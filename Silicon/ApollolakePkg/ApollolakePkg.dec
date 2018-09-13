@@ -1,0 +1,28 @@
+## @file
+#
+#  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution.  The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php
+#
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+##
+
+[Defines]
+  DEC_SPECIFICATION              = 0x00010005
+  PACKAGE_NAME                   = ApollolakePkg
+  PACKAGE_GUID                   = 54ABB153-AA16-4be7-83EE-1E401553F505
+  PACKAGE_VERSION                = 0.1
+
+[Includes]
+  Include
+
+[Guids]
+  gEfiBootMediaHobGuid           = { 0x79e5f681, 0x59f4, 0x4415, { 0x8e, 0x46, 0x8c, 0x22, 0x3c, 0xf5, 0x17, 0xe6}}
+  gFspVariableNvDataHobGuid      = { 0xa034147d, 0x690c, 0x4154, { 0x8d, 0xe6, 0xc0, 0x44, 0x64, 0x1d, 0xe9, 0x42}}
+  gEfiHeciMbpDataHobGuid         = { 0x5aa0697d, 0x7fcc, 0x4add, { 0xaa, 0x29, 0x4e, 0xc5, 0x81, 0xa6, 0x0c, 0xd0}}
+
+[PcdsFixedAtBuild]

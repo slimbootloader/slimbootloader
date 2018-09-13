@@ -1,0 +1,57 @@
+## @file
+#  FSP API interfaces
+#
+#  Copyright (c) 2016 - 2017, Intel Corporation. All rights reserved.<BR>
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution.  The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php
+#
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = FspApiLib
+  FILE_GUID                      = 06156ECD-38DF-4e8a-AE96-077234A56C80
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = FspApiLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+#
+
+[Sources]
+  FspTempRamExit.c
+  FspMemoryInit.c
+  FspSiliconInit.c
+  FspNotifyPhase.c
+  FspRebase.c
+
+[Sources.IA32]
+  Ia32/FspTempRamInit.nasm
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  IntelFsp2Pkg/IntelFsp2Pkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  BaseMemoryLib
+
+[Pcd]
+  gPlatformModuleTokenSpaceGuid.PcdFSPMBase
+  gPlatformModuleTokenSpaceGuid.PcdFSPSBase
+  gPlatformModuleTokenSpaceGuid.PcdFSPTBase
+
+[FixedPcd]
+  gPlatformModuleTokenSpaceGuid.PcdFSPMUpdSize
+  gPlatformModuleTokenSpaceGuid.PcdFSPSUpdSize

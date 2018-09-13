@@ -1,0 +1,104 @@
+## @file
+#
+#  Copyright (c) 2016 - 2017, Intel Corporation. All rights reserved.<BR>
+#
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution. The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php.
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = Stage1B
+  FILE_GUID                      = A68576FB-074E-4490-A82A-7C56121ECC56
+  MODULE_TYPE                    = PEIM
+  VERSION_STRING                 = 1.0
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+# VALID_ARCHITECTURES = IA32 X64 IPF EBC
+#
+
+[Sources]
+  Stage1B.c
+
+[Sources.IA32]
+  Ia32/Stage1BArch.c
+
+[Sources.ARC]
+  Arc/Stage1BArch.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  IntelFsp2Pkg/IntelFsp2Pkg.dec
+
+[LibraryClasses.IA32]
+  PagingLib
+
+[LibraryClasses]
+  ModuleEntryLib
+  BaseLib
+  IoLib
+  BootloaderCoreLib
+  DecompressLib
+  SocInitLib
+  BoardInitLib
+  LoaderLib
+  FspSupportLib
+  MemoryAllocationLib
+  LoaderPerformanceLib
+  SecureBootLib
+  TimeStampLib
+  FspApiLib
+  LitePeCoffLib
+  DebugDataLib
+  ConfigDataLib
+  CpuExceptionLib
+  TpmLib
+  ResetSystemLib
+
+[Guids]
+  gPlatformModuleTokenSpaceGuid
+  gFspReservedMemoryResourceHobGuid
+
+[Pcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdMaxLibraryDataEntry
+  gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
+  gPlatformModuleTokenSpaceGuid.PcdStage1StackSize
+  gPlatformModuleTokenSpaceGuid.PcdStage1DataSize
+  gPlatformModuleTokenSpaceGuid.PcdFSPTBase
+  gPlatformModuleTokenSpaceGuid.PcdStage2FdBase
+  gPlatformModuleTokenSpaceGuid.PcdStage2FdSize
+  gPlatformModuleTokenSpaceGuid.PcdMrcDataBase
+  gPlatformModuleTokenSpaceGuid.PcdStage1BFdBase
+  gPlatformModuleTokenSpaceGuid.PcdStage1BFdSize
+  gPlatformModuleTokenSpaceGuid.PcdStage2LoadBase
+  gPlatformModuleTokenSpaceGuid.PcdLoaderReservedMemSize
+  gPlatformModuleTokenSpaceGuid.PcdStage2LoadHigh
+  gPlatformModuleTokenSpaceGuid.PcdLoaderHobStackSize
+  gPlatformModuleTokenSpaceGuid.PcdPayloadExeBase
+  gPlatformModuleTokenSpaceGuid.PcdFlashBaseAddress
+  gPlatformModuleTokenSpaceGuid.PcdFlashSize
+  gPlatformModuleTokenSpaceGuid.PcdFSPMBase
+  gPlatformModuleTokenSpaceGuid.PcdCfgDataSize
+  gPlatformModuleTokenSpaceGuid.PcdCfgDataBase
+  gPlatformModuleTokenSpaceGuid.PcdCfgDatabaseSize
+  gPlatformModuleTokenSpaceGuid.PcdStage1BXip
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel
+  gPlatformModuleTokenSpaceGuid.PcdS3DebugEnabled
+  gPlatformModuleTokenSpaceGuid.PcdCfgDataLoadSource
+  gPlatformCommonLibTokenSpaceGuid.PcdPcdLibId
+  gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
+  gPlatformModuleTokenSpaceGuid.PcdEarlyLogBufferSize
+  gPlatformModuleTokenSpaceGuid.PcdLogBufferSize
+
+[Depex]
+  TRUE

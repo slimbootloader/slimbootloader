@@ -1,0 +1,80 @@
+/** @file
+
+  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  This program and the accompanying materials
+  are licensed and made available under the terms and conditions of the BSD License
+  which accompanies this distribution.  The full text of the license may be found at
+  http://opensource.org/licenses/bsd-license.php.
+
+  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+
+**/
+
+#include <FspApiLibInternal.h>
+#include <Library/BoardInitLib.h>
+#include <Library/BootloaderCoreLib.h>
+
+/**
+  This FSP API is called after TempRamInit and initializes the memory.
+  This FSP API accepts a pointer to a data structure that will be platform dependent
+  and defined for each FSP binary. This will be documented in Integration guide with
+  each FSP release.
+  After FspMemInit completes its execution, it passes the pointer to the HobList and
+  returns to the boot loader from where it was called. BootLoader is responsible to
+  migrate it's stack and data to Memory.
+  FspMemoryInit, TempRamExit and FspSiliconInit APIs provide an alternate method to
+  complete the silicon initialization and provides bootloader an opportunity to get
+  control after system memory is available and before the temporary RAM is torn down.
+
+  @param[in] FspmBase                 The base address of FSPM.
+  @param[out] HobListPtr              Pointer to receive the address of the HOB list.
+
+  @retval EFI_SUCCESS                 FSP execution environment was initialized successfully.
+  @retval EFI_INVALID_PARAMETER       Input parameters are invalid.
+  @retval EFI_UNSUPPORTED             The FSP calling conditions were not met.
+  @retval EFI_DEVICE_ERROR            FSP initialization failed.
+  @retval EFI_OUT_OF_RESOURCES        Stack range requested by FSP is not met.
+  @retval FSP_STATUS_RESET_REQUIREDx  A reset is reuired. These status codes will not be returned during S3.
+**/
+EFI_STATUS
+EFIAPI
+CallFspMemoryInit (
+  UINT32                     FspmBase,
+  VOID                       **HobList
+  )
+{
+  UINT8                       FspmUpd[FixedPcdGet32 (PcdFSPMUpdSize)];
+  UINT8                      *DefaultMemoryInitUpd;
+  FSP_INFO_HEADER            *FspHeader;
+  FSP_MEMORY_INIT             FspMemoryInit;
+  FSPM_UPD_COMMON            *FspmUpdCommon;
+  EFI_STATUS                  Status;
+
+  FspHeader = (FSP_INFO_HEADER *) (FspmBase + FSP_INFO_HEADER_OFF);
+
+  ASSERT (FspHeader->Signature == FSP_INFO_HEADER_SIGNATURE);
+  ASSERT (FspHeader->ImageBase == FspmBase);
+
+  // Copy default UPD data
+  DefaultMemoryInitUpd = (UINT8 *) (FspHeader->ImageBase + FspHeader->CfgRegionOffset);
+  CopyMem (&FspmUpd, DefaultMemoryInitUpd, FspHeader->CfgRegionSize);
+
+  /* Update architectural UPD fields */
+  FspmUpdCommon = (FSPM_UPD_COMMON *)FspmUpd;
+  FspmUpdCommon->FspmArchUpd.BootLoaderTolumSize = 0;
+  FspmUpdCommon->FspmArchUpd.BootMode            = (UINT32)GetBootMode();
+  FspmUpdCommon->FspmArchUpd.NvsBufferPtr        = FindNvsData();
+
+  UpdateFspConfig (FspmUpd);
+
+  ASSERT (FspHeader->FspMemoryInitEntryOffset != 0);
+  FspMemoryInit = (FSP_MEMORY_INIT) (FspHeader->ImageBase + \
+                                     FspHeader->FspMemoryInitEntryOffset);
+
+  DEBUG ((DEBUG_INFO, "Call FspMemoryInit ... "));
+  Status = FspMemoryInit (&FspmUpd, HobList);
+  DEBUG ((DEBUG_INFO, "%r\n", Status));
+
+  return Status;
+}

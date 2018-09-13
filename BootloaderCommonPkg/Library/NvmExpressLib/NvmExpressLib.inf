@@ -1,0 +1,50 @@
+## @file
+#  NVM Express Host Controller Module.
+#
+#  NvmExpressDxe driver is used to manage non-volatile memory subsystem which follows
+#  NVM Express specification.
+#
+#  Copyright (c) 2013 - 2016, Intel Corporation. All rights reserved.<BR>
+#
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution. The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php.
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = NvmExpressLib
+  FILE_GUID                      = 5BE3BDF4-53CF-46a3-A6A9-73C34A6E5EE3
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = NvmExpressLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+#
+
+[Sources]
+  NvmExpressBlockIo.c
+  NvmExpressBlockIo.h
+  NvmExpress.c
+  NvmExpress.h
+  NvmExpressDiskInfo.c
+  NvmExpressDiskInfo.h
+  NvmExpressHci.c
+  NvmExpressHci.h
+  NvmExpressPassthru.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+
+[LibraryClasses]
+  DebugLib
+  PrintLib
+

@@ -1,0 +1,39 @@
+## @file  PayloadPkg.dec
+# This Package provides all definitions, library classes and libraries instances.
+#
+# Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+# This program and the accompanying materials are licensed and made available under
+# the terms and conditions of the BSD License that accompanies this distribution.
+# The full text of the license may be found at
+# http://opensource.org/licenses/bsd-license.php.
+#
+# THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+# WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+##
+
+[Defines]
+  DEC_SPECIFICATION              = 0x00010005
+  PACKAGE_NAME                   = PayloadPkg
+  PACKAGE_GUID                   = BADCCF2F-BEB0-498E-9FCD-0EDFC8FD6AA8
+  PACKAGE_VERSION                = 0.1
+
+[Includes]
+  Include
+
+[LibraryClasses]
+
+[Guids]
+  #
+  # GUID defined in package
+  #
+  gPayloadTokenSpaceGuid = { 0x87cc9b46, 0x6742, 0x40d2, { 0x8b, 0x8b, 0xa4, 0x82, 0x2f, 0xbf, 0x8c, 0x15 } }
+  gOsLoaderTokenSpaceGuid = { 0x8dfd71db, 0xae65, 0x46d4, {0x88, 0x6c, 0xcc, 0x0e, 0x6d, 0x31, 0xf8, 0x71 } }
+  gFirmwareUpdateImageFileGuid  = { 0x1a3eae58, 0xb580, 0x4fef, { 0xac, 0xa3, 0xa1, 0x6d, 0x9e, 0x00, 0xdf, 0x5f } }
+
+[PcdsFixedAtBuild, PcdsPatchableInModule]
+  # These will be patched in the FDF file.
+  gPayloadTokenSpaceGuid.PcdPayloadHobList    | 0x00000000 | UINT32 | 0x10001000
+  gPayloadTokenSpaceGuid.PcdPayloadStackSize  | 0x00000000 | UINT32 | 0x10001002
+  gPayloadTokenSpaceGuid.PcdPayloadHeapSize   | 0x00000000 | UINT32 | 0x10001003
+  gPayloadTokenSpaceGuid.PcdGlobalDataAddress | 0x00000000 | UINT32 | 0x10001004

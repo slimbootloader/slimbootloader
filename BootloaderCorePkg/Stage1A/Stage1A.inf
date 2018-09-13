@@ -1,0 +1,88 @@
+## @file
+# This is the first module taking control.
+#
+#  Copyright (c) 2016 - 2017, Intel Corporation. All rights reserved.<BR>
+#
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution. The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php.
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = Stage1A
+  FILE_GUID                      = A0FC7906-3519-4605-BACD-50B7C4392F84
+  MODULE_TYPE                    = PEIM
+  VERSION_STRING                 = 1.0
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+# VALID_ARCHITECTURES = IA32 X64 IPF EBC
+#
+
+[Sources]
+  Stage1A.h
+  Stage1A.c
+
+[Sources.IA32]
+  Ia32/SecEntry.nasm
+  Ia32/Stage1AArch.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  IntelFsp2Pkg/IntelFsp2Pkg.dec
+
+[LibraryClasses]
+  IoLib
+  BaseLib
+  SocInitLib
+  BoardInitLib
+  TimeStampLib
+  DecompressLib
+  SecureBootLib
+  MemoryAllocationLib
+  LoaderPerformanceLib
+  LitePeCoffLib
+  LoaderLib
+  FspApiLib
+  CpuExceptionLib
+
+[Guids]
+  gPlatformModuleTokenSpaceGuid
+
+[Pcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdMaxLibraryDataEntry
+  gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdDebugOutputDeviceMask
+  gPlatformModuleTokenSpaceGuid.PcdStage1StackSize
+  gPlatformModuleTokenSpaceGuid.PcdStage1BFdBase
+  gPlatformModuleTokenSpaceGuid.PcdStage1BLoadBase
+  gPlatformModuleTokenSpaceGuid.PcdKeyStoreBase
+  gPlatformModuleTokenSpaceGuid.PcdVerInfoBase
+  gPlatformModuleTokenSpaceGuid.PcdStage1DataSize
+  gPlatformModuleTokenSpaceGuid.PcdStage1StackSize
+  gPlatformModuleTokenSpaceGuid.PcdStage1BXip
+  gPlatformModuleTokenSpaceGuid.PcdCfgDatabaseSize
+  gPlatformModuleTokenSpaceGuid.PcdStage1AXip
+  gPlatformModuleTokenSpaceGuid.PcdStage1ALoadBase
+  gPlatformModuleTokenSpaceGuid.PcdStage1AFdBase
+  gPlatformModuleTokenSpaceGuid.PcdStage1AFvSize
+  gPlatformModuleTokenSpaceGuid.PcdFSPTSize
+  gPlatformModuleTokenSpaceGuid.PcdFSPTBase
+  gPlatformModuleTokenSpaceGuid.PcdMaxServiceNumber
+  gPlatformModuleTokenSpaceGuid.PcdEarlyLogBufferSize
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel
+  gPlatformModuleTokenSpaceGuid.PcdFlashMapEnabled
+  gPlatformModuleTokenSpaceGuid.PcdFileDataBase
+  gPlatformModuleTokenSpaceGuid.PcdVerifiedBootHashMask
+
+[Depex]
+  TRUE

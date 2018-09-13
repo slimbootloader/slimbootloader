@@ -1,0 +1,144 @@
+/** @file
+  Shell command `fwupdate` to reset the system.
+
+  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  This program and the accompanying materials
+  are licensed and made available under the terms and conditions of the BSD License
+  which accompanies this distribution.  The full text of the license may be found at
+  http://opensource.org/licenses/bsd-license.php.
+
+  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+
+**/
+
+#include <Library/ShellLib.h>
+#include <Library/IoLib.h>
+#include <Library/BootloaderCommonLib.h>
+#include <Service/PlatformService.h>
+#include <Library/FirmwareUpdateLib.h>
+#include <Library/ConfigDataLib.h>
+#include <Library/BaseMemoryLib.h>
+#include <Library/DebugLib.h>
+#include <Library/ShellExtensionLib.h>
+#include <Service/HeciService.h>
+#include <ConfigDataDefs.h>
+
+
+#define FW_UPD_CAPSULE_INFO_LENGTH 128
+#define CDATA_HEADER_LENGTH        8
+
+/**
+  Reset the system.
+
+  @param[in]  Shell        shell instance
+  @param[in]  Argc         number of command line arguments
+  @param[in]  Argv         command line arguments
+
+  @retval EFI_SUCCESS
+
+**/
+STATIC
+EFI_STATUS
+EFIAPI
+ShellCommandFwUpdateFunc (
+  IN SHELL  *Shell,
+  IN UINTN   Argc,
+  IN CHAR16 *Argv[]
+  );
+
+CONST SHELL_COMMAND mShellCommandFwUpdate = {
+  L"fwupdate",
+  L"Initiate Firmware Update",
+  &ShellCommandFwUpdateFunc
+};
+
+/**
+  Initiate firmware update.
+
+  @param[in]  Shell        shell instance
+  @param[in]  Argc         number of command line arguments
+  @param[in]  Argv         command line arguments
+
+  @retval EFI_SUCCESS
+
+**/
+STATIC
+EFI_STATUS
+EFIAPI
+ShellCommandFwUpdateFunc (
+  IN SHELL  *Shell,
+  IN UINTN   Argc,
+  IN CHAR16 *Argv[]
+  )
+{
+  CDATA_BLOB            *UserCfgData;
+  CDATA_HEADER          *CdataHeader;
+  FW_UPD_USER_CFG_DATA  *FwUpdUserCfgData;
+  UINT8                  Data[FW_UPD_CAPSULE_INFO_LENGTH];
+  EFI_STATUS             Status;
+  PLATFORM_SERVICE      *PlatformService;
+  HECI_SERVICE          *HeciService;
+  UINT32                 CdataLength;
+
+  HeciService = (HECI_SERVICE *) GetServiceBySignature (HECI_SERVICE_SIGNATURE);
+  if ((HeciService == NULL) || (HeciService->SimpleHeciCommand == NULL)) {
+    ShellPrint (L"Firmware update command is not supported.\n");
+    return EFI_UNSUPPORTED;
+  }
+
+  ZeroMem (Data, FW_UPD_CAPSULE_INFO_LENGTH);
+
+  UserCfgData = (CDATA_BLOB *)(&Data[0]);
+
+  //
+  // Populate configuration data header
+  //
+  CdataLength = (CDATA_HEADER_LENGTH + sizeof(FW_UPD_USER_CFG_DATA));
+  UserCfgData->Signature = CFG_DATA_SIGNATURE;
+  UserCfgData->HeaderLength = sizeof(CDATA_BLOB);
+  UserCfgData->UsedLength  = sizeof(CDATA_BLOB)  + CdataLength;
+  UserCfgData->TotalLength = FW_UPD_CAPSULE_INFO_LENGTH;
+
+  //
+  // Populate CDATA header for the item
+  //
+  CdataHeader = (CDATA_HEADER *)(&Data[sizeof(CDATA_BLOB)]);
+  CdataHeader->ConditionNum = 1;
+  CdataHeader->Length = CdataLength >> 2;
+  CdataHeader->Version = 1;
+  CdataHeader->Tag = CDATA_CAPSULE_TAG;
+  CdataHeader->Condition[0].Value = 0xFFFFFFFF;
+
+  //
+  // Populate firmware update user configuration data structure
+  //
+  FwUpdUserCfgData = (FW_UPD_USER_CFG_DATA *)(&Data[sizeof(CDATA_BLOB) + CDATA_HEADER_LENGTH]);
+  FwUpdUserCfgData->DevAddr = 0x00001500;
+  FwUpdUserCfgData->DevType = 5;
+  FwUpdUserCfgData->HwPart = 0;
+  FwUpdUserCfgData->SwPart = 0;
+  FwUpdUserCfgData->FsType = 2;
+  FwUpdUserCfgData->LbaAddr = 0;
+
+  AsciiStrCpy(FwUpdUserCfgData->FileName, "FwuImage.bin");
+
+  //
+  // Send HECI user command to save IBB signal data
+  //
+  Status = HeciService->HeciUserCommand((UINT8 *)Data, FW_UPD_CAPSULE_INFO_LENGTH, 1 );
+  if (EFI_ERROR(Status)) {
+    DEBUG((DEBUG_ERROR, " HeciSendUserCommand: Status : %r\n", Status));
+    return Status;
+  }
+
+  //
+  // Reset the platform
+  //
+  PlatformService = (PLATFORM_SERVICE *) GetServiceBySignature (PLATFORM_SERVICE_SIGNATURE);
+  if (PlatformService != NULL && PlatformService->ResetSystem != NULL) {
+    PlatformService->ResetSystem(EfiResetWarm);
+  }
+
+  return EFI_SUCCESS;
+}

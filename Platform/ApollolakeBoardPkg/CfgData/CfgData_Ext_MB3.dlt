@@ -1,0 +1,175 @@
+#
+# Delta configuration values for platform ID 0x000C
+# This file is not auto-generated. Rather, users must input all the settings
+# that are needed to be overwritten from the base DSC into this file.
+# This file is similar to changing BSF file in BCT for the new settings.
+
+PLATFORMID_CFG_DATA.PlatformId                  | 0xC
+
+PLAT_NAME_CFG_DATA.PlatformName                 | 'MB3'
+
+DEV_EN_CFG_DATA.DevEnControl1.SataPort0Enable        | 0x1
+DEV_EN_CFG_DATA.DevEnControl1.SataPort1Enable        | 0x1
+
+# GPIO CONFIG
+# MB3 port: USB port GPIOs
+  GPIO_CFG_DATA.GPIO_0_Half1                    | 0x40908005
+  GPIO_CFG_DATA.GPIO_1_Half1                    | 0x40908005
+  GPIO_CFG_DATA.GPIO_15_Half1                   | 0x40008005
+  GPIO_CFG_DATA.GPIO_27_Half1                   | 0x41008005
+  GPIO_CFG_DATA.GPIO_35_Half1                   | 0x42808005
+  GPIO_CFG_DATA.GPIO_38_Half1                   | 0x23108008
+  GPIO_CFG_DATA.GPIO_39_Half1                   | 0x03108008
+  GPIO_CFG_DATA.GPIO_40_Half1                   | 0x03108008
+  GPIO_CFG_DATA.GPIO_41_Half1                   | 0x23108008
+  GPIO_CFG_DATA.GPIO_42_Half1                   | 0x23108008
+  GPIO_CFG_DATA.GPIO_43_Half1                   | 0x03108008
+  GPIO_CFG_DATA.GPIO_44_Half1                   | 0x03108008
+  GPIO_CFG_DATA.GPIO_45_Half1                   | 0x00008008
+  GPIO_CFG_DATA.GPIO_46_Half1                   | 0x03008008
+  GPIO_CFG_DATA.GPIO_47_Half1                   | 0x03008008
+  GPIO_CFG_DATA.GPIO_48_Half1                   | 0x43008002
+  GPIO_CFG_DATA.GPIO_62_Half1                   | 0x5d008004
+  GPIO_CFG_DATA.GPIO_63_Half1                   | 0x5d008004
+  GPIO_CFG_DATA.GPIO_64_Half1                   | 0x5d008004
+  GPIO_CFG_DATA.GPIO_65_Half1                   | 0x5d008004
+  GPIO_CFG_DATA.GPIO_66_Half1                   | 0x5d008004
+  GPIO_CFG_DATA.GPIO_67_Half1                   | 0x5d008004
+  GPIO_CFG_DATA.GPIO_68_Half1                   | 0x5d008004
+  GPIO_CFG_DATA.GPIO_69_Half1                   | 0x5d008004
+  GPIO_CFG_DATA.GPIO_70_Half1                   | 0x5d008004
+  GPIO_CFG_DATA.GPIO_71_Half1                   | 0x5d008004
+  GPIO_CFG_DATA.GPIO_72_Half1                   | 0x5d008004
+  GPIO_CFG_DATA.GPIO_73_Half1                   | 0x5d008004
+  GPIO_CFG_DATA.TMS_Half1                       | 0x3f008008
+  GPIO_CFG_DATA.TDI_Half1                       | 0x3f008008
+  GPIO_CFG_DATA.CX_PREQ_B_Half1                 | 0x3f008008
+  GPIO_CFG_DATA.CNV_BRI_DT_Half1                | 0x7d008002
+  GPIO_CFG_DATA.CNV_BRI_RSP_Half1               | 0x7d008002
+  GPIO_CFG_DATA.CNV_RGI_DT_Half1                | 0x7d008002
+  GPIO_CFG_DATA.CNV_RGI_RSP_Half1               | 0x7d008002
+  GPIO_CFG_DATA.SVID0_ALERT_B_Half1             | 0x3c008008
+  GPIO_CFG_DATA.SVID0_DATA_Half1                | 0x3f008008
+  GPIO_CFG_DATA.SVID0_CLK_Half1                 | 0x3f008008
+  GPIO_CFG_DATA.GPIO_187_Half1                  | 0x1f008008
+  GPIO_CFG_DATA.GPIO_188_Half1                  | 0x1f008008
+  GPIO_CFG_DATA.GPIO_189_Half1                  | 0x03008008
+  GPIO_CFG_DATA.GPIO_190_Half1                  | 0x03008008
+  GPIO_CFG_DATA.GPIO_199_Half1                  | 0x01008010
+  GPIO_CFG_DATA.GPIO_200_Half1                  | 0x01008010
+  GPIO_CFG_DATA.GPIO_203_Half1                  | 0x3f008008
+  GPIO_CFG_DATA.GPIO_204_Half1                  | 0x3f008008
+  GPIO_CFG_DATA.PMIC_PWRGOOD_Half1              | 0x42408005
+  GPIO_CFG_DATA.PMIC_RESET_B_Half1              | 0x7c008002
+  GPIO_CFG_DATA.GPIO_213_Half1                  | 0x40008004
+  GPIO_CFG_DATA.GPIO_214_Half1                  | 0x41008005
+  GPIO_CFG_DATA.GPIO_215_Half1                  | 0x41008005
+  GPIO_CFG_DATA.PMIC_THERMTRIP_B_Half1          | 0x03008008
+  GPIO_CFG_DATA.PMIC_STDBY_Half1                | 0x41008005
+  GPIO_CFG_DATA.PROCHOT_B_Half1                 | 0x23008008
+  GPIO_CFG_DATA.GPIO_74_Half1                   | 0x01008008
+  GPIO_CFG_DATA.GPIO_75_Half1                   | 0x01008008
+  GPIO_CFG_DATA.GPIO_83_Half1                   | 0x25208008
+  GPIO_CFG_DATA.GPIO_85_Half1                   | 0x3d008008
+  GPIO_CFG_DATA.GPIO_86_Half1                   | 0x3d008008
+  GPIO_CFG_DATA.GPIO_87_Half1                   | 0x25208008
+  GPIO_CFG_DATA.GPIO_88_Half1                   | 0x3d008008
+  GPIO_CFG_DATA.GPIO_89_Half1                   | 0x3d008008
+  GPIO_CFG_DATA.GPIO_90_Half1                   | 0x3d008008
+  GPIO_CFG_DATA.GPIO_91_Half1                   | 0x25208008
+  GPIO_CFG_DATA.GPIO_92_Half1                   | 0x3d008008
+  GPIO_CFG_DATA.GPIO_97_Half1                   | 0x3c008008
+  GPIO_CFG_DATA.GPIO_98_Half1                   | 0x3c008008
+  GPIO_CFG_DATA.GPIO_99_Half1                   | 0x3c008008
+  GPIO_CFG_DATA.GPIO_100_Half1                  | 0x3c008008
+  GPIO_CFG_DATA.GPIO_101_Half1                  | 0x3c008008
+  GPIO_CFG_DATA.GPIO_102_Half1                  | 0x3c008008
+  GPIO_CFG_DATA.GPIO_103_Half1                  | 0x3c008008
+  GPIO_CFG_DATA.GPIO_104_Half1                  | 0x01008008
+  GPIO_CFG_DATA.GPIO_105_Half1                  | 0x01008008
+  GPIO_CFG_DATA.GPIO_110_Half1                  | 0x01008008
+  GPIO_CFG_DATA.GPIO_111_Half1                  | 0x41008002
+  GPIO_CFG_DATA.GPIO_112_Half1                  | 0x01008010
+  GPIO_CFG_DATA.GPIO_113_Half1                  | 0x41008002
+  GPIO_CFG_DATA.GPIO_116_Half1                  | 0x01008010
+  GPIO_CFG_DATA.GPIO_118_Half1                  | 0x01008008
+  GPIO_CFG_DATA.GPIO_119_Half1                  | 0x01008008
+  GPIO_CFG_DATA.GPIO_120_Half1                  | 0x01008008
+  GPIO_CFG_DATA.GPIO_121_Half1                  | 0x01008008
+  GPIO_CFG_DATA.GPIO_123_Half1                  | 0x01008008
+  GPIO_CFG_DATA.GPIO_124_Half1                  | 0x12708008
+  GPIO_CFG_DATA.GPIO_125_Half1                  | 0x12708008
+  GPIO_CFG_DATA.GPIO_126_Half1                  | 0x12708008
+  GPIO_CFG_DATA.GPIO_127_Half1                  | 0x12708008
+  GPIO_CFG_DATA.GPIO_128_Half1                  | 0x12708008
+  GPIO_CFG_DATA.GPIO_131_Half1                  | 0x12708008
+  GPIO_CFG_DATA.GPIO_132_Half1                  | 0x12708008
+  GPIO_CFG_DATA.GPIO_133_Half1                  | 0x12708008
+  GPIO_CFG_DATA.GPIO_134_Half1                  | 0x07308010
+  GPIO_CFG_DATA.GPIO_138_Half1                  | 0x06708008
+  GPIO_CFG_DATA.GPIO_139_Half1                  | 0x06708008
+  GPIO_CFG_DATA.GPIO_146_Half1                  | 0x3d008018
+  GPIO_CFG_DATA.GPIO_150_Half1                  | 0x01008010
+  GPIO_CFG_DATA.GPIO_151_Half1                  | 0x41008004
+  GPIO_CFG_DATA.GPIO_152_Half1                  | 0x01008010
+  GPIO_CFG_DATA.GPIO_153_Half1                  | 0x3d008008
+  GPIO_CFG_DATA.GPIO_154_Half1                  | 0x41008005
+  GPIO_CFG_DATA.GPIO_155_Half1                  | 0x3d008010
+  GPIO_CFG_DATA.GPIO_209_Half1                  | 0x1c208008
+  GPIO_CFG_DATA.GPIO_210_Half1                  | 0x1d208008
+  GPIO_CFG_DATA.GPIO_211_Half1                  | 0x1d208008
+  GPIO_CFG_DATA.GPIO_212_Half1                  | 0x1d208008
+  GPIO_CFG_DATA.OSC_CLK_OUT_0_Half1             | 0x01008008
+  GPIO_CFG_DATA.OSC_CLK_OUT_4_Half1             | 0x41008002
+  GPIO_CFG_DATA.PMU_AC_PRESENT_Half1            | 0x3d008008
+  GPIO_CFG_DATA.PMU_PLTRST_B_Half1              | 0x3c008008
+  GPIO_CFG_DATA.PMU_RESETBUTTON_B_Half1         | 0x3c008008
+  GPIO_CFG_DATA.PMU_SUSCLK_Half1                | 0x3c008008
+  GPIO_CFG_DATA.PMU_WAKE_B_Half1                | 0x7f008005
+  GPIO_CFG_DATA.SUSPWRDNACK_Half1               | 0x3c008008
+  GPIO_CFG_DATA.GPIO_156_Half1                  | 0x05008008
+  GPIO_CFG_DATA.GPIO_157_Half1                  | 0x23008008
+  GPIO_CFG_DATA.GPIO_158_Half1                  | 0x23008008
+  GPIO_CFG_DATA.GPIO_159_Half1                  | 0x23008008
+  GPIO_CFG_DATA.GPIO_160_Half1                  | 0x23008008
+  GPIO_CFG_DATA.GPIO_161_Half1                  | 0x23008008
+  GPIO_CFG_DATA.GPIO_162_Half1                  | 0x23008008
+  GPIO_CFG_DATA.GPIO_163_Half1                  | 0x23008008
+  GPIO_CFG_DATA.GPIO_164_Half1                  | 0x23008008
+  GPIO_CFG_DATA.GPIO_165_Half1                  | 0x23008008
+  GPIO_CFG_DATA.GPIO_166_Half1                  | 0x05008008
+  GPIO_CFG_DATA.GPIO_167_Half1                  | 0x23008008
+  GPIO_CFG_DATA.GPIO_168_Half1                  | 0x23008008
+  GPIO_CFG_DATA.GPIO_169_Half1                  | 0x23008008
+  GPIO_CFG_DATA.GPIO_170_Half1                  | 0x23008008
+  GPIO_CFG_DATA.GPIO_171_Half1                  | 0x23008008
+  GPIO_CFG_DATA.GPIO_172_Half1                  | 0x05008008
+  GPIO_CFG_DATA.GPIO_179_Half1                  | 0x01008008
+  GPIO_CFG_DATA.GPIO_173_Half1                  | 0x23008008
+  GPIO_CFG_DATA.GPIO_174_Half1                  | 0x23008008
+  GPIO_CFG_DATA.GPIO_175_Half1                  | 0x23008008
+  GPIO_CFG_DATA.GPIO_176_Half1                  | 0x23008008
+  GPIO_CFG_DATA.GPIO_178_Half1                  | 0x03008008
+  GPIO_CFG_DATA.GPIO_186_Half1                  | 0x41005002
+  GPIO_CFG_DATA.GPIO_183_Half1                  | 0x41008004
+  GPIO_CFG_DATA.LPC_CLKOUT0_Half1               | 0x3c008008
+  GPIO_CFG_DATA.LPC_AD0_Half1                   | 0x3f008008
+  GPIO_CFG_DATA.LPC_AD1_Half1                   | 0x3f008008
+  GPIO_CFG_DATA.LPC_AD2_Half1                   | 0x3f008008
+  GPIO_CFG_DATA.LPC_AD3_Half1                   | 0x3f008008
+  GPIO_CFG_DATA.LPC_CLKRUNB_Half1               | 0x3f008008
+  GPIO_CFG_DATA.LPC_FRAMEB_Half1                | 0x3f008008
+
+
+# MEMORY CONFIG
+  MEMORY_CFG_DATA.Profile                       | 0xB
+  MEMORY_CFG_DATA.RmtCheckRun                   | 0x3
+  MEMORY_CFG_DATA.MemorySizeLimit               | 0x1800
+  MEMORY_CFG_DATA.Ch0_DramDensity               | 2
+  MEMORY_CFG_DATA.Ch1_DramDensity               | 2
+  MEMORY_CFG_DATA.Ch2_DramDensity               | 2
+  MEMORY_CFG_DATA.Ch3_DramDensity               | 2
+  MEMORY_CFG_DATA.Ch0_Bit_swizzling             | { 0x09, 0x0e, 0x0c, 0x0d, 0x0a, 0x0b, 0x08, 0x0f, 0x05, 0x06, 0x01, 0x00, 0x02, 0x07, 0x04, 0x03, 0x1a, 0x1f, 0x1c, 0x1b, 0x1d, 0x19, 0x18, 0x1e, 0x14, 0x16, 0x17, 0x11, 0x12, 0x13, 0x10, 0x15 }
+  MEMORY_CFG_DATA.Ch1_Bit_swizzling             | { 0x06, 0x07, 0x05, 0x04, 0x03, 0x01, 0x00, 0x02, 0x0c, 0x0a, 0x0b, 0x0d, 0x0e, 0x08, 0x09, 0x0f, 0x14, 0x10, 0x16, 0x15, 0x12, 0x11, 0x13, 0x17, 0x1e, 0x1c, 0x1d, 0x19, 0x18, 0x1a, 0x1b, 0x1f }
+  MEMORY_CFG_DATA.Ch2_Bit_swizzling             | { 0x0f, 0x09, 0x08, 0x0b, 0x0c, 0x0d, 0x0e, 0x0a, 0x05, 0x02, 0x00, 0x03, 0x06, 0x07, 0x01, 0x04, 0x19, 0x1c, 0x1e, 0x1f, 0x1a, 0x1b, 0x18, 0x1d, 0x14, 0x17, 0x16, 0x15, 0x12, 0x13, 0x10, 0x11 }
+  MEMORY_CFG_DATA.Ch3_Bit_swizzling             | { 0x03, 0x04, 0x06, 0x05, 0x00, 0x01, 0x02, 0x07, 0x0b, 0x0a, 0x08, 0x09, 0x0e, 0x0c, 0x0f, 0x0d, 0x11, 0x17, 0x13, 0x10, 0x15, 0x16, 0x14, 0x12, 0x1c, 0x1d, 0x1a, 0x19, 0x1e, 0x1b, 0x18, 0x1f }

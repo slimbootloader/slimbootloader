@@ -1,0 +1,47 @@
+## @file
+#  Instance of secure boot library.
+#
+#  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+#
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution. The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php.
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = SecureBootLib
+  FILE_GUID                      = 61D177BF-1EBB-4A67-A720-CA8A3B675A4E
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = SecureBootLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF
+#
+
+[Sources]
+  SecureBootRsa.c
+  SecureBootHash.c
+  SecureBootRndNumGen.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+
+[Pcd]
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  CryptoLib
+  BootloaderCommonLib
+  BootloaderLib
+  RngLib

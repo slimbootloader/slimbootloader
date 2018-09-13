@@ -1,0 +1,180 @@
+## @file
+# Provides bootloader driver related package definitions.
+#
+# Copyright (c) 2016 - 2017, Intel Corporation. All rights reserved.<BR>
+# This program and the accompanying materials are licensed and made available under
+# the terms and conditions of the BSD License that accompanies this distribution.
+# The full text of the license may be found at
+# http://opensource.org/licenses/bsd-license.php.
+#
+# THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+# WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+##
+
+[Defines]
+  DEC_SPECIFICATION              = 0x00010005
+  PACKAGE_NAME                   = BootloaderCommonPkg
+  PACKAGE_GUID                   = c65f7789-add1-40a6-af90-dab7c27bfb33
+  PACKAGE_VERSION                = 0.1
+
+[Includes]
+  Include
+
+[Guids]
+  gPlatformCommonLibTokenSpaceGuid              = { 0x373657df, 0x5dc0, 0x4cbb, { 0x87, 0xad, 0x50, 0x1e, 0xb8, 0x89, 0xbf, 0x89 } }
+  gLoaderFspInfoGuid                            = { 0xbd42bc23, 0x1efe, 0x4b2b, { 0xa5, 0x8e, 0x08, 0x8b, 0x5b, 0xa2, 0xf5, 0xb0 } }
+  gPayloadKeyHashGuid                           = { 0xbf16846f, 0xfde9, 0x487a, { 0xb6, 0x9d, 0xac, 0xad, 0x39, 0x79, 0x5c, 0x4e } }
+  gOsBootOptionGuid                             = { 0xa9e97fe1, 0xe2e0, 0x4550, { 0x86, 0xb3, 0x8d, 0x93, 0x66, 0x5e, 0x6f, 0x6d } }
+  gLoaderMemoryMapInfoGuid                      = { 0xa1ff7424, 0x7a1a, 0x478e, { 0xa9, 0xe4, 0x92, 0xf3, 0x57, 0xd1, 0x28, 0x32 } }
+  gLoaderSerialPortInfoGuid                     = { 0x6c6872fe, 0x56a9, 0x4403, { 0xbb, 0x98, 0x95, 0x8d, 0x62, 0xde, 0x87, 0xf1 } }
+  gLoaderPerformanceInfoGuid                    = { 0x868204be, 0x23d0, 0x4ff9, { 0xac, 0x34, 0xb9, 0x95, 0xac, 0x04, 0xb1, 0xb9 } }
+  gLoaderSystemTableInfoGuid                    = { 0x16c8a6d0, 0xfe8a, 0x4082, { 0xa2, 0x08, 0xcf, 0x89, 0xc4, 0x29, 0x04, 0x33 } }
+  gLoaderFrameBufferInfoGuid                    = { 0xdc2cd8bd, 0x402c, 0x4dc4, { 0x9b, 0xe0, 0x0c, 0x43, 0x2b, 0x07, 0xfa, 0x34 } }
+  gLoaderPlatformDeviceInfoGuid                 = { 0x74f136fd, 0x518f, 0x4884, { 0x83, 0x90, 0x4a, 0xcd, 0x50, 0x28, 0x11, 0xb6 } }
+  gLoaderPlatformDataGuid                       = { 0x559265da, 0x0982, 0x46ca, { 0x92, 0x48, 0xa4, 0x36, 0x74, 0x34, 0x07, 0x78 } }
+  gPeiFirmwarePerformanceGuid                   = { 0x55765e8f, 0x021a, 0x41f9, { 0x93, 0x2d, 0x4c, 0x49, 0xc5, 0xb7, 0xef, 0x5d } }
+  gLoaderLibraryDataGuid                        = { 0xb803281e, 0xe5aa, 0x42a6, { 0xa7, 0x90, 0x8b, 0x23, 0x52, 0x31, 0x6a, 0xe6 } }
+  gBootLoaderServiceGuid                        = { 0x5ce78dbc, 0xe342, 0x4108, { 0x8f, 0xbf, 0x37, 0xa9, 0x3b, 0x10, 0xf2, 0xf9 } }
+  gBootLoaderVersionGuid                        = { 0x6897f304, 0x45db, 0x4048, { 0xb0, 0xda, 0x04, 0x4d, 0x76, 0x2f, 0x70, 0x1d } }
+  gOsConfigDataGuid                             = { 0x84a0b43c, 0xbdb3, 0x43e3, { 0xa6, 0x39, 0xe8, 0x9c, 0x8e, 0x86, 0xd3, 0xef } }
+  gFlashMapInfoGuid                             = { 0xaf7f452c, 0x5b00, 0x4598, { 0xb4, 0x8c, 0xbf, 0x57, 0xa2, 0x08, 0x71, 0xa1 } }
+  gLoaderPlatformInfoGuid                       = { 0x7b6bad42, 0xd3ab, 0x4947, { 0xa2, 0x6e, 0xd6, 0xf9, 0xa9, 0xac, 0x4a, 0x2a } }
+  gSeedListInfoHobGuid                          = { 0x5e9f5b2f, 0xfeeb, 0x4344, { 0xb3, 0x0e, 0x4e, 0xf2, 0x17, 0xa3, 0x91, 0xcc } }
+  gBootLoaderVersionFileGuid                    = { 0x3473a022, 0xc3c2, 0x4964, { 0xb3, 0x09, 0x22, 0xb3, 0xdf, 0xb0, 0xb6, 0xca } }
+
+[PcdsFixedAtBuild]
+  gPlatformCommonLibTokenSpaceGuid.PcdMaxLibraryDataEntry    |          8 | UINT32 | 0x20000100
+  gPlatformCommonLibTokenSpaceGuid.PcdPcdLibId               |          0 |  UINT8 | 0x20000101
+  gPlatformCommonLibTokenSpaceGuid.PcdVariableLibId          |          1 |  UINT8 | 0x20000102
+  gPlatformCommonLibTokenSpaceGuid.PcdSpiFlashLibId          |          2 |  UINT8 | 0x20000103
+  gPlatformCommonLibTokenSpaceGuid.PcdEmmcBlockDeviceLibId   |          3 |  UINT8 | 0x20000104
+  gPlatformCommonLibTokenSpaceGuid.PcdTpmLibId               |          4 |  UINT8 | 0x20000105
+  gPlatformCommonLibTokenSpaceGuid.PcdHeciLibId              |          5 |  UINT8 | 0x20000106
+  gPlatformCommonLibTokenSpaceGuid.PcdMmcTuningLibId         |          6 |  UINT8 | 0x20000107
+
+  gPlatformCommonLibTokenSpaceGuid.PcdCpuLocalApicBaseAddress| 0xFEE00000 | UINT32 | 0x20000186
+  gPlatformCommonLibTokenSpaceGuid.PcdSupportedMediaTypeMask | 0xFFFFFFFF | UINT32 | 0x20000187
+  gPlatformCommonLibTokenSpaceGuid.PcdMmcTuningLba           | 0x00000040 | UINT32 | 0x20000188
+  gPlatformCommonLibTokenSpaceGuid.PcdCryptoShaNiEnabled     | FALSE      | BOOLEAN | 0x20000200
+  gPlatformCommonLibTokenSpaceGuid.PcdSeedListEnabled        | FALSE      | BOOLEAN | 0x20000203
+
+[PcdsFixedAtBuild, PcdsPatchableInModule]
+  # For patchable PCDs, try to set the default as none-zero
+  # It is to prevent it from being put into BSS section, thus cause patching issue
+  gPlatformCommonLibTokenSpaceGuid.PcdAcpiPmTimerBase        | 0x0408     | UINT16 | 0x20000180
+  gPlatformCommonLibTokenSpaceGuid.PcdCpuInitIpiDelayInMicroSeconds| 100 | UINT32 | 0x20000182
+
+  ## This PCD specifies the PCI-based UFS host controller mmio base address.
+  # Define the mmio base address of the pci-based UFS host controller. If there are multiple UFS
+  # host controllers, their mmio base addresses are calculated one by one from this base address.
+  # @Prompt Mmio base address of pci-based UFS host controller.
+  gPlatformCommonLibTokenSpaceGuid.PcdUfsPciHostControllerMmioBase|0xd0000000|UINT32|0x20000185
+
+  ## These PCDs specify the details of the SPI flash region used to store IAS images.
+  # This includes the type of the flash region, the base address and size for IAS image 1 & 2
+  gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImageRegionType    |0x00000000|UINT32|0x2000018C
+  gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImage1RegionBase   |0x00000000|UINT32|0x20000190
+  gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImage1RegionSize   |0x00000000|UINT32|0x20000194
+  gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImage2RegionBase   |0x00000000|UINT32|0x20000198
+  gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImage2RegionSize   |0x00000000|UINT32|0x2000019C
+
+  ## This PCD controls enabled debug output devcie
+  gPlatformCommonLibTokenSpaceGuid.PcdDebugOutputDeviceMask    |0x00000003|UINT32|0x20000400
+
+  ## Indicates the 16550 serial port registers are in MMIO space, or in I/O space. Default is I/O space.<BR><BR>
+  #   TRUE  - 16550 serial port registers are in MMIO space.<BR>
+  #   FALSE - 16550 serial port registers are in I/O space.<BR>
+  # @Prompt Serial port registers use MMIO.
+  gPlatformCommonLibTokenSpaceGuid.PcdSerialUseMmio|FALSE|BOOLEAN|0x00020000
+
+  ## Indicates if the 16550 serial port hardware flow control will be enabled. Default is FALSE.<BR><BR>
+  #   TRUE  - 16550 serial port hardware flow control will be enabled.<BR>
+  #   FALSE - 16550 serial port hardware flow control will be disabled.<BR>
+  # @Prompt Enable serial port hardware flow control.
+  gPlatformCommonLibTokenSpaceGuid.PcdSerialUseHardwareFlowControl|FALSE|BOOLEAN|0x00020001
+
+  ## Indicates if the 16550 serial Tx operations will be blocked if DSR is not asserted (no cable). Default is FALSE.
+  #  This PCD is ignored if PcdSerialUseHardwareFlowControl is FALSE.<BR><BR>
+  #   TRUE  - 16550 serial Tx operations will be blocked if DSR is not asserted.<BR>
+  #   FALSE - 16550 serial Tx operations will not be blocked if DSR is not asserted.<BR>
+  # @Prompt Enable serial port cable detetion.
+  gPlatformCommonLibTokenSpaceGuid.PcdSerialDetectCable|FALSE|BOOLEAN|0x00020006
+
+  ## Base address of 16550 serial port registers in MMIO or I/O space. Default is 0x3F8.
+  # @Prompt Base address of serial port registers.
+  gPlatformCommonLibTokenSpaceGuid.PcdSerialRegisterBase|0x03F8|UINT64|0x00020002
+
+  ## Baud rate for the 16550 serial port.  Default is 115200 baud.
+  # @Prompt Baud rate for serial port.
+  # @ValidList  0x80000001 | 921600, 460800, 230400, 115200, 57600, 38400, 19200, 9600, 7200, 4800, 3600, 2400, 2000, 1800, 1200, 600, 300, 150, 134, 110, 75, 50
+  gPlatformCommonLibTokenSpaceGuid.PcdSerialBaudRate|115200|UINT32|0x00020003
+
+  ## Line Control Register (LCR) for the 16550 serial port. This encodes data bits, parity, and stop bits.<BR><BR>
+  #    BIT1..BIT0 - Data bits.  00b = 5 bits, 01b = 6 bits, 10b = 7 bits, 11b = 8 bits<BR>
+  #    BIT2       - Stop Bits.  0 = 1 stop bit.  1 = 1.5 stop bits if 5 data bits selected, otherwise 2 stop bits.<BR>
+  #    BIT5..BIT3 - Parity.  xx0b = No Parity, 001b = Odd Parity, 011b = Even Parity, 101b = Mark Parity, 111b=Stick Parity<BR>
+  #    BIT7..BIT6 - Reserved.  Must be 0.<BR>
+  #
+  #  Default is No Parity, 8 Data Bits, 1 Stop Bit.<BR>
+  # @Prompt Serial port Line Control settings.
+  # @Expression 0x80000002 | (gPayloadTokenSpaceGuid.PcdSerialLineControl & 0xC0) == 0
+  gPlatformCommonLibTokenSpaceGuid.PcdSerialLineControl|0x03|UINT8|0x00020004
+
+  ## FIFO Control Register (FCR) for the 16550 serial port.<BR><BR>
+  #    BIT0       - FIFO Enable.  0 = Disable FIFOs.  1 = Enable FIFOs.<BR>
+  #    BIT1       - Clear receive FIFO.  1 = Clear FIFO.<BR>
+  #    BIT2       - Clear transmit FIFO.  1 = Clear FIFO.<BR>
+  #    BIT4..BIT3 - Reserved.  Must be 0.<BR>
+  #    BIT5       - Enable 64-byte FIFO.  0 = Disable 64-byte FIFO.  1 = Enable 64-byte FIFO<BR>
+  #    BIT7..BIT6 - Reserved.  Must be 0.<BR>
+  #
+  #  Default is to enable and clear all FIFOs.<BR>
+  # @Prompt Serial port FIFO Control settings.
+  # @Expression 0x80000002 | (gPayloadTokenSpaceGuid.PcdSerialFifoControl & 0xD8) == 0
+  gPlatformCommonLibTokenSpaceGuid.PcdSerialFifoControl|0x07|UINT8|0x00020005
+
+  ## UART clock frequency is for the baud rate configuration.
+  # @Prompt Serial Port Clock Rate.
+  gPlatformCommonLibTokenSpaceGuid.PcdSerialClockRate|1843200|UINT32|0x00010066
+
+  ## PCI Serial Device Info. It is an array of Device, Function, and Power Management
+  #  information that describes the path that contains zero or more PCI to PCI briges
+  #  followed by a PCI serial device.  Each array entry is 4-bytes in length.  The
+  #  first byte is the PCI Device Number, then second byte is the PCI Function Number,
+  #  and the last two bytes are the offset to the PCI power management capabilities
+  #  register used to manage the D0-D3 states.  If a PCI power management capabilities
+  #  register is not present, then the last two bytes in the offset is set to 0.  The
+  #  array is terminated by an array entry with a PCI Device Number of 0xFF.  For a
+  #  non-PCI fixed address serial device, such as an ISA serial device, the value is 0xFF.
+  # @Prompt Pci Serial Device Info
+  gPlatformCommonLibTokenSpaceGuid.PcdSerialPciDeviceInfo|{0xFF}|VOID*|0x00010067
+
+  ## Serial Port Extended Transmit FIFO Size.  The default is 64 bytes.
+  # @Prompt Serial Port Extended Transmit FIFO Size in Bytes
+  gPlatformCommonLibTokenSpaceGuid.PcdSerialExtendedTxFifoSize|64|UINT32|0x00010068
+
+  ## The number of bytes between registers in serial device.  The default is 1 byte.
+  # @Prompt Serial Port Register Stride in Bytes
+  gPlatformCommonLibTokenSpaceGuid.PcdSerialRegisterStride|1|UINT32|0x0001006d
+
+  ## The maximal block number supported eMMC device in single read/write command.
+  # @Prompt Maximal Read/Write Block Number For eMMC Device
+  gPlatformCommonLibTokenSpaceGuid.PcdEmmcMaxRwBlockNumber|0xFFFF|UINT16|0x00010070
+
+  ## This PCD indicates TPM base address.
+  # @Prompt TPM device address.
+  gPlatformCommonLibTokenSpaceGuid.PcdTpmBaseAddress|0xFED40000|UINT64|0x00010080
+
+  ## This PCD defines minimum length(in bytes) of the system preboot TCG event log area(LAML).
+  #  For PC Client Implementation spec up to and including 1.2 the minimum log size is 64KB.
+  # @Prompt Minimum length(in bytes) of the system preboot TCG event log area(LAML).
+  gPlatformCommonLibTokenSpaceGuid.PcdTcgLogAreaMinLen|0x10000|UINT32|0x00010081
+
+
+
+[PcdsFeatureFlag]
+  gPlatformCommonLibTokenSpaceGuid.PcdMinDecompression       | FALSE      | BOOLEAN | 0x20000201
+  gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled    | FALSE      | BOOLEAN | 0x20000210
+  gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled    | FALSE      | BOOLEAN | 0x20000211
+

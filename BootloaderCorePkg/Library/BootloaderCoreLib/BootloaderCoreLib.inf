@@ -1,0 +1,72 @@
+## @file
+#
+#  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution.  The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php
+#
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+##
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = BootloaderLib
+  FILE_GUID                      = 86C22AC7-A8A5-4a09-A57C-BBC59841B8D3
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = BootloaderLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF
+#
+
+[Sources]
+  BootloaderCoreLib.c
+
+[Sources.IA32]
+  Ia32/BootloaderArch.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  HobLib
+  BootloaderLib
+
+[Guids]
+
+
+[Pcd]
+  gPlatformModuleTokenSpaceGuid.PcdRedundantRegionSize
+  gPlatformModuleTokenSpaceGuid.PcdTopSwapRegionSize
+  gPlatformModuleTokenSpaceGuid.PcdFlashMapEnabled
+  gPlatformModuleTokenSpaceGuid.PcdStage1ABase
+  gPlatformModuleTokenSpaceGuid.PcdStage1ASize
+  gPlatformModuleTokenSpaceGuid.PcdStage1BBase
+  gPlatformModuleTokenSpaceGuid.PcdStage1BSize
+  gPlatformModuleTokenSpaceGuid.PcdStage2Base
+  gPlatformModuleTokenSpaceGuid.PcdStage2Size
+  gPlatformModuleTokenSpaceGuid.PcdPayloadBase
+  gPlatformModuleTokenSpaceGuid.PcdPayloadSize
+  gPlatformModuleTokenSpaceGuid.PcdMrcDataBase
+  gPlatformModuleTokenSpaceGuid.PcdMrcDataSize
+  gPlatformModuleTokenSpaceGuid.PcdUcodeBase
+  gPlatformModuleTokenSpaceGuid.PcdUcodeSize
+  gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImage1RegionBase
+  gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImage1RegionSize
+  gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImage2RegionBase
+  gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImage2RegionSize
+  gPlatformModuleTokenSpaceGuid.PcdFwuPayloadBase
+  gPlatformModuleTokenSpaceGuid.PcdFwuPayloadSize
+  gPlatformModuleTokenSpaceGuid.PcdCfgDataBase
+  gPlatformModuleTokenSpaceGuid.PcdCfgDataSize

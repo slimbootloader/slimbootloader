@@ -1,0 +1,42 @@
+## @file
+# This is the first module taking control.
+#
+#  Copyright (c) 2016 - 2017, Intel Corporation. All rights reserved.<BR>
+#
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution. The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php.
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = PcdData
+  FILE_GUID                      = 932AD5C3-768D-4f48-B2FE-83FF0C64F7B3
+  MODULE_TYPE                    = PEIM
+  VERSION_STRING                 = 1.0
+  PCD_IS_DRIVER                  = PEI_PCD_DRIVER
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+# VALID_ARCHITECTURES = IA32 X64 IPF EBC
+#
+
+[Sources]
+  PcdData.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+
+[LibraryClasses]
+  ModuleEntryLib
+
+[Depex]
+  TRUE

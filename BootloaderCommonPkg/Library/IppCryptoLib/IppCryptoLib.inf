@@ -1,0 +1,69 @@
+## @file
+#
+#  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+#
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution. The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php.
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+#
+
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = IppCryptoLib
+  FILE_GUID                      = EF5676C2-86C2-49ac-B517-7092CDDB5A93
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = CryptoLib
+  DEFINE IPP_PATH                = auth
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  $(IPP_PATH)/gsmodmethod.c
+  $(IPP_PATH)/gsmodstuff.c
+  $(IPP_PATH)/pcpbnca.c
+  $(IPP_PATH)/pcpbnsetca.c
+  $(IPP_PATH)/pcpbnu32arith.c
+  $(IPP_PATH)/pcpbnu32misc.c
+  $(IPP_PATH)/pcpbnuarith.c
+  $(IPP_PATH)/pcpbnumisc.c
+  $(IPP_PATH)/pcphashca_rmf.c
+  $(IPP_PATH)/pcphashcnt.c
+  $(IPP_PATH)/pcpmontred.c
+  $(IPP_PATH)/pcpngrsaencodec.c
+  $(IPP_PATH)/pcpngrsakeypublic.c
+  $(IPP_PATH)/pcpngrsamontstuff.c
+  $(IPP_PATH)/pcpngrsassapkcsv15ca_rmf.c
+  $(IPP_PATH)/pcpsha256ca.c
+  $(IPP_PATH)/pcphmacca_rmf.c
+  hmac.c
+  rsa_verify.c
+  sha256.c
+
+[Sources.IA32]
+  $(IPP_PATH)/Ia32/pcpsha256v8as.nasm
+  $(IPP_PATH)/Ia32/pcpsha256nias.nasm
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+
+[FixedPcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdCryptoShaNiEnabled
+
+[BuildOptions]
+  MSFT:*_*_*_CC_FLAGS = -D_SLIMBOOT_OPT -D_ARCH_IA32 -D_IPP_LE
+  GCC:*_*_*_CC_FLAGS  = -D_SLIMBOOT_OPT -D_ARCH_IA32 -D_IPP_LE -Wno-unused-but-set-variable

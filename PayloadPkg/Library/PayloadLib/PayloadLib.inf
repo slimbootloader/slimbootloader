@@ -1,0 +1,48 @@
+## @file
+#
+#  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution.  The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php
+#
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = PayloadLib
+  FILE_GUID                      = 588E4F33-F177-4f60-A446-9AD38884B382
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = BootloaderLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF
+#
+
+[Sources]
+  PayloadLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  PayloadPkg/PayloadPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  HobLib
+
+[Guids]
+  gPayloadKeyHashGuid
+  gFlashMapInfoGuid
+
+[Pcd]
+  gPayloadTokenSpaceGuid.PcdPayloadHobList
+  gPayloadTokenSpaceGuid.PcdGlobalDataAddress

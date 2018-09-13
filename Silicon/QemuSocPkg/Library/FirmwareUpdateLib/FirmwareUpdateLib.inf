@@ -1,0 +1,58 @@
+### @file
+# Boot Partition Descriptor Table library.
+#
+#  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution.  The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php
+#
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+##
+
+[Defines]
+  INF_VERSION          = 0x00010005
+  BASE_NAME            = FirmwareUpdateLib
+  FILE_GUID            = 8EFEE308-844C-4386-A892-D9945549DF21
+  MODULE_TYPE          = BASE
+  VERSION_STRING       = 1.0
+  LIBRARY_CLASS        = FirmwareUpdateLib
+
+[Sources]
+  FirmwareUpdateLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  Silicon/QemuSocPkg/QemuSocPkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  PayloadPkg/PayloadPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  HobLib
+  BaseMemoryLib
+  MemoryAllocationLib
+  IoLib
+  FileSystemLib
+  MmcAccessLib
+  PcdLib
+  PartitionLib
+
+[Guids]
+  gEfiPartTypeSystemPartGuid
+  gOsBootOptionGuid
+
+[Pcd]
+  gPlatformModuleTokenSpaceGuid.PcdTopSwapRegionSize
+  gPlatformModuleTokenSpaceGuid.PcdRedundantRegionSize
+  gPlatformModuleTokenSpaceGuid.PcdFlashBaseAddress
+  gPlatformModuleTokenSpaceGuid.PcdMrcDataSize
+  gPlatformModuleTokenSpaceGuid.PcdStage1BSize
+  gPlatformModuleTokenSpaceGuid.PcdStage2Size
+  gPlatformModuleTokenSpaceGuid.PcdUcodeSize
+  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
+  gPayloadTokenSpaceGuid.PcdPayloadHobList

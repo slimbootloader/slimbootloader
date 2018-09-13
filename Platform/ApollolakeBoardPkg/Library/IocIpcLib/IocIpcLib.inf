@@ -1,0 +1,47 @@
+## @file
+#   IOC interface library.
+#
+#  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution.  The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php
+#
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = IocIpcLib
+  FILE_GUID                      = FC5A1D7B-573B-43DF-B8FA-6BB47E2418FB
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = IocIpcLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF
+#
+
+[Sources]
+  IocIpcLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  Crc32Lib
+  IoLib
+  PciLib
+  TimerLib
+
+[Guids]
+
+[Pcd]

@@ -1,0 +1,213 @@
+/** @file
+  Structure definition for the ACPI Platform Service Discovery Table
+
+  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+  This program and the accompanying materials
+  are licensed and made available under the terms and conditions of the BSD License
+  which accompanies this distribution.  The full text of the license may be found at
+  http://opensource.org/licenses/bsd-license.php.
+
+  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+
+**/
+
+//
+// Statements that include other files
+//
+#include "AcpiTablePlatform.h"
+#include <PsdLib.h>
+
+//PSD Table
+EFI_ACPI_PSD_TABLE PsdTable = {
+  {
+    EFI_ACPI_PSD_SIGNATURE,
+    sizeof (EFI_ACPI_PSD_TABLE),
+    EFI_ACPI_PSD_TABLE_REVISION,   //1 byte for Revision
+    0,                              // to make sum of entire table == 0
+    EFI_ACPI_OEM_ID,                // OEMID is a 6 bytes long field
+    EFI_ACPI_OEM_TABLE_ID,          // OEM table identification(8 bytes long)
+    EFI_ACPI_OEM_REVISION,          // OEM revision
+    EFI_ACPI_CREATOR_ID,            // ASL compiler vendor ID
+    EFI_ACPI_CREATOR_REVISION,      // ASL compiler revision number
+  },
+  {
+    0x0,   //PsdVersionMajor
+    0x0,   //PsdVersionMinor
+  },
+  0x0,  //CsmeSecCapabilities
+  {    //FW version info
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+  },
+  { //FW Vendor
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+  },
+  0x0, //EOM
+  0x0, //Secure boot Enabled
+  0x0, //Measured Boot Enabled
+  0x0, //PSD Type
+  0x0, //FW Hash Index
+  0x0, //FW Data Len
+  {
+    0x0, //TXE-0
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0, //TXE-31
+    0x0, //IBBL-0
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0, //IBBL-31
+    0x0, //IBBM-0
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x0, //IBBM-31
+    0x0, //OBB-0
+    0x0,
+    0x0,
+    0x0, //OBB-3
+    0x0,
+    0x0,
+    0x0,
+    0x0, //OBB-7
+    0x0,
+    0x0,
+    0x0,
+    0x0, //OBB-11
+    0x0,
+    0x0,
+    0x0,
+    0x0, //OBB-15
+    0x0,
+    0x0,
+    0x0,
+    0x0, //OBB-19
+    0x0,
+    0x0,
+    0x0,
+    0x0, //OBB-23
+    0x0,
+    0x0,
+    0x0,
+    0x0, //OBB-27
+    0x0,
+    0x0,
+    0x0,
+    0x0, //OBB-31
+  },
+};
+
+VOID*
+ReferenceAcpiTable (
+          VOID
+            )
+{
+  //
+  // Reference the table being generated to prevent the optimizer from
+  // removing the data structure from the executable
+  //
+  return (VOID*)&PsdTable;
+}
+
+

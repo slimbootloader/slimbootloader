@@ -1,0 +1,43 @@
+## @file
+# Instance of Memory Allocation Library.
+#
+# Memory Allocation Library that can be used to allocate and free memory.
+#
+# Copyright (c) 2007 - 2017, Intel Corporation. All rights reserved.<BR>
+#
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution. The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php.
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = FullMemoryAllocationLib
+  FILE_GUID                      = 68C4F914-2B25-4AAA-8D36-A3335CB515B5
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = MemoryAllocationLib
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+#
+
+[Sources]
+  Imem.h
+  MemData.c
+  Page.c
+  Pool.c
+  FullMemoryAllocationLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+
+[LibraryClasses]
+  DebugLib
+  BaseMemoryLib
+

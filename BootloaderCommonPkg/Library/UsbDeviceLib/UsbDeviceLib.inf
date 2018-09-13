@@ -1,0 +1,51 @@
+## @file
+# Description file for the USB Device driver.
+#
+# Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+#
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution. The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = UsbDeviceLib
+  FILE_GUID                      = 42CF2D4A-78B4-4B80-80F9-96A83A630D70
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = UsbDeviceLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF
+#
+
+[Sources.common]
+  UsbDeviceLib.c
+  UsbFuncIo.c
+  UsbIoNode.c
+  UsbDeviceMode.c
+  XdciDevice.c
+  XdciDWC.c
+  XdciTable.c
+  XdciUtility.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg\BootloaderCommonPkg.dec
+
+[LibraryClasses]
+  MemoryAllocationLib
+  UsbDeviceBoardLib
+
+[Pcd]
+  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
+
+

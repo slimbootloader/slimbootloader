@@ -1,0 +1,57 @@
+## @file
+#    HECI interface library.
+#
+#  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+#
+#  This program and the accompanying materials are licensed and made available
+#  under the terms and conditions of the BSD License which accompanies this
+#  distribution. The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php
+#
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = HeciLib
+  FILE_GUID                      = 2A4EEB2A-43D4-4648-ACA7-0422F4604AEF
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = HeciLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+#
+
+[Sources]
+  HeciLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  PayloadPkg/PayloadPkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  Silicon/ApollolakePkg/ApollolakePkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  HobLib
+  IoLib
+  PcdLib
+  PciLib
+  PciCf8Lib
+  TimerLib
+
+[Guids]
+  gLoaderPlatformDeviceInfoGuid
+  gEfiHeciMbpDataHobGuid
+
+[Pcd]
+  gPayloadTokenSpaceGuid.PcdPayloadHobList
+  gPlatformCommonLibTokenSpaceGuid.PcdHeciLibId

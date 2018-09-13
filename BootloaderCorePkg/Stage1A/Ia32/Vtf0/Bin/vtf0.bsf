@@ -1,0 +1,57 @@
+StructDef
+Find            "$SIG"
+$CarBase             4 bytes
+$CarSize             4 bytes
+$IBBSource           4 bytes
+$IBBBase             4 bytes
+$IBBSize             4 bytes
+$IBBLSource          4 bytes
+$IBBLBase            4 bytes
+$IBBLSize            4 bytes
+EndStruct
+
+;==============================================================================
+; BMP Info Block Definitions
+;------------------------------------------------------------------------------
+
+BeginInfoBlock
+        PPVer   "0.2"
+        Image EOF Thru EOF At EOF
+EndInfoBlock
+
+
+;==============================================================================
+; Page Definitions
+;------------------------------------------------------------------------------
+
+Page "Revision History"
+        TitleB  "Broxton IBBL BMP Script File"
+EndPage
+
+Page	"IBBL binary configuration"
+
+EditNum	$CarBase, " Cache As Ram Base Address:", HEX,
+Help	"This is the Cache As Ram Base Address."
+
+EditNum	$CarSize, " Cache As Ram Size:", HEX,
+Help	"This is the Cache As Ram Size."
+
+EditNum	$IBBSource, " IBB Base Address in SRAM/SPI:", HEX,
+Help	"This is the IBB Base Address in SRAM/SPI."
+
+EditNum	$IBBBase, " IBB Base Address in CAR:", HEX,
+Help	"This is the IBB Base Address in CAR."
+
+EditNum	$IBBSize, " IBB Size:", HEX,
+Help	"This is the IBB Size."
+
+EditNum	$IBBLSource, " IBBL Base Address in SRAM/SPI:", HEX,
+Help	"This is the IBBL Base Address in SRAM/SPI."
+
+EditNum	$IBBLBase, " IBBL Base Address in CAR:", HEX,
+Help	"This is the IBBL Base Address in CAR."
+
+EditNum	$IBBLSize, " IBBL Size:", HEX,
+Help	"This is the IBBL Size."
+
+EndPage

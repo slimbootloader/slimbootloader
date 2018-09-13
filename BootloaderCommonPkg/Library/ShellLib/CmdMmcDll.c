@@ -1,0 +1,160 @@
+/** @file
+  Shell command `mmcdll` to display system performance data.
+
+  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  This program and the accompanying materials
+  are licensed and made available under the terms and conditions of the BSD License
+  which accompanies this distribution.  The full text of the license may be found at
+  http://opensource.org/licenses/bsd-license.php.
+
+  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+
+**/
+
+#include <Library/ShellLib.h>
+#include <Library/MmcAccessLib.h>
+#include <Library/MmcTuningLib.h>
+#include <Library/HobLib.h>
+#include <Library/BootloaderCommonLib.h>
+#include <Library/VariableLib.h>
+#include <Guid/OsBootOptionGuid.h>
+
+
+/**
+  Display performance data.
+
+  @param[in]  Shell        shell instance
+  @param[in]  Argc         number of command line arguments
+  @param[in]  Argv         command line arguments
+
+  @retval EFI_SUCCESS
+
+**/
+STATIC
+EFI_STATUS
+ShellCommandMmcDllFunc (
+  IN SHELL  *Shell,
+  IN UINTN   Argc,
+  IN CHAR16 *Argv[]
+  );
+
+CONST SHELL_COMMAND ShellCommandMmcDll = {
+  L"mmcdll",
+  L"Tune or print MMC DLL data",
+  &ShellCommandMmcDllFunc
+};
+
+/**
+  Print DLL tuning data.
+
+  @param[in]  TuningData    pointer to tuning data
+
+**/
+STATIC
+VOID
+PrintDllData (
+  IN EMMC_TUNING_DATA *TuningData
+  )
+{
+  ShellPrint (L"  HS400 |  TX 0x%02x |  RX 0x%02x\n", TuningData->Hs400TxDataDll, TuningData->Hs400RxStrobe1Dll);
+}
+
+
+/**
+  Get MMC base address
+
+  This function returns the base address for MMC device
+
+  @retval UINTN       Return MMC base address if device is found
+  @retval NULL        Return NULL if it is NOT found.
+**/
+UINTN
+GetMmcBaseAddress (
+  VOID
+  )
+{
+  EFI_HOB_GUID_TYPE             *GuidHob;
+  OS_BOOT_OPTION_LIST           *OsBootOptionList;
+  OS_BOOT_OPTION                *OsBootOption;
+  UINTN                         MmcBaseAddress;
+  UINT8                         Index;
+
+  GuidHob = GetNextGuidHob (&gOsBootOptionGuid, GetHobListPtr());
+  if (GuidHob == NULL) {
+    return 0;
+  }
+
+  MmcBaseAddress = 0;
+  OsBootOptionList = (OS_BOOT_OPTION_LIST *) GET_GUID_HOB_DATA (GuidHob);
+  for (Index = 0; Index < OsBootOptionList->OsBootOptionCount; Index++) {
+    OsBootOption = &OsBootOptionList->OsBootOption[Index];
+    if (OsBootOption->DevType == OsBootDeviceEmmc) {
+      MmcBaseAddress = (UINTN) ( PcdGet64 (PcdPciExpressBaseAddress)  + \
+                                 (((OsBootOption->DevAddr >> 16) & 0xFF) << 20) + \
+                                 (((OsBootOption->DevAddr >> 8)  & 0xFF) << 15) + \
+                                 ((OsBootOption->DevAddr & 0xFF) << 12) \
+                                 );
+      break;
+    }
+  }
+
+  return MmcBaseAddress;
+}
+
+/**
+  Tune or print mmc dll data.
+
+  @param[in]  Shell        shell instance
+  @param[in]  Argc         number of command line arguments
+  @param[in]  Argv         command line arguments
+
+  @retval EFI_SUCCESS
+
+**/
+STATIC
+EFI_STATUS
+ShellCommandMmcDllFunc (
+  IN SHELL  *Shell,
+  IN UINTN   Argc,
+  IN CHAR16 *Argv[]
+  )
+{
+  EFI_STATUS                Status;
+  UINTN                     EmmcHcPciBase;
+  EMMC_TUNING_DATA          EmmcTuningData;
+  UINT32                    VariableLen;
+
+  if ((Argc < 2) || (Argc > 3)) {
+    goto usage;
+  }
+
+  if (StrCmp (Argv[1], L"tune") == 0) {
+    EmmcHcPciBase = GetMmcBaseAddress();
+    if (EmmcHcPciBase == 0) {
+      ShellPrint (L"Invalid base address for Mmc device!\n");
+      return EFI_ABORTED;
+    }
+
+    MmcInitialize (EmmcHcPciBase, DevInitAll);
+    MmcTuning (EmmcHcPciBase);
+    VariableLen = sizeof (EmmcTuningData);
+    Status = GetVariable ("MMCDLL", NULL, &VariableLen, &EmmcTuningData);
+    if (EFI_ERROR (Status)) {
+      ShellPrint (L"MMC traing fails, not found MMCDLL variable.\n");
+      return EFI_DEVICE_ERROR;
+    }
+    PrintDllData (&EmmcTuningData);
+  } else if (StrCmp (Argv[1], L"dump") == 0) {
+    ShellPrint (L"Support for dumping dll tuning data will be added shortly!\n");
+  } else {
+    goto usage;
+  }
+
+  return EFI_SUCCESS;
+
+usage:
+  ShellPrint (L"Usage: %s <'tune'|'dump'>\n", Argv[0]);
+  return EFI_ABORTED;
+}
+

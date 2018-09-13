@@ -1,0 +1,62 @@
+## @file
+#
+#  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution.  The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php
+#
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = PayloadEntryLib
+  FILE_GUID                      = 91815665-3EBA-494e-BB8A-58B5CA272BA7
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = PayloadEntryLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF
+#
+
+[Sources]
+  PayloadEntryLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  PayloadPkg/PayloadPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  HobLib
+  ModuleEntryLib
+  MemoryAllocationLib
+  TimeStampLib
+  LoaderPerformanceLib
+  PayloadSupportLib
+  SerialPortLib
+  DebugLogBufferLib
+  DebugPrintErrorLevelLib
+
+[Guids]
+  gLoaderLibraryDataGuid
+  gLoaderPlatformDataGuid
+  gBootLoaderServiceGuid
+  gBootLoaderVersionGuid
+
+[Pcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdMaxLibraryDataEntry
+  gPayloadTokenSpaceGuid.PcdPayloadHobList
+  gPayloadTokenSpaceGuid.PcdPayloadStackSize
+  gPayloadTokenSpaceGuid.PcdPayloadHeapSize
+  gPayloadTokenSpaceGuid.PcdGlobalDataAddress
+  gPlatformCommonLibTokenSpaceGuid.PcdEmmcMaxRwBlockNumber
+  gPlatformCommonLibTokenSpaceGuid.PcdPcdLibId

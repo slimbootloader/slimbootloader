@@ -1,0 +1,106 @@
+## @file
+#  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+#
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution. The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = OsLoader
+  FILE_GUID                      = A257AA67-53F3-491B-8CFF-E9A4E2E2A514
+  MODULE_TYPE                    = PEIM
+  VERSION_STRING                 = 1.0
+
+#
+#  This flag specifies whether HII resource section is generated into PE image.
+#
+  UEFI_HII_RESOURCE_SECTION      = TRUE
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+#
+
+[Sources]
+  OsLoader.c
+  BootOption.c
+  LoadImage.c
+  Linux.c
+  PerformanceData.c
+  BootParameters.c
+  BlockIoTest.c
+  KeyManagement.c
+
+[Sources.IA32]
+  Ia32/JumpToKernel.nasm
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  IntelFsp2Pkg/IntelFsp2Pkg.dec
+  PayloadPkg/PayloadPkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  Platform/CommonBoardPkg/CommonBoardPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  MemoryAllocationLib
+  BaseMemoryLib
+  PrintLib
+  LoaderPerformanceLib
+  BootloaderLib
+  PayloadEntryLib
+  BootloaderCommonLib
+  FileSystemLib
+  PlatformHookLib
+  ShellLib
+  IasImageLib
+  MultibootLib
+  PartitionLib
+  Ext23Lib
+  DebugPrintErrorLevelLib
+  MediaAccessLib
+  LitePeCoffLib
+  BootOptionLib
+  TpmLib
+  SeedListInfoLib
+  VariableLib
+  ShellExtensionLib
+  RpmbLib
+  ConfigDataLib
+  AbSupportLib
+  SblParameterLib
+  TrustyBootLib
+
+[Guids]
+  gOsConfigDataGuid
+  gLoaderFrameBufferInfoGuid
+  gLoaderPlatformInfoGuid
+  gBootLoaderVersionGuid
+  gFlashMapInfoGuid
+  gSeedListInfoHobGuid
+
+[Pcd]
+  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel
+  gPayloadTokenSpaceGuid.PcdPayloadHobList
+  gPayloadTokenSpaceGuid.PcdPayloadStackSize
+  gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut
+  gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdDebugOutputDeviceMask
+  gPayloadTokenSpaceGuid.PcdPayloadHeapSize
+  gPlatformCommonLibTokenSpaceGuid.PcdSeedListEnabled
+
+[Depex]
+  TRUE
+

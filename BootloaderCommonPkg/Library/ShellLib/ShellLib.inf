@@ -1,0 +1,76 @@
+## @file
+#
+#  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution.  The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php
+#
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = ShellLib
+  FILE_GUID                      = C0297BE1-944B-4134-AC79-AA928F74AE31
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = ShellLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF
+#
+
+[Sources]
+  CmdBoot.c
+  CmdCpuid.c
+  CmdExit.c
+  CmdHelp.c
+  CmdHob.c
+  CmdIo.c
+  CmdMem.c
+  CmdMmap.c
+  CmdMmcDll.c
+  CmdMsr.c
+  CmdMtrr.c
+  CmdPci.c
+  CmdPciUtil.c
+  CmdPerf.c
+  CmdReset.c
+  CmdUcode.c
+  Parsing.c
+  Printing.c
+  Shell.c
+  CmdCdata.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  SerialPortLib
+  PrintLib
+  IoLib
+  MmcAccessLib
+  MmcTuningLib
+  TimerLib
+  PciExpressLib
+  HobLib
+  BootOptionLib
+  ResetSystemLib
+  BootloaderCommonLib
+
+[Pcd]
+  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
+
+[Guids]
+  gLoaderPerformanceInfoGuid
+  gLoaderMemoryMapInfoGuid
+  gOsBootOptionGuid

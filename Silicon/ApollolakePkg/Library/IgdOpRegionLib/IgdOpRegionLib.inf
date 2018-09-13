@@ -1,0 +1,46 @@
+## @file
+#  Component description file for Igd Operation Region Library
+#
+#  Copyright (c) 1999 - 2014, Intel Corporation. All rights reserved.<BR>
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution.  The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php
+#
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = IgdOpRegionLib
+  FILE_GUID                      = 79cb721c-c316-4a85-8133-2ebc7c89fdd7
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = IgdOpRegionLib
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC ARM
+#
+
+[Sources]
+  IgdOpRegionLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/ApollolakePkg/ApollolakePkg.dec
+
+[LibraryClasses]
+  BaseLib  
+  IoLib
+  PcdLib
+  DebugLib
+  HobLib
+  MemoryAllocationLib
+
+[Pcd]
+  gPlatformModuleTokenSpaceGuid.PcdAcpiGnvsAddress
+  gPlatformModuleTokenSpaceGuid.PcdGraphicsVbtAddress

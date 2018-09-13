@@ -1,0 +1,255 @@
+## @file
+#  FDF file of Platform.
+#
+# Copyright (c) 2016 - 2018, Intel Corporation. All rights reserved.<BR>
+# This program and the accompanying materials are licensed and made available under
+# the terms and conditions of the BSD License that accompanies this distribution.
+# The full text of the license may be found at
+# http://opensource.org/licenses/bsd-license.php.
+#
+# THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+# WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+##
+
+[Defines]
+DEFINE FLASH_ERASE_POLARITY   = 1
+DEFINE FV_DIR                 = $(OUTPUT_DIRECTORY)/$(TARGET)_$(TOOL_CHAIN_TAG)/FV
+DEFINE IA_DIR                 = $(OUTPUT_DIRECTORY)/$(TARGET)_$(TOOL_CHAIN_TAG)/IA32
+
+#------------------------------------------------------------------------------
+# STAGE1A FD
+#   STAGE1A_FD_BASE, STAGE1A_FD_SIZE, STAGE1A_FD_NUMBLK
+#------------------------------------------------------------------------------
+[FD.STAGE1A]
+BaseAddress   = $(STAGE1A_FD_BASE)
+Size          = $(STAGE1A_FD_SIZE)
+BlockSize     = $(FLASH_BLOCK_SIZE)
+NumBlocks     = $(STAGE1A_FD_NUMBLK)
+ErasePolarity = $(FLASH_ERASE_POLARITY)
+
+!if $(FSP_T_SIZE) > 0
+$(FSP_T_OFFSET) | $(FSP_T_SIZE)
+FILE = $(FV_DIR)/FSP_T.bin
+!endif
+
+$(STAGE1A_FV_OFFSET) | $(STAGE1A_FV_SIZE)
+FV = STAGE1A
+
+#------------------------------------------------------------------------------
+# STAGE1B FD
+#   STAGE1B_FD_BASE, STAGE1B_FD_SIZE, STAGE1B_FD_NUMBLK
+#------------------------------------------------------------------------------
+
+[FD.STAGE1B]
+BaseAddress   = $(STAGE1B_FD_BASE)
+Size          = $(STAGE1B_FD_SIZE)
+BlockSize     = $(FLASH_BLOCK_SIZE)
+NumBlocks     = $(STAGE1B_FD_NUMBLK)
+ErasePolarity = $(FLASH_ERASE_POLARITY)
+
+$(STAGE1B_FV_OFFSET) | $(STAGE1B_FV_SIZE)
+FV = STAGE1B
+
+!if $(FSP_M_SIZE) > 0
+$(FSP_M_OFFSET) | $(FSP_M_SIZE)
+FILE = $(FV_DIR)/FSP_M.bin
+!endif
+
+#------------------------------------------------------------------------------
+# STAGE2 FD
+#------------------------------------------------------------------------------
+[FD.STAGE2]
+BaseAddress   = $(STAGE2_FD_BASE)
+Size          = $(STAGE2_FD_SIZE)
+BlockSize     = $(FLASH_BLOCK_SIZE)
+NumBlocks     = $(STAGE2_FD_NUMBLK)
+ErasePolarity = $(FLASH_ERASE_POLARITY)
+
+$(STAGE2_FV_OFFSET) | $(STAGE2_FV_SIZE)
+FV = STAGE2
+
+!if $(FSP_S_SIZE) > 0
+$(FSP_S_OFFSET) | $(FSP_S_SIZE)
+FILE = $(FV_DIR)/FSP_S.bin
+!endif
+
+#------------------------------------------------------------------------------
+# STAGE1A FV
+#------------------------------------------------------------------------------
+[FV.STAGE1A]
+  BlockSize          = $(FLASH_BLOCK_SIZE)
+  FvAlignment        = 16
+  ERASE_POLARITY     = 1
+  MEMORY_MAPPED      = TRUE
+  STICKY_WRITE       = TRUE
+  LOCK_CAP           = TRUE
+  LOCK_STATUS        = TRUE
+  WRITE_DISABLED_CAP = TRUE
+  WRITE_ENABLED_CAP  = TRUE
+  WRITE_STATUS       = TRUE
+  WRITE_LOCK_CAP     = TRUE
+  WRITE_LOCK_STATUS  = TRUE
+  READ_DISABLED_CAP  = TRUE
+  READ_ENABLED_CAP   = TRUE
+  READ_STATUS        = TRUE
+  READ_LOCK_CAP      = TRUE
+  READ_LOCK_STATUS   = TRUE
+
+  FILE RAW = 3473A022-C3C2-4964-B309-22B3DFB0B6CA {
+    SECTION RAW = $(FV_DIR)/VerInfo.bin
+  }
+
+!if $(HAVE_FLASH_MAP)
+  FILE RAW = 3CEA8EF3-95FC-476F-ABA5-7EC5DFA1D77B {
+    SECTION RAW = $(FV_DIR)/FlashMap.bin
+  }
+!endif
+
+!if $(HAVE_FIT_TABLE)
+  FILE RAW = CD17FF5E-7731-4d16-8441-FC7A113C392F {
+    SECTION RAW = $(FV_DIR)/FitTable.bin
+  }
+!endif
+
+!if $(HAVE_VERIFIED_BOOT)
+  FILE RAW = 18EDB1DF-1DBE-4EC5-8E26-C44808B546E1 {
+    SECTION RAW = $(FV_DIR)/HashStore.bin
+  }
+!endif
+
+  FILE RAW = EFAC3859-B680-4232-A159-F886F2AE0B83 {
+    SECTION RAW = $(IA_DIR)/BootloaderCorePkg/PcdData/PcdData/OUTPUT/PEIPcdDataBase.raw
+  }
+
+  INF RuleOverride = PE32  $(PLATFORM_PACKAGE)/Stage1A/Stage1A.inf
+
+  INF RuleOverride = RESET_VECTOR USE = IA32 $(PLATFORM_PACKAGE)/Stage1A/Ia32/Vtf0/Bin/ResetVector.inf
+
+
+#------------------------------------------------------------------------------
+# STAGE1B FV
+#------------------------------------------------------------------------------
+[FV.STAGE1B]
+  FvForceRebase      = TRUE
+  BlockSize          = $(FLASH_BLOCK_SIZE)
+  FvAlignment        = 16
+  ERASE_POLARITY     = 1
+  MEMORY_MAPPED      = TRUE
+  STICKY_WRITE       = TRUE
+  LOCK_CAP           = TRUE
+  LOCK_STATUS        = TRUE
+  WRITE_DISABLED_CAP = TRUE
+  WRITE_ENABLED_CAP  = TRUE
+  WRITE_STATUS       = TRUE
+  WRITE_LOCK_CAP     = TRUE
+  WRITE_LOCK_STATUS  = TRUE
+  READ_DISABLED_CAP  = TRUE
+  READ_ENABLED_CAP   = TRUE
+  READ_STATUS        = TRUE
+  READ_LOCK_CAP      = TRUE
+  READ_LOCK_STATUS   = TRUE
+
+  INF RuleOverride = PE32  $(PLATFORM_PACKAGE)/Stage1B/Stage1B.inf
+
+#------------------------------------------------------------------------------
+# STAGE2 FV
+#------------------------------------------------------------------------------
+[FV.STAGE2]
+  BlockSize          = $(FLASH_BLOCK_SIZE)
+  FvAlignment        = 16
+  ERASE_POLARITY     = 1
+  MEMORY_MAPPED      = TRUE
+  STICKY_WRITE       = TRUE
+  LOCK_CAP           = TRUE
+  LOCK_STATUS        = TRUE
+  WRITE_DISABLED_CAP = TRUE
+  WRITE_ENABLED_CAP  = TRUE
+  WRITE_STATUS       = TRUE
+  WRITE_LOCK_CAP     = TRUE
+  WRITE_LOCK_STATUS  = TRUE
+  READ_DISABLED_CAP  = TRUE
+  READ_ENABLED_CAP   = TRUE
+  READ_STATUS        = TRUE
+  READ_LOCK_CAP      = TRUE
+  READ_LOCK_STATUS   = TRUE
+
+  INF RuleOverride = PE32  $(PLATFORM_PACKAGE)/Stage2/Stage2.inf
+
+!if $(HAVE_ACPI_TABLE)
+  INF RuleOverride = ACPITABLE Platform/$(BOARD_PKG_NAME)/AcpiTables/AcpiTables.inf
+!endif
+
+!if $(HAVE_VBT_BIN)
+  FILE FREEFORM = E08CA6D5-8D02-43ae-ABB1-952CC787C933 {
+    SECTION RAW = Platform/$(BOARD_PKG_NAME)/VbtBin/Vbt.dat
+  }
+!endif
+
+!if $(ENABLE_SPLASH)
+  FILE FREEFORM = 5E2D3BE9-AD72-4D1D-AAD5-6B08AF921590 {
+    SECTION RAW = BootloaderCorePkg/Logo.bmp
+  }
+!endif
+
+#------------------------------------------------------------------------------
+# Dummy FV to make PCDs visible to modules
+#------------------------------------------------------------------------------
+[FV.MISC]
+  BlockSize          = $(FLASH_BLOCK_SIZE)
+  FvAlignment        = 16
+  ERASE_POLARITY     = 1
+  MEMORY_MAPPED      = TRUE
+  STICKY_WRITE       = TRUE
+  LOCK_CAP           = TRUE
+  LOCK_STATUS        = TRUE
+  WRITE_DISABLED_CAP = TRUE
+  WRITE_ENABLED_CAP  = TRUE
+  WRITE_STATUS       = TRUE
+  WRITE_LOCK_CAP     = TRUE
+  WRITE_LOCK_STATUS  = TRUE
+  READ_DISABLED_CAP  = TRUE
+  READ_ENABLED_CAP   = TRUE
+  READ_STATUS        = TRUE
+  READ_LOCK_CAP      = TRUE
+  READ_LOCK_STATUS   = TRUE
+
+  INF PayloadPkg/OsLoader/OsLoader.inf
+
+!if $(ENABLE_FWU)
+  INF PayloadPkg/FirmwareUpdate/FirmwareUpdate.inf
+!endif
+
+################################################################################
+#
+# Rules are use with the [FV] section's module INF type to define
+# how an FFS file is created for a given INF file. The following Rule are the default
+# rules for the different module type. User can add the customized rules to define the
+# content of the FFS file.
+#
+################################################################################
+[Rule.Common.PEIM]
+  FILE SEC = $(NAMED_GUID) RELOCS_STRIPPED {
+    TE  TE    Align = 16  $(INF_OUTPUT)/$(MODULE_NAME).efi
+  }
+
+[Rule.Common.PEIM.PE32]
+  FILE SEC = $(NAMED_GUID) {
+    TE  TE    Align = 16  $(INF_OUTPUT)/$(MODULE_NAME).efi
+  }
+
+[Rule.Common.SEC.RESET_VECTOR]
+  FILE RAW = $(NAMED_GUID) {
+    RAW RAW                |.raw
+  }
+
+[Rule.Common.USER_DEFINED.RAWBIN]
+  FILE RAW = $(NAMED_GUID) {
+     RAW BIN               |.acpi
+  }
+
+[Rule.Common.USER_DEFINED.ACPITABLE]
+  FILE FREEFORM = $(NAMED_GUID) {
+    RAW ACPI  Optional            |.acpi
+    RAW ASL   Optional            |.aml
+  }

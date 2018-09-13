@@ -1,0 +1,49 @@
+## @file
+#
+#  Platform Configuration Delta File.
+#
+#  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution.  The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php.
+#
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+##
+
+#
+# Delta configuration values for platform ID 0x0006
+#
+PLATFORMID_CFG_DATA.PlatformId                      | 0x0006
+PLAT_NAME_CFG_DATA.PlatformName                     | 'OXH'
+
+MEMORY_CFG_DATA.Package                             | 0x0
+MEMORY_CFG_DATA.Profile                             | 0x19
+MEMORY_CFG_DATA.MemoryDown                          | 0x0
+MEMORY_CFG_DATA.DDR3LPageSize                       | 0x1
+MEMORY_CFG_DATA.RmtMode                             | 0x0
+MEMORY_CFG_DATA.MemorySizeLimit                     | 0x0
+MEMORY_CFG_DATA.DIMM0SPDAddress                     | 0xA0
+MEMORY_CFG_DATA.DIMM1SPDAddress                     | 0xA4
+MEMORY_CFG_DATA.Ch0_RankEnable                      | 0x0
+MEMORY_CFG_DATA.Ch0_DeviceWidth                     | 0x0
+MEMORY_CFG_DATA.Ch0_DramDensity                     | 0x0
+MEMORY_CFG_DATA.Ch1_RankEnable                      | 0x0
+MEMORY_CFG_DATA.Ch1_DeviceWidth                     | 0x0
+MEMORY_CFG_DATA.Ch1_DramDensity                     | 0x0
+MEMORY_CFG_DATA.Ch2_RankEnable                      | 0x0
+MEMORY_CFG_DATA.Ch2_DeviceWidth                     | 0x0
+MEMORY_CFG_DATA.Ch2_DramDensity                     | 0x0
+MEMORY_CFG_DATA.Ch2_Option                          | 0x0
+MEMORY_CFG_DATA.Ch3_RankEnable                      | 0x0
+MEMORY_CFG_DATA.Ch3_DeviceWidth                     | 0x0
+MEMORY_CFG_DATA.Ch3_DramDensity                     | 0x0
+MEMORY_CFG_DATA.Ch3_Option                          | 0x0
+MEMORY_CFG_DATA.RmtMarginCheckScaleHighThreshold    | 0x00
+MEMORY_CFG_DATA.EnhancePort8xhDecoding              | 0x01
+MEMORY_CFG_DATA.Ch0_Bit_swizzling        | { 0x0, 0x1, 0x2, 0x3,  0x4,  0x5,  0x6,  0x7,  0x8,  0x9,  0xA,  0xB, 0xC,  0xD,  0xE,  0xF, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F   }
+MEMORY_CFG_DATA.Ch1_Bit_swizzling        | { 0x0, 0x1, 0x2, 0x3,  0x4,  0x5,  0x6,  0x7,  0x8,  0x9,  0xA,  0xB, 0xC,  0xD,  0xE,  0xF, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F  }
+MEMORY_CFG_DATA.Ch2_Bit_swizzling        | { 0x0, 0x1, 0x2, 0x3,  0x4,  0x5,  0x6,  0x7,  0x8,  0x9,  0xA,  0xB, 0xC,  0xD,  0xE,  0xF, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F   }
+MEMORY_CFG_DATA.Ch3_Bit_swizzling        | { 0x0, 0x1, 0x2, 0x3,  0x4,  0x5,  0x6,  0x7,  0x8,  0x9,  0xA,  0xB, 0xC,  0xD,  0xE,  0xF, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F  }

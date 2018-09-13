@@ -1,0 +1,20 @@
+#
+# Delta configuration values for platform ID 0x0001
+#
+# This file is not auto-generated. Rather, users must input all the settings
+# that are needed to be overwritten from the base DSC into this file.
+# This file is similar to changing BSF file in BCT for the new settings.
+#
+
+PLATFORMID_CFG_DATA.PlatformId | 31
+
+PLAT_NAME_CFG_DATA.PlatformName            | 'QEMU_31'
+
+GPIO_CFG_DATA.GpioConfPad1_GPP_A1.GPIOSkip | 1
+GPIO_CFG_DATA.GpioConfPad1_GPP_A6.GPIOSkip | 1
+
+GPIO_CFG_DATA.GpioConfPad0_GPP_A3 | 0xC0008003
+GPIO_CFG_DATA.GpioConfPad1_GPP_A4 | 0x00008014
+
+MEMORY_CFG_DATA.MemTest2      | 0x11112222
+SILICON_CFG_DATA.SiliconTest1 | 0x22223333
