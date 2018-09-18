@@ -59,7 +59,7 @@
   gCfgData.TotalLength            |      * | 0x04 | 0x2000
 
   # ---------------------------------------------------------------------------------------
-  !include ../../CommonBoardPkg/CfgData/CfgData_Platform.dsc
+  !include Platform/CommonBoardPkg/CfgData/CfgData_Platform.dsc
 
   # ---------------------------------------------------------------------------------------
   # !BSF PAGE:{IOCUART}
@@ -109,7 +109,7 @@
   !include CfgData_Gpio.dsc
 
   # ---------------------------------------------------------------------------------------
-  !include ../../CommonBoardPkg/CfgData/CfgData_Common.dsc
+  !include Platform/CommonBoardPkg/CfgData/CfgData_Common.dsc
 
   # ---------------------------------------------------------------------------------------
   !include CfgData_BootOption.dsc

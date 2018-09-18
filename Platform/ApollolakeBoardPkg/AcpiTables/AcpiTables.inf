@@ -37,8 +37,8 @@
   Madt/Madt30.aslc
   Dmar/Dmar.aslc
   Dmar/Dmar.h
-  ../../CommonBoardPkg/AcpiTables/Tpm/Tpm2.aslc
-  ../../CommonBoardPkg/AcpiTables/Tpm/TpmSsdt.asl
+  Platform/CommonBoardPkg/AcpiTables/Tpm/Tpm2.aslc
+  Platform/CommonBoardPkg/AcpiTables/Tpm/TpmSsdt.asl
 
 [Packages]
   MdePkg/MdePkg.dec

@@ -32,7 +32,7 @@ on an existing IFWI image.  Please follow steps below:
 
   2.  Build Slim Bootloader source tree and generate a stitching ZIP package.
       The generated ZIP package is located at:
-      $(SLIMBOOT_ROOT_DIR)/Outputs/apl/Stitch_Components.zip
+      $(WORKSPACE)/Outputs/apl/Stitch_Components.zip
 
   3.  Stitch to create a new IFWI image.
       EX:
