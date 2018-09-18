@@ -239,7 +239,7 @@
 
   # ---------------------------------------------------------------------------------------
   # OS_TMPL
-  !include ../../CommonBoardPkg/CfgData/Template_BootOption.dsc
+  !include Platform/CommonBoardPkg/CfgData/Template_BootOption.dsc
 
   # PCIERP_TMPL
   !include Template_PcieRp.dsc

@@ -638,10 +638,13 @@ EndList
                             Handle = True
                         if Handle:
                             if Keyword == 'include':
-                                IncludeFilePath = Remaining
-                                IncludeFilePath = self.ExpandMacros(IncludeFilePath)
+                                IncludeFilePath1 = Remaining
+                                IncludeFilePath1 = self.ExpandMacros(IncludeFilePath1)
                                 # Relative to DSC filepath
-                                IncludeFilePath = os.path.join(os.path.dirname(DscFile), IncludeFilePath)
+                                IncludeFilePath = os.path.join(os.path.dirname(DscFile), IncludeFilePath1)
+                                if not os.path.exists(IncludeFilePath):
+                                    IncludeFilePath = os.path.join(os.environ['SBL_SOURCE'], IncludeFilePath1)
+
                                 try:
                                     IncludeDsc  = open(IncludeFilePath, "r")
                                 except:

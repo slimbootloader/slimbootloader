@@ -38,20 +38,18 @@ def CloneFspRepo (fsp_dir):
     print ('Done\n')
 
 
-def CheckFileListExist (copy_list, sbl_dir):
+def CheckFileListExist (copy_list):
     exists = True
     for src_path, dst_path in copy_list:
-        dst_path = os.path.join (sbl_dir, dst_path)
         if not os.path.exists(dst_path):
             exists = False
             break
     return exists
 
-def CopyFileList (copy_list, fsp_dir, sbl_dir):
+def CopyFileList (copy_list, fsp_repo_dir):
     print ('Copy FSP into Slim Bootloader source tree ...')
     for src_path, dst_path in copy_list:
-        src_path = os.path.join (fsp_dir, src_path)
-        dst_path = os.path.join (sbl_dir, dst_path)
+        src_path = os.path.join (fsp_repo_dir, src_path)
         if os.path.exists(dst_path):
             print ('Keep:  %s' % os.path.abspath(dst_path))
             continue
@@ -62,24 +60,25 @@ def CopyFileList (copy_list, fsp_dir, sbl_dir):
     print ('Done\n')
 
 
-def CopyFspBins (fsp_dir, sbl_dir, platform):
+def CopyFspBins (fsp_repo_dir, fsp_dir, platform, boardname):
     sys.stdout.flush()
     copy_list = []
-    if platform == 'apl':
+    if platform == 'ApollolakePkg':
+        vbt_dir = os.path.join(fsp_dir, '../../../Platform', boardname, 'VbtBin')
         copy_list.extend ([
-          ('ApolloLakeFspBinPkg/FspBin/Fsp.fd',  'Silicon/ApollolakePkg/FspBin/FspDbg.bin'),
-          ('ApolloLakeFspBinPkg/FspBin/Fsp.fd',  'Silicon/ApollolakePkg/FspBin/FspRel.bin'),
-          ('ApolloLakeFspBinPkg/FspBin/Fsp.bsf', 'Silicon/ApollolakePkg/FspBin/Fsp.bsf'),
-          ('ApolloLakeFspBinPkg/Vbt/Vbt.bin',    'Platform/ApollolakeBoardPkg/VbtBin/Vbt.dat'),
-          ('ApolloLakeFspBinPkg/Vbt/Vbt.bsf',    'Platform/ApollolakeBoardPkg/VbtBin/Vbt.bsf')
+          ('ApolloLakeFspBinPkg/FspBin/Fsp.fd',  os.path.join (fsp_dir, 'FspDbg.bin')),
+          ('ApolloLakeFspBinPkg/FspBin/Fsp.fd',  os.path.join (fsp_dir, 'FspRel.bin')),
+          ('ApolloLakeFspBinPkg/FspBin/Fsp.bsf', os.path.join (fsp_dir, 'Fsp.bsf')),
+          ('ApolloLakeFspBinPkg/Vbt/Vbt.bin',    os.path.join (vbt_dir, 'Vbt.dat')),
+          ('ApolloLakeFspBinPkg/Vbt/Vbt.bsf',    os.path.join (vbt_dir, 'Vbt.bsf'))
         ])
 
-    if CheckFileListExist(copy_list, sbl_dir):
+    if CheckFileListExist(copy_list):
         return
 
-    CloneFspRepo (fsp_dir)
+    CloneFspRepo (fsp_repo_dir)
 
-    CopyFileList (copy_list, fsp_dir, sbl_dir)
+    CopyFileList (copy_list, fsp_repo_dir)
 
     return 0
 
@@ -88,7 +87,7 @@ def BuildFspBins (fsp_dir, sbl_dir, platform, flag):
     sys.stdout.flush()
 
     copy_list = []
-    if platform == 'qemu':
+    if platform == 'QemuSocPkg':
         copy_list.extend ([
           ('BuildFsp/QEMU_FSP.bsf',        'Silicon/QemuSocPkg/FspBin/Fsp.bsf'),
           ('BuildFsp/QEMU_FSP_DEBUG.fd',   'Silicon/QemuSocPkg/FspBin/FspDbg.bin'),
@@ -101,7 +100,7 @@ def BuildFspBins (fsp_dir, sbl_dir, platform, flag):
     else:
         return
 
-    if CheckFileListExist(copy_list, sbl_dir):
+    if CheckFileListExist(copy_list):
         return
 
     print ('Building QEMU FSP binaries from EDKII repo')
@@ -163,28 +162,36 @@ def BuildFspBins (fsp_dir, sbl_dir, platform, flag):
 
     print ('Done\n')
 
-    CopyFileList (copy_list, fsp_dir, sbl_dir)
+    CopyFileList (copy_list, fsp_dir)
 
 
 def Main():
     curr_dir      = os.path.dirname (os.path.realpath(__file__))
     sbl_dir       = os.path.abspath (os.path.join(curr_dir, '../..'))
-    fsp_repo_dir  = os.path.abspath (os.path.join(curr_dir, '../../../IntelFsp'))
-    qemu_repo_dir = os.path.abspath (os.path.join(curr_dir, '../../../QemuFsp'))
+    workspace_dir = os.path.abspath (os.path.join(sbl_dir, os.path.pardir))
+    fsp_repo_dir  = os.path.abspath (os.path.join(workspace_dir, 'IntelFsp'))
+    qemu_repo_dir = os.path.abspath (os.path.join(workspace_dir, 'QemuFsp'))
 
-    if len(sys.argv) < 2:
+    if not os.path.exists(workspace_dir):
+        os.makedirs(workspace_dir)
+
+    if len(sys.argv) < 3:
         print ('Platform argument is required!')
         return -1
 
-    platform = sys.argv[1]
-    target = ''
-    if len(sys.argv) > 2:
-        target = sys.argv[2]
+    fspfile          = sys.argv[1]
+    fspdir           = os.path.abspath(os.path.join(fspfile, os.path.pardir))
+    pltdir, platform = os.path.split (os.path.abspath (os.path.join(fspdir, '..')))
 
-    if platform == 'qemu':
+    target = ''
+    if len(sys.argv) > 3:
+        target = sys.argv[3]
+
+    boardname = sys.argv[2]
+    if platform == 'QemuSocPkg':
         BuildFspBins (qemu_repo_dir, sbl_dir, platform, target)
     else:
-        CopyFspBins (fsp_repo_dir, sbl_dir, platform)
+        CopyFspBins (fsp_repo_dir, fspdir, platform, boardname)
 
     return 0
 

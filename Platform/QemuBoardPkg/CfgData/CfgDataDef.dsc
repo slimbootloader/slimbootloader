@@ -98,7 +98,7 @@
   gCfgData.TotalLength            |      * | 0x04 | 0x1000
 
   # ---------------------------------------------------------------------------------------
-  !include ../../CommonBoardPkg/CfgData/CfgData_Platform.dsc
+  !include Platform/CommonBoardPkg/CfgData/CfgData_Platform.dsc
 
 
   # !BSF SUBT:{CFGHDR_TMPL:PLATFORM_CFG_DATA:0:0}
@@ -147,7 +147,7 @@
   # ---------------------------------------------------------------------------------------
   # !BSF PAGE:{GEN}
   # ---------------------------------------------------------------------------------------
-  !include ../../CommonBoardPkg/CfgData/CfgData_Common.dsc
+  !include Platform/CommonBoardPkg/CfgData/CfgData_Common.dsc
 
 
   # ---------------------------------------------------------------------------------------
