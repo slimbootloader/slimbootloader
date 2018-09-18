@@ -36,17 +36,16 @@ from   BuildUtility import *
 def rebuild_basetools ():
 
 	ret = 0
-	workspace = os.environ['WORKSPACE']
-
+	sblsource = os.environ['SBL_SOURCE']
 	if os.name == 'posix':
-		genffs_exe_path = os.path.join(workspace, 'BaseTools', 'Source', 'C', 'bin', 'GenFfs')
+		genffs_exe_path = os.path.join(sblsource, 'BaseTools', 'Source', 'C', 'bin', 'GenFfs')
 		genffs_exist = os.path.exists(genffs_exe_path)
 		if not genffs_exist:
 			ret = subprocess.call(['make', '-C', 'BaseTools'])
 
 	elif os.name == 'nt':
-		build_exe_path  = os.path.join(workspace, 'BaseTools', 'Bin', 'Win32', 'build.exe')
-		genffs_exe_path = os.path.join(workspace, 'BaseTools', 'Bin', 'Win32', 'GenFfs.exe')
+		build_exe_path  = os.path.join(sblsource, 'BaseTools', 'Bin', 'Win32', 'build.exe')
+		genffs_exe_path = os.path.join(sblsource, 'BaseTools', 'Bin', 'Win32', 'GenFfs.exe')
 		build_exist = os.path.exists(build_exe_path)
 		if not build_exist:
 			print "Could not find pre-built BaseTools binaries, try to rebuild BaseTools ..."
@@ -68,6 +67,8 @@ def rebuild_basetools ():
 
 
 def prep_env ():
+	sblsource = os.path.dirname(os.path.realpath(__file__))
+	os.chdir(sblsource)
 	if os.name == 'posix':
 		toolchain = 'GCC49'
 		gcc_ver = subprocess.Popen(['gcc', '-dumpversion'], stdout=subprocess.PIPE)
@@ -75,20 +76,23 @@ def prep_env ():
 		if int(gcc_ver) > 4:
 			toolchain = 'GCC5'
 
-		workspace = os.path.dirname(os.path.realpath(__file__))
-		os.environ['PATH'] = os.environ['PATH'] + ':' + os.path.join(workspace, 'BaseTools/BinWrappers/PosixLike')
+		os.environ['PATH'] = os.environ['PATH'] + ':' + os.path.join(sblsource, 'BaseTools/BinWrappers/PosixLike')
 	elif os.name == 'nt':
-		if 'WORKSPACE' not in os.environ:
-			print "Please run EdkSetup.bat first !"
-			sys.exit(1)
 		toolchain = ''
-		workspace = os.environ['WORKSPACE']
-		os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.join(workspace, 'BaseTools/Bin/Win32')
-		vs_ver = ['2015', '2013', '2012', '2010', '2008']
-		for each in vs_ver:
-			vs_test = 'VS%s_PREFIX' % (each)
-			if vs_test in os.environ:
-				toolchain='VS%s%s' % (each, 'x86' if '(x86)' in os.environ[vs_test] else '')
+		os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.join(sblsource, 'BaseTools/Bin/Win32')
+		vs_ver_list = {
+			('2015', 'VS140COMNTOOLS'),
+			('2013', 'VS120COMNTOOLS'),
+			('2012', 'VS110COMNTOOLS'),
+			('2010', 'VS100COMNTOOLS'),
+			('2008', 'VS90COMNTOOLS'),
+			('2005', 'VS80COMNTOOLS')
+		}
+		for vs_ver, vs_tool in vs_ver_list:
+			if vs_tool in os.environ:
+				toolchain='VS%s%s' % (vs_ver, 'x86')
+				toolchainprefix = 'VS%s_PREFIX' % (vs_ver)
+				os.environ[toolchainprefix] = os.path.join(os.environ[vs_tool], '..//..//')
 				break
 		if not toolchain:
 			print "Could not find supported Visual Studio version !"
@@ -97,19 +101,37 @@ def prep_env ():
 			os.environ['NASM_PREFIX'] = "C:\\Nasm\\"
 		if 'OPENSSL_PATH' not in os.environ:
 			os.environ['OPENSSL_PATH'] = "C:\\Openssl\\"
+		if 'IASL_PREFIX' not in os.environ:
+			os.environ['IASL_PREFIX'] = "C:\\ASL\\"
 	else:
 		print "Unsupported operating system !"
 		sys.exit(1)
 
 	# Update Environment vars
-	os.environ['WORKSPACE']      = workspace
-	os.environ['EDK_TOOLS_PATH'] = os.path.join(workspace, 'BaseTools')
-
+	os.environ['SBL_SOURCE']     = sblsource
+	os.environ['EDK_TOOLS_PATH'] = os.path.join(sblsource, 'BaseTools')
+	if 'WORKSPACE' not in os.environ:
+		os.environ['WORKSPACE'] = sblsource
+	os.environ['CONF_PATH']     = os.path.join(os.environ['WORKSPACE'], 'Conf')
+	os.environ['TOOL_CHAIN']    = toolchain
+	
 	# Check if BaseTools has been compiled
 	rebuild_basetools ()
 
-	return (workspace, toolchain)
 
+def get_board_config_file (check_dir, board_cfgs):
+	platform_dir = os.path.join (check_dir, 'Platform')
+	if not os.path.isdir (platform_dir):
+		if os.path.basename(check_dir) == 'Platform':
+			platform_dir = check_dir
+		else:
+			return
+
+	board_pkgs = os.listdir(platform_dir)
+	for pkg in board_pkgs:
+		cfgfile = os.path.join(platform_dir, pkg, 'BoardConfig.py')
+		if os.path.exists(cfgfile):
+			board_cfgs.append(cfgfile)
 
 class BaseBoard(object):
 	def __init__(self, *args, **kwargs):
@@ -221,13 +243,13 @@ class BaseBoard(object):
 class Build(object):
 
 	def __init__(self, board):
-
-		self._workspace, self._toolchain   = prep_env ()
+		self._toolchain                    = os.environ['TOOL_CHAIN']
+		self._workspace                    = os.environ['WORKSPACE']
 		self._board                        = board
 		self._image                        = "SlimBootloader.bin"
 		self._target                       = 'RELEASE' if board.RELEASE_MODE  else 'DEBUG'
 		self._fsp_basename                 = 'FspDbg'  if board.FSPDEBUG_MODE else 'FspRel'
-		self._fv_dir                       = os.path.join('Build', 'BootloaderCorePkg', '%s_%s' % (self._target, self._toolchain), 'FV')
+		self._fv_dir                       = os.path.join(self._workspace, 'Build', 'BootloaderCorePkg', '%s_%s' % (self._target, self._toolchain), 'FV')
 		self._img_list                     = board.GetImageLayout()
 		self._pld_list                     = get_payload_list (board._PAYLOAD_NAME.split(';'))
 		self._comp_list                    = []
@@ -879,30 +901,37 @@ class Build(object):
 
 
 	def pre_build(self):
+		# Update search path
+		sbl_dir = os.environ['SBL_SOURCE']
+		plt_dir = os.environ['PLT_SOURCE']
+		os.environ['PACKAGES_PATH'] = plt_dir
+		if plt_dir != sbl_dir:
+			os.environ['PACKAGES_PATH'] += os.pathsep + sbl_dir
+
 		# create conf and build folder if not exist
-		workspace = self._workspace
-		if not os.path.exists(os.path.join(workspace, 'Conf')):
-			os.makedirs(os.path.join(workspace, 'Conf'))
+		if not os.path.exists(os.path.join(self._workspace, 'Conf')):
+			os.makedirs(os.path.join(self._workspace, 'Conf'))
 		for name in ['target', 'tools_def', 'build_rule']:
-			txt_file = os.path.join(workspace, 'Conf/%s.txt' % name)
+			txt_file = os.path.join(self._workspace, 'Conf/%s.txt' % name)
 			if not os.path.exists(txt_file):
 				shutil.copy (
-					os.path.join(workspace, 'BaseTools/Conf/%s.template' % name),
-					os.path.join(workspace, 'Conf/%s.txt' % name))
+					os.path.join(sbl_dir, 'BaseTools/Conf/%s.template' % name),
+					os.path.join(self._workspace, 'Conf/%s.txt' % name))
 
 		if not os.path.exists(self._fv_dir):
 			os.makedirs(self._fv_dir)
 
 		# check if FSP binary exists
+		fsp_dir  = os.path.join(plt_dir, 'Silicon', self._board.SILICON_PKG_NAME, "FspBin", self._board._FSP_PATH_NAME)
+		fsp_path = os.path.join(fsp_dir, self._fsp_basename + '.bin')
+
 		check_fsp = os.path.join(tool_dir, 'PrepareFspBin.py')
 		if os.path.exists(check_fsp):
-			ret = subprocess.call(['python', check_fsp, self._board.BOARD_NAME, '/d' if self._board.FSPDEBUG_MODE else '/r'])
+			ret = subprocess.call(['python', check_fsp, plt_dir, self._board.BOARD_NAME, '/d' if self._board.FSPDEBUG_MODE else '/r'])
 			if ret:
 				raise Exception  ('Failed to checkout FSP binaries !')
 
 		# create FSP size and UPD size can be known
-		fsp_dir  = os.path.join(self._workspace, "Silicon", self._board.SILICON_PKG_NAME, "FspBin", self._board._FSP_PATH_NAME)
-		fsp_path = os.path.join(fsp_dir, self._fsp_basename + '.bin')
 		fsp_list = ['FSP_T', 'FSP_M', 'FSP_S']
 		if self._board.HAVE_FSP_BIN:
 			split_fsp (fsp_path, self._fv_dir)
@@ -962,7 +991,7 @@ class Build(object):
 		# create bootloader version info file
 		ver_info_name = 'VerInfo'
 		ver_bin_file = os.path.join(self._fv_dir, ver_info_name + '.bin')
-		ver_txt_file = os.path.join('Platform', self._board.BOARD_PKG_NAME, ver_info_name + '.txt')
+		ver_txt_file = os.path.join(os.environ['PLT_SOURCE'], 'Platform', self._board.BOARD_PKG_NAME, ver_info_name + '.txt')
 		if self._board.USE_VERSION:
 			ver_info = get_verinfo_via_file (ver_txt_file)
 		else:
@@ -978,7 +1007,7 @@ class Build(object):
 
 
 		# create platform include dsc file
-		platform_dsc_path = os.path.join(self._workspace, 'BootloaderCorePkg', 'Platform.dsc')
+		platform_dsc_path = os.path.join(sbl_dir, 'BootloaderCorePkg', 'Platform.dsc')
 		self.create_dsc_inc_file (platform_dsc_path)
 
 
@@ -1125,18 +1154,20 @@ class Build(object):
 
 
 def main():
-
+	prep_env ()
 	board_cfgs   = []
 	board_names  = []
 
 	# Find all boards
-	board_pkgs = os.listdir('Platform')
+	parent_dir = os.path.abspath(os.path.join(os.environ['SBL_SOURCE'], os.path.pardir))
+	board_pkgs = os.listdir (parent_dir)
 	for pkg in board_pkgs:
-		cfgfile = os.path.join('Platform', pkg, 'BoardConfig.py')
-		if os.path.exists(cfgfile):
-			brdcfg = imp.load_source('BoardConfig', cfgfile)
-			board_names.append(brdcfg.Board().BOARD_NAME)
-			board_cfgs.append(cfgfile)
+		get_board_config_file (os.path.join (parent_dir, pkg), board_cfgs)
+
+	for cfgfile in board_cfgs:
+		brdcfg = imp.load_source('BoardConfig', cfgfile)
+		board_names.append(brdcfg.Board().BOARD_NAME)
+
 
 	ap = argparse.ArgumentParser()
 	sp = ap.add_subparsers(help='command')
@@ -1152,6 +1183,7 @@ def main():
 										_PAYLOAD_NAME     = args.payload,     \
 										_FSP_PATH_NAME    = args.fsppath
 										);
+				os.environ['PLT_SOURCE']  = os.path.abspath (os.path.join (os.path.dirname (board_cfgs[index]), '../..'))
 				Build(board).build()
 				break
 
@@ -1165,10 +1197,13 @@ def main():
 	buildp.set_defaults(func=cmd_build)
 
 	def cmd_clean(args):
+		workspace = os.environ['WORKSPACE']
+		sbl_dir   = os.environ['SBL_SOURCE']
 		dirs  = ['Build', 'Conf']
 		files = [
-			'BootloaderCorePkg/Stage1A/Ia32/Vtf0/Bin/ResetVector.ia32.raw',
-			'BootloaderCorePkg/Platform.dsc'
+			os.path.join (sbl_dir, 'BootloaderCorePkg/Stage1A/Ia32/Vtf0/Bin/ResetVector.ia32.raw'),
+			os.path.join (sbl_dir, 'BootloaderCorePkg/Platform.dsc'),
+			os.path.join (workspace, 'Report.log')
 		]
 
 		if args.distclean:
@@ -1180,7 +1215,7 @@ def main():
 			])
 
 		for dir in dirs:
-			shutil.rmtree(dir,ignore_errors=True)
+			shutil.rmtree(os.path.join (workspace, dir), ignore_errors=True)
 
 		for file in files:
 			if os.path.exists(file):

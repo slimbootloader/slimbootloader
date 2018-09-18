@@ -168,23 +168,25 @@ def BuildFspBins (fsp_dir, sbl_dir, platform, flag):
 
 def Main():
     curr_dir      = os.path.dirname (os.path.realpath(__file__))
-    sbl_dir       = os.path.abspath (os.path.join(curr_dir, '../..'))
-    fsp_repo_dir  = os.path.abspath (os.path.join(curr_dir, '../../../IntelFsp'))
-    qemu_repo_dir = os.path.abspath (os.path.join(curr_dir, '../../../QemuFsp'))
+    workspace_dir = os.path.abspath (os.path.join(curr_dir, '../../..'))
+    fsp_repo_dir  = os.path.abspath (os.path.join(workspace_dir, 'IntelFsp'))
+    qemu_repo_dir = os.path.abspath (os.path.join(workspace_dir, 'QemuFsp'))
 
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 3:
         print ('Platform argument is required!')
         return -1
 
-    platform = sys.argv[1]
+    plt_dir   = sys.argv[1]
+    platform  = sys.argv[2]
+
     target = ''
-    if len(sys.argv) > 2:
-        target = sys.argv[2]
+    if len(sys.argv) > 3:
+        target = sys.argv[3]
 
     if platform == 'qemu':
-        BuildFspBins (qemu_repo_dir, sbl_dir, platform, target)
+        BuildFspBins (qemu_repo_dir, plt_dir, platform, target)
     else:
-        CopyFspBins (fsp_repo_dir, sbl_dir, platform)
+        CopyFspBins (fsp_repo_dir, plt_dir, platform)
 
     return 0
 
