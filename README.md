@@ -3,7 +3,7 @@ Slim Bootloader
 
 **Welcome to the Slim Bootloader project!**
 
-Slim Boootloader is an open-source boot firmware solution, built from the
+Slim Bootloader is an open-source boot firmware solution, built from the
 ground up to be secure, lightweight, and highly optimized while leveraging
 robust tools and libraries from the [EDK II](https://www.tianocore.org/edk2/)
 framework.
@@ -38,5 +38,5 @@ https://lists.01.org/mailman/listinfo/sbl-devel
 
 License
 -------
-Slim Boootloader is released under the terms of the BSD license. 
+Slim Bootloader is released under the terms of the BSD license. 
 Please see the `LICENSE` file for the full terms of the license.
