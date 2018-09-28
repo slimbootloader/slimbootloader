@@ -1,0 +1,7 @@
+# This file specifies the default reviewers that will be automatically be added
+# to pull requests. The pattern format follows .gitignore syntax. Reviewers can
+# be specified by email, GitHub usernames, or GitHub team names.
+
+# Global Reviewers
+#-----------------
+* @slimbootloader/reviewers-global
