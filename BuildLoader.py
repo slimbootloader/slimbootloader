@@ -1159,10 +1159,12 @@ def main():
 	board_names  = []
 
 	# Find all boards
-	parent_dir = os.path.abspath(os.path.join(os.environ['SBL_SOURCE'], os.path.pardir))
-	board_pkgs = os.listdir (parent_dir)
+	search_dir = os.environ['SBL_SOURCE']
+	if 'PLT_SOURCE' in os.environ:
+		search_dir = os.path.abspath(os.path.join(search_dir, os.path.pardir))
+	board_pkgs = os.listdir (search_dir)
 	for pkg in board_pkgs:
-		get_board_config_file (os.path.join (parent_dir, pkg), board_cfgs)
+		get_board_config_file (os.path.join (search_dir, pkg), board_cfgs)
 
 	for cfgfile in board_cfgs:
 		brdcfg = imp.load_source('BoardConfig', cfgfile)
