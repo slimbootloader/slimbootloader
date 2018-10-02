@@ -80,14 +80,14 @@ def prep_env ():
 	elif os.name == 'nt':
 		toolchain = ''
 		os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.join(sblsource, 'BaseTools/Bin/Win32')
-		vs_ver_list = {
+		vs_ver_list = [
 			('2015', 'VS140COMNTOOLS'),
 			('2013', 'VS120COMNTOOLS'),
 			('2012', 'VS110COMNTOOLS'),
 			('2010', 'VS100COMNTOOLS'),
 			('2008', 'VS90COMNTOOLS'),
 			('2005', 'VS80COMNTOOLS')
-		}
+		]
 		for vs_ver, vs_tool in vs_ver_list:
 			if vs_tool in os.environ:
 				toolchain='VS%s%s' % (vs_ver, 'x86')
