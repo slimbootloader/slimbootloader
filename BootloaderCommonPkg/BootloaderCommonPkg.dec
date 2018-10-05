@@ -53,11 +53,13 @@
   gPlatformCommonLibTokenSpaceGuid.PcdHeciLibId              |          5 |  UINT8 | 0x20000106
   gPlatformCommonLibTokenSpaceGuid.PcdMmcTuningLibId         |          6 |  UINT8 | 0x20000107
 
-  gPlatformCommonLibTokenSpaceGuid.PcdCpuLocalApicBaseAddress| 0xFEE00000 | UINT32 | 0x20000186
-  gPlatformCommonLibTokenSpaceGuid.PcdSupportedMediaTypeMask | 0xFFFFFFFF | UINT32 | 0x20000187
-  gPlatformCommonLibTokenSpaceGuid.PcdMmcTuningLba           | 0x00000040 | UINT32 | 0x20000188
+  gPlatformCommonLibTokenSpaceGuid.PcdCpuLocalApicBaseAddress| 0xFEE00000 | UINT32  | 0x20000186
+  gPlatformCommonLibTokenSpaceGuid.PcdSupportedMediaTypeMask | 0xFFFFFFFF | UINT32  | 0x20000187
+  gPlatformCommonLibTokenSpaceGuid.PcdMmcTuningLba           | 0x00000040 | UINT32  | 0x20000188
   gPlatformCommonLibTokenSpaceGuid.PcdCryptoShaNiEnabled     | FALSE      | BOOLEAN | 0x20000200
   gPlatformCommonLibTokenSpaceGuid.PcdSeedListEnabled        | FALSE      | BOOLEAN | 0x20000203
+  gPlatformCommonLibTokenSpaceGuid.PcdConsoleInDeviceMask    | 0x00000001 | UINT32  | 0x20000300
+  gPlatformCommonLibTokenSpaceGuid.PcdConsoleOutDeviceMask   | 0x00000001 | UINT32  | 0x20000301
 
 [PcdsFixedAtBuild, PcdsPatchableInModule]
   # For patchable PCDs, try to set the default as none-zero
