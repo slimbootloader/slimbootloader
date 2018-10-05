@@ -118,6 +118,7 @@
   ShellExtensionLib|BootloaderCommonPkg/Library/ShellExtensionLibNull/ShellExtensionLibNull.inf
   DebugLogBufferLib|BootloaderCommonPkg/Library/DebugLogBufferLib/DebugLogBufferLib.inf
   DebugLib|BootloaderCommonPkg/Library/BootloaderDebugLib/BootloaderDebugLib.inf
+  ConsoleInLib|BootloaderCommonPkg/Library/ConsoleInLib/ConsoleInLib.inf
 !if $(HAVE_FSP_BIN)
   FspApiLib|$(PLATFORM_PACKAGE)/Library/FspApiLib/FspApiLib.inf
 !endif
@@ -209,6 +210,9 @@
   gPlatformModuleTokenSpaceGuid.PcdRedundantRegionSize    | $(REDUNDANT_SIZE)
   gPlatformModuleTokenSpaceGuid.PcdCfgDataLoadSource      | $(CFGDATA_REGION_TYPE)
   gPlatformModuleTokenSpaceGuid.PcdCfgDatabaseSize        | $(CFG_DATABASE_SIZE)
+
+  gPlatformCommonLibTokenSpaceGuid.PcdConsoleInDeviceMask  | $(CONSOLE_IN_DEVICE_MASK)
+  gPlatformCommonLibTokenSpaceGuid.PcdConsoleOutDeviceMask | $(CONSOLE_OUT_DEVICE_MASK)
 
   gPlatformModuleTokenSpaceGuid.PcdVerifiedBootHashMask   | $(VERIFIED_BOOT_HASH_MASK)
   gPlatformCommonLibTokenSpaceGuid.PcdCryptoShaNiEnabled  | $(ENABLE_CRYPTO_SHA_NI)

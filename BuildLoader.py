@@ -114,7 +114,7 @@ def prep_env ():
 		os.environ['WORKSPACE'] = sblsource
 	os.environ['CONF_PATH']     = os.path.join(os.environ['WORKSPACE'], 'Conf')
 	os.environ['TOOL_CHAIN']    = toolchain
-	
+
 	# Check if BaseTools has been compiled
 	rebuild_basetools ()
 
@@ -164,6 +164,8 @@ class BaseBoard(object):
 
 		self.VERIFIED_BOOT_HASH_MASK  = 0x00000000
 		self.BOOT_MEDIA_SUPPORT_MASK  = 0xFFFFFFFF
+		self.CONSOLE_IN_DEVICE_MASK   = 0x00000001
+		self.CONSOLE_OUT_DEVICE_MASK  = 0x00000001
 
 		self.HAVE_VBT_BIN          = 0
 		self.HAVE_FIT_TABLE        = 0

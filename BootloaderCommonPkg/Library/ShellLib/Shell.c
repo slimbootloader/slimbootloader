@@ -13,7 +13,7 @@
 **/
 
 #include <Library/ShellLib.h>
-#include <Library/SerialPortLib.h>
+#include <Library/ConsoleInLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/TimerLib.h>
@@ -126,7 +126,7 @@ Shell (
     for (Index = Timeout; Index > 0; Index--) {
       ShellPrint (L"%c[80DPress any key within %d second(s) to enter the command shell", 0x1b, Index);
       for (Index1 = 0; Index1 < 10; Index1++) {
-        Start = SerialPortPoll();
+        Start = ConsolePoll ();
         if (Start) {
           break;
         }
@@ -215,7 +215,7 @@ ReadShellCommand (
 
     // Get next character from serial port
     Char = 0;
-    if (SerialPortRead (&Char, 1) < 1) {
+    if (ConsoleRead (&Char, 1) < 1) {
       return EFI_TIMEOUT;
     }
 
@@ -238,12 +238,12 @@ ReadShellCommand (
     // Handle key codes of the form: ESC [ x
     if (Char == ESC) {
       // Expect '[' character
-      if (SerialPortRead (&Char, 1) < 1) {
+      if (ConsoleRead (&Char, 1) < 1) {
         return EFI_TIMEOUT;
       }
       if (Char == '[') {
         // Expect command
-        if (SerialPortRead (&Char, 1) < 1) {
+        if (ConsoleRead (&Char, 1) < 1) {
           return EFI_TIMEOUT;
         }
 
@@ -305,7 +305,7 @@ ShellReadLine (
 
     // Get next character from serial port
     Char = 0;
-    if (SerialPortRead (&Char, 1) < 1) {
+    if (ConsoleRead (&Char, 1) < 1) {
       return EFI_TIMEOUT;
     }
 
@@ -328,12 +328,12 @@ ShellReadLine (
     // Handle key codes of the form: ESC [ x
     if (Char == ESC) {
       // Expect '[' character
-      if (SerialPortRead (&Char, 1) < 1) {
+      if (ConsoleRead (&Char, 1) < 1) {
         return EFI_TIMEOUT;
       }
       if (Char == '[') {
         // Expect command
-        if (SerialPortRead (&Char, 1) < 1) {
+        if (ConsoleRead (&Char, 1) < 1) {
           return EFI_TIMEOUT;
         }
 
@@ -399,7 +399,7 @@ ShellReadUintn (
 
     // Get next character from serial port
     Char = 0;
-    if (SerialPortRead (&Char, 1) < 1) {
+    if (ConsoleRead (&Char, 1) < 1) {
       return EFI_TIMEOUT;
     }
 
