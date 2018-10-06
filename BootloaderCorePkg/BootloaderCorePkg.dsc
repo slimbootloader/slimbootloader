@@ -104,6 +104,8 @@
   NvmExpressLib|BootloaderCommonPkg/Library/NvmExpressLib/NvmExpressLib.inf
   MemoryDeviceBlockIoLib|BootloaderCommonPkg/Library/MemoryDeviceBlockIoLib/MemoryDeviceBlockIoLib.inf
   AhciLib|BootloaderCommonPkg/Library/AhciLib/AhciLib.inf
+  UsbIoLib|BootloaderCommonPkg/Library/UsbIoLib/UsbIoLib.inf
+  UsbKbLib|BootloaderCommonPkg/Library/UsbKbLib/UsbKbLib.inf
   UsbHostCtrlLib|BootloaderCommonPkg/Library/XhciLib/XhciLib.inf
   UsbBusLib|BootloaderCommonPkg/Library/UsbBusLib/UsbBusLib.inf
   UsbBlockIoLib|BootloaderCommonPkg/Library/UsbBlockIoLib/UsbBlockIoLib.inf

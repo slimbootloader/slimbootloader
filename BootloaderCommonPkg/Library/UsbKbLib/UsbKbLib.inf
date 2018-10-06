@@ -1,5 +1,5 @@
 ## @file
-# Description file for the USB block I/O library.
+# Description file for the USB keyboard library.
 #
 # Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
 #
@@ -15,28 +15,19 @@
 
 [Defines]
   INF_VERSION                    = 0x00010005
-  BASE_NAME                      = UsbBlockIoLib
-  FILE_GUID                      = 67B8E021-B014-4E83-B692-9590F8214F87
+  BASE_NAME                      = UsbKbLib
+  FILE_GUID                      = DED53C0B-1EA9-4b29-9780-45A6A6C6BC36
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
-  LIBRARY_CLASS                  = UsbBlockIoLib
+  LIBRARY_CLASS                  = UsbKbLib
 
 #
 # The following information is for reference only and not required by the build tools.
 #
 #  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
 #
-
 [Sources]
-  UsbBlockIoLib.c
-  PeiUsbLib.c
-  PeiAtapi.c
-  BotPeim.c
-  UsbBotPeim.c
-  UsbPeim.h
-  UsbBotPeim.h
-  PeiUsbLib.h
-  BotPeim.h
+  UsbKbLib.c
 
 [Packages]
   MdePkg/MdePkg.dec

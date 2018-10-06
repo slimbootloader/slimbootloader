@@ -41,15 +41,7 @@ TestDevBlocks (
   //
   // Get OS boot device address
   //
-  if ((OsBootOption->DevAddr & 0xFF000000) == 0) {
-    BootMediumPciBase = (UINTN)MM_PCI_ADDRESS (0,               \
-                        ((OsBootOption->DevAddr >> 16) & 0xFF), \
-                        ((OsBootOption->DevAddr >> 8)  & 0xFF), \
-                        (OsBootOption->DevAddr & 0xFF),         \
-                        0);
-  } else {
-    BootMediumPciBase = OsBootOption->DevAddr;
-  }
+  BootMediumPciBase = GetBootDeviceBase (BootOption);
   DEBUG ((DEBUG_INFO, "BootMediumPciBase(0x%x)\n", BootMediumPciBase));
 
   //

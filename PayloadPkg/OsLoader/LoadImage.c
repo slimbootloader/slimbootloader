@@ -38,15 +38,7 @@ FindBootPartition (
   //
   // Get OS boot device address
   //
-  if ((BootOption->DevAddr & 0xFF000000) == 0) {
-    BootMediumPciBase = (UINTN) MM_PCI_BASE (                   \
-                        ((BootOption->DevAddr >> 16) & 0xFF), \
-                        ((BootOption->DevAddr >> 8)  & 0xFF), \
-                        (BootOption->DevAddr & 0xFF)          \
-                        );
-  } else {
-    BootMediumPciBase = BootOption->DevAddr;
-  }
+  BootMediumPciBase = GetBootDeviceBase (BootOption);
   DEBUG ((DEBUG_INFO, "BootMediumPciBase(0x%x)\n", BootMediumPciBase));
 
   //
