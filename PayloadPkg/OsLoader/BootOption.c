@@ -152,3 +152,32 @@ GetNextBootOption (
   return Index;
 }
 
+/**
+  Get boot device base address from a given boot option
+
+  @param[in]  BootOption         Current boot option
+
+  @retval     Boot device base address for a given boot option
+**/
+UINT32
+GetBootDeviceBase (
+  IN  OS_BOOT_OPTION         *BootOption
+  )
+{
+  UINT32   BootDeviceBase;
+
+  BootDeviceBase = 0;
+  if (BootOption != NULL) {
+    if ((BootOption->DevAddr & 0xFF000000) == 0) {
+      BootDeviceBase = (UINTN)MM_PCI_ADDRESS (0,
+                          ((BootOption->DevAddr >> 16) & 0xFF),
+                          ((BootOption->DevAddr >> 8)  & 0xFF),
+                          (BootOption->DevAddr & 0xFF),
+                          0);
+    } else {
+      BootDeviceBase = BootOption->DevAddr;
+    }
+  }
+
+  return BootDeviceBase;
+}

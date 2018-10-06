@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -18,42 +18,15 @@
 #include <Library/IoLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
-#include <Library/XhciLib.h>
-#include <Library/UsbBusLib.h>
+#include <Library/UsbIoLib.h>
 #include <UsbBotPeim.h>
 #include <BlockDevice.h>
 
-#define  MAX_USB_DEVICE_NUMBER         16
 #define  MAX_USB_BLOCK_DEVICE_NUMBER   1
-
-UINTN                           mUsbIoCount;
-PEI_USB_IO_PPI                 *mUsbIoArray[MAX_USB_DEVICE_NUMBER];
 
 UINTN                           mUsbBlkCount;
 EFI_PEI_RECOVERY_BLOCK_IO_PPI  *mUsbBlkArray[MAX_USB_BLOCK_DEVICE_NUMBER];
 
-/**
-  This is a USB device callback function.
-
-  When a new USB device is found during USB bus enumeration, it will
-  be called to register this device.
-
-  @param[in]  UsbIoPpi           The USB device interface instance.
-
-  @retval EFI_SUCCESS            This routinue alwasy return success.
-
-**/
-EFI_STATUS
-EFIAPI
-UsbDevCallback (
-  IN PEI_USB_IO_PPI   *UsbIoPpi
-  )
-{
-  if (mUsbIoCount < sizeof (mUsbIoArray) / sizeof (mUsbIoArray[0])) {
-    mUsbIoArray[mUsbIoCount++] = UsbIoPpi;
-  }
-  return EFI_SUCCESS;
-}
 
 /**
   This is a USB block device callback function.
@@ -72,7 +45,7 @@ UsbBlkCallback (
   IN EFI_PEI_RECOVERY_BLOCK_IO_PPI    *BlkIoPpi
   )
 {
-  if (mUsbBlkCount < sizeof (mUsbBlkArray) / sizeof (mUsbBlkArray[0])) {
+  if (mUsbBlkCount < ARRAY_SIZE (mUsbBlkArray)) {
     mUsbBlkArray[mUsbBlkCount++] = BlkIoPpi;
   }
   return EFI_SUCCESS;
@@ -100,33 +73,25 @@ InitializeUsb (
   IN  DEVICE_INIT_PHASE         DevInitPhase
   )
 {
-  EFI_HANDLE  UsbHostHandle;
-  EFI_STATUS  Status;
-  UINTN       Idx;
-  UINT32      PcieAddress;
-  UINT32      XhciMmioBase;
+  EFI_STATUS        Status;
+  UINTN             Index;
+  UINT32            UsbIoCount;
+  PEI_USB_IO_PPI  **UsbIoArray;
 
-  mUsbIoCount  = 0;
   mUsbBlkCount = 0;
-
-  // Enable XHCI controller
-  PcieAddress = UsbHcPciBase;
-  MmioOr8 (PcieAddress + PCI_COMMAND_OFFSET, EFI_PCI_COMMAND_MEMORY_SPACE | EFI_PCI_COMMAND_BUS_MASTER);
-  XhciMmioBase = MmioRead32 (PcieAddress + PCI_BASE_ADDRESSREG_OFFSET) & ~0xF;
-
-  Status = UsbInitCtrl (XhciMmioBase, &UsbHostHandle);
-  DEBUG ((DEBUG_INFO, "Init USB XHCI - %r\n", Status));
-
-  Status = UsbEnumBus (UsbHostHandle, UsbDevCallback);
-  DEBUG ((DEBUG_INFO, "Enumerate Bus - %r\n", Status));
-  if (!EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "Found %d USB devices on bus\n", mUsbIoCount));
+  Status = InitUsbDevices (UsbHcPciBase);
+  if (!EFI_ERROR(Status)) {
+    Status = GetUsbDevices ((PEI_USB_IO_PPI **)&UsbIoArray, &UsbIoCount);
+  }
+  if (EFI_ERROR(Status)) {
+    DEBUG ((DEBUG_INFO, "Failed to initialize USB bus !\n"));
+    return Status;
   }
 
-  for (Idx = 0; Idx < mUsbIoCount; Idx++) {
-    Status = UsbFindBlockDevice (mUsbIoArray[Idx], UsbBlkCallback);
+  for (Index = 0; Index < UsbIoCount; Index++) {
+    Status = UsbFindBlockDevice (UsbIoArray[Index], UsbBlkCallback);
     if (!EFI_ERROR (Status) && (mUsbBlkCount > 0)) {
-      DEBUG ((DEBUG_INFO, "Found mass storage on devices %d\n", Idx));
+      DEBUG ((DEBUG_INFO, "Found mass storage on device %d\n", Index));
       break;
     }
   }

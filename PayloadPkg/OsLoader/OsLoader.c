@@ -563,6 +563,66 @@ BootOsImage (
   return Status;
 }
 
+/**
+  Initialize platform console.
+  
+  @retval  EFI_NOT_FOUND    No additional console was found.
+  @retval  EFI_SUCCESS      Console has been initialized successfully.
+  @retval  Others           There is error during console initialization.
+**/
+EFI_STATUS
+InitConsole (
+  VOID
+)
+{
+  OS_BOOT_OPTION_LIST     *OsBootOptionList;
+  OS_BOOT_OPTION          *OsBootOption;
+  UINT32                   CtrlPciBase;
+  UINT32                   Index;
+  EFI_STATUS               Status;
+
+  Status = EFI_NOT_FOUND;
+
+  // Initialize input console
+  if ((PcdGet32 (PcdConsoleInDeviceMask) & ConsoleInUsbKeyboard) != 0) {
+    CtrlPciBase      = 0;
+    OsBootOptionList = GetBootOptionList ();
+    if ((OsBootOptionList != NULL) && (OsBootOptionList->OsBootOptionCount > 0)) {
+      for (Index = 0; Index < OsBootOptionList->OsBootOptionCount; Index++) {
+        OsBootOption = &OsBootOptionList->OsBootOption[Index];
+        if (OsBootOption->DevType == OsBootDeviceUsb) {
+          CtrlPciBase = GetBootDeviceBase (OsBootOption);
+        }
+      }
+    }
+    if (CtrlPciBase > 0) {
+      Status = InitUsbKeyBoard (CtrlPciBase);
+    }
+  }
+
+  return Status;
+}
+
+/**
+  Run Shell.
+
+  This function will enter Shell environment.
+
+  @param  Timeout           Waiting time out in seconds before entrying Shell.
+                            0 will enter Shell without waiting.
+**/
+VOID
+RunShell (
+  IN  UINTN    Timeout
+  )
+{
+  CONST SHELL_COMMAND    **ShellExtensionCmd;
+
+  InitConsole ();
+
+  ShellExtensionCmd = GetShellExtensionCmds ();
+  Shell (ShellExtensionCmd, Timeout);
+}
 
 /**
   Payload main entry.
@@ -579,7 +639,6 @@ PayloadMain (
   )
 {
   OS_BOOT_OPTION_LIST    *OsBootOptionList;
-  CONST SHELL_COMMAND    **ShellExtensionCmd;
   UINTN                  ShellTimeout;
 
   mEntryStack = Param;
@@ -590,7 +649,6 @@ PayloadMain (
   //
   // Get Boot Image Info
   //
-  ShellExtensionCmd = GetShellExtensionCmds ();
   OsBootOptionList = GetBootOptionList ();
   if ((OsBootOptionList == NULL) || (OsBootOptionList->OsBootOptionCount == 0)) {
     ShellTimeout = 0;
@@ -604,7 +662,7 @@ PayloadMain (
     ShellTimeout = 0;
   }
   if ((DebugCodeEnabled () == TRUE) || (OsBootOptionList->BootToShell != 0)) {
-    Shell (ShellExtensionCmd, ShellTimeout);
+    RunShell (ShellTimeout);
   }
   AddMeasurePoint (0x4020);
 
@@ -648,7 +706,7 @@ PayloadMain (
 
 GOTO_SHELL:
   if (DebugCodeEnabled () == TRUE) {
-    Shell (ShellExtensionCmd, 0);
+    RunShell (0);
   }
 
   CpuHalt (NULL);

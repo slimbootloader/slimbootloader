@@ -80,6 +80,8 @@
   AbSupportLib
   SblParameterLib
   TrustyBootLib
+  UsbIoLib
+  UsbKbLib
 
 [Guids]
   gOsConfigDataGuid
@@ -100,6 +102,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdDebugOutputDeviceMask
   gPayloadTokenSpaceGuid.PcdPayloadHeapSize
   gPlatformCommonLibTokenSpaceGuid.PcdSeedListEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdConsoleInDeviceMask
 
 [Depex]
   TRUE

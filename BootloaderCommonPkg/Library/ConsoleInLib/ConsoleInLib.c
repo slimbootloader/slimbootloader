@@ -12,6 +12,8 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 **/
 
+#include <PiPei.h>
+#include <Library/UsbKbLib.h>
 #include <Library/SerialPortLib.h>
 #include <Library/ConsoleInLib.h>
 
@@ -31,6 +33,12 @@ ConsolePoll (
 
   if ((PcdGet32 (PcdConsoleInDeviceMask) & ConsoleInSerialPort) != 0) {
     if (SerialPortPoll ()) {
+      return TRUE;
+    }
+  }
+
+  if ((PcdGet32 (PcdConsoleInDeviceMask) & ConsoleInUsbKeyboard) != 0) {
+    if (KeyboardPoll ()) {
       return TRUE;
     }
   }
@@ -63,6 +71,14 @@ ConsoleRead (
     if ((PcdGet32 (PcdConsoleInDeviceMask) & ConsoleInSerialPort) != 0) {
       if (SerialPortPoll ()) {
         ReadCount = SerialPortRead (Buffer, 1);
+        Buffer += ReadCount;
+        Count  += ReadCount;
+      }
+    }
+
+    if ((PcdGet32 (PcdConsoleInDeviceMask) & ConsoleInUsbKeyboard) != 0) {
+      if (KeyboardPoll () && (Count < NumberOfBytes)) {
+        ReadCount = KeyboardRead (Buffer, 1);
         Buffer += ReadCount;
         Count  += ReadCount;
       }

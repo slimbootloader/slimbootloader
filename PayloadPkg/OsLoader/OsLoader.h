@@ -38,10 +38,12 @@
 #include <Library/LoaderPerformanceLib.h>
 #include <Library/RpmbLib.h>
 #include <Library/SerialPortLib.h>
+#include <Library/ConsoleInLib.h>
 #include <Library/ConfigDataLib.h>
 #include <Library/AbSupportLib.h>
 #include <Library/SblParameterLib.h>
 #include <Library/TrustyBootLib.h>
+#include <Library/UsbKbLib.h>
 #include <Guid/SeedInfoHobGuid.h>
 #include <Guid/OsConfigDataHobGuid.h>
 #include <Guid/OsBootOptionGuid.h>
@@ -371,6 +373,19 @@ EFI_STATUS
 RpmbKeyProvisioning (
   IN     OS_BOOT_OPTION      *CurrentBootOption,
   IN     LOADER_SEED_LIST    *SeedList
+  );
+
+
+/**
+  Get boot device base address from a given boot option
+
+  @param[in]  BootOption         Current boot option
+
+  @retval     Boot device base address for a given boot option
+**/
+UINT32
+GetBootDeviceBase (
+  IN  OS_BOOT_OPTION         *BootOption
   );
 
 #endif

@@ -661,7 +661,7 @@ BoardInit (
                        );
     // Set the BIOS Lock Enable and EISS bits
     MmioOr8 (SpiBaseAddress + R_SPI_BCR, (UINT8) (B_SPI_BCR_BLE | B_SPI_BCR_EISS));
-    
+
     ClearFspHob ();
 
     // Lock down Tco WDT just before handling off to OS
