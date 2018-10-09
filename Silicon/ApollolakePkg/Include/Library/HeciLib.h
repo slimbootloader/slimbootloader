@@ -146,7 +146,7 @@ typedef union {
     UINT32  HostAddress : 8;        // This is the logical address of the Host client of the message.
     UINT32  Length : 9;             // This is the message length in bytes, not including the HECI_MESSAGE_HEADER
     UINT32  Reserved : 6;
-    UINT32  MessageComplete : 1;    // This bit is used to indicate that this is the last message of a multi message HECI transfer of a client’s message that is larger than HECI circular buffer.
+    UINT32  MessageComplete : 1;    // This bit is used to indicate that this is the last message of a multi message HECI transfer of a client's message that is larger than HECI circular buffer.
   } Fields;
 } HeciMessageHeader;
 
