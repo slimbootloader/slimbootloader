@@ -50,7 +50,7 @@ UnmapStage (
   //
   // Reload Exception handler
   //
-  UpdateExceptionHandler (0);
+  UpdateExceptionHandler (NULL);
 
   if (AsmReadCr0 () & (1 << 31)) {
     DEBUG ((DEBUG_INFO, "Disable Paging ...\n"));

@@ -53,13 +53,14 @@ CommonExceptionHandler (
 
   This function is used to update the IDT exception handler with current stage.
 
-  @param[in]  IdtBase   If non-zero, it is the IDT base address.
-                        if it is 0,  the IDT base will be retrieved from IDT base register.
+  @param[in]  IdtDescritor   If non-zero, it is new IDT descriptor to be updated.
+                             if it is 0,  the IDT descriptor will be retrieved from IDT base register.
 
 **/
+STATIC
 VOID
-UpdateExceptionHandler (
-  IN UINT32        IdtBase
+UpdateExceptionHandler2 (
+  IN VOID                    *IdtDescriptor
 )
 {
   UINT64                     *IdtTable;
@@ -69,12 +70,12 @@ UpdateExceptionHandler (
   IA32_DESCRIPTOR             Idtr;
   EXCEPTION_HANDLER_TEMPLATE_MAP  TemplateMap;
 
-  if (IdtBase == 0) {
+  if (IdtDescriptor == NULL) {
     AsmReadIdtr (&Idtr);
-    IdtTable = (UINT64 *)Idtr.Base;
   } else {
-    IdtTable = (UINT64 *)IdtBase;
+    Idtr = *(IA32_DESCRIPTOR *) IdtDescriptor;
   }
+  IdtTable                          = (UINT64 *)Idtr.Base;
   IdtGateDescriptor.Uint64          = 0;
   IdtGateDescriptor.Bits.Selector   = AsmReadCs ();
   IdtGateDescriptor.Bits.GateType   = IA32_IDT_GATE_TYPE_INTERRUPT_32;
@@ -86,4 +87,25 @@ UpdateExceptionHandler (
     IdtGateDescriptor.Bits.OffsetLow  = (UINT16)Address;
     IdtTable[Index] = IdtGateDescriptor.Uint64;
   }
+
+  if (IdtDescriptor != NULL) {
+    AsmWriteIdtr (&Idtr);
+  }
+}
+
+/**
+  Update exception handler in IDT table .
+
+  This function is used to update the IDT exception handler with current stage.
+
+  @param[in]  IdtDescriptor   If not NULL, it is new IDT descriptor to be updated.
+                              if it is NULL, the IDT descriptor will be retrieved from IDT base register.
+
+**/
+VOID
+UpdateExceptionHandler (
+  IN IA32_DESCRIPTOR         *IdtDescriptor
+)
+{
+  UpdateDebugAgentIdt (IdtDescriptor, UpdateExceptionHandler2);
 }

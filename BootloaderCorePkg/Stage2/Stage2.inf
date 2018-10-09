@@ -69,6 +69,7 @@
   TpmLib
   ResetSystemLib
   ConfigDataLib
+  DebugAgentLib
 
 [Guids]
   gFspReservedMemoryResourceHobGuid

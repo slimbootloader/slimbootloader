@@ -54,6 +54,7 @@
   LoaderLib
   FspApiLib
   CpuExceptionLib
+  DebugAgentLib
 
 [Guids]
   gPlatformModuleTokenSpaceGuid

@@ -19,7 +19,7 @@
 #include <Library/LocalApicLib.h>
 #include <Library/IoLib.h>
 #include <Library/TimerLib.h>
-#include <LocalApic.h>
+#include <Library/LocalApic.h>
 
 //
 // Library internal functions
@@ -509,6 +509,39 @@ SendInitSipiSipiAllExcludingSelf (
   SendIpi (IcrLow.Uint32, 0);
   MicroSecondDelay (200);
   SendIpi (IcrLow.Uint32, 0);
+}
+
+/**
+  Initialize the state of the SoftwareEnable bit in the Local APIC
+  Spurious Interrupt Vector register.
+
+  @param  Enable  If TRUE, then set SoftwareEnable to 1
+                  If FALSE, then set SoftwareEnable to 0.
+
+**/
+VOID
+EFIAPI
+InitializeLocalApicSoftwareEnable (
+  IN BOOLEAN  Enable
+  )
+{
+  LOCAL_APIC_SVR  Svr;
+
+  //
+  // Set local APIC software-enabled bit.
+  //
+  Svr.Uint32 = ReadLocalApicReg (XAPIC_SPURIOUS_VECTOR_OFFSET);
+  if (Enable) {
+    if (Svr.Bits.SoftwareEnable == 0) {
+      Svr.Bits.SoftwareEnable = 1;
+      WriteLocalApicReg (XAPIC_SPURIOUS_VECTOR_OFFSET, Svr.Uint32);
+    }
+  } else {
+    if (Svr.Bits.SoftwareEnable == 1) {
+      Svr.Bits.SoftwareEnable = 0;
+      WriteLocalApicReg (XAPIC_SPURIOUS_VECTOR_OFFSET, Svr.Uint32);
+    }
+  }
 }
 
 /**

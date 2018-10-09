@@ -37,6 +37,8 @@
 #include <Library/CpuExceptionLib.h>
 #include <Library/DebugDataLib.h>
 #include <Library/DebugLogBufferLib.h>
+#include <Library/LocalApicLib.h>
+#include <Library/DebugAgentLib.h>
 #include <Guid/PcdDataBaseSignatureGuid.h>
 #include <Guid/LoaderPlatformDataGuid.h>
 #include <VerInfo.h>

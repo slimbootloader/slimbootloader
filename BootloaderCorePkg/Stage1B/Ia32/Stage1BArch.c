@@ -50,8 +50,7 @@ LoadIdt (
 
   IdtDescriptor.Base  = (UINTN) &IdtTable->IdtTable;
   IdtDescriptor.Limit = (UINT16) (sizeof (IdtTable->IdtTable) - 1);
-  UpdateExceptionHandler (IdtDescriptor.Base);
-  AsmWriteIdtr (&IdtDescriptor);
+  UpdateExceptionHandler (&IdtDescriptor);
 }
 
 /**

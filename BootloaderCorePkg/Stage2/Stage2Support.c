@@ -60,6 +60,10 @@ BoardNotifyPhase (
       // Only call board init for ReadyToBoot & EndOfFirmware
       BoardInit (Phase);
     }
+
+    if (FspPhaseMask & BIT2) {
+      InitializeDebugAgent (DEBUG_AGENT_INIT_DXE_UNLOAD, NULL, NULL);
+    }
   }
 
 }

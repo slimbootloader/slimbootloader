@@ -74,4 +74,61 @@ PeCoffRelocateImage (
   IN     UINT32   CurrentImageBase
   );
 
+/**
+  Performs an specific relocation fpr PECOFF images. The caller needs to
+  allocate enough buffer at the PreferedImageBase
+
+  @param  CurrentImageBase        Pointer to the current image base.
+
+  @return Status code.
+
+**/
+RETURN_STATUS
+PeCoffRelocateImage (
+  IN     UINT32   CurrentImageBase
+  );
+
+/**
+  Returns PE/COFF image base is loaded in system memory where the input address is in.
+
+  On DEBUG build, searches the PE/COFF image base forward the input address and
+  returns it.
+
+  @param  Address    Address located in one PE/COFF image.
+
+  @retval 0          RELEASE build or cannot find the PE/COFF image base.
+  @retval others     PE/COFF image base found.
+
+**/
+UINTN
+EFIAPI
+PeCoffSearchImageBase (
+  IN UINTN    Address
+  );
+
+/**
+  Returns a pointer to the PDB file name for a raw PE/COFF image that is not
+  loaded into system memory with the PE/COFF Loader Library functions.
+
+  Returns the PDB file name for the PE/COFF image specified by Pe32Data.  If
+  the PE/COFF image specified by Pe32Data is not a valid, then NULL is
+  returned.  If the PE/COFF image specified by Pe32Data does not contain a
+  debug directory entry, then NULL is returned.  If the debug directory entry
+  in the PE/COFF image specified by Pe32Data does not contain a PDB file name,
+  then NULL is returned.
+  If Pe32Data is NULL, then return NULL.
+
+  @param  Pe32Data   Pointer to the PE/COFF image that is loaded in system
+                     memory.
+
+  @return The PDB file name for the PE/COFF image specified by Pe32Data or NULL
+          if it cannot be retrieved.
+
+**/
+VOID *
+EFIAPI
+PeCoffLoaderGetPdbPointer (
+  IN VOID  *Pe32Data
+  );
+
 #endif

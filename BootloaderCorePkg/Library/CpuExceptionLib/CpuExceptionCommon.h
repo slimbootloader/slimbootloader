@@ -20,6 +20,7 @@
 #include <Library/DebugLib.h>
 #include <Library/CpuExceptionLib.h>
 #include <Library/BootloaderCommonLib.h>
+#include <Library/DebugAgentLib.h>
 
 #endif
 
