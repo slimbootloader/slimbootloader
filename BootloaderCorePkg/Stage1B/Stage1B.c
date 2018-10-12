@@ -43,7 +43,6 @@ PrepareStage2 (
   UINT32                    Delta;
   STAGE_HDR                *StageHdr;
   LOADER_COMPRESSED_HEADER *Hdr;
-  PE_COFF_LOADER_IMAGE_CONTEXT  ImageContext;
 
   // Load Stage 2 (Compressed)
   Status = GetComponentInfo (FLASH_MAP_SIG_STAGE2, &Src, &Length);
@@ -130,10 +129,6 @@ PrepareStage2 (
     Stage1bHob->PayloadBase = Src;
   }
   DEBUG ((DEBUG_INFO, "Loaded STAGE2 @ 0x%08X\n", Dst));
-
-  ImageContext.ImageAddress = (PHYSICAL_ADDRESS)(UINTN) GET_STAGE_MODULE_BASE (Dst);
-  ImageContext.PdbPointer = (CHAR8 *) PeCoffLoaderGetPdbPointer ((VOID *)(UINTN) ImageContext.ImageAddress);
-  PeCoffLoaderRelocateImageExtraAction (&ImageContext);
 
   return Dst;
 }
@@ -275,7 +270,6 @@ SecStartup2 (
   DEBUG_LOG_BUFFER_HEADER  *NewLogBuf;
   DEBUG_LOG_BUFFER_HEADER  *OldLogBuf;
   BOOLEAN                   OldStatus;
-  PE_COFF_LOADER_IMAGE_CONTEXT  ImageContext;
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
   ASSERT (LdrGlobal != NULL);
@@ -388,11 +382,7 @@ SecStartup2 (
     RemapStage ();
   }
 
-  // To support source level debugging from POSTMEM
-  ZeroMem (&ImageContext, sizeof (PE_COFF_LOADER_IMAGE_CONTEXT));
-  ImageContext.ImageAddress = (PHYSICAL_ADDRESS)(UINTN) PeCoffSearchImageBase ((UINTN) SecStartup2);
-  ImageContext.PdbPointer = (CHAR8 *) PeCoffLoaderGetPdbPointer ((VOID *)(UINTN) ImageContext.ImageAddress);
-  PeCoffLoaderRelocateImageExtraAction (&ImageContext);
+  PeCoffFindAndReportImageInfo ((UINT32) (UINTN) SecStartup2);
 
   OldStatus = SaveAndSetDebugTimerInterrupt (FALSE);
   InitializeDebugAgent (DEBUG_AGENT_INIT_POSTMEM_SEC, NULL, NULL);

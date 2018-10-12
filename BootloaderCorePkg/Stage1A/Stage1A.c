@@ -130,14 +130,11 @@ SecStartup2 (
   PEI_PCD_DATABASE         *PcdDatabaseBin;
   UINT32                    PlatformDataLen;
   DEBUG_LOG_BUFFER_HEADER  *LogBufHdr;
-  PE_COFF_LOADER_IMAGE_CONTEXT  ImageContext;
 
   Stage1aAsmHob = (STAGE1A_ASM_HOB *)Params;
 
   Src = PcdGet32 (PcdStage1AFdBase) + PcdGet32 (PcdFSPTSize);
-  ImageContext.ImageAddress = (PHYSICAL_ADDRESS)(UINTN) GET_STAGE_MODULE_BASE (Src);
-  ImageContext.PdbPointer = (CHAR8 *) PeCoffLoaderGetPdbPointer ((VOID *)(UINTN) ImageContext.ImageAddress);
-  PeCoffLoaderRelocateImageExtraAction (&ImageContext);
+  PeCoffFindAndReportImageInfo (Src);
 
   LdrGlobal = GetLoaderGlobalDataPointer ();
 
@@ -267,11 +264,6 @@ SecStartup2 (
     Status = PeCoffRelocateImage (StageHdr->Base);
     if (!EFI_ERROR (Status)) {
       EnableCodeExecution ();
-
-      ImageContext.ImageAddress = (PHYSICAL_ADDRESS)(UINTN) StageHdr->Base;
-      ImageContext.PdbPointer = (CHAR8 *) PeCoffLoaderGetPdbPointer ((VOID *)(UINTN) ImageContext.ImageAddress);
-      PeCoffLoaderRelocateImageExtraAction (&ImageContext);
-
       ContinueEntry = (STAGE_ENTRY) ((UINT32)ContinueFunc + Delta);
     } else {
       CpuHalt ("Relocation failed!\n");
@@ -364,7 +356,6 @@ ContinueFunc (
   UINT8                     ImageId[9];
   BOOT_LOADER_VERSION      *VerInfoTbl;
   FSP_INFO_HEADER          *FspInfoHdr;
-  PE_COFF_LOADER_IMAGE_CONTEXT  ImageContext;
 
   LdrGlobal     = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
   AddMeasurePoint (0x1060);
@@ -411,9 +402,7 @@ ContinueFunc (
 
   // Jump into Stage 1B entry
   if (StageBase != 0) {
-    ImageContext.ImageAddress = (PHYSICAL_ADDRESS)(UINTN) GET_STAGE_MODULE_BASE (StageBase);
-    ImageContext.PdbPointer = (CHAR8 *) PeCoffLoaderGetPdbPointer ((VOID *)(UINTN) ImageContext.ImageAddress);
-    PeCoffLoaderRelocateImageExtraAction (&ImageContext);
+    PeCoffFindAndReportImageInfo ((UINT32) GET_STAGE_MODULE_BASE (StageBase));
     StageEntry = (STAGE_ENTRY) GET_STAGE_MODULE_ENTRY (StageBase);
     if (StageEntry != NULL) {
       StageEntry (Stage1aHob);

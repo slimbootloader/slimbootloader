@@ -148,4 +148,3 @@
   gPlatformModuleTokenSpaceGuid.PcdFlashMapEnabled        | FALSE      | BOOLEAN | 0x2000020C
   gPlatformModuleTokenSpaceGuid.PcdS3DebugEnabled         | FALSE      | BOOLEAN | 0x2000020D
   gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled         | FALSE      | BOOLEAN | 0x2000020E
-  gPlatformModuleTokenSpaceGuid.PcdSourceDebugEnabled     | FALSE      | BOOLEAN | 0x2000020F

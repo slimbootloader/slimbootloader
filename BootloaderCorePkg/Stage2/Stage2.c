@@ -225,7 +225,6 @@ NormalBootPath (
   UINT32                          KernelEntry;
   LOADER_GLOBAL_DATA             *LdrGlobal;
   EFI_STATUS                      Status;
-  PE_COFF_LOADER_IMAGE_CONTEXT    ImageContext;
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
 
@@ -244,10 +243,6 @@ NormalBootPath (
     ASSERT_EFI_ERROR (Status);
     Status = PeCoffLoaderGetEntryPoint (Dst, (VOID *)&PldEntry);
     ASSERT_EFI_ERROR (Status);
-
-    ImageContext.ImageAddress = (PHYSICAL_ADDRESS)(UINTN) Dst;
-    ImageContext.PdbPointer = (CHAR8 *) PeCoffLoaderGetPdbPointer ((VOID *)(UINTN) ImageContext.ImageAddress);
-    PeCoffLoaderRelocateImageExtraAction (&ImageContext);
   } else if (Dst[10] == EFI_FVH_SIGNATURE) {
     // It is a FV format
     DEBUG ((DEBUG_INFO, "FV Format Payload\n"));

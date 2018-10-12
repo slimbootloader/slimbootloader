@@ -20,6 +20,7 @@
 #include <IndustryStandard/PeImage.h>
 #include <Library/LitePeCoffLib.h>
 #include <Library/DebugLib.h>
+#include <Library/DebugAgentLib.h>
 
 #define PE_COFF_IMAGE_ALIGN_SIZE        4
 
@@ -150,6 +151,7 @@ PeCoffRelocateImage (
   EFI_TE_IMAGE_HEADER            *Te;
   EFI_IMAGE_NT_HEADERS32         *Pe32;
   EFI_IMAGE_OPTIONAL_HEADER_PTR_UNION    Hdr;
+  PE_COFF_LOADER_IMAGE_CONTEXT    ImageContext;
 
   Status = RETURN_SUCCESS;
 
@@ -252,6 +254,10 @@ PeCoffRelocateImage (
   } else {
     Pe32->OptionalHeader.ImageBase += FixupDelta;
   }
+
+  ImageContext.ImageAddress = (PHYSICAL_ADDRESS)(UINTN) ImageBase;
+  ImageContext.PdbPointer = (CHAR8 *) PeCoffLoaderGetPdbPointer ((VOID *)(UINTN) ImageContext.ImageAddress);
+  PeCoffLoaderRelocateImageExtraAction (&ImageContext);
 
   return Status;
 }
@@ -487,4 +493,26 @@ PeCoffLoaderGetPdbPointer (
   }
 
   return NULL;
+}
+
+/**
+  Find and report image info to HOST.
+
+  @param  ImageBase        Pointer to the current image base.
+
+**/
+VOID
+PeCoffFindAndReportImageInfo (
+  IN UINT32   ImageBase
+  )
+{
+  UINTN                           Pe32Data;
+  PE_COFF_LOADER_IMAGE_CONTEXT    ImageContext;
+
+  Pe32Data = PeCoffSearchImageBase (ImageBase);
+  if (Pe32Data != 0) {
+    ImageContext.ImageAddress = Pe32Data;
+    ImageContext.PdbPointer = (CHAR8 *) PeCoffLoaderGetPdbPointer ((VOID *)(UINTN) ImageContext.ImageAddress);
+    PeCoffLoaderRelocateImageExtraAction (&ImageContext);
+  }
 }

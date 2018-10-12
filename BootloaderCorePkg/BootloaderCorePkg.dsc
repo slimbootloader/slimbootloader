@@ -274,7 +274,7 @@
 !ifdef $(S3_DEBUG)
   gPlatformModuleTokenSpaceGuid.PcdS3DebugEnabled         | $(S3_DEBUG)
 !endif
-  gPlatformModuleTokenSpaceGuid.PcdSourceDebugEnabled     | $(ENABLE_SOURCE_DEBUG)
+  gPlatformCommonLibTokenSpaceGuid.PcdSourceDebugEnabled  | $(ENABLE_SOURCE_DEBUG)
 
 [PcdsDynamicDefault]
   gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut         | 2

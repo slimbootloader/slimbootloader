@@ -131,4 +131,15 @@ PeCoffLoaderGetPdbPointer (
   IN VOID  *Pe32Data
   );
 
+/**
+  Find and report image info to HOST.
+
+  @param  ImageBase        Pointer to the current image base.
+
+**/
+VOID
+PeCoffFindAndReportImageInfo (
+  IN UINT32   ImageBase
+  );
+
 #endif

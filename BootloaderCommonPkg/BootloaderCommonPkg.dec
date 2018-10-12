@@ -188,4 +188,4 @@
   gPlatformCommonLibTokenSpaceGuid.PcdMinDecompression       | FALSE      | BOOLEAN | 0x20000201
   gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled    | FALSE      | BOOLEAN | 0x20000210
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled    | FALSE      | BOOLEAN | 0x20000211
-
+  gPlatformCommonLibTokenSpaceGuid.PcdSourceDebugEnabled     | FALSE      | BOOLEAN | 0x20000212
