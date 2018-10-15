@@ -105,20 +105,16 @@ PrepareStage1B (
 **/
 VOID
 EFIAPI
-SecStartup (
+SecStartup2 (
   IN VOID  *Params
   )
 {
-  LOADER_GLOBAL_DATA        LdrGlobalData;
-  STAGE_IDT_TABLE           IdtTable;
   STAGE1A_HOB               Stage1aHob;
   LOADER_GLOBAL_DATA       *LdrGlobal;
   STAGE1A_ASM_HOB          *Stage1aAsmHob;
   STAGE_HDR                *StageHdr;
-  UINT32                    StackTop;
   STAGE_ENTRY               ContinueEntry;
   EFI_STATUS                Status;
-  UINT64                    TimeStamp;
   UINT32                    Delta;
   UINT32                    Dst;
   UINT32                    Src;
@@ -135,32 +131,12 @@ SecStartup (
   UINT32                    PlatformDataLen;
   DEBUG_LOG_BUFFER_HEADER  *LogBufHdr;
 
-  TimeStamp     = ReadTimeStamp ();
   Stage1aAsmHob = (STAGE1A_ASM_HOB *)Params;
 
-  // Init global data
-  LdrGlobal = &LdrGlobalData;
-  ZeroMem (LdrGlobal, sizeof (LOADER_GLOBAL_DATA));
-  StackTop = Stage1aAsmHob->CarBase + PcdGet32 (PcdStage1StackSize);
-  LdrGlobal->Signature             = LDR_GDATA_SIGNATURE;
-  LdrGlobal->LoaderStage           = LOADER_STAGE_1A;
-  LdrGlobal->StackTop              = StackTop;
-  LdrGlobal->MemPoolEnd            = StackTop + PcdGet32 (PcdStage1DataSize);
-  LdrGlobal->MemPoolStart          = StackTop;
-  LdrGlobal->MemPoolCurrTop        = LdrGlobal->MemPoolEnd;
-  LdrGlobal->MemPoolCurrBottom     = LdrGlobal->MemPoolStart;
-  LdrGlobal->DebugPrintErrorLevel  = PcdGet32 (PcdDebugPrintErrorLevel);
-  LdrGlobal->PerfData.PerfIndex    = 2;
-  LdrGlobal->PerfData.FreqKhz      = GetCpuTscFreqency ();
-  LdrGlobal->PerfData.TimeStamp[0] = Stage1aAsmHob->TimeStamp | 0x1000000000000000ULL;
-  LdrGlobal->PerfData.TimeStamp[1] = TimeStamp  | 0x1010000000000000ULL;
-  // Set the Loader features to default here.
-  // Any platform (board init lib) can update these according to
-  // the config data passed in or these defaults remain
-  LdrGlobal->LdrFeatures           = FEATURE_MEASURED_BOOT | FEATURE_ACPI;
+  Src = PcdGet32 (PcdStage1AFdBase) + PcdGet32 (PcdFSPTSize);
+  PeCoffFindAndReportImageInfo (Src);
 
-  LoadIdt (&IdtTable, (UINT32)LdrGlobal);
-  SetLoaderGlobalDataPointer (LdrGlobal);
+  LdrGlobal = GetLoaderGlobalDataPointer ();
 
   // Allocate version info, key store, config data space and library data.
   // Adjust for alignments.
@@ -299,6 +275,63 @@ SecStartup (
 }
 
 /**
+
+  Entry point to the C language phase of Stage1A.
+
+  After the Stage1A assembly code has initialized some temporary memory and set
+  up the stack, control is transferred to this function.
+  - Initialize the global data
+  - Do post TempRaminit board initialization.
+  - Relocate by itself stage1A code to temp memory and execute.
+  - CPU halted if relocation fails.
+
+  @param[in] Params            Pointer to stage specific parameters.
+
+**/
+VOID
+EFIAPI
+SecStartup (
+  IN VOID  *Params
+  )
+{
+  LOADER_GLOBAL_DATA        LdrGlobalData;
+  STAGE_IDT_TABLE           IdtTable;
+  LOADER_GLOBAL_DATA       *LdrGlobal;
+  STAGE1A_ASM_HOB          *Stage1aAsmHob;
+  UINT32                    StackTop;
+  UINT64                    TimeStamp;
+
+  TimeStamp     = ReadTimeStamp ();
+  Stage1aAsmHob = (STAGE1A_ASM_HOB *)Params;
+
+  // Init global data
+  LdrGlobal = &LdrGlobalData;
+  ZeroMem (LdrGlobal, sizeof (LOADER_GLOBAL_DATA));
+  StackTop = Stage1aAsmHob->CarBase + PcdGet32 (PcdStage1StackSize);
+  LdrGlobal->Signature             = LDR_GDATA_SIGNATURE;
+  LdrGlobal->LoaderStage           = LOADER_STAGE_1A;
+  LdrGlobal->StackTop              = StackTop;
+  LdrGlobal->MemPoolEnd            = StackTop + PcdGet32 (PcdStage1DataSize);
+  LdrGlobal->MemPoolStart          = StackTop;
+  LdrGlobal->MemPoolCurrTop        = LdrGlobal->MemPoolEnd;
+  LdrGlobal->MemPoolCurrBottom     = LdrGlobal->MemPoolStart;
+  LdrGlobal->DebugPrintErrorLevel  = PcdGet32 (PcdDebugPrintErrorLevel);
+  LdrGlobal->PerfData.PerfIndex    = 2;
+  LdrGlobal->PerfData.FreqKhz      = GetCpuTscFreqency ();
+  LdrGlobal->PerfData.TimeStamp[0] = Stage1aAsmHob->TimeStamp | 0x1000000000000000ULL;
+  LdrGlobal->PerfData.TimeStamp[1] = TimeStamp  | 0x1010000000000000ULL;
+  // Set the Loader features to default here.
+  // Any platform (board init lib) can update these according to
+  // the config data passed in or these defaults remain
+  LdrGlobal->LdrFeatures           = FEATURE_MEASURED_BOOT | FEATURE_ACPI;
+
+  LoadIdt (&IdtTable, (UINT32)LdrGlobal);
+  SetLoaderGlobalDataPointer (LdrGlobal);
+
+  InitializeDebugAgent (DEBUG_AGENT_INIT_PREMEM_SEC, Params, SecStartup2);
+}
+
+/**
   Continue Stage 1A execution.
 
   This function will continue Stage1A execution for a new location.
@@ -369,6 +402,7 @@ ContinueFunc (
 
   // Jump into Stage 1B entry
   if (StageBase != 0) {
+    PeCoffFindAndReportImageInfo ((UINT32) GET_STAGE_MODULE_BASE (StageBase));
     StageEntry = (STAGE_ENTRY) GET_STAGE_MODULE_ENTRY (StageBase);
     if (StageEntry != NULL) {
       StageEntry (Stage1aHob);

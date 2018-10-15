@@ -228,6 +228,20 @@ SendInitSipiSipiAllExcludingSelf (
   );
 
 /**
+  Initialize the state of the SoftwareEnable bit in the Local APIC
+  Spurious Interrupt Vector register.
+
+  @param  Enable  If TRUE, then set SoftwareEnable to 1
+                  If FALSE, then set SoftwareEnable to 0.
+
+**/
+VOID
+EFIAPI
+InitializeLocalApicSoftwareEnable (
+  IN BOOLEAN  Enable
+  );
+
+/**
   Programming Virtual Wire Mode.
 
   This function programs the local APIC for virtual wire mode following

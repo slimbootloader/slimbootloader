@@ -16,9 +16,11 @@
 
 
 #include <Base.h>
+#include <Uefi/UefiBaseType.h>
 #include <IndustryStandard/PeImage.h>
 #include <Library/LitePeCoffLib.h>
 #include <Library/DebugLib.h>
+#include <Library/DebugAgentLib.h>
 
 /**
   Check if the image is a TE or PE32 image.
@@ -250,5 +252,8 @@ PeCoffRelocateImage (
     Pe32->OptionalHeader.ImageBase += FixupDelta;
   }
 
+  PeCoffFindAndReportImageInfo (ImageBase);
+
   return Status;
 }
+

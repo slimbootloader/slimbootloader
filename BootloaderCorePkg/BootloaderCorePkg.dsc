@@ -124,7 +124,11 @@
 !if $(HAVE_FSP_BIN)
   FspApiLib|$(PLATFORM_PACKAGE)/Library/FspApiLib/FspApiLib.inf
 !endif
-
+!if $(ENABLE_SOURCE_DEBUG)
+  DebugAgentLib|BootloaderCommonPkg/Library/DebugAgentLib/DebugAgentLib.inf
+!else
+  DebugAgentLib|BootloaderCommonPkg/Library/DebugAgentLib/DebugAgentLibNull.inf
+!endif
 
 [LibraryClasses.IA32]
   PagingLib|$(PLATFORM_PACKAGE)/Library/PagingLib/PagingLib.inf
@@ -267,10 +271,10 @@
   gPlatformModuleTokenSpaceGuid.PcdVtdEnabled             | $(VTD_ENABLED)
   gPlatformModuleTokenSpaceGuid.PcdFlashMapEnabled        | $(HAVE_FLASH_MAP)
   gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled         | $(HAVE_PSD_TABLE)
-
 !ifdef $(S3_DEBUG)
   gPlatformModuleTokenSpaceGuid.PcdS3DebugEnabled         | $(S3_DEBUG)
 !endif
+  gPlatformCommonLibTokenSpaceGuid.PcdSourceDebugEnabled  | $(ENABLE_SOURCE_DEBUG)
 
 [PcdsDynamicDefault]
   gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut         | 2
@@ -302,6 +306,9 @@
     <LibraryClasses>
       SocInitLib   | Silicon/$(SILICON_PKG_NAME)/Library/Stage1ASocInitLib/Stage1ASocInitLib.inf
       BoardInitLib | Platform/$(BOARD_PKG_NAME)/Library/Stage1ABoardInitLib/Stage1ABoardInitLib.inf
+!if $(SKIP_STAGE1A_SOURCE_DEBUG)
+      DebugAgentLib| BootloaderCommonPkg/Library/DebugAgentLib/DebugAgentLibNull.inf
+!endif
   }
 
   $(PLATFORM_PACKAGE)/Stage1B/Stage1B.inf {

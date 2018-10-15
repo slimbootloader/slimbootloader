@@ -30,6 +30,7 @@
 #include <Library/LoaderPerformanceLib.h>
 #include <Library/CpuExceptionLib.h>
 #include <Library/DebugLogBufferLib.h>
+#include <Library/DebugAgentLib.h>
 #include <Guid/FspHeaderFile.h>
 #include <Guid/FlashMapInfoGuid.h>
 #include <Guid/LoaderPlatformDataGuid.h>

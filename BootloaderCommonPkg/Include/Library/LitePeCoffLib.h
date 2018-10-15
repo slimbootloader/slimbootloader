@@ -74,4 +74,18 @@ PeCoffRelocateImage (
   IN     UINT32   CurrentImageBase
   );
 
+/**
+  Performs an specific relocation fpr PECOFF images. The caller needs to
+  allocate enough buffer at the PreferedImageBase
+
+  @param  CurrentImageBase        Pointer to the current image base.
+
+  @return Status code.
+
+**/
+RETURN_STATUS
+PeCoffRelocateImage (
+  IN     UINT32   CurrentImageBase
+  );
+
 #endif

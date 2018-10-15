@@ -51,6 +51,12 @@ class Board(BaseBoard):
 
 		self.ENABLE_FWU           = 1
 
+		# To enable source debug, set 1 to self.ENABLE_SOURCE_DEBUG
+		# self.ENABLE_SOURCE_DEBUG  = 1
+
+		# For test purpose
+		# self.SKIP_STAGE1A_SOURCE_DEBUG = 1
+
 		# OS_PK | FWU_PK | CFG_PK | FWU_PLD | PLD | Stage2 | Stage1B
 		self.VERIFIED_BOOT_HASH_MASK  = 0x000000D7
 		if self.ENABLE_FWU:
@@ -59,6 +65,8 @@ class Board(BaseBoard):
 		self.STAGE1B_XIP          = 0
 
 		self.STAGE1A_SIZE         = 0x00008000
+		if self.ENABLE_SOURCE_DEBUG:
+			self.STAGE1A_SIZE += 0x2000
 		self.STAGE1B_SIZE         = 0x0001F000
 		self.STAGE2_SIZE          = 0x00020000
 
@@ -97,6 +105,8 @@ class Board(BaseBoard):
 			# For Stage1B, it can be compressed if STAGE1B_XIP is 0
 			# If so, 	STAGE1B_FD_BASE/STAGE1B_FD_SIZE need to be defined
 			self.STAGE1B_FD_SIZE    = 0x2C000
+			if self.ENABLE_SOURCE_DEBUG:
+				self.STAGE1B_FD_SIZE += 0x4000
 			self.STAGE1B_FD_BASE    = FREE_TEMP_RAM_TOP - self.STAGE1B_FD_SIZE
 
 		# For Stage2, it is always compressed.

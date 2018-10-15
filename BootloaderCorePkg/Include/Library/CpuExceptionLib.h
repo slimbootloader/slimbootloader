@@ -45,13 +45,13 @@ AsmGetTemplateAddressMap (
 
   This function is used to update the IDT exception handler with current stage.
 
-  @param[in]  IdtBase   If non-zero, it is the IDT base address.
-                        if it is 0,  the IDT base will be retrieved from IDT base register.
+  @param[in]  IdtDescriptor   If not NULL, it is new IDT descriptor to be updated.
+                              if it is NULL, the IDT descriptor will be retrieved from IDT base register.
 
 **/
 VOID
 UpdateExceptionHandler (
-  IN UINT32        IdtBase
+  IN IA32_DESCRIPTOR         *IdtDescriptor
   );
 
 #endif

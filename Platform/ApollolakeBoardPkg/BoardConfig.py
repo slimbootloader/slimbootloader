@@ -56,6 +56,14 @@ class Board(BaseBoard):
 		self.ENABLE_FWU            = 1
 		self.ENABLE_SPLASH         = 1
 
+		# To enable source debug, set 1 to self.ENABLE_SOURCE_DEBUG
+		# self.ENABLE_SOURCE_DEBUG   = 1
+
+		# Temporary skip Stage1A due to 32KB(IBBL) size limitation
+                # until library size optimization has done.
+		# If ENABLE_SOURCE_DEBUG is disabled, SKIP_STAGE1A_SOURCE_DEBUG will be ignored
+		self.SKIP_STAGE1A_SOURCE_DEBUG  = 1
+
 		# BIT0:Serial  BIT1:USB KB
 		# Support serial port input console by default
 		self.CONSOLE_IN_DEVICE_MASK  = 0x00000001
@@ -73,6 +81,8 @@ class Board(BaseBoard):
 
 		self.STAGE1A_SIZE         = 0x00008000
 		self.STAGE1B_SIZE         = 0x00035000
+		if self.ENABLE_SOURCE_DEBUG:
+			self.STAGE1B_SIZE += 0x2000
 		self.STAGE2_SIZE          = 0x00032000
 		self.PAYLOAD_SIZE         = 0x0001F000
 		self.EPAYLOAD_SIZE        = 0x00120000

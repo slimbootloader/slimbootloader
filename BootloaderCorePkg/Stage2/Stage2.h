@@ -54,6 +54,7 @@
 #include <Service/PlatformService.h>
 #include <Library/ResetSystemLib.h>
 #include <Library/ConfigDataLib.h>
+#include <Library/DebugAgentLib.h>
 
 #include <KeyStore.h>
 #include <VerInfo.h>

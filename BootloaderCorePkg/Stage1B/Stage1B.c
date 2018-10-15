@@ -237,7 +237,7 @@ CreateConfigDatabase (
 **/
 VOID
 EFIAPI
-SecStartup (
+SecStartup2 (
   IN VOID   *Params
   )
 {
@@ -269,6 +269,7 @@ SecStartup (
   UINT8                     PlatformName[PLATFORM_NAME_SIZE + 1];
   DEBUG_LOG_BUFFER_HEADER  *NewLogBuf;
   DEBUG_LOG_BUFFER_HEADER  *OldLogBuf;
+  BOOLEAN                   OldStatus;
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
   ASSERT (LdrGlobal != NULL);
@@ -278,7 +279,7 @@ SecStartup (
   DEBUG ((DEBUG_INFO, "\n============= Intel Slim Bootloader STAGE1B =============\n"));
 
   // Reload Exception handler
-  UpdateExceptionHandler (0);
+  UpdateExceptionHandler (NULL);
 
   // Migrate data from Stage1A HOB to Stage1B HOB
   Stage1aHob = (STAGE1A_HOB *)Params;
@@ -376,6 +377,17 @@ SecStartup (
   SetLoaderGlobalDataPointer (LdrGlobal);
   DEBUG ((DEBUG_INFO, "Loader global data @ 0x%08X\n", (UINT32)LdrGlobal));
 
+  if (!FeaturePcdGet (PcdStage1BXip)) {
+    // Reload GDT table into memory
+    RemapStage ();
+  }
+
+  PeCoffFindAndReportImageInfo ((UINT32) (UINTN) SecStartup2);
+
+  OldStatus = SaveAndSetDebugTimerInterrupt (FALSE);
+  InitializeDebugAgent (DEBUG_AGENT_INIT_POSTMEM_SEC, NULL, NULL);
+  SaveAndSetDebugTimerInterrupt (OldStatus);
+
   // Restore PlatformData in new LoaderGlobal
   LdrGlobal->S3DataPtr = AllocatePool (sizeof (S3_DATA));
   if (LdrGlobal->BootMode != BOOT_ON_S3_RESUME) {
@@ -462,6 +474,23 @@ SecStartup (
   SwitchStack (ContinueFunc, Stage1bHobInMem, (VOID *)OldLdrGlobal, (VOID *)StackTop);
 }
 
+/**
+  Entry point to the C language phase of Stage 1B.
+
+  Stage1B will find memory initialization. It can be either executed from
+  Flash or temporary memory.
+
+  @param[in] Params            Pointer to stage specific parameters.
+
+**/
+VOID
+EFIAPI
+SecStartup (
+  IN VOID   *Params
+  )
+{
+  InitializeDebugAgent (DEBUG_AGENT_INIT_PREMEM_SEC, Params, SecStartup2);
+}
 
 /**
   Continue Stage 1B execution.
@@ -489,11 +518,6 @@ ContinueFunc (
 
   Stage1bHob   = (STAGE1B_HOB *)Context1;
   OldLdrGlobal = (LOADER_GLOBAL_DATA *)Context2;
-
-  if (!FeaturePcdGet (PcdStage1BXip)) {
-    // Reload GDT table into memory
-    RemapStage ();
-  }
 
   BoardInit (PreTempRamExit);
 
@@ -548,9 +572,9 @@ ContinueFunc (
   SetMem (Stage2Hob, sizeof (STAGE2_HOB), 0);
   Stage2Hob->Stage2ExeBase = Dst;
   Stage2Hob->PayloadBase   = Stage1bHob->PayloadBase;
+
   SwitchStack ((SWITCH_STACK_ENTRY_POINT)GET_STAGE_MODULE_ENTRY (Dst), Stage2Hob, NULL, (VOID *)StackTop);
 
   // Error: Stage 2 returned!
   CpuHalt (NULL);
 }
-

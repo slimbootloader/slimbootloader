@@ -42,6 +42,7 @@
   gLoaderPlatformInfoGuid                       = { 0x7b6bad42, 0xd3ab, 0x4947, { 0xa2, 0x6e, 0xd6, 0xf9, 0xa9, 0xac, 0x4a, 0x2a } }
   gSeedListInfoHobGuid                          = { 0x5e9f5b2f, 0xfeeb, 0x4344, { 0xb3, 0x0e, 0x4e, 0xf2, 0x17, 0xa3, 0x91, 0xcc } }
   gBootLoaderVersionFileGuid                    = { 0x3473a022, 0xc3c2, 0x4964, { 0xb3, 0x09, 0x22, 0xb3, 0xdf, 0xb0, 0xb6, 0xca } }
+  gEfiDebugAgentGuid                            = { 0x865a5a9b, 0xb85d, 0x474c, { 0x84, 0x55, 0x65, 0xd1, 0xbe, 0x84, 0x4b, 0xe2 } }
 
 [PcdsFixedAtBuild]
   gPlatformCommonLibTokenSpaceGuid.PcdMaxLibraryDataEntry    |          8 | UINT32 | 0x20000100
@@ -60,6 +61,14 @@
   gPlatformCommonLibTokenSpaceGuid.PcdSeedListEnabled        | FALSE      | BOOLEAN | 0x20000203
   gPlatformCommonLibTokenSpaceGuid.PcdConsoleInDeviceMask    | 0x00000001 | UINT32  | 0x20000300
   gPlatformCommonLibTokenSpaceGuid.PcdConsoleOutDeviceMask   | 0x00000001 | UINT32  | 0x20000301
+
+  ## The data buffer size used by debug port in debug communication library instances.
+  #  Its value is not suggested to be changed in platform DSC file.
+  # @Prompt Assign debug port buffer size.
+  gPlatformCommonLibTokenSpaceGuid.PcdDebugPortHandleBufferSize   |        0x0 | UINT16 | 0x20000401
+  gPlatformCommonLibTokenSpaceGuid.PcdTransferProtocolRevision    | 0x00000004 | UINT32 | 0x20000402
+  gPlatformCommonLibTokenSpaceGuid.PcdExceptionsIgnoredByDebugger | 0x00000000 | UINT32 | 0x20000403
+  gPlatformCommonLibTokenSpaceGuid.PcdDebugLoadImageMethod        |        0x2 |  UINT8 | 0x20000404
 
 [PcdsFixedAtBuild, PcdsPatchableInModule]
   # For patchable PCDs, try to set the default as none-zero
@@ -179,4 +188,4 @@
   gPlatformCommonLibTokenSpaceGuid.PcdMinDecompression       | FALSE      | BOOLEAN | 0x20000201
   gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled    | FALSE      | BOOLEAN | 0x20000210
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled    | FALSE      | BOOLEAN | 0x20000211
-
+  gPlatformCommonLibTokenSpaceGuid.PcdSourceDebugEnabled     | FALSE      | BOOLEAN | 0x20000212
