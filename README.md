@@ -33,8 +33,12 @@ Getting Started
 Documentation for compiling, using, and extending Slim Bootloader can be found
 [here](https://slimbootloader.github.io/).
 
-You can contact us directly on the mailing list: 
+Mailing List
+--------------
+You can subscribe to our mailing list for questions or share your learnings: 
 https://lists.01.org/mailman/listinfo/sbl-devel
+
+Archives: https://lists.01.org/pipermail/sbl-devel/
 
 License
 -------
