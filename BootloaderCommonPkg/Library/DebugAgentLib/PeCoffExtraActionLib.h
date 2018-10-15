@@ -22,6 +22,8 @@
 #include <Library/IoLib.h>
 #include <Library/PcdLib.h>
 #include <Library/BaseMemoryLib.h>
+#include <IndustryStandard/PeImage.h>
+#include <Library/LitePeCoffLib.h>
 
 #include <ImageDebugSupport.h>
 
@@ -30,6 +32,8 @@
 
 #define IO_HW_BREAKPOINT_VECTOR_NUM                 1
 #define SOFT_INT_VECTOR_NUM                         3
+
+#define PE_COFF_IMAGE_ALIGN_SIZE                    4
 
 extern UINTN  AsmInterruptHandle;
 

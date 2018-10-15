@@ -84,6 +84,16 @@ PeCoffLoaderUnloadImageExtraAction (
   IN OUT PE_COFF_LOADER_IMAGE_CONTEXT  *ImageContext
   );
 
+/**
+  Find and report image info to HOST.
+
+  @param  ImageBase        Pointer to the current image base.
+
+**/
+VOID
+PeCoffFindAndReportImageInfo (
+  IN UINT32   ImageBase
+  );
 
 /**
   Update IDT entries for DebugAgent whenever IDT base is re-configured

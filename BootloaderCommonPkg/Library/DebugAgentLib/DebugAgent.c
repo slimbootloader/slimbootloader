@@ -93,18 +93,7 @@ FindAndReportModuleImageInfo (
   IN UINTN          AlignSize
   )
 {
-  UINTN                                Pe32Data;
-  PE_COFF_LOADER_IMAGE_CONTEXT         ImageContext;
-
-  //
-  // Find Image Base
-  //
-  Pe32Data = PeCoffSearchImageBase ((UINTN) mErrorMsgVersionAlert);
-  if (Pe32Data != 0) {
-    ImageContext.ImageAddress = Pe32Data;
-    ImageContext.PdbPointer   = PeCoffLoaderGetPdbPointer ((VOID*) (UINTN) ImageContext.ImageAddress);
-    PeCoffLoaderRelocateImageExtraAction (&ImageContext);
-  }
+  PeCoffFindAndReportImageInfo ((UINTN) mErrorMsgVersionAlert);
 }
 
 /**

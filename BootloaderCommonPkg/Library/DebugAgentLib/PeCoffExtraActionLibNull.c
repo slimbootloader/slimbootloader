@@ -46,3 +46,17 @@ PeCoffLoaderUnloadImageExtraAction (
 {
   ASSERT (ImageContext != NULL);
 }
+
+/**
+  Find and report image info to HOST.
+
+  @param  ImageBase        Pointer to the current image base.
+
+**/
+VOID
+PeCoffFindAndReportImageInfo (
+  IN UINT32   ImageBase
+  )
+{
+  return;
+}
