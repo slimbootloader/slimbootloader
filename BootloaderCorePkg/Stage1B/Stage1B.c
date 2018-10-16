@@ -278,11 +278,15 @@ SecStartup2 (
 
   DEBUG ((DEBUG_INFO, "\n============= Intel Slim Bootloader STAGE1B =============\n"));
 
+  Stage1aHob = (STAGE1A_HOB *) Params;
+  if (Stage1aHob->Stage1BBase != 0) {
+    PeCoffFindAndReportImageInfo ((UINT32) (UINTN) GET_STAGE_MODULE_BASE (Stage1aHob->Stage1BBase));
+  }
+
   // Reload Exception handler
   UpdateExceptionHandler (NULL);
 
   // Migrate data from Stage1A HOB to Stage1B HOB
-  Stage1aHob = (STAGE1A_HOB *)Params;
   ZeroMem (&Stage1bHob, sizeof (STAGE1B_HOB));
   Stage1bHob.CarBase  = Stage1aHob->CarBase;
   Stage1bHob.CarTop   = Stage1aHob->CarTop;
@@ -381,8 +385,6 @@ SecStartup2 (
     // Reload GDT table into memory
     RemapStage ();
   }
-
-  PeCoffFindAndReportImageInfo ((UINT32) (UINTN) SecStartup2);
 
   OldStatus = SaveAndSetDebugTimerInterrupt (FALSE);
   InitializeDebugAgent (DEBUG_AGENT_INIT_POSTMEM_SEC, NULL, NULL);

@@ -134,7 +134,7 @@ SecStartup2 (
   Stage1aAsmHob = (STAGE1A_ASM_HOB *)Params;
 
   Src = PcdGet32 (PcdStage1AFdBase) + PcdGet32 (PcdFSPTSize);
-  PeCoffFindAndReportImageInfo (Src);
+  PeCoffFindAndReportImageInfo ((UINT32) (UINTN) GET_STAGE_MODULE_BASE (Src));
 
   LdrGlobal = GetLoaderGlobalDataPointer ();
 
@@ -405,6 +405,7 @@ ContinueFunc (
     PeCoffFindAndReportImageInfo ((UINT32) GET_STAGE_MODULE_BASE (StageBase));
     StageEntry = (STAGE_ENTRY) GET_STAGE_MODULE_ENTRY (StageBase);
     if (StageEntry != NULL) {
+      Stage1aHob->Stage1BBase = StageBase;
       StageEntry (Stage1aHob);
     }
   }
