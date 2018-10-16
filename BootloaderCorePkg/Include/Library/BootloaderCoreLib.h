@@ -62,6 +62,7 @@ typedef struct {
   UINT32        VerInfoBase;
   UINT32        AllocDataBase;
   UINT32        AllocDataLen;
+  UINT32        Stage1BBase;
 } STAGE1A_HOB;
 
 typedef struct {
