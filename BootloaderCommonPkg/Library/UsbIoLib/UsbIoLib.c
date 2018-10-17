@@ -60,6 +60,7 @@ RegisterUsbDevice (
 
   @retval EFI_SUCCESS            The driver is successfully initialized.
   @retval EFI_NOT_FOUND          Can't find any USB block devices for boot.
+  @retval EFI_UNSUPPORTED        Device is not XHCI controller.
 
 **/
 EFI_STATUS
@@ -72,25 +73,35 @@ InitUsbDevices (
   EFI_HANDLE  UsbHostHandle;
   UINT32      PcieAddress;
   UINT32      XhciMmioBase;
+  UINT32      Data;
+  UINT8      *Class;
 
+  Status = EFI_SUCCESS;
   if (!mUsbIoInitDone) {
-    // Enable XHCI controller
+    // Verify XHCI controller
     PcieAddress = UsbHcPciBase;
-    MmioOr8 (PcieAddress + PCI_COMMAND_OFFSET, EFI_PCI_COMMAND_MEMORY_SPACE | EFI_PCI_COMMAND_BUS_MASTER);
-    XhciMmioBase = MmioRead32 (PcieAddress + PCI_BASE_ADDRESSREG_OFFSET) & ~0xF;
+    Data  = MmioRead32 (PcieAddress + PCI_REVISION_ID_OFFSET) >> 8;
+    Class = (UINT8 *)&Data;
+    if (((Class[0] == PCI_IF_XHCI) && (Class[1] == PCI_CLASS_SERIAL_USB) &&
+        (Class[2] == PCI_CLASS_SERIAL))) {
+      // Enable XHCI controller
+      MmioOr8 (PcieAddress + PCI_COMMAND_OFFSET, EFI_PCI_COMMAND_MEMORY_SPACE | EFI_PCI_COMMAND_BUS_MASTER);
+      XhciMmioBase = MmioRead32 (PcieAddress + PCI_BASE_ADDRESSREG_OFFSET) & ~0xF;
 
-    Status = UsbInitCtrl (XhciMmioBase, &UsbHostHandle);
-    DEBUG ((DEBUG_INFO, "Init USB XHCI - %r\n", Status));
-
-    Status = UsbEnumBus (UsbHostHandle, RegisterUsbDevice);
-    DEBUG ((DEBUG_INFO, "Enumerate Bus - %r\n", Status));
-    if (!EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_INFO, "Found %d USB devices on bus\n", mUsbIoCount));
+      Status = UsbInitCtrl (XhciMmioBase, &UsbHostHandle);
+      DEBUG ((DEBUG_INFO, "Init USB XHCI - %r\n", Status));
+      if (!EFI_ERROR (Status)) {
+        // Enumerate USB bus to register all devices
+        Status = UsbEnumBus (UsbHostHandle, RegisterUsbDevice);
+        DEBUG ((DEBUG_INFO, "Enumerate Bus - %r\n", Status));
+        if (!EFI_ERROR (Status)) {
+          mUsbIoInitDone = TRUE;
+          DEBUG ((DEBUG_INFO, "Found %d USB devices on bus\n", mUsbIoCount));
+        }
+      }
+    } else {
+      Status = EFI_UNSUPPORTED;
     }
-
-    mUsbIoInitDone = TRUE;
-  } else {
-    Status = EFI_SUCCESS;
   }
 
   return Status;
