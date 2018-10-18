@@ -517,6 +517,18 @@ InitializeDebugAgentPhase2 (
 
   if (Phase2Context->InitFlag == DEBUG_AGENT_INIT_PREMEM_SEC) {
     //
+    // If Temporary RAM region is below 128 MB, then send message to
+    // host to disable low memory filtering.
+    // Check a stack variable address simply.
+    //
+    if (((UINTN) &NewDebugPortHandle < BASE_128MB) && (IsHostAttached () == TRUE)) {
+      SetDebugFlag (DEBUG_AGENT_FLAG_MEMORY_READY, 1);
+      //
+      // Trigger one software interrupt to inform HOST
+      //
+      TriggerSoftInterrupt (MEMORY_READY_SIGNATURE);
+    }
+    //
     // Enable Debug Timer interrupt
     //
     SaveAndSetDebugTimerInterrupt (TRUE);
