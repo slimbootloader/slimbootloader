@@ -130,6 +130,7 @@
 !else
   DebugAgentLib|BootloaderCommonPkg/Library/DebugAgentLib/DebugAgentLibNull.inf
 !endif
+  ElfLib|BootloaderCommonPkg/Library/ElfLib/ElfLib.inf
 
 [LibraryClasses.IA32]
   PagingLib|$(PLATFORM_PACKAGE)/Library/PagingLib/PagingLib.inf
@@ -370,5 +371,4 @@
 !if $(TARGET) == RELEASE
   *_*_*_CC_FLAGS = -DLITE_PRINT
 !endif
-
 

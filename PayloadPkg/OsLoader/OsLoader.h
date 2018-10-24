@@ -46,6 +46,7 @@
 #include <Library/SblParameterLib.h>
 #include <Library/TrustyBootLib.h>
 #include <Library/UsbKbLib.h>
+#include <Library/ElfLib.h>
 #include <Guid/SeedInfoHobGuid.h>
 #include <Guid/OsConfigDataHobGuid.h>
 #include <Guid/OsBootOptionGuid.h>
