@@ -208,7 +208,7 @@ SetupBootImage (
   MultiBoot = &LoadedImage->Image.MultiBoot;
   if (IsElfImage (BootFile->Addr)) {
     DEBUG ((DEBUG_INFO, "Boot image is ELF format...\n"));
-    EntryPoint = LoadElfImage (MultiBoot);
+    EntryPoint = LoadElfImage (BootFile->Addr);
     if (EntryPoint != NULL) {
       if (IsMultiboot (BootFile->Addr)) {
         DEBUG ((DEBUG_INFO, "and Image is Multiboot format\n"));

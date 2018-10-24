@@ -21,8 +21,6 @@
 #include <Library/HobLib.h>
 #include <Guid/MemoryMapInfoGuid.h>
 
-#include "Elf32.h"
-
 #define SUPPORTED_FEATURES  (MULTIBOOT_HEADER_MODS_ALIGNED | MULTIBOOT_HEADER_WANT_MEMORY)
 UINT8 mLoaderName[]        = "Slim BootLoader\0";
 
@@ -192,7 +190,8 @@ SetupMultibootInfo (
   }
 
   // a.out symbol table [MULTIBOOT_INFO_HAS_AOUT_SYMS]: provided by a.out loader
-  // ELF symbol table [MULTIBOOT_INFO_HAS_ELF_SYMS]: provided by ELF loader
+  // ELF symbol table [MULTIBOOT_INFO_HAS_ELF_SYMS]: not supported,
+  // if required, ElfLib and MultibootLib should implement additional APIs.
 
   // BIOS drive info [MULTIBOOT_INFO_HAS_DRIVES]: not supported
   // BIOS ROM configuration table [MULTIBOOT_INFO_HAS_CONFIG_TABLE]: not supported.
@@ -422,172 +421,3 @@ DumpMbBootState (
   DEBUG ((DEBUG_INFO, "-        Esi: %4x\n", BootState->Esi));
   DEBUG ((DEBUG_INFO, "-        Edi: %4x\n\n", BootState->Edi));
 }
-
-
-#define IS_BOOTABLE_I386_ELF(h) \
- ( IS_ELF (h)                             && \
-  (h->E_Ident[EI_CLASS]   == ELFCLASS32)  && \
-  (h->E_Ident[EI_DATA]    == ELFDATA2LSB) && \
-  (h->E_Ident[EI_VERSION] == EV_CURRENT)  && \
- ((h->E_Type              == ET_EXEC)     || (h->E_Type == ET_DYN)) && \
-  (h->E_Machine           == EM_386)      && \
-  (h->E_Version           == EV_CURRENT))
-
-/**
-  Check if the image is a bootable ELF image.
-
-  @param[in]  ImgAddr    Memory address of an image
-
-  @retval TRUE           Image is a bootable ELF image
-  @retval FALSE          Not a bootable ELF image
-**/
-BOOLEAN
-EFIAPI
-IsElfImage (
-  IN  VOID                   *ImgAddr
-  )
-{
-  ELF32_EHDR                 *Ehdr;
-
-  Ehdr = (ELF32_EHDR *) ImgAddr;
-
-  return (BOOLEAN) IS_BOOTABLE_I386_ELF (Ehdr);
-}
-
-
-/**
-  load ELF image symbol table
-
-  @param[in]      Img    Memory address of ELF image
-  @param[in]      Ehdr   ELF file header
-  @param[in,out]  Eaddr  Start address for ELF symbols
-  @param[out]     Mbi    Multiboot info
-
-  @retval         End address of loaded sysbols table
-**/
-UINT32 *
-LoadElfSymtab (
-  IN      UINT32             *Img,
-  IN CONST ELF32_EHDR        *Ehdr,
-  IN OUT  UINT32             *Eaddr,
-  OUT     MULTIBOOT_INFO     *Mbi
-  )
-{
-  UINT32                     Addr;
-  UINT32                     Size;
-  UINT32                     Index;
-  ELF32_SHDR                 *Shdr;
-
-  // Clear multiboot symbol table flags.
-  Mbi->Flags &= ~ (MULTIBOOT_INFO_HAS_AOUT_SYMS | MULTIBOOT_INFO_HAS_ELF_SYMS);
-
-  // Copy ELF section headers.
-  Size = Ehdr->E_Shnum * Ehdr->E_Shentsize;
-  Shdr = (ELF32_SHDR *) Eaddr;
-  CopyMem (Shdr, (VOID *) ((UINT32)Img + Ehdr->E_Shoff), Size);
-  Eaddr += Size;
-
-  // Copy sections that are part of the symbol table.
-  for (Index = 0 ; Index < Ehdr->E_Shnum ; Index += 1) {
-    if (Shdr[Index].Sh_Type != SHT_SYMTAB) {
-      continue;
-    }
-    Addr = ROUNDED_UP ((UINT32)Eaddr, Shdr[Index].Sh_Addralign);
-    Size = ROUNDED_UP (Shdr[Index].Sh_Size, 4);
-
-    CopyMem ((VOID *)Addr, (VOID *) ((UINT32)Img + Shdr[Index].Sh_Offset), Size);
-    Shdr[Index].Sh_Addr = Addr;
-    Eaddr = (UINT32 *) (Addr + Size);
-  }
-
-  // Record symbol table in the multiboot info structure.
-  Mbi->Flags       |= MULTIBOOT_INFO_HAS_ELF_SYMS;
-  Mbi->ElfshdrNum   = Ehdr->E_Shnum;
-  Mbi->ElfshdrSize  = Ehdr->E_Shentsize;
-  Mbi->ElfshdrAddr  = (UINT32 *) Shdr;
-  Mbi->ElfshdrShndx = Ehdr->E_Shstrndx;
-
-  return Eaddr;
-}
-
-/**
-  Load the ELF image to specified address in ELF header.
-
-  This function load ELF image section by section into memory address specified
-  in ELF program header, and also load ELF symbols.
-
-  @param[in,out]  MultiBoot  Loaded multiboot image.
-
-  @retval Image entry point  The entry point of ELF image if load image success
-  @retval NULL               Error with loading ELF image
-**/
-UINT32 *
-EFIAPI
-LoadElfImage (
-  IN OUT MULTIBOOT_IMAGE     *MultiBoot
-  )
-{
-  ELF32_EHDR                 Ehdr;
-  ELF32_PHDR                 *Phdr;
-  UINT32                     Size;
-  UINT32                     Eaddr;
-  UINT32                     Index;
-  UINT32                     Msize;
-  UINT32                     Fsize;
-  UINT32                     Mpos;
-  UINT32                     Ipos;
-  UINT32                     *Img;
-
-  //
-  // TODO: Check if image, load region overlap; if yes, move image away.
-  //
-
-  //
-  //  Copy ELF header, program headers.
-  //
-  Img = (UINT32 *)MultiBoot->BootFile.Addr;
-  CopyMem (&Ehdr, (VOID *)Img, sizeof (Ehdr));
-
-  Size = Ehdr.E_Phnum * Ehdr.E_Phentsize;
-  Phdr = (ELF32_PHDR *) AllocatePool (Size);
-  CopyMem (Phdr, (VOID *) ((UINT32)Img + Ehdr.E_Phoff), Size);
-
-  //
-  //  Iterate over the program headers and load all necessary segments.
-  //  Keep track of the highest load address used in <eaddr>
-  //
-  for (Index = 0, Eaddr = 0 ; Index < Ehdr.E_Phnum ; Index += 1) {
-    if (Phdr[Index].P_Type != PT_LOAD) {
-      continue;
-    }
-
-    Msize = Phdr[Index].P_Memsz;            // target (in-memory) segment size
-    Fsize = Phdr[Index].P_Filesz;           // source (image) segment size
-    Mpos  = Phdr[Index].P_Paddr;            // target segment address
-    Ipos  = Phdr[Index].P_Offset;           // location of segment in image
-
-    if ((Mpos <= ((UINT32) Img)) && (Mpos + Msize > ((UINT32) Img))) {
-      DEBUG ((DEBUG_INFO, "** IMAGE overwrite, out of range **\n"));
-      return NULL;
-    }
-
-    if (Fsize != 0) {
-      CopyMem ((VOID *) Mpos, (VOID *) ((UINT32)Img + Ipos), Fsize);
-    }
-
-    if (Msize > Fsize) {
-      ZeroMem ((VOID *) (Mpos + Fsize), Msize - Fsize);
-    }
-
-    Eaddr = MAX (Eaddr, Mpos + Msize);
-  }
-
-  FreePool ((VOID *)Phdr);
-
-  //
-  //  The image is now bootable; try to load the symbol table as well.
-  //
-  LoadElfSymtab (Img, &Ehdr, (UINT32 *) ROUNDED_UP (Eaddr, KB_ (4)), &MultiBoot->MbInfo);
-  return (UINT32 *) Ehdr.E_Entry;
-}
-

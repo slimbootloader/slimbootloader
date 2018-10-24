@@ -253,4 +253,3 @@ typedef struct {
 } ELF32_SYMINFO;
 
 #endif // _SYS_ELF32_H_
-

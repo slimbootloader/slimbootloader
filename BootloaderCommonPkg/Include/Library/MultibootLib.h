@@ -257,35 +257,4 @@ JumpToMultibootOs (
   IN IA32_BOOT_STATE *State  // esp + 4
   );
 
-/**
-  Check if the image is a bootable ELF image.
-
-  @param[in]  ImgAddr    Memory address of an image
-
-  @retval TRUE           Image is a bootable ELF image
-  @retval FALSE          Not a bootable ELF image
-**/
-BOOLEAN
-EFIAPI
-IsElfImage (
-  IN  VOID                   *ImgAddr
-  );
-
-/**
-  Load the ELF image to specified address in ELF header.
-
-  This function load ELF image section by section into memory address specified
-  in ELF program header, and also load ELF symbols.
-
-  @param[in,out]  MultiBoot  Loaded multiboot image.
-
-  @retval Image entry point  The entry point of ELF image if load image success
-  @retval NULL               Error with loading ELF image
-**/
-UINT32 *
-EFIAPI
-LoadElfImage (
-  IN OUT MULTIBOOT_IMAGE     *MultiBoot
-  );
-
 #endif

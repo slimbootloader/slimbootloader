@@ -82,6 +82,7 @@
   TrustyBootLib
   UsbIoLib
   UsbKbLib
+  ElfLib
 
 [Guids]
   gOsConfigDataGuid

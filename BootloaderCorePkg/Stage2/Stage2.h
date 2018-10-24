@@ -55,6 +55,7 @@
 #include <Library/ResetSystemLib.h>
 #include <Library/ConfigDataLib.h>
 #include <Library/DebugAgentLib.h>
+#include <Library/ElfLib.h>
 
 #include <KeyStore.h>
 #include <VerInfo.h>
