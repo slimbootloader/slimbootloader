@@ -1,8 +1,7 @@
 /** @file
-  Helper function for printing from the shell. It uses PrintLib to send debug
-  messages to serial port device.
+  Helper function for printing from the shell.
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -19,7 +18,7 @@
 #include <Library/PrintLib.h>
 #include <Library/PcdLib.h>
 #include <Library/BaseMemoryLib.h>
-#include <Library/SerialPortLib.h>
+#include <Library/ConsoleOutLib.h>
 
 //
 // Define the maximum message length that this library supports
@@ -36,7 +35,7 @@
                       based on the format string specified by Format.
 
 **/
-VOID
+UINTN
 EFIAPI
 ShellPrint (
   IN  CONST CHAR16 *Format,
@@ -49,5 +48,5 @@ ShellPrint (
   VA_START (Marker, Format);
   AsciiVSPrintUnicodeFormat (Buffer, sizeof (Buffer), Format, Marker);
   VA_END (Marker);
-  SerialPortWrite ((UINT8 *)Buffer, AsciiStrLen (Buffer));
+  return ConsoleWrite ((UINT8 *)Buffer, AsciiStrLen (Buffer));
 }

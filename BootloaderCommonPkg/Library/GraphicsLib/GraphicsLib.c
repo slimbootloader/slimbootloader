@@ -1,7 +1,7 @@
 /** @file
   Basic graphics rendering support
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -14,8 +14,9 @@
 
 #include <Library/GraphicsLib.h>
 #include <Library/PrintLib.h>
+#include <Library/MemoryAllocationLib.h>
 
-EFI_GRAPHICS_OUTPUT_BLT_PIXEL Colors[16] = {
+CONST EFI_GRAPHICS_OUTPUT_BLT_PIXEL mColors[16] = {
   //
   // B     G     R
   //
@@ -36,6 +37,8 @@ EFI_GRAPHICS_OUTPUT_BLT_PIXEL Colors[16] = {
   {0x00, 0xff, 0xff, 0x00},  // YELLOW
   {0xff, 0xff, 0xff, 0x00},  // WHITE
 };
+
+STATIC FRAME_BUFFER_CONSOLE mFbConsole;
 
 /**
   Copy image into frame buffer.
@@ -63,10 +66,9 @@ BltToFrameBuffer (
   )
 {
   EFI_GRAPHICS_OUTPUT_BLT_PIXEL_UNION *GopBltPixels;
-  EFI_GRAPHICS_OUTPUT_BLT_PIXEL       Pixel;
-  UINT32                              FrameBufferOffset;
-  volatile UINT32                     *FrameBufferPtr;
-  UINTN                               Row, Col;
+  UINT32                               FrameBufferOffset;
+  UINT32                              *FrameBufferPtr;
+  UINTN                                Row;
 
   GopBltPixels = GopBlt;
   ASSERT (FrameBuffer != NULL);
@@ -79,16 +81,10 @@ BltToFrameBuffer (
   }
 
   // Copy image into frame buffer
-  FrameBufferPtr = (volatile UINT32 *) (UINTN) (FrameBuffer->LinearFrameBuffer);
+  FrameBufferPtr = (UINT32 *) (UINTN) (FrameBuffer->LinearFrameBuffer);
   FrameBufferOffset = OffY * FrameBuffer->HorizontalResolution + OffX;
   for (Row = 0; Row < Height; Row++) {
-    for (Col = 0; Col < Width; Col++) {
-      Pixel = GopBltPixels[Row * Width + Col].Pixel;
-      FrameBufferPtr[FrameBufferOffset + Col] = 0 \
-          | ((Pixel.Red   & FrameBuffer->Red.Mask)   << FrameBuffer->Red.Position) \
-          | ((Pixel.Green & FrameBuffer->Green.Mask) << FrameBuffer->Green.Position) \
-          | ((Pixel.Blue  & FrameBuffer->Blue.Mask)  << FrameBuffer->Blue.Position);
-    }
+    CopyMem (&FrameBufferPtr[FrameBufferOffset], &GopBltPixels[Row * Width], Width * 4);
     FrameBufferOffset += FrameBuffer->HorizontalResolution;
   }
 
@@ -126,14 +122,16 @@ BltGlyphToFrameBuffer (
   UINTN                         Row, Col;
   EFI_GRAPHICS_OUTPUT_BLT_PIXEL GopBlt[GLYPH_WIDTH * GLYPH_HEIGHT];
 
-  Width = GLYPH_WIDTH;
-  Height = GLYPH_HEIGHT;
-
-  ASSERT (FrameBuffer != NULL);
+  if (FrameBuffer == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
 
   if ((Glyph < 0) || (Glyph > 0x7f)) {
     return EFI_INVALID_PARAMETER;
   }
+
+  Width = GLYPH_WIDTH;
+  Height = GLYPH_HEIGHT;
 
   // Render ASCII characters 0-0x1f as whitespace
   if (Glyph < GlyphTableStart) {
@@ -156,7 +154,6 @@ BltGlyphToFrameBuffer (
   Initialize the frame buffer console.
 
   @param[in] FrameBuffer         Frame buffer instance
-  @param[in, out] Console             Console instance
   @param[in] Width               Width of the console (in pixels)
   @param[in] Height              Height of the console (in pixels)
   @param[in] OffX                Desired X offset of the console
@@ -170,15 +167,17 @@ EFI_STATUS
 EFIAPI
 InitFrameBufferConsole (
   IN     FRAME_BUFFER_INFO    *FrameBuffer,
-  IN OUT FRAME_BUFFER_CONSOLE *Console,
   IN     UINTN                Width,
   IN     UINTN                Height,
   IN     UINTN                OffX,
   IN     UINTN                OffY
   )
 {
-  ASSERT (FrameBuffer != NULL);
-  ASSERT (Console != NULL);
+  FRAME_BUFFER_CONSOLE  *Console;
+
+  if (FrameBuffer == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
 
   // Check dimensions
   if (((Height + OffY) > FrameBuffer->VerticalResolution)
@@ -186,6 +185,7 @@ InitFrameBufferConsole (
     return EFI_INVALID_PARAMETER;
   }
 
+  Console = &mFbConsole;
   Console->FrameBuffer = FrameBuffer;
   Console->OffX        = OffX;
   Console->OffY        = OffY;
@@ -195,6 +195,12 @@ InitFrameBufferConsole (
   Console->Cols        = Width / GLYPH_WIDTH;
   Console->CursorX     = 0;
   Console->CursorY     = 0;
+  Console->ForegroundColor = mColors[7];
+  Console->BackgroundColor = mColors[0];
+  Console->TextDisplayBuf = AllocateZeroPool (Console->Rows * Console->Cols);
+  ASSERT (Console->TextDisplayBuf != NULL);
+  Console->TextSwapBuf = AllocateZeroPool (Console->Rows * Console->Cols);
+  ASSERT (Console->TextSwapBuf != NULL);
 
   return EFI_SUCCESS;
 }
@@ -202,8 +208,7 @@ InitFrameBufferConsole (
 /**
   Scroll the console area of the screen up.
 
-  @param[in] Console      The console instance
-  @param[in] ScrollAmount Amount (in pixels) to scroll
+  @param[in] ScrollAmount Amount (in rows) to scroll
 
   @retval EFI_SUCCESS
 
@@ -211,66 +216,99 @@ InitFrameBufferConsole (
 EFI_STATUS
 EFIAPI
 FrameBufferConsoleScroll (
-  IN FRAME_BUFFER_CONSOLE *Console,
-  IN UINTN                ScrollAmount
+  IN UINTN ScrollAmount
   )
 {
-  UINTN  Row;
-  UINT32 Src, Dest;
-  UINT32 *FrameBufferPtr;
+  FRAME_BUFFER_CONSOLE *Console;
+  UINTN BufX, BufY, BufPos;
+  UINTN ScreenX, ScreenY;
 
-  ASSERT (Console != NULL);
-
-  // Copy each line to make space at the end
-  FrameBufferPtr = (UINT32 *) (UINTN) (Console->FrameBuffer->LinearFrameBuffer);
-  Dest = Console->OffY * Console->FrameBuffer->HorizontalResolution + Console->OffX;
-  Src  = Dest + ScrollAmount * Console->FrameBuffer->HorizontalResolution;
-
-  for (Row = ScrollAmount; Row < Console->Height; Row++) {
-    CopyMem (FrameBufferPtr + Dest,
-             FrameBufferPtr + Src,
-             Console->Width * 4);
-    Dest += Console->FrameBuffer->HorizontalResolution;
-    Src  += Console->FrameBuffer->HorizontalResolution;
+  Console = &mFbConsole;
+  if (Console->Height == 0) {
+    return EFI_UNSUPPORTED;
   }
 
-  // Blank new area
-  for (Row = Console->Height - ScrollAmount; Row < Console->Height; Row++) {
-    ZeroMem (FrameBufferPtr + Dest, Console->Width * 4);
-    Dest += Console->FrameBuffer->HorizontalResolution;
+  if (ScrollAmount > Console->Rows) {
+    ScrollAmount = Console->Rows;
+  }
+
+  if (ScrollAmount < Console->Rows) {
+    // Move all lines in text buffer up
+    CopyMem (&Console->TextSwapBuf[0],
+             &Console->TextDisplayBuf[Console->Cols * ScrollAmount],
+             Console->Cols * (Console->Rows - ScrollAmount));
+  }
+
+  // Blank remaining lines
+  ZeroMem (&Console->TextSwapBuf[Console->Cols * (Console->Rows - ScrollAmount)],
+           Console->Cols * ScrollAmount);
+
+  // Write text buffer to screen
+  //
+  // Note: At this point, TextDisplayBuf contains what is currently being
+  // displayed and TextSwapBuf contains what *should* be displayed. Step through
+  // every character of the buffer and update the framebuffer with any
+  // differences.
+  BufPos = 0;
+  ScreenY = Console->OffY;
+  for (BufY = 0; BufY < Console->Rows; BufY++) {
+    ScreenX = Console->OffX;
+    for (BufX = 0; BufX < Console->Cols; BufX++) {
+      if (Console->TextSwapBuf[BufPos] != Console->TextDisplayBuf[BufPos]) {
+        Console->TextDisplayBuf[BufPos] = Console->TextSwapBuf[BufPos];
+        BltGlyphToFrameBuffer (Console->FrameBuffer, Console->TextSwapBuf[BufPos],
+                               Console->ForegroundColor, Console->BackgroundColor,
+                               ScreenX, ScreenY);
+      }
+      BufPos++;
+      ScreenX += GLYPH_WIDTH;
+    }
+    ScreenY += GLYPH_HEIGHT;
   }
 
   return EFI_SUCCESS;
 }
 
 /**
- Write a string to the frame buffer console.
+  Write data from buffer to graphics framebuffer.
 
- @param[in] Console Console instance
- @param[in] Str     ASCII string to write
- @param[in] Length  Length of the string
- @param[in] ForegroundColor Fore ground color parameter
- @param[in] BackgroundColor Back ground color parameter
- @retval EFI_SUCCESS
+  Writes NumberOfBytes data bytes from Buffer to the framebuffer device.
+  The number of bytes actually written to the framebuffer is returned.
+  If the return value is less than NumberOfBytes, then the write operation failed.
+
+  If Buffer is NULL, then ASSERT().
+
+  If NumberOfBytes is zero, then return 0.
+
+  @param  Buffer           Pointer to the data buffer to be written.
+  @param  NumberOfBytes    Number of bytes to written.
+
+  @retval 0                NumberOfBytes is 0.
+  @retval >0               The number of bytes written.
+                           If this value is less than NumberOfBytes, then the write operation failed.
 
 **/
-EFI_STATUS
+UINTN
 EFIAPI
-FrameBufferConsoleWrite (
-  IN FRAME_BUFFER_CONSOLE          *Console,
-  IN UINT8                         *Str,
-  IN UINTN                         Length,
-  IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL ForegroundColor,
-  IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL BackgroundColor
+FrameBufferWrite (
+  IN UINT8     *Buffer,
+  IN UINTN      NumberOfBytes
   )
 {
-  EFI_STATUS Status;
-  UINTN      Pos;
+  FRAME_BUFFER_CONSOLE *Console;
+  EFI_STATUS            Status;
+  UINTN                 Pos;
 
-  ASSERT (Console != NULL);
-  ASSERT (Str != NULL);
+  if (Buffer == NULL) {
+    return 0;
+  }
 
-  for (Pos = 0; Pos < Length; Pos++) {
+  Console = &mFbConsole;
+  if (Console->Height == 0) {
+    return 0;
+  }
+
+  for (Pos = 0; Pos < NumberOfBytes; Pos++) {
     // Continue on next line when cursor overflows columns
     if (Console->CursorX >= Console->Cols) {
       Console->CursorX = 0;
@@ -279,99 +317,43 @@ FrameBufferConsoleWrite (
 
     // Create new line when cursor overflows rows
     if (Console->CursorY >= Console->Rows) {
-      FrameBufferConsoleScroll (Console, GLYPH_HEIGHT);
+      FrameBufferConsoleScroll (1);
       Console->CursorY = Console->Rows - 1;
       Console->CursorX = 0;
     }
 
-    if (Str[Pos] == '\n') {
+    if (Buffer[Pos] == '\x00') {
+      break;
+    } else if (Buffer[Pos] == '\b') {
+      if (Console->CursorX > 0) {
+        // Move to previous column
+        Console->CursorX--;
+      } else {
+        if (Console->CursorY != 0) {
+          // Move to previous row
+          Console->CursorY--;
+          Console->CursorX = Console->Cols - 1;
+        }
+      }
+    } else if (Buffer[Pos] == '\n') {
       // Newline
       Console->CursorX = 0;
       Console->CursorY++;
-    } else if (Str[Pos] == '\r') {
+    } else if (Buffer[Pos] == '\r') {
       // Carriage Return
       Console->CursorX = 0;
     } else {
-      Status = BltGlyphToFrameBuffer (Console->FrameBuffer, Str[Pos],
-                                      ForegroundColor, BackgroundColor,
+      Console->TextDisplayBuf[Console->CursorY * Console->Cols + Console->CursorX] = Buffer[Pos];
+      Status = BltGlyphToFrameBuffer (Console->FrameBuffer, Buffer[Pos],
+                                      Console->ForegroundColor, Console->BackgroundColor,
                                       Console->OffX + Console->CursorX * GLYPH_WIDTH,
                                       Console->OffY + Console->CursorY * GLYPH_HEIGHT);
       if (Status != EFI_SUCCESS) {
-        return Status;
+        break;
       }
       Console->CursorX++;
     }
   }
 
-  return EFI_SUCCESS;
-}
-
-/**
-  Write a formatted (printf style) message to the console.
-
-  If Format is NULL, then ASSERT().
-
-  @param[in]  Console         Console instance
-  @param[in]  Format          Format string for the message to print.
-  @param[in]  ...             Variable argument list whose contents are accessed
-                              based on the format string specified by Format.
-
-**/
-EFI_STATUS
-EFIAPI
-FrameBufferConsolePrint (
-  IN FRAME_BUFFER_CONSOLE *Console,
-  IN CONST CHAR16         *Format,
-  ...
-  )
-{
-  CHAR8    Buffer[MAX_MESSAGE_LENGTH];
-  VA_LIST  Marker;
-
-  ASSERT (Console != NULL);
-  ASSERT (Format != NULL);
-
-  VA_START (Marker, Format);
-  AsciiVSPrintUnicodeFormat (Buffer, sizeof (Buffer), Format, Marker);
-  VA_END (Marker);
-  return FrameBufferConsoleWrite (Console,
-                                  (UINT8 *)Buffer, AsciiStrLen (Buffer),
-                                  Colors[WHITE], Colors[BLACK]);
-}
-
-/**
-  Write a formatted (printf style) message to the console.
-
-  If Format is NULL, then ASSERT().
-
-  @param[in]  Console         Console instance
-  @param[in]  ForegroundColor Foreground color to use
-  @param[in]  BackgroundColor Background color to use
-  @param[in]  Format          Format string for the message to print.
-  @param[in]  ...             Variable argument list whose contents are accessed
-                              based on the format string specified by Format.
-
-**/
-EFI_STATUS
-EFIAPI
-FrameBufferConsolePrintEx (
-  IN FRAME_BUFFER_CONSOLE          *Console,
-  IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL ForegroundColor,
-  IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL BackgroundColor,
-  IN CONST CHAR16                  *Format,
-  ...
-  )
-{
-  CHAR8    Buffer[MAX_MESSAGE_LENGTH];
-  VA_LIST  Marker;
-
-  ASSERT (Console != NULL);
-  ASSERT (Format != NULL);
-
-  VA_START (Marker, Format);
-  AsciiVSPrintUnicodeFormat (Buffer, sizeof (Buffer), Format, Marker);
-  VA_END (Marker);
-  return FrameBufferConsoleWrite (Console,
-                                  (UINT8 *)Buffer, AsciiStrLen (Buffer),
-                                  ForegroundColor, BackgroundColor);
+  return Pos;
 }

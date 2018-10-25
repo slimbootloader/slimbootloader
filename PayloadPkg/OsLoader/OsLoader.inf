@@ -103,6 +103,9 @@
   gPayloadTokenSpaceGuid.PcdPayloadHeapSize
   gPlatformCommonLibTokenSpaceGuid.PcdSeedListEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdConsoleInDeviceMask
+  gPlatformCommonLibTokenSpaceGuid.PcdConsoleOutDeviceMask
+  gPlatformCommonLibTokenSpaceGuid.PcdFrameBufferMaxConsoleWidth
+  gPlatformCommonLibTokenSpaceGuid.PcdFrameBufferMaxConsoleHeight
 
 [Depex]
   TRUE

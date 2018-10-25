@@ -1,7 +1,7 @@
 /** @file
   Basic graphics rendering support
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -64,10 +64,14 @@ extern UINT32 mNarrowFontSize;
 
 typedef struct {
   FRAME_BUFFER_INFO *FrameBuffer;
+  CHAR8             *TextDisplayBuf;
+  CHAR8             *TextSwapBuf;
   UINTN             OffX, OffY;
   UINTN             Width, Height;
   UINTN             Rows, Cols;
   UINTN             CursorX, CursorY;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL ForegroundColor;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL BackgroundColor;
 } FRAME_BUFFER_CONSOLE;
 
 /**
@@ -151,7 +155,6 @@ BltGlyphToFrameBuffer (
   Initialize the frame buffer console.
 
   @param[in] FrameBuffer         Frame buffer instance
-  @param[in, out] Console             Console instance
   @param[in] Width               Width of the console (in pixels)
   @param[in] Height              Height of the console (in pixels)
   @param[in] OffX                Desired X offset of the console
@@ -165,7 +168,6 @@ EFI_STATUS
 EFIAPI
 InitFrameBufferConsole (
   IN     FRAME_BUFFER_INFO    *FrameBuffer,
-  IN OUT FRAME_BUFFER_CONSOLE *Console,
   IN     UINTN                Width,
   IN     UINTN                Height,
   IN     UINTN                OffX,
@@ -175,7 +177,6 @@ InitFrameBufferConsole (
 /**
   Scroll the console area of the screen up.
 
-  @param[in] Console      The console instance
   @param[in] ScrollAmount Amount (in pixels) to scroll
 
   @retval EFI_SUCCESS
@@ -184,71 +185,33 @@ InitFrameBufferConsole (
 EFI_STATUS
 EFIAPI
 FrameBufferConsoleScroll (
-  IN FRAME_BUFFER_CONSOLE *Console,
   IN UINTN                ScrollAmount
   );
 
 /**
- Write a string to the frame buffer console.
+  Write data from buffer to graphics framebuffer.
 
- @param[in] Console Console instance
- @param[in] Str                 ASCII string to write
- @param[in] Length              Length of the string
- @param[in] ForegroundColor     Fore ground color parameter
- @param[in] BackgroundColor     Back ground color parameter
- @retval EFI_SUCCESS
+  Writes NumberOfBytes data bytes from Buffer to the framebuffer device.
+  The number of bytes actually written to the framebuffer is returned.
+  If the return value is less than NumberOfBytes, then the write operation failed.
 
-**/
-EFI_STATUS
-EFIAPI
-FrameBufferConsoleWrite (
-  IN FRAME_BUFFER_CONSOLE          *Console,
-  IN UINT8                         *Str,
-  IN UINTN                         Length,
-  IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL ForegroundColor,
-  IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL BackgroundColor
-  );
+  If Buffer is NULL, then ASSERT().
 
-/**
-  Write a formatted (printf style) message to the console.
+  If NumberOfBytes is zero, then return 0.
 
-  If Format is NULL, then ASSERT().
+  @param  Buffer           Pointer to the data buffer to be written.
+  @param  NumberOfBytes    Number of bytes to written.
 
-  @param[in]  Console         Console instance
-  @param[in]  Format          Format string for the message to print.
-  @param[in]  ...             Variable argument list whose contents are accessed
-                              based on the format string specified by Format.
+  @retval 0                NumberOfBytes is 0.
+  @retval >0               The number of bytes written.
+                           If this value is less than NumberOfBytes, then the write operation failed.
 
 **/
-EFI_STATUS
+UINTN
 EFIAPI
-FrameBufferConsolePrint (
-  IN FRAME_BUFFER_CONSOLE *Console,
-  IN CONST CHAR16         *Format,
-  ...
-  );
-
-/**
-  Write a formatted (printf style) message to the console.
-
-  If Format is NULL, then ASSERT().
-
-  @param[in]  Console         Console instance
-  @param[in]  ForegroundColor Foreground color to use
-  @param[in]  BackgroundColor Background color to use
-  @param[in]  Format          Format string for the message to print.
-  @param[in]  ...             Variable argument list whose contents are accessed
-                              based on the format string specified by Format.
-
-**/
-EFI_STATUS
-EFIAPI
-FrameBufferConsolePrintEx (
-  IN FRAME_BUFFER_CONSOLE          *Console,
-  IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL ForegroundColor,
-  IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL BackgroundColor,
-  IN CONST CHAR16                  *Format,
-  ...
+FrameBufferWrite (
+  IN UINT8     *Buffer,
+  IN UINTN      NumberOfBytes
   );
 
 #endif

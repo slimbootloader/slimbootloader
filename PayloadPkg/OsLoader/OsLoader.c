@@ -565,7 +565,7 @@ BootOsImage (
 
 /**
   Initialize platform console.
-  
+
   @retval  EFI_NOT_FOUND    No additional console was found.
   @retval  EFI_SUCCESS      Console has been initialized successfully.
   @retval  Others           There is error during console initialization.
@@ -580,6 +580,11 @@ InitConsole (
   UINT32                   CtrlPciBase;
   UINT32                   Index;
   EFI_STATUS               Status;
+  UINT32                   Height;
+  UINT32                   Width;
+  UINT32                   OffX;
+  UINT32                   OffY;
+  FRAME_BUFFER_INFO       *FrameBuffer;
 
   Status = EFI_NOT_FOUND;
 
@@ -597,6 +602,23 @@ InitConsole (
     }
     if (CtrlPciBase > 0) {
       Status = InitUsbKeyBoard (CtrlPciBase);
+    }
+  }
+
+  if (PcdGet32 (PcdConsoleOutDeviceMask) & ConsoleOutFrameBuffer) {
+    FrameBuffer = (FRAME_BUFFER_INFO *)GetGuidHobData (NULL, NULL, &gLoaderFrameBufferInfoGuid);
+    if (FrameBuffer != NULL) {
+      Width  = FrameBuffer->HorizontalResolution;
+      Height = FrameBuffer->VerticalResolution;
+      if ((PcdGet32 (PcdFrameBufferMaxConsoleWidth) > 0) && (Width > PcdGet32 (PcdFrameBufferMaxConsoleWidth))) {
+        Width = PcdGet32 (PcdFrameBufferMaxConsoleWidth);
+      }
+      if ((PcdGet32 (PcdFrameBufferMaxConsoleHeight) > 0) && (Height > PcdGet32 (PcdFrameBufferMaxConsoleHeight))) {
+        Height = PcdGet32 (PcdFrameBufferMaxConsoleHeight);
+      }
+      OffX = (FrameBuffer->HorizontalResolution-Width)/2;
+      OffY = (FrameBuffer->VerticalResolution-Height)/2;
+      Status = InitFrameBufferConsole (FrameBuffer, Width, Height, OffX, OffY);
     }
   }
 

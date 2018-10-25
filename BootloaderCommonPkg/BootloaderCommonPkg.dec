@@ -70,6 +70,10 @@
   gPlatformCommonLibTokenSpaceGuid.PcdExceptionsIgnoredByDebugger | 0x00000000 | UINT32 | 0x20000403
   gPlatformCommonLibTokenSpaceGuid.PcdDebugLoadImageMethod        |        0x2 |  UINT8 | 0x20000404
 
+  # Options to limit framebuffer console size (it will be centered if smaller than screen resolution)
+  gPlatformCommonLibTokenSpaceGuid.PcdFrameBufferMaxConsoleWidth  | 0xFFFFFFFF | UINT32 | 0x20000501
+  gPlatformCommonLibTokenSpaceGuid.PcdFrameBufferMaxConsoleHeight | 0xFFFFFFFF | UINT32 | 0x20000502
+
 [PcdsFixedAtBuild, PcdsPatchableInModule]
   # For patchable PCDs, try to set the default as none-zero
   # It is to prevent it from being put into BSS section, thus cause patching issue
