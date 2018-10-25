@@ -1,7 +1,7 @@
 /** @file
   A minimal command-line shell.
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -14,13 +14,13 @@
 
 #include <Library/ShellLib.h>
 #include <Library/ConsoleInLib.h>
+#include <Library/ConsoleOutLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/TimerLib.h>
 #include "Shell.h"
 #include "Parsing.h"
 
-#define ESCBS L"\b\x1b[K"
 #define ESC   '\x1b'
 
 CONST SHELL_COMMAND *mShellDefaultCommands[] = {
@@ -124,7 +124,7 @@ Shell (
   if (Timeout != 0) {
     ShellPrint (L"\n");
     for (Index = Timeout; Index > 0; Index--) {
-      ShellPrint (L"%c[80DPress any key within %d second(s) to enter the command shell", 0x1b, Index);
+      ShellPrint (L"Press any key within %d second(s) to enter the command shell", Index);
       for (Index1 = 0; Index1 < 10; Index1++) {
         Start = ConsolePoll ();
         if (Start) {
@@ -132,6 +132,7 @@ Shell (
         }
         MicroSecondDelay (100 * 1000);
       }
+      ShellPrint(L"\r");
       if (Start) {
         break;
       }
@@ -228,8 +229,8 @@ ReadShellCommand (
     // Check for backspace/delete
     if ((Char == 0x7f) || (Char == '\b')) {
       if (Count > 0) {
-        // Move cursor back 1 char and clear line
-        ShellPrint (ESCBS);
+        // Move cursor back 1 char and clear
+        ShellPrint (L"\b \b");
         Count--;
       }
       continue;
@@ -318,8 +319,8 @@ ShellReadLine (
     // Check for backspace/delete
     if ((Char == 0x7f) || (Char == '\b')) {
       if (Count > 0) {
-        // Move cursor back 1 char and clear line
-        ShellPrint (ESCBS);
+        // Move cursor back 1 char and clear
+        ShellPrint (L"\b \b");
         Count--;
       }
       continue;
@@ -413,8 +414,8 @@ ShellReadUintn (
         if (Buffer[Count - 1] == 'x' || Buffer[Count - 1] == 'X') {
           *IsHex = FALSE;
         }
-        // Move cursor back 1 char and clear line
-        ShellPrint (ESCBS);
+        // Move cursor back 1 char and clear
+        ShellPrint (L"\b \b");
         Count--;
       }
       continue;

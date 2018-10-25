@@ -68,6 +68,9 @@ class Board(BaseBoard):
 		# Support serial port input console by default
 		self.CONSOLE_IN_DEVICE_MASK  = 0x00000001
 
+		# BIT0:Serial  BIT1:GFX
+		self.CONSOLE_OUT_DEVICE_MASK = 0x00000001
+
 		# OS_PK | FWU_PK | CFG_PK | FWU_PLD | PLD | Stage2 | Stage1B
 		# Stage1B is verified by CSE
 		self.VERIFIED_BOOT_HASH_MASK  = 0x000000D6

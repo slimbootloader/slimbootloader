@@ -1,7 +1,7 @@
 ## @file
 # This file is used to provide board specific image information.
 #
-#  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
 #
 #  This program and the accompanying materials
 #  are licensed and made available under the terms and conditions of the BSD License
@@ -56,6 +56,13 @@ class Board(BaseBoard):
 
 		# For test purpose
 		# self.SKIP_STAGE1A_SOURCE_DEBUG = 1
+
+		# BIT0:Serial  BIT1:USB KB
+		# Support serial port input console by default
+		self.CONSOLE_IN_DEVICE_MASK  = 0x00000001
+
+		# BIT0:Serial  BIT1:GFX
+		self.CONSOLE_OUT_DEVICE_MASK = 0x00000001
 
 		# OS_PK | FWU_PK | CFG_PK | FWU_PLD | PLD | Stage2 | Stage1B
 		self.VERIFIED_BOOT_HASH_MASK  = 0x000000D7

@@ -36,6 +36,7 @@
 [LibraryClasses]
   SerialPortLib
   DebugLogBufferLib
+  ConsoleOutLib
   BaseMemoryLib
   PcdLib
   PrintLib
@@ -47,4 +48,3 @@
   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask              ## CONSUMES
   gEfiMdePkgTokenSpaceGuid.PcdFixedDebugPrintErrorLevel      ## CONSUMES
   gPlatformCommonLibTokenSpaceGuid.PcdDebugOutputDeviceMask  ## CONSUMES
-

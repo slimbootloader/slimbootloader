@@ -21,6 +21,7 @@
 #include <Library/DebugLogBufferLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include <Library/DebugPrintErrorLevelLib.h>
+#include <Library/ConsoleOutLib.h>
 
 //
 // Define the maximum debug and assert message length that this library supports
@@ -73,13 +74,16 @@ DebugPrint (
   VA_END (Marker);
 
   //
-  // Send the print string to a Serial Port
+  // Send the print string to debug output handler
   //
   if (PcdGet32 (PcdDebugOutputDeviceMask) & DEBUG_OUTPUT_DEVICE_LOG_BUFFER) {
     DebugLogBufferWrite  ((UINT8 *)Buffer, AsciiStrLen (Buffer));
   }
   if (PcdGet32 (PcdDebugOutputDeviceMask) & DEBUG_OUTPUT_DEVICE_SERIAL_PORT) {
     SerialPortWrite ((UINT8 *)Buffer, AsciiStrLen (Buffer));
+  }
+  if (PcdGet32 (PcdDebugOutputDeviceMask) & DEBUG_OUTPUT_DEVICE_CONSOLE) {
+    ConsoleWrite ((UINT8 *)Buffer, AsciiStrLen (Buffer));
   }
 }
 

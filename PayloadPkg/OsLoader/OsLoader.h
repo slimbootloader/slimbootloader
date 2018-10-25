@@ -37,8 +37,10 @@
 #include <Library/ShellExtensionLib.h>
 #include <Library/LoaderPerformanceLib.h>
 #include <Library/RpmbLib.h>
+#include <Library/GraphicsLib.h>
 #include <Library/SerialPortLib.h>
 #include <Library/ConsoleInLib.h>
+#include <Library/ConsoleOutLib.h>
 #include <Library/ConfigDataLib.h>
 #include <Library/AbSupportLib.h>
 #include <Library/SblParameterLib.h>

@@ -24,6 +24,7 @@ extern EFI_GUID gLoaderPlatformDataGuid;
 
 #define  DEBUG_OUTPUT_DEVICE_LOG_BUFFER     BIT0
 #define  DEBUG_OUTPUT_DEVICE_SERIAL_PORT    BIT1
+#define  DEBUG_OUTPUT_DEVICE_CONSOLE        BIT2
 
 typedef struct {
   UINT32  Signature;
