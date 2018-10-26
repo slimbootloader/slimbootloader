@@ -59,5 +59,6 @@
   gPlatformModuleTokenSpaceGuid.PcdMaxServiceNumber
   gPlatformModuleTokenSpaceGuid.PcdVariableRegionBase
   gPlatformModuleTokenSpaceGuid.PcdVariableRegionSize
+  gPlatformModuleTokenSpaceGuid.PcdFramebufferInitEnabled
 
 

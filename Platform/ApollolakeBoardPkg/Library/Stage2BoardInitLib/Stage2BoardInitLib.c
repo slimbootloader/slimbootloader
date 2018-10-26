@@ -556,6 +556,44 @@ RestoreOtgRole (
 }
 
 /**
+  Set framebuffer range as WC using MTRR to improve performance.
+
+  The BSP MTRR needs to be programmed before FspSiliconInit() API so that
+  all APs' MTRRs will be syned up during FspSiliconInit() call.
+
+**/
+VOID
+SetFrameBufferWriteCombining (
+  VOID
+)
+{
+  UINT32             MsrIdx;
+  UINT32             MsrMax;
+  UINT32             Base;
+
+  // Enable Framebuffer as WC.
+  MsrMax = EFI_MSR_CACHE_VARIABLE_MTRR_BASE +
+           (2 * (UINT32)(AsmReadMsr64(EFI_MSR_IA32_MTRR_CAP) & B_EFI_MSR_IA32_MTRR_CAP_VARIABLE_SUPPORT));
+  for (MsrIdx = EFI_MSR_CACHE_VARIABLE_MTRR_BASE; MsrIdx < MsrMax; MsrIdx += 2) {
+    // Try to find a free MTRR pair
+    if ((AsmReadMsr64(MsrIdx + 1) & B_EFI_MSR_CACHE_MTRR_VALID) == 0) {
+      break;
+    }
+  }
+
+  if (MsrIdx < MsrMax) {
+    // Framebuffer belongs to PMEM32 in PCI resource allocation.
+    // The 1st 256MB from PcdPciResourceMem32Base will be consumed by MEM32 resource.
+    // And framebuffer should be allocated to the next 256MB aligned address.
+    Base = (PcdGet32 (PcdPciResourceMem32Base) + SIZE_256MB)  &  ~(SIZE_256MB - 1);
+    AsmWriteMsr64 (MsrIdx,     Base | CACHE_WRITECOMBINING);
+    AsmWriteMsr64 (MsrIdx + 1, 0xF00000000ULL + B_EFI_MSR_CACHE_MTRR_VALID + (UINT32)(~(SIZE_256MB - 1)));
+  } else {
+    DEBUG ((DEBUG_WARN, "Failed to find a free MTRR pair for framebuffer!\n"));
+  }
+}
+
+/**
   Clear FSP HOB data
 
 **/
@@ -606,6 +644,10 @@ BoardInit (
       VariableConstructor (VarBase, VarSize);
     }
     SaveOtgRole();
+    if (PcdGetBool (PcdFramebufferInitEnabled)) {
+      // Enable framebuffer as WC for performance
+      SetFrameBufferWriteCombining ();
+    }
     GenericCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);
     if (GenericCfgData != NULL) {
       SetPayloadId (GenericCfgData->PayloadId);
@@ -614,8 +656,8 @@ BoardInit (
   case PostSiliconInit:
     // To prevent from generating MCA for CLFLUSH flash region
     AsmMsrAnd32 (IA32_MC4_CTL, (UINT32)~BIT4);
-    // Enable GFX PCI command register if splash screen is required.
-    if (PcdGetBool (PcdSplashEnabled)) {
+    // Enable GFX PCI command register if framebuffer init is required.
+    if (PcdGetBool (PcdFramebufferInitEnabled)) {
       PciWrite8 (PCI_LIB_ADDRESS(SA_IGD_BUS, SA_IGD_DEV, SA_IGD_FUN_0, PCI_COMMAND_OFFSET), \
                  EFI_PCI_COMMAND_MEMORY_SPACE | EFI_PCI_COMMAND_BUS_MASTER);
     }
@@ -886,7 +928,11 @@ UpdateFspConfig (
   FspsConfig->HDAudioClkGate              = 1;
   FspsConfig->HdAudioDspUaaCompliance     = 1;
 
-  FspsConfig->GraphicsConfigPtr = PcdGet32 (PcdGraphicsVbtAddress);
+  if (PcdGetBool (PcdFramebufferInitEnabled)) {
+    FspsConfig->GraphicsConfigPtr = PcdGet32 (PcdGraphicsVbtAddress);
+  } else {
+    FspsConfig->GraphicsConfigPtr = 0;
+  }
 
   FspsConfig->InitS3Cpu                   = 1;
 

@@ -93,4 +93,5 @@
   gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
   gPlatformModuleTokenSpaceGuid.PcdSplashEnabled
+  gPlatformModuleTokenSpaceGuid.PcdFramebufferInitEnabled
 

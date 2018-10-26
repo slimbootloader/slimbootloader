@@ -271,6 +271,7 @@
   gPlatformModuleTokenSpaceGuid.PcdStage1BXip             | $(STAGE1B_XIP)
   gPlatformModuleTokenSpaceGuid.PcdLoadImageUseFsp        | $(ENABLE_FSP_LOAD_IMAGE)
   gPlatformModuleTokenSpaceGuid.PcdSplashEnabled          | $(ENABLE_SPLASH)
+  gPlatformModuleTokenSpaceGuid.PcdFramebufferInitEnabled | $(ENABLE_FRAMEBUFFER_INIT)
   gPlatformModuleTokenSpaceGuid.PcdVtdEnabled             | $(VTD_ENABLED)
   gPlatformModuleTokenSpaceGuid.PcdFlashMapEnabled        | $(HAVE_FLASH_MAP)
   gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled         | $(HAVE_PSD_TABLE)

@@ -240,7 +240,11 @@ UpdateFspConfig (
   FspsUpd    = (FSPS_UPD *)FspUpdRgnPtr;
   FspsConfig = &FspsUpd->FspsConfig;
 
-  FspsConfig->GraphicsConfigPtr = PcdGet32(PcdGraphicsVbtAddress);
+  if (PcdGetBool (PcdFramebufferInitEnabled)) {
+    FspsConfig->GraphicsConfigPtr = PcdGet32 (PcdGraphicsVbtAddress);
+  } else {
+    FspsConfig->GraphicsConfigPtr = 0;
+  }
 
   SilCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
   if (SilCfgData == NULL) {

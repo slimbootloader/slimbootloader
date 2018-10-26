@@ -184,6 +184,7 @@ class BaseBoard(object):
 		self.ENABLE_SMP_INIT       = 1
 		self.ENABLE_FSP_LOAD_IMAGE = 0
 		self.ENABLE_SPLASH         = 0
+		self.ENABLE_FRAMEBUFFER_INIT = 0
 		self.ENABLE_CRYPTO_SHA_NI  = 0
 		self.ENABLE_FWU            = 0
 		self.ENABLE_SOURCE_DEBUG   = 0

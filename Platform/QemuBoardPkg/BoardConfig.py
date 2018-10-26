@@ -44,12 +44,12 @@ class Board(BaseBoard):
 		self.PCI_IO_BASE          = 0x00002000
 		self.PCI_MEM32_BASE       = 0x80000000
 
-		self.HAVE_VERIFIED_BOOT   = 1
-		self.HAVE_VBT_BIN         = 1
-		self.ENABLE_SPLASH        = 1
-		self.HAVE_FLASH_MAP       = 1
-
-		self.ENABLE_FWU           = 1
+		self.HAVE_VERIFIED_BOOT       = 1
+		self.HAVE_VBT_BIN             = 1
+		self.HAVE_FLASH_MAP           = 1
+		self.ENABLE_SPLASH            = 1
+		self.ENABLE_FRAMEBUFFER_INIT  = 1
+		self.ENABLE_FWU               = 1
 
 		# To enable source debug, set 1 to self.ENABLE_SOURCE_DEBUG
 		# self.ENABLE_SOURCE_DEBUG  = 1
