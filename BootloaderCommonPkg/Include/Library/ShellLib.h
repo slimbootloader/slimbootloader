@@ -84,6 +84,7 @@ extern CONST SHELL_COMMAND ShellCommandPerf;
 extern CONST SHELL_COMMAND ShellCommandBoot;
 extern CONST SHELL_COMMAND ShellCommandMmcDll;
 extern CONST SHELL_COMMAND ShellCommandCdata;
+extern CONST SHELL_COMMAND ShellCommandDmesg;
 
 #define SHELL_COMMANDS_STANDARD \
   &ShellCommandHob, \
@@ -93,6 +94,7 @@ extern CONST SHELL_COMMAND ShellCommandCdata;
   &ShellCommandBoot, \
   &ShellCommandMmcDll, \
   &ShellCommandCdata, \
+  &ShellCommandDmesg, \
 
 // x86 Architectural Commands
 extern CONST SHELL_COMMAND ShellCommandCpuid;

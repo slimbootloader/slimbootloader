@@ -28,6 +28,7 @@
 [Sources]
   CmdBoot.c
   CmdCpuid.c
+  CmdDmesg.c
   CmdExit.c
   CmdHelp.c
   CmdHob.c
