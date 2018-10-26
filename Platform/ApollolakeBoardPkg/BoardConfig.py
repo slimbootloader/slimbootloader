@@ -50,11 +50,12 @@ class Board(BaseBoard):
 		self.HAVE_SEED_LIST       = 0
 		self.HAVE_PSD_TABLE       = 1
 
-		self.ENABLE_FSP_LOAD_IMAGE = 0
-		self.ENABLE_CRYPTO_SHA_NI  = 1
-		self.VTD_ENABLED           = 1
-		self.ENABLE_FWU            = 1
-		self.ENABLE_SPLASH         = 1
+		self.ENABLE_FSP_LOAD_IMAGE    = 0
+		self.ENABLE_CRYPTO_SHA_NI     = 1
+		self.VTD_ENABLED              = 1
+		self.ENABLE_FWU               = 1
+		self.ENABLE_SPLASH            = 1
+		self.ENABLE_FRAMEBUFFER_INIT  = 1
 
 		# To enable source debug, set 1 to self.ENABLE_SOURCE_DEBUG
 		# self.ENABLE_SOURCE_DEBUG   = 1

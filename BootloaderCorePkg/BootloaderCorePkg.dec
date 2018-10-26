@@ -136,15 +136,21 @@
 
 
 [PcdsFeatureFlag]
-  gPlatformModuleTokenSpaceGuid.PcdIntelGfxEnabled        | FALSE      | BOOLEAN | 0x20000202
+  # Determine if the Intel GFX device should be enabled or not in system
+  gPlatformModuleTokenSpaceGuid.PcdIntelGfxEnabled        | TRUE       | BOOLEAN | 0x20000200
+  # Determine if the GFX framebuffer should be initialized or not.
+  gPlatformModuleTokenSpaceGuid.PcdFramebufferInitEnabled | FALSE      | BOOLEAN | 0x20000201
+  # Determine if the splash screen should be displayed or not.
+  gPlatformModuleTokenSpaceGuid.PcdSplashEnabled          | FALSE      | BOOLEAN | 0x20000202
+
   gPlatformModuleTokenSpaceGuid.PcdAcpiEnabled            | TRUE       | BOOLEAN | 0x20000203
   gPlatformModuleTokenSpaceGuid.PcdSmpEnabled             | TRUE       | BOOLEAN | 0x20000204
   gPlatformModuleTokenSpaceGuid.PcdPciEnumEnabled         | TRUE       | BOOLEAN | 0x20000205
   gPlatformModuleTokenSpaceGuid.PcdStage1BXip             | TRUE       | BOOLEAN | 0x20000206
   gPlatformModuleTokenSpaceGuid.PcdStage1AXip             | TRUE       | BOOLEAN | 0x20000207
   gPlatformModuleTokenSpaceGuid.PcdLoadImageUseFsp        | FALSE      | BOOLEAN | 0x20000209
-  gPlatformModuleTokenSpaceGuid.PcdSplashEnabled          | TRUE       | BOOLEAN | 0x2000020A
   gPlatformModuleTokenSpaceGuid.PcdVtdEnabled             | FALSE      | BOOLEAN | 0x2000020B
   gPlatformModuleTokenSpaceGuid.PcdFlashMapEnabled        | FALSE      | BOOLEAN | 0x2000020C
   gPlatformModuleTokenSpaceGuid.PcdS3DebugEnabled         | FALSE      | BOOLEAN | 0x2000020D
   gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled         | FALSE      | BOOLEAN | 0x2000020E
+
