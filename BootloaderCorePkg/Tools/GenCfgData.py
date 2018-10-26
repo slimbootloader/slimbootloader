@@ -638,17 +638,20 @@ EndList
                             Handle = True
                         if Handle:
                             if Keyword == 'include':
-                                IncludeFilePath1 = Remaining
-                                IncludeFilePath1 = self.ExpandMacros(IncludeFilePath1)
+                                Remaining = self.ExpandMacros(Remaining)
                                 # Relative to DSC filepath
-                                IncludeFilePath = os.path.join(os.path.dirname(DscFile), IncludeFilePath1)
+                                IncludeFilePath = os.path.join(os.path.dirname(DscFile), Remaining)
                                 if not os.path.exists(IncludeFilePath):
-                                    IncludeFilePath = os.path.join(os.environ['SBL_SOURCE'], IncludeFilePath1)
+                                    # Relative to repository to find dsc in common platform
+                                    IncludeFilePath = os.path.join(os.path.dirname(DscFile), "../../..", Remaining)
+                                    if (not os.path.exists(IncludeFilePath)) and ('SBL_SOURCE' in os.environ):
+                                        # Relative to SBL_SOURCE if it is defined.
+                                        IncludeFilePath = os.path.join(os.environ['SBL_SOURCE'], Remaining)
 
                                 try:
                                     IncludeDsc  = open(IncludeFilePath, "r")
                                 except:
-                                    raise Exception ("ERROR: Cannot open file '%s'" % IncludeFilePath)
+                                    raise Exception ("ERROR: Cannot open file '%s',\n Please check if env variable SBL_SOURCE is set correctly." % IncludeFilePath)
                                 NewDscLines = IncludeDsc.readlines()
                                 IncludeDsc.close()
                                 DscLines = NewDscLines + DscLines
