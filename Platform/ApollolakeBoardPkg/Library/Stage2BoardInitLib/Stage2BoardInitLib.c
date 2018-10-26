@@ -1194,7 +1194,7 @@ UpdateOsBootMediumInfo (
       OsBootCfgData->OsBootOptionCount, PcdGet32(PcdOsBootOptionNumber)));
   }
 
-  Length = sizeof(OS_BOOT_OPTION_LIST) + sizeof (OS_BOOT_OPTION) * Count;
+  Length = sizeof (OS_BOOT_OPTION) * Count;
   CopyMem(OsBootOptionList->OsBootOption, OsBootCfgData->OsBootOptions, Length);
 
   //
