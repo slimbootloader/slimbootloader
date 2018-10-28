@@ -75,5 +75,11 @@ Scope (\_SB.PCI0) {
       //
       Memory32Fixed (ReadOnly, 0x0FEE00000, 0x0100000, LIOH)
     })
+
+    Method(_CRS,0,Serialized)
+    {
+        Return(BUF0)
+    }
+
   }
 }
