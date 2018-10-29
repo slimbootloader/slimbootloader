@@ -603,7 +603,7 @@ KeyboardPoll (
                UsbKbDevice->EndpointDescriptor.EndpointAddress,
                KeyBuf,
                &DataSize,
-               1
+               PcdGet32 (PcdUsbKeyboardPollingTimeout)
                );
   if (!EFI_ERROR (Status)) {
     if ((KeyBuf[2] == 0) || (KeyBuf[2] != UsbKbDevice->LastChar)) {

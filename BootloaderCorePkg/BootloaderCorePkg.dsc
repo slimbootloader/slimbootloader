@@ -235,7 +235,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdSupportedMediaTypeMask | $(BOOT_MEDIA_SUPPORT_MASK)
 
   gPlatformCommonLibTokenSpaceGuid.PcdSeedListEnabled     | $(HAVE_SEED_LIST)
-
+  gPlatformCommonLibTokenSpaceGuid.PcdUsbKeyboardPollingTimeout | $(USB_KB_POLLING_TIMEOUT)
 
 [PcdsPatchableInModule]
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel   | 0x8000004F

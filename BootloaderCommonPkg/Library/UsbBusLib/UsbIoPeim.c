@@ -169,6 +169,7 @@ PeiUsbBulkTransfer (
   EFI_USB_ENDPOINT_DESCRIPTOR *EndpointDescriptor;
   UINT8                       EndpointIndex;
   VOID                        *Data2[EFI_USB_MAX_BULK_BUFFER_NUM];
+  BOOLEAN                     IsInterruptTransfer;
 
   PeiUsbDev     = PEI_USB_DEVICE_FROM_THIS (This);
 
@@ -194,6 +195,14 @@ PeiUsbBulkTransfer (
     return EFI_INVALID_PARAMETER;
   }
 
+  if ((PeiUsbDev->EndpointDesc[EndpointIndex]->Attributes & USB_ENDPOINT_TYPE_MASK) == USB_ENDPOINT_INTERRUPT) {
+    // Since USB HC PPI has no interrupt transfer support, reuse bulk transfer instead.
+    // Only support interrupt transfer for low speed device for now.
+    IsInterruptTransfer = TRUE;
+  } else {
+    IsInterruptTransfer = FALSE;
+  }
+
   MaxPacketLength = PeiUsbDev->EndpointDesc[EndpointIndex]->MaxPacketSize;
   if ((PeiUsbDev->DataToggle & (1 << EndpointIndex)) != 0) {
     DataToggle = 1;
@@ -209,7 +218,7 @@ PeiUsbBulkTransfer (
                PeiUsbDev->Usb2HcPpi,
                PeiUsbDev->DeviceAddress,
                DeviceEndpoint,
-               PeiUsbDev->DeviceSpeed,
+               IsInterruptTransfer ? EFI_USB_SPEED_LOW : PeiUsbDev->DeviceSpeed,
                MaxPacketLength,
                Data2,
                DataLength,

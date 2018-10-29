@@ -340,6 +340,17 @@ UpdateOsBootMediumInfo (
   OsBootOptionList->OsBootOptionCount++;
   BootOption++;
 
+  // Boot file image from USB
+  BootOption->DevType   = OsBootDeviceUsb;
+  BootOption->DevAddr   = 0x00000400;
+  BootOption->HwPart    = 0;
+  BootOption->BootFlags = 0;
+  BootOption->FsType    = EnumFileSystemTypeAuto;
+  BootOption->SwPart    = 0;
+  CopyMem (BootOption->Image[0].FileName, "iasimage.bin", sizeof ("iasimage.bin"));
+  OsBootOptionList->OsBootOptionCount++;
+  BootOption++;
+
   ASSERT (OsBootOptionList->OsBootOptionCount <= PcdGet32 (PcdOsBootOptionNumber));
 
   //

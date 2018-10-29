@@ -41,8 +41,9 @@ class Board(BaseBoard):
 		self.BOARD_PKG_NAME       = 'QemuBoardPkg'
 		self.SILICON_PKG_NAME     = 'QemuSocPkg'
 
-		self.PCI_IO_BASE          = 0x00002000
-		self.PCI_MEM32_BASE       = 0x80000000
+		self.PCI_IO_BASE              = 0x00002000
+		self.PCI_MEM32_BASE           = 0x80000000
+		self.USB_KB_POLLING_TIMEOUT   = 10
 
 		self.HAVE_VERIFIED_BOOT       = 1
 		self.HAVE_VBT_BIN             = 1
