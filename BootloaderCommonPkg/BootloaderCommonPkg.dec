@@ -70,6 +70,9 @@
   gPlatformCommonLibTokenSpaceGuid.PcdExceptionsIgnoredByDebugger | 0x00000000 | UINT32 | 0x20000403
   gPlatformCommonLibTokenSpaceGuid.PcdDebugLoadImageMethod        |        0x2 |  UINT8 | 0x20000404
 
+  # USB keyboard polling timeout in milliseconds
+  gPlatformCommonLibTokenSpaceGuid.PcdUsbKeyboardPollingTimeout   | 0x00000001 | UINT32 | 0x20000440
+
   # Options to limit framebuffer console size (it will be centered if smaller than screen resolution)
   gPlatformCommonLibTokenSpaceGuid.PcdFrameBufferMaxConsoleWidth  | 0xFFFFFFFF | UINT32 | 0x20000501
   gPlatformCommonLibTokenSpaceGuid.PcdFrameBufferMaxConsoleHeight | 0xFFFFFFFF | UINT32 | 0x20000502

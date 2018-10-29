@@ -42,6 +42,7 @@
   UsbIoLib
 
 [Pcd]
-  gEfiMdePkgTokenSpaceGuid.PcdUsbTransferTimeoutValue  ## CONSUMES
+  gEfiMdePkgTokenSpaceGuid.PcdUsbTransferTimeoutValue            ## CONSUMES
+  gPlatformCommonLibTokenSpaceGuid.PcdUsbKeyboardPollingTimeout  ## CONSUMES
 
 

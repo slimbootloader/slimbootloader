@@ -1018,7 +1018,7 @@ XhcPeiBulkTransfer (
 ON_EXIT:
 
   if (EFI_ERROR (Status)) {
-    // Interrupt Transfer might return EFI_TIMEOUT if no data is ready. 
+    // Interrupt Transfer might return EFI_TIMEOUT if no data is ready.
     if (!(IsInterruptTransfer && (Status == EFI_TIMEOUT))) {
       DEBUG ((EFI_D_ERROR, "XhcPeiBulkTransfer: error - %r, transfer - %x\n", Status, *TransferResult));
     }
