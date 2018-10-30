@@ -94,71 +94,7 @@ typedef struct {
   FIRMWARE_UPDATE_REGION      FwRegion[1];
 } FIRMWARE_UPDATE_PARTITION;
 
-//
-// Partition information for firmware update
-// It may include multiple regions
-//
-typedef struct {
-
-  ///
-  /// Boot medium type, Refer OS_BOOT_MEDIUM_TYPE
-  ///
-  UINT8                DevType;
-
-  ///
-  /// If there are multiple controllers, it indicate which 
-  /// controller instance the boot medium belong to.
-  ///
-  UINT8                DevInstance;
-  UINT8                Reserved[3];
-
-  ///
-  /// Zero-based hardware partition number
-  ///
-  UINT8                HwPart;
-
-  ///
-  /// Zero-based software partition number for boot image
-  /// Used for file system only.
-  ///
-  UINT8                SwPart;
-
-  ///
-  /// For File system support only, Refer OS_FILE_SYSTEM_TYPE
-  ///
-  UINT8                FsType;
-
-  ///
-  /// Used for image from file system, Ascii file name
-  /// If FileName[0] is zero, means this entry is invalid
-  ///
-  CHAR8                FileName[MAX_FILE_LEN];
-
-  ///
-  /// Lba offset address relative to partition
-  ///
-  UINT32               LbaAddr;
-} FW_UPD_USER_CFG_DATA;
-
 #define CAPSULE_IMAGE_SIZE(h)   ((h)->HeaderSize + (h)->PubKeySize + (h)->ImageSize + (h)->SignatureSize)
-
-/**
-  Platform code to get capsule image for firmware update.
-
-  This function is platform hook to implement specific way to detecting capsule
-  firmware update
-
-  @param[out] CapsuleImage     The firmware update capsule image.
-  @param[out] CapsuleImageSize The capsule image size.
-
-  @retval  EFI_SUCCESS         Get the capsule image successfully.
-  @retval  others              Error happening when getting capsule image.
-**/
-EFI_STATUS
-PlatformGetCapsuleImage (
-  OUT  VOID       **CapsuleImage,
-  OUT  UINT32     *CapsuleImageSize
-  );
 
 /**
   Get capsule image for firmware update.

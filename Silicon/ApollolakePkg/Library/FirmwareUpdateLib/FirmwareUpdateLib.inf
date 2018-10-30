@@ -30,7 +30,6 @@
   Platform/ApollolakeBoardPkg/ApollolakeBoardPkg.dec
   BootloaderCorePkg/BootloaderCorePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
-  PayloadPkg/PayloadPkg.dec
 
 [LibraryClasses]
   BaseLib
@@ -51,8 +50,6 @@
 [Guids]
   gEfiPartTypeSystemPartGuid
   gOsBootOptionGuid
-  gFirmwareUpdateImageFileGuid
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
-  gPayloadTokenSpaceGuid.PcdPayloadHobList
