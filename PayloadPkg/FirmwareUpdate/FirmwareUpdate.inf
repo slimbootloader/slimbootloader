@@ -33,6 +33,7 @@
   MdePkg/MdePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
   PayloadPkg/PayloadPkg.dec
+  Platform/CommonBoardPkg/CommonBoardPkg.dec
 
 [LibraryClasses]
   FirmwareUpdateLib
