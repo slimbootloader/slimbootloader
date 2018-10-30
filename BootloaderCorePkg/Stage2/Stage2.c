@@ -252,7 +252,7 @@ NormalBootPath (
       CopyMem ((VOID *)Dst[1], Dst, Stage2Hob->PayloadActualLength);
     }
   } else if (IsElfImage (Dst)) {
-    PldEntry = (PAYLOAD_ENTRY) LoadElfImage (Dst);
+    PldEntry = (PAYLOAD_ENTRY) (UINTN) LoadElfImage (Dst);
     ASSERT (PldEntry != NULL);
   } else {
     // Assume RAW Binary Payload
