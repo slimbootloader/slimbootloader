@@ -1,5 +1,5 @@
 /** @file
-The header file for firmware update library.
+The header file for firmware update mechanism.
 
 Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
 This program and the accompanying materials

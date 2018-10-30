@@ -31,8 +31,8 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Library/ResetSystemLib.h>
 #include <Library/SecureBootLib.h>
 #include <Library/BootloaderCommonLib.h>
-#include <Library/FirmwareUpdateLib.h>
 #include <Library/LiteFvLib.h>
+#include <FirmwareUpdate.h>
 
 /**
   Update a region block.

@@ -16,17 +16,16 @@
 #include <Library/IoLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include <Service/PlatformService.h>
-#include <Library/FirmwareUpdateLib.h>
 #include <Library/ConfigDataLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/ShellExtensionLib.h>
 #include <Service/HeciService.h>
-#include <ConfigDataDefs.h>
+#include <ConfigDataCommonStruct.h>
+#include <FirmwareUpdate.h>
 
-
-#define FW_UPD_CAPSULE_INFO_LENGTH 128
-#define CDATA_HEADER_LENGTH        8
+#define CDATA_CAPSULE_INFO_LENGTH 128
+#define CDATA_HEADER_LENGTH       8
 
 /**
   Reset the system.
@@ -74,12 +73,12 @@ ShellCommandFwUpdateFunc (
 {
   CDATA_BLOB            *UserCfgData;
   CDATA_HEADER          *CdataHeader;
-  FW_UPD_USER_CFG_DATA  *FwUpdUserCfgData;
-  UINT8                  Data[FW_UPD_CAPSULE_INFO_LENGTH];
-  EFI_STATUS             Status;
+  CAPSULE_INFO_CFG_DATA *FwUpdUserCfgData;
+  UINT8                 Data[CDATA_CAPSULE_INFO_LENGTH];
   PLATFORM_SERVICE      *PlatformService;
   HECI_SERVICE          *HeciService;
-  UINT32                 CdataLength;
+  UINT32                CdataLength;
+  EFI_STATUS            Status;
 
   HeciService = (HECI_SERVICE *) GetServiceBySignature (HECI_SERVICE_SIGNATURE);
   if ((HeciService == NULL) || (HeciService->SimpleHeciCommand == NULL)) {
@@ -87,18 +86,18 @@ ShellCommandFwUpdateFunc (
     return EFI_UNSUPPORTED;
   }
 
-  ZeroMem (Data, FW_UPD_CAPSULE_INFO_LENGTH);
+  ZeroMem (Data, CDATA_CAPSULE_INFO_LENGTH);
 
   UserCfgData = (CDATA_BLOB *)(&Data[0]);
 
   //
   // Populate configuration data header
   //
-  CdataLength = (CDATA_HEADER_LENGTH + sizeof(FW_UPD_USER_CFG_DATA));
+  CdataLength = (CDATA_HEADER_LENGTH + sizeof(CAPSULE_INFO_CFG_DATA));
   UserCfgData->Signature = CFG_DATA_SIGNATURE;
   UserCfgData->HeaderLength = sizeof(CDATA_BLOB);
   UserCfgData->UsedLength  = sizeof(CDATA_BLOB)  + CdataLength;
-  UserCfgData->TotalLength = FW_UPD_CAPSULE_INFO_LENGTH;
+  UserCfgData->TotalLength = CDATA_CAPSULE_INFO_LENGTH;
 
   //
   // Populate CDATA header for the item
@@ -107,13 +106,13 @@ ShellCommandFwUpdateFunc (
   CdataHeader->ConditionNum = 1;
   CdataHeader->Length = CdataLength >> 2;
   CdataHeader->Version = 1;
-  CdataHeader->Tag = CDATA_CAPSULE_TAG;
+  CdataHeader->Tag = CDATA_CAPSULE_INFO_TAG;
   CdataHeader->Condition[0].Value = 0xFFFFFFFF;
 
   //
   // Populate firmware update user configuration data structure
   //
-  FwUpdUserCfgData = (FW_UPD_USER_CFG_DATA *)(&Data[sizeof(CDATA_BLOB) + CDATA_HEADER_LENGTH]);
+  FwUpdUserCfgData = (CAPSULE_INFO_CFG_DATA *)(&Data[sizeof(CDATA_BLOB) + CDATA_HEADER_LENGTH]);
   FwUpdUserCfgData->DevAddr = 0x00001500;
   FwUpdUserCfgData->DevType = 5;
   FwUpdUserCfgData->HwPart = 0;
@@ -126,7 +125,7 @@ ShellCommandFwUpdateFunc (
   //
   // Send HECI user command to save IBB signal data
   //
-  Status = HeciService->HeciUserCommand((UINT8 *)Data, FW_UPD_CAPSULE_INFO_LENGTH, 1 );
+  Status = HeciService->HeciUserCommand((UINT8 *)Data, CDATA_CAPSULE_INFO_LENGTH, 1 );
   if (EFI_ERROR(Status)) {
     DEBUG((DEBUG_ERROR, " HeciSendUserCommand: Status : %r\n", Status));
     return Status;

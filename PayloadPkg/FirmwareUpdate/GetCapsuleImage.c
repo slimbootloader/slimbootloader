@@ -23,8 +23,10 @@
 #include <Library/HobLib.h>
 #include <Library/MediaAccessLib.h>
 #include <Library/BootloaderCommonLib.h>
-#include <Library/FirmwareUpdateLib.h>
 #include <Library/CryptoLib.h>
+#include <FirmwareUpdate.h>
+#include <Library/ConfigDataLib.h>
+#include <ConfigDataCommonStruct.h>
 
 #define MM_PCI_BASE(Bus, Device, Function) \
   ( (UINTN)PcdGet64(PcdPciExpressBaseAddress) + \
@@ -36,10 +38,10 @@
 /**
   Get hardware partition handle from boot option info
 
-  This function will initialize boot device, and get hardware partition
+  This function will initialize boot device and get hardware partition
   handle based on boot option.
 
-  @param[in]  BootOption      Current boot option
+  @param[in]  CapsuleInfo     Pointer to capsule information config data
   @param[out] HwPartHandle    Hardware partition handle for boot image
 
   @retval  RETURN_SUCCESS     If partition was found successfully
@@ -47,31 +49,35 @@
 **/
 EFI_STATUS
 FindBootPartition (
-  IN  OS_BOOT_OPTION         *BootOption,
-  OUT EFI_HANDLE             *HwPartHandle
+  IN  CAPSULE_INFO_CFG_DATA *CapsuleInfo,
+  OUT EFI_HANDLE            *HwPartHandle
   )
 {
-  RETURN_STATUS              Status;
-  UINTN                      BootMediumPciBase;
+  RETURN_STATUS   Status;
+  UINTN           BootMediumPciBase;
+
+  if (CapsuleInfo == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
 
   //
   // Get OS boot device address
   //
-  if ((BootOption->DevAddr & 0xFF000000) == 0) {
+  if ((CapsuleInfo->DevAddr & 0xFF000000) == 0) {
     BootMediumPciBase = (UINTN)MM_PCI_BASE (
-                          ((BootOption->DevAddr >> 16) & 0xFF), \
-                          ((BootOption->DevAddr >> 8)  & 0xFF), \
-                          (BootOption->DevAddr & 0xFF)      \
+                          ((CapsuleInfo->DevAddr >> 16) & 0xFF), \
+                          ((CapsuleInfo->DevAddr >> 8)  & 0xFF), \
+                          (CapsuleInfo->DevAddr & 0xFF)      \
                           );
   } else {
-    BootMediumPciBase = BootOption->DevAddr;
+    BootMediumPciBase = CapsuleInfo->DevAddr;
   }
   DEBUG ((DEBUG_INFO, "BootMediumPciBase(0x%x)\n", BootMediumPciBase));
 
   //
   // Init Boot device functions
   //
-  Status = MediaSetInterfaceType (BootOption->DevType);
+  Status = MediaSetInterfaceType (CapsuleInfo->DevType);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Invalid Boot device configured\n"));
     return RETURN_UNSUPPORTED;
@@ -83,7 +89,7 @@ FindBootPartition (
   }
 
   DEBUG ((DEBUG_INFO, "find boot partition\n"));
-  Status = FindPartitions (BootOption->HwPart, HwPartHandle);
+  Status = FindPartitions (CapsuleInfo->HwPart, HwPartHandle);
   if (EFI_ERROR (Status)) {
     return Status;
   }
@@ -100,10 +106,11 @@ FindBootPartition (
   After capsule image is loaded into memory, information will be saved
   to LoadedImage.
 
-  @param[in]      HwPartHandle    Partition handler
-  @param[out]     FileBuffer      Pointer to the buffer address for the
-                                  loaded image.
-  @param[out]     FileSize        Pointer to the length of the loaded image.
+  @param[in]  CapsuleInfo     Pointer to capsule information config data
+  @param[in]  HwPartHandle    Partition handler
+  @param[out] FileBuffer      Pointer to the buffer address for the
+                              loaded image.
+  @param[out] FileSize        Pointer to the length of the loaded image.
 
   @retval  EFI_OUT_OF_RESOURCES   Out of memory resource
   @retval  EFI_NOT_FOUND          Cannot find the capsule image
@@ -113,9 +120,10 @@ FindBootPartition (
 **/
 EFI_STATUS
 GetCapsuleFromRawPartition (
-  IN    EFI_HANDLE  HwPartHandle,
-  OUT   VOID        **FileBuffer,
-  OUT   UINTN       *FileSize
+  IN  CAPSULE_INFO_CFG_DATA   *CapsuleInfo,
+  IN  EFI_HANDLE              HwPartHandle,
+  OUT VOID                    **CapsuleImage,
+  OUT UINTN                   *CapsuleImageSize
   )
 {
   EFI_STATUS                Status;
@@ -130,13 +138,13 @@ GetCapsuleFromRawPartition (
   FIRMWARE_UPDATE_HEADER    *FwUpdHeader;
 
   DEBUG ((DEBUG_INFO, "Load image from SwPart (0x%x), LbaAddr(0x%x)\n", 0, 0));
-  Status = GetLogicalPartitionInfo (0, HwPartHandle, &LogicBlkDev);
+  Status = GetLogicalPartitionInfo (CapsuleInfo->SwPart, HwPartHandle, &LogicBlkDev);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "Get logical partition error, Status = %r\n", Status));
     return Status;
   }
 
-  Status = MediaGetMediaInfo (0, &BlockInfo);
+  Status = MediaGetMediaInfo (CapsuleInfo->HwPart, &BlockInfo);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "GetMediaInfo Error %r\n", Status));
     return Status;
@@ -151,8 +159,8 @@ GetCapsuleFromRawPartition (
                       sizeof (FIRMWARE_UPDATE_HEADER) : \
                       ((sizeof (FIRMWARE_UPDATE_HEADER) / BlockSize) + 1) * BlockSize;
   Status = MediaReadBlocks (
-             0,
-             LogicBlkDev.StartBlock,
+             CapsuleInfo->HwPart,
+             LogicBlkDev.StartBlock + CapsuleInfo->LbaAddr,
              AlginedHeaderSize,
              BlockData
              );
@@ -207,8 +215,8 @@ GetCapsuleFromRawPartition (
   // Read the capsule image into the buffer
   //
   Status = MediaReadBlocks (
-             0,
-             LogicBlkDev.StartBlock,
+             CapsuleInfo->HwPart,
+             LogicBlkDev.StartBlock + CapsuleInfo->LbaAddr,
              AlginedImageSize,
              Buffer
              );
@@ -221,8 +229,8 @@ GetCapsuleFromRawPartition (
     return EFI_LOAD_ERROR;
   }
 
-  *FileBuffer = Buffer;
-  *FileSize = ImageSize;
+  *CapsuleImage = Buffer;
+  *CapsuleImageSize = ImageSize;
   return EFI_SUCCESS;
 }
 
@@ -243,19 +251,20 @@ GetCapsuleFromRawPartition (
 **/
 EFI_STATUS
 LoadCapsuleImage (
-  IN   OS_BOOT_OPTION            *OsImageInfo,
-  OUT  VOID                      **CapsuleImage,
-  OUT  UINT32                    *CapsuleImageSize
+  IN  CAPSULE_INFO_CFG_DATA *CapsuleInfo,
+  OUT VOID                  **CapsuleImage,
+  OUT UINT32                *CapsuleImageSize
   )
 {
-  EFI_STATUS                     Status;
-  UINTN                          HardwareDeviceBlockIndex;
-  DEVICE_BLOCK_INFO              BlockInfo;
-  EFI_HANDLE                     FsHandle;
-  EFI_HANDLE                     HwPartHandle;
+  EFI_STATUS          Status;
+  UINTN               HardwareDeviceBlockIndex;
+  DEVICE_BLOCK_INFO   BlockInfo;
+  EFI_HANDLE          FsHandle;
+  EFI_HANDLE          HwPartHandle;
+  CHAR16              FileName[MAX_FILE_LEN];
 
   HwPartHandle = NULL;
-  Status = FindBootPartition (OsImageInfo, &HwPartHandle);
+  Status = FindBootPartition (CapsuleInfo, &HwPartHandle);
   if (EFI_ERROR (Status)) {
     return Status;
   }
@@ -263,13 +272,13 @@ LoadCapsuleImage (
   //
   // If we do not have file system, try reading capsule from raw partition
   //
-  if (OsImageInfo->FsType >= EnumFileSystemMax) {
-    Status = GetCapsuleFromRawPartition (HwPartHandle, CapsuleImage, CapsuleImageSize);
+  if (CapsuleInfo->FsType >= EnumFileSystemMax) {
+    Status = GetCapsuleFromRawPartition (CapsuleInfo, HwPartHandle, CapsuleImage, CapsuleImageSize);
     return Status;
   }
 
   DEBUG ((DEBUG_ERROR, "Find partition\n"));
-  HardwareDeviceBlockIndex = OsImageInfo->HwPart;
+  HardwareDeviceBlockIndex = CapsuleInfo->HwPart;
   Status = MediaGetMediaInfo (HardwareDeviceBlockIndex, &BlockInfo);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "GetInfo Error %r\n", Status));
@@ -277,7 +286,7 @@ LoadCapsuleImage (
   }
 
   FsHandle = NULL;
-  Status = InitFileSystem (OsImageInfo->SwPart, EnumFileSystemTypeFat, HwPartHandle, &FsHandle);
+  Status = InitFileSystem (CapsuleInfo->SwPart, EnumFileSystemTypeFat, HwPartHandle, &FsHandle);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "No partitions found, Status = %r\n", Status));
     goto Done;
@@ -288,8 +297,19 @@ LoadCapsuleImage (
   //
   *CapsuleImageSize = 0x1000000;
   *CapsuleImage     = NULL;
-  // get the capsule image
-  Status = GetFileByName (FsHandle, L"FwuImage.bin", CapsuleImage, CapsuleImageSize);
+
+  //
+  // Find capsule using the name provided in configuration data
+  //
+  if (CapsuleInfo->FileName[0] != 0) {
+    AsciiStrToUnicodeStr((CONST CHAR8 *)(&CapsuleInfo->FileName), FileName);
+    Status = GetFileByName(FsHandle, FileName, CapsuleImage, CapsuleImageSize);
+    if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_ERROR, " Capsule File '%a' Status : %r\n", FileName, Status));
+    }
+  } else {
+    Status = EFI_NOT_FOUND;
+  }
 
 Done:
   if (EFI_ERROR (Status)) {
@@ -319,7 +339,7 @@ GetOsImageList (
   VOID
   )
 {
-  EFI_HOB_GUID_TYPE             *GuidHob;
+  EFI_HOB_GUID_TYPE   *GuidHob;
 
   GuidHob = GetNextGuidHob (&gOsBootOptionGuid, GetHobListPtr());
   if (GuidHob == NULL) {
@@ -337,8 +357,8 @@ GetOsImageList (
   header. It could be read from EMMC, UFS, USB, SATA, etc. block device. Often the
   Capsule image could be saved in the root directory of a FAT system.
 
-  @param[out] FwBuffer        The firmware update capsule image.
-  @param[out] FwSize          The capsule image size.
+  @param[out] CapsuleImage      The firmware update capsule image.
+  @param[out] CapsuleImageSize  The capsule image size.
 
   @retval  EFI_SUCCESS        Get the capsule image successfully.
   @retval  others             Error happening when getting capsule image.
@@ -346,55 +366,36 @@ GetOsImageList (
 EFI_STATUS
 EFIAPI
 GetCapsuleImage (
-  OUT  VOID                      **FwBuffer,
-  OUT  UINT32                    *FwSize
+  OUT VOID     **CapsuleImage,
+  OUT UINT32   *CapsuleImageSize
   )
 {
-  EFI_STATUS                     Status;
-  VOID                           *CapsuleImage;
-  UINTN                          CapsuleImageSize;
-  OS_BOOT_OPTION_LIST            *OsImageInfoList;
-  UINT32                         Index;
+  EFI_STATUS              Status;
+  CAPSULE_INFO_CFG_DATA   *CapsuleInfo;
 
   Status = EFI_UNSUPPORTED;
+  CapsuleInfo = NULL;
 
   DEBUG ((DEBUG_INFO, "\n=================Read Capsule Image==============\n"));
 
-  Status = PlatformGetCapsuleImage (&CapsuleImage, &CapsuleImageSize);
-  DEBUG((DEBUG_ERROR, " PlatformGetCapsuleImage: Status : %r\n", Status));
-  if ((Status == EFI_SUCCESS) || (Status == EFI_NOT_FOUND)) {
-    *FwSize   = CapsuleImageSize;
-    *FwBuffer = CapsuleImage;
-    return Status;
-  }
-
   //
-  // Get Boot Image Info
+  // Get capsule configuration data
   //
-  OsImageInfoList = GetOsImageList ();
-  if (OsImageInfoList == NULL) {
-    DEBUG ((DEBUG_ERROR, "Could not obtain OS image list\n"));
+  CapsuleInfo = (CAPSULE_INFO_CFG_DATA *) FindConfigDataByTag (CDATA_CAPSULE_INFO_TAG);
+  //
+  // If we do not find capsule information, return error 
+  //
+  if (CapsuleInfo == NULL) {
+    DEBUG((DEBUG_ERROR, " CapsuleInfo not found \n"));
     return EFI_NOT_FOUND;
   }
 
-  //
-  // Load and run Image in order from OsImageInfoList
-  //
-  for (Index = 0; Index < OsImageInfoList->OsBootOptionCount; Index++) {
-    Status = LoadCapsuleImage (&OsImageInfoList->OsBootOption[Index], &CapsuleImage, &CapsuleImageSize);
-    if (!EFI_ERROR (Status)) {
-      break;
-    }
-  }
-
-  if (Index == OsImageInfoList->OsBootOptionCount) {
-    DEBUG ((DEBUG_ERROR, "Get firmware update capsule image failure!\n"));
+  Status = LoadCapsuleImage (CapsuleInfo, CapsuleImage, CapsuleImageSize);
+  if (EFI_ERROR(Status)) {
     return Status;
   }
 
-  *FwSize   = CapsuleImageSize;
-  *FwBuffer = CapsuleImage;
-  DEBUG ((DEBUG_INFO, "Capsule Image found, ImageSize=0x%x\n", *FwSize));
+  DEBUG ((DEBUG_INFO, "Capsule Image found, ImageSize=0x%x\n", *CapsuleImageSize));
   DEBUG ((DEBUG_INFO, "First 256Bytes of capsule image\n"));
   DumpHex (2, 0, 256, (VOID *)CapsuleImage);
 

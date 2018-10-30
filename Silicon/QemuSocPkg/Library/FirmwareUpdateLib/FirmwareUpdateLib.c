@@ -28,7 +28,7 @@
 #include <RegAccess.h>
 #include <Library/FatLib.h>
 #include <Library/GpioLib.h>
-#include <Library/FirmwareUpdateLib.h>
+#include <FirmwareUpdate.h>
 
 SPI_FLASH_SERVICE             *mFwuSpiService = NULL;
 UINT32                         mFlashSize;

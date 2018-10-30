@@ -62,7 +62,7 @@ class Board(BaseBoard):
 		self.STAGE1B_SIZE         = 0x0001F000
 		self.STAGE2_SIZE          = 0x00020000
 
-		self.EPAYLOAD_SIZE        = 0x00100000
+		self.EPAYLOAD_SIZE        = 0x000FD000
 		self.PAYLOAD_SIZE         = 0x00020000
 		self.CFGDATA_SIZE         = 0x00001000
 		self.VARIABLE_SIZE        = 0x00002000
