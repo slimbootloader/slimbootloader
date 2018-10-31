@@ -21,6 +21,36 @@ UINT8                             *mBackupBuffer;
 UINT32                             mMpInitPhase = EnumMpInitNull;
 
 /**
+  Relocate SMM base for CPU
+
+  @param[in]  Index       CPU index to rebase.
+  @param[in]  ApicId      CPU APIC ID.
+
+**/
+VOID
+SmmRebase (
+  IN UINT32  Index,
+  IN UINT32  ApicId
+)
+{
+  INT32   Offset;
+
+  Offset = PcdGet32 (PcdSmramTsegSize) - (SMM_BASE_MIN_SIZE + Index * SMM_BASE_GAP);
+  if (Offset <= 0) {
+    return;
+  }
+
+  AsmWriteCr2 (PcdGet32 (PcdSmramTsegBase) + Offset);
+  while (!AcquireSpinLockOrFail (&mMpDataStruct.SpinLock)) {
+    CpuPause ();
+  }
+  SendSmiIpi (ApicId);
+  mMpDataStruct.SmmRebaseDoneCounter++;
+  ReleaseSpinLock (&mMpDataStruct.SpinLock);
+  AsmWriteCr2 (0);
+}
+
+/**
   Common CPU initialization routine.
 
   @param[in]  Index       CPU index to initialize.
@@ -39,6 +69,10 @@ CpuInit (
   ApicId = GetApicId();
   if (Index < PcdGet32 (PcdCpuMaxLogicalProcessorNumber)) {
     mSysCpuInfo.CpuInfo[Index].ApicId = ApicId;
+  }
+
+  if (PcdGetBool (PcdSmmRebaseEnabled)) {
+    SmmRebase (Index, ApicId);
   }
 
   return EFI_SUCCESS;
@@ -136,19 +170,24 @@ MpInit (
     if (mMpInitPhase != EnumMpInitNull) {
       Status = EFI_UNSUPPORTED;
     } else {
+
+      // Init structure for lock
+      mMpDataStruct.SmmRebaseDoneCounter = 0;
+      InitializeSpinLock (&mMpDataStruct.SpinLock);
+
       //
       // Allocate 1 K * 16 AP Stack, assume to support max 16 CPUs
       //
       ApStackTop = (EFI_PHYSICAL_ADDRESS) (UINTN)AllocatePages ( \
                    EFI_SIZE_TO_PAGES (PcdGet32 (PcdCpuMaxLogicalProcessorNumber) * AP_STACK_SIZE));
       ZeroMem (&mAddressMap, sizeof (mAddressMap));
-      AsmGetHotAddCodeAddressMap (&mAddressMap);
+      AsmGetAddressMap (&mAddressMap);
 
       //
-      // Allocate backup Buffer
-      //
-      mBackupBuffer = AllocatePages (EFI_SIZE_TO_PAGES (mAddressMap.CodeSize + mAddressMap.MpDataSize));
-      CopyMem (mBackupBuffer, ApBuffer, (mAddressMap.CodeSize + mAddressMap.MpDataSize));
+      // Allocate backup Buffer for MP waking up
+      // It is shared with initial SMBASE region.  So needs to cover at least 32KB.
+      mBackupBuffer = AllocatePages (EFI_SIZE_TO_PAGES (AP_BUFFER_SIZE));
+      CopyMem (mBackupBuffer, ApBuffer, AP_BUFFER_SIZE);
 
       //
       // Copy the Rendezvous routine to the memory buffer @ < 1 MB
@@ -253,10 +292,17 @@ MpInit (
         DEBUG ((DEBUG_INFO, " CPU %2d APIC ID: %d\n", Index, mSysCpuInfo.CpuInfo[Index].ApicId));
       }
 
+      if (PcdGetBool (PcdSmmRebaseEnabled)) {
+        // Check SMM rebase result
+        if (mMpDataStruct.SmmRebaseDoneCounter != CpuCount) {
+          CpuHalt ("CPU SMM rebase failed!\n");
+        }
+      }
+
       //
       // Restore AP buffer (needed for S3)
       //
-      CopyMem (ApBuffer, mBackupBuffer, (mAddressMap.CodeSize + mAddressMap.MpDataSize));
+      CopyMem (ApBuffer, mBackupBuffer, AP_BUFFER_SIZE);
 
       mMpInitPhase = EnumMpInitRun;
     }

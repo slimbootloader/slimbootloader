@@ -23,14 +23,19 @@
 #include <Library/SynchronizationLib.h>
 #include <Library/LocalApicLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/BootloaderCommonLib.h>
 #include <Library/MpInitLib.h>
 
-#define   AP_BUFFER_ADDRESS        0x60000
+#define   AP_BUFFER_ADDRESS        0x38000
+#define   AP_BUFFER_SIZE           0x8000
+
 #define   AP_STACK_SIZE_SHIFT_BITS 12
 #define   AP_STACK_SIZE            (1<<AP_STACK_SIZE_SHIFT_BITS)
 #define   AP_TASK_TIMEOUT_UNIT     15
 #define   AP_TASK_TIMEOUT_CNT      1000
 
+#define   SMM_BASE_GAP             0x1000
+#define   SMM_BASE_MIN_SIZE        0x10000
 
 #pragma pack(1)
 typedef struct {
@@ -66,6 +71,8 @@ typedef struct {
 
 typedef struct {
   UINT32           ApDoneCounter;
+  UINT32           SmmRebaseDoneCounter;
+  SPIN_LOCK        SpinLock;
 } MP_DATA_EXCHANGE_STRUCT;
 #pragma pack()
 
@@ -87,7 +94,7 @@ typedef struct {
  **/
 VOID
 EFIAPI
-AsmGetHotAddCodeAddressMap (
+AsmGetAddressMap (
   OUT MP_ASSEMBLY_ADDRESS_MAP    *AddressMap
   );
 

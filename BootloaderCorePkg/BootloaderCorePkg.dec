@@ -117,14 +117,21 @@
   gPlatformModuleTokenSpaceGuid.PcdSeedListBufferSize     | 0x00000400 | UINT32 | 0x200000E2
 
 [PcdsFixedAtBuild, PcdsPatchableInModule]
-  # For patchable PCDs, try to set the default as none-zero
-  # It is to prevent it from being put into BSS section, thus cause patching issue
+  #
+  # For module patchable PCDs, if it is required to do static patching during the build
+  # process using PatchFv.py script, then they should be set to non-zero default values.
+  # It is to prevent it from being put into BSS section, thus cause issue during pacting
+  # because the PCD symbol won't be available in MAP file.
+  # If static patching is not required, zero default value can be used with no issue.
+  #
   gPlatformModuleTokenSpaceGuid.PcdFSPSBase               | 0xFF000000 | UINT32 | 0x20000100
   gPlatformModuleTokenSpaceGuid.PcdAcpiTablesMaxEntry     |         32 | UINT32 | 0x2000000C
   gPlatformModuleTokenSpaceGuid.PcdAcpiTablesRsdp         | 0x00000000 | UINT32 | 0x2000000D
   gPlatformModuleTokenSpaceGuid.PcdAcpiTablesAddress      | 0xFF000000 | UINT32 | 0x20000110
   gPlatformModuleTokenSpaceGuid.PcdAcpiGnvsAddress        | 0xFF000000 | UINT32 | 0x20000112
   gPlatformModuleTokenSpaceGuid.PcdGraphicsVbtAddress     | 0xFF000000 | UINT32 | 0x20000113
+  gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase          | 0xFF000000 | UINT32 | 0x20000120
+  gPlatformModuleTokenSpaceGuid.PcdSmramTsegSize          | 0x00000000 | UINT32 | 0x20000121
   gPlatformModuleTokenSpaceGuid.PcdKeyStoreBase           | 0xFF000000 | UINT32 | 0x20000181
   gPlatformModuleTokenSpaceGuid.PcdDeviceTreeBase         | 0xFF000000 | UINT32 | 0x20000183
   gPlatformModuleTokenSpaceGuid.PcdSplashLogoAddress      | 0xFF000000 | UINT32 | 0x20000184
@@ -153,4 +160,4 @@
   gPlatformModuleTokenSpaceGuid.PcdFlashMapEnabled        | FALSE      | BOOLEAN | 0x2000020C
   gPlatformModuleTokenSpaceGuid.PcdS3DebugEnabled         | FALSE      | BOOLEAN | 0x2000020D
   gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled         | FALSE      | BOOLEAN | 0x2000020E
-
+  gPlatformModuleTokenSpaceGuid.PcdSmmRebaseEnabled       | FALSE      | BOOLEAN | 0x2000020F

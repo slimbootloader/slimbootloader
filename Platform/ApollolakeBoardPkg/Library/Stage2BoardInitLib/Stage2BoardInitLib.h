@@ -29,6 +29,7 @@
 #include <Library/RleCompressLib.h>
 #include <Library/VariableLib.h>
 #include <Library/DebugPrintErrorLevelLib.h>
+#include <Library/FspSupportLib.h>
 #include <Guid/FrameBufferInfoGuid.h>
 #include <Guid/SystemTableInfoGuid.h>
 #include <Guid/SerialPortInfoGuid.h>
@@ -67,6 +68,7 @@
 #include <Library/MpInitLib.h>
 #include <Library/BootOptionLib.h>
 #include <ConfigDataCommonStruct.h>
+#include <PsdLib.h>
 
 #define IOC_UART_PPR_CLK_N_DIV        0x64
 #define IOC_UART_PPR_CLK_M_DIV        0x40
