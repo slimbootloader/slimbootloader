@@ -12,7 +12,6 @@
 **/
 
 #include "Stage2BoardInitLib.h"
-#include <PsdLib.h>
 
 #define  VBT_OFFSET            36
 
@@ -626,13 +625,16 @@ BoardInit (
   IN  BOARD_INIT_PHASE    InitPhase
   )
 {
-  EFI_STATUS         Status;
-  UINT32             VarBase;
-  UINT32             VarSize;
-  GEN_CFG_DATA      *GenericCfgData;
-  UINT32             TcoCnt;
-  UINT64             MsrData;
-  UINTN              SpiBaseAddress;
+  EFI_STATUS          Status;
+  UINT32              VarBase;
+  UINT32              VarSize;
+  GEN_CFG_DATA       *GenericCfgData;
+  UINT32              TcoCnt;
+  UINT64              MsrData;
+  UINTN               SpiBaseAddress;
+  LOADER_GLOBAL_DATA *LdrGlobal;
+  UINT32              TsegBase;
+  UINT64              TsegSize;
 
   switch (InitPhase) {
   case PreSiliconInit:
@@ -643,6 +645,22 @@ BoardInit (
     if (!EFI_ERROR(Status)) {
       VariableConstructor (VarBase, VarSize);
     }
+
+    if (PcdGetBool (PcdSmmRebaseEnabled)) {
+      // Get TSEG info from FSP HOB
+      // It will be consumed in MpInit if SMM rebase is enabled
+      LdrGlobal  = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
+      TsegBase = (UINT32)GetFspReservedMemoryFromGuid (
+                         LdrGlobal->FspHobList,
+                         &TsegSize,
+                         &gReservedMemoryResourceHobTsegGuid
+                         );
+      if (TsegBase != 0) {
+        Status = PcdSet32S (PcdSmramTsegBase, TsegBase);
+        Status = PcdSet32S (PcdSmramTsegSize, (UINT32)TsegSize);
+      }
+    }
+
     SaveOtgRole();
     if (PcdGetBool (PcdFramebufferInitEnabled)) {
       // Enable framebuffer as WC for performance

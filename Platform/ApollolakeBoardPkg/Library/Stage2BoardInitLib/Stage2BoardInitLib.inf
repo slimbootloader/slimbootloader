@@ -66,6 +66,7 @@
   gOsConfigDataGuid
   gFspVariableNvDataHobGuid
   gEfiHeciMbpDataHobGuid
+  gReservedMemoryResourceHobTsegGuid
 
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdPciResourceIoBase
@@ -94,4 +95,6 @@
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
   gPlatformModuleTokenSpaceGuid.PcdSplashEnabled
   gPlatformModuleTokenSpaceGuid.PcdFramebufferInitEnabled
-
+  gPlatformModuleTokenSpaceGuid.PcdSmmRebaseEnabled
+  gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase
+  gPlatformModuleTokenSpaceGuid.PcdSmramTsegSize

@@ -254,6 +254,8 @@
   gPlatformModuleTokenSpaceGuid.PcdSplashLogoAddress | 0xFF000000
   gPlatformCommonLibTokenSpaceGuid.PcdEmmcMaxRwBlockNumber     | 0xFFFF
   gPlatformModuleTokenSpaceGuid.PcdPayloadReservedMemSize | $(PLD_RSVD_MEM_SIZE)
+  gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase     | 0xFF000000
+  gPlatformModuleTokenSpaceGuid.PcdSmramTsegSize     | 0x00000000
 
   gPayloadTokenSpaceGuid.PcdPayloadHobList           | 0x00000000
   gPayloadTokenSpaceGuid.PcdPayloadHeapSize          | $(PLD_HEAP_SIZE)
@@ -276,6 +278,8 @@
   gPlatformModuleTokenSpaceGuid.PcdVtdEnabled             | $(VTD_ENABLED)
   gPlatformModuleTokenSpaceGuid.PcdFlashMapEnabled        | $(HAVE_FLASH_MAP)
   gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled         | $(HAVE_PSD_TABLE)
+  gPlatformModuleTokenSpaceGuid.PcdSmmRebaseEnabled       | $(ENABLE_SMM_REBASE)
+
 !ifdef $(S3_DEBUG)
   gPlatformModuleTokenSpaceGuid.PcdS3DebugEnabled         | $(S3_DEBUG)
 !endif

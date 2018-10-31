@@ -189,6 +189,7 @@ class BaseBoard(object):
 		self.ENABLE_CRYPTO_SHA_NI  = 0
 		self.ENABLE_FWU            = 0
 		self.ENABLE_SOURCE_DEBUG   = 0
+		self.ENABLE_SMM_REBASE     = 0
 
 		self.ACM_SIZE              = 0
 		self.UCODE_SIZE            = 0

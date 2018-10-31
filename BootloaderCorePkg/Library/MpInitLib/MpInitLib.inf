@@ -14,7 +14,7 @@
 [Defines]
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = MpInitLib
-  FILE_GUID                      = 9C33ED3D-923B-40b4-B3AA-3F24FE7DD1C8  
+  FILE_GUID                      = 9C33ED3D-923B-40b4-B3AA-3F24FE7DD1C8
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
   LIBRARY_CLASS                  = MpInitLib
@@ -31,22 +31,26 @@
   Ia32/MpFuncs.nasm
 
 [Packages]
-  MdePkg/MdePkg.dec  
+  MdePkg/MdePkg.dec
   IntelFsp2Pkg/IntelFsp2Pkg.dec
   BootloaderCorePkg/BootloaderCorePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
-  
+
 [LibraryClasses]
   BaseLib
-  DebugLib  
-  
+  DebugLib
+
 [LibraryClasses.IA32]
   LocalApicLib
   SynchronizationLib
 
 [Guids]
-  
-  
+
+
 [FixedPcd]
   gPlatformModuleTokenSpaceGuid.PcdCpuMaxLogicalProcessorNumber
-  
+
+[Pcd]
+  gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase
+  gPlatformModuleTokenSpaceGuid.PcdSmramTsegSize
+  gPlatformModuleTokenSpaceGuid.PcdSmmRebaseEnabled
