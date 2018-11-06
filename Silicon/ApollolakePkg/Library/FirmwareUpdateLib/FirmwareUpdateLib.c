@@ -1,7 +1,7 @@
 /** @file
   This file contains the implementation of FirmwareUpdateLib library.
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -192,18 +192,12 @@ AplFindBootPartition (
   RETURN_STATUS   Status;
   UINTN           BootMediumPciBase;
 
+
   //
-  // Get OS boot device address
+  // Get device address for capsule image
   //
-  if ((UserCfgData->DevAddr & 0xFF000000) == 0) {
-    BootMediumPciBase = (UINTN) MM_PCI_BASE (                   \
-                        ((UserCfgData->DevAddr >> 16) & 0xFF), \
-                        ((UserCfgData->DevAddr >> 8)  & 0xFF), \
-                        (UserCfgData->DevAddr & 0xFF)          \
-                        );
-  } else {
-    BootMediumPciBase = UserCfgData->DevAddr;
-  }
+  BootMediumPciBase = GetDeviceAddr (UserCfgData->DevType, UserCfgData->DevInstance);
+  BootMediumPciBase = TO_MM_PCI_ADDRESS (BootMediumPciBase);
   DEBUG ((DEBUG_INFO, "BootMediumPciBase(0x%x)\n", BootMediumPciBase));
 
   //

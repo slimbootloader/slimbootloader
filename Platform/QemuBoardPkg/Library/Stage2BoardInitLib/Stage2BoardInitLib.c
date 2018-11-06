@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -38,12 +38,6 @@
 #include "GpioTbl.h"
 
 #define GRAPHICS_DATA_SIG    SIGNATURE_32 ('Q', 'G', 'F', 'X')
-
-CONST CHAR8  *mBootList[] = {
-  "DevType=1  DevAddr=0x00000300  HwPart=0  FilePath=iasimage.bin", // SD card
-  "DevType=0  DevAddr=0x00001F02  HwPart=5  FilePath=iasimage.bin", // SATA
-  "DevType=6  DevAddr=0x00000300  HwPart=0  FilePath=iasimage.bin"  // NVMe
-};
 
 typedef struct {
   UINT32     Signature;
@@ -308,45 +302,45 @@ UpdateOsBootMediumInfo (
   BootOption = &OsBootOptionList->OsBootOption[0];
 
   // Boot file image from SD
-  BootOption->DevType   = OsBootDeviceSd;
-  BootOption->DevAddr   = 0x00000300;
-  BootOption->HwPart    = 0;
-  BootOption->BootFlags = 0;
-  BootOption->FsType    = EnumFileSystemTypeAuto;
-  BootOption->SwPart    = 0;
+  BootOption->DevType     = OsBootDeviceSd;
+  BootOption->DevInstance = 0;
+  BootOption->HwPart      = 0;
+  BootOption->BootFlags   = 0;
+  BootOption->FsType      = EnumFileSystemTypeAuto;
+  BootOption->SwPart      = 0;
   CopyMem (BootOption->Image[0].FileName, "iasimage.bin", sizeof ("iasimage.bin"));
   OsBootOptionList->OsBootOptionCount++;
   BootOption++;
 
   // Boot file image from SATA
-  BootOption->DevType   = OsBootDeviceSata;
-  BootOption->DevAddr   = 0x00001F02;
-  BootOption->HwPart    = 5;
-  BootOption->BootFlags = 0;
-  BootOption->FsType    = EnumFileSystemTypeAuto;
-  BootOption->SwPart    = 0;
+  BootOption->DevType     = OsBootDeviceSata;
+  BootOption->DevInstance = 0;
+  BootOption->HwPart      = 5;
+  BootOption->BootFlags   = 0;
+  BootOption->FsType      = EnumFileSystemTypeAuto;
+  BootOption->SwPart      = 0;
   CopyMem (BootOption->Image[0].FileName, "iasimage.bin", sizeof ("iasimage.bin"));
   OsBootOptionList->OsBootOptionCount++;
   BootOption++;
 
   // Boot file image from NVMe
-  BootOption->DevType   = OsBootDeviceNvme;
-  BootOption->DevAddr   = 0x00000300;
-  BootOption->HwPart    = 0;
-  BootOption->BootFlags = 0;
-  BootOption->FsType    = EnumFileSystemTypeAuto;
-  BootOption->SwPart    = 0;
+  BootOption->DevType     = OsBootDeviceNvme;
+  BootOption->DevInstance = 0;
+  BootOption->HwPart      = 0;
+  BootOption->BootFlags   = 0;
+  BootOption->FsType      = EnumFileSystemTypeAuto;
+  BootOption->SwPart      = 0;
   CopyMem (BootOption->Image[0].FileName, "iasimage.bin", sizeof ("iasimage.bin"));
   OsBootOptionList->OsBootOptionCount++;
   BootOption++;
 
   // Boot file image from USB
-  BootOption->DevType   = OsBootDeviceUsb;
-  BootOption->DevAddr   = 0x00000400;
-  BootOption->HwPart    = 0;
-  BootOption->BootFlags = 0;
-  BootOption->FsType    = EnumFileSystemTypeAuto;
-  BootOption->SwPart    = 0;
+  BootOption->DevType     = OsBootDeviceUsb;
+  BootOption->DevInstance = 0;
+  BootOption->HwPart      = 0;
+  BootOption->BootFlags   = 0;
+  BootOption->FsType      = EnumFileSystemTypeAuto;
+  BootOption->SwPart      = 0;
   CopyMem (BootOption->Image[0].FileName, "iasimage.bin", sizeof ("iasimage.bin"));
   OsBootOptionList->OsBootOptionCount++;
   BootOption++;

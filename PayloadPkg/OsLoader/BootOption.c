@@ -30,28 +30,28 @@ PrintBootOptions (
 
   DEBUG ((DEBUG_INFO, "Boot options (in HEX):\n\n"));
 
-  DEBUG ((DEBUG_INFO, "Idx|ImgType|DevType|Flags|DevAddr |HwPart|FsType|SwPart|File/Lbaoffset\n"));
+  DEBUG ((DEBUG_INFO, "Idx|ImgType|DevType|DevNum|Flags|HwPart|FsType|SwPart|File/Lbaoffset\n"));
   for (Index = 0; Index < OsBootOptionList->OsBootOptionCount; Index++) {
     BootOption = &OsBootOptionList->OsBootOption[Index];
     if (BootOption->FsType < EnumFileSystemMax) {
-      DEBUG ((DEBUG_INFO, "%3x|%7x| %5a | %3x |%8x| %4x | %4a | %4x | %a\n", \
+      DEBUG ((DEBUG_INFO, "%3x|%7x| %5a | %4x | %3x | %4x | %4a | %4x | %a\n", \
                  Index, \
                  BootOption->ImageType, \
                  GetBootDeviceNameString(BootOption->DevType), \
+                 BootOption->DevInstance, \
                  BootOption->BootFlags, \
-                 BootOption->DevAddr, \
                  BootOption->HwPart,  \
                  GetFsTypeString (BootOption->FsType), \
                  BootOption->SwPart,  \
                  BootOption->Image[0].FileName \
                  ));
     } else {
-      DEBUG ((DEBUG_INFO, "%3x|%7x| %5a | %3x |%8x| %4x | %4a | %4x | 0x%x\n", \
+      DEBUG ((DEBUG_INFO, "%3x|%7x| %5a | %4x | %3x | %4x | %4a | %4x | 0x%x\n", \
                  Index, \
                  BootOption->ImageType, \
                  GetBootDeviceNameString(BootOption->DevType), \
+                 BootOption->DevInstance, \
                  BootOption->BootFlags, \
-                 BootOption->DevAddr, \
                  BootOption->HwPart,  \
                  GetFsTypeString (BootOption->FsType), \
                  BootOption->Image[0].LbaImage.SwPart, \
@@ -152,32 +152,3 @@ GetNextBootOption (
   return Index;
 }
 
-/**
-  Get boot device base address from a given boot option
-
-  @param[in]  BootOption         Current boot option
-
-  @retval     Boot device base address for a given boot option
-**/
-UINT32
-GetBootDeviceBase (
-  IN  OS_BOOT_OPTION         *BootOption
-  )
-{
-  UINT32   BootDeviceBase;
-
-  BootDeviceBase = 0;
-  if (BootOption != NULL) {
-    if ((BootOption->DevAddr & 0xFF000000) == 0) {
-      BootDeviceBase = (UINTN)MM_PCI_ADDRESS (0,
-                          ((BootOption->DevAddr >> 16) & 0xFF),
-                          ((BootOption->DevAddr >> 8)  & 0xFF),
-                          (BootOption->DevAddr & 0xFF),
-                          0);
-    } else {
-      BootDeviceBase = BootOption->DevAddr;
-    }
-  }
-
-  return BootDeviceBase;
-}

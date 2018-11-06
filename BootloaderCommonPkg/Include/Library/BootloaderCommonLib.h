@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -18,6 +18,7 @@
 #include <Guid/BootLoaderServiceGuid.h>
 #include <Guid/FlashMapInfoGuid.h>
 #include <Guid/LoaderPlatformDataGuid.h>
+#include <Guid/DeviceTableHobGuid.h>
 
 #define  STACK_DEBUG_FILL_PATTERN     0x5AA55AA5
 
@@ -48,6 +49,17 @@ typedef struct {
 #define        FEATURE_MEASURED_BOOT            BIT1
 #define        FEATURE_MMC_TUNING               BIT2
 #define        FEATURE_MMC_FORCE_TUNING         BIT3
+
+#define MM_PCI_ADDRESS( Bus, Device, Function, Register ) \
+  ( (UINTN)PcdGet64(PcdPciExpressBaseAddress) + \
+    (UINTN)((Bus) << 20) + \
+    (UINTN)((Device) << 15) + \
+    (UINTN)((Function) << 12) + \
+    (UINTN)(Register) \
+  )
+
+#define TO_MM_PCI_ADDRESS( Addr ) \
+  MM_PCI_ADDRESS ( ((Addr) >> 16) & 0xFF, ((Addr) >> 8) & 0xFF, (Addr) & 0xFF, 0)
 
 //
 // Enumeration of stages of bootloader execution.
@@ -467,6 +479,51 @@ GetGuidHobData (
   IN CONST VOID          *HobListPtr, OPTIONAL
   OUT      UINT32        *Length, OPTIONAL
   IN       EFI_GUID      *Guid
+  );
+
+/**
+  This function sets device table.
+
+  @param DeviceTable   The pointer to device table.
+
+**/
+VOID
+EFIAPI
+SetDeviceTable (
+  IN VOID                 *DeviceTable
+  );
+
+/**
+  This function retrieves the platform device table.
+
+  @retval    The platform device table.
+
+**/
+VOID *
+EFIAPI
+GetDeviceTable (
+  VOID
+  );
+
+/**
+  Get device address
+
+  If the device is PCI device, the device address format is 0x00BBDDFF, where
+  BB, DD and FF are PCI bus, device and function number.
+  If the device is MMIO device, the device address format is 0xMMxxxxxx, where
+  MM should be non-zero value, xxxxxx could be any value.
+
+  @param[in]  DeviceType         The device type, refer OS_BOOT_MEDIUM_TYPE.
+  @param[in]  DeviceInstance     The device instance number starting from 0.
+
+  @retval     Device address for a given device instance, return 0 if the device
+              could not be found from device table.
+**/
+UINT32
+EFIAPI
+GetDeviceAddr (
+  IN  UINT8          DeviceType,
+  IN  UINT8          DeviceInstance
   );
 
 #endif

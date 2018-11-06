@@ -38,8 +38,9 @@ FindBootPartition (
   //
   // Get OS boot device address
   //
-  BootMediumPciBase = GetBootDeviceBase (BootOption);
+  BootMediumPciBase = GetDeviceAddr (BootOption->DevType, BootOption->DevInstance);
   DEBUG ((DEBUG_INFO, "BootMediumPciBase(0x%x)\n", BootMediumPciBase));
+  BootMediumPciBase = TO_MM_PCI_ADDRESS (BootMediumPciBase);
 
   //
   // Init Boot device functions

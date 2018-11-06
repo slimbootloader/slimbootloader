@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -184,6 +184,7 @@ typedef struct {
   VOID             *ServicePtr;
   VOID             *PcdDataPtr;
   VOID             *LogBufPtr;
+  VOID             *DeviceTable;
   UINT8             PlatformName[PLATFORM_NAME_SIZE];
   UINT32            LdrFeatures;
   BL_PERF_DATA      PerfData;

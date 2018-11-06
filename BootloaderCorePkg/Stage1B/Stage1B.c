@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2016 - 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2016 - 2018, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -270,6 +270,7 @@ SecStartup2 (
   DEBUG_LOG_BUFFER_HEADER  *NewLogBuf;
   DEBUG_LOG_BUFFER_HEADER  *OldLogBuf;
   BOOLEAN                   OldStatus;
+  PLT_DEVICE_TABLE         *DeviceTable;
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
   ASSERT (LdrGlobal != NULL);
@@ -461,6 +462,14 @@ SecStartup2 (
       NewLogBuf->TotalLength = PcdGet32 (PcdLogBufferSize);
       LdrGlobal->LogBufPtr = NewLogBuf;
     }
+  }
+
+  // Copy device table to memory
+  if (LdrGlobal->DeviceTable != NULL) {
+    DeviceTable = (PLT_DEVICE_TABLE *) LdrGlobal->DeviceTable;
+    AllocateLen = DeviceTable->DeviceNumber * sizeof (PLT_DEVICE) + sizeof (PLT_DEVICE_TABLE);
+    LdrGlobal->DeviceTable = AllocatePool (AllocateLen);
+    CopyMem (LdrGlobal->DeviceTable, DeviceTable, AllocateLen);
   }
 
   BoardInit (PostMemoryInit);

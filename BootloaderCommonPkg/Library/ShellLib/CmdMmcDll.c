@@ -1,7 +1,7 @@
 /** @file
   Shell command `mmcdll` to display system performance data.
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -74,30 +74,10 @@ GetMmcBaseAddress (
   VOID
   )
 {
-  EFI_HOB_GUID_TYPE             *GuidHob;
-  OS_BOOT_OPTION_LIST           *OsBootOptionList;
-  OS_BOOT_OPTION                *OsBootOption;
   UINTN                         MmcBaseAddress;
-  UINT8                         Index;
 
-  GuidHob = GetNextGuidHob (&gOsBootOptionGuid, GetHobListPtr());
-  if (GuidHob == NULL) {
-    return 0;
-  }
-
-  MmcBaseAddress = 0;
-  OsBootOptionList = (OS_BOOT_OPTION_LIST *) GET_GUID_HOB_DATA (GuidHob);
-  for (Index = 0; Index < OsBootOptionList->OsBootOptionCount; Index++) {
-    OsBootOption = &OsBootOptionList->OsBootOption[Index];
-    if (OsBootOption->DevType == OsBootDeviceEmmc) {
-      MmcBaseAddress = (UINTN) ( PcdGet64 (PcdPciExpressBaseAddress)  + \
-                                 (((OsBootOption->DevAddr >> 16) & 0xFF) << 20) + \
-                                 (((OsBootOption->DevAddr >> 8)  & 0xFF) << 15) + \
-                                 ((OsBootOption->DevAddr & 0xFF) << 12) \
-                                 );
-      break;
-    }
-  }
+  MmcBaseAddress = GetDeviceAddr (OsBootDeviceEmmc, 0);
+  MmcBaseAddress = TO_MM_PCI_ADDRESS (MmcBaseAddress);
 
   return MmcBaseAddress;
 }

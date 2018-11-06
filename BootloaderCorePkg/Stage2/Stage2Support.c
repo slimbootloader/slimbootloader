@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2016 - 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2016 - 2018, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -522,6 +522,8 @@ BuildExtraInfoHob (
   FLASH_MAP                 *FlashMapHob;
   UINTN                      Index;
   SEED_LIST_INFO_HOB        *SeedListInfoHob;
+  PLT_DEVICE_TABLE          *DeviceTable;
+  VOID                      *DeviceTableHob;
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
   S3Data    = (S3_DATA *)LdrGlobal->S3DataPtr;
@@ -605,6 +607,14 @@ BuildExtraInfoHob (
         }
       }
     }
+  }
+
+  // Build device table Hob
+  DeviceTable  = (PLT_DEVICE_TABLE *)LdrGlobal->DeviceTable;
+  Length = sizeof (PLT_DEVICE_TABLE) + sizeof (PLT_DEVICE) * DeviceTable->DeviceNumber;
+  DeviceTableHob = BuildGuidHob (&gDeviceTableHobGuid, Length);
+  if (DeviceTableHob != NULL) {
+    CopyMem (DeviceTableHob, DeviceTable, Length);
   }
 
   // Build Performance Hob

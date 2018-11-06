@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -41,7 +41,8 @@ TestDevBlocks (
   //
   // Get OS boot device address
   //
-  BootMediumPciBase = GetBootDeviceBase (BootOption);
+  BootMediumPciBase = GetDeviceAddr (OsBootOption->DevType, OsBootOption->DevInstance);
+  BootMediumPciBase = TO_MM_PCI_ADDRESS (BootMediumPciBase);
   DEBUG ((DEBUG_INFO, "BootMediumPciBase(0x%x)\n", BootMediumPciBase));
 
   //

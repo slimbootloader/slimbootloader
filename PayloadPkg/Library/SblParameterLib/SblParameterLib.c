@@ -75,6 +75,7 @@ AppendBootDevices (
   UINT32                    BootDevicesSize;
   UINT32                    Index;
   CHAR8                     ParamValue[64];
+  OS_BOOT_OPTION            *OsBootOption;
 
   if ((BootOption->DevType != OsBootDeviceSpi) && (BootOption->DevType != OsBootDeviceMemory)) {
     return EFI_SUCCESS;
@@ -103,9 +104,10 @@ AppendBootDevices (
   BootDevicesData->Revision        = OsBootOptionList->Revision;
   BootDevicesData->BootDeviceCount = OsBootOptionList->OsBootOptionCount;
   for (Index = 0; Index < BootDevicesData->BootDeviceCount; Index++) {
-    BootDevicesData->BootDevice[Index].DevType = (UINT8) OsBootOptionList->OsBootOption[Index].DevType;
-    BootDevicesData->BootDevice[Index].HwPart  = OsBootOptionList->OsBootOption[Index].HwPart;
-    BootDevicesData->BootDevice[Index].DevAddr = OsBootOptionList->OsBootOption[Index].DevAddr;
+    OsBootOption = &OsBootOptionList->OsBootOption[Index];
+    BootDevicesData->BootDevice[Index].DevType = (UINT8) OsBootOption->DevType;
+    BootDevicesData->BootDevice[Index].HwPart  = OsBootOption->HwPart;
+    BootDevicesData->BootDevice[Index].DevAddr = GetDeviceAddr (OsBootOption->DevType, OsBootOption->DevInstance);
   }
 
   AsciiSPrint (ParamValue, sizeof (ParamValue), " bootdevices=0x%x", BootDevicesData);
@@ -255,7 +257,7 @@ AddSblCommandLine (
   UINT8                     ResetReason;
   UINT32                    SerialNumberLength;
   UINT8                     Data8;
-//  IMAGE_BOOT_PARAM          *BootParams;
+  UINT32                    DiskBus;
   UINT32                    MaxCmdSize;
 
   if (BootOption->ImageType != EnumImageTypeAdroid) {
@@ -327,7 +329,8 @@ AddSblCommandLine (
   AsciiSPrint (ParamValue, sizeof (ParamValue), " bdev=%a", GetBootDeviceNameString (BootOption->DevType));
   AsciiStrCatS (CommandLine, MaxCmdSize, ParamValue);
 
-  AsciiSPrint (ParamValue, sizeof (ParamValue), " diskbus=0x%x", BootOption->DevAddr);
+  DiskBus = GetDeviceAddr (BootOption->DevType, BootOption->DevInstance);
+  AsciiSPrint (ParamValue, sizeof (ParamValue), " diskbus=0x%x", DiskBus);
   AsciiStrCatS (CommandLine, MaxCmdSize, ParamValue);
 
   //

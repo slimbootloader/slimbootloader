@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -376,19 +376,6 @@ EFI_STATUS
 RpmbKeyProvisioning (
   IN     OS_BOOT_OPTION      *CurrentBootOption,
   IN     LOADER_SEED_LIST    *SeedList
-  );
-
-
-/**
-  Get boot device base address from a given boot option
-
-  @param[in]  BootOption         Current boot option
-
-  @retval     Boot device base address for a given boot option
-**/
-UINT32
-GetBootDeviceBase (
-  IN  OS_BOOT_OPTION         *BootOption
   );
 
 #endif

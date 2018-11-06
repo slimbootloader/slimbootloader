@@ -1,7 +1,7 @@
 /** @file
   Shell command `boot` to print or modify the OS boot option list.
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -159,16 +159,16 @@ GetBootDeviceInfo (
   } while (1);
 
   do {
-    ShellPrint (L"Enter DevAddr (uint)\n");
+    ShellPrint (L"Enter DevInstance (uint)\n");
     Status = ShellReadUintn (Shell, Buffer, BufferSize, &IsHex);
     if (EFI_ERROR (Status)) {
       return Status;
     }
-    BootOption->DevAddr = (IsHex) ? StrHexToUintn (Buffer) : StrDecimalToUintn (Buffer);
-    if ((BootOption->DevAddr > 0) && (StrLen (Buffer) > 0)) {
+    BootOption->DevInstance = (UINT8)((IsHex) ? StrHexToUintn (Buffer) : StrDecimalToUintn (Buffer));
+    if (StrLen (Buffer) > 0) {
       break;
     }
-    ShellPrint (L"Invalid DevAddr value '%s', please re-enter\n", Buffer);
+    ShellPrint (L"Invalid DevInstance value '%s', please re-enter\n", Buffer);
   } while (1);
 
   do {
@@ -331,28 +331,28 @@ PrintBootOption (
 
   ShellPrint (L"Boot options (in HEX):\n\n");
 
-  ShellPrint (L"Idx|ImgType|DevType|Flags|DevAddr |HwPart|FsType|SwPart|File/Lbaoffset\n");
+  ShellPrint (L"Idx|ImgType|DevType|DevNum|Flags|HwPart|FsType|SwPart|File/Lbaoffset\n");
   for (Index = 0; Index < OsBootOptionList->OsBootOptionCount; Index++) {
     BootOption = &OsBootOptionList->OsBootOption[Index];
     if (BootOption->FsType < EnumFileSystemMax) {
-      ShellPrint (L"%3x|%7x| %5a | %3x |%8x| %4x | %4a | %4x | %a\n", \
+      ShellPrint (L"%3x|%7x| %5a | %4x | %3x | %4x | %4a | %4x | %a\n", \
                  Index, \
                  BootOption->ImageType, \
                  GetBootDeviceNameString(BootOption->DevType), \
+                 BootOption->DevInstance, \
                  BootOption->BootFlags, \
-                 BootOption->DevAddr, \
                  BootOption->HwPart,  \
                  GetFsTypeString (BootOption->FsType), \
                  BootOption->SwPart,  \
                  BootOption->Image[0].FileName \
                  );
     } else {
-      ShellPrint (L"%3x|%7x| %5a | %3x |%8x| %4x | %4a | %4x | 0x%x\n", \
+      ShellPrint (L"%3x|%7x| %5a | %4x | %3x | %4x | %4a | %4x | 0x%x\n", \
                  Index, \
                  BootOption->ImageType, \
                  GetBootDeviceNameString(BootOption->DevType), \
+                 BootOption->DevInstance, \
                  BootOption->BootFlags, \
-                 BootOption->DevAddr, \
                  BootOption->HwPart,  \
                  GetFsTypeString (BootOption->FsType), \
                  BootOption->Image[0].LbaImage.SwPart, \
