@@ -596,7 +596,8 @@ InitConsole (
       for (Index = 0; Index < OsBootOptionList->OsBootOptionCount; Index++) {
         OsBootOption = &OsBootOptionList->OsBootOption[Index];
         if (OsBootOption->DevType == OsBootDeviceUsb) {
-          CtrlPciBase = GetBootDeviceBase (OsBootOption);
+          CtrlPciBase = GetDeviceAddr (OsBootOption->DevType, OsBootOption->DevInstance);
+          CtrlPciBase = TO_MM_PCI_ADDRESS (CtrlPciBase);
         }
       }
     }

@@ -503,3 +503,45 @@ GetGuidHobData (
   return NULL;
 }
 
+
+/**
+  Get device address
+
+  If the device is PCI device, the device address format is 0x00BBDDFF, where
+  BB, DD and FF are PCI bus, device and function number.
+  If the device is MMIO device, the device address format is 0xMMxxxxxx, where
+  MM should be non-zero value, xxxxxx could be any value.
+
+  @param[in]  DeviceType         The device type, refer OS_BOOT_MEDIUM_TYPE.
+  @param[in]  DeviceInstance     The device instance number starting from 0.
+
+  @retval     Device address for a given device instance, return 0 if the device
+              could not be found from device table.
+**/
+UINT32
+EFIAPI
+GetDeviceAddr (
+  IN  UINT8          DeviceType,
+  IN  UINT8          DeviceInstance
+  )
+{
+  PLT_DEVICE_TABLE   *DeviceTable;
+  PLT_DEVICE         *Device;
+  UINT32             DeviceBase;
+  UINT32             Index;
+
+  DeviceBase  = 0;
+  DeviceTable = (PLT_DEVICE_TABLE *)GetDeviceTable();
+  for (Index = 0; Index < DeviceTable->DeviceNumber; Index++) {
+    Device = &DeviceTable->Device[Index];
+    if ((Device->Type == DeviceType) && (Device->Instance == DeviceInstance)){
+      break;
+    }
+  }
+
+  if (DeviceTable->DeviceNumber != Index) {
+    DeviceBase = Device->Dev.DevAddr;
+  }
+  return DeviceBase;
+}
+

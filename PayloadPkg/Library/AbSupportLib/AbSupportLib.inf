@@ -28,7 +28,6 @@
 [Packages]
   MdePkg/MdePkg.dec
   PayloadPkg/PayloadPkg.dec
-  BootloaderCorePkg/BootloaderCorePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
 
 [Guids]

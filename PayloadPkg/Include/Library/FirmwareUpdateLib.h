@@ -1,7 +1,7 @@
 /** @file
 The header file for firmware update library.
 
-Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
 This program and the accompanying materials
 are licensed and made available under the terms and conditions of the BSD License
 which accompanies this distribution.  The full text of the license may be found at
@@ -99,16 +99,18 @@ typedef struct {
 // It may include multiple regions
 //
 typedef struct {
-  ///
-  /// For PCI device, its value is 0x00BBDDFF
-  /// For other device, its value is MMIO address (The highest bytes is not zero).
-  ///
-  UINT32               DevAddr;
 
   ///
   /// Boot medium type, Refer OS_BOOT_MEDIUM_TYPE
   ///
   UINT8                DevType;
+
+  ///
+  /// If there are multiple controllers, it indicate which 
+  /// controller instance the boot medium belong to.
+  ///
+  UINT8                DevInstance;
+  UINT8                Reserved[3];
 
   ///
   /// Zero-based hardware partition number

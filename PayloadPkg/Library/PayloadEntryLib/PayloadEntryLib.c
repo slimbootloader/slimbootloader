@@ -212,6 +212,9 @@ SecStartup (
     GlobalDataPtr->LdrFeatures = LoaderPlatformInfo->LdrFeatures;
   }
 
+  // Init device table
+  GlobalDataPtr->DeviceTable =  GetGuidHobData (NULL, NULL, &gDeviceTableHobGuid);
+
   //
   // GetLoaderPerformanceInfo() function
   //

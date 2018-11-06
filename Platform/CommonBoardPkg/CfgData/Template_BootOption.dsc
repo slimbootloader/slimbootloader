@@ -19,49 +19,32 @@
     # !BSF PAGES:{OS_$(1):OS:"Boot Option $(1)"}
     # !BSF PAGE:{OS_$(1)}
 
-    # !BSF NAME:{Boot Device PCI Address}
-    gCfgData.DevAddr_$(1)                 |        * | 0x04 | $(2)
-      # !BSF NAME:{Boot Device PCI Function Number}
-      # !BSF TYPE:{EditNum, DEC, (0,7)}
-      # !BSF HELP:{Specify PCI function number for the boot device}
-      # !BSF ORDER:{0000.0030}
-      # !BSF FIELD:{FunctionNumber:8bD}
-
-      # !BSF NAME:{Boot Device PCI Device Number}
-      # !BSF TYPE:{EditNum, DEC, (0,31)}
-      # !BSF HELP:{Specify PCI device number for the boot device}
-      # !BSF ORDER:{0000.0020}
-      # !BSF FIELD:{DeviceNumber:8bD}
-
-      # !BSF NAME:{Boot Device PCI Bus Number}
-      # !BSF TYPE:{EditNum, HEX, (0,255)}
-      # !BSF HELP:{Specify PCI bus number for the boot device}
-      # !BSF ORDER:{0000.0010}
-      # !BSF FIELD:{BusNumber:8bD}
-
-      # !BSF NAME:{Reserved} TYPE:{Reserved}
-      # !BSF FIELD:{Rsvd:8bD}
-
     # !BSF NAME:{Image Type}
     # !BSF TYPE:{Combo}
     # !BSF OPTION:{0:Default, 1:Android, 2:ClearLinux, 3:Acrn, 4:Fastboot}
     # !BSF HELP:{Specify boot image type}
-    gCfgData.ImageType_$(1)                 |      * | 0x01 | $(3)
+    gCfgData.ImageType_$(1)                 |      * | 0x01 | $(2)
 
     # !BSF NAME:{Boot Flags}
     # !BSF TYPE:{Combo}
     # !BSF OPTION:{0:Normal, 1:A/B support, 2:Crash OS, 4:Trusty support, 5:Trusty and A/B support}
     # !BSF HELP:{Specify boot flags (options)}
-    gCfgData.BootFlags_$(1)                 |      * | 0x01 | $(4)
+    gCfgData.BootFlags_$(1)                 |      * | 0x01 | $(3)
 
-    gCfgData.Reserved_$(1)                  |      * | 0x02 | 0x55AA
-
-    # !BSF NAME:{Boot Device}
+    gCfgData.Reserved_$(1)                  |      * | 0x01 | 0x5A
+    # !BSF NAME:{Boot Device type}
     # !BSF TYPE:{Combo}
     # !BSF OPTION:{0:SATA, 1:SD, 2:EMMC, 3:UFS, 4:SPI, 5:USB, 6:NVME, 7:MAX}
-    # !BSF HELP:{Specify boot device}
+    # !BSF HELP:{Specify boot device type}
     # !BSF ORDER:{0000.0000}
-    gCfgData.BootDevice_$(1)                |      * | 0x01 | $(5)
+    gCfgData.BootDeviceType_$(1)            |      * | 0x01 | $(4)
+
+    # !BSF NAME:{Boot Device instance}
+    # !BSF TYPE:{Combo}
+    # !BSF OPTION:{0:Device 0, 1:Device 1, 2:Device 2, 3:Device 3}
+    # !BSF HELP:{Specify boot device instance when then are multple instances}
+    # !BSF ORDER:{0000.0000}
+    gCfgData.BootDeviceInstance_$(1)        |      * | 0x01 | $(5)
 
     # !BSF NAME:{Hardware Partition}
     # !BSF TYPE:{Combo}

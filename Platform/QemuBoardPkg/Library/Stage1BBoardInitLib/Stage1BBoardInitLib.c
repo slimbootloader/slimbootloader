@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -18,6 +18,7 @@
 #include <Library/DebugLib.h>
 #include <Library/PciLib.h>
 #include <Library/BaseMemoryLib.h>
+#include <Library/MemoryAllocationLib.h>
 #include <Library/GpioLib.h>
 #include <Library/CryptoLib.h>
 #include <Library/BoardInitLib.h>
@@ -32,6 +33,14 @@
 #include <BlCommon.h>
 #include <ConfigDataDefs.h>
 #include "GpioTbl.h"
+
+CONST PLT_DEVICE  mPlatformDevices[]= {
+  {{0x00001F02}, OsBootDeviceSata  , 0 },
+  {{0x00000300}, OsBootDeviceSd    , 0 },
+  {{0x00000300}, OsBootDeviceNvme  , 0 },
+  {{0x00000400}, OsBootDeviceUsb   , 0 },
+  {{0x01000000}, OsBootDeviceMemory, 0 }
+};
 
 /**
   This function overrides the default configurations in the FSP-M UPD data region.
@@ -196,9 +205,14 @@ BoardInit (
 )
 {
   EFI_STATUS            Status;
+  PLT_DEVICE_TABLE      *PltDeviceTable;
 
   switch (InitPhase) {
   case PreConfigInit:
+    PltDeviceTable = (PLT_DEVICE_TABLE *)AllocatePool (sizeof (PLT_DEVICE_TABLE) + sizeof (mPlatformDevices));
+    PltDeviceTable->DeviceNumber = sizeof (mPlatformDevices) /sizeof (PLT_DEVICE);
+    CopyMem (PltDeviceTable->Device, mPlatformDevices, sizeof (mPlatformDevices));
+    SetDeviceTable (PltDeviceTable);
     BoardDetection ();
     UpdateBootMode ();
     SpiConstructor ();

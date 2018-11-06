@@ -1,6 +1,6 @@
 /** @file
 
-Copyright (c) 2006 - 2017, Intel Corporation. All rights reserved.
+Copyright (c) 2006 - 2018, Intel Corporation. All rights reserved.
 
 This program and the accompanying materials are licensed and made available
 under the terms and conditions of the BSD License which accompanies this
@@ -33,20 +33,11 @@ typedef struct {
   VOID             *PcdDataPtr;
   VOID             *LogBufPtr;
   VOID             *CfgDataPtr;
+  VOID             *DeviceTable;
   UINT32           LdrFeatures;
   BL_PERF_DATA     PerfData;
 } PAYLOAD_GLOBAL_DATA;
 
-#define MM_PCI_ADDRESS( Segment, Bus, Device, Function, Register ) \
-  ( (UINTN)PcdGet64(PcdPciExpressBaseAddress) + \
-    (UINTN)(Bus << 20) + \
-    (UINTN)(Device << 15) + \
-    (UINTN)(Function << 12) + \
-    (UINTN)(Register) \
-  )
-
-#define MM_PCI_BASE(Bus, Device, Function) \
-  MM_PCI_ADDRESS(0, Bus, Device, Function, 0)
 
 /**
   Returns the System table info HOB data.

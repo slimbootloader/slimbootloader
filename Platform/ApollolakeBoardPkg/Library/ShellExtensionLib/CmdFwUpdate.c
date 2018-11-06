@@ -1,7 +1,7 @@
 /** @file
   Shell command `fwupdate` to reset the system.
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -114,12 +114,12 @@ ShellCommandFwUpdateFunc (
   // Populate firmware update user configuration data structure
   //
   FwUpdUserCfgData = (FW_UPD_USER_CFG_DATA *)(&Data[sizeof(CDATA_BLOB) + CDATA_HEADER_LENGTH]);
-  FwUpdUserCfgData->DevAddr = 0x00001500;
-  FwUpdUserCfgData->DevType = 5;
-  FwUpdUserCfgData->HwPart = 0;
-  FwUpdUserCfgData->SwPart = 0;
-  FwUpdUserCfgData->FsType = 2;
-  FwUpdUserCfgData->LbaAddr = 0;
+  FwUpdUserCfgData->DevType     = 5;
+  FwUpdUserCfgData->DevInstance = 0;
+  FwUpdUserCfgData->HwPart      = 0;
+  FwUpdUserCfgData->SwPart      = 0;
+  FwUpdUserCfgData->FsType      = 2;
+  FwUpdUserCfgData->LbaAddr     = 0;
 
   AsciiStrCpy(FwUpdUserCfgData->FileName, "FwuImage.bin");
 

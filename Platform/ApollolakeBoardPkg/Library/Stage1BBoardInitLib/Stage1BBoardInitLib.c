@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -39,6 +39,7 @@
 #include <Library/TpmLib.h>
 #include <Library/LoaderLib.h>
 #include <Library/HeciLib.h>
+#include <Library/BootloaderCommonLib.h>
 
 #include <FspmUpd.h>
 #include <GpioDefines.h>
@@ -55,6 +56,16 @@
 #include <PlatformData.h>
 
 #define MRC_PARAMS_BYTE_OFFSET_MRC_VERSION 14
+
+CONST PLT_DEVICE  mPlatformDevices[]= {
+  {{0x00001200}, OsBootDeviceSata  , 0 },
+  {{0x00001B00}, OsBootDeviceSd    , 0 },
+  {{0x00001C00}, OsBootDeviceEmmc  , 0 },
+  {{0x00001D00}, OsBootDeviceUfs   , 0 },
+  {{0x00000D00}, OsBootDeviceSpi   , 0 },
+  {{0x00001500}, OsBootDeviceUsb   , 0 },
+  {{0x01000000}, OsBootDeviceMemory, 0 }
+};
 
 CONST CHAR16 *BootDeviceType[] = { L"eMMC", L"UFS", L"SPI" };
 
@@ -1697,9 +1708,14 @@ BoardInit (
   PLATFORM_DATA            *PlatformData;
   HECI_INSTANCE            *HeciInstance;
   EFI_STATUS                Status;
+  PLT_DEVICE_TABLE         *PltDeviceTable;
 
   switch (InitPhase) {
   case PreConfigInit:
+    PltDeviceTable = (PLT_DEVICE_TABLE *)AllocatePool (sizeof (PLT_DEVICE_TABLE) + sizeof (mPlatformDevices));
+    PltDeviceTable->DeviceNumber = sizeof (mPlatformDevices) /sizeof (PLT_DEVICE);
+    CopyMem (PltDeviceTable->Device, mPlatformDevices, sizeof (mPlatformDevices));
+    SetDeviceTable (PltDeviceTable);
     PrintBoardInfo ();
     EarlyBootDeviceInit ();
     SpiControllerInitialize ();

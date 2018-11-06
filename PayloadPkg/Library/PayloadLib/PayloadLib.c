@@ -1,7 +1,7 @@
 /** @file
   This file provides payload common library interfaces.
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -360,3 +360,43 @@ GetLoaderStage (
 {
   return LOADER_STAGE_PAYLOAD;
 }
+
+
+/**
+  This function sets device table.
+
+  @param DeviceTable   The pointer to device table.
+
+**/
+VOID
+EFIAPI
+SetDeviceTable (
+  IN VOID                 *DeviceTable
+  )
+{
+  PAYLOAD_GLOBAL_DATA     *PayloadGlobalDataPtr;
+
+  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *) PcdGet32 (PcdGlobalDataAddress);
+
+  PayloadGlobalDataPtr->DeviceTable = DeviceTable;
+}
+
+/**
+  This function retrieves the platform device table.
+
+  @retval    The platform device table.
+
+**/
+VOID *
+EFIAPI
+GetDeviceTable (
+  VOID
+  )
+{
+  PAYLOAD_GLOBAL_DATA     *PayloadGlobalDataPtr;
+
+  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *) PcdGet32 (PcdGlobalDataAddress);
+
+  return PayloadGlobalDataPtr->DeviceTable;
+}
+
