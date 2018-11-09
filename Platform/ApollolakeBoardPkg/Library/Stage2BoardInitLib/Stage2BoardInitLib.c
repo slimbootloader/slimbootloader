@@ -410,34 +410,6 @@ AssignPciIrqs (
   }
 }
 
-/**
-  Init UART2 BAR
-
-  Current ACRN is using fixed UART address for GP MRB target.
-  So here init UART2 BAR to 0xFC000000
-  And make sure it will be invoked in both normal and S3 path.
-
-**/
-VOID
-InitUart2Bar (
-  VOID
-  )
-{
-  UINT32      PciBase;
-  UINT32      Base;
-
-  if (FeaturePcdGet (PcdVtdEnabled)) {
-    Base    = 0xFC000000;
-    PciBase = MmPciBase (DEFAULT_PCI_BUS_NUMBER_SC, \
-                         PCI_DEVICE_NUMBER_LPSS_HSUART, \
-                         (PCI_FUNCTION_NUMBER_LPSS_HSUART0 + 2));
-
-    MmioAnd32   (PciBase + PCI_COMMAND_OFFSET, (UINT32)~ (EFI_PCI_COMMAND_MEMORY_SPACE));
-    MmioWrite32 (PciBase + PCI_BASE_ADDRESSREG_OFFSET, Base);
-    MmioOr32    (PciBase + PCI_COMMAND_OFFSET, EFI_PCI_COMMAND_MEMORY_SPACE);
-  }
-}
-
 VOID
 SaveOtgRole (
   VOID
@@ -689,7 +661,6 @@ BoardInit (
         DEBUG ((DEBUG_ERROR, "Error in seeds generation: %r\n", Status));
       }
     }
-    InitUart2Bar ();
     AssignPciIrqs ();
     RestoreOtgRole ();
     break;
