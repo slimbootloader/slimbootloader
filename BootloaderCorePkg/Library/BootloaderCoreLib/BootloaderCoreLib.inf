@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
 #  This program and the accompanying materials
 #  are licensed and made available under the terms and conditions of the BSD License
 #  which accompanies this distribution.  The full text of the license may be found at
@@ -14,8 +14,8 @@
 
 [Defines]
   INF_VERSION                    = 0x00010005
-  BASE_NAME                      = BootloaderLib
-  FILE_GUID                      = 86C22AC7-A8A5-4a09-A57C-BBC59841B8D3
+  BASE_NAME                      = BootloaderCoreLib
+  FILE_GUID                      = CB92AF64-D337-48A0-9DCD-ECF4549380D2
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
   LIBRARY_CLASS                  = BootloaderLib
