@@ -1,5 +1,5 @@
 ## @file
-#  Component description file for VTd Library
+#  Component description file for Vtd Library
 #
 #  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
 #  This program and the accompanying materials
@@ -25,7 +25,7 @@
 #
 
 [Sources]
-  VTdLib.c
+  VtdLib.c
 
 [Packages]
   MdePkg/MdePkg.dec
