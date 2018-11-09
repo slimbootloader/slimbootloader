@@ -52,7 +52,7 @@ class Board(BaseBoard):
 
 		self.ENABLE_FSP_LOAD_IMAGE    = 0
 		self.ENABLE_CRYPTO_SHA_NI     = 1
-		self.VTD_ENABLED              = 1
+		self.ENABLE_VTD               = 1
 		self.ENABLE_FWU               = 1
 		self.ENABLE_SPLASH            = 1
 		self.ENABLE_FRAMEBUFFER_INIT  = 1
@@ -152,10 +152,8 @@ class Board(BaseBoard):
 			'ShellExtensionLib|Platform/$(BOARD_PKG_NAME)/Library/ShellExtensionLib/ShellExtensionLib.inf',
 			'BootMediaLib|Silicon/ApollolakePkg/Library/BootMediaLib/BootMediaLib.inf',
 			'FlashDescriptorLib|Silicon/ApollolakePkg/Library/FlashDescriptorLib/FlashDescriptorLib.inf',
+			'VTdLib|Silicon/$(SILICON_PKG_NAME)/Library/VTdLib/VTdLib.inf'
 		]
-		if self.VTD_ENABLED == 1:
-			dsc_libs['IA32'].extend (['VTdLib|Silicon/$(SILICON_PKG_NAME)/Library/VTdLib/VTdLib.inf'])
-
 		return dsc_libs
 
 	def GetFlashMapList (self):
