@@ -1,7 +1,7 @@
 /** @file
   This code provides a initialization of intel VT-d (Virtualization Technology for Directed I/O).
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -12,8 +12,8 @@
 
 **/
 
-#ifndef _VT_D_LIB_H_
-#define _VT_D_LIB_H_
+#ifndef __VTD_LIB_H__
+#define __VTD_LIB_H__
 
 #define VTD_RMRR_USB_LENGTH                   0x20000
 
@@ -30,4 +30,5 @@ VOID
 UpdateDmarAcpi (
   EFI_ACPI_DESCRIPTION_HEADER *Table
   );
-#endif
+
+#endif /* __VTD_LIB_H__ */

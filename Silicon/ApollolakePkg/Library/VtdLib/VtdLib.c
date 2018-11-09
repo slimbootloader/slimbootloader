@@ -1,7 +1,7 @@
 /** @file
   This code provides a initialization of intel VT-d (Virtualization Technology for Directed I/O).
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -17,7 +17,7 @@
 #include <Library/IoLib.h>
 #include <Library/DebugLib.h>
 #include <Library/BaseMemoryLib.h>
-#include <Library/VTdLib.h>
+#include <Library/VtdLib.h>
 #include <RegAccess.h>
 #include <Library/DmaRemappingTable.h>
 #include <Library/PciLib.h>
@@ -189,7 +189,7 @@ UpdateDrhd2 (
       // Update source id for IoApic's device scope entry
       //
       Data16 = MmioRead16 (P2sbMmbase + R_PCH_P2SB_IBDF);
-      DEBUG ((EFI_D_INFO, " VTD Lib: P2sbMmbase = 0x%X, IBDF = 0x%X\n", P2sbMmbase, Data16));
+      DEBUG ((EFI_D_INFO, " VtdLib: P2sbMmbase = 0x%X, IBDF = 0x%X\n", P2sbMmbase, Data16));
       Bus     = (UINT8) (Data16 >> 8);
       Path[0] = (UINT8) ((Data16 & 0xff) >> 3);
       Path[1] = (UINT8) (Data16 & 0x7);
@@ -202,7 +202,7 @@ UpdateDrhd2 (
       // Update APIC ID
       //
       DrhdEngine->DeviceScope[Index].EnumId = GetIoApicId();
-      DEBUG ((EFI_D_INFO, " VTd check IoApicId : 0x%x\n", GetIoApicId()));
+      DEBUG ((EFI_D_INFO, " VtdLib: IoApicId 0x%x\n", GetIoApicId()));
     }
 
     if (Index == 1) {
