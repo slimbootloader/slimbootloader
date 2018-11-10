@@ -247,7 +247,7 @@
   gPlatformModuleTokenSpaceGuid.PcdGraphicsVbtAddress| 0xFF000000
   gPlatformModuleTokenSpaceGuid.PcdDeviceTreeBase    | 0xFF000000
   gPlatformCommonLibTokenSpaceGuid.PcdAcpiPmTimerBase   | $(ACPI_PM_TIMER_BASE)
-  gPlatformModuleTokenSpaceGuid.PcdKeyStoreBase      | 0xFF000000
+  gPlatformModuleTokenSpaceGuid.PcdHashStoreBase     | 0xFF000000
   gPlatformModuleTokenSpaceGuid.PcdVerInfoBase       | 0xFF000000
   gPlatformModuleTokenSpaceGuid.PcdFileDataBase      | 0xFF000000
   gPlatformModuleTokenSpaceGuid.PcdFSPSBase          | $(FSP_S_BASE)

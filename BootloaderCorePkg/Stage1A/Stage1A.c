@@ -154,7 +154,7 @@ SecStartup2 (
                 + LibDataLen + ServiceDataLen + PcdDatabaseLen + PlatformDataLen \
                 + LogBufLen + sizeof (UINTN) * 16;
   if (FeaturePcdGet (PcdVerifiedBootEnabled)) {
-    AllocateLen += sizeof (KEYSTORE_TABLE);
+    AllocateLen += sizeof (HASH_STORE_TABLE);
   }
   if (FeaturePcdGet (PcdFlashMapEnabled) == TRUE) {
     FlashMap = (FLASH_MAP *) (* (UINT32 *)FLASH_MAP_ADDRESS);
@@ -186,9 +186,9 @@ SecStartup2 (
 
     // Key Store
     if (FeaturePcdGet (PcdVerifiedBootEnabled)) {
-      CopyMem (BufPtr, (VOID *)PcdGet32 (PcdKeyStoreBase), sizeof (KEYSTORE_TABLE));
-      LdrGlobal->KeyStorePtr = BufPtr;
-      BufPtr += ALIGN_UP (sizeof (KEYSTORE_TABLE), sizeof (UINTN));
+      CopyMem (BufPtr, (VOID *)PcdGet32 (PcdHashStoreBase), sizeof (HASH_STORE_TABLE));
+      LdrGlobal->HashStorePtr = BufPtr;
+      BufPtr += ALIGN_UP (sizeof (HASH_STORE_TABLE), sizeof (UINTN));
     }
 
     // Library data

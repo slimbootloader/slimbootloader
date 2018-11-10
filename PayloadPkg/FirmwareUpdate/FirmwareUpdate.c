@@ -720,7 +720,7 @@ AfterUpdateEnforceFwUpdatePolicy (
   Verify the capsule image against its signature.
 
   This function first gets the hash of the processed public key, then compare it
-  with the saved one from keystore. If they are same, the pre-processed key is
+  with the saved one from hash store. If they are same, the pre-processed key is
   verified.
   Then using the pre-process key to verify capsule image, if it passed verification,
   the capsule image can be trusted.

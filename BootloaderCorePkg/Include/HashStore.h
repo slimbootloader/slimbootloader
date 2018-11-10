@@ -11,11 +11,11 @@
 
 **/
 
-#ifndef __KEY_STORE_H__
-#define __KEY_STORE_H__
+#ifndef __HASH_STORE_H__
+#define __HASH_STORE_H__
 
-#define  KEYSTORE_SIGNATURE                SIGNATURE_32('_', 'K', 'S', '_')
-#define  KEYSTORE_DIGEST_LENGTH            32
+#define  HASH_STORE_SIGNATURE                SIGNATURE_32('_', 'H', 'S', '_')
+#define  HASH_STORE_DIGEST_LENGTH            32
 
 #define  HASH_INDEX_STAGE_1B               0
 #define  HASH_INDEX_STAGE_2                1
@@ -30,14 +30,14 @@
 
 #pragma pack(1)
 typedef struct {
-  UINT8  Data[KEYSTORE_DIGEST_LENGTH];
-} KEYSTORE_DATA;
+  UINT8  Data[HASH_STORE_DIGEST_LENGTH];
+} HASH_STORE_DATA;
 
 typedef struct {
   UINT32             Signature;
   UINT32             Valid;
-  KEYSTORE_DATA      Data[HASH_INDEX_MAX_NUM];
-} KEYSTORE_TABLE;
+  HASH_STORE_DATA    Data[HASH_INDEX_MAX_NUM];
+} HASH_STORE_TABLE;
 #pragma pack()
 
-#endif /* __KEY_STORE_H__ */
+#endif /* __HASH_STORE_H__ */

@@ -16,9 +16,9 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLogBufferLib.h>
 #include <Library/BootloaderCoreLib.h>
-#include <KeyStore.h>
 #include <Library/HobLib.h>
 #include <Library/PcdLib.h>
+#include <HashStore.h>
 
 /**
   Get the component hash data by the component type.
@@ -39,28 +39,26 @@ GetComponentHash (
   )
 {
   LOADER_GLOBAL_DATA  *LdrGlobal;
-  KEYSTORE_TABLE      *KeyStorePtr;
-  UINT8               HashIndex;
+  HASH_STORE_TABLE    *HashStorePtr;
+  UINT8                HashIndex;
 
   if (HashData == NULL) {
     return RETURN_INVALID_PARAMETER;
   }
 
   HashIndex = ComponentType;
-  LdrGlobal = GetLoaderGlobalDataPointer ();
-  KeyStorePtr = (KEYSTORE_TABLE *)LdrGlobal->KeyStorePtr;
-  ASSERT (KeyStorePtr != NULL);
-
   *HashData = NULL;
   if (HashIndex >= HASH_INDEX_MAX_NUM) {
     return RETURN_UNSUPPORTED;
   }
 
-  if (! (KeyStorePtr->Valid & (1 << HashIndex))) {
+  LdrGlobal = GetLoaderGlobalDataPointer ();
+  HashStorePtr = (HASH_STORE_TABLE *)LdrGlobal->HashStorePtr;
+  if ((HashStorePtr == NULL) || (! (HashStorePtr->Valid & (1 << HashIndex)))) {
     return RETURN_NOT_FOUND;
   }
 
-  *HashData = (UINT8 *)KeyStorePtr->Data[HashIndex].Data;
+  *HashData = (UINT8 *)HashStorePtr->Data[HashIndex].Data;
 
   return RETURN_SUCCESS;
 }
@@ -84,7 +82,7 @@ SetComponentHash (
   )
 {
   LOADER_GLOBAL_DATA  *LdrGlobal;
-  KEYSTORE_TABLE      *KeyStorePtr;
+  HASH_STORE_TABLE    *HashStorePtr;
   UINT8               HashIndex;
 
   if (HashData == NULL) {
@@ -93,15 +91,12 @@ SetComponentHash (
 
   HashIndex = ComponentType;
   LdrGlobal = GetLoaderGlobalDataPointer ();
-  KeyStorePtr = (KEYSTORE_TABLE *)LdrGlobal->KeyStorePtr;
-  ASSERT (KeyStorePtr != NULL);
-
-  if (HashIndex != HASH_INDEX_PAYLOAD_DYNAMIC) {
+  HashStorePtr = (HASH_STORE_TABLE *)LdrGlobal->HashStorePtr;
+  if ((HashStorePtr == NULL) || (HashIndex != HASH_INDEX_PAYLOAD_DYNAMIC)) {
     return RETURN_UNSUPPORTED;
   }
 
-  CopyMem ((UINT8 *)KeyStorePtr->Data[HashIndex].Data, HashData, KEYSTORE_DIGEST_LENGTH);
-
+  CopyMem ((UINT8 *)HashStorePtr->Data[HashIndex].Data, HashData, HASH_STORE_DIGEST_LENGTH);
   return RETURN_SUCCESS;
 }
 

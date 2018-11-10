@@ -446,7 +446,7 @@ BuildBaseInfoHob (
   }
 
   // Build key hash Hob for Payload
-  if (LdrGlobal->KeyStorePtr != NULL) {
+  if (LdrGlobal->HashStorePtr != NULL) {
     HobDataSize = sizeof (PAYLOAD_KEY_HASH) + sizeof (KEY_HASH_ITEM) * MAX_KEY_DIGEST_COUNT;
     HashHob     = BuildGuidHob (&gPayloadKeyHashGuid, HobDataSize);
     if (HashHob != NULL) {
