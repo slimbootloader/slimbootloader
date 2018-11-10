@@ -39,11 +39,12 @@
 #include <Library/DebugLogBufferLib.h>
 #include <Library/LocalApicLib.h>
 #include <Library/DebugAgentLib.h>
+#include <Library/TpmLib.h>
 #include <Guid/PcdDataBaseSignatureGuid.h>
 #include <Guid/LoaderPlatformDataGuid.h>
 #include <VerInfo.h>
-#include <KeyStore.h>
-#include <Library/TpmLib.h>
+#include <HashStore.h>
+
 
 /**
   Continue Stage1B execution.

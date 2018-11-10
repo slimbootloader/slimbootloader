@@ -180,7 +180,7 @@ GetIbbHashDataFromBpm (
   DEBUG ((DEBUG_INFO, "BpmData->IbbmHash IBB Hash: 0x%08x\n", BpmData->IbbmHash));
   DumpHex (2, 0, BpmData->IbbmHashSize, (VOID *)BpmData->IbbmHash);
 
-  //OBB Hash, we will calculate Stage-2 HASH from keystore ( OBB = Stage2 + padding ),
+  //OBB Hash, we will calculate Stage-2 HASH from hash store ( OBB = Stage2 + padding ),
 
   return EFI_SUCCESS;
 }

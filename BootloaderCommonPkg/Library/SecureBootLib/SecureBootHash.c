@@ -67,7 +67,7 @@ DoHashVerify (
     DEBUG ((DEBUG_INFO, "Image Digest\n"));
     DumpHex (2, 0, SHA256_DIGEST_SIZE, (VOID *)Digest);
 
-    DEBUG ((DEBUG_INFO, "KeyStore Digest\n"));
+    DEBUG ((DEBUG_INFO, "HashStore Digest\n"));
     DumpHex (2, 0, SHA256_DIGEST_SIZE, (VOID *)PubKeyHash);
 
     DEBUG_CODE_END();

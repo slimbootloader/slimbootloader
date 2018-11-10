@@ -410,8 +410,8 @@ SecStartup2 (
   if (LdrGlobal->VerInfoPtr) {
     LdrGlobal->VerInfoPtr = (UINT8 *)LdrGlobal->VerInfoPtr + Delta;
   }
-  if (LdrGlobal->KeyStorePtr) {
-    LdrGlobal->KeyStorePtr = (UINT8 *)LdrGlobal->KeyStorePtr + Delta;
+  if (LdrGlobal->HashStorePtr) {
+    LdrGlobal->HashStorePtr = (UINT8 *)LdrGlobal->HashStorePtr + Delta;
   }
   if (LdrGlobal->ConfDataPtr) {
     LdrGlobal->ConfDataPtr = (UINT8 *)LdrGlobal->ConfDataPtr + Delta;

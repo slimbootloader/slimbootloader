@@ -58,7 +58,7 @@ typedef struct {
 typedef struct {
   UINT32        CarBase;
   UINT32        CarTop;
-  UINT32        KeyStoreBase;
+  UINT32        HashStoreBase;
   UINT32        VerInfoBase;
   UINT32        AllocDataBase;
   UINT32        AllocDataLen;
@@ -174,7 +174,7 @@ typedef struct {
   VOID             *FspHobList;
   VOID             *LdrHobList;
   VOID             *VerInfoPtr;
-  VOID             *KeyStorePtr;
+  VOID             *HashStorePtr;
   VOID             *ConfDataPtr;
   VOID             *S3DataPtr;
   VOID             *DebugDataPtr;

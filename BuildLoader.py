@@ -630,7 +630,7 @@ class Build(object):
 				])
 		if self._board.HAVE_VERIFIED_BOOT:
 			extra_cmd.append (
-				"<Stage1A:__gPcd_BinaryPatch_PcdKeyStoreBase>, {18EDB1DF-1DBE-4EC5-8E26-C44808B546E1:0x1C}, @Patch KeyStore",
+				"<Stage1A:__gPcd_BinaryPatch_PcdHashStoreBase>, {18EDB1DF-1DBE-4EC5-8E26-C44808B546E1:0x1C}, @Patch HashStore",
 			)
 		patch_fv(self._fv_dir, *extra_cmd)
 

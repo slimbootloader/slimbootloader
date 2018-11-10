@@ -56,8 +56,7 @@
 #include <Library/ConfigDataLib.h>
 #include <Library/DebugAgentLib.h>
 #include <Library/ElfLib.h>
-
-#include <KeyStore.h>
+#include <HashStore.h>
 #include <VerInfo.h>
 
 #define UIMAGE_FIT_MAGIC               (0x56190527)

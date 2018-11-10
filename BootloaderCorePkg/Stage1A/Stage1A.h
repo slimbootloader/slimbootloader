@@ -36,7 +36,7 @@
 #include <Guid/LoaderPlatformDataGuid.h>
 #include <Guid/PcdDataBaseSignatureGuid.h>
 #include <VerInfo.h>
-#include <KeyStore.h>
+#include <HashStore.h>
 
 /**
   Load IDT table for current processor.
