@@ -264,6 +264,7 @@ RpmbKeyProvisioning (
   }
 
   // Copy 32 bytes for APL
+  Status = EFI_UNSUPPORTED;
   for(Index = 0;Index < mRpmbKeyCount; Index++) {
     RpmbSeedInfo = (UINT8 *)&SeedList->RpmbHeciSeeds[Index];
     Status = RpmbProgramKey(CurrentBootOption->DevType, 0, RpmbSeedInfo, 32, &Result);

@@ -374,6 +374,7 @@ UpdateSeedListInfo (
     return EFI_NOT_FOUND;
   }
 
+  Status = EFI_NOT_FOUND;
   if (LdrSeedList->NumofSeeds > 0) {
     for (Index = 0; Index < LdrSeedList->NumofSeeds; Index++) {
       // Fill SeedListHOB with one USeed at a time

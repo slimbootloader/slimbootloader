@@ -531,6 +531,7 @@ GetDeviceAddr (
   UINT32             Index;
 
   DeviceBase  = 0;
+  Device = NULL;
   DeviceTable = (PLT_DEVICE_TABLE *)GetDeviceTable();
   for (Index = 0; Index < DeviceTable->DeviceNumber; Index++) {
     Device = &DeviceTable->Device[Index];
