@@ -237,6 +237,7 @@ UpdateOsParameters (
 
   // Check storage serial number validity. eMMC only for now.
   if (PcdGetBool (PcdSeedListEnabled)) {
+    SerialNumValidity = FALSE;
     if (CurrentBootOption->DevType == OsBootDeviceEmmc) {
       Status = EmmcSerialNumCheck();
       if (EFI_ERROR (Status)) {

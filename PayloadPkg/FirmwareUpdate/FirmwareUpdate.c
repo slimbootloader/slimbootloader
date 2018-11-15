@@ -368,11 +368,13 @@ VerifyFwVersion (
   //
   // Get base address of Stage 1A in capsule Image
   //
+  Status = EFI_INVALID_PARAMETER;
   if (FwPolicy.Fields.UpdatePartitionB == 0x1) {
     Status = GetComponentInfoByPartition(FLASH_MAP_SIG_STAGE1A, FALSE, &CompBase, &CompSize);
   } else if (FwPolicy.Fields.UpdatePartitionA == 0x1) {
     Status = GetComponentInfoByPartition(FLASH_MAP_SIG_STAGE1A, TRUE, &CompBase, &CompSize);
   }
+
   if (EFI_ERROR(Status)) {
     DEBUG((DEBUG_ERROR, "GetComponentInfoByPartition: %r\n", Status));
     return Status;
