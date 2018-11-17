@@ -13,8 +13,9 @@
 ;
 ;------------------------------------------------------------------------------
 
-%define SEC_DEFAULT_CR0  0x40000023
-%define SEC_DEFAULT_CR4  0x640
+%define SEC_DEFAULT_CR0       0x00000023
+%define SEC_DEFAULT_CR0_MASK  0x40000000
+%define SEC_DEFAULT_CR4       0x640
 
 BITS    16
 
@@ -102,7 +103,9 @@ TransitionFromReal16To32BitFlat:
     mov     ds, bx
     mov     bx, ADDR16_OF(gdtr)
 o32 lgdt    [cs:bx]
-    mov     eax, SEC_DEFAULT_CR0
+    mov     eax, cr0
+    and     eax, SEC_DEFAULT_CR0_MASK
+    or      eax, SEC_DEFAULT_CR0
     mov     cr0, eax
     jmp     LINEAR_CODE_SEL:dword ADDR_OF(jumpTo32BitAndLandHere)
 BITS    32
