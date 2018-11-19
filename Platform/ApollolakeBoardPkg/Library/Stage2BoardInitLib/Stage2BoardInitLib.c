@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017-2018, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -424,7 +424,9 @@ SaveOtgRole (
     return;
   }
 
-  XhciPciBase = MmPciBase (0, 21, 0);
+  XhciPciBase = GetDeviceAddr (OsBootDeviceUsb, 0);
+  XhciPciBase = TO_MM_PCI_ADDRESS (XhciPciBase);
+
   XhciBar     = MmioRead32 (XhciPciBase + PCI_BASE_ADDRESSREG_OFFSET) & 0xFFFF0000;
   if (XhciBar == 0) {
     XhciBar   = 0xFC800000;
@@ -517,8 +519,9 @@ RestoreOtgRole (
   if (BootMode != BOOT_ON_S3_RESUME) {
     return;
   }
+  XhciPciBase = GetDeviceAddr (OsBootDeviceUsb, 0);
+  XhciPciBase = TO_MM_PCI_ADDRESS (XhciPciBase);
 
-  XhciPciBase  = MmPciBase (0, 21, 0);
   XhciBar      = MmioRead32 (XhciPciBase + PCI_BASE_ADDRESSREG_OFFSET) & 0xFFFF0000;
   DualRoleCfg0 = MmioRead32 (XhciBar + R_XHCI_MEM_DUAL_ROLE_CFG0);
   DEBUG ((DEBUG_INFO, "Before restore DualRoleCfg0: 0x%x \n", DualRoleCfg0));
@@ -670,11 +673,8 @@ BoardInit (
 
     // Lock down SPI for all other payload entry except FWUpdate and OSloader
     // as this phase is too early for them to lock it here
-    SpiBaseAddress = MmPciBase (
-                       DEFAULT_PCI_BUS_NUMBER_SC,
-                       PCI_DEVICE_NUMBER_SPI,
-                       PCI_FUNCTION_NUMBER_SPI
-                       );
+    SpiBaseAddress = GetDeviceAddr (OsBootDeviceSpi, 0);
+    SpiBaseAddress = TO_MM_PCI_ADDRESS (SpiBaseAddress);
 
     if ((GetBootMode() != BOOT_ON_FLASH_UPDATE) && (GetPayloadId() != 0)) {
       // Set the BIOS Lock Enable and EISS bits
@@ -685,11 +685,9 @@ BoardInit (
     break;
   case ReadyToBoot:
     // Lock down SPI for everything
-    SpiBaseAddress = MmPciBase (
-                       DEFAULT_PCI_BUS_NUMBER_SC,
-                       PCI_DEVICE_NUMBER_SPI,
-                       PCI_FUNCTION_NUMBER_SPI
-                       );
+    SpiBaseAddress = GetDeviceAddr (OsBootDeviceSpi, 0);
+    SpiBaseAddress = TO_MM_PCI_ADDRESS (SpiBaseAddress);
+
     // Set the BIOS Lock Enable and EISS bits
     MmioOr8 (SpiBaseAddress + R_SPI_BCR, (UINT8) (B_SPI_BCR_BLE | B_SPI_BCR_EISS));
 

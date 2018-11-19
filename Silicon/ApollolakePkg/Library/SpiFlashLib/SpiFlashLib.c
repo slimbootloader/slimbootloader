@@ -1,7 +1,7 @@
 /** @file
   SC SPI Common Driver implements the SPI Host Controller Compatibility Interface.
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017-2018, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -22,6 +22,7 @@
 #include <RegAccess.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/BootloaderCommonLib.h>
+#include <Guid/OsBootOptionGuid.h>
 
 const SPI_FLASH_SERVICE   mSpiFlashService = {
   .Header.Signature = SPI_FLASH_SERVICE_SIGNATURE,
@@ -92,11 +93,9 @@ SpiConstructor (
 
   SpiInstance->Signature  = SC_SPI_PRIVATE_DATA_SIGNATURE;
   SpiInstance->Handle     = NULL;
-  SpiInstance->PchSpiBase = MmPciBase (
-                              DEFAULT_PCI_BUS_NUMBER_SC,
-                              PCI_DEVICE_NUMBER_SPI,
-                              PCI_FUNCTION_NUMBER_SPI
-                              );
+
+  SpiInstance->PchSpiBase = GetDeviceAddr (OsBootDeviceSpi, 0);
+  SpiInstance->PchSpiBase = TO_MM_PCI_ADDRESS (SpiInstance->PchSpiBase);
 
   SpiInstance->PchAcpiBase = ACPI_BASE_ADDRESS;
   ASSERT (SpiInstance->PchAcpiBase != 0);
@@ -998,11 +997,9 @@ DisableBiosWriteProtect (
 {
   UINTN             SpiBaseAddress;
 
-  SpiBaseAddress = MmPciBase (
-                     DEFAULT_PCI_BUS_NUMBER_SC,
-                     PCI_DEVICE_NUMBER_SPI,
-                     PCI_FUNCTION_NUMBER_SPI
-                     );
+  SpiBaseAddress = GetDeviceAddr (OsBootDeviceSpi, 0);
+  SpiBaseAddress = TO_MM_PCI_ADDRESS (SpiBaseAddress);
+
   if ((MmioRead8 (SpiBaseAddress + R_SPI_BCR) & B_SPI_BCR_SMM_BWP) != 0) {
     return EFI_ACCESS_DENIED;
   }
@@ -1030,11 +1027,9 @@ EnableBiosWriteProtect (
 {
   UINTN                           SpiBaseAddress;
 
-  SpiBaseAddress = MmPciBase (
-                     DEFAULT_PCI_BUS_NUMBER_SC,
-                     PCI_DEVICE_NUMBER_SPI,
-                     PCI_FUNCTION_NUMBER_SPI
-                     );
+  SpiBaseAddress = GetDeviceAddr (OsBootDeviceSpi, 0);
+  SpiBaseAddress = TO_MM_PCI_ADDRESS (SpiBaseAddress);
+
   //
   // Disable the access to the BIOS space for write cycles
   //

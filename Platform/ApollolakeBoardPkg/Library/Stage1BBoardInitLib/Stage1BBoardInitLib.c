@@ -62,7 +62,7 @@ CONST PLT_DEVICE  mPlatformDevices[]= {
   {{0x00001B00}, OsBootDeviceSd    , 0 },
   {{0x00001C00}, OsBootDeviceEmmc  , 0 },
   {{0x00001D00}, OsBootDeviceUfs   , 0 },
-  {{0x00000D00}, OsBootDeviceSpi   , 0 },
+  {{0x00000D02}, OsBootDeviceSpi   , 0 },
   {{0x00001500}, OsBootDeviceUsb   , 0 },
   {{0x01000000}, OsBootDeviceMemory, 0 }
 };
@@ -729,7 +729,11 @@ EarlyBootDeviceInit (
 )
 {
   EFI_STATUS  Status        = EFI_SUCCESS;
-  UINT32      EmmcHcPciBase = MmPciBase(0, 0x1C, 0);  // D28:F0
+  UINT32      EmmcHcPciBase;
+
+  EmmcHcPciBase = GetDeviceAddr (OsBootDeviceEmmc, 0);
+  EmmcHcPciBase = TO_MM_PCI_ADDRESS (EmmcHcPciBase);
+
   UINT32      Base          = 0xFE700000; // temporary PCI MMIO resource for eMMC device, non-conflicting MMIO address
 
 
@@ -796,12 +800,10 @@ SpiControllerInitialize (
 {
   UINTN                           SpiBaseAddress;
 
-  /* Allow SPI write in non-SMM mode */
-  SpiBaseAddress = MmPciBase (
-                     DEFAULT_PCI_BUS_NUMBER_SC,
-                     PCI_DEVICE_NUMBER_SPI,
-                     PCI_FUNCTION_NUMBER_SPI
-                     );
+  // Allow SPI write in non-SMM mode
+  SpiBaseAddress = GetDeviceAddr (OsBootDeviceSpi, 0);
+  SpiBaseAddress = TO_MM_PCI_ADDRESS (SpiBaseAddress);
+
   MmioWrite32 (SpiBaseAddress + R_LPSS_IO_BAR, SPI_TEMP_MEM_BASE_ADDRESS);
   MmioAnd8    (SpiBaseAddress + R_SPI_BCR, (UINT8)~B_SPI_BCR_EISS);
 
