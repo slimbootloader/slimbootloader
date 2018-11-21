@@ -72,6 +72,12 @@ class Board(BaseBoard):
 		# BIT0:Serial  BIT1:GFX
 		self.CONSOLE_OUT_DEVICE_MASK = 0x00000001
 
+		# NVMe | Usb | Spi | Ufs | eMMC | SD | Sata
+		self.BOOT_MEDIA_SUPPORT_MASK  = 0x3F
+
+		# EXT | FAT
+		self.FILE_SYSTEM_SUPPORT_MASK  = 3
+
 		# OS_PK | FWU_PK | CFG_PK | FWU_PLD | PLD | Stage2 | Stage1B
 		# Stage1B is verified by CSE
 		self.VERIFIED_BOOT_HASH_MASK  = 0x000000D6

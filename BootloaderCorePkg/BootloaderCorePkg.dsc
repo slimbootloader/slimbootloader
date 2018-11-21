@@ -233,7 +233,8 @@
   gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImage2RegionBase   | $(SPI_IAS2_BASE)
   gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImage2RegionSize   | $(SPI_IAS2_SIZE)
 
-  gPlatformCommonLibTokenSpaceGuid.PcdSupportedMediaTypeMask | $(BOOT_MEDIA_SUPPORT_MASK)
+  gPlatformCommonLibTokenSpaceGuid.PcdSupportedMediaTypeMask   | $(BOOT_MEDIA_SUPPORT_MASK)
+  gPlatformCommonLibTokenSpaceGuid.PcdSupportedFileSystemMask  | $(FILE_SYSTEM_SUPPORT_MASK)
 
   gPlatformCommonLibTokenSpaceGuid.PcdSeedListEnabled     | $(HAVE_SEED_LIST)
   gPlatformCommonLibTokenSpaceGuid.PcdUsbKeyboardPollingTimeout | $(USB_KB_POLLING_TIMEOUT)

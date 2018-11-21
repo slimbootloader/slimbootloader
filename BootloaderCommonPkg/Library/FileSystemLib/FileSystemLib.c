@@ -1,7 +1,7 @@
 /** @file
   File system level API library interface
 
-Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
 
 This program and the accompanying materials are licensed and made available
 under the terms and conditions of the BSD License which accompanies this
@@ -16,6 +16,10 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/FileSystemLib.h>
+#include <Library/PcdLib.h>
+
+OS_FILE_SYSTEM_TYPE     mCurrentFsType = EnumFileSystemMax;
+FILE_SYSTEM_FUNC        mFileSystemFuncs[EnumFileSystemTypeAuto];
 
 /**
 Loads file into memory by its name.
@@ -42,21 +46,17 @@ GetFileByName (
   OUT UINTN                                       *FileSize
   )
 {
-  EFI_STATUS   Status;
-  UINT32      *Signature;
 
-  Signature = (UINT32 *)FsHandle;
-
-  Status = EFI_INVALID_PARAMETER;
-  if (Signature != NULL) {
-    if (*Signature == FS_FAT_SIGNATURE) {
-      Status = FatGetFileByName (FsHandle, FileName, FileBuffer, FileSize);
-    } else if (*Signature == FS_EXT_SIGNATURE) {
-      Status = ExtGetFileByName (FsHandle, FileName, FileBuffer, FileSize);
-    }
+  if (mCurrentFsType >= EnumFileSystemTypeAuto) {
+    return EFI_NOT_READY;
   }
 
-  return Status;
+  if (mFileSystemFuncs[mCurrentFsType].GetFileByName == NULL) {
+    return EFI_UNSUPPORTED;
+  }
+
+  return mFileSystemFuncs[mCurrentFsType].GetFileByName (FsHandle, FileName, FileBuffer, FileSize);
+
 }
 
 /**
@@ -83,15 +83,40 @@ InitFileSystem (
   )
 {
   EFI_STATUS   Status;
+  UINT32       Type;
 
   Status = EFI_INVALID_PARAMETER;
-  if ((FsType == EnumFileSystemTypeFat) || (FsType == EnumFileSystemTypeAuto)) {
-    Status = FatInitFileSystem (SwPart, PartHandle, FsHandle);
+
+  if (FsType >= EnumFileSystemMax) {
+    return Status;
   }
 
-  if (EFI_ERROR (Status)) {
-    if ((FsType == EnumFileSystemTypeExt2) || (FsType == EnumFileSystemTypeAuto)) {
-      Status = ExtInitFileSystem (SwPart, PartHandle, FsHandle);
+  if (FsType == EnumFileSystemTypeAuto) {
+    FsType = 0xFFFFFFFF;
+  }
+
+  if (mCurrentFsType == EnumFileSystemMax) {
+    Type = EnumFileSystemTypeFat;
+    if (FixedPcdGet32 (PcdSupportedFileSystemMask) & (1 << Type)) {
+      mFileSystemFuncs[Type].InitFileSystem     = FatInitFileSystem;
+      mFileSystemFuncs[Type].GetFileByName      = FatGetFileByName;
+    }
+
+    Type = EnumFileSystemTypeExt2;
+    if (FixedPcdGet32 (PcdSupportedFileSystemMask) & (1 << Type)) {
+      mFileSystemFuncs[Type].InitFileSystem     = ExtInitFileSystem;
+      mFileSystemFuncs[Type].GetFileByName      = ExtGetFileByName;
+    }
+    mCurrentFsType = EnumFileSystemTypeAuto;
+  }
+
+  for (Type = EnumFileSystemTypeFat; Type < EnumFileSystemTypeAuto; Type++) {
+    if (((FsType & (1 << Type)) != 0) && (mFileSystemFuncs[Type].InitFileSystem != NULL)) {
+      Status = mFileSystemFuncs[Type].InitFileSystem (SwPart, PartHandle, FsHandle);
+      if (!EFI_ERROR (Status)) {
+        mCurrentFsType = Type;
+        break;
+      }
     }
   }
 
