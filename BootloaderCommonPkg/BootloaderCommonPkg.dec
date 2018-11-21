@@ -58,6 +58,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdCpuLocalApicBaseAddress| 0xFEE00000 | UINT32  | 0x20000186
   gPlatformCommonLibTokenSpaceGuid.PcdSupportedMediaTypeMask | 0xFFFFFFFF | UINT32  | 0x20000187
   gPlatformCommonLibTokenSpaceGuid.PcdMmcTuningLba           | 0x00000040 | UINT32  | 0x20000188
+  gPlatformCommonLibTokenSpaceGuid.PcdSupportedFileSystemMask| 0x00000003 | UINT32  | 0x20000189
   gPlatformCommonLibTokenSpaceGuid.PcdCryptoShaNiEnabled     | FALSE      | BOOLEAN | 0x20000200
   gPlatformCommonLibTokenSpaceGuid.PcdSeedListEnabled        | FALSE      | BOOLEAN | 0x20000203
   gPlatformCommonLibTokenSpaceGuid.PcdConsoleInDeviceMask    | 0x00000001 | UINT32  | 0x20000300

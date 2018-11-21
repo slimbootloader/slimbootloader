@@ -207,6 +207,10 @@ ExtGetFileByName (
   CHAR8      *FileBuffer;
   CHAR8      *NameBuffer;
 
+  if (((PEI_EXT_PRIVATE_DATA *)PrivateData)->Signature != FS_EXT_SIGNATURE) {
+    return EFI_INVALID_PARAMETER;
+  }
+
   OpenFile.FileDevData = PrivateData;
 
   NameSize = StrSize (FileName);
