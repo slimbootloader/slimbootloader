@@ -643,15 +643,12 @@ EndList
                                 IncludeFilePath = os.path.join(os.path.dirname(DscFile), Remaining)
                                 if not os.path.exists(IncludeFilePath):
                                     # Relative to repository to find dsc in common platform
-                                    IncludeFilePath = os.path.join(os.path.dirname(DscFile), "../../..", Remaining)
-                                    if (not os.path.exists(IncludeFilePath)) and ('SBL_SOURCE' in os.environ):
-                                        # Relative to SBL_SOURCE if it is defined.
-                                        IncludeFilePath = os.path.join(os.environ['SBL_SOURCE'], Remaining)
+                                    IncludeFilePath = os.path.join(os.path.dirname (os.path.realpath(__file__)), "../..", Remaining)
 
                                 try:
                                     IncludeDsc  = open(IncludeFilePath, "r")
                                 except:
-                                    raise Exception ("ERROR: Cannot open file '%s',\n Please check if env variable SBL_SOURCE is set correctly." % IncludeFilePath)
+                                    raise Exception ("ERROR: Cannot open file '%s'." % IncludeFilePath)
                                 NewDscLines = IncludeDsc.readlines()
                                 IncludeDsc.close()
                                 DscLines = NewDscLines + DscLines
