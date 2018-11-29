@@ -72,8 +72,8 @@ class Board(BaseBoard):
 		# BIT0:Serial  BIT1:GFX
 		self.CONSOLE_OUT_DEVICE_MASK = 0x00000001
 
-		# NVMe | Usb | Spi | Ufs | eMMC | SD | Sata
-		self.BOOT_MEDIA_SUPPORT_MASK  = 0x3F
+		# Mem | NVMe | Usb | Spi | Ufs | eMMC | SD | Sata
+		self.BOOT_MEDIA_SUPPORT_MASK  = 0xBF
 
 		# EXT | FAT
 		self.FILE_SYSTEM_SUPPORT_MASK  = 3
