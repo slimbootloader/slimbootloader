@@ -804,7 +804,7 @@ def CreateIfwiImage (IfwiIn, IfwiOut, BiosOut, PlatformData, StitchDir, Redundan
         ]
 
         ObbList = [
-          ('PROV' , ''),
+          ('PROV' , 'FB'),
           ('EPLD' , 'EPLD'),
           ('PLD'  , 'PLD'),
 
