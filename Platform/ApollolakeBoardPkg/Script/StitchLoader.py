@@ -543,6 +543,10 @@ def CopyComponent (Root, Path, IfwiData):
     Bp1SBpdtEndOffset = Bp1SBpdtOffset + Bp1SBpdt.Length
     IfwiData[Bp1SBpdtOffset:Bp1SBpdtEndOffset] = Bp1SBpdtData
     Padding = Bp1.Offset + Bp1.Length - Bp1SBpdtEndOffset
+    if Padding < 0:
+        print ('Insufficiant space in BP1 partition !')
+        return -1
+
     IfwiData[Bp1SBpdtEndOffset:Bp1SBpdtEndOffset+Padding] = '\xff' * Padding
 
     # Fix Sbpdt length in BP1 BPDT
@@ -632,7 +636,6 @@ def CreateDirData (Dir, IfwiData):
 
 
 def RefreshIfwiForDir (Dir, IfwiData):
-    print Dir.Name
     # Claculate new DIR length and creaet new DIR data
     DirData = CreateDirData (Dir, IfwiData)
     Length  = len (DirData)
