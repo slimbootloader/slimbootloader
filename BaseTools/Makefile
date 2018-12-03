@@ -17,13 +17,10 @@
 
 SUBDIRS = $(BASE_TOOLS_PATH)\Source\C $(BASE_TOOLS_PATH)\Source\Python
 
-all: c python
+all: c
 
 c :
   @$(BASE_TOOLS_PATH)\Source\C\Makefiles\NmakeSubdirs.bat all $(BASE_TOOLS_PATH)\Source\C
-
-python:
-  @$(BASE_TOOLS_PATH)\Source\C\Makefiles\NmakeSubdirs.bat all $(BASE_TOOLS_PATH)\Source\Python
 
 subdirs: $(SUBDIRS)
   @$(BASE_TOOLS_PATH)\Source\C\Makefiles\NmakeSubdirs.bat all $**

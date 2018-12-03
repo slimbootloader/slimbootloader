@@ -104,7 +104,8 @@ def BuildFspBins (fsp_dir, sbl_dir, platform, flag):
     if CheckFileListExist(copy_list, sbl_dir):
         return
 
-    print ('Building QEMU FSP binaries from EDKII repo')
+    edk2_base_tag = 'edk2-stable201811'
+    print ('Building QEMU FSP binaries from EDKII repo (Base Tag: %s)' % edk2_base_tag)
     if not os.path.exists(fsp_dir + '/.git'):
         print ('Cloning EDKII repo ...')
         cmd = 'git clone https://github.com/tianocore/edk2.git %s' % fsp_dir
@@ -112,8 +113,14 @@ def BuildFspBins (fsp_dir, sbl_dir, platform, flag):
         if ret:
             Fatal ('Failed to clone FSP repo to directory %s !' % fsp_dir)
         print ('Done\n')
+    else:
+        output = subprocess.check_output(['git', 'tag', '-l'], cwd=fsp_dir)
+        if edk2_base_tag not in output:
+            ret = subprocess.call(['git', 'fetch', '--all'], cwd=fsp_dir)
+            if ret:
+                Fatal ('Failed to fetch all tags !')
 
-    print ('Checking out EDKII UDK2018 branch ...')
+    print ('Checking out EDKII stable tag (%s)...' % edk2_base_tag)
 
     if os.path.exists(fsp_dir + '/BuildFsp.cmd'):
         os.remove (fsp_dir + '/BuildFsp.cmd')
@@ -124,7 +131,7 @@ def BuildFspBins (fsp_dir, sbl_dir, platform, flag):
     if os.path.exists(fsp_dir + '/QemuFspPkg'):
         shutil.rmtree(fsp_dir + '/QemuFspPkg')
 
-    cmd = 'git checkout vUDK2018 -f'
+    cmd = 'git checkout -f ' + edk2_base_tag
     ret = subprocess.call(cmd.split(' '), cwd=fsp_dir)
     if ret:
         Fatal ('Failed to check out branch !')

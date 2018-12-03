@@ -44,15 +44,12 @@ def rebuild_basetools ():
 			ret = subprocess.call(['make', '-C', 'BaseTools'])
 
 	elif os.name == 'nt':
-		build_exe_path  = os.path.join(sblsource, 'BaseTools', 'Bin', 'Win32', 'build.exe')
 		genffs_exe_path = os.path.join(sblsource, 'BaseTools', 'Bin', 'Win32', 'GenFfs.exe')
-		build_exist = os.path.exists(build_exe_path)
-		if not build_exist:
+		genffs_exist = os.path.exists(genffs_exe_path)
+		if not genffs_exist:
 			print "Could not find pre-built BaseTools binaries, try to rebuild BaseTools ..."
 			if 'PYTHON_HOME' not in os.environ:
 				os.environ['PYTHON_HOME'] = 'C:\\Python27'
-			if 'PYTHON_FREEZER_PATH' not in os.environ:
-				os.environ['PYTHON_FREEZER_PATH'] = os.path.join(os.environ['PYTHON_HOME'], 'Scripts')
 			ret = subprocess.call(['BaseTools\\toolsetup.bat', 'forcerebuild'])
 
 	if ret:
@@ -61,8 +58,7 @@ def rebuild_basetools ():
 
 		genffs_exist = os.path.exists(genffs_exe_path)
 		if not genffs_exist:
-				print "Build python executables failed !\n" \
-				      "Please set environment variable PYTHON_FREEZER_PATH properly and then try again!"
+				print "Build python executables failed !"
 				sys.exit(1)
 
 
@@ -79,7 +75,9 @@ def prep_env ():
 		os.environ['PATH'] = os.environ['PATH'] + ':' + os.path.join(sblsource, 'BaseTools/BinWrappers/PosixLike')
 	elif os.name == 'nt':
 		toolchain = ''
-		os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.join(sblsource, 'BaseTools/Bin/Win32')
+		os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.join(sblsource, 'BaseTools\\Bin\\Win32')
+		os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.join(sblsource, 'BaseTools\\BinWrappers\\WindowsLike')
+		os.environ['PYTHONPATH'] = os.path.join(sblsource, 'BaseTools', 'Source', 'Python')
 		vs_ver_list = [
 			('2015', 'VS140COMNTOOLS'),
 			('2013', 'VS120COMNTOOLS'),
@@ -110,6 +108,7 @@ def prep_env ():
 	# Update Environment vars
 	os.environ['SBL_SOURCE']     = sblsource
 	os.environ['EDK_TOOLS_PATH'] = os.path.join(sblsource, 'BaseTools')
+	os.environ['BASE_TOOLS_PATH'] = os.path.join(sblsource, 'BaseTools')
 	if 'WORKSPACE' not in os.environ:
 		os.environ['WORKSPACE'] = sblsource
 	os.environ['CONF_PATH']     = os.path.join(os.environ['WORKSPACE'], 'Conf')
@@ -1052,10 +1051,9 @@ class Build(object):
 		# Run pre-build
 		self.pre_build()
 
-
 		# Run build
 		x = subprocess.call([
-			"build",
+			"build" if os.name == 'posix' else "build.bat",
 			"--platform", os.path.join('BootloaderCorePkg', 'BootloaderCorePkg.dsc'),
 			"-b",         self._target,
 			"--arch",     'IA32',

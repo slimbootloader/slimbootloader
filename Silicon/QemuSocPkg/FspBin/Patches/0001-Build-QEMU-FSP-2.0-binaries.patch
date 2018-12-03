@@ -1,48 +1,48 @@
-From a8641517fa283380dadb56f87a477f291cf02853 Mon Sep 17 00:00:00 2001
+From c3bd59e2c32b03e34bf7219c38822492414b8574 Mon Sep 17 00:00:00 2001
 From: Maurice Ma <maurice.ma@intel.com>
 Date: Sun, 26 Aug 2018 22:13:05 -0700
 Subject: [PATCH] Build QEMU FSP 2.0 binaries
 
 Signed-off-by: Aiden Park <aiden.park@intel.com>
 ---
- BuildFsp.cmd                                  |  19 +
- BuildFsp.py                                   | 313 +++++++
- QemuFspPkg/BuildFv.cmd                        | 248 ++++++
- QemuFspPkg/FspDescription/FspDescription.inf  |  29 +
- QemuFspPkg/FspDescription/FspDescription.txt  |   2 +
- QemuFspPkg/FspHeader/FspHeader.aslc           |  90 +++
- QemuFspPkg/FspHeader/FspHeader.inf            |  49 ++
- QemuFspPkg/FspmInit/FspmInit.c                | 608 ++++++++++++++
- QemuFspPkg/FspmInit/FspmInit.h                |  77 ++
- QemuFspPkg/FspmInit/FspmInit.inf              |  66 ++
- QemuFspPkg/FspsInit/FspsInit.c                | 234 ++++++
- QemuFspPkg/FspsInit/FspsInit.h                | 124 +++
- QemuFspPkg/FspsInit/FspsInit.inf              |  55 ++
- QemuFspPkg/Include/BootLoaderPlatformData.h   |  33 +
- QemuFspPkg/Include/ChipsetAccess.h            |  23 +
- QemuFspPkg/Include/FspUpd.h                   |  48 ++
- QemuFspPkg/Include/FspmUpd.h                  | 108 +++
- QemuFspPkg/Include/FspsUpd.h                  | 101 +++
- QemuFspPkg/Include/FsptUpd.h                  | 101 +++
- QemuFspPkg/Include/OvmfPlatforms.h            |  44 +
- QemuFspPkg/Include/Q35MchIch9.h               | 109 +++
- .../Library/PlatformSecLib/Ia32/Chipset.inc   | 119 +++
- .../Library/PlatformSecLib/Ia32/Ia32Nasm.inc  | 169 ++++
- .../PlatformSecLib/Ia32/PlatformNasm.inc      | 143 ++++
- .../PlatformSecLib/Ia32/SecCoreNasm.inc       |  61 ++
- .../Library/PlatformSecLib/Ia32/SecEntry.nasm | 706 ++++++++++++++++
- .../Library/PlatformSecLib/PlatformSecLib.c   |  85 ++
- .../Library/PlatformSecLib/PlatformSecLib.h   |  48 ++
- .../PlatformSecLib/Vtf0PlatformSecMLib.inf    |  61 ++
- .../PlatformSecLib/Vtf0PlatformSecSLib.inf    |  63 ++
- .../PlatformSecLib/Vtf0PlatformSecTLib.inf    |  67 ++
- QemuFspPkg/QemuFspPkg.dec                     |  51 ++
- QemuFspPkg/QemuFspPkg.dsc                     | 434 ++++++++++
- QemuFspPkg/QemuFspPkg.fdf                     | 278 +++++++
- QemuFspPkg/QemuVideo/QemuVideo.c              | 761 ++++++++++++++++++
- QemuFspPkg/QemuVideo/QemuVideo.h              | 115 +++
- QemuFspPkg/QemuVideo/QemuVideo.inf            |  56 ++
- 37 files changed, 5698 insertions(+)
+ BuildFsp.cmd                                       |  19 +
+ BuildFsp.py                                        | 309 +++++++++
+ QemuFspPkg/BuildFv.cmd                             | 248 +++++++
+ QemuFspPkg/FspDescription/FspDescription.inf       |  29 +
+ QemuFspPkg/FspDescription/FspDescription.txt       |   2 +
+ QemuFspPkg/FspHeader/FspHeader.aslc                |  90 +++
+ QemuFspPkg/FspHeader/FspHeader.inf                 |  49 ++
+ QemuFspPkg/FspmInit/FspmInit.c                     | 608 ++++++++++++++++
+ QemuFspPkg/FspmInit/FspmInit.h                     |  77 +++
+ QemuFspPkg/FspmInit/FspmInit.inf                   |  66 ++
+ QemuFspPkg/FspsInit/FspsInit.c                     | 234 +++++++
+ QemuFspPkg/FspsInit/FspsInit.h                     | 124 ++++
+ QemuFspPkg/FspsInit/FspsInit.inf                   |  55 ++
+ QemuFspPkg/Include/BootLoaderPlatformData.h        |  33 +
+ QemuFspPkg/Include/ChipsetAccess.h                 |  23 +
+ QemuFspPkg/Include/FspUpd.h                        |  48 ++
+ QemuFspPkg/Include/FspmUpd.h                       | 108 +++
+ QemuFspPkg/Include/FspsUpd.h                       | 101 +++
+ QemuFspPkg/Include/FsptUpd.h                       | 101 +++
+ QemuFspPkg/Include/OvmfPlatforms.h                 |  44 ++
+ QemuFspPkg/Include/Q35MchIch9.h                    | 109 +++
+ QemuFspPkg/Library/PlatformSecLib/Ia32/Chipset.inc | 119 ++++
+ .../Library/PlatformSecLib/Ia32/Ia32Nasm.inc       | 169 +++++
+ .../Library/PlatformSecLib/Ia32/PlatformNasm.inc   | 143 ++++
+ .../Library/PlatformSecLib/Ia32/SecCoreNasm.inc    |  61 ++
+ .../Library/PlatformSecLib/Ia32/SecEntry.nasm      | 706 +++++++++++++++++++
+ QemuFspPkg/Library/PlatformSecLib/PlatformSecLib.c |  85 +++
+ QemuFspPkg/Library/PlatformSecLib/PlatformSecLib.h |  48 ++
+ .../Library/PlatformSecLib/Vtf0PlatformSecMLib.inf |  61 ++
+ .../Library/PlatformSecLib/Vtf0PlatformSecSLib.inf |  63 ++
+ .../Library/PlatformSecLib/Vtf0PlatformSecTLib.inf |  67 ++
+ QemuFspPkg/QemuFspPkg.dec                          |  51 ++
+ QemuFspPkg/QemuFspPkg.dsc                          | 434 ++++++++++++
+ QemuFspPkg/QemuFspPkg.fdf                          | 278 ++++++++
+ QemuFspPkg/QemuVideo/QemuVideo.c                   | 761 +++++++++++++++++++++
+ QemuFspPkg/QemuVideo/QemuVideo.h                   | 115 ++++
+ QemuFspPkg/QemuVideo/QemuVideo.inf                 |  56 ++
+ 37 files changed, 5694 insertions(+)
  create mode 100644 BuildFsp.cmd
  create mode 100644 BuildFsp.py
  create mode 100644 QemuFspPkg/BuildFv.cmd
@@ -108,10 +108,10 @@ index 0000000000..15b97ad490
 +python  BuildFsp.py  %*
 diff --git a/BuildFsp.py b/BuildFsp.py
 new file mode 100644
-index 0000000000..09b3ac2193
+index 0000000000..c89fe93f38
 --- /dev/null
 +++ b/BuildFsp.py
-@@ -0,0 +1,313 @@
+@@ -0,0 +1,309 @@
 +#!/usr/bin/env python
 +## @ BuildFsp.py
 +# Build FSP main script
@@ -155,18 +155,13 @@ index 0000000000..09b3ac2193
 +            ret = subprocess.call(['make', '-C', 'BaseTools'])
 +
 +    elif os.name == 'nt':
-+        build_exe_path = os.path.join(workspace, 'BaseTools', 'Bin', 'Win32',
-+                                      'build.exe')
 +        genffs_exe_path = os.path.join(workspace, 'BaseTools', 'Bin', 'Win32',
 +                                       'GenFfs.exe')
-+        build_exist = os.path.exists(build_exe_path)
-+        if not build_exist:
++        genffs_exist = os.path.exists(genffs_exe_path)
++        if not genffs_exist:
 +            print "Could not find pre-built BaseTools binaries, try to rebuild BaseTools ..."
 +            if 'PYTHON_HOME' not in os.environ:
 +                os.environ['PYTHON_HOME'] = 'C:\\Python27'
-+            if 'PYTHON_FREEZER_PATH' not in os.environ:
-+                os.environ['PYTHON_FREEZER_PATH'] = os.path.join(
-+                    os.environ['PYTHON_HOME'], 'Scripts')
 +            ret = subprocess.call(['BaseTools\\toolsetup.bat', 'forcerebuild'])
 +
 +    if ret:
@@ -175,7 +170,7 @@ index 0000000000..09b3ac2193
 +
 +        genffs_exist = os.path.exists(genffs_exe_path)
 +        if not genffs_exist:
-+            print "Build python executables failed !\n" "Please set environment variable PYTHON_FREEZER_PATH properly and then try again!"
++            print "Build python executables failed !"
 +            sys.exit(1)
 +
 +
@@ -198,6 +193,9 @@ index 0000000000..09b3ac2193
 +        workspace = os.environ['WORKSPACE']
 +        os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.join(
 +            workspace, 'BaseTools/Bin/Win32')
++        os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.join(
++            workspace, 'BaseTools/BinWrappers/WindowsLike')
++        os.environ['PYTHONPATH'] = os.path.join(workspace, 'BaseTools/Source/Python')
 +        vs_ver = ['2015', '2013', '2012', '2010', '2008']
 +        for each in vs_ver:
 +            vs_test = 'VS%s_PREFIX' % (each)
@@ -219,6 +217,7 @@ index 0000000000..09b3ac2193
 +    # Update Environment vars
 +    os.environ['WORKSPACE'] = workspace
 +    os.environ['EDK_TOOLS_PATH'] = os.path.join(workspace, 'BaseTools')
++    os.environ['BASE_TOOLS_PATH'] = os.path.join(workspace, 'BaseTools')
 +    os.environ['CONF_PATH'] = os.path.join(workspace, 'Conf')
 +
 +    # Check if BaseTools has been compiled
@@ -257,8 +256,8 @@ index 0000000000..09b3ac2193
 +              os.path.join(workspace, 'BaseTools/Conf/%s.template' % name),
 +              os.path.join(workspace, 'Conf/%s.txt' % name))
 +
-+    cmd = 'build -p QemuFspPkg/QemuFspPkg.dsc -m QemuFspPkg/FspHeader/FspHeader.inf -a IA32 -b %s -t %s -DCFG_PREBUILD' % (
-+        target, toolchain)
++    cmd = '%s -p QemuFspPkg/QemuFspPkg.dsc -m QemuFspPkg/FspHeader/FspHeader.inf -a IA32 -b %s -t %s -DCFG_PREBUILD' % (
++        'build' if os.name == 'posix' else 'build.bat', target, toolchain)
 +    ret = subprocess.call(cmd.split(' '))
 +    if ret:
 +        Fatal('Failed to prebuild QEMU FSP !')
@@ -282,10 +281,7 @@ index 0000000000..09b3ac2193
 +    print('UPD TXT file was generated successfully !')
 +
 +    print('Generate UPD Header File ...')
-+    if os.name == 'nt':
-+        bdpgpath = 'BaseTools/Bin/Win32/BPDG.exe'
-+    else :
-+        bdpgpath = 'BaseTools/BinWrappers/PosixLike/BPDG'
++    bdpgpath = 'BPDG' if os.name == 'posix' else 'BPDG.bat'
 +
 +    fvdir = 'Build/%s/%s_%s/FV' % (pkgname, target, toolchain)
 +    for fspcomp in FspGuid:
@@ -319,8 +315,8 @@ index 0000000000..09b3ac2193
 +
 +
 +def Build (target, toolchain):
-+    cmd = 'build -p QemuFspPkg/QemuFspPkg.dsc -a IA32 -b %s -t %s -y Report%s.log' % (
-+        target, toolchain, target)
++    cmd = '%s -p QemuFspPkg/QemuFspPkg.dsc -a IA32 -b %s -t %s -y Report%s.log' % (
++        'build' if os.name == 'posix' else 'build.bat', target, toolchain, target)
 +    ret = subprocess.call(cmd.split(' '))
 +    if ret:
 +        Fatal('Failed to do Build QEMU FSP!')
@@ -6005,5 +6001,5 @@ index 0000000000..16023b57c1
 +  TRUE
 +
 -- 
-2.17.1
+2.14.3.windows.1
 
