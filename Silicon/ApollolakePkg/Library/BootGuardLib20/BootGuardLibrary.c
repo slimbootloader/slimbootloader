@@ -101,6 +101,7 @@ FetchPreRBPData(
   FitData = FindFitEntryData (  FIT_TABLE_TYPE_TXE_SECURE_BOOT,   FIT_ENTRY_SUB_TYPE_BOOT_POLICY  );
   if (FitData != NULL) {
     CopyMem ((VOID*)&(BtGuardInfo->Bpm), FitData, sizeof (BtGuardInfo->Bpm));
+    DEBUG ((DEBUG_INFO, "BtGuard: VB : %d, MB : %d \n", BtGuardInfo->Bpm.Vb, BtGuardInfo->Bpm.Mb));
   }
 
   if (BtGuardInfo->Bpm.Mb) {

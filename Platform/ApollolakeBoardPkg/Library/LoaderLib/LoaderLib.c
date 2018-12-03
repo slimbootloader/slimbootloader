@@ -35,6 +35,7 @@
 #include <Library/IoLib.h>
 #include <Library/DecompressLib.h>
 #include <CpuRegs.h>
+#include <PlatformData.h>
 
 #define  SRAM_SIZE              0x20000
 #define  SRAM_REMAPPING         (0xFFFFFFFF - SRAM_SIZE + 1)
@@ -82,6 +83,7 @@ LoadStage1B (
   UINT8     *Src;
   UINT8     *Dst;
   UINT8     *Ptr;
+  PLATFORM_DATA   *PlatformData;
 
   if (CSE_VIDDID == 0xFFFFFFFF) {
     /* CSE does not exist */
@@ -157,7 +159,15 @@ LoadStage1B (
   } while ((CseToHost & 0x00000400) == 0);
 
   if ((CseToHost & 0x00000200) != 0) {
-    DEBUG ((DEBUG_INFO, "CSE verified IBBM successfully OR BtGuard is NOT enabled!\n"));
+
+    PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
+    if (PlatformData != NULL) {
+      if (PlatformData->BtGuardInfo.Bpm.Vb) {
+        DEBUG ((DEBUG_INFO, "BtGuard IBBM verification succeeded !\n"));
+      } else {
+        DEBUG ((DEBUG_INFO, "No BtGuard verification !\n"));
+      }
+    }
   } else {
     CpuHalt ("BtGuard verification failed !!\n");
   }
