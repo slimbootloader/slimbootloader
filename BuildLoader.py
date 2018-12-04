@@ -114,10 +114,6 @@ def prep_env ():
 	os.environ['CONF_PATH']     = os.path.join(os.environ['WORKSPACE'], 'Conf')
 	os.environ['TOOL_CHAIN']    = toolchain
 
-	# Check if BaseTools has been compiled
-	rebuild_basetools ()
-
-
 def get_board_config_file (check_dir, board_cfgs):
 	platform_dir = os.path.join (check_dir, 'Platform')
 	if not os.path.isdir (platform_dir):
@@ -908,6 +904,9 @@ class Build(object):
 
 
 	def pre_build(self):
+		# Check if BaseTools has been compiled
+                rebuild_basetools ()
+
 		# Update search path
 		sbl_dir = os.environ['SBL_SOURCE']
 		plt_dir = os.environ['PLT_SOURCE']
@@ -1213,6 +1212,7 @@ def main():
 			os.path.join (sbl_dir, 'BootloaderCorePkg/Platform.dsc'),
 			os.path.join (workspace, 'Report.log')
 		]
+		cmds  = []
 
 		if args.distclean:
 			dirs.extend ([
@@ -1222,12 +1222,23 @@ def main():
 			files.extend ([
 			])
 
+			cmds.extend ([
+				'git clean -xdf BaseTools',
+			])
+
 		for dir in dirs:
-			shutil.rmtree(os.path.join (workspace, dir), ignore_errors=True)
+			dirpath = os.path.join (workspace, dir)
+			print 'Removing %s' % dirpath
+			shutil.rmtree(dirpath, ignore_errors=True)
 
 		for file in files:
 			if os.path.exists(file):
+				print 'Removing %s' % file
 				os.remove(file)
+
+		for cmd in cmds:
+			x = subprocess.call(cmd.split(' '), cwd=sbl_dir)
+			if x: raise Exception ('Failed to run clean-up commands !')
 
 		print('Clean Done !')
 
