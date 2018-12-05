@@ -95,7 +95,14 @@ class Board(BaseBoard):
 			self.STAGE1B_SIZE += 0x2000
 		self.STAGE2_SIZE          = 0x00032000
 		self.PAYLOAD_SIZE         = 0x0001F000
-		self.EPAYLOAD_SIZE        = 0x00120000
+
+		if len(self._PAYLOAD_NAME.split(';')) > 1:
+			# EPAYLOAD is specified
+			self.EPAYLOAD_SIZE      = 0x00120000
+		else:
+			# EPAYLOAD does not exist, create a dummy one
+			self.EPAYLOAD_SIZE      = 0x1000
+
 		if self.FSPDEBUG_MODE == 1:
 			self.STAGE1B_SIZE += 0x00009000
 			self.STAGE2_SIZE  += 0x0000F000
@@ -237,11 +244,7 @@ class Board(BaseBoard):
 					),
 					('Stitch_IBBL.bin', [
 						('STAGE1A.fd',   '',     self.STAGE1A_SIZE,   STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL)]
-					),
-				])
-
-		if self.EPAYLOAD_SIZE > 0:
-				img_list.extend ([
+					),			
 					('Stitch_EPLD.bin', [
 						('EPAYLOAD.bin', '',    self.EPAYLOAD_SIZE,   STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL)]
 					),
