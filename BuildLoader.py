@@ -44,12 +44,12 @@ def rebuild_basetools ():
 			ret = subprocess.call(['make', '-C', 'BaseTools'])
 
 	elif os.name == 'nt':
+		if 'PYTHON_HOME' not in os.environ:
+			os.environ['PYTHON_HOME'] = 'C:\\Python27'
 		genffs_exe_path = os.path.join(sblsource, 'BaseTools', 'Bin', 'Win32', 'GenFfs.exe')
 		genffs_exist = os.path.exists(genffs_exe_path)
 		if not genffs_exist:
 			print "Could not find pre-built BaseTools binaries, try to rebuild BaseTools ..."
-			if 'PYTHON_HOME' not in os.environ:
-				os.environ['PYTHON_HOME'] = 'C:\\Python27'
 			ret = subprocess.call(['BaseTools\\toolsetup.bat', 'forcerebuild'])
 
 	if ret:
