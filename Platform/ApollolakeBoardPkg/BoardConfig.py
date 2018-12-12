@@ -209,14 +209,14 @@ class Board(BaseBoard):
 		img_list  = []
 		img_list.extend ([
 					# Padding to ensure all other components in OBB partition will be aligned at 4KB boundary
-					# 0xB80 assumes 7 files in BpdtIBB (IBBP.man, BPM.met) + (IPAD, IBBL, IBBM,  OBB, CFGDATA)
-					# 0xF40 assumes 5 files in BpdtOBB (OPAD,  PLD,  VAR, MRCD, PROV)
+					# 0xB00 assumes (IBBP.man, BPM.met) + (IPAD, IBBL, IBBM,  OBB, FWUP, CFGD, PLD, VAR, MRCD) in BpdtIBB
+					# 0x180 assumes (OPAD,  PROV, EPLD) in BpdtOBB 
 					# If more files are added, the offset needs to be adjusted accordingly
 					('Stitch_IPAD.bin', [
 						('PADDING.bin',  '',                0xB00,    STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL)]
 					),
 					('Stitch_OPAD.bin', [
-						('PADDING.bin',  '',                0x1C0,    STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL)]
+						('PADDING.bin',  '',                0x180,    STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL)]
 					),
 					('Stitch_FWU.bin', [
 						('FWUPDATE.bin' ,  'Lzma', self.FWUPDATE_SIZE, STITCH_OPS.MODE_FILE_PAD | fwu_flag, STITCH_OPS.MODE_POS_TAIL)]
