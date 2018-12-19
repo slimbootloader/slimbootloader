@@ -403,8 +403,9 @@ def gen_file_with_size (file, size):
 	open (file, 'wb').write('\xFF' * size);
 
 
-def gen_ias_file (file_path, file_space, out_file):
+def gen_ias_file (rel_file_path, file_space, out_file):
 	bins = bytearray()
+	file_path = os.path.join(os.environ['PLT_SOURCE'], rel_file_path)
 	if os.path.exists(file_path):
 		ias_fh   = open (file_path, 'rb')
 		file_bin = ias_fh.read()
