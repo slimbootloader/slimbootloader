@@ -404,7 +404,10 @@ def PatchFlashMap (ImageData, PlatformData = 0xffffffff):
         Path = CompBpdtDict['SG1A'].replace("BP0", "BP%d" % Part)
         Comp = LocateComponent (Ifwi, Path)
         if not Comp:
-            raise Exception("Cannot locate %s !" % Path)
+            if Part == 0:
+                raise Exception("Cannot locate %s !" % Path)
+            else:
+                continue
         Stage1AOffset = Comp.Offset
         Stage1ALength = Comp.Length
         Temp = Stage1AOffset + Stage1ALength - 8
@@ -760,8 +763,11 @@ def ManipulateIfwi (Action, Path, IfwiData, FileName = '', Before = '$'):
     return Ret
 
 
-def CreateIfwiImage (IfwiIn, IfwiOut, BiosOut, PlatformData, StitchDir, RedundantPayload = True):
+def CreateIfwiImage (IfwiIn, IfwiOut, BiosOut, PlatformData, NonRedundant, StitchDir):
 
+    print ('Creating %sredundant image ...' % ('Non-' if NonRedundant else ''))
+
+    RedundantPayload = True
     Fd = open(IfwiIn, "rb")
     IfwiData = bytearray(Fd.read())
     Fd.close()
@@ -786,7 +792,7 @@ def CreateIfwiImage (IfwiIn, IfwiOut, BiosOut, PlatformData, StitchDir, Redundan
                 raise Exception ('REMOVE failed (error code %d) !' % (Ret))
 
     # Copy BP0 BPDT into BP1 BPDT
-    if True:
+    if not NonRedundant:
         Ret = ManipulateIfwi  ('COPY', '', IfwiData)
         if Ret != 0:
             raise Exception ('COPY failed (error code %d) !' % (Ret))
@@ -817,7 +823,8 @@ def CreateIfwiImage (IfwiIn, IfwiOut, BiosOut, PlatformData, StitchDir, Redundan
 
         Bp1Sbpdt = 'ROOT/IFWI/BP1/SBPDT/BpdtObb/'
 
-        for Bp in range(2):
+        Loop = 1 if NonRedundant else 2
+        for Bp in range(Loop):
             Dir = 'ROOT/IFWI/BP%d/BPDT/BpdtIbb/' % Bp
             for CompName, FileName in IbbList:
                 FilePath = os.path.join(StitchDir, 'Stitch_%s.bin' % FileName)
@@ -913,6 +920,12 @@ def main():
                     default=0xFFFFFFFF,
                     help='Specify a platform specific data (HEX, DWORD) for customization')
 
+    ap.add_argument('-n',
+                    '--non-redundant',
+                    dest='non_redundant',
+                    action="store_true",
+                    help='Specify if the flash layout will be full redundant or not')
+
     if len(sys.argv) == 1:
         print ('%s' % ExtraUsageTxt)
 
@@ -923,7 +936,7 @@ def main():
         return 0
     else:
         if args.ifwi_out and args.stitch_in == '':
-            Ret = CreateIfwiImage (args.ifwi_in, args.ifwi_out, args.bios_out, args.plat_data, None)
+            Ret = CreateIfwiImage (args.ifwi_in, args.ifwi_out, args.bios_out, args.plat_data, args.non_redundant, None)
             return Ret
 
     # Unpack files from zip
@@ -937,7 +950,7 @@ def main():
     zf.close()
 
     # Create new IFWI
-    Ret = CreateIfwiImage (args.ifwi_in, args.ifwi_out, args.bios_out, args.plat_data, StitchDir)
+    Ret = CreateIfwiImage (args.ifwi_in, args.ifwi_out, args.bios_out, args.plat_data, args.non_redundant, StitchDir)
 
     # Remove extracted files
     if os.path.exists(StitchDir):
