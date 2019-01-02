@@ -271,7 +271,7 @@ LoadCapsuleImage (
   }
 
   FsHandle = NULL;
-  Status = InitFileSystem (CapsuleInfo->SwPart, EnumFileSystemTypeFat, HwPartHandle, &FsHandle);
+  Status = InitFileSystem (CapsuleInfo->SwPart, EnumFileSystemTypeAuto, HwPartHandle, &FsHandle);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "No partitions found, Status = %r\n", Status));
     goto Done;
