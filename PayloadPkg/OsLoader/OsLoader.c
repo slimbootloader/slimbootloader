@@ -575,10 +575,7 @@ InitConsole (
   VOID
 )
 {
-  OS_BOOT_OPTION_LIST     *OsBootOptionList;
-  OS_BOOT_OPTION          *OsBootOption;
   UINT32                   CtrlPciBase;
-  UINT32                   Index;
   EFI_STATUS               Status;
   UINT32                   Height;
   UINT32                   Width;
@@ -590,18 +587,9 @@ InitConsole (
 
   // Initialize input console
   if ((PcdGet32 (PcdConsoleInDeviceMask) & ConsoleInUsbKeyboard) != 0) {
-    CtrlPciBase      = 0;
-    OsBootOptionList = GetBootOptionList ();
-    if ((OsBootOptionList != NULL) && (OsBootOptionList->OsBootOptionCount > 0)) {
-      for (Index = 0; Index < OsBootOptionList->OsBootOptionCount; Index++) {
-        OsBootOption = &OsBootOptionList->OsBootOption[Index];
-        if (OsBootOption->DevType == OsBootDeviceUsb) {
-          CtrlPciBase = GetDeviceAddr (OsBootOption->DevType, OsBootOption->DevInstance);
-          CtrlPciBase = TO_MM_PCI_ADDRESS (CtrlPciBase);
-        }
-      }
-    }
+    CtrlPciBase = GetDeviceAddr (OsBootDeviceUsb, 0);
     if (CtrlPciBase > 0) {
+      CtrlPciBase = TO_MM_PCI_ADDRESS (CtrlPciBase);
       Status = InitUsbKeyBoard (CtrlPciBase);
     }
   }
