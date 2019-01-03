@@ -91,10 +91,6 @@ InitFileSystem (
     return Status;
   }
 
-  if (FsType == EnumFileSystemTypeAuto) {
-    FsType = 0xFFFFFFFF;
-  }
-
   if (mCurrentFsType == EnumFileSystemMax) {
     Type = EnumFileSystemTypeFat;
     if (FixedPcdGet32 (PcdSupportedFileSystemMask) & (1 << Type)) {
@@ -111,7 +107,10 @@ InitFileSystem (
   }
 
   for (Type = EnumFileSystemTypeFat; Type < EnumFileSystemTypeAuto; Type++) {
-    if (((FsType & (1 << Type)) != 0) && (mFileSystemFuncs[Type].InitFileSystem != NULL)) {
+    if (mFileSystemFuncs[Type].InitFileSystem == NULL) {
+      continue;
+    }
+    if ((FsType == EnumFileSystemTypeAuto) || (FsType == Type)) {
       Status = mFileSystemFuncs[Type].InitFileSystem (SwPart, PartHandle, FsHandle);
       if (!EFI_ERROR (Status)) {
         mCurrentFsType = Type;
