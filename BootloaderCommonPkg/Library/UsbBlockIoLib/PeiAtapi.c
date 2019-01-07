@@ -378,7 +378,7 @@ PeiUsbRead10 (
   ATAPI_PACKET_COMMAND  Packet;
   ATAPI_READ10_CMD      *Read10Packet;
   UINT16                MaxBlock;
-  UINT16                BlocksRemaining;
+  UINT32                BlocksRemaining;
   UINT16                SectorCount;
   UINT32                Lba32;
   UINT32                BlockSize;
@@ -398,14 +398,14 @@ PeiUsbRead10 (
   BlockSize       = (UINT32) PeiBotDevice->Media.BlockSize;
 
   MaxBlock        = (UINT16) (65535 / BlockSize);
-  BlocksRemaining = (UINT16) NumberOfBlocks;
+  BlocksRemaining = NumberOfBlocks;
 
   Status          = EFI_SUCCESS;
   while (BlocksRemaining > 0) {
 
     if (BlocksRemaining <= MaxBlock) {
 
-      SectorCount = BlocksRemaining;
+      SectorCount = (UINT16)BlocksRemaining;
 
     } else {
 
@@ -456,7 +456,7 @@ PeiUsbRead10 (
 
     Lba32 += SectorCount;
     PtrBuffer       = (UINT8 *) PtrBuffer + SectorCount * BlockSize;
-    BlocksRemaining = (UINT16) (BlocksRemaining - SectorCount);
+    BlocksRemaining = BlocksRemaining - SectorCount;
   }
 
   return Status;
