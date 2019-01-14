@@ -200,6 +200,7 @@ class BaseBoard(object):
 		self.KM_SIZE               = 0x1000 # valid only if ACM_SIZE > 0
 		self.BPM_SIZE              = 0x1000 # valid only if ACM_SIZE > 0
 		self.CFG_DATABASE_SIZE     = 0
+		self.EPVARIABLE_SIZE       = 0
 
 		self.STAGE1A_XIP           = 1
 		self.STAGE1B_XIP           = 1
@@ -1076,6 +1077,9 @@ class Build(object):
 		# create bootloader reserved binary of 4K size
 		gen_file_with_size (os.path.join(self._fv_dir, 'SBLRSVD.bin'), 0x1000)
 
+		# ccreate variable region for Epayload
+		if self._board.EPVARIABLE_SIZE > 0:
+			gen_file_with_size (os.path.join(self._fv_dir, 'EPVARIABLE.bin'), self._board.EPVARIABLE_SIZE)
 
 		# create ACM binary
 		if self._board.ACM_SIZE > 0:

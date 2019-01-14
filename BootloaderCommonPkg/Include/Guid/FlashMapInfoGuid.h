@@ -37,6 +37,7 @@ extern EFI_GUID gFlashMapInfoGuid;
 #define FLASH_MAP_SIG_FWUPDATE     SIGNATURE_32 ('F', 'W', 'U', 'P')
 #define FLASH_MAP_SIG_CFGDATA      SIGNATURE_32 ('C', 'N', 'F', 'G')
 #define FLASH_MAP_SIG_BLRESERVED   SIGNATURE_32 ('R', 'S', 'V', 'D')
+#define FLASH_MAP_SIG_EPVARIABLE   SIGNATURE_32 ('E', 'P', 'V', 'R')
 #define FLASH_MAP_SIG_EMPTY        SIGNATURE_32 ('E', 'M', 'T', 'Y')
 #define FLASH_MAP_SIG_UNKNOWN      SIGNATURE_32 ('U', 'N', 'K', 'N')
 #define FLASH_MAP_SIG_BPM          SIGNATURE_32 ('_', 'B', 'P', 'M')
