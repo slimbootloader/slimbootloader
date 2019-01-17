@@ -1007,7 +1007,7 @@ class Build(object):
 			ver_dict = {}
 			for key in keys:
 				ver_dict[key] = getattr (self._board, key)
-			ver_info = get_verinfo_via_git  (ver_dict)
+			ver_info = get_verinfo_via_git  (ver_dict, os.environ['PLT_SOURCE'])
 			gen_ver_info_txt (ver_txt_file, ver_info)
 		gen_file_from_object (ver_bin_file, ver_info)
 
