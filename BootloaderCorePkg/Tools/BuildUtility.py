@@ -721,9 +721,9 @@ def get_verinfo_via_file (file):
 	return ver_info
 
 
-def get_verinfo_via_git (ver_dict):
+def get_verinfo_via_git (ver_dict, repo_dir = '.'):
 	gitcmd   = 'git describe --dirty --abbrev=16 --always'
-	command  = subprocess.Popen(gitcmd, shell=True, stdout=subprocess.PIPE)
+	command  = subprocess.Popen(gitcmd, shell=True, cwd=repo_dir, stdout=subprocess.PIPE)
 	line     = command.stdout.readline().strip()
 	commitid = 0
 	dirty    = 0
