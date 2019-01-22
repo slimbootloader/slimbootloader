@@ -67,6 +67,7 @@
   gFspVariableNvDataHobGuid
   gEfiHeciMbpDataHobGuid
   gReservedMemoryResourceHobTsegGuid
+  gSmmInformationGuid
 
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdPciResourceIoBase

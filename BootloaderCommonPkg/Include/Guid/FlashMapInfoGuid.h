@@ -30,6 +30,7 @@ extern EFI_GUID gFlashMapInfoGuid;
 #define FLASH_MAP_SIG_UCODE        SIGNATURE_32 ('U', 'C', 'O', 'D')
 #define FLASH_MAP_SIG_MRCDATA      SIGNATURE_32 ('M', 'R', 'C', 'D')
 #define FLASH_MAP_SIG_VARIABLE     SIGNATURE_32 ('V', 'A', 'R', 'S')
+#define FLASH_MAP_SIG_UEFIVARIABLE SIGNATURE_32 ('U', 'V', 'A', 'R')
 #define FLASH_MAP_SIG_PAYLOAD      SIGNATURE_32 ('P', 'Y', 'L', 'D')
 #define FLASH_MAP_SIG_EPAYLOAD     SIGNATURE_32 ('E', 'P', 'L', 'D')
 #define FLASH_MAP_SIG_SPI_IAS1     SIGNATURE_32 ('I', 'A', 'S', '1')

@@ -21,6 +21,7 @@
 #include <Guid/DeviceTableHobGuid.h>
 
 #define  STACK_DEBUG_FILL_PATTERN     0x5AA55AA5
+#define  UEFI_PAYLOAD_ID_SIGNATURE    SIGNATURE_32('U', 'E', 'F', 'I')
 
 #define  ALIGN_UP(address, align)     (((address) + ((align) - 1)) & ~((align)-1))
 #define  ALIGN_DOWN(address, align)   ((address) & ~((align)-1))

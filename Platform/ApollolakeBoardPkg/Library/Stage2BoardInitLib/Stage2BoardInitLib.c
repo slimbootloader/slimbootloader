@@ -676,7 +676,7 @@ BoardInit (
     SpiBaseAddress = GetDeviceAddr (OsBootDeviceSpi, 0);
     SpiBaseAddress = TO_MM_PCI_ADDRESS (SpiBaseAddress);
 
-    if ((GetBootMode() != BOOT_ON_FLASH_UPDATE) && (GetPayloadId() != 0)) {
+    if ((GetBootMode() != BOOT_ON_FLASH_UPDATE) && (GetPayloadId() != 0) && (GetPayloadId() != UEFI_PAYLOAD_ID_SIGNATURE)) {
       // Set the BIOS Lock Enable and EISS bits
       MmioOr8 (SpiBaseAddress + R_SPI_BCR, (UINT8) (B_SPI_BCR_BLE | B_SPI_BCR_EISS));
 
@@ -1304,6 +1304,28 @@ UpdateLoaderPlatformInfo (
   }
 }
 
+
+
+/**
+ Update loader SMM info.
+
+ @param[out] SmmInfoHob     pointer to SMM information HOB
+
+**/
+VOID
+UpdateSmmInfo (
+  OUT  SMM_INFORMATION           *SmmInfoHob
+)
+{
+
+  SmmInfoHob->SmmBase = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + TSEG) & ~0xF;
+  SmmInfoHob->SmmSize = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + BGSM) & ~0xF;
+  SmmInfoHob->SmmSize -= SmmInfoHob->SmmBase;
+  SmmInfoHob->Flags = 0;
+  DEBUG ((EFI_D_INFO, "SmmRamBase = 0x%x, SmmRamSize = 0x%x\n", SmmInfoHob->SmmBase, SmmInfoHob->SmmSize));
+}
+
+
 /**
  Update Hob Info with platform specific data
 
@@ -1336,6 +1358,8 @@ PlatformUpdateHobInfo (
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "Error caused while appending seeds to HOB: %r\n", Status));
     }
+  } else if (Guid == &gSmmInformationGuid) {
+    UpdateSmmInfo (HobInfo);
   }
 }
 

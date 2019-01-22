@@ -299,4 +299,7 @@
 #define IGD_SWSCI_OFFSET        0x00E0
 #define IGD_ASLS_OFFSET         0x00FC
 
+#define  TSEG                   0xb8    // TSEG base
+#define  BGSM                   0xb4    // Base GTT Stolen Memory
+
 #endif

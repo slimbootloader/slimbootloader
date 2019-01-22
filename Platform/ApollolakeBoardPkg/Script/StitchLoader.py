@@ -371,6 +371,7 @@ def PatchFlashMap (ImageData, PlatformData = 0xffffffff):
       'RSVD' : 'ROOT/IFWI/BP1/SBPDT/BpdtObb/RSVD',
       'IAS1' : 'ROOT/IFWI/BP1/SBPDT/BpdtObb/PROV',
       'EPLD' : 'ROOT/IFWI/BP1/SBPDT/BpdtObb/EPLD',
+      'UVAR' : 'ROOT/IFWI/BP1/SBPDT/BpdtObb/UVAR',
       'PYLD' : 'ROOT/IFWI/BP0/BPDT/BpdtIbb/PLD',
       'VARS' : 'ROOT/IFWI/BP0/BPDT/BpdtIbb/VAR',
       'MRCD' : 'ROOT/IFWI/BP0/BPDT/BpdtIbb/MRCD',
@@ -812,6 +813,7 @@ def CreateIfwiImage (IfwiIn, IfwiOut, BiosOut, PlatformData, NonRedundant, Stitc
         ObbList = [
           ('PROV' , 'FB'),
           ('EPLD' , 'EPLD'),
+          ('UVAR' , 'UVAR'),
           ('PLD'  , 'PLD'),
 
         ]
@@ -837,7 +839,7 @@ def CreateIfwiImage (IfwiIn, IfwiOut, BiosOut, PlatformData, NonRedundant, Stitc
                 FilePath = ''
             else:
                 FilePath = os.path.join(StitchDir, 'Stitch_%s.bin' % FileName)
-            if CompName == 'EPLD' and not os.path.exists(FilePath):
+            if (CompName == 'EPLD' or CompName == 'UVAR') and not os.path.exists(FilePath):
                 Ret = 0
             else:
                 Ret = ManipulateIfwi  ('ADD', Bp1Sbpdt + CompName,  IfwiData, FilePath)
