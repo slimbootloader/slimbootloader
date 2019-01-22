@@ -524,6 +524,7 @@ BuildExtraInfoHob (
   SEED_LIST_INFO_HOB        *SeedListInfoHob;
   PLT_DEVICE_TABLE          *DeviceTable;
   VOID                      *DeviceTableHob;
+  SMM_INFORMATION           *SmmInfoHob;
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
   S3Data    = (S3_DATA *)LdrGlobal->S3DataPtr;
@@ -615,6 +616,12 @@ BuildExtraInfoHob (
   DeviceTableHob = BuildGuidHob (&gDeviceTableHobGuid, Length);
   if (DeviceTableHob != NULL) {
     CopyMem (DeviceTableHob, DeviceTable, Length);
+  }
+
+  // Build SMMRAM info Hob
+  SmmInfoHob = BuildGuidHob (&gSmmInformationGuid, sizeof (SMM_INFORMATION));
+  if (SmmInfoHob != NULL) {
+    PlatformUpdateHobInfo (&gSmmInformationGuid, SmmInfoHob);
   }
 
   // Build Performance Hob

@@ -48,6 +48,7 @@
 #include <Guid/PayloadKeyHashGuid.h>
 #include <Guid/LoaderLibraryDataGuid.h>
 #include <Guid/GraphicsInfoHob.h>
+#include <Guid/SmmInformationGuid.h>
 #include <Service/PlatformService.h>
 #include <Pi/PiBootMode.h>
 #include <FspEas.h>

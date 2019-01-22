@@ -98,10 +98,12 @@ class Board(BaseBoard):
 
 		if len(self._PAYLOAD_NAME.split(';')) > 1:
 			# EPAYLOAD is specified
-			self.EPAYLOAD_SIZE      = 0x00120000
+			self.EPAYLOAD_SIZE      = 0x00130000
+			self.UEFI_VARIABLE_SIZE = 0x00040000
 		else:
 			# EPAYLOAD does not exist, create a dummy one
 			self.EPAYLOAD_SIZE      = 0x1000
+			self.UEFI_VARIABLE_SIZE = 0x1000
 
 		if self.FSPDEBUG_MODE == 1:
 			self.STAGE1B_SIZE += 0x00009000
@@ -134,14 +136,18 @@ class Board(BaseBoard):
 
 		self.PLD_HEAP_SIZE        = 0x08000000
 
-		self.FWUPDATE_SIZE        = 0x00030000
+		self.FWUPDATE_SIZE        = 0x00020000
 		self.CFGDATA_SIZE         = 0x00004000
 		self.CFG_DATABASE_SIZE    = self.CFGDATA_SIZE
 		self.MRCDATA_SIZE         = 0x00004000
 		self.VARIABLE_SIZE        = 0x00002000
-		self.SPI_IAS1_SIZE        = 0x00150000
 		self.S3_DEBUG             = 0
 		self.SBLRSVD_SIZE         = 0x00001000
+
+		if len(self._PAYLOAD_NAME.split(';')) > 1:
+			self.SPI_IAS1_SIZE    = 0x00001000
+		else:
+			self.SPI_IAS1_SIZE    = 0x00150000
 
 		self._CFGDATA_INT_FILE = ['CfgData_Int_LeafHill.dlt']
 		self._CFGDATA_EXT_FILE = ['CfgData_Ext_Gpmrb.dlt', 'CfgData_Ext_Up2.dlt','CfgData_Ext_OxbHill.dlt','CfgData_Ext_MB3.dlt','CfgData_Ext_JuniperHill.dlt']
@@ -244,9 +250,12 @@ class Board(BaseBoard):
 					),
 					('Stitch_IBBL.bin', [
 						('STAGE1A.fd',   '',     self.STAGE1A_SIZE,   STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL)]
-					),			
+					),
 					('Stitch_EPLD.bin', [
 						('EPAYLOAD.bin', '',    self.EPAYLOAD_SIZE,   STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL)]
+					),
+					('Stitch_UVAR.bin', [
+						('UEFIVARIABLE.bin', '',  self.UEFI_VARIABLE_SIZE,  STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL)],
 					),
 					])
 

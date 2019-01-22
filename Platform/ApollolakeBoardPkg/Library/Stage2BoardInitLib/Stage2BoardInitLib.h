@@ -61,6 +61,7 @@
 #include <Library/SeedListInfoLib.h>
 #include <Library/VariableLib.h>
 #include <CpuRegs.h>
+#include <SaRegs.h>
 #include <Service/PlatformService.h>
 #include <Library/ResetSystemLib.h>
 #include <Library/IocIpcLib.h>
@@ -69,6 +70,7 @@
 #include <Library/BootOptionLib.h>
 #include <ConfigDataCommonStruct.h>
 #include <PsdLib.h>
+#include <Guid/SmmInformationGuid.h>
 
 #define IOC_UART_PPR_CLK_N_DIV        0x64
 #define IOC_UART_PPR_CLK_M_DIV        0x40

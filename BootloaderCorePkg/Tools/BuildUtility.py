@@ -198,6 +198,7 @@ class FlashMap(Structure):
 		"VARIABLE"      : "VARS",
 		"PAYLOAD"       : "PYLD",
 		"EPAYLOAD"      : "EPLD",
+		"UEFIVARIABLE"  : "UVAR",
 		"SPI_IAS1"      : "IAS1",
 		"SPI_IAS2"      : "IAS2",
 		"FWUPDATE"      : "FWUP",

@@ -92,6 +92,7 @@
   gSeedListInfoHobGuid
   gLoaderPlatformDataGuid
   gDeviceTableHobGuid
+  gSmmInformationGuid
 
 [Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdMaxLibraryDataEntry
@@ -126,6 +127,6 @@
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
   gPlatformModuleTokenSpaceGuid.PcdSeedListBufferSize
   gPlatformCommonLibTokenSpaceGuid.PcdSeedListEnabled
-
+  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
 [Depex]
   TRUE

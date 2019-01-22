@@ -192,6 +192,7 @@ class BaseBoard(object):
 		self.CFGDATA_SIZE          = 0
 		self.MRCDATA_SIZE          = 0
 		self.VARIABLE_SIZE         = 0
+		self.UEFI_VARIABLE_SIZE    = 0
 		self.FWUPDATE_SIZE         = 0
 
 		self.SPI_IAS1_SIZE         = 0
@@ -1076,6 +1077,9 @@ class Build(object):
 		# create bootloader reserved binary of 4K size
 		gen_file_with_size (os.path.join(self._fv_dir, 'SBLRSVD.bin'), 0x1000)
 
+		# create variable region for UEFI payload
+		if self._board.UEFI_VARIABLE_SIZE > 0:
+			gen_file_with_size (os.path.join(self._fv_dir, 'UEFIVARIABLE.bin'), self._board.UEFI_VARIABLE_SIZE)
 
 		# create ACM binary
 		if self._board.ACM_SIZE > 0:
