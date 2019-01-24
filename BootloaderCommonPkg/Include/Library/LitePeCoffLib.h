@@ -88,4 +88,26 @@ PeCoffRelocateImage (
   IN     UINT32   CurrentImageBase
   );
 
+/**
+  Get PE/TE relocation address gap
+
+  Based on current image location Pe32Data, check if it is same with expected location to run the
+  image. If it is not same, it means the image need relocate to expected location. This function
+  will return the gap between expected location and current location.
+
+  If Pe32Data is NULL, then ASSERT().
+
+  @param[in]   Pe32Data             The pointer to the PE/COFF image that is loaded in system memory.
+  @param[out]  Gap                  The gap value between expected location and current location.
+
+  @retval RETURN_SUCCESS            Gap was returned.
+  @retval RETURN_UNSUPPORTED        It is not PE/COFF image.
+**/
+EFI_STATUS
+EFIAPI
+PeCoffRelocateGap (
+  IN  VOID                             *Pe32Data,
+  OUT INT32                            *Gap
+  );
+
 #endif
