@@ -257,3 +257,51 @@ PeCoffRelocateImage (
   return Status;
 }
 
+/**
+  Get PE/TE image relocation address gap
+
+  Based on current image location Pe32Data, check if it is same with expected location to run the
+  image. If it is not same, it means the image need relocate to expected location. This function
+  will return the gap between expected location and current location.
+
+  If Pe32Data is NULL, then ASSERT().
+
+  @param[in]   Pe32Data             The pointer to the PE/COFF image that is loaded in system memory.
+  @param[out]  Gap                  The gap value between expected location and current location.
+
+  @retval RETURN_SUCCESS            Gap was returned.
+  @retval RETURN_UNSUPPORTED        It is not PE/COFF image.
+**/
+EFI_STATUS
+EFIAPI
+PeCoffRelocateGap (
+  IN  VOID                             *Pe32Data,
+  OUT INT32                            *Gap
+  )
+{
+  EFI_IMAGE_OPTIONAL_HEADER_PTR_UNION   Hdr;
+  UINT32                                ImageBase;
+
+  ASSERT (Pe32Data   != NULL);
+  ASSERT (Gap   != NULL);
+
+  if (!IsTePe32Image (Pe32Data, &Hdr)) {
+    return RETURN_UNSUPPORTED;
+  }
+
+  //
+  // Common for PE32 & PE32+
+  //
+  if (Hdr.Te->Signature == EFI_TE_IMAGE_HEADER_SIGNATURE) {
+    ImageBase = (UINT32)Hdr.Te->ImageBase;
+  } else if (Hdr.Pe32->Signature == EFI_IMAGE_NT_SIGNATURE) {
+    ImageBase = Hdr.Pe32->OptionalHeader.ImageBase;
+  } else {
+    return RETURN_UNSUPPORTED;
+  }
+
+  *Gap = ImageBase - (UINT32)(UINTN)Pe32Data;
+
+  return EFI_SUCCESS;
+}
+

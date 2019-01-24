@@ -246,11 +246,8 @@ NormalBootPath (
   } else if (Dst[10] == EFI_FVH_SIGNATURE) {
     // It is a FV format
     DEBUG ((DEBUG_INFO, "FV Format Payload\n"));
-    // If loading base is not as expected, copy it over
-    PldEntry = (PAYLOAD_ENTRY)Dst[0];
-    if ((UINT32)Dst != Dst[1]) {
-      CopyMem ((VOID *)Dst[1], Dst, Stage2Hob->PayloadActualLength);
-    }
+    Status = LoadFvImage (Dst, Stage2Hob->PayloadActualLength, (VOID **)&PldEntry);
+    ASSERT_EFI_ERROR (Status);
   } else if (IsElfImage (Dst)) {
     PldEntry = (PAYLOAD_ENTRY) (UINTN) LoadElfImage (Dst);
     ASSERT (PldEntry != NULL);
