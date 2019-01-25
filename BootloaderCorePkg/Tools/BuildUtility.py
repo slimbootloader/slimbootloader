@@ -552,7 +552,7 @@ def gen_config_file (fv_dir, brd_name, platform_id, pri_key, cfg_db_size, cfg_si
 	for dlt_file in dlt_list:
 		shutil.copy (os.path.join (brd_cfg_dir, dlt_file), os.path.join (fv_dir, dlt_file))
 
-def gen_payload_bin (fv_dir, pld_list, pld_bin, priv_key):
+def gen_payload_bin (fv_dir, pld_list, pld_bin, priv_key, brd_name = None):
 	fv_dir = os.path.dirname (pld_bin)
 	for idx, pld in enumerate(pld_list):
 		if pld['file'] in ['OsLoader.efi', 'FirmwareUpdate.efi']:
@@ -560,11 +560,14 @@ def gen_payload_bin (fv_dir, pld_list, pld_bin, priv_key):
 			src_file = "../IA32/PayloadPkg/%s/%s/OUTPUT/%s.efi" % (pld_base_name, pld_base_name, pld_base_name)
 			src_file = os.path.join(fv_dir, src_file)
 		else:
-			src_file = os.path.join("PayloadPkg", "PayloadBins", pld['file'])
+			src_file = os.path.join(os.environ['PLT_SOURCE'], 'Platform', brd_name, 'Binaries', pld['file'])
+			if (brd_name is None) or (not os.path.exists(src_file)):
+				src_file = os.path.join("PayloadPkg", "PayloadBins", pld['file'])
 		if idx == 0:
 			dst_path = pld_bin
 		else :
 			dst_path = os.path.join(fv_dir, os.path.basename(src_file))
+
 		shutil.copy (src_file, dst_path)
 
 	epld_bin   = os.path.join(os.path.dirname(pld_bin), 'E' + os.path.basename(pld_bin))
