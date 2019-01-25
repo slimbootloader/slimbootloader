@@ -1120,7 +1120,7 @@ class Build(object):
 		# generate payload
 		gen_payload_bin (self._fv_dir, self._pld_list,
 		                 os.path.join(self._fv_dir, "PAYLOAD.bin"),
-		                 self._board._CFG_PRIVATE_KEY)
+		                 self._board._CFG_PRIVATE_KEY, self._board.BOARD_PKG_NAME)
 
 
 		# create firmware update key
