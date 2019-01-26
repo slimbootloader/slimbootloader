@@ -55,6 +55,8 @@ PreparePayload (
   if (BootMode == BOOT_ON_FLASH_UPDATE) {
     Status = GetComponentInfo (FLASH_MAP_SIG_FWUPDATE, &Src, &Length);
     LoadBase = PcdGet32 (PcdFwuPayloadLoadBase);
+    // Consider firmware update payload as normal payload
+    IsNormalPld = TRUE;
   } else {
     if (IsNormalPld) {
       Status = GetComponentInfo (FLASH_MAP_SIG_PAYLOAD, &Src, &Length);
