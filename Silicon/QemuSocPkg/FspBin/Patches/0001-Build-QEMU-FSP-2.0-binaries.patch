@@ -1,48 +1,49 @@
-From c3bd59e2c32b03e34bf7219c38822492414b8574 Mon Sep 17 00:00:00 2001
+From cd31bc729673cab4802a5ba4562b432ca8ee8a09 Mon Sep 17 00:00:00 2001
 From: Maurice Ma <maurice.ma@intel.com>
 Date: Sun, 26 Aug 2018 22:13:05 -0700
 Subject: [PATCH] Build QEMU FSP 2.0 binaries
 
 Signed-off-by: Aiden Park <aiden.park@intel.com>
+Signed-off-by: Maurice Ma <maurice.ma@intel.com>
 ---
- BuildFsp.cmd                                       |  19 +
- BuildFsp.py                                        | 309 +++++++++
- QemuFspPkg/BuildFv.cmd                             | 248 +++++++
- QemuFspPkg/FspDescription/FspDescription.inf       |  29 +
- QemuFspPkg/FspDescription/FspDescription.txt       |   2 +
- QemuFspPkg/FspHeader/FspHeader.aslc                |  90 +++
- QemuFspPkg/FspHeader/FspHeader.inf                 |  49 ++
- QemuFspPkg/FspmInit/FspmInit.c                     | 608 ++++++++++++++++
- QemuFspPkg/FspmInit/FspmInit.h                     |  77 +++
- QemuFspPkg/FspmInit/FspmInit.inf                   |  66 ++
- QemuFspPkg/FspsInit/FspsInit.c                     | 234 +++++++
- QemuFspPkg/FspsInit/FspsInit.h                     | 124 ++++
- QemuFspPkg/FspsInit/FspsInit.inf                   |  55 ++
- QemuFspPkg/Include/BootLoaderPlatformData.h        |  33 +
- QemuFspPkg/Include/ChipsetAccess.h                 |  23 +
- QemuFspPkg/Include/FspUpd.h                        |  48 ++
- QemuFspPkg/Include/FspmUpd.h                       | 108 +++
- QemuFspPkg/Include/FspsUpd.h                       | 101 +++
- QemuFspPkg/Include/FsptUpd.h                       | 101 +++
- QemuFspPkg/Include/OvmfPlatforms.h                 |  44 ++
- QemuFspPkg/Include/Q35MchIch9.h                    | 109 +++
- QemuFspPkg/Library/PlatformSecLib/Ia32/Chipset.inc | 119 ++++
- .../Library/PlatformSecLib/Ia32/Ia32Nasm.inc       | 169 +++++
- .../Library/PlatformSecLib/Ia32/PlatformNasm.inc   | 143 ++++
- .../Library/PlatformSecLib/Ia32/SecCoreNasm.inc    |  61 ++
- .../Library/PlatformSecLib/Ia32/SecEntry.nasm      | 706 +++++++++++++++++++
- QemuFspPkg/Library/PlatformSecLib/PlatformSecLib.c |  85 +++
- QemuFspPkg/Library/PlatformSecLib/PlatformSecLib.h |  48 ++
- .../Library/PlatformSecLib/Vtf0PlatformSecMLib.inf |  61 ++
- .../Library/PlatformSecLib/Vtf0PlatformSecSLib.inf |  63 ++
- .../Library/PlatformSecLib/Vtf0PlatformSecTLib.inf |  67 ++
- QemuFspPkg/QemuFspPkg.dec                          |  51 ++
- QemuFspPkg/QemuFspPkg.dsc                          | 434 ++++++++++++
- QemuFspPkg/QemuFspPkg.fdf                          | 278 ++++++++
- QemuFspPkg/QemuVideo/QemuVideo.c                   | 761 +++++++++++++++++++++
- QemuFspPkg/QemuVideo/QemuVideo.h                   | 115 ++++
- QemuFspPkg/QemuVideo/QemuVideo.inf                 |  56 ++
- 37 files changed, 5694 insertions(+)
+ BuildFsp.cmd                                  |  19 +
+ BuildFsp.py                                   | 309 +++++++
+ QemuFspPkg/BuildFv.cmd                        | 248 ++++++
+ QemuFspPkg/FspDescription/FspDescription.inf  |  29 +
+ QemuFspPkg/FspDescription/FspDescription.txt  |   2 +
+ QemuFspPkg/FspHeader/FspHeader.aslc           |  90 +++
+ QemuFspPkg/FspHeader/FspHeader.inf            |  49 ++
+ QemuFspPkg/FspmInit/FspmInit.c                | 671 +++++++++++++++
+ QemuFspPkg/FspmInit/FspmInit.h                |  77 ++
+ QemuFspPkg/FspmInit/FspmInit.inf              |  67 ++
+ QemuFspPkg/FspsInit/FspsInit.c                | 234 ++++++
+ QemuFspPkg/FspsInit/FspsInit.h                | 124 +++
+ QemuFspPkg/FspsInit/FspsInit.inf              |  55 ++
+ QemuFspPkg/Include/BootLoaderPlatformData.h   |  33 +
+ QemuFspPkg/Include/ChipsetAccess.h            |  23 +
+ QemuFspPkg/Include/FspUpd.h                   |  48 ++
+ QemuFspPkg/Include/FspmUpd.h                  | 108 +++
+ QemuFspPkg/Include/FspsUpd.h                  | 101 +++
+ QemuFspPkg/Include/FsptUpd.h                  | 101 +++
+ QemuFspPkg/Include/OvmfPlatforms.h            |  44 +
+ QemuFspPkg/Include/Q35MchIch9.h               | 112 +++
+ .../Library/PlatformSecLib/Ia32/Chipset.inc   | 119 +++
+ .../Library/PlatformSecLib/Ia32/Ia32Nasm.inc  | 169 ++++
+ .../PlatformSecLib/Ia32/PlatformNasm.inc      | 143 ++++
+ .../PlatformSecLib/Ia32/SecCoreNasm.inc       |  61 ++
+ .../Library/PlatformSecLib/Ia32/SecEntry.nasm | 706 ++++++++++++++++
+ .../Library/PlatformSecLib/PlatformSecLib.c   |  85 ++
+ .../Library/PlatformSecLib/PlatformSecLib.h   |  48 ++
+ .../PlatformSecLib/Vtf0PlatformSecMLib.inf    |  61 ++
+ .../PlatformSecLib/Vtf0PlatformSecSLib.inf    |  63 ++
+ .../PlatformSecLib/Vtf0PlatformSecTLib.inf    |  67 ++
+ QemuFspPkg/QemuFspPkg.dec                     |  51 ++
+ QemuFspPkg/QemuFspPkg.dsc                     | 434 ++++++++++
+ QemuFspPkg/QemuFspPkg.fdf                     | 278 +++++++
+ QemuFspPkg/QemuVideo/QemuVideo.c              | 761 ++++++++++++++++++
+ QemuFspPkg/QemuVideo/QemuVideo.h              | 115 +++
+ QemuFspPkg/QemuVideo/QemuVideo.inf            |  56 ++
+ 37 files changed, 5761 insertions(+)
  create mode 100644 BuildFsp.cmd
  create mode 100644 BuildFsp.py
  create mode 100644 QemuFspPkg/BuildFv.cmd
@@ -873,10 +874,10 @@ index 0000000000..c5c23500f2
 \ No newline at end of file
 diff --git a/QemuFspPkg/FspmInit/FspmInit.c b/QemuFspPkg/FspmInit/FspmInit.c
 new file mode 100644
-index 0000000000..6769d7f53d
+index 0000000000..02cd2a0826
 --- /dev/null
 +++ b/QemuFspPkg/FspmInit/FspmInit.c
-@@ -0,0 +1,608 @@
+@@ -0,0 +1,671 @@
 +/** @file
 +  FSP-M component implementation.
 +
@@ -1364,6 +1365,47 @@ index 0000000000..6769d7f53d
 +  return EFI_SUCCESS;
 +}
 +
++/**
++  Initialize TSEG size
++  
++  @retval     TSEG size supported by platform.
++
++**/
++UINT32
++InitializeSmramTsegSize (
++  VOID
++  )
++{
++  UINT16        ExtendedTsegMbytes;
++  UINT16        TsegMbytes;
++  
++  //
++  // Check if QEMU offers an extended TSEG.
++  //
++  // This can be seen from writing MCH_EXT_TSEG_MB_QUERY to the MCH_EXT_TSEG_MB
++  // register, and reading back the register.
++  //
++  // On a QEMU machine type that does not offer an extended TSEG, the initial
++  // write overwrites whatever value a malicious guest OS may have placed in
++  // the (unimplemented) register, before entering S3 or rebooting.
++  // Subsequently, the read returns MCH_EXT_TSEG_MB_QUERY unchanged.
++  //
++  // On a QEMU machine type that offers an extended TSEG, the initial write
++  // triggers an update to the register. Subsequently, the value read back
++  // (which is guaranteed to differ from MCH_EXT_TSEG_MB_QUERY) tells us the
++  // number of megabytes.
++  //
++  PciWrite16 (DRAMC_REGISTER_Q35 (MCH_EXT_TSEG_MB), MCH_EXT_TSEG_MB_QUERY);
++  ExtendedTsegMbytes = PciRead16 (DRAMC_REGISTER_Q35 (MCH_EXT_TSEG_MB));
++  if (ExtendedTsegMbytes == MCH_EXT_TSEG_MB_QUERY) {
++    TsegMbytes = 0x10;    
++    PciWrite16 (DRAMC_REGISTER_Q35 (MCH_EXT_TSEG_MB), TsegMbytes);
++  } else {
++    TsegMbytes = ExtendedTsegMbytes;
++  }
++  return (UINT32)TsegMbytes << 20;
++}
++
 +
 +/**
 +  FSP Init before memory PEI module entry point
@@ -1388,7 +1430,8 @@ index 0000000000..6769d7f53d
 +  EFI_BOOT_MODE                   BootMode;
 +  UINT32                          LowMemLen;
 +  UINT64                          HighMemLen;
-+
++  UINT32                          TsegSize;
++  
 +  DEBUG ((EFI_D_INFO, "FspmInitPoint() - Begin\n"));
 +
 +  //
@@ -1419,6 +1462,10 @@ index 0000000000..6769d7f53d
 +
 +  LowMemLen  = GetSystemMemorySizeBelow4Gb();
 +  HighMemLen = GetSystemMemorySizeAbove4Gb();
++  
++  TsegSize   = InitializeSmramTsegSize ();
++  LowMemLen -= TsegSize;
++
 +
 +  PeiMemSize = PcdGet32(PcdFspReservedMemoryLength);
 +  ASSERT (LowMemLen > PeiMemSize);
@@ -1479,6 +1526,23 @@ index 0000000000..6769d7f53d
 +    );
 +  }
 +
++  // Report TSEG memroy
++  BuildResourceDescriptorWithOwnerHob (
++      EFI_RESOURCE_MEMORY_RESERVED,
++      (
++        EFI_RESOURCE_ATTRIBUTE_PRESENT |
++        EFI_RESOURCE_ATTRIBUTE_INITIALIZED |
++        EFI_RESOURCE_ATTRIBUTE_TESTED |
++        EFI_RESOURCE_ATTRIBUTE_UNCACHEABLE |
++        EFI_RESOURCE_ATTRIBUTE_WRITE_COMBINEABLE |
++        EFI_RESOURCE_ATTRIBUTE_WRITE_THROUGH_CACHEABLE |
++        EFI_RESOURCE_ATTRIBUTE_WRITE_BACK_CACHEABLE
++      ),
++      LowMemLen,
++      TsegSize,
++      &gFspReservedMemoryResourceHobTsegGuid
++    );
++  
 +  Status = PeiServicesInstallPeiMemory (PeiMemBase, PeiMemSize);
 +
 +  DEBUG ((EFI_D_INFO, "FspmInitPoint() - End\n"));
@@ -1570,10 +1634,10 @@ index 0000000000..f7eca68b20
 +#endif
 diff --git a/QemuFspPkg/FspmInit/FspmInit.inf b/QemuFspPkg/FspmInit/FspmInit.inf
 new file mode 100644
-index 0000000000..6b3bea8be1
+index 0000000000..97bb04c421
 --- /dev/null
 +++ b/QemuFspPkg/FspmInit/FspmInit.inf
-@@ -0,0 +1,66 @@
+@@ -0,0 +1,67 @@
 +## @file
 +#   FSP-M component implementation.
 +#
@@ -1615,7 +1679,8 @@ index 0000000000..6b3bea8be1
 +[Guids]
 +  gFspReservedMemoryResourceHobGuid         ## CONSUMES
 +  gFspBootLoaderTolumHobGuid                ## CONSUMES
-+
++  gFspReservedMemoryResourceHobTsegGuid     ## CONSUMES
++  
 +[Protocols]
 +  gEfiPciEnumerationCompleteProtocolGuid    ## CONSUMES
 +
@@ -2574,10 +2639,10 @@ index 0000000000..57f467398b
 +#endif
 diff --git a/QemuFspPkg/Include/Q35MchIch9.h b/QemuFspPkg/Include/Q35MchIch9.h
 new file mode 100644
-index 0000000000..5f8cbf7bf4
+index 0000000000..e86c154f18
 --- /dev/null
 +++ b/QemuFspPkg/Include/Q35MchIch9.h
-@@ -0,0 +1,109 @@
+@@ -0,0 +1,112 @@
 +/** @file
 +  Various register numbers and value bits based on the following publications:
 +  - Intel(R) datasheet 316966-002
@@ -2609,6 +2674,9 @@ index 0000000000..5f8cbf7bf4
 +// B/D/F/Type: 0/0/0/PCI
 +//
 +#define DRAMC_REGISTER_Q35(Offset) PCI_LIB_ADDRESS (0, 0, 0, (Offset))
++
++#define MCH_EXT_TSEG_MB       0x50
++#define MCH_EXT_TSEG_MB_QUERY   0xFFFF
 +
 +#define MCH_GGC               0x52
 +#define MCH_GGC_IVD             BIT1
@@ -4271,7 +4339,7 @@ index 0000000000..ca5911c023
 +
 diff --git a/QemuFspPkg/QemuFspPkg.dec b/QemuFspPkg/QemuFspPkg.dec
 new file mode 100644
-index 0000000000..6f1388cd03
+index 0000000000..29aa5d6660
 --- /dev/null
 +++ b/QemuFspPkg/QemuFspPkg.dec
 @@ -0,0 +1,51 @@
@@ -4305,7 +4373,7 @@ index 0000000000..6f1388cd03
 +  #
 +  gQemuFspPkgTokenSpaceGuid  = { 0x2aef6cb8, 0x2fc4, 0x47ef, { 0x85, 0xc7, 0x16, 0xfb, 0xe2, 0xae, 0xe3, 0xbd }}
 +  gFspSiliconFvGuid          = { 0x1b5c27fe, 0xf01c, 0x4fbc, { 0xae, 0xae, 0x34, 0x1b, 0x2e, 0x99, 0x2a, 0x17 }}
-+
++  gFspReservedMemoryResourceHobTsegGuid  =  { 0xd038747c, 0xd00c, 0x4980, { 0xb3, 0x19, 0x49, 0x01, 0x99, 0xa4, 0x7d, 0x55}}
 +
 +[PcdsFixedAtBuild]
 +  gQemuFspPkgTokenSpaceGuid.PcdFspStackTopReservedSize    | 0x00000000           | UINT32  | 0x00000002
@@ -6001,5 +6069,5 @@ index 0000000000..16023b57c1
 +  TRUE
 +
 -- 
-2.14.3.windows.1
+2.17.0.windows.1
 
