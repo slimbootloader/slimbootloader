@@ -27,9 +27,11 @@
 #include <Library/VariableLib.h>
 #include <Library/BootloaderCoreLib.h>
 #include <Library/BlMemoryAllocationLib.h>
+#include <Library/FspSupportLib.h>
 #include <Guid/FrameBufferInfoGuid.h>
 #include <Guid/SystemTableInfoGuid.h>
 #include <Guid/SerialPortInfoGuid.h>
+#include <Guid/SmmInformationGuid.h>
 #include <FspsUpd.h>
 #include <BlCommon.h>
 #include <GlobalNvsArea.h>
@@ -192,7 +194,10 @@ BoardInit (
 {
   EFI_STATUS           Status;
   GEN_CFG_DATA        *GenericCfgData;
-
+  LOADER_GLOBAL_DATA  *LdrGlobal;
+  UINT32               TsegBase;
+  UINT64               TsegSize;
+  
   switch (InitPhase) {
   case PreSiliconInit:
     GpioInit ();
@@ -200,7 +205,19 @@ BoardInit (
     EnableLegacyRegions ();
     VariableConstructor (PcdGet32 (PcdVariableRegionBase), PcdGet32 (PcdVariableRegionSize));
     Status = TestVariableService ();
-    ASSERT_EFI_ERROR (Status);
+    ASSERT_EFI_ERROR (Status);        
+    // Get TSEG info from FSP HOB
+    // It will be consumed in MpInit if SMM rebase is enabled
+    LdrGlobal  = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
+    TsegBase = (UINT32)GetFspReservedMemoryFromGuid (
+                       LdrGlobal->FspHobList,
+                       &TsegSize,
+                       &gReservedMemoryResourceHobTsegGuid
+                       );
+    if (TsegBase != 0) {
+      Status = PcdSet32S (PcdSmramTsegBase, TsegBase);
+      Status = PcdSet32S (PcdSmramTsegSize, (UINT32)TsegSize);
+    }  
     break;
   case PostPciEnumeration:
     GenericCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);
@@ -392,6 +409,29 @@ UpdateFrameBufferInfo (
   }
 }
 
+
+/**
+ Update loader SMM info.
+
+ @param[out] SmmInfoHob     pointer to SMM information HOB
+
+**/
+VOID
+UpdateSmmInfo (
+  OUT  SMM_INFORMATION           *SmmInfoHob
+)
+{
+  UINT32  TsegSize;
+  
+  TsegSize = PcdGet32 (PcdSmramTsegSize);
+  if (TsegSize > 0) {
+    SmmInfoHob->SmmBase = PcdGet32 (PcdSmramTsegBase);
+    SmmInfoHob->SmmSize = TsegSize;    
+    SmmInfoHob->Flags   = 0;
+    DEBUG ((EFI_D_INFO, "SmmRamBase = 0x%x, SmmRamSize = 0x%x\n", SmmInfoHob->SmmBase, SmmInfoHob->SmmSize));
+  }
+}
+
 /**
  Update Hob Info with platform specific data
 
@@ -415,6 +455,8 @@ PlatformUpdateHobInfo (
     UpdateSerialPortInfo (HobInfo);
   } else if (Guid == &gOsBootOptionGuid) {
     UpdateOsBootMediumInfo (HobInfo);
+  } else if (Guid == &gSmmInformationGuid) {
+    UpdateSmmInfo (HobInfo);
   }
 }
 

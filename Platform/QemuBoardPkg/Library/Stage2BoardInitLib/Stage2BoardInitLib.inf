@@ -48,7 +48,7 @@
   GpioLib
 
 [Guids]
-
+  gReservedMemoryResourceHobTsegGuid
 
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdMrcDataBase
@@ -60,5 +60,8 @@
   gPlatformModuleTokenSpaceGuid.PcdVariableRegionBase
   gPlatformModuleTokenSpaceGuid.PcdVariableRegionSize
   gPlatformModuleTokenSpaceGuid.PcdFramebufferInitEnabled
-
+  gPlatformModuleTokenSpaceGuid.PcdSmmRebaseEnabled
+  gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase
+  gPlatformModuleTokenSpaceGuid.PcdSmramTsegSize
+  
 
