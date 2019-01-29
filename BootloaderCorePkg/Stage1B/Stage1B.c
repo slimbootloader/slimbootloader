@@ -191,6 +191,7 @@ CreateConfigDatabase (
         Status  = DoRsaVerify ((UINT8 *)CfgBlob, CfgBlob->UsedLength, COMP_TYPE_PUBKEY_CFG_DATA,
                      SigPtr, KeyPtr, Stage1bHob->ConfigDataHash);
         if (EFI_ERROR (Status)) {
+          DEBUG ((DEBUG_INFO, "EXT CFG Data ignored ... %r\n", Status));
           ExtCfgAddPtr = NULL;
         }
       }

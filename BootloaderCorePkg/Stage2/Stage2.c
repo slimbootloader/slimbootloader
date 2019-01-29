@@ -50,6 +50,7 @@ PreparePayload (
 
   // Load payload to PcdPayloadLoadBase.
   PayloadId   = GetPayloadId ();
+  DEBUG ((DEBUG_INFO, "Loading Payload ID 0x%08X\n", PayloadId));
   IsNormalPld = (PayloadId == 0) ? TRUE : FALSE;
   BootMode = GetBootMode();
   if (BootMode == BOOT_ON_FLASH_UPDATE) {
