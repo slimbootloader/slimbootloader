@@ -132,7 +132,6 @@ class Board(BaseBoard):
 		self.LOADER_RSVD_MEM_SIZE = 0x00B8C000
 
 		self.PLD_RSVD_MEM_SIZE    = 0x00500000
-		self.PAYLOAD_LOAD_HIGH    = 1
 
 		self.PLD_HEAP_SIZE        = 0x08000000
 
