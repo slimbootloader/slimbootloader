@@ -158,7 +158,9 @@ PreparePayload (
   if (IS_COMPRESSED (Hdr)) {
     // Determine if Payload needs to be loaded into high mem
     ActualLength = Hdr->Size;
-    if (FixedPcdGetBool (PcdPayloadLoadHigh)) {
+    // For UEFI payload, it is big and need to run at pre-compiled address,
+    // so leave it at the required address even when PcdPayloadLoadHigh is requested.
+    if (FixedPcdGetBool (PcdPayloadLoadHigh) && (GetPayloadId() != UEFI_PAYLOAD_ID_SIGNATURE)) {
       Dst = (UINT32)AllocatePages (EFI_SIZE_TO_PAGES (ActualLength));
     } else {
       Dst = PcdGet32 (PcdPayloadExeBase);

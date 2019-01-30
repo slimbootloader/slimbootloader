@@ -206,7 +206,7 @@ class BaseBoard(object):
 		self.STAGE1B_XIP           = 1
 		self.STAGE2_XIP            = 0
 		self.STAGE2_LOAD_HIGH      = 1
-		self.PAYLOAD_LOAD_HIGH     = 0
+		self.PAYLOAD_LOAD_HIGH     = 1
 		self.PAYLOAD_EXE_BASE      = 0x00800000
 
 		#     0: Direct access from flash
