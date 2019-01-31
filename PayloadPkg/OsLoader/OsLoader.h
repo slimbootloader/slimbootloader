@@ -14,6 +14,7 @@
 #ifndef __LINUX_LOADER_H__
 #define __LINUX_LOADER_H__
 
+#include <Library/LiteFvLib.h>
 #include <Library/PartitionLib.h>
 #include <Library/FileSystemLib.h>
 #include <Library/PayloadMemoryAllocationLib.h>
@@ -77,6 +78,7 @@
 #define LOADED_IMAGE_MULTIBOOT   BIT1
 #define LOADED_IMAGE_LINUX       BIT2
 #define LOADED_IMAGE_PE32        BIT3
+#define LOADED_IMAGE_FV          BIT4
 
 #define MAX_EXTRA_FILE_NUMBER    16
 
