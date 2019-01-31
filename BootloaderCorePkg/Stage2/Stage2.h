@@ -40,6 +40,7 @@
 #include <Library/SecureBootLib.h>
 #include <Library/TpmLib.h>
 #include <Library/DebugLogBufferLib.h>
+#include <Library/LiteFvLib.h>
 #include <Guid/BootLoaderServiceGuid.h>
 #include <Guid/BootLoaderVersionGuid.h>
 #include <Guid/LoaderPlatformInfoGuid.h>
@@ -158,27 +159,6 @@ InitializeService (
 VOID
 BoardNotifyPhase (
   IN BOARD_INIT_PHASE   Phase
-  );
-
-/**
-  Load FV to expected location and return entry point of SEC core.
-
-  This function will search whole FV to find SEC core file, and then check SEC core file if
-  relocation is required. If relocation is required, this function will relocation whole FV
-  to expected location and SEC core entry point will be returned if success.
-
-  @param[in]  FvBase                   Point to the boot firmware volume.
-  @param[in]  FvActualLength           The actural length of FV.
-  @param[out] EntryPoint               The sec core entry point.
-
-  @retval RETURN_SUCCESS               The FV is loaded successfully.
-  @retval Others                       Failed to load the FV.
-**/
-EFI_STATUS
-LoadFvImage (
-  IN  UINT32                           *FvBase,
-  IN  UINT32                           FvActualLength,
-  OUT VOID                             **EntryPoint
   );
 
 #endif

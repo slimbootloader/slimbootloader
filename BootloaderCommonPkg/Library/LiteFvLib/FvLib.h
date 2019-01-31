@@ -18,6 +18,8 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <PiPei.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
+#include <Library/LitePeCoffLib.h>
+#include <Library/BootloaderCommonLib.h>
 
 #define  THREE_BYTE_LEN(x)    ((*(UINT32 *)(UINTN)(x)) & 0xFFFFFF)
 #define  GET_FFS_LENGTH(x)    THREE_BYTE_LEN((x)->Size)

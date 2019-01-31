@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2016 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2016 - 2019, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -723,95 +723,4 @@ InitializeService (
 
 }
 
-
-/**
-  Load FV to expected location and return entry point of SEC core.
-
-  This function will search whole FV to find SEC core file, and then check SEC core file if
-  relocation is required. If relocation is required, this function will relocation whole FV
-  to expected location and SEC core entry point will be returned if success.
-
-  @param[in]  FvBase                   Point to the boot firmware volume.
-  @param[in]  FvActualLength           The actural length of FV.
-  @param[out] EntryPoint               The sec core entry point.
-
-  @retval RETURN_SUCCESS               The FV is loaded successfully.
-  @retval Others                       Failed to load the FV.
-**/
-EFI_STATUS
-LoadFvImage (
-  IN  UINT32                           *FvBase,
-  IN  UINT32                           FvActualLength,
-  OUT VOID                             **EntryPoint
-  )
-{
-  EFI_STATUS                            Status;
-  EFI_FIRMWARE_VOLUME_HEADER            *FvHeader;
-  EFI_FIRMWARE_VOLUME_EXT_HEADER        *FvExHeader;
-  EFI_FFS_FILE_HEADER                   *FfsFileHeader;
-  EFI_COMMON_SECTION_HEADER             *Section;
-  UINTN                                 SectionEnd;
-  UINT32                                SecCoreImageBase;
-  INT32                                 Gap;
-
-  FvHeader = (EFI_FIRMWARE_VOLUME_HEADER *)FvBase;
-  Status   = EFI_NOT_FOUND;
-
-  //
-  // Get first FFS file
-  //
-  FfsFileHeader = (EFI_FFS_FILE_HEADER *)((UINT8 *)FvHeader + FvHeader->HeaderLength);
-  if (FvHeader->ExtHeaderOffset != 0) {
-    FvExHeader = (EFI_FIRMWARE_VOLUME_EXT_HEADER *)(((UINT8 *)FvHeader) + FvHeader->ExtHeaderOffset);
-    FfsFileHeader = (EFI_FFS_FILE_HEADER *)(((UINT8 *)FvExHeader) + FvExHeader->ExtHeaderSize);
-  }
-
-  //
-  // Loop through the FV to find the SEC core file
-  //
-  FfsFileHeader = ALIGN_POINTER (FfsFileHeader, 8);
-  while (FfsFileHeader->Type != EFI_FV_FILETYPE_SECURITY_CORE) {
-    FfsFileHeader = ALIGN_POINTER ((UINTN)FfsFileHeader + FFS_FILE_SIZE (FfsFileHeader), 8);
-    if ((UINTN)FfsFileHeader >= (UINTN)FvHeader + FvHeader->FvLength) {
-      return Status;
-    }
-  }
-
-  //
-  // Loop through the file to find a executable section
-  //
-  Section    = ALIGN_POINTER ((UINTN)FfsFileHeader + sizeof (EFI_FFS_FILE_HEADER), 4);
-  SectionEnd = (UINTN)ALIGN_POINTER ((UINTN)FfsFileHeader + FFS_FILE_SIZE (FfsFileHeader), 4);
-  while (TRUE) {
-    if (Section->Type == EFI_SECTION_PE32 || Section->Type == EFI_SECTION_TE) {
-      break;
-    }
-    if (SECTION_SIZE (Section) < sizeof (EFI_COMMON_SECTION_HEADER)) {
-      return Status;
-    }
-
-    Section = ALIGN_POINTER ((UINTN)Section + SECTION_SIZE (Section), 4);
-    if ((UINTN)Section > SectionEnd) {
-      return Status;
-    }
-  }
-
-  //
-  // Reloacte FV if required
-  //
-  SecCoreImageBase = (UINTN)Section + sizeof (EFI_COMMON_SECTION_HEADER);
-  Status = PeCoffRelocateGap ((VOID *)SecCoreImageBase, &Gap);
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  if (Gap != 0) {
-    CopyMem ((UINT8 *)FvHeader + Gap, FvHeader, FvActualLength);
-    SecCoreImageBase += Gap;
-  }
-
-  Status = PeCoffLoaderGetEntryPoint ((VOID *)SecCoreImageBase, EntryPoint);
-
-  return Status;
-}
 
