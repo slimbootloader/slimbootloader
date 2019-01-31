@@ -82,6 +82,7 @@
   UsbIoLib
   UsbKbLib
   ElfLib
+  LiteFvLib
 
 [Guids]
   gOsConfigDataGuid

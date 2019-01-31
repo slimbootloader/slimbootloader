@@ -199,9 +199,7 @@ DisplayInfo (
   if ((LoadedImage->Flags & LOADED_IMAGE_MULTIBOOT) != 0) {
     DumpMbInfo (&LoadedImage->Image.MultiBoot.MbInfo);
     DumpMbBootState (&LoadedImage->Image.MultiBoot.BootState);
-  } else if ((LoadedImage->Flags & LOADED_IMAGE_PE32) != 0) {
-    // For PE32 image, no extra info to display
-  } else {
+  } else if ((LoadedImage->Flags & LOADED_IMAGE_LINUX) != 0) {
     DumpBootParameters (LoadedImage->Image.Linux.BootParams);
   }
 }
@@ -304,4 +302,3 @@ UpdateOsParameters (
 
   return Status;
 }
-

@@ -77,6 +77,9 @@ ParseIasImage (
       // be handled as Linux image boot path
       LoadedImage->Flags |= LOADED_IMAGE_PE32;
       DEBUG ((DEBUG_INFO, "One PE32 file in IAS file .... \n"));
+    } else if (IsValidFvHeader ((VOID *)File[0].Addr))  {
+      LoadedImage->Flags |= LOADED_IMAGE_FV;
+      DEBUG ((DEBUG_INFO, "One FV file in IAS file .... \n"));  
     } else {
       LoadedImage->Flags |= LOADED_IMAGE_LINUX;
       DEBUG ((DEBUG_INFO, "One file in IAS file, take it as bzImage .... \n"));
@@ -232,6 +235,14 @@ SetupBootImage (
       return Status;
     }
     // Reuse MultiBoot structure to store the PE32 entry point information
+    MultiBoot->BootState.EntryPoint = (UINT32)EntryPoint;
+  } else if ((LoadedImage->Flags & LOADED_IMAGE_FV) != 0) {
+    DEBUG ((DEBUG_INFO, "Boot image is FV format\n"));
+    Status = LoadFvImage ((UINT32 *)BootFile->Addr, BootFile->Size, (VOID **)&EntryPoint);
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
+    // Reuse MultiBoot structure to store the FV entry point information
     MultiBoot->BootState.EntryPoint = (UINT32)EntryPoint;
   } else {
     DEBUG ((DEBUG_INFO, "Assume BzImage...\n"));
@@ -446,9 +457,9 @@ StartBooting (
     JumpToMultibootOs((IA32_BOOT_STATE*)&MultiBoot->BootState);
     Status = EFI_DEVICE_ERROR;
 
-  } else if ((LoadedImage->Flags & LOADED_IMAGE_PE32) != 0) {
+  } else if ((LoadedImage->Flags & (LOADED_IMAGE_PE32 | LOADED_IMAGE_FV)) != 0) {
     MultiBoot = &LoadedImage->Image.MultiBoot;
-    BeforeOSJump ("Jumping into PE32 ...");
+    BeforeOSJump ("Jumping into FV/PE32 ...");
 
     //
     // Use switch stack to ensure stack will be rolled back to original point.
@@ -460,6 +471,7 @@ StartBooting (
       (VOID *)((UINT8 *)mEntryStack + 8)
       );
     Status = EFI_DEVICE_ERROR;
+  
   } else {
     DEBUG ((DEBUG_ERROR, "Image is not supported, flags:0x%x\n", LoadedImage->Flags));
     return RETURN_UNSUPPORTED;
