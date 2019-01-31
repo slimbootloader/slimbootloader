@@ -2,7 +2,7 @@
   Base PE/COFF loader supports loading any PE32/PE32+ or TE image, but
   only supports relocating IA32, x64, IPF, and EBC images.
 
-  Copyright (c) 2006 - 2008, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2006 - 2019, Intel Corporation. All rights reserved.<BR>
   Portions copyright (c) 2008-2009 Apple Inc. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
@@ -43,8 +43,6 @@ IsTePe32Image (
   Retrieves the entry point to the PE/COFF image specified by Pe32Data and returns this entry
   point in EntryPoint.  If the entry point could not be retrieved from the PE/COFF image, then
   return RETURN_INVALID_PARAMETER.  Otherwise return RETURN_SUCCESS.
-  If Pe32Data is NULL, then ASSERT().
-  If EntryPoint is NULL, then ASSERT().
 
   @param  Pe32Data                  The pointer to the PE/COFF image that is loaded in system memory.
   @param  EntryPoint                The pointer to entry point to the PE/COFF image to return.
@@ -60,19 +58,6 @@ PeCoffLoaderGetEntryPoint (
   OUT VOID  **EntryPoint
   );
 
-/**
-  Performs an specific relocation fpr PECOFF images. The caller needs to
-  allocate enough buffer at the PreferedImageBase
-
-  @param  CurrentImageBase        Pointer to the current image base.
-
-  @return Status code.
-
-**/
-RETURN_STATUS
-PeCoffRelocateImage (
-  IN     UINT32   CurrentImageBase
-  );
 
 /**
   Performs an specific relocation fpr PECOFF images. The caller needs to
@@ -84,30 +69,46 @@ PeCoffRelocateImage (
 
 **/
 RETURN_STATUS
+EFIAPI
 PeCoffRelocateImage (
   IN     UINT32   CurrentImageBase
   );
 
+
 /**
-  Get PE/TE relocation address gap
+  Performs an specific relocation fpr PECOFF images. The caller needs to
+  allocate enough buffer at the PreferedImageBase
+
+  @param  CurrentImageBase        Pointer to the current image base.
+
+  @return Status code.
+
+**/
+RETURN_STATUS
+EFIAPI
+PeCoffRelocateImage (
+  IN     UINT32   CurrentImageBase
+  );
+
+
+/**
+  Get PE/TE image preferred image base address
 
   Based on current image location Pe32Data, check if it is same with expected location to run the
   image. If it is not same, it means the image need relocate to expected location. This function
-  will return the gap between expected location and current location.
-
-  If Pe32Data is NULL, then ASSERT().
+  will return the preferred image base.
 
   @param[in]   Pe32Data             The pointer to the PE/COFF image that is loaded in system memory.
-  @param[out]  Gap                  The gap value between expected location and current location.
+  @param[out]  Base                 The pointer to receive image base.
 
-  @retval RETURN_SUCCESS            Gap was returned.
+  @retval RETURN_SUCCESS            Base was returned successfully.
   @retval RETURN_UNSUPPORTED        It is not PE/COFF image.
 **/
-EFI_STATUS
+RETURN_STATUS
 EFIAPI
-PeCoffRelocateGap (
+PeCoffGetPreferredBase (
   IN  VOID                             *Pe32Data,
-  OUT INT32                            *Gap
+  OUT UINT32                           *Base       OPTIONAL
   );
 
 #endif
