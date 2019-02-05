@@ -1538,6 +1538,32 @@ EndList
 
         return 0
 
+    def CheckCfgData (self):
+        # Check if CfgData contains any duplicated name
+        def  AddItem (Item, ChkList):
+            Name = Item['cname']
+            if Name in ChkList:
+                return Item
+            if Name not in ['Dummy', 'Reserved', 'CfgHeader', 'CondValue']:
+                ChkList.append(Name)
+            return None
+
+        Duplicate = None
+        ChkList   = []
+        for  Item in self._CfgItemList:
+            Duplicate = AddItem (Item, ChkList)
+            if not Duplicate:
+                for SubItem in Item['subreg']:
+                    Duplicate = AddItem (SubItem, ChkList)
+                    if Duplicate:
+                        break
+            if Duplicate:
+                break
+        if Duplicate:
+            self.Error = "Duplicated CFGDATA '%s' found !\n" % Duplicate['cname']
+            return -1
+        return 0
+
     def PrintData (self):
         for  Item in self._CfgItemList:
             if not Item['length']:
@@ -1924,6 +1950,9 @@ def Main():
             GenCfgData.__dict__ = marshal.load(PklFile)
     else:
         if GenCfgData.ParseDscFile(DscFile) != 0:
+            raise Exception (GenCfgData.Error)
+
+        if GenCfgData.CheckCfgData() != 0:
             raise Exception (GenCfgData.Error)
 
         if GenCfgData.CreateVarDict() != 0:
