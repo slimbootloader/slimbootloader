@@ -383,3 +383,50 @@ TpmLogLocalityEvent (
 
   TpmLogEvent ( &PcrEventHdr, (const UINT8 *)&StartupLocalityEvent);
 }
+
+/**
+  Get the TCG log Lasa and LasaEven info.
+
+  @param[out] Tcg2Lasa  Pointer to the Log area start address .
+  @param[out] Tcg2LasaEven  Pointer to the Last event logged.
+
+**/
+VOID
+GetTCGLogInfo (
+  OUT  UINT32  *Tcg2Lasa,
+  OUT  UINT32  *Tcg2LasaEven
+  )
+{
+
+  UINT32                Lasa;            //LogAreaStartAddress
+  UINT32                Laml;            //LogAreaMinimumLength
+  UINT32                EventSize;
+  TCG_PCR_EVENT2_HDR    *EmptySlot;
+  TCG_PCR_EVENT_HDR     *FirstEvent;
+
+  GetTCGLasa (&Lasa, &Laml);
+
+  if (Lasa == 0 || Laml == 0 ) {
+    DEBUG ((DEBUG_WARN, "Unable to get log area for TCG 2.0 format events !!\n"));
+    *Tcg2Lasa = 0;
+    *Tcg2LasaEven = 0;
+    return;
+  }
+
+  *Tcg2Lasa = Lasa;
+
+  FirstEvent = (TCG_PCR_EVENT_HDR *) (Lasa);
+  EmptySlot  = (TCG_PCR_EVENT2_HDR *)
+               ((UINT8 *)FirstEvent + sizeof (TCG_PCR_EVENT_HDR) + FirstEvent->EventSize);
+
+  while (EmptySlot < (TCG_PCR_EVENT2_HDR *) (Lasa + Laml - 1)) {
+    EventSize = GetCompressedTCGEventSize (EmptySlot);
+    if (EventSize == 0) {
+      break;
+    } else {
+      *Tcg2LasaEven = (UINT32) EmptySlot;
+      EmptySlot = (TCG_PCR_EVENT2_HDR *) ((UINT8 *)EmptySlot + EventSize);
+    }
+  }
+
+}

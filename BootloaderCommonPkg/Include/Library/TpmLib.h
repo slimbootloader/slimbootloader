@@ -151,4 +151,18 @@ RETURN_STATUS
 TpmIndicateReadyToBoot (
   VOID
   );
+
+
+/**
+  Get the TCG log Lasa and LasaEven info.
+
+  @param[out] Tcg2Lasa  Pointer to the Log area start address .
+  @param[out] Tcg2LasaEven  Pointer to the Last event logged.
+
+**/
+VOID
+GetTCGLogInfo (
+  OUT  UINT32  *Tcg2Lasa,
+  OUT  UINT32  *Tcg2LasaEven
+  );
 #endif  // _TPM_LIB_H
