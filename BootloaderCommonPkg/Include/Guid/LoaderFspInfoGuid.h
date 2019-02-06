@@ -22,9 +22,12 @@ extern EFI_GUID gLoaderFspInfoGuid;
 
 typedef struct {
   UINT8          Revision;
-  UINT8          Reserved0[3];
+  UINT8          VerifiedBoot:1;
+  UINT8          MeasuredBoot:1;
+  UINT8          Reserved0:6;
+  UINT8          Reserved1[2];
   UINT32         FspsBase;
-  VOID          *FspHobList;
+  VOID           *FspHobList;
 } LOADER_FSP_INFO;
 
 #endif

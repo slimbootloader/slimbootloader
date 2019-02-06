@@ -390,6 +390,9 @@ BuildBaseInfoHob (
   if (LoaderFspInfo != NULL) {
     LoaderFspInfo->FspsBase   = PCD_GET32_WITH_ADJUST (PcdFSPSBase);
     LoaderFspInfo->FspHobList = LdrGlobal->FspHobList;
+    LoaderFspInfo->VerifiedBoot = FeaturePcdGet (PcdVerifiedBootEnabled);
+    LoaderFspInfo->MeasuredBoot = FeaturePcdGet (PcdMeasuredBootEnabled);
+    DEBUG ((DEBUG_INFO, "VerifiedBoot 0x%x\n MeasuredBoot 0x%x\n", LoaderFspInfo->VerifiedBoot, LoaderFspInfo->MeasuredBoot));
   }
 
   // Build serial port hob
