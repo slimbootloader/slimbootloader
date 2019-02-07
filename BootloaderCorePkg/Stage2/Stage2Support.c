@@ -528,6 +528,7 @@ BuildExtraInfoHob (
   PLT_DEVICE_TABLE          *DeviceTable;
   VOID                      *DeviceTableHob;
   SMM_INFORMATION           *SmmInfoHob;
+  TPM_EVENT_LOG_INFO        *TpmEventLogInfoHob;
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
   S3Data    = (S3_DATA *)LdrGlobal->S3DataPtr;
@@ -619,6 +620,12 @@ BuildExtraInfoHob (
   DeviceTableHob = BuildGuidHob (&gDeviceTableHobGuid, Length);
   if (DeviceTableHob != NULL) {
     CopyMem (DeviceTableHob, DeviceTable, Length);
+  }
+
+  // Build TPM Event Log info Hob
+  TpmEventLogInfoHob = BuildGuidHob (&gTpmEventLogInfoGuid, sizeof (TPM_EVENT_LOG_INFO));
+  if (TpmEventLogInfoHob != NULL) {
+    PlatformUpdateHobInfo (&gTpmEventLogInfoGuid, TpmEventLogInfoHob);
   }
 
   // Build SMMRAM info Hob

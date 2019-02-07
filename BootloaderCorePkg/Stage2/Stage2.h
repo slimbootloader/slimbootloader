@@ -50,6 +50,7 @@
 #include <Guid/LoaderLibraryDataGuid.h>
 #include <Guid/GraphicsInfoHob.h>
 #include <Guid/SmmInformationGuid.h>
+#include <Guid/TpmEventLogInfoGuid.h>
 #include <Service/PlatformService.h>
 #include <Pi/PiBootMode.h>
 #include <FspEas.h>
