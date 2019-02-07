@@ -688,14 +688,13 @@ def align_pad_file (src, dst, val, mode = STITCH_OPS.MODE_FILE_ALIGN, pos = STIT
 	fo.close()
 
 
-def get_verinfo_via_file (file):
+def get_verinfo_via_file (ver_dict, file):
 	if not os.path.exists(file):
 		raise Exception ("Version TXT file '%s' does not exist!" % file)
 	hfile = open(file)
 	lines = hfile.readlines()
 	hfile.close()
 
-	ver_dict = dict()
 	for line in lines:
 		elements = line.strip().split('=')
 		if len(elements) == 2:
@@ -716,8 +715,8 @@ def get_verinfo_via_file (file):
 		ver_info.ImageVersion.CoreMajorVersion = int(ver_dict['CoreMajorVersion'])
 		ver_info.ImageVersion.BuildNumber  = int(ver_dict['BuildNumber'])
 		ver_info.ImageVersion.SecureVerNum = int(ver_dict['SecureVerNum'])
-		ver_info.ImageVersion.FspDebug     = int(ver_dict['FspDebug'])
-		ver_info.ImageVersion.BldDebug     = int(ver_dict['BldDebug'])
+		ver_info.ImageVersion.FspDebug     = 1 if ver_dict['FSPDEBUG_MODE'] else 0;
+		ver_info.ImageVersion.BldDebug     = 0 if ver_dict['RELEASE_MODE']  else 1;
 		ver_info.ImageVersion.Dirty        = int(ver_dict['Dirty'])
 	except KeyError:
 		raise Exception ("Invalid version TXT file format!")
@@ -784,8 +783,6 @@ def gen_ver_info_txt (ver_file, ver_info):
 	h_file.write('CoreMajorVersion  = %03d\n'  % ver_info.ImageVersion.CoreMajorVersion)
 	h_file.write('CoreMinorVersion  = %03d\n'  % ver_info.ImageVersion.CoreMinorVersion)
 	h_file.write('BuildNumber   = %05d\n'  % ver_info.ImageVersion.BuildNumber)
-	h_file.write('FspDebug      = %d\n'    % ver_info.ImageVersion.FspDebug)
-	h_file.write('BldDebug      = %d\n'    % ver_info.ImageVersion.BldDebug)
 	h_file.write('Dirty         = %d\n'    % ver_info.ImageVersion.Dirty)
 	h_file.close()
 
