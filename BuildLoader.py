@@ -999,15 +999,16 @@ class Build(object):
 		ver_info_name = 'VerInfo'
 		ver_bin_file = os.path.join(self._fv_dir, ver_info_name + '.bin')
 		ver_txt_file = os.path.join(os.environ['PLT_SOURCE'], 'Platform', self._board.BOARD_PKG_NAME, ver_info_name + '.txt')
+
+		keys = ['VERINFO_IMAGE_ID', 'VERINFO_BUILD_DATE', 'VERINFO_PROJ_MINOR_VER',
+						'VERINFO_PROJ_MAJOR_VER', 'VERINFO_CORE_MINOR_VER', 'VERINFO_CORE_MAJOR_VER',
+						'VERINFO_SVN', 'FSPDEBUG_MODE', 'RELEASE_MODE']
+		ver_dict = {}
+		for key in keys:
+			ver_dict[key] = getattr (self._board, key)
 		if self._board.USE_VERSION:
-			ver_info = get_verinfo_via_file (ver_txt_file)
+			ver_info = get_verinfo_via_file (ver_dict, ver_txt_file)
 		else:
-			keys = ['VERINFO_IMAGE_ID', 'VERINFO_BUILD_DATE', 'VERINFO_PROJ_MINOR_VER',
-							'VERINFO_PROJ_MAJOR_VER', 'VERINFO_CORE_MINOR_VER', 'VERINFO_CORE_MAJOR_VER',
-							'VERINFO_SVN', 'FSPDEBUG_MODE', 'RELEASE_MODE']
-			ver_dict = {}
-			for key in keys:
-				ver_dict[key] = getattr (self._board, key)
 			ver_info = get_verinfo_via_git  (ver_dict, os.environ['PLT_SOURCE'])
 			gen_ver_info_txt (ver_txt_file, ver_info)
 		gen_file_from_object (ver_bin_file, ver_info)
