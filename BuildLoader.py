@@ -771,15 +771,16 @@ class Build(object):
 			os.path.join(self._fv_dir, 'STAGE1A.fd'),
 			os.path.join(self._fv_dir, 'STAGE1A_B.fd'))
 
-		# put a marker (@ 0xFFFFFFF4) for STAGE1A_B so that
-		# boot partition can be detected easily
+		# Patch flashmap to indicate boot parititon
 		fo = open(os.path.join(self._fv_dir, 'STAGE1A_B.fd'), 'r+b')
-		fo.seek(-12, 2)
-		nop = fo.read(1)
-		if nop != '\x90':
-			raise Exception ('Unexpected instructions at reset vector!')
-		fo.seek(-12, 2)
-		fo.write('\x80')
+		bins = bytearray(fo.read())
+		fmapoff = (Bytes2Val(bins[-8:-4]) + len(bins)) & 0xFFFFFFFF
+		fmaphdr = FlashMap.from_buffer (bins, fmapoff)
+		if fmaphdr.sig != FlashMap.FLASH_MAP_SIGNATURE:
+			raise Exception ('Failed to locate flash map in STAGE1A_B.fd !')
+		fmaphdr.attributes |=  fmaphdr.FLASH_MAP_ATTRIBUTES['BACKUP_REGION']
+		fo.seek(fmapoff)
+		fo.write(fmaphdr)
 		fo.close()
 
 		# Stage 1B_B will be created during rebasing
