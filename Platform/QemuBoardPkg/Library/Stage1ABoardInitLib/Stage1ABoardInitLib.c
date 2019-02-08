@@ -54,7 +54,6 @@ BoardInit (
     DisableWatchDogTimer ();
     PlatformHookSerialPortInitialize ();
     SerialPortInitialize ();
-    SetCurrentBootPartition (*(UINT8 *)0xFFFFFFF4 == 0x90 ? 0 : 1);
     break;
   default:
     break;

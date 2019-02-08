@@ -14,7 +14,7 @@
   # !BSF OPTION:{0:Device 0, 1:Device 1, 2:Device 2, 3:Device 3}
   # !BSF HELP:{Specify boot device instance when then are multple instances}
   # !BSF ORDER:{0000.0000}
-  gCfgData.DevInstance                  |      * | 0x01 | 5
+  gCfgData.DevInstance                  |      * | 0x01 | 0
 
   gCfgData.Reserved                     |      * | 0x03 | 0
 
@@ -33,7 +33,7 @@
   # !BSF TYPE:{Combo}
   # !BSF OPTION:{0:FAT, 1:EXT2, 2:AUTO, 3:RAW}
   # !BSF HELP:{Image is loaded from file system instead of raw data}
-  gCfgData.FsType                       |      * | 0x01 | 2
+  gCfgData.FsType                       |      * | 0x01 | 0
 
   # !BSF NAME:{Capsule File Name}
   # !BSF TYPE:{EditText}

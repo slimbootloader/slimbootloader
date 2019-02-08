@@ -471,7 +471,7 @@ EndFirmwareUpdate (
 {
   UINT8    Data;
 
-  DEBUG ((EFI_D_INFO, "Firmware update Done! clear FWU flag to normal boot mode.\n"));
+  DEBUG ((EFI_D_INIT, "Firmware update Done! clear FWU flag to normal boot mode.\n"));
 
   //
   // This is platform specific method.
