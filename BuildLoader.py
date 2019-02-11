@@ -1218,7 +1218,6 @@ def main():
 			os.path.join (sbl_dir, 'BootloaderCorePkg/Platform.dsc'),
 			os.path.join (workspace, 'Report.log')
 		]
-		cmds  = []
 
 		if args.distclean:
 			dirs.extend ([
@@ -1226,10 +1225,6 @@ def main():
 			])
 
 			files.extend ([
-			])
-
-			cmds.extend ([
-				'git clean -xdf BaseTools',
 			])
 
 		for dir in dirs:
@@ -1242,7 +1237,8 @@ def main():
 				print 'Removing %s' % file
 				os.remove(file)
 
-		for cmd in cmds:
+		if os.path.exists(os.path.join (sbl_dir, '.git')):
+			cmd = 'git clean -xdf BaseTools'
 			x = subprocess.call(cmd.split(' '), cwd=sbl_dir)
 			if x: raise Exception ('Failed to run clean-up commands !')
 
