@@ -657,7 +657,6 @@ BoardInit (
     BuildOsConfigDataHob ();
     break;
   case PostPciEnumeration:
-    IgdOpRegionInit();
     if (PcdGetBool (PcdSeedListEnabled)) {
       Status = GenerateSeeds ();
       if (EFI_ERROR (Status)) {
@@ -1600,6 +1599,8 @@ PlatformUpdateAcpiGnvs (
   SetMem (Gnvs, sizeof (GLOBAL_NVS_AREA), 0);
 
   Pnvs->BoardId = (UINT8)GetPlatformId ();
+
+  IgdOpRegionInit ();
 
   SysCpuInfo = MpGetInfo ();
   if (SysCpuInfo != NULL) {
