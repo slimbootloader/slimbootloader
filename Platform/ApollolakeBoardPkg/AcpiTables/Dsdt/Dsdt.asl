@@ -46,9 +46,7 @@ DefinitionBlock (
   include ("Cpu0Ist.asl")
   include ("ApIst.asl")
 
-//win10 boot error:
-//  include ("IgfxOpRn.asl")
-
+  include ("Gfx.asl")
 
 // Sleep states supported by Chipset/Board.
 //----------------------------------------------------------------------
