@@ -182,7 +182,7 @@ FILE = $(FV_DIR)/FSP_S.bin
 
 !if $(HAVE_VBT_BIN)
   FILE FREEFORM = E08CA6D5-8D02-43ae-ABB1-952CC787C933 {
-    SECTION RAW = Platform/$(BOARD_PKG_NAME)/VbtBin/Vbt.dat
+    SECTION RAW = $(FV_DIR)/Vbt.bin
   }
 !endif
 

@@ -17,6 +17,7 @@
 #include <Guid/FlashMapInfoGuid.h>
 
 #define  MPLD_SIGNATURE               SIGNATURE_32 ('$', 'P', 'L', 'D')
+#define  MVBT_SIGNATURE               SIGNATURE_32 ('$', 'M', 'V', 'B')
 #define  IS_MULTI_PAYLOAD(x)          (*(UINT32 *)(x) == MPLD_SIGNATURE)
 
 #define  IS_FLASH_SPACE(x)            (((x) >= PcdGet32 (PcdFlashBaseAddress)) && \
@@ -104,6 +105,18 @@ typedef struct {
   UINT32        Reserved;
   UINT8         Hash[32];
 } MULTI_PAYLOAD_ENTRY;
+
+typedef struct {
+  UINT32        Signature;
+  UINT8         EntryNum;
+  UINT8         Reserved[3];
+} VBT_MB_HDR;
+
+typedef struct {
+  UINT32        ImageId;
+  UINT32        Length;
+  UINT8         Data[];
+} VBT_ENTRY_HDR;
 
 typedef struct {
   UINT32        AcpiTop;

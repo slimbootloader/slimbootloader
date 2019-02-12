@@ -134,6 +134,14 @@ class Board(BaseBoard):
 		self._CFGDATA_INT_FILE    = []
 		self._CFGDATA_EXT_FILE    = ['CfgDataExt_Brd1.dlt', 'CfgDataExt_Brd31.dlt']
 
+		# If mulitple VBT table support is required, list them as:
+		#   {VbtImageId1 : VbtFileName1, VbtImageId2 : VbtFileName2, ...}
+		# VbtImageId is ID to identify a VBT image. It is a UINT32 number to match
+		#   the ImageId field in the VBT container.
+		# VbtFileName is the VBT file name. It needs to be located under platform
+		#   VbtBin folder.
+		self._MULTI_VBT_FILE      = {1:'Vbt800x600.dat', 2:'Vbt1024x768.dat'}
+
 	def GetDscLibrarys (self):
 		dsc_libs = {}
 		# These libraries will be added into the DSC files
