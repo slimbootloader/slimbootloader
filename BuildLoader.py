@@ -237,6 +237,7 @@ class BaseBoard(object):
 		self._FSP_PATH_NAME        = ''
 
 		self._PLATFORM_ID          = None
+		self._MULTI_VBT_FILE       = {}
 		self._CFGDATA_INT_FILE     = []
 		self._CFGDATA_EXT_FILE     = []
 
@@ -1014,6 +1015,9 @@ class Build(object):
 			gen_ver_info_txt (ver_txt_file, ver_info)
 		gen_file_from_object (ver_bin_file, ver_info)
 
+		# create VBT file
+		if self._board.HAVE_VBT_BIN:
+			gen_vbt_file (self._board.BOARD_PKG_NAME, self._board._MULTI_VBT_FILE, os.path.join(self._fv_dir, 'Vbt.bin'))
 
 		# create platform include dsc file
 		platform_dsc_path = os.path.join(sbl_dir, 'BootloaderCorePkg', 'Platform.dsc')

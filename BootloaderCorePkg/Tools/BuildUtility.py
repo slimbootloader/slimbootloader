@@ -31,7 +31,7 @@ from   ctypes import *
 
 sys.dont_write_bytecode = True
 sys.path.append (os.path.join(os.path.dirname(__file__), '..', '..', 'IntelFsp2Pkg', 'Tools'))
-from   SplitFspBin import RebaseFspBin, FirmwareDevice, EFI_SECTION_TYPE, FSP_INFORMATION_HEADER, PeTeImage, Bytes2Val
+from   SplitFspBin import RebaseFspBin, FirmwareDevice, EFI_SECTION_TYPE, FSP_INFORMATION_HEADER, PeTeImage, Bytes2Val, Val2Bytes
 
 
 AUTO_GEN_DSC_HDR = """#
@@ -686,6 +686,39 @@ def align_pad_file (src, dst, val, mode = STITCH_OPS.MODE_FILE_ALIGN, pos = STIT
 	if pos == STITCH_OPS.MODE_POS_TAIL:
 		fo.write(padding)
 	fo.close()
+
+
+def gen_vbt_file (brd_pkg_name, vbt_dict, vbt_file):
+	if len(vbt_dict) == 0:
+		# One VBT file
+		src_path = os.path.join(os.environ['PLT_SOURCE'], 'Platform', brd_pkg_name, 'VbtBin', 'Vbt.dat')
+		shutil.copy (src_path, vbt_file)
+		return
+
+	# Multiple VBT files, create signature and entry number.
+	vbtbin = bytearray (b'$MVB')
+	vbtbin.extend(bytearray(Val2Bytes(len(vbt_dict), 1)) + b'\x00' * 3)
+	for vbt in vbt_dict:
+		if type(vbt) == str:
+			if len(vbt) != 4:
+				raise Exception ("VBT key needs to be 4 chars, got '%s' !" % vbt)
+			imageid = bytearray(vbt)
+		else:
+			imageid = bytearray(Val2Bytes(vbt, 4))
+		src_path = os.path.join(os.environ['PLT_SOURCE'], 'Platform', brd_pkg_name, 'VbtBin', vbt_dict[vbt])
+		if not os.path.exists(src_path):
+			raise Exception ("File '%s' not found !" % src_path)
+		fp  = open(src_path, 'rb')
+		bin = bytearray(fp.read())
+		fp.close()
+		# Write image id and length (DWORD aligned) for VBT image
+		vbtbin.extend(imageid)
+		padding = ((len(bin) + 3) & ~3) - len(bin)
+		vbtbin.extend(bytearray(Val2Bytes(len(bin) + padding + 8, 4)))
+		vbtbin.extend(bin + b'\x00' * padding)
+	fp = open(vbt_file, 'wb')
+	fp.write(vbtbin)
+	fp.close()
 
 
 def get_verinfo_via_file (ver_dict, file):

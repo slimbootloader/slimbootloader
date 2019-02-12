@@ -103,10 +103,17 @@
 
   # !BSF SUBT:{CFGHDR_TMPL:PLATFORM_CFG_DATA:0:0}
   # !HDR EMBED:{PLATFORM_CFG_DATA:TAG_280:START}
-  # !BSF NAME:{Payload Test Data}
+
+  # !BSF NAME:{Platform Test Data}
   # !BSF TYPE:{EditText}
-  # !BSF HELP:{Specify platfomr test data string}
+  # !BSF HELP:{Specify platform test data string}
   gCfgData.PlatTest             |      * | 0x04 | ''
+
+  # !BSF NAME:{Platform VBT table}
+  # !BSF TYPE:{Combo}
+  # !BSF OPTION:{1:800x600, 2:1024x768}
+  # !BSF HELP:{Specify VBT image ID for desired graphics resolution}
+  gCfgData.VbtImageId           |      * | 0x04 | 1
 
   # !HDR EMBED:{PLATFORM_CFG_DATA:TAG_280:END}
 
