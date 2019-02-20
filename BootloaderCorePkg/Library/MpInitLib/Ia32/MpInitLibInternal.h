@@ -37,6 +37,9 @@
 #define   SMM_BASE_GAP             0x1000
 #define   SMM_BASE_MIN_SIZE        0x10000
 
+#define   PLD_TO_LDR_SMM_SIG       SIGNATURE_32('S', 'C', 'O', 'M')
+#define   RSM_SIG                  0x9090AA0F  /// Opcode for 'rsm'
+
 #pragma pack(1)
 typedef struct {
   UINT16 CSSelector;
@@ -85,6 +88,7 @@ typedef struct {
   UINT32           CpuCount;
   CPU_TASK         CpuTask[FixedPcdGet32 (PcdCpuMaxLogicalProcessorNumber)];
 } ALL_CPU_TASK;
+
 
 /**
   Assembly function to get the address map of MP.

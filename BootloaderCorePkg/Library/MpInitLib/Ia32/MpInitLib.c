@@ -12,6 +12,7 @@
 
 **/
 #include <MpInitLibInternal.h>
+#include <Library/BootloaderCoreLib.h>
 
 MP_ASSEMBLY_ADDRESS_MAP            mAddressMap;
 ALL_CPU_INFO                       mSysCpuInfo;
@@ -20,27 +21,29 @@ volatile MP_DATA_EXCHANGE_STRUCT   mMpDataStruct;
 UINT8                             *mBackupBuffer;
 UINT32                             mMpInitPhase = EnumMpInitNull;
 
+
 /**
   Relocate SMM base for CPU
 
   @param[in]  Index       CPU index to rebase.
   @param[in]  ApicId      CPU APIC ID.
+  @param[in]  SmmBase     SMBASE for the current proc (Index)
 
 **/
 VOID
 SmmRebase (
   IN UINT32  Index,
-  IN UINT32  ApicId
+  IN UINT32  ApicId,
+  IN UINT32  SmmBase
 )
 {
-  INT32   Offset;
-
-  Offset = PcdGet32 (PcdSmramTsegSize) - (SMM_BASE_MIN_SIZE + Index * SMM_BASE_GAP);
-  if (Offset <= 0) {
-    return;
+  if (SmmBase == 0) {
+    SmmBase = PcdGet32 (PcdSmramTsegBase) + PcdGet32 (PcdSmramTsegSize) - (SMM_BASE_MIN_SIZE + Index * SMM_BASE_GAP);
+    // Write 'RSM' at new SMM handler entry
+    *(UINT32 *)(SmmBase + 0x8000) = RSM_SIG;
   }
 
-  AsmWriteCr2 (PcdGet32 (PcdSmramTsegBase) + Offset);
+  AsmWriteCr2 (SmmBase);
   while (!AcquireSpinLockOrFail (&mMpDataStruct.SpinLock)) {
     CpuPause ();
   }
@@ -49,6 +52,7 @@ SmmRebase (
   ReleaseSpinLock (&mMpDataStruct.SpinLock);
   AsmWriteCr2 (0);
 }
+
 
 /**
   Common CPU initialization routine.
@@ -64,15 +68,32 @@ CpuInit (
   IN UINT32     Index
   )
 {
-  UINT32  ApicId;
+  SMMBASE_INFO  *SmmBaseInfo;
+  UINT32         ApicId;
+  UINT32         CpuIdx;
 
   ApicId = GetApicId();
   if (Index < PcdGet32 (PcdCpuMaxLogicalProcessorNumber)) {
     mSysCpuInfo.CpuInfo[Index].ApicId = ApicId;
   }
 
-  if (PcdGetBool (PcdSmmRebaseEnabled)) {
-    SmmRebase (Index, ApicId);
+  if (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE_ON_S3_RESUME_ONLY) {
+    if (GetBootMode() == BOOT_ON_S3_RESUME) {
+      SmmBaseInfo = (SMMBASE_INFO *)PcdGet32 (PcdSmramTsegBase);
+      if (SmmBaseInfo->Signature == PLD_TO_LDR_SMM_SIG) {
+        for (CpuIdx = 0; CpuIdx < SmmBaseInfo->CpuEntry; CpuIdx++) {
+          if (ApicId == SmmBaseInfo->SmmBase[CpuIdx].ApicId) {
+            SmmRebase (Index, ApicId, SmmBaseInfo->SmmBase[CpuIdx].SmmBase);
+            break;
+          }
+        }
+        if (CpuIdx == SmmBaseInfo->CpuEntry) {
+          ASSERT (CpuIdx < SmmBaseInfo->CpuEntry);
+        }
+      }
+    }
+  } else if (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE) {
+    SmmRebase (Index, ApicId, 0);
   }
 
   return EFI_SUCCESS;
@@ -170,7 +191,6 @@ MpInit (
     if (mMpInitPhase != EnumMpInitNull) {
       Status = EFI_UNSUPPORTED;
     } else {
-
       // Init structure for lock
       mMpDataStruct.SmmRebaseDoneCounter = 0;
       InitializeSpinLock (&mMpDataStruct.SpinLock);
@@ -265,7 +285,6 @@ MpInit (
     if (mMpInitPhase != EnumMpInitWakeup) {
       Status = EFI_UNSUPPORTED;
     } else {
-
       //
       // Wait for task done
       //
@@ -292,7 +311,7 @@ MpInit (
         DEBUG ((DEBUG_INFO, " CPU %2d APIC ID: %d\n", Index, mSysCpuInfo.CpuInfo[Index].ApicId));
       }
 
-      if (PcdGetBool (PcdSmmRebaseEnabled)) {
+      if (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE) {
         // Check SMM rebase result
         if (mMpDataStruct.SmmRebaseDoneCounter != CpuCount) {
           CpuHalt ("CPU SMM rebase failed!\n");

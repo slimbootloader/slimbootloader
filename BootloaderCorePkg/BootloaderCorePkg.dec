@@ -139,7 +139,7 @@
   gPlatformModuleTokenSpaceGuid.PcdVerInfoBase            | 0xFF000000 | UINT32 | 0x20000190
   gPlatformModuleTokenSpaceGuid.PcdCfgDataLoadSource      | 0x00000002 | UINT32 | 0x20000194
   gPlatformModuleTokenSpaceGuid.PcdPayloadReservedMemSize | 0x00004000 | UINT32 | 0x20000195
-
+  gPlatformModuleTokenSpaceGuid.PcdSmmRebaseMode          | 0x00000000 | UINT8  | 0x20000196
 
 
 [PcdsFeatureFlag]
@@ -160,4 +160,3 @@
   gPlatformModuleTokenSpaceGuid.PcdFlashMapEnabled        | FALSE      | BOOLEAN | 0x2000020C
   gPlatformModuleTokenSpaceGuid.PcdS3DebugEnabled         | FALSE      | BOOLEAN | 0x2000020D
   gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled         | FALSE      | BOOLEAN | 0x2000020E
-  gPlatformModuleTokenSpaceGuid.PcdSmmRebaseEnabled       | FALSE      | BOOLEAN | 0x2000020F

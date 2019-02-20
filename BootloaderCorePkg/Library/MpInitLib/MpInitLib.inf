@@ -53,4 +53,4 @@
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegSize
-  gPlatformModuleTokenSpaceGuid.PcdSmmRebaseEnabled
+  gPlatformModuleTokenSpaceGuid.PcdSmmRebaseMode

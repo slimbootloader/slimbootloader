@@ -263,6 +263,8 @@
   gPayloadTokenSpaceGuid.PcdPayloadStackSize         | $(PLD_STACK_SIZE)
   gPayloadTokenSpaceGuid.PcdGlobalDataAddress        | 0x00000000
 
+  gPlatformModuleTokenSpaceGuid.PcdSmmRebaseMode     | $(ENABLE_SMM_REBASE)
+
 [PcdsFeatureFlag]
   gPlatformCommonLibTokenSpaceGuid.PcdMinDecompression    | FALSE
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled | $(HAVE_MEASURED_BOOT)
@@ -279,7 +281,6 @@
   gPlatformModuleTokenSpaceGuid.PcdVtdEnabled             | $(ENABLE_VTD)
   gPlatformModuleTokenSpaceGuid.PcdFlashMapEnabled        | $(HAVE_FLASH_MAP)
   gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled         | $(HAVE_PSD_TABLE)
-  gPlatformModuleTokenSpaceGuid.PcdSmmRebaseEnabled       | $(ENABLE_SMM_REBASE)
 
 !ifdef $(S3_DEBUG)
   gPlatformModuleTokenSpaceGuid.PcdS3DebugEnabled         | $(S3_DEBUG)

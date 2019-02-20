@@ -81,7 +81,6 @@ BITS 32
 SmmRebase:
     mov         edi,  0x3fef8     ; SMBASE offset
     mov         dword [edi], eax  ; change to new  SMBASE
-    mov         dword [eax + 0x8000], 0x9090AA0F  ; write 'RSM' at new SMM handler entry
     rsm
     jmp         $
 

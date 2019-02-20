@@ -73,6 +73,15 @@ typedef enum {
   LOADER_STAGE_PAYLOAD
 } LOADER_STAGE;
 
+//
+// Enum type for SMM rebase enabling
+//
+typedef enum {
+  SMM_REBASE_DISABLE,
+  SMM_REBASE_ENABLE,
+  SMM_REBASE_ENABLE_ON_S3_RESUME_ONLY
+} SMM_REBASE_MODE;
+
 /**
   Returns the current stage of Bootloader execution.
 

@@ -621,19 +621,17 @@ BoardInit (
       VariableConstructor (VarBase, VarSize);
     }
 
-    if (PcdGetBool (PcdSmmRebaseEnabled)) {
-      // Get TSEG info from FSP HOB
-      // It will be consumed in MpInit if SMM rebase is enabled
-      LdrGlobal  = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
-      TsegBase = (UINT32)GetFspReservedMemoryFromGuid (
-                         LdrGlobal->FspHobList,
-                         &TsegSize,
-                         &gReservedMemoryResourceHobTsegGuid
-                         );
-      if (TsegBase != 0) {
-        Status = PcdSet32S (PcdSmramTsegBase, TsegBase);
-        Status = PcdSet32S (PcdSmramTsegSize, (UINT32)TsegSize);
-      }
+    // Get TSEG info from FSP HOB
+    // It will be consumed in MpInit if SMM rebase is enabled
+    LdrGlobal  = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
+    TsegBase = (UINT32)GetFspReservedMemoryFromGuid (
+                       LdrGlobal->FspHobList,
+                       &TsegSize,
+                       &gReservedMemoryResourceHobTsegGuid
+                       );
+    if (TsegBase != 0) {
+      Status = PcdSet32S (PcdSmramTsegBase, TsegBase);
+      Status = PcdSet32S (PcdSmramTsegSize, (UINT32)TsegSize);
     }
 
     SaveOtgRole();
@@ -1313,7 +1311,7 @@ UpdateLoaderPlatformInfo (
 **/
 VOID
 UpdateSmmInfo (
-  OUT  SMM_INFORMATION           *SmmInfoHob
+  OUT  LDR_SMM_INFO           *SmmInfoHob
 )
 {
 
