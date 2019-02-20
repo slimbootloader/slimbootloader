@@ -169,6 +169,10 @@ CONST UINT16 mGpMrbModuleIdOffset[] = {
   0x01B8, 0x01C0, 0x01C8, 0x01D0, 0x01D8, 0x01E0, 0x01E8
 };
 
+CONST UINT16 mUp2ModuleIdOffset[] = {
+  0x00D8, 0x00E0
+};
+
 typedef struct {
   UINT8 RankEnable;
   UINT8 DeviceWidth;
@@ -444,9 +448,6 @@ ModuleIdInitialize (
     }
     PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
     PlatformData->ModuleIdInfo.ModuleId = ModuleId & 0x7F;
-    DEBUG ((DEBUG_INFO, " MemSkuId 0x%02X, FabId 0x%02X\n", \
-            PlatformData->ModuleIdInfo.Bits.MemSkuId, \
-            PlatformData->ModuleIdInfo.Bits.FabId));
 
     PlatformData->ModuleIdInfo.Bits.PlatformSkuId = PlatformSkuMax;
     CpuNumCores = GetCpuNumCores();
@@ -459,10 +460,36 @@ ModuleIdInitialize (
     }
 
     break;
+
+  case PLATFORM_ID_UP2:
+    ModuleId = 0;
+    for (Index = 0; Index < ARRAY_SIZE (mUp2ModuleIdOffset); Index ++) {
+      Offset = GPIO_PADBAR + mUp2ModuleIdOffset[Index];
+      PadConfg0.padCnf0 = GpioRead (NORTHWEST, Offset + BXT_GPIO_PAD_CONF0_OFFSET);
+      PadConfg0.r.PMode = 0;
+      PadConfg0.r.GPIORxTxDis = 0x1;
+      GpioWrite (NORTHWEST, Offset + BXT_GPIO_PAD_CONF0_OFFSET, PadConfg0.padCnf0);
+      PadConfg1.padCnf1 = GpioRead (NORTHWEST, Offset + BXT_GPIO_PAD_CONF1_OFFSET);
+      PadConfg1.r.IOSTerm = 0x3;
+      PadConfg1.r.Term = 0xC;
+      GpioWrite (NORTHWEST, Offset + BXT_GPIO_PAD_CONF1_OFFSET, PadConfg1.padCnf1);
+
+      PadConfg0.padCnf0 = GpioRead (NORTHWEST, Offset + BXT_GPIO_PAD_CONF0_OFFSET);
+      ModuleId |= (UINT16) (PadConfg0.r.GPIORxState << Index);
+    }
+    PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
+    PlatformData->ModuleIdInfo.ModuleId = ModuleId & 0x3;
+
+    break;
+
   default:
     return EFI_UNSUPPORTED;
     break;
   }
+
+  DEBUG ((DEBUG_INFO, "MemSkuId 0x%02X, FabId 0x%02X\n", \
+          PlatformData->ModuleIdInfo.Bits.MemSkuId, \
+          PlatformData->ModuleIdInfo.Bits.FabId));
 
   return EFI_SUCCESS;
 }
@@ -600,7 +627,48 @@ UpdateFspConfig (
   //
   // This will be done by configuration data
   //
-  if (GetPlatformId () == PLATFORM_ID_GPMRB) {
+  if (GetPlatformId () == PLATFORM_ID_UP2) {
+    PlatformData  = (PLATFORM_DATA *)GetPlatformDataPtr ();
+
+    DEBUG ((DEBUG_INFO, "UP2 memory SKU ID is 0x%x\n", PlatformData->ModuleIdInfo.Bits.MemSkuId));
+    switch (PlatformData->ModuleIdInfo.Bits.MemSkuId) {
+      case 0: /* 2GB */
+        Fspmcfg->DualRankSupportEnable = 0;
+        Fspmcfg->Ch0_RankEnable        = 1;
+        Fspmcfg->Ch0_DramDensity       = 2;
+        Fspmcfg->Ch1_RankEnable        = 1;
+        Fspmcfg->Ch1_DramDensity       = 2;
+
+        Fspmcfg->Ch2_RankEnable        = 0;
+        Fspmcfg->Ch3_RankEnable        = 0;
+        break;
+      case 1: /* 4GB */
+        Fspmcfg->DualRankSupportEnable = 1;
+        Fspmcfg->Ch0_RankEnable        = 1;
+        Fspmcfg->Ch0_DramDensity       = 2;
+        Fspmcfg->Ch1_RankEnable        = 1;
+        Fspmcfg->Ch1_DramDensity       = 2;
+        Fspmcfg->Ch2_RankEnable        = 1;
+        Fspmcfg->Ch2_DramDensity       = 2;
+        Fspmcfg->Ch3_RankEnable        = 1;
+        Fspmcfg->Ch3_DramDensity       = 2;
+        break;
+      case 2: /* 8GB */
+        Fspmcfg->DualRankSupportEnable = 1;
+        Fspmcfg->Ch0_RankEnable        = 3;
+        Fspmcfg->Ch0_DramDensity       = 2;
+        Fspmcfg->Ch1_RankEnable        = 3;
+        Fspmcfg->Ch1_DramDensity       = 2;
+        Fspmcfg->Ch2_RankEnable        = 3;
+        Fspmcfg->Ch2_DramDensity       = 2;
+        Fspmcfg->Ch3_RankEnable        = 3;
+        Fspmcfg->Ch3_DramDensity       = 2;
+        break;
+      default:
+        break;
+    };
+
+  } else if (GetPlatformId () == PLATFORM_ID_GPMRB) {
     PlatformData  = (PLATFORM_DATA *)GetPlatformDataPtr ();
     MemSkuId      = PlatformData->ModuleIdInfo.Bits.MemSkuId;
     FabId         = PlatformData->ModuleIdInfo.Bits.FabId;
