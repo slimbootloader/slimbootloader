@@ -473,7 +473,7 @@ UpdateFrameBufferInfo (
 **/
 VOID
 UpdateSmmInfo (
-  OUT  SMM_INFORMATION           *SmmInfoHob
+  OUT  LDR_SMM_INFO           *SmmInfoHob
 )
 {
   UINT32  TsegSize;

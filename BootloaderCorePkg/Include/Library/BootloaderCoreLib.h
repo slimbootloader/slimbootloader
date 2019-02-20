@@ -126,6 +126,22 @@ typedef struct {
   UINT8         BootPartition;
 } S3_DATA;
 
+typedef struct {
+  UINT32  ApicId;
+  UINT32  SmmBase;
+} CPU_SMMBASE;
+
+typedef struct {
+  UINT32       Signature;
+  UINT8        CpuEntry;
+  UINT8        RegType;
+  UINT8        RegWidth;
+  UINT8        Unused;
+  UINT32       SmiEnReg;
+  UINT32       SmiEnVal;
+  CPU_SMMBASE  SmmBase[];
+} SMMBASE_INFO;
+
 #pragma pack()
 
 #define ACPI_FEATURE_ENABLED()    (GetFeatureCfg() & FEATURE_ACPI)

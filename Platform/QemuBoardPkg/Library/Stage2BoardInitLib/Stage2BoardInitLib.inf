@@ -60,7 +60,7 @@
   gPlatformModuleTokenSpaceGuid.PcdVariableRegionBase
   gPlatformModuleTokenSpaceGuid.PcdVariableRegionSize
   gPlatformModuleTokenSpaceGuid.PcdFramebufferInitEnabled
-  gPlatformModuleTokenSpaceGuid.PcdSmmRebaseEnabled
+  gPlatformModuleTokenSpaceGuid.PcdSmmRebaseMode
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegSize
   
