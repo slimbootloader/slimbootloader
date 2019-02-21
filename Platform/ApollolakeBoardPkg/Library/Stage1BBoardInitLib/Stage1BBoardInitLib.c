@@ -1660,24 +1660,38 @@ PlatformFeaturesInit (
   LOADER_GLOBAL_DATA          *LdrGlobal;
   PLAT_FEATURES               *PlatformFeatures;
   DYNAMIC_CFG_DATA            *DynamicCfgData;
+  PLATFORM_DATA               *PlatformData;
   UINT32                      Features;
 
   Features        = 0;
   FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
   if (FeaturesCfgData != NULL) {
+
     if (FeaturesCfgData->Features.Acpi != 0) {
       Features |= FEATURE_ACPI;
     } else {
       Features &= ~FEATURE_ACPI;
     }
-    if (FeaturesCfgData->Features.MeasuredBoot != 0) {
+
+    if (FeaturesCfgData->Features.eMMCTuning != 0) {
+      Features |= FEATURE_MMC_TUNING;
+    }
+
+    PlatformData  = (PLATFORM_DATA *)GetPlatformDataPtr ();
+
+    if ((PlatformData != NULL) && (FeaturesCfgData->Features.MeasuredBoot != 0) &&
+              (PlatformData->BtGuardInfo.Bpm.Mb != 0) && MEASURED_BOOT_ENABLED()) {
       Features |= FEATURE_MEASURED_BOOT;
     } else {
       Features &= ~FEATURE_MEASURED_BOOT;
     }
-    if (FeaturesCfgData->Features.eMMCTuning != 0) {
-      Features |= FEATURE_MMC_TUNING;
+
+    if ((PlatformData != NULL) && (PlatformData->BtGuardInfo.Bpm.Vb != 0) && FeaturePcdGet(PcdVerifiedBootEnabled)) {
+      Features |= FEATURE_VERIFIED_BOOT;
+    } else {
+      Features &= ~FEATURE_VERIFIED_BOOT;
     }
+
     PlatformFeatures           = &((PLATFORM_DATA *)GetPlatformDataPtr ())->PlatformFeatures;
     PlatformFeatures->Vt       = FeaturesCfgData->Features.Vt;
     PlatformFeatures->DciDebug = FeaturesCfgData->Features.DciDebug;

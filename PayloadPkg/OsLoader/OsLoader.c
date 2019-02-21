@@ -306,7 +306,7 @@ LoadAndSetupImage (
     if (LoaderPlatformInfo == NULL) {
       return EFI_NOT_FOUND;
     }
-    if (FeaturePcdGet (PcdMeasuredBootEnabled) && (LoaderPlatformInfo->SecurityFlags && BIT1)) {
+    if (FeaturePcdGet (PcdMeasuredBootEnabled) && (LoaderPlatformInfo->LdrFeatures & FEATURE_MEASURED_BOOT)) {
       // Extend hash of the image into TPM.
       TpmExtendPcrAndLogEvent ( 8, TPM_ALG_SHA256, LoadedImage->ImageHash,
         EV_COMPACT_HASH, sizeof("LinuxLoaderPkg: OS Image"), (UINT8 *)"LinuxLoaderPkg: OS Image");
@@ -396,7 +396,7 @@ BeforeOSJump (
   if (LoaderPlatformInfo == NULL) {
     return ;
   }
-  if (FeaturePcdGet (PcdMeasuredBootEnabled) && (LoaderPlatformInfo->SecurityFlags && BIT1)) {
+  if (FeaturePcdGet (PcdMeasuredBootEnabled) && (LoaderPlatformInfo->LdrFeatures & FEATURE_MEASURED_BOOT)) {
     TpmIndicateReadyToBoot ();
   }
   AddMeasurePoint (0x4100);

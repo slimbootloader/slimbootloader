@@ -50,6 +50,7 @@ typedef struct {
 #define        FEATURE_MEASURED_BOOT            BIT1
 #define        FEATURE_MMC_TUNING               BIT2
 #define        FEATURE_MMC_FORCE_TUNING         BIT3
+#define        FEATURE_VERIFIED_BOOT            BIT4
 
 #define MM_PCI_ADDRESS( Bus, Device, Function, Register ) \
   ( (UINTN)PcdGet64(PcdPciExpressBaseAddress) + \

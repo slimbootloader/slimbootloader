@@ -256,10 +256,10 @@ RpmbKeyProvisioning (
   }
 
   // Get manufacturing state
-  Eom = (LoaderPlatformInfo->SecurityFlags & BIT2) >> BIT1;
+  Eom = ((LoaderPlatformInfo->HwState & HWSTATE_IN_MANUFACTURING_MODE) == 0) ?TRUE:FALSE;
 
   // Proceed further only if its in production mode and if the verified boot is enabled
-  if((Eom == 1) || ((LoaderPlatformInfo->SecurityFlags & 0x1) != 1)) {
+  if((Eom) || ((LoaderPlatformInfo->LdrFeatures & FEATURE_VERIFIED_BOOT) == FEATURE_VERIFIED_BOOT)) {
     return EFI_UNSUPPORTED;
   }
 
