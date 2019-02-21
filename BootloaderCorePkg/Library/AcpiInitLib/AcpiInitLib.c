@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -45,6 +45,19 @@
 extern  UINT32          WakeUpBuffer;
 extern  CHAR8           WakeUp;
 extern  UINT32          WakeUpSize;
+
+/**
+  Update Firmware Performance Data Table (FPDT).
+
+  @param[in] Table          Pointer of ACPI FPDT Table.
+
+  @retval EFI_SUCCESS       Update ACPI FPDT table successfully.
+  @retval Others            Failed to update FPDT table.
+ **/
+EFI_STATUS
+UpdateFpdt (
+  IN VOID                             *Table
+  );
 
 const EFI_ACPI_5_0_ROOT_SYSTEM_DESCRIPTION_POINTER RsdpTmp = {
   .Signature = EFI_ACPI_5_0_ROOT_SYSTEM_DESCRIPTION_POINTER_SIGNATURE,
@@ -314,7 +327,6 @@ AcpiTableUpdate (
               EFI_OUT_OF_RESOURCES  If less MADT entries
 **/
 EFI_STATUS
-EFIAPI
 UpdateMadt (
   IN UINT8   *Current
   )
@@ -482,6 +494,13 @@ AcpiInit (
         return Status;
       }
       break;
+    case EFI_ACPI_5_0_FIRMWARE_PERFORMANCE_DATA_TABLE_SIGNATURE:
+      // FPDT
+      Status = UpdateFpdt (Current);
+      if (Status != EFI_SUCCESS) {
+        return Status;
+      }
+      break;
     default:
       // Misc
       break;
@@ -561,6 +580,7 @@ typedef VOID (*DOWAKEUP) (UINT32 WakeVector);
 
 **/
 VOID
+EFIAPI
 FindAcpiWakeVectorAndJump (
   IN  UINT32    AcpiTableBase
   )
