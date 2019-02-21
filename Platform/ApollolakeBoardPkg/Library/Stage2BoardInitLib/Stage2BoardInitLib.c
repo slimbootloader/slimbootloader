@@ -1294,12 +1294,12 @@ UpdateLoaderPlatformInfo (
 
   PlatformData  = (PLATFORM_DATA *)GetPlatformDataPtr ();
   if(PlatformData != NULL) {
-    LoaderPlatformInfo->SecurityFlags = (PlatformData->BtGuardInfo.Bpm.Vb & FeaturePcdGet(PcdVerifiedBootEnabled)) |
-                                        ((PlatformData->BtGuardInfo.Bpm.Mb & FeaturePcdGet(PcdMeasuredBootEnabled) & MEASURED_BOOT_ENABLED() ) << 1);
+    LoaderPlatformInfo->HwState = (PlatformData->BtGuardInfo.Bpm.Vb) |
+                                        ((PlatformData->BtGuardInfo.Bpm.Mb) << 1);
 
     // Get Manufacturing Mode from Heci
     ReadHeciFwStatus(&HeciFwSts);
-    LoaderPlatformInfo->SecurityFlags |= (HeciFwSts & BIT4) >> 2;
+    LoaderPlatformInfo->HwState |= (HeciFwSts & BIT4) >> 2;
   }
 }
 
