@@ -1,0 +1,86 @@
+/**@file
+  This file contains a structure definition for the ACPI FPDT Table.
+
+  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+  This program and the accompanying materials
+  are licensed and made available under the terms and conditions of the BSD License
+  which accompanies this distribution.  The full text of the license may be found at
+  http://opensource.org/licenses/bsd-license.php.
+
+  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+
+**/
+
+//
+// Statements that include other files
+//
+#include <IndustryStandard/Acpi.h>
+#include <Library/AcpiInitLib.h>
+
+//
+// ACPI table information used to initialize FPDT tables.
+//
+#define EFI_ACPI_FPDT_OEM_ID           {'I','N','T','E','L',' '}
+#define EFI_ACPI_FPDT_OEM_TABLE_ID     SIGNATURE_64('O','E','M','T','A','B','L','E')
+#define EFI_ACPI_FPDT_OEM_REVISION     0x00000005
+#define EFI_ACPI_FPDT_CREATOR_ID       SIGNATURE_32('C','R','E','A')
+#define EFI_ACPI_FPDT_CREATOR_REVISION 0x0100000D
+
+INTERNAL_FIRMWARE_PERFORMANCE_TABLE  FPDT = {
+  { //FIRMWARE_PERFORMANCE_TABLE
+    {
+      EFI_ACPI_5_0_FIRMWARE_PERFORMANCE_DATA_TABLE_SIGNATURE,
+      //
+      // The FPDT table length should be sizeof (FIRMWARE_PERFORMANCE_TABLE).
+      // Here INTERNAL_FIRMWARE_PERFORMANCE_TABLE includes other tables,  later code will
+      // update the tables and this length in runtime.
+      //
+      sizeof (INTERNAL_FIRMWARE_PERFORMANCE_TABLE),
+      EFI_ACPI_5_0_FIRMWARE_PERFORMANCE_DATA_TABLE_REVISION,    // Revision
+      0x00,                             // Checksum will be updated at runtime
+      EFI_ACPI_FPDT_OEM_ID,             // OEMID, a 6 bytes long field
+      EFI_ACPI_FPDT_OEM_TABLE_ID,       // OEM table identification(8 bytes long)
+      EFI_ACPI_FPDT_OEM_REVISION,       // OEM revision
+      EFI_ACPI_FPDT_CREATOR_ID,         // ASL compiler vendor ID
+      EFI_ACPI_FPDT_CREATOR_REVISION,   // ASL compiler revision number
+    },
+    //
+    // Firmware Basic Boot Performance Table Pointer Record.
+    //
+    {
+      {
+        EFI_ACPI_5_0_FPDT_RECORD_TYPE_FIRMWARE_BASIC_BOOT_POINTER ,       // Type
+        sizeof (EFI_ACPI_5_0_FPDT_BOOT_PERFORMANCE_TABLE_POINTER_RECORD), // Length
+        EFI_ACPI_5_0_FPDT_RECORD_REVISION_FIRMWARE_BASIC_BOOT_POINTER     // Revision
+      },
+      0,  // Reserved
+      0   // BootPerformanceTablePointer will be updated at runtime.
+    },
+    //
+    // S3 Performance Table Pointer Record.
+    //
+    {
+      {
+        EFI_ACPI_5_0_FPDT_RECORD_TYPE_S3_PERFORMANCE_TABLE_POINTER,     // Type
+        sizeof (EFI_ACPI_5_0_FPDT_S3_PERFORMANCE_TABLE_POINTER_RECORD), // Length
+        EFI_ACPI_5_0_FPDT_RECORD_REVISION_S3_PERFORMANCE_TABLE_POINTER  // Revision
+      },
+      0,  // Reserved
+      0   // S3PerformanceTablePointer will be updated at runtime.
+    }
+  }
+};
+
+
+VOID *
+ReferenceAcpiTable (
+  VOID
+  )
+{
+  //
+  // Reference the table being generated to prevent the optimizer from
+  // removing the data structure from the executable
+  //
+  return (VOID*)&FPDT;
+}

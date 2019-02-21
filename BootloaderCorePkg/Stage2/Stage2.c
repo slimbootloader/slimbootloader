@@ -333,6 +333,9 @@ S3ResumePath (
   PrintStackHeapInfo ();
   DEBUG_CODE_END ();
 
+  // Update FPDT table
+  UpdateFpdtS3Table (S3Data->AcpiBase);
+
   // Find Wake Vector and Jump to OS
   FindAcpiWakeVectorAndJump (S3Data->AcpiBase);
 

@@ -28,10 +28,11 @@
   Madt/Madt30.aslc
   Mcfg/Mcfg.aslc
   Hpet/Hpet.aslc  
+  Platform/CommonBoardPkg/AcpiTables/Fpdt/Fpdt.aslc
 
 [Packages]
   MdePkg/MdePkg.dec
   Silicon/QemuSocPkg/QemuSocPkg.dec
   Platform/QemuBoardPkg/QemuBoardPkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
-  
+  BootloaderCorePkg/BootloaderCorePkg.dec  
