@@ -363,35 +363,39 @@ EngFatToStr (
 
 
 /**
-  Performs a case-insensitive comparison of two Null-terminated Unicode strings.
+  Performs a case-insensitive comparison of two Null-terminated Unicode strings
+  for specific length.
 
   @param  PrivateData       Global memory map for accessing global variables
   @param  Str1              First string to perform case insensitive comparison.
   @param  Str2              Second string to perform case insensitive comparison.
+  @param  Len               Length to compare.
 
 **/
 BOOLEAN
-EngStriColl (
-  IN  PEI_FAT_PRIVATE_DATA  *PrivateData,
+EngStrniColl (
   IN CHAR16                 *Str1,
-  IN CHAR16                 *Str2
+  IN CHAR16                 *Str2,
+  IN UINT32                  Len
   )
 {
   CHAR16  UpperS1;
   CHAR16  UpperS2;
 
-  UpperS1 = ToUpper (*Str1);
-  UpperS2 = ToUpper (*Str2);
-  while (*Str1 != 0) {
+  while (Len > 0) {
+    if ((*Str1 == 0) || (*Str2 == 0)) {
+      return FALSE;
+    }
+    UpperS1 = ToUpper (*Str1);
+    UpperS2 = ToUpper (*Str2);
     if (UpperS1 != UpperS2) {
       return FALSE;
     }
-
     Str1++;
     Str2++;
-    UpperS1 = ToUpper (*Str1);
-    UpperS2 = ToUpper (*Str2);
+    Len--;
   }
 
-  return (BOOLEAN) ((*Str2 != 0) ? FALSE : TRUE);
+  return TRUE;
 }
+

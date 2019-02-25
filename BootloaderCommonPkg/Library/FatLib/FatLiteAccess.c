@@ -436,6 +436,7 @@ FatReadFile (
 
   @param  PrivateData            Global memory map for accessing global variables
   @param  ParentDir              The parent directory.
+  @param  Attributes             The file attribute (file or dir) to find.
   @param  SubFile                The File structure containing the sub file that
                                  is caught.
 
@@ -449,6 +450,7 @@ EFI_STATUS
 FatReadNextDirectoryEntry (
   IN  PEI_FAT_PRIVATE_DATA  *PrivateData,
   IN  PEI_FAT_FILE          *ParentDir,
+  IN  UINT32                 Attributes,
   OUT PEI_FAT_FILE          *SubFile
   )
 {
@@ -471,19 +473,28 @@ FatReadNextDirectoryEntry (
     if (EFI_ERROR (Status)) {
       return EFI_DEVICE_ERROR;
     }
+
     //
-    // We only search for *FILE* in root directory
     // Long file name entry is *NOT* supported
     //
-    if (((DirEntry.Attributes & FAT_ATTR_DIRECTORY) == FAT_ATTR_DIRECTORY) || (DirEntry.Attributes == FAT_ATTR_LFN)) {
+    if (DirEntry.Attributes == FAT_ATTR_LFN) {
       continue;
     }
+
     //
     // if this is a terminator dir entry, just return EFI_NOT_FOUND
     //
     if (DirEntry.FileName[0] == EMPTY_ENTRY_MARK) {
       return EFI_NOT_FOUND;
     }
+
+    //
+    // Check if attribute matches
+    //
+    if (((Attributes & FAT_ATTR_DIRECTORY) ^ (DirEntry.Attributes & FAT_ATTR_DIRECTORY)) != 0) {
+      continue;
+    }
+
     //
     // If this not an invalid entry neither an empty entry, this is what we want.
     // otherwise we will start a new loop to continue to find something meaningful
