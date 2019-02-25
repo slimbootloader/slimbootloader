@@ -188,6 +188,47 @@ FatGetFileByName (
   return Status;
 }
 
+/**
+  Gets next path node from a full file path string.
+
+  @param[in]     FileName         The full file path string.
+  @param[out]    Length           The current path node length.
+
+  @retval        The next path node pointer in the file path string.
+                 NULL indicates no more path node found.
+
+**/
+CHAR16 *
+GetNextFilePathNode (
+  IN  CHAR16 *FileName,
+  OUT UINT32 *Length
+  )
+{
+  CHAR16 *Ptr;
+  UINT32  Len;
+
+  Len = 0;  
+  Ptr = FileName;
+  if (Ptr != NULL) {    
+    while (TRUE) {
+      if ((*Ptr == 0) || (*Ptr == '\\') || (*Ptr == '/')) {
+        Len = Ptr - FileName;
+        break;
+      }
+      Ptr++;
+    }
+  }
+
+  if (Length != NULL) {
+    *Length = (UINT32)Len;
+  }
+
+  if ((Ptr != NULL) && (*Ptr != 0)) {
+    return Ptr + 1;
+  } else {
+    return NULL;
+  }
+}
 
 /**
   Finds the recovery file on a FAT volume.
@@ -218,6 +259,9 @@ FindFile (
   EFI_STATUS    Status;
   PEI_FAT_FILE  Parent;
   PEI_FAT_FILE  *File;
+  CHAR16        *NodeCurr;
+  CHAR16        *NodeNext;
+  UINT32         NodeLen;
 
   File = &PrivateData->File;
 
@@ -242,23 +286,37 @@ FindFile (
   if (EFI_ERROR (Status)) {
     return EFI_DEVICE_ERROR;
   }
+
   //
   // Search for recovery capsule in root directory
   //
-  Status = FatReadNextDirectoryEntry (PrivateData, &Parent, File);
-  while (Status == EFI_SUCCESS) {
-    //
-    // Compare whether the file name is recovery file name.
-    //
-    if (EngStriColl (PrivateData, FileName, File->FileName)) {
-      break;
+  NodeCurr = FileName;
+  while (NodeCurr != NULL) {
+    NodeNext = GetNextFilePathNode (NodeCurr, &NodeLen);
+    if (NodeLen > 0) {
+      do {
+        Status   = FatReadNextDirectoryEntry (
+                       PrivateData,
+                       &Parent,
+                       (NodeNext == NULL) ? 0 : FAT_ATTR_DIRECTORY,
+                       File
+                   );
+        if (Status == EFI_SUCCESS) {
+          //
+          // Compare whether the file name is recovery file name.
+          //
+          if (EngStrniColl (NodeCurr, File->FileName, NodeLen)) {
+            break;
+          }
+        }
+      } while (Status == EFI_SUCCESS);
+      if (EFI_ERROR (Status)) {
+        return EFI_NOT_FOUND;
+      } else {
+        Parent = *File;
+      }
     }
-
-    Status = FatReadNextDirectoryEntry (PrivateData, &Parent, File);
-  }
-
-  if (EFI_ERROR (Status)) {
-    return EFI_NOT_FOUND;
+    NodeCurr = NodeNext;
   }
 
   //

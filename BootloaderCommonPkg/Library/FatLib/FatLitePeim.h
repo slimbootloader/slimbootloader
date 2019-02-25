@@ -254,20 +254,21 @@ EngFatToStr (
 
 
 /**
-  Performs a case-insensitive comparison of two Null-terminated Unicode strings.
+  Performs a case-insensitive comparison of two Null-terminated Unicode strings
+  for specific length.
 
   @param  PrivateData       Global memory map for accessing global variables
   @param  Str1              First string to perform case insensitive comparison.
   @param  Str2              Second string to perform case insensitive comparison.
+  @param  Len               Length to compare.
 
 **/
 BOOLEAN
-EngStriColl (
-  IN  PEI_FAT_PRIVATE_DATA  *PrivateData,
+EngStrniColl (
   IN CHAR16                 *Str1,
-  IN CHAR16                 *Str2
+  IN CHAR16                 *Str2,
+  IN UINT32                  Len
   );
-
 
 /**
   Reads a block of data from the block device by calling
@@ -417,6 +418,7 @@ FatReadFile (
 
   @param  PrivateData            Global memory map for accessing global variables
   @param  ParentDir              The parent directory.
+  @param  Attributes             The file attribute (file or dir) to find.
   @param  SubFile                The File structure containing the sub file that
                                  is caught.
 
@@ -430,6 +432,7 @@ EFI_STATUS
 FatReadNextDirectoryEntry (
   IN  PEI_FAT_PRIVATE_DATA  *PrivateData,
   IN  PEI_FAT_FILE          *ParentDir,
+  IN  UINT32                 Attributes,
   OUT PEI_FAT_FILE          *SubFile
   );
 
