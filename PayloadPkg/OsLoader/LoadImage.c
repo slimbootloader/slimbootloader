@@ -13,6 +13,11 @@
 
 #include "OsLoader.h"
 
+CONST CHAR16  *mConfigFileName[2] = {
+  L"config.cfg",
+  L"boot/grub/grub.cfg"
+};
+
 /**
   Get hardware partition handle from boot option info
 
@@ -254,6 +259,56 @@ GetIasImageFromFs (
 
 
 /**
+  Load a file from media and fill in the loaded file information.
+
+  @param[in]  FsHandle        File system handle used to read file
+  @param[in]  ConfigFile      Configuration file buffer.
+  @param[in]  FileInfo        Pointer to the file informatino in buffer.
+  @param[out] ImageData       Pointer to receive the loaded file address and size.
+
+  @retval  RETURN_SUCCESS     If image was loaded successfully
+  @retval  Others             If image was not loaded.
+**/
+STATIC
+EFI_STATUS
+LoadLinuxFile (
+  IN  EFI_HANDLE             FsHandle,
+  IN  CHAR8                 *ConfigFile,
+  IN  STR_SLICE             *FileInfo,
+  OUT IMAGE_DATA            *ImageData
+  )
+{
+  EFI_STATUS  Status;
+  VOID       *FileBuffer;
+  UINTN       FileSize;
+  CHAR8      *Ptr;
+  CHAR16      FileName[256];
+
+  if (FileInfo->Len == 0) {
+    return EFI_NOT_FOUND;
+  }
+
+  if (FileInfo->Buf[0] == 0) {
+    Ptr = ConfigFile + FileInfo->Pos;
+  } else {
+    Ptr = FileInfo->Buf + FileInfo->Pos;
+  }
+
+  Ptr[FileInfo->Len] = 0;
+  AsciiStrToUnicodeStr (Ptr, FileName);
+  FileSize   = 0;
+  FileBuffer = NULL;
+  Status = GetFileByName (FsHandle, FileName, &FileBuffer, &FileSize);
+  DEBUG ((DEBUG_INFO, "Load file %a [size 0x%x]: %r\n", Ptr, FileSize, Status));
+  if (!EFI_ERROR (Status)) {
+    ImageData->Addr = FileBuffer;
+    ImageData->Size = FileSize;
+  }
+
+  return Status;
+}
+
+/**
   Get traditional linux image from file
 
   This function will read traditional linux files (vmlinuz, config.cfg
@@ -273,45 +328,83 @@ GetTraditionalLinux (
   )
 {
   RETURN_STATUS              Status;
-  VOID                       *Kernel;
-  UINTN                      KernelSize;
-  UINTN                      InitrdSize;
-  VOID                       *InitrdData;
   UINTN                      ConfigFileSize;
   VOID                       *ConfigFile;
+  LINUX_BOOT_CFG             LinuxBootCfg;
+  UINT32                     Index;
+  UINT32                     EntryIdx;
+  CHAR8                      *Ptr;
+  MENU_ENTRY                 *MenuEntry;
 
-  // Todo: use OS verification Hash flag to controll support tradition linux or not.
-  DEBUG ((DEBUG_INFO, "Try booting Linux from vmlinuz...\n"));
-  KernelSize = 0;
-  Kernel     = NULL;
-  Status = GetFileByName (FsHandle, L"vmlinuz", &Kernel, &KernelSize);
-  DEBUG ((DEBUG_INFO, "load vmlinuz size (0x%x): %r\n", KernelSize, Status));
+  DEBUG ((DEBUG_INFO, "Try booting Linux from config file ...\n"));
+
+  Status = RETURN_NOT_FOUND;
+  for (Index = 0; Index < (UINTN)(FeaturePcdGet (PcdGrubBootCfgEnabled) ? 2 : 1); Index++) {
+    DEBUG ((DEBUG_INFO, "Checking %s\n",mConfigFileName[Index]));
+    ConfigFile     = NULL;
+    ConfigFileSize = 0;
+    Status = GetFileByName (FsHandle, (CHAR16 *)mConfigFileName[Index], &ConfigFile, &ConfigFileSize);
+    if (!EFI_ERROR (Status)) {
+      break;
+    }
+  }
+
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "Not found Linux Images!\n"));
+    DEBUG ((DEBUG_ERROR, "Could not find configuration file!\n"));
     return RETURN_NOT_FOUND;
   }
-  LinuxImage->BootFile.Addr = Kernel;
-  LinuxImage->BootFile.Size = KernelSize;
 
-  ConfigFileSize = 0;
-  ConfigFile     = NULL;
-  Status = GetFileByName (FsHandle, L"config.cfg", &ConfigFile, &ConfigFileSize);
-  if (!EFI_ERROR (Status) && (ConfigFileSize > 0)) {
-    LinuxImage->CmdFile.Addr = ConfigFile;
-    LinuxImage->CmdFile.Size = ConfigFileSize;
+  ZeroMem (&LinuxBootCfg, sizeof (LINUX_BOOT_CFG));
+  if (Index == 0) {
+    // Build a default boot option
+    LinuxBootCfg.EntryNum   = 1;
+    MenuEntry = LinuxBootCfg.MenuEntry;
+    MenuEntry[0].Name.Pos    = 0;
+    MenuEntry[0].Name.Len    = 5;
+    AsciiStrCpy (MenuEntry[0].Name.Buf, "Linux");
+    MenuEntry[0].InitRd.Pos  = 0;
+    MenuEntry[0].InitRd.Len  = 6;
+    AsciiStrCpy (MenuEntry[0].InitRd.Buf, "initrd");
+    MenuEntry[0].Kernel.Pos  = 0;
+    MenuEntry[0].Kernel.Len  = 7;
+    AsciiStrCpy (MenuEntry[0].Kernel.Buf, "vmlinuz");
+    MenuEntry[0].Command.Pos = 0;
+    MenuEntry[0].Command.Len = ConfigFileSize;
+    EntryIdx = 0;
+  } else if (FeaturePcdGet (PcdGrubBootCfgEnabled)) {
+    // Process the config file and
+    // Get boot option from user if timeout is non-zero
+    ParseLinuxBootConfig (ConfigFile, &LinuxBootCfg);
+    PrintLinuxBootConfig (ConfigFile, &LinuxBootCfg);
+    EntryIdx = GetLinuxBootOption (ConfigFile, &LinuxBootCfg);
   }
-  DEBUG ((DEBUG_INFO, "load config.cfg size (0x%x): %r\n", ConfigFileSize, Status));
 
-  InitrdSize = 0;
-  InitrdData = NULL;
-  Status = GetFileByName (FsHandle, L"initrd", &InitrdData, &InitrdSize);
-  if (!EFI_ERROR (Status) && (InitrdSize > 0)) {
-    LinuxImage->InitrdFile.Addr = InitrdData;
-    LinuxImage->InitrdFile.Size = InitrdSize;
+  // Load kernel image
+  Status = LoadLinuxFile (FsHandle, ConfigFile, &LinuxBootCfg.MenuEntry[EntryIdx].Kernel, &LinuxImage->BootFile);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Load kernel failed!\n"));
+    return RETURN_LOAD_ERROR;
   }
-  DEBUG ((DEBUG_INFO, "load initrd size (0x%x): %r\n", InitrdSize, Status));
+
+  // Update command line
+  LinuxImage->CmdFile.Size = LinuxBootCfg.MenuEntry[EntryIdx].Command.Len;
+  if (LinuxImage->CmdFile.Size > 0) {
+    Ptr = (CHAR8 *)ConfigFile + LinuxBootCfg.MenuEntry[EntryIdx].Command.Pos;
+    Ptr[LinuxImage->CmdFile.Size] = 0;
+    LinuxImage->CmdFile.Addr = Ptr;
+  } else {
+    LinuxImage->CmdFile.Addr = 0;
+  }
+
+  // Load InitRd, optional
+  Status = LoadLinuxFile (FsHandle, ConfigFile, &LinuxBootCfg.MenuEntry[EntryIdx].InitRd, &LinuxImage->InitrdFile);
+  if (EFI_ERROR (Status) && (Status != EFI_NOT_FOUND)) {
+    DEBUG ((DEBUG_ERROR, "Load initrd failed!\n"));
+    return RETURN_LOAD_ERROR;
+  }
 
   LinuxImage->ExtraBlobNumber = 0;
+
   return EFI_SUCCESS;
 }
 
@@ -375,4 +468,3 @@ GetImageFromMedia (
 
   return Status;
 }
-

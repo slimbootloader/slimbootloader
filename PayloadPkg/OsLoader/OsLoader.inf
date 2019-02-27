@@ -32,6 +32,7 @@
 [Sources]
   OsLoader.c
   BootOption.c
+  BootConfig.c
   LoadImage.c
   Linux.c
   PerformanceData.c
@@ -107,6 +108,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdConsoleOutDeviceMask
   gPlatformCommonLibTokenSpaceGuid.PcdFrameBufferMaxConsoleWidth
   gPlatformCommonLibTokenSpaceGuid.PcdFrameBufferMaxConsoleHeight
+  gPayloadTokenSpaceGuid.PcdGrubBootCfgEnabled
 
 [Depex]
   TRUE

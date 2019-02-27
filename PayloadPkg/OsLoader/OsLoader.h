@@ -16,6 +16,7 @@
 
 #include <Library/LiteFvLib.h>
 #include <Library/PartitionLib.h>
+#include <Library/TimerLib.h>
 #include <Library/FileSystemLib.h>
 #include <Library/PayloadMemoryAllocationLib.h>
 #include <Library/DebugPrintErrorLevelLib.h>
@@ -81,6 +82,33 @@
 #define LOADED_IMAGE_FV          BIT4
 
 #define MAX_EXTRA_FILE_NUMBER    16
+
+#define MAX_BOOT_MENU_ENTRY      8
+#define MAX_STR_SLICE_LEN        16
+
+typedef struct {
+  UINT32       Pos;
+  UINT32       Len;
+  CHAR8        Buf[MAX_STR_SLICE_LEN];
+} STR_SLICE;
+
+typedef struct {
+  STR_SLICE    Name;
+  STR_SLICE    Command;
+  STR_SLICE    Kernel;
+  STR_SLICE    InitRd;
+} MENU_ENTRY;
+
+typedef struct {
+  UINT32       Default;
+  UINT32       Timeout;
+} CFG_SETTING;
+
+typedef struct {
+  UINT32       EntryNum;
+  CFG_SETTING  Settings;
+  MENU_ENTRY   MenuEntry[MAX_BOOT_MENU_ENTRY];
+} LINUX_BOOT_CFG;
 
 typedef struct {
   IMAGE_DATA              BootFile;
@@ -378,6 +406,49 @@ EFI_STATUS
 RpmbKeyProvisioning (
   IN     OS_BOOT_OPTION      *CurrentBootOption,
   IN     LOADER_SEED_LIST    *SeedList
+  );
+
+
+/**
+  Parse the Linux boot configuration file.
+
+  @param[in]    CfgBuffer     The configuration buffer.
+  @param[out]   LinuxBootCfg  The pointer to hold the parse results.
+
+**/
+VOID
+ParseLinuxBootConfig (
+  IN   CHAR8            *CfgBuffer,
+  OUT  LINUX_BOOT_CFG   *LinuxBootCfg
+  );
+
+
+/**
+  Print Linux boot options.
+
+  @param[in]    CfgBuffer     The configuration buffer.
+  @param[out]   LinuxBootCfg  The pointer to hold the parse results.
+
+**/
+VOID
+PrintLinuxBootConfig (
+  CHAR8                    *CfgBuffer,
+  LINUX_BOOT_CFG           *LinuxBootCfg
+  );
+
+/**
+  Get Linux boot option from user input.
+
+  @param[in]    CfgBuffer     The configuration buffer.
+  @param[out]   LinuxBootCfg  The pointer to hold the parse results.
+
+  @retval       0 based boot option index.
+
+**/
+UINT32
+GetLinuxBootOption (
+  CHAR8                    *CfgBuffer,
+  LINUX_BOOT_CFG           *LinuxBootCfg
   );
 
 #endif
