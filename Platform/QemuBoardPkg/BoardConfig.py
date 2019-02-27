@@ -51,6 +51,7 @@ class Board(BaseBoard):
 		self.ENABLE_SPLASH            = 1
 		self.ENABLE_FRAMEBUFFER_INIT  = 1
 		self.ENABLE_FWU               = 1
+		self.ENABLE_GRUB_CONFIG       = 1
 
 		# To enable source debug, set 1 to self.ENABLE_SOURCE_DEBUG
 		# self.ENABLE_SOURCE_DEBUG  = 1

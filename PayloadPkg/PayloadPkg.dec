@@ -37,3 +37,6 @@
   gPayloadTokenSpaceGuid.PcdPayloadStackSize  | 0x00000000 | UINT32 | 0x10001002
   gPayloadTokenSpaceGuid.PcdPayloadHeapSize   | 0x00000000 | UINT32 | 0x10001003
   gPayloadTokenSpaceGuid.PcdGlobalDataAddress | 0x00000000 | UINT32 | 0x10001004
+
+[PcdsFeatureFlag]
+  gPayloadTokenSpaceGuid.PcdGrubBootCfgEnabled  | FALSE    | BOOLEAN | 0x2001000

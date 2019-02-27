@@ -56,6 +56,7 @@ class Board(BaseBoard):
 		self.ENABLE_FWU               = 1
 		self.ENABLE_SPLASH            = 1
 		self.ENABLE_FRAMEBUFFER_INIT  = 1
+		self.ENABLE_GRUB_CONFIG       = 1
 
 		# To enable source debug, set 1 to self.ENABLE_SOURCE_DEBUG
 		# self.ENABLE_SOURCE_DEBUG   = 1
@@ -215,7 +216,7 @@ class Board(BaseBoard):
 		img_list.extend ([
 					# Padding to ensure all other components in OBB partition will be aligned at 4KB boundary
 					# 0xB00 assumes (IBBP.man, BPM.met) + (IPAD, IBBL, IBBM,  OBB, FWUP, CFGD, PLD, VAR, MRCD) in BpdtIBB
-					# 0x180 assumes (OPAD,  PROV, EPLD) in BpdtOBB 
+					# 0x180 assumes (OPAD,  PROV, EPLD) in BpdtOBB
 					# If more files are added, the offset needs to be adjusted accordingly
 					('Stitch_IPAD.bin', [
 						('PADDING.bin',  '',                0xB00,    STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL)]
