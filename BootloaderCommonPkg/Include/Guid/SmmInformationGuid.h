@@ -33,9 +33,9 @@ typedef enum {
 } REG_TYPE;
 
 typedef enum {
-  WIDE8,
-  WIDE16,
-  WIDE32
+  WIDE8   = 1,
+  WIDE16  = 2,
+  WIDE32  = 4
 } REG_WIDTH;
 
 #pragma pack(1)

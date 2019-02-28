@@ -134,11 +134,11 @@ typedef struct {
 typedef struct {
   UINT32       Signature;
   UINT8        CpuEntry;
-  UINT8        RegType;
-  UINT8        RegWidth;
   UINT8        Unused;
-  UINT32       SmiEnReg;
-  UINT32       SmiEnVal;
+  UINT8        SmiCtrlRegType;
+  UINT8        SmiCtrlRegWidth;
+  UINT32       SmiCtrlRegAddr;
+  UINT32       SmiCtrlRegVal;
   CPU_SMMBASE  SmmBase[];
 } SMMBASE_INFO;
 
