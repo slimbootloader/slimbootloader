@@ -1,7 +1,7 @@
 /** @file
   FAT format data structures
 
-Copyright (c) 2006 - 2017, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2006 - 2019, Intel Corporation. All rights reserved.<BR>
 
 This program and the accompanying materials are licensed and made available
 under the terms and conditions of the BSD License which accompanies this
@@ -35,6 +35,25 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #define DELETE_ENTRY_MARK                 0xE5
 #define EMPTY_ENTRY_MARK                  0x00
+
+//
+// Some 8.3 File Name definitions
+//
+#define FAT_MAIN_NAME_LEN                 8
+#define FAT_EXTEND_NAME_LEN               3
+#define FAT_NAME_LEN                      (FAT_MAIN_NAME_LEN + FAT_EXTEND_NAME_LEN)
+
+//
+// Some Long File Name definitions
+//
+#define FAT_LFN_LAST                      0x40  // Ordinal field
+#define MAX_LFN_ENTRIES                   20
+#define LFN_CHAR1_LEN                     5
+#define LFN_CHAR2_LEN                     6
+#define LFN_CHAR3_LEN                     2
+#define LFN_CHAR_TOTAL                    (LFN_CHAR1_LEN + LFN_CHAR2_LEN + LFN_CHAR3_LEN)
+#define LFN_ENTRY_NUMBER(a)               (((a) + LFN_CHAR_TOTAL - 1) / LFN_CHAR_TOTAL)
+#define FAT_LONG_NAME_LEN                 (MAX_LFN_ENTRIES * LFN_CHAR_TOTAL)
 
 #define FAT_CLUSTER_FUNCTIONAL(Cluster)   (((Cluster) == 0) || ((Cluster) >= FAT_CLUSTER_SPECIAL))
 #define FAT_CLUSTER_END_OF_CHAIN(Cluster) ((Cluster) > (FAT_CLUSTER_SPECIAL))
@@ -73,6 +92,17 @@ typedef struct {
   UINT16        FileCluster;
   UINT32        FileSize;
 } FAT_DIRECTORY_ENTRY;
+
+typedef struct {
+  UINT8         Ordinal;
+  CHAR8         Name1[10];                // (Really 5 chars, but not WCHAR aligned)
+  UINT8         Attributes;
+  UINT8         Type;
+  UINT8         Checksum;
+  CHAR16        Name2[6];
+  UINT16        MustBeZero;
+  CHAR16        Name3[2];
+} FAT_DIRECTORY_LFN;
 
 #pragma pack()
 //

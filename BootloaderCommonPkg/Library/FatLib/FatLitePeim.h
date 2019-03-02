@@ -1,7 +1,7 @@
 /** @file
   Data structures for FAT recovery PEIM
 
-Copyright (c) 2006 - 2017, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2006 - 2019, Intel Corporation. All rights reserved.<BR>
 
 This program and the accompanying materials are licensed and made available
 under the terms and conditions of the BSD License which accompanies this
@@ -89,7 +89,8 @@ typedef struct {
 //
 typedef struct {
   PEI_FAT_VOLUME  *Volume;
-  CHAR16          FileName[FAT_MAX_FILE_NAME_LENGTH];
+  CHAR16          FileName[FAT_NAME_LEN + 2];   // 8 + 3 + '.' + NULL
+  CHAR16          LongFileName[FAT_LONG_NAME_LEN + 1];
   BOOLEAN         IsFixedRootDir;
   UINT32          StartingCluster;
   UINT32          CurrentPos;
