@@ -207,9 +207,9 @@ GetNextFilePathNode (
   CHAR16 *Ptr;
   UINT32  Len;
 
-  Len = 0;  
+  Len = 0;
   Ptr = FileName;
-  if (Ptr != NULL) {    
+  if (Ptr != NULL) {
     while (TRUE) {
       if ((*Ptr == 0) || (*Ptr == '\\') || (*Ptr == '/')) {
         Len = Ptr - FileName;
@@ -305,7 +305,8 @@ FindFile (
           //
           // Compare whether the file name is recovery file name.
           //
-          if (EngStrniColl (NodeCurr, File->FileName, NodeLen)) {
+          if (EngStrniColl (NodeCurr, File->FileName, NodeLen) ||
+              EngStrniColl (NodeCurr, File->LongFileName, NodeLen)) {
             break;
           }
         }

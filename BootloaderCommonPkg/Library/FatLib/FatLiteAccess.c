@@ -1,7 +1,7 @@
 /** @file
   FAT file system access routines for FAT recovery PEIM
 
-Copyright (c) 2006 - 2017, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2006 - 2019, Intel Corporation. All rights reserved.<BR>
 
 This program and the accompanying materials are licensed and made available
 under the terms and conditions of the BSD License which accompanies this
@@ -456,10 +456,15 @@ FatReadNextDirectoryEntry (
 {
   EFI_STATUS          Status;
   FAT_DIRECTORY_ENTRY DirEntry;
+  FAT_DIRECTORY_LFN   *LfnEntry;
   CHAR16              *Pos;
   CHAR16              BaseName[9];
   CHAR16              Ext[4];
+  CHAR16             *LfnBufferPointer;
+  UINT8               LfnOrdinal;
+  UINTN               LfnBufferLen;
 
+  LfnBufferLen = 0;
   ZeroMem ((UINT8 *) SubFile, sizeof (PEI_FAT_FILE));
 
   //
@@ -469,14 +474,43 @@ FatReadNextDirectoryEntry (
     //
     // Read one entry
     //
-    Status = FatReadFile (PrivateData, ParentDir, 32, &DirEntry);
-    if (EFI_ERROR (Status)) {
-      return EFI_DEVICE_ERROR;
-    }
+    LfnOrdinal   = 0;
 
     //
-    // Long file name entry is *NOT* supported
+    // If it is LFN entry, read all of the following LFN entries.
     //
+    do {
+      Status = FatReadFile (PrivateData, ParentDir, 32, &DirEntry);
+      if (EFI_ERROR (Status)) {
+        return EFI_DEVICE_ERROR;
+      }
+
+      if (DirEntry.Attributes == FAT_ATTR_LFN) {
+        LfnEntry = (FAT_DIRECTORY_LFN *)&DirEntry;
+        if ((LfnEntry->Ordinal & FAT_LFN_LAST) != 0) {
+          LfnOrdinal   = LfnEntry->Ordinal & (FAT_LFN_LAST - 1);
+          if (LfnOrdinal > MAX_LFN_ENTRIES) {
+            LfnOrdinal = 0;
+          }
+          LfnBufferLen = LfnOrdinal * LFN_CHAR_TOTAL;
+        }
+        if ((LfnEntry->Ordinal & (FAT_LFN_LAST - 1)) != LfnOrdinal) {
+          // Unexpected LFN entry, skip it.
+          LfnOrdinal   = 0;
+          LfnBufferLen = 0;
+        } else if (LfnOrdinal > 0) {
+          LfnBufferPointer = SubFile->LongFileName + (LfnOrdinal - 1) * LFN_CHAR_TOTAL;
+          CopyMem (LfnBufferPointer, LfnEntry->Name1, sizeof (CHAR16) * LFN_CHAR1_LEN);
+          LfnBufferPointer += LFN_CHAR1_LEN;
+          CopyMem (LfnBufferPointer, LfnEntry->Name2, sizeof (CHAR16) * LFN_CHAR2_LEN);
+          LfnBufferPointer += LFN_CHAR2_LEN;
+          CopyMem (LfnBufferPointer, LfnEntry->Name3, sizeof (CHAR16) * LFN_CHAR3_LEN);
+          LfnBufferPointer += LFN_CHAR3_LEN;
+          LfnOrdinal--;
+        }
+      }
+    } while (LfnOrdinal > 0);
+
     if (DirEntry.Attributes == FAT_ATTR_LFN) {
       continue;
     }
@@ -510,7 +544,6 @@ FatReadNextDirectoryEntry (
   EngFatToStr (3, DirEntry.FileName + 8, Ext);
 
   Pos = (UINT16 *) SubFile->FileName;
-  SetMem ((UINT8 *) Pos, FAT_MAX_FILE_NAME_LENGTH, 0);
   CopyMem ((UINT8 *) Pos, (UINT8 *) BaseName, 2 * (StrLen (BaseName) + 1));
 
   if (Ext[0] != 0) {
@@ -519,6 +552,8 @@ FatReadNextDirectoryEntry (
     Pos++;
     CopyMem ((UINT8 *) Pos, (UINT8 *) Ext, 2 * (StrLen (Ext) + 1));
   }
+
+  SubFile->LongFileName[LfnBufferLen] = 0;
 
   SubFile->Attributes     = DirEntry.Attributes;
   SubFile->CurrentCluster = DirEntry.FileCluster;
