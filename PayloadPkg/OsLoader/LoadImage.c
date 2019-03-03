@@ -350,12 +350,24 @@ GetTraditionalLinux (
   }
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "Could not find configuration file!\n"));
-    return RETURN_NOT_FOUND;
+    DEBUG ((DEBUG_INFO, "Could not find configuration file!\n"));
+    // No any config was found, try to load vmlinuz/initrd directly.
+    ConfigFileSize = 0;
   }
 
+  EntryIdx = 0;
   ZeroMem (&LinuxBootCfg, sizeof (LINUX_BOOT_CFG));
-  if (Index == 0) {
+  if (FeaturePcdGet (PcdGrubBootCfgEnabled)) {
+    // Process the config file and
+    // Get boot option from user if timeout is non-zero
+    if (ConfigFileSize > 0) {
+      ParseLinuxBootConfig (ConfigFile, &LinuxBootCfg);
+      PrintLinuxBootConfig (ConfigFile, &LinuxBootCfg);
+      EntryIdx = GetLinuxBootOption (ConfigFile, &LinuxBootCfg);
+    }
+  }
+
+  if (LinuxBootCfg.EntryNum == 0) {
     // Build a default boot option
     LinuxBootCfg.EntryNum   = 1;
     MenuEntry = LinuxBootCfg.MenuEntry;
@@ -371,12 +383,6 @@ GetTraditionalLinux (
     MenuEntry[0].Command.Pos = 0;
     MenuEntry[0].Command.Len = ConfigFileSize;
     EntryIdx = 0;
-  } else if (FeaturePcdGet (PcdGrubBootCfgEnabled)) {
-    // Process the config file and
-    // Get boot option from user if timeout is non-zero
-    ParseLinuxBootConfig (ConfigFile, &LinuxBootCfg);
-    PrintLinuxBootConfig (ConfigFile, &LinuxBootCfg);
-    EntryIdx = GetLinuxBootOption (ConfigFile, &LinuxBootCfg);
   }
 
   // Load kernel image
