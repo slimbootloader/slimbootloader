@@ -235,10 +235,10 @@ ParseLinuxBootConfig (
       CurrLine += 9;
       CurrLine  = TrimLeft (CurrLine);
       for (Idx = 0; Idx < 2; Idx++) {
-        while ((CurrLine[0] != 0) && (CurrLine[0] != '"') && (CurrLine < EndLine)) {
+        while ((CurrLine[0] != 0) && (CurrLine[0] != '"') && (CurrLine[0] != '\'') && (CurrLine < EndLine)) {
           CurrLine++;
         }
-        if (CurrLine[0] == '"') {
+        if ((CurrLine[0] == '"') || (CurrLine[0] == '\'')) {
           if (Idx == 0) {
             MenuEntry[EntryNum].Name.Pos = CurrLine - CfgBuffer + 1;
           } else {
