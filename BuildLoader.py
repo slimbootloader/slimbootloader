@@ -359,38 +359,6 @@ class Build(object):
 			print('  Patching entry %d with 0x%08X:0x%08X - BIOS Module(Stage1B)' % (num_fit_entries, fit_entry.address, fit_entry.size))
 			num_fit_entries     += 1
 
-			# Keep this temporary to compare BTG with BTG+VerifiedBoot
-			if not self._board.HAVE_VERIFIED_BOOT:
-				# Stage2
-				addr = self._board.STAGE2_BASE
-				src = 'STAGE2.lz'
-				src_path = os.path.join(self._fv_dir, src)
-				if not os.path.exists(src_path):
-					module_size = (self._board.STAGE2_SIZE >> 4)
-				else:
-					module_size = os.path.getsize(src_path)
-					module_size = ((module_size + 0x3F) & 0xFFFFFFC0) # 0x40 align
-					module_size = module_size >> 4
-				fit_entry = FitEntry.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
-				fit_entry.set_values(addr, module_size, 0x100, 0x7, 0)
-				print('  Patching entry %d with 0x%08X:0x%08X - BIOS Module(Stage2)' % (num_fit_entries, fit_entry.address, fit_entry.size))
-				num_fit_entries     += 1
-
-				# Payload
-				addr = self._board.PAYLOAD_BASE
-				src = 'PAYLOAD.lz'
-				src_path = os.path.join(self._fv_dir, src)
-				if not os.path.exists(src_path):
-					module_size = (self._board.PAYLOAD_SIZE >> 4)
-				else:
-					module_size = os.path.getsize(src_path)
-					module_size = ((module_size + 0x3F) & 0xFFFFFFC0) # 0x40 align
-					module_size = module_size >> 4
-				fit_entry = FitEntry.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
-				fit_entry.set_values(addr, module_size, 0x100, 0x7, 0)
-				print('  Patching entry %d with 0x%08X:0x%08X - BIOS Module(Payload)' % (num_fit_entries, fit_entry.address, fit_entry.size))
-				num_fit_entries     += 1
-
 			# KM
 			addr = self._board.ACM_BASE + self._board.ACM_SIZE - (self._board.KM_SIZE + self._board.BPM_SIZE)
 			fit_entry = FitEntry.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
