@@ -19,7 +19,9 @@
 #include <Library/MemoryAllocationLib.h>
 #include <Library/DebugLib.h>
 #include <Library/HobLib.h>
+#include <Library/BootloaderCommonLib.h>
 #include <Guid/MemoryMapInfoGuid.h>
+#include <Guid/FrameBufferInfoGuid.h>
 
 #define SUPPORTED_FEATURES  (MULTIBOOT_HEADER_MODS_ALIGNED | MULTIBOOT_HEADER_WANT_MEMORY)
 UINT8 mLoaderName[]        = "Slim BootLoader\0";
@@ -155,6 +157,8 @@ SetupMultibootInfo (
   MULTIBOOT_MMAP             *MbMmap;
   MEMORY_MAP_INFO            *MemoryMapInfo;
   MULTIBOOT_INFO             *MbInfo;
+  EFI_HOB_GUID_TYPE          *GuidHob;
+  FRAME_BUFFER_INFO          *FrameBufferInfo;
 
   MbInfo        = &MultiBoot->MbInfo;
   MemoryMapInfo = GetMemoryMapInfo();
@@ -201,7 +205,28 @@ SetupMultibootInfo (
   MbInfo->Flags     |= MULTIBOOT_INFO_HAS_LOADER_NAME;
 
   // BIOS APM table [MULTIBOOT_INFO_HAS_APM_TABLE]: not supported
+
   // BIOS VBE video mode information [MULTIBOOT_INFO_HAS_VBE]: not supported
+
+  // BIOS FB framebuffer information [MULTIBOOT_INFO_HAS_FB]
+  GuidHob = GetNextGuidHob (&gLoaderFrameBufferInfoGuid, GetHobListPtr());
+  if (GuidHob != NULL) {
+    FrameBufferInfo = (FRAME_BUFFER_INFO *)GET_GUID_HOB_DATA (GuidHob);
+    MbInfo = &MultiBoot->MbInfo;
+    MbInfo->FramebufferAddr   = FrameBufferInfo->LinearFrameBuffer;
+    MbInfo->FramebufferPitch  = FrameBufferInfo->BytesPerScanLine;
+    MbInfo->FramebufferWidth  = FrameBufferInfo->HorizontalResolution;
+    MbInfo->FramebufferHeight = FrameBufferInfo->VerticalResolution;
+    MbInfo->FramebufferBpp    = (UINT8)FrameBufferInfo->BitsPerPixel;
+    MbInfo->FramebufferType   = 1;
+    MbInfo->FramebufferRedFieldPosition   = FrameBufferInfo->Red.Position;
+    MbInfo->FramebufferRedMaskSize        = 8;
+    MbInfo->FramebufferGreenFieldPosition = FrameBufferInfo->Green.Position;
+    MbInfo->FramebufferGreenMaskSize      = 8;
+    MbInfo->FramebufferBlueFieldPosition  = FrameBufferInfo->Blue.Position;
+    MbInfo->FramebufferBlueMaskSize       = 8;
+    MbInfo->Flags |= MULTIBOOT_INFO_HAS_FB;
+  }
 
   // Arrange for passing this data to the image.
   MultiBoot->BootState.Eax = MULTIBOOT_INFO_MAGIC;

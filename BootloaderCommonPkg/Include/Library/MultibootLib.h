@@ -99,6 +99,7 @@ typedef struct {
 #define MULTIBOOT_INFO_HAS_LOADER_NAME  0x00000200
 #define MULTIBOOT_INFO_HAS_APM_TABLE    0x00000400
 #define MULTIBOOT_INFO_HAS_VBE          0x00000800
+#define MULTIBOOT_INFO_HAS_FB           0x00001000
 
 typedef struct {
   UINT32  Flags;
@@ -146,9 +147,25 @@ typedef struct {
   /* Valid if mi_flags sets MULTIBOOT_INFO_HAS_VBE. */
   VOID   *UnusedVbeControlInfo;
   VOID   *UnusedVbeModeInfo;
-  P_ADDR  UnusedVbeInterfaceSeg;
-  P_ADDR  UnusedVbeInterfaceOff;
-  UINT32  UnusedVbeInterfaceLen;
+  UINT16  UnusedVbeMode;
+  UINT16  UnusedVbeInterfaceSeg;
+  UINT16  UnusedVbeInterfaceOff;
+  UINT16  UnusedVbeInterfaceLen;
+
+  /* Valid if mi_flags sets MULTIBOOT_INFO_HAS_FB. */
+  UINT64  FramebufferAddr;
+  UINT32  FramebufferPitch;
+  UINT32  FramebufferWidth;
+  UINT32  FramebufferHeight;
+  UINT8   FramebufferBpp;
+  UINT8   FramebufferType;
+  UINT8   FramebufferRedFieldPosition;
+  UINT8   FramebufferRedMaskSize;
+  UINT8   FramebufferGreenFieldPosition;
+  UINT8   FramebufferGreenMaskSize;
+  UINT8   FramebufferBlueFieldPosition;
+  UINT8   FramebufferBlueMaskSize;
+
 } MULTIBOOT_INFO;
 
 /*
