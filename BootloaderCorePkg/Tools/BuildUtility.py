@@ -819,6 +819,29 @@ def gen_ver_info_txt (ver_file, ver_info):
 	h_file.write('Dirty         = %d\n'    % ver_info.ImageVersion.Dirty)
 	h_file.close()
 
+def check_for_openssl():
+	'''
+	Verify OpenSSL executable is available
+	'''
+	cmdline = os.path.join(os.environ.get('OPENSSL_PATH', ''), 'openssl')
+	try:
+		version = subprocess.check_output([cmdline, 'version'])
+	except:
+		print 'ERROR: OpenSSL not available. Please set OPENSSL_PATH.'
+		sys.exit(1)
+	return version
+
+def check_for_nasm():
+	'''
+	Verify NASM executable is available
+	'''
+	cmdline = os.path.join(os.environ.get('NASM_PREFIX', ''), 'nasm')
+	try:
+		version = subprocess.check_output([cmdline, '-v'])
+	except:
+		print 'ERROR: NASM not available. Please set NASM_PREFIX.'
+		sys.exit(1)
+	return version
 
 def rsa_sign_file (priv_key, pub_key, in_file, out_file, inc_dat = False, inc_key = False):
 	cmdline = os.path.join(os.environ.get ('OPENSSL_PATH', ''), 'openssl')

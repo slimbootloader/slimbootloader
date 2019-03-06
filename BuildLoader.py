@@ -105,6 +105,9 @@ def prep_env ():
 		print "Unsupported operating system !"
 		sys.exit(1)
 
+	check_for_openssl()
+	check_for_nasm()
+
 	# Update Environment vars
 	os.environ['SBL_SOURCE']     = sblsource
 	os.environ['EDK_TOOLS_PATH'] = os.path.join(sblsource, 'BaseTools')
