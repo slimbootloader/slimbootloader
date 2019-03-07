@@ -152,6 +152,8 @@ class BaseBoard(object):
 		self.VERINFO_SVN            = 1
 		self.VERINFO_BUILD_DATE     = '01/01/2018'
 
+		self.LOWEST_SUPPORTED_FW_VER = 1
+
 		self.FLASH_BLOCK_SIZE       = 0x1000
 		self.FLASH_LAYOUT_START     = 0x100000000
 		self.FLASH_BASE             = 0

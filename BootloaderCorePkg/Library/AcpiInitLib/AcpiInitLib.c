@@ -28,6 +28,8 @@
 #include <Mcfg.h>
 #include <Library/DebugDataLib.h>
 #include <Library/MpInitLib.h>
+#include <Library/FirmwareUpdateLib.h>
+#include <Guid/BootLoaderVersionGuid.h>
 
 #define  ACPI_ALLOC(x)       (Current = (UINT8 *)(((UINT32)Current - (x)) & ~0x0F))
 #define  ACPI_ALLOC_PAGE(x)  (Current = (UINT8 *)(((UINT32)Current - (x)) & ~0x0FFF))
@@ -381,6 +383,73 @@ UpdateMadt (
 }
 
 /**
+  This function updates FWST ACPI data structure.
+
+  @param[in]  Current               Pointer to FWST table
+  @retval     EFI_SUCCESS           Patched the FWST
+              EFI_NOT_FOUND         Reserved region component information not found.
+**/
+EFI_STATUS
+UpdateFwst (
+  IN UINT8   *Current
+  )
+{
+  UINT32                          RsvdBase;
+  EFI_STATUS                      Status;
+  LOADER_GLOBAL_DATA              *LdrGlobal;
+  BOOT_LOADER_VERSION             *Version;
+  FIRMWARE_UPDATE_STATUS          *FwUpdateStatus;
+  EFI_FWST_ACPI_DESCRIPTION_TABLE *FwstAcpiTablePtr;
+
+  LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
+
+  //
+  // We do not need to populate ACPI table during firmware update
+  //
+  if (GetBootMode () == BOOT_ON_FLASH_UPDATE) {
+    return EFI_SUCCESS;
+  }
+
+  //
+  // Get bootloader reserved region base
+  //
+  Status = GetComponentInfo (FLASH_MAP_SIG_BLRESERVED, &RsvdBase, NULL);
+  if (EFI_ERROR(Status)) {
+    DEBUG((DEBUG_ERROR, "Could not get reserved region base\n"));
+    return Status;
+  }
+
+  //
+  // Fill in details for FWST ACPI table
+  //
+  FwstAcpiTablePtr = (EFI_FWST_ACPI_DESCRIPTION_TABLE *)Current;
+
+  CopyMem(&FwstAcpiTablePtr->EsrtTableEntry.FwClass, &gEsrtSystemFirmwareGuid, sizeof (EFI_GUID)); 
+  FwstAcpiTablePtr->EsrtTableEntry.FwType = ESRT_FW_TYPE_SYSTEMFIRMWARE;
+
+  //
+  // Get current version and lowest supported SVN version
+  //
+  if (LdrGlobal->VerInfoPtr != NULL) {
+    Version = LdrGlobal->VerInfoPtr;
+    FwstAcpiTablePtr->EsrtTableEntry.FwVersion = Version->ImageVersion.SecureVerNum;
+    FwstAcpiTablePtr->EsrtTableEntry.LowestSupportedFwVersion = PcdGet32 (PcdLowestSupportedFwVer);
+  }
+
+  //
+  // Get status of last firmware update attempt
+  //
+  FwUpdateStatus = (FIRMWARE_UPDATE_STATUS *)RsvdBase;
+
+  if (FwUpdateStatus->Signature == FIRMWARE_UPDATE_STATUS_SIGNATURE) {
+    FwstAcpiTablePtr->EsrtTableEntry.LastAttemptVersion = FwUpdateStatus->LastAttemptVersion; 
+    FwstAcpiTablePtr->EsrtTableEntry.LastAttemptStatus = FwUpdateStatus->LastAttemptStatus; 
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
   This function creates necessary ACPI tables and puts the RSDP
   table in F segment so that OS can locate it.
 
@@ -497,6 +566,13 @@ AcpiInit (
     case EFI_ACPI_5_0_FIRMWARE_PERFORMANCE_DATA_TABLE_SIGNATURE:
       // FPDT
       Status = UpdateFpdt (Current);
+      if (Status != EFI_SUCCESS) {
+        return Status;
+      }
+      break;
+    case EFI_FIRMWARE_UPDATE_STATUS_TABLE_SIGNATURE:
+      // FWST
+      Status = UpdateFwst (Current);
       if (Status != EFI_SUCCESS) {
         return Status;
       }

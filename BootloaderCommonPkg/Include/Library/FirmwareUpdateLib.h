@@ -15,7 +15,10 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #ifndef __FIRMWARE_UPDATE_LIB_H__
 #define __FIRMWARE_UPDATE_LIB_H__
 
+#include <PiPei.h>
 #include <Guid/FlashMapInfoGuid.h>
+#include <IndustryStandard/Acpi30.h>
+#include <Guid/SystemResourceTable.h>
 
 #define CMOS_ADDREG     0x70
 #define CMOS_DATAREG    0x71
@@ -38,6 +41,15 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #define CAPSULE_FLAGS_CFG_DATA  BIT0
 
+#define FIRMWARE_UPDATE_STATUS_SIGNATURE SIGNATURE_32 ('F', 'W', 'U', 'S')
+#define FIRMWARE_UPDATE_STATUS_VERSION   0x1
+
+///
+/// "FWST"  Firmware Update status data Table
+/// This table contains pointer to the ESRT (EFI System Resource Table)structure
+///
+#define EFI_FIRMWARE_UPDATE_STATUS_TABLE_SIGNATURE  SIGNATURE_32('F', 'W', 'S', 'T')
+
 typedef enum {
   TopSwapSet,
   TopSwapClear
@@ -47,6 +59,44 @@ typedef enum {
   PrimaryPartition,
   BackupPartition
 } BOOT_PARTITION;
+
+#define ESRT_FIRMWARE_RESOURCE_VERSION    0x1
+#define ESRT_FIRMWARE_RESOURCE_COUNT      0x1
+#define ESRT_FIRMWARE_RESOURCE_COUNT_MAX  0x1
+
+#define CREATOR_INTEL_OEM_ID        'I','N','T','E','L',' '
+#define CREATOR_INTEL_OEM_TABLE_ID  SIGNATURE_64('F','W','U','P','D','S','T','S')
+#define CREATOR_ID_INTEL            0x4C544E49              // "INTL"(Intel)
+#define CREATOR_REV_INTEL           0x20090903
+#define ACPI_FWST_OEM_REV           0x00001000
+
+#pragma pack(push, 1)
+//
+// Firmware Update Status ACPI structure
+// This structure has a generic address structure
+// which contains the pointer to ESRT structure.
+//
+typedef struct {
+  EFI_ACPI_DESCRIPTION_HEADER   Header;
+  EFI_SYSTEM_RESOURCE_TABLE     EsrtTablePtr;
+  EFI_SYSTEM_RESOURCE_ENTRY     EsrtTableEntry;
+} EFI_FWST_ACPI_DESCRIPTION_TABLE;
+
+//
+// Firmware Update status structure
+// This structure maintains the firmware update status
+// in the non volatile reserved region of Slim Bootloader
+// ESRT ACPI table will be populated based on this structure
+//
+typedef struct {
+  UINT32                Signature;
+  UINT16                Version;
+  UINT16                Length;
+  UINT32                LastAttemptVersion;
+  UINT32                LastAttemptStatus;
+  UINT8                 StateMachine;
+  UINT8                 Reserved[3];
+} FIRMWARE_UPDATE_STATUS;
 
 typedef union _FIRMWARE_UPDATE_POLICY {
   UINT32 Data;
@@ -93,6 +143,8 @@ typedef struct {
   UINT32                      RegionCount;
   FIRMWARE_UPDATE_REGION      FwRegion[1];
 } FIRMWARE_UPDATE_PARTITION;
+
+#pragma pack(pop)
 
 #define CAPSULE_IMAGE_SIZE(h)   ((h)->HeaderSize + (h)->PubKeySize + (h)->ImageSize + (h)->SignatureSize)
 
@@ -338,10 +390,8 @@ FirmwareUpdateGetComponentInfo (
 
   @param[in, out] StateMachine  Pointer to state machine flag byte.
 
-  @retval  EFI_SUCCESS        State machine flag found.
-  @retval  others             Error while getting state machine flag.
 **/
-EFI_STATUS
+VOID
 GetStateMachineFlag (
   IN OUT UINT8    *StateMachine
   );
@@ -360,7 +410,7 @@ GetStateMachineFlag (
 EFI_STATUS
 SetStateMachineFlag (
   IN UINT8    StateMachine
-  );
+);
 
 /**
   Switch between the boot partitions.
@@ -381,6 +431,20 @@ SetBootPartition (
 /**
   This function will enforce firmware update policy.
 
+  Firmware update policy
+
+  ----------------------------------------------------------
+  |  SM   |   TS   |             Operation                 |
+  ----------------------------------------------------------
+  |  FF   |    0   | Set SM to FE, Set TS and reboot       |
+  |  FF   |    1   | Set SM to FD, clear TS and reboot     |
+  |  FE   |    0   | Set TS and reboot                     |
+  |  FE   |    1   | Set SM to FC, clear TS and reboot     |
+  |  FD   |    0   | Set SM to FC, reboot                  |
+  |  FD   |    1   | clear TS and reboot                   |
+  |  FC   |    0   | Clear IBB signal,Set SM to FF, reboot |
+  |  FC   |    1   | Clear IBB signal,Set SM to FF, reboot |
+  ----------------------------------------------------------
   @param[in][out] FwPolicy    Pointer to Firmware update policy.
 
   @retval  EFI_SUCCESS        The operation completed successfully.
@@ -389,11 +453,11 @@ SetBootPartition (
 EFI_STATUS
 EnforceFwUpdatePolicy (
   IN FIRMWARE_UPDATE_POLICY   *FwPolicy
-  );
+ );
 
 /**
   This function will enforce firmware update policy after
-  partition update is successful
+  partition update is successful.
 
   After update firmware update policy
 
@@ -405,5 +469,21 @@ EnforceFwUpdatePolicy (
 EFI_STATUS
 AfterUpdateEnforceFwUpdatePolicy (
   IN FIRMWARE_UPDATE_POLICY   FwPolicy
-  );
+ );
+
+/**
+  This function will be called after the firmware update is complete. 
+  This function will update firmware update status structure in reserved region 
+  
+  @param[in] LastAttemptVersion Version of last firmware update attempted.   
+  @param[in] LastAttemptStatus Status of last firmware update attempted.  
+
+  @retval  EFI_SUCCESS        The operation completed successfully.
+  @retval  others             There is error happening.
+**/
+EFI_STATUS
+UpdateStatus (
+  IN UINT16     LastAttemptVersion,
+  IN EFI_STATUS LastAttemptStatus
+ );
 #endif
