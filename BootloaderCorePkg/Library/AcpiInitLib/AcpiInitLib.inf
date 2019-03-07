@@ -46,7 +46,7 @@
   TimeStampLib
 
 [Guids]
-
+  gEsrtSystemFirmwareGuid
 
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdAcpiTablesRsdp
@@ -57,3 +57,4 @@
   gPlatformModuleTokenSpaceGuid.PcdS3DebugEnabled
   gPlatformModuleTokenSpaceGuid.PcdAcpiGnvsAddress
   gPlatformModuleTokenSpaceGuid.PcdLoaderAcpiReclaimSize
+  gPlatformCommonLibTokenSpaceGuid.PcdLowestSupportedFwVer

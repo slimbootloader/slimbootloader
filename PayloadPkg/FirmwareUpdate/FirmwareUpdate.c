@@ -33,6 +33,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Library/BootloaderCommonLib.h>
 #include <Library/LiteFvLib.h>
 #include <Library/FirmwareUpdateLib.h>
+#include <Guid/SystemResourceTable.h>
 
 /**
   Update a region block.
@@ -306,13 +307,12 @@ UpdateBootPartition (
 **/
 EFI_STATUS
 GetVersionfromFv (
-  IN  UINT32     *Stage1ABase,
-  OUT UINT16     *Version
+  IN  UINT32              *Stage1ABase,
+  OUT BOOT_LOADER_VERSION **Version
   )
 {
   EFI_STATUS                  Status;
   EFI_FFS_FILE_HEADER         *FfsFile;
-  BOOT_LOADER_VERSION         *VerInfoFromFile;
   EFI_FIRMWARE_VOLUME_HEADER  *FvHeader;
 
   FvHeader = (EFI_FIRMWARE_VOLUME_HEADER *)(*Stage1ABase);
@@ -333,13 +333,11 @@ GetVersionfromFv (
   //
   // Raw section in version info FFS has version information
   //
-  Status = GetSectionByType(FfsFile, EFI_SECTION_RAW, 0, (VOID *)&VerInfoFromFile);
+  Status = GetSectionByType(FfsFile, EFI_SECTION_RAW, 0, (VOID *)Version);
   if (EFI_ERROR (Status)) {
     DEBUG((DEBUG_ERROR, "GetSectionByType: %r\n", Status));
     return Status;
   }
-
-  *Version = VerInfoFromFile->ImageVersion.SecureVerNum;
 
   return EFI_SUCCESS;
 }
@@ -347,8 +345,8 @@ GetVersionfromFv (
 /**
   Verify the firmware version to make sure it is no less than current firmware version.
 
-  @param[in] FwImage          The pointer to the firmware update capsule image.
-  @param[in] FwPolicy         Firmware update policy.
+  @param[in] FwImage            The pointer to the firmware update capsule image.
+  @param[in] FwPolicy           Firmware update policy. 
 
   @retval  EFI_SUCCESS        The operation completed successfully.
   @retval  others             There is error happening.
@@ -359,14 +357,16 @@ VerifyFwVersion (
   IN  FIRMWARE_UPDATE_POLICY  FwPolicy
   )
 {
-  UINT32      CompBase;
-  UINT32      CompSize;
-  UINT16      CurrentVersion;
-  UINT16      VersionFromCapsule;
-  EFI_STATUS  Status;
+  UINT32                CompBase;
+  UINT32                CompSize;
+  BOOT_LOADER_VERSION   *CurrentBlVersion;
+  BOOT_LOADER_VERSION   *CapsuleBlVersion;
+  EFI_STATUS            Status;
 
+  CurrentBlVersion = NULL;
+  CapsuleBlVersion = NULL;
   //
-  // Get base address of Stage 1A in capsule Image
+  // Get base address of Stage 1A from current firmware
   //
   Status = EFI_INVALID_PARAMETER;
   if (FwPolicy.Fields.UpdatePartitionB == 0x1) {
@@ -380,7 +380,7 @@ VerifyFwVersion (
     return Status;
   }
 
-  Status = GetVersionfromFv (&CompBase, &CurrentVersion);
+  Status = GetVersionfromFv (&CompBase, &CurrentBlVersion);
   if (EFI_ERROR (Status)) {
     DEBUG((DEBUG_ERROR, "GetVersionfromFv: %r\n", Status));
     return Status;
@@ -399,18 +399,24 @@ VerifyFwVersion (
     return Status;
   }
 
-  Status = GetVersionfromFv (&CompBase, &VersionFromCapsule);
+  Status = GetVersionfromFv (&CompBase, &CapsuleBlVersion);
   if (EFI_ERROR (Status)) {
     DEBUG((DEBUG_ERROR, "GetVersionfromFv: %r\n", Status));
     return Status;
   }
 
-  if (VersionFromCapsule >= CurrentVersion) {
+  Status = UpdateStatus((CapsuleBlVersion->ImageVersion.ProjMajorVersion << 8) | CapsuleBlVersion->ImageVersion.ProjMinorVersion, 0xFFFFFFFF);
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "Updating status to reserved region failed: %r\n", Status));
+    return Status;
+  }
+
+  if (CapsuleBlVersion->ImageVersion.SecureVerNum >= CurrentBlVersion->ImageVersion.SecureVerNum) {
     return EFI_SUCCESS;
   }
 
   DEBUG((DEBUG_ERROR, "Antirollback - Could not rollback to version %x from current version: %x\n", \
-         VersionFromCapsule, CurrentVersion));
+         CapsuleBlVersion->ImageVersion.SecureVerNum, CurrentBlVersion->ImageVersion.SecureVerNum));
 
   return EFI_INCOMPATIBLE_VERSION;
 }
@@ -423,46 +429,20 @@ VerifyFwVersion (
 
   @param[in, out] StateMachine  Pointer to state machine flag byte.
 
-  @retval  EFI_SUCCESS        State machine flag found.
-  @retval  others             Error while getting state machine flag.
 **/
-EFI_STATUS
+VOID
 GetStateMachineFlag (
   IN OUT UINT8    *StateMachine
 )
 {
-  EFI_STATUS    Status;
-  UINT32        RsvdBase;
-  UINT32        RsvdOffset;
-  UINT32        RsvdSize;
-  FLASH_MAP     *FlashMap;
-
-  FlashMap = GetFlashMapPtr();
-  if (FlashMap == NULL) {
-    return EFI_NOT_FOUND;
-  }
+  FIRMWARE_UPDATE_STATUS  *FwUpdStatus;
 
   //
-  // Get bootloader reserved region base and size
+  // Read from the reserved region and return state machine
   //
-  Status = GetComponentInfoByPartition (FLASH_MAP_SIG_BLRESERVED, FALSE, &RsvdBase, &RsvdSize);
-  if (EFI_ERROR (Status)) {
-    DEBUG((DEBUG_ERROR, "Could not get component information for bootloader reserved region\n"));
-    return Status;
-  }
+  FwUpdStatus = (FIRMWARE_UPDATE_STATUS *)(PcdGet32(PcdRsvdRegionBase));
 
-  //
-  // Get offset of the reserved region in the bios region
-  //
-  RsvdOffset = FlashMap->RomSize - (~RsvdBase + 1);
-
-  Status = BootMediaRead (RsvdOffset, 0x1, StateMachine);
-  if (EFI_ERROR (Status)) {
-    DEBUG((DEBUG_ERROR, "BootMediaRead.  readaddr: 0x%llx, Status = 0x%x\n", RsvdOffset, Status));
-    return Status;
-  }
-
-  return Status;
+  *StateMachine = FwUpdStatus->StateMachine;
 }
 
 /**
@@ -481,12 +461,9 @@ SetStateMachineFlag (
   IN UINT8    StateMachine
 )
 {
-  EFI_STATUS    Status;
-  UINT32        RsvdOffset;
-  UINT32        RsvdBase;
-  UINT32        RsvdSize;
-  FLASH_MAP     *FlashMap;
-  UINT8         CurrentSMFlag;
+  EFI_STATUS              Status;
+  UINT32                  FwUpdStatusOffset;
+  FIRMWARE_UPDATE_STATUS  FwUpdStatus;
 
   //
   // Any value less than 0xFC is invalid
@@ -496,55 +473,45 @@ SetStateMachineFlag (
   }
 
   //
-  // Get flash map pointer
-  //
-  FlashMap = GetFlashMapPtr();
-  if (FlashMap == NULL) {
-    return EFI_NOT_FOUND;
+  // Any value other than 0xFC, 0xFD, 0xFE, 0xFF is invalid
+  // 
+  if ((StateMachine & FW_UPDATE_SM_PART_AB) != FW_UPDATE_SM_PART_AB) {
+    return EFI_INVALID_PARAMETER;
   }
 
-  //
-  // Get bootloader reserved region base and size
-  //
-  Status = GetComponentInfoByPartition (FLASH_MAP_SIG_BLRESERVED, FALSE, &RsvdBase, &RsvdSize);
+  FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
+
+  Status = BootMediaRead (FwUpdStatusOffset, sizeof(FIRMWARE_UPDATE_STATUS), (UINT8 *)&FwUpdStatus);
   if (EFI_ERROR (Status)) {
-    DEBUG((DEBUG_ERROR, "Could not get component information for bootloader reserved region\n"));
+    DEBUG((DEBUG_ERROR, "BootMediaRead.  FwUpdStatusOffset: 0x%llx, Status = 0x%x\n", FwUpdStatusOffset, Status));
     return Status;
   }
-
-  //
-  // Get offset of the reserved region in the bios region
-  //
-  RsvdOffset = FlashMap->RomSize - (~RsvdBase + 1);
 
   //
   // To write 0xFF, erase 4kb block
   //
   if (StateMachine == FW_UPDATE_SM_INIT) {
-    Status = BootMediaErase (RsvdOffset, RsvdSize);
+    Status = BootMediaErase (FwUpdStatusOffset, EFI_PAGE_SIZE);
     if (EFI_ERROR (Status)) {
-      DEBUG((DEBUG_ERROR, "BootMediaErase.  RsvdBase: 0x%llx, Status = 0x%x\n", RsvdOffset, Status));
-      return Status;
-    }
-  } else {
-
-    Status = GetStateMachineFlag (&CurrentSMFlag);
-    if (EFI_ERROR (Status)) {
+      DEBUG((DEBUG_ERROR, "BootMediaErase.  RsvdBase: 0x%llx, Status = 0x%x\n", FwUpdStatusOffset, Status));
       return Status;
     }
 
-    //
-    // Any value other than 0xFC, 0xFD, 0xFE is invalid
-    //
-    if ((CurrentSMFlag & StateMachine) != StateMachine) {
-      return EFI_INVALID_PARAMETER;
-    }
-
-    Status = BootMediaWrite (RsvdOffset, 0x1, &StateMachine);
+    Status = BootMediaWrite (FwUpdStatusOffset, sizeof(FIRMWARE_UPDATE_STATUS) - sizeof(UINT32), (UINT8 *)&FwUpdStatus);
     if (EFI_ERROR (Status)) {
-      DEBUG((DEBUG_ERROR, "BootMediaWrite.  readaddr: 0x%llx, Status = 0x%x\n", RsvdOffset, Status));
+      DEBUG((DEBUG_ERROR, "BootMediaWrite.  readaddr: 0x%llx, Status = 0x%x\n", FwUpdStatusOffset, Status));
       return Status;
     }
+
+    return Status;
+  }
+
+  FwUpdStatus.StateMachine = StateMachine;
+
+  Status = BootMediaWrite (FwUpdStatusOffset, sizeof(FIRMWARE_UPDATE_STATUS), (UINT8 *)&FwUpdStatus);
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "BootMediaWrite.  readaddr: 0x%llx, Status = 0x%x\n", FwUpdStatusOffset, Status));
+    return Status;
   }
 
   return Status;
@@ -590,16 +557,14 @@ EnforceFwUpdatePolicy (
   //
   LoaderInfo = GetLoaderPlatformInfoPtr ();
   if (LoaderInfo == NULL) {
+    DEBUG((DEBUG_ERROR, "Could not get loader platform information \n"));
     return EFI_NOT_FOUND;
   }
 
   //
   // Get State machine flag
   //
-  Status = GetStateMachineFlag (&StateMachine);
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
+  GetStateMachineFlag (&StateMachine);
 
   FwPolicy->Data = 0;
 
@@ -646,13 +611,15 @@ EnforceFwUpdatePolicy (
     if (LoaderInfo->BootPartition == FW_UPDATE_PARTITION_A){
       Status = SetStateMachineFlag (FW_UPDATE_SM_INIT);
       if (EFI_ERROR (Status)) {
+        DEBUG((DEBUG_ERROR, "Error while setting state machine\n"));
         return Status;
       }
-      Status = EndFirmwareUpdate ();
-      if (EFI_ERROR (Status)) {
-        return Status;
-      }
-      ResetRequired = TRUE;
+      //
+      // This return would end the firmware update
+      // but before retuning would update status and version
+      // in the reserved region.
+      //
+      return EFI_ALREADY_STARTED;
     } else if (LoaderInfo->BootPartition == FW_UPDATE_PARTITION_B) {
       SetBootPartition (PrimaryPartition);
       ResetRequired = TRUE;
@@ -714,6 +681,81 @@ AfterUpdateEnforceFwUpdatePolicy (
     ResetSystem (EfiResetWarm);
     CpuDeadLoop ();
   }
+
+  return EFI_SUCCESS;
+}
+
+/**
+  This function will be called after the firmware update is complete. 
+  This function will update firmware update status structure in reserved region 
+  
+  @param[in] LastAttemptVersion Version of last firmware update attempted.   
+  @param[in] LastAttemptStatus Status of last firmware update attempted.  
+
+  @retval  EFI_SUCCESS        The operation completed successfully.
+  @retval  others             There is error happening.
+**/
+EFI_STATUS
+UpdateStatus (
+  IN UINT16     LastAttemptVersion,
+  IN EFI_STATUS LastAttemptStatus
+ )
+{
+  EFI_STATUS              Status;
+  UINT32                  FwUpdStatusOffset;
+  FIRMWARE_UPDATE_STATUS  FwUpdStatus;
+
+  FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
+
+  Status = BootMediaRead (FwUpdStatusOffset, sizeof(FIRMWARE_UPDATE_STATUS), (UINT8 *)&FwUpdStatus);
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "BootMediaRead.  FwUpdStatusOffset: 0x%llx, Status = 0x%x\n", FwUpdStatusOffset, Status));
+    return Status;
+  }
+
+  if (FwUpdStatus.Signature == 0xFFFFFFFF) {
+    FwUpdStatus.Signature = FIRMWARE_UPDATE_STATUS_SIGNATURE;
+    FwUpdStatus.Version = FIRMWARE_UPDATE_STATUS_VERSION;
+    FwUpdStatus.Length = sizeof(FIRMWARE_UPDATE_STATUS);
+  }
+
+  if (LastAttemptVersion != 0) {
+    FwUpdStatus.LastAttemptVersion = LastAttemptVersion;
+  }
+
+  if (LastAttemptStatus != 0xFFFFFFFF) {
+    if (LastAttemptStatus == EFI_SUCCESS) {
+      FwUpdStatus.LastAttemptStatus = LAST_ATTEMPT_STATUS_SUCCESS;
+    } else if (LastAttemptStatus == EFI_INCOMPATIBLE_VERSION) {
+      FwUpdStatus.LastAttemptStatus = LAST_ATTEMPT_STATUS_ERROR_INCORRECT_VERSION;
+    } else if (LastAttemptStatus == EFI_OUT_OF_RESOURCES) {
+      FwUpdStatus.LastAttemptStatus = LAST_ATTEMPT_STATUS_ERROR_INSUFFICIENT_RESOURCES;
+    } else if (LastAttemptStatus == EFI_SECURITY_VIOLATION) {
+      //
+      // If we get security violation, at this point we do not know
+      // version from capsule, instead of keeping the existing version
+      // reset it back to 0
+      //
+      FwUpdStatus.LastAttemptVersion = 0;
+      FwUpdStatus.LastAttemptStatus = LAST_ATTEMPT_STATUS_ERROR_AUTH_ERROR;
+    } else {
+      FwUpdStatus.LastAttemptVersion = 0;
+      FwUpdStatus.LastAttemptStatus = LAST_ATTEMPT_STATUS_ERROR_UNSUCCESSFUL;
+    }
+  }
+
+  Status = BootMediaErase (FwUpdStatusOffset, EFI_PAGE_SIZE);
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "BootMediaErase.  RsvdBase: 0x%llx, Status = 0x%x\n", FwUpdStatusOffset, Status));
+    return Status;
+  }
+
+  Status = BootMediaWrite(FwUpdStatusOffset, sizeof(FIRMWARE_UPDATE_STATUS), (UINT8 *)&FwUpdStatus);
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "BootMediaWrite.  readaddr: 0x%llx, Status = 0x%x\n", FwUpdStatusOffset, Status));
+    return Status;
+  }
+  DEBUG((DEBUG_INIT, "Firmware Update status updated to reserved region \n"));
 
   return EFI_SUCCESS;
 }
@@ -790,7 +832,7 @@ AuthenticateCapsule (
   This is generic function for firmware update.
 
   This function will get capsule image file, verify the image, and update
-  current firmware using new firmware.
+  current firmware using new firmware. 
 
   @retval  EFI_SUCCESS           The operation completed successfully.
   @retval  others                There is error happening.
@@ -800,11 +842,11 @@ InitFirmwareUpdate (
   VOID
 )
 {
-  EFI_STATUS                    Status;
-  VOID                          *CapsuleImage;
-  UINT32                        CapsuleSize;
-  FIRMWARE_UPDATE_POLICY        FwPolicy;
-  FIRMWARE_UPDATE_PARTITION     *UpdatePartition;
+  EFI_STATUS                  Status;
+  VOID                        *CapsuleImage;
+  UINT32                      CapsuleSize;
+  FIRMWARE_UPDATE_POLICY      FwPolicy;
+  FIRMWARE_UPDATE_PARTITION   *UpdatePartition;
 
   //
   // 1. Enforce firmware update policy.
@@ -839,7 +881,7 @@ InitFirmwareUpdate (
   //
   Status = VerifyFwVersion (CapsuleImage, FwPolicy);
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, " GetCurrentFwVersion: Status = 0x%x\n", Status));
+    DEBUG ((DEBUG_ERROR, " VerifyFwVersion failed with Status = 0x%x\n", Status));
     return Status;
   }
 
@@ -854,8 +896,6 @@ InitFirmwareUpdate (
 
   //
   // 6. Do boot partition update.
-  // This function will also enforce after update firmware update policy
-  // which will restart the system
   //
   Status = UpdateBootPartition (UpdatePartition);
   if (EFI_ERROR (Status)) {
@@ -924,6 +964,9 @@ PayloadMain (
   IN  VOID  *Param
   )
 {
+  UINT32        RsvdBase;
+  UINT32        RsvdSize;
+  FLASH_MAP     *FlashMap;
   EFI_STATUS    Status;
 
   DEBUG ((DEBUG_INFO, "Starting Firmware Update\n"));
@@ -933,11 +976,61 @@ PayloadMain (
   InitializeBootMedia ();
 
   //
+  // Get flash map pointer
+  //
+  FlashMap = GetFlashMapPtr();
+  if (FlashMap == NULL) {
+    DEBUG((DEBUG_ERROR, "Could not get flash map\n"));
+    return;
+  }
+
+  //
+  // Get bootloader reserved region base and size
+  //
+  Status = GetComponentInfoByPartition (FLASH_MAP_SIG_BLRESERVED, FALSE, &RsvdBase, &RsvdSize);
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "Could not get component information for bootloader reserved region\n"));
+    return;
+  }
+
+  //
+  // Set PCD for Firmware Update status structure base
+  //
+  Status = PcdSet32S (PcdFwUpdStatusBase, (FlashMap->RomSize - (~RsvdBase + 1)));
+  if (EFI_ERROR (Status)) {
+    return;
+  }
+
+  Status = PcdSet32S (PcdRsvdRegionBase, RsvdBase);
+  if (EFI_ERROR (Status)) {
+    return;
+  }
+
+  //
   // Perform firmware update
   //
   Status = InitFirmwareUpdate ();
   if (EFI_ERROR (Status)) {
-    DEBUG((DEBUG_ERROR, "Firmware update failed with Status = %r\n", Status));
+    if (Status != EFI_ALREADY_STARTED) {
+      DEBUG((DEBUG_ERROR, "Firmware update failed with Status = %r\n", Status));
+    } else {
+      //
+      // This case happens when firmware update is successfully completed
+      //
+      Status = EFI_SUCCESS;
+    }
+  }
+
+  //
+  // Control comes here after the firmware update is complete
+  // Update Fw update status in reserved region
+  //
+  Status = UpdateStatus(0, Status);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "UpdateLastAttemptStatus failed! Status = %r\n", Status));
+    DEBUG((DEBUG_ERROR, "Reset required to proceed with the firmware update.\n"));
+    ResetSystem (EfiResetCold);
+    CpuDeadLoop ();
   }
 
   //

@@ -45,6 +45,7 @@
   gEfiDebugAgentGuid                            = { 0x865a5a9b, 0xb85d, 0x474c, { 0x84, 0x55, 0x65, 0xd1, 0xbe, 0x84, 0x4b, 0xe2 } }
   gDeviceTableHobGuid                           = { 0xd21fc32c, 0x7fd2, 0x435b, { 0xb8, 0xef, 0xc0, 0x42, 0x66, 0xa8, 0xf4, 0xf5 } }
   gSmmInformationGuid                           = { 0x2d939d66, 0xceec, 0x4244, { 0x94, 0x97, 0x6e, 0x1c, 0x6f, 0x92, 0x54, 0x2c } }
+  gEsrtSystemFirmwareGuid                       = { 0xbfbaf62d, 0x0a27, 0x4390, { 0x99, 0xf6, 0x8a, 0xe1, 0xca, 0x62, 0x62, 0x77 } }
 
 [PcdsFixedAtBuild]
   gPlatformCommonLibTokenSpaceGuid.PcdMaxLibraryDataEntry    |          8 | UINT32 | 0x20000100
@@ -79,6 +80,8 @@
   # Options to limit framebuffer console size (it will be centered if smaller than screen resolution)
   gPlatformCommonLibTokenSpaceGuid.PcdFrameBufferMaxConsoleWidth  | 0xFFFFFFFF | UINT32 | 0x20000501
   gPlatformCommonLibTokenSpaceGuid.PcdFrameBufferMaxConsoleHeight | 0xFFFFFFFF | UINT32 | 0x20000502
+
+  gPlatformCommonLibTokenSpaceGuid.PcdLowestSupportedFwVer		  | 0x00000000 | UINT32 | 0x20000601
 
 [PcdsFixedAtBuild, PcdsPatchableInModule]
   # For patchable PCDs, try to set the default as none-zero
