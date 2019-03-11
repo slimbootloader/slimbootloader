@@ -385,10 +385,8 @@ TpmInit(
   } else {
     Status = TpmTcgLogInit();
     if (Status == EFI_SUCCESS) {
-      if (BypassTpmInit) {
-        // TPM_Start was done by ACM via Locality 3
-        TpmLogLocalityEvent (3);
-      } else {
+      if (!BypassTpmInit) {
+        // TPM_Start was done by SBL via Locality 0
         TpmLogLocalityEvent (0);
       }
     }
