@@ -120,7 +120,7 @@ ShellCommandFwUpdateFunc (
   FwUpdUserCfgData->FsType      = 2;
   FwUpdUserCfgData->LbaAddr     = 0;
 
-  AsciiStrCpy((CHAR8 *)FwUpdUserCfgData->FileName, "FwuImage.bin");
+  AsciiStrCpyS ((CHAR8 *)FwUpdUserCfgData->FileName, sizeof(FwUpdUserCfgData->FileName), "FwuImage.bin");
 
   //
   // Send HECI user command to save IBB signal data

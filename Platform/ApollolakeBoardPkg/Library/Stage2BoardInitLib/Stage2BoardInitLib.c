@@ -243,10 +243,11 @@ BuildOsConfigDataHob (
   VOID
   )
 {
+  EFI_STATUS             Status;
   OS_CONFIG_DATA_HOB    *OsConfigData;
   GEN_CFG_DATA          *GenCfgData;
-  UINT32                MemorySize;
-  UINT32                PldRsvdMemSize;
+  UINT32                 MemorySize;
+  UINT32                 PldRsvdMemSize;
 
   MemorySize   = 0;
   OsConfigData = BuildGuidHob (&gOsConfigDataGuid, sizeof (OS_CONFIG_DATA_HOB));
@@ -283,13 +284,14 @@ BuildOsConfigDataHob (
     }
   }
 
+  Status = EFI_SUCCESS;
   OsConfigData->OsCrashMemorySize = MemorySize;
   OsConfigData->EnableCrashMode   = GenCfgData->EnableCrashMode;
   if (MemorySize > 0) {
     PldRsvdMemSize = PcdGet32 (PcdPayloadReservedMemSize);
-    PcdSet32 (PcdPayloadReservedMemSize, PldRsvdMemSize + MemorySize);
+    Status = PcdSet32S (PcdPayloadReservedMemSize, PldRsvdMemSize + MemorySize);
   }
-  return EFI_SUCCESS;
+  return Status;
 }
 
 /**
@@ -1285,10 +1287,10 @@ UpdateLoaderPlatformInfo (
   VariableLen = sizeof (EmmcTuningData);
   Status = GetVariable ("MMCDLL", NULL, &VariableLen, &EmmcTuningData);
   if (EFI_ERROR (Status)) {
-    AsciiStrCpy (EmmcTuningData.SerialNumber, "badbadbadbadba");
+    AsciiStrCpyS (EmmcTuningData.SerialNumber, sizeof(EmmcTuningData.SerialNumber), "badbadbadbadba");
   }
 
-  AsciiStrCpy(LoaderPlatformInfo->SerialNumber, EmmcTuningData.SerialNumber);
+  AsciiStrCpyS (LoaderPlatformInfo->SerialNumber, sizeof(LoaderPlatformInfo->SerialNumber), EmmcTuningData.SerialNumber);
 
   PlatformData  = (PLATFORM_DATA *)GetPlatformDataPtr ();
   if(PlatformData != NULL) {
@@ -1532,7 +1534,7 @@ PlatformUpdateAcpiTable (
             (UINT32) Hpet->BaseAddressLower32Bit.Address, Hpet->EventTimerBlockId));
   } else if (Table->Signature == SIGNATURE_32 ('$', 'V', 'B', 'T')) {
     // Pointer to new VBT
-    PcdSet32 (PcdGraphicsVbtAddress, (UINT32)(UINTN)Table + VBT_OFFSET);
+    Status = PcdSet32S (PcdGraphicsVbtAddress, (UINT32)(UINTN)Table + VBT_OFFSET);
     IgdOpRegionInit ();
   }
 

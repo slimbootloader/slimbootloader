@@ -555,7 +555,7 @@ AcpiInit (
   //
   // Keep a copy at F segment so that non-UEFI OS will find ACPI tables
   //
-  PcdSet32 (PcdAcpiTablesRsdp, (UINT32)Rsdp);
+  Status = PcdSet32S (PcdAcpiTablesRsdp, (UINT32)Rsdp);
   CopyMem ((VOID *)0xFFF80, Rsdp, sizeof (RsdpTmp));
 
   // Update ACPI update service so that payload can have opportunity to update ACPI tables

@@ -988,7 +988,7 @@ MmcTuning (
     EmmcTuningData.Hs400RxStrobe1Dll, EmmcTuningData.Hs400TxDataDll));
 
   // Todo: Serial number should be removed from this function later.
-  Status = EmmcGetSerialNumber (EmmcTuningData.SerialNumber);
+  Status = EmmcGetSerialNumber (EmmcTuningData.SerialNumber, sizeof(EmmcTuningData.SerialNumber));
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "ERRORL: MMC serial number invalid, status = %r\n", Status));
   }

@@ -235,19 +235,21 @@ SetAttestationKeyboxInRpmb (
   @param[in,out] CmdFile        Pointer to IMAGE_DATA for Command file
   @param[in]     BootParams     Pointer to the IMAGE_BOOT_PARAM structure
                                 that needs to be passed via command line
+  @param[in]     CmdBufLen      Command buffer length.
 
   @retval  EFI_SUCCESS          Command line was succesffuly modified.
 **/
 EFI_STATUS
 UpdateCmdLine (
   IN OUT IMAGE_DATA        *CmdFile,
-  IN     IMAGE_BOOT_PARAM  *BootParams
+  IN     IMAGE_BOOT_PARAM  *BootParams,
+  IN     UINT32             CmdBufLen
   )
 {
   CHAR8 ParamValue[32];
 
   AsciiSPrint (ParamValue, sizeof (ParamValue), " ImageBootParamsAddr=0x%x", BootParams);
-  AsciiStrCat ((CHAR8 *)CmdFile->Addr, ParamValue);
+  AsciiStrCatS ((CHAR8 *)CmdFile->Addr, CmdBufLen, ParamValue);
   CmdFile->Size = AsciiStrLen ((CHAR8 *)CmdFile->Addr);
   return EFI_SUCCESS;
 }
@@ -321,7 +323,7 @@ SetupTrustyBoot (
     SetCpuState (& (VmmBootParams->CpuState), &BootOsImage->BootState);
     BootParams->VmmBootParamAddr  = (UINT64) (UINTN)VmmBootParams;
   }
-  Status = UpdateCmdLine (&TrustyImage->CmdFile, BootParams);
+  Status = UpdateCmdLine (&TrustyImage->CmdFile, BootParams, TrustyImage->CmdBufferSize);
   if (EFI_ERROR (Status)) {
     return Status;
   }
@@ -336,7 +338,7 @@ SetupTrustyBoot (
     return RETURN_OUT_OF_RESOURCES;
   }
 
-  Status = UpdateCmdLine (&BootOsImage->CmdFile, BootParams);
+  Status = UpdateCmdLine (&BootOsImage->CmdFile, BootParams, BootOsImage->CmdBufferSize);
   if (EFI_ERROR (Status)) {
     return Status;
   }

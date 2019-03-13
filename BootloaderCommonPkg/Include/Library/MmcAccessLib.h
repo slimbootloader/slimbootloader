@@ -172,7 +172,8 @@ EmmcModeSelection (
 /**
   This function gets serial number of eMMC card.
 
-  @param[out] SerialNumber              Serial Number of Device.
+  @param[out] SerialNumber              Serial Number buffer.
+  @param[in]  Length                    Serial Number buffer length.
 
   @retval EFI_SUCCESS                   Serial Number Valid.
   @retval Others                        A parameter was incorrect.
@@ -180,7 +181,8 @@ EmmcModeSelection (
 EFI_STATUS
 EFIAPI
 EmmcGetSerialNumber (
-  OUT CHAR8*                            SerialNumber
+  IN  CHAR8*                            SerialNumber,
+  IN  UINT32                            Length
   );
 
 /**

@@ -219,7 +219,7 @@ typedef struct {
   IMAGE_DATA              CmdFile;
   MULTIBOOT_INFO          MbInfo;
   IA32_BOOT_STATE         BootState;
-  UINT16                  Reserved;
+  UINT16                  CmdBufferSize;
   UINT16                  MbModuleNumber;
   MULTIBOOT_MODULE        MbModule[MAX_MULTIBOOT_MODULE_NUMBER];
 } MULTIBOOT_IMAGE;

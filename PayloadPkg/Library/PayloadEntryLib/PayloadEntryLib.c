@@ -60,8 +60,10 @@ PayloadInit (
   UINT32                    StackBase;
   UINT32                    StackSize;
   LOADER_PLATFORM_DATA      *LoaderPlatformData;
+  EFI_STATUS                PcdStatus1;
+  EFI_STATUS                PcdStatus2;
 
-  PcdSet32 (PcdPayloadHobList, (UINT32)HobList);
+  PcdStatus1 = PcdSet32S (PcdPayloadHobList, (UINT32)HobList);
 
   //
   // Payload Memmap
@@ -93,7 +95,8 @@ PayloadInit (
 
   GlobalDataPtr = AllocateZeroPool (sizeof (PAYLOAD_GLOBAL_DATA));
   GlobalDataPtr->Signature = PLD_GDATA_SIGNATURE;
-  PcdSet32 (PcdGlobalDataAddress, (UINT32) (UINTN)GlobalDataPtr);
+  PcdStatus2 = PcdSet32S (PcdGlobalDataAddress, (UINT32) (UINTN)GlobalDataPtr);
+  ASSERT_EFI_ERROR (PcdStatus1 | PcdStatus2);
 
   // Create Debug Log Buffer and init configuration data
   GuidHob = GetNextGuidHob (&gLoaderPlatformDataGuid, (VOID *)PcdGet32 (PcdPayloadHobList));

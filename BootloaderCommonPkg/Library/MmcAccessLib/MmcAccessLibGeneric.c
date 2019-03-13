@@ -1993,7 +1993,8 @@ Done:
 /**
   This function gets serial number of eMMC card.
 
-  @param[out] SerialNumber              Serial Number of Device.
+  @param[out] SerialNumber              Serial Number buffer.
+  @param[in]  Length                    Serial Number buffer length.
 
   @retval EFI_SUCCESS                   Serial Number Valid.
   @retval Others                        A parameter was incorrect.
@@ -2001,8 +2002,9 @@ Done:
 EFI_STATUS
 EFIAPI
 EmmcGetSerialNumber (
-  OUT CHAR8*              SerialNumber
-)
+  IN  CHAR8*                            SerialNumber,
+  IN  UINT32                            Length
+  )
 {
   EFI_STATUS               Status;
   SD_MMC_HC_PRIVATE_DATA  *Private;
@@ -2013,7 +2015,7 @@ EmmcGetSerialNumber (
   Status      = EFI_SUCCESS;
 
   if (!MmcIsInitialized()) {
-    AsciiStrCpy(SerialNumber, "badbadbadbadba");
+    AsciiStrCpyS (SerialNumber, Length, "badbadbadbadba");
     Status = EFI_NOT_READY;
     goto Done;
   }
@@ -2038,7 +2040,7 @@ EmmcGetSerialNumber (
   SerialNumber[Index++] = CardData->Cid.ProductName[1];
   SerialNumber[Index++] = CardData->Cid.ProductName[0];
 
-  AsciiValueToString (&SerialNumber[Index], PREFIX_ZERO | RADIX_HEX, ProductNumber, 8);
+  AsciiValueToStringS (&SerialNumber[Index], Length - Index, PREFIX_ZERO | RADIX_HEX, ProductNumber, 8);
   do {
     if (('A' <= SerialNumber[Index]) && (SerialNumber[Index] <= 'Z')) {
       SerialNumber[Index] += 0x20;
