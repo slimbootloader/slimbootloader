@@ -261,7 +261,7 @@ GenerateSeeds (
   if ((Status != EFI_SUCCESS) || (AsciiStrCmp(EmmcTuningData.SerialNumber,"badbadbadbadba") == 0)) {
     RpmbSerialNumberValid = FALSE;
   } else {
-    AsciiStrCpy (SerialNum, EmmcTuningData.SerialNumber);
+    AsciiStrCpyS (SerialNum, sizeof(SerialNum), EmmcTuningData.SerialNumber);
     RpmbSerialNumberValid = TRUE;
   }
 

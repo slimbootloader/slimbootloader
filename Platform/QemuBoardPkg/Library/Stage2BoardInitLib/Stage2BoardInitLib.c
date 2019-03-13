@@ -270,7 +270,7 @@ BoardInit (
     if (PlatformCfgData != NULL) {
       VbtAddress = LocateVbtByImageId (PlatformCfgData->VbtImageId);
       if (VbtAddress != 0) {
-        PcdSet32 (PcdGraphicsVbtAddress,  VbtAddress);
+        Status = PcdSet32S (PcdGraphicsVbtAddress,  VbtAddress);
       }
     }
     break;

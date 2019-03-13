@@ -274,6 +274,8 @@ UpdateOsParameters (
   // Update Trusty image if it is loaded.
   //
   if ((CurrentBootOption->BootFlags & BOOT_FLAGS_TRUSTY) != 0) {
+    LoadedImage->Image.MultiBoot.CmdBufferSize       = CMDLINE_LENGTH_MAX;
+    LoadedTrustyImage->Image.MultiBoot.CmdBufferSize = CMDLINE_LENGTH_MAX;
     Status = SetupTrustyBoot (&LoadedTrustyImage->Image.MultiBoot, &LoadedImage->Image.MultiBoot);
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "ERROR Setting up Trusty Boot!\n"));

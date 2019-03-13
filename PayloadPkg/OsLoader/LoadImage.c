@@ -295,7 +295,7 @@ LoadLinuxFile (
   }
 
   Ptr[FileInfo->Len] = 0;
-  AsciiStrToUnicodeStr (Ptr, FileName);
+  AsciiStrToUnicodeStrS (Ptr, FileName, sizeof(FileName) / sizeof(CHAR16));
   FileSize   = 0;
   FileBuffer = NULL;
   Status = GetFileByName (FsHandle, FileName, &FileBuffer, &FileSize);
@@ -373,13 +373,13 @@ GetTraditionalLinux (
     MenuEntry = LinuxBootCfg.MenuEntry;
     MenuEntry[0].Name.Pos    = 0;
     MenuEntry[0].Name.Len    = 5;
-    AsciiStrCpy (MenuEntry[0].Name.Buf, "Linux");
+    AsciiStrCpyS (MenuEntry[0].Name.Buf, sizeof(MenuEntry[0].Name.Buf), "Linux");
     MenuEntry[0].InitRd.Pos  = 0;
     MenuEntry[0].InitRd.Len  = 6;
-    AsciiStrCpy (MenuEntry[0].InitRd.Buf, "initrd");
+    AsciiStrCpyS (MenuEntry[0].InitRd.Buf, sizeof(MenuEntry[0].InitRd.Buf), "initrd");
     MenuEntry[0].Kernel.Pos  = 0;
     MenuEntry[0].Kernel.Len  = 7;
-    AsciiStrCpy (MenuEntry[0].Kernel.Buf, "vmlinuz");
+    AsciiStrCpyS (MenuEntry[0].Kernel.Buf, sizeof(MenuEntry[0].Kernel.Buf), "vmlinuz");
     MenuEntry[0].Command.Pos = 0;
     MenuEntry[0].Command.Len = ConfigFileSize;
     EntryIdx = 0;

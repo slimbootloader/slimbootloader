@@ -201,6 +201,7 @@ ExtGetFileByName (
   OUT   UINTN          *FileSizePtr
   )
 {
+  EFI_STATUS  Status;
   OPEN_FILE   OpenFile;
   INT32       Ret;
   UINT32      FileSize, Residual, NameSize;
@@ -215,12 +216,17 @@ ExtGetFileByName (
 
   NameSize = StrSize (FileName);
   NameBuffer = AllocatePool (NameSize);
-  NameBuffer = UnicodeStrToAsciiStr (FileName, NameBuffer);
+  Status = UnicodeStrToAsciiStrS (FileName, NameBuffer, NameSize);
+  if (!EFI_ERROR(Status)) {
+    Ret = Ext2fsOpen (NameBuffer, &OpenFile);
+    if (Ret != 0) {
+      Status = EFI_NOT_FOUND;
+    }
+  }
 
-  Ret = Ext2fsOpen (NameBuffer, &OpenFile);
-  if (Ret != 0) {
+  if (EFI_ERROR (Status)) {
     DEBUG ((EFI_D_INFO, "** Openning FAILED\n"));
-    return Ret;
+    return Status;
   }
 
   FileSize = Ext2fsFileSize (&OpenFile);
@@ -236,7 +242,7 @@ ExtGetFileByName (
   *FileBufferPtr = FileBuffer;
   *FileSizePtr = FileSize;
 
-  return Ret;
+  return Status;
 }
 
 

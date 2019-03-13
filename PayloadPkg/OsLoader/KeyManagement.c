@@ -55,7 +55,7 @@ EmmcSerialNumCheck (
 
   // Compare serial number from the card and SPI flash
   if (AsciiStriCmp (LoaderPlatformInfo->SerialNumber, EmmcTuningData.SerialNumber) != 0) {
-    AsciiStrCpy (EmmcTuningData.SerialNumber, LoaderPlatformInfo->SerialNumber);
+    AsciiStrCpyS (EmmcTuningData.SerialNumber, sizeof(EmmcTuningData.SerialNumber), LoaderPlatformInfo->SerialNumber);
 
     // Save new serial number into SPI flash
     Status = SetVariable ((CHAR8 *)mMmcDllStr, 0, sizeof (EMMC_TUNING_DATA), (VOID *)&EmmcTuningData);
@@ -242,7 +242,7 @@ RpmbKeyProvisioning (
 
   // Get Rpmb Key provisioning flag from Cfg Data
   GenCfgData = (GEN_CFG_DATA *) FindConfigDataByTag (CDATA_GEN_TAG);
-  if (GenCfgData == NULL) { 
+  if (GenCfgData == NULL) {
     return EFI_NOT_FOUND;
   }
 

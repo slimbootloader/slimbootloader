@@ -287,7 +287,7 @@ LoadCapsuleImage (
   // Find capsule using the name provided in configuration data
   //
   if (CapsuleInfo->FileName[0] != 0) {
-    AsciiStrToUnicodeStr((CONST CHAR8 *)(&CapsuleInfo->FileName), FileName);
+    AsciiStrToUnicodeStrS ((CONST CHAR8 *)(&CapsuleInfo->FileName), FileName, MAX_FILE_LEN);
     Status = GetFileByName(FsHandle, FileName, CapsuleImage, CapsuleImageSize);
     if (EFI_ERROR(Status)) {
       DEBUG((DEBUG_ERROR, " Capsule File '%a' Status : %r\n", FileName, Status));
@@ -372,7 +372,7 @@ GetCapsuleImage (
   //
   CapsuleInfo = (CAPSULE_INFO_CFG_DATA *) FindConfigDataByTag (CDATA_CAPSULE_INFO_TAG);
   //
-  // If we do not find capsule information, return error 
+  // If we do not find capsule information, return error
   //
   if (CapsuleInfo == NULL) {
     DEBUG((DEBUG_ERROR, " CapsuleInfo not found \n"));

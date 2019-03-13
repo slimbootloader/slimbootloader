@@ -375,7 +375,10 @@
   *_GCC5_IA32_ASLDLINK_FLAGS = -no-pie
   # Force synchronous PDB writes for parallel builds
   *_VS2015x86_IA32_CC_FLAGS = /FS
+
+  *_*_*_CC_FLAGS = -DDISABLE_NEW_DEPRECATED_INTERFACES
 !if $(TARGET) == RELEASE
   *_*_*_CC_FLAGS = -DLITE_PRINT
 !endif
+
 

@@ -393,10 +393,10 @@ SecStartup (
   // Update Patchable PCD in case Stage2 is loaded into high mem
   Stage2Hob = (STAGE2_HOB *)Params;
   Delta = Stage2Hob->Stage2ExeBase - PCD_GET32_WITH_ADJUST (PcdStage2FdBase);
-  PcdSet32 (PcdFSPSBase,             PCD_GET32_WITH_ADJUST (PcdFSPSBase) + Delta);
-  PcdSet32 (PcdAcpiTablesAddress,    PCD_GET32_WITH_ADJUST (PcdAcpiTablesAddress) + Delta);
-  PcdSet32 (PcdGraphicsVbtAddress,   PCD_GET32_WITH_ADJUST (PcdGraphicsVbtAddress) + Delta);
-  PcdSet32 (PcdSplashLogoAddress,    PCD_GET32_WITH_ADJUST (PcdSplashLogoAddress) + Delta);
+  Status = PcdSet32S (PcdFSPSBase,             PCD_GET32_WITH_ADJUST (PcdFSPSBase) + Delta);
+  Status = PcdSet32S (PcdAcpiTablesAddress,    PCD_GET32_WITH_ADJUST (PcdAcpiTablesAddress) + Delta);
+  Status = PcdSet32S (PcdGraphicsVbtAddress,   PCD_GET32_WITH_ADJUST (PcdGraphicsVbtAddress) + Delta);
+  Status = PcdSet32S (PcdSplashLogoAddress,    PCD_GET32_WITH_ADJUST (PcdSplashLogoAddress) + Delta);
 
   LdrGlobal->LdrHobList = (VOID *)LdrGlobal->MemPoolEnd;
   BuildHobHandoffInfoTable (
@@ -484,8 +484,8 @@ SecStartup (
       AcpiTop  = AcpiGnvs;
     }
 
-    S3Data   = (S3_DATA *)LdrGlobal->S3DataPtr;
-    PcdSet32 (PcdAcpiGnvsAddress, AcpiGnvs);
+    S3Data = (S3_DATA *)LdrGlobal->S3DataPtr;
+    Status = PcdSet32S (PcdAcpiGnvsAddress, AcpiGnvs);
     if (BootMode != BOOT_ON_S3_RESUME) {
       if ((AcpiGnvs > 0) && (AcpiTop > 0)) {
         PlatformUpdateAcpiGnvs ((VOID *)AcpiGnvs);
