@@ -24,11 +24,17 @@ from subprocess  import check_output
 
 ExtraUsageTxt = """
 This script creates a new Apollo Lake Slim Bootloader IFWI image basing
-on an existing IFWI image.  Please follow steps below:
+on an existing IFWI base image.  Please note, this stitching method will work
+only if Boot Guard in the base image is not enabled, and the silicon is not
+fused with Boot Guard enabled.
 
-  1.  Download an existing Apollo Lake UEFI IFWI image for the target platform
+Please follow steps below:
+
+  1.  Download an existing Apollo Lake UEFI IFWI image associated with the target platform,
       such as MinnowBoard 3, LeafHill, etc.  The URL is below:
       https://firmware.intel.com/projects/minnowboard3
+      Alternatively, the original IFWI image from the onboard SPI flash can be
+      read out as the base image too.
 
   2.  Build Slim Bootloader source tree and generate a stitching ZIP package.
       The generated ZIP package is located at:
@@ -766,14 +772,22 @@ def ManipulateIfwi (Action, Path, IfwiData, FileName = '', Before = '$'):
 
 def CreateIfwiImage (IfwiIn, IfwiOut, BiosOut, PlatformData, NonRedundant, StitchDir):
 
-    print ('Creating %sredundant image ...' % ('Non-' if NonRedundant else ''))
-
     RedundantPayload = True
     Fd = open(IfwiIn, "rb")
     IfwiData = bytearray(Fd.read())
     Fd.close()
 
     Root = ParseIfwiLayout (IfwiData)
+
+    # Verify if Boot Guard is enabled or not
+    Comp = LocateComponent (Root, 'ROOT/IFWI/BP0/BPDT/BpdtUepType')
+    if not Comp:
+        raise Exception ('Unsupported base image format !')
+    Data = IfwiData[Comp.Offset + 0x30:Comp.Offset + 0x32]
+    if Data[0] != 0x10  or Data[1] != 0x00:
+        raise Exception ('Unsupported base image type. Boot Guard might have been enabled in this image !')
+
+    print ('Creating %sredundant image ...' % ('Non-' if NonRedundant else ''))
 
     # Remove all in IBB/OBB
     RemoveList = [
