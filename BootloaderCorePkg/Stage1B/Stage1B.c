@@ -336,7 +336,11 @@ SecStartup2 (
   //
   if ((Status >= FSP_STATUS_RESET_REQUIRED_COLD) && (Status <= FSP_STATUS_RESET_REQUIRED_8)) {
     DEBUG ((DEBUG_INIT, "FSP Reboot\n"));
-    ResetSystem (EfiResetCold);
+    if (Status == FSP_STATUS_RESET_REQUIRED_WARM) {
+      ResetSystem(EfiResetWarm);
+    } else {
+      ResetSystem(EfiResetCold);
+    }
   }
 
   FspReservedMemBase = (UINT32)GetFspReservedMemoryFromGuid (
