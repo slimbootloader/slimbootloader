@@ -1,6 +1,6 @@
 ## @ ConfigEditor.py
 #
-# Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2018 - 2019, Intel Corporation. All rights reserved.<BR>
 # This program and the accompanying materials are licensed and made available under
 # the terms and conditions of the BSD License that accompanies this distribution.
 # The full text of the license may be found at
@@ -21,7 +21,6 @@ import tkMessageBox
 import tkFileDialog
 
 from GenCfgData import CGenCfgData, Bytes2Str, Bytes2Val, Array2Val
-
 
 class CreateToolTip(object):
     '''
@@ -221,7 +220,6 @@ class Application(Frame):
                              padx=(5, 0))
         self.PageScroll.pack(side='right', fill=Y, pady=Pady, padx=(0, 5))
         self.ConfCanvas.create_window(0, 0, window=self.RightGrid, anchor='nw')
-        #self.ConfCanvas.bind_all('<MouseWheel>', self.OnPageScroll)
         self.ConfCanvas.bind("<Configure>", self.OnCanvasConfigure)
 
         Paned.add(FrameLeft, weight=2)
@@ -255,6 +253,8 @@ class Application(Frame):
 
         Root.config(menu=Menubar)
 
+        if len(sys.argv) > 1:
+            self.LoadDscFile (sys.argv[1])
 
     def SetObjectName(self, Widget, Name):
         self.ConfList[id(Widget)] = Name
@@ -268,10 +268,6 @@ class Application(Frame):
     def LimitEntrySize(self, Variable, Limit):
         Value = Variable.get()
         if len(Value) > Limit: Variable.set(Value[:Limit])
-
-    def Donothing():
-        print "12345"
-        pass
 
     def OnCanvasConfigure(self, Event):
         self.RightGrid.grid_columnconfigure(0, minsize=Event.width)
@@ -344,12 +340,15 @@ class Application(Frame):
         self.FrameRight.update()
         self.ConfCanvas.config(scrollregion=self.ConfCanvas.bbox("all"))
 
+
     def OnConfigPageSelectChange(self, Event):
         self.UpdateConfigDataOnPage()
-        PageId = self.Left.selection()[0]
-        self.BuildConfigDataPage(PageId)
-        self.UpdateWidgetsVisibilityOnPage()
-        self.UpdatePageScrollBar()
+        Sel = self.Left.selection()
+        if len(Sel) > 0:
+            PageId = Sel[0]
+            self.BuildConfigDataPage(PageId)
+            self.UpdateWidgetsVisibilityOnPage()
+            self.UpdatePageScrollBar()
 
     def WalkWidgetsInLayout(self, Parent, CallbackFunction, Args=None):
         for Widget in Parent.winfo_children():
@@ -859,7 +858,6 @@ class Application(Frame):
                                                     Item['length'])
             ColHdr = Item['option'].split(',')
             Widget = CustomTable(Parent, ColHdr, Bins)
-            #Widget.setEditTriggers(QAbstractItemView.DoubleClicked)
 
         if Widget:
             Ttp = CreateToolTip(Widget, Item['help'])
@@ -873,14 +871,6 @@ class Application(Frame):
                                  self.UpdateConfigDataFromWidget)
         self.SyncConfigDataFromSubRegion()
 
-    def OnConfigPageSelectChange(self, Event):
-        self.UpdateConfigDataOnPage()
-        Sel = self.Left.selection()
-        if len(Sel) > 0:
-            PageId = Sel[0]
-            self.BuildConfigDataPage(PageId)
-            self.UpdateWidgetsVisibilityOnPage()
-            self.UpdatePageScrollBar()
 
 if __name__ == '__main__':
     Root = Tk()
