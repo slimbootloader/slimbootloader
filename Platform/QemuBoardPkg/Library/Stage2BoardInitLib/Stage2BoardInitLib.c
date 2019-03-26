@@ -244,6 +244,7 @@ BoardInit (
   UINT32               TsegBase;
   UINT64               TsegSize;
   UINT32               VbtAddress;
+  UINT8                BootDev;
 
   switch (InitPhase) {
   case PreSiliconInit:
@@ -277,7 +278,22 @@ BoardInit (
   case PostPciEnumeration:
     GenericCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);
     if (GenericCfgData != NULL) {
-      SetPayloadId (GenericCfgData->PayloadId);
+      if (GenericCfgData->PayloadId == AUTO_PAYLOAD_ID_SIGNATURE) {
+        // Use QEMU bootorder to select the payload
+        // Add QEMU command line parameter '-boot order=??a' to enable EFI payload
+        // Here ?? is the normal boot device.
+        IoWrite8 (0x70, 0x38);
+        BootDev = IoRead8 (0x71) >> 4;
+        if (BootDev == 1) {
+          // Boot UEFI payload
+          SetPayloadId (UEFI_PAYLOAD_ID_SIGNATURE);
+        } else {
+          // Boot OsLoader
+          SetPayloadId (0);
+        }
+      } else {
+        SetPayloadId (GenericCfgData->PayloadId);
+      }
     }
     break;
   default:

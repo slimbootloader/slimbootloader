@@ -22,6 +22,7 @@
 
 #define  STACK_DEBUG_FILL_PATTERN     0x5AA55AA5
 #define  UEFI_PAYLOAD_ID_SIGNATURE    SIGNATURE_32('U', 'E', 'F', 'I')
+#define  AUTO_PAYLOAD_ID_SIGNATURE    SIGNATURE_32('A', 'U', 'T', 'O')
 
 #define  ALIGN_UP(address, align)     (((address) + ((align) - 1)) & ~((align)-1))
 #define  ALIGN_DOWN(address, align)   ((address) & ~((align)-1))
@@ -472,7 +473,7 @@ GetRegionOffsetSize (
 /**
   This function retrieves a GUIDed HOB data and size.
 
-  This function will search the HobListPtr to find the first GUIDed HOB that 
+  This function will search the HobListPtr to find the first GUIDed HOB that
   its GUID matches Guid, and return the GUID size in Length if Lengh is no NULL.
   If HobListPtr is NULL, it will use the loader HOB list.
 
