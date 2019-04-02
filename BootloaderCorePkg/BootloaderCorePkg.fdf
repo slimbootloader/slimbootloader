@@ -188,7 +188,7 @@ FILE = $(FV_DIR)/FSP_S.bin
 
 !if $(ENABLE_SPLASH)
   FILE FREEFORM = 5E2D3BE9-AD72-4D1D-AAD5-6B08AF921590 {
-    SECTION RAW = BootloaderCorePkg/Logo.bmp
+    SECTION RAW = Platform/CommonBoardPkg/Logo/Logo.bmp
   }
 !endif
 
