@@ -1,0 +1,5 @@
+Slim Bootloader Logo 
+To build equity around the project, the Slim Bootloader logo was created for both Intel and community usage. The logo may only be used to represent Slim Bootloader.
+
+Usage Guidelines
+The Slim Bootloader logo must be used in connection with truthful, non-misleading references to Slim Bootloader, and for no other purpose. Modification of the logo or use of any separate element(s) of the logo alone are not allowed.
