@@ -73,18 +73,16 @@ class Board(BaseBoard):
 
 		self.STAGE1B_XIP          = 0
 
-		self.STAGE1A_SIZE         = 0x00008000
-		if self.ENABLE_SOURCE_DEBUG:
-			self.STAGE1A_SIZE += 0x2000
-		self.STAGE1B_SIZE         = 0x0001F000
-		self.STAGE2_SIZE          = 0x00020000
+		self.STAGE1A_SIZE         = 0x00010000
+		self.STAGE1B_SIZE         = 0x00012000
+		self.STAGE2_SIZE          = 0x00018000
 
-		self.EPAYLOAD_SIZE        = 0x000FD000
+		self.EPAYLOAD_SIZE        = 0x0010D000
 		self.PAYLOAD_SIZE         = 0x00020000
 		self.CFGDATA_SIZE         = 0x00001000
 		self.VARIABLE_SIZE        = 0x00002000
 		self.SBLRSVD_SIZE         = 0x00001000
-		self.FWUPDATE_SIZE        = 0x00020000 if self.ENABLE_FWU else 0
+		self.FWUPDATE_SIZE        = 0x00018000 if self.ENABLE_FWU else 0
 
 		self._REDUNDANT_LAYOUT    = 1
 		if not self._REDUNDANT_LAYOUT:
@@ -94,9 +92,9 @@ class Board(BaseBoard):
 			self.NON_REDUNDANT_SIZE = 0x200000
 		else:
 			self.TOP_SWAP_SIZE      = 0x010000
-			self.REDUNDANT_SIZE     = 0x060000
+			self.REDUNDANT_SIZE     = 0x050000
 			self.NON_VOLATILE_SIZE  = 0x001000
-			self.NON_REDUNDANT_SIZE = 0x122000
+			self.NON_REDUNDANT_SIZE = 0x13F000
 
 
 		self.SLIMBOOTLOADER_SIZE = (self.TOP_SWAP_SIZE + self.REDUNDANT_SIZE) * 2 + \
@@ -113,9 +111,7 @@ class Board(BaseBoard):
 		if not self.STAGE1B_XIP:
 			# For Stage1B, it can be compressed if STAGE1B_XIP is 0
 			# If so, 	STAGE1B_FD_BASE/STAGE1B_FD_SIZE need to be defined
-			self.STAGE1B_FD_SIZE    = 0x2C000
-			if self.ENABLE_SOURCE_DEBUG:
-				self.STAGE1B_FD_SIZE += 0x4000
+			self.STAGE1B_FD_SIZE    = 0x30000
 			self.STAGE1B_FD_BASE    = FREE_TEMP_RAM_TOP - self.STAGE1B_FD_SIZE
 
 		# For Stage2, it is always compressed.
