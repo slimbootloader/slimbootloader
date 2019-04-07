@@ -665,6 +665,7 @@ def ReportImageLayout(FvDir, ImgPath, ImgList, ImgStart, TopDown):
         if Pos == STITCH_OPS.MODE_POS_HEAD:
             if FileSize != OrgSize:
                 NameList.reverse()
+                OrgSize = FileSize - OrgSize
 
         for Idx, Name in enumerate(NameList):
             if Idx == 0:
