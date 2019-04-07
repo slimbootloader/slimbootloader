@@ -57,7 +57,7 @@ Abstract: File contains platform specific ACPI defines for use in ACPI tables
 #define PM1_CNT_LEN     0x02
 #define PM2_CNT_LEN     0x01
 #define PM_TM_LEN       0x04
-#define GPE0_BLK_LEN    0x10
+#define GPE0_BLK_LEN    0x20
 #define GPE1_BLK_LEN    0x00
 #define GPE1_BASE       0x00
 #define CST_CNT         0x00
