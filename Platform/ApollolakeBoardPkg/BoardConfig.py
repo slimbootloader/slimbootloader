@@ -171,7 +171,8 @@ class Board(BaseBoard):
 			'ShellExtensionLib|Platform/$(BOARD_PKG_NAME)/Library/ShellExtensionLib/ShellExtensionLib.inf',
 			'BootMediaLib|Silicon/ApollolakePkg/Library/BootMediaLib/BootMediaLib.inf',
 			'FlashDescriptorLib|Silicon/ApollolakePkg/Library/FlashDescriptorLib/FlashDescriptorLib.inf',
-			'VtdLib|Silicon/$(SILICON_PKG_NAME)/Library/VtdLib/VtdLib.inf'
+			'VtdLib|Silicon/$(SILICON_PKG_NAME)/Library/VtdLib/VtdLib.inf',
+			'SmbusLib|Silicon/$(SILICON_PKG_NAME)/Library/SmbusLib/SmbusLib.inf'
 		]
 		return dsc_libs
 
