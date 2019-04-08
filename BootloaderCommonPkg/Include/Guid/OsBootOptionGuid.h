@@ -25,6 +25,7 @@
 #define BOOT_FLAGS_CRASH_OS        BIT1
 #define BOOT_FLAGS_TRUSTY          BIT2
 #define BOOT_FLAGS_EXTRA           BIT3
+#define BOOT_FLAGS_PRE_OS_BOOT     BIT4
 
 // This bit is used dynamically.
 #define LOAD_IMAGE_FROM_BACKUP     BIT7

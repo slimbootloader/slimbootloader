@@ -485,32 +485,90 @@ StartBooting (
 }
 
 /**
-  Boot from OsBootOption
+  Start pre-OS boot image
+
+  This function will jump to pre-OS boot image entry point.
+
+  @param[in]  PreOsBootLoadedImage Loaded pre-OS boot image information.
+  @param[in]  OsLoadedImage        Loaded OS boot image information.
+
+  @retval  RETURN_SUCCESS       boot image is return after boot
+  @retval  Others               There is error when checking boot image
+**/
+EFI_STATUS
+StartBootingPreOs (
+  IN LOADED_IMAGE            *PreOsBootLoadedImage,
+  IN LOADED_IMAGE            *OsLoadedImage
+  )
+{
+  EFI_STATUS                 Status;
+  PRE_OS_BOOT_ENTRY          PreOsBootMain;
+  PRE_OS_BOOT_PARAMS         PreOsBootParams;
+
+  DEBUG_CODE_BEGIN();
+  PrintStackHeapInfo ();
+  DEBUG_CODE_END();
+
+  PreOsBootParams.EaxGpr = 0x0;
+  PreOsBootParams.EcxGpr = 0x0;
+  PreOsBootParams.EdxGpr = 0x0;
+  PreOsBootParams.EbxGpr = 0x0;
+  PreOsBootParams.EspGpr = 0x0;
+  PreOsBootParams.EbpGpr = 0x0;
+  PreOsBootParams.EsiGpr = 0x0;
+  PreOsBootParams.EdiGpr = 0x0;
+
+  Status = RETURN_SUCCESS;
+
+  DEBUG ((DEBUG_INIT, "Jumping into Pre-OS Boot image entry point...\n"));
+  PreOsBootMain = (PRE_OS_BOOT_ENTRY) PreOsBootLoadedImage->Image.MultiBoot.BootState.EntryPoint;
+  if (PreOsBootMain == 0) {
+    DEBUG ((DEBUG_ERROR, "Pre-OS Boot EntryPoint is not found\n"));
+    return RETURN_INVALID_PARAMETER;
+  }
+  BeforeOSJump ("Calling Pre-OS Boot Entry ...");
+  PreOsBootMain ((VOID*) &PreOsBootParams);
+  Status = RETURN_DEVICE_ERROR;
+
+  if (Status == RETURN_DEVICE_ERROR) {
+    CpuHalt ("Boot image returned");
+  }
+
+  return RETURN_SUCCESS;
+}
+
+/**
+  Boot from MainBootOption
 
   Based on given boot option, this function will load image, setup
   boot parameters and boot image.
 
-  @param[in]  OsBootOption      OS boot optoin to boot
+  @param[in]  MainBootOption     Main boot option to boot
+  @param[in]  OptBootOption      Optional boot option to chain boot after main.
 
   @retval  RETURN_SUCCESS       Image returns after boot into its entrypoint
   @retval  Others               There is error to boot from this boot option
 **/
 EFI_STATUS
 BootOsImage (
-  IN  OS_BOOT_OPTION         *OsBootOption
+  IN  OS_BOOT_OPTION           *MainBootOption,
+  IN  OS_BOOT_OPTION  OPTIONAL *OptBootOption
   )
 {
   EFI_STATUS                 Status;
   EFI_HANDLE                 HwPartHandle;
+  EFI_HANDLE                 OsHwPartHandle;
   LOADED_IMAGE               LoadedImage;
   LOADED_IMAGE               LoadedTrustyImage;
   LOADED_IMAGE               LoadedExtraImage[MAX_EXTRA_IMAGE_NUM];
+  LOADED_IMAGE               OptLoadedImage;
   OS_BOOT_OPTION             BootOption;
+  OS_BOOT_OPTION             ChainBootOption;
   INT32                      BootSlot;
   UINT8                      Index;
 
   HwPartHandle = NULL;
-  CopyMem (&BootOption, OsBootOption, sizeof (OS_BOOT_OPTION));
+  CopyMem (&BootOption, MainBootOption, sizeof (OS_BOOT_OPTION));
   ZeroMem (&LoadedImage, sizeof (LOADED_IMAGE));
   Status = FindBootPartition (&BootOption, &HwPartHandle);
   if (EFI_ERROR (Status)) {
@@ -524,7 +582,7 @@ BootOsImage (
     BootOption.BootFlags |= LOAD_IMAGE_FROM_BACKUP;
   }
 
-  // Load normal OS boot image
+  // Load main OS boot image
   LoadedImage.HwPartHandle = HwPartHandle;
   Status = LoadAndSetupImage (&BootOption, &LoadedImage);
   if (EFI_ERROR (Status)) {
@@ -560,15 +618,41 @@ BootOsImage (
     }
   }
 
-  Status = UpdateOsParameters (&BootOption, &LoadedImage, &LoadedTrustyImage, &LoadedExtraImage[0]);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "UpdateOsParameters: Status = %r\n", Status));
-    return Status;
+  if ((BootOption.BootFlags & BOOT_FLAGS_PRE_OS_BOOT) != 0) {
+    OsHwPartHandle = NULL;
+    CopyMem (&ChainBootOption, OptBootOption, sizeof (OS_BOOT_OPTION));
+    ZeroMem (&OptLoadedImage, sizeof (LOADED_IMAGE));
+    Status = FindBootPartition (&ChainBootOption, &OsHwPartHandle);
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
+
+    // Load OS boot image
+    OptLoadedImage.HwPartHandle = OsHwPartHandle;
+    Status = LoadAndSetupImage (&ChainBootOption, &OptLoadedImage);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_INFO, "OptLoadedImage: Status = %r\n", Status));
+      return Status;
+    }
+
+    Status = UpdateOsParameters (&ChainBootOption, &OptLoadedImage, &LoadedTrustyImage, &LoadedExtraImage[0]);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_INFO, "UpdateOsParameters: Status = %r\n", Status));
+      return Status;
+    }
+  } else {
+    Status = UpdateOsParameters (&BootOption, &LoadedImage, &LoadedTrustyImage, &LoadedExtraImage[0]);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_INFO, "UpdateOsParameters: Status = %r\n", Status));
+      return Status;
+    }
   }
   AddMeasurePoint (0x40E0);
 
   if ((BootOption.BootFlags & BOOT_FLAGS_TRUSTY) != 0) {
     Status = StartBooting (&LoadedTrustyImage);
+  } else if ((BootOption.BootFlags & BOOT_FLAGS_PRE_OS_BOOT) != 0) {
+    StartBootingPreOs (&LoadedImage, &OptLoadedImage);
   } else {
     Status = StartBooting (&LoadedImage);
   }
@@ -705,7 +789,10 @@ PayloadMain (
   //
   mCurrentBoot = GetCurrentBootOption (OsBootOptionList, mCurrentBoot);
   while  (mCurrentBoot < OsBootOptionList->OsBootOptionCount) {
-    BootOsImage (&OsBootOptionList->OsBootOption[mCurrentBoot]);
+    BootOsImage (&OsBootOptionList->OsBootOption[mCurrentBoot],
+      (OsBootOptionList->OsBootOption[mCurrentBoot].BootFlags & BOOT_FLAGS_PRE_OS_BOOT) != 0 ?
+      &OsBootOptionList->OsBootOption[mCurrentBoot+1] : NULL
+      );
     mCurrentBoot = GetNextBootOption (OsBootOptionList, mCurrentBoot);
     if (mCurrentBoot == OsBootOptionList->OsBootOptionCount) {
       break;

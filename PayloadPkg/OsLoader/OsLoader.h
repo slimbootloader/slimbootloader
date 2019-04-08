@@ -142,6 +142,18 @@ typedef struct {
   UINT8                   ImageHash[SHA256_DIGEST_SIZE];
 } LOADED_IMAGE;
 
+typedef struct {
+  UINT32    EaxGpr;
+  UINT32    EcxGpr;
+  UINT32    EdxGpr;
+  UINT32    EbxGpr;
+  UINT32    EspGpr;
+  UINT32    EbpGpr;
+  UINT32    EsiGpr;
+  UINT32    EdiGpr;
+} PRE_OS_BOOT_PARAMS;
+
+typedef  VOID   (*PRE_OS_BOOT_ENTRY) (VOID *Params);
 
 /**
 Print out the Multiboot information block.
