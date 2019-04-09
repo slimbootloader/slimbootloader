@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -53,7 +53,7 @@
 #include <Guid/OsConfigDataHobGuid.h>
 #include <Guid/OsBootOptionGuid.h>
 #include <Library/SeedListInfoLib.h>
-#include <Guid/FrameBufferInfoGuid.h>
+#include <Guid/GraphicsInfoHob.h>
 #include <Guid/LoaderPlatformInfoGuid.h>
 #include <Guid/BootLoaderVersionGuid.h>
 #include <Guid/LoaderPlatformInfoGuid.h>

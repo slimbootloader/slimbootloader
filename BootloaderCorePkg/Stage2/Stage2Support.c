@@ -84,15 +84,15 @@ DisplaySplash (
 {
   EFI_STATUS                          Status;
   VOID                                *SplashLogoBmp;
-  FRAME_BUFFER_INFO                   *FrameBuffer;
+  EFI_PEI_GRAPHICS_INFO_HOB           *GfxInfoHob;
   EFI_GRAPHICS_OUTPUT_BLT_PIXEL_UNION *GopBlt;
   UINTN                               GopBltSize;
   UINTN                               Width, Height;
   INTN                                OffX, OffY;
 
   // Get framebuffer info
-  FrameBuffer = (FRAME_BUFFER_INFO *)GetGuidHobData (NULL, NULL, &gLoaderFrameBufferInfoGuid);
-  if (FrameBuffer == NULL) {
+  GfxInfoHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GetGuidHobData (NULL, NULL, &gEfiGraphicsInfoHobGuid);
+  if (GfxInfoHob == NULL) {
     return EFI_UNSUPPORTED;
   }
 
@@ -109,15 +109,15 @@ DisplaySplash (
   ASSERT (GopBlt != NULL);
 
   // Check image size
-  if ((Width > FrameBuffer->HorizontalResolution)
-      || (Height > FrameBuffer->VerticalResolution)) {
+  if ((Width > GfxInfoHob->GraphicsMode.HorizontalResolution)
+      || (Height > GfxInfoHob->GraphicsMode.VerticalResolution)) {
     return EFI_BUFFER_TOO_SMALL;
   }
 
   // Copy image to center of framebuffer
-  OffX = (FrameBuffer->HorizontalResolution - Width) / 2;
-  OffY = (FrameBuffer->VerticalResolution - Height) / 2;
-  Status = BltToFrameBuffer (FrameBuffer, GopBlt, Width, Height, OffX, OffY);
+  OffX = (GfxInfoHob->GraphicsMode.HorizontalResolution - Width) / 2;
+  OffY = (GfxInfoHob->GraphicsMode.VerticalResolution - Height) / 2;
+  Status = BltToFrameBuffer (GfxInfoHob, GopBlt, Width, Height, OffX, OffY);
 
   return Status;
 }
@@ -354,34 +354,39 @@ SplitMemroyMap (
 }
 
 /**
-  Create interface HOBs required by payloads.
+  Build some basic HOBs
+
+  After silicon initialization, the information is available
+  to build some basic HOBs. These HOBs could be used/updated
+  by stage2 code, or used by payload.
 
   @param Stage2Hob         Stage2 HOB pointer.
 
-  @return                  Bootloader HOB list pointer.
+  @return                  The HOB list pointer.
 **/
 VOID *
 EFIAPI
 BuildBaseInfoHob (
-  IN  STAGE2_HOB  *Stage2Hob
+  IN  STAGE2_HOB                       *Stage2Hob
   )
 {
-  SERIAL_PORT_INFO          *SerialPortInfo;
-  FRAME_BUFFER_INFO         *FrameBufferInfo;
-  LOADER_FSP_INFO           *LoaderFspInfo;
-  MEMORY_MAP_INFO           *MemoryMapInfo;
-  FRAME_BUFFER_INFO          FrameBuffer;
-  UINT32                     Length;
-  LOADER_GLOBAL_DATA        *LdrGlobal;
-  EFI_PEI_GRAPHICS_INFO_HOB *FspGfxHob;
-  EFI_STATUS                 Status;
-  PAYLOAD_KEY_HASH          *HashHob;
-  UINT32                     HobDataSize;
-  CONST UINT8                *PubKeyHash;
-  UINT8                      Index;
-  UINT8                      CompType;
-  EXT_BOOT_LOADER_VERSION   *VersionHob;
-  SEED_LIST_INFO_HOB        *SeedListInfoHob;
+  SERIAL_PORT_INFO                     *SerialPortInfo;
+  LOADER_FSP_INFO                      *LoaderFspInfo;
+  MEMORY_MAP_INFO                      *MemoryMapInfo;
+  UINT32                               Length;
+  LOADER_GLOBAL_DATA                   *LdrGlobal;
+  EFI_PEI_GRAPHICS_INFO_HOB            *FspGfxHob;
+  EFI_PEI_GRAPHICS_INFO_HOB            *BlGfxHob;
+  EFI_PEI_GRAPHICS_DEVICE_INFO_HOB     *BlGfxDeviceInfo;
+  EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *GfxMode;
+  EFI_STATUS                           Status;
+  PAYLOAD_KEY_HASH                     *HashHob;
+  UINT32                               HobDataSize;
+  CONST UINT8                          *PubKeyHash;
+  UINT8                                Index;
+  UINT8                                CompType;
+  EXT_BOOT_LOADER_VERSION              *VersionHob;
+  SEED_LIST_INFO_HOB                   *SeedListInfoHob;
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
 
@@ -403,32 +408,30 @@ BuildBaseInfoHob (
     SerialPortInfo->UartPciAddr = 0;
   }
 
-  // Build Frame Buffer hob
-  FspGfxHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GetGuidHobData (LdrGlobal->FspHobList, &Length,
-              &gEfiGraphicsInfoHobGuid);
-  if (FspGfxHob != NULL) {
-    FrameBuffer.LinearFrameBuffer    = FspGfxHob->FrameBufferBase;
-    FrameBuffer.HorizontalResolution = FspGfxHob->GraphicsMode.HorizontalResolution;
-    FrameBuffer.VerticalResolution   = FspGfxHob->GraphicsMode.VerticalResolution;
-    FrameBuffer.BitsPerPixel         = 32;
-    FrameBuffer.BytesPerScanLine     = (UINT16) (FspGfxHob->GraphicsMode.PixelsPerScanLine * 4);
-    FrameBuffer.Red.Position         = 0x10;
-    FrameBuffer.Red.Mask             = 0xFF;
-    FrameBuffer.Green.Position       = 0x08;
-    FrameBuffer.Green.Mask           = 0xFF;
-    FrameBuffer.Blue.Position        = 0x00;
-    FrameBuffer.Blue.Mask            = 0xFF;
-    FrameBuffer.Reserved.Position    = 0x18;
-    FrameBuffer.Reserved.Mask        = 0xFF;
-  } else {
-    FrameBuffer.LinearFrameBuffer    = 0;
+  // Build graphic info hob
+  BlGfxHob = BuildGuidHob (&gEfiGraphicsInfoHobGuid, sizeof (EFI_PEI_GRAPHICS_INFO_HOB));
+  if (BlGfxHob != NULL) {
+    ZeroMem (BlGfxHob, sizeof (EFI_PEI_GRAPHICS_INFO_HOB));
+    FspGfxHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GetGuidHobData (LdrGlobal->FspHobList, &Length,
+                  &gEfiGraphicsInfoHobGuid);
+    if (FspGfxHob != NULL) {
+      GfxMode = &BlGfxHob->GraphicsMode;
+      DEBUG ((DEBUG_INFO, "Graphics Info: %d x %d x 32 @ 0x%08X\n",GfxMode->HorizontalResolution,\
+        GfxMode->VerticalResolution, BlGfxHob->FrameBufferBase));
+      if ((GfxMode->PixelFormat != PixelRedGreenBlueReserved8BitPerColor) ||
+          (GfxMode->PixelFormat != PixelBlueGreenRedReserved8BitPerColor)) {
+        DEBUG ((DEBUG_ERROR, "Graphics PixelFormat NOT expected (0x%x)\n", GfxMode->PixelFormat));
+      }
+      CopyMem (BlGfxHob, FspGfxHob, sizeof (EFI_PEI_GRAPHICS_INFO_HOB));
+    } else {
+      DEBUG ((DEBUG_INFO, "Failed to get Graphics Info HOB from FSP\n"));
+    }
   }
 
-  if (FrameBuffer.LinearFrameBuffer) {
-    FrameBufferInfo = BuildGuidHob (&gLoaderFrameBufferInfoGuid, sizeof (FRAME_BUFFER_INFO));
-    CopyMem (FrameBufferInfo, &FrameBuffer, sizeof (FRAME_BUFFER_INFO));
-    DEBUG ((DEBUG_INFO, "Framebuffer Info: %d x %d x 32 @ 0x%08X\n", \
-            FrameBuffer.HorizontalResolution, FrameBuffer.VerticalResolution, FrameBuffer.LinearFrameBuffer));
+  // Build graphic device info hob
+  BlGfxDeviceInfo = BuildGuidHob (&gEfiGraphicsDeviceInfoHobGuid, sizeof (EFI_PEI_GRAPHICS_DEVICE_INFO_HOB));
+  if (BlGfxDeviceInfo != NULL) {
+    SetMem (BlGfxDeviceInfo, sizeof (EFI_PEI_GRAPHICS_DEVICE_INFO_HOB), 0xFF);
   }
 
   // Build Memory Map hob
@@ -490,41 +493,45 @@ BuildBaseInfoHob (
 }
 
 /**
-  Create interface HOBs required by payloads.
+  Build and update HOBs.
+
+  Before jumping to payload, more information is available, so update some HOBs
+  built early, and build more HOBs for payload.
 
   @param Stage2Hob         Stage2 HOB pointer.
 
-  @return                  Bootloader HOB list pointer.
+  @return                  The HOB list pointer.
 **/
 VOID *
 EFIAPI
 BuildExtraInfoHob (
-  IN  STAGE2_HOB  *Stage2Hob
+  IN  STAGE2_HOB                   *Stage2Hob
   )
 {
-  LOADER_GLOBAL_DATA        *LdrGlobal;
-  S3_DATA                   *S3Data;
-  SERIAL_PORT_INFO          *SerialPortInfo;
-  SYSTEM_TABLE_INFO         *SystemTableInfo;
-  SYS_CPU_INFO              *SysCpuInfo;
-  PERFORMANCE_INFO          *PerformanceInfo;
-  OS_BOOT_OPTION_LIST       *OsBootOptionInfo;
-  FRAME_BUFFER_INFO         *FrameBufferInfo;
-  LOADER_PLATFORM_INFO      *LoaderPlatformInfo;
-  LOADER_PLATFORM_DATA      *LoaderPlatformData;
-  LOADER_LIBRARY_DATA       *LoaderLibData;
-  UINT32                     Count;
-  UINT32                     Length;
-  BOOT_LOADER_SERVICES_LIST *HobServicesList;
-  SERVICES_LIST             *PldServicesList;
-  SERVICES_LIST             *CoreServicesList;
-  FLASH_MAP                 *FlashMapPtr;
-  FLASH_MAP                 *FlashMapHob;
-  UINTN                      Index;
-  SEED_LIST_INFO_HOB        *SeedListInfoHob;
-  PLT_DEVICE_TABLE          *DeviceTable;
-  VOID                      *DeviceTableHob;
-  LDR_SMM_INFO              *SmmInfoHob;
+  LOADER_GLOBAL_DATA               *LdrGlobal;
+  S3_DATA                          *S3Data;
+  SERIAL_PORT_INFO                 *SerialPortInfo;
+  SYSTEM_TABLE_INFO                *SystemTableInfo;
+  SYS_CPU_INFO                     *SysCpuInfo;
+  PERFORMANCE_INFO                 *PerformanceInfo;
+  OS_BOOT_OPTION_LIST              *OsBootOptionInfo;
+  EFI_PEI_GRAPHICS_INFO_HOB        *GfxInfoHob;
+  EFI_PEI_GRAPHICS_DEVICE_INFO_HOB *GfxDeviceInfoHob;
+  LOADER_PLATFORM_INFO             *LoaderPlatformInfo;
+  LOADER_PLATFORM_DATA             *LoaderPlatformData;
+  LOADER_LIBRARY_DATA              *LoaderLibData;
+  UINT32                           Count;
+  UINT32                           Length;
+  BOOT_LOADER_SERVICES_LIST        *HobServicesList;
+  SERVICES_LIST                    *PldServicesList;
+  SERVICES_LIST                    *CoreServicesList;
+  FLASH_MAP                        *FlashMapPtr;
+  FLASH_MAP                        *FlashMapHob;
+  UINTN                            Index;
+  SEED_LIST_INFO_HOB               *SeedListInfoHob;
+  PLT_DEVICE_TABLE                 *DeviceTable;
+  VOID                             *DeviceTableHob;
+  LDR_SMM_INFO                     *SmmInfoHob;
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
   S3Data    = (S3_DATA *)LdrGlobal->S3DataPtr;
@@ -537,10 +544,16 @@ BuildExtraInfoHob (
     LoaderLibData->Data  = LdrGlobal->LibDataPtr;
   }
 
-  // Update Framebuffer
-  FrameBufferInfo = (FRAME_BUFFER_INFO *)GetGuidHobData (NULL, NULL, &gLoaderFrameBufferInfoGuid);
-  if (FrameBufferInfo != NULL) {
-    PlatformUpdateHobInfo (&gLoaderFrameBufferInfoGuid, FrameBufferInfo);
+  // Update graphic info HOB
+  GfxInfoHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GetGuidHobData (NULL, NULL, &gEfiGraphicsInfoHobGuid);
+  if (GfxInfoHob != NULL) {
+    PlatformUpdateHobInfo (&gEfiGraphicsInfoHobGuid, GfxInfoHob);
+  }
+
+  // Update graphic device info HOB
+  GfxDeviceInfoHob = (EFI_PEI_GRAPHICS_DEVICE_INFO_HOB *)GetGuidHobData (NULL, NULL, &gEfiGraphicsDeviceInfoHobGuid);
+  if (GfxDeviceInfoHob != NULL) {
+    PlatformUpdateHobInfo (&gEfiGraphicsDeviceInfoHobGuid, GfxDeviceInfoHob);
   }
 
   // Update serial port hob

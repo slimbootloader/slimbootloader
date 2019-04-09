@@ -24,6 +24,7 @@
 #define E820_UNUSABLE   5
 
 #define VIDEO_TYPE_EFI  0x70  /* EFI graphic mode   */
+#define GET_POS_FROM_MASK(mask)   (mask & 0x0FF)?0:((mask & 0x0FF00)?8:((mask & 0x0FF0000)?16:24))
 
 #pragma pack(1)
 

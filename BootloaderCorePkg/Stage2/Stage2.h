@@ -75,29 +75,36 @@ UnmapStage (
   );
 
 /**
-  Create interface HOBs required by payloads.
+  Build some basic HOBs
+
+  After silicon initialization, the information is available
+  to build some basic HOBs. These HOBs could be used/updated
+  by stage2 code, or used by payload.
 
   @param Stage2Hob         Stage2 HOB pointer.
 
-  @return                  Bootloader HOB list pointer.
+  @return                  The HOB list pointer.
 **/
 VOID *
 EFIAPI
 BuildBaseInfoHob (
-  IN  STAGE2_HOB  *Stage2Hob
+  IN  STAGE2_HOB                   *Stage2Hob
   );
 
 /**
-  Create interface HOBs required by payloads.
+  Build and update HOBs.
+
+  Before jumping to payload, more information is available, so update some HOBs
+  built early, and build more HOBs for payload.
 
   @param Stage2Hob         Stage2 HOB pointer.
 
-  @return                  Bootloader HOB list pointer.
+  @return                  The HOB list pointer.
 **/
 VOID *
 EFIAPI
 BuildExtraInfoHob (
-  IN  STAGE2_HOB  *Stage2Hob
+  IN  STAGE2_HOB                   *Stage2Hob
   );
 
 /**

@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2011 - 2014, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2011 - 2019, Intel Corporation. All rights reserved.<BR>
 
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
@@ -199,8 +199,9 @@ SetupBzImage (
   BOOT_PARAMS                *BaseBp;
   UINT32                      BootParamSize;
   EFI_HOB_GUID_TYPE          *GuidHob;
-  FRAME_BUFFER_INFO          *FrameBufferInfo;
+  EFI_PEI_GRAPHICS_INFO_HOB  *GfxInfoHob;
   UINT8                      *Buffer;
+  EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *GfxMode;
 
   DEBUG ((DEBUG_INFO, "Setup bzImage boot parameters ...\n"));
   Buffer = LinuxImage->BootFile.Addr;
@@ -244,25 +245,26 @@ SetupBzImage (
   //
   // Get graphics data
   //
-  GuidHob = GetNextGuidHob (&gLoaderFrameBufferInfoGuid, GetHobListPtr());
+  GuidHob = GetFirstGuidHob (&gEfiGraphicsInfoHobGuid);
   if (GuidHob != NULL) {
-    FrameBufferInfo = (FRAME_BUFFER_INFO *)GET_GUID_HOB_DATA (GuidHob);
+    GfxInfoHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GET_GUID_HOB_DATA (GuidHob);
     ZeroMem (&Bp->ScreenInfo, sizeof (Bp->ScreenInfo));
+    GfxMode = &GfxInfoHob->GraphicsMode;
     Bp->ScreenInfo.OrigVideoIsVGA  = VIDEO_TYPE_EFI;
-    Bp->ScreenInfo.LfbLinelength   = FrameBufferInfo->BytesPerScanLine;
-    Bp->ScreenInfo.LfbDepth        = (UINT16)FrameBufferInfo->BitsPerPixel;
-    Bp->ScreenInfo.LfbBase         = (UINT32)FrameBufferInfo->LinearFrameBuffer;
-    Bp->ScreenInfo.LfbWidth        = (UINT16)FrameBufferInfo->HorizontalResolution;
-    Bp->ScreenInfo.LfbHeight       = (UINT16)FrameBufferInfo->VerticalResolution;
+    Bp->ScreenInfo.LfbLinelength   = (UINT16) (GfxMode->PixelsPerScanLine * 4);
+    Bp->ScreenInfo.LfbDepth        = 32;
+    Bp->ScreenInfo.LfbBase         = (UINT32)(UINTN)GfxInfoHob->FrameBufferBase;
+    Bp->ScreenInfo.LfbWidth        = (UINT16)GfxMode->HorizontalResolution;
+    Bp->ScreenInfo.LfbHeight       = (UINT16)GfxMode->VerticalResolution;
     Bp->ScreenInfo.Pages           = 1;
     Bp->ScreenInfo.BlueSize        = 8;
-    Bp->ScreenInfo.BluePos         = FrameBufferInfo->Blue.Position;
+    Bp->ScreenInfo.BluePos         = GET_POS_FROM_MASK (GfxMode->PixelInformation.BlueMask);
     Bp->ScreenInfo.GreenSize       = 8;
-    Bp->ScreenInfo.GreenPos        = FrameBufferInfo->Green.Position;
+    Bp->ScreenInfo.GreenPos        = GET_POS_FROM_MASK (GfxMode->PixelInformation.GreenMask);
     Bp->ScreenInfo.RedSize         = 8;
-    Bp->ScreenInfo.RedPos          = FrameBufferInfo->Red.Position;
+    Bp->ScreenInfo.RedPos          = GET_POS_FROM_MASK (GfxMode->PixelInformation.RedMask);
     Bp->ScreenInfo.RsvdSize        = 8;
-    Bp->ScreenInfo.RsvdPos         = 24;
+    Bp->ScreenInfo.RsvdPos         = GET_POS_FROM_MASK (GfxMode->PixelInformation.ReservedMask);
   }
 
   if (Bp->Hdr.Version < 0x205 || (!Bp->Hdr.RelocatableKernel && (Bp->Hdr.Code32Start != LINUX_KERNEL_BASE))) {

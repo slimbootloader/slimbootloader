@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -587,13 +587,13 @@ InitConsole (
   VOID
 )
 {
-  UINT32                   CtrlPciBase;
-  EFI_STATUS               Status;
-  UINT32                   Height;
-  UINT32                   Width;
-  UINT32                   OffX;
-  UINT32                   OffY;
-  FRAME_BUFFER_INFO       *FrameBuffer;
+  UINT32                    CtrlPciBase;
+  EFI_STATUS                Status;
+  UINT32                    Height;
+  UINT32                    Width;
+  UINT32                    OffX;
+  UINT32                    OffY;
+  EFI_PEI_GRAPHICS_INFO_HOB *GfxInfoHob;
 
   Status = EFI_NOT_FOUND;
 
@@ -607,19 +607,19 @@ InitConsole (
   }
 
   if (PcdGet32 (PcdConsoleOutDeviceMask) & ConsoleOutFrameBuffer) {
-    FrameBuffer = (FRAME_BUFFER_INFO *)GetGuidHobData (NULL, NULL, &gLoaderFrameBufferInfoGuid);
-    if (FrameBuffer != NULL) {
-      Width  = FrameBuffer->HorizontalResolution;
-      Height = FrameBuffer->VerticalResolution;
+    GfxInfoHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GetGuidHobData (NULL, NULL, &gEfiGraphicsInfoHobGuid);
+    if (GfxInfoHob != NULL) {
+      Width  = GfxInfoHob->GraphicsMode.HorizontalResolution;
+      Height = GfxInfoHob->GraphicsMode.VerticalResolution;
       if ((PcdGet32 (PcdFrameBufferMaxConsoleWidth) > 0) && (Width > PcdGet32 (PcdFrameBufferMaxConsoleWidth))) {
         Width = PcdGet32 (PcdFrameBufferMaxConsoleWidth);
       }
       if ((PcdGet32 (PcdFrameBufferMaxConsoleHeight) > 0) && (Height > PcdGet32 (PcdFrameBufferMaxConsoleHeight))) {
         Height = PcdGet32 (PcdFrameBufferMaxConsoleHeight);
       }
-      OffX = (FrameBuffer->HorizontalResolution-Width)/2;
-      OffY = (FrameBuffer->VerticalResolution-Height)/2;
-      Status = InitFrameBufferConsole (FrameBuffer, Width, Height, OffX, OffY);
+      OffX = (GfxInfoHob->GraphicsMode.HorizontalResolution - Width) / 2;
+      OffY = (GfxInfoHob->GraphicsMode.VerticalResolution - Height) / 2;
+      Status = InitFrameBufferConsole (GfxInfoHob, Width, Height, OffX, OffY);
     }
   }
 

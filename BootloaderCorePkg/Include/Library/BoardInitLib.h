@@ -13,7 +13,7 @@
 
 #ifndef _BOARD_INIT_LIB_H_
 
-#include <Guid/FrameBufferInfoGuid.h>
+#include <Guid/GraphicsInfoHob.h>
 #include <Guid/SystemTableInfoGuid.h>
 #include <Guid/SerialPortInfoGuid.h>
 #include <Guid/LoaderFspInfoGuid.h>

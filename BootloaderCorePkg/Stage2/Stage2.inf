@@ -77,13 +77,13 @@
   gFspReservedMemoryResourceHobGuid
   gLoaderSerialPortInfoGuid
   gLoaderPlatformDeviceInfoGuid
-  gLoaderFrameBufferInfoGuid
   gLoaderSystemTableInfoGuid
   gLoaderPerformanceInfoGuid
   gLoaderLibraryDataGuid
   gLoaderMemoryMapInfoGuid
   gLoaderFspInfoGuid
   gEfiGraphicsInfoHobGuid
+  gEfiGraphicsDeviceInfoHobGuid
   gPayloadKeyHashGuid
   gOsBootOptionGuid
   gBootLoaderServiceGuid
