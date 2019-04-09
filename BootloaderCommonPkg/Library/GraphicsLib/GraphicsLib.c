@@ -1,7 +1,7 @@
 /** @file
   Basic graphics rendering support
 
-  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -43,7 +43,7 @@ STATIC FRAME_BUFFER_CONSOLE mFbConsole;
 /**
   Copy image into frame buffer.
 
-  @param[in] FrameBuffer         Frame buffer instance
+  @param[in] GfxInfoHob          Pointer to graphics info HOB
   @param[in] GopBlt              The source image
   @param[in] Width               Width of the source image
   @param[in] Height              Height of the source image
@@ -57,12 +57,12 @@ STATIC FRAME_BUFFER_CONSOLE mFbConsole;
 EFI_STATUS
 EFIAPI
 BltToFrameBuffer (
-  IN FRAME_BUFFER_INFO *FrameBuffer,
-  IN VOID              *GopBlt,
-  IN UINTN             Width,
-  IN UINTN             Height,
-  IN UINTN             OffX,
-  IN UINTN             OffY
+  IN EFI_PEI_GRAPHICS_INFO_HOB        *GfxInfoHob,
+  IN VOID                             *GopBlt,
+  IN UINTN                            Width,
+  IN UINTN                            Height,
+  IN UINTN                            OffX,
+  IN UINTN                            OffY
   )
 {
   EFI_GRAPHICS_OUTPUT_BLT_PIXEL_UNION *GopBltPixels;
@@ -71,21 +71,21 @@ BltToFrameBuffer (
   UINTN                                Row;
 
   GopBltPixels = GopBlt;
-  ASSERT (FrameBuffer != NULL);
+  ASSERT (GfxInfoHob != NULL);
   ASSERT (GopBlt != NULL);
 
   // Check dimensions
-  if (((Height + OffY) > FrameBuffer->VerticalResolution)
-      || ((Width + OffX) > FrameBuffer->HorizontalResolution)) {
+  if (((Height + OffY) > GfxInfoHob->GraphicsMode.VerticalResolution)
+      || ((Width + OffX) > GfxInfoHob->GraphicsMode.HorizontalResolution)) {
     return EFI_INVALID_PARAMETER;
   }
 
   // Copy image into frame buffer
-  FrameBufferPtr = (UINT32 *) (UINTN) (FrameBuffer->LinearFrameBuffer);
-  FrameBufferOffset = OffY * FrameBuffer->HorizontalResolution + OffX;
+  FrameBufferPtr = (UINT32 *) (UINTN) (GfxInfoHob->FrameBufferBase);
+  FrameBufferOffset = OffY * GfxInfoHob->GraphicsMode.HorizontalResolution + OffX;
   for (Row = 0; Row < Height; Row++) {
     CopyMem (&FrameBufferPtr[FrameBufferOffset], &GopBltPixels[Row * Width], Width * 4);
-    FrameBufferOffset += FrameBuffer->HorizontalResolution;
+    FrameBufferOffset += GfxInfoHob->GraphicsMode.HorizontalResolution;
   }
 
   return EFI_SUCCESS;
@@ -94,7 +94,7 @@ BltToFrameBuffer (
 /**
   Draw a glyph into the frame buffer (ASCII only).
 
-  @param[in] FrameBuffer         Frame buffer instance
+  @param[in] GfxInfoHob          Pointer to graphics info HOB
   @param[in] Glyph               ASCII character to write
   @param[in] ForegroundColor     Foreground color to use
   @param[in] BackgroundColor     Background color to use
@@ -108,7 +108,7 @@ BltToFrameBuffer (
 EFI_STATUS
 EFIAPI
 BltGlyphToFrameBuffer (
-  IN FRAME_BUFFER_INFO             *FrameBuffer,
+  IN EFI_PEI_GRAPHICS_INFO_HOB     *GfxInfoHob,
   IN CHAR8                         Glyph,
   IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL ForegroundColor,
   IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL BackgroundColor,
@@ -116,13 +116,14 @@ BltGlyphToFrameBuffer (
   IN UINTN                         OffY
   )
 {
-  UINT8                         *GlyphBitmap;
-  CONST UINT8                   GlyphTableStart = 0x20;
-  UINTN                         Width, Height;
-  UINTN                         Row, Col;
-  EFI_GRAPHICS_OUTPUT_BLT_PIXEL GopBlt[GLYPH_WIDTH * GLYPH_HEIGHT];
+  UINT8                            *GlyphBitmap;
+  CONST UINT8                      GlyphTableStart = 0x20;
+  UINTN                            Width, Height;
+  UINTN                            Row;
+  UINTN                            Col;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL    GopBlt[GLYPH_WIDTH * GLYPH_HEIGHT];
 
-  if (FrameBuffer == NULL) {
+  if (GfxInfoHob == NULL) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -147,13 +148,13 @@ BltGlyphToFrameBuffer (
     }
   }
 
-  return BltToFrameBuffer (FrameBuffer, GopBlt, Width, Height, OffX, OffY);
+  return BltToFrameBuffer (GfxInfoHob, GopBlt, Width, Height, OffX, OffY);
 }
 
 /**
   Initialize the frame buffer console.
 
-  @param[in] FrameBuffer         Frame buffer instance
+  @param[in] GfxInfoHob          Pointer to graphics info HOB
   @param[in] Width               Width of the console (in pixels)
   @param[in] Height              Height of the console (in pixels)
   @param[in] OffX                Desired X offset of the console
@@ -166,27 +167,27 @@ BltGlyphToFrameBuffer (
 EFI_STATUS
 EFIAPI
 InitFrameBufferConsole (
-  IN     FRAME_BUFFER_INFO    *FrameBuffer,
-  IN     UINTN                Width,
-  IN     UINTN                Height,
-  IN     UINTN                OffX,
-  IN     UINTN                OffY
+  IN EFI_PEI_GRAPHICS_INFO_HOB *GfxInfoHob,
+  IN     UINTN                 Width,
+  IN     UINTN                 Height,
+  IN     UINTN                 OffX,
+  IN     UINTN                 OffY
   )
 {
   FRAME_BUFFER_CONSOLE  *Console;
 
-  if (FrameBuffer == NULL) {
+  if (GfxInfoHob == NULL) {
     return EFI_INVALID_PARAMETER;
   }
 
   // Check dimensions
-  if (((Height + OffY) > FrameBuffer->VerticalResolution)
-      || ((Width + OffX) > FrameBuffer->HorizontalResolution)) {
+  if (((Height + OffY) > GfxInfoHob->GraphicsMode.VerticalResolution)
+      || ((Width + OffX) > GfxInfoHob->GraphicsMode.HorizontalResolution)) {
     return EFI_INVALID_PARAMETER;
   }
 
   Console = &mFbConsole;
-  Console->FrameBuffer = FrameBuffer;
+  Console->GfxInfoHob  = GfxInfoHob;
   Console->OffX        = OffX;
   Console->OffY        = OffY;
   Console->Width       = Width;
@@ -216,12 +217,15 @@ InitFrameBufferConsole (
 EFI_STATUS
 EFIAPI
 FrameBufferConsoleScroll (
-  IN UINTN ScrollAmount
+  IN UINTN               ScrollAmount
   )
 {
-  FRAME_BUFFER_CONSOLE *Console;
-  UINTN BufX, BufY, BufPos;
-  UINTN ScreenX, ScreenY;
+  FRAME_BUFFER_CONSOLE   *Console;
+  UINTN                  BufX;
+  UINTN                  BufY;
+  UINTN                  BufPos;
+  UINTN                  ScreenX;
+  UINTN                  ScreenY;
 
   Console = &mFbConsole;
   if (Console->Height == 0) {
@@ -256,7 +260,7 @@ FrameBufferConsoleScroll (
     for (BufX = 0; BufX < Console->Cols; BufX++) {
       if (Console->TextSwapBuf[BufPos] != Console->TextDisplayBuf[BufPos]) {
         Console->TextDisplayBuf[BufPos] = Console->TextSwapBuf[BufPos];
-        BltGlyphToFrameBuffer (Console->FrameBuffer, Console->TextSwapBuf[BufPos],
+        BltGlyphToFrameBuffer (Console->GfxInfoHob, Console->TextSwapBuf[BufPos],
                                Console->ForegroundColor, Console->BackgroundColor,
                                ScreenX, ScreenY);
       }
@@ -344,7 +348,7 @@ FrameBufferWrite (
       Console->CursorX = 0;
     } else {
       Console->TextDisplayBuf[Console->CursorY * Console->Cols + Console->CursorX] = Buffer[Pos];
-      Status = BltGlyphToFrameBuffer (Console->FrameBuffer, Buffer[Pos],
+      Status = BltGlyphToFrameBuffer (Console->GfxInfoHob, Buffer[Pos],
                                       Console->ForegroundColor, Console->BackgroundColor,
                                       Console->OffX + Console->CursorX * GLYPH_WIDTH,
                                       Console->OffY + Console->CursorY * GLYPH_HEIGHT);

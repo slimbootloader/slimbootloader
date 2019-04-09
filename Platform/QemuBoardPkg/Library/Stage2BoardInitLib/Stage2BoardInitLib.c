@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -28,7 +28,7 @@
 #include <Library/BootloaderCoreLib.h>
 #include <Library/BlMemoryAllocationLib.h>
 #include <Library/FspSupportLib.h>
-#include <Guid/FrameBufferInfoGuid.h>
+#include <Guid/GraphicsInfoHob.h>
 #include <Guid/SystemTableInfoGuid.h>
 #include <Guid/SerialPortInfoGuid.h>
 #include <Guid/SmmInformationGuid.h>
@@ -462,24 +462,37 @@ UpdateOsBootMediumInfo (
 /**
  Update the frame buffer info by reading the PCI address
 
- @param FrameBufferInfo pointer to global HOB data structure.
+ @param[out] GfxInfo    pointer to global HOB data structure.
  */
 VOID
-EFIAPI
 UpdateFrameBufferInfo (
-  IN  FRAME_BUFFER_INFO  *FrameBufferInfo
+  OUT  EFI_PEI_GRAPHICS_INFO_HOB   *GfxInfo
 )
 {
   GRAPHICS_DATA   *GfxPtr;
 
   GfxPtr = (GRAPHICS_DATA *)(UINTN)PcdGet32(PcdGraphicsVbtAddress);
-  FrameBufferInfo->LinearFrameBuffer = (UINT64)PciRead32 (PCI_LIB_ADDRESS(0, 1, 0, 0x10)) & 0xFFFFFFF0;
+  GfxInfo->FrameBufferBase = (UINT64)PciRead32 (PCI_LIB_ADDRESS(0, 1, 0, 0x10)) & 0xFFFFFFF0;
   if (GfxPtr->Signature == GRAPHICS_DATA_SIG) {
-    FrameBufferInfo->HorizontalResolution = GfxPtr->ResX;
-    FrameBufferInfo->VerticalResolution   = GfxPtr->ResY;
+    GfxInfo->GraphicsMode.HorizontalResolution = GfxPtr->ResX;
+    GfxInfo->GraphicsMode.VerticalResolution   = GfxPtr->ResY;
   }
 }
 
+/**
+ Update the frame buffer device info.
+
+ @param[out] GfxDeviceInfo   pointer to EFI_PEI_GRAPHICS_DEVICE_INFO_HOB structure.
+ **/
+VOID
+UpdateFrameBufferDeviceInfo (
+  OUT  EFI_PEI_GRAPHICS_DEVICE_INFO_HOB   *GfxDeviceInfo
+  )
+{
+  GfxDeviceInfo->BarIndex = 0;
+  GfxDeviceInfo->VendorId = PciRead16 (PCI_LIB_ADDRESS (0, 1, 0, 0));
+  GfxDeviceInfo->DeviceId = PciRead16 (PCI_LIB_ADDRESS (0, 1, 0, 2));
+}
 
 /**
  Update loader SMM info.
@@ -520,8 +533,10 @@ PlatformUpdateHobInfo (
   ASSERT (HobInfo != NULL);
 
   // Just compare Guid memory addresses which are in Stage2 data section instead of CompareGuid ()
-  if (Guid == &gLoaderFrameBufferInfoGuid) {
+  if (Guid == &gEfiGraphicsInfoHobGuid) {
     UpdateFrameBufferInfo (HobInfo);
+  } else if (Guid == &gEfiGraphicsDeviceInfoHobGuid) {
+    UpdateFrameBufferDeviceInfo (HobInfo);
   } else if (Guid == &gLoaderSerialPortInfoGuid) {
     UpdateSerialPortInfo (HobInfo);
   } else if (Guid == &gOsBootOptionGuid) {

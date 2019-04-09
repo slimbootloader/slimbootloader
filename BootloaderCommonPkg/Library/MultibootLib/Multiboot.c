@@ -1,7 +1,7 @@
 /** @file
   This file Multiboot specification (implementation).
 
-  Copyright (c) 2014 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2014 - 2019, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -21,7 +21,7 @@
 #include <Library/HobLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include <Guid/MemoryMapInfoGuid.h>
-#include <Guid/FrameBufferInfoGuid.h>
+#include <Guid/GraphicsInfoHob.h>
 
 #define SUPPORTED_FEATURES  (MULTIBOOT_HEADER_MODS_ALIGNED | MULTIBOOT_HEADER_WANT_MEMORY)
 UINT8 mLoaderName[]        = "Slim BootLoader\0";
@@ -158,7 +158,7 @@ SetupMultibootInfo (
   MEMORY_MAP_INFO            *MemoryMapInfo;
   MULTIBOOT_INFO             *MbInfo;
   EFI_HOB_GUID_TYPE          *GuidHob;
-  FRAME_BUFFER_INFO          *FrameBufferInfo;
+  EFI_PEI_GRAPHICS_INFO_HOB  *GfxInfoHob;
 
   MbInfo        = &MultiBoot->MbInfo;
   MemoryMapInfo = GetMemoryMapInfo();
@@ -209,21 +209,21 @@ SetupMultibootInfo (
   // BIOS VBE video mode information [MULTIBOOT_INFO_HAS_VBE]: not supported
 
   // BIOS FB framebuffer information [MULTIBOOT_INFO_HAS_FB]
-  GuidHob = GetNextGuidHob (&gLoaderFrameBufferInfoGuid, GetHobListPtr());
+  GuidHob = GetFirstGuidHob (&gEfiGraphicsInfoHobGuid);
   if (GuidHob != NULL) {
-    FrameBufferInfo = (FRAME_BUFFER_INFO *)GET_GUID_HOB_DATA (GuidHob);
+    GfxInfoHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GET_GUID_HOB_DATA (GuidHob);
     MbInfo = &MultiBoot->MbInfo;
-    MbInfo->FramebufferAddr   = FrameBufferInfo->LinearFrameBuffer;
-    MbInfo->FramebufferPitch  = FrameBufferInfo->BytesPerScanLine;
-    MbInfo->FramebufferWidth  = FrameBufferInfo->HorizontalResolution;
-    MbInfo->FramebufferHeight = FrameBufferInfo->VerticalResolution;
-    MbInfo->FramebufferBpp    = (UINT8)FrameBufferInfo->BitsPerPixel;
+    MbInfo->FramebufferAddr   = (UINT64)(UINTN)GfxInfoHob->FrameBufferBase;
+    MbInfo->FramebufferPitch  = GfxInfoHob->GraphicsMode.PixelsPerScanLine * 4;
+    MbInfo->FramebufferWidth  = GfxInfoHob->GraphicsMode.HorizontalResolution;
+    MbInfo->FramebufferHeight = GfxInfoHob->GraphicsMode.VerticalResolution;
+    MbInfo->FramebufferBpp    = 32;
     MbInfo->FramebufferType   = 1;
-    MbInfo->FramebufferRedFieldPosition   = FrameBufferInfo->Red.Position;
+    MbInfo->FramebufferRedFieldPosition   = 0x10;
     MbInfo->FramebufferRedMaskSize        = 8;
-    MbInfo->FramebufferGreenFieldPosition = FrameBufferInfo->Green.Position;
+    MbInfo->FramebufferGreenFieldPosition = 0x08;
     MbInfo->FramebufferGreenMaskSize      = 8;
-    MbInfo->FramebufferBlueFieldPosition  = FrameBufferInfo->Blue.Position;
+    MbInfo->FramebufferBlueFieldPosition  = 0x00;
     MbInfo->FramebufferBlueMaskSize       = 8;
     MbInfo->Flags |= MULTIBOOT_INFO_HAS_FB;
   }

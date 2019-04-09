@@ -1,7 +1,7 @@
 /** @file
   Basic graphics rendering support
 
-  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -20,7 +20,6 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Guid/GraphicsInfoHob.h>
-#include <Guid/FrameBufferInfoGuid.h>
 #include <Protocol/GraphicsOutput.h>
 
 //
@@ -63,13 +62,17 @@ extern EFI_NARROW_GLYPH gUsStdNarrowGlyphData[];
 extern UINT32 mNarrowFontSize;
 
 typedef struct {
-  FRAME_BUFFER_INFO *FrameBuffer;
-  CHAR8             *TextDisplayBuf;
-  CHAR8             *TextSwapBuf;
-  UINTN             OffX, OffY;
-  UINTN             Width, Height;
-  UINTN             Rows, Cols;
-  UINTN             CursorX, CursorY;
+  EFI_PEI_GRAPHICS_INFO_HOB     *GfxInfoHob;
+  CHAR8                         *TextDisplayBuf;
+  CHAR8                         *TextSwapBuf;
+  UINTN                         OffX;
+  UINTN                         OffY;
+  UINTN                         Width;
+  UINTN                         Height;
+  UINTN                         Rows;
+  UINTN                         Cols;
+  UINTN                         CursorX;
+  UINTN                         CursorY;
   EFI_GRAPHICS_OUTPUT_BLT_PIXEL ForegroundColor;
   EFI_GRAPHICS_OUTPUT_BLT_PIXEL BackgroundColor;
 } FRAME_BUFFER_CONSOLE;
@@ -104,7 +107,7 @@ ConvertBmpToGopBlt (
 /**
   Copy image into frame buffer.
 
-  @param[in] FrameBuffer         Frame buffer instance
+  @param[in] GfxInfoHob          Pointer to graphics info HOB
   @param[in] GopBlt              The source image
   @param[in] Width               Width of the source image
   @param[in] Height              Height of the source image
@@ -118,18 +121,18 @@ ConvertBmpToGopBlt (
 EFI_STATUS
 EFIAPI
 BltToFrameBuffer (
-  IN FRAME_BUFFER_INFO *FrameBuffer,
-  IN VOID              *GopBlt,
-  IN UINTN             Width,
-  IN UINTN             Height,
-  IN UINTN             OffX,
-  IN UINTN             OffY
+  IN EFI_PEI_GRAPHICS_INFO_HOB *GfxInfoHob,
+  IN VOID                      *GopBlt,
+  IN UINTN                     Width,
+  IN UINTN                     Height,
+  IN UINTN                     OffX,
+  IN UINTN                     OffY
   );
 
 /**
   Draw a glyph into the frame buffer (ASCII only).
 
-  @param[in] FrameBuffer         Frame buffer instance
+  @param[in] GfxInfoHob          Pointer to graphics info HOB
   @param[in] Glyph               ASCII character to write
   @param[in] ForegroundColor     Foreground color to use
   @param[in] BackgroundColor     Background color to use
@@ -143,7 +146,7 @@ BltToFrameBuffer (
 EFI_STATUS
 EFIAPI
 BltGlyphToFrameBuffer (
-  IN FRAME_BUFFER_INFO             *FrameBuffer,
+  IN EFI_PEI_GRAPHICS_INFO_HOB     *GfxInfoHob,
   IN CHAR8                         Glyph,
   IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL ForegroundColor,
   IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL BackgroundColor,
@@ -154,7 +157,7 @@ BltGlyphToFrameBuffer (
 /**
   Initialize the frame buffer console.
 
-  @param[in] FrameBuffer         Frame buffer instance
+  @param[in] GfxInfoHob          Pointer to graphics info HOB
   @param[in] Width               Width of the console (in pixels)
   @param[in] Height              Height of the console (in pixels)
   @param[in] OffX                Desired X offset of the console
@@ -167,11 +170,11 @@ BltGlyphToFrameBuffer (
 EFI_STATUS
 EFIAPI
 InitFrameBufferConsole (
-  IN     FRAME_BUFFER_INFO    *FrameBuffer,
-  IN     UINTN                Width,
-  IN     UINTN                Height,
-  IN     UINTN                OffX,
-  IN     UINTN                OffY
+  IN EFI_PEI_GRAPHICS_INFO_HOB *GfxInfoHob,
+  IN     UINTN                 Width,
+  IN     UINTN                 Height,
+  IN     UINTN                 OffX,
+  IN     UINTN                 OffY
   );
 
 /**
