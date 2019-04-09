@@ -366,6 +366,7 @@ SecStartup (
   UINT32                          Delta;
   UINT32                          AcpiGnvs;
   UINT32                          AcpiTop;
+  UINT32                          SmbiosEntry;
   LOADER_GLOBAL_DATA             *LdrGlobal;
   UINT8                           BootMode;
   S3_DATA                        *S3Data;
@@ -528,6 +529,10 @@ SecStartup (
   if (PlatformService != NULL) {
     PlatformService->ResetSystem = ResetSystem;
   }
+
+  // SMBIOS Initialization
+  SmbiosInit (&SmbiosEntry);
+  PlatformUpdateSmbios (SmbiosEntry);
 
   BoardInit (PrePayloadLoading);
   AddMeasurePoint (0x30E0);

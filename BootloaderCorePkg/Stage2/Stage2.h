@@ -32,6 +32,7 @@
 #include <Library/PciEnumerationLib.h>
 #include <Library/BlMemoryAllocationLib.h>
 #include <Library/AcpiInitLib.h>
+#include <Library/SmbiosInitLib.h>
 #include <Library/FspApiLib.h>
 #include <Library/LoaderLib.h>
 #include <Library/GraphicsLib.h>

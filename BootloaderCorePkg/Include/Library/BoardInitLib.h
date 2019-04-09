@@ -150,6 +150,17 @@ PlatformUpdateAcpiGnvs (
   );
 
 /**
+  Update the Smbios Tables
+
+  @param[in]  SmbiosEntry   Pointer to the beginning of the Smbios entry+table range
+**/
+VOID
+EFIAPI
+PlatformUpdateSmbios (
+  IN  UINT32    SmbiosEntry
+  );
+
+/**
   Get size of Platform Specific Data.
 
   @param[in] none

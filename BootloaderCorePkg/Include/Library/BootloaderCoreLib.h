@@ -214,6 +214,7 @@ typedef struct {
   VOID             *PcdDataPtr;
   VOID             *LogBufPtr;
   VOID             *DeviceTable;
+  VOID             *SmbiosPtr;
   UINT8             PlatformName[PLATFORM_NAME_SIZE];
   UINT32            LdrFeatures;
   BL_PERF_DATA      PerfData;
@@ -456,6 +457,28 @@ GetComponentPcdInfo (
   IN  UINT32     Signature,
   OUT UINT32     *Base,
   OUT UINT32     *Size
+  );
+
+/**
+  Get the Smbios Table Pointer
+
+  @retval     Smbios Table Pointer
+**/
+VOID *
+EFIAPI
+GetSmbiosPtr (
+  VOID
+  );
+
+/**
+  Set the Smbios Table Pointer
+
+  @param[in]  SmbiosPtr   Pointer to the Smbios Table memory allocated
+**/
+VOID
+EFIAPI
+SetSmbiosPtr (
+  IN  VOID          *SmbiosPtr
   );
 
 #endif

@@ -384,3 +384,30 @@ SetHobList (
   GetLoaderGlobalDataPointer()->LdrHobList = HobList;
 }
 
+/**
+  Get the Smbios Table Pointer
+
+  @retval     Smbios Table Pointer
+**/
+VOID *
+EFIAPI
+GetSmbiosPtr (
+  VOID
+  )
+{
+  return GetLoaderGlobalDataPointer()->SmbiosPtr;
+}
+
+/**
+  Set the Smbios Table Pointer
+
+  @param[in]  SmbiosPtr   Pointer to the Smbios Table memory allocated
+**/
+VOID
+EFIAPI
+SetSmbiosPtr (
+  IN  VOID          *SmbiosPtr
+  )
+{
+  GetLoaderGlobalDataPointer()->SmbiosPtr = SmbiosPtr;
+}

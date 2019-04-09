@@ -55,6 +55,7 @@
   BoardInitLib
   PciEnumerationLib
   AcpiInitLib
+  SmbiosInitLib
   LitePeCoffLib
   LoaderPerformanceLib
   MemoryAllocationLib

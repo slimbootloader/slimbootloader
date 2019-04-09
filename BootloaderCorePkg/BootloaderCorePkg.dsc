@@ -73,6 +73,7 @@
   BootloaderCoreLib|$(PLATFORM_PACKAGE)/Library/BootloaderCoreLib/BootloaderCoreLib.inf
   PciEnumerationLib|$(PLATFORM_PACKAGE)/Library/PciEnumerationLib/PciEnumerationLib.inf
   AcpiInitLib|$(PLATFORM_PACKAGE)/Library/AcpiInitLib/AcpiInitLib.inf
+  SmbiosInitLib|$(PLATFORM_PACKAGE)/Library/SmbiosInitLib/SmbiosInitLib.inf
   LitePeCoffLib|BootloaderCommonPkg/Library/LitePeCoffLib/LitePeCoffLib.inf
   HobLib|BootloaderCommonPkg/Library/HobLib/HobLib.inf
   HobBuildLib|$(PLATFORM_PACKAGE)/Library/HobBuildLib/HobBuildLib.inf

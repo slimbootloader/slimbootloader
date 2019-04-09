@@ -590,3 +590,16 @@ PlatformUpdateAcpiGnvs (
 
   SocUpdateAcpiGnvs ((VOID *)Gnvs);
 }
+
+/**
+  Update the Smbios Tables
+
+  @param[in]  SmbiosEntry   Pointer to the beginning of the Smbios entry+table range
+**/
+VOID
+EFIAPI
+PlatformUpdateSmbios (
+  IN  UINT32    SmbiosEntry
+  )
+{
+}
