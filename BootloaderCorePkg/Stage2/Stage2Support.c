@@ -415,6 +415,7 @@ BuildBaseInfoHob (
     FspGfxHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GetGuidHobData (LdrGlobal->FspHobList, &Length,
                   &gEfiGraphicsInfoHobGuid);
     if (FspGfxHob != NULL) {
+      CopyMem (BlGfxHob, FspGfxHob, sizeof (EFI_PEI_GRAPHICS_INFO_HOB));
       GfxMode = &BlGfxHob->GraphicsMode;
       DEBUG ((DEBUG_INFO, "Graphics Info: %d x %d x 32 @ 0x%08X\n",GfxMode->HorizontalResolution,\
         GfxMode->VerticalResolution, BlGfxHob->FrameBufferBase));
@@ -422,7 +423,6 @@ BuildBaseInfoHob (
           (GfxMode->PixelFormat != PixelBlueGreenRedReserved8BitPerColor)) {
         DEBUG ((DEBUG_ERROR, "Graphics PixelFormat NOT expected (0x%x)\n", GfxMode->PixelFormat));
       }
-      CopyMem (BlGfxHob, FspGfxHob, sizeof (EFI_PEI_GRAPHICS_INFO_HOB));
     } else {
       DEBUG ((DEBUG_INFO, "Failed to get Graphics Info HOB from FSP\n"));
     }
