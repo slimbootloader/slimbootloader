@@ -38,6 +38,18 @@ typedef struct {
   BL_PERF_DATA     PerfData;
 } PAYLOAD_GLOBAL_DATA;
 
+#pragma pack (1)
+
+typedef struct {
+  UINT32 Eip;
+  UINT32 Eax;
+  UINT32 Ebx;
+  UINT32 Esi;
+  UINT32 Edi;
+  UINT32 Ecx;
+} CPU_BOOT_STATE;
+
+#pragma pack ()
 
 /**
   Returns the System table info HOB data.
@@ -150,7 +162,8 @@ GetLoaderPerformanceInfo (
 VOID
 EFIAPI
 PayloadMain (
-  IN  VOID *Param
+  IN  VOID *Param,
+  IN  VOID *PldBase
   );
 
 #endif /* __PAYLOADLIB_H__ */

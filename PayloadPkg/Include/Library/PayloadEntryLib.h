@@ -18,12 +18,14 @@
   The payload common Entry Point for C code.
 
   @param[in] Params         The HOB list pointer for payload.
+  @param[in] PldBase        Address of the payload image base.
 
 **/
 VOID
 EFIAPI
 SecStartup (
-  IN VOID     *Params
+  IN VOID     *Params,
+  IN VOID     *PldBase
   );
 
 #endif /* __PAYLOAD_ENTRY_LIB_H__ */

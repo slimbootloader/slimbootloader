@@ -131,12 +131,14 @@ PayloadInit (
   The payload common Entry Point for C code.
 
   @param[in] Params         The HOB list pointer for payload.
+  @param[in] PldBase        Address of the payload image base.
 
 **/
 VOID
 EFIAPI
 SecStartup (
-  IN VOID                   *Params
+  IN VOID                   *Params,
+  IN VOID                   *PldBase
   )
 {
   PAYLOAD_GLOBAL_DATA       *GlobalDataPtr;
@@ -237,5 +239,5 @@ SecStartup (
     );
   DEBUG_CODE_END ();
 
-  SwitchStack ((SWITCH_STACK_ENTRY_POINT)PayloadMain, &Params, NULL, (VOID *) (UINTN)HeapBase);
+  SwitchStack ((SWITCH_STACK_ENTRY_POINT)PayloadMain, &Params, PldBase, (VOID *) (UINTN)HeapBase);
 }

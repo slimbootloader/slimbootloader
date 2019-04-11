@@ -1,7 +1,7 @@
 ## @file
 # Provides bootloader driver related package definitions.
 #
-# Copyright (c) 2016 - 2017, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2016 - 2019, Intel Corporation. All rights reserved.<BR>
 # This program and the accompanying materials are licensed and made available under
 # the terms and conditions of the BSD License that accompanies this distribution.
 # The full text of the license may be found at
@@ -149,12 +149,15 @@
   gPlatformModuleTokenSpaceGuid.PcdFramebufferInitEnabled | FALSE      | BOOLEAN | 0x20000201
   # Determine if the splash screen should be displayed or not.
   gPlatformModuleTokenSpaceGuid.PcdSplashEnabled          | FALSE      | BOOLEAN | 0x20000202
+  # Determine if the Pre-OS checker should be executed or not.
+  gPlatformModuleTokenSpaceGuid.PcdPreOsCheckerEnabled    | FALSE      | BOOLEAN | 0x20000203
 
-  gPlatformModuleTokenSpaceGuid.PcdAcpiEnabled            | TRUE       | BOOLEAN | 0x20000203
-  gPlatformModuleTokenSpaceGuid.PcdSmpEnabled             | TRUE       | BOOLEAN | 0x20000204
-  gPlatformModuleTokenSpaceGuid.PcdPciEnumEnabled         | TRUE       | BOOLEAN | 0x20000205
-  gPlatformModuleTokenSpaceGuid.PcdStage1BXip             | TRUE       | BOOLEAN | 0x20000206
-  gPlatformModuleTokenSpaceGuid.PcdStage1AXip             | TRUE       | BOOLEAN | 0x20000207
+
+  gPlatformModuleTokenSpaceGuid.PcdAcpiEnabled            | TRUE       | BOOLEAN | 0x20000204
+  gPlatformModuleTokenSpaceGuid.PcdSmpEnabled             | TRUE       | BOOLEAN | 0x20000205
+  gPlatformModuleTokenSpaceGuid.PcdPciEnumEnabled         | TRUE       | BOOLEAN | 0x20000206
+  gPlatformModuleTokenSpaceGuid.PcdStage1BXip             | TRUE       | BOOLEAN | 0x20000207
+  gPlatformModuleTokenSpaceGuid.PcdStage1AXip             | TRUE       | BOOLEAN | 0x20000208
   gPlatformModuleTokenSpaceGuid.PcdLoadImageUseFsp        | FALSE      | BOOLEAN | 0x20000209
   gPlatformModuleTokenSpaceGuid.PcdVtdEnabled             | FALSE      | BOOLEAN | 0x2000020B
   gPlatformModuleTokenSpaceGuid.PcdFlashMapEnabled        | FALSE      | BOOLEAN | 0x2000020C

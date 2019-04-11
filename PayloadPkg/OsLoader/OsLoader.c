@@ -13,6 +13,7 @@
 
 #include "OsLoader.h"
 
+UINT32  *mPreOsCheckerEntry;
 UINT8    mCurrentBoot;
 VOID    *mEntryStack;
 
@@ -258,6 +259,53 @@ SetupBootImage (
 }
 
 /**
+  Search for and load pre-OS checker for execution.
+
+  This function will search for a pre-OS checker binary that might
+  be loaded as part of the payload, if found get the entry point for
+  execution later instead of jumping into the OS directly.
+
+  @param[in] PldBase   Payload Image base to search through for
+                       the pre-OS checker binary.
+
+  @retval  NULL        Pre-OS checker is not loaded successfully.
+  @retval  Others      Pre-OS checker is loaded successfully and
+                       the entry point is returned.
+**/
+UINT32 *
+LoadPreOsChecker (
+  IN  VOID             *PldBase
+  )
+{
+  EFI_FIRMWARE_VOLUME_HEADER       *FvHeader;
+  EFI_FFS_FILE_HEADER              *PreOsCheckerFile;
+  EFI_COMMON_SECTION_HEADER        *Section;
+  UINT32                           PreOsCheckerImageBase;
+  EFI_STATUS                       Status;
+
+  if (((UINT32*) PldBase)[10] == EFI_FVH_SIGNATURE) {
+    FvHeader = (EFI_FIRMWARE_VOLUME_HEADER *) PldBase;
+
+    // Find pre-OS checker FFS file
+    Status = GetFfsFileByType (FvHeader, EFI_FV_FILETYPE_FREEFORM, 0, &PreOsCheckerFile);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Did NOT find PreOsChecker.bin\n"));
+    } else {
+      // Get PreOsChcker.bin data
+      Status = GetSectionByType (PreOsCheckerFile, EFI_SECTION_RAW, 0, (VOID **)&Section);
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_INFO, "PreOsChecker.bin data NOT FOUND\n"));
+      } else {
+        PreOsCheckerImageBase = (UINTN)Section;
+        return LoadElfImage ((VOID *)PreOsCheckerImageBase);
+      }
+    }
+  }
+
+  return NULL;
+}
+
+/**
   Load Image from OS boot device.
 
   This function will initialize OS boot device if required, and load image
@@ -433,6 +481,8 @@ StartBooting (
   EFI_STATUS                 Status;
   MULTIBOOT_IMAGE            *MultiBoot;
   BOOT_PARAMS                *BootParams;
+  CPU_BOOT_STATE             OsBootState;
+  PRE_OS_CHECKER_ENTRY       EntryPoint;
 
   DEBUG_CODE_BEGIN();
   PrintStackHeapInfo ();
@@ -442,8 +492,19 @@ StartBooting (
 
   if ((LoadedImage->Flags & LOADED_IMAGE_LINUX) != 0) {
     BootParams = LoadedImage->Image.Linux.BootParams;
-    BeforeOSJump ("Starting Kernel ...");
-    JumpToKernel ((VOID *)BootParams->Hdr.Code32Start, (VOID *) BootParams);
+
+    if (mPreOsCheckerEntry != NULL) {
+      EntryPoint = (PRE_OS_CHECKER_ENTRY) (UINTN)mPreOsCheckerEntry;
+      BeforeOSJump ("Starting Pre-OS Checker ...");
+
+      OsBootState.Esi = (UINT32) BootParams;
+      OsBootState.Eip = BootParams->Hdr.Code32Start;
+
+      EntryPoint (&OsBootState);
+    } else {
+      BeforeOSJump ("Starting Kernel ...");
+      JumpToKernel ((VOID *)BootParams->Hdr.Code32Start, (VOID *) BootParams);
+    }
     Status = EFI_DEVICE_ERROR;
 
   } else if ((LoadedImage->Flags & LOADED_IMAGE_MULTIBOOT) != 0) {
@@ -653,18 +714,21 @@ RunShell (
   This function will continue Payload execution with a new memory based stack.
 
   @param  Param           parameter passed from SwitchStack().
+  @param  PldBase         payload base passed from SwitchStack().
 
 **/
 VOID
 EFIAPI
 PayloadMain (
-  IN  VOID             *Param
+  IN  VOID             *Param,
+  IN  VOID             *PldBase
   )
 {
   OS_BOOT_OPTION_LIST    *OsBootOptionList;
   UINTN                  ShellTimeout;
 
   mEntryStack = Param;
+  mPreOsCheckerEntry = NULL;
 
   DEBUG ((DEBUG_INFO, "\n\n====================Os Loader====================\n\n"));
   AddMeasurePoint (0x4010);
@@ -699,6 +763,12 @@ PayloadMain (
     TestDevBlocks (&OsBootOptionList->OsBootOption[Index]);
   }
 #endif
+
+  // Check if there is a pre-OS checker that needs to be executed
+  if (PldBase != NULL) {
+    mPreOsCheckerEntry = LoadPreOsChecker (PldBase);
+    DEBUG ((DEBUG_INFO, "Pre-OS checker entry @ 0x%08X\n", mPreOsCheckerEntry));
+  }
 
   //
   // Load and run Image in order from OsImageList

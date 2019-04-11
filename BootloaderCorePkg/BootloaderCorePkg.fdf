@@ -1,7 +1,7 @@
 ## @file
 #  FDF file of Platform.
 #
-# Copyright (c) 2016 - 2018, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2016 - 2019, Intel Corporation. All rights reserved.<BR>
 # This program and the accompanying materials are licensed and made available under
 # the terms and conditions of the BSD License that accompanies this distribution.
 # The full text of the license may be found at
@@ -73,6 +73,19 @@ FV = STAGE2
 $(FSP_S_OFFSET) | $(FSP_S_SIZE)
 FILE = $(FV_DIR)/FSP_S.bin
 !endif
+
+#------------------------------------------------------------------------------
+# OsLoader FD
+#------------------------------------------------------------------------------
+[FD.OsLoader]
+BaseAddress   = $(PAYLOAD_EXE_BASE)
+Size          = $(OS_LOADER_FD_SIZE)
+BlockSize     = $(FLASH_BLOCK_SIZE)
+NumBlocks     = $(OS_LOADER_FD_NUMBLK)
+ErasePolarity = $(FLASH_ERASE_POLARITY)
+
+0x00000000 | $(OS_LOADER_FD_SIZE)
+FV = OsLoader
 
 #------------------------------------------------------------------------------
 # STAGE1A FV
@@ -193,9 +206,9 @@ FILE = $(FV_DIR)/FSP_S.bin
 !endif
 
 #------------------------------------------------------------------------------
-# Dummy FV to make PCDs visible to modules
+# OS Loader Payload as an FV
 #------------------------------------------------------------------------------
-[FV.MISC]
+[FV.OsLoader]
   BlockSize          = $(FLASH_BLOCK_SIZE)
   FvAlignment        = 16
   ERASE_POLARITY     = 1
@@ -215,6 +228,34 @@ FILE = $(FV_DIR)/FSP_S.bin
   READ_LOCK_STATUS   = TRUE
 
   INF PayloadPkg/OsLoader/OsLoader.inf
+
+!if $(ENABLE_PRE_OS_CHECKER)
+  FILE FREEFORM = 01C46D7E-00A2-48E8-A50F-17467D1CA0C5 {
+    SECTION RAW = Platform/$(BOARD_PKG_NAME)/Binaries/PreOsChecker.bin
+  }
+!endif
+
+#------------------------------------------------------------------------------
+# FwUpdate FV to make FirmwareUpdate.efi visible to modules
+#------------------------------------------------------------------------------
+[FV.FwUpdate]
+  BlockSize          = $(FLASH_BLOCK_SIZE)
+  FvAlignment        = 16
+  ERASE_POLARITY     = 1
+  MEMORY_MAPPED      = TRUE
+  STICKY_WRITE       = TRUE
+  LOCK_CAP           = TRUE
+  LOCK_STATUS        = TRUE
+  WRITE_DISABLED_CAP = TRUE
+  WRITE_ENABLED_CAP  = TRUE
+  WRITE_STATUS       = TRUE
+  WRITE_LOCK_CAP     = TRUE
+  WRITE_LOCK_STATUS  = TRUE
+  READ_DISABLED_CAP  = TRUE
+  READ_ENABLED_CAP   = TRUE
+  READ_STATUS        = TRUE
+  READ_LOCK_CAP      = TRUE
+  READ_LOCK_STATUS   = TRUE
 
 !if $(ENABLE_FWU)
   INF PayloadPkg/FirmwareUpdate/FirmwareUpdate.inf

@@ -2,7 +2,7 @@
 ## @ BuildLoader.py
 # Build bootloader main script
 #
-# Copyright (c) 2016 - 2018, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2016 - 2019, Intel Corporation. All rights reserved.<BR>
 # This program and the accompanying materials are licensed and made available under
 # the terms and conditions of the BSD License that accompanies this distribution.
 # The full text of the license may be found at
@@ -187,6 +187,7 @@ class BaseBoard(object):
 		self.ENABLE_FSP_LOAD_IMAGE = 0
 		self.ENABLE_SPLASH         = 0
 		self.ENABLE_FRAMEBUFFER_INIT = 0
+		self.ENABLE_PRE_OS_CHECKER = 0
 		self.ENABLE_CRYPTO_SHA_NI  = 0
 		self.ENABLE_FWU            = 0
 		self.ENABLE_SOURCE_DEBUG   = 0
@@ -219,6 +220,10 @@ class BaseBoard(object):
 		# other: Load image into memory address
 		self.PAYLOAD_LOAD_BASE     = 0
 		self.FWUPDATE_LOAD_BASE    = 0
+
+		# OS Loader FD/FV sizes
+		self.OS_LOADER_FD_SIZE     = 0x00037000
+		self.OS_LOADER_FD_NUMBLK   = self.OS_LOADER_FD_SIZE / self.FLASH_BLOCK_SIZE
 
 		self.PLD_HEAP_SIZE         = 0x02000000
 		self.PLD_STACK_SIZE        = 0x00010000
