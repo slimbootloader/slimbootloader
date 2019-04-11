@@ -1,7 +1,7 @@
 ## @file
 # Provides driver and definitions to build bootloader.
 #
-# Copyright (c) 2016 - 2017, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2016 - 2019, Intel Corporation. All rights reserved.<BR>
 # This program and the accompanying materials are licensed and made available under
 # the terms and conditions of the BSD License that accompanies this distribution.
 # The full text of the license may be found at
@@ -279,6 +279,7 @@
   gPlatformModuleTokenSpaceGuid.PcdLoadImageUseFsp        | $(ENABLE_FSP_LOAD_IMAGE)
   gPlatformModuleTokenSpaceGuid.PcdSplashEnabled          | $(ENABLE_SPLASH)
   gPlatformModuleTokenSpaceGuid.PcdFramebufferInitEnabled | $(ENABLE_FRAMEBUFFER_INIT)
+  gPlatformModuleTokenSpaceGuid.PcdPreOsCheckerEnabled    | $(ENABLE_PRE_OS_CHECKER)
   gPlatformModuleTokenSpaceGuid.PcdVtdEnabled             | $(ENABLE_VTD)
   gPlatformModuleTokenSpaceGuid.PcdFlashMapEnabled        | $(HAVE_FLASH_MAP)
   gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled         | $(HAVE_PSD_TABLE)

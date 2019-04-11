@@ -142,6 +142,7 @@ typedef struct {
   UINT8                   ImageHash[SHA256_DIGEST_SIZE];
 } LOADED_IMAGE;
 
+typedef  VOID   (*PRE_OS_CHECKER_ENTRY) (VOID *Params);
 
 /**
 Print out the Multiboot information block.

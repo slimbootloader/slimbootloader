@@ -956,12 +956,14 @@ GetRegionInfo (
   This function will continue Payload execution with a new memory based stack.
 
   @param  Param           parameter passed from SwitchStack().
+  @param  PldBase         payload base passed from SwitchStack().
 
 **/
 VOID
 EFIAPI
 PayloadMain (
-  IN  VOID  *Param
+  IN  VOID  *Param,
+  IN  VOID  *PldBase
   )
 {
   UINT32        RsvdBase;

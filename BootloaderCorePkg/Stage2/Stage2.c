@@ -227,7 +227,7 @@ NormalBootPath (
   UINT32                         *Dst;
   PAYLOAD_ENTRY                   PldEntry;
   VOID                           *PldHobList;
-  UINT32                          KernelEntry;
+  UINT32                          PldBase;
   LOADER_GLOBAL_DATA             *LdrGlobal;
   EFI_STATUS                      Status;
 
@@ -240,7 +240,7 @@ NormalBootPath (
   BoardInit (PostPayloadLoading);
   AddMeasurePoint (0x31A0);
 
-  KernelEntry = 0;
+  PldBase = 0;
   if (Dst[0] == 0x00005A4D) {
     // It is a PE format
     DEBUG ((DEBUG_INFO, "PE32 Format Payload\n"));
@@ -252,6 +252,9 @@ NormalBootPath (
     // It is a FV format
     DEBUG ((DEBUG_INFO, "FV Format Payload\n"));
     Status = LoadFvImage (Dst, Stage2Hob->PayloadActualLength, (VOID **)&PldEntry);
+    if ((FixedPcdGetBool (PcdPreOsCheckerEnabled))) {
+      PldBase = (UINT32) Dst;
+    }
     ASSERT_EFI_ERROR (Status);
   } else if (IsElfImage (Dst)) {
     PldEntry = (PAYLOAD_ENTRY) (UINTN) LoadElfImage (Dst);
@@ -282,7 +285,7 @@ NormalBootPath (
 
   DEBUG ((DEBUG_INFO, "Payload entry: 0x%08X\n", PldEntry));
   DEBUG ((DEBUG_INIT, "Jump to payload\n"));
-  PldEntry (PldHobList, (VOID *)KernelEntry);
+  PldEntry (PldHobList, (VOID *)PldBase);
 }
 
 /**
