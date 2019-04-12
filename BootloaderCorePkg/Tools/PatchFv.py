@@ -836,7 +836,7 @@ class Symbols:
 #
 #  Print out the usage
 #
-def usage():
+def Usage():
     print "Usage: \n\tPatchFv FvBuildDir [FvFileBaseNames:]FdFileBaseNameToPatch \"Offset, Value\""
 
 def main():
