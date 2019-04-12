@@ -179,6 +179,7 @@ class BaseBoard(object):
 		self.HAVE_PSD_TABLE        = 0
 		self.HAVE_FLASH_MAP        = 1
 		self.HAVE_SEED_LIST        = 0
+		self.HAVE_PSE_FW_BIN       = 0
 
 		self.FIT_ENTRY_MAX_NUM     = 10
 
@@ -633,6 +634,10 @@ class Build(object):
 		if self._board.ENABLE_SPLASH:
 			extra_cmd.append (
 				"<Stage2:__gPcd_BinaryPatch_PcdSplashLogoAddress>, {5E2D3BE9-AD72-4D1D-AAD5-6B08AF921590:0x1C}, @Patch Logo",
+			)
+		if self._board.HAVE_PSE_FW_BIN:
+			extra_cmd.append (
+				"<Stage2:__gPcd_BinaryPatch_PcdPseFwAddress>, {EE4E5898-3914-4259-9D6E-DC7BD79403CF:0x1C}, @Patch PseFw",
 			)
 		patch_fv(
 			self._fv_dir,

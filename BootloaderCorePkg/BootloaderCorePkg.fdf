@@ -205,6 +205,12 @@ FV = OsLoader
   }
 !endif
 
+!if $(HAVE_PSE_FW_BIN)
+  FILE FREEFORM = EE4E5898-3914-4259-9D6E-DC7BD79403CF {
+    SECTION RAW = Platform/$(BOARD_PKG_NAME)/Binaries/PseFw.bin
+  }
+!endif
+
 #------------------------------------------------------------------------------
 # OS Loader Payload as an FV
 #------------------------------------------------------------------------------

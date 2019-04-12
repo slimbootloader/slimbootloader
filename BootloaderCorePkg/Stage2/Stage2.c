@@ -401,6 +401,7 @@ SecStartup (
   Status = PcdSet32S (PcdAcpiTablesAddress,    PCD_GET32_WITH_ADJUST (PcdAcpiTablesAddress) + Delta);
   Status = PcdSet32S (PcdGraphicsVbtAddress,   PCD_GET32_WITH_ADJUST (PcdGraphicsVbtAddress) + Delta);
   Status = PcdSet32S (PcdSplashLogoAddress,    PCD_GET32_WITH_ADJUST (PcdSplashLogoAddress) + Delta);
+  Status = PcdSet32S (PcdPseFwAddress,         PCD_GET32_WITH_ADJUST (PcdPseFwAddress) + Delta);
 
   LdrGlobal->LdrHobList = (VOID *)LdrGlobal->MemPoolEnd;
   BuildHobHandoffInfoTable (

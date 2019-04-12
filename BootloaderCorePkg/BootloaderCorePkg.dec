@@ -132,6 +132,7 @@
   gPlatformModuleTokenSpaceGuid.PcdAcpiTablesAddress      | 0xFF000000 | UINT32 | 0x20000110
   gPlatformModuleTokenSpaceGuid.PcdAcpiGnvsAddress        | 0xFF000000 | UINT32 | 0x20000112
   gPlatformModuleTokenSpaceGuid.PcdGraphicsVbtAddress     | 0xFF000000 | UINT32 | 0x20000113
+  gPlatformModuleTokenSpaceGuid.PcdPseFwAddress           | 0xFF000000 | UINT32 | 0x20000114
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase          | 0xFF000000 | UINT32 | 0x20000120
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegSize          | 0x00000000 | UINT32 | 0x20000121
   gPlatformModuleTokenSpaceGuid.PcdHashStoreBase          | 0xFF000000 | UINT32 | 0x20000181
