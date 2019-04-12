@@ -292,7 +292,7 @@ PeCoffGetPreferredBase (
   // Common for PE32 & PE32+
   //
   if (Hdr.Te->Signature == EFI_TE_IMAGE_HEADER_SIGNATURE) {
-    ImageBase = (UINT32)Hdr.Te->ImageBase;
+    ImageBase = (UINT32)Hdr.Te->ImageBase + Hdr.Te->StrippedSize - sizeof (EFI_TE_IMAGE_HEADER);
   } else if (Hdr.Pe32->Signature == EFI_IMAGE_NT_SIGNATURE) {
     ImageBase = Hdr.Pe32->OptionalHeader.ImageBase;
   } else {
