@@ -563,6 +563,9 @@ def gen_payload_bin (fv_dir, pld_list, pld_bin, priv_key, brd_name = None):
 			src_file = os.path.join(os.environ['PLT_SOURCE'], 'Platform', brd_name, 'Binaries', pld['file'])
 			if (brd_name is None) or (not os.path.exists(src_file)):
 				src_file = os.path.join("PayloadPkg", "PayloadBins", pld['file'])
+				if not os.path.exists(src_file):
+						src_file = os.path.join(fv_dir, pld['file'])
+
 		if idx == 0:
 			dst_path = pld_bin
 		else :
