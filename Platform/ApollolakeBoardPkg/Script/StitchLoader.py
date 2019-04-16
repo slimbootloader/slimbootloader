@@ -784,7 +784,7 @@ def CreateIfwiImage (IfwiIn, IfwiOut, BiosOut, PlatformData, NonRedundant, Stitc
     if not Comp:
         raise Exception ('Unsupported base image format !')
     Data = IfwiData[Comp.Offset + 0x30:Comp.Offset + 0x32]
-    if Data[0] != 0x10  or Data[1] != 0x00:
+    if (Data[0] & 0x0F) != 0x00:
         raise Exception ('Unsupported base image type. Boot Guard might have been enabled in this image !')
 
     print ('Creating %sredundant image ...' % ('Non-' if NonRedundant else ''))
