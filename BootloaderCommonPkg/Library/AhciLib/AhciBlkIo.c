@@ -115,7 +115,7 @@ AhciFindDeviceData (
        Link != &AhciController->DeviceList;
        Link  = Link->ForwardLink) {
     AhciDeviceData = EFI_ATA_DEVICE_FROM_LINK (Link);
-    if (((AhciDeviceData->Port == PortNumber) || (PortNumber == 0xFFFFFFFF)) &&
+    if (((AhciDeviceData->Port == PortNumber) || (PortNumber == 0xFF)) &&
         ((AhciDeviceData->PortMultiplier == PortMulNumber) || (PortMulNumber == 0xFFFFFFFF))) {
       return AhciDeviceData;
     }
