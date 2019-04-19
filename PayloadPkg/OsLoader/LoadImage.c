@@ -52,14 +52,14 @@ FindBootPartition (
   //
   Status = MediaSetInterfaceType (BootOption->DevType);
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "Invalid Boot device configured\n"));
+    DEBUG ((DEBUG_ERROR, "Failed to set media interface - %r\n", Status));
     return RETURN_UNSUPPORTED;
   }
 
-  DEBUG ((DEBUG_INFO, "Getting boot image from... %a\n", GetBootDeviceNameString(BootOption->DevType)));
-
+  DEBUG ((DEBUG_INFO, "Getting boot image from %a\n", GetBootDeviceNameString(BootOption->DevType)));
   Status = MediaInitialize (BootMediumPciBase, DevInitAll);
   if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to init media - %r\n", Status));
     return Status;
   }
 
@@ -70,6 +70,7 @@ FindBootPartition (
   DEBUG ((DEBUG_INFO, "Try to find boot partition\n"));
   Status = FindPartitions (BootOption->HwPart, HwPartHandle);
   if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to find partition - %r\n", Status));
     return Status;
   }
   AddMeasurePoint (0x4060);
