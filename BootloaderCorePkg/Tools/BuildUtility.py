@@ -571,7 +571,11 @@ def gen_payload_bin (fv_dir, pld_list, pld_bin, priv_key, brd_name = None):
 		else :
 			dst_path = os.path.join(fv_dir, os.path.basename(src_file))
 
-		shutil.copy (src_file, dst_path)
+		if not os.path.exists(src_file):
+			raise Exception ("Cannot find payload file '%s' !" % src_file)
+
+		if src_file != dst_path:
+			shutil.copy (src_file, dst_path)
 
 	epld_bin   = os.path.join(os.path.dirname(pld_bin), 'E' + os.path.basename(pld_bin))
 	ext_list   = pld_list[1:]
