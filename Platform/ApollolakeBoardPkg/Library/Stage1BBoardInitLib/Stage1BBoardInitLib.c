@@ -1932,6 +1932,10 @@ FindNvsData (
 
     ActIdx = 0xFF;
     if (MrcVarHdr->Signature == MRC_VAR_SIGNATURE) {
+      if (MrcVarHdr->SlotNum > 0) {
+        // Set default slot to be the last entry
+        ActIdx = MrcVarHdr->SlotNum;
+      }
       for (Idx = 0; Idx < MrcVarHdr->SlotNum >> 3; Idx++) {
         Data8 = MrcVarHdr->SlotMap[Idx];
         if (Data8 != 0) {
@@ -1949,9 +1953,12 @@ FindNvsData (
       break;
     }
 
-    // Read NV data from the slot
+    // Adjust index to be 0 based
+    ActIdx--;
     DEBUG ((DEBUG_INFO, "Use slot %d\n", ActIdx));
-    Offset = MrcNvDataOffset + sizeof (MRC_VAR_HDR) + (ActIdx - 1) * MRC_VAR_SLOT_LENGTH;
+
+    // Read NV data from the slot
+    Offset = MrcNvDataOffset + sizeof (MRC_VAR_HDR) + ActIdx * MRC_VAR_SLOT_LENGTH;
     CopyMem ((UINT8 *)MrcVarData, (UINT8 *)MrcDataBase + Offset, MRC_VAR_LENGTH);
 
   } while (EFI_ERROR (Status));
