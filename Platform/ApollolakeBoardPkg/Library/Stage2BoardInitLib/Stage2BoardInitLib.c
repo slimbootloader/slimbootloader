@@ -1129,7 +1129,7 @@ SaveNvsData (
       }
       SetMem (MrcVarHdr, sizeof (MRC_VAR_HDR), 0xFF);
       MrcVarHdr->Signature  = MRC_VAR_SIGNATURE;
-      MrcVarHdr->SlotNum    = (SIZE_4KB - sizeof (MRC_VAR_HDR)) / MRC_VAR_SLOT_LENGTH;
+      MrcVarHdr->SlotNum    = ALIGN_DOWN (((SIZE_4KB - sizeof (MRC_VAR_HDR)) / MRC_VAR_SLOT_LENGTH), 8);
       MrcVarHdr->SlotLen    = MRC_VAR_SLOT_LENGTH;
       MrcVarHdr->SlotMap[0] = 0xFE;
       Status = SpiFlashWrite (FlashRegionBios, BiosOffset + MrcNvDataOffset + sizeof (UINT32),
