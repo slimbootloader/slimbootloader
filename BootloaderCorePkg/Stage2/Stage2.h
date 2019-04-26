@@ -61,6 +61,8 @@
 #include <HashStore.h>
 #include <VerInfo.h>
 
+#include <Library/SmbiosInitLib.h>
+
 #define UIMAGE_FIT_MAGIC               (0x56190527)
 
 /**

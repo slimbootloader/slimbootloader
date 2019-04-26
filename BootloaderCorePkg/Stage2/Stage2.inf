@@ -73,6 +73,8 @@
   LiteFvLib
   ElfLib
 
+  SmbiosInitLib
+
 [Guids]
   gFspReservedMemoryResourceHobGuid
   gLoaderSerialPortInfoGuid
@@ -130,5 +132,10 @@
   gPlatformModuleTokenSpaceGuid.PcdSeedListBufferSize
   gPlatformCommonLibTokenSpaceGuid.PcdSeedListEnabled
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
+
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesBase
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesSize
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled
+
 [Depex]
   TRUE

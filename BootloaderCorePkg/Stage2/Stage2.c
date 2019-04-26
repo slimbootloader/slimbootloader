@@ -373,6 +373,7 @@ SecStartup (
   UINT8                           BootMode;
   S3_DATA                        *S3Data;
   PLATFORM_SERVICE               *PlatformService;
+  VOID                           *SmbiosEntry;
 
   // Initialize HOB
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
@@ -524,6 +525,18 @@ SecStartup (
     AddMeasurePoint (0x30D0);
     if (EFI_ERROR (Status)) {
       CpuHaltWithStatus ("ACPI error !", Status);
+    }
+  }
+
+  //
+  // Allocate SMBIOS tables' memory, set Base and call Smbios init
+  //
+  if (FixedPcdGetBool (PcdSmbiosEnabled)) {
+    SmbiosEntry = AllocateZeroPool (PcdGet16(PcdSmbiosTablesSize));
+    Status = PcdSet32S (PcdSmbiosTablesBase, (UINT32)SmbiosEntry);
+    Status = SmbiosInit ();
+    if (EFI_ERROR(Status)) {
+      DEBUG ((DEBUG_INFO, "SMBIOS init Status = %r\n", Status));
     }
   }
 
