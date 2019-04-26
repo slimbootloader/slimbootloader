@@ -46,10 +46,14 @@ typedef enum {
 typedef struct {
   UINT8   RegType;
   UINT8   RegWidth;
+  /// The bit value for Global SMI Enable (GBL_SMI_EN)
   UINT8   SmiGblPos;
+  /// The bit value for APMC Enable (APMC_EN).
   UINT8   SmiApmPos;
+  /// The bit value for End of SMI (EOS)
   UINT8   SmiEosPos;
   UINT8   Rsvd[3];
+  /// IO based address for SMM control and enable register
   UINT32  Address;
 } SMI_CTRL_REG;
 

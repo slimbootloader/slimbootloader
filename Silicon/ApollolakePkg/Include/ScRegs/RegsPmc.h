@@ -68,16 +68,17 @@
 #define R_ACPI_PM1_TMR                        0x08  ///< Power Management 1 Timer
 #define B_ACPI_PM1_TMR_VAL                    0xFFFFFF ///< The timer value mask
 #define V_ACPI_PM1_TMR_MAX_VAL                0x1000000 ///< The timer is 24 bit overflow
-#endif
 
-#if (ENBDT_PF_ENABLE == 1)
-  #define R_SMI_EN                              0x40  ///< SMI Control and Enable
-#else
-  #define R_SMI_EN                              0x30  ///< SMI Control and Enable
-#endif
+#define R_SMI_EN                              0x40  ///< SMI Control and Enable
 #define B_SMI_EN_GBL_SMI                      BIT0  ///< Global SMI Enable
+#define B_SMI_EN_EOS                          BIT1  ///< End Of Service
+#define B_SMI_EN_APMC                         BIT5  ///< APMC Enable
+#define B_SMI_EN_SWSMI_TMR                    BIT6  ///< Software SMI Timer Enable
+
 #define R_TCO_STS                             0x64  ///< TCO Timer Status
 #define B_TCO_STS_SECOND_TO                   BIT17 ///< Second Timeout Status
 #define R_TCO1_CNT                            0x68  ///< TCO Control
 #define B_TCO1_CNT_TMR_HLT                    BIT11 ///< TCO Timer Halt
 #define B_TCO1_CNT_LOCK                       BIT12 ///< TCO Enable Lock
+
+#endif
