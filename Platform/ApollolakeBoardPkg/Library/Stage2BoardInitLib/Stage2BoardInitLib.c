@@ -1336,6 +1336,15 @@ UpdateSmmInfo (
   SmmInfoHob->SmmSize -= SmmInfoHob->SmmBase;
   SmmInfoHob->Flags = 0;
   DEBUG ((EFI_D_INFO, "SmmRamBase = 0x%x, SmmRamSize = 0x%x\n", SmmInfoHob->SmmBase, SmmInfoHob->SmmSize));
+  //
+  // Update the HOB with smi ctrl register data
+  //
+  SmmInfoHob->SmiCtrlReg.RegType    = IO;
+  SmmInfoHob->SmiCtrlReg.RegWidth   = WIDE32;
+  SmmInfoHob->SmiCtrlReg.SmiGblPos  = B_SMI_EN_GBL_SMI;
+  SmmInfoHob->SmiCtrlReg.SmiApmPos  = B_SMI_EN_APMC;
+  SmmInfoHob->SmiCtrlReg.SmiEosPos  = B_SMI_EN_EOS;
+  SmmInfoHob->SmiCtrlReg.Address    = (UINT32)(ACPI_BASE_ADDRESS + R_SMI_EN);
 }
 
 
