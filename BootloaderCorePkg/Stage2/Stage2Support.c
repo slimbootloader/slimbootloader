@@ -567,8 +567,8 @@ BuildExtraInfoHob (
   if (SystemTableInfo != NULL) {
     SystemTableInfo->AcpiTableBase = S3Data->AcpiBase;
     SystemTableInfo->AcpiTableSize = S3Data->AcpiTop - S3Data->AcpiBase;
-    SystemTableInfo->SmbiosTableBase = 0;
-    SystemTableInfo->SmbiosTableSize = 0;
+    SystemTableInfo->SmbiosTableBase = (UINT64)PcdGet32 (PcdSmbiosTablesBase);
+    SystemTableInfo->SmbiosTableSize = (UINT32)PcdGet16 (PcdSmbiosTablesSize);
     PlatformUpdateHobInfo (&gLoaderSystemTableInfoGuid, SystemTableInfo);
   }
 

@@ -116,6 +116,8 @@
   gPlatformModuleTokenSpaceGuid.PcdMaxServiceNumber       | 8          | UINT32 | 0x200000E1
   gPlatformModuleTokenSpaceGuid.PcdSeedListBufferSize     | 0x00000400 | UINT32 | 0x200000E2
 
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesSize       |     0x1000 | UINT16 | 0x200000E3
+
 [PcdsFixedAtBuild, PcdsPatchableInModule]
   #
   # For module patchable PCDs, if it is required to do static patching during the build
@@ -141,6 +143,10 @@
   gPlatformModuleTokenSpaceGuid.PcdPayloadReservedMemSize | 0x00004000 | UINT32 | 0x20000195
   gPlatformModuleTokenSpaceGuid.PcdSmmRebaseMode          | 0x00000000 | UINT8  | 0x20000196
 
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesBase       | 0x00000000 | UINT32 | 0x20000197
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsPtr       | 0x00000000 | UINT32 | 0x20000198
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsCnt       |     0x0000 | UINT16 | 0x20000199
+
 
 [PcdsFeatureFlag]
   # Determine if the Intel GFX device should be enabled or not in system
@@ -163,3 +169,4 @@
   gPlatformModuleTokenSpaceGuid.PcdFlashMapEnabled        | FALSE      | BOOLEAN | 0x2000020C
   gPlatformModuleTokenSpaceGuid.PcdS3DebugEnabled         | FALSE      | BOOLEAN | 0x2000020D
   gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled         | FALSE      | BOOLEAN | 0x2000020E
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled          | FALSE      | BOOLEAN | 0x2000020F

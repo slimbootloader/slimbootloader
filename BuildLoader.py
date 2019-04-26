@@ -193,6 +193,7 @@ class BaseBoard(object):
 		self.ENABLE_SOURCE_DEBUG   = 0
 		self.ENABLE_SMM_REBASE     = 0
 		self.ENABLE_GRUB_CONFIG    = 0
+		self.ENABLE_SMBIOS         = 0
 
 		self.ACM_SIZE              = 0
 		self.UCODE_SIZE            = 0

@@ -73,6 +73,7 @@
   BootloaderCoreLib|$(PLATFORM_PACKAGE)/Library/BootloaderCoreLib/BootloaderCoreLib.inf
   PciEnumerationLib|$(PLATFORM_PACKAGE)/Library/PciEnumerationLib/PciEnumerationLib.inf
   AcpiInitLib|$(PLATFORM_PACKAGE)/Library/AcpiInitLib/AcpiInitLib.inf
+  SmbiosInitLib|BootloaderCommonPkg/Library/SmbiosInitLib/SmbiosInitLib.inf
   LitePeCoffLib|BootloaderCommonPkg/Library/LitePeCoffLib/LitePeCoffLib.inf
   HobLib|BootloaderCommonPkg/Library/HobLib/HobLib.inf
   HobBuildLib|$(PLATFORM_PACKAGE)/Library/HobBuildLib/HobBuildLib.inf
@@ -266,6 +267,10 @@
 
   gPlatformModuleTokenSpaceGuid.PcdSmmRebaseMode     | $(ENABLE_SMM_REBASE)
 
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesBase  | 0x00000000
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsPtr  | 0x00000000
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsCnt  | 0x0000
+
 [PcdsFeatureFlag]
   gPlatformCommonLibTokenSpaceGuid.PcdMinDecompression    | FALSE
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled | $(HAVE_MEASURED_BOOT)
@@ -284,6 +289,7 @@
   gPlatformModuleTokenSpaceGuid.PcdFlashMapEnabled        | $(HAVE_FLASH_MAP)
   gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled         | $(HAVE_PSD_TABLE)
   gPayloadTokenSpaceGuid.PcdGrubBootCfgEnabled            | $(ENABLE_GRUB_CONFIG)
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled          | $(ENABLE_SMBIOS)
 
 !ifdef $(S3_DEBUG)
   gPlatformModuleTokenSpaceGuid.PcdS3DebugEnabled         | $(S3_DEBUG)
