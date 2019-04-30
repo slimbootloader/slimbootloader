@@ -43,6 +43,15 @@ typedef enum {
 #pragma pack (1)
 
 typedef struct {
+  UINT32 Eip;
+  UINT32 Eax;
+  UINT32 Ebx;
+  UINT32 Esi;
+  UINT32 Edi;
+  UINT32 Ecx;
+} CPU_BOOT_STATE;
+
+typedef struct {
   // use size as version. In future, we can only add members in the structure
   UINT32         SizeOfThisStruct;
   UINT32         Version;
