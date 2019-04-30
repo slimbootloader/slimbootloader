@@ -478,11 +478,11 @@ StartBooting (
   IN LOADED_IMAGE            *LoadedImage
   )
 {
-  EFI_STATUS                 Status;
   MULTIBOOT_IMAGE            *MultiBoot;
   BOOT_PARAMS                *BootParams;
-  CPU_BOOT_STATE             OsBootState;
+  PRE_OS_PAYLOAD_PARAM       PreOsParams;
   PRE_OS_CHECKER_ENTRY       EntryPoint;
+  EFI_STATUS                 Status;
 
   DEBUG_CODE_BEGIN();
   PrintStackHeapInfo ();
@@ -497,10 +497,15 @@ StartBooting (
       EntryPoint = (PRE_OS_CHECKER_ENTRY) (UINTN)mPreOsCheckerEntry;
       BeforeOSJump ("Starting Pre-OS Checker ...");
 
-      OsBootState.Esi = (UINT32) BootParams;
-      OsBootState.Eip = BootParams->Hdr.Code32Start;
+      PreOsParams.Version  = 0x1;
+      PreOsParams.HeapSize = EFI_SIZE_TO_PAGES (0);
+      PreOsParams.HeapAddr = (UINT32) AllocatePages (PreOsParams.HeapSize);
 
-      EntryPoint (&OsBootState);
+      PreOsParams.OsBootState.Esi = (UINT32) BootParams;
+      PreOsParams.OsBootState.Eip = BootParams->Hdr.Code32Start;
+      PreOsParams.OsBootState.Eflags = 0;
+
+      EntryPoint (&PreOsParams);
     } else {
       BeforeOSJump ("Starting Kernel ...");
       JumpToKernel ((VOID *)BootParams->Hdr.Code32Start, (VOID *) BootParams);

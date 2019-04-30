@@ -41,13 +41,23 @@ typedef struct {
 #pragma pack (1)
 
 typedef struct {
-  UINT32 Eip;
   UINT32 Eax;
   UINT32 Ebx;
+  UINT32 Ecx;
+  UINT32 Edx;
   UINT32 Esi;
   UINT32 Edi;
-  UINT32 Ecx;
-} CPU_BOOT_STATE;
+  UINT32 Ebp;
+  UINT32 Eip;
+  UINT32 Eflags;
+} OS_BOOT_STATE;
+
+typedef struct {
+  UINT32        Version;
+  UINT32        HeapSize;
+  UINT32        HeapAddr;
+  OS_BOOT_STATE OsBootState;
+} PRE_OS_PAYLOAD_PARAM;
 
 #pragma pack ()
 
