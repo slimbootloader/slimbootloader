@@ -32,13 +32,13 @@
   # eMMC boot P1
   # !BSF SUBT:{OS_TMPL:0 :  0    :  0 :   2   :  0   :   0  :    0 :    0 :'iasimage.bin' :       0 :      0 :     0         :     0   :  0     :     0         :     0   :   0    }
   # eMMC boot P2
-  # !BSF SUBT:{OS_TMPL:1 :  0    :  0 :   2   :  0   :   0  :    0 :    3 :       0       :       1 :      0 :     0         :     0   :  0     :     0         :     0   :   0    }
+  # !BSF SUBT:{OS_TMPL:1 :  0    :  0 :   2   :  0   :   0  :    0 :    3 :      ''       :       1 :      0 :     0         :     0   :  0     :     0         :     0   :   0    }
   # SATA boot
   # !BSF SUBT:{OS_TMPL:2 :  0    :  0 :   0   :  0   :   0  :    0 :    0 :'iasimage.bin' :       0 :      0 :     0         :     0   :  0     :     0         :     0   :   0    }
   # USB boot
   # !BSF SUBT:{OS_TMPL:3 :  0    :  0 :   5   :  0   :   0  :    0 :    0 :'iasimage.bin' :       0 :      0 :     0         :     0   :  0     :     0         :     8   :   0    }
   # SPI boot (for fastboot recovery)
-  # !BSF SUBT:{OS_TMPL:4 :  4    :  0 :   7   :  0   :   0  :    0 :    3 :      0        :       0 :      0 :     0         :     0   :  0     :     0         :     0   :   0    }
+  # !BSF SUBT:{OS_TMPL:4 :  4    :  0 :   7   :  0   :   0  :    0 :    3 :      ''       :       0 :      0 :     0         :     0   :  0     :     0         :     0   :   0    }
 
   # !HDR EMBED:{OS_CFG_DATA:TAG_700:END}
 
