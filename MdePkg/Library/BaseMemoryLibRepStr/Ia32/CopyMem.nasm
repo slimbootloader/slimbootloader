@@ -38,6 +38,33 @@ ASM_PFX(InternalMemCopyMem):
     mov     esi, [esp + 16]             ; esi <- Source
     mov     edi, [esp + 12]             ; edi <- Destination
     mov     edx, [esp + 20]             ; edx <- Count
+    shr     edx, 7
+    jz      @CopyRest
+@Copy128:
+    movdqu  xmm0, [esi + 0 ]
+    movdqu  xmm1, [esi + 16]
+    movdqu  xmm2, [esi + 32]
+    movdqu  xmm3, [esi + 48]
+    movdqu  xmm4, [esi + 64]
+    movdqu  xmm5, [esi + 80]
+    movdqu  xmm6, [esi + 96]
+    movdqu  xmm7, [esi + 112]
+    movdqu  [edi + 0 ], xmm0
+    movdqu  [edi + 16], xmm1
+    movdqu  [edi + 32], xmm2
+    movdqu  [edi + 48], xmm3
+    movdqu  [edi + 64], xmm4
+    movdqu  [edi + 80], xmm5
+    movdqu  [edi + 96], xmm6
+    movdqu  [edi + 112], xmm7
+    add     esi, 128
+    add     edi, 128
+    dec     edx
+    jnz     @Copy128                    ; Copy as many 128-byte blocks as possible
+@CopyRest:
+    mov     edx, [esp + 20]
+    and     edx, 7Fh
+    jz      @End
     lea     eax, [esi + edx - 1]        ; eax <- End of Source
     cmp     esi, edi
     jae     .0
@@ -57,8 +84,8 @@ ASM_PFX(InternalMemCopyMem):
     mov     ecx, edx
     rep     movsb                       ; Copy bytes backward
     cld
+@End:
     mov     eax, [esp + 12]             ; eax <- Destination as return value
     pop     edi
     pop     esi
     ret
-
