@@ -106,7 +106,7 @@ TrimRight (
   IN  CHAR8  *Line
   )
 {
-  while ((Line[0] == ' ') || (Line[0] == '\t') || (Line[0] == '\r')) {
+  while ((Line[0] == ' ') || (Line[0] == '\t') || (Line[0] == '\r') || (Line[0] == '\n')) {
     Line--;
   }
   return Line;
@@ -267,8 +267,8 @@ ParseLinuxBootConfig (
       // Mark initrd path
       CurrLine = TrimLeft (CurrLine);
       MenuEntry[EntryNum].InitRd.Pos = CurrLine - CfgBuffer;
-      CurrLine = GetNextSpace (CurrLine, EndLine);
-      MenuEntry[EntryNum].InitRd.Len = CurrLine - CfgBuffer - MenuEntry[EntryNum].InitRd.Pos;
+      EndLine  = TrimRight (EndLine);
+      MenuEntry[EntryNum].InitRd.Len = EndLine - CfgBuffer - MenuEntry[EntryNum].InitRd.Pos;
     }
 
     CurrLine = NextLine;
