@@ -87,8 +87,9 @@ DisplaySplash (
   EFI_PEI_GRAPHICS_INFO_HOB           *GfxInfoHob;
   EFI_GRAPHICS_OUTPUT_BLT_PIXEL_UNION *GopBlt;
   UINTN                               GopBltSize;
-  UINTN                               Width, Height;
-  INTN                                OffX, OffY;
+
+  GopBlt = NULL;
+  GopBltSize = 0;
 
   // Get framebuffer info
   GfxInfoHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GetGuidHobData (NULL, NULL, &gEfiGraphicsInfoHobGuid);
@@ -96,28 +97,11 @@ DisplaySplash (
     return EFI_UNSUPPORTED;
   }
 
-  // Convert image from BMP format
+  // Convert image from BMP format and write to frame buffer
   GopBlt = NULL;
   SplashLogoBmp = (VOID *) PCD_GET32_WITH_ADJUST (PcdSplashLogoAddress);
   ASSERT (SplashLogoBmp != NULL);
-  Status = ConvertBmpToGopBlt (SplashLogoBmp,
-                               (VOID **)&GopBlt, &GopBltSize,
-                               &Height, &Width);
-  if (Status != EFI_SUCCESS) {
-    return Status;
-  }
-  ASSERT (GopBlt != NULL);
-
-  // Check image size
-  if ((Width > GfxInfoHob->GraphicsMode.HorizontalResolution)
-      || (Height > GfxInfoHob->GraphicsMode.VerticalResolution)) {
-    return EFI_BUFFER_TOO_SMALL;
-  }
-
-  // Copy image to center of framebuffer
-  OffX = (GfxInfoHob->GraphicsMode.HorizontalResolution - Width) / 2;
-  OffY = (GfxInfoHob->GraphicsMode.VerticalResolution - Height) / 2;
-  Status = BltToFrameBuffer (GfxInfoHob, GopBlt, Width, Height, OffX, OffY);
+  Status = DisplayBmpToFrameBuffer (SplashLogoBmp, (VOID **)&GopBlt, &GopBltSize, GfxInfoHob);
 
   return Status;
 }
@@ -419,7 +403,7 @@ BuildBaseInfoHob (
       GfxMode = &BlGfxHob->GraphicsMode;
       DEBUG ((DEBUG_INFO, "Graphics Info: %d x %d x 32 @ 0x%08X\n",GfxMode->HorizontalResolution,\
         GfxMode->VerticalResolution, BlGfxHob->FrameBufferBase));
-      if ((GfxMode->PixelFormat != PixelRedGreenBlueReserved8BitPerColor) ||
+      if ((GfxMode->PixelFormat != PixelRedGreenBlueReserved8BitPerColor) &&
           (GfxMode->PixelFormat != PixelBlueGreenRedReserved8BitPerColor)) {
         DEBUG ((DEBUG_ERROR, "Graphics PixelFormat NOT expected (0x%x)\n", GfxMode->PixelFormat));
       }

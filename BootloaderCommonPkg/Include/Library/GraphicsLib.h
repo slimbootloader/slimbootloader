@@ -78,15 +78,14 @@ typedef struct {
 } FRAME_BUFFER_CONSOLE;
 
 /**
-  Convert a *.BMP graphics image to a GOP blt buffer. If a NULL Blt buffer
+  Display a *.BMP graphics image to the frame buffer. If a NULL GopBlt buffer
   is passed in a GopBlt buffer will be allocated by this routine. If a GopBlt
   buffer is passed in it will be used if it is big enough.
 
   @param  BmpImage      Pointer to BMP file
-  @param  GopBlt        Buffer containing GOP version of BmpImage.
+  @param  GopBlt        Buffer for transferring BmpImage to the frame buffer.
   @param  GopBltSize    Size of GopBlt in bytes.
-  @param  PixelHeight   Height of GopBlt/BmpImage in pixels
-  @param  PixelWidth    Width of GopBlt/BmpImage in pixels
+  @param  GfxInfoHob    Pointer to graphics info HOB.
 
   @retval EFI_SUCCESS           GopBlt and GopBltSize are returned.
   @retval EFI_UNSUPPORTED       BmpImage is not a valid *.BMP image
@@ -96,12 +95,11 @@ typedef struct {
 
 **/
 EFI_STATUS
-ConvertBmpToGopBlt (
+DisplayBmpToFrameBuffer (
   IN     VOID      *BmpImage,
   IN OUT VOID      **GopBlt,
   IN OUT UINTN     *GopBltSize,
-  OUT UINTN     *PixelHeight,
-  OUT UINTN     *PixelWidth
+  IN     EFI_PEI_GRAPHICS_INFO_HOB *GfxInfoHob
   );
 
 /**
