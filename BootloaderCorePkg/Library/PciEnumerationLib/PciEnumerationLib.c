@@ -88,6 +88,9 @@ PciDevicePresent (
   )
 {
   UINT32      Address;
+  UINT32      Loop;
+  UINT32      *Src;
+  UINT32      *Dst;
 
   //
   // Create PCI address map in terms of Bus, Device and Func
@@ -100,8 +103,16 @@ PciDevicePresent (
   if (PciExpressRead16 (Address) == 0xFFFF) {
     return EFI_NOT_FOUND;
   } else {
-    CopyMem (Pci, (VOID *) ((UINTN)PcdGet64 (PcdPciExpressBaseAddress) + \
-                            PCI_EXPRESS_LIB_ADDRESS (Bus, Device, Func, 0)), sizeof (PCI_TYPE00));
+    //
+    // We perform a memory copy here manually since using the
+    // BaseMemoryLibSse2 CopyMem routine causes issue related
+    // to DQWORD copying in PCI config space.
+    //
+    Src = (UINT32 *) ((UINTN)PcdGet64 (PcdPciExpressBaseAddress) + PCI_EXPRESS_LIB_ADDRESS (Bus, Device, Func, 0));
+    Dst = (UINT32 *) Pci;
+    for (Loop = 0; Loop < sizeof (PCI_TYPE00); Loop += sizeof (UINT32)) {
+      *Dst++ = *Src++;
+    }
     return EFI_SUCCESS;
   }
 }
