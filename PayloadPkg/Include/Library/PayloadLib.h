@@ -57,6 +57,7 @@ typedef struct {
   UINT32        HeapSize;
   UINT32        HeapAddr;
   OS_BOOT_STATE OsBootState;
+  UINT32        HobListPtr;
 } PRE_OS_PAYLOAD_PARAM;
 
 #pragma pack ()
