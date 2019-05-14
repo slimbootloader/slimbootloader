@@ -500,6 +500,7 @@ StartBooting (
       PreOsParams.Version  = 0x1;
       PreOsParams.HeapSize = EFI_SIZE_TO_PAGES (0);
       PreOsParams.HeapAddr = (UINT32) AllocatePages (PreOsParams.HeapSize);
+      PreOsParams.HobListPtr = PcdGet32 (PcdPayloadHobList);
 
       PreOsParams.OsBootState.Esi = (UINT32) BootParams;
       PreOsParams.OsBootState.Eip = BootParams->Hdr.Code32Start;
