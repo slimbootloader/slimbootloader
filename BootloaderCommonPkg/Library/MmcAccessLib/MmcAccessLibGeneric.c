@@ -1276,6 +1276,8 @@ MmcRwMultiBlocks (
   EFI_STATUS                            Status;
   EMMC_CARD_DATA                       *CardData;
 
+  CardData = (EMMC_CARD_DATA *) Private->Slot.CardData;
+
   ZeroMem (&SdMmcCmdBlk, sizeof (SdMmcCmdBlk));
   ZeroMem (&SdMmcStatusBlk, sizeof (SdMmcStatusBlk));
   ZeroMem (&Packet, sizeof (Packet));
@@ -1288,14 +1290,22 @@ MmcRwMultiBlocks (
     Packet.InDataBuffer     = Buffer;
     Packet.InTransferLength = (UINT32)BufferSize;
 
-    SdMmcCmdBlk.CommandIndex = EMMC_READ_MULTIPLE_BLOCK;
+    if (BufferSize > CardData->BlockLen) {
+      SdMmcCmdBlk.CommandIndex = EMMC_READ_MULTIPLE_BLOCK;
+    } else {
+      SdMmcCmdBlk.CommandIndex = EMMC_READ_SINGLE_BLOCK;
+    }
     SdMmcCmdBlk.CommandType  = SdMmcCommandTypeAdtc;
     SdMmcCmdBlk.ResponseType = SdMmcResponseTypeR1;
   } else {
     Packet.OutDataBuffer     = Buffer;
     Packet.OutTransferLength = (UINT32)BufferSize;
 
-    SdMmcCmdBlk.CommandIndex = EMMC_WRITE_MULTIPLE_BLOCK;
+    if (BufferSize > CardData->BlockLen) {
+      SdMmcCmdBlk.CommandIndex = EMMC_WRITE_MULTIPLE_BLOCK;
+    } else {
+      SdMmcCmdBlk.CommandIndex = EMMC_WRITE_BLOCK;
+    }
     SdMmcCmdBlk.CommandType  = SdMmcCommandTypeAdtc;
     SdMmcCmdBlk.ResponseType = SdMmcResponseTypeR1;
   }
@@ -1303,7 +1313,6 @@ MmcRwMultiBlocks (
   if (Private->Slot.SectorAddressing) {
     SdMmcCmdBlk.CommandArgument = (UINT32)Lba;
   } else {
-    CardData = (EMMC_CARD_DATA *) Private->Slot.CardData;
     SdMmcCmdBlk.CommandArgument = (UINT32)MultU64x32 (Lba, CardData->BlockLen);
   }
 
@@ -1372,11 +1381,13 @@ MmcReadWrite (
       BlockNum = MaxBlock;
     }
 
-    Status = MmcSetBlkCount (Private, (UINT16)BlockNum, IsReliableWrite);
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "Emmc%a MmcSetBlkCount Failed: Lba 0x%x, BlockNum 0x%x with 0x%x\n", IsRead ? "Read " : "Write",
-              (UINT32)Lba, BlockNum, Status));
-      return Status;
+    if (Private->Slot.CardType != SdCardType) {
+      Status = MmcSetBlkCount (Private, (UINT16)BlockNum, IsReliableWrite);
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "Emmc%a MmcSetBlkCount Failed: Lba 0x%x, BlockNum 0x%x with 0x%x\n", IsRead ? "Read " : "Write",
+                (UINT32)Lba, BlockNum, Status));
+        return Status;
+      }
     }
 
     BufferSize = BlockNum * CardData->BlockLen;
