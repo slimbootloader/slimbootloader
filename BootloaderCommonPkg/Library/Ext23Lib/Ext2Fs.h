@@ -599,69 +599,6 @@ Ext2fsSeek (
   INT32         Where
   );
 
-
-/**
- Read a new inode into a FILE structure.
- @param [in] INumber inode number
- @param [in] File pointer to open file struct.
- @retval
-**/
-STATIC
-INT32
-ReadInode (
-  IN    INODE32      INumber,
-  IN    OPEN_FILE   *File
-  );
-
-/**
-  Given an offset in a FILE, find the disk block number that
-  contains that block.
-  @param File           pointer to an Open file.
-  @param FileBlock      Block to find the file.
-  @param DiskBlockPtr   Pointer to the disk which contains block.
-  @retval 0 if success
-  @retval other if error.
-**/
-STATIC
-INT32
-BlockMap (
-  OPEN_FILE     *File,
-  INDPTR         FileBlock,
-  INDPTR        *DiskBlockPtr
-  );
-
-/**
-  Read a portion of a FILE into an internal buffer.
-  Return the location in the buffer and the amount in the buffer.
-  @param File       Pointer to the open file.
-  @param BufferPtr  buffer corresponding to offset
-  @param SizePtr    Size of remainder of buffer.
-**/
-STATIC
-INT32
-BufReadFile (
-  OPEN_FILE     *File,
-  CHAR8        **BufferPtr,
-  UINT32        *SizePtr
-  );
-
-/**
-  Search a directory for a Name and return its
-  inode number.
-  @param Name       Name to compare with
-  @param Length     Length of the dir name
-  @param File       Pointer to file private data
-  @param INumPtr    pointer to Inode number.
-**/
-STATIC
-INT32
-SearchDirectory (
-  CHAR8         *Name,
-  INT32          Length,
-  OPEN_FILE     *File,
-  INODE32       *INumPtr
-  );
-
 /**
   Read Superblock of the file.
   @param File       File for which super block needs to be read.
@@ -712,21 +649,5 @@ DumpSBlock (
   M_EXT2FS  *FileSystem
   );
 #endif
-
-//
-// FILE operation structure - to be passed to generic FileSystem core
-//
-const struct fs_ops ext2fs_ops = {
-  .open  = Ext2fsOpen,
-  .close = Ext2fsClose,
-  .read  = Ext2fsRead,
-  .stat  = Ext2fsStat,
-#if defined(LIBSA_ENABLE_LS_OP)
-  .ls    = Ext2fsLs,
-#endif
-  .disk_blocks = Ext2fsDiskBlocks,
-  .lookup_file = Ext2fsLookUpFile,
-  .seek  = Ext2fsSeek,
-};
 
 #endif  // !_UFS_EXT2FS_EXT2FS_H_

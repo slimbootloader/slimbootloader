@@ -1,7 +1,7 @@
 /** @file
   This file contains the implementation of FirmwareUpdateLib library.
 
-  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -247,6 +247,7 @@ LoadCapsuleImage (
   EFI_HANDLE          FsHandle;
   EFI_HANDLE          HwPartHandle;
   CHAR16              FileName[MAX_FILE_LEN];
+  EFI_HANDLE          FileHandle;
 
   HwPartHandle = NULL;
   Status = FindBootPartition (CapsuleInfo, &HwPartHandle);
@@ -280,7 +281,8 @@ LoadCapsuleImage (
   //
   // get capsule image size.
   //
-  *CapsuleImageSize = 0x1000000;
+  FileHandle        = NULL;
+  *CapsuleImageSize = 0;
   *CapsuleImage     = NULL;
 
   //
@@ -288,18 +290,46 @@ LoadCapsuleImage (
   //
   if (CapsuleInfo->FileName[0] != 0) {
     AsciiStrToUnicodeStrS ((CONST CHAR8 *)(&CapsuleInfo->FileName), FileName, MAX_FILE_LEN);
-    Status = GetFileByName(FsHandle, FileName, CapsuleImage, CapsuleImageSize);
+
+    Status = OpenFile (FsHandle, FileName, &FileHandle);
     if (EFI_ERROR(Status)) {
-      DEBUG((DEBUG_ERROR, " Capsule File '%s' Status : %r\n", FileName, Status));
+      DEBUG((DEBUG_ERROR, " Open Capsule File '%s' Status : %r\n", FileName, Status));
+      goto Done;
+    }
+
+    Status = GetFileSize (FileHandle, CapsuleImageSize);
+    if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_ERROR, " Get Capsule File '%s' size Status : %r\n", FileName, Status));
+      goto Done;
+    }
+
+    *CapsuleImage = AllocatePool (*CapsuleImageSize);
+    if (*CapsuleImage == NULL) {
+      Status = EFI_OUT_OF_RESOURCES;
+      goto Done;
+    }
+
+    Status = ReadFile (FileHandle, CapsuleImage, CapsuleImageSize);
+    if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_ERROR, " Read Capsule File '%s' Status : %r\n", FileName, Status));
+      goto Done;
     }
   } else {
     Status = EFI_NOT_FOUND;
   }
 
 Done:
+  if (FileHandle != NULL) {
+    CloseFile (FileHandle);
+  }
+
   if (EFI_ERROR (Status)) {
+    if (*CapsuleImage == NULL) {
+      FreePool (*CapsuleImage);
+      *CapsuleImage = NULL;
+    }
     if (FsHandle != NULL) {
-      FreePool (FsHandle);
+      CloseFileSystem (FsHandle);
     }
     if (HwPartHandle != NULL) {
       FreePool (HwPartHandle);

@@ -201,36 +201,6 @@ typedef struct {
 #define UNPACK_UINT32(a) \
   (UINT32) ((((UINT8 *) a)[0] << 0) | (((UINT8 *) a)[1] << 8) | (((UINT8 *) a)[2] << 16) | (((UINT8 *) a)[3] << 24))
 
-
-/**
-  Finds the file on a FAT volume.
-  This function finds the the recovery file named FileName on a specified FAT volume and returns
-  its FileHandle pointer.
-
-  @param  PrivateData             Global memory map for accessing global
-                                  variables.
-  @param  VolumeIndex             The index of the volume.
-  @param  FileName                The recovery file name to find.
-  @param  Handle                  The output file handle.
-
-  @retval EFI_DEVICE_ERROR        Some error occured when operating the FAT
-                                  volume.
-  @retval EFI_NOT_FOUND           The recovery file was not found.
-  @retval EFI_SUCCESS             The recovery file was successfully found on the
-                                  FAT volume.
-
-**/
-EFI_STATUS
-FindFile (
-  IN  PEI_FAT_PRIVATE_DATA  *PrivateData,
-  IN  UINTN                 VolumeIndex,
-  IN  CHAR16                *FileName,
-  OUT PEI_FILE_HANDLE       *Handle
-  );
-
-
-
-
 /**
   This version is different from the version in Unicode collation
   protocol in that this version strips off trailing blanks.

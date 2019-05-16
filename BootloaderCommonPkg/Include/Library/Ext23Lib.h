@@ -1,7 +1,7 @@
 /** @file
-  Data structures for FAT recovery PEIM
+  Function prototypes for EXT library
 
-Copyright (c) 2006 - 2016, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
 
 This program and the accompanying materials are licensed and made available
 under the terms and conditions of the BSD License which accompanies this
@@ -15,6 +15,11 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #ifndef _EXT23_LIB_H_
 #define _EXT23_LIB_H_
+
+#include <PiPei.h>
+#include <Library/BaseLib.h>
+#include <Library/DebugLib.h>
+#include <Library/MemoryAllocationLib.h>
 
 #define FS_EXT_SIGNATURE    SIGNATURE_32 ('p', 'e', 'x', 't')
 
@@ -39,12 +44,63 @@ ExtInitFileSystem (
   OUT EFI_HANDLE                                  *FsHandle
   );
 
+/**
+  Clean-up allocated memory/etc. for EXT file system
+
+  @param[in]     FsHandle         EXT file system handle.
+
+  @retval                         none
+
+**/
+VOID
+EFIAPI
+ExtCloseFileSystem (
+  IN  EFI_HANDLE                                   FsHandle
+  );
 
 /**
-Loads file into memory by its name.
+  Open a file by its name and return its file handle.
 
-  @param[in]     FsHandle         FAT file system handle.
+  @param[in]     FsHandle         file system handle.
   @param[in]     FileName         The file name to get.
+  @param[out]    FileHandle       file handle
+
+  @retval EFI_SUCCESS             The file opened correctly.
+  @retval EFI_INVALID_PARAMETER   Parameter is not valid.
+  @retval EFI_DEVICE_ERROR        A device error occurred.
+  @retval EFI_NOT_FOUND           A requested file cannot be found.
+  @retval EFI_OUT_OF_RESOURCES    Insufficant memory resource pool.
+
+**/
+EFI_STATUS
+EFIAPI
+ExtFsOpenFile (
+  IN  EFI_HANDLE                                    FsHandle,
+  IN  CHAR16                                       *FileName,
+  OUT EFI_HANDLE                                   *FileHandle
+  );
+
+/**
+  Get file size by opened file handle.
+
+  @param[in]     FileHandle       file handle
+  @param[out]    FileSize         Pointer to file buffer size.
+
+  @retval EFI_SUCCESS             The file was loaded correctly.
+  @retval EFI_INVALID_PARAMETER   Parameter is not valid.
+
+**/
+EFI_STATUS
+EFIAPI
+ExtFsGetFileSize (
+  IN  EFI_HANDLE                                  FileHandle,
+  OUT UINTN                                      *FileSize
+  );
+
+/**
+  Read file into memory by opened file handle.
+
+  @param[in]     FileHandle       file handle
   @param[out]    FileBufferPtr    Allocated file buffer pointer.
   @param[out]    FileSize         Pointer to file buffer size.
 
@@ -58,11 +114,25 @@ Loads file into memory by its name.
 **/
 EFI_STATUS
 EFIAPI
-ExtGetFileByName (
-  IN EFI_HANDLE                                    FsHandle,
-  IN CHAR16                                       *FileName,
-  OUT VOID                                       **FileBufferPtr,
-  OUT UINTN                                       *FileSize
+ExtFsReadFile (
+  IN  EFI_HANDLE                                  FsHandle,
+  IN  EFI_HANDLE                                  FileHandle,
+  OUT VOID                                      **FileBufferPtr,
+  OUT UINTN                                      *FileSizePtr
   );
 
-#endif
+/**
+  Close a file by opened file handle
+
+  @param[in]     FileHandle       file handle
+
+  @retval                         none
+
+**/
+VOID
+EFIAPI
+ExtFsCloseFile (
+  IN  EFI_HANDLE                                  FileHandle
+  );
+
+#endif // _EXT23_LIB_H_

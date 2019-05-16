@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -229,6 +229,7 @@ GetIasImageFromFs (
   VOID                       *Image;
   UINTN                      ImageSize;
   CONST CHAR8                *FileName;
+  EFI_HANDLE                 FileHandle;
 
   if (FsHandle == NULL) {
     return RETURN_INVALID_PARAMETER;
@@ -238,25 +239,52 @@ GetIasImageFromFs (
 
   // Load IAS Image from file system
   AsciiStrToUnicodeStrS (FileName, FilePath, sizeof (FilePath) / sizeof (CHAR16));
-  Image     = NULL;
-  ImageSize = 0;
-  Status = GetFileByName (FsHandle, FilePath, &Image, &ImageSize);
+
+  FileHandle = NULL;
+  Status = OpenFile (FsHandle, FilePath, &FileHandle);
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "Get file '%a' failed, Status = %r\n", FileName, Status));
-    return Status;
+    DEBUG ((DEBUG_INFO, "Open file '%a' failed, Status = %r\n", FileName, Status));
+    goto Done;
+  }
+
+  Status = GetFileSize (FileHandle, &ImageSize);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "Get file size failed, Status = %r\n", Status));
+    goto Done;
+  }
+  DEBUG ((DEBUG_INFO, "File '%a' size %d\n", FileName, ImageSize));
+
+  if (ImageSize == 0) {
+    Status = EFI_LOAD_ERROR;
+    goto Done;
+  }
+
+  Image = AllocatePool (ImageSize);
+  if (Image == NULL) {
+    Status = EFI_OUT_OF_RESOURCES;
+    goto Done;
+  }
+
+  Status = ReadFile (FileHandle, &Image, &ImageSize);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "Read file '%a' failed, Status = %r\n", FileName, Status));
+    if (Image != NULL) {
+      FreePool (Image);
+    }
+    goto Done;
   }
   DEBUG ((DEBUG_INFO, "Get file '%s' (size:0x%x) success.\n", FilePath, ImageSize));
-
-  if ((Image == NULL) || (ImageSize == 0)) {
-    return EFI_LOAD_ERROR;
-  }
 
   LoadedImage->IasImage.Addr = Image;
   LoadedImage->IasImage.Size = ImageSize;
   LoadedImage->Flags        |= LOADED_IMAGE_IAS;
 
+Done:
+  if (FileHandle != NULL) {
+    CloseFile (FileHandle);
+  }
 
-  return EFI_SUCCESS;
+  return Status;
 }
 
 
@@ -285,6 +313,7 @@ LoadLinuxFile (
   UINTN       FileSize;
   CHAR8      *Ptr;
   CHAR16      FileName[256];
+  EFI_HANDLE  FileHandle;
 
   if (FileInfo->Len == 0) {
     return EFI_NOT_FOUND;
@@ -300,13 +329,40 @@ LoadLinuxFile (
   AsciiStrToUnicodeStrS (Ptr, FileName, sizeof(FileName) / sizeof(CHAR16));
   FileSize   = 0;
   FileBuffer = NULL;
-  Status = GetFileByName (FsHandle, FileName, &FileBuffer, &FileSize);
-  DEBUG ((DEBUG_INFO, "Load file %a [size 0x%x]: %r\n", Ptr, FileSize, Status));
+  FileHandle = NULL;
+  Status = OpenFile (FsHandle, FileName, &FileHandle);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "Open file '%s' failed, Status = %r\n", FileName, Status));
+    goto Done;
+  }
+
+  Status = GetFileSize (FileHandle, &FileSize);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "Get file '%s' size failed, Status = %r\n", FileName, Status));
+    goto Done;
+  }
+
+  FileBuffer = AllocatePool (FileSize);
+  if (FileBuffer == NULL) {
+    Status = EFI_OUT_OF_RESOURCES;
+    goto Done;
+  }
+
+  Status = ReadFile (FileHandle, &FileBuffer, &FileSize);
+  DEBUG ((DEBUG_INFO, "Load file %a [size %d bytes]: %r\n", Ptr, FileSize, Status));
   if (!EFI_ERROR (Status)) {
     ImageData->Addr = FileBuffer;
     ImageData->Size = FileSize;
+  } else {
+    if (FileBuffer != NULL) {
+      FreePool (FileBuffer);
+    }
   }
 
+Done:
+  if (FileHandle != NULL) {
+    CloseFile (FileHandle);
+  }
   return Status;
 }
 
@@ -337,6 +393,7 @@ GetTraditionalLinux (
   UINT32                     EntryIdx;
   CHAR8                      *Ptr;
   MENU_ENTRY                 *MenuEntry;
+  EFI_HANDLE                 FileHandle;
 
   DEBUG ((DEBUG_INFO, "Try booting Linux from config file ...\n"));
 
@@ -345,8 +402,30 @@ GetTraditionalLinux (
     DEBUG ((DEBUG_INFO, "Checking %s\n",mConfigFileName[Index]));
     ConfigFile     = NULL;
     ConfigFileSize = 0;
-    Status = GetFileByName (FsHandle, (CHAR16 *)mConfigFileName[Index], &ConfigFile, &ConfigFileSize);
+
+    Status = OpenFile (FsHandle, (CHAR16 *)mConfigFileName[Index], &FileHandle);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_INFO, "Open file '%s' failed, Status = %r\n", (CHAR16 *)mConfigFileName[Index], Status));
+      continue;
+    }
+
+    Status = GetFileSize (FileHandle, &ConfigFileSize);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_INFO, "Get file '%s' size failed, Status = %r\n", (CHAR16 *)mConfigFileName[Index], Status));
+      CloseFile (FileHandle);
+      continue;
+    }
+
+    ConfigFile = AllocatePool (ConfigFileSize);
+    if (ConfigFile == NULL) {
+      CloseFile (FileHandle);
+      return EFI_OUT_OF_RESOURCES;
+    }
+
+    Status = ReadFile (FileHandle, &ConfigFile, &ConfigFileSize);
+    CloseFile (FileHandle);
     if (!EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_INFO, "Load file %s [size 0x%x]: %r\n", (CHAR16 *)mConfigFileName[Index], ConfigFileSize, Status));
       break;
     }
   }
@@ -354,6 +433,10 @@ GetTraditionalLinux (
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "Could not find configuration file!\n"));
     // No any config was found, try to load vmlinuz/initrd directly.
+    if (ConfigFile != NULL) {
+      FreePool (ConfigFile);
+      ConfigFile = NULL;
+    }
     ConfigFileSize = 0;
   }
 
@@ -391,7 +474,8 @@ GetTraditionalLinux (
   Status = LoadLinuxFile (FsHandle, ConfigFile, &LinuxBootCfg.MenuEntry[EntryIdx].Kernel, &LinuxImage->BootFile);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Load kernel failed!\n"));
-    return RETURN_LOAD_ERROR;
+    Status = RETURN_LOAD_ERROR;
+    goto Done;
   }
 
   // Update command line
@@ -408,12 +492,16 @@ GetTraditionalLinux (
   Status = LoadLinuxFile (FsHandle, ConfigFile, &LinuxBootCfg.MenuEntry[EntryIdx].InitRd, &LinuxImage->InitrdFile);
   if (EFI_ERROR (Status) && (Status != EFI_NOT_FOUND)) {
     DEBUG ((DEBUG_ERROR, "Load initrd failed!\n"));
-    return RETURN_LOAD_ERROR;
+    Status = RETURN_LOAD_ERROR;
   }
 
   LinuxImage->ExtraBlobNumber = 0;
 
-  return EFI_SUCCESS;
+Done:
+  if (ConfigFile != NULL) {
+    FreePool (ConfigFile);
+  }
+  return Status;
 }
 
 

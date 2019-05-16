@@ -1,7 +1,7 @@
 /** @file
   Function prototypes for FAT library
 
-Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
 
 This program and the accompanying materials are licensed and made available
 under the terms and conditions of the BSD License which accompanies this
@@ -16,8 +16,12 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #ifndef _FAT_LIB_H_
 #define _FAT_LIB_H_
 
-#define FS_FAT_SIGNATURE    SIGNATURE_32 ('p', 'f', 'a', 't')
+#include <PiPei.h>
+#include <Library/BaseLib.h>
+#include <Library/DebugLib.h>
+#include <Library/PartitionLib.h>
 
+#define FS_FAT_SIGNATURE    SIGNATURE_32 ('p', 'f', 'a', 't')
 
 /**
 Initialize FAT file system volumes.
@@ -40,12 +44,63 @@ FatInitFileSystem (
   OUT EFI_HANDLE                                  *FsHandle
   );
 
-
 /**
-Loads file into memory by its name.
+  Clean-up allocated memory/etc. for FAT file system
 
   @param[in]     FsHandle         FAT file system handle.
+
+  @retval                         none
+
+**/
+VOID
+EFIAPI
+FatCloseFileSystem (
+  IN  EFI_HANDLE                                   FsHandle
+  );
+
+/**
+  Open a file by its name and return its file handle.
+
+  @param[in]     FsHandle         file system handle.
   @param[in]     FileName         The file name to get.
+  @param[out]    FileHandle       file handle
+
+  @retval EFI_SUCCESS             The file opened correctly.
+  @retval EFI_INVALID_PARAMETER   Parameter is not valid.
+  @retval EFI_DEVICE_ERROR        A device error occurred.
+  @retval EFI_NOT_FOUND           A requested file cannot be found.
+  @retval EFI_OUT_OF_RESOURCES    Insufficant memory resource pool.
+
+**/
+EFI_STATUS
+EFIAPI
+FatFsOpenFile (
+  IN  EFI_HANDLE                                    FsHandle,
+  IN  CHAR16                                       *FileName,
+  OUT EFI_HANDLE                                   *FileHandle
+  );
+
+/**
+  Get file size by opened file handle.
+
+  @param[in]     FileHandle       file handle
+  @param[out]    FileSize         Pointer to file buffer size.
+
+  @retval EFI_SUCCESS             The file was loaded correctly.
+  @retval EFI_INVALID_PARAMETER   Parameter is not valid.
+
+**/
+EFI_STATUS
+EFIAPI
+FatFsGetFileSize (
+  IN  EFI_HANDLE                                  FileHandle,
+  OUT UINTN                                      *FileSize
+  );
+
+/**
+  Read file into memory by opened file handle.
+
+  @param[in]     FileHandle       file handle
   @param[out]    FileBufferPtr    Allocated file buffer pointer.
   @param[out]    FileSize         Pointer to file buffer size.
 
@@ -59,11 +114,25 @@ Loads file into memory by its name.
 **/
 EFI_STATUS
 EFIAPI
-FatGetFileByName (
-  IN EFI_HANDLE                                    FsHandle,
-  IN CHAR16                                       *FileName,
-  OUT VOID                                       **FileBufferPtr,
-  OUT UINTN                                       *FileSize
+FatFsReadFile (
+  IN  EFI_HANDLE                                  FsHandle,
+  IN  EFI_HANDLE                                  FileHandle,
+  OUT VOID                                      **FileBufferPtr,
+  OUT UINTN                                      *FileSize
   );
 
-#endif // _FAT_PEIM_H_
+/**
+  Close a file by opened file handle
+
+  @param[in]     FileHandle       file handle
+
+  @retval                         none
+
+**/
+VOID
+EFIAPI
+FatFsCloseFile (
+  IN  EFI_HANDLE                                  FileHandle
+  );
+
+#endif // _FAT_LIB_H_
