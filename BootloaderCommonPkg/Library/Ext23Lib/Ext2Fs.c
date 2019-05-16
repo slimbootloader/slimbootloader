@@ -80,12 +80,10 @@
     Stand-alone FILE reading package for Ext2 FILE system.
 **/
 
-#include "Ext2Fs.h"
-
 #include <Library/DebugLib.h>
 #include <Library/MemoryAllocationLib.h>
-#include <Library/Ext23Lib.h>
 #include <Library/MediaAccessLib.h>
+#include "Ext2Fs.h"
 #include "LibsaFsStand.h"
 
 #define    LITTLE_ENDIAN  1234              // LSB First: i386, vax
@@ -128,123 +126,67 @@ STATIC CONST CHAR8 *CONST mTypeStr[] = { "unknown", "REG",  "DIR",  "CHR",  "BLK
 
 #endif  // LIBSA_ENABLE_LS_OP
 
+/**
+ Read a new inode into a FILE structure.
+ @param [in] INumber inode number
+ @param [in] File pointer to open file struct.
+ @retval
+**/
+STATIC
+INT32
+ReadInode (
+  IN    INODE32      INumber,
+  IN    OPEN_FILE   *File
+  );
 
 /**
-Initialize the EXT2/3 FileSystem API structure.
-
-@param  SwPart                 The partition number of EXT2/3 FileSystem located
-@param  PartHandle             The Partition handle
-@param  FsHandle               The EXT2/3 FILE system handle
-
-@retval EFI_INVALID_PARAMETER  The Partition handle is not for EXT2/3, or
-                               partition number exceeds the maxium number in Partition handle
-@retval EFI_OUT_OF_RESOURCES   Can't allocate memory resource
-
+  Given an offset in a FILE, find the disk block number that
+  contains that block.
+  @param File           pointer to an Open file.
+  @param FileBlock      Block to find the file.
+  @param DiskBlockPtr   Pointer to the disk which contains block.
+  @retval 0 if success
+  @retval other if error.
 **/
-EFI_STATUS
-EFIAPI
-ExtInitFileSystem (
-  IN  UINT32        SwPart,
-  IN  EFI_HANDLE    PartHandle,
-  OUT EFI_HANDLE    *FsHandle
-  )
-{
-  PEI_EXT_PRIVATE_DATA      *PrivateData;
-  PART_BLOCK_DEVICE         *PartBlockDev;
-  // Valid parameters
-  PartBlockDev = (PART_BLOCK_DEVICE *)PartHandle;
-  if ((FsHandle == NULL) || (PartBlockDev == NULL) || \
-      (PartBlockDev->Signature != PART_INFO_SIGNATURE)) {
-    return EFI_INVALID_PARAMETER;
-  }
-
-  if (SwPart >= PartBlockDev->BlockDeviceCount) {
-    return EFI_INVALID_PARAMETER;
-  }
-
-  PrivateData = (PEI_EXT_PRIVATE_DATA *)AllocateZeroPool (sizeof (PEI_EXT_PRIVATE_DATA));
-  if (PrivateData == NULL) {
-    return EFI_OUT_OF_RESOURCES;
-  }
-
-  PrivateData->Signature     = FS_EXT_SIGNATURE;
-  PrivateData->PhysicalDevNo = (UINT8)PartBlockDev->HarewareDevice;
-  PrivateData->StartBlock    = PartBlockDev->BlockDevice[SwPart].StartBlock;
-  PrivateData->LastBlock     = PartBlockDev->BlockDevice[SwPart].LastBlock;
-  PrivateData->BlockSize     = PartBlockDev->BlockInfo.BlockSize;
-
-  DEBUG ((DEBUG_INFO, "Detected EXT on StartBlock %d Part %d\n", PrivateData->StartBlock, SwPart));
-
-  *FsHandle = (EFI_HANDLE)PrivateData;
-
-  return EFI_SUCCESS;
-}
+STATIC
+INT32
+BlockMap (
+  OPEN_FILE     *File,
+  INDPTR         FileBlock,
+  INDPTR        *DiskBlockPtr
+  );
 
 /**
-Read the FILE by Name for EXT2/3 FileSystem
-
-@param  PrivateData          The EXT2/3 FILE system handle
-@param  FileName             The FILE Name to read
-@param  FileBufferPtr        The address of FILE read in memory
-@param  FileSizePtr          The address point for FILE Size
-
-@retval EFI_SUCCESS       The function completed successfully.
-@retval !EFI_SUCCESS      Something error while read FILE.
-
+  Read a portion of a FILE into an internal buffer.
+  Return the location in the buffer and the amount in the buffer.
+  @param File       Pointer to the open file.
+  @param BufferPtr  buffer corresponding to offset
+  @param SizePtr    Size of remainder of buffer.
 **/
-EFI_STATUS
-EFIAPI
-ExtGetFileByName (
-  IN    EFI_HANDLE      PrivateData,
-  IN    CHAR16         *FileName,
-  OUT   VOID          **FileBufferPtr,
-  OUT   UINTN          *FileSizePtr
-  )
-{
-  EFI_STATUS  Status;
-  OPEN_FILE   OpenFile;
-  INT32       Ret;
-  UINT32      FileSize, Residual, NameSize;
-  CHAR8      *FileBuffer;
-  CHAR8      *NameBuffer;
+STATIC
+INT32
+BufReadFile (
+  OPEN_FILE     *File,
+  CHAR8        **BufferPtr,
+  UINT32        *SizePtr
+  );
 
-  if (((PEI_EXT_PRIVATE_DATA *)PrivateData)->Signature != FS_EXT_SIGNATURE) {
-    return EFI_INVALID_PARAMETER;
-  }
-
-  OpenFile.FileDevData = PrivateData;
-
-  NameSize = StrSize (FileName);
-  NameBuffer = AllocatePool (NameSize);
-  Status = UnicodeStrToAsciiStrS (FileName, NameBuffer, NameSize);
-  if (!EFI_ERROR(Status)) {
-    Ret = Ext2fsOpen (NameBuffer, &OpenFile);
-    if (Ret != 0) {
-      Status = EFI_NOT_FOUND;
-    }
-  }
-
-  if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_INFO, "** Openning FAILED\n"));
-    return Status;
-  }
-
-  FileSize = Ext2fsFileSize (&OpenFile);
-  DEBUG ((EFI_D_INFO, "** Openning SUCCEEDED, struct file Size == 0x%X\n", FileSize));
-
-  FileBuffer = AllocatePages (EFI_SIZE_TO_PAGES (FileSize));
-  ASSERT (FileBuffer != NULL);
-  Residual = 0;
-  Ret = Ext2fsRead (&OpenFile, FileBuffer, FileSize, &Residual);
-  ASSERT (Ret == 0);
-  ASSERT (Residual == 0);
-
-  *FileBufferPtr = FileBuffer;
-  *FileSizePtr = FileSize;
-
-  return Status;
-}
-
+/**
+  Search a directory for a Name and return its
+  inode number.
+  @param Name       Name to compare with
+  @param Length     Length of the dir name
+  @param File       Pointer to file private data
+  @param INumPtr    pointer to Inode number.
+**/
+STATIC
+INT32
+SearchDirectory (
+  CHAR8         *Name,
+  INT32          Length,
+  OPEN_FILE     *File,
+  INODE32       *INumPtr
+  );
 
 /**
 Gives the info of device block config.

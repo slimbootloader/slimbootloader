@@ -28,7 +28,7 @@
 #
 
 [Sources]
-  FatLiteApi.c
+  FatLib.c
   FatLiteLib.c
   FatLiteAccess.c
 

@@ -28,6 +28,7 @@
 #
 
 [Sources]
+  ExtLib.c
   Ext2Fs.c
 
 [Packages]

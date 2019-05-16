@@ -23,7 +23,6 @@
 #include <Library/SpiFlashLib.h>  //todo: should not let this lib depends on specific spi lib.
 #include <Library/FlashDescriptorLib.h>
 #include <Library/IoLib.h>
-#include <Library/FatLib.h>
 #include <Library/HeciLib.h>
 #include <Library/PcdLib.h>
 #include <FwuBootMode.h>

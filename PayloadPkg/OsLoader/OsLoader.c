@@ -80,7 +80,7 @@ ParseIasImage (
       DEBUG ((DEBUG_INFO, "One PE32 file in IAS file .... \n"));
     } else if (IsValidFvHeader ((VOID *)File[0].Addr))  {
       LoadedImage->Flags |= LOADED_IMAGE_FV;
-      DEBUG ((DEBUG_INFO, "One FV file in IAS file .... \n"));  
+      DEBUG ((DEBUG_INFO, "One FV file in IAS file .... \n"));
     } else {
       LoadedImage->Flags |= LOADED_IMAGE_LINUX;
       DEBUG ((DEBUG_INFO, "One file in IAS file, take it as bzImage .... \n"));
@@ -538,7 +538,7 @@ StartBooting (
       (VOID *)((UINT8 *)mEntryStack + 8)
       );
     Status = EFI_DEVICE_ERROR;
-  
+
   } else {
     DEBUG ((DEBUG_ERROR, "Image is not supported, flags:0x%x\n", LoadedImage->Flags));
     return RETURN_UNSUPPORTED;
