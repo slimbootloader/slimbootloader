@@ -590,6 +590,26 @@ ClearFspHob (
 }
 
 /**
+  Set SPI flash EISS and LE and clear FSP HOBs.
+**/
+VOID
+ProgramSecuritySetting (
+  VOID
+  )
+{
+  UINTN            SpiBaseAddress;
+
+  SpiBaseAddress = GetDeviceAddr (OsBootDeviceSpi, 0);
+  SpiBaseAddress = TO_MM_PCI_ADDRESS (SpiBaseAddress);
+
+  // Set the BIOS Lock Enable and EISS bits
+  MmioOr8 (SpiBaseAddress + R_SPI_BCR, (UINT8) (B_SPI_BCR_BLE | B_SPI_BCR_EISS));
+
+  ClearFspHob ();
+}
+
+
+/**
   Platform specific initialization for BSP and APs.
 
   NOTE: If there is code to access common resource in this function,
@@ -630,7 +650,6 @@ BoardInit (
   UINT32              VarSize;
   GEN_CFG_DATA       *GenericCfgData;
   UINT32              TcoCnt;
-  UINTN               SpiBaseAddress;
   LOADER_GLOBAL_DATA *LdrGlobal;
   UINT32              TsegBase;
   UINT64              TsegSize;
@@ -694,27 +713,14 @@ BoardInit (
     RegisterHeciService();
     InitPlatformService ();
 
-    // Lock down SPI for all other payload entry except FWUpdate and OSloader
-    // as this phase is too early for them to lock it here
-    SpiBaseAddress = GetDeviceAddr (OsBootDeviceSpi, 0);
-    SpiBaseAddress = TO_MM_PCI_ADDRESS (SpiBaseAddress);
-
-    if ((GetBootMode() != BOOT_ON_FLASH_UPDATE) && (GetPayloadId() != 0) && (GetPayloadId() != UEFI_PAYLOAD_ID_SIGNATURE)) {
-      // Set the BIOS Lock Enable and EISS bits
-      MmioOr8 (SpiBaseAddress + R_SPI_BCR, (UINT8) (B_SPI_BCR_BLE | B_SPI_BCR_EISS));
-
-      ClearFspHob ();
+    if (GetPayloadId() != 0) {
+      ProgramSecuritySetting ();
     }
     break;
   case ReadyToBoot:
-    // Lock down SPI for everything
-    SpiBaseAddress = GetDeviceAddr (OsBootDeviceSpi, 0);
-    SpiBaseAddress = TO_MM_PCI_ADDRESS (SpiBaseAddress);
-
-    // Set the BIOS Lock Enable and EISS bits
-    MmioOr8 (SpiBaseAddress + R_SPI_BCR, (UINT8) (B_SPI_BCR_BLE | B_SPI_BCR_EISS));
-
-    ClearFspHob ();
+    if (GetPayloadId() == 0) {
+      ProgramSecuritySetting ();
+    }
 
     // Lock down Tco WDT just before handling off to OS
     TcoCnt = IoRead32 (ACPI_BASE_ADDRESS + R_TCO1_CNT);
@@ -796,14 +802,6 @@ UpdateFspConfig (
   FspsConfig->TurboMode = 1;
   FspsConfig->MonitorMwaitEnable = 0;
   FspsConfig->CdClock = 4;
-
-  if (GetBootMode() == BOOT_ON_FLASH_UPDATE) {
-    // Disable Eiss for firmware update
-    FspsConfig->SpiEiss = 0x0;
-    FspsConfig->BiosInterface = 0x0;
-  } else {
-    FspsConfig->SpiEiss = 0x1;
-  }
 
   // Force Eiss and BiosLock off for now.
   // Enable it later in OS loader/EndofStages
@@ -1353,7 +1351,7 @@ UpdateSmmInfo (
   SmmInfoHob->SmmBase = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + TSEG) & ~0xF;
   SmmInfoHob->SmmSize = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + BGSM) & ~0xF;
   SmmInfoHob->SmmSize -= SmmInfoHob->SmmBase;
-  SmmInfoHob->Flags = 0;
+  SmmInfoHob->Flags   = SMM_FLAGS_4KB_COMMUNICATION;
   DEBUG ((EFI_D_INFO, "SmmRamBase = 0x%x, SmmRamSize = 0x%x\n", SmmInfoHob->SmmBase, SmmInfoHob->SmmSize));
   //
   // Update the HOB with smi ctrl register data
