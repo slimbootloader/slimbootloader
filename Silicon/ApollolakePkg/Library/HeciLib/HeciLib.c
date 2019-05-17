@@ -1009,11 +1009,11 @@ PrepareCseForFirmwareUpdate (
   HECI_RES_IFWI_PREPARE_FOR_UPDATE *Response;
 
   ZeroMem(DataBuffer, sizeof(DataBuffer));
+  Response = (HECI_RES_IFWI_PREPARE_FOR_UPDATE*)DataBuffer;
 
   Request = (HECI_REQ_IFWI_PREPARE_FOR_UPDATE*)DataBuffer;
-  Request->MkhiHeader.Fields.GroupId = 0x20;
-  Request->MkhiHeader.Fields.Command = 0x01;
-
+  Request->MkhiHeader.Fields.GroupId = MKHI_IFWI_UPDATE_GROUP_ID;
+  Request->MkhiHeader.Fields.Command = IFWI_PREPARE_FOR_UPDATE_CMD_ID;
   Request->ResetType = 1;
 
   HeciSendLength = sizeof (HECI_REQ_IFWI_PREPARE_FOR_UPDATE) - 3;
@@ -1031,20 +1031,18 @@ PrepareCseForFirmwareUpdate (
     return Status;
   }
 
-  Response = (HECI_RES_IFWI_PREPARE_FOR_UPDATE*)DataBuffer;
-
   if (Response->MkhiHeader.Fields.Result != 0x0) {
     DEBUG ((EFI_D_ERROR, "Rejected request IFWI prepare update \n"));
     return EFI_ACCESS_DENIED;
   }
-
+  
   if (Response->Flag == 0x02) {
-    DEBUG ((EFI_D_ERROR, "HECI/CSE prepare for update failed \n"));
+    return EFI_SUCCESS;
+  } else {
+    DEBUG ((EFI_D_ERROR, "HECI/CSE prepare for update not ready yet \n"));
     return EFI_DEVICE_ERROR;
   }
 
-  DEBUG ((EFI_D_ERROR, "HECI/CSE ready for update \n"));
-  return EFI_SUCCESS;
 }
 
 /**
