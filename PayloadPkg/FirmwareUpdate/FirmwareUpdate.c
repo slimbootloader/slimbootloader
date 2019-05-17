@@ -438,14 +438,20 @@ GetStateMachineFlag (
   IN OUT UINT8    *StateMachine
 )
 {
-  FIRMWARE_UPDATE_STATUS  *FwUpdStatus;
+  EFI_STATUS              Status;
+  UINT32                  FwUpdStatusOffset;
+  FIRMWARE_UPDATE_STATUS  FwUpdStatus;
 
   //
   // Read from the reserved region and return state machine
   //
-  FwUpdStatus = (FIRMWARE_UPDATE_STATUS *)(PcdGet32(PcdRsvdRegionBase));
-
-  *StateMachine = FwUpdStatus->StateMachine;
+  FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
+  Status = BootMediaRead (FwUpdStatusOffset, sizeof(FIRMWARE_UPDATE_STATUS), (UINT8 *)&FwUpdStatus);
+  if (EFI_ERROR (Status)) {
+    *StateMachine = FW_UPDATE_SM_INIT;
+  } else {
+    *StateMachine = FwUpdStatus.StateMachine;
+  }
 }
 
 /**
@@ -468,7 +474,7 @@ SetStateMachineFlag (
   UINT32                  FwUpdStatusOffset;
   FIRMWARE_UPDATE_STATUS  FwUpdStatus;
 
-  DEBUG((DEBUG_INIT, "Set next FWU state to 0x%02X\n", StateMachine));
+  DEBUG((DEBUG_INIT, "Set next FWU state: 0x%02X\n", StateMachine));
 
   //
   // Any value less than 0xFC is invalid

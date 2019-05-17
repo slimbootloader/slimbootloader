@@ -91,4 +91,7 @@ typedef struct {
 #define COMMON_GROUP_ID          0xF0
 #define DRAM_INIT_DONE_CMD       0x01
 
+#define MKHI_IFWI_UPDATE_GROUP_ID       0x20
+#define IFWI_PREPARE_FOR_UPDATE_CMD_ID  0x01
+
 #endif // _MKHI_MSGS_H
