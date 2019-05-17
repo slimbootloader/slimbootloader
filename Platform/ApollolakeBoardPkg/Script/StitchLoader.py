@@ -458,6 +458,16 @@ def PatchFlashMap (ImageData, PlatformData = 0xffffffff):
             if (Bp1.Offset + Bp1.Length - 0x1000) <= (Desc.Offset + Desc.Size) <= (Bp1.Offset + Bp1.Length):
                 raise Exception("Component '%s' offset is in bootloader reserved region, please try to reduce compoent size !" % CompBpdtDict[Desc.Sig])
 
+        Limit = Bp1.Offset + Bp1.Length - Bp0.Offset - 0x40000
+        for Idx in range (EntryNum):
+            Desc  = FlashMapDesc.from_buffer (OutputImageData, Stage1AOffset + FlaMapOff + sizeof(FlashMap) + Idx * sizeof(FlashMapDesc))
+            if Desc.Sig == 'RSVD':
+                continue
+            # Last 256K flash space (4GB - 256KB to 4GB) is remapped to CSME read-only SRAM on APL
+            # Directly access is not available.
+            if Desc.Offset >= Limit or Desc.Offset + Desc.Size > Limit:
+                print "WARNING: Component '%s' in BP%d is located inside CSME memory mapped region, direct access might fail." % (Desc.Sig, Part)
+
     print ("Flash map was patched successfully!")
 
     return 0
@@ -829,7 +839,6 @@ def CreateIfwiImage (IfwiIn, IfwiOut, BiosOut, PlatformData, NonRedundant, Stitc
           ('EPLD' , 'EPLD'),
           ('UVAR' , 'UVAR'),
           ('PLD'  , 'PLD'),
-
         ]
 
         if RedundantPayload:
