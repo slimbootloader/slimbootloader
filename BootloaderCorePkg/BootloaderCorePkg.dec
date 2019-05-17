@@ -146,6 +146,7 @@
   gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesBase       | 0x00000000 | UINT32 | 0x20000197
   gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsPtr       | 0x00000000 | UINT32 | 0x20000198
   gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsCnt       |     0x0000 | UINT16 | 0x20000199
+  gPlatformModuleTokenSpaceGuid.PcdFuncCpuInitHook        | 0x00000000 | UINT32 | 0x2000019A
 
 
 [PcdsFeatureFlag]
