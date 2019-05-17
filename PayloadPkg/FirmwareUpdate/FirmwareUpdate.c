@@ -224,27 +224,30 @@ UpdateBootRegion (
   Buffer          = UpdateRegion->SourceAddress;
 
   UpdatedSize = 0;
-
-  if (UpdateRegion->UpdateSize < 0x1000) {
-    return UpdateRegionLessthan4k (UpdateAddress, Buffer, UpdateRegion->UpdateSize);
-  }
-
   while (UpdatedSize < UpdateRegion->UpdateSize) {
-    if (UpdatedSize + SIZE_64KB > UpdateRegion->UpdateSize) {
-      UpdateBlockSize = UpdateRegion->UpdateSize - UpdatedSize;
+    if (UpdateRegion->UpdateSize < SIZE_4KB) {
+      UpdateBlockSize = UpdateRegion->UpdateSize;
     } else {
-      UpdateBlockSize = SIZE_64KB;
+      if (UpdatedSize + SIZE_64KB > UpdateRegion->UpdateSize) {
+        UpdateBlockSize = UpdateRegion->UpdateSize - UpdatedSize;
+      } else {
+        UpdateBlockSize = SIZE_64KB;
+      }
     }
-    DEBUG ((DEBUG_ERROR, "Updating 0x%llx, Size:0x%x\n", UpdateAddress, UpdateBlockSize));
-    Status = UpdateRegionBlock (UpdateAddress, Buffer, UpdateBlockSize);
+    DEBUG ((DEBUG_INIT, "Updating 0x%08llx, Size:0x%05x\n", UpdateAddress, UpdateBlockSize));
+    if (UpdateRegion->UpdateSize < SIZE_4KB) {
+      Status = UpdateRegionLessthan4k (UpdateAddress, Buffer, UpdateBlockSize);
+    } else {
+      Status = UpdateRegionBlock (UpdateAddress, Buffer, UpdateBlockSize);
+    }
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "Failed! Address=0x%llx, Status = 0x%x\n", UpdateAddress, Status));
+      DEBUG ((DEBUG_ERROR, "\nFailed! Address=0x%08llx, Status = %r\n", UpdateAddress, Status));
       return Status;
     }
     UpdateAddress += UpdateBlockSize;
     Buffer        += UpdateBlockSize;
     UpdatedSize   += UpdateBlockSize;
-    DEBUG ((DEBUG_ERROR, "  Finished   %3d%%\n", (WrittenSize + UpdatedSize) * 100 / TotalSize));
+    DEBUG ((DEBUG_INIT, "\nFinished   %3d%%\n", (WrittenSize + UpdatedSize) * 100 / TotalSize));
   }
 
   return EFI_SUCCESS;
@@ -346,7 +349,7 @@ GetVersionfromFv (
   Verify the firmware version to make sure it is no less than current firmware version.
 
   @param[in] FwImage            The pointer to the firmware update capsule image.
-  @param[in] FwPolicy           Firmware update policy. 
+  @param[in] FwPolicy           Firmware update policy.
 
   @retval  EFI_SUCCESS        The operation completed successfully.
   @retval  others             There is error happening.
@@ -465,6 +468,8 @@ SetStateMachineFlag (
   UINT32                  FwUpdStatusOffset;
   FIRMWARE_UPDATE_STATUS  FwUpdStatus;
 
+  DEBUG((DEBUG_INIT, "Set next FWU state to 0x%02X\n", StateMachine));
+
   //
   // Any value less than 0xFC is invalid
   //
@@ -474,7 +479,7 @@ SetStateMachineFlag (
 
   //
   // Any value other than 0xFC, 0xFD, 0xFE, 0xFF is invalid
-  // 
+  //
   if ((StateMachine & FW_UPDATE_SM_PART_AB) != FW_UPDATE_SM_PART_AB) {
     return EFI_INVALID_PARAMETER;
   }
@@ -565,6 +570,7 @@ EnforceFwUpdatePolicy (
   // Get State machine flag
   //
   GetStateMachineFlag (&StateMachine);
+  DEBUG((DEBUG_INIT, "Get current FWU state: 0x%02X\n", StateMachine));
 
   FwPolicy->Data = 0;
 
@@ -686,11 +692,11 @@ AfterUpdateEnforceFwUpdatePolicy (
 }
 
 /**
-  This function will be called after the firmware update is complete. 
-  This function will update firmware update status structure in reserved region 
-  
-  @param[in] LastAttemptVersion Version of last firmware update attempted.   
-  @param[in] LastAttemptStatus Status of last firmware update attempted.  
+  This function will be called after the firmware update is complete.
+  This function will update firmware update status structure in reserved region
+
+  @param[in] LastAttemptVersion Version of last firmware update attempted.
+  @param[in] LastAttemptStatus Status of last firmware update attempted.
 
   @retval  EFI_SUCCESS        The operation completed successfully.
   @retval  others             There is error happening.
@@ -832,7 +838,7 @@ AuthenticateCapsule (
   This is generic function for firmware update.
 
   This function will get capsule image file, verify the image, and update
-  current firmware using new firmware. 
+  current firmware using new firmware.
 
   @retval  EFI_SUCCESS           The operation completed successfully.
   @retval  others                There is error happening.

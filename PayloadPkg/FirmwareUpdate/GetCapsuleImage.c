@@ -290,7 +290,7 @@ LoadCapsuleImage (
     AsciiStrToUnicodeStrS ((CONST CHAR8 *)(&CapsuleInfo->FileName), FileName, MAX_FILE_LEN);
     Status = GetFileByName(FsHandle, FileName, CapsuleImage, CapsuleImageSize);
     if (EFI_ERROR(Status)) {
-      DEBUG((DEBUG_ERROR, " Capsule File '%a' Status : %r\n", FileName, Status));
+      DEBUG((DEBUG_ERROR, " Capsule File '%s' Status : %r\n", FileName, Status));
     }
   } else {
     Status = EFI_NOT_FOUND;
