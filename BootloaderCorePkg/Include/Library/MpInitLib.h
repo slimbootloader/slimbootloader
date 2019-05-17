@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2016 - 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2016 - 2019, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -49,7 +49,8 @@ typedef struct {
   CPU_TASK         CpuTask[0];
 } SYS_CPU_TASK;
 
-typedef UINT32 (*CPU_TASK_PROC) (UINT32 Arg);
+typedef UINT32 (*CPU_TASK_PROC)          (UINT32 Arg);
+typedef VOID   (*PLATFORM_CPU_INIT_HOOK) (UINT32 CpuIndex);
 
 /**
   Run a task function for a specific processor.

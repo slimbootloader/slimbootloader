@@ -1,7 +1,7 @@
 /** @file
   MP init library implementation.
 
-  Copyright (c) 2015 - 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2015 - 2019, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -65,12 +65,13 @@ SmmRebase (
 EFI_STATUS
 EFIAPI
 CpuInit (
-  IN UINT32     Index
+  IN UINT32               Index
   )
 {
-  SMMBASE_INFO  *SmmBaseInfo;
-  UINT32         ApicId;
-  UINT32         CpuIdx;
+  SMMBASE_INFO            *SmmBaseInfo;
+  UINT32                  ApicId;
+  UINT32                  CpuIdx;
+  PLATFORM_CPU_INIT_HOOK  PlatformCpuInitHook;
 
   ApicId = GetApicId();
   if (Index < PcdGet32 (PcdCpuMaxLogicalProcessorNumber)) {
@@ -94,6 +95,11 @@ CpuInit (
     }
   } else if (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE) {
     SmmRebase (Index, ApicId, 0);
+  }
+
+  PlatformCpuInitHook = (PLATFORM_CPU_INIT_HOOK)(UINTN)PcdGet32 (PcdFuncCpuInitHook);
+  if (PlatformCpuInitHook != NULL) {
+    PlatformCpuInitHook (Index);
   }
 
   return EFI_SUCCESS;

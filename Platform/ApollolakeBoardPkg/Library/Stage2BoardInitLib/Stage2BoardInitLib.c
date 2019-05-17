@@ -590,6 +590,29 @@ ClearFspHob (
 }
 
 /**
+  Platform specific initialization for BSP and APs.
+
+  NOTE: If there is code to access common resource in this function,
+        need use lock to avoid resource access conflict.
+
+  @param[in] CpuIndex       CPU index to initialize.
+**/
+VOID
+EFIAPI
+PlatformCpuInit (
+  UINT32         CpuIndex
+  )
+{
+  UINT64         Data;
+
+  // Set IA_Untrusted mode
+  Data = AsmReadMsr64 (EFI_MSR_POWER_MISC);
+  Data |= B_EFI_MSR_POWER_MISC_ENABLE_IA_UNTRUSTED_MODE;
+  AsmWriteMsr64 (EFI_MSR_POWER_MISC, Data);
+}
+
+
+/**
   Board specific hook points.
 
   Implement board specific initialization during the boot flow.
@@ -607,7 +630,6 @@ BoardInit (
   UINT32              VarSize;
   GEN_CFG_DATA       *GenericCfgData;
   UINT32              TcoCnt;
-  UINT64              MsrData;
   UINTN               SpiBaseAddress;
   LOADER_GLOBAL_DATA *LdrGlobal;
   UINT32              TsegBase;
@@ -645,6 +667,8 @@ BoardInit (
     if (GenericCfgData != NULL) {
       SetPayloadId (GenericCfgData->PayloadId);
     }
+
+    Status = PcdSet32S (PcdFuncCpuInitHook, (UINT32)(UINTN) PlatformCpuInit);
     break;
   case PostSiliconInit:
     // To prevent from generating MCA for CLFLUSH flash region
@@ -700,11 +724,6 @@ BoardInit (
     // Clear known MCA logged in BANK4 and enable this MCA again
     AsmWriteMsr64 (IA32_MC4_STATUS, 0);
     AsmMsrOr32    (IA32_MC4_CTL,    (UINT32)BIT4);
-
-    // Set IA_Untrusted mode
-    MsrData = AsmReadMsr64 (EFI_MSR_POWER_MISC);
-    MsrData |= B_EFI_MSR_POWER_MISC_ENABLE_IA_UNTRUSTED_MODE;
-    AsmWriteMsr64 (EFI_MSR_POWER_MISC, MsrData);
     break;
   default:
     break;
