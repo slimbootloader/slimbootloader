@@ -94,4 +94,18 @@ FindPartitions (
   OUT  EFI_HANDLE          *PartHandle
   );
 
+/**
+  Clean-up allocated memory/etc. used for partitions
+
+  @param[in]  PartHandle      The partition handle to clean-up
+
+  @retval                     none
+
+**/
+VOID
+EFIAPI
+ClosePartitions (
+  IN   EFI_HANDLE             PartHandle
+  );
+
 #endif

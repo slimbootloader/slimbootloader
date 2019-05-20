@@ -71,6 +71,7 @@ FindBootPartition (
   Status = FindPartitions (BootOption->HwPart, HwPartHandle);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Failed to find partition - %r\n", Status));
+    ClosePartitions (*HwPartHandle);
     return Status;
   }
   AddMeasurePoint (0x4060);

@@ -596,3 +596,30 @@ FindPartitions (
 
   return Status;
 }
+
+/**
+  Clean-up allocated memory/etc. used for partitions
+
+  @param[in]  PartHandle      The partition handle to clean-up
+
+  @retval                     none
+
+**/
+VOID
+EFIAPI
+ClosePartitions (
+  IN   EFI_HANDLE             PartHandle
+  )
+{
+  PART_BLOCK_DEVICE           *PartBlockDev;
+
+  PartBlockDev = NULL;
+  if (PartHandle != NULL) {
+    PartBlockDev = (PART_BLOCK_DEVICE *)PartHandle;
+    ASSERT (PartBlockDev->Signature == PART_INFO_SIGNATURE);
+  }
+
+  if ((PartBlockDev != NULL) && (PartBlockDev->Signature == PART_INFO_SIGNATURE)) {
+    FreePool (PartBlockDev);
+  }
+}
