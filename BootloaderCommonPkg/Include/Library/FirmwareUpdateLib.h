@@ -20,35 +20,48 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <IndustryStandard/Acpi30.h>
 #include <Guid/SystemResourceTable.h>
 
-#define CMOS_ADDREG     0x70
-#define CMOS_DATAREG    0x71
+#define CMOS_ADDREG             0x70
+#define CMOS_DATAREG            0x71
 
-#define MAX_UPDATE_REGIONS   4
+#define MAX_UPDATE_REGIONS      4
 
-#define FW_UPDATE_SM_INIT     0xFF
-#define FW_UPDATE_SM_PART_A   0xFE
-#define FW_UPDATE_SM_PART_B   0xFD
-#define FW_UPDATE_SM_PART_AB  0xFC
+#define FW_UPDATE_SM_INIT             0xFF
+#define FW_UPDATE_SM_CAP_PROCESSING   0x7F
+#define FW_UPDATE_SM_PART_A           0x7E
+#define FW_UPDATE_SM_PART_B           0x7D
+#define FW_UPDATE_SM_PART_AB          0x7C
 
-#define RTC_PORT_ID 0xC3
-#define PCH_LPC_REG_P2SB_UNHIDE 0xE1
-#define PCH_LPC_REG_P2SB_BAR 0x10
+#define FW_UPDATE_IMAGE_UPDATE_NONE         0xFF
+#define FW_UPDATE_IMAGE_UPDATE_PENDING      0xFE
+#define FW_UPDATE_IMAGE_UPDATE_PROCESSING   0xFC
+#define FW_UPDATE_IMAGE_UPDATE_DONE         0xF8
 
-#define FW_UPDATE_PARTITION_A 0
-#define FW_UPDATE_PARTITION_B 1
+#define FW_UPDATE_PARTITION_A   0
+#define FW_UPDATE_PARTITION_B   1
 
-#define MAX_FILE_LEN          16
+#define FW_UPDATE_SIG_LENGTH    256
+
+#define MAX_FILE_LEN            16
+#define MAX_FW_COMPONENTS       3
 
 #define CAPSULE_FLAGS_CFG_DATA  BIT0
 
-#define FIRMWARE_UPDATE_STATUS_SIGNATURE SIGNATURE_32 ('F', 'W', 'U', 'S')
-#define FIRMWARE_UPDATE_STATUS_VERSION   0x1
+#define FW_UPDATE_STATUS_SIGNATURE SIGNATURE_32 ('F', 'W', 'U', 'S')
+#define FW_UPDATE_STATUS_VERSION   0x1
 
 ///
 /// "FWST"  Firmware Update status data Table
 /// This table contains pointer to the ESRT (EFI System Resource Table)structure
 ///
 #define EFI_FIRMWARE_UPDATE_STATUS_TABLE_SIGNATURE  SIGNATURE_32('F', 'W', 'S', 'T')
+
+#define ESRT_FIRMWARE_RESOURCE_VERSION    0x1
+
+#define CREATOR_INTEL_OEM_ID        'I','N','T','E','L',' '
+#define CREATOR_INTEL_OEM_TABLE_ID  SIGNATURE_64('F','W','U','P','D','S','T','S')
+#define CREATOR_ID_INTEL            0x4C544E49              // "INTL"(Intel)
+#define CREATOR_REV_INTEL           0x20090903
+#define ACPI_FWST_OEM_REV           0x00001000
 
 typedef enum {
   TopSwapSet,
@@ -60,16 +73,6 @@ typedef enum {
   BackupPartition
 } BOOT_PARTITION;
 
-#define ESRT_FIRMWARE_RESOURCE_VERSION    0x1
-#define ESRT_FIRMWARE_RESOURCE_COUNT      0x1
-#define ESRT_FIRMWARE_RESOURCE_COUNT_MAX  0x1
-
-#define CREATOR_INTEL_OEM_ID        'I','N','T','E','L',' '
-#define CREATOR_INTEL_OEM_TABLE_ID  SIGNATURE_64('F','W','U','P','D','S','T','S')
-#define CREATOR_ID_INTEL            0x4C544E49              // "INTL"(Intel)
-#define CREATOR_REV_INTEL           0x20090903
-#define ACPI_FWST_OEM_REV           0x00001000
-
 #pragma pack(push, 1)
 //
 // Firmware Update Status ACPI structure
@@ -79,7 +82,7 @@ typedef enum {
 typedef struct {
   EFI_ACPI_DESCRIPTION_HEADER   Header;
   EFI_SYSTEM_RESOURCE_TABLE     EsrtTablePtr;
-  EFI_SYSTEM_RESOURCE_ENTRY     EsrtTableEntry;
+  EFI_SYSTEM_RESOURCE_ENTRY     EsrtTableEntry[MAX_FW_COMPONENTS];
 } EFI_FWST_ACPI_DESCRIPTION_TABLE;
 
 //
@@ -92,11 +95,18 @@ typedef struct {
   UINT32                Signature;
   UINT16                Version;
   UINT16                Length;
+  UINT8                 CapsuleSig[FW_UPDATE_SIG_LENGTH];
+  UINT8                 StateMachine;
+  UINT8                 Reserved[7];
+} FW_UPDATE_STATUS;
+
+typedef struct {
+  EFI_GUID              FirmwareId;
   UINT32                LastAttemptVersion;
   UINT32                LastAttemptStatus;
-  UINT8                 StateMachine;
+  UINT8                 UpdatePending;
   UINT8                 Reserved[3];
-} FIRMWARE_UPDATE_STATUS;
+} FW_UPDATE_COMP_STATUS;
 
 typedef union _FIRMWARE_UPDATE_POLICY {
   UINT32 Data;
@@ -126,6 +136,23 @@ typedef struct {
   UINT32                      Reserved[3];
 } FIRMWARE_UPDATE_HEADER;
 
+typedef struct {
+  UINT32                      Version;
+  UINT16                      EmbeddedDriverCount;
+  UINT16                      PayloadItemCount;
+// UINT64 ItemOffsetList[];
+} EFI_FW_MGMT_CAP_HEADER;
+
+typedef struct {
+  UINT32                      Version;
+  EFI_GUID                    UpdateImageTypeId;
+  UINT8                       UpdateImageIndex;
+  UINT8                       reserved_bytes[3];
+  UINT32                      UpdateImageSize;
+  UINT32                      UpdateVendorCodeSize;
+  UINT64                      UpdateHardwareInstance;
+} EFI_FW_MGMT_CAP_IMAGE_HEADER;
+
 //
 // Region information for firmware update
 //
@@ -147,6 +174,9 @@ typedef struct {
 #pragma pack(pop)
 
 #define CAPSULE_IMAGE_SIZE(h)   ((h)->HeaderSize + (h)->PubKeySize + (h)->ImageSize + (h)->SignatureSize)
+#define COMP_STATUS_OFFSET(x, y)   ((x) + sizeof(FW_UPDATE_STATUS) + ((y) * sizeof(FW_UPDATE_COMP_STATUS)))
+
+typedef  VOID   (*DRIVER_ENTRY) (VOID *Params);
 
 /**
   Get capsule image for firmware update.
@@ -175,7 +205,7 @@ GetCapsuleImage (
   Computes offset in the BIOS region from the base address.
   Then it calculates base address of stage1A in the capsule image.
 
-  @param[in]  FwImage         The firmware update capsule image.
+  @param[in]  ImageHdr        Pointer to Fw Mgmt capsule Image header
   @param[in]  IsBackupPartition TRUE for Back up copy, FALSE for primary copy
   @param[out] Base            Base address of the component
   @param[out] Size            Size of the component
@@ -187,7 +217,7 @@ GetCapsuleImage (
 EFI_STATUS
 EFIAPI
 PlatformGetStage1AOffset (
-  IN  UINT8      *FwImage,
+  IN  EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
   IN  BOOLEAN    IsBackupPartition,
   OUT UINT32     *Base,
   OUT UINT32     *Size
@@ -205,10 +235,9 @@ PlatformGetStage1AOffset (
   to write to boot media. If the flag is set, that source will be used to check if
   the source is same before doing firmware update.
 
-  @param[in]  FwImage         The firmware update capsule image.
-  @param[in]  FwPolicy        Firmware update policy
-  @param[out] PartitionInfo   The detail informaion on the partition to update
-
+  @param[in]  ImageHdr        Pointer to Fw Mgmt capsule Image header
+  @param[in]  FwPolicy        Firmware update policy.
+  @param[out] PartitionInfo   The detail information on the partition to update
 
   @retval  EFI_SUCCESS        Update successfully.
   @retval  others             Error happening when updating.
@@ -216,7 +245,7 @@ PlatformGetStage1AOffset (
 EFI_STATUS
 EFIAPI
 GetFirmwareUpdateInfo (
-  IN  UINT8                      *FwImage,
+  IN  EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
   IN  FIRMWARE_UPDATE_POLICY     FwPolicy,
   OUT FIRMWARE_UPDATE_PARTITION  **PartitionInfo
   );
@@ -472,18 +501,40 @@ AfterUpdateEnforceFwUpdatePolicy (
  );
 
 /**
-  This function will be called after the firmware update is complete. 
-  This function will update firmware update status structure in reserved region 
-  
-  @param[in] LastAttemptVersion Version of last firmware update attempted.   
-  @param[in] LastAttemptStatus Status of last firmware update attempted.  
+  This function will be called after the firmware update is complete.
+  This function will update firmware update status structure in reserved region
+
+  @param[in] ImageHdr           Pointer to Fw update image guid
+  @param[in] LastAttemptVersion Version of last firmware update attempted.
+  @param[in] LastAttemptStatus  Status of last firmware update attempted.
 
   @retval  EFI_SUCCESS        The operation completed successfully.
   @retval  others             There is error happening.
 **/
 EFI_STATUS
 UpdateStatus (
+  IN EFI_GUID   *ImageId,
   IN UINT16     LastAttemptVersion,
   IN EFI_STATUS LastAttemptStatus
  );
+
+/**
+  Perform csme Firmware update.
+
+  This function based on the image type id guid from the image header will 
+  call the respective functions to perform capsule update.
+
+  @param[in] CapImage       The pointer to the firmware update capsule image.
+  @param[in] CapImageSize   The size of capsule image in bytes.
+  @param[in] ImageHdr       Pointer to fw mgmt capsule Image header
+
+  @retval  EFI_SUCCESS      Update successful.
+  @retval  other            error status from the update routine
+**/
+EFI_STATUS
+UpdateCsme (
+  IN  UINT8                         *CapImage,
+  IN  UINT32                        CapImageSize,
+  IN  EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
+  );
 #endif

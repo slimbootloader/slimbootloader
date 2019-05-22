@@ -34,6 +34,29 @@ SPI_FLASH_SERVICE             *mFwuSpiService = NULL;
 UINT32                         mFlashSize;
 
 /**
+  Perform csme Firmware update.
+
+  This function based on the image type id guid from the image header will 
+  call the respective functions to perform capsule update.
+
+  @param[in] CapImage       The pointer to the firmware update capsule image.
+  @param[in] CapImageSize   The size of capsule image in bytes.
+  @param[in] ImageHdr       Pointer to fw mgmt capsule Image header
+
+  @retval  EFI_SUCCESS      Update successful.
+  @retval  other            error status from the update routine
+**/
+EFI_STATUS
+UpdateCsme (
+  IN  UINT8                         *CapImage,
+  IN  UINT32                        CapImageSize,
+  IN  EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
+  )
+{
+  return EFI_UNSUPPORTED;
+}
+
+/**
   Platform code to get capsule image for firmware update.
 
   This function is platform hook to implement specific way to detecting capsule
@@ -156,7 +179,7 @@ BootMediaErase (
   Computes offset in the BIOS region from the base address.
   Then it calculates base address of stage1A in the capsule image.
 
-  @param[in]  FwImage         The firmware update capsule image.
+  @param[in]  ImageHdr        Pointer to Fw Mgmt capsule Image header
   @param[in]  IsBackupPartition TRUE for Back up copy, FALSE for primary copy
   @param[out] Base            Base address of the component
   @param[out] Size            Size of the component
@@ -168,7 +191,7 @@ BootMediaErase (
 EFI_STATUS
 EFIAPI
 PlatformGetStage1AOffset (
-  IN  UINT8      *FwImage,
+  IN  EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
   IN  BOOLEAN    IsBackupPartition,
   OUT UINT32     *Base,
   OUT UINT32     *Size
@@ -176,7 +199,6 @@ PlatformGetStage1AOffset (
 {
   EFI_STATUS                Status;
   FLASH_MAP                 *FlashMap;
-  FIRMWARE_UPDATE_HEADER    *FwUpdHeader;
 
   if ((Base == NULL) || (Size == NULL)) {
     return EFI_INVALID_PARAMETER;
@@ -205,12 +227,11 @@ PlatformGetStage1AOffset (
   //
   *Base = (UINT32)(FlashMap->RomSize - (0x100000000ULL - *Base));
 
-  FwUpdHeader = (FIRMWARE_UPDATE_HEADER *)FwImage;
   //
   // Calculate base address of the component in the capsule image
   // Capsule image address + bios region offset + offset of the component
   //
-  *Base  = (UINT32)(FwImage + FwUpdHeader->ImageOffset + *Base);
+  *Base  = (UINT32)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER) + *Base);
 
   return EFI_SUCCESS;
 }
@@ -227,7 +248,7 @@ PlatformGetStage1AOffset (
   to write to boot media. If the flag is set, that source will be used to check if
   the source is same before doing firmware update.
 
-  @param[in]  FwImage         The firmware update capsule image.
+  @param[in]  ImageHdr        Pointer to Fw Mgmt capsule Image header
   @param[in]  FwPolicy        Firmware update policy.
   @param[out] PartitionInfo   The detail information on the partition to update
 
@@ -237,7 +258,7 @@ PlatformGetStage1AOffset (
 EFI_STATUS
 EFIAPI
 GetFirmwareUpdateInfo (
-  IN  UINT8                      *FwImage,
+  IN  EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
   IN  FIRMWARE_UPDATE_POLICY     FwPolicy,
   OUT FIRMWARE_UPDATE_PARTITION  **PartitionInfo
   )
@@ -253,7 +274,6 @@ GetFirmwareUpdateInfo (
   UINT32                         CfgDataBase;
   UINT32                         CfgDataSize;
   UINT8                          BootPartition;
-  FIRMWARE_UPDATE_HEADER         *Header;
   FIRMWARE_UPDATE_PARTITION      *UpdatePartition;
   FIRMWARE_UPDATE_REGION         *UpdateRegion;
   UINT8                          Idx;
@@ -272,8 +292,7 @@ GetFirmwareUpdateInfo (
   ASSERT (UpdatePartition != NULL);
   UpdatePartition->RegionCount   = RegionNumber;
 
-  Header = (FIRMWARE_UPDATE_HEADER *)FwImage;
-  if (Header->CapsuleFlags & CAPSULE_FLAGS_CFG_DATA) {
+  if (CompareGuid(&ImageHdr->UpdateImageTypeId, &gCfgFWUpdateImageFileGuid) == TRUE) {
     //
     // Update CfgData
     //
@@ -286,20 +305,20 @@ GetFirmwareUpdateInfo (
       return Status;
     }
 
-    if (Header->ImageSize & 0xFFF) {
+    if (ImageHdr->UpdateImageSize & 0xFFF) {
       DEBUG ((DEBUG_INFO, "CFGDATA capsule payload size is not block aligned!"));
       return EFI_UNSUPPORTED;
     }
 
-    if (Header->ImageSize > CfgDataSize) {
+    if (ImageHdr->UpdateImageSize > CfgDataSize) {
       DEBUG ((DEBUG_INFO, "CFGDATA capsule payload size is too big for the region on flash!"));
       return EFI_UNSUPPORTED;
     }
 
     UpdateRegion                  = &UpdatePartition->FwRegion[0];
     UpdateRegion->ToUpdateAddress = FlashMap->RomSize + CfgDataBase;
-    UpdateRegion->UpdateSize      = Header->ImageSize;
-    UpdateRegion->SourceAddress   = FwImage + Header->ImageOffset;
+    UpdateRegion->UpdateSize      = ImageHdr->UpdateImageSize;
+    UpdateRegion->SourceAddress   = (UINT8 *)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
     UpdatePartition->RegionCount  = 1;
 
   } else {
@@ -347,19 +366,19 @@ GetFirmwareUpdateInfo (
       UpdateRegion->ToUpdateAddress = TopSwapRegionOffset - TopSwapRegionSize;
     }
     UpdateRegion->UpdateSize      = TopSwapRegionSize;
-    UpdateRegion->SourceAddress   = FwImage + Header->ImageOffset + TopSwapRegionOffset;
+    UpdateRegion->SourceAddress   = (UINT8 *)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER) + TopSwapRegionOffset);
 
     // Redundant region
     UpdateRegion                  = &UpdatePartition->FwRegion[1];
     UpdateRegion->ToUpdateAddress = RedundantRegionOffset;
     UpdateRegion->UpdateSize      = RedundantRegionSize;
-    UpdateRegion->SourceAddress   = FwImage + Header->ImageOffset + RedundantRegionOffset;
+    UpdateRegion->SourceAddress   = (UINT8 *)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER) + RedundantRegionOffset);
 
     // Non-redundant region
     UpdateRegion                  = &UpdatePartition->FwRegion[2];
     UpdateRegion->ToUpdateAddress = NonRedundantRegionOffset;
     UpdateRegion->UpdateSize      = NonRedundantRegionSize;
-    UpdateRegion->SourceAddress   = FwImage + Header->ImageOffset + NonRedundantRegionOffset;
+    UpdateRegion->SourceAddress   = (UINT8 *)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER) + NonRedundantRegionOffset);
 
     if (BootPartition == 0) {
       UpdatePartition->RegionCount   = 3;

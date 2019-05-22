@@ -44,6 +44,29 @@
 SPI_FLASH_SERVICE   *mFwuSpiService = NULL;
 
 /**
+  Perform csme Firmware update.
+
+  This function based on the image type id guid from the image header will 
+  call the respective functions to perform capsule update.
+
+  @param[in] CapImage       The pointer to the firmware update capsule image.
+  @param[in] CapImageSize   The size of capsule image in bytes.
+  @param[in] ImageHdr       Pointer to fw mgmt capsule Image header
+
+  @retval  EFI_SUCCESS      Update successful.
+  @retval  other            error status from the update routine
+**/
+EFI_STATUS
+UpdateCsme (
+  IN  UINT8                         *CapImage,
+  IN  UINT32                        CapImageSize,
+  IN  EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
+  )
+{
+  return EFI_UNSUPPORTED;
+}
+
+/**
   This function initialized boot media.
 
   It initializes SPI services and SPI Flash size information.
@@ -177,7 +200,7 @@ MarkBootParitionBpdt (
   Computes offset in the BIOS region from the base address.
   Then it calculates base address of stage1A in the capsule image.
 
-  @param[in]  FwImage         The firmware update capsule image.
+  @param[in]  ImageHdr        Pointer to Fw Mgmt capsule Image header
   @param[in]  IsBackupPartition TRUE for Back up copy, FALSE for primary copy
   @param[out] Base            Base address of the component
   @param[out] Size            Size of the component
@@ -189,14 +212,13 @@ MarkBootParitionBpdt (
 EFI_STATUS
 EFIAPI
 PlatformGetStage1AOffset (
-  IN  UINT8      *FwImage,
+  IN  EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
   IN  BOOLEAN    IsBackupPartition,
   OUT UINT32     *Base,
   OUT UINT32     *Size
   )
 {
   EFI_STATUS                   Status;
-  FIRMWARE_UPDATE_HEADER      *FwUpdHeader;
   UINT32                       Offset;
   UINT8                       *Ptr;
   UINT32                       Index;
@@ -218,10 +240,9 @@ PlatformGetStage1AOffset (
 
   // Search for Flash Map signature in image
   FlashMapPtr = NULL;
-  FwUpdHeader = (FIRMWARE_UPDATE_HEADER *)FwImage;
-  Ptr         = (UINT8 *)(FwImage + FwUpdHeader->ImageOffset);
+  Ptr         = (UINT8 *)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
   BpOffset    = IsBackupPartition ? (RgnSize >> 1) : 0;
-  for (Offset = BpOffset; Offset < FwUpdHeader->ImageSize; Offset += SIZE_4KB) {
+  for (Offset = BpOffset; Offset < ImageHdr->UpdateImageSize; Offset += SIZE_4KB) {
      if (*(UINT32 *)(Ptr + Offset + FLASH_MAP_IN_FV_OFFSET) == FLASH_MAP_SIG_HEADER) {
         // This is flash map
         FlashMapPtr = (FLASH_MAP *)(Ptr + Offset + FLASH_MAP_IN_FV_OFFSET);
@@ -263,7 +284,7 @@ PlatformGetStage1AOffset (
   to write to boot media. If the flag is set, that source will be used to check if
   the source is same before doing firmware update.
 
-  @param[in]  FwImage         The firmware update capsule image.
+  @param[in]  ImageHdr        Pointer to Fw Mgmt capsule Image header
   @param[in]  FwPolicy        Firmware update policy.
   @param[out] PartitionInfo   The detail informaion on the partition to update
 
@@ -273,13 +294,12 @@ PlatformGetStage1AOffset (
 EFI_STATUS
 EFIAPI
 GetFirmwareUpdateInfo (
-  IN  UINT8                      *FwImage,
+  IN  EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
   IN  FIRMWARE_UPDATE_POLICY     FwPolicy,
   OUT FIRMWARE_UPDATE_PARTITION  **PartitionInfo
   )
 {
   EFI_STATUS                     Status;
-  FIRMWARE_UPDATE_HEADER         *Header;
   FIRMWARE_UPDATE_PARTITION      *UpdatePartition;
   UINT32                         AllocateSize;
   UINT32                         ToUpdateAddress;
@@ -305,13 +325,12 @@ GetFirmwareUpdateInfo (
     return Status;
   }
 
-  Header = (FIRMWARE_UPDATE_HEADER *)FwImage;
   if (FwPolicy.Fields.UpdatePartitionA == 1) {
     ToUpdateAddress = 0;
   } else {
     ToUpdateAddress = RgnSize >> 1;
   }
-  BiosAddress  = (UINT8 *)(FwImage + Header->ImageOffset + ToUpdateAddress);
+  BiosAddress  = (UINT8 *)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER) + ToUpdateAddress);
 
   //
   // Mark BPDT header to RED, so if update fails in between, we will have a corrupted partition
