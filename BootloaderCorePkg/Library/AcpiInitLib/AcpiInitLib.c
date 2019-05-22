@@ -394,14 +394,11 @@ UpdateFwst (
   IN UINT8   *Current
   )
 {
+  UINT8                           Count;
   UINT32                          RsvdBase;
   EFI_STATUS                      Status;
-  LOADER_GLOBAL_DATA              *LdrGlobal;
-  BOOT_LOADER_VERSION             *Version;
-  FIRMWARE_UPDATE_STATUS          *FwUpdateStatus;
   EFI_FWST_ACPI_DESCRIPTION_TABLE *FwstAcpiTablePtr;
-
-  LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
+  FW_UPDATE_COMP_STATUS           *FwUpdCompStatus;
 
   //
   // We do not need to populate ACPI table during firmware update
@@ -423,27 +420,13 @@ UpdateFwst (
   // Fill in details for FWST ACPI table
   //
   FwstAcpiTablePtr = (EFI_FWST_ACPI_DESCRIPTION_TABLE *)Current;
-
-  CopyMem(&FwstAcpiTablePtr->EsrtTableEntry.FwClass, &gEsrtSystemFirmwareGuid, sizeof (EFI_GUID)); 
-  FwstAcpiTablePtr->EsrtTableEntry.FwType = ESRT_FW_TYPE_SYSTEMFIRMWARE;
-
-  //
-  // Get current version and lowest supported SVN version
-  //
-  if (LdrGlobal->VerInfoPtr != NULL) {
-    Version = LdrGlobal->VerInfoPtr;
-    FwstAcpiTablePtr->EsrtTableEntry.FwVersion = Version->ImageVersion.SecureVerNum;
-    FwstAcpiTablePtr->EsrtTableEntry.LowestSupportedFwVersion = PcdGet32 (PcdLowestSupportedFwVer);
-  }
-
-  //
-  // Get status of last firmware update attempt
-  //
-  FwUpdateStatus = (FIRMWARE_UPDATE_STATUS *)RsvdBase;
-
-  if (FwUpdateStatus->Signature == FIRMWARE_UPDATE_STATUS_SIGNATURE) {
-    FwstAcpiTablePtr->EsrtTableEntry.LastAttemptVersion = FwUpdateStatus->LastAttemptVersion; 
-    FwstAcpiTablePtr->EsrtTableEntry.LastAttemptStatus = FwUpdateStatus->LastAttemptStatus; 
+  FwUpdCompStatus = (FW_UPDATE_COMP_STATUS *)(RsvdBase + sizeof(FW_UPDATE_STATUS));
+  for (Count = 0; Count < MAX_FW_COMPONENTS; Count ++) {
+    CopyMem(&(FwstAcpiTablePtr->EsrtTableEntry[Count].FwClass), &(FwUpdCompStatus->FirmwareId), sizeof(EFI_GUID));
+    FwstAcpiTablePtr->EsrtTableEntry[Count].FwType = ESRT_FW_TYPE_SYSTEMFIRMWARE;
+    FwstAcpiTablePtr->EsrtTableEntry[Count].LastAttemptVersion = FwUpdCompStatus->LastAttemptVersion;
+    FwstAcpiTablePtr->EsrtTableEntry[Count].LastAttemptStatus = FwUpdCompStatus->LastAttemptStatus;
+    FwUpdCompStatus = (FW_UPDATE_COMP_STATUS *)((UINT32)FwUpdCompStatus + sizeof(FW_UPDATE_COMP_STATUS));
   }
 
   return EFI_SUCCESS;
