@@ -414,7 +414,7 @@ def SignImage(RawData, OutFile, PrivKey):
 
     file_size = len(RawData)
 
-    header.FileGuid         = (ctypes.c_ubyte * 16).from_buffer_copy(FIRMWARE_UPDATE_IMAGE_FILE_GUID.get_bytes_le())
+    header.FileGuid         = (c_ubyte *16).from_buffer_copy(FIRMWARE_UPDATE_IMAGE_FILE_GUID.get_bytes_le())
     header.HeaderSize       = sizeof(Firmware_Update_Header)
     header.FirmwreVersion   = 1
     header.CapsuleFlags     = 0
