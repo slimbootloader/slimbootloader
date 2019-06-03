@@ -1729,37 +1729,29 @@ PlatformFeaturesInit (
   PLAT_FEATURES               *PlatformFeatures;
   DYNAMIC_CFG_DATA            *DynamicCfgData;
   PLATFORM_DATA               *PlatformData;
-  UINT32                      Features;
 
-  Features        = 0;
+  // Set common features
+  LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
+  LdrGlobal->LdrFeatures |= FeaturePcdGet (PcdAcpiEnabled)?FEATURE_ACPI:0;
+  LdrGlobal->LdrFeatures |= FeaturePcdGet (PcdVerifiedBootEnabled)?FEATURE_VERIFIED_BOOT:0;
+  LdrGlobal->LdrFeatures |= FeaturePcdGet (PcdMeasuredBootEnabled)?FEATURE_MEASURED_BOOT:0;
+
+  // Update feature by configuration data.
   FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
   if (FeaturesCfgData != NULL) {
+    if (FeaturesCfgData->Features.Acpi == 0) {
+      LdrGlobal->LdrFeatures &= ~FEATURE_ACPI;
+    }
 
-    if (FeaturesCfgData->Features.Acpi != 0) {
-      Features |= FEATURE_ACPI;
-    } else {
-      Features &= ~FEATURE_ACPI;
+    if (FeaturesCfgData->Features.MeasuredBoot == 0) {
+      LdrGlobal->LdrFeatures &= ~FEATURE_MEASURED_BOOT;
     }
 
     if (FeaturesCfgData->Features.eMMCTuning != 0) {
-      Features |= FEATURE_MMC_TUNING;
+      LdrGlobal->LdrFeatures |= FEATURE_MMC_TUNING;
     }
 
-    PlatformData  = (PLATFORM_DATA *)GetPlatformDataPtr ();
-
-    if ((PlatformData != NULL) && (FeaturesCfgData->Features.MeasuredBoot != 0) &&
-              (PlatformData->BtGuardInfo.Bpm.Mb != 0) && MEASURED_BOOT_ENABLED()) {
-      Features |= FEATURE_MEASURED_BOOT;
-    } else {
-      Features &= ~FEATURE_MEASURED_BOOT;
-    }
-
-    if ((PlatformData != NULL) && (PlatformData->BtGuardInfo.Bpm.Vb != 0) && FeaturePcdGet(PcdVerifiedBootEnabled)) {
-      Features |= FEATURE_VERIFIED_BOOT;
-    } else {
-      Features &= ~FEATURE_VERIFIED_BOOT;
-    }
-
+    // Update platform specific feature from configuration data.
     PlatformFeatures           = &((PLATFORM_DATA *)GetPlatformDataPtr ())->PlatformFeatures;
     PlatformFeatures->Vt       = FeaturesCfgData->Features.Vt;
     PlatformFeatures->DciDebug = FeaturesCfgData->Features.DciDebug;
@@ -1767,12 +1759,22 @@ PlatformFeaturesInit (
     DEBUG ((DEBUG_INFO, "FEATURES CFG DATA NOT FOUND!\n"));
   }
 
-  DynamicCfgData = (DYNAMIC_CFG_DATA *) FindConfigDataByTag (CDATA_DYNAMIC_TAG);
-  if ((FeaturesCfgData != NULL) && (DynamicCfgData != NULL) && (DynamicCfgData->EmmcTuningEnforcement != 0)) {
-    Features |= FEATURE_MMC_FORCE_TUNING;
+  // Update features by boot guard profile
+  PlatformData  = (PLATFORM_DATA *)GetPlatformDataPtr ();
+  if (PlatformData != NULL) {
+    if (PlatformData->BtGuardInfo.Bpm.Mb == 0) {
+      LdrGlobal->LdrFeatures &= ~FEATURE_MEASURED_BOOT;
+    }
+    if (PlatformData->BtGuardInfo.Bpm.Vb == 0) {
+      LdrGlobal->LdrFeatures &= ~FEATURE_VERIFIED_BOOT;
+    }
   }
-  LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
-  LdrGlobal->LdrFeatures = Features;
+
+  // Update features by dynamic configuration data
+  DynamicCfgData = (DYNAMIC_CFG_DATA *) FindConfigDataByTag (CDATA_DYNAMIC_TAG);
+  if ((DynamicCfgData != NULL) && (DynamicCfgData->EmmcTuningEnforcement != 0)) {
+    LdrGlobal->LdrFeatures |= FEATURE_MMC_FORCE_TUNING;
+  }
 }
 
 
