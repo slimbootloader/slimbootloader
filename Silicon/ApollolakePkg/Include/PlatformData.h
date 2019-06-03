@@ -142,7 +142,7 @@ typedef struct {
 
 #define PLAT_DATA                         ((PLATFORM_DATA *)GetPlatformDataPtr ())
 #define PLAT_FEAT                         (PLAT_DATA->PlatformFeatures)
-#define VT_ENABLED()                      (ACPI_FEATURE_ENABLED() && FeaturePcdGet (PcdVtdEnabled) && PLAT_FEAT.Vt)
+#define VT_ENABLED()                      (FeaturePcdGet (PcdVtdEnabled) && ACPI_FEATURE_ENABLED() && PLAT_FEAT.Vt)
 #define EMMC_TUNE_FEATURE_ENABLED()       (PLAT_FEAT.eMMCTuning)
 #define DCI_DBG_FEATURE_ENABLED()         (PLAT_FEAT.DciDebug)
 

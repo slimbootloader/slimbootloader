@@ -491,7 +491,7 @@ SecStartup (
   }
 
   // ACPI Initialization
-  if ( FixedPcdGetBool (PcdAcpiEnabled) && ACPI_FEATURE_ENABLED() ) {
+  if (ACPI_ENABLED()) {
     if (PcdGet32 (PcdLoaderAcpiNvsSize) < GetAcpiGnvsSize()) {
       AcpiGnvs = 0;
       AcpiTop  = 0;
@@ -549,7 +549,7 @@ SecStartup (
   AddMeasurePoint (0x30E0);
 
   // Continue boot flow
-  if (FixedPcdGetBool (PcdAcpiEnabled) && (BootMode == BOOT_ON_S3_RESUME) && ACPI_FEATURE_ENABLED() ) {
+  if (ACPI_ENABLED() && (BootMode == BOOT_ON_S3_RESUME)) {
     S3ResumePath (Stage2Hob);
   } else {
     NormalBootPath (Stage2Hob);
