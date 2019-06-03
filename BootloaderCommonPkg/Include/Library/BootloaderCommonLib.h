@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -63,6 +63,9 @@ typedef struct {
 
 #define TO_MM_PCI_ADDRESS( Addr ) \
   MM_PCI_ADDRESS ( ((Addr) >> 16) & 0xFF, ((Addr) >> 8) & 0xFF, (Addr) & 0xFF, 0)
+
+#define TO_PCI_LIB_ADDRESS( Addr ) \
+  PCI_LIB_ADDRESS ( ((Addr) >> 16) & 0xFF, ((Addr) >> 8) & 0xFF, (Addr) & 0xFF, 0)
 
 //
 // Enumeration of stages of bootloader execution.

@@ -1,7 +1,7 @@
 /** @file
   The platform GPIO library.
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -18,6 +18,7 @@
 #include <RegAccess.h>
 #include <GpioDefines.h>
 #include <Library/ScSbiAccessLib.h>
+#include <Library/BootloaderCommonLib.h>
 
 //
 // Structure for storing information about registers offset, community,
@@ -118,11 +119,7 @@ GetBxtSeries (
   UINT16  VenId;
   UINT16  DevId;
 
-  McD0Base = MmPciBase (
-               SA_MC_BUS,
-               SA_MC_DEV,
-               SA_MC_FUN
-               );
+  McD0Base = MM_PCI_ADDRESS (SA_MC_BUS, SA_MC_DEV, SA_MC_FUN, 0);
 
   VenId = MmioRead16 (McD0Base + PCI_VENDOR_ID_OFFSET);
   DevId = MmioRead16 (McD0Base + PCI_DEVICE_ID_OFFSET);
@@ -182,7 +179,7 @@ GetSideBandMmioAddress(
   IN UINT16 TargetRegister
   )
 {
-  UINT32 Temp = MmioRead32(MmPciAddress(0, 0, PCI_DEVICE_NUMBER_P2SB, PCI_FUNCTION_NUMBER_P2SB, 0) + R_P2SB_BASE) & 0xff000000;
+  UINT32 Temp = MmioRead32(MM_PCI_ADDRESS(0, PCI_DEVICE_NUMBER_P2SB, PCI_FUNCTION_NUMBER_P2SB, 0) + R_P2SB_BASE) & 0xff000000;
   Temp |= TargetPortId << 16;
   Temp |= TargetRegister;
 

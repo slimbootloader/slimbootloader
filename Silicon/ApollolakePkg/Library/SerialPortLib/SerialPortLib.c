@@ -1,7 +1,7 @@
 /** @file
   Serial I/O Port library functions with no library constructor/destructor
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -79,8 +79,7 @@ GetPciUartBase (
   UINT32  PciUartMmBase;
   UINT16  Cmd16;
 
-  PciUartMmBase = MmPciAddress (
-                    0,
+  PciUartMmBase = MM_PCI_ADDRESS (
                     DEFAULT_PCI_BUS_NUMBER_SC,
                     PCI_DEVICE_NUMBER_LPSS_HSUART,
                     (PCI_FUNCTION_NUMBER_LPSS_HSUART0 + GetDebugPort()),
