@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -144,8 +144,12 @@ typedef struct {
 
 #pragma pack()
 
-#define ACPI_FEATURE_ENABLED()    (GetFeatureCfg() & FEATURE_ACPI)
-#define MEASURED_BOOT_ENABLED()   (ACPI_FEATURE_ENABLED() && FeaturePcdGet (PcdMeasuredBootEnabled) && (GetFeatureCfg() & FEATURE_MEASURED_BOOT))
+//
+// These MACRO definations should be used only after feature config data is set in stage1b.
+//
+#define ACPI_FEATURE_ENABLED()   (GetFeatureCfg() & FEATURE_ACPI)
+#define ACPI_ENABLED()           (FeaturePcdGet (PcdAcpiEnabled) && ACPI_FEATURE_ENABLED())
+#define MEASURED_BOOT_ENABLED()  (FeaturePcdGet (PcdMeasuredBootEnabled) && (GetFeatureCfg() & FEATURE_MEASURED_BOOT) && ACPI_FEATURE_ENABLED())
 
 /*
           Reserved MEM
