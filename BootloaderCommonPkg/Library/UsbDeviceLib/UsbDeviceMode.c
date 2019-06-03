@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2006 - 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2006 - 2019, Intel Corporation. All rights reserved.<BR>
 
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
@@ -62,7 +62,7 @@ XhciSwitchSwid (
   UINT32                            DualRoleCfg0;
   UINT32                            DualRoleCfg1;
 
-  XhciPciMmBase = MmPciAddress (0, 0, mUsbDeviceInfo.XhciDeviceAddress.Device, mUsbDeviceInfo.XhciDeviceAddress.Func, 0);
+  XhciPciMmBase = MM_PCI_ADDRESS (0, mUsbDeviceInfo.XhciDeviceAddress.Device, mUsbDeviceInfo.XhciDeviceAddress.Func, 0);
   XhciMemBaseAddress = MmioRead32 ((UINTN) (XhciPciMmBase + R_XHCI_MEM_BASE)) & B_XHCI_MEM_BASE_BA;
   DEBUG ((DEBUG_INFO, "XhciPciMmBase=%x, XhciMemBaseAddress=%x\n", XhciPciMmBase, XhciMemBaseAddress));
 

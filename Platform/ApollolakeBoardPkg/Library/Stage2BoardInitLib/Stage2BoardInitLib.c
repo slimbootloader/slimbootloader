@@ -393,12 +393,12 @@ AssignPciIrqs (
   // Need to program interrupt register for add-in cards
   Shift = 0;
   for (Function = PCI_FUNCTION_NUMBER_PCIE_ROOT_PORT_5; Function <= PCI_FUNCTION_NUMBER_PCIE_ROOT_PORT_6; Function++) {
-    PciBase = MmPciBase (DEFAULT_PCI_BUS_NUMBER_SC, PCI_DEVICE_NUMBER_SC_PCIE_DEVICE_2, Function);
+    PciBase = MM_PCI_ADDRESS (DEFAULT_PCI_BUS_NUMBER_SC, PCI_DEVICE_NUMBER_SC_PCIE_DEVICE_2, Function, 0); 
     if (MmioRead32(PciBase) == 0xFFFFFFFF) {
       continue;
     }
     Bus = MmioRead8(PciBase + PCI_BRIDGE_SECONDARY_BUS_REGISTER_OFFSET);
-    PciBase = MmPciBase (Bus, 0, 0);
+    PciBase = MM_PCI_ADDRESS (Bus, 0, 0, 0);
     if (MmioRead32(PciBase) == 0xFFFFFFFF) {
       continue;
     } else {

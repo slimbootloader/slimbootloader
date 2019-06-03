@@ -1,7 +1,7 @@
 /** @file
   The platform hook library.
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -18,7 +18,7 @@
 #include <Library/BaseLib.h>
 #include <Library/IoLib.h>
 #include <Library/BootloaderCoreLib.h>
-
+#include <Library/BootloaderCommonLib.h>
 #include <RegAccess.h>
 #include <PlatformHookSupport.h>
 
@@ -44,13 +44,7 @@ UartPortInitialize (
   //
   // Program the UART PCI resource
   //
-  PciUartMmBase = MmPciAddress (
-                    0,
-                    DEFAULT_PCI_BUS_NUMBER_SC,
-                    PCI_DEVICE_NUMBER_LPSS_HSUART,
-                    (PCI_FUNCTION_NUMBER_LPSS_HSUART0 + Port),
-                    0
-                    );
+  PciUartMmBase = MM_PCI_ADDRESS (0, PCI_DEVICE_NUMBER_LPSS_HSUART, PCI_FUNCTION_NUMBER_LPSS_HSUART0 + Port, 0);
   if (MmioRead8 (PciUartMmBase + R_LPSS_IO_STSCMD) & 0x02) {
     PciBar = MmioRead32 (PciUartMmBase + R_LPSS_IO_BAR) & 0xFFFFFFF0;
   } else {

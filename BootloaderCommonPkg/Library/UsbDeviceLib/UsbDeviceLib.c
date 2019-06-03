@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2006 - 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2006 - 2019, Intel Corporation. All rights reserved.<BR>
 
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
@@ -42,13 +42,13 @@ UsbDeviceDriverSupported (
 
   UsbInfo = &mUsbDeviceInfo;
 
-  Address = MmPciAddress ( 0, UsbInfo->XdciDeviceAddress.Bus, UsbInfo->XdciDeviceAddress.Device,
+  Address = MM_PCI_ADDRESS (UsbInfo->XdciDeviceAddress.Bus, UsbInfo->XdciDeviceAddress.Device,
                            UsbInfo->XdciDeviceAddress.Func, 0);
   if (MmioRead16 (Address) == 0xFFFF) {
     return EFI_NOT_FOUND;
   }
 
-  Address = MmPciAddress ( 0, UsbInfo->XdciDeviceAddress.Bus, UsbInfo->XdciDeviceAddress.Device,
+  Address = MM_PCI_ADDRESS (UsbInfo->XdciDeviceAddress.Bus, UsbInfo->XdciDeviceAddress.Device,
                            UsbInfo->XdciDeviceAddress.Func, PCI_REVISION_ID_OFFSET);
   Data = MmioRead32 (Address) >> 8;
   CopyMem (&UsbClassCReg, &Data, sizeof (USB_CLASSC));
@@ -105,7 +105,7 @@ UsbDeviceDriverStart (
   UsbXdciDevContext->FirstNodePtr = NULL;
   UsbXdciDevContext->Signature = EFI_USB_DEV_SIGNATURE;
 
-  Address = MmPciAddress (0, UsbInfo->XdciDeviceAddress.Bus, UsbInfo->XdciDeviceAddress.Device,
+  Address = MM_PCI_ADDRESS (UsbInfo->XdciDeviceAddress.Bus, UsbInfo->XdciDeviceAddress.Device,
                           UsbInfo->XdciDeviceAddress.Func, R_OTG_BAR0);
   UsbXdciDevContext->XdciMmioBarAddr = MmioRead32 (Address) & B_OTG_BAR0_BA;
 

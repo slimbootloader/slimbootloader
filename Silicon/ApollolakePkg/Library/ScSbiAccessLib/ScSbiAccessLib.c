@@ -1,7 +1,7 @@
 /** @file
   Program SC SBI register.
 
-  Copyright (c) 2013 - 2016, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2013 - 2019, Intel Corporation. All rights reserved.<BR>
 
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
@@ -17,6 +17,7 @@
 #include <Library/DebugLib.h>
 #include <RegAccess.h>
 #include <Library/ScSbiAccessLib.h>
+#include <Library/BootloaderCommonLib.h>
 
 EFI_STATUS
 EFIAPI
@@ -136,11 +137,7 @@ PchSbiExecutionEx (
   }
 
   P2sbOrgStatus = FALSE;
-  P2sbBase      = MmPciBase (
-                    DEFAULT_PCI_BUS_NUMBER_SC,
-                    PCI_DEVICE_NUMBER_P2SB,
-                    PCI_FUNCTION_NUMBER_P2SB
-                    );
+  P2sbBase      = MM_PCI_ADDRESS (0, PCI_DEVICE_NUMBER_P2SB, PCI_FUNCTION_NUMBER_P2SB, 0);
   PchRevealP2sb (P2sbBase, &P2sbOrgStatus);
 
   Timeout = 0xFFFFFFF;
@@ -255,11 +252,7 @@ PchSbiRegisterSave (
   UINTN                                 Timeout;
   UINT16                                SbiStat;
 
-  P2sbBase      = MmPciBase (
-                    DEFAULT_PCI_BUS_NUMBER_SC,
-                    PCI_DEVICE_NUMBER_P2SB,
-                    PCI_FUNCTION_NUMBER_P2SB
-                    );
+  P2sbBase = MM_PCI_ADDRESS (0, PCI_DEVICE_NUMBER_P2SB, PCI_FUNCTION_NUMBER_P2SB, 0);
   if (MmioRead16 (P2sbBase + PCI_VENDOR_ID_OFFSET) == 0xFFFF) {
     return EFI_DEVICE_ERROR;
   }
@@ -312,11 +305,7 @@ PchSbiRegisterRestore (
   UINTN                                 Timeout;
   UINT16                                SbiStat;
 
-  P2sbBase      = MmPciBase (
-                    DEFAULT_PCI_BUS_NUMBER_SC,
-                    PCI_DEVICE_NUMBER_P2SB,
-                    PCI_FUNCTION_NUMBER_P2SB
-                    );
+  P2sbBase = MM_PCI_ADDRESS (0, PCI_DEVICE_NUMBER_P2SB, PCI_FUNCTION_NUMBER_P2SB, 0);
   if (MmioRead16 (P2sbBase + PCI_VENDOR_ID_OFFSET) == 0xFFFF) {
     return EFI_DEVICE_ERROR;
   }
