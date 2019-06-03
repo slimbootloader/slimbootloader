@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2016, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2016 - 2019, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -20,15 +20,5 @@
 #include <PcieRegs.h>
 #include <SocRegs.h>
 #include <PlatformBase.h>
-
-#define MmPciAddress( Segment, Bus, Device, Function, Register ) \
-  ( (UINTN)PcdGet64(PcdPciExpressBaseAddress) + \
-    (UINTN)(Bus << 20) + \
-    (UINTN)(Device << 15) + \
-    (UINTN)(Function << 12) + \
-    (UINTN)(Register) \
-  )
-
-#define MmPciBase(Bus, Device, Function)   MmPciAddress(0, Bus, Device, Function, 0)
 
 #endif

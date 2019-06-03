@@ -1032,7 +1032,7 @@ UpdateResetReason (
     RstCause = ResetWakeS3;
   }
 
-  Bar     = MmioRead32 (MmPciAddress (0, 0, PCI_DEVICE_NUMBER_PMC, PCI_FUNCTION_NUMBER_PMC, R_PMC_BASE)) & ~0x0F;
+  Bar     = MmioRead32 (MM_PCI_ADDRESS (0, PCI_DEVICE_NUMBER_PMC, PCI_FUNCTION_NUMBER_PMC, R_PMC_BASE)) & ~0x0F;
   PmConf1 = MmioRead32 (Bar + R_PMC_GEN_PMCON_1);
 
   TcoStatus = IoRead32(ACPI_BASE_ADDRESS + R_TCO_STS);
@@ -1458,7 +1458,7 @@ EarlyPcieLinkUp (
     PortIndex = 5;
     ClkReqNum = 0xF;
 
-    Address = MmioRead32 (MmPciAddress (0, 0, PCI_DEVICE_NUMBER_P2SB, PCI_FUNCTION_NUMBER_P2SB, R_P2SB_BASE)) & B_PCH_P2SB_SBREG_RBA;
+    Address = MmioRead32 (MM_PCI_ADDRESS (0, PCI_DEVICE_NUMBER_P2SB, PCI_FUNCTION_NUMBER_P2SB, R_P2SB_BASE)) & B_PCH_P2SB_SBREG_RBA;
     Address |= (0xB0 << 16);                                        // PID_FIA: 0xB0
     Address |= (0x100 + (SC_PCIE_ROOT_PORT_FUNC (PortIndex) / 2)); // R_SC_PCR_FIA_DRCRM1: 0x100
     Data8   = MmioRead8 (Address);
@@ -1467,7 +1467,7 @@ EarlyPcieLinkUp (
     MmioWrite8 (Address, Data8);
     DEBUG ((DEBUG_INFO, "Address = 0x%08X Value = 0x%X\n", Address, Data8));
 
-    Address = MmPciAddress (0, 0, SC_PCIE_ROOT_PORT_BUS (PortIndex), SC_PCIE_ROOT_PORT_FUNC (PortIndex), 0);
+    Address = MM_PCI_ADDRESS (0, SC_PCIE_ROOT_PORT_BUS (PortIndex), SC_PCIE_ROOT_PORT_FUNC (PortIndex), 0);
     DEBUG ((DEBUG_INFO, "RpBase = 0x%08X\n", Address));
     MmioOr16 (Address + R_PCH_PCIE_XCAP, B_PCIE_XCAP_SI);
   }
@@ -1675,7 +1675,7 @@ RtcInit (
   UINT8   PmConf1;
   UINT8   Data8;
 
-  Bar     = MmioRead32 (MmPciAddress (0, 0, PCI_DEVICE_NUMBER_PMC, PCI_FUNCTION_NUMBER_PMC, R_PMC_BASE)) & ~0x0F;
+  Bar     = MmioRead32 (MM_PCI_ADDRESS (0, PCI_DEVICE_NUMBER_PMC, PCI_FUNCTION_NUMBER_PMC, R_PMC_BASE)) & ~0x0F;
   PmConf1 = MmioRead8 (Bar + R_PMC_GEN_PMCON_1);
 
   if ((PmConf1 & B_PMC_GEN_PMCON_RTC_PWR_STS) != 0) {

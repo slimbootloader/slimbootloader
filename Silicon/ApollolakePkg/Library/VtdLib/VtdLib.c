@@ -1,7 +1,7 @@
 /** @file
   This code provides a initialization of intel VT-d (Virtualization Technology for Directed I/O).
 
-  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -24,6 +24,7 @@
 #include <Library/MemoryAllocationLib.h>
 #include <Library/BaseLib.h>
 #include <Library/ScSbiAccessLib.h>
+#include <Library/BootloaderCommonLib.h>
 
 /**
   For device that specified by Device Num and Function Num,
@@ -74,6 +75,7 @@ UpdateDrhd (
   UINT16                        DisableBit;
   BOOLEAN                       NeedRemove;
   EFI_ACPI_DRHD_ENGINE1_STRUCT  *DrhdEngine;
+  UINT32                        PciAddress;
 
   //
   // Convert DrhdEnginePtr to EFI_ACPI_DRHD_ENGINE1_STRUCT Pointer
@@ -87,11 +89,11 @@ UpdateDrhd (
                 );
 
   NeedRemove = FALSE;
-
+  PciAddress = MM_PCI_ADDRESS (0, DrhdEngine->DeviceScope[0].PciPath[0], DrhdEngine->DeviceScope[0].PciPath[1], 0);
   if ((DisableBit == 0xFF)                   ||
       (DrhdEngine->RegisterBaseAddress == 0) ||
       ((DisableBit == 0x80)                  &&
-      (MmioRead32 (MmPciBase (0, DrhdEngine->DeviceScope[0].PciPath[0], DrhdEngine->DeviceScope[0].PciPath[1]) + 0x00) == 0xFFFFFFFF))
+      (MmioRead32 (PciAddress + 0x00) == 0xFFFFFFFF))
         ) {
       NeedRemove = TRUE;
   }
@@ -155,13 +157,7 @@ UpdateDrhd2 (
   BOOLEAN                       P2sbOrgStatus;
 
   P2sbOrgStatus = FALSE;
-  P2sbMmbase = MmPciAddress(
-                 0,
-                 DEFAULT_PCI_BUS_NUMBER_SC,
-                 PCI_DEVICE_NUMBER_P2SB,
-                 PCI_FUNCTION_NUMBER_P2SB,
-                 0
-               );
+  P2sbMmbase    = MM_PCI_ADDRESS (0, PCI_DEVICE_NUMBER_P2SB, PCI_FUNCTION_NUMBER_P2SB, 0);
   PchRevealP2sb (P2sbMmbase, &P2sbOrgStatus);
 
   //
@@ -263,6 +259,7 @@ UpdateRmrr (
   UINTN                     Index;
   BOOLEAN                   NeedRemove;
   EFI_ACPI_RMRR_HECI_STRUC  *Rmrr;
+  UINT32                    PciAddress;
 
   //
   // To make sure all device scope can be checked,
@@ -281,9 +278,10 @@ UpdateRmrr (
                   );
     NeedRemove = FALSE;
 
+    PciAddress = MM_PCI_ADDRESS (0, Rmrr->DeviceScope[Index].PciPath[0], Rmrr->DeviceScope[Index].PciPath[1], 0);
     if ((DisableBit == 0xFF) ||
         ((DisableBit == 0x80) &&
-        (MmioRead32 (MmPciBase (0, Rmrr->DeviceScope[Index].PciPath[0], Rmrr->DeviceScope[Index].PciPath[1]) + 0x00) == 0xFFFFFFFF))
+        (MmioRead32 (PciAddress + 0x00) == 0xFFFFFFFF))
         ){
       NeedRemove = TRUE;
     }
@@ -356,7 +354,7 @@ DmarTableUpdate (
   //
   // Calculate IGD mem size
   //
-  McD0BaseAddress = MmPciBase (SA_MC_BUS, 0, 0);
+  McD0BaseAddress = MM_PCI_ADDRESS (SA_MC_BUS, 0, 0, 0);
   MchBar          = MmioRead32 (McD0BaseAddress + R_SA_MCHBAR_REG) & ~BIT0;
   IgdMode = (MmioRead16 (McD0BaseAddress + R_SA_GGC) & B_SA_GGC_GMS_MASK) >> N_SA_GGC_GMS_OFFSET;
 
@@ -473,7 +471,7 @@ UpdateDmarAcpi (
   UINTN                McD0BaseAddress;
 
   DEBUG ((DEBUG_INFO, "DMAR table update.\n"));
-  McD0BaseAddress = MmPciBase (SA_MC_BUS, 0, 0);
+  McD0BaseAddress = MM_PCI_ADDRESS (SA_MC_BUS, 0, 0, 0);
 
   ///
   /// skip install when disabled

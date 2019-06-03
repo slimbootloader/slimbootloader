@@ -1,7 +1,7 @@
 /** @file
   The platform hook library.
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -19,6 +19,7 @@
 #include <Library/IoLib.h>
 #include <RegAccess.h>
 #include <PlatformHookSupport.h>
+#include <Library/BootloaderCommonLib.h>
 
 typedef struct {
   UINT16  Community   : 4;
@@ -68,11 +69,7 @@ GetUartBaseAddress (
 {
   UINTN                 PciUartMmBase;
 
-  PciUartMmBase = MmPciAddress (0,\
-    DEFAULT_PCI_BUS_NUMBER_SC, \
-    PCI_DEVICE_NUMBER_LPSS_HSUART, \
-    (PCI_FUNCTION_NUMBER_LPSS_HSUART0 + Port), \
-    0);
+  PciUartMmBase = MM_PCI_ADDRESS (0, PCI_DEVICE_NUMBER_LPSS_HSUART, PCI_FUNCTION_NUMBER_LPSS_HSUART0 + Port, 0);
 
   if ((MmioRead8 (PciUartMmBase + R_LPSS_IO_STSCMD) & 0x02) != 0x02) {
     DEBUG ((DEBUG_ERROR, "UART%d was not configured properly!", Port));
