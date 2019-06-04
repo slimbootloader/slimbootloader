@@ -674,8 +674,8 @@ Ext2fsOpen (
   )
 {
 #ifndef LIBSA_FS_SINGLECOMPONENT
-  CONST CHAR8 *Cp;
-  CONST CHAR8 *Ncp;
+  CHAR8 *Cp;
+  CHAR8 *Ncp;
   INT32 Component;
 #endif
   INODE32 INumber;
@@ -752,7 +752,7 @@ Ext2fsOpen (
 
 #ifndef LIBSA_FS_SINGLECOMPONENT
   Cp = Path;
-  while (*Cp != NULL) {
+  while (*Cp != '\0') {
 
     //
     //  Remove extra separators
@@ -768,7 +768,7 @@ Ext2fsOpen (
     //  Check that current node is a directory.
     //
     if ((Fp->DiskInode.Ext2DInodeMode & EXT2_IFMT) != EXT2_IFDIR) {
-      Rc = ENOTDIR;
+      Rc = EFI_LOAD_ERROR;
       goto out;
     }
 
