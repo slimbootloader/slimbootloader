@@ -146,6 +146,7 @@ typedef struct {
 
 #define ACPI_FEATURE_ENABLED()    (GetFeatureCfg() & FEATURE_ACPI)
 #define MEASURED_BOOT_ENABLED()   (ACPI_FEATURE_ENABLED() && FeaturePcdGet (PcdMeasuredBootEnabled) && (GetFeatureCfg() & FEATURE_MEASURED_BOOT))
+#define TCC_FEATURE_ENABLED()    (GetFeatureCfg() & FEATURE_TCC_MODE)
 
 /*
           Reserved MEM
