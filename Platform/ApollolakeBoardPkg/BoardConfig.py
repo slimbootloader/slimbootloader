@@ -162,7 +162,7 @@ class Board(BaseBoard):
 			'PlatformHookLib|Silicon/$(SILICON_PKG_NAME)/Library/PlatformHookLib/PlatformHookLib.inf',
 			'ScSbiAccessLib|Silicon/$(SILICON_PKG_NAME)/Library/ScSbiAccessLib/ScSbiAccessLib.inf',
 			'GpioLib|Silicon/$(SILICON_PKG_NAME)/Library/GpioLib/GpioLib.inf',
-			'SpiFlashLib|Silicon/$(SILICON_PKG_NAME)/Library/SpiFlashLib/SpiFlashLib.inf',
+			'SpiFlashLib|BootloaderCommonPkg/Library/SpiFlashLib/SpiFlashLib.inf',
 			'IgdOpRegionLib|Silicon/$(SILICON_PKG_NAME)/Library/IgdOpRegionLib/IgdOpRegionLib.inf',
 			'IocIpcLib|Platform/$(BOARD_PKG_NAME)/Library/IocIpcLib/IocIpcLib.inf',
 			'BootGuardLib|Silicon/$(SILICON_PKG_NAME)/Library/BootGuardLib20/BootGuardLib20.inf',
