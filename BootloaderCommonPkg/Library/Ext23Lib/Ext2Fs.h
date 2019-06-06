@@ -1,4 +1,8 @@
 /** @file
+
+  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
   Copyright (c) 1982, 1986, 1989, 1993
   The Regents of the University of California.  All rights reserved.
 
@@ -244,6 +248,8 @@ typedef struct {
 
 #define EXT2F_INCOMPAT_COMP         0x0001
 #define EXT2F_INCOMPAT_FTYPE        0x0002
+#define EXT2F_INCOMPAT_EXTENTS      0x0040
+#define EXT2F_INCOMPAT_FLEX_BG      0x0200
 
 /**
   Features supported in this implementation
@@ -261,7 +267,9 @@ typedef struct {
 #define EXT2F_COMPAT_SUPP        0x0000
 #define EXT2F_ROCOMPAT_SUPP      (EXT2F_ROCOMPAT_SPARSESUPER \
                                  | EXT2F_ROCOMPAT_LARGEFILE)
-#define EXT2F_INCOMPAT_SUPP      EXT2F_INCOMPAT_FTYPE
+#define EXT2F_INCOMPAT_SUPP      (EXT2F_INCOMPAT_FTYPE \
+                                 | EXT2F_INCOMPAT_EXTENTS \
+                                 | EXT2F_INCOMPAT_FLEX_BG)
 
 //
 //  Definitions of behavior on errors
