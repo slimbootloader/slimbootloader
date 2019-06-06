@@ -1,4 +1,8 @@
 /** @file
+
+  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
   Copyright (c) 1982, 1986, 1989, 1993
   The Regents of the University of California.  All rights reserved.
   (c) UNIX System Laboratories, Inc.
@@ -117,7 +121,38 @@ typedef struct {
   UINT32    Ext2DInodeLinuxRsvd3;               // 124
 } EXTFS_DINODE;
 
+#define EXT4_MAX_HEADER_EXTENT_ENTRIES  4
+#define EXT4_EXTENT_HEADER_MAGIC        0xF30A
 
+typedef struct {
+  UINT16    EhMagic;      // magic number: 0xF30A
+  UINT16    EhEntries;    // number of valid entries
+  UINT16    EhMax;        // capacity of store in entries
+  UINT16    EhDepth;      // the depth of extent tree
+  UINT32    EhGen;        // generation of extent tree
+} EXT4_EXTENT_HEADER;
+
+typedef struct {
+  UINT32    EiBlk;        // indexes logical blocks
+  UINT32    EiLeafLo;     // points to physical block of the next level
+  UINT16    EiLeafHi;     // high 16 bits of physical block
+  UINT16    EiUnused;
+} EXT4_EXTENT_INDEX;
+
+typedef struct {
+  UINT32    Eblk;         // first logical block
+  UINT16    Elen;         // number of blocks
+  UINT16    EstartHi;     // high 16 bits of physical block
+  UINT32    EstartLo;     // low 32 bits of physical block
+} EXT4_EXTENT;
+
+typedef struct {
+  EXT4_EXTENT_HEADER Eheader;
+  union {
+    EXT4_EXTENT_INDEX  Eindex[EXT4_MAX_HEADER_EXTENT_ENTRIES];
+    EXT4_EXTENT        Extent[EXT4_MAX_HEADER_EXTENT_ENTRIES];
+  } Enodes;
+} EXT4_EXTENT_TABLE;
 
 #define    E2MAXSYMLINKLEN    ((NDADDR + NIADDR) * sizeof(UINT32))
 //
@@ -150,6 +185,7 @@ typedef struct {
 #define EXT2_IMMUTABLE  0x00000010      // Immutable file
 #define EXT2_APPEND     0x00000020      // writes to file may only append
 #define EXT2_NODUMP     0x00000040      // do not dump file
+#define EXT4_EXTENTS    0x00080000      // Inode uses extents
 
 //
 // Size of on-disk inode.

@@ -1,4 +1,8 @@
 /** @file
+
+  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
   Copyright (c) 1997 Manuel Bouyer.
 
   Redistribution and use in source and binary forms, with or without
@@ -331,83 +335,159 @@ BlockMap (
   UINT32    RSize;
   INT32     Rc;
   INDPTR   *Buf;
+  UINT32    Index;
+  UINT64    NextLevelNode;
+  EXT4_EXTENT_TABLE *Etable;
+  EXT4_EXTENT_INDEX *ExtIndex;
+  EXT4_EXTENT       *Extent;
 
   Fp = (FILE *)File->FileSystemSpecificData;
   FileSystem = Fp->SuperBlockPtr;
   Buf = (VOID *)Fp->Buffer;
 
-  if (FileBlock < NDADDR) {
-    //
-    // Direct block.
-    //
-    *DiskBlockPtr = FS2H32 (Fp->DiskInode.Ext2DInodeBlocks[FileBlock]);
-    return 0;
-  }
-
-  FileBlock -= NDADDR;
-
-  IndCache = FileBlock >> LN2_IND_CACHE_SZ;
-  if (IndCache == Fp->InodeCacheBlock) {
-    *DiskBlockPtr =
-      FS2H32 (Fp->InodeCache[FileBlock & IND_CACHE_MASK]);
-    return 0;
-  }
-
-  for (Level = 0;;) {
-    Level += Fp->NiShift;
-    if (FileBlock < (INDPTR)1 << Level) {
-      break;
+  if ((Fp->DiskInode.Ext2DInodeStatusFlags & EXT4_EXTENTS) != 0) {
+    Etable = (EXT4_EXTENT_TABLE*) &(Fp->DiskInode.Ext2DInodeBlocks);
+    if (Etable->Eheader.EhMagic != EXT4_EXTENT_HEADER_MAGIC) {
+        DEBUG ((DEBUG_ERROR, "EXT4 extent header magic mismatch 0x%X!\n", Etable->Eheader.EhMagic));
+        return EFI_DEVICE_ERROR;
     }
-    if (Level > NIADDR * Fp->NiShift)
-      //
-      // Block number too high
-      //
-    {
-      return EFI_OUT_OF_RESOURCES;
+
+    while (Etable->Eheader.EhDepth > 0) {
+      ExtIndex = NULL;
+      for (Index=1; Index < Etable->Eheader.EhEntries; Index++) {
+        ExtIndex = &(Etable->Enodes.Eindex[Index]);
+        if (((UINT32) FileBlock) < ExtIndex->EiBlk) {
+          ExtIndex = &(Etable->Enodes.Eindex[Index-1]);
+          break;
+        }
+        ExtIndex = NULL;
+      }
+
+      if (ExtIndex != NULL) {
+        //
+        // TODO: Need to support 48-bit block device addressing.
+        // Throw an ASSERT if upper 16-bits are non-zero.
+        //
+        ASSERT (ExtIndex->EiLeafHi == 0);
+        NextLevelNode = ExtIndex->EiLeafLo; //LShiftU64((UINT64)ExtIndex->EiLeafHi, 32) | ExtIndex->EiLeafLo;
+
+        //
+        // We need to read the next level node of the extent tree since the data was not in the current level.
+        //
+        Rc = DEV_STRATEGY (File->DevPtr) (File->FileDevData, F_READ,
+                                          FSBTODB (Fp->SuperBlockPtr, (DADDRESS) NextLevelNode), FileSystem->Ext2FsBlockSize,
+                                          Buf, &RSize);
+        if (Rc != 0) {
+          return Rc;
+        }
+        if (RSize != (UINT32)FileSystem->Ext2FsBlockSize) {
+          return EFI_DEVICE_ERROR;
+        }
+
+        Etable = (EXT4_EXTENT_TABLE*) Buf;
+        if (Etable->Eheader.EhMagic != EXT4_EXTENT_HEADER_MAGIC) {
+            DEBUG ((DEBUG_ERROR, "EXT4 extent header magic mismatch 0x%X!\n", Etable->Eheader.EhMagic));
+            return EFI_DEVICE_ERROR;
+        }
+      } else {
+        DEBUG ((DEBUG_ERROR, "Could not find FileBlock #%d in the index extent data!\n", FileBlock));
+        return EFI_NO_MAPPING;
+      }
     }
-    FileBlock -= (INDPTR)1 << Level;
-  }
 
-  IndBlockNum =
-    FS2H32 (Fp->DiskInode.Ext2DInodeBlocks[NDADDR + (Level / Fp->NiShift - 1)]);
+    Extent = NULL;
+    for (Index=0; Index < Etable->Eheader.EhEntries; Index++) {
+      Extent = &(Etable->Enodes.Extent[Index]);
+      if ((((UINT32) FileBlock) >= Extent->Eblk) && (((UINT32) FileBlock) <= (Extent->Eblk + Extent->Elen - 1))) {
+        break;
+      }
+      Extent = NULL;
+    }
 
-  for (;;) {
-    Level -= Fp->NiShift;
-    if (IndBlockNum == 0) {
-      *DiskBlockPtr = 0;    // missing
+    if (Extent != NULL) {
+      //
+      // TODO: Need to support 48-bit block device addressing
+      // Throw an ASSERT if upper 16-bits are non-zero.
+      //
+      ASSERT (Extent->EstartHi == 0);
+      *DiskBlockPtr = Extent->EstartLo + FileBlock; // (LShiftU64((UINT64)Extent->EiLeafHi, 32) | Extent->EstartLo) + FileBlock);
+    } else {
+      *DiskBlockPtr = 0;
+    }
+  } else {
+    if (FileBlock < NDADDR) {
+      //
+      // Direct block.
+      //
+      *DiskBlockPtr = FS2H32 (Fp->DiskInode.Ext2DInodeBlocks[FileBlock]);
       return 0;
     }
 
-    TWIDDLE();
-    //
-    //  If we were feeling brave, we could work out the number
-    //  of the disk sector and read a single disk sector instead
-    //  of a filesystem block.
-    //  However we don't do this very often anyway...
-    //
-    Rc = DEV_STRATEGY (File->DevPtr) (File->FileDevData, F_READ,
-                                      FSBTODB (Fp->SuperBlockPtr, IndBlockNum), FileSystem->Ext2FsBlockSize,
-                                      Buf, &RSize);
-    if (Rc != 0) {
-      return Rc;
-    }
-    if (RSize != (UINT32)FileSystem->Ext2FsBlockSize) {
-      return EFI_DEVICE_ERROR;
-    }
-    IndBlockNum = FS2H32 (Buf[FileBlock >> Level]);
-    if (Level == 0) {
-      break;
-    }
-    FileBlock &= (1 << Level) - 1;
-  }
-  //
-  // Save the part of the block that contains this sector
-  //
-  CopyMem (Fp->InodeCache, &Buf[FileBlock & ~IND_CACHE_MASK],
-           IND_CACHE_SZ * sizeof Fp->InodeCache[0]);
-  Fp->InodeCacheBlock = IndCache;
+    FileBlock -= NDADDR;
 
-  *DiskBlockPtr = IndBlockNum;
+    IndCache = FileBlock >> LN2_IND_CACHE_SZ;
+    if (IndCache == Fp->InodeCacheBlock) {
+      *DiskBlockPtr =
+        FS2H32 (Fp->InodeCache[FileBlock & IND_CACHE_MASK]);
+      return 0;
+    }
+
+    for (Level = 0;;) {
+      Level += Fp->NiShift;
+      if (FileBlock < (INDPTR)1 << Level) {
+        break;
+      }
+      if (Level > NIADDR * Fp->NiShift)
+        //
+        // Block number too high
+        //
+      {
+        return EFI_OUT_OF_RESOURCES;
+      }
+      FileBlock -= (INDPTR)1 << Level;
+    }
+
+    IndBlockNum =
+      FS2H32 (Fp->DiskInode.Ext2DInodeBlocks[NDADDR + (Level / Fp->NiShift - 1)]);
+
+    while (1) {
+      Level -= Fp->NiShift;
+      if (IndBlockNum == 0) {
+        *DiskBlockPtr = 0;    // missing
+        return 0;
+      }
+
+      TWIDDLE();
+      //
+      //  If we were feeling brave, we could work out the number
+      //  of the disk sector and read a single disk sector instead
+      //  of a filesystem block.
+      //  However we don't do this very often anyway...
+      //
+      Rc = DEV_STRATEGY (File->DevPtr) (File->FileDevData, F_READ,
+                                        FSBTODB (Fp->SuperBlockPtr, IndBlockNum), FileSystem->Ext2FsBlockSize,
+                                        Buf, &RSize);
+      if (Rc != 0) {
+        return Rc;
+      }
+      if (RSize != (UINT32)FileSystem->Ext2FsBlockSize) {
+        return EFI_DEVICE_ERROR;
+      }
+      IndBlockNum = FS2H32 (Buf[FileBlock >> Level]);
+      if (Level == 0) {
+        break;
+      }
+      FileBlock &= (1 << Level) - 1;
+    }
+    //
+    // Save the part of the block that contains this sector
+    //
+    CopyMem (Fp->InodeCache, &Buf[FileBlock & ~IND_CACHE_MASK],
+             IND_CACHE_SZ * sizeof Fp->InodeCache[0]);
+    Fp->InodeCacheBlock = IndCache;
+
+    *DiskBlockPtr = IndBlockNum;
+  }
 
   return 0;
 }
