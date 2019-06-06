@@ -1,7 +1,7 @@
 /** @file
   SC SPI Common Driver implements the SPI Host Controller Compatibility Interface.
 
-  Copyright (c) 2017-2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017-2019, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -18,11 +18,12 @@
 #include <Library/DebugLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/SpiFlashLib.h>
-#include <Library/ScSpiCommon.h>
-#include <RegAccess.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/TimerLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include <Guid/OsBootOptionGuid.h>
+#include "ScSpiCommon.h"
+#include "RegsSpi.h"
 
 const SPI_FLASH_SERVICE   mSpiFlashService = {
   .Header.Signature = SPI_FLASH_SERVICE_SIGNATURE,
@@ -96,11 +97,9 @@ SpiConstructor (
 
   SpiInstance->PchSpiBase = GetDeviceAddr (OsBootDeviceSpi, 0);
   SpiInstance->PchSpiBase = TO_MM_PCI_ADDRESS (SpiInstance->PchSpiBase);
+  DEBUG ((DEBUG_INFO, "PchSpiBase at 0x%x\n", SpiInstance->PchSpiBase));
 
-  SpiInstance->PchAcpiBase = ACPI_BASE_ADDRESS;
-  ASSERT (SpiInstance->PchAcpiBase != 0);
-
-  ScSpiBar0 = MmioRead32 (SpiInstance->PchSpiBase + R_SPI_BASE) & ~(B_SPI_BAR0_MASK);
+  ScSpiBar0 = MmioRead32 (SpiInstance->PchSpiBase + PCI_BASE_ADDRESSREG_OFFSET) & 0xFFFFF000;
   if (ScSpiBar0 == 0) {
     ASSERT (FALSE);
   }
@@ -157,75 +156,6 @@ SpiConstructor (
   return Status;
 }
 
-
-
-/**
-  Delay for at least the request number of microseconds for Runtime usage.
-
-  @param[in] ABase                Acpi base address
-  @param[in] Microseconds         Number of microseconds to delay.
-
-  @retval None
-**/
-VOID
-EFIAPI
-PchPmTimerStallRuntimeSafe (
-  IN  UINT16  ABase,
-  IN  UINTN   Microseconds
-  )
-{
-  UINTN   Ticks;
-  UINTN   Counts;
-  UINTN   CurrentTick;
-  UINTN   OriginalTick;
-  UINTN   RemainingTick;
-
-  if (Microseconds == 0) {
-    return;
-  }
-
-  OriginalTick   = IoRead32 ((UINTN) (ABase + R_ACPI_PM1_TMR)) & B_ACPI_PM1_TMR_VAL;
-  CurrentTick    = OriginalTick;
-
-  ///
-  /// The timer frequency is 3.579545 MHz, so 1 ms corresponds 3.58 clocks
-  ///
-  Ticks = Microseconds * 358 / 100 + OriginalTick + 1;
-
-  ///
-  /// The loops needed by timer overflow
-  ///
-  Counts = Ticks / V_ACPI_PM1_TMR_MAX_VAL;
-
-  ///
-  /// Remaining clocks within one loop
-  ///
-  RemainingTick = Ticks % V_ACPI_PM1_TMR_MAX_VAL;
-
-  ///
-  /// not intend to use TMROF_STS bit of register PM1_STS, because this adds extra
-  /// one I/O operation, and maybe generate SMI
-  ///
-  while ((Counts != 0) || (RemainingTick > CurrentTick)) {
-    CurrentTick = IoRead32 ((UINTN) (ABase + R_ACPI_PM1_TMR)) & B_ACPI_PM1_TMR_VAL;
-    ///
-    /// Check if timer overflow
-    ///
-    if ((CurrentTick < OriginalTick)) {
-      if (Counts != 0) {
-        Counts--;
-      } else {
-        ///
-        /// If timer overflow and Counts equal to 0, that means we already stalled more than
-        /// RemainingTick, break the loop here
-        ///
-        break;
-      }
-    }
-
-    OriginalTick = CurrentTick;
-  }
-}
 
 /**
   Read data from the flash part.
@@ -575,30 +505,13 @@ SendSpiCmd (
   UINT32          SpiDataCount;
   UINT32          FlashCycle;
   UINT8           BiosCtlSave;
-  UINT32          SmiEnSave;
-  UINT16          ABase;
   SPI_INSTANCE    *SpiInstance;
 
-  SpiInstance       = GetSpiInstance();
-  Status            = EFI_SUCCESS;
-  ScSpiBar0         = AcquireSpiBar0 ();
-  SpiBaseAddress    = SpiInstance->PchSpiBase;
-  ABase             = SpiInstance->PchAcpiBase;
-
-  ///
-  /// Disable SMIs to make sure normal mode flash access is not interrupted by an SMI
-  /// whose SMI handler accesses flash (e.g. for error logging)
-  ///
-  /// *** NOTE: if the SMI_LOCK bit is set (i.e., PMC PCI Offset A0h [4]='1'),
-  /// clearing B_GBL_SMI_EN will not have effect. In this situation, some other
-  /// synchronization methods must be applied here or in the consumer of the
-  /// SendSpiCmd. An example method is disabling the specific SMI sources
-  /// whose SMI handlers access flash before flash cycle and re-enabling the SMI
-  /// sources after the flash cycle .
-  ///
-  SmiEnSave   = IoRead32 ((UINTN) (ABase + R_SMI_EN));
-  IoWrite32 ((UINTN) (ABase + R_SMI_EN), SmiEnSave & (UINT32) (~B_SMI_EN_GBL_SMI));
-  BiosCtlSave = MmioRead8 (SpiBaseAddress + R_SPI_BCR) & B_SPI_BCR_SRC;
+  SpiInstance    = GetSpiInstance();
+  Status         = EFI_SUCCESS;
+  ScSpiBar0      = AcquireSpiBar0 ();
+  SpiBaseAddress = SpiInstance->PchSpiBase;
+  BiosCtlSave    = MmioRead8 (SpiBaseAddress + R_SPI_BCR) & B_SPI_BCR_SRC;
 
   ///
   /// If it's write cycle, disable Prefetching, Caching and disable BIOS Write Protect
@@ -895,10 +808,6 @@ SendSpiCmdEnd:
       BiosCtlSave
       );
   }
-  ///
-  /// Restore SMIs.
-  ///
-  IoWrite32 ((UINTN) (ABase + R_SMI_EN), SmiEnSave);
 
   ReleaseSpiBar0 ();
 
@@ -924,9 +833,7 @@ WaitForSpiCycleComplete (
   UINT64        WaitTicks;
   UINT64        WaitCount;
   UINT32        Data32;
-  SPI_INSTANCE  *SpiInstance;
 
-  SpiInstance = GetSpiInstance();
   ///
   /// Convert the wait period allowed into to tick count
   ///
@@ -944,7 +851,7 @@ WaitForSpiCycleComplete (
         return TRUE;
       }
     }
-    PchPmTimerStallRuntimeSafe (SpiInstance->PchAcpiBase, WAIT_PERIOD);
+    MicroSecondDelay ( WAIT_PERIOD);
   }
   return FALSE;
 }
@@ -997,8 +904,7 @@ DisableBiosWriteProtect (
 {
   UINTN             SpiBaseAddress;
 
-  SpiBaseAddress = GetDeviceAddr (OsBootDeviceSpi, 0);
-  SpiBaseAddress = TO_MM_PCI_ADDRESS (SpiBaseAddress);
+  SpiBaseAddress = GetSpiInstance()->PchSpiBase;
 
   if ((MmioRead8 (SpiBaseAddress + R_SPI_BCR) & B_SPI_BCR_SMM_BWP) != 0) {
     return EFI_ACCESS_DENIED;
@@ -1006,10 +912,7 @@ DisableBiosWriteProtect (
   //
   // Enable the access to the BIOS space for both read and write cycles
   //
-  MmioOr8 (
-    SpiBaseAddress + R_SPI_BCR,
-    B_SPI_BCR_BIOSWE
-    );
+  MmioOr8 (SpiBaseAddress + R_SPI_BCR, B_SPI_BCR_BIOSWE);
 
   return EFI_SUCCESS;
 }
@@ -1027,16 +930,12 @@ EnableBiosWriteProtect (
 {
   UINTN                           SpiBaseAddress;
 
-  SpiBaseAddress = GetDeviceAddr (OsBootDeviceSpi, 0);
-  SpiBaseAddress = TO_MM_PCI_ADDRESS (SpiBaseAddress);
+  SpiBaseAddress = GetSpiInstance()->PchSpiBase;
 
   //
   // Disable the access to the BIOS space for write cycles
   //
-  MmioAnd8 (
-    SpiBaseAddress + R_SPI_BCR,
-    (UINT8) (~B_SPI_BCR_BIOSWE)
-    );
+  MmioAnd8 (SpiBaseAddress + R_SPI_BCR, (UINT8) (~B_SPI_BCR_BIOSWE));
 }
 
 /**

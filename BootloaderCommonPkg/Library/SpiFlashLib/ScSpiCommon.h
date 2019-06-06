@@ -57,7 +57,7 @@ typedef enum {
 typedef struct {
   UINTN                 Signature;
   EFI_HANDLE            Handle;
-  UINT16                PchAcpiBase;
+  UINT32                AcpiTmrReg;
   UINTN                 PchSpiBase;
   UINT16                RegionPermission;
   UINT32                SfdpVscc0Value;

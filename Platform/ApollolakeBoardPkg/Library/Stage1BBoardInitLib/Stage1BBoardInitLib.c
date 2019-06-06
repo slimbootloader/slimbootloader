@@ -28,7 +28,6 @@
 #include <Library/MemoryAllocationLib.h>
 #include <Library/MmcAccessLib.h>
 #include <IndustryStandard/Pci30.h>
-#include <Library/ScSpiCommon.h>
 #include <Library/DebugPrintErrorLevelLib.h>
 #include <Library/SocInfoLib.h>
 #include <Library/IocIpcLib.h>
