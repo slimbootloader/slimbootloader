@@ -1,0 +1,22 @@
+#
+# Delta configuration values for platform ID 0x001B
+#
+# This file is not auto-generated. Rather, users must input all the settings
+# that are needed to be overwritten from the base DSC into this file.
+# This file is similar to changing BSF file in BCT for the new settings.
+#
+
+PLATFORMID_CFG_DATA.PlatformId            | 0x1B
+PLAT_NAME_CFG_DATA.PlatformName           | 'CFL_S'
+
+OS_CFG_DATA.OsBootOptionCount             | 2
+
+MEMORY_CFG_DATA.SpdAddressTable           | {0xA0, 0xA2, 0xA4, 0xA6}
+MEMORY_CFG_DATA.FClkFrequency             | 0x01
+MEMORY_CFG_DATA.UserBd                    | 0x01
+MEMORY_CFG_DATA.DualDpc                   | 0x01
+
+GPU_CFG_DATA.DdiPortBDdc                  | 0x0
+GPU_CFG_DATA.DdiPortFDdc                  | 0x1
+
+GPIO_CFG_DATA.GpioPinConfig1_GPP_PEC.Hide_GPP_PEC | 0x1

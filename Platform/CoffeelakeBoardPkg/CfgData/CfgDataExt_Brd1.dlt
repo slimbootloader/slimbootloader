@@ -1,0 +1,10 @@
+#
+# Delta configuration values for platform ID 0x0011
+#
+# This file is not auto-generated. Rather, users must input all the settings
+# that are needed to be overwritten from the base DSC into this file.
+# This file is similar to changing BSF file in BCT for the new settings.
+#
+
+PLATFORMID_CFG_DATA.PlatformId           | 0x11
+PLAT_NAME_CFG_DATA.PlatformName          | 'CFLExt'

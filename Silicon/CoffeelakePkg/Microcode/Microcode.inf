@@ -1,0 +1,27 @@
+## @file
+#
+#  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution.  The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php.
+#
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+#
+##
+
+[Defines]
+  INF_VERSION          = 0x00010005
+  BASE_NAME            = Microcode
+  FILE_GUID            = 197DB236-F856-4924-90F8-CDF12FB875F3
+  MODULE_TYPE          = USER_DEFINED
+  VERSION_STRING       = 1.0
+  MICROCODE_TAG        = microcode-20190514a
+
+[Sources]
+  06-8e-0c.mcb
+  06-8e-0b.mcb
+  06-9e-0d.mcb
+  06-9e-0c.mcb

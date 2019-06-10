@@ -17,3 +17,6 @@ Platform/ApollolakeBoardPkg/VbtBin
 Silicon/ApollolakePkg/FspBin
 Silicon/QemuSocPkg/FspBin/*
 !Silicon/QemuSocPkg/FspBin/Patches
+Platform/CoffeelakeBoardPkg/VbtBin
+Silicon/CoffeelakePkg/FspBin
+Silicon/CoffeelakePkg/Microcode/*.mcb

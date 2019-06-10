@@ -914,11 +914,11 @@ class Build(object):
 		fsp_dir  = os.path.join(plt_dir, 'Silicon', self._board.SILICON_PKG_NAME, "FspBin", self._board._FSP_PATH_NAME)
 		fsp_path = os.path.join(fsp_dir, self._fsp_basename + '.bin')
 
-		check_fsp = os.path.join(tool_dir, 'PrepareFspBin.py')
-		if os.path.exists(check_fsp):
-			ret = subprocess.call(['python', check_fsp, plt_dir, self._board.BOARD_NAME, '/d' if self._board.FSPDEBUG_MODE else '/r'])
+		check_build_component_bin = os.path.join(tool_dir, 'PrepareBuildComponentBin.py')
+		if os.path.exists(check_build_component_bin):
+			ret = subprocess.call(['python', check_build_component_bin, plt_dir, self._board.BOARD_NAME, '/d' if self._board.FSPDEBUG_MODE else '/r'])
 			if ret:
-				raise Exception  ('Failed to checkout FSP binaries !')
+				raise Exception  ('Failed to prepare build component binaries !')
 
 		# create FSP size and UPD size can be known
 		fsp_list = ['FSP_T', 'FSP_M', 'FSP_S']

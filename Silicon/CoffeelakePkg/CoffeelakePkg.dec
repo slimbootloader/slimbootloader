@@ -1,0 +1,23 @@
+## @file
+#
+#  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution.  The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php
+#
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+##
+[Defines]
+  DEC_SPECIFICATION              = 0x00010005
+  PACKAGE_NAME                   = CoffeelakePkg
+  PACKAGE_GUID                   = 52735C2C-6DE4-4906-804D-5074EB81D6B8
+  PACKAGE_VERSION                = 0.1
+
+[Includes]
+  Include
+
+[Guids]
+  gEfiHeciMbpDataHobGuid         = {0x992c52c8, 0xbc01, 0x4ecd, {0x20, 0xbf, 0xf9, 0x57, 0x16, 0x0e, 0x9e, 0xf7}}
