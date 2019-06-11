@@ -1,14 +1,8 @@
 ## @file
-# Standardized Error Hanlding infrastructures.
+# Standardized Error Handling infrastructures.
 #
 # Copyright (c) 2007 - 2016, Intel Corporation. All rights reserved.<BR>
-# This program and the accompanying materials
-# are licensed and made available under the terms and conditions of the BSD License
-# which accompanies this distribution.  The full text of the license may be found at
-# http://opensource.org/licenses/bsd-license.php
-#
-# THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-# WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 
 FILE_OPEN_FAILURE = 1
@@ -89,6 +83,7 @@ PCD_VARIABLE_INFO_ERROR = 0xF016
 PCD_VARIABLE_ATTRIBUTES_CONFLICT_ERROR = 0xF013
 PCD_STRUCTURE_PCD_INVALID_FIELD_ERROR = 0xF014
 PCD_STRUCTURE_PCD_ERROR = 0xF015
+ERROR_STATEMENT = 0xFFFD
 ABORT_ERROR = 0xFFFE
 UNKNOWN_ERROR = 0xFFFF
 
@@ -151,6 +146,7 @@ gErrorMessage = {
     IO_TIMEOUT              :   "Timeout",
     IO_UNKNOWN_ERROR        :   "Unknown error in IO operation",
 
+    ERROR_STATEMENT         :   "!error statement",
     UNKNOWN_ERROR           :   "Unknown error",
 }
 

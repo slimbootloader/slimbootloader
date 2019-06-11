@@ -2,13 +2,7 @@
 Header file for PcdValue structure definition.
 
 Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
-This program and the accompanying materials
-are licensed and made available under the terms and conditions of the BSD License
-which accompanies this distribution.  The full text of the license may be found at
-http://opensource.org/licenses/bsd-license.php
-
-THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
@@ -22,6 +16,13 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #define __ARRAY_ELEMENT_SIZE(TYPE, Field) (sizeof((TYPE *)0)->Field[0])
 #define __OFFSET_OF(TYPE, Field) ((UINT32) &(((TYPE *)0)->Field))
 #define __FLEXIBLE_SIZE(Size, TYPE, Field, MaxIndex)   if (__FIELD_SIZE(TYPE, Field) == 0) Size = MAX((__OFFSET_OF(TYPE, Field) + __ARRAY_ELEMENT_SIZE(TYPE, Field) * (MaxIndex)), Size)
+#define __ARRAY_SIZE(Array) (sizeof(Array)/sizeof(Array[0]))
+
+#if defined(_MSC_EXTENSIONS)
+#define __STATIC_ASSERT static_assert
+#else
+#define __STATIC_ASSERT _Static_assert
+#endif
 
 VOID
 PcdEntryPoint (

@@ -46,11 +46,12 @@ def rebuild_basetools ():
 	elif os.name == 'nt':
 		if 'PYTHON_HOME' not in os.environ:
 			os.environ['PYTHON_HOME'] = 'C:\\Python27'
+		os.environ['PYTHON_COMMAND'] = os.path.join (os.environ['PYTHON_HOME'], 'python.exe')
 		genffs_exe_path = os.path.join(sblsource, 'BaseTools', 'Bin', 'Win32', 'GenFfs.exe')
 		genffs_exist = os.path.exists(genffs_exe_path)
 		if not genffs_exist:
 			print "Could not find pre-built BaseTools binaries, try to rebuild BaseTools ..."
-			ret = subprocess.call(['BaseTools\\toolsetup.bat', 'forcerebuild'])
+			ret = run_process (['BaseTools\\toolsetup.bat', 'forcerebuild'])
 
 	if ret:
 		print "Build BaseTools failed, please check required build environment and utilities !"
@@ -1030,7 +1031,6 @@ class Build(object):
 		x = subprocess.call(['python', 'Build.py'],  cwd=vtf_dir)
 		if x: raise Exception ('Failed to build reset vector !')
 
-
 	def build(self):
 		print "Build [%s] ..." % self._board.BOARD_NAME
 
@@ -1038,7 +1038,7 @@ class Build(object):
 		self.pre_build()
 
 		# Run build
-		x = subprocess.call([
+		cmd_args = [
 			"build" if os.name == 'posix' else "build.bat",
 			"--platform", os.path.join('BootloaderCorePkg', 'BootloaderCorePkg.dsc'),
 			"-b",         self._target,
@@ -1048,9 +1048,8 @@ class Build(object):
 			"-y",         "Report.log",
 			"-Y",         "PCD",
 			"-Y",         "FLASH",
-			"-Y",         "LIBRARY"])
-		if x: sys.exit(1)
-
+			"-Y",         "LIBRARY"]
+		run_process (cmd_args)
 
 		# Run post-build
 		self.post_build()

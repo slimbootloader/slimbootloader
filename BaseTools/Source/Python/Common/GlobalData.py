@@ -1,25 +1,13 @@
 ## @file
 # This file is used to define common static strings used by INF/DEC/DSC files
 #
-# Copyright (c) 2007 - 2016, Intel Corporation. All rights reserved.<BR>
-# This program and the accompanying materials
-# are licensed and made available under the terms and conditions of the BSD License
-# which accompanies this distribution.  The full text of the license may be found at
-# http://opensource.org/licenses/bsd-license.php
-#
-# THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-# WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+# Copyright (c) 2007 - 2018, Intel Corporation. All rights reserved.<BR>
+# SPDX-License-Identifier: BSD-2-Clause-Patent
 
 import re
 
 gIsWindows = None
-
-gEdkCompatibilityPkg = "EdkCompatibilityPkg"
 gWorkspace = "."
-gEdkSource = "EdkCompatibilityPkg"
-gEfiSource = "."
-gEcpSource = "EdkCompatibilityPkg"
-
 gOptions = None
 gCaseInsensitive = False
 gAllFiles = None
@@ -35,7 +23,6 @@ gPlatformOtherPcds = {}
 gActivePlatform = None
 gCommandLineDefines = {}
 gEdkGlobal = {}
-gOverrideDir = {}
 gCommandMaxLength = 4096
 # for debug trace purpose when problem occurs
 gProcessingFile = ''
@@ -43,12 +30,37 @@ gBuildingModule = ''
 gSkuids = []
 gDefaultStores = []
 
+# definition for a MACRO name.  used to create regular expressions below.
+_MacroNamePattern = "[A-Z][A-Z0-9_]*"
+
 ## Regular expression for matching macro used in DSC/DEC/INF file inclusion
-gMacroRefPattern = re.compile("\$\(([A-Z][_A-Z0-9]*)\)", re.UNICODE)
+gMacroRefPattern = re.compile("\$\(({})\)".format(_MacroNamePattern), re.UNICODE)
 gMacroDefPattern = re.compile("^(DEFINE|EDK_GLOBAL)[ \t]+")
-gMacroNamePattern = re.compile("^[A-Z][A-Z0-9_]*$")
-# C-style wide string pattern
-gWideStringPattern = re.compile('(\W|\A)L"')
+gMacroNamePattern = re.compile("^{}$".format(_MacroNamePattern))
+
+# definition for a GUID.  used to create regular expressions below.
+_HexChar = r"[0-9a-fA-F]"
+_GuidPattern = r"{Hex}{{8}}-{Hex}{{4}}-{Hex}{{4}}-{Hex}{{4}}-{Hex}{{12}}".format(Hex=_HexChar)
+
+## Regular expressions for GUID matching
+gGuidPattern = re.compile(r'{}'.format(_GuidPattern))
+gGuidPatternEnd = re.compile(r'{}$'.format(_GuidPattern))
+
+## Regular expressions for HEX matching
+g4HexChar = re.compile(r'{}{{4}}'.format(_HexChar))
+gHexPattern = re.compile(r'0[xX]{}+'.format(_HexChar))
+gHexPatternAll = re.compile(r'0[xX]{}+$'.format(_HexChar))
+
+## Regular expressions for string identifier checking
+gIdentifierPattern = re.compile('^[a-zA-Z][a-zA-Z0-9_]*$', re.UNICODE)
+## Regular expression for GUID c structure format
+_GuidCFormatPattern = r"{{\s*0[xX]{Hex}{{1,8}}\s*,\s*0[xX]{Hex}{{1,4}}\s*,\s*0[xX]{Hex}{{1,4}}" \
+                      r"\s*,\s*{{\s*0[xX]{Hex}{{1,2}}\s*,\s*0[xX]{Hex}{{1,2}}" \
+                      r"\s*,\s*0[xX]{Hex}{{1,2}}\s*,\s*0[xX]{Hex}{{1,2}}" \
+                      r"\s*,\s*0[xX]{Hex}{{1,2}}\s*,\s*0[xX]{Hex}{{1,2}}" \
+                      r"\s*,\s*0[xX]{Hex}{{1,2}}\s*,\s*0[xX]{Hex}{{1,2}}\s*}}\s*}}".format(Hex=_HexChar)
+gGuidCFormatPattern = re.compile(r"{}".format(_GuidCFormatPattern))
+
 #
 # A global variable for whether current build in AutoGen phase or not.
 #
@@ -75,13 +87,6 @@ gIgnoreSource = False
 #
 gFdfParser = None
 
-#
-# If a module is built more than once with different PCDs or library classes
-# a temporary INF file with same content is created, the temporary file is removed
-# when build exits.
-#
-gTempInfs = []
-
 BuildOptionPcd = []
 
 #
@@ -91,7 +96,7 @@ MixedPcd = {}
 
 # Structure Pcd dict
 gStructurePcd = {}
-
+gPcdSkuOverrides={}
 # Pcd name for the Pcd which used in the Conditional directives
 gConditionalPcds = []
 
@@ -102,3 +107,14 @@ gPlatformHash = None
 gPackageHash = {}
 gModuleHash = {}
 gEnableGenfdsMultiThread = False
+gSikpAutoGenCache = set()
+
+# Dictionary for tracking Module build status as success or failure
+# False -> Fail : True -> Success
+gModuleBuildTracking = dict()
+
+# Dictionary of booleans that dictate whether a module or
+# library can be skiped
+# Top Dict:     Key: Arch Type              Value: Dictionary
+# Second Dict:  Key: Module\Library Name    Value: True\False
+gBuildHashSkipTracking = dict()

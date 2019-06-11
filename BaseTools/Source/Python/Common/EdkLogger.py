@@ -1,20 +1,15 @@
 ## @file
 # This file implements the log mechanism for Python tools.
 #
-# Copyright (c) 2007 - 2015, Intel Corporation. All rights reserved.<BR>
-# This program and the accompanying materials
-# are licensed and made available under the terms and conditions of the BSD License
-# which accompanies this distribution.  The full text of the license may be found at
-# http://opensource.org/licenses/bsd-license.php
-#
-# THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-# WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+# Copyright (c) 2007 - 2018, Intel Corporation. All rights reserved.<BR>
+# SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 
 ## Import modules
+from __future__ import absolute_import
 import Common.LongFilePathOs as os, sys, logging
 import traceback
-from  BuildToolError import *
+from  .BuildToolError import *
 
 ## Log level constants
 DEBUG_0 = 1
@@ -89,7 +84,7 @@ def debug(Level, Message, ExtraData=None):
         "msg"       : Message,
     }
 
-    if ExtraData != None:
+    if ExtraData is not None:
         LogText = _DebugMessageTemplate % TemplateDict + "\n    %s" % ExtraData
     else:
         LogText = _DebugMessageTemplate % TemplateDict
@@ -119,10 +114,10 @@ def warn(ToolName, Message, File=None, Line=None, ExtraData=None):
         return
 
     # if no tool name given, use caller's source file name as tool name
-    if ToolName == None or ToolName == "":
+    if ToolName is None or ToolName == "":
         ToolName = os.path.basename(traceback.extract_stack()[-2][0])
 
-    if Line == None:
+    if Line is None:
         Line = "..."
     else:
         Line = "%d" % Line
@@ -134,17 +129,17 @@ def warn(ToolName, Message, File=None, Line=None, ExtraData=None):
         "msg"       : Message,
     }
 
-    if File != None:
+    if File is not None:
         LogText = _WarningMessageTemplate % TemplateDict
     else:
         LogText = _WarningMessageTemplateWithoutFile % TemplateDict
 
-    if ExtraData != None:
+    if ExtraData is not None:
         LogText += "\n    %s" % ExtraData
 
     _InfoLogger.log(WARN, LogText)
 
-    # Raise an execption if indicated
+    # Raise an exception if indicated
     if _WarningAsError == True:
         raise FatalError(WARNING_AS_ERROR)
 
@@ -154,7 +149,7 @@ info    = _InfoLogger.info
 ## Log ERROR message
 #
 #   Once an error messages is logged, the tool's execution will be broken by raising
-# an execption. If you don't want to break the execution later, you can give
+# an exception. If you don't want to break the execution later, you can give
 # "RaiseError" with "False" value.
 #
 #   @param  ToolName    The name of the tool. If not given, the name of caller
@@ -164,22 +159,22 @@ info    = _InfoLogger.info
 #   @param  File        The name of file which caused the error.
 #   @param  Line        The line number in the "File" which caused the warning.
 #   @param  ExtraData   More information associated with "Message"
-#   @param  RaiseError  Raise an exception to break the tool's executuion if
+#   @param  RaiseError  Raise an exception to break the tool's execution if
 #                       it's True. This is the default behavior.
 #
 def error(ToolName, ErrorCode, Message=None, File=None, Line=None, ExtraData=None, RaiseError=IsRaiseError):
-    if Line == None:
+    if Line is None:
         Line = "..."
     else:
         Line = "%d" % Line
 
-    if Message == None:
+    if Message is None:
         if ErrorCode in gErrorMessage:
             Message = gErrorMessage[ErrorCode]
         else:
             Message = gErrorMessage[UNKNOWN_ERROR]
 
-    if ExtraData == None:
+    if ExtraData is None:
         ExtraData = ""
 
     TemplateDict = {
@@ -191,13 +186,14 @@ def error(ToolName, ErrorCode, Message=None, File=None, Line=None, ExtraData=Non
         "extra"     : ExtraData
     }
 
-    if File != None:
+    if File is not None:
         LogText =  _ErrorMessageTemplate % TemplateDict
     else:
         LogText = _ErrorMessageTemplateWithoutFile % TemplateDict
 
     _ErrorLogger.log(ERROR, LogText)
-    if RaiseError:
+
+    if RaiseError and IsRaiseError:
         raise FatalError(ErrorCode)
 
 # Log information which should be always put out

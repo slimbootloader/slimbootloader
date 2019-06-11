@@ -19,7 +19,6 @@
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
-#include <Library/ExtractGuidedSectionLib.h>
 
 /**
   Given a Lzma compressed source buffer, this function retrieves the size of

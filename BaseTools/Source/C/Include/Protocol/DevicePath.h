@@ -6,13 +6,7 @@
   it can not contain things like PCI bus numbers that change from boot to boot.
 
 Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
-This program and the accompanying materials are licensed and made available under
-the terms and conditions of the BSD License that accompanies this distribution.
-The full text of the license may be found at
-http://opensource.org/licenses/bsd-license.php.
-
-THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
@@ -1380,7 +1374,7 @@ extern EFI_GUID  gEfiDebugPortVariableGuid;
 // DebugPort device path definitions...
 //
 #define DEVICE_PATH_MESSAGING_DEBUGPORT EFI_DEBUGPORT_PROTOCOL_GUID
-extern EFI_GUID  gEfiDebugPortDevicePathGuid;
+extern EFI_GUID  gEfiDebugPortProtocolGuid;
 
 typedef struct {
   EFI_DEVICE_PATH_PROTOCOL  Header;

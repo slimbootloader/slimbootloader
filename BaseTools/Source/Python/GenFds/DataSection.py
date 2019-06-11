@@ -1,28 +1,24 @@
 ## @file
 # process data section generation
 #
-#  Copyright (c) 2007 - 2017, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2007 - 2018, Intel Corporation. All rights reserved.<BR>
 #
-#  This program and the accompanying materials
-#  are licensed and made available under the terms and conditions of the BSD License
-#  which accompanies this distribution.  The full text of the license may be found at
-#  http://opensource.org/licenses/bsd-license.php
-#
-#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 
 ##
 # Import Modules
 #
-import Section
-from GenFdsGlobalVariable import GenFdsGlobalVariable
+from __future__ import absolute_import
+from . import Section
+from .GenFdsGlobalVariable import GenFdsGlobalVariable
 import subprocess
-from Ffs import Ffs
+from .Ffs import SectionSuffix
 import Common.LongFilePathOs as os
 from CommonDataClass.FdfClass import DataSectionClassObject
 from Common.Misc import PeImageClass
 from Common.LongFilePathSupport import CopyLongFilePath
+from Common.DataType import *
 
 ## generate data section
 #
@@ -52,7 +48,7 @@ class DataSection (DataSectionClassObject):
         #
         # Prepare the parameter of GenSection
         #
-        if FfsFile != None:
+        if FfsFile is not None:
             self.SectFileName = GenFdsGlobalVariable.ReplaceWorkspaceMacro(self.SectFileName)
             self.SectFileName = GenFdsGlobalVariable.MacroExtend(self.SectFileName, Dict, FfsFile.CurrentArch)
         else:
@@ -81,18 +77,18 @@ class DataSection (DataSectionClassObject):
                         CopyLongFilePath(MapFile, CopyMapFile)
 
         #Get PE Section alignment when align is set to AUTO
-        if self.Alignment == 'Auto' and self.SecType in ('TE', 'PE32'):
+        if self.Alignment == 'Auto' and self.SecType in (BINARY_FILE_TYPE_TE, BINARY_FILE_TYPE_PE32):
             ImageObj = PeImageClass (Filename)
             if ImageObj.SectionAlignment < 0x400:
                 self.Alignment = str (ImageObj.SectionAlignment)
             elif ImageObj.SectionAlignment < 0x100000:
-                self.Alignment = str (ImageObj.SectionAlignment / 0x400) + 'K'
+                self.Alignment = str (ImageObj.SectionAlignment // 0x400) + 'K'
             else:
-                self.Alignment = str (ImageObj.SectionAlignment / 0x100000) + 'M'
+                self.Alignment = str (ImageObj.SectionAlignment // 0x100000) + 'M'
 
         NoStrip = True
-        if self.SecType in ('TE', 'PE32'):
-            if self.KeepReloc != None:
+        if self.SecType in (BINARY_FILE_TYPE_TE, BINARY_FILE_TYPE_PE32):
+            if self.KeepReloc is not None:
                 NoStrip = self.KeepReloc
 
         if not NoStrip:
@@ -109,7 +105,7 @@ class DataSection (DataSectionClassObject):
                 )
             self.SectFileName = StrippedFile
 
-        if self.SecType == 'TE':
+        if self.SecType == BINARY_FILE_TYPE_TE:
             TeFile = os.path.join( OutputPath, ModuleName + 'Te.raw')
             GenFdsGlobalVariable.GenerateFirmwareImage(
                     TeFile,
@@ -119,7 +115,7 @@ class DataSection (DataSectionClassObject):
                 )
             self.SectFileName = TeFile
 
-        OutputFile = os.path.join (OutputPath, ModuleName + 'SEC' + SecNum + Ffs.SectionSuffix.get(self.SecType))
+        OutputFile = os.path.join (OutputPath, ModuleName + SUP_MODULE_SEC + SecNum + SectionSuffix.get(self.SecType))
         OutputFile = os.path.normpath(OutputFile)
         GenFdsGlobalVariable.GenerateSection(OutputFile, [self.SectFileName], Section.Section.SectionType.get(self.SecType), IsMakefile = IsMakefile)
         FileList = [OutputFile]

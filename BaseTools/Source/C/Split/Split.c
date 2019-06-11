@@ -3,13 +3,7 @@
   Split a file into two pieces at the request offset.
 
 Copyright (c) 1999 - 2017, Intel Corporation. All rights reserved.<BR>
-This program and the accompanying materials are licensed and made available
-under the terms and conditions of the BSD License which accompanies this
-distribution.  The full text of the license may be found at
-http://opensource.org/licenses/bsd-license.php
-
-THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
@@ -328,7 +322,7 @@ Returns:
       if (strlen(argv[0]) > 2) {
         Status = CountVerboseLevel (&argv[0][2], strlen(argv[0]) - 2, &VerboseLevel);
         if (EFI_ERROR (Status)) {
-          Error (NULL, 0, 0x1003, NULL, "%s is invaild parameter!", argv[0]);
+          Error (NULL, 0, 0x1003, NULL, "%s is invalid parameter!", argv[0]);
           return STATUS_ERROR;
         }
       }
@@ -351,7 +345,7 @@ Returns:
     //
     // Don't recognize the parameter.
     //
-    Error (NULL, 0, 0x1003, NULL, "%s is invaild parameter!", argv[0]);
+    Error (NULL, 0, 0x1003, NULL, "%s is invalid parameter!", argv[0]);
     return STATUS_ERROR;
   }
 

@@ -19,7 +19,6 @@
 #define PPB_BAR_0                             0
 #define PPB_BAR_1                             1
 
-#define BASE_CR(Record, TYPE, Field)     ((TYPE *) ((CHAR8 *) (Record) - (CHAR8 *) &(((TYPE *) 0)->Field)))
 #define PCI_IO_DEVICE_FROM_LINK(a)       BASE_CR (a, PCI_IO_DEVICE, Link)
 #define PCI_BAR_RESOURCE_FROM_LINK(a)    BASE_CR (a, PCI_BAR_RESOURCE, Link)
 #define ALIGN(Base, Align)               ((Base + Align) & (~(Align)))

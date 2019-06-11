@@ -2,13 +2,7 @@
 Common basic Library Functions
 
 Copyright (c) 2004 - 2018, Intel Corporation. All rights reserved.<BR>
-This program and the accompanying materials                          
-are licensed and made available under the terms and conditions of the BSD License         
-which accompanies this distribution.  The full text of the license may be found at        
-http://opensource.org/licenses/bsd-license.php                                            
-                                                                                          
-THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,                     
-WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.             
+SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
@@ -136,7 +130,7 @@ Arguments:
 
 Returns:
   =  0  if Guid1 == Guid2
-  != 0  if Guid1 != Guid2 
+  != 0  if Guid1 != Guid2
 
 --*/
 {
@@ -169,7 +163,7 @@ GetFileImage (
 
 Routine Description:
 
-  This function opens a file and reads it into a memory buffer.  The function 
+  This function opens a file and reads it into a memory buffer.  The function
   will allocate the memory buffer and returns the size of the buffer.
 
 Arguments:
@@ -332,7 +326,7 @@ CalculateChecksum8 (
   IN UINTN        Size
   )
 /*++
-  
+
 Routine Description:
 
   This function calculates the value needed for a valid UINT8 checksum
@@ -357,7 +351,7 @@ CalculateSum8 (
   IN UINTN  Size
   )
 /*++
-  
+
 Routine Description::
 
   This function calculates the UINT8 sum for the requested region.
@@ -394,7 +388,7 @@ CalculateChecksum16 (
   IN UINTN        Size
   )
 /*++
-  
+
 Routine Description::
 
   This function calculates the value needed for a valid UINT16 checksum
@@ -419,7 +413,7 @@ CalculateSum16 (
   IN UINTN        Size
   )
 /*++
-  
+
 Routine Description:
 
   This function calculates the UINT16 sum for the requested region.
@@ -518,7 +512,7 @@ Returns:
   EFI_SUCCESS             The GUID was printed.
   EFI_INVALID_PARAMETER   The input was NULL.
   EFI_BUFFER_TOO_SMALL    The input buffer was not big enough
-  
+
 --*/
 {
   if (Guid == NULL) {
@@ -593,7 +587,7 @@ char *strlwr(char *s)
 #define WINDOWS_UNC_EXTENSION_PATH "\\\\?\\UNC"
 
 //
-// Global data to store full file path. It is not required to be free. 
+// Global data to store full file path. It is not required to be free.
 //
 CHAR8 mCommonLibFullPath[MAX_LONG_FILE_PATH];
 
@@ -604,32 +598,32 @@ LongFilePath (
 /*++
 
 Routine Description:
-  Convert FileName to the long file path, which can support larger than 260 length. 
+  Convert FileName to the long file path, which can support larger than 260 length.
 
 Arguments:
-  FileName         - FileName. 
+  FileName         - FileName.
 
 Returns:
   LongFilePath      A pointer to the converted long file path.
-  
+
 --*/
 {
 #ifdef __GNUC__
   //
-  // __GNUC__ may not be good way to differentiate unix and windows. Need more investigation here. 
-  // unix has no limitation on file path. Just return FileName. 
+  // __GNUC__ may not be good way to differentiate unix and windows. Need more investigation here.
+  // unix has no limitation on file path. Just return FileName.
   //
   return FileName;
 #else
   CHAR8 *RootPath;
   CHAR8 *PathPointer;
   CHAR8 *NextPointer;
-  
+
   PathPointer = (CHAR8 *) FileName;
-  
+
   if (FileName != NULL) {
     //
-    // Add the extension string first to support long file path. 
+    // Add the extension string first to support long file path.
     //
     mCommonLibFullPath[0] = 0;
     strcpy (mCommonLibFullPath, WINDOWS_EXTENSION_PATH);
@@ -642,7 +636,7 @@ Returns:
       FileName ++;
     } else if (strlen (FileName) < 3 || FileName[1] != ':' || (FileName[2] != '\\' && FileName[2] != '/')) {
       //
-      // Relative file path. Convert it to absolute path. 
+      // Relative file path. Convert it to absolute path.
       //
       RootPath = getcwd (NULL, 0);
       if (RootPath != NULL) {
@@ -675,7 +669,7 @@ Returns:
       return NULL;
     }
     strncat (mCommonLibFullPath, FileName, MAX_LONG_FILE_PATH - strlen (mCommonLibFullPath) - 1);
-    
+
     //
     // Convert directory separator '/' to '\\'
     //
@@ -685,7 +679,7 @@ Returns:
         *PathPointer = '\\';
       }
     } while (*PathPointer ++ != '\0');
-    
+
     //
     // Convert ":\\\\" to ":\\", because it doesn't work with WINDOWS_EXTENSION_PATH.
     //
@@ -693,7 +687,7 @@ Returns:
       *(PathPointer + 2) = '\0';
       strncat (mCommonLibFullPath, PathPointer + 3, MAX_LONG_FILE_PATH - strlen (mCommonLibFullPath) - 1);
     }
-    
+
     //
     // Convert ".\\" to "", because it doesn't work with WINDOWS_EXTENSION_PATH.
     //
@@ -701,7 +695,7 @@ Returns:
       *PathPointer = '\0';
       strncat (mCommonLibFullPath, PathPointer + 2, MAX_LONG_FILE_PATH - strlen (mCommonLibFullPath) - 1);
     }
-        
+
     //
     // Convert "\\.\\" to "\\", because it doesn't work with WINDOWS_EXTENSION_PATH.
     //
@@ -732,10 +726,10 @@ Returns:
         break;
       }
     }
-    
+
     PathPointer = mCommonLibFullPath;
   }
-  
+
   return PathPointer;
 #endif
 }
@@ -882,72 +876,6 @@ InternalSafeStringNoStrOverlap (
   return !InternalSafeStringIsOverlap (Str1, Size1 * sizeof(CHAR16), Str2, Size2 * sizeof(CHAR16));
 }
 
-RETURN_STATUS
-StrDecimalToUintnS (
-    CONST CHAR16             *String,
-         CHAR16             **EndPointer,  OPTIONAL
-         UINTN              *Data
-  )
-{
-  ASSERT (((UINTN) String & BIT0) == 0);
-
-  //
-  // 1. Neither String nor Data shall be a null pointer.
-  //
-  SAFE_STRING_CONSTRAINT_CHECK ((String != NULL), RETURN_INVALID_PARAMETER);
-  SAFE_STRING_CONSTRAINT_CHECK ((Data != NULL), RETURN_INVALID_PARAMETER);
-
-  //
-  // 2. The length of String shall not be greater than RSIZE_MAX.
-  //
-  if (RSIZE_MAX != 0) {
-    SAFE_STRING_CONSTRAINT_CHECK ((StrnLenS (String, RSIZE_MAX + 1) <= RSIZE_MAX), RETURN_INVALID_PARAMETER);
-  }
-
-  if (EndPointer != NULL) {
-    *EndPointer = (CHAR16 *) String;
-  }
-
-  //
-  // Ignore the pad spaces (space or tab)
-  //
-  while ((*String == L' ') || (*String == L'\t')) {
-    String++;
-  }
-
-  //
-  // Ignore leading Zeros after the spaces
-  //
-  while (*String == L'0') {
-    String++;
-  }
-
-  *Data = 0;
-
-  while (InternalIsDecimalDigitCharacter (*String)) {
-    //
-    // If the number represented by String overflows according to the range
-    // defined by UINTN, then MAX_UINTN is stored in *Data and
-    // RETURN_UNSUPPORTED is returned.
-    //
-    if (*Data > ((MAX_UINTN - (*String - L'0')) / 10)) {
-      *Data = MAX_UINTN;
-      if (EndPointer != NULL) {
-        *EndPointer = (CHAR16 *) String;
-      }
-      return RETURN_UNSUPPORTED;
-    }
-
-    *Data = *Data * 10 + (*String - L'0');
-    String++;
-  }
-
-  if (EndPointer != NULL) {
-    *EndPointer = (CHAR16 *) String;
-  }
-  return RETURN_SUCCESS;
-}
-
 /**
   Convert a Null-terminated Unicode decimal string to a value of type UINT64.
 
@@ -1064,9 +992,9 @@ StrDecimalToUint64S (
 
 /**
   Convert a Null-terminated Unicode hexadecimal string to a value of type
-  UINTN.
+  UINT64.
 
-  This function outputs a value of type UINTN by interpreting the contents of
+  This function outputs a value of type UINT64 by interpreting the contents of
   the Unicode string specified by String as a hexadecimal number. The format of
   the input Unicode string String is:
 
@@ -1091,8 +1019,8 @@ StrDecimalToUint64S (
 
   If String has no valid hexadecimal digits in the above format, then 0 is
   stored at the location pointed to by Data.
-  If the number represented by String exceeds the range defined by UINTN, then
-  MAX_UINTN is stored at the location pointed to by Data.
+  If the number represented by String exceeds the range defined by UINT64, then
+  MAX_UINT64 is stored at the location pointed to by Data.
 
   If EndPointer is not NULL, a pointer to the character that stopped the scan
   is stored at the location pointed to by EndPointer. If String has no valid
@@ -1112,85 +1040,9 @@ StrDecimalToUint64S (
                                    characters, not including the
                                    Null-terminator.
   @retval RETURN_UNSUPPORTED       If the number represented by String exceeds
-                                   the range defined by UINTN.
+                                   the range defined by UINT64.
 
 **/
-RETURN_STATUS
-StrHexToUintnS (
-    CONST CHAR16             *String,
-         CHAR16             **EndPointer,  OPTIONAL
-         UINTN              *Data
-  )
-{
-  ASSERT (((UINTN) String & BIT0) == 0);
-
-  //
-  // 1. Neither String nor Data shall be a null pointer.
-  //
-  SAFE_STRING_CONSTRAINT_CHECK ((String != NULL), RETURN_INVALID_PARAMETER);
-  SAFE_STRING_CONSTRAINT_CHECK ((Data != NULL), RETURN_INVALID_PARAMETER);
-
-  //
-  // 2. The length of String shall not be greater than RSIZE_MAX.
-  //
-  if (RSIZE_MAX != 0) {
-    SAFE_STRING_CONSTRAINT_CHECK ((StrnLenS (String, RSIZE_MAX + 1) <= RSIZE_MAX), RETURN_INVALID_PARAMETER);
-  }
-
-  if (EndPointer != NULL) {
-    *EndPointer = (CHAR16 *) String;
-  }
-
-  //
-  // Ignore the pad spaces (space or tab)
-  //
-  while ((*String == L' ') || (*String == L'\t')) {
-    String++;
-  }
-
-  //
-  // Ignore leading Zeros after the spaces
-  //
-  while (*String == L'0') {
-    String++;
-  }
-
-  if (InternalCharToUpper (*String) == L'X') {
-    if (*(String - 1) != L'0') {
-      *Data = 0;
-      return RETURN_SUCCESS;
-    }
-    //
-    // Skip the 'X'
-    //
-    String++;
-  }
-
-  *Data = 0;
-
-  while (InternalIsHexaDecimalDigitCharacter (*String)) {
-    //
-    // If the number represented by String overflows according to the range
-    // defined by UINTN, then MAX_UINTN is stored in *Data and
-    // RETURN_UNSUPPORTED is returned.
-    //
-    if (*Data > ((MAX_UINTN - InternalHexCharToUintn (*String)) >> 4)) {
-      *Data = MAX_UINTN;
-      if (EndPointer != NULL) {
-        *EndPointer = (CHAR16 *) String;
-      }
-      return RETURN_UNSUPPORTED;
-    }
-
-    *Data = (*Data << 4) + InternalHexCharToUintn (*String);
-    String++;
-  }
-
-  if (EndPointer != NULL) {
-    *EndPointer = (CHAR16 *) String;
-  }
-  return RETURN_SUCCESS;
-}
 RETURN_STATUS
 StrHexToUint64S (
     CONST CHAR16             *String,
@@ -1292,28 +1144,6 @@ StrHexToUint64 (
 }
 
 UINTN
-StrDecimalToUintn (
-  CONST CHAR16              *String
-  )
-{
-  UINTN     Result;
-
-  StrDecimalToUintnS (String, (CHAR16 **) NULL, &Result);
-  return Result;
-}
-
-UINTN
-StrHexToUintn (
-  CONST CHAR16              *String
-  )
-{
-  UINTN     Result;
-
-  StrHexToUintnS (String, (CHAR16 **) NULL, &Result);
-  return Result;
-}
-
-UINTN
 StrSize (
   CONST CHAR16              *String
   )
@@ -1400,7 +1230,6 @@ InternalAllocateCopyPool (
   VOID  *Memory;
 
   ASSERT (Buffer != NULL);
-  ASSERT (AllocationSize <= (MAX_ADDRESS - (UINTN) Buffer + 1));
 
   Memory = malloc (AllocationSize);
   if (Memory != NULL) {
@@ -1785,7 +1614,7 @@ StrToIpv4Address (
 {
   RETURN_STATUS          Status;
   UINTN                  AddressIndex;
-  UINTN                  Uintn;
+  UINT64                 Uint64;
   EFI_IPv4_ADDRESS       LocalAddress;
   UINT8                  LocalPrefixLength;
   CHAR16                 *Pointer;
@@ -1812,7 +1641,7 @@ StrToIpv4Address (
     //
     // Get D or P.
     //
-    Status = StrDecimalToUintnS ((CONST CHAR16 *) Pointer, &Pointer, &Uintn);
+    Status = StrDecimalToUint64S ((CONST CHAR16 *) Pointer, &Pointer, &Uint64);
     if (RETURN_ERROR (Status)) {
       return RETURN_UNSUPPORTED;
     }
@@ -1820,18 +1649,18 @@ StrToIpv4Address (
       //
       // It's P.
       //
-      if (Uintn > 32) {
+      if (Uint64 > 32) {
         return RETURN_UNSUPPORTED;
       }
-      LocalPrefixLength = (UINT8) Uintn;
+      LocalPrefixLength = (UINT8) Uint64;
     } else {
       //
       // It's D.
       //
-      if (Uintn > MAX_UINT8) {
+      if (Uint64 > MAX_UINT8) {
         return RETURN_UNSUPPORTED;
       }
-      LocalAddress.Addr[AddressIndex] = (UINT8) Uintn;
+      LocalAddress.Addr[AddressIndex] = (UINT8) Uint64;
       AddressIndex++;
     }
 
@@ -1888,7 +1717,7 @@ StrToIpv6Address (
 {
   RETURN_STATUS          Status;
   UINTN                  AddressIndex;
-  UINTN                  Uintn;
+  UINT64                 Uint64;
   EFI_IPv6_ADDRESS       LocalAddress;
   UINT8                  LocalPrefixLength;
   CONST CHAR16           *Pointer;
@@ -1969,7 +1798,7 @@ StrToIpv6Address (
         //
         // Get X.
         //
-        Status = StrHexToUintnS (Pointer, &End, &Uintn);
+        Status = StrHexToUint64S (Pointer, &End, &Uint64);
         if (RETURN_ERROR (Status) || End - Pointer > 4) {
           //
           // Number of hexadecimal digit characters is no more than 4.
@@ -1978,24 +1807,24 @@ StrToIpv6Address (
         }
         Pointer = End;
         //
-        // Uintn won't exceed MAX_UINT16 if number of hexadecimal digit characters is no more than 4.
+        // Uint64 won't exceed MAX_UINT16 if number of hexadecimal digit characters is no more than 4.
         //
         ASSERT (AddressIndex + 1 < ARRAY_SIZE (Address->Addr));
-        LocalAddress.Addr[AddressIndex] = (UINT8) ((UINT16) Uintn >> 8);
-        LocalAddress.Addr[AddressIndex + 1] = (UINT8) Uintn;
+        LocalAddress.Addr[AddressIndex] = (UINT8) ((UINT16) Uint64 >> 8);
+        LocalAddress.Addr[AddressIndex + 1] = (UINT8) Uint64;
         AddressIndex += 2;
       } else {
         //
         // Get P, then exit the loop.
         //
-        Status = StrDecimalToUintnS (Pointer, &End, &Uintn);
-        if (RETURN_ERROR (Status) || End == Pointer || Uintn > 128) {
+        Status = StrDecimalToUint64S (Pointer, &End, &Uint64);
+        if (RETURN_ERROR (Status) || End == Pointer || Uint64 > 128) {
           //
           // Prefix length should not exceed 128.
           //
           return RETURN_UNSUPPORTED;
         }
-        LocalPrefixLength = (UINT8) Uintn;
+        LocalPrefixLength = (UINT8) Uint64;
         Pointer = End;
         break;
       }
@@ -2222,13 +2051,13 @@ IsHexStr (
   )
 {
   //
-  // skip preceeding white space
+  // skip preceding white space
   //
   while ((*Str != 0) && *Str == L' ') {
     Str ++;
   }
   //
-  // skip preceeding zeros
+  // skip preceding zeros
   //
   while ((*Str != 0) && *Str == L'0') {
     Str ++;
@@ -2252,9 +2081,9 @@ Strtoi (
   )
 {
   if (IsHexStr (Str)) {
-    return StrHexToUintn (Str);
+    return (UINTN)StrHexToUint64 (Str);
   } else {
-    return StrDecimalToUintn (Str);
+    return (UINTN)StrDecimalToUint64 (Str);
   }
 }
 

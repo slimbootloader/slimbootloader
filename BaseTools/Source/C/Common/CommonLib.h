@@ -2,13 +2,7 @@
 Common library assistance routines.
 
 Copyright (c) 2004 - 2018, Intel Corporation. All rights reserved.<BR>
-This program and the accompanying materials
-are licensed and made available under the terms and conditions of the BSD License
-which accompanies this distribution.  The full text of the license may be found at
-http://opensource.org/licenses/bsd-license.php
-
-THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
@@ -22,8 +16,8 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #define MAX_LONG_FILE_PATH 500
 
-#define MAX_UINTN MAX_ADDRESS
 #define MAX_UINT64 ((UINT64)0xFFFFFFFFFFFFFFFFULL)
+#define MAX_UINT32 ((UINT32)0xFFFFFFFF)
 #define MAX_UINT16  ((UINT16)0xFFFF)
 #define MAX_UINT8   ((UINT8)0xFF)
 #define ARRAY_SIZE(Array) (sizeof (Array) / sizeof ((Array)[0]))
@@ -250,16 +244,6 @@ StrSize (
   CONST CHAR16              *String
   );
 
-UINTN
-StrHexToUintn (
-  CONST CHAR16              *String
-  );
-
-UINTN
-StrDecimalToUintn (
-  CONST CHAR16              *String
-  );
-
 UINT64
 StrHexToUint64 (
   CONST CHAR16             *String
@@ -278,24 +262,10 @@ StrHexToUint64S (
   );
 
 RETURN_STATUS
-StrHexToUintnS (
-    CONST CHAR16             *String,
-         CHAR16             **EndPointer,  OPTIONAL
-         UINTN              *Data
-  );
-
-RETURN_STATUS
 StrDecimalToUint64S (
     CONST CHAR16             *String,
          CHAR16             **EndPointer,  OPTIONAL
          UINT64             *Data
-  );
-
-RETURN_STATUS
-StrDecimalToUintnS (
-    CONST CHAR16             *String,
-         CHAR16             **EndPointer,  OPTIONAL
-         UINTN              *Data
   );
 
 VOID *
@@ -451,14 +421,14 @@ SplitStr (
 /*++
 
 Routine Description:
-  Convert FileName to the long file path, which can support larger than 260 length. 
+  Convert FileName to the long file path, which can support larger than 260 length.
 
 Arguments:
-  FileName         - FileName. 
+  FileName         - FileName.
 
 Returns:
   LongFilePath      A pointer to the converted long file path.
-  
+
 --*/
 
 #ifdef __cplusplus

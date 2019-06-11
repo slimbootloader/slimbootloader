@@ -1,19 +1,12 @@
 @REM @file
-@REM   This stand-alone program is typically called by the edksetup.bat file, 
+@REM   This stand-alone program is typically called by the edksetup.bat file,
 @REM   however it may be executed directly from the BaseTools project folder
 @REM   if the file is not executed within a WORKSPACE\BaseTools folder.
 @REM
-@REM Copyright (c) 2006 - 2017, Intel Corporation. All rights reserved.<BR>
+@REM Copyright (c) 2006 - 2018, Intel Corporation. All rights reserved.<BR>
 @REM (C) Copyright 2016 Hewlett Packard Enterprise Development LP<BR>
 @REM
-@REM This program and the accompanying materials are licensed and made available
-@REM under the terms and conditions of the BSD License which accompanies this 
-@REM distribution.  The full text of the license may be found at:
-@REM   http://opensource.org/licenses/bsd-license.php
-@REM
-@REM THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-@REM WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR 
-@REM IMPLIED.
+@REM SPDX-License-Identifier: BSD-2-Clause-Patent
 @REM
 
 @echo off
@@ -124,7 +117,7 @@ if /I "%1"=="/?" goto Usage
       echo !!! ERROR !!! Cannot find BaseTools Bin Win32!!!
       echo Please check the directory %EDK_TOOLS_PATH%\Bin\Win32
       echo Or configure EDK_TOOLS_BIN env to point Win32 directory.
-      echo. 
+      echo.
     )
   )
   set PATH=%EDK_TOOLS_BIN%;%PATH%
@@ -140,7 +133,7 @@ if /I "%1"=="/?" goto Usage
       echo !!! ERROR !!! Cannot find BaseTools Bin Win32!!!
       echo Please check the directory %EDK_TOOLS_PATH%\Bin\Win32
       echo Or configure EDK_TOOLS_BIN env to point Win32 directory.
-      echo. 
+      echo.
     )
   )
   set PATH=%EDK_TOOLS_BIN%;%PATH%
@@ -182,7 +175,7 @@ if NOT exist %CONF_PATH% (
     )
   )
 )
- 
+
 :CopyConf
 if NOT exist %CONF_PATH% (
   mkdir %CONF_PATH%
@@ -256,16 +249,11 @@ if defined REBUILD goto check_build_environment
 if not exist "%EDK_TOOLS_PATH%" goto check_build_environment
 if not exist "%EDK_TOOLS_BIN%"  goto check_build_environment
 
-IF NOT EXIST "%EDK_TOOLS_BIN%\BootSectImage.exe" goto check_c_tools
-IF NOT EXIST "%EDK_TOOLS_BIN%\EfiLdrImage.exe" goto check_c_tools
 IF NOT EXIST "%EDK_TOOLS_BIN%\EfiRom.exe" goto check_c_tools
-IF NOT EXIST "%EDK_TOOLS_BIN%\GenBootSector.exe" goto check_c_tools
 IF NOT EXIST "%EDK_TOOLS_BIN%\GenFfs.exe" goto check_c_tools
 IF NOT EXIST "%EDK_TOOLS_BIN%\GenFv.exe" goto check_c_tools
 IF NOT EXIST "%EDK_TOOLS_BIN%\GenFw.exe" goto check_c_tools
-IF NOT EXIST "%EDK_TOOLS_BIN%\GenPage.exe" goto check_c_tools
 IF NOT EXIST "%EDK_TOOLS_BIN%\GenSec.exe" goto check_c_tools
-IF NOT EXIST "%EDK_TOOLS_BIN%\GenVtf.exe" goto check_c_tools
 IF NOT EXIST "%EDK_TOOLS_BIN%\Split.exe" goto check_c_tools
 IF NOT EXIST "%EDK_TOOLS_BIN%\TianoCompress.exe" goto check_c_tools
 IF NOT EXIST "%EDK_TOOLS_BIN%\VfrCompile.exe" goto check_c_tools
@@ -275,11 +263,11 @@ goto check_build_environment
 
 :check_c_tools
   echo.
-  echo !!! ERROR !!! Binary C tools are missing. They are requried to be built from BaseTools Source.
+  echo !!! ERROR !!! Binary C tools are missing. They are required to be built from BaseTools Source.
   echo.
 
 :check_build_environment
-  if defined BASETOOLS_PYTHON_SOURCE goto VisualStudioAvailable
+  set PYTHONHASHSEED=1
 
   if not defined BASE_TOOLS_PATH (
      if not exist "Source\C\Makefile" (
@@ -290,24 +278,93 @@ goto check_build_environment
      )
   )
 
-  if not defined PYTHON_HOME (
-    if defined PYTHONHOME (
-      set PYTHON_HOME=%PYTHONHOME%
-    ) else (
+:defined_python
+if defined PYTHON_COMMAND if not defined PYTHON3_ENABLE (
+  goto check_python_available
+)
+if defined PYTHON3_ENABLE (
+  if "%PYTHON3_ENABLE%" EQU "TRUE" (
+    set PYTHON_COMMAND=py -3
+    goto check_python_available
+  ) else (
+    goto check_python2
+  )
+)
+if not defined PYTHON_COMMAND if not defined PYTHON3_ENABLE (
+  set PYTHON_COMMAND=py -3
+  py -3 %BASE_TOOLS_PATH%\Tests\PythonTest.py >PythonCheck.txt 2>&1
+  setlocal enabledelayedexpansion
+  set /p PythonCheck=<"PythonCheck.txt"
+  del PythonCheck.txt
+  if "!PythonCheck!" NEQ "TRUE" (
+    if not defined PYTHON_HOME if not defined PYTHONHOME (
+      endlocal
+      set PYTHON_COMMAND=
       echo.
-      echo !!! ERROR !!! Binary python tools are missing. PYTHON_HOME environment variable is not set. 
-      echo PYTHON_HOME is required to build or execute the python tools.
+      echo !!! ERROR !!! Binary python tools are missing.
+      echo PYTHON_COMMAND, PYTHON3_ENABLE or PYTHON_HOME
+      echo Environment variable is not set successfully.
+      echo They is required to build or execute the python tools.
       echo.
       goto end
+    ) else (
+      goto check_python2
     )
+  ) else (
+    goto check_freezer_path
+  )
+)
+
+:check_python2
+endlocal
+if defined PYTHON_HOME (
+  if EXIST "%PYTHON_HOME%" (
+    set PYTHON_COMMAND=%PYTHON_HOME%\python.exe
+    goto check_python_available
+  )
+)
+if defined PYTHONHOME (
+  if EXIST "%PYTHONHOME%" (
+    set PYTHON_HOME=%PYTHONHOME%
+    set PYTHON_COMMAND=%PYTHON_HOME%\python.exe
+    goto check_python_available
+  )
+)
+echo.
+echo !!! ERROR !!!  PYTHON_HOME is not defined or The value of this variable does not exist
+echo.
+goto end
+:check_python_available
+echo %PYTHON_COMMAND% %BASE_TOOLS_PATH%\Tests\PythonTest.py
+%PYTHON_COMMAND% %BASE_TOOLS_PATH%\Tests\PythonTest.py >PythonCheck.txt 2>&1
+  setlocal enabledelayedexpansion
+  set /p PythonCheck=<"PythonCheck.txt"
+  del PythonCheck.txt
+  if "!PythonCheck!" NEQ "TRUE" (
+    echo.
+    echo ! ERROR !  "%PYTHON_COMMAND%" is not installed or added to environment variables
+    echo.
+    goto end
+  ) else (
+    goto check_freezer_path
   )
 
+:check_freezer_path
+  endlocal
+  if defined BASETOOLS_PYTHON_SOURCE goto print_python_info
   set "PATH=%BASE_TOOLS_PATH%\BinWrappers\WindowsLike;%PATH%"
   set BASETOOLS_PYTHON_SOURCE=%BASE_TOOLS_PATH%\Source\Python
   set PYTHONPATH=%BASETOOLS_PYTHON_SOURCE%;%PYTHONPATH%
-  
+
+:print_python_info
   echo                PATH = %PATH%
-  echo         PYTHON_HOME = %PYTHON_HOME%
+  if defined PYTHON3_ENABLE if "%PYTHON3_ENABLE%" EQU "TRUE" (
+    echo      PYTHON3_ENABLE = %PYTHON3_ENABLE%
+    echo             PYTHON3 = %PYTHON_COMMAND%
+  ) else (
+    echo      PYTHON3_ENABLE = FALSE
+    echo      PYTHON_COMMAND = %PYTHON_COMMAND%
+  )
   echo          PYTHONPATH = %PYTHONPATH%
   echo.
 
@@ -353,11 +410,11 @@ goto check_build_environment
   @echo.
   echo  Usage: "%0 [-h | -help | --help | /h | /help | /?] [ Rebuild | ForceRebuild ] [Reconfig] [base_tools_path [edk_tools_path]]"
   @echo.
-  @echo         base_tools_path   BaseTools project path, BASE_TOOLS_PATH will be set to this path. 
+  @echo         base_tools_path   BaseTools project path, BASE_TOOLS_PATH will be set to this path.
   @echo         edk_tools_path    EDK_TOOLS_PATH will be set to this path.
-  @echo         Rebuild           If sources are available perform an Incremental build, only 
+  @echo         Rebuild           If sources are available perform an Incremental build, only
   @echo                           build those updated tools.
-  @echo         ForceRebuild      If sources are available, rebuild all tools regardless of 
+  @echo         ForceRebuild      If sources are available, rebuild all tools regardless of
   @echo                           whether they have been updated or not.
   @echo         Reconfig          Reinstall target.txt, tools_def.txt and build_rule.txt.
   @echo.
