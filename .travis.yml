@@ -10,6 +10,7 @@ before_install:
 env:
   - BUILD_TARGET=qemu
   - BUILD_TARGET=apl
+  - BUILD_TARGET=cfl
 
 script:
   - docker run --rm -v ${PWD}:/tmp/sbl -w /tmp/sbl --network=host sbl ./BuildLoader.py build $BUILD_TARGET
