@@ -251,21 +251,26 @@ class FlashMap(Structure):
 		self.length  = sizeof(self) + len(self.descriptors) * sizeof(FlashMapDesc)
 
 
-def split_fsp(path, out_dir):
+def run_process (arg_list, print_cmd = True):
+	if print_cmd:
+		print ' '.join(arg_list)
 	sys.stdout.flush()
-	x = subprocess.call([
+	x = subprocess.call (arg_list)
+	if x: sys.exit(1)
+
+
+def split_fsp(path, out_dir):
+	run_process ([
 				"python",
 				gtools['FSP_SPLIT'],
 				"split",
 				"-f", path,
 				"-n", "FSP.bin",
 				"-o", out_dir])
-	if x: sys.exit(1)
 
 
 def rebase_fsp(path, out_dir, base_t, base_m, base_s):
-	sys.stdout.flush()
-	x = subprocess.call([
+	run_process ([
 		"python",
 		gtools['FSP_SPLIT'],
 		"rebase",
@@ -274,35 +279,28 @@ def rebase_fsp(path, out_dir, base_t, base_m, base_s):
 		"-c", "t" , "m", "s",
 		"-n", "Fsp.bin",
 		"-o", out_dir])
-	if x: sys.exit(1)
 
 
 def patch_fv(fv_dir, fvs, *vargs):
 	sys.stdout.flush()
 	args = filter (lambda x: x != '', list(vargs))
-	x = subprocess.call(["python", gtools['FV_PATCH'], fv_dir, fvs] + args)
-	if x: sys.exit(1)
+	run_process (["python", gtools['FV_PATCH'], fv_dir, fvs] + args, False)
 
 
 def gen_cfg_data (command, dscfile, outfile):
-	sys.stdout.flush()
-	x = subprocess.call([
+	run_process ([
 			"python",
 			gtools['GEN_CFG'],
 			command,
 			dscfile,
 			outfile])
-	if x: sys.exit(1)
 
 
 def cfg_data_tool (command, infiles, outfile, extra = []):
 	arg_list = ["python",	gtools['CFG_DATA'], command,	'-o', outfile]
 	arg_list.extend (extra)
 	arg_list.extend (infiles)
-	print ' '.join(arg_list)
-	sys.stdout.flush()
-	x = subprocess.call(arg_list)
-	if x: sys.exit(1)
+	run_process (arg_list)
 
 
 def compress (path, alg="Lzma"):
@@ -325,9 +323,7 @@ def compress (path, alg="Lzma"):
 			"-e",
 			"-o", root_path+'.lz',
 			path]
-		sys.stdout.flush()
-		x = subprocess.call(cmdline)
-		if x: sys.exit(1)
+		run_process (cmdline, False)
 	add_file_size(root_path+'.lz', path, sig)
 
 
@@ -853,9 +849,7 @@ def check_for_nasm():
 def rsa_sign_file (priv_key, pub_key, in_file, out_file, inc_dat = False, inc_key = False):
 	cmdline = os.path.join(os.environ.get ('OPENSSL_PATH', ''), 'openssl')
 	cmdargs = [cmdline, 'dgst' , '-sha256', '-sign', '%s' % priv_key, '-out', '%s' % out_file, '%s' % in_file]
-	x = subprocess.call(cmdargs)
-	if x:
-		raise Exception ('Failed to generate signature using openssl !')
+	run_process (cmdargs, False)
 
 	if inc_dat:
 		bins = bytearray(open(in_file, 'rb').read())

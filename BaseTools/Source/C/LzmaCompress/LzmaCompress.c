@@ -1,18 +1,12 @@
 /** @file
   LZMA Compress/Decompress tool (LzmaCompress)
 
-  Based on LZMA SDK 16.04:
+  Based on LZMA SDK 18.05:
     LzmaUtil.c -- Test application for LZMA compression
-    2016-10-04 : Igor Pavlov : Public domain
+    2018-04-30 : Igor Pavlov : Public domain
 
-  Copyright (c) 2006 - 2016, Intel Corporation. All rights reserved.<BR>
-  This program and the accompanying materials
-  are licensed and made available under the terms and conditions of the BSD License
-  which accompanies this distribution.  The full text of the license may be found at
-  http://opensource.org/licenses/bsd-license.php
-
-  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+  Copyright (c) 2006 - 2018, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
@@ -33,7 +27,7 @@
 #define LZMA_HEADER_SIZE (LZMA_PROPS_SIZE + 8)
 
 typedef enum {
-  NoConverter, 
+  NoConverter,
   X86Converter,
   MaxConverter
 } CONVERTER_TYPE;
@@ -50,7 +44,7 @@ static CONVERTER_TYPE mConType = NoConverter;
 #define UTILITY_MAJOR_VERSION 0
 #define UTILITY_MINOR_VERSION 2
 #define INTEL_COPYRIGHT \
-  "Copyright (c) 2009-2016, Intel Corporation. All rights reserved."
+  "Copyright (c) 2009-2018, Intel Corporation. All rights reserved."
 void PrintHelp(char *buffer)
 {
   strcat(buffer,
@@ -113,7 +107,7 @@ static SRes Encode(ISeqOutStream *outStream, ISeqInStream *inStream, UInt64 file
   } else {
     return SZ_ERROR_INPUT_EOF;
   }
-  
+
   if (SeqInStream_Read(inStream, inBuffer, inSize) != SZ_OK) {
     res = SZ_ERROR_READ;
     goto Done;
@@ -126,7 +120,7 @@ static SRes Encode(ISeqOutStream *outStream, ISeqInStream *inStream, UInt64 file
     res = SZ_ERROR_MEM;
     goto Done;
   }
-  
+
   {
     int i;
     for (i = 0; i < 8; i++)
@@ -141,7 +135,7 @@ static SRes Encode(ISeqOutStream *outStream, ISeqInStream *inStream, UInt64 file
       goto Done;
     }
     memcpy(filteredStream, inBuffer, inSize);
-    
+
     if (mConType == X86Converter) {
       {
         UInt32 x86State;
@@ -154,12 +148,12 @@ static SRes Encode(ISeqOutStream *outStream, ISeqInStream *inStream, UInt64 file
   {
     size_t outSizeProcessed = outSize - LZMA_HEADER_SIZE;
     size_t outPropsSize = LZMA_PROPS_SIZE;
-    
+
     res = LzmaEncode(outBuffer + LZMA_HEADER_SIZE, &outSizeProcessed,
         mConType != NoConverter ? filteredStream : inBuffer, inSize,
         &props, outBuffer, &outPropsSize, 0,
         NULL, &g_Alloc, &g_Alloc);
-    
+
     if (res != SZ_OK)
       goto Done;
 
@@ -190,13 +184,13 @@ static SRes Decode(ISeqOutStream *outStream, ISeqInStream *inStream, UInt64 file
 
   int i;
 
-  if (inSize < LZMA_HEADER_SIZE) 
+  if (inSize < LZMA_HEADER_SIZE)
     return SZ_ERROR_INPUT_EOF;
 
   inBuffer = (Byte *)MyAlloc(inSize);
   if (inBuffer == 0)
     return SZ_ERROR_MEM;
-  
+
   if (SeqInStream_Read(inStream, inBuffer, inSize) != SZ_OK) {
     res = SZ_ERROR_READ;
     goto Done;
@@ -341,14 +335,14 @@ int main2(int numArgs, const char *args[], char *rs)
     if (!mQuietMode) {
       printf("Encoding\n");
     }
-    res = Encode(&outStream.s, &inStream.s, fileSize);
+    res = Encode(&outStream.vt, &inStream.vt, fileSize);
   }
   else
   {
     if (!mQuietMode) {
       printf("Decoding\n");
     }
-    res = Decode(&outStream.s, &inStream.s, fileSize);
+    res = Decode(&outStream.vt, &inStream.vt, fileSize);
   }
 
   File_Close(&outStream.file);

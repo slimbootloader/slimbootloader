@@ -1,13 +1,7 @@
 ## @ FspTool.py
 #
 # Copyright (c) 2015 - 2018, Intel Corporation. All rights reserved.<BR>
-# This program and the accompanying materials are licensed and made available under
-# the terms and conditions of the BSD License that accompanies this distribution.
-# The full text of the license may be found at
-# http://opensource.org/licenses/bsd-license.php.
-#
-# THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-# WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
 
@@ -567,7 +561,7 @@ class PeTeImage:
         tehdr          = EFI_TE_IMAGE_HEADER.from_buffer (data, 0)
         if   tehdr.Signature == 'VZ': # TE image
             self.TeHdr   = tehdr
-        elif tehdr.Signature == 'MZ': # PE32 image
+        elif tehdr.Signature == 'MZ': # PE image
             self.TeHdr   = None
             self.DosHdr  = EFI_IMAGE_DOS_HEADER.from_buffer (data, 0)
             self.PeHdr   = EFI_IMAGE_NT_HEADERS32.from_buffer (data, self.DosHdr.e_lfanew)
@@ -617,7 +611,7 @@ class PeTeImage:
             for each in rdata:
                 roff  = each & 0xfff
                 rtype = each >> 12
-                if rtype == 0: # IMAGE_REL_BASED.ABSOLUTE:
+                if rtype == 0: # IMAGE_REL_BASED_ABSOLUTE:
                     continue
                 if ((rtype != 3) and (rtype != 10)): # IMAGE_REL_BASED_HIGHLOW and IMAGE_REL_BASED_DIR64
                     raise Exception("ERROR: Unsupported relocation type %d!" % rtype)
@@ -725,7 +719,7 @@ def SplitFspBin (fspfile, outdir, nametemplate):
         fspname, ext = os.path.splitext(os.path.basename(nametemplate))
         filename = os.path.join(outdir, fspname + '_' + fsp.Type + ext)
         hfsp = open(filename, 'wb')
-        print ("Ceate FSP component file '%s'" % filename)
+        print ("Create FSP component file '%s'" % filename)
         for fvidx in fsp.FvIdxList:
             fv = fd.FvList[fvidx]
             hfsp.write(fv.FvData)

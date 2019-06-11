@@ -3,13 +3,7 @@
   Virtualization Technology for Directed I/O (VT-D) Architecture Specification.
 
   Copyright (c) 2016 - 2018, Intel Corporation. All rights reserved.<BR>
-  This program and the accompanying materials
-  are licensed and made available under the terms and conditions of the BSD License
-  which accompanies this distribution.  The full text of the license may be found at
-  http://opensource.org/licenses/bsd-license.php
-
-  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 
   @par Revision Reference:
     - Intel(R) Virtualization Technology for Directed I/O (VT-D) Architecture
@@ -30,10 +24,10 @@
 ///
 /// DMA-Remapping Reporting Structure definitions from section 8.1
 ///@{
-#define EFI_ACPI_DMAR_REVISION                    0x01
+#define EFI_ACPI_DMAR_REVISION                             0x01
 
-#define EFI_ACPI_DMAR_FLAGS_INTR_REMAP            BIT0
-#define EFI_ACPI_DMAR_FLAGS_X2APIC_OPT_OUT        BIT1
+#define EFI_ACPI_DMAR_FLAGS_INTR_REMAP                     BIT0
+#define EFI_ACPI_DMAR_FLAGS_X2APIC_OPT_OUT                 BIT1
 #define EFI_ACPI_DMAR_FLAGS_DMA_CTRL_PLATFORM_OPT_IN_FLAG  BIT2
 ///@}
 

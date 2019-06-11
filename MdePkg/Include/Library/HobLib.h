@@ -8,14 +8,8 @@
   allows the PEI phase to pass information to the DXE phase. HOBs are position
   independent and can be relocated easily to different memory locations.
 
-Copyright (c) 2006 - 2017, Intel Corporation. All rights reserved.<BR>
-This program and the accompanying materials
-are licensed and made available under the terms and conditions of the BSD License
-which accompanies this distribution.  The full text of the license may be found at
-http://opensource.org/licenses/bsd-license.php
-
-THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+Copyright (c) 2006 - 2018, Intel Corporation. All rights reserved.<BR>
+SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
@@ -190,7 +184,7 @@ BuildModuleHob (
   This function builds a HOB that describes a chunk of system memory.
   It can only be invoked during PEI phase;
   for DXE phase, it will ASSERT() since PEI HOB is read-only for DXE phase.
-  
+
   If there is no additional space for HOB creation, then ASSERT().
 
   @param  ResourceType        The type of resource described by this HOB.

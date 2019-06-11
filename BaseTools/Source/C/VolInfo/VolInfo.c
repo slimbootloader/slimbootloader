@@ -1,14 +1,8 @@
 /** @file
 The tool dumps the contents of a firmware volume
 
-Copyright (c) 1999 - 2017, Intel Corporation. All rights reserved.<BR>
-This program and the accompanying materials
-are licensed and made available under the terms and conditions of the BSD License
-which accompanies this distribution.  The full text of the license may be found at
-http://opensource.org/licenses/bsd-license.php
-
-THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+Copyright (c) 1999 - 2018, Intel Corporation. All rights reserved.<BR>
+SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
@@ -541,16 +535,16 @@ GetOccupiedSize (
 
 Routine Description:
 
-  This function returns the next larger size that meets the alignment 
+  This function returns the next larger size that meets the alignment
   requirement specified.
 
 Arguments:
 
   ActualSize      The size.
   Alignment       The desired alignment.
-    
+
 Returns:
- 
+
   EFI_SUCCESS             Function completed successfully.
   EFI_ABORTED             The function encountered an error.
 
@@ -600,7 +594,7 @@ Returns:
     //
     // 0x02
     //
-    "EFI_SECTION_GUID_DEFINED",    
+    "EFI_SECTION_GUID_DEFINED",
     //
     // 0x03
     //
@@ -664,11 +658,11 @@ Returns:
     //
     // 0x12
     //
-    "EFI_SECTION_TE",    
+    "EFI_SECTION_TE",
     //
     // 0x13
     //
-    "EFI_SECTION_DXE_DEPEX", 
+    "EFI_SECTION_DXE_DEPEX",
     //
     // 0x14
     //
@@ -735,7 +729,7 @@ ReadHeader (
 
 Routine Description:
 
-  This function determines the size of the FV and the erase polarity.  The 
+  This function determines the size of the FV and the erase polarity.  The
   erase polarity is the FALSE value for file state.
 
 Arguments:
@@ -743,9 +737,9 @@ Arguments:
   InputFile       The file that contains the FV image.
   FvSize          The size of the FV.
   ErasePolarity   The FV erase polarity.
-    
+
 Returns:
- 
+
   EFI_SUCCESS             Function completed successfully.
   EFI_INVALID_PARAMETER   A required parameter was NULL or is out of range.
   EFI_ABORTED             The function encountered an error.
@@ -757,6 +751,7 @@ Returns:
   UINTN                       Signature[2];
   UINTN                       BytesRead;
   UINT32                      Size;
+  size_t                      ReadSize;
 
   BytesRead = 0;
   Size      = 0;
@@ -770,7 +765,10 @@ Returns:
   //
   // Read the header
   //
-  fread (&VolumeHeader, sizeof (EFI_FIRMWARE_VOLUME_HEADER) - sizeof (EFI_FV_BLOCK_MAP_ENTRY), 1, InputFile);
+  ReadSize = fread (&VolumeHeader, sizeof (EFI_FIRMWARE_VOLUME_HEADER) - sizeof (EFI_FV_BLOCK_MAP_ENTRY), 1, InputFile);
+  if (ReadSize != 1) {
+    return EFI_ABORTED;
+  }
   BytesRead     = sizeof (EFI_FIRMWARE_VOLUME_HEADER) - sizeof (EFI_FV_BLOCK_MAP_ENTRY);
   Signature[0]  = VolumeHeader.Signature;
   Signature[1]  = 0;
@@ -894,7 +892,7 @@ Returns:
   if (VolumeHeader.Attributes & EFI_FVB2_ALIGNMENT_64K) {
     printf ("        EFI_FVB2_ALIGNMENT_64K\n");
   }
-  
+
 #else
 
   if (VolumeHeader.Attributes & EFI_FVB2_READ_LOCK_CAP) {
@@ -1059,7 +1057,10 @@ Returns:
   printf ("Revision:              0x%04X\n", VolumeHeader.Revision);
 
   do {
-    fread (&BlockMap, sizeof (EFI_FV_BLOCK_MAP_ENTRY), 1, InputFile);
+    ReadSize = fread (&BlockMap, sizeof (EFI_FV_BLOCK_MAP_ENTRY), 1, InputFile);
+    if (ReadSize != 1) {
+      return EFI_ABORTED;
+    }
     BytesRead += sizeof (EFI_FV_BLOCK_MAP_ENTRY);
 
     if (BlockMap.NumBlocks != 0) {
@@ -1123,7 +1124,7 @@ Returns:
   EFI_STATUS          Status;
   UINT8               GuidBuffer[PRINTED_GUID_BUFFER_SIZE];
   UINT32              HeaderSize;
-#if (PI_SPECIFICATION_VERSION < 0x00010000) 
+#if (PI_SPECIFICATION_VERSION < 0x00010000)
   UINT16              *Tail;
 #endif
   //
@@ -1225,7 +1226,7 @@ Returns:
         return EFI_ABORTED;
       }
     }
-#if (PI_SPECIFICATION_VERSION < 0x00010000)    
+#if (PI_SPECIFICATION_VERSION < 0x00010000)
     //
     // Verify tail if present
     //
@@ -1240,7 +1241,7 @@ Returns:
         return EFI_ABORTED;
       }
     }
- #endif   
+ #endif
     break;
 
   default:
@@ -1302,6 +1303,14 @@ Returns:
 
   case EFI_FV_FILETYPE_SMM_CORE:
     printf ("EFI_FV_FILETYPE_SMM_CORE\n");
+    break;
+
+  case EFI_FV_FILETYPE_MM_STANDALONE:
+    printf ("EFI_FV_FILETYPE_MM_STANDALONE\n");
+    break;
+
+  case EFI_FV_FILETYPE_MM_CORE_STANDALONE:
+    printf ("EFI_FV_FILETYPE_MM_CORE_STANDALONE\n");
     break;
 
   case EFI_FV_FILETYPE_FFS_PAD:
@@ -1565,7 +1574,7 @@ Returns:
   //
   // Update Image Base Address
   //
-  if ((ImgHdr->Pe32.OptionalHeader.Magic == EFI_IMAGE_NT_OPTIONAL_HDR32_MAGIC) && (ImgHdr->Pe32.FileHeader.Machine != IMAGE_FILE_MACHINE_IA64)) {
+  if (ImgHdr->Pe32.OptionalHeader.Magic == EFI_IMAGE_NT_OPTIONAL_HDR32_MAGIC) {
     ImgHdr->Pe32.OptionalHeader.ImageBase = (UINT32) NewPe32BaseAddress;
   } else if (ImgHdr->Pe32Plus.OptionalHeader.Magic == EFI_IMAGE_NT_OPTIONAL_HDR64_MAGIC) {
     ImgHdr->Pe32Plus.OptionalHeader.ImageBase = NewPe32BaseAddress;
@@ -1635,7 +1644,7 @@ Returns:
 
   EFI_SECTION_ERROR - Problem with section parsing.
                       (a) compression errors
-                      (b) unrecognized section 
+                      (b) unrecognized section
   EFI_UNSUPPORTED - Do not know how to parse the section.
   EFI_SUCCESS - Section successfully parsed.
   EFI_OUT_OF_RESOURCES - Memory allocation failed.
@@ -2384,8 +2393,8 @@ Returns:
 
   //
   // Copyright declaration
-  // 
-  fprintf (stdout, "Copyright (c) 2007 - 2016, Intel Corporation. All rights reserved.\n\n");
+  //
+  fprintf (stdout, "Copyright (c) 2007 - 2018, Intel Corporation. All rights reserved.\n\n");
   fprintf (stdout, "  Display Tiano Firmware Volume FFS image information\n\n");
 
   //
