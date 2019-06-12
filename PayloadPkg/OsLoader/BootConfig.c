@@ -260,7 +260,7 @@ ParseLinuxBootConfig (
       CurrLine = TrimLeft (CurrLine);
       MenuEntry[EntryNum].Command.Pos = CurrLine - CfgBuffer;
       EndLine  = TrimRight (EndLine);
-      MenuEntry[EntryNum].Command.Len = EndLine - CfgBuffer - MenuEntry[EntryNum].Command.Pos;
+      MenuEntry[EntryNum].Command.Len = EndLine - CfgBuffer - MenuEntry[EntryNum].Command.Pos + 1;
     } else if (MatchKeyWord (CurrLine, "initrd") > 0) {
       CurrLine += 6;
 
@@ -268,7 +268,7 @@ ParseLinuxBootConfig (
       CurrLine = TrimLeft (CurrLine);
       MenuEntry[EntryNum].InitRd.Pos = CurrLine - CfgBuffer;
       EndLine  = TrimRight (EndLine);
-      MenuEntry[EntryNum].InitRd.Len = EndLine - CfgBuffer - MenuEntry[EntryNum].InitRd.Pos;
+      MenuEntry[EntryNum].InitRd.Len = EndLine - CfgBuffer - MenuEntry[EntryNum].InitRd.Pos + 1;
     }
 
     CurrLine = NextLine;
