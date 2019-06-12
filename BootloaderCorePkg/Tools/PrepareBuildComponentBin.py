@@ -23,7 +23,7 @@ def Fatal (msg):
     raise Exception (msg)
 
 
-def CloneFspRepo (fsp_dir, platform):
+def CloneFspRepo (fsp_dir, fsp_tag):
     if not os.path.exists(fsp_dir + '/.git'):
         print ('Cloning Intel FSP repo ...')
         cmd = 'git clone https://github.com/IntelFsp/FSP.git %s' % fsp_dir
@@ -33,17 +33,15 @@ def CloneFspRepo (fsp_dir, platform):
         print ('Done\n')
     else:
         print ('Update Intel FSP repo ...')
-        cmd = 'git pull origin master'
+        cmd = 'git fetch origin master'
         ret = subprocess.call(cmd.split(' '), cwd=fsp_dir)
         if ret:
             Fatal ('Failed to update FSP repo to directory %s !' % fsp_dir)
         print ('Done\n')
 
     print ('Checking out Intel FSP commit ...')
-    if platform == 'apl':
-        cmd = 'git checkout 7431e4f3399a5081c956753b5fa3bcd764196723'
-    elif platform == 'cfl':
-        cmd = 'git checkout 59964173e18950debcc6b8856c5c928935ce0b4f'
+
+    cmd = 'git checkout %s' % fsp_tag
     ret = subprocess.call(cmd.split(' '), cwd=fsp_dir)
     if ret:
         Fatal ('Failed to check out branch !')
@@ -59,6 +57,7 @@ def CheckFileListExist (copy_list, sbl_dir):
             break
     return exists
 
+
 def CopyFileList (copy_list, src_dir, sbl_dir):
     print ('Copy Files into Slim Bootloader source tree ...')
     for src_path, dst_path in copy_list:
@@ -73,32 +72,61 @@ def CopyFileList (copy_list, src_dir, sbl_dir):
         shutil.copy (src_path, dst_path)
     print ('Done\n')
 
+
+def GetFspCopyList (platform):
+    plat_pkg = GetPlatformPkgName (platform)
+    fsp_inf  = 'Silicon/%s/FspBin/FspBin.inf' % plat_pkg
+
+    fd = open (fsp_inf, 'r')
+    lines = fd.readlines()
+    fd.close ()
+
+    fsp_tag        = ''
+    is_def_section = False
+    is_lst_section = False
+    copy_list      = []
+    for line in lines:
+        line = line.strip ()
+        if line.startswith('['):
+            if line.upper().startswith('[DEFINES]'):
+                is_def_section = True
+            else:
+                is_def_section = False
+            if line.upper().startswith('[COPYLIST]'):
+                is_lst_section = True
+            else:
+                is_lst_section = False
+
+        if is_def_section:
+            match = re.match("^FSP_COMMIT_ID\s*=\s*([_\-\w]+)", line)
+            if match:
+                fsp_tag = match.group(1)
+
+        if is_lst_section:
+            match = re.match("^(.+)\s*:\s*(.+)", line)
+            if match:
+                copy_list.append((match.group(1).strip(), match.group(2).strip()))
+
+    if fsp_tag == '':
+        Fatal ('Failed to find FSP commit ID in file - %s' % fsp_inf)
+
+    if len(copy_list) == 0:
+        Fatal ('Failed to find FSP list files in file - %s' % fsp_inf)
+
+    return copy_list, fsp_tag
+
+
 def CopyFspBins (fsp_dir, sbl_dir, platform):
-    sys.stdout.flush()
-    copy_list = []
-    if platform == 'apl':
-        copy_list.extend ([
-          ('ApolloLakeFspBinPkg/FspBin/Fsp.fd',  'Silicon/ApollolakePkg/FspBin/FspDbg.bin'),
-          ('ApolloLakeFspBinPkg/FspBin/Fsp.fd',  'Silicon/ApollolakePkg/FspBin/FspRel.bin'),
-          ('ApolloLakeFspBinPkg/FspBin/Fsp.bsf', 'Silicon/ApollolakePkg/FspBin/Fsp.bsf'),
-          ('ApolloLakeFspBinPkg/Vbt/Vbt.bin',    'Platform/ApollolakeBoardPkg/VbtBin/Vbt.dat'),
-          ('ApolloLakeFspBinPkg/Vbt/Vbt.bsf',    'Platform/ApollolakeBoardPkg/VbtBin/Vbt.bsf')
-        ])
-    elif platform == 'cfl':
-        copy_list.extend ([
-          ('CoffeeLakeFspBinPkg/FSP.fd',                 'Silicon/CoffeelakePkg/FspBin/FspDbg.bin'),
-          ('CoffeeLakeFspBinPkg/FSP.fd',                 'Silicon/CoffeelakePkg/FspBin/FspRel.bin'),
-          ('CoffeeLakeFspBinPkg/Fsp.bsf',                'Silicon/CoffeelakePkg/FspBin/Fsp.bsf'),
-          ('CoffeeLakeFspBinPkg/SampleCode/Vbt/Vbt.bin', 'Platform/CoffeelakeBoardPkg/VbtBin/Vbt.dat'),
-          ('CoffeeLakeFspBinPkg/SampleCode/Vbt/Vbt.bsf', 'Platform/CoffeelakeBoardPkg/VbtBin/Vbt.bsf')
-        ])
-    else:
+    if platform not in ['apl', 'cfl']:
         return
+
+    sys.stdout.flush()
+    copy_list, fsp_tag = GetFspCopyList (platform)
 
     if CheckFileListExist(copy_list, sbl_dir):
         return
 
-    CloneFspRepo (fsp_dir, platform)
+    CloneFspRepo (fsp_dir, fsp_tag)
 
     CopyFileList (copy_list, fsp_dir, sbl_dir)
 
@@ -194,7 +222,9 @@ def BuildFspBins (fsp_dir, sbl_dir, platform, flag):
 
 def GetPlatformPkgName (platform):
     PlatfromPkgNameDict = {
-      'cfl' : 'CoffeelakePkg'
+      'qemu' : 'QemuSocPkg',
+      'apl'  : 'ApollolakePkg',
+      'cfl'  : 'CoffeelakePkg'
     }
     return PlatfromPkgNameDict[platform]
 
