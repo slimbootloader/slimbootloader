@@ -1,0 +1,19 @@
+## @file
+#  File to describe FSP repo information
+#
+#  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+##
+
+[Defines]
+  FSP_COMMIT_ID  = 59964173e18950debcc6b8856c5c928935ce0b4f
+
+[CopyList]
+  CoffeeLakeFspBinPkg/FSP.fd         : Silicon/CoffeelakePkg/FspBin/FspDbg.bin
+  CoffeeLakeFspBinPkg/FSP.fd         : Silicon/CoffeelakePkg/FspBin/FspRel.bin
+  CoffeeLakeFspBinPkg/Fsp.bsf        : Silicon/CoffeelakePkg/FspBin/Fsp.bsf
+  CoffeeLakeFspBinPkg/SampleCode/Vbt/Vbt.bin : Platform/CoffeelakeBoardPkg/VbtBin/Vbt.dat
+  CoffeeLakeFspBinPkg/SampleCode/Vbt/Vbt.bsf : Platform/CoffeelakeBoardPkg/VbtBin/Vbt.bsf
