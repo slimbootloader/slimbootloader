@@ -137,10 +137,17 @@ FindFile (
           //
           // Compare whether the file name is recovery file name.
           //
-          if (EngStrniColl (NodeCurr, File->FileName, NodeLen) ||
-              EngStrniColl (NodeCurr, File->LongFileName, NodeLen)) {
-            break;
+          if (EngStrniColl (NodeCurr, File->FileName, NodeLen)) {
+            if (File->FileName[NodeLen] == 0) {
+              break;
+            }
           }
+
+          if (EngStrniColl (NodeCurr, File->LongFileName, NodeLen)) {
+            if (File->LongFileName[NodeLen] == 0) {
+              break;
+            }
+           }
         }
       } while (Status == EFI_SUCCESS);
       if (EFI_ERROR (Status)) {
