@@ -1,3 +1,9 @@
+## @file
+#
+#  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
 #
 # Delta configuration values for platform ID 0x000C
 # This file is not auto-generated. Rather, users must input all the settings

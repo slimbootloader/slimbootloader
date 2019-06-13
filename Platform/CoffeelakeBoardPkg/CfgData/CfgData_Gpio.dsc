@@ -1,3 +1,8 @@
+## @file
+#
+#  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+##
   # ---------------------------------------------------------------------------------------
   # !BSF PAGE:{GIO}
   # !BSF SUBT:{CFGHDR_TMPL:GPIO_CFG_DATA:1:0}  //Flags - bit 12 (Reuse config from base platform ID) is set to 1
