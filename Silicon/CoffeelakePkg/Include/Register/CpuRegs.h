@@ -9,6 +9,16 @@
 #ifndef _CPU_REGS_H_
 #define _CPU_REGS_H_
 
+#define EFI_CACHE_UNCACHEABLE                  0
+#define EFI_CACHE_WRITECOMBINING               1
+#define EFI_CACHE_WRITETHROUGH                 4
+#define EFI_CACHE_WRITEPROTECTED               5
+#define EFI_CACHE_WRITEBACK                    6
+
+#define MSR_CACHE_VARIABLE_MTRR_BASE                                  0x200
+#define B_CACHE_MTRR_VALID                                            BIT11
+#define B_CACHE_FIXED_MTRR_VALID                                      BIT10
+
 #define MSR_BOOT_GUARD_SACM_INFO                                      0x13A
 #define V_TPM_PRESENT_MASK                                            0x06
 #define B_BOOT_GUARD_SACM_INFO_NEM_ENABLED                            BIT0

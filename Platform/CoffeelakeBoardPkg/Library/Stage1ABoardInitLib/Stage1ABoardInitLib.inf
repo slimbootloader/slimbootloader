@@ -43,8 +43,11 @@
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
+  gPlatformModuleTokenSpaceGuid.PcdFlashSize
 
 [FixedPcd]
+  gPlatformModuleTokenSpaceGuid.PcdStage1ABase
+  gPlatformModuleTokenSpaceGuid.PcdStage1ASize
   gPlatformModuleTokenSpaceGuid.PcdUcodeBase
   gPlatformModuleTokenSpaceGuid.PcdUcodeSize
   gPlatformModuleTokenSpaceGuid.PcdPayloadBase
