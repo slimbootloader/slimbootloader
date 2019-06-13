@@ -12,8 +12,12 @@
   FSP_COMMIT_ID  = 7431e4f3399a5081c956753b5fa3bcd764196723
 
 [CopyList]
-  ApolloLakeFspBinPkg/FspBin/Fsp.fd  : Silicon/ApollolakePkg/FspBin/FspDbg.bin
-  ApolloLakeFspBinPkg/FspBin/Fsp.fd  : Silicon/ApollolakePkg/FspBin/FspRel.bin
-  ApolloLakeFspBinPkg/FspBin/Fsp.bsf : Silicon/ApollolakePkg/FspBin/Fsp.bsf
-  ApolloLakeFspBinPkg/Vbt/Vbt.bin    : Platform/ApollolakeBoardPkg/VbtBin/Vbt.dat
-  ApolloLakeFspBinPkg/Vbt/Vbt.bsf    : Platform/ApollolakeBoardPkg/VbtBin/Vbt.bsf
+  ApolloLakeFspBinPkg/FspBin/Fsp.fd     : Silicon/ApollolakePkg/FspBin/FspDbg.bin
+  ApolloLakeFspBinPkg/FspBin/Fsp.fd     : Silicon/ApollolakePkg/FspBin/FspRel.bin
+  ApolloLakeFspBinPkg/FspBin/Fsp.bsf    : Silicon/ApollolakePkg/FspBin/Fsp.bsf
+  ApolloLakeFspBinPkg/Include/FspUpd.h  : Silicon/ApollolakePkg/Include/FspUpd.h
+  ApolloLakeFspBinPkg/Include/FsptUpd.h : Silicon/ApollolakePkg/Include/FsptUpd.h
+  ApolloLakeFspBinPkg/Include/FspmUpd.h : Silicon/ApollolakePkg/Include/FspmUpd.h
+  ApolloLakeFspBinPkg/Include/FspsUpd.h : Silicon/ApollolakePkg/Include/FspsUpd.h
+  ApolloLakeFspBinPkg/Vbt/Vbt.bin       : Platform/ApollolakeBoardPkg/VbtBin/Vbt.dat
+  ApolloLakeFspBinPkg/Vbt/Vbt.bsf       : Platform/ApollolakeBoardPkg/VbtBin/Vbt.bsf

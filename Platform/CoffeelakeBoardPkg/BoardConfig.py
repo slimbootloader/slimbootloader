@@ -73,6 +73,11 @@ class Board(BaseBoard):
 		if self.ENABLE_FWU:
 			self.VERIFIED_BOOT_HASH_MASK  |= 0x00000028
 
+		# Verify required minimum FSP version
+		self.MIN_FSP_REVISION     = 0x07006440
+		# Verify FSP image ID. Empty string means skipping verification
+		self.FSP_IMAGE_ID         = '$CFLFSP$'
+
 		self.STAGE1B_XIP          = 1
 
 		self.STAGE2_FD_BASE       = 0x01000000
