@@ -357,7 +357,7 @@ GetComponentInfoByPartition (
       // Check if need to get back up copy
       // Back up copies can be identified with back up flag
       //
-      if ( ((EntryDesc.Flags & FLASH_MAP_FLAGS_NON_REDUNDANT_REGION) != 0) ||
+      if ( ((EntryDesc.Flags & (FLASH_MAP_FLAGS_NON_REDUNDANT_REGION | FLASH_MAP_FLAGS_NON_VOLATILE_REGION)) != 0) ||
            (((IsBackupPartition ? FLASH_MAP_FLAGS_BACKUP : 0) ^ (EntryDesc.Flags & FLASH_MAP_FLAGS_BACKUP)) == 0) ) {
         PcdBase = (UINT32) (RomBase + EntryDesc.Offset);
         PcdSize = EntryDesc.Size;
@@ -458,7 +458,7 @@ GetRegionOffsetSize (
 /**
   This function retrieves a GUIDed HOB data and size.
 
-  This function will search the HobListPtr to find the first GUIDed HOB that 
+  This function will search the HobListPtr to find the first GUIDed HOB that
   its GUID matches Guid, and return the GUID size in Length if Lengh is no NULL.
   If HobListPtr is NULL, it will use the loader HOB list.
 

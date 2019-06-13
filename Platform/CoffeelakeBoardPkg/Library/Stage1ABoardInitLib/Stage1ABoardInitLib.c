@@ -15,15 +15,14 @@
 #include <Library/DebugLib.h>
 #include <GpioPinsCnlLp.h>
 #include <RegAccess.h>
+#include <Register/CpuRegs.h>
 #include <FsptUpd.h>
 #include <PlatformData.h>
 
 #define UCODE_REGION_BASE   FixedPcdGet32(PcdUcodeBase)
 #define UCODE_REGION_SIZE   FixedPcdGet32(PcdUcodeSize)
-// PcdPayloadBase is too big. using following value
-// self.TOP_SWAP_SIZE + self.SLIMBOOTLOADER_SIZE + self.STAGE1B_SIZE
-#define CODE_REGION_BASE    0xFFCE0000
-#define CODE_REGION_SIZE    ((UINT32)~CODE_REGION_BASE + 1)
+#define CODE_REGION_BASE    FixedPcdGet32(PcdStage1ABase)
+#define CODE_REGION_SIZE    FixedPcdGet32(PcdStage1ASize)
 
 CONST
 FSPT_UPD TempRamInitParams = {
@@ -142,6 +141,10 @@ BoardInit (
   BOOT_PARTITION_SELECT     BootPartition;
   EFI_STATUS                Status;
   UINT8                     DebugPort;
+  UINT32                    MsrIdx;
+  UINT32                    ImgLen;
+  UINT32                    AdjLen;
+  UINT64                    MskLen;
 
   //  0xFF: External 0x3F8 based I/O UART
   // 0,1,2: Internal SOC MMIO UART
@@ -159,6 +162,24 @@ BoardInit (
     Status = GetBootPartition (&BootPartition);
     if (!EFI_ERROR(Status)) {
       SetCurrentBootPartition (BootPartition == BootPartition2 ? 1 : 0);
+    }
+
+    // Enlarge the code cache region to cover full flash for non-BootGuard case only
+    if ((AsmReadMsr64 (MSR_BOOT_GUARD_SACM_INFO) & B_BOOT_GUARD_SACM_INFO_NEM_ENABLED) == 0) {
+       // WHL FSP-T does not allow to enable full flash code cache due to cache size restriction.
+       // Here, MTRR is patched to enable full flash region cache to avoid performance penalty.
+       // However, the SBL code flow should ensure only limited flash regions will be accessed
+       // before FSP TempRamExit() is called. The combined DATA and CODE cache size should satisfy
+       // the BWG requirement.
+       MskLen = (AsmReadMsr64 (MSR_CACHE_VARIABLE_MTRR_BASE + 1) | (SIZE_4GB - 1)) + 1;
+       MsrIdx = MSR_CACHE_VARIABLE_MTRR_BASE + 1 * 2;
+       ImgLen = PcdGet32 (PcdFlashSize);
+       AdjLen = GetPowerOfTwo32 (ImgLen);
+       if (ImgLen > AdjLen) {
+         AdjLen <<= 1;
+       }
+       AsmWriteMsr64 (MsrIdx,     (SIZE_4GB - AdjLen) | EFI_CACHE_WRITEPROTECTED);
+       AsmWriteMsr64 (MsrIdx + 1, (MskLen - AdjLen) | B_CACHE_MTRR_VALID);
     }
     break;
   default:
