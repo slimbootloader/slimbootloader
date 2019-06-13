@@ -1,12 +1,9 @@
 /** @file
   Header file for FSP Information HOB.
 
- @copyright
   Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
-
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
-@par Specification Reference:
 **/
 
 #ifndef _FSP_INFO_HOB_H_

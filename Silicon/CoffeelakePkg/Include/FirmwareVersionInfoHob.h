@@ -1,9 +1,7 @@
 /** @file
   Header file for Firmware Version Information
 
- @copyright
   Copyright (c) 2015 - 2019, Intel Corporation. All rights reserved.<BR>
-
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/

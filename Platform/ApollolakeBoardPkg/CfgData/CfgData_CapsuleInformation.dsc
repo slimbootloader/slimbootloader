@@ -1,3 +1,9 @@
+## @file
+#
+#  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
   # !BSF PAGE:{PLT}
   # !BSF SUBT:{CFGHDR_TMPL:CAPSULE_INFO_CFG_DATA:0:0}
 

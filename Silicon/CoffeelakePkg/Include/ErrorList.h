@@ -1,7 +1,6 @@
 /*++
 
 Copyright (C) 2009-2018 Intel Corporation
-
 SPDX-License-Identifier: BSD-2-Clause
 
 File Name:
