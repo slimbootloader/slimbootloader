@@ -169,7 +169,7 @@ UpdateFspConfig (
   }
 
   if (!(UpdateFspmSgxConfig (FspmUpd))) {
-    DEBUG ((DEBUG_ERROR, "UpdateFspmSgxConfig failed.\n"));
+    DEBUG ((DEBUG_INFO, "FSP-M variables for Intel(R) SGX were NOT updated.\n"));
   }
 
   Fspmcfg->PlatformDebugConsent = MemCfgData->PlatformDebugConsent;
