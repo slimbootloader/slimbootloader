@@ -128,7 +128,7 @@ DefPerfIdToStr (
   case 0x31E0:
     return "FSP EndOfFirmware notify";
   case 0x31F0:
-    return "Board ReadyToBoot hook";
+    return "End of stage2";
   }
   return NULL;
 }
