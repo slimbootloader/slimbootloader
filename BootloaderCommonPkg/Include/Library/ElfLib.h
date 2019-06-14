@@ -22,23 +22,27 @@
 BOOLEAN
 EFIAPI
 IsElfImage (
-  IN  VOID                   *ImageBase
+  IN  CONST VOID             *ImageBase
   );
 
 /**
   Load the ELF image to specified address in ELF header.
 
-  This function load ELF image section by section into memory address specified
-  in ELF program header, and also load ELF symbols.
+  This function loads ELF image segments into memory address specified
+  in ELF program header.
 
-  @param[in]  ImageBase      Memory address of an image
+  @param[in]  ImageBase           Memory address of an image.
+  @param[out] EntryPoint          The entry point of loaded ELF image.
 
-  @retval Image entry point  The entry point of ELF image if load image success
-  @retval NULL               Error with loading ELF image
+  @retval EFI_INVALID_PARAMETER   Input parameters are not valid.
+  @retval EFI_UNSUPPORTED         Unsupported binary type.
+  @retval EFI_LOAD_ERROR          ELF binary loading error.
+  @retval EFI_SUCCESS             ELF binary is loaded successfully.
 **/
-UINT32 *
+EFI_STATUS
 LoadElfImage (
-  IN  VOID                   *ImageBase
+  IN  CONST VOID                  *ImageBase,
+  OUT       VOID                 **EntryPoint
   );
 
 #endif /* __ELF_LIB_H__ */
