@@ -1581,7 +1581,7 @@ UpdateFspConfig (
   }
 
   if (!(UpdateFspsSgxConfig (FspsUpd))) {
-    DEBUG ((DEBUG_ERROR, "UpdateFspsSgxConfig failed.\n"));
+    DEBUG ((DEBUG_INFO, "FSP-S variables for Intel(R) SGX were NOT updated.\n"));
   }
 }
 
