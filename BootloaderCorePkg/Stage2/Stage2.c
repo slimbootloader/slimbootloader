@@ -224,6 +224,7 @@ NormalBootPath (
   UINT32                          PldBase;
   LOADER_GLOBAL_DATA             *LdrGlobal;
   EFI_STATUS                      Status;
+  BOOLEAN                         CallBoardNotify;
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
 
@@ -268,6 +269,23 @@ NormalBootPath (
   }
 
   BoardInit (EndOfStages);
+
+  CallBoardNotify = TRUE;
+  if ((GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE) && (Dst[0] != 0)) {
+    // Current open sourced UEFI payload does not call any FSP notifications,
+    // but some customized UEFI payload will. The 1st DWORD in UEFI payload image
+    // will be used to indicate if it will handle FSP notifications.
+    CallBoardNotify = FALSE;
+  }
+
+  if (CallBoardNotify) {
+    BoardNotifyPhase (ReadyToBoot);
+    AddMeasurePoint (0x31D0);
+
+    BoardNotifyPhase (EndOfFirmware);
+    AddMeasurePoint (0x31E0);
+  }
+
   AddMeasurePoint (0x31F0);
 
   DEBUG ((DEBUG_INFO, "HOB @ 0x%08X\n", LdrGlobal->LdrHobList));
@@ -278,7 +296,7 @@ NormalBootPath (
   DEBUG_CODE_END ();
 
   DEBUG ((DEBUG_INFO, "Payload entry: 0x%08X\n", PldEntry));
-  DEBUG ((DEBUG_INIT, "Jump to payload\n"));
+  DEBUG ((DEBUG_INIT, "Jump to payload\n\n"));
   PldEntry (PldHobList, (VOID *)PldBase);
 }
 
@@ -295,36 +313,23 @@ S3ResumePath (
 {
   LOADER_GLOBAL_DATA             *LdrGlobal;
   S3_DATA                        *S3Data;
-  EFI_STATUS                      Status;
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
   S3Data    = (S3_DATA *)LdrGlobal->S3DataPtr;
 
   if (FixedPcdGetBool (PcdSmpEnabled)) {
     DEBUG ((DEBUG_INFO, "MP Init (Done)\n"));
-    Status = MpInit (EnumMpInitDone);
+    MpInit (EnumMpInitDone);
     AddMeasurePoint (0x31C0);
   }
 
-  BoardInit (ReadyToBoot);
-
-  // Call FspNotify ReadyToBoot
-  DEBUG ((DEBUG_INFO, "Call FspNotifyPhase(ReadyToBoot) ... "));
-  Status = CallFspNotifyPhase (EnumInitPhaseReadyToBoot);
+  // Call board and FSP Notify ReadyToBoot
+  BoardNotifyPhase (ReadyToBoot);
   AddMeasurePoint (0x31D0);
-  DEBUG ((DEBUG_INFO, "%X\n", Status));
-  ASSERT_EFI_ERROR (Status);
 
-  BoardInit (EndOfFirmware);
-
-  // Call FspNotify EndOfFirmware
-  DEBUG ((DEBUG_INFO, "Call FspNotifyPhase(EndOfFirmware) ... "));
-  Status = CallFspNotifyPhase (EnumInitPhaseEndOfFirmware);
+  // Call board and FSP Notify ReadyToBoot
+  BoardNotifyPhase (EndOfFirmware);
   AddMeasurePoint (0x31E0);
-  DEBUG ((DEBUG_INFO, "%X\n", Status));
-  ASSERT_EFI_ERROR (Status);
-
-  AddMeasurePoint (0x31F0);
 
   DEBUG_CODE_BEGIN ();
   PrintStackHeapInfo ();
@@ -334,6 +339,7 @@ S3ResumePath (
   UpdateFpdtS3Table (S3Data->AcpiBase);
 
   // Find Wake Vector and Jump to OS
+  AddMeasurePoint (0x31F0);
   FindAcpiWakeVectorAndJump (S3Data->AcpiBase);
 
   ASSERT (FALSE);
