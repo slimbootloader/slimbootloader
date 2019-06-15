@@ -225,6 +225,7 @@ NormalBootPath (
   LOADER_GLOBAL_DATA             *LdrGlobal;
   EFI_STATUS                      Status;
   BOOLEAN                         CallBoardNotify;
+  UINT32                          PayloadId;
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
 
@@ -270,12 +271,19 @@ NormalBootPath (
 
   BoardInit (EndOfStages);
 
-  CallBoardNotify = TRUE;
-  if ((GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE) && (Dst[0] != 0)) {
+  PayloadId = GetPayloadId ();
+  if (PayloadId == 0) {
+    // For built-in payload including OsLoader and FirmwareUpdate, it will handle
+    // notification through SBL platform services, so do not call notifications
+    // here.
+    CallBoardNotify = FALSE;
+  } else if ((PayloadId == UEFI_PAYLOAD_ID_SIGNATURE) && (Dst[0] != 0)) {
     // Current open sourced UEFI payload does not call any FSP notifications,
     // but some customized UEFI payload will. The 1st DWORD in UEFI payload image
     // will be used to indicate if it will handle FSP notifications.
     CallBoardNotify = FALSE;
+  } else {
+    CallBoardNotify = TRUE;
   }
 
   if (CallBoardNotify) {
