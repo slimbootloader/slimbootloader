@@ -206,8 +206,8 @@ SetupBootImage (
   MultiBoot = &LoadedImage->Image.MultiBoot;
   if (IsElfImage (BootFile->Addr)) {
     DEBUG ((DEBUG_INFO, "Boot image is ELF format...\n"));
-    EntryPoint = LoadElfImage (BootFile->Addr);
-    if (EntryPoint != NULL) {
+    Status = LoadElfImage (BootFile->Addr, (VOID *)&EntryPoint);
+    if (!EFI_ERROR (Status)) {
       if (IsMultiboot (BootFile->Addr)) {
         DEBUG ((DEBUG_INFO, "and Image is Multiboot format\n"));
         SetupMultibootInfo (MultiBoot);
@@ -274,9 +274,11 @@ LoadPreOsChecker (
   EFI_FIRMWARE_VOLUME_HEADER       *FvHeader;
   EFI_FFS_FILE_HEADER              *PreOsCheckerFile;
   EFI_COMMON_SECTION_HEADER        *Section;
+  UINT32                           *EntryPoint;
   UINT32                           PreOsCheckerImageBase;
   EFI_STATUS                       Status;
 
+  EntryPoint = NULL;
   if (((UINT32*) PldBase)[10] == EFI_FVH_SIGNATURE) {
     FvHeader = (EFI_FIRMWARE_VOLUME_HEADER *) PldBase;
 
@@ -291,12 +293,15 @@ LoadPreOsChecker (
         DEBUG ((DEBUG_INFO, "PreOsChecker.bin data NOT FOUND\n"));
       } else {
         PreOsCheckerImageBase = (UINTN)Section;
-        return LoadElfImage ((VOID *)PreOsCheckerImageBase);
+        Status = LoadElfImage ((VOID *)PreOsCheckerImageBase, (VOID *)&EntryPoint);
+        if (EFI_ERROR (Status)) {
+          DEBUG ((DEBUG_ERROR, "Failed to load ELF binary and get entrypoint\n"));
+        }
       }
     }
   }
 
-  return NULL;
+  return EntryPoint;
 }
 
 /**

@@ -253,8 +253,8 @@ NormalBootPath (
     }
     ASSERT_EFI_ERROR (Status);
   } else if (IsElfImage (Dst)) {
-    PldEntry = (PAYLOAD_ENTRY) (UINTN) LoadElfImage (Dst);
-    ASSERT (PldEntry != NULL);
+    Status = LoadElfImage (Dst, (VOID *)&PldEntry);
+    ASSERT_EFI_ERROR (Status);
   } else {
     // Assume RAW Binary Payload
     // PcdPayloadExeBase MUST be the same as payload binary's TEXT BASE
