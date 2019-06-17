@@ -398,7 +398,7 @@ BlockMap (
     Extent = NULL;
     for (Index=0; Index < Etable->Eheader.EhEntries; Index++) {
       Extent = &(Etable->Enodes.Extent[Index]);
-      if ((((UINT32) FileBlock) >= Extent->Eblk) && (((UINT32) FileBlock) <= (Extent->Eblk + Extent->Elen - 1))) {
+      if ((((UINT32) FileBlock) >= Extent->Eblk) && (((UINT32) FileBlock) < (Extent->Eblk + Extent->Elen))) {
         break;
       }
       Extent = NULL;
@@ -410,7 +410,7 @@ BlockMap (
       // Throw an ASSERT if upper 16-bits are non-zero.
       //
       ASSERT (Extent->EstartHi == 0);
-      *DiskBlockPtr = Extent->EstartLo + FileBlock; // (LShiftU64((UINT64)Extent->EiLeafHi, 32) | Extent->EstartLo) + FileBlock);
+      *DiskBlockPtr = Extent->EstartLo + (FileBlock - Extent->Eblk); // (LShiftU64((UINT64)Extent->EiLeafHi, 32) | Extent->EstartLo) + (FileBlock - Extent->Eblk);
     } else {
       *DiskBlockPtr = 0;
     }
