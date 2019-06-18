@@ -863,6 +863,7 @@ BoardInit (
   UINT32          Length;
   UINT32          PayloadSelGpioData;
   UINT32          PayloadSelGpioPad;
+  UINT32          PayloadId;
   EFI_PEI_GRAPHICS_INFO_HOB *FspGfxHob;
   LOADER_GLOBAL_DATA        *LdrGlobal;
 
@@ -870,33 +871,41 @@ BoardInit (
   case PreSiliconInit:
     EnableLegacyRegions ();
     SpiConstructor ();
+
+    PayloadId = GetPayloadId ();
     GenericCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);
     if (GenericCfgData != NULL) {
-      SetPayloadId (GenericCfgData->PayloadId);
+      if (GenericCfgData->PayloadId == AUTO_PAYLOAD_ID_SIGNATURE) {
+        PayloadId = 0;
+      } else {
+        PayloadId = GenericCfgData->PayloadId;
+      }
     }
 
     //
     // Switch payloads based on configured GPIO pin
     //
     SiliconCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
-    //
-    // Check if we have non zero config data value
-    //
     if ((SiliconCfgData != NULL) && (SiliconCfgData->PayloadSelGpio.Enable != 0)){
       if (IsPchLp() == TRUE) {
         PayloadSelGpioPad = GPIO_CFG_PIN_TO_PAD(SiliconCfgData->PayloadSelGpio) | (GPIO_CNL_LP_CHIPSET_ID << 24);
       } else {
         PayloadSelGpioPad = GPIO_CFG_PIN_TO_PAD(SiliconCfgData->PayloadSelGpio) | (GPIO_CNL_H_CHIPSET_ID << 24);
       }
-
       Status = GpioGetInputValue (PayloadSelGpioPad, &PayloadSelGpioData);
       if (!EFI_ERROR (Status)) {
         if (PayloadSelGpioData == 0) {
-          SetPayloadId (0);
-          DEBUG((DEBUG_INIT, "Booting Osloader payload based on GPIO config\n"));
+          PayloadId = 0;
+        } else {
+          if ((GenericCfgData != NULL) && (GenericCfgData->PayloadId == AUTO_PAYLOAD_ID_SIGNATURE)) {
+            PayloadId = UEFI_PAYLOAD_ID_SIGNATURE;
+          }
         }
+        DEBUG ((DEBUG_INFO, "Set PayloadId to 0x%08X based on GPIO config\n", PayloadId));
       }
     }
+
+    SetPayloadId (PayloadId);
 
     if (GetLoaderGlobalDataPointer ()->BootMode != BOOT_ON_FLASH_UPDATE) {
       UpdateBlRsvdRegion ();
