@@ -387,7 +387,7 @@ AssignPciIrqs (
   // Need to program interrupt register for add-in cards
   Shift = 0;
   for (Function = PCI_FUNCTION_NUMBER_PCIE_ROOT_PORT_5; Function <= PCI_FUNCTION_NUMBER_PCIE_ROOT_PORT_6; Function++) {
-    PciBase = MM_PCI_ADDRESS (DEFAULT_PCI_BUS_NUMBER_SC, PCI_DEVICE_NUMBER_SC_PCIE_DEVICE_2, Function, 0); 
+    PciBase = MM_PCI_ADDRESS (DEFAULT_PCI_BUS_NUMBER_SC, PCI_DEVICE_NUMBER_SC_PCIE_DEVICE_2, Function, 0);
     if (MmioRead32(PciBase) == 0xFFFFFFFF) {
       continue;
     }
@@ -578,9 +578,11 @@ ClearFspHob (
 
   LdrGlobal  = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
   HandOffHob = (EFI_HOB_HANDOFF_INFO_TABLE  *) LdrGlobal->FspHobList;
-  Length     = (UINT8 *) (UINTN) HandOffHob->EfiEndOfHobList - (UINT8 *)HandOffHob;
-  ZeroMem (HandOffHob, Length);
-  LdrGlobal->FspHobList = NULL;
+  if (HandOffHob != NULL) {
+    Length     = (UINT8 *) (UINTN) HandOffHob->EfiEndOfHobList - (UINT8 *)HandOffHob;
+    ZeroMem (HandOffHob, Length);
+    LdrGlobal->FspHobList = NULL;
+  }
 }
 
 /**
