@@ -10,7 +10,8 @@
 
   # !HDR EMBED:{MEMORY_CFG_DATA:TAG_200:START}
 
-
+  # !BSF PAGES:{MEM_SPD00:MEM:"SPD Data (Channel 0 Dimm 0)"}
+  # !BSF PAGE:{MEM_SPD00}
   # !BSF NAME:{Memory SPD Pointer Channel 0 Dimm 0}
   # !BSF TYPE:{Table}
   # !BSF OPTION:{ 0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX,}
@@ -18,27 +19,34 @@
   # !BSF HELP:{Pointer to SPD data in Memory}
   gCfgData.MemorySpdPtr00                   |      * | 0x200 | {FILE: spd00.bin}
 
+  # !BSF PAGES:{MEM_SPD01:MEM:"SPD Data (Channel 0 Dimm 1)"}
+  # !BSF PAGE:{MEM_SPD01}
   # !BSF NAME:{Memory SPD Pointer Channel 0 Dimm 1}
   # !BSF TYPE:{Table}
   # !BSF OPTION:{ 0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX,}
   # !BSF OPTION:{+ 8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX, E:1:HEX, F:1:HEX}
   # !BSF HELP:{Pointer to SPD data in Memory}
   gCfgData.MemorySpdPtr01                   |      * | 0x200 | 0
-  
-    # !BSF NAME:{Memory SPD Pointer Channel 1 Dimm 0}
+
+  # !BSF PAGES:{MEM_SPD10:MEM:"SPD Data (Channel 1 Dimm 0)"}
+  # !BSF PAGE:{MEM_SPD10}
+  # !BSF NAME:{Memory SPD Pointer Channel 1 Dimm 0}
   # !BSF TYPE:{Table}
   # !BSF OPTION:{ 0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX,}
   # !BSF OPTION:{+ 8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX, E:1:HEX, F:1:HEX}
   # !BSF HELP:{Pointer to SPD data in Memory}
   gCfgData.MemorySpdPtr10                   |      * | 0x200 | {FILE: spd00.bin}
-  
+
+  # !BSF PAGES:{MEM_SPD11:MEM:"SPD Data (Channel 1 Dimm 1)"}
+  # !BSF PAGE:{MEM_SPD11}
   # !BSF NAME:{Memory SPD Pointer Channel 1 Dimm 1}
   # !BSF TYPE:{Table}
   # !BSF OPTION:{ 0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX,}
   # !BSF OPTION:{+ 8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX, E:1:HEX, F:1:HEX}
   # !BSF HELP:{Pointer to SPD data in Memory}
   gCfgData.MemorySpdPtr11                   |      * | 0x200 | 0
-  
+
+  # !BSF PAGE:{MEM}
   # !BSF NAME:{Spd Address Tabl} TYPE:{EditNum, HEX, (0x00,0xFFFFFFFF)}
   # !BSF HELP:{Specify SPD Address table for CH0D0/CH0D1/CH1D0&CH1D1. MemorySpdPtr will be used if SPD Address is 00}
   gCfgData.SpdAddressTable                  |      * | 0x04 | { 0x0, 0x0, 0x0, 0x0 }
@@ -68,7 +76,7 @@
   # !BSF NAME:{Dqs Pins Interleaved Setting} TYPE:{Combo} OPTION:{$EN_DIS}
   # !BSF HELP:{Indicates DqPinsInterleaved setting: board-dependent}
   gCfgData.DqPinsInterleaved                |      * | 0x01 | 0x1
-  
+
   # !BSF NAME:{Tseg Size} TYPE:{Combo}
   # !BSF OPTION:{0x0400000:4MB, 0x01000000:16MB}
   # !BSF HELP:{Size of SMRAM memory reserved. 0x400000 for Release build and 0x1000000 for Debug build}
@@ -112,7 +120,7 @@
   # !BSF HELP:{Select 'Host Debugger' if Trace Hub is used with host debugger tool or 'Target Debugger' if Trace Hub is used by target debugger software or 'Disable' trace hub functionality.}
   gCfgData.PchTraceHubMode                  |     * | 0x01 | 0x00
 
-  # !BSF NAME:{Platform Debug Consent} TYPE:{Combo} 
+  # !BSF NAME:{Platform Debug Consent} TYPE:{Combo}
   # !BSF OPTION:{0:Disabled, 1:Enabled (DCI OOB+[DbC]), 2:Enabled (DCI OOB), 3:Enabled (USB3 DbC), 4:Enabled (XDP/MIPI60), 5:Enabled (USB2 DbC)}
   # !BSF HELP:{To 'opt-in' for debug, please select 'Enabled' with the desired debug probe type. Enabling this BIOS option may alter the default value of other debug-related BIOS options. Note: DCI OOB (aka BSSB) uses CCA probe; [DCI OOB+DbC] and [USB2 DbC] have the same setting}
   gCfgData.PlatformDebugConsent             |     * | 0x01 | 0x00
