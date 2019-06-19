@@ -353,6 +353,24 @@ GpioWrite(
 );
 
 /**
+  This procedure will get GPIO input level
+
+  @param[in]  GpioPad             GPIO pad
+  @param[in]  Term                Termination
+  @param[out] InputVal            GPIO Input value
+                                  0: InputLow, 1: InputHigh
+
+  @retval EFI_SUCCESS             The function completed successfully
+  @retval EFI_INVALID_PARAMETER   Invalid GpioPad
+**/
+EFI_STATUS
+GpioGetInputValue (
+  IN  UINT32       GpioPad,
+  IN  UINT32       Term,
+  OUT UINT32      *InputVal
+);
+
+/**
   Program SMIP GPIO PAD DW 0 and 1 registers for South/West/SouthWest/North/NorthWest GPIO communities.
 
   @param[in]  Gpio_Pin_Num         - GPIO Pin Number to configure.

@@ -627,6 +627,44 @@ PlatformCpuInit (
   AsmWriteMsr64 (EFI_MSR_POWER_MISC, Data);
 }
 
+/**
+  Update current boot Payload ID.
+
+**/
+VOID
+UpdatePayloadId (
+  VOID
+  )
+{
+  GEN_CFG_DATA       *GenericCfgData;
+  PLATFORM_CFG_DATA  *PlatCfgData;
+  UINT32              PayloadId;
+  UINT32              GpioLevel;
+
+  PayloadId = 0;
+  GenericCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);
+  if (GenericCfgData != NULL) {
+    if (GenericCfgData->PayloadId != AUTO_PAYLOAD_ID_SIGNATURE) {
+      PayloadId = GenericCfgData->PayloadId;
+    }
+  }
+
+  GpioLevel = 1;
+  PlatCfgData = (PLATFORM_CFG_DATA *)FindConfigDataByTag (CDATA_PLATFORM_TAG);
+  if ((PlatCfgData != NULL) && (PlatCfgData->PayloadSelGpio.Enable != 0)) {
+    // The default GPIOSet to Pull Up 20K
+    GpioGetInputValue (PlatCfgData->PayloadSelGpio.PadInfo, 0x0C, &GpioLevel);
+    if (GpioLevel == 0) {
+      PayloadId = 0;
+    } else {
+      if ((GenericCfgData != NULL) && (GenericCfgData->PayloadId == AUTO_PAYLOAD_ID_SIGNATURE)) {
+        PayloadId = UEFI_PAYLOAD_ID_SIGNATURE;
+      }
+    }
+    DEBUG ((DEBUG_INFO, "Set PayloadId to 0x%08X based on GPIO config\n", PayloadId));
+  }
+  SetPayloadId (PayloadId);
+}
 
 /**
   Board specific hook points.
@@ -644,7 +682,6 @@ BoardInit (
   EFI_STATUS          Status;
   UINT32              VarBase;
   UINT32              VarSize;
-  GEN_CFG_DATA       *GenericCfgData;
   UINT32              TcoCnt;
   LOADER_GLOBAL_DATA *LdrGlobal;
   UINT32              TsegBase;
@@ -652,6 +689,7 @@ BoardInit (
 
   switch (InitPhase) {
   case PreSiliconInit:
+    UpdatePayloadId ();
     GpioInit ();
     SetGpioPadCfgLock();
     SpiConstructor ();
@@ -677,10 +715,6 @@ BoardInit (
     if (PcdGetBool (PcdFramebufferInitEnabled)) {
       // Enable framebuffer as WC for performance
       SetFrameBufferWriteCombining ();
-    }
-    GenericCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);
-    if (GenericCfgData != NULL) {
-      SetPayloadId (GenericCfgData->PayloadId);
     }
 
     Status = PcdSet32S (PcdFuncCpuInitHook, (UINT32)(UINTN) PlatformCpuInit);

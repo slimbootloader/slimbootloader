@@ -5,20 +5,24 @@
 #
 ##
   # !BSF PAGE:{PLT}
+  # !BSF PAGES:{PLT_CAPSULE_DEV:PLT:"Capsule Update Device"}
+  # !BSF PAGE:{PLT_CAPSULE_DEV}
+
   # !BSF SUBT:{CFGHDR_TMPL:CAPSULE_INFO_CFG_DATA:0:0}
 
   # !HDR EMBED:{CAPSULE_INFO_CFG_DATA:TAG_080:START}
 
-  # !BSF NAME:{DevType}
+
+  # !BSF NAME:{Capsule Device Type}
   # !BSF TYPE:{Combo}
   # !BSF OPTION:{0:SATA, 1:SD, 2:EMMC, 3:UFS, 4:SPI, 5:USB, 6:NVME, 7:MAX}
-  # !BSF HELP:{Specify boot device}
+  # !BSF HELP:{Specify capsule device type}
   gCfgData.DevType                      |      * | 0x01 | 5
 
-  # !BSF NAME:{Boot Device instance}
+  # !BSF NAME:{Capsule Device Instance}
   # !BSF TYPE:{Combo}
   # !BSF OPTION:{0:Device 0, 1:Device 1, 2:Device 2, 3:Device 3}
-  # !BSF HELP:{Specify boot device instance when then are multple instances}
+  # !BSF HELP:{Specify capsule device instance when then are multple instances}
   # !BSF ORDER:{0000.0000}
   gCfgData.DevInstance                  |      * | 0x01 | 5
 
