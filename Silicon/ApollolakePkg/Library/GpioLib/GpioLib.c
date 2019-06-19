@@ -670,3 +670,55 @@ GpioSmipPadConfigTable (
     GpioPadConfigItem (mGpioConfigItem);
   }
 }
+
+/**
+  This procedure will get GPIO input level
+
+  @param[in]  GpioPad             GPIO pad
+  @param[in]  Term                Termination
+  @param[out] InputVal            GPIO Input value
+                                  0: InputLow, 1: InputHigh
+
+  @retval EFI_SUCCESS             The function completed successfully
+  @retval EFI_INVALID_PARAMETER   Invalid GpioPad
+**/
+EFI_STATUS
+GpioGetInputValue (
+  IN  UINT32       GpioPad,
+  IN  UINT32       Term,
+  OUT UINT32      *InputVal
+  )
+{
+  UINT8           Community;
+  UINT16          PadNumber;
+  BXT_CONF_PAD0   PadConfg0;
+  BXT_CONF_PAD1   PadConfg1;
+  UINT32          Data32;
+
+  Community = GpioPad & 0xFF;
+  if ((Community != SOUTH) && (Community != WEST) && (Community != NORTHWEST) && \
+      (Community != SOUTHWEST) && (Community != NORTH)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  PadNumber = (UINT16)(GpioPad >> 8);
+  if (PadNumber >= 0x300) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  PadNumber += GPIO_PADBAR;
+  PadConfg0.padCnf0 = GpioRead (Community, PadNumber + BXT_GPIO_PAD_CONF0_OFFSET);
+  PadConfg0.r.PMode = 0;
+  PadConfg0.r.GPIORxTxDis = 0x1;
+  GpioWrite (Community, PadNumber + BXT_GPIO_PAD_CONF0_OFFSET, PadConfg0.padCnf0);
+  PadConfg1.padCnf1 = GpioRead (Community, PadNumber + BXT_GPIO_PAD_CONF1_OFFSET);
+  PadConfg1.r.Term  = Term & 0x0F;
+  GpioWrite (Community, PadNumber + BXT_GPIO_PAD_CONF1_OFFSET, PadConfg1.padCnf1);
+  Data32 = GpioRead (Community, PadNumber + BXT_GPIO_PAD_CONF0_OFFSET);
+
+  if (InputVal != NULL) {
+    *InputVal = (Data32 & BIT1) >> 1;
+  }
+
+  return EFI_SUCCESS;
+}

@@ -35,7 +35,7 @@
   #
 
   # Global definitions in BSF
-  # !BSF PAGES:{PLT::"Platform", MEM::"Memory Settings", SIL::"Silicon Settings", GEN::"General Settings", IOCUART::"IOC Uart Settings", GIO::"Gpio Settings", OS::"OS Boot Options"}
+  # !BSF PAGES:{PLT::"Platform", MEM::"Memory Settings", SIL::"Silicon Settings", GEN::"General Settings", GIO::"Gpio Settings", OS::"OS Boot Options"}
   # !BSF BLOCK:{NAME:"APLI Platform", VER:"0.1"}
 
   # CFG HDR Format
@@ -56,6 +56,7 @@
   !include Platform/CommonBoardPkg/CfgData/CfgData_Platform.dsc
 
   # ---------------------------------------------------------------------------------------
+  # !BSF PAGES:{IOCUART:PLT:"IOC Uart Settings"}
   # !BSF PAGE:{IOCUART}
   # !BSF SUBT:{CFGHDR_TMPL:IOC_UART_CFG_DATA:0:0}
 
@@ -89,6 +90,32 @@
 
   gCfgData.Rsvd              |      * | 0x03 | 0
   # !HDR EMBED:{IOC_UART_CFG_DATA:TAG_120:END}
+
+
+  # !BSF PAGES:{PSEL:PLT:"Payload Selection GPIO"}
+  # !BSF PAGE:{PSEL}
+
+  # !BSF SUBT:{CFGHDR_TMPL:PLATFORM_CFG_DATA:0:0}
+  # !HDR EMBED:{PLATFORM_CFG_DATA:TAG_280:START}
+  # !BSF NAME:{GPIO pin for switching payload}
+  # !HDR STRUCT:{PAYLOAD_SEL_GPIO_PIN}
+  gCfgData.PayloadSelGpio         |      * | 0x04 | 0x000000c5
+    # !BSF NAME:{Pin Number}
+    # !BSF TYPE:{Combo}
+    !include CfgData_GpioPinOption.dsc
+    # !BSF CONDITION:{($PayloadSelGpio.Enable > 0)}
+    # !BSF HELP:{Specify GPIO Pin Number}
+    # !BSF FIELD:{PadInfo:24b}
+
+    # !BSF NAME:{Reserved} TYPE:{Reserved}
+    # !BSF FIELD:{Rsvd1:7b}
+
+    # !BSF NAME:{Payload Selection Pin Enable} TYPE:{Combo} OPTION:{$EN_DIS}
+    # !BSF HELP:{Enable/Disable this pin for payload selection.}
+    # !BSF ORDER:{0000.0000}
+    # !BSF FIELD:{Enable:1b}
+
+  # !HDR EMBED:{PLATFORM_CFG_DATA:TAG_280:END}
 
   # ---------------------------------------------------------------------------------------
   !include CfgData_Memory.dsc
