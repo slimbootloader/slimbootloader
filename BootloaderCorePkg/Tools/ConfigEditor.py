@@ -448,7 +448,7 @@ class Application(Frame):
 
         if Type == 'dsc':
             FileType = 'DSC or PKL'
-            FileExt  = 'dsc *.pkl'
+            FileExt  = 'pkl *Def.dsc'
         else:
             FileType = Type.upper()
             FileExt  = Type
