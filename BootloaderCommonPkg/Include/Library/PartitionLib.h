@@ -11,6 +11,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define _PARTITION_LIB_H_
 
 #include <BlockDevice.h>
+#include <Uefi/UefiGpt.h>
 
 #define  PART_INFO_SIGNATURE      SIGNATURE_32 ('P', 'A', 'R', 'T')
 
@@ -100,6 +101,21 @@ VOID
 EFIAPI
 ClosePartitions (
   IN   EFI_HANDLE             PartHandle
+  );
+
+/**
+  Get the GPT entries array from the last GPT block
+  device read.
+
+  @param  None
+
+  @retval                   Pointer to the GPT entry data
+
+**/
+EFI_PARTITION_ENTRY *
+EFIAPI
+GetGptEntryData (
+  VOID
   );
 
 #endif

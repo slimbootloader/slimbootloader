@@ -9,7 +9,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <PiPei.h>
 #include <IndustryStandard/Mbr.h>
-#include <Uefi/UefiGpt.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/Crc32Lib.h>
@@ -29,6 +28,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define UNPACK_UINT32(a) \
   (UINT32) ((((UINT8 *) a)[0] << 0) | (((UINT8 *) a)[1] << 8) | (((UINT8 *) a)[2] << 16) | (((UINT8 *) a)[3] << 24))
 
+EFI_PARTITION_ENTRY *mGptEntries = NULL;
+UINTN mGptEntriesSize = 0;
 
 CHAR8 *mPartTypeName[] = {
   "UNKNOWN",
@@ -59,6 +60,25 @@ GetPartitionTypeName (
     Type = EnumPartTypeUnknown;
   }
   return mPartTypeName[Type];
+}
+
+
+/**
+  Get the GPT entries array from the last GPT block
+  device read.
+
+  @param  None
+
+  @retval                   Pointer to the GPT entry data
+
+**/
+EFI_PARTITION_ENTRY *
+EFIAPI
+GetGptEntryData (
+  VOID
+  )
+{
+  return mGptEntries;
 }
 
 
@@ -335,13 +355,11 @@ FindGptPartitions (
   UINT64                       MaxBlkNum;
   BOOLEAN                      IsGptValid;
   BOOLEAN                      SecondaryHeader;
-  EFI_PARTITION_ENTRY         *GptEntries;
   DEVICE_BLOCK_INFO           *DevBlockInfo;
 
   DevBlockInfo = &PartBlockDev->BlockInfo;
   ParentBlockDevNo = PartBlockDev->HarewareDevice;
   SecondaryHeader = FALSE;
-  GptEntries = NULL;
 
   if (DevBlockInfo->BlockSize == 0 || DevBlockInfo->BlockNum == 0) {
     Status = EFI_INVALID_PARAMETER;
@@ -388,13 +406,22 @@ FindGptPartitions (
   ReadSize = Gpt->NumberOfPartitionEntries * Gpt->SizeOfPartitionEntry;
   ReadSize = (ReadSize % DevBlockInfo->BlockSize) == 0 ? ReadSize : DevBlockInfo->BlockSize * ((
                ReadSize / DevBlockInfo->BlockSize) + 1);
-  GptEntries = (EFI_PARTITION_ENTRY *) AllocatePool (ReadSize);
-  if (GptEntries == NULL) {
-    Status = EFI_OUT_OF_RESOURCES;
-    goto Done;
+
+  if (mGptEntriesSize < ReadSize) {
+    mGptEntriesSize = ReadSize;
+    if (mGptEntries != NULL) {
+      FreePool (mGptEntries);
+    }
+    mGptEntries = (EFI_PARTITION_ENTRY *) AllocatePool (mGptEntriesSize);
+    if (mGptEntries == NULL) {
+      Status = EFI_OUT_OF_RESOURCES;
+      goto Done;
+    }  
+  } else {
+    SetMem (mGptEntries, mGptEntriesSize, 0);
   }
 
-  IsGptValid = PartitionValidGptEntryArray (GptEntries, Gpt, ReadSize, DevBlockInfo, ParentBlockDevNo);
+  IsGptValid = PartitionValidGptEntryArray (mGptEntries, Gpt, ReadSize, DevBlockInfo, ParentBlockDevNo);
   if (!IsGptValid) {
     DEBUG ((DEBUG_ERROR, "GPT Array CalculateCrc32 Error!\n"));
     if (SecondaryHeader) {
@@ -408,7 +435,7 @@ FindGptPartitions (
       Status = EFI_CRC_ERROR;
       goto Done;
     }
-    IsGptValid = PartitionValidGptEntryArray (GptEntries, Gpt, ReadSize, DevBlockInfo, ParentBlockDevNo);
+    IsGptValid = PartitionValidGptEntryArray (mGptEntries, Gpt, ReadSize, DevBlockInfo, ParentBlockDevNo);
     if (!IsGptValid) {
       DEBUG ((DEBUG_ERROR, "Secondary GPT Array CalculateCrc32 Error!\n"));
       Status = EFI_CRC_ERROR;
@@ -425,15 +452,15 @@ FindGptPartitions (
 
   Status = EFI_NOT_FOUND;
   for (Index = 0; Index < GptPartCnt; Index++) {
-    if (CompareGuid (&GptEntries[Index].PartitionTypeGUID, &gEfiPartTypeUnusedGuid)) {
+    if (CompareGuid (&mGptEntries[Index].PartitionTypeGUID, &gEfiPartTypeUnusedGuid)) {
       continue;
     }
     if (PartBlockDev->BlockDeviceCount < PART_MAX_BLOCK_DEVICE) {
       Status  = EFI_SUCCESS;
       BlockDev                    = & (PartBlockDev->BlockDevice[PartBlockDev->BlockDeviceCount]);
-      BlockDev->StartBlock        = GptEntries[Index].StartingLBA;
-      BlockDev->LastBlock         = GptEntries[Index].EndingLBA;
-      DEBUG ((DEBUG_INFO, "Part %02d: %12s ", PartBlockDev->BlockDeviceCount, GptEntries[Index].PartitionName));
+      BlockDev->StartBlock        = mGptEntries[Index].StartingLBA;
+      BlockDev->LastBlock         = mGptEntries[Index].EndingLBA;
+      DEBUG ((DEBUG_INFO, "Part %02d: %12s ", PartBlockDev->BlockDeviceCount, mGptEntries[Index].PartitionName));
       DEBUG ((DEBUG_INFO, "0x%08x--0x%08x, LBA count: 0x%x\n", (UINT32)BlockDev->StartBlock, \
               (UINT32)BlockDev->LastBlock, (UINT32) (BlockDev->LastBlock - BlockDev->StartBlock + 1)));
 
@@ -442,10 +469,6 @@ FindGptPartitions (
   }
 
 Done:
-  if (GptEntries != NULL) {
-    FreePool (GptEntries);
-  }
-
   if (!EFI_ERROR (Status)) {
     PartBlockDev->PartitionType = EnumPartTypeGpt;
   }
