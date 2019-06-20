@@ -134,6 +134,7 @@ class BaseBoard(object):
 		self._CFG_PRIVATE_KEY       = os.path.join(key_dir, 'TestSigningPrivateKey.pem')
 		self._FWU_PRIVATE_KEY       = os.path.join(key_dir, 'TestSigningPrivateKey.pem')
 		self._IAS_PRIVATE_KEY       = os.path.join(key_dir, 'TestSigningPrivateKey.pem')
+		self.LOGO_FILE              = 'Platform/CommonBoardPkg/Logo/Logo.bmp'
 
 		self.VERINFO_IMAGE_ID       = 'SB_???? '
 		self.VERINFO_PROJ_ID        = 1
