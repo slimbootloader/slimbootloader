@@ -120,7 +120,10 @@ UpdateFspConfig (
   CopyMem (&Fspmcfg->DqsMapCpu2DramCh0, MemCfgData->DqsMapCpu2DramCh0, sizeof(MemCfgData->DqsMapCpu2DramCh0));
   CopyMem (&Fspmcfg->DqsMapCpu2DramCh1, MemCfgData->DqsMapCpu2DramCh1, sizeof(MemCfgData->DqsMapCpu2DramCh1));
   Fspmcfg->DqPinsInterleaved      = MemCfgData->DqPinsInterleaved;
-  Fspmcfg->TsegSize               = MemCfgData->TsegSize;
+  //
+  // Tseg 4MB is enough for both debug/release build with SBL
+  //
+  Fspmcfg->TsegSize               = 0x00400000;
   Fspmcfg->MmioSize               = MemCfgData->MmioSize;
   Fspmcfg->RMT                    = MemCfgData->RMT;
   FspmcfgTest->BdatEnable         = MemCfgData->BdatEnable;

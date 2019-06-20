@@ -77,11 +77,6 @@
   # !BSF HELP:{Indicates DqPinsInterleaved setting: board-dependent}
   gCfgData.DqPinsInterleaved                |      * | 0x01 | 0x1
 
-  # !BSF NAME:{Tseg Size} TYPE:{Combo}
-  # !BSF OPTION:{0x0400000:4MB, 0x01000000:16MB}
-  # !BSF HELP:{Size of SMRAM memory reserved. 0x400000 for Release build and 0x1000000 for Debug build}
-  gCfgData.TsegSize                         |      * | 0x04 | 0x00800000
-
   # !BSF NAME:{MMIO Size}
   # !BSF TYPE:{EditNum, HEX, (0,0xC00)}
   # !BSF HELP:{Size of MMIO space reserved for devices. non-Zero=size in MB }
