@@ -663,7 +663,6 @@ DEBUG_CODE_END();
     CopyMem (PltDeviceTable->Device, mPlatformDevices, sizeof (mPlatformDevices));
     SetDeviceTable (PltDeviceTable);
     SpiControllerInitialize ();
-    SetBootMode (IsFirmwareUpdate() ? BOOT_ON_FLASH_UPDATE : GetPlatformPowerState());
     break;
   case PostConfigInit:
     PlatformIdInitialize ();
@@ -678,6 +677,7 @@ DEBUG_CODE_END();
   case PreTempRamExit:
     break;
   case PostTempRamExit:
+    SetBootMode (IsFirmwareUpdate() ? BOOT_ON_FLASH_UPDATE : GetPlatformPowerState());
     if (FeaturePcdGet (PcdMeasuredBootEnabled)) {
       TpmInitialize();
     }
