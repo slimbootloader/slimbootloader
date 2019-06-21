@@ -654,7 +654,7 @@ UpdatePayloadId (
   if ((PlatCfgData != NULL) && (PlatCfgData->PayloadSelGpio.Enable != 0)) {
     // The default GPIOSet to Pull Up 20K
     GpioGetInputValue (PlatCfgData->PayloadSelGpio.PadInfo, 0x0C, &GpioLevel);
-    if (GpioLevel == 0) {
+    if (GpioLevel != 0) {
       PayloadId = 0;
     } else {
       if ((GenericCfgData != NULL) && (GenericCfgData->PayloadId == AUTO_PAYLOAD_ID_SIGNATURE)) {
