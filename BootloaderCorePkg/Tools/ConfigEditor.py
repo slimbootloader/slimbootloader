@@ -167,6 +167,7 @@ class Application(Frame):
         self.Debug = True
         self.LastDir = '.'
         self.PageId = ''
+        self.DscFilePath = ''
         self.PageList = {}
         self.ConfList = {}
         self.CfgDataObj = None
@@ -178,7 +179,8 @@ class Application(Frame):
             'Save Config Data to Binary', 'Load Config Data from Binary',
             'Load Config Changes from Delta File',
             'Save Config Changes to Delta File',
-            'Save Full Config Data to Delta File'
+            'Save Full Config Data to Delta File',
+            'Export Build Data'
         ]
 
         Root.geometry("1200x800")
@@ -249,6 +251,9 @@ class Application(Frame):
                              state='disabled')
         FileMenu.add_command(label=self.MenuString[4],
                              command=self.SaveFullToDelta,
+                             state='disabled')
+        FileMenu.add_command(label=self.MenuString[5],
+                             command=self.ExportBuildData,
                              state='disabled')
         FileMenu.add_command(label="About", command=self.About)
         Menubar.add_cascade(label="File", menu=FileMenu)
@@ -529,7 +534,7 @@ class Application(Frame):
         Path = self.GetOpenFileName('dsc')
         if not Path:
             return
-
+        self.DscFilePath = os.path.dirname(Path)
         self.LoadDscFile(Path)
 
     def GetSaveFileName (self, Extension):
@@ -559,6 +564,9 @@ class Application(Frame):
     def SaveFullToDelta(self):
         self.SaveDeltaFile(True)
 
+    def ExportBuildData(self):
+        self.GeneratePyFile()
+
     def SaveToBin(self):
         Path = self.GetSaveFileName (".bin")
         if not Path:
@@ -568,6 +576,24 @@ class Application(Frame):
         with open(Path, 'wb') as Fd:
             Bins = self.CfgDataObj.GenerateBinaryArray()
             Fd.write(Bins)
+
+    def GeneratePyFile(self):
+        Path = self.DscFilePath
+        if not Path:
+            return
+        PlatformFileName = Path + '/BuildData.py'
+        #print('Generating Python file at... %s' % PlatformFileName)
+        TagName = ''
+        with open(PlatformFileName, 'w') as Fd:
+            for Item in self.CfgDataObj._CfgItemList:
+                #print('%s' % Item)
+                if Item['embed'].endswith(':START'):
+                    TagName = Item['embed'].split(':')[0]
+                FullName = '%s.%s' % (TagName, Item['page'])
+                #print('fullname is %s' % FullName)
+                #print('Item[name] is %s' % Item['name'])
+                if '.BLD' == FullName and Item['name'] != '':
+                    Fd.write('self.' + Item['name'] + ' = ' + Item['value'] + '\n')
 
     def GenerateDeltaFile(self, DeltaFile, Full=False):
         NewData = self.CfgDataObj.GenerateBinaryArray()
