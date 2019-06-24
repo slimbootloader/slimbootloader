@@ -27,6 +27,7 @@ CONST SOC_REV_INFO mBxtSocRevInfo[] = { // new      old
   { 0xa,  0,  "APL",   "B0" },        // APL-B0   BXTP-B1
   { 0xb,  0,  "APL",   "B1" },        // APL-B1   BXTP-B2
   { 0xb,  1,  "APL",   "D0" },        // APL-D0  (BXTP-B2)
+  { 0xd,  1,  "APL",   "F1" },        // APL-F1
   { 0x0,  0,  "INVD",  "XX" }         // Invalid
 };
 
