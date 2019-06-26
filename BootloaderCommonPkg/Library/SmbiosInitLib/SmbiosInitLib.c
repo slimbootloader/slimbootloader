@@ -244,7 +244,10 @@ GetSmbiosString (
 
   for (Index = 0; Index < PcdGet16 (PcdSmbiosStringsCnt); ++Index) {
     if (Type == SmbiosStrings[Index].Type && StringId == SmbiosStrings[Index].Idx) {
-      return SmbiosStrings[Index].String;
+      if (SmbiosStrings[Index].String != NULL && AsciiStrLen (SmbiosStrings[Index].String) != 0) {
+        return SmbiosStrings[Index].String;
+      }
+      break;
     }
   }
 
