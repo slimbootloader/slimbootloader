@@ -5,8 +5,7 @@
 #
 ##
 
-  # !BSF PAGES:{GPU:SIL:"GPU"}
-  # !BSF PAGES:{GPU_CFG:GPU:"GPU Config"}
+  # !BSF PAGES:{GPU_CFG:SIL:"Graphic & Display"}
 
   # !BSF PAGE:{GPU_CFG}
 
@@ -26,8 +25,9 @@
   gCfgData.ApertureSize                |    * | 0x01 | 0x01
 
   # !BSF NAME:{Internal Graphics} TYPE:{Combo} OPTION:{$EN_DIS}
+  # !BSF OPTION:{1:Enable, 0:Disable}
   # !BSF HELP:{Enable/disable internal graphics.}
-  gCfgData.InternalGfx                 |    * | 0x01 | 0x02
+  gCfgData.InternalGfx                 |    * | 0x01 | 0x01
 
   # !BSF NAME:{Selection of the primary display device} TYPE:{Combo}
   # !BSF OPTION:{0:iGFX, 1:PEG, 2:PCIe Graphics on PCH, 3:AUTO, 4:Switchable Graphics}
