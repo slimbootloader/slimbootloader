@@ -1,10 +1,13 @@
-## @file
+#/** @file
+#
 #  Platform Configuration Delta File.
 #
-#  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
-##
+#
+#**/
+
 
 #
 # Delta configuration values for platform ID 0x000F
@@ -13,12 +16,12 @@
 PLATFORMID_CFG_DATA.PlatformId           | 0x000F
 
 
-IOC_UART_CFG_DATA.DeviceIndex           | 1
-IOC_UART_CFG_DATA.BaudRate              | 4
-IOC_UART_CFG_DATA.Retries               | 2
-IOC_UART_CFG_DATA.TimeoutInitial        | 10
-IOC_UART_CFG_DATA.TimeoutXmit           | 10
 PLAT_NAME_CFG_DATA.PlatformName          | 'GpMrb'
+IOC_UART_CFG_DATA.DeviceIndex            | 1
+IOC_UART_CFG_DATA.BaudRate               | 4
+IOC_UART_CFG_DATA.Retries                | 2
+IOC_UART_CFG_DATA.TimeoutInitial         | 10
+IOC_UART_CFG_DATA.TimeoutXmit            | 10
 MEMORY_CFG_DATA.Profile                  | 0x9
 MEMORY_CFG_DATA.MemorySizeLimit          | 0x0
 MEMORY_CFG_DATA.Ch0_DramDensity          | 0x2
@@ -30,16 +33,6 @@ MEMORY_CFG_DATA.Ch0_Bit_swizzling        | { 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D,
 MEMORY_CFG_DATA.Ch1_Bit_swizzling        | { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F }
 MEMORY_CFG_DATA.Ch2_Bit_swizzling        | { 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17 }
 MEMORY_CFG_DATA.Ch3_Bit_swizzling        | { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F }
-PCIE_RP_CFG_DATA.PcieRpFeatures1.En            | 0
-PCIE_RP_CFG_DATA.PcieRpFeatures3.En            | 1
-PCIE_RP_CFG_DATA.PcieRpFeatures3.ClkReqSup     | 0
-PCIE_RP_CFG_DATA.PcieRpFeatures5.ClkReqSup     | 0
-PCIE_RP_CFG_DATA.PcieRpFeatures0.ClkReqNum     | 2
-PCIE_RP_CFG_DATA.PcieRpFeatures1.ClkReqNum     | 3
-PCIE_RP_CFG_DATA.PcieRpFeatures2.ClkReqNum     | 0
-PCIE_RP_CFG_DATA.PcieRpFeatures3.ClkReqNum     | 0x7
-PCIE_RP_CFG_DATA.PcieRpFeatures4.ClkReqNum     | 1
-PCIE_RP_CFG_DATA.PcieRpFeatures5.ClkReqNum     | 0x7
 GPIO_CFG_DATA.GPIO_0_Half1.Direction     | 0x1
 GPIO_CFG_DATA.GPIO_0_Half1.AltFunc       | 0x0
 GPIO_CFG_DATA.GPIO_0_Half1.InterruptType | 0x0
@@ -550,3 +543,23 @@ GPIO_CFG_DATA.LPC_CLKOUT1_Half1.InterruptType | 0x0
 GPIO_CFG_DATA.LPC_CLKOUT1_Half1.PuPdEnable | 0x1
 GPIO_CFG_DATA.LPC_CLKOUT1_Half1.IoState  | 0x7
 GPIO_CFG_DATA.LPC_CLKOUT1_Half1.HostSw   | 0x1
+PCIE_RP_CFG_DATA.PcieRpFeatures0.En      | 0x0
+PCIE_RP_CFG_DATA.PcieRpFeatures1.En      | 0x0
+PCIE_RP_CFG_DATA.PcieRpFeatures2.ClkReqNum | 0x0
+PCIE_RP_CFG_DATA.PcieRpFeatures3.En      | 0x1
+PCIE_RP_CFG_DATA.PcieRpFeatures4.ClkReqNum | 0x2
+PCIE_RP_CFG_DATA.PcieRpFeatures5.En      | 0x1
+PCIE_RP_CFG_DATA.PcieRpPower0.Skip       | 0x1
+PCIE_RP_CFG_DATA.PcieRpReset0.Skip       | 0x1
+PCIE_RP_CFG_DATA.PcieRpPower1.Skip       | 0x1
+PCIE_RP_CFG_DATA.PcieRpReset1.Skip       | 0x1
+PCIE_RP_CFG_DATA.PcieRpPower2.Community  | 0xC5
+PCIE_RP_CFG_DATA.PcieRpPower3.Community  | 0xC5
+PCIE_RP_CFG_DATA.PcieRpPower4.Community  | 0xC5
+PCIE_RP_CFG_DATA.PcieRpReset4.Community  | 0xC5
+PCIE_RP_CFG_DATA.PcieRpPower5.Skip       | 0x0
+PCIE_RP_CFG_DATA.PcieRpPower5.Community  | 0xC5
+PCIE_RP_CFG_DATA.PcieRpPower5.PadNum     | 0xD8
+PCIE_RP_CFG_DATA.PcieRpReset5.Skip       | 0x0
+PCIE_RP_CFG_DATA.PcieRpReset5.Community  | 0xC5
+PCIE_RP_CFG_DATA.PcieRpReset5.PadNum     | 0xD0
