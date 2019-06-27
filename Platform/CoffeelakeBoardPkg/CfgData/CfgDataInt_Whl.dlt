@@ -17,14 +17,21 @@ PLATFORMID_CFG_DATA.PlatformId           | 0x0014
 
 PLAT_NAME_CFG_DATA.PlatformName          | 'WHL'
 
-PCIE_RP_CFG_DATA.RpFeatures16.RpPresent  | 0x0
-PCIE_RP_CFG_DATA.RpFeatures17.RpPresent  | 0x0
-PCIE_RP_CFG_DATA.RpFeatures18.RpPresent  | 0x0
-PCIE_RP_CFG_DATA.RpFeatures19.RpPresent  | 0x0
-PCIE_RP_CFG_DATA.RpFeatures20.RpPresent  | 0x0
-PCIE_RP_CFG_DATA.RpFeatures21.RpPresent  | 0x0
-PCIE_RP_CFG_DATA.RpFeatures22.RpPresent  | 0x0
-PCIE_RP_CFG_DATA.RpFeatures23.RpPresent  | 0x0
+PCIE_CFG_DATA.RpFeatures16.RpPresent  | 0x0
+PCIE_CFG_DATA.RpFeatures17.RpPresent  | 0x0
+PCIE_CFG_DATA.RpFeatures18.RpPresent  | 0x0
+PCIE_CFG_DATA.RpFeatures19.RpPresent  | 0x0
+PCIE_CFG_DATA.RpFeatures20.RpPresent  | 0x0
+PCIE_CFG_DATA.RpFeatures21.RpPresent  | 0x0
+PCIE_CFG_DATA.RpFeatures22.RpPresent  | 0x0
+PCIE_CFG_DATA.RpFeatures23.RpPresent  | 0x0
+
+PCIE_CFG_DATA.ClkFeatures0.ClkUsage   | 0x01
+PCIE_CFG_DATA.ClkFeatures1.ClkUsage   | 0x08
+PCIE_CFG_DATA.ClkFeatures2.ClkUsage   | 0x70
+PCIE_CFG_DATA.ClkFeatures3.ClkUsage   | 0x0D
+PCIE_CFG_DATA.ClkFeatures4.ClkUsage   | 0x04
+PCIE_CFG_DATA.ClkFeatures5.ClkUsage   | 0x0E
 
 MEMORY_CFG_DATA.SpdAddressTable          | {0xA0, 0xA2, 0xA4, 0xA6}
 

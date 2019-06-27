@@ -1112,7 +1112,7 @@ UpdateFspConfig (
   UINT32                    *HdaVerbTablePtr;
   UINT8                     HdaVerbTableNum;
   UINT16                    PlatformId;
-  PCIE_RP_CFG_DATA          *RpCfgData;
+  PCIE_CFG_DATA             *PcieCfgData;
   GPU_CFG_DATA              *GpuCfgData;
   UINT8                     Data8;
   SILICON_CFG_DATA          *SiliconCfgData;
@@ -1388,8 +1388,8 @@ UpdateFspConfig (
     FspsUpd->FspsConfig.PegPhysicalSlotNumber[2]              = 3;
   }
 
-  RpCfgData = (PCIE_RP_CFG_DATA *) FindConfigDataByTag (CDATA_PCIE_RP_TAG);
-  if (RpCfgData == NULL) {
+  PcieCfgData = (PCIE_CFG_DATA *) FindConfigDataByTag (CDATA_PCIE_TAG);
+  if (PcieCfgData == NULL) {
     DEBUG ((DEBUG_ERROR, "Missing PCIE RP Cfg Data!\n"));
   } else {
     Length = GetPchMaxPciePortNum ();
@@ -1397,38 +1397,44 @@ UpdateFspConfig (
     FspsUpd->FspsConfig.PcieRpDpcMask                         = 0;
     FspsUpd->FspsConfig.PcieRpDpcExtensionsMask               = 0;
     for (Index = 0; Index < Length; Index++) {
-      FspsUpd->FspsConfig.PcieRpAspm[Index]                   = (UINT8) RpCfgData->RpFeatures0[Index].Aspm;
-      FspsUpd->FspsConfig.PcieRpPmSci[Index]                  = (UINT8) RpCfgData->RpFeatures0[Index].PmSciEn;
-      FspsUpd->FspsConfig.PcieRpAcsEnabled[Index]             = (UINT8) RpCfgData->RpFeatures0[Index].AcsEn;
+      FspsUpd->FspsConfig.PcieRpAspm[Index]                   = (UINT8) PcieCfgData->RpFeatures0[Index].Aspm;
+      FspsUpd->FspsConfig.PcieRpPmSci[Index]                  = (UINT8) PcieCfgData->RpFeatures0[Index].PmSciEn;
+      FspsUpd->FspsConfig.PcieRpAcsEnabled[Index]             = (UINT8) PcieCfgData->RpFeatures0[Index].AcsEn;
       FspsUpd->FspsConfig.PcieRpPtmMask                       |= (BIT0 << Index);
       FspsUpd->FspsConfig.PcieRpDpcMask                       |= (BIT0 << Index);
       FspsUpd->FspsConfig.PcieRpDpcExtensionsMask             |= (BIT0 << Index);
-      FspsUpd->FspsConfig.PcieRpMaxPayload[Index]             = (UINT8) RpCfgData->RpFeatures0[Index].MaxPld;
-      FspsUpd->FspsConfig.PcieRpSlotImplemented[Index]        = (UINT8) RpCfgData->RpFeatures0[Index].SlotImplemented;
+      FspsUpd->FspsConfig.PcieRpMaxPayload[Index]             = (UINT8) PcieCfgData->RpFeatures0[Index].MaxPld;
+      FspsUpd->FspsConfig.PcieRpSlotImplemented[Index]        = (UINT8) PcieCfgData->RpFeatures0[Index].SlotImplemented;
       FspsUpd->FspsConfig.PcieRpPhysicalSlotNumber[Index]     = (UINT8) Index;
-      FspsUpd->FspsConfig.PcieRpL1Substates[Index]            = (UINT8) RpCfgData->RpFeatures0[Index].L1SubStates;
-      FspsUpd->FspsConfig.PcieRpEnableCpm[Index]              = (UINT8) RpCfgData->RpFeatures0[Index].CpmEn;
-      FspsUpd->FspsConfig.PcieRpGen3EqPh3Method[Index]        = (UINT8) RpCfgData->RpFeatures0[Index].Gen3EqPh3Method;
+      FspsUpd->FspsConfig.PcieRpL1Substates[Index]            = (UINT8) PcieCfgData->RpFeatures0[Index].L1SubStates;
+      FspsUpd->FspsConfig.PcieRpEnableCpm[Index]              = (UINT8) PcieCfgData->RpFeatures0[Index].CpmEn;
+      FspsUpd->FspsConfig.PcieRpGen3EqPh3Method[Index]        = (UINT8) PcieCfgData->RpFeatures0[Index].Gen3EqPh3Method;
 
-      FspsUpd->FspsConfig.PcieRpLtrEnable[Index]                = (UINT8)  RpCfgData->RpFeatures0[Index].LtrEn;
-      FspsUpd->FspsTestConfig.PcieRpLtrMaxSnoopLatency[Index]   = (UINT16) RpCfgData->RpFeatures0[Index].MaxSnoopLat;
-      FspsUpd->FspsTestConfig.PcieRpLtrMaxNoSnoopLatency[Index] = (UINT16) RpCfgData->RpFeatures0[Index].MaxNoSnoopLat;
+      FspsUpd->FspsConfig.PcieRpLtrEnable[Index]                = (UINT8)  PcieCfgData->RpFeatures0[Index].LtrEn;
+      FspsUpd->FspsTestConfig.PcieRpLtrMaxSnoopLatency[Index]   = (UINT16) PcieCfgData->RpFeatures0[Index].MaxSnoopLat;
+      FspsUpd->FspsTestConfig.PcieRpLtrMaxNoSnoopLatency[Index] = (UINT16) PcieCfgData->RpFeatures0[Index].MaxNoSnoopLat;
 
-      FspsUpd->FspsTestConfig.PcieRpSnoopLatencyOverrideMode[Index]           = (UINT8) RpCfgData->RpFeatures0[Index].SnoopLatMode;
-      FspsUpd->FspsTestConfig.PcieRpSnoopLatencyOverrideMultiplier[Index]     = (UINT8) RpCfgData->RpFeatures0[Index].SnoopLatMul;
-      FspsUpd->FspsTestConfig.PcieRpSnoopLatencyOverrideValue[Index]          = (UINT16)RpCfgData->RpFeatures0[Index].SnoopLatVal;
-      FspsUpd->FspsTestConfig.PcieRpNonSnoopLatencyOverrideMode[Index]        = (UINT8) RpCfgData->RpFeatures0[Index].NoSnoopLatMode;
-      FspsUpd->FspsTestConfig.PcieRpNonSnoopLatencyOverrideMultiplier[Index]  = (UINT8) RpCfgData->RpFeatures0[Index].NoSnoopLatMul;
-      FspsUpd->FspsTestConfig.PcieRpNonSnoopLatencyOverrideValue[Index]       = (UINT16)RpCfgData->RpFeatures0[Index].NoSnoopLatVal;
+      FspsUpd->FspsTestConfig.PcieRpSnoopLatencyOverrideMode[Index]           = (UINT8) PcieCfgData->RpFeatures0[Index].SnoopLatMode;
+      FspsUpd->FspsTestConfig.PcieRpSnoopLatencyOverrideMultiplier[Index]     = (UINT8) PcieCfgData->RpFeatures0[Index].SnoopLatMul;
+      FspsUpd->FspsTestConfig.PcieRpSnoopLatencyOverrideValue[Index]          = (UINT16)PcieCfgData->RpFeatures0[Index].SnoopLatVal;
+      FspsUpd->FspsTestConfig.PcieRpNonSnoopLatencyOverrideMode[Index]        = (UINT8) PcieCfgData->RpFeatures0[Index].NoSnoopLatMode;
+      FspsUpd->FspsTestConfig.PcieRpNonSnoopLatencyOverrideMultiplier[Index]  = (UINT8) PcieCfgData->RpFeatures0[Index].NoSnoopLatMul;
+      FspsUpd->FspsTestConfig.PcieRpNonSnoopLatencyOverrideValue[Index]       = (UINT16)PcieCfgData->RpFeatures0[Index].NoSnoopLatVal;
 
-      FspsUpd->FspsTestConfig.PcieRpUptp[Index]               = (UINT8) RpCfgData->RpFeatures0[Index].Uptp;
-      FspsUpd->FspsTestConfig.PcieRpDptp[Index]               = (UINT8) RpCfgData->RpFeatures0[Index].Dptp;
+      FspsUpd->FspsTestConfig.PcieRpUptp[Index]               = (UINT8) PcieCfgData->RpFeatures0[Index].Uptp;
+      FspsUpd->FspsTestConfig.PcieRpDptp[Index]               = (UINT8) PcieCfgData->RpFeatures0[Index].Dptp;
 
-      FspsUpd->FspsConfig.PcieEqPh3LaneParamCm[Index]         = (UINT8) RpCfgData->RpFeatures0[Index].EqPh3Cm;
-      FspsUpd->FspsConfig.PcieEqPh3LaneParamCp[Index]         = (UINT8) RpCfgData->RpFeatures0[Index].EqPh3Cp;
+      FspsUpd->FspsConfig.PcieEqPh3LaneParamCm[Index]         = (UINT8) PcieCfgData->RpFeatures0[Index].EqPh3Cm;
+      FspsUpd->FspsConfig.PcieEqPh3LaneParamCp[Index]         = (UINT8) PcieCfgData->RpFeatures0[Index].EqPh3Cp;
 
-      FspsUpd->FspsConfig.PcieRpClkReqDetect[Index]           = (UINT8) RpCfgData->RpFeatures0[Index].ClkReqDetect;
-      FspsUpd->FspsConfig.PcieRpAdvancedErrorReporting[Index] = (UINT8) RpCfgData->RpFeatures0[Index].AdvErrReport;
+      FspsUpd->FspsConfig.PcieRpClkReqDetect[Index]           = (UINT8) PcieCfgData->RpFeatures0[Index].ClkReqDetect;
+      FspsUpd->FspsConfig.PcieRpAdvancedErrorReporting[Index] = (UINT8) PcieCfgData->RpFeatures0[Index].AdvErrReport;
+    }
+
+    Length = GetPchMaxPcieClockNum ();
+    for (Index = 0; Index < Length; Index++) {
+      FspsUpd->FspsConfig.PcieClkSrcClkReq[Index]             = (UINT8)PcieCfgData->ClkFeatures0[Index].ClkReq;
+      FspsUpd->FspsConfig.PcieClkSrcUsage[Index]              = (UINT8)PcieCfgData->ClkFeatures0[Index].ClkUsage;
     }
   }
 
@@ -1442,55 +1448,6 @@ UpdateFspConfig (
   FspsUpd->FspsConfig.PcieSwEqCoeffListCp[3]                = 8;
   FspsUpd->FspsConfig.PcieSwEqCoeffListCm[4]                = 12;
   FspsUpd->FspsConfig.PcieSwEqCoeffListCp[4]                = 2;
-
-  Length = GetPchMaxPcieClockNum ();
-  for (Index = 0; Index < Length; Index++) {
-    FspsUpd->FspsConfig.PcieClkSrcUsage[Index]              = 0x80;
-    FspsUpd->FspsConfig.PcieClkSrcClkReq[Index]             = (UINT8) Index;
-  }
-
-  if (PlatformId == PLATFORM_ID_WHL) {
-    FspsUpd->FspsConfig.PcieClkSrcUsage[0]                  = 1;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[1]                  = 8;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[2]                  = 0x70;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[3]                  = 13;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[4]                  = 4;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[5]                  = 14;
-  } else if (PlatformId == PLATFORM_ID_CFL_S) {
-    FspsUpd->FspsConfig.PcieClkSrcUsage[0]                  = 0xFF;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[1]                  = 2;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[2]                  = 0x70;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[3]                  = 0xFF;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[4]                  = 4;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[5]                  = 0xFF;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[6]                  = 8;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[7]                  = 16;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[8]                  = 0x40;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[9]                  = 0xFF;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[10]                 = 20;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[11]                 = 0xFF;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[12]                 = 0xFF;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[13]                 = 0xFF;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[14]                 = 0xFF;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[15]                 = 0xFF;
-  } else if (PlatformId == PLATFORM_ID_CFL_H) {
-    FspsUpd->FspsConfig.PcieClkSrcUsage[0]                  = 0xFF;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[1]                  = 0xFF;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[2]                  = 0xFF;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[3]                  = 6;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[4]                  = 0x14;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[5]                  = 7;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[6]                  = 5;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[7]                  = 16;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[8]                  = 0x40;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[9]                  = 0x70;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[10]                 = 0xFF;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[11]                 = 0xFF;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[12]                 = 8;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[13]                 = 0xFF;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[14]                 = 0xFF;
-    FspsUpd->FspsConfig.PcieClkSrcUsage[15]                 = 0xFF;
-  }
 
   if (PlatformId == PLATFORM_ID_CFL_S) {
     FspsUpd->FspsConfig.VrPowerDeliveryDesign = 0x0D;

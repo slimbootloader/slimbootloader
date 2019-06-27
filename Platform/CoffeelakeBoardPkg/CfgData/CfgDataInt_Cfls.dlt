@@ -15,6 +15,23 @@ PLAT_NAME_CFG_DATA.PlatformName           | 'CFL_S'
 
 OS_CFG_DATA.OsBootOptionCount             | 2
 
+PCIE_CFG_DATA.ClkFeatures0.ClkUsage       | 0xFF
+PCIE_CFG_DATA.ClkFeatures1.ClkUsage       | 0x02
+PCIE_CFG_DATA.ClkFeatures2.ClkUsage       | 0x70
+PCIE_CFG_DATA.ClkFeatures3.ClkUsage       | 0xFF
+PCIE_CFG_DATA.ClkFeatures4.ClkUsage       | 0x04
+PCIE_CFG_DATA.ClkFeatures5.ClkUsage       | 0xFF
+PCIE_CFG_DATA.ClkFeatures6.ClkUsage       | 0x08
+PCIE_CFG_DATA.ClkFeatures7.ClkUsage       | 0x10
+PCIE_CFG_DATA.ClkFeatures8.ClkUsage       | 0x40
+PCIE_CFG_DATA.ClkFeatures9.ClkUsage       | 0xFF
+PCIE_CFG_DATA.ClkFeatures10.ClkUsage      | 0x14
+PCIE_CFG_DATA.ClkFeatures11.ClkUsage      | 0xFF
+PCIE_CFG_DATA.ClkFeatures12.ClkUsage      | 0xFF
+PCIE_CFG_DATA.ClkFeatures13.ClkUsage      | 0xFF
+PCIE_CFG_DATA.ClkFeatures14.ClkUsage      | 0xFF
+PCIE_CFG_DATA.ClkFeatures15.ClkUsage      | 0xFF
+
 MEMORY_CFG_DATA.SpdAddressTable           | {0xA0, 0xA2, 0xA4, 0xA6}
 MEMORY_CFG_DATA.FClkFrequency             | 0x01
 MEMORY_CFG_DATA.UserBd                    | 0x01
