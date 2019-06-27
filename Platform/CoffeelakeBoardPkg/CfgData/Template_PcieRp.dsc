@@ -6,12 +6,12 @@
 ##
 
   #
-  # ================================= PCIERP_TMPL =========================================
+  # ================================= PCIE_TMPL =========================================
   #
     =======================================================================================
 
   # !BSF DEFT:{PCIERP_PERPORT_TMPL:START}
-    # !BSF PAGES:{PLT_PCIE_RP_$(1)_FEAT:PLT_PCIE_RP_FEAT:"RP $(1) Features"}
+    # !BSF PAGES:{PLT_PCIE_RP_$(1)_FEAT:PLT_PCIE_RP_FEAT:"RP $(1) Config"}
     # !BSF PAGE:{PLT_PCIE_RP_$(1)_FEAT}
 
     # !HDR STRUCT:{RP_FEATURES[]}
@@ -167,5 +167,27 @@
       # !BSF NAME:{RP Present} TYPE:{Reserved}
       # !BSF FIELD:{RpPresent:1b}
 
+  # !BSF DEFT:{PCIERP_PERPORT_TMPL:END}
 
-  # !BSF DEFT:{PCIERP_PERPORT_TMPL:START}
+  # !BSF DEFT:{PCIE_PER_CLK_TMPL:START}
+    # !BSF PAGES:{PLT_PCIE_CLK_FEAT_$(1):PLT_PCIE_CLK_FEAT:"Clock $(1) Config"}
+    # !BSF PAGE:{PLT_PCIE_CLK_FEAT_$(1)}
+    # !BSF NAME:{PCIE Clock$(1) Features}
+    # !HDR STRUCT:{CLOCK_FEATURES[]}
+    gCfgData.ClkFeatures$(1)                   |     * | 0x04 | $(2)
+
+      # !BSF NAME:{PCIE Clock Request Number}
+      # !BSF TYPE:{EditNum, HEX, (0x00, 0xFF)}
+      # !BSF HELP:{Configure PCIE Clock Request Number. 0xFF:Disable CLKREQ, Default 1:1 mapping with Clock numbers}
+      # !BSF FIELD:{ClkReq:8b}
+
+      # !BSF NAME:{PCIE Clock Usage}
+      # !BSF TYPE:{EditNum, HEX, (0x00, 0xFF)}
+      # !BSF HELP:{Configure PCIE Clock Usage, 0x0-0x17:PCIE_PCH, 0x40-0x43:PCIE_PEG, 0x70:LAN_CLOCK, 0x80:FREE_RUNNING, 0xFF:NOT_USED}
+      # !BSF FIELD:{ClkUsage:8b}
+
+      # !BSF NAME:{Reserved} TYPE:{Reserved}
+      # !BSF HELP:{Reserved}
+      # !BSF FIELD:{Reserved:16b}
+
+  # !BSF DEFT:{PCIE_PER_CLK_TMPL:END}
