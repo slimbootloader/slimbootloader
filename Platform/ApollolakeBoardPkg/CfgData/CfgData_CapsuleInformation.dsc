@@ -24,7 +24,7 @@
   # !BSF OPTION:{0:Device 0, 1:Device 1, 2:Device 2, 3:Device 3}
   # !BSF HELP:{Specify capsule device instance when then are multple instances}
   # !BSF ORDER:{0000.0000}
-  gCfgData.DevInstance                  |      * | 0x01 | 5
+  gCfgData.DevInstance                  |      * | 0x01 | 0
 
   gCfgData.Reserved                     |      * | 0x03 | 0
 
