@@ -124,7 +124,7 @@
 
       # !BSF NAME:{GpioAltFunc}
       # !BSF TYPE:{Combo}
-      # !BSF OPTION:{0:M0, 1:M1, 2:M2, 3:M3}
+      # !BSF OPTION:{0:M0, 1:M1, 2:M2, 3:M3, 4:M4, 5:M5}
       # !BSF HELP:{GPIO GpioAltFunc}
       # !BSF CONDITION:{$(COND_GPIO_SKIP)}
       # !BSF FIELD:{AltFunc:3b}
