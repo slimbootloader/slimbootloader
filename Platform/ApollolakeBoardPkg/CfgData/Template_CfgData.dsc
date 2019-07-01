@@ -54,27 +54,14 @@
 
     # !BSF NAME:{GPIO $(1) Data}
     # !HDR STRUCT:{PID_GPIO_PIN_DATA[]}
-    gCfgData.$(1)                       |      * | 0x04 | $(2)
+    gCfgData.$(1)                       |      * | 0x04 | 0x0000F0C4
 
-      # !BSF NAME:{Pad Community}
+      # !BSF NAME:{Pid Pad Info}
       # !BSF TYPE:{Combo}
-      # !BSF OPTION:{0xC2: SOUTH, 0xC7: WEST, 0xC4: NORTHWEST, 0xC0: SOUTHWEST, 0xC5: NORTH}
-      # !BSF HELP:{Specify Pad Community}
+      # !BSF OPTION:{0x0F0C4:GPIO_PMIC_STDBY, 0x0D0C4:GPIO_213, 0x0C8C4:GPIO_PMIC_RESET_B, 0x0C0C4:GPIO_PMIC_PWRGOOD}
       # !BSF CONDITION:{$(COND_GPIO_PID_ENABLE)}
-      # !BSF FIELD:{Community:8b}
-
-      # !BSF NAME:{Pad Number}
-      # !BSF TYPE:{EditNum, INT, (0,4095)}
-      # !BSF HELP:{Specify Pad Number}
-      # !BSF CONDITION:{$(COND_GPIO_PID_ENABLE)}
-      # !BSF FIELD:{PadNum:12b}
-
-      # !BSF NAME:{Allow Pull-up}
-      # !BSF TYPE:{Combo}
-      # !BSF OPTION:{0x0:P_NONE, 0x2:P_5K_L, 0x4:P_20K_L, 0x9:P_1K_H, 0xA:P_5K_H, 0xB:P_2K_H, 0xC:P_20K_H, 0xD:P_1K2K_H, 0xF:Native_control}
-      # !BSF HELP:{Specify if pull-up needed and how much}
-      # !BSF CONDITION:{$(COND_GPIO_PID_ENABLE)}
-      # !BSF FIELD:{PullUp:4b}
+      # !BSF HELP:{Specify the GPIO pin}
+      # !BSF FIELD:{PidPadInfo:24b}
 
       # !BSF NAME:{Reserved} TYPE:{Reserved}
       # !BSF FIELD:{Rsvd1:7b}

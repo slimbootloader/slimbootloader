@@ -296,9 +296,8 @@ GetBoardIdFromGpioPins (
   PID_GPIO_PIN_DATA   *PidGpioPinData;
   UINT8               Index;
   UINT8               Community;
-  UINT8               PadNum;
+  UINT16              PadNum;
   UINT8               PinCount;
-  UINT8               PullUp;
 
   BrdId = 0xFF;
   PidGpioCfgData = (PID_GPIO_CFG_DATA *)FindConfigDataByTag (CDATA_PID_GPIO_TAG);
@@ -311,20 +310,19 @@ GetBoardIdFromGpioPins (
       } else if (BrdId == 0xFF) {
         BrdId = 0;
       }
-      Community = (UINT8)PidGpioPinData->Community;
-      PadNum    = (UINT8)PidGpioPinData->PadNum;
-      PullUp    = (UINT8)PidGpioPinData->PullUp;
-      PadConfg0.padCnf0 = GpioRead (Community, GPIO_PADBAR + (UINT8)PadNum + BXT_GPIO_PAD_CONF0_OFFSET);
-      PadConfg0.r.PMode = 0;
-      PadConfg0.r.GPIORxTxDis = 0x1;
-      GpioWrite (Community, GPIO_PADBAR + PadNum + BXT_GPIO_PAD_CONF0_OFFSET, PadConfg0.padCnf0);
-      if (PullUp) {
+      Community = (UINT8) (PidGpioPinData->PidPadInfo & 0xFF);
+      PadNum    = (UINT16)(PidGpioPinData->PidPadInfo >> 8);
+      if (PadNum < 0x300) {
+        PadConfg0.padCnf0 = GpioRead (Community, GPIO_PADBAR + PadNum + BXT_GPIO_PAD_CONF0_OFFSET);
+        PadConfg0.r.PMode = 0;
+        PadConfg0.r.GPIORxTxDis = 0x1;
+        GpioWrite (Community, GPIO_PADBAR + PadNum + BXT_GPIO_PAD_CONF0_OFFSET, PadConfg0.padCnf0);
         PadConfg1.padCnf1 = GpioRead (Community, GPIO_PADBAR + PadNum + BXT_GPIO_PAD_CONF1_OFFSET);
         PadConfg1.r.IOSTerm = 0x3; //Enable Pullup
-        PadConfg1.r.Term    = PullUp; //Set to Pull Up
+        PadConfg1.r.Term    = 0xC & 0x0F; //Default 20K set to Pull Up
         GpioWrite (Community, GPIO_PADBAR + PadNum + BXT_GPIO_PAD_CONF1_OFFSET, PadConfg1.padCnf1);
+        BrdId |= (UINT8) (((GpioRead (Community, GPIO_PADBAR + PadNum + BXT_GPIO_PAD_CONF0_OFFSET) & BIT1) >> 1) << Index);
       }
-      BrdId |= (UINT8) (((GpioRead (Community, GPIO_PADBAR + PadNum + BXT_GPIO_PAD_CONF0_OFFSET) & BIT1) >> 1) << Index);
       PidGpioPinData++;
     }
   }
