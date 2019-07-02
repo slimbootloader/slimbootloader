@@ -55,6 +55,7 @@
   gSmmInformationGuid
   gCpuInitDataHobGuid
   gEfiGraphicsInfoHobGuid
+  gCsmeFWUpdateImageFileGuid
 
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdGraphicsVbtAddress

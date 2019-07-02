@@ -391,8 +391,12 @@ UpdateFwst (
   UINT8                           Count;
   UINT32                          RsvdBase;
   EFI_STATUS                      Status;
+  UINT32                          Version;
+  BOOT_LOADER_VERSION             *VerInfoTbl;
   EFI_FWST_ACPI_DESCRIPTION_TABLE *FwstAcpiTablePtr;
   FW_UPDATE_COMP_STATUS           *FwUpdCompStatus;
+
+  VerInfoTbl    = GetLoaderGlobalDataPointer()->VerInfoPtr;
 
   //
   // We do not need to populate ACPI table during firmware update
@@ -420,6 +424,13 @@ UpdateFwst (
     FwstAcpiTablePtr->EsrtTableEntry[Count].FwType = ESRT_FW_TYPE_SYSTEMFIRMWARE;
     FwstAcpiTablePtr->EsrtTableEntry[Count].LastAttemptVersion = FwUpdCompStatus->LastAttemptVersion;
     FwstAcpiTablePtr->EsrtTableEntry[Count].LastAttemptStatus = FwUpdCompStatus->LastAttemptStatus;
+    if (CompareGuid(&(FwUpdCompStatus->FirmwareId), &gSblFWUpdateImageFileGuid) == TRUE) {
+      Version = ((VerInfoTbl->ImageVersion.CoreMajorVersion << 24) | (VerInfoTbl->ImageVersion.CoreMinorVersion << 16) | \
+                (VerInfoTbl->ImageVersion.ProjMajorVersion << 8) | (VerInfoTbl->ImageVersion.ProjMinorVersion));
+      FwstAcpiTablePtr->EsrtTableEntry[Count].FwVersion = Version;
+    } else {
+      PlatformUpdateCurrentVersion(&(FwUpdCompStatus->FirmwareId), &(FwstAcpiTablePtr->EsrtTableEntry[Count].FwVersion));
+    }
     FwUpdCompStatus = (FW_UPDATE_COMP_STATUS *)((UINT32)FwUpdCompStatus + sizeof(FW_UPDATE_COMP_STATUS));
   }
 

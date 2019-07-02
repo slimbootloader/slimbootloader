@@ -41,6 +41,7 @@
 
 [Guids]
   gEsrtSystemFirmwareGuid
+  gSblFWUpdateImageFileGuid
 
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdAcpiTablesRsdp

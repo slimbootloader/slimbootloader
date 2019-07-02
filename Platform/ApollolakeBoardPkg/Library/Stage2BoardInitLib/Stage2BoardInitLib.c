@@ -1558,6 +1558,29 @@ UpdateAcpiDsdt (
   }
 }
 
+/**
+  Return current version of the firmware requested.
+
+  This function will update and return the current
+  version of the firmware requested. If the firmware requested
+  is not supported by the platform, return 0 for version.
+
+  @param  Guid          The GUID to identify the firmware.
+  @param  Version       Pointer to the version information.
+
+**/
+VOID
+PlatformUpdateCurrentVersion (
+  IN CONST EFI_GUID   *Guid,
+  IN OUT UINT32       *Version
+  )
+{
+  if ((Guid == NULL) || (Version == NULL)){
+    return;
+  }
+
+  *Version = 0;
+}
 
 /**
   Update PCH NVS and SA NVS area address and size in ACPI table.

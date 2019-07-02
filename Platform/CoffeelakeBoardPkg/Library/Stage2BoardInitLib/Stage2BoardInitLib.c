@@ -61,6 +61,8 @@
 #include <Library/SmbiosInitLib.h>
 #include <IndustryStandard/SmBios.h>
 #include <VerInfo.h>
+#include <Library/HeciLib.h>
+#include <Library/HeciLib/CseMsg.h>
 
 #define DEFAULT_GPIO_IRQ_ROUTE                      14
 
@@ -1850,6 +1852,43 @@ PlatformUpdateHobInfo (
     UpdateSmmInfo (HobInfo);
   } else if (Guid == &gLoaderPlatformInfoGuid) {
     UpdateLoaderPlatformInfo (HobInfo);
+  }
+}
+
+/**
+  Return current version of the firmware requested.
+
+  This function will update and return the current
+  version of the firmware requested. If the firmware requested
+  is not supported by the platform, return 0 for version.
+
+  @param  Guid          The GUID to identify the firmware.
+  @param  Version       Pointer to the version information.
+
+**/
+VOID
+PlatformUpdateCurrentVersion (
+  IN CONST EFI_GUID   *Guid,
+  IN OUT UINT32       *Version
+  )
+{
+  EFI_STATUS  Status;
+  GEN_GET_FW_VER_ACK    MsgGenGetFwVersionAckData;
+
+  if ((Guid == NULL) || (Version == NULL)){
+    return;
+  }
+
+  *Version = 0;
+
+  if (CompareGuid (Guid, &gCsmeFWUpdateImageFileGuid) == TRUE) {
+    Status = HeciGetFwVersionMsg( (UINT8 *)&MsgGenGetFwVersionAckData);
+    if (EFI_ERROR(Status)) {
+      return;
+    }
+
+    *Version = ((MsgGenGetFwVersionAckData.Data.CodeMajor << 24) | (MsgGenGetFwVersionAckData.Data.CodeMinor << 16) | \
+                (MsgGenGetFwVersionAckData.Data.CodeBuildNo << 8) | (MsgGenGetFwVersionAckData.Data.CodeHotFix));
   }
 }
 
