@@ -21,11 +21,7 @@ thereby achieving unparalleled boot performance and minimizing firmware footprin
 
 Supported Platforms
 -------------------
-Slim Bootloader currently has support for [Apollo Lake](https://www.intel.com/content/www/us/en/embedded/products/apollo-lake/overview.html) based designs including 
-* [UP Squared](http://up-board.org/upsquared/specifications/) maker board
-* Intel Leaf Hill customer reference design
-
-Additionally, Slim Bootloader supports booting a virtual machine via [QEMU](https://www.qemu.org/).
+Please visit [Supported Hardware](https://slimbootloader.github.io/supported-hardware/index.html) page for a list of platform supported by Slim Bootloader. 
 
 Getting Started
 ---------------
