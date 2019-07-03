@@ -71,9 +71,10 @@ IsSgxCapSupported (
   ///
   if ((CpuidRegs.RegEbx & BIT2) && (AsmReadMsr64 (MSR_IA32_MTRRCAP) & BIT12)) {
     return TRUE;
+  } else {
+    DEBUG ((DEBUG_WARN, "\nIsSgxCapSupported(): Intel(R) SGX is not supported on this processor.\n"));
+    return FALSE;
   }
-
-  return FALSE;
 }
 
 /**
@@ -229,7 +230,12 @@ IsSgxFeatureCtrlSet (
   UINT64 Msr;
 
   Msr = AsmReadMsr64 (MSR_IA32_FEATURE_CONTROL);
-  return (BOOLEAN) (Msr & BIT18);
+  if (BIT18 == (Msr & BIT18)) {
+    return TRUE;
+  } else {
+    DEBUG ((DEBUG_WARN, "\nIsSgxFeatureCtrlSet(): Intel(R) SGX bit in feature control MSR was NOT set!\n"));
+    return FALSE;
+  }
 }
 
 /**
@@ -245,8 +251,10 @@ IsPrmrrAlreadySet (
   if ((AsmReadMsr64 (MSR_PRMRR_PHYS_BASE) != 0) &&
       ((AsmReadMsr64 (MSR_PRMRR_PHYS_MASK) & BIT10) != 0)) {
     return TRUE;
+  } else {
+    DEBUG ((DEBUG_WARN, "\nIsPrmrrAlreadySet(): PRMRR base was NOT set!\n"));
+    return FALSE;
   }
-  return FALSE;
 }
 
 /**
@@ -265,7 +273,7 @@ UpdateSgxNvs (
   EFI_CPUID_REGISTER CpuidSgxLeaf;
   EFI_CPUID_REGISTER Cpuid;
 
-  DEBUG ((DEBUG_INFO, "\n UpdateSgxNvs started \n"));
+  DEBUG ((DEBUG_INFO, "\nUpdateSgxNvs started...\n"));
 
   CpuNvs->SgxStatus      = 0;
   CpuNvs->EpcBaseAddress = 0;
@@ -289,14 +297,15 @@ UpdateSgxNvs (
     // Check if the first sub-leaf is a valid EPC section
     //
     if ((Cpuid.RegEax & 0xF) != 0x1) {
+      DEBUG ((DEBUG_WARN, "\nUpdateSgxNvs(): Invalid EPC section!\n"));
       return;
     }
-    DEBUG ((DEBUG_INFO, "\n Intel(R) SGX is ENABLED\n"));
+    DEBUG ((DEBUG_INFO, "\nUpdateSgxNvs(): Intel(R) SGX is ENABLED.\n"));
     CpuNvs->EpcBaseAddress = LShiftU64 ((UINT64) (Cpuid.RegEbx & 0xFFFFF), 32) + (UINT64) (Cpuid.RegEax & 0xFFFFF000);
     CpuNvs->EpcLength      = LShiftU64 ((UINT64) (Cpuid.RegEdx & 0xFFFFF), 32) + (UINT64) (Cpuid.RegEcx & 0xFFFFF000);
     CpuNvs->SgxStatus      = TRUE;
   } else {
-    DEBUG ((DEBUG_WARN, "\n Intel(R) SGX is not supported\n"));
+    DEBUG ((DEBUG_WARN, "\nUpdateSgxNvs(): Intel(R) SGX is not supported!\n"));
   }
   DEBUG ((DEBUG_INFO, "CpuNvs->SgxStatus      = 0x%X\n",      CpuNvs->SgxStatus));
   DEBUG ((DEBUG_INFO, "CpuNvs->EpcBaseAddress = 0x%016llX\n", CpuNvs->EpcBaseAddress));
