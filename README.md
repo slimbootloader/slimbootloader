@@ -37,5 +37,5 @@ Archives: https://lists.01.org/pipermail/sbl-devel/
 
 License
 -------
-Slim Bootloader is released under the terms of the BSD license. 
+Slim Bootloader is released under the terms of the BSD-2-Clause Plus Patent License. 
 Please see the `LICENSE` file for the full terms of the license.
