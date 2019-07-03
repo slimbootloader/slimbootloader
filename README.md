@@ -21,7 +21,7 @@ thereby achieving unparalleled boot performance and minimizing firmware footprin
 
 Supported Platforms
 -------------------
-Please visit [Supported Hardware](https://slimbootloader.github.io/supported-hardware/index.html) page for a list of platform supported by Slim Bootloader. 
+Please visit [Supported Hardware](https://slimbootloader.github.io/supported-hardware/index.html) page for a list of platforms supported by Slim Bootloader. 
 
 Getting Started
 ---------------
