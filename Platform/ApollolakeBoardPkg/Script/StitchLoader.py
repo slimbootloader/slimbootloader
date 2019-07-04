@@ -369,7 +369,7 @@ def LocateComponent(Root, Path):
 def PatchFlashMap (ImageData, PlatformData = 0xffffffff):
     CompBpdtDict = {
       'RSVD' : 'ROOT/IFWI/BP1/SBPDT/BpdtObb/RSVD',
-      'IAS1' : 'ROOT/IFWI/BP1/SBPDT/BpdtObb/PROV',
+      'IAS1' : 'ROOT/IFWI/BP1/SBPDT/BpdtObb/FB',
       'EPLD' : 'ROOT/IFWI/BP1/SBPDT/BpdtObb/EPLD',
       'UVAR' : 'ROOT/IFWI/BP1/SBPDT/BpdtObb/UVAR',
       'PYLD' : 'ROOT/IFWI/BP0/BPDT/BpdtIbb/PLD',
@@ -441,7 +441,7 @@ def PatchFlashMap (ImageData, PlatformData = 0xffffffff):
                 Desc.Size = Comp.Length
                 Desc.Offset = Comp.Offset - Bp0.Offset
                 continue
-            if Desc.Size != Comp.Length and Comp.Name != 'PROV':
+            if Desc.Size != Comp.Length and Comp.Name != 'FB':
                 raise Exception("Mismatch component '%s' length in FlashMap and BPDT !" % CompBpdtDict[Desc.Sig])
             if Desc.Sig not in ['_BPM', 'OEMK'] and (Comp.Offset & 0xFFF > 0):
                 raise Exception("Component '%s' %x is not aligned at 4KB boundary, " \
@@ -829,7 +829,7 @@ def CreateIfwiImage (IfwiIn, IfwiOut, BiosOut, PlatformData, NonRedundant, Stitc
         ]
 
         ObbList = [
-          ('PROV' , 'FB'),
+          ('FB' , 'FB'),
           ('EPLD' , 'EPLD'),
           ('UVAR' , 'UVAR'),
           ('PLD'  , 'PLD'),
