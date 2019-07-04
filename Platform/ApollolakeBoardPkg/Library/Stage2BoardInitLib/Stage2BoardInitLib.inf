@@ -55,6 +55,7 @@
   IocIpcLib
   PsdLib
   BootOptionLib
+  HdaLib
 
 [Guids]
   gOsConfigDataGuid

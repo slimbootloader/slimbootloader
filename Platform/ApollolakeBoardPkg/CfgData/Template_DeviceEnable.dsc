@@ -19,14 +19,6 @@
     # !HDR STRUCT:{DEV_EN_CTRL_0}
     gCfgData.DevEnControl0                  |      * | 0x04 | $(1)
 
-      # !BSF NAME:{HD Audio Support} TYPE:{Combo} OPTION:{$EN_DIS}
-      # !BSF HELP:{Enable/disable HDA Audio Feature. 0:Disable, 1:Enable(Default).}
-      # !BSF FIELD:{HdaEnable:1b}
-
-      # !BSF NAME:{HD Audio DSP Support} TYPE:{Combo} OPTION:{$EN_DIS}
-      # !BSF HELP:{Enable/disable HDA Audio DSP Feature. 0:Disable, 1:Enable(Default).}
-      # !BSF FIELD:{DspEnable:1b}
-
       # !BSF NAME:{I2C Device 0} TYPE:{Combo} OPTION:{0: Disabled, 1: PCI Mode, 2: ACPI Mode}
       # !BSF HELP:{Enable/Disable I2C Device 0. 0:Disabled, 1:PCI Mode(Default), 2:ACPI Mode.}
       # !BSF FIELD:{I2C0Enable:2b}
@@ -87,6 +79,9 @@
       # !BSF HELP:{Enable/Disable SPI Device 2. 0:Disabled, 1:PCI Mode(Default), 2:ACPI Mode.}
       # !BSF FIELD:{Spi2Enable:2b}
 
+      # !BSF NAME:{Reserved} TYPE:{Reserved}
+      # !BSF HELP:{Enable/Disable reserved}
+      # !BSF FIELD:{Rsvd:2b}
 
     # !BSF PAGES:{CTRL1:DEV_EN_DIS:"Control 1"}
     # !BSF PAGE:{CTRL1}

@@ -1,0 +1,37 @@
+## @file
+#  HD Audio library.
+#
+#  Copyright (c) 2014 - 2019, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                        = 0x00010017
+  BASE_NAME                          = HdaLib
+  FILE_GUID                          = DA915B7F-EE08-4C1D-B3D0-DE7C52AB155A
+  VERSION_STRING                     = 1.0
+  MODULE_TYPE                        = BASE
+  LIBRARY_CLASS                      = HdaLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF
+#
+
+[Sources]
+  HdaLib.c
+  HdaEndpoints.c
+  HdaVerbTables.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Platform/ApollolakeBoardPkg/ApollolakeBoardPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  MemoryAllocationLib

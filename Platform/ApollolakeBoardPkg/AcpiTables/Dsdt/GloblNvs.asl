@@ -54,4 +54,6 @@
     RPA6,    32,    //   Root Port address 6
     M32B,    32,    //   PCIE MMIO resource base
     M32L,    32,    //   PCIE MMIO resource length
+    ADFM,    32,    //   HD-Audio DSP Feature Mask
+    ADPM,    32,    //   Hd-Audio DSP Post-Processing Module Mask
 }
