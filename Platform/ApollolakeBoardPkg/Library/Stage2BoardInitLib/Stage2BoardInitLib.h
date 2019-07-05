@@ -65,12 +65,11 @@
 #include <ConfigDataCommonStruct.h>
 #include <PsdLib.h>
 #include <Guid/SmmInformationGuid.h>
+#include <Library/HdaLib.h>
 
 #define IOC_UART_PPR_CLK_N_DIV        0x64
 #define IOC_UART_PPR_CLK_M_DIV        0x40
 #define R_XHCI_MEM_DUAL_ROLE_CFG0     0x80D8
-
-#define NHLT_ACPI_TABLE_SIGNATURE  SIGNATURE_32 ('N', 'H', 'L', 'T')
 
 #define NATIVE_PSTATE_LATENCY         10
 #define PSTATE_BM_LATENCY             10

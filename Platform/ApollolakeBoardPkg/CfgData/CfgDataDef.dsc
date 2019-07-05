@@ -13,6 +13,8 @@
   DEFINE  COND_PCIE_RP_RST_PIN_SKIP = ($PcieRpReset$(1).Skip == 0)
   DEFINE  COND_PCIE_RP_EN           = ($PcieRpFeatures$(1).En == 1)
   DEFINE  COND_PCIE_RP_CLK_REQ_SUP  = (($PcieRpFeatures$(1).ClkReqSup == 1) and ($PcieRpFeatures$(1).En == 1))
+  DEFINE  COND_HDA_EN               = ($HdaEnable == 1)
+  DEFINE  COND_HDA_DSP_EN           = (($HdaEnable == 1) and ($DspEnable == 1))
 
 [PcdsDynamicVpd.Tmp]
   !include Template_CfgData.dsc
@@ -149,6 +151,9 @@
 
   # ---------------------------------------------------------------------------------------
   !include CfgData_DeviceEnable.dsc
+
+  # ---------------------------------------------------------------------------------------
+  !include CfgData_Hda.dsc
 
   # ---------------------------------------------------------------------------------------
   !include CfgData_CapsuleInformation.dsc

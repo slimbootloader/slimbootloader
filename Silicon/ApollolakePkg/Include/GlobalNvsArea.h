@@ -63,6 +63,8 @@ typedef struct {
   UINT32      RpAddress[6];                           ///<   Root Port address 1
   UINT32      Mmio32Base;                             ///<   PCIE MMIO resource base
   UINT32      Mmio32Length;                           ///<   PCIE MMIO resource length
+  UINT32      HdaDspFeatureMask;                      ///<   HD-Audio DSP Feature Mask
+  UINT32      HdaDspModMask;                          ///<   Hd-Audio DSP Post-Processing Module Mask
 } PLATFORM_NVS_AREA;
 
 typedef struct {

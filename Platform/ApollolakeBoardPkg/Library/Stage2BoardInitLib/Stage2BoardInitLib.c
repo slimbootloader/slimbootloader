@@ -11,102 +11,90 @@
 
 UINT32       mOtgDualRoleCfg0 = 0;
 
-BL_HDAUDIO_VERB_TABLE VerbAlc662 = {
-  /*
-   *  VerbTable: (Realtek ALC662)
-   *  Codec Vendor: 0x10EC0662
-   */
-  {
-    0x10EC0662,     /* Vendor ID / Device ID */
-    0xFF,           /* Revision ID */
-    0xFF,           /* SDI number */
-    15 * 4,         /* Number of data DWORDs */
-    0               /* Front Pannel Support */
-  },
-  {
-    /* ===== HDA Codec Subsystem ID Verb-table ===== */
+/**
+  Create NHLT (Non HDA-Link Table)
 
-    /* HDA Codec Subsystem ID  : 0x80860000 */
-    0x00172000,
-    0x00172100,
-    0x00172286,
-    0x00172380,
+  @param[in, out]  NhltTable    The NHLT table to be created
 
+  @retval     EFI_UNSUPPORTED   NHLT configuration does not support
+  @retval     EFI_SUCCESS       NHLT has been created successfully
 
-    /* ===== Pin Widget Verb-table ===== */
+**/
+STATIC
+EFI_STATUS
+EFIAPI
+CreateNhltAcpiTable (
+  VOID
+  )
+{
+  PLATFORM_SERVICE     *PlatformService;
+  HDA_CFG_DATA         *HdaCfgData;
+  NHLT_ACPI_TABLE      *Table;
+  UINT32                TableLength;
+  HDA_NHLT_ENDPOINTS    HdaNhltEndpoints[HdaEndpointMax] = {
+    {HdaDmicX2,        FALSE},
+    {HdaDmicX4,        FALSE},
+    {HdaBtRender,      FALSE},
+    {HdaBtCapture,     FALSE},
+    {HdaI2sRenderSKP,  FALSE},
+    {HdaI2sCaptureSKP, FALSE},
+    {HdaI2sRenderHP,   FALSE},
+    {HdaI2sCaptureHP,  FALSE},
+    {HdaModem1Render,  FALSE},
+    {HdaModem1Capture, FALSE},
+    {HdaModem2Render,  FALSE},
+    {HdaModem2Capture, FALSE}
+  };
 
-    /* Widget node 0x01 */
-    0x0017FF00,
-    0x0017FF00,
-    0x0017FF00,
-    0x0017FF00,
-    /* Pin widget 0x12 - DMIC */
-    0x01271C00,
-    0x01271D00,
-    0x01271E13,
-    0x01271F40,
-    /* Pin widget 0x14 - FRONT (Port-D) */
-    0x01471C10,
-    0x01471D40,
-    0x01471E01,
-    0x01471F01,
-    /* Pin widget 0x15 - SURR (Port-A) */
-    0x01571C12,
-    0x01571D10,
-    0x01571E01,
-    0x01571F01,
-    /* Pin widget 0x16 - CEN/LFE (Port-G) */
-    0x01671C11,
-    0x01671D60,
-    0x01671E01,
-    0x01671F01,
-    /* Pin widget 0x18 - MIC1 (Port-B) */
-    0x01871C30,
-    0x01871D90,
-    0x01871EA1,
-    0x01871F01,
-    /* Pin widget 0x19 - MIC2 (Port-F) */
-    0x01971C40,
-    0x01971D90,
-    0x01971EA1,
-    0x01971F02,
-    /* Pin widget 0x1A - LINE1 (Port-C) */
-    0x01A71C3F,
-    0x01A71D30,
-    0x01A71E81,
-    0x01A71F01,
-    /* Pin widget 0x1B - LINE2 (Port-E) */
-    0x01B71C1F,
-    0x01B71D40,
-    0x01B71E21,
-    0x01B71F02,
-    /* Pin widget 0x1C - CD-IN */
-    0x01C71CF0,
-    0x01C71D11,
-    0x01C71E11,
-    0x01C71F41,
-    /* Pin widget 0x1D - BEEP-IN */
-    0x01D71C01,
-    0x01D71DE6,
-    0x01D71E45,
-    0x01D71F40,
-    /* Pin widget 0x1E - S/PDIF-OUT */
-    0x01E71C20,
-    0x01E71D11,
-    0x01E71E44,
-    0x01E71F01,
-    /* Widget node 0x20  */
-    0x02050004,
-    0x02040001,
-    0x02050004,
-    0x02040001,
-    /* Widget node 0x20 - 1 */
-    0x02050005,
-    0x02040080,
-    0x02050001,
-    0x0204A9B8
+  HdaCfgData = (HDA_CFG_DATA *) FindConfigDataByTag (CDATA_HDA_TAG);
+  ASSERT (HdaCfgData != NULL);
+
+  if ((HdaCfgData == NULL) || (HdaCfgData->DspEnable == FALSE)) {
+    return EFI_UNSUPPORTED;
   }
-};
+
+  PlatformService = (PLATFORM_SERVICE *) GetServiceBySignature (PLATFORM_SERVICE_SIGNATURE);
+  if (PlatformService == NULL || PlatformService->AcpiTableUpdate == NULL) {
+    return EFI_UNSUPPORTED;
+  }
+
+  //
+  // DMIC X2
+  //
+  switch (HdaCfgData->DspEndpointDmic) {
+  case 1:
+    HdaNhltEndpoints[HdaDmicX2].Enable        = TRUE;
+    break;
+  case 2:
+    HdaNhltEndpoints[HdaDmicX4].Enable        = TRUE;
+    break;
+  default:
+    HdaNhltEndpoints[HdaDmicX2].Enable        = FALSE;
+    HdaNhltEndpoints[HdaDmicX4].Enable        = FALSE;
+  }
+
+  if (HdaCfgData->DspEndpointBluetooth) {
+    HdaNhltEndpoints[HdaBtRender].Enable      = TRUE;
+    HdaNhltEndpoints[HdaBtCapture].Enable     = TRUE;
+  }
+
+  if (HdaCfgData->DspEndpointI2sSpk) {
+    HdaNhltEndpoints[HdaI2sRenderSKP].Enable  = TRUE;
+    HdaNhltEndpoints[HdaI2sCaptureSKP].Enable = TRUE;
+  }
+
+  if (HdaCfgData->DspEndpointI2sHp) {
+    HdaNhltEndpoints[HdaI2sRenderHP].Enable   = TRUE;
+    HdaNhltEndpoints[HdaI2sCaptureHP].Enable  = TRUE;
+  }
+
+  Table = (NHLT_ACPI_TABLE *)AllocateTemporaryPages (0);
+
+  NhltConstructor (HdaNhltEndpoints, Table, &TableLength);
+  NhltAcpiHeaderConstructor (Table, TableLength);
+
+  return PlatformService->AcpiTableUpdate ((UINT8 *)Table, Table->Header.Length);
+}
 
 /**
   Print the output of the GPIO Config table that was read from CfgData.
@@ -739,6 +727,12 @@ BoardInit (
     AssignPciIrqs ();
     RestoreOtgRole ();
     break;
+  case PrePayloadLoading:
+    Status = CreateNhltAcpiTable ();
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "HDA config missing or NHLT unsupported - %r\n", Status));
+    }
+    break;
   case EndOfStages:
     RegisterHeciService();
     InitPlatformService ();
@@ -790,6 +784,7 @@ UpdateFspConfig (
   USB_CFG_DATA           *UsbCfgData;
   PCIE_RP_CFG_DATA       *PcieRpConfigData;
   DEV_EN_CFG_DATA        *DevEnCfgData;
+  HDA_CFG_DATA           *HdaCfgData;
 
   FspsUpd    = (FSPS_UPD *)FspsUpdPtr;
   FspsConfig = &FspsUpd->FspsConfig;
@@ -821,11 +816,6 @@ UpdateFspConfig (
   FspsConfig->PkgCStateUnDemotion = 1;
   // if set to 0, FSP will not halt and lock TCO, SBL or payload should do it.
   FspsConfig->TcoTimerHaltLock = 1;
-
-  FspsConfig->HdAudioIoBufferOwnership = 0;
-
-  FspsConfig->HdaVerbTableEntryNum = 1;
-  FspsConfig->HdaVerbTablePtr = (UINT32) (&VerbAlc662);
 
   FspsConfig->Eist = 1;
   FspsConfig->BiProcHot = 1;
@@ -946,20 +936,32 @@ UpdateFspConfig (
 
   FspsConfig->UfsEnabled                  = (UINT8)DevEnCfgData->DevEnControl1.UfsEnable;
 
-  FspsConfig->HdaEnable                   = (UINT8)DevEnCfgData->DevEnControl0.HdaEnable;
-  FspsConfig->DspEnable                   = (UINT8)DevEnCfgData->DevEnControl0.DspEnable;
-  FspsConfig->Pme                         = 1;
-  FspsConfig->HdAudioIoBufferOwnership    = 3;
-  FspsConfig->HdAudioLinkFrequency        = 0;
-  FspsConfig->HdAudioIDispLinkFrequency   = 0;
-  FspsConfig->DspEndpointDmic             = 0;
-  FspsConfig->DspEndpointI2sSkp           = 1;
-  FspsConfig->DspEndpointI2sHp            = 1;
-  FspsConfig->DspEndpointBluetooth        = 0;
-  FspsConfig->DspFeatureMask              = 0x2A;
-  FspsConfig->HDAudioPwrGate              = 1;
-  FspsConfig->HDAudioClkGate              = 1;
-  FspsConfig->HdAudioDspUaaCompliance     = 1;
+  HdaCfgData = (HDA_CFG_DATA *) FindConfigDataByTag (CDATA_HDA_TAG);
+  if (HdaCfgData != NULL) {
+    FspsConfig->HdaEnable                 = HdaCfgData->HdaEnable;
+    FspsConfig->DspEnable                 = HdaCfgData->DspEnable;
+    FspsConfig->HdAudioDspUaaCompliance   = HdaCfgData->HdAudioDspUaaCompliance;
+    FspsConfig->Pme                       = HdaCfgData->Pme;
+    FspsConfig->HdAudioIoBufferOwnership  = HdaCfgData->HdAudioIoBufferOwnership;
+    FspsConfig->HdAudioVcType             = HdaCfgData->HdAudioVcType;
+    FspsConfig->HdAudioLinkFrequency      = HdaCfgData->HdAudioLinkFrequency;
+    FspsConfig->HdAudioIDispLinkFrequency = HdaCfgData->HdAudioIDispLinkFrequency;
+    FspsConfig->HdAudioIDispLinkTmode     = HdaCfgData->HdAudioIDispLinkTmode;
+    FspsConfig->DspEndpointDmic           = HdaCfgData->DspEndpointDmic;
+    FspsConfig->DspEndpointBluetooth      = HdaCfgData->DspEndpointBluetooth;
+    FspsConfig->DspEndpointI2sSkp         = HdaCfgData->DspEndpointI2sSpk;
+    FspsConfig->DspEndpointI2sHp          = HdaCfgData->DspEndpointI2sHp;
+    FspsConfig->DspFeatureMask            = HdaCfgData->DspFeatureMask;
+    FspsConfig->DspPpModuleMask           = HdaCfgData->DspPpModuleMask;
+    FspsConfig->HdaVerbTablePtr           = (UINT32) (&HdaVerbTableAlc662);
+    FspsConfig->HdaVerbTableEntryNum      = 1;
+
+    HdaEndpointBtRender.VirtualBusId      = HdaCfgData->VirtualIdBtRender;
+    HdaEndpointBtCapture.VirtualBusId     = HdaCfgData->VirtualIdBtCapture;
+    HdaEndpointI2sRenderSKP.VirtualBusId  = HdaCfgData->VirtualIdI2sRenderSpk;
+    HdaEndpointI2sRenderHP.VirtualBusId   = HdaCfgData->VirtualIdI2sRenderHp;
+    HdaEndpointI2sCapture.VirtualBusId    = HdaCfgData->VirtualIdI2sCapture;
+  }
 
   if (PcdGetBool (PcdFramebufferInitEnabled)) {
     FspsConfig->GraphicsConfigPtr = PcdGet32 (PcdGraphicsVbtAddress);
@@ -1558,7 +1560,6 @@ UpdateAcpiDsdt (
   }
 }
 
-
 /**
   Update PCH NVS and SA NVS area address and size in ACPI table.
 
@@ -1581,6 +1582,7 @@ PlatformUpdateAcpiTable (
   EFI_ACPI_DMAR_TABLE                               *Dmar;
   PLATFORM_DATA                                     *PlatformData;
   GLOBAL_NVS_AREA                                   *Gnvs;
+  HDA_CFG_DATA                                      *HdaCfgData;
 
   Table  = (EFI_ACPI_DESCRIPTION_HEADER *) Current;
   Status = EFI_SUCCESS;
@@ -1633,10 +1635,20 @@ PlatformUpdateAcpiTable (
   }
 
   if (Table->Signature == NHLT_ACPI_TABLE_SIGNATURE) {
+    HdaCfgData = (HDA_CFG_DATA *) FindConfigDataByTag (CDATA_HDA_TAG);
+    ASSERT (HdaCfgData != NULL);
+
+    if ((HdaCfgData == NULL) || (HdaCfgData->DspEnable == FALSE)) {
+      DEBUG ((DEBUG_WARN, "HDA config is missing or disabled. But, allow to update NHLT.\n") );
+    }
     Gnvs->PlatformNvs.HdaNhltAcpiAddr   = (UINT32) (UINTN)Table;
     Gnvs->PlatformNvs.HdaNhltAcpiLength = Table->Length;
     DEBUG ((DEBUG_INFO, "HdaNhltAcpi Addr 0x%08X, Length 0x%08X\n", \
            Gnvs->PlatformNvs.HdaNhltAcpiAddr, Gnvs->PlatformNvs.HdaNhltAcpiLength));
+
+    DEBUG_CODE_BEGIN ();
+    NhltAcpiTableDump ((NHLT_ACPI_TABLE *)Table);
+    DEBUG_CODE_END ();
   }
 
   if (FeaturePcdGet (PcdPsdBiosEnabled)) {
@@ -1665,6 +1677,7 @@ PlatformUpdateAcpiGnvs (
   GLOBAL_NVS_AREA      *Gnvs;
   PLATFORM_NVS_AREA    *Pnvs;
   SYS_CPU_INFO         *SysCpuInfo;
+  HDA_CFG_DATA         *HdaCfgData;
 
   Gnvs = (GLOBAL_NVS_AREA *)GnvsIn;
   Pnvs = &Gnvs->PlatformNvs;
@@ -1683,6 +1696,12 @@ PlatformUpdateAcpiGnvs (
 
   Pnvs->Mmio32Base   = PcdGet32 (PcdPciResourceMem32Base);
   Pnvs->Mmio32Length = 0xD0000000 - Pnvs->Mmio32Base;
+
+  HdaCfgData = (HDA_CFG_DATA *) FindConfigDataByTag (CDATA_HDA_TAG);
+  if ((HdaCfgData != NULL) && (HdaCfgData->DspEnable == TRUE)) {
+    Pnvs->HdaDspFeatureMask     = HdaCfgData->DspFeatureMask;
+    Pnvs->HdaDspModMask         = HdaCfgData->DspPpModuleMask;
+  }
 
   SocUpdateAcpiGnvs ((VOID *)Gnvs);
 }
