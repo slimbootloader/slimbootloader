@@ -260,7 +260,7 @@ def PaddingIasImage (IbblImage):
         Desc  = FlashMapDesc.from_buffer (IbblImgData, FlaMapOff + sizeof(FlashMap) + Idx * sizeof(FlashMapDesc))
         if Desc.Sig != 'IAS1' :
             continue
-        Ias1Name  = os.path.join(os.path.dirname (IbblImage), 'Stitch_PROV.bin')
+        Ias1Name  = os.path.join(os.path.dirname (IbblImage), 'Stitch_FB.bin')
         if not os.path.exists(Ias1Name):
             Ias1Size = 0
             Mode     = 'wb'
@@ -437,7 +437,7 @@ def GenMeuSblXml (MeuDir, Src, Dst):
     Node = Tree.find('./ObbSubPartition/Modules')
     ModList = [
       ("OPAD",  "OPAD"),
-      ("PROV",  "PROV"),
+      ("FB",  "FB"),
       ("EPLD",  "EPLD"),
       ("UVAR",  "UVAR")
       ]
