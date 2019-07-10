@@ -673,6 +673,9 @@ EndList
                         TemplateName = ''
                 else:
                     if TemplateName:
+                        Match = re.match("^!include\s*(.+)?$", DscLine)
+                        if Match:
+                            continue
                         self._BsfTempDict[TemplateName].append(DscLine)
 
             else:
