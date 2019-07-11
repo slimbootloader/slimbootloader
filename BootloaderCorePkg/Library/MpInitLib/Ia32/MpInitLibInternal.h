@@ -28,11 +28,10 @@
 #define   AP_TASK_TIMEOUT_UNIT     15
 #define   AP_TASK_TIMEOUT_CNT      1000
 
-#define   SMM_BASE_GAP             0x1000
-#define   SMM_BASE_MIN_SIZE        0x10000
-
-#define   PLD_TO_LDR_SMM_SIG       SIGNATURE_32('S', 'C', 'O', 'M')
 #define   RSM_SIG                  0x9090AA0F  /// Opcode for 'rsm'
+
+#define SMM_BASE_GAP               0x1000
+#define SMM_BASE_MIN_SIZE          0x10000
 
 #pragma pack(1)
 typedef struct {

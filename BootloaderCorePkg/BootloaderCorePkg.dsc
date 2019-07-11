@@ -126,6 +126,7 @@
   DebugAgentLib|BootloaderCommonPkg/Library/DebugAgentLib/DebugAgentLibNull.inf
 !endif
   ElfLib|BootloaderCommonPkg/Library/ElfLib/ElfLib.inf
+  S3SaveRestoreLib|BootloaderCorePkg/Library/S3SaveRestoreLib/S3SaveRestoreLib.inf
 
 [LibraryClasses.IA32]
   PagingLib|$(PLATFORM_PACKAGE)/Library/PagingLib/PagingLib.inf

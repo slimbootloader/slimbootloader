@@ -50,6 +50,7 @@
   SgxLib
   GpioLib
   PsdLib
+  S3SaveRestoreLib
 
 [Guids]
   gSmmInformationGuid
