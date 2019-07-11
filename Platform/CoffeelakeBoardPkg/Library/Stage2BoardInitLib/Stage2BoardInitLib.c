@@ -61,6 +61,7 @@
 #include <Library/SmbiosInitLib.h>
 #include <IndustryStandard/SmBios.h>
 #include <VerInfo.h>
+#include <Library/S3SaveRestoreLib.h>
 
 #define DEFAULT_GPIO_IRQ_ROUTE                      14
 
@@ -253,21 +254,18 @@ EnableLegacyRegions (
 
 
 /**
-  Enable SMI on S3 resume path
+  Clear SMI sources
 
 **/
 VOID
-EnableSmi (
+ClearSmi (
   VOID
 )
 {
-  SMMBASE_INFO          *SmmInfo;
   UINT32                SmiEn;
   UINT32                SmiSts;
 
-  SmmInfo = (SMMBASE_INFO *) (MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + TSEG) & ~0xF);
-
-  SmiEn = IoRead32 ((UINTN)(UINT32)(SmmInfo->SmiCtrlRegAddr));
+  SmiEn = IoRead32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN));
   if (((SmiEn & B_ACPI_IO_SMI_EN_GBL_SMI) !=0) && ((SmiEn & B_ACPI_IO_SMI_EN_EOS) !=0)) {
     return;
   }
@@ -275,7 +273,7 @@ EnableSmi (
   //
   // Clear the status before setting smi enable
   //
-  SmiSts = IoRead32 ((UINTN)(UINT32)(SmmInfo->SmiCtrlRegAddr + SmmInfo->SmiCtrlRegWidth));
+  SmiSts = IoRead32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN + 4));
   SmiSts |=
     (
       B_ACPI_IO_SMI_STS_SMBUS |
@@ -286,16 +284,9 @@ EnableSmi (
       B_ACPI_IO_SMI_STS_ON_SLP_EN |
       B_ACPI_IO_SMI_STS_BIOS
     );
-  IoWrite32 ((UINTN)(UINT32)(SmmInfo->SmiCtrlRegAddr + SmmInfo->SmiCtrlRegWidth), SmiSts);
-
-  //
-  // Set the "global SMI enable" bit
-  //
-  SmiEn |= SmmInfo->SmiCtrlRegVal;
-  IoWrite32 ((UINTN)(UINT32)(SmmInfo->SmiCtrlRegAddr), SmiEn);
-
-  SmiEn = IoRead32 ((UINTN)(UINT32)(SmmInfo->SmiCtrlRegAddr));
+  IoWrite32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN + 4), SmiSts);
 }
+
 
 //
 // Update ACPI PerfomanceStates tables
@@ -838,6 +829,16 @@ InitializeSmbiosInfo (
   return EFI_SUCCESS;
 }
 
+
+STATIC SMMBASE_INFO mSmmBaseInfo = {
+  { BL_PLD_COMM_SIG, SMMBASE_INFO_COMM_ID, 0, 0 }
+};
+
+STATIC S3_SAVE_REG mS3SaveReg = {
+  { BL_PLD_COMM_SIG, S3_SAVE_REG_COMM_ID, 1, 0 },
+  { { IO, WIDE32, { 0, 0}, (ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN), 0x00000000 } }
+};
+
 /**
   Initialize Board specific things in Stage2 Phase
 
@@ -971,6 +972,19 @@ BoardInit (
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_WARN, "VBT not found %r\n", Status));
     }
+    if (GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE && GetBootMode() != BOOT_ON_S3_RESUME) {
+      //
+      // Set SMMBASE_INFO dummy strucutre in TSEG before others
+      //
+      mSmmBaseInfo.SmmBaseHdr.Count     = (UINT8) MpGetInfo()->CpuCount;
+      mSmmBaseInfo.SmmBaseHdr.TotalSize = sizeof(BL_PLD_COMM_HDR) + mSmmBaseInfo.SmmBaseHdr.Count * sizeof(CPU_SMMBASE);
+      Status = AppendS3Info ((VOID *)&mSmmBaseInfo);
+      //
+      // Set REG_INFO struct in TSEG region except 'Val' for regs
+      //
+      mS3SaveReg.S3SaveHdr.TotalSize = sizeof(BL_PLD_COMM_HDR) + mS3SaveReg.S3SaveHdr.Count * sizeof(REG_INFO);
+      AppendS3Info ((VOID *)&mS3SaveReg);
+    }
     break;
   case EndOfStages:
     // Lock down SPI for all other payload entry except FWUpdate and OSloader
@@ -1042,8 +1056,9 @@ BoardInit (
 
     break;
   case EndOfFirmware:
+    ClearSmi ();
     if ((GetBootMode() == BOOT_ON_S3_RESUME) && (GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE)) {
-      EnableSmi ();
+      RestoreS3RegInfo (FindS3Info (S3_SAVE_REG_COMM_ID));
     }
     break;
   default:

@@ -33,6 +33,7 @@
 [LibraryClasses]
   BaseLib
   DebugLib
+  S3SaveRestoreLib
 
 [LibraryClasses.IA32]
   LocalApicLib

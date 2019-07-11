@@ -120,22 +120,6 @@ typedef struct {
   UINT8         BootPartition;
 } S3_DATA;
 
-typedef struct {
-  UINT32  ApicId;
-  UINT32  SmmBase;
-} CPU_SMMBASE;
-
-typedef struct {
-  UINT32       Signature;
-  UINT8        CpuEntry;
-  UINT8        Unused;
-  UINT8        SmiCtrlRegType;
-  UINT8        SmiCtrlRegWidth;
-  UINT32       SmiCtrlRegAddr;
-  UINT32       SmiCtrlRegVal;
-  CPU_SMMBASE  SmmBase[];
-} SMMBASE_INFO;
-
 #pragma pack()
 
 //

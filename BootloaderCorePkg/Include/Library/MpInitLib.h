@@ -6,6 +6,7 @@
 **/
 
 #ifndef _MP_INIT_LIB_H_
+#define _MP_INIT_LIB_H_
 
 typedef enum {
   EnumMpInitNull   = 0x00,
