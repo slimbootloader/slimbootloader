@@ -963,9 +963,6 @@ BoardInit (
     }
     break;
   case PrePciEnumeration:
-    if (GetBootMode() == BOOT_ON_S3_RESUME) {
-      EnableSmi ();
-    }
     break;
   case PostPciEnumeration:
     break;
@@ -1045,6 +1042,9 @@ BoardInit (
 
     break;
   case EndOfFirmware:
+    if ((GetBootMode() == BOOT_ON_S3_RESUME) && (GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE)) {
+      EnableSmi ();
+    }
     break;
   default:
     break;
