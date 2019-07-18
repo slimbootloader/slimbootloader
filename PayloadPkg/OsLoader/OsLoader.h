@@ -63,7 +63,6 @@
 
 #define BOOT_PARAMS_BASE         0x00090000
 #define LINUX_KERNEL_BASE        0x00100000
-#define IMAGE_MAX_SIZE           0x00F00000
 #define CMDLINE_OFFSET           0xF000
 #define CMDLINE_LENGTH_MAX       0x800
 #define EOF                      "<eof>"
@@ -137,6 +136,16 @@ typedef struct {
 } LOADED_IMAGE;
 
 typedef  VOID   (*PRE_OS_CHECKER_ENTRY) (VOID *Params);
+
+/**
+OS Loader module entry point. Can also be used to get the
+base address of the OS Loader's location in memory.
+
+**/
+VOID
+_ModuleEntryPoint (
+  VOID
+  );
 
 /**
 Print out the Multiboot information block.
