@@ -98,6 +98,10 @@ SpiConstructor (
     ASSERT (FALSE);
   }
 
+  if ((MmioRead32 (ScSpiBar0 + R_SPI_HSFS) & B_SPI_HSFS_FDV) == 0) {
+    DEBUG ((DEBUG_ERROR, "ERROR : SPI Flash descriptor invalid, cannot use Hardware Sequencing registers!\n"));
+    ASSERT (FALSE);
+  }
   MmioOr32 (SpiInstance->PchSpiBase + PCI_COMMAND_OFFSET, EFI_PCI_COMMAND_MEMORY_SPACE);
   SpiInstance->RegionPermission = MmioRead16 (ScSpiBar0 + R_SPI_FRAP);
   SpiInstance->SfdpVscc0Value = MmioRead32 (ScSpiBar0 + R_SPI_LVSCC);
@@ -127,7 +131,7 @@ SpiConstructor (
   /// Copy Component 0 Density
   ///
   Comp0Density = (UINT8) MmioRead32 (ScSpiBar0 + R_SPI_FDOD) & B_SPI_FLCOMP_COMP1_MASK;
-  SpiInstance->Component1StartAddr = (UINT32) (V_SPI_FLCOMP_COMP1_512KB << Comp0Density);
+  SpiInstance->Component1StartAddr = (UINT32) (SIZE_512KB << Comp0Density);
 
   ///
   /// Select FLASH_MAP1 to get Flash SC Strap Base Address
@@ -261,7 +265,6 @@ SpiFlashErase (
 /**
   Read SFDP data from the flash part.
 
-  @param[in] This                 Pointer to the SC_SPI_PROTOCOL instance.
   @param[in] ComponentNumber      The Component Number for chip select
   @param[in] ByteCount            Number of bytes in SFDP data portion of the SPI cycle, the max number is 64
   @param[out] SfdpData            The Pointer to caller-allocated buffer containing the SFDP data received
@@ -952,30 +955,43 @@ SpiGetRegionAddress (
   )
 {
   UINT32          ScSpiBar0;
-  UINT32          RegOffset;
+  UINT32          ReadValue;
   UINT32          Base;
 
-  switch (FlashRegionType) {
-  case FlashRegionBios:
-    RegOffset = R_SPI_FREG1_BIOS;
-    break;
-  case FlashRegionPlatformData:
-    RegOffset = R_SPI_FREG4_PLATFORM_DATA;
-    break;
-  default:
-    return EFI_UNSUPPORTED;
+  if (FlashRegionType >= FlashRegionMax) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (FlashRegionType == FlashRegionAll) {
+    if (BaseAddress != NULL) {
+      *BaseAddress  = 0;
+    }
+    if (RegionSize != NULL) {
+      *RegionSize  = GetSpiInstance()->Component1StartAddr;
+    }
+    return EFI_SUCCESS;
   }
 
   ScSpiBar0 = AcquireSpiBar0 ();
-  Base = (MmioRead32 (ScSpiBar0 + RegOffset) & B_SPI_FREG1_BASE_MASK) << N_SPI_FREG1_BASE;
+  ReadValue = MmioRead32 (ScSpiBar0 + R_SPI_FREG0_FLASHD + S_SPI_FREGX * (UINT32) FlashRegionType);
+  ReleaseSpiBar0 ();
+
+  //
+  // If the region is not used, the Region Base is 7FFFh and Region Limit is 0000h
+  //
+  if (ReadValue == B_SPI_FREGX_BASE_MASK) {
+    return EFI_DEVICE_ERROR;
+  }
+
+  Base = (ReadValue & B_SPI_FREG1_BASE_MASK) << N_SPI_FREG1_BASE;
   if (BaseAddress != NULL) {
     *BaseAddress = Base;
   }
+
   if (RegionSize != NULL) {
-    *RegionSize =  ((((MmioRead32 (ScSpiBar0 + RegOffset) & B_SPI_FREG1_LIMIT_MASK) >> N_SPI_FREGX_LIMIT)
-                    + 1) << N_SPI_FREGX_LIMIT_REPR) - Base;
+    *RegionSize =  ((((ReadValue & B_SPI_FREGX_LIMIT_MASK) >> N_SPI_FREGX_LIMIT) + 1) << 
+                     N_SPI_FREGX_LIMIT_REPR) - Base;
   }
-  ReleaseSpiBar0 ();
 
   return EFI_SUCCESS;
 }
