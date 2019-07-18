@@ -220,7 +220,7 @@ SetupBzImage (
   KernelBuf  = (VOID *) (UINTN)LINUX_KERNEL_BASE;
   KernelSize = Bp->Hdr.SysSize * 16;
   DEBUG ((DEBUG_INFO, "Src=0x%p Dest=0x%p KernelSize=%d\n", Buffer + BootParamSize, KernelBuf, KernelSize));
-  if (KernelSize > IMAGE_MAX_SIZE) {
+  if ((LINUX_KERNEL_BASE + KernelSize) > (((UINT32) _ModuleEntryPoint) & ~(SIZE_4KB - 1))) {
     DEBUG ((DEBUG_ERROR, "Linux kernel too big!\n"));
     Status = EFI_LOAD_ERROR;
     return Status;
