@@ -9,6 +9,8 @@
 
 CONST CHAR8 *mMmcDllStr = "MMCDLL";
 
+CONST CHAR8 *mAppendCmdLineParams = NULL;
+
 /**
   Get command line arguments from the config file.
 
@@ -258,6 +260,15 @@ UpdateOsParameters (
   // Multiboot and non-Multiboot share same Cmd Addr
   //
   CmdFile = &LoadedImage->Image.Common.CmdFile;
+
+  if (mAppendCmdLineParams != NULL) {
+    if ((AsciiStrSize (mAppendCmdLineParams) + CmdFile->Size) < CMDLINE_LENGTH_MAX) {
+      AsciiStrCatS ((CHAR8 *)CmdFile->Addr, CMDLINE_LENGTH_MAX, mAppendCmdLineParams);
+    } else {
+      DEBUG ((DEBUG_INFO, "Unable to append extra cmd line parameters!\n"));
+    }
+  }
+
   CmdFile->Size = CMDLINE_LENGTH_MAX;
   Status = AddSblCommandLine (CurrentBootOption, (CHAR8 *)CmdFile->Addr, &CmdFile->Size);
   if (EFI_ERROR (Status)) {
