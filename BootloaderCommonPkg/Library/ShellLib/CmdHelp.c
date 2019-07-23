@@ -1,14 +1,14 @@
 /** @file
   Shell command `help` to display the list of supported shell commands.
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
 #include <Library/ShellLib.h>
-
-extern CONST SHELL_COMMAND *mShellDefaultCommands[];
+#include <Library/DebugLib.h>
+#include "Shell.h"
 
 /**
   Display list of supported shell commands.
@@ -54,16 +54,15 @@ ShellCommandHelpFunc (
   IN CHAR16 *Argv[]
   )
 {
-  CONST SHELL_COMMAND **Iter;
+  LIST_ENTRY                *EntryList;
+  LIST_ENTRY                *Link;
+  SHELL_COMMAND_LIST_ENTRY  *Entry;
 
-  for (Iter = mShellDefaultCommands; *Iter != NULL; Iter++) {
-    ShellPrint (L"%-8s - %s\n", (*Iter)->Name,
-                (*Iter)->Desc);
-  }
+  EntryList = GetShellCommandEntryList ();
+  for (Link = EntryList->ForwardLink; Link != EntryList; Link = Link->ForwardLink) {
+    Entry = CR (Link, SHELL_COMMAND_LIST_ENTRY, Link, SHELL_COMMAND_LIST_ENTRY_SIGNATURE);
 
-  for (Iter = Shell->Commands; *Iter != NULL; Iter++) {
-    ShellPrint (L"%-8s - %s\n", (*Iter)->Name,
-                (*Iter)->Desc);
+    ShellPrint (L"%-8s - %s\n", Entry->ShellCommand->Name, Entry->ShellCommand->Desc);
   }
 
   return EFI_SUCCESS;

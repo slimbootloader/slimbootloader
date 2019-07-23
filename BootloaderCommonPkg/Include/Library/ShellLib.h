@@ -1,7 +1,7 @@
 /** @file
   A minimal command-line shell.
 
-  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -25,7 +25,6 @@ typedef struct {
 
 struct _SHELL {
   BOOLEAN               ShouldExit;
-  CONST SHELL_COMMAND **Commands;
 };
 
 /**
@@ -63,53 +62,18 @@ ShellPrint (
   ...
   );
 
-// Basic Commands
-extern CONST SHELL_COMMAND ShellCommandExit;
-extern CONST SHELL_COMMAND ShellCommandHelp;
-#define SHELL_COMMANDS_BASIC \
-  &ShellCommandExit, \
-  &ShellCommandHelp, \
+/**
+  Register a Shell Command
 
-// Standard Commands
-extern CONST SHELL_COMMAND ShellCommandHob;
-extern CONST SHELL_COMMAND ShellCommandMem;
-extern CONST SHELL_COMMAND ShellCommandMmap;
-extern CONST SHELL_COMMAND ShellCommandPerf;
-extern CONST SHELL_COMMAND ShellCommandBoot;
-extern CONST SHELL_COMMAND ShellCommandMmcDll;
-extern CONST SHELL_COMMAND ShellCommandCdata;
-extern CONST SHELL_COMMAND ShellCommandDmesg;
+  @param[in]  ShellCommand A Shell Command to be registered
 
-#define SHELL_COMMANDS_STANDARD \
-  &ShellCommandHob, \
-  &ShellCommandMem, \
-  &ShellCommandMmap, \
-  &ShellCommandPerf, \
-  &ShellCommandBoot, \
-  &ShellCommandMmcDll, \
-  &ShellCommandCdata, \
-  &ShellCommandDmesg, \
-
-// x86 Architectural Commands
-extern CONST SHELL_COMMAND ShellCommandCpuid;
-extern CONST SHELL_COMMAND ShellCommandIo;
-extern CONST SHELL_COMMAND ShellCommandMsr;
-extern CONST SHELL_COMMAND ShellCommandMtrr;
-extern CONST SHELL_COMMAND ShellCommandPci;
-extern CONST SHELL_COMMAND ShellCommandReset;
-extern CONST SHELL_COMMAND ShellCommandUcode;
-#define SHELL_COMMANDS_X86 \
-  &ShellCommandCpuid, \
-  &ShellCommandIo, \
-  &ShellCommandMsr, \
-  &ShellCommandMtrr, \
-  &ShellCommandPci, \
-  &ShellCommandReset, \
-  &ShellCommandUcode, \
-
-#define SHELL_COMMANDS_DEFAULT \
-  SHELL_COMMANDS_BASIC \
-  SHELL_COMMANDS_STANDARD \
-  SHELL_COMMANDS_X86 \
+  @retval EFI_SUCCESS
+  @retval EFI_OUT_OF_RESOURCES
+**/
+EFI_STATUS
+EFIAPI
+ShellCommandRegister (
+  IN  CONST SHELL_COMMAND   *ShellCommand
+  );
 
 #endif

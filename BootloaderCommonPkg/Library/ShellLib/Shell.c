@@ -1,7 +1,7 @@
 /** @file
   A minimal command-line shell.
 
-  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -12,15 +12,15 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/TimerLib.h>
+#include <Library/MemoryAllocationLib.h>
 #include "Shell.h"
 #include "Parsing.h"
+#include "ShellCmds.h"
 
 #define ESC   '\x1b'
 
-CONST SHELL_COMMAND *mShellDefaultCommands[] = {
-  SHELL_COMMANDS_DEFAULT
-  NULL,
-};
+STATIC LIST_ENTRY mShellCommandEntryList =
+  INITIALIZE_LIST_HEAD_VARIABLE (mShellCommandEntryList);
 
 /**
   Prompt user for command, receive command, run command.
@@ -111,9 +111,13 @@ Shell (
   BOOLEAN Start;
   UINTN   Index, Index1;
   SHELL   Shell;
+  CONST SHELL_COMMAND **Iter;
 
+  LoadShellCommands ();
+  for (Iter = Commands; *Iter != NULL; Iter++) {
+    ShellCommandRegister (*Iter);
+  }
   Shell.ShouldExit = FALSE;
-  Shell.Commands   = Commands;
 
   if (Timeout != 0) {
     ShellPrint (L"\n");
@@ -519,7 +523,8 @@ FindShellCommand (
   IN CONST SHELL_COMMAND **Ptr
   )
 {
-  CONST SHELL_COMMAND **Iter;
+  LIST_ENTRY                *Link;
+  SHELL_COMMAND_LIST_ENTRY  *Entry;
 
   //
   // Add '?' alias for help
@@ -528,25 +533,57 @@ FindShellCommand (
     Name = L"help";
   }
 
-  //
-  // Search the default commands firstly
-  //
-  for (Iter = mShellDefaultCommands; *Iter != NULL; Iter++) {
-    if (StrCmp (Name, (*Iter)->Name) == 0) {
-      *Ptr = *Iter;
-      return EFI_SUCCESS;
-    }
-  }
-
-  //
-  // Search the extension shell command
-  //
-  for (Iter = Shell->Commands; *Iter != NULL; Iter++) {
-    if (StrCmp (Name, (*Iter)->Name) == 0) {
-      *Ptr = *Iter;
+  for (Link = mShellCommandEntryList.ForwardLink; Link != &mShellCommandEntryList; Link = Link->ForwardLink) {
+    Entry = CR (Link, SHELL_COMMAND_LIST_ENTRY, Link, SHELL_COMMAND_LIST_ENTRY_SIGNATURE);
+    if (StrCmp (Name, Entry->ShellCommand->Name) == 0) {
+      *Ptr = Entry->ShellCommand;
       return EFI_SUCCESS;
     }
   }
 
   return EFI_NOT_FOUND;
+}
+
+/**
+  Register a Shell Command
+
+  @param[in]  ShellCommand A Shell Command to be registered
+
+  @retval EFI_SUCCESS
+  @retval EFI_OUT_OF_RESOURCES
+**/
+EFI_STATUS
+EFIAPI
+ShellCommandRegister (
+  IN  CONST SHELL_COMMAND   *ShellCommand
+  )
+{
+  SHELL_COMMAND_LIST_ENTRY  *Entry;
+
+  Entry = (SHELL_COMMAND_LIST_ENTRY *)AllocateZeroPool (sizeof (SHELL_COMMAND_LIST_ENTRY));
+  ASSERT (Entry != NULL);
+  if (Entry == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+  InitializeListHead (&Entry->Link);
+  Entry->ShellCommand = ShellCommand;
+  Entry->Signature = SHELL_COMMAND_LIST_ENTRY_SIGNATURE;
+
+  InsertTailList (&mShellCommandEntryList, &Entry->Link);
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Return a Shell Command Entry List Pointer
+
+  @retval LIST_ENTRY Pointer
+**/
+LIST_ENTRY *
+EFIAPI
+GetShellCommandEntryList (
+  VOID
+  )
+{
+  return &mShellCommandEntryList;
 }

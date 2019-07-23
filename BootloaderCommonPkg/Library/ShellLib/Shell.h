@@ -1,13 +1,21 @@
 /** @file
   A minimal command-line shell.
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
 #ifndef _SHELL_H_
 #define _SHELL_H_
+
+#define SHELL_COMMAND_LIST_ENTRY_SIGNATURE  SIGNATURE_32('S','C','L','E')
+
+typedef struct {
+  UINT32                    Signature;
+  CONST SHELL_COMMAND      *ShellCommand;
+  LIST_ENTRY                Link;
+} SHELL_COMMAND_LIST_ENTRY;
 
 /**
   Read a line of input from the serial port.
@@ -47,6 +55,17 @@ ShellReadUintn (
   OUT       CHAR16  *Buffer,
   IN  CONST UINTN    BufferSize,
   OUT       BOOLEAN *IsHex
+  );
+
+/**
+  Return a Shell Command Entry List Pointer
+
+  @retval LIST_ENTRY Pointer
+**/
+LIST_ENTRY *
+EFIAPI
+GetShellCommandEntryList (
+  VOID
   );
 
 #endif
