@@ -1784,10 +1784,12 @@ UpdateLoaderPlatformInfo (
 
   PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
 
-  if(PlatformData != NULL)
+  if(PlatformData != NULL) {
     LoaderPlatformInfo->HwState = PlatformData->BtGuardInfo.VerifiedBoot | (PlatformData->BtGuardInfo.MeasuredBoot << 1);
+    LoaderPlatformInfo->Flags   = FLAGS_SPI_DISABLE_SMM_WRITE_PROTECT;
+    DEBUG ((EFI_D_INFO, "Stage2: HwState 0x%x\n", LoaderPlatformInfo->HwState));
+  }
 
-  DEBUG ((EFI_D_INFO, "Stage2: HwState 0x%x\n", LoaderPlatformInfo->HwState));
 }
 
 /**
