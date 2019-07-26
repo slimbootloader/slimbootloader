@@ -45,6 +45,14 @@ extern EFI_GUID gLoaderPlatformInfoGuid;
 //Secure debug (0 - disabled, 1 - enabled)
 #define        HWSTATE_SECURE_DEBUG              BIT3
 
+//Definition for LOADER_PLATFORM_INFO.Flags
+
+//
+// When writing flash in SMM mode, some platform need disable SMM write
+// protection using following method:
+//  -- AsmWriteMsr32 (0x1FE, MmioRead32 (0xFED30880) | BIT0);
+//
+#define   FLAGS_SPI_DISABLE_SMM_WRITE_PROTECT    BIT0
 
 typedef struct {
   UINT8          Revision;
@@ -54,7 +62,7 @@ typedef struct {
   UINT16         PlatformId;
   UINT32         CpuCount;
   UINT16         HwState;
-  UINT8          Reserved1[2];
+  UINT16         Flags;
   UINT32         LdrFeatures;
   CHAR8          SerialNumber[MAX_SERIAL_NUMBER_LENGTH];
 } LOADER_PLATFORM_INFO;
