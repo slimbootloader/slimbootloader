@@ -34,6 +34,7 @@
 #include <Library/LocalApicLib.h>
 #include <Library/DebugAgentLib.h>
 #include <Library/TpmLib.h>
+#include <Library/ContainerLib.h>
 #include <Guid/PcdDataBaseSignatureGuid.h>
 #include <Guid/LoaderPlatformDataGuid.h>
 #include <VerInfo.h>

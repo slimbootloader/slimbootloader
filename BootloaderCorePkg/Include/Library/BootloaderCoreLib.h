@@ -79,14 +79,6 @@ typedef struct {
 
 typedef struct {
   UINT32        Signature;
-  UINT32        CompressedSize;
-  UINT32        Size;
-  UINT32        Reserved;
-  UINT8         Data[];
-} LOADER_COMPRESSED_HEADER;
-
-typedef struct {
-  UINT32        Signature;
   UINT32        EntryNum;
   UINT32        EntrySize;
   UINT32        Reserved;
@@ -196,6 +188,7 @@ typedef struct {
   VOID             *PcdDataPtr;
   VOID             *LogBufPtr;
   VOID             *DeviceTable;
+  VOID             *ContainerList;
   UINT8             PlatformName[PLATFORM_NAME_SIZE];
   UINT32            LdrFeatures;
   BL_PERF_DATA      PerfData;

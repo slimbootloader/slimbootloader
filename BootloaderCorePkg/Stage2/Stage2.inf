@@ -67,7 +67,7 @@
   DebugAgentLib
   LiteFvLib
   ElfLib
-
+  ContainerLib
   SmbiosInitLib
 
 [Guids]

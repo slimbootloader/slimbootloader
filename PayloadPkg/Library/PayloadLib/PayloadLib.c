@@ -394,3 +394,21 @@ GetDeviceTable (
   return PayloadGlobalDataPtr->DeviceTable;
 }
 
+/**
+  This function retrieves container list pointer.
+
+  @retval    The container list pointer.
+
+**/
+VOID *
+EFIAPI
+GetContainerListPtr (
+  VOID
+  )
+{
+  PAYLOAD_GLOBAL_DATA     *PayloadGlobalDataPtr;
+
+  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)PcdGet32 (PcdGlobalDataAddress);
+
+  return PayloadGlobalDataPtr->ContainerList;
+}

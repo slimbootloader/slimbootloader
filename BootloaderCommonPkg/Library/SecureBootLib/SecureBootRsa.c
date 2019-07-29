@@ -15,13 +15,16 @@
 
 /**
   Verifies the RSA signature with PKCS1-v1_5 encoding scheme defined in RSA PKCS#1.
+  Also(optional), return the hash of the message to the caller.
 
   @param[in]  Data            Data buffer pointer.
   @param[in]  Length          Data buffer size.
   @param[in]  ComponentType   Component type.
   @param[in]  Signature       Signature for the data buffer.
-  @param[in]  PubKey          Public Key data pointer.
-  @param[out] OutHash         OutHash buffer pointer.
+  @param[in]  PubKey          Public key data pointer.
+  @param[in]  PubKeyHash      Public key hash value when ComponentType is not used.
+  @param[out] OutHash         Calculated data hash value.
+
 
   @retval RETURN_SUCCESS             RSA verification succeeded.
   @retval RETURN_NOT_FOUND           Hash data for ComponentType is not found.
@@ -36,7 +39,8 @@ DoRsaVerify (
   IN       UINT8            ComponentType,
   IN CONST UINT8           *Signature,
   IN       UINT8           *PubKey,
-  OUT      UINT8           *OutHash
+  IN       UINT8           *PubKeyHash      OPTIONAL,
+  OUT      UINT8           *OutHash         OPTIONAL
   )
 {
   UINTN            Index;
@@ -56,7 +60,8 @@ DoRsaVerify (
   for (Index = 0; Index < RSA_E_SIZE; Index++) {
     TmpPubKey[RSA_MOD_SIZE + Index] = InpPubKey->PubKeyData[RSA_MOD_SIZE + RSA_E_SIZE - 1 - Index];
   }
-  Status = DoHashVerify ((CONST UINT8 *)PubKeyBuf, RSA_MOD_SIZE + RSA_E_SIZE, ComponentType);
+
+  Status = DoHashVerify ((CONST UINT8 *)PubKeyBuf, RSA_MOD_SIZE + RSA_E_SIZE, HASH_TYPE_SHA256, ComponentType, PubKeyHash);
   if (RETURN_ERROR (Status)) {
     return Status;
   }

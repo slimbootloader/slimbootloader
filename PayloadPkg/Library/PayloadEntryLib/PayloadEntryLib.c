@@ -19,6 +19,7 @@
 #include <Library/SerialPortLib.h>
 #include <Library/DebugLogBufferLib.h>
 #include <Library/DebugPrintErrorLevelLib.h>
+#include <Library/ContainerLib.h>
 #include <Guid/BootLoaderServiceGuid.h>
 #include <Guid/BootLoaderVersionGuid.h>
 #include <Guid/LoaderPlatformDataGuid.h>
@@ -56,6 +57,7 @@ PayloadInit (
   LOADER_PLATFORM_DATA      *LoaderPlatformData;
   EFI_STATUS                PcdStatus1;
   EFI_STATUS                PcdStatus2;
+  CONTAINER_LIST            *ContainerList;
 
   PcdStatus1 = PcdSet32S (PcdPayloadHobList, (UINT32)HobList);
 
@@ -104,6 +106,14 @@ PayloadInit (
       CopyMem (BufPtr, DebugLogBufferHdr, DebugLogBufferHdr->UsedLength);
       GlobalDataPtr->LogBufPtr = BufPtr;
     }
+
+    ContainerList = LoaderPlatformData->ContainerList;
+    if (ContainerList != NULL) {
+      BufPtr = AllocatePool (ContainerList->TotalLength);
+      CopyMem (BufPtr, ContainerList, ContainerList->TotalLength);
+      GlobalDataPtr->ContainerList = ContainerList;
+    }
+
   }
 
   SerialPortInitialize ();

@@ -118,7 +118,7 @@ PreparePayload (
 
     if (IsNormalPld || (Stage2Hob->PayloadId != 0)) {
       // For standard payload or components inside multi-payload, do hash verififcation
-      Status = DoHashVerify ((CONST UINT8 *)Src, Length, HashIdx);
+      Status = DoHashVerify ((CONST UINT8 *)Src, Length, HASH_TYPE_SHA256, HashIdx, NULL);
     } else {
       // For multi-payload header, do signature verififcation
       PldHdr    = (MULTI_PAYLOAD_HEADER *)&Hdr[1];
@@ -132,7 +132,7 @@ PreparePayload (
         Length = (UINT32)((UINT8 *)PldEntry - (UINT8 *)Hdr);
         PubKey = (UINT8 *)PldEntry + RSA2048NUMBYTES;
         Status = DoRsaVerify ((CONST UINT8 *)Src,  Length, COMP_TYPE_PUBKEY_CFG_DATA,
-                              (CONST UINT8 *)PldEntry, PubKey, NULL);
+                              (CONST UINT8 *)PldEntry, PubKey, NULL, NULL);
       }
     }
     AddMeasurePoint (0x3120);
@@ -231,7 +231,9 @@ NormalBootPath (
 
   // Load payload
   Dst = (UINT32 *)PreparePayload (Stage2Hob);
-  ASSERT (Dst != NULL);
+  if (Dst == NULL) {
+    CpuHalt ("Failed to load payload!");
+  }
 
   BoardInit (PostPayloadLoading);
   AddMeasurePoint (0x31A0);

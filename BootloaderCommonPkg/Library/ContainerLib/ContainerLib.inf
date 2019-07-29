@@ -1,0 +1,32 @@
+## @file
+#  Container Library Instance.
+#
+#  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = ContainerLib
+  FILE_GUID                      = F7EAF992-7473-4232-B1D2-4A798E92722A
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = ContainerLib
+
+[Sources]
+  ContainerLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  SecureBootLib
+  DecompressLib
+
+[Pcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdContainerMaxNumber
+  gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled

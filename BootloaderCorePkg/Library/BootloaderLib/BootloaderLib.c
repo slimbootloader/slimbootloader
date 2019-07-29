@@ -286,6 +286,21 @@ GetPlatformDataPtr (
 }
 
 /**
+  This function retrieves container list pointer.
+
+  @retval    The container list pointer.
+
+**/
+VOID *
+EFIAPI
+GetContainerListPtr  (
+  VOID
+  )
+{
+  return GetLoaderGlobalDataPointer()->ContainerList;
+}
+
+/**
   Gets component information from the flash map.
 
   This function will look for the component based on the input signature
