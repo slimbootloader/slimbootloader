@@ -21,12 +21,12 @@ import subprocess
 import datetime
 import zipfile
 import ntpath
-from   ctypes import *
+from   CommonUtility import *
 
 sys.dont_write_bytecode = True
 sys.path.append (os.path.join(os.path.dirname(__file__), '..', '..', 'IntelFsp2Pkg', 'Tools'))
-from   SplitFspBin import RebaseFspBin, FirmwareDevice, EFI_SECTION_TYPE, FSP_INFORMATION_HEADER, PeTeImage, Bytes2Val, Val2Bytes
-
+from   SplitFspBin  import RebaseFspBin, FirmwareDevice, EFI_SECTION_TYPE, FSP_INFORMATION_HEADER, PeTeImage
+from   GenContainer import gen_container_bin
 
 AUTO_GEN_DSC_HDR = """#
 #  DO NOT EDIT
@@ -192,6 +192,7 @@ class FlashMap(Structure):
 		"VARIABLE"      : "VARS",
 		"PAYLOAD"       : "PYLD",
 		"EPAYLOAD"      : "EPLD",
+		"SIIPFW"        : "IPFW",
 		"UEFIVARIABLE"  : "UVAR",
 		"SPI_IAS1"      : "IAS1",
 		"SPI_IAS2"      : "IAS2",
@@ -245,14 +246,6 @@ class FlashMap(Structure):
 		self.length  = sizeof(self) + len(self.descriptors) * sizeof(FlashMapDesc)
 
 
-def run_process (arg_list, print_cmd = True):
-	if print_cmd:
-		print ' '.join(arg_list)
-	sys.stdout.flush()
-	x = subprocess.call (arg_list)
-	if x: sys.exit(1)
-
-
 def split_fsp(path, out_dir):
 	run_process ([
 				"python",
@@ -295,30 +288,6 @@ def cfg_data_tool (command, infiles, outfile, extra = []):
 	arg_list.extend (extra)
 	arg_list.extend (infiles)
 	run_process (arg_list)
-
-
-def compress (path, alg="Lzma"):
-	root_path = os.path.splitext(path)[0]
-	if alg == "Lzma":
-		sig = "LZMA"
-	elif alg == "Tiano":
-		sig = "LZUF"
-	elif alg == "Lz4":
-		sig = "LZ4 "
-	elif alg == "Dummy":
-		sig = "LZDM"
-	else:
-		raise Exception ("Unsupported compression '%s' !" % alg)
-	if sig == "LZDM":
-		shutil.copy(path, root_path+'.lz')
-	else:
-		cmdline = [
-			"%sCompress" % alg,
-			"-e",
-			"-o", root_path+'.lz',
-			path]
-		run_process (cmdline, False)
-	add_file_size(root_path+'.lz', path, sig)
 
 
 def report_image_layout (fv_dir, stitch_file, report_file):
@@ -386,14 +355,6 @@ def get_payload_list (payloads):
 	return pld_lst
 
 
-def gen_file_from_object (file, object):
-	open (file, 'wb').write(object)
-
-
-def gen_file_with_size (file, size):
-	open (file, 'wb').write('\xFF' * size);
-
-
 def gen_ias_file (rel_file_path, file_space, out_file):
 	bins = bytearray()
 	file_path = os.path.join(os.environ['PLT_SOURCE'], rel_file_path)
@@ -408,6 +369,7 @@ def gen_ias_file (rel_file_path, file_space, out_file):
 		raise Exception ("Insufficient region size 0x%X for file '%s', requires size 0x%X!" % (file_space, os.path.basename(file_path), file_size))
 	bins.extend (file_bin + '\xff' * (file_space - file_size))
 	open (out_file, 'wb').write (bins)
+
 
 def gen_flash_map_bin (flash_map_file, comp_list):
 	flash_map = FlashMap()
@@ -641,19 +603,6 @@ def gen_hash_file (src_path, hash_path = '', is_key = False):
 		fo.write(ho.digest())
 
 
-def add_file_size (dst_file, src_path, signature):
-	fi = open(dst_file,'rb')
-	di = fi.read()
-	fi.close()
-	fo = open(dst_file,'wb')
-	fo.write(signature[0:4])
-	fo.write(struct.pack('I', len(di)))
-	fo.write(struct.pack('I', os.path.getsize(src_path)))
-	fo.write(struct.pack('I', 0))
-	fo.write(di)
-	fo.close()
-
-
 def align_pad_file (src, dst, val, mode = STITCH_OPS.MODE_FILE_ALIGN, pos = STITCH_OPS.MODE_POS_TAIL):
 	fi = open(src, 'rb')
 	di = fi.read()
@@ -694,14 +643,14 @@ def gen_vbt_file (brd_pkg_name, vbt_dict, vbt_file):
 
 	# Multiple VBT files, create signature and entry number.
 	vbtbin = bytearray (b'$MVB')
-	vbtbin.extend(bytearray(Val2Bytes(len(vbt_dict), 1)) + b'\x00' * 3)
+	vbtbin.extend(bytearray(value_to_bytes(len(vbt_dict), 1)) + b'\x00' * 3)
 	for vbt in vbt_dict:
 		if type(vbt) == str:
 			if len(vbt) != 4:
 				raise Exception ("VBT key needs to be 4 chars, got '%s' !" % vbt)
 			imageid = bytearray(vbt)
 		else:
-			imageid = bytearray(Val2Bytes(vbt, 4))
+			imageid = bytearray(value_to_bytes(vbt, 4))
 		src_path = os.path.join(os.environ['PLT_SOURCE'], 'Platform', brd_pkg_name, 'VbtBin', vbt_dict[vbt])
 		if not os.path.exists(src_path):
 			raise Exception ("File '%s' not found !" % src_path)
@@ -711,7 +660,7 @@ def gen_vbt_file (brd_pkg_name, vbt_dict, vbt_file):
 		# Write image id and length (DWORD aligned) for VBT image
 		vbtbin.extend(imageid)
 		padding = ((len(bin) + 3) & ~3) - len(bin)
-		vbtbin.extend(bytearray(Val2Bytes(len(bin) + padding + 8, 4)))
+		vbtbin.extend(bytearray(value_to_bytes(len(bin) + padding + 8, 4)))
 		vbtbin.extend(bin + b'\x00' * padding)
 	fp = open(vbt_file, 'wb')
 	fp.write(vbtbin)
@@ -816,11 +765,12 @@ def gen_ver_info_txt (ver_file, ver_info):
 	h_file.write('Dirty         = %d\n'    % ver_info.ImageVersion.Dirty)
 	h_file.close()
 
+
 def check_for_openssl():
 	'''
 	Verify OpenSSL executable is available
 	'''
-	cmdline = os.path.join(os.environ.get('OPENSSL_PATH', ''), 'openssl')
+	cmdline = get_openssl_path ()
 	try:
 		version = subprocess.check_output([cmdline, 'version'])
 	except:
@@ -839,56 +789,6 @@ def check_for_nasm():
 		print 'ERROR: NASM not available. Please set NASM_PREFIX.'
 		sys.exit(1)
 	return version
-
-def rsa_sign_file (priv_key, pub_key, in_file, out_file, inc_dat = False, inc_key = False):
-	cmdline = os.path.join(os.environ.get ('OPENSSL_PATH', ''), 'openssl')
-	cmdargs = [cmdline, 'dgst' , '-sha256', '-sign', '%s' % priv_key, '-out', '%s' % out_file, '%s' % in_file]
-	run_process (cmdargs, False)
-
-	if inc_dat:
-		bins = bytearray(open(in_file, 'rb').read())
-	else:
-		bins = bytearray()
-	sign = open(out_file, 'rb').read()
-	bins.extend(sign)
-
-	key = gen_pub_key (priv_key, pub_key)
-
-	if inc_key:
-		bins.extend(key)
-	open(out_file, 'wb').write(bins)
-
-
-def gen_pub_key (priv_key, pub_key):
-	cmdline = os.path.join(os.environ.get ('OPENSSL_PATH', ''), 'openssl')
-	x = subprocess.call([cmdline, 'rsa', '-pubout', '-text', '-out', '%s' % pub_key, '-noout', '-in', '%s' % priv_key])
-	if x:
-		raise Exception ('Failed to generate public key using openssl !')
-
-	data = open(pub_key, 'r').read()
-	data = data.replace('\r', '')
-	data = data.replace('\n', '')
-	data = data.replace('  ', '')
-
-	#
-	# Extract the modulus
-	#
-	match = re.search('modulus(.*)publicExponent:\s+(\d+)\s+', data)
-	if not match:
-		raise Exception('Public key not found!')
-	modulus  = match.group(1).replace(':', '')
-	exponent = int(match.group(2))
-
-	# Remove the '00' from the front if the MSB is 1
-	if (len(modulus) != 512):
-		modulus = modulus[2:]
-	mod = bytearray.fromhex(modulus)
-	exp = bytearray.fromhex('{:08x}'.format(exponent))
-
-	key = "$IPP" + mod + exp
-	open(pub_key, 'wb').write(key)
-
-	return key
 
 
 def copy_images_to_output (fv_dir, zip_file, img_list, rgn_name_list, out_list):
