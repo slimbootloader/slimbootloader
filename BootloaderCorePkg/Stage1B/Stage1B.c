@@ -67,7 +67,7 @@ PrepareStage2 (
     }
 
     // Verify Stage2 image only.
-    Status = DoHashVerify ((CONST UINT8 *)Src, Length, COMP_TYPE_STAGE_2);
+    Status = DoHashVerify ((CONST UINT8 *)Src, Length, HASH_TYPE_SHA256, COMP_TYPE_STAGE_2, NULL);
     AddMeasurePoint (0x20A0);
     if (EFI_ERROR (Status)) {
       if (Status != RETURN_NOT_FOUND) {
@@ -183,7 +183,7 @@ CreateConfigDatabase (
         SigPtr  = (UINT8 *)CfgBlob + CfgBlob->UsedLength;
         KeyPtr  = SigPtr + RSA2048NUMBYTES;
         Status  = DoRsaVerify ((UINT8 *)CfgBlob, CfgBlob->UsedLength, COMP_TYPE_PUBKEY_CFG_DATA,
-                     SigPtr, KeyPtr, Stage1bHob->ConfigDataHash);
+                     SigPtr, KeyPtr, NULL, Stage1bHob->ConfigDataHash);
         if (EFI_ERROR (Status)) {
           DEBUG ((DEBUG_INFO, "EXT CFG Data ignored ... %r\n", Status));
           ExtCfgAddPtr = NULL;
@@ -266,6 +266,7 @@ SecStartup2 (
   DEBUG_LOG_BUFFER_HEADER  *OldLogBuf;
   BOOLEAN                   OldStatus;
   PLT_DEVICE_TABLE         *DeviceTable;
+  CONTAINER_LIST           *ContainerList;
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
   ASSERT (LdrGlobal != NULL);
@@ -470,6 +471,12 @@ SecStartup2 (
     LdrGlobal->DeviceTable = AllocatePool (AllocateLen);
     CopyMem (LdrGlobal->DeviceTable, DeviceTable, AllocateLen);
   }
+
+  AllocateLen = PcdGet32 (PcdContainerMaxNumber) * sizeof (CONTAINER_ENTRY) + sizeof (CONTAINER_LIST);
+  LdrGlobal->ContainerList = AllocateZeroPool (AllocateLen);
+  ContainerList = (CONTAINER_LIST *) LdrGlobal->ContainerList;
+  ContainerList->Signature   = CONTAINER_LIST_SIGNATURE;
+  ContainerList->TotalLength = AllocateLen;
 
   BoardInit (PostMemoryInit);
   AddMeasurePoint (0x2040);

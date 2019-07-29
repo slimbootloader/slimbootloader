@@ -50,6 +50,8 @@
   gPlatformCommonLibTokenSpaceGuid.PcdHeciLibId              |          5 |  UINT8 | 0x20000106
   gPlatformCommonLibTokenSpaceGuid.PcdMmcTuningLibId         |          6 |  UINT8 | 0x20000107
 
+  gPlatformCommonLibTokenSpaceGuid.PcdContainerMaxNumber     |          8 | UINT32 | 0x20000120
+
   gPlatformCommonLibTokenSpaceGuid.PcdCpuLocalApicBaseAddress| 0xFEE00000 | UINT32  | 0x20000186
   gPlatformCommonLibTokenSpaceGuid.PcdSupportedMediaTypeMask | 0xFFFFFFFF | UINT32  | 0x20000187
   gPlatformCommonLibTokenSpaceGuid.PcdMmcTuningLba           | 0x00000040 | UINT32  | 0x20000188

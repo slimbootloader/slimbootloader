@@ -35,6 +35,7 @@
 #include <Library/TpmLib.h>
 #include <Library/DebugLogBufferLib.h>
 #include <Library/LiteFvLib.h>
+#include <Library/ContainerLib.h>
 #include <Guid/BootLoaderServiceGuid.h>
 #include <Guid/BootLoaderVersionGuid.h>
 #include <Guid/LoaderPlatformInfoGuid.h>

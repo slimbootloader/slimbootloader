@@ -556,6 +556,7 @@ BuildExtraInfoHob (
     LoaderPlatformData->Revision = 1;
     LoaderPlatformData->DebugLogBuffer = (DEBUG_LOG_BUFFER_HEADER *) GetDebugLogBufferPtr ();
     LoaderPlatformData->ConfigDataPtr  = GetConfigDataPtr ();
+    LoaderPlatformData->ContainerList  = GetContainerListPtr ();
   }
 
   // Build flash map info hob

@@ -36,6 +36,14 @@ typedef struct {
   UINT32        BufSize;
 } LIBRARY_DATA;
 
+typedef struct {
+  UINT32        Signature;
+  UINT32        CompressedSize;
+  UINT32        Size;
+  UINT32        Reserved;
+  UINT8         Data[];
+} LOADER_COMPRESSED_HEADER;
+
 #pragma pack()
 
 //
@@ -533,6 +541,19 @@ EFIAPI
 GetDeviceAddr (
   IN  UINT8          DeviceType,
   IN  UINT8          DeviceInstance
+  );
+
+
+/**
+  This function retrieves container list pointer.
+
+  @retval    The container list pointer.
+
+**/
+VOID *
+EFIAPI
+GetContainerListPtr (
+  VOID
   );
 
 #endif

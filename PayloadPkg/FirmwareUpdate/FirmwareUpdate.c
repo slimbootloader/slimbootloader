@@ -343,7 +343,7 @@ GetVersionfromFv (
   Verify the firmware version to make sure it is no less than current firmware version.
 
   @param[in] ImageHdr     Pointer to the fw mgmt capsule image header
-  @param[in] FwPolicy     Firmware update policy. 
+  @param[in] FwPolicy     Firmware update policy.
 
   @retval  EFI_SUCCESS    The operation completed successfully.
   @retval  others         There is error happening.
@@ -457,8 +457,8 @@ GetStateMachineFlag (
   Set state machine flag in flash.
 
   This function will set state machine flag in the bootloader reserved region
-  First byte in the booloader reserved region is state machine flag 
-  
+  First byte in the booloader reserved region is state machine flag
+
   ----------------------------------------------------------------------------------------
   |  SM                            |             Operation                               |
   ----------------------------------------------------------------------------------------
@@ -486,7 +486,7 @@ SetStateMachineFlag (
   FW_UPDATE_COMP_STATUS   FwUpdCompStatus[MAX_FW_COMPONENTS];
 
   DEBUG((DEBUG_INIT, "Set next FWU state: 0x%02X\n", StateMachine));
-  
+
   FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
 
   //
@@ -499,9 +499,9 @@ SetStateMachineFlag (
   }
 
   //
-  // If we are to clear state machine, Wipe the whole region and preserve 
+  // If we are to clear state machine, Wipe the whole region and preserve
   // the last update status and version for all firmwares
-  // 
+  //
   // If we are to set the capsule to processing, then this is start of the firmware update
   // in this case, clear the whole region.
   //
@@ -535,7 +535,7 @@ SetStateMachineFlag (
     UpdateSize = sizeof(UINT64);
 
     //
-    // Write back the firware update status 
+    // Write back the firware update status
     //
     Status = BootMediaWrite((FwUpdStatusOffset + sizeof(FW_UPDATE_STATUS)),\
                             MAX_FW_COMPONENTS * sizeof(FW_UPDATE_COMP_STATUS), (UINT8 *)&FwUpdCompStatus);
@@ -761,7 +761,7 @@ UpdateStatus (
   //
   for (Count = 0; Count < MAX_FW_COMPONENTS; Count ++) {
     if (CompareGuid(&(FwUpdCompStatus[Count].FirmwareId), ImageId) == TRUE) {
-      DEBUG((DEBUG_VERBOSE, "FOund the component to update status\n")); 
+      DEBUG((DEBUG_VERBOSE, "FOund the component to update status\n"));
       break;
     }
   }
@@ -801,21 +801,21 @@ UpdateStatus (
   // Update a field at a time, if we loose power in between, we can still have control
   //
   ByteOffset = COMP_STATUS_OFFSET(FwUpdStatusOffset, Count) + OFFSET_OF(FW_UPDATE_COMP_STATUS, LastAttemptVersion);
-  Status = BootMediaWrite(ByteOffset, sizeof(UINT32), (UINT8 *)&(FwUpdCompStatus[Count].LastAttemptVersion)); 
+  Status = BootMediaWrite(ByteOffset, sizeof(UINT32), (UINT8 *)&(FwUpdCompStatus[Count].LastAttemptVersion));
   if (EFI_ERROR (Status)) {
     DEBUG((DEBUG_ERROR, "Updating last attempt version failed with status: %r\n", Status));
     return Status;
   }
 
   ByteOffset = COMP_STATUS_OFFSET(FwUpdStatusOffset, Count) + OFFSET_OF(FW_UPDATE_COMP_STATUS, LastAttemptStatus);
-  Status = BootMediaWrite(ByteOffset, sizeof(UINT32), (UINT8 *)&(FwUpdCompStatus[Count].LastAttemptStatus)); 
+  Status = BootMediaWrite(ByteOffset, sizeof(UINT32), (UINT8 *)&(FwUpdCompStatus[Count].LastAttemptStatus));
   if (EFI_ERROR (Status)) {
     DEBUG((DEBUG_ERROR, "Updating last attempt status failed with status: %r\n", Status));
     return Status;
   }
 
   ByteOffset = COMP_STATUS_OFFSET(FwUpdStatusOffset, Count) + OFFSET_OF(FW_UPDATE_COMP_STATUS, UpdatePending);
-  Status = BootMediaWrite(ByteOffset, sizeof(UINT8), (UINT8 *)&(FwUpdCompStatus[Count].UpdatePending)); 
+  Status = BootMediaWrite(ByteOffset, sizeof(UINT8), (UINT8 *)&(FwUpdCompStatus[Count].UpdatePending));
   if (EFI_ERROR (Status)) {
     DEBUG((DEBUG_ERROR, "Updating updatepending failed with status: %r\n", Status));
     return Status;
@@ -900,7 +900,7 @@ AuthenticateCapsule (
     }
   }
 
-  Status    = DoRsaVerify (FwImage, Header->SignatureOffset, COMP_TYPE_PUBKEY_FWU, Signature, Key, NULL);
+  Status    = DoRsaVerify (FwImage, Header->SignatureOffset, COMP_TYPE_PUBKEY_FWU, Signature, Key, NULL, NULL);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Image verification failed, %r!\n", Status));
     return EFI_SECURITY_VIOLATION;
@@ -924,7 +924,7 @@ AuthenticateCapsule (
 }
 
 /**
-  Process capsule image. 
+  Process capsule image.
 
   This function will abstract firmware images from the capsule image. for each
   of the firmware image found, FW_UPDATE_COMP_STATUS structure will be created
@@ -968,7 +968,7 @@ ProcessCapsule (
 
   //
   // If state machine is 0xFF, Capsule is not processed yet
-  // set SM to capsule processing stage, this will reset back to 
+  // set SM to capsule processing stage, this will reset back to
   // init at the end of firmware update
   //
   if (FwUpdStatus.StateMachine == FW_UPDATE_SM_INIT) {
@@ -1044,10 +1044,10 @@ ProcessCapsule (
 /**
   Find payload in the capsule image.
 
-  This function will parse through the capsule image to find the payload 
-  matching the input guid. 
+  This function will parse through the capsule image to find the payload
+  matching the input guid.
 
-  This function if provided with an empty guid will return the first payload 
+  This function if provided with an empty guid will return the first payload
   found
 
   @param[in] ImageId        Guid to identify payload in the capsule image
@@ -1190,9 +1190,9 @@ UpdateSystemFirmware (
 /**
   Perform Firmware update.
 
-  This function based on the image type id guid from the image header will 
+  This function based on the image type id guid from the image header will
   call the respective functions to perform capsule update.
-*  
+*
   @param[in] CapImage       Pointer to the capsule Image
   @param[in] CapImageSize   Size of the capsule image in bytes
 * @param[in] ImageHdr       Pointer to fw mgmt capsule Image header
@@ -1311,7 +1311,7 @@ InitFirmwareUpdate (
         // Update component state in the reserved region
         //
         ByteOffset = COMP_STATUS_OFFSET(FwUpdStatusOffset, Count) + OFFSET_OF(FW_UPDATE_COMP_STATUS, UpdatePending);
-        Status = BootMediaWrite(ByteOffset, sizeof(UINT8), (UINT8 *)&(FwUpdCompStatus[Count].UpdatePending)); 
+        Status = BootMediaWrite(ByteOffset, sizeof(UINT8), (UINT8 *)&(FwUpdCompStatus[Count].UpdatePending));
         if (EFI_ERROR (Status)) {
           DEBUG((DEBUG_ERROR, "BootMediaWrite. offset: 0x%llx, Status = 0x%x\n", (FwUpdStatusOffset + sizeof(FW_UPDATE_STATUS)), Status));
           return Status;
@@ -1338,7 +1338,7 @@ InitFirmwareUpdate (
       //
       // Update firmware update status of the component in reserved region
       //
-      Status = UpdateStatus(&(ImgHdr->UpdateImageTypeId), (UINT16)ImgHdr->Version, Status); 
+      Status = UpdateStatus(&(ImgHdr->UpdateImageTypeId), (UINT16)ImgHdr->Version, Status);
       if (EFI_ERROR (Status)) {
         DEBUG ((DEBUG_ERROR, "UpdateStatus failed! Status = %r\n", Status));
         DEBUG((DEBUG_ERROR, "Reset required to proceed with the firmware update.\n"));

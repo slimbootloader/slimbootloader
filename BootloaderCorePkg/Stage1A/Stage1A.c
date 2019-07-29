@@ -59,7 +59,7 @@ PrepareStage1B (
     if (IS_COMPRESSED (Src)) {
       Length = sizeof (LOADER_COMPRESSED_HEADER) + Hdr->CompressedSize;
     }
-    Status = DoHashVerify ((CONST UINT8 *)Src, Length, COMP_TYPE_STAGE_1B);
+    Status = DoHashVerify ((CONST UINT8 *)Src, Length, HASH_TYPE_SHA256, COMP_TYPE_STAGE_1B, NULL);
     AddMeasurePoint (0x10A0);
     if (EFI_ERROR (Status)) {
       if (Status != RETURN_NOT_FOUND) {
