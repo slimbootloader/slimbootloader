@@ -633,3 +633,35 @@ AllocateRuntimePool (
 {
   return InternalAllocatePool (EfiRuntimeServicesData, AllocationSize);
 }
+
+/**
+  This function allocates temporary memory pool.
+
+  @param[in]  AllocationSize    The memory pool size to allocate.
+
+  @retval     A pointer to the allocated temporary buffer or NULL if allocation fails.
+
+**/
+VOID *
+EFIAPI
+AllocateTemporaryMemory (
+  IN UINTN  AllocationSize
+  )
+{
+  return InternalAllocatePool (EfiBootServicesData, AllocationSize);
+}
+
+/**
+  This function frees temporary memory pool.
+
+  @param[in] Buffer  Temporary memory pool to free.
+
+**/
+VOID
+EFIAPI
+FreeTemporaryMemory (
+  IN VOID   *Buffer
+  )
+{
+  FreePool (Buffer);
+}

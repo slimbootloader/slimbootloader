@@ -59,7 +59,7 @@ PrepareStage2 (
   if (FixedPcdGetBool (PcdVerifiedBootEnabled)) {
     // Copy and Verify if Stage2 is in Flash
     if (IS_FLASH_SPACE (Src)) {
-      Dst = (UINT32)AllocateTemporaryPages (EFI_SIZE_TO_PAGES (Length));
+      Dst = (UINT32)AllocateTemporaryMemory (Length);
       CopyMem ((VOID *)Dst, (VOID *)Src, Length);
       AddMeasurePoint (0x2090);
       Src = Dst;
@@ -94,7 +94,7 @@ PrepareStage2 (
   Status = DecompressGetInfo (Hdr->Signature, Hdr->Data, Hdr->CompressedSize, &DstLen, &ScrLen);
   if (!EFI_ERROR (Status)) {
     // Decompress Stage 2
-    Scr    = (UINT32)AllocateTemporaryPages (EFI_SIZE_TO_PAGES (ScrLen));
+    Scr    = (UINT32)AllocateTemporaryMemory (ScrLen);
     Status = Decompress (Hdr->Signature, Hdr->Data, Hdr->CompressedSize, (VOID *)Dst, (VOID *)Scr);
     AddMeasurePoint (0x20B0);
   }

@@ -734,7 +734,7 @@ InitializeSmbiosInfo (
 
   Index         = 0;
   PlatformId    = GetPlatformId ();
-  TempSmbiosStrTbl  = (SMBIOS_TYPE_STRINGS *) AllocateTemporaryPages (0);
+  TempSmbiosStrTbl  = (SMBIOS_TYPE_STRINGS *) AllocateTemporaryMemory (0);
   VerInfoTbl    = GetLoaderGlobalDataPointer()->VerInfoPtr;
 
   //

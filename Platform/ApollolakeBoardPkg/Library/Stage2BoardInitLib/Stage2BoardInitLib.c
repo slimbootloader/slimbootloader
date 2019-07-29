@@ -88,7 +88,7 @@ CreateNhltAcpiTable (
     HdaNhltEndpoints[HdaI2sCaptureHP].Enable  = TRUE;
   }
 
-  Table = (NHLT_ACPI_TABLE *)AllocateTemporaryPages (0);
+  Table = (NHLT_ACPI_TABLE *)AllocateTemporaryMemory (0);
 
   NhltConstructor (HdaNhltEndpoints, Table, &TableLength);
   NhltAcpiHeaderConstructor (Table, TableLength);
@@ -161,7 +161,7 @@ GpioInit (
     return;
   }
 
-  GpioCfgDataBuffer = (VOID *)AllocateTemporaryPages (0);  //allocate new buffer
+  GpioCfgDataBuffer = (VOID *)AllocateTemporaryMemory (0);  //allocate new buffer
   GpioConfigSmip    = (GPIO_CONFIG_SMIP *)GpioCfgDataBuffer;
   SmipEntry         = NULL;
   GpioEntries       = 0;
@@ -1092,7 +1092,7 @@ SaveNvsData (
   DEBUG ((DEBUG_INFO, "\nSave MRC NVS Data\n"));
 
   PlatformData  = (PLATFORM_DATA *)GetPlatformDataPtr ();
-  MemPool       = AllocateTemporaryPages (0);
+  MemPool       = AllocateTemporaryMemory (0);
   TmpPtr        = (UINT8 *)Buffer + Length - sizeof (MrcParamHdr->Crc);
 
   // Read current MRC Param DATA

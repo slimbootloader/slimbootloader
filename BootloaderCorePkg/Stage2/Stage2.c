@@ -99,7 +99,7 @@ PreparePayload (
 
     // Security requirement: Verify in memory only (Not in flash)
     if ((Stage2Hob->PayloadBase == 0) && IS_FLASH_SPACE (Src)) {
-      TmpDst = (UINT32) AllocateTemporaryPages (EFI_SIZE_TO_PAGES (Length));
+      TmpDst = (UINT32) AllocateTemporaryMemory (Length);
       CopyMem ((VOID *)TmpDst, (VOID *)Src, Length);
       AddMeasurePoint (0x3110);
       Src = TmpDst;
@@ -165,7 +165,7 @@ PreparePayload (
     DEBUG ((DEBUG_INFO, "Load Payload ID 0x%08X @ 0x%08X\n", Stage2Hob->PayloadId, Dst));
     Status = DecompressGetInfo (Hdr->Signature, Hdr->Data, Hdr->CompressedSize, &DstLen, &ScrLen);
     if (!EFI_ERROR (Status)) {
-      Scr    = AllocateTemporaryPages (EFI_SIZE_TO_PAGES (ScrLen));
+      Scr    = AllocateTemporaryMemory (ScrLen);
       Status = Decompress (Hdr->Signature, Hdr->Data, Hdr->CompressedSize, (VOID *)Dst, Scr);
       FreeTemporaryMemory (Scr);
     }
@@ -480,7 +480,7 @@ SecStartup (
   AddMeasurePoint (0x3090);
 
   if (FixedPcdGetBool (PcdPciEnumEnabled)) {
-    MemPool = AllocateTemporaryPages (0);
+    MemPool = AllocateTemporaryMemory (0);
     DEBUG ((DEBUG_INIT, "PCI Enum\n"));
     Status = PciEnumeration (MemPool);
     AddMeasurePoint (0x30A0);

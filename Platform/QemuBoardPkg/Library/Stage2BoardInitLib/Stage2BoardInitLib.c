@@ -196,7 +196,7 @@ GpioInit (
   }
 
   Offset     = 0;
-  GpioTable  = (UINT8 *)AllocateTemporaryPages (0);  //allocate new buffer
+  GpioTable  = (UINT8 *)AllocateTemporaryMemory (0);  //allocate new buffer
   GpioCfgDataBuffer = GpioTable;
 
   for (Index = 0; Index  < GpioCfgHdr->GpioItemCount; Index++) {
