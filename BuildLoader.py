@@ -261,6 +261,7 @@ class Build(object):
 		self._target                       = 'RELEASE' if board.RELEASE_MODE  else 'DEBUG'
 		self._fsp_basename                 = 'FspDbg'  if board.FSPDEBUG_MODE else 'FspRel'
 		self._fv_dir                       = os.path.join(self._workspace, 'Build', 'BootloaderCorePkg', '%s_%s' % (self._target, self._toolchain), 'FV')
+		self._key_dir                      = os.path.join('BootloaderCorePkg', 'Tools', 'Keys')
 		self._img_list                     = board.GetImageLayout()
 		self._pld_list                     = get_payload_list (board._PAYLOAD_NAME.split(';'))
 		self._comp_list                    = []
@@ -296,7 +297,7 @@ class Build(object):
 		# Check FIT signature
 		fit_offset = fit_address.value - base
 		fit_header = FitEntry.from_buffer(rom, fit_offset)
-		if fit_header.address != Bytes2Val (bytearray(FitEntry.FIT_SIGNATURE)):
+		if fit_header.address != bytes_to_value (bytearray(FitEntry.FIT_SIGNATURE)):
 			raise Exception('  FIT signature not found')
 
 		num_fit_entries = 0
@@ -749,7 +750,7 @@ class Build(object):
 		# Patch flashmap to indicate boot parititon
 		fo = open(os.path.join(self._fv_dir, 'STAGE1A_B.fd'), 'r+b')
 		bins = bytearray(fo.read())
-		fmapoff = (Bytes2Val(bins[-8:-4]) + len(bins)) & 0xFFFFFFFF
+		fmapoff = (bytes_to_value(bins[-8:-4]) + len(bins)) & 0xFFFFFFFF
 		fmaphdr = FlashMap.from_buffer (bins, fmapoff)
 		if fmaphdr.sig != FlashMap.FLASH_MAP_SIGNATURE:
 			raise Exception ('Failed to locate flash map in STAGE1A_B.fd !')
@@ -1100,7 +1101,6 @@ class Build(object):
 		                 os.path.join(self._fv_dir, "PAYLOAD.bin"),
 		                 self._board._CFG_PRIVATE_KEY, self._board.BOARD_PKG_NAME)
 
-
 		# create firmware update key
 		if self._board.ENABLE_FWU:
 			srcfile = "../IA32/PayloadPkg/FirmwareUpdate/FirmwareUpdate/OUTPUT/FirmwareUpdate.efi"
@@ -1118,6 +1118,12 @@ class Build(object):
 				file_path  = os.path.join('Platform', self._board.BOARD_PKG_NAME, 'SpiIasBin', 'iasimage%d.bin' % idx)
 				file_space = getattr(self._board, 'SPI_IAS%d_SIZE' % idx)
 				gen_ias_file (file_path, file_space, os.path.join(self._fv_dir, "SPI_IAS%d.bin" % idx))
+
+		# generate container images
+		if getattr(self._board, "GetContainerList", None):
+		  container_list = self._board.GetContainerList ()
+		  component_dir = os.path.join(os.environ['PLT_SOURCE'], 'Platform', self._board.BOARD_PKG_NAME, 'Binaries')
+		  gen_container_bin (container_list, self._fv_dir, component_dir, self._key_dir, '')
 
 		# patch stages
 		self.patch_stages ()
