@@ -9,7 +9,7 @@
 #include <Library/GraphicsLib.h>
 #include <IndustryStandard/Bmp.h>
 #include <Protocol/GraphicsOutput.h>
-#include <Library/MemoryAllocationLib.h>
+#include <Library/BlMemoryAllocationLib.h>
 #include <Guid/GraphicsInfoHob.h>
 
 /**
@@ -161,7 +161,7 @@ DisplayBmpToFrameBuffer (
     // GopBlt is not allocated by caller.
     //
     *GopBltSize = (UINTN) BltBufferSize;
-    *GopBlt     = AllocateRuntimePages (EFI_SIZE_TO_PAGES (*GopBltSize));
+    *GopBlt     = AllocateTemporaryMemory (*GopBltSize);
     IsAllocated = TRUE;
     if (*GopBlt == NULL) {
       return EFI_OUT_OF_RESOURCES;

@@ -14,6 +14,8 @@
 #include <Library/DebugLib.h>
 #include <Library/BootloaderCoreLib.h>
 
+#define   POOL_MIN_ALIGNMENT    0x10
+
 /**
   Update the Memory pool top address.
 
@@ -72,7 +74,7 @@ AllocatePool (
   LdrGlobal = GetLoaderGlobalDataPointer();
   Top  = LdrGlobal->MemPoolCurrTop;
   Top -= AllocationSize;
-  Top  = ALIGN_DOWN (Top, 0x10);
+  Top  = ALIGN_DOWN (Top, POOL_MIN_ALIGNMENT);
   InternalUpdateMemPoolTop (Top);
   return (VOID *)Top;
 }
@@ -176,22 +178,17 @@ AllocateAlignedPages (
 }
 
 /**
-  Allocates one or more 4KB pages of type EfiRuntimeServicesData.
+  This function allocates temporary memory pool.
 
-  Allocates the number of 4KB pages of type EfiRuntimeServicesData and returns a pointer to the
-  allocated buffer.  The buffer returned is aligned on a 4KB boundary.  If Pages is 0, then NULL
-  is returned.  If there is not enough memory remaining to satisfy the request, then NULL is
-  returned.
+  @param[in]  AllocationSize    The memory pool size to allocate.
 
-  @param  Pages                 The number of 4 KB pages to allocate.
-
-  @return A pointer to the allocated buffer or NULL if allocation fails.
+  @retval   A pointer to the allocated buffer or NULL if allocation fails.
 
 **/
 VOID *
 EFIAPI
-AllocateRuntimePages (
-  IN UINTN  Pages
+AllocateTemporaryMemory (
+  IN UINTN  AllocationSize
   )
 {
   LOADER_GLOBAL_DATA  *LdrGlobal;
@@ -200,45 +197,35 @@ AllocateRuntimePages (
 
   LdrGlobal = GetLoaderGlobalDataPointer();
   Bottom  = LdrGlobal->MemPoolCurrBottom;
-  Bottom  = ALIGN_UP (Bottom, EFI_PAGE_SIZE);
-  NewBottom = Bottom + Pages * EFI_PAGE_SIZE;
+  Bottom  = ALIGN_UP (Bottom, POOL_MIN_ALIGNMENT);
+  NewBottom = Bottom + AllocationSize;
   InternalUpdateMemPoolBottom (NewBottom);
   return (VOID *)Bottom;
 }
 
 /**
-  This function Allocates temporary memory pool.
+  This function frees temporary memory pool.
 
-  @param  Pages  The number of 4 KB pages to allocate.
-**/
-VOID *
-EFIAPI
-AllocateTemporaryPages (
-  IN UINTN  Pages
-  )
-{
-  return  AllocateRuntimePages(Pages);
-}
-
-/**
-  This function reset temporary memory pool.
-
-  @param[in] Bottom  New memory pool bottom pointer.
-                     NULL indicates to free all temporary memory pool
+  @param[in] Buffer  Temporary memory pool to free.
+                     NULL indicates to free all temporary memory pool previously allocated
 **/
 VOID
 EFIAPI
 FreeTemporaryMemory (
-  IN VOID   *Bottom
+  IN VOID   *Buffer
   )
 {
   LOADER_GLOBAL_DATA  *LdrGlobal;
+  UINT32               NewBottom;
 
   LdrGlobal = GetLoaderGlobalDataPointer();
-  if (Bottom == NULL) {
+  if (Buffer == NULL) {
     LdrGlobal->MemPoolCurrBottom = LdrGlobal->MemPoolStart;
   } else {
-    LdrGlobal->MemPoolCurrBottom = (UINT32)Bottom;
+    NewBottom = (UINT32)Buffer;
+    if (NewBottom < LdrGlobal->MemPoolCurrBottom) {
+      InternalUpdateMemPoolBottom (NewBottom);
+    }
   }
 }
 

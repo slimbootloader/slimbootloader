@@ -72,9 +72,9 @@ RemapStage (
   GdtDesc.Limit = sizeof (mGdtEntries) - 1;
   AsmWriteGdtr (&GdtDesc);
 
-  IbbMemBase  = AllocateTemporaryPages (EFI_SIZE_TO_PAGES (PcdGet32 (PcdStage1BFdSize)));
+  IbbMemBase  = AllocateTemporaryMemory (PcdGet32 (PcdStage1BFdSize));
   PageTblSize = GetPageTablesMemorySize ();
-  Pdpe        = AllocateTemporaryPages (EFI_SIZE_TO_PAGES (PageTblSize));
+  Pdpe        = AllocateTemporaryMemory (PageTblSize);
 
   DEBUG ((DEBUG_INFO, "Enable Paging ...\n"));
   CopyMem (IbbMemBase, (VOID *)PcdGet32 (PcdStage1BFdBase), PcdGet32 (PcdStage1BFdSize));
