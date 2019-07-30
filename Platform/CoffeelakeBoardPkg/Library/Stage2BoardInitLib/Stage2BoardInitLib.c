@@ -1787,9 +1787,14 @@ UpdateLoaderPlatformInfo (
   if(PlatformData != NULL) {
     LoaderPlatformInfo->HwState = PlatformData->BtGuardInfo.VerifiedBoot | (PlatformData->BtGuardInfo.MeasuredBoot << 1);
     LoaderPlatformInfo->Flags   = FLAGS_SPI_DISABLE_SMM_WRITE_PROTECT;
+
+    if (PlatformData->BtGuardInfo.TpmType == dTpm20)
+      LoaderPlatformInfo->HwState |= HWSTATE_DTPM_20;
+    else if (PlatformData->BtGuardInfo.TpmType == Ptt)
+      LoaderPlatformInfo->HwState |= HWSTATE_TPM_PTT;
+
     DEBUG ((EFI_D_INFO, "Stage2: HwState 0x%x\n", LoaderPlatformInfo->HwState));
   }
-
 }
 
 /**
