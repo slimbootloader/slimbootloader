@@ -45,6 +45,12 @@ extern EFI_GUID gLoaderPlatformInfoGuid;
 //Secure debug (0 - disabled, 1 - enabled)
 #define        HWSTATE_SECURE_DEBUG              BIT3
 
+//Tpm Type dTPM 2.0 (0 - Not Availble, 1 - detected)
+#define        HWSTATE_DTPM_20                   BIT4
+
+//Tpm Type TPM 2.0 PTT (0 - Not Availble, 1 - detected)
+#define        HWSTATE_TPM_PTT                   BIT5
+
 //Definition for LOADER_PLATFORM_INFO.Flags
 
 //
