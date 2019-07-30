@@ -71,6 +71,7 @@ class Board(BaseBoard):
 		self.STAGE1B_SIZE         = 0x00012000
 		self.STAGE2_SIZE          = 0x00018000
 
+		self.SIIPFW_SIZE          = 0x00010000
 		self.EPAYLOAD_SIZE        = 0x0010D000
 		self.PAYLOAD_SIZE         = 0x00020000
 		self.CFGDATA_SIZE         = 0x00001000
@@ -145,6 +146,21 @@ class Board(BaseBoard):
 		]
 		return dsc_libs
 
+	def GetContainerList (self):
+		container_list = []
+		container_list.append ([
+		  # Name       | Image File |    CompressAlg  | AuthType   | Key File                     | Region Size
+		  # =====================================================================================================================
+		  ('IPFW',      'SIIPFW.bin',    '',           'RSA2048',   'TestSigningPrivateKey.pem',    0     ),   # Container Header
+		  ('TST1',      '',              'Dummy',      '',          '',                             0x2000),   # Component 1
+		  ('TST2',      '',              'Lz4',        '',          '',                             0x3000),   # Component 2
+		  ('TST3',      '',              'Lz4',        'RSA2048',   'TestSigningPrivateKey.pem',    0x3000),   # Component 3
+		  ('TST4',      '',              'Lzma',       'SHA2_256',  '',                             0x3000),   # Component 4
+		  ('TST5',      '',              'Dummy',      'RSA2048',   'TestSigningPrivateKey.pem',    0x3000),   # Component 5
+		  ('TST6',      '',              '',           '',          '',                             0x1000),   # Component 6
+		])
+		return container_list
+
 	def GetImageLayout (self):
 
 		compress = '' if self.STAGE1B_XIP else 'Lz4'
@@ -178,6 +194,7 @@ class Board(BaseBoard):
 					('VARIABLE.bin' ,  ''        , self.VARIABLE_SIZE, STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
 					('PAYLOAD.bin'  ,  'Lzma'    , self.PAYLOAD_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
 					('EPAYLOAD.bin' ,  ''        , self.EPAYLOAD_SIZE, STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
+					('SIIPFW.bin'   ,  ''        , self.SIIPFW_SIZE,   STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
 					]
 				),
 				('REDUNDANT_A.bin', [

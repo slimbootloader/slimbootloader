@@ -8,6 +8,32 @@
 #include "Stage1B.h"
 
 /**
+  Callback function to add performance measure point during component loading.
+
+  @param[in]  ProgressId    Component loading progress ID code.
+
+**/
+VOID
+LoadComponentCallback (
+  IN  UINT32   ProgressId
+  )
+{
+  switch (ProgressId) {
+  case PROGESS_ID_COPY:
+    AddMeasurePoint (0x2090);
+    break;
+  case PROGESS_ID_AUTHENTICATE:
+    AddMeasurePoint (0x20A0);
+    break;
+  case PROGESS_ID_DECOMPRESS:
+    AddMeasurePoint (0x20B0);
+    break;
+  default:
+    break;
+  }
+}
+
+/**
   Prepare and load Stage2 into proper location for execution.
   - Load stage2 and check if compressed, if not CPU halted.
   - Check if the image is in flash
@@ -26,79 +52,32 @@ PrepareStage2 (
   IN STAGE1B_HOB   *Stage1bHob
   )
 {
-  UINT32                    Src;
   UINT32                    Dst;
-  UINT32                    Scr;
   UINT32                    DstLen;
-  UINT32                    ScrLen;
   EFI_STATUS                Status;
-  UINT32                    Data;
-  UINT32                    Length;
   UINT32                    Delta;
   STAGE_HDR                *StageHdr;
-  LOADER_COMPRESSED_HEADER *Hdr;
 
-  // Load Stage 2 (Compressed)
-  Status = GetComponentInfo (FLASH_MAP_SIG_STAGE2, &Src, &Length);
-  if (EFI_ERROR (Status)) {
-    return 0;
-  }
-  Dst = PCD_GET32_WITH_ADJUST (PcdStage2LoadBase);
 
-  LoadStage2 (Dst, Src, Length);
-  AddMeasurePoint (0x2080);
-  Src = Dst;
-
-  if (!IS_COMPRESSED (Src)) {
-    CpuHalt ("ERROR: Stage2 must be compressed.");
-  }
-
-  Hdr    = (LOADER_COMPRESSED_HEADER *)Src;
-  Length = sizeof (LOADER_COMPRESSED_HEADER) + Hdr->CompressedSize;
-
-  if (FixedPcdGetBool (PcdVerifiedBootEnabled)) {
-    // Copy and Verify if Stage2 is in Flash
-    if (IS_FLASH_SPACE (Src)) {
-      Dst = (UINT32)AllocateTemporaryMemory (Length);
-      CopyMem ((VOID *)Dst, (VOID *)Src, Length);
-      AddMeasurePoint (0x2090);
-      Src = Dst;
-      Hdr = (LOADER_COMPRESSED_HEADER *)Src;
-    }
-
-    // Verify Stage2 image only.
-    Status = DoHashVerify ((CONST UINT8 *)Src, Length, HASH_TYPE_SHA256, COMP_TYPE_STAGE_2, NULL);
-    AddMeasurePoint (0x20A0);
-    if (EFI_ERROR (Status)) {
-      if (Status != RETURN_NOT_FOUND) {
-        CpuHalt (NULL);
-      }
-    }
-
-    // Extend hash of Stage2 image into TPM.
-    if (MEASURED_BOOT_ENABLED() ) {
-      if (GetBootMode() != BOOT_ON_S3_RESUME) {
-        TpmExtendStageHash (COMP_TYPE_STAGE_2);
-      }
-    }
-  }
-
-  // Determine if Stage 2 needs to be loaded into high mem
   if (FixedPcdGetBool (PcdStage2LoadHigh)) {
-    Dst = (UINT32)AllocatePages (EFI_SIZE_TO_PAGES (Hdr->Size));
+    Dst = 0;
   } else {
     Dst = PCD_GET32_WITH_ADJUST (PcdStage2FdBase);
   }
 
-  // Reserve scratch space needed for decompression
-  Status = DecompressGetInfo (Hdr->Signature, Hdr->Data, Hdr->CompressedSize, &DstLen, &ScrLen);
-  if (!EFI_ERROR (Status)) {
-    // Decompress Stage 2
-    Scr    = (UINT32)AllocateTemporaryMemory (ScrLen);
-    Status = Decompress (Hdr->Signature, Hdr->Data, Hdr->CompressedSize, (VOID *)Dst, (VOID *)Scr);
-    AddMeasurePoint (0x20B0);
+  AddMeasurePoint (0x2080);
+  Status = LoadComponentWithCallback (COMP_TYPE_STAGE_2, FLASH_MAP_SIG_STAGE2,
+                                     (VOID *)&Dst, &DstLen, LoadComponentCallback);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Loading Stage2 error - %r !", Status));
+    return 0;
   }
-  ASSERT_EFI_ERROR (Status);
+
+  // Extend hash of Stage2 image into TPM.
+  if (MEASURED_BOOT_ENABLED() && (GetBootMode() != BOOT_ON_S3_RESUME)) {
+    TpmExtendStageHash (COMP_TYPE_STAGE_2);
+    AddMeasurePoint (0x20C0);
+  }
 
   // Rebase Stage2 if required
   if (Dst != PCD_GET32_WITH_ADJUST (PcdStage2FdBase)) {
@@ -112,16 +91,9 @@ PrepareStage2 (
     // Fix FSP-S Base Address
     RebaseFspComponent (Delta);
 
-    AddMeasurePoint (0x20C0);
+    AddMeasurePoint (0x20D0);
   }
 
-  // Check if Stage 2 contains a compressed payload
-  Data = (UINT32)Hdr->Data + Hdr->CompressedSize;
-  Src  = ALIGN_UP (Data, 0x100);
-  if (IS_COMPRESSED (Src)) {
-    // Only compressed payload is supported for now
-    Stage1bHob->PayloadBase = Src;
-  }
   DEBUG ((DEBUG_INFO, "Loaded STAGE2 @ 0x%08X\n", Dst));
 
   return Dst;
@@ -579,7 +551,9 @@ ContinueFunc (
   DEBUG ((DEBUG_INFO, "Memory TOP @ 0x%08X\n", LdrGlobal->MemPoolStart));
 
   Dst = PrepareStage2 (Stage1bHob);
-  ASSERT (Dst != 0);
+  if (Dst == 0) {
+    CpuHalt ("Failed to load Stage2!");
+  }
 
   // Configure stack
   StackTop = ALIGN_DOWN (LdrGlobal->StackTop - sizeof (STAGE2_HOB), 0x10);

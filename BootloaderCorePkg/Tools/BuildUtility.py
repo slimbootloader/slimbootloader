@@ -529,63 +529,20 @@ def gen_payload_bin (fv_dir, pld_list, pld_bin, priv_key, brd_name = None):
 		if src_file != dst_path:
 			shutil.copy (src_file, dst_path)
 
-	epld_bin   = os.path.join(os.path.dirname(pld_bin), 'E' + os.path.basename(pld_bin))
+	epld_bin   = 'E' + os.path.basename(pld_bin)
 	ext_list   = pld_list[1:]
 	if len(ext_list) == 0:
 		# Create a empty EPAYLOAD.bin
-		open (epld_bin, 'wb').close()
+		open (os.path.join(fv_dir, epld_bin), 'wb').close()
 		return
 
-	# Multiple payloads format
-	entry_len  = 48
-	entry_num  = len(ext_list)
-	sig_len    = sizeof(RsaSignature)
-	hdr_len    = entry_num * entry_len + sig_len + 16
-	fout       = open (epld_bin, 'wb')
-	fout.write (struct.pack('4sIII', 'LZDM', hdr_len, hdr_len, 0))
-	fout.write (struct.pack('4sIII', '$PLD', entry_num, entry_len, 0))
-	hdr_len    = 16 + hdr_len
-
-
-
-	lz_list = []
-	offset  = hdr_len
+	# E-payloads container format
+	alignment = 0x10   
+	key_dir  = os.path.dirname (priv_key)
+	pld_list = [('EPLD', '%s' % epld_bin, '0x%x' % alignment, 'RSA2048', '%s' % os.path.basename(priv_key), 0)]
 	for pld in ext_list:
-		dst_path = os.path.join(fv_dir, os.path.basename(pld['file']))
-		compress (dst_path, pld['algo'])
-		base_path = os.path.splitext(dst_path)[0]
-		comp_path = base_path  + '.lz'
-		length = os.path.getsize(comp_path)
-		fout.write(pld['name'])
-		fout.write(struct.pack('III', offset, length, 0))
-		with open (comp_path,'rb') as fin:
-			fout.write (hashlib.sha256(bytearray(fin.read())).digest())
-		newoff = (offset + length + 15) & ~0x0F
-		lz_list.append((comp_path, newoff - offset - length))
-		offset = newoff
-	fout.close()
-
-	pld_key_file = os.path.join(fv_dir, "EPLDKEY.bin")
-	hdr_file = os.path.splitext(epld_bin)[0] + '_HDR.bin'
-	rsa_sign_file (priv_key, pld_key_file, epld_bin, hdr_file, False, True)
-
-	fd = open (hdr_file, 'rb')
-	sig_bin = fd.read()
-	fd.close()
-
-	padding = sizeof(RsaSignature) - RsaSignature.Padding.offset
-	if len(sig_bin) != sig_len - padding:
-			raise Exception ("Unexpected signautre length !")
-
-	fout       = open (epld_bin, 'ab')
-	fout.write (sig_bin + '\x00' * padding)
-
-	for lz in lz_list:
-		with open(lz[0],'rb') as fin:
-			fout.write (fin.read())
-			fout.write ('\x00' * lz[1])
-
-	fout.close()
+		pld_list.append ((pld['name'], pld['file'], pld['algo'], 'SHA2_256', '',  0))
+	gen_container_bin ([pld_list], fv_dir, fv_dir, key_dir, '')
 
 
 def gen_hash_file (src_path, hash_path = '', is_key = False):
