@@ -21,6 +21,8 @@
 #define  TEMP_BUF_ALIGN    0x10
 #define  AUTH_DATA_ALIGN   0x04
 
+#define  IS_FLASH_ADDRESS(x)   (((UINT32)(UINTN)(x)) >= 0xF0000000)
+
 /**
   This function registers a container.
 
@@ -171,7 +173,7 @@ GetContainerHeaderSize (
 }
 
 /**
-  This function returns the container header size.
+  This function returns the component entry info.
 
   @param[in] ContainerEntry    Container entry pointer.
   @param[in] ComponentName     Component name in container.
@@ -181,7 +183,7 @@ GetContainerHeaderSize (
 **/
 STATIC
 COMPONENT_ENTRY  *
-LocateComponentEntry (
+LocateComponentEntryFromContainer (
   IN  CONTAINER_HDR  *ContainerHdr,
   IN  UINT32          ComponentName
   )
@@ -245,7 +247,7 @@ AuthenticateComponent (
 }
 
 /**
-  Locate a component from a container.
+  Locate a component information from a container.
 
   @param[in]     ContainerSig       Container signature.
   @param[in]     ComponentName      Component name.
@@ -259,7 +261,7 @@ AuthenticateComponent (
 
 **/
 EFI_STATUS
-LocateComponent (
+LocateComponentEntry (
   IN      UINT32                  ContainerSig,
   IN      UINT32                  ComponentName,
   IN OUT  CONTAINER_ENTRY       **ContainerEntryPtr,
@@ -303,7 +305,7 @@ LocateComponent (
         Status = EFI_SECURITY_VIOLATION;
       } else {
         Status = AuthenticateComponent ((UINT8 *)ContainerHdr, ContainerHdrSize,
-                                             AuthType, AuthData, NULL, COMP_TYPE_PUBKEY_FWU);
+                                             AuthType, AuthData, NULL, COMP_TYPE_PUBKEY_CFG_DATA);
       }
     } else {
       Status   = EFI_UNSUPPORTED;
@@ -311,14 +313,15 @@ LocateComponent (
 
     if (EFI_ERROR (Status)) {
       // Unregister the container since authentication failed
+      DEBUG ((EFI_D_INFO, "Unregister container due to %r\n", Status));
       UnregisterLastContainer ();
-      return EFI_SECURITY_VIOLATION;
+      return Status;
     }
   }
 
   // Locate the component from the container header
   ContainerHdr = (CONTAINER_HDR *)ContainerEntry->HeaderCache;
-  CompEntry = LocateComponentEntry (ContainerHdr, ComponentName);
+  CompEntry = LocateComponentEntryFromContainer (ContainerHdr, ComponentName);
   if (CompEntry == NULL) {
     return EFI_NOT_FOUND;
   }
@@ -335,12 +338,12 @@ LocateComponent (
 }
 
 /**
-  Load a component region information from a container.
+  Locate a component region information from a container or flash map.
 
-  @param[in] ContainerSig    Container signature.
-  @param[in] ComponentName   component name.
-  @param[in] Buffer          Pointer to receive component base.
-  @param[in] Length          Pointer to receive component size.
+  @param[in]      ContainerSig    Container signature or component type.
+  @param[in]      ComponentName   component name.
+  @param[in, out] Buffer          Pointer to receive component base.
+  @param[in, out] Length          Pointer to receive component size.
 
   @retval EFI_UNSUPPORTED          Unsupported AuthType.
   @retval EFI_NOT_FOUND            Cannot locate component.
@@ -350,11 +353,11 @@ LocateComponent (
 **/
 EFI_STATUS
 EFIAPI
-LocateComponentRegion (
+LocateComponent (
   IN     UINT32    ContainerSig,
   IN     UINT32    ComponentName,
-  OUT    UINT32   *RegionBase,
-  OUT    UINT32   *RegionLength
+  IN OUT VOID    **Buffer,
+  IN OUT UINT32   *Length
   )
 {
   EFI_STATUS                Status;
@@ -362,29 +365,37 @@ LocateComponentRegion (
   CONTAINER_ENTRY          *ContainerEntry;
   COMPONENT_ENTRY          *CompEntry;
 
-  Status = LocateComponent (ContainerSig, ComponentName, &ContainerEntry, &CompEntry);
+  if (ContainerSig < COMP_TYPE_INVALID) {
+    // It is a component type, so get the info from flash map
+    Status = GetComponentInfo (ComponentName, (UINT32 *)Buffer, Length);
+    return EFI_NOT_FOUND;
+  }
+
+  Status = LocateComponentEntry (ContainerSig, ComponentName, &ContainerEntry, &CompEntry);
   if (EFI_ERROR (Status)) {
     return Status;
   }
 
   ContainerHdr = (CONTAINER_HDR *)ContainerEntry->HeaderCache;
-  if (RegionBase != NULL) {
-    *RegionBase = ContainerEntry->Base + ContainerHdr->DataOffset + CompEntry->Offset;
+  if (Buffer != NULL) {
+    *Buffer = (VOID *)(ContainerEntry->Base + ContainerHdr->DataOffset + CompEntry->Offset);
   }
-  if (RegionLength != NULL) {
-    *RegionLength = CompEntry->Size;
+  if (Length != NULL) {
+    *Length = CompEntry->Size;
   }
 
   return Status;
 }
 
 /**
-  Load a component from a container to memory.
+  Load a component from a container or flahs map to memory and call callback
+  function at predefined point.
 
   @param[in]     ContainerSig    Container signature or component type.
   @param[in]     ComponentName   Component name.
   @param[in,out] Buffer          Pointer to receive component base.
   @param[in,out] Length          Pointer to receive component size.
+  @param[in,out] LoadComponentCallback  Callback function pointer.
 
   @retval EFI_UNSUPPORTED          Unsupported AuthType.
   @retval EFI_NOT_FOUND            Cannot locate component.
@@ -395,11 +406,12 @@ LocateComponentRegion (
 **/
 EFI_STATUS
 EFIAPI
-LoadComponent (
-  IN     UINT32    ContainerSig,
-  IN     UINT32    ComponentName,
-  IN OUT VOID    **Buffer,
-  IN OUT UINT32   *Length
+LoadComponentWithCallback (
+  IN     UINT32                   ContainerSig,
+  IN     UINT32                   ComponentName,
+  IN OUT VOID                   **Buffer,
+  IN OUT UINT32                  *Length,
+  IN     LOAD_COMPONENT_CALLBACK  LoadComponentCallback
   )
 {
   EFI_STATUS                Status;
@@ -411,14 +423,18 @@ LoadComponent (
   UINT8                    *CompBuf;
   UINT8                    *HashData;
   VOID                     *CompBase;
+  VOID                     *ScrBuf;
+  VOID                     *AllocBuf;
   VOID                     *ReqCompBase;
   UINT8                     CompType;
   UINT8                     AuthType;
   UINT32                    DecompressedLen;
   UINT32                    CompLen;
+  UINT32                    AllocLen;
   UINT32                    SignedDataLen;
   UINT32                    DstLen;
   UINT32                    ScrLen;
+  BOOLEAN                   IsInFlash;
 
   if (ContainerSig < COMP_TYPE_INVALID) {
     // Check if it is container signature or component type
@@ -438,7 +454,7 @@ LoadComponent (
     HashData = NULL;
   } else {
     // Find the component info
-    Status = LocateComponent (ContainerSig, ComponentName, &ContainerEntry, &CompEntry);
+    Status = LocateComponentEntry (ContainerSig, ComponentName, &ContainerEntry, &CompEntry);
     if (EFI_ERROR (Status)) {
       return Status;
     }
@@ -450,6 +466,10 @@ LoadComponent (
     AuthType  = CompEntry->AuthType;
     HashData  = CompEntry->HashData;
     CompType  = COMP_TYPE_INVALID;
+  }
+
+  if (LoadComponentCallback != NULL) {
+    LoadComponentCallback (PROGESS_ID_LOCATE);
   }
 
   // Component must have LOADER_COMPRESSED_HEADER
@@ -476,16 +496,36 @@ LoadComponent (
     }
   }
 
-  // Allocate temporary buffer since decompression is required.
-  CompBuf = AllocateTemporaryMemory (SignedDataLen + ScrLen + TEMP_BUF_ALIGN * 2);
-  if (CompBuf == NULL) {
+  // If it is on flash, the data needs to be copied into memory first
+  // before authentication for security concern.
+  IsInFlash = IS_FLASH_ADDRESS (CompData);
+  AllocLen  = ScrLen + TEMP_BUF_ALIGN * 2;
+  if (!IsInFlash) {
+    AllocLen += SignedDataLen;
+  }
+  AllocBuf = AllocateTemporaryMemory (AllocLen);
+  if (AllocBuf == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
+  if (IsInFlash) {
+    // Authenticate component and decompress it if required
+    CompBuf = AllocBuf;
+    ScrBuf  = (UINT8 *)AllocBuf + ALIGN_UP (SignedDataLen, TEMP_BUF_ALIGN);
+    CopyMem (CompBuf, CompData, SignedDataLen);
+    if (LoadComponentCallback != NULL) {
+      LoadComponentCallback (PROGESS_ID_COPY);
+    }
+  } else {
+    CompBuf = CompData;
+    ScrBuf  = AllocBuf;
+  }
 
-  // Authenticate component and decompress it if required
-  CopyMem (CompBuf, CompData, SignedDataLen);
+  // Verify the component
   Status = AuthenticateComponent (CompBuf, SignedDataLen, AuthType,
              CompData + ALIGN_UP(SignedDataLen, AUTH_DATA_ALIGN),  HashData, CompType);
+  if (LoadComponentCallback != NULL) {
+    LoadComponentCallback (PROGESS_ID_AUTHENTICATE);
+  }
   if (!EFI_ERROR (Status)) {
     CompressHdr = (LOADER_COMPRESSED_HEADER *)CompBuf;
     if (ReqCompBase == NULL) {
@@ -495,7 +535,10 @@ LoadComponent (
     }
     if (CompBase != NULL) {
       Status = Decompress (CompressHdr->Signature, CompressHdr->Data, CompressHdr->CompressedSize,
-                           CompBase, (VOID *)(CompBuf + ALIGN_UP (SignedDataLen, TEMP_BUF_ALIGN)));
+                           CompBase, ScrBuf);
+      if (LoadComponentCallback != NULL) {
+        LoadComponentCallback (PROGESS_ID_DECOMPRESS);
+      }
       if (EFI_ERROR (Status)) {
         if (ReqCompBase == NULL) {
           FreePool (CompBase);
@@ -508,7 +551,7 @@ LoadComponent (
   } else {
     Status = EFI_SECURITY_VIOLATION;
   }
-  FreeTemporaryMemory (CompBuf);
+  FreeTemporaryMemory (AllocBuf);
 
   if (!EFI_ERROR (Status)) {
     if (Buffer != NULL) {
@@ -520,4 +563,32 @@ LoadComponent (
   }
 
   return Status;
+}
+
+
+/**
+  Load a component from a container or flash map to memory.
+
+  @param[in] ContainerSig    Container signature or component type.
+  @param[in] ComponentName   Component name.
+  @param[in,out] Buffer          Pointer to receive component base.
+  @param[in,out] Length          Pointer to receive component size.
+
+  @retval EFI_UNSUPPORTED          Unsupported AuthType.
+  @retval EFI_NOT_FOUND            Cannot locate component.
+  @retval EFI_BUFFER_TOO_SMALL     Specified buffer size is too small.
+  @retval EFI_SECURITY_VIOLATION   Authentication failed.
+  @retval EFI_SUCCESS              Authentication succeeded.
+
+**/
+EFI_STATUS
+EFIAPI
+LoadComponent (
+  IN     UINT32    ContainerSig,
+  IN     UINT32    ComponentName,
+  IN OUT VOID    **Buffer,
+  IN OUT UINT32   *Length
+  )
+{
+  return LoadComponentWithCallback (ContainerSig, ComponentName, Buffer, Length, NULL);
 }

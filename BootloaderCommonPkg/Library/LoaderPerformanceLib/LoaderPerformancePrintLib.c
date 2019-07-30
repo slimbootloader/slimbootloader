@@ -80,6 +80,8 @@ DefPerfIdToStr (
   case 0x20B0:
     return "Decompress Stage2";
   case 0x20C0:
+    return "Extend Stage2 hash";
+  case 0x20D0:
     return "Rebase Stage2";
   case 0x3000:
     return "Stage2 entry point";
@@ -112,11 +114,15 @@ DefPerfIdToStr (
   case 0x3100:
     return "Load payload";
   case 0x3110:
-    return "Copy payload to memory";
+    return "Locate payload";
   case 0x3120:
-    return "Verify payload";
+    return "Copy payload to memory";
   case 0x3130:
+    return "Verify payload";
+  case 0x3140:
     return "Decompress payload";
+  case 0x3150:
+    return "Extend payload hash";
   case 0x31A0:
     return "Board PostPayloadLoading hook";
   case 0x31B0:

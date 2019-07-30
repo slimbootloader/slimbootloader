@@ -22,6 +22,7 @@
 #include <Library/BootloaderCoreLib.h>
 #include <Library/BlMemoryAllocationLib.h>
 #include <Library/FspSupportLib.h>
+#include <Library/ContainerLib.h>
 #include <Guid/GraphicsInfoHob.h>
 #include <Guid/SystemTableInfoGuid.h>
 #include <Guid/SerialPortInfoGuid.h>
@@ -239,6 +240,8 @@ BoardInit (
   UINT64               TsegSize;
   UINT32               VbtAddress;
   UINT8                BootDev;
+  VOID                *Buffer;      
+  UINT32               Length;
 
   switch (InitPhase) {
   case PreSiliconInit:
@@ -268,7 +271,13 @@ BoardInit (
         Status = PcdSet32S (PcdGraphicsVbtAddress,  VbtAddress);
       }
     }
+    // Load IP firmware from container
+    Buffer = NULL;
+    Length = 0;
+    Status = LoadComponent (SIGNATURE_32('I', 'P', 'F', 'W'), SIGNATURE_32('T', 'S', 'T', '3'), &Buffer,  &Length);
+    DEBUG ((EFI_D_INFO, "Load IP firmware @ %p:0x%X - %r\n", Buffer, Length, Status));
     break;
+
   case PostPciEnumeration:
     GenericCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);
     if (GenericCfgData != NULL) {
@@ -290,6 +299,7 @@ BoardInit (
       }
     }
     break;
+
   default:
     break;
   }

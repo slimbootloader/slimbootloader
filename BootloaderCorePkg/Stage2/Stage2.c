@@ -8,6 +8,35 @@
 #include "Stage2.h"
 
 /**
+  Callback function to add performance measure point during component loading.
+
+  @param[in]  ProgressId    Component loading progress ID code.
+
+**/
+VOID
+LoadComponentCallback (
+  IN  UINT32   ProgressId
+  )
+{
+  switch (ProgressId) {
+  case PROGESS_ID_LOCATE:
+    AddMeasurePoint (0x3110);
+    break;
+  case PROGESS_ID_COPY:
+    AddMeasurePoint (0x3120);
+    break;
+  case PROGESS_ID_AUTHENTICATE:
+    AddMeasurePoint (0x3130);
+    break;
+  case PROGESS_ID_DECOMPRESS:
+    AddMeasurePoint (0x3140);
+    break;
+  default:
+    break;
+  }
+}
+
+/**
   Prepare and load payload into proper location for execution.
 
   @param[in]  Stage2Hob    HOB pointer for Stage2
@@ -22,25 +51,15 @@ PreparePayload (
   )
 {
   EFI_STATUS                     Status;
-  UINT32                         Src;
   UINT32                         Dst;
-  UINT32                         TmpDst;
-  UINT32                         LoadBase;
-  UINT32                         Length;
-  UINT32                         ActualLength;
-  LOADER_COMPRESSED_HEADER      *Hdr;
-  UINT8                          BootMode;
-  UINT8                          CompType;
-  UINT8                          PldIdx;
-  MULTI_PAYLOAD_HEADER          *PldHdr;
-  MULTI_PAYLOAD_ENTRY           *PldEntry;
+  UINT32                         DstLen;
   BOOLEAN                        IsNormalPld;
   UINT32                         PayloadId;
-  VOID                          *Scr;
-  UINT8                         *PubKey;
-  UINT32                         ScrLen;
-  UINT32                         DstLen;
-  UINT64                         Tmp64;
+  UINT32                         ContainerSig;
+  UINT32                         ComponentName;
+  UINT8                          BootMode;
+  UINT8                          HashIdx;
+  COMPONENT_ENTRY               *ComponentEntry;
 
   // Load payload to PcdPayloadLoadBase.
   PayloadId   = GetPayloadId ();
@@ -48,162 +67,53 @@ PreparePayload (
   IsNormalPld = (PayloadId == 0) ? TRUE : FALSE;
   BootMode = GetBootMode();
   if (BootMode == BOOT_ON_FLASH_UPDATE) {
-    Status = GetComponentInfo (FLASH_MAP_SIG_FWUPDATE, &Src, &Length);
-    LoadBase = PcdGet32 (PcdFwuPayloadLoadBase);
-    // Consider firmware update payload as normal payload
-    IsNormalPld = TRUE;
+    ContainerSig  = COMP_TYPE_FIRMWARE_UPDATE;
+    ComponentName = FLASH_MAP_SIG_FWUPDATE;
+    HashIdx = COMP_TYPE_FIRMWARE_UPDATE;
   } else {
     if (IsNormalPld) {
-      Status = GetComponentInfo (FLASH_MAP_SIG_PAYLOAD, &Src, &Length);
+      ContainerSig  = COMP_TYPE_PAYLOAD;
+      ComponentName = FLASH_MAP_SIG_PAYLOAD;
+      HashIdx       = COMP_TYPE_PAYLOAD;
     } else {
-      Status = GetComponentInfo (FLASH_MAP_SIG_EPAYLOAD, &Src, &Length);
+      ContainerSig  = FLASH_MAP_SIG_EPAYLOAD;
+      ComponentName = PayloadId;
+      HashIdx       = COMP_TYPE_PAYLOAD_DYNAMIC;
     }
-    LoadBase = PcdGet32 (PcdPayloadLoadBase);
   }
+
+  Dst = PcdGet32 (PcdPayloadExeBase);
+  if (FixedPcdGetBool (PcdPayloadLoadHigh) && (GetPayloadId() != UEFI_PAYLOAD_ID_SIGNATURE)) {
+    Dst = 0;
+  }
+
+  AddMeasurePoint (0x3100);
+  DstLen = 0;
+  Status = LoadComponentWithCallback (ContainerSig, ComponentName,
+                                     (VOID *)&Dst, &DstLen, LoadComponentCallback);
   if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Loading payload error - %r !", Status));
     return 0;
   }
 
-  Dst = (LoadBase == 0) ? Src : LoadBase;
-  if (Stage2Hob->PayloadBase != 0) {
-    // Payload is loaded already by Stage1B
-    DEBUG ((DEBUG_INFO, "Payload is loaded already\n"));
-    Src = Stage2Hob->PayloadBase;
-    if (Stage2Hob->PayloadId != 0) {
-      Src += Stage2Hob->PayloadOffset;
-    }
-  } else {
-    // Load payload from media
-    if (Stage2Hob->PayloadId != 0) {
-      // Load a payload from multi-payload image
-      if (Src == Dst) {
-        Dst += Stage2Hob->PayloadOffset;
+  if (MEASURED_BOOT_ENABLED() && (BootMode != BOOT_ON_S3_RESUME)) {
+    if (HashIdx == COMP_TYPE_PAYLOAD_DYNAMIC) {
+      ComponentEntry = NULL;
+      LocateComponentEntry (ContainerSig, ComponentName, NULL, &ComponentEntry);
+      if (ComponentEntry != NULL)  {
+        if (ComponentEntry->HashSize == HASH_STORE_DIGEST_LENGTH) {
+          SetComponentHash (COMP_TYPE_PAYLOAD_DYNAMIC, ComponentEntry->HashData);
+        } else {
+          DEBUG ((DEBUG_INFO, "EPAYLOAD hash does not exist !"));
+        }
       }
-      Src += Stage2Hob->PayloadOffset;
-      Length = Stage2Hob->PayloadLength;
     }
-    Status = LoadPayload (Dst, Src, Length);
-    ASSERT_EFI_ERROR (Status);
-    AddMeasurePoint (0x3100);
-
-    Src = Dst;
+    TpmExtendStageHash (HashIdx);
+    AddMeasurePoint (0x3150);
   }
 
-  ActualLength = Length;
-  Hdr = (LOADER_COMPRESSED_HEADER *) Src;
-  if (FixedPcdGetBool (PcdVerifiedBootEnabled)) {
-    // Copy and Verify if Payload is in Flash
-    if (IS_COMPRESSED (Hdr)) {
-      Length = sizeof (LOADER_COMPRESSED_HEADER) + Hdr->CompressedSize;
-    }
-
-    // Security requirement: Verify in memory only (Not in flash)
-    if ((Stage2Hob->PayloadBase == 0) && IS_FLASH_SPACE (Src)) {
-      TmpDst = (UINT32) AllocateTemporaryMemory (Length);
-      CopyMem ((VOID *)TmpDst, (VOID *)Src, Length);
-      AddMeasurePoint (0x3110);
-      Src = TmpDst;
-      Hdr = (LOADER_COMPRESSED_HEADER *)TmpDst;
-    }
-
-    if (BootMode == BOOT_ON_FLASH_UPDATE) {
-      CompType = COMP_TYPE_FIRMWARE_UPDATE;
-    } else {
-      if (Stage2Hob->PayloadId == 0) {
-        CompType = COMP_TYPE_PAYLOAD;
-      } else {
-        CompType = COMP_TYPE_PAYLOAD_DYNAMIC;
-      }
-    }
-
-    if (IsNormalPld || (Stage2Hob->PayloadId != 0)) {
-      // For standard payload or components inside multi-payload, do hash verification
-      Status = DoHashVerify ((CONST UINT8 *)Src, Length, HASH_TYPE_SHA256, CompType, NULL);
-    } else {
-      // For multi-payload header, do signature verification
-      PldHdr    = (MULTI_PAYLOAD_HEADER *)&Hdr[1];
-      PldEntry  = (MULTI_PAYLOAD_ENTRY *)&PldHdr[1] + PldHdr->EntryNum;
-      if (Hdr->Signature != LZDM_SIGNATURE) {
-        Status = RETURN_UNSUPPORTED;
-      } else if ((UINT32)((UINT8 *)PldEntry - (UINT8 *)Hdr) >= Length) {
-        // Ensure the buffer is within the boundary since the header cannot be trusted.
-        Status = RETURN_BAD_BUFFER_SIZE;
-      } else {
-        Length = (UINT32)((UINT8 *)PldEntry - (UINT8 *)Hdr);
-        PubKey = (UINT8 *)PldEntry + RSA2048NUMBYTES;
-        Status = DoRsaVerify ((CONST UINT8 *)Src,  Length, COMP_TYPE_PUBKEY_CFG_DATA,
-                              (CONST UINT8 *)PldEntry, PubKey, NULL, NULL);
-      }
-    }
-    AddMeasurePoint (0x3120);
-    if (EFI_ERROR (Status)) {
-      if (Status != RETURN_NOT_FOUND) {
-        CpuHaltWithStatus (NULL, Status);
-      }
-    }
-    // Extend hash of Payload into TPM.
-    if (MEASURED_BOOT_ENABLED() ) {
-      if (BootMode != BOOT_ON_S3_RESUME) {
-        TpmExtendStageHash (CompType);
-      }
-    }
-  }
-
-  // Decompress payload
-  if (IS_COMPRESSED (Hdr)) {
-    // Determine if Payload needs to be loaded into high mem
-    ActualLength = Hdr->Size;
-    // For UEFI payload, it is big and need to run at pre-compiled address,
-    // so leave it at the required address even when PcdPayloadLoadHigh is requested.
-    if (FixedPcdGetBool (PcdPayloadLoadHigh) && (GetPayloadId() != UEFI_PAYLOAD_ID_SIGNATURE)) {
-      Dst = (UINT32)AllocatePages (EFI_SIZE_TO_PAGES (ActualLength));
-    } else {
-      Dst = PcdGet32 (PcdPayloadExeBase);
-    }
-
-    // Reserve scratch space needed for decompression
-    DEBUG ((DEBUG_INFO, "Load Payload ID 0x%08X @ 0x%08X\n", Stage2Hob->PayloadId, Dst));
-    Status = DecompressGetInfo (Hdr->Signature, Hdr->Data, Hdr->CompressedSize, &DstLen, &ScrLen);
-    if (!EFI_ERROR (Status)) {
-      Scr    = AllocateTemporaryMemory (ScrLen);
-      Status = Decompress (Hdr->Signature, Hdr->Data, Hdr->CompressedSize, (VOID *)Dst, Scr);
-      FreeTemporaryMemory (Scr);
-    }
-    AddMeasurePoint (0x3130);
-    ASSERT_EFI_ERROR (Status);
-  } else {
-    Dst = Src;
-  }
-
-  if (IS_MULTI_PAYLOAD (Dst)) {
-
-    PldHdr   = (MULTI_PAYLOAD_HEADER *)Dst;
-    PldEntry = (MULTI_PAYLOAD_ENTRY *)&PldHdr[1];
-    for (PldIdx = 0; PldIdx < PldHdr->EntryNum; PldIdx++) {
-      if (PayloadId == PldEntry->Name) {
-        Stage2Hob->PayloadId     = PldEntry->Name;
-        Stage2Hob->PayloadOffset = PldEntry->Offset;
-        Stage2Hob->PayloadLength = PldEntry->Size;
-        Stage2Hob->PayloadActualLength = PldEntry->Size;
-        SetComponentHash (COMP_TYPE_PAYLOAD_DYNAMIC, PldEntry->Hash);
-        break;
-      }
-      PldEntry++;
-    }
-
-    Tmp64 = PayloadId;
-    if (PldIdx == PldHdr->EntryNum) {
-      Dst = 0;
-    } else {
-      Dst = PreparePayload (Stage2Hob);
-    }
-    DEBUG ((DEBUG_INFO, "Load Multi-Payload name '%a' - %r\n", &Tmp64, Dst != 0 ? EFI_SUCCESS : EFI_NOT_FOUND));
-
-  } else {
-    Stage2Hob->PayloadId = 0;
-    Stage2Hob->PayloadActualLength = ActualLength;
-  }
-
+  Stage2Hob->PayloadActualLength = DstLen;
+  DEBUG ((DEBUG_INFO, "Load Payload ID 0x%08X @ 0x%08X\n", PayloadId, Dst));
   return Dst;
 }
 
