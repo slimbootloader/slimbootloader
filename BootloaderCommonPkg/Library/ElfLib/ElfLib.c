@@ -140,9 +140,9 @@ IsElfImage (
   }
 
   //
-  //  Support executable elf only
+  //  Support ELF types: EXEC (Executable file), DYN (Shared object file)
   //
-  if (ElfHdr->e_type != ET_EXEC) {
+  if ((ElfHdr->e_type != ET_EXEC) && (ElfHdr->e_type != ET_DYN)) {
     return FALSE;
   }
 
