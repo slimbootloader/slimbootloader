@@ -1,7 +1,7 @@
 /** @file
   SBL parameters for specific OS.
 
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018 - 2019, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -254,6 +254,19 @@ AddSblCommandLine (
   UINT32                    DiskBus;
   UINT32                    MaxCmdSize;
 
+  MaxCmdSize = *CommandLineSize;
+
+  //
+  // Add OS Mender boot info parameter
+  //
+  if ((BootOption->BootFlags & BOOT_FLAGS_MENDER) != 0) {
+    if ((BootOption->BootFlags & LOAD_IMAGE_FROM_BACKUP) == 0) {
+      AsciiStrCatS (CommandLine, MaxCmdSize, " root=PARTLABEL=primary");
+    } else {
+      AsciiStrCatS (CommandLine, MaxCmdSize, " root=PARTLABEL=secondary");
+    }
+  }
+
   if (BootOption->ImageType != EnumImageTypeAdroid) {
     // currently these command line parameters are tested only with Android OS.
     return EFI_SUCCESS;
@@ -262,7 +275,6 @@ AddSblCommandLine (
   //
   // Allocate the reserved memory and update command line parameters
   //
-  MaxCmdSize = *CommandLineSize;
   OsConfigData = (OS_CONFIG_DATA_HOB *) GetGuidHobData (NULL, NULL, &gOsConfigDataGuid);
   if ((OsConfigData != NULL) && (OsConfigData->OsCrashMemorySize != 0)) {
     Buffer = AllocateReservedPages (EFI_SIZE_TO_PAGES (OsConfigData->OsCrashMemorySize));

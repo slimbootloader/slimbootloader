@@ -1,7 +1,7 @@
 /** @file
   This file defines the hob structure for the OS boot configuration.
 
-  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -19,6 +19,7 @@
 #define BOOT_FLAGS_CRASH_OS        BIT1
 #define BOOT_FLAGS_TRUSTY          BIT2
 #define BOOT_FLAGS_EXTRA           BIT3
+#define BOOT_FLAGS_MENDER          BIT4
 
 // This bit is used dynamically.
 #define LOAD_IMAGE_FROM_BACKUP     BIT7

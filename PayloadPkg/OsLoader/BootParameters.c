@@ -150,7 +150,7 @@ UpdateOsMemMap (
 
   //
   // Linux E820 Mmap is very similar with multiboot MMAP
-  // Here find the diffenerce to share same update logic below
+  // Here find the difference to share same update logic below
   //
   if ((LoadedImage->Flags & LOADED_IMAGE_MULTIBOOT) != 0) {
     MultiBoot = &LoadedImage->Image.MultiBoot;
@@ -203,7 +203,7 @@ DisplayInfo (
 /**
   Update OS boot parameters
 
-  This function will append reqired command line parameters,
+  This function will append required command line parameters,
   and update mem map info.
 
   @param[in]     CurrentBootOption Current boot option
