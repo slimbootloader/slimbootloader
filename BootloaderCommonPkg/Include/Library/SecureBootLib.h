@@ -22,7 +22,8 @@
 #define  COMP_TYPE_PUBKEY_CFG_DATA     4
 #define  COMP_TYPE_PUBKEY_FWU          5
 #define  COMP_TYPE_PUBKEY_OS           6
-#define  COMP_TYPE_INVALID             7
+#define  COMP_TYPE_PAYLOAD_DYNAMIC     7
+#define  COMP_TYPE_INVALID             8
 
 /**
   Verify data block hash with the built-in one.
