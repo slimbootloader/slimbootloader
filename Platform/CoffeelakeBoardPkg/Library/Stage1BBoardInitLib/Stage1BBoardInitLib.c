@@ -88,11 +88,13 @@ UpdateFspConfig (
   GPU_CFG_DATA                    *GpuCfgData;
   UINT16                           PlatformId;
   PEG_GPIO_DATA                   *PegGpioData;
+  UINT16                          CpuId;
 
   FspmUpd       = (FSPM_UPD *)FspmUpdPtr;
   Fspmcfg       = &FspmUpd->FspmConfig;
   FspmcfgTest   = &FspmUpd->FspmTestConfig;
   PlatformId    = GetPlatformId ();
+  CpuId         = GetPlatformBomId ();
 
   Fspmcfg->MemorySpdDataLen = 512;
   CopyMem (&Fspmcfg->RcompTarget, mRcompTarget, sizeof(mRcompTarget));
@@ -104,9 +106,9 @@ UpdateFspConfig (
   }
 
   DEBUG ((DEBUG_INFO, "Load memory parameters from CfgData.\n"));
-  if (PlatformId == PLATFORM_ID_CFL_H ||
-      PlatformId == PLATFORM_ID_WHL ||
-      PlatformId == PLATFORM_ID_CFL_S) {
+  if (CpuId == CPU_ID_CFL_H ||
+      CpuId == CPU_ID_WHL ||
+      CpuId == CPU_ID_CFL_S) {
     CopyMem (&Fspmcfg->SpdAddressTable, MemCfgData->SpdAddressTable, sizeof(MemCfgData->SpdAddressTable));
   } else {
     Fspmcfg->MemorySpdPtr00       = (UINT32) MemCfgData->MemorySpdPtr00;
@@ -158,7 +160,7 @@ UpdateFspConfig (
   Fspmcfg->SafeMode                   = 0;
   Fspmcfg->PeciC10Reset               = 0;
 
-  if (PlatformId == PLATFORM_ID_CFL_S) {
+  if (CpuId == CPU_ID_CFL_S) {
     ASSERT (sizeof (PEG_GPIO_DATA) == sizeof (Fspmcfg->PegGpioData));
     ZeroMem (Fspmcfg->PegGpioData, sizeof (Fspmcfg->PegGpioData));
     PegGpioData                           = (PEG_GPIO_DATA *) Fspmcfg->PegGpioData;
@@ -267,18 +269,21 @@ PlatformIdInitialize (
        (CpuDid == V_SA_DEVICE_ID_CFL_DT_3) ||
        (CpuDid == V_SA_DEVICE_ID_CFL_DT_4))) {
       SetPlatformId (PLATFORM_ID_CFL_S);  // CFL-S
+      SetPlatformBomId (CPU_ID_CFL_S);
     } else if (CpuFamilyModel == CPUID_FULL_FAMILY_MODEL_COFFEELAKE_DT_HALO &&
       ((CpuDid == V_SA_DEVICE_ID_CFL_HALO_1) ||
        (CpuDid == V_SA_DEVICE_ID_CFL_HALO_2) ||
        (CpuDid == V_SA_DEVICE_ID_CFL_HALO_3) ||
        (CpuDid == V_SA_DEVICE_ID_CFL_HALO_IOT_1))) {
       SetPlatformId (PLATFORM_ID_CFL_H);  // CFL-H
+      SetPlatformBomId (CPU_ID_CFL_H);
     } else {
       DEBUG ((DEBUG_ERROR, "Unsupported CFL CPU!\n"));
     }
   } else if (IsPchLp()) { // Whiskey lake
     if (CpuFamilyModel == CPUID_FULL_FAMILY_MODEL_COFFEELAKE_ULT_ULX) {
       SetPlatformId (PLATFORM_ID_WHL);  // WHL
+      SetPlatformBomId (CPU_ID_WHL);
     } else {
       DEBUG ((DEBUG_ERROR, "Unsupported WHL CPU!\n"));
     }
@@ -399,15 +404,17 @@ GpioInit (
   )
 {
   EFI_STATUS            Status = EFI_INVALID_PARAMETER;
+  UINT16                CpuId;
 
+  CpuId = GetPlatformBomId ();
   switch (InitPhase) {
   case PreMemoryInit:
-    if (PlatformId == PLATFORM_ID_WHL) {
+    if (CpuId == CPU_ID_WHL) {
       Status = GpioConfigurePads (sizeof (mGpioTableCnlUDdr4PreMem) / sizeof (GPIO_INIT_CONFIG), mGpioTableCnlUDdr4PreMem );
       Status |= GpioConfigurePads (sizeof (mGpioTableWhlUDdr4WwanPreMem) / sizeof (GPIO_INIT_CONFIG), mGpioTableWhlUDdr4WwanPreMem );
-    } else if (PlatformId == PLATFORM_ID_CFL_H) {
+    } else if (CpuId == CPU_ID_CFL_H) {
       Status = GpioConfigurePads (sizeof (mGpioTableCoffeelakeHDdr4PreMem) / sizeof (GPIO_INIT_CONFIG), mGpioTableCoffeelakeHDdr4PreMem );
-    } else if (PlatformId == PLATFORM_ID_CFL_S) {
+    } else if (CpuId == CPU_ID_CFL_S) {
       Status = GpioConfigurePads (sizeof (mGpioTableCflS82Ddr4PreMem) / sizeof (GPIO_INIT_CONFIG), mGpioTableCflS82Ddr4PreMem );
     }
     break;

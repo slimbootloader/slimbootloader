@@ -731,11 +731,13 @@ InitializeSmbiosInfo (
   SMBIOS_TYPE_STRINGS  *TempSmbiosStrTbl;
   BOOT_LOADER_VERSION  *VerInfoTbl;
   VOID                 *SmbiosStringsPtr;
+  UINT16                CpuId;
 
   Index         = 0;
   PlatformId    = GetPlatformId ();
   TempSmbiosStrTbl  = (SMBIOS_TYPE_STRINGS *) AllocateTemporaryMemory (0);
   VerInfoTbl    = GetLoaderGlobalDataPointer()->VerInfoPtr;
+  CpuId         = GetPlatformBomId ();
 
   //
   // SMBIOS_TYPE_BIOS_INFORMATION
@@ -767,9 +769,9 @@ InitializeSmbiosInfo (
   //
   AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
     1, "Intel Corporation");
-  if ((PlatformId == PLATFORM_ID_CFL_S) || (PlatformId == PLATFORM_ID_CFL_H)) {
+  if ((CpuId == CPU_ID_CFL_S) || (CpuId == CPU_ID_CFL_H)) {
     AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "CoffeeLake Client Platform");
-  } else if (PlatformId == PLATFORM_ID_WHL) {
+  } else if (CpuId == CPU_ID_WHL) {
     AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "WhiskeyLake Client Platform");
   } else {
     AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "Unknown");
@@ -790,11 +792,11 @@ InitializeSmbiosInfo (
   //
   AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BASEBOARD_INFORMATION,
     1, "Intel Corporation");
-  if (PlatformId == PLATFORM_ID_CFL_S) {
+  if (CpuId == CPU_ID_CFL_S) {
     AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "CoffeeLake S 82 UDIMM RVP");
-  } else if (PlatformId == PLATFORM_ID_CFL_H) {
+  } else if (CpuId == CPU_ID_CFL_H) {
     AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "CoffeeLake H DDR4 RVP");
-  } else if (PlatformId == PLATFORM_ID_WHL) {
+  } else if (CpuId == CPU_ID_WHL) {
     AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "WhiskeyLake U DDR4 ERB");
   } else {
     AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "Unknown");
@@ -1131,9 +1133,11 @@ UpdateFspConfig (
   GPU_CFG_DATA              *GpuCfgData;
   UINT8                     Data8;
   SILICON_CFG_DATA          *SiliconCfgData;
+  UINT16                    CpuId;
 
   PlatformId                              = GetPlatformId ();
   FspsUpd                                 = (FSPS_UPD *) FspsUpdPtr;
+  CpuId                                   = GetPlatformBomId ();
 
   FspsUpd->FspsConfig.PchPmSlpS3MinAssert       = 0;
   FspsUpd->FspsConfig.PchPmSlpS4MinAssert       = 0;
@@ -1397,7 +1401,7 @@ UpdateFspConfig (
   //
   // PCIE config
   //
-  if (PlatformId == PLATFORM_ID_CFL_S) {
+  if (CpuId == CPU_ID_CFL_S) {
     FspsUpd->FspsConfig.PegPhysicalSlotNumber[0]              = 1;
     FspsUpd->FspsConfig.PegPhysicalSlotNumber[1]              = 2;
     FspsUpd->FspsConfig.PegPhysicalSlotNumber[2]              = 3;
@@ -1464,9 +1468,9 @@ UpdateFspConfig (
   FspsUpd->FspsConfig.PcieSwEqCoeffListCm[4]                = 12;
   FspsUpd->FspsConfig.PcieSwEqCoeffListCp[4]                = 2;
 
-  if (PlatformId == PLATFORM_ID_CFL_S) {
+  if (CpuId == CPU_ID_CFL_S) {
     FspsUpd->FspsConfig.VrPowerDeliveryDesign = 0x0D;
-  } else if (PlatformId == PLATFORM_ID_CFL_H) {
+  } else if (CpuId == CPU_ID_CFL_H) {
     FspsUpd->FspsConfig.VrPowerDeliveryDesign = 0x1F;
   }
 
@@ -2018,6 +2022,7 @@ PlatformUpdateAcpiGnvs (
   GPIO_GROUP               GroupToGpeDwX[3];
   UINT32                   GroupDw[3];
   SILICON_CFG_DATA        *SiliconCfgData;
+  UINT16                  CpuId;
 
   GlobalNvs   = (GLOBAL_NVS_AREA *) GnvsIn;
   PlatformNvs = (PLATFORM_NVS_AREA *) &GlobalNvs->PlatformNvs;
@@ -2027,6 +2032,7 @@ PlatformUpdateAcpiGnvs (
   ZeroMem (GlobalNvs, sizeof (GLOBAL_NVS_AREA));
 
   PlatformId = GetPlatformId ();
+  CpuId = GetPlatformBomId ();
 
   PlatformNvs->Ps2MouseEnable               = 0x0;
   PlatformNvs->Ps2KbMsEnable                = 0x0;
@@ -2042,7 +2048,7 @@ PlatformUpdateAcpiGnvs (
   }
   PlatformNvs->HdaDspPpModuleMask = 0;
 
-  if ((PlatformId == PLATFORM_ID_CFL_H) ||  (PlatformId == PLATFORM_ID_CFL_S)) {
+  if ((CpuId == CPU_ID_CFL_H) ||  (CpuId == CPU_ID_CFL_S)) {
     PlatformNvs->PcdH8S2113SIO              = 1;
   }
 
@@ -2054,20 +2060,20 @@ PlatformUpdateAcpiGnvs (
     PlatformNvs->EcSmiGpioPin                 = 0;
     PlatformNvs->EcLowPowerModeGpioPin        = 0;
     if (PlatformNvs->EcAvailable == 1) {
-      if (PlatformId == PLATFORM_ID_WHL) {
+      if (CpuId == CPU_ID_WHL) {
         PlatformNvs->EcSmiGpioPin             = GPIO_CNL_LP_GPP_E3;
         PlatformNvs->EcLowPowerModeGpioPin    = GPIO_CNL_LP_GPP_B23;
-      } else if (PlatformId == PLATFORM_ID_CFL_H) {
+      } else if (CpuId == CPU_ID_CFL_H) {
         PlatformNvs->EcSmiGpioPin             = GPIO_CNL_H_GPP_E3;
         PlatformNvs->EcLowPowerModeGpioPin    = GPIO_CNL_H_GPP_B23;
-      } else if (PlatformId == PLATFORM_ID_CFL_S) {
+      } else if (CpuId == CPU_ID_CFL_S) {
         PlatformNvs->EcSmiGpioPin             = GPIO_CNL_H_GPP_I3;
         PlatformNvs->EcLowPowerModeGpioPin    = 0;
       }
     }
   }
   if (SiliconCfgData != NULL) {
-    if (PlatformId == PLATFORM_ID_WHL) {
+    if (CpuId == CPU_ID_WHL) {
       PlatformNvs->PlatformFlavor           = SiliconCfgData->EnableLegacySerial;
     }
   }

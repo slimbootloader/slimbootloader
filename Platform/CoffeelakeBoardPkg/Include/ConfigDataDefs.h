@@ -12,6 +12,10 @@
 #define PLATFORM_ID_CFL_H       0x16
 #define PLATFORM_ID_CFL_S       0x1B
 
+#define CPU_ID_WHL              0x1
+#define CPU_ID_CFL_S            0x2
+#define CPU_ID_CFL_H            0x3
+
 #include <ConfigDataCommonDefs.h>
 
 #include "ConfigDataStruct.h"
