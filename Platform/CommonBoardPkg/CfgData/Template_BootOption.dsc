@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2018 - 2019, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -21,7 +21,7 @@
 
     # !BSF NAME:{Boot Flags}
     # !BSF TYPE:{Combo}
-    # !BSF OPTION:{0:Normal, 1:A/B support, 2:Crash OS, 4:Trusty support, 5:Trusty and A/B support}
+    # !BSF OPTION:{0:Normal, 1:A/B support, 2:Crash OS, 4:Trusty support, 5:Trusty and A/B support, 16:Mender support}
     # !BSF HELP:{Specify boot flags (options)}
     gCfgData.BootFlags_$(1)                 |      * | 0x01 | $(3)
 
@@ -36,7 +36,7 @@
     # !BSF NAME:{Boot Device instance}
     # !BSF TYPE:{Combo}
     # !BSF OPTION:{0:Device 0, 1:Device 1, 2:Device 2, 3:Device 3}
-    # !BSF HELP:{Specify boot device instance when then are multple instances}
+    # !BSF HELP:{Specify boot device instance when then are multiple instances}
     # !BSF ORDER:{0000.0000}
     gCfgData.BootDeviceInstance_$(1)        |      * | 0x01 | $(5)
 
@@ -78,7 +78,7 @@
     # !BSF NAME:{LBA address for normal OS Image)}
     # !BSF CONDITION:{$FsType_$(1) == 3}
     # !BSF TYPE:{EditNum, INT, (0,0xFFFFFFFF)}
-    # !BSF HELP:{pecify LBA address where to find normal OS image}
+    # !BSF HELP:{Specify LBA address where to find normal OS image}
     gCfgData.LbaAddr_0_$(1)                 |      * | 0x04 | $(11)
 
     # ---------------------------- IMAGE[1] -------------------------
@@ -115,7 +115,7 @@
 
     gCfgData.Valid_2_$(1)                   |      * | 0x01 | 1
 
-    # !BSF NAME:{Sofware partition for misc Image}
+    # !BSF NAME:{Software partition for misc Image}
     # !BSF CONDITION:{($BootFlags_$(1) & 0x1 == 0x1) and ($FsType_$(1) == 3)}
     # !BSF TYPE:{EditNum, INT, (0,127)}
     # !BSF HELP:{Specify software partition number for OS A/B support}

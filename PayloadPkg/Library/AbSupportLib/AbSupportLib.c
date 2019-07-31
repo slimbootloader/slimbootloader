@@ -1,7 +1,7 @@
 /** @file
-  Payload implements one instance of Paltform Hook Library.
+  Payload implements one instance of Platform Hook Library.
 
-  Copyright (c) 2015 - 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2015 - 2019, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -168,19 +168,25 @@ GetBootSlot (
   INT32                      BootSlot;
 
   BootSlot = 0;
-  if ((BootOption->BootFlags & BOOT_FLAGS_MISC) == 0) {
-    return BootSlot;
-  }
 
-  Status   = LoadMisc (BootOption, HwPartHandle, &AbBootInfo);
-  if (!EFI_ERROR (Status)) {
-    BootSlot = ParseBootSlot (&AbBootInfo);
-    if (BootSlot < 0) {
-      DEBUG ((DEBUG_ERROR, "ERROR: boot slot error (%d)\n", BootSlot));
-      BootSlot = 0;
+  if ((BootOption->BootFlags & BOOT_FLAGS_MISC) != 0) {
+    Status   = LoadMisc (BootOption, HwPartHandle, &AbBootInfo);
+    if (!EFI_ERROR (Status)) {
+      BootSlot = ParseBootSlot (&AbBootInfo);
+      if (BootSlot < 0) {
+        DEBUG ((DEBUG_ERROR, "ERROR: boot slot error (%d)\n", BootSlot));
+        BootSlot = 0;
+      }
+    } else {
+      DEBUG ((DEBUG_ERROR, "LoadMisc Status = %r\n", Status));
     }
-  } else {
-    DEBUG ((DEBUG_ERROR, "LoadMisc Status = %r\n", Status));
+  } else if ((BootOption->BootFlags & BOOT_FLAGS_MENDER) != 0) {
+    //
+    // TODO: Need to support env file parsing to determine which
+    //       boot slot we should really be using for Mender boot
+    //       support. For now, just return primary (e.g. 0)
+    //
+    BootSlot = 0;
   }
 
   return BootSlot;
