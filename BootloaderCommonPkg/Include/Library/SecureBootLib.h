@@ -30,7 +30,7 @@
 
   @param[in]  Data           Data buffer pointer.
   @param[in]  Length         Data buffer size.
-  @param[in]  HashAlg        Specify hash algrothsm.
+  @param[in]  HashAlg        Specify hash algorithm.
   @param[in]  ComponentType  Component type.
   @param[in,out]  Hash       On input,  expected hash value when ComponentType is not used.
                              On output, calculated hash value when verification succeeds.
@@ -88,7 +88,7 @@ DoRsaVerify (
   @param[in] Size                    Size of the array to be generated.
 
   @retval EFI_SUCCESS                Random number generation successful.
-  @retval EFI_UNSUPPORTED            Couldnt generate a random number.
+  @retval EFI_UNSUPPORTED            Couldn't generate a random number.
 **/
 RETURN_STATUS
 EFIAPI
