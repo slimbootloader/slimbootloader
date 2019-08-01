@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2016 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2016 - 2019, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -10,6 +10,7 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLogBufferLib.h>
 #include <Library/BootloaderCoreLib.h>
+#include <Library/SecureBootLib.h>
 #include <Library/HobLib.h>
 #include <Library/PcdLib.h>
 #include <HashStore.h>
@@ -86,7 +87,7 @@ SetComponentHash (
   HashIndex = ComponentType;
   LdrGlobal = GetLoaderGlobalDataPointer ();
   HashStorePtr = (HASH_STORE_TABLE *)LdrGlobal->HashStorePtr;
-  if ((HashStorePtr == NULL) || (HashIndex != HASH_INDEX_PAYLOAD_DYNAMIC)) {
+  if ((HashStorePtr == NULL) || (HashIndex != COMP_TYPE_PAYLOAD_DYNAMIC)) {
     return RETURN_UNSUPPORTED;
   }
 

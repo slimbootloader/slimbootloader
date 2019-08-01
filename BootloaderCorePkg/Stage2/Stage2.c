@@ -30,7 +30,7 @@ PreparePayload (
   UINT32                         ActualLength;
   LOADER_COMPRESSED_HEADER      *Hdr;
   UINT8                          BootMode;
-  UINT8                          HashIdx;
+  UINT8                          CompType;
   UINT8                          PldIdx;
   MULTI_PAYLOAD_HEADER          *PldHdr;
   MULTI_PAYLOAD_ENTRY           *PldEntry;
@@ -107,20 +107,20 @@ PreparePayload (
     }
 
     if (BootMode == BOOT_ON_FLASH_UPDATE) {
-      HashIdx = HASH_INDEX_FIRMWARE_UPDATE;
+      CompType = COMP_TYPE_FIRMWARE_UPDATE;
     } else {
       if (Stage2Hob->PayloadId == 0) {
-        HashIdx = HASH_INDEX_PAYLOAD;
+        CompType = COMP_TYPE_PAYLOAD;
       } else {
-        HashIdx = HASH_INDEX_PAYLOAD_DYNAMIC;
+        CompType = COMP_TYPE_PAYLOAD_DYNAMIC;
       }
     }
 
     if (IsNormalPld || (Stage2Hob->PayloadId != 0)) {
-      // For standard payload or components inside multi-payload, do hash verififcation
-      Status = DoHashVerify ((CONST UINT8 *)Src, Length, HASH_TYPE_SHA256, HashIdx, NULL);
+      // For standard payload or components inside multi-payload, do hash verification
+      Status = DoHashVerify ((CONST UINT8 *)Src, Length, HASH_TYPE_SHA256, CompType, NULL);
     } else {
-      // For multi-payload header, do signature verififcation
+      // For multi-payload header, do signature verification
       PldHdr    = (MULTI_PAYLOAD_HEADER *)&Hdr[1];
       PldEntry  = (MULTI_PAYLOAD_ENTRY *)&PldHdr[1] + PldHdr->EntryNum;
       if (Hdr->Signature != LZDM_SIGNATURE) {
@@ -144,7 +144,7 @@ PreparePayload (
     // Extend hash of Payload into TPM.
     if (MEASURED_BOOT_ENABLED() ) {
       if (BootMode != BOOT_ON_S3_RESUME) {
-        TpmExtendStageHash (HashIdx);
+        TpmExtendStageHash (CompType);
       }
     }
   }
@@ -185,7 +185,7 @@ PreparePayload (
         Stage2Hob->PayloadOffset = PldEntry->Offset;
         Stage2Hob->PayloadLength = PldEntry->Size;
         Stage2Hob->PayloadActualLength = PldEntry->Size;
-        SetComponentHash (HASH_INDEX_PAYLOAD_DYNAMIC, PldEntry->Hash);
+        SetComponentHash (COMP_TYPE_PAYLOAD_DYNAMIC, PldEntry->Hash);
         break;
       }
       PldEntry++;
