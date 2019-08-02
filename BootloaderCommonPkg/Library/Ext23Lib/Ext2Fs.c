@@ -230,7 +230,7 @@ BDevStrategy (
 
   Startblockno = BlockNum + PrivateData->StartBlock;
   if (ReadWrite == F_READ) {
-    Res = MediaReadBlocks (0, (UINT32)Startblockno, Size, Buf);
+    Res = MediaReadBlocks (PrivateData->PhysicalDevNo, (UINT32)Startblockno, Size, Buf);
     if (Res != 0) {
       return Res;
     }
