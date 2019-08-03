@@ -13,6 +13,7 @@
 #include <Library/PlatformHookLib.h>
 #include <Library/FirmwareUpdateLib.h>
 #include <Library/DebugLib.h>
+#include <PlatformData.h>
 #include <GpioPinsCnlLp.h>
 #include <RegAccess.h>
 #include <Register/CpuRegs.h>
@@ -65,6 +66,33 @@ typedef enum {
   BootPartition2,
   BootPartitionMax
 } BOOT_PARTITION_SELECT;
+
+/**
+  Stitching process might pass some specific plafform data to be
+  consumed pretty early. This will be used to guide the platform initialization
+  even before CFGDATA is available.
+
+**/
+VOID
+EarlyPlatformDataCheck (
+  VOID
+)
+{
+  STITCH_DATA          *StitchData;
+
+  // Stitching process might pass some plafform specific data.
+  StitchData = (STITCH_DATA *)(0xFFFFFFF4);
+  if (StitchData->Marker != 0xAA) {
+    // No data, set default debug port to 2
+    // PlatformID will be deferred to be detected
+    SetDebugPort (0xFF);
+  } else {
+    SetDebugPort  (StitchData->DebugUart);
+    if ((StitchData->PlatformId > 0) && (StitchData->PlatformId < 32)) {
+      SetPlatformId (StitchData->PlatformId);
+    }
+  }
+}
 
 /**
   Determines the boot partition that the platform firmware is booting from
@@ -146,14 +174,15 @@ BoardInit (
   UINT32                    AdjLen;
   UINT64                    MskLen;
 
-  //  0xFF: External 0x3F8 based I/O UART
-  // 0,1,2: Internal SOC MMIO UART
-  DebugPort = 0xFF;
+  // DebugPort:
+  //   0xFF: External 0x3F8 based I/O UART
+  //   0,1,2: Internal SOC MMIO UART
 
   switch (InitPhase) {
   case PostTempRamInit:
     DisableWatchDogTimer ();
-    SetDebugPort (DebugPort);
+    EarlyPlatformDataCheck ();
+    DebugPort = GetDebugPort ();
     if ((DebugPort != 0xFF) && (DebugPort < PCH_MAX_SERIALIO_UART_CONTROLLERS)) {
       GpioConfigurePads (2, mUartGpioTable + (DebugPort << 1));
     }

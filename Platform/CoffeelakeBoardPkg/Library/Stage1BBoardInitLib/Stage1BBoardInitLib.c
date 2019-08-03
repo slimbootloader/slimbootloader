@@ -259,6 +259,9 @@ PlatformIdInitialize (
   CpuDid = PciRead16 (PCI_LIB_ADDRESS (SA_MC_BUS, SA_MC_DEV, SA_MC_FUN, R_SA_MC_DEVICE_ID));
 
   DEBUG ((DEBUG_ERROR, "CpuFamilyModel 0x%X, CpuStepping 0x%X, CpuDid 0x%X\n", CpuFamilyModel, CpuStepping, CpuDid));
+  if (GetPlatformId () != 0) {
+    return;
+  }
 
   if (IsPchH()) {         // Coffee lake
     if ((CpuFamilyModel == CPUID_FULL_FAMILY_MODEL_COFFEELAKE_DT_HALO) &&
@@ -409,6 +412,8 @@ GpioInit (
       Status = GpioConfigurePads (sizeof (mGpioTableCoffeelakeHDdr4PreMem) / sizeof (GPIO_INIT_CONFIG), mGpioTableCoffeelakeHDdr4PreMem );
     } else if (PlatformId == PLATFORM_ID_CFL_S) {
       Status = GpioConfigurePads (sizeof (mGpioTableCflS82Ddr4PreMem) / sizeof (GPIO_INIT_CONFIG), mGpioTableCflS82Ddr4PreMem );
+    } else {
+      Status = EFI_SUCCESS;
     }
     break;
   case PostMemoryInit:

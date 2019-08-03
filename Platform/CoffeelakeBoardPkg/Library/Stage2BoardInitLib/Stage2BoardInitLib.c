@@ -86,8 +86,8 @@
 #define GPIO_CFG_PIN_TO_PAD(A) \
   ((UINT32) (((A).PinNum) | (((A).Group) << 16)))
 
-FVID_TABLE                  *mFvidPointer       = NULL;
-
+FVID_TABLE                  *mFvidPointer    = NULL;
+SILICON_CFG_DATA            *mSiliconCfgData = NULL;
 ///
 /// Overcurrent pins, the values match the setting of EDS, please refer to EDS for more details
 ///
@@ -906,6 +906,7 @@ BoardInit (
         DEBUG ((DEBUG_INFO, "Set PayloadId to 0x%08X based on GPIO config\n", PayloadId));
       }
     }
+    mSiliconCfgData = SiliconCfgData;
 
     SetPayloadId (PayloadId);
 
@@ -1232,6 +1233,11 @@ UpdateFspConfig (
     FspsUpd->FspsConfig.Usb2AfeTxiset[Index]                = 5;
     FspsUpd->FspsConfig.Usb2AfePredeemp[Index]              = 3;
     FspsUpd->FspsConfig.Usb2AfePehalfbit[Index]             = 0;
+  }
+
+  if (PlatformId == PLATFORM_ID_UPXTREME) {
+    // Workaround for USB issue on port 9, disable it for now
+    FspsUpd->FspsConfig.PortUsb20Enable[9] = 0;
   }
 
   Length = GetPchXhciMaxUsb3PortNum ();
@@ -1868,6 +1874,12 @@ PlatformUpdateAcpiTable (
   Ptr  = (UINT8 *)Table;
   End  = (UINT8 *)Table + Table->Length;
 
+  if (Table->Signature == EFI_ACPI_5_0_EMBEDDED_CONTROLLER_BOOT_RESOURCES_TABLE_SIGNATURE) {
+    if ((mSiliconCfgData == NULL) || (mSiliconCfgData->ECEnable == 0)) {
+      return EFI_UNSUPPORTED;
+    }
+  }
+
   if (Table->Signature == EFI_ACPI_5_0_DIFFERENTIATED_SYSTEM_DESCRIPTION_TABLE_SIGNATURE) {
     for (; Ptr < End; Ptr++) {
       if (*(Ptr-1) != AML_NAME_OP)
@@ -1913,7 +1925,7 @@ PlatformUpdateAcpiTable (
     DEBUG ((DEBUG_INFO, "NHLT Base 0x%08X, Size 0x%08X\n", (UINT32)(UINTN)GlobalNvs->PchNvs.NHLA, GlobalNvs->PchNvs.NHLL));
   } else if (Table->OemTableId == SIGNATURE_64 ('C', 'p', 'u', 'S', 's', 'd', 't', 0)) {
     PatchCpuSsdtTable (Table, GlobalNvs);
-  }  else if (Table->OemTableId == SIGNATURE_64 ('C', 'p', 'u', '0', 'I', 's', 't', 0)) {
+  } else if (Table->OemTableId == SIGNATURE_64 ('C', 'p', 'u', '0', 'I', 's', 't', 0)) {
     PatchCpuIstTable (Table, GlobalNvs);
   }
 
