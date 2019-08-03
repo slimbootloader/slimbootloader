@@ -38,6 +38,80 @@ Please follow steps below:
 
 """
 
+
+class BIOS_ENTRY(Structure):
+    _pack_ = 1
+    _fields_ = [
+        ('Name', ARRAY(c_char, 4)),
+        ('Offset', c_uint32),
+        ('Length', c_uint32),
+        ('Reserved', c_uint32),
+    ]
+
+
+class COMPONENT:
+    TYPE_BIOS = 0
+    TYPE_IFWI = 1
+    TYPE_BP   = 2
+    TYPE_BPDT = 3
+    TYPE_PART = 4
+    TYPE_FILE = 5
+
+    def __init__(self, Name, Type, Offset, Length):
+        self.Name = Name
+        self.Type = Type
+        self.Offset = Offset
+        self.Length = Length
+        self.Child = []
+
+    def AddChild(self, Child):
+        self.Child.append(Child)
+        self.Child.sort (key=lambda x: x.Offset)
+
+
+class FlashMapDesc(Structure):
+    _pack_ = 1
+    _fields_ = [
+        ('Sig',     ARRAY(c_char, 4)),
+        ('Flags',   c_uint32),
+        ('Offset',  c_uint32),
+        ('Size',    c_uint32),
+        ]
+
+class FlashMap(Structure):
+    FLASH_MAP_DESC_SIGNATURE = 'FLMP'
+
+    FLASH_MAP_ATTRIBUTES = {
+        "PRIMARY_REGION"  : 0x00000000,
+        "BACKUP_REGION"   : 0x00000001,
+    }
+
+    FLASH_MAP_DESC_FLAGS = {
+        "TOP_SWAP"      : 0x00000001,
+        "REDUNDANT"     : 0x00000002,
+        "NON_REDUNDANT" : 0x00000004,
+        "NON_VOLATILE"  : 0x00000008,
+        "COMPRESSED"    : 0x00000010,
+        "BACKUP"        : 0x00000040,
+    }
+
+    _pack_ = 1
+    _fields_ = [
+        ('Sig',              ARRAY(c_char, 4)),
+        ('Version',          c_uint16),
+        ('Length',           c_uint16),
+        ('Attributes',       c_uint8),
+        ('Reserved',         ARRAY(c_char, 3)),
+        ('Romsize',          c_uint32),
+        ]
+
+
+def Bytes2Val (bytes):
+	return reduce(lambda x,y: (x<<8)|y,  bytes[::-1] )
+
+def Val2Bytes (value, length):
+	return [(value>>(i*8) & 0xff) for i in range(length)]
+
 class SPI_DESCRIPTOR(Structure):
     DESC_SIGNATURE = 0x0FF0A55A
     FLASH_REGIONS = {
@@ -89,7 +163,79 @@ def GetRegion (RgnList, RegionName):
 
     return None
 
-def ReplaceRegion (IfwiData, Rgn, InputFile, TailPos):
+
+def ParseFlashMap (ImgData, BaseOff = 0):
+
+    PartDict = {
+        0x01:  "TS0",
+        0x41:  "TS1",
+        0x02:  "RD0",
+        0x42:  "RD1",
+        0x04:  "NRD",
+        0x08:  "NVS",
+    }
+
+    #
+    # No SPI descriptor, try to check the flash map
+    #
+    Offset = Bytes2Val(ImgData[-8:-4]) - (0x100000000 - len(ImgData))
+    if Offset <0 or Offset >= len(ImgData) - 0x10:
+        return None
+
+    FlaMapOff = Offset
+    if Bytes2Val(ImgData[FlaMapOff:FlaMapOff+4]) != 0x504d4c46:
+        return None
+
+    IfwiComp  = COMPONENT('IFWI', COMPONENT.TYPE_IFWI, BaseOff, len(ImgData))
+    BiosComp  = COMPONENT('BIOS', COMPONENT.TYPE_BIOS, BaseOff, len(ImgData))
+    CurrPart  = -1
+    FlaMapStr = FlashMap.from_buffer (ImgData, FlaMapOff)
+    EntryNum  = (FlaMapStr.Length - sizeof(FlashMap)) // sizeof(FlashMapDesc)
+    for Idx in range (EntryNum):
+        Idx   = EntryNum - 1 - Idx
+        Desc  = FlashMapDesc.from_buffer (ImgData, FlaMapOff + sizeof(FlashMap) + Idx * sizeof(FlashMapDesc))
+        FileComp = COMPONENT(Desc.Sig, COMPONENT.TYPE_FILE, Desc.Offset + BaseOff, Desc.Size)
+        if CurrPart != Desc.Flags & 0x4F:
+            CurrPart = Desc.Flags & 0x4F
+            PartComp = COMPONENT('%s' % (PartDict[CurrPart]), COMPONENT.TYPE_BIOS, Desc.Offset + BaseOff, Desc.Size)
+            BiosComp.AddChild (PartComp)
+        else:
+            PartComp.Length += Desc.Size
+
+        PartComp.AddChild(FileComp)
+    IfwiComp.AddChild(BiosComp)
+    return IfwiComp
+
+
+def PrintTree(Root, Level=0):
+    print "%-24s [O:0x%06X  L:0x%06X]" % ('  ' * Level + Root.Name,
+                                          Root.Offset, Root.Length)
+    for Comp in Root.Child:
+        Level += 1
+        PrintTree(Comp, Level)
+        Level -= 1
+
+def LocateComponents(Root, Path):
+    Result = []
+    Nodes  = Path.split('/')
+    if len(Nodes) < 1 or Root.Name != Nodes[0]:
+        return []
+    if len(Nodes) == 1:
+        return [Root]
+    for Comp in Root.Child:
+        Return = LocateComponents(Comp, '/'.join(Nodes[1:]))
+        if len(Return) > 0:
+            Result.extend(Return)
+    return Result
+
+def LocateComponent(Root, Path):
+    result = LocateComponents(Root, Path)
+    if len(result) > 0:
+        return result[0]
+    else:
+        return None
+
+def ReplaceRegion (IfwiData, Rgn, InputFile, TailPos, PlatformData = None):
     RgnPos = Rgn[1]
     RgnLen = Rgn[2]
 
@@ -101,6 +247,17 @@ def ReplaceRegion (IfwiData, Rgn, InputFile, TailPos):
     if RgnLen < InputLen:
         Fatal("Input binary size(0x%08x) cannot exceed %s region size(0x%08x) !" % (InputLen, Rgn[0], RgnLen))
 
+    if PlatformData:
+      # Parse Flash Map
+      Ifwi = ParseFlashMap (InputData)
+      for Part in range(2):
+        Path = 'IFWI/BIOS/TS%d/SG1A' %Part
+        Stage1A = LocateComponent (Ifwi, Path)
+        if Stage1A:
+          PlatDataOffset = Stage1A.Offset + Stage1A.Length - 12
+          c_uint32.from_buffer (InputData, PlatDataOffset).value = PlatformData
+        print "Platform data was patched for %s" % Path
+
     RgnOff = RgnLen - InputLen
     if TailPos == 1:
         if RgnLen != InputLen:
@@ -111,7 +268,7 @@ def ReplaceRegion (IfwiData, Rgn, InputFile, TailPos):
         if RgnLen != InputLen:
             IfwiData[RgnPos+InputLen:RgnPos+RgnLen] = '\xff' * RgnOff
 
-def CreateIfwiImage (IfwiIn, IfwiOut, SblIn):
+def CreateIfwiImage (IfwiIn, IfwiOut, SblIn, PlatformData):
     Fd = open(IfwiIn, "rb")
     IfwiData = bytearray(Fd.read())
     Fd.close()
@@ -123,15 +280,19 @@ def CreateIfwiImage (IfwiIn, IfwiOut, SblIn):
     Rgn = GetRegion(RgnList, "BIOS")
     if Rgn == None:
         Fatal("Failed to find BIOS region!")
-    ReplaceRegion(IfwiData, Rgn, SblIn, 1)
+
+    ReplaceRegion(IfwiData, Rgn, SblIn, 1, PlatformData)
     print "Done"
 
     # create new ifwi
     print "Creating IFWI image ..."
+    if IfwiOut == '':
+        IfwiOut = IfwiIn
     Fd = open (IfwiOut, 'wb')
     Fd.write(IfwiData)
     Fd.close()
     print ('Done!')
+
 
 def PrintIfwiLayout (IfwiFile):
     Fd = open(IfwiFile, "rb")
@@ -143,6 +304,8 @@ def PrintIfwiLayout (IfwiFile):
         print "%04s: 0x%08x - 0x%08x" % (Rgn[0], Rgn[1], Rgn[1] + Rgn[2])
 
 def main():
+    hexstr = lambda x: int(x, 16)
+
     ap = argparse.ArgumentParser()
     ap.add_argument('-i',
                     '--input-ifwi-file',
@@ -165,6 +328,14 @@ def main():
                     default='',
                     help='Specify input sbl binary file path')
 
+    ap.add_argument('-p',
+                    '--platform-data',
+                    dest='plat_data',
+                    type=hexstr,
+                    default=None,
+                    help='Specify a platform specific data (HEX, DWORD) for customization')
+
+
     if len(sys.argv) == 1:
         print ('%s' % ExtraUsageTxt)
 
@@ -174,7 +345,7 @@ def main():
         PrintIfwiLayout (args.ifwi_in)
         return 0
 
-    return CreateIfwiImage (args.ifwi_in, args.ifwi_out, args.sbl_in)
+    return CreateIfwiImage (args.ifwi_in, args.ifwi_out, args.sbl_in, args.plat_data)
 
 if __name__ == '__main__':
     sys.exit(main())

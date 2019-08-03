@@ -49,6 +49,7 @@ class Board(BaseBoard):
 		self.ENABLE_SPLASH            = 1
 		self.ENABLE_FRAMEBUFFER_INIT  = 1
 		self.HAVE_PSD_TABLE       = 1
+		self.ENABLE_GRUB_CONFIG       = 1
 
 		# To enable source debug, set 1 to self.ENABLE_SOURCE_DEBUG
 		self.ENABLE_SOURCE_DEBUG  = 0
@@ -84,7 +85,7 @@ class Board(BaseBoard):
 		self.STAGE2_FD_SIZE       = 0x000E0000
 
 		self.STAGE1_STACK_SIZE    = 0x00002000
-		self.STAGE1_DATA_SIZE     = 0x00006000
+		self.STAGE1_DATA_SIZE     = 0x0000E000
 
 		self.PAYLOAD_EXE_BASE     = 0x00B00000
 		self.PAYLOAD_SIZE         = 0x00025000
@@ -126,9 +127,9 @@ class Board(BaseBoard):
 		self.CFGDATA_REGION_TYPE  = FLASH_REGION_TYPE.BIOS
 		self.SPI_IAS_REGION_TYPE  = FLASH_REGION_TYPE.BIOS
 
-		self.CFG_DATABASE_SIZE    = self.CFGDATA_SIZE
+		self.CFG_DATABASE_SIZE    = self.CFGDATA_SIZE + 0x4000
 		self._CFGDATA_INT_FILE    = ['CfgDataInt_Cfls.dlt', 'CfgDataInt_Cflh.dlt', 'CfgDataInt_Whl.dlt']
-		self._CFGDATA_EXT_FILE    = ['CfgDataExt_Brd1.dlt']
+		self._CFGDATA_EXT_FILE    = ['CfgDataExt_Upx.dlt']
 
 	def GetDscLibrarys (self):
 		dsc_libs = {}
