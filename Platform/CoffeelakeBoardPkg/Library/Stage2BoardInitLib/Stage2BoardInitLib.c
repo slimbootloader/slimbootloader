@@ -839,6 +839,7 @@ STATIC S3_SAVE_REG mS3SaveReg = {
   { { IO, WIDE32, { 0, 0}, (ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN), 0x00000000 } }
 };
 
+
 /**
   Initialize Board specific things in Stage2 Phase
 
@@ -1000,7 +1001,17 @@ BoardInit (
     }
     break;
   case ReadyToBoot:
+    //
+    // Clear Smi and restore S3 regs on S3 resume
+    //
+    ClearSmi ();
+    if ((GetBootMode() == BOOT_ON_S3_RESUME) && (GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE)) {
+      RestoreS3RegInfo (FindS3Info (S3_SAVE_REG_COMM_ID));
+    }
 
+    //
+    // Do necessary locks, and clean up before jumping tp OS
+    //
     SiliconCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
     if ( (SiliconCfgData != NULL) && (SiliconCfgData->ECEnable == 1)){
       //
@@ -1053,13 +1064,8 @@ BoardInit (
     //
     TcoBase = MmioRead16(PCH_PCR_ADDRESS(PID_DMI, R_PCH_DMI_PCR_TCOBASE)) & B_PCH_DMI_PCR_TCOBASE_TCOBA;
     IoOr16 ((TcoBase + R_TCO_IO_TCO1_CNT), B_TCO_IO_TCO1_CNT_LOCK);
-
     break;
   case EndOfFirmware:
-    ClearSmi ();
-    if ((GetBootMode() == BOOT_ON_S3_RESUME) && (GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE)) {
-      RestoreS3RegInfo (FindS3Info (S3_SAVE_REG_COMM_ID));
-    }
     break;
   default:
     break;
