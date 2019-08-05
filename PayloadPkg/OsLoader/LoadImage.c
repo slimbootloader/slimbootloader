@@ -388,9 +388,11 @@ GetTraditionalLinux (
   CHAR8                      *Ptr;
   MENU_ENTRY                 *MenuEntry;
   EFI_HANDLE                 FileHandle;
+  BOOLEAN                    DefBootOption;
 
   DEBUG ((DEBUG_INFO, "Try booting Linux from config file ...\n"));
 
+  DefBootOption = FALSE;
   Status = RETURN_NOT_FOUND;
   for (Index = 0; Index < (UINTN)(FeaturePcdGet (PcdGrubBootCfgEnabled) ? 2 : 1); Index++) {
     DEBUG ((DEBUG_INFO, "Checking %s\n",mConfigFileName[Index]));
@@ -448,6 +450,7 @@ GetTraditionalLinux (
 
   if (LinuxBootCfg.EntryNum == 0) {
     // Build a default boot option
+    DefBootOption = TRUE;
     LinuxBootCfg.EntryNum   = 1;
     MenuEntry = LinuxBootCfg.MenuEntry;
     MenuEntry[0].Name.Pos    = 0;
@@ -484,9 +487,13 @@ GetTraditionalLinux (
 
   // Load InitRd, optional
   Status = LoadLinuxFile (FsHandle, ConfigFile, &LinuxBootCfg.MenuEntry[EntryIdx].InitRd, &LinuxImage->InitrdFile);
-  if (EFI_ERROR (Status) && (Status != EFI_NOT_FOUND)) {
-    DEBUG ((DEBUG_ERROR, "Load initrd failed!\n"));
-    Status = RETURN_LOAD_ERROR;
+  if (EFI_ERROR (Status)) {
+    if ((Status == EFI_NOT_FOUND) && ((LinuxBootCfg.MenuEntry[EntryIdx].InitRd.Len == 0) || DefBootOption)) {
+      return RETURN_SUCCESS;
+    } else {
+      DEBUG ((DEBUG_ERROR, "Load initrd failed!\n"));
+      Status = RETURN_LOAD_ERROR;
+    }
   }
 
   LinuxImage->ExtraBlobNumber = 0;
