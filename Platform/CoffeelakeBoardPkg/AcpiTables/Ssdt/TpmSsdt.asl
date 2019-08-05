@@ -193,11 +193,6 @@ DefinitionBlock (
             Store (DerefOf (Index (Arg2, 0x00)), PPRQ)
             Store (0x02, PPIP)
 
-            //Set the SmiEn.EOS bit
-            Store(SMIE, Local0)
-            Or(Local0, 0x2, Local1)
-            Store(Local1, SMIE)
-
             //
             // Trigger the SMI interrupt
             //
@@ -236,11 +231,6 @@ DefinitionBlock (
             }
 
             Store (0x05, PPIP)
-
-            //Set the SmiEn.EOS bit
-            Store(SMIE, Local0)
-            Or(Local0, 0x2, Local1)
-            Store(Local1, SMIE)
 
             //
             // Triggle the SMI interrupt
@@ -284,11 +274,6 @@ DefinitionBlock (
             }
 
 
-            //Set the SmiEn.EOS bit
-            //Store(SMIE, Local0)
-            //Or(Local0, 0x2, Local1)
-            //Store(Local1, SMIE)
-
             //
             // Trigger the SMI interrupt
             //
@@ -311,11 +296,6 @@ DefinitionBlock (
 
             Store (8, PPIP)
             Store (DerefOf (Index (Arg2, 0x00)), PPRQ)
-
-            //Set the SmiEn.EOS bit
-            //Store(SMIE, Local0)
-            //Or(Local0, 0x2, Local1)
-            //Store(Local1, SMIE)
 
             //
             // Trigger the SMI interrupt
