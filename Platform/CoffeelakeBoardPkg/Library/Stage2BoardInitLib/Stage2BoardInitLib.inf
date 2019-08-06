@@ -51,6 +51,7 @@
   GpioLib
   PsdLib
   S3SaveRestoreLib
+  BoardSupportLib
 
 [Guids]
   gSmmInformationGuid

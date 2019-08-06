@@ -13,7 +13,7 @@
 PLATFORMID_CFG_DATA.PlatformId            | 0x16
 PLAT_NAME_CFG_DATA.PlatformName           | 'CFL_H'
 
-OS_CFG_DATA.OsBootOptionCount             | 2
+BOOT_OPTION_CFG_DATA_2.ImageType_2        | 0xFF
 
 PCIE_CFG_DATA.ClkFeatures0.ClkUsage       | 0xFF
 PCIE_CFG_DATA.ClkFeatures1.ClkUsage       | 0xFF

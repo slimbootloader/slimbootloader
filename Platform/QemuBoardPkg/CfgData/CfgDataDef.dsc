@@ -56,6 +56,8 @@
 
   # !BSF DEFT:{GPIO_TMPL:END}
 
+  !include Platform/CommonBoardPkg/CfgData/Template_BootOption.dsc
+
 [PcdsDynamicVpd.Upd]
   #
   # This section is not used by the normal build process
@@ -74,7 +76,7 @@
   #
 
   # Global definitions in BSF
-  # !BSF PAGES:{PLT::"Platform", MEM::"Memory Settings", SIL::"Silicon Settings", GIO::"GPIO Settings"}
+  # !BSF PAGES:{PLT::"Platform", MEM::"Memory Settings", SIL::"Silicon Settings", GIO::"GPIO Settings", OS::"OS Boot Options"}
   # !BSF BLOCK:{NAME:"QEMU Platform", VER:"0.1"}
 
   # CFG HDR Format
@@ -159,3 +161,5 @@
   # ---------------------------------------------------------------------------------------
   !include CfgData_CapsuleInformation.dsc
 
+  # ---------------------------------------------------------------------------------------
+  !include CfgData_BootOption.dsc

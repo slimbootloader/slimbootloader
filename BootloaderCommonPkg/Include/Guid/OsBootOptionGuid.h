@@ -130,7 +130,7 @@ typedef struct {
   UINT8                DevType;
 
   ///
-  /// If there are multiple controllers, it indicate which 
+  /// If there are multiple controllers, it indicate which
   /// controller instance the boot medium belong to.
   ///
   UINT8                DevInstance;

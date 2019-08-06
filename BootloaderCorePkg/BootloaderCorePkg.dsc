@@ -118,6 +118,7 @@
   ConsoleInLib|BootloaderCommonPkg/Library/ConsoleInLib/ConsoleInLib.inf
   ConsoleOutLib|BootloaderCommonPkg/Library/ConsoleOutLib/ConsoleOutLib.inf
   ContainerLib|BootloaderCommonPkg/Library/ContainerLib/ContainerLib.inf
+
 !if $(HAVE_FSP_BIN)
   FspApiLib|$(PLATFORM_PACKAGE)/Library/FspApiLib/FspApiLib.inf
 !endif
@@ -128,6 +129,8 @@
 !endif
   ElfLib|BootloaderCommonPkg/Library/ElfLib/ElfLib.inf
   S3SaveRestoreLib|BootloaderCorePkg/Library/S3SaveRestoreLib/S3SaveRestoreLib.inf
+
+  BoardSupportLib|Platform/CommonBoardPkg/Library/BoardSupportLib/BoardSupportLib.inf
 
 [LibraryClasses.IA32]
   PagingLib|$(PLATFORM_PACKAGE)/Library/PagingLib/PagingLib.inf

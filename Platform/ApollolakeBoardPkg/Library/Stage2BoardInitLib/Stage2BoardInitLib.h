@@ -33,6 +33,7 @@
 #include <Library/IoLib.h>
 #include <Library/BpdtLib.h>
 #include <Library/BlMemoryAllocationLib.h>
+#include <Library/BoardSupportLib.h>
 #include <FspsUpd.h>
 #include <GpioDefines.h>
 #include <GlobalNvsArea.h>
