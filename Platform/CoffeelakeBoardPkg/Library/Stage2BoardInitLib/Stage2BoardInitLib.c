@@ -56,6 +56,7 @@
 #include <Library/MpInitLib.h>
 #include <Guid/GraphicsInfoHob.h>
 #include <Library/PciCf8Lib.h>
+#include <Library/BoardSupportLib.h>
 #include <PlatformData.h>
 #include <PsdLib.h>
 #include <Library/SmbiosInitLib.h>
@@ -1685,32 +1686,7 @@ UpdateOsBootMediumInfo (
   OUT  OS_BOOT_OPTION_LIST  *OsBootOptionList
   )
 {
-  OS_CFG_BOOT            *OsBootCfgData;
-  UINT32                  Length;
-  UINT8                   Count;
-
-  OsBootCfgData = (OS_CFG_BOOT *)FindConfigDataByTag (CDATA_OS_TAG);
-  if (OsBootCfgData == NULL) {
-    DEBUG ((DEBUG_ERROR, "ERROR:could not OS boot option from config data!\n"));
-    return ;
-  }
-
-  Count = OsBootCfgData->OsBootOptionCount;
-  if (Count > PcdGet32(PcdOsBootOptionNumber)) {
-    Count = (UINT8)PcdGet32(PcdOsBootOptionNumber);
-    DEBUG ((DEBUG_ERROR, "OS boot option count (0x%x) is bigger than support max (0x%x)\n",
-      OsBootCfgData->OsBootOptionCount, PcdGet32(PcdOsBootOptionNumber)));
-  }
-
-  OsBootOptionList->Revision = 1;
-  OsBootOptionList->OsBootOptionCount = Count;
-  Length = sizeof(OS_BOOT_OPTION_LIST) + sizeof (OS_BOOT_OPTION) * Count;
-
-  //
-  // Here, assume config data uses same boot option structure.
-  // If not, could not use copy here.
-  //
-  CopyMem(OsBootOptionList->OsBootOption, OsBootCfgData->OsBootOptions, Length);
+  FillBootOptionListFromCfgData (OsBootOptionList);
 
   return;
 }

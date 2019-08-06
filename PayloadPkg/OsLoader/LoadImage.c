@@ -104,7 +104,7 @@ GetIasImageFromRawPartition (
   UINTN                      AlginedImageSize;
   UINT32                     BlockSize;
   UINT8                      BlockData[4096];
-  UINT32                     LbaAddr;
+  EFI_LBA                    LbaAddr;
   UINT8                      SwPart;
 
   SwPart  = BootOption->Image[LoadedImage->LoadImageType].LbaImage.SwPart;
@@ -120,7 +120,7 @@ GetIasImageFromRawPartition (
     }
   }
 
-  DEBUG ((DEBUG_INFO, "Load image from SwPart (0x%x), LbaAddr(0x%x)\n", SwPart, LbaAddr));
+  DEBUG ((DEBUG_INFO, "Load image from SwPart (0x%x), LbaAddr(0x%llx)\n", SwPart, LbaAddr));
   Status = GetLogicalPartitionInfo (SwPart, LoadedImage->HwPartHandle, &LogicBlkDev);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "Get logical partition error, Status = %r\n", Status));

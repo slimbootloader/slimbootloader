@@ -40,6 +40,7 @@
   SpiFlashLib
   VariableLib
   GpioLib
+  BoardSupportLib
 
 [Guids]
   gReservedMemoryResourceHobTsegGuid
@@ -59,5 +60,5 @@
   gPlatformModuleTokenSpaceGuid.PcdSmmRebaseMode
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegSize
-  
+
 

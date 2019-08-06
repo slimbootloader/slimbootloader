@@ -22,6 +22,7 @@
 #include <Library/BootloaderCoreLib.h>
 #include <Library/BlMemoryAllocationLib.h>
 #include <Library/FspSupportLib.h>
+#include <Library/BoardSupportLib.h>
 #include <Library/ContainerLib.h>
 #include <Guid/GraphicsInfoHob.h>
 #include <Guid/SystemTableInfoGuid.h>
@@ -240,7 +241,7 @@ BoardInit (
   UINT64               TsegSize;
   UINT32               VbtAddress;
   UINT8                BootDev;
-  VOID                *Buffer;      
+  VOID                *Buffer;
   UINT32               Length;
 
   switch (InitPhase) {
@@ -360,9 +361,9 @@ SaveNvsData (
 }
 
 /**
- Update serial port information to global HOB data structure.
+  Update serial port information to global HOB data structure.
 
- @param SerialPortInfo  Pointer to global HOB data structure.
+  @param SerialPortInfo  Pointer to global HOB data structure.
  **/
 VOID
 EFIAPI
@@ -375,7 +376,6 @@ UpdateSerialPortInfo (
   SerialPortInfo->RegWidth = GetSerialPortStrideSize();
 }
 
-
 /**
  Update the OS boot option
 
@@ -387,57 +387,9 @@ UpdateOsBootMediumInfo (
   OUT  OS_BOOT_OPTION_LIST   *OsBootOptionList
 )
 {
-  OS_BOOT_OPTION             *BootOption;
-  UINT8                      BootOrder;
+  UINT8         BootOrder;
 
-  //The OS image information could come from config data later.
-  BootOption = &OsBootOptionList->OsBootOption[0];
-
-  // Boot file image from SD
-  BootOption->DevType     = OsBootDeviceSd;
-  BootOption->DevInstance = 0;
-  BootOption->HwPart      = 0;
-  BootOption->BootFlags   = 0;
-  BootOption->FsType      = EnumFileSystemTypeAuto;
-  BootOption->SwPart      = 0;
-  CopyMem (BootOption->Image[0].FileName, "iasimage.bin", sizeof ("iasimage.bin"));
-  OsBootOptionList->OsBootOptionCount++;
-  BootOption++;
-
-  // Boot file image from SATA
-  BootOption->DevType     = OsBootDeviceSata;
-  BootOption->DevInstance = 0;
-  BootOption->HwPart      = 5;
-  BootOption->BootFlags   = 0;
-  BootOption->FsType      = EnumFileSystemTypeAuto;
-  BootOption->SwPart      = 0;
-  CopyMem (BootOption->Image[0].FileName, "iasimage.bin", sizeof ("iasimage.bin"));
-  OsBootOptionList->OsBootOptionCount++;
-  BootOption++;
-
-  // Boot file image from NVMe
-  BootOption->DevType     = OsBootDeviceNvme;
-  BootOption->DevInstance = 0;
-  BootOption->HwPart      = 0;
-  BootOption->BootFlags   = 0;
-  BootOption->FsType      = EnumFileSystemTypeAuto;
-  BootOption->SwPart      = 0;
-  CopyMem (BootOption->Image[0].FileName, "iasimage.bin", sizeof ("iasimage.bin"));
-  OsBootOptionList->OsBootOptionCount++;
-  BootOption++;
-
-  // Boot file image from USB
-  BootOption->DevType     = OsBootDeviceUsb;
-  BootOption->DevInstance = 0;
-  BootOption->HwPart      = 0;
-  BootOption->BootFlags   = 0;
-  BootOption->FsType      = EnumFileSystemTypeAuto;
-  BootOption->SwPart      = 0;
-  CopyMem (BootOption->Image[0].FileName, "iasimage.bin", sizeof ("iasimage.bin"));
-  OsBootOptionList->OsBootOptionCount++;
-  BootOption++;
-
-  ASSERT (OsBootOptionList->OsBootOptionCount <= PcdGet32 (PcdOsBootOptionNumber));
+  FillBootOptionListFromCfgData (OsBootOptionList);
 
   //
   // Read boot order, it is passed in by QEMU command

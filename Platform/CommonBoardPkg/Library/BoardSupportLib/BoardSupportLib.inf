@@ -1,0 +1,29 @@
+## @file
+#
+#  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = BoardSupportLib
+  FILE_GUID                      = CFD586F9-B7B6-4384-B472-0EC5CD916B7C
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = BoardSupportLib
+
+[Sources]
+  BoardSupportLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Platform/CommonBoardPkg/CommonBoardPkg.dec
+
+[LibraryClasses]
+  BaseLib
+
+[Pcd]
+  gPlatformModuleTokenSpaceGuid.PcdOsBootOptionNumber

@@ -1242,13 +1242,10 @@ UpdateOsBootMediumInfo (
   OUT  OS_BOOT_OPTION_LIST  *OsBootOptionList
   )
 {
-  OS_CFG_BOOT            *OsBootCfgData;
   PLATFORM_DATA          *PlatformData;
   BOOT_MODE_OPTION       *BootModeOption;
   BOOT_MODE_TARGET        Target;
   BOOT_MODE_ACTION        Action;
-  UINT32                  Length;
-  UINT8                   Count;
 
   Target        = BootModeTargetNormal;
   Action        = BootModeActionBoot;
@@ -1262,21 +1259,7 @@ UpdateOsBootMediumInfo (
     }
   }
 
-  OsBootCfgData = (OS_CFG_BOOT *)FindConfigDataByTag (CDATA_OS_TAG);
-  if (OsBootCfgData == NULL) {
-    DEBUG ((DEBUG_ERROR, "ERROR: Could not find OS boot option from config data!\n"));
-    return ;
-  }
-
-  Count = OsBootCfgData->OsBootOptionCount;
-  if (Count > PcdGet32(PcdOsBootOptionNumber)) {
-    Count = (UINT8)PcdGet32(PcdOsBootOptionNumber);
-    DEBUG ((DEBUG_ERROR, "OS boot option count (0x%x) is bigger than support max (0x%x)\n",
-      OsBootCfgData->OsBootOptionCount, PcdGet32(PcdOsBootOptionNumber)));
-  }
-
-  Length = sizeof (OS_BOOT_OPTION) * Count;
-  CopyMem(OsBootOptionList->OsBootOption, OsBootCfgData->OsBootOptions, Length);
+  FillBootOptionListFromCfgData (OsBootOptionList);
 
   //
   // Update current boot and count based on target and action
@@ -1286,7 +1269,7 @@ UpdateOsBootMediumInfo (
     OsBootOptionList->CurrentBoot = 0;
     break;
   case BootModeTargetProvision:
-    OsBootOptionList->CurrentBoot = OsBootCfgData->OsBootOptionCount - 1;
+    OsBootOptionList->CurrentBoot = OsBootOptionList->OsBootOptionCount > 0 ? OsBootOptionList->OsBootOptionCount - 1 : 0;
     break;
   default:
     DEBUG ((DEBUG_ERROR, "Not Supported Boot Target!\n"));
@@ -1297,8 +1280,7 @@ UpdateOsBootMediumInfo (
     DEBUG ((DEBUG_INFO, "Set boot to shell!\n"));
     OsBootOptionList->BootToShell = 1;
   }
-  OsBootOptionList->Revision          = 1;
-  OsBootOptionList->OsBootOptionCount = Count;
+
 }
 
 /**

@@ -815,7 +815,7 @@ EndList
                     Match = re.match("^\s*#\s+(!BSF)\s+FIELD:{(.+)}", DscLine)
                     if Match:
                         BitFieldTxt = Match.group(2)
-                        Match = re.match("(.+):(\d+)b([BWD])?", BitFieldTxt)
+                        Match = re.match("(.+):(\d+)b([BWDQ])?", BitFieldTxt)
                         if not Match:
                             raise Exception ("Incorrect bit field format '%s' !" % BitFieldTxt)
                         UnitBitLen = 1
@@ -832,6 +832,8 @@ EndList
                                 SubCfgDict['bitunit'] = 1
                             elif Match.group(3) == 'W':
                                 SubCfgDict['bitunit'] = 2
+                            elif Match.group(3) == 'Q':
+                                SubCfgDict['bitunit'] = 8
                             else:
                                 SubCfgDict['bitunit'] = 4
                             SubCfgDict['bitoffset'] = SubOffset
@@ -908,7 +910,7 @@ EndList
         BitOffset = 0
         StartIdx  = 0
         Unit      = None
-        UnitDec   = {1:'BYTE', 2:'WORD', 4:'DWORD'}
+        UnitDec   = {1:'BYTE', 2:'WORD', 4:'DWORD', 8:'QWORD'}
         for Idx, SubItem in enumerate(Item['subreg']):
             if Unit is None:
                 Unit  = SubItem['bitunit']
@@ -916,7 +918,7 @@ EndList
             BitTotal  += BitLength
             BitOffset += BitLength
 
-            if BitOffset > 32 or BitOffset > Unit * 8:
+            if BitOffset > 64 or BitOffset > Unit * 8:
                 break
 
             if BitOffset == Unit * 8:

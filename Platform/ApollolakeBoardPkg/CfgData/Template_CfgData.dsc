@@ -219,7 +219,7 @@
 
 
   # ---------------------------------------------------------------------------------------
-  # OS_TMPL
+  # BOOT_OPTION_TMPL
   !include Platform/CommonBoardPkg/CfgData/Template_BootOption.dsc
 
   # PCIERP_TMPL

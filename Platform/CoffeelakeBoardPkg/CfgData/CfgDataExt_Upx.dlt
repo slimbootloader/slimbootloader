@@ -17,9 +17,9 @@ PLATFORMID_CFG_DATA.PlatformId           | 0x0010
 
 PLAT_NAME_CFG_DATA.PlatformName          | 'UPXtreme'
 
-SILICON_CFG_DATA.ECEnable  | 0
+SILICON_CFG_DATA.ECEnable             | 0
 
-OS_CFG_DATA.HwPart_1       | 0
+BOOT_OPTION_CFG_DATA_1.HwPart_1       | 0
 
 PCIE_CFG_DATA.RpFeatures16.RpPresent  | 0x0
 PCIE_CFG_DATA.RpFeatures17.RpPresent  | 0x0
