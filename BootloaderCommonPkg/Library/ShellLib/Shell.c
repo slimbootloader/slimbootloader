@@ -113,6 +113,8 @@ Shell (
   SHELL   Shell;
   CONST SHELL_COMMAND **Iter;
 
+  InitializeListHead (&mShellCommandEntryList);
+
   LoadShellCommands ();
   for (Iter = Commands; *Iter != NULL; Iter++) {
     ShellCommandRegister (*Iter);
