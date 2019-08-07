@@ -238,6 +238,15 @@ CONST UINT8 mPchLpSerialIoDevMode[PCH_MAX_SERIALIO_CONTROLLERS] = {
   0 /* SPI0 */,  0 /* SPI1 */,  0 /* SPI2 */, 0 /* UART0 */, 0 /* UART1 */, 0 /* UART2 */
 };
 
+STATIC SMMBASE_INFO mSmmBaseInfo = {
+  { BL_PLD_COMM_SIG, SMMBASE_INFO_COMM_ID, 0, 0 }
+};
+
+STATIC S3_SAVE_REG mS3SaveReg = {
+  { BL_PLD_COMM_SIG, S3_SAVE_REG_COMM_ID, 1, 0 },
+  { { IO, WIDE32, { 0, 0}, (ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN), 0x00000000 } }
+};
+
 UINT8
 GetSerialPortStrideSize (
   VOID
@@ -812,7 +821,7 @@ InitializeSmbiosInfo (
   //
 
   //
-  // SMBIOS_TYPE_BASEBOARD_INFORMATION
+  // SMBIOS_TYPE_END_OF_TABLE
   //
   AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_END_OF_TABLE,
     0, NULL);
@@ -829,17 +838,6 @@ InitializeSmbiosInfo (
 
   return EFI_SUCCESS;
 }
-
-
-STATIC SMMBASE_INFO mSmmBaseInfo = {
-  { BL_PLD_COMM_SIG, SMMBASE_INFO_COMM_ID, 0, 0 }
-};
-
-STATIC S3_SAVE_REG mS3SaveReg = {
-  { BL_PLD_COMM_SIG, S3_SAVE_REG_COMM_ID, 1, 0 },
-  { { IO, WIDE32, { 0, 0}, (ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN), 0x00000000 } }
-};
-
 
 /**
   Initialize Board specific things in Stage2 Phase
