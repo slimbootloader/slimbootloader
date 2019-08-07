@@ -50,6 +50,7 @@ CONST UINT8  mRsvdSmbusAddressTable[4] = { 0xA2, 0xA0, 0xA2, 0xA0 };
 CONST UINT16 mRcompResistor[3] = { 121, 75, 100 };
 CONST UINT16 mRcompTarget[5] = { 60, 26, 20, 20, 26 };
 
+
 /**
   Set the debug print error level fron CFG data.
 
@@ -316,6 +317,57 @@ PrintGpioConfigTable (
 }
 
 /**
+  Retreive PadInfo embedded inside DW1 of GPIO CFG DATA.
+  Prepare a PadInfo DWORD first, add into the GpioTable,
+  followed by DW0 and DW1 directly from GPIO CFG DATA.
+  This format of GpioTable is what the Gpio library expects.
+
+  @param    GpioTable   Pointer to the GpioTable to be updated
+  @param    GpioCfg     Pointer to the cfg data
+  @param    Offset      Index of a particulr pin's DW0, DW1 in GpioCfg
+
+  @retval   GpioTable   Pointer to fill the next gpio item
+**/
+UINT8 *
+FillGpioTable (
+  IN  UINT8         *GpioTable,
+  IN  GPIO_CFG_HDR  *GpioCfg,
+  IN  UINT32        Offset,
+  IN  UINT8         ChipsetId
+
+)
+{
+  GPIO_CFG_DATA_DW1 *Dw1;
+  UINT32            *GpioItem;
+  GPIO_PAD_FIELD    GpioPad = { 0, 0, 0, 0 };
+
+  //
+  // Get the DW1 and extract PadInfo
+  //
+  GpioItem = (UINT32 *) (GpioCfg->GpioTableData + Offset);
+  Dw1 = (GPIO_CFG_DATA_DW1 *) (&GpioItem[1]);
+  GpioPad.PadNum    = (UINT16) Dw1->PadNum;
+  GpioPad.GrpIdx    = (UINT8)  Dw1->GrpIdx;
+  GpioPad.ChipsetId = ChipsetId;
+
+  //
+  // Remove PadInfo data from DW1
+  //
+  Dw1->PadNum = 0;
+  Dw1->GrpIdx = 0;
+
+  //
+  // Copy PadInfo(PinOffset), DW0, DW1
+  //
+  CopyMem (GpioTable, (VOID *)&GpioPad, sizeof(GPIO_PAD_FIELD));
+  GpioTable += sizeof(GPIO_PAD_FIELD);
+  CopyMem (GpioTable, GpioItem, GpioCfg->GpioItemSize);
+  GpioTable += GpioCfg->GpioItemSize;
+
+  return GpioTable;
+}
+
+/**
   Configure GPIOs
 
   @retval EFI_SUCCESS                   The function completed successfully
@@ -336,6 +388,7 @@ GpioConfig (
   UINT32              Offset;
   UINT8              *GpioCfgDataBuffer;
   UINT8              *GpioTable;
+  UINT8              ChipsetId;
 
   //Find the GPIO CFG HDR
   GpioCfgCurrHdr = (GPIO_CFG_HDR *)FindConfigDataByTag (CDATA_GPIO_TAG);
@@ -366,18 +419,27 @@ GpioConfig (
   GpioTable  = (UINT8 *)AllocateTemporaryMemory (0);  //allocate new buffer
   GpioCfgDataBuffer = GpioTable;
 
+  if (IsPchH()) {
+    ChipsetId = CNL_H_CHIPSET_ID;
+  } else if (IsPchLp()) {
+    ChipsetId = CNL_LP_CHIPSET_ID;
+  }
+
   for (Index = 0; Index  < GpioCfgHdr->GpioItemCount; Index++) {
     if (GpioCfgCurrHdr->GpioBaseTableBitMask[Index >> 3] & (1 << (Index & 7))) {
-      CopyMem (GpioTable, GpioCfgHdr->GpioTableData + Offset, GpioCfgHdr->GpioItemSize);
-      GpioTable += GpioCfgHdr->GpioItemSize;
+      GpioTable = FillGpioTable (GpioTable, GpioCfgHdr, Offset, ChipsetId);
       GpioEntries++;
     }
     Offset += GpioCfgHdr->GpioItemSize;
   }
 
+  Offset = 0;
   if (GpioCfgBaseHdr != NULL) {
-    CopyMem (GpioTable, GpioCfgCurrHdr->GpioTableData, GpioCfgCurrHdr->GpioItemCount * GpioCfgCurrHdr->GpioItemSize);
-    GpioEntries += GpioCfgCurrHdr->GpioItemCount;
+    for (Index = 0; Index  < GpioCfgCurrHdr->GpioItemCount; Index++) {
+      GpioTable = FillGpioTable (GpioTable, GpioCfgCurrHdr, Offset, ChipsetId);
+      GpioEntries++;
+      Offset += GpioCfgCurrHdr->GpioItemSize;
+    }
   }
 
   DEBUG_CODE_BEGIN ();

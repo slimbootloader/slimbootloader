@@ -96,12 +96,7 @@
     # !BSF PAGES:{GIO_$(1):GIO:"GPIO $(1)"}
     # !BSF PAGE:{GIO_$(1)}
 
-    #Dword0: GpioPinOffset (Hide it)
-    # !BSF NAME:{Reserved} TYPE:{Reserved}
-    # !BSF MARKER:{GpioPinOffset_$(1)}
-    gCfgData.GpioPinOffset_$(1)        |      * | 0x04 | $(2)
-
-    #Dword1: GpioPinConfig0
+    #Dword0: GpioPinConfig0
     # !BSF NAME:{GPIO $(1) PIN Config0}
     # !BSF TYPE:{EditNum, HEX, (0x00000000,0xFFFFFFFF)}
     # !BSF HELP:{GPIO $(1) PIN Configuration}
@@ -176,7 +171,7 @@
       # !BSF CONDITION:{$GpioPinConfig1_$(1).Hide_$(1) == 0}
       # !BSF FIELD:{GPIOResetConfig_$(1):8b}
 
-    #Dword2: GpioPinConfig1
+    #Dword1: GpioPinConfig1
     # !BSF NAME:{GPIO $(1) PIN Config1}
     # !BSF TYPE:{EditNum, HEX, (0x00000000,0xFFFFFFFF)}
     # !BSF HELP:{GPIO $(1) PIN Configuration}
@@ -201,8 +196,17 @@
       # !BSF CONDITION:{$GpioPinConfig1_$(1).Hide_$(1) == 0}
       # !BSF FIELD:{GPIOLockConfig_$(1):4b}
 
-      # !BSF NAME:{Reserved} TYPE:{Reserved}
-      # !BSF FIELD:{Reserved_$(1):17b}
+      # !BSF NAME:{Reserved1} TYPE:{Reserved}
+      # !BSF FIELD:{Reserved1_$(1):3b}
+
+      # !BSF NAME:{PadNum} TYPE:{Reserved}
+      # !BSF FIELD:{PadNum_$(1):8b}
+
+      # !BSF NAME:{GrpIdx} TYPE:{Reserved}
+      # !BSF FIELD:{GrpIdx_$(1):5b}
+
+      # !BSF NAME:{Reserved2} TYPE:{Reserved}
+      # !BSF FIELD:{Reserved2_$(1):1b}
 
       # !BSF NAME:{Hide} TYPE:{Reserved}
       # !BSF FIELD:{Hide_$(1):1b}
