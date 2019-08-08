@@ -15,27 +15,21 @@ This script creates a new Whiskeylake/Coffeelake Slim Bootloader IFWI image basi
 on an existing IFWI base image.  Please note, this stitching method will work
 only if Boot Guard in the base image is not enabled, and the silicon is not
 fused with Boot Guard enabled.
-
 Please follow steps below:
-
   1.  Download an existing Whiskeylake/Coffeelake UEFI IFWI image associated
       with the target platform.
       Alternatively, the original IFWI image from the onboard SPI flash can be
       read out as the base image too.
-
   2.  Build Slim Bootloader source tree.
       The generated Slim Bootloader binary is located at:
       $(WORKSPACE)/Outputs/cfl/SlimBootloader.bin
-
   3.  Stitch to create a new IFWI image.
       EX:
       python StitchLoader.py -i WHL_UEFI_IFWI.bin -s SlimBootloader.bin -o WHL_SBL_IFWI.bin
-
   4.  Optionally, to view the flash layout for an given IFWI image,
       specify '-i' option only.
       EX:
       python StitchLoader.py -i IFWI.bin
-
 """
 
 
@@ -107,10 +101,10 @@ class FlashMap(Structure):
 
 
 def Bytes2Val (bytes):
-	return reduce(lambda x,y: (x<<8)|y,  bytes[::-1] )
+    return reduce(lambda x,y: (x<<8)|y,  bytes[::-1] )
 
 def Val2Bytes (value, length):
-	return [(value>>(i*8) & 0xff) for i in range(length)]
+    return [(value>>(i*8) & 0xff) for i in range(length)]
 
 class SPI_DESCRIPTOR(Structure):
     DESC_SIGNATURE = 0x0FF0A55A
@@ -235,17 +229,16 @@ def LocateComponent(Root, Path):
     else:
         return None
 
-def ReplaceRegion (IfwiData, Rgn, InputFile, TailPos, PlatformData = None):
-    RgnPos = Rgn[1]
-    RgnLen = Rgn[2]
-
+def AddPlatformData (InputFile, RgnLen, PlatformData = None):
     Fd = open(InputFile, "rb")
     InputData = bytearray(Fd.read())
     Fd.close()
 
     InputLen = len(InputData)
-    if RgnLen < InputLen:
-        Fatal("Input binary size(0x%08x) cannot exceed %s region size(0x%08x) !" % (InputLen, Rgn[0], RgnLen))
+    if RgnLen is not 0:
+        if RgnLen < InputLen:
+            Fatal("Input binary size(0x%08x) cannot exceed %s region size(0x%08x) !" % (InputLen, Rgn[0], RgnLen))
+            return None
 
     if PlatformData:
       # Parse Flash Map
@@ -257,7 +250,17 @@ def ReplaceRegion (IfwiData, Rgn, InputFile, TailPos, PlatformData = None):
           PlatDataOffset = Stage1A.Offset + Stage1A.Length - 12
           c_uint32.from_buffer (InputData, PlatDataOffset).value = PlatformData
         print "Platform data was patched for %s" % Path
+      return InputData
 
+def ReplaceRegion (IfwiData, Rgn, InputFile, TailPos, PlatformData = None):
+    RgnPos = Rgn[1]
+    RgnLen = Rgn[2]
+
+    InputData = AddPlatformData(InputFile, RgnLen, PlatformData)
+    if InputData is None:
+        return
+
+    InputLen = len(InputData)
     RgnOff = RgnLen - InputLen
     if TailPos == 1:
         if RgnLen != InputLen:
