@@ -1,23 +1,26 @@
 /** @file
 
-  Copyright (c) 2011 - 2013, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2011 - 2019, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-#ifndef __LINUX_BZIMAGE_H__
-#define __LINUX_BZIMAGE_H__
+#ifndef __LINUX_LIB_H__
+#define __LINUX_LIB_H__
 
-#define BOOTSIG         0x1FE
-#define SETUP_HDR       0x53726448  /* 0x53726448 == "HdrS" */
+#define BOOTSIG               0x1FE
+#define SETUP_HDR             0x53726448  // "HdrS"
 
-#define E820_RAM        1
-#define E820_RESERVED   2
-#define E820_ACPI       3
-#define E820_NVS        4
-#define E820_UNUSABLE   5
+#define BOOT_PARAMS_BASE      0x00090000
+#define LINUX_KERNEL_BASE     0x00100000
 
-#define VIDEO_TYPE_EFI  0x70  /* EFI graphic mode   */
+#define E820_RAM              1
+#define E820_RESERVED         2
+#define E820_ACPI             3
+#define E820_NVS              4
+#define E820_UNUSABLE         5
+
+#define VIDEO_TYPE_EFI        0x70
 #define GET_POS_FROM_MASK(mask)   (mask & 0x0FF)?0:((mask & 0x0FF00)?8:((mask & 0x0FF0000)?16:24))
 
 #pragma pack(1)
@@ -150,20 +153,81 @@ typedef struct {
 } BOOT_PARAMS;
 
 typedef struct {
-  UINT16    Limit;
-  UINT64    *Base;
+  UINT16        Limit;
+  UINT64       *Base;
 } DT_ADDR;
 
 #pragma pack()
 
 /**
-  Setup graphics.
+  Dumps kernel boot parameters.
 
-  @param Buf  Pointer to boot parameter structure.
+  @param[in] Bp    Pointer to boot parameter structure.
  **/
-extern EFI_STATUS
-setup_graphics (
-  BOOT_PARAMS *Buf
+VOID
+DumpLinuxBootParams (
+  IN BOOT_PARAMS             *Bp
   );
 
-#endif /* __LINUX_BZIMAGE_H__ */
+/**
+  Return kernel boot parameters.
+
+  @retval    Pointer to boot parameter structure.
+ **/
+BOOT_PARAMS *
+EFIAPI
+GetLinuxBootParams (
+  VOID
+  );
+
+/**
+  Check if the image is a bootable Linux image.
+
+  @param[in]  ImageBase      Memory address of an image
+
+  @retval     TRUE           Image is a bootable kernel image
+  @retval     FALSE          Not a bootable kernel image
+**/
+BOOLEAN
+EFIAPI
+IsBzImage (
+  IN  CONST VOID             *ImageBase
+  );
+
+/**
+  Load linux kernel image to specified address and setup boot parameters.
+
+  @param[in]  KernelBase     Memory address of an kernel image.
+  @param[in]  InitRdBase     Memory address of an InitRd image.
+  @param[in]  InitRdLen      InitRd image size.
+  @param[in]  CmdLineBase    Memory address of command line buffer.
+  @param[in]  CmdLineLen     Command line buffer size.
+
+  @retval EFI_INVALID_PARAMETER   Input parameters are not valid.
+  @retval EFI_UNSUPPORTED         Unsupported binary type.
+  @retval EFI_SUCCESS             Kernel is loaded successfully.
+**/
+EFI_STATUS
+EFIAPI
+LoadBzImage (
+  IN  CONST VOID                  *KernelBase,
+  IN  CONST VOID                  *InitRdBase,
+  IN      UINT32                   InitRdLen,
+  IN  CONST VOID                  *CmdLineBase,
+  IN      UINT32                   CmdLineLen
+  );
+
+/**
+  Load linux kernel image to specified address and setup boot parameters.
+
+  @param[in]  HobList    HOB list pointer. Not used for now.
+  @param[in]  Params     Extra parameters. Not used for now.
+**/
+VOID
+EFIAPI
+LinuxBoot (
+  IN VOID   *HobList,
+  IN VOID   *Params
+  );
+
+#endif

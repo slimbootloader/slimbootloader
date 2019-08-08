@@ -153,7 +153,6 @@
   # Determine if the Pre-OS checker should be executed or not.
   gPlatformModuleTokenSpaceGuid.PcdPreOsCheckerEnabled    | FALSE      | BOOLEAN | 0x20000203
 
-
   gPlatformModuleTokenSpaceGuid.PcdAcpiEnabled            | TRUE       | BOOLEAN | 0x20000204
   gPlatformModuleTokenSpaceGuid.PcdSmpEnabled             | TRUE       | BOOLEAN | 0x20000205
   gPlatformModuleTokenSpaceGuid.PcdPciEnumEnabled         | TRUE       | BOOLEAN | 0x20000206
@@ -165,3 +164,5 @@
   gPlatformModuleTokenSpaceGuid.PcdS3DebugEnabled         | FALSE      | BOOLEAN | 0x2000020D
   gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled         | FALSE      | BOOLEAN | 0x2000020E
   gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled          | FALSE      | BOOLEAN | 0x2000020F
+  gPlatformModuleTokenSpaceGuid.PcdLinuxPayloadEnabled    | FALSE      | BOOLEAN | 0x20000210
+

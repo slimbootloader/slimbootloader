@@ -1,0 +1,35 @@
+## @file
+#
+#  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = LinuxLib
+  FILE_GUID                      = 3999B594-5FE9-476B-884E-9D302D6DFA0F
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = LinuxLib
+
+[Sources]
+  LinuxLib.c
+
+[Sources.IA32]
+  Ia32/JumpToKernel.nasm
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+
+[Guids]
+  gEfiGraphicsInfoHobGuid
+  gLoaderMemoryMapInfoGuid
+
+[Pcd]

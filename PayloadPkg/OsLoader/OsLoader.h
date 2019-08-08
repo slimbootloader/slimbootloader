@@ -25,7 +25,6 @@
 #include <Library/PrintLib.h>
 #include <Library/Crc32Lib.h>
 #include <Library/PcdLib.h>
-#include <Library/LinuxBzimage.h>
 #include <Library/BootOptionLib.h>
 #include <Library/TpmLib.h>
 #include <Library/VariableLib.h>
@@ -43,6 +42,7 @@
 #include <Library/TrustyBootLib.h>
 #include <Library/UsbKbLib.h>
 #include <Library/ElfLib.h>
+#include <Library/LinuxLib.h>
 #include <Guid/SeedInfoHobGuid.h>
 #include <Guid/OsConfigDataHobGuid.h>
 #include <Guid/OsBootOptionGuid.h>
@@ -169,16 +169,6 @@ DumpMbBootState (
   );
 
 /**
-  Dumps kernel boot parameters.
-
-  @param[in] Bp  Pointer to boot parameter structure.
- **/
-VOID
-DumpBootParameters (
-  IN BOOT_PARAMS             *Bp
-  );
-
-/**
   Dumps the content of the buffer starting from Address.
 
   @param[in]  Address   Start address of buffer to dump
@@ -236,23 +226,6 @@ EFI_STATUS
 FindBootPartition (
   IN  OS_BOOT_OPTION         *BootOption,
   OUT EFI_HANDLE             *HwPartHandle
-  );
-
-/**
-  Setup linux kernel and boot parameter table
-
-  This function will check if boot image is bzImage firstly.
-  If yes, will copy kernel to address 0x100000, and copy boot parameters
-  to 0x90000. And also update boot parametere fields.
-
-  @param[in]  LinuxImage        Loaded Linux image information.
-
-  @retval  RETURN_SUCCESS       Setup bzImage kernel and boot parameter successfully
-  @retval  Others               There is error when setup bzImage and boot parameters
-**/
-EFI_STATUS
-SetupBzImage (
-  IN LINUX_IMAGE             *LinuxImage
   );
 
 /**

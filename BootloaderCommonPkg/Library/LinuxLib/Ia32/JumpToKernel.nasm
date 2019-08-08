@@ -22,21 +22,3 @@ ASM_PFX(JumpToKernel):
     call    DWORD [esp + 4]
     ret
 
-;------------------------------------------------------------------------------
-; VOID
-; EFIAPI
-; JumpToUefiKernel (
-;   EFI_HANDLE ImageHandle,
-;   EFI_SYSTEM_TABLE *SystemTable,
-;   VOID *KernelBootParams,
-;   VOID *KernelStart
-;   );
-;------------------------------------------------------------------------------
-global ASM_PFX(JumpToUefiKernel)
-ASM_PFX(JumpToUefiKernel):
-
-    mov     eax, [esp + 12]
-    mov     eax, [eax + 0x264]
-    add     eax, [esp + 16]
-    jmp     eax
-

@@ -16,6 +16,7 @@
 
 #define  STACK_DEBUG_FILL_PATTERN     0x5AA55AA5
 #define  UEFI_PAYLOAD_ID_SIGNATURE    SIGNATURE_32('U', 'E', 'F', 'I')
+#define  LINX_PAYLOAD_ID_SIGNATURE    SIGNATURE_32('L', 'I', 'N', 'X')
 #define  AUTO_PAYLOAD_ID_SIGNATURE    SIGNATURE_32('A', 'U', 'T', 'O')
 
 #define  ALIGN_UP(address, align)     (((address) + ((align) - 1)) & ~((align)-1))

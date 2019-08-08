@@ -33,6 +33,7 @@
 #include <Library/CryptoLib.h>
 #include <Library/SecureBootLib.h>
 #include <Library/TpmLib.h>
+#include <Library/LinuxLib.h>
 #include <Library/DebugLogBufferLib.h>
 #include <Library/LiteFvLib.h>
 #include <Library/ContainerLib.h>

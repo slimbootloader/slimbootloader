@@ -83,8 +83,11 @@ PreparePayload (
   }
 
   Dst = PcdGet32 (PcdPayloadExeBase);
-  if (FixedPcdGetBool (PcdPayloadLoadHigh) && (GetPayloadId() != UEFI_PAYLOAD_ID_SIGNATURE)) {
-    Dst = 0;
+  if (FixedPcdGetBool (PcdPayloadLoadHigh)) {
+    PayloadId = GetPayloadId();
+    if ((PayloadId != LINX_PAYLOAD_ID_SIGNATURE) && (PayloadId != UEFI_PAYLOAD_ID_SIGNATURE)) {
+      Dst = 0;
+    }
   }
 
   AddMeasurePoint (0x3100);
@@ -136,6 +139,12 @@ NormalBootPath (
   EFI_STATUS                      Status;
   BOOLEAN                         CallBoardNotify;
   UINT32                          PayloadId;
+  VOID                           *InitRd;
+  UINT32                          InitRdLen;
+  UINT8                          *CmdLine;
+  UINT32                          CmdLineLen;
+  UINT8                           OrgVal;
+
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
 
@@ -149,13 +158,14 @@ NormalBootPath (
   AddMeasurePoint (0x31A0);
 
   PldBase = 0;
+  Status  = EFI_SUCCESS;
   if (Dst[0] == 0x00005A4D) {
     // It is a PE format
     DEBUG ((DEBUG_INFO, "PE32 Format Payload\n"));
     Status = PeCoffRelocateImage ((UINT32)Dst);
-    ASSERT_EFI_ERROR (Status);
-    Status = PeCoffLoaderGetEntryPoint (Dst, (VOID *)&PldEntry);
-    ASSERT_EFI_ERROR (Status);
+    if (!EFI_ERROR(Status)) {
+      Status = PeCoffLoaderGetEntryPoint (Dst, (VOID *)&PldEntry);
+    }
   } else if (Dst[10] == EFI_FVH_SIGNATURE) {
     // It is a FV format
     DEBUG ((DEBUG_INFO, "FV Format Payload\n"));
@@ -163,17 +173,41 @@ NormalBootPath (
     if ((FixedPcdGetBool (PcdPreOsCheckerEnabled))) {
       PldBase = (UINT32) Dst;
     }
-    ASSERT_EFI_ERROR (Status);
   } else if (IsElfImage (Dst)) {
     Status = LoadElfImage (Dst, (VOID *)&PldEntry);
-    ASSERT_EFI_ERROR (Status);
   } else {
-    // Assume RAW Binary Payload
-    // PcdPayloadExeBase MUST be the same as payload binary's TEXT BASE
-    // Jump to the entry point directly
-    PldEntry = (PAYLOAD_ENTRY) (UINTN)Dst;
+    PldEntry = NULL;
+    if (FeaturePcdGet (PcdLinuxPayloadEnabled)) {
+      if (IsBzImage (Dst)) {
+        // It is a Linux kernel image
+        DEBUG ((DEBUG_INFO, "BzImage Format Payload\n"));
+        InitRd     = NULL;
+        InitRdLen  = 0;
+        CmdLine    = NULL;
+        CmdLineLen = 0;
+        Status = LoadComponent (FLASH_MAP_SIG_EPAYLOAD, SIGNATURE_32 ('C', 'M', 'D', 'L'),
+                                (VOID **)&CmdLine, &CmdLineLen);
+        if (!EFI_ERROR (Status)) {
+          OrgVal = CmdLine[CmdLineLen];
+          CmdLine[CmdLineLen] = 0;
+          DEBUG ((DEBUG_INFO, "Kernel command line: \n%a\n", CmdLine));
+          CmdLine[CmdLineLen] = OrgVal;
+        }
+        PldEntry = (PAYLOAD_ENTRY)(UINTN)LinuxBoot;
+        Status   = LoadBzImage (Dst, InitRd, InitRdLen, CmdLine, CmdLineLen);
+      }
+    }
+
+    if (PldEntry == NULL) {
+      // Assume RAW Binary Payload if no other format match
+      // PcdPayloadExeBase MUST be the same as payload binary's TEXT BASE
+      // Jump to the entry point directly
+      DEBUG ((DEBUG_INFO, "Assume RAW Format Payload\n"));
+      PldEntry = (PAYLOAD_ENTRY) (UINTN)Dst;
+    }
   }
   AddMeasurePoint (0x31B0);
+  ASSERT_EFI_ERROR (Status);
 
   if (FixedPcdGetBool (PcdSmpEnabled)) {
     DEBUG ((DEBUG_INIT, "MP Init%a\n", DebugCodeEnabled() ? " (Done)" : ""));

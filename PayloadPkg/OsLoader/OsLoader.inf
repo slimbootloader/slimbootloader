@@ -29,14 +29,10 @@
   BootOption.c
   BootConfig.c
   LoadImage.c
-  Linux.c
   PerformanceData.c
   BootParameters.c
   BlockIoTest.c
   KeyManagement.c
-
-[Sources.IA32]
-  Ia32/JumpToKernel.nasm
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -78,6 +74,7 @@
   UsbKbLib
   ElfLib
   LiteFvLib
+  LinuxLib
 
 [Guids]
   gOsConfigDataGuid

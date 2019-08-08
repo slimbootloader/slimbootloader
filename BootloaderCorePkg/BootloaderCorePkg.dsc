@@ -118,6 +118,7 @@
   ConsoleInLib|BootloaderCommonPkg/Library/ConsoleInLib/ConsoleInLib.inf
   ConsoleOutLib|BootloaderCommonPkg/Library/ConsoleOutLib/ConsoleOutLib.inf
   ContainerLib|BootloaderCommonPkg/Library/ContainerLib/ContainerLib.inf
+  LinuxLib|BootloaderCommonPkg/Library/LinuxLib/LinuxLib.inf
 
 !if $(HAVE_FSP_BIN)
   FspApiLib|$(PLATFORM_PACKAGE)/Library/FspApiLib/FspApiLib.inf
