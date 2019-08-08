@@ -180,6 +180,7 @@ SetupBootImage (
   MULTIBOOT_IMAGE            *MultiBoot;
   IMAGE_DATA                 *CmdFile;
   IMAGE_DATA                 *BootFile;
+  LINUX_IMAGE                *LinuxImage;
 
   //
   // Allocate a cmd line buffer and init it with config file or default value
@@ -241,11 +242,15 @@ SetupBootImage (
     MultiBoot->BootState.EntryPoint = (UINT32)EntryPoint;
   } else {
     DEBUG ((DEBUG_INFO, "Assume BzImage...\n"));
-    Status = SetupBzImage (&LoadedImage->Image.Linux);
+    LinuxImage = &LoadedImage->Image.Linux;
+    Status = LoadBzImage (LinuxImage->BootFile.Addr,
+                          LinuxImage->InitrdFile.Addr, LinuxImage->InitrdFile.Size,
+                          LinuxImage->CmdFile.Addr,    LinuxImage->CmdFile.Size);
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "Setup BzImage error, %r\n", Status));
       return Status;
     }
+    LinuxImage->BootParams = GetLinuxBootParams ();
     LoadedImage->Flags  = (LoadedImage->Flags  & ~LOADED_IMAGE_MULTIBOOT) | LOADED_IMAGE_LINUX;
   }
 

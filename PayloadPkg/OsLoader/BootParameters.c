@@ -196,7 +196,7 @@ DisplayInfo (
     DumpMbInfo (&LoadedImage->Image.MultiBoot.MbInfo);
     DumpMbBootState (&LoadedImage->Image.MultiBoot.BootState);
   } else if ((LoadedImage->Flags & LOADED_IMAGE_LINUX) != 0) {
-    DumpBootParameters (LoadedImage->Image.Linux.BootParams);
+    DumpLinuxBootParams (LoadedImage->Image.Linux.BootParams);
   }
 }
 
