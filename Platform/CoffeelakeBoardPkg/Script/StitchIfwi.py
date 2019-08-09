@@ -110,7 +110,6 @@ def RunCmd (Cmd, Cwd):
                 CmdArgs[0] = CmdArgs[0][2:]
         else:
             Shell = False
-        #Proc = subprocess.Popen(CmdArgs, shell = Shell, cwd=Cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         Proc = subprocess.Popen(CmdArgs, shell = Shell, cwd=Cwd)
         Out, Err = Proc.communicate()
         Ret = Proc.returncode
@@ -453,8 +452,11 @@ def Stitch (StitchDir, StitchZip, BtgProfile, SpiQuadMode, PlatformData, FullRdu
     os.chdir(StitchDir)
 
     if PlatformData:
+        Fd = open(os.path.join(StitchDir, CfgVar['fitinput'], "SlimBootloader.bin"), "rb")
+        InputData = bytearray(Fd.read())
+        Fd.close()
         print ("\n Adding platform data to Slimbootloader ...")
-        Data = AddPlatformData(os.path.join(StitchDir, CfgVar['fitinput'], "SlimBootloader.bin"), 0, PlatformData)
+        Data = AddPlatformData(InputData, 0, PlatformData)
         Fd = open(os.path.join(StitchDir, CfgVar['fitinput'], "SlimBootloader.bin"), "wb")
         Fd.write(Data)
         Fd.close()
