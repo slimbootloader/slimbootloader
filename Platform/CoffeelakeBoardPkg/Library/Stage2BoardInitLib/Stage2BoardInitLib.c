@@ -1596,54 +1596,53 @@ SaveNvsData (
   UINT32      Address;
   UINT32      BaseAddress;
   UINT32      RegionSize;
-  UINT32      TotalSize;
+  UINT32      MrcDataRegSize;
 
-  Status = GetComponentInfo (FLASH_MAP_SIG_MRCDATA, &Address, NULL);
+  Status = GetComponentInfo (FLASH_MAP_SIG_MRCDATA, &Address, &MrcDataRegSize);
   if (EFI_ERROR(Status)) {
     return EFI_NOT_FOUND;
   }
-  if (*(UINT32 *)Address == 0xFFFFFFFF) {
-    Status = SpiConstructor ();
-    if (EFI_ERROR (Status)) {
-      return Status;
-    }
 
-    Status = SpiGetRegionAddress (FlashRegionAll, NULL,  &TotalSize);
-    if (EFI_ERROR (Status)) {
-      return Status;
-    }
+  if (Length > MrcDataRegSize) {
+    return EFI_INVALID_PARAMETER;
+  }
 
-    Status = SpiGetRegionAddress (FlashRegionBios, &BaseAddress, &RegionSize);
-    if (EFI_ERROR (Status)) {
-      return Status;
-    }
+  //
+  // Compare input data against the stored MRC training data
+  // if they match, no need to update again.
+  //
+  if (CompareMem ((VOID *)Address, Buffer, Length) == 0){
+    return EFI_ALREADY_STARTED;
+  }
 
-    BaseAddress += ((UINT32)(~TotalSize) + 1);
-    if (Address < BaseAddress) {
-      return EFI_ACCESS_DENIED;
-    }
+  Status = SpiGetRegionAddress (FlashRegionBios, &BaseAddress, &RegionSize);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
 
-    Address -= BaseAddress;
-    if ((Address + ROUNDED_UP(Length, KB_(4))) > RegionSize) {
-      return EFI_OUT_OF_RESOURCES;
-    }
+  BaseAddress = ((UINT32)(~RegionSize) + 1);
+  if (Address < BaseAddress) {
+    return EFI_ACCESS_DENIED;
+  }
 
+  Address -= BaseAddress;
+  if ((Address + ROUNDED_UP(Length, KB_(4))) > RegionSize) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  if (!EFI_ERROR(Status)) {
+    Status = SpiFlashErase (FlashRegionBios, Address, ROUNDED_UP(Length, KB_(4)));
     if (!EFI_ERROR(Status)) {
-      Status = SpiFlashErase (FlashRegionBios, Address, ROUNDED_UP(Length, KB_(4)));
+      Status = SpiFlashWrite (FlashRegionBios, Address, Length, Buffer);
       if (!EFI_ERROR(Status)) {
-        Status = SpiFlashWrite (FlashRegionBios, Address, Length, Buffer);
-        if (!EFI_ERROR(Status)) {
-          DEBUG ((DEBUG_INFO, "MRC data successfully cached to 0x%X\n", Address));
-          MmioAndThenOr8 (
-            PCH_PWRM_BASE_ADDRESS + R_PMC_PWRM_GEN_PMCON_A + 2,
-            (UINT8) ~((B_PMC_PWRM_GEN_PMCON_A_MS4V | B_PMC_PWRM_GEN_PMCON_A_SUS_PWR_FLR) >> 16),
-            B_PMC_PWRM_GEN_PMCON_A_DISB >> 16
-            );
-        }
+        DEBUG ((DEBUG_INFO, "MRC data successfully cached to 0x%X\n", Address));
+        MmioAndThenOr8 (
+          PCH_PWRM_BASE_ADDRESS + R_PMC_PWRM_GEN_PMCON_A + 2,
+          (UINT8) ~((B_PMC_PWRM_GEN_PMCON_A_MS4V | B_PMC_PWRM_GEN_PMCON_A_SUS_PWR_FLR) >> 16),
+          B_PMC_PWRM_GEN_PMCON_A_DISB >> 16
+          );
       }
     }
-  } else {
-    Status = EFI_ALREADY_STARTED;
   }
 
   return Status;
