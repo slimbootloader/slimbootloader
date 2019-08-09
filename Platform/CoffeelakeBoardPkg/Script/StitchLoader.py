@@ -229,11 +229,7 @@ def LocateComponent(Root, Path):
     else:
         return None
 
-def AddPlatformData (InputFile, RgnLen, PlatformData = None):
-    Fd = open(InputFile, "rb")
-    InputData = bytearray(Fd.read())
-    Fd.close()
-
+def AddPlatformData (InputData, RgnLen, PlatformData = None):
     InputLen = len(InputData)
     if RgnLen is not 0:
         if RgnLen < InputLen:
@@ -256,9 +252,14 @@ def ReplaceRegion (IfwiData, Rgn, InputFile, TailPos, PlatformData = None):
     RgnPos = Rgn[1]
     RgnLen = Rgn[2]
 
-    InputData = AddPlatformData(InputFile, RgnLen, PlatformData)
-    if InputData is None:
-        return
+    Fd = open(InputFile, "rb")
+    InputData = bytearray(Fd.read())
+    Fd.close()
+
+    if PlatformData:
+        InputData = AddPlatformData(InputData, RgnLen, PlatformData)
+        if InputData is None:
+            return
 
     InputLen = len(InputData)
     RgnOff = RgnLen - InputLen
