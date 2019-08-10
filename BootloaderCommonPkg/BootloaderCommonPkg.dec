@@ -40,6 +40,12 @@
   gSmmInformationGuid                           = { 0x2d939d66, 0xceec, 0x4244, { 0x94, 0x97, 0x6e, 0x1c, 0x6f, 0x92, 0x54, 0x2c } }
   gEsrtSystemFirmwareGuid                       = { 0xbfbaf62d, 0x0a27, 0x4390, { 0x99, 0xf6, 0x8a, 0xe1, 0xca, 0x62, 0x62, 0x77 } }
 
+  gEfiVariableGuid                              = { 0xddcf3616, 0x3275, 0x4164, { 0x98, 0xb6, 0xfe, 0x85, 0x70, 0x7f, 0xfe, 0x7d } }
+  gEfiAuthenticatedVariableGuid                 = { 0xaaf32c78, 0x947b, 0x439a, { 0xa1, 0x80, 0x2e, 0x14, 0x4e, 0xc3, 0x77, 0x92 } }
+  gEfiSystemNvDataFvGuid                        = { 0xFFF12B8D, 0x7696, 0x4C8B, { 0xA9, 0x85, 0x27, 0x47, 0x07, 0x5B, 0x4F, 0x50 } }
+  gEfiVariableIndexTableGuid                    = { 0x8cfdb8c8, 0xd6b2, 0x40f3, { 0x8e, 0x97, 0x02, 0x30, 0x7c, 0xc9, 0x8b, 0x7c } }
+  gEdkiiWorkingBlockSignatureGuid               = { 0x9e58292b, 0x7c68, 0x497d, { 0xa0, 0xce, 0x65,  0x0, 0xfd, 0x9f, 0x1b, 0x95 } }
+
 [PcdsFixedAtBuild]
   gPlatformCommonLibTokenSpaceGuid.PcdMaxLibraryDataEntry    |          8 | UINT32 | 0x20000100
   gPlatformCommonLibTokenSpaceGuid.PcdPcdLibId               |          0 |  UINT8 | 0x20000101
@@ -49,6 +55,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdTpmLibId               |          4 |  UINT8 | 0x20000105
   gPlatformCommonLibTokenSpaceGuid.PcdHeciLibId              |          5 |  UINT8 | 0x20000106
   gPlatformCommonLibTokenSpaceGuid.PcdMmcTuningLibId         |          6 |  UINT8 | 0x20000107
+  gPlatformCommonLibTokenSpaceGuid.PcdUefiVariableLibId      |          7 |  UINT8 | 0x20000108
 
   gPlatformCommonLibTokenSpaceGuid.PcdContainerMaxNumber     |          8 | UINT32 | 0x20000120
 

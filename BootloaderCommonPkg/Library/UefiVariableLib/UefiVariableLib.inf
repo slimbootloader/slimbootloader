@@ -1,0 +1,55 @@
+## @file
+# Description file for the Variable library.
+#
+# Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = UefiVariableLib
+  FILE_GUID                      = 34C8C28F-B61C-45a2-8F2E-89E46BECC63B
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = UefiVariableLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 EBC
+#
+
+[Sources]
+  FtwLastWrite.c
+  UefiVariableLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+
+[LibraryClasses]
+  BaseMemoryLib
+  PcdLib
+  HobLib
+  DebugLib
+
+[Guids]
+  ## CONSUMES             ## GUID # Variable store header
+  ## SOMETIMES_CONSUMES   ## HOB
+  gEfiAuthenticatedVariableGuid
+  ## SOMETIMES_CONSUMES   ## GUID # Variable store header
+  ## SOMETIMES_CONSUMES   ## HOB
+  gEfiVariableGuid
+  ## SOMETIMES_PRODUCES   ## HOB
+  ## SOMETIMES_CONSUMES   ## HOB
+  gEfiVariableIndexTableGuid
+  gEfiSystemNvDataFvGuid            ## SOMETIMES_CONSUMES   ## GUID
+  ## SOMETIMES_CONSUMES   ## HOB
+  ## CONSUMES             ## GUID # Dependence
+  gEdkiiWorkingBlockSignatureGuid
+
+[Pcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdUefiVariableLibId

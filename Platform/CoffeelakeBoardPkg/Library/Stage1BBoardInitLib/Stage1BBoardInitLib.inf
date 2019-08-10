@@ -45,8 +45,6 @@
   MmcAccessLib
   BoardSupportLib
 
-[Guids]
-
 [Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
   gPlatformModuleTokenSpaceGuid.PcdCfgDatabaseSize

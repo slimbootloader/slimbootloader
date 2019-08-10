@@ -697,6 +697,7 @@ BoardInit (
 {
   UINT16                PlatformId;
   PLT_DEVICE_TABLE     *PltDeviceTable;
+
   PlatformId = GetPlatformId ();
 
   switch (InitPhase) {
