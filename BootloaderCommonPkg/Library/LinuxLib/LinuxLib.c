@@ -242,21 +242,31 @@ LoadBzImage (
     GfxInfoHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GET_GUID_HOB_DATA (GuidHob);
     ZeroMem (&Bp->ScreenInfo, sizeof (Bp->ScreenInfo));
     GfxMode = &GfxInfoHob->GraphicsMode;
-    Bp->ScreenInfo.OrigVideoIsVGA  = VIDEO_TYPE_EFI;
-    Bp->ScreenInfo.LfbLinelength   = (UINT16) (GfxMode->PixelsPerScanLine * 4);
-    Bp->ScreenInfo.LfbDepth        = 32;
-    Bp->ScreenInfo.LfbBase         = (UINT32)(UINTN)GfxInfoHob->FrameBufferBase;
-    Bp->ScreenInfo.LfbWidth        = (UINT16)GfxMode->HorizontalResolution;
-    Bp->ScreenInfo.LfbHeight       = (UINT16)GfxMode->VerticalResolution;
-    Bp->ScreenInfo.Pages           = 1;
-    Bp->ScreenInfo.BlueSize        = 8;
-    Bp->ScreenInfo.BluePos         = GET_POS_FROM_MASK (GfxMode->PixelInformation.BlueMask);
-    Bp->ScreenInfo.GreenSize       = 8;
-    Bp->ScreenInfo.GreenPos        = GET_POS_FROM_MASK (GfxMode->PixelInformation.GreenMask);
-    Bp->ScreenInfo.RedSize         = 8;
-    Bp->ScreenInfo.RedPos          = GET_POS_FROM_MASK (GfxMode->PixelInformation.RedMask);
-    Bp->ScreenInfo.RsvdSize        = 8;
-    Bp->ScreenInfo.RsvdPos         = GET_POS_FROM_MASK (GfxMode->PixelInformation.ReservedMask);
+    if (GfxMode->PixelFormat == PixelRedGreenBlueReserved8BitPerColor) {
+      Bp->ScreenInfo.RedPos   = 0;
+      Bp->ScreenInfo.BluePos  = 16;
+    } else if (GfxMode->PixelFormat == PixelBlueGreenRedReserved8BitPerColor) {
+      Bp->ScreenInfo.RedPos   = 16;
+      Bp->ScreenInfo.BluePos  = 0;
+    } else {
+      // Unsupported format
+      GfxMode = NULL;
+    }
+    if (GfxMode != NULL) {
+      Bp->ScreenInfo.OrigVideoIsVGA  = VIDEO_TYPE_EFI;
+      Bp->ScreenInfo.LfbLinelength   = (UINT16) (GfxMode->PixelsPerScanLine * 4);
+      Bp->ScreenInfo.LfbDepth        = 32;
+      Bp->ScreenInfo.LfbBase         = (UINT32)(UINTN)GfxInfoHob->FrameBufferBase;
+      Bp->ScreenInfo.LfbWidth        = (UINT16)GfxMode->HorizontalResolution;
+      Bp->ScreenInfo.LfbHeight       = (UINT16)GfxMode->VerticalResolution;
+      Bp->ScreenInfo.Pages           = 1;
+      Bp->ScreenInfo.RedSize         = 8;
+      Bp->ScreenInfo.GreenSize       = 8;
+      Bp->ScreenInfo.BlueSize        = 8;
+      Bp->ScreenInfo.RsvdSize        = 8;
+      Bp->ScreenInfo.GreenPos        = 8;
+      Bp->ScreenInfo.RsvdPos         = 24;
+    }
   }
 
   // Get memory map
