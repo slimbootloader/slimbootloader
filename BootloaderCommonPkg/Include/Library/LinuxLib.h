@@ -218,6 +218,17 @@ LoadBzImage (
   );
 
 /**
+  Update linux kernel boot parameters.
+
+  @retval EFI_SUCCESS        Linux boot parameters were updated successfully.
+**/
+VOID
+EFIAPI
+UpdateLinuxBootParams (
+  VOID
+  );
+
+/**
   Load linux kernel image to specified address and setup boot parameters.
 
   @param[in]  HobList    HOB list pointer. Not used for now.
