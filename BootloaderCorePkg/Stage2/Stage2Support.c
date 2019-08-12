@@ -632,7 +632,7 @@ BuildExtraInfoHob (
   Length       = sizeof (LOADER_PLATFORM_INFO);
   LoaderPlatformInfo = BuildGuidHob (&gLoaderPlatformInfoGuid, Length);
   if (LoaderPlatformInfo != NULL) {
-    LoaderPlatformInfo->Revision = 1;
+    LoaderPlatformInfo->Revision = 2;
     LoaderPlatformInfo->BootPartition = GetCurrentBootPartition ();
     LoaderPlatformInfo->BootMode = GetBootMode ();
     LoaderPlatformInfo->PlatformId = GetPlatformId ();

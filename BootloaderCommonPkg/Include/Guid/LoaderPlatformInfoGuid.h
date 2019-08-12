@@ -45,12 +45,6 @@ extern EFI_GUID gLoaderPlatformInfoGuid;
 //Secure debug (0 - disabled, 1 - enabled)
 #define        HWSTATE_SECURE_DEBUG              BIT3
 
-//Tpm Type dTPM 2.0 (0 - Not Availble, 1 - detected)
-#define        HWSTATE_DTPM_20                   BIT4
-
-//Tpm Type TPM 2.0 PTT (0 - Not Availble, 1 - detected)
-#define        HWSTATE_TPM_PTT                   BIT5
-
 //Definition for LOADER_PLATFORM_INFO.Flags
 
 //
@@ -59,6 +53,14 @@ extern EFI_GUID gLoaderPlatformInfoGuid;
 //  -- AsmWriteMsr32 (0x1FE, MmioRead32 (0xFED30880) | BIT0);
 //
 #define   FLAGS_SPI_DISABLE_SMM_WRITE_PROTECT    BIT0
+
+
+//Definition for LOADER_PLATFORM_INFO.TpmType
+
+#define        TPM_TYPE_NOT_KNOWN                0x0     // TPM type is not detected or updated from bootloader
+#define        TPM_TYPE_NONE                     0x1     // TPM is not available
+#define        TPM_TYPE_DTPM20                   0x2     // Discrete TPM 2.0
+#define        TPM_TYPE_PTT                      0x3     // TPM PTT
 
 typedef struct {
   UINT8          Revision;
@@ -71,6 +73,7 @@ typedef struct {
   UINT16         Flags;
   UINT32         LdrFeatures;
   CHAR8          SerialNumber[MAX_SERIAL_NUMBER_LENGTH];
+  UINT8          TpmType;
 } LOADER_PLATFORM_INFO;
 
 #pragma pack()

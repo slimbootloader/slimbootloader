@@ -1774,9 +1774,11 @@ UpdateLoaderPlatformInfo (
     LoaderPlatformInfo->Flags   = FLAGS_SPI_DISABLE_SMM_WRITE_PROTECT;
 
     if (PlatformData->BtGuardInfo.TpmType == dTpm20)
-      LoaderPlatformInfo->HwState |= HWSTATE_DTPM_20;
+      LoaderPlatformInfo->TpmType = TPM_TYPE_DTPM20;
     else if (PlatformData->BtGuardInfo.TpmType == Ptt)
-      LoaderPlatformInfo->HwState |= HWSTATE_TPM_PTT;
+      LoaderPlatformInfo->TpmType = TPM_TYPE_PTT;
+    else if (PlatformData->BtGuardInfo.TpmType == TpmNone)
+      LoaderPlatformInfo->TpmType = TPM_TYPE_NONE;
 
     DEBUG ((EFI_D_INFO, "Stage2: HwState 0x%x\n", LoaderPlatformInfo->HwState));
   }
