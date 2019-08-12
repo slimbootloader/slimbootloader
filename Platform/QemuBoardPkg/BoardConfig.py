@@ -46,6 +46,7 @@ class Board(BaseBoard):
 		self.ENABLE_FRAMEBUFFER_INIT  = 1
 		self.ENABLE_FWU               = 1
 		self.ENABLE_GRUB_CONFIG       = 1
+		self.ENABLE_LINUX_PAYLOAD     = 1
 
 		# To enable source debug, set 1 to self.ENABLE_SOURCE_DEBUG
 		# self.ENABLE_SOURCE_DEBUG  = 1
@@ -72,7 +73,7 @@ class Board(BaseBoard):
 		self.STAGE2_SIZE          = 0x00018000
 
 		self.SIIPFW_SIZE          = 0x00010000
-		self.EPAYLOAD_SIZE        = 0x0010D000
+		self.EPAYLOAD_SIZE        = 0x0030D000
 		self.PAYLOAD_SIZE         = 0x00020000
 		self.CFGDATA_SIZE         = 0x00001000
 		self.VARIABLE_SIZE        = 0x00002000
@@ -84,12 +85,12 @@ class Board(BaseBoard):
 			self.TOP_SWAP_SIZE      = 0x000000
 			self.REDUNDANT_SIZE     = 0x000000
 			self.NON_VOLATILE_SIZE  = 0x000000
-			self.NON_REDUNDANT_SIZE = 0x200000
+			self.NON_REDUNDANT_SIZE = 0x400000
 		else:
 			self.TOP_SWAP_SIZE      = 0x010000
 			self.REDUNDANT_SIZE     = 0x050000
 			self.NON_VOLATILE_SIZE  = 0x001000
-			self.NON_REDUNDANT_SIZE = 0x13F000
+			self.NON_REDUNDANT_SIZE = 0x33F000
 
 
 		self.SLIMBOOTLOADER_SIZE = (self.TOP_SWAP_SIZE + self.REDUNDANT_SIZE) * 2 + \

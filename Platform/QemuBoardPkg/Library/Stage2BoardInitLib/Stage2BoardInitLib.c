@@ -283,14 +283,20 @@ BoardInit (
     GenericCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);
     if (GenericCfgData != NULL) {
       if (GenericCfgData->PayloadId == AUTO_PAYLOAD_ID_SIGNATURE) {
-        // Use QEMU bootorder to select the payload
-        // Add QEMU command line parameter '-boot order=??a' to enable EFI payload
-        // Here ?? is the normal boot device.
+        // Use QEMU 3rd bootorder to select the payload
+        // Add QEMU command line parameter:
+        //   default           : enable OsLoader
+        //   '-boot order=??a' : enable EFI payload
+        //   '-boot order=??c' : enable LINUX payload
+        // Here ?? is the normal boot devices.
         IoWrite8 (0x70, 0x38);
         BootDev = IoRead8 (0x71) >> 4;
         if (BootDev == 1) {
           // Boot UEFI payload
           SetPayloadId (UEFI_PAYLOAD_ID_SIGNATURE);
+        } else if (BootDev == 2) {
+          // Boot LINUX payload
+          SetPayloadId (LINX_PAYLOAD_ID_SIGNATURE);
         } else {
           // Boot OsLoader
           SetPayloadId (0);
