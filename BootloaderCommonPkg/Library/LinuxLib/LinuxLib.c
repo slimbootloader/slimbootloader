@@ -193,13 +193,6 @@ LoadBzImage (
   UINT32                      BootParamSize;
   UINTN                       KernelSize;
   VOID CONST                 *ImageBase;
-  EFI_HOB_GUID_TYPE          *GuidHob;
-  EFI_PEI_GRAPHICS_INFO_HOB  *GfxInfoHob;
-  UINTN                       MemoryMapSize;
-  E820_ENTRY                 *E820Entry;
-  MEMORY_MAP_INFO            *MapInfo;
-  UINTN                      Index;
-  EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *GfxMode;
 
   ImageBase = KernelBase;
   if (ImageBase == NULL) {
@@ -233,6 +226,31 @@ LoadBzImage (
   Bp->Hdr.CmdlineSize  = CmdLineLen;
   Bp->Hdr.RamDiskStart = (UINT32)InitRdBase;
   Bp->Hdr.RamDisklen   = InitRdLen;
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Update linux kernel boot parameters.
+
+  @retval EFI_SUCCESS        Linux boot parameters were updated successfully.
+**/
+VOID
+EFIAPI
+UpdateLinuxBootParams (
+  VOID
+  )
+{
+  BOOT_PARAMS                *Bp;
+  EFI_HOB_GUID_TYPE          *GuidHob;
+  EFI_PEI_GRAPHICS_INFO_HOB  *GfxInfoHob;
+  UINTN                       MemoryMapSize;
+  E820_ENTRY                 *E820Entry;
+  MEMORY_MAP_INFO            *MapInfo;
+  UINTN                       Index;
+  EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *GfxMode;
+
+  Bp = GetLinuxBootParams ();
 
   //
   // Get graphics data
@@ -281,7 +299,6 @@ LoadBzImage (
   }
   Bp->E820Entries = (UINT8)MapInfo->Count;
 
-  return EFI_SUCCESS;
 }
 
 /**
@@ -298,6 +315,8 @@ LinuxBoot (
   )
 {
   BOOT_PARAMS   *Bp;
+
+  UpdateLinuxBootParams ();
   Bp = GetLinuxBootParams ();
   JumpToKernel ((VOID *)Bp->Hdr.Code32Start, Bp);
 }

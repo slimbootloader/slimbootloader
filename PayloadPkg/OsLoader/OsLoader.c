@@ -250,6 +250,7 @@ SetupBootImage (
       DEBUG ((DEBUG_ERROR, "Setup BzImage error, %r\n", Status));
       return Status;
     }
+    UpdateLinuxBootParams ();
     LinuxImage->BootParams = GetLinuxBootParams ();
     LoadedImage->Flags  = (LoadedImage->Flags  & ~LOADED_IMAGE_MULTIBOOT) | LOADED_IMAGE_LINUX;
   }
