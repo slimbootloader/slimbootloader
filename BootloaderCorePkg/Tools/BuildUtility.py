@@ -388,6 +388,8 @@ def gen_flash_map_bin (flash_map_file, comp_list):
 		fd.write(desc)
 	fd.close()
 
+def copy_expanded_file (src, dst):
+	gen_cfg_data ("GENDLT", src, dst)
 
 def gen_config_file (fv_dir, brd_name, platform_id, pri_key, cfg_db_size, cfg_size, cfg_int, cfg_ext):
 	# Remove previous generated files
@@ -500,9 +502,9 @@ def gen_config_file (fv_dir, brd_name, platform_id, pri_key, cfg_db_size, cfg_si
 	fd.close()
 
 	# copy delta files
-	shutil.copy (os.path.join (com_brd_cfg_dir, def_dlt_file), os.path.join (fv_dir, def_dlt_file))
+	copy_expanded_file (os.path.join (com_brd_cfg_dir, def_dlt_file), os.path.join (fv_dir, def_dlt_file))
 	for dlt_file in dlt_list:
-		shutil.copy (os.path.join (brd_cfg_dir, dlt_file), os.path.join (fv_dir, dlt_file))
+		copy_expanded_file (os.path.join (brd_cfg_dir, dlt_file), os.path.join (fv_dir, dlt_file))
 
 def gen_payload_bin (fv_dir, pld_list, pld_bin, priv_key, brd_name = None):
 	fv_dir = os.path.dirname (pld_bin)
@@ -537,7 +539,7 @@ def gen_payload_bin (fv_dir, pld_list, pld_bin, priv_key, brd_name = None):
 		return
 
 	# E-payloads container format
-	alignment = 0x10   
+	alignment = 0x10
 	key_dir  = os.path.dirname (priv_key)
 	pld_list = [('EPLD', '%s' % epld_bin, '0x%x' % alignment, 'RSA2048', '%s' % os.path.basename(priv_key), 0)]
 	for pld in ext_list:

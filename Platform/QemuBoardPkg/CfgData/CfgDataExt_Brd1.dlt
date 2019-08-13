@@ -17,4 +17,4 @@ PLAT_NAME_CFG_DATA.PlatformName            | 'QEMU_01'
 
 GEN_CFG_DATA.PayloadId                     | 'AUTO'
 
-GPIO_CFG_DATA.GpioConfPad1_GPP_A1.GPIOSkip | 1
+!include CfgDataExt_Inc.dlt

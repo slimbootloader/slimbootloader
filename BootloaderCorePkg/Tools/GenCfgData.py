@@ -955,21 +955,50 @@ EndList
                 self.UpdateBsfBitUnit (Item)
         return Error
 
+    @staticmethod
+    def ExpandIncludeFiles (FilePath, CurDir = ''):
+        if CurDir == '':
+            CurDir   = os.path.dirname(FilePath)
+            FilePath = os.path.basename(FilePath)
+
+        InputFilePath = os.path.join(CurDir, FilePath)
+        File  = open(InputFilePath, "r")
+        Lines = File.readlines()
+        File.close()
+
+        NewLines = []
+        for LineNum, Line in enumerate(Lines):
+            Match = re.match("^!include\s*(.+)?$", Line)
+            if Match:
+                IncPath = Match.group(1)
+                TmpPath = os.path.join(CurDir, IncPath)
+                OrgPath = TmpPath
+                if not os.path.exists(TmpPath):
+                    CurDir = os.path.join(os.path.dirname (os.path.realpath(__file__)), "..", "..")
+                TmpPath = os.path.join(CurDir, IncPath)
+                if not os.path.exists(TmpPath):
+                    raise Exception ("ERROR: Cannot open include file '%s'." % OrgPath)
+                else:
+                    NewLines.append (('# Included from file: %s\n' % IncPath, TmpPath, 0))
+                    NewLines.append (('# %s\n' % ('=' * 80), TmpPath, 0))
+                    NewLines.extend (CGenCfgData.ExpandIncludeFiles (IncPath, CurDir))
+            else:
+                NewLines.append ((Line, InputFilePath, LineNum))
+
+        return NewLines
+
     def OverrideDefaultValue (self, DltFile):
-        Error = 0
-        DltFd    = open(DltFile, "r")
-        DltLines = DltFd.readlines()
-        DltFd.close()
+        Error    = 0
+        DltLines = CGenCfgData.ExpandIncludeFiles (DltFile);
 
-        PlatformId = None
-
-        for LineNum, Line in enumerate(DltLines):
+        PlatformId  = None
+        for Line, FilePath, LineNum in DltLines:
           Line = Line.strip()
           if not Line or Line.startswith('#'):
             continue
           Match = re.match("\s*(\w+)\.(\w+)(\.\w+)?\s*\|\s*(.+)", Line)
           if not Match:
-            raise Exception("Unrecognized line '%s' (File:'%s' Line:%d) !" % (Line, DltFile, LineNum + 1))
+            raise Exception("Unrecognized line '%s' (File:'%s' Line:%d) !" % (Line, FilePath, LineNum + 1))
 
           Found   = False
           InScope = False
@@ -987,7 +1016,7 @@ EndList
           if not Found:
               ErrItem = Match.group(2) if InScope else Match.group(1)
               raise Exception("Invalid configuration '%s' in '%s' (File:'%s' Line:%d) !" %
-                    (ErrItem, Name, DltFile, LineNum + 1))
+                    (ErrItem, Name, FilePath, LineNum + 1))
 
           ValueStr = Match.group(4).strip()
           if Match.group(3) is not None:
@@ -1001,17 +1030,17 @@ EndList
                           break
               if not Found:
                   raise Exception("Invalid configuration bit field '%s' in '%s.%s' (File:'%s' Line:%d) !" %
-                        (BitField, Name, BitField, DltFile, LineNum + 1))
+                        (BitField, Name, BitField, FilePath, LineNum + 1))
 
               try:
                   Value = int(ValueStr, 16) if ValueStr.startswith('0x') else int(ValueStr, 10)
               except:
                   raise Exception("Invalid value '%s' for bit field '%s.%s' (File:'%s' Line:%d) !" %
-                        (ValueStr, Name, BitField, DltFile, LineNum + 1))
+                        (ValueStr, Name, BitField, FilePath, LineNum + 1))
 
               if Value >= 2 ** SubItem['bitlength']:
                   raise Exception("Invalid configuration bit field value '%s' for '%s.%s' (File:'%s' Line:%d) !" %
-                        (Value, Name, BitField, DltFile, LineNum + 1))
+                        (Value, Name, BitField, FilePath, LineNum + 1))
 
               ValArray = self.ValueToByteArray (Item['value'], Item['length'])
               self.UpdateBsfBitFields (SubItem, Value, ValArray)
@@ -1025,7 +1054,7 @@ EndList
               if Item['value'].startswith('{') and  not ValueStr.startswith('{'):
                   print (Item['value'])
                   print (ValueStr)
-                  raise Exception("Data array required for '%s' (File:'%s' Line:%d) !" % (Name, DltFile, LineNum + 1))
+                  raise Exception("Data array required for '%s' (File:'%s' Line:%d) !" % (Name, FilePath, LineNum + 1))
               Item['value'] = ValueStr
 
           if Name == 'PLATFORMID_CFG_DATA.PlatformId':
@@ -1908,13 +1937,23 @@ def Main():
 
     FileList  = sys.argv[2].split(';')
     if len(FileList) == 2:
-      DscFile   = FileList[0]
-      DltFile   = FileList[1]
+        DscFile   = FileList[0]
+        DltFile   = FileList[1]
     elif len(FileList) == 1:
-      DscFile   = FileList[0]
-      DltFile   = ''
+        DscFile   = FileList[0]
+        DltFile   = ''
     else:
-      raise Exception ("ERROR: Invalid parameter '%s' !" % sys.argv[2])
+        raise Exception ("ERROR: Invalid parameter '%s' !" % sys.argv[2])
+
+    if Command == "GENDLT" and DscFile.endswith('.dlt'):
+        # It needs to expand an existing DLT file
+        DltFile = DscFile
+        Lines  = CGenCfgData.ExpandIncludeFiles (DltFile)
+        OutTxt = ''.join ([x[0] for x in Lines])
+        OutFile = open(OutFile, "w")
+        OutFile.write (OutTxt)
+        OutFile.close ()
+        return 0;
 
     if not os.path.exists(DscFile):
         raise Exception ("ERROR: Cannot open file '%s' !" % DscFile)
