@@ -100,7 +100,7 @@
     # !BSF NAME:{GPIO $(1) PIN Config0}
     # !BSF TYPE:{EditNum, HEX, (0x00000000,0xFFFFFFFF)}
     # !BSF HELP:{GPIO $(1) PIN Configuration}
-    gCfgData.GpioPinConfig0_$(1)              |      * | 0x04 | $(3)
+    gCfgData.GpioPinConfig0_$(1)              |      * | 0x04 | $(2)
       # !BSF NAME:{PadMode}
       # !BSF TYPE:{Combo}
       # !BSF OPTION:{0x0:Hardware Default, 0x1:GPIO control of the pad, 0x3:Native function 1, 0x5:Native function 2, 0x7:Native function 3, 0x9:Native function 4}
@@ -175,7 +175,7 @@
     # !BSF NAME:{GPIO $(1) PIN Config1}
     # !BSF TYPE:{EditNum, HEX, (0x00000000,0xFFFFFFFF)}
     # !BSF HELP:{GPIO $(1) PIN Configuration}
-    gCfgData.GpioPinConfig1_$(1)              |      * | 0x04 | $(4)
+    gCfgData.GpioPinConfig1_$(1)              |      * | 0x04 | $(3)
       # !BSF NAME:{GPIO ElectricalCfg} TYPE:{Combo}
       # !BSF OPTION:{0x0:TermDefault, 0x1:TermNone, 0x5:TermNone, 0x9:TermWpd20K, 0x13:TermWpu1K, 0x17:TermWpu2K, 0x15:TermWpu5K, 0x19:TermWpu20K, 0x1B:TermWpu1K2K, 0x1F:TermNative, 0x20:NoTolerance1v8, 0x60:Tolerance1v8}
       # !BSF HELP:{GPIO Electrical Configuration. Set GPIO termination and Pad Tolerance.(applicable only for some pads):-}
