@@ -43,6 +43,7 @@
   BootGuardLib
   SgxLib
   MmcAccessLib
+  BoardSupportLib
 
 [Guids]
 

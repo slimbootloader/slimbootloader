@@ -22,6 +22,7 @@
 #include <Library/SpiFlashLib.h>
 #include <Library/VariableLib.h>
 #include <Library/BootloaderCoreLib.h>
+#include <Library/BoardSupportLib.h>
 #include <ConfigDataBlob.h>
 #include <FspmUpd.h>
 #include <BlCommon.h>
@@ -169,21 +170,6 @@ VOID BoardDetection (
   SetPlatformId (BoardId);
 }
 
-/**
-    Read the Platform Name from the config data
-**/
-VOID
-PlatformNameInit (
-  VOID
-  )
-{
-  PLAT_NAME_CFG_DATA          *PlatNameConfigData;
-
-  PlatNameConfigData = (PLAT_NAME_CFG_DATA *) FindConfigDataByTag(CDATA_PLAT_NAME_TAG);
-  if (PlatNameConfigData != NULL) {
-    SetPlatformName ((VOID *)&PlatNameConfigData->PlatformName);
-  }
-}
 
 /**
   Board specific hook points.
@@ -275,27 +261,8 @@ LoadExternalConfigData (
   IN UINT32  Len
   )
 {
-  EFI_STATUS   Status;
-  CDATA_BLOB  *CfgBlob;
-  UINT32       SignedLen;
 
-  Status = EFI_SUCCESS;
-  CfgBlob = (CDATA_BLOB  *)Src;
-  if ((CfgBlob != NULL) && (CfgBlob->Signature == CFG_DATA_SIGNATURE)) {
-    SignedLen = CfgBlob->UsedLength;
-    if (FeaturePcdGet (PcdVerifiedBootEnabled)) {
-      SignedLen += RSA_SIGNATURE_AND_KEY_SIZE;
-    }
-    if ((SignedLen <= Len) && (SignedLen > sizeof(CDATA_BLOB))) {
-      CopyMem ((VOID *)Dst, (VOID *)Src, SignedLen);
-    } else {
-      Status = EFI_OUT_OF_RESOURCES;
-    }
-  } else {
-    Status = EFI_NOT_FOUND;
-  }
-
-  return Status;
+  return SpiLoadExternalConfigData (Dst, Src, Len);
 }
 
 /**

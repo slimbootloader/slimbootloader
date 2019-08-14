@@ -33,6 +33,7 @@
 #include <Library/LoaderLib.h>
 #include <Library/HeciLib.h>
 #include <Library/BootloaderCommonLib.h>
+#include <Library/BoardSupportLib.h>
 
 #include <FspmUpd.h>
 #include <GpioDefines.h>
@@ -923,66 +924,10 @@ LoadExternalConfigData (
   IN UINT32  Len
   )
 {
-  EFI_STATUS   Status;
-  UINT32       Address;
-  UINT32       BlobSize;
-  UINT8       *Buffer;
-  CDATA_BLOB  *CfgBlob;
-  UINT32       SignedLen;
-  UINT32       CfgDataLoadSrc;
-  UINT32       Base;
-  UINT32       Length;
 
-  Address  = 0;
-  BlobSize = sizeof(CDATA_BLOB);
-  Buffer   = (UINT8 *)Dst;
 
-  CfgDataLoadSrc = PcdGet32 (PcdCfgDataLoadSource);
+  return SpiLoadExternalConfigData (Dst, Src, Len);
 
-  CfgBlob = NULL;
-  if (Len < BlobSize) {
-    Status = EFI_OUT_OF_RESOURCES;
-  } else {
-    if (CfgDataLoadSrc == FlashRegionPlatformData) {
-      Status = SpiFlashRead (FlashRegionPlatformData, Address, BlobSize, Buffer);
-    } else if (CfgDataLoadSrc == FlashRegionBios) {
-      Status = GetComponentInfo (FLASH_MAP_SIG_CFGDATA, &Base, &Length);
-      if (!EFI_ERROR(Status)) {
-        CopyMem (Buffer, (VOID *)Base, BlobSize);
-      }
-    } else {
-      Status = EFI_UNSUPPORTED;
-    }
-  }
-
-  if (!EFI_ERROR(Status)) {
-    CfgBlob = (CDATA_BLOB  *)Buffer;
-    if ((CfgBlob != NULL) && (CfgBlob->Signature == CFG_DATA_SIGNATURE)) {
-      SignedLen = CfgBlob->UsedLength;
-      if (FeaturePcdGet (PcdVerifiedBootEnabled)) {
-        SignedLen += RSA_SIGNATURE_AND_KEY_SIZE;
-      }
-      if ((SignedLen <= Len) && (SignedLen > sizeof(CDATA_BLOB))) {
-        if (CfgDataLoadSrc == FlashRegionPlatformData) {
-          Status = SpiFlashRead (
-                                  FlashRegionPlatformData,
-                                  Address + BlobSize,
-                                  SignedLen - BlobSize,
-                                  Buffer + BlobSize
-                                );
-        } else {
-          CopyMem (Buffer + BlobSize, (VOID *)(Base + BlobSize), SignedLen - BlobSize);
-          Status = EFI_SUCCESS;
-        }
-      } else {
-        Status = EFI_OUT_OF_RESOURCES;
-      }
-    } else {
-      Status = EFI_NOT_FOUND;
-    }
-  }
-
-  return Status;
 }
 
 /**
@@ -1602,21 +1547,6 @@ PcieRpPwrRstInit (
   }
 }
 
-/**
-    Read the Platform Name from the config data
-**/
-VOID
-PlatformNameInit (
-  VOID
-  )
-{
-  PLAT_NAME_CFG_DATA          *PlatNameConfigData;
-
-  PlatNameConfigData = (PLAT_NAME_CFG_DATA *) FindConfigDataByTag(CDATA_PLAT_NAME_TAG);
-  if (PlatNameConfigData != NULL) {
-    SetPlatformName ((VOID *)&PlatNameConfigData->PlatformName);
-  }
-}
 
 /**
   Read RTC content through its registers.

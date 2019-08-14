@@ -27,3 +27,6 @@
 
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdOsBootOptionNumber
+  gPlatformModuleTokenSpaceGuid.PcdCfgDataLoadSource
+  gPlatformModuleTokenSpaceGuid.PcdCfgDatabaseSize
+  gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled

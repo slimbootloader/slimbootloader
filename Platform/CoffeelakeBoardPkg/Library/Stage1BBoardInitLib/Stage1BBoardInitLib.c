@@ -26,6 +26,7 @@
 #include <IndustryStandard/Pci30.h>
 #include <Library/BootloaderCoreLib.h>
 #include <Library/BootloaderCommonLib.h>
+#include <Library/BoardSupportLib.h>
 #include <RegAccess.h>
 #include <Library/CryptoLib.h>
 #include <ConfigDataBlob.h>
@@ -491,21 +492,6 @@ GpioInit (
 }
 
 
-VOID
-PlatformNameInit (
-  IN VOID
-)
-{
-  PLAT_NAME_CFG_DATA     *PlatNameConfigData;
-
-  PlatNameConfigData = (PLAT_NAME_CFG_DATA *) FindConfigDataByTag(CDATA_PLAT_NAME_TAG);
-  if (PlatNameConfigData != NULL) {
-    SetPlatformName ((VOID *)&PlatNameConfigData->PlatformName);
-  } else {
-    DEBUG ((DEBUG_ERROR, "Platform Name config not found"));
-  }
-}
-
 /**
     Read the Platform Features from the config data
 **/
@@ -810,71 +796,8 @@ LoadExternalConfigData (
   IN UINT32  Len
   )
 {
-  EFI_STATUS   Status;
-  UINT32       Address;
-  UINT32       BlobSize;
-  UINT8       *Buffer;
-  CDATA_BLOB  *CfgBlob;
-  UINT32       SignedLen;
-  UINT32       CfgDataLoadSrc;
-  UINT8        Index;
 
-  Address  = 0;
-  BlobSize = sizeof(CDATA_BLOB);
-  Buffer   = (UINT8 *)Dst;
-  CfgBlob  = NULL;
-  Status   = EFI_SUCCESS;
-  CfgDataLoadSrc = PcdGet32 (PcdCfgDataLoadSource);
-
-  // Check the validity of the Cfg Data Source:
-  // Currently supported sources are BIOS, PDR.
-  // Source cannot be both at the same time.
-    if(CfgDataLoadSrc == FlashRegionBios) {
-      Index = 1;
-    } else if (CfgDataLoadSrc == FlashRegionPlatformData) {
-      Index = 0;
-    } else {
-      return EFI_NOT_FOUND;
-    }
-    DEBUG ((DEBUG_INFO, "Load External Cfg data...%a\n", GetCfgDataSource(Index)));
-
-  // Get the CfgBlob Hdr from the source
-  if (CfgDataLoadSrc == FlashRegionBios) {
-    Buffer = (UINT8 *)Src;
-  } else if (CfgDataLoadSrc == FlashRegionPlatformData) {
-    if (Len < BlobSize) {
-      return EFI_OUT_OF_RESOURCES;
-    } else {
-      Status = SpiFlashRead (FlashRegionPlatformData, Address, BlobSize, Buffer);
-    }
-  }
-
-  if (!EFI_ERROR(Status)) {
-    CfgBlob = (CDATA_BLOB  *)Buffer;
-  }
-  // Check for CfgBlob integrity
-  if((CfgBlob != NULL) &&(CfgBlob->Signature == CFG_DATA_SIGNATURE)) {
-    SignedLen = CfgBlob->UsedLength;
-
-    if (FeaturePcdGet (PcdVerifiedBootEnabled)) {
-      SignedLen += RSA_SIGNATURE_AND_KEY_SIZE;
-    }
-    if ((SignedLen <= Len) && (SignedLen > sizeof(CDATA_BLOB))) {
-      // Read the CfgBlob data into final destination
-      if (CfgDataLoadSrc == FlashRegionBios) {  //BIOS
-        CopyMem ((VOID *)Dst, (VOID *)Src, SignedLen);
-        Status = EFI_SUCCESS;
-      } else if (CfgDataLoadSrc == FlashRegionPlatformData) {  //PDR
-        Status = SpiFlashRead ( FlashRegionPlatformData,
-                                Address + BlobSize,
-                                SignedLen - BlobSize,
-                                Buffer + BlobSize);
-      }
-    } else {
-      Status = EFI_OUT_OF_RESOURCES;
-    }
-  }
-  return Status;
+  return SpiLoadExternalConfigData (Dst, Src, Len);
 }
 
 
