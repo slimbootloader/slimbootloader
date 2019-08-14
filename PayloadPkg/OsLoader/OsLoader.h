@@ -43,6 +43,7 @@
 #include <Library/UsbKbLib.h>
 #include <Library/ElfLib.h>
 #include <Library/LinuxLib.h>
+#include <Library/ContainerLib.h>
 #include <Guid/SeedInfoHobGuid.h>
 #include <Guid/OsConfigDataHobGuid.h>
 #include <Guid/OsBootOptionGuid.h>

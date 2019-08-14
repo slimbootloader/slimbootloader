@@ -265,8 +265,7 @@ SetupBootImage (
   be loaded as part of the payload, if found get the entry point for
   execution later instead of jumping into the OS directly.
 
-  @param[in] PldBase   Payload Image base to search through for
-                       the pre-OS checker binary.
+  @param[in] PreOsCheckerImageBase   Base of the pre-OS checker loaded in memory.
 
   @retval  NULL        Pre-OS checker is not loaded successfully.
   @retval  Others      Pre-OS checker is loaded successfully and
@@ -274,37 +273,17 @@ SetupBootImage (
 **/
 UINT32 *
 LoadPreOsChecker (
-  IN  VOID             *PldBase
+  IN  UINT32                 *PreOsCheckerImageBase
   )
 {
-  EFI_FIRMWARE_VOLUME_HEADER       *FvHeader;
-  EFI_FFS_FILE_HEADER              *PreOsCheckerFile;
-  EFI_COMMON_SECTION_HEADER        *Section;
   UINT32                           *EntryPoint;
-  UINT32                           PreOsCheckerImageBase;
   EFI_STATUS                       Status;
 
   EntryPoint = NULL;
-  if (((UINT32*) PldBase)[10] == EFI_FVH_SIGNATURE) {
-    FvHeader = (EFI_FIRMWARE_VOLUME_HEADER *) PldBase;
 
-    // Find pre-OS checker FFS file
-    Status = GetFfsFileByType (FvHeader, EFI_FV_FILETYPE_FREEFORM, 0, &PreOsCheckerFile);
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "Did NOT find PreOsChecker.bin\n"));
-    } else {
-      // Get PreOsChcker.bin data
-      Status = GetSectionByType (PreOsCheckerFile, EFI_SECTION_RAW, 0, (VOID **)&Section);
-      if (EFI_ERROR (Status)) {
-        DEBUG ((DEBUG_INFO, "PreOsChecker.bin data NOT FOUND\n"));
-      } else {
-        PreOsCheckerImageBase = (UINTN)Section;
-        Status = LoadElfImage ((VOID *)PreOsCheckerImageBase, (VOID *)&EntryPoint);
-        if (EFI_ERROR (Status)) {
-          DEBUG ((DEBUG_ERROR, "Failed to load ELF binary and get entrypoint\n"));
-        }
-      }
-    }
+  Status = LoadElfImage ((VOID *)PreOsCheckerImageBase, (VOID *)&EntryPoint);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to load ELF binary and get entrypoint\n"));
   }
 
   return EntryPoint;
@@ -736,10 +715,15 @@ PayloadMain (
   )
 {
   OS_BOOT_OPTION_LIST    *OsBootOptionList;
+  UINT32                 *PreOsCheckerImage;
+  UINT32                 Length;
+  EFI_STATUS             Status;
   UINTN                  ShellTimeout;
 
   mEntryStack = Param;
   mPreOsCheckerEntry = NULL;
+  PreOsCheckerImage = NULL;
+  Length = 0;
 
   DEBUG ((DEBUG_INFO, "\n\n====================Os Loader====================\n\n"));
   AddMeasurePoint (0x4010);
@@ -776,11 +760,12 @@ PayloadMain (
 #endif
 
   // Check if there is a pre-OS checker that needs to be executed
-  if (PldBase != NULL) {
-    mPreOsCheckerEntry = LoadPreOsChecker (PldBase);
+  Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('P', 'O', 'S', 'C'),
+                          (VOID **)&PreOsCheckerImage, &Length);
+  if (!EFI_ERROR (Status)) {
+    mPreOsCheckerEntry = LoadPreOsChecker (PreOsCheckerImage);
     DEBUG ((DEBUG_INFO, "Pre-OS checker entry @ 0x%08X\n", mPreOsCheckerEntry));
   }
-
   //
   // Load and run Image in order from OsImageList
   //
