@@ -223,12 +223,6 @@ FV = OsLoader
 
   INF PayloadPkg/OsLoader/OsLoader.inf
 
-!if $(ENABLE_PRE_OS_CHECKER)
-  FILE FREEFORM = 01C46D7E-00A2-48E8-A50F-17467D1CA0C5 {
-    SECTION RAW = Platform/$(BOARD_PKG_NAME)/Binaries/PreOsChecker.bin
-  }
-!endif
-
 #------------------------------------------------------------------------------
 # FwUpdate FV to make FirmwareUpdate.efi visible to modules
 #------------------------------------------------------------------------------

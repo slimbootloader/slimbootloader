@@ -118,7 +118,6 @@
   gPlatformModuleTokenSpaceGuid.PcdFlashSize
   gPlatformModuleTokenSpaceGuid.PcdSplashEnabled
   gPlatformModuleTokenSpaceGuid.PcdSplashLogoAddress
-  gPlatformModuleTokenSpaceGuid.PcdPreOsCheckerEnabled
   gPlatformModuleTokenSpaceGuid.PcdOsBootOptionNumber
   gPlatformModuleTokenSpaceGuid.PcdServiceNumber
   gPlatformModuleTokenSpaceGuid.PcdFlashMapEnabled

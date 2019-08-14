@@ -75,6 +75,7 @@
   ElfLib
   LiteFvLib
   LinuxLib
+  ContainerLib
 
 [Guids]
   gOsConfigDataGuid

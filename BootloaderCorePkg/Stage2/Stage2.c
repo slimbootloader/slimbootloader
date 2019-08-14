@@ -170,9 +170,6 @@ NormalBootPath (
     // It is a FV format
     DEBUG ((DEBUG_INFO, "FV Format Payload\n"));
     Status = LoadFvImage (Dst, Stage2Hob->PayloadActualLength, (VOID **)&PldEntry);
-    if ((FixedPcdGetBool (PcdPreOsCheckerEnabled))) {
-      PldBase = (UINT32) Dst;
-    }
   } else if (IsElfImage (Dst)) {
     Status = LoadElfImage (Dst, (VOID *)&PldEntry);
   } else {
