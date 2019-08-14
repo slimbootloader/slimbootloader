@@ -50,6 +50,7 @@
   RleCompressLib
   BootGuardLib
   HeciLib
+  BoardSupportLib
 
 [Guids]
   gEfiHeciMbpDataHobGuid

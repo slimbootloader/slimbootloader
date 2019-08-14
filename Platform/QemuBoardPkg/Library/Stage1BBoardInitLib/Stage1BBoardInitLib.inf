@@ -39,6 +39,7 @@
   ConfigDataLib
   SpiFlashLib
   VariableLib
+  BoardSupportLib
 
 [Guids]
 

@@ -13,6 +13,9 @@
 #include <Library/ConfigDataLib.h>
 #include <Library/BoardSupportLib.h>
 #include <ConfigDataCommonDefs.h>
+#include <Library/BootloaderCoreLib.h>
+#include <Library/SpiFlashLib.h>
+#include <Library/CryptoLib.h>
 
 #define  IMAGE_TYPE_ADDENDUM  0xFE
 #define  IMAGE_TYPE_NOT_USED  0xFF
@@ -89,3 +92,115 @@ FillBootOptionListFromCfgData (
 
   DEBUG ((DEBUG_INFO, "Created %d OS boot options\n",  OsBootOptionList->OsBootOptionCount));
 }
+
+/**
+  Set the platform name with CFGDATA info
+
+ **/
+VOID
+EFIAPI
+PlatformNameInit (
+  VOID
+)
+{
+  PLAT_NAME_CFG_DATA     *PlatNameConfigData;
+
+  PlatNameConfigData = (PLAT_NAME_CFG_DATA *) FindConfigDataByTag(CDATA_PLAT_NAME_TAG);
+  if (PlatNameConfigData != NULL) {
+    SetPlatformName ((VOID *)&PlatNameConfigData->PlatformName);
+  } else {
+    DEBUG ((DEBUG_INFO, "Platform Name config not found"));
+  }
+}
+
+
+/**
+  Load the configuration data blob from SPI flash into destination buffer.
+  It supports the sources: PDR, BIOS for external Cfgdata.
+
+  @param[in]    Dst        Destination address to load configuration data blob.
+  @param[in]    Src        Source address to load configuration data blob.
+  @param[in]    Len        The destination address buffer size.
+
+  @retval  EFI_SUCCESS             Configuration data blob was loaded successfully.
+  @retval  EFI_NOT_FOUND           Configuration data blob cannot be found.
+  @retval  EFI_OUT_OF_RESOURCES    Destination buffer is too small to hold the
+                                   configuration data blob.
+  @retval  Others                  Failed to load configuration data blob.
+
+**/
+EFI_STATUS
+EFIAPI
+SpiLoadExternalConfigData (
+  IN UINT32  Dst,
+  IN UINT32  Src,
+  IN UINT32  Len
+  )
+{
+  EFI_STATUS   Status;
+  UINT32       Address;
+  UINT32       BlobSize;
+  UINT8       *Buffer;
+  CDATA_BLOB  *CfgBlob;
+  UINT32       SignedLen;
+  UINT32       CfgDataLoadSrc;
+  UINT32       Base;
+  UINT32       Length;
+
+  Address  = 0;
+  BlobSize = sizeof(CDATA_BLOB);
+  Buffer   = (UINT8 *)Dst;
+
+  CfgDataLoadSrc = PcdGet32 (PcdCfgDataLoadSource);
+
+  CfgBlob = NULL;
+  if (Len < BlobSize) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  //
+  // Get configuration data header
+  //
+  Status = EFI_UNSUPPORTED;
+  if (CfgDataLoadSrc == FlashRegionPlatformData) {
+    Status = SpiFlashRead (FlashRegionPlatformData, Address, BlobSize, Buffer);
+  } else if (CfgDataLoadSrc == FlashRegionBios) {
+    Status = GetComponentInfo (FLASH_MAP_SIG_CFGDATA, &Base, &Length);
+    if (!EFI_ERROR(Status)) {
+      CopyMem (Buffer, (VOID *)Base, BlobSize);
+    }
+  }
+  if (EFI_ERROR(Status)) {
+    return Status;
+  }
+
+  //
+  // Check the configuration signature and size
+  //
+  CfgBlob = (CDATA_BLOB  *)Buffer;
+  if ((CfgBlob == NULL) || (CfgBlob->Signature != CFG_DATA_SIGNATURE)) {
+    return EFI_NOT_FOUND;
+  }
+
+  SignedLen = CfgBlob->UsedLength;
+  if (FeaturePcdGet (PcdVerifiedBootEnabled)) {
+    SignedLen += RSA_SIGNATURE_AND_KEY_SIZE;
+  }
+
+  if ((SignedLen > Len) || (SignedLen <= sizeof(CDATA_BLOB))) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  //
+  // Read the full configuration data
+  //
+  if (CfgDataLoadSrc == FlashRegionPlatformData) {
+    Status = SpiFlashRead (FlashRegionPlatformData, Address + BlobSize, SignedLen - BlobSize, Buffer + BlobSize);
+  } else {
+    CopyMem (Buffer + BlobSize, (VOID *)(Base + BlobSize), SignedLen - BlobSize);
+  }
+
+  return Status;
+}
+
+
