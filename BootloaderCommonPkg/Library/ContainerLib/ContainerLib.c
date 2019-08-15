@@ -500,7 +500,7 @@ LoadComponentWithCallback (
   // before authentication for security concern.
   IsInFlash = IS_FLASH_ADDRESS (CompData);
   AllocLen  = ScrLen + TEMP_BUF_ALIGN * 2;
-  if (!IsInFlash) {
+  if (IsInFlash) {
     AllocLen += SignedDataLen;
   }
   AllocBuf = AllocateTemporaryMemory (AllocLen);
