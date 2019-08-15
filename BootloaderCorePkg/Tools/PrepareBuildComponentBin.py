@@ -69,7 +69,7 @@ def CopyFileList (copy_list, src_dir, sbl_dir):
 
 def GetFspCopyList (platform):
     plat_pkg = GetPlatformPkgName (platform)
-    fsp_inf  = 'Silicon/%s/FspBin/FspBin.inf' % plat_pkg
+    fsp_inf  = os.path.join(os.environ['PLT_SOURCE'], 'Silicon/%s/FspBin/FspBin.inf' % plat_pkg)
 
     fd = open (fsp_inf, 'r')
     lines = fd.readlines()
@@ -246,7 +246,7 @@ def CloneUcodeRepo (ucode_dir, tag):
 
 def GetUcodeList (platform):
     plat_pkg  = GetPlatformPkgName (platform)
-    ucode_inf = 'Silicon/%s/Microcode/Microcode.inf' % plat_pkg
+    ucode_inf = os.path.join(os.environ['PLT_SOURCE'], 'Silicon/%s/Microcode/Microcode.inf' % plat_pkg)
 
     fd = open (ucode_inf, 'r')
     lines = fd.readlines()
