@@ -16,34 +16,37 @@ def Fatal (msg):
     sys.stdout.flush()
     raise Exception (msg)
 
+def CloneRepo (clone_dir, driver_inf):
+    repo, commit = GetRepoAndCommit (driver_inf)
+    if repo == '' or commit == '':
+        Fatal ('Failed to find repo and commit information!')
 
-def CloneFspRepo (fsp_dir, fsp_tag):
-    if not os.path.exists(fsp_dir + '/.git'):
-        print ('Cloning Intel FSP repo ...')
-        cmd = 'git clone https://github.com/IntelFsp/FSP.git %s' % fsp_dir
+    if not os.path.exists(clone_dir + '/.git'):
+        print ('Cloning the repo ... %s' % repo)
+        cmd = 'git clone %s %s' % (repo, clone_dir)
         ret = subprocess.call(cmd.split(' '))
         if ret:
-            Fatal ('Failed to clone FSP repo to directory %s !' % fsp_dir)
+            Fatal ('Failed to clone repo to directory %s !' % clone_dir)
         print ('Done\n')
     else:
-        print ('Update Intel FSP repo ...')
+        print ('Update the repo ...')
         cmd = 'git fetch origin master'
-        ret = subprocess.call(cmd.split(' '), cwd=fsp_dir)
+        ret = subprocess.call(cmd.split(' '), cwd=clone_dir)
         if ret:
-            Fatal ('Failed to update FSP repo to directory %s !' % fsp_dir)
+            Fatal ('Failed to update repo in directory %s !' % clone_dir)
         print ('Done\n')
 
-    print ('Checking out Intel FSP commit ...')
+    print ('Checking out specified version ... %s' % commit)
 
-    cmd = 'git checkout %s' % fsp_tag
-    ret = subprocess.call(cmd.split(' '), cwd=fsp_dir)
+    cmd = 'git checkout %s' % commit
+    ret = subprocess.call(cmd.split(' '), cwd=clone_dir)
     if ret:
-        Fatal ('Failed to check out branch !')
+        Fatal ('Failed to check out specified version !')
     print ('Done\n')
 
 
 def CheckFileListExist (copy_list, sbl_dir):
-    exists = True
+    exists  = True
     for src_path, dst_path in copy_list:
         dst_path = os.path.join (sbl_dir, dst_path)
         if not os.path.exists(dst_path):
@@ -66,71 +69,79 @@ def CopyFileList (copy_list, src_dir, sbl_dir):
         shutil.copy (src_path, dst_path)
     print ('Done\n')
 
-
-def GetFspCopyList (platform):
-    plat_pkg = GetPlatformPkgName (platform)
-    fsp_inf  = os.path.join(os.environ['PLT_SOURCE'], 'Silicon/%s/FspBin/FspBin.inf' % plat_pkg)
-
-    fd = open (fsp_inf, 'r')
+def GetCopyList (driver_inf):
+    fd = open (driver_inf, 'r')
     lines = fd.readlines()
     fd.close ()
 
-    fsp_tag        = ''
-    is_def_section = False
-    is_lst_section = False
+    have_copylist_section = False
     copy_list      = []
     for line in lines:
         line = line.strip ()
         if line.startswith('['):
-            if line.upper().startswith('[DEFINES]'):
-                is_def_section = True
+            if line.startswith('[UserExtensions.SBL."CopyList"]'):
+                have_copylist_section = True
             else:
-                is_def_section = False
-            if line.upper().startswith('[COPYLIST]'):
-                is_lst_section = True
-            else:
-                is_lst_section = False
+                have_copylist_section = False
 
-        if is_def_section:
-            match = re.match("^FSP_COMMIT_ID\s*=\s*([_\-\w]+)", line)
-            if match:
-                fsp_tag = match.group(1)
-
-        if is_lst_section:
+        if have_copylist_section:
             match = re.match("^(.+)\s*:\s*(.+)", line)
             if match:
                 copy_list.append((match.group(1).strip(), match.group(2).strip()))
 
-    if fsp_tag == '':
-        Fatal ('Failed to find FSP commit ID in file - %s' % fsp_inf)
+    return copy_list
 
-    if len(copy_list) == 0:
-        Fatal ('Failed to find FSP list files in file - %s' % fsp_inf)
+def GetRepoAndCommit (driver_inf):
+    fd = open (driver_inf, 'r')
+    lines = fd.readlines()
+    fd.close ()
 
-    return copy_list, fsp_tag
+    repo      = ''
+    commit    = ''
+    have_repo_section = False
+    for line in lines:
+        line = line.strip ()
+        if line.startswith('['):
+            if line.startswith('[UserExtensions.SBL."CloneRepo"]'):
+                have_repo_section = True
+            else:
+                have_repo_section = False
 
+        if have_repo_section:
+            match = re.match("^REPO\s*=\s*(.*)", line)
+            if match:
+                repo = match.group(1)
 
-def CopyFspBins (fsp_dir, sbl_dir, platform):
-    if platform not in ['apl', 'cfl']:
+            match = re.match("^TAG\s*=\s*(.*)", line)
+            if match:
+                commit = match.group(1)
+            match = re.match("^COMMIT\s*=\s*(.*)", line)
+            if match:
+                commit = match.group(1)
+
+    return repo, commit
+
+def CopyBins (driver_dir, sbl_dir, driver_inf):
+    if not os.path.exists(driver_inf):
         return
 
     sys.stdout.flush()
-    copy_list, fsp_tag = GetFspCopyList (platform)
+    copy_list = GetCopyList (driver_inf)
+    if len(copy_list) == 0:
+        return
 
     if CheckFileListExist(copy_list, sbl_dir):
         return
 
-    CloneFspRepo (fsp_dir, fsp_tag)
+    CloneRepo (driver_dir, driver_inf)
 
-    CopyFileList (copy_list, fsp_dir, sbl_dir)
+    CopyFileList (copy_list, driver_dir, sbl_dir)
 
-    return 0
-
-def BuildFspBins (fsp_dir, sbl_dir, platform, flag):
+def BuildFspBins (fsp_dir, sbl_dir, silicon_pkg_name, flag):
     sys.stdout.flush()
 
     copy_list = []
-    if platform == 'qemu':
+    if silicon_pkg_name == 'QemuSocPkg':
         copy_list.extend ([
           ('BuildFsp/QEMU_FSP.bsf',        'Silicon/QemuSocPkg/FspBin/Fsp.bsf'),
           ('BuildFsp/QEMU_FSP_DEBUG.fd',   'Silicon/QemuSocPkg/FspBin/FspDbg.bin'),
@@ -214,120 +225,30 @@ def BuildFspBins (fsp_dir, sbl_dir, platform, flag):
 
     CopyFileList (copy_list, fsp_dir, sbl_dir)
 
-def GetPlatformPkgName (platform):
-    PlatfromPkgNameDict = {
-      'qemu' : 'QemuSocPkg',
-      'apl'  : 'ApollolakePkg',
-      'cfl'  : 'CoffeelakePkg'
-    }
-    return PlatfromPkgNameDict[platform]
-
-def CloneUcodeRepo (ucode_dir, tag):
-    if not os.path.exists(ucode_dir + '/.git'):
-        print ('Cloning Intel Ucode repo ...')
-        cmd = 'git clone https://github.com/intel/Intel-Linux-Processor-Microcode-Data-Files.git %s' % ucode_dir
-        ret = subprocess.call(cmd.split(' '))
-        if ret:
-            Fatal ('Failed to clone Ucode repo to directory %s !' % ucode_dir)
-        print ('Done\n')
-    else:
-        print ('Update Intel Ucode repo ...')
-        cmd = 'git pull origin master'
-        ret = subprocess.call(cmd.split(' '), cwd=ucode_dir)
-        if ret:
-            Fatal ('Failed to update Ucode repo to directory %s !' % ucode_dir)
-        print ('Done\n')
-
-    print ('Checking out Intel Ucode commit ...')
-    cmd = 'git checkout %s' % tag
-    ret = subprocess.call(cmd.split(' '), cwd=ucode_dir)
-    if ret:
-        Fatal ('Failed to check out tag %s !' % tag)
-
-def GetUcodeList (platform):
-    plat_pkg  = GetPlatformPkgName (platform)
-    ucode_inf = os.path.join(os.environ['PLT_SOURCE'], 'Silicon/%s/Microcode/Microcode.inf' % plat_pkg)
-
-    fd = open (ucode_inf, 'r')
-    lines = fd.readlines()
-    fd.close ()
-
-    ucode_tag      = ''
-    is_def_section = False
-    is_src_section = False
-    ucode_names    = []
-    for line in lines:
-        line = line.strip ()
-        if line.startswith('['):
-            if line.upper().startswith('[DEFINES]'):
-                is_def_section = True
-            else:
-                is_def_section = False
-            if line.upper().startswith('[SOURCES]'):
-                is_src_section = True
-            else:
-                is_src_section = False
-
-        if is_def_section:
-            match = re.match("^MICROCODE_TAG\s*=\s*([_\-\w]+)", line)
-            if match:
-                ucode_tag = match.group(1)
-
-        if is_src_section:
-            match = re.match("^([_\-\w]+)\.mcb", line)
-            if match:
-                ucode_names.append(match.group(1))
-
-    if ucode_tag == '':
-        ucode_tag = 'microcode-20190514a'
-
-    if len(ucode_names) == 0:
-        Fatal ('Failed to find microcode files in file - %s' % ucode_inf)
-
-    ucode_list = []
-    for ucode in ucode_names:
-        ucode_list.append (('intel-ucode/%s' % ucode, 'Silicon/%s/Microcode/%s.mcb' % (plat_pkg, ucode)))
-
-    return ucode_list, ucode_tag
-
-def CopyUcodeBins (ucode_dir, sbl_dir, platform):
-    if platform not in ['cfl']:
-        return
-
-    copy_list, ucode_tag = GetUcodeList (platform)
-    if CheckFileListExist(copy_list, sbl_dir):
-        return
-
-    CloneUcodeRepo (ucode_dir, ucode_tag)
-
-    CopyFileList (copy_list, ucode_dir, sbl_dir)
-
-    print ('Done\n')
-
 def Main():
-    curr_dir       = os.path.dirname (os.path.realpath(__file__))
-    workspace_dir  = os.path.abspath (os.path.join(curr_dir, '../../..'))
+    sbl_dir        = os.environ['PLT_SOURCE']
+    workspace_dir  = os.path.join(sbl_dir, '../Download')
     fsp_repo_dir   = os.path.abspath (os.path.join(workspace_dir, 'IntelFsp'))
     qemu_repo_dir  = os.path.abspath (os.path.join(workspace_dir, 'QemuFsp'))
     ucode_repo_dir = os.path.abspath (os.path.join(workspace_dir, 'IntelUcode'))
 
-    if len(sys.argv) < 3:
-        print ('Platform argument is required!')
+    if len(sys.argv) < 2:
+        print ('Silicon package name argument is required!')
         return -1
-
-    plt_dir   = sys.argv[1]
-    platform  = sys.argv[2]
+    silicon_pkg_name = sys.argv[1]
 
     target = ''
-    if len(sys.argv) > 3:
-        target = sys.argv[3]
+    if len(sys.argv) > 2:
+        target = sys.argv[2]
 
-    if platform == 'qemu':
-        BuildFspBins (qemu_repo_dir, plt_dir, platform, target)
+    if silicon_pkg_name == 'QemuSocPkg':
+        BuildFspBins (qemu_repo_dir, sbl_dir, silicon_pkg_name, target)
     else:
-        CopyFspBins (fsp_repo_dir, plt_dir, platform)
+        fsp_inf = os.path.join(sbl_dir, 'Silicon', silicon_pkg_name, 'FspBin', 'FspBin.inf')
+        CopyBins (fsp_repo_dir, sbl_dir, fsp_inf,)
 
-    CopyUcodeBins (ucode_repo_dir, plt_dir, platform)
+    microcode_inf = os.path.join(sbl_dir, 'Silicon', silicon_pkg_name, 'Microcode', 'Microcode.inf')
+    CopyBins (ucode_repo_dir, sbl_dir, microcode_inf)
     return 0
 
 if __name__ == '__main__':
