@@ -12,7 +12,6 @@
   FILE_GUID            = 197DB236-F856-4924-90F8-CDF12FB875F3
   MODULE_TYPE          = USER_DEFINED
   VERSION_STRING       = 1.0
-  MICROCODE_TAG        = microcode-20190514a
 
 [Sources]
   06-8e-0c.mcb
@@ -20,3 +19,14 @@
   06-9e-0d.mcb
   06-9e-0c.mcb
   06-9e-0a.mcb
+
+[UserExtensions.SBL."CloneRepo"]
+  REPO  = https://github.com/intel/Intel-Linux-Processor-Microcode-Data-Files.git
+  TAG   = microcode-20190514a
+
+[UserExtensions.SBL."CopyList"]
+  intel-ucode/06-8e-0c  : Silicon/CoffeelakePkg/Microcode/06-8e-0c.mcb
+  intel-ucode/06-8e-0b  : Silicon/CoffeelakePkg/Microcode/06-8e-0b.mcb
+  intel-ucode/06-9e-0d  : Silicon/CoffeelakePkg/Microcode/06-9e-0d.mcb
+  intel-ucode/06-9e-0c  : Silicon/CoffeelakePkg/Microcode/06-9e-0c.mcb
+  intel-ucode/06-9e-0a  : Silicon/CoffeelakePkg/Microcode/06-9e-0a.mcb

@@ -8,10 +8,11 @@
 #
 ##
 
-[Defines]
-  FSP_COMMIT_ID  = 7431e4f3399a5081c956753b5fa3bcd764196723
+[UserExtensions.SBL."CloneRepo"]
+  REPO    = https://github.com/IntelFsp/FSP.git
+  COMMIT  = 7431e4f3399a5081c956753b5fa3bcd764196723
 
-[CopyList]
+[UserExtensions.SBL."CopyList"]
   ApolloLakeFspBinPkg/FspBin/Fsp.fd     : Silicon/ApollolakePkg/FspBin/FspDbg.bin
   ApolloLakeFspBinPkg/FspBin/Fsp.fd     : Silicon/ApollolakePkg/FspBin/FspRel.bin
   ApolloLakeFspBinPkg/FspBin/Fsp.bsf    : Silicon/ApollolakePkg/FspBin/Fsp.bsf
