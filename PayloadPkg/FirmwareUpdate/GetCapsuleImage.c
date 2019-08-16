@@ -318,7 +318,7 @@ Done:
   }
 
   if (EFI_ERROR (Status)) {
-    if (*CapsuleImage == NULL) {
+    if (*CapsuleImage != NULL) {
       FreePool (*CapsuleImage);
       *CapsuleImage = NULL;
     }
