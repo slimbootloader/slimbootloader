@@ -226,20 +226,21 @@ def BuildFspBins (fsp_dir, sbl_dir, silicon_pkg_name, flag):
     CopyFileList (copy_list, fsp_dir, sbl_dir)
 
 def Main():
-    sbl_dir        = os.environ['PLT_SOURCE']
+
+    if len(sys.argv) < 3:
+        print ('Silicon directory and silicon package name are required!')
+        return -1
+    target = ''
+    if len(sys.argv) > 3:
+        target = sys.argv[3]
+
+    sbl_dir          = sys.argv[1]
+    silicon_pkg_name = sys.argv[2]
+
     workspace_dir  = os.path.join(sbl_dir, '../Download')
     fsp_repo_dir   = os.path.abspath (os.path.join(workspace_dir, 'IntelFsp'))
     qemu_repo_dir  = os.path.abspath (os.path.join(workspace_dir, 'QemuFsp'))
     ucode_repo_dir = os.path.abspath (os.path.join(workspace_dir, 'IntelUcode'))
-
-    if len(sys.argv) < 2:
-        print ('Silicon package name argument is required!')
-        return -1
-    silicon_pkg_name = sys.argv[1]
-
-    target = ''
-    if len(sys.argv) > 2:
-        target = sys.argv[2]
 
     if silicon_pkg_name == 'QemuSocPkg':
         BuildFspBins (qemu_repo_dir, sbl_dir, silicon_pkg_name, target)
