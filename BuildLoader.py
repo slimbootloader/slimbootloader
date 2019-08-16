@@ -908,11 +908,15 @@ class Build(object):
 
 		# check if FSP binary exists
 		fsp_dir  = os.path.join(plt_dir, 'Silicon', self._board.SILICON_PKG_NAME, "FspBin", self._board._FSP_PATH_NAME)
+		work_dir = plt_dir
+		if not os.path.exists(fsp_dir):
+			fsp_dir  = os.path.join(sbl_dir, 'Silicon', self._board.SILICON_PKG_NAME, "FspBin", self._board._FSP_PATH_NAME)
+			work_dir = sbl_dir
 		fsp_path = os.path.join(fsp_dir, self._fsp_basename + '.bin')
 
 		check_build_component_bin = os.path.join(tool_dir, 'PrepareBuildComponentBin.py')
 		if os.path.exists(check_build_component_bin):
-			ret = subprocess.call(['python', check_build_component_bin, self._board.SILICON_PKG_NAME, '/d' if self._board.FSPDEBUG_MODE else '/r'])
+			ret = subprocess.call(['python', check_build_component_bin, work_dir, self._board.SILICON_PKG_NAME, '/d' if self._board.FSPDEBUG_MODE else '/r'])
 			if ret:
 				raise Exception  ('Failed to prepare build component binaries !')
 
