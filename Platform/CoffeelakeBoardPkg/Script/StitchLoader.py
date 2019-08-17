@@ -180,8 +180,8 @@ def ParseFlashMap (ImgData, BaseOff = 0):
     if Bytes2Val(ImgData[FlaMapOff:FlaMapOff+4]) != 0x504d4c46:
         return None
 
-    IfwiComp  = COMPONENT('IFWI', COMPONENT.TYPE_IFWI, BaseOff, len(ImgData))
-    BiosComp  = COMPONENT('BIOS', COMPONENT.TYPE_BIOS, BaseOff, len(ImgData))
+    IfwiComp  = COMPONENT('IFWI', COMPONENT.TYPE_IFWI, 0, len(ImgData))
+    BiosComp  = COMPONENT('BIOS', COMPONENT.TYPE_BIOS, BaseOff, len(ImgData) - BaseOff)
     CurrPart  = -1
     FlaMapStr = FlashMap.from_buffer (ImgData, FlaMapOff)
     EntryNum  = (FlaMapStr.Length - sizeof(FlashMap)) // sizeof(FlashMapDesc)
@@ -306,6 +306,13 @@ def PrintIfwiLayout (IfwiFile):
     RgnList = ParseIfwiLayout (IfwiData)
     for Rgn in RgnList:
         print "%04s: 0x%08x - 0x%08x" % (Rgn[0], Rgn[1], Rgn[1] + Rgn[2])
+
+    print ''
+    for Rgn in RgnList:
+        if Rgn[0] == 'BIOS':
+            Bios = ParseFlashMap (IfwiData, Rgn[1])
+            PrintTree (Bios)
+
 
 def main():
     hexstr = lambda x: int(x, 16)
