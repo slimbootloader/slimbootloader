@@ -15,6 +15,7 @@ import zipfile
 import shutil
 from ctypes import *
 from subprocess  import check_output
+from functools import reduce
 
 ExtraUsageTxt = """
 This script creates a new Apollo Lake Slim Bootloader IFWI image basing
@@ -72,7 +73,7 @@ class BPDT_ENTRY_TYPE(Structure):
         "BpdtInvalidType": 19,
     }
 
-    Val2Str = {v: k for k, v in Str2Val.items()}
+    Val2Str = {v: k for k, v in list(Str2Val.items())}
 
     _fields_ = [('data', c_uint16)]
 
@@ -209,9 +210,9 @@ class COMPONENT:
             Data = bytearray(Fd.read())
             Fd.close()
         else:
-            Data = bytearray('\xff' * self.Length)
+            Data = bytearray(b'\xff' * self.Length)
         if self.Length > len(Data):
-            self.Data = Data + '\xff' * (self.Length - len(Data))
+            self.Data = Data + b'\xff' * (self.Length - len(Data))
         else:
             self.Data = Data[:self.Length]
 
@@ -261,8 +262,8 @@ def Bytes2Val(Bytes):
 
 
 def PrintTree(Root, Level=0):
-    print "%-24s [O:0x%06X  L:0x%06X]" % ('  ' * Level + Root.Name,
-            Root.Offset, Root.Length)
+    print("%-24s [O:0x%06X  L:0x%06X]" % ('  ' * Level + Root.Name,
+            Root.Offset, Root.Length))
     for Comp in Root.Child:
         Level += 1
         PrintTree(Comp, Level)
@@ -293,7 +294,7 @@ def BpdtParser(BinData, BpdtOffset, Offset):
                 bytearray(BinData[PartIdx:PartIdx + sizeof(
                     SUBPART_DIR_HEADER)]), 0)
             PartIdx += sizeof(SubPartDirHdr)
-            if '$CPD' == SubPartDirHdr.HeaderMarker:
+            if b'$CPD' == SubPartDirHdr.HeaderMarker:
                 for Dir in range(SubPartDirHdr.NumOfEntries):
                     PartDir = SUBPART_DIR_ENTRY.from_buffer(
                         bytearray(BinData[PartIdx:PartIdx + sizeof(
@@ -320,10 +321,10 @@ def FindSpiRegion (SpiDescriptor, RgnName):
 
 def ParseIfwiRegion (IfwiComp, ImgData):
     BiosStart, BiosLimit = IfwiComp.Offset, IfwiComp.Offset + IfwiComp.Length - 1
-    BpOffset = [BiosStart, (BiosStart + BiosLimit + 1) / 2]
+    BpOffset = [BiosStart, (BiosStart + BiosLimit + 1) // 2]
     for Idx, Offset in enumerate(BpOffset):
         BpComp = COMPONENT('BP%d' % Idx, COMPONENT.TYPE_BP, Offset,
-                           (BiosLimit - BiosStart + 1) / 2)
+                           (BiosLimit - BiosStart + 1) // 2)
         SubPartOffset = 0
         while True:
             Bpdt, SBpdtEntry = BpdtParser(ImgData, Offset, SubPartOffset)
@@ -338,7 +339,7 @@ def ParseIfwiRegion (IfwiComp, ImgData):
                     Offset + Part.SubPartOffset, Part.SubPartSize)
                 SortedDir = sorted(DirList, key=lambda x: x.EntryOffset)
                 for Dir in SortedDir:
-                    FileComp = COMPONENT(Dir.EntryName, COMPONENT.TYPE_FILE,
+                    FileComp = COMPONENT(Dir.EntryName.decode(), COMPONENT.TYPE_FILE,
                                          PartComp.Offset + Dir.EntryOffset,
                                          Dir.EntrySize)
                     PartComp.AddChild(FileComp)
@@ -368,20 +369,20 @@ def LocateComponent(Root, Path):
 
 def PatchFlashMap (ImageData, PlatformData = 0xffffffff):
     CompBpdtDict = {
-      'RSVD' : 'ROOT/IFWI/BP1/SBPDT/BpdtObb/RSVD',
-      'IAS1' : 'ROOT/IFWI/BP1/SBPDT/BpdtObb/FB',
-      'EPLD' : 'ROOT/IFWI/BP1/SBPDT/BpdtObb/EPLD',
-      'UVAR' : 'ROOT/IFWI/BP1/SBPDT/BpdtObb/UVAR',
-      'PYLD' : 'ROOT/IFWI/BP0/BPDT/BpdtIbb/PLD',
-      'VARS' : 'ROOT/IFWI/BP0/BPDT/BpdtIbb/VAR',
-      'MRCD' : 'ROOT/IFWI/BP0/BPDT/BpdtIbb/MRCD',
-      'CNFG' : 'ROOT/IFWI/BP0/BPDT/BpdtIbb/CFGD',
-      'FWUP' : 'ROOT/IFWI/BP0/BPDT/BpdtIbb/FWUP',
-      'SG02' : 'ROOT/IFWI/BP0/BPDT/BpdtIbb/OBB',
-      'SG1B' : 'ROOT/IFWI/BP0/BPDT/BpdtIbb/IBB',
-      'SG1A' : 'ROOT/IFWI/BP0/BPDT/BpdtIbb/IBBL',
-      '_BPM' : 'ROOT/IFWI/BP0/BPDT/BpdtIbb/BPM.met',
-      'OEMK' : 'ROOT/IFWI/BP0/BPDT/BpdtCseBup/oem.key',
+      b'RSVD' : 'ROOT/IFWI/BP1/SBPDT/BpdtObb/RSVD',
+      b'IAS1' : 'ROOT/IFWI/BP1/SBPDT/BpdtObb/FB',
+      b'EPLD' : 'ROOT/IFWI/BP1/SBPDT/BpdtObb/EPLD',
+      b'UVAR' : 'ROOT/IFWI/BP1/SBPDT/BpdtObb/UVAR',
+      b'PYLD' : 'ROOT/IFWI/BP0/BPDT/BpdtIbb/PLD',
+      b'VARS' : 'ROOT/IFWI/BP0/BPDT/BpdtIbb/VAR',
+      b'MRCD' : 'ROOT/IFWI/BP0/BPDT/BpdtIbb/MRCD',
+      b'CNFG' : 'ROOT/IFWI/BP0/BPDT/BpdtIbb/CFGD',
+      b'FWUP' : 'ROOT/IFWI/BP0/BPDT/BpdtIbb/FWUP',
+      b'SG02' : 'ROOT/IFWI/BP0/BPDT/BpdtIbb/OBB',
+      b'SG1B' : 'ROOT/IFWI/BP0/BPDT/BpdtIbb/IBB',
+      b'SG1A' : 'ROOT/IFWI/BP0/BPDT/BpdtIbb/IBBL',
+      b'_BPM' : 'ROOT/IFWI/BP0/BPDT/BpdtIbb/BPM.met',
+      b'OEMK' : 'ROOT/IFWI/BP0/BPDT/BpdtCseBup/oem.key',
     }
 
     print ("Patching Slim Bootloader Flash Map table ...")
@@ -391,9 +392,9 @@ def PatchFlashMap (ImageData, PlatformData = 0xffffffff):
     if not Ifwi:
         return -1
 
-    Pld  = LocateComponent (Ifwi, CompBpdtDict['PYLD'])
+    Pld  = LocateComponent (Ifwi, CompBpdtDict[b'PYLD'])
     if not Pld:
-        CompBpdtDict['PYLD'] = 'ROOT/IFWI/BP1/SBPDT/BpdtObb/PLD'
+        CompBpdtDict[b'PYLD'] = 'ROOT/IFWI/BP1/SBPDT/BpdtObb/PLD'
 
     Bp0  = LocateComponent (Ifwi, 'ROOT/IFWI/BP0')
     Bp1  = LocateComponent (Ifwi, 'ROOT/IFWI/BP1')
@@ -402,7 +403,7 @@ def PatchFlashMap (ImageData, PlatformData = 0xffffffff):
 
     # Locate FlashMap offset
     for Part in range(2):
-        Path = CompBpdtDict['SG1A'].replace("BP0", "BP%d" % Part)
+        Path = CompBpdtDict[b'SG1A'].replace("BP0", "BP%d" % Part)
         Comp = LocateComponent (Ifwi, Path)
         if not Comp:
             if Part == 0:
@@ -430,7 +431,7 @@ def PatchFlashMap (ImageData, PlatformData = 0xffffffff):
                 Path = Path.replace("BP0", "BP1")
             if Part == 1 and (Desc.Flags & FlashMap.FLASH_MAP_DESC_FLAGS['REDUNDANT']):
                 Desc.Flags |= FlashMap.FLASH_MAP_DESC_FLAGS['BACKUP']
-            if Desc.Sig == 'RSVD':
+            if Desc.Sig == b'RSVD':
                 Desc.Offset = Bp1.Offset + Bp1.Length - Desc.Size - Bp0.Offset
                 continue
 
@@ -443,7 +444,7 @@ def PatchFlashMap (ImageData, PlatformData = 0xffffffff):
                 continue
             if Desc.Size != Comp.Length and Comp.Name != 'FB':
                 raise Exception("Mismatch component '%s' length in FlashMap and BPDT !" % CompBpdtDict[Desc.Sig])
-            if Desc.Sig not in ['_BPM', 'OEMK'] and (Comp.Offset & 0xFFF > 0):
+            if Desc.Sig not in [b'_BPM', b'OEMK'] and (Comp.Offset & 0xFFF > 0):
                 raise Exception("Component '%s' %x is not aligned at 4KB boundary, " \
                                 "please adjust padding size for IPAD/OPAD in BoardConfig.py and rebuild !" % (CompBpdtDict[Desc.Sig], Comp.Offset))
             Desc.Offset = Comp.Offset - Bp0.Offset
@@ -455,12 +456,12 @@ def PatchFlashMap (ImageData, PlatformData = 0xffffffff):
         Limit = Bp1.Offset + Bp1.Length - Bp0.Offset - 0x40000
         for Idx in range (EntryNum):
             Desc  = FlashMapDesc.from_buffer (OutputImageData, Stage1AOffset + FlaMapOff + sizeof(FlashMap) + Idx * sizeof(FlashMapDesc))
-            if Desc.Sig == 'RSVD':
+            if Desc.Sig == b'RSVD':
                 continue
             # Last 256K flash space (4GB - 256KB to 4GB) is remapped to CSME read-only SRAM on APL
             # Directly access is not available.
             if Desc.Offset >= Limit or Desc.Offset + Desc.Size > Limit:
-                print "WARNING: Component '%s' in BP%d is located inside CSME memory mapped region, direct access might fail." % (Desc.Sig, Part)
+                print("WARNING: Component '%s' in BP%d is located inside CSME memory mapped region, direct access might fail." % (Desc.Sig, Part))
 
     print ("Flash map was patched successfully!")
 
@@ -561,7 +562,7 @@ def CopyComponent (Root, Path, IfwiData):
         print ('Insufficiant space in BP1 partition !')
         return -1
 
-    IfwiData[Bp1SBpdtEndOffset:Bp1SBpdtEndOffset+Padding] = '\xff' * Padding
+    IfwiData[Bp1SBpdtEndOffset:Bp1SBpdtEndOffset+Padding] = b'\xff' * Padding
 
     # Fix Sbpdt length in BP1 BPDT
     Offset  = Bp1Bpdt.Offset
@@ -595,9 +596,8 @@ def CreateDirData (Dir, IfwiData):
     Adjust    = True
     Offset    = len(Dir.Child) * sizeof(SUBPART_DIR_ENTRY) + sizeof(SUBPART_DIR_HEADER)
     SubDirHdr = SUBPART_DIR_HEADER.from_buffer(IfwiData, Dir.Offset)
-    DirData   = bytearray(SubDirHdr) + '\xff' * (Offset - sizeof(SUBPART_DIR_HEADER))
-    SubDirHdr = SUBPART_DIR_HEADER.from_buffer(DirData)
-    SubDirHdr.NumOfEntries = len(Dir.Child)
+    DirData   = bytearray(SubDirHdr) + b'\xff' * (Offset - sizeof(SUBPART_DIR_HEADER))
+
     for Idx, Comp in enumerate(Dir.Child):
         Delta = 0
         Parts = os.path.splitext(Comp.Name)
@@ -613,38 +613,44 @@ def CreateDirData (Dir, IfwiData):
         if Adjust:
             Adjust = False
             Count -= Delta
-        DirData.extend('\xff' * Count)
+        DirData.extend(b'\xff' * Count)
         CompData = Comp.GetData()
         if CompData:
             DirData.extend(CompData)
         else:
             DirData.extend(IfwiData[Comp.Offset : Comp.Offset + Comp.Length])
-        EntryOffset = Idx * sizeof(SUBPART_DIR_ENTRY) + sizeof(SUBPART_DIR_HEADER)
-        DirData[EntryOffset:EntryOffset+sizeof(SUBPART_DIR_ENTRY)] = '\x00' * sizeof(SUBPART_DIR_ENTRY)
-        SubDir = SUBPART_DIR_ENTRY.from_buffer(DirData, EntryOffset)
-        SubDir.EntryName   = Comp.Name
+
+        SubDir = SUBPART_DIR_ENTRY()
+        SubDir.EntryName   = Comp.Name.encode()
         SubDir.EntryOffset = NextOffset - Delta
         SubDir.EntrySize   = Comp.Length
         SubDir.Reserved1   = 0
         SubDir.Reserved2   = 0
+        EntryOffset = Idx * sizeof(SUBPART_DIR_ENTRY) + sizeof(SUBPART_DIR_HEADER)
+        DirData[EntryOffset:EntryOffset+sizeof(SUBPART_DIR_ENTRY)] = bytearray(SubDir)
+
         NextOffset += Comp.Length
         Offset = NextOffset
 
     Align       = FILE_ALIGN
     NextOffset  = ((Offset + Align - 1) & ~(Align - 1))
-    DirData.extend('\xff' * (NextOffset - Offset))
+    DirData.extend(b'\xff' * (NextOffset - Offset))
 
     # Update checksum
-    SubDirHdr = SUBPART_DIR_HEADER.from_buffer(DirData)
+    SubDirHdr = SUBPART_DIR_HEADER.from_buffer_copy(DirData)
+    SubDirHdr.NumOfEntries = len(Dir.Child)
     SubDirHdr.Checksum = 0
+    DirData[:sizeof(SUBPART_DIR_HEADER)] = bytearray(SubDirHdr)
+
     Length    = SubDirHdr.NumOfEntries * sizeof(SUBPART_DIR_ENTRY) + sizeof(SUBPART_DIR_HEADER)
-    SumBuf    = (c_uint8 * Length).from_buffer(DirData)
+    SumBuf    = (c_uint8 * Length).from_buffer_copy(DirData)
     SubDirHdr.Checksum = (~sum(SumBuf) + 1) & 0xFF
+    DirData[:sizeof(SUBPART_DIR_HEADER)] = bytearray(SubDirHdr)
 
     Remaining = (Dir.Offset + len(DirData))  & (FILE_ALIGN - 1)
     if Remaining:
         # Not page aligned, add padding
-        DirData.extend('\xff' * (FILE_ALIGN - Remaining))
+        DirData.extend(b'\xff' * (FILE_ALIGN - Remaining))
 
     return DirData
 
@@ -655,7 +661,7 @@ def RefreshIfwiForDir (Dir, IfwiData):
     Length  = len (DirData)
     AdjustLength = Length - Dir.Length
     if (Dir.Offset + Length)  & (FILE_ALIGN - 1):
-        print hex(Dir.Offset), hex(Length)
+        print(hex(Dir.Offset), hex(Length))
         print  ('Dir total size needs to be 4KB aligned !')
 
     # Remember original SBPDT offset
@@ -721,7 +727,7 @@ def RefreshIfwiForDir (Dir, IfwiData):
         AdjustLength = -AdjustLength
         IfwiData[:] = IfwiData[:OldDir.Offset] + DirData + \
                       IfwiData[OldDir.Offset + OldDir.Length + AdjustLength: BpComp.Offset + BpComp.Length] + \
-                      '\xff' * AdjustLength + IfwiData[BpComp.Offset + BpComp.Length:]
+                      b'\xff' * AdjustLength + IfwiData[BpComp.Offset + BpComp.Length:]
     return 0
 
 
@@ -946,7 +952,7 @@ def main():
                     help='Specify if the flash layout will be full redundant or not')
 
     if len(sys.argv) == 1:
-        print ('%s' % ExtraUsageTxt)
+        print('%s' % ExtraUsageTxt)
 
     args = ap.parse_args()
 

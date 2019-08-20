@@ -283,7 +283,7 @@ class IFWI_PARSER:
             print ("Not a valid ifwi image!")
             return -2
 
-        ifwi_comps = ifwi_parser.locate_components (ifwi, path)
+        ifwi_comps = self.locate_components (ifwi, path)
         if len(ifwi_comps) == 0:
             print ("Cannot find path '%s' in ifwi image!" % path)
             return -4

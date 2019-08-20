@@ -118,12 +118,12 @@ def RunCmd (Cmd, Cwd):
         Ret = 1
     if Ret:
         sys.stdout.flush()
-        print ('%s\n%s' % (Out, Err))
-        print "Failed to run command:\n  PATH: %s\n   CMD: %s" % (Cwd, Cmd)
+        print('%s\n%s' % (Out, Err))
+        print("Failed to run command:\n  PATH: %s\n   CMD: %s" % (Cwd, Cmd))
         sys.exit(1)
 
 def SwapTSBlock(InFile, OutFile, TsSize):
-    print "Swapping Top Swap Blocks...."
+    print("Swapping Top Swap Blocks....")
 
     if not os.path.exists(InFile):
         raise Exception("%s not found !" % InFile)
@@ -151,7 +151,7 @@ def SignBinary(Infile, StitchDir, CfgVar):
     OutputDir = os.path.join(StitchDir,"Output", "input")
     shutil.copy(Infile, os.path.join(OutputDir,"sbl_sec_temp.bin"))
 
-    print "Generating new keys...."
+    print("Generating new keys....")
 
     BpmGen2Dir = StitchDir + '/' + 'bpmgen2'
     if not os.path.exists(os.path.join(StitchDir,"bpmgen2", "keys")):
@@ -172,24 +172,30 @@ def SignBinary(Infile, StitchDir, CfgVar):
     Cmd = 'python CSE/FIT/FitHelp.py "FITACM" Output/input/sbl_sec_temp.bin Output/input/acm.bin'
     RunCmd (Cmd, StitchDir)
 
-    print "Generating KeyManifest.bin...."
+    print("Generating KeyManifest.bin....")
     Cmd = './bpmgen2 KM1GEN -KEY keys/pubkey.pem BPM -KM ../output/input/KeyManifest.bin -SIGNKEY keys/keyprivkey.pem -SIGNPUBKEY keys/keypubkey.pem -KMID 0x01 -SVN 0 -d:2 > ../output/input/bpmgen2_km.txt'
     RunCmd (Cmd, BpmGen2Dir)
 
-    print "Generating Manifest.bin...."
+    print("Generating Manifest.bin....")
     Cmd = './bpmgen2 GEN ../output/input/sbl_sec_temp.bin bpmgen2.params -BPM ../output/input/Manifest.bin -U ../output/input/sbl_sec.bin -KM ../output/input/KeyManifest.bin -d:2 > ../output/input/bpmgen2_bpm.txt'
     RunCmd (Cmd, BpmGen2Dir)
 
-    print "Calculate public key hash...."
-    print "Extract Public key"
+    print("Calculate public key hash....")
+    print("Extract Public key")
     Cmd = './openssl rsa -in %s -pubin -modulus > pubkey.txt' % ('../../bpmgen2/keys/keypubkey.pem')
     RunCmd (Cmd, OutputDir)
 
-    line=open('output/input/pubkey'+'.txt','r').readline()[8:8+256*2]; open('output/input/pubkey'+'.bin','wb').write(line.decode('hex')[::-1])
+    line=open('output/input/pubkey'+'.txt','r').readline()[8:8+256*2]
+    if sys.hexversion >= 0x3000000:
+        keybin = bytearray.fromhex(line)
+    else:
+        keybin = line.decode('hex')
+    open('output/input/pubkey'+'.bin','wb').write(keybin[::-1])
     Cmd = './openssl dgst -sha256 -binary -out pubkey.hash pubkey.bin'
     RunCmd (Cmd, OutputDir)
-    print "printing hash"
-    hash=open('output/input/pubkey'+'.hash','rb').read(); print ''.join('%02X ' % ord(b) for b in hash);
+    print("printing hash")
+    hash = bytearray(open('output/input/pubkey'+'.hash','rb').read())
+    print(''.join('%02X ' % b for b in hash))
 
 def UpdateIfwiXml(Btguardprofile, StitchDir, CfgVar, Tree):
     OutputDir = os.path.join(StitchDir,"Output", "input")
@@ -206,21 +212,25 @@ def UpdateIfwiXml(Btguardprofile, StitchDir, CfgVar, Tree):
     shutil.copy(os.path.join(OutputDir, "kmsigpubkeytxt_fh"), kmsigpubkeytxtfile)
 
     line=open(kmsigpubkeytxtfile,"r").readline()[8:8+256*2]
-    open(kmsigpubkeybinfile,"wb").write(line.decode('hex')[::-1])
- 
+    if sys.hexversion >= 0x3000000:
+        keybin = bytearray.fromhex(line)
+    else:
+        keybin = line.decode('hex')
+    open(kmsigpubkeybinfile,"wb").write(keybin[::-1])
+
     # In, CFL and  future platforms, public exponent (i.e. 65537) is concatenated for OEM key hash calculation.
     line=open(kmsigpubkeytxtfile,"r").readline()[8:8+256*2]
     open(kmsigpubkeybinfile,"ab").write(bytearray.fromhex('01000100'))
     Cmd = './openssl dgst -sha256 -binary -out Output/input/kmsigpubkey.hash Output/input/kmsigpubkey.bin'
     RunCmd (Cmd, StitchDir)
- 
+
     # Convert OEM key hash into hexadecimal for Fit tool consumption
     with open(kmsigpubkeyhashfile,"rb") as kmsigpubkeyhash_fh:
-        hash = kmsigpubkeyhash_fh.read()
+        hash = bytearray (kmsigpubkeyhash_fh.read())
         oemkeyhash = ""
         for b in hash:
-            oemkeyhash = oemkeyhash + "%02X " % ord(b)
-    print oemkeyhash
+            oemkeyhash = oemkeyhash + "%02X " % b
+    print(oemkeyhash)
 
     # if measured boot enabled, enable ptt
     if Btguardprofile in [3, 5]:
@@ -242,21 +252,21 @@ def UpdateIfwiXml(Btguardprofile, StitchDir, CfgVar, Tree):
     Node.attrib['value'] = BTG_Profile_Values[Btguardprofile]
 
 def UpdateBtGuardManifests(StitchDir, CfgVar):
-    print "Sigining Coffeelake...."
+    print("Sigining Coffeelake....")
 
     OutputDir = os.path.join(StitchDir,"Output", "input")
 
-    print "Sign primary partition...."
+    print("Sign primary partition....")
     SignBinary(os.path.join(OutputDir,"SlimBootloader.bin"), StitchDir, CfgVar)
 
-    print "Swap top swap block...."
+    print("Swap top swap block....")
     SwapTSBlock(os.path.join(OutputDir, "sbl_sec.bin"), os.path.join(OutputDir, "SwappedA.bin"), 0x20000)
 
-    print "Sign backup partition...."
+    print("Sign backup partition....")
     SignBinary(os.path.join(OutputDir,"SwappedA.bin"), StitchDir, CfgVar)
     os.remove(os.path.join(OutputDir,"SwappedA.bin"))
 
-    print "Swap to original top swap block...."
+    print("Swap to original top swap block....")
     SwapTSBlock(os.path.join(OutputDir, "sbl_sec.bin"), os.path.join(OutputDir, "SwappedA.bin"), 0x20000)
     shutil.copy(os.path.join(OutputDir, "SwappedA.bin"), os.path.join(OutputDir, "SlimBootloader.bin"))
     os.remove(os.path.join(OutputDir,"SwappedA.bin"))
@@ -456,7 +466,7 @@ def Stitch (StitchDir, StitchZip, BtgProfile, SpiQuadMode, PlatformData, FullRdu
         InputData = bytearray(Fd.read())
         Fd.close()
         print ("\n Adding platform data to Slimbootloader ...")
-        Data = AddPlatformData(InputData, 0, PlatformData)
+        Data = AddPlatformData(InputData, PlatformData)
         Fd = open(os.path.join(StitchDir, CfgVar['fitinput'], "SlimBootloader.bin"), "wb")
         Fd.write(Data)
         Fd.close()

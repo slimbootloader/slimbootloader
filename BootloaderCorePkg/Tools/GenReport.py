@@ -9,7 +9,8 @@ import os
 import re
 import sys
 import uuid
-from   ctypes import *
+from   ctypes  import *
+from functools import reduce
 
 sys.dont_write_bytecode = True
 from BuildUtility import STITCH_OPS
@@ -29,6 +30,10 @@ def AlignPtrUp(offset, alignment=8):
 def AlignPtrDown(offset, alignment=8):
     return offset & ~(alignment - 1)
 
+def ExecAssignment (var, val):
+	namespace = {}
+	exec ('%s = %s' % (var, val), namespace)
+	return namespace[var]
 
 class c_uint24(Structure):
     _pack_ = 1
@@ -206,10 +211,9 @@ class REPORTER:
         while Offset < FvHdr.FvLength:
             Offset = AlignPtrUp(Offset)
             FfsHdr = EFI_FFS_FILE_HEADER.from_buffer(FvData, Offset)
-            FfsName = str(uuid.UUID(bytes_le=str(bytearray(
-                FfsHdr.Name)))).upper()
+            FfsName = str(uuid.UUID(bytes_le=bytes(bytearray(FfsHdr.Name)))).upper()
             Ffs = IMG_INFO('FFS', FfsName, Offset, int(FfsHdr.Size))
-            if bytearray(FfsHdr.Name) == '\xff' * 16:
+            if bytearray(FfsHdr.Name) == b'\xff' * 16:
                 if (int(FfsHdr.Size) == 0xFFFFFF):
                     Ffs.Length = FvHdr.FvLength - Offset
             Offset += Ffs.Length
@@ -228,13 +232,13 @@ class REPORTER:
         FdIn.close()
         while FvOffset < FdSize:
             FvHdr = EFI_FIRMWARE_VOLUME_HEADER.from_buffer(FdData, FvOffset)
-            if '_FVH' != FvHdr.Signature:
+            if b'_FVH' != FvHdr.Signature:
                 raise Exception("ERROR: Invalid FV header in FD '%s' !" %
                                 FdFile)
             FspHdr = FSP_INFORMATION_HEADER.from_buffer(FdData,
                                                         FvOffset + 0x94)
             OldOffset = FvOffset
-            if 'FSPH' == FspHdr.Signature:
+            if b'FSPH' == FspHdr.Signature:
                 FvOffset += FspHdr.ImageSize
                 Fv = IMG_INFO(
                     'FSP', 'FSP-' + self.GetFspType(FspHdr.ComponentAttribute),
@@ -356,8 +360,7 @@ class REPORTER:
                 Value = Value[:Space]
             Lead = Blank // 2
             Tail = Blank - Lead
-
-            return Lead * ' ' + Value + Tail * ' ' + Pattern[2 * Idx + 2]
+            return ' ' * Lead + Value + ' ' * Tail + Pattern[2 * Idx + 2]
 
         def OutSplitter(Pattern='+-+-+-+-+', Value=['', '', '', '']):
             Lines = []
@@ -380,18 +383,18 @@ class REPORTER:
                 Start += 1
 
         def GetPattern(Layout, LineIdx):
-            Pattern = bytearray('| + + + |')
-            for Col in xrange(len(Layout)):
+            Pattern = [ord(i) for i in '| + + + |']
+            for Col in range(len(Layout)):
                 Cnt = 0
                 Idx = Col * 2 + 1
                 for Val in Layout[Col]:
                     Cnt += Val
                     if LineIdx == Cnt - 1:
-                        Pattern[Idx] = '-'
+                        Pattern[Idx] = ord('-')
                         break
             if LineIdx == sum(Layout[0]) - 1:
                 # Last line
-                Pattern[0] = ord('+')
+                Pattern[0]  = ord('+')
                 Pattern[-1] = ord('+')
 
             for Idx, Char in enumerate(Pattern):
@@ -399,7 +402,7 @@ class REPORTER:
                     # Check orphan in a row
                     if Pattern[Idx - 1] == ord(' ') and Pattern[Idx + 1] == ord(' '):
                         Pattern[Idx] = ord('|')
-            Pattern = ''.join(str(Pattern))
+            Pattern = ''.join(chr(i) for i in Pattern)
             return Pattern
 
         def Normalize(Com):
@@ -454,7 +457,7 @@ class REPORTER:
                 Idx1 = len(Layout[1])
             Count = sum(Layout[0])
             self.Layout = Layout
-            Table = [[' ' for i in xrange(Count)] for i in xrange(len(Layout))]
+            Table = [[' ' for i in range(Count)] for i in range(len(Layout))]
 
             Index = 0
             FfsIdx = 0
@@ -509,9 +512,9 @@ class REPORTER:
         Header = OutSplitter('         ', self.Header)
         Lines.append(OutSplitter())
 
-        for Idx in xrange(Rows):
+        for Idx in range(Rows):
             Pattern = GetPattern(Layout, Idx)
-            Line = OutSplitter(Pattern, [Table[i][Idx] for i in xrange(4)])
+            Line = OutSplitter(Pattern, [Table[i][Idx] for i in range(4)])
             Lines.append(Line)
 
         FfsIdx = 0
@@ -539,7 +542,7 @@ class REPORTER:
 
         Lines.insert(0, Header)
 
-        print '\n'.join(Lines)
+        print('\n'.join(Lines))
 
 def ReportFd(FvDir, Title, FdNames):
     # Parse all xref
@@ -598,7 +601,7 @@ def ReportFd(FvDir, Title, FdNames):
 
     if len(FdList):
         Reporter.Report(FdList)
-        print '\n'
+        print('\n')
 
 
 def ReportImageLayout(FvDir, ImgPath, ImgList, ImgStart, TopDown):
@@ -714,9 +717,8 @@ def ReportImageLayout(FvDir, ImgPath, ImgList, ImgStart, TopDown):
         FfsHeight = (MinHeight + FfsNum - 1) // FfsNum
     Reporter.Report(FdList, FfsHeight)
 
-
 def Usage():
-    print "Usage: \n\tGenReport FvBuildDir [StitchInput]"
+    print("Usage: \n\tGenReport FvBuildDir [StitchInput]")
 
 def Main():
 
@@ -746,16 +748,16 @@ def Main():
         Parts   = Line.split('=')
         if len(Parts) == 2:
             if Parts[0].strip() == 'BOARD_INFO':
-                exec ('BrdInfo = %s' % Parts[1])
+                BrdInfo = ExecAssignment ('BrdInfo', Parts[1])
                 Title = 'Flash Layout for Board %s' % BrdInfo[0]
                 Padding = (sum(REPORTER.Cols) - len(Title)) // 2
                 if Padding < 0:
                   Padding = 0
-                print ''
-                print '    %s%s' % (' ' * Padding, Title)
-                print '    %s%s' % (' ' * Padding, '=' * len(Title))
+                print('')
+                print('    %s%s' % (' ' * Padding, Title))
+                print('    %s%s' % (' ' * Padding, '=' * len(Title)))
             if Parts[0].strip() == 'IMAGE_INFO':
-                exec ('ImgInfo = %s' % Parts[1])
+                ImgInfo = ExecAssignment ('ImgInfo', Parts[1])
                 ImgPath = os.path.join(FvDir, ImgInfo[0])
                 Start   = ImgInfo[1]
                 TopDown = ImgInfo[2]
@@ -764,9 +766,9 @@ def Main():
                         ReportFd(FvDir, '', [Name])
                     FdReported = True
             elif Parts[0].strip() == 'IMAGE_LIST':
-                exec ('ImgList = %s' % Parts[1])
+                ImgList = ExecAssignment ('ImgList', Parts[1])
                 ReportImageLayout(FvDir, ImgPath, ImgList, Start, TopDown)
-        print '\n'
+        print('\n')
 
     return 0
 

@@ -9,10 +9,19 @@ import os
 import re
 import sys
 import marshal
-from Tkinter import *
-import ttk
-import tkMessageBox
-import tkFileDialog
+
+if sys.hexversion >= 0x3000000:
+    # for Python3
+    from tkinter import *   ## notice lowercase 't' in tkinter here
+    import tkinter.ttk as ttk
+    import tkinter.messagebox as messagebox
+    import tkinter.filedialog as filedialog
+else:
+    # for Python2
+    from Tkinter import *   ## notice capitalized T in Tkinter
+    import ttk
+    import tkMessageBox as messagebox
+    import tkFileDialog as filedialog
 
 from GenCfgData import CGenCfgData, Bytes2Str, Bytes2Val, Array2Val
 
@@ -430,7 +439,7 @@ class Application(Frame):
         Text = []
         for Line in Lines:
             Text.append(Line.center(Width, ' '))
-        tkMessageBox.showinfo('Config Editor', '\n'.join(Text))
+        messagebox.showinfo('Config Editor', '\n'.join(Text))
 
     def GetOpenFileName(self, Type):
         if self.IsConfigDataLoaded():
@@ -442,7 +451,7 @@ class Application(Frame):
                 Question = 'All configuration will be reloaded from DSC file, continue ?'
             else:
                 raise Exception('Unsupported file type !')
-            Reply = tkMessageBox.askquestion('', Question, icon='warning')
+            Reply = messagebox.askquestion('', Question, icon='warning')
             if Reply == 'no':
                 return None
 
@@ -453,7 +462,7 @@ class Application(Frame):
             FileType = Type.upper()
             FileExt  = Type
 
-        Path = tkFileDialog.askopenfilename(
+        Path = filedialog.askopenfilename(
             initialdir=self.LastDir,
             title="Load file",
             filetypes=(("%s files" % FileType, "*.%s" % FileExt), (
@@ -476,7 +485,7 @@ class Application(Frame):
             self.CfgDataObj.OverrideDefaultValue(Path)
             self.CfgDataObj.UpdateDefaultValue()
         except Exception as e:
-            tkMessageBox.showerror('LOADING ERROR', str(e))
+            messagebox.showerror('LOADING ERROR', str(e))
             return
 
         self.RefreshConfigDataPage()
@@ -493,7 +502,7 @@ class Application(Frame):
         try:
             self.ReloadConfigDataFromBin(BinData)
         except Exception as e:
-            tkMessageBox.showerror('LOADING ERROR', str(e))
+            messagebox.showerror('LOADING ERROR', str(e))
             return
 
     def LoadDscFile(self, Path):
@@ -504,7 +513,7 @@ class Application(Frame):
         try:
             self.CfgDataObj = self.LoadConfigData(Path)
         except Exception as e:
-            tkMessageBox.showerror('LOADING ERROR', str(e))
+            messagebox.showerror('LOADING ERROR', str(e))
             return -1
 
         self.OrgCfgDataBin = self.CfgDataObj.GenerateBinaryArray()
@@ -524,7 +533,7 @@ class Application(Frame):
         self.LoadDscFile(Path)
 
     def GetSaveFileName (self, Extension):
-        Path = tkFileDialog.asksaveasfilename(
+        Path = filedialog.asksaveasfilename(
                   initialdir=self.LastDir,
                   title="Save file",
                   defaultextension=Extension)

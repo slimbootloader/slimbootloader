@@ -92,7 +92,7 @@ class UcodeHeader(Structure):
 
 class FitEntry(Structure):
 
-	FIT_SIGNATURE = '_FIT_   '
+	FIT_SIGNATURE = b'_FIT_   '
 
 	_pack_ = 1
 	_fields_ = [
@@ -113,7 +113,7 @@ class FitEntry(Structure):
 
 class HashStore(Structure):
 
-	HASH_STORE_SIGNATURE    = '_HS_'
+	HASH_STORE_SIGNATURE    = b'_HS_'
 	HASH_STORE_MAX_IDX_NUM  = 8
 	HASH_STORE_ENTRY_LEN    = 32
 
@@ -180,7 +180,7 @@ class FlashMapDesc(Structure):
 
 class FlashMap(Structure):
 
-	FLASH_MAP_SIGNATURE = 'FLMP'
+	FLASH_MAP_SIGNATURE = b'FLMP'
 
 	FLASH_MAP_COMPONENT_SIGNATURE = {
 		"STAGE1A"       : "SG1A",
@@ -270,7 +270,7 @@ def rebase_fsp(path, out_dir, base_t, base_m, base_s):
 
 def patch_fv(fv_dir, fvs, *vargs):
 	sys.stdout.flush()
-	args = filter (lambda x: x != '', list(vargs))
+	args = [x for x in list(vargs) if x != '']
 	run_process (["python", gtools['FV_PATCH'], fv_dir, fvs] + args, False)
 
 
@@ -315,7 +315,7 @@ def get_fsp_revision (path):
 
 def get_fsp_image_id (path):
 	di = open(path,'rb').read()[0xA4:0xAC]
-	return struct.unpack('8s', di[:8])[0].rstrip('\x00')
+	return struct.unpack('8s', di[:8])[0].rstrip(b'\x00').decode()
 
 
 def get_redundant_info (comp_name):
@@ -363,11 +363,11 @@ def gen_ias_file (rel_file_path, file_space, out_file):
 		file_bin = ias_fh.read()
 		ias_fh.close ()
 	else:
-		file_bin = ''
+		file_bin = bytearray ()
 	file_size = len(file_bin)
 	if file_size > file_space:
 		raise Exception ("Insufficient region size 0x%X for file '%s', requires size 0x%X!" % (file_space, os.path.basename(file_path), file_size))
-	bins.extend (file_bin + '\xff' * (file_space - file_size))
+	bins.extend (file_bin + b'\xff' * (file_space - file_size))
 	open (out_file, 'wb').write (bins)
 
 
@@ -375,7 +375,7 @@ def gen_flash_map_bin (flash_map_file, comp_list):
 	flash_map = FlashMap()
 	for comp in reversed(comp_list):
 		desc  = FlashMapDesc ()
-		desc.sig    = FlashMap.FLASH_MAP_COMPONENT_SIGNATURE[comp['bname']]
+		desc.sig    = FlashMap.FLASH_MAP_COMPONENT_SIGNATURE[comp['bname']].encode()
 		desc.flags  = comp['flag']
 		desc.offset = comp['offset']
 		desc.size   = comp['size']
@@ -581,7 +581,7 @@ def align_pad_file (src, dst, val, mode = STITCH_OPS.MODE_FILE_ALIGN, pos = STIT
 		return
 	else:
 		raise Exception ('Unsupported align mode %d !' % mode)
-	padding = '\xff' * (newlen - srclen)
+	padding = b'\xff' * (newlen - srclen)
 	if dst == '':
 		dst = src
 	fo = open(dst,'wb')
@@ -669,7 +669,7 @@ def get_verinfo_via_git (ver_dict, repo_dir = '.'):
 	commitid = 0
 	dirty    = 0
 	if len(line) >= 16:
-		if line.endswith('dirty'):
+		if line.endswith(b'dirty'):
 			dirty = 1
 			line = line[:-6]
 		try:
@@ -677,14 +677,14 @@ def get_verinfo_via_git (ver_dict, repo_dir = '.'):
 		except ValueError:
 			commitid = 0
 	imgid = '%-8s' % ver_dict['VERINFO_IMAGE_ID']
-	imgid = imgid[0:8]
+	imgid = imgid[0:8].encode()
 
 	date_format = "%m/%d/%Y"
 	base_date = datetime.datetime.strptime(ver_dict['VERINFO_BUILD_DATE'], date_format)
 	delta     = datetime.datetime.now() - base_date
 
 	ver_info = VerInfo ()
-	ver_info.Signature      = '$SBH'
+	ver_info.Signature      = b'$SBH'
 	ver_info.HeaderLength   = sizeof(ver_info)
 	ver_info.HeaderRevision = 1
 	if os.environ.get('BUILD_NUMBER'):
@@ -731,9 +731,9 @@ def check_for_openssl():
 	'''
 	cmdline = get_openssl_path ()
 	try:
-		version = subprocess.check_output([cmdline, 'version'])
+		version = subprocess.check_output([cmdline, 'version']).decode()
 	except:
-		print 'ERROR: OpenSSL not available. Please set OPENSSL_PATH.'
+		print('ERROR: OpenSSL not available. Please set OPENSSL_PATH.')
 		sys.exit(1)
 	return version
 
@@ -743,9 +743,9 @@ def check_for_nasm():
 	'''
 	cmdline = os.path.join(os.environ.get('NASM_PREFIX', ''), 'nasm')
 	try:
-		version = subprocess.check_output([cmdline, '-v'])
+		version = subprocess.check_output([cmdline, '-v']).decode()
 	except:
-		print 'ERROR: NASM not available. Please set NASM_PREFIX.'
+		print('ERROR: NASM not available. Please set NASM_PREFIX.')
 		sys.exit(1)
 	return version
 
@@ -847,7 +847,7 @@ def rebase_fv (fv, out_bin, delta):
 		pcount += img.Rebase(delta, out_bin)
 		fcount += 1
 
-	print "Patched %d entries in %d TE/PE32 images." % (pcount, fcount)
+	print("Patched %d entries in %d TE/PE32 images." % (pcount, fcount))
 
 
 def decode_flash_map (flash_map_file, print_address = True):
@@ -879,10 +879,10 @@ def decode_flash_map (flash_map_file, print_address = True):
 	prev_rgn = 'TS'
 	disp_rgn = ''
 
-	for idx in xrange (entry_num):
+	for idx in range (entry_num):
 		desc  = FlashMapDesc.from_buffer (flash_map_data, sizeof(FlashMap) + idx * sizeof(FlashMapDesc))
 		flags = 'Compressed  '  if (desc.flags & FlashMap.FLASH_MAP_DESC_FLAGS['COMPRESSED']) else 'Uncompressed'
-		for rgn_name, rgn_flag in FlashMap.FLASH_MAP_DESC_FLAGS.items():
+		for rgn_name, rgn_flag in list(FlashMap.FLASH_MAP_DESC_FLAGS.items()):
 			if rgn_flag == (desc.flags & 0x0F):
 				if rgn_flag & (FlashMap.FLASH_MAP_DESC_FLAGS['NON_REDUNDANT'] | FlashMap.FLASH_MAP_DESC_FLAGS['NON_VOLATILE']):
 					rgn_suf      = ''
@@ -911,7 +911,7 @@ def decode_flash_map (flash_map_file, print_address = True):
 		else:
 			address = ' ???????? '
 		flash_map_lines.append ("\t|   %s   |  0x%06x(%s)  |  0x%06x  |  %s   |\n" \
-			% (desc.sig, desc.offset, address, desc.size, flags))
+			% (desc.sig.decode(), desc.offset, address, desc.size, flags))
 
 	flash_map_lines.append ("\t+----------+------------------------+------------+-----------------------+\n")
 
@@ -928,5 +928,5 @@ def find_component_in_image_list (comp_name, img_list):
 
 def print_component_list (comp_list):
 	for comp in comp_list:
-		print '%-20s BASE=0x%08X' % (comp['name'], comp['base'])
+		print('%-20s BASE=0x%08X' % (comp['name'], comp['base']))
 

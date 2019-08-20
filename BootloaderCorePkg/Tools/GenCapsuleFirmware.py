@@ -398,7 +398,7 @@ class Firmware_Update_Header(Structure):
 
 
 def SignImage(RawData, OutFile, PrivKey):
-    
+
     #
     # Generate the new image layout
     # 1. write firmware update header
@@ -408,7 +408,7 @@ def SignImage(RawData, OutFile, PrivKey):
 
     file_size = len(RawData)
 
-    header.FileGuid         = (c_ubyte *16).from_buffer_copy(FIRMWARE_UPDATE_IMAGE_FILE_GUID.get_bytes_le())
+    header.FileGuid         = (c_ubyte *16).from_buffer_copy(FIRMWARE_UPDATE_IMAGE_FILE_GUID.bytes_le)
     header.HeaderSize       = sizeof(Firmware_Update_Header)
     header.FirmwreVersion   = 1
     header.CapsuleFlags     = 0
@@ -424,9 +424,8 @@ def SignImage(RawData, OutFile, PrivKey):
 
     header.PubKeySize = os.path.getsize(pubkey_file)
 
-    unsigned_image.extend(RawData)
     fwupdate_bin_file = 'fwupdate_unsigned.bin'
-    open(fwupdate_bin_file, 'wb').write(unsigned_image)
+    open(fwupdate_bin_file, 'wb').write(unsigned_image + RawData)
 
     rsa_sign_file(PrivKey, pubkey_file, fwupdate_bin_file, OutFile, True, True)
 
@@ -482,7 +481,7 @@ def main():
 
     FmpCapsuleHeader = FmpCapsuleHeaderClass()
     for PldUuid, PldFile in args.payload:
-        
+
         FmpPayloadHeader = FmpPayloadHeaderClass()
         Buffer = open(PldFile, 'rb').read()
         Result = Buffer

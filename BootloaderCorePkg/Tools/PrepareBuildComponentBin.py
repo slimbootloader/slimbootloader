@@ -167,7 +167,7 @@ def BuildFspBins (fsp_dir, sbl_dir, silicon_pkg_name, flag):
             Fatal ('Failed to clone FSP repo to directory %s !' % fsp_dir)
         print ('Done\n')
     else:
-        output = subprocess.check_output(['git', 'tag', '-l'], cwd=fsp_dir)
+        output = subprocess.check_output(['git', 'tag', '-l'], cwd=fsp_dir).decode()
         if edk2_base_tag not in output:
             ret = subprocess.call(['git', 'fetch', '--all'], cwd=fsp_dir)
             if ret:
@@ -208,7 +208,7 @@ def BuildFspBins (fsp_dir, sbl_dir, silicon_pkg_name, flag):
     else:
         flags = [flag]
 
-    print flags
+    print(flags)
     for flag in flags:
         os.environ['WORKSPACE'] = ''
         os.environ['EDK_TOOLS_PATH'] = ''
