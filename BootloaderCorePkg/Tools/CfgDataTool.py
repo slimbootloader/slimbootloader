@@ -4,197 +4,11 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
-
-from ctypes import Structure, c_char, c_uint32, c_uint8, c_uint64, c_uint16, sizeof, ARRAY
-import os
-import re
 import sys
-import struct
-import shutil
-import subprocess
-import argparse
 import collections
 
-class BPDT_ENTRY_TYPE(Structure):
-    Str2Val = {
-        "BpdtOemSmip": 0,
-        "BpdtCseRbe": 1,
-        "BpdtCseBup": 2,
-        "BpdtUcode": 3,
-        "BpdtIbb": 4,
-        "BpdtSbpdt": 5,
-        "BpdtObb": 6,
-        "BpdtCseMain": 7,
-        "BpdtIsh": 8,
-        "BpdtCseIdlm": 9,
-        "BpdtIfpOverride": 10,
-        "BpdtDebugTokens": 11,
-        "BpdtUfsPhyConfig": 12,
-        "BpdtUfsGppLunId": 13,
-        "BpdtPmc": 14,
-        "BpdtIunit": 15,
-        "BpdtNvmConfig": 16,
-        "BpdtUepType": 17,
-        "BpdtUfsRateType": 18,
-        "BpdtInvalidType": 19,
-    }
-
-    Val2Str = {v: k for k, v in Str2Val.items()}
-
-    _fields_ = [('data', c_uint16)]
-
-    def __init__(self, val=0):
-        self.set_value(val)
-
-    def __str__(self):
-        if self.value < 0 or self.value >= self.Str2Val['BpdtInvalidType']:
-            str = "BpdtInvalidType"
-        else:
-            str = self.Val2Str[self.value]
-        return str
-
-    def __int__(self):
-        return self.get_value()
-
-    def set_value(self, val):
-        self.data = val
-
-    def get_value(self):
-        return self.data
-
-    value = property(get_value, set_value)
-
-
-class BPDT_INFO():
-    def __init__(self, name, offset, bpdt_offset, primary):
-        self.Name = name
-        self.Primary = primary
-        self.Offset = offset
-        self.BpdtOffset = bpdt_offset
-
-
-class BPDT_HEADER(Structure):
-    _pack_ = 1
-    _fields_ = [
-        ('Signature', c_uint32), ('DescCnt', c_uint16), ('Version', c_uint16),
-        ('XorSum', c_uint32), ('IfwiVer', c_uint32),
-        ('Reserved', ARRAY(c_uint8, 8))
-    ]
-
-
-class BPDT_ENTRY(Structure):
-    _pack_ = 1
-    _fields_ = [
-        ('Type', BPDT_ENTRY_TYPE),
-        ('Flags', c_uint16),
-        ('SubPartOffset', c_uint32),
-        ('SubPartSize', c_uint32),
-    ]
-
-
-class SUBPART_DIR_HEADER(Structure):
-    _pack_ = 1
-    _fields_ = [
-        ('HeaderMarker', ARRAY(c_char, 4)),
-        ('NumOfEntries', c_uint32),
-        ('HeaderVersion', c_uint8),
-        ('EntryVersion', c_uint8),
-        ('HeaderLength', c_uint8),
-        ('Checksum', c_uint8),
-        ('SubPartName', ARRAY(c_char, 4)),
-    ]
-
-
-class SUBPART_DIR_ENTRY(Structure):
-    _pack_ = 1
-    _fields_ = [
-        ('EntryName', ARRAY(c_char, 12)),
-        ('EntryOffset', c_uint32, 24),
-        ('Reserved1', c_uint32, 8),
-        ('EntrySize', c_uint32),
-        ('Reserved2', c_uint32),
-    ]
-
-
-class SPI_DESCRIPTOR(Structure):
-    DESC_SIGNATURE = 0x0FF0A55A
-    FLASH_REGIONS = {
-        "descriptor": 0x0,
-        "bios": 0x4,
-        "txe": 0x8,
-        "pdr": 0x10,
-        "dev_expansion": 0x14,
-    }
-    _pack_ = 1
-    _fields_ = [
-        ('Reserved', ARRAY(c_char, 16)),
-        ('FlValSig', c_uint32),
-        ('FlMap0', c_uint32),
-        ('FlMap1', c_uint32),
-        ('FlMap2', c_uint32),
-        ('Remaining', ARRAY(c_char, 0x1000 - 0x20)),
-    ]
-
-
-class BIOS_ENTRY(Structure):
-    _pack_ = 1
-    _fields_ = [
-        ('Name', ARRAY(c_char, 4)),
-        ('Offset', c_uint32),
-        ('Length', c_uint32),
-        ('Reserved', c_uint32),
-    ]
-
-
-class COMPONENT:
-    TYPE_BIOS = 0
-    TYPE_IFWI = 1
-    TYPE_BP = 2
-    TYPE_BPDT = 3
-    TYPE_PART = 4
-    TYPE_FILE = 5
-
-    def __init__(self, Name, Type, Offset, Length):
-        self.Name = Name
-        self.Type = Type
-        self.Offset = Offset
-        self.Length = Length
-        self.Child = []
-
-    def AddChild(self, Child):
-        self.Child.append(Child)
-
-
-class FlashMapDesc(Structure):
-    _pack_ = 1
-    _fields_ = [
-        ('sig', ARRAY(c_char, 4)),
-        ('flags', c_uint32),
-        ('offset', c_uint32),
-        ('size', c_uint32),
-    ]
-
-
-class FlashMap(Structure):
-    FLASH_MAP_SIGNATURE = 'FLMP'
-    FLASH_MAP_DESC_FLAGS = {
-        "TOP_SWAP": 0x00000001,
-        "REDUNDANT": 0x00000002,
-        "NON_REDUNDANT": 0x00000004,
-        "NON_VOLATILE": 0x00000008,
-        "COMPRESSED": 0x00000010,
-        "BACKUP": 0x00000040,
-    }
-
-    _pack_ = 1
-    _fields_ = [
-        ('sig',              ARRAY(c_char, 4)),
-        ('version',          c_uint16),
-        ('length',           c_uint16),
-        ('attributes',       c_uint8),
-        ('reserved',         ARRAY(c_char, 3)),
-        ('romsize',          c_uint32),
-        ]
+sys.dont_write_bytecode = True
+from   IfwiUtility import *
 
 
 class CDATA_BLOB_HEADER(Structure):
@@ -211,154 +25,11 @@ class CDATA_BLOB_HEADER(Structure):
     ]
 
 
-def Bytes2Val(Bytes):
-    return reduce(lambda x, y: (x << 8) | y, Bytes[::-1])
-
-
 def PrintByteArray (Array, Indent=0, Offset=0):
     DataArray = bytearray(Array)
     for Idx in range(0, len(DataArray), 16):
         HexStr = ' '.join('%02X' % Val for Val in DataArray[Idx:Idx + 16])
         print '{:s}{:04x}: {:s}'.format(Indent * ' ', Offset + Idx, HexStr)
-
-
-class CIfwiParser:
-    def __init__(self):
-        return
-
-    def IsIfwiImage (self, BiosBins):
-        spi_desc = SPI_DESCRIPTOR.from_buffer(BiosBins)
-        return spi_desc.FlValSig == spi_desc.DESC_SIGNATURE
-
-
-    def LocateComponent (self, Root, Path):
-        Nodes = Path.split('/')
-        if len(Nodes) < 1 or Root.Name != Nodes[0]:
-            return None
-        if len(Nodes) == 1:
-            return Root
-        for Comp in Root.Child:
-            Comp = self.LocateComponent(Comp, '/'.join(Nodes[1:]))
-            if Comp:
-                break
-        return Comp
-
-
-    def FindIfwiRegion (self, SpiDescriptor, RgnName):
-        Frba = ((SpiDescriptor.FlMap0 >> 16) & 0xFF) << 4
-        FlReg = SpiDescriptor.FLASH_REGIONS[RgnName] + Frba
-        RgnOff = c_uint32.from_buffer(SpiDescriptor, FlReg)
-        RgnBase = (RgnOff.value & 0x7FFF) << 12
-        RgnLimit = ((RgnOff.value & 0x7FFF0000) >> 4) | 0xFFF
-        if RgnLimit <= RgnBase:
-            return None
-        else:
-            return (RgnBase, RgnLimit)
-
-
-    def FindComponent (self, BiosBins, Name):
-        # Find CFGDATA in SlimBoot image
-        BiosSize = len(BiosBins)
-        BiosBase = 0x100000000 - BiosSize
-
-        FlashMapAddr = c_uint32.from_buffer(BiosBins, BiosSize - 8)
-        FlashMapOff = FlashMapAddr.value - BiosBase
-        FlashMapStr = FlashMap.from_buffer(BiosBins, FlashMapOff)
-
-        CompList = []
-        if FlashMapStr.sig == FlashMap.FLASH_MAP_SIGNATURE:
-            Offset = BiosSize
-            EntryNum = (
-                FlashMapStr.length - sizeof(FlashMap)) // sizeof(FlashMapDesc)
-            for idx in xrange(EntryNum):
-                Desc = FlashMapDesc.from_buffer(
-                    BiosBins,
-                    FlashMapOff + sizeof(FlashMap) + idx * sizeof(FlashMapDesc))
-                Offset -= Desc.size
-                # print '%s @ offset 0x%06X size 0x%x' %  (Desc.sig, offset, Desc.size)
-                if Name == Desc.sig:
-                    CompList.append((Offset, Desc.size))
-
-        return CompList
-
-
-    def BpdtParser (self, BinData, BpdtOffset, Offset):
-        SubPartList = []
-        Idx = BpdtOffset + Offset
-        BpdtHdr = BPDT_HEADER.from_buffer(
-            bytearray(BinData[Idx:Idx + sizeof(BPDT_HEADER)]), 0)
-        Idx += sizeof(BpdtHdr)
-
-        SBpdt = None
-        for Desc in xrange(BpdtHdr.DescCnt):
-            BpdtEntry = BPDT_ENTRY.from_buffer(
-                bytearray(BinData[Idx:Idx + sizeof(BPDT_ENTRY)]), 0)
-            Idx += sizeof(BpdtEntry)
-            DirList = []
-            if 'BpdtSbpdt' == str(BpdtEntry.Type):
-                SBpdt = BpdtEntry
-
-            if BpdtEntry.SubPartSize > sizeof(SUBPART_DIR_HEADER):
-                PartIdx = BpdtOffset + BpdtEntry.SubPartOffset
-                SubPartDirHdr = SUBPART_DIR_HEADER.from_buffer(
-                    bytearray(BinData[PartIdx:PartIdx + sizeof(
-                        SUBPART_DIR_HEADER)]), 0)
-                PartIdx += sizeof(SubPartDirHdr)
-                if '$CPD' == SubPartDirHdr.HeaderMarker:
-                    for Dir in xrange(SubPartDirHdr.NumOfEntries):
-                        PartDir = SUBPART_DIR_ENTRY.from_buffer(
-                            bytearray(BinData[PartIdx:PartIdx + sizeof(
-                                SUBPART_DIR_ENTRY)]), 0)
-                        PartIdx += sizeof(PartDir)
-                        DirList.append(PartDir)
-
-            SubPartList.append((BpdtEntry, DirList))
-
-        return SubPartList, SBpdt
-
-
-    def ParseIfwiBinary(self, ImgData):
-        if len(ImgData) < 0x1000:
-            return None
-
-        SpiDescriptor = SPI_DESCRIPTOR.from_buffer(ImgData, 0)
-        if SpiDescriptor.FlValSig != SpiDescriptor.DESC_SIGNATURE:
-            return None
-
-        IfwiComp = COMPONENT('IFWI', COMPONENT.TYPE_IFWI, 0, len(ImgData))
-        BiosStart, BiosLimit = self.FindIfwiRegion(SpiDescriptor, 'bios')
-        BpOffset = [BiosStart, (BiosStart + BiosLimit + 1) / 2]
-        for Idx, Offset in enumerate(BpOffset):
-            BpComp = COMPONENT('BP%d' % Idx, COMPONENT.TYPE_BP, Offset,
-                               (BiosLimit - BiosStart + 1) / 2)
-            SubPartOffset = 0
-            while True:
-                Bpdt, SBpdtEntry = self.BpdtParser(ImgData, Offset, SubPartOffset)
-                BpdtPrefix = '' if SubPartOffset == 0 else 'S'
-                BpdtSize = SBpdtEntry.SubPartOffset if SBpdtEntry else BpComp.Length - SubPartOffset
-                BpdtComp = COMPONENT('%sBPDT' % BpdtPrefix, COMPONENT.TYPE_BPDT,
-                                     Offset + SubPartOffset, BpdtSize)
-                SortedBpdt = sorted(Bpdt, key=lambda x: x[0].SubPartOffset)
-                for Part, DirList in SortedBpdt:
-                    if not Part.SubPartSize:
-                        continue
-                    PartComp = COMPONENT(
-                        str(Part.Type), COMPONENT.TYPE_PART,
-                        Offset + Part.SubPartOffset, Part.SubPartSize)
-                    SortedDir = sorted(DirList, key=lambda x: x.EntryOffset)
-                    for Dir in SortedDir:
-                        FileComp = COMPONENT(Dir.EntryName, COMPONENT.TYPE_FILE,
-                                             PartComp.Offset + Dir.EntryOffset,
-                                             Dir.EntrySize)
-                        PartComp.AddChild(FileComp)
-                    BpdtComp.AddChild(PartComp)
-                BpComp.AddChild(BpdtComp)
-                if SBpdtEntry:
-                    SubPartOffset = SBpdtEntry.SubPartOffset
-                else:
-                    break
-            IfwiComp.AddChild(BpComp)
-        return IfwiComp
 
 
 class CRsaSign:
@@ -987,7 +658,7 @@ def CmdExtract(Args):
         print ("Config data (Tag=0x%X) was not found!" % TagNo)
 
 def CmdReplace(Args):
-    IfwiParser = CIfwiParser ()
+    IfwiParser = IFWI_PARSER ()
 
     CfgFile = Args.cfg_in_file
     if not os.path.exists(CfgFile):
@@ -1027,28 +698,21 @@ def CmdReplace(Args):
     CompList = []
     StartOff = 0
     EndOff   = 0
-    if IfwiParser.IsIfwiImage(BiosBins):
+    CfgName  = 'CNFG'
+    if IfwiParser.is_ifwi_image(BiosBins):
         #Check if it has BPDT
         SpiDesc = SPI_DESCRIPTOR.from_buffer(BiosBins, 0)
-        Comp = IfwiParser.FindIfwiRegion(SpiDesc, RegionName)
+        Comp = IfwiParser.find_ifwi_region(SpiDesc, RegionName)
         if len(Comp) < 1:
             raise Exception("Cannot not find CFGDATA in SPI flash region '%s' !" % RegionName)
-
-        StartOff = Comp[0]
-        EndOff   = Comp[1]
-        if Bytes2Val(BiosBins[StartOff:StartOff + 4]) == 0x000055AA:
-            # BPDT layout
-            CompList = []
-            Ifwi  = IfwiParser.ParseIfwiBinary(BiosBins)
-            for Idx in range(2):
-                Cfgd  = IfwiParser.LocateComponent(Ifwi, 'IFWI/BP%d/BPDT/BpdtIbb/CFGD' % Idx)
-                if not Cfgd:
-                    continue
-                CompList.append((Cfgd.Offset, Cfgd.Length))
+        CfgName = 'CFGD'
 
     if not CompList:
         if RegionName == 'bios':
-            CompList = IfwiParser.FindComponent(BiosBins, 'CNFG')
+            Ifwi = IfwiParser.parse_ifwi_binary (BiosBins)
+            cfgs = IfwiParser.find_components(Ifwi, CfgName)
+            for cfgd in cfgs:
+                CompList.append((cfgd.offset, cfgd.length))
         else:
             # For PDR region, always assume CFGDATA starts from offset 0
             CfgBlobHeader = CCfgData.CDATA_BLOB_HEADER.from_buffer(BiosBins[StartOff:])
