@@ -1,0 +1,531 @@
+## @ ifwi_utility.py
+#
+# copyright (c) 2019, intel corporation. all rights reserved.<BR>
+# SPDX-license-identifier: BSD-2-clause-patent
+#
+##
+import sys
+import os
+import argparse
+from   ctypes import Structure, c_char, c_uint32, c_uint8, c_uint64, c_uint16, sizeof, ARRAY
+
+sys.dont_write_bytecode = True
+from   CommonUtility import *
+
+class BPDT_ENTRY_TYPE(Structure):
+    _pack_ = 1
+    _fields_ = [('data', c_uint16)]
+
+    BPDT_PART_VAL = {
+        "BpdtOemSmip"       : 0,
+        "BpdtCseRbe"        : 1,
+        "BpdtCseBup"        : 2,
+        "BpdtUcode"         : 3,
+        "BpdtIbb"           : 4,
+        "BpdtSbpdt"         : 5,
+        "BpdtObb"           : 6,
+        "BpdtCseMain"       : 7,
+        "BpdtIsh"           : 8,
+        "BpdtCseIdlm"       : 9,
+        "BpdtIfpOverride"   : 10,
+        "BpdtDebugTokens"   : 11,
+        "BpdtUfsPhyConfig"  : 12,
+        "BpdtUfsGppLunId"   : 13,
+        "BpdtPmc"           : 14,
+        "BpdtIunit"         : 15,
+        "BpdtNvmConfig"     : 16,
+        "BpdtUepType"       : 17,
+        "BpdtUfsRateType"   : 18,
+        "BpdtInvalidType"   : 19,
+    }
+
+    BPDT_PART_NAME = {v: k for k, v in BPDT_PART_VAL.items()}
+
+    def __init__(self, val=0):
+        self.set_value(val)
+
+    def __str__(self):
+        if self.value < 0 or self.value >= self.BPDT_PART_VAL['BpdtInvalidType']:
+            str = "BpdtInvalidType"
+        else:
+            str = self.BPDT_PART_NAME[self.value]
+        return str
+
+    def __int__(self):
+        return self.get_value()
+
+    def set_value(self, val):
+        self.data = val
+
+    def get_value(self):
+        return self.data
+
+    value = property(get_value, set_value)
+
+
+class BPDT_INFO():
+    def __init__(self, name, offset, bpdt_offset, primary):
+        self.name        = name
+        self.primary     = primary
+        self.offset      = offset
+        self.bpdt_offset = bpdt_offset
+
+
+class BPDT_HEADER(Structure):
+    _pack_   = 1
+    _fields_ = [
+        ('signature',    c_uint32),
+        ('desc_cnt',     c_uint16),
+        ('version',      c_uint16),
+        ('xor_sum',      c_uint32),
+        ('ifwi_ver',     c_uint32),
+        ('reserved',     ARRAY(c_uint8, 8))
+    ]
+
+
+class BPDT_ENTRY(Structure):
+    _pack_   = 1
+    _fields_ = [
+        ('type',            BPDT_ENTRY_TYPE),
+        ('flags',           c_uint16),
+        ('sub_part_offset', c_uint32),
+        ('sub_part_size',   c_uint32),
+    ]
+
+
+class SUBPART_DIR_HEADER(Structure):
+    _pack_ = 1
+    _fields_ = [
+        ('header_marker',   ARRAY(c_char, 4)),
+        ('num_of_entries',  c_uint32),
+        ('header_version',  c_uint8),
+        ('entry_version',   c_uint8),
+        ('header_length',   c_uint8),
+        ('checksum',        c_uint8),
+        ('sub_part_name',   ARRAY(c_char, 4)),
+    ]
+
+
+class SUBPART_DIR_ENTRY(Structure):
+    _pack_ = 1
+    _fields_ = [
+        ('entry_name',     ARRAY(c_char, 12)),
+        ('entry_offset',   c_uint32, 24),
+        ('reserved1',      c_uint32, 8),
+        ('entry_size',     c_uint32),
+        ('reserved2',      c_uint32),
+    ]
+
+class BIOS_ENTRY(Structure):
+    _pack_ = 1
+    _fields_ = [
+        ('name',           ARRAY(c_char, 4)),
+        ('offset',         c_uint32),
+        ('length',         c_uint32),
+        ('reserved',       c_uint32),
+    ]
+
+class SPI_DESCRIPTOR(Structure):
+    DESC_SIGNATURE = 0x0FF0A55A
+    FLASH_REGIONS  = {
+        "descriptor"       : 0x00,
+        "bios"             : 0x04,
+        "txe"              : 0x08,
+        "gbe"              : 0x0c,
+        "pdr"              : 0x10,
+        "dev_expansion"    : 0x14,
+    }
+    _pack_ = 1
+    _fields_ = [
+        ('reserved',       ARRAY(c_char, 16)),
+        ('fl_val_sig',     c_uint32),
+        ('fl_map0',        c_uint32),
+        ('fl_map1',        c_uint32),
+        ('fl_map2',        c_uint32),
+        ('remaining',      ARRAY(c_char, 0x1000 - 0x20)),
+    ]
+
+
+class COMPONENT:
+    COMP_TYPE = {
+        "IFWI" : 0,
+        "RGN"  : 1,
+        "BP"   : 2,
+        "BPDT" : 3,
+        "PART" : 4,
+        "FILE" : 5,
+    }
+
+    def __init__(self, name, comp_type, offset, length):
+        self.name   = name
+        self.type   = comp_type
+        self.offset = offset
+        self.length = length
+        self.child  = []
+
+    def add_child(self, child):
+        self.child.append(child)
+
+
+class FLASH_MAP_DESC(Structure):
+    _pack_   = 1
+    _fields_ = [
+        ('sig',     ARRAY(c_char, 4)),
+        ('flags',   c_uint32),
+        ('offset',  c_uint32),
+        ('size',    c_uint32),
+    ]
+
+
+class FLASH_MAP(Structure):
+    FLASH_MAP_SIGNATURE  = b'FLMP'
+    FLASH_MAP_DESC_FLAGS = {
+        "TOP_SWAP"     : 0x00000001,
+        "REDUNDANT"    : 0x00000002,
+        "NON_REDUNDANT": 0x00000004,
+        "NON_VOLATILE" : 0x00000008,
+        "COMPRESSED"   : 0x00000010,
+        "BACKUP"       : 0x00000040,
+    }
+    FLASH_MAP_REGION = {
+        0x01:  "TS0",
+        0x41:  "TS1",
+        0x02:  "RD0",
+        0x42:  "RD1",
+        0x04:  "NRD",
+        0x08:  "NVS",
+    }
+
+    _pack_ = 1
+    _fields_ = [
+        ('sig',          ARRAY(c_char, 4)),
+        ('version',      c_uint16),
+        ('length',       c_uint16),
+        ('attributes',   c_uint8),
+        ('reserved',     ARRAY(c_char, 3)),
+        ('romsize',      c_uint32),
+        ]
+
+
+class IFWI_PARSER:
+    def __init__(self):
+        return
+
+    def is_ifwi_image(self, bios_bins):
+        spi_desc = SPI_DESCRIPTOR.from_buffer(bios_bins)
+        return spi_desc.fl_val_sig == spi_desc.DESC_SIGNATURE
+
+    def locate_components(self, root, path):
+        result = []
+        nodes  = path.split('/')
+        if len(nodes) < 1 or root.name != nodes[0]:
+            return []
+        if len(nodes) == 1:
+            return [root]
+        for comp in root.child:
+            ret = self.locate_components(comp, '/'.join(nodes[1:]))
+            if len(ret) > 0:
+                result.extend(ret)
+        return result
+
+    def locate_component(self, root, path):
+        result = self.locate_components(root, path)
+        if len(result) > 0:
+            return result[0]
+        else:
+            return None
+
+    def find_components(self, root, name, comp_type = COMPONENT.COMP_TYPE['FILE']):
+        result = []
+        if root.type == comp_type and root.name == name:
+            return [root]
+        for comp in root.child:
+            ret = self.find_components(comp, name, comp_type)
+            if len(ret) > 0:
+                result.extend(ret)
+        return result
+
+    def print_tree(self, root, level=0):
+        if root is None:
+            return
+        print ("%-24s [O:0x%08X  L:0x%08X]" % ('  ' * level + root.name,
+                root.offset, root.length))
+        for comp in root.child:
+            level += 1
+            self.print_tree(comp, level)
+            level -= 1
+
+        bp = self.locate_component (root, 'IFWI/BIOS/BP0')
+        if bp:
+            print ("\nBPDT Space Information:")
+            for idx in range(2):
+                bp = self.locate_component (root, 'IFWI/BIOS/BP%d' % idx)
+                sbpdt = bp.child[1]
+                print ("  BP%d Free Space: 0x%05X" % (idx,  bp.length - ((sbpdt.offset + sbpdt.length) - bp.offset)))
+
+
+    def find_ifwi_region (self, spi_descriptor, rgn_name):
+        frba      = ((spi_descriptor.fl_map0 >> 16) & 0xFF) << 4
+        fl_reg    = spi_descriptor.FLASH_REGIONS[rgn_name] + frba
+        rgn_off   = c_uint32.from_buffer(spi_descriptor, fl_reg)
+        rgn_base  = (rgn_off.value & 0x7FFF) << 12
+        rgn_limit = ((rgn_off.value & 0x7FFF0000) >> 4) | 0xFFF
+        if rgn_limit <= rgn_base:
+            return None, None
+        else:
+            return (rgn_base, rgn_limit)
+
+
+    def replace_component (self, ifwi_bin, comp_bin, path):
+
+        ifwi = self.parse_ifwi_binary (ifwi_bin)
+        if not ifwi:
+            print ("Not a valid ifwi image!")
+            return -2
+
+        ifwi_comps = ifwi_parser.locate_components (ifwi, path)
+        if len(ifwi_comps) == 0:
+            print ("Cannot find path '%s' in ifwi image!" % path)
+            return -4
+
+        for ifwi_comp in ifwi_comps:
+            gap = len(comp_bin) - ifwi_comp.length
+            if gap > 0:
+                print ("Component image file is too big (0x%x vs 0x%x)!" % (ifwi_comp.length, len(comp_bin)))
+                return -5
+            elif gap < 0:
+                gap = -gap
+                print ("Padding 0x%x bytes at the end to fill the region '%s'" % (gap, ifwi_comp.name))
+                comp_bin.extend ('\xff' * gap)
+
+            ifwi_bin[ifwi_comp.offset:ifwi_comp.offset + ifwi_comp.length] = \
+                comp_bin[0:ifwi_comp.length]
+
+        return 0
+
+
+
+    def bpdt_parser (self, bin_data, bpdt_offset, offset):
+        sub_part_list = []
+        idx = bpdt_offset + offset
+        bpdt_hdr = BPDT_HEADER.from_buffer(bytearray(bin_data[idx:idx + sizeof(BPDT_HEADER)]))
+        idx += sizeof(bpdt_hdr)
+
+        sbpdt = None
+        for desc in range(bpdt_hdr.desc_cnt):
+            bpdt_entry = BPDT_ENTRY.from_buffer(bytearray(bin_data[idx:idx + sizeof(BPDT_ENTRY)]))
+            idx += sizeof(bpdt_entry)
+            dir_list = []
+            if 'BpdtSbpdt' == str(bpdt_entry.type):
+                sbpdt = bpdt_entry
+
+            if bpdt_entry.sub_part_size > sizeof(SUBPART_DIR_HEADER):
+                part_idx = bpdt_offset + bpdt_entry.sub_part_offset
+                sub_part_dir_hdr = SUBPART_DIR_HEADER.from_buffer(
+                    bytearray(bin_data[part_idx:part_idx + sizeof(
+                        SUBPART_DIR_HEADER)]), 0)
+                part_idx += sizeof(sub_part_dir_hdr)
+                if b'$CPD' == sub_part_dir_hdr.header_marker:
+                    for dir in range(sub_part_dir_hdr.num_of_entries):
+                        part_dir = SUBPART_DIR_ENTRY.from_buffer(
+                            bytearray(bin_data[part_idx:part_idx + sizeof(
+                                SUBPART_DIR_ENTRY)]), 0)
+                        part_idx += sizeof(part_dir)
+                        dir_list.append(part_dir)
+
+            sub_part_list.append((bpdt_entry, dir_list))
+
+        return sub_part_list, sbpdt
+
+    def parse_bios_bpdt (self, img_data):
+        offset = 0
+        bios_hdr = BIOS_ENTRY.from_buffer(img_data, offset)
+        if bios_hdr.name != "BIOS":
+            return None
+
+        bios_comp = COMPONENT(bios_hdr.name, COMPONENT.COMP_TYPE['RGN'], 0, len(img_data))
+        offset += sizeof(bios_hdr)
+        entry_num = bios_hdr.offset
+        for idx in range(entry_num):
+            part_entry = BIOS_ENTRY.from_buffer(img_data, offset)
+            part_comp = COMPONENT(part_entry.name, COMPONENT.COMP_TYPE['PART'],
+                                 part_entry.offset, part_entry.length)
+            bios_comp.add_child(part_comp)
+            sub_part_dir_hdr = SUBPART_DIR_HEADER.from_buffer(img_data,
+                                                           part_entry.offset)
+            if b'$CPD' == sub_part_dir_hdr.header_marker:
+                for dir in range(sub_part_dir_hdr.num_of_entries):
+                    part_dir = SUBPART_DIR_ENTRY.from_buffer(
+                        img_data, part_entry.offset + sizeof(SUBPART_DIR_HEADER) +
+                        sizeof(SUBPART_DIR_ENTRY) * dir)
+                    dir_comp = COMPONENT(part_dir.entry_name, COMPONENT.COMP_TYPE['FILE'],
+                                        part_entry.offset + part_dir.entry_offset,
+                                        part_dir.entry_size)
+                    part_comp.add_child(dir_comp)
+            offset += sizeof(part_entry)
+
+        return bios_comp
+
+
+    def parse_bios_region (self, img_data, base_off = 0):
+        offset = bytes_to_value(img_data[-8:-4]) - (0x100000000 - len(img_data))
+        if offset <0 or offset >= len(img_data) - 0x10:
+            return None
+
+        fla_map_off = offset
+        if bytes_to_value(img_data[fla_map_off:fla_map_off+4]) != 0x504d4c46:
+            return None
+
+        bios_comp  = COMPONENT('BIOS', COMPONENT.COMP_TYPE['RGN'], base_off, len(img_data))
+        curr_part  = -1
+        fla_map_str = FLASH_MAP.from_buffer (img_data, fla_map_off)
+        entry_num  = (fla_map_str.length - sizeof(FLASH_MAP)) // sizeof(FLASH_MAP_DESC)
+        for idx in range (entry_num):
+            idx   = entry_num - 1 - idx
+            desc  = FLASH_MAP_DESC.from_buffer (img_data, fla_map_off + sizeof(FLASH_MAP) + idx * sizeof(FLASH_MAP_DESC))
+            file_comp = COMPONENT(desc.sig.decode(), COMPONENT.COMP_TYPE['FILE'], desc.offset + base_off, desc.size)
+            if curr_part != desc.flags & 0x4F:
+                curr_part = desc.flags & 0x4F
+                part_comp = COMPONENT('%s' % (FLASH_MAP.FLASH_MAP_REGION[curr_part]), COMPONENT.COMP_TYPE['PART'], desc.offset + base_off, desc.size)
+                bios_comp.add_child (part_comp)
+            else:
+                part_comp.length += desc.size
+
+            part_comp.add_child(file_comp)
+
+        return bios_comp
+
+
+    def parse_ifwi_binary(self, img_data):
+        if len(img_data) < 0x1000:
+            return None
+
+        ifwi_comp = COMPONENT('IFWI', COMPONENT.COMP_TYPE['IFWI'], 0, len(img_data))
+        bios_comp = self.parse_bios_bpdt (img_data)
+        if bios_comp is not None:
+            ifwi_comp.add_child (bios_comp)
+            return ifwi_comp
+
+        spi_descriptor = SPI_DESCRIPTOR.from_buffer(img_data)
+        if spi_descriptor.fl_val_sig != spi_descriptor.DESC_SIGNATURE:
+            # no SPI descriptor, try to check the flash map
+            bios_comp = self.parse_bios_region (img_data, 0)
+            ifwi_comp.add_child (bios_comp)
+            return ifwi_comp
+
+        # It is a full IFWI image
+        bios_comp = None
+        ifwi_comp = COMPONENT('IFWI', COMPONENT.COMP_TYPE['IFWI'], 0, len(img_data))
+        rgn_dict  = sorted(SPI_DESCRIPTOR.FLASH_REGIONS, key=SPI_DESCRIPTOR.FLASH_REGIONS.get)
+        for rgn in rgn_dict:
+            rgn_start, rgn_limit = self.find_ifwi_region(spi_descriptor, rgn)
+            if rgn_start is None:
+                continue
+            rgn_comp = COMPONENT(rgn.upper(), COMPONENT.COMP_TYPE['RGN'], rgn_start, rgn_limit - rgn_start + 1)
+            ifwi_comp.add_child (rgn_comp)
+            if rgn == 'bios':
+                bios_comp = rgn_comp
+        if bios_comp is None:
+            return None
+
+        # Sort region by offset
+        ifwi_comp.child.sort (key=lambda x: x.offset)
+
+        bios_start = bios_comp.offset
+        bios_limit = bios_comp.offset + bios_comp.length - 1
+        if not (img_data[bios_start] == 0xAA and img_data[bios_start + 1] == 0x55):
+            # normal layout
+            tmp_comp = self.parse_bios_region (img_data[bios_start:bios_limit+1], bios_start)
+            bios_comp.child = tmp_comp.child
+            return ifwi_comp
+
+        # It is BPDT format
+        bp_offset = [bios_start, (bios_start + bios_limit + 1) // 2]
+        for idx, offset in enumerate(bp_offset):
+            bp_comp = COMPONENT('BP%d' % idx, COMPONENT.COMP_TYPE['BP'], offset,
+                               (bios_limit - bios_start + 1) // 2)
+            sub_part_offset = 0
+            while True:
+                bpdt, sbpdt_entry = self.bpdt_parser(img_data, offset, sub_part_offset)
+                bpdt_prefix = '' if sub_part_offset == 0 else 'S'
+                bpdt_size = sbpdt_entry.sub_part_offset if sbpdt_entry else bpdt_comp.child[-1].length
+                bpdt_comp = COMPONENT('%sBPDT' % bpdt_prefix, COMPONENT.COMP_TYPE['BPDT'],
+                                     offset + sub_part_offset, bpdt_size)
+                sorted_bpdt = sorted(bpdt, key=lambda x: x[0].sub_part_offset)
+                for part, dir_list in sorted_bpdt:
+                    if not part.sub_part_size:
+                        continue
+                    part_comp = COMPONENT(
+                        str(part.type), COMPONENT.COMP_TYPE['PART'],
+                        offset + part.sub_part_offset, part.sub_part_size)
+                    sorted_dir = sorted(dir_list, key=lambda x: x.entry_offset)
+                    for dir in sorted_dir:
+                        file_comp = COMPONENT(dir.entry_name.decode(), COMPONENT.COMP_TYPE['FILE'],
+                                             part_comp.offset + dir.entry_offset,
+                                             dir.entry_size)
+                        part_comp.add_child(file_comp)
+                    bpdt_comp.add_child(part_comp)
+                bp_comp.add_child(bpdt_comp)
+                if sbpdt_entry:
+                    sub_part_offset = sbpdt_entry.sub_part_offset
+                else:
+                    break
+            bios_comp.add_child(bp_comp)
+        return ifwi_comp
+
+
+if __name__ == '__main__':
+    parser     = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(title='commands')
+
+    parser_view     = subparsers.add_parser('view',  help='print IFWI componet layout')
+    parser_view.set_defaults(which='view')
+    parser_view.add_argument('-i', '--input-image', dest='ifwi_image', type=str,
+                    required=True, help='Specify input IFWI image file path')
+
+
+    parser_replace  = subparsers.add_parser('replace',  help='replace componet in IFWI')
+    parser_replace.set_defaults(which='replace')
+    parser_replace.add_argument('-f', '--component-image', dest='comp_image', type=str,
+                    default = '', help='Specify component image file')
+    parser_replace.add_argument('-i', '--input-image', dest='ifwi_image', type=str,
+                    required=True, help='Specify input IFWI image file path')
+    parser_replace.add_argument('-o', '--output-image', dest='output_image', type=str,
+                    default = '',  help='Specify output IFWI image file path')
+    parser_replace.add_argument('-p', '--path', dest='replace_path', type=str,
+                    default = '',  help='Specify replace path in IFWI image flashmap')
+
+    args = parser.parse_args()
+
+    ifwi = None
+    ifwi_parser = IFWI_PARSER ()
+    ifwi_bin = bytearray (get_file_data (args.ifwi_image))
+
+    ret  = -1
+    show = False
+    if args.which == 'view':
+        show = True
+    elif args.which == 'replace':
+        if args.replace_path and not args.comp_image:
+            parser_replace.error('Component image file is required when path is specified!')
+
+        if not args.replace_path:
+            show = True
+        else:
+            comp_bin = bytearray (get_file_data (args.comp_image))
+            ret = ifwi_parser.replace_component (ifwi_bin, comp_bin, args.replace_path)
+            if ret == 0:
+                out_image = args.output_image if args.output_image else args.ifwi_image
+                gen_file_from_object (out_image, ifwi_bin)
+                print ("Components @ %s was replaced successfully!" % args.replace_path)
+
+    if show:
+        ifwi = ifwi_parser.parse_ifwi_binary (ifwi_bin)
+        if ifwi:
+            ifwi_parser.print_tree (ifwi)
+            ret = 0
+
+    if ret != 0:
+        raise Exception ('Execution failed for %s !' % sys.argv[0])
+
+    sys.exit(ret)
