@@ -233,7 +233,7 @@ class CONTAINER ():
 		if auth_type_str is not None:
 			self.header.auth_type = CONTAINER.get_auth_type_val (auth_type_str)
 			auth_size = CONTAINER.get_auth_size (self.header.auth_type, True)
-			self.header.auth_data = bytearray('\xff' * auth_size)
+			self.header.auth_data = b'\xff' * auth_size
 
 	def get_header_size (self):
 		length = sizeof (self.header)
@@ -276,7 +276,7 @@ class CONTAINER ():
 		else:
 			header.data_size   = 0
 		auth_type = self.get_auth_type_str (header.auth_type)
-		basename = header.signature
+		basename = header.signature.decode()
 		hdr_file = os.path.join(self.out_dir, basename + '.hdr')
 		hdr_data = bytearray (header)
 		for component in header.comp_entry:
@@ -295,19 +295,19 @@ class CONTAINER ():
 		for component in header.comp_entry:
 			data.extend (component)
 			data.extend (component.hash_data)
-		padding = '\xff' *  get_padding_length (len(data))
+		padding = b'\xff' *  get_padding_length (len(data))
 		data.extend(padding + header.auth_data)
 		for component in header.comp_entry:
 			offset = component.offset + header.data_offset
-			data.extend ('\xff' * (offset - len(data)))
+			data.extend (b'\xff' * (offset - len(data)))
 			comp_data = bytearray(component.data)
-			padding = '\xff' * get_padding_length (len(comp_data))
+			padding = b'\xff' * get_padding_length (len(comp_data))
 			comp_data.extend (padding + component.auth_data)
 			if len(comp_data) > component.size:
 				raise Exception ("Component '%s' needs space 0x%X, but region size is 0x%X !" % (component.name, len(comp_data), component.size))
 			data.extend (comp_data)
 		offset = header.data_offset + header.data_size
-		data.extend ('\xff' * (offset - len(data)))
+		data.extend (b'\xff' * (offset - len(data)))
 		return data
 
 	def locate_component (self, comp_name):
@@ -341,7 +341,7 @@ class CONTAINER ():
 			container_file = container_sig + '.bin'
 		key_path = os.path.join(self.key_dir, key_file)
 
-		self.init (container_sig, alignment)
+		self.init (container_sig.encode(), alignment)
 		self.set_header_auth_info (auth_type, key_path)
 
 		for name, file, compress_alg, auth_type, key_file, region_size in layout[1:]:
@@ -350,13 +350,13 @@ class CONTAINER ():
 			if auth_type == '':
 				auth_type = 'NONE'
 			component = COMPONENT_ENTRY ()
-			component.name      = name
+			component.name      = name.encode()
 			component.alignment = self.header.alignment.bit_length() - 1
 			component.auth_type = self.get_auth_type_val (auth_type)
 			if file:
 				in_file = os.path.join(self.inp_dir, file)
 			else:
-				in_file = os.path.join(self.out_dir, component.name + '.bin')
+				in_file = os.path.join(self.out_dir, component.name.decode() + '.bin')
 				gen_file_with_size (in_file, 0x10)
 			lz_file = compress (in_file, compress_alg, self.out_dir, self.tool_dir)
 			component.data = bytearray(get_file_data (lz_file))
@@ -409,9 +409,6 @@ class CONTAINER ():
 		component.data = bytearray(data)
 		component.auth_data = bytearray(auth_data)
 		if component.hash_data != bytearray(hash_data):
-			print len(component.hash_data), len(hash_data)
-			print self.hex_str(component.hash_data)
-			print self.hex_str(hash_data)
 			raise Exception ('Compoent hash does not match the one stored in container header !')
 
 		#self.adjust_header ()
@@ -444,7 +441,7 @@ class CONTAINER ():
 				key_file      = 'TestSigningPrivateKey.pem' if auth_type_str.startswith('RSA') else ''
 				lz_header = LZ_HEADER.from_buffer(component.data)
 				alg = LZ_HEADER._compress_alg[lz_header.signature]
-				comp = [component.name, component.name + '.bin', alg,  auth_type_str,  key_file]
+				comp = [component.name.decode(), component.name.decode() + '.bin', alg,  auth_type_str,  key_file]
 				layout.append(tuple(["'%s'" % x for x in comp] + ['0x%x' % component.size]))
 			layout_file = os.path.join(self.out_dir, self.header.signature + '.txt')
 			fo = open (layout_file, 'w')
@@ -462,10 +459,10 @@ class CONTAINER ():
 			fo.close()
 
 		for component in self.header.comp_entry:
-			if (component.name == name) or (name == ''):
-				basename = os.path.join(self.out_dir, '%s' % component.name)
+			if (component.name.decode() == name) or (name == ''):
+				basename = os.path.join(self.out_dir, '%s' % component.name.decode())
 				sig_file = basename + '.rgn'
-				sig_data = component.data + '\xff' * get_padding_length (len(component.data)) + component.auth_data
+				sig_data = component.data + b'\xff' * get_padding_length (len(component.data)) + component.auth_data
 				gen_file_from_object (sig_file, sig_data)
 
 				bin_file = basename + '.bin'
@@ -484,7 +481,7 @@ def gen_container_bin (container_list, out_dir, inp_dir, key_dir = '.', tool_dir
 		container = CONTAINER ()
 		container.set_dir_path (out_dir, inp_dir, key_dir, tool_dir)
 		out_file = container.create (each)
-		print "Container '%s' was created successfully at:  \n  %s" % (container.header.signature, out_file)
+		print ("Container '%s' was created successfully at:  \n  %s" % (container.header.signature.decode(), out_file))
 
 def create_container (args):
 	def_inp_dir = os.path.dirname (args.layout)
@@ -522,7 +519,7 @@ def sign_component (args):
 	data = bytearray(get_file_data (lz_file))
 	hash_data, auth_data = CONTAINER.calculate_auth_data (lz_file, auth_dict[args.auth], args.key_file, args.out_dir)
 	sign_file = os.path.join (args.out_dir, args.sign_file)
-	data.extend ('\xff' * get_padding_length(len(data)))
+	data.extend (b'\xff' * get_padding_length(len(data)))
 	data.extend (auth_data)
 	gen_file_from_object (sign_file, data)
 	print ("Component file was signed successfully at:\n  %s" % sign_file)

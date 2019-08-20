@@ -42,16 +42,16 @@ def rebuild_basetools ():
 		genffs_exe_path = os.path.join(sblsource, 'BaseTools', 'Bin', 'Win32', 'GenFfs.exe')
 		genffs_exist = os.path.exists(genffs_exe_path)
 		if not genffs_exist:
-			print "Could not find pre-built BaseTools binaries, try to rebuild BaseTools ..."
+			print ("Could not find pre-built BaseTools binaries, try to rebuild BaseTools ...")
 			ret = run_process (['BaseTools\\toolsetup.bat', 'forcerebuild'])
 
 	if ret:
-		print "Build BaseTools failed, please check required build environment and utilities !"
+		print ("Build BaseTools failed, please check required build environment and utilities !")
 		sys.exit(1)
 
 		genffs_exist = os.path.exists(genffs_exe_path)
 		if not genffs_exist:
-				print "Build python executables failed !"
+				print("Build python executables failed !")
 				sys.exit(1)
 
 
@@ -86,7 +86,7 @@ def prep_env ():
 				os.environ[toolchainprefix] = os.path.join(os.environ[vs_tool], '..//..//')
 				break
 		if not toolchain:
-			print "Could not find supported Visual Studio version !"
+			print("Could not find supported Visual Studio version !")
 			sys.exit(1)
 		if 'NASM_PREFIX' not in os.environ:
 			os.environ['NASM_PREFIX'] = "C:\\Nasm\\"
@@ -95,7 +95,7 @@ def prep_env ():
 		if 'IASL_PREFIX' not in os.environ:
 			os.environ['IASL_PREFIX'] = "C:\\ASL\\"
 	else:
-		print "Unsupported operating system !"
+		print("Unsupported operating system !")
 		sys.exit(1)
 
 	check_for_openssl()
@@ -219,7 +219,7 @@ class BaseBoard(object):
 
 		# OS Loader FD/FV sizes
 		self.OS_LOADER_FD_SIZE     = 0x00040000
-		self.OS_LOADER_FD_NUMBLK   = self.OS_LOADER_FD_SIZE / self.FLASH_BLOCK_SIZE
+		self.OS_LOADER_FD_NUMBLK   = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
 		self.PLD_HEAP_SIZE         = 0x02000000
 		self.PLD_STACK_SIZE        = 0x00010000
@@ -248,7 +248,7 @@ class BaseBoard(object):
 		self._CFGDATA_INT_FILE     = []
 		self._CFGDATA_EXT_FILE     = []
 
-		for key, value in kwargs.items():
+		for key, value in list(kwargs.items()):
 			setattr(self, '%s' % key, value)
 
 
@@ -330,9 +330,9 @@ class Build(object):
 				if len(u_code_images) > 0:
 					offset, size = u_code_images.pop(0)
 					fit_entry.set_values(base + offset, 0, 0x100, 0x1, 0)
-					print('  Patching entry %d with 0x%08X - uCode' % (i, fit_entry.address))
+					print ('  Patching entry %d with 0x%08X - uCode' % (i, fit_entry.address))
 				else:
-					print('  Nullifying unused uCode patch entry %d' % i)
+					print ('  Nullifying unused uCode patch entry %d' % i)
 					fit_entry.type      = 0x7f
 
 			if len(u_code_images) > 0:
@@ -342,7 +342,7 @@ class Build(object):
 			# ACM
 			fit_entry = FitEntry.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
 			fit_entry.set_values(self._board.ACM_BASE, 0, 0x100, 0x2, 0)
-			print('  Patching entry %d with 0x%08X:0x%08X - ACM' % (num_fit_entries, fit_entry.address, fit_entry.size))
+			print ('  Patching entry %d with 0x%08X:0x%08X - ACM' % (num_fit_entries, fit_entry.address, fit_entry.size))
 			num_fit_entries     += 1
 
 			# BIOS Module (IBB segment 0): from FIT table end to 4GB
@@ -355,7 +355,7 @@ class Build(object):
 			module_size =  (fit_address.value - addr) >> 4
 			fit_entry = FitEntry.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
 			fit_entry.set_values(addr, module_size, 0x100, 0x7, 0)
-			print('  Patching entry %d with 0x%08X:0x%08X - BIOS Module(Stage1A base to FIT table start)' % (num_fit_entries, fit_entry.address, fit_entry.size))
+			print ('  Patching entry %d with 0x%08X:0x%08X - BIOS Module(Stage1A base to FIT table start)' % (num_fit_entries, fit_entry.address, fit_entry.size))
 			num_fit_entries     += 1
 
 			# BIOS Module (IBB segment 2): full Stage1B
@@ -363,21 +363,21 @@ class Build(object):
 			module_size = self._board.STAGE1B_SIZE >> 4
 			fit_entry = FitEntry.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
 			fit_entry.set_values(addr, module_size, 0x100, 0x7, 0)
-			print('  Patching entry %d with 0x%08X:0x%08X - BIOS Module(Stage1B)' % (num_fit_entries, fit_entry.address, fit_entry.size))
+			print ('  Patching entry %d with 0x%08X:0x%08X - BIOS Module(Stage1B)' % (num_fit_entries, fit_entry.address, fit_entry.size))
 			num_fit_entries     += 1
 
 			# KM
 			addr = self._board.ACM_BASE + self._board.ACM_SIZE - (self._board.KM_SIZE + self._board.BPM_SIZE)
 			fit_entry = FitEntry.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
 			fit_entry.set_values(addr, self._board.KM_SIZE, 0x100, 0xb, 0)
-			print('  Patching entry %d with 0x%08X:0x%08X - KM' % (num_fit_entries, fit_entry.address, fit_entry.size))
+			print ('  Patching entry %d with 0x%08X:0x%08X - KM' % (num_fit_entries, fit_entry.address, fit_entry.size))
 			num_fit_entries     += 1
 
 			# BPM
 			addr = self._board.ACM_BASE + self._board.ACM_SIZE - self._board.BPM_SIZE
 			fit_entry = FitEntry.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
 			fit_entry.set_values(addr, self._board.BPM_SIZE, 0x100, 0xc, 0)
-			print('  Patching entry %d with 0x%08X:0x%08X - BPM' % (num_fit_entries, fit_entry.address, fit_entry.size))
+			print ('  Patching entry %d with 0x%08X:0x%08X - BPM' % (num_fit_entries, fit_entry.address, fit_entry.size))
 			num_fit_entries     += 1
 
 			# Patch the entry 'FIT table end to 4GB' since FIT table size is known now
@@ -388,7 +388,7 @@ class Build(object):
 			module_size = (0x100000000 - addr) >> 4
 			fit_entry = FitEntry.from_buffer(rom, fit_offset + (patch_entry+1)*16)
 			fit_entry.set_values(addr, module_size, 0x100, 0x7, 0)
-			print('  Patching entry %d with 0x%08X:0x%08X - BIOS Module(FIT table end to 4GB)' % (patch_entry, fit_entry.address, fit_entry.size))
+			print ('  Patching entry %d with 0x%08X:0x%08X - BIOS Module(FIT table end to 4GB)' % (patch_entry, fit_entry.address, fit_entry.size))
 
 		else :
 			addr = fit_address.value + (num_fit_entries + 1) * 16
@@ -398,7 +398,7 @@ class Build(object):
 		if spaceleft > 0:
 				raise Exception('  Insufficient FIT entries in FIT table, need %d more entries !' %  ((spaceleft + 15) // 16))
 
-		print('  FIT %d entries added' % num_fit_entries)
+		print ('  FIT %d entries added' % num_fit_entries)
 
 		# Update FIT checksum
 		print('  Updating Checksum')
@@ -444,7 +444,7 @@ class Build(object):
 		if not self._board.HAVE_VERIFIED_BOOT:
 			return
 
-		print 'Updating HashStore %s' % os.path.basename (img_file)
+		print('Updating HashStore %s' % os.path.basename (img_file))
 
 		fi = open(img_file,'rb')
 		stage1_bins = bytearray(fi.read())
@@ -470,7 +470,7 @@ class Build(object):
 				continue
 
 			if hash_file == 'PLDDYN':
-				hash_data = bytearray('\x00' * hash_len)
+				hash_data = bytearray(b'\x00' * hash_len)
 			else:
 				src_path = os.path.join(self._fv_dir, hash_file)
 				if not os.path.exists(src_path):
@@ -488,7 +488,7 @@ class Build(object):
 			# update valid bit
 			hash_store.Valid |= 1 << hash_idx
 
-			print ' Update HashStore entry %d at offset 0x%08X:0x%X with file %s' % (hash_idx, start, hash_len, hash_file)
+			print(' Update HashStore entry %d at offset 0x%08X:0x%X with file %s' % (hash_idx, start, hash_len, hash_file))
 
 		fo = open(img_file,'r+b')
 		fo.seek(hs_offset)
@@ -564,7 +564,7 @@ class Build(object):
 				rgn['base'] = image_base + rgn['offset']
 
 		except ValueError:
-			print "Warning: No '%s' component in image list !" % master_name
+			print("Warning: No '%s' component in image list !" % master_name)
 
 		#print_component_list (comp_list)
 
@@ -640,31 +640,41 @@ class Build(object):
 
 
 	def create_dsc_inc_file (self, file):
+		lines = []
 
-		with open(file, 'w') as fh:
-			fh.write('%s\n' % AUTO_GEN_DSC_HDR)
-			fh.write('# Platform specific macro definitions\n')
-			fh.write('[Defines]\n')
+		lines.append('%s\n' % AUTO_GEN_DSC_HDR)
+		lines.append('# Platform specific macro definitions\n')
+		lines.append('[Defines]\n')
 
-			for attr in sorted(vars(self._board)):
-				if attr.startswith('_'):
-					continue
-				value = getattr(self._board, attr)
-				if type(value) is not str:
-					if value == 0 or value == 1:
-						value = '0x%x' % value
-					else:
-						value = '0x%08X' % value
-				fh.write('  DEFINE %-24s = %s\n'   % (attr, value))
+		for attr in sorted(vars(self._board)):
+			if attr.startswith('_'):
+				continue
+			value = getattr(self._board, attr)
+			if type(value) is not str:
+				if value == 0 or value == 1:
+					value = '0x%x' % value
+				else:
+					value = '0x%08X' % value
+			lines.append('  DEFINE %-24s = %s\n'   % (attr, value))
 
-			if getattr(self._board, "GetDscLibrarys", None):
-				libsdict = self._board.GetDscLibrarys()
-				for arch in libsdict:
-					fh.write('\n# Platform specific libraries\n')
-					fh.write('[LibraryClasses.%s]\n' % arch)
-					for lib in libsdict[arch]:
-						fh.write('  %s\n' % lib)
-					fh.write('\n')
+		if getattr(self._board, "GetDscLibrarys", None):
+			libsdict = self._board.GetDscLibrarys()
+			for arch in libsdict:
+				lines.append('\n# Platform specific libraries\n')
+				lines.append('[LibraryClasses.%s]\n' % arch)
+				for lib in libsdict[arch]:
+					lines.append('  %s\n' % lib)
+				lines.append('\n')
+
+		update = True
+		text = ''.join(lines)
+		if os.path.exists(file):
+				old_text = get_file_data (file, 'r')
+				if text == old_text:
+						update = False
+
+		if update:
+				open (file, 'w').write(text)
 
 
 	def create_platform_vars (self):
@@ -738,7 +748,7 @@ class Build(object):
 		if self._board.REDUNDANT_SIZE == 0:
 			return
 
-		print "Generating redundant components"
+		print("Generating redundant components")
 
 		shutil.copy(
 			os.path.join(self._fv_dir, 'STAGE1A.fd'),
@@ -770,7 +780,7 @@ class Build(object):
 
 		if self._board.STAGE1B_XIP:
 			# Rebase stage1b.fd
-			print "Rebasing STAGE1B_B"
+			print("Rebasing STAGE1B_B")
 			rebase_stage (stage1b_path, stage1b_b_path, -self._board.REDUNDANT_SIZE)
 
 			# rebase FSPM in Stage1B and update stage1B hash in key store
@@ -798,7 +808,7 @@ class Build(object):
 
 		for idx, (comp_name, file_list)  in enumerate(self._img_list):
 			if (self._board.ENABLE_FWU == 0) and (comp_name == 'Stitch_FWU.bin') :
-				print "No firmware update payload specified, skip firmware update."
+				print("No firmware update payload specified, skip firmware update.")
 				continue
 			out_file = comp_name
 			out_path = os.path.join(self._fv_dir, out_file)
@@ -837,7 +847,7 @@ class Build(object):
 				fi.close()
 
 			if comp_name == self._image:
-				bins = '\xff' * (self._board.SLIMBOOTLOADER_SIZE - len(bins)) + bins
+				bins = b'\xff' * (self._board.SLIMBOOTLOADER_SIZE - len(bins)) + bins
 
 			fo = open(out_path,'wb')
 			fo.write(bins)
@@ -884,7 +894,7 @@ class Build(object):
 
 	def pre_build(self):
 		# Check if BaseTools has been compiled
-                rebuild_basetools ()
+		rebuild_basetools ()
 
 		# Update search path
 		sbl_dir = os.environ['SBL_SOURCE']
@@ -1003,7 +1013,6 @@ class Build(object):
 		platform_dsc_path = os.path.join(sbl_dir, 'BootloaderCorePkg', 'Platform.dsc')
 		self.create_dsc_inc_file (platform_dsc_path)
 
-
 		# rebase FSP accordingly
 		if self._board.HAVE_FSP_BIN:
 			rebase_fsp(fsp_path, self._fv_dir, self._board.FSP_T_BASE, self._board.FSP_M_BASE, self._board.FSP_S_BASE)
@@ -1031,7 +1040,7 @@ class Build(object):
 		if x: raise Exception ('Failed to build reset vector !')
 
 	def build(self):
-		print "Build [%s] ..." % self._board.BOARD_NAME
+		print("Build [%s] ..." % self._board.BOARD_NAME)
 
 		# Run pre-build
 		self.pre_build()
@@ -1053,7 +1062,7 @@ class Build(object):
 		# Run post-build
 		self.post_build()
 
-		print "Done [%s] !" % self._board.BOARD_NAME
+		print("Done [%s] !" % self._board.BOARD_NAME)
 
 
 	def post_build(self):
@@ -1077,13 +1086,13 @@ class Build(object):
 
 		# create variable binary
 		if self._board.VARIABLE_SIZE:
-			varhdr = VariableRegionHeader.from_buffer(bytearray('\xFF' * sizeof(VariableRegionHeader)))
-			varhdr.Signature = 'VARS'
+			varhdr = VariableRegionHeader.from_buffer(bytearray(b'\xFF' * sizeof(VariableRegionHeader)))
+			varhdr.Signature = b'VARS'
 			varhdr.Size      = self._board.VARIABLE_SIZE >> 1
 			varhdr.State     = 0xFE
 			varfile = open (os.path.join(self._fv_dir, "VARIABLE.bin"), "wb")
 			varfile.write(varhdr)
-			varfile.write('\xFF' * (self._board.VARIABLE_SIZE - sizeof(varhdr)));
+			varfile.write(b'\xFF' * (self._board.VARIABLE_SIZE - sizeof(varhdr)));
 			varfile.close()
 
 
@@ -1119,7 +1128,7 @@ class Build(object):
 
 		# create SPI IAS image if required
 		if self._board.SPI_IAS1_SIZE > 0 or self._board.SPI_IAS2_SIZE > 0:
-			for idx in xrange (1, 3):
+			for idx in range (1, 3):
 				file_path  = os.path.join('Platform', self._board.BOARD_PKG_NAME, 'SpiIasBin', 'iasimage%d.bin' % idx)
 				file_space = getattr(self._board, 'SPI_IAS%d_SIZE' % idx)
 				gen_ias_file (file_path, file_space, os.path.join(self._fv_dir, "SPI_IAS%d.bin" % idx))
@@ -1145,7 +1154,7 @@ class Build(object):
 		if self._board.HAVE_FLASH_MAP and len(self._comp_list) > 0:
 			print_addr = False if getattr(self._board, "GetFlashMapList", None) else True
 			flash_map_text = decode_flash_map (os.path.join(self._fv_dir, 'FlashMap.bin'), print_addr)
-			print '%s' % flash_map_text
+			print('%s' % flash_map_text)
 			fd = open (os.path.join(self._fv_dir, 'FlashMap.txt'), 'w')
 			fd.write (flash_map_text)
 			fd.close ()
@@ -1216,12 +1225,12 @@ def main():
 
 		for dir in dirs:
 			dirpath = os.path.join (workspace, dir)
-			print 'Removing %s' % dirpath
+			print('Removing %s' % dirpath)
 			shutil.rmtree(dirpath, ignore_errors=True)
 
 		for file in files:
 			if os.path.exists(file):
-				print 'Removing %s' % file
+				print('Removing %s' % file)
 				os.remove(file)
 
 		if os.path.exists(os.path.join (sbl_dir, '.git')):

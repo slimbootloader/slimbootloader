@@ -17,6 +17,7 @@ import shutil
 import subprocess
 import struct
 import hashlib
+from   functools import reduce
 from   ctypes import *
 
 class LZ_HEADER(Structure):
@@ -56,7 +57,7 @@ def gen_file_from_object (file, object):
 	open (file, 'wb').write(object)
 
 def gen_file_with_size (file, size):
-	open (file, 'wb').write('\xFF' * size);
+	open (file, 'wb').write(b'\xFF' * size);
 
 def get_openssl_path ():
 	if os.name == 'nt':
@@ -79,7 +80,7 @@ def run_process (arg_list, print_cmd = False, capture_out = False):
 	output = ''
 	try:
 		if capture_out:
-			output = subprocess.check_output(arg_list)
+			output = subprocess.check_output(arg_list).decode()
 		else:
 			result = subprocess.call (arg_list)
 	except Exception as exc:
@@ -138,7 +139,7 @@ def gen_pub_key (priv_key, pub_key = None):
 		modulus = modulus[2:]
 	mod = bytearray.fromhex(modulus)
 	exp = bytearray.fromhex('{:08x}'.format(exponent))
-	key = "$IPP" + mod + exp
+	key = b"$IPP" + mod + exp
 	if pub_key:
 		gen_file_from_object (pub_key, key)
 
@@ -211,7 +212,7 @@ def compress (in_file, alg, out_path = '', tool_dir = ''):
 
 	compress_data = get_file_data(out_file)
 	lz_hdr = LZ_HEADER ()
-	lz_hdr.signature = sig
+	lz_hdr.signature = sig.encode()
 	lz_hdr.compressed_len = len(compress_data)
 	lz_hdr.length = os.path.getsize(in_file)
 	data = bytearray ()

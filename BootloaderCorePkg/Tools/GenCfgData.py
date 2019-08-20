@@ -34,9 +34,9 @@ def Bytes2Str (Bytes):
     return '{ %s }' % (', '.join('0x%02X' % i for i in Bytes))
 
 def Str2Bytes (Value, Blen):
-    Result = bytearray(Value[1:-1], 'utf8')  # Excluding quotes
+    Result = bytearray(Value[1:-1], 'utf-8')  # Excluding quotes
     if len(Result) < Blen:
-        Result.extend('\x00' * (Blen - len(Result)))
+        Result.extend(b'\x00' * (Blen - len(Result)))
     return Result
 
 def Val2Bytes (Value, Blen):
@@ -391,7 +391,7 @@ EndList
             except ValueError as e:
                 raise Exception ("Bytes in '%s' must be in range 0~255 !" % ValueStr)
         if len(Result) < Length:
-            Result.extend('\x00' * (Length - len(Result)))
+            Result.extend(b'\x00' * (Length - len(Result)))
         elif len(Result) > Length:
             raise Exception ("Value '%s' is too big to fit into %d bytes !" % (ValueStr, Length))
 
@@ -412,7 +412,7 @@ EndList
                     pass
                 else:
                     if Each[0] in ['"', "'"]:
-                        Result.extend(list(bytearray(Each[1:-1])))
+                        Result.extend(list(bytearray(Each[1:-1], 'utf-8')))
                     elif ':' in Each:
                         Match    = re.match("(.+):(\d+)b", Each)
                         if Match is None:
@@ -444,7 +444,7 @@ EndList
             return
 
         DataList = self.ValueToList(ConfigDict['value'], ConfigDict['length'])
-        Unit = int(Struct[4:]) / 8
+        Unit = int(Struct[4:]) // 8
         if int(ConfigDict['length']) != Unit * len(DataList):
             raise Exception("Array size is not proper for '%s' !" % ConfigDict['cname'])
 
@@ -1140,7 +1140,7 @@ EndList
             Type = Struct
             if Struct in ['UINT8','UINT16','UINT32','UINT64']:
                 IsArray = True
-                Unit = int(Type[4:]) / 8
+                Unit = int(Type[4:]) // 8
                 Length = Length / Unit
             else:
                 IsArray = False
@@ -1515,7 +1515,7 @@ EndList
         for Item in self._CfgItemList:
             if Item['offset'] > Offset:
                 Gap = Item['offset'] - Offset
-                BinDat.extend('\x00' * Gap)
+                BinDat.extend(b'\x00' * Gap)
             BinDat.extend(self.ValueToByteArray(Item['value'], Item['length']))
             Offset = Item['offset'] + Item['length']
         return BinDat
@@ -1768,7 +1768,7 @@ EndList
                         if BitsRemain:
                             BsfFd.write("        Skip %d bits\n" % BitsRemain)
                             BitsGap -= BitsRemain
-                        BytesRemain = BitsGap / 8
+                        BytesRemain = BitsGap // 8
                         if BytesRemain:
                             BsfFd.write("        Skip %d bytes\n" % BytesRemain)
                     NextOffset = Item['offset'] + Item['length']

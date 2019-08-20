@@ -29,7 +29,7 @@ def PrintByteArray (Array, Indent=0, Offset=0):
     DataArray = bytearray(Array)
     for Idx in range(0, len(DataArray), 16):
         HexStr = ' '.join('%02X' % Val for Val in DataArray[Idx:Idx + 16])
-        print '{:s}{:04x}: {:s}'.format(Indent * ' ', Offset + Idx, HexStr)
+        print ('{:s}{:04x}: {:s}'.format(Indent * ' ', Offset + Idx, HexStr))
 
 
 class CRsaSign:
@@ -45,7 +45,7 @@ class CRsaSign:
         try:
             Output = subprocess.check_output(
                 [self._OpensslPath, 'version'],
-                stderr=subprocess.STDOUT)
+                stderr=subprocess.STDOUT).decode()
         except:
             Output = ''
         if not Output.startswith('OpenSSL'):
@@ -61,7 +61,7 @@ class CRsaSign:
         Output = subprocess.check_output(
             [self._OpensslPath, 'rsa', '-pubout', '-text', '-noout', '-in',
              '%s' % PrivateKey],
-            stderr=subprocess.STDOUT)
+            stderr=subprocess.STDOUT).decode()
 
         #
         # Extract the modulus
@@ -84,7 +84,7 @@ class CRsaSign:
         if (len(Mod) != 256):
             raise Exception('Unsupported modulus length!')
 
-        Key = "$IPP" + Mod + Exp
+        Key = b"$IPP" + Mod + Exp
 
         return Key
 
@@ -223,7 +223,7 @@ class CCfgData:
             Extra = ', '.join (ExtraInfo)
             if Extra:
                 Extra = '(%s)' % Extra
-            print("  TAG %03X: MSK=%08X LEN=%04X OFF=%04X %s" %
+            print ("  TAG %03X: MSK=%08X LEN=%04X OFF=%04X %s" %
                   (CfgTagHdr.Tag, CfgItem[1], CfgTagHdr.Length * 4, Offset, Extra))
             if Flag & CCfgData.DUMP_FLAG_VERBOSE:
                 if PrintData:
@@ -233,17 +233,17 @@ class CCfgData:
                         Offset    = 0
                         DataOffset = CCfgData.CDATA_ITEM_ARRAY.ItemValidByteOffset.offset
                         BitMaskLen = ArrayInfo.HeaderSize - DataOffset
-                        print "    ARRAY HEADER:"
+                        print("    ARRAY HEADER:")
                         PrintByteArray (CfgData[2][:DataOffset], Indent = 5,  Offset=Offset)
                         Offset  +=  DataOffset
-                        print "    ARRAY MASK:"
+                        print("    ARRAY MASK:")
                         PrintByteArray (CfgData[2][DataOffset:DataOffset+BitMaskLen], Indent = 5,  Offset=Offset)
                         Offset  +=  BitMaskLen
                         if ArrayInfo.ItemCount > 0:
-                            print "    ARRAY DATA:"
+                            print("    ARRAY DATA:")
                             ArrayData  = CfgData[2][ArrayInfo.HeaderSize:]
                             DataOffset = 0
-                            for Idx in xrange (ArrayInfo.ItemCount):
+                            for Idx in range (ArrayInfo.ItemCount):
                                 PrintByteArray (ArrayData[DataOffset:DataOffset + ArrayInfo.ItemSize], Offset=Offset, Indent = 5)
                                 DataOffset += ArrayInfo.ItemSize
                                 Offset     += ArrayInfo.ItemSize
@@ -252,20 +252,20 @@ class CCfgData:
 
     def Dump (self, Flag, Input = True):
         if Flag & CCfgData.DUMP_FLAG_INPUT:
-            print "%sPUT:" % ("IN" if Input else "OUT")
-            for CfgFile, (CfgItemList, CfgBlobHeader, IsBuiltIn) in self.CfgDataBase.items():
+            print("%sPUT:" % ("IN" if Input else "OUT"))
+            for CfgFile, (CfgItemList, CfgBlobHeader, IsBuiltIn) in list(self.CfgDataBase.items()):
                 if CfgFile in self.CfgDataPid:
                     Pid = self.CfgDataPid[CfgFile]
                 else:
                     Pid = 0
                 BuiltIn = '*' if IsBuiltIn else ''
-                print "PID=%04X LEN=%04X (%s%s)" % (Pid, CfgBlobHeader.UsedLength, CfgFile, BuiltIn)
+                print("PID=%04X LEN=%04X (%s%s)" % (Pid, CfgBlobHeader.UsedLength, CfgFile, BuiltIn))
                 self.DumpTags (Flag, CfgItemList)
 
         if Flag & CCfgData.DUMP_FLAG_OUTPUT:
-            print "MERGED:"
+            print("MERGED:")
             self.DumpTags (Flag, self.CfgDataItems)
-        print ''
+        print('')
 
 
     def ProcessCfgArray (self, Header, Data, PidMask, CfgBinFile):
@@ -278,13 +278,13 @@ class CCfgData:
                 "Each config item size must be DWORD aligned in TAG '%03X'!" %
                 Header.Tag)
 
-        if Header.Length != ActualLen / 4:
+        if Header.Length != ActualLen // 4:
             raise Exception(
                 "Invalid array item count/size field in TAG '0x%03X'!" %
                 Header.Tag)
 
         BitMaskLen = ArrayInfo.HeaderSize - CCfgData.CDATA_ITEM_ARRAY.ItemValidByteOffset.offset
-        ByteWidth  = (ArrayInfo.ItemCount + 7) / 8
+        ByteWidth  = (ArrayInfo.ItemCount + 7) // 8
         if ByteWidth < 2:
             ByteWidth = 2
         if BitMaskLen < ByteWidth:
@@ -293,7 +293,8 @@ class CCfgData:
                 % (Header.Tag, ByteWidth))
 
         BitMaskDat = bytearray('1' * ArrayInfo.ItemCount + '0' *
-                     (BitMaskLen * 8 - ArrayInfo.ItemCount))
+                     (BitMaskLen * 8 - ArrayInfo.ItemCount), 'utf-8')
+
         ItemValidByteOffset = ArrayInfo.ItemValidByteOffset
         ItemValidByteMask   = ArrayInfo.ItemValidByteMask
 
@@ -337,41 +338,44 @@ class CCfgData:
             # Check the invliad flag and remove those items
             RemovedItem = 0
             Index = 0
-            while DataOff < len(Data):
+            DataLen = len(Data)
+            while DataOff < DataLen:
                 Remove = False
                 if ArrayInfo.BasePlatformId == 0x80:
                     # It is a base table, remove marker and assemble mask
                     if Data[DataOff + ItemValidByteOffset] & ItemValidByteMask:
                         Data[DataOff + ItemValidByteOffset] = Data[
                             DataOff + ItemValidByteOffset] ^ ItemValidByteMask
-                        BitMaskDat[Index] = '0'
+                        BitMaskDat[Index] = ord('0')
                     self.CfgDataDataArrayDict[ArrayTagKey].append(Data[DataOff:DataOff +
                                                           ArrayInfo.ItemSize])
                 else:
                     if ArrayTagKey in self.CfgDataDataArrayDict:
                         if Data[DataOff:DataOff + ArrayInfo.ItemSize] != self.CfgDataDataArrayDict[ArrayTagKey][Index]:
-                            BitMaskDat[Index] = '0'
+                            BitMaskDat[Index] = ord('0')
                         else:
                             Remove = True
                     if Data[DataOff + ItemValidByteOffset] & ItemValidByteMask:
                         Remove = True
                 if Remove:
-                    del Data[DataOff:DataOff + ArrayInfo.ItemSize]
+                    Data[DataOff:] = Data[DataOff + ArrayInfo.ItemSize:] + b'\x00' * ArrayInfo.ItemSize
+                    DataLen -= ArrayInfo.ItemSize
                     RemovedItem += 1
                 else:
                     DataOff += ArrayInfo.ItemSize
                 Index += 1
 
-            ArrayInfo = CCfgData.CDATA_ITEM_ARRAY.from_buffer(Data, 0)
             ArrayInfo.ItemCount -= RemovedItem
-            Header.Length -= (RemovedItem * ArrayInfo.ItemSize) / 4
+            Header.Length -= (RemovedItem * ArrayInfo.ItemSize) // 4
 
             # Update mask
             BitWidth = BitMaskLen * 8
-            MaskHexStr = '{0:0{w}x}'.format(int(str(BitMaskDat)[::-1], 2), w=BitWidth / 4)
+            MaskHexStr = '{0:0{w}x}'.format(int(BitMaskDat.decode()[::-1], 2), w=BitWidth // 4)
             BinData = bytearray.fromhex(MaskHexStr)[::-1]
             Offset  = CCfgData.CDATA_ITEM_ARRAY.ItemValidByteOffset.offset
             Data[Offset:Offset + BitMaskLen] = BinData
+
+            return DataLen
 
     def Parse (self, CfgBinFile):
 
@@ -383,13 +387,13 @@ class CCfgData:
 
         if self._Debug & CCfgData.DEBUG_FLAG_PARSE:
             MiscStr = ' built-in' if IsBuiltIn else ''
-            print("Parsing%s config binary '%s'" % (MiscStr, CfgBinFile))
+            print ("Parsing%s config binary '%s'" % (MiscStr, CfgBinFile))
 
         with open(CfgBinFile, "rb") as Fin:
             FileData = bytearray(Fin.read())
 
         CfgBlobHeader = CCfgData.CDATA_BLOB_HEADER.from_buffer(FileData)
-        if CfgBlobHeader.Signature != 'CFGD':
+        if CfgBlobHeader.Signature != b'CFGD':
             raise Exception("Invalid config binary file '%s' !" % CfgBinFile)
 
         IsMergedCfg = True if CfgBlobHeader.Attribute & CCfgData.CDATA_BLOB_HEADER.ATTR_MERGED else False
@@ -419,7 +423,7 @@ class CCfgData:
             CfgTagHdr = CCfgData.CDATA_HEADER.from_buffer(FileData, Offset)
             NextOff = Offset + sizeof(CCfgData.CDATA_HEADER)
             CondBin = bytearray()
-            for Idx in xrange(0, CfgTagHdr.ConditionNum):
+            for Idx in range(0, CfgTagHdr.ConditionNum):
                 CondBin.extend(FileData[NextOff:NextOff + sizeof(
                     CCfgData.CDATA_COND)])
                 NextOff += sizeof(CCfgData.CDATA_COND)
@@ -433,14 +437,15 @@ class CCfgData:
             DataCond.Value = 0x00000000
 
             if self._Debug & CCfgData.DEBUG_FLAG_PARSE:
-                print("  TAG %03X: OFF=%04X PIDMSK=%08X LEN=%04X" %
+                print ("  TAG %03X: OFF=%04X PIDMSK=%08X LEN=%04X" %
                       (CfgTagHdr.Tag, Offset, PidMask, CfgDlen))
-
             if (CfgTagHdr.Flags & CCfgData.CDATA_HEADER.FLAG_ITEM_TYPE_MASK) == \
                 CCfgData.CDATA_HEADER.FLAG_ITEM_TYPE_ARRAY:
-                self.ProcessCfgArray(CfgTagHdr, DataBin, PidMask, CfgBinFile)
+                DataLen = self.ProcessCfgArray(CfgTagHdr, DataBin, PidMask, CfgBinFile)
+            else:
+                DataLen = len(DataBin)
 
-            CfgItemList.append([(bytearray(CfgTagHdr), CondBin, DataBin), PidMask, PidMask, IsBuiltIn])
+            CfgItemList.append([(bytearray(CfgTagHdr), CondBin, DataBin[:DataLen]), PidMask, PidMask, IsBuiltIn])
             Offset += CfgDlen
 
         self.CfgDataBase[CfgBinFile] = (CfgItemList, CfgBlobHeader, IsBuiltIn)
@@ -497,7 +502,7 @@ class CCfgData:
         if PlatformId >= 32 and PlatformId != 0xFF:
             raise Exception("Invalid platfrom ID '%d' is specified !" % PlatformId)
 
-        for CfgFile, (CfgItemList, CfgBlobHeader, IsBuiltIn) in self.CfgDataBase.items():
+        for CfgFile, (CfgItemList, CfgBlobHeader, IsBuiltIn) in list(self.CfgDataBase.items()):
             for CfgItem in CfgItemList:
                 if CfgBlobHeader.Attribute & CCfgData.CDATA_BLOB_HEADER.ATTR_MERGED:
                     PidMask = 0
@@ -516,7 +521,7 @@ class CCfgData:
             CfgDataHdr  = CCfgData.CDATA_HEADER.from_buffer(TagHdr)
             if CfgDataHdr.Tag == CCfgData.CDATA_PLATFORM_ID.TAG:
                 if PlatformId >=0:
-                    print "Set platform ID to %d" % PlatformId
+                    print("Set platform ID to %d" % PlatformId)
                     DataCond = CCfgData.CDATA_COND.from_buffer(CondBin)
                     DataCond.Value = 0xFFFFFFFF
                     Pid = CCfgData.CDATA_PLATFORM_ID.from_buffer(DataBin)
@@ -548,7 +553,7 @@ class CCfgData:
                     CfgTagHdr.Tag    = CfgDataHdr.Tag
                     CfgTagHdr.Flags  = CCfgData.CDATA_HEADER.FLAG_ITEM_TYPE_REFER
                     CfgTagHdr.Length = (sizeof(CfgDataRefer) + sizeof(CfgTagHdr) + \
-                                       sizeof(CfgDataCond) * CfgTagHdr.ConditionNum + 3) / 4
+                                       sizeof(CfgDataCond) * CfgTagHdr.ConditionNum + 3) // 4
                     CfgDataCond.Value = PidMask
                     CfgDataRefer.PlatformId = BasePid
                     CfgDataRefer.IsInternal = 1 if IsBuiltIn else 0
@@ -559,7 +564,7 @@ class CCfgData:
                 BinDat.extend (TagHdr + CondBin + DataBin)
 
         CfgdHdr = CCfgData.CDATA_BLOB_HEADER()
-        CfgdHdr.Signature    = 'CFGD'
+        CfgdHdr.Signature    = b'CFGD'
         CfgdHdr.Attribute    = CCfgData.CDATA_BLOB_HEADER.ATTR_MERGED
         CfgdHdr.HeaderLength = sizeof(CfgdHdr)
         CfgdHdr.UsedLength   = len(BinDat) + CfgdHdr.HeaderLength
@@ -613,7 +618,7 @@ def CmdSign(Args):
     Fd.close ()
 
     CfgBlobHeader = CCfgData.CDATA_BLOB_HEADER.from_buffer(FileData)
-    if CfgBlobHeader.Signature != 'CFGD':
+    if CfgBlobHeader.Signature != b'CFGD':
         raise Exception("Invalid config binary file '%s' !" % CfgDataFile)
     CfgBlobHeader.Attribute |= CCfgData.CDATA_BLOB_HEADER.ATTR_SIGNED
 
@@ -636,7 +641,7 @@ def CmdExtract(Args):
     for CfgBinFile in Args.cfg_in_file:
         CfgData.Parse(CfgBinFile)
 
-    for CfgFile, (CfgItemList, CfgBlobHeader, IsBuiltIn) in CfgData.CfgDataBase.items():
+    for CfgFile, (CfgItemList, CfgBlobHeader, IsBuiltIn) in list(CfgData.CfgDataBase.items()):
         for CfgItem in CfgItemList:
             TagHdr, CondBin, DataBin = CfgItem[0]
             CfgTagHdr = CCfgData.CDATA_HEADER.from_buffer(TagHdr)
@@ -674,7 +679,7 @@ def CmdReplace(Args):
     Fh.close()
 
     CfgHdr = CDATA_BLOB_HEADER.from_buffer(CfgBins)
-    if CfgHdr.Signature != 'CFGD':
+    if CfgHdr.Signature != b'CFGD':
         raise Exception("Invalid CFGDATA image file '%s'" % CfgFile)
 
     if not CfgHdr.Attribute & CDATA_BLOB_HEADER.ATTR_MERGED:
@@ -716,7 +721,7 @@ def CmdReplace(Args):
         else:
             # For PDR region, always assume CFGDATA starts from offset 0
             CfgBlobHeader = CCfgData.CDATA_BLOB_HEADER.from_buffer(BiosBins[StartOff:])
-            if CfgBlobHeader.Signature != 'CFGD':
+            if CfgBlobHeader.Signature != b'CFGD':
                 raise Exception("Cannot not find CFGDATA in SPI flash PDR region!")
             if CfgBlobHeader.TotalLength > EndOff - StartOff:
                 raise Exception("Invalid CFGDATA length in PDR region ")
@@ -729,7 +734,7 @@ def CmdReplace(Args):
         if CfgLen > Size:
             raise Exception("CfgData file size 0x%X shall not be greater than CFGDATA region size 0x%X !" % (CfgLen, Size))
 
-        print "Patching CFGDATA region at image offset 0x%X (len: 0x%X)!" % (Offset, Size)
+        print("Patching CFGDATA region at image offset 0x%X (len: 0x%X)!" % (Offset, Size))
         BiosBins[Offset:Offset + CfgLen] = CfgBins
 
     IfwiImgOut = Args.ifwi_out_file
@@ -741,10 +746,10 @@ def CmdReplace(Args):
     Fh.close()
 
     if len(CompList):
-        print "%d CFGDATA region has been patched successfully !" % len(
-            CompList)
+        print("%d CFGDATA region has been patched successfully !" % len(
+            CompList))
     else:
-        print "No CFGDATA region has been patched!"
+        print("No CFGDATA region has been patched!")
 
     return
 

@@ -126,25 +126,25 @@ def GetConfig ():
 def ParseBiosLayout (ImgData):
     Offset = 0
     BiosHdr = BIOS_ENTRY.from_buffer(ImgData, Offset)
-    if BiosHdr.Name != "BIOS":
+    if BiosHdr.Name != b'BIOS':
         return None
 
-    BiosComp = COMPONENT(BiosHdr.Name, COMPONENT.TYPE_IMG, 0, len(ImgData))
+    BiosComp = COMPONENT(BiosHdr.Name.decode(), COMPONENT.TYPE_IMG, 0, len(ImgData))
     Offset += sizeof(BiosHdr)
     EntryNum = BiosHdr.Offset
-    for Idx in xrange(EntryNum):
+    for Idx in range(EntryNum):
         PartEntry = BIOS_ENTRY.from_buffer(ImgData, Offset)
-        PartComp = COMPONENT(PartEntry.Name, COMPONENT.TYPE_DIR,
+        PartComp = COMPONENT(PartEntry.Name.decode(), COMPONENT.TYPE_DIR,
                              PartEntry.Offset, PartEntry.Length)
         BiosComp.AddChild(PartComp)
         SubPartDirHdr = SUBPART_DIR_HEADER.from_buffer(ImgData,
                                                        PartEntry.Offset)
-        if '$CPD' == SubPartDirHdr.HeaderMarker:
-            for Dir in xrange(SubPartDirHdr.NumOfEntries):
+        if b'$CPD' == SubPartDirHdr.HeaderMarker:
+            for Dir in range(SubPartDirHdr.NumOfEntries):
                 PartDir = SUBPART_DIR_ENTRY.from_buffer(
                     ImgData, PartEntry.Offset + sizeof(SUBPART_DIR_HEADER) +
                     sizeof(SUBPART_DIR_ENTRY) * Dir)
-                DirComp = COMPONENT(PartDir.EntryName, COMPONENT.TYPE_FILE,
+                DirComp = COMPONENT(PartDir.EntryName.decode(), COMPONENT.TYPE_FILE,
                                     PartEntry.Offset + PartDir.EntryOffset,
                                     PartDir.EntrySize)
                 PartComp.AddChild(DirComp)
@@ -207,7 +207,6 @@ def PatchIbbFlashMap (IbblFile, IfwiFile, OutputFile = ''):
 
     return 0
 
-
 def ReplaceIbbPartition (BiosImage, IfwiImage, OutputImage, BiosPath, IfwiPath):
     Fd = open(BiosImage, "rb")
     BiosImgData = bytearray(Fd.read())
@@ -256,7 +255,7 @@ def PaddingIasImage (IbblImage):
     FlaMapOff = (Bytes2Val(IbblImgData[-8:-4]) + len(IbblImgData)) & 0xFFFFFFFF
     FlaMapStr = FlashMap.from_buffer (IbblImgData, FlaMapOff)
     EntryNum  = (FlaMapStr.Length - sizeof(FlashMap)) // sizeof(FlashMapDesc)
-    for Idx in xrange (EntryNum):
+    for Idx in range (EntryNum):
         Desc  = FlashMapDesc.from_buffer (IbblImgData, FlaMapOff + sizeof(FlashMap) + Idx * sizeof(FlashMapDesc))
         if Desc.Sig != 'IAS1' :
             continue
@@ -290,14 +289,16 @@ def RunCmd (Cmd, Cwd):
             Shell = False
         Proc = subprocess.Popen(CmdArgs, shell = Shell, cwd=Cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         Out, Err = Proc.communicate()
+        Out = Out.decode()
+        Err = Err.decode()
         Ret = Proc.returncode
     except Exception as e:
         Out, Err = '', e
         Ret = 1
     if Ret:
         sys.stdout.flush()
-        print ('%s\n%s' % (Out, Err))
-        print "Failed to run command:\n  PATH: %s\n   CMD: %s" % (Cwd, Cmd)
+        print('%s\n%s' % (Out, Err))
+        print("Failed to run command:\n  PATH: %s\n   CMD: %s" % (Cwd, Cmd))
         sys.exit(1)
 
 
@@ -318,7 +319,7 @@ def XmlWrite (Tree, File):
     Fp = open (File, "w")
     for Line in Formatted.splitlines():
         if Line.strip():
-            Fp.write ('%s\n' % Line)
+            Fp.write ('%s\n' % (Line.decode() if sys.hexversion >= 0x3000000 else Line))
     Fp.close()
 
 
@@ -395,7 +396,7 @@ def GenFitXml (FitDir, Src, Dst, BtgProfile, SpiQuad):
         Value = 'Yes'
     else:
         Value = 'No'
-    print "Set SPI QUAD mode: %s" % Value
+    print("Set SPI QUAD mode: %s" % Value)
     Node = Tree.find('./FlashSettings/FlashConfiguration/QuadIoReadEnable')
     Node.attrib['value'] = Value
     Node = Tree.find('./FlashSettings/FlashConfiguration/QuadOutReadEnable')
@@ -405,9 +406,9 @@ def GenFitXml (FitDir, Src, Dst, BtgProfile, SpiQuad):
     Node = Tree.find('./PlatformProtection/BootGuardConfiguration/BtGuardProfileConfig')
     Profiles = Node.attrib['value_list'].split(',,')
     if len(Profiles) != 3:
-        print "Expected Boot Guard profile list in XML !"
+        print("Expected Boot Guard profile list in XML !")
         return -1
-    print "Set Boot Guard profile: %s" % BtgProfile
+    print("Set Boot Guard profile: %s" % BtgProfile)
     if BtgProfile == 'legacy':
         Node.attrib['value'] = Profiles[0]
     elif BtgProfile == 'v':
@@ -587,7 +588,7 @@ def Stitch (StitchDir, StitchZip, BtgProfile, SpiQuadMode, FullRdundant = True):
     print ("\nUpdating IBB partition for BP0 in IFWI ...")
     Ret = ReplaceIbbPartition (CfgVar['fitinput'] + '/bios.bin', IfwiFileName,  IfwiFileName, 'BIOS/IBBP', 'ROOT/IFWI/BP0/BPDT/BpdtIbb')
     if Ret:
-        raise Exception ("Failed with error %d !" % ret)
+        raise Exception ("Failed with error %d !" % Ret)
 
     if FullRdundant:
         print ("\nRe-gernerating BIOS.bin for BP1 ...")
@@ -606,7 +607,7 @@ def Stitch (StitchDir, StitchZip, BtgProfile, SpiQuadMode, FullRdundant = True):
 def main():
 
     if len(sys.argv) == 1:
-        print ('%s' % ExtraUsageTxt)
+        print('%s' % ExtraUsageTxt)
 
     Ap = argparse.ArgumentParser()
     Ap.add_argument('-w',
