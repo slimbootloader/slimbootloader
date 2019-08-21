@@ -17,8 +17,18 @@ from ctypes import *
 from subprocess  import check_output
 from functools import reduce
 
-ExtraUsageTxt = """
-This script creates a new Apollo Lake Slim Bootloader IFWI image basing
+sys.dont_write_bytecode = True
+sys.path.append (os.path.join(os.getenv('SBL_SOURCE', ''), 'BootloaderCorePkg' , 'Tools'))
+try:
+    from   IfwiUtility   import *
+except ImportError:
+    err_msg  = "Cannot find IfwiUtility module!\n"
+    err_msg += "Please make sure 'SBL_SOURCE' environment variable is set to open source SBL root folder."
+    raise  ImportError(err_msg)
+
+
+extra_usage_txt = \
+"""This script creates a new Apollo Lake Slim Bootloader IFWI image basing
 on an existing IFWI base image.  Please note, this stitching method will work
 only if Boot Guard in the base image is not enabled, and the silicon is not
 fused with Boot Guard enabled.
@@ -46,784 +56,453 @@ Please follow steps below:
       python StitchLoader.py -i LEAFHILD.X64.0070.R01.1805070352.bin
 
 """
-
 FILE_ALIGN  = 0x1000
 
-class BPDT_ENTRY_TYPE(Structure):
-    Str2Val = {
-        "BpdtOemSmip": 0,
-        "BpdtCseRbe": 1,
-        "BpdtCseBup": 2,
-        "BpdtUcode": 3,
-        "BpdtIbb": 4,
-        "BpdtSbpdt": 5,
-        "BpdtObb": 6,
-        "BpdtCseMain": 7,
-        "BpdtIsh": 8,
-        "BpdtCseIdlm": 9,
-        "BpdtIfpOverride": 10,
-        "BpdtDebugTokens": 11,
-        "BpdtUfsPhyConfig": 12,
-        "BpdtUfsGppLunId": 13,
-        "BpdtPmc": 14,
-        "BpdtIunit": 15,
-        "BpdtNvmConfig": 16,
-        "BpdtUepType": 17,
-        "BpdtUfsRateType": 18,
-        "BpdtInvalidType": 19,
-    }
 
-    Val2Str = {v: k for k, v in list(Str2Val.items())}
+class IFWI_MANIPULATE:
 
-    _fields_ = [('data', c_uint16)]
-
-    def __init__(self, val=0):
-        self.set_value(val)
-
-    def __str__(self):
-        if self.value < 0 or self.value >= self.Str2Val['BpdtInvalidType']:
-            str = "BpdtInvalidType"
+    def add_component (self, root, path, before = '$', file_path = ''):
+        nodes      = path.split('/')
+        parent_path = '/'.join(nodes[:-1])
+        dir_comp    = IFWI_PARSER.locate_component (root, parent_path)
+        if not dir_comp:
+            print ('Cannot find DIR %s !' % '/'.join(nodes[:-1]))
+            return -1
+        if dir_comp.type != COMPONENT.COMP_TYPE['PART']:
+            print ('Can only add FILE type !')
+            return -2
+        index   = None
+        if before == '$':
+            # Add to end
+            index = len(dir_comp.child)
+        elif before == '^':
+            # Add to top
+            index = 0
         else:
-            str = self.Val2Str[self.value]
-        return str
-
-    def __int__(self):
-        return self.get_value()
-
-    def set_value(self, val):
-        self.data = val
-
-    def get_value(self):
-        return self.data
-
-    value = property(get_value, set_value)
-
-
-class BPDT_INFO():
-    def __init__(self, name, offset, bpdt_offset, primary):
-        self.Name = name
-        self.Primary = primary
-        self.Offset = offset
-        self.BpdtOffset = bpdt_offset
-
-
-class BPDT_HEADER(Structure):
-    _fields_ = [
-        ('Signature', c_uint32),
-        ('DescCnt', c_uint16),
-        ('Version', c_uint16),
-        ('XorSum', c_uint32),
-        ('IfwiVer', c_uint32),
-        ('FitVer', ARRAY(c_uint8, 8))
-    ]
-
-
-class BPDT_ENTRY(Structure):
-    _fields_ = [
-        ('Type', BPDT_ENTRY_TYPE),
-        ('Flags', c_uint16),
-        ('SubPartOffset', c_uint32),
-        ('SubPartSize', c_uint32),
-    ]
-
-
-class SUBPART_DIR_HEADER(Structure):
-    _fields_ = [
-        ('HeaderMarker', ARRAY(c_char, 4)),
-        ('NumOfEntries', c_uint32),
-        ('HeaderVersion', c_uint8),
-        ('EntryVersion', c_uint8),
-        ('HeaderLength', c_uint8),
-        ('Checksum', c_uint8),
-        ('SubPartName', ARRAY(c_char, 4)),
-    ]
-
-
-class SUBPART_DIR_ENTRY(Structure):
-    _pack_ = 1
-    _fields_ = [
-        ('EntryName', ARRAY(c_char, 12)),
-        ('EntryOffset', c_uint32, 24),
-        ('Reserved1', c_uint32, 8),
-        ('EntrySize', c_uint32),
-        ('Reserved2', c_uint32),
-    ]
-
-
-class SPI_DESCRIPTOR(Structure):
-    DESC_SIGNATURE = 0x0FF0A55A
-    FLASH_REGIONS = {
-        "descriptor"    : 0x0,
-        "ifwi"          : 0x4,
-        "txe"           : 0x8,
-        "pdr"           : 0x10,
-        "dev_expansion" : 0x14,
-    }
-    _pack_ = 1
-    _fields_ = [
-        ('Reserved', ARRAY(c_char, 16)),
-        ('FlValSig', c_uint32),
-        ('FlMap0', c_uint32),
-        ('FlMap1', c_uint32),
-        ('FlMap2', c_uint32),
-        ('Remaining', ARRAY(c_char, 0x1000 - 0x20)),
-    ]
-
-
-class BIOS_ENTRY(Structure):
-    _pack_ = 1
-    _fields_ = [
-        ('Name', ARRAY(c_char, 4)),
-        ('Offset', c_uint32),
-        ('Length', c_uint32),
-        ('Reserved', c_uint32),
-    ]
-
-
-class COMPONENT:
-    TYPE_IMG  = 0
-    TYPE_RGN  = 1
-    TYPE_BP   = 2
-    TYPE_BPDT = 3
-    TYPE_DIR  = 4
-    TYPE_FILE = 5
-
-    def __init__(self, Name, Type, Offset, Length):
-        self.Name   = Name
-        self.Type   = Type
-        self.Offset = Offset
-        self.Length = Length
-        self.Child  = []
-        self.Data   = None
-        self.Parent = None
-
-    def AddChild(self, Child, Index = -1):
-        Child.Parent = self
-        if Index == -1:
-            self.Child.append (Child)
+            for idx, file in enumerate(dir_comp.child):
+                if before == file.name:
+                    index = idx
+        if index is None:
+            print ('Cannot find FILE %s !' % before)
+            return -3
         else:
-            self.Child.insert (Index, Child)
+            length = os.path.getsize(file_path) if file_path else 0x1000
+            comp = COMPONENT (nodes[-1], COMPONENT.COMP_TYPE['FILE'], 0, length)
+            comp.set_data (file_path)
+            dir_comp.add_child (comp, index)
+            return 0
 
-    def SetData(self, File):
-        if File:
-            Fd =open(File, 'rb')
-            Data = bytearray(Fd.read())
-            Fd.close()
-        else:
-            Data = bytearray(b'\xff' * self.Length)
-        if self.Length > len(Data):
-            self.Data = Data + b'\xff' * (self.Length - len(Data))
-        else:
-            self.Data = Data[:self.Length]
+    def remove_component (self, root, path):
+        nodes       = path.split('/')
+        parent_path = '/'.join(nodes[:-1])
+        dir_comp = IFWI_PARSER.locate_component (root, parent_path)
 
-    def GetData(self):
-        return self.Data
-
-
-class FlashMapDesc(Structure):
-    _pack_ = 1
-    _fields_ = [
-        ('Sig',     ARRAY(c_char, 4)),
-        ('Flags',   c_uint32),
-        ('Offset',  c_uint32),
-        ('Size',    c_uint32),
-        ]
-
-class FlashMap(Structure):
-    FLASH_MAP_DESC_SIGNATURE = 'FLMP'
-
-    FLASH_MAP_ATTRIBUTES = {
-        "PRIMARY_REGION"  : 0x00000000,
-        "BACKUP_REGION"   : 0x00000001,
-    }
-
-    FLASH_MAP_DESC_FLAGS = {
-        "TOP_SWAP"      : 0x00000001,
-        "REDUNDANT"     : 0x00000002,
-        "NON_REDUNDANT" : 0x00000004,
-        "NON_VOLATILE"  : 0x00000008,
-        "COMPRESSED"    : 0x00000010,
-        "BACKUP"        : 0x00000040,
-    }
-
-    _pack_ = 1
-    _fields_ = [
-        ('Sig',              ARRAY(c_char, 4)),
-        ('Version',          c_uint16),
-        ('Length',           c_uint16),
-        ('Attributes',       c_uint8),
-        ('Reserved',         ARRAY(c_char, 3)),
-        ('Romsize',          c_uint32),
-        ]
-
-
-def Bytes2Val(Bytes):
-    return reduce(lambda x, y: (x << 8) | y, Bytes[::-1])
-
-
-def PrintTree(Root, Level=0):
-    print("%-24s [O:0x%06X  L:0x%06X]" % ('  ' * Level + Root.Name,
-            Root.Offset, Root.Length))
-    for Comp in Root.Child:
-        Level += 1
-        PrintTree(Comp, Level)
-        Level -= 1
-
-
-def BpdtParser(BinData, BpdtOffset, Offset):
-    SubPartList = []
-    Idx = BpdtOffset + Offset
-    BpdtHdr = BPDT_HEADER.from_buffer(
-        bytearray(BinData[Idx:Idx + sizeof(BPDT_HEADER)]), 0)
-    Idx += sizeof(BpdtHdr)
-    if BpdtHdr.Signature != 0x55AA:
-        raise Exception ("Invalid BPDT header!")
-
-    SBpdt = None
-    for Desc in range(BpdtHdr.DescCnt):
-        BpdtEntry = BPDT_ENTRY.from_buffer(
-            bytearray(BinData[Idx:Idx + sizeof(BPDT_ENTRY)]), 0)
-        Idx += sizeof(BpdtEntry)
-        DirList = []
-        if 'BpdtSbpdt' == str(BpdtEntry.Type):
-            SBpdt = BpdtEntry
-
-        if BpdtEntry.SubPartSize > sizeof(SUBPART_DIR_HEADER):
-            PartIdx = BpdtOffset + BpdtEntry.SubPartOffset
-            SubPartDirHdr = SUBPART_DIR_HEADER.from_buffer(
-                bytearray(BinData[PartIdx:PartIdx + sizeof(
-                    SUBPART_DIR_HEADER)]), 0)
-            PartIdx += sizeof(SubPartDirHdr)
-            if b'$CPD' == SubPartDirHdr.HeaderMarker:
-                for Dir in range(SubPartDirHdr.NumOfEntries):
-                    PartDir = SUBPART_DIR_ENTRY.from_buffer(
-                        bytearray(BinData[PartIdx:PartIdx + sizeof(
-                            SUBPART_DIR_ENTRY)]), 0)
-                    PartIdx += sizeof(PartDir)
-                    DirList.append(PartDir)
-
-        SubPartList.append((BpdtEntry, DirList))
-
-    return SubPartList, SBpdt
-
-
-def FindSpiRegion (SpiDescriptor, RgnName):
-    Frba = ((SpiDescriptor.FlMap0 >> 16) & 0xFF) << 4
-    FlReg = SpiDescriptor.FLASH_REGIONS[RgnName] + Frba
-    RgnOff = c_uint32.from_buffer(SpiDescriptor, FlReg)
-    RgnBase = (RgnOff.value & 0x7FFF) << 12
-    RgnLimit = ((RgnOff.value & 0x7FFF0000) >> 4) | 0xFFF
-    if RgnLimit <= RgnBase:
-        return (None, None)
-    else:
-        return (RgnBase, RgnLimit)
-
-
-def ParseIfwiRegion (IfwiComp, ImgData):
-    BiosStart, BiosLimit = IfwiComp.Offset, IfwiComp.Offset + IfwiComp.Length - 1
-    BpOffset = [BiosStart, (BiosStart + BiosLimit + 1) // 2]
-    for Idx, Offset in enumerate(BpOffset):
-        BpComp = COMPONENT('BP%d' % Idx, COMPONENT.TYPE_BP, Offset,
-                           (BiosLimit - BiosStart + 1) // 2)
-        SubPartOffset = 0
-        while True:
-            Bpdt, SBpdtEntry = BpdtParser(ImgData, Offset, SubPartOffset)
-            BpdtPrefix = '' if SubPartOffset == 0 else 'S'
-            BpdtSize = SBpdtEntry.SubPartOffset if SBpdtEntry else BpdtComp.Child[-1].Length
-            BpdtComp = COMPONENT('%sBPDT' % BpdtPrefix, COMPONENT.TYPE_BPDT,
-                                 Offset + SubPartOffset, BpdtSize)
-            SortedBpdt = sorted(Bpdt, key=lambda x: x[0].SubPartOffset)
-            for Part, DirList in SortedBpdt:
-                PartComp = COMPONENT(
-                    str(Part.Type), COMPONENT.TYPE_DIR,
-                    Offset + Part.SubPartOffset, Part.SubPartSize)
-                SortedDir = sorted(DirList, key=lambda x: x.EntryOffset)
-                for Dir in SortedDir:
-                    FileComp = COMPONENT(Dir.EntryName.decode(), COMPONENT.TYPE_FILE,
-                                         PartComp.Offset + Dir.EntryOffset,
-                                         Dir.EntrySize)
-                    PartComp.AddChild(FileComp)
-                BpdtComp.AddChild(PartComp)
-            BpComp.AddChild(BpdtComp)
-            if SBpdtEntry:
-                SubPartOffset = SBpdtEntry.SubPartOffset
-            else:
+        if not dir_comp:
+            print ('Cannot find DIR %s !' % '/'.join(nodes[:-1]))
+            return -1
+        if dir_comp.type != COMPONENT.COMP_TYPE['PART']:
+            print ('Can only replace FILE type !')
+            return -2
+        index = None
+        for idx, file in enumerate(dir_comp.child):
+            if file.name == nodes[-1]:
+                index = idx
                 break
-        IfwiComp.AddChild(BpComp)
-    return IfwiComp
+        if index is None:
+            print ('Cannot find FILE %s !' % path)
+            return -3
+        else:
+            del dir_comp.child[index]
+
+        return 0
+
+    def replace_component (self, root, path, file_path):
+        comp = IFWI_PARSER.locate_component (root, path)
+        if not comp:
+            print ('Cannot find FILE %s !' % path)
+            return -1
+        if comp.type != COMPONENT.COMP_TYPE['FILE']:
+            print ('Can only replace FILE type !' % path)
+            return -2
+        comp.length = os.path.getsize(file_path) if file_path else 0x1000
+        if file_path:
+            comp.set_data (file_path)
+        return 0
 
 
-def LocateComponent(Root, Path):
-    Nodes = Path.split('/')
-    if len(Nodes) < 1 or Root.Name != Nodes[0]:
-        return None
-    if len(Nodes) == 1:
-        return Root
-    Comp = None
-    for Comp in Root.Child:
-        Comp = LocateComponent(Comp, '/'.join(Nodes[1:]))
-        if Comp:
-            break
-    return Comp
+    def copy_component (self, root, path, ifwi_data):
+
+        print ("COPY BP0 BPDT to BP1 BPDT ...")
+        # Backup BP0 BPDT and BP1 SBPDT
+        bp1      = IFWI_PARSER.locate_component (root, 'IFWI/BIOS/BP1')
+        bp0bpdt  = IFWI_PARSER.locate_component (root, 'IFWI/BIOS/BP0/BPDT')
+        bp1bpdt  = IFWI_PARSER.locate_component (root, 'IFWI/BIOS/BP1/BPDT')
+        bp1sbpdt = IFWI_PARSER.locate_component (root, 'IFWI/BIOS/BP1/SBPDT')
+        bp0bpdt_data  = bytearray(ifwi_data[bp0bpdt.offset :bp0bpdt.offset  + bp0bpdt.length])
+        bp1sbpdt_data = bytearray(ifwi_data[bp1sbpdt.offset:bp1sbpdt.offset + bp1sbpdt.length])
+
+        # Copy to BP0 BPDT to BP1 BPDT
+        bp1sbpdt_offset = bp1bpdt.offset + bp0bpdt.length
+        ifwi_data[bp1bpdt.offset:bp1sbpdt_offset] = bp0bpdt_data
+
+        # Append original BP1 SBPDT
+        bp1sbpdt_end_offset = bp1sbpdt_offset + bp1sbpdt.length
+        ifwi_data[bp1sbpdt_offset:bp1sbpdt_end_offset] = bp1sbpdt_data
+        padding = bp1.offset + bp1.length - bp1sbpdt_end_offset
+        if padding < 0:
+            print ('Insufficiant space in BP1 partition !')
+            return -1
+
+        ifwi_data[bp1sbpdt_end_offset:bp1sbpdt_end_offset + padding] = b'\xff' * padding
+
+        # Fix Sbpdt length in BP1 BPDT
+        offset  = bp1bpdt.offset
+        bpdt_hdr = BPDT_HEADER.from_buffer(ifwi_data, offset)
+        offset += sizeof(BPDT_HEADER)
+        for idx in range(bpdt_hdr.desc_cnt):
+            bpdt_entry = BPDT_ENTRY.from_buffer(ifwi_data, offset)
+            if "BpdtSbpdt" == str(bpdt_entry.type):
+                bpdt_entry.sub_part_size = bp1sbpdt.length
+            offset   += sizeof(BPDT_ENTRY)
+
+        # Fix Sbpdt headers
+        offset  = bp1sbpdt_offset
+        bpdt_hdr = BPDT_HEADER.from_buffer(ifwi_data, offset)
+        offset += sizeof(BPDT_HEADER)
+        for idx in range(bpdt_hdr.desc_cnt):
+            bpdt_entry = BPDT_ENTRY.from_buffer(ifwi_data, offset)
+            bpdt_entry.sub_part_offset += (bp0bpdt.length - bp1bpdt.length)
+            offset   += sizeof(BPDT_ENTRY)
+
+        print ("Done!")
+
+        return 0
 
 
-def PatchFlashMap (ImageData, PlatformData = 0xffffffff):
-    CompBpdtDict = {
-      b'RSVD' : 'ROOT/IFWI/BP1/SBPDT/BpdtObb/RSVD',
-      b'IAS1' : 'ROOT/IFWI/BP1/SBPDT/BpdtObb/FB',
-      b'EPLD' : 'ROOT/IFWI/BP1/SBPDT/BpdtObb/EPLD',
-      b'UVAR' : 'ROOT/IFWI/BP1/SBPDT/BpdtObb/UVAR',
-      b'PYLD' : 'ROOT/IFWI/BP0/BPDT/BpdtIbb/PLD',
-      b'VARS' : 'ROOT/IFWI/BP0/BPDT/BpdtIbb/VAR',
-      b'MRCD' : 'ROOT/IFWI/BP0/BPDT/BpdtIbb/MRCD',
-      b'CNFG' : 'ROOT/IFWI/BP0/BPDT/BpdtIbb/CFGD',
-      b'FWUP' : 'ROOT/IFWI/BP0/BPDT/BpdtIbb/FWUP',
-      b'SG02' : 'ROOT/IFWI/BP0/BPDT/BpdtIbb/OBB',
-      b'SG1B' : 'ROOT/IFWI/BP0/BPDT/BpdtIbb/IBB',
-      b'SG1A' : 'ROOT/IFWI/BP0/BPDT/BpdtIbb/IBBL',
-      b'_BPM' : 'ROOT/IFWI/BP0/BPDT/BpdtIbb/BPM.met',
-      b'OEMK' : 'ROOT/IFWI/BP0/BPDT/BpdtCseBup/oem.key',
+    def create_dir_data (self, dir, ifwi_data):
+        # Claculate new DIR length and creaet new DIR data
+        support_list = ["BpdtIbb", "BpdtObb"]
+        if dir.name not in support_list:
+            raise Exception ('Only %s are supported !' % ' '.join(support_list))
+
+        adjust    = True
+        offset    = len(dir.child) * sizeof(SUBPART_DIR_ENTRY) + sizeof(SUBPART_DIR_HEADER)
+        sub_dir_hdr = SUBPART_DIR_HEADER.from_buffer(ifwi_data, dir.offset)
+        dir_data   = bytearray(sub_dir_hdr) + b'\xff' * (offset - sizeof(SUBPART_DIR_HEADER))
+
+        for idx, comp in enumerate(dir.child):
+            delta = 0
+            parts = os.path.splitext(comp.name)
+            if len(parts) > 1 and parts[1] in ['.man', '.met']:
+                align = 1
+            elif comp.name in ['IPAD', 'OPAD']:
+                align = 0x40
+            else:
+                align = FILE_ALIGN
+                delta = dir.offset & (FILE_ALIGN - 1)
+            next_offset  = ((offset + delta + align - 1) & ~(align - 1))
+            count = next_offset - offset
+            if adjust:
+                adjust = False
+                count -= delta
+            dir_data.extend(b'\xff' * count)
+            comp_data = comp.get_data()
+            if comp_data:
+                dir_data.extend(comp_data)
+            else:
+                dir_data.extend(ifwi_data[comp.offset : comp.offset + comp.length])
+
+            sub_dir = SUBPART_DIR_ENTRY()
+            sub_dir.entry_name   = comp.name.encode()
+            sub_dir.entry_offset = next_offset - delta
+            sub_dir.entry_size   = comp.length
+            sub_dir.reserved1   = 0
+            sub_dir.reserved2   = 0
+            entry_offset = idx * sizeof(SUBPART_DIR_ENTRY) + sizeof(SUBPART_DIR_HEADER)
+            dir_data[entry_offset:entry_offset+sizeof(SUBPART_DIR_ENTRY)] = bytearray(sub_dir)
+
+            next_offset += comp.length
+            offset = next_offset
+
+        align       = FILE_ALIGN
+        next_offset  = ((offset + align - 1) & ~(align - 1))
+        dir_data.extend(b'\xff' * (next_offset - offset))
+
+        # Update checksum
+        sub_dir_hdr = SUBPART_DIR_HEADER.from_buffer_copy(dir_data)
+        sub_dir_hdr.num_of_entries = len(dir.child)
+        sub_dir_hdr.checksum = 0
+        dir_data[:sizeof(SUBPART_DIR_HEADER)] = bytearray(sub_dir_hdr)
+
+        length    = sub_dir_hdr.num_of_entries * sizeof(SUBPART_DIR_ENTRY) + sizeof(SUBPART_DIR_HEADER)
+        sum_buf    = (c_uint8 * length).from_buffer_copy(dir_data)
+        sub_dir_hdr.checksum = (~sum(sum_buf) + 1) & 0xFF
+        dir_data[:sizeof(SUBPART_DIR_HEADER)] = bytearray(sub_dir_hdr)
+
+        remaining = (dir.offset + len(dir_data))  & (FILE_ALIGN - 1)
+        if remaining:
+            # Not page aligned, add padding
+            dir_data.extend(b'\xff' * (FILE_ALIGN - remaining))
+
+        return dir_data
+
+
+    def refresh_ifwi_for_dir (self, dir, ifwi_data):
+        # Claculate new DIR length and creaet new DIR data
+        dir_data = self.create_dir_data (dir, ifwi_data)
+
+        length  = len (dir_data)
+        adjust_length = length - dir.length
+        if (dir.offset + length)  & (FILE_ALIGN - 1):
+            print  ('DIR total size needs to be 4KB aligned !')
+
+        # Remember original SBPDT offset
+        org_bpdt_offset  = dir.parent.parent.child[0].offset
+        org_sbpdt_offset = dir.parent.parent.child[1].offset
+
+        # Adjust offset and size for peer and up level in tree
+        old_dir = dir
+        while dir.type != COMPONENT.COMP_TYPE['BP']:
+            for each in dir.parent.child:
+                if each.offset > dir.offset:
+                    each.offset += adjust_length
+            dir.length += adjust_length
+            dir = dir.parent
+        dir = old_dir
+
+        # Update parent BPDT header info in IFWI data
+        parent  = dir.parent
+        bpdt_hdr = BPDT_HEADER.from_buffer(ifwi_data, parent.offset)
+        base    = parent.offset + sizeof(BPDT_HEADER)
+        found   = False
+
+        for idx in range(bpdt_hdr.desc_cnt):
+            bpdt_entry = BPDT_ENTRY.from_buffer(ifwi_data, base + idx * sizeof(BPDT_ENTRY))
+            comps = [x for x in parent.child if x.name == str(bpdt_entry.type)]
+            if len(comps) == 0:
+                continue
+            if len(comps) > 1:
+                raise Exception ('Found duplicated DIR %s !', bpdt_entry.type)
+            bpdt_entry.sub_part_offset = comps[0].offset - parent.parent.offset
+            if dir.name == str(bpdt_entry.type):
+                bpdt_entry.sub_part_size = length
+                found = True
+        if not found:
+            raise Exception ('Could not find DIR %s !', dir.name)
+
+        # Update SBPDT DIR header in IFWI data
+        bp_comp = parent.parent
+        if parent.name == 'BPDT':
+            bpdt_hdr    = BPDT_HEADER.from_buffer (ifwi_data, org_sbpdt_offset)
+            bpdt_hdr.xor_sum = 0
+            base_offset = org_sbpdt_offset + sizeof(BPDT_HEADER)
+            for idx in range(bpdt_hdr.desc_cnt):
+                bpdt_entry = BPDT_ENTRY.from_buffer(ifwi_data, base_offset + idx * sizeof(BPDT_ENTRY))
+                bpdt_entry.sub_part_offset += adjust_length
+                if  (bpdt_entry.sub_part_offset + bpdt_entry.sub_part_size) > bp_comp.length:
+                    raise Exception ('Insufficiant space in layout !')
+        else:
+            # 'SBPDT', update length in BPDT
+            bpdt_hdr    = BPDT_HEADER.from_buffer (ifwi_data, org_bpdt_offset)
+            bpdt_hdr.xor_sum = 0
+            base_offset = org_bpdt_offset + sizeof(BPDT_HEADER)
+            for idx in range(bpdt_hdr.desc_cnt):
+                bpdt_entry = BPDT_ENTRY.from_buffer(ifwi_data, base_offset + idx * sizeof(BPDT_ENTRY))
+                if str(bpdt_entry.type) == "BpdtSbpdt":
+                    bpdt_entry.sub_part_size += adjust_length
+                if  (bpdt_entry.sub_part_offset + bpdt_entry.sub_part_size) > bp_comp.length:
+                    raise Exception ('Insufficiant space in layout !')
+
+        # Generate actual final IFWI Data
+        if adjust_length > 0:
+            ifwi_data[:] = ifwi_data[:old_dir.offset] + dir_data + \
+                          ifwi_data[old_dir.offset + old_dir.length - adjust_length : bp_comp.offset + bp_comp.length - adjust_length] + \
+                          ifwi_data[bp_comp.offset + bp_comp.length:]
+        else:
+            adjust_length = -adjust_length
+            ifwi_data[:] = ifwi_data[:old_dir.offset] + dir_data + \
+                          ifwi_data[old_dir.offset + old_dir.length + adjust_length: bp_comp.offset + bp_comp.length] + \
+                          b'\xff' * adjust_length + ifwi_data[bp_comp.offset + bp_comp.length:]
+
+        return 0
+
+
+
+
+def manipulate_ifwi (action, path, ifwi_data, file_name = '', before = '$'):
+    print ('%s %s ...' % (action, path))
+
+    root    = IFWI_PARSER.parse_ifwi_binary (ifwi_data)
+    ifwi_op = IFWI_MANIPULATE()
+
+    if action == "REMOVE":
+        ret  = ifwi_op.remove_component (root, path)
+    elif action == "ADD":
+        ret  = ifwi_op.add_component (root, path, before, file_name)
+    elif action == "REPLACE":
+        ret  = ifwi_op.replace_component (root, path, file_name)
+    elif action == "COPY":
+        ret  = ifwi_op.copy_component (root, 'IFWI/BIOS/BP0/BPDT', ifwi_data)
+    else:
+        ret  = -100
+
+    if ret == 0 and path:
+        dir_path = '/'.join(path.split('/')[:-1])
+        dir = IFWI_PARSER.locate_component (root, dir_path)
+        ifwi_op.refresh_ifwi_for_dir (dir, ifwi_data)
+        print ('done!')
+
+    return ret
+
+
+
+def patch_flash_map (image_data, platform_data = 0xffffffff):
+    comp_bpdt_dict = {
+      b'RSVD' : "IFWI/BIOS/BP1/SBPDT/BpdtObb/RSVD",
+      b'IAS1' : "IFWI/BIOS/BP1/SBPDT/BpdtObb/FB",
+      b'EPLD' : "IFWI/BIOS/BP1/SBPDT/BpdtObb/EPLD",
+      b'UVAR' : "IFWI/BIOS/BP1/SBPDT/BpdtObb/UVAR",
+      b'PYLD' : "IFWI/BIOS/BP0/BPDT/BpdtIbb/PLD",
+      b'VARS' : "IFWI/BIOS/BP0/BPDT/BpdtIbb/VAR",
+      b'MRCD' : "IFWI/BIOS/BP0/BPDT/BpdtIbb/MRCD",
+      b'CNFG' : "IFWI/BIOS/BP0/BPDT/BpdtIbb/CFGD",
+      b'FWUP' : "IFWI/BIOS/BP0/BPDT/BpdtIbb/FWUP",
+      b'SG02' : "IFWI/BIOS/BP0/BPDT/BpdtIbb/OBB",
+      b'SG1B' : "IFWI/BIOS/BP0/BPDT/BpdtIbb/IBB",
+      b'SG1A' : "IFWI/BIOS/BP0/BPDT/BpdtIbb/IBBL",
+      b'_BPM' : "IFWI/BIOS/BP0/BPDT/BpdtIbb/BPM.met",
+      b'OEMK' : "IFWI/BIOS/BP0/BPDT/BpdtCseBup/oem.key",
     }
 
     print ("Patching Slim Bootloader Flash Map table ...")
 
-    OutputImageData  =  ImageData
-    Ifwi = ParseIfwiLayout (OutputImageData)
-    if not Ifwi:
+    output_image_data  =  image_data
+    ifwi = IFWI_PARSER.parse_ifwi_binary (output_image_data)
+    if not ifwi:
         return -1
 
-    Pld  = LocateComponent (Ifwi, CompBpdtDict[b'PYLD'])
-    if not Pld:
-        CompBpdtDict[b'PYLD'] = 'ROOT/IFWI/BP1/SBPDT/BpdtObb/PLD'
+    pld  = IFWI_PARSER.locate_component (ifwi, comp_bpdt_dict[b'PYLD'])
+    if not pld:
+        comp_bpdt_dict[b'PYLD'] = "IFWI/BIOS/BP1/SBPDT/BpdtObb/PLD"
 
-    Bp0  = LocateComponent (Ifwi, 'ROOT/IFWI/BP0')
-    Bp1  = LocateComponent (Ifwi, 'ROOT/IFWI/BP1')
-    if not Bp0 or not Bp1:
+    bp0  = IFWI_PARSER.locate_component (ifwi, 'IFWI/BIOS/BP0')
+    bp1  = IFWI_PARSER.locate_component (ifwi, 'IFWI/BIOS/BP1')
+    if not bp0 or not bp1:
         return -2
 
     # Locate FlashMap offset
-    for Part in range(2):
-        Path = CompBpdtDict[b'SG1A'].replace("BP0", "BP%d" % Part)
-        Comp = LocateComponent (Ifwi, Path)
-        if not Comp:
-            if Part == 0:
-                raise Exception("Cannot locate %s !" % Path)
+    for part in range(2):
+        path = comp_bpdt_dict[b'SG1A'].replace("BP0", "BP%d" % part)
+        comp = IFWI_PARSER.locate_component (ifwi, path)
+        if not comp:
+            if part == 0:
+                raise Exception("Cannot locate %s !" % path)
             else:
                 continue
-        Stage1AOffset = Comp.Offset
-        Stage1ALength = Comp.Length
-        Temp = Stage1AOffset + Stage1ALength - 8
+        stage1AOffset = comp.offset
+        stage1ALength = comp.length
+        temp = stage1AOffset + stage1ALength - 8
 
-        c_uint32.from_buffer (OutputImageData, Temp - 4).value = PlatformData
+        c_uint32.from_buffer (output_image_data, temp - 4).value = platform_data
 
-        FlaMapOff = (Bytes2Val(OutputImageData[Temp:Temp+4]) + Stage1ALength) & 0xFFFFFFFF
-        FlaMapStr = FlashMap.from_buffer (OutputImageData, Stage1AOffset + FlaMapOff)
-        EntryNum  = (FlaMapStr.Length - sizeof(FlashMap)) // sizeof(FlashMapDesc)
-        FlaMapStr.Romsize = Bp0.Length + Bp1.Length
+        fla_map_off = (bytes_to_value(output_image_data[temp:temp+4]) + stage1ALength) & 0xFFFFFFFF
+        fla_map_str = FLASH_MAP.from_buffer (output_image_data, stage1AOffset + fla_map_off)
+        entry_num  = (fla_map_str.length - sizeof(FLASH_MAP)) // sizeof(FLASH_MAP_DESC)
+        fla_map_str.romsize = bp0.length + bp1.length
 
-        if Part == 1:
-            FlaMapStr.Attributes |= FlashMap.FLASH_MAP_ATTRIBUTES['BACKUP_REGION']
+        if part == 1:
+            fla_map_str.attributes |= FLASH_MAP.FLASH_MAP_ATTRIBUTES['BACKUP_REGION']
 
-        for Idx in range (EntryNum):
-            Desc  = FlashMapDesc.from_buffer (OutputImageData, Stage1AOffset + FlaMapOff + sizeof(FlashMap) + Idx * sizeof(FlashMapDesc))
-            Path = CompBpdtDict[Desc.Sig]
-            if Part == 1 or (Desc.Flags & FlashMap.FLASH_MAP_DESC_FLAGS['NON_REDUNDANT']):
-                Path = Path.replace("BP0", "BP1")
-            if Part == 1 and (Desc.Flags & FlashMap.FLASH_MAP_DESC_FLAGS['REDUNDANT']):
-                Desc.Flags |= FlashMap.FLASH_MAP_DESC_FLAGS['BACKUP']
-            if Desc.Sig == b'RSVD':
-                Desc.Offset = Bp1.Offset + Bp1.Length - Desc.Size - Bp0.Offset
+        for idx in range (entry_num):
+            desc  = FLASH_MAP_DESC.from_buffer (output_image_data, stage1AOffset + fla_map_off + sizeof(FLASH_MAP) + idx * sizeof(FLASH_MAP_DESC))
+            path = comp_bpdt_dict[desc.sig]
+            if part == 1 or (desc.flags & FLASH_MAP.FLASH_MAP_DESC_FLAGS['NON_REDUNDANT']):
+                path = path.replace("BP0", "BP1")
+            if part == 1 and (desc.flags & FLASH_MAP.FLASH_MAP_DESC_FLAGS['REDUNDANT']):
+                desc.flags |= FLASH_MAP.FLASH_MAP_DESC_FLAGS['BACKUP']
+            if desc.sig == b'RSVD':
+                desc.offset = bp1.offset + bp1.length - desc.size - bp0.offset
                 continue
 
-            Comp  = LocateComponent (Ifwi, Path)
-            if not Comp:
-                raise Exception("Cannot locate component '%s' in BPDT !" % Path)
-            if (Desc.Size == 0) and (Desc.Offset == 0):
-                Desc.Size = Comp.Length
-                Desc.Offset = Comp.Offset - Bp0.Offset
+            comp  = IFWI_PARSER.locate_component (ifwi, path)
+            if not comp:
+                raise Exception("Cannot locate component '%s' in BPDT !" % path)
+            if (desc.size == 0) and (desc.offset == 0):
+                desc.size = comp.length
+                desc.offset = comp.offset - bp0.offset
                 continue
-            if Desc.Size != Comp.Length and Comp.Name != 'FB':
-                raise Exception("Mismatch component '%s' length in FlashMap and BPDT !" % CompBpdtDict[Desc.Sig])
-            if Desc.Sig not in [b'_BPM', b'OEMK'] and (Comp.Offset & 0xFFF > 0):
+            if desc.size != comp.length and comp.name != 'FB':
+                raise Exception("Mismatch component '%s' length in FlashMap and BPDT !" % comp_bpdt_dict[desc.sig])
+            if desc.sig not in [b'_BPM', b'OEMK'] and (comp.offset & 0xFFF > 0):
                 raise Exception("Component '%s' %x is not aligned at 4KB boundary, " \
-                                "please adjust padding size for IPAD/OPAD in BoardConfig.py and rebuild !" % (CompBpdtDict[Desc.Sig], Comp.Offset))
-            Desc.Offset = Comp.Offset - Bp0.Offset
+                                "please adjust padding size for IPAD/OPAD in BoardConfig.py and rebuild !" % (comp_bpdt_dict[desc.sig], comp.offset))
+            desc.offset = comp.offset - bp0.offset
 
-            # Last 4k in bios region is reserved for bootloader, throw exception if any component falls in that range
-            if (Bp1.Offset + Bp1.Length - 0x1000) <= (Desc.Offset + Desc.Size) <= (Bp1.Offset + Bp1.Length):
-                raise Exception("Component '%s' offset is in bootloader reserved region, please try to reduce compoent size !" % CompBpdtDict[Desc.Sig])
+            # Last 4k in bios region is reserved for bootloader, throw Exception if any component falls in that range
+            if (bp1.offset + bp1.length - 0x1000) <= (desc.offset + desc.size) <= (bp1.offset + bp1.length):
+                raise Exception("Component '%s' offset is in bootloader reserved region, please try to reduce compoent size !" % comp_bpdt_dict[desc.sig])
 
-        Limit = Bp1.Offset + Bp1.Length - Bp0.Offset - 0x40000
-        for Idx in range (EntryNum):
-            Desc  = FlashMapDesc.from_buffer (OutputImageData, Stage1AOffset + FlaMapOff + sizeof(FlashMap) + Idx * sizeof(FlashMapDesc))
-            if Desc.Sig == b'RSVD':
+        limit = bp1.offset + bp1.length - bp0.offset - 0x40000
+        for idx in range (entry_num):
+            desc  = FLASH_MAP_DESC.from_buffer (output_image_data, stage1AOffset + fla_map_off + sizeof(FLASH_MAP) + idx * sizeof(FLASH_MAP_DESC))
+            if desc.sig == b'RSVD':
                 continue
             # Last 256K flash space (4GB - 256KB to 4GB) is remapped to CSME read-only SRAM on APL
             # Directly access is not available.
-            if Desc.Offset >= Limit or Desc.Offset + Desc.Size > Limit:
-                print("WARNING: Component '%s' in BP%d is located inside CSME memory mapped region, direct access might fail." % (Desc.Sig, Part))
+            if desc.offset >= limit or desc.offset + desc.size > limit:
+                print("WARNING: Component '%s' in BP%d is located inside CSME memory mapped region, direct access might fail." % (desc.sig, part))
 
     print ("Flash map was patched successfully!")
 
     return 0
 
 
-def AddComponent (Root, Path, Before = '$', FilePath = ''):
-    Nodes      = Path.split('/')
-    ParentPath = '/'.join(Nodes[:-1])
-    DirComp    = LocateComponent (Root, ParentPath)
-    if not DirComp:
-        print ('Cannot find DIR %s !' % '/'.join(Nodes[:-1]))
-        return -1
-    if DirComp.Type != COMPONENT.TYPE_DIR:
-        print ('Can only add FILE type !')
-        return -2
-    Index   = None
-    if Before == '$':
-        # Add to end
-        Index = len(DirComp.Child)
-    elif Before == '^':
-        # Add to top
-        Index = 0
-    else:
-        for Idx, File in enumerate(DirComp.Child):
-            if Before == File.Name:
-                Index = Idx
-    if Index is None:
-        print ('Cannot find FILE %s !' % Before)
-        return -3
-    else:
-        Length = os.path.getsize(FilePath) if FilePath else 0x1000
-        Comp = COMPONENT (Nodes[-1], COMPONENT.TYPE_FILE, 0, Length)
-        Comp.SetData (FilePath)
-        DirComp.AddChild (Comp, Index)
-        return 0
+def create_ifwi_image (ifwi_in, ifwi_out, bios_out, platform_data, non_redundant, stitch_dir):
 
+    redundant_payload = True
 
-def RemoveComponent (Root, Path):
-    Nodes      = Path.split('/')
-    ParentPath = '/'.join(Nodes[:-1])
-    DirComp = LocateComponent (Root, ParentPath)
-
-    if not DirComp:
-        print ('Cannot find DIR %s !' % '/'.join(Nodes[:-1]))
-        return -1
-    if DirComp.Type != COMPONENT.TYPE_DIR:
-        print ('Can only replace FILE type !')
-        return -2
-    Index = None
-    for Idx, File in enumerate(DirComp.Child):
-        if File.Name == Nodes[-1]:
-            Index = Idx
-            break
-    if Index is None:
-        print ('Cannot find FILE %s !' % Path)
-        return -3
-    else:
-        del DirComp.Child[Index]
-
-    return 0
-
-
-def ReplaceComponent (Root, Path, FilePath):
-    Comp = LocateComponent (Root, Path)
-    if not Comp:
-        print ('Cannot find FILE %s !' % Path)
-        return -1
-    if Comp.Type != COMPONENT.TYPE_FILE:
-        print ('Can only replace FILE type !' % Path)
-        return -2
-    Comp.Length = os.path.getsize(FilePath) if FilePath else 0x1000
-    if FilePath:
-        Comp.SetData (FilePath)
-    return 0
-
-
-def CopyComponent (Root, Path, IfwiData):
-
-    print ("COPY BP0 BPDT to BP1 BPDT ...")
-    # Backup BP0 BPDT and BP1 SBPDT
-    Bp1      = LocateComponent (Root, 'ROOT/IFWI/BP1')
-    Bp0Bpdt  = LocateComponent (Root, 'ROOT/IFWI/BP0/BPDT')
-    Bp1Bpdt  = LocateComponent (Root, 'ROOT/IFWI/BP1/BPDT')
-    Bp1SBpdt = LocateComponent (Root, 'ROOT/IFWI/BP1/SBPDT')
-    Bp0BpdtData  = bytearray(IfwiData[Bp0Bpdt.Offset :Bp0Bpdt.Offset  + Bp0Bpdt.Length])
-    Bp1SBpdtData = bytearray(IfwiData[Bp1SBpdt.Offset:Bp1SBpdt.Offset + Bp1SBpdt.Length])
-
-    # Copy to BP0 BPDT to BP1 BPDT
-    Bp1SBpdtOffset = Bp1Bpdt.Offset + Bp0Bpdt.Length
-    IfwiData[Bp1Bpdt.Offset:Bp1SBpdtOffset] = Bp0BpdtData
-
-    # Append original BP1 SBPDT
-    Bp1SBpdtEndOffset = Bp1SBpdtOffset + Bp1SBpdt.Length
-    IfwiData[Bp1SBpdtOffset:Bp1SBpdtEndOffset] = Bp1SBpdtData
-    Padding = Bp1.Offset + Bp1.Length - Bp1SBpdtEndOffset
-    if Padding < 0:
-        print ('Insufficiant space in BP1 partition !')
-        return -1
-
-    IfwiData[Bp1SBpdtEndOffset:Bp1SBpdtEndOffset+Padding] = b'\xff' * Padding
-
-    # Fix Sbpdt length in BP1 BPDT
-    Offset  = Bp1Bpdt.Offset
-    BpdtHdr = BPDT_HEADER.from_buffer(IfwiData, Offset)
-    Offset += sizeof(BPDT_HEADER)
-    for Idx in range(BpdtHdr.DescCnt):
-        BpdtEntry = BPDT_ENTRY.from_buffer(IfwiData, Offset)
-        if 'BpdtSbpdt' == str(BpdtEntry.Type):
-            BpdtEntry.SubPartSize = Bp1SBpdt.Length
-        Offset   += sizeof(BPDT_ENTRY)
-
-    # Fix Sbpdt headers
-    Offset  = Bp1SBpdtOffset
-    BpdtHdr = BPDT_HEADER.from_buffer(IfwiData, Offset)
-    Offset += sizeof(BPDT_HEADER)
-    for Idx in range(BpdtHdr.DescCnt):
-        BpdtEntry = BPDT_ENTRY.from_buffer(IfwiData, Offset)
-        BpdtEntry.SubPartOffset += (Bp0Bpdt.Length - Bp1Bpdt.Length)
-        Offset   += sizeof(BPDT_ENTRY)
-
-    print ("Done!")
-
-    return 0
-
-def CreateDirData (Dir, IfwiData):
-    # Claculate new DIR length and creaet new DIR data
-    SupportList = ['BpdtIbb', 'BpdtObb']
-    if Dir.Name not in SupportList:
-        raise Exception ('Only %s are supported !' % ' '.join(SupportList))
-
-    Adjust    = True
-    Offset    = len(Dir.Child) * sizeof(SUBPART_DIR_ENTRY) + sizeof(SUBPART_DIR_HEADER)
-    SubDirHdr = SUBPART_DIR_HEADER.from_buffer(IfwiData, Dir.Offset)
-    DirData   = bytearray(SubDirHdr) + b'\xff' * (Offset - sizeof(SUBPART_DIR_HEADER))
-
-    for Idx, Comp in enumerate(Dir.Child):
-        Delta = 0
-        Parts = os.path.splitext(Comp.Name)
-        if len(Parts) > 1 and Parts[1] in ['.man', '.met']:
-            Align = 1
-        elif Comp.Name in ['IPAD', 'OPAD']:
-            Align = 0x40
-        else:
-            Align = FILE_ALIGN
-            Delta = Dir.Offset & (FILE_ALIGN - 1)
-        NextOffset  = ((Offset + Delta + Align - 1) & ~(Align - 1))
-        Count = NextOffset - Offset
-        if Adjust:
-            Adjust = False
-            Count -= Delta
-        DirData.extend(b'\xff' * Count)
-        CompData = Comp.GetData()
-        if CompData:
-            DirData.extend(CompData)
-        else:
-            DirData.extend(IfwiData[Comp.Offset : Comp.Offset + Comp.Length])
-
-        SubDir = SUBPART_DIR_ENTRY()
-        SubDir.EntryName   = Comp.Name.encode()
-        SubDir.EntryOffset = NextOffset - Delta
-        SubDir.EntrySize   = Comp.Length
-        SubDir.Reserved1   = 0
-        SubDir.Reserved2   = 0
-        EntryOffset = Idx * sizeof(SUBPART_DIR_ENTRY) + sizeof(SUBPART_DIR_HEADER)
-        DirData[EntryOffset:EntryOffset+sizeof(SUBPART_DIR_ENTRY)] = bytearray(SubDir)
-
-        NextOffset += Comp.Length
-        Offset = NextOffset
-
-    Align       = FILE_ALIGN
-    NextOffset  = ((Offset + Align - 1) & ~(Align - 1))
-    DirData.extend(b'\xff' * (NextOffset - Offset))
-
-    # Update checksum
-    SubDirHdr = SUBPART_DIR_HEADER.from_buffer_copy(DirData)
-    SubDirHdr.NumOfEntries = len(Dir.Child)
-    SubDirHdr.Checksum = 0
-    DirData[:sizeof(SUBPART_DIR_HEADER)] = bytearray(SubDirHdr)
-
-    Length    = SubDirHdr.NumOfEntries * sizeof(SUBPART_DIR_ENTRY) + sizeof(SUBPART_DIR_HEADER)
-    SumBuf    = (c_uint8 * Length).from_buffer_copy(DirData)
-    SubDirHdr.Checksum = (~sum(SumBuf) + 1) & 0xFF
-    DirData[:sizeof(SUBPART_DIR_HEADER)] = bytearray(SubDirHdr)
-
-    Remaining = (Dir.Offset + len(DirData))  & (FILE_ALIGN - 1)
-    if Remaining:
-        # Not page aligned, add padding
-        DirData.extend(b'\xff' * (FILE_ALIGN - Remaining))
-
-    return DirData
-
-
-def RefreshIfwiForDir (Dir, IfwiData):
-    # Claculate new DIR length and creaet new DIR data
-    DirData = CreateDirData (Dir, IfwiData)
-    Length  = len (DirData)
-    AdjustLength = Length - Dir.Length
-    if (Dir.Offset + Length)  & (FILE_ALIGN - 1):
-        print(hex(Dir.Offset), hex(Length))
-        print  ('Dir total size needs to be 4KB aligned !')
-
-    # Remember original SBPDT offset
-    OrgBpdtOffset  = Dir.Parent.Parent.Child[0].Offset
-    OrgSbpdtOffset = Dir.Parent.Parent.Child[1].Offset
-
-    # Adjust offset and size for peer and up level in tree
-    OldDir = Dir
-    while Dir.Type != COMPONENT.TYPE_BP:
-        for Each in Dir.Parent.Child:
-            if Each.Offset > Dir.Offset:
-                Each.Offset += AdjustLength
-        Dir.Length += AdjustLength
-        Dir = Dir.Parent
-    Dir = OldDir
-
-    # Update parent BPDT header info in IFWI data
-    Parent  = Dir.Parent
-    BpdtHdr = BPDT_HEADER.from_buffer(IfwiData, Parent.Offset)
-    Base    = Parent.Offset + sizeof(BPDT_HEADER)
-    Found   = False
-    for Idx in range(BpdtHdr.DescCnt):
-        BpdtEntry = BPDT_ENTRY.from_buffer(IfwiData, Base + Idx * sizeof(BPDT_ENTRY))
-        Comps = [x for x in Parent.Child if x.Name == str(BpdtEntry.Type)]
-        if len(Comps) > 1:
-            raise Exception ('Found duplicated DIR %s !', BpdtEntry.Type)
-        BpdtEntry.SubPartOffset = Comps[0].Offset - Parent.Parent.Offset
-        if Dir.Name == str(BpdtEntry.Type):
-            BpdtEntry.SubPartSize = Length
-            Found = True
-    if not Found:
-        raise Exception ('Could not find DIR %s !', Dir.Name)
-
-    # Update SBPDT DIR header in IFWI data
-    BpComp = Parent.Parent
-    if Parent.Name == 'BPDT':
-        BpdtHdr    = BPDT_HEADER.from_buffer (IfwiData, OrgSbpdtOffset)
-        BpdtHdr.XorSum = 0
-        BaseOffset = OrgSbpdtOffset + sizeof(BPDT_HEADER)
-        for Idx in range(BpdtHdr.DescCnt):
-            BpdtEntry = BPDT_ENTRY.from_buffer(IfwiData, BaseOffset + Idx * sizeof(BPDT_ENTRY))
-            BpdtEntry.SubPartOffset += AdjustLength
-            if  (BpdtEntry.SubPartOffset + BpdtEntry.SubPartSize) > BpComp.Length:
-                raise Exception ('Insufficiant space in layout !')
-    else:
-        # 'SBPDT', update length in BPDT
-        BpdtHdr    = BPDT_HEADER.from_buffer (IfwiData, OrgBpdtOffset)
-        BpdtHdr.XorSum = 0
-        BaseOffset = OrgBpdtOffset + sizeof(BPDT_HEADER)
-        for Idx in range(BpdtHdr.DescCnt):
-            BpdtEntry = BPDT_ENTRY.from_buffer(IfwiData, BaseOffset + Idx * sizeof(BPDT_ENTRY))
-            if str(BpdtEntry.Type) == 'BpdtSbpdt':
-                BpdtEntry.SubPartSize += AdjustLength
-            if  (BpdtEntry.SubPartOffset + BpdtEntry.SubPartSize) > BpComp.Length:
-                raise Exception ('Insufficiant space in layout !')
-
-    # Generate actual final IFWI Data
-    if AdjustLength > 0:
-        IfwiData[:] = IfwiData[:OldDir.Offset] + DirData + \
-                      IfwiData[OldDir.Offset + OldDir.Length - AdjustLength : BpComp.Offset + BpComp.Length - AdjustLength] + \
-                      IfwiData[BpComp.Offset + BpComp.Length:]
-    else:
-        AdjustLength = -AdjustLength
-        IfwiData[:] = IfwiData[:OldDir.Offset] + DirData + \
-                      IfwiData[OldDir.Offset + OldDir.Length + AdjustLength: BpComp.Offset + BpComp.Length] + \
-                      b'\xff' * AdjustLength + IfwiData[BpComp.Offset + BpComp.Length:]
-    return 0
-
-
-def ParseIfwiLayout (IfwiImgData):
-
-    SpiDescriptor = SPI_DESCRIPTOR.from_buffer(IfwiImgData, 0)
-    if SpiDescriptor.FlValSig != SpiDescriptor.DESC_SIGNATURE:
-        return None
-
-    RgnList = []
-    Regions = [("descriptor", "DESC"), ("ifwi" , "IFWI"), ("pdr", "PDR"), ("dev_expansion", "DEVE")]
-    for Rgn in Regions:
-        Start, Limit = FindSpiRegion (SpiDescriptor, Rgn[0])
-        if Start is None:
-            continue
-        RgnList.append((Rgn[1], Start, Limit - Start + 1))
-
-    RgnList.sort (key = lambda Rgn : Rgn[1])
-
-    Root = COMPONENT ('ROOT', COMPONENT.TYPE_IMG, 0, len(IfwiImgData))
-    for Idx, Rgn in enumerate(RgnList):
-        Comp = COMPONENT (Rgn[0], COMPONENT.TYPE_RGN, Rgn[1], Rgn[2])
-        if Rgn[0] == 'IFWI':
-            ParseIfwiRegion (Comp, IfwiImgData)
-        Root.AddChild (Comp)
-
-    return Root
-
-
-def ManipulateIfwi (Action, Path, IfwiData, FileName = '', Before = '$'):
-    print ('%s %s ...' % (Action, Path))
-    Root = ParseIfwiLayout (IfwiData)
-    if Action == "REMOVE":
-        Ret  = RemoveComponent (Root, Path)
-    elif Action == "ADD":
-        Ret  = AddComponent (Root, Path, Before, FileName)
-    elif Action == "REPLACE":
-        Ret  = ReplaceComponent (Root, Path, FileName)
-    elif Action == "COPY":
-        Ret  = CopyComponent (Root, 'ROOT/IFWI/BP0/BPDT', IfwiData)
-    else:
-        Ret  = -100
-
-    if Ret == 0 and Path:
-        DirPath = '/'.join(Path.split('/')[:-1])
-        Dir = LocateComponent (Root, DirPath)
-        RefreshIfwiForDir (Dir, IfwiData)
-        print ('Done!')
-
-    return Ret
-
-
-def CreateIfwiImage (IfwiIn, IfwiOut, BiosOut, PlatformData, NonRedundant, StitchDir):
-
-    RedundantPayload = True
-    Fd = open(IfwiIn, "rb")
-    IfwiData = bytearray(Fd.read())
-    Fd.close()
-
-    Root = ParseIfwiLayout (IfwiData)
+    ifwi_data = bytearray (get_file_data (ifwi_in))
+    root = IFWI_PARSER.parse_ifwi_binary (ifwi_data)
+    if not root:
+        raise Exception ('Invalid IFWI input image format !')
 
     # Verify if Boot Guard is enabled or not
-    Comp = LocateComponent (Root, 'ROOT/IFWI/BP0/BPDT/BpdtUepType')
-    if not Comp:
+    comp = IFWI_PARSER.locate_component (root, "IFWI/BIOS/BP0/BPDT/BpdtUepType")
+    if not comp:
         raise Exception ('Unsupported base image format !')
-    Data = IfwiData[Comp.Offset + 0x30:Comp.Offset + 0x32]
-    if (Data[0] & 0x0F) != 0x00:
-        raise Exception ('Unsupported base image type. Boot Guard might have been enabled in this image !')
 
-    print ('Creating %sredundant image ...' % ('Non-' if NonRedundant else ''))
+    data = ifwi_data[comp.offset + 0x30:comp.offset + 0x32]
+    if (data[0] & 0x0F) != 0x00:
+        raise Exception ('Unsupported base image type. boot guard might have been enabled in this image !')
+
+    print ('Creating %sredundant image ...' % ('non-' if non_redundant else ''))
+
 
     # Remove all in IBB/OBB
-    RemoveList = [
-      'ROOT/IFWI/BP0/BPDT/BpdtIbb',
-      'ROOT/IFWI/BP1/BPDT/BpdtIbb',
-      'ROOT/IFWI/BP1/SBPDT/BpdtObb'
+    remove_list = [
+      "IFWI/BIOS/BP0/BPDT/BpdtIbb",
+      "IFWI/BIOS/BP1/BPDT/BpdtIbb",
+      "IFWI/BIOS/BP1/SBPDT/BpdtObb"
     ]
-    for DirPath in RemoveList:
-        Comp = LocateComponent (Root, DirPath)
-        if not Comp:
+    for dir_path in remove_list:
+        comp = IFWI_PARSER.locate_component (root, dir_path)
+        if not comp:
             continue
-        for Each in Comp.Child:
-            if Each.Name.endswith('.man') or Each.Name.endswith('.met'):
+        for each in comp.child:
+            if each.name.endswith('.man') or each.name.endswith('.met'):
                 continue
-            Ret = ManipulateIfwi  ('REMOVE', DirPath + '/' + Each.Name,  IfwiData)
-            if Ret != 0:
-                raise Exception ('REMOVE failed (error code %d) !' % (Ret))
+            ret = manipulate_ifwi  ('REMOVE', dir_path + '/' + each.name,  ifwi_data)
+            if ret != 0:
+                raise Exception ('REMOVE failed (error code %d) !' % (ret))
 
     # Copy BP0 BPDT into BP1 BPDT
-    if not NonRedundant:
-        Ret = ManipulateIfwi  ('COPY', '', IfwiData)
-        if Ret != 0:
-            raise Exception ('COPY failed (error code %d) !' % (Ret))
+    if not non_redundant:
+        ret = manipulate_ifwi  ('COPY', '', ifwi_data)
+        if ret != 0:
+            raise Exception ('COPY failed (error code %d) !' % (ret))
 
-    if StitchDir:
-        IbbList = [
+    if stitch_dir:
+        ibb_list = [
           ('IBBL' , 'IBBL'),
           ('IBB'  , 'IBBM'),
           ('OBB'  , 'OBB'),
@@ -834,79 +513,70 @@ def CreateIfwiImage (IfwiIn, IfwiOut, BiosOut, PlatformData, NonRedundant, Stitc
           ('PLD'  , 'PLD'),
         ]
 
-        ObbList = [
+        obb_list = [
           ('FB' , 'FB'),
           ('EPLD' , 'EPLD'),
           ('UVAR' , 'UVAR'),
           ('PLD'  , 'PLD'),
         ]
 
-        if RedundantPayload:
-            del ObbList[-1]
+        if redundant_payload:
+            del obb_list[-1]
         else:
-            del IbbList[-1]
+            del ibb_list[-1]
 
-        Bp1Sbpdt = 'ROOT/IFWI/BP1/SBPDT/BpdtObb/'
+        bp1sbpdt = "IFWI/BIOS/BP1/SBPDT/BpdtObb/"
 
-        Loop = 1 if NonRedundant else 2
-        for Bp in range(Loop):
-            Dir = 'ROOT/IFWI/BP%d/BPDT/BpdtIbb/' % Bp
-            for CompName, FileName in IbbList:
-                FilePath = os.path.join(StitchDir, 'Stitch_%s.bin' % FileName)
-                Ret = ManipulateIfwi  ('ADD', Dir + CompName,  IfwiData, FilePath)
-                if Ret != 0:
-                    raise Exception ('ADD failed (error code %d) !' % (Ret))
+        loop = 1 if non_redundant else 2
+        for bp in range(loop):
+            dir = "IFWI/BIOS/BP%d/BPDT/BpdtIbb/" % bp
+            for comp_name, file_name in ibb_list:
+                file_path = os.path.join(stitch_dir, 'stitch_%s.bin' % file_name)
+                ret = manipulate_ifwi  ('ADD', dir + comp_name,  ifwi_data, file_path)
+                if ret != 0:
+                    raise Exception ('ADD failed (error code %d) !' % (ret))
 
-        for CompName, FileName in ObbList:
-            if FileName == '':
-                FilePath = ''
+        for comp_name, file_name in obb_list:
+            if file_name == '':
+                file_path = ''
             else:
-                FilePath = os.path.join(StitchDir, 'Stitch_%s.bin' % FileName)
-            if (CompName == 'EPLD' or CompName == 'UVAR') and not os.path.exists(FilePath):
-                Ret = 0
+                file_path = os.path.join(stitch_dir, 'stitch_%s.bin' % file_name)
+            if (comp_name == 'EPLD' or comp_name == 'UVAR') and not os.path.exists(file_path):
+                ret = 0
             else:
-                Ret = ManipulateIfwi  ('ADD', Bp1Sbpdt + CompName,  IfwiData, FilePath)
-            if Ret != 0:
-                raise Exception ('ADD failed (error code %d) !' % (Ret))
+                ret = manipulate_ifwi  ('ADD', bp1sbpdt + comp_name,  ifwi_data, file_path)
+            if ret != 0:
+                raise Exception ('ADD failed (error code %d) !' % (ret))
 
-        PatchFlashMap (IfwiData, PlatformData)
+        patch_flash_map (ifwi_data, platform_data)
 
-    if BiosOut:
+    if bios_out:
       print ('Creating BIOS image ...')
-      Bios = LocateComponent (Root, 'ROOT/IFWI')
-      Fd = open (BiosOut, 'wb')
-      Fd.write(IfwiData[Bios.Offset:Bios.Offset+Bios.Length])
-      Fd.close()
+      bios = IFWI_PARSER.locate_component (root, 'IFWI/BIOS')
+      fd = open (bios_out, 'wb')
+      fd.write(ifwi_data[bios.offset:bios.offset+bios.length])
+      fd.close()
 
     print ('Creating IFWI image ...')
-    Fd = open (IfwiOut, 'wb')
-    Fd.write(IfwiData)
-    Fd.close()
-
+    fd = open (ifwi_out, 'wb')
+    fd.write(ifwi_data)
+    fd.close()
 
     print ('Done!')
 
 
-def PrintIfwiLayout (IfwiFile):
-    Fd = open(IfwiFile, "rb")
-    IfwiData = bytearray(Fd.read())
-    Fd.close()
-
-    Root = ParseIfwiLayout (IfwiData)
-    PrintTree (Root)
-
-    Ifwi = LocateComponent (Root, 'ROOT/IFWI')
-
-    print ("\nFree Space:")
-    for Idx in range(2):
-        Bp    = Ifwi.Child[Idx]
-        Sbpdt = Bp.Child[1]
-        print ("  BP%d Free Space: 0x%05X" % (Idx,  Bp.Length - ((Sbpdt.Offset + Sbpdt.Length) - Bp.Offset)))
-
+def print_ifwi_layout (ifwi_file):
+    ifwi_parser = IFWI_PARSER ()
+    ifwi_bin = bytearray (get_file_data (ifwi_file))
+    ifwi = ifwi_parser.parse_ifwi_binary (ifwi_bin)
+    if ifwi:
+        ifwi_parser.print_tree (ifwi)
+    else:
+        print ('Invalid IFWI image')
     return 0
 
 
-def main():
+if __name__ == '__main__':
 
     hexstr = lambda x: int(x, 16)
     ap = argparse.ArgumentParser()
@@ -915,74 +585,70 @@ def main():
                     dest='ifwi_in',
                     type=str,
                     required=True,
-                    help='Specify input template IFWI image file path')
+                    help='specify input template IFWI image file path')
 
     ap.add_argument('-o',
                     '--output-ifwi-file',
                     dest='ifwi_out',
                     type=str,
                     default='',
-                    help='Specify generated output IFWI image file path')
+                    help='specify generated output IFWI image file path')
 
     ap.add_argument('-b',
                     '--output-bios-region',
                     dest='bios_out',
                     type=str,
                     default='',
-                    help='Specify generated output BIOS region image file path')
+                    help='specify generated output BIOS region image file path')
 
     ap.add_argument('-s',
                     '--sitch-zip-file',
                     dest='stitch_in',
                     type=str,
                     default='',
-                    help='Specify input sitching zip package file path')
+                    help='specify input sitching zip package file path')
 
     ap.add_argument('-p',
                     '--platform-data',
                     dest='plat_data',
                     type=hexstr,
                     default=0xFFFFFFFF,
-                    help='Specify a platform specific data (HEX, DWORD) for customization')
+                    help='specify a platform specific data (HEX, DWORD) for customization')
 
     ap.add_argument('-n',
                     '--non-redundant',
                     dest='non_redundant',
                     action="store_true",
-                    help='Specify if the flash layout will be full redundant or not')
+                    help='specify if the flash layout will be full redundant or not')
 
     if len(sys.argv) == 1:
-        print('%s' % ExtraUsageTxt)
+        print('%s' % extra_usage_txt)
 
     args = ap.parse_args()
 
     if args.ifwi_out == '' and args.stitch_in == '':
-        PrintIfwiLayout (args.ifwi_in)
-        return 0
+        print_ifwi_layout (args.ifwi_in)
+        sys.exit (0)
     else:
         if args.ifwi_out and args.stitch_in == '':
-            Ret = CreateIfwiImage (args.ifwi_in, args.ifwi_out, args.bios_out, args.plat_data, args.non_redundant, None)
-            return Ret
+            ret = create_ifwi_image (args.ifwi_in, args.ifwi_out, args.bios_out, args.plat_data, args.non_redundant, None)
+            sys.exit (ret)
 
     # Unpack files from zip
     print ("Unpacking sitching ZIP package ...")
-    OutputDir = os.path.dirname(args.ifwi_out)
-    StitchDir = os.path.join(OutputDir, 'StitchComp')
-    if os.path.exists(StitchDir):
-        shutil.rmtree(StitchDir)
+    output_dir = os.path.dirname(args.ifwi_out)
+    stitch_dir = os.path.join(output_dir, 'stitch_comp')
+    if os.path.exists(stitch_dir):
+        shutil.rmtree(stitch_dir)
     zf = zipfile.ZipFile(args.stitch_in, 'r', zipfile.ZIP_DEFLATED)
-    zf.extractall(StitchDir)
+    zf.extractall(stitch_dir)
     zf.close()
 
     # Create new IFWI
-    Ret = CreateIfwiImage (args.ifwi_in, args.ifwi_out, args.bios_out, args.plat_data, args.non_redundant, StitchDir)
+    ret = create_ifwi_image (args.ifwi_in, args.ifwi_out, args.bios_out, args.plat_data, args.non_redundant, stitch_dir)
 
     # Remove extracted files
-    if os.path.exists(StitchDir):
-        shutil.rmtree(StitchDir)
+    if os.path.exists(stitch_dir):
+        shutil.rmtree(stitch_dir)
 
-    return Ret
-
-if __name__ == '__main__':
-    sys.exit(main())
-
+    sys.exit (ret)

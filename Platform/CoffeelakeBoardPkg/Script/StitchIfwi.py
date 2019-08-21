@@ -20,9 +20,11 @@ import xml.etree.ElementTree as ET
 from   xml.dom import minidom
 from   ctypes  import *
 from   subprocess   import call
-from   StitchLoader import AddPlatformData
 
-BTG_Profile_Values = [\
+sys.dont_write_bytecode = True
+from   StitchLoader import add_platform_data
+
+btg_profile_values = [\
                     "Boot Guard Profile 0 - No_FVME",\
                     "Not Applicable",\
                     "Not Applicable",\
@@ -30,8 +32,8 @@ BTG_Profile_Values = [\
                     "Boot Guard Profile 4 - FVE",\
                     "Boot Guard Profile 5 - FVME"]
 
-ExtraUsageTxt = """
-This script creates a new Whiskey Lake/Coffee Lake Slim Bootloader IFWI image using FIT
+extra_usage_txt = \
+"""This script creates a new Whiskey Lake/Coffee Lake Slim Bootloader IFWI image using FIT
 tool.  For the FIT tool and stitching ingredients listed in step 2 below, please
 contact your Intel representative.
 
@@ -80,11 +82,10 @@ Please follow the steps below for WHL/CFL IFWI stitching.
          python  Platform\CoffeelakeBoardPkg\Script\StitchIfwi.py -c -w D:\Stitch
 
 """
-
-def GetConfig ():
+def get_config ():
     # This dictionary defines path for stitching components
-    CfgVar = {
-      'wkspace'   :   'Output',
+    cfg_var = {
+      'wkspace'   :   'output',
       'fitinput'  :   'Output/input',
       'ifwiname'  :   'SBL_IFWI.bin',
       'fit'       :   'CSE/FIT/fit%s' %     ('.exe' if os.name == 'nt' else ''),
@@ -98,92 +99,96 @@ def GetConfig ():
       'gbe'       :   'GBE/gbe.bin',
       'bpm'       :   'bpmgen2',
     }
-    return CfgVar
+    return cfg_var
 
-def RunCmd (Cmd, Cwd):
+def run_cmd (cmd, cwd):
     sys.stdout.flush()
     try:
-        CmdArgs = shlex.split(Cmd)
+        cmd_args = shlex.split(cmd)
         if os.name == 'nt':
-            Shell = True
-            if CmdArgs[0].startswith('./'):
-                CmdArgs[0] = CmdArgs[0][2:]
+            shell = True
+            if cmd_args[0].startswith('./'):
+                cmd_args[0] = cmd_args[0][2:]
         else:
-            Shell = False
-        Proc = subprocess.Popen(CmdArgs, shell = Shell, cwd=Cwd)
-        Out, Err = Proc.communicate()
-        Ret = Proc.returncode
+            shell = False
+        proc = subprocess.Popen(cmd_args, shell = shell, cwd=cwd)
+        out, err = proc.communicate()
+        ret = proc.returncode
     except Exception as e:
-        Out, Err = '', e
-        Ret = 1
-    if Ret:
+        out, err = '', e
+        ret = 1
+    if ret:
         sys.stdout.flush()
-        print('%s\n%s' % (Out, Err))
-        print("Failed to run command:\n  PATH: %s\n   CMD: %s" % (Cwd, Cmd))
+        print('%s\n%s' % (out, err))
+        print("Failed to run command:\n  PATH: %s\n   CMD: %s" % (cwd, ' '.join(cmd_args)))
         sys.exit(1)
 
-def SwapTSBlock(InFile, OutFile, TsSize):
+
+def swap_ts_block(in_file, out_file, ts_size):
     print("Swapping Top Swap Blocks....")
 
-    if not os.path.exists(InFile):
-        raise Exception("%s not found !" % InFile)
+    if not os.path.exists(in_file):
+        raise Exception("%s not found !" % in_file)
         return 1
 
-    InFileSize = os.path.getsize(InFile)
+    in_file_size = os.path.getsize(in_file)
 
-    if TsSize > InFileSize:
-        raise Exception("TsSize %x is greater than the file size !" % TsSize)
+    if ts_size > in_file_size:
+        raise Exception("TsSize %x is greater than the file size !" % ts_size)
         return 1
 
-    InFileptr = open(InFile, 'rb')
-    InFileData = bytearray(InFileptr.read())
-    InFileptr.close()
+    in_fileptr = open(in_file, 'rb')
+    in_file_data = bytearray(in_fileptr.read())
+    in_fileptr.close()
 
-    WriteData = bytearray(0)
-    OutFilePtr = open(OutFile, 'wb')
-    BlockData = InFileData[0:(InFileSize-(2*TsSize))]
-    BlockData += InFileData[(InFileSize-TsSize):InFileSize]
-    BlockData += InFileData[(InFileSize-(2*TsSize)):(InFileSize-TsSize)]
-    OutFilePtr.write(BlockData)
-    OutFilePtr.close()
+    write_data = bytearray(0)
+    out_file_ptr = open(out_file, 'wb')
+    block_data = in_file_data[0:(in_file_size-(2*ts_size))]
+    block_data += in_file_data[(in_file_size-ts_size):in_file_size]
+    block_data += in_file_data[(in_file_size-(2*ts_size)):(in_file_size-ts_size)]
+    out_file_ptr.write(block_data)
+    out_file_ptr.close()
 
-def SignBinary(Infile, StitchDir, CfgVar):
-    OutputDir = os.path.join(StitchDir,"Output", "input")
-    shutil.copy(Infile, os.path.join(OutputDir,"sbl_sec_temp.bin"))
+def sign_binary(infile, stitch_dir, cfg_var):
+    cfg_var      = get_config ()
+    openssl_path = (stitch_dir.replace('\\', '/') + '/' if os.name == 'nt' else '') + cfg_var['openssl']
+
+    output_dir = os.path.join(stitch_dir,"Output", "input")
+    shutil.copy(infile, os.path.join(output_dir,"sbl_sec_temp.bin"))
 
     print("Generating new keys....")
 
-    BpmGen2Dir = StitchDir + '/' + 'bpmgen2'
-    if not os.path.exists(os.path.join(StitchDir,"bpmgen2", "keys")):
-        os.mkdir(os.path.join(BpmGen2Dir, "keys"))
+    bpm_gen2dir = stitch_dir + '/' + 'bpmgen2'
+    if not os.path.exists(os.path.join(stitch_dir,"bpmgen2", "keys")):
+        os.mkdir(os.path.join(bpm_gen2dir, "keys"))
 
-        Cmd = './openssl genrsa -F4 -out keys/keyprivkey.pem 2048'
-        RunCmd (Cmd, BpmGen2Dir)
+        cmd = '%s genrsa -F4 -out keys/keyprivkey.pem 2048' % openssl_path
+        run_cmd (cmd, bpm_gen2dir)
 
-        Cmd = './openssl rsa -pubout -in keys/keyprivkey.pem -out keys/keypubkey.pem'
-        RunCmd (Cmd, BpmGen2Dir)
+        cmd = '%s rsa -pubout -in keys/keyprivkey.pem -out keys/keypubkey.pem' % openssl_path
+        run_cmd (cmd, bpm_gen2dir)
 
-        Cmd = './openssl genrsa -F4 -out keys/privkey.pem 2048'
-        RunCmd (Cmd, BpmGen2Dir)
+        cmd = '%s genrsa -F4 -out keys/privkey.pem 2048' % openssl_path
+        run_cmd (cmd, bpm_gen2dir)
 
-        Cmd = './openssl rsa -pubout -in keys/privkey.pem -out keys/pubkey.pem'
-        RunCmd (Cmd, BpmGen2Dir)
+        cmd = '%s rsa -pubout -in keys/privkey.pem -out keys/pubkey.pem' % openssl_path
+        run_cmd (cmd, bpm_gen2dir)
 
-    Cmd = 'python CSE/FIT/FitHelp.py "FITACM" Output/input/sbl_sec_temp.bin Output/input/acm.bin'
-    RunCmd (Cmd, StitchDir)
+    cmd = 'python CSE/FIT/FitHelp.py "FITACM" Output/input/sbl_sec_temp.bin Output/input/acm.bin'
+    run_cmd (cmd, stitch_dir)
 
     print("Generating KeyManifest.bin....")
-    Cmd = './bpmgen2 KM1GEN -KEY keys/pubkey.pem BPM -KM ../output/input/KeyManifest.bin -SIGNKEY keys/keyprivkey.pem -SIGNPUBKEY keys/keypubkey.pem -KMID 0x01 -SVN 0 -d:2 > ../output/input/bpmgen2_km.txt'
-    RunCmd (Cmd, BpmGen2Dir)
+    cmd = './bpmgen2 KM1GEN -KEY keys/pubkey.pem BPM -KM ../output/input/KeyManifest.bin -SIGNKEY keys/keyprivkey.pem -SIGNPUBKEY keys/keypubkey.pem -KMID 0x01 -SVN 0 -d:2 > ../output/input/bpmgen2_km.txt'
+    run_cmd (cmd, bpm_gen2dir)
 
     print("Generating Manifest.bin....")
-    Cmd = './bpmgen2 GEN ../output/input/sbl_sec_temp.bin bpmgen2.params -BPM ../output/input/Manifest.bin -U ../output/input/sbl_sec.bin -KM ../output/input/KeyManifest.bin -d:2 > ../output/input/bpmgen2_bpm.txt'
-    RunCmd (Cmd, BpmGen2Dir)
+    cmd = './bpmgen2 GEN ../output/input/sbl_sec_temp.bin bpmgen2.params -BPM ../output/input/Manifest.bin -U ../output/input/sbl_sec.bin -KM ../output/input/KeyManifest.bin -d:2 > ../output/input/bpmgen2_bpm.txt'
+    run_cmd (cmd, bpm_gen2dir)
 
     print("Calculate public key hash....")
     print("Extract Public key")
-    Cmd = './openssl rsa -in %s -pubin -modulus > pubkey.txt' % ('../../bpmgen2/keys/keypubkey.pem')
-    RunCmd (Cmd, OutputDir)
+    cmd = '%s rsa -in %s -pubin -modulus > pubkey.txt' % (openssl_path, '../../bpmgen2/keys/keypubkey.pem')
+    run_cmd (cmd, output_dir)
 
     line=open('output/input/pubkey'+'.txt','r').readline()[8:8+256*2]
     if sys.hexversion >= 0x3000000:
@@ -191,25 +196,26 @@ def SignBinary(Infile, StitchDir, CfgVar):
     else:
         keybin = line.decode('hex')
     open('output/input/pubkey'+'.bin','wb').write(keybin[::-1])
-    Cmd = './openssl dgst -sha256 -binary -out pubkey.hash pubkey.bin'
-    RunCmd (Cmd, OutputDir)
+    cmd = '%s dgst -sha256 -binary -out pubkey.hash pubkey.bin' % openssl_path
+    run_cmd (cmd, output_dir)
     print("printing hash")
     hash = bytearray(open('output/input/pubkey'+'.hash','rb').read())
     print(''.join('%02X ' % b for b in hash))
 
-def UpdateIfwiXml(Btguardprofile, StitchDir, CfgVar, Tree):
-    OutputDir = os.path.join(StitchDir,"Output", "input")
+def update_ifwi_xml(btguardprofile, stitch_dir, cfg_var, tree):
+    cfg_var      = get_config ()
+    openssl_path = (stitch_dir.replace('\\', '/') + '/' if os.name == 'nt' else '') + cfg_var['openssl']
 
-    Openssl             = os.path.join(OutputDir, "openssl.exe")
-    kmsigpubkeytxtfile  = os.path.join(OutputDir, "kmsigpubkey.txt")
-    kmsigpubkeybinfile  = os.path.join(OutputDir, "kmsigpubkey.bin")
-    kmsigpubkeyhashfile = os.path.join(OutputDir, "kmsigpubkey.hash")
+    output_dir = os.path.join(stitch_dir,"Output", "input")
+    kmsigpubkeytxtfile  = os.path.join(output_dir, "kmsigpubkey.txt")
+    kmsigpubkeybinfile  = os.path.join(output_dir, "kmsigpubkey.bin")
+    kmsigpubkeyhashfile = os.path.join(output_dir, "kmsigpubkey.hash")
 
     with open(kmsigpubkeytxtfile, "w") as kmsigpubkeytxt_fh:
-        Cmd = './openssl rsa -in ../../bpmgen2/keys/keypubkey.pem -pubin -modulus > kmsigpubkeytxt_fh'
-        RunCmd (Cmd, OutputDir)
+        cmd = '%s rsa -in ../../bpmgen2/keys/keypubkey.pem -pubin -modulus > kmsigpubkeytxt_fh'  % openssl_path
+        run_cmd (cmd, output_dir)
 
-    shutil.copy(os.path.join(OutputDir, "kmsigpubkeytxt_fh"), kmsigpubkeytxtfile)
+    shutil.copy(os.path.join(output_dir, "kmsigpubkeytxt_fh"), kmsigpubkeytxtfile)
 
     line=open(kmsigpubkeytxtfile,"r").readline()[8:8+256*2]
     if sys.hexversion >= 0x3000000:
@@ -221,8 +227,8 @@ def UpdateIfwiXml(Btguardprofile, StitchDir, CfgVar, Tree):
     # In, CFL and  future platforms, public exponent (i.e. 65537) is concatenated for OEM key hash calculation.
     line=open(kmsigpubkeytxtfile,"r").readline()[8:8+256*2]
     open(kmsigpubkeybinfile,"ab").write(bytearray.fromhex('01000100'))
-    Cmd = './openssl dgst -sha256 -binary -out Output/input/kmsigpubkey.hash Output/input/kmsigpubkey.bin'
-    RunCmd (Cmd, StitchDir)
+    cmd = '%s dgst -sha256 -binary -out Output/input/kmsigpubkey.hash Output/input/kmsigpubkey.bin' % openssl_path
+    run_cmd (cmd, stitch_dir)
 
     # Convert OEM key hash into hexadecimal for Fit tool consumption
     with open(kmsigpubkeyhashfile,"rb") as kmsigpubkeyhash_fh:
@@ -233,363 +239,364 @@ def UpdateIfwiXml(Btguardprofile, StitchDir, CfgVar, Tree):
     print(oemkeyhash)
 
     # if measured boot enabled, enable ptt
-    if Btguardprofile in [3, 5]:
+    if btguardprofile in [3, 5]:
         #PttConfiguration
-        Node = Tree.find('./PlatformProtection/IntelPttConfiguration/PttSupported')
-        Node.attrib['value'] = 'Yes'
-        Node = Tree.find('./PlatformProtection/IntelPttConfiguration/PttPwrUpState')
-        Node.attrib['value'] = 'Enabled'
-        Node = Tree.find('./PlatformProtection/IntelPttConfiguration/PttSupportedFpf')
-        Node.attrib['value'] = 'Yes'
+        node = tree.find('./PlatformProtection/IntelPttConfiguration/PttSupported')
+        node.attrib['value'] = 'yes'
+        node = tree.find('./PlatformProtection/IntelPttConfiguration/PttPwrUpState')
+        node.attrib['value'] = 'enabled'
+        node = tree.find('./PlatformProtection/IntelPttConfiguration/PttSupportedFpf')
+        node.attrib['value'] = 'yes'
 
-    Node = Tree.find('./PlatformProtection/BootGuardConfiguration/BtGuardKeyManifestId')
-    Node.attrib['value'] = '0x1'
+    node = tree.find('./PlatformProtection/BootGuardConfiguration/BtGuardKeyManifestId')
+    node.attrib['value'] = '0x1'
 
-    Node = Tree.find('./PlatformProtection/PlatformIntegrity/OemPublicKeyHash')
-    Node.attrib['value'] = oemkeyhash
+    node = tree.find('./PlatformProtection/PlatformIntegrity/OemPublicKeyHash')
+    node.attrib['value'] = oemkeyhash
 
-    Node = Tree.find('./PlatformProtection/BootGuardConfiguration/BtGuardProfileConfig')
-    Node.attrib['value'] = BTG_Profile_Values[Btguardprofile]
+    node = tree.find('./PlatformProtection/BootGuardConfiguration/BtGuardProfileConfig')
+    node.attrib['value'] = btg_profile_values[btguardprofile]
 
-def UpdateBtGuardManifests(StitchDir, CfgVar):
+def update_btGuard_manifests(stitch_dir, cfg_var):
     print("Sigining Coffeelake....")
 
-    OutputDir = os.path.join(StitchDir,"Output", "input")
+    output_dir = os.path.join(stitch_dir,"Output", "input")
 
     print("Sign primary partition....")
-    SignBinary(os.path.join(OutputDir,"SlimBootloader.bin"), StitchDir, CfgVar)
+    sign_binary(os.path.join(output_dir,"SlimBootloader.bin"), stitch_dir, cfg_var)
 
     print("Swap top swap block....")
-    SwapTSBlock(os.path.join(OutputDir, "sbl_sec.bin"), os.path.join(OutputDir, "SwappedA.bin"), 0x20000)
+    swap_ts_block(os.path.join(output_dir, "sbl_sec.bin"), os.path.join(output_dir, "SwappedA.bin"), 0x20000)
 
     print("Sign backup partition....")
-    SignBinary(os.path.join(OutputDir,"SwappedA.bin"), StitchDir, CfgVar)
-    os.remove(os.path.join(OutputDir,"SwappedA.bin"))
+    sign_binary(os.path.join(output_dir,"SwappedA.bin"), stitch_dir, cfg_var)
+    os.remove(os.path.join(output_dir,"SwappedA.bin"))
 
     print("Swap to original top swap block....")
-    SwapTSBlock(os.path.join(OutputDir, "sbl_sec.bin"), os.path.join(OutputDir, "SwappedA.bin"), 0x20000)
-    shutil.copy(os.path.join(OutputDir, "SwappedA.bin"), os.path.join(OutputDir, "SlimBootloader.bin"))
-    os.remove(os.path.join(OutputDir,"SwappedA.bin"))
+    swap_ts_block(os.path.join(output_dir, "sbl_sec.bin"), os.path.join(output_dir, "SwappedA.bin"), 0x20000)
+    shutil.copy(os.path.join(output_dir, "SwappedA.bin"), os.path.join(output_dir, "SlimBootloader.bin"))
+    os.remove(os.path.join(output_dir,"SwappedA.bin"))
 
-def GenXmlFile(StitchDir, CfgVar, BtgProfile, SpiQuad):
+def gen_xml_file(stitch_dir, cfg_var, btg_profile, spi_quad):
 
     print ("Generating xml file .........")
 
-    Cmd = './fit -save new.xml'
-    RunCmd (Cmd, os.path.join(StitchDir, CfgVar['fitinput']))
+    cmd = './fit -save new.xml'
+    run_cmd (cmd, os.path.join(stitch_dir, cfg_var['fitinput']))
 
-    Tree = ET.parse(os.path.join(StitchDir, CfgVar['fitinput'], 'new.xml'))
+    tree = ET.parse(os.path.join(stitch_dir, cfg_var['fitinput'], 'new.xml'))
 
     #Region Order
-    Node = Tree.find('./BuildSettings/BuildResults/RegionOrder')
-    Node.attrib['value'] = '45321'
+    node = tree.find('./BuildSettings/BuildResults/RegionOrder')
+    node.attrib['value'] = '45321'
 
     # Enable BIOS region
     #Node = Tree.find('./FlashLayout/BiosRegion/Enabled')
     #Node.attrib['value'] = 'Enabled'
-    Node = Tree.find('./FlashLayout/BiosRegion/InputFile')
-    Node.attrib['value'] = '$SourceDir\Slimbootloader.bin'
+    node = tree.find('./FlashLayout/BiosRegion/InputFile')
+    node.attrib['value'] = '$SourceDir\Slimbootloader.bin'
 
     # Enable BIOS region
-    Node = Tree.find('./FlashLayout/Ifwi_IntelMePmcRegion/MeRegionFile')
-    Node.attrib['value'] = '$SourceDir\cse_image.bin'
-    Node = Tree.find('./FlashLayout/Ifwi_IntelMePmcRegion/PmcBinary')
-    Node.attrib['value'] = '$SourceDir\pmc.bin'
+    node = tree.find('./FlashLayout/Ifwi_IntelMePmcRegion/MeRegionFile')
+    node.attrib['value'] = '$SourceDir\cse_image.bin'
+    node = tree.find('./FlashLayout/Ifwi_IntelMePmcRegion/PmcBinary')
+    node.attrib['value'] = '$SourceDir\pmc.bin'
 
     # Enable EC region
-    Node = Tree.find('./FlashLayout/EcRegion/InputFile')
-    Node.attrib['value'] = '$SourceDir\ec.bin'
-    Node = Tree.find('./FlashLayout/EcRegion/Enabled')
-    Node.attrib['value'] = 'Enabled'
-    Node = Tree.find('./FlashLayout/EcRegion/EcRegionPointer')
-    Node.attrib['value'] = '$SourceDir\ecregionpointer.bin'
+    node = tree.find('./FlashLayout/EcRegion/InputFile')
+    node.attrib['value'] = '$SourceDir\ec.bin'
+    node = tree.find('./FlashLayout/EcRegion/Enabled')
+    node.attrib['value'] = 'enabled'
+    node = tree.find('./FlashLayout/EcRegion/EcRegionPointer')
+    node.attrib['value'] = '$SourceDir\ecregionpointer.bin'
 
     # Enable GBE region
-    Node = Tree.find('./FlashLayout/GbeRegion/Enabled')
-    Node.attrib['value'] = 'Enabled'
-    Node = Tree.find('./FlashLayout/GbeRegion/InputFile')
-    Node.attrib['value'] = '$SourceDir\gbe.bin'
+    node = tree.find('./FlashLayout/GbeRegion/Enabled')
+    node.attrib['value'] = 'enabled'
+    node = tree.find('./FlashLayout/GbeRegion/InputFile')
+    node.attrib['value'] = '$SourceDir\gbe.bin'
 
     # Disable Quad Io and Out read enable
-    if SpiQuad:
-        Value = 'Yes'
+    if spi_quad:
+        value = 'yes'
     else:
-        Value = 'No'
-    Node = Tree.find('./FlashSettings/FlashConfiguration/QuadIoReadEnable')
-    Node.attrib['value'] = Value
-    Node = Tree.find('./FlashSettings/FlashConfiguration/QuadOutReadEnable')
-    Node.attrib['value'] = Value
+        value = 'no'
+    node = tree.find('./FlashSettings/FlashConfiguration/QuadIoReadEnable')
+    node.attrib['value'] = value
+    node = tree.find('./FlashSettings/FlashConfiguration/QuadOutReadEnable')
+    node.attrib['value'] = value
 
     #VsccTable
-    Node = Tree.find('./FlashSettings/VsccTable/VsccEntries/VsccEntry/VsccEntryName')
-    Node.attrib['value'] = 'VsccEntry0'
-    Node = Tree.find('./FlashSettings/VsccTable/VsccEntries/VsccEntry/VsccEntryVendorId')
-    Node.attrib['value'] = '0xEF'
-    Node = Tree.find('./FlashSettings/VsccTable/VsccEntries/VsccEntry/VsccEntryDeviceId0')
-    Node.attrib['value'] = '0x40'
-    Node = Tree.find('./FlashSettings/VsccTable/VsccEntries/VsccEntry/VsccEntryDeviceId1')
-    Node.attrib['value'] = '0x19'
+    node = tree.find('./FlashSettings/VsccTable/VsccEntries/VsccEntry/VsccEntryName')
+    node.attrib['value'] = 'vscc_entry0'
+    node = tree.find('./FlashSettings/VsccTable/VsccEntries/VsccEntry/VsccEntryVendorId')
+    node.attrib['value'] = '0xEF'
+    node = tree.find('./FlashSettings/VsccTable/VsccEntries/VsccEntry/VsccEntryDeviceId0')
+    node.attrib['value'] = '0x40'
+    node = tree.find('./FlashSettings/VsccTable/VsccEntries/VsccEntry/VsccEntryDeviceId1')
+    node.attrib['value'] = '0x19'
 
     #IntelMekernel
-    Node = Tree.find('./IntelMeKernel/Processor/ProcEmulation')
-    Node.attrib['value'] = 'EMULATE Intel (R) vPro (TM) capable Processor'
+    node = tree.find('./IntelMeKernel/Processor/ProcEmulation')
+    node.attrib['value'] = 'EMULATE Intel (R) vPro (TM) capable Processor'
 
     #PttConfiguration
-    Node = Tree.find('./PlatformProtection/IntelPttConfiguration/PttSupported')
-    Node.attrib['value'] = 'No'
-    Node = Tree.find('./PlatformProtection/IntelPttConfiguration/PttPwrUpState')
-    Node.attrib['value'] = 'Disabled'
-    Node = Tree.find('./PlatformProtection/IntelPttConfiguration/PttSupportedFpf')
-    Node.attrib['value'] = 'No'
+    node = tree.find('./PlatformProtection/IntelPttConfiguration/PttSupported')
+    node.attrib['value'] = 'no'
+    node = tree.find('./PlatformProtection/IntelPttConfiguration/PttPwrUpState')
+    node.attrib['value'] = 'disabled'
+    node = tree.find('./PlatformProtection/IntelPttConfiguration/PttSupportedFpf')
+    node.attrib['value'] = 'no'
 
     #BootGuardConfiguration
-    Node = Tree.find('./PlatformProtection/BiosGuardConfiguration/BiosGrdProtOvrdEn')
-    Node.attrib['value'] = 'No'
+    node = tree.find('./PlatformProtection/BiosGuardConfiguration/BiosGrdProtOvrdEn')
+    node.attrib['value'] = 'no'
 
     #ICC
-    Node = Tree.find('./Icc/IccPolicies/Profiles/Profile/ClockOutputConfiguration/ClkoutCpunsscPnPath')
-    Node.attrib['value'] = 'Direct XTAL IN / Out Path'
+    node = tree.find('./Icc/IccPolicies/Profiles/Profile/ClockOutputConfiguration/ClkoutCpunsscPnPath')
+    node.attrib['value'] = 'Direct XTAL IN / Out Path'
 
     #Networking
-    Node = Tree.find('./NetworkingConnectivity/WiredLanConfiguration/PhyConnected')
-    Node.attrib['value'] = 'PHY on SMLink0'
+    node = tree.find('./NetworkingConnectivity/WiredLanConfiguration/PhyConnected')
+    node.attrib['value'] = 'PHY on SMLink0'
 
     #SMBUS
-    Node = Tree.find('./InternalPchBuses/SmbusSmlinkConfiguration/SLink1freq')
-    Node.attrib['value'] = '1 MHz'
+    node = tree.find('./InternalPchBuses/SmbusSmlinkConfiguration/SLink1freq')
+    node.attrib['value'] = '1 MHz'
 
     #ISH
-    Node = Tree.find('./IntegratedSensorHub/IshSupported')
-    Node.attrib['value'] = 'No'
+    node = tree.find('./IntegratedSensorHub/IshSupported')
+    node.attrib['value'] = 'no'
 
     #CPU Straps
-    Node = Tree.find('./CpuStraps/IaPowerPlaneTopology')
-    Node.attrib['value'] = '0x00000000'
-    Node = Tree.find('./CpuStraps/RingPowerPlaneTopology')
-    Node.attrib['value'] = '0x00000000'
-    Node = Tree.find('./CpuStraps/GtUsPowerPlaneTopology')
-    Node.attrib['value'] = '0x00000001'
-    Node = Tree.find('./CpuStraps/GtSPowerPlaneTopology')
-    Node.attrib['value'] = '0x00000001'
+    node = tree.find('./CpuStraps/IaPowerPlaneTopology')
+    node.attrib['value'] = '0x00000000'
+    node = tree.find('./CpuStraps/RingPowerPlaneTopology')
+    node.attrib['value'] = '0x00000000'
+    node = tree.find('./CpuStraps/GtUsPowerPlaneTopology')
+    node.attrib['value'] = '0x00000001'
+    node = tree.find('./CpuStraps/GtSPowerPlaneTopology')
+    node.attrib['value'] = '0x00000001'
 
     #StrapsDifferences
-    Node = Tree.find('./StrapsDifferences/PCH_Strap_SPI_touch2_max_freq_Diff')
-    Node.attrib['value'] = '0x03'
-    Node = Tree.find('./StrapsDifferences/PCH_Strap_PN0_RPCFG_0_Diff')
-    Node.attrib['value'] = '0x03'
-    Node = Tree.find('./StrapsDifferences/PCH_Strap_PN1_RPCFG_0_Diff')
-    Node.attrib['value'] = '0x03'
-    Node = Tree.find('./StrapsDifferences/PCH_Strap_PN2_RPCFG_0_Diff')
-    Node.attrib['value'] = '0x00'
-    Node = Tree.find('./StrapsDifferences/PCH_Strap_PN3_RPCFG_0_Diff')
-    Node.attrib['value'] = '0x03'
-    Node = Tree.find('./StrapsDifferences/PCH_Strap_EXI_PTSS_PORT3_Diff')
-    Node.attrib['value'] = '0x01'
-    Node = Tree.find('./StrapsDifferences/PCH_Strap_EXI_PTSS_PORT1_Diff')
-    Node.attrib['value'] = '0x01'
-    Node = Tree.find('./StrapsDifferences/PCH_Strap_GBE_SMLink1_Frequency_Diff')
-    Node.attrib['value'] = '0x00'
-    Node = Tree.find('./StrapsDifferences/PCH_Strap_GBE_Reserved3_Diff')
-    Node.attrib['value'] = '0x0F'
-    Node = Tree.find('./StrapsDifferences/CPU_Strap_SEPARATE_VCCAGSH_EXISTS_Diff')
-    Node.attrib['value'] = '0x00'
+    node = tree.find('./StrapsDifferences/PCH_Strap_SPI_touch2_max_freq_Diff')
+    node.attrib['value'] = '0x03'
+    node = tree.find('./StrapsDifferences/PCH_Strap_PN0_RPCFG_0_Diff')
+    node.attrib['value'] = '0x03'
+    node = tree.find('./StrapsDifferences/PCH_Strap_PN1_RPCFG_0_Diff')
+    node.attrib['value'] = '0x03'
+    node = tree.find('./StrapsDifferences/PCH_Strap_PN2_RPCFG_0_Diff')
+    node.attrib['value'] = '0x00'
+    node = tree.find('./StrapsDifferences/PCH_Strap_PN3_RPCFG_0_Diff')
+    node.attrib['value'] = '0x03'
+    node = tree.find('./StrapsDifferences/PCH_Strap_EXI_PTSS_PORT3_Diff')
+    node.attrib['value'] = '0x01'
+    node = tree.find('./StrapsDifferences/PCH_Strap_EXI_PTSS_PORT1_Diff')
+    node.attrib['value'] = '0x01'
+    node = tree.find('./StrapsDifferences/PCH_Strap_GBE_SMLink1_Frequency_Diff')
+    node.attrib['value'] = '0x00'
+    node = tree.find('./StrapsDifferences/PCH_Strap_GBE_Reserved3_Diff')
+    node.attrib['value'] = '0x0F'
+    node = tree.find('./StrapsDifferences/CPU_Strap_SEPARATE_VCCAGSH_EXISTS_Diff')
+    node.attrib['value'] = '0x00'
 
     #FlexIO
-    Node = Tree.find('./FlexIO/PciePortConfiguration/PCIeContoller2Config')
-    Node.attrib['value'] = '1x4'
-    Node = Tree.find('./FlexIO/SataPcieComboPortConfiguration/SataPCIeComboPort0')
-    Node.attrib['value'] = 'PCIe'
-    Node = Tree.find('./FlexIO/SataPcieComboPortConfiguration/SataPCIeComboPort2')
-    Node.attrib['value'] = 'PCIe'
-    Node = Tree.find('./FlexIO/Usb3PortConfiguration/USB3Prt2ConTypeSel')
-    Node.attrib['value'] = 'Type A'
-    Node = Tree.find('./FlexIO/Usb3PortConfiguration/USB3Prt3ConTypeSel')
-    Node.attrib['value'] = 'Type A'
-    Node = Tree.find('./FlexIO/Usb2PortConfiguration/USB2Prt2ConTypeSel')
-    Node.attrib['value'] = 'Type C'
-    Node = Tree.find('./FlexIO/Usb2PortConfiguration/USB2Prt3ConTypeSel')
-    Node.attrib['value'] = 'Type A'
-    Node = Tree.find('./FlexIO/Usb2PortConfiguration/USB2Prt5ConTypeSel')
-    Node.attrib['value'] = 'Type A'
+    node = tree.find('./FlexIO/PciePortConfiguration/PCIeContoller2Config')
+    node.attrib['value'] = '1x4'
+    node = tree.find('./FlexIO/SataPcieComboPortConfiguration/SataPCIeComboPort0')
+    node.attrib['value'] = 'PCIe'
+    node = tree.find('./FlexIO/SataPcieComboPortConfiguration/SataPCIeComboPort2')
+    node.attrib['value'] = 'PCIe'
+    node = tree.find('./FlexIO/Usb3PortConfiguration/USB3Prt2ConTypeSel')
+    node.attrib['value'] = 'Type A'
+    node = tree.find('./FlexIO/Usb3PortConfiguration/USB3Prt3ConTypeSel')
+    node.attrib['value'] = 'Type A'
+    node = tree.find('./FlexIO/Usb2PortConfiguration/USB2Prt2ConTypeSel')
+    node.attrib['value'] = 'Type C'
+    node = tree.find('./FlexIO/Usb2PortConfiguration/USB2Prt3ConTypeSel')
+    node.attrib['value'] = 'Type A'
+    node = tree.find('./FlexIO/Usb2PortConfiguration/USB2Prt5ConTypeSel')
+    node.attrib['value'] = 'Type A'
 
     #GPIO
-    Node = Tree.find('./Gpio/GpioVccioVoltageControl/GppA7voltSelect')
-    Node.attrib['value'] = '3.3Volts'
-    Node = Tree.find('./Gpio/GpioVccioVoltageControl/GppA8voltSelect')
-    Node.attrib['value'] = '3.3Volts'
-    Node = Tree.find('./Gpio/GpioVccioVoltageControl/GppA16voltSelect')
-    Node.attrib['value'] = '3.3Volts'
-    Node = Tree.find('./Gpio/GpioVccioVoltageControl/GppA21voltSelect')
-    Node.attrib['value'] = '3.3Volts'
-    Node = Tree.find('./Gpio/GpioVccioVoltageControl/GppC11voltSelect')
-    Node.attrib['value'] = '3.3Volts'
-    Node = Tree.find('./Gpio/GpioVccioVoltageControl/GppD9voltSelect')
-    Node.attrib['value'] = '1.8Volts'
-    Node = Tree.find('./Gpio/GpioVccioVoltageControl/GppH12voltSelect')
-    Node.attrib['value'] = '3.3Volts'
-    Node = Tree.find('./Gpio/GpioVccioVoltageControl/GppH14voltSelect')
-    Node.attrib['value'] = '3.3Volts'
-    Node = Tree.find('./Gpio/GpioVccioVoltageControl/GppH16voltSelect')
-    Node.attrib['value'] = '1.8Volts'
-    Node = Tree.find('./Gpio/GpioVccioVoltageControl/GppH17voltSelect')
-    Node.attrib['value'] = '1.8Volts'
-    Node = Tree.find('./Gpio/GpioVccioVoltageControl/GppH20voltSelect')
-    Node.attrib['value'] = '3.3Volts'
-    Node = Tree.find('./Gpio/GpioVccioVoltageControl/GppH22voltSelect')
-    Node.attrib['value'] = '3.3Volts'
+    node = tree.find('./Gpio/GpioVccioVoltageControl/GppA7voltSelect')
+    node.attrib['value'] = '3.3Volts'
+    node = tree.find('./Gpio/GpioVccioVoltageControl/GppA8voltSelect')
+    node.attrib['value'] = '3.3Volts'
+    node = tree.find('./Gpio/GpioVccioVoltageControl/GppA16voltSelect')
+    node.attrib['value'] = '3.3Volts'
+    node = tree.find('./Gpio/GpioVccioVoltageControl/GppA21voltSelect')
+    node.attrib['value'] = '3.3Volts'
+    node = tree.find('./Gpio/GpioVccioVoltageControl/GppC11voltSelect')
+    node.attrib['value'] = '3.3Volts'
+    node = tree.find('./Gpio/GpioVccioVoltageControl/GppD9voltSelect')
+    node.attrib['value'] = '1.8Volts'
+    node = tree.find('./Gpio/GpioVccioVoltageControl/GppH12voltSelect')
+    node.attrib['value'] = '3.3Volts'
+    node = tree.find('./Gpio/GpioVccioVoltageControl/GppH14voltSelect')
+    node.attrib['value'] = '3.3Volts'
+    node = tree.find('./Gpio/GpioVccioVoltageControl/GppH16voltSelect')
+    node.attrib['value'] = '1.8Volts'
+    node = tree.find('./Gpio/GpioVccioVoltageControl/GppH17voltSelect')
+    node.attrib['value'] = '1.8Volts'
+    node = tree.find('./Gpio/GpioVccioVoltageControl/GppH20voltSelect')
+    node.attrib['value'] = '3.3Volts'
+    node = tree.find('./Gpio/GpioVccioVoltageControl/GppH22voltSelect')
+    node.attrib['value'] = '3.3Volts'
 
-    if (BtgProfile == 'vm') or (BtgProfile == 'fve') or (BtgProfile == 'fvme'):
+    if (btg_profile == 'vm') or (btg_profile == 'fve') or (btg_profile == 'fvme'):
         print ("Boot Guard is enabled.....")
-        UpdateBtGuardManifests(StitchDir, CfgVar)
-        if BtgProfile == 'vm':
-            UpdateIfwiXml(3, StitchDir, CfgVar, Tree)
-        if BtgProfile == 'fve':
-            UpdateIfwiXml(4, StitchDir, CfgVar, Tree)
-        if BtgProfile == 'fvme':
-            UpdateIfwiXml(5, StitchDir, CfgVar, Tree)
+        update_btGuard_manifests(stitch_dir, cfg_var)
+        if btg_profile == 'vm':
+            update_ifwi_xml(3, stitch_dir, cfg_var, tree)
+        if btg_profile == 'fve':
+            update_ifwi_xml(4, stitch_dir, cfg_var, tree)
+        if btg_profile == 'fvme':
+            update_ifwi_xml(5, stitch_dir, cfg_var, tree)
 
-    Tree.write(os.path.join(StitchDir, CfgVar['fitinput'], 'Platform.xml'))
+    tree.write(os.path.join(stitch_dir, cfg_var['fitinput'], 'Platform.xml'))
 
-def Stitch (StitchDir, StitchZip, BtgProfile, SpiQuadMode, PlatformData, FullRdundant = True):
+def stitch (stitch_dir, stitch_zip, btg_profile, spi_quad_mode, platform_data, full_rdundant = True):
 
-    CfgVar    = GetConfig ()
+    cfg_var    = get_config ()
 
     print ("\nUnpack files from stitching zip file ...")
-    Zf = zipfile.ZipFile(StitchZip, 'r', zipfile.ZIP_DEFLATED)
-    Zf.extractall(os.path.join(StitchDir, CfgVar['fitinput']))
-    Zf.close()
+    zf = zipfile.ZipFile(stitch_zip, 'r', zipfile.ZIP_DEFLATED)
+    zf.extractall(os.path.join(stitch_dir, cfg_var['fitinput']))
+    zf.close()
 
-    os.chdir(StitchDir)
+    os.chdir(stitch_dir)
 
-    if PlatformData:
-        Fd = open(os.path.join(StitchDir, CfgVar['fitinput'], "SlimBootloader.bin"), "rb")
-        InputData = bytearray(Fd.read())
-        Fd.close()
+    if platform_data:
+        fd = open(os.path.join(stitch_dir, cfg_var['fitinput'], "SlimBootloader.bin"), "rb")
+        input_data = bytearray(fd.read())
+        fd.close()
         print ("\n Adding platform data to Slimbootloader ...")
-        Data = AddPlatformData(InputData, PlatformData)
-        Fd = open(os.path.join(StitchDir, CfgVar['fitinput'], "SlimBootloader.bin"), "wb")
-        Fd.write(Data)
-        Fd.close()
+        data = add_platform_data(input_data, platform_data)
+        fd = open(os.path.join(stitch_dir, cfg_var['fitinput'], "SlimBootloader.bin"), "wb")
+        fd.write(data)
+        fd.close()
 
     print ("\nChecking and copying components ...")
-    CopyList = ['cseimg', 'pmc', 'gbe', 'ec', 'ecptr', 'acm', 'fit']
-    for Each in ['fit', 'openssl', 'fithelp'] + CopyList:
-        if not os.path.exists(CfgVar[Each]):
-             raise Exception ("Could not find file '%s' !" % CfgVar[Each])
+    copy_list = ['cseimg', 'pmc', 'gbe', 'ec', 'ecptr', 'acm', 'fit']
+    for each in ['fit', 'openssl', 'fithelp'] + copy_list:
+        if not os.path.exists(cfg_var[each]):
+             raise Exception ("Could not find file '%s' !" % cfg_var[each])
 
-    for Each in CopyList:
-        shutil.copy (CfgVar[Each], CfgVar['fitinput'])
+    for each in copy_list:
+        shutil.copy (cfg_var[each], cfg_var['fitinput'])
 
-    FitDir = StitchDir + '/' + os.path.dirname(CfgVar['fit'])
-    shutil.copy (os.path.join(FitDir, 'vsccommn.bin'), CfgVar['fitinput'])
+    fit_dir = stitch_dir + '/' + os.path.dirname(cfg_var['fit'])
+    shutil.copy (os.path.join(fit_dir, 'vsccommn.bin'), cfg_var['fitinput'])
 
-    GenXmlFile(StitchDir, CfgVar, BtgProfile, SpiQuadMode)
+    gen_xml_file(stitch_dir, cfg_var, btg_profile, spi_quad_mode)
 
     print ("Run fit tool to generate ifwi.........")
-    Cmd = './fit -b -o Ifwi.bin -f Platform.xml'
-    RunCmd (Cmd, os.path.join(StitchDir, CfgVar['fitinput']))
+    cmd = './fit -b -o Ifwi.bin -f Platform.xml'
+    run_cmd (cmd, os.path.join(stitch_dir, cfg_var['fitinput']))
 
     return 0
 
-def Clean (StitchDir, DistMode):
+def clean (stitch_dir, dist_mode):
     print ("Clean up workspace ...")
 
-    CfgVar    = GetConfig ()
-    for Each in [CfgVar['wkspace']]:
-        Each = StitchDir + '/' + Each
-        if os.path.exists(Each):
-            shutil.rmtree(Each)
+    cfg_var    = get_config ()
+    for each in [cfg_var['wkspace']]:
+        each = stitch_dir + '/' + each
+        if os.path.exists(each):
+            shutil.rmtree(each)
 
-    FitDir = StitchDir + '/' + os.path.dirname(CfgVar['fit'])
-    Patterns = [
-      FitDir    + '/*.log',
-      FitDir    + '/*_sbl.xml',
+    fit_dir = stitch_dir + '/' + os.path.dirname(cfg_var['fit'])
+    patterns = [
+      fit_dir    + '/*.log',
+      fit_dir    + '/*_sbl.xml',
     ]
 
-    for Pattern in Patterns:
-        for File in glob.glob(Pattern):
-            os.remove (File)
+    for pattern in patterns:
+        for file in glob.glob(pattern):
+            os.remove (file)
 
     return 0
 
 def main():
 
     if len(sys.argv) == 1:
-        print ('%s' % ExtraUsageTxt)
+        print ('%s' % extra_usage_txt)
 
     hexstr = lambda x: int(x, 16)
 
-    Ap = argparse.ArgumentParser()
-    Ap.add_argument('-w',
+    ap = argparse.ArgumentParser()
+    ap.add_argument('-w',
                     '--stitch-work-dir',
                     dest='stitch_dir',
                     type=str,
                     required=True,
                     help='specify workspace directory for stitching')
 
-    Ap.add_argument('-s',
+    ap.add_argument('-s',
                     '--stitch-zip-file',
                     dest='stitch_zip',
                     type=str,
-                    default='Outputs/apl/Stitch_Components.zip',
+                    default='Outputs/cfl/Stitch_Components.zip',
                     help='specify input stitching zip package file path')
 
-    Ap.add_argument('-b',
+    ap.add_argument('-b',
                     '--boot-guard-profile',
                     default = 'vm',
                     choices=['legacy', 'vm', 'fve', 'fvme'],
                     dest='btg_profile',
                     help='specify Boot Guard profile type')
 
-    Ap.add_argument('-q',
+    ap.add_argument('-q',
                     '--spi-quad-mode',
                     dest='quad_mode',
                     action = "store_true",
                     default = False,
                     help = "enable SPI QUAD mode")
 
-    Ap.add_argument('-c',
+    ap.add_argument('-c',
                     '--clean',
                     dest='clean',
                     action = "store_true",
                     default = False,
                     help = "clean stitching workspace")
 
-    Ap.add_argument('-p',
+    ap.add_argument('-p',
                     '--platform-data',
                     dest='plat_data',
                     type=hexstr,
                     default=None,
                     help='Specify a platform specific data (HEX, DWORD) for customization')
 
-    Args = Ap.parse_args()
+    args = ap.parse_args()
 
-    StitchDir = Args.stitch_dir
+    stitch_dir = args.stitch_dir
     print ("Clean all temporary files.....")
-    if Clean (StitchDir, Args.clean):
+    if clean (stitch_dir, args.clean):
         raise Exception ('Stitching clean up failed !')
 
-    if Args.clean:
+    if args.clean:
         print ("Cleaning completed successfully !\n")
         return 0
 
     print ("Executing stitch.......")
-    if Stitch (StitchDir, Args.stitch_zip, Args.btg_profile, Args.quad_mode, Args.plat_data):
+    if stitch (stitch_dir, args.stitch_zip, args.btg_profile, args.quad_mode, args.plat_data):
         raise Exception ('Stitching process failed !')
 
-    CfgVar       = GetConfig ()
-    IfwiFileName = '%s/%s/%s' % (StitchDir, CfgVar['wkspace'], CfgVar['ifwiname'])
-    IfwiFileName = os.path.normpath (IfwiFileName)
+    cfg_var       = get_config ()
+    ifwi_file_name = '%s/%s/%s' % (stitch_dir, cfg_var['wkspace'], cfg_var['ifwiname'])
+    ifwi_file_name = os.path.normpath (ifwi_file_name)
 
-    shutil.copy (os.path.join(StitchDir, CfgVar['fitinput'], 'Ifwi.bin'), os.path.join(StitchDir, CfgVar['wkspace'], '%s' % CfgVar['ifwiname']))
+    shutil.copy (os.path.join(stitch_dir, cfg_var['fitinput'], 'Ifwi.bin'), os.path.join(stitch_dir, cfg_var['wkspace'], '%s' % cfg_var['ifwiname']))
 
     print ("\nIFWI Stitching completed successfully !")
-    print ("Boot Guard Profile: %s" % Args.btg_profile.upper())
-    print ("IFWI image: %s\n" % IfwiFileName)
+    print ("Boot Guard Profile: %s" % args.btg_profile.upper())
+    print ("IFWI image: %s\n" % ifwi_file_name)
 
     return 0
 
 
 if __name__ == '__main__':
     sys.exit(main())
+
 
