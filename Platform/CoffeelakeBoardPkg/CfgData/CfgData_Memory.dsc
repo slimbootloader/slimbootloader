@@ -10,46 +10,15 @@
 
   # !HDR EMBED:{MEMORY_CFG_DATA:TAG_200:START}
 
-  # !BSF PAGES:{MEM_SPD00:MEM:"SPD Data (Channel 0 Dimm 0)"}
-  # !BSF PAGE:{MEM_SPD00}
-  # !BSF NAME:{Memory SPD Pointer Channel 0 Dimm 0}
-  # !BSF TYPE:{Table}
-  # !BSF OPTION:{ 0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX,}
-  # !BSF OPTION:{+ 8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX, E:1:HEX, F:1:HEX}
-  # !BSF HELP:{Pointer to SPD data in Memory}
-  gCfgData.MemorySpdPtr00                   |      * | 0x200 | {FILE: Spd_Empty.bin}
-
-  # !BSF PAGES:{MEM_SPD01:MEM:"SPD Data (Channel 0 Dimm 1)"}
-  # !BSF PAGE:{MEM_SPD01}
-  # !BSF NAME:{Memory SPD Pointer Channel 0 Dimm 1}
-  # !BSF TYPE:{Table}
-  # !BSF OPTION:{ 0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX,}
-  # !BSF OPTION:{+ 8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX, E:1:HEX, F:1:HEX}
-  # !BSF HELP:{Pointer to SPD data in Memory}
-  gCfgData.MemorySpdPtr01                   |      * | 0x200 | 0
-
-  # !BSF PAGES:{MEM_SPD10:MEM:"SPD Data (Channel 1 Dimm 0)"}
-  # !BSF PAGE:{MEM_SPD10}
-  # !BSF NAME:{Memory SPD Pointer Channel 1 Dimm 0}
-  # !BSF TYPE:{Table}
-  # !BSF OPTION:{ 0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX,}
-  # !BSF OPTION:{+ 8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX, E:1:HEX, F:1:HEX}
-  # !BSF HELP:{Pointer to SPD data in Memory}
-  gCfgData.MemorySpdPtr10                   |      * | 0x200 | {FILE: Spd_Empty.bin}
-
-  # !BSF PAGES:{MEM_SPD11:MEM:"SPD Data (Channel 1 Dimm 1)"}
-  # !BSF PAGE:{MEM_SPD11}
-  # !BSF NAME:{Memory SPD Pointer Channel 1 Dimm 1}
-  # !BSF TYPE:{Table}
-  # !BSF OPTION:{ 0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX,}
-  # !BSF OPTION:{+ 8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX, E:1:HEX, F:1:HEX}
-  # !BSF HELP:{Pointer to SPD data in Memory}
-  gCfgData.MemorySpdPtr11                   |      * | 0x200 | 0
-
   # !BSF PAGE:{MEM}
-  # !BSF NAME:{Spd Address Tabl} TYPE:{EditNum, HEX, (0x00,0xFFFFFFFF)}
+  # !BSF NAME:{Spd Address Table} TYPE:{EditNum, HEX, (0x00,0xFFFFFFFF)}
   # !BSF HELP:{Specify SPD Address table for CH0D0/CH0D1/CH1D0&CH1D1. MemorySpdPtr will be used if SPD Address is 00}
   gCfgData.SpdAddressTable                  |      * | 0x04 | { 0x0, 0x0, 0x0, 0x0 }
+
+  # !BSF SUBT:{SPD_TMPL:0:0 : 0x1}
+  # !BSF SUBT:{SPD_TMPL:0:1 : 0x0}
+  # !BSF SUBT:{SPD_TMPL:1:0 : 0x1}
+  # !BSF SUBT:{SPD_TMPL:1:1 : 0x0}
 
   # !BSF NAME:{Dq Byte Map CH0}
   # !BSF TYPE:{Table}

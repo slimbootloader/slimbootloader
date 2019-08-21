@@ -37,8 +37,6 @@ PCIE_CFG_DATA.ClkFeatures3.ClkUsage   | 0x0D
 PCIE_CFG_DATA.ClkFeatures4.ClkUsage   | 0x04
 PCIE_CFG_DATA.ClkFeatures5.ClkUsage   | 0x0E
 
-MEMORY_CFG_DATA.MemorySpdPtr00        | {FILE: Spd_Upx.bin}
-MEMORY_CFG_DATA.MemorySpdPtr10        | {FILE: Spd_Upx.bin}
 MEMORY_CFG_DATA.DqPinsInterleaved     | 0
 
 GPU_CFG_DATA.DdiPortDHpd              | 0x0

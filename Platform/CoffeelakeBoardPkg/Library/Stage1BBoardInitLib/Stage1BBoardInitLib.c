@@ -90,6 +90,7 @@ UpdateFspConfig (
   GPU_CFG_DATA                    *GpuCfgData;
   UINT16                           PlatformId;
   PEG_GPIO_DATA                   *PegGpioData;
+  UINT32                          SpdData[3];
 
   FspmUpd       = (FSPM_UPD *)FspmUpdPtr;
   Fspmcfg       = &FspmUpd->FspmConfig;
@@ -111,10 +112,14 @@ UpdateFspConfig (
       PlatformId == PLATFORM_ID_CFL_S) {
     CopyMem (&Fspmcfg->SpdAddressTable, MemCfgData->SpdAddressTable, sizeof(MemCfgData->SpdAddressTable));
   } else {
-    Fspmcfg->MemorySpdPtr00       = (UINT32) MemCfgData->MemorySpdPtr00;
-    Fspmcfg->MemorySpdPtr01       = (UINT32) MemCfgData->MemorySpdPtr01;
-    Fspmcfg->MemorySpdPtr10       = (UINT32) MemCfgData->MemorySpdPtr10;
-    Fspmcfg->MemorySpdPtr11       = (UINT32) MemCfgData->MemorySpdPtr11;
+    SpdData[0] = 0;
+    SpdData[1] = (UINT32) (((MEM_SPD0_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD0_TAG))->MemorySpdPtr0);
+    SpdData[2] = (UINT32) (((MEM_SPD1_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD1_TAG))->MemorySpdPtr1);
+
+    Fspmcfg->MemorySpdPtr00       = SpdData[MemCfgData->SpdDataSel00];
+    Fspmcfg->MemorySpdPtr01       = SpdData[MemCfgData->SpdDataSel01];
+    Fspmcfg->MemorySpdPtr10       = SpdData[MemCfgData->SpdDataSel10];
+    Fspmcfg->MemorySpdPtr11       = SpdData[MemCfgData->SpdDataSel11];
   }
   //Dq/Dqs Mapping arrays
   CopyMem (&Fspmcfg->DqByteMapCh0, MemCfgData->DqByteMapCh0, sizeof(MemCfgData->DqByteMapCh0));
