@@ -67,7 +67,7 @@
   BootloaderCoreLib|$(PLATFORM_PACKAGE)/Library/BootloaderCoreLib/BootloaderCoreLib.inf
   PciEnumerationLib|$(PLATFORM_PACKAGE)/Library/PciEnumerationLib/PciEnumerationLib.inf
   AcpiInitLib|$(PLATFORM_PACKAGE)/Library/AcpiInitLib/AcpiInitLib.inf
-  SmbiosInitLib|BootloaderCommonPkg/Library/SmbiosInitLib/SmbiosInitLib.inf
+  SmbiosInitLib|$(PLATFORM_PACKAGE)/Library/SmbiosInitLib/SmbiosInitLib.inf
   LitePeCoffLib|BootloaderCommonPkg/Library/LitePeCoffLib/LitePeCoffLib.inf
   HobLib|BootloaderCommonPkg/Library/HobLib/HobLib.inf
   HobBuildLib|$(PLATFORM_PACKAGE)/Library/HobBuildLib/HobBuildLib.inf
@@ -130,7 +130,7 @@
   DebugAgentLib|BootloaderCommonPkg/Library/DebugAgentLib/DebugAgentLibNull.inf
 !endif
   ElfLib|BootloaderCommonPkg/Library/ElfLib/ElfLib.inf
-  S3SaveRestoreLib|BootloaderCorePkg/Library/S3SaveRestoreLib/S3SaveRestoreLib.inf
+  S3SaveRestoreLib|$(PLATFORM_PACKAGE)/Library/S3SaveRestoreLib/S3SaveRestoreLib.inf
 
   BoardSupportLib|Platform/CommonBoardPkg/Library/BoardSupportLib/BoardSupportLib.inf
 
