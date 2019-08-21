@@ -25,7 +25,6 @@
 [Packages]
   MdePkg/MdePkg.dec
   IntelFsp2Pkg/IntelFsp2Pkg.dec
-  BootloaderCorePkg/BootloaderCorePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
 
 [LibraryClasses]
