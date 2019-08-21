@@ -505,9 +505,9 @@ class Build(object):
 
 			flags  = 0
 			if redundant:
-				flags |= FlashMap.FLASH_MAP_DESC_FLAGS['BACKUP']
+				flags |= FLASH_MAP.FLASH_MAP_DESC_FLAGS['BACKUP']
 			if region_name in ['TOP_SWAP', 'REDUNDANT', 'NON_REDUNDANT', 'NON_VOLATILE']:
-				flags |= FlashMap.FLASH_MAP_DESC_FLAGS[region_name]
+				flags |= FLASH_MAP.FLASH_MAP_DESC_FLAGS[region_name]
 
 			oldidx         = len (comp_list)
 			parent_size    = getattr(self._board, '%s_SIZE' % region_name, 0)
@@ -515,7 +515,7 @@ class Build(object):
 			for comp in img_list[idx][1]:
 				if comp[3] & STITCH_OPS.MODE_FILE_IGNOR:
 					continue
-				compress = FlashMap.FLASH_MAP_DESC_FLAGS['COMPRESSED'] if comp[1] else 0
+				compress = FLASH_MAP.FLASH_MAP_DESC_FLAGS['COMPRESSED'] if comp[1] else 0
 				if comp[0] in region_name_list:
 					idx = region_name_list.index (comp[0])
 					region_size = process_image_list (idx, offset)
@@ -679,7 +679,7 @@ class Build(object):
 
 	def create_platform_vars (self):
 		for comp in self._comp_list:
-			if comp['flag'] & FlashMap.FLASH_MAP_DESC_FLAGS['BACKUP'] or comp['bname'] == 'EMPTY':
+			if comp['flag'] & FLASH_MAP.FLASH_MAP_DESC_FLAGS['BACKUP'] or comp['bname'] == 'EMPTY':
 				continue
 			setattr(self._board, '%s_BASE' % comp['bname'], comp['base'])
 
@@ -762,8 +762,8 @@ class Build(object):
 		fo = open(os.path.join(self._fv_dir, 'STAGE1A_B.fd'), 'r+b')
 		bins = bytearray(fo.read())
 		fmapoff = (bytes_to_value(bins[-8:-4]) + len(bins)) & 0xFFFFFFFF
-		fmaphdr = FlashMap.from_buffer (bins, fmapoff)
-		if fmaphdr.sig != FlashMap.FLASH_MAP_SIGNATURE:
+		fmaphdr = FLASH_MAP.from_buffer (bins, fmapoff)
+		if fmaphdr.sig != FLASH_MAP.FLASH_MAP_SIGNATURE:
 			raise Exception ('Failed to locate flash map in STAGE1A_B.fd !')
 		fmaphdr.attributes |=  fmaphdr.FLASH_MAP_ATTRIBUTES['BACKUP_REGION']
 		fo.seek(fmapoff)

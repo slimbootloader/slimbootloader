@@ -14,7 +14,7 @@ import sys
 
 sys.dont_write_bytecode = True
 sys.path.append (os.path.join('..', '..'))
-from BuildLoader import FlashMap, BaseBoard, STITCH_OPS
+from BuildLoader import FLASH_MAP, BaseBoard, STITCH_OPS
 
 class Board(BaseBoard):
 	def __init__(self, *args, **kwargs):
@@ -182,16 +182,16 @@ class Board(BaseBoard):
 				if child[3] & STITCH_OPS.MODE_FILE_IGNOR:
 					continue
 				bname = os.path.splitext(child[0])[0]
-				comp = {'name':child[0], 'bname':bname, 'offset':offset, 'size':child[2], 'flag': FlashMap.FLASH_MAP_DESC_FLAGS['COMPRESSED'] if child[1] else 0}
+				comp = {'name':child[0], 'bname':bname, 'offset':offset, 'size':child[2], 'flag': FLASH_MAP.FLASH_MAP_DESC_FLAGS['COMPRESSED'] if child[1] else 0}
 				if bname in  ['STAGE1A', 'STAGE1B', 'STAGE2', 'FWUPDATE', 'CFGDATA', 'MRCDATA', 'PAYLOAD', 'VARIABLE']:
-					comp['flag'] |= FlashMap.FLASH_MAP_DESC_FLAGS['REDUNDANT']
+					comp['flag'] |= FLASH_MAP.FLASH_MAP_DESC_FLAGS['REDUNDANT']
 				else:
-					comp['flag'] |= FlashMap.FLASH_MAP_DESC_FLAGS['NON_REDUNDANT']
+					comp['flag'] |= FLASH_MAP.FLASH_MAP_DESC_FLAGS['NON_REDUNDANT']
 				comp_list.append (comp)
 				offset += child[2]
 
-		flag = FlashMap.FLASH_MAP_DESC_FLAGS['REDUNDANT']
-		comp_list.append ({'name':'SBLRSVD.bin','bname':'SBLRSVD','offset':0, 'size':self.SBLRSVD_SIZE, 'flag': FlashMap.FLASH_MAP_DESC_FLAGS['NON_REDUNDANT']})
+		flag = FLASH_MAP.FLASH_MAP_DESC_FLAGS['REDUNDANT']
+		comp_list.append ({'name':'SBLRSVD.bin','bname':'SBLRSVD','offset':0, 'size':self.SBLRSVD_SIZE, 'flag': FLASH_MAP.FLASH_MAP_DESC_FLAGS['NON_REDUNDANT']})
 		comp_list.append ({'name':'BPM.bin',    'bname':'BPM',    'offset':0, 'size':0, 'flag': flag})
 		comp_list.append ({'name':'OEMKEY.bin', 'bname':'OEMKEY', 'offset':0, 'size':0, 'flag': flag})
 		return comp_list[::-1]

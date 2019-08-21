@@ -22,6 +22,7 @@ import datetime
 import zipfile
 import ntpath
 from   CommonUtility import *
+from   IfwiUtility   import FLASH_MAP, FLASH_MAP_DESC
 
 sys.dont_write_bytecode = True
 sys.path.append (os.path.join(os.path.dirname(__file__), '..', '..', 'IntelFsp2Pkg', 'Tools'))
@@ -168,84 +169,6 @@ class VariableRegionHeader(Structure):
 		]
 
 
-class FlashMapDesc(Structure):
-	_pack_ = 1
-	_fields_ = [
-		('sig',             ARRAY(c_char, 4)),
-		('flags',           c_uint32),
-		('offset',          c_uint32),
-		('size',            c_uint32),
-		]
-
-
-class FlashMap(Structure):
-
-	FLASH_MAP_SIGNATURE = b'FLMP'
-
-	FLASH_MAP_COMPONENT_SIGNATURE = {
-		"STAGE1A"       : "SG1A",
-		"STAGE1B"       : "SG1B",
-		"STAGE2"        : "SG02",
-		"ACM"           : "ACM0",
-		"UCODE"         : "UCOD",
-		"MRCDATA"       : "MRCD",
-		"VARIABLE"      : "VARS",
-		"PAYLOAD"       : "PYLD",
-		"EPAYLOAD"      : "EPLD",
-		"SIIPFW"        : "IPFW",
-		"UEFIVARIABLE"  : "UVAR",
-		"SPI_IAS1"      : "IAS1",
-		"SPI_IAS2"      : "IAS2",
-		"FWUPDATE"      : "FWUP",
-		"CFGDATA"       : "CNFG",
-		"BPM"           : "_BPM",
-		"OEMKEY"        : "OEMK",
-		"SBLRSVD"       : "RSVD",
-		"EMPTY"         : "EMTY",
-		"UNKNOWN"       : "UNKN",
-		}
-
-	FLASH_MAP_ATTRIBUTES = {
-	  "PRIMARY_REGION"  : 0x00000000,
-	  "BACKUP_REGION"   : 0x00000001,
-	}
-
-	FLASH_MAP_DESC_FLAGS = {
-	  "TOP_SWAP"      : 0x00000001,
-	  "REDUNDANT"     : 0x00000002,
-	  "NON_REDUNDANT" : 0x00000004,
-	  "NON_VOLATILE"  : 0x00000008,
-	  "COMPRESSED"    : 0x00000010,
-	  "BACKUP"        : 0x00000040,
-	}
-
-	_pack_ = 1
-	_fields_ = [
-		('sig',              ARRAY(c_char, 4)),
-		('version',          c_uint16),
-		('length',           c_uint16),
-		('attributes',       c_uint8),
-		('reserved',         ARRAY(c_char, 3)),
-		('romsize',          c_uint32),
-		]
-
-	def __init__(self):
-		self.sig = FlashMap.FLASH_MAP_SIGNATURE
-		self.version = 1
-		self.romsize = 0
-		self.attributes = 0
-		self.length  = sizeof(self)
-		self.descriptors = []
-
-	def add(self, desc):
-		self.descriptors.append(desc)
-
-	def finalize (self):
-		# Calculate size of the flash map
-		self.romsize = sum ([x.size for x in self.descriptors])
-		self.length  = sizeof(self) + len(self.descriptors) * sizeof(FlashMapDesc)
-
-
 def split_fsp(path, out_dir):
 	run_process ([
 				"python",
@@ -372,10 +295,10 @@ def gen_ias_file (rel_file_path, file_space, out_file):
 
 
 def gen_flash_map_bin (flash_map_file, comp_list):
-	flash_map = FlashMap()
+	flash_map = FLASH_MAP()
 	for comp in reversed(comp_list):
-		desc  = FlashMapDesc ()
-		desc.sig    = FlashMap.FLASH_MAP_COMPONENT_SIGNATURE[comp['bname']].encode()
+		desc  = FLASH_MAP_DESC ()
+		desc.sig    = FLASH_MAP.FLASH_MAP_COMPONENT_SIGNATURE[comp['bname']].encode()
 		desc.flags  = comp['flag']
 		desc.offset = comp['offset']
 		desc.size   = comp['size']
@@ -860,8 +783,8 @@ def decode_flash_map (flash_map_file, print_address = True):
 	flash_map_data = bytearray(fmap_bins.read())
 	fmap_bins.close()
 
-	flash_map = FlashMap.from_buffer (flash_map_data)
-	entry_num = (flash_map.length - sizeof(FlashMap)) // sizeof(FlashMapDesc)
+	flash_map = FLASH_MAP.from_buffer (flash_map_data)
+	entry_num = (flash_map.length - sizeof(FLASH_MAP)) // sizeof(FLASH_MAP_DESC)
 
 	image_size = flash_map.romsize
 	image_base = 0x100000000 - image_size
@@ -880,15 +803,15 @@ def decode_flash_map (flash_map_file, print_address = True):
 	disp_rgn = ''
 
 	for idx in range (entry_num):
-		desc  = FlashMapDesc.from_buffer (flash_map_data, sizeof(FlashMap) + idx * sizeof(FlashMapDesc))
-		flags = 'Compressed  '  if (desc.flags & FlashMap.FLASH_MAP_DESC_FLAGS['COMPRESSED']) else 'Uncompressed'
-		for rgn_name, rgn_flag in list(FlashMap.FLASH_MAP_DESC_FLAGS.items()):
+		desc  = FLASH_MAP_DESC.from_buffer (flash_map_data, sizeof(FLASH_MAP) + idx * sizeof(FLASH_MAP_DESC))
+		flags = 'Compressed  '  if (desc.flags & FLASH_MAP.FLASH_MAP_DESC_FLAGS['COMPRESSED']) else 'Uncompressed'
+		for rgn_name, rgn_flag in list(FLASH_MAP.FLASH_MAP_DESC_FLAGS.items()):
 			if rgn_flag == (desc.flags & 0x0F):
-				if rgn_flag & (FlashMap.FLASH_MAP_DESC_FLAGS['NON_REDUNDANT'] | FlashMap.FLASH_MAP_DESC_FLAGS['NON_VOLATILE']):
+				if rgn_flag & (FLASH_MAP.FLASH_MAP_DESC_FLAGS['NON_REDUNDANT'] | FLASH_MAP.FLASH_MAP_DESC_FLAGS['NON_VOLATILE']):
 					rgn_suf      = ''
 					disp_rgn_suf = ''
 				else:
-					suffixes = 'B' if desc.flags & FlashMap.FLASH_MAP_DESC_FLAGS['BACKUP'] else 'A'
+					suffixes = 'B' if desc.flags & FLASH_MAP.FLASH_MAP_DESC_FLAGS['BACKUP'] else 'A'
 					rgn_suf      = '_' + suffixes
 					disp_rgn_suf = ' ' + suffixes
 				region   = ''.join([word[0] for word in rgn_name.split('_')]) + rgn_suf

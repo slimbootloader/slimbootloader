@@ -23,12 +23,10 @@ from   subprocess   import check_output
 from   collections  import OrderedDict
 
 sys.dont_write_bytecode = True
-from   StitchLoader import COMPONENT, SUBPART_DIR_HEADER, SUBPART_DIR_ENTRY, BIOS_ENTRY
-from   StitchLoader import FlashMap, FlashMapDesc, Bytes2Val, PatchFlashMap
-from   StitchLoader import ManipulateIfwi, LocateComponent, ParseIfwiLayout, PrintIfwiLayout
+from   StitchLoader import *
 
-ExtraUsageTxt = """
-This script creates a new Apollo Lake Slim Bootloader IFWI image using FIT
+extra_usage_txt = \
+"""This script creates a new Apollo Lake Slim Bootloader IFWI image using FIT
 tool.  For the FIT tool and stitching ingredients listed in step 2 below, please
 contact your Intel representative to get them.
 
@@ -99,11 +97,10 @@ Please follow the steps below for APL-I IFWI stitching.
 
 """
 
-
-def GetConfig ():
+def get_config ():
     # This dictionary defines path for stitching components
-    CfgVar = {
-      'wkspace'   :   'Output',
+    cfg_var = {
+      'wkspace'   :   'output',
       'fitinput'  :   'Output/input',
       'ifwiname'  :   'APL_SBL_IFWI.bin',
       'fitxml'    :   'CSE/FIT/bxt_spi_8mb.xml',
@@ -120,309 +117,280 @@ def GetConfig ():
       'patch2'    :   'Patch/06-5c-0a',
       'keys'      :   'Keys/bxt_dbg_priv_key.pem',
     }
-    return CfgVar
+    return cfg_var
 
 
-def ParseBiosLayout (ImgData):
-    Offset = 0
-    BiosHdr = BIOS_ENTRY.from_buffer(ImgData, Offset)
-    if BiosHdr.Name != b'BIOS':
-        return None
 
-    BiosComp = COMPONENT(BiosHdr.Name.decode(), COMPONENT.TYPE_IMG, 0, len(ImgData))
-    Offset += sizeof(BiosHdr)
-    EntryNum = BiosHdr.Offset
-    for Idx in range(EntryNum):
-        PartEntry = BIOS_ENTRY.from_buffer(ImgData, Offset)
-        PartComp = COMPONENT(PartEntry.Name.decode(), COMPONENT.TYPE_DIR,
-                             PartEntry.Offset, PartEntry.Length)
-        BiosComp.AddChild(PartComp)
-        SubPartDirHdr = SUBPART_DIR_HEADER.from_buffer(ImgData,
-                                                       PartEntry.Offset)
-        if b'$CPD' == SubPartDirHdr.HeaderMarker:
-            for Dir in range(SubPartDirHdr.NumOfEntries):
-                PartDir = SUBPART_DIR_ENTRY.from_buffer(
-                    ImgData, PartEntry.Offset + sizeof(SUBPART_DIR_HEADER) +
-                    sizeof(SUBPART_DIR_ENTRY) * Dir)
-                DirComp = COMPONENT(PartDir.EntryName.decode(), COMPONENT.TYPE_FILE,
-                                    PartEntry.Offset + PartDir.EntryOffset,
-                                    PartDir.EntrySize)
-                PartComp.AddChild(DirComp)
-        Offset += sizeof(PartEntry)
+def copy_primary_bpdt (ifwi_file, output_file = ''):
+    fd = open(ifwi_file, "rb")
+    ifwi_img_data = bytearray(fd.read())
+    fd.close()
 
-    return BiosComp
-
-
-def CopyPrimaryBpdt (IfwiFile, OutputFile = ''):
-    Fd = open(IfwiFile, "rb")
-    IfwiImgData = bytearray(Fd.read())
-    Fd.close()
-
-    Ret = ManipulateIfwi  ('COPY', '', IfwiImgData)
-    if Ret != 0:
+    ret = manipulate_ifwi  ('COPY', '', ifwi_img_data)
+    if ret != 0:
         return -1
 
-    if OutputFile == '':
-        OutputFile = IfwiFile
+    if output_file == '':
+        output_file = ifwi_file
 
-    Fd = open(OutputFile, "wb")
-    Fd.write(IfwiImgData)
-    Fd.close()
+    fd = open(output_file, "wb")
+    fd.write(ifwi_img_data)
+    fd.close()
 
     return 0
 
 
-def PatchIbbFlashMap (IbblFile, IfwiFile, OutputFile = ''):
-    Fd = open(IfwiFile, "rb")
-    IfwiImgData = bytearray(Fd.read())
-    Fd.close()
-    Ifwi = PatchFlashMap (IfwiImgData)
-    if Ifwi:
+def patch_ibb_flash_map (ibbl_file, ifwi_file, platform_data, output_file = ''):
+    fd = open(ifwi_file, "rb")
+    ifwi_img_data = bytearray(fd.read())
+    fd.close()
+    ifwi = patch_flash_map (ifwi_img_data, platform_data)
+    if ifwi:
         return -1
 
-    if OutputFile == '':
-        OutputFile = IbblFile
+    if output_file == '':
+        output_file = ibbl_file
 
-    Ifwi = ParseIfwiLayout (IfwiImgData)
-    if not Ifwi:
+    ifwi = IFWI_PARSER.parse_ifwi_binary (ifwi_img_data)
+    if not ifwi:
         return -2
 
     # Locate IBBL in both BP0 and BP1
-    for Part in range(2):
-        Path = 'ROOT/IFWI/BP%d/BPDT/BpdtIbb/IBBL' % Part
-        Ibbl = LocateComponent (Ifwi, Path)
-        if not Ibbl:
-            if Part == 0:
+    for part in range(2):
+        path = "IFWI/BIOS/BP%d/BPDT/BpdtIbb/IBBL" % part
+        ibbl = IFWI_PARSER.locate_component (ifwi, path)
+        if not ibbl:
+            if part == 0:
                 return -3
             continue
 
-        IbblImgData = IfwiImgData[Ibbl.Offset:Ibbl.Offset + Ibbl.Length]
+        ibbl_img_data = ifwi_img_data[ibbl.offset:ibbl.offset + ibbl.length]
 
-        if Part == 1:
-            OutputFile = OutputFile[0:-4] + "_backup.bin"
+        if part == 1:
+            output_file = output_file[0:-4] + "_backup.bin"
 
-        Fd = open(OutputFile, "wb")
-        Fd.write(IbblImgData)
-        Fd.close()
+        fd = open(output_file, "wb")
+        fd.write(ibbl_img_data)
+        fd.close()
 
     return 0
 
-def ReplaceIbbPartition (BiosImage, IfwiImage, OutputImage, BiosPath, IfwiPath):
-    Fd = open(BiosImage, "rb")
-    BiosImgData = bytearray(Fd.read())
-    Fd.close()
-    Bios = ParseBiosLayout (BiosImgData)
-    if not Bios:
+def replace_ibb_partition (bios_image, ifwi_image, output_image, bios_path, ifwi_path):
+    fd = open(bios_image, "rb")
+    bios_img_data = bytearray(fd.read())
+    fd.close()
+    bios = IFWI_PARSER.parse_ifwi_binary (bios_img_data)
+    if not bios:
         return -1
 
-    Fd = open(IfwiImage, "rb")
-    IfwiImgData = bytearray(Fd.read())
-    Fd.close()
-    Ifwi = ParseIfwiLayout (IfwiImgData)
-    if not Ifwi:
+    fd = open(ifwi_image, "rb")
+    ifwi_img_data = bytearray(fd.read())
+    fd.close()
+    ifwi = IFWI_PARSER.parse_ifwi_binary (ifwi_img_data)
+    if not ifwi:
         return -2
 
-    BiosComp = LocateComponent (Bios, BiosPath)
-    if not BiosComp:
+    bios_comp = IFWI_PARSER.locate_component (bios, bios_path)
+    if not bios_comp:
         return -3
 
-    IfwiComp = LocateComponent (Ifwi, IfwiPath)
-    if not IfwiComp:
+    ifwi_comp = IFWI_PARSER.locate_component (ifwi, ifwi_path)
+    if not ifwi_comp:
         return -4
 
-    if BiosComp.Length != IfwiComp.Length:
+    if bios_comp.length != ifwi_comp.length:
         return -5
 
-    IfwiImgData[IfwiComp.Offset:IfwiComp.Offset + IfwiComp.Length] = \
-        BiosImgData[BiosComp.Offset:BiosComp.Offset + BiosComp.Length]
+    ifwi_img_data[ifwi_comp.offset:ifwi_comp.offset + ifwi_comp.length] = \
+        bios_img_data[bios_comp.offset:bios_comp.offset + bios_comp.length]
 
-    if OutputImage == '':
-        OutputImage = IfwiImage
+    if output_image == '':
+        output_image = ifwi_image
 
-    Fd = open(IfwiImage, "wb")
-    Fd.write(IfwiImgData)
-    Fd.close()
+    fd = open(ifwi_image, "wb")
+    fd.write(ifwi_img_data)
+    fd.close()
 
     return 0
 
 
-def PaddingIasImage (IbblImage):
-    Fd = open(IbblImage, "rb")
-    IbblImgData = bytearray(Fd.read())
-    Fd.close()
+def padding_ias_image (ibbl_image):
+    fd = open(ibbl_image, "rb")
+    ibbl_img_data = bytearray(fd.read())
+    fd.close()
 
     # Locate FlashMap offset
-    FlaMapOff = (Bytes2Val(IbblImgData[-8:-4]) + len(IbblImgData)) & 0xFFFFFFFF
-    FlaMapStr = FlashMap.from_buffer (IbblImgData, FlaMapOff)
-    EntryNum  = (FlaMapStr.Length - sizeof(FlashMap)) // sizeof(FlashMapDesc)
-    for Idx in range (EntryNum):
-        Desc  = FlashMapDesc.from_buffer (IbblImgData, FlaMapOff + sizeof(FlashMap) + Idx * sizeof(FlashMapDesc))
-        if Desc.Sig != 'IAS1' :
+    fla_map_off = (bytes_to_value(ibbl_img_data[-8:-4]) + len(ibbl_img_data)) & 0xFFFFFFFF
+    fla_map_str = FLASH_MAP.from_buffer (ibbl_img_data, fla_map_off)
+    entry_num  = (fla_map_str.length - sizeof(FLASH_MAP)) // sizeof(FLASH_MAP_DESC)
+    for idx in range (entry_num):
+        desc  = FLASH_MAP_DESC.from_buffer (ibbl_img_data, fla_map_off + sizeof(FLASH_MAP) + idx * sizeof(FLASH_MAP_DESC))
+        if desc.sig != 'IAS1' :
             continue
-        Ias1Name  = os.path.join(os.path.dirname (IbblImage), 'Stitch_FB.bin')
-        if not os.path.exists(Ias1Name):
-            Ias1Size = 0
-            Mode     = 'wb'
+        ias1name  = os.path.join(os.path.dirname (ibbl_image), 'Stitch_FB.bin')
+        if not os.path.exists(ias1name):
+            ias1size = 0
+            mode     = 'wb'
         else:
-            Ias1Size = os.path.getsize(Ias1Name)
-            Mode     = 'r+b'
-        if Desc.Size > Ias1Size:
-            IasFh = open (Ias1Name, Mode)
-            IasFh.seek (Ias1Size)
-            IasFh.write ('\xff' * (Desc.Size - Ias1Size))
-            IasFh.close()
-        if Desc.Size < Ias1Size:
-            raise Exception("ERROR: IAS1 image 0x%x bigger than size 0x%x in FlashMap!" % (Ias1Size, Desc.Size))
+            ias1size = os.path.getsize(ias1name)
+            mode     = 'r+b'
+        if desc.size > ias1size:
+            ias_fh = open (ias1name, mode)
+            ias_fh.seek (ias1size)
+            ias_fh.write ('\xff' * (desc.size - ias1size))
+            ias_fh.close()
+        if desc.size < ias1size:
+            raise Exception("ERROR: IAS1 image 0x%x bigger than size 0x%x in FlashMap!" % (ias1size, desc.size))
 
     return 0
 
 
-def RunCmd (Cmd, Cwd):
+def run_cmd (cmd, cwd):
     sys.stdout.flush()
     try:
-        CmdArgs = shlex.split(Cmd)
+        cmd_args = shlex.split(cmd)
         if os.name == 'nt':
-            Shell = True
-            if CmdArgs[0].startswith('./'):
-                CmdArgs[0] = CmdArgs[0][2:]
+            shell = True
+            if cmd_args[0].startswith('./'):
+                cmd_args[0] = cmd_args[0][2:]
         else:
-            Shell = False
-        Proc = subprocess.Popen(CmdArgs, shell = Shell, cwd=Cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        Out, Err = Proc.communicate()
-        Out = Out.decode()
-        Err = Err.decode()
-        Ret = Proc.returncode
+            shell = False
+        proc = subprocess.Popen(cmd_args, shell = shell, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = proc.communicate()
+        out = out.decode()
+        err = err.decode()
+        ret = proc.returncode
     except Exception as e:
-        Out, Err = '', e
-        Ret = 1
-    if Ret:
+        out, err = '', e
+        ret = 1
+    if ret:
         sys.stdout.flush()
-        print('%s\n%s' % (Out, Err))
-        print("Failed to run command:\n  PATH: %s\n   CMD: %s" % (Cwd, Cmd))
+        print('%s\n%s' % (out, err))
+        print("Failed to run command:\n  PATH: %s\n   CMD: %s" % (cwd, cmd))
         sys.exit(1)
 
 
-def RebuildModules (Node, ModList):
-    for Child in list(Node):
-        Node.remove (Child)
-    for Mod, FileName in ModList:
-        Child  = ET.SubElement(Node, "DataModule")
-        Child.attrib['name'] = Mod
-        Child2 = ET.SubElement(Child, "InputFile")
-        Child2.attrib['value'] = "$SourceDir/Stitch_%s.bin" % FileName
+def rebuild_modules (node, mod_list):
+    for child in list(node):
+        node.remove (child)
+    for mod, file_name in mod_list:
+        child  = ET.SubElement(node, "DataModule")
+        child.attrib['name'] = mod
+        child2 = ET.SubElement(child, "InputFile")
+        child2.attrib['value'] = "$SourceDir/Stitch_%s.bin" % file_name
 
 
-def XmlWrite (Tree, File):
-    Text = ET.tostring(Tree.getroot(), 'utf-8')
-    Reparsed  = minidom.parseString(Text)
-    Formatted = Reparsed.toprettyxml(indent='    ', newl='\n', encoding="utf-8")
-    Fp = open (File, "w")
-    for Line in Formatted.splitlines():
-        if Line.strip():
-            Fp.write ('%s\n' % (Line.decode() if sys.hexversion >= 0x3000000 else Line))
-    Fp.close()
+def xml_write (tree, file):
+    text = ET.tostring(tree.getroot(), 'utf-8')
+    reparsed  = minidom.parseString(text)
+    formatted = reparsed.toprettyxml(indent='    ', newl='\n', encoding="utf-8")
+    fp = open (file, "w")
+    for line in formatted.splitlines():
+        if line.strip():
+            fp.write ('%s\n' % (line.decode() if sys.hexversion >= 0x3000000 else line))
+    fp.close()
 
 
-def GenMeuOemKeyXml (MeuDir, Src, Dst):
-    CfgVar = GetConfig ()
-    Tree = ET.parse(MeuDir + '/%s' % Src)
-    Node = Tree.find('./KeyManifestEntries')
-    for Child in list(Node):
-        Node.remove (Child)
+def gen_meu_oem_key_xml (meu_dir, src, dst):
+    cfg_var = get_config ()
+    tree = ET.parse(meu_dir + '/%s' % src)
+    node = tree.find('./KeyManifestEntries')
+    for child in list(node):
+        node.remove (child)
 
-    ManifestList = [
+    manifest_list = [
       ('IfwiManifest | OemSmipManifest | OemDnxIfwiManifest | BootPolicyManifest' ,
         'bxt_dbg_pub_key_hash.bin'),
       ('cAvsImage0Manifest | cAvsImage1Manifest' ,
         'bxt_prod_pub_key_hash_Audio.bin'),
       ('iUnitBootLoaderManifest | iUnitMainFwManifest' ,
         'bxt_prod_pub_key_hash_iUnit.bin'),
-      ('IshManifest' ,
+      ('ish_manifest' ,
         'bxt_prod_pub_key_hash_ISH.bin')
     ]
 
-    Prefix = '../..'
-    for Manifest, FileName in ManifestList:
-        Child  = ET.SubElement(Node, "KeyManifestEntry")
-        Child2 = ET.SubElement(Child, "Usage")
-        Child2.attrib['value'] = Manifest
-        Child3 = ET.SubElement(Child, "HashBinary")
-        Child3.attrib['value'] = '%s/%s/%s' % (Prefix, CfgVar['fitinput'], FileName)
+    prefix = '../..'
+    for manifest, file_name in manifest_list:
+        child  = ET.SubElement(node, "KeyManifestEntry")
+        child2 = ET.SubElement(child, "Usage")
+        child2.attrib['value'] = manifest
+        child3 = ET.SubElement(child, "HashBinary")
+        child3.attrib['value'] = '%s/%s/%s' % (prefix, cfg_var['fitinput'], file_name)
 
-    XmlWrite (Tree, MeuDir + '/%s' % Dst)
+    xml_write (tree, meu_dir + '/%s' % dst)
 
 
-def GenMeuCfgXml (MeuDir, Src, Dst):
-    CfgVar = GetConfig ()
-    Tree = ET.parse(MeuDir + '/%s' % Src)
-    Node = Tree.find('./SigningConfig/SigningToolPath')
-    if CfgVar['openssl'].startswith('/'):
-        Node.attrib['value'] = CfgVar['openssl']
+def gen_meu_cfg_xml (meu_dir, src, dst):
+    cfg_var = get_config ()
+    tree = ET.parse(meu_dir + '/%s' % src)
+    node = tree.find("./SigningConfig/SigningToolPath")
+    if cfg_var['openssl'].startswith('/'):
+        node.attrib['value'] = cfg_var['openssl']
     else:
-        Node.attrib['value'] = '../../' + CfgVar['openssl']
-    Node = Tree.find('./SigningConfig/PrivateKeyPath')
-    Node.attrib['value'] = '../../' + CfgVar['keys']
-    XmlWrite (Tree, MeuDir + '/%s' % Dst)
+        node.attrib['value'] = '../../' + cfg_var['openssl']
+    node = tree.find("./SigningConfig/PrivateKeyPath")
+    node.attrib['value'] = '../../' + cfg_var['keys']
+    xml_write (tree, meu_dir + '/%s' % dst)
 
 
-def GenFitXml (FitDir, Src, Dst, BtgProfile, SpiQuad):
-    CfgVar = GetConfig ()
-    Tree = ET.parse(FitDir + '/%s' % Src)
+def gen_fit_xml (fit_dir, src, dst, btg_profile, spi_quad):
+    cfg_var = get_config ()
+    tree = ET.parse(fit_dir + '/%s' % src)
 
     # Change tool path
-    Node = Tree.find('./BuildSettings/BuildResults/MeuToolPath')
+    node = tree.find("./BuildSettings/BuildResults/MeuToolPath")
     if os.name == 'nt':
-        Node.attrib['value'] = '../MEU/meu.exe'
+        node.attrib['value'] = "../MEU/meu.exe"
     else:
-        Node.attrib['value'] = '../MEU/meu'
-    Node = Tree.find('./BuildSettings/BuildResults/SigningToolPath')
-    if CfgVar['openssl'].startswith('/'):
-        Node.attrib['value'] = CfgVar['openssl']
+        node.attrib['value'] = "../MEU/meu"
+    node = tree.find("./BuildSettings/BuildResults/SigningToolPath")
+    if cfg_var['openssl'].startswith('/'):
+        node.attrib['value'] = cfg_var['openssl']
     else:
-        Node.attrib['value'] = '../../' + CfgVar['openssl']
+        node.attrib['value'] = '../../' + cfg_var['openssl']
 
     # Change region order
-    Node = Tree.find('./BuildSettings/BuildResults/RegionOrder')
-    Node.attrib['value'] = '415'
+    node = tree.find('./BuildSettings/BuildResults/RegionOrder')
+    node.attrib['value'] = '415'
 
     # Enable PDR region
-    Node = Tree.find('./FlashLayout/SubPartitions/PdrRegion/Enabled')
-    Node.attrib['value'] = 'Enabled'
-    Node = Tree.find('./FlashLayout/SubPartitions/PdrRegion/InputFile')
-    Node.attrib['value'] = '$SourceDir\input\pdr.bin'
+    node = tree.find('./FlashLayout/SubPartitions/PdrRegion/Enabled')
+    node.attrib['value'] = 'enabled'
+    node = tree.find('./FlashLayout/SubPartitions/PdrRegion/InputFile')
+    node.attrib['value'] = '$SourceDir\input\pdr.bin'
 
     # Change SPI mode settings
-    if SpiQuad:
-        Value = 'Yes'
+    if spi_quad:
+        value = 'yes'
     else:
-        Value = 'No'
-    print("Set SPI QUAD mode: %s" % Value)
-    Node = Tree.find('./FlashSettings/FlashConfiguration/QuadIoReadEnable')
-    Node.attrib['value'] = Value
-    Node = Tree.find('./FlashSettings/FlashConfiguration/QuadOutReadEnable')
-    Node.attrib['value'] = Value
+        value = 'no'
+    print("Set SPI QUAD mode: %s" % value)
+    node = tree.find('./FlashSettings/FlashConfiguration/QuadIoReadEnable')
+    node.attrib['value'] = value
+    node = tree.find('./FlashSettings/FlashConfiguration/QuadOutReadEnable')
+    node.attrib['value'] = value
 
     # Change boot guard settings
-    Node = Tree.find('./PlatformProtection/BootGuardConfiguration/BtGuardProfileConfig')
-    Profiles = Node.attrib['value_list'].split(',,')
-    if len(Profiles) != 3:
+    node = tree.find('./PlatformProtection/BootGuardConfiguration/BtGuardProfileConfig')
+    profiles = node.attrib['value_list'].split(',,')
+    if len(profiles) != 3:
         print("Expected Boot Guard profile list in XML !")
         return -1
-    print("Set Boot Guard profile: %s" % BtgProfile)
-    if BtgProfile == 'legacy':
-        Node.attrib['value'] = Profiles[0]
-    elif BtgProfile == 'v':
-        Node.attrib['value'] = Profiles[1]
+    print("Set Boot Guard profile: %s" % btg_profile)
+    if btg_profile == 'legacy':
+        node.attrib['value'] = profiles[0]
+    elif btg_profile == 'v':
+        node.attrib['value'] = profiles[1]
     else:
-        Node.attrib['value'] = Profiles[2]
+        node.attrib['value'] = profiles[2]
 
-    XmlWrite (Tree, FitDir + '/%s' % Dst)
+    xml_write (tree, fit_dir + '/%s' % dst)
 
 
-def GenMeuSblXml (MeuDir, Src, Dst):
-    Tree = ET.parse(MeuDir + '/%s' % Src)
-    Node = Tree.find('./IbbSubPartition/Modules')
-    ModList = [
+def gen_meu_sbl_xml (meu_dir, src, dst):
+    tree = ET.parse(meu_dir + '/%s' % src)
+    node = tree.find('./IbbSubPartition/Modules')
+    mod_list = [
       ("IPAD",  "IPAD"),
       ("IBBL",  "IBBL"),
       ("IBB",   "IBBM"),
@@ -433,238 +401,247 @@ def GenMeuSblXml (MeuDir, Src, Dst):
       ("VAR",   "VAR"),
       ("MRCD",  "MRCDATA")
       ]
-    RebuildModules (Node, ModList)
+    rebuild_modules (node, mod_list)
 
-    Node = Tree.find('./ObbSubPartition/Modules')
-    ModList = [
+    node = tree.find("./ObbSubPartition/Modules")
+    mod_list = [
       ("OPAD",  "OPAD"),
       ("FB",  "FB"),
       ("EPLD",  "EPLD"),
       ("UVAR",  "UVAR")
       ]
-    RebuildModules (Node, ModList)
-    XmlWrite (Tree, MeuDir + '/%s' % Dst)
+    rebuild_modules (node, mod_list)
+    xml_write (tree, meu_dir + '/%s' % dst)
 
 
-def Clean (StitchDir, DistMode):
+def clean (stitch_dir, dist_mode):
     print ("Clean up workspace ...")
 
-    CfgVar    = GetConfig ()
-    for Each in [CfgVar['wkspace']]:
-        Each = StitchDir + '/' + Each
-        if os.path.exists(Each):
-            shutil.rmtree(Each)
+    cfg_var    = get_config ()
+    for each in [cfg_var['wkspace']]:
+        each = stitch_dir + '/' + each
+        if os.path.exists(each):
+            shutil.rmtree(each)
 
-    FitDir = StitchDir + '/' + os.path.dirname(CfgVar['fit'])
-    MeuDir = StitchDir + '/' + os.path.dirname(CfgVar['meu'])
-    Patterns = [
-      FitDir    + '/*.log',
-      MeuDir    + '/*.log',
-      FitDir    + '/*_sbl.xml',
-      MeuDir    + '/*.xml',
+    fit_dir = stitch_dir + '/' + os.path.dirname(cfg_var['fit'])
+    meu_dir = stitch_dir + '/' + os.path.dirname(cfg_var['meu'])
+    patterns = [
+      fit_dir    + '/*.log',
+      meu_dir    + '/*.log',
+      fit_dir    + '/*_sbl.xml',
+      meu_dir    + '/*.xml',
     ]
 
-    for Pattern in Patterns:
-        for File in glob.glob(Pattern):
-            os.remove (File)
+    for pattern in patterns:
+        for file in glob.glob(pattern):
+            os.remove (file)
 
     return 0
 
 
-def Stitch (StitchDir, StitchZip, BtgProfile, SpiQuadMode, FullRdundant = True):
+def stitch (stitch_dir, stitch_zip, btg_profile, spi_quad_mode, platform_data, full_rdundant = True):
 
-    CfgVar    = GetConfig ()
+    cfg_var    = get_config ()
 
     print ("\nUnpack files from stitching zip file ...")
-    Zf = zipfile.ZipFile(StitchZip, 'r', zipfile.ZIP_DEFLATED)
-    Zf.extractall(os.path.join(StitchDir, CfgVar['fitinput']))
-    Zf.close()
+    zf = zipfile.ZipFile(stitch_zip, 'r', zipfile.ZIP_DEFLATED)
+    zf.extractall(os.path.join(stitch_dir, cfg_var['fitinput']))
+    zf.close()
 
-    os.chdir(StitchDir)
+    os.chdir(stitch_dir)
 
     print ("\nPadding IAS image size ...")
-    Ret = PaddingIasImage ('%s/Stitch_IBBL.bin' % CfgVar['fitinput'])
-    if Ret:
-        raise Exception ("Failed with error %d !" % Ret)
+    ret = padding_ias_image ('%s/Stitch_IBBL.bin' % cfg_var['fitinput'])
+    if ret:
+        raise Exception ("Failed with error %d !" % ret)
 
     print ("\nChecking and copying components ...")
-    CopyList = ['cseimg', 'ishdata', 'ishimg', 'iunit', 'pmc', 'audio']
-    for Each in ['fit', 'meu', 'openssl', 'fitxml'] + CopyList:
-        if not os.path.exists(CfgVar[Each]):
-             raise Exception ("Could not find file '%s' !" % CfgVar[Each])
+    copy_list = ['cseimg', 'ishdata', 'ishimg', 'iunit', 'pmc', 'audio']
+    for each in ['fit', 'meu', 'openssl', 'fitxml'] + copy_list:
+        if not os.path.exists(cfg_var[each]):
+             raise Exception ("Could not find file '%s' !" % cfg_var[each])
 
-    for Each in CopyList:
-        shutil.copy (CfgVar[Each], CfgVar['fitinput'])
-    shutil.copy (CfgVar['patch1'], CfgVar['fitinput'] + '/upatch1.bin')
-    shutil.copy (CfgVar['patch2'], CfgVar['fitinput'] + '/upatch2.bin')
-    KeyDir = CfgVar['wkspace'] + '/keys'
-    if not os.path.exists(KeyDir):
-        os.mkdir(KeyDir)
-    shutil.copy (CfgVar['keys'],   KeyDir)
+    for each in copy_list:
+        shutil.copy (cfg_var[each], cfg_var['fitinput'])
+    shutil.copy (cfg_var['patch1'], cfg_var['fitinput'] + '/upatch1.bin')
+    shutil.copy (cfg_var['patch2'], cfg_var['fitinput'] + '/upatch2.bin')
+    key_dir = cfg_var['wkspace'] + '/keys'
+    if not os.path.exists(key_dir):
+        os.mkdir(key_dir)
+    shutil.copy (cfg_var['keys'],   key_dir)
 
     # SMIP_IAFW is not used by SBL, create a dummy one for stitching.
     print ("\nGenerating smip_iafw.bin ...")
-    OutputDir = StitchDir + '/' + CfgVar['fitinput']
-    Fp = open (OutputDir + '/smip_iafw.bin', 'wb')
-    Fp.write (b'\xAF\xBE\xED\xDE' + b'\x00' * 0x380 + b'\xAA\xCC\xFF\xAA')
-    Fp.close()
+    output_dir = stitch_dir + '/' + cfg_var['fitinput']
+    fp = open (output_dir + '/smip_iafw.bin', 'wb')
+    fp.write (b'\xAF\xBE\xED\xDE' + b'\x00' * 0x380 + b'\xAA\xCC\xFF\xAA')
+    fp.close()
 
     # PDR region is not used by SBL, here create one for stitching.
-    InputPdr = StitchDir + '/%s/Stitch_PDR.bin' % CfgVar['fitinput']
-    OutputPdr = OutputDir  + '/pdr.bin'
-    if not os.path.exists(InputPdr):
+    input_pdr = stitch_dir + '/%s/Stitch_PDR.bin' % cfg_var['fitinput']
+    output_pdr = output_dir  + '/pdr.bin'
+    if not os.path.exists(input_pdr):
         print ("\nGenerating pdr.bin ...")
-        Fp = open (OutputPdr, 'wb')
-        Fp.write (b'\xff' * 0xFF000)
-        Fp.close()
+        fp = open (output_pdr, 'wb')
+        fp.write (b'\xff' * 0xFF000)
+        fp.close()
     else:
-        shutil.copy (InputPdr, OutputPdr)
+        shutil.copy (input_pdr, output_pdr)
 
-    Prefix = '../..'
-    MeuDir = StitchDir + '/' + os.path.dirname(CfgVar['meu'])
-    if not os.path.exists (MeuDir + '/meu_config.xml'):
+    prefix = '../..'
+    meu_dir = stitch_dir + '/' + os.path.dirname(cfg_var['meu'])
+    if not os.path.exists (meu_dir + '/meu_config.xml'):
         print ("\nGenerating meu_config.xml ...")
-        Cmd = './meu -gen meu_config'
-        RunCmd (Cmd, MeuDir)
-        GenMeuCfgXml (MeuDir, 'meu_config.xml', 'meu_config.xml')
+        cmd = './meu -gen meu_config'
+        run_cmd (cmd, meu_dir)
+        gen_meu_cfg_xml (meu_dir, 'meu_config.xml', 'meu_config.xml')
 
     print ("\nGenerating public key hash ...")
-    Cmd = './meu -keyhash %s -f %s' % (Prefix + '/%s/bxt_prod_pub_key_hash_ISH' % CfgVar['fitinput'], Prefix + '/%s' % CfgVar['ishimg'])
-    RunCmd (Cmd, MeuDir)
-    Cmd = './meu -keyhash %s -f %s' % (Prefix + '/%s/bxt_prod_pub_key_hash_iUnit' % CfgVar['fitinput'], Prefix + '/%s' % CfgVar['iunit'])
-    RunCmd (Cmd, MeuDir)
-    Cmd = './meu -keyhash %s -f %s' % (Prefix + '/%s/bxt_prod_pub_key_hash_Audio' % CfgVar['fitinput'], Prefix + '/%s' % CfgVar['audio'])
-    RunCmd (Cmd, MeuDir)
-    Cmd = './meu -keyhash %s -key %s' % (Prefix + '/%s/bxt_dbg_pub_key_hash' % CfgVar['fitinput'], Prefix + '/%s' % CfgVar['keys'])
-    RunCmd (Cmd, MeuDir)
+    cmd = './meu -keyhash %s -f %s' % (prefix + '/%s/bxt_prod_pub_key_hash_ISH' % cfg_var['fitinput'], prefix + '/%s' % cfg_var['ishimg'])
+    run_cmd (cmd, meu_dir)
+    cmd = './meu -keyhash %s -f %s' % (prefix + '/%s/bxt_prod_pub_key_hash_iUnit' % cfg_var['fitinput'], prefix + '/%s' % cfg_var['iunit'])
+    run_cmd (cmd, meu_dir)
+    cmd = './meu -keyhash %s -f %s' % (prefix + '/%s/bxt_prod_pub_key_hash_Audio' % cfg_var['fitinput'], prefix + '/%s' % cfg_var['audio'])
+    run_cmd (cmd, meu_dir)
+    cmd = './meu -keyhash %s -key %s' % (prefix + '/%s/bxt_dbg_pub_key_hash' % cfg_var['fitinput'], prefix + '/%s' % cfg_var['keys'])
+    run_cmd (cmd, meu_dir)
 
     print ("\nGenerating sbl.xml ...")
-    Cmd = './meu -gen Bios -o sbl.xml'
-    RunCmd (Cmd, MeuDir)
-    GenMeuSblXml (MeuDir, 'sbl.xml', 'sbl.xml')
+    cmd = './meu -gen Bios -o sbl.xml'
+    run_cmd (cmd, meu_dir)
+    gen_meu_sbl_xml (meu_dir, 'sbl.xml', 'sbl.xml')
 
     print ("\nGenerating OEMKeyManifest.xml ...")
-    Cmd = './meu -gen OEMKeyManifest -o OEMKeyManifest.xml'
-    RunCmd (Cmd, MeuDir)
-    GenMeuOemKeyXml (MeuDir, 'OEMKeyManifest.xml', 'OEMKeyManifest.xml')
+    cmd = './meu -gen OEMKeyManifest -o OEMKeyManifest.xml'
+    run_cmd (cmd, meu_dir)
+    gen_meu_oem_key_xml (meu_dir, 'OEMKeyManifest.xml', 'OEMKeyManifest.xml')
 
     print ("\nGenerating BIOS.bin ...")
-    Cmd  = './meu -f sbl.xml -o %s -u1 . -key %s -s %s' % (Prefix + '/%s/bios.bin' % CfgVar['fitinput'],
-           Prefix + '/%s' % CfgVar['keys'], Prefix + '/%s' % CfgVar['fitinput'])
-    RunCmd (Cmd, MeuDir)
+    cmd  = './meu -f sbl.xml -o %s -u1 . -key %s -s %s' % (prefix + '/%s/bios.bin' % cfg_var['fitinput'],
+           prefix + '/%s' % cfg_var['keys'], prefix + '/%s' % cfg_var['fitinput'])
+    run_cmd (cmd, meu_dir)
 
     print ("\nGenerating OEM key manifest ...")
-    Cmd  = './meu -f OEMKeyManifest.xml -o %s' % (Prefix + '/%s/oemkeymn2.bin' % CfgVar['fitinput'])
-    RunCmd (Cmd, MeuDir)
+    cmd  = './meu -f OEMKeyManifest.xml -o %s' % (prefix + '/%s/oemkeymn2.bin' % cfg_var['fitinput'])
+    run_cmd (cmd, meu_dir)
 
-    FitDir = StitchDir + '/' + os.path.dirname(CfgVar['fit'])
+    fit_dir = stitch_dir + '/' + os.path.dirname(cfg_var['fit'])
     print ("\nGenerating bxt_spi_8mb_sbl.xml ...")
-    GenFitXml (FitDir, 'bxt_spi_8mb.xml', 'bxt_spi_8mb_sbl.xml', BtgProfile, SpiQuadMode)
+    gen_fit_xml (fit_dir, 'bxt_spi_8mb.xml', 'bxt_spi_8mb_sbl.xml', btg_profile, spi_quad_mode)
 
     print ("\nGernerating SPI Image ...")
-    Cmd = './fit -b -f bxt_spi_8mb_sbl.xml -o %s -w %s -s %s' % (Prefix + '/%s/%s' % (CfgVar['wkspace'],
-          CfgVar['ifwiname']),   Prefix + '/%s' % CfgVar['wkspace'], Prefix + '/%s' % CfgVar['wkspace'])
+    cmd = './fit -b -f bxt_spi_8mb_sbl.xml -o %s -w %s -s %s' % (prefix + '/%s/%s' % (cfg_var['wkspace'],
+          cfg_var['ifwiname']),   prefix + '/%s' % cfg_var['wkspace'], prefix + '/%s' % cfg_var['wkspace'])
 
-    if CfgVar['openssl'].startswith('/'):
-        Cmd = Cmd + ' -st_path %s'   % (CfgVar['openssl'])
+    if cfg_var['openssl'].startswith('/'):
+        cmd = cmd + ' -st_path %s'   % (cfg_var['openssl'])
     else:
-        Cmd = Cmd + ' -st_path %s'   % (Prefix + '/' + CfgVar['openssl'])
-    RunCmd (Cmd, FitDir)
+        cmd = cmd + ' -st_path %s'   % (prefix + '/' + cfg_var['openssl'])
+    run_cmd (cmd, fit_dir)
 
-    IfwiFileName = '%s/%s' % (CfgVar['wkspace'], CfgVar['ifwiname'])
-    if FullRdundant:
+    ifwi_file_name = '%s/%s' % (cfg_var['wkspace'], cfg_var['ifwiname'])
+    if full_rdundant:
         print ("\nCopy BP0 BPDT into BP1 ...")
-        Ret = CopyPrimaryBpdt ('%s' % IfwiFileName)
+        ret = copy_primary_bpdt ('%s' % ifwi_file_name)
 
     print ("\nPatching IBBL Flash map ...")
-    Ret = PatchIbbFlashMap (CfgVar['fitinput'] + '/Stitch_IBBL.bin', IfwiFileName)
-    if Ret:
+    ret = patch_ibb_flash_map (cfg_var['fitinput'] + '/Stitch_IBBL.bin', ifwi_file_name, platform_data)
+    if ret:
         raise Exception ("Failed with error %d !" % ret)
 
     print ("\nRe-gernerating BIOS.bin for BP0 ...")
-    Cmd  = './meu -f sbl.xml -o %s -u1 . -key %s -s %s' % (Prefix + '/%s/bios.bin' % CfgVar['fitinput'], Prefix + '/%s' % CfgVar['keys'], Prefix + '/%s' % CfgVar['fitinput'])
-    RunCmd (Cmd, MeuDir)
+    cmd  = './meu -f sbl.xml -o %s -u1 . -key %s -s %s' % (prefix + '/%s/bios.bin' % cfg_var['fitinput'], prefix + '/%s' % cfg_var['keys'], prefix + '/%s' % cfg_var['fitinput'])
+    run_cmd (cmd, meu_dir)
 
     print ("\nUpdating IBB partition for BP0 in IFWI ...")
-    Ret = ReplaceIbbPartition (CfgVar['fitinput'] + '/bios.bin', IfwiFileName,  IfwiFileName, 'BIOS/IBBP', 'ROOT/IFWI/BP0/BPDT/BpdtIbb')
-    if Ret:
-        raise Exception ("Failed with error %d !" % Ret)
+    ret = replace_ibb_partition (cfg_var['fitinput'] + '/bios.bin', ifwi_file_name,  ifwi_file_name, 'IFWI/BIOS/IBBP', "IFWI/BIOS/BP0/BPDT/BpdtIbb")
+    if ret:
+        raise Exception ("Failed with error %d !" % ret)
 
-    if FullRdundant:
+    if full_rdundant:
         print ("\nRe-gernerating BIOS.bin for BP1 ...")
-        shutil.copy (CfgVar['fitinput'] + '/Stitch_IBBL_backup.bin', CfgVar['fitinput'] + '/Stitch_IBBL.bin')
-        Cmd  = './meu -f sbl.xml -o %s -u1 . -key %s -s %s' % (Prefix + '/%s/bios_backup.bin' % CfgVar['fitinput'], Prefix + '/%s' % CfgVar['keys'], Prefix + '/%s' % CfgVar['fitinput'])
-        RunCmd (Cmd, MeuDir)
+        shutil.copy (cfg_var['fitinput'] + '/Stitch_IBBL_backup.bin', cfg_var['fitinput'] + '/Stitch_IBBL.bin')
+        cmd  = './meu -f sbl.xml -o %s -u1 . -key %s -s %s' % (prefix + '/%s/bios_backup.bin' % cfg_var['fitinput'], prefix + '/%s' % cfg_var['keys'], prefix + '/%s' % cfg_var['fitinput'])
+        run_cmd (cmd, meu_dir)
 
         print ("\nUpdating BIOS.bin for BP1 in IFWI ...")
-        Ret = ReplaceIbbPartition (CfgVar['fitinput'] + '/bios_backup.bin', IfwiFileName, IfwiFileName, 'BIOS/IBBP', 'ROOT/IFWI/BP1/BPDT/BpdtIbb')
-        if Ret:
+        ret = replace_ibb_partition (cfg_var['fitinput'] + '/bios_backup.bin', ifwi_file_name, ifwi_file_name, 'IFWI/BIOS/IBBP', "IFWI/BIOS/BP1/BPDT/BpdtIbb")
+        if ret:
             raise Exception ("Failed with error %d !" % ret)
 
     return 0
 
 
 def main():
+    hexstr = lambda x: int(x, 16)
 
     if len(sys.argv) == 1:
-        print('%s' % ExtraUsageTxt)
+        print('%s' % extra_usage_txt)
 
-    Ap = argparse.ArgumentParser()
-    Ap.add_argument('-w',
+    ap = argparse.ArgumentParser()
+    ap.add_argument('-w',
                     '--stitch-work-dir',
                     dest='stitch_dir',
                     type=str,
                     required=True,
                     help='specify workspace directory for stitching')
 
-    Ap.add_argument('-s',
+    ap.add_argument('-s',
                     '--stitch-zip-file',
                     dest='stitch_zip',
                     type=str,
                     default='Outputs/apl/Stitch_Components.zip',
                     help='specify input stitching zip package file path')
 
-    Ap.add_argument('-b',
+    ap.add_argument('-b',
                     '--boot-guard-profile',
                     default = 'vm',
                     choices=['legacy', 'v', 'vm'],
                     dest='btg_profile',
                     help='specify Boot Guard profile type')
 
-    Ap.add_argument('-q',
+    ap.add_argument('-q',
                     '--spi-quad-mode',
                     dest='quad_mode',
                     action = "store_true",
                     default = False,
                     help = "enable SPI QUAD mode")
 
-    Ap.add_argument('-c',
+    ap.add_argument('-c',
                     '--clean',
                     dest='clean',
                     action = "store_true",
                     default = False,
                     help = "clean stitching workspace")
 
-    Args = Ap.parse_args()
+    ap.add_argument('-p',
+                    '--platform-data',
+                    dest='plat_data',
+                    type=hexstr,
+                    default=0xFFFFFFFF,
+                    help='specify a platform specific data (HEX, DWORD) for customization')
 
-    StitchDir = Args.stitch_dir
-    if Clean (StitchDir, Args.clean):
+    args = ap.parse_args()
+
+    stitch_dir = args.stitch_dir
+    if clean (stitch_dir, args.clean):
         raise Exception ('Stitching clean up failed !')
 
-    if Args.clean:
+    if args.clean:
         print ("Cleaning completed successfully !\n")
         return 0
 
-    if Stitch (StitchDir, Args.stitch_zip, Args.btg_profile, Args.quad_mode):
+    if stitch (stitch_dir, args.stitch_zip, args.btg_profile, args.quad_mode, args.plat_data):
         raise Exception ('Stitching process failed !')
 
-    CfgVar       = GetConfig ()
-    IfwiFileName = '%s/%s/%s' % (StitchDir, CfgVar['wkspace'], CfgVar['ifwiname'])
-    IfwiFileName = os.path.normpath (IfwiFileName)
+    cfg_var       = get_config ()
+    ifwi_file_name = '%s/%s/%s' % (stitch_dir, cfg_var['wkspace'], cfg_var['ifwiname'])
+    ifwi_file_name = os.path.normpath (ifwi_file_name)
 
-    print ("\nIFWI Stitching completed successfully !")
-    print ("Boot Guard Profile: %s" % Args.btg_profile.upper())
-    print ("IFWI image: %s\n" % IfwiFileName)
+    print ("")
+    print ("IFWI Stitching completed successfully !")
+    print ("Boot Guard Profile: %s" % args.btg_profile.upper())
+    print ("IFWI image: %s\n" % ifwi_file_name)
 
     return 0
 

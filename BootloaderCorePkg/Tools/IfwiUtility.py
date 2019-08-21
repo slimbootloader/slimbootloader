@@ -156,15 +156,36 @@ class COMPONENT:
         "FILE" : 5,
     }
 
-    def __init__(self, name, comp_type, offset, length):
+    def __init__(self, name, com_type, offset, length):
         self.name   = name
-        self.type   = comp_type
+        self.type   = com_type
         self.offset = offset
         self.length = length
         self.child  = []
+        self.data   = None
+        self.parent = None
 
-    def add_child(self, child):
-        self.child.append(child)
+    def add_child(self, child, index = -1):
+        child.parent = self
+        if index == -1:
+            self.child.append (child)
+        else:
+            self.child.insert (index, child)
+
+    def set_data(self, file):
+        if file:
+            fd =open(file, 'rb')
+            data = bytearray(fd.read())
+            fd.close()
+        else:
+            data = bytearray(b'\xff' * self.length)
+        if self.length > len(data):
+            self.data = data + b'\xff' * (self.length - len(data))
+        else:
+            self.data = data[:self.length]
+
+    def get_data(self):
+        return self.data
 
 
 class FLASH_MAP_DESC(Structure):
@@ -179,6 +200,35 @@ class FLASH_MAP_DESC(Structure):
 
 class FLASH_MAP(Structure):
     FLASH_MAP_SIGNATURE  = b'FLMP'
+
+    FLASH_MAP_COMPONENT_SIGNATURE = {
+        "STAGE1A"       : "SG1A",
+        "STAGE1B"       : "SG1B",
+        "STAGE2"        : "SG02",
+        "ACM"           : "ACM0",
+        "UCODE"         : "UCOD",
+        "MRCDATA"       : "MRCD",
+        "VARIABLE"      : "VARS",
+        "PAYLOAD"       : "PYLD",
+        "EPAYLOAD"      : "EPLD",
+        "SIIPFW"        : "IPFW",
+        "UEFIVARIABLE"  : "UVAR",
+        "SPI_IAS1"      : "IAS1",
+        "SPI_IAS2"      : "IAS2",
+        "FWUPDATE"      : "FWUP",
+        "CFGDATA"       : "CNFG",
+        "BPM"           : "_BPM",
+        "OEMKEY"        : "OEMK",
+        "SBLRSVD"       : "RSVD",
+        "EMPTY"         : "EMTY",
+        "UNKNOWN"       : "UNKN",
+      }
+
+    FLASH_MAP_ATTRIBUTES = {
+        "PRIMARY_REGION"  : 0x00000000,
+        "BACKUP_REGION"   : 0x00000001,
+    }
+
     FLASH_MAP_DESC_FLAGS = {
         "TOP_SWAP"     : 0x00000001,
         "REDUNDANT"    : 0x00000002,
@@ -187,6 +237,7 @@ class FLASH_MAP(Structure):
         "COMPRESSED"   : 0x00000010,
         "BACKUP"       : 0x00000040,
     }
+
     FLASH_MAP_REGION = {
         0x01:  "TS0",
         0x41:  "TS1",
@@ -206,16 +257,34 @@ class FLASH_MAP(Structure):
         ('romsize',      c_uint32),
         ]
 
+    def __init__(self):
+        self.sig = FLASH_MAP.FLASH_MAP_SIGNATURE
+        self.version = 1
+        self.romsize = 0
+        self.attributes = 0
+        self.length  = sizeof(self)
+        self.descriptors = []
+
+    def add(self, desc):
+        self.descriptors.append(desc)
+
+    def finalize (self):
+        # Calculate size of the flash map
+        self.romsize = sum ([x.size for x in self.descriptors])
+        self.length  = sizeof(self) + len(self.descriptors) * sizeof(FLASH_MAP_DESC)
+
 
 class IFWI_PARSER:
     def __init__(self):
         return
 
-    def is_ifwi_image(self, bios_bins):
+    @staticmethod
+    def is_ifwi_image(bios_bins):
         spi_desc = SPI_DESCRIPTOR.from_buffer(bios_bins)
         return spi_desc.fl_val_sig == spi_desc.DESC_SIGNATURE
 
-    def locate_components(self, root, path):
+    @staticmethod
+    def locate_components(root, path):
         result = []
         nodes  = path.split('/')
         if len(nodes) < 1 or root.name != nodes[0]:
@@ -223,48 +292,51 @@ class IFWI_PARSER:
         if len(nodes) == 1:
             return [root]
         for comp in root.child:
-            ret = self.locate_components(comp, '/'.join(nodes[1:]))
+            ret = IFWI_PARSER.locate_components(comp, '/'.join(nodes[1:]))
             if len(ret) > 0:
                 result.extend(ret)
         return result
 
-    def locate_component(self, root, path):
-        result = self.locate_components(root, path)
+    @staticmethod
+    def locate_component(root, path):
+        result = IFWI_PARSER.locate_components(root, path)
         if len(result) > 0:
             return result[0]
         else:
             return None
 
-    def find_components(self, root, name, comp_type = COMPONENT.COMP_TYPE['FILE']):
+    @staticmethod
+    def find_components(root, name, comp_type = COMPONENT.COMP_TYPE['FILE']):
         result = []
         if root.type == comp_type and root.name == name:
             return [root]
         for comp in root.child:
-            ret = self.find_components(comp, name, comp_type)
+            ret = IFWI_PARSER.find_components(comp, name, comp_type)
             if len(ret) > 0:
                 result.extend(ret)
         return result
 
-    def print_tree(self, root, level=0):
+    @staticmethod
+    def print_tree(root, level=0):
         if root is None:
             return
         print ("%-24s [O:0x%08X  L:0x%08X]" % ('  ' * level + root.name,
                 root.offset, root.length))
         for comp in root.child:
             level += 1
-            self.print_tree(comp, level)
+            IFWI_PARSER.print_tree(comp, level)
             level -= 1
 
-        bp = self.locate_component (root, 'IFWI/BIOS/BP0')
+        bp = IFWI_PARSER.locate_component (root, 'IFWI/BIOS/BP0')
         if bp:
             print ("\nBPDT Space Information:")
             for idx in range(2):
-                bp = self.locate_component (root, 'IFWI/BIOS/BP%d' % idx)
+                bp = IFWI_PARSER.locate_component (root, 'IFWI/BIOS/BP%d' % idx)
                 sbpdt = bp.child[1]
                 print ("  BP%d Free Space: 0x%05X" % (idx,  bp.length - ((sbpdt.offset + sbpdt.length) - bp.offset)))
 
-
-    def find_ifwi_region (self, spi_descriptor, rgn_name):
+    @staticmethod
+    def find_ifwi_region (spi_descriptor, rgn_name):
         frba      = ((spi_descriptor.fl_map0 >> 16) & 0xFF) << 4
         fl_reg    = spi_descriptor.FLASH_REGIONS[rgn_name] + frba
         rgn_off   = c_uint32.from_buffer(spi_descriptor, fl_reg)
@@ -275,15 +347,15 @@ class IFWI_PARSER:
         else:
             return (rgn_base, rgn_limit)
 
+    @staticmethod
+    def replace_component (ifwi_bin, comp_bin, path):
 
-    def replace_component (self, ifwi_bin, comp_bin, path):
-
-        ifwi = self.parse_ifwi_binary (ifwi_bin)
+        ifwi = IFWI_PARSER.parse_ifwi_binary (ifwi_bin)
         if not ifwi:
             print ("Not a valid ifwi image!")
             return -2
 
-        ifwi_comps = self.locate_components (ifwi, path)
+        ifwi_comps = IFWI_PARSER.locate_components (ifwi, path)
         if len(ifwi_comps) == 0:
             print ("Cannot find path '%s' in ifwi image!" % path)
             return -4
@@ -303,9 +375,8 @@ class IFWI_PARSER:
 
         return 0
 
-
-
-    def bpdt_parser (self, bin_data, bpdt_offset, offset):
+    @staticmethod
+    def bpdt_parser (bin_data, bpdt_offset, offset):
         sub_part_list = []
         idx = bpdt_offset + offset
         bpdt_hdr = BPDT_HEADER.from_buffer(bytearray(bin_data[idx:idx + sizeof(BPDT_HEADER)]))
@@ -337,7 +408,8 @@ class IFWI_PARSER:
 
         return sub_part_list, sbpdt
 
-    def parse_bios_bpdt (self, img_data):
+    @staticmethod
+    def parse_bios_bpdt (img_data):
         offset = 0
         bios_hdr = BIOS_ENTRY.from_buffer(img_data, offset)
         if bios_hdr.name != "BIOS":
@@ -366,8 +438,8 @@ class IFWI_PARSER:
 
         return bios_comp
 
-
-    def parse_bios_region (self, img_data, base_off = 0):
+    @staticmethod
+    def parse_bios_region (img_data, base_off = 0):
         offset = bytes_to_value(img_data[-8:-4]) - (0x100000000 - len(img_data))
         if offset <0 or offset >= len(img_data) - 0x10:
             return None
@@ -395,13 +467,13 @@ class IFWI_PARSER:
 
         return bios_comp
 
-
-    def parse_ifwi_binary(self, img_data):
+    @staticmethod
+    def parse_ifwi_binary(img_data):
         if len(img_data) < 0x1000:
             return None
 
         ifwi_comp = COMPONENT('IFWI', COMPONENT.COMP_TYPE['IFWI'], 0, len(img_data))
-        bios_comp = self.parse_bios_bpdt (img_data)
+        bios_comp = IFWI_PARSER.parse_bios_bpdt (img_data)
         if bios_comp is not None:
             ifwi_comp.add_child (bios_comp)
             return ifwi_comp
@@ -409,8 +481,9 @@ class IFWI_PARSER:
         spi_descriptor = SPI_DESCRIPTOR.from_buffer(img_data)
         if spi_descriptor.fl_val_sig != spi_descriptor.DESC_SIGNATURE:
             # no SPI descriptor, try to check the flash map
-            bios_comp = self.parse_bios_region (img_data, 0)
-            ifwi_comp.add_child (bios_comp)
+            bios_comp = IFWI_PARSER.parse_bios_region (img_data, 0)
+            if bios_comp is not None:
+                ifwi_comp.add_child (bios_comp)
             return ifwi_comp
 
         # It is a full IFWI image
@@ -418,26 +491,31 @@ class IFWI_PARSER:
         ifwi_comp = COMPONENT('IFWI', COMPONENT.COMP_TYPE['IFWI'], 0, len(img_data))
         rgn_dict  = sorted(SPI_DESCRIPTOR.FLASH_REGIONS, key=SPI_DESCRIPTOR.FLASH_REGIONS.get)
         for rgn in rgn_dict:
-            rgn_start, rgn_limit = self.find_ifwi_region(spi_descriptor, rgn)
+            rgn_start, rgn_limit = IFWI_PARSER.find_ifwi_region(spi_descriptor, rgn)
             if rgn_start is None:
                 continue
             rgn_comp = COMPONENT(rgn.upper(), COMPONENT.COMP_TYPE['RGN'], rgn_start, rgn_limit - rgn_start + 1)
-            ifwi_comp.add_child (rgn_comp)
             if rgn == 'bios':
                 bios_comp = rgn_comp
+            else:
+                ifwi_comp.add_child (rgn_comp)
         if bios_comp is None:
             return None
-
-        # Sort region by offset
-        ifwi_comp.child.sort (key=lambda x: x.offset)
 
         bios_start = bios_comp.offset
         bios_limit = bios_comp.offset + bios_comp.length - 1
         if not (img_data[bios_start] == 0xAA and img_data[bios_start + 1] == 0x55):
             # normal layout
-            tmp_comp = self.parse_bios_region (img_data[bios_start:bios_limit+1], bios_start)
-            bios_comp.child = tmp_comp.child
+            new_bios_comp = IFWI_PARSER.parse_bios_region (img_data[bios_start:bios_limit+1], bios_start)
+            if new_bios_comp is not None:
+                bios_comp = new_bios_comp
+            ifwi_comp.add_child (bios_comp)
+            ifwi_comp.child.sort (key=lambda x: x.offset)
             return ifwi_comp
+
+        # Sort region by offset
+        ifwi_comp.add_child (bios_comp)
+        ifwi_comp.child.sort (key=lambda x: x.offset)
 
         # It is BPDT format
         bp_offset = [bios_start, (bios_start + bios_limit + 1) // 2]
@@ -446,7 +524,7 @@ class IFWI_PARSER:
                                (bios_limit - bios_start + 1) // 2)
             sub_part_offset = 0
             while True:
-                bpdt, sbpdt_entry = self.bpdt_parser(img_data, offset, sub_part_offset)
+                bpdt, sbpdt_entry = IFWI_PARSER.bpdt_parser(img_data, offset, sub_part_offset)
                 bpdt_prefix = '' if sub_part_offset == 0 else 'S'
                 bpdt_size = sbpdt_entry.sub_part_offset if sbpdt_entry else bpdt_comp.child[-1].length
                 bpdt_comp = COMPONENT('%sBPDT' % bpdt_prefix, COMPONENT.COMP_TYPE['BPDT'],
@@ -498,7 +576,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     ifwi = None
-    ifwi_parser = IFWI_PARSER ()
     ifwi_bin = bytearray (get_file_data (args.ifwi_image))
 
     ret  = -1
@@ -513,16 +590,16 @@ if __name__ == '__main__':
             show = True
         else:
             comp_bin = bytearray (get_file_data (args.comp_image))
-            ret = ifwi_parser.replace_component (ifwi_bin, comp_bin, args.replace_path)
+            ret = IFWI_PARSER.replace_component (ifwi_bin, comp_bin, args.replace_path)
             if ret == 0:
                 out_image = args.output_image if args.output_image else args.ifwi_image
                 gen_file_from_object (out_image, ifwi_bin)
                 print ("Components @ %s was replaced successfully!" % args.replace_path)
 
     if show:
-        ifwi = ifwi_parser.parse_ifwi_binary (ifwi_bin)
+        ifwi = IFWI_PARSER.parse_ifwi_binary (ifwi_bin)
         if ifwi:
-            ifwi_parser.print_tree (ifwi)
+            IFWI_PARSER.print_tree (ifwi)
             ret = 0
 
     if ret != 0:
