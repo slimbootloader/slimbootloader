@@ -192,6 +192,7 @@ class BaseBoard(object):
 		self.ENABLE_LINUX_PAYLOAD  = 0
 
 		self.ACM_SIZE              = 0
+		self.FUSA_ACM_SIZE         = 0
 		self.UCODE_SIZE            = 0
 		self.CFGDATA_SIZE          = 0
 		self.MRCDATA_SIZE          = 0
@@ -339,12 +340,23 @@ class Build(object):
 			if len(u_code_images) > 0:
 				raise Exception('  Insufficient uCode entries in FIT. Need %d more.' % len(u_code_images))
 
-		if self._board.ACM_SIZE > 0:
+			fusa_acm_index = 0
+			if self._board.ACM_SIZE == 0:
+				fusa_acm_index       = num_fit_entries
+				num_fit_entries     += 1
+
 			# ACM
+		if self._board.ACM_SIZE > 0:
 			fit_entry = FitEntry.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
 			fit_entry.set_values(self._board.ACM_BASE, 0, 0x100, 0x2, 0)
 			print ('  Patching entry %d with 0x%08X:0x%08X - ACM' % (num_fit_entries, fit_entry.address, fit_entry.size))
 			num_fit_entries     += 1
+
+			# FuSa ACM Fit entry (0x3) should be in sequential order with/without BTG enabled
+			# Save the next FIT entry for Fusa ACM here and set it later below
+			if self._board.FUSA_ACM_SIZE > 0:
+				fusa_acm_index       = num_fit_entries
+				num_fit_entries     += 1
 
 			# BIOS Module (IBB segment 0): from FIT table end to 4GB
 			# Record it now and update later since the FIT size is unknown yet
@@ -393,6 +405,14 @@ class Build(object):
 
 		else :
 			addr = fit_address.value + (num_fit_entries + 1) * 16
+
+		# Add Fusa ACM with the reserved fit entry saved
+		if self._board.FUSA_ACM_SIZE > 0:
+			addr = self._board.FUSAACM_BASE
+			module_size = self._board.FUSA_ACM_SIZE
+			fit_entry = FitEntry.from_buffer(rom, fit_offset + (fusa_acm_index+1)*16)
+			fit_entry.set_values(addr, module_size, 0x100, 0x3, 0)
+			print('  Patching entry %d with 0x%08X:0x%08X - FuSa ACM' % (fusa_acm_index, fit_entry.address, fit_entry.size))
 
 		# Check FIT length
 		spaceleft = addr - (fit_address.value + fit_header.size)
@@ -560,7 +580,6 @@ class Build(object):
 				comp['offset'] = image_offs
 				comp['base']   = image_base + image_offs
 				image_offs    += comp['size']
-
 			for rgn in region_list:
 				rgn['base'] = image_base + rgn['offset']
 
@@ -743,6 +762,11 @@ class Build(object):
 			acm_base = getattr(self._board, 'ACM_BASE')
 			if acm_base & 0x7FFF:
 				raise Exception ('ACM base[FSP-T+CAR:0x%x] must be 32KB aligned!' % acm_base)
+
+		if getattr(self._board, 'FUSA_ACM_SIZE') > 0:
+			fusa_acm_base = getattr(self._board, 'FUSAACM_BASE')
+			if fusa_acm_base & 0xFF:
+				raise Exception ('FUSA ACM base[FSP-T+CAR:0x%x] must be 4KB aligned!' % fusa_acm_base)
 
 
 	def create_redundant_components (self):
@@ -1079,6 +1103,9 @@ class Build(object):
 		if self._board.ACM_SIZE > 0:
 			gen_file_with_size (os.path.join(self._fv_dir, 'ACM.bin'), self._board.ACM_SIZE)
 
+		#create Fusa ACM binary
+		if self._board.FUSA_ACM_SIZE > 0:
+			gen_file_with_size (os.path.join(self._fv_dir, 'FUSAACM.bin'), self._board.FUSA_ACM_SIZE)
 
 		# create MRC data
 		if self._board.MRCDATA_SIZE:
@@ -1243,7 +1270,7 @@ def main():
 
 	cleanp = sp.add_parser('clean', help='clean build dir')
 	cleanp.add_argument('-d',  '--distclean', action='store_true', help='Distribution clean')
-	cleanp.set_defaults(func=cmd_clean)
+	cleanp.set_defaults(func=cmd_clean) 
 
 	args = ap.parse_args()
 	args.func(args)
