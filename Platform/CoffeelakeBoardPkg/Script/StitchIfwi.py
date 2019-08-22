@@ -174,7 +174,7 @@ def sign_binary(infile, stitch_dir, cfg_var):
         cmd = '%s rsa -pubout -in keys/privkey.pem -out keys/pubkey.pem' % openssl_path
         run_cmd (cmd, bpm_gen2dir)
 
-    cmd = 'python CSE/FIT/FitHelp.py "FITACM" Output/input/sbl_sec_temp.bin Output/input/acm.bin'
+    cmd = '"%s" CSE/FIT/FitHelp.py "FITACM" Output/input/sbl_sec_temp.bin Output/input/acm.bin' % (sys.executable.replace('\\', '/'))
     run_cmd (cmd, stitch_dir)
 
     print("Generating KeyManifest.bin....")

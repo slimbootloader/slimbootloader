@@ -59,6 +59,12 @@ def gen_file_from_object (file, object):
 def gen_file_with_size (file, size):
 	open (file, 'wb').write(b'\xFF' * size);
 
+def check_files_exist (base_name_list, dir = '', ext = ''):
+	for each in base_name_list:
+		if not os.path.exists (os.path.join (dir, each + ext)):
+			return False
+	return True
+
 def get_openssl_path ():
 	if os.name == 'nt':
 		if 'OPENSSL_PATH' not in os.environ:
@@ -83,8 +89,9 @@ def run_process (arg_list, print_cmd = False, capture_out = False):
 			output = subprocess.check_output(arg_list).decode()
 		else:
 			result = subprocess.call (arg_list)
-	except Exception as exc:
+	except Exception as ex:
 		result = 1
+		exc    = ex
 
 	if result:
 		if not print_cmd:

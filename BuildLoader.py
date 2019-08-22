@@ -25,34 +25,35 @@ import multiprocessing
 from   ctypes import *
 from   BuildUtility import *
 
-def rebuild_basetools ():
 
+def rebuild_basetools ():
+	exe_list = 'GenFfs  GenFv  GenFw  GenSec  Lz4Compress  LzmaCompress'.split()
 	ret = 0
 	sblsource = os.environ['SBL_SOURCE']
+
+	cmd = [sys.executable, '-c', 'import sys; import platform; print(", ".join([sys.executable, platform.python_version()]))']
+	py_out = run_process (cmd, capture_out = True)
+	parts  = py_out.split(',')
+	if len(parts) > 1:
+		py_exe, py_ver = parts
+		os.environ['PYTHON_COMMAND'] = py_exe
+		print ('Using %s, Version %s' % (os.environ['PYTHON_COMMAND'], py_ver.rstrip()))
+	else:
+		os.environ['PYTHON_COMMAND'] = 'python'
+
 	if os.name == 'posix':
-		genffs_exe_path = os.path.join(sblsource, 'BaseTools', 'Source', 'C', 'bin', 'GenFfs')
-		genffs_exist = os.path.exists(genffs_exe_path)
-		if not genffs_exist:
+		if not check_files_exist (exe_list, os.path.join(sblsource, 'BaseTools', 'Source', 'C', 'bin')):
 			ret = subprocess.call(['make', '-C', 'BaseTools'])
 
 	elif os.name == 'nt':
-		if 'PYTHON_HOME' not in os.environ:
-			os.environ['PYTHON_HOME'] = 'C:\\Python27'
-		os.environ['PYTHON_COMMAND'] = os.path.join (os.environ['PYTHON_HOME'], 'python.exe')
-		genffs_exe_path = os.path.join(sblsource, 'BaseTools', 'Bin', 'Win32', 'GenFfs.exe')
-		genffs_exist = os.path.exists(genffs_exe_path)
-		if not genffs_exist:
+
+		if not check_files_exist (exe_list, os.path.join(sblsource, 'BaseTools', 'Bin', 'Win32'), '.exe'):
 			print ("Could not find pre-built BaseTools binaries, try to rebuild BaseTools ...")
 			ret = run_process (['BaseTools\\toolsetup.bat', 'forcerebuild'])
 
 	if ret:
 		print ("Build BaseTools failed, please check required build environment and utilities !")
 		sys.exit(1)
-
-		genffs_exist = os.path.exists(genffs_exe_path)
-		if not genffs_exist:
-				print("Build python executables failed !")
-				sys.exit(1)
 
 
 def prep_env ():
@@ -926,7 +927,7 @@ class Build(object):
 
 		check_build_component_bin = os.path.join(tool_dir, 'PrepareBuildComponentBin.py')
 		if os.path.exists(check_build_component_bin):
-			ret = subprocess.call(['python', check_build_component_bin, work_dir, self._board.SILICON_PKG_NAME, '/d' if self._board.FSPDEBUG_MODE else '/r'])
+			ret = subprocess.call([sys.executable, check_build_component_bin, work_dir, self._board.SILICON_PKG_NAME, '/d' if self._board.FSPDEBUG_MODE else '/r'])
 			if ret:
 				raise Exception  ('Failed to prepare build component binaries !')
 
@@ -1036,7 +1037,7 @@ class Build(object):
 
 		# rebuild reset vector
 		vtf_dir = os.path.join('BootloaderCorePkg', 'Stage1A', 'Ia32', 'Vtf0')
-		x = subprocess.call(['python', 'Build.py'],  cwd=vtf_dir)
+		x = subprocess.call([sys.executable, 'Build.py'],  cwd=vtf_dir)
 		if x: raise Exception ('Failed to build reset vector !')
 
 	def build(self):

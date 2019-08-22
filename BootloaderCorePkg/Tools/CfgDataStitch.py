@@ -85,27 +85,27 @@ def cfgdata_stitch(ifwi_file, ifwi_out_file, cfg_dir, key_dir, tool_dir, pid):
     for dlt in dlt_files:
         bin_file = os.path.splitext(dlt)[0] + '.bin'
         bin_file = os.path.join(out_dir, bin_file)
-        run_cmd(['python', os.path.join(tool_dir, 'GenCfgData.py'), 'GENBIN',
+        run_cmd([sys.executable, os.path.join(tool_dir, 'GenCfgData.py'), 'GENBIN',
                  os.path.join(cfg_dir, 'CfgDataDef.dsc;') + os.path.join(
                      cfg_dir, dlt), bin_file])
         bin_files.append(bin_file)
 
     # merge the CFGDATA
-    cmd_list = ['python', os.path.join(tool_dir, 'CfgDataTool.py'), 'merge',
+    cmd_list = [sys.executable, os.path.join(tool_dir, 'CfgDataTool.py'), 'merge',
                 '-o', os.path.join(out_dir, 'CfgDataExt.bin'), '-p', pid,
                 os.path.join(cfg_dir, 'CfgDataInt.bin*')]
     cmd_list.extend(bin_files)
     run_cmd(cmd_list)
 
     # sign the CFGDATA
-    cmd_list = ['python', os.path.join(tool_dir, 'CfgDataTool.py'), 'sign',
+    cmd_list = [sys.executable, os.path.join(tool_dir, 'CfgDataTool.py'), 'sign',
                 '-o', os.path.join(out_dir, 'CfgData.bin')]
     cmd_list.extend(['-k', key_file,
                      os.path.join(out_dir, 'CfgDataExt.bin')])
     run_cmd(cmd_list)
 
     # replace the CFGDATA in IFWI
-    cmd_list = ['python', os.path.join(tool_dir, 'CfgDataTool.py'), 'replace',
+    cmd_list = [sys.executable, os.path.join(tool_dir, 'CfgDataTool.py'), 'replace',
                 '-i', ifwi_file, os.path.join(out_dir, 'CfgData.bin')]
     cmd_list.extend(['-o', os.path.join(out_dir, os.path.basename(ifwi_file))])
     run_cmd(cmd_list)
