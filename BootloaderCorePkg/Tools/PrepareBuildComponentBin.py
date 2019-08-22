@@ -157,7 +157,7 @@ def BuildFspBins (fsp_dir, sbl_dir, silicon_pkg_name, flag):
     if CheckFileListExist(copy_list, sbl_dir):
         return
 
-    edk2_base_tag = 'edk2-stable201811'
+    edk2_base_tag = 'edk2-stable201905'
     print ('Building QEMU FSP binaries from EDKII repo (Base Tag: %s)' % edk2_base_tag)
     if not os.path.exists(fsp_dir + '/.git'):
         print ('Cloning EDKII repo ...')
@@ -217,7 +217,7 @@ def BuildFspBins (fsp_dir, sbl_dir, silicon_pkg_name, flag):
         if os.name == 'nt':
             ret = subprocess.call([os.path.join(fsp_dir, 'BuildFsp.cmd'), flag], cwd=fsp_dir)
         else:
-            ret = subprocess.call(['python', os.path.join(fsp_dir, 'BuildFsp.py'), flag], cwd=fsp_dir)
+            ret = subprocess.call([sys.executable, os.path.join(fsp_dir, 'BuildFsp.py'), flag], cwd=fsp_dir)
         if ret:
             Fatal ('Failed to build QEMU FSP binary !')
 

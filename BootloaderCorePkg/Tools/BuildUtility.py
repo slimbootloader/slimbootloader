@@ -171,7 +171,7 @@ class VariableRegionHeader(Structure):
 
 def split_fsp(path, out_dir):
 	run_process ([
-				"python",
+				sys.executable,
 				gtools['FSP_SPLIT'],
 				"split",
 				"-f", path,
@@ -181,7 +181,7 @@ def split_fsp(path, out_dir):
 
 def rebase_fsp(path, out_dir, base_t, base_m, base_s):
 	run_process ([
-		"python",
+		sys.executable,
 		gtools['FSP_SPLIT'],
 		"rebase",
 		"-f", path,
@@ -194,12 +194,12 @@ def rebase_fsp(path, out_dir, base_t, base_m, base_s):
 def patch_fv(fv_dir, fvs, *vargs):
 	sys.stdout.flush()
 	args = [x for x in list(vargs) if x != '']
-	run_process (["python", gtools['FV_PATCH'], fv_dir, fvs] + args, False)
+	run_process ([sys.executable, gtools['FV_PATCH'], fv_dir, fvs] + args, False)
 
 
 def gen_cfg_data (command, dscfile, outfile):
 	run_process ([
-			"python",
+			sys.executable,
 			gtools['GEN_CFG'],
 			command,
 			dscfile,
@@ -207,7 +207,7 @@ def gen_cfg_data (command, dscfile, outfile):
 
 
 def cfg_data_tool (command, infiles, outfile, extra = []):
-	arg_list = ["python",	gtools['CFG_DATA'], command,	'-o', outfile]
+	arg_list = [sys.executable,	gtools['CFG_DATA'], command,	'-o', outfile]
 	arg_list.extend (extra)
 	arg_list.extend (infiles)
 	run_process (arg_list)
@@ -216,7 +216,7 @@ def cfg_data_tool (command, infiles, outfile, extra = []):
 def report_image_layout (fv_dir, stitch_file, report_file):
 	sys.stdout.flush()
 	rpt_file = open(os.path.join(fv_dir, report_file), "w")
-	x = subprocess.call(["python", gtools['IMG_REPORT'], fv_dir, stitch_file, ""], stdout=rpt_file)
+	x = subprocess.call([sys.executable, gtools['IMG_REPORT'], fv_dir, stitch_file, ""], stdout=rpt_file)
 	rpt_file.close()
 	if x: sys.exit(1)
 
