@@ -20,9 +20,9 @@
   # !BSF HELP:{Enable or Disable processor debug features; <b>0: Disable</b>; 1: Enable.}
   gCfgData.DebugInterfaceEnable   |      * | 0x01 | 0x00
 
-  # !BSF NAME:{Enable or Disable processor debug features} TYPE:{Combo}
+  # !BSF NAME:{Enable or Disable legacy serial port expose to OS} TYPE:{Combo}
   # !BSF TYPE:{Combo} OPTION:{$EN_DIS}
-  # !BSF HELP:{Enable or Disable processor debug features; <b>0: Disable</b>; 1: Enable.}
+  # !BSF HELP:{Enable or Disable legacy serial port expose to OS; <b>0: Disable</b>; 1: Enable.}
   gCfgData.EnableLegacySerial     |      * | 0x01 | 0x00
 
   # !BSF PAGES:{PSEL:SIL:"Payload Selection GPIO"}
