@@ -224,7 +224,7 @@ BDevStrategy (
   if (ReadWrite != F_READ && ReadWrite != F_WRITE) {
     return EFI_INVALID_PARAMETER;
   }
-  if ((Size % BDEV_BLOCKSIZE) != 0) {
+  if ((Size % PrivateData->BlockSize) != 0) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -277,12 +277,23 @@ ReadInode (
   UINT32        RSize;
   INT32         Rc;
   DADDRESS      InodeSector;
+  EXT2GD       *Ext2FsGrpDes;
   EXTFS_DINODE *DInodePtr;
 
   Fp = (FILE *)File->FileSystemSpecificData;
   FileSystem = Fp->SuperBlockPtr;
 
-  InodeSector = FSBTODB (FileSystem, INODETOFSBA (FileSystem, INumber));
+  Ext2FsGrpDes = FileSystem->Ext2FsGrpDes;
+  Ext2FsGrpDes = (EXT2GD*)((UINT32)Ext2FsGrpDes + (INOTOCG(FileSystem, INumber) * FileSystem->Ext2FsGDSize));
+
+  InodeSector = (DADDRESS) (Ext2FsGrpDes->Ext2BGDInodeTables + DivU64x32 (ModU64x32 ((INumber - 1), FileSystem->Ext2Fs.Ext2FsINodesPerGroup), FileSystem->Ext2FsInodesPerBlock));
+
+  if (FileSystem->Ext2FsGDSize > 32) {
+    if (Ext2FsGrpDes->Ext2BGDInodeTablesHi !=0) {
+      InodeSector |= LShiftU64 ((UINT64) (Ext2FsGrpDes->Ext2BGDInodeTablesHi), 32);
+    }
+  }
+  InodeSector = FSBTODB (FileSystem, InodeSector);
 
   //
   // Read inode and save it.
@@ -642,54 +653,71 @@ ReadSBlock (
   M_EXT2FS      *FileSystem
   )
 {
-  STATIC UINT8 SbBuf[SBSIZE];
+  PEI_EXT_PRIVATE_DATA *PrivateData;
+  UINT8 *Buffer;
   EXT2FS Ext2Fs;
   UINT32 BufSize;
-  INT32 Rc;
+  INT32  Rc;
+  UINT32 SbOffset;
+
+  Rc = 0;
+  Buffer = NULL;
+
+  PrivateData = (PEI_EXT_PRIVATE_DATA*) File->FileDevData;
+
+  Buffer = AllocatePool ((PrivateData->BlockSize > SBSIZE) ? PrivateData->BlockSize : SBSIZE);
+  if (Buffer == NULL) {
+    Rc = EFI_OUT_OF_RESOURCES;
+    goto Exit;
+  }
 
   Rc = DEV_STRATEGY (File->DevPtr) (File->FileDevData, F_READ,
-                                    SBOFF / DEV_BSIZE, SBSIZE, SbBuf, &BufSize);
+                                    SBOFF / PrivateData->BlockSize, PrivateData->BlockSize, Buffer, &BufSize);
   if (Rc != 0) {
-    return Rc;
+    goto Exit;
   }
-
-  if (BufSize != SBSIZE) {
-    return EFI_DEVICE_ERROR;
-  }
-
-  E2FS_SBLOAD ((VOID *)SbBuf, &Ext2Fs);
+  SbOffset = (SBOFF < PrivateData->BlockSize) ? SBOFF : 0;
+  E2FS_SBLOAD ((VOID *)(&Buffer[SbOffset]), &Ext2Fs);
   if (Ext2Fs.Ext2FsMagic != E2FS_MAGIC) {
-    return EFI_INVALID_PARAMETER;
+    Rc = EFI_INVALID_PARAMETER;
+    goto Exit;
   }
   if (Ext2Fs.Ext2FsRev > E2FS_REV1 ||
       (Ext2Fs.Ext2FsRev == E2FS_REV1 &&
        (Ext2Fs.Ext2FsFirstInode != EXT2_FIRSTINO ||
         (Ext2Fs.Ext2FsInodeSize != 128 && Ext2Fs.Ext2FsInodeSize != 256) ||
         Ext2Fs.Ext2FsFeaturesIncompat & ~EXT2F_INCOMPAT_SUPP))) {
-    return EFI_UNSUPPORTED;
+    Rc = EFI_UNSUPPORTED;
+    goto Exit;
   }
-
-  E2FS_SBLOAD ((VOID *)SbBuf, &FileSystem->Ext2Fs);
+  E2FS_SBLOAD ((VOID *)&Ext2Fs, &FileSystem->Ext2Fs);
   //
   // compute in-memory m_ext2fs values
   //
   FileSystem->Ext2FsNumCylinder       =
     HOWMANY (FileSystem->Ext2Fs.Ext2FsBlockCount - FileSystem->Ext2Fs.Ext2FsFirstDataBlock,
              FileSystem->Ext2Fs.Ext2FsBlocksPerGroup);
-  //
-  // XXX assume hw bsize = 512
-  //
-  FileSystem->Ext2FsFsbtobd           = FileSystem->Ext2Fs.Ext2FsLogBlockSize + 1;
+
+  FileSystem->Ext2FsFsbtobd           = (FileSystem->Ext2Fs.Ext2FsLogBlockSize + 10) - HighBitSet32 (PrivateData->BlockSize);
   FileSystem->Ext2FsBlockSize         = MINBSIZE << FileSystem->Ext2Fs.Ext2FsLogBlockSize;
   FileSystem->Ext2FsLogicalBlock      = LOG_MINBSIZE + FileSystem->Ext2Fs.Ext2FsLogBlockSize;
   FileSystem->Ext2FsQuadBlockOffset   = FileSystem->Ext2FsBlockSize - 1;
   FileSystem->Ext2FsBlockOffset       = (UINT32)~FileSystem->Ext2FsQuadBlockOffset;
+  FileSystem->Ext2FsGDSize            = 32;
+  if (Ext2Fs.Ext2FsFeaturesIncompat & EXT2F_INCOMPAT_64BIT) {
+    FileSystem->Ext2FsGDSize          = FileSystem->Ext2Fs.Ext2FsGDSize;
+  }
   FileSystem->Ext2FsNumGrpDesBlock    =
-    HOWMANY (FileSystem->Ext2FsNumCylinder, FileSystem->Ext2FsBlockSize / sizeof (EXT2GD));
+    HOWMANY (FileSystem->Ext2FsNumCylinder, FileSystem->Ext2FsBlockSize / FileSystem->Ext2FsGDSize);
   FileSystem->Ext2FsInodesPerBlock    = FileSystem->Ext2FsBlockSize / Ext2Fs.Ext2FsInodeSize;
   FileSystem->Ext2FsInodesTablePerGrp = FileSystem->Ext2Fs.Ext2FsINodesPerGroup / FileSystem->Ext2FsInodesPerBlock;
 
-  return 0;
+Exit:
+  if (Buffer != NULL) {
+    FreePool (Buffer);
+  }
+
+  return Rc;
 }
 
 /**
@@ -713,7 +741,7 @@ ReadGDBlock (
 
   Fp = (FILE *)File->FileSystemSpecificData;
 
-  gdpb = FileSystem->Ext2FsBlockSize / sizeof (EXT2GD);
+  gdpb = FileSystem->Ext2FsBlockSize / FileSystem->Ext2FsGDSize;
 
   for (Index = 0; Index < FileSystem->Ext2FsNumGrpDesBlock; Index++) {
     Rc = DEV_STRATEGY (File->DevPtr) (File->FileDevData, F_READ,
@@ -730,7 +758,7 @@ ReadGDBlock (
     E2FS_CGLOAD ((EXT2GD *)Fp->Buffer,
                  &FileSystem->Ext2FsGrpDes[Index * gdpb],
                  (Index == (FileSystem->Ext2FsNumGrpDesBlock - 1)) ?
-                 (FileSystem->Ext2FsNumCylinder - gdpb * Index) * sizeof (EXT2GD) :
+                 (FileSystem->Ext2FsNumCylinder - gdpb * Index) * FileSystem->Ext2FsGDSize :
                  FileSystem->Ext2FsBlockSize);
   }
 
@@ -803,7 +831,7 @@ Ext2fsOpen (
   //
   // read group descriptor blocks
   //
-  FileSystem->Ext2FsGrpDes = AllocatePool (sizeof (EXT2GD) * FileSystem->Ext2FsNumCylinder);
+  FileSystem->Ext2FsGrpDes = AllocatePool (FileSystem->Ext2FsGDSize * FileSystem->Ext2FsNumCylinder);
   Rc = ReadGDBlock (File, FileSystem);
   if (Rc != 0) {
     goto out;
@@ -833,7 +861,6 @@ Ext2fsOpen (
 #ifndef LIBSA_FS_SINGLECOMPONENT
   Cp = Path;
   while (*Cp != '\0') {
-
     //
     //  Remove extra separators
     //
@@ -1404,35 +1431,36 @@ DumpSBlock (
   )
 {
 
-  DEBUG ((DEBUG_VERBOSE, "FileSystem->Ext2Fs.Ext2FsBlockCount = %u\n", FileSystem->Ext2Fs.Ext2FsBlockCount));
-  DEBUG ((DEBUG_VERBOSE, "FileSystem->Ext2Fs.Ext2FsFirstDataBlock = %u\n", FileSystem->Ext2Fs.Ext2FsFirstDataBlock));
-  DEBUG ((DEBUG_VERBOSE, "FileSystem->Ext2Fs.Ext2FsLogBlockSize = %u\n", FileSystem->Ext2Fs.Ext2FsLogBlockSize));
-  DEBUG ((DEBUG_VERBOSE, "FileSystem->Ext2Fs.Ext2FsBlocksPerGroup = %u\n", FileSystem->Ext2Fs.Ext2FsBlocksPerGroup));
-  DEBUG ((DEBUG_VERBOSE, "FileSystem->Ext2Fs.Ext2FsINodesPerGroup = %u\n", FileSystem->Ext2Fs.Ext2FsINodesPerGroup));
-  DEBUG ((DEBUG_VERBOSE, "FileSystem->Ext2Fs.Ext2FsMagic = 0x%x\n", FileSystem->Ext2Fs.Ext2FsMagic));
-  DEBUG ((DEBUG_VERBOSE, "FileSystem->Ext2Fs.Ext2FsRev = %u\n", FileSystem->Ext2Fs.Ext2FsRev));
+  DEBUG ((DEBUG_INFO, "FileSystem->Ext2Fs.Ext2FsBlockCount = %u\n", FileSystem->Ext2Fs.Ext2FsBlockCount));
+  DEBUG ((DEBUG_INFO, "FileSystem->Ext2Fs.Ext2FsFirstDataBlock = %u\n", FileSystem->Ext2Fs.Ext2FsFirstDataBlock));
+  DEBUG ((DEBUG_INFO, "FileSystem->Ext2Fs.Ext2FsLogBlockSize = %u\n", FileSystem->Ext2Fs.Ext2FsLogBlockSize));
+  DEBUG ((DEBUG_INFO, "FileSystem->Ext2Fs.Ext2FsBlocksPerGroup = %u\n", FileSystem->Ext2Fs.Ext2FsBlocksPerGroup));
+  DEBUG ((DEBUG_INFO, "FileSystem->Ext2Fs.Ext2FsINodesPerGroup = %u\n", FileSystem->Ext2Fs.Ext2FsINodesPerGroup));
+  DEBUG ((DEBUG_INFO, "FileSystem->Ext2Fs.Ext2FsMagic = 0x%x\n", FileSystem->Ext2Fs.Ext2FsMagic));
+  DEBUG ((DEBUG_INFO, "FileSystem->Ext2Fs.Ext2FsRev = %u\n", FileSystem->Ext2Fs.Ext2FsRev));
 
   if (FileSystem->Ext2Fs.Ext2FsRev == E2FS_REV1) {
-    DEBUG ((DEBUG_VERBOSE, "FileSystem->Ext2Fs.Ext2FsFirstInode = %u\n",
+    DEBUG ((DEBUG_INFO, "FileSystem->Ext2Fs.Ext2FsFirstInode = %u\n",
             FileSystem->Ext2Fs.Ext2FsFirstInode));
-    DEBUG ((DEBUG_VERBOSE, "FileSystem->Ext2Fs.Ext2FsInodeSize = %u\n",
+    DEBUG ((DEBUG_INFO, "FileSystem->Ext2Fs.Ext2FsInodeSize = %u\n",
             FileSystem->Ext2Fs.Ext2FsInodeSize));
-    DEBUG ((DEBUG_VERBOSE, "FileSystem->Ext2Fs.Ext2FsFeaturesCompat = %u\n",
+    DEBUG ((DEBUG_INFO, "FileSystem->Ext2Fs.Ext2FsFeaturesCompat = %u\n",
             FileSystem->Ext2Fs.Ext2FsFeaturesCompat));
-    DEBUG ((DEBUG_VERBOSE, "FileSystem->Ext2Fs.Ext2FsFeaturesIncompat = %u\n",
+    DEBUG ((DEBUG_INFO, "FileSystem->Ext2Fs.Ext2FsFeaturesIncompat = %u\n",
             FileSystem->Ext2Fs.Ext2FsFeaturesIncompat));
-    DEBUG ((DEBUG_VERBOSE, "FileSystem->Ext2Fs.Ext2FsFeaturesROCompat = %u\n",
+    DEBUG ((DEBUG_INFO, "FileSystem->Ext2Fs.Ext2FsFeaturesROCompat = %u\n",
             FileSystem->Ext2Fs.Ext2FsFeaturesROCompat));
-    DEBUG ((DEBUG_VERBOSE, "FileSystem->Ext2Fs.Ext2FsRsvdGDBlock = %u\n",
+    DEBUG ((DEBUG_INFO, "FileSystem->Ext2Fs.Ext2FsRsvdGDBlock = %u\n",
             FileSystem->Ext2Fs.Ext2FsRsvdGDBlock));
   }
 
-  DEBUG ((DEBUG_VERBOSE, "FileSystem->Ext2FsBlockSize = %u\n", FileSystem->Ext2FsBlockSize));
-  DEBUG ((DEBUG_VERBOSE, "FileSystem->Ext2FsFsbtobd = %u\n", FileSystem->Ext2FsFsbtobd));
-  DEBUG ((DEBUG_VERBOSE, "FileSystem->Ext2FsNumCylinder = %u\n", FileSystem->Ext2FsNumCylinder));
-  DEBUG ((DEBUG_VERBOSE, "FileSystem->Ext2FsNumGrpDesBlock = %u\n", FileSystem->Ext2FsNumGrpDesBlock));
-  DEBUG ((DEBUG_VERBOSE, "FileSystem->Ext2FsInodesPerBlock = %u\n", FileSystem->Ext2FsInodesPerBlock));
-  DEBUG ((DEBUG_VERBOSE, "FileSystem->Ext2FsInodesTablePerGrp = %u\n", FileSystem->Ext2FsInodesTablePerGrp));
+  DEBUG ((DEBUG_INFO, "FileSystem->Ext2FsGDSize = %u\n", FileSystem->Ext2FsGDSize));
+  DEBUG ((DEBUG_INFO, "FileSystem->Ext2FsBlockSize = %u\n", FileSystem->Ext2FsBlockSize));
+  DEBUG ((DEBUG_INFO, "FileSystem->Ext2FsFsbtobd = %u\n", FileSystem->Ext2FsFsbtobd));
+  DEBUG ((DEBUG_INFO, "FileSystem->Ext2FsNumCylinder = %u\n", FileSystem->Ext2FsNumCylinder));
+  DEBUG ((DEBUG_INFO, "FileSystem->Ext2FsNumGrpDesBlock = %u\n", FileSystem->Ext2FsNumGrpDesBlock));
+  DEBUG ((DEBUG_INFO, "FileSystem->Ext2FsInodesPerBlock = %u\n", FileSystem->Ext2FsInodesPerBlock));
+  DEBUG ((DEBUG_INFO, "FileSystem->Ext2FsInodesTablePerGrp = %u\n", FileSystem->Ext2FsInodesTablePerGrp));
 }
 #endif
 

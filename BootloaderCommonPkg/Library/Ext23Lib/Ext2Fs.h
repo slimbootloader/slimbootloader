@@ -92,8 +92,6 @@
 #define BBLOCK      ((DADDRESS)(0))
 #define SBLOCK      ((DADDRESS)(BBLOCK + BBSIZE / DEV_BSIZE))
 
-#define BDEV_BLOCKSIZE    512
-
 #undef  EXT2FS_DEBUG
 
 #undef  LIBSA_FS_SINGLECOMPONENT
@@ -190,7 +188,10 @@ typedef struct {
   UINT8   Ext2FsPreAlloc;           /* # of blocks to preallocate */
   UINT8   Ext2FsDirPreAlloc;        /* # of blocks to preallocate for dir */
   UINT16  Ext2FsRsvdGDBlock;        /* # of reserved gd blocks for resize */
-  UINT32  Rsvd2[204];
+  UINT32  Rsvd2[11];
+  UINT16  Rsvd3;
+  UINT16  Ext2FsGDSize;             /* size of group descriptors, in bytes, if the 64bit incompat feature flag is set */
+  UINT32  Rsvd4[192];
 } EXT2FS;
 
 //
@@ -204,7 +205,9 @@ typedef struct {
   UINT16 Ext2BGDFreeInodes;     /* number of free inodes */
   UINT16 Ext2BGDNumDir;         /* number of directories */
   UINT16 Rsvd;
-  UINT32 Rsvd2[3];
+  UINT32 Rsvd2[5];
+  UINT32 Ext2BGDInodeTablesHi;  /* upper 32 bits of inodes table block, if the 64bit incompat feature flag is set */
+  UINT32 Rsvd3[5];
 } EXT2GD;
 
 //
@@ -224,7 +227,8 @@ typedef struct {
   INT32    Ext2FsNumGrpDesBlock;     // number of group descriptor block
   INT32    Ext2FsInodesPerBlock;     // number of inodes per block
   INT32    Ext2FsInodesTablePerGrp;  // number of inode table per group
-  EXT2GD  *Ext2FsGrpDes;             // group descripors
+  UINT32   Ext2FsGDSize;             // size of group descriptors
+  EXT2GD  *Ext2FsGrpDes;             // group descriptors
 } M_EXT2FS;
 
 
@@ -256,7 +260,7 @@ typedef struct {
 //       encounter a real file error.
 //
 #define EXT2F_INCOMPAT_RECOVER      0x0004
-
+#define EXT2F_INCOMPAT_64BIT        0x0080
 #define EXT2F_INCOMPAT_EXTENTS      0x0040
 #define EXT2F_INCOMPAT_FLEX_BG      0x0200
 
@@ -276,8 +280,9 @@ typedef struct {
 #define EXT2F_COMPAT_SUPP        0x0000
 #define EXT2F_ROCOMPAT_SUPP      (EXT2F_ROCOMPAT_SPARSESUPER \
                                  | EXT2F_ROCOMPAT_LARGEFILE)
-#define EXT2F_INCOMPAT_SUPP      (EXT2F_INCOMPAT_FTYPE \
+#define EXT2F_INCOMPAT_SUPP      (EXT2F_INCOMPAT_FTYPE    \
                                  | EXT2F_INCOMPAT_RECOVER \
+                                 | EXT2F_INCOMPAT_64BIT   \
                                  | EXT2F_INCOMPAT_EXTENTS \
                                  | EXT2F_INCOMPAT_FLEX_BG)
 
@@ -417,7 +422,7 @@ E2fsCGByteSwap (
 #define INODETOFSBA(fs, x)  \
     ((fs)->Ext2FsGrpDes[INOTOCG((fs), (x))].Ext2BGDInodeTables + \
     (((x) - 1) % (fs)->Ext2Fs.Ext2FsINodesPerGroup) / (fs)->Ext2FsInodesPerBlock)
-#define INODETOFSBO(fs, x)  (((x) - 1) % (fs)->Ext2FsInodesPerBlock)
+#define INODETOFSBO(fs, x)  ((((x) - 1) % (fs)->Ext2Fs.Ext2FsINodesPerGroup) % (fs)->Ext2FsInodesPerBlock)
 
 /**
   Give cylinder group number for a file system block.
