@@ -184,6 +184,11 @@ def BuildFspBins (fsp_dir, sbl_dir, silicon_pkg_name, flag):
     if os.path.exists(fsp_dir + '/QemuFspPkg'):
         shutil.rmtree(fsp_dir + '/QemuFspPkg')
 
+    cmd = 'git clean -xfd'
+    ret = subprocess.call(cmd.split(' '), cwd=fsp_dir)
+    if ret:
+        Fatal ('Failed to clean repo in directory %s !' % fsp_dir)
+
     cmd = 'git checkout -f ' + edk2_base_tag
     ret = subprocess.call(cmd.split(' '), cwd=fsp_dir)
     if ret:
