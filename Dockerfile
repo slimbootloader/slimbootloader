@@ -1,16 +1,15 @@
 FROM ubuntu:18.04
 
 # Install build dependencies
-RUN apt-get update && apt-get -y install sudo build-essential python \
+RUN apt-get update && apt-get -y install sudo build-essential python python3 \
 	uuid-dev nasm openssl gcc-multilib git m4 bison flex
 
 # Install ACPICA Utilities
-ADD https://acpica.org/sites/acpica/files/acpica-unix-20160422.tar.gz /tmp
+ADD http://ftp.br.debian.org/debian/pool/main/a/acpica-unix/acpica-tools_20160831-1+b1_amd64.deb /tmp
 RUN cd /tmp && \
-    tar -xvf acpica-unix-20160422.tar.gz && \
-    cd acpica-unix-20160422 && \
-    make && make install && \
-    cd /tmp && rm -rf acpica-unix-20160422 acpica-unix-20160422.tar.gz
+    dpkg -i acpica-tools_20160831-1+b1_amd64.deb && \
+    apt-get install -f && \
+    apt-get -y install python3-distutils
 
 # Add a user account, give sudo access
 RUN useradd -m docker && echo "docker:docker" | chpasswd && adduser docker sudo
