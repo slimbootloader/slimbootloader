@@ -160,27 +160,27 @@ NhltFormatDump (
 
   UINT32  i;
 
-  DEBUG ((DEBUG_INFO, "------------------------------- FORMAT -------------------------------\n"));
-  DEBUG ((DEBUG_INFO, " Format->Format.Format.wFormatTag      = 0x%x\n", Format->Format.Format.wFormatTag));
-  DEBUG ((DEBUG_INFO, " Format->Format.Format.nChannels       = %d\n", Format->Format.Format.nChannels));
-  DEBUG ((DEBUG_INFO, " Format->Format.Format.nSamplesPerSec  = %d\n", Format->Format.Format.nSamplesPerSec));
-  DEBUG ((DEBUG_INFO, " Format->Format.Format.nAvgBytesPerSec = %d\n", Format->Format.Format.nAvgBytesPerSec));
-  DEBUG ((DEBUG_INFO, " Format->Format.Format.nBlockAlign     = %d\n", Format->Format.Format.nBlockAlign));
-  DEBUG ((DEBUG_INFO, " Format->Format.Format.wBitsPerSample  = %d\n", Format->Format.Format.wBitsPerSample));
-  DEBUG ((DEBUG_INFO, " Format->Format.Format.cbSize          = %d\n", Format->Format.Format.cbSize));
-  DEBUG ((DEBUG_INFO, " Format->Format.Samples                = %d\n", Format->Format.Samples));
-  DEBUG ((DEBUG_INFO, " Format->Format.dwChannelMask          = 0x%x\n", Format->Format.dwChannelMask));
-  DEBUG ((DEBUG_INFO, " Format->Format.SubFormat              = %g\n", Format->Format.SubFormat));
+  DEBUG ((DEBUG_VERBOSE, "------------------------------- FORMAT -------------------------------\n"));
+  DEBUG ((DEBUG_VERBOSE, " Format->Format.Format.wFormatTag      = 0x%x\n", Format->Format.Format.wFormatTag));
+  DEBUG ((DEBUG_VERBOSE, " Format->Format.Format.nChannels       = %d\n", Format->Format.Format.nChannels));
+  DEBUG ((DEBUG_VERBOSE, " Format->Format.Format.nSamplesPerSec  = %d\n", Format->Format.Format.nSamplesPerSec));
+  DEBUG ((DEBUG_VERBOSE, " Format->Format.Format.nAvgBytesPerSec = %d\n", Format->Format.Format.nAvgBytesPerSec));
+  DEBUG ((DEBUG_VERBOSE, " Format->Format.Format.nBlockAlign     = %d\n", Format->Format.Format.nBlockAlign));
+  DEBUG ((DEBUG_VERBOSE, " Format->Format.Format.wBitsPerSample  = %d\n", Format->Format.Format.wBitsPerSample));
+  DEBUG ((DEBUG_VERBOSE, " Format->Format.Format.cbSize          = %d\n", Format->Format.Format.cbSize));
+  DEBUG ((DEBUG_VERBOSE, " Format->Format.Samples                = %d\n", Format->Format.Samples));
+  DEBUG ((DEBUG_VERBOSE, " Format->Format.dwChannelMask          = 0x%x\n", Format->Format.dwChannelMask));
+  DEBUG ((DEBUG_VERBOSE, " Format->Format.SubFormat              = %g\n", Format->Format.SubFormat));
 
-  DEBUG ((DEBUG_INFO, " Format->FormatConfiguration.CapabilitiesSize = %d B\n", Format->FormatConfiguration.CapabilitiesSize));
-  DEBUG ((DEBUG_INFO, " Format->FormatConfiguration.Capabilities:"));
+  DEBUG ((DEBUG_VERBOSE, " Format->FormatConfiguration.CapabilitiesSize = %d B\n", Format->FormatConfiguration.CapabilitiesSize));
+  DEBUG ((DEBUG_VERBOSE, " Format->FormatConfiguration.Capabilities:"));
   for (i = 0; i < (  Format->FormatConfiguration.CapabilitiesSize ) ; i++) {
     if(i % 16 == 0) {
-      DEBUG ((DEBUG_INFO, "\n"));
+      DEBUG ((DEBUG_VERBOSE, "\n"));
     }
-    DEBUG ((DEBUG_INFO, "0x%02x, ", Format->FormatConfiguration.Capabilities[i]));
+    DEBUG ((DEBUG_VERBOSE, "0x%02x, ", Format->FormatConfiguration.Capabilities[i]));
   }
-  DEBUG ((DEBUG_INFO, "\n"));
+  DEBUG ((DEBUG_VERBOSE, "\n"));
 
   DEBUG_CODE_END ();
 }
@@ -204,37 +204,37 @@ NhltEndpointDump (
   FORMATS_CONFIG  *FormatsConfigs;
   FORMAT_CONFIG   *Format;
 
-  DEBUG ((DEBUG_INFO, "------------------------------ ENDPOINT ------------------------------\n"));
-  DEBUG ((DEBUG_INFO, " Endpoint->DeviceDescriptorLength = %d B\n", Endpoint->EndpointDescriptorLength));
-  DEBUG ((DEBUG_INFO, " Endpoint->LinkType               = 0x%x\n", Endpoint->LinkType));
-  DEBUG ((DEBUG_INFO, " Endpoint->InstanceId             = 0x%x\n", Endpoint->InstanceId));
-  DEBUG ((DEBUG_INFO, " Endpoint->HwVendorId             = 0x%x\n", Endpoint->HwVendorId));
-  DEBUG ((DEBUG_INFO, " Endpoint->HwDeviceId             = 0x%x\n", Endpoint->HwDeviceId));
-  DEBUG ((DEBUG_INFO, " Endpoint->HwRevisionId           = 0x%x\n", Endpoint->HwRevisionId));
-  DEBUG ((DEBUG_INFO, " Endpoint->HwSubsystemId          = 0x%x\n", Endpoint->HwSubsystemId));
-  DEBUG ((DEBUG_INFO, " Endpoint->DeviceType             = 0x%x\n", Endpoint->DeviceType));
-  DEBUG ((DEBUG_INFO, " Endpoint->Direction              = 0x%x\n", Endpoint->Direction));
-  DEBUG ((DEBUG_INFO, " Endpoint->VirtualBusId           = 0x%x\n", Endpoint->VirtualBusId));
+  DEBUG ((DEBUG_VERBOSE, "------------------------------ ENDPOINT ------------------------------\n"));
+  DEBUG ((DEBUG_VERBOSE, " Endpoint->DeviceDescriptorLength = %d B\n", Endpoint->EndpointDescriptorLength));
+  DEBUG ((DEBUG_VERBOSE, " Endpoint->LinkType               = 0x%x\n", Endpoint->LinkType));
+  DEBUG ((DEBUG_VERBOSE, " Endpoint->InstanceId             = 0x%x\n", Endpoint->InstanceId));
+  DEBUG ((DEBUG_VERBOSE, " Endpoint->HwVendorId             = 0x%x\n", Endpoint->HwVendorId));
+  DEBUG ((DEBUG_VERBOSE, " Endpoint->HwDeviceId             = 0x%x\n", Endpoint->HwDeviceId));
+  DEBUG ((DEBUG_VERBOSE, " Endpoint->HwRevisionId           = 0x%x\n", Endpoint->HwRevisionId));
+  DEBUG ((DEBUG_VERBOSE, " Endpoint->HwSubsystemId          = 0x%x\n", Endpoint->HwSubsystemId));
+  DEBUG ((DEBUG_VERBOSE, " Endpoint->DeviceType             = 0x%x\n", Endpoint->DeviceType));
+  DEBUG ((DEBUG_VERBOSE, " Endpoint->Direction              = 0x%x\n", Endpoint->Direction));
+  DEBUG ((DEBUG_VERBOSE, " Endpoint->VirtualBusId           = 0x%x\n", Endpoint->VirtualBusId));
 
-  DEBUG ((DEBUG_INFO, " Endpoint->EndpointConfig.CapabilitiesSize = %d B\n", Endpoint->EndpointConfig.CapabilitiesSize));
-  DEBUG ((DEBUG_INFO, " Endpoint->EndpointConfig.Capabilities:"));
+  DEBUG ((DEBUG_VERBOSE, " Endpoint->EndpointConfig.CapabilitiesSize = %d B\n", Endpoint->EndpointConfig.CapabilitiesSize));
+  DEBUG ((DEBUG_VERBOSE, " Endpoint->EndpointConfig.Capabilities:"));
   for (i = 0; i < (Endpoint->EndpointConfig.CapabilitiesSize ) ; i++) {
     if (i % 16 == 0) {
-                DEBUG ((DEBUG_INFO, "\n"));
+                DEBUG ((DEBUG_VERBOSE, "\n"));
         }
-    DEBUG ((DEBUG_INFO, "0x%02x, ", Endpoint->EndpointConfig.Capabilities[i]));
+    DEBUG ((DEBUG_VERBOSE, "0x%02x, ", Endpoint->EndpointConfig.Capabilities[i]));
   }
 
   FormatsConfigs = GetNhltEndpointFormatsConfig(Endpoint);
 
-  DEBUG ((DEBUG_INFO, "\n"));
-  DEBUG ((DEBUG_INFO, " Endpoint->FormatsConfig.FormatsCount = %d\n", FormatsConfigs->FormatsCount));
+  DEBUG ((DEBUG_VERBOSE, "\n"));
+  DEBUG ((DEBUG_VERBOSE, " Endpoint->FormatsConfig.FormatsCount = %d\n", FormatsConfigs->FormatsCount));
   for (i = 0; i < FormatsConfigs->FormatsCount; i++) {
     Format = GetNhltEndpointFormat (Endpoint, i);
     NhltFormatDump (Format);
   }
 
-  DEBUG ((DEBUG_INFO, "\n"));
+  DEBUG ((DEBUG_VERBOSE, "\n"));
 
   DEBUG_CODE_END ();
 }
@@ -256,17 +256,17 @@ NhltOedConfigDump (
 
   UINT8  i;
 
-  DEBUG ((DEBUG_INFO, "-------------------------- OED CONFIGURATION -------------------------\n"));
-  DEBUG ((DEBUG_INFO, " OedConfig->CapabilitiesSize = %d B\n", OedConfig->CapabilitiesSize));
-  DEBUG ((DEBUG_INFO, " OedConfig->Capabilities:"));
+  DEBUG ((DEBUG_VERBOSE, "-------------------------- OED CONFIGURATION -------------------------\n"));
+  DEBUG ((DEBUG_VERBOSE, " OedConfig->CapabilitiesSize = %d B\n", OedConfig->CapabilitiesSize));
+  DEBUG ((DEBUG_VERBOSE, " OedConfig->Capabilities:"));
   for (i = 0; i < (OedConfig->CapabilitiesSize) ; i++) {
     if(i % 16 == 0) {
-      DEBUG ((DEBUG_INFO, "\n"));
+      DEBUG ((DEBUG_VERBOSE, "\n"));
     }
-    DEBUG ((DEBUG_INFO, "0x%02x, ", OedConfig->Capabilities[i]));
+    DEBUG ((DEBUG_VERBOSE, "0x%02x, ", OedConfig->Capabilities[i]));
   }
 
-  DEBUG ((DEBUG_INFO, "\n"));
+  DEBUG ((DEBUG_VERBOSE, "\n"));
 
   DEBUG_CODE_END ();
 }
@@ -288,35 +288,35 @@ NhltAcpiTableDump (
 
   UINT8 i;
 
-  DEBUG ((DEBUG_INFO, "\n"));
-  DEBUG ((DEBUG_INFO, "--- NHLT ACPI Table Dump [OED (Offload Engine Driver) Configuration] ---\n"));
+  DEBUG ((DEBUG_VERBOSE, "\n"));
+  DEBUG ((DEBUG_VERBOSE, "--- NHLT ACPI Table Dump [OED (Offload Engine Driver) Configuration] ---\n"));
 
-  DEBUG ((DEBUG_INFO, "sizeof NHLT_ACPI_TABLE = %d B\n", sizeof (NHLT_ACPI_TABLE)));
-  DEBUG ((DEBUG_INFO, "sizeof EFI_ACPI_DESCRIPTION_HEADER = %d B\n", sizeof (EFI_ACPI_DESCRIPTION_HEADER)));
-  DEBUG ((DEBUG_INFO, "sizeof ENDPOINT_DESCRIPTOR = %d B\n", sizeof (ENDPOINT_DESCRIPTOR)));
-  DEBUG ((DEBUG_INFO, "sizeof SPECIFIC_CONFIG = %d B\n", sizeof (SPECIFIC_CONFIG)));
-  DEBUG ((DEBUG_INFO, "sizeof FORMATS_CONFIG = %d B\n", sizeof (FORMATS_CONFIG)));
-  DEBUG ((DEBUG_INFO, "sizeof FORMAT_CONFIG = %d B\n", sizeof (FORMAT_CONFIG)));
-  DEBUG ((DEBUG_INFO, "sizeof WAVEFORMATEXTENSIBLE = %d B\n", sizeof (WAVEFORMATEXTENSIBLE)));
+  DEBUG ((DEBUG_VERBOSE, "sizeof NHLT_ACPI_TABLE = %d B\n", sizeof (NHLT_ACPI_TABLE)));
+  DEBUG ((DEBUG_VERBOSE, "sizeof EFI_ACPI_DESCRIPTION_HEADER = %d B\n", sizeof (EFI_ACPI_DESCRIPTION_HEADER)));
+  DEBUG ((DEBUG_VERBOSE, "sizeof ENDPOINT_DESCRIPTOR = %d B\n", sizeof (ENDPOINT_DESCRIPTOR)));
+  DEBUG ((DEBUG_VERBOSE, "sizeof SPECIFIC_CONFIG = %d B\n", sizeof (SPECIFIC_CONFIG)));
+  DEBUG ((DEBUG_VERBOSE, "sizeof FORMATS_CONFIG = %d B\n", sizeof (FORMATS_CONFIG)));
+  DEBUG ((DEBUG_VERBOSE, "sizeof FORMAT_CONFIG = %d B\n", sizeof (FORMAT_CONFIG)));
+  DEBUG ((DEBUG_VERBOSE, "sizeof WAVEFORMATEXTENSIBLE = %d B\n", sizeof (WAVEFORMATEXTENSIBLE)));
 
-  DEBUG ((DEBUG_INFO, " NHLT_ACPI_TABLE Header.Signature       = 0x%08x\n", NhltTable->Header.Signature));
-  DEBUG ((DEBUG_INFO, " NHLT_ACPI_TABLE Header.Length          = 0x%08x\n", NhltTable->Header.Length));
-  DEBUG ((DEBUG_INFO, " NHLT_ACPI_TABLE Header.Revision        = 0x%02x\n", NhltTable->Header.Revision));
-  DEBUG ((DEBUG_INFO, " NHLT_ACPI_TABLE Header.Checksum        = 0x%02x\n", NhltTable->Header.Checksum));
-  DEBUG ((DEBUG_INFO, " NHLT_ACPI_TABLE Header.OemId           = %a\n",     NhltTable->Header.OemId));
-  DEBUG ((DEBUG_INFO, " NHLT_ACPI_TABLE Header.OemTableId      = 0x%lx\n",  NhltTable->Header.OemTableId));
-  DEBUG ((DEBUG_INFO, " NHLT_ACPI_TABLE Header.OemRevision     = 0x%08x\n", NhltTable->Header.OemRevision));
-  DEBUG ((DEBUG_INFO, " NHLT_ACPI_TABLE Header.CreatorId       = 0x%08x\n", NhltTable->Header.CreatorId));
-  DEBUG ((DEBUG_INFO, " NHLT_ACPI_TABLE Header.CreatorRevision = 0x%08x\n", NhltTable->Header.CreatorRevision));
-  DEBUG ((DEBUG_INFO, "\n"));
+  DEBUG ((DEBUG_VERBOSE, " NHLT_ACPI_TABLE Header.Signature       = 0x%08x\n", NhltTable->Header.Signature));
+  DEBUG ((DEBUG_VERBOSE, " NHLT_ACPI_TABLE Header.Length          = 0x%08x\n", NhltTable->Header.Length));
+  DEBUG ((DEBUG_VERBOSE, " NHLT_ACPI_TABLE Header.Revision        = 0x%02x\n", NhltTable->Header.Revision));
+  DEBUG ((DEBUG_VERBOSE, " NHLT_ACPI_TABLE Header.Checksum        = 0x%02x\n", NhltTable->Header.Checksum));
+  DEBUG ((DEBUG_VERBOSE, " NHLT_ACPI_TABLE Header.OemId           = %a\n",     NhltTable->Header.OemId));
+  DEBUG ((DEBUG_VERBOSE, " NHLT_ACPI_TABLE Header.OemTableId      = 0x%lx\n",  NhltTable->Header.OemTableId));
+  DEBUG ((DEBUG_VERBOSE, " NHLT_ACPI_TABLE Header.OemRevision     = 0x%08x\n", NhltTable->Header.OemRevision));
+  DEBUG ((DEBUG_VERBOSE, " NHLT_ACPI_TABLE Header.CreatorId       = 0x%08x\n", NhltTable->Header.CreatorId));
+  DEBUG ((DEBUG_VERBOSE, " NHLT_ACPI_TABLE Header.CreatorRevision = 0x%08x\n", NhltTable->Header.CreatorRevision));
+  DEBUG ((DEBUG_VERBOSE, "\n"));
 
-  DEBUG ((DEBUG_INFO, " NHLT_ACPI_TABLE EndpointCount = %d\n", NhltTable->EndpointCount));
+  DEBUG ((DEBUG_VERBOSE, " NHLT_ACPI_TABLE EndpointCount = %d\n", NhltTable->EndpointCount));
   for (i = 0; i < NhltTable->EndpointCount; i++) {
     NhltEndpointDump (GetNhltEndpoint (NhltTable, i));
   }
 
   NhltOedConfigDump (GetNhltOedConfig (NhltTable));
-  DEBUG ((DEBUG_INFO, "----------------------------------------------------------------------\n"));
+  DEBUG ((DEBUG_VERBOSE, "----------------------------------------------------------------------\n"));
 
   DEBUG_CODE_END();
 }
@@ -709,10 +709,10 @@ NhltConstructor (
      EndpointDescriptorsLength += NhltEndpointConstructor (NhltTable, EndpointTable[Index].EndpointType, NhltTable->EndpointCount++);
     }
   }
-  DEBUG ((DEBUG_INFO, "NhltConstructor: EndpointCount = %d, All EndpointDescriptorsLength = %d B\n", NhltTable->EndpointCount, EndpointDescriptorsLength));
+  DEBUG ((DEBUG_VERBOSE, "NhltConstructor: EndpointCount = %d, All EndpointDescriptorsLength = %d B\n", NhltTable->EndpointCount, EndpointDescriptorsLength));
 
   OedConfigLength = NhltOedConfigConstructor (NhltTable);
-  DEBUG ((DEBUG_INFO, "NhltConstructor: OedConfigLength = %d B\n", OedConfigLength));
+  DEBUG ((DEBUG_VERBOSE, "NhltConstructor: OedConfigLength = %d B\n", OedConfigLength));
 
   TableSize = EndpointDescriptorsLength + OedConfigLength;
 
@@ -736,7 +736,7 @@ NhltAcpiHeaderConstructor (
   IN     UINT32                  NhltTableSize
   )
 {
-  DEBUG ((DEBUG_INFO, "NhltAcpiHeaderConstructor() Start\n"));
+  DEBUG ((DEBUG_VERBOSE, "NhltAcpiHeaderConstructor() Start\n"));
 
   //
   // Header
@@ -754,5 +754,5 @@ NhltAcpiHeaderConstructor (
 
   NhltTable->Header.Checksum = CalculateCheckSum8 ((UINT8 *)NhltTable, NhltTable->Header.Length);
 
-  DEBUG ((DEBUG_INFO, "NhltAcpiHeaderConstructor(), NhltAcpiTable->Header.Length = %d B\n", NhltTable->Header.Length));
+  DEBUG ((DEBUG_VERBOSE, "NhltAcpiHeaderConstructor(), NhltAcpiTable->Header.Length = %d B\n", NhltTable->Header.Length));
 }
