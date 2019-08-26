@@ -8,7 +8,8 @@
 
 #include "GpioPinsCnlH.h"
 #include "GpioPinsCnlLp.h"
-
+#include "PlatformBase.h"
+#include "Register/PchRegsPmc.h"
 
 #define TRAP_TYPE_DTS     0x02
 #define TRAP_TYPE_BGD     0x04  // BIOS Guard
@@ -187,6 +188,15 @@ Method(ADBG,1,Serialized)
 OperationRegion(SPRT,SystemIO, 0xB2,2)
 Field (SPRT, ByteAcc, Lock, Preserve) {
   SSMP, 8
+}
+
+//
+// Operational region for ACPI Control (SMI_EN) access
+//
+OperationRegion (SMIN, SystemIO, (ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN), 0x4)
+Field (SMIN, AnyAcc, NoLock, Preserve)
+{
+  SMIE, 32
 }
 
 // The _PIC Control Method is optional for ACPI design.  It allows the
