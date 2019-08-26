@@ -531,7 +531,7 @@ def create_ifwi_image (ifwi_in, ifwi_out, bios_out, platform_data, non_redundant
         for bp in range(loop):
             dir = "IFWI/BIOS/BP%d/BPDT/BpdtIbb/" % bp
             for comp_name, file_name in ibb_list:
-                file_path = os.path.join(stitch_dir, 'stitch_%s.bin' % file_name)
+                file_path = os.path.join(stitch_dir, 'Stitch_%s.bin' % file_name)
                 ret = manipulate_ifwi  ('ADD', dir + comp_name,  ifwi_data, file_path)
                 if ret != 0:
                     raise Exception ('ADD failed (error code %d) !' % (ret))
@@ -540,7 +540,7 @@ def create_ifwi_image (ifwi_in, ifwi_out, bios_out, platform_data, non_redundant
             if file_name == '':
                 file_path = ''
             else:
-                file_path = os.path.join(stitch_dir, 'stitch_%s.bin' % file_name)
+                file_path = os.path.join(stitch_dir, 'Stitch_%s.bin' % file_name)
             if (comp_name == 'EPLD' or comp_name == 'UVAR') and not os.path.exists(file_path):
                 ret = 0
             else:
