@@ -5,6 +5,9 @@
 
 **/
 
+#include "PlatformBase.h"
+#include "ScRegs/RegsPmc.h"
+
 #define NW_GPIO_116           0x00C40728    //GP_SSP_1_RXD
 
 // Define the following External variables to prevent a WARNING when
@@ -27,6 +30,15 @@ Mutex(MUTX,0)
 OperationRegion (SPRT, SystemIO, 0xB2, 2)
 Field (SPRT, ByteAcc, Lock, Preserve) {
   SSMP, 8
+}
+
+//
+// Operational region for ACPI Control (SMI_EN) access
+//
+OperationRegion (SMIN, SystemIO, (ACPI_BASE_ADDRESS + R_SMI_EN), 0x4)
+Field (SMIN, AnyAcc, NoLock, Preserve)
+{
+  SMIE, 32
 }
 
 // The _PIC Control Method is optional for ACPI design.  It allows the
