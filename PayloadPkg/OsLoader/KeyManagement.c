@@ -112,14 +112,15 @@ SeedSanityCheck (
   ClearSeedHOB = FALSE;
   UseedCount = 0;
   DseedCount = 0;
+  SeedListLen = 0;
 
   OsBootOptionList = GetBootOptionList ();
   if ((OsBootOptionList == NULL) || (OsBootOptionList->OsBootOptionCount == 0)) {
     return EFI_NOT_FOUND;
   }
 
-  SeedListInfo = GetSeedListInfoHOB(&SeedListLen);
-  if ((SeedListInfo == NULL) || (SeedListLen < 0)) {
+  SeedListInfo = GetSeedListInfoHOB (&SeedListLen);
+  if ((SeedListInfo == NULL) || (SeedListLen == 0)) {
     return EFI_NOT_FOUND;
   }
 

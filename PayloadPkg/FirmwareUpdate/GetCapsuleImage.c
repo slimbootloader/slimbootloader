@@ -243,6 +243,7 @@ LoadCapsuleImage (
   CHAR16              FileName[MAX_FILE_LEN];
   EFI_HANDLE          FileHandle;
 
+  FileHandle = NULL;
   HwPartHandle = NULL;
   Status = FindBootPartition (CapsuleInfo, &HwPartHandle);
   if (EFI_ERROR (Status)) {
@@ -273,9 +274,8 @@ LoadCapsuleImage (
   }
 
   //
-  // get capsule image size.
+  // Get capsule image size.
   //
-  FileHandle        = NULL;
   *CapsuleImageSize = 0;
   *CapsuleImage     = NULL;
 

@@ -150,6 +150,7 @@ SpiLoadExternalConfigData (
   Address  = 0;
   BlobSize = sizeof(CDATA_BLOB);
   Buffer   = (UINT8 *)Dst;
+  Base     = 0;
 
   CfgDataLoadSrc = PcdGet32 (PcdCfgDataLoadSource);
 
@@ -197,10 +198,10 @@ SpiLoadExternalConfigData (
   if (CfgDataLoadSrc == FlashRegionPlatformData) {
     Status = SpiFlashRead (FlashRegionPlatformData, Address + BlobSize, SignedLen - BlobSize, Buffer + BlobSize);
   } else {
-    CopyMem (Buffer + BlobSize, (VOID *)(Base + BlobSize), SignedLen - BlobSize);
+    if (Base > 0) {
+      CopyMem (Buffer + BlobSize, (VOID *)(Base + BlobSize), SignedLen - BlobSize);
+    }
   }
 
   return Status;
 }
-
-

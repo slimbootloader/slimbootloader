@@ -313,7 +313,7 @@ LoadLinuxFile (
     return EFI_NOT_FOUND;
   }
 
-  if (FileInfo->Buf[0] == 0) {
+  if ((FileInfo->Buf[0] == 0) && (ConfigFile != NULL)) {
     Ptr = ConfigFile + FileInfo->Pos;
   } else {
     Ptr = FileInfo->Buf + FileInfo->Pos;
@@ -390,10 +390,13 @@ GetTraditionalLinux (
   EFI_HANDLE                 FileHandle;
   BOOLEAN                    DefBootOption;
 
+  ConfigFile     = NULL;
+  ConfigFileSize = 0;
+  DefBootOption  = FALSE;
+  Status = RETURN_NOT_FOUND;
+
   DEBUG ((DEBUG_INFO, "Try booting Linux from config file ...\n"));
 
-  DefBootOption = FALSE;
-  Status = RETURN_NOT_FOUND;
   for (Index = 0; Index < (UINTN)(FeaturePcdGet (PcdGrubBootCfgEnabled) ? 2 : 1); Index++) {
     DEBUG ((DEBUG_INFO, "Checking %s\n",mConfigFileName[Index]));
     ConfigFile     = NULL;
@@ -477,7 +480,7 @@ GetTraditionalLinux (
 
   // Update command line
   LinuxImage->CmdFile.Size = LinuxBootCfg.MenuEntry[EntryIdx].Command.Len;
-  if (LinuxImage->CmdFile.Size > 0) {
+  if ((LinuxImage->CmdFile.Size > 0) && (ConfigFile != NULL)) {
     Ptr = (CHAR8 *)ConfigFile + LinuxBootCfg.MenuEntry[EntryIdx].Command.Pos;
     Ptr[LinuxImage->CmdFile.Size] = 0;
     LinuxImage->CmdFile.Addr = Ptr;

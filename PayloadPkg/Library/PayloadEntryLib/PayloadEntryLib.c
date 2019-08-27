@@ -231,8 +231,10 @@ SecStartup (
   AddMeasurePointTimestamp (0x4000, TimeStamp);
 
   // ACPI table
-  SystemTableInfo = GetSystemTableInfo();
-  ParseAcpiTableInfo ((UINT32)SystemTableInfo->AcpiTableBase);
+  SystemTableInfo = GetSystemTableInfo ();
+  if (SystemTableInfo != NULL) {
+    ParseAcpiTableInfo ((UINT32)SystemTableInfo->AcpiTableBase);
+  }
 
   DEBUG_CODE_BEGIN ();
   // Initialize HOB/Stack region with known pattern so that the usage can be detected
