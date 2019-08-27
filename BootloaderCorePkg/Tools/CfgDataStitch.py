@@ -21,7 +21,7 @@ def get_tool_dir():
 
 def run_cmd(cmd_list):
     sys.stdout.flush()
-    print ' '.join(cmd_list)
+    print (' '.join(cmd_list))
     ret = subprocess.call(cmd_list)
     if ret:
         sys.exit(1)
@@ -107,7 +107,7 @@ def cfgdata_stitch(ifwi_file, ifwi_out_file, cfg_dir, key_dir, tool_dir, pid):
     # replace the CFGDATA in IFWI
     cmd_list = [sys.executable, os.path.join(tool_dir, 'CfgDataTool.py'), 'replace',
                 '-i', ifwi_file, os.path.join(out_dir, 'CfgData.bin')]
-    cmd_list.extend(['-o', os.path.join(out_dir, os.path.basename(ifwi_file))])
+    cmd_list.extend(['-o', os.path.join(out_dir, os.path.basename(ifwi_out_file))])
     run_cmd(cmd_list)
 
     # clean intermediate files
