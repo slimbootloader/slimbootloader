@@ -74,7 +74,7 @@
   #
 
   # Global definitions in BSF
-  # !BSF PAGES:{PLT::"Platform", MEM::"Memory Settings", SIL::"Silicon Settings", GIO::"GPIO Settings"}
+  # !BSF PAGES:{PLT::"Platform", MEM::"Memory Settings", SIL::"Silicon Settings", GIO::"GPIO Settings", BLD::"Build Settings"}
   # !BSF BLOCK:{NAME:"QEMU Platform", VER:"0.1"}
 
   # CFG HDR Format
@@ -155,6 +155,11 @@
   # !BSF PAGE:{GIO}
   # ---------------------------------------------------------------------------------------
   !include CfgDataGpio.dsc
+
+  # ---------------------------------------------------------------------------------------
+  # !BSF PAGE:{BLD}
+  # ---------------------------------------------------------------------------------------
+  !include CfgBuildData.dsc
 
   # ---------------------------------------------------------------------------------------
   !include CfgData_CapsuleInformation.dsc
