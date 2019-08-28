@@ -1666,6 +1666,9 @@ MmcSelectPart (
   }
 
   Private = MmcGetHcPrivateData();
+  if (Private == NULL) {
+    return EFI_NOT_READY;
+  }
 
   Status = MmcGetExtCsd (Private);
   if (EFI_ERROR (Status)) {
@@ -1744,6 +1747,10 @@ MmcReadBlocks (
   }
 
   Private = MmcGetHcPrivateData();
+  if (Private == NULL) {
+    return EFI_NOT_READY;
+  }
+
   if (DeviceIndex != Private->CurrentPartition) {
     Status = MmcSelectPart ((UINT8)DeviceIndex);
     if (EFI_ERROR (Status)) {
@@ -1783,13 +1790,15 @@ MmcWriteBlocksExt (
   EFI_STATUS               Status;
   SD_MMC_HC_PRIVATE_DATA  *Private;
 
-  Private = NULL;
-
   if (!MmcIsInitialized()) {
     return EFI_NOT_READY;
   }
 
   Private = MmcGetHcPrivateData();
+  if (Private == NULL) {
+    return EFI_NOT_READY;
+  }
+
   if (DeviceIndex != Private->CurrentPartition) {
     Status = MmcSelectPart ((UINT8)DeviceIndex);
     if (EFI_ERROR (Status)) {
@@ -1866,6 +1875,9 @@ MmcGetMediaInfo (
   }
 
   Private = MmcGetHcPrivateData();
+  if (Private == NULL) {
+    return EFI_NOT_READY;
+  }
 
   if (DeviceIndex != Private->CurrentPartition) {
     Status = MmcSelectPart ((UINT8)DeviceIndex);

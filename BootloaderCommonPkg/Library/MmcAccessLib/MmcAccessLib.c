@@ -229,9 +229,7 @@ SdCardSendOpCond (
     //
     // For details, refer to SD Host Controller Simplified Spec 3.0 Table 2-12.
     //
-    if  (Argument != NULL) {
-      *Argument = SdMmcStatusBlk.Resp0;
-    }
+    *Argument = SdMmcStatusBlk.Resp0;
   }
 
   return Status;

@@ -1078,7 +1078,7 @@ UfsReadBlocks (
     ReadSize   += ReadBlockSize;
     LbaAddress += ReadBlockSize / SIZE_4KB;
   }
- 
+
   return Status;
 }
 
@@ -1317,11 +1317,6 @@ InitializeUfs (
     // When status is error, meant no controller is found
     //
     if (EFI_ERROR (Status)) {
-      break;
-    }
-
-    if (Private == NULL) {
-      Status = EFI_OUT_OF_RESOURCES;
       break;
     }
 
