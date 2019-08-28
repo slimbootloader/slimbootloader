@@ -703,20 +703,21 @@ def CmdReplace(Args):
     CompList = []
     StartOff = 0
     EndOff   = 0
-    CfgName  = 'CNFG'
     if IfwiParser.is_ifwi_image(BiosBins):
         #Check if it has BPDT
         SpiDesc = SPI_DESCRIPTOR.from_buffer(BiosBins, 0)
         Comp = IfwiParser.find_ifwi_region(SpiDesc, RegionName)
         if len(Comp) < 1:
             raise Exception("Cannot not find CFGDATA in SPI flash region '%s' !" % RegionName)
-        CfgName = 'CFGD'
 
     if not CompList:
         if RegionName == 'bios':
             Ifwi = IfwiParser.parse_ifwi_binary (BiosBins)
-            cfgs = IfwiParser.find_components(Ifwi, CfgName)
+            cfgs = IfwiParser.find_components(Ifwi, 'CNFG')
+            if not cfgs:
+                cfgs = IfwiParser.find_components(Ifwi, 'CFGD')
             for cfgd in cfgs:
+                print (IfwiParser.get_component_path (cfgd))
                 CompList.append((cfgd.offset, cfgd.length))
         else:
             # For PDR region, always assume CFGDATA starts from offset 0

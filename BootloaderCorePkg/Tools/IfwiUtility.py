@@ -317,6 +317,14 @@ class IFWI_PARSER:
         return result
 
     @staticmethod
+    def get_component_path (comp):
+        path = []
+        while comp:
+            path.append (comp.name)
+            comp = comp.parent
+        return '/'.join(path[::-1])
+
+    @staticmethod
     def print_tree(root, level=0):
         if root is None:
             return
