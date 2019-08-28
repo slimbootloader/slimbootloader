@@ -667,6 +667,10 @@ class Build(object):
 					lines.append('  %s\n' % lib)
 				lines.append('\n')
 
+		if os.path.exists(os.path.join(os.environ['PLT_SOURCE'], 'Platform', self._board.BOARD_PKG_NAME, 'ExtraPlatform.dsc')):
+			lines.append('\n# Extra Platform specific DSC file\n')
+			lines.append('!include Platform/$(BOARD_PKG_NAME)/ExtraPlatform.dsc\n')
+
 		update = True
 		text = ''.join(lines)
 		if os.path.exists(file):
