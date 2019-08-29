@@ -376,7 +376,7 @@ class IFWI_PARSER:
             elif gap < 0:
                 gap = -gap
                 print ("Padding 0x%x bytes at the end to fill the region '%s'" % (gap, ifwi_comp.name))
-                comp_bin.extend ('\xff' * gap)
+                comp_bin.extend (b'\xff' * gap)
 
             ifwi_bin[ifwi_comp.offset:ifwi_comp.offset + ifwi_comp.length] = \
                 comp_bin[0:ifwi_comp.length]
