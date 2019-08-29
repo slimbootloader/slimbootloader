@@ -75,9 +75,9 @@ Please follow the steps below for WHL/CFL IFWI stitching.
   4. Stitch the final image
      Run this script from Slim Bootloader root directory:
      EX:
-       Assuming stitching workspace is at D:\Stitch
+       Assuming stitching workspace is at D:\Stitch and building ifwi for WHL platform
        To stitch IFWI with SPI QUAD mode and Boot Guard profile VM:
-         python  Platform\CoffeelakeBoardPkg\Script\StitchIfwi.py -b vm -q -w D:\Stitch -s Stitch_Components.zip
+         python  Platform\CoffeelakeBoardPkg\Script\StitchIfwi.py -b vm -q -a whl -w D:\Stitch -s Stitch_Components.zip
        To clean all generated files:
          python  Platform\CoffeelakeBoardPkg\Script\StitchIfwi.py -c -w D:\Stitch
 
@@ -87,7 +87,7 @@ def get_config ():
     cfg_var = {
       'wkspace'   :   'output',
       'fitinput'  :   'Output/input',
-      'ifwiname'  :   'SBL_IFWI.bin',
+      'ifwiname'  :   'SBL_IFWI',
       'fit'       :   'CSE/FIT/fit%s' %     ('.exe' if os.name == 'nt' else ''),
       'openssl'   :   'Openssl/openssl.exe' if os.name == 'nt' else '/usr/bin/openssl',
       'cseimg'    :   'CSE/Silicon/cse_image.bin',
@@ -99,6 +99,94 @@ def get_config ():
       'bpm'       :   'bpmgen2',
     }
     return cfg_var
+def get_xml_change_list (platform, spi_quad):
+    # Disable Quad Io and Out read enable
+    if spi_quad:
+        value = 'Yes'
+    else:
+        value = 'No'
+    xml_change_list = []
+    xml_change_list.append ([
+      # Path                                                                            | value |
+      # =========================================================================================
+      #Region Order
+      ('./BuildSettings/BuildResults/RegionOrder',                                        '45321'),
+      ('./FlashLayout/BiosRegion/InputFile',                                              '$SourceDir\Slimbootloader.bin'),
+      ('./FlashLayout/Ifwi_IntelMePmcRegion/MeRegionFile',                                '$SourceDir\cse_image.bin'),
+      ('./FlashLayout/Ifwi_IntelMePmcRegion/PmcBinary',                                   '$SourceDir\pmc.bin'),
+      ('./FlashLayout/EcRegion/InputFile',                                                '$SourceDir\ec.bin'),
+      ('./FlashLayout/EcRegion/Enabled',                                                  'Enabled'),
+      ('./FlashLayout/EcRegion/EcRegionPointer',                                          '$SourceDir\ecregionpointer.bin'),
+      ('./FlashLayout/GbeRegion/Enabled',                                                 'Enabled'),
+      ('./FlashLayout/GbeRegion/InputFile',                                               '$SourceDir\gbe.bin'),
+      ('./FlashSettings/FlashConfiguration/QuadIoReadEnable',                             value),
+      ('./FlashSettings/FlashConfiguration/QuadOutReadEnable',                            value),
+      #VsccTable
+      ('./FlashSettings/VsccTable/VsccEntries/VsccEntry/VsccEntryName',                   'vscc_entry0'),
+      ('./FlashSettings/VsccTable/VsccEntries/VsccEntry/VsccEntryVendorId',               '0xEF'),
+      ('./FlashSettings/VsccTable/VsccEntries/VsccEntry/VsccEntryDeviceId0',              '0x40'),
+      ('./FlashSettings/VsccTable/VsccEntries/VsccEntry/VsccEntryDeviceId1',              '0x19'),
+      #IntelMekernel
+      ('./IntelMeKernel/Processor/ProcEmulation',                                         'EMULATE Intel (R) vPro (TM) capable Processor'),
+      #PttConfiguration
+      ('./PlatformProtection/IntelPttConfiguration/PttSupported',                         'No'),
+      ('./PlatformProtection/IntelPttConfiguration/PttPwrUpState',                        'Disabled'),
+      #BootGuardConfiguration
+      ('./PlatformProtection/BiosGuardConfiguration/BiosGrdProtOvrdEn',                   'No'),
+      #ICC
+      ('./Icc/IccPolicies/Profiles/Profile/ClockOutputConfiguration/ClkoutCpunsscPnPath', 'Direct XTAL IN / Out Path'),
+      #Networking
+      ('./NetworkingConnectivity/WiredLanConfiguration/PhyConnected',                     'PHY on SMLink0'),
+      #SMBUS
+      ('./InternalPchBuses/SmbusSmlinkConfiguration/SLink1freq',                          '1 MHz'),
+      #ISH
+      ('./IntegratedSensorHub/IshSupported',                                              'No'),
+      #CPU Straps
+      ('./CpuStraps/IaPowerPlaneTopology',                                                '0x00000000'),
+      ('./CpuStraps/RingPowerPlaneTopology',                                              '0x00000000'),
+      ('./CpuStraps/GtUsPowerPlaneTopology',                                              '0x00000001'),
+      ('./CpuStraps/GtSPowerPlaneTopology',                                               '0x00000001'),
+      ])
+
+    if platform == 'whl':
+        xml_change_list.append ([
+            ('./PlatformProtection/IntelPttConfiguration/PttSupportedFpf',                'No'),
+            #StrapsDifferences
+            ('./StrapsDifferences/PCH_Strap_SPI_touch2_max_freq_Diff',                    '0x03'),
+            ('./StrapsDifferences/PCH_Strap_PN0_RPCFG_0_Diff',                            '0x03'),
+            ('./StrapsDifferences/PCH_Strap_PN1_RPCFG_0_Diff',                            '0x03'),
+            ('./StrapsDifferences/PCH_Strap_PN2_RPCFG_0_Diff',                            '0x00'),
+            ('./StrapsDifferences/PCH_Strap_PN3_RPCFG_0_Diff',                            '0x03'),
+            ('./StrapsDifferences/PCH_Strap_EXI_PTSS_PORT3_Diff',                         '0x01'),
+            ('./StrapsDifferences/PCH_Strap_EXI_PTSS_PORT1_Diff',                         '0x01'),
+            ('./StrapsDifferences/PCH_Strap_GBE_SMLink1_Frequency_Diff',                  '0x00'),
+            ('./StrapsDifferences/PCH_Strap_GBE_Reserved3_Diff',                          '0x0F'),
+            ('./StrapsDifferences/CPU_Strap_SEPARATE_VCCAGSH_EXISTS_Diff',                '0x00'),
+            #FlexIO
+            ('./FlexIO/PciePortConfiguration/PCIeContoller2Config',                       '1x4'),
+            ('./FlexIO/SataPcieComboPortConfiguration/SataPCIeComboPort0',                'PCIe'),
+            ('./FlexIO/SataPcieComboPortConfiguration/SataPCIeComboPort2',                'PCIe'),
+            ('./FlexIO/Usb3PortConfiguration/USB3Prt2ConTypeSel',                         'Type A'),
+            ('./FlexIO/Usb3PortConfiguration/USB3Prt3ConTypeSel',                         'Type A'),
+            ('./FlexIO/Usb2PortConfiguration/USB2Prt2ConTypeSel',                         'Type C'),
+            ('./FlexIO/Usb2PortConfiguration/USB2Prt3ConTypeSel',                         'Type A'),
+            ('./FlexIO/Usb2PortConfiguration/USB2Prt5ConTypeSel',                         'Type A'),
+            #GPIO
+            ('./Gpio/GpioVccioVoltageControl/GppA7voltSelect',                            '3.3Volts'),
+            ('./Gpio/GpioVccioVoltageControl/GppA8voltSelect',                            '3.3Volts'),
+            ('./Gpio/GpioVccioVoltageControl/GppA16voltSelect',                           '3.3Volts'),
+            ('./Gpio/GpioVccioVoltageControl/GppA21voltSelect',                           '3.3Volts'),
+            ('./Gpio/GpioVccioVoltageControl/GppC11voltSelect',                           '3.3Volts'),
+            ('./Gpio/GpioVccioVoltageControl/GppD9voltSelect',                            '1.8Volts'),
+            ('./Gpio/GpioVccioVoltageControl/GppH12voltSelect',                           '3.3Volts'),
+            ('./Gpio/GpioVccioVoltageControl/GppH14voltSelect',                           '3.3Volts'),
+            ('./Gpio/GpioVccioVoltageControl/GppH16voltSelect',                           '1.8Volts'),
+            ('./Gpio/GpioVccioVoltageControl/GppH17voltSelect',                           '1.8Volts'),
+            ('./Gpio/GpioVccioVoltageControl/GppH20voltSelect',                           '3.3Volts'),
+            ('./Gpio/GpioVccioVoltageControl/GppH22voltSelect',                           '3.3Volts'),
+            ])
+
+    return xml_change_list
 
 def run_cmd (cmd, cwd):
     sys.stdout.flush()
@@ -121,7 +209,6 @@ def run_cmd (cmd, cwd):
         print('%s\n%s' % (out, err))
         print("Failed to run command:\n  PATH: %s\n   CMD: %s" % (cwd, ' '.join(cmd_args)))
         sys.exit(1)
-
 
 def swap_ts_block(in_file, out_file, ts_size):
     print("Swapping Top Swap Blocks....")
@@ -284,170 +371,25 @@ def update_btGuard_manifests(stitch_dir, cfg_var):
     shutil.copy(os.path.join(output_dir, "SwappedA.bin"), os.path.join(output_dir, "SlimBootloader.bin"))
     os.remove(os.path.join(output_dir,"SwappedA.bin"))
 
-def gen_xml_file(stitch_dir, cfg_var, btg_profile, spi_quad):
+def gen_xml_file(stitch_dir, cfg_var, btg_profile, spi_quad, platform):
 
     print ("Generating xml file .........")
 
-    cmd = './fit -save new.xml'
+    if platform == 'whl':
+        cmd = './fit -sku "CNP-LP Base U" -save new.xml'
+    elif platform == 'cfls':
+        cmd = './fit -sku Z390 -save new.xml'
+    elif platform == 'cflh':
+        cmd = './fit -sku QM370 -save new.xml'
     run_cmd (cmd, os.path.join(stitch_dir, cfg_var['fitinput']))
 
     tree = ET.parse(os.path.join(stitch_dir, cfg_var['fitinput'], 'new.xml'))
 
-    #Region Order
-    node = tree.find('./BuildSettings/BuildResults/RegionOrder')
-    node.attrib['value'] = '45321'
-
-    # Enable BIOS region
-    node = tree.find('./FlashLayout/BiosRegion/InputFile')
-    node.attrib['value'] = '$SourceDir\Slimbootloader.bin'
-
-    # Enable BIOS region
-    node = tree.find('./FlashLayout/Ifwi_IntelMePmcRegion/MeRegionFile')
-    node.attrib['value'] = '$SourceDir\cse_image.bin'
-    node = tree.find('./FlashLayout/Ifwi_IntelMePmcRegion/PmcBinary')
-    node.attrib['value'] = '$SourceDir\pmc.bin'
-
-    # Enable EC region
-    node = tree.find('./FlashLayout/EcRegion/InputFile')
-    node.attrib['value'] = '$SourceDir\ec.bin'
-    node = tree.find('./FlashLayout/EcRegion/Enabled')
-    node.attrib['value'] = 'Enabled'
-    node = tree.find('./FlashLayout/EcRegion/EcRegionPointer')
-    node.attrib['value'] = '$SourceDir\ecregionpointer.bin'
-
-    # Enable GBE region
-    node = tree.find('./FlashLayout/GbeRegion/Enabled')
-    node.attrib['value'] = 'Enabled'
-    node = tree.find('./FlashLayout/GbeRegion/InputFile')
-    node.attrib['value'] = '$SourceDir\gbe.bin'
-
-    # Disable Quad Io and Out read enable
-    if spi_quad:
-        value = 'Yes'
-    else:
-        value = 'No'
-    node = tree.find('./FlashSettings/FlashConfiguration/QuadIoReadEnable')
-    node.attrib['value'] = value
-    node = tree.find('./FlashSettings/FlashConfiguration/QuadOutReadEnable')
-    node.attrib['value'] = value
-
-    #VsccTable
-    node = tree.find('./FlashSettings/VsccTable/VsccEntries/VsccEntry/VsccEntryName')
-    node.attrib['value'] = 'vscc_entry0'
-    node = tree.find('./FlashSettings/VsccTable/VsccEntries/VsccEntry/VsccEntryVendorId')
-    node.attrib['value'] = '0xEF'
-    node = tree.find('./FlashSettings/VsccTable/VsccEntries/VsccEntry/VsccEntryDeviceId0')
-    node.attrib['value'] = '0x40'
-    node = tree.find('./FlashSettings/VsccTable/VsccEntries/VsccEntry/VsccEntryDeviceId1')
-    node.attrib['value'] = '0x19'
-
-    #IntelMekernel
-    node = tree.find('./IntelMeKernel/Processor/ProcEmulation')
-    node.attrib['value'] = 'EMULATE Intel (R) vPro (TM) capable Processor'
-
-    #PttConfiguration
-    node = tree.find('./PlatformProtection/IntelPttConfiguration/PttSupported')
-    node.attrib['value'] = 'No'
-    node = tree.find('./PlatformProtection/IntelPttConfiguration/PttPwrUpState')
-    node.attrib['value'] = 'Disabled'
-    node = tree.find('./PlatformProtection/IntelPttConfiguration/PttSupportedFpf')
-    node.attrib['value'] = 'No'
-
-    #BootGuardConfiguration
-    node = tree.find('./PlatformProtection/BiosGuardConfiguration/BiosGrdProtOvrdEn')
-    node.attrib['value'] = 'No'
-
-    #ICC
-    node = tree.find('./Icc/IccPolicies/Profiles/Profile/ClockOutputConfiguration/ClkoutCpunsscPnPath')
-    node.attrib['value'] = 'Direct XTAL IN / Out Path'
-
-    #Networking
-    node = tree.find('./NetworkingConnectivity/WiredLanConfiguration/PhyConnected')
-    node.attrib['value'] = 'PHY on SMLink0'
-
-    #SMBUS
-    node = tree.find('./InternalPchBuses/SmbusSmlinkConfiguration/SLink1freq')
-    node.attrib['value'] = '1 MHz'
-
-    #ISH
-    node = tree.find('./IntegratedSensorHub/IshSupported')
-    node.attrib['value'] = 'No'
-
-    #CPU Straps
-    node = tree.find('./CpuStraps/IaPowerPlaneTopology')
-    node.attrib['value'] = '0x00000000'
-    node = tree.find('./CpuStraps/RingPowerPlaneTopology')
-    node.attrib['value'] = '0x00000000'
-    node = tree.find('./CpuStraps/GtUsPowerPlaneTopology')
-    node.attrib['value'] = '0x00000001'
-    node = tree.find('./CpuStraps/GtSPowerPlaneTopology')
-    node.attrib['value'] = '0x00000001'
-
-    #StrapsDifferences
-    node = tree.find('./StrapsDifferences/PCH_Strap_SPI_touch2_max_freq_Diff')
-    node.attrib['value'] = '0x03'
-    node = tree.find('./StrapsDifferences/PCH_Strap_PN0_RPCFG_0_Diff')
-    node.attrib['value'] = '0x03'
-    node = tree.find('./StrapsDifferences/PCH_Strap_PN1_RPCFG_0_Diff')
-    node.attrib['value'] = '0x03'
-    node = tree.find('./StrapsDifferences/PCH_Strap_PN2_RPCFG_0_Diff')
-    node.attrib['value'] = '0x00'
-    node = tree.find('./StrapsDifferences/PCH_Strap_PN3_RPCFG_0_Diff')
-    node.attrib['value'] = '0x03'
-    node = tree.find('./StrapsDifferences/PCH_Strap_EXI_PTSS_PORT3_Diff')
-    node.attrib['value'] = '0x01'
-    node = tree.find('./StrapsDifferences/PCH_Strap_EXI_PTSS_PORT1_Diff')
-    node.attrib['value'] = '0x01'
-    node = tree.find('./StrapsDifferences/PCH_Strap_GBE_SMLink1_Frequency_Diff')
-    node.attrib['value'] = '0x00'
-    node = tree.find('./StrapsDifferences/PCH_Strap_GBE_Reserved3_Diff')
-    node.attrib['value'] = '0x0F'
-    node = tree.find('./StrapsDifferences/CPU_Strap_SEPARATE_VCCAGSH_EXISTS_Diff')
-    node.attrib['value'] = '0x00'
-
-    #FlexIO
-    node = tree.find('./FlexIO/PciePortConfiguration/PCIeContoller2Config')
-    node.attrib['value'] = '1x4'
-    node = tree.find('./FlexIO/SataPcieComboPortConfiguration/SataPCIeComboPort0')
-    node.attrib['value'] = 'PCIe'
-    node = tree.find('./FlexIO/SataPcieComboPortConfiguration/SataPCIeComboPort2')
-    node.attrib['value'] = 'PCIe'
-    node = tree.find('./FlexIO/Usb3PortConfiguration/USB3Prt2ConTypeSel')
-    node.attrib['value'] = 'Type A'
-    node = tree.find('./FlexIO/Usb3PortConfiguration/USB3Prt3ConTypeSel')
-    node.attrib['value'] = 'Type A'
-    node = tree.find('./FlexIO/Usb2PortConfiguration/USB2Prt2ConTypeSel')
-    node.attrib['value'] = 'Type C'
-    node = tree.find('./FlexIO/Usb2PortConfiguration/USB2Prt3ConTypeSel')
-    node.attrib['value'] = 'Type A'
-    node = tree.find('./FlexIO/Usb2PortConfiguration/USB2Prt5ConTypeSel')
-    node.attrib['value'] = 'Type A'
-
-    #GPIO
-    node = tree.find('./Gpio/GpioVccioVoltageControl/GppA7voltSelect')
-    node.attrib['value'] = '3.3Volts'
-    node = tree.find('./Gpio/GpioVccioVoltageControl/GppA8voltSelect')
-    node.attrib['value'] = '3.3Volts'
-    node = tree.find('./Gpio/GpioVccioVoltageControl/GppA16voltSelect')
-    node.attrib['value'] = '3.3Volts'
-    node = tree.find('./Gpio/GpioVccioVoltageControl/GppA21voltSelect')
-    node.attrib['value'] = '3.3Volts'
-    node = tree.find('./Gpio/GpioVccioVoltageControl/GppC11voltSelect')
-    node.attrib['value'] = '3.3Volts'
-    node = tree.find('./Gpio/GpioVccioVoltageControl/GppD9voltSelect')
-    node.attrib['value'] = '1.8Volts'
-    node = tree.find('./Gpio/GpioVccioVoltageControl/GppH12voltSelect')
-    node.attrib['value'] = '3.3Volts'
-    node = tree.find('./Gpio/GpioVccioVoltageControl/GppH14voltSelect')
-    node.attrib['value'] = '3.3Volts'
-    node = tree.find('./Gpio/GpioVccioVoltageControl/GppH16voltSelect')
-    node.attrib['value'] = '1.8Volts'
-    node = tree.find('./Gpio/GpioVccioVoltageControl/GppH17voltSelect')
-    node.attrib['value'] = '1.8Volts'
-    node = tree.find('./Gpio/GpioVccioVoltageControl/GppH20voltSelect')
-    node.attrib['value'] = '3.3Volts'
-    node = tree.find('./Gpio/GpioVccioVoltageControl/GppH22voltSelect')
-    node.attrib['value'] = '3.3Volts'
+    xml_change_list = get_xml_change_list (platform, spi_quad)
+    for each in xml_change_list:
+        for xml_path, value in each:
+            node = tree.find('%s' % xml_path)
+            node.attrib['value'] = value
 
     if (btg_profile == 'vm') or (btg_profile == 'fve') or (btg_profile == 'fvme'):
         print ("Boot Guard is enabled.....")
@@ -461,7 +403,7 @@ def gen_xml_file(stitch_dir, cfg_var, btg_profile, spi_quad):
 
     tree.write(os.path.join(stitch_dir, cfg_var['fitinput'], 'Platform.xml'))
 
-def stitch (stitch_dir, stitch_zip, btg_profile, spi_quad_mode, platform_data, full_rdundant = True):
+def stitch (stitch_dir, stitch_zip, btg_profile, spi_quad_mode, platform_data, platform, full_rdundant = True):
 
     cfg_var    = get_config ()
 
@@ -494,7 +436,7 @@ def stitch (stitch_dir, stitch_zip, btg_profile, spi_quad_mode, platform_data, f
     fit_dir = stitch_dir + '/' + os.path.dirname(cfg_var['fit'])
     shutil.copy (os.path.join(fit_dir, 'vsccommn.bin'), cfg_var['fitinput'])
 
-    gen_xml_file(stitch_dir, cfg_var, btg_profile, spi_quad_mode)
+    gen_xml_file(stitch_dir, cfg_var, btg_profile, spi_quad_mode, platform)
 
     print ("Run fit tool to generate ifwi.........")
     cmd = './fit -b -o Ifwi.bin -f Platform.xml'
@@ -566,6 +508,13 @@ def main():
                     default = False,
                     help = "clean stitching workspace")
 
+    ap.add_argument('-a',
+                    '--platform',
+                    default = 'whl',
+                    choices=['whl', 'cfls', 'cflh'],
+                    dest='platform',
+                    help='specify platform')
+
     ap.add_argument('-p',
                     '--platform-data',
                     dest='plat_data',
@@ -585,14 +534,14 @@ def main():
         return 0
 
     print ("Executing stitch.......")
-    if stitch (stitch_dir, args.stitch_zip, args.btg_profile, args.quad_mode, args.plat_data):
+    if stitch (stitch_dir, args.stitch_zip, args.btg_profile, args.quad_mode, args.plat_data, args.platform):
         raise Exception ('Stitching process failed !')
 
     cfg_var       = get_config ()
-    ifwi_file_name = '%s/%s/%s' % (stitch_dir, cfg_var['wkspace'], cfg_var['ifwiname'])
+    ifwi_file_name = '%s/%s/%s_%s.bin' % (stitch_dir, cfg_var['wkspace'], cfg_var['ifwiname'], args.platform)
     ifwi_file_name = os.path.normpath (ifwi_file_name)
 
-    shutil.copy (os.path.join(stitch_dir, cfg_var['fitinput'], 'Ifwi.bin'), os.path.join(stitch_dir, cfg_var['wkspace'], '%s' % cfg_var['ifwiname']))
+    shutil.copy (os.path.join(stitch_dir, cfg_var['fitinput'], 'Ifwi.bin'), ifwi_file_name)
 
     print ("\nIFWI Stitching completed successfully !")
     print ("Boot Guard Profile: %s" % args.btg_profile.upper())
