@@ -22,7 +22,7 @@ from   ctypes  import *
 from   subprocess   import call
 
 sys.dont_write_bytecode = True
-from   StitchLoader import add_platform_data
+from   StitchLoader import IFWI_PARSER, add_platform_data, get_file_data, gen_file_from_object
 
 btg_profile_values = [\
                     "Boot Guard Profile 0 - No_FVME",\
@@ -89,7 +89,6 @@ def get_config ():
       'fitinput'  :   'Output/input',
       'ifwiname'  :   'SBL_IFWI.bin',
       'fit'       :   'CSE/FIT/fit%s' %     ('.exe' if os.name == 'nt' else ''),
-      'fithelp'   :   'CSE/FIT/FitHelp.py',
       'openssl'   :   'Openssl/openssl.exe' if os.name == 'nt' else '/usr/bin/openssl',
       'cseimg'    :   'CSE/Silicon/cse_image.bin',
       'acm'       :   'ACM/acm.bin',
@@ -174,9 +173,6 @@ def sign_binary(infile, stitch_dir, cfg_var):
         cmd = '%s rsa -pubout -in keys/privkey.pem -out keys/pubkey.pem' % openssl_path
         run_cmd (cmd, bpm_gen2dir)
 
-    cmd = '"%s" CSE/FIT/FitHelp.py "FITACM" Output/input/sbl_sec_temp.bin Output/input/acm.bin' % (sys.executable.replace('\\', '/'))
-    run_cmd (cmd, stitch_dir)
-
     print("Generating KeyManifest.bin....")
     cmd = './bpmgen2 KM1GEN -KEY keys/pubkey.pem BPM -KM ../output/input/KeyManifest.bin -SIGNKEY keys/keyprivkey.pem -SIGNPUBKEY keys/keypubkey.pem -KMID 0x01 -SVN 0 -d:2 > ../output/input/bpmgen2_km.txt'
     run_cmd (cmd, bpm_gen2dir)
@@ -242,11 +238,11 @@ def update_ifwi_xml(btguardprofile, stitch_dir, cfg_var, tree):
     if btguardprofile in [3, 5]:
         #PttConfiguration
         node = tree.find('./PlatformProtection/IntelPttConfiguration/PttSupported')
-        node.attrib['value'] = 'yes'
+        node.attrib['value'] = 'Yes'
         node = tree.find('./PlatformProtection/IntelPttConfiguration/PttPwrUpState')
-        node.attrib['value'] = 'enabled'
+        node.attrib['value'] = 'Enabled'
         node = tree.find('./PlatformProtection/IntelPttConfiguration/PttSupportedFpf')
-        node.attrib['value'] = 'yes'
+        node.attrib['value'] = 'Yes'
 
     node = tree.find('./PlatformProtection/BootGuardConfiguration/BtGuardKeyManifestId')
     node.attrib['value'] = '0x1'
@@ -261,6 +257,17 @@ def update_btGuard_manifests(stitch_dir, cfg_var):
     print("Sigining Coffeelake....")
 
     output_dir = os.path.join(stitch_dir,"Output", "input")
+
+    print("Patch ACM binary in both partitions....")
+    sbl_file = os.path.join (output_dir, 'SlimBootloader.bin')
+    sbl_bin  = bytearray (get_file_data (sbl_file))
+    acm_bin  = bytearray (get_file_data (os.path.join (stitch_dir, 'Output/input/acm.bin')))
+    ifwi = IFWI_PARSER.parse_ifwi_binary (sbl_bin)
+    for x in range (2):
+      ret  = IFWI_PARSER.replace_component (sbl_bin, acm_bin, 'IFWI/BIOS/TS%d/ACM0' % x)
+      if ret:
+          raise Exception("Failed to inject ACM binary !")
+    gen_file_from_object (sbl_file, sbl_bin)
 
     print("Sign primary partition....")
     sign_binary(os.path.join(output_dir,"SlimBootloader.bin"), stitch_dir, cfg_var)
@@ -291,8 +298,6 @@ def gen_xml_file(stitch_dir, cfg_var, btg_profile, spi_quad):
     node.attrib['value'] = '45321'
 
     # Enable BIOS region
-    #Node = Tree.find('./FlashLayout/BiosRegion/Enabled')
-    #Node.attrib['value'] = 'Enabled'
     node = tree.find('./FlashLayout/BiosRegion/InputFile')
     node.attrib['value'] = '$SourceDir\Slimbootloader.bin'
 
@@ -306,21 +311,21 @@ def gen_xml_file(stitch_dir, cfg_var, btg_profile, spi_quad):
     node = tree.find('./FlashLayout/EcRegion/InputFile')
     node.attrib['value'] = '$SourceDir\ec.bin'
     node = tree.find('./FlashLayout/EcRegion/Enabled')
-    node.attrib['value'] = 'enabled'
+    node.attrib['value'] = 'Enabled'
     node = tree.find('./FlashLayout/EcRegion/EcRegionPointer')
     node.attrib['value'] = '$SourceDir\ecregionpointer.bin'
 
     # Enable GBE region
     node = tree.find('./FlashLayout/GbeRegion/Enabled')
-    node.attrib['value'] = 'enabled'
+    node.attrib['value'] = 'Enabled'
     node = tree.find('./FlashLayout/GbeRegion/InputFile')
     node.attrib['value'] = '$SourceDir\gbe.bin'
 
     # Disable Quad Io and Out read enable
     if spi_quad:
-        value = 'yes'
+        value = 'Yes'
     else:
-        value = 'no'
+        value = 'No'
     node = tree.find('./FlashSettings/FlashConfiguration/QuadIoReadEnable')
     node.attrib['value'] = value
     node = tree.find('./FlashSettings/FlashConfiguration/QuadOutReadEnable')
@@ -342,15 +347,15 @@ def gen_xml_file(stitch_dir, cfg_var, btg_profile, spi_quad):
 
     #PttConfiguration
     node = tree.find('./PlatformProtection/IntelPttConfiguration/PttSupported')
-    node.attrib['value'] = 'no'
+    node.attrib['value'] = 'No'
     node = tree.find('./PlatformProtection/IntelPttConfiguration/PttPwrUpState')
-    node.attrib['value'] = 'disabled'
+    node.attrib['value'] = 'Disabled'
     node = tree.find('./PlatformProtection/IntelPttConfiguration/PttSupportedFpf')
-    node.attrib['value'] = 'no'
+    node.attrib['value'] = 'No'
 
     #BootGuardConfiguration
     node = tree.find('./PlatformProtection/BiosGuardConfiguration/BiosGrdProtOvrdEn')
-    node.attrib['value'] = 'no'
+    node.attrib['value'] = 'No'
 
     #ICC
     node = tree.find('./Icc/IccPolicies/Profiles/Profile/ClockOutputConfiguration/ClkoutCpunsscPnPath')
@@ -366,7 +371,7 @@ def gen_xml_file(stitch_dir, cfg_var, btg_profile, spi_quad):
 
     #ISH
     node = tree.find('./IntegratedSensorHub/IshSupported')
-    node.attrib['value'] = 'no'
+    node.attrib['value'] = 'No'
 
     #CPU Straps
     node = tree.find('./CpuStraps/IaPowerPlaneTopology')
@@ -479,7 +484,7 @@ def stitch (stitch_dir, stitch_zip, btg_profile, spi_quad_mode, platform_data, f
 
     print ("\nChecking and copying components ...")
     copy_list = ['cseimg', 'pmc', 'gbe', 'ec', 'ecptr', 'acm', 'fit']
-    for each in ['fit', 'openssl', 'fithelp'] + copy_list:
+    for each in ['fit', 'openssl'] + copy_list:
         if not os.path.exists(cfg_var[each]):
              raise Exception ("Could not find file '%s' !" % cfg_var[each])
 
