@@ -143,12 +143,10 @@ def get_xml_change_list (platform, spi_quad):
       ('./FlashSettings/FlashConfiguration/QuadIoReadEnable',                             value),
       ('./FlashSettings/FlashConfiguration/QuadOutReadEnable',                            value),
       #VsccTable
-      ('./FlashSettings/VsccTable/VsccEntries/VsccEntry/VsccEntryName',                   'vscc_entry0'),
+      ('./FlashSettings/VsccTable/VsccEntries/VsccEntry/VsccEntryName',                   'W25Q256FV'),
       ('./FlashSettings/VsccTable/VsccEntries/VsccEntry/VsccEntryVendorId',               '0xEF'),
       ('./FlashSettings/VsccTable/VsccEntries/VsccEntry/VsccEntryDeviceId0',              '0x40'),
       ('./FlashSettings/VsccTable/VsccEntries/VsccEntry/VsccEntryDeviceId1',              '0x19'),
-      #IntelMekernel
-      ('./IntelMeKernel/Processor/ProcEmulation',                                         'EMULATE Intel (R) vPro (TM) capable Processor'),
       #PttConfiguration
       ('./PlatformProtection/IntelPttConfiguration/PttSupported',                         'No'),
       ('./PlatformProtection/IntelPttConfiguration/PttPwrUpState',                        'Disabled'),
@@ -158,21 +156,21 @@ def get_xml_change_list (platform, spi_quad):
       ('./Icc/IccPolicies/Profiles/Profile/ClockOutputConfiguration/ClkoutCpunsscPnPath', 'Direct XTAL IN / Out Path'),
       #Networking
       ('./NetworkingConnectivity/WiredLanConfiguration/PhyConnected',                     'PHY on SMLink0'),
-      #SMBUS
-      ('./InternalPchBuses/SmbusSmlinkConfiguration/SLink1freq',                          '1 MHz'),
       #ISH
       ('./IntegratedSensorHub/IshSupported',                                              'No'),
-      #CPU Straps
-      ('./CpuStraps/IaPowerPlaneTopology',                                                '0x00000000'),
-      ('./CpuStraps/RingPowerPlaneTopology',                                              '0x00000000'),
-      ('./CpuStraps/GtUsPowerPlaneTopology',                                              '0x00000001'),
-      ('./CpuStraps/GtSPowerPlaneTopology',                                               '0x00000001'),
       ])
 
     if platform == 'whl':
         xml_change_list.append ([
             ('./PlatformProtection/IntelPttConfiguration/PttSupportedFpf',                'No'),
+            #IntelMekernel
+            ('./IntelMeKernel/Processor/ProcEmulation',                                   'EMULATE Intel (R) vPro (TM) capable Processor'),
             #StrapsDifferences
+            #CPU Straps
+            ('./CpuStraps/IaPowerPlaneTopology',                                          '0x00000000'),
+            ('./CpuStraps/RingPowerPlaneTopology',                                        '0x00000000'),
+            ('./CpuStraps/GtUsPowerPlaneTopology',                                        '0x00000001'),
+            ('./CpuStraps/GtSPowerPlaneTopology',                                         '0x00000001'),
             ('./StrapsDifferences/PCH_Strap_SPI_touch2_max_freq_Diff',                    '0x03'),
             ('./StrapsDifferences/PCH_Strap_PN0_RPCFG_0_Diff',                            '0x03'),
             ('./StrapsDifferences/PCH_Strap_PN1_RPCFG_0_Diff',                            '0x03'),
@@ -205,6 +203,45 @@ def get_xml_change_list (platform, spi_quad):
             ('./Gpio/GpioVccioVoltageControl/GppH17voltSelect',                           '1.8Volts'),
             ('./Gpio/GpioVccioVoltageControl/GppH20voltSelect',                           '3.3Volts'),
             ('./Gpio/GpioVccioVoltageControl/GppH22voltSelect',                           '3.3Volts'),
+            #SMBUS
+            ('./InternalPchBuses/SmbusSmlinkConfiguration/SLink1freq',                    '1 MHz'),
+            ])
+
+    if platform == 'cflh':
+        xml_change_list.append ([
+            #Networking
+            ('./NetworkingConnectivity/WiredLanConfiguration/GbePCIePortSelect',          'Port 5'),
+            ('./InternalPchBuses/DmiConfiguration/DmiLaneReversal',                       'No'),
+            ('./Debug/DirectConnectInterfaceConfiguration/Usb9DciBssbEnable',             'Yes'),
+            ('./CpuStraps/SaVrType',                                                      'SVID'),
+            ('./CpuStraps/VccinSvidAddrs',                                                '0x0'),
+            ('./CpuStraps/VccinVrType',                                                   'SVID'),
+            ('./StrapsDifferences/PCH_Strap_PN1_RPCFG_2_Diff',                            '0x2'),
+            ('./StrapsDifferences/PCH_Strap_PN2_RPCFG_2_Diff',                            '0x2'),
+            ('./FlexIO/IntelRstForPcieConfiguration/RstPCIeController3',                  '2x2'),
+            ('./FlexIO/PcieLaneReversalConfiguration/PCIeCtrl3LnReversal',                'Yes'),
+            ('./FlexIO/PciePortConfiguration/PCIeContoller2Config',                       '4x1'),
+            ('./FlexIO/PciePortConfiguration/PCIeContoller5Config',                       '4x1'),
+            ('./FlexIO/SataPcieComboPortConfiguration/SataPCIeComboPort1',                'GPIO Polarity PCIe'),
+            ('./FlexIO/SataPcieComboPortConfiguration/SataPCIeComboPort2',                'Disabled'),
+            ('./FlexIO/SataPcieComboPortConfiguration/SataPCIeComboPort3',                'Disabled'),
+            ('./FlexIO/SataPcieComboPortConfiguration/SataPCIeComboPort6',                'SATA'),
+            ('./FlexIO/SataPcieComboPortConfiguration/SataPCIeComboPort7',                'SATA'),
+            ('./FlexIO/SataPcieComboPortConfiguration/SataPCIeComboPort8',                'SATA'),
+            ('./FlexIO/SataPcieComboPortConfiguration/SataPCIeComboPort9',                'SATA'),
+            ('./FlexIO/Usb3PortConfiguration/USB3PCIeComboPort2',                         'USB3'),
+            ('./FlexIO/Usb3PortConfiguration/USB3Prt9ConTypeSel',                         'Type A'),
+            ('./FlexIO/Usb2PortConfiguration/USB2Prt9ConTypeSel',                         'Type A'),
+            ('./FlexIO/Usb2PortConfiguration/USB2Prt14ConTypeSel',                        'Express Card / M.2 S2'),
+            ('./Gpio/MeFeaturePins/TouchResetGpio',                                       'GPP_B_14'),
+            ('./Gpio/MeFeaturePins/TouchIntGpio',                                         'GPP_D_15'),
+            ('./Gpio/GpioVccioVoltageControl/Clkout48ModeConfig',                         'GPP_A16'),
+            ])
+
+    if platform == 'cfls':
+        xml_change_list.append ([
+            #IntelMekernel
+            ('./IntelMeKernel/Processor/ProcEmulation',                                   'EMULATE Intel (R) vPro (TM) capable Processor'),
             ])
 
     return xml_change_list
@@ -423,7 +460,7 @@ def gen_xml_file(stitch_dir, cfg_var, btg_profile, spi_quad, platform):
     if platform == 'whl':
         cmd = './fit -sku "CNP-LP Base U" -save new.xml'
     elif platform == 'cfls':
-        cmd = './fit -sku Z390 -save new.xml'
+        cmd = './fit -sku Q370 -save new.xml'
     elif platform == 'cflh':
         cmd = './fit -sku QM370 -save new.xml'
     run_cmd (cmd, os.path.join(stitch_dir, cfg_var['fitinput']))
