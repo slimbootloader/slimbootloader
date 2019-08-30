@@ -97,8 +97,29 @@ def get_config ():
       'ecptr'     :   'EC/ecregionpointer.bin',
       'gbe'       :   'GBE/gbe.bin',
       'bpm'       :   'bpmgen2',
+      'bpm_params':   'bpmgen2/Example.bpDef',
     }
     return cfg_var
+
+def get_bpmgen2_params_change_list ():
+    params_change_list = []
+    params_change_list.append ([
+      # variable                | value |
+      # ===================================
+      ('PlatformRules',         'CFL Client'),
+      ('BpmStrutVersion',       '0x10'),
+      ('BpmRevision',           '0x01'),
+      ('BpmRevocation',         '1'),
+      ('AcmRevocation',         '2'),
+      ('NEMPages',              '3'),
+      ('IbbFlags',              '0x2'),
+      ('TxtInclude',            'FALSE'),
+      ('BpmSigScheme',          '0x14:RSASSA'),
+      ('BpmSigPubKey',          'keys\pubkey.pem'),
+      ('BpmSigPrivKey',         'keys\privkey.pem'),
+      ])
+    return params_change_list
+
 def get_xml_change_list (platform, spi_quad):
     # Disable Quad Io and Out read enable
     if spi_quad:
@@ -210,6 +231,27 @@ def run_cmd (cmd, cwd):
         print("Failed to run command:\n  PATH: %s\n   CMD: %s" % (cwd, ' '.join(cmd_args)))
         sys.exit(1)
 
+def gen_bpmgen2_params (InFile, OutFile):
+    InFileptr = open(InFile, 'rb')
+    lines = InFileptr.readlines()
+    InFileptr.close()
+
+    params_change_list = get_bpmgen2_params_change_list()
+
+    for item in params_change_list:
+        for variable, value in item:
+            for linenumber, line in enumerate(lines):
+                if line.split(':')[0].strip() == variable:
+                    lines[linenumber] = variable + ':    ' + value + '\n'
+                    break
+
+    if OutFile == '':
+        OutFile = Infile
+
+    Outfileptr = open(OutFile, 'wb')
+    Outfileptr.write("".join(lines))
+    Outfileptr.close()
+
 def swap_ts_block(in_file, out_file, ts_size):
     print("Swapping Top Swap Blocks....")
 
@@ -259,6 +301,9 @@ def sign_binary(infile, stitch_dir, cfg_var):
 
         cmd = '%s rsa -pubout -in keys/privkey.pem -out keys/pubkey.pem' % openssl_path
         run_cmd (cmd, bpm_gen2dir)
+
+    print "Generating BPM GEN2 params file"
+    gen_bpmgen2_params(os.path.join(bpm_gen2dir, "Example.bpDef"), os.path.join(bpm_gen2dir, "bpmgen2.params"))
 
     print("Generating KeyManifest.bin....")
     cmd = './bpmgen2 KM1GEN -KEY keys/pubkey.pem BPM -KM ../output/input/KeyManifest.bin -SIGNKEY keys/keyprivkey.pem -SIGNPUBKEY keys/keypubkey.pem -KMID 0x01 -SVN 0 -d:2 > ../output/input/bpmgen2_km.txt'
