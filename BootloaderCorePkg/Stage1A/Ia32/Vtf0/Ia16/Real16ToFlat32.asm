@@ -111,5 +111,7 @@ jumpTo32BitAndLandHere:
     mov     fs, ax
     mov     gs, ax
     mov     ss, ax
+    /* Restore the BIST value to EAX register */
+    movd     eax, mm0
     OneTimeCallRet TransitionFromReal16To32BitFlat
 
