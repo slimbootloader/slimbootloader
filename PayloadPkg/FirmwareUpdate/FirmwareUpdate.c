@@ -984,7 +984,7 @@ ProcessCapsule (
   // If capsule header is NULL or no payloads found in the capsule
   // return EFI_NOT_FOUND;
   //
-  if ((CapHeader != NULL) && (CapHeader->PayloadItemCount == 0)) {
+  if ((CapHeader == NULL) || (CapHeader->PayloadItemCount == 0)) {
     ImgHeader = NULL;
     return EFI_NOT_FOUND;
   }
