@@ -92,7 +92,6 @@ GDT_END:
 ; Modified:  EAX, EBX
 ;
 TransitionFromReal16To32BitFlat:
-    cli
     mov     bx, 0xf000
     mov     ds, bx
     mov     bx, ADDR16_OF(gdtr)

@@ -31,6 +31,7 @@ EarlyApInitReal16:
 ; @param[out] ESP   Initial value of the EAX register (BIST: Built-in Self Test)
 ;
 EarlyInit16:
+    cli
     ;
     ; ESP -  Initial value of the EAX register (BIST: Built-in Self Test)
     ;

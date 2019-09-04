@@ -34,5 +34,7 @@ BITS    32
     ;
     mov     eax, 0FFFFFFFCh    
     mov     eax, dword [eax]
-    mov     esi, dword [eax]                  
+    mov     esi, dword [eax]               
+    ; Restore the BIST value to EAX register
+    movd    eax, mm0   
     jmp     esi
