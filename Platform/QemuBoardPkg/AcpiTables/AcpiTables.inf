@@ -19,9 +19,8 @@
   Dsdt/Dsdt.asl
   Facs/Facs.aslc
   Facp/Facp.aslc
-  Madt/Madt30.aslc
   Mcfg/Mcfg.aslc
-  Hpet/Hpet.aslc  
+  Hpet/Hpet.aslc
   Platform/CommonBoardPkg/AcpiTables/Fpdt/Fpdt.aslc
 
 [Packages]
@@ -29,4 +28,4 @@
   Silicon/QemuSocPkg/QemuSocPkg.dec
   Platform/QemuBoardPkg/QemuBoardPkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
-  BootloaderCorePkg/BootloaderCorePkg.dec  
+  BootloaderCorePkg/BootloaderCorePkg.dec

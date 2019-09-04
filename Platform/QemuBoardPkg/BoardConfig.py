@@ -47,6 +47,9 @@ class Board(BaseBoard):
 		self.ENABLE_FWU               = 1
 		self.ENABLE_GRUB_CONFIG       = 1
 		self.ENABLE_LINUX_PAYLOAD     = 1
+		self.ENABLE_CREATE_MADT       = 1
+
+		self.CPU_MAX_LOGICAL_PROCESSOR_NUM  = 255
 
 		# To enable source debug, set 1 to self.ENABLE_SOURCE_DEBUG
 		# self.ENABLE_SOURCE_DEBUG  = 1
