@@ -24,6 +24,8 @@ extern  ASM_PFX(FspTempRamInit)
 
 global  ASM_PFX(_ModuleEntryPoint)
 ASM_PFX(_ModuleEntryPoint):
+        mov     ebx, eax
+        
         ;
         ; Read time stamp
         ;
@@ -62,6 +64,7 @@ FspApiSuccess:
         mov     eax, esp
 
         ; Setup HOB
+        push    ebx                  ; BistVal
         push    edi                  ; TimeStamp[0] [63:32]
         push    esi                  ; TimeStamp[0] [31:0]
         push    edx                  ; CarTop
