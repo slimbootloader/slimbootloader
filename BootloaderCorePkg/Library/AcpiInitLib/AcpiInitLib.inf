@@ -24,6 +24,7 @@
 [Sources]
   AcpiInitLib.c
   AcpiFpdt.c
+  AcpiMadt.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -52,3 +53,15 @@
   gPlatformModuleTokenSpaceGuid.PcdAcpiGnvsAddress
   gPlatformModuleTokenSpaceGuid.PcdLoaderAcpiReclaimSize
   gPlatformCommonLibTokenSpaceGuid.PcdLowestSupportedFwVer
+  gPlatformModuleTokenSpaceGuid.PcdCreateMadtEnabled
+  gPlatformModuleTokenSpaceGuid.PcdIoApicCount
+  gPlatformModuleTokenSpaceGuid.PcdIntrSrcOverrideCount
+  gPlatformModuleTokenSpaceGuid.PcdIntrSrcSciTrigger
+  gPlatformModuleTokenSpaceGuid.PcdIntrSrcSciPolarity
+  gPlatformModuleTokenSpaceGuid.PcdLocalApicNmiCount
+  gPlatformModuleTokenSpaceGuid.PcdLocalApicNmiTrigger
+  gPlatformModuleTokenSpaceGuid.PcdLocalApicNmiPolarity
+  gPlatformModuleTokenSpaceGuid.PcdLocalApicNmiLintIdx
+  gPlatformModuleTokenSpaceGuid.PcdLocalApicAddress
+  gPlatformModuleTokenSpaceGuid.PcdIoApicAddress
+  gPlatformModuleTokenSpaceGuid.PcdIoApicId

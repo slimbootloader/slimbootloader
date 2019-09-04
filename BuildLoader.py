@@ -190,6 +190,20 @@ class BaseBoard(object):
 		self.ENABLE_GRUB_CONFIG    = 0
 		self.ENABLE_SMBIOS         = 0
 		self.ENABLE_LINUX_PAYLOAD  = 0
+		self.ENABLE_CREATE_MADT    = 0
+
+		self.CPU_MAX_LOGICAL_PROCESSOR_NUM  = 16
+		self.IO_APIC_COUNT                  = 1
+		self.INTR_SRC_OVERRIDE_COUNT        = 2
+		self.INTR_SRC_SCI_TRIGGER           = 1 # 1:level trigger, 0:edge trigger
+		self.INTR_SRC_SCI_POLARITY          = 1 # 1:active low, 0:active high
+		self.LOCAL_APIC_NMI_COUNT           = 1
+		self.LOCAL_APIC_NMI_TRIGGER         = 1 # 1:level trigger, 0:edge trigger
+		self.LOCAL_APIC_NMI_POLARITY        = 0 # 1:active low, 0:active high
+		self.LOCAL_APIC_NMI_LINT_INDEX      = 1 # LINT#0 or LINT#1
+		self.LOCAL_APIC_ADDRESS             = 0xFEE00000
+		self.IO_APIC_ADDRESS                = 0xFEC00000
+		self.IO_APIC_ID                     = 1
 
 		self.ACM_SIZE              = 0
 		self.ACM3_SIZE             = 0

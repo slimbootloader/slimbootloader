@@ -221,6 +221,19 @@
   gPlatformModuleTokenSpaceGuid.PcdCfgDataLoadSource      | $(CFGDATA_REGION_TYPE)
   gPlatformModuleTokenSpaceGuid.PcdCfgDatabaseSize        | $(CFG_DATABASE_SIZE)
 
+  gPlatformModuleTokenSpaceGuid.PcdCpuMaxLogicalProcessorNumber | $(CPU_MAX_LOGICAL_PROCESSOR_NUM)
+  gPlatformModuleTokenSpaceGuid.PcdIoApicCount            | $(IO_APIC_COUNT)
+  gPlatformModuleTokenSpaceGuid.PcdIntrSrcOverrideCount   | $(INTR_SRC_OVERRIDE_COUNT)
+  gPlatformModuleTokenSpaceGuid.PcdIntrSrcSciTrigger      | $(INTR_SRC_SCI_TRIGGER)
+  gPlatformModuleTokenSpaceGuid.PcdIntrSrcSciPolarity     | $(INTR_SRC_SCI_POLARITY)
+  gPlatformModuleTokenSpaceGuid.PcdLocalApicNmiCount      | $(LOCAL_APIC_NMI_COUNT)
+  gPlatformModuleTokenSpaceGuid.PcdLocalApicNmiTrigger    | $(LOCAL_APIC_NMI_TRIGGER)
+  gPlatformModuleTokenSpaceGuid.PcdLocalApicNmiPolarity   | $(LOCAL_APIC_NMI_POLARITY)
+  gPlatformModuleTokenSpaceGuid.PcdLocalApicNmiLintIdx    | $(LOCAL_APIC_NMI_LINT_INDEX)
+  gPlatformModuleTokenSpaceGuid.PcdLocalApicAddress       | $(LOCAL_APIC_ADDRESS)
+  gPlatformModuleTokenSpaceGuid.PcdIoApicAddress          | $(IO_APIC_ADDRESS)
+  gPlatformModuleTokenSpaceGuid.PcdIoApicId               | $(IO_APIC_ID)
+
   gPlatformCommonLibTokenSpaceGuid.PcdDebugOutputDeviceMask  | $(DEBUG_OUTPUT_DEVICE_MASK)
 
   gPlatformCommonLibTokenSpaceGuid.PcdConsoleInDeviceMask  | $(CONSOLE_IN_DEVICE_MASK)
@@ -293,6 +306,7 @@
   gPayloadTokenSpaceGuid.PcdGrubBootCfgEnabled            | $(ENABLE_GRUB_CONFIG)
   gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled          | $(ENABLE_SMBIOS)
   gPlatformModuleTokenSpaceGuid.PcdLinuxPayloadEnabled    | $(ENABLE_LINUX_PAYLOAD)
+  gPlatformModuleTokenSpaceGuid.PcdCreateMadtEnabled      | $(ENABLE_CREATE_MADT)
 
 !ifdef $(S3_DEBUG)
   gPlatformModuleTokenSpaceGuid.PcdS3DebugEnabled         | $(S3_DEBUG)

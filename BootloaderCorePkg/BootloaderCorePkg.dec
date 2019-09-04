@@ -112,6 +112,18 @@
 
   gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesSize       |     0x1000 | UINT16 | 0x200000E3
 
+  gPlatformModuleTokenSpaceGuid.PcdIoApicCount            |          1 | UINT32 | 0x200000E4
+  gPlatformModuleTokenSpaceGuid.PcdIntrSrcOverrideCount   |          2 | UINT32 | 0x200000E5
+  gPlatformModuleTokenSpaceGuid.PcdIntrSrcSciTrigger      |          1 | UINT16 | 0x200000E6
+  gPlatformModuleTokenSpaceGuid.PcdIntrSrcSciPolarity     |          1 | UINT16 | 0x200000E7
+  gPlatformModuleTokenSpaceGuid.PcdLocalApicNmiCount      |          1 | UINT32 | 0x200000E8
+  gPlatformModuleTokenSpaceGuid.PcdLocalApicNmiTrigger    |          1 | UINT16 | 0x200000E9
+  gPlatformModuleTokenSpaceGuid.PcdLocalApicNmiPolarity   |          0 | UINT16 | 0x200000EA
+  gPlatformModuleTokenSpaceGuid.PcdLocalApicNmiLintIdx    |          1 | UINT8  | 0x200000EB
+  gPlatformModuleTokenSpaceGuid.PcdLocalApicAddress       | 0xFEE00000 | UINT32 | 0x200000EC
+  gPlatformModuleTokenSpaceGuid.PcdIoApicAddress          | 0xFEC00000 | UINT32 | 0x200000ED
+  gPlatformModuleTokenSpaceGuid.PcdIoApicId               |          1 | UINT8  | 0x200000EE
+
 [PcdsFixedAtBuild, PcdsPatchableInModule]
   #
   # For module patchable PCDs, if it is required to do static patching during the build
@@ -165,4 +177,4 @@
   gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled         | FALSE      | BOOLEAN | 0x2000020E
   gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled          | FALSE      | BOOLEAN | 0x2000020F
   gPlatformModuleTokenSpaceGuid.PcdLinuxPayloadEnabled    | FALSE      | BOOLEAN | 0x20000210
-
+  gPlatformModuleTokenSpaceGuid.PcdCreateMadtEnabled      | FALSE      | BOOLEAN | 0x20000211

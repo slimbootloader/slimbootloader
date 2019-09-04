@@ -24,6 +24,7 @@
 #include <Library/MpInitLib.h>
 #include <Library/FirmwareUpdateLib.h>
 #include <Guid/BootLoaderVersionGuid.h>
+#include "AcpiInitLibPrivate.h"
 
 #define  ACPI_ALLOC(x)       (Current = (UINT8 *)(((UINT32)Current - (x)) & ~0x0F))
 #define  ACPI_ALLOC_PAGE(x)  (Current = (UINT8 *)(((UINT32)Current - (x)) & ~0x0FFF))
@@ -492,6 +493,30 @@ AcpiInit (
   XsdtIndex = 0;
   SetMem (XsdtEntry, PcdGet32 (PcdAcpiTablesMaxEntry) * sizeof (UINT64), 0);
 
+  //
+  // Create MADT and update RSDT/XSDT entries
+  //
+  if (FeaturePcdGet (PcdCreateMadtEnabled)) {
+    TotalSize = GetMadtSize ();
+    ASSERT (TotalSize > 0);
+    if (TotalSize == 0) {
+      return EFI_ABORTED;
+    }
+
+    TblPtr = ACPI_ALLOC (TotalSize);
+    Status = CreateMadt (TblPtr, TotalSize);
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
+
+    // Add MADT to RSDT/XSDT
+    RsdtEntry[XsdtIndex]   = (UINT32)(UINTN)TblPtr;
+    XsdtEntry[XsdtIndex++] = (UINT64)(UINTN)TblPtr;
+
+    // Update Checksum
+    AcpiPlatformChecksum (TblPtr, ((EFI_ACPI_COMMON_HEADER *)TblPtr)->Length);
+  }
+
   TblPtr  = (UINT8 *)PcdGet32 (PcdAcpiTablesAddress);
   EndPtr  = TblPtr + ((* ((UINT32 *) (TblPtr - 8)) & 0xFFFFFF) - 28);
   while (TblPtr < EndPtr) {
@@ -535,9 +560,14 @@ AcpiInit (
       break;
     case EFI_ACPI_5_0_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE:
       // MADT
-      Status = UpdateMadt (Current);
-      if (Status != EFI_SUCCESS) {
-        return Status;
+      if (FeaturePcdGet (PcdCreateMadtEnabled)) {
+        DEBUG ((DEBUG_ERROR, "Duplicated MADT found!\n"));
+        return EFI_ABORTED;
+      } else {
+        Status = UpdateMadt (Current);
+        if (EFI_ERROR (Status)) {
+          return Status;
+        }
       }
       break;
     case EFI_ACPI_5_0_FIRMWARE_PERFORMANCE_DATA_TABLE_SIGNATURE:
