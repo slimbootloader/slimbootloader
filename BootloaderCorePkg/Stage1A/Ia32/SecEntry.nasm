@@ -61,13 +61,12 @@ FspApiSuccess:
         ;
         mov     esp, ecx
         add     esp, dword [ASM_PFX(PcdGet32(PcdStage1StackSize))]
-        mov     eax, esp
 
-        movd    ebx, mm0
+        movd    eax, mm0
         emms                         ; Exit MMX Instruction
 
         ; Setup HOB
-        push    ebx                  ; BistVal
+        push    eax                  ; BistVal
         push    edi                  ; TimeStamp[0] [63:32]
         push    esi                  ; TimeStamp[0] [31:0]
         push    edx                  ; CarTop
