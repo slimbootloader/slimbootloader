@@ -25,8 +25,8 @@
 #include <Library/FirmwareUpdateLib.h>
 #include <Guid/BootLoaderVersionGuid.h>
 
-#define  ACPI_ALLOC(x)       (Current = (UINT8 *)(((UINT32)Current - (x)) & ~0x0F))
-#define  ACPI_ALLOC_PAGE(x)  (Current = (UINT8 *)(((UINT32)Current - (x)) & ~0x0FFF))
+#define  ACPI_ALIGN()       (Current = (UINT8 *)ALIGN_POINTER (Current, 0x10))
+#define  ACPI_ALIGN_PAGE()  (Current = (UINT8 *)ALIGN_POINTER (Current, 0x1000))
 
 #define  EFI_ACPI_OEM_ID           {'O','E','M','I','D',' '}   // OEMID 6 bytes long
 #define  EFI_ACPI_OEM_TABLE_ID     SIGNATURE_64('O','E','M','T','A','B','L','E') // OEM table id 8 bytes long
@@ -202,7 +202,6 @@ AcpiTableUpdate (
   EFI_ACPI_DESCRIPTION_HEADER      *AcpiHdr;
   UINT8                            *Current;
   UINT8                            *Previous;
-  UINT8                            *NewTable;
   UINT32                           *RsdtEntry;
   UINT64                           *XsdtEntry;
   UINT32                            EntryIndex;
@@ -210,6 +209,9 @@ AcpiTableUpdate (
   UINT32                            Size;
   UINT32                            EntryNum;
   EFI_STATUS                        Status;
+  LOADER_GLOBAL_DATA               *LdrGlobal;
+  S3_DATA                          *S3Data;
+  UINT32                            AcpiMax;
 
   if ((AcpiTable == NULL) || (Length < sizeof (EFI_ACPI_DESCRIPTION_HEADER))) {
     return EFI_INVALID_PARAMETER;
@@ -222,7 +224,10 @@ AcpiTableUpdate (
   XsdtEntry = (UINT64 *) ((UINT8 *)Xsdt + sizeof (EFI_ACPI_DESCRIPTION_HEADER));
   EntryNum  = (Rsdt->Length - sizeof (EFI_ACPI_DESCRIPTION_HEADER)) / sizeof (UINT32);
 
-  Current   = (UINT8 *)Rsdp;
+  LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
+  S3Data    = (S3_DATA *)LdrGlobal->S3DataPtr;
+  Current   = (UINT8 *)S3Data->AcpiTop;
+  AcpiMax   = S3Data->AcpiBase + PcdGet32 (PcdLoaderAcpiReclaimSize);
 
   Status = EFI_SUCCESS;
   Size   = 0;
@@ -242,18 +247,18 @@ AcpiTableUpdate (
 
     // Determine policy
     Previous = Current;
-    NewTable = (UINT8 *)ACPI_ALLOC (AcpiHdr->Length);
-    if ((UINT32)Current < PcdGet32 (PcdAcpiGnvsAddress) - PcdGet32 (PcdLoaderAcpiReclaimSize)) {
+    ACPI_ALIGN ();
+    if (((UINT32)Current + AcpiHdr->Length) > AcpiMax) {
       Status = EFI_OUT_OF_RESOURCES;
       break;
     }
 
-    CopyMem  (NewTable, AcpiHdr, AcpiHdr->Length);
+    CopyMem  (Current, AcpiHdr, AcpiHdr->Length);
 
     // Update the ACPI header to pointer to the new copy
     // And then update the table if required
-    AcpiHdr = (EFI_ACPI_DESCRIPTION_HEADER *)NewTable;
-    Status  = PlatformUpdateAcpiTable (NewTable);
+    AcpiHdr = (EFI_ACPI_DESCRIPTION_HEADER *)Current;
+    Status  = PlatformUpdateAcpiTable (Current);
     if (Status != EFI_SUCCESS) {
       Current = Previous;
       continue;
@@ -298,6 +303,14 @@ AcpiTableUpdate (
       }
     }
     AcpiPlatformChecksum ((UINT8 *)AcpiHdr, AcpiHdr->Length);
+    Current += AcpiHdr->Length;
+  }
+
+  //
+  // Check ACPI memory range again since a Table length may increase in hook
+  //
+  if ((UINT32)Current > AcpiMax) {
+    Status = EFI_OUT_OF_RESOURCES;
   }
 
   Rsdt->Length = sizeof (EFI_ACPI_DESCRIPTION_HEADER) + EntryNum * sizeof (UINT32);
@@ -305,6 +318,11 @@ AcpiTableUpdate (
 
   Xsdt->Length = sizeof (EFI_ACPI_DESCRIPTION_HEADER) + EntryNum * sizeof (UINT64);
   AcpiPlatformChecksum ((UINT8 *)Xsdt, Xsdt->Length);
+
+  //
+  // Update AcpiTop for gLoaderSystemTableInfoGuid
+  //
+  S3Data->AcpiTop = (UINT32)(UINTN)Current;
 
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Acpi update failed - %r\n", Status));
@@ -440,7 +458,7 @@ UpdateFwst (
 EFI_STATUS
 EFIAPI
 AcpiInit (
-  IN  UINT32    *AcpiMemTop
+  IN  UINT32    *AcpiMemBase
   )
 {
   UINT8                   *TblPtr;
@@ -469,28 +487,38 @@ AcpiInit (
   Facp = NULL;
   UpdateRdstXsdt = 0;
 
-  Current = (UINT8 *) (*AcpiMemTop);
+  Current = (UINT8 *)(*AcpiMemBase);
+
+  //
+  // Create RSDP
+  //
+  Rsdp = (EFI_ACPI_5_0_ROOT_SYSTEM_DESCRIPTION_POINTER *) ACPI_ALIGN_PAGE ();
+  CopyMem (Rsdp, &RsdpTmp, sizeof (RsdpTmp));
+  TotalSize = sizeof (EFI_ACPI_5_0_ROOT_SYSTEM_DESCRIPTION_POINTER);
+  Current += TotalSize;
 
   //
   // Create RSDT structures and allocate buffers.
   //
-  TotalSize = sizeof (EFI_ACPI_DESCRIPTION_HEADER) + PcdGet32 (PcdAcpiTablesMaxEntry) * sizeof (UINT32);
-  Rsdt      = (EFI_ACPI_DESCRIPTION_HEADER *) ACPI_ALLOC (TotalSize);
+  Rsdt = (EFI_ACPI_DESCRIPTION_HEADER *) ACPI_ALIGN ();
   CopyMem (Rsdt, &XsdtTmp, sizeof (EFI_ACPI_DESCRIPTION_HEADER));
   Rsdt->Signature = EFI_ACPI_5_0_ROOT_SYSTEM_DESCRIPTION_TABLE_SIGNATURE;
   Rsdt->Revision  = EFI_ACPI_5_0_ROOT_SYSTEM_DESCRIPTION_TABLE_REVISION;
   RsdtEntry = (UINT32 *) ((UINT8 *)Rsdt + sizeof (EFI_ACPI_DESCRIPTION_HEADER));
   SetMem (RsdtEntry, PcdGet32 (PcdAcpiTablesMaxEntry) * sizeof (UINT32), 0);
+  TotalSize = sizeof (EFI_ACPI_DESCRIPTION_HEADER) + PcdGet32 (PcdAcpiTablesMaxEntry) * sizeof (UINT32);
+  Current += TotalSize;
 
   //
   // Create XSDT structures and allocate buffers.
   //
-  TotalSize = sizeof (EFI_ACPI_DESCRIPTION_HEADER) + PcdGet32 (PcdAcpiTablesMaxEntry) * sizeof (UINT64);
-  Xsdt      = (EFI_ACPI_DESCRIPTION_HEADER *) ACPI_ALLOC (TotalSize);
+  Xsdt = (EFI_ACPI_DESCRIPTION_HEADER *) ACPI_ALIGN ();
   CopyMem (Xsdt, &XsdtTmp, sizeof (EFI_ACPI_DESCRIPTION_HEADER));
   XsdtEntry = (UINT64 *) ((UINT8 *)Xsdt + sizeof (EFI_ACPI_DESCRIPTION_HEADER));
   XsdtIndex = 0;
   SetMem (XsdtEntry, PcdGet32 (PcdAcpiTablesMaxEntry) * sizeof (UINT64), 0);
+  TotalSize = sizeof (EFI_ACPI_DESCRIPTION_HEADER) + PcdGet32 (PcdAcpiTablesMaxEntry) * sizeof (UINT64);
+  Current += TotalSize;
 
   TblPtr  = (UINT8 *)PcdGet32 (PcdAcpiTablesAddress);
   EndPtr  = TblPtr + ((* ((UINT32 *) (TblPtr - 8)) & 0xFFFFFF) - 28);
@@ -498,7 +526,7 @@ AcpiInit (
     Previous = Current;
 
     Table = (EFI_ACPI_COMMON_HEADER *)TblPtr;
-    ACPI_ALLOC (Table->Length);
+    ACPI_ALIGN ();
     CopyMem  (Current, Table, Table->Length);
 
     Status = PlatformUpdateAcpiTable (Current);
@@ -574,6 +602,9 @@ AcpiInit (
 
     SectionLen = * (UINT32 *) (TblPtr - 4) & 0x00FFFFFF;
     TblPtr = TblPtr + ((SectionLen + 3) & ~3);
+
+    TotalSize = ((EFI_ACPI_COMMON_HEADER *)Current)->Length;
+    Current += TotalSize;
   }
 
   if (Facp == NULL || Facs == NULL || Dsdt == NULL) {
@@ -594,16 +625,13 @@ AcpiInit (
   AcpiPlatformChecksum ((UINT8 *)Xsdt, Xsdt->Length);
 
   //
-  // Make Rsdp page aligned
+  // Update RSDP
   //
-  Rsdp    = (EFI_ACPI_5_0_ROOT_SYSTEM_DESCRIPTION_POINTER *) \
-        ACPI_ALLOC_PAGE (sizeof (EFI_ACPI_5_0_ROOT_SYSTEM_DESCRIPTION_POINTER));
-  CopyMem (Rsdp, &RsdpTmp, sizeof (RsdpTmp));
   Rsdp->RsdtAddress = (UINT32)Rsdt;
   Rsdp->XsdtAddress = (UINT64) (UINTN)Xsdt;
   Rsdp->Checksum    = CalculateCheckSum8 ((UINT8 *)Rsdp, sizeof (EFI_ACPI_1_0_ROOT_SYSTEM_DESCRIPTION_POINTER));
   Rsdp->ExtendedChecksum = CalculateCheckSum8 ((UINT8 *)Rsdp, Rsdp->Length);
-  *AcpiMemTop = (UINT32)Current;
+  *AcpiMemBase = (UINT32)Current;
 
   //
   // Keep a copy at F segment so that non-UEFI OS will find ACPI tables

@@ -319,7 +319,7 @@ SecStartup (
   VOID                           *MemPool;
   UINT32                          Delta;
   UINT32                          AcpiGnvs;
-  UINT32                          AcpiTop;
+  UINT32                          AcpiBase;
   LOADER_GLOBAL_DATA             *LdrGlobal;
   UINT8                           BootMode;
   S3_DATA                        *S3Data;
@@ -442,35 +442,31 @@ SecStartup (
   }
 
   // ACPI Initialization
-  if (ACPI_ENABLED()) {
-    if (PcdGet32 (PcdLoaderAcpiNvsSize) < GetAcpiGnvsSize()) {
-      AcpiGnvs = 0;
-      AcpiTop  = 0;
-    } else {
+  if (ACPI_ENABLED ()) {
+    AcpiGnvs = 0;
+    AcpiBase = 0;
+    Status   = (PcdGet32 (PcdLoaderAcpiNvsSize) < GetAcpiGnvsSize ()) ? EFI_OUT_OF_RESOURCES : EFI_SUCCESS;
+    if (!EFI_ERROR (Status)) {
       AcpiGnvs = LdrGlobal->MemPoolStart - PcdGet32 (PcdLoaderAcpiNvsSize);
-      AcpiTop  = AcpiGnvs;
-    }
+      AcpiBase = AcpiGnvs - PcdGet32 (PcdLoaderAcpiReclaimSize);
+      Status   = PcdSet32S (PcdAcpiGnvsAddress, AcpiGnvs);
 
-    S3Data = (S3_DATA *)LdrGlobal->S3DataPtr;
-    Status = PcdSet32S (PcdAcpiGnvsAddress, AcpiGnvs);
-    if (BootMode != BOOT_ON_S3_RESUME) {
-      if ((AcpiGnvs > 0) && (AcpiTop > 0)) {
+      S3Data = (S3_DATA *)LdrGlobal->S3DataPtr;
+      if (BootMode != BOOT_ON_S3_RESUME) {
         PlatformUpdateAcpiGnvs ((VOID *)AcpiGnvs);
         S3Data->AcpiGnvs = AcpiGnvs;
-        S3Data->AcpiTop  = AcpiTop;
+        S3Data->AcpiBase = AcpiBase;
         DEBUG ((DEBUG_INIT, "ACPI Init\n"));
-        Status = AcpiInit (&AcpiTop);
+        Status = AcpiInit (&AcpiBase);
         DEBUG ((DEBUG_INFO, "ACPI Ret: %r\n", Status));
-        S3Data->AcpiBase = AcpiTop;
+        S3Data->AcpiTop = AcpiBase;
         if (!EFI_ERROR (Status) && ((S3Data->AcpiTop - S3Data->AcpiBase) >
              PcdGet32 (PcdLoaderAcpiReclaimSize))) {
           Status = EFI_OUT_OF_RESOURCES;
         }
       } else {
-        Status = EFI_OUT_OF_RESOURCES;
+        Status = (S3Data->AcpiGnvs == AcpiGnvs) ? EFI_SUCCESS : EFI_ABORTED;
       }
-    } else {
-      Status   = (S3Data->AcpiGnvs == AcpiGnvs) ? EFI_SUCCESS : EFI_ABORTED;
     }
 
     AddMeasurePoint (0x30D0);
