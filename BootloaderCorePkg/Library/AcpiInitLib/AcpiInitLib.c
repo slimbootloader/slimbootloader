@@ -42,6 +42,11 @@ extern  UINT32          WakeUpBuffer;
 extern  CHAR8           WakeUp;
 extern  UINT32          WakeUpSize;
 
+typedef struct {
+  UINT8   Type;
+  UINT8   Length;
+} EFI_ACPI_MADT_ENTRY_COMMON_HEADER;
+
 /**
   Update Firmware Performance Data Table (FPDT).
 
@@ -345,51 +350,75 @@ UpdateMadt (
   IN UINT8   *Current
   )
 {
+  EFI_ACPI_DESCRIPTION_HEADER                 *Table;
+  UINT8                                       *TempMadt;
+  UINT8                                       *MadtPtr;
+  UINT8                                       *MadtEnd;
+  EFI_ACPI_MADT_ENTRY_COMMON_HEADER           *EntryHeader;
   EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC_STRUCTURE *LocalApic;
-  EFI_ACPI_5_0_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER *Temp;
-  SYS_CPU_INFO            *SysCpuInfo;
-  UINT32                   CpuCount;
-  UINT32                   MarkCpuCount;
-  UINT32                   Idx;
-  UINT32                   EndOfMadt;
-  UINT8                   *Madt;
+  SYS_CPU_INFO                                *SysCpuInfo;
+  UINT32                                       Length;
+  UINT32                                       Index;
 
-  Temp = (EFI_ACPI_5_0_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER *)Current;
-  EndOfMadt = Temp->Header.Length + (UINT32)Current;
-
-  Madt = Current;
-  //Skip the header
-  Madt = Madt + sizeof (EFI_ACPI_5_0_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER);
-
-  //Get the Mp Table info
+  //
+  // Get the number of detected CPUs
+  //
   SysCpuInfo = MpGetInfo ();
-  if (SysCpuInfo != NULL) {
-    CpuCount = SysCpuInfo->CpuCount;
-    MarkCpuCount = CpuCount;
-  } else {
-    return EFI_UNSUPPORTED;
+  if ((SysCpuInfo == NULL) || (SysCpuInfo->CpuCount == 0)) {
+    return EFI_ABORTED;
   }
 
-  //Search for Processor Local APIC
-  while ((UINT32)Madt < EndOfMadt) {
-    LocalApic = (EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC_STRUCTURE *)Madt;
-    if (LocalApic->Type == EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC) {
-      LocalApic->Flags = 0;
-      for (Idx = 0 ; Idx < CpuCount; Idx ++) {
-        if ((LocalApic->ApicId == SysCpuInfo->CpuInfo[Idx].ApicId) && (LocalApic->Flags == 0)) {
-          LocalApic->Flags = 1;
-          MarkCpuCount--;
-          break;
-        }
-      }
+  Table = (EFI_ACPI_DESCRIPTION_HEADER *)Current;
+
+  //
+  // Copy original MADT
+  //
+  TempMadt = (UINT8 *)AllocateTemporaryMemory (0);
+  CopyMem ((VOID *)TempMadt, (VOID *)Table, Table->Length);
+
+  MadtPtr = TempMadt;
+  MadtEnd = MadtPtr + Table->Length;
+
+  //
+  // Copy MADT Header
+  //
+  Length = sizeof (EFI_ACPI_5_0_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER);
+  CopyMem ((VOID *)Current, (VOID *)MadtPtr, Length);
+  MadtPtr += Length;
+  Current += Length;
+
+  //
+  // Append Processor Local APIC info
+  //
+  LocalApic = (EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC_STRUCTURE *)Current;
+  for (Index = 0; Index < SysCpuInfo->CpuCount; Index++) {
+    LocalApic[Index].Type             = EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC;
+    LocalApic[Index].Length           = sizeof (EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC_STRUCTURE);
+    LocalApic[Index].AcpiProcessorId  = Index + 1;
+    LocalApic[Index].ApicId           = SysCpuInfo->CpuInfo[Index].ApicId;
+    LocalApic[Index].Flags            = 1;
+  }
+  Length = sizeof (EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC_STRUCTURE) * SysCpuInfo->CpuCount;
+  Current += Length;
+
+  //
+  // Copy rest of MADT entries
+  //
+  while (MadtPtr < MadtEnd) {
+    EntryHeader = (EFI_ACPI_MADT_ENTRY_COMMON_HEADER *)MadtPtr;
+    Length = EntryHeader->Length;
+    if (EntryHeader->Type != EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC) {
+      CopyMem ((VOID *)Current, (VOID *)MadtPtr, Length);
+      Current += Length;
     }
-    Madt = Madt + LocalApic->Length;
+    MadtPtr += Length;
   }
 
-  if (MarkCpuCount != 0) {
-    DEBUG ((DEBUG_ERROR, "Less MADT entries than Number of cores..\n"));
-    return EFI_OUT_OF_RESOURCES;
-  }
+  //
+  // Update Table Length
+  //
+  Length = Current - (UINT8 *)Table;
+  Table->Length = Length;
 
   return EFI_SUCCESS;
 }
