@@ -191,6 +191,8 @@ class BaseBoard(object):
 		self.ENABLE_SMBIOS         = 0
 		self.ENABLE_LINUX_PAYLOAD  = 0
 
+		self.CPU_MAX_LOGICAL_PROCESSOR_NUMBER = 16
+
 		self.ACM_SIZE              = 0
 		self.ACM3_SIZE             = 0
 		self.UCODE_SIZE            = 0
