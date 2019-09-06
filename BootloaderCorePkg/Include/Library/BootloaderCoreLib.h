@@ -48,6 +48,7 @@ typedef struct {
   UINT32        CarBase;
   UINT32        CarTop;
   UINT64        TimeStamp;
+  UINT32        BistVal;
 } STAGE1A_ASM_HOB;
 
 typedef struct {
