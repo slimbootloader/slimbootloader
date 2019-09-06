@@ -240,8 +240,9 @@ SecStartup2 (
     DEBUG ((DEBUG_INIT, "\n%a\n", mBootloaderName));
   }
 
-  if (Stage1aAsmHob->BistVal != 0)
+  if (Stage1aAsmHob->BistVal != 0) {
     CpuHalt ("CPU BIST failure!\n");
+  }
 
   if ( (BufPtr == NULL) ||
        ((Stage1aHob.AllocDataBase + Stage1aHob.AllocDataLen) < (UINT32)(UINTN)BufPtr) ) {
