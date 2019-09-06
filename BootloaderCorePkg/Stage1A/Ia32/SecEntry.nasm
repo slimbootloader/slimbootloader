@@ -64,6 +64,7 @@ FspApiSuccess:
         mov     eax, esp
 
         movd    ebx, mm0
+        emms                         ; Exit MMX Instruction
 
         ; Setup HOB
         push    ebx                  ; BistVal
