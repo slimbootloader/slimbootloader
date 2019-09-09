@@ -394,8 +394,11 @@ UpdateMadt (
   for (Index = 0; Index < SysCpuInfo->CpuCount; Index++) {
     LocalApic[Index].Type             = EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC;
     LocalApic[Index].Length           = sizeof (EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC_STRUCTURE);
-    LocalApic[Index].AcpiProcessorId  = Index + 1;
-    LocalApic[Index].ApicId           = SysCpuInfo->CpuInfo[Index].ApicId;
+    //
+    // ProcessorId and ApicId has sizeof (UINT8).
+    //
+    LocalApic[Index].AcpiProcessorId  = (UINT8)Index + 1;
+    LocalApic[Index].ApicId           = (UINT8)SysCpuInfo->CpuInfo[Index].ApicId;
     LocalApic[Index].Flags            = 1;
   }
   Length = sizeof (EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC_STRUCTURE) * SysCpuInfo->CpuCount;
