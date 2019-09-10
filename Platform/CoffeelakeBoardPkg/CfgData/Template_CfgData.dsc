@@ -103,7 +103,7 @@
     gCfgData.GpioPinConfig0_$(1)              |      * | 0x04 | $(2)
       # !BSF NAME:{PadMode}
       # !BSF TYPE:{Combo}
-      # !BSF OPTION:{0x0:Hardware Default, 0x1:GPIO control of the pad, 0x3:Native function 1, 0x5:Native function 2, 0x7:Native function 3, 0x9:Native function 4}
+      # !BSF OPTION:{0x0:Hardware Default, 0x1:GPIO control of the pad, 0x3:Native function 1 < $(4) >, 0x5:Native function 2 < $(5) >, 0x7:Native function 3 < $(6) >, 0x9:Native function 4 < $(7) >}
       # !BSF HELP:{GPIO PAD Mode. If GPIO is set to one of NativeX modes then following settings are not applicable and can be skipped:-}
       # !BSF HELP:{+ Interrupt related settings, Host Software Ownership, Output/Input enabling/disabling, Output lock}
       # !BSF CONDITION:{$GpioPinConfig1_$(1).Hide_$(1) == 0}
