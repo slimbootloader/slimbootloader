@@ -415,7 +415,8 @@ GetTraditionalLinux (
       continue;
     }
 
-    ConfigFile = AllocatePool (ConfigFileSize);
+    // Allocate one more space to append NULL char
+    ConfigFile = AllocatePool (ConfigFileSize + 1);
     if (ConfigFile == NULL) {
       CloseFile (FileHandle);
       return EFI_OUT_OF_RESOURCES;
