@@ -1,0 +1,94 @@
+/** @file
+  This file contains a structure definition for the
+  Debug Port Table 2 (DBG2). If a platform wants to report
+  a debug port, it should include this file in ACPI build, and
+  it should patch the Debug Device Info structure with the
+  corresponding debug port information.
+
+  Copyright (c) 2018 - 2019, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+//
+// Statements that include other files
+//
+
+#include <Dbg2.h>
+
+//
+// Multiple APIC Description Table
+//
+
+EFI_ACPI_DEBUG_PORT_2_DESCRIPTION_TABLE Dbg2 = {
+  //
+  // Header
+  //
+  {
+    EFI_ACPI_6_1_DEBUG_PORT_2_TABLE_SIGNATURE,
+    sizeof(EFI_ACPI_DEBUG_PORT_2_DESCRIPTION_TABLE),
+    EFI_ACPI_DEBUG_PORT_2_TABLE_REVISION,
+
+    //
+    // Checksum will be updated at runtime
+    //
+    0x00,
+
+    //
+    // It is expected that these values will be programmed at runtime
+    //
+    { ' ', ' ', ' ', ' ', ' ', ' ' },
+
+    0,
+    0,
+    0,
+    0
+  },
+  //
+  // DBG2 fields
+  //
+  sizeof (EFI_ACPI_DESCRIPTION_HEADER) + sizeof(UINT32) + sizeof(UINT32),
+  NUM_DBG_DEV_INFO,   // # of debug device info
+  //
+  // Debug Device Info structure
+  //
+  {
+    {
+      0x0,              // Revision
+      sizeof(EFI_ACPI_DBG2_DEBUG_DEVICE_INFO),
+      NUM_BAR,          // NumberofGenericAddressRegisters
+      0x0,              // NameSpaceStringLength
+      sizeof(EFI_ACPI_DBG2_DEBUG_DEVICE_INFO) + sizeof(EFI_ACPI_5_0_GENERIC_ADDRESS_STRUCTURE) + 4,
+      0x0,              // OemDataLength
+      0x0,              // OemDataOffset
+      0x0,              // Port Type
+      0x0,              // Port Subtype
+      { 0x0, 0x0 },     // reserved
+      sizeof(EFI_ACPI_DBG2_DEBUG_DEVICE_INFO),
+      sizeof(EFI_ACPI_DBG2_DEBUG_DEVICE_INFO) + sizeof(EFI_ACPI_5_0_GENERIC_ADDRESS_STRUCTURE)
+    }
+  }
+
+};
+
+#ifdef __GNUC__
+VOID*
+ReferenceAcpiTable (
+ VOID
+ )
+
+{
+ //
+ // Reference the table being generated to prevent the optimizer from removing the
+ // data structure from the exeutable
+ //
+ return (VOID*)&Madt;
+}
+#else
+VOID
+main (
+  VOID
+  )
+{
+}
+#endif
