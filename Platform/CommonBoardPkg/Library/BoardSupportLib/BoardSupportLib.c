@@ -141,7 +141,7 @@ SpiLoadExternalConfigData (
   UINT32       Address;
   UINT32       BlobSize;
   UINT8       *Buffer;
-  CDATA_BLOB  *CfgBlob;
+  CDATA_BLOB  CfgBlob;
   UINT32       SignedLen;
   UINT32       CfgDataLoadSrc;
   UINT32       Base;
@@ -154,7 +154,6 @@ SpiLoadExternalConfigData (
 
   CfgDataLoadSrc = PcdGet32 (PcdCfgDataLoadSource);
 
-  CfgBlob = NULL;
   if (Len < BlobSize) {
     return EFI_OUT_OF_RESOURCES;
   }
@@ -164,11 +163,11 @@ SpiLoadExternalConfigData (
   //
   Status = EFI_UNSUPPORTED;
   if (CfgDataLoadSrc == FlashRegionPlatformData) {
-    Status = SpiFlashRead (FlashRegionPlatformData, Address, BlobSize, Buffer);
+    Status = SpiFlashRead (FlashRegionPlatformData, Address, BlobSize, (UINT8*)&CfgBlob);
   } else if (CfgDataLoadSrc == FlashRegionBios) {
     Status = GetComponentInfo (FLASH_MAP_SIG_CFGDATA, &Base, &Length);
     if (!EFI_ERROR(Status)) {
-      CopyMem (Buffer, (VOID *)Base, BlobSize);
+      CopyMem (&CfgBlob, (VOID *)Base, BlobSize);
     }
   }
   if (EFI_ERROR(Status)) {
@@ -178,12 +177,11 @@ SpiLoadExternalConfigData (
   //
   // Check the configuration signature and size
   //
-  CfgBlob = (CDATA_BLOB  *)Buffer;
-  if ((CfgBlob == NULL) || (CfgBlob->Signature != CFG_DATA_SIGNATURE)) {
+  if (CfgBlob.Signature != CFG_DATA_SIGNATURE) {
     return EFI_NOT_FOUND;
   }
 
-  SignedLen = CfgBlob->UsedLength;
+  SignedLen = CfgBlob.UsedLength;
   if (FeaturePcdGet (PcdVerifiedBootEnabled)) {
     SignedLen += RSA_SIGNATURE_AND_KEY_SIZE;
   }
@@ -195,6 +193,7 @@ SpiLoadExternalConfigData (
   //
   // Read the full configuration data
   //
+  CopyMem (Buffer, &CfgBlob, BlobSize);
   if (CfgDataLoadSrc == FlashRegionPlatformData) {
     Status = SpiFlashRead (FlashRegionPlatformData, Address + BlobSize, SignedLen - BlobSize, Buffer + BlobSize);
   } else {
