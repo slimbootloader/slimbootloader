@@ -89,6 +89,7 @@ def get_config ():
       'fitinput'  :   'Output/input',
       'ifwiname'  :   'SBL_IFWI',
       'fit'       :   'CSE/FIT/fit%s' %     ('.exe' if os.name == 'nt' else ''),
+      'vsccommn'  :   'CSE/FIT/vsccommn.bin',
       'openssl'   :   'Openssl/openssl.exe' if os.name == 'nt' else '/usr/bin/openssl',
       'cseimg'    :   'CSE/Silicon/cse_image.bin',
       'acm'       :   'ACM/acm.bin',
@@ -490,6 +491,9 @@ def stitch (stitch_dir, stitch_zip, btg_profile, spi_quad_mode, platform_data, p
     cfg_var    = get_config ()
 
     print ("\nUnpack files from stitching zip file ...")
+    if not os.path.isabs(stitch_zip):
+        stitch_zip = os.path.join(os.environ['SBL_SOURCE'], stitch_zip)
+
     zf = zipfile.ZipFile(stitch_zip, 'r', zipfile.ZIP_DEFLATED)
     zf.extractall(os.path.join(stitch_dir, cfg_var['fitinput']))
     zf.close()
@@ -507,16 +511,13 @@ def stitch (stitch_dir, stitch_zip, btg_profile, spi_quad_mode, platform_data, p
         fd.close()
 
     print ("\nChecking and copying components ...")
-    copy_list = ['cseimg', 'pmc', 'gbe', 'ec', 'ecptr', 'acm', 'fit']
+    copy_list = ['cseimg', 'pmc', 'gbe', 'ec', 'ecptr', 'acm', 'fit', 'vsccommn']
     for each in ['fit', 'openssl'] + copy_list:
         if not os.path.exists(cfg_var[each]):
              raise Exception ("Could not find file '%s' !" % cfg_var[each])
 
     for each in copy_list:
         shutil.copy (cfg_var[each], cfg_var['fitinput'])
-
-    fit_dir = stitch_dir + '/' + os.path.dirname(cfg_var['fit'])
-    shutil.copy (os.path.join(fit_dir, 'vsccommn.bin'), cfg_var['fitinput'])
 
     gen_xml_file(stitch_dir, cfg_var, btg_profile, spi_quad_mode, platform)
 
