@@ -60,5 +60,5 @@
   gPlatformModuleTokenSpaceGuid.PcdSmmRebaseMode
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegSize
-
+  gPlatformModuleTokenSpaceGuid.PcdStage1BXip
 
