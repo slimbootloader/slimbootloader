@@ -50,3 +50,4 @@
   gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
   gPlatformModuleTokenSpaceGuid.PcdVariableRegionBase
   gPlatformModuleTokenSpaceGuid.PcdVariableRegionSize
+  gPlatformModuleTokenSpaceGuid.PcdStage1BXip
