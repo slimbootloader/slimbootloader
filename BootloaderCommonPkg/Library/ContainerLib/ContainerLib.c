@@ -529,7 +529,7 @@ LoadComponentWithCallback (
   if (!EFI_ERROR (Status)) {
     CompressHdr = (LOADER_COMPRESSED_HEADER *)CompBuf;
     if (ReqCompBase == NULL) {
-      CompBase = AllocatePool (DecompressedLen);
+      CompBase = AllocatePages (EFI_SIZE_TO_PAGES ((UINTN) DecompressedLen));
     } else {
       CompBase = ReqCompBase;
     }
@@ -541,7 +541,7 @@ LoadComponentWithCallback (
       }
       if (EFI_ERROR (Status)) {
         if (ReqCompBase == NULL) {
-          FreePool (CompBase);
+          FreePages (CompBase, EFI_SIZE_TO_PAGES ((UINTN) DecompressedLen));
         }
       }
     } else {
