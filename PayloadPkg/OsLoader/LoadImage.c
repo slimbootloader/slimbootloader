@@ -192,7 +192,11 @@ GetIasImageFromRawPartition (
 
   LoadedImage->IasImage.Addr = Buffer;
   LoadedImage->IasImage.Size = ImageSize;
-  LoadedImage->Flags        |= LOADED_IMAGE_IAS;
+  if ( *((UINT32 *) Buffer) == CONTAINER_BOOT_SIGNATURE ) {
+    LoadedImage->Flags      |= LOADED_IMAGE_CONTAINER;
+  } else if ( *((UINT32 *) Buffer) == IAS_MAGIC_PATTERN ) {
+    LoadedImage->Flags      |= LOADED_IMAGE_IAS;
+  }
   return EFI_SUCCESS;
 }
 
@@ -271,7 +275,11 @@ GetIasImageFromFs (
 
   LoadedImage->IasImage.Addr = Image;
   LoadedImage->IasImage.Size = ImageSize;
-  LoadedImage->Flags        |= LOADED_IMAGE_IAS;
+  if ( *((UINT32 *) Image) == CONTAINER_BOOT_SIGNATURE ) {
+    LoadedImage->Flags      |= LOADED_IMAGE_CONTAINER;
+  } else if ( *((UINT32 *) Image) == IAS_MAGIC_PATTERN ) {
+    LoadedImage->Flags      |= LOADED_IMAGE_IAS;
+  }
 
 Done:
   if (FileHandle != NULL) {

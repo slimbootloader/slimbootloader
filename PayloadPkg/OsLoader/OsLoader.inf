@@ -101,6 +101,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdFrameBufferMaxConsoleWidth
   gPlatformCommonLibTokenSpaceGuid.PcdFrameBufferMaxConsoleHeight
   gPayloadTokenSpaceGuid.PcdGrubBootCfgEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdContainerBootEnabled
 
 [Depex]
   TRUE
