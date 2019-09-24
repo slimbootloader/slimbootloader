@@ -464,9 +464,9 @@ def gen_payload_bin (fv_dir, pld_list, pld_bin, priv_key, brd_name = None):
 	# E-payloads container format
 	alignment = 0x10
 	key_dir  = os.path.dirname (priv_key)
-	pld_list = [('EPLD', '%s' % epld_bin, '0x%x' % alignment, 'RSA2048', '%s' % os.path.basename(priv_key), 0)]
+	pld_list = [('EPLD', '%s' % epld_bin, '', 'RSA2048', '%s' % os.path.basename(priv_key), alignment, 0)]
 	for pld in ext_list:
-		pld_list.append ((pld['name'], pld['file'], pld['algo'], 'SHA2_256', '',  0))
+		pld_list.append ((pld['name'], pld['file'], pld['algo'], 'SHA2_256', '', 0, 0))
 	gen_container_bin ([pld_list], fv_dir, fv_dir, key_dir, '')
 
 

@@ -20,11 +20,15 @@ class COMPONENT_ENTRY (Structure):
 		('name',        ARRAY(c_char, 4)),   # SBL pod entry name
 		('offset',      c_uint32),   # Component offset in byte from the payload (data)
 		('size',        c_uint32),   # Region/Component size in byte
-		('reserved',    c_uint8),    # reserved
+		('attribute',   c_uint8),    # Attribute:  BIT7 Reserved component entry
 		('alignment',   c_uint8),    # This image need to be loaded to memory  in (1 << Alignment) address
 		('auth_type',   c_uint8),    # Refer AUTH_TYPE_VALUE: 0 - "NONE"; 1- "SHA2_256";  2- "RSA2048SHA256"; 3- "SHA2_384"; 4 - RSA3072SHA384
 		('hash_size',   c_uint8)     # Hash data size, it could be image hash or public key hash
 		]
+
+	_attr = {
+	  'RESERVED' : 0x80
+	}
 
 	def __new__(cls, buf = None):
 		if buf is None:
@@ -50,10 +54,20 @@ class CONTAINER_HDR (Structure):
 		('data_offset',  c_uint16),         # Offset of payload (data) from header in byte
 		('data_size',    c_uint32),         # Size of payload (data) in byte
 		('auth_type',    c_uint8),          # Refer AUTH_TYPE_VALUE: 0 - "NONE"; 2- "RSA2048SHA256"; 4 - RSA3072SHA384
-		('image_type',   c_uint8),          # Not used for now
-		('flags',        c_uint8),          # Not used for now
+		('image_type',   c_uint8),          # 0: Normal
+		('flags',        c_uint8),          # BIT0: monolithic signing
 		('entry_count',  c_uint8),          # Number of entry in the header
 		]
+
+	_flags = {
+	  'MONO_SIGNING' : 0x01
+	}
+
+	_image_type = {
+	  'NORMAL'     :  0x00,
+	  'CLASSIC'    :  0xF3,
+	  'MULTIBOOT'  :  0xF4,
+	}
 
 	def __new__(cls, buf = None):
 		if buf is None:
@@ -66,7 +80,9 @@ class CONTAINER_HDR (Structure):
 		self.alignment  = 0x1000
 		self.auth_data  = bytearray()
 		self.comp_entry = []
+
 		if buf is not None:
+			# construct CONTAINER_HDR from existing buffer
 			offset = sizeof(self)
 			alignment = None
 			for i in range(self.entry_count):
@@ -108,10 +124,14 @@ class CONTAINER ():
 		else:
 			self.header = CONTAINER_HDR (buf)
 
-	def init (self, signature, alignment):
-		self.header.signature = signature
-		self.header.version   = 1
-		self.header.alignment = alignment
+	def init_header (self, signature, alignment, image_type = 'NORMAL'):
+		self.header.signature  = signature
+		self.header.version    = 1
+		self.header.alignment  = alignment
+		self.header.flags      = 0
+		if image_type not in CONTAINER_HDR._image_type.keys():
+			raise Exception ("Invalid image type '%s' specified !" % image_type)
+		self.header.image_type = CONTAINER_HDR._image_type[image_type]
 
 	@staticmethod
 	def get_auth_type_val (auth_type_str):
@@ -123,6 +143,7 @@ class CONTAINER ():
 
 	@staticmethod
 	def get_auth_size (auth_type, signed = False):
+		# calculate the length for the required authentication info
 		if type(auth_type) is type(1):
 			auth_type_str = CONTAINER.get_auth_type_str (auth_type)
 		else:
@@ -145,6 +166,7 @@ class CONTAINER ():
 
 	@staticmethod
 	def decode_field (name, val):
+		# deocde auth type into readable string
 		extra = ''
 		if name in ['CONTAINER_HDR.auth_type', 'COMPONENT_ENTRY.auth_type']:
 			auth_type = next(k for k, v in CONTAINER._auth_type_value.items() if v == val)
@@ -153,6 +175,7 @@ class CONTAINER ():
 
 	@staticmethod
 	def hex_str (data, name = ''):
+		# convert bytearray to hex string
 		dlen = len(data)
 		if dlen == 0:
 			hex_str = ''
@@ -169,6 +192,7 @@ class CONTAINER ():
 
 	@staticmethod
 	def output_struct (obj, indent = 0, plen = 0):
+		# print out a struct info
 		body = '' if indent else (' ' * indent + '<%s>:\n') % obj.__class__.__name__
 		if plen == 0:
 			plen = sizeof(obj)
@@ -193,12 +217,14 @@ class CONTAINER ():
 
 	@staticmethod
 	def get_pub_key_hash (key):
+		# calculate publish key hash
 		dh = bytearray (key)[4:]
 		dh = dh[:0x100][::-1] + dh[0x100:][::-1]
 		return bytearray(hashlib.sha256(dh).digest())
 
 	@staticmethod
 	def calculate_auth_data (file, auth_type, priv_key, out_dir):
+		# calculate auth info for a given file
 		hash_data = bytearray()
 		auth_data = bytearray()
 		basename = os.path.basename (file)
@@ -226,6 +252,12 @@ class CONTAINER ():
 		self.key_dir   = key_dir
 		self.tool_dir  = tool_dir
 
+	def set_header_flags (self, flags, overwrite = False):
+		if overwrite:
+			self.header.flags  = flags
+		else:
+			self.header.flags |= flags
+
 	def set_header_auth_info (self, auth_type_str = None, priv_key = None):
 		if priv_key is not None:
 			self.header.priv_key   = priv_key
@@ -244,6 +276,7 @@ class CONTAINER ():
 		return length
 
 	def get_auth_data (self, comp_file, auth_type_str):
+		# calculate auth info for a give component file with specified auth type
 		auth_size = CONTAINER.get_auth_size (auth_type_str, True)
 		file_data = bytearray(get_file_data (comp_file))
 		lz_header = LZ_HEADER.from_buffer(file_data)
@@ -266,6 +299,7 @@ class CONTAINER ():
 		return data, hash_data, auth_data
 
 	def adjust_header (self):
+		# finalize the container
 		header = self.header
 		header.entry_count = len(header.comp_entry)
 		alignment = header.alignment - 1
@@ -328,76 +362,133 @@ class CONTAINER ():
 			print (self.hex_str (component.data, 'data') + ' %s' % str(component.data[:4]))
 
 	def create (self, layout):
-		container_sig, container_file, alignment, auth_type, key_file, region_size = layout[0]
-		if type(alignment) is str:
-			if alignment == '':
-				alignment = '0x1000'
-			alignment = int (alignment, 0)
+
+		# for monolithic signing, need to add a reserved _SG_ entry to hold the auth info
+		mono_sig = '_SG_'
+		is_mono_signing = True if layout[-1][0] == mono_sig else False
+
+		# get the first entry in layout as CONTAINER_HDR
+		container_sig, container_file, image_type, auth_type, key_file, alignment, region_size = layout[0]
+
+		if alignment == 0:
+			alignment = 0x1000
 
 		if auth_type == '':
 			auth_type = 'NONE'
+
+		if image_type == '':
+			image_type = 'NORMAL'
 
 		if container_file == '':
 			container_file = container_sig + '.bin'
 		key_path = os.path.join(self.key_dir, key_file)
 
-		self.init (container_sig.encode(), alignment)
+		# build header
+		self.init_header (container_sig.encode(), alignment, image_type)
 		self.set_header_auth_info (auth_type, key_path)
 
-		for name, file, compress_alg, auth_type, key_file, region_size in layout[1:]:
+		name_set = set()
+		is_last_entry = False
+		for name, file, compress_alg, auth_type, key_file, alignment, region_size in layout[1:]:
+			if is_last_entry:
+				raise Exception ("'%s' must be the last entry in layout for monolithic signing!" % mono_sig)
 			if compress_alg == '':
 				compress_alg = 'Dummy'
 			if auth_type == '':
 				auth_type = 'NONE'
+
+			# build a component entry
 			component = COMPONENT_ENTRY ()
 			component.name      = name.encode()
-			component.alignment = self.header.alignment.bit_length() - 1
+			if alignment == 0:
+				component.alignment = self.header.alignment.bit_length() - 1
+			else:
+				component.alignment = alignment.bit_length() - 1
+			component.attribute = 0
 			component.auth_type = self.get_auth_type_val (auth_type)
+			key_file = os.path.join (self.key_dir, key_file)
 			if file:
 				in_file = os.path.join(self.inp_dir, file)
 			else:
 				in_file = os.path.join(self.out_dir, component.name.decode() + '.bin')
 				gen_file_with_size (in_file, 0x10)
+				if component.name == mono_sig.encode():
+					component.attribute = COMPONENT_ENTRY._attr['RESERVED']
+					compress_alg        = 'Dummy'
+					is_last_entry       = True
+
+			# compress the component
 			lz_file = compress (in_file, compress_alg, self.out_dir, self.tool_dir)
 			component.data = bytearray(get_file_data (lz_file))
-			key_file = os.path.join (self.key_dir, key_file)
+
+			# calculate the component auth info
 			component.hash_data, component.auth_data = CONTAINER.calculate_auth_data (lz_file, auth_type, key_file, self.out_dir)
 			component.hash_size = len(component.hash_data)
 			if region_size == 0:
+				# arrange the region size automatically
 				region_size = len(component.data)
 				region_size = get_aligned_value (region_size, 4) + len(component.auth_data)
-				region_size = get_aligned_value (region_size, (1 << component.alignment))
+				if  is_mono_signing:
+					region_size = get_aligned_value (region_size, self.header.alignment)
+				else:
+					region_size = get_aligned_value (region_size, (1 << component.alignment))
 			component.size = region_size
+			name_set.add (component.name)
 			self.header.comp_entry.append (component)
 
+		if len(name_set) != len(self.header.comp_entry):
+			raise Exception ("Found duplicated component names in a container !")
+
+		# calculate the component offset based on alignment requirement
 		base_offset = None
 		offset = self.get_header_size ()
 		for component in self.header.comp_entry:
 			alignment = (1 << component.alignment) - 1
-			offset  = (offset + alignment) & ~alignment
+			next_offset  = (offset + alignment) & ~alignment
+			if is_mono_signing and  (next_offset - offset >=  sizeof(LZ_HEADER)):
+				offset = next_offset - sizeof(LZ_HEADER)
+			else:
+				offset = next_offset
 			if base_offset is None:
 				base_offset = offset
 			component.offset = offset - base_offset
 			offset += component.size
 
-		self.adjust_header ()
+		if is_mono_signing:
+			# for monolithic signing, set proper flags and update header
+			self.set_header_flags (CONTAINER_HDR._flags['MONO_SIGNING'])
+			self.adjust_header ()
 
+			# update auth info for last _SG_ entry
+			data = self.get_data ()[self.header.data_offset:]
+			pods_comp = self.header.comp_entry[-1]
+			pods_data = data[:pods_comp.offset]
+			gen_file_from_object (in_file, pods_data)
+			pods_comp.hash_data, pods_comp.auth_data = CONTAINER.calculate_auth_data (in_file, auth_type, key_file, self.out_dir)
+
+		self.adjust_header ()
 		data = self.get_data ()
+
 		out_file = os.path.join(self.out_dir, container_file)
 		gen_file_from_object (out_file, data)
 
 		return out_file
 
 	def replace (self, comp_name, comp_file, comp_alg, key_file, new_name):
+		if self.header.flags & CONTAINER_HDR._flags['MONO_SIGNING']:
+			raise Exception ("Counld not replace component for monolithically signed container!")
+
 		component = self.locate_component (comp_name)
 		if not component:
 			raise Exception ("Counld not locate component '%s' in container !" % comp_name)
 		if comp_alg == '':
+			# reuse the original compression alg
 			lz_header = LZ_HEADER.from_buffer(component.data)
 			comp_alg  = LZ_HEADER._compress_alg[lz_header.signature]
 		else:
 			comp_alg = comp_alg[0].upper() + comp_alg[1:]
 
+		# verify the new component hash does match the hash stored in the container header
 		auth_type_str = self.get_auth_type_str (component.auth_type)
 		data, hash_data, auth_data = self.get_auth_data (comp_file, auth_type_str)
 		if auth_data is None:
@@ -411,7 +502,7 @@ class CONTAINER ():
 		if component.hash_data != bytearray(hash_data):
 			raise Exception ('Compoent hash does not match the one stored in container header !')
 
-		#self.adjust_header ()
+		# create the final output file
 		data = self.get_data ()
 		if new_name == '':
 			new_name = self.header.signature + '.bin'
@@ -422,32 +513,40 @@ class CONTAINER ():
 
 	def extract (self, name = '', file_path = ''):
 		if name == '':
-			# create a layout file
+			# extract all components inside a container
+			# so creat a layout file first
 			if file_path == '':
 				file_name = self.header.signature + '.bin'
 			else:
 				file_name = os.path.splitext(os.path.basename (file_path))[0] + '.bin'
+
+			# create header entry
 			auth_type_str = self.get_auth_type_str (self.header.auth_type)
 			key_file = 'TestSigningPrivateKey.pem' if auth_type_str.startswith('RSA') else ''
-			if self.header.alignment == 0x1000:
-				alignement = ''
-			else:
-				alignement = '0x%x' % self.header.alignment
-			header = [self.header.signature, file_name, alignement,  auth_type_str,  key_file]
-			layout = [(' Name', ' ImageFile', ' CompAlg', ' AuthType',  ' KeyFile', ' Size')]
-			layout.append(tuple(["'%s'" % x for x in header] + ['0']))
+			alignment = self.header.alignment
+			header = ['%s' % self.header.signature.decode(), file_name, '',  auth_type_str,  key_file]
+			layout = [(' Name', ' ImageFile', ' CompAlg', ' AuthType',  ' KeyFile', ' Alignment', ' Size')]
+			layout.append(tuple(["'%s'" % x for x in header] + ['0x%x' % alignment, '0']))
+
+			# create component entry
 			for component in self.header.comp_entry:
 				auth_type_str = self.get_auth_type_str (component.auth_type)
 				key_file      = 'TestSigningPrivateKey.pem' if auth_type_str.startswith('RSA') else ''
 				lz_header = LZ_HEADER.from_buffer(component.data)
 				alg = LZ_HEADER._compress_alg[lz_header.signature]
-				comp = [component.name.decode(), component.name.decode() + '.bin', alg,  auth_type_str,  key_file]
-				layout.append(tuple(["'%s'" % x for x in comp] + ['0x%x' % component.size]))
+				if component.attribute & COMPONENT_ENTRY._attr['RESERVED']:
+					comp_file = ''
+				else:
+					comp_file = component.name.decode() + '.bin'
+				comp = [component.name.decode(), comp_file, alg,  auth_type_str,  key_file]
+				layout.append(tuple(["'%s'" % x for x in comp] + ['0x%x' % (1 << component.alignment), '0x%x' % component.size]))
+
+			# write layout file
 			layout_file = os.path.join(self.out_dir, self.header.signature + '.txt')
 			fo = open (layout_file, 'w')
 			fo.write ('# Container Layout File\n#\n')
 			for idx, each in enumerate(layout):
-				line = ' %-6s, %-16s, %-10s, %-10s, %-30s, %-8s' % each
+				line = ' %-6s, %-16s, %-10s, %-10s, %-30s, %-8s, %-8s' % each
 				if idx == 0:
 					line = '#  %s\n' % line
 				else:
@@ -459,6 +558,9 @@ class CONTAINER ():
 			fo.close()
 
 		for component in self.header.comp_entry:
+			if component.attribute & COMPONENT_ENTRY._attr['RESERVED']:
+				continue
+			# creat individual component region and image binary
 			if (component.name.decode() == name) or (name == ''):
 				basename = os.path.join(self.out_dir, '%s' % component.name.decode())
 				sig_file = basename + '.rgn'
@@ -483,28 +585,71 @@ def gen_container_bin (container_list, out_dir, inp_dir, key_dir = '.', tool_dir
 		out_file = container.create (each)
 		print ("Container '%s' was created successfully at:  \n  %s" % (container.header.signature.decode(), out_file))
 
+def gen_layout (comp_list, out_file, key_file):
+	# prepare the layout from individual components from '-cl'
+	if key_file == '':
+		key_file = 'TestSigningPrivateKey.pem'
+	layout 		= "('BOOT', '%s', 'CLASSIC', 'RSA2048' , '%s', 0x10, 0),\n" % (out_file, key_file)
+	end_layout 	= "('_SG_', '', 'Dummy', 'SHA2_256', '', 0, 0),"
+	for idx, each in enumerate(comp_list):
+		comp_name = each.split(':')[0]
+		comp_file = each.split(':')[1]
+		align = 0
+		if comp_name == 'INRD':
+			align = 0x1000
+		layout += "('%s', '%s', 'Dummy', 'NONE', '', %s, 0),\n" % (comp_name, comp_file, align)
+	layout += end_layout
+	return layout
+
 def create_container (args):
-	def_inp_dir = os.path.dirname (args.layout)
-	key_dir  = args.key_dir if args.key_dir else def_inp_dir
+	layout = ""
+	# if '-l', get the layout content directly
+	# if '-cl' prepare the layout
+	if args.layout:
+		def_inp_dir = os.path.dirname (args.layout)
+		layout = get_file_data(args.layout, 'r')
+		key_dir = args.key_path if args.key_path else def_inp_dir
+		out_dir = args.out_path if args.out_path else def_inp_dir
+	elif args.comp_list:
+		def_inp_dir = os.path.dirname (args.comp_list[0])
+		#extract key dir and file
+		if os.path.isdir(args.key_path):
+			key_dir = args.key_path
+			key_file = ''
+		elif os.path.isfile(args.key_path):
+			key_dir = os.path.dirname(args.key_path)
+			key_file = os.path.basename(args.key_path)
+		else:
+			raise Exception ("Invalid key path '%s' !" % args.key_path)
+		#extract out dir and file
+		if os.path.isdir(args.out_path):
+			out_dir = args.out_path
+			out_file = ''
+		elif os.path.isfile(args.out_path):
+			out_dir = os.path.dirname(args.out_path)
+			out_file = os.path.basename(args.out_path)
+		else:
+			raise Exception ("Invalid out path '%s' !" % args.out_path)
+		layout = gen_layout (args.comp_list, out_file, key_file)
 	comp_dir = args.comp_dir if args.comp_dir else def_inp_dir
 	tool_dir = args.tool_dir if args.tool_dir else def_inp_dir
-	container_list = eval ('[[%s]]' % get_file_data(args.layout, 'r'))
-	gen_container_bin (container_list, args.out_dir, comp_dir, key_dir, tool_dir)
+	container_list = eval ('[[%s]]' % layout)
+	gen_container_bin (container_list, out_dir, comp_dir, key_dir, tool_dir)
 
 def extract_container (args):
 	tool_dir = args.tool_dir if args.tool_dir else '.'
 	data = get_file_data (args.image)
 	container = CONTAINER (data)
-	container.set_dir_path (args.out_dir, '.', '.', tool_dir)
+	container.set_dir_path (args.out_path, '.', '.', tool_dir)
 	container.extract (args.comp_name, args.image)
-	print ("Components were extraced successfully at:\n  %s" % args.out_dir)
+	print ("Components were extraced successfully at:\n  %s" % args.out_path)
 
 def replace_component (args):
 	tool_dir = args.tool_dir if args.tool_dir else '.'
 	data = get_file_data (args.image)
 	container = CONTAINER (data)
-	container.set_dir_path (args.out_dir, '.', '.', tool_dir)
-	file = container.replace (args.comp_name, args.comp_file, args.compress, args.key_file, args.new_name)
+	container.set_dir_path (args.out_path, '.', '.', tool_dir)
+	file = container.replace (args.comp_name, args.comp_file, args.compress, args.key_path, args.new_name)
 	print ("Component '%s' was replaced successfully at:\n  %s" % (args.comp_name, file))
 
 def sign_component (args):
@@ -515,10 +660,10 @@ def sign_component (args):
 	}
 	compress_alg = args.compress
 	compress_alg = compress_alg[0].upper() + compress_alg[1:]
-	lz_file = compress (args.comp_file, compress_alg, args.out_dir, args.tool_dir)
+	lz_file = compress (args.comp_file, compress_alg, args.out_path, args.tool_dir)
 	data = bytearray(get_file_data (lz_file))
-	hash_data, auth_data = CONTAINER.calculate_auth_data (lz_file, auth_dict[args.auth], args.key_file, args.out_dir)
-	sign_file = os.path.join (args.out_dir, args.sign_file)
+	hash_data, auth_data = CONTAINER.calculate_auth_data (lz_file, auth_dict[args.auth], args.key_file, args.out_path)
+	sign_file = os.path.join (args.out_path, args.sign_file)
 	data.extend (b'\xff' * get_padding_length(len(data)))
 	data.extend (auth_data)
 	gen_file_from_object (sign_file, data)
@@ -534,15 +679,18 @@ def main():
 	sub_parser = parser.add_subparsers(help='command')
 
 	# Command for display
-	cmd_display = sub_parser.add_parser('display', help='display a container image')
+	cmd_display = sub_parser.add_parser('view', help='display a container image')
 	cmd_display.add_argument('-i', dest='image',  type=str, required=True, help='Container input image')
 	cmd_display.set_defaults(func=display_container)
 
 	# Command for create
 	cmd_display = sub_parser.add_parser('create', help='create a container image')
-	cmd_display.add_argument('-l',  dest='layout',   type=str, required=True, help='Container layout intput file')
-	cmd_display.add_argument('-od', dest='out_dir',  type=str, default='.', help='Container output directory')
-	cmd_display.add_argument('-kd', dest='key_dir',  type=str, default='', help='Input key directory')
+	group = cmd_display.add_mutually_exclusive_group (required=True)
+	# '-l' or '-cl', one of them is mandatory
+	group.add_argument('-l',  dest='layout',   type=str, help='Container layout intput file if no -cl')
+	group.add_argument('-cl', dest='comp_list',nargs='+', help='List of Component files if no -l')
+	cmd_display.add_argument('-o', dest='out_path',  type=str, default='.', help='Container output directory/file')
+	cmd_display.add_argument('-k', dest='key_path',  type=str, default='', help='Input key directory/file')
 	cmd_display.add_argument('-cd', dest='comp_dir', type=str, default='', help='Componet image input directory')
 	cmd_display.add_argument('-td', dest='tool_dir', type=str, default='', help='Compression tool directory')
 	cmd_display.set_defaults(func=create_container)
