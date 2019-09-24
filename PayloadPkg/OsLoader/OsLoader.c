@@ -11,79 +11,68 @@ UINT32  *mPreOsCheckerEntry;
 UINT8    mCurrentBoot;
 VOID    *mEntryStack;
 
+
 /**
-  Parse IAS image
+  Update fields of LoadedImage
 
-  This function will parse IAS image and get every file blobs info, Especially
-  get the command line file and ELF/kernel file for boot.
+  This function will update LoadedImage structure with the
+  individual File info
 
-  @param[in]      BootOption    Current boot option
+  @param[in]      NumFiles      Number of files/components
+  @param[in]      File          Array of individual Files
   @param[in, out] LoadedImage   Loaded Image information.
+  @param[in]      ImageType     {NORMAL, CLASSIC, MULTIBOOT}
 
-  @retval  RETURN_SUCCESS       Parse IAS image successfully
-  @retval  Others               There is error when parsing IAS image.
+  @retval  RETURN_SUCCESS       Update LoadedImage successfully
+  @retval  Others               There is error updating.
 **/
 EFI_STATUS
-ParseIasImage (
-  IN     OS_BOOT_OPTION      *BootOption,
-  IN OUT LOADED_IMAGE        *LoadedImage
+UpdateLoadedImage (
+  IN      UINT32         NumFiles,
+  IN      IMAGE_DATA    *File,
+  IN OUT  LOADED_IMAGE  *LoadedImage,
+  IN      UINT32         ImageType
   )
 {
-  IAS_HEADER                 *IasImage;
-  UINT32                     NumFiles;
-  IMAGE_DATA                 File[MAX_IAS_SUB_IMAGE];
+  EFI_STATUS                 Status;
   UINTN                      InitrdSize;
   VOID                       *InitrdData;
-  UINT32                     ImageType;
   UINT16                     Index;
   UINT16                     ModuleIndex;
   LINUX_IMAGE                *LinuxImage;
   MULTIBOOT_IMAGE            *MultiBoot;
   COMMON_IMAGE               *CommonImage;
   PLATFORM_SERVICE           *PlatformService;
-  EFI_STATUS                 Status;
 
   PlatformService = NULL;
-
-  IasImage = IsIasImageValid (LoadedImage->IasImage.Addr, LoadedImage->IasImage.Size, LoadedImage->ImageHash);
-  if (IasImage == NULL) {
-    DEBUG ((DEBUG_INFO, "Image given is not a valid IAS image\n"));
-    return EFI_LOAD_ERROR;
-  }
-  AddMeasurePoint (0x4080);
-
-  ZeroMem (File, sizeof (File));
-  NumFiles = IasGetFiles (IasImage, sizeof (File) / sizeof ((File)[0]), File);
-  DEBUG ((DEBUG_INFO, "IAS size = 0x%x, file number: %d\n", LoadedImage->IasImage.Size, NumFiles));
+  Status = EFI_SUCCESS;
 
   if (NumFiles == 1) {
-    // This is not valid IAS use case, at least 2 files in IAS image.
+    // This is not valid image use case, at least 2 files in image.
     // Support this only for test
     CommonImage                = &LoadedImage->Image.Common;
     CommonImage->BootFile.Addr = File[0].Addr;
     CommonImage->BootFile.Size = File[0].Size;
     if (IsMultiboot (File[0].Addr)) {
       LoadedImage->Flags |= LOADED_IMAGE_MULTIBOOT;
-      DEBUG ((DEBUG_INFO, "One multiboot file in IAS file .... \n"));
+      DEBUG ((DEBUG_INFO, "One multiboot file in boot image file .... \n"));
     } else if (IsTePe32Image (File[0].Addr, NULL) && \
                (* (UINT32 *)File[0].Addr == EFI_IMAGE_DOS_SIGNATURE)) {
       // Add extra check to ensure it is a PE32 image generated from payload build.
       // Please note vmlinuxz is also following PE32 format, but it should
       // be handled as Linux image boot path
       LoadedImage->Flags |= LOADED_IMAGE_PE32;
-      DEBUG ((DEBUG_INFO, "One PE32 file in IAS file .... \n"));
+      DEBUG ((DEBUG_INFO, "One PE32 file in boot image file .... \n"));
     } else if (IsValidFvHeader ((VOID *)File[0].Addr))  {
       LoadedImage->Flags |= LOADED_IMAGE_FV;
-      DEBUG ((DEBUG_INFO, "One FV file in IAS file .... \n"));
+      DEBUG ((DEBUG_INFO, "One FV file in boot iamge file .... \n"));
     } else {
       LoadedImage->Flags |= LOADED_IMAGE_LINUX;
-      DEBUG ((DEBUG_INFO, "One file in IAS file, take it as bzImage .... \n"));
+      DEBUG ((DEBUG_INFO, "One file in boot image file, take it as bzImage .... \n"));
     }
     return EFI_SUCCESS;
   }
 
-  ImageType = IAS_IMAGE_TYPE (IasImage->ImageType);
-  DEBUG ((DEBUG_INFO, "IAS Image Type = 0x%x\n", ImageType));
   if (ImageType == IAS_TYPE_CLASSIC) {
     // Files: cmdline, bzImage, initrd, acpi, firmware1, firmware2, ...
     LinuxImage                = &LoadedImage->Image.Linux;
@@ -131,12 +120,12 @@ ParseIasImage (
     for (Index = 2; Index < NumFiles; Index += 2) {
       if (Index < MAX_MULTIBOOT_MODULE_NUMBER) {
         if (* (UINT32 *) File[Index].Addr == MULTIBOOT_SPECIAL_MODULE_MAGIC) {
-          DEBUG ((DEBUG_INFO, "Loading IAS ACPI tables...\n"));
+          DEBUG ((DEBUG_INFO, "Loading boot image ACPI tables...\n"));
           if (PlatformService == NULL) {
             PlatformService = (PLATFORM_SERVICE *) GetServiceBySignature (PLATFORM_SERVICE_SIGNATURE);
             if ((PlatformService != NULL) && (PlatformService->AcpiTableUpdate != NULL)) {
               Status = PlatformService->AcpiTableUpdate (File[Index + 1].Addr, File[Index + 1].Size);
-              DEBUG ((DEBUG_INFO, "Updating ACPI table with IAS image %d - %r\n", Index, Status));
+              DEBUG ((DEBUG_INFO, "Updating ACPI table with boot image %d - %r\n", Index, Status));
             }
           }
           continue;
@@ -154,8 +143,130 @@ ParseIasImage (
     return EFI_UNSUPPORTED;
   }
 
+  return Status;
+}
+
+/**
+  Parse CONTAINER image
+
+  This function will parse CONTAINER image and get every file blobs info, Especially
+  get the command line file and ELF/kernel file for boot.
+
+  @param[in]      BootOption    Current boot option
+  @param[in, out] LoadedImage   Loaded Image information.
+
+  @retval  RETURN_SUCCESS       Parse IAS image successfully
+  @retval  Others               There is error when parsing IAS image.
+**/
+EFI_STATUS
+ParseContainerImage (
+  IN     OS_BOOT_OPTION      *BootOption,
+  IN OUT LOADED_IMAGE        *LoadedImage
+  )
+{
+  EFI_STATUS                  Status;
+  CONTAINER_HDR              *ContainerHdr;
+  UINT64                      ComponentName;
+  LOADER_COMPRESSED_HEADER   *LzHdr;
+  IMAGE_DATA                  File[MAX_IAS_SUB_IMAGE];
+  UINT8                       Index;
+
+  ContainerHdr = (CONTAINER_HDR  *)LoadedImage->IasImage.Addr;
+  if (ContainerHdr->Signature != CONTAINER_BOOT_SIGNATURE) {
+    return EFI_UNSUPPORTED;
+  }
+  Status = RegisterContainer ((UINT32) ContainerHdr);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "Image given is not a valid CONTAINER image\n"));
+    return EFI_LOAD_ERROR;
+  }
+
+  AddMeasurePoint (0x4080);
+  ZeroMem (File, sizeof (File));
+
+  DEBUG ((DEBUG_INFO, "CONTAINER size = 0x%x, image type = 0x%x, # of components = %d\n", LoadedImage->IasImage.Size, ContainerHdr->ImageType, ContainerHdr->Count));
+
+  // Enumerate all components
+  Index = 0;
+  ComponentName = 0;
+  while (TRUE) {
+    Status = GetNextAvailableComponent (ContainerHdr->Signature, (UINT32 *)&ComponentName);
+    if (EFI_ERROR(Status) || ((UINT32)ComponentName == CONTAINER_MONO_SIGN_SIGNATURE) ) {
+      break;
+    } else {
+      DEBUG ((DEBUG_INFO, "COMP:%a %r\n", &ComponentName, Status));
+      // Load or locate components
+      if (ContainerHdr->Flags & CONTAINER_HDR_FLAG_MONO_SIGNING) {
+        // Use Locate to reuse the image buffer
+        Status  = LocateComponent (ContainerHdr->Signature, (UINT32) ComponentName, (VOID **)&LzHdr, NULL);
+        if (!EFI_ERROR(Status)) {
+          if (LzHdr->Signature != LZDM_SIGNATURE) {
+            Status = EFI_UNSUPPORTED;
+          } else {
+            File[Index].Addr = (UINT8 *)LzHdr + sizeof(LOADER_COMPRESSED_HEADER);
+            File[Index].Size = LzHdr->Size;
+            Index++;
+          }
+        }
+      } else {
+        // Use Load to decompress to a new buffer
+        Status = LoadComponent (ContainerHdr->Signature, (UINT32) ComponentName, (VOID **)&File[Index].Addr, &File[Index].Size);
+      }
+    }
+  }
+
+  Status = UnregisterContainer (ContainerHdr->Signature);
+  DEBUG ((DEBUG_INFO, "Unregister done - %r!\n", Status));
+
+  // Mask upper nibble in ImageType so that UpdateLoadedImage() supports both IAS and CONTAINER Image types
+  Status = UpdateLoadedImage (ContainerHdr->Count, File, LoadedImage, ContainerHdr->ImageType & 0xF);
+
   AddMeasurePoint (0x40A0);
-  return EFI_SUCCESS;
+  return Status;
+}
+
+/**
+  Parse IAS image
+
+  This function will parse IAS image and get every file blobs info, Especially
+  get the command line file and ELF/kernel file for boot.
+
+  @param[in]      BootOption    Current boot option
+  @param[in, out] LoadedImage   Loaded Image information.
+
+  @retval  RETURN_SUCCESS       Parse IAS image successfully
+  @retval  Others               There is error when parsing IAS image.
+**/
+EFI_STATUS
+ParseIasImage (
+  IN     OS_BOOT_OPTION      *BootOption,
+  IN OUT LOADED_IMAGE        *LoadedImage
+  )
+{
+  IAS_HEADER                 *IasImage;
+  UINT32                     NumFiles;
+  IMAGE_DATA                 File[MAX_IAS_SUB_IMAGE];
+  UINT32                     ImageType;
+  EFI_STATUS                 Status;
+
+  IasImage = IsIasImageValid (LoadedImage->IasImage.Addr, LoadedImage->IasImage.Size, LoadedImage->ImageHash);
+  if (IasImage == NULL) {
+    DEBUG ((DEBUG_INFO, "Image given is not a valid IAS image\n"));
+    return EFI_LOAD_ERROR;
+  }
+  AddMeasurePoint (0x4080);
+
+  ZeroMem (File, sizeof (File));
+  NumFiles = IasGetFiles (IasImage, sizeof (File) / sizeof ((File)[0]), File);
+  DEBUG ((DEBUG_INFO, "IAS size = 0x%x, file number: %d\n", LoadedImage->IasImage.Size, NumFiles));
+
+  ImageType = IAS_IMAGE_TYPE (IasImage->ImageType);
+  DEBUG ((DEBUG_INFO, "IAS Image Type = 0x%x\n", ImageType));
+
+  Status = UpdateLoadedImage (NumFiles, File, LoadedImage, ImageType);
+
+  AddMeasurePoint (0x40A0);
+  return Status;
 }
 
 /**
@@ -318,12 +429,18 @@ LoadAndSetupImage (
   }
   AddMeasurePoint (0x4070);
 
-  if ((LoadedImage->Flags & LOADED_IMAGE_IAS) != 0) {
-    Status = ParseIasImage (BootOption, LoadedImage);
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_INFO, "ParseIasImage: Status = %r\n", Status));
-      return Status;
+  Status = EFI_SUCCESS;
+  if ((LoadedImage->Flags & LOADED_IMAGE_CONTAINER) != 0) {
+    if (FeaturePcdGet (PcdContainerBootEnabled)) {
+      Status = ParseContainerImage (BootOption, LoadedImage);
     }
+  } else if ((LoadedImage->Flags & LOADED_IMAGE_IAS) != 0) {
+    Status = ParseIasImage (BootOption, LoadedImage);
+  }
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "ParseLoadedImage: Status = %r\n", Status));
+    return Status;
   }
 
   if ((LoadedImage->LoadImageType == LOAD_IMAGE_TRUSTY) || (LoadedImage->LoadImageType == LOAD_IMAGE_NORMAL)) {

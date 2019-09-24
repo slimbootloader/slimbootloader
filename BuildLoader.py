@@ -190,6 +190,7 @@ class BaseBoard(object):
 		self.ENABLE_GRUB_CONFIG    = 0
 		self.ENABLE_SMBIOS         = 0
 		self.ENABLE_LINUX_PAYLOAD  = 0
+		self.ENABLE_CONTAINER_BOOT = 1
 
 		self.CPU_MAX_LOGICAL_PROCESSOR_NUMBER = 16
 

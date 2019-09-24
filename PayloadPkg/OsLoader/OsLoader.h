@@ -14,6 +14,7 @@
 #include <Library/FileSystemLib.h>
 #include <Library/PayloadMemoryAllocationLib.h>
 #include <Library/DebugPrintErrorLevelLib.h>
+#include <Library/DecompressLib.h>
 #include <Library/PayloadLib.h>
 #include <Library/ShellLib.h>
 #include <Library/IasImageLib.h>
@@ -74,6 +75,7 @@
 #define LOADED_IMAGE_LINUX       BIT2
 #define LOADED_IMAGE_PE32        BIT3
 #define LOADED_IMAGE_FV          BIT4
+#define LOADED_IMAGE_CONTAINER   BIT5
 
 #define MAX_EXTRA_FILE_NUMBER    16
 

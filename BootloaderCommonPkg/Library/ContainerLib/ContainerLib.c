@@ -277,6 +277,26 @@ AuthenticateComponent (
 }
 
 /**
+  Return Containser Key Type based on its signature
+
+  @param[in]    ContainerSig    Signature of the container
+
+  @retval                       COMP_TYPE_PUBKEY_OS for CONTAINER boot image
+                                COMP_TYPE_PUBKEY_CFG_DATA, otherwise
+**/
+UINT8
+GetContainerKeyTypeBySig (
+  IN  UINT32    ContainerSig
+  )
+{
+  if (ContainerSig == CONTAINER_BOOT_SIGNATURE) {
+    return COMP_TYPE_PUBKEY_OS;
+  } else {
+    return COMP_TYPE_PUBKEY_CFG_DATA;
+  }
+}
+
+/**
   This function authenticates a container
 
   @param[in]  ContainerHeader    Container base address to register.
@@ -315,7 +335,7 @@ AutheticateContainerInternal (
       Status = EFI_SECURITY_VIOLATION;
     } else {
       Status = AuthenticateComponent ((UINT8 *)ContainerHdr, ContainerHdrSize,
-                                      AuthType, AuthData, NULL, COMP_TYPE_PUBKEY_CFG_DATA);
+                                      AuthType, AuthData, NULL, GetContainerKeyTypeBySig(ContainerHeader->Signature) );
     }
   } else {
     Status = EFI_UNSUPPORTED;

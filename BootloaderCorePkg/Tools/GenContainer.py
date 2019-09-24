@@ -408,7 +408,12 @@ class CONTAINER ():
 			component.auth_type = self.get_auth_type_val (auth_type)
 			key_file = os.path.join (self.key_dir, key_file)
 			if file:
-				in_file = os.path.join(self.inp_dir, file)
+				if not os.path.isabs(file):
+					in_file = os.path.join(self.inp_dir, file)
+				else:
+					in_file = file
+				if not os.path.isfile(in_file):
+					raise Exception ("Component file path '%s' is invalid !" % in_file)
 			else:
 				in_file = os.path.join(self.out_dir, component.name.decode() + '.bin')
 				gen_file_with_size (in_file, 0x10)
@@ -592,11 +597,16 @@ def gen_layout (comp_list, out_file, key_file):
 	layout 		= "('BOOT', '%s', 'CLASSIC', 'RSA2048' , '%s', 0x10, 0),\n" % (out_file, key_file)
 	end_layout 	= "('_SG_', '', 'Dummy', 'SHA2_256', '', 0, 0),"
 	for idx, each in enumerate(comp_list):
-		comp_name = each.split(':')[0]
-		comp_file = each.split(':')[1]
-		align = 0
+		parts = each.split(':')
+		comp_name = parts[0]
+		if len(comp_name) != 4:
+			raise Exception ("Invalid component string format '%s' !" % each)
+
+		comp_file = ':'.join(parts[1:])
 		if comp_name == 'INRD':
 			align = 0x1000
+		else:
+			align = 0
 		layout += "('%s', '%s', 'Dummy', 'NONE', '', %s, 0),\n" % (comp_name, comp_file, align)
 	layout += end_layout
 	return layout
@@ -611,29 +621,26 @@ def create_container (args):
 		key_dir = args.key_path if args.key_path else def_inp_dir
 		out_dir = args.out_path if args.out_path else def_inp_dir
 	elif args.comp_list:
-		def_inp_dir = os.path.dirname (args.comp_list[0])
+		def_inp_dir = '.'
 		#extract key dir and file
 		if os.path.isdir(args.key_path):
 			key_dir = args.key_path
 			key_file = ''
-		elif os.path.isfile(args.key_path):
+		else:
 			key_dir = os.path.dirname(args.key_path)
 			key_file = os.path.basename(args.key_path)
-		else:
-			raise Exception ("Invalid key path '%s' !" % args.key_path)
 		#extract out dir and file
 		if os.path.isdir(args.out_path):
 			out_dir = args.out_path
 			out_file = ''
-		elif os.path.isfile(args.out_path):
+		else:
 			out_dir = os.path.dirname(args.out_path)
 			out_file = os.path.basename(args.out_path)
-		else:
-			raise Exception ("Invalid out path '%s' !" % args.out_path)
+
 		layout = gen_layout (args.comp_list, out_file, key_file)
 	comp_dir = args.comp_dir if args.comp_dir else def_inp_dir
 	tool_dir = args.tool_dir if args.tool_dir else def_inp_dir
-	container_list = eval ('[[%s]]' % layout)
+	container_list = eval ('[[%s]]' % layout.replace('\\', '/'))
 	gen_container_bin (container_list, out_dir, comp_dir, key_dir, tool_dir)
 
 def extract_container (args):
@@ -688,7 +695,7 @@ def main():
 	group = cmd_display.add_mutually_exclusive_group (required=True)
 	# '-l' or '-cl', one of them is mandatory
 	group.add_argument('-l',  dest='layout',   type=str, help='Container layout intput file if no -cl')
-	group.add_argument('-cl', dest='comp_list',nargs='+', help='List of Component files if no -l')
+	group.add_argument('-cl', dest='comp_list',nargs='+', help='List of each component files, following XXXX:FileName format')
 	cmd_display.add_argument('-o', dest='out_path',  type=str, default='.', help='Container output directory/file')
 	cmd_display.add_argument('-k', dest='key_path',  type=str, default='', help='Input key directory/file')
 	cmd_display.add_argument('-cd', dest='comp_dir', type=str, default='', help='Componet image input directory')
