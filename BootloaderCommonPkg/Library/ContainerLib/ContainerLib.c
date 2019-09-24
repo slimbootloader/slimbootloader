@@ -24,89 +24,6 @@
 #define  IS_FLASH_ADDRESS(x)   (((UINT32)(UINTN)(x)) >= 0xF0000000)
 
 /**
-  This function registers a container.
-
-  @param[in]  ContainerBase      Container base address to register.
-
-  @retval EFI_NOT_READY          Not ready for register yet.
-  @retval EFI_BUFFER_TOO_SMALL   Insufficant max container entry number.
-  @retval EFI_OUT_OF_RESOURCES   No space to add new container.
-  @retval EFI_SUCCESS            The container has been registered successfully.
-
-**/
-STATIC
-EFI_STATUS
-RegisterContainer (
-  IN UINT32    ContainerBase
-  )
-{
-  CONTAINER_LIST       *ContainerList;
-  CONTAINER_HDR        *ContainerHdr;
-  UINT32                Index;
-  VOID                 *Buffer;
-
-  ContainerList = (CONTAINER_LIST *)GetContainerListPtr ();
-  if (ContainerList == NULL) {
-    return EFI_NOT_READY;
-  }
-
-  Index = ContainerList->Count;
-  if (Index >= PcdGet32 (PcdContainerMaxNumber)) {
-    return EFI_BUFFER_TOO_SMALL;
-  }
-
-  ContainerHdr = (CONTAINER_HDR *)ContainerBase;
-  Buffer = AllocatePool (ContainerHdr->DataOffset);
-  if (Buffer == NULL) {
-    return  EFI_OUT_OF_RESOURCES;
-  }
-
-  ContainerList->Entry[Index].Signature   = ContainerHdr->Signature;
-  ContainerList->Entry[Index].HeaderCache = (UINT32)Buffer;
-  ContainerList->Entry[Index].Base        = ContainerBase;
-  CopyMem (Buffer, (VOID *)ContainerBase, ContainerHdr->DataOffset);
-  ContainerList->Count++;
-
-  return EFI_SUCCESS;
-}
-
-/**
-  This function unregisters a container in the last entry.
-
-  @retval EFI_NOT_READY          Not ready for unregister yet.
-  @retval EFI_NOT_FOUND          Not container available for unregisteration.
-  @retval EFI_SUCCESS            The container has been unregistered successfully.
-
-**/
-STATIC
-EFI_STATUS
-UnregisterLastContainer (
-  VOID
-  )
-{
-  EFI_STATUS            Status;
-  CONTAINER_LIST       *ContainerList;
-  UINT32                Index;
-
-  ContainerList = (CONTAINER_LIST *)GetContainerListPtr ();
-  if (ContainerList == NULL) {
-    return EFI_NOT_READY;
-  }
-
-  Index = ContainerList->Count;
-  if (Index > 0) {
-    Index--;
-    FreePool ((VOID *)ContainerList->Entry[Index].HeaderCache);
-    ContainerList->Count = Index;
-    Status = EFI_SUCCESS;
-  } else {
-    Status = EFI_NOT_FOUND;
-  }
-
-  return Status;
-}
-
-/**
   Get the container pointer by the container signature
 
   @param[in] Signature            The signature for the container to get.
@@ -136,6 +53,114 @@ GetContainerBySignature (
   }
 
   return NULL;
+}
+
+/**
+  This function registers a container.
+
+  @param[in]  ContainerBase      Container base address to register.
+
+  @retval EFI_NOT_READY          Not ready for register yet.
+  @retval EFI_BUFFER_TOO_SMALL   Insufficant max container entry number.
+  @retval EFI_OUT_OF_RESOURCES   No space to add new container.
+  @retval EFI_UNSUPPORTED        Duplicated container found.
+  @retval EFI_SUCCESS            The container has been registered successfully.
+
+**/
+STATIC
+EFI_STATUS
+RegisterContainerInternal (
+  IN UINT32    ContainerBase
+  )
+{
+  CONTAINER_LIST       *ContainerList;
+  CONTAINER_HDR        *ContainerHdr;
+  CONTAINER_ENTRY      *ContainerEntry;
+  UINT32                Index;
+  VOID                 *Buffer;
+
+  ContainerList = (CONTAINER_LIST *)GetContainerListPtr ();
+  if (ContainerList == NULL) {
+    return EFI_NOT_READY;
+  }
+
+  ContainerHdr   = (CONTAINER_HDR *)ContainerBase;
+  ContainerEntry = GetContainerBySignature (ContainerHdr->Signature);
+  if (ContainerEntry != NULL) {
+    return EFI_UNSUPPORTED;
+  }
+
+  Index = ContainerList->Count;
+  if (Index >= PcdGet32 (PcdContainerMaxNumber)) {
+    return EFI_BUFFER_TOO_SMALL;
+  }
+
+  Buffer = AllocatePool (ContainerHdr->DataOffset);
+  if (Buffer == NULL) {
+    return  EFI_OUT_OF_RESOURCES;
+  }
+
+  ContainerList->Entry[Index].Signature   = ContainerHdr->Signature;
+  ContainerList->Entry[Index].HeaderCache = (UINT32)Buffer;
+  ContainerList->Entry[Index].Base        = ContainerBase;
+  CopyMem (Buffer, (VOID *)ContainerBase, ContainerHdr->DataOffset);
+  ContainerList->Count++;
+
+  return EFI_SUCCESS;
+}
+
+
+/**
+  This function unregisters a container with given signature.
+
+  @param[in]  Signature      Container signature.
+
+  @retval EFI_NOT_READY          Not ready for unregister yet.
+  @retval EFI_NOT_FOUND          Not container available for unregisteration.
+  @retval EFI_SUCCESS            The container has been unregistered successfully.
+
+**/
+EFI_STATUS
+UnregisterContainer (
+  IN  UINT32   Signature
+  )
+{
+  EFI_STATUS            Status;
+  CONTAINER_LIST       *ContainerList;
+  CONTAINER_ENTRY      *ContainerEntry;
+  UINT32                Index;
+  UINT32                LastIndex;
+
+  ContainerList = (CONTAINER_LIST *)GetContainerListPtr ();
+  if (ContainerList == NULL) {
+    return EFI_NOT_READY;
+  }
+
+  Status = EFI_NOT_FOUND;
+  if (ContainerList->Count == 0) {
+    return Status;
+  }
+
+  LastIndex = ContainerList->Count - 1;
+  if (Signature == 0xFFFFFFFF) {
+    Index = LastIndex;
+  } else {
+    for (Index = 0; Index < ContainerList->Count; Index++) {
+      ContainerEntry = (CONTAINER_ENTRY *)&ContainerList->Entry[Index];
+      if (ContainerEntry->Signature == Signature) {
+        break;
+      }
+    }
+  }
+
+  if (Index < ContainerList->Count) {
+    FreePool ((VOID *)ContainerList->Entry[Index].HeaderCache);
+    ContainerList->Entry[Index] = ContainerList->Entry[LastIndex];
+    ContainerList->Count--;
+    Status = EFI_SUCCESS;
+  }
+
+  return Status;
 }
 
 /**
@@ -233,16 +258,134 @@ AuthenticateComponent (
 {
   EFI_STATUS  Status;
 
-  if (AuthType == AUTH_TYPE_SHA2_256) {
-    Status = DoHashVerify (Data, Length, HASH_TYPE_SHA256, CompType, HashData);
-  } else if (AuthType == AUTH_TYPE_SIG_RSA2048_SHA256) {
-    Status = DoRsaVerify (Data, Length, CompType, AuthData,
-                          AuthData + RSA2048NUMBYTES, HashData, NULL);
-  } else if (AuthType == AUTH_TYPE_NONE) {
+  if (!FeaturePcdGet (PcdVerifiedBootEnabled)) {
     Status = EFI_SUCCESS;
+  } else {
+    if (AuthType == AUTH_TYPE_SHA2_256) {
+      Status = DoHashVerify (Data, Length, HASH_TYPE_SHA256, CompType, HashData);
+    } else if (AuthType == AUTH_TYPE_SIG_RSA2048_SHA256) {
+      Status = DoRsaVerify (Data, Length, CompType, AuthData,
+                            AuthData + RSA2048NUMBYTES, HashData, NULL);
+    } else if (AuthType == AUTH_TYPE_NONE) {
+      Status = EFI_SUCCESS;
+    } else {
+      Status = EFI_UNSUPPORTED;
+    }
+  }
+
+  return Status;
+}
+
+/**
+  This function authenticates a container
+
+  @param[in]  ContainerHeader    Container base address to register.
+
+  @retval EFI_SUCCESS            The container has been authenticated successfully.
+  @retval EFI_UNSUPPORTED        If container header is invalid or autheication fails
+
+**/
+EFI_STATUS
+AutheticateContainerInternal (
+  IN  CONTAINER_HDR      *ContainerHeader
+  )
+{
+  CONTAINER_HDR            *ContainerHdr;
+  CONTAINER_ENTRY          *ContainerEntry;
+  COMPONENT_ENTRY          *CompEntry;
+  UINT8                    *AuthData;
+  UINT32                    ContainerHdrSize;
+  UINT8                     AuthType;
+  UINT8                    *DataBuf;
+  UINT8                    *CompData;
+  UINT32                    DataLen;
+  UINT32                    SignedDataLen;
+  UINT32                    Index;
+  LOADER_COMPRESSED_HEADER *CompressHdr;
+  EFI_STATUS                Status;
+
+  // Find authentication data offset and authenticate the container header
+  ContainerEntry   = GetContainerBySignature (ContainerHeader->Signature);
+  ContainerHdr     = (CONTAINER_HDR *)ContainerEntry->HeaderCache;
+  ContainerHdrSize = GetContainerHeaderSize (ContainerHdr);
+  if (ContainerHdrSize > 0) {
+    AuthType = ContainerHdr->AuthType;
+    AuthData = (UINT8 *)ContainerHdr + ALIGN_UP(ContainerHdrSize, AUTH_DATA_ALIGN);
+    if ((AuthType == AUTH_TYPE_NONE) && FeaturePcdGet (PcdVerifiedBootEnabled)) {
+      Status = EFI_SECURITY_VIOLATION;
+    } else {
+      Status = AuthenticateComponent ((UINT8 *)ContainerHdr, ContainerHdrSize,
+                                      AuthType, AuthData, NULL, COMP_TYPE_PUBKEY_CFG_DATA);
+    }
   } else {
     Status = EFI_UNSUPPORTED;
   }
+
+  if (!EFI_ERROR (Status) && \
+      ((ContainerHdr->Flags & CONTAINER_HDR_FLAG_MONO_SIGNING) != 0)) {
+    // Additional verification if the container is signed monolithically.
+    // It is required for the container to be loaded in memory before registeration.
+    Status = EFI_UNSUPPORTED;
+    if ((ContainerHdr->Count > 1) && !IS_FLASH_ADDRESS (ContainerHeader)) {
+      // Use the last entry to verify all other combined components
+      CompEntry = (COMPONENT_ENTRY *)&ContainerHdr[1];
+      for (Index = 0; Index < (UINT32)(ContainerHdr->Count - 1); Index++) {
+        CompEntry = (COMPONENT_ENTRY *)((UINT8 *)(CompEntry + 1) + CompEntry->HashSize);
+      }
+      CompData    = (UINT8 *)(ContainerEntry->Base + ContainerHdr->DataOffset + CompEntry->Offset);
+      CompressHdr = (LOADER_COMPRESSED_HEADER *)CompData;
+      if (CompressHdr->Signature == LZDM_SIGNATURE) {
+        SignedDataLen = sizeof (LOADER_COMPRESSED_HEADER) + CompressHdr->CompressedSize;
+        AuthData = CompData + ALIGN_UP(SignedDataLen, AUTH_DATA_ALIGN);
+        DataBuf  = (UINT8 *)(ContainerEntry->Base + ContainerHdr->DataOffset);
+        DataLen  = CompEntry->Offset;
+        Status   = AuthenticateComponent (DataBuf, DataLen, CompEntry->AuthType,
+                                          AuthData, CompEntry->HashData, COMP_TYPE_INVALID);
+      }
+    }
+  }
+
+  return Status;
+}
+
+/**
+  This function registers a container.
+
+  @param[in]  ContainerBase      Container base address to register.
+
+  @retval EFI_NOT_READY          Not ready for register yet.
+  @retval EFI_BUFFER_TOO_SMALL   Insufficant max container entry number.
+  @retval EFI_OUT_OF_RESOURCES   No space to add new container.
+  @retval EFI_SUCCESS            The container has been registered successfully.
+
+**/
+EFI_STATUS
+RegisterContainer (
+  IN  UINT32   ContainerBase
+  )
+{
+  EFI_STATUS                Status;
+  CONTAINER_HDR            *ContainerHdr;
+  UINT64                    SignatureBuffer;
+
+  ContainerHdr     = (CONTAINER_HDR *)ContainerBase;
+  SignatureBuffer  = ContainerHdr->Signature;
+  DEBUG ((EFI_D_INFO, "Registering container %4a\n", (CHAR8 *)&SignatureBuffer));
+
+  // Register container
+  Status = RegisterContainerInternal (ContainerBase);
+  if (!EFI_ERROR (Status)) {
+    Status = AutheticateContainerInternal (ContainerHdr);
+    if (EFI_ERROR (Status)) {
+      // Unregister the container since authentication failed
+      UnregisterContainer (ContainerHdr->Signature);
+    }
+  }
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((EFI_D_INFO, "Registering container failed due to %r\n", Status));
+  }
+
   return Status;
 }
 
@@ -272,11 +415,8 @@ LocateComponentEntry (
   CONTAINER_HDR            *ContainerHdr;
   CONTAINER_ENTRY          *ContainerEntry;
   COMPONENT_ENTRY          *CompEntry;
-  UINT8                    *AuthData;
   UINT32                    ContainerBase;
   UINT32                    ContainerSize;
-  UINT32                    ContainerHdrSize;
-  UINT8                     AuthType;
 
   // Search container header from cache
   ContainerEntry = GetContainerBySignature (ContainerSig);
@@ -288,7 +428,6 @@ LocateComponentEntry (
     }
 
     // Register container temporarily
-    DEBUG ((EFI_D_INFO, "Register container 0x%08X\n", ContainerSig));
     Status = RegisterContainer (ContainerBase);
     if (EFI_ERROR (Status)) {
       return EFI_UNSUPPORTED;
@@ -296,27 +435,6 @@ LocateComponentEntry (
 
     // Find authentication data offset and authenticate the container header
     ContainerEntry   = GetContainerBySignature (ContainerSig);
-    ContainerHdr     = (CONTAINER_HDR *)ContainerEntry->HeaderCache;
-    ContainerHdrSize = GetContainerHeaderSize (ContainerHdr);
-    if (ContainerHdrSize > 0) {
-      AuthType = ContainerHdr->AuthType;
-      AuthData = (UINT8 *)ContainerHdr + ALIGN_UP(ContainerHdrSize, AUTH_DATA_ALIGN);
-      if ((AuthType == AUTH_TYPE_NONE) && FeaturePcdGet (PcdVerifiedBootEnabled)) {
-        Status = EFI_SECURITY_VIOLATION;
-      } else {
-        Status = AuthenticateComponent ((UINT8 *)ContainerHdr, ContainerHdrSize,
-                                             AuthType, AuthData, NULL, COMP_TYPE_PUBKEY_CFG_DATA);
-      }
-    } else {
-      Status   = EFI_UNSUPPORTED;
-    }
-
-    if (EFI_ERROR (Status)) {
-      // Unregister the container since authentication failed
-      DEBUG ((EFI_D_INFO, "Unregister container due to %r\n", Status));
-      UnregisterLastContainer ();
-      return Status;
-    }
   }
 
   // Locate the component from the container header
@@ -335,6 +453,73 @@ LocateComponentEntry (
   }
 
   return EFI_SUCCESS;
+}
+
+/**
+  Get Next Component in a container.
+
+  @param[in]       ContainerSig    Container signature or component type.
+  @param[in, out]  ComponentName   Pointer to receive next component name.
+
+  @retval EFI_INVALID_PARAMETER    ComponentName is NULL.
+  @retval EFI_NOT_FOUND            Cannot find next component.
+  @retval EFI_SUCCESS              Next component was found successfully.
+
+**/
+EFI_STATUS
+EFIAPI
+GetNextAvailableComponent (
+  IN     UINT32     ContainerSig,
+  IN     UINT32    *ComponentName
+)
+{
+  EFI_STATUS         Status;
+  CONTAINER_HDR     *ContainerHdr;
+  CONTAINER_ENTRY   *ContainerEntry;
+  COMPONENT_ENTRY   *CurrEntry;
+  COMPONENT_ENTRY   *NextEntry;
+  UINT32             Index;
+
+  if (ComponentName == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  // Search container header from cache
+  Status = EFI_NOT_FOUND;
+  ContainerEntry = GetContainerBySignature (ContainerSig);
+  if (ContainerEntry == NULL) {
+    return Status;
+  }
+
+  ContainerHdr = (CONTAINER_HDR *)ContainerEntry->HeaderCache;
+  if (ContainerHdr->Count == 0) {
+    return Status;
+  }
+
+  CurrEntry = (COMPONENT_ENTRY *)&ContainerHdr[1];
+  NextEntry = (COMPONENT_ENTRY *)((UINT8 *)(CurrEntry + 1) + CurrEntry->HashSize);
+  for (Index = 0; Index < (UINT32)(ContainerHdr->Count - 1); Index++) {
+    if ((CurrEntry->Attribute & COMPONENT_ENTRY_ATTR_RESERVED) == 0) {
+      if (*ComponentName == 0) {
+        *ComponentName = CurrEntry->Name;
+        Status = EFI_SUCCESS;
+        break;
+      } else if (*ComponentName == CurrEntry->Name) {
+        if ((NextEntry->Attribute & COMPONENT_ENTRY_ATTR_RESERVED) == 0) {
+          *ComponentName = NextEntry->Name;
+          Status = EFI_SUCCESS;
+          break;
+        } else {
+          NextEntry = (COMPONENT_ENTRY *)((UINT8 *)(NextEntry + 1) + NextEntry->HashSize);
+          continue;
+        }
+      }
+    }
+    CurrEntry = NextEntry;
+    NextEntry = (COMPONENT_ENTRY *)((UINT8 *)(CurrEntry + 1) + CurrEntry->HashSize);
+  }
+
+  return Status;
 }
 
 /**
@@ -459,13 +644,17 @@ LoadComponentWithCallback (
       return Status;
     }
 
+    if ((CompEntry->Attribute & COMPONENT_ENTRY_ATTR_RESERVED) != 0) {
+      return EFI_UNSUPPORTED;
+    }
+
     // Collect component info
     ContainerHdr = (CONTAINER_HDR *)ContainerEntry->HeaderCache;
-    CompData  = (UINT8 *)(ContainerEntry->Base + ContainerHdr->DataOffset + CompEntry->Offset);
-    CompLen   = CompEntry->Size;
     AuthType  = CompEntry->AuthType;
     HashData  = CompEntry->HashData;
     CompType  = COMP_TYPE_INVALID;
+    CompData  = (UINT8 *)(ContainerEntry->Base + ContainerHdr->DataOffset + CompEntry->Offset);
+    CompLen   = CompEntry->Size;
   }
 
   if (LoadComponentCallback != NULL) {
