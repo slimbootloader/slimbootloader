@@ -23,6 +23,12 @@
 #define AUTH_TYPE_SIG_RSA2048_SHA256  3
 #define AUTH_TYPE_SIG_RSA3072_SHA384  4
 
+// Flags for CONTAINER_HDR
+#define CONTAINER_HDR_FLAG_MONO_SIGNING     BIT0
+
+// Attributes for COMPONENT_ENTRY
+#define COMPONENT_ENTRY_ATTR_RESERVED       BIT7
+
 typedef VOID (*LOAD_COMPONENT_CALLBACK) (UINT32 ProgressId);
 
 typedef struct {
@@ -55,35 +61,12 @@ typedef struct {
   UINT32           Name;
   UINT32           Offset;
   UINT32           Size;
-  UINT8            Rserved;
+  UINT8            Attribute;
   UINT8            Alignment;
   UINT8            AuthType;
   UINT8            HashSize;
   UINT8            HashData[0];
 } COMPONENT_ENTRY;
-
-
-/**
-  Locate a component information from a container.
-
-  @param[in]     ContainerSig       Container signature.
-  @param[in]     ComponentName      Component name.
-  @param[in,out] ContainerEntryPtr  Pointer to receive container entry info.
-  @param[in,out] ComponentEntryPtr  Pointer to receive component entry info.
-
-  @retval EFI_UNSUPPORTED          Unsupported AuthType.
-  @retval EFI_NOT_FOUND            Cannot locate component.
-  @retval EFI_SECURITY_VIOLATION   Authentication failed.
-  @retval EFI_SUCCESS              component region is located successfully.
-
-**/
-EFI_STATUS
-LocateComponentEntry (
-  IN      UINT32                  ContainerSig,
-  IN      UINT32                  ComponentName,
-  IN OUT  CONTAINER_ENTRY       **ContainerEntryPtr,
-  IN OUT  COMPONENT_ENTRY       **ComponentEntryPtr
-  );
 
 
 /**
@@ -159,5 +142,77 @@ LoadComponent (
   IN OUT VOID    **Buffer,
   IN OUT UINT32   *Length
   );
+
+/**
+  Locate a component information from a container.
+
+  @param[in]     ContainerSig       Container signature.
+  @param[in]     ComponentName      Component name.
+  @param[in,out] ContainerEntryPtr  Pointer to receive container entry info.
+  @param[in,out] ComponentEntryPtr  Pointer to receive component entry info.
+
+  @retval EFI_UNSUPPORTED          Unsupported AuthType.
+  @retval EFI_NOT_FOUND            Cannot locate component.
+  @retval EFI_SECURITY_VIOLATION   Authentication failed.
+  @retval EFI_SUCCESS              component region is located successfully.
+
+**/
+EFI_STATUS
+LocateComponentEntry (
+  IN      UINT32                  ContainerSig,
+  IN      UINT32                  ComponentName,
+  IN OUT  CONTAINER_ENTRY       **ContainerEntryPtr,
+  IN OUT  COMPONENT_ENTRY       **ComponentEntryPtr
+  );
+
+/**
+  Get Next Component in a container.
+
+  @param[in]       ContainerSig    Container signature or component type.
+  @param[in, out]  ComponentName   Pointer to receive next component name.
+
+  @retval EFI_INVALID_PARAMETER    ComponentName is NULL.
+  @retval EFI_NOT_FOUND            Cannot find next component.
+  @retval EFI_SUCCESS              Next component was found successfully.
+
+**/
+EFI_STATUS
+EFIAPI
+GetNextAvailableComponent (
+  IN     UINT32     ContainerSig,
+  IN     UINT32    *ComponentName
+);
+
+/**
+  This function registers a container.
+
+  @param[in]  ContainerBase      Container base address to register.
+
+  @retval EFI_NOT_READY          Not ready for register yet.
+  @retval EFI_BUFFER_TOO_SMALL   Insufficant max container entry number.
+  @retval EFI_OUT_OF_RESOURCES   No space to add new container.
+  @retval EFI_SUCCESS            The container has been registered successfully.
+
+**/
+EFI_STATUS
+RegisterContainer (
+  IN  UINT32   ContainerBase
+  );
+
+/**
+  This function unregisters a container with given signature.
+
+  @param[in]  Signature      Container signature.
+
+  @retval EFI_NOT_READY          Not ready for unregister yet.
+  @retval EFI_NOT_FOUND          Not container available for unregisteration.
+  @retval EFI_SUCCESS            The container has been unregistered successfully.
+
+**/
+EFI_STATUS
+UnregisterContainer (
+  IN  UINT32   Signature
+  );
+
 
 #endif
