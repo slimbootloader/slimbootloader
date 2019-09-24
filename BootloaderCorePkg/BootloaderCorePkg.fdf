@@ -129,7 +129,7 @@ FV = OsLoader
     SECTION RAW = $(IA_DIR)/BootloaderCorePkg/PcdData/PcdData/OUTPUT/PEIPcdDataBase.raw
   }
 
-  INF RuleOverride = PE32  $(PLATFORM_PACKAGE)/Stage1A/Stage1A.inf
+  INF $(PLATFORM_PACKAGE)/Stage1A/Stage1A.inf
 
   INF RuleOverride = RESET_VECTOR USE = IA32 $(PLATFORM_PACKAGE)/Stage1A/Ia32/Vtf0/Bin/ResetVector.inf
 
@@ -157,7 +157,7 @@ FV = OsLoader
   READ_LOCK_CAP      = TRUE
   READ_LOCK_STATUS   = TRUE
 
-  INF RuleOverride = PE32  $(PLATFORM_PACKAGE)/Stage1B/Stage1B.inf
+  INF $(PLATFORM_PACKAGE)/Stage1B/Stage1B.inf
 
 #------------------------------------------------------------------------------
 # STAGE2 FV
@@ -181,7 +181,7 @@ FV = OsLoader
   READ_LOCK_CAP      = TRUE
   READ_LOCK_STATUS   = TRUE
 
-  INF RuleOverride = PE32  $(PLATFORM_PACKAGE)/Stage2/Stage2.inf
+  INF $(PLATFORM_PACKAGE)/Stage2/Stage2.inf
 
 !if $(HAVE_ACPI_TABLE)
   INF RuleOverride = ACPITABLE Platform/$(BOARD_PKG_NAME)/AcpiTables/AcpiTables.inf
@@ -258,13 +258,8 @@ FV = OsLoader
 #
 ################################################################################
 [Rule.Common.PEIM]
-  FILE SEC = $(NAMED_GUID) RELOCS_STRIPPED {
-    TE  TE    Align = 16  $(INF_OUTPUT)/$(MODULE_NAME).efi
-  }
-
-[Rule.Common.PEIM.PE32]
-  FILE SEC = $(NAMED_GUID) {
-    TE  TE    Align = 16  $(INF_OUTPUT)/$(MODULE_NAME).efi
+  FILE PEIM = $(NAMED_GUID) {
+    TE  TE  Align=16  $(INF_OUTPUT)/$(MODULE_NAME).efi
   }
 
 [Rule.Common.SEC.RESET_VECTOR]
@@ -274,11 +269,11 @@ FV = OsLoader
 
 [Rule.Common.USER_DEFINED.RAWBIN]
   FILE RAW = $(NAMED_GUID) {
-     RAW BIN               |.acpi
+    RAW BIN                |.acpi
   }
 
 [Rule.Common.USER_DEFINED.ACPITABLE]
   FILE FREEFORM = $(NAMED_GUID) {
-    RAW ACPI  Optional            |.acpi
-    RAW ASL   Optional            |.aml
+    RAW ACPI  Optional     |.acpi
+    RAW ASL   Optional     |.aml
   }
