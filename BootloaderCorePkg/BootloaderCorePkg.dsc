@@ -18,7 +18,7 @@
   DSC_SPECIFICATION                   = 0x00010005
   OUTPUT_DIRECTORY                    = Build/$(PLATFORM_NAME)
   SUPPORTED_ARCHITECTURES             = IA32|X64|ARC
-  BUILD_TARGETS                       = DEBUG|RELEASE
+  BUILD_TARGETS                       = DEBUG|RELEASE|NOOPT
   SKUID_IDENTIFIER                    = DEFAULT
   FLASH_DEFINITION                    = $(PLATFORM_NAME)/$(PLATFORM_NAME).fdf
 
@@ -396,4 +396,11 @@
   *_*_*_CC_FLAGS = -DLITE_PRINT
 !endif
 
-
+!if $(TARGET) == NOOPT
+  # GCC: -O0 results in too big size. Override it to -O1 with lto
+  *_GCC49_*_CC_FLAGS = -O1
+  *_GCC49_*_DLINK_FLAGS = -O1
+  *_GCC5_*_CC_FLAGS = -flto -O1
+  *_GCC5_*_DLINK_FLAGS = -flto -O1
+  # VS: Use default /Od for now
+!endif
