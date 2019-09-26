@@ -147,7 +147,7 @@ FindFile (
       if (EFI_ERROR (Status)) {
         return EFI_NOT_FOUND;
       } else {
-        Parent = *File;
+        CopyMem (&Parent, File, sizeof (PEI_FAT_FILE));
       }
     }
     NodeCurr = NodeNext;

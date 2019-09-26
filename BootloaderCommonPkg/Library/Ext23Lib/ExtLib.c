@@ -126,7 +126,8 @@ ExtFsOpenFile (
   NameBuffer = AllocatePool (NameSize);
   Status = UnicodeStrToAsciiStrS (FileName, NameBuffer, NameSize);
   if (EFI_ERROR(Status)) {
-    goto Error;
+    FreePool (NameBuffer);
+    return Status;
   }
 
   OpenFile = (OPEN_FILE *)AllocatePool (sizeof (OPEN_FILE));

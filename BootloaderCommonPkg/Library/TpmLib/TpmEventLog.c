@@ -44,6 +44,9 @@ GetTCGLasa (
   if (TpmLibData != NULL) {
     *Lasa = (UINT32) (TpmLibData->LogAreaStartAddress);
     *Laml = TpmLibData->LogAreaMinLength;
+  } else {
+    *Lasa = 0;
+    *Laml = 0;
   }
 }
 
