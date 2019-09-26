@@ -110,12 +110,18 @@ class Board(BaseBoard):
 			# For Stage1B, it can be compressed if STAGE1B_XIP is 0
 			# If so, 	STAGE1B_FD_BASE/STAGE1B_FD_SIZE need to be defined
 			self.STAGE1B_FD_SIZE    = 0x30000
+			if self.NO_OPT_MODE:
+				self.STAGE1B_FD_SIZE += 0x2000
 			self.STAGE1B_FD_BASE    = FREE_TEMP_RAM_TOP - self.STAGE1B_FD_SIZE
 
 		# For Stage2, it is always compressed.
 		# if STAGE2_LOAD_HIGH is 1, STAGE2_FD_BASE will be ignored
 		self.STAGE2_FD_BASE       = 0x01000000
 		self.STAGE2_FD_SIZE       = 0x00060000
+
+		if self.NO_OPT_MODE:
+			self.OS_LOADER_FD_SIZE   += 0x00010000
+			self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
 		self.STAGE1_STACK_SIZE    = 0x00002000
 		self.STAGE1_DATA_SIZE     = 0x00006000
