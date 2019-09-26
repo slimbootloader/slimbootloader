@@ -237,6 +237,7 @@ class BaseBoard(object):
 		self.CFGDATA_REGION_TYPE   = FLASH_REGION_TYPE.BIOS
 
 		self.RELEASE_MODE          = 0
+		self.NO_OPT_MODE           = 0
 		self.FSPDEBUG_MODE         = 0
 		self.MIN_FSP_REVISION      = 0
 		self.FSP_IMAGE_ID          = ''
@@ -263,7 +264,7 @@ class Build(object):
 		self._workspace                    = os.environ['WORKSPACE']
 		self._board                        = board
 		self._image                        = "SlimBootloader.bin"
-		self._target                       = 'RELEASE' if board.RELEASE_MODE  else 'DEBUG'
+		self._target                       = 'RELEASE' if board.RELEASE_MODE  else 'NOOPT' if board.NO_OPT_MODE else 'DEBUG'
 		self._fsp_basename                 = 'FspDbg'  if board.FSPDEBUG_MODE else 'FspRel'
 		self._fv_dir                       = os.path.join(self._workspace, 'Build', 'BootloaderCorePkg', '%s_%s' % (self._target, self._toolchain), 'FV')
 		self._key_dir                      = os.path.join('BootloaderCorePkg', 'Tools', 'Keys')
@@ -1214,6 +1215,7 @@ def main():
 				brdcfg = imp.load_source('BoardConfig', board_cfgs[index])
 				board  = brdcfg.Board(
 										RELEASE_MODE      = args.release,     \
+										NO_OPT_MODE       = args.noopt,       \
 										FSPDEBUG_MODE     = args.fspdebug,    \
 										USE_VERSION       = args.usever,      \
 										_PAYLOAD_NAME     = args.payload,     \
@@ -1228,6 +1230,7 @@ def main():
 	buildp.add_argument('-v',  '--usever',  action='store_true', help='Use board version file')
 	buildp.add_argument('-fp', dest='fsppath', type=str, help='FSP binary path relative to FspBin in Silicon folder', default='')
 	buildp.add_argument('-fd', '--fspdebug', action='store_true', help='Use debug FSP binary')
+	buildp.add_argument('-no', '--noopt', action='store_true', help='No compile/link optimization for debugging purpose. Not enabled in Release build.')
 	buildp.add_argument('-p',  '--payload' , dest='payload', type=str, help='Payload file name', default ='OsLoader.efi')
 	buildp.add_argument('board', metavar='board', choices=board_names, help='Board Name (%s)' % ', '.join(board_names))
 	buildp.set_defaults(func=cmd_build)
