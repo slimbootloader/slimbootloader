@@ -47,8 +47,19 @@ typedef struct {
 typedef UINT32 (*CPU_TASK_PROC)          (UINT32 Arg);
 typedef VOID   (*PLATFORM_CPU_INIT_HOOK) (UINT32 CpuIndex);
 
+
 /**
-  Run a task function for a specific processor.
+  BSP initialization routine.
+
+**/
+VOID
+BspInit (
+  VOID
+  );
+
+
+/**
+  Multiprocessor Initialization.
 
   @param[in]  Phase       Initialization phase for MP.
 
