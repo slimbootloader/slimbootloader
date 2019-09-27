@@ -238,7 +238,11 @@ AcpiTableUpdate (
   Size   = 0;
   while (Size < Length) {
     AcpiHdr = (EFI_ACPI_DESCRIPTION_HEADER *)(AcpiTable + Size);
-    if (CalculateCheckSum8 ((UINT8 *)AcpiHdr, AcpiHdr->Length) != 0) {
+
+    //
+    // Verify Checksum
+    //
+    if (CalculateSum8 ((UINT8 *)AcpiHdr, AcpiHdr->Length) != 0) {
       Status = EFI_ABORTED;
       break;
     }
