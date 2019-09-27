@@ -449,7 +449,7 @@ EndList
             raise Exception("Array size is not proper for '%s' !" % ConfigDict['cname'])
 
         ByteArray = []
-        for Value in ByteArray:
+        for Value in DataList:
             for Loop in range(Unit):
                 ByteArray.append("0x%02X" % (Value & 0xFF))
                 Value = Value >> 8
