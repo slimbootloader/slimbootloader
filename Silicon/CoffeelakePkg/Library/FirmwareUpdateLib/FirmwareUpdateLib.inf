@@ -18,8 +18,6 @@
 
 [Sources]
   FirmwareUpdateLib.c
-  CsmeFwUpdate.c
-  ErrorList.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -43,7 +41,6 @@
 [Guids]
   gEfiPartTypeSystemPartGuid
   gOsBootOptionGuid
-  gCsmeFWUDriverImageFileGuid
 
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdTopSwapRegionSize

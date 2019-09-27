@@ -7,17 +7,14 @@
 
 #include <Base.h>
 #include <PiPei.h>
-#include <RegAccess.h>
 #include <Uefi/UefiBaseType.h>
 #include <Library/DebugLib.h>
-#include <Library/PciLib.h>
 #include <Library/TimerLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/LitePeCoffLib.h>
 #include <Library/FirmwareUpdateLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include <Library/PayloadMemoryAllocationLib.h>
-#include <Library/HeciLib.h>
 #include <CsmeUpdateDriver.h>
 
 /**
@@ -79,16 +76,6 @@ DisplaySendStatus (
   IN UINT32 totalBytesToSendToFw
   );
 
-EFI_STATUS
-FwuPciReadBuffer (
-  IN     UINT64   Address,
-  IN     UINTN    Count,
-  IN OUT VOID     *Buffer
-  )
-{
-  PciReadBuffer ((UINTN)Address, Count, Buffer);
-  return EFI_SUCCESS;
-}
 /**
   Check if the update image has the same version as the flash image.
 
@@ -167,9 +154,9 @@ DisplaySendStatus (
   UINT32 value = bytesSentToFw * 100 / totalBytesToSendToFw;
 
   if (value != 100) {
-    DEBUG((DEBUG_ERROR, "Sending the update image to FW for verification:  [ %u%% ]\r \n", value));
+    DEBUG((DEBUG_ERROR, " Sending the update image to FW for verification:  [ %u%% ] \r \n", value));
   } else {
-    DEBUG((DEBUG_ERROR, "Sending the update image to FW for verification:  [ COMPLETE ] \n"));
+    DEBUG((DEBUG_ERROR, " Sending the update image to FW for verification:  [ COMPLETE ] \n"));
   }
 }
 
@@ -425,11 +412,12 @@ End:
 /**
   Perform csme Firmware update.
 
-  This function based on the image type id guid from the image header will 
+  This function based on the image type id guid from the image header will
   call the respective functions to perform capsule update.
 
   @param[in] CapImage       The pointer to the firmware update capsule image.
   @param[in] CapImageSize   The size of capsule image in bytes.
+  @param[in] CsmeUpdInputData   pointer to input data structure for CSME update
   @param[in] ImageHdr       Pointer to fw mgmt capsule Image header
 
   @retval  EFI_SUCCESS      Update successful.
@@ -439,13 +427,13 @@ EFI_STATUS
 UpdateCsme (
   IN  UINT8                         *CapImage,
   IN  UINT32                        CapImageSize,
+  IN  VOID                          *CsmeUpdInputData,
   IN  EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
   )
 {
   EFI_STATUS                    Status;
   UINT32                        *DriverPtr;
   DRIVER_ENTRY                  DriverEntry;
-  FWU_CB_CONTEXT                FwuCbContext;
   CSME_UPDATE_DRIVER_OUTPUT     *CsmeUpdateApi;
   CSME_UPDATE_DRIVER_PARAMS     DriverParams;
   EFI_FW_MGMT_CAP_IMAGE_HEADER  *CsmeDriverImageHdr;
@@ -480,19 +468,7 @@ UpdateCsme (
     return Status;
   }
 
-  FwuCbContext.AllocatePool     = AllocatePool;
-  FwuCbContext.AllocateZeroPool = AllocateZeroPool;
-  FwuCbContext.FreePool         = FreePool;
-  FwuCbContext.CopyMem          = CopyMem;
-  FwuCbContext.SetMem           = SetMem;
-  FwuCbContext.CompareMem       = CompareMem;
-  FwuCbContext.Stall            = MicroSecondDelay;
-  FwuCbContext.PciRead          = FwuPciReadBuffer;
-  FwuCbContext.HeciReadMessage  = HeciReceive; 
-  FwuCbContext.HeciSendMessage  = HeciSend;
-  FwuCbContext.HeciReset        = ResetHeciInterface;
-
-  DriverParams.FwuCbContext = &FwuCbContext;
+  DriverParams.CsmeUpdDriverInFunc = CsmeUpdInputData;
   *(DriverParams.OutputFunc) = NULL;
 
   DriverEntry((VOID *)&DriverParams);
@@ -511,7 +487,6 @@ UpdateCsme (
   DriverPtr = (UINT32 *)((UINT32)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
 
   Status = StartCsmeUpdate((VOID *)DriverPtr, ImageHdr->UpdateImageSize, CsmeUpdateApi);
-  DEBUG((DEBUG_ERROR, "CSME update failed\n"));
 
   return Status;
 }

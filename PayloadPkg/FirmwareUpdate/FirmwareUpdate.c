@@ -1210,8 +1210,10 @@ ApplyFwImage (
   )
 {
   EFI_STATUS  Status;
+  VOID        *CsmeUpdateInData;
 
   Status = EFI_SUCCESS;
+  *ResetRequired = FALSE;
 
   if (CompareGuid(&ImageHdr->UpdateImageTypeId, &gSblFWUpdateImageFileGuid) == TRUE) {
     Status = UpdateSystemFirmware(ImageHdr);
@@ -1220,8 +1222,13 @@ ApplyFwImage (
     Status = UpdateSystemFirmware(ImageHdr);
     *ResetRequired = TRUE;
   } else if (CompareGuid(&ImageHdr->UpdateImageTypeId, &gCsmeFWUpdateImageFileGuid) == TRUE) {
-    Status = UpdateCsme(CapImage, CapImageSize, ImageHdr);
-    *ResetRequired = TRUE;
+    if (FeaturePcdGet(PcdCsmeUpdateEnabled) == 1) {
+      CsmeUpdateInData = InitCsmeUpdInputData();
+      if (CsmeUpdateInData != NULL) {
+        Status = UpdateCsme(CapImage, CapImageSize, CsmeUpdateInData, ImageHdr);
+        *ResetRequired = TRUE;
+      }
+    }
   }
 
   return Status;

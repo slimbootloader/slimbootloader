@@ -191,6 +191,9 @@ class BaseBoard(object):
 		self.ENABLE_SMBIOS         = 0
 		self.ENABLE_LINUX_PAYLOAD  = 0
 		self.ENABLE_CONTAINER_BOOT = 1
+		self.ENABLE_CSME_UPDATE    = 0
+
+		self.BUILD_CSME_UPDATE_DRIVER    = 0
 
 		self.CPU_MAX_LOGICAL_PROCESSOR_NUMBER = 16
 
@@ -978,6 +981,9 @@ class Build(object):
 			setattr(self._board, '%s_SIZE' % each, get_fsp_size(fsp_bin) if self._board.HAVE_FSP_BIN else 0)
 			setattr(self._board, '%s_UPD_SIZE' % each, get_fsp_upd_size(fsp_bin) if self._board.HAVE_FSP_BIN else 0)
 
+		if self._board.BUILD_CSME_UPDATE_DRIVER:
+			if os.name != 'nt':
+				raise Exception  ('BUILD_CSME_UPDATE_DRIVER is enabled, build only works in WINDOWS !')
 
 		# create component base/size variables
 		self.update_component_list ()

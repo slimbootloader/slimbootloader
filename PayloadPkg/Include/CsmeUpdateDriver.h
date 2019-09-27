@@ -8,21 +8,37 @@
 #ifndef __CSME_UPDATE_DRIVER_H__
 #define __CSME_UPDATE_DRIVER_H__
 
-#include "FwuCbContext.h"
-#include "ErrorList.h"
+#include <Base.h>
+#include <Uefi/UefiBaseType.h>
 #include "MeFwUpdateLib.h"
+#include "ErrorList.h"
 
 #define CMD_LINE_STATUS_UPDATE_1        0
 #define CMD_LINE_STATUS_UPDATE_2        1
 #define CMD_LINE_STATUS_UPDATE_3        2
 #define CMD_LINE_STATUS_UPDATE_4        3
 
+typedef struct
+{
+  VOID     *AllocatePool;
+  VOID     *AllocateZeroPool;
+  VOID     *FreePool;
+  VOID     *CopyMem;
+  VOID     *SetMem;
+  VOID     *CompareMem;
+  VOID     *Stall;
+  VOID     *HeciReadMessage;
+  VOID     *HeciSendMessage;
+  VOID     *HeciReset;
+  VOID     *PciRead;
+} CSME_UPDATE_DRIVER_INPUT;
+
 typedef
 UINT32 
 ( *FWU_FULL_UPDATE_FROM_BUFFER) (
   IN  UINT8         *Buffer,
   IN  UINT32        BufferLength,
-  IN  EFI_GUID         *OemId,
+  IN  EFI_GUID      *OemId,
   IN  void(*Func)(UINT32, UINT32)
   );
 
@@ -53,7 +69,7 @@ UINT32
 typedef
 UINT32 
 ( *FWU_OEMID) (
-  OUT EFI_GUID       *OemId
+  OUT EFI_GUID     *OemId
   );
 
 typedef
@@ -135,8 +151,10 @@ typedef struct {
 } CSME_UPDATE_DRIVER_OUTPUT;
 
 typedef struct {
-  FWU_CB_CONTEXT            *FwuCbContext;
+  CSME_UPDATE_DRIVER_INPUT  *CsmeUpdDriverInFunc;
   CSME_UPDATE_DRIVER_OUTPUT **OutputFunc;
 } CSME_UPDATE_DRIVER_PARAMS;
+
+extern CSME_UPDATE_DRIVER_INPUT g_FwuCbCtxt;
 
 #endif

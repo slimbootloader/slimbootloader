@@ -12,12 +12,17 @@
 #include <Uefi/UefiBaseType.h>
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
+#include <Library/PciLib.h>
+#include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/TimerLib.h>
 #include <Service/SpiFlashService.h>
 #include <Library/FirmwareUpdateLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include <Library/PchSbiAccessLib.h>
 #include <Library/PchPcrLib.h>
+#include <Library/HeciLib.h>
+#include <CsmeUpdateDriver.h>
 
 SPI_FLASH_SERVICE   *mFwuSpiService = NULL;
 
@@ -106,6 +111,41 @@ BootMediaErase (
   )
 {
   return mFwuSpiService->SpiErase (FlashRegionBios, (UINT32)Address, ByteCount);
+}
+
+/**
+  Initializes input structure for csme update driver.
+
+  This function will initialize input structure for csme
+  update driver. Since HECI functionality is avaiable to access
+  only in silicon driver, this init is done in silicon package.
+
+  @retval Pointer to intialized input data structure.
+  @retval NULL if csme update is not supported.
+
+**/
+VOID *
+InitCsmeUpdInputData (
+  VOID
+  )
+{
+  CSME_UPDATE_DRIVER_INPUT    *CsmeUpdDriverInput;
+
+  CsmeUpdDriverInput = (CSME_UPDATE_DRIVER_INPUT *)AllocateZeroPool (sizeof(CSME_UPDATE_DRIVER_INPUT));
+
+  CsmeUpdDriverInput->AllocatePool     = (VOID *)((UINT32)AllocatePool);
+  CsmeUpdDriverInput->AllocateZeroPool = (VOID *)((UINT32)AllocateZeroPool);
+  CsmeUpdDriverInput->FreePool         = (VOID *)((UINT32)FreePool);
+  CsmeUpdDriverInput->CopyMem          = (VOID *)((UINT32)CopyMem);
+  CsmeUpdDriverInput->SetMem           = (VOID *)((UINT32)SetMem);
+  CsmeUpdDriverInput->CompareMem       = (VOID *)((UINT32)CompareMem);
+  CsmeUpdDriverInput->Stall            = (VOID *)((UINT32)MicroSecondDelay);
+  CsmeUpdDriverInput->PciRead          = (VOID *)((UINT32)PciReadBuffer);
+  CsmeUpdDriverInput->HeciReadMessage  = (VOID *)((UINT32)HeciReceive);
+  CsmeUpdDriverInput->HeciSendMessage  = (VOID *)((UINT32)HeciSend);
+  CsmeUpdDriverInput->HeciReset        = (VOID *)((UINT32)ResetHeciInterface);
+
+  return CsmeUpdDriverInput;
 }
 
 /**

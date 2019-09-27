@@ -297,6 +297,7 @@
   gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled          | $(ENABLE_SMBIOS)
   gPlatformModuleTokenSpaceGuid.PcdLinuxPayloadEnabled    | $(ENABLE_LINUX_PAYLOAD)
   gPlatformCommonLibTokenSpaceGuid.PcdContainerBootEnabled| $(ENABLE_CONTAINER_BOOT)
+  gPayloadTokenSpaceGuid.PcdCsmeUpdateEnabled             | $(ENABLE_CSME_UPDATE)
 
 !ifdef $(S3_DEBUG)
   gPlatformModuleTokenSpaceGuid.PcdS3DebugEnabled         | $(S3_DEBUG)
@@ -372,6 +373,10 @@
       BootloaderLib           | PayloadPkg/Library/PayloadLib/PayloadLib.inf
       FirmwareUpdateLib       | Silicon/$(SILICON_PKG_NAME)/Library/FirmwareUpdateLib/FirmwareUpdateLib.inf
   }
+!endif
+
+!if $(BUILD_CSME_UPDATE_DRIVER)
+  PayloadPkg/CsmeUpdateDriver/CsmeUpdateDriver.inf
 !endif
 
 !if $(HAVE_ACPI_TABLE)

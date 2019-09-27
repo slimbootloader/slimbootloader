@@ -327,6 +327,17 @@ BootMediaErase (
   IN     UINT32                  ByteCount
   );
 
+/**
+  Initializes input structure for csme update driver.
+
+  This function will initialize input structure for csme
+  update driver. Since HECI functionality is avaiable to access
+  only in silicon driver, this init is done in silicon package.
+**/
+VOID *
+InitCsmeUpdInputData (
+  VOID
+  );
 
 /**
   API to Initialize BootMedia.
@@ -518,9 +529,10 @@ UpdateStatus (
   This function based on the image type id guid from the image header will 
   call the respective functions to perform capsule update.
 
-  @param[in] CapImage       The pointer to the firmware update capsule image.
-  @param[in] CapImageSize   The size of capsule image in bytes.
-  @param[in] ImageHdr       Pointer to fw mgmt capsule Image header
+  @param[in] CapImage           The pointer to the firmware update capsule image.
+  @param[in] CapImageSize       The size of capsule image in bytes.
+  @param[in] CsmeUpdInputData   pointer to input data structure for CSME update
+  @param[in] ImageHdr           Pointer to fw mgmt capsule Image header
 
   @retval  EFI_SUCCESS      Update successful.
   @retval  other            error status from the update routine
@@ -529,6 +541,7 @@ EFI_STATUS
 UpdateCsme (
   IN  UINT8                         *CapImage,
   IN  UINT32                        CapImageSize,
+  IN  VOID                          *CsmeUpdInputData,
   IN  EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
   );
 #endif
