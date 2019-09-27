@@ -240,6 +240,7 @@ class FLASH_MAP(Structure):
     }
 
     FLASH_MAP_REGION = {
+        0x00:  "RGN",
         0x01:  "TS0",
         0x41:  "TS1",
         0x02:  "RD0",
