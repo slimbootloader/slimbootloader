@@ -50,6 +50,10 @@ class Board(BaseBoard):
 		self.ENABLE_FRAMEBUFFER_INIT  = 1
 		self.HAVE_PSD_TABLE       = 1
 		self.ENABLE_GRUB_CONFIG   = 1
+		self.ENABLE_CSME_UPDATE   = 0
+
+		# CSME update library is required to enable this option and will be available as part of CSME kit
+		self.BUILD_CSME_UPDATE_DRIVER   = 0
 
 		# To enable source debug, set 1 to self.ENABLE_SOURCE_DEBUG
 		self.ENABLE_SOURCE_DEBUG  = 0
@@ -151,8 +155,10 @@ class Board(BaseBoard):
 			'SgxLib|Platform/CommonBoardPkg/Library/SgxLib/SgxLib.inf',
 			'PsdLib|Silicon/$(SILICON_PKG_NAME)/Library/PsdLib/PsdLib.inf',
 			'HeciLib|Silicon/$(SILICON_PKG_NAME)/Library/HeciLib/HeciLib.inf',
-			'ShellExtensionLib|Platform/$(BOARD_PKG_NAME)/Library/ShellExtensionLib/ShellExtensionLib.inf'
+			'ShellExtensionLib|Platform/$(BOARD_PKG_NAME)/Library/ShellExtensionLib/ShellExtensionLib.inf',
 		]
+		if self.BUILD_CSME_UPDATE_DRIVER:
+			dsc_libs['IA32'].append ('MeFwUpdateLib|Silicon/$(SILICON_PKG_NAME)/Library/MeFwUpdateLib/MeFwUpdateLib.inf')
 		return dsc_libs
 
 	def GetImageLayout (self):

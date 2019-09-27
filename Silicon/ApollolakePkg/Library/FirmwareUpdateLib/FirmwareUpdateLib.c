@@ -37,29 +37,6 @@
 SPI_FLASH_SERVICE   *mFwuSpiService = NULL;
 
 /**
-  Perform csme Firmware update.
-
-  This function based on the image type id guid from the image header will 
-  call the respective functions to perform capsule update.
-
-  @param[in] CapImage       The pointer to the firmware update capsule image.
-  @param[in] CapImageSize   The size of capsule image in bytes.
-  @param[in] ImageHdr       Pointer to fw mgmt capsule Image header
-
-  @retval  EFI_SUCCESS      Update successful.
-  @retval  other            error status from the update routine
-**/
-EFI_STATUS
-UpdateCsme (
-  IN  UINT8                         *CapImage,
-  IN  UINT32                        CapImageSize,
-  IN  EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
-  )
-{
-  return EFI_UNSUPPORTED;
-}
-
-/**
   This function initialized boot media.
 
   It initializes SPI services and SPI Flash size information.
@@ -141,6 +118,25 @@ BootMediaErase (
   )
 {
   return mFwuSpiService->SpiErase (FlashRegionBios, (UINT32)Address, ByteCount);
+}
+
+/**
+  Initializes input structure for csme update driver.
+
+  This function will initialize input structure for csme
+  update driver. Since HECI functionality is avaiable to access
+  only in silicon driver, this init is done in silicon package.
+
+  @retval Pointer to intialized input data structure.
+  @retval NULL if csme update is not supported.
+
+**/
+VOID *
+InitCsmeUpdInputData (
+  VOID
+  )
+{
+  return NULL;
 }
 
 /**

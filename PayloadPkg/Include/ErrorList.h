@@ -1,15 +1,10 @@
-/*++
+/** @file
 
-Copyright (C) 2009-2018 Intel Corporation
-SPDX-License-Identifier: BSD-2-Clause
+  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 
-File Name:
-    errorlist.h
+**/
 
-Abstract:
-    List of all error codes, categories and error strings.
-
---*/
 
 #ifndef _ERRORLIST_H
 #define _ERRORLIST_H

@@ -42,3 +42,4 @@
 
 [PcdsFeatureFlag]
   gPayloadTokenSpaceGuid.PcdGrubBootCfgEnabled  | FALSE    | BOOLEAN | 0x2001000
+  gPayloadTokenSpaceGuid.PcdCsmeUpdateEnabled   | FALSE    | BOOLEAN | 0x2001002
