@@ -23,7 +23,7 @@ else:
     import tkMessageBox as messagebox
     import tkFileDialog as filedialog
 
-from GenCfgData import CGenCfgData, Bytes2Str, Bytes2Val, Array2Val
+from GenCfgData import CGenCfgData, Bytes2Str, Bytes2Val, Val2Bytes, Array2Val
 
 class CreateToolTip(object):
     '''
@@ -70,14 +70,28 @@ class CreateToolTip(object):
 
 
 class ValidatingEntry(Entry):
+    _Padding   = 2
+    _CharWidth = 1
+
     def __init__(self, master, value="", **kw):
-        apply(Entry.__init__, (self, master), kw)
+        Entry.__init__(*(self, master), **kw)
         self.Value = value
         self.Variable = StringVar()
         self.Variable.set(value)
         self.Variable.trace("w", self.Callback)
         self.config(textvariable=self.Variable)
         self.bind("<FocusOut>", self.FocusOut)
+
+    @staticmethod
+    def ToCellWidth (ByteLen):
+        return ByteLen * 2 * ValidatingEntry._CharWidth + ValidatingEntry._Padding
+
+    @staticmethod
+    def ToByteLen (CellWidth):
+        return (CellWidth  - ValidatingEntry._Padding) // (ValidatingEntry._CharWidth * 2)
+
+    def GetByteLen (self):
+        return ValidatingEntry.ToByteLen (self['width'])
 
     def FocusOut(self, Event):
         Value = self.Variable.get()
@@ -103,8 +117,9 @@ class ValidatingEntry(Entry):
             except:
                 return None
 
-        if len(Value) > 2:
-            return None
+        MaxLen = self.GetByteLen() * 2
+        if len(Value) > MaxLen:
+            Value = Value[:MaxLen]
 
         return Value.upper()
 
@@ -134,12 +149,12 @@ class CustomTable(Frame):
             for Col in range(Cols):  #Columns
                 if Idx >= len(Bins):
                     break
-                Hex = "%02X" % Bins[Idx]
-                ValidatingEntry(self, width=4,
-                                justify=CENTER,
-                                value=Hex).grid(row=Row + RowAdj,
-                                                column=Col + ColAdj)
-                Idx += 1
+                ByteLen  = int(ColHdr[Col].split(':')[1])
+                Value = Bytes2Val (Bins[Idx:Idx+ByteLen])
+                Hex = ("%%0%dX" % (ByteLen * 2) ) % Value
+                ValidatingEntry(self, width=ValidatingEntry.ToCellWidth(ByteLen),
+                                justify=CENTER, value=Hex).grid(row=Row + RowAdj, column=Col + ColAdj)
+                Idx += ByteLen
             if Idx >= len(Bins):
                 break
 
@@ -148,10 +163,12 @@ class CustomTable(Frame):
         for Widget in self.winfo_children():
             if not isinstance(Widget, ValidatingEntry):
                 continue
+            ByteLen = Widget.GetByteLen ()
             Hex = Widget.get()
             if not Hex:
                 break
-            Bins.append(int(Hex, 16) & 0xff)
+            Values = Val2Bytes (int(Hex, 16) & ((1 << ByteLen * 8) - 1), ByteLen)
+            Bins.extend(Values)
         return Bins
 
     def destroy(self):
