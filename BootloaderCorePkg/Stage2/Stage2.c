@@ -158,6 +158,8 @@ NormalBootPath (
   AddMeasurePoint (0x31A0);
 
   PldBase = 0;
+  PldEntry = NULL;
+  
   Status  = EFI_SUCCESS;
   if (Dst[0] == 0x00005A4D) {
     // It is a PE format
@@ -173,7 +175,6 @@ NormalBootPath (
   } else if (IsElfImage (Dst)) {
     Status = LoadElfImage (Dst, (VOID *)&PldEntry);
   } else {
-    PldEntry = NULL;
     if (FeaturePcdGet (PcdLinuxPayloadEnabled)) {
       if (IsBzImage (Dst)) {
         // It is a Linux kernel image
