@@ -160,7 +160,39 @@ ApFunc (
 
 
 /**
-  Run a task function for a specific processor.
+  BSP initialization routine.
+
+**/
+VOID
+BspInit (
+  VOID
+  )
+{
+
+  mSysCpuInfo.CpuCount = 1;
+  mSysCpuTask.CpuCount = 1;
+
+  mMpDataStruct.SmmRebaseDoneCounter = 0;
+
+  //
+  // CPU specific init
+  //
+  CpuInit (0);
+  DEBUG ((DEBUG_INFO, " BSP APIC ID: %d\n", mSysCpuInfo.CpuInfo[0].ApicId));
+
+
+  if (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE) {
+    // Check SMM rebase result
+    if (mMpDataStruct.SmmRebaseDoneCounter != 1) {
+      CpuHalt ("CPU SMM rebase failed!\n");
+    }
+  }
+
+}
+
+
+/**
+  Multiprocessor Initialization.
 
   @param[in]  Phase       Initialization phase for MP.
 
@@ -175,7 +207,7 @@ MpInit (
 {
   UINT8                    *ApBuffer;
   EFI_STATUS                Status;
-  UINT8                     TimeOutCounter;
+  UINT32                    TimeOutCounter;
   UINT32                   *Ptr;
   AP_DATA_STRUCT           *ApDataPtr;
   volatile UINT32          *ApCounter;

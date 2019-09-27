@@ -210,7 +210,7 @@ NormalBootPath (
     DEBUG ((DEBUG_INIT, "MP Init%a\n", DebugCodeEnabled() ? " (Done)" : ""));
     Status = MpInit (EnumMpInitDone);
     AddMeasurePoint (0x31C0);
-  }
+  } 
 
   BoardInit (EndOfStages);
 
@@ -407,8 +407,11 @@ SecStartup (
   if (FixedPcdGetBool (PcdSmpEnabled)) {
     DEBUG ((DEBUG_INFO, "MP Init (Wakeup)\n"));
     Status = MpInit (EnumMpInitWakeup);
-    AddMeasurePoint (0x3060);
+  } else {
+    DEBUG ((DEBUG_INIT, "BSP Init\n"));
+    BspInit ();
   }
+  AddMeasurePoint (0x3060);
 
   // MP Init phase 2
   if (FixedPcdGetBool (PcdSmpEnabled) && !EFI_ERROR (Status)) {

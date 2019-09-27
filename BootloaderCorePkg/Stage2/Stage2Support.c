@@ -638,11 +638,7 @@ BuildExtraInfoHob (
     LoaderPlatformInfo->PlatformId = GetPlatformId ();
     LoaderPlatformInfo->LdrFeatures = LdrGlobal->LdrFeatures;
     SysCpuInfo = MpGetInfo ();
-    if (SysCpuInfo != NULL) {
-      LoaderPlatformInfo->CpuCount = SysCpuInfo->CpuCount;
-    } else {
-      LoaderPlatformInfo->CpuCount = 1;
-    }
+    LoaderPlatformInfo->CpuCount = SysCpuInfo->CpuCount;
     PlatformUpdateHobInfo (&gLoaderPlatformInfoGuid, LoaderPlatformInfo);
   }
 
