@@ -446,7 +446,10 @@ EndList
         DataList = self.ValueToList(ConfigDict['value'], ConfigDict['length'])
         Unit = int(Struct[4:]) // 8
         if int(ConfigDict['length']) != Unit * len(DataList):
-            raise Exception("Array size is not proper for '%s' !" % ConfigDict['cname'])
+            # Fallback to byte array
+            Unit = 1
+            if int(ConfigDict['length']) != len(DataList):
+                raise Exception("Array size is not proper for '%s' !" % ConfigDict['cname'])
 
         ByteArray = []
         for Value in DataList:

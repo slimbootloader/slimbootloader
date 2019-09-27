@@ -141,10 +141,25 @@
   # !BSF HELP:{Silicon Test 1}
   gCfgData.SiliconTest1           |      * | 0x04 | 0x11223347
 
-  # !BSF NAME:{Silicon Test 9}
-  # !BSF TYPE:{EditNum, HEX, (0x00000000,0xFFFFFFFF)}
-  # !BSF HELP:{Silicon Test 9}
-  gCfgData.SiliconTest2           |      * | 0x04 | 0x11223348
+  # !BSF NAME:{Silicon Test 2}
+  # !BSF TYPE:{Table}
+  # !BSF OPTION:{ 0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX}
+  # !BSF HELP:{Silicon Test 2 to show BYTE table configuration}
+  gCfgData.SiliconTest2           |      * | 0x04 | 0x04030201
+
+  # !BSF NAME:{Silicon Test 3}
+  # !BSF TYPE:{Table}
+  # !BSF OPTION:{ 0:2:HEX, 1:2:HEX}
+  # !BSF HELP:{Silicon Test 3 to show UINT16 table configuration}
+  # !HDR STRUCT:{UINT16}
+  gCfgData.SiliconTest3           |      * | 0x08 | {0x1111, 0x2222, 0x3333, 0x4444}
+
+  # !BSF NAME:{Silicon Test 4}
+  # !BSF TYPE:{Table}
+  # !BSF OPTION:{ 0:4:HEX, 1:4:HEX}
+  # !BSF HELP:{Silicon Test 4 to show UINT32 table configuration}
+  # !HDR STRUCT:{UINT32}
+  gCfgData.SiliconTest4           |      * | 0x08 | {0x11112222, 0x33334444}
   # !HDR EMBED:{SILICON_CFG_DATA:TAG_200:END}
 
   # ---------------------------------------------------------------------------------------
