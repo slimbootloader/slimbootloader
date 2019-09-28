@@ -624,7 +624,8 @@ class Application(Frame):
             if NewData[Start:End] != self.OrgCfgDataBin[Start:End] or (
                     Full and Item['name'] and (Item['cname'] != 'Dummy')):
                 if not Item['subreg']:
-                    Text = '%-40s | %s' % (FullName, Item['value'])
+                    ValStr = self.CfgDataObj.FormatDeltaValue (Item)
+                    Text = '%-40s | %s' % (FullName, ValStr)
                     if 'PLATFORMID_CFG_DATA.PlatformId' == FullName:
                         PlatformId = Array2Val(Item['value'])
                     else:
@@ -644,7 +645,8 @@ class Application(Frame):
                                 Offset = len(Item['cname']) + 1
                                 FieldName = '%s.%s' % (
                                     FullName, SubItem['cname'][Offset:])
-                            Text = '%-40s | %s' % (FieldName, SubItem['value'])
+                            ValStr = self.CfgDataObj.FormatDeltaValue (SubItem)
+                            Text = '%-40s | %s' % (FieldName, ValStr)
                             Lines.append(Text)
 
             if Item['embed'].endswith(':END'):
