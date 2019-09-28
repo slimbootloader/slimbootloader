@@ -284,7 +284,7 @@ List &EN_DIS
 EndList
 
 """
-
+        self._StructType    = ['UINT8','UINT16','UINT32','UINT64']
         self._BsfKeyList    = ['FIND','NAME','HELP','TYPE','PAGE', 'PAGES', 'BLOCK', 'OPTION','CONDITION','ORDER', 'MARKER', 'SUBT']
         self._HdrKeyList    = ['HEADER','STRUCT', 'EMBED', 'COMMENT']
         self._BuidinOption  = {'$EN_DIS' : 'EN_DIS'}
@@ -438,9 +438,29 @@ EndList
             Result = Val2Bytes (self.EvaluateExpress(ValueStr), Length)
         return Result
 
+    def FormatDeltaValue(self, ConfigDict):
+        ValStr = ConfigDict['value']
+        if ValStr[0] == "'":
+            # Remove padding \x00 in the value string
+            ValStr = filter(lambda x: ord(x) != 0, ValStr)
+
+        Struct = ConfigDict['struct']
+        if Struct in self._StructType:
+            # Format the array using its struct type
+            Unit   = int(Struct[4:]) // 8
+            Value  = Array2Val(ConfigDict['value'])
+            Loop   = ConfigDict['length'] // Unit
+            Values = []
+            for Each in range(Loop):
+                Values.append (Value & ((1 << (Unit * 8)) - 1))
+                Value = Value >> (Unit * 8)
+            ValStr = '{ ' + ', '.join ([('0x%%0%dX' % (Unit * 2)) % x for x in Values]) + ' }'
+
+        return ValStr
+
     def FormatListValue(self, ConfigDict):
         Struct = ConfigDict['struct']
-        if Struct not in ['UINT8','UINT16','UINT32','UINT64']:
+        if Struct not in self._StructType:
             return
 
         DataList = self.ValueToList(ConfigDict['value'], ConfigDict['length'])
