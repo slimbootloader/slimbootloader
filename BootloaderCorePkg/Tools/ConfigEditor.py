@@ -10,6 +10,7 @@ import re
 import sys
 import marshal
 
+sys.dont_write_bytecode = True
 if sys.hexversion >= 0x3000000:
     # for Python3
     from tkinter import *   ## notice lowercase 't' in tkinter here
@@ -274,7 +275,15 @@ class Application(Frame):
         Root.config(menu=Menubar)
 
         if len(sys.argv) > 1:
-            self.LoadDscFile (sys.argv[1])
+            Path = sys.argv[1]
+            if Path.endswith('.dlt'):
+                DscPath = os.path.join (os.path.dirname(Path), 'CfgDataDef.dsc')
+            else:
+                DscPath = Path
+            if DscPath.endswith('.dsc'):
+                if self.LoadDscFile (DscPath) == 0:
+                    if DscPath != Path:
+                        self.LoadDeltaFile (Path)
 
     def SetObjectName(self, Widget, Name):
         self.ConfList[id(Widget)] = Name
@@ -458,19 +467,23 @@ class Application(Frame):
             Text.append(Line.center(Width, ' '))
         messagebox.showinfo('Config Editor', '\n'.join(Text))
 
+    def UpdateLastDir (self, Path):
+        self.LastDir = os.path.dirname(Path)
+
     def GetOpenFileName(self, Type):
         if self.IsConfigDataLoaded():
             if Type == 'dlt':
-                Question = 'Configuration will be changed using Delta file, continue ?'
+                Question = ''
             elif Type == 'bin':
                 Question = 'All configuration will be reloaded from BIN file, continue ?'
             elif Type == 'dsc':
-                Question = 'All configuration will be reloaded from DSC file, continue ?'
+                Question = ''
             else:
                 raise Exception('Unsupported file type !')
-            Reply = messagebox.askquestion('', Question, icon='warning')
-            if Reply == 'no':
-                return None
+            if Question:
+                Reply = messagebox.askquestion('', Question, icon='warning')
+                if Reply == 'no':
+                    return None
 
         if Type == 'dsc':
             FileType = 'DSC or PKL'
@@ -485,7 +498,7 @@ class Application(Frame):
             filetypes=(("%s files" % FileType, "*.%s" % FileExt), (
                 "all files", "*.*")))
         if Path:
-            self.LastDir = os.path.dirname(Path)
+            self.UpdateLastDir (Path)
             return Path
         else:
             return None
@@ -495,7 +508,9 @@ class Application(Frame):
         Path = self.GetOpenFileName('dlt')
         if not Path:
             return
+        self.LoadDeltaFile (Path)
 
+    def LoadDeltaFile (self, Path):
         self.ReloadConfigDataFromBin(self.OrgCfgDataBin)
 
         try:
@@ -505,6 +520,7 @@ class Application(Frame):
             messagebox.showerror('LOADING ERROR', str(e))
             return
 
+        self.UpdateLastDir (Path)
         self.RefreshConfigDataPage()
 
     def LoadFromBin(self):
@@ -533,8 +549,8 @@ class Application(Frame):
             messagebox.showerror('LOADING ERROR', str(e))
             return -1
 
+        self.UpdateLastDir (Path)
         self.OrgCfgDataBin = self.CfgDataObj.GenerateBinaryArray()
-
         self.BuildConfigPageTree(self.CfgDataObj._CfgPageTree['root'], '')
 
         for Menu in self.MenuString:
