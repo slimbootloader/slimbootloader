@@ -57,6 +57,7 @@ ShellCommandMemFunc (
   Width = 4;
   Write = FALSE;
   Value = 0;
+  Count = 0;
 
   if ((Argc == 2) || (Argc == 3)) {
     // Read 1 element
