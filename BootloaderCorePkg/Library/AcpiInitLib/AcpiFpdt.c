@@ -219,7 +219,7 @@ UpdateFpdt (
     UpdateFpdtBootTable (BootPerfTable);
 
     // Fixup FPDT table length
-    Fpdt->Header.Length = sizeof (FIRMWARE_PERFORMANCE_TABLE);
+    Fpdt->Header.Length = sizeof (INTERNAL_FIRMWARE_PERFORMANCE_TABLE);
   }
 
   return  EFI_SUCCESS;
