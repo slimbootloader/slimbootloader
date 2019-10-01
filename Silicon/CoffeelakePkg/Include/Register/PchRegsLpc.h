@@ -24,13 +24,14 @@
 #define PCH_PCR_BASE_ADDRESS                      0xFD000000
 #define PCH_PCR_ADDRESS(Pid, Offset)              (PCH_PCR_BASE_ADDRESS | ((UINT8)(Pid) << 16) | (UINT16)(Offset))
 
+#define B_LPC_CFG_IOE_SIO                         BIT12
 #define B_LPC_CFG_IOE_ME1                         BIT11
 #define B_LPC_CFG_IOE_CBE                         BIT1
 #define B_LPC_CFG_IOE_CAE                         BIT0
 
 #define R_PCH_LPC_IOD                             0x80
 #define N_PCH_LPC_IOD_COMB                        4
-#define V_PCH_LPC_IOD_COMB_3E8                    7
+#define V_PCH_LPC_IOD_COMB_2F8                    1
 #define N_PCH_LPC_IOD_COMA                        0
 #define V_PCH_LPC_IOD_COMA_3F8                    0
 
