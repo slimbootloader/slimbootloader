@@ -51,7 +51,7 @@ LegacySerialPortInitialize (
     0);
 
   Data16 = PciRead16 (LpcBaseAddr + R_PCH_LPC_IOD);
-  Data16 |= (V_PCH_LPC_IOD_COMB_3E8 << N_PCH_LPC_IOD_COMB);
+  Data16 |= (V_PCH_LPC_IOD_COMB_2F8 << N_PCH_LPC_IOD_COMB);
   Data16 |= (V_PCH_LPC_IOD_COMA_3F8 << N_PCH_LPC_IOD_COMA);
   MmioWrite16 (PCH_PCR_ADDRESS (PID_DMI, R_PCH_PCR_DMI_LPCIOD), Data16);
   PciWrite16 (LpcBaseAddr + R_PCH_LPC_IOD, Data16);

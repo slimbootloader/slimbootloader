@@ -19,6 +19,12 @@
 #include <Register/CpuRegs.h>
 #include <FsptUpd.h>
 #include <PlatformData.h>
+#include <ConfigDataDefs.h>
+
+#define SIO_IDX             0x2E
+#define SIO_DAT             0x2F
+#define SIO_ENTRY_KEY       0x87
+#define SIO_EXIT_KEY        0xAA
 
 #define UCODE_REGION_BASE   FixedPcdGet32(PcdUcodeBase)
 #define UCODE_REGION_SIZE   FixedPcdGet32(PcdUcodeSize)
@@ -52,7 +58,35 @@ FSPT_UPD TempRamInitParams = {
   .UpdTerminator = 0x55AA,
 };
 
-static GPIO_INIT_CONFIG mUartGpioTable[] = {
+CONST UINT8  mUpxSioInitTable[] = {
+  0x26, 0x80,  // Set to 48Mhz clock
+  0x07, 0x01,  // Select UART1
+  0x60, 0x03,  // UART1 Base MSB
+  0x61, 0xF8,  // UART1 Base LSB
+  0x70, 0x04,  // UART1 IRQ
+  0x30, 0x01,  // UART1 Enable
+  0x07, 0x02,  // Select UART2
+  0x60, 0x02,  // UART2 Base MSB
+  0x61, 0xF8,  // UART2 Base LSB
+  0x70, 0x03,  // UART2 IRQ
+  0xF1, 0x04,  // UART2 SIR mode
+  0x30, 0x01,  // UART2 Enable
+};
+
+// F81438 mode
+// M1  M2
+//  0  0:  RS-422 Full Duplex
+//  0  1:  RS-232
+//  1  0:  RS-485 Driver Half Duplex
+//  1  1:  RS-485 Receiver Full Duplex
+CONST GPIO_INIT_CONFIG mUpxSioGpioTable[] = {
+  {GPIO_CNL_LP_GPP_A20, {GpioPadModeGpio,    GpioHostOwnGpio, GpioDirOut,   GpioOutLow,     GpioIntDis,  GpioHostDeepReset, GpioTermNone}},//COM1_MODE1
+  {GPIO_CNL_LP_GPP_A21, {GpioPadModeGpio,    GpioHostOwnGpio, GpioDirOut,   GpioOutHigh,    GpioIntDis,  GpioHostDeepReset, GpioTermNone}},//COM1_MODE2
+  {GPIO_CNL_LP_GPP_A22, {GpioPadModeGpio,    GpioHostOwnGpio, GpioDirOut,   GpioOutLow,     GpioIntDis,  GpioHostDeepReset, GpioTermNone}},//COM2_MODE1
+  {GPIO_CNL_LP_GPP_A23, {GpioPadModeGpio,    GpioHostOwnGpio, GpioDirOut,   GpioOutHigh,    GpioIntDis,  GpioHostDeepReset, GpioTermNone}},//COM2_MODE2
+};
+
+CONST GPIO_INIT_CONFIG mUartGpioTable[] = {
   {GPIO_CNL_LP_GPP_C8,  {GpioPadModeNative1, GpioHostOwnGpio, GpioDirNone,  GpioOutDefault, GpioIntDis, GpioHostDeepReset,  GpioTermNone}},//SERIALIO_UART0_RXD
   {GPIO_CNL_LP_GPP_C9,  {GpioPadModeNative1, GpioHostOwnGpio, GpioDirNone,  GpioOutDefault, GpioIntDis, GpioHostDeepReset,  GpioTermNone}},//SERIALIO_UART0_TXD
   {GPIO_CNL_LP_GPP_C12, {GpioPadModeNative1, GpioHostOwnGpio, GpioDirNone,  GpioOutDefault, GpioIntDis, GpioHostDeepReset,  GpioTermNone}},//SERIALIO_UART1_RXD
@@ -66,6 +100,44 @@ typedef enum {
   BootPartition2,
   BootPartitionMax
 } BOOT_PARTITION_SELECT;
+
+/**
+  Enable UART in SIO chip.
+
+**/
+VOID
+EarlySioInit (
+  VOID
+)
+{
+  UINT8                 Idx;
+  UINT32                LpcBaseAddr;
+
+  if (GetPlatformId() == PLATFORM_ID_UPXTREME) {
+    // Set SIO Mode GPIO pins
+    GpioConfigurePads (ARRAY_SIZE(mUpxSioGpioTable), (GPIO_INIT_CONFIG *)mUpxSioGpioTable);
+
+    // Enable SIO decoding
+    LpcBaseAddr = PCI_LIB_ADDRESS (
+                       DEFAULT_PCI_BUS_NUMBER_PCH,
+                       PCI_DEVICE_NUMBER_PCH_LPC,
+                       PCI_FUNCTION_NUMBER_PCH_LPC,
+                       0
+                       );
+    PciOr16 (LpcBaseAddr + R_LPC_CFG_IOE, B_LPC_CFG_IOE_SIO);
+
+    // Unlock SIO (F71889/F81801)
+    IoWrite8 (SIO_IDX, SIO_ENTRY_KEY);
+    IoWrite8 (SIO_IDX, SIO_ENTRY_KEY);
+    // Init logic devices
+    for  (Idx = 0; Idx < sizeof(mUpxSioInitTable); Idx += 2) {
+      IoWrite8 (SIO_IDX, mUpxSioInitTable[Idx]);
+      IoWrite8 (SIO_DAT, mUpxSioInitTable[Idx + 1]);
+    }
+    // Lock SIO
+    IoWrite8 (SIO_IDX, SIO_EXIT_KEY);
+  }
+}
 
 /**
   Stitching process might pass some specific plafform data to be
@@ -182,9 +254,10 @@ BoardInit (
   case PostTempRamInit:
     DisableWatchDogTimer ();
     EarlyPlatformDataCheck ();
+    EarlySioInit ();
     DebugPort = GetDebugPort ();
-    if ((DebugPort != 0xFF) && (DebugPort < PCH_MAX_SERIALIO_UART_CONTROLLERS)) {
-      GpioConfigurePads (2, mUartGpioTable + (DebugPort << 1));
+    if (DebugPort < PCH_MAX_SERIALIO_UART_CONTROLLERS) {
+      GpioConfigurePads (2, (GPIO_INIT_CONFIG *)mUartGpioTable + (DebugPort << 1));
     }
     PlatformHookSerialPortInitialize ();
     SerialPortInitialize ();

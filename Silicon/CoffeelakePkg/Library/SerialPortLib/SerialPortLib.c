@@ -96,7 +96,11 @@ GetPciUartBase (
 
   DebugPort = GetDebugPort ();
   if (DebugPort >=  PCH_MAX_SERIALIO_UART_CONTROLLERS) {
-    return 0x3F8;
+    if (DebugPort == 0xFE) {
+      return 0x2F8;
+    } else {
+      return 0x3F8;
+    }
   }
 
   PciAddress = gUartMmPciOffset[DebugPort] + (UINTN)PcdGet64(PcdPciExpressBaseAddress);
