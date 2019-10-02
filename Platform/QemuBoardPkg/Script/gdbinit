@@ -1,0 +1,16 @@
+## @ gdbinit
+#
+# Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+target remote localhost:1234
+source loadthis.py
+layout asm
+layout next
+focus src
+set auto-load python-scripts on
+loadthis
+break SecStartup
+c
