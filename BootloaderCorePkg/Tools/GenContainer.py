@@ -590,11 +590,11 @@ def gen_container_bin (container_list, out_dir, inp_dir, key_dir = '.', tool_dir
 		out_file = container.create (each)
 		print ("Container '%s' was created successfully at:  \n  %s" % (container.header.signature.decode(), out_file))
 
-def gen_layout (comp_list, out_file, key_file):
+def gen_layout (comp_list, img_type, out_file, key_file):
 	# prepare the layout from individual components from '-cl'
-	if key_file == '':
-		key_file = 'TestSigningPrivateKey.pem'
-	layout 		= "('BOOT', '%s', 'CLASSIC', 'RSA2048' , '%s', 0x10, 0),\n" % (out_file, key_file)
+	if img_type not in CONTAINER_HDR._image_type.keys():
+		raise Exception ("Invalid Container Type '%s' !" % img_type)
+	layout 		= "('BOOT', '%s', '%s', 'RSA2048' , '%s', 0x10, 0),\n" % (out_file, img_type, key_file)
 	end_layout 	= "('_SG_', '', 'Dummy', 'SHA2_256', '', 0, 0),"
 	for idx, each in enumerate(comp_list):
 		parts = each.split(':')
@@ -625,7 +625,7 @@ def create_container (args):
 		#extract key dir and file
 		if os.path.isdir(args.key_path):
 			key_dir = args.key_path
-			key_file = ''
+			key_file = 'TestSigningPrivateKey.pem'
 		else:
 			key_dir = os.path.dirname(args.key_path)
 			key_file = os.path.basename(args.key_path)
@@ -637,7 +637,7 @@ def create_container (args):
 			out_dir = os.path.dirname(args.out_path)
 			out_file = os.path.basename(args.out_path)
 
-		layout = gen_layout (args.comp_list, out_file, key_file)
+		layout = gen_layout (args.comp_list, args.img_type, out_file, key_file)
 	comp_dir = args.comp_dir if args.comp_dir else def_inp_dir
 	tool_dir = args.tool_dir if args.tool_dir else def_inp_dir
 	container_list = eval ('[[%s]]' % layout.replace('\\', '/'))
@@ -647,16 +647,16 @@ def extract_container (args):
 	tool_dir = args.tool_dir if args.tool_dir else '.'
 	data = get_file_data (args.image)
 	container = CONTAINER (data)
-	container.set_dir_path (args.out_path, '.', '.', tool_dir)
+	container.set_dir_path (args.out_dir, '.', '.', tool_dir)
 	container.extract (args.comp_name, args.image)
-	print ("Components were extraced successfully at:\n  %s" % args.out_path)
+	print ("Components were extraced successfully at:\n  %s" % args.out_dir)
 
 def replace_component (args):
 	tool_dir = args.tool_dir if args.tool_dir else '.'
 	data = get_file_data (args.image)
 	container = CONTAINER (data)
-	container.set_dir_path (args.out_path, '.', '.', tool_dir)
-	file = container.replace (args.comp_name, args.comp_file, args.compress, args.key_path, args.new_name)
+	container.set_dir_path (args.out_dir, '.', '.', tool_dir)
+	file = container.replace (args.comp_name, args.comp_file, args.compress, args.key_file, args.new_name)
 	print ("Component '%s' was replaced successfully at:\n  %s" % (args.comp_name, file))
 
 def sign_component (args):
@@ -667,10 +667,10 @@ def sign_component (args):
 	}
 	compress_alg = args.compress
 	compress_alg = compress_alg[0].upper() + compress_alg[1:]
-	lz_file = compress (args.comp_file, compress_alg, args.out_path, args.tool_dir)
+	lz_file = compress (args.comp_file, compress_alg, args.out_dir, args.tool_dir)
 	data = bytearray(get_file_data (lz_file))
-	hash_data, auth_data = CONTAINER.calculate_auth_data (lz_file, auth_dict[args.auth], args.key_file, args.out_path)
-	sign_file = os.path.join (args.out_path, args.sign_file)
+	hash_data, auth_data = CONTAINER.calculate_auth_data (lz_file, auth_dict[args.auth], args.key_file, args.out_dir)
+	sign_file = os.path.join (args.out_dir, args.sign_file)
 	data.extend (b'\xff' * get_padding_length(len(data)))
 	data.extend (auth_data)
 	gen_file_from_object (sign_file, data)
@@ -696,6 +696,7 @@ def main():
 	# '-l' or '-cl', one of them is mandatory
 	group.add_argument('-l',  dest='layout',   type=str, help='Container layout intput file if no -cl')
 	group.add_argument('-cl', dest='comp_list',nargs='+', help='List of each component files, following XXXX:FileName format')
+	cmd_display.add_argument('-t', dest='img_type',  type=str, default='NORMAL', help='Container Image Type : [NORMAL, CLASSIC, MULTIBOOT]')
 	cmd_display.add_argument('-o', dest='out_path',  type=str, default='.', help='Container output directory/file')
 	cmd_display.add_argument('-k', dest='key_path',  type=str, default='', help='Input key directory/file')
 	cmd_display.add_argument('-cd', dest='comp_dir', type=str, default='', help='Componet image input directory')
