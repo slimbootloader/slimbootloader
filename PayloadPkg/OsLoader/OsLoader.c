@@ -205,13 +205,15 @@ ParseContainerImage (
           } else {
             File[Index].Addr = (UINT8 *)LzHdr + sizeof(LOADER_COMPRESSED_HEADER);
             File[Index].Size = LzHdr->Size;
-            Index++;
           }
         }
       } else {
         // Use Load to decompress to a new buffer
         Status = LoadComponent (ContainerHdr->Signature, (UINT32) ComponentName, (VOID **)&File[Index].Addr, &File[Index].Size);
       }
+    }
+    if (Status == EFI_SUCCESS) {
+      Index++;
     }
   }
 
