@@ -143,6 +143,7 @@ NormalBootPath (
   UINT32                          InitRdLen;
   UINT8                          *CmdLine;
   UINT32                          CmdLineLen;
+  UINT32                          UefiSig;
   UINT8                           OrgVal;
 
 
@@ -157,9 +158,10 @@ NormalBootPath (
   BoardInit (PostPayloadLoading);
   AddMeasurePoint (0x31A0);
 
-  PldBase = 0;
+  UefiSig  = 0;
+  PldBase  = 0;
   PldEntry = NULL;
-  
+
   Status  = EFI_SUCCESS;
   if (Dst[0] == 0x00005A4D) {
     // It is a PE format
@@ -171,7 +173,8 @@ NormalBootPath (
   } else if (Dst[10] == EFI_FVH_SIGNATURE) {
     // It is a FV format
     DEBUG ((DEBUG_INFO, "FV Format Payload\n"));
-    Status = LoadFvImage (Dst, Stage2Hob->PayloadActualLength, (VOID **)&PldEntry);
+    UefiSig = Dst[0];
+    Status  = LoadFvImage (Dst, Stage2Hob->PayloadActualLength, (VOID **)&PldEntry);
   } else if (IsElfImage (Dst)) {
     Status = LoadElfImage (Dst, (VOID *)&PldEntry);
   } else {
@@ -211,7 +214,7 @@ NormalBootPath (
     DEBUG ((DEBUG_INIT, "MP Init%a\n", DebugCodeEnabled() ? " (Done)" : ""));
     Status = MpInit (EnumMpInitDone);
     AddMeasurePoint (0x31C0);
-  } 
+  }
 
   BoardInit (EndOfStages);
 
@@ -221,7 +224,7 @@ NormalBootPath (
     // notification through SBL platform services, so do not call notifications
     // here.
     CallBoardNotify = FALSE;
-  } else if ((PayloadId == UEFI_PAYLOAD_ID_SIGNATURE) && (Dst[0] != 0)) {
+  } else if ((PayloadId == UEFI_PAYLOAD_ID_SIGNATURE) && (UefiSig != 0)) {
     // Current open sourced UEFI payload does not call any FSP notifications,
     // but some customized UEFI payload will. The 1st DWORD in UEFI payload image
     // will be used to indicate if it will handle FSP notifications.
