@@ -21,6 +21,7 @@
 [Packages]
   MdePkg/MdePkg.dec
   Silicon/QemuSocPkg/QemuSocPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
   BootloaderCorePkg/BootloaderCorePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
   PayloadPkg/PayloadPkg.dec

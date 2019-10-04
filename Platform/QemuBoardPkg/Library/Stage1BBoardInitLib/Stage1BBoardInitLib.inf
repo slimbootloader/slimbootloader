@@ -28,6 +28,7 @@
   BootloaderCorePkg/BootloaderCorePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
   Silicon/QemuSocPkg/QemuSocPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
   Platform/CommonBoardPkg/CommonBoardPkg.dec
   Platform/QemuBoardPkg/QemuBoardPkg.dec
 
