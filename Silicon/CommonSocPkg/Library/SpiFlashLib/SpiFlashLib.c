@@ -179,10 +179,22 @@ SpiConstructor (
   DEBUG ((DEBUG_INFO, "SpiInstance = %08X\n", SpiInstance));
 
   SpiInstance->PchSpiBase = GetDeviceAddr (OsBootDeviceSpi, 0);
-  SpiInstance->PchSpiBase = TO_MM_PCI_ADDRESS (SpiInstance->PchSpiBase);
-  DEBUG ((DEBUG_INFO, "PchSpiBase at 0x%x\n", SpiInstance->PchSpiBase));
+  if (SpiInstance->PchSpiBase == 0) {
+    DEBUG ((DEBUG_ERROR, "Failed to get SPI device info from Platform devices!\n"));
+    return EFI_NOT_FOUND;
+  }
+  DEBUG ((DEBUG_INFO, "PchSpiBase at 0x%08X\n", SpiInstance->PchSpiBase));
 
-  ScSpiBar0 = MmioRead32 (SpiInstance->PchSpiBase + PCI_BASE_ADDRESSREG_OFFSET) & 0xFFFFF000;
+  ///
+  /// Only for a device which has PCI bus/device/func info
+  ///
+  if (!(SpiInstance->PchSpiBase & 0xFF000000)) {
+    SpiInstance->PchSpiBase = TO_MM_PCI_ADDRESS (SpiInstance->PchSpiBase);
+    MmioOr32 (SpiInstance->PchSpiBase + PCI_COMMAND_OFFSET, EFI_PCI_COMMAND_MEMORY_SPACE);
+  }
+  ScSpiBar0 = AcquireSpiBar0 (SpiInstance->PchSpiBase);
+  DEBUG ((DEBUG_INFO, "ScSpiBar0 at 0x%08X\n", ScSpiBar0));
+
   if (ScSpiBar0 == 0) {
     ASSERT (FALSE);
   }
@@ -191,7 +203,6 @@ SpiConstructor (
     DEBUG ((DEBUG_ERROR, "ERROR : SPI Flash descriptor invalid, cannot use Hardware Sequencing registers!\n"));
     ASSERT (FALSE);
   }
-  MmioOr32 (SpiInstance->PchSpiBase + PCI_COMMAND_OFFSET, EFI_PCI_COMMAND_MEMORY_SPACE);
   SpiInstance->RegionPermission = MmioRead16 (ScSpiBar0 + R_SPI_FRAP);
   SpiInstance->SfdpVscc0Value = MmioRead32 (ScSpiBar0 + R_SPI_LVSCC);
   SpiInstance->SfdpVscc1Value = MmioRead32 (ScSpiBar0 + R_SPI_UVSCC);
