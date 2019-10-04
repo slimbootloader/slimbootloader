@@ -16,7 +16,7 @@
 #include <Library/BoardInitLib.h>
 #include <Library/SerialPortLib.h>
 #include <Library/PlatformHookLib.h>
-#include <Library/SpiFlashLibCfl.h>
+#include <Library/SpiFlashLib.h>
 #include <Library/ConfigDataLib.h>
 #include <Library/DebugPrintErrorLevelLib.h>
 #include <ConfigDataDefs.h>

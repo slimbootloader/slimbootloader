@@ -13,7 +13,7 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/BlMemoryAllocationLib.h>
 #include <Library/DebugLib.h>
-#include <Library/SpiFlashLibCfl.h>
+#include <Library/SpiFlashLib.h>
 #include <Library/SocInitLib.h>
 #include <Library/BoardInitLib.h>
 #include <Library/SerialPortLib.h>
