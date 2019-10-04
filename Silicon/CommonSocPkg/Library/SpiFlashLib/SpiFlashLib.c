@@ -15,9 +15,60 @@
 #include <Library/MemoryAllocationLib.h>
 #include <Library/TimerLib.h>
 #include <Library/BootloaderCommonLib.h>
+#include <Library/PchSpiLib.h>
 #include <Guid/OsBootOptionGuid.h>
-#include "ScSpiCommon.h"
 #include "RegsSpi.h"
+
+//
+// Private data structure definitions for the driver
+//
+#define PCH_SPI_PRIVATE_DATA_SIGNATURE        SIGNATURE_32 ('P', 'S', 'P', 'I')
+
+//
+// Maximum time allowed while waiting the SPI cycle to complete
+//  Wait Time = 6 seconds = 6000000 microseconds
+//  Wait Period = 10 microseconds
+//
+#define WAIT_TIME   6000000     ///< Wait Time = 6 seconds = 6000000 microseconds
+#define WAIT_PERIOD 10          ///< Wait Period = 10 microseconds
+
+//
+// Flash cycle Type
+//
+typedef enum {
+  FlashCycleRead,
+  FlashCycleWrite,
+  FlashCycleErase,
+  FlashCycleReadSfdp,
+  FlashCycleReadJedecId,
+  FlashCycleWriteStatus,
+  FlashCycleReadStatus,
+  FlashCycleMax
+} FLASH_CYCLE_TYPE;
+
+//
+// Flash Component Number
+//
+typedef enum {
+  FlashComponent0,
+  FlashComponent1,
+  FlashComponentMax
+} FLASH_COMPONENT_NUM;
+
+//
+// SPI Instance Structure
+//
+typedef struct {
+  UINTN                 Signature;
+  UINT32                AcpiTmrReg;
+  UINTN                 PchSpiBase;
+  UINT16                RegionPermission;
+  UINT32                SfdpVscc0Value;
+  UINT32                SfdpVscc1Value;
+  UINT32                StrapBaseAddress;
+  UINT8                 NumberOfComponents;
+  UINT32                Component1StartAddr;
+} SPI_INSTANCE;
 
 const SPI_FLASH_SERVICE   mSpiFlashService = {
   .Header.Signature = SPI_FLASH_SERVICE_SIGNATURE,
@@ -28,6 +79,47 @@ const SPI_FLASH_SERVICE   mSpiFlashService = {
   .SpiErase         = SpiFlashErase,
   .SpiGetRegion     = SpiGetRegionAddress
 };
+
+/**
+  This function sends the programmed SPI command to the slave device.
+
+  @param[in] SpiRegionType        The SPI Region type for flash cycle which is listed in the Descriptor
+  @param[in] FlashCycleType       The Flash SPI cycle type list in HSFC (Hardware Sequencing Flash Control Register) register
+  @param[in] Address              The Flash Linear Address must fall within a region for which BIOS has access permissions.
+  @param[in] ByteCount            Number of bytes in the data portion of the SPI cycle.
+  @param[in,out] Buffer           Pointer to caller-allocated buffer containing the data received or sent during the SPI cycle.
+
+  @retval EFI_SUCCESS             SPI command completes successfully.
+  @retval EFI_DEVICE_ERROR        Device error, the command aborts abnormally.
+  @retval EFI_ACCESS_DENIED       Some unrecognized command encountered in hardware sequencing mode
+  @retval EFI_INVALID_PARAMETER   The parameters specified are not valid.
+**/
+STATIC
+EFI_STATUS
+SendSpiCmd (
+  IN     FLASH_REGION_TYPE  FlashRegionType,
+  IN     FLASH_CYCLE_TYPE   FlashCycleType,
+  IN     UINT32             Address,
+  IN     UINT32             ByteCount,
+  IN OUT UINT8              *Buffer
+  );
+
+/**
+  Wait execution cycle to complete on the SPI interface.
+
+  @param[in] PchSpiBar0           Spi MMIO base address
+  @param[in] ErrorCheck           TRUE if the SpiCycle needs to do the error check
+
+  @retval TRUE                    SPI cycle completed on the interface.
+  @retval FALSE                   Time out while waiting the SPI cycle to complete.
+                                  It's not safe to program the next command on the SPI interface.
+**/
+STATIC
+BOOLEAN
+WaitForSpiCycleComplete (
+  IN     UINT32             PchSpiBar0,
+  IN     BOOLEAN            ErrorCheck
+  );
 
 /**
   Get SPI Instance from library global data..
@@ -80,14 +172,11 @@ SpiConstructor (
   //
   SpiInstance = GetSpiInstance();
   ASSERT (SpiInstance != NULL);
-  if (SpiInstance->Signature == SC_SPI_PRIVATE_DATA_SIGNATURE) {
+  if (SpiInstance->Signature == PCH_SPI_PRIVATE_DATA_SIGNATURE) {
     Status = RegisterService ((VOID *)&mSpiFlashService);
     return Status;
   }
   DEBUG ((DEBUG_INFO, "SpiInstance = %08X\n", SpiInstance));
-
-  SpiInstance->Signature  = SC_SPI_PRIVATE_DATA_SIGNATURE;
-  SpiInstance->Handle     = NULL;
 
   SpiInstance->PchSpiBase = GetDeviceAddr (OsBootDeviceSpi, 0);
   SpiInstance->PchSpiBase = TO_MM_PCI_ADDRESS (SpiInstance->PchSpiBase);
@@ -148,6 +237,11 @@ SpiConstructor (
   /// Align FPSBA with address bits for the SC Strap portion of flash descriptor
   ///
   SpiInstance->StrapBaseAddress &= B_SPI_FDBAR_FPSBA;
+
+  ///
+  /// Update Signature at the end of Constructor
+  ///
+  SpiInstance->Signature  = PCH_SPI_PRIVATE_DATA_SIGNATURE;
 
   Status = RegisterService ((VOID *)&mSpiFlashService);
 
@@ -506,24 +600,20 @@ SendSpiCmd (
 
   SpiInstance    = GetSpiInstance();
   Status         = EFI_SUCCESS;
-  ScSpiBar0      = AcquireSpiBar0 ();
   SpiBaseAddress = SpiInstance->PchSpiBase;
-  BiosCtlSave    = MmioRead8 (SpiBaseAddress + R_SPI_BCR) & B_SPI_BCR_SRC;
+  ScSpiBar0      = AcquireSpiBar0 (SpiBaseAddress);
+  BiosCtlSave    = 0;
 
   ///
   /// If it's write cycle, disable Prefetching, Caching and disable BIOS Write Protect
   ///
   if ((FlashCycleType == FlashCycleWrite) ||
       (FlashCycleType == FlashCycleErase)) {
-    Status = DisableBiosWriteProtect ();
+    Status = DisableBiosWriteProtect (SpiBaseAddress);
     if (EFI_ERROR (Status)) {
       goto SendSpiCmdEnd;
     }
-    MmioAndThenOr32 (
-      SpiBaseAddress + R_SPI_BCR,
-      (UINT32) (~B_SPI_BCR_SRC),
-      (UINT32) (V_SPI_BCR_SRC_PREF_DIS_CACHE_DIS <<  B_SPI_BCR_SRC)
-      );
+    BiosCtlSave = SaveAndDisableSpiPrefetchCache (SpiBaseAddress);
   }
   ///
   /// Make sure it's safe to program the command.
@@ -798,15 +888,11 @@ SendSpiCmdEnd:
   ///
   if ((FlashCycleType == FlashCycleWrite) ||
       (FlashCycleType == FlashCycleErase)) {
-    EnableBiosWriteProtect ();
-    MmioAndThenOr8 (
-      SpiBaseAddress + R_SPI_BCR,
-      (UINT8) ~B_SPI_BCR_SRC,
-      BiosCtlSave
-      );
+    EnableBiosWriteProtect (SpiBaseAddress);
+    SetSpiBiosControlRegister (SpiBaseAddress, BiosCtlSave);
   }
 
-  ReleaseSpiBar0 ();
+  ReleaseSpiBar0 (SpiBaseAddress);
 
   return Status;
 }
@@ -853,88 +939,6 @@ WaitForSpiCycleComplete (
   return FALSE;
 }
 
-
-/**
-  Acquire SC spi mmio address.
-
-  @param[in] SpiInstance          Pointer to SpiInstance to initialize
-
-  @retval ScSpiBar0               Return SPI MMIO address
-**/
-UINT32
-AcquireSpiBar0 (
-  VOID
-  )
-{
-  SPI_INSTANCE  *SpiInstance;
-
-  SpiInstance = GetSpiInstance();
-  return MmioRead32 (SpiInstance->PchSpiBase + R_SPI_BASE) & ~(B_SPI_BAR0_MASK);
-}
-
-/**
-  Release SC spi mmio address. Do nothing.
-
-  @param[in] SpiInstance          Pointer to SpiInstance to initialize
-
-  @retval None
-**/
-VOID
-ReleaseSpiBar0 (
-  VOID
-  )
-{
-}
-
-/**
-  This function is a hook for Spi to disable BIOS Write Protect
-
-  @retval EFI_SUCCESS             The protocol instance was properly initialized
-  @retval EFI_ACCESS_DENIED       The BIOS Region can only be updated in SMM phase
-
-**/
-EFI_STATUS
-EFIAPI
-DisableBiosWriteProtect (
-  VOID
-  )
-{
-  UINTN             SpiBaseAddress;
-
-  SpiBaseAddress = GetSpiInstance()->PchSpiBase;
-
-  if ((MmioRead8 (SpiBaseAddress + R_SPI_BCR) & B_SPI_BCR_SMM_BWP) != 0) {
-    return EFI_ACCESS_DENIED;
-  }
-  //
-  // Enable the access to the BIOS space for both read and write cycles
-  //
-  MmioOr8 (SpiBaseAddress + R_SPI_BCR, B_SPI_BCR_BIOSWE);
-
-  return EFI_SUCCESS;
-}
-
-/**
-  This function is a hook for Spi to enable BIOS Write Protect
-
-  @retval
-**/
-VOID
-EFIAPI
-EnableBiosWriteProtect (
-  VOID
-  )
-{
-  UINTN                           SpiBaseAddress;
-
-  SpiBaseAddress = GetSpiInstance()->PchSpiBase;
-
-  //
-  // Disable the access to the BIOS space for write cycles
-  //
-  MmioAnd8 (SpiBaseAddress + R_SPI_BCR, (UINT8) (~B_SPI_BCR_BIOSWE));
-}
-
 /**
   Get the SPI region base and size, based on the enum type
 
@@ -957,24 +961,26 @@ SpiGetRegionAddress (
   UINT32          ScSpiBar0;
   UINT32          ReadValue;
   UINT32          Base;
+  SPI_INSTANCE   *SpiInstance;
 
   if (FlashRegionType >= FlashRegionMax) {
     return EFI_INVALID_PARAMETER;
   }
 
+  SpiInstance = GetSpiInstance();
   if (FlashRegionType == FlashRegionAll) {
     if (BaseAddress != NULL) {
       *BaseAddress  = 0;
     }
     if (RegionSize != NULL) {
-      *RegionSize  = GetSpiInstance()->Component1StartAddr;
+      *RegionSize  = SpiInstance->Component1StartAddr;
     }
     return EFI_SUCCESS;
   }
 
-  ScSpiBar0 = AcquireSpiBar0 ();
+  ScSpiBar0 = AcquireSpiBar0 (SpiInstance->PchSpiBase);
   ReadValue = MmioRead32 (ScSpiBar0 + R_SPI_FREG0_FLASHD + S_SPI_FREGX * (UINT32) FlashRegionType);
-  ReleaseSpiBar0 ();
+  ReleaseSpiBar0 (SpiInstance->PchSpiBase);
 
   //
   // If the region is not used, the Region Base is 7FFFh and Region Limit is 0000h
