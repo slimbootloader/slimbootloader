@@ -26,6 +26,7 @@
 [Packages]
   MdePkg/MdePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
 
 [LibraryClasses]
   BaseLib
@@ -33,6 +34,7 @@
   IoLib
   PciLib
   TimerLib
+  PchSpiLib
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
