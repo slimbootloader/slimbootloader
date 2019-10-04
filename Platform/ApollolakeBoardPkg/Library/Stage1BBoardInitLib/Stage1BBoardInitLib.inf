@@ -28,6 +28,7 @@
   BootloaderCorePkg/BootloaderCorePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
   Silicon/ApollolakePkg/ApollolakePkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
   Platform/CommonBoardPkg/CommonBoardPkg.dec
   Platform/ApollolakeBoardPkg/ApollolakeBoardPkg.dec
 
