@@ -5,20 +5,9 @@
 
 **/
 
-#include <PiPei.h>
-#include <IndustryStandard/Pci.h>
-#include <Library/DebugLib.h>
-#include <Library/PciLib.h>
-#include <Library/IoLib.h>
-#include <Library/XhciLib.h>
-#include <Library/UsbBusLib.h>
+#include <UsbInitLibInternal.h>
 
-#define  MAX_USB_DEVICE_NUMBER  32
-
-BOOLEAN                         mUsbIoInitDone;
-UINTN                           mUsbIoCount;
-PEI_USB_IO_PPI                 *mUsbIoArray[MAX_USB_DEVICE_NUMBER];
-
+USB_INIT_INSTANCE  mUsbInit;
 
 /**
   This function register each USB device into an array.
@@ -28,6 +17,7 @@ PEI_USB_IO_PPI                 *mUsbIoArray[MAX_USB_DEVICE_NUMBER];
 
   @param[in]  UsbIoPpi           The USB device interface instance.
 
+  @retval EFI_UNSUPPORTED        USB device registeration failed due to insufficant entry.
   @retval EFI_SUCCESS            This routinue alwasy return success.
 
 **/
@@ -37,10 +27,45 @@ RegisterUsbDevice (
   IN PEI_USB_IO_PPI   *UsbIoPpi
   )
 {
-  if (mUsbIoCount < ARRAY_SIZE (mUsbIoArray)) {
-    mUsbIoArray[mUsbIoCount++] = UsbIoPpi;
+  EFI_STATUS  Status;
+
+  if (mUsbInit.UsbIoCount < ARRAY_SIZE (mUsbInit.UsbIoArray)) {
+    mUsbInit.UsbIoArray[mUsbInit.UsbIoCount++] = UsbIoPpi;
+    Status = EFI_SUCCESS;
+  } else {
+    Status = EFI_UNSUPPORTED;
   }
-  return EFI_SUCCESS;
+  return Status;
+}
+
+/**
+  The function will de-initialize USB device.
+
+  For USB system, it is required to do de-initialization at the end of
+  the boot stage so that the host controller will stop transactions.
+
+  @retval EFI_SUCCESS            The driver is successfully deinitialized.
+  @retval EFI_NOT_FOUND          Can't find any USB block devices for boot.
+
+**/
+EFI_STATUS
+EFIAPI
+DeinitUsbDevices (
+  VOID
+  )
+{
+  EFI_STATUS  Status;
+
+  if (mUsbInit.UsbHostHandle == NULL) {
+    return EFI_NOT_FOUND;
+  }
+
+  Status = UsbDeinitCtrl (mUsbInit.UsbHostHandle);
+  if (!EFI_ERROR (Status)) {
+    ZeroMem (&mUsbInit, sizeof(mUsbInit));
+  }
+
+  return Status;
 }
 
 
@@ -64,14 +89,13 @@ InitUsbDevices (
   )
 {
   EFI_STATUS  Status;
-  EFI_HANDLE  UsbHostHandle;
   UINT32      PcieAddress;
   UINT32      XhciMmioBase;
   UINT32      Data;
   UINT8      *Class;
 
   Status = EFI_SUCCESS;
-  if (!mUsbIoInitDone) {
+  if (mUsbInit.UsbHostHandle == NULL) {
     // Verify XHCI controller
     PcieAddress = UsbHcPciBase;
     Data  = MmioRead32 (PcieAddress + PCI_REVISION_ID_OFFSET) >> 8;
@@ -82,15 +106,14 @@ InitUsbDevices (
       MmioOr8 (PcieAddress + PCI_COMMAND_OFFSET, EFI_PCI_COMMAND_MEMORY_SPACE | EFI_PCI_COMMAND_BUS_MASTER);
       XhciMmioBase = MmioRead32 (PcieAddress + PCI_BASE_ADDRESSREG_OFFSET) & ~0xF;
 
-      Status = UsbInitCtrl (XhciMmioBase, &UsbHostHandle);
+      Status = UsbInitCtrl (XhciMmioBase, &mUsbInit.UsbHostHandle);
       DEBUG ((DEBUG_INFO, "Init USB XHCI - %r\n", Status));
       if (!EFI_ERROR (Status)) {
         // Enumerate USB bus to register all devices
-        Status = UsbEnumBus (UsbHostHandle, RegisterUsbDevice);
+        Status = UsbEnumBus (mUsbInit.UsbHostHandle, RegisterUsbDevice);
         DEBUG ((DEBUG_INFO, "Enumerate Bus - %r\n", Status));
         if (!EFI_ERROR (Status)) {
-          mUsbIoInitDone = TRUE;
-          DEBUG ((DEBUG_INFO, "Found %d USB devices on bus\n", mUsbIoCount));
+          DEBUG ((DEBUG_INFO, "Found %d USB devices on bus\n", mUsbInit.UsbIoCount));
         }
       }
     } else {
@@ -119,16 +142,16 @@ GetUsbDevices (
   IN OUT   UINT32           *UsbIoCount
   )
 {
-  if (!mUsbIoInitDone) {
+  if (mUsbInit.UsbHostHandle == NULL) {
     return EFI_NOT_AVAILABLE_YET;
   }
 
   if (UsbIoArray != NULL) {
-    *UsbIoArray = (PEI_USB_IO_PPI *)mUsbIoArray;
+    *UsbIoArray = (PEI_USB_IO_PPI *)mUsbInit.UsbIoArray;
   }
 
   if (UsbIoCount != NULL) {
-    *UsbIoCount = mUsbIoCount;
+    *UsbIoCount = mUsbInit.UsbIoCount;
   }
 
   return EFI_SUCCESS;

@@ -46,4 +46,20 @@ GetUsbDevices (
   IN OUT   UINT32           *UsbIoCount
   );
 
+/**
+  The function will de-initialize USB device.
+
+  For USB system, it is required to do de-initialization at the end of
+  the boot stage so that the host controller will stop transactions.
+
+  @retval EFI_SUCCESS            The driver is successfully deinitialized.
+  @retval EFI_NOT_FOUND          Can't find any USB block devices for boot.
+
+**/
+EFI_STATUS
+EFIAPI
+DeinitUsbDevices (
+  VOID
+  );
+
 #endif
