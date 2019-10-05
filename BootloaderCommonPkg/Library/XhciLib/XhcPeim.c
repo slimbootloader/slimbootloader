@@ -1413,6 +1413,36 @@ XhcPeiGetRootHubPortStatus (
 }
 
 /**
+  USB deinitialization interface.
+
+  @param UsbHostHandle   USB host controller handle to deinitalize.
+
+  @retval EFI_SUCCESS              USB host controller was deinitialized successfully.
+  @retval EFI_INVALID_PARAMETER    USB host controller handle is invalid.
+**/
+EFI_STATUS
+EFIAPI
+UsbDeinitCtrl (
+  IN  EFI_HANDLE      UsbHostHandle
+  )
+{
+  PEI_XHC_DEV                    *XhcDev;
+  PEI_USB2_HOST_CONTROLLER_PPI   *This;
+
+  if (UsbHostHandle == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  This   = (PEI_USB2_HOST_CONTROLLER_PPI *)UsbHostHandle;
+  XhcDev = PEI_RECOVERY_USB_XHC_DEV_FROM_THIS (This);
+
+  XhcPeiResetHC (XhcDev, XHC_RESET_TIMEOUT);
+  ASSERT (XhcPeiIsHalt (XhcDev));
+
+  return EFI_SUCCESS;
+}
+
+/**
   USB initialization interface.
 
   @param BaseAddress     Base address of the USB host controller.
