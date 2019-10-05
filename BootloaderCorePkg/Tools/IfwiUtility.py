@@ -348,11 +348,12 @@ class IFWI_PARSER:
     @staticmethod
     def find_ifwi_region (spi_descriptor, rgn_name):
         frba      = ((spi_descriptor.fl_map0 >> 16) & 0xFF) << 4
-        fl_reg    = spi_descriptor.FLASH_REGIONS[rgn_name] + frba
+        reg_off   = spi_descriptor.FLASH_REGIONS[rgn_name]
+        fl_reg    = reg_off + frba
         rgn_off   = c_uint32.from_buffer(spi_descriptor, fl_reg)
         rgn_base  = (rgn_off.value & 0x7FFF) << 12
         rgn_limit = ((rgn_off.value & 0x7FFF0000) >> 4) | 0xFFF
-        if rgn_limit <= rgn_base:
+        if (reg_off > 0 and rgn_off.value == 0) or (rgn_off.value == 0xFFFFFFFF) or (rgn_limit <= rgn_base):
             return None, None
         else:
             return (rgn_base, rgn_limit)
