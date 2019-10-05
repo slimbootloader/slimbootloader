@@ -24,6 +24,9 @@
 #define USB_KB_DEVICE_SIG      SIGNATURE_32 ('U', 'S', 'K', 'B')
 
 #define QUEUE_MAX_COUNT        32
+#define KEY_REPEAT_DELAY       10
+
+#define USBKBD_VALID_KEYCODE(Key) ((UINT8) (Key) > 3)
 
 typedef struct {
   UINTN                                      Front;
@@ -47,8 +50,10 @@ typedef struct {
   BOOLEAN                             CapsOn;
   BOOLEAN                             ScrollOn;
   SIMPLE_QUEUE                        Queue;
-  UINT8                               KeyRepeat;
-  CHAR8                               LastChar;
+  UINT32                              RepeatCounter;
+  UINT8                               RepeatKey;
+  CHAR8                               RepeatChar;
+  UINT8                               LastKeyCodeArray[8];
 } USB_KB_DEV;
 
 #endif

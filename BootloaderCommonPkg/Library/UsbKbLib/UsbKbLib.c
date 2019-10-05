@@ -562,7 +562,6 @@ ConvertKeyToAscii (
   return 0;
 }
 
-
 /**
   Polls a keyboard to see if there is any data waiting to be read.
 
@@ -582,6 +581,11 @@ KeyboardPoll (
   CHAR8            Char;
   UINTN            DataSize;
   UINTN            Index;
+  UINTN            Index2;
+  BOOLEAN          KeyRelease;
+  BOOLEAN          KeyPress;
+  UINT8           *CurKeyCodeBuffer;
+  UINT8           *OldKeyCodeBuffer;
 
   UsbKbDevice = &mUsbKbDevice;
   if (UsbKbDevice->Signature != USB_KB_DEVICE_SIG) {
@@ -600,26 +604,90 @@ KeyboardPoll (
                PcdGet32 (PcdUsbKeyboardPollingTimeout)
                );
   if (!EFI_ERROR (Status)) {
-    if ((KeyBuf[2] == 0) || (KeyBuf[2] != UsbKbDevice->LastChar)) {
-      UsbKbDevice->KeyRepeat = 0;
-    }
-    for (Index = 2; Index < DataSize; Index++) {
-      if (KeyBuf[Index] == 0) {
+    CurKeyCodeBuffer  = (UINT8 *) KeyBuf;
+    OldKeyCodeBuffer  = UsbKbDevice->LastKeyCodeArray;
+
+    // Checks for new key stroke.
+    for (Index = 0; Index < 8; Index++) {
+      if (OldKeyCodeBuffer[Index] != CurKeyCodeBuffer[Index]) {
         break;
       }
-      // Key press
-      UsbKbDevice->LastChar = KeyBuf[Index];
-      if ((UsbKbDevice->KeyRepeat == 0) || (UsbKbDevice->KeyRepeat > 10)) {
-        Char = ConvertKeyToAscii (KeyBuf[0], KeyBuf[Index]);
-        if (Char > 0) {
-          Enqueue (&UsbKbDevice->Queue, Char);
+    }
+
+    if (Index < 8) {
+
+      // Handle normal key's releasing situation
+      KeyRelease = FALSE;
+      for (Index = 2; Index < 8; Index++) {
+
+        if (!USBKBD_VALID_KEYCODE (OldKeyCodeBuffer[Index])) {
+          continue;
+        }
+
+        // For any key in old keycode buffer, if it is not in current keycode buffer,
+        // then it is released. Otherwise, it is not released.
+        KeyRelease = TRUE;
+        for (Index2 = 2; Index2 < 8; Index2++) {
+          if (!USBKBD_VALID_KEYCODE (CurKeyCodeBuffer[Index2])) {
+            continue;
+          }
+          if (OldKeyCodeBuffer[Index] == CurKeyCodeBuffer[Index2]) {
+            KeyRelease = FALSE;
+            break;
+          }
+        }
+        if (KeyRelease) {
+          // The original repeat key is released.
+          if (OldKeyCodeBuffer[Index] == UsbKbDevice->RepeatKey) {
+            UsbKbDevice->RepeatKey = 0;
+          }
         }
       }
-    }
-    if (KeyBuf[2] != 0) {
-      if (UsbKbDevice->KeyRepeat < 0xFF) {
-        // Handle key repeat
-        UsbKbDevice->KeyRepeat++;
+
+      // Handle normal key's pressing situation
+      KeyPress = FALSE;
+      for (Index = 2; Index < 8; Index++) {
+
+        if (!USBKBD_VALID_KEYCODE (CurKeyCodeBuffer[Index])) {
+          continue;
+        }
+
+        // For any key in current keycode buffer, if it is not in old keycode buffer,
+        // then it is pressed. Otherwise, it is not pressed.
+        KeyPress = TRUE;
+        for (Index2 = 2; Index2 < 8; Index2++) {
+          if (!USBKBD_VALID_KEYCODE (OldKeyCodeBuffer[Index2])) {
+            continue;
+          }
+          if (CurKeyCodeBuffer[Index] == OldKeyCodeBuffer[Index2]) {
+            KeyPress = FALSE;
+            break;
+          }
+        }
+
+        if (KeyPress) {
+          Char = ConvertKeyToAscii (CurKeyCodeBuffer[0], CurKeyCodeBuffer[Index]);
+          if (Char > 0) {
+            Enqueue (&UsbKbDevice->Queue, Char);
+            // Prepare new repeat key, and clear the original one.
+            UsbKbDevice->RepeatCounter = 0;
+            UsbKbDevice->RepeatChar    = Char;
+            UsbKbDevice->RepeatKey     = CurKeyCodeBuffer[Index];
+          }
+        }
+      }
+
+      // Update LastKeycodeArray buffer in the UsbKeyboardDevice data structure.
+      CopyMem (OldKeyCodeBuffer, CurKeyCodeBuffer, sizeof(OldKeyCodeBuffer));
+
+    } else {
+      // Handle key repeat
+      if (UsbKbDevice->RepeatKey > 0) {
+        if (UsbKbDevice->RepeatCounter < KEY_REPEAT_DELAY) {
+          UsbKbDevice->RepeatCounter++;
+        } else {
+          Enqueue (&UsbKbDevice->Queue, UsbKbDevice->RepeatChar);
+        }
       }
     }
   }
