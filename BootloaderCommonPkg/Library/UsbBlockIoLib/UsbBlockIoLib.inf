@@ -43,7 +43,7 @@
   BaseMemoryLib
   DebugLib
   PcdLib
-  UsbIoLib
+  UsbInitLib
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdUsbTransferTimeoutValue  ## CONSUMES

@@ -70,7 +70,7 @@
   AbSupportLib
   SblParameterLib
   TrustyBootLib
-  UsbIoLib
+  UsbInitLib
   UsbKbLib
   ElfLib
   LiteFvLib

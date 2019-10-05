@@ -19,7 +19,7 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/BootloaderCommonLib.h>
-#include <Library/UsbIoLib.h>
+#include <Library/UsbInitLib.h>
 
 #define USB_KB_DEVICE_SIG      SIGNATURE_32 ('U', 'S', 'K', 'B')
 

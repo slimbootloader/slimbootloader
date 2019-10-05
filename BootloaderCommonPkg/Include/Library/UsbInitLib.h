@@ -5,8 +5,8 @@
 
 **/
 
-#ifndef  __USB_IO_LIB_H__
-#define  __USB_IO_LIB_H__
+#ifndef  __USB_INIT_LIB_H__
+#define  __USB_INIT_LIB_H__
 
 #include <Ppi/UsbIo.h>
 
