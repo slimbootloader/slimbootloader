@@ -43,3 +43,4 @@
   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask              ## CONSUMES
   gEfiMdePkgTokenSpaceGuid.PcdFixedDebugPrintErrorLevel      ## CONSUMES
   gPlatformCommonLibTokenSpaceGuid.PcdDebugOutputDeviceMask  ## CONSUMES
+  gPlatformCommonLibTokenSpaceGuid.PcdConsoleOutDeviceMask   ## CONSUMES

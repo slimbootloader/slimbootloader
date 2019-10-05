@@ -47,6 +47,9 @@ DebugPrint (
 {
   CHAR8    Buffer[MAX_DEBUG_MESSAGE_LENGTH];
   VA_LIST  Marker;
+  UINTN    Length;
+  BOOLEAN  OutputToSerial;
+
 
   //
   // If Format is NULL, then ASSERT().
@@ -60,6 +63,8 @@ DebugPrint (
     return;
   }
 
+  Length = AsciiStrLen (Buffer);
+
   //
   // Convert the DEBUG() message to an ASCII String
   //
@@ -71,13 +76,22 @@ DebugPrint (
   // Send the print string to debug output handler
   //
   if (PcdGet32 (PcdDebugOutputDeviceMask) & DEBUG_OUTPUT_DEVICE_LOG_BUFFER) {
-    DebugLogBufferWrite  ((UINT8 *)Buffer, AsciiStrLen (Buffer));
+    DebugLogBufferWrite  ((UINT8 *)Buffer, Length);
   }
-  if (PcdGet32 (PcdDebugOutputDeviceMask) & DEBUG_OUTPUT_DEVICE_SERIAL_PORT) {
-    SerialPortWrite ((UINT8 *)Buffer, AsciiStrLen (Buffer));
-  }
+
+  OutputToSerial = (PcdGet32 (PcdDebugOutputDeviceMask) & DEBUG_OUTPUT_DEVICE_SERIAL_PORT) ? TRUE : FALSE;
   if (PcdGet32 (PcdDebugOutputDeviceMask) & DEBUG_OUTPUT_DEVICE_CONSOLE) {
-    ConsoleWrite ((UINT8 *)Buffer, AsciiStrLen (Buffer));
+    ConsoleWrite ((UINT8 *)Buffer, Length);
+
+    // If serial port is part of console output devices, skip the output below.
+    // since it has been outputed in ConsoleWrite().
+    if ( (PcdGet32 (PcdConsoleOutDeviceMask) & ConsoleOutSerialPort) != 0) {
+      OutputToSerial = FALSE;
+    }
+  }
+
+  if (OutputToSerial) {
+    SerialPortWrite ((UINT8 *)Buffer, Length);
   }
 }
 
