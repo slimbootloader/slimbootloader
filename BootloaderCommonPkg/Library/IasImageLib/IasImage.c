@@ -63,6 +63,10 @@ IsIasImageValid (
     return NULL;
   }
 
+  if (!FeaturePcdGet (PcdVerifiedBootEnabled)) {
+    DEBUG ((DEBUG_INFO, "IAS image verification is skipped!\n"));
+    return Hdr;
+  }
 
   if (!IAS_IMAGE_IS_SIGNED (Hdr->ImageType)) {
     DEBUG ((DEBUG_ERROR, "IAS image is not signed!\n"));

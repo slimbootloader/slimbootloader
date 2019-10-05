@@ -39,3 +39,4 @@
 [Guids]
 
 [Pcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
