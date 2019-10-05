@@ -12,7 +12,7 @@
 #include <Library/IoLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
-#include <Library/UsbIoLib.h>
+#include <Library/UsbInitLib.h>
 #include <UsbBotPeim.h>
 #include <BlockDevice.h>
 
