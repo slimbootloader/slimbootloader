@@ -10,6 +10,8 @@
 #include <Library/PrintLib.h>
 #include <Library/MemoryAllocationLib.h>
 
+#define  ANSI_ESCAPE_SEQ_CLEAR_SCREEN    (UINT8 *)"\x1b[2J"
+
 CONST EFI_GRAPHICS_OUTPUT_BLT_PIXEL mColors[16] = {
   //
   // B     G     R
@@ -169,6 +171,7 @@ InitFrameBufferConsole (
   )
 {
   FRAME_BUFFER_CONSOLE  *Console;
+  BOOLEAN                ClearScreen;
 
   if (GfxInfoHob == NULL) {
     return EFI_INVALID_PARAMETER;
@@ -179,6 +182,10 @@ InitFrameBufferConsole (
       || ((Width + OffX) > GfxInfoHob->GraphicsMode.HorizontalResolution)) {
     return EFI_INVALID_PARAMETER;
   }
+
+  // Don't clear screen for the 1st time to enter Shell
+  // so that the logo will stay on screen.
+  ClearScreen = (mFbConsole.TextDisplayBuf != NULL) ? TRUE : FALSE;
 
   Console = &mFbConsole;
   Console->GfxInfoHob  = GfxInfoHob;
@@ -196,6 +203,11 @@ InitFrameBufferConsole (
   ASSERT (Console->TextDisplayBuf != NULL);
   Console->TextSwapBuf = AllocateZeroPool (Console->Rows * Console->Cols);
   ASSERT (Console->TextSwapBuf != NULL);
+
+  if (ClearScreen) {
+    // Clear screen using standard ANSI Escape Sequences 'ESC[2J'
+    FrameBufferWrite (ANSI_ESCAPE_SEQ_CLEAR_SCREEN, 4);
+  }
 
   return EFI_SUCCESS;
 }
@@ -296,6 +308,8 @@ FrameBufferWrite (
   FRAME_BUFFER_CONSOLE *Console;
   EFI_STATUS            Status;
   UINTN                 Pos;
+  UINTN                 Length;
+  EFI_PEI_GRAPHICS_INFO_HOB  *GfxInfoHob;
 
   if (Buffer == NULL) {
     return 0;
@@ -304,6 +318,19 @@ FrameBufferWrite (
   Console = &mFbConsole;
   if (Console->Height == 0) {
     return 0;
+  }
+
+  // Handle clear screen
+  if ((NumberOfBytes == 4) && (CompareMem (ANSI_ESCAPE_SEQ_CLEAR_SCREEN, Buffer, 4)) == 0) {
+    // Clear screen
+    SetMem (Console->TextDisplayBuf, Console->Rows * Console->Cols, 0);
+    // Zero framebuffer
+    GfxInfoHob = Console->GfxInfoHob;
+    Length = (GfxInfoHob->GraphicsMode.HorizontalResolution * GfxInfoHob->GraphicsMode.PixelsPerScanLine) * 4;
+    SetMem64 ((UINT32 *) (UINTN)(GfxInfoHob->FrameBufferBase), Length, 0);
+    Console->CursorX = 0;
+    Console->CursorY = 0;
+    return NumberOfBytes;
   }
 
   for (Pos = 0; Pos < NumberOfBytes; Pos++) {
