@@ -552,6 +552,9 @@ BeforeOSJump (
   }
   AddMeasurePoint (0x4100);
 
+  // De-init USB before OS boot.
+  DeinitUsbDevices ();
+
   // Print performance data
   PrintLinuxMeasurePoint ();
 
@@ -895,6 +898,9 @@ PayloadMain (
     if (mCurrentBoot == OsBootOptionList->OsBootOptionCount) {
       break;
     }
+
+    // De-init USB to prevent issues while restarting payload.
+    DeinitUsbDevices ();
 
     //
     // Use switch stack to ensure stack will be rolled back to original point.
