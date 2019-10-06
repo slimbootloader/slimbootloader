@@ -41,6 +41,7 @@
 #include <Library/AbSupportLib.h>
 #include <Library/SblParameterLib.h>
 #include <Library/TrustyBootLib.h>
+#include <Library/UsbInitLib.h>
 #include <Library/UsbKbLib.h>
 #include <Library/ElfLib.h>
 #include <Library/LinuxLib.h>
