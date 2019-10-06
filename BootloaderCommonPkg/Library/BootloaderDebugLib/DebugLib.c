@@ -63,14 +63,14 @@ DebugPrint (
     return;
   }
 
-  Length = AsciiStrLen (Buffer);
-
   //
   // Convert the DEBUG() message to an ASCII String
   //
   VA_START (Marker, Format);
   AsciiVSPrint (Buffer, sizeof (Buffer), Format, Marker);
   VA_END (Marker);
+
+  Length = AsciiStrLen (Buffer);
 
   //
   // Send the print string to debug output handler
