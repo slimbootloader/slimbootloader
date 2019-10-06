@@ -29,6 +29,6 @@ LoadShellCommands (
   ShellCommandRegister (&ShellCommandPci);
   ShellCommandRegister (&ShellCommandReset);
   ShellCommandRegister (&ShellCommandUcode);
-
+  ShellCommandRegister (&ShellCommandCls);
   return EFI_SUCCESS;
 }
