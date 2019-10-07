@@ -20,4 +20,16 @@ ReadTimeStamp (
   VOID
   );
 
+/**
+  Get timestamp frequency in KHZ.
+
+  @return   Timestamp frequency in KHZ.
+
+**/
+UINT32
+EFIAPI
+GetTimeStampFrequency (
+  VOID
+  );
+
 #endif
