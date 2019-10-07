@@ -49,17 +49,6 @@ SocUpdateAcpiGnvs (
   );
 
 /**
-  Get cpu tsc frequency.
-
-  @retval   cpu TSC frequency
-**/
-UINT32
-EFIAPI
-GetCpuTscFreqency (
-  VOID
-  );
-
-/**
   Update reset reason.
 **/
 VOID

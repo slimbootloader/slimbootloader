@@ -315,7 +315,7 @@ SecStartup (
   LdrGlobal->MemPoolCurrBottom     = LdrGlobal->MemPoolStart;
   LdrGlobal->DebugPrintErrorLevel  = PcdGet32 (PcdDebugPrintErrorLevel);
   LdrGlobal->PerfData.PerfIndex    = 2;
-  LdrGlobal->PerfData.FreqKhz      = GetCpuTscFreqency ();
+  LdrGlobal->PerfData.FreqKhz      = GetTimeStampFrequency ();
   LdrGlobal->PerfData.TimeStamp[0] = Stage1aAsmHob->TimeStamp | 0x1000000000000000ULL;
   LdrGlobal->PerfData.TimeStamp[1] = TimeStamp  | 0x1010000000000000ULL;
   // Set the Loader features to default here.

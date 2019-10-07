@@ -30,13 +30,3 @@ DisableWatchDogTimer (
   ///
   IoWrite16 (TCO_BASE_ADDRESS + R_TCO_IO_TCO1_CNT, B_TCO_IO_TCO1_CNT_TMR_HLT);
 }
-
-
-UINT32
-EFIAPI
-GetCpuTscFreqency (
-  VOID
-)
-{
-  return ((AsmReadMsr64(0xCE) >> 8) & 0xFF) * 100000;
-}

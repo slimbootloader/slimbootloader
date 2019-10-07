@@ -27,18 +27,3 @@ EnableCodeExecution (
 )
 {
 }
-
-
-/**
-  Get cpu tsc frequency.
-
-  @retval   cpu TSC frequency
-**/
-UINT32
-EFIAPI
-GetCpuTscFreqency (
-  VOID
-)
-{
-  return 8 * 100000;
-}
