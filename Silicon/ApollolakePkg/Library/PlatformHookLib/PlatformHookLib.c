@@ -17,6 +17,57 @@
 #include <PlatformHookSupport.h>
 
 /**
+  Get serial port stride register size.
+
+  @retval  The serial port register stride size.
+
+**/
+UINT8
+EFIAPI
+GetSerialPortStrideSize (
+  VOID
+  )
+{
+  return 4;
+}
+
+/**
+  Get serial port register base address.
+
+  @retval  The serial port register base address.
+
+**/
+UINT32
+EFIAPI
+GetSerialPortBase (
+  VOID
+  )
+{
+  UINT32  PciUartMmBase;
+  UINT16  Cmd16;
+
+  PciUartMmBase = MM_PCI_ADDRESS (
+                    DEFAULT_PCI_BUS_NUMBER_SC,
+                    PCI_DEVICE_NUMBER_LPSS_HSUART,
+                    (PCI_FUNCTION_NUMBER_LPSS_HSUART0 + GetDebugPort()),
+                    0
+                    );
+  Cmd16 = MmioRead16 (PciUartMmBase + R_LPSS_IO_STSCMD);
+  if (Cmd16 == 0xFFFF) {
+    //
+    // Device might be hidden, assigned temp base address for it
+    //
+    return LPSS_UART_TEMP_BASE_ADDRESS + (2 * LPSS_UART_TMP_BAR_DELTA);
+  } else {
+    if (MmioRead8 (PciUartMmBase + R_LPSS_IO_STSCMD) & 0x02) {
+      return MmioRead32 (PciUartMmBase + R_LPSS_IO_BAR) & 0xFFFFFFF0;
+    } else {
+      return 0;
+    }
+  }
+}
+
+/**
   Performs UART config space initialization
 
   @param[in]  Port             Specifies a UART port

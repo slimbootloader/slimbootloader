@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2008 - 2015, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -25,13 +25,11 @@
 [Packages]
   MdePkg/MdePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
-  BootloaderCorePkg/BootloaderCorePkg.dec
-  Silicon/ApollolakePkg/ApollolakePkg.dec
 
 [LibraryClasses]
   BaseLib
+  PcdLib
   IoLib
-  PciLib
+  PlatformHookLib
 
 [Pcd]
-  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
