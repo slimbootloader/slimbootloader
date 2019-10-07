@@ -19,10 +19,75 @@
 #include <IndustryStandard/Pci.h>
 #include <RegAccess.h>
 
-UINT32
-GetPciUartPciBase (
+
+CONST UINT32
+mUartMmPciOffset[] = {
+  MM_PCI_OFFSET (0, PCI_DEVICE_NUMBER_PCH_SERIAL_IO_UART0, PCI_FUNCTION_NUMBER_PCH_SERIAL_IO_UART0),
+  MM_PCI_OFFSET (0, PCI_DEVICE_NUMBER_PCH_SERIAL_IO_UART1, PCI_FUNCTION_NUMBER_PCH_SERIAL_IO_UART1),
+  MM_PCI_OFFSET (0, PCI_DEVICE_NUMBER_PCH_SERIAL_IO_UART2, PCI_FUNCTION_NUMBER_PCH_SERIAL_IO_UART2),
+};
+
+/**
+  Get serial port stride register size.
+
+  @retval  The serial port register stride size.
+
+**/
+UINT8
+EFIAPI
+GetSerialPortStrideSize (
   VOID
-  );
+  )
+{
+  if (GetDebugPort () >= PCH_MAX_SERIALIO_UART_CONTROLLERS) {
+    // External UART, assume 0x3F8 I/O port
+    return 1;
+  } else {
+    // SOC UART, MMIO only
+    return 4;
+  }
+}
+
+/**
+  Get serial port register base address.
+
+  @retval  The serial port register base address.
+
+**/
+UINT32
+EFIAPI
+GetSerialPortBase (
+  VOID
+  )
+{
+  UINT16  Cmd16;
+  UINT32  PciAddress;
+  UINT8   DebugPort;
+
+  DebugPort = GetDebugPort ();
+  if (DebugPort >=  PCH_MAX_SERIALIO_UART_CONTROLLERS) {
+    if (DebugPort == 0xFE) {
+      return 0x2F8;
+    } else {
+      return 0x3F8;
+    }
+  }
+
+  PciAddress = mUartMmPciOffset[DebugPort] + (UINTN)PcdGet64(PcdPciExpressBaseAddress);
+  Cmd16 = MmioRead16 (PciAddress + PCI_VENDOR_ID_OFFSET);
+  if (Cmd16 == 0xFFFF) {
+    //
+    // Device might be hidden, assigned temp base address for it
+    //
+    return LPSS_UART_TEMP_BASE_ADDRESS(DebugPort);
+  } else {
+    if (MmioRead32 (PciAddress + PCI_COMMAND_OFFSET) & EFI_PCI_COMMAND_MEMORY_SPACE) {
+      return MmioRead32 (PciAddress + PCI_BASE_ADDRESSREG_OFFSET) & 0xFFFFFFF0;
+    } else {
+      return 0;
+    }
+  }
+}
 
 /**
   Performs platform specific initialization required for the CPU to access
@@ -65,7 +130,17 @@ LegacySerialPortInitialize (
   return RETURN_SUCCESS;
 }
 
+/**
+  Performs platform specific initialization required for the CPU to access
+  the hardware associated with a SerialPortLib instance.  This function does
+  not intiailzie the serial port hardware itself.  Instead, it initializes
+  hardware devices that are required for the CPU to access the serial port
+  hardware.  This function may be called more than once.
 
+  @retval RETURN_SUCCESS       The platform specific initialization succeeded.
+  @retval RETURN_DEVICE_ERROR  The platform specific initialization could not be completed.
+
+**/
 RETURN_STATUS
 EFIAPI
 PlatformHookSerialPortInitialize (
@@ -81,7 +156,7 @@ PlatformHookSerialPortInitialize (
     LegacySerialPortInitialize ();
   } else {
     BarAddress = LPSS_UART_TEMP_BASE_ADDRESS(DebugPort);
-    PciAddress = GetPciUartPciBase ();
+    PciAddress = mUartMmPciOffset[DebugPort] + (UINTN)PcdGet64(PcdPciExpressBaseAddress);
     MmioWrite32 (PciAddress + R_SERIAL_IO_CFG_BAR0_LOW,  BarAddress);
     MmioWrite32 (PciAddress + R_SERIAL_IO_CFG_BAR0_HIGH, 0x0);
     MmioWrite32 (PciAddress + R_SERIAL_IO_CFG_BAR1_LOW,  BarAddress + 0x1000);

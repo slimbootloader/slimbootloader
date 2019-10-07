@@ -120,6 +120,7 @@
   ContainerLib|BootloaderCommonPkg/Library/ContainerLib/ContainerLib.inf
   LinuxLib|BootloaderCommonPkg/Library/LinuxLib/LinuxLib.inf
   UefiVariableLib|BootloaderCommonPkg/Library/UefiVariableLib/UefiVariableLib.inf
+  SerialPortLib|BootloaderCommonPkg/Library/SerialPortLib/SerialPortLib.inf
 
 !if $(HAVE_FSP_BIN)
   FspApiLib|$(PLATFORM_PACKAGE)/Library/FspApiLib/FspApiLib.inf

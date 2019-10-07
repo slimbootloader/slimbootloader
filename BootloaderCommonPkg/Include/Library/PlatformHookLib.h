@@ -12,6 +12,31 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define __PLATFORM_HOOK_LIB__
 
 /**
+  Get serial port stride register size.
+
+  @retval  The serial port register stride size.
+
+**/
+UINT8
+EFIAPI
+GetSerialPortStrideSize (
+  VOID
+  );
+
+/**
+  Get serial port register base address.
+
+  @retval  The serial port register base address.
+
+**/
+UINT32
+EFIAPI
+GetSerialPortBase (
+  VOID
+  );
+
+
+/**
   Performs platform specific initialization required for the CPU to access
   the hardware associated with a SerialPortLib instance.  This function does
   not intiailzie the serial port hardware itself.  Instead, it initializes

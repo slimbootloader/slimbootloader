@@ -42,6 +42,14 @@ UINT8   gStop     = 1;
 UINT8   gParity   = 0;
 UINT8   gBreakSet = 0;
 
+/**
+  Read from UART controller register.
+
+  @param  Offset           UART register offset index before stride size adjustment.
+
+  @retval Data value read back.
+
+**/
 UINT8
 SerialPortReadRegister (
   IN UINTN    Offset
@@ -62,6 +70,15 @@ SerialPortReadRegister (
   return Data;
 }
 
+/**
+  Write value to UART controller register.
+
+  @param  Offset           UART register offset index before stride size adjustment.
+  @param  Value            Value to write.
+
+  @retval Data value written.
+
+**/
 UINT8
 SerialPortWriteRegister (
   IN UINTN    Offset,
@@ -102,9 +119,8 @@ SerialPortInitialize (
   VOID
   )
 {
-UINTN  Divisor;
+  UINTN  Divisor;
   UINT8  OutputData;
-  // UINT8  Data;
 
   if (SerialPortReadRegister (SCR_OFFSET) != UART_MAGIC) {
     //

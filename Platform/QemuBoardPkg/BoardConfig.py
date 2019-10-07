@@ -148,7 +148,6 @@ class Board(BaseBoard):
 		# These libraries will be added into the DSC files
 		dsc_libs['IA32'] = [
 			'LoaderLib|Platform/CommonBoardPkg/Library/LoaderLib/LoaderLib.inf',
-			'SerialPortLib|Silicon/$(SILICON_PKG_NAME)/Library/SerialPortLib/SerialPortLib.inf',
 			'PlatformHookLib|Silicon/$(SILICON_PKG_NAME)/Library/PlatformHookLib/PlatformHookLib.inf',
 			'GpioLib|Silicon/$(SILICON_PKG_NAME)/Library/GpioLib/GpioLib.inf',
 			'SpiFlashLib|Silicon/$(SILICON_PKG_NAME)/Library/SpiFlashLib/SpiFlashLib.inf',

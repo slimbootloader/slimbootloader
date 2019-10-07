@@ -39,6 +39,7 @@
   BaseMemoryLib
   DebugLib
   PcdLib
+  PciLib
 
 [Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdUfsPciHostControllerMmioBase
