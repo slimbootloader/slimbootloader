@@ -34,17 +34,3 @@ EnableCodeExecution (
 {
   AsmWriteMsr32 (0x120, 0x100);
 }
-
-/**
-  Get cpu tsc frequency.
-
-  @retval   cpu TSC frequency
-**/
-UINT32
-EFIAPI
-GetCpuTscFreqency (
-  VOID
-  )
-{
-  return ((AsmReadMsr64(0xCE) >> 8) & 0xFF) * 100000;
-}
