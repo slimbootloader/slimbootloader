@@ -1300,6 +1300,7 @@ UpdateFspConfig (
   GPU_CFG_DATA              *GpuCfgData;
   UINT8                     Data8;
   SILICON_CFG_DATA          *SiliconCfgData;
+  POWER_CFG_DATA            *PowerCfgData;
 
   PlatformId                              = GetPlatformId ();
   FspsUpd                                 = (FSPS_UPD *) FspsUpdPtr;
@@ -1678,12 +1679,6 @@ UpdateFspConfig (
   FspsUpd->FspsConfig.IccMax[3]                           = 0x80;
   FspsUpd->FspsConfig.McivrSpreadSpectrum                 = 0x3;
 
-  FspsUpd->FspsTestConfig.OneCoreRatioLimit               = 0x29;
-  FspsUpd->FspsTestConfig.TwoCoreRatioLimit               = 0x28;
-  FspsUpd->FspsTestConfig.ThreeCoreRatioLimit             = 0x27;
-  FspsUpd->FspsTestConfig.FourCoreRatioLimit              = 0x26;
-  FspsUpd->FspsTestConfig.FiveCoreRatioLimit              = 0x25;
-  FspsUpd->FspsTestConfig.SixCoreRatioLimit               = 0x24;
   FspsUpd->FspsTestConfig.TccActivationOffset             = 0x0;
   FspsUpd->FspsTestConfig.TccOffsetClamp                  = 0x0;
 
@@ -1712,6 +1707,36 @@ UpdateFspConfig (
   FspsUpd->FspsTestConfig.MaxRatio                        = 0x8;
   FspsUpd->FspsTestConfig.PsysPmax                        = 0x0;
   FspsUpd->FspsTestConfig.CstateLatencyControl0Irtl       = 0x4e;
+
+  PowerCfgData = (POWER_CFG_DATA *) FindConfigDataByTag (CDATA_POWER_TAG);
+  if (PowerCfgData == NULL) {
+    DEBUG ((DEBUG_ERROR, "Missing power Cfg Data!\n"));
+  } else {
+    if ((PlatformId == PLATFORM_ID_WHL) || (PlatformId == PLATFORM_ID_CFL_H)){
+      FspsUpd->FspsConfig.PchPwrOptEnable = 0x1;
+    }
+    FspsUpd->FspsTestConfig.OneCoreRatioLimit = PowerCfgData->OneCoreRatioLimit;
+    FspsUpd->FspsTestConfig.TwoCoreRatioLimit = PowerCfgData->TwoCoreRatioLimit;
+    FspsUpd->FspsTestConfig.ThreeCoreRatioLimit = PowerCfgData->ThreeCoreRatioLimit;
+    FspsUpd->FspsTestConfig.FourCoreRatioLimit = PowerCfgData->FourCoreRatioLimit;
+    FspsUpd->FspsTestConfig.FiveCoreRatioLimit = PowerCfgData->FiveCoreRatioLimit;
+    FspsUpd->FspsTestConfig.SixCoreRatioLimit = PowerCfgData->SixCoreRatioLimit;
+    FspsUpd->FspsTestConfig.SevenCoreRatioLimit = PowerCfgData->SevenCoreRatioLimit;
+    FspsUpd->FspsTestConfig.EightCoreRatioLimit = PowerCfgData->EightCoreRatioLimit;
+
+    FspsUpd->FspsConfig.DmiTS0TW = PowerCfgData->DmiTS0TW;
+    FspsUpd->FspsConfig.DmiTS1TW = PowerCfgData->DmiTS1TW;
+    FspsUpd->FspsConfig.DmiTS2TW = PowerCfgData->DmiTS2TW;
+
+    FspsUpd->FspsConfig.PchMemoryPmsyncEnable[0] = PowerCfgData->MemoryThermalMgmt;
+    FspsUpd->FspsConfig.PchMemoryC0TransmitEnable[0] = PowerCfgData->MemoryThermalMgmt;
+    FspsUpd->FspsConfig.PchMemoryPmsyncEnable[1] = PowerCfgData->MemoryThermalMgmt;
+    FspsUpd->FspsConfig.PchMemoryC0TransmitEnable[1] = PowerCfgData->MemoryThermalMgmt;
+    if (PlatformId == PLATFORM_ID_WHL) {
+      FspsUpd->FspsConfig.PchPmSlpS0Vm075VSupport = 0x1;
+      FspsUpd->FspsConfig.PchHotEnable = 0x1;
+    }
+  }
 
   SiliconCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
   if (SiliconCfgData != NULL) {

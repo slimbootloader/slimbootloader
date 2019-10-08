@@ -40,5 +40,16 @@ MEMORY_CFG_DATA.DualDpc                   | 0x01
 GPU_CFG_DATA.DdiPortBDdc                  | 0x0
 GPU_CFG_DATA.DdiPortFDdc                  | 0x1
 
+POWER_CFG_DATA.OneCoreRatioLimit          | 0x29
+POWER_CFG_DATA.TwoCoreRatioLimit          | 0x28
+POWER_CFG_DATA.ThreeCoreRatioLimit        | 0x27
+POWER_CFG_DATA.FourCoreRatioLimit         | 0x26
+POWER_CFG_DATA.FiveCoreRatioLimit         | 0x25
+POWER_CFG_DATA.SixCoreRatioLimit          | 0x24
+POWER_CFG_DATA.DmiTS0TW                   | 0
+POWER_CFG_DATA.DmiTS1TW                   | 0
+POWER_CFG_DATA.DmiTS2TW                   | 0
+POWER_CFG_DATA.MemoryThermalMgmt          | 0
+
 GPIO_CFG_DATA.GpioPinConfig1_GPP_PEC.Hide_GPP_PEC | 0x1
 GPIO_CFG_DATA.GpioPinConfig1_GPP_I03.GPIOSkip_GPP_I03 | 1
