@@ -9,7 +9,6 @@
 #include <Library/ShellLib.h>
 
 extern CONST SHELL_COMMAND mShellCommandFwUpdate;
-extern CONST SHELL_COMMAND mShellCommandCse;
 
 CONST SHELL_COMMAND *mShellExtensionCommands[] = {
   &mShellCommandFwUpdate,
