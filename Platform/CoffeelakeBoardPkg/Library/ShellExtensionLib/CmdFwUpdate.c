@@ -64,7 +64,7 @@ ShellCommandFwUpdateFunc (
   PLATFORM_SERVICE      *PlatformService;
 
   //
-  // This is platform specific method. Here just use COMS address 0x40.
+  // This is platform specific method. Here just use CMOS address 0x40.
   //
   IoWrite8 (CMOS_ADDREG, FWU_BOOT_MODE_OFFSET);
   IoWrite8 (CMOS_DATAREG, FWU_BOOT_MODE_VALUE);
