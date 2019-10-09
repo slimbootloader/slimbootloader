@@ -48,6 +48,7 @@
 #include <ConfigDataCommonStruct.h>
 #include <ConfigDataStruct.h>
 #include <PlatformData.h>
+#include <Register/RegsSpi.h>
 
 #define MRC_PARAMS_BYTE_OFFSET_MRC_VERSION 14
 

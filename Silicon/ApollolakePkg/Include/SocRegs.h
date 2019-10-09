@@ -30,7 +30,6 @@
 #include <SaRegs.h>
 
 #include <ScRegs/ScReservedResources.h>
-#include <ScRegs/RegsSpi.h>
 #include <ScRegs/RegsPmc.h>
 #include <ScRegs/RegsP2sb.h>
 #include <ScRegs/RegsPcu.h>

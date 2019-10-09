@@ -39,6 +39,7 @@
 #include <PciePreMemConfig.h>
 #include <PlatformData.h>
 #include "PreMemGpioTables.h"
+#include <Register/RegsSpi.h>
 
 CONST PLT_DEVICE  mPlatformDevices[]= {
   {{0x00001400}, OsBootDeviceUsb   , 0 },
@@ -199,8 +200,8 @@ SpiControllerInitialize (
   SpiBaseAddress = GetDeviceAddr (OsBootDeviceSpi, 0);
   SpiBaseAddress = TO_MM_PCI_ADDRESS (SpiBaseAddress);
 
-  MmioWrite32 (SpiBaseAddress + R_SPI_CFG_BAR0, SPI_TEMP_MEM_BASE_ADDRESS);
-  MmioAnd8    (SpiBaseAddress + R_SPI_CFG_BC, (UINT8)~B_SPI_CFG_BC_EISS);
+  MmioWrite32 (SpiBaseAddress + R_SPI_BASE, SPI_TEMP_MEM_BASE_ADDRESS);
+  MmioAnd8    (SpiBaseAddress + R_SPI_BCR, (UINT8)~B_SPI_BCR_SMM_BWP);
 
   SpiConstructor ();
 }
