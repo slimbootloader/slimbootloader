@@ -442,7 +442,7 @@ EndList
         ValStr = ConfigDict['value']
         if ValStr[0] == "'":
             # Remove padding \x00 in the value string
-            ValStr = filter(lambda x: ord(x) != 0, ValStr)
+            ValStr = "'%s'" % ValStr[1:-1].rstrip('\x00')
 
         Struct = ConfigDict['struct']
         if Struct in self._StructType:
@@ -1512,7 +1512,7 @@ EndList
         IsString = True if Item['value'].startswith("'") else False
         Bytes = self.ValueToByteArray(ValueStr, Item['length'])
         if IsString:
-            NewValue = "'%s'" % str(Bytes)
+            NewValue = "'%s'" % Bytes.decode("utf-8")
         elif IsArray:
             NewValue = Bytes2Str(Bytes)
         else:
