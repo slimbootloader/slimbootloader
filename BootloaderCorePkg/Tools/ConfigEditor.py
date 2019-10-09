@@ -178,6 +178,17 @@ class CustomTable(Frame):
         Frame.destroy(self)
 
 
+class State:
+    def __init__(self):
+        self.state = False
+
+    def set(self, value):
+        self.state = value
+
+    def get(self):
+        return self.state
+
+
 class Application(Frame):
     def __init__(self, master=None):
         Root = master
@@ -189,6 +200,8 @@ class Application(Frame):
         self.ConfList = {}
         self.CfgDataObj = None
         self.OrgCfgDataBin = None
+        self.InLeft  = State()
+        self.InRight = State()
 
         Frame.__init__(self, master, borderwidth=2)
 
@@ -218,6 +231,10 @@ class Application(Frame):
                                         command=self.Left.yview)
         self.Left.configure(yscrollcommand=self.TreeScroll.set)
         self.Left.bind('<<TreeviewSelect>>', self.OnConfigPageSelectChange)
+        self.Left.bind('<Enter>',  lambda e: self.InLeft.set(True))
+        self.Left.bind('<Leave>',  lambda e: self.InLeft.set(False))
+        self.Left.bind('<MouseWheel>',  self.OnTreeScroll)
+
         self.Left.pack(side='left',
                        fill=BOTH,
                        expand=True,
@@ -241,7 +258,10 @@ class Application(Frame):
                              padx=(5, 0))
         self.PageScroll.pack(side='right', fill=Y, pady=Pady, padx=(0, 5))
         self.ConfCanvas.create_window(0, 0, window=self.RightGrid, anchor='nw')
+        self.ConfCanvas.bind('<Enter>',  lambda e: self.InRight.set(True))
+        self.ConfCanvas.bind('<Leave>',  lambda e: self.InRight.set(False))
         self.ConfCanvas.bind("<Configure>", self.OnCanvasConfigure)
+        self.ConfCanvas.bind_all("<MouseWheel>", self.OnPageScroll)
 
         Paned.add(FrameLeft, weight=2)
         Paned.add(FrameRight, weight=10)
@@ -296,13 +316,25 @@ class Application(Frame):
 
     def LimitEntrySize(self, Variable, Limit):
         Value = Variable.get()
-        if len(Value) > Limit: Variable.set(Value[:Limit])
+        if len(Value) > Limit:
+            Variable.set(Value[:Limit])
 
     def OnCanvasConfigure(self, Event):
         self.RightGrid.grid_columnconfigure(0, minsize=Event.width)
 
+    def OnTreeScroll(self, Event):
+        if not self.InLeft.get() and self.InRight.get():
+            # This prevents scroll event from being handled by both left and
+            # right frame at the same time.
+            self.OnPageScroll (Event)
+            return 'break'
+
     def OnPageScroll(self, Event):
-        self.ConfCanvas.yview_scroll(-1 * Event.delta, 'units')
+        if self.InRight.get():
+            # Only scroll when it is in active area
+            min, max = self.PageScroll.get()
+            if not ((min == 0.0) and (max == 1.0)):
+                self.ConfCanvas.yview_scroll(-1 * (Event.delta / 120), 'units')
 
     def UpdateVisibilityForWidget(self, Widget, Args):
 
