@@ -82,6 +82,7 @@ class ValidatingEntry(Entry):
         Entry.__init__(*(self, master), **kw)
         self.Parent    = master
         self.OldValue  = ''
+        self.LastValue = ''
         self.Variable  = StringVar()
         self.Variable.trace("w", self.Callback)
         self.config(textvariable=self.Variable)
@@ -118,7 +119,8 @@ class ValidatingEntry(Entry):
             Col      = int(ColId[1:]) - 1
             self.Row = Row
             self.Col = Col
-            self.OldValue = Txt
+            self.OldValue  = Txt
+            self.LastValue = Txt
             x, y, width, height = self.Parent.bbox(RowId, Col)
             self.place(x=x, y=y, w=width)
             self.Variable.set(Txt)
@@ -129,8 +131,10 @@ class ValidatingEntry(Entry):
         CurVal = self.Variable.get()
         NewVal = self.Validate(CurVal)
         if NewVal is not None and self.Row >= 0:
-            self.Variable.set(NewVal)
+            self.LastValue = NewVal
             self.Parent.SetCell (self.Row , self.Col, NewVal)
+        self.Variable.set(self.LastValue)
+
 
     def Validate(self, Value):
         if len(Value) > 0:
@@ -230,7 +234,7 @@ class CustomTable(ttk.Treeview):
             for Col in range(self.Cols):
                 Idx = Row * sum(self.ColByteLen) + sum(self.ColByteLen[:Col])
                 ByteLen = self.ColByteLen[Col]
-                if Idx + ByteLen < self.Size:
+                if Idx + ByteLen <= self.Size:
                     ByteLen  = int(self.ColHdr[Col].split(':')[1])
                     if Idx + ByteLen > BinLen:
                       Val = 0
@@ -296,8 +300,8 @@ class CustomTable(ttk.Treeview):
             return
 
         Item = self.identify('item', event.x, event.y)
-        if not Item:
-            # Not clicked on cell
+        if not Item or not ColId:
+            # Not clicked on valid cell
             return
 
         # Clicked cell
