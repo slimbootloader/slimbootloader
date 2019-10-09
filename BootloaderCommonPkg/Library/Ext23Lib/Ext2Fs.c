@@ -90,45 +90,11 @@
 #include "Ext2Fs.h"
 #include "LibsaFsStand.h"
 
-#define    LITTLE_ENDIAN  1234              // LSB First: i386, vax
-#define    BIG_ENDIAN     4321              // MSB First: 68000, ibm, net
-#define    PDP_ENDIAN     3412              // LSB First in word, MSW First in long
-
-#define BYTE_ORDER LITTLE_ENDIAN
 #define HOWMANY(x, y)  (((x)+((y)-1))/(y))
-#define DEV_BSHIFT  9                       // log2(DEV_BSIZE)
-#define DEV_BSIZE   (1 << DEV_BSHIFT)
-
 
 #if defined(LIBSA_FS_SINGLECOMPONENT) && !defined(LIBSA_NO_FS_SYMLINK)
 #define LIBSA_NO_FS_SYMLINK
 #endif
-
-#if defined(LIBSA_NO_TWIDDLE)
-#define TWIDDLE()
-#endif
-
-#ifndef FSBTODB
-#define FSBTODB(FileSystem, indp) FSBTODB(FileSystem, indp)
-#endif
-
-#if defined(LIBSA_ENABLE_LS_OP)
-
-#include "cli.h"
-
-#define NELEM(x) (sizeof (x) / sizeof(*x))
-
-typedef struct ENTRY ENTRY;
-struct ENTRY {
-  ENTRY    *EntryNext;
-  INODE32  EntryInode;
-  UINT8    EntryType;
-  CHAR8    EntryName[1];
-};
-
-STATIC CONST CHAR8 *CONST mTypeStr[] = { "unknown", "REG",  "DIR",  "CHR",  "BLK",  "FIFO",  "SOCK",  "LNK" };
-
-#endif  // LIBSA_ENABLE_LS_OP
 
 /**
  Read a new inode into a FILE structure.
@@ -241,24 +207,6 @@ BDevStrategy (
 }
 
 /**
- Find the length of the string.
- @param [in] Str string to find length
- @retval length of the string.
-**/
-UINT32
-Strlen (
-  CONST CHAR8 *Str
-  )
-{
-  CONST CHAR8 *Ptr;
-
-  for (Ptr = Str ; *Ptr != 0 ; Ptr += 1)
-    ;
-
-  return (Ptr - Str);
-}
-
-/**
  Read a new inode into a FILE structure.
  @param [in] INumber inode number
  @param [in] File pointer to open file struct.
@@ -299,7 +247,6 @@ ReadInode (
   // Read inode and save it.
   //
   Buf = Fp->Buffer;
-  TWIDDLE();
   Rc = DEV_STRATEGY (File->DevPtr) (File->FileDevData, F_READ,
                                     InodeSector, FileSystem->Ext2FsBlockSize, Buf, &RSize);
   if (Rc != 0) {
@@ -430,7 +377,7 @@ BlockMap (
       //
       // Direct block.
       //
-      *DiskBlockPtr = FS2H32 (Fp->DiskInode.Ext2DInodeBlocks[FileBlock]);
+      *DiskBlockPtr = Fp->DiskInode.Ext2DInodeBlocks[FileBlock];
       return 0;
     }
 
@@ -439,7 +386,7 @@ BlockMap (
     IndCache = FileBlock >> LN2_IND_CACHE_SZ;
     if (IndCache == Fp->InodeCacheBlock) {
       *DiskBlockPtr =
-        FS2H32 (Fp->InodeCache[FileBlock & IND_CACHE_MASK]);
+        Fp->InodeCache[FileBlock & IND_CACHE_MASK];
       return 0;
     }
 
@@ -459,7 +406,7 @@ BlockMap (
     }
 
     IndBlockNum =
-      FS2H32 (Fp->DiskInode.Ext2DInodeBlocks[NDADDR + (Level / Fp->NiShift - 1)]);
+      Fp->DiskInode.Ext2DInodeBlocks[NDADDR + (Level / Fp->NiShift - 1)];
 
     while (1) {
       Level -= Fp->NiShift;
@@ -468,7 +415,6 @@ BlockMap (
         return 0;
       }
 
-      TWIDDLE();
       //
       //  If we were feeling brave, we could work out the number
       //  of the disk sector and read a single disk sector instead
@@ -484,7 +430,7 @@ BlockMap (
       if (RSize != (UINT32)FileSystem->Ext2FsBlockSize) {
         return EFI_DEVICE_ERROR;
       }
-      IndBlockNum = FS2H32 (Buf[FileBlock >> Level]);
+      IndBlockNum = Buf[FileBlock >> Level];
       if (Level == 0) {
         break;
       }
@@ -545,7 +491,6 @@ BufReadFile (
       Fp->BufferSize = BlockSize;
     } else {
 
-      TWIDDLE();
       Rc = DEV_STRATEGY (File->DevPtr) (File->FileDevData, F_READ,
                                         FSBTODB (FileSystem, DiskBlock),
                                         BlockSize, Fp->Buffer, &Fp->BufferSize);
@@ -617,11 +562,11 @@ SearchDirectory (
     Dp = (EXT2FS_DIRECT *)Buf;
     EdPtr = (EXT2FS_DIRECT *) (Buf + BufSize);
     for (; Dp < EdPtr;
-         Dp = (VOID *) ((CHAR8 *)Dp + FS2H16 (Dp->Ext2DirectRecLen))) {
-      if (FS2H16 (Dp->Ext2DirectRecLen) <= 0) {
+         Dp = (VOID *) ((CHAR8 *)Dp + Dp->Ext2DirectRecLen)) {
+      if (Dp->Ext2DirectRecLen <= 0) {
         break;
       }
-      if (FS2H32 (Dp->Ext2DirectInodeNumber) == (INODE32)0) {
+      if (Dp->Ext2DirectInodeNumber == (INODE32)0) {
         continue;
       }
       NameLen = Dp->Ext2DirectNameLen;
@@ -630,7 +575,7 @@ SearchDirectory (
         //
         // found entry
         //
-        *INumPtr = FS2H32 (Dp->Ext2DirectInodeNumber);
+        *INumPtr = Dp->Ext2DirectInodeNumber;
         return 0;
       }
     }
@@ -814,7 +759,6 @@ Ext2fsOpen (
   FileSystem = AllocatePool (sizeof (*FileSystem));
   SetMem32 (FileSystem, sizeof (*FileSystem), 0);
   Fp->SuperBlockPtr = FileSystem;
-  TWIDDLE();
 
   Rc = ReadSBlock (File, FileSystem);
   if (Rc != 0) {
@@ -837,6 +781,9 @@ Ext2fsOpen (
     goto out;
   }
 
+#ifdef EXT2FS_DEBUG
+  DumpGroupDesBlock (FileSystem);
+#endif
   //
   //  Calculate indirect block levels.
   //
@@ -920,7 +867,7 @@ Ext2fsOpen (
 
       LinkLength = Fp->DiskInode.Ext2DInodeSize;
 
-      Len = Strlen (Cp);
+      Len = AsciiStrLen (Cp);
 
       if (LinkLength + Len > MAXPATHLEN ||
           ++Nlinks > MAXSYMLINKS) {
@@ -945,7 +892,6 @@ Ext2fsOpen (
           goto out;
         }
 
-        TWIDDLE();
         Rc = DEV_STRATEGY (File->DevPtr) (File->FileDevData,
                                           F_READ, FSBTODB (FileSystem, DiskBlock),
                                           FileSystem->Ext2FsBlockSize, Buf, &BufSize);
@@ -983,7 +929,7 @@ Ext2fsOpen (
   //
   // look up component in the current (root) directory
   //
-  Rc = SearchDirectory (Path, Strlen (Path), File, &INumber);
+  Rc = SearchDirectory (Path, AsciiStrLen (Path), File, &INumber);
   if (Rc != 0) {
     goto out;
   }
@@ -1176,249 +1122,6 @@ Ext2fsStat (
   return 0;
 }
 
-#if defined(LIBSA_ENABLE_LS_OP)
-/**
-  Update the mode and size from descriptor to stat Block.
-  contains that block.
-  @param File       pointer to an file private data
-  @param Pattern    pointer to Pattern
-**/
-VOID
-Ext2fsLs (
-  OPEN_FILE     *File,
-  CONST CHAR8   *Pattern
-  )
-{
-  FILE    *Fp;
-  UINT32   BlockSize;
-  CHAR8   *Buf;
-  UINT32   BufSize;
-  ENTRY   *Names;
-  ENTRY   *New;
-  ENTRY  **NextPtr;
-
-  Fp = (FILE *)File->FileSystemSpecificData;
-  BlockSize = Fp->SuperBlockPtr->Ext2FsBlockSize;
-  Names = NULL;
-
-  Fp->SeekPtr = 0;
-  while (Fp->SeekPtr < (OFFSET)Fp->DiskInode.Ext2DInodeSize) {
-    EXT2FS_DIRECT  *Dp;
-    EXT2FS_DIRECT  *EdPtr;
-    INT32 Rc;
-    Rc = BufReadFile (File, &Buf, &BufSize);
-    if (Rc != 0) {
-      goto out;
-    }
-    if (BufSize != BlockSize || BufSize == 0) {
-      goto out;
-    }
-
-    Dp = (EXT2FS_DIRECT *)Buf;
-    EdPtr = (EXT2FS_DIRECT *) (Buf + BufSize);
-
-    for (; Dp < EdPtr;
-         Dp = (VOID *) ((CHAR8 *)Dp + FS2H16 (Dp->Ext2DirectRecLen))) {
-      CONST CHAR8 *Type;
-
-      if (FS2H16 (Dp->Ext2DirectRecLen) <= 0) {
-        goto out;
-      }
-
-      if (FS2H32 (Dp->Ext2DirectInodeNumber) == 0) {
-        continue;
-      }
-
-      if (Dp->Ext2DirectType >= NELEM (mTypeStr) ||
-          ! (Type = mTypeStr[Dp->Ext2DirectType])) {
-        //
-        //  This does not handle "Old"
-        //  filesystems properly. On little
-        //  endian machines, we get a bogus
-        //  type Name if the NameLen matches a
-        //  valid type identifier. We could
-        //  check if we read NameLen "0" and
-        //  handle this case specially, if
-        //  there were a pressing need...
-        //
-        DEBUG ((DEBUG_INFO, "bad dir entry\n"));
-        goto out;
-      }
-#if 0
-      if ((Pattern != NULL) && !fnmatch (Dp->Ext2DirectName, Pattern)) {
-        continue;
-      }
-#endif
-      New = AllocatePool (sizeof * New + Strlen (Dp->Ext2DirectName));
-      if (New == NULL) {
-        DEBUG ((DEBUG_INFO, "%d: %s (%s)\n",
-                FS2H32 (Dp->Ext2DirectInodeNumber), Dp->Ext2DirectName, Type));
-        continue;
-      }
-      New->EntryInode = FS2H32 (Dp->Ext2DirectInodeNumber);
-      New->EntryType  = Dp->Ext2DirectType;
-      strcpy (New->EntryName, Dp->Ext2DirectName);
-      for (NextPtr = &Names; *NextPtr != NULL; NextPtr = & (*NextPtr)->EntryNext) {
-        if (strcmp (New->EntryName, (*NextPtr)->EntryName) < 0) {
-          break;
-        }
-      }
-      New->EntryNext = *NextPtr;
-      *NextPtr = New;
-    }
-    Fp->SeekPtr += BufSize;
-  }
-
-  if (Names != NULL) {
-    ENTRY *PNames;
-    PNames = Names;
-    do {
-      New = PNames;
-      DEBUG ((DEBUG_INFO, "%d: %s (%s)\n",
-              New->EntryInode, New->EntryName, mTypeStr[New->EntryType]));
-      PNames = New->EntryNext;
-    } while (PNames != NULL);
-  } else {
-    DEBUG ((DEBUG_INFO, "not found\n"));
-  }
-out:
-  if (Names != NULL) {
-    do {
-      New   = Names;
-      Names = New->EntryNext;
-      FreePool (New);
-    } while (Names != NULL);
-  }
-  return;
-}
-#endif
-
-
-#if BYTE_ORDER == BIG_ENDIAN
-/**
-  Byte swap functions for big endian machines.
-  (Ext2Fs is always little endian)
-
-  XXX: We should use src/sys/ufs/Ext2Fs/ext2fs_bswap.c
-
- These functions are only needed if native byte order is not big endian
-
- @param Old pointer to old filesystem field
- @param New pointer to new filesystem field
-**/
-VOID
-E2fsSBByteSwap (
-  EXT2FS    *Old,
-  EXT2FS    *New
-  )
-{
-  //
-  // preserve unused fields
-  //
-  CopyMem (New, Old, sizeof (EXT2FS));
-  New->Ext2FsINodeCount         =   bswap32 (Old->Ext2FsINodeCount);
-  New->Ext2FsBlockCount         =   bswap32 (Old->Ext2FsBlockCount);
-  New->Ext2FsRsvdBlockCount     =   bswap32 (Old->Ext2FsRsvdBlockCount);
-  New->Ext2FsFreeBlockCount     =   bswap32 (Old->Ext2FsFreeBlockCount);
-  New->Ext2FsFreeINodeCount     =   bswap32 (Old->Ext2FsFreeINodeCount);
-  New->Ext2FsFirstDataBlock     =   bswap32 (Old->Ext2FsFirstDataBlock);
-  New->Ext2FsLogBlockSize       =   bswap32 (Old->Ext2FsLogBlockSize);
-  New->Ext2FsFragmentSize       =   bswap32 (Old->Ext2FsFragmentSize);
-  New->Ext2FsBlocksPerGroup     =   bswap32 (Old->Ext2FsBlocksPerGroup);
-  New->Ext2FsFragsPerGroup      =   bswap32 (Old->Ext2FsFragsPerGroup);
-  New->Ext2FsINodesPerGroup     =   bswap32 (Old->Ext2FsINodesPerGroup);
-  New->Ext2FsMountTime          =   bswap32 (Old->Ext2FsMountTime);
-  New->Ext2FsWriteTime          =   bswap32 (Old->Ext2FsWriteTime);
-  New->Ext2FsMountCount         =   bswap16 (Old->Ext2FsMountCount);
-  New->Ext2FsMaxMountCount      =   bswap16 (Old->Ext2FsMaxMountCount);
-  New->Ext2FsMagic              =   bswap16 (Old->Ext2FsMagic);
-  New->Ext2FsState              =   bswap16 (Old->Ext2FsState);
-  New->Ext2FsBehavior           =   bswap16 (Old->Ext2FsBehavior);
-  New->Ext2FsMinorRev           =   bswap16 (Old->Ext2FsMinorRev);
-  New->Ext2FsLastFsck           =   bswap32 (Old->Ext2FsLastFsck);
-  New->Ext2FsFsckInterval       =   bswap32 (Old->Ext2FsFsckInterval);
-  New->Ext2FsCreator            =   bswap32 (Old->Ext2FsCreator);
-  New->Ext2FsRev                =   bswap32 (Old->Ext2FsRev);
-  New->Ext2FsRsvdUid            =   bswap16 (Old->Ext2FsRsvdUid);
-  New->Ext2FsRsvdGid            =   bswap16 (Old->Ext2FsRsvdGid);
-  New->Ext2FsFirstInode         =   bswap32 (Old->Ext2FsFirstInode);
-  New->Ext2FsInodeSize          =   bswap16 (Old->Ext2FsInodeSize);
-  New->Ext2FsBlockGrpNum        =   bswap16 (Old->Ext2FsBlockGrpNum);
-  New->Ext2FsFeaturesCompat     =   bswap32 (Old->Ext2FsFeaturesCompat);
-  New->Ext2FsFeaturesIncompat   =   bswap32 (Old->Ext2FsFeaturesIncompat);
-  New->Ext2FsFeaturesROCompat   =   bswap32 (Old->Ext2FsFeaturesROCompat);
-  New->Ext2FsAlgorithm          =   bswap32 (Old->Ext2FsAlgorithm);
-  New->Ext2FsRsvdGDBlock        =   bswap16 (Old->Ext2FsRsvdGDBlock);
-}
-
-/**
-  Byte swap functions for big endian machines.
-  (Ext2Fs is always little endian)
-  XXX: We should use src/sys/ufs/Ext2Fs/ext2fs_bswap.c
-  These functions are only needed if native byte order is not big endian
-
-  @param Old     pointer to old filesystem field
-  @param New     pointer to new filesystem field
-  @param Size    Size to swap
-**/
-VOID
-E2fsCGByteSwap (
-  EXT2GD    *Old,
-  EXT2GD    *New,
-  INT32      Size
-  )
-{
-  INT32 Index;
-
-  for (Index = 0; Index < (Size / sizeof (EXT2GD)); Index++) {
-    New[Index].Ext2BGDBlockBitmap  = bswap32 (Old[Index].Ext2BGDBlockBitmap);
-    New[Index].Ext2BGDInodeBitmap  = bswap32 (Old[Index].Ext2BGDInodeBitmap);
-    New[Index].Ext2BGDInodeTables  = bswap32 (Old[Index].Ext2BGDInodeTables);
-    New[Index].Ext2BGDFreeBlocks   = bswap16 (Old[Index].Ext2BGDFreeBlocks);
-    New[Index].Ext2BGDFreeInodes   = bswap16 (Old[Index].Ext2BGDFreeInodes);
-    New[Index].Ext2BGDNumDir       = bswap16 (Old[Index].Ext2BGDNumDir);
-  }
-}
-
-/**
-  Byte swap functions for big endian machines.
-  (Ext2Fs is always little endian)
-
-  XXX: We should use src/sys/ufs/Ext2Fs/ext2fs_bswap.c
-
-  These functions are only needed if native byte order is not big endian
-
-  @param Old     pointer to old filesystem field
-  @param New     pointer to new filesystem field
-**/
-VOID
-E2fsIByteSwap (
-  EXTFS_DINODE  *Old,
-  EXTFS_DINODE  *New
-  )
-{
-
-  New->Ext2DInodeMode             =   bswap16 (Old->Ext2DInodeMode);
-  New->Ext2DInodeUid              =   bswap16 (Old->Ext2DInodeUid);
-  New->Ext2DInodeGid              =   bswap16 (Old->Ext2DInodeGid);
-  New->Ext2DInodeLinkcount        =   bswap16 (Old->Ext2DInodeLinkcount);
-  New->Ext2DInodeSize             =   bswap32 (Old->Ext2DInodeSize);
-  New->Ext2DInodeAcessTime        =   bswap32 (Old->Ext2DInodeAcessTime);
-  New->Ext2DInodeCreatTime        =   bswap32 (Old->Ext2DInodeCreatTime);
-  New->Ext2DInodeModificationTime =   bswap32 (Old->Ext2DInodeModificationTime);
-  New->Ext2DInodeDeletionTime     =   bswap32 (Old->Ext2DInodeDeletionTime);
-  New->Ext2DInodeBlockcount       =   bswap32 (Old->Ext2DInodeBlockcount);
-  New->Ext2DInodeStatusFlags      =   bswap32 (Old->Ext2DInodeStatusFlags);
-  New->Ext2DInodeGen              =   bswap32 (Old->Ext2DInodeGen);
-  New->Ext2DInodeFileAcl          =   bswap32 (Old->Ext2DInodeFileAcl);
-  New->Ext2DInodeDirAcl           =   bswap32 (Old->Ext2DInodeDirAcl);
-  New->Ext2DInodeFragmentAddr     =   bswap32 (Old->Ext2DInodeFragmentAddr);
-
-  CopyMem (&New->Ext2DInodeBlocks[0], &Old->Ext2DInodeBlocks[0],
-           (NDADDR + NIADDR) * sizeof (UINT32));
-}
-#endif
-
 #ifdef EXT2FS_DEBUG
 /**
   Dump the file system super block info.
@@ -1461,6 +1164,34 @@ DumpSBlock (
   DEBUG ((DEBUG_INFO, "FileSystem->Ext2FsNumGrpDesBlock = %u\n", FileSystem->Ext2FsNumGrpDesBlock));
   DEBUG ((DEBUG_INFO, "FileSystem->Ext2FsInodesPerBlock = %u\n", FileSystem->Ext2FsInodesPerBlock));
   DEBUG ((DEBUG_INFO, "FileSystem->Ext2FsInodesTablePerGrp = %u\n", FileSystem->Ext2FsInodesTablePerGrp));
+}
+
+/**
+  Dump the file group descriptor block info.
+
+  @param FileSystem     pointer to filesystem.
+**/
+VOID
+DumpGroupDesBlock (
+  M_EXT2FS  *FileSystem
+  )
+{
+  INT32     Index;
+  EXT2GD    *Ext2FsGrpDesEntry;
+
+  for (Index=0; Index < FileSystem->Ext2FsNumCylinder; Index++) {
+    Ext2FsGrpDesEntry = (EXT2GD*) ((UINT32) FileSystem->Ext2FsGrpDes + (Index * FileSystem->Ext2FsGDSize));
+    DEBUG ((DEBUG_INFO, "Ext2FsGrpDes[Index=%u]\n", Index));
+    DEBUG ((DEBUG_INFO, "  Ext2BGDBlockBitmap   %u\n", Ext2FsGrpDesEntry->Ext2BGDBlockBitmap));
+    DEBUG ((DEBUG_INFO, "  Ext2BGDInodeBitmap   %u\n", Ext2FsGrpDesEntry->Ext2BGDInodeBitmap));
+    DEBUG ((DEBUG_INFO, "  Ext2BGDInodeTables   %u\n", Ext2FsGrpDesEntry->Ext2BGDInodeTables));
+    DEBUG ((DEBUG_INFO, "  Ext2BGDFreeBlocks    %u\n", Ext2FsGrpDesEntry->Ext2BGDFreeBlocks));
+    DEBUG ((DEBUG_INFO, "  Ext2BGDFreeInodes    %u\n", Ext2FsGrpDesEntry->Ext2BGDFreeInodes));
+    DEBUG ((DEBUG_INFO, "  Ext2BGDNumDir        %u\n", Ext2FsGrpDesEntry->Ext2BGDNumDir));
+    if (FileSystem->Ext2FsGDSize > 32) {
+      DEBUG ((DEBUG_INFO, "  Ext2BGDInodeTablesHi %u\n", Ext2FsGrpDesEntry->Ext2BGDInodeTablesHi));
+    }
+  }
 }
 #endif
 
@@ -1573,8 +1304,8 @@ Ext2fsLookUpFile (
     }
     Dp = (EXT2FS_DIRECT *) Buf;
 
-    Ext2DirectInodeNumber   =   FS2H32 (Dp->Ext2DirectInodeNumber);
-    Ext2DirectRecLen        =   FS2H16 (Dp->Ext2DirectRecLen);
+    Ext2DirectInodeNumber   =   Dp->Ext2DirectInodeNumber;
+    Ext2DirectRecLen        =   Dp->Ext2DirectRecLen;
     Ext2DirectNameLen       =   Dp->Ext2DirectNameLen;
 
     Dp->Ext2DirectName[Ext2DirectNameLen] = '\0';
@@ -1599,50 +1330,3 @@ Ext2fsLookUpFile (
 
   return Ext2DirectNameLen;
 }
-
-#if defined(LIBSA_ENABLE_LS_OP)
-
-/**
-  CMD: edir -- FILE system tests / exercisers.
-  @param ac   Number of arguments.
-  @param av   argument vector.
-  @param args argument string.
-**/
-STATIC
-INT32
-CmdEdir (
-  INT32                 ac,
-  CONST CHAR8          *av[],
-  CONST cmd_args_t     *args
-  )
-{
-  UINT32    OptInd;
-  CONST CHAR8 *Path;
-  FILE File;
-  INT32 Error;
-
-  OptInd = args->optind;
-  Path   = (ac > OptInd) ? av[OptInd] : ".";
-
-  if (ac - OptInd > 1) {
-    return CMD_ERROR_ARGS;
-  }
-
-  if ((Error = fs_open (Path, &File, 0, 0)) != 0) {
-    DEBUG ((DEBUG_INFO, "open '%s' failed (%d)\n", Path, Error));
-    return -9;
-  }
-  Ext2fsLs (&File->Openfile, 0);
-  if ((Error = fs_close (File)) != 0) {
-    DEBUG ((DEBUG_INFO, "close '%s' failed (%d)\n", Path, Error));
-    return -9;
-  }
-
-  return CMD_RESULT_OK;
-}
-
-CLI_COMMAND (edir, "List directory (EXT2-specific)", "",
-             CmdEdir,
-             0);
-
-#endif

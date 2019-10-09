@@ -95,15 +95,11 @@ typedef struct {
   DEVSW       *DevPtr;                        // pointer to device operations
 #endif
   VOID        *FileDevData;                   // device specific data
-#if !defined(LIBSA_SINGLE_FILESYSTEM)
-  const struct fs_ops *FileOperations;        // pointer to file system operations
-#endif
   VOID        *FileSystemSpecificData;        // file system specific data
 #if !defined(LIBSA_NO_RAW_ACCESS)
   OFFSET      FileOffset;                     // current file offset (F_RAW)
 #endif
 } OPEN_FILE;
-
 
 #if ! defined(LIBSA_SINGLE_DEVICE)
 
@@ -144,19 +140,6 @@ BDevStrategy (
   );
 
 #endif
-
-struct fs_ops {
-  INT32   (*open) (CHAR8 *, OPEN_FILE *);
-  INT32   (*close) (OPEN_FILE *);
-  INT32   (*read) (OPEN_FILE *, VOID *, UINT32, UINT32 *);
-  INT32   (*write) (OPEN_FILE *, VOID *, UINT32 size, UINT32 *);
-  OFFSET  (*seek) (OPEN_FILE *, OFFSET, INT32);
-  INT32   (*stat) (OPEN_FILE *, STAT *);
-  VOID    (*ls) (OPEN_FILE *, const CHAR8 *);
-  INT32   (*disk_blocks) (OPEN_FILE *, UINT32, UINT32, UINT32 *);
-  INT32   (*lookup_file) (OPEN_FILE *, STAT *, CHAR8 *, UINT32);
-};
-
 
 //
 // f_flags values

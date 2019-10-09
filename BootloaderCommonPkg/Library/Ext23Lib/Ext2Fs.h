@@ -340,70 +340,15 @@ typedef struct {
 } FILE;
 
 
-/**
-  EXT2FS metadatas are stored in little-endian byte order. These macros
-  helps reading theses metadatas
-**/
+//
+// EXT2FS meta data is stored in little-endian byte order. These macros
+// help with reading the meta data.
+//
 
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define H2FS16(x) (x)
-#define H2FS32(x) (x)
-#define H2FS64(x) (x)
-#define FS2H16(x) (x)
-#define FS2H32(x) (x)
-#define FS2H64(x) (x)
 #define E2FS_SBLOAD(old, new) CopyMem((new), (old), SBSIZE);
 #define E2FS_CGLOAD(old, new, size) CopyMem((new), (old), (size));
 #define E2FS_SBSAVE(old, new) CopyMem((new), (old), SBSIZE);
 #define E2FS_CGSAVE(old, new, size) CopyMem((new), (old), (size));
-#else
-/**
-  Byte swap functions for big endian machines.
-  (Ext2Fs is always little endian)
-
-  XXX: We should use src/sys/ufs/Ext2Fs/ext2fs_bswap.c
-
- These functions are only needed if native byte order is not big endian
-
- @param Old pointer to old filesystem field
- @param New pointer to new filesystem field
-**/
-VOID
-E2fsSBByteSwap (
-  EXT2FS *Old,
-  EXT2FS *New
-  );
-
-/**
-  Byte swap functions for big endian machines.
-  (Ext2Fs is always little endian)
-
-  XXX: We should use src/sys/ufs/Ext2Fs/ext2fs_bswap.c
-
- These functions are only needed if native byte order is not big endian
-
- @param Old     pointer to old filesystem field
- @param New     pointer to new filesystem field
- @param Size    Size to swap
-**/
-VOID
-E2fsCGByteSwap (
-  EXT2GD *Old,
-  EXT2GD *New,
-  INT32 Size
-  );
-
-#define H2FS16(x) bswap16(x)
-#define H2FS32(x) bswap32(x)
-#define H2FS64(x) bswap64(x)
-#define FS2H16(x) bswap16(x)
-#define FS2H32(x) bswap32(x)
-#define FS2H64(x) bswap64(x)
-#define E2FS_SBLOAD(old, new) E2fsSBByteSwap((old), (new))
-#define E2FS_CGLOAD(old, new, size) E2fsCGByteSwap((old), (new), (size));
-#define E2FS_SBSAVE(old, new) E2fsSBByteSwap((old), (new))
-#define E2FS_CGSAVE(old, new, size) E2fsCGByteSwap((old), (new), (size));
-#endif
 
 /**
   Turn file system block numbers into disk block addresses.
@@ -557,20 +502,6 @@ Ext2fsStat (
   STAT          *StatBlock
   );
 
-#if defined(LIBSA_ENABLE_LS_OP)
-/**
-  Update the mode and size from descriptor to stat Block.
-  contains that block.
-  @param File       pointer to an file private data
-  @param Pattern    pointer to Pattern
-**/
-VOID
-Ext2fsLs (
-  OPEN_FILE *File,
-  const CHAR8 *Pattern
-  );
-#endif
-
 /**
 
   Determine the disk block(s) that contains data for FILE <File>,
@@ -669,6 +600,16 @@ Ext2fsFileSize (
 **/
 VOID
 DumpSBlock (
+  M_EXT2FS  *FileSystem
+  );
+
+/**
+  Dump the file system group descriptor block info.
+
+  @param FileSystem     pointer to filesystem.
+**/
+VOID
+DumpGroupDesBlock (
   M_EXT2FS  *FileSystem
   );
 #endif
