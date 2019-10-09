@@ -64,6 +64,8 @@
 #include <VerInfo.h>
 #include <Library/S3SaveRestoreLib.h>
 #include "GpioTables.h"
+#include <Library/PchSpiLib.h>
+#include <Register/RegsSpi.h>
 
 #define DEFAULT_GPIO_IRQ_ROUTE                      14
 
@@ -1157,7 +1159,7 @@ BoardInit (
 
     if ((GetBootMode() != BOOT_ON_FLASH_UPDATE) && (GetPayloadId() != 0)) {
       // Set the BIOS Lock Enable and EISS bits
-      MmioOr8 (SpiBaseAddress + R_SPI_CFG_BC, (UINT8) (B_SPI_CFG_BC_LE | B_SPI_CFG_BC_EISS));
+      MmioOr8 (SpiBaseAddress + R_SPI_BCR, (UINT8) (B_SPI_BCR_BLE | B_SPI_BCR_EISS));
 
       ClearFspHob ();
     }
@@ -1193,7 +1195,7 @@ BoardInit (
     SpiBaseAddress = TO_MM_PCI_ADDRESS (SpiBaseAddress);
 
     // Set the BIOS Lock Enable and EISS bits
-    MmioOr8 (SpiBaseAddress + R_SPI_CFG_BC, (UINT8) (B_SPI_CFG_BC_LE | B_SPI_CFG_BC_EISS));
+    MmioOr8 (SpiBaseAddress + R_SPI_BCR, (UINT8) (B_SPI_BCR_BLE | B_SPI_BCR_EISS));
 
     //
     // Set Bios Interface Lock-Down (BILD)
@@ -1201,16 +1203,15 @@ BoardInit (
     //
 
     // Set the BILD
-    MmioOr8 (SpiBaseAddress + R_SPI_CFG_BC, (UINT8)B_SPI_CFG_BC_BILD);
+    MmioOr8 (SpiBaseAddress + R_SPI_BCR, (UINT8)B_SPI_BCR_BILD);
 
     //
     // set Flash Configuration Lock-Down (FLOCKDN)
     // B0:D31:F05  Offset 04h Bit 15
     //
-    SpiBar0 = (UINTN)PciRead32 (PCI_LIB_ADDRESS (0, PCI_DEVICE_NUMBER_PCH_SPI, PCI_FUNCTION_NUMBER_PCH_SPI, R_SPI_CFG_BAR0));
-    SpiBar0 &= ~(B_SPI_CFG_BAR0_MASK);
+    SpiBar0 = (UINTN)AcquireSpiBar0 (SpiBaseAddress);
     if (SpiBar0 != 0) {
-      MmioOr16 (SpiBar0 + R_SPI_MEM_HSFSC, (UINT16)B_SPI_MEM_HSFSC_FLOCKDN);
+      MmioOr16 (SpiBar0 + R_SPI_HSFS, (UINT16)B_SPI_HSFS_FLOCKDN);
     }
 
     //

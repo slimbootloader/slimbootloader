@@ -9,15 +9,7 @@
 #include <Uefi/UefiBaseType.h>
 #include <Library/IoLib.h>
 #include <Library/BaseLib.h>
-
-#define R_SPI_BASE                        0x10          ///< 32-bit Memory Base Address Register
-#define B_SPI_BAR0_MASK                   0x0FFF
-
-#define R_SPI_BCR                         0xDC          ///< BIOS Control  Register
-#define B_SPI_BCR_SMM_BWP                 BIT5          ///< Enable InSMM.STS
-#define B_SPI_BCR_SRC                     (BIT3 | BIT2) ///< SPI Read Configuration (SRC)
-#define V_SPI_BCR_SRC_PREF_DIS_CACHE_DIS  0x04          ///< Prefetch Disable, Cache Disable
-#define B_SPI_BCR_BIOSWE                  BIT0          ///< Write Protect Disable (WPD)
+#include <Register/RegsSpi.h>
 
 /**
   Acquire SPI MMIO BAR

@@ -17,7 +17,7 @@
 #include <Library/BootloaderCommonLib.h>
 #include <Library/PchSpiLib.h>
 #include <Guid/OsBootOptionGuid.h>
-#include "RegsSpi.h"
+#include <Register/RegsSpi.h>
 
 //
 // Private data structure definitions for the driver

@@ -26,7 +26,6 @@
 #include <Register/BupMsgs.h>
 #include <PchLimits.h>
 #include <PchReservedResources.h>
-#include <Register/PchRegsSpi.h>
 #include <Register/PchRegsGpio.h>
 #include <Register/PchRegsGpioCnl.h>
 #include <Register/PchRegsSerialIo.h>

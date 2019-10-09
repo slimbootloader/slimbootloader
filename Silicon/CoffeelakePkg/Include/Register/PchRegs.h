@@ -50,4 +50,10 @@ Conventions:
 #define V_PCH_DEFAULT_SID       0x7270      ///< Default Intel PCH Subsystem ID
 #define V_PCH_DEFAULT_SVID_SID  (V_INTEL_VENDOR_ID + (V_PCH_DEFAULT_SID << 16))   ///< Default INTEL PCH Vendor ID and Subsystem ID
 
+//
+// SPI Registers (D31:F5)
+//
+#define PCI_DEVICE_NUMBER_PCH_SPI       31
+#define PCI_FUNCTION_NUMBER_PCH_SPI     5
+
 #endif //_PCH_REGS_H_
