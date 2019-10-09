@@ -42,9 +42,16 @@ class CreateToolTip(object):
     def Enter(self, event=None):
         if self.InProgress:
             return
-        x, y, cx, cy = self.Widget.bbox("insert")
+        if self.Widget.winfo_class() == 'Treeview':
+            # Only show help when cursor is on row header.
+            rowid  = self.Widget.identify_row(event.y)
+            if rowid != '':
+                return
+        else:
+            x, y, cx, cy = self.Widget.bbox("insert")
+
         Cursor = self.Widget.winfo_pointerxy()
-        x += self.Widget.winfo_rootx() + 35
+        x = self.Widget.winfo_rootx() + 35
         y = self.Widget.winfo_rooty() + 20
         if Cursor[1] > y and Cursor[1] < y + 20:
             y += 20
@@ -60,7 +67,7 @@ class CreateToolTip(object):
                       background='bisque',
                       relief='solid',
                       borderwidth=1,
-                      font=("times", "9", "normal"))
+                      font=("times", "10", "normal"))
         label.pack(ipadx=1)
         self.InProgress = True
 
@@ -71,45 +78,59 @@ class CreateToolTip(object):
 
 
 class ValidatingEntry(Entry):
-    _Padding   = 2
-    _CharWidth = 1
-
-    def __init__(self, master, value="", **kw):
+    def __init__(self, master, **kw):
         Entry.__init__(*(self, master), **kw)
-        self.Value = value
-        self.Variable = StringVar()
-        self.Variable.set(value)
+        self.Parent    = master
+        self.OldValue  = ''
+        self.Variable  = StringVar()
         self.Variable.trace("w", self.Callback)
         self.config(textvariable=self.Variable)
-        self.bind("<FocusOut>", self.FocusOut)
+        self.config({"background": "#c0c0c0"})
+        self.bind("<Return>", self.MoveNext)
+        self.bind("<Tab>", self.MoveNext)
+        self.bind("<Escape>", self.Cancel)
+        for each in ['BackSpace', 'Delete']:
+            self.bind("<%s>" % each, self.Ignore)
+        self.Display (None)
 
-    @staticmethod
-    def ToCellWidth (ByteLen):
-        return ByteLen * 2 * ValidatingEntry._CharWidth + ValidatingEntry._Padding
+    def Ignore (self, even):
+        return "break"
 
-    @staticmethod
-    def ToByteLen (CellWidth):
-        return (CellWidth  - ValidatingEntry._Padding) // (ValidatingEntry._CharWidth * 2)
+    def MoveNext (self, event):
+        if self.Row < 0:
+            return
+        Row, Col = self.Row, self.Col
+        Txt, RowId, ColId = self.Parent.GetNextCell (Row, Col)
+        self.Display (Txt, RowId, ColId)
+        return "break"
 
-    def GetByteLen (self):
-        return ValidatingEntry.ToByteLen (self['width'])
+    def Cancel (self, event):
+        self.Variable.set(self.OldValue)
+        self.Display (None)
 
-    def FocusOut(self, Event):
-        Value = self.Variable.get()
-        if len(Value) == 0:
-            self.Value = '00'
+    def Display (self, Txt, RowId = '', ColId = ''):
+        if Txt is None:
+            self.Row = -1
+            self.Col = -1
+            self.place_forget()
         else:
-            self.Value = '%02X' % int(Value, 16)
-        self.Variable.set(self.Value)
+            Row      = int('0x' + RowId[1:], 0) - 1
+            Col      = int(ColId[1:]) - 1
+            self.Row = Row
+            self.Col = Col
+            self.OldValue = Txt
+            x, y, width, height = self.Parent.bbox(RowId, Col)
+            self.place(x=x, y=y, w=width)
+            self.Variable.set(Txt)
+            self.focus_set()
+            self.icursor(0)
 
     def Callback(self, *Args):
         CurVal = self.Variable.get()
         NewVal = self.Validate(CurVal)
-        if NewVal is None:
-            self.Variable.set(self.Value)
-        else:
-            self.Value = NewVal
-            self.Variable.set(self.Value)
+        if NewVal is not None and self.Row >= 0:
+            self.Variable.set(NewVal)
+            self.Parent.SetCell (self.Row , self.Col, NewVal)
 
     def Validate(self, Value):
         if len(Value) > 0:
@@ -118,65 +139,192 @@ class ValidatingEntry(Entry):
             except:
                 return None
 
-        MaxLen = self.GetByteLen() * 2
-        if len(Value) > MaxLen:
+        # Normalize the cell format
+        self.update()
+        CellWidth = self.winfo_width ()
+        MaxLen = CustomTable.ToByteLength(CellWidth) * 2
+        CurPos = self.index("insert")
+        if CurPos == MaxLen + 1:
+            Value = Value[-MaxLen:]
+        else:
             Value = Value[:MaxLen]
+        if Value == '':
+            Value = '0'
+        Fmt =  '%%0%dX' % MaxLen
+        return Fmt % int(Value, 16)
 
-        return Value.upper()
 
+class CustomTable(ttk.Treeview):
+    _Padding   = 20
+    _CharWidth = 6
 
-class CustomTable(Frame):
     def __init__(self, Parent, ColHdr, Bins):
-        Frame.__init__(self, Parent)
-        Idx = 0
         Cols = len(ColHdr)
-        if Cols > 0:
-            Rows = (len(Bins) + Cols - 1) // Cols
-        self.Row = Rows
-        self.Col = Cols
-        ColAdj = 2
-        RowAdj = 1
+
+        ColByteLen = []
+        for Col in range(Cols):  #Columns
+            ColByteLen.append(int(ColHdr[Col].split(':')[1]))
+
+        ByteLen = sum(ColByteLen)
+        Rows = (len(Bins) + ByteLen - 1) // ByteLen
+
+        self.Rows = Rows
+        self.Cols = Cols
+        self.ColByteLen = ColByteLen
+        self.ColHdr = ColHdr
+
+        self.Size = len(Bins)
+        self.LastDir = ''
+
+        style = ttk.Style()
+        style.configure("Custom.Treeview.Heading", font=('Calibri', 10, 'bold'),  foreground="blue")
+        ttk.Treeview.__init__(self, Parent, height=Rows, columns=[''] + ColHdr, show='headings', style="Custom.Treeview", selectmode='none')
+        self.bind("<Button-1>", self.Click)
+        self.bind("<FocusOut>", self.FocusOut)
+        self.entry = ValidatingEntry(self, width=4,  justify=CENTER)
+
+        self.heading(0, text='LOAD')
+        self.column (0, width=60, stretch=0, anchor=CENTER)
+
         for Col in range(Cols):  #Columns
             Text = ColHdr[Col].split(':')[0]
-            Header = Label(self, text=Text)
-            Header.grid(row=0, column=Col + ColAdj)
+            ByteLen  = int(ColHdr[Col].split(':')[1])
+            self.heading(Col+1, text=Text)
+            self.column(Col+1, width=self.ToCellWidth(ByteLen), stretch=0, anchor=CENTER)
+
+        Idx = 0
         for Row in range(Rows):  #Rows
             Text = '%04X' % (Row * len(ColHdr))
-            Header = Label(self, text=Text)
-            Header.grid(row=Row + RowAdj,
-                        column=0,
-                        columnspan=1,
-                        sticky='ewsn')
+            Vals = ['%04X:' % (Cols * Row)]
             for Col in range(Cols):  #Columns
                 if Idx >= len(Bins):
                     break
                 ByteLen  = int(ColHdr[Col].split(':')[1])
                 Value = Bytes2Val (Bins[Idx:Idx+ByteLen])
                 Hex = ("%%0%dX" % (ByteLen * 2) ) % Value
-                ValidatingEntry(self, width=ValidatingEntry.ToCellWidth(ByteLen),
-                                justify=CENTER, value=Hex).grid(row=Row + RowAdj, column=Col + ColAdj)
+                Vals.append (Hex)
                 Idx += ByteLen
+            self.insert('', 'end', values=tuple(Vals))
             if Idx >= len(Bins):
                 break
 
+    @staticmethod
+    def ToCellWidth(ByteLen):
+        return ByteLen * 2 * CustomTable._CharWidth + CustomTable._Padding
+
+    @staticmethod
+    def ToByteLength(CellWidth):
+        return (CellWidth - CustomTable._Padding) // (2 * CustomTable._CharWidth)
+
+    def FocusOut (self, event):
+        self.entry.Display (None)
+
+    def RefreshBin (self, Bins):
+        if not Bins:
+            return
+
+        # Reload binary into widget
+        BinLen = len(Bins)
+        for Row in range(self.Rows):
+            Iid  = self.get_children()[Row]
+            for Col in range(self.Cols):
+                Idx = Row * sum(self.ColByteLen) + sum(self.ColByteLen[:Col])
+                ByteLen = self.ColByteLen[Col]
+                if Idx + ByteLen < self.Size:
+                    ByteLen  = int(self.ColHdr[Col].split(':')[1])
+                    if Idx + ByteLen > BinLen:
+                      Val = 0
+                    else:
+                      Val = Bytes2Val (Bins[Idx:Idx+ByteLen])
+                    HexVal = ("%%0%dX" % (ByteLen * 2) ) % Val
+                    self.set (Iid, Col + 1, HexVal)
+
+    def GetCell (self, Row, Col):
+        Iid  = self.get_children()[Row]
+        Txt  = self.item(Iid, 'values')[Col]
+        return Txt
+
+    def GetNextCell (self, Row, Col):
+        Rows  = self.get_children()
+        Col  += 1
+        if Col > self.Cols:
+          Col = 1
+          Row +=1
+        Cnt = Row * sum(self.ColByteLen) + sum(self.ColByteLen[:Col])
+        if Cnt > self.Size:
+          # Reached the last cell, so roll back to beginning
+          Row  = 0
+          Col  = 1
+
+        Txt   = self.GetCell(Row, Col)
+        RowId = Rows[Row]
+        ColId = '#%d' % (Col + 1)
+        return (Txt, RowId, ColId)
+
+    def SetCell (self, Row, Col, Val):
+        Iid  = self.get_children()[Row]
+        self.set (Iid, Col, Val)
+
+    def LoadBin (self):
+        # Load binary from file
+        Path = filedialog.askopenfilename(
+            initialdir=self.LastDir,
+            title="Load binary file",
+            filetypes=(("Binary files", "*.bin"), (
+                "binary files", "*.bin")))
+        if Path:
+            self.LastDir = os.path.dirname(Path)
+            Fd = open(Path, 'rb')
+            Bins = bytearray(Fd.read())[:self.Size]
+            Fd.close()
+            Bins.extend (b'\x00' * (self.Size - len(Bins)))
+            return Bins
+
+        return None
+
+    def Click (self, event):
+        RowId  = self.identify_row(event.y)
+        ColId  = self.identify_column(event.x)
+        if RowId == '' and ColId == '#1':
+            # Clicked on "LOAD" cell
+            Bins = self.LoadBin ()
+            self.RefreshBin (Bins)
+            return
+
+        if ColId == '#1':
+            # Clicked on column 1 (Offset column)
+            return
+
+        Item = self.identify('item', event.x, event.y)
+        if not Item:
+            # Not clicked on cell
+            return
+
+        # Clicked cell
+        Row    = int('0x' + RowId[1:], 0) - 1
+        Col    = int(ColId[1:]) - 1
+        if Row * self.Cols + Col > self.Size:
+            return
+
+        Vals = self.item(Item, 'values')
+        if Col < len(Vals):
+            Txt = self.item(Item, 'values')[Col]
+            self.entry.Display (Txt, RowId, ColId)
+
     def get(self):
         Bins = bytearray()
-        for Widget in self.winfo_children():
-            if not isinstance(Widget, ValidatingEntry):
-                continue
-            ByteLen = Widget.GetByteLen ()
-            Hex = Widget.get()
-            if not Hex:
-                break
-            Values = Val2Bytes (int(Hex, 16) & ((1 << ByteLen * 8) - 1), ByteLen)
-            Bins.extend(Values)
+        RowIds = self.get_children()
+        for RowId in RowIds:
+            Row = int('0x' + RowId[1:], 0) - 1
+            for Col in range(self.Cols):
+              Idx = Row * sum(self.ColByteLen) + sum(self.ColByteLen[:Col])
+              ByteLen = self.ColByteLen[Col]
+              if Idx + ByteLen > self.Size:
+                  break
+              Hex = self.item(RowId, 'values')[Col + 1]
+              Values = Val2Bytes (int(Hex, 16) & ((1 << ByteLen * 8) - 1), ByteLen)
+              Bins.extend(Values)
         return Bins
-
-    def destroy(self):
-        for Widget in self.winfo_children():
-            Widget.destroy()
-        Frame.destroy(self)
-
 
 class State:
     def __init__(self):
@@ -187,7 +335,6 @@ class State:
 
     def get(self):
         return self.state
-
 
 class Application(Frame):
     def __init__(self, master=None):
@@ -934,7 +1081,7 @@ class Application(Frame):
             self.SetObjectName(Name, 'LABEL_' + Item['cname'])
             self.SetObjectName(Widget, Item['cname'])
             Name.grid(row=Row, column=0, padx=10, pady=5, sticky="nsew")
-            Widget.grid(row=Row + 1, column=0, padx=10, pady=5, sticky="nsew")
+            Widget.grid(row=Row + 1, rowspan=1, column=0, padx=10, pady=5, sticky="nsew")
 
     def UpdateConfigDataOnPage(self):
         self.WalkWidgetsInLayout(self.RightGrid,
