@@ -54,7 +54,7 @@ class CreateToolTip(object):
         # Leaves only the label and removes the app window
         self.TopWin.wm_overrideredirect(True)
         self.TopWin.wm_geometry("+%d+%d" % (x, y))
-        label = Label(self.TopWin,
+        label = Message(self.TopWin,
                       text=self.Text,
                       justify='left',
                       background='bisque',
