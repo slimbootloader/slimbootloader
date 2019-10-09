@@ -194,25 +194,14 @@ SpiControllerInitialize (
   VOID
 )
 {
-  /* Enable PCI config space for SPI device */
-  PciWrite32(
-    PCI_LIB_ADDRESS (
-      DEFAULT_PCI_BUS_NUMBER_PCH,
-      PCI_DEVICE_NUMBER_PCH_SPI,
-      PCI_FUNCTION_NUMBER_PCH_SPI,
-      R_SPI_CFG_BAR0
-    ),
-    SPI_TEMP_MEM_BASE_ADDRESS
-  );
-  PciWrite8(
-    PCI_LIB_ADDRESS (
-      DEFAULT_PCI_BUS_NUMBER_PCH,
-      PCI_DEVICE_NUMBER_PCH_SPI,
-      PCI_FUNCTION_NUMBER_PCH_SPI,
-      PCI_COMMAND_OFFSET
-    ),
-    EFI_PCI_COMMAND_BUS_MASTER | EFI_PCI_COMMAND_MEMORY_SPACE
-  );
+  UINTN   SpiBaseAddress;
+
+  SpiBaseAddress = GetDeviceAddr (OsBootDeviceSpi, 0);
+  SpiBaseAddress = TO_MM_PCI_ADDRESS (SpiBaseAddress);
+
+  MmioWrite32 (SpiBaseAddress + R_SPI_CFG_BAR0, SPI_TEMP_MEM_BASE_ADDRESS);
+  MmioAnd8    (SpiBaseAddress + R_SPI_CFG_BC, (UINT8)~B_SPI_CFG_BC_EISS);
+
   SpiConstructor ();
 }
 

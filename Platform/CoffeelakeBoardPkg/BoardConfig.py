@@ -137,7 +137,7 @@ class Board(BaseBoard):
 		dsc_libs['IA32'] = [
 			'LoaderLib|Platform/CommonBoardPkg/Library/LoaderLib/LoaderLib.inf',
 			'PlatformHookLib|Silicon/$(SILICON_PKG_NAME)/Library/PlatformHookLib/PlatformHookLib.inf',
-			'PchSpiLib|Silicon/$(SILICON_PKG_NAME)/Library/PchSpiLib/PchSpiLib.inf',
+			'PchSpiLib|Silicon/CommonSocPkg/Library/PchSpiLib/PchSpiLib.inf',
 			'SpiFlashLib|Silicon/CommonSocPkg/Library/SpiFlashLib/SpiFlashLib.inf',
 			'PchSbiAccessLib|Silicon/$(SILICON_PKG_NAME)/Library/PchSbiAccessLib/PchSbiAccessLib.inf',
 			'PchInfoLib|Silicon/$(SILICON_PKG_NAME)/Library/PchInfoLib/PchInfoLib.inf',
