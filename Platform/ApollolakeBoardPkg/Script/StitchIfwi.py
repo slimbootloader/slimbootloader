@@ -361,9 +361,9 @@ def gen_fit_xml (fit_dir, src, dst, btg_profile, spi_quad):
 
     # Change SPI mode settings
     if spi_quad:
-        value = 'yes'
+        value = 'Yes'
     else:
-        value = 'no'
+        value = 'No'
     print("Set SPI QUAD mode: %s" % value)
     node = tree.find('./FlashSettings/FlashConfiguration/QuadIoReadEnable')
     node.attrib['value'] = value
