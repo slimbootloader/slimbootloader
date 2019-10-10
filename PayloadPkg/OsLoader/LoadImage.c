@@ -106,6 +106,7 @@ GetIasImageFromRawPartition (
   UINT8                      BlockData[4096];
   EFI_LBA                    LbaAddr;
   UINT8                      SwPart;
+  CONTAINER_HDR             *ContainerHdr;
 
   SwPart  = BootOption->Image[LoadedImage->LoadImageType].LbaImage.SwPart;
   LbaAddr = BootOption->Image[LoadedImage->LoadImageType].LbaImage.LbaAddr;
@@ -148,19 +149,28 @@ GetIasImageFromRawPartition (
              BlockData
              );
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "Read IAS image error, Status = %r\n", Status));
+    DEBUG ((DEBUG_INFO, "Read image error, Status = %r\n", Status));
     return Status;
   }
 
   //
   // Make sure to round the image size to be block aligned in bytes.
   //
-  ImageSize        = IAS_IMAGE_SIZE ((IAS_HEADER *) BlockData);
+  ContainerHdr = (CONTAINER_HDR *)BlockData;
+  if (ContainerHdr->Signature == CONTAINER_BOOT_SIGNATURE) {
+    ImageSize = ContainerHdr->DataOffset + ContainerHdr->DataSize;
+  } else if (ContainerHdr->Signature == IAS_MAGIC_PATTERN) {
+    ImageSize = IAS_IMAGE_SIZE ((IAS_HEADER *) BlockData);
+  } else {
+    DEBUG ((DEBUG_INFO, "No valid image header found !\n"));
+    return EFI_LOAD_ERROR;
+  }
+
   AlginedImageSize = ((ImageSize % BlockSize) == 0) ? \
                      ImageSize : \
                      ((ImageSize / BlockSize) + 1) * BlockSize;
   if (AlginedImageSize > MAX_IAS_IMAGE_SIZE) {
-    DEBUG ((DEBUG_INFO, "IAS image is bigger than limitation (0x%x). ImageSize=0x%x\n",
+    DEBUG ((DEBUG_INFO, "Image is bigger than limitation (0x%x). ImageSize=0x%x\n",
             MAX_IAS_IMAGE_SIZE, AlginedImageSize));
     return EFI_LOAD_ERROR;
   }
@@ -182,7 +192,7 @@ GetIasImageFromRawPartition (
              & (((UINT8 *)Buffer)[AlginedHeaderSize])
              );
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "Read rest of IAS image error, Status = %r\n", Status));
+    DEBUG ((DEBUG_INFO, "Read rest of image error, Status = %r\n", Status));
     return  Status;
   }
 
