@@ -49,8 +49,20 @@ CONST PLT_DEVICE  mPlatformDevices[]= {
 };
 
 CONST UINT16 mRcompResistor[3] = { 121, 75, 100 };
-CONST UINT16 mRcompTarget[5] = { 60, 26, 20, 20, 26 };
+CONST UINT16 mRcompTarget[5]   = { 60, 26, 20, 20, 26 };
 
+CONST UINT32 mUpxGpioBomPad[]  = {
+  GPIO_CNL_LP_GPP_C10,
+  GPIO_CNL_LP_GPP_C9,
+  GPIO_CNL_LP_GPP_C8,
+  GPIO_CNL_LP_GPP_A23,
+  GPIO_CNL_LP_GPP_A18,
+  GPIO_CNL_LP_GPP_C11
+};
+
+CONST GPIO_INIT_CONFIG mUpxBomGpioTemplate = {
+  GPIO_CNL_LP_GPP_C10, {GpioPadModeGpio, GpioHostOwnGpio, GpioDirIn, GpioOutDefault, GpioIntDis, GpioHostDeepReset, GpioTermNone}
+};
 
 /**
   Set the debug print error level fron CFG data.
@@ -241,10 +253,16 @@ PlatformIdInitialize (
   IN  VOID
   )
 {
+  UINT16              PlatformId;
   UINT16              CpuDid;
   UINT32              CpuFamilyModel;
   UINT8               CpuStepping;
   EFI_CPUID_REGISTER  Cpuid;
+  EFI_STATUS          Status;
+  UINT8               Idx;
+  UINT16              BomId;
+  UINT32              GpioData;
+  GPIO_INIT_CONFIG    UpxBomGpioTemplate;
 
   ///
   /// Read the CPUID & DID information
@@ -255,7 +273,34 @@ PlatformIdInitialize (
   CpuDid = PciRead16 (PCI_LIB_ADDRESS (SA_MC_BUS, SA_MC_DEV, SA_MC_FUN, R_SA_MC_DEVICE_ID));
 
   DEBUG ((DEBUG_ERROR, "CpuFamilyModel 0x%X, CpuStepping 0x%X, CpuDid 0x%X\n", CpuFamilyModel, CpuStepping, CpuDid));
-  if (GetPlatformId () != 0) {
+
+  PlatformId = GetPlatformId();
+  if (PlatformId == PLATFORM_ID_UPXTREME) {
+    // For UPX, further detect the BOM ID
+    BomId = 0;
+    CopyMem (&UpxBomGpioTemplate, &mUpxBomGpioTemplate, sizeof(UpxBomGpioTemplate));
+
+    for (Idx = 0; Idx < ARRAY_SIZE(mUpxGpioBomPad); Idx++) {
+      UpxBomGpioTemplate.GpioPad = mUpxGpioBomPad[Idx];
+      GpioConfigurePads (1, &UpxBomGpioTemplate);
+    }
+
+    for (Idx = 0; Idx < ARRAY_SIZE(mUpxGpioBomPad); Idx++) {
+      Status = GpioGetInputValue (mUpxGpioBomPad[Idx], &GpioData);
+      DEBUG ((DEBUG_INFO, "Idx %d %r\n", Idx, Status));
+      if (EFI_ERROR(Status)) {
+        break;
+      }
+      BomId = (BomId << 1) + (GpioData & 1);
+    }
+    if (Idx == ARRAY_SIZE(mUpxGpioBomPad)) {
+      DEBUG ((DEBUG_INFO, "UPX BomID: 0x%02X\n", BomId));
+      SetPlatformBomId (BomId);
+    }
+  }
+
+  if (PlatformId != 0) {
+    // PlatformID is assigned already, don't detect again.
     return;
   }
 
