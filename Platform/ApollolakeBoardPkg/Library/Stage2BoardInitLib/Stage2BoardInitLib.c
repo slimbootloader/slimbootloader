@@ -629,6 +629,10 @@ UpdatePayloadId (
   UINT32              PayloadId;
   UINT32              GpioLevel;
 
+  if (GetBootMode() == BOOT_ON_FLASH_UPDATE) {
+    return;
+  }
+
   PayloadId = 0;
   GenericCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);
   if (GenericCfgData != NULL) {

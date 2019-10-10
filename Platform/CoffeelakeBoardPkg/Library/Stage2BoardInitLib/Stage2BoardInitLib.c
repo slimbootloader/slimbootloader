@@ -91,7 +91,6 @@
   ((UINT32) (((A).PinNum) | (((A).Group) << 16)))
 
 FVID_TABLE                  *mFvidPointer    = NULL;
-SILICON_CFG_DATA            *mSiliconCfgData = NULL;
 ///
 /// Overcurrent pins, the values match the setting of EDS, please refer to EDS for more details
 ///
@@ -617,7 +616,6 @@ PatchCpuSsdtTable (
   }
 }
 
-
 /**
   Update bootloader reserved region.
 
@@ -1003,6 +1001,58 @@ GpioInit (
 }
 
 /**
+  Update current boot Payload ID.
+
+**/
+VOID
+UpdatePayloadId (
+  VOID
+  )
+{
+  EFI_STATUS      Status;
+  GEN_CFG_DATA    *GenericCfgData;
+  SILICON_CFG_DATA  *SiliconCfgData;
+  UINT32          PayloadSelGpioData;
+  UINT32          PayloadSelGpioPad;
+  UINT32          PayloadId;
+
+  PayloadId = GetPayloadId ();
+  GenericCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);
+  if (GenericCfgData != NULL) {
+    if (GenericCfgData->PayloadId == AUTO_PAYLOAD_ID_SIGNATURE) {
+      PayloadId = 0;
+    } else {
+      PayloadId = GenericCfgData->PayloadId;
+    }
+  }
+
+  //
+  // Switch payloads based on configured GPIO pin
+  //
+  SiliconCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
+  if ((SiliconCfgData != NULL) && (SiliconCfgData->PayloadSelGpio.Enable != 0)){
+    if (IsPchLp() == TRUE) {
+      PayloadSelGpioPad = GPIO_CFG_PIN_TO_PAD(SiliconCfgData->PayloadSelGpio) | (GPIO_CNL_LP_CHIPSET_ID << 24);
+    } else {
+      PayloadSelGpioPad = GPIO_CFG_PIN_TO_PAD(SiliconCfgData->PayloadSelGpio) | (GPIO_CNL_H_CHIPSET_ID << 24);
+    }
+    Status = GpioGetInputValue (PayloadSelGpioPad, &PayloadSelGpioData);
+    if (!EFI_ERROR (Status)) {
+      if (PayloadSelGpioData == 0) {
+        PayloadId = 0;
+      } else {
+        if ((GenericCfgData != NULL) && (GenericCfgData->PayloadId == AUTO_PAYLOAD_ID_SIGNATURE)) {
+          PayloadId = UEFI_PAYLOAD_ID_SIGNATURE;
+        }
+      }
+      DEBUG ((DEBUG_INFO, "Set PayloadId to 0x%08X based on GPIO config\n", PayloadId));
+    }
+  }
+
+  SetPayloadId (PayloadId);
+}
+
+/**
   Initialize Board specific things in Stage2 Phase
 
   @param[in]  InitPhase            Indicates a board init phase to be initialized
@@ -1013,7 +1063,6 @@ BoardInit (
   IN  BOARD_INIT_PHASE    InitPhase
 )
 {
-  GEN_CFG_DATA    *GenericCfgData;
   SILICON_CFG_DATA  *SiliconCfgData;
   EFI_STATUS      Status;
   UINT32          RgnBase;
@@ -1025,9 +1074,7 @@ BoardInit (
   UINT32          AddressPort;
   UINTN           SpiBar0;
   UINT32          Length;
-  UINT32          PayloadSelGpioData;
-  UINT32          PayloadSelGpioPad;
-  UINT32          PayloadId;
+
   EFI_PEI_GRAPHICS_INFO_HOB *FspGfxHob;
   LOADER_GLOBAL_DATA        *LdrGlobal;
 
@@ -1037,43 +1084,8 @@ BoardInit (
     GpioInit ();
     SpiConstructor ();
 
-    PayloadId = GetPayloadId ();
-    GenericCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);
-    if (GenericCfgData != NULL) {
-      if (GenericCfgData->PayloadId == AUTO_PAYLOAD_ID_SIGNATURE) {
-        PayloadId = 0;
-      } else {
-        PayloadId = GenericCfgData->PayloadId;
-      }
-    }
-
-    //
-    // Switch payloads based on configured GPIO pin
-    //
-    SiliconCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
-    if ((SiliconCfgData != NULL) && (SiliconCfgData->PayloadSelGpio.Enable != 0)){
-      if (IsPchLp() == TRUE) {
-        PayloadSelGpioPad = GPIO_CFG_PIN_TO_PAD(SiliconCfgData->PayloadSelGpio) | (GPIO_CNL_LP_CHIPSET_ID << 24);
-      } else {
-        PayloadSelGpioPad = GPIO_CFG_PIN_TO_PAD(SiliconCfgData->PayloadSelGpio) | (GPIO_CNL_H_CHIPSET_ID << 24);
-      }
-      Status = GpioGetInputValue (PayloadSelGpioPad, &PayloadSelGpioData);
-      if (!EFI_ERROR (Status)) {
-        if (PayloadSelGpioData == 0) {
-          PayloadId = 0;
-        } else {
-          if ((GenericCfgData != NULL) && (GenericCfgData->PayloadId == AUTO_PAYLOAD_ID_SIGNATURE)) {
-            PayloadId = UEFI_PAYLOAD_ID_SIGNATURE;
-          }
-        }
-        DEBUG ((DEBUG_INFO, "Set PayloadId to 0x%08X based on GPIO config\n", PayloadId));
-      }
-    }
-    mSiliconCfgData = SiliconCfgData;
-
-    SetPayloadId (PayloadId);
-
-    if (GetLoaderGlobalDataPointer ()->BootMode != BOOT_ON_FLASH_UPDATE) {
+    if (GetBootMode() != BOOT_ON_FLASH_UPDATE) {
+      UpdatePayloadId ();
       UpdateBlRsvdRegion ();
     }
     Status = GetComponentInfo (FLASH_MAP_SIG_VARIABLE, &RgnBase, &RgnSize);
@@ -2003,6 +2015,7 @@ PlatformUpdateAcpiTable (
   UINT16                       Size;
   LOADER_GLOBAL_DATA          *LdrGlobal;
   EFI_STATUS                   Status;
+  SILICON_CFG_DATA            *SiliconCfgData;
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
 
@@ -2013,7 +2026,8 @@ PlatformUpdateAcpiTable (
   End  = (UINT8 *)Table + Table->Length;
 
   if (Table->Signature == EFI_ACPI_5_0_EMBEDDED_CONTROLLER_BOOT_RESOURCES_TABLE_SIGNATURE) {
-    if ((mSiliconCfgData == NULL) || (mSiliconCfgData->ECEnable == 0)) {
+    SiliconCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
+    if ((SiliconCfgData == NULL) || (SiliconCfgData->ECEnable == 0)) {
       return EFI_UNSUPPORTED;
     }
   }
