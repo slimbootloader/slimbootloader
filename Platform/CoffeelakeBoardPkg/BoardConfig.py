@@ -93,7 +93,7 @@ class Board(BaseBoard):
 			self.UEFI_VARIABLE_SIZE = 0x00040000
 		else:
 			self.UEFI_VARIABLE_SIZE = 0x1000
-		self.EPAYLOAD_SIZE        = 0x00180000
+		self.EPAYLOAD_SIZE        = 0x00190000
 		self.UCODE_SIZE           = 0x0007A000
 		self.MRCDATA_SIZE         = 0x00008000
 		self.CFGDATA_SIZE         = 0x00004000
