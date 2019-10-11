@@ -52,12 +52,12 @@ CONST UINT16 mRcompResistor[3] = { 121, 75, 100 };
 CONST UINT16 mRcompTarget[5]   = { 60, 26, 20, 20, 26 };
 
 CONST UINT32 mUpxGpioBomPad[]  = {
-  GPIO_CNL_LP_GPP_C10,
-  GPIO_CNL_LP_GPP_C9,
-  GPIO_CNL_LP_GPP_C8,
-  GPIO_CNL_LP_GPP_A23,
-  GPIO_CNL_LP_GPP_A18,
-  GPIO_CNL_LP_GPP_C11
+  GPIO_CNL_LP_GPP_C10,  // BRD_ID2
+  GPIO_CNL_LP_GPP_C9,   // BRD_ID1
+  GPIO_CNL_LP_GPP_C8,   // BRD_ID0
+  GPIO_CNL_LP_GPP_A23,  // DDR_ID2
+  GPIO_CNL_LP_GPP_A18,  // DDR_ID1
+  GPIO_CNL_LP_GPP_C11   // DDR_ID0
 };
 
 CONST GPIO_INIT_CONFIG mUpxBomGpioTemplate = {
@@ -101,8 +101,10 @@ UpdateFspConfig (
   MEMORY_CFG_DATA                 *MemCfgData;
   GPU_CFG_DATA                    *GpuCfgData;
   UINT16                           PlatformId;
+  UINT16                           BomId;
   PEG_GPIO_DATA                   *PegGpioData;
-  UINT32                          SpdData[3];
+  UINT32                           SpdData[3];
+  UINT32                           SpdPtr;
 
   FspmUpd       = (FSPM_UPD *)FspmUpdPtr;
   Fspmcfg       = &FspmUpd->FspmConfig;
@@ -128,10 +130,38 @@ UpdateFspConfig (
     SpdData[1] = (UINT32) (((MEM_SPD0_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD0_TAG))->MemorySpdPtr0);
     SpdData[2] = (UINT32) (((MEM_SPD1_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD1_TAG))->MemorySpdPtr1);
 
-    Fspmcfg->MemorySpdPtr00       = SpdData[MemCfgData->SpdDataSel00];
-    Fspmcfg->MemorySpdPtr01       = SpdData[MemCfgData->SpdDataSel01];
-    Fspmcfg->MemorySpdPtr10       = SpdData[MemCfgData->SpdDataSel10];
-    Fspmcfg->MemorySpdPtr11       = SpdData[MemCfgData->SpdDataSel11];
+    if (PlatformId == PLATFORM_ID_UPXTREME) {
+      // For UPX, using BomID to decide SPD data instead.
+      BomId = GetPlatformBomId ();
+      // BOMID [1:0]
+      //   0: 16G A & B CH
+      //   1:  8G A CH
+      //   2:  8G A & B CH
+      //   3:  4G A CH
+      if ((BomId & BIT1) == BIT1) {
+        SpdPtr = SpdData[2];
+      } else {
+        SpdPtr = SpdData[1];
+      }
+      if ((BomId & BIT0) == BIT0) {
+        // Single Channel
+        Fspmcfg->MemorySpdPtr00 = SpdPtr;
+        Fspmcfg->MemorySpdPtr01 = 0;
+        Fspmcfg->MemorySpdPtr11 = 0;
+        Fspmcfg->MemorySpdPtr10 = 0;
+      } else {
+        // Dual Channel
+        Fspmcfg->MemorySpdPtr00 = SpdPtr;
+        Fspmcfg->MemorySpdPtr01 = 0;
+        Fspmcfg->MemorySpdPtr10 = SpdPtr;
+        Fspmcfg->MemorySpdPtr11 = 0;
+      }
+    } else {
+      Fspmcfg->MemorySpdPtr00       = SpdData[MemCfgData->SpdDataSel00];
+      Fspmcfg->MemorySpdPtr01       = SpdData[MemCfgData->SpdDataSel01];
+      Fspmcfg->MemorySpdPtr10       = SpdData[MemCfgData->SpdDataSel10];
+      Fspmcfg->MemorySpdPtr11       = SpdData[MemCfgData->SpdDataSel11];
+    }
   }
   //Dq/Dqs Mapping arrays
   CopyMem (&Fspmcfg->DqByteMapCh0, MemCfgData->DqByteMapCh0, sizeof(MemCfgData->DqByteMapCh0));
@@ -280,19 +310,21 @@ PlatformIdInitialize (
     BomId = 0;
     CopyMem (&UpxBomGpioTemplate, &mUpxBomGpioTemplate, sizeof(UpxBomGpioTemplate));
 
+    // Initialize all GPIO pins to input
     for (Idx = 0; Idx < ARRAY_SIZE(mUpxGpioBomPad); Idx++) {
       UpxBomGpioTemplate.GpioPad = mUpxGpioBomPad[Idx];
       GpioConfigurePads (1, &UpxBomGpioTemplate);
     }
 
+    // Sample the GPIO pin level
     for (Idx = 0; Idx < ARRAY_SIZE(mUpxGpioBomPad); Idx++) {
       Status = GpioGetInputValue (mUpxGpioBomPad[Idx], &GpioData);
-      DEBUG ((DEBUG_INFO, "Idx %d %r\n", Idx, Status));
       if (EFI_ERROR(Status)) {
         break;
       }
       BomId = (BomId << 1) + (GpioData & 1);
     }
+
     if (Idx == ARRAY_SIZE(mUpxGpioBomPad)) {
       DEBUG ((DEBUG_INFO, "UPX BomID: 0x%02X\n", BomId));
       SetPlatformBomId (BomId);
