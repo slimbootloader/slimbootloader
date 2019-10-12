@@ -297,14 +297,14 @@ AhciDeinitialize (
       );
   }
 
-  if (AhciRegisters->AhciCommandTable != NULL) {
+  if (AhciRegisters->AhciCmdList != NULL) {
     FreePages (
       AhciRegisters->AhciCmdList,
       EFI_SIZE_TO_PAGES ((UINTN) AhciRegisters->MaxCommandListSize)
       );
   }
 
-  if (AhciRegisters->AhciCommandTable != NULL) {
+  if (AhciRegisters->AhciRFis != NULL) {
     FreePages (
       AhciRegisters->AhciRFis,
       EFI_SIZE_TO_PAGES ((UINTN) AhciRegisters->MaxReceiveFisSize)
