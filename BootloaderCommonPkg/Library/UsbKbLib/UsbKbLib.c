@@ -7,6 +7,7 @@
 **/
 
 #include <UsbKbLibInternal.h>
+#include <Library/TimeStampLib.h>
 
 CONST  CHAR8  *mKeyboardKeyMap[] = {
   "abcdefghijklmnopqrstuvwxyz1234567890\r\x1b\b\t -=[]\\ ;'`,./",
@@ -340,6 +341,7 @@ UsbFindUsbKbDevice (
     UsbKbDevice->UsbIo               = UsbIoPpi;
     UsbKbDevice->InterfaceDescriptor = *InterfaceDesc;
     UsbKbDevice->EndpointDescriptor  = *EndpointDescriptor;
+    UsbKbDevice->TimeStampFreqKhz    = GetTimeStampFrequency ();
   }
 
   Status = UsbSetProtocolRequest (
@@ -586,6 +588,7 @@ KeyboardPoll (
   BOOLEAN          KeyPress;
   UINT8           *CurKeyCodeBuffer;
   UINT8           *OldKeyCodeBuffer;
+  UINT32           DeltaMs;
 
   UsbKbDevice = &mUsbKbDevice;
   if (UsbKbDevice->Signature != USB_KB_DEVICE_SIG) {
@@ -595,14 +598,25 @@ KeyboardPoll (
   // Use interrupt transfer to get report
   Char     = 0;
   DataSize = sizeof (KeyBuf);
-  Status   = UsbKbDevice->UsbIo->UsbBulkTransfer (
+
+  DeltaMs = (UINT32)DivU64x32 (
+                   ReadTimeStamp () - UsbKbDevice->LastTransferTimeStamp,
+                   UsbKbDevice->TimeStampFreqKhz
+                  );
+  if (DeltaMs > UsbKbDevice->EndpointDescriptor.Interval) {
+    Status   = UsbKbDevice->UsbIo->UsbBulkTransfer (
                NULL,
                UsbKbDevice->UsbIo,
                UsbKbDevice->EndpointDescriptor.EndpointAddress,
                KeyBuf,
                &DataSize,
-               PcdGet32 (PcdUsbKeyboardPollingTimeout)
+               UsbKbDevice->EndpointDescriptor.Interval
                );
+    UsbKbDevice->LastTransferTimeStamp = ReadTimeStamp ();
+  } else {
+    Status   = EFI_NOT_READY;
+  }
+
   if (!EFI_ERROR (Status)) {
     CurKeyCodeBuffer  = (UINT8 *) KeyBuf;
     OldKeyCodeBuffer  = UsbKbDevice->LastKeyCodeArray;
@@ -681,7 +695,17 @@ KeyboardPoll (
       CopyMem (OldKeyCodeBuffer, CurKeyCodeBuffer, sizeof(OldKeyCodeBuffer));
 
     } else {
-      // Handle key repeat
+      // No new data in key buffer
+      for (Index = 2; Index < 8; Index++) {
+        if (CurKeyCodeBuffer[Index] != 0) {
+          break;
+        }
+      }
+      if (Index == 8) {
+        // All key released, stop repeating
+        UsbKbDevice->RepeatKey = 0;
+      }
+
       if (UsbKbDevice->RepeatKey > 0) {
         if (UsbKbDevice->RepeatCounter < KEY_REPEAT_DELAY) {
           UsbKbDevice->RepeatCounter++;
