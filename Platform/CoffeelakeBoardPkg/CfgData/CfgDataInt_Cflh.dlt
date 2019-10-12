@@ -39,6 +39,13 @@ MEMORY_CFG_DATA.DualDpc                   | 0x01
 
 GPU_CFG_DATA.DdiPortFHpd                  | 0x0
 
+POWER_CFG_DATA.OneCoreRatioLimit          | 0x29
+POWER_CFG_DATA.TwoCoreRatioLimit          | 0x28
+POWER_CFG_DATA.ThreeCoreRatioLimit        | 0x27
+POWER_CFG_DATA.FourCoreRatioLimit         | 0x26
+POWER_CFG_DATA.FiveCoreRatioLimit         | 0x25
+POWER_CFG_DATA.SixCoreRatioLimit          | 0x24
+
 GPIO_CFG_DATA.GpioPinConfig1_GPP_A00.GPIOSkip_GPP_A00 | 1
 GPIO_CFG_DATA.GpioPinConfig1_GPP_A01.GPIOSkip_GPP_A01 | 1
 GPIO_CFG_DATA.GpioPinConfig1_GPP_A02.GPIOSkip_GPP_A02 | 1
