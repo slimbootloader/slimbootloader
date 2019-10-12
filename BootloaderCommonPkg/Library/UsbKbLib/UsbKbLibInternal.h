@@ -54,6 +54,8 @@ typedef struct {
   UINT8                               RepeatKey;
   CHAR8                               RepeatChar;
   UINT8                               LastKeyCodeArray[8];
+  UINT32                              TimeStampFreqKhz;
+  UINT64                              LastTransferTimeStamp;
 } USB_KB_DEV;
 
 #endif
