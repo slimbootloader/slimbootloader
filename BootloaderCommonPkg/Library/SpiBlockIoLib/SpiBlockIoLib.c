@@ -32,6 +32,11 @@ InitializeSpi (
 {
   EFI_STATUS Status;
 
+  if (DevInitPhase == DevDeinit) {
+    // Handle Deinit if required.
+    return EFI_SUCCESS;
+  }
+
   mSpiService = (SPI_FLASH_SERVICE *) GetServiceBySignature (SPI_FLASH_SERVICE_SIGNATURE);
   if (mSpiService == NULL) {
     return EFI_UNSUPPORTED;

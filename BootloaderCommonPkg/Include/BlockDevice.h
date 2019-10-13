@@ -19,7 +19,8 @@ typedef struct {
 typedef enum {
   DevInitAll,
   DevInitOnlyPhase1,
-  DevInitOnlyPhase2
+  DevInitOnlyPhase2,
+  DevDeinit
 } DEVICE_INIT_PHASE;
 
 /**

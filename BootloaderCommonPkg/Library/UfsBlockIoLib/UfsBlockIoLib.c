@@ -1287,6 +1287,14 @@ InitializeUfs (
   UINT8                         Controller;
   UFS_HC_PEI_PRIVATE_DATA      *UfsPrivateHcData;
 
+  if (DevInitPhase == DevDeinit) {
+    if (gPrivate != NULL) {
+      FreePool (gPrivate);
+      gPrivate = NULL;
+    }
+    return EFI_SUCCESS;
+  }
+
   gPrivate = (UFS_PEIM_HC_PRIVATE_DATA *)AllocatePool (sizeof (UFS_PEIM_HC_PRIVATE_DATA));
   if (gPrivate == NULL) {
     DEBUG ((EFI_D_ERROR, "Failed to allocate memory for UFS_PEIM_HC_PRIVATE_DATA! \n"));

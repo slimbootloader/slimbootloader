@@ -262,6 +262,18 @@ NvmeInitialize (
   NVME_CONTROLLER_PRIVATE_DATA        *Private;
   EFI_PHYSICAL_ADDRESS                PhysicalAddress;
 
+  if (NvmeInitMode == DevDeinit) {
+    Private = mNvmeCtrlPrivate;
+    if ((Private != NULL) && (Private->ControllerData != NULL)) {
+      FreePool (Private->ControllerData);
+    }
+    if (Private != NULL) {
+      FreePool (Private);
+    }
+    mNvmeCtrlPrivate = NULL;
+    return EFI_SUCCESS;
+  }
+
   DEBUG ((EFI_D_INFO, "NvmExpressDriverBindingStart: start\n"));
 
   Private          = NULL;

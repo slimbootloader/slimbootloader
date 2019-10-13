@@ -326,7 +326,8 @@ AhciDeinitialize (
   @param[in]  DevInitPhase       For the performance optimization,
                                  Device initialization is separated to several phases.
 
-  @retval EFI_SUCCESS            The driver is successfully initialized.
+  @retval EFI_SUCCESS            The driver is successfully initialized or deinitialized.
+  @retval EFI_UNSUPPORTED        Unsupported initialization phase.
   @retval EFI_NOT_FOUND          Can't find any AHCI block devices for boot.
   @retval EFI_OUT_OF_RESOURCES   Not sufficient memory.
   @retval EFI_DEVICE_ERROR       Hardware error during the initialization.
@@ -341,12 +342,23 @@ AhciInitialize (
   EFI_STATUS            Status;
   EFI_AHCI_CONTROLLER  *AhciPrivateData;
 
-  DEBUG ((EFI_D_INFO, "Init AHCI Device %X\n", AhciHcPciBase));
+  DEBUG ((EFI_D_INFO, "%a AHCI controller %X\n", (DevInitPhase == DevDeinit) ? "Deinit" : "Init", AhciHcPciBase));
+
+  if (DevInitPhase == DevDeinit) {
+    if (mAhciPrivateData != NULL) {
+      AhciDeinitialize (mAhciPrivateData);
+      mAhciPrivateData = NULL;
+    }
+    return EFI_SUCCESS;
+  }
+
+  if (DevInitPhase != DevInitAll) {
+    return EFI_UNSUPPORTED;
+  }
 
   if (mAhciPrivateData != NULL) {
-    DEBUG ((EFI_D_INFO, "Re-init AHCI controller\n"));
-    AhciDeinitialize (mAhciPrivateData);
-    mAhciPrivateData = NULL;
+    DEBUG ((EFI_D_INFO, "Skip reinit AHCI controller\n"));
+    return EFI_SUCCESS;
   }
 
   AhciPrivateData = AllocatePool (sizeof (EFI_AHCI_CONTROLLER));
@@ -367,6 +379,8 @@ AhciInitialize (
   Status = AhciModeInitialization (AhciPrivateData);
   if (!EFI_ERROR (Status)) {
     mAhciPrivateData = AhciPrivateData;
+  } else {
+    AhciDeinitialize (AhciPrivateData);
   }
 
   return Status;
