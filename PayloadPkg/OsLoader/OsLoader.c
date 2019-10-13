@@ -519,6 +519,23 @@ PrintStackHeapInfo (
   }
 }
 
+/**
+  The function will de-initialize boot device.
+
+**/
+VOID
+DeinitBootDevices (
+  VOID
+  )
+{
+  // Deinit boot media
+  MediaInitialize (0, DevDeinit);
+
+  if ((PcdGet32 (PcdConsoleInDeviceMask) & ConsoleInUsbKeyboard) != 0) {
+    // Deinit USB devices if USB keyboard console is active
+    DeinitUsbDevices ();
+  }
+}
 
 /**
   This function will send FSP notification, indicate ReadyToBoot event to TPM and print
@@ -552,8 +569,8 @@ BeforeOSJump (
   }
   AddMeasurePoint (0x4100);
 
-  // De-init USB before OS boot.
-  DeinitUsbDevices ();
+  // De-init boot devices before OS boot.
+  DeinitBootDevices ();
 
   // Print performance data
   PrintLinuxMeasurePoint ();
@@ -899,8 +916,8 @@ PayloadMain (
       break;
     }
 
-    // De-init USB to prevent issues while restarting payload.
-    DeinitUsbDevices ();
+    // De-init boot devices while restarting payload.
+    DeinitBootDevices ();
 
     //
     // Use switch stack to ensure stack will be rolled back to original point.

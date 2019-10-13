@@ -72,6 +72,12 @@ InitializeUsb (
   UINT32            UsbIoCount;
   PEI_USB_IO_PPI  **UsbIoArray;
 
+  if (DevInitPhase == DevDeinit) {
+    DeinitUsbDevices ();
+    mUsbBlkCount = 0;
+    return EFI_SUCCESS;
+  }
+
   mUsbBlkCount = 0;
   Status = InitUsbDevices (UsbHcPciBase);
   if (!EFI_ERROR(Status)) {

@@ -452,6 +452,10 @@ MmcInitialize (
   IN  DEVICE_INIT_PHASE   MmcInitMode
   )
 {
+  if (MmcInitMode == DevDeinit) {
+    // Handle Deinit if required.
+    return EFI_SUCCESS;
+  }
   return SdMmcInitialize (MmcHcPciBase, EmmcCardType, MmcInitMode);
 }
 
@@ -479,6 +483,9 @@ SdInitialize (
   IN  DEVICE_INIT_PHASE   SdInitMode
   )
 {
-
+  if (SdInitMode == DevDeinit) {
+    // Handle Deinit if required.
+    return EFI_SUCCESS;
+  }
   return SdMmcInitialize (SdHcPciBase, SdCardType, SdInitMode);
 }
