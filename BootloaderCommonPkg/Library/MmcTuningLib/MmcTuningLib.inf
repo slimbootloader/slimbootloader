@@ -40,3 +40,5 @@
 [Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdMmcTuningLibId
   gPlatformCommonLibTokenSpaceGuid.PcdMmcTuningLba
+  gPlatformCommonLibTokenSpaceGuid.PcdEmmcHs400SupportEnabled
+

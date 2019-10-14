@@ -1112,8 +1112,15 @@ MmcSetBusMode (
     // The host controller supports 8bits bus.
     //
     ASSERT (BusWidth == 8);
-    HsTiming  = 3;
-    IsDdr     = TRUE;
+    if (FeaturePcdGet (PcdEmmcHs400SupportEnabled)) {
+      HsTiming  = 3;
+      IsDdr     = TRUE;
+    } else {
+      // Fallback to HS200 if HS400 needs to be disabled
+      HsTiming  = 2;
+      IsDdr     = FALSE;
+      DEBUG ((DEBUG_INFO, "Degrade HS400 to HS200 per request\n"));
+    }
     ClockFreq = 200;
   }
 

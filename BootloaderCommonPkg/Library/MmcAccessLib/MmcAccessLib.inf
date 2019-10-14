@@ -38,3 +38,4 @@
 [Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdEmmcBlockDeviceLibId
   gPlatformCommonLibTokenSpaceGuid.PcdEmmcMaxRwBlockNumber
+  gPlatformCommonLibTokenSpaceGuid.PcdEmmcHs400SupportEnabled
