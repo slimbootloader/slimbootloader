@@ -781,11 +781,13 @@ MmcSetDlls (
 {
   UINTN   EmmcBaseAddress;
 
-  EmmcBaseAddress   = MmioRead32 (EmmcHcPciBase + PCI_BASE_ADDRESSREG_OFFSET) & 0xFFFFF000;
+  if ((EmmcTuningData != NULL) && (EmmcTuningData->Hs400DataValid)) {
+    EmmcBaseAddress   = MmioRead32 (EmmcHcPciBase + PCI_BASE_ADDRESSREG_OFFSET) & 0xFFFFF000;
 
-  EmmcSetRxDllCtrl (EmmcBaseAddress, RxDll1, EmmcTuningData->Hs400RxStrobe1Dll, RegList);
-  EmmcSetRxDllCtrl (EmmcBaseAddress, RxDll2, EmmcTuningData->Hs400RxStrobe1Dll, RegList);
-  EmmcSetTxDllCtrl1 (EmmcBaseAddress, EmmcTuningData->Hs400TxDataDll, RegList);
+    EmmcSetRxDllCtrl (EmmcBaseAddress, RxDll1, EmmcTuningData->Hs400RxStrobe1Dll, RegList);
+    EmmcSetRxDllCtrl (EmmcBaseAddress, RxDll2, EmmcTuningData->Hs400RxStrobe1Dll, RegList);
+    EmmcSetTxDllCtrl1 (EmmcBaseAddress, EmmcTuningData->Hs400TxDataDll, RegList);
+  }
 }
 
 
@@ -968,18 +970,21 @@ MmcTuning (
   // Now need do eMMC tunning.
   // Mask of all output since errors are expected during tuning
   //
-  DEBUG ((DEBUG_INFO, "Execute eMMC tunning\n"));
-  PrintLevel = GetDebugPrintErrorLevel ();
-  SetDebugPrintErrorLevel (0);
-  Status = DoMmcTuneDlls (MmcHcPciBase, &EmmcTuningData);
-  SetDebugPrintErrorLevel (PrintLevel);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "MMC MmcTuneDlls error, status = %r\n", Status));
-    return Status;
-  }
+  if (FeaturePcdGet (PcdEmmcHs400SupportEnabled)) {
+    // Only do eMMC tunning when HS400 is enabled.
+    DEBUG ((DEBUG_INFO, "Execute eMMC tunning\n"));
+    PrintLevel = GetDebugPrintErrorLevel ();
+    SetDebugPrintErrorLevel (0);
+    Status = DoMmcTuneDlls (MmcHcPciBase, &EmmcTuningData);
+    SetDebugPrintErrorLevel (PrintLevel);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "MMC MmcTuneDlls error, status = %r\n", Status));
+      return Status;
+    }
 
-  DEBUG ((DEBUG_INFO, "eMMC tunning done, RxDll=%02X TxDll=%02X\n",
-    EmmcTuningData.Hs400RxStrobe1Dll, EmmcTuningData.Hs400TxDataDll));
+    DEBUG ((DEBUG_INFO, "eMMC tunning done, RxDll=%02X TxDll=%02X\n",
+      EmmcTuningData.Hs400RxStrobe1Dll, EmmcTuningData.Hs400TxDataDll));
+  }
 
   // Todo: Serial number should be removed from this function later.
   Status = EmmcGetSerialNumber (EmmcTuningData.SerialNumber, sizeof(EmmcTuningData.SerialNumber));

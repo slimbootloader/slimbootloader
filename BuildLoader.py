@@ -192,6 +192,7 @@ class BaseBoard(object):
 		self.ENABLE_LINUX_PAYLOAD  = 0
 		self.ENABLE_CONTAINER_BOOT = 1
 		self.ENABLE_CSME_UPDATE    = 0
+		self.ENABLE_EMMC_HS400     = 1
 
 		self.BUILD_CSME_UPDATE_DRIVER    = 0
 
