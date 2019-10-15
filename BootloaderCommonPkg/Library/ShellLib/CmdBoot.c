@@ -117,10 +117,11 @@ SwapBootEntries (
   Get the OS boot entry's file info.
 
   @param[in]      Shell        shell instance
-  @param[in, out]  Buffer       buffer for Shell user input
+  @param[in, out] Buffer       buffer for Shell user input
   @param[in]      BufferSize   size of the Buffer in bytes
   @param[out]     BootOption   update the boot entry with the device type,
                                address, and partition info
+  @param[in]      CurrOption   the current boot entry value
 
   @retval EFI_SUCCESS
 
@@ -130,7 +131,8 @@ GetBootDeviceInfo (
   IN     SHELL               *Shell,
   IN OUT CHAR16              *Buffer,
   IN     UINTN               BufferSize,
-  OUT    OS_BOOT_OPTION      *BootOption
+  OUT    OS_BOOT_OPTION      *BootOption,
+  IN     OS_BOOT_OPTION      *CurrOption
   )
 {
   EFI_STATUS                 Status;
@@ -140,54 +142,60 @@ GetBootDeviceInfo (
     ShellPrint (L"Enter DevType (SATA 0x%X, SD 0x%X, eMMC 0x%X, UFS 0x%X, SPI 0x%X, USB 0x%X, NVMe 0x%X)\n",
                 OsBootDeviceSata, OsBootDeviceSd, OsBootDeviceEmmc, OsBootDeviceUfs, OsBootDeviceSpi, OsBootDeviceUsb, OsBootDeviceNvme
                 );
+    ShellPrint (L"(default 0x%X) ", CurrOption->DevType);
     Status = ShellReadUintn (Shell, Buffer, BufferSize, &IsHex);
     if (EFI_ERROR (Status)) {
       return Status;
     }
     BootOption->DevType = (OS_BOOT_MEDIUM_TYPE) ((IsHex) ? StrHexToUintn (Buffer) : StrDecimalToUintn (Buffer));
 
-    if ((BootOption->DevType < OsBootDeviceMax) && (StrLen (Buffer) > 0)) {
+    if (StrLen (Buffer) == 0) {
+      BootOption->DevType = CurrOption->DevType;
+      break;
+    } else if (BootOption->DevType < OsBootDeviceMax) {
       break;
     }
     ShellPrint (L"Invalid DevType value '%s', please re-enter\n", Buffer);
   } while (1);
 
-  do {
-    ShellPrint (L"Enter DevInstance (uint)\n");
-    Status = ShellReadUintn (Shell, Buffer, BufferSize, &IsHex);
-    if (EFI_ERROR (Status)) {
-      return Status;
-    }
+  ShellPrint (L"Enter DevInstance (uint)\n");
+  ShellPrint (L"(default 0x%X) ", CurrOption->DevInstance);
+  Status = ShellReadUintn (Shell, Buffer, BufferSize, &IsHex);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+  if (StrLen (Buffer) == 0) {
+    BootOption->DevInstance = CurrOption->DevInstance;
+  } else {
     BootOption->DevInstance = (UINT8)((IsHex) ? StrHexToUintn (Buffer) : StrDecimalToUintn (Buffer));
-    if (StrLen (Buffer) > 0) {
-      break;
-    }
-    ShellPrint (L"Invalid DevInstance value '%s', please re-enter\n", Buffer);
-  } while (1);
+  }
 
-  do {
-    ShellPrint (L"Enter HwPart (uint)\n");
-    Status = ShellReadUintn (Shell, Buffer, BufferSize, &IsHex);
-    if (EFI_ERROR (Status)) {
-      return Status;
-    }
+  ShellPrint (L"Enter HwPart (uint)\n");
+  ShellPrint (L"(default 0x%X) ", CurrOption->HwPart);
+  Status = ShellReadUintn (Shell, Buffer, BufferSize, &IsHex);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+  if (StrLen (Buffer) == 0) {
+    BootOption->HwPart = CurrOption->HwPart;
+  } else {
     BootOption->HwPart = (UINT8) ((IsHex) ? StrHexToUintn (Buffer) : StrDecimalToUintn (Buffer));
-    if (StrLen (Buffer) > 0) {
-      break;
-    }
-    ShellPrint (L"Invalid HwPart value '%s', please re-enter\n", Buffer);
-  } while (1);
+  }
 
   do {
     ShellPrint (L"Enter FsType (FAT (0x%X), EXT2/3 (0x%X), Auto (0x%X), RAW (0x%X)\n",
                 EnumFileSystemTypeFat, EnumFileSystemTypeExt2, EnumFileSystemTypeAuto,
                 EnumFileSystemMax);
+    ShellPrint (L"(default 0x%X) ", CurrOption->FsType);
     Status = ShellReadUintn (Shell, Buffer, BufferSize, &IsHex);
     if (EFI_ERROR (Status)) {
       return Status;
     }
-    BootOption->FsType = (OS_FILE_SYSTEM_TYPE) ((IsHex) ? StrHexToUintn (Buffer) : StrDecimalToUintn (Buffer));
-    if ((((UINT8)BootOption->FsType) <= ((UINT8)EnumFileSystemMax)) && (StrLen (Buffer) > 0)) {
+    if (StrLen (Buffer) == 0) {
+      BootOption->FsType = CurrOption->FsType;
+      break;
+    } else if (((UINT8)BootOption->FsType) <= ((UINT8)EnumFileSystemMax)) {
+      BootOption->FsType = (OS_FILE_SYSTEM_TYPE) ((IsHex) ? StrHexToUintn (Buffer) : StrDecimalToUintn (Buffer));
       break;
     }
     ShellPrint (L"Invalid value '%s', please re-enter\n", Buffer);
@@ -200,18 +208,17 @@ GetBootDeviceInfo (
   //
   // Get software partition for file system
   //
-  do {
-    ShellPrint (L"Enter SwPart (uint)\n");
-    Status = ShellReadUintn (Shell, Buffer, BufferSize, &IsHex);
-    if (EFI_ERROR (Status)) {
-      return Status;
-    }
+  ShellPrint (L"Enter SwPart (uint)\n");
+  ShellPrint (L"(default 0x%X) ", CurrOption->SwPart);
+  Status = ShellReadUintn (Shell, Buffer, BufferSize, &IsHex);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+  if (StrLen (Buffer) == 0) {
+    BootOption->SwPart = CurrOption->SwPart;
+  } else {
     BootOption->SwPart = (UINT8) ((IsHex) ? StrHexToUintn (Buffer) : StrDecimalToUintn (Buffer));
-    if (StrLen (Buffer) > 0) {
-      break;
-    }
-    ShellPrint (L"Invalid SwPart value '%s', please re-enter\n", Buffer);
-  } while (1);
+  }
 
   return EFI_SUCCESS;
 }
@@ -224,6 +231,7 @@ GetBootDeviceInfo (
   @param[in]      BufferSize   size of the Buffer in bytes
   @param[out]     BootOption   update the boot entry with the file system type
                                and file path user values
+  @param[in]      CurrOption   the current boot entry value
 
   @retval EFI_SUCCESS
 
@@ -233,7 +241,8 @@ GetBootFileInfo (
   IN     SHELL               *Shell,
   IN OUT CHAR16              *Buffer,
   IN     UINTN               BufferSize,
-  OUT    OS_BOOT_OPTION      *BootOption
+  OUT    OS_BOOT_OPTION      *BootOption,
+  IN     OS_BOOT_OPTION      *CurrOption
   )
 {
   EFI_STATUS                 Status;
@@ -243,16 +252,21 @@ GetBootFileInfo (
     ShellPrint (L"Enter file path string (max length of %d)\n",
                 sizeof (BootOption->Image[0].FileName) - 1
                 );
+    ShellPrint (L"(default '%a') ", CurrOption->Image[0].FileName);
     Status = ShellReadLine (Shell, Buffer, BufferSize);
     if (EFI_ERROR (Status)) {
       return Status;
     }
     Length = StrLen (Buffer);
-    if ((Length < sizeof (BootOption->Image[0].FileName)) && (Length > 0)) {
+    if (Length == 0) {
+      CopyMem (BootOption->Image[0].FileName, CurrOption->Image[0].FileName, sizeof (CurrOption->Image[0].FileName));
+      break;
+    }
+    if (Length < sizeof (BootOption->Image[0].FileName)) {
       UnicodeStrToAsciiStrS (Buffer, (CHAR8 *)BootOption->Image[0].FileName, sizeof (BootOption->Image[0].FileName));
       break;
     }
-    ShellPrint (L"Invalid, too long/short: '%s' len=%d, please re-enter\n", Buffer, Length);
+    ShellPrint (L"Invalid, too long: '%s' len=%d, please re-enter\n", Buffer, Length);
   } while (1);
 
   return EFI_SUCCESS;
@@ -265,6 +279,7 @@ GetBootFileInfo (
   @param[in, out] Buffer       buffer for Shell user input
   @param[in]      BufferSize   size of the Buffer in bytes
   @param[out]     BootOption   update the boot entry with the LBA user values
+  @param[in]      CurrOption   the current boot entry value
 
   @retval EFI_SUCCESS
 
@@ -274,37 +289,36 @@ GetBootLbaInfo (
   IN     SHELL               *Shell,
   IN OUT CHAR16              *Buffer,
   IN     UINTN               BufferSize,
-  OUT    OS_BOOT_OPTION      *BootOption
+  OUT    OS_BOOT_OPTION      *BootOption,
+  IN     OS_BOOT_OPTION      *CurrOption
   )
 {
   EFI_STATUS                 Status;
   BOOLEAN                    IsHex;
 
-  do {
-    ShellPrint (L"Enter SwPart (uint)\n");
-    Status = ShellReadUintn (Shell, Buffer, BufferSize, &IsHex);
-    if (EFI_ERROR (Status)) {
-      return Status;
-    }
+  ShellPrint (L"Enter SwPart (uint)\n");
+  ShellPrint (L"(default 0x%X) ", CurrOption->Image[0].LbaImage.SwPart);
+  Status = ShellReadUintn (Shell, Buffer, BufferSize, &IsHex);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+  if (StrLen (Buffer) == 0) {
+    BootOption->Image[0].LbaImage.SwPart = CurrOption->Image[0].LbaImage.SwPart;
+  } else {
     BootOption->Image[0].LbaImage.SwPart = (UINT8) ((IsHex) ? StrHexToUintn (Buffer) : StrDecimalToUintn (Buffer));
-    if (StrLen (Buffer) > 0) {
-      break;
-    }
-    ShellPrint (L"Invalid SwPart value '%s', please re-enter\n", Buffer);
-  } while (1);
+  }
 
-  do {
-    ShellPrint (L"Enter LBA Address (uint)\n");
-    Status = ShellReadUintn (Shell, Buffer, BufferSize, &IsHex);
-    if (EFI_ERROR (Status)) {
-      return Status;
-    }
+  ShellPrint (L"Enter LBA Address (uint)\n");
+  ShellPrint (L"(default 0x%X) ", CurrOption->Image[0].LbaImage.LbaAddr);
+  Status = ShellReadUintn (Shell, Buffer, BufferSize, &IsHex);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+  if (StrLen (Buffer) == 0) {
+    BootOption->Image[0].LbaImage.LbaAddr = CurrOption->Image[0].LbaImage.LbaAddr;
+  } else {
     BootOption->Image[0].LbaImage.LbaAddr = (UINT32) ((IsHex) ? StrHexToUintn (Buffer) : StrDecimalToUintn (Buffer));
-    if (StrLen (Buffer) > 0) {
-      break;
-    }
-    ShellPrint (L"Invalid LBA Address value '%s', please re-enter\n", Buffer);
-  } while (1);
+  }
 
   return EFI_SUCCESS;
 }
@@ -397,7 +411,7 @@ ShellCommandBootFunc (
   CHAR16               Buffer[0x100];
   OS_BOOT_OPTION_LIST  *BootOptionList;
   OS_BOOT_OPTION       BootOption;
-  BOOLEAN              ResetAll;
+  OS_BOOT_OPTION       *CurrOption;
   BOOLEAN              SkipArgParse;
   BOOLEAN              Swap;
   EFI_STATUS           Status;
@@ -432,19 +446,17 @@ ShellCommandBootFunc (
     }
   }
 
-  ResetAll = FALSE;
   Swap = FALSE;
 
   PrintBootOption (BootOptionList);
   do {
     ShellPrint (L"SubCommand:\n");
     ShellPrint (L"  s   -- swap boot order by index\n");
-    ShellPrint (L"  a   -- modify all boot options one by one\n");
     ShellPrint (L"  q   -- quit boot option change\n");
     ShellPrint (L"  idx -- modify the boot option specified by idx (0");
 
     if (BootOptionList->OsBootOptionCount > 1) {
-      ShellPrint (L" to 0x%X", BootOptionList->OsBootOptionCount - 1);
+      ShellPrint (L" to %u", BootOptionList->OsBootOptionCount - 1);
     }
     ShellPrint (L")\n");
 
@@ -454,10 +466,7 @@ ShellCommandBootFunc (
     }
 
     Index = 0;
-    if (StrCmp (Buffer, L"a") == 0) {
-      ResetAll = TRUE;
-      break;
-    } else if (StrCmp (Buffer, L"s") == 0) {
+    if (StrCmp (Buffer, L"s") == 0) {
       Swap = TRUE;
       break;
     } else if (StrCmp (Buffer, L"q") == 0) {
@@ -477,37 +486,32 @@ ShellCommandBootFunc (
       goto ExitBootCmd;
     }
   } else {
-    do {
-      ZeroMem (&BootOption, sizeof (BootOption));
-      Status = GetBootDeviceInfo (Shell, Buffer, sizeof (Buffer), &BootOption);
+    CurrOption = &BootOptionList->OsBootOption[Index];
+    ZeroMem (&BootOption, sizeof (BootOption));
+    Status = GetBootDeviceInfo (Shell, Buffer, sizeof (Buffer), &BootOption, CurrOption);
+    if (EFI_ERROR (Status)) {
+      goto ExitBootCmd;
+    }
+
+    if (BootOption.FsType != EnumFileSystemMax) {
+      Status = GetBootFileInfo (Shell, Buffer, sizeof (Buffer), &BootOption, CurrOption);
       if (EFI_ERROR (Status)) {
         goto ExitBootCmd;
       }
-
-      if (BootOption.FsType != EnumFileSystemMax) {
-        Status = GetBootFileInfo (Shell, Buffer, sizeof (Buffer), &BootOption);
-        if (EFI_ERROR (Status)) {
-          goto ExitBootCmd;
-        }
-      } else {
-        Status = GetBootLbaInfo (Shell, Buffer, sizeof (Buffer), &BootOption);
-        if (EFI_ERROR (Status)) {
-          goto ExitBootCmd;
-        }
+    } else {
+      Status = GetBootLbaInfo (Shell, Buffer, sizeof (Buffer), &BootOption, CurrOption);
+      if (EFI_ERROR (Status)) {
+        goto ExitBootCmd;
       }
-      CopyMem (&BootOptionList->OsBootOption[Index], &BootOption, sizeof (BootOption));
-      if (!ResetAll) {
-        break;
-      }
-      Index++;
-    } while (Index < (BootOptionList->OsBootOptionCount - 1));
+    }
+    CopyMem (&BootOptionList->OsBootOption[Index], &BootOption, sizeof (BootOption));
   }
   ShellPrint (L"Updated the Boot Option List\n");
   PrintBootOption (BootOptionList);
 
 ExitBootCmd:
   if (EFI_ERROR (Status)) {
-    ShellPrint (L"ERROR, exiting comamnd unsuccesfully\n");
+    ShellPrint (L"ERROR, exiting command unsuccessfully\n");
   } else {
     BootOptionList->BootOptionReset = 1;
     BootOptionList->CurrentBoot     = 0;
