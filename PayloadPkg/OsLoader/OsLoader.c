@@ -7,7 +7,6 @@
 
 #include "OsLoader.h"
 
-UINT32  *mPreOsCheckerEntry;
 UINT8    mCurrentBoot;
 VOID    *mEntryStack;
 
@@ -372,37 +371,6 @@ SetupBootImage (
 }
 
 /**
-  Search for and load pre-OS checker for execution.
-
-  This function will search for a pre-OS checker binary that might
-  be loaded as part of the payload, if found get the entry point for
-  execution later instead of jumping into the OS directly.
-
-  @param[in] PreOsCheckerImageBase   Base of the pre-OS checker loaded in memory.
-
-  @retval  NULL        Pre-OS checker is not loaded successfully.
-  @retval  Others      Pre-OS checker is loaded successfully and
-                       the entry point is returned.
-**/
-UINT32 *
-LoadPreOsChecker (
-  IN  UINT32                 *PreOsCheckerImageBase
-  )
-{
-  UINT32                           *EntryPoint;
-  EFI_STATUS                       Status;
-
-  EntryPoint = NULL;
-
-  Status = LoadElfImage ((VOID *)PreOsCheckerImageBase, (VOID *)&EntryPoint);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "Failed to load ELF binary and get entrypoint\n"));
-  }
-
-  return EntryPoint;
-}
-
-/**
   Load Image from OS boot device.
 
   This function will initialize OS boot device if required, and load image
@@ -603,8 +571,6 @@ StartBooting (
 {
   MULTIBOOT_IMAGE            *MultiBoot;
   BOOT_PARAMS                *BootParams;
-  PRE_OS_PAYLOAD_PARAM       PreOsParams;
-  PRE_OS_CHECKER_ENTRY       EntryPoint;
   EFI_STATUS                 Status;
 
   DEBUG_CODE_BEGIN();
@@ -616,26 +582,14 @@ StartBooting (
   if ((LoadedImage->Flags & LOADED_IMAGE_LINUX) != 0) {
     BootParams = LoadedImage->Image.Linux.BootParams;
 
-    if (mPreOsCheckerEntry != NULL) {
-      EntryPoint = (PRE_OS_CHECKER_ENTRY) (UINTN)mPreOsCheckerEntry;
+    if (FeaturePcdGet (PcdPreOsCheckerEnabled) && IsPreOsCheckerLoaded ()) {
       BeforeOSJump ("Starting Pre-OS Checker ...");
-
-      PreOsParams.Version  = 0x1;
-      PreOsParams.HeapSize = EFI_SIZE_TO_PAGES (0);
-      PreOsParams.HeapAddr = (UINT32) AllocatePages (PreOsParams.HeapSize);
-      PreOsParams.HobListPtr = PcdGet32 (PcdPayloadHobList);
-
-      PreOsParams.OsBootState.Esi = (UINT32) BootParams;
-      PreOsParams.OsBootState.Eip = BootParams->Hdr.Code32Start;
-      PreOsParams.OsBootState.Eflags = 0;
-
-      EntryPoint (&PreOsParams);
+      StartPreOsChecker (BootParams);
     } else {
       BeforeOSJump ("Starting Kernel ...");
       JumpToKernel ((VOID *)BootParams->Hdr.Code32Start, (VOID *) BootParams);
     }
     Status = EFI_DEVICE_ERROR;
-
   } else if ((LoadedImage->Flags & LOADED_IMAGE_MULTIBOOT) != 0) {
     DEBUG ((DEBUG_INIT, "Jumping into ELF or Multiboot image entry point...\n"));
     MultiBoot = &LoadedImage->Image.MultiBoot;
@@ -887,15 +841,9 @@ PayloadMain (
   )
 {
   OS_BOOT_OPTION_LIST    *OsBootOptionList;
-  UINT32                 *PreOsCheckerImage;
-  UINT32                 Length;
-  EFI_STATUS             Status;
   UINTN                  ShellTimeout;
 
   mEntryStack = Param;
-  mPreOsCheckerEntry = NULL;
-  PreOsCheckerImage = NULL;
-  Length = 0;
 
   DEBUG ((DEBUG_INFO, "\n\n====================Os Loader====================\n\n"));
   AddMeasurePoint (0x4010);
@@ -931,13 +879,13 @@ PayloadMain (
   }
 #endif
 
-  // Check if there is a pre-OS checker that needs to be executed
-  Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('P', 'O', 'S', 'C'),
-                          (VOID **)&PreOsCheckerImage, &Length);
-  if (!EFI_ERROR (Status)) {
-    mPreOsCheckerEntry = LoadPreOsChecker (PreOsCheckerImage);
-    DEBUG ((DEBUG_INFO, "Pre-OS checker entry @ 0x%08X\n", mPreOsCheckerEntry));
+  //
+  // Load PreOsChecker
+  //
+  if (FeaturePcdGet (PcdPreOsCheckerEnabled)) {
+    LoadPreOsChecker ();
   }
+
   //
   // Load and run Image in order from OsImageList
   //

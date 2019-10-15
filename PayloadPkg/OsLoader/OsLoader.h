@@ -59,6 +59,7 @@
 #include <Uefi/UefiGpt.h>
 #include "BlockIoTest.h"
 #include <ConfigDataCommonDefs.h>
+#include "PreOsChecker.h"
 
 #define MKHI_BOOTLOADER_SEED_LEN       64
 
@@ -138,8 +139,6 @@ typedef struct {
   LOADED_IMAGE_TYPE       Image;
   UINT8                   ImageHash[SHA256_DIGEST_SIZE];
 } LOADED_IMAGE;
-
-typedef  VOID   (*PRE_OS_CHECKER_ENTRY) (VOID *Params);
 
 /**
 OS Loader module entry point. Can also be used to get the
