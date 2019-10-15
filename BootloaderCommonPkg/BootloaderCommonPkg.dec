@@ -206,3 +206,5 @@
   gPlatformCommonLibTokenSpaceGuid.PcdSourceDebugEnabled      | FALSE      | BOOLEAN | 0x20000212
   gPlatformCommonLibTokenSpaceGuid.PcdContainerBootEnabled    | FALSE      | BOOLEAN | 0x20000213
   gPlatformCommonLibTokenSpaceGuid.PcdEmmcHs400SupportEnabled | TRUE       | BOOLEAN | 0x20000214
+  # Determine if the Pre-OS checker should be executed or not.
+  gPlatformCommonLibTokenSpaceGuid.PcdPreOsCheckerEnabled     | FALSE      | BOOLEAN | 0x20000215

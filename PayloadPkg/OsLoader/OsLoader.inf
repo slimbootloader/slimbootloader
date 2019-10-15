@@ -33,6 +33,7 @@
   BootParameters.c
   BlockIoTest.c
   KeyManagement.c
+  PreOsChecker.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -102,6 +103,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdFrameBufferMaxConsoleHeight
   gPayloadTokenSpaceGuid.PcdGrubBootCfgEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdContainerBootEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdPreOsCheckerEnabled
 
 [Depex]
   TRUE

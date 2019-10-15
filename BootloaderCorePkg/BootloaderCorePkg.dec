@@ -150,8 +150,6 @@
   gPlatformModuleTokenSpaceGuid.PcdFramebufferInitEnabled | FALSE      | BOOLEAN | 0x20000201
   # Determine if the splash screen should be displayed or not.
   gPlatformModuleTokenSpaceGuid.PcdSplashEnabled          | FALSE      | BOOLEAN | 0x20000202
-  # Determine if the Pre-OS checker should be executed or not.
-  gPlatformModuleTokenSpaceGuid.PcdPreOsCheckerEnabled    | FALSE      | BOOLEAN | 0x20000203
 
   gPlatformModuleTokenSpaceGuid.PcdAcpiEnabled            | TRUE       | BOOLEAN | 0x20000204
   gPlatformModuleTokenSpaceGuid.PcdSmpEnabled             | TRUE       | BOOLEAN | 0x20000205
