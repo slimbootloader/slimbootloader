@@ -17,6 +17,7 @@
 #include <Guid/OsBootOptionGuid.h>
 #include "Shell.h"
 
+extern UINT8    mCurrentBoot;
 
 /**
   Print or modify the OS boot option list.
@@ -343,7 +344,7 @@ PrintBootOption (
   for (Index = 0; Index < OsBootOptionList->OsBootOptionCount; Index++) {
     BootOption = &OsBootOptionList->OsBootOption[Index];
     if (BootOption->FsType < EnumFileSystemMax) {
-      ShellPrint (L"%3x|%7x| %5a | %4x | %3x | %4x | %4a | %4x | %a\n", \
+      ShellPrint (L"%3x|%7x| %5a | %4x | %3x | %4x | %4a | %4x | %a", \
                  Index, \
                  BootOption->ImageType, \
                  GetBootDeviceNameString(BootOption->DevType), \
@@ -355,7 +356,7 @@ PrintBootOption (
                  BootOption->Image[0].FileName \
                  );
     } else {
-      ShellPrint (L"%3x|%7x| %5a | %4x | %3x | %4x | %4a | %4x | 0x%x\n", \
+      ShellPrint (L"%3x|%7x| %5a | %4x | %3x | %4x | %4a | %4x | 0x%x", \
                  Index, \
                  BootOption->ImageType, \
                  GetBootDeviceNameString(BootOption->DevType), \
@@ -367,6 +368,11 @@ PrintBootOption (
                  BootOption->Image[0].LbaImage.LbaAddr \
                  );
     }
+
+    if (Index == mCurrentBoot) {
+      ShellPrint (L" *Current");
+    }
+    ShellPrint (L"\n");
   }
 
   ShellPrint (L"\n");
@@ -413,6 +419,8 @@ ShellCommandBootFunc (
   OS_BOOT_OPTION       BootOption;
   OS_BOOT_OPTION       *CurrOption;
   BOOLEAN              SkipArgParse;
+  BOOLEAN              ChangeCurrentIndex;
+  BOOLEAN              IsHex;
   BOOLEAN              Swap;
   EFI_STATUS           Status;
 
@@ -447,12 +455,14 @@ ShellCommandBootFunc (
   }
 
   Swap = FALSE;
+  ChangeCurrentIndex = FALSE;
 
   PrintBootOption (BootOptionList);
   do {
     ShellPrint (L"SubCommand:\n");
-    ShellPrint (L"  s   -- swap boot order by index\n");
     ShellPrint (L"  q   -- quit boot option change\n");
+    ShellPrint (L"  s   -- swap boot order by index\n");
+    ShellPrint (L"  c   -- set the boot index\n");
     ShellPrint (L"  idx -- modify the boot option specified by idx (0");
 
     if (BootOptionList->OsBootOptionCount > 1) {
@@ -468,6 +478,9 @@ ShellCommandBootFunc (
     Index = 0;
     if (StrCmp (Buffer, L"s") == 0) {
       Swap = TRUE;
+      break;
+    } else if (StrCmp (Buffer, L"c") == 0) {
+      ChangeCurrentIndex = TRUE;
       break;
     } else if (StrCmp (Buffer, L"q") == 0) {
       goto ExitBootCmd;
@@ -485,6 +498,25 @@ ShellCommandBootFunc (
     if (EFI_ERROR (Status)) {
       goto ExitBootCmd;
     }
+  } else if (ChangeCurrentIndex) {
+    do {
+      ShellPrint (L"Enter index to change to (0 to %u)\n",
+                  BootOptionList->OsBootOptionCount - 1
+                  );
+      ShellPrint (L"(current index %u) ", mCurrentBoot);
+      Status = ShellReadUintn (Shell, Buffer, sizeof (Buffer), &IsHex);
+      if (EFI_ERROR (Status)) {
+        return Status;
+      }
+      Index = (UINT8) ((IsHex) ? StrHexToUintn (Buffer) : StrDecimalToUintn (Buffer));
+      if (StrLen (Buffer) == 0) {
+        break;
+      } else if (Index < BootOptionList->OsBootOptionCount) {
+        mCurrentBoot = (UINT8) Index;
+        break;
+      }
+      ShellPrint (L"Invalid index '%s', please re-enter\n", Buffer);
+    } while (1);
   } else {
     CurrOption = &BootOptionList->OsBootOption[Index];
     ZeroMem (&BootOption, sizeof (BootOption));
