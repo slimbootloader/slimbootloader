@@ -1,7 +1,7 @@
 /** @file
   Shell command `boot` to print or modify the OS boot option list.
 
-  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -544,9 +544,6 @@ ShellCommandBootFunc (
 ExitBootCmd:
   if (EFI_ERROR (Status)) {
     ShellPrint (L"ERROR, exiting command unsuccessfully\n");
-  } else {
-    BootOptionList->BootOptionReset = 1;
-    BootOptionList->CurrentBoot     = 0;
   }
   return Status;
 }
