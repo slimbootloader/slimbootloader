@@ -102,7 +102,7 @@ LoadMisc (
   UINT32                     BlockSize;
   LBA_IMAGE_LOCATION         *LbaImage;
 
-  LbaImage = &BootOption->Image[LOAD_IMAGE_MISC].LbaImage;
+  LbaImage = &BootOption->Image[LoadImageTypeMisc].LbaImage;
   Status = GetLogicalPartitionInfo (LbaImage->SwPart, HwPartHandle, &LogicBlkDev);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "Get logical partition error, Status = %r\n", Status));
@@ -137,11 +137,17 @@ LoadMisc (
              );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "Read Mics error, Status = %r\n", Status));
-    return Status;
+  } else {
+    MiscPartitionData = (MISC_PARTITION_DATA *)Buffer;
+    CopyMem (AbBootInfo, &MiscPartitionData->AbBootInfo, sizeof (AB_BOOT_INFO));
   }
 
-  MiscPartitionData = (MISC_PARTITION_DATA *)Buffer;
-  CopyMem (AbBootInfo, &MiscPartitionData->AbBootInfo, sizeof (AB_BOOT_INFO));
+  //
+  // Free temporary memory
+  //
+  if (Buffer != NULL) {
+    FreePages (Buffer, EFI_SIZE_TO_PAGES (ReadSize));
+  }
 
   return Status;
 }

@@ -24,13 +24,16 @@
 // This bit is used dynamically.
 #define LOAD_IMAGE_FROM_BACKUP     BIT7
 
-#define LOAD_IMAGE_NORMAL          0
-#define LOAD_IMAGE_TRUSTY          1
-#define LOAD_IMAGE_MISC            2
-#define LOAD_IMAGE_EXTRA0          3
-#define LOAD_IMAGE_EXTRA1          4
-#define LOAD_IMAGE_EXTRA2          5
-#define LOAD_IMAGE_EXTRA3          6
+typedef enum {
+  LoadImageTypeNormal              = 0x0,
+  LoadImageTypeTrusty,
+  LoadImageTypeMisc,
+  LoadImageTypeExtra0,
+  LoadImageTypeExtra1,
+  LoadImageTypeExtra2,
+  LoadImageTypeExtra3,
+  LoadImageTypeMax
+} LOAD_IMAGE_TYPE;
 
 ///
 /// OS Boot Option GUID
@@ -155,7 +158,7 @@ typedef struct {
   // Image[1] is for trusty OS
   // Image[2] is for misc image
   // Image[3-6] is for extra Images
-  BOOT_IMAGE           Image[7];
+  BOOT_IMAGE           Image[LoadImageTypeMax];
 } OS_BOOT_OPTION;
 
 

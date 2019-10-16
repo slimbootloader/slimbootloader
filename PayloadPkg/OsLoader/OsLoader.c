@@ -287,12 +287,13 @@ SetupBootImage (
   )
 {
   EFI_STATUS                 Status;
-  UINT32                     *EntryPoint;
-  UINT8                      *NewCmdBuffer;
-  MULTIBOOT_IMAGE            *MultiBoot;
-  IMAGE_DATA                 *CmdFile;
-  IMAGE_DATA                 *BootFile;
-  LINUX_IMAGE                *LinuxImage;
+  LOADER_PLATFORM_INFO      *LoaderPlatformInfo;
+  UINT32                    *EntryPoint;
+  UINT8                     *NewCmdBuffer;
+  MULTIBOOT_IMAGE           *MultiBoot;
+  IMAGE_DATA                *CmdFile;
+  IMAGE_DATA                *BootFile;
+  LINUX_IMAGE               *LinuxImage;
 
   //
   // Allocate a cmd line buffer and init it with config file or default value
@@ -303,6 +304,7 @@ SetupBootImage (
     return EFI_OUT_OF_RESOURCES;
   }
 
+  Status = EFI_SUCCESS;
   CmdFile = &LoadedImage->Image.Common.CmdFile;
   if (CmdFile->Size > 0) {
     CmdFile->Size = GetFromConfigFile (NewCmdBuffer, CMDLINE_LENGTH_MAX, (UINT8 *)CmdFile->Addr, CmdFile->Size);
@@ -330,107 +332,52 @@ SetupBootImage (
   } else if (IsMultiboot (BootFile->Addr)) {
     DEBUG ((DEBUG_INFO, "Boot image is Multiboot format...\n"));
     Status = SetupMultibootImage (MultiBoot);
-    if (EFI_ERROR (Status)) {
-      return Status;
-    }
   } else if ((LoadedImage->Flags & LOADED_IMAGE_PE32) != 0) {
     DEBUG ((DEBUG_INFO, "Boot image is PE32 format\n"));
     Status = PeCoffRelocateImage ((UINT32)BootFile->Addr);
     if (!EFI_ERROR (Status)) {
       Status = PeCoffLoaderGetEntryPoint (BootFile->Addr, (VOID **)&EntryPoint);
     }
-    if (EFI_ERROR (Status)) {
-      return Status;
+    if (!EFI_ERROR (Status)) {
+      // Reuse MultiBoot structure to store the PE32 entry point information
+      MultiBoot->BootState.EntryPoint = (UINT32)EntryPoint;
     }
-    // Reuse MultiBoot structure to store the PE32 entry point information
-    MultiBoot->BootState.EntryPoint = (UINT32)EntryPoint;
   } else if ((LoadedImage->Flags & LOADED_IMAGE_FV) != 0) {
     DEBUG ((DEBUG_INFO, "Boot image is FV format\n"));
     Status = LoadFvImage ((UINT32 *)BootFile->Addr, BootFile->Size, (VOID **)&EntryPoint);
-    if (EFI_ERROR (Status)) {
-      return Status;
+    if (!EFI_ERROR (Status)) {
+      // Reuse MultiBoot structure to store the FV entry point information
+      MultiBoot->BootState.EntryPoint = (UINT32)EntryPoint;
     }
-    // Reuse MultiBoot structure to store the FV entry point information
-    MultiBoot->BootState.EntryPoint = (UINT32)EntryPoint;
   } else {
     DEBUG ((DEBUG_INFO, "Assume BzImage...\n"));
     LinuxImage = &LoadedImage->Image.Linux;
     Status = LoadBzImage (LinuxImage->BootFile.Addr,
                           LinuxImage->InitrdFile.Addr, LinuxImage->InitrdFile.Size,
                           LinuxImage->CmdFile.Addr,    LinuxImage->CmdFile.Size);
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "Setup BzImage error, %r\n", Status));
-      return Status;
+    if (!EFI_ERROR (Status)) {
+      UpdateLinuxBootParams ();
+      LinuxImage->BootParams = GetLinuxBootParams ();
+      LoadedImage->Flags  = (LoadedImage->Flags  & ~LOADED_IMAGE_MULTIBOOT) | LOADED_IMAGE_LINUX;
     }
-    UpdateLinuxBootParams ();
-    LinuxImage->BootParams = GetLinuxBootParams ();
-    LoadedImage->Flags  = (LoadedImage->Flags  & ~LOADED_IMAGE_MULTIBOOT) | LOADED_IMAGE_LINUX;
-  }
-
-  return EFI_SUCCESS;
-}
-
-/**
-  Load Image from OS boot device.
-
-  This function will initialize OS boot device if required, and load image
-  based the information from BootOption, the loaded image info will be saved
-  in LoadedImage.
-
-  @param[in]  BootOption        Image information where to load image.
-  @param[in, out] LoadedImage   Loaded Image information.
-
-  @retval  RETURN_SUCCESS       Image is loaded successfully
-  @retval  Others               Image is not loaded
-**/
-EFI_STATUS
-LoadAndSetupImage (
-  IN     OS_BOOT_OPTION      *BootOption,
-  IN OUT LOADED_IMAGE        *LoadedImage
-  )
-{
-  EFI_STATUS                 Status;
-  LOADER_PLATFORM_INFO      *LoaderPlatformInfo;
-
-  Status = GetImageFromMedia (BootOption, LoadedImage);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "GetImageFromMedia: Status = %r\n", Status));
-    return Status;
-  }
-  AddMeasurePoint (0x4070);
-
-  Status = EFI_SUCCESS;
-  if ((LoadedImage->Flags & LOADED_IMAGE_CONTAINER) != 0) {
-    if (FeaturePcdGet (PcdContainerBootEnabled)) {
-      Status = ParseContainerImage (BootOption, LoadedImage);
-    }
-  } else if ((LoadedImage->Flags & LOADED_IMAGE_IAS) != 0) {
-    Status = ParseIasImage (BootOption, LoadedImage);
   }
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "ParseLoadedImage: Status = %r\n", Status));
-    return Status;
-  }
-
-  if ((LoadedImage->LoadImageType == LOAD_IMAGE_TRUSTY) || (LoadedImage->LoadImageType == LOAD_IMAGE_NORMAL)) {
-    Status = SetupBootImage (LoadedImage);
-  }
-
-  DEBUG ((DEBUG_INFO, "SetupBootImage: Status = %r\n", Status));
-  AddMeasurePoint (0x40B0);
-
-  if (Status == EFI_SUCCESS) {
+    if (NewCmdBuffer != NULL) {
+      FreePages (NewCmdBuffer, EFI_SIZE_TO_PAGES (CMDLINE_LENGTH_MAX));
+      CmdFile->Addr = NULL;
+    }
+  } else {
     LoaderPlatformInfo = (LOADER_PLATFORM_INFO *)GetLoaderPlatformInfoPtr();
-    if (LoaderPlatformInfo == NULL) {
-      return EFI_NOT_FOUND;
-    }
-    if (FeaturePcdGet (PcdMeasuredBootEnabled) && (LoaderPlatformInfo->LdrFeatures & FEATURE_MEASURED_BOOT)) {
-      // Extend hash of the image into TPM.
-      TpmExtendPcrAndLogEvent ( 8, TPM_ALG_SHA256, LoadedImage->ImageHash,
-        EV_COMPACT_HASH, sizeof("LinuxLoaderPkg: OS Image"), (UINT8 *)"LinuxLoaderPkg: OS Image");
+    if (LoaderPlatformInfo != NULL) {
+      if (FeaturePcdGet (PcdMeasuredBootEnabled) && (LoaderPlatformInfo->LdrFeatures & FEATURE_MEASURED_BOOT)) {
+        // Extend hash of the image into TPM.
+        TpmExtendPcrAndLogEvent (8, TPM_ALG_SHA256, LoadedImage->ImageHash,
+          EV_COMPACT_HASH, sizeof("LinuxLoaderPkg: OS Image"), (UINT8 *)"LinuxLoaderPkg: OS Image");
+      }
     }
   }
+
   return Status;
 }
 
@@ -629,12 +576,307 @@ StartBooting (
 }
 
 /**
+  Initialize Boot Device (Media)
+
+  Based on given boot option, this function will initialize Boot Device.
+
+  @param[in]  OsBootOption      OS boot option to boot
+
+  @retval  EFI_SUCCESS          A Boot Device is initialized successfully
+  @retval  Others               An error during initializing a Boot Device
+
+**/
+EFI_STATUS
+EFIAPI
+InitBootDevice (
+  IN  OS_BOOT_OPTION          *OsBootOption
+  )
+{
+  EFI_STATUS                Status;
+  UINTN                     BootMediumPciBase;
+  UINT8                     DeviceType;
+  UINT8                     DeviceInstance;
+
+  AddMeasurePoint (0x4040);
+
+  ASSERT (OsBootOption != NULL);
+
+  DeviceType      = OsBootOption->DevType;
+  DeviceInstance  = OsBootOption->DevInstance;
+
+  //
+  // Get OS boot device address
+  //
+  BootMediumPciBase = GetDeviceAddr (DeviceType, DeviceInstance);
+  DEBUG ((DEBUG_INFO, "BootMediumPciBase(0x%x)\n", BootMediumPciBase));
+  BootMediumPciBase = TO_MM_PCI_ADDRESS (BootMediumPciBase);
+
+  //
+  // Init Boot device functions
+  //
+  Status = MediaSetInterfaceType (DeviceType);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to set media interface - %r\n", Status));
+    return EFI_UNSUPPORTED;
+  }
+
+  DEBUG ((DEBUG_INFO, "Getting boot image from %a\n", GetBootDeviceNameString(DeviceType)));
+  Status = MediaInitialize (BootMediumPciBase, DevInitAll);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to init media - %r\n", Status));
+    return Status;
+  }
+
+  AddMeasurePoint (0x4050);
+  MediaTuning (BootMediumPciBase);
+  AddMeasurePoint (0x4055);
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Find a MBR or GPT partition from the given hardware partition number
+
+  Based on given boot option, this function will find a MBR or GPT partition
+
+  @param[in]  OsBootOption      OS boot option to boot
+  @param[out] HwPartHandle      Hardware partition handle when detected successfully
+
+  @retval  EFI_SUCCESS          A hardware partition is initialized successfully
+  @retval  Others               An error when finding a partition
+
+**/
+EFI_STATUS
+EFIAPI
+FindBootPartitions (
+  IN  OS_BOOT_OPTION      *OsBootOption,
+  OUT EFI_HANDLE          *HwPartHandle
+  )
+{
+  EFI_STATUS                Status;
+  UINT8                     HwPart;
+
+  DEBUG ((DEBUG_INFO, "Try to find boot partition\n"));
+
+  ASSERT (OsBootOption != NULL);
+
+  HwPart = OsBootOption->HwPart;
+
+  Status = FindPartitions (HwPart, HwPartHandle);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to find partition - %r\n", Status));
+    ClosePartitions (*HwPartHandle);
+    return Status;
+  }
+  AddMeasurePoint (0x4060);
+
+  DEBUG ((DEBUG_INFO, "Find partition success\n"));
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Initialize File System
+
+  Based on given boot option, this function will initialize File System
+
+  @param[in]  OsBootOption      OS boot option to boot
+  @param[in]  HwPartHandle      Detected hardware partition handle
+  @param[out] FsHandle          File System handle when detected successfully
+
+  @retval  EFI_SUCCESS          A File System is initialized successfully
+  @retval  Others               An error when initializing a File System
+
+**/
+EFI_STATUS
+EFIAPI
+InitBootFileSystem (
+  IN  OS_BOOT_OPTION      *OsBootOption,
+  IN  EFI_HANDLE           HwPartHandle,
+  OUT EFI_HANDLE          *FsHandle
+  )
+{
+  EFI_STATUS      Status;
+  UINT32          SwPart;
+  UINT32          FsType;
+  INT32           BootSlot;
+
+  ASSERT (OsBootOption != NULL);
+
+  SwPart = OsBootOption->SwPart;
+  FsType = OsBootOption->FsType;
+
+  DEBUG ((DEBUG_INFO, "Init File system\n"));
+  if ((OS_FILE_SYSTEM_TYPE)FsType < EnumFileSystemMax) {
+    Status = InitFileSystem (SwPart, FsType, HwPartHandle, FsHandle);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_INFO, "No partitions found, Status = %r\n", Status));
+      return Status;
+    }
+  } else {
+    //
+    // Assume RAW format partition
+    //
+    DEBUG ((DEBUG_INFO, "Requested FsType %d. Assume RAW format partition.\n", FsType));
+    *FsHandle = NULL;
+  }
+
+  //
+  // Get boot image A/B info. TBD: Better to be in LoadBootImages ()
+  //
+  BootSlot = GetBootSlot (OsBootOption, HwPartHandle);
+  DEBUG ((DEBUG_INFO, "BootSlot = 0x%x\n", BootSlot));
+  if (BootSlot == 1) {
+    OsBootOption->BootFlags |= LOAD_IMAGE_FROM_BACKUP;
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Parse a Boot Image
+
+  Based on given loaded image, this function will parse the image
+
+  @param[in]      OsBootOption  OS boot option to boot
+  @param[in, out] LoadedImage   Loaded Boot Image to be parsed
+
+  @retval  EFI_SUCCESS          No issue when parsing the image
+  @retval  Others               An error when parsing the image
+
+**/
+EFI_STATUS
+EFIAPI
+ParseBootImages (
+  IN  OS_BOOT_OPTION    *OsBootOption,
+  IN  EFI_HANDLE         LoadedImageHandle
+  )
+{
+  LOADED_IMAGE        *LoadedImage;
+  EFI_STATUS           Status;
+  UINT8                Type;
+
+  Status = EFI_SUCCESS;
+  for (Type = 0; Type < LoadImageTypeMax; Type++) {
+    if (Type == LoadImageTypeMisc) {
+      continue;
+    }
+
+    GetLoadedImageByType (LoadedImageHandle, Type, &LoadedImage);
+    if (LoadedImage == NULL) {
+      continue;
+    }
+
+    DEBUG ((DEBUG_INFO, "ParseBootImage ImageType-%d\n", Type));
+    if ((LoadedImage->Flags & LOADED_IMAGE_CONTAINER) != 0) {
+      if (FeaturePcdGet (PcdContainerBootEnabled)) {
+        Status = ParseContainerImage (OsBootOption, LoadedImage);
+      }
+    } else if ((LoadedImage->Flags & LOADED_IMAGE_IAS) != 0) {
+      Status = ParseIasImage (OsBootOption, LoadedImage);
+    }
+
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_INFO, "ParseLoadedImage: Status = %r\n", Status));
+      break;
+    }
+  }
+
+  return Status;
+}
+
+EFI_STATUS
+EFIAPI
+SetupBootImages (
+  IN  OS_BOOT_OPTION    *OsBootOption,
+  IN  EFI_HANDLE         LoadedImageHandle
+  )
+{
+  LOADED_IMAGE        *LoadedImage;
+  LOADED_IMAGE        *LoadedTrustyImage;
+  EFI_STATUS           Status;
+
+  GetLoadedImageByType (LoadedImageHandle, LoadImageTypeNormal, &LoadedImage);
+  GetLoadedImageByType (LoadedImageHandle, LoadImageTypeTrusty, &LoadedTrustyImage);
+
+  //
+  // Normal type image is mandatory
+  //
+  if (LoadedImage == NULL) {
+    return EFI_LOAD_ERROR;
+  }
+
+  DEBUG ((DEBUG_INFO, "SetupBootImage ImageType-%d\n", LoadImageTypeNormal));
+  Status = SetupBootImage (LoadedImage);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+  if (LoadedTrustyImage != NULL) {
+    DEBUG ((DEBUG_INFO, "SetupBootImage ImageType-%d\n", LoadImageTypeTrusty));
+    Status = SetupBootImage (LoadedTrustyImage);
+  }
+
+  return Status;
+}
+
+/**
+  Update Boot Parameter
+
+  Based on given loaded image, this function will update Boot Parameters
+
+  @param[in]      OsBootOption  OS boot option to boot
+  @param[in, out] LoadedImage   Loaded Boot Image to be updated
+
+  @retval  EFI_SUCCESS          No issue when updating the parameters
+  @retval  Others               An error when updating the parameters
+
+**/
+EFI_STATUS
+EFIAPI
+UpdateBootParameters (
+  IN  OS_BOOT_OPTION  *OsBootOption,
+  IN  EFI_HANDLE       LoadedImageHandle
+  )
+{
+  LOADED_IMAGE        *LoadedImage;
+  LOADED_IMAGE        *LoadedTrustyImage;
+  LOADED_IMAGE        *LoadedExtraImages;
+
+  GetLoadedImageByType (LoadedImageHandle, LoadImageTypeNormal, &LoadedImage);
+  GetLoadedImageByType (LoadedImageHandle, LoadImageTypeTrusty, &LoadedTrustyImage);
+  GetLoadedImageByType (LoadedImageHandle, LoadImageTypeExtra0, &LoadedExtraImages);
+
+  return UpdateOsParameters (OsBootOption, LoadedImage, LoadedTrustyImage, LoadedExtraImages);
+}
+
+EFI_STATUS
+EFIAPI
+StartBootImages (
+  IN  EFI_HANDLE      LoadedImageHandle
+  )
+{
+  LOADED_IMAGE        *LoadedImage;
+  EFI_STATUS           Status;
+
+  Status = GetLoadedImageByType (LoadedImageHandle, LoadImageTypeTrusty, &LoadedImage);
+  if (EFI_ERROR (Status)) {
+    Status = GetLoadedImageByType (LoadedImageHandle, LoadImageTypeNormal, &LoadedImage);
+  }
+
+  if (!EFI_ERROR (Status)) {
+    Status = StartBooting (LoadedImage);
+  }
+
+  return Status;
+}
+
+/**
   Boot from OsBootOption
 
   Based on given boot option, this function will load image, setup
   boot parameters and boot image.
 
-  @param[in]  OsBootOption      OS boot optoin to boot
+  @param[in]  OsBootOption      OS boot option to boot
 
   @retval  RETURN_SUCCESS       Image returns after boot into its entrypoint
   @retval  Others               There is error to boot from this boot option
@@ -644,78 +886,104 @@ BootOsImage (
   IN  OS_BOOT_OPTION         *OsBootOption
   )
 {
-  EFI_STATUS                 Status;
-  EFI_HANDLE                 HwPartHandle;
-  LOADED_IMAGE               LoadedImage;
-  LOADED_IMAGE               LoadedTrustyImage;
-  LOADED_IMAGE               LoadedExtraImage[MAX_EXTRA_IMAGE_NUM];
-  OS_BOOT_OPTION             BootOption;
-  INT32                      BootSlot;
-  UINT8                      Index;
+  EFI_STATUS        Status;
+  EFI_HANDLE        HwPartHandle;
+  EFI_HANDLE        FsHandle;
+  EFI_HANDLE        LoadedImageHandle;
 
-  HwPartHandle = NULL;
-  CopyMem (&BootOption, OsBootOption, sizeof (OS_BOOT_OPTION));
-  ZeroMem (&LoadedImage, sizeof (LOADED_IMAGE));
-  Status = FindBootPartition (&BootOption, &HwPartHandle);
+  HwPartHandle      = NULL;
+  FsHandle          = NULL;
+  LoadedImageHandle = NULL;
+
+  //
+  // Initialize Boot Device
+  //
+  Status = InitBootDevice (OsBootOption);
   if (EFI_ERROR (Status)) {
-    return Status;
+    DEBUG ((DEBUG_INFO, "Failed to Initialize Boot Device - Type %d, Instance %d\n",
+      OsBootOption->DevType, OsBootOption->DevInstance));
+    goto ERROR;
   }
 
-  // Get boot image A/B info
-  BootSlot = GetBootSlot (&BootOption, HwPartHandle);
-  DEBUG ((DEBUG_INFO, "BootSlot = 0x%x\n", BootSlot));
-  if (BootSlot == 1) {
-    BootOption.BootFlags |= LOAD_IMAGE_FROM_BACKUP;
-  }
-
-  // Load normal OS boot image
-  LoadedImage.HwPartHandle = HwPartHandle;
-  Status = LoadAndSetupImage (&BootOption, &LoadedImage);
+  //
+  // Find Boot Partition
+  //
+  Status = FindBootPartitions (OsBootOption, &HwPartHandle);
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "LoadImage: Status = %r\n", Status));
-    return Status;
+    DEBUG ((DEBUG_INFO, "Failed to Find Boot Partitions - HwPart %d\n", OsBootOption->HwPart));
+    goto ERROR;
   }
 
-  // Load Trusy OS image if required
-  if ((BootOption.BootFlags & BOOT_FLAGS_TRUSTY) != 0) {
-    ZeroMem (&LoadedTrustyImage, sizeof (LOADED_IMAGE));
-    LoadedTrustyImage.HwPartHandle  = HwPartHandle;
-    LoadedTrustyImage.LoadImageType = LOAD_IMAGE_TRUSTY;
-    Status = LoadAndSetupImage (&BootOption, &LoadedTrustyImage);
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_INFO, "Load extra Image: Status = %r\n", Status));
-      return Status;
-    }
-  }
-
-  // Load Extra OS image if required
-  if ((BootOption.BootFlags & BOOT_FLAGS_EXTRA) != 0) {
-    for (Index = 0; Index < MAX_EXTRA_IMAGE_NUM; Index++) {
-      if (BootOption.Image[LOAD_IMAGE_EXTRA0 + Index].LbaImage.Valid == 0) {
-        break;
-      }
-      ZeroMem (&LoadedExtraImage[Index], sizeof (LOADED_IMAGE));
-      LoadedExtraImage[Index].HwPartHandle  = HwPartHandle;
-      LoadedExtraImage[Index].LoadImageType = LOAD_IMAGE_EXTRA0 + Index;
-      Status = LoadAndSetupImage (&BootOption, &LoadedExtraImage[Index]);
-      if (EFI_ERROR (Status)) {
-        DEBUG ((DEBUG_INFO, "Load extra Image[%d]: Status = %r\n", Index, Status));
-      }
-    }
-  }
-
-  Status = UpdateOsParameters (&BootOption, &LoadedImage, &LoadedTrustyImage, &LoadedExtraImage[0]);
+  //
+  // Init File System
+  //
+  Status = InitBootFileSystem (OsBootOption, HwPartHandle, &FsHandle);
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "UpdateOsParameters: Status = %r\n", Status));
-    return Status;
+    DEBUG ((DEBUG_INFO, "Failed to Initialize Boot File System - SwPart %d\n", OsBootOption->SwPart));
+    goto ERROR;
   }
-  AddMeasurePoint (0x40E0);
 
-  if ((BootOption.BootFlags & BOOT_FLAGS_TRUSTY) != 0) {
-    Status = StartBooting (&LoadedTrustyImage);
-  } else {
-    Status = StartBooting (&LoadedImage);
+  //
+  // Load Boot Image
+  //
+  Status = LoadBootImages (OsBootOption, HwPartHandle, FsHandle, &LoadedImageHandle);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "Failed to Load Boot Image\n"));
+    goto ERROR;
   }
+  AddMeasurePoint (0x4070);
+
+  //
+  // Parse Boot Image
+  //
+  Status = ParseBootImages (OsBootOption, LoadedImageHandle);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "Failed to Parse Boot Image\n"));
+    goto ERROR;
+  }
+
+  //
+  // Setup Boot Image
+  //
+  Status = SetupBootImages (OsBootOption, LoadedImageHandle);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "Failed to Setup Boot Image - Status = %r\n", Status));
+    goto ERROR;
+  }
+  AddMeasurePoint (0x40B0);
+
+  //
+  // Update Boot Parameters
+  //
+  Status = UpdateBootParameters (OsBootOption, LoadedImageHandle);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "Failed to Update Boot Parameters - Status = %r\n", Status));
+    goto ERROR;
+  }
+
+  //
+  // Start Boot
+  //
+  StartBootImages (LoadedImageHandle);
+
+  //
+  // Never reach here
+  //
+  return EFI_DEVICE_ERROR;
+
+ERROR:
+  if (LoadedImageHandle != NULL) {
+    UnloadBootImages (LoadedImageHandle);
+  }
+
+  if (FsHandle != NULL) {
+    CloseFileSystem (FsHandle);
+  }
+
+  if (HwPartHandle != NULL) {
+    ClosePartitions (HwPartHandle);
+  }
+
   return Status;
 }
 
@@ -840,8 +1108,9 @@ PayloadMain (
   IN  VOID             *PldBase
   )
 {
-  OS_BOOT_OPTION_LIST    *OsBootOptionList;
+  OS_BOOT_OPTION_LIST   *OsBootOptionList;
   UINTN                  ShellTimeout;
+  OS_BOOT_OPTION         OsBootOption;
 
   mEntryStack = Param;
 
@@ -858,7 +1127,9 @@ PayloadMain (
     goto GOTO_SHELL;
   }
 
+  //
   // Shell will be invoked even in release build if BootToShell is set
+  //
   ShellTimeout = (UINTN)PcdGet16 (PcdPlatformBootTimeOut);
   if (OsBootOptionList->BootToShell != 0) {
     ShellTimeout = 0;
@@ -868,7 +1139,10 @@ PayloadMain (
   }
   AddMeasurePoint (0x4020);
 
-  DEBUG_CODE_BEGIN();
+  //
+  // Print BOOT Option List
+  //
+  DEBUG_CODE_BEGIN ();
   PrintBootOptions (OsBootOptionList);
   DEBUG_CODE_END ();
 
@@ -891,16 +1165,16 @@ PayloadMain (
   //
   mCurrentBoot = GetCurrentBootOption (OsBootOptionList, mCurrentBoot);
   while  (mCurrentBoot < OsBootOptionList->OsBootOptionCount) {
-    BootOsImage (&OsBootOptionList->OsBootOption[mCurrentBoot]);
-    mCurrentBoot = GetNextBootOption (OsBootOptionList, mCurrentBoot);
-    if (mCurrentBoot == OsBootOptionList->OsBootOptionCount) {
-      break;
-    }
+    DEBUG ((DEBUG_INFO, "\n======== Try Booting with Boot Option %d ========\n", mCurrentBoot));
 
-    // In order to reclaim all allocated memory for previous boot,
-    // restart OsLoader from beginning.
-    DEBUG ((DEBUG_INIT, "Try next boot option\n"));
-    RestartOsLoader (Param);
+    //
+    // Get current Boot Option & Update it with next Boot Option
+    //
+    CopyMem ((VOID *)&OsBootOption, (VOID *)&OsBootOptionList->OsBootOption[mCurrentBoot], sizeof (OS_BOOT_OPTION));
+
+    BootOsImage (&OsBootOption);
+
+    mCurrentBoot = GetNextBootOption (OsBootOptionList, mCurrentBoot);
   }
 
 GOTO_SHELL:
