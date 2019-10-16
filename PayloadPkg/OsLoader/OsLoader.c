@@ -838,6 +838,39 @@ RunShell (
 }
 
 /**
+  Restart the OsLoader from beginning.
+
+  This function will roll back the stack to the original point and jump
+  into SecStartup() again. By doing this, all memory allocated in OsLoader
+  will be reclaimed. However, special handling might be required to ensure
+  device state is in good condition in preparation for the restarting.
+
+  @param  Param           parameter passed from SwitchStack().
+
+**/
+VOID
+RestartOsLoader (
+  IN  VOID             *Param
+  )
+{
+  // De-init boot devices while restarting payload.
+  DeinitBootDevices ();
+
+  // Use switch stack to ensure stack will be rolled back to original point.
+  // The stack will be adjusted by +8 to match the exact stack top at the
+  // time that SecStartup() was called by Stage2.
+  SwitchStack (
+    (SWITCH_STACK_ENTRY_POINT)SecStartup,
+    (VOID *)PcdGet32 (PcdPayloadHobList),
+    NULL,
+    (VOID *) ((UINT8 *)Param + 8)
+    );
+
+  // Should never reach here
+  CpuHalt (NULL);
+}
+
+/**
   Payload main entry.
 
   This function will continue Payload execution with a new memory based stack.
@@ -916,28 +949,18 @@ PayloadMain (
       break;
     }
 
-    // De-init boot devices while restarting payload.
-    DeinitBootDevices ();
-
-    //
-    // Use switch stack to ensure stack will be rolled back to original point.
-    // The stack will be adjusted by +8 to match the exact stack top at the
-    // time that SecStartup() was called by Stage2.
-    //
+    // In order to reclaim all allocated memory for previous boot,
+    // restart OsLoader from beginning.
     DEBUG ((DEBUG_INIT, "Try next boot option\n"));
-    SwitchStack (
-      (SWITCH_STACK_ENTRY_POINT)SecStartup,
-      (VOID *)PcdGet32 (PcdPayloadHobList),
-      NULL,
-      (VOID *) ((UINT8 *)Param + 8)
-      );
+    RestartOsLoader (Param);
   }
-
-  DEBUG ((DEBUG_INFO, "Error: while trying to booting...\n"));
 
 GOTO_SHELL:
   if (DebugCodeEnabled () == TRUE) {
     RunShell (0);
+    // Retry all boot options from beginning
+    mCurrentBoot = 0;
+    RestartOsLoader (Param);
   }
 
   CpuHalt (NULL);
