@@ -153,6 +153,10 @@
   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask            | 0x27
 !endif
 
+  # Limit DEBUG output device to be serial port (BIT1) and log buffer (BIT0) for stages.
+  # Once in payload, more debug devices can be enabled, such as frame buffer.
+  gPlatformCommonLibTokenSpaceGuid.PcdDebugOutputDeviceMask  | $(DEBUG_OUTPUT_DEVICE_MASK) & 3
+
   gPlatformModuleTokenSpaceGuid.PcdDebugInterfaceFlags    | $(DEBUG_INTERFACE_FLAGS)
 
   gPlatformModuleTokenSpaceGuid.PcdPciMmcfgBase           | $(PCI_EXPRESS_BASE)
@@ -223,8 +227,6 @@
   gPlatformModuleTokenSpaceGuid.PcdCfgDatabaseSize        | $(CFG_DATABASE_SIZE)
 
   gPlatformModuleTokenSpaceGuid.PcdCpuMaxLogicalProcessorNumber | $(CPU_MAX_LOGICAL_PROCESSOR_NUMBER)
-
-  gPlatformCommonLibTokenSpaceGuid.PcdDebugOutputDeviceMask  | $(DEBUG_OUTPUT_DEVICE_MASK)
 
   gPlatformCommonLibTokenSpaceGuid.PcdConsoleInDeviceMask  | $(CONSOLE_IN_DEVICE_MASK)
   gPlatformCommonLibTokenSpaceGuid.PcdConsoleOutDeviceMask | $(CONSOLE_OUT_DEVICE_MASK)
@@ -355,6 +357,8 @@
   }
 
   PayloadPkg/OsLoader/OsLoader.inf {
+    <PcdsFixedAtBuild>
+      gPlatformCommonLibTokenSpaceGuid.PcdDebugOutputDeviceMask  | $(DEBUG_OUTPUT_DEVICE_MASK)
     <LibraryClasses>
       MemoryAllocationLib | BootloaderCommonPkg/Library/FullMemoryAllocationLib/FullMemoryAllocationLib.inf
       PayloadEntryLib     | PayloadPkg/Library/PayloadEntryLib/PayloadEntryLib.inf
@@ -367,6 +371,8 @@
 
 !if $(ENABLE_FWU)
   PayloadPkg/FirmwareUpdate/FirmwareUpdate.inf {
+    <PcdsFixedAtBuild>
+      gPlatformCommonLibTokenSpaceGuid.PcdDebugOutputDeviceMask  | $(DEBUG_OUTPUT_DEVICE_MASK)
     <LibraryClasses>
       MemoryAllocationLib     | BootloaderCommonPkg/Library/FullMemoryAllocationLib/FullMemoryAllocationLib.inf
       PayloadEntryLib         | PayloadPkg/Library/PayloadEntryLib/PayloadEntryLib.inf
