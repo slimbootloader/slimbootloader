@@ -130,9 +130,13 @@
       # !BSF HELP:{Enable/Disable IPU Device. 0:Disable, 1:Enable(Default).}
       # !BSF FIELD:{IpuEnable:1bW}
 
+      # !BSF NAME:{IPC1 Enable/Disable} TYPE:{Combo} OPTION:{$EN_DIS}
+      # !BSF HELP:{Enable/Disable IPC1 Device. 0:Disable, 1:Enable(Default).}
+      # !BSF FIELD:{Ipc1Enable:1bW}
+
       # !BSF NAME:{Reserved} TYPE:{Reserved}
       # !BSF HELP:{Control 1 reserved}
-      # !BSF FIELD:{Rsvd:6bW}
+      # !BSF FIELD:{Rsvd:5bW}
 
 
     # !BSF PAGES:{CTRL2:DEV_EN_DIS:"Control 2"}

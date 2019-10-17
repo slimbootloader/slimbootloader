@@ -1664,12 +1664,18 @@ PlatformUpdateAcpiGnvs (
   PLATFORM_NVS_AREA    *Pnvs;
   SYS_CPU_INFO         *SysCpuInfo;
   HDA_CFG_DATA         *HdaCfgData;
+  DEV_EN_CFG_DATA      *DevEnCfgData;
 
   Gnvs = (GLOBAL_NVS_AREA *)GnvsIn;
   Pnvs = &Gnvs->PlatformNvs;
   SetMem (Gnvs, sizeof (GLOBAL_NVS_AREA), 0);
 
   Pnvs->BoardId = (UINT8)GetPlatformId ();
+
+  DevEnCfgData = (DEV_EN_CFG_DATA *)FindConfigDataByTag (CDATA_DEV_EN_TAG);
+  if (DevEnCfgData != NULL) {
+    Pnvs->Ipc1Enable = (UINT8)DevEnCfgData->DevEnControl1.Ipc1Enable;
+  }
 
   IgdOpRegionInit ();
 

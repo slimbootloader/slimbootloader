@@ -57,7 +57,7 @@ typedef struct {
   UINT32      IPCBIOSMailBoxData;                     ///<   IPC BIOS mail box data
   UINT32      IPCBIOSMailBoxInterface;                ///<   IPC BIOS mail box interface
   UINT32      P2SBBaseAddress;                        ///<   P2SB Base Address
-  UINT8       Reserved3;                              ///<   Reserved for DWORD alignment
+  UINT8       Ipc1Enable;                             ///<   IPC1Enable
   UINT8       BxtStepping;                            ///<   BXT Stepping
   UINT8       Reserved4[2];                           ///<   Reserved for DWORD alignment
   UINT32      RpAddress[6];                           ///<   Root Port address 1

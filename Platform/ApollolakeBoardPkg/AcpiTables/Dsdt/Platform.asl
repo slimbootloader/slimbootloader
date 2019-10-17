@@ -355,6 +355,60 @@ Scope(\_SB)
       SDPC, 1
     }
   }   //  Device (GPO3)
+
+  Scope (\_SB) {
+    Device(IPC1)
+    {
+      Name (_ADR, 0)
+      Name (_HID, "INT34D2")
+      Name (_CID, "INT34D2")
+      Name (_DDN, "Intel(R) IPCI controller ")
+      Name (_UID, 1)
+
+      Name (RBUF, ResourceTemplate ()
+      {
+        Memory32Fixed (ReadWrite, 0x00000000, 0x00002000, BAR0)    // IPC1 Bar, 8KB
+        Memory32Fixed (ReadWrite, 0x00000000, 0x00000004, MDAT)    // PUnit mailbox Data
+        Memory32Fixed (ReadWrite, 0x00000000, 0x00000004, MINF)    // PUnit mailbox Interface
+        IO (Decode16, 0x400, 0x480, 0x4, 0x80)                     // ACPI IO Base address
+        Memory32Fixed (ReadWrite, 0x00000000, 0x00002000, BAR1)    // SSRAM
+
+        Interrupt (ResourceConsumer, Level, ActiveLow, Exclusive, , , ) {40}  // IPC1 IRQ
+      })
+
+      Method (_CRS, 0x0, NotSerialized)
+      {
+        CreateDwordField(^RBUF, ^BAR0._BAS, B0BA)
+        CreateDwordField(^RBUF, ^BAR0._LEN, B0LN)
+        Store(DD1A, B0BA) // D13A is the  BAR high address for B0/D13/F1
+        Store(DD1L, B0LN) // D13L is the BAR length for B0/D13/F1
+
+        CreateDwordField(^RBUF, ^MDAT._BAS, BM01)
+        CreateDwordField(^RBUF, ^MDAT._LEN, BML1)
+        CreateDwordField(^RBUF, ^MINF._BAS, BM02)
+        CreateDwordField(^RBUF, ^MINF._LEN, BML2)
+        Store(BMDA, BM01)                        // BMDA is the mail box data
+        Store(4, BML1)                           // Length for BMDA is 4 bytes
+        Store(BMIA, BM02)                        // BMDA is the mail box interface
+        Store(4, BML2)                           // Length for BMIA is 4 bytes
+
+        CreateDwordField(^RBUF, ^BAR1._BAS, B1BA)
+        CreateDwordField(^RBUF, ^BAR1._LEN, B1LN)
+        Store(DD3A, B1BA) // D13A is the  BAR high address for B0/D13/F3
+        Store(DD3L, B1LN) // D13L is the BAR length for B0/D13/F3
+
+        Return (RBUF)
+      }
+
+      Method (_STA, 0x0, NotSerialized)
+      {
+        If (LEqual (IPCE, 1)) {
+          Return (0xF)
+        }
+        Return (0x00)
+      }
+    }
+  }
 }
 
 Scope (\)
