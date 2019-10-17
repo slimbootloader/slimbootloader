@@ -42,6 +42,7 @@
   ShellCmds.c
   Parsing.c
   Printing.c
+  History.c
   Shell.c
 
 [Packages]

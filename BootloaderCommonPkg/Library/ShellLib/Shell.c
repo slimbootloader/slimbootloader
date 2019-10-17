@@ -14,6 +14,7 @@
 #include <Library/TimerLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include "Shell.h"
+#include "History.h"
 #include "Parsing.h"
 #include "ShellCmds.h"
 
@@ -143,9 +144,13 @@ Shell (
     }
   }
 
+  HistoryInit (TRUE);
+
   while (! (Shell.ShouldExit)) {
     ShellPrompt (&Shell);
   }
+
+  HistoryInit (FALSE);
 
   return EFI_SUCCESS;
 }
@@ -176,6 +181,8 @@ ShellPrompt (
     return Status;
   }
 
+  HistoryAdd (CommandLine);
+
   return RunShellCommand (Shell, CommandLine);
 }
 
@@ -199,8 +206,11 @@ ReadShellCommand (
   IN  CONST UINTN   BufferSize
   )
 {
-  UINTN Count;
-  UINT8 Char;
+  UINTN   Count;
+  UINTN   CurrCount;
+  UINT8   Char;
+  UINTN   HistoryLineLen;
+  CHAR16  HistoryLine[MAX_COMMAND_LINE_LEN];
 
   Count = 0;
 
@@ -248,11 +258,38 @@ ReadShellCommand (
           return EFI_TIMEOUT;
         }
 
+        HistoryLineLen = 0;
         if (Char == 'A') { // Up
+          HistoryLineLen = HistoryUp (HistoryLine);
         } else if (Char == 'B') { // Down
+          HistoryLineLen = HistoryDown (HistoryLine);
         } else if (Char == 'C') { // Right
         } else if (Char == 'D') { // Left
         }
+
+
+        CurrCount = Count;
+        while (Count-- > 0) {
+          ShellPrint (L"\b");
+        }
+        if (HistoryLineLen > 0) {
+          StrCpyS (Buffer, MAX_COMMAND_LINE_LEN, HistoryLine);
+          ShellPrint (L"%s", Buffer);
+        }
+        if (CurrCount > HistoryLineLen) {
+          CurrCount = CurrCount - HistoryLineLen;
+
+          Count = CurrCount;
+          while (Count-- > 0) {
+            ShellPrint (L" ");
+          }
+
+          Count = CurrCount;
+          while (Count-- > 0) {
+            ShellPrint (L"\b");
+          }
+        }
+        Count = HistoryLineLen;
 
         // Key code consumed, continue getting input
         continue;
@@ -269,6 +306,7 @@ ReadShellCommand (
 
   return EFI_SUCCESS;
 }
+
 
 /**
   Read a line of input from the serial port.
