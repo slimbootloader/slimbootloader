@@ -43,7 +43,7 @@
     BMDA,    32,    //   IPC BIOS mail box data
     BMIA,    32,    //   IPC BIOS mail box interface
     P2BA,    32,    //   P2SB Base Address: only used by BXT-M
-    RSV3,    8,     //   Reserved for alignment
+    IPCE,    8,     //   IPC1Enable
     STEP,    8,     //   BXT Stepping ID
     RSV4,    16,    //   Reserved for alignment
     RPA1,    32,    //   Root Port address 1
