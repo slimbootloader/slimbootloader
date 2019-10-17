@@ -140,7 +140,7 @@ StartPreOsChecker (
   PreOsParams.OsBootState.Eip     = OsBootParam->Hdr.Code32Start;
   PreOsParams.OsBootState.Eflags  = 0;
 
-  EntryPoint = (PRE_OS_CHECKER_ENTRY)mPreOsCheckerEntry;
+  EntryPoint = (PRE_OS_CHECKER_ENTRY)(UINTN)mPreOsCheckerEntry;
   EntryPoint (&PreOsParams);
 
   //
