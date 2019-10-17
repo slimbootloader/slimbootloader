@@ -9,10 +9,13 @@
 #include <UsbKbLibInternal.h>
 #include <Library/TimeStampLib.h>
 
+#define ARROW_KEY_MODIFIER          0x1000
+
 CONST  CHAR8  *mKeyboardKeyMap[] = {
   "abcdefghijklmnopqrstuvwxyz1234567890\r\x1b\b\t -=[]\\ ;'`,./",
   "ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()\r\x1b\b\t _+{}| :\"~<>?",
-  "/*-+\r1234567890."
+  "/*-+\r1234567890.",
+  "CDBA"
 };
 
 USB_KB_DEV     mUsbKbDevice;
@@ -490,6 +493,44 @@ CheckQueue (
 }
 
 /**
+  Enqueue the key.
+
+  @param  Queue                 The queue to be enqueued.
+  @param  Char                  The key data to be enqueued.
+
+  @retval EFI_NOT_READY         The queue is full.
+  @retval EFI_UNSUPPORTED       The char is invalid.
+  @retval EFI_SUCCESS           Successfully enqueued the key data.
+
+**/
+EFI_STATUS
+EnqueueChar (
+  IN SIMPLE_QUEUE         *Queue,
+  IN CHAR16                Char
+  )
+{
+  CHAR16      Modifier;
+  CHAR8       AnsiChar;
+  EFI_STATUS  Status;
+
+  Status = EFI_UNSUPPORTED;
+  Modifier = Char & 0xFF00;
+  AnsiChar = (CHAR8)Char;
+  if (Modifier == 0) {
+    if (AnsiChar > 0) {
+      Status = Enqueue (Queue, AnsiChar);
+    }
+  } else if (Modifier == ARROW_KEY_MODIFIER) {
+    // Convert arrow key to ANSI escape sequence
+    Enqueue (Queue, '\x1b');
+    Enqueue (Queue, '[');
+    Status = Enqueue (Queue, AnsiChar);
+  }
+  return Status;
+}
+
+
+/**
   Return queue length.
 
   @param  Queue                 The queue to be checked.
@@ -522,7 +563,7 @@ GetQueueLength (
   @retval                 The ascii for the key code.
 
 **/
-CHAR8
+CHAR16
 ConvertKeyToAscii (
   IN  UINT8  Modifier,
   IN  UINT8  Key
@@ -545,6 +586,11 @@ ConvertKeyToAscii (
      if (Key >= 0x54 && Key <= 0x63) {
        return mKeyboardKeyMap[2][Key - 0x54];
      }
+  }
+
+  if (Key >= 0x4F && Key <= 0x52) {
+    // Arrow key
+    return ARROW_KEY_MODIFIER | mKeyboardKeyMap[3][Key - 0x4F];
   }
 
   if (Key == 0x53) {
@@ -580,7 +626,7 @@ KeyboardPoll (
   EFI_STATUS       Status;
   USB_KB_DEV      *UsbKbDevice;
   UINT8            KeyBuf[8];
-  CHAR8            Char;
+  CHAR16           Char;
   UINTN            DataSize;
   UINTN            Index;
   UINTN            Index2;
@@ -682,7 +728,7 @@ KeyboardPoll (
         if (KeyPress) {
           Char = ConvertKeyToAscii (CurKeyCodeBuffer[0], CurKeyCodeBuffer[Index]);
           if (Char > 0) {
-            Enqueue (&UsbKbDevice->Queue, Char);
+            EnqueueChar (&UsbKbDevice->Queue, Char);
             // Prepare new repeat key, and clear the original one.
             UsbKbDevice->RepeatCounter = 0;
             UsbKbDevice->RepeatChar    = Char;
@@ -710,7 +756,7 @@ KeyboardPoll (
         if (UsbKbDevice->RepeatCounter < KEY_REPEAT_DELAY) {
           UsbKbDevice->RepeatCounter++;
         } else {
-          Enqueue (&UsbKbDevice->Queue, UsbKbDevice->RepeatChar);
+          EnqueueChar (&UsbKbDevice->Queue, UsbKbDevice->RepeatChar);
         }
       }
     }

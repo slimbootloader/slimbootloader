@@ -23,7 +23,7 @@
 
 #define USB_KB_DEVICE_SIG      SIGNATURE_32 ('U', 'S', 'K', 'B')
 
-#define QUEUE_MAX_COUNT        32
+#define QUEUE_MAX_COUNT        64
 #define KEY_REPEAT_DELAY       10
 
 #define USBKBD_VALID_KEYCODE(Key) ((UINT8) (Key) > 3)
@@ -51,8 +51,8 @@ typedef struct {
   BOOLEAN                             ScrollOn;
   SIMPLE_QUEUE                        Queue;
   UINT32                              RepeatCounter;
+  CHAR16                              RepeatChar;
   UINT8                               RepeatKey;
-  CHAR8                               RepeatChar;
   UINT8                               LastKeyCodeArray[8];
   UINT32                              TimeStampFreqKhz;
   UINT64                              LastTransferTimeStamp;
