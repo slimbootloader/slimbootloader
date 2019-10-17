@@ -908,6 +908,7 @@ UpdateFspConfig (
   }
 
   FspsConfig->Usb30Mode                   = 1;
+  FspsConfig->UsbOtg                      = (UINT8)DevEnCfgData->DevEnControl2.XdciEnable;
 
   if (DCI_DBG_FEATURE_ENABLED() ) {
     FspsConfig->DciEn = 1;

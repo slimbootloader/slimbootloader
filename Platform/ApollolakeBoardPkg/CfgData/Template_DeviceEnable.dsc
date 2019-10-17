@@ -202,8 +202,12 @@
       # !BSF HELP:{Enable/disable USB3 port 5. 0x01(Default).}
       # !BSF FIELD:{Usb30Port5Enable:1bW}
 
+      # !BSF NAME:{Enable XDCI} TYPE:{Combo} OPTION:{0: Disabled, 1: PCI Mode, 2: ACPI Mode}
+      # !BSF HELP:{Enable/disable XDCI. 0:Disabled, 1:PCI Mode(Default), 2:ACPI Mode.}
+      # !BSF FIELD:{XdciEnable:2b}
+
       # !BSF NAME:{Reserved} TYPE:{Reserved}
       # !BSF HELP:{Control 2 reserved}
-      # !BSF FIELD:{Rsvd:2b}
+      # !BSF FIELD:{Rsvd:0b}
 
   # !BSF DEFT:{DEV_EN_TMPL:END}
