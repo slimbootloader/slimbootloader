@@ -98,3 +98,4 @@
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegSize
   gPlatformModuleTokenSpaceGuid.PcdFuncCpuInitHook
+  gPlatformCommonLibTokenSpaceGuid.PcdEmmcHs400SupportEnabled

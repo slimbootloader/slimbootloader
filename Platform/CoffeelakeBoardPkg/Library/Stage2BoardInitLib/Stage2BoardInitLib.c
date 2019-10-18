@@ -1327,7 +1327,7 @@ UpdateFspConfig (
   FspsUpd->FspsConfig.Enable8254ClockGatingOnS3 = 0;
 
   FspsUpd->FspsConfig.ScsEmmcEnabled      = 1;
-  FspsUpd->FspsConfig.ScsEmmcHs400Enabled = 1;
+  FspsUpd->FspsConfig.ScsEmmcHs400Enabled = (UINT8)((FeaturePcdGet (PcdEmmcHs400SupportEnabled) != 0) ? 1 : 0);
   FspsUpd->FspsConfig.ScsSdCardEnabled    = 0;
   FspsUpd->FspsConfig.ScsUfsEnabled       = 0;
 
