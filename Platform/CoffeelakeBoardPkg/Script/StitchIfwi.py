@@ -77,7 +77,7 @@ Please follow the steps below for WHL/CFL IFWI stitching.
      EX:
        Assuming stitching workspace is at D:\Stitch and building ifwi for WHL platform
        To stitch IFWI with SPI QUAD mode and Boot Guard profile VM:
-         python  Platform\CoffeelakeBoardPkg\Script\StitchIfwi.py -b vm -q -a whl -w D:\Stitch -s Stitch_Components.zip
+         python  Platform\CoffeelakeBoardPkg\Script\StitchIfwi.py -b vm -q -a whl -w D:\Stitch -s Stitch_Components.zip -t ptt
        To clean all generated files:
          python  Platform\CoffeelakeBoardPkg\Script\StitchIfwi.py -c -w D:\Stitch
 
@@ -368,6 +368,42 @@ def sign_binary(infile, stitch_dir, cfg_var):
     hash = bytearray(open('output/input/pubkey'+'.hash','rb').read())
     print(''.join('%02X ' % b for b in hash))
 
+def update_tpm_type(tpm_type, tree):
+
+  ptt_supported_xml_entry     = "./PlatformProtection/IntelPttConfiguration/PttSupported"
+  ptt_pwrup_state_xml_entry   = "./PlatformProtection/IntelPttConfiguration/PttPwrUpState"
+  ptt_supported_fpf_xml_entry = "./PlatformProtection/IntelPttConfiguration/PttSupportedFpf"
+  spi_over_tpmbus_xml_entry   = "./PlatformProtection/TpmOverSpiBusConfiguration/SpiOverTpmBusEnable"
+
+  tpm_config = {
+    'ptt': {
+              ptt_supported_xml_entry: 'Yes',
+              ptt_pwrup_state_xml_entry: 'Enabled',
+              ptt_supported_fpf_xml_entry: 'Yes',
+              spi_over_tpmbus_xml_entry: 'No'
+            },
+    'dtpm': {
+              ptt_supported_xml_entry: 'No',
+              ptt_pwrup_state_xml_entry: 'Disabled',
+              ptt_supported_fpf_xml_entry: 'Yes',
+              spi_over_tpmbus_xml_entry:'Yes'
+            },
+    'none': {
+              ptt_supported_xml_entry: 'No',
+              ptt_pwrup_state_xml_entry: 'Disabled',
+              ptt_supported_fpf_xml_entry: 'Yes',
+              spi_over_tpmbus_xml_entry: 'No'
+            },
+    }
+
+  #Enable TPM/PTT device
+  for key in tpm_config[tpm_type]:
+    node = tree.find(key)
+    if node is not None:
+      node.attrib['value'] = tpm_config[tpm_type][key]
+
+  print("[INFO] TPM device type enabled for Measured Boot: %s" % tpm_type)
+
 def update_ifwi_xml(btguardprofile, stitch_dir, cfg_var, tree):
     cfg_var      = get_config ()
     openssl_path = (stitch_dir.replace('\\', '/') + '/' if os.name == 'nt' else '') + cfg_var['openssl']
@@ -403,16 +439,6 @@ def update_ifwi_xml(btguardprofile, stitch_dir, cfg_var, tree):
         for b in hash:
             oemkeyhash = oemkeyhash + "%02X " % b
     print(oemkeyhash)
-
-    # if measured boot enabled, enable ptt
-    if btguardprofile in [3, 5]:
-        #PttConfiguration
-        node = tree.find('./PlatformProtection/IntelPttConfiguration/PttSupported')
-        node.attrib['value'] = 'Yes'
-        node = tree.find('./PlatformProtection/IntelPttConfiguration/PttPwrUpState')
-        node.attrib['value'] = 'Enabled'
-        node = tree.find('./PlatformProtection/IntelPttConfiguration/PttSupportedFpf')
-        node.attrib['value'] = 'Yes'
 
     node = tree.find('./PlatformProtection/BootGuardConfiguration/BtGuardKeyManifestId')
     node.attrib['value'] = '0x1'
@@ -454,7 +480,7 @@ def update_btGuard_manifests(stitch_dir, cfg_var):
     shutil.copy(os.path.join(output_dir, "SwappedA.bin"), os.path.join(output_dir, "SlimBootloader.bin"))
     os.remove(os.path.join(output_dir,"SwappedA.bin"))
 
-def gen_xml_file(stitch_dir, cfg_var, btg_profile, spi_quad, platform):
+def gen_xml_file(stitch_dir, cfg_var, btg_profile, spi_quad, platform, tpm):
 
     print ("Generating xml file .........")
 
@@ -484,9 +510,11 @@ def gen_xml_file(stitch_dir, cfg_var, btg_profile, spi_quad, platform):
         if btg_profile == 'fvme':
             update_ifwi_xml(5, stitch_dir, cfg_var, tree)
 
+    update_tpm_type(tpm, tree)
+
     tree.write(os.path.join(stitch_dir, cfg_var['fitinput'], 'Platform.xml'))
 
-def stitch (stitch_dir, stitch_zip, btg_profile, spi_quad_mode, platform_data, platform, full_rdundant = True):
+def stitch (stitch_dir, stitch_zip, btg_profile, spi_quad_mode, platform_data, platform, tpm, full_rdundant = True):
 
     cfg_var    = get_config ()
 
@@ -519,7 +547,7 @@ def stitch (stitch_dir, stitch_zip, btg_profile, spi_quad_mode, platform_data, p
     for each in copy_list:
         shutil.copy (cfg_var[each], cfg_var['fitinput'])
 
-    gen_xml_file(stitch_dir, cfg_var, btg_profile, spi_quad_mode, platform)
+    gen_xml_file(stitch_dir, cfg_var, btg_profile, spi_quad_mode, platform, tpm)
 
     print ("Run fit tool to generate ifwi.........")
     cmd = './fit -b -o Ifwi.bin -f Platform.xml'
@@ -605,6 +633,13 @@ def main():
                     default=None,
                     help='Specify a platform specific data (HEX, DWORD) for customization')
 
+    ap.add_argument('-t',
+                    '--tpm-type',
+                    dest='tpm',
+                    default = 'ptt',
+                    choices=['ptt', 'dtpm', 'none'],
+                    help='specify TPM type')
+
     args = ap.parse_args()
 
     stitch_dir = args.stitch_dir
@@ -616,8 +651,12 @@ def main():
         print ("Cleaning completed successfully !\n")
         return 0
 
+    if args.btg_profile in ["vm","fvme"] and args.tpm == "none":
+        print "ERROR: Choose appropriate Tpm type for BootGuard profile 3 and 5"
+        return 0
+
     print ("Executing stitch.......")
-    if stitch (stitch_dir, args.stitch_zip, args.btg_profile, args.quad_mode, args.plat_data, args.platform):
+    if stitch (stitch_dir, args.stitch_zip, args.btg_profile, args.quad_mode, args.plat_data, args.platform, args.tpm):
         raise Exception ('Stitching process failed !')
 
     cfg_var       = get_config ()
