@@ -1019,6 +1019,9 @@ UpdateFspConfig (
   FspsConfig->SdioEnabled                 = (UINT8)DevEnCfgData->DevEnControl1.SdioEnable;
   FspsConfig->SmbusEnable                 = (UINT8)DevEnCfgData->DevEnControl1.SmbusEnable;
 
+  // Set HS200 if HS400 is disabled. No DDR50 in scope.
+  FspsConfig->eMMCHostMaxSpeed            = (UINT8)((FeaturePcdGet (PcdEmmcHs400SupportEnabled) != 0) ? 0 : 1);
+
   FspsConfig->PortUsb20Enable[0]          = (UINT8)DevEnCfgData->DevEnControl2.Usb20Port0Enable;
   FspsConfig->PortUsb20Enable[1]          = (UINT8)DevEnCfgData->DevEnControl2.Usb20Port1Enable;
   FspsConfig->PortUsb20Enable[2]          = (UINT8)DevEnCfgData->DevEnControl2.Usb20Port2Enable;

@@ -81,3 +81,4 @@
   gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsCnt
   gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesBase
   gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdEmmcHs400SupportEnabled
