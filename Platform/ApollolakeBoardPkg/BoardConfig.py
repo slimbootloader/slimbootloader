@@ -194,7 +194,6 @@ class Board(BaseBoard):
 		flag = FLASH_MAP.FLASH_MAP_DESC_FLAGS['REDUNDANT']
 		comp_list.append ({'name':'SBLRSVD.bin','bname':'SBLRSVD','offset':0, 'size':self.SBLRSVD_SIZE, 'flag': FLASH_MAP.FLASH_MAP_DESC_FLAGS['NON_REDUNDANT']})
 		comp_list.append ({'name':'BPM.bin',    'bname':'BPM',    'offset':0, 'size':0, 'flag': flag})
-		comp_list.append ({'name':'OEMKEY.bin', 'bname':'OEMKEY', 'offset':0, 'size':0, 'flag': flag})
 		return comp_list[::-1]
 
 	def GetOutputImages (self):

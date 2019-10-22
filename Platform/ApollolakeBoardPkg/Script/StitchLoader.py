@@ -371,7 +371,6 @@ def patch_flash_map (image_data, platform_data = 0xffffffff):
       b'SG1B' : "IFWI/BIOS/BP0/BPDT/BpdtIbb/IBB",
       b'SG1A' : "IFWI/BIOS/BP0/BPDT/BpdtIbb/IBBL",
       b'_BPM' : "IFWI/BIOS/BP0/BPDT/BpdtIbb/BPM.met",
-      b'OEMK' : "IFWI/BIOS/BP0/BPDT/BpdtCseBup/oem.key",
     }
 
     print ("Patching Slim Bootloader Flash Map table ...")
@@ -433,7 +432,7 @@ def patch_flash_map (image_data, platform_data = 0xffffffff):
                 continue
             if desc.size != comp.length and comp.name != 'FB':
                 raise Exception("Mismatch component '%s' length in FlashMap and BPDT !" % comp_bpdt_dict[desc.sig])
-            if desc.sig not in [b'_BPM', b'OEMK'] and (comp.offset & 0xFFF > 0):
+            if desc.sig not in [b'_BPM'] and (comp.offset & 0xFFF > 0):
                 raise Exception("Component '%s' %x is not aligned at 4KB boundary, " \
                                 "please adjust padding size for IPAD/OPAD in BoardConfig.py and rebuild !" % (comp_bpdt_dict[desc.sig], comp.offset))
             desc.offset = comp.offset - bp0.offset
