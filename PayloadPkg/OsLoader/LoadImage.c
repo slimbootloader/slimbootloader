@@ -7,80 +7,24 @@
 
 #include "OsLoader.h"
 
-CONST CHAR16  *mConfigFileName[2] = {
+#define LOADED_IMAGES_INFO_SIGNATURE   SIGNATURE_32 ('L', 'I', 'I', 'S')
+
+typedef struct {
+  UINTN                   Signature;
+  LOADED_IMAGE           *LoadedImageList[LoadImageTypeMax];
+} LOADED_IMAGES_INFO;
+
+STATIC CONST CHAR16  *mConfigFileName[2] = {
   L"config.cfg",
   L"boot/grub/grub.cfg"
 };
 
 /**
-  Get hardware partition handle from boot option info
+  Get Boot image from raw partition
 
-  This function will initialize boot device, and get hardware partition
-  handle based on boot option.
-
-  @param[in]  BootOption      Current boot option
-  @param[out] HwPartHandle    Hardware partition handle for boot image
-
-  @retval  RETURN_SUCCESS     If partition was found successfully
-  @retval  Others             If partition was not found
-**/
-EFI_STATUS
-FindBootPartition (
-  IN  OS_BOOT_OPTION         *BootOption,
-  OUT EFI_HANDLE             *HwPartHandle
-  )
-{
-  RETURN_STATUS              Status;
-  UINTN                      BootMediumPciBase;
-
-  AddMeasurePoint (0x4040);
-  //
-  // Get OS boot device address
-  //
-  BootMediumPciBase = GetDeviceAddr (BootOption->DevType, BootOption->DevInstance);
-  DEBUG ((DEBUG_INFO, "BootMediumPciBase(0x%x)\n", BootMediumPciBase));
-  BootMediumPciBase = TO_MM_PCI_ADDRESS (BootMediumPciBase);
-
-  //
-  // Init Boot device functions
-  //
-  Status = MediaSetInterfaceType (BootOption->DevType);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "Failed to set media interface - %r\n", Status));
-    return RETURN_UNSUPPORTED;
-  }
-
-  DEBUG ((DEBUG_INFO, "Getting boot image from %a\n", GetBootDeviceNameString(BootOption->DevType)));
-  Status = MediaInitialize (BootMediumPciBase, DevInitAll);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "Failed to init media - %r\n", Status));
-    return Status;
-  }
-
-  AddMeasurePoint (0x4050);
-  MediaTuning (BootMediumPciBase);
-  AddMeasurePoint (0x4055);
-
-  DEBUG ((DEBUG_INFO, "Try to find boot partition\n"));
-  Status = FindPartitions (BootOption->HwPart, HwPartHandle);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "Failed to find partition - %r\n", Status));
-    ClosePartitions (*HwPartHandle);
-    return Status;
-  }
-  AddMeasurePoint (0x4060);
-
-  DEBUG ((DEBUG_INFO, "Find partition success\n"));
-  return RETURN_SUCCESS;
-}
-
-
-/**
-  Get IAS image from raw partition
-
-  Using boot option info, this function will read IAS image from raw
+  Using boot option info, this function will read Boot image from raw
   partition based on hardware partition info saved in LoadedImage.
-  After IAS image is loaded into memory, its information will be saved
+  After Boot image is loaded into memory, its information will be saved
   to LoadedImage.
 
   @param[in]      BootOption      Current boot option
@@ -89,8 +33,9 @@ FindBootPartition (
   @retval  RETURN_SUCCESS     If IAS image was loaded successfully
   @retval  Others             If IAS image was not loaded.
 **/
+STATIC
 EFI_STATUS
-GetIasImageFromRawPartition (
+GetBootImageFromRawPartition (
   IN     OS_BOOT_OPTION      *BootOption,
   IN OUT LOADED_IMAGE        *LoadedImage
   )
@@ -116,7 +61,8 @@ GetIasImageFromRawPartition (
   // They share same LBA offset address.
   //
   if ((BootOption->BootFlags & LOAD_IMAGE_FROM_BACKUP) != 0) {
-    if ((LoadedImage->LoadImageType == LOAD_IMAGE_TRUSTY) || (LoadedImage->LoadImageType == LOAD_IMAGE_NORMAL)) {
+    if ((LoadedImage->LoadImageType == LoadImageTypeTrusty)
+      || (LoadedImage->LoadImageType == LoadImageTypeNormal)) {
       SwPart++;
     }
   }
@@ -210,23 +156,23 @@ GetIasImageFromRawPartition (
   return EFI_SUCCESS;
 }
 
-
 /**
-  Get IAS image from file
+  Get Boot image from File System
 
-  This function will read IAS image from file based on FsHandle.
-  After IAS image is loaded into memory, its information will be saved
+  This function will read Boot image from file based on FsHandle.
+  After Boot image is loaded into memory, its information will be saved
   to LoadedImage.
 
   @param[in]  FsHandle        File system handle used to read file
   @param[in]  BootOption      Current boot option
   @param[out] LoadedImage     Loaded Image information.
 
-  @retval  RETURN_SUCCESS     If IAS image was loaded successfully
-  @retval  Others             If IAS image was not loaded.
+  @retval  RETURN_SUCCESS     If Boot image was loaded successfully
+  @retval  Others             If Boot image was not loaded.
 **/
+STATIC
 EFI_STATUS
-GetIasImageFromFs (
+GetBootImageFromFs (
   IN  EFI_HANDLE             FsHandle,
   IN  OS_BOOT_OPTION         *BootOption,
   OUT LOADED_IMAGE           *LoadedImage
@@ -245,7 +191,7 @@ GetIasImageFromFs (
 
   FileName = (CONST CHAR8 *)&BootOption->Image[LoadedImage->LoadImageType].FileName[0];
 
-  // Load IAS Image from file system
+  // Load Boot Image from file system
   AsciiStrToUnicodeStrS (FileName, FilePath, sizeof (FilePath) / sizeof (CHAR16));
 
   FileHandle = NULL;
@@ -391,6 +337,7 @@ Done:
   @retval  RETURN_SUCCESS     If IAS image was loaded successfully
   @retval  Others             If IAS image was not loaded.
 **/
+STATIC
 EFI_STATUS
 GetTraditionalLinux (
   IN  EFI_HANDLE             FsHandle,
@@ -527,6 +474,92 @@ Done:
   return Status;
 }
 
+/**
+  Get a pointer of Loaded Image which has specific LoadImageType
+
+  This function will return the pointer address of a Loaded Image with given
+  LoadImageType.
+
+  @param[in]  LoadedImageHandle       Loaded Image handle
+  @param[in]  LoadImageType           Load Image Type Index
+  @param[out] LoadedImage             Loaded Image
+
+  @retval     EFI_SUCCESS             Found a Loaded Image from the handle successfully
+  @retval     EFI_INVALID_PARAMETER   If Loaded Image handle is invalid
+  @retval     EFI_NOT_FOUND           Not found a Loaded Image from the handle
+
+**/
+EFI_STATUS
+EFIAPI
+GetLoadedImageByType (
+  IN   EFI_HANDLE         LoadedImageHandle,
+  IN   LOAD_IMAGE_TYPE    LoadImageType,
+  OUT  LOADED_IMAGE     **LoadedImage
+  )
+{
+  LOADED_IMAGES_INFO  *LoadedImagesInfo;
+  LOADED_IMAGE        *LoadedImagePtr;
+
+  LoadedImagesInfo = (LOADED_IMAGES_INFO *)LoadedImageHandle;
+  if ((LoadedImagesInfo == NULL) || (LoadedImagesInfo->Signature != LOADED_IMAGES_INFO_SIGNATURE)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  LoadedImagePtr = LoadedImagesInfo->LoadedImageList[LoadImageType];
+  if (LoadedImagePtr == NULL) {
+    *LoadedImage = NULL;
+    return EFI_NOT_FOUND;
+  }
+
+  *LoadedImage = LoadedImagePtr;
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Free all temporary resources used for Boot Image
+
+  This function will clean up all temporary resources used to load Boot Image.
+
+  @param[in]  LoadedImageHandle Loaded Image handle
+
+  @retval     none
+**/
+VOID
+EFIAPI
+UnloadBootImages (
+  IN  EFI_HANDLE       LoadedImageHandle
+  )
+{
+  LOADED_IMAGES_INFO        *LoadedImagesInfo;
+  LOADED_IMAGE              *LoadedImage;
+  IMAGE_DATA                *ImageData;
+  UINT8                      Index;
+
+  LoadedImagesInfo = (LOADED_IMAGES_INFO *)LoadedImageHandle;
+  if ((LoadedImagesInfo == NULL) || (LoadedImagesInfo->Signature != LOADED_IMAGES_INFO_SIGNATURE)) {
+    ASSERT (FALSE);
+    DEBUG ((DEBUG_INFO, "Invalid LoadedImageHandle parameter!"));
+    return;
+  }
+
+  for (Index = 0; Index < LoadImageTypeMax; Index++) {
+    LoadedImage = (LOADED_IMAGE *)LoadedImagesInfo->LoadedImageList[Index];
+    if (LoadedImage != NULL) {
+      // TBD: Need to add cleanup api in each LOADED_IMAGE
+      ImageData = &LoadedImage->Image.Common.CmdFile;
+      if (ImageData->Addr != NULL) {
+        FreePages (ImageData->Addr, EFI_SIZE_TO_PAGES (CMDLINE_LENGTH_MAX));
+        ImageData->Addr = NULL;
+      }
+
+      FreePool (LoadedImage);
+      LoadedImagesInfo->LoadedImageList[Index] = NULL;
+    }
+  }
+
+  FreePool (LoadedImagesInfo);
+}
 
 /**
   Load Image from boot media.
@@ -534,55 +567,104 @@ Done:
   This function will initialize OS boot device, and load image based on
   boot option, the loaded image info will be saved in  LoadedImage.
 
-  @param[in]  BootOption     Current boot option
-  @param[out] LoadedImage    Loaded Image information.
+  @param[in]  BootOption        Current boot option
+  @param[in]  HwPartHandle      Hardware partition handle
+  @param[in]  FsHandle          FileSystem handle
+  @param[out] LoadedImageHandle Loaded Image handle
 
-  @retval  RETURN_SUCCESS    If image was loaded successfully
-  @retval  Others            If image was not loaded.
+  @retval     RETURN_SUCCESS    If image was loaded successfully
+  @retval     Others            If image was not loaded.
 **/
 EFI_STATUS
-GetImageFromMedia (
-  IN  OS_BOOT_OPTION         *BootOption,
-  OUT LOADED_IMAGE           *LoadedImage
+EFIAPI
+LoadBootImages (
+  IN  OS_BOOT_OPTION  *OsBootOption,
+  IN  EFI_HANDLE       HwPartHandle,
+  IN  EFI_HANDLE       FsHandle,
+  OUT EFI_HANDLE      *LoadedImageHandle
   )
 {
-  RETURN_STATUS              Status;
-  EFI_HANDLE                 FsHandle;
-  EFI_HANDLE                 HwPartHandle;
-  EFI_HOB_GUID_TYPE          *GuidHob;
-  EXT_BOOT_LOADER_VERSION    *VersionHob;
+  LOADED_IMAGES_INFO        *LoadedImagesInfo;
+  LOADED_IMAGE              *LoadedImage;
+  BOOT_IMAGE                *BootImage;
+  UINT8                      BootFlags;
+  EFI_STATUS                 Status;
+  UINT8                      Index;
 
-  FsHandle     = NULL;
-  HwPartHandle = LoadedImage->HwPartHandle;
-  if (BootOption->FsType >= EnumFileSystemMax) {
-    Status = GetIasImageFromRawPartition (BootOption, LoadedImage);
-    return Status;
+  ASSERT (OsBootOption != NULL);
+
+  BootImage = OsBootOption->Image;
+  BootFlags = OsBootOption->BootFlags;
+
+  LoadedImagesInfo = (LOADED_IMAGES_INFO *)AllocateZeroPool (sizeof (LOADED_IMAGES_INFO));
+  if (LoadedImagesInfo == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+  LoadedImagesInfo->Signature = LOADED_IMAGES_INFO_SIGNATURE;
+
+  for (Index = 0; Index < LoadImageTypeMax; Index++) {
+    if ((Index == LoadImageTypeTrusty) && !(BootFlags & BOOT_FLAGS_TRUSTY)) {
+      continue;
+    }
+    if (Index == LoadImageTypeMisc) {
+      continue;
+    }
+    if ((Index >= LoadImageTypeExtra0) && !(BootFlags & BOOT_FLAGS_EXTRA)) {
+      if (!BootImage[Index].LbaImage.Valid) {
+        continue;
+      }
+    }
+
+    LoadedImage = (LOADED_IMAGE *)AllocateZeroPool (sizeof (LOADED_IMAGE));
+    LoadedImage->HwPartHandle   = HwPartHandle;
+    LoadedImage->LoadImageType  = Index;
+
+    //
+    // Load Boot Image from FS or RAW partition
+    //
+    if (FsHandle != NULL) {
+      Status = GetBootImageFromFs (FsHandle, OsBootOption, LoadedImage);
+    } else {
+      Status = GetBootImageFromRawPartition (OsBootOption, LoadedImage);
+    }
+
+    if (EFI_ERROR (Status)) {
+      // UnloadBootImages () will free all unnecessary Memory
+      break;
+    }
+
+    DEBUG ((DEBUG_INFO, "LoadBootImage ImageType-%d Image\n", Index));
+    LoadedImagesInfo->LoadedImageList[Index] = LoadedImage;
   }
 
-  // Load image from file system.
-  DEBUG ((DEBUG_INFO, "Init File system\n"));
-  Status = InitFileSystem (BootOption->SwPart, EnumFileSystemTypeAuto, HwPartHandle, &FsHandle);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "No partitions found, Status = %r\n", Status));
-    return Status;
-  }
-
-  Status = GetIasImageFromFs (FsHandle, BootOption, LoadedImage);
-  if (!EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  // Enable tradition linux boot only in debug build
-  GuidHob = GetNextGuidHob (&gBootLoaderVersionGuid, GetHobListPtr ());
-  if (GuidHob != NULL) {
-    VersionHob = (EXT_BOOT_LOADER_VERSION *)GET_GUID_HOB_DATA (GuidHob);
-    if ((VersionHob->Version.ImageVersion.BldDebug != 0) ||
-         !FeaturePcdGet (PcdVerifiedBootEnabled)) {
+  //
+  // Launch Traditional Linux for debugging purpose only
+  //
+  if (DebugCodeEnabled () || !FeaturePcdGet (PcdVerifiedBootEnabled)) {
+    if (EFI_ERROR (Status) && (FsHandle != NULL)) {
+      LoadedImage = LoadedImagesInfo->LoadedImageList[LoadImageTypeNormal];
+      if (LoadedImage == NULL) {
+        LoadedImage = (LOADED_IMAGE *)AllocateZeroPool (sizeof (LOADED_IMAGE));
+      }
+      LoadedImage->HwPartHandle   = HwPartHandle;
+      LoadedImage->LoadImageType  = LoadImageTypeNormal;
+      LoadedImagesInfo->LoadedImageList[LoadImageTypeNormal] = LoadedImage;
       Status = GetTraditionalLinux (FsHandle, &LoadedImage->Image.Linux);
       if (!EFI_ERROR (Status)) {
         LoadedImage->Flags |= LOADED_IMAGE_LINUX;
+        DEBUG ((DEBUG_INFO, "LoadBootImage TraditionalLinux ImageType-%d Image\n", Index));
       }
     }
+  }
+
+  *LoadedImageHandle = (EFI_HANDLE)(UINTN)LoadedImagesInfo;
+
+  //
+  // Free allocated memory if not successful
+  //
+  if (EFI_ERROR (Status)) {
+    UnloadBootImages (*LoadedImageHandle);
+    *LoadedImageHandle = NULL;
   }
 
   return Status;

@@ -196,39 +196,64 @@ PrintBootOptions (
   );
 
 /**
+  Get a pointer of Loaded Image which has specific LoadImageType
+
+  This function will return the pointer address of a Loaded Image with given
+  LoadImageType.
+
+  @param[in]  LoadedImageHandle       Loaded Image handle
+  @param[in]  LoadImageType           Load Image Type Index
+  @param[out] LoadedImage             Loaded Image
+
+  @retval     EFI_SUCCESS             Found a Loaded Image from the handle successfully
+  @retval     EFI_INVALID_PARAMETER   If Loaded Image handle is invalid
+  @retval     EFI_NOT_FOUND           Not found a Loaded Image from the handle
+
+**/
+EFI_STATUS
+EFIAPI
+GetLoadedImageByType (
+  IN   EFI_HANDLE         LoadedImageHandle,
+  IN   LOAD_IMAGE_TYPE    LoadImageType,
+  OUT  LOADED_IMAGE     **LoadedImage
+  );
+
+/**
+  Free all temporary resources used for Boot Image
+
+  This function will clean up all temporary resources used to load Boot Image.
+
+  @param[in]  LoadedImageHandle Loaded Image handle
+
+  @retval     none
+**/
+VOID
+EFIAPI
+UnloadBootImages (
+  IN  EFI_HANDLE       LoadedImageHandle
+  );
+
+/**
   Load Image from boot media.
 
   This function will initialize OS boot device, and load image based on
   boot option, the loaded image info will be saved in  LoadedImage.
 
-  @param[in]  BootOption     Current boot option
-  @param[out] LoadedImage    Loaded Image information.
+  @param[in]  BootOption        Current boot option
+  @param[in]  HwPartHandle      Hardware partition handle
+  @param[in]  FsHandle          FileSystem handle
+  @param[out] LoadedImageHandle Loaded Image handle
 
-  @retval  RETURN_SUCCESS    If image was loaded successfully
-  @retval  Others            If image was not loaded.
+  @retval     RETURN_SUCCESS    If image was loaded successfully
+  @retval     Others            If image was not loaded.
 **/
 EFI_STATUS
-GetImageFromMedia (
-  IN  OS_BOOT_OPTION         *BootOption,
-  OUT LOADED_IMAGE           *LoadedImage
-  );
-
-/**
-  Get hardware partition handle from boot option info
-
-  This function will initialize boot device, and get hardware partition
-  handle based on boot option.
-
-  @param[in]  BootOption      Current boot option
-  @param[out] HwPartHandle    Hardware partition handle for boot image
-
-  @retval  RETURN_SUCCESS     If partition was found successfully
-  @retval  Others             If partition was not found
-**/
-EFI_STATUS
-FindBootPartition (
-  IN  OS_BOOT_OPTION         *BootOption,
-  OUT EFI_HANDLE             *HwPartHandle
+EFIAPI
+LoadBootImages (
+  IN  OS_BOOT_OPTION  *OsBootOption,
+  IN  EFI_HANDLE       HwPartHandle,
+  IN  EFI_HANDLE       FsHandle,
+  OUT EFI_HANDLE      *LoadedImageHandle
   );
 
 /**
