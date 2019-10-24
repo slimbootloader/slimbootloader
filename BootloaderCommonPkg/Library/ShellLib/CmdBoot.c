@@ -17,8 +17,6 @@
 #include <Guid/OsBootOptionGuid.h>
 #include "Shell.h"
 
-extern UINT8    mCurrentBoot;
-
 /**
   Print or modify the OS boot option list.
 
@@ -369,7 +367,7 @@ PrintBootOption (
                  );
     }
 
-    if (Index == mCurrentBoot) {
+    if (Index == OsBootOptionList->CurrentBoot) {
       ShellPrint (L" *Current");
     }
     ShellPrint (L"\n");
@@ -486,7 +484,7 @@ ShellCommandBootFunc (
       goto ExitBootCmd;
     } else {
       Index = (UINT16)StrHexToUintn (Buffer);
-      if (Index < BootOptionList->OsBootOptionCount) {
+      if ((StrLen (Buffer) > 0) && (Index < BootOptionList->OsBootOptionCount)) {
         break;
       }
       ShellPrint (L"Invalid value '%s', please re-enter\n", Buffer);
@@ -503,7 +501,7 @@ ShellCommandBootFunc (
       ShellPrint (L"Enter index to change to (0 to %u)\n",
                   BootOptionList->OsBootOptionCount - 1
                   );
-      ShellPrint (L"(current index %u) ", mCurrentBoot);
+      ShellPrint (L"(current index %u) ", BootOptionList->CurrentBoot);
       Status = ShellReadUintn (Shell, Buffer, sizeof (Buffer), &IsHex);
       if (EFI_ERROR (Status)) {
         return Status;
@@ -512,7 +510,8 @@ ShellCommandBootFunc (
       if (StrLen (Buffer) == 0) {
         break;
       } else if (Index < BootOptionList->OsBootOptionCount) {
-        mCurrentBoot = (UINT8) Index;
+        BootOptionList->CurrentBoot = (UINT8) Index;
+        BootOptionList->BootOptionReset = 0x1;
         break;
       }
       ShellPrint (L"Invalid index '%s', please re-enter\n", Buffer);
