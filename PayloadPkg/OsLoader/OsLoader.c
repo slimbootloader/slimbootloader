@@ -1060,39 +1060,6 @@ RunShell (
 }
 
 /**
-  Restart the OsLoader from beginning.
-
-  This function will roll back the stack to the original point and jump
-  into SecStartup() again. By doing this, all memory allocated in OsLoader
-  will be reclaimed. However, special handling might be required to ensure
-  device state is in good condition in preparation for the restarting.
-
-  @param  Param           parameter passed from SwitchStack().
-
-**/
-VOID
-RestartOsLoader (
-  IN  VOID             *Param
-  )
-{
-  // De-init boot devices while restarting payload.
-  DeinitBootDevices ();
-
-  // Use switch stack to ensure stack will be rolled back to original point.
-  // The stack will be adjusted by +8 to match the exact stack top at the
-  // time that SecStartup() was called by Stage2.
-  SwitchStack (
-    (SWITCH_STACK_ENTRY_POINT)SecStartup,
-    (VOID *)PcdGet32 (PcdPayloadHobList),
-    NULL,
-    (VOID *) ((UINT8 *)Param + 8)
-    );
-
-  // Should never reach here
-  CpuHalt (NULL);
-}
-
-/**
   Payload main entry.
 
   This function will continue Payload execution with a new memory based stack.
@@ -1109,8 +1076,11 @@ PayloadMain (
   )
 {
   OS_BOOT_OPTION_LIST   *OsBootOptionList;
+  BOOLEAN                BootShell;
   UINTN                  ShellTimeout;
   OS_BOOT_OPTION         OsBootOption;
+  UINT8                  CurrIdx;
+  UINT8                  BootIdx;
 
   mEntryStack = Param;
 
@@ -1120,38 +1090,26 @@ PayloadMain (
   //
   // Get Boot Image Info
   //
+  ShellTimeout = 0;
+  BootShell    = FALSE;
   OsBootOptionList = GetBootOptionList ();
-  if ((OsBootOptionList == NULL) || (OsBootOptionList->OsBootOptionCount == 0)) {
-    ShellTimeout = 0;
-    DEBUG ((DEBUG_ERROR, "Get OS boot option fail. \n"));
-    goto GOTO_SHELL;
+  if (OsBootOptionList == NULL) {
+    if (DebugCodeEnabled ()) {
+      BootShell    = TRUE;
+    }
+  } else {
+    if (OsBootOptionList->BootToShell != 0) {
+      BootShell    = TRUE;
+    } else if (DebugCodeEnabled ()) {
+      ShellTimeout = (UINTN)PcdGet16 (PcdPlatformBootTimeOut);
+      BootShell    = TRUE;
+    }
   }
 
-  //
-  // Shell will be invoked even in release build if BootToShell is set
-  //
-  ShellTimeout = (UINTN)PcdGet16 (PcdPlatformBootTimeOut);
-  if (OsBootOptionList->BootToShell != 0) {
-    ShellTimeout = 0;
-  }
-  if ((DebugCodeEnabled () == TRUE) || (OsBootOptionList->BootToShell != 0)) {
+  if (BootShell) {
     RunShell (ShellTimeout);
   }
   AddMeasurePoint (0x4020);
-
-  //
-  // Print BOOT Option List
-  //
-  DEBUG_CODE_BEGIN ();
-  PrintBootOptions (OsBootOptionList);
-  DEBUG_CODE_END ();
-
-#if  TEST_DEVICE_WRITE
-  UINT32                Index;
-  for (Index = 0; Index < OsBootOptionList->OsBootOptionCount; Index++) {
-    TestDevBlocks (&OsBootOptionList->OsBootOption[Index]);
-  }
-#endif
 
   //
   // Load PreOsChecker
@@ -1160,29 +1118,39 @@ PayloadMain (
     LoadPreOsChecker ();
   }
 
-  //
-  // Load and run Image in order from OsImageList
-  //
-  mCurrentBoot = GetCurrentBootOption (OsBootOptionList, mCurrentBoot);
-  while  (mCurrentBoot < OsBootOptionList->OsBootOptionCount) {
-    DEBUG ((DEBUG_INFO, "\n======== Try Booting with Boot Option %d ========\n", mCurrentBoot));
+  while (OsBootOptionList != NULL) {
 
-    //
-    // Get current Boot Option & Update it with next Boot Option
-    //
-    CopyMem ((VOID *)&OsBootOption, (VOID *)&OsBootOptionList->OsBootOption[mCurrentBoot], sizeof (OS_BOOT_OPTION));
+    // Print BOOT Option List
+    DEBUG_CODE_BEGIN ();
+    PrintBootOptions (OsBootOptionList);
+    DEBUG_CODE_END ();
 
-    BootOsImage (&OsBootOption);
+    // Load and run Image in order from OsImageList
+    BootIdx = 0;
+    CurrIdx = GetCurrentBootOption (OsBootOptionList, mCurrentBoot);
+    while  (BootIdx < OsBootOptionList->OsBootOptionCount) {
+      DEBUG ((DEBUG_INFO, "\n======== Try Booting with Boot Option %d ========\n", CurrIdx));
 
-    mCurrentBoot = GetNextBootOption (OsBootOptionList, mCurrentBoot);
-  }
+      // Get current boot option and try boot
+      CopyMem ((VOID *)&OsBootOption, (VOID *)&OsBootOptionList->OsBootOption[CurrIdx], sizeof (OS_BOOT_OPTION));
+      BootOsImage (&OsBootOption);
 
-GOTO_SHELL:
-  if (DebugCodeEnabled () == TRUE) {
-    RunShell (0);
-    // Retry all boot options from beginning
-    mCurrentBoot = 0;
-    RestartOsLoader (Param);
+      // Move to next boot option
+      CurrIdx = GetNextBootOption (OsBootOptionList, CurrIdx);
+      if (CurrIdx >= OsBootOptionList->OsBootOptionCount) {
+        CurrIdx = 0;
+      }
+      BootIdx++;
+    }
+
+    if (DebugCodeEnabled ()) {
+      RunShell (0);
+    } else {
+      break;
+    }
+
+    // De-init boot devices while restarting payload.
+    DeinitBootDevices ();
   }
 
   CpuHalt (NULL);
