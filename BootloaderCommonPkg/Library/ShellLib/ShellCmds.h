@@ -13,7 +13,7 @@
 extern CONST SHELL_COMMAND ShellCommandExit;
 extern CONST SHELL_COMMAND ShellCommandHelp;
 extern CONST SHELL_COMMAND ShellCommandHob;
-extern CONST SHELL_COMMAND ShellCommandMem;
+extern CONST SHELL_COMMAND ShellCommandMm;
 extern CONST SHELL_COMMAND ShellCommandMmap;
 extern CONST SHELL_COMMAND ShellCommandPerf;
 extern CONST SHELL_COMMAND ShellCommandBoot;
@@ -21,7 +21,6 @@ extern CONST SHELL_COMMAND ShellCommandMmcDll;
 extern CONST SHELL_COMMAND ShellCommandCdata;
 extern CONST SHELL_COMMAND ShellCommandDmesg;
 extern CONST SHELL_COMMAND ShellCommandCpuid;
-extern CONST SHELL_COMMAND ShellCommandIo;
 extern CONST SHELL_COMMAND ShellCommandMsr;
 extern CONST SHELL_COMMAND ShellCommandMtrr;
 extern CONST SHELL_COMMAND ShellCommandPci;
