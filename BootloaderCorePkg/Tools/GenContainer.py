@@ -696,7 +696,7 @@ def main():
 	# '-l' or '-cl', one of them is mandatory
 	group.add_argument('-l',  dest='layout',   type=str, help='Container layout intput file if no -cl')
 	group.add_argument('-cl', dest='comp_list',nargs='+', help='List of each component files, following XXXX:FileName format')
-	cmd_display.add_argument('-t', dest='img_type',  type=str, default='NORMAL', help='Container Image Type : [NORMAL, CLASSIC, MULTIBOOT]')
+	cmd_display.add_argument('-t', dest='img_type',  type=str, default='CLASSIC', help='Container Image Type : [NORMAL, CLASSIC, MULTIBOOT]')
 	cmd_display.add_argument('-o', dest='out_path',  type=str, default='.', help='Container output directory/file')
 	cmd_display.add_argument('-k', dest='key_path',  type=str, default='', help='Input key directory/file')
 	cmd_display.add_argument('-cd', dest='comp_dir', type=str, default='', help='Componet image input directory')
