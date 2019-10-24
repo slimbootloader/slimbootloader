@@ -26,8 +26,7 @@
   CmdExit.c
   CmdHelp.c
   CmdHob.c
-  CmdIo.c
-  CmdMem.c
+  CmdMm.c
   CmdMmap.c
   CmdMmcDll.c
   CmdMsr.c

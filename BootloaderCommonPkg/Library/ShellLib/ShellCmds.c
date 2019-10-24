@@ -15,7 +15,7 @@ LoadShellCommands (
   ShellCommandRegister (&ShellCommandExit);
   ShellCommandRegister (&ShellCommandHelp);
   ShellCommandRegister (&ShellCommandHob);
-  ShellCommandRegister (&ShellCommandMem);
+  ShellCommandRegister (&ShellCommandMm);
   ShellCommandRegister (&ShellCommandMmap);
   ShellCommandRegister (&ShellCommandPerf);
   ShellCommandRegister (&ShellCommandBoot);
@@ -23,7 +23,6 @@ LoadShellCommands (
   ShellCommandRegister (&ShellCommandCdata);
   ShellCommandRegister (&ShellCommandDmesg);
   ShellCommandRegister (&ShellCommandCpuid);
-  ShellCommandRegister (&ShellCommandIo);
   ShellCommandRegister (&ShellCommandMsr);
   ShellCommandRegister (&ShellCommandMtrr);
   ShellCommandRegister (&ShellCommandPci);
