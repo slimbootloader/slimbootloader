@@ -492,7 +492,7 @@ def stitch (stitch_dir, stitch_zip, btg_profile, spi_quad_mode, platform_data, p
 
     print ("\nUnpack files from stitching zip file ...")
     if not os.path.isabs(stitch_zip):
-        stitch_zip = os.path.join(os.environ['SBL_SOURCE'], stitch_zip)
+        stitch_zip = os.path.join(os.getcwd(), stitch_zip)
 
     zf = zipfile.ZipFile(stitch_zip, 'r', zipfile.ZIP_DEFLATED)
     zf.extractall(os.path.join(stitch_dir, cfg_var['fitinput']))
@@ -608,6 +608,9 @@ def main():
     args = ap.parse_args()
 
     stitch_dir = args.stitch_dir
+    if not os.path.isabs(stitch_dir):
+        stitch_dir = os.path.join(os.getcwd(), stitch_dir)
+
     print ("Clean all temporary files.....")
     if clean (stitch_dir, args.clean):
         raise Exception ('Stitching clean up failed !')
