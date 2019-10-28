@@ -85,6 +85,15 @@
 
   gPlatformCommonLibTokenSpaceGuid.PcdLowestSupportedFwVer		  | 0x00000000 | UINT32 | 0x20000601
 
+  ## This PCD indicates the HASH algorithm to be included by IPP Crypto library
+  #  Based on the value set, the required algorithm hash API would be enabled
+  #     0x0001    - SHA1.<BR>
+  #     0x0002    - SHA2_256.<BR>
+  #     0x0004    - SHA2_384.<BR>
+  #     0x0008    - SHA2_512.<BR>
+  #     0x0010    - SM3_256.<BR>
+  gPlatformCommonLibTokenSpaceGuid.PcdIppHashLibSupportedMask     |        0x02| UINT16 | 0x20000701
+
 [PcdsFixedAtBuild, PcdsPatchableInModule]
   # For patchable PCDs, try to set the default as none-zero
   # It is to prevent it from being put into BSS section, thus cause patching issue

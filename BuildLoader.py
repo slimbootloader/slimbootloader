@@ -258,6 +258,8 @@ class BaseBoard(object):
 		self._CFGDATA_INT_FILE     = []
 		self._CFGDATA_EXT_FILE     = []
 
+		self.IPP_HASH_LIB_SUPPORTED_MASK   = 0x0002 #SHA256 for default
+
 		for key, value in list(kwargs.items()):
 			setattr(self, '%s' % key, value)
 

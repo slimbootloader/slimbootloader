@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -15,24 +15,24 @@
 #include <Library/CryptoLib.h>
 
 
-/**
-  Computes the SHA-256 message digest of a input data buffer.
 
-  This function performs the SHA-256 message digest of a given data buffer, and places
+/**
+  Computes the SHA-384 message digest of a input data buffer.
+
+  This function performs the SHA-384 message digest of a given data buffer, and places
   the digest value into the specified memory.
 
   @param[in]   pMsg        Pointer to the buffer containing the data to be hashed.
   @param[in]   msgLen      Length of Data buffer in bytes.
-  @param[out]  pMD         Pointer to a buffer that receives the SHA-256 digest
-                           value (32 bytes).
+  @param[out]  pMD         Pointer to a buffer that receives the SHA-384 digest
+                           value (48 bytes).
 
-  @retval                  A pointer to SHA-256 digest value
+  @retval                  A pointer to SHA-384 digest value
 **/
-Ipp8u* Sha256 (const Ipp8u* pMsg, Ipp32u msgLen, Ipp8u* pMD)
+Ipp8u* Sha384 (const Ipp8u* pMsg, Ipp32u msgLen, Ipp8u* pMD)
 {
-  if (FixedPcdGet8(PcdIppHashLibSupportedMask) & IPP_HASHLIB_SHA2_256) {
-
-    ippsHashMessage_rmf(pMsg, msgLen, pMD, ippsHashMethod_SHA256 ());
+  if (FixedPcdGet8(PcdIppHashLibSupportedMask) & IPP_HASHLIB_SHA2_384) {
+    ippsHashMessage_rmf(pMsg, msgLen, pMD, ippsHashMethod_SHA384 ());
     return pMD;
 
   } else {
@@ -42,7 +42,7 @@ Ipp8u* Sha256 (const Ipp8u* pMsg, Ipp32u msgLen, Ipp8u* pMD)
 }
 
 /**
-  Initializes the hash context for SHA256 hashing.
+  Initializes the hash context for SHA384 hashing.
 
   @param[in]   HashCtx       Pointer to the hash context buffer.
   @param[in]   HashCtxSize   Length of the hash context.
@@ -52,17 +52,17 @@ Ipp8u* Sha256 (const Ipp8u* pMsg, Ipp32u msgLen, Ipp8u* pMD)
   @retval  RETURN_SECURITY_VIOLATION  All other errors.
 **/
 RETURN_STATUS
-Sha256Init (
+Sha384Init (
   IN      HASH_CTX   *HashCtx,
   IN      Ipp32u      HashCtxSize
   )
 {
-  if (FixedPcdGet8(PcdIppHashLibSupportedMask) & IPP_HASHLIB_SHA2_256) {
+  if (FixedPcdGet8(PcdIppHashLibSupportedMask) & IPP_HASHLIB_SHA2_384) {
     if (HashCtxSize < sizeof(IppsHashState_rmf)) {
       return RETURN_BUFFER_TOO_SMALL;
     }
 
-    if (ippsHashInit_rmf((IppsHashState_rmf*)HashCtx, ippsHashMethod_SHA256 ()) == ippStsNoErr) {
+    if (ippsHashInit_rmf((IppsHashState_rmf*)HashCtx, ippsHashMethod_SHA384 ()) == ippStsNoErr) {
       return RETURN_SUCCESS;
     }
 
@@ -74,7 +74,7 @@ Sha256Init (
 }
 
 /**
-  Consumes the data for SHA256 hashing.
+  Consumes the data for SHA384 hashing.
   This method can be called multiple times to hash separate pieces of data.
 
   @param[in]   HashCtx     Pointer to the hash context buffer.
@@ -85,41 +85,41 @@ Sha256Init (
   @retval  RETURN_SECURITY_VIOLATION  All other errors.
 **/
 RETURN_STATUS
-Sha256Update (
+Sha384Update (
   IN        HASH_CTX   *HashCtx,
   IN CONST  Ipp8u      *Msg,
   IN        Ipp32u      MsgLen
   )
 {
-  if (FixedPcdGet8(PcdIppHashLibSupportedMask) & IPP_HASHLIB_SHA2_256) {
+  if (FixedPcdGet8(PcdIppHashLibSupportedMask) & IPP_HASHLIB_SHA2_384) {
     if (ippsHashUpdate_rmf(Msg, MsgLen, (IppsHashState_rmf*)HashCtx) == ippStsNoErr) {
       return RETURN_SUCCESS;
     }
 
     return RETURN_SECURITY_VIOLATION;
 
-  }  else {
-    return RETURN_UNSUPPORTED;
+  } else {
+      return RETURN_UNSUPPORTED;
   }
 }
 
 
 /**
-  Finalizes the SHA256 hashing and returns the hash.
+  Finalizes the SHA384 hashing and returns the hash.
 
   @param[in]   HashCtx     Pointer to the hash context buffer.
-  @param[out]  Hash        Sha256 hash of the data.
+  @param[out]  Hash        Sha384 hash of the data.
 
   @retval  RETURN_SUCCESS             Success.
   @retval  RETURN_SECURITY_VIOLATION  All other errors.
 **/
 RETURN_STATUS
-Sha256Final (
+Sha384Final (
   IN       HASH_CTX   *HashCtx,
   OUT      Ipp8u      *Hash
   )
 {
-  if (FixedPcdGet8(PcdIppHashLibSupportedMask) & IPP_HASHLIB_SHA2_256) {
+  if (FixedPcdGet8(PcdIppHashLibSupportedMask) & IPP_HASHLIB_SHA2_384) {
     if (ippsHashFinal_rmf(Hash, (IppsHashState_rmf*)HashCtx) == ippStsNoErr) {
       return RETURN_SUCCESS;
     }
