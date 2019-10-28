@@ -45,6 +45,8 @@
   hmac.c
   rsa_verify.c
   sha256.c
+  sha384.c
+  sm3.c
 
 [Sources.IA32]
   $(IPP_PATH)/Ia32/pcpsha256v8as.nasm
@@ -60,6 +62,7 @@
 
 [FixedPcd]
   gPlatformCommonLibTokenSpaceGuid.PcdCryptoShaNiEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdIppHashLibSupportedMask
 
 [BuildOptions]
   MSFT:*_*_*_CC_FLAGS = -D_SLIMBOOT_OPT -D_ARCH_IA32 -D_IPP_LE
