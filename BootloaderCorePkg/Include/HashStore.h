@@ -9,7 +9,12 @@
 #define __HASH_STORE_H__
 
 #define  HASH_STORE_SIGNATURE                SIGNATURE_32('_', 'H', 'S', '_')
-#define  HASH_STORE_DIGEST_LENGTH            32
+
+#if (FixedPcdGet8(PcdSignHashType) != 0x0)  //0x0 SHA265
+	#define  HASH_STORE_DIGEST_LENGTH            48
+#else
+	#define  HASH_STORE_DIGEST_LENGTH            32
+#endif
 
 #define  HASH_INDEX_MAX_NUM                  8
 

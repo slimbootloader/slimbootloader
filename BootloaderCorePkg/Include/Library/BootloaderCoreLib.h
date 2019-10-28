@@ -66,7 +66,7 @@ typedef struct {
   UINT32        CarTop;
   UINT32        PayloadBase;
   UINT8         ConfigDataHashValid;
-  UINT8         ConfigDataHash[32];
+  UINT8         ConfigDataHash[48];  //Set size for max supported size - SHA384 length
 } STAGE1B_HOB;
 
 typedef struct {

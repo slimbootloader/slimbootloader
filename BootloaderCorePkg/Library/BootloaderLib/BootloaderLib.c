@@ -37,6 +37,8 @@ GetComponentHash (
   HASH_STORE_TABLE    *HashStorePtr;
   UINT8                HashIndex;
 
+  DEBUG ((DEBUG_INFO, "++Bootloaderlib: GetComponentHash %d\n",ComponentType));
+
   if (HashData == NULL) {
     return RETURN_INVALID_PARAMETER;
   }
@@ -83,6 +85,9 @@ SetComponentHash (
   if (HashData == NULL) {
     return RETURN_INVALID_PARAMETER;
   }
+
+  DEBUG ((DEBUG_INFO, "++Bootloaderlib: SetComponentHash %d\n",ComponentType));
+
 
   HashIndex = ComponentType;
   LdrGlobal = GetLoaderGlobalDataPointer ();
