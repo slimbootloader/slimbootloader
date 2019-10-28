@@ -247,6 +247,24 @@
   gPlatformCommonLibTokenSpaceGuid.PcdUsbKeyboardPollingTimeout | $(USB_KB_POLLING_TIMEOUT)
   gPlatformCommonLibTokenSpaceGuid.PcdLowestSupportedFwVer		| $(LOWEST_SUPPORTED_FW_VER)
 
+  !if $(RSA_SIGN_TYPE) == RSA2048
+    gPlatformCommonLibTokenSpaceGuid.PcdRsaSignType | 0x0
+  !elseif $(RSA_SIGN_TYPE) == RSA3072
+    gPlatformCommonLibTokenSpaceGuid.PcdRsaSignType | 0x1
+  !endif
+
+  !if $(SIGN_HASH_TYPE) == SHA2_256
+    gPlatformCommonLibTokenSpaceGuid.PcdSignHashType | 0x0
+  !elseif $(SIGN_HASH_TYPE) == SHA2_384
+    gPlatformCommonLibTokenSpaceGuid.PcdSignHashType | 0x1
+  !elseif $(SIGN_HASH_TYPE) == SHA2_512
+    gPlatformCommonLibTokenSpaceGuid.PcdSignHashType | 0x2
+  !elseif $(SIGN_HASH_TYPE) == SM3_256
+    gPlatformCommonLibTokenSpaceGuid.PcdSignHashType | 0x3
+  !endif
+
+  gPlatformCommonLibTokenSpaceGuid.PcdIppHashLibSupported    | 0xB
+
 [PcdsPatchableInModule]
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel   | 0x8000004F
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress  | $(PCI_EXPRESS_BASE)
@@ -309,6 +327,17 @@
 
 [PcdsDynamicDefault]
   gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut         | 2
+
+  !if $(MEASURED_BOOT_HASH_TYPE) == SHA2_256
+    gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootHashType | 0x0
+  !elseif $(MEASURED_BOOT_HASH_TYPE) == SHA2_384
+    gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootHashType | 0x1
+  !elseif $(MEASURED_BOOT_HASH_TYPE) == SHA2_512
+    gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootHashType | 0x2
+  !elseif $(MEASURED_BOOT_HASH_TYPE) == SM3_256
+    gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootHashType | 0x3
+  !endif
+  
 
 ###############################################################################
 ##

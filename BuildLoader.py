@@ -137,6 +137,10 @@ class BaseBoard(object):
 		self._IAS_PRIVATE_KEY       = os.path.join(key_dir, 'TestSigningPrivateKey.pem')
 		self.LOGO_FILE              = 'Platform/CommonBoardPkg/Logo/Logo.bmp'
 
+		self.RSA_SIGN_TYPE						= 'RSA2048'
+		self.SIGN_HASH_TYPE						= 'SHA2_256'
+		self.MEASURED_BOOT_HASH_TYPE	= 'SHA2_256'
+
 		self.VERINFO_IMAGE_ID       = 'SB_???? '
 		self.VERINFO_PROJ_ID        = 1
 		self.VERINFO_CORE_MAJOR_VER = 0

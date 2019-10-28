@@ -85,6 +85,38 @@
 
   gPlatformCommonLibTokenSpaceGuid.PcdLowestSupportedFwVer		  | 0x00000000 | UINT32 | 0x20000601
 
+
+  ## This PCD indicates the signing algorithm to be enabled by bootloader
+  #  Based on the value set, bootloader would use cipher for verified boot
+  #     0x00    - RSA2048.<BR>
+  #     0x01    - RSA3072.<BR>
+  #     0x02    - SM2.<BR>
+  gPlatformCommonLibTokenSpaceGuid.PcdRsaSignType             |         0x0| UINT8  | 0x20000701
+
+  ## This PCD indicates hash algorithm to be enabled by bootloader
+  #  Based on the value set, bootloader would use alg for verified boot
+  #     0x00    - SHA2_256.<BR>
+  #     0x01    - SHA2_384.<BR>
+  #     0x02    - SHA2_512.<BR>
+  #     0x03    - SM3_256.<BR>
+  gPlatformCommonLibTokenSpaceGuid.PcdSignHashType            |         0x0| UINT8  | 0x20000702
+
+  ## This PCD indicates the HASH algorithm to be included by IPP Crypto library
+  #  Based on the value set, the required algorithm hash API would be enabled 
+  #     0x0001    - SHA2_256.<BR>
+  #     0x0002    - SHA2_384.<BR>
+  #     0x0004    - SHA2_512.<BR>
+  #     0x0008    - SM3_256.<BR>
+  gPlatformCommonLibTokenSpaceGuid.PcdIppHashLibSupported     |        0x01| UINT16 | 0x20000704
+
+  ## This PCD indicates the Signing crypto algorithm to be included by IPP Crypto library
+  #  Based on the value set, the required algorithm hash API would be enabled 
+  #     0x0001    - RSA2048.<BR>
+  #     0x0002    - RSA3072.<BR>
+  #     0x0004    - SM2.<BR>
+  gPlatformCommonLibTokenSpaceGuid.PcdIppSignLibSupported     |        0x01| UINT16 | 0x20000705
+
+
 [PcdsFixedAtBuild, PcdsPatchableInModule]
   # For patchable PCDs, try to set the default as none-zero
   # It is to prevent it from being put into BSS section, thus cause patching issue
@@ -197,6 +229,14 @@
   # @Prompt Minimum length(in bytes) of the system preboot TCG event log area(LAML).
   gPlatformCommonLibTokenSpaceGuid.PcdTcgLogAreaMinLen|0x10000|UINT32|0x00010081
 
+[PcdsDynamic]
+  ## This PCD indicates the hash algorithm to be enabled by bootloader for measured boot
+  #  Based on the value set, PCR bank world be enabled and extended
+  #     0x00    - SHA2_256.<BR>
+  #     0x01    - SHA2_384.<BR>
+  #     0x02    - SHA2_512.<BR>
+  #     0x03    - SM3_256.<BR>
+  gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootHashType    |         0x0| UINT8  | 0x20000703
 
 
 [PcdsFeatureFlag]

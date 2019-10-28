@@ -112,6 +112,7 @@
 
   gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesSize       |     0x1000 | UINT16 | 0x200000E3
 
+
 [PcdsFixedAtBuild, PcdsPatchableInModule]
   #
   # For module patchable PCDs, if it is required to do static patching during the build
