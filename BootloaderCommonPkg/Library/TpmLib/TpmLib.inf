@@ -41,6 +41,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdTcgLogAreaMinLen          ## CONSUMES
   gPlatformCommonLibTokenSpaceGuid.PcdTpmLibId                  ## CONSUMES
   gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled       ## CONSUMES
+  gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootHashType      ## CONSUMES
 
 [LibraryClasses]
   BaseLib

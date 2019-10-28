@@ -107,13 +107,17 @@ TpmExtendPcrAndLogEvent (
   in PCR 0 with EV_POST_CODE event type.
 
   @param[in] ComponentType    Stage whose measurement need to be extended.
+  @param[in] Signature        Signature of the component
+  @param[in] CalculateHash    Flag to indicate hash calculation is needed
 
   @retval RETURN_SUCCESS      Operation completed successfully.
   @retval Others              Unable to extend stage hash.
 **/
 RETURN_STATUS
 TpmExtendStageHash (
-  IN       UINT8            ComponentType
+  IN       UINT8            ComponentType,
+  IN       UINT32           Signature,
+  IN       BOOLEAN          CalculateHash
   );
 
 /**
@@ -143,6 +147,11 @@ TpmLogEvent (
 **/
 RETURN_STATUS
 TpmIndicateReadyToBoot (
+  VOID
+  );
+
+UINT32
+GetTpmHashAlgEnabled(
   VOID
   );
 #endif  // _TPM_LIB_H

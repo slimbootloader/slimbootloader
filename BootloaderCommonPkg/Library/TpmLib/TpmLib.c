@@ -21,6 +21,66 @@
 #include "Tpm2DeviceLib.h"
 #include "TpmLibInternal.h"
 #include "TpmEventLog.h"
+#include <Library/ResetSystemLib.h>
+#include <Library/SecureBootLib.h>
+
+
+
+/**
+  Get Tcg PCR Hash bank type required by bootloader.
+
+  @retval TpmHashAlg    TCG Algorithm Registry.
+**/
+UINT32
+GetTcgHashEnabled(
+  VOID
+  )
+{
+  UINT32 TpmHashAlg = 0;
+  UINT8  PcdHashType;
+
+  PcdHashType = PcdGet8(PcdMeasuredBootHashType);
+
+  if(PcdHashType == HASH_TYPE_SHA256)
+    TpmHashAlg = HASH_ALG_SHA256;
+  else if (PcdHashType == HASH_TYPE_SHA384)
+    TpmHashAlg = HASH_ALG_SHA384;
+  else if (PcdHashType == HASH_TYPE_SHA512)
+    TpmHashAlg = HASH_ALG_SHA512;
+  else if (PcdHashType == HASH_TYPE_SM3)
+    TpmHashAlg = HASH_ALG_SM3_256;
+
+  return TpmHashAlg;
+}
+
+
+/**
+  Get Tpm Hash Algo type.
+
+  @retval PcdHashType    TPM Algorithm Id.
+**/
+UINT32
+GetTpmHashAlgEnabled(
+  VOID
+  )
+{
+  UINT32 TpmHashAlg = 0;
+  UINT8  PcdHashType;
+
+  PcdHashType = PcdGet8(PcdMeasuredBootHashType);
+
+  if(PcdHashType == HASH_TYPE_SHA256)
+    TpmHashAlg = TPM_ALG_SHA256;
+  else if (PcdHashType == HASH_TYPE_SHA384)
+    TpmHashAlg = TPM_ALG_SHA384;
+  else if (PcdHashType == HASH_TYPE_SHA512)
+    TpmHashAlg = TPM_ALG_SHA512;
+  else if (PcdHashType == HASH_TYPE_SM3)
+    TpmHashAlg = TPM_ALG_SM3_256;
+
+  return TpmHashAlg;
+}
+
 
 //@todo What happens to TPM_LIB_PRIVATE_DATA memory during S3 resume?
 
@@ -161,23 +221,27 @@ TpmPcrBankCheck (
   UINT32                ActivePcrBanks;
 
   Status = Tpm2GetCapabilitySupportedAndActivePcrs (&TpmHashAlgorithmBitmap, &ActivePcrBanks);
+
   if (Status == EFI_SUCCESS) {
     // Update Active PCR banks info in TPM Library data
     TpmLibSetActivePcrBanks (ActivePcrBanks);
 
     // Check if TPM supports SHA256 PCR bank
-    if ((TpmHashAlgorithmBitmap & HASH_ALG_SHA256) == 0) {
-      DEBUG ((DEBUG_ERROR, "SHA256 hash algorithm is NOT supported. This should never happen with TPM2.0 device. \n"));
+    if (!(TpmHashAlgorithmBitmap & HASH_ALG_SHA256) &&  !(TpmHashAlgorithmBitmap & HASH_ALG_SHA384) && !(TpmHashAlgorithmBitmap & HASH_ALG_SM3_256)){
+      DEBUG ((DEBUG_ERROR, "Hash algorithm is NOT supported. This should never happen with TPM2.0 device. \n"));
       return EFI_UNSUPPORTED;
     }
 
-    // Check if 'only' SHA256 PCR bank is enabled
-    if (ActivePcrBanks == HASH_ALG_SHA256) {
-      DEBUG ((DEBUG_INFO, "SHA256 PCR Bank is enabled. \n"));
+    // Check if required PCR bank is enabled
+    if (ActivePcrBanks == GetTcgHashEnabled()) {
+      DEBUG ((DEBUG_INFO, "Bootloader requested PCR Bank is enabled. \n"));
     } else {
-      Status = Tpm2PcrAllocateBanks (NULL, TpmHashAlgorithmBitmap, HASH_ALG_SHA256);
+      Status = Tpm2PcrAllocateBanks (NULL, TpmHashAlgorithmBitmap, GetTcgHashEnabled());
       if (Status == EFI_SUCCESS) {
-        DEBUG ((DEBUG_INFO, "Successfully enabled SHA256 PCR Bank. It will be available after next platform reset. \n"));
+        DEBUG ((DEBUG_INFO, "Successfully enabled requested PCR Bank. It will be available after next platform reset. \n"));
+
+        //Reboot the device for change in PCR bank to get effect
+        //ResetSystem(EfiResetCold);
       }
     }
   }
@@ -357,6 +421,7 @@ TpmInit(
       Status = Tpm2Startup (TPM_SU_CLEAR);
     }
     if (EFI_ERROR (Status)) {
+
       DisableTpm();
       goto TpmError;
     }
@@ -426,9 +491,16 @@ MeasureSeparatorEvent (
   Data = WithError;
   Digests = &PcrEventHdr.Digests;
   Digests->count = 1;
-  Digests->digests[0].hashAlg = TPM_ALG_SHA256;
+  Digests->digests[0].hashAlg = (TPMI_ALG_HASH) GetTpmHashAlgEnabled();
 
-  Sha256 ((UINT8 *)&Data, sizeof (Data), (UINT8 *) (& (Digests->digests[0].digest)));
+ /* if (PcdGet8(PcdMeasuredBootHashType) == HASH_TYPE_SHA256)
+    Sha256 ((UINT8 *)&Data, sizeof (Data), (UINT8 *) (& (Digests->digests[0].digest)));
+  else if (PcdGet8(PcdMeasuredBootHashType) == HASH_TYPE_SHA384)
+     Sha384 ((UINT8 *)&Data, sizeof (Data), (UINT8 *) (& (Digests->digests[0].digest)));
+  else if (PcdGet8(PcdMeasuredBootHashType) == HASH_TYPE_SM3)
+     Sm3 ((UINT8 *)&Data, sizeof (Data), (UINT8 *) (& (Digests->digests[0].digest)));*/
+
+  DoHashCalc ((UINT8 *)&Data, sizeof (Data), PcdGet8(PcdMeasuredBootHashType) , (UINT8 *) (& (Digests->digests[0].digest)));
 
   for (PcrHandle = 0; PcrHandle <= 7; PcrHandle++) {
     Status = Tpm2PcrExtend (PcrHandle, Digests);
@@ -479,6 +551,7 @@ TpmExtendPcrAndLogEvent (
   TCG_PCR_EVENT2_HDR         PcrEventHdr;
   TPML_DIGEST_VALUES        *Digests;
 
+
   if (Hash == NULL || Event == NULL) {
     return RETURN_INVALID_PARAMETER;
   }
@@ -526,12 +599,21 @@ TpmExtendSecureBootPolicy (
 {
   EFI_STATUS                 Status;
   UINT8                      Data;
-  UINT8                      Hash[SHA256_DIGEST_SIZE];
+  UINT8                      Hash[SHA384_DIGEST_SIZE];
 
   Data = FeaturePcdGet (PcdVerifiedBootEnabled);
 
-  Sha256((UINT8*)&Data, sizeof(Data), Hash);
-  Status = TpmExtendPcrAndLogEvent ( 7, TPM_ALG_SHA256, Hash, EV_EFI_VARIABLE_DRIVER_CONFIG,
+
+  /*if (PcdGet8(PcdMeasuredBootHashType) == HASH_TYPE_SHA256)
+    Sha256((UINT8*)&Data, sizeof(Data), Hash);
+  else if (PcdGet8(PcdMeasuredBootHashType) == HASH_TYPE_SHA384)
+    Sha384((UINT8*)&Data, sizeof(Data), Hash);
+  else if (PcdGet8(PcdMeasuredBootHashType) == HASH_TYPE_SM3)
+    Sm3((UINT8*)&Data, sizeof(Data), Hash);*/
+
+  DoHashCalc ((UINT8 *)&Data, sizeof (Data), PcdGet8(PcdMeasuredBootHashType), (UINT8 *) Hash);
+  
+  Status = TpmExtendPcrAndLogEvent ( 7, (TPMI_ALG_HASH) GetTpmHashAlgEnabled(), Hash, EV_EFI_VARIABLE_DRIVER_CONFIG,
       sizeof ("SecureBootPolicy"), (UINT8*)"SecureBootPolicy");
 
   return Status;
@@ -550,7 +632,12 @@ TpmChangePlatformAuth (
   TPM2B_AUTH           NewPlatformAuth;
   RETURN_STATUS        Status;
 
-  NewPlatformAuth.size = SHA256_DIGEST_SIZE;
+  if (PcdGet8(PcdMeasuredBootHashType) == HASH_TYPE_SHA256)
+    NewPlatformAuth.size = SHA256_DIGEST_SIZE;
+  else if (PcdGet8(PcdMeasuredBootHashType) == HASH_TYPE_SHA384)
+    NewPlatformAuth.size = SHA384_DIGEST_SIZE;
+  else if (PcdGet8(PcdMeasuredBootHashType) == HASH_TYPE_SM3)
+    NewPlatformAuth.size = SM3_DIGEST_SIZE;
 
   if ((GetRandomBytes(NewPlatformAuth.buffer, NewPlatformAuth.size) == 0) &&
       (Tpm2HierarchyChangeAuth (TPM_RH_PLATFORM, NULL, &NewPlatformAuth) == EFI_SUCCESS)) {
@@ -600,25 +687,54 @@ TpmIndicateReadyToBoot (
   in PCR 0 with EV_POST_CODE event type.
 
   @param[in] ComponentType    Stage whose measurement need to be extended.
+  @param[in] Signature        Signature of the component
+  @param[in] CalculateHash    Flag to indicate hash calculation is needed
 
   @retval RETURN_SUCCESS      Operation completed successfully.
   @retval Others              Unable to extend stage hash.
 **/
 RETURN_STATUS
 TpmExtendStageHash (
-  IN       UINT8            ComponentType
+  IN       UINT8            ComponentType,
+  IN       UINT32           Signature,
+  IN       BOOLEAN          CalculateHash
   )
 {
   RETURN_STATUS        Status;
   CONST UINT8         *Digest;
+  UINT32               Src;
+  UINT32               Length;
+  UINT8                DigestHash[48];
 
-  // Get public key hash
-  Status = GetComponentHash (ComponentType, &Digest);
-  if(Status == EFI_SUCCESS) {
-    Status = TpmExtendPcrAndLogEvent ( 0, TPM_ALG_SHA256, Digest,
-      EV_POST_CODE, POST_CODE_STR_LEN, (UINT8 *)EV_POSTCODE_INFO_POST_CODE);
+  if(CalculateHash == TRUE){
+      DEBUG ((DEBUG_INFO, "Calculate Hash for the components\n"));
+      Status = GetComponentInfo (Signature, &Src, &Length);
+      if (!EFI_ERROR (Status)) {
+          DEBUG ((DEBUG_INFO, "Src 0x%x Length 0x%8x \n", Src, Length));
+
+          /*if (PcdGet8(PcdMeasuredBootHashType) == HASH_TYPE_SHA256)
+            Sha256 ((UINT8 *)&Src, Length, (UINT8 *) (&DigestHash));
+          else if (PcdGet8(PcdMeasuredBootHashType) == HASH_TYPE_SHA384)
+             Sha384 ((UINT8 *)&Src, Length, (UINT8 *) (&DigestHash));
+          else if (PcdGet8(PcdMeasuredBootHashType) == HASH_TYPE_SM3)
+             Sm3 ((UINT8 *)&Src, Length, (UINT8 *) (&DigestHash));*/
+
+          DoHashCalc ((UINT8 *)&Src, Length, PcdGet8(PcdMeasuredBootHashType), (UINT8 *) &DigestHash);
+
+          Status = TpmExtendPcrAndLogEvent ( 0, (TPMI_ALG_HASH) GetTpmHashAlgEnabled(), DigestHash,
+          EV_POST_CODE, POST_CODE_STR_LEN, (UINT8 *)EV_POSTCODE_INFO_POST_CODE);
+
+          DEBUG ((DEBUG_INFO, "TpmExtendStageHash Complete\n"));
+      }
   } else {
-    DEBUG ((DEBUG_ERROR, "Error: Component (%d) is not measured in TPM.\n", ComponentType));
+    // Get from hash store
+    Status = GetComponentHash (ComponentType, &Digest);
+    if(Status == EFI_SUCCESS) {
+      Status = TpmExtendPcrAndLogEvent ( 0, (TPMI_ALG_HASH) GetTpmHashAlgEnabled(), Digest,
+        EV_POST_CODE, POST_CODE_STR_LEN, (UINT8 *)EV_POSTCODE_INFO_POST_CODE);
+    } else {
+      DEBUG ((DEBUG_ERROR, "Error: Component (%d) is not measured in TPM.\n", ComponentType));
+    }
   }
   return Status;
 }
