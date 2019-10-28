@@ -39,10 +39,14 @@
   $(IPP_PATH)/pcpngrsamontstuff.c
   $(IPP_PATH)/pcpngrsassapkcsv15ca_rmf.c
   $(IPP_PATH)/pcpsha256ca.c
+  $(IPP_PATH)/pcpsha512ca.c
+  $(IPP_PATH)/pcpsm3ca.c
   $(IPP_PATH)/pcphmacca_rmf.c
   hmac.c
   rsa_verify.c
   sha256.c
+  sha384.c
+  sm3.c
 
 [Sources.IA32]
   $(IPP_PATH)/Ia32/pcpsha256v8as.nasm
@@ -58,6 +62,7 @@
 
 [FixedPcd]
   gPlatformCommonLibTokenSpaceGuid.PcdCryptoShaNiEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdIppHashLibSupported
 
 [BuildOptions]
   MSFT:*_*_*_CC_FLAGS = -D_SLIMBOOT_OPT -D_ARCH_IA32 -D_IPP_LE

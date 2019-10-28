@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -14,12 +14,11 @@
 
 #include <Library/CryptoLib.h>
 
-Ipp8u* Sha256 (const Ipp8u* pMsg, Ipp32u msgLen, Ipp8u* pMD)
+Ipp8u* Sha384 (const Ipp8u* pMsg, Ipp32u msgLen, Ipp8u* pMD)
 {
   #if (FixedPcdGet8(PcdIppHashLibSupported) & 0x2)
   {
-
-    ippsHashMessage_rmf(pMsg, msgLen, pMD, ippsHashMethod_SHA256 ());
+    ippsHashMessage_rmf(pMsg, msgLen, pMD, ippsHashMethod_SHA384 ());
     return pMD;
   }
   #else
@@ -31,7 +30,7 @@ Ipp8u* Sha256 (const Ipp8u* pMsg, Ipp32u msgLen, Ipp8u* pMD)
 }
 
 /**
-  Initializes the hash context for SHA256 hashing.
+  Initializes the hash context for SHA384 hashing.
 
   @param[in]   HashCtx       Pointer to the hash context buffer.
   @param[in]   HashCtxSize   Length of the hash context.
@@ -41,7 +40,7 @@ Ipp8u* Sha256 (const Ipp8u* pMsg, Ipp32u msgLen, Ipp8u* pMD)
   @retval  RETURN_SECURITY_VIOLATION  All other errors.
 **/
 RETURN_STATUS
-Sha256Init (
+Sha384Init (
   IN      HASH_CTX   *HashCtx,
   IN      Ipp32u      HashCtxSize
   )
@@ -52,7 +51,7 @@ Sha256Init (
       return RETURN_BUFFER_TOO_SMALL;
     }
 
-    if (ippsHashInit_rmf((IppsHashState_rmf*)HashCtx, ippsHashMethod_SHA256 ()) == ippStsNoErr) {
+    if (ippsHashInit_rmf((IppsHashState_rmf*)HashCtx, ippsHashMethod_SHA384 ()) == ippStsNoErr) {
       return RETURN_SUCCESS;
     }
 
@@ -66,7 +65,7 @@ Sha256Init (
 }
 
 /**
-  Consumes the data for SHA256 hashing.
+  Consumes the data for SHA384 hashing.
   This method can be called multiple times to hash separate pieces of data.
 
   @param[in]   HashCtx     Pointer to the hash context buffer.
@@ -77,7 +76,7 @@ Sha256Init (
   @retval  RETURN_SECURITY_VIOLATION  All other errors.
 **/
 RETURN_STATUS
-Sha256Update (
+Sha384Update (
   IN        HASH_CTX   *HashCtx,
   IN CONST  Ipp8u      *Msg,
   IN        Ipp32u      MsgLen
@@ -93,23 +92,23 @@ Sha256Update (
   }
   #else
   {
-    return RETURN_UNSUPPORTED;
+      return RETURN_UNSUPPORTED;
   }
   #endif
 }
 
 
 /**
-  Finalizes the SHA256 hashing and returns the hash.
+  Finalizes the SHA384 hashing and returns the hash.
 
   @param[in]   HashCtx     Pointer to the hash context buffer.
-  @param[out]  Hash        Sha256 hash of the data.
+  @param[out]  Hash        Sha384 hash of the data.
 
   @retval  RETURN_SUCCESS             Success.
   @retval  RETURN_SECURITY_VIOLATION  All other errors.
 **/
 RETURN_STATUS
-Sha256Final (
+Sha384Final (
   IN       HASH_CTX   *HashCtx,
   OUT      Ipp8u      *Hash
   )
