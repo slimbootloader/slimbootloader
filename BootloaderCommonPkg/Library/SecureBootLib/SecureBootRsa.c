@@ -23,6 +23,8 @@
   @param[in]  Signature       Signature for the data buffer.
   @param[in]  PubKey          Public key data pointer.
   @param[in]  PubKeyHash      Public key hash value when ComponentType is not used.
+  @param[in]  SignKeyType     Type of Public key Sign .
+  @param[in]  SignHashAlg     Hash type used for signing.
   @param[out] OutHash         Calculated data hash value.
 
 
@@ -40,6 +42,8 @@ DoRsaVerify (
   IN CONST UINT8           *Signature,
   IN       UINT8           *PubKey,
   IN       UINT8           *PubKeyHash      OPTIONAL,
+  IN       UINT8            SignKeyType     OPTIONAL,
+  IN       UINT8            SignHashAlg     OPTIONAL,
   OUT      UINT8           *OutHash         OPTIONAL
   )
 {
@@ -47,8 +51,10 @@ DoRsaVerify (
   RETURN_STATUS    Status;
   UINT8           *TmpPubKey;
   RSA_PUB_KEY     *InpPubKey;
-  UINT8            Digest[SHA256_DIGEST_SIZE];
+  UINT8            Digest[HASH_DIGEST_MAX]; //Set max size
   UINT8            PubKeyBuf[RSA_MOD_SIZE + RSA_E_SIZE];
+  UINT8            DigestSize;
+
 
   // Verify public key first
   // Hash caculation for key uses different endian
@@ -61,16 +67,31 @@ DoRsaVerify (
     TmpPubKey[RSA_MOD_SIZE + Index] = InpPubKey->PubKeyData[RSA_MOD_SIZE + RSA_E_SIZE - 1 - Index];
   }
 
-  Status = DoHashVerify ((CONST UINT8 *)PubKeyBuf, RSA_MOD_SIZE + RSA_E_SIZE, HASH_TYPE_SHA256, ComponentType, PubKeyHash);
+  Status = DoHashVerify ((CONST UINT8 *)PubKeyBuf, RSA_MOD_SIZE + RSA_E_SIZE, SignHashAlg, ComponentType, PubKeyHash);
   if (RETURN_ERROR (Status)) {
     return Status;
   }
 
-  // Verify payload data
-  Sha256 (Data, Length, Digest);
 
-  if (OutHash != NULL) {
-    CopyMem (OutHash, Digest, sizeof (Digest));
+  // Verify payload data
+  if (SignHashAlg == HASH_TYPE_SHA256) {
+      DEBUG ((DEBUG_INFO, "SHA256 Sign Hash!\n"));
+      Sha256 (Data, Length, Digest);
+      DigestSize = SHA256_DIGEST_SIZE;
+  } else if (SignHashAlg == HASH_TYPE_SHA384) {
+      DEBUG ((DEBUG_INFO, "SHA384 Sign Hash!\n"));
+      Sha384 (Data, Length, Digest);
+      DigestSize = SHA384_DIGEST_SIZE;
+  } else if (SignHashAlg == HASH_TYPE_SM3) {
+      DEBUG ((DEBUG_INFO, "SM3 Sign Hash!\n"));
+      Sm3 (Data, Length, Digest);
+      DigestSize = SM3_DIGEST_SIZE;
+  } else {
+    return RETURN_INVALID_PARAMETER;
+  }
+
+  if(OutHash != NULL){
+    CopyMem (OutHash, Digest, DigestSize);
   }
 
   Status = RsaVerify ((RSA_PUB_KEY *)PubKey, Signature, RSA2048NUMBYTES, SIG_TYPE_RSA2048SHA256, Digest);
@@ -80,13 +101,13 @@ DoRsaVerify (
     DEBUG ((DEBUG_INFO, "RSA Verification Failed!\n"));
 
     DEBUG ((DEBUG_INFO, "First 32Bytes Input Data\n"));
-    DumpHex (2, 0, SHA256_DIGEST_SIZE, (VOID *)Data);
+    DumpHex (2, 0, DigestSize, (VOID *)Data);
 
     DEBUG ((DEBUG_INFO, "Last 32Bytes Input Data\n"));
-    DumpHex (2, 0, SHA256_DIGEST_SIZE, (VOID *) (Data + Length - 32));
+    DumpHex (2, 0, DigestSize, (VOID *) (Data + Length - 32));
 
     DEBUG ((DEBUG_INFO, "Image Digest\n"));
-    DumpHex (2, 0, SHA256_DIGEST_SIZE, (VOID *)Digest);
+    DumpHex (2, 0, DigestSize, (VOID *)Digest);
 
     DEBUG ((DEBUG_INFO, "Signature\n"));
     DumpHex (2, 0, RSA2048NUMBYTES, (VOID *)Signature);

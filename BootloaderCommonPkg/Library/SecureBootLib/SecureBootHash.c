@@ -13,6 +13,53 @@
 #include <Library/SecureBootLib.h>
 #include <Library/BootloaderCommonLib.h>
 
+
+/**
+  Calculate hash API.
+
+  @param[in]  Data           Data buffer pointer.
+  @param[in]  Length         Data buffer size.
+  @param[in]  HashAlg        Specify hash algrothsm.
+  @param[in,out]  OutHash       On input,  expected hash value when ComponentType is not used.
+                             On output, calculated hash value.
+
+  @retval RETURN_SUCCESS             Hash verification succeeded.
+  @retval RETRUN_INVALID_PARAMETER   Hash parameter is not valid.
+  @retval RETURN_UNSUPPORTED         Hash component type is not supported.
+
+**/
+
+RETURN_STATUS
+DoHashCalc (
+  IN      UINT8          *Data,
+  IN      UINT32          Length,
+  IN      UINT8           HashAlg,
+  IN OUT  UINT8          *OutHash
+  )
+{
+  UINT8 Digest[HASH_DIGEST_MAX];
+  UINT8 DigestSize;
+
+  if(Digest != NULL){
+    if (HashAlg == HASH_TYPE_SHA256) {
+        Sha256 (Data, Length, Digest);
+        DigestSize = SHA256_DIGEST_SIZE;
+    } else if (HashAlg == HASH_TYPE_SHA384) {
+        Sha384 (Data, Length, Digest);
+        DigestSize = SHA384_DIGEST_SIZE;
+    } else if (HashAlg == HASH_TYPE_SM3) {
+        Sm3 (Data, Length, Digest);
+        DigestSize = SM3_DIGEST_SIZE;
+    } else {
+      return RETURN_UNSUPPORTED;
+    }
+
+    CopyMem (OutHash, Digest, DigestSize);
+  }
+
+  return RETURN_SUCCESS;
+}
+
 /**
   Verify data block hash with the built-in one.
 
@@ -30,6 +77,7 @@
   @retval RETURN_SECURITY_VIOLATION  Hash verification failed.
 
 **/
+
 RETURN_STATUS
 DoHashVerify (
   IN CONST UINT8           *Data,
@@ -40,10 +88,12 @@ DoHashVerify (
   )
 {
   RETURN_STATUS        Status;
-  UINT8                Digest[SHA256_DIGEST_SIZE];
+  UINT8                Digest[HASH_DIGEST_MAX];
   CONST UINT8          *HashData;
+  UINT8                 DigestSize;
 
-  if (HashAlg != HASH_TYPE_SHA256) {
+  if (HashAlg != HASH_TYPE_SHA256 && HashAlg != HASH_TYPE_SHA384 &&
+                                            HashAlg != HASH_TYPE_SM3) {
     return RETURN_UNSUPPORTED;
   }
 
@@ -62,8 +112,20 @@ DoHashVerify (
     return RETURN_INVALID_PARAMETER;
   }
 
-  Sha256 (Data, Length, Digest);
-  if (CompareMem (HashData, (VOID *)Digest, SHA256_DIGEST_SIZE)) {
+  if (HashAlg == HASH_TYPE_SHA256) {
+      Sha256 (Data, Length, Digest);
+      DigestSize = SHA256_DIGEST_SIZE;
+  } else if (HashAlg == HASH_TYPE_SHA384) {
+      Sha384 (Data, Length, Digest);
+      DigestSize = SHA384_DIGEST_SIZE;
+  } else if (HashAlg == HASH_TYPE_SM3) {
+      Sm3 (Data, Length, Digest);
+      DigestSize = SM3_DIGEST_SIZE;
+  } else {
+    return RETURN_INVALID_PARAMETER;
+  }
+
+  if (CompareMem (HashData, (VOID *)Digest, DigestSize)) {
     Status = RETURN_SECURITY_VIOLATION;
 
     DEBUG ((DEBUG_ERROR, "Hash check fail for component type (%d)\n", ComponentType));
@@ -71,16 +133,16 @@ DoHashVerify (
     DEBUG_CODE_BEGIN();
 
     DEBUG ((DEBUG_INFO, "First 32Bytes Input Data\n"));
-    DumpHex (2, 0, SHA256_DIGEST_SIZE, (VOID *)Data);
+    DumpHex (2, 0, DigestSize, (VOID *)Data);
 
     DEBUG ((DEBUG_INFO, "Last 32Bytes Input Data\n"));
-    DumpHex (2, 0, SHA256_DIGEST_SIZE, (VOID *) (Data + Length - 32));
+    DumpHex (2, 0, DigestSize, (VOID *) (Data + Length - 32));
 
     DEBUG ((DEBUG_INFO, "Image Digest\n"));
-    DumpHex (2, 0, SHA256_DIGEST_SIZE, (VOID *)Digest);
+    DumpHex (2, 0, DigestSize, (VOID *)Digest);
 
     DEBUG ((DEBUG_INFO, "HashStore Digest\n"));
-    DumpHex (2, 0, SHA256_DIGEST_SIZE, (VOID *)HashData);
+    DumpHex (2, 0, DigestSize, (VOID *)HashData);
 
     DEBUG_CODE_END();
 
@@ -90,7 +152,7 @@ DoHashVerify (
     }
     Status = RETURN_SUCCESS;
     DEBUG ((DEBUG_INFO, "HASH Verification Success! Component Type (%d)\n", ComponentType));
-  }
+    }
 
   return Status;
 }
