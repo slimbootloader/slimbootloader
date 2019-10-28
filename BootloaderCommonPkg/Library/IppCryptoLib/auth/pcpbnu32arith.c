@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018-2019, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -37,8 +37,8 @@ Ipp32u cpAdd_BNU32(Ipp32u* pR, const Ipp32u* pA, const Ipp32u* pB, cpSize ns)
    cpSize i;
    for(i=0; i<ns; i++) {
       Ipp64u t = (Ipp64u)carry +pA[i] + pB[i];
-      pR[i] = LODWORD(t);
-      carry = HIDWORD(t);
+      pR[i] = IPP_LODWORD(t);
+      carry = IPP_HIDWORD(t);
    }
    return carry;
 }
@@ -52,8 +52,8 @@ Ipp32u cpSub_BNU32(Ipp32u* pR, const Ipp32u* pA, const Ipp32u* pB, cpSize ns)
    cpSize i;
    for(i=0; i<ns; i++) {
       Ipp64u t = (Ipp64u)(pA[i]) - pB[i] - borrow;
-      pR[i] = LODWORD(t);
-      borrow = 0-HIDWORD(t);
+      pR[i] = IPP_LODWORD(t);
+      borrow = 0-IPP_HIDWORD(t);
    }
    return borrow;
 }
@@ -67,8 +67,8 @@ Ipp32u cpInc_BNU32(Ipp32u* pR, const Ipp32u* pA, cpSize ns, Ipp32u v)
    cpSize i;
    for(i=0; i<ns && carry; i++) {
       Ipp64u t = (Ipp64u)carry +pA[i];
-      pR[i] = LODWORD(t);
-      carry = HIDWORD(t);
+      pR[i] = IPP_LODWORD(t);
+      carry = IPP_HIDWORD(t);
    }
    return carry;
 }
@@ -82,8 +82,8 @@ Ipp32u cpDec_BNU32(Ipp32u* pR, const Ipp32u* pA, cpSize ns, Ipp32u v)
    int n;
    for(n=0; n<ns; n++) {
       Ipp64u t = (Ipp64u)(pA[n]) - (Ipp64u)borrow;
-      pR[n] = LODWORD(t);
-      borrow = HIDWORD(t)>>(32-1);
+      pR[n] = IPP_LODWORD(t);
+      borrow = IPP_HIDWORD(t)>>(32-1);
    }
    return borrow;
 }
@@ -101,8 +101,8 @@ Ipp32u cpMulDgt_BNU32(Ipp32u* pR, const Ipp32u* pA, cpSize nsA, Ipp32u val)
 #else
       Ipp64u t = (Ipp64u)val * (Ipp64u)pA[i] + carry;
 #endif
-      pR[i] = LODWORD(t);
-      carry = HIDWORD(t);
+      pR[i] = IPP_LODWORD(t);
+      carry = IPP_HIDWORD(t);
     }
     return carry;
 }
@@ -124,8 +124,8 @@ Ipp32u cpSubMulDgt_BNU32(Ipp32u* pR, const Ipp32u* pA, cpSize nsA, Ipp32u val)
 #else
       Ipp64u r = (Ipp64u)*pR - (Ipp64u)(*pA++) * val - carry;
 #endif
-      *pR++  = LODWORD(r);
-      carry  = 0-HIDWORD(r);
+      *pR++  = IPP_LODWORD(r);
+      carry  = 0-IPP_HIDWORD(r);
    }
    return carry;
 }
@@ -162,13 +162,13 @@ int cpDiv_BNU32(Ipp32u* pQ, cpSize* sizeQ,
       int i;
       Ipp32u r = 0;
       for(i=(int)sizeX-1; i>=0; i--) {
-         Ipp64u tmp = MAKEDWORD(pX[i],r);
+         Ipp64u tmp = IPP_MAKEDWORD(pX[i],r);
 #ifdef _SLIMBOOT_OPT
-         Ipp32u q = LODWORD(DivU64x32 (tmp , pY[0]));
-         r = LODWORD(tmp - MultU64x32(pY[0], q));
+         Ipp32u q = IPP_LODWORD(DivU64x32 (tmp , pY[0]));
+         r = IPP_LODWORD(tmp - MultU64x32(pY[0], q));
 #else
-         Ipp32u q = LODWORD(tmp / pY[0]);
-         r = LODWORD(tmp - q*pY[0]);
+         Ipp32u q = IPP_LODWORD(tmp / pY[0]);
+         r = IPP_LODWORD(tmp - q*pY[0]);
 #endif
          if(pQ) pQ[i] = q;
       }
@@ -216,7 +216,7 @@ int cpDiv_BNU32(Ipp32u* pQ, cpSize* sizeQ,
             Ipp32u extend;
 
             /* estimate digit of quotient */
-            Ipp64u tmp = MAKEDWORD(pX[i+sizeY-1], pX[i+sizeY]);
+            Ipp64u tmp = IPP_MAKEDWORD(pX[i+sizeY-1], pX[i+sizeY]);
 #ifdef _SLIMBOOT_OPT
             Ipp64u q = DivU64x32 (tmp, yHi);
             Ipp64u r = tmp - MultU64x32 (q , yHi);
@@ -229,13 +229,13 @@ int cpDiv_BNU32(Ipp32u* pQ, cpSize* sizeQ,
             /* tune estimation above */
             //for(; (q>=CONST_64(0x100000000)) || (Ipp64u)q*pY[sizeY-2] > MAKEDWORD(pX[i+sizeY-2],r); ) {
 #ifdef _SLIMBOOT_OPT
-            for(; HIDWORD(q) || (Ipp64u)MultU64x32 (q, pY[sizeY-2]) > MAKEDWORD(pX[i+sizeY-2],r); ) {
+            for(; IPP_HIDWORD(q) || (Ipp64u)MultU64x32 (q, pY[sizeY-2]) > IPP_MAKEDWORD(pX[i+sizeY-2],r); ) {
 #else
-            for(; HIDWORD(q) || (Ipp64u)q*pY[sizeY-2] > MAKEDWORD(pX[i+sizeY-2],r); ) {
+            for(; IPP_HIDWORD(q) || (Ipp64u)q*pY[sizeY-2] > IPP_MAKEDWORD(pX[i+sizeY-2],r); ) {
 #endif
                q -= 1;
                r += yHi;
-               if( HIDWORD(r) )
+               if( IPP_HIDWORD(r) )
                   break;
             }
 
@@ -250,7 +250,7 @@ int cpDiv_BNU32(Ipp32u* pQ, cpSize* sizeQ,
             }
 
             /* store quotation digit */
-            if(pQ) pQ[i] = LODWORD(q);
+            if(pQ) pQ[i] = IPP_LODWORD(q);
          }
       }
 
@@ -286,8 +286,8 @@ int cpDiv_BNU32(Ipp32u* pQ, cpSize* sizeQ,
       Ipp32u c = 0; \
       for(aidx=0; aidx<(LEN); aidx++) { \
          Ipp64u t = (R)[bidx+aidx] + (A)[aidx] * b + c; \
-         (R)[bidx+aidx] = LODWORD(t); \
-         c = HIDWORD(t); \
+         (R)[bidx+aidx] = IPP_LODWORD(t); \
+         c = IPP_HIDWORD(t); \
       } \
       (R)[bidx+aidx] = c; \
    } \

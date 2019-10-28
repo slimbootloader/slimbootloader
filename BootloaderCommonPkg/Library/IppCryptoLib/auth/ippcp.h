@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018-2019, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -62,6 +62,7 @@ IPPAPI( const IppLibraryVersion*, ippcpGetLibVersion, (void) )
 
 /* method based generalized (reduced memory footprint) Hash Primitives */
 IPPAPI( const IppsHashMethod*, ippsHashMethod_MD5, (void) )
+IPPAPI( const IppsHashMethod*, ippsHashMethod_SM3, (void) )
 IPPAPI( const IppsHashMethod*, ippsHashMethod_SHA1, (void) )
 IPPAPI( const IppsHashMethod*, ippsHashMethod_SHA1_NI, (void) )
 IPPAPI( const IppsHashMethod*, ippsHashMethod_SHA1_TT, (void) )

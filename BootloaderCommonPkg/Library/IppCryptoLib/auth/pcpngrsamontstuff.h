@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018-2019, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -34,8 +34,8 @@
 __INLINE int gsIsKaratsubaApplicable(cpSize ns, cpSize threshold)
 {
    #if !defined(_USE_KARATSUBA_)
-   UNREFERENCED_PARAMETER(ns);
-   UNREFERENCED_PARAMETER(threshold);
+   IPP_UNREFERENCED_PARAMETER(ns);
+   IPP_UNREFERENCED_PARAMETER(threshold);
    return 0;
    #else
    return ns>=threshold;
@@ -48,7 +48,7 @@ __INLINE int gsIsKaratsubaApplicable(cpSize ns, cpSize threshold)
 __INLINE cpSize gsKaratsubaBufferLen(cpSize ns)
 {
    #if !defined(_USE_KARATSUBA_)
-   UNREFERENCED_PARAMETER(ns);
+   IPP_UNREFERENCED_PARAMETER(ns);
    return 0;
    #else
    cpSize len= 0;
@@ -82,7 +82,7 @@ __INLINE cpSize gsMontExp_WinSize(cpSize bitsize)
          bitsize>  178? 3 :    /*  178 - 716  */
          bitsize>   41? 2 : 1; /*   41 - 177  */
    #else
-   UNREFERENCED_PARAMETER(bitsize);
+   IPP_UNREFERENCED_PARAMETER(bitsize);
    return 1;
    #endif
 }

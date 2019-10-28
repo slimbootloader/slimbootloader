@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2017-2019, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -39,6 +39,8 @@
   $(IPP_PATH)/pcpngrsamontstuff.c
   $(IPP_PATH)/pcpngrsassapkcsv15ca_rmf.c
   $(IPP_PATH)/pcpsha256ca.c
+  $(IPP_PATH)/pcpsha512ca.c
+  $(IPP_PATH)/pcpsm3ca.c
   $(IPP_PATH)/pcphmacca_rmf.c
   hmac.c
   rsa_verify.c
