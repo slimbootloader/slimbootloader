@@ -220,7 +220,7 @@ void sha224_hashOctString(Ipp8u* pMD, void* pHashVal)
 
 void sha256_msgRep(Ipp8u* pDst, Ipp64u lenLo, Ipp64u lenHi)
 {
-   UNREFERENCED_PARAMETER(lenHi);
+   IPP_UNREFERENCED_PARAMETER(lenHi);
    lenLo = ENDIANNESS64(lenLo<<3);
    ((Ipp64u*)(pDst))[0] = lenLo;
 }

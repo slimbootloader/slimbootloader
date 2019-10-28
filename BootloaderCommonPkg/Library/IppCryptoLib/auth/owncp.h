@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -72,12 +72,12 @@ typedef int cpSize;
 #define BITS2WORD64_SIZE(x) (((x)+63)>>6)
 
 /* WORD and DWORD manipulators */
-#define LODWORD(x)    ((Ipp32u)(x))
-#define HIDWORD(x)    ((Ipp32u)(((Ipp64u)(x) >>32) & 0xFFFFFFFF))
+#define IPP_LODWORD(x)    ((Ipp32u)(x))
+#define IPP_HIDWORD(x)    ((Ipp32u)(((Ipp64u)(x) >>32) & 0xFFFFFFFF))
 
-#define MAKEHWORD(bLo,bHi) ((Ipp16u)(((Ipp8u)(bLo))  | ((Ipp16u)((Ipp8u)(bHi))) << 8))
-#define MAKEWORD(hLo,hHi)  ((Ipp32u)(((Ipp16u)(hLo)) | ((Ipp32u)((Ipp16u)(hHi))) << 16))
-#define MAKEDWORD(wLo,wHi) ((Ipp64u)(((Ipp32u)(wLo)) | ((Ipp64u)((Ipp32u)(wHi))) << 32))
+#define IPP_MAKEHWORD(bLo,bHi) ((Ipp16u)(((Ipp8u)(bLo))  | ((Ipp16u)((Ipp8u)(bHi))) << 8))
+#define IPP_MAKEWORD(hLo,hHi)  ((Ipp32u)(((Ipp16u)(hLo)) | ((Ipp32u)((Ipp16u)(hHi))) << 16))
+#define IPP_MAKEDWORD(wLo,wHi) ((Ipp64u)(((Ipp32u)(wLo)) | ((Ipp64u)((Ipp32u)(wHi))) << 32))
 
 /* extract byte */
 #define EBYTE(w,n) ((Ipp8u)((w) >> (8 * (n))))
@@ -150,7 +150,7 @@ typedef int cpSize;
   #else
   #  define ENDIANNESS(x) ((ROR32((x), 24) & 0x00ff00ff) | (ROR32((x), 8) & 0xff00ff00))
   #  define ENDIANNESS32(x) ENDIANNESS((x))
-  #  define ENDIANNESS64(x) MAKEDWORD(ENDIANNESS(HIDWORD((x))), ENDIANNESS(LODWORD((x))))
+  #  define ENDIANNESS64(x) MAKEDWORD(ENDIANNESS(IPP_HIDWORD((x))), ENDIANNESS(IPP_LODWORD((x))))
   #endif
 #endif
 

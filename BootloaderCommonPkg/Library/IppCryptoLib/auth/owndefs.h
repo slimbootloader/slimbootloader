@@ -737,7 +737,7 @@ void __CDECL ownUnregisterLib( IppDomain );
 #endif
 #endif
 
-#define UNREFERENCED_PARAMETER(p) (p)=(p)
+#define IPP_UNREFERENCED_PARAMETER(p) (void)(p)
 
 #if defined( _IPP_MARK_LIBRARY )
 static char G[] = {73, 80, 80, 71, 101, 110, 117, 105, 110, 101, 243, 193, 210, 207, 215};
