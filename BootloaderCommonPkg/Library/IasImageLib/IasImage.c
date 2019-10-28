@@ -42,6 +42,7 @@ IsIasImageValid (
   UINT32                     CrcOut;
   UINT32                     Index;
   UINT32                     KeyIdx;
+  UINT8 RsaSignType, SignHashType;
 
   Hdr = (IAS_HEADER *) ImageAddr;
 
@@ -84,8 +85,15 @@ IsIasImageValid (
   }
 
   Signature = (UINT8 *) IAS_SIGNATURE (Hdr);
+
+  //TO-DO: RsaSignType & SignHashType hash info to be retrivied from IasImage header pr 
+  // any other process
+  RsaSignType = FixedPcdGet8(PcdRsaSignType);
+  SignHashType = FixedPcdGet8(PcdSignHashType);
+
   Status = DoRsaVerify ((CONST UINT8 *)Hdr, ((UINT32)IAS_PAYLOAD_END (Hdr)) - ((UINT32)Hdr), COMP_TYPE_PUBKEY_OS,
-                        Signature, (UINT8 *)&Key, NULL, ImageHash);
+                        Signature, (UINT8 *)&Key, NULL, RsaSignType, 
+                        SignHashType, ImageHash);
   if (EFI_ERROR (Status) != EFI_SUCCESS) {
     DEBUG ((DEBUG_ERROR, "IAS image verification failed!\n"));
     return NULL;

@@ -97,6 +97,9 @@
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
   gPlatformModuleTokenSpaceGuid.PcdEarlyLogBufferSize
   gPlatformModuleTokenSpaceGuid.PcdLogBufferSize
+  gPlatformCommonLibTokenSpaceGuid.PcdRsaSignType
+  gPlatformCommonLibTokenSpaceGuid.PcdSignHashType
+  gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootHashType
 
 [Depex]
   TRUE

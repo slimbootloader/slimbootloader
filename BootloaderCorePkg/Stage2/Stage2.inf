@@ -131,6 +131,9 @@
   gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesSize
   gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled
   gPlatformModuleTokenSpaceGuid.PcdLinuxPayloadEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdSignHashType
+  gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootHashType
+
 
 [Depex]
   TRUE

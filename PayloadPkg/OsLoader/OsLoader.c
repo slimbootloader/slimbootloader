@@ -427,8 +427,12 @@ LoadAndSetupImage (
     }
     if (FeaturePcdGet (PcdMeasuredBootEnabled) && (LoaderPlatformInfo->LdrFeatures & FEATURE_MEASURED_BOOT)) {
       // Extend hash of the image into TPM.
-      TpmExtendPcrAndLogEvent ( 8, TPM_ALG_SHA256, LoadedImage->ImageHash,
-        EV_COMPACT_HASH, sizeof("LinuxLoaderPkg: OS Image"), (UINT8 *)"LinuxLoaderPkg: OS Image");
+      TpmExtendPcrAndLogEvent ( 8, 
+        (TPMI_ALG_HASH) GetTpmHashAlgEnabled(),  //To-Do: Hash alogrithm should be retrived from IasImage header?
+        LoadedImage->ImageHash,
+        EV_COMPACT_HASH,
+        sizeof("LinuxLoaderPkg: OS Image"),
+        (UINT8 *)"LinuxLoaderPkg: OS Image");
     }
   }
   return Status;

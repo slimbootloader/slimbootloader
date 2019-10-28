@@ -57,6 +57,7 @@ PrepareStage2 (
   EFI_STATUS                Status;
   UINT32                    Delta;
   STAGE_HDR                *StageHdr;
+  BOOLEAN                   MbHashCalcReq;
 
 
   if (FixedPcdGetBool (PcdStage2LoadHigh)) {
@@ -75,7 +76,11 @@ PrepareStage2 (
 
   // Extend hash of Stage2 image into TPM.
   if (MEASURED_BOOT_ENABLED() && (GetBootMode() != BOOT_ON_S3_RESUME)) {
-    TpmExtendStageHash (COMP_TYPE_STAGE_2);
+
+    //To-Do: SignHashType to be retrived from Hash used in creating of bootloader HASHSTORE 
+    MbHashCalcReq = (FixedPcdGet8(PcdSignHashType) != PcdGet8(PcdMeasuredBootHashType)) ? TRUE : FALSE;
+
+    TpmExtendStageHash (COMP_TYPE_STAGE_2, FLASH_MAP_SIG_STAGE2, MbHashCalcReq);
     AddMeasurePoint (0x20C0);
   }
 
@@ -123,6 +128,8 @@ CreateConfigDatabase (
   UINT8                    *KeyPtr;
   UINT32                    CfgDataBase;
   UINT32                    CfgDataLength;
+  UINT8                     RsaSignType, SignHashType;
+
 
   //
   // In the config data base, the config data near the data base heaser has high priority.
@@ -154,11 +161,25 @@ CreateConfigDatabase (
         CfgBlob = (CDATA_BLOB *)ExtCfgAddPtr;
         SigPtr  = (UINT8 *)CfgBlob + CfgBlob->UsedLength;
         KeyPtr  = SigPtr + RSA2048NUMBYTES;
+
+        //TO-DO: RsaSignType & SignHashType hash info has to be retrivied from container header
+        RsaSignType = FixedPcdGet8(PcdRsaSignType);
+        SignHashType = FixedPcdGet8(PcdSignHashType); 
+
         Status  = DoRsaVerify ((UINT8 *)CfgBlob, CfgBlob->UsedLength, COMP_TYPE_PUBKEY_CFG_DATA,
-                     SigPtr, KeyPtr, NULL, Stage1bHob->ConfigDataHash);
+                     SigPtr, KeyPtr, NULL, RsaSignType,SignHashType, 
+                     Stage1bHob->ConfigDataHash);
         if (EFI_ERROR (Status)) {
           DEBUG ((DEBUG_INFO, "EXT CFG Data ignored ... %r\n", Status));
           ExtCfgAddPtr = NULL;
+        }
+
+        //Compute the config data blob hash for PCR extend if MB hash type differs from Sign hash type
+        //To-Do: Sigining hash type to be retrived from Config data blob header
+
+        if(FixedPcdGet8(PcdRsaSignType) != PcdGet8(PcdMeasuredBootHashType)){
+          DoHashCalc ((UINT8 *)CfgBlob, CfgBlob->UsedLength, (UINT8)PcdGet8(PcdMeasuredBootHashType),
+                                        Stage1bHob->ConfigDataHash);
         }
       }
       if (ExtCfgAddPtr != NULL) {
@@ -540,7 +561,7 @@ ContinueFunc (
   if (MEASURED_BOOT_ENABLED() ) {
     if (GetBootMode() != BOOT_ON_S3_RESUME) {
       if (Stage1bHob->ConfigDataHashValid == 1) {
-        TpmExtendPcrAndLogEvent ( 1, TPM_ALG_SHA256, Stage1bHob->ConfigDataHash,
+        TpmExtendPcrAndLogEvent ( 1, (TPMI_ALG_HASH) GetTpmHashAlgEnabled(), Stage1bHob->ConfigDataHash,
                 EV_EFI_VARIABLE_DRIVER_CONFIG, sizeof("Ext Config Data"), (UINT8 *)"Ext Config Data");
       }
     }

@@ -257,15 +257,21 @@ AuthenticateComponent (
   )
 {
   EFI_STATUS  Status;
+  UINT8 RsaSignType, SignHashType;
+
+  //TO-DO: RsaSignType & SignHashType hash info has to be retrivied from container header
+  RsaSignType = FixedPcdGet8(PcdRsaSignType);
+  SignHashType = FixedPcdGet8(PcdSignHashType);
 
   if (!FeaturePcdGet (PcdVerifiedBootEnabled)) {
     Status = EFI_SUCCESS;
   } else {
     if (AuthType == AUTH_TYPE_SHA2_256) {
-      Status = DoHashVerify (Data, Length, HASH_TYPE_SHA256, CompType, HashData);
+      Status = DoHashVerify (Data, Length, SignHashType, CompType, HashData);
     } else if (AuthType == AUTH_TYPE_SIG_RSA2048_SHA256) {
+      
       Status = DoRsaVerify (Data, Length, CompType, AuthData,
-                            AuthData + RSA2048NUMBYTES, HashData, NULL);
+                            AuthData + RSA2048NUMBYTES, HashData, RsaSignType, SignHashType, NULL);
     } else if (AuthType == AUTH_TYPE_NONE) {
       Status = EFI_SUCCESS;
     } else {

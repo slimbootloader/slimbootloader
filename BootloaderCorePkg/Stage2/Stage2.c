@@ -60,6 +60,8 @@ PreparePayload (
   UINT8                          BootMode;
   UINT8                          HashIdx;
   COMPONENT_ENTRY               *ComponentEntry;
+  BOOLEAN                        MbHashCalcReq;
+
 
   // Load payload to PcdPayloadLoadBase.
   PayloadId   = GetPayloadId ();
@@ -111,7 +113,10 @@ PreparePayload (
         }
       }
     }
-    TpmExtendStageHash (HashIdx);
+
+    //TO-DO: PcdSignHashType has to be retrived from Hash Store
+    MbHashCalcReq = (FixedPcdGet8(PcdSignHashType) != PcdGet8(PcdMeasuredBootHashType)) ? TRUE : FALSE;
+    TpmExtendStageHash (HashIdx, ComponentName, MbHashCalcReq);
     AddMeasurePoint (0x3150);
   }
 

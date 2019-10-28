@@ -853,6 +853,8 @@ AuthenticateCapsule (
   UINT8                     *Signature;
   FW_UPDATE_STATUS          FwUpdStatus;
   UINT32                    FwUpdStatusOffset;
+  UINT8 RsaSignType, SignHashType;
+
 
   FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
 
@@ -900,7 +902,11 @@ AuthenticateCapsule (
     }
   }
 
-  Status    = DoRsaVerify (FwImage, Header->SignatureOffset, COMP_TYPE_PUBKEY_FWU, Signature, Key, NULL, NULL);
+  //TO-DO: RsaSignType & SignHashType hash info has to be retrivied from container header
+  RsaSignType = FixedPcdGet8(PcdRsaSignType);
+  SignHashType = FixedPcdGet8(PcdSignHashType);
+
+  Status    = DoRsaVerify (FwImage, Header->SignatureOffset, COMP_TYPE_PUBKEY_FWU, Signature, Key, NULL, RsaSignType, SignHashType, NULL);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Image verification failed, %r!\n", Status));
     return EFI_SECURITY_VIOLATION;

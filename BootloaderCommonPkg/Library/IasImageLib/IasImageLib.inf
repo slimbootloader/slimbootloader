@@ -36,7 +36,12 @@
   CryptoLib
   SecureBootLib
 
+
 [Guids]
 
 [Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdRsaSignType               ## CONSUMES
+  gPlatformCommonLibTokenSpaceGuid.PcdSignHashType              ## CONSUMES
+  gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootHashType      ## CONSUMES
+  

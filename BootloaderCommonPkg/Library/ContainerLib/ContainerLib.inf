@@ -30,3 +30,6 @@
 [Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdContainerMaxNumber
   gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdRsaSignType               ## CONSUMES
+  gPlatformCommonLibTokenSpaceGuid.PcdSignHashType              ## CONSUMES
+  gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootHashType      ## CONSUMES
