@@ -289,10 +289,14 @@ DebugPrintLevelEnabled (
   @param  Expression  Boolean expression that evaluated to FALSE
 
 **/
-#ifdef LITE_PRINT
-#define _ASSERT(Expression)  DebugAssert (gEfiCallerBaseName, __LINE__, "")
+#ifdef __KLOCWORK__
+  #define _ASSERT(Expression)    do { if (!(Expression)) abort(); } while (0)
 #else
-#define _ASSERT(Expression)  DebugAssert (__FILE__, __LINE__, #Expression)
+  #ifdef LITE_PRINT
+    #define _ASSERT(Expression)  DebugAssert (gEfiCallerBaseName, __LINE__, "")
+  #else
+    #define _ASSERT(Expression)  DebugAssert (__FILE__, __LINE__, #Expression)
+  #endif
 #endif
 
 /**
@@ -332,18 +336,22 @@ DebugPrintLevelEnabled (
   @param  Expression  Boolean expression.
 
 **/
-#if !defined(MDEPKG_NDEBUG)
-  #define ASSERT(Expression)        \
-    do {                            \
-      if (DebugAssertEnabled ()) {  \
-        if (!(Expression)) {        \
-          _ASSERT (Expression);     \
-          ANALYZER_UNREACHABLE ();  \
-        }                           \
-      }                             \
-    } while (FALSE)
+#ifdef __KLOCWORK__
+  #define ASSERT(Expression)    _ASSERT (Expression)
 #else
-  #define ASSERT(Expression)
+  #if !defined(MDEPKG_NDEBUG)
+    #define ASSERT(Expression)        \
+      do {                            \
+        if (DebugAssertEnabled ()) {  \
+          if (!(Expression)) {        \
+            _ASSERT (Expression);     \
+            ANALYZER_UNREACHABLE ();  \
+          }                           \
+        }                             \
+      } while (FALSE)
+  #else
+    #define ASSERT(Expression)
+  #endif
 #endif
 
 /**
