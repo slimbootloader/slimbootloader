@@ -19,12 +19,12 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #define  GPT_MAX_NUM_PARTITIONS   128
 
-enum {
+typedef enum {
   EnumPartTypeUnknown = 0,
   EnumPartTypeMbr,
   EnumPartTypeGpt,
   EnumPartTypeMax
-};
+} PARTITION_TYPE;
 
 //
 // The block device
@@ -100,6 +100,37 @@ VOID
 EFIAPI
 ClosePartitions (
   IN   EFI_HANDLE             PartHandle
+  );
+
+/**
+  Get detected partition type
+
+  @param[in]  PartHandle      The partition handle to clean-up
+
+  @retval                     Partition type enum
+
+**/
+PARTITION_TYPE
+EFIAPI
+GetPartitionType (
+  IN   EFI_HANDLE             PartHandle
+  );
+
+/**
+  Get HW part no of the detected partition
+
+  @param[in]  PartHandle              The partition handle to clean-up
+  @param[in]  HwPartNo                HW part no.
+
+  @retval     EFI_SUCCESS             Found SW part no.
+  @retval     EFI_INVALID_PARAMETER   Invalid PartHandle
+
+**/
+EFI_STATUS
+EFIAPI
+GetPartitionCurrentPartNo (
+  IN  EFI_HANDLE            PartHandle,
+  OUT UINT32               *HwPartNo
   );
 
 #endif

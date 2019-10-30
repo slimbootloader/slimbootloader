@@ -130,7 +130,7 @@ ExtFsOpenFile (
     return Status;
   }
 
-  OpenFile = (OPEN_FILE *)AllocatePool (sizeof (OPEN_FILE));
+  OpenFile = (OPEN_FILE *)AllocateZeroPool (sizeof (OPEN_FILE));
   if (OpenFile == NULL) {
     Status = EFI_OUT_OF_RESOURCES;
     goto Error;
@@ -269,4 +269,41 @@ ExtFsCloseFile (
   }
   Ext2fsClose (OpenFile);
   FreePool (OpenFile);
+}
+
+/**
+  List directories or files
+
+  @param[in]     FsHandle         file system handle.
+  @param[in]     DirFilePath      directory or file path
+
+  @retval EFI_SUCCESS             list directories of files successfully
+  @retval EFI_UNSUPPORTED         this api is not supported
+  @retval Others                  an error occurs
+
+**/
+EFI_STATUS
+EFIAPI
+ExtFsListDir (
+  IN  EFI_HANDLE                                  FsHandle,
+  IN  CHAR16                                     *DirFilePath
+  )
+{
+  EFI_STATUS              Status;
+  EFI_HANDLE              FileHandle;
+
+  Status = EFI_UNSUPPORTED;
+
+DEBUG_CODE_BEGIN ();
+  FileHandle = NULL;
+  Status = ExtFsOpenFile (FsHandle, DirFilePath, &FileHandle);
+  if (!EFI_ERROR (Status)) {
+    Status = Ext2fsLs ((OPEN_FILE *)FileHandle, NULL);
+  }
+  if (FileHandle != NULL) {
+    ExtFsCloseFile (FileHandle);
+  }
+DEBUG_CODE_END ();
+
+  return Status;
 }

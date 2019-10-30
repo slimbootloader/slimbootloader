@@ -24,6 +24,7 @@
 [Sources]
   ExtLib.c
   Ext2Fs.c
+  Ext2FsLs.c
 
 [Packages]
   MdePkg/MdePkg.dec

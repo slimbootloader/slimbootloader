@@ -13,6 +13,38 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include "FatLiteFmt.h"
 
 /**
+  Print directory or file name in debug output
+
+  @param[in]     File             The File pointer to be printed
+
+  @retval        none
+
+*/
+STATIC
+VOID
+PrintFileName (
+  IN   PEI_FAT_FILE  *File
+  )
+{
+  CHAR16  *FileName;
+
+  if (File == NULL) {
+    return;
+  }
+
+  FileName = File->LongFileName;
+  if (FileName[0] == '\0') {
+    FileName = File->FileName;
+  }
+
+  if (File->Attributes & FAT_ATTR_DIRECTORY) {
+    DEBUG ((DEBUG_INFO, "  %s/\n", FileName));
+  } else {
+    DEBUG ((DEBUG_INFO, "  %s\t%d\n", FileName, File->FileSize));
+  }
+}
+
+/**
   Gets next path node from a full file path string.
 
   @param[in]     FileName         The full file path string.
@@ -56,20 +88,20 @@ GetNextFilePathNode (
 }
 
 /**
-  Finds the recovery file on a FAT volume.
-  This function finds the the recovery file named FileName on a specified FAT volume and returns
-  its FileHandle pointer.
+  Finds a file on a FAT volume.
+  This function finds the the file named FileName on a specified FAT volume and
+  returns its FileHandle pointer.
 
   @param  PrivateData             Global memory map for accessing global
                                   variables.
   @param  VolumeIndex             The index of the volume.
-  @param  FileName                The recovery file name to find.
+  @param  FileName                The file name to find.
   @param  Handle                  The output file handle.
 
   @retval EFI_DEVICE_ERROR        Some error occured when operating the FAT
                                   volume.
-  @retval EFI_NOT_FOUND           The recovery file was not found.
-  @retval EFI_SUCCESS             The recovery file was successfully found on the
+  @retval EFI_NOT_FOUND           The file was not found.
+  @retval EFI_SUCCESS             The file was successfully found on the
                                   FAT volume.
 
 **/
@@ -93,7 +125,7 @@ FindFile (
 
   //
   // VolumeIndex must be less than PEI_FAT_MAX_VOLUME because PrivateData->VolumeCount
-  // cannot be larger than PEI_FAT_MAX_VOLUME when detecting recovery volume.
+  // cannot be larger than PEI_FAT_MAX_VOLUME when detecting a volume.
   //
   ASSERT (VolumeIndex < PEI_FAT_MAX_VOLUME);
 
@@ -113,8 +145,10 @@ FindFile (
     return EFI_DEVICE_ERROR;
   }
 
+  CopyMem (File, &Parent, sizeof (PEI_FAT_FILE));
+
   //
-  // Search for recovery capsule in root directory
+  // Search for a file or directory
   //
   NodeCurr = FileName;
   while (NodeCurr != NULL) {
@@ -129,7 +163,7 @@ FindFile (
                    );
         if (Status == EFI_SUCCESS) {
           //
-          // Compare whether the file name is recovery file name.
+          // Compare whether the file name is matched.
           //
           if (EngStrniColl (NodeCurr, File->FileName, NodeLen)) {
             if (File->FileName[NodeLen] == 0) {
@@ -141,7 +175,7 @@ FindFile (
             if (File->LongFileName[NodeLen] == 0) {
               break;
             }
-           }
+          }
         }
       } while (Status == EFI_SUCCESS);
       if (EFI_ERROR (Status)) {
@@ -154,7 +188,7 @@ FindFile (
   }
 
   //
-  // Get the recovery file, set its file position to 0.
+  // Get the file, set its file position to 0.
   //
   if (File->StartingCluster != 0) {
     Status = FatSetFilePos (PrivateData, File, 0);
@@ -449,11 +483,65 @@ FatFsCloseFile (
 
   File = (PEI_FAT_FILE *)FileHandle;
   ASSERT (File != NULL);
-  ASSERT (File->FileSize != 0);
-  if (File == NULL || File->FileSize == 0) {
+  if (File == NULL) {
     return;
   }
 
   DEBUG ((DEBUG_VERBOSE, "  FatFsCloseFile: %s closed\n", File->FileName));
   FreePool (File);
+}
+
+/**
+  List directories or files
+
+  @param[in]     FsHandle         file system handle.
+  @param[in]     DirFilePath      directory or file path
+
+  @retval EFI_SUCCESS             list directories of files successfully
+  @retval EFI_UNSUPPORTED         this api is not supported
+  @retval Others                  an error occurs
+
+**/
+EFI_STATUS
+EFIAPI
+FatFsListDir (
+  IN  EFI_HANDLE                                    FsHandle,
+  IN  CHAR16                                       *DirFilePath
+  )
+{
+  EFI_STATUS              Status;
+  PEI_FAT_PRIVATE_DATA   *PrivateData;
+  PEI_FAT_FILE           *File;
+  PEI_FAT_FILE            Parent;
+  EFI_HANDLE              FileHandle;
+
+  Status = EFI_UNSUPPORTED;
+
+DEBUG_CODE_BEGIN ();
+  FileHandle = NULL;
+  Status = FatFsOpenFile (FsHandle, DirFilePath, &FileHandle);
+  if (!EFI_ERROR (Status)) {
+    PrivateData = (PEI_FAT_PRIVATE_DATA *)FsHandle;
+    File = (PEI_FAT_FILE *)FileHandle;
+
+    if (File->Attributes & FAT_ATTR_DIRECTORY) {
+      CopyMem (&Parent, File, sizeof (PEI_FAT_FILE));
+      do {
+        Status = FatReadNextDirectoryEntry (PrivateData, &Parent, 0, File);
+        if (EFI_ERROR (Status)) {
+          Status = EFI_SUCCESS;
+          break;
+        }
+        PrintFileName (File);
+      } while (Status == EFI_SUCCESS);
+    } else {
+      PrintFileName (File);
+    }
+  }
+  if (FileHandle != NULL) {
+    FatFsCloseFile (FileHandle);
+  }
+DEBUG_CODE_END ();
+
+  return Status;
 }

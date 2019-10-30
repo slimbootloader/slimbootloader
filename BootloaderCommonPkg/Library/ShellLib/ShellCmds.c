@@ -6,6 +6,7 @@
 **/
 
 #include "ShellCmds.h"
+#include <Library/DebugLib.h>
 
 EFI_STATUS
 LoadShellCommands (
@@ -29,5 +30,7 @@ LoadShellCommands (
   ShellCommandRegister (&ShellCommandReset);
   ShellCommandRegister (&ShellCommandUcode);
   ShellCommandRegister (&ShellCommandCls);
+  ShellCommandRegister (&ShellCommandFs);
+
   return EFI_SUCCESS;
 }

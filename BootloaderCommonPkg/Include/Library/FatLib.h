@@ -129,4 +129,22 @@ FatFsCloseFile (
   IN  EFI_HANDLE                                  FileHandle
   );
 
+/**
+  List directories or files
+
+  @param[in]     FsHandle         file system handle.
+  @param[in]     DirFilePath      directory or file path
+
+  @retval EFI_SUCCESS             list directories of files successfully
+  @retval EFI_UNSUPPORTED         this api is not supported
+  @retval Others                  an error occurs
+
+**/
+EFI_STATUS
+EFIAPI
+FatFsListDir (
+  IN  EFI_HANDLE                                  FsHandle,
+  IN  CHAR16                                     *DirFilePath
+  );
+
 #endif // _FAT_LIB_H_

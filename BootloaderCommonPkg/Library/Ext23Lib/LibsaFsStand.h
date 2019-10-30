@@ -99,6 +99,7 @@ typedef struct {
 #if !defined(LIBSA_NO_RAW_ACCESS)
   OFFSET      FileOffset;                     // current file offset (F_RAW)
 #endif
+  CHAR8       *FileNamePtr;
 } OPEN_FILE;
 
 #if ! defined(LIBSA_SINGLE_DEVICE)
