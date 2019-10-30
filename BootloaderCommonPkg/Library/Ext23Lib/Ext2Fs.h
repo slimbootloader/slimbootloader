@@ -421,185 +421,141 @@ typedef struct {
   UINT8                PhysicalDevNo;
 } PEI_EXT_PRIVATE_DATA;
 
-
 /**
-Gives the info of device block config.
+  Gives the info of device block config.
 
-@param  DevData     Device privete data.
-@param  ReadWrite   Read write
-@param  BlockNum    Block number to start
-@param  Size        Size to read block.
-@param  Buf         Buffer to read the block data.
-@param  RSize
+  @param[in]    DevData     Device privete data.
+  @param[in]    ReadWrite   Read or Write
+  @param[in]    BlockNum    Block number to start
+  @param[in]    Size        Size to read block.
+  @param[out]   Buf         Buffer to read the block data.
+  @param[out]   RSize       Actual read size
 
-@retval EFI_SUCCESS       The function completed successfully.
-@retval !EFI_SUCCESS      Something error while read FILE.
+  @retval 0 if success
+  @retval other if error.
 **/
 INT32
+EFIAPI
 BDevStrategy (
-  VOID     *DevData,
-  INT32     ReadWrite,
-  DADDRESS  BlockNum,
-  UINT32    Size,
-  VOID     *Buf,
-  UINT32   *RSize
+  IN  VOID       *DevData,
+  IN  INT32       ReadWrite,
+  IN  DADDRESS    BlockNum,
+  IN  UINT32      Size,
+  OUT VOID       *Buf,
+  OUT UINT32     *RSize
   );
 #define    DEV_STRATEGY(d)    BDevStrategy
 
 /**
   Open struct file.
 
-  @param  Path          path to locate the file
-  @param  File          The struct having the device and file info
+  @param[in]      Path          Path to locate the file
+  @param[in/out]  File          The struct having the device and file info
 
-  @retval 0 if Group descriptor read is success
+  @retval 0 if file open is success
   @retval other if error.
 **/
 INT32
+EFIAPI
 Ext2fsOpen (
-  CHAR8         *Path,
-  OPEN_FILE     *File
+  IN      CHAR8         *Path,
+  IN OUT  OPEN_FILE     *File
   );
 
 /**
-  Close the file.
-  @param File  File to be closed.
+  Close the opened file.
 
-  @retval 0 if Group descriptor read is success
+  @param[in/out]    File        File to be closed.
+
+  @retval 0 regardless of success/fail condition
 **/
 INT32
+EFIAPI
 Ext2fsClose (
-  OPEN_FILE     *File
+  IN OUT  OPEN_FILE     *File
   );
 
-
 /**
-  Copy a portion of a FILE into kernel memory.
+  Copy a portion of a FILE into a memory.
   Cross block boundaries when necessary
-  @param File
-  @param Start
-  @param Size
-  @param ResId
+
+  @param[in/out]    File      File handle to be read
+  @param[in]        Start     Start address of read buffer
+  @param[in]        Size      Size to be read
+  @param[out]       ResId     Actual read size
+
+  @retval 0 if file read is success
+  @retval other if error.
 **/
 INT32
+EFIAPI
 Ext2fsRead (
-  OPEN_FILE     *File,
-  VOID          *Start,
-  UINT32         Size,
-  UINT32        *ResId
+  IN OUT  OPEN_FILE     *File,
+  IN      VOID          *Start,
+  IN      UINT32         Size,
+  OUT     UINT32        *ResId
   );
 
 /**
-  Update the mode and size from descriptor to stat Block.
-  contains that block.
-  @param File       pointer to an file private data.
-  @param StatBlock  pointer to File information (stats).
-  @retval 0 if success
-**/
-INT32
-Ext2fsStat (
-  OPEN_FILE     *File,
-  STAT          *StatBlock
-  );
+  List directories or files and print them
 
-/**
-  Update the mode and size from descriptor to stat Block.
-  contains that block.
-  @param File       pointer to an file private data
-  @param Pattern    pointer to Pattern
+  @param[in] File           pointer to an file private data
+  @param[in] Pattern        not used for now
+
+  @retval EFI_SUCCESS       list directories or files successfully
+  @retval EFI_NOT_FOUND     not found specified dir or file
+  @retval EFI_DEVICE_ERROR  an error while accessing filesystem
 **/
 EFI_STATUS
+EFIAPI
 Ext2fsLs (
-  OPEN_FILE *File,
-  const CHAR8 *Pattern
-  );
-
-/**
-
-  Determine the disk block(s) that contains data for FILE <File>,
-  starting at Offset <FilePosition> and extending for up to <Len> bytes.
-  @param File           Pointer to an file private data.
-  @param FilePosition   offset address of the file position.
-  @param Len            Number of bytes
-  @param NBlocks        Number of consecutive blocks
-
-  @retval  First disk block, number of consecutive blocks thru *<nblock>.
-**/
-INT32
-Ext2fsDiskBlocks (
-  OPEN_FILE    *File,
-  UINT32        FilePosition,
-  UINT32        Len,
-  UINT32       *NBlocks
-  );
-
-/**
-  Given an offset in a FILE, find the disk block number that
-  contains that block.
-  @param OpenFile       pointer to an Open file.
-  @param Stat           Block to find the file.
-  @param Name           Pointer to the disk which contains block.
-  @param NamLen
-  @retval 0 if success
-  @retval other if error.
-**/
-INT32
-Ext2fsLookUpFile (
-  OPEN_FILE     *OpenFile,
-  STAT          *Stat,
-  CHAR8         *Name,
-  UINT32         NamLen
-  );
-
-/**
-  Updates the seek ptr of file based on seek point.
-  @param File       pointer to an Open file.
-  @param Offset     Offset to update the seekptr.
-  @param Where      Seek point where it needs to be update.
-
-**/
-OFFSET
-Ext2fsSeek (
-  OPEN_FILE    *File,
-  OFFSET        Offset,
-  INT32         Where
+  IN  OPEN_FILE     *File,
+  IN  CONST CHAR8   *Pattern
   );
 
 /**
   Read Superblock of the file.
-  @param File       File for which super block needs to be read.
-  @param FileSystem Fs on which super block is computed.
+
+  @param[in]      File          File for which super block needs to be read.
+  @param[in/out]  FileSystem    Fs on which super block is computed.
 
   @retval 0 if superblock compute is success
   @retval other if error.
 **/
 INT32
+EFIAPI
 ReadSBlock (
-  OPEN_FILE     *File,
-  M_EXT2FS      *FileSystem
+  IN      OPEN_FILE     *File,
+  IN OUT  M_EXT2FS      *FileSystem
   );
 
 /**
   Read group descriptor of the file.
-  @param File       File for which group descriptor needs to be read.
-  @param FileSystem Fs on which super block is computed.
+
+  @param[in/out]  File          File for which group descriptor needs to be read.
+  @param[in]      FileSystem    Fs on which super block is computed.
 
   @retval 0 if Group descriptor read is success
   @retval other if error.
 **/
 INT32
+EFIAPI
 ReadGDBlock (
-  OPEN_FILE     *File,
-  M_EXT2FS      *FileSystem
+  IN OUT  OPEN_FILE     *File,
+  IN      M_EXT2FS      *FileSystem
   );
 
 /**
- Read a new inode into a FILE structure.
- @param [in] INumber inode number
- @param [in] File pointer to open file struct.
- @retval
+  Read a new inode into a FILE structure.
+
+  @param[in]      INumber     inode number
+  @param[in/out]  File        pointer to open file struct.
+
+  @retval         0 if success
+  @retval         other if error.
 **/
 INT32
+EFIAPI
 ReadInode (
   IN    INODE32      INumber,
   IN    OPEN_FILE   *File
@@ -607,48 +563,62 @@ ReadInode (
 
 /**
   Read a portion of a FILE into an internal buffer.
+
   Return the location in the buffer and the amount in the buffer.
-  @param File       Pointer to the open file.
-  @param BufferPtr  buffer corresponding to offset
-  @param SizePtr    Size of remainder of buffer.
+
+  @param[in]  File        Pointer to the open file.
+  @param[out] BufferPtr   buffer corresponding to offset
+  @param[out] SizePtr     Size of remainder of buffer.
+
+  @retval     0 if success
+  @retval     other if error.
 **/
 INT32
+EFIAPI
 BufReadFile (
-  OPEN_FILE     *File,
-  CHAR8        **BufferPtr,
-  UINT32        *SizePtr
+  IN  OPEN_FILE     *File,
+  OUT CHAR8        **BufferPtr,
+  OUT UINT32        *SizePtr
   );
 
 /**
   Gets the size of the file from descriptor.
 
-  @param File  File to be closed.
+  @param[in]    File      File to be closed.
+
   @retval size of the file from descriptor.
 **/
 UINT32
+EFIAPI
 Ext2fsFileSize (
-  OPEN_FILE     *File
+  IN  OPEN_FILE     *File
   );
 
 #ifdef EXT2FS_DEBUG
 /**
   Dump the file system super block info.
 
-  @param FileSystem     pointer to filesystem.
+  @param[in]  FileSystem     pointer to filesystem.
+
+  @retval     none
 **/
 VOID
+EFIAPI
 DumpSBlock (
-  M_EXT2FS  *FileSystem
+  IN  M_EXT2FS  *FileSystem
   );
 
 /**
-  Dump the file system group descriptor block info.
+  Dump the file group descriptor block info.
 
-  @param FileSystem     pointer to filesystem.
+  @param[in]  FileSystem     pointer to filesystem.
+
+  @retval     none
 **/
 VOID
+EFIAPI
 DumpGroupDesBlock (
-  M_EXT2FS  *FileSystem
+  IN  M_EXT2FS  *FileSystem
   );
 #endif
 

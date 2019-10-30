@@ -90,8 +90,6 @@
 #include "Ext2Fs.h"
 #include "LibsaFsStand.h"
 
-#define NELEM(x) (sizeof (x) / sizeof(*x))
-
 typedef struct ENTRY ENTRY;
 struct ENTRY {
   ENTRY    *EntryNext;
@@ -105,15 +103,18 @@ STATIC CONST CHAR8 *CONST mTypeStr[] = { "unknown", "REG",  "DIR",  "CHR",  "BLK
 /**
   List directories or files and print them
 
-  @param File       pointer to an file private data
-  @param Pattern    not used for now
+  @param[in] File           pointer to an file private data
+  @param[in] Pattern        not used for now
 
+  @retval EFI_SUCCESS       list directories or files successfully
+  @retval EFI_NOT_FOUND     not found specified dir or file
+  @retval EFI_DEVICE_ERROR  an error while accessing filesystem
 **/
 EFI_STATUS
 EFIAPI
 Ext2fsLs (
-  OPEN_FILE     *File,
-  CONST CHAR8   *Pattern
+  IN  OPEN_FILE     *File,
+  IN  CONST CHAR8   *Pattern
   )
 {
   EFI_STATUS      Status;
@@ -168,7 +169,7 @@ Ext2fsLs (
         continue;
       }
 
-      if (Dp->Ext2DirectType >= NELEM (mTypeStr)) {
+      if (Dp->Ext2DirectType >= ARRAY_SIZE (mTypeStr)) {
         //
         //  This does not handle "Old"
         //  filesystems properly. On little
