@@ -40,7 +40,7 @@ PrintFileName (
   if (File->Attributes & FAT_ATTR_DIRECTORY) {
     DEBUG ((DEBUG_INFO, "  %s/\n", FileName));
   } else {
-    DEBUG ((DEBUG_INFO, "  %s\t%d\n", FileName, File->FileSize));
+    DEBUG ((DEBUG_INFO, "  %-16s %d\n", FileName, File->FileSize));
   }
 }
 
