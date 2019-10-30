@@ -99,58 +99,64 @@
 /**
   Given an offset in a FILE, find the disk block number that
   contains that block.
-  @param File           pointer to an Open file.
-  @param FileBlock      Block to find the file.
-  @param DiskBlockPtr   Pointer to the disk which contains block.
+
+  @param[in]  File            pointer to an Open file.
+  @param[in]  FileBlock       Block to find the file.
+  @param[out] DiskBlockPtr    Pointer to the disk which contains block.
+
   @retval 0 if success
   @retval other if error.
 **/
 STATIC
 INT32
 BlockMap (
-  OPEN_FILE     *File,
-  INDPTR         FileBlock,
-  INDPTR        *DiskBlockPtr
+  IN  OPEN_FILE     *File,
+  IN  INDPTR         FileBlock,
+  OUT INDPTR        *DiskBlockPtr
   );
 
 /**
-  Search a directory for a Name and return its
-  inode number.
-  @param Name       Name to compare with
-  @param Length     Length of the dir name
-  @param File       Pointer to file private data
-  @param INumPtr    pointer to Inode number.
+  Search a directory for a Name and return its inode number.
+
+  @param[in]      Name        Name to compare with
+  @param[in]      Length      Length of the dir name
+  @param[in/out]  File        Pointer to file private data
+  @param[out]     INumPtr     pointer to Inode number.
+
+  @retval 0 if success
+  @retval other if error.
 **/
 STATIC
 INT32
 SearchDirectory (
-  CHAR8         *Name,
-  INT32          Length,
-  OPEN_FILE     *File,
-  INODE32       *INumPtr
+  IN      CHAR8         *Name,
+  IN      INT32          Length,
+  IN OUT  OPEN_FILE     *File,
+  OUT     INODE32       *INumPtr
   );
 
 /**
-Gives the info of device block config.
+  Gives the info of device block config.
 
-@param  DevData     Device privete data.
-@param  ReadWrite   Read write
-@param  BlockNum    Block number to start
-@param  Size        Size to read block.
-@param  Buf         Buffer to read the block data.
-@param  RSize
+  @param[in]    DevData     Device privete data.
+  @param[in]    ReadWrite   Read or Write
+  @param[in]    BlockNum    Block number to start
+  @param[in]    Size        Size to read block.
+  @param[out]   Buf         Buffer to read the block data.
+  @param[out]   RSize       Actual read size
 
-@retval EFI_SUCCESS       The function completed successfully.
-@retval !EFI_SUCCESS      Something error while read FILE.
+  @retval 0 if success
+  @retval other if error.
 **/
 INT32
+EFIAPI
 BDevStrategy (
-  VOID     *DevData,
-  INT32     ReadWrite,
-  DADDRESS  BlockNum,
-  UINT32    Size,
-  VOID     *Buf,
-  UINT32   *RSize
+  IN  VOID       *DevData,
+  IN  INT32       ReadWrite,
+  IN  DADDRESS    BlockNum,
+  IN  UINT32      Size,
+  OUT VOID       *Buf,
+  OUT UINT32     *RSize
   )
 {
   INT32                    Res;
@@ -179,12 +185,16 @@ BDevStrategy (
 }
 
 /**
- Read a new inode into a FILE structure.
- @param [in] INumber inode number
- @param [in] File pointer to open file struct.
- @retval
+  Read a new inode into a FILE structure.
+
+  @param[in]      INumber     inode number
+  @param[in/out]  File        pointer to open file struct.
+
+  @retval         0 if success
+  @retval         other if error.
 **/
 INT32
+EFIAPI
 ReadInode (
   IN    INODE32      INumber,
   IN    OPEN_FILE   *File
@@ -242,18 +252,20 @@ ReadInode (
 /**
   Given an offset in a FILE, find the disk block number that
   contains that block.
-  @param File           pointer to an Open file.
-  @param FileBlock      Block to find the file.
-  @param DiskBlockPtr   Pointer to the disk which contains block.
+
+  @param[in]  File            pointer to an Open file.
+  @param[in]  FileBlock       Block to find the file.
+  @param[out] DiskBlockPtr    Pointer to the disk which contains block.
+
   @retval 0 if success
   @retval other if error.
 **/
 STATIC
 INT32
 BlockMap (
-  OPEN_FILE     *File,
-  INDPTR         FileBlock,
-  INDPTR        *DiskBlockPtr
+  IN  OPEN_FILE     *File,
+  IN  INDPTR         FileBlock,
+  OUT INDPTR        *DiskBlockPtr
   )
 {
   FILE     *Fp;
@@ -422,16 +434,22 @@ BlockMap (
 
 /**
   Read a portion of a FILE into an internal buffer.
+
   Return the location in the buffer and the amount in the buffer.
-  @param File       Pointer to the open file.
-  @param BufferPtr  buffer corresponding to offset
-  @param SizePtr    Size of remainder of buffer.
+
+  @param[in]  File        Pointer to the open file.
+  @param[out] BufferPtr   buffer corresponding to offset
+  @param[out] SizePtr     Size of remainder of buffer.
+
+  @retval     0 if success
+  @retval     other if error.
 **/
 INT32
+EFIAPI
 BufReadFile (
-  OPEN_FILE     *File,
-  CHAR8        **BufferPtr,
-  UINT32        *SizePtr
+  IN  OPEN_FILE     *File,
+  OUT CHAR8        **BufferPtr,
+  OUT UINT32        *SizePtr
   )
 {
   FILE *Fp;
@@ -493,20 +511,23 @@ BufReadFile (
 }
 
 /**
-  Search a directory for a Name and return its
-  inode number.
-  @param Name       Name to compare with
-  @param Length     Length of the dir name
-  @param File       Pointer to file private data
-  @param INumPtr    pointer to Inode number.
+  Search a directory for a Name and return its inode number.
+
+  @param[in]      Name        Name to compare with
+  @param[in]      Length      Length of the dir name
+  @param[in/out]  File        Pointer to file private data
+  @param[out]     INumPtr     pointer to Inode number.
+
+  @retval 0 if success
+  @retval other if error.
 **/
 STATIC
 INT32
 SearchDirectory (
-  CHAR8         *Name,
-  INT32          Length,
-  OPEN_FILE     *File,
-  INODE32       *INumPtr
+  IN      CHAR8         *Name,
+  IN      INT32          Length,
+  IN OUT  OPEN_FILE     *File,
+  OUT     INODE32       *INumPtr
   )
 {
   FILE *Fp;
@@ -557,16 +578,18 @@ SearchDirectory (
 
 /**
   Read Superblock of the file.
-  @param File       File for which super block needs to be read.
-  @param FileSystem Fs on which super block is computed.
+
+  @param[in]      File          File for which super block needs to be read.
+  @param[in/out]  FileSystem    Fs on which super block is computed.
 
   @retval 0 if superblock compute is success
   @retval other if error.
 **/
 INT32
+EFIAPI
 ReadSBlock (
-  OPEN_FILE     *File,
-  M_EXT2FS      *FileSystem
+  IN      OPEN_FILE     *File,
+  IN OUT  M_EXT2FS      *FileSystem
   )
 {
   PEI_EXT_PRIVATE_DATA *PrivateData;
@@ -638,16 +661,18 @@ Exit:
 
 /**
   Read group descriptor of the file.
-  @param File       File for which group descriptor needs to be read.
-  @param FileSystem Fs on which super block is computed.
+
+  @param[in/out]  File          File for which group descriptor needs to be read.
+  @param[in]      FileSystem    Fs on which super block is computed.
 
   @retval 0 if Group descriptor read is success
   @retval other if error.
 **/
 INT32
+EFIAPI
 ReadGDBlock (
-  OPEN_FILE     *File,
-  M_EXT2FS      *FileSystem
+  IN OUT  OPEN_FILE     *File,
+  IN      M_EXT2FS      *FileSystem
   )
 {
   FILE *Fp;
@@ -681,20 +706,20 @@ ReadGDBlock (
   return 0;
 }
 
-
 /**
   Open struct file.
 
-  @param  Path          path to locate the file
-  @param  File          The struct having the device and file info
+  @param[in]      Path          Path to locate the file
+  @param[in/out]  File          The struct having the device and file info
 
-  @retval 0 if Group descriptor read is success
+  @retval 0 if file open is success
   @retval other if error.
 **/
 INT32
+EFIAPI
 Ext2fsOpen (
-  CHAR8         *Path,
-  OPEN_FILE     *File
+  IN      CHAR8         *Path,
+  IN OUT  OPEN_FILE     *File
   )
 {
 #ifndef LIBSA_FS_SINGLECOMPONENT
@@ -926,14 +951,16 @@ out:
 }
 
 /**
-  Close the file.
-  @param File  File to be closed.
+  Close the opened file.
 
-  @retval 0 if Group descriptor read is success
+  @param[in/out]    File        File to be closed.
+
+  @retval 0 regardless of success/fail condition
 **/
 INT32
+EFIAPI
 Ext2fsClose (
-  OPEN_FILE     *File
+  IN OUT  OPEN_FILE     *File
   )
 {
   FILE *Fp;
@@ -959,12 +986,14 @@ Ext2fsClose (
 /**
   Gets the size of the file from descriptor.
 
-  @param File  File to be closed.
+  @param[in]    File      File to be closed.
+
   @retval size of the file from descriptor.
 **/
 UINT32
+EFIAPI
 Ext2fsFileSize (
-  OPEN_FILE     *File
+  IN  OPEN_FILE     *File
   )
 {
   FILE *Fp;
@@ -973,19 +1002,24 @@ Ext2fsFileSize (
 }
 
 /**
-  Copy a portion of a FILE into kernel memory.
+  Copy a portion of a FILE into a memory.
   Cross block boundaries when necessary
-  @param File
-  @param Start
-  @param Size
-  @param ResId
+
+  @param[in/out]    File      File handle to be read
+  @param[in]        Start     Start address of read buffer
+  @param[in]        Size      Size to be read
+  @param[out]       ResId     Actual read size
+
+  @retval 0 if file read is success
+  @retval other if error.
 **/
 INT32
+EFIAPI
 Ext2fsRead (
-  OPEN_FILE     *File,
-  VOID          *Start,
-  UINT32         Size,
-  UINT32        *ResId
+  IN OUT  OPEN_FILE     *File,
+  IN      VOID          *Start,
+  IN      UINT32         Size,
+  OUT     UINT32        *ResId
   )
 {
   FILE *Fp;
@@ -1029,79 +1063,18 @@ Ext2fsRead (
   return Rc;
 }
 
-/**
-  Updates the seek ptr of file based on seek point.
-  @param File       pointer to an Open file.
-  @param Offset     Offset to update the seekptr.
-  @param Where      Seek point where it needs to be update.
-
-**/
-OFFSET
-Ext2fsSeek (
-  OPEN_FILE    *File,
-  OFFSET        Offset,
-  INT32         Where
-  )
-{
-  FILE *Fp;
-  Fp = (FILE *)File->FileSystemSpecificData;
-
-  switch (Where) {
-  case SEEK_SET:
-    Fp->SeekPtr = Offset;
-    break;
-  case SEEK_CUR:
-    Fp->SeekPtr += Offset;
-    break;
-  case SEEK_END:
-    //
-    // XXX should handle LARGEFILE
-    //
-    Fp->SeekPtr = Fp->DiskInode.Ext2DInodeSize - Offset;
-    break;
-  default:
-    return -1;
-  }
-  return Fp->SeekPtr;
-}
-
-/**
-  Update the mode and size from descriptor to stat Block.
-  contains that block.
-  @param File       pointer to an file private data.
-  @param StatBlock  pointer to File information (stats).
-  @retval 0 if success
-**/
-INT32
-Ext2fsStat (
-  OPEN_FILE     *File,
-  STAT          *StatBlock
-  )
-{
-  FILE *Fp;
-
-  Fp = (FILE *)File->FileSystemSpecificData;
-  //
-  // only important stuff
-  //
-  SetMem32 (StatBlock, sizeof * StatBlock, 0);
-  StatBlock->StatMode = Fp->DiskInode.Ext2DInodeMode;
-  //
-  // XXX should handle LARGEFILE
-  //
-  StatBlock->StatSize = Fp->DiskInode.Ext2DInodeSize;
-  return 0;
-}
-
 #ifdef EXT2FS_DEBUG
 /**
   Dump the file system super block info.
 
-  @param FileSystem     pointer to filesystem.
+  @param[in]  FileSystem     pointer to filesystem.
+
+  @retval     none
 **/
 VOID
+EFIAPI
 DumpSBlock (
-  M_EXT2FS  *FileSystem
+  IN  M_EXT2FS  *FileSystem
   )
 {
 
@@ -1140,11 +1113,14 @@ DumpSBlock (
 /**
   Dump the file group descriptor block info.
 
-  @param FileSystem     pointer to filesystem.
+  @param[in]  FileSystem     pointer to filesystem.
+
+  @retval     none
 **/
 VOID
+EFIAPI
 DumpGroupDesBlock (
-  M_EXT2FS  *FileSystem
+  IN  M_EXT2FS  *FileSystem
   )
 {
   INT32     Index;
@@ -1165,139 +1141,3 @@ DumpGroupDesBlock (
   }
 }
 #endif
-
-/**
-
-  Determine the disk block(s) that contains data for FILE <File>,
-  starting at Offset <FilePosition> and extending for up to <Len> bytes.
-  @param File           Pointer to an file private data.
-  @param FilePosition   offset address of the file position.
-  @param Len            Number of bytes
-  @param NBlocks        Number of consecutive blocks
-
-  @retval  First disk block, number of consecutive blocks thru *<nblock>.
-**/
-INT32
-Ext2fsDiskBlocks (
-  OPEN_FILE    *File,
-  UINT32        FilePosition,
-  UINT32        Len,
-  UINT32       *NBlocks
-  )
-{
-  FILE      *Fp;
-  M_EXT2FS  *FileSystem;
-  UINT32    BlockSize;
-  UINT32    First;
-  UINT32    Num;
-  INDPTR    FileBlock;
-  INDPTR    DiskBlock;
-  INT32     Rc;
-
-  First = 0;
-  Num   = 0;
-
-  Fp         = (FILE *) File->FileSystemSpecificData;
-  FileSystem = Fp->SuperBlockPtr;
-  BlockSize  = FileSystem->Ext2FsBlockSize;
-
-  *NBlocks = 0;
-  while (Len >= BlockSize) {
-    FileBlock = LBLKNO (FileSystem, FilePosition);
-    DiskBlock = 0;
-
-    Rc = BlockMap (File, FileBlock, &DiskBlock);
-    if (Rc != 0) {
-      if (Num == 0) {
-        return 0;
-      } else {
-        break;
-      }
-    }
-
-    if (Num == 0) {
-      First = DiskBlock;
-      Num  += 1;
-    } else if (First + Num == (UINT32)DiskBlock) {
-      Num += 1;
-    } else {
-      break;
-    }
-
-    FilePosition += BlockSize;
-    Len -= BlockSize;
-  }
-
-  *NBlocks = Num;
-  return FSBTODB (FileSystem, First);
-}
-
-/**
-  Given an offset in a FILE, find the disk block number that
-  contains that block.
-  @param OpenFile       pointer to an Open file.
-  @param Stat           Block to find the file.
-  @param Name           Pointer to the disk which contains block.
-  @param NamLen
-  @retval 0 if success
-  @retval other if error.
-**/
-INT32
-Ext2fsLookUpFile (
-  OPEN_FILE     *OpenFile,
-  STAT          *Stat,
-  CHAR8         *Name,
-  UINT32         NamLen
-  )
-{
-  FILE      *Fp;
-  EXT2FS_DIRECT *Dp;
-  CHAR8  *Buf;
-  UINT32 BufSize;
-  UINT32 Ext2DirectInodeNumber;
-  INT32      Ext2DirectRecLen;
-  UINT32 Ext2DirectNameLen;
-  INT32 Rc;
-
-  Fp = OpenFile->FileSystemSpecificData;
-
-  do {
-    if ((UINT32)Fp->SeekPtr >= Fp->DiskInode.Ext2DInodeSize) {
-      return 0;
-    }
-
-    if ((Rc = BufReadFile (OpenFile, &Buf, &BufSize)) != 0) {
-      return (Rc < 0) ? Rc : -Rc;
-    }
-
-    if (BufSize < sizeof (EXT2FS_DIRECT) - EXT2FS_MAXNAMLEN + 1) {
-      return -1;  // XXX: corrupt entry.
-    }
-    Dp = (EXT2FS_DIRECT *) Buf;
-
-    Ext2DirectInodeNumber   =   Dp->Ext2DirectInodeNumber;
-    Ext2DirectRecLen        =   Dp->Ext2DirectRecLen;
-    Ext2DirectNameLen       =   Dp->Ext2DirectNameLen;
-
-    Dp->Ext2DirectName[Ext2DirectNameLen] = '\0';
-
-    if (Ext2DirectRecLen <= 0) {
-      return 0;
-    }
-
-    Fp->SeekPtr += Ext2DirectRecLen;
-  } while (Ext2DirectInodeNumber == 0 || Ext2DirectNameLen == 0);
-
-  CopyMem (Name, Dp->Ext2DirectName, MIN (NamLen, Ext2DirectNameLen));
-
-  _FILE Tf;
-  SetMem32 (&Tf, sizeof (Tf), 0);
-  if ((Rc = Ext2fsOpen (Dp->Ext2DirectName, &Tf.Openfile)) != 0) {
-    return (Rc < 0) ? Rc : -Rc;
-  }
-
-  Ext2fsStat (&Tf.Openfile, Stat);
-  Ext2fsClose (&Tf.Openfile);
-
-  return Ext2DirectNameLen;
-}
