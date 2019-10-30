@@ -9,6 +9,28 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include "FatLitePeim.h"
 
+#define FAT_CASE_NAME_LOWER     0x08
+#define FAT_CASE_EXT_LOWER      0x10
+
+/**
+  Converts unicode characters to lower case characters.
+
+  @param  Str    A pointer to a Null-terminated string.
+
+**/
+STATIC
+VOID
+UnicodeStrLwr (
+  IN OUT CHAR16                       *Str
+  )
+{
+  while (*Str != 0) {
+    if ('A' <= *Str && *Str <= 'Z') {
+      *Str = (CHAR16)(*Str + 0x20);
+    }
+    Str += 1;
+  }
+}
 
 /**
   Check if there is a valid FAT in the corresponding Block device
@@ -517,9 +539,17 @@ FatReadNextDirectoryEntry (
     }
 
     //
-    // Check if attribute matches
+    // Search Directory only if Attributes has FAT_ATTR_DIRECTORY.
+    // Otherwise, search files and directories
     //
-    if (((Attributes & FAT_ATTR_DIRECTORY) ^ (DirEntry.Attributes & FAT_ATTR_DIRECTORY)) != 0) {
+    if ((Attributes & FAT_ATTR_DIRECTORY) && !(DirEntry.Attributes & FAT_ATTR_DIRECTORY)) {
+      continue;
+    }
+
+    //
+    // Skip Volume file
+    //
+    if (DirEntry.Attributes & FAT_ATTR_VOLUME_ID) {
       continue;
     }
 
@@ -536,6 +566,16 @@ FatReadNextDirectoryEntry (
   //
   EngFatToStr (8, DirEntry.FileName, BaseName);
   EngFatToStr (3, DirEntry.FileName + 8, Ext);
+
+  //
+  // Check CaseFlag
+  //
+  if (DirEntry.CaseFlag & FAT_CASE_NAME_LOWER) {
+    UnicodeStrLwr (BaseName);
+  }
+  if (DirEntry.CaseFlag & FAT_CASE_EXT_LOWER) {
+    UnicodeStrLwr (Ext);
+  }
 
   Pos = (UINT16 *) SubFile->FileName;
   CopyMem ((UINT8 *) Pos, (UINT8 *) BaseName, 2 * (StrLen (BaseName) + 1));

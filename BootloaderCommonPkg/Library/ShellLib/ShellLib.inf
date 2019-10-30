@@ -38,6 +38,7 @@
   CmdUcode.c
   CmdCdata.c
   CmdCls.c
+  CmdFs.c
   ShellCmds.c
   Parsing.c
   Printing.c

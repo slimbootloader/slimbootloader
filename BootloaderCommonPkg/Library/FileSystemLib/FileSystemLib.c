@@ -21,6 +21,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 typedef struct {
   UINTN                 Signature;
   EFI_HANDLE            FsHandle;
+  UINT32                SwPartNo;
   LIST_ENTRY            OpenFiles;
 } FILE_SYSTEM_CONTROL_BLOCK;
 
@@ -53,6 +54,7 @@ RegisterFileSystems (
       mFileSystemFuncs[FsType].GetFileSize      = FatFsGetFileSize;
       mFileSystemFuncs[FsType].ReadFile         = FatFsReadFile;
       mFileSystemFuncs[FsType].CloseFile        = FatFsCloseFile;
+      mFileSystemFuncs[FsType].ListDir          = FatFsListDir;
     }
 
     FsType = EnumFileSystemTypeExt2;
@@ -63,24 +65,70 @@ RegisterFileSystems (
       mFileSystemFuncs[FsType].GetFileSize      = ExtFsGetFileSize;
       mFileSystemFuncs[FsType].ReadFile         = ExtFsReadFile;
       mFileSystemFuncs[FsType].CloseFile        = ExtFsCloseFile;
+      mFileSystemFuncs[FsType].ListDir          = ExtFsListDir;
     }
     mFileSystemRegistered = TRUE;
   }
 }
 
-STATIC
+/**
+  Get SW partition no. of detected file system
+
+  @param[in]     FsHandle               file system handle.
+  @param[out]    SwPartNo               sw part no.
+
+  @retval        EFI_SUCCESS            found sw part no.
+  @retval        EFI_INVALID_PARAMETER  Invalid FsHandle
+
+**/
+EFI_STATUS
+EFIAPI
+GetFileSystemCurrentPartNo (
+  IN  EFI_HANDLE                                    FsHandle,
+  OUT UINT32                                       *SwPartNo
+  )
+{
+  FILE_SYSTEM_CONTROL_BLOCK  *FileSystemControlBlock;
+
+  FileSystemControlBlock = (FILE_SYSTEM_CONTROL_BLOCK *)FsHandle;
+  if (FileSystemControlBlock == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+  ASSERT (FileSystemControlBlock->Signature == FILE_SYSTEM_CB_SIGNATURE);
+
+  *SwPartNo = FileSystemControlBlock->SwPartNo;
+  return EFI_SUCCESS;
+}
+
+/**
+  Get detected file system type
+
+  @param[in]     FsHandle             file system handle.
+
+  @retval        OS_FILE_SYSTEM_TYPE  file system type enum
+
+**/
 OS_FILE_SYSTEM_TYPE
 EFIAPI
 GetFileSystemType (
   IN  EFI_HANDLE                                    FsHandle
   )
 {
-  UINTN   Signature;
-  OS_FILE_SYSTEM_TYPE FsType;
+  UINTN                       Signature;
+  OS_FILE_SYSTEM_TYPE         FsType;
+  EFI_HANDLE                  SubFsHandle;
+  FILE_SYSTEM_CONTROL_BLOCK  *FileSystemControlBlock;
 
   FsType = EnumFileSystemMax;
-  if (FsHandle != NULL) {
-    Signature = *(UINTN *)FsHandle;
+  FileSystemControlBlock = (FILE_SYSTEM_CONTROL_BLOCK *)FsHandle;
+  if (FileSystemControlBlock == NULL) {
+    return FsType;
+  }
+  ASSERT (FileSystemControlBlock->Signature == FILE_SYSTEM_CB_SIGNATURE);
+
+  SubFsHandle = FileSystemControlBlock->FsHandle;
+  if (SubFsHandle != NULL) {
+    Signature = *(UINTN *)SubFsHandle;
     if (Signature == FS_FAT_SIGNATURE) {
       FsType = EnumFileSystemTypeFat;
     } else if (Signature == FS_EXT_SIGNATURE) {
@@ -147,6 +195,7 @@ InitFileSystem (
     FileSystemControlBlock = (FILE_SYSTEM_CONTROL_BLOCK *) AllocatePool (sizeof (FILE_SYSTEM_CONTROL_BLOCK));
     FileSystemControlBlock->Signature = FILE_SYSTEM_CB_SIGNATURE;
     FileSystemControlBlock->FsHandle  = Handle;
+    FileSystemControlBlock->SwPartNo  = SwPart;
     InitializeListHead (&FileSystemControlBlock->OpenFiles);
 
     *FsHandle = (EFI_HANDLE)FileSystemControlBlock;
@@ -179,7 +228,7 @@ CloseFileSystem (
     return;
   }
 
-  FsType = GetFileSystemType (FileSystemControlBlock->FsHandle);
+  FsType = GetFileSystemType (FsHandle);
   if (FsType >= EnumFileSystemTypeAuto) {
     return;
   }
@@ -237,7 +286,7 @@ OpenFile (
     return EFI_INVALID_PARAMETER;
   }
 
-  FsType = GetFileSystemType (FileSystemControlBlock->FsHandle);
+  FsType = GetFileSystemType (FsHandle);
   if (FsType >= EnumFileSystemTypeAuto) {
     return EFI_NOT_READY;
   }
@@ -297,7 +346,7 @@ GetFileSize (
   FileSystemControlBlock = (FILE_SYSTEM_CONTROL_BLOCK *)FileControlBlock->FileSystemControlBlock;
   ASSERT (FileSystemControlBlock->Signature == FILE_SYSTEM_CB_SIGNATURE);
 
-  FsType = GetFileSystemType (FileSystemControlBlock->FsHandle);
+  FsType = GetFileSystemType (FileSystemControlBlock);
   if (FsType >= EnumFileSystemTypeAuto) {
     return EFI_NOT_READY;
   }
@@ -352,7 +401,7 @@ ReadFile (
   FileSystemControlBlock = (FILE_SYSTEM_CONTROL_BLOCK *)FileControlBlock->FileSystemControlBlock;
   ASSERT (FileSystemControlBlock->Signature == FILE_SYSTEM_CB_SIGNATURE);
 
-  FsType = GetFileSystemType (FileSystemControlBlock->FsHandle);
+  FsType = GetFileSystemType (FileSystemControlBlock);
   if (FsType >= EnumFileSystemTypeAuto) {
     return EFI_NOT_READY;
   }
@@ -396,7 +445,7 @@ CloseFile (
     return;
   }
 
-  FsType = GetFileSystemType (FileSystemControlBlock->FsHandle);
+  FsType = GetFileSystemType (FileSystemControlBlock);
   if (FsType >= EnumFileSystemTypeAuto) {
     return;
   }
@@ -408,4 +457,45 @@ CloseFile (
   RemoveEntryList (&FileControlBlock->Link);
   mFileSystemFuncs[FsType].CloseFile (FileControlBlock->FileHandle);
   FreePool (FileControlBlock);
+}
+
+/**
+  List directories or files
+
+  @param[in]     FsHandle         file system handle.
+  @param[in]     DirFilePath      directory or file path
+
+  @retval EFI_SUCCESS             list directories of files successfully
+  @retval EFI_UNSUPPORTED         this api is not supported
+  @retval Others                  an error occurs
+
+**/
+EFI_STATUS
+EFIAPI
+ListDir (
+  IN  EFI_HANDLE                                  FsHandle,
+  IN  CHAR16                                     *DirFilePath
+  )
+{
+DEBUG_CODE_BEGIN ();
+  OS_FILE_SYSTEM_TYPE         FsType;
+  FILE_SYSTEM_CONTROL_BLOCK  *FileSystemControlBlock;
+
+  FileSystemControlBlock = (FILE_SYSTEM_CONTROL_BLOCK *)FsHandle;
+  ASSERT (FileSystemControlBlock != NULL);
+  if (FileSystemControlBlock == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  FsType = GetFileSystemType (FsHandle);
+  if (FsType >= EnumFileSystemTypeAuto) {
+    return EFI_NOT_READY;
+  }
+
+  if (mFileSystemFuncs[FsType].ListDir != NULL) {
+    return mFileSystemFuncs[FsType].ListDir (FileSystemControlBlock->FsHandle, DirFilePath);
+  }
+DEBUG_CODE_END ();
+
+  return EFI_UNSUPPORTED;
 }

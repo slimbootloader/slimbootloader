@@ -617,3 +617,57 @@ ClosePartitions (
     FreePool (PartBlockDev);
   }
 }
+
+/**
+  Get detected partition type
+
+  @param[in]  PartHandle      The partition handle to clean-up
+
+  @retval                     Partition type enum
+
+**/
+PARTITION_TYPE
+EFIAPI
+GetPartitionType (
+  IN   EFI_HANDLE             PartHandle
+  )
+{
+  PART_BLOCK_DEVICE           *PartBlockDev;
+  PARTITION_TYPE               PartType;
+
+  PartType = EnumPartTypeMax;
+  PartBlockDev = (PART_BLOCK_DEVICE *)PartHandle;
+  if ((PartBlockDev != NULL) && (PartBlockDev->Signature == PART_INFO_SIGNATURE)) {
+    PartType = PartBlockDev->PartitionType;
+  }
+
+  return PartType;
+}
+
+/**
+  Get HW part no of the detected partition
+
+  @param[in]  PartHandle              The partition handle to clean-up
+  @param[in]  HwPartNo                HW part no.
+
+  @retval     EFI_SUCCESS             Found SW part no.
+  @retval     EFI_INVALID_PARAMETER   Invalid PartHandle
+
+**/
+EFI_STATUS
+EFIAPI
+GetPartitionCurrentPartNo (
+  IN  EFI_HANDLE            PartHandle,
+  OUT UINT32               *HwPartNo
+  )
+{
+  PART_BLOCK_DEVICE          *PartBlockDev;
+
+  PartBlockDev = (PART_BLOCK_DEVICE *)PartHandle;
+  if ((PartBlockDev == NULL) || (PartBlockDev->Signature != PART_INFO_SIGNATURE)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  *HwPartNo = PartBlockDev->HarewareDevice;
+  return EFI_SUCCESS;
+}

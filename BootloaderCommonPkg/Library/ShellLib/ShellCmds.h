@@ -27,6 +27,7 @@ extern CONST SHELL_COMMAND ShellCommandPci;
 extern CONST SHELL_COMMAND ShellCommandReset;
 extern CONST SHELL_COMMAND ShellCommandUcode;
 extern CONST SHELL_COMMAND ShellCommandCls;
+extern CONST SHELL_COMMAND ShellCommandFs;
 
 EFI_STATUS
 LoadShellCommands (

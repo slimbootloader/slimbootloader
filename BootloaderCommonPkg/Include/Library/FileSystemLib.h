@@ -128,6 +128,55 @@ VOID
   );
 
 /**
+  List directories or files
+
+  @param[in]     FsHandle         file system handle.
+  @param[in]     DirFilePath      directory or file path
+
+  @retval EFI_SUCCESS             list directories of files successfully
+  @retval EFI_UNSUPPORTED         this api is not supported
+  @retval Others                  an error occurs
+
+**/
+typedef
+EFI_STATUS
+(EFIAPI *FS_LIST_DIR) (
+  IN  EFI_HANDLE                                  FsHandle,
+  IN  CHAR16                                     *DirFilePath
+  );
+
+/**
+  Get SW partition no. of detected file system
+
+  @param[in]     FsHandle               file system handle.
+  @param[out]    SwPartNo               sw part no.
+
+  @retval        EFI_SUCCESS            found sw part no.
+  @retval        EFI_INVALID_PARAMETER  Invalid FsHandle
+
+**/
+EFI_STATUS
+EFIAPI
+GetFileSystemCurrentPartNo (
+  IN  EFI_HANDLE                                    FsHandle,
+  OUT UINT32                                       *SwPartNo
+  );
+
+/**
+  Get detected file system type
+
+  @param[in]     FsHandle             file system handle.
+
+  @retval        OS_FILE_SYSTEM_TYPE  file system type enum
+
+**/
+OS_FILE_SYSTEM_TYPE
+EFIAPI
+GetFileSystemType (
+  IN  EFI_HANDLE                                    FsHandle
+  );
+
+/**
   Initialize file systems.
 
   @param[in]     SwPart           Software partition index.
@@ -240,6 +289,24 @@ CloseFile (
   IN  EFI_HANDLE                                  FileHandle
   );
 
+/**
+  List directories or files
+
+  @param[in]     FsHandle         file system handle.
+  @param[in]     DirFilePath      directory or file path
+
+  @retval EFI_SUCCESS             list directories of files successfully
+  @retval EFI_UNSUPPORTED         this api is not supported
+  @retval Others                  an error occurs
+
+**/
+EFI_STATUS
+EFIAPI
+ListDir (
+  IN  EFI_HANDLE                                  FsHandle,
+  IN  CHAR16                                     *DirFilePath
+  );
+
 typedef struct {
   FS_INIT_FILE_SYSTEM                 InitFileSystem;
   FS_CLOSE_FILE_SYSTEM                CloseFileSystem;
@@ -247,6 +314,7 @@ typedef struct {
   FS_GET_FILE_SIZE                    GetFileSize;
   FS_READ_FILE                        ReadFile;
   FS_CLOSE_FILE                       CloseFile;
+  FS_LIST_DIR                         ListDir;
 } FILE_SYSTEM_FUNC;
 
 #endif // _FAT_PEIM_H_

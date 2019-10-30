@@ -97,19 +97,6 @@
 #endif
 
 /**
- Read a new inode into a FILE structure.
- @param [in] INumber inode number
- @param [in] File pointer to open file struct.
- @retval
-**/
-STATIC
-INT32
-ReadInode (
-  IN    INODE32      INumber,
-  IN    OPEN_FILE   *File
-  );
-
-/**
   Given an offset in a FILE, find the disk block number that
   contains that block.
   @param File           pointer to an Open file.
@@ -124,21 +111,6 @@ BlockMap (
   OPEN_FILE     *File,
   INDPTR         FileBlock,
   INDPTR        *DiskBlockPtr
-  );
-
-/**
-  Read a portion of a FILE into an internal buffer.
-  Return the location in the buffer and the amount in the buffer.
-  @param File       Pointer to the open file.
-  @param BufferPtr  buffer corresponding to offset
-  @param SizePtr    Size of remainder of buffer.
-**/
-STATIC
-INT32
-BufReadFile (
-  OPEN_FILE     *File,
-  CHAR8        **BufferPtr,
-  UINT32        *SizePtr
   );
 
 /**
@@ -212,7 +184,6 @@ BDevStrategy (
  @param [in] File pointer to open file struct.
  @retval
 **/
-STATIC
 INT32
 ReadInode (
   IN    INODE32      INumber,
@@ -456,7 +427,6 @@ BlockMap (
   @param BufferPtr  buffer corresponding to offset
   @param SizePtr    Size of remainder of buffer.
 **/
-STATIC
 INT32
 BufReadFile (
   OPEN_FILE     *File,
@@ -576,6 +546,7 @@ SearchDirectory (
         // found entry
         //
         *INumPtr = Dp->Ext2DirectInodeNumber;
+        File->FileNamePtr = Name;
         return 0;
       }
     }
