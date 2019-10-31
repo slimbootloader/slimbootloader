@@ -135,7 +135,7 @@ FinalizeSmbios (
   //
   Type127 = (SMBIOS_TABLE_TYPE127 *) (SmbiosEntry->TableAddress + SmbiosEntry->TableLength);
   Type127->Hdr.Type = SMBIOS_TYPE_END_OF_TABLE;
-  Type127->Hdr.Length = sizeof (SMBIOS_STRUCTURE);  
+  Type127->Hdr.Length = sizeof (SMBIOS_STRUCTURE);
   mType127Ptr = (VOID *) Type127;
 
   SmbiosEntry->TableLength += sizeof (SMBIOS_STRUCTURE) + TYPE_TERMINATOR_SIZE;
@@ -146,7 +146,7 @@ FinalizeSmbios (
   if (NewMaxStructSize > SmbiosEntry->MaxStructureSize) {
     SmbiosEntry->MaxStructureSize = NewMaxStructSize;
   }
-  SmbiosEntry->IntermediateChecksum         = 0; 
+  SmbiosEntry->IntermediateChecksum         = 0;
   SmbiosEntry->EntryPointStructureChecksum  = 0;
   SmbiosEntry->IntermediateChecksum         = CalculateCheckSum8 ((UINT8 *)SmbiosEntry + 0x10, sizeof (SMBIOS_TABLE_ENTRY_POINT) - 0x10);
   SmbiosEntry->EntryPointStructureChecksum  = CalculateCheckSum8 ((UINT8 *)SmbiosEntry       , sizeof (SMBIOS_TABLE_ENTRY_POINT)       );
@@ -344,7 +344,7 @@ AddSmbiosType (
   }
 
   //
-  // Copy header info into memory allocated 
+  // Copy header info into memory allocated
   // and add strings for this type
   //
   CopyMem (TypePtr.Raw, HdrInfo, HdrLen);
@@ -362,7 +362,7 @@ AddSmbiosType (
   // Update TypeLength, header length, Max Length
   // and TableLength(in entry point)
   //
-  TypeLength = (UINT16)((UINTN)(TypeAddr) - (UINTN)TypePtr.Raw);  
+  TypeLength = (UINT16)((UINTN)(TypeAddr) - (UINTN)TypePtr.Raw);
   TypePtr.Hdr->Length = HdrLen;
   if (TypeLength > *MaxLength) {
     *MaxLength = TypeLength;
@@ -412,8 +412,9 @@ SmbiosInit (
 
   //
   // Add common SMBIOS Types' information.
+  // Types start at 16 byte boundary
   //
-  TypeAddr = (UINT8 *)SmbiosEntryPoint + sizeof (SMBIOS_TABLE_ENTRY_POINT) + sizeof (UINT8); // Types start at 16 byte boundary
+  TypeAddr = (UINT8 *)&SmbiosEntryPoint[1] + sizeof (UINT8);
   TypeAddr = AddSmbiosType (SMBIOS_TYPE_BIOS_INFORMATION,      TypeAddr, &MaxLength);
   TypeAddr = AddSmbiosType (SMBIOS_TYPE_SYSTEM_INFORMATION,    TypeAddr, &MaxLength);
   TypeAddr = AddSmbiosType (SMBIOS_TYPE_BASEBOARD_INFORMATION, TypeAddr, &MaxLength);

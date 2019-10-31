@@ -152,7 +152,7 @@ NormalBootPath (
   // Load payload
   Dst = (UINT32 *)PreparePayload (Stage2Hob);
   if (Dst == NULL) {
-    CpuHalt ("Failed to load payload!");
+    CpuHalt ("Failed to load payload !");
   }
 
   BoardInit (PostPayloadLoading);
@@ -251,8 +251,10 @@ NormalBootPath (
   DEBUG_CODE_END ();
 
   DEBUG ((DEBUG_INFO, "Payload entry: 0x%08X\n", PldEntry));
-  DEBUG ((DEBUG_INIT, "Jump to payload\n\n"));
-  PldEntry (PldHobList, (VOID *)PldBase);
+  if (PldEntry != NULL) {
+    DEBUG ((DEBUG_INIT, "Jump to payload\n\n"));
+    PldEntry (PldHobList, (VOID *)PldBase);
+  }
 }
 
 /**
@@ -296,8 +298,6 @@ S3ResumePath (
   // Find Wake Vector and Jump to OS
   AddMeasurePoint (0x31F0);
   FindAcpiWakeVectorAndJump (S3Data->AcpiBase);
-
-  ASSERT (FALSE);
 }
 
 /**
@@ -510,7 +510,5 @@ SecStartup (
   }
 
   // Should not reach here!
-  DEBUG ((DEBUG_ERROR, "\nBoot failed. System is halted.\n"));
-
-  CpuHalt (NULL);
+  CpuHalt ("Boot failed !");
 }
