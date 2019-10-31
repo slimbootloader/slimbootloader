@@ -166,13 +166,19 @@ FindFile (
           // Compare whether the file name is matched.
           //
           if (EngStrniColl (NodeCurr, File->FileName, NodeLen)) {
-            if (File->FileName[NodeLen] == 0) {
+            if (NodeLen == ARRAY_SIZE (File->FileName)) {
+              break;
+            }
+            if ((NodeLen < ARRAY_SIZE (File->FileName)) && (File->FileName[NodeLen] == 0)) {
               break;
             }
           }
 
           if (EngStrniColl (NodeCurr, File->LongFileName, NodeLen)) {
-            if (File->LongFileName[NodeLen] == 0) {
+            if (NodeLen == ARRAY_SIZE (File->LongFileName)) {
+              break;
+            }
+            if ((NodeLen < ARRAY_SIZE (File->LongFileName)) && (File->LongFileName[NodeLen] == 0)) {
               break;
             }
           }
