@@ -571,14 +571,18 @@ DebugPrintLevelEnabled (
   @param  TestSignature  The 32-bit signature value to match.
 
 **/
-#if !defined(MDEPKG_NDEBUG)
-  #define CR(Record, TYPE, Field, TestSignature)                                              \
-    (DebugAssertEnabled () && (BASE_CR (Record, TYPE, Field)->Signature != TestSignature)) ?  \
-    (TYPE *) (_ASSERT (CR has Bad Signature), Record) :                                       \
-    BASE_CR (Record, TYPE, Field)
+#ifdef __KLOCWORK__
+  #define CR(Record, TYPE, Field, TestSignature)  BASE_CR(Record, TYPE, Field)
 #else
-  #define CR(Record, TYPE, Field, TestSignature)                                              \
-    BASE_CR (Record, TYPE, Field)
+  #if !defined(MDEPKG_NDEBUG)
+    #define CR(Record, TYPE, Field, TestSignature)                                              \
+      (DebugAssertEnabled () && (BASE_CR (Record, TYPE, Field)->Signature != TestSignature)) ?  \
+      (TYPE *) (_ASSERT (CR has Bad Signature), Record) :                                       \
+      BASE_CR(Record, TYPE, Field)
+  #else
+    #define CR(Record, TYPE, Field, TestSignature)                                              \
+      BASE_CR(Record, TYPE, Field)
+  #endif
 #endif
 
 #endif
