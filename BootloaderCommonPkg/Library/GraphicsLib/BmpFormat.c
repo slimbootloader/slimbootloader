@@ -135,11 +135,6 @@ DisplayBmpToFrameBuffer (
   PixelWidth   = BmpHeader->PixelWidth;
   PixelHeight  = BmpHeader->PixelHeight;
 
-  //
-  // Convert image from BMP to Blt buffer format
-  //
-  BltBuffer = *GopBlt;
-
   // Center the BMP image on the display
   OffX = (GfxInfoHob->GraphicsMode.HorizontalResolution - PixelWidth) / 2;
   OffY = (GfxInfoHob->GraphicsMode.VerticalResolution - PixelHeight) / 2;
@@ -175,6 +170,11 @@ DisplayBmpToFrameBuffer (
       return EFI_BUFFER_TOO_SMALL;
     }
   }
+
+  //
+  // Convert image from BMP to Blt buffer format
+  //
+  BltBuffer = *GopBlt;
 
   FrameBufferPtr = (UINT32 *) (((UINTN) GfxInfoHob->FrameBufferBase));
   FrameBufferOffset = (OffY + PixelHeight) * GfxInfoHob->GraphicsMode.HorizontalResolution + OffX;

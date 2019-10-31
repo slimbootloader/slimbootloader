@@ -193,6 +193,10 @@ InitFileSystem (
 
   if (!EFI_ERROR (Status)) {
     FileSystemControlBlock = (FILE_SYSTEM_CONTROL_BLOCK *) AllocatePool (sizeof (FILE_SYSTEM_CONTROL_BLOCK));
+    if (FileSystemControlBlock == NULL) {
+      return EFI_OUT_OF_RESOURCES;
+    }
+
     FileSystemControlBlock->Signature = FILE_SYSTEM_CB_SIGNATURE;
     FileSystemControlBlock->FsHandle  = Handle;
     FileSystemControlBlock->SwPartNo  = SwPart;

@@ -325,20 +325,21 @@ AutheticateContainerInternal (
   EFI_STATUS                Status;
 
   // Find authentication data offset and authenticate the container header
+  Status = EFI_UNSUPPORTED;
   ContainerEntry   = GetContainerBySignature (ContainerHeader->Signature);
-  ContainerHdr     = (CONTAINER_HDR *)ContainerEntry->HeaderCache;
-  ContainerHdrSize = GetContainerHeaderSize (ContainerHdr);
-  if (ContainerHdrSize > 0) {
-    AuthType = ContainerHdr->AuthType;
-    AuthData = (UINT8 *)ContainerHdr + ALIGN_UP(ContainerHdrSize, AUTH_DATA_ALIGN);
-    if ((AuthType == AUTH_TYPE_NONE) && FeaturePcdGet (PcdVerifiedBootEnabled)) {
-      Status = EFI_SECURITY_VIOLATION;
-    } else {
-      Status = AuthenticateComponent ((UINT8 *)ContainerHdr, ContainerHdrSize,
-                                      AuthType, AuthData, NULL, GetContainerKeyTypeBySig(ContainerHeader->Signature) );
+  if (ContainerEntry != NULL) {
+    ContainerHdr     = (CONTAINER_HDR *)ContainerEntry->HeaderCache;
+    ContainerHdrSize = GetContainerHeaderSize (ContainerHdr);
+    if (ContainerHdrSize > 0) {
+      AuthType = ContainerHdr->AuthType;
+      AuthData = (UINT8 *)ContainerHdr + ALIGN_UP(ContainerHdrSize, AUTH_DATA_ALIGN);
+      if ((AuthType == AUTH_TYPE_NONE) && FeaturePcdGet (PcdVerifiedBootEnabled)) {
+        Status = EFI_SECURITY_VIOLATION;
+      } else {
+        Status = AuthenticateComponent ((UINT8 *)ContainerHdr, ContainerHdrSize,
+                                        AuthType, AuthData, NULL, GetContainerKeyTypeBySig(ContainerHeader->Signature) );
+      }
     }
-  } else {
-    Status = EFI_UNSUPPORTED;
   }
 
   if (!EFI_ERROR (Status) && \
@@ -454,7 +455,10 @@ LocateComponentEntry (
     }
 
     // Find authentication data offset and authenticate the container header
-    ContainerEntry   = GetContainerBySignature (ContainerSig);
+    ContainerEntry = GetContainerBySignature (ContainerSig);
+    if (ContainerEntry == NULL) {
+      return EFI_UNSUPPORTED;
+    }
   }
 
   // Locate the component from the container header

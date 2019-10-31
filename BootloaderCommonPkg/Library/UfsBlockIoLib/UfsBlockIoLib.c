@@ -772,7 +772,7 @@ UfsGetDeviceNo (
                              was obtained successfully.
   @retval EFI_DEVICE_ERROR   Cannot get the media information due to a hardware
                              error.
-
+  @retval EFI_OUT_OF_RESOURCES  Insufficant memory resource pool.
 **/
 EFI_STATUS
 UfsGetMediaInfoInternal (
@@ -806,6 +806,15 @@ UfsGetMediaInfoInternal (
   //
   Capacity   = AllocateZeroPool (sizeof (EFI_SCSI_DISK_CAPACITY_DATA));
   Capacity16 = AllocateZeroPool (sizeof (EFI_SCSI_DISK_CAPACITY_DATA16));
+  if ((Capacity == NULL) || (Capacity16 == NULL)) {
+    if (Capacity != NULL) {
+      FreePool (Capacity);
+    }
+    if (Capacity16 != NULL) {
+      FreePool (Capacity16);
+    }
+    return EFI_OUT_OF_RESOURCES;
+  }
 
   SenseDataLength = sizeof (SenseData);
   ZeroMem (&SenseData, SenseDataLength);
