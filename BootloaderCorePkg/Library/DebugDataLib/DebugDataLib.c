@@ -176,25 +176,26 @@ S3DebugSaveCRC32 (
   // Allocating predefined amount of memory here due to lack of
   // Memory Map availablity in Stage1B in Normal Boot.
   S3CrcTableSize = sizeof (S3_CRC_DATA) * (S3_DEBUG_CRC32_LIMIT / S3_DEBUG_CRC32_REGION_SIZE);
+  S3CrcTable = (S3_CRC_DATA *) AllocatePool (S3CrcTableSize);
 
-  ((DEBUG_DATA *)LdrGlobal->DebugDataPtr)->S3CrcTable = (S3_CRC_DATA *) AllocatePool (S3CrcTableSize);
-  S3CrcTable = ((DEBUG_DATA *)LdrGlobal->DebugDataPtr)->S3CrcTable;
-
-  if (LdrGlobal->BootMode != BOOT_ON_S3_RESUME) {
-    ZeroMem (S3CrcTable, S3CrcTableSize);
-  } else {
-    GuidHob = GetNextGuidHob (&gLoaderMemoryMapInfoGuid, LdrHobList);
-    ASSERT (GuidHob != NULL);
-    MemoryMapInfo = (MEMORY_MAP_INFO *)GET_GUID_HOB_DATA (GuidHob);
-    for (MemoryMapIdx = 0; MemoryMapIdx < MemoryMapInfo->Count; MemoryMapIdx++) {
-      if (MemoryMapInfo->Entry[MemoryMapIdx].Base >= S3_DEBUG_CRC32_LIMIT) {
-        break;
-      }
-      // Calculate CRC32 for this memory region if it is unreserved
-      if (MemoryMapInfo->Entry[MemoryMapIdx].Type == 1) {
-        S3DebugCalculateCRC32 (S3CrcTable, S3CrcTableSize, & (MemoryMapInfo->Entry[MemoryMapIdx]), &S3CrcRegionIdx);
+  if (S3CrcTable != NULL) {
+    if (LdrGlobal->BootMode != BOOT_ON_S3_RESUME) {
+      ZeroMem (S3CrcTable, S3CrcTableSize);
+    } else {
+      GuidHob = GetNextGuidHob (&gLoaderMemoryMapInfoGuid, LdrHobList);
+      ASSERT (GuidHob != NULL);
+      MemoryMapInfo = (MEMORY_MAP_INFO *)GET_GUID_HOB_DATA (GuidHob);
+      for (MemoryMapIdx = 0; MemoryMapIdx < MemoryMapInfo->Count; MemoryMapIdx++) {
+        if (MemoryMapInfo->Entry[MemoryMapIdx].Base >= S3_DEBUG_CRC32_LIMIT) {
+          break;
+        }
+        // Calculate CRC32 for this memory region if it is unreserved
+        if (MemoryMapInfo->Entry[MemoryMapIdx].Type == 1) {
+          S3DebugCalculateCRC32 (S3CrcTable, S3CrcTableSize, & (MemoryMapInfo->Entry[MemoryMapIdx]), &S3CrcRegionIdx);
+        }
       }
     }
+    ((DEBUG_DATA *)LdrGlobal->DebugDataPtr)->S3CrcTable = S3CrcTable;
   }
 
 }
