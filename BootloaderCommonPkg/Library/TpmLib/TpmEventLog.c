@@ -260,7 +260,7 @@ TpmLogSpecIDEvent (
     DigestSize[NumberOfAlgorithms].algorithmId = TPM_ALG_SHA256;
     DigestSize[NumberOfAlgorithms].digestSize = SHA256_DIGEST_SIZE;
 
-    DigestSize = DigestSize + sizeof (TCG_EfiSpecIdEventAlgorithmSize);
+    DigestSize = &DigestSize[1];
     ++NumberOfAlgorithms;
   }
 

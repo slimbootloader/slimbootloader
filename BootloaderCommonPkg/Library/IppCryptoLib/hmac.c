@@ -69,19 +69,23 @@ IppStatus HKDFExpand( Ipp8u* okm, int okmLen,
   int outLen;
   int copyLen;
   IppStatus Sts;
-  
+
   Sts = ippsHMACGetSize_rmf(&ctxSize);
   if(Sts !=ippStsNoErr) {
     return Sts;
   }
 
   pHMAC = AllocatePool (ctxSize);
+  if (pHMAC == NULL) {
+    Sts = ippStsNoMemErr;
+    return Sts;
+  }
 
   Sts = ippsHMACInit_rmf(prk, prkLen, pHMAC, pMethod);
   if(Sts !=ippStsNoErr) {
-    return Sts;
+    goto Exit;
   }
-  
+
   tmpLen = 0;
   hashLen = prkLen;
   cnt = 1;
@@ -89,20 +93,20 @@ IppStatus HKDFExpand( Ipp8u* okm, int okmLen,
   for(outLen=0; outLen<okmLen; outLen+=hashLen) {
     Sts = ippsHMACUpdate_rmf(tmp,  tmpLen, pHMAC);
     if(Sts !=ippStsNoErr) {
-      return Sts;
+      goto Exit;
     }
     Sts = ippsHMACUpdate_rmf(info, infoLen, pHMAC);
     if(Sts !=ippStsNoErr) {
-      return Sts;
+      goto Exit;
     }
     Sts = ippsHMACUpdate_rmf(&cnt, sizeof(cnt), pHMAC);
     if(Sts !=ippStsNoErr) {
-      return Sts;
+      goto Exit;
     }
     cnt++;
     Sts = ippsHMACFinal_rmf(tmp,  hashLen, pHMAC);
     if(Sts !=ippStsNoErr) {
-      return Sts;
+      goto Exit;
     }
     tmpLen = hashLen;
 
@@ -111,6 +115,7 @@ IppStatus HKDFExpand( Ipp8u* okm, int okmLen,
     CopyMem(okm+outLen, tmp, copyLen);
   }
 
+Exit:
   FreePool(pHMAC);
   return Sts;
 }

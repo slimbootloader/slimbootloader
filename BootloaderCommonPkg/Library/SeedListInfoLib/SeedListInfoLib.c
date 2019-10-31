@@ -155,7 +155,7 @@ GetSeedData (
 
   // Get Seed List HOB
   SeedListInfoHob = GetSeedListInfoHOB(&SeedListHobLen);
-  if ((SeedListInfoHob == NULL)&& (SeedListHobLen < 0)) {
+  if ((SeedListInfoHob == NULL) || (SeedListHobLen == 0)) {
     return EFI_NOT_FOUND;
   }
 
