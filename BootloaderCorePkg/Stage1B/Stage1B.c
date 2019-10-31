@@ -425,14 +425,16 @@ SecStartup2 (
   }
 
   if (LdrGlobal->LogBufPtr) {
-    if (PcdGet32 (PcdEarlyLogBufferSize) >= PcdGet32 (PcdLogBufferSize)) {
-      LdrGlobal->LogBufPtr   = (UINT8 *)LdrGlobal->LogBufPtr + Delta;
-    } else {
-      NewLogBuf = (DEBUG_LOG_BUFFER_HEADER *)AllocatePool (PcdGet32 (PcdLogBufferSize));
+    LdrGlobal->LogBufPtr   = (UINT8 *)LdrGlobal->LogBufPtr + Delta;
+    if (PcdGet32 (PcdEarlyLogBufferSize) < PcdGet32 (PcdLogBufferSize)) {
+      // If log buffer needs to be bigger post memory, increase it.
       OldLogBuf = (DEBUG_LOG_BUFFER_HEADER *)LdrGlobal->LogBufPtr;
-      CopyMem ((VOID *)NewLogBuf, (VOID *)OldLogBuf, OldLogBuf->UsedLength);
-      NewLogBuf->TotalLength = PcdGet32 (PcdLogBufferSize);
-      LdrGlobal->LogBufPtr = NewLogBuf;
+      NewLogBuf = (DEBUG_LOG_BUFFER_HEADER *)AllocatePool (PcdGet32 (PcdLogBufferSize));
+      if (NewLogBuf != NULL) {
+        CopyMem ((VOID *)NewLogBuf, (VOID *)OldLogBuf, OldLogBuf->UsedLength);
+        NewLogBuf->TotalLength = PcdGet32 (PcdLogBufferSize);
+        LdrGlobal->LogBufPtr = NewLogBuf;
+      }
     }
   }
 
@@ -447,8 +449,10 @@ SecStartup2 (
   AllocateLen = PcdGet32 (PcdContainerMaxNumber) * sizeof (CONTAINER_ENTRY) + sizeof (CONTAINER_LIST);
   LdrGlobal->ContainerList = AllocateZeroPool (AllocateLen);
   ContainerList = (CONTAINER_LIST *) LdrGlobal->ContainerList;
-  ContainerList->Signature   = CONTAINER_LIST_SIGNATURE;
-  ContainerList->TotalLength = AllocateLen;
+  if (ContainerList != NULL) {
+    ContainerList->Signature   = CONTAINER_LIST_SIGNATURE;
+    ContainerList->TotalLength = AllocateLen;
+  }
 
   BoardInit (PostMemoryInit);
   AddMeasurePoint (0x2040);
