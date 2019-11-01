@@ -256,7 +256,7 @@ static BNU_CHUNK_T* gs_mont_mul(BNU_CHUNK_T* pr, const BNU_CHUNK_T* pa, const BN
    BNU_CHUNK_T* pBuffer = gsModPoolAlloc(pME, polLength);
    //gres: temporary excluded: assert(NULL!=pBuffer);
 
-   {
+   if (pBuffer != NULL) {
       BNU_CHUNK_T carry = 0;
       int i, j;
 
@@ -383,11 +383,13 @@ static BNU_CHUNK_T* gs_mont_decode(BNU_CHUNK_T* pr, const BNU_CHUNK_T* pa, gsMod
    BNU_CHUNK_T* t = gsModPoolAlloc(pME, polLength);
    //gres: temporary excluded: assert(NULL!=t);
 
-   ZEXPAND_BNU(t, 0, mLen);
-   t[0] = 1;
-   gs_mont_mul(pr, pa, t, pME);
+   if (t != NULL) {
+      ZEXPAND_BNU(t, 0, mLen);
+      t[0] = 1;
+      gs_mont_mul(pr, pa, t, pME);
+      gsModPoolFree(pME, polLength);
+   }
 
-   gsModPoolFree(pME, polLength);
    return pr;
 }
 
