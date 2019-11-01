@@ -54,8 +54,9 @@ InternalUpdateMemPoolBottom (
   Allocates a buffer of type EfiBootServicesData.
 
   Allocates the number bytes specified by AllocationSize of type EfiBootServicesData and returns a
-  pointer to the allocated buffer.  If AllocationSize is 0, then a valid buffer of 0 size is
-  returned.  If there is not enough memory remaining to satisfy the request, then NULL is returned.
+  pointer to the allocated buffer.  If AllocationSize is 0, LdrGlobal->MemPoolCurrTop is returned.
+  If there is not enough memory remaining to satisfy the request, InternalUpdateMemPoolTop ASSERTS 
+  and the function does not return.
 
   @param  AllocationSize        The number of bytes to allocate.
 
@@ -83,9 +84,9 @@ AllocatePool (
   Allocates and zeros a buffer of type EfiBootServicesData.
 
   Allocates the number bytes specified by AllocationSize of type EfiBootServicesData, clears the
-  buffer with zeros, and returns a pointer to the allocated buffer.  If AllocationSize is 0, then a
-  valid buffer of 0 size is returned.  If there is not enough memory remaining to satisfy the
-  request, then NULL is returned.
+  buffer with zeros, and returns a pointer to the allocated buffer.  If AllocationSize is 0, 
+  LdrGlobal->MemPoolCurrTop is returned. If there is not enough memory remaining to satisfy the 
+  request, InternalUpdateMemPoolTop ASSERTS and the function does not return.
 
   @param  AllocationSize        The number of bytes to allocate and zero.
 
@@ -111,9 +112,9 @@ AllocateZeroPool (
   Allocates one or more 4KB pages of type EfiBootServicesData.
 
   Allocates the number of 4KB pages of type EfiBootServicesData and returns a pointer to the
-  allocated buffer.  The buffer returned is aligned on a 4KB boundary.  If Pages is 0, then NULL
-  is returned.  If there is not enough memory remaining to satisfy the request, then NULL is
-  returned.
+  allocated buffer.  The buffer returned is aligned on a 4KB boundary.  If Pages is 0, then 
+  NULL is returned.  If there is not enough memory remaining to satisfy the request, 
+  InternalUpdateMemPoolTop ASSERTS and the function does not return.
 
   @param  Pages                 The number of 4 KB pages to allocate.
 
@@ -129,6 +130,10 @@ AllocatePages (
   LOADER_GLOBAL_DATA  *LdrGlobal;
   UINT32               Top;
 
+  if (Pages == 0) {
+    return NULL;
+  }
+
   LdrGlobal = GetLoaderGlobalDataPointer();
   Top  = LdrGlobal->MemPoolCurrTop;
   Top  = ALIGN_DOWN (Top, EFI_PAGE_SIZE);
@@ -141,9 +146,9 @@ AllocatePages (
   Allocates one or more 4KB pages of type EfiBootServicesData at a specified alignment.
 
   Allocates the number of 4KB pages specified by Pages of type EfiBootServicesData with an
-  alignment specified by Alignment.  The allocated buffer is returned.  If Pages is 0, then NULL is
-  returned.  If there is not enough memory at the specified alignment remaining to satisfy the
-  request, then NULL is returned.
+  alignment specified by Alignment.  The allocated buffer is returned.  If Pages is 0, then 
+  NULL is returned.  If there is not enough memory remaining to satisfy the request, 
+  InternalUpdateMemPoolTop ASSERTS and the function does not return.
 
   If Alignment is not a power of two and Alignment is not zero, then ASSERT().
   If Pages plus EFI_SIZE_TO_PAGES (Alignment) overflows, then ASSERT().
@@ -165,6 +170,10 @@ AllocateAlignedPages (
   LOADER_GLOBAL_DATA  *LdrGlobal;
   UINT32               Top;
 
+  if (Pages == 0) {
+    return NULL;
+  }
+
   LdrGlobal = GetLoaderGlobalDataPointer();
   Top  = LdrGlobal->MemPoolCurrTop;
   Top  = ALIGN_DOWN (Top, EFI_PAGE_SIZE);
@@ -180,7 +189,9 @@ AllocateAlignedPages (
 /**
   This function allocates temporary memory pool.
 
-  @param[in]  AllocationSize    The memory pool size to allocate.
+  @param[in]  AllocationSize    The memory pool size to allocate. If AllocationSize is 0, 
+  LdrGlobal->MemPoolCurrBottom is returned. If there is not enough memory remaining to satisfy the 
+  request, InternalUpdateMemPoolBottom ASSERTS and the function does not return.
 
   @retval   A pointer to the allocated buffer or NULL if allocation fails.
 
