@@ -79,7 +79,7 @@ AppendSeedData (
 
   // Get Seed List HOB
   SeedListInfoHob = GetSeedListInfoHOB(&SeedListHobLen);
-  if ((SeedListInfoHob == NULL)&& (SeedListHobLen < 0)) {
+  if ((SeedListInfoHob == NULL) || (SeedListHobLen == 0)) {
     return EFI_NOT_FOUND;
   }
 
@@ -91,7 +91,7 @@ AppendSeedData (
   SeedEntryData = (SEED_ENTRY  *)((UINT8 *)SeedListInfoHob + Offset); //Start of SeedEntryData buffer
 
   // This is to get to the 'last' seed entry data pointer that was added so far
-  for( Index =0; Index  <= SeedListInfoHob->TotalSeedCount; Index++) {
+  for (Index = 0; Index <= SeedListInfoHob->TotalSeedCount; Index++) {
     SeedEntryData  = (SEED_ENTRY *)((UINT8 *)SeedEntryData + SeedEntryData->SeedEntrySize);
   }
 

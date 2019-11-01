@@ -47,7 +47,7 @@ AddMemoryResourceRange (
   MemoryRanges[1].Type          = EfiReservedMemoryType;
   MemoryRanges[2].Type          = EfiMaxMemoryType;
 
-  for (Index = 0; (MemoryRanges[Index].Type != EfiMaxMemoryType) && (Index < EfiMaxMemoryType); Index++) {
+  for (Index = 0; (MemoryRanges[Index].Type != EfiMaxMemoryType) && (Index < ARRAY_SIZE (MemoryRanges)); Index++) {
     CoreAddMemoryDescriptor (MemoryRanges[Index].Type, MemoryRanges[Index].BaseAddress, MemoryRanges[Index].NumberOfPages,
                              MEMORY_ATTRIBUTE_DEFAULT);
   }
