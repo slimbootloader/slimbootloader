@@ -14,6 +14,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/FileSystemLib.h>
 
 #define FS_EXT_SIGNATURE    SIGNATURE_32 ('p', 'e', 'x', 't')
 
@@ -134,6 +135,7 @@ ExtFsCloseFile (
 
   @param[in]     FsHandle         file system handle.
   @param[in]     DirFilePath      directory or file path
+  @param[in]     ConsoleOutFunc   redirect output message to a console
 
   @retval EFI_SUCCESS             list directories of files successfully
   @retval EFI_UNSUPPORTED         this api is not supported
@@ -144,7 +146,8 @@ EFI_STATUS
 EFIAPI
 ExtFsListDir (
   IN  EFI_HANDLE                                  FsHandle,
-  IN  CHAR16                                     *DirFilePath
+  IN  CHAR16                                     *DirFilePath,
+  IN  CONSOLE_OUT_FUNC                            ConsoleOutFunc
   );
 
 #endif // _EXT23_LIB_H_

@@ -67,6 +67,7 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/BaseLib.h>
 #include <Library/PartitionLib.h>
+#include <Library/FileSystemLib.h>
 #include "Ext2FsDiNode.h"
 #include "Ext2FsDir.h"
 #include "LibsaFsStand.h"
@@ -501,6 +502,7 @@ Ext2fsRead (
 
   @param[in] File           pointer to an file private data
   @param[in] Pattern        not used for now
+  @param[in] ConsoleOutFunc redirect output message to a console
 
   @retval EFI_SUCCESS       list directories or files successfully
   @retval EFI_NOT_FOUND     not found specified dir or file
@@ -509,8 +511,9 @@ Ext2fsRead (
 EFI_STATUS
 EFIAPI
 Ext2fsLs (
-  IN  OPEN_FILE     *File,
-  IN  CONST CHAR8   *Pattern
+  IN  OPEN_FILE         *File,
+  IN  CONST CHAR8       *Pattern,
+  IN  CONSOLE_OUT_FUNC   ConsoleOutFunc
   );
 
 /**
