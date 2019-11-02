@@ -113,6 +113,7 @@ Shell (
   UINTN   Index, Index1;
   SHELL   Shell;
   CONST SHELL_COMMAND **Iter;
+  UINT8   Buffer;
 
   InitializeListHead (&mShellCommandEntryList);
 
@@ -124,6 +125,9 @@ Shell (
 
   if (Timeout != 0) {
     ShellPrint (L"\n");
+    while (ConsolePoll ()) {
+      ConsoleRead (&Buffer, 1);
+    }
     for (Index = Timeout; Index > 0; Index--) {
       ShellPrint (L"Press any key within %d second(s) to enter the command shell", Index);
       for (Index1 = 0; Index1 < 10; Index1++) {
