@@ -161,7 +161,9 @@ UpdateOsMemMap (
     Bp        = (BOOT_PARAMS *) (UINTN)BOOT_PARAMS_BASE;
     E820Entry = &Bp->E820Map[0];
     Count     = Bp->E820Entries;
-    ASSERT (Count < 128);
+    if (Count >= 128) {
+      Count = 128;
+    }
     MmapDiff  = 0;
   }
 
@@ -281,9 +283,14 @@ UpdateOsParameters (
   //
   if ((CurrentBootOption->BootFlags & BOOT_FLAGS_TRUSTY) != 0) {
     LoadedImage->Image.MultiBoot.CmdBufferSize       = CMDLINE_LENGTH_MAX;
-    LoadedTrustyImage->Image.MultiBoot.CmdBufferSize = CMDLINE_LENGTH_MAX;
-    Status = SetupTrustyBoot (&LoadedTrustyImage->Image.MultiBoot, &LoadedImage->Image.MultiBoot);
-    if (EFI_ERROR (Status)) {
+    if (LoadedTrustyImage != NULL) {
+      LoadedTrustyImage->Image.MultiBoot.CmdBufferSize = CMDLINE_LENGTH_MAX;
+      Status = SetupTrustyBoot (&LoadedTrustyImage->Image.MultiBoot, &LoadedImage->Image.MultiBoot);
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "ERROR Setting up Trusty Boot!\n"));
+        return Status;
+      }
+    } else {
       DEBUG ((DEBUG_ERROR, "ERROR Setting up Trusty Boot!\n"));
       return Status;
     }
@@ -299,6 +306,9 @@ UpdateOsParameters (
     // update OS boot parameter here.
     //
     DEBUG ((DEBUG_ERROR, "Warning: Extra image parameters are not handled yet.\n"));
+    if (LoadedExtraImages == NULL) {
+      DEBUG ((DEBUG_ERROR, "Warning: Extra image not loaded.\n"));
+    }
   }
 
   UpdateOsMemMap (LoadedImage);

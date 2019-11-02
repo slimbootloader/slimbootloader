@@ -90,7 +90,7 @@ PayloadInit (
                           RsvdBase, EFI_SIZE_TO_PAGES ((UINT32)RsvdSize));
 
   GlobalDataPtr = AllocateZeroPool (sizeof (PAYLOAD_GLOBAL_DATA));
-  ASSERT (GlobalDataPtr);
+  ASSERT (GlobalDataPtr != NULL);
   GlobalDataPtr->Signature = PLD_GDATA_SIGNATURE;
   PcdStatus2 = PcdSet32S (PcdGlobalDataAddress, (UINT32) (UINTN)GlobalDataPtr);
   ASSERT_EFI_ERROR (PcdStatus1 | PcdStatus2);
@@ -183,7 +183,7 @@ SecStartup (
 
     AllocateLen += LoaderLibData->Count * sizeof (LIBRARY_DATA);
     BufPtr = AllocatePool (AllocateLen);
-    ASSERT (BufPtr);
+    ASSERT (BufPtr != NULL);
 
     CopyMem (BufPtr, LibData, LoaderLibData->Count * sizeof (LIBRARY_DATA));
     LibData = (LIBRARY_DATA *) BufPtr;

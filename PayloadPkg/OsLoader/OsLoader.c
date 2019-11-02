@@ -849,14 +849,7 @@ UpdateBootParameters (
     return Status;
   }
   Status = GetLoadedImageByType (LoadedImageHandle, LoadImageTypeTrusty, &LoadedTrustyImage);
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
   Status = GetLoadedImageByType (LoadedImageHandle, LoadImageTypeExtra0, &LoadedExtraImages);
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
   return UpdateOsParameters (OsBootOption, LoadedImage, LoadedTrustyImage, LoadedExtraImages);
 }
 
