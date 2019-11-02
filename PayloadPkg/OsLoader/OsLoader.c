@@ -841,10 +841,21 @@ UpdateBootParameters (
   LOADED_IMAGE        *LoadedImage;
   LOADED_IMAGE        *LoadedTrustyImage;
   LOADED_IMAGE        *LoadedExtraImages;
+  EFI_STATUS           Status;
 
-  GetLoadedImageByType (LoadedImageHandle, LoadImageTypeNormal, &LoadedImage);
-  GetLoadedImageByType (LoadedImageHandle, LoadImageTypeTrusty, &LoadedTrustyImage);
-  GetLoadedImageByType (LoadedImageHandle, LoadImageTypeExtra0, &LoadedExtraImages);
+
+  Status = GetLoadedImageByType (LoadedImageHandle, LoadImageTypeNormal, &LoadedImage);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+  Status = GetLoadedImageByType (LoadedImageHandle, LoadImageTypeTrusty, &LoadedTrustyImage);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+  Status = GetLoadedImageByType (LoadedImageHandle, LoadImageTypeExtra0, &LoadedExtraImages);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
 
   return UpdateOsParameters (OsBootOption, LoadedImage, LoadedTrustyImage, LoadedExtraImages);
 }

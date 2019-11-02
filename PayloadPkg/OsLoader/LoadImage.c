@@ -616,6 +616,7 @@ LoadBootImages (
     }
 
     LoadedImage = (LOADED_IMAGE *)AllocateZeroPool (sizeof (LOADED_IMAGE));
+    ASSERT (LoadedImage);
     LoadedImage->HwPartHandle   = HwPartHandle;
     LoadedImage->LoadImageType  = Index;
 

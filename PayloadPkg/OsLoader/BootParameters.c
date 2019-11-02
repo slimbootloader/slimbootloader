@@ -161,6 +161,7 @@ UpdateOsMemMap (
     Bp        = (BOOT_PARAMS *) (UINTN)BOOT_PARAMS_BASE;
     E820Entry = &Bp->E820Map[0];
     Count     = Bp->E820Entries;
+    ASSERT (Count < 128);
     MmapDiff  = 0;
   }
 
