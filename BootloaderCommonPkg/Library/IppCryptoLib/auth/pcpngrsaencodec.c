@@ -169,16 +169,14 @@ void gsRSApub_cipher(IppsBigNumState* pY,
 
    BNU_CHUNK_T* dataY = BN_NUMBER(pY);
 
-   if (m != NULL) {
-      cpSize nsY = m->publicExpFun(dataY,
-                                  BN_NUMBER(pX), BN_SIZE(pX),
-                                  RSA_PUB_KEY_E(pKey), BITS_BNU_CHUNK(RSA_PUB_KEY_BITSIZE_E(pKey)),
-                                  RSA_PUB_KEY_NMONT(pKey),
-                                  pBuffer);
-      FIX_BNU(dataY, nsY);
-      BN_SIZE(pY) = nsY;
-      BN_SIGN(pY) = ippBigNumPOS;
-   }
+   cpSize nsY = m->publicExpFun(dataY,
+                               BN_NUMBER(pX), BN_SIZE(pX),
+                               RSA_PUB_KEY_E(pKey), BITS_BNU_CHUNK(RSA_PUB_KEY_BITSIZE_E(pKey)),
+                               RSA_PUB_KEY_NMONT(pKey),
+                               pBuffer);
+   FIX_BNU(dataY, nsY);
+   BN_SIZE(pY) = nsY;
+   BN_SIGN(pY) = ippBigNumPOS;
 }
 
 
@@ -250,15 +248,17 @@ void gsRSAprv_cipher(IppsBigNumState* pY,
 {
    gsMethod_RSA* m = getDefaultMethod_RSA(RSA_PRV_KEY_BITSIZE_N(pKey));
 
-   BNU_CHUNK_T* dataY = BN_NUMBER(pY);
-   cpSize nsY = m->privateExpFun(dataY,
-                                 BN_NUMBER(pX), BN_SIZE(pX),
-                                 RSA_PRV_KEY_D(pKey), BITS_BNU_CHUNK(RSA_PRV_KEY_BITSIZE_D(pKey)),
-                                 RSA_PRV_KEY_NMONT(pKey),
-                                 pBuffer);
-   FIX_BNU(dataY, nsY);
-   BN_SIZE(pY) = nsY;
-   BN_SIGN(pY) = ippBigNumPOS;
+   if (m->privateExpFun != NULL) {
+      BNU_CHUNK_T* dataY = BN_NUMBER(pY);
+      cpSize nsY = m->privateExpFun(dataY,
+                                    BN_NUMBER(pX), BN_SIZE(pX),
+                                    RSA_PRV_KEY_D(pKey), BITS_BNU_CHUNK(RSA_PRV_KEY_BITSIZE_D(pKey)),
+                                    RSA_PRV_KEY_NMONT(pKey),
+                                    pBuffer);
+      FIX_BNU(dataY, nsY);
+      BN_SIZE(pY) = nsY;
+      BN_SIGN(pY) = ippBigNumPOS;
+   }
 }
 
 void gsRSAprv_cipher_crt(IppsBigNumState* pY,
@@ -286,7 +286,7 @@ void gsRSAprv_cipher_crt(IppsBigNumState* pY,
    cpMod_BNU(dataXq, nsX, MOD_MODULUS(pMontQ), nsQ);
 
    m = getDefaultMethod_RSA(bitSizeDQ);
-   if (m != NULL) {
+   if (m->privateExpFun != NULL) {
       m->privateExpFun(dataXq, dataXq, nsQ, RSA_PRV_KEY_DQ(pKey), BITS_BNU_CHUNK(bitSizeDQ), pMontQ, pBuffer);
    }
 
@@ -295,7 +295,7 @@ void gsRSAprv_cipher_crt(IppsBigNumState* pY,
    cpMod_BNU(dataXp, nsX, MOD_MODULUS(pMontP), nsP);
 
    m = getDefaultMethod_RSA(bitSizeDP);
-   if (m != NULL) {
+   if (m->privateExpFun != NULL) {
       m->privateExpFun(dataXp, dataXp, nsP, RSA_PRV_KEY_DP(pKey), BITS_BNU_CHUNK(bitSizeDP), pMontP, pBuffer);
    }
 
