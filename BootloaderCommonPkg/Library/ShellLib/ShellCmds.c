@@ -5,14 +5,23 @@
 
 **/
 
-#include "ShellCmds.h"
 #include <Library/DebugLib.h>
+#include <Library/ShellExtensionLib.h>
+#include "ShellCmds.h"
+#include "Shell.h"
 
 EFI_STATUS
 LoadShellCommands (
   VOID
   )
 {
+  LIST_ENTRY           *EntryList;
+  CONST SHELL_COMMAND **ShellExtensionCmds;
+  CONST SHELL_COMMAND **Iter;
+
+  EntryList = GetShellCommandEntryList ();
+  InitializeListHead (EntryList);
+
   ShellCommandRegister (&ShellCommandExit);
   ShellCommandRegister (&ShellCommandHelp);
   ShellCommandRegister (&ShellCommandHob);
@@ -31,6 +40,14 @@ LoadShellCommands (
   ShellCommandRegister (&ShellCommandUcode);
   ShellCommandRegister (&ShellCommandCls);
   ShellCommandRegister (&ShellCommandFs);
+
+  //
+  // Load Platform specific shell commands
+  //
+  ShellExtensionCmds = GetShellExtensionCmds ();
+  for (Iter = ShellExtensionCmds; *Iter != NULL; Iter++) {
+    ShellCommandRegister (*Iter);
+  }
 
   return EFI_SUCCESS;
 }

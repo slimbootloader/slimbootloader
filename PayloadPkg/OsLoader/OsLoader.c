@@ -1051,12 +1051,9 @@ RunShell (
   IN  UINTN    Timeout
   )
 {
-  CONST SHELL_COMMAND    **ShellExtensionCmd;
-
   InitConsole ();
 
-  ShellExtensionCmd = GetShellExtensionCmds ();
-  Shell (ShellExtensionCmd, Timeout);
+  Shell (Timeout);
 }
 
 /**
