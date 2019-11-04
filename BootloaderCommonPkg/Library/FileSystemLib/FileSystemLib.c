@@ -468,6 +468,7 @@ CloseFile (
 
   @param[in]     FsHandle         file system handle.
   @param[in]     DirFilePath      directory or file path
+  @param[in]     ConsoleOutFunc   redirect output message to a console
 
   @retval EFI_SUCCESS             list directories of files successfully
   @retval EFI_UNSUPPORTED         this api is not supported
@@ -478,12 +479,17 @@ EFI_STATUS
 EFIAPI
 ListDir (
   IN  EFI_HANDLE                                  FsHandle,
-  IN  CHAR16                                     *DirFilePath
+  IN  CHAR16                                     *DirFilePath,
+  IN  CONSOLE_OUT_FUNC                            ConsoleOutFunc
   )
 {
 DEBUG_CODE_BEGIN ();
   OS_FILE_SYSTEM_TYPE         FsType;
   FILE_SYSTEM_CONTROL_BLOCK  *FileSystemControlBlock;
+
+  if (ConsoleOutFunc == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
 
   FileSystemControlBlock = (FILE_SYSTEM_CONTROL_BLOCK *)FsHandle;
   ASSERT (FileSystemControlBlock != NULL);
@@ -497,7 +503,7 @@ DEBUG_CODE_BEGIN ();
   }
 
   if (mFileSystemFuncs[FsType].ListDir != NULL) {
-    return mFileSystemFuncs[FsType].ListDir (FileSystemControlBlock->FsHandle, DirFilePath);
+    return mFileSystemFuncs[FsType].ListDir (FileSystemControlBlock->FsHandle, DirFilePath, ConsoleOutFunc);
   }
 DEBUG_CODE_END ();
 

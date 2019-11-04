@@ -16,6 +16,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
   Print directory or file name in debug output
 
   @param[in]     File             The File pointer to be printed
+  @param[in]     ConsoleOutFunc   Redirect output message to a console
 
   @retval        none
 
@@ -23,12 +24,13 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 STATIC
 VOID
 PrintFileName (
-  IN   PEI_FAT_FILE  *File
+  IN  PEI_FAT_FILE        *File,
+  IN  CONSOLE_OUT_FUNC     ConsoleOutFunc
   )
 {
   CHAR16  *FileName;
 
-  if (File == NULL) {
+  if ((File == NULL) || (ConsoleOutFunc == NULL)) {
     return;
   }
 
@@ -38,9 +40,9 @@ PrintFileName (
   }
 
   if (File->Attributes & FAT_ATTR_DIRECTORY) {
-    DEBUG ((DEBUG_INFO, "  %s/\n", FileName));
+    ConsoleOutFunc (L"  %s/\n", FileName);
   } else {
-    DEBUG ((DEBUG_INFO, "  %-16s %d\n", FileName, File->FileSize));
+    ConsoleOutFunc (L"  %-16s %d\n", FileName, File->FileSize);
   }
 }
 
@@ -502,6 +504,7 @@ FatFsCloseFile (
 
   @param[in]     FsHandle         file system handle.
   @param[in]     DirFilePath      directory or file path
+  @param[in]     ConsoleOutFunc   redirect output message to a console
 
   @retval EFI_SUCCESS             list directories of files successfully
   @retval EFI_UNSUPPORTED         this api is not supported
@@ -512,7 +515,8 @@ EFI_STATUS
 EFIAPI
 FatFsListDir (
   IN  EFI_HANDLE                                    FsHandle,
-  IN  CHAR16                                       *DirFilePath
+  IN  CHAR16                                       *DirFilePath,
+  IN  CONSOLE_OUT_FUNC                              ConsoleOutFunc
   )
 {
   EFI_STATUS              Status;
@@ -524,6 +528,10 @@ FatFsListDir (
   Status = EFI_UNSUPPORTED;
 
 DEBUG_CODE_BEGIN ();
+  if (ConsoleOutFunc == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
   FileHandle = NULL;
   Status = FatFsOpenFile (FsHandle, DirFilePath, &FileHandle);
   if (!EFI_ERROR (Status)) {
@@ -538,10 +546,10 @@ DEBUG_CODE_BEGIN ();
           Status = EFI_SUCCESS;
           break;
         }
-        PrintFileName (File);
+        PrintFileName (File, ConsoleOutFunc);
       } while (Status == EFI_SUCCESS);
     } else {
-      PrintFileName (File);
+      PrintFileName (File, ConsoleOutFunc);
     }
   }
   if (FileHandle != NULL) {

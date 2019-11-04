@@ -105,6 +105,7 @@ STATIC CONST CHAR8 *CONST mTypeStr[] = { "unknown", "REG",  "DIR",  "CHR",  "BLK
 
   @param[in] File           pointer to an file private data
   @param[in] Pattern        not used for now
+  @param[in] ConsoleOutFunc redirect output message to a console
 
   @retval EFI_SUCCESS       list directories or files successfully
   @retval EFI_NOT_FOUND     not found specified dir or file
@@ -113,8 +114,9 @@ STATIC CONST CHAR8 *CONST mTypeStr[] = { "unknown", "REG",  "DIR",  "CHR",  "BLK
 EFI_STATUS
 EFIAPI
 Ext2fsLs (
-  IN  OPEN_FILE     *File,
-  IN  CONST CHAR8   *Pattern
+  IN  OPEN_FILE         *File,
+  IN  CONST CHAR8       *Pattern,
+  IN  CONSOLE_OUT_FUNC   ConsoleOutFunc
   )
 {
   EFI_STATUS      Status;
@@ -132,11 +134,15 @@ Ext2fsLs (
   ENTRY          *PNames;
   CONST CHAR8    *Type;
 
+  if (ConsoleOutFunc == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
   Status = EFI_SUCCESS;
   Fp = (FILE *)File->FileSystemSpecificData;
 
   if ((Fp->DiskInode.Ext2DInodeMode & EXT2_IFMT) == EXT2_IFREG) {
-    DEBUG ((DEBUG_INFO, "  %-16a %d\n", File->FileNamePtr, Fp->DiskInode.Ext2DInodeSize));
+    ConsoleOutFunc (L"  %-16a %d\n", File->FileNamePtr, Fp->DiskInode.Ext2DInodeSize);
     return EFI_SUCCESS;
   } else if ((Fp->DiskInode.Ext2DInodeMode & EXT2_IFMT) != EXT2_IFDIR) {
     return EFI_NOT_FOUND;
@@ -214,7 +220,7 @@ Ext2fsLs (
     do {
       New = PNames;
       if (New->EntryType == 2) {
-        DEBUG ((DEBUG_INFO, "  %a/\n", New->EntryName));
+        ConsoleOutFunc (L"  %a/\n", New->EntryName);
       } else if (New->EntryType == 1) {
         FileSize = 0;
         Rc = ReadInode (New->EntryInode, File);
@@ -222,7 +228,7 @@ Ext2fsLs (
           Fp = (FILE *)File->FileSystemSpecificData;
           FileSize = Fp->DiskInode.Ext2DInodeSize;
         }
-        DEBUG ((DEBUG_INFO, "  %-16a %d\n", New->EntryName, FileSize));
+        ConsoleOutFunc (L"  %-16a %d\n", New->EntryName, FileSize);
       }
       PNames = New->EntryNext;
     } while (PNames != NULL);
