@@ -40,8 +40,9 @@ DoHashVerify (
   )
 {
   RETURN_STATUS        Status;
-  UINT8                Digest[SHA256_DIGEST_SIZE];
-  CONST UINT8          *HashData;
+  UINT8                Digest[HASH_DIGEST_MAX];
+  CONST UINT8         *HashData;
+  UINT8                DigestSize;
 
   if (HashAlg != HASH_TYPE_SHA256) {
     return RETURN_UNSUPPORTED;
@@ -62,8 +63,14 @@ DoHashVerify (
     return RETURN_INVALID_PARAMETER;
   }
 
-  Sha256 (Data, Length, Digest);
-  if (CompareMem (HashData, (VOID *)Digest, SHA256_DIGEST_SIZE)) {
+  if (HashAlg == HASH_TYPE_SHA256) {
+      Sha256 (Data, Length, Digest);
+      DigestSize = SHA256_DIGEST_SIZE;
+  } else {
+    return RETURN_INVALID_PARAMETER;
+  }
+
+  if (CompareMem (HashData, (VOID *)Digest, DigestSize)) {
     Status = RETURN_SECURITY_VIOLATION;
 
     DEBUG ((DEBUG_ERROR, "Hash check fail for component type (%d)\n", ComponentType));
@@ -71,16 +78,16 @@ DoHashVerify (
     DEBUG_CODE_BEGIN();
 
     DEBUG ((DEBUG_INFO, "First 32Bytes Input Data\n"));
-    DumpHex (2, 0, SHA256_DIGEST_SIZE, (VOID *)Data);
+    DumpHex (2, 0, DigestSize, (VOID *)Data);
 
     DEBUG ((DEBUG_INFO, "Last 32Bytes Input Data\n"));
-    DumpHex (2, 0, SHA256_DIGEST_SIZE, (VOID *) (Data + Length - 32));
+    DumpHex (2, 0, DigestSize, (VOID *) (Data + Length - 32));
 
     DEBUG ((DEBUG_INFO, "Image Digest\n"));
-    DumpHex (2, 0, SHA256_DIGEST_SIZE, (VOID *)Digest);
+    DumpHex (2, 0, DigestSize, (VOID *)Digest);
 
     DEBUG ((DEBUG_INFO, "HashStore Digest\n"));
-    DumpHex (2, 0, SHA256_DIGEST_SIZE, (VOID *)HashData);
+    DumpHex (2, 0, DigestSize, (VOID *)HashData);
 
     DEBUG_CODE_END();
 

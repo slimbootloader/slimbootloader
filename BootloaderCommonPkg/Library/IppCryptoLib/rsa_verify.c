@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018-2019, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -17,102 +17,116 @@
 /* Wrapper function for RSAVerify to make the inferface consistent.
  * Returns non-zero on failure, 0 on success.
  */
-int VerifyRsaSignature (const void *hash, const void *rsa_n,  const void *rsa_e, const void *sig)
+int VerifyRsaSignature (const void *hash, const void *rsa_n,  const void *rsa_e, const void *sig,
+                                                                    Ipp8u sign_type, Ipp8u hash_type)
 {
-	int    sz_n;
-	int    sz_e;
-	int    sz_rsa;
-	int    sz_adj;
-	int    signature_verified;
+  int    sz_n;
+  int    sz_e;
+  int    sz_rsa;
+  int    sz_adj;
+  int    signature_verified;
+  int    rsa_mod_sz=0;
 
-	Ipp8u  bn_buf[3400];
-	IppsBigNumState *bn_rsa_n;
-	IppsBigNumState *bn_rsa_e;
-	Ipp8u *scratch_buf;
-	IppStatus err;
-	IppsRSAPublicKeyState *rsa_key_s;
+  if(sign_type == SIG_TYPE_RSA2048){
+    rsa_mod_sz = RSA_MOD_SIZE_2048;
+  } else if (sign_type == SIG_TYPE_RSA3072) {
+    rsa_mod_sz = RSA_MOD_SIZE_3072;
+  } else {
+    //Not supported
+    return -1;
+  }
 
 
-	err = ippsRSA_GetSizePublicKey(RSA_MOD_SIZE * 8, RSA_E_SIZE * 8, &sz_rsa);
-	if (err != ippStsNoErr) {
-		return err;
-	}
+  Ipp8u  bn_buf[3400];
+  IppsBigNumState *bn_rsa_n;
+  IppsBigNumState *bn_rsa_e;
+  Ipp8u *scratch_buf;
+  IppStatus err;
+  IppsRSAPublicKeyState *rsa_key_s;
 
-	err = ippsBigNumGetSize(RSA_MOD_SIZE / sizeof(Ipp32u), &sz_n);
-	if (err != ippStsNoErr) {
-		return err;
-	}
-	err = ippsBigNumGetSize(RSA_E_SIZE / sizeof(Ipp32u), &sz_e);
-	if (err != ippStsNoErr) {
-		return err;
-	}
+  err = ippsRSA_GetSizePublicKey(rsa_mod_sz * 8, RSA_E_SIZE * 8, &sz_rsa);
+  if (err != ippStsNoErr) {
+    return err;
+  }
 
-	rsa_key_s = (IppsRSAPublicKeyState*)bn_buf;
-	sz_adj = ((sz_rsa + sizeof(Ipp32u)) & ~(sizeof(Ipp32u)-1));
-	scratch_buf = bn_buf + sz_adj;
-	sz_adj = sz_adj + sz_adj;
-	bn_rsa_n = (IppsBigNumState *)(bn_buf + sz_adj);
-	sz_adj = sz_adj + ((sz_n + sizeof(Ipp32u)) & ~(sizeof(Ipp32u)-1));
-	bn_rsa_e = (IppsBigNumState *)(bn_buf + sz_adj);
-	sz_adj = sz_adj + ((sz_e + sizeof(Ipp32u)) & ~(sizeof(Ipp32u)-1));
+  err = ippsBigNumGetSize(rsa_mod_sz / sizeof(Ipp32u), &sz_n);
+  if (err != ippStsNoErr) {
+    return err;
+  }
+  err = ippsBigNumGetSize(RSA_E_SIZE / sizeof(Ipp32u), &sz_e);
+  if (err != ippStsNoErr) {
+    return err;
+  }
 
-	if (sz_adj > sizeof(bn_buf)) {
-		return ippStsNoMemErr;
-	}
+  rsa_key_s = (IppsRSAPublicKeyState*)bn_buf;
+  sz_adj = ((sz_rsa + sizeof(Ipp32u)) & ~(sizeof(Ipp32u)-1));
+  scratch_buf = bn_buf + sz_adj;
+  sz_adj = sz_adj + sz_adj;
+  bn_rsa_n = (IppsBigNumState *)(bn_buf + sz_adj);
+  sz_adj = sz_adj + ((sz_n + sizeof(Ipp32u)) & ~(sizeof(Ipp32u)-1));
+  bn_rsa_e = (IppsBigNumState *)(bn_buf + sz_adj);
+  sz_adj = sz_adj + ((sz_e + sizeof(Ipp32u)) & ~(sizeof(Ipp32u)-1));
 
-	err = ippsBigNumInit(RSA_MOD_SIZE / sizeof(Ipp32u), bn_rsa_n);
-	if (err != ippStsNoErr) {
-		return err;
-	}
+  if (sz_adj > sizeof(bn_buf)) {
+    return ippStsNoMemErr;
+  }
 
-	err = ippsSetOctString_BN(rsa_n, RSA_MOD_SIZE, bn_rsa_n);
-	if (err != ippStsNoErr) {
-		return err;
-	}
+  err = ippsBigNumInit(rsa_mod_sz / sizeof(Ipp32u), bn_rsa_n);
+  if (err != ippStsNoErr) {
+    return err;
+  }
 
-	err = ippsBigNumInit(RSA_E_SIZE / sizeof(Ipp32u), bn_rsa_e);
-	if (err != ippStsNoErr) {
-		return err;
-	}
+  err = ippsSetOctString_BN(rsa_n, rsa_mod_sz, bn_rsa_n);
+  if (err != ippStsNoErr) {
+    return err;
+  }
 
-	err = ippsSetOctString_BN(rsa_e, RSA_E_SIZE, bn_rsa_e);
-	if (err != ippStsNoErr) {
-		return err;
-	}
+  err = ippsBigNumInit(RSA_E_SIZE / sizeof(Ipp32u), bn_rsa_e);
+  if (err != ippStsNoErr) {
+    return err;
+  }
 
-	err = ippsRSA_InitPublicKey(RSA_MOD_SIZE * 8, RSA_E_SIZE * 8, rsa_key_s, sz_rsa);
-	if (err != ippStsNoErr) {
-		return err;
-	}
+  err = ippsSetOctString_BN(rsa_e, RSA_E_SIZE, bn_rsa_e);
+  if (err != ippStsNoErr) {
+    return err;
+  }
 
-	err = ippsRSA_SetPublicKey(bn_rsa_n, bn_rsa_e, rsa_key_s);
-	if (err != ippStsNoErr) {
-		return err;
-	}
+  err = ippsRSA_InitPublicKey(rsa_mod_sz * 8, RSA_E_SIZE * 8, rsa_key_s, sz_rsa);
+  if (err != ippStsNoErr) {
+    return err;
+  }
 
-	signature_verified = 0;
-	err = ippsRSAVerifyHash_PKCS1v15_rmf((const Ipp8u *)hash, (Ipp8u *)sig, &signature_verified, rsa_key_s, ippsHashMethod_SHA256 (), scratch_buf);
-	if (err != ippStsNoErr) {
-		return err;
-	}
-	return !signature_verified;
-}
+  err = ippsRSA_SetPublicKey(bn_rsa_n, bn_rsa_e, rsa_key_s);
+  if (err != ippStsNoErr) {
+    return err;
+  }
+
+  signature_verified = 0;
+  if (hash_type == HASH_TYPE_SHA256){
+    err = ippsRSAVerifyHash_PKCS1v15_rmf((const Ipp8u *)hash, (Ipp8u *)sig, &signature_verified, rsa_key_s, ippsHashMethod_SHA256(), scratch_buf);
+  }
+  if (err != ippStsNoErr) {
+    return err;
+  }
+  return !signature_verified;
+  }
 
 
 /* Wrapper function for RSAVerify to make the inferface consistent.
- * Returns RETURN_SUCCESS on success, others on failure.
- */
+* Returns RETURN_SUCCESS on success, others on failure.
+*/
 RETURN_STATUS
-RsaVerify(const RSA_PUB_KEY *key, const Ipp8u *sig,	const Ipp32u sig_len, const Ipp8u  sig_type, const Ipp8u *hash)
+RsaVerify(const RSA_PUB_KEY *key, const Ipp8u *sig, const Ipp32u sig_len, const Ipp8u  sig_type, const Ipp8u hash_type, const Ipp8u *hash)
 {
-	Ipp8u  *rsa_n;
-	Ipp8u  *rsa_e;
+  Ipp8u  *rsa_n;
+  Ipp8u  *rsa_e;
 
-	if ((key->Signature != RSA_KEY_IPP_SIGNATURE) || (sig_type != SIG_TYPE_RSA2048SHA256) || (sig_len != RSA_MOD_SIZE)) {
-		return RETURN_INVALID_PARAMETER;
-	} else {
-		rsa_n = (Ipp8u *)key->PubKeyData;
-		rsa_e = rsa_n + RSA_MOD_SIZE;
-		return VerifyRsaSignature (hash, rsa_n, rsa_e, sig) ? RETURN_SECURITY_VIOLATION : RETURN_SUCCESS ;
-	}
+  if ((key->Signature != RSA_KEY_IPP_SIGNATURE) || ((sig_type != SIG_TYPE_RSA2048) &&  (sig_type != SIG_TYPE_RSA3072)) || \
+             ((sig_len != RSA_MOD_SIZE_2048) && (sig_len != RSA_MOD_SIZE_3072))) {
+    return RETURN_INVALID_PARAMETER;
+  } else {
+    rsa_n = (Ipp8u *)key->PubKeyData;
+    rsa_e = rsa_n + sig_len;
+    return VerifyRsaSignature (hash, rsa_n, rsa_e, sig, sig_type, hash_type) ? RETURN_SECURITY_VIOLATION : RETURN_SUCCESS ;
+  }
 }

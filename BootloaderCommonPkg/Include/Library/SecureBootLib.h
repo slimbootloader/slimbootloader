@@ -8,9 +8,6 @@
 #ifndef __VERIFIED_BOOT_LIB_H__
 #define __VERIFIED_BOOT_LIB_H__
 
-#define  HASH_TYPE_SHA256              0
-#define  HASH_TYPE_SHA384              1
-#define  HASH_TYPE_SHA512              2
 
 #define  SIG_TYPE_RSA2048_SHA256       0
 #define  SIG_TYPE_RSA3072_SHA384       1
@@ -61,6 +58,9 @@ DoHashVerify (
   @param[in]  Signature       Signature for the data buffer.
   @param[in]  PubKey          Public key data pointer.
   @param[in]  PubKeyHash      Public key hash value when ComponentType is not used.
+  @param[in]  PubKeyHashAlg   Pubkey Hash Alg .
+  @param[in]  SignKeyType     Type of Public key Sign .
+  @param[in]  SignHashAlg     Hash Alg used for signing.
   @param[out] OutHash         Calculated data hash value.
 
 
@@ -77,7 +77,10 @@ DoRsaVerify (
   IN       UINT8            ComponentType,
   IN CONST UINT8           *Signature,
   IN       UINT8           *PubKey,
-  IN       UINT8           *PubKeyHash      OPTIONAL,
+  IN       UINT8           *PubKeyHash,
+  IN       UINT8            PubKeyHashAlg,
+  IN       UINT8            SignKeyType,
+  IN       UINT8            SignHashAlg,
   OUT      UINT8           *OutHash         OPTIONAL
   );
 

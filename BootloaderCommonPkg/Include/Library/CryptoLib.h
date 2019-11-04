@@ -15,15 +15,31 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define RSA_KEY_VB_SIGNATURE     SIGNATURE_32 ('$', '_', 'V', 'B')
 #define RSA_KEY_IPP_SIGNATURE    SIGNATURE_32 ('$', 'I', 'P', 'P')
 
-#define SIG_TYPE_RSA2048SHA256   0
+#define SIG_TYPE_RSA2048   0
+#define SIG_TYPE_RSA3072   1
+
+#define  HASH_TYPE_SHA256              0
+#define  HASH_TYPE_SHA384              1
+#define  HASH_TYPE_SHA512              2
+#define  HASH_TYPE_SM3                 3
 
 #define SHA256_DIGEST_SIZE       32
-#define RSA2048NUMBYTES          256
+#define SHA384_DIGEST_SIZE       48
+#define SM3_DIGEST_SIZE          32
+#define SHA512_DIGEST_SIZE       64
+#define HASH_DIGEST_MAX          SHA384_DIGEST_SIZE
 
-#define RSA_MOD_SIZE 256 //hardcode n size to be 256
+#define RSA2048NUMBYTES          256
+#define RSA3072NUMBYTES          384
+
+#define RSA_MOD_SIZE_2048 256 //n size to be 256
+#define RSA_MOD_SIZE_3072 384 //n size to be 384
+#define RSA_MOD_SIZE_MAX RSA_MOD_SIZE_3072
+
 #define RSA_E_SIZE   4   //hardcode e size to be 4
 
-#define RSA_SIGNATURE_AND_KEY_SIZE  (RSA2048NUMBYTES + RSA_MOD_SIZE + RSA_E_SIZE + sizeof(UINT32))
+#define RSA2048_SIGNATURE_AND_KEY_SIZE  (RSA2048NUMBYTES + RSA_MOD_SIZE_2048 + RSA_E_SIZE + sizeof(UINT32))
+#define RSA3072_SIGNATURE_AND_KEY_SIZE  (RSA3072NUMBYTES + RSA_MOD_SIZE_3072 + RSA_E_SIZE + sizeof(UINT32))
 
 #define IPP_HASH_CTX_SIZE  256   //IPP Hash context size
 
@@ -77,6 +93,7 @@ RsaVerify (
   CONST UINT8              *Signature,
   CONST UINT32              SignatureLen,
   CONST UINT8               SignatureType,
+  CONST UINT8               HashType,
   CONST UINT8              *Hash
   );
 
