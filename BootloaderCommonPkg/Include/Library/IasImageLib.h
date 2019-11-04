@@ -65,7 +65,7 @@ typedef struct {        /* a file (sub-image) inside a boot image */
 //
 typedef struct {
   UINT32  Signature;
-  UINT8 PubKeyMod[RSA_MOD_SIZE];
+  UINT8 PubKeyMod[RSA_MOD_SIZE_2048];
   UINT8 PubKeyExp[RSA_E_SIZE];
 } IAS_PUB_KEY;
 

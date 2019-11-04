@@ -185,7 +185,7 @@ SpiLoadExternalConfigData (
 
   SignedLen = CfgBlob->UsedLength;
   if (FeaturePcdGet (PcdVerifiedBootEnabled)) {
-    SignedLen += RSA_SIGNATURE_AND_KEY_SIZE;
+    SignedLen += RSA2048_SIGNATURE_AND_KEY_SIZE;
   }
 
   if ((SignedLen > Len) || (SignedLen <= sizeof(CDATA_BLOB))) {

@@ -154,8 +154,17 @@ CreateConfigDatabase (
         CfgBlob = (CDATA_BLOB *)ExtCfgAddPtr;
         SigPtr  = (UINT8 *)CfgBlob + CfgBlob->UsedLength;
         KeyPtr  = SigPtr + RSA2048NUMBYTES;
-        Status  = DoRsaVerify ((UINT8 *)CfgBlob, CfgBlob->UsedLength, COMP_TYPE_PUBKEY_CFG_DATA,
-                     SigPtr, KeyPtr, NULL, Stage1bHob->ConfigDataHash);
+        Status  = DoRsaVerify ((UINT8 *)CfgBlob,
+                                  CfgBlob->UsedLength,
+                                  COMP_TYPE_PUBKEY_CFG_DATA,
+                                  SigPtr,
+                                  KeyPtr,
+                                  NULL,
+                                  HASH_TYPE_SHA256,
+                                  SIG_TYPE_RSA2048,
+                                  HASH_TYPE_SHA256,
+                                  Stage1bHob->ConfigDataHash);
+
         if (EFI_ERROR (Status)) {
           DEBUG ((DEBUG_INFO, "EXT CFG Data ignored ... %r\n", Status));
           ExtCfgAddPtr = NULL;

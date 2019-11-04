@@ -13,6 +13,8 @@
 #include <Library/DebugLib.h>
 #include <Library/Crc32Lib.h>
 #include <Library/SecureBootLib.h>
+#include <Library/CryptoLib.h>
+
 
 /**
 Check the Addr parameter for a valid IAS image; ensure the format is correct,
@@ -79,13 +81,23 @@ IsIasImageValid (
   // The byte order of RSA public key exponent is opposite between what iastool.py
   // generates and what RsaVerify API expects. Thus reverse it here.
   //
-  for (Index = 0, KeyIdx = (RSA_E_SIZE + RSA_MOD_SIZE - 1); Index < RSA_E_SIZE; Index++, KeyIdx--) {
+  for (Index = 0, KeyIdx = (RSA_E_SIZE + RSA_MOD_SIZE_2048 - 1); Index < RSA_E_SIZE; Index++, KeyIdx--) {
     Key.PubKeyExp[Index] = ((UINT8 *) IAS_PUBLIC_KEY (Hdr))[KeyIdx];
   }
 
   Signature = (UINT8 *) IAS_SIGNATURE (Hdr);
-  Status = DoRsaVerify ((CONST UINT8 *)Hdr, ((UINT32)IAS_PAYLOAD_END (Hdr)) - ((UINT32)Hdr), COMP_TYPE_PUBKEY_OS,
-                        Signature, (UINT8 *)&Key, NULL, ImageHash);
+  Status = DoRsaVerify ((CONST UINT8 *)Hdr,
+                        ((UINT32)IAS_PAYLOAD_END (Hdr)) - ((UINT32)Hdr),
+                        COMP_TYPE_PUBKEY_OS,
+                        Signature,
+                        (UINT8 *)&Key,
+                         NULL,
+                         HASH_TYPE_SHA256,
+                         SIG_TYPE_RSA2048,
+                         HASH_TYPE_SHA256,
+                         ImageHash
+                         );
+
   if (EFI_ERROR (Status) != EFI_SUCCESS) {
     DEBUG ((DEBUG_ERROR, "IAS image verification failed!\n"));
     return NULL;

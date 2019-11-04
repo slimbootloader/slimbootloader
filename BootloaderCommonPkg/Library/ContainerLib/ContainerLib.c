@@ -265,7 +265,8 @@ AuthenticateComponent (
       Status = DoHashVerify (Data, Length, HASH_TYPE_SHA256, CompType, HashData);
     } else if (AuthType == AUTH_TYPE_SIG_RSA2048_SHA256) {
       Status = DoRsaVerify (Data, Length, CompType, AuthData,
-                            AuthData + RSA2048NUMBYTES, HashData, NULL);
+                            AuthData + RSA2048NUMBYTES, HashData,
+                            HASH_TYPE_SHA256, SIG_TYPE_RSA2048, HASH_TYPE_SHA256, NULL);
     } else if (AuthType == AUTH_TYPE_NONE) {
       Status = EFI_SUCCESS;
     } else {
