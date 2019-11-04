@@ -206,7 +206,7 @@ CmdFsFsListDir (
     return EFI_ABORTED;
   }
 
-  Status = ListDir (mFsHandle, DirFilePath);
+  Status = ListDir (mFsHandle, DirFilePath, ShellPrint);
   if (Status == EFI_NOT_FOUND) {
     ShellPrint (L"Not found!\n");
   } else if (Status == EFI_UNSUPPORTED) {

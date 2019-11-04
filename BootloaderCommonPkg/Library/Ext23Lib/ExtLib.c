@@ -276,6 +276,7 @@ ExtFsCloseFile (
 
   @param[in]     FsHandle         file system handle.
   @param[in]     DirFilePath      directory or file path
+  @param[in]     ConsoleOutFunc   redirect output message to a console
 
   @retval EFI_SUCCESS             list directories of files successfully
   @retval EFI_UNSUPPORTED         this api is not supported
@@ -286,7 +287,8 @@ EFI_STATUS
 EFIAPI
 ExtFsListDir (
   IN  EFI_HANDLE                                  FsHandle,
-  IN  CHAR16                                     *DirFilePath
+  IN  CHAR16                                     *DirFilePath,
+  IN  CONSOLE_OUT_FUNC                            ConsoleOutFunc
   )
 {
   EFI_STATUS              Status;
@@ -295,10 +297,14 @@ ExtFsListDir (
   Status = EFI_UNSUPPORTED;
 
 DEBUG_CODE_BEGIN ();
+  if (ConsoleOutFunc == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
   FileHandle = NULL;
   Status = ExtFsOpenFile (FsHandle, DirFilePath, &FileHandle);
   if (!EFI_ERROR (Status)) {
-    Status = Ext2fsLs ((OPEN_FILE *)FileHandle, NULL);
+    Status = Ext2fsLs ((OPEN_FILE *)FileHandle, NULL, ConsoleOutFunc);
   }
   if (FileHandle != NULL) {
     ExtFsCloseFile (FileHandle);
