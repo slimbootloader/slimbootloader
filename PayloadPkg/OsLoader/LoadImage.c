@@ -616,6 +616,9 @@ LoadBootImages (
     }
 
     LoadedImage = (LOADED_IMAGE *)AllocateZeroPool (sizeof (LOADED_IMAGE));
+    if (LoadedImage == NULL) {
+      return EFI_OUT_OF_RESOURCES;
+    }
     LoadedImage->HwPartHandle   = HwPartHandle;
     LoadedImage->LoadImageType  = Index;
 

@@ -90,8 +90,12 @@ ParseAcpiTableInfo (
   EFI_STATUS                                    Status;
 
   Rsdp = (EFI_ACPI_3_0_ROOT_SYSTEM_DESCRIPTION_POINTER *) (UINTN)AcpiBase;
-  Xsdt = (EFI_ACPI_DESCRIPTION_HEADER *) (UINTN) (Rsdp->XsdtAddress);
-  ASSERT (Rsdp || Xsdt);
+  if (Rsdp != NULL) {
+    Xsdt = (EFI_ACPI_DESCRIPTION_HEADER *) (UINTN) (Rsdp->XsdtAddress);
+  } else {
+    Xsdt = NULL;
+  }
+  ASSERT (Xsdt != NULL);
 
   Fadt = NULL;
   Mcfg = NULL;
