@@ -143,7 +143,8 @@
       # !BSF NAME:{InterruptConfig}
       # !BSF TYPE:{Combo}
       # !BSF OPTION:{0x0:IntDefault , 0x1:IntDisable, 0x3:IntNmi , 0x5:IntSmi, 0x9:IntSci, 0x11:IntApic, 0x20:IntLevel, 0x60:IntEdge, 0xA0:IntLvlEdgDis, 0xE0:IntBothEdge,}
-      # !BSF OPTION:{+ 0x31:IntLevel | IntApic, 0x29:IntLevel | IntSci, 0x25:IntLevel | IntSmi, 0x69:IntEdge | IntSci, 0x71:IntEdge | IntApic, 0x65:IntEdge | IntSmi, 0x60:IntEdge | IntDefault}
+      # !BSF OPTION:{+ 0x31:IntLevel | IntApic, 0x29:IntLevel | IntSci, 0x25:IntLevel | IntSmi, 0x69:IntEdge | IntSci, 0x71:IntEdge | IntApic, 0x65:IntEdge | IntSmi, 0x60:IntEdge | IntDefault,}
+      # !BSF OPTION:{+ 0xA1:IntLvlEdgDis | IntDisable}
       # !BSF HELP:{GPIO Interrupt Configuration - This setting is applicable only if pad is in GPIO mode and has input enabled.}
       # !BSF HELP:{+ GPIO_INT_CONFIG allows to choose which interrupt is generated (IOxAPIC/SCI/SMI/NMI) and how it is triggered (edge or level). }
       # !BSF HELP:{+ Refer to PADCFG_DW0 register description in EDS for details on this settings. Field from GpioIntNmi to GpioIntApic can be OR'ed with }
