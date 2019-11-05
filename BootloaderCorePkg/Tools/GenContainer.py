@@ -166,7 +166,7 @@ class CONTAINER ():
 
 	@staticmethod
 	def decode_field (name, val):
-		# deocde auth type into readable string
+		# decode auth type into readable string
 		extra = ''
 		if name in ['CONTAINER_HDR.auth_type', 'COMPONENT_ENTRY.auth_type']:
 			auth_type = next(k for k, v in CONTAINER._auth_type_value.items() if v == val)
@@ -216,14 +216,17 @@ class CONTAINER ():
 		return body.strip()
 
 	@staticmethod
-	def get_pub_key_hash (key):
+	def get_pub_key_hash (key, hash_type):
 		# calculate publish key hash
-		dh = bytearray (key)[4:]
-		dh = dh[:0x100][::-1] + dh[0x100:][::-1]
-		return bytearray(hashlib.sha256(dh).digest())
+		if hash_type == 'SHA2_256':
+			dh = bytearray (key)[4:]
+			dh = dh[:0x100][::-1] + dh[0x100:][::-1]
+			return bytearray(hashlib.sha256(dh).digest())
+		else:
+			raise Exception ("Unsupported hash type in get_pub_key_hash!")
 
 	@staticmethod
-	def calculate_auth_data (file, auth_type, priv_key, out_dir):
+	def calculate_auth_data (file, auth_type, priv_key, out_dir, hash_type = 'SHA2_256'):
 		# calculate auth info for a given file
 		hash_data = bytearray()
 		auth_data = bytearray()
@@ -236,21 +239,22 @@ class CONTAINER ():
 		elif auth_type in ['RSA2048']:
 			pub_key = os.path.join(out_dir, basename + '.pub')
 			di = gen_pub_key (priv_key, pub_key)
-			key_hash = CONTAINER.get_pub_key_hash (di)
+			key_hash = CONTAINER.get_pub_key_hash (di, hash_type)
 			hash_data.extend (key_hash)
 			out_file = os.path.join(out_dir, basename + '.sig')
-			rsa_sign_file (priv_key, pub_key, file, out_file, False, True)
+			rsa_sign_file (priv_key, pub_key, hash_type, file, out_file, False, True)
 			auth_data.extend (get_file_data(out_file))
 		else:
 			raise Exception ("Unsupport AuthTupe '%s' !" % auth_type)
 		return hash_data, auth_data
 
 
-	def set_dir_path(self, out_dir, inp_dir, key_dir, tool_dir):
+	def set_dir_path(self, out_dir, inp_dir, key_dir, tool_dir, hash_type=None):
 		self.out_dir   = out_dir
 		self.inp_dir   = inp_dir
 		self.key_dir   = key_dir
 		self.tool_dir  = tool_dir
+		self.hash_type  = hash_type
 
 	def set_header_flags (self, flags, overwrite = False):
 		if overwrite:
@@ -317,7 +321,7 @@ class CONTAINER ():
 			hdr_data.extend (component)
 			hdr_data.extend (component.hash_data)
 		gen_file_from_object (hdr_file, hdr_data)
-		hash_data, auth_data = CONTAINER.calculate_auth_data (hdr_file, auth_type, header.priv_key, self.out_dir)
+		hash_data, auth_data = CONTAINER.calculate_auth_data (hdr_file, auth_type, header.priv_key, self.out_dir, self.hash_type)
 		if len(auth_data) != len(header.auth_data):
 			raise Exception ("Unexpected authentication data length for container header !")
 		header.auth_data = auth_data
@@ -427,7 +431,7 @@ class CONTAINER ():
 			component.data = bytearray(get_file_data (lz_file))
 
 			# calculate the component auth info
-			component.hash_data, component.auth_data = CONTAINER.calculate_auth_data (lz_file, auth_type, key_file, self.out_dir)
+			component.hash_data, component.auth_data = CONTAINER.calculate_auth_data (lz_file, auth_type, key_file, self.out_dir, self.hash_type)
 			component.hash_size = len(component.hash_data)
 			if region_size == 0:
 				# arrange the region size automatically
@@ -469,7 +473,7 @@ class CONTAINER ():
 			pods_comp = self.header.comp_entry[-1]
 			pods_data = data[:pods_comp.offset]
 			gen_file_from_object (in_file, pods_data)
-			pods_comp.hash_data, pods_comp.auth_data = CONTAINER.calculate_auth_data (in_file, auth_type, key_file, self.out_dir)
+			pods_comp.hash_data, pods_comp.auth_data = CONTAINER.calculate_auth_data (in_file, auth_type, key_file, self.out_dir, self.hash_type)
 
 		self.adjust_header ()
 		data = self.get_data ()
@@ -500,7 +504,7 @@ class CONTAINER ():
 			lz_file = compress (comp_file, comp_alg, self.out_dir, self.tool_dir)
 			if auth_type_str.startswith ('RSA') and key_file == '':
 				raise Exception ("Signing key needs to be specified !")
-			hash_data, auth_data = CONTAINER.calculate_auth_data (lz_file, auth_type_str, key_file, self.out_dir)
+			hash_data, auth_data = CONTAINER.calculate_auth_data (lz_file, auth_type_str, key_file, self.out_dir, self.hash_type)
 			data = get_file_data (lz_file)
 		component.data = bytearray(data)
 		component.auth_data = bytearray(auth_data)
@@ -583,10 +587,10 @@ class CONTAINER ():
 				else:
 					raise Exception ("Unknown LZ format!")
 
-def gen_container_bin (container_list, out_dir, inp_dir, key_dir = '.', tool_dir = ''):
+def gen_container_bin (container_list, out_dir, inp_dir, key_dir = '.', tool_dir = '', hash_type = 'SHA2_256'):
 	for each in container_list:
 		container = CONTAINER ()
-		container.set_dir_path (out_dir, inp_dir, key_dir, tool_dir)
+		container.set_dir_path (out_dir, inp_dir, key_dir, tool_dir, hash_type)
 		out_file = container.create (each)
 		print ("Container '%s' was created successfully at:  \n  %s" % (container.header.signature.decode(), out_file))
 
@@ -669,7 +673,7 @@ def sign_component (args):
 	compress_alg = compress_alg[0].upper() + compress_alg[1:]
 	lz_file = compress (args.comp_file, compress_alg, args.out_dir, args.tool_dir)
 	data = bytearray(get_file_data (lz_file))
-	hash_data, auth_data = CONTAINER.calculate_auth_data (lz_file, auth_dict[args.auth], args.key_file, args.out_dir)
+	hash_data, auth_data = CONTAINER.calculate_auth_data (lz_file, auth_dict[args.auth], args.key_file, args.out_dir, args.hash_type)
 	sign_file = os.path.join (args.out_dir, args.sign_file)
 	data.extend (b'\xff' * get_padding_length(len(data)))
 	data.extend (auth_data)

@@ -34,6 +34,33 @@ class LZ_HEADER(Structure):
 		'LZMA' : 'Lzma',
 	}
 
+# Hash values defined should match with cryptolib.h
+HASH_TYPE_VALUE = {
+# {   Hash_string:        Hash_Value}
+			"SHA2_256"    : 0,
+			"SHA2_384"    : 1,
+			"SHA2_512"    : 2,
+			"SM3_256"     : 3,
+	}
+
+# Sign values defined should match with cryptolib.h
+SIGN_TYPE_VALUE = {
+# {   Sign_string:        Sign_Value}
+			"RSA2048"     : 0,
+			"RSA3072 "    : 1,
+			"SM2     "    : 2,
+	}
+
+AUTH_TYPE_HASH_VALUE = {
+# {   Auth_type:        Hash_type}
+			"SHA2_256"       : 0,
+			"SHA2_384"       : 1,
+			"SHA2_512"       : 2,
+			"SM3_256"        : 3,
+			"RSA2048SHA256"  : 0,
+			"RSA3072SHA384"  : 1,
+	}
+
 def bytes_to_value (bytes):
 	return reduce(lambda x,y: (x<<8)|y,  bytes[::-1] )
 
@@ -103,8 +130,15 @@ def run_process (arg_list, print_cmd = False, capture_out = False):
 
 	return output
 
-def rsa_sign_file (priv_key, pub_key, in_file, out_file, inc_dat = False, inc_key = False):
-	cmdargs = [get_openssl_path(), 'dgst' , '-sha256', '-sign', '%s' % priv_key,
+def rsa_sign_file (priv_key, pub_key, hash_type, in_file, out_file, inc_dat = False, inc_key = False):
+
+	_hash_type_string = {
+			"SHA2_256"    : '-sha256',
+			"SHA2_384"    : '-sha384',
+			"SHA2_512"    : '-sha512',
+	}
+
+	cmdargs = [get_openssl_path(), 'dgst' , '%s' % _hash_type_string[hash_type], '-sign', '%s' % priv_key,
 	           '-out', '%s' % out_file, '%s' % in_file]
 	run_process (cmdargs)
 
@@ -228,3 +262,19 @@ def compress (in_file, alg, out_path = '', tool_dir = ''):
 	gen_file_from_object (out_file, data)
 
 	return out_file
+
+def get_priv_key_type (priv_key, openssl_path):
+
+	print ("get_priv_key_type")
+	Output = subprocess.check_output(
+            [openssl_path, 'rsa', '-pubout', '-text', '-noout', '-in',
+             '%s' % priv_key],
+            stderr=subprocess.STDOUT).decode()
+
+	Match = re.match(r'Private-Key: (.*)\n', Output, re.M|re.I)
+	temp = re.findall(r'\d+', Match.group(1))
+	key_type = list(map(int, temp))
+
+	print ("Key Type: RSA%s" % key_type[0])
+
+	return key_type
