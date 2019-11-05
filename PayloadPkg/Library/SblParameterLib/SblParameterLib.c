@@ -313,7 +313,7 @@ AddSblCommandLine (
   //
   if ((OsConfigData != NULL) && (OsConfigData->EnableCrashMode != 0)) {
     Data8 = (UINT8)~(ResetCold | ResetPowerOn | ResetGlobal | ResetWakeS3);
-    if ((OsBootOptionList->ResetReason & Data8) != 0) {
+    if ((ResetReason & Data8) != 0) {
       AsciiStrCatS (CommandLine, MaxCmdSize, " boot_target=CRASHMODE");
     }
   }
