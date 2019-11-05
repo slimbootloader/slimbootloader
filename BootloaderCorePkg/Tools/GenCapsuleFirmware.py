@@ -427,7 +427,7 @@ def SignImage(RawData, OutFile, PrivKey):
     fwupdate_bin_file = 'fwupdate_unsigned.bin'
     open(fwupdate_bin_file, 'wb').write(unsigned_image + RawData)
 
-    rsa_sign_file(PrivKey, pubkey_file, fwupdate_bin_file, OutFile, True, True)
+    rsa_sign_file(PrivKey, pubkey_file, self.SIGN_HASH_TYPE, fwupdate_bin_file, OutFile, True, True )
 
     os.remove(pubkey_file)
     os.remove(fwupdate_bin_file)

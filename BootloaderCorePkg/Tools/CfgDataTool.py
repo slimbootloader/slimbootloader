@@ -9,6 +9,7 @@ import collections
 
 sys.dont_write_bytecode = True
 from   IfwiUtility import *
+from   CommonUtility import *
 
 
 class CDATA_BLOB_HEADER(Structure):
@@ -114,7 +115,6 @@ class CRsaSign:
             Bins.extend(PubKey)
 
         open(OutFile, 'wb').write(Bins)
-
 
 class CCfgData:
 
@@ -785,6 +785,7 @@ def Main():
                             help='Configuration binary file')
     SignParser.add_argument('-o', dest='cfg_out_file', type=str, help='Signed configuration output binary file name to be generated', required=True)
     SignParser.add_argument('-k', dest='cfg_pri_key', type=str, help='Private key file (PEM format) used to sign configuration data', required=True)
+    SignParser.add_argument('-auth', dest='auth_type', type=str, help='Auth Type with RSA signing', required=True)
     SignParser.set_defaults(func=CmdSign)
 
     ExtractParser = SubParser.add_parser('extract', help='extract a single config data to a file')

@@ -25,7 +25,6 @@ import multiprocessing
 from   ctypes import *
 from   BuildUtility import *
 
-
 def rebuild_basetools ():
 	exe_list = 'GenFfs  GenFv  GenFw  GenSec  Lz4Compress  LzmaCompress'.split()
 	ret = 0
@@ -137,6 +136,8 @@ class BaseBoard(object):
 		self._IAS_PRIVATE_KEY       = os.path.join(key_dir, 'TestSigningPrivateKey.pem')
 		self.LOGO_FILE              = 'Platform/CommonBoardPkg/Logo/Logo.bmp'
 
+		self.RSA_SIGN_TYPE						= 'RSA2048'
+		self.SIGN_HASH_TYPE						= 'SHA2_256'
 		self.VERINFO_IMAGE_ID       = 'SB_???? '
 		self.VERINFO_PROJ_ID        = 1
 		self.VERINFO_CORE_MAJOR_VER = 0
@@ -860,7 +861,7 @@ class Build(object):
 					if src == 'STAGE2.fd':
 						raise Exception ("STAGE2.fd must be compressed, please change BoardConfig.py file !")
 				if src not in rgn_name_list:
-					gen_hash_file (src_path)
+					gen_hash_file (src_path, self._board.SIGN_HASH_TYPE, '', False)
 
 				if mode != STITCH_OPS.MODE_FILE_NOP:
 					dst_path = bas_path + '.pad'
@@ -1057,13 +1058,13 @@ class Build(object):
 				cfg_priv_key     = self._board._CFG_PRIVATE_KEY
 				cfg_pub_key_file = os.path.join(self._fv_dir, "CFGKEY.bin")
 				gen_pub_key (cfg_priv_key, cfg_pub_key_file)
-				gen_hash_file (cfg_pub_key_file, '', True)
+				gen_hash_file (cfg_pub_key_file, self._board.SIGN_HASH_TYPE, '', True)
 			else:
 				cfg_priv_key = None
 			# create config data files
 			gen_config_file (self._fv_dir, self._board.BOARD_PKG_NAME, self._board._PLATFORM_ID,
 											 cfg_priv_key, self._board.CFG_DATABASE_SIZE, self._board.CFGDATA_SIZE,
-											 self._board._CFGDATA_INT_FILE, self._board._CFGDATA_EXT_FILE)
+											 self._board._CFGDATA_INT_FILE, self._board._CFGDATA_EXT_FILE, self._board.SIGN_HASH_TYPE)
 
 		# rebuild reset vector
 		vtf_dir = os.path.join('BootloaderCorePkg', 'Stage1A', 'Ia32', 'Vtf0')
@@ -1141,7 +1142,7 @@ class Build(object):
 		if self._board.HAVE_VERIFIED_BOOT:
 			ias_pub_key_file = os.path.join(self._fv_dir, "OSKEY.bin")
 			gen_pub_key (self._board._IAS_PRIVATE_KEY, ias_pub_key_file)
-			gen_hash_file (ias_pub_key_file, '', True)
+			gen_hash_file (ias_pub_key_file, self._board.SIGN_HASH_TYPE, '', True)
 
 
 		# generate payload
@@ -1157,7 +1158,7 @@ class Build(object):
 				os.path.join(self._fv_dir, "FWUPDATE.bin"))
 			fwup_key_file = os.path.join(self._fv_dir, "FWUKEY.bin")
 			gen_pub_key (self._board._FWU_PRIVATE_KEY, fwup_key_file)
-			gen_hash_file (fwup_key_file, '', True)
+			gen_hash_file (fwup_key_file, self._board.SIGN_HASH_TYPE, '', True)
 
 
 		# create SPI IAS image if required
@@ -1171,7 +1172,7 @@ class Build(object):
 		if getattr(self._board, "GetContainerList", None):
 		  container_list = self._board.GetContainerList ()
 		  component_dir = os.path.join(os.environ['PLT_SOURCE'], 'Platform', self._board.BOARD_PKG_NAME, 'Binaries')
-		  gen_container_bin (container_list, self._fv_dir, component_dir, self._key_dir, '')
+		  gen_container_bin (container_list, self._fv_dir, component_dir, self._key_dir, '', self._board.SIGN_HASH_TYPE)
 
 		# patch stages
 		self.patch_stages ()
