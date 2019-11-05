@@ -94,9 +94,23 @@ ReadShellCommand (
   );
 
 /**
+  Insert the given entry to the Sorted list.
+
+  @param[in/out]  ListHead    pointer to the head of the list
+  @param[in/out]  Entry       point at which the list is inserted.
+
+ **/
+STATIC
+VOID
+EFIAPI
+InsertSortedCommandList (
+  IN OUT  LIST_ENTRY                *ListHead,
+  IN OUT  LIST_ENTRY                *Entry
+  );
+
+/**
   Begin a run-time interactive shell.
 
-  @param[in]  Commands      command list (may be NULL for default commands)
   @param[in]  Timeout       seconds to wait for input before returning (0 for no timeout)
 
   @retval EFI_SUCCESS
@@ -105,22 +119,15 @@ ReadShellCommand (
 EFI_STATUS
 EFIAPI
 Shell (
-  IN CONST SHELL_COMMAND **Commands,
   IN       UINTN           Timeout
   )
 {
   BOOLEAN Start;
   UINTN   Index, Index1;
   SHELL   Shell;
-  CONST SHELL_COMMAND **Iter;
   UINT8   Buffer;
 
-  InitializeListHead (&mShellCommandEntryList);
-
   LoadShellCommands ();
-  for (Iter = Commands; *Iter != NULL; Iter++) {
-    ShellCommandRegister (*Iter);
-  }
   Shell.ShouldExit = FALSE;
 
   if (Timeout != 0) {
@@ -569,6 +576,7 @@ FindShellCommand (
 {
   LIST_ENTRY                *Link;
   SHELL_COMMAND_LIST_ENTRY  *Entry;
+  LIST_ENTRY                *EntryList;
 
   //
   // Add '?' alias for help
@@ -577,7 +585,8 @@ FindShellCommand (
     Name = L"help";
   }
 
-  for (Link = mShellCommandEntryList.ForwardLink; Link != &mShellCommandEntryList; Link = Link->ForwardLink) {
+  EntryList = GetShellCommandEntryList ();
+  for (Link = EntryList->ForwardLink; Link != EntryList; Link = Link->ForwardLink) {
     Entry = CR (Link, SHELL_COMMAND_LIST_ENTRY, Link, SHELL_COMMAND_LIST_ENTRY_SIGNATURE);
     if (StrCmp (Name, Entry->ShellCommand->Name) == 0) {
       *Ptr = Entry->ShellCommand;
@@ -586,6 +595,41 @@ FindShellCommand (
   }
 
   return EFI_NOT_FOUND;
+}
+
+/**
+  Insert the given entry to the Sorted list.
+
+  @param[in/out]  ListHead    pointer to the head of the list
+  @param[in/out]  Entry       point at which the list is inserted.
+
+ **/
+STATIC
+VOID
+EFIAPI
+InsertSortedCommandList (
+  IN OUT  LIST_ENTRY                *ListHead,
+  IN OUT  LIST_ENTRY                *Entry
+  )
+{
+  LIST_ENTRY                *Curr;
+  SHELL_COMMAND_LIST_ENTRY  *CurrEntry;
+  SHELL_COMMAND_LIST_ENTRY  *NewEntry;
+
+  Curr = ListHead->ForwardLink;
+  NewEntry = BASE_CR (Entry, SHELL_COMMAND_LIST_ENTRY, Link);
+  while (Curr != ListHead) {
+    CurrEntry = BASE_CR (Curr, SHELL_COMMAND_LIST_ENTRY, Link);
+    if (StrCmp (CurrEntry->ShellCommand->Name, NewEntry->ShellCommand->Name) >= 0) {
+      break;
+    }
+    Curr = Curr->ForwardLink;
+  }
+
+  Curr->BackLink->ForwardLink = Entry;
+  Entry->ForwardLink          = Curr;
+  Entry->BackLink             = Curr->BackLink;
+  Curr->BackLink              = Entry;
 }
 
 /**
@@ -603,9 +647,9 @@ ShellCommandRegister (
   )
 {
   SHELL_COMMAND_LIST_ENTRY  *Entry;
+  LIST_ENTRY                *EntryList;
 
   Entry = (SHELL_COMMAND_LIST_ENTRY *)AllocateZeroPool (sizeof (SHELL_COMMAND_LIST_ENTRY));
-  ASSERT (Entry != NULL);
   if (Entry == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
@@ -613,7 +657,8 @@ ShellCommandRegister (
   Entry->ShellCommand = ShellCommand;
   Entry->Signature = SHELL_COMMAND_LIST_ENTRY_SIGNATURE;
 
-  InsertTailList (&mShellCommandEntryList, &Entry->Link);
+  EntryList = GetShellCommandEntryList ();
+  InsertSortedCommandList (EntryList, &Entry->Link);
 
   return EFI_SUCCESS;
 }

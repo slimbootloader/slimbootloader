@@ -30,7 +30,6 @@ struct _SHELL {
 /**
   Begin a run-time interactive shell.
 
-  @param[in]  Commands      command list (may be NULL for default commands)
   @param[in]  Timeout       seconds to wait for input before returning (0 for no timeout)
 
   @retval EFI_SUCCESS
@@ -39,7 +38,6 @@ struct _SHELL {
 EFI_STATUS
 EFIAPI
 Shell (
-  IN CONST SHELL_COMMAND **Commands,
   IN       UINTN           Timeout
   );
 
