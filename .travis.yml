@@ -14,5 +14,8 @@ env:
   - BUILD_TARGET=cfl   PYTHON_VER=2
   - BUILD_TARGET=cfl   PYTHON_VER=3  BUILD_REL=-r
 
+before_script:
+  - docker run --rm -v ${PWD}:/tmp/sbl -w /tmp/sbl --network=host sbl /bin/bash -c "if [[ $(python BaseTools/Scripts/PatchCheck.py | grep -c 'is not valid') -gt 0 ]]; then echo 'PatchCheck: Fail'; exit -1; else echo 'PatchCheck: Pass'; fi"
+
 script:
   - docker run --rm -v ${PWD}:/tmp/sbl -w /tmp/sbl --network=host sbl python${PYTHON_VER} ./BuildLoader.py build ${BUILD_REL} ${BUILD_TARGET}
