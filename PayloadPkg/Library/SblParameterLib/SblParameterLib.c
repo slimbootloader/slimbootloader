@@ -300,7 +300,7 @@ AddSblCommandLine (
   }
 
   // Add reset reason
-  ResetReason = ResetUnknown;
+  ResetReason = 0;
   OsBootOptionList = GetBootOptionList ();
   if (OsBootOptionList != NULL) {
     ResetReason = OsBootOptionList->ResetReason;

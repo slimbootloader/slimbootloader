@@ -410,7 +410,7 @@ GetTraditionalLinux (
   if (FeaturePcdGet (PcdGrubBootCfgEnabled)) {
     // Process the config file and
     // Get boot option from user if timeout is non-zero
-    if (ConfigFileSize > 0) {
+    if (ConfigFileSize > 0 && ConfigFile != NULL) {
       ParseLinuxBootConfig (ConfigFile, &LinuxBootCfg);
       PrintLinuxBootConfig (ConfigFile, &LinuxBootCfg);
       EntryIdx = GetLinuxBootOption (ConfigFile, &LinuxBootCfg);
@@ -648,6 +648,9 @@ LoadBootImages (
       LoadedImage = LoadedImagesInfo->LoadedImageList[LoadImageTypeNormal];
       if (LoadedImage == NULL) {
         LoadedImage = (LOADED_IMAGE *)AllocateZeroPool (sizeof (LOADED_IMAGE));
+        if (LoadedImage == NULL) {
+          return EFI_OUT_OF_RESOURCES;
+        }
       }
       LoadedImage->HwPartHandle   = HwPartHandle;
       LoadedImage->LoadImageType  = LoadImageTypeNormal;
