@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018-2019, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -31,7 +31,7 @@ void gsMontGetSize(IppsExpMethod method, int maxLen32, int* pSize)
    int maxBitSize = maxLen32 << 5;
    gsModEngineGetSize(maxBitSize, MOD_ENGINE_RSA_POOL_SIZE, &size);
 
-   UNREFERENCED_PARAMETER(method);
+   IPP_UNREFERENCED_PARAMETER(method);
 
    *pSize = size + MONT_ALIGNMENT;
 }

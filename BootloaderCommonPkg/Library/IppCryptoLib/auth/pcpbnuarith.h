@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018-2019, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -98,7 +98,7 @@ int cpModInv_BNU(BNU_CHUNK_T* pInv,
 __INLINE cpSize cpMul_BNU_BufferSize(cpSize opLen)
 {
 #if !defined (_USE_KARATSUBA_)
-   UNREFERENCED_PARAMETER(opLen);
+   IPP_UNREFERENCED_PARAMETER(opLen);
    return 0;
 #else
    return cpKaratsubaBufferSize(opLen);
@@ -110,7 +110,7 @@ __INLINE BNU_CHUNK_T cpMul_BNU(BNU_CHUNK_T* pR,
                                BNU_CHUNK_T* pBuffer)
 {
 #if !defined(_USE_KARATSUBA_)
-   UNREFERENCED_PARAMETER(pBuffer);
+   IPP_UNREFERENCED_PARAMETER(pBuffer);
    return cpMul_BNU_school(pR, pA,nsA, pB,nsB);
 #else
    if(nsA!=nsB || nsA<CP_KARATSUBA_MUL_THRESHOLD || !pBuffer)
@@ -124,7 +124,7 @@ __INLINE BNU_CHUNK_T cpSqr_BNU(BNU_CHUNK_T * pR,
                                BNU_CHUNK_T* pBuffer)
 {
 #if !defined(_USE_KARATSUBA_)
-   UNREFERENCED_PARAMETER(pBuffer);
+   IPP_UNREFERENCED_PARAMETER(pBuffer);
    return cpSqr_BNU_school(pR, pA,nsA);
 #else
    if(nsA<CP_KARATSUBA_SQR_THRESHOLD || !pBuffer)
