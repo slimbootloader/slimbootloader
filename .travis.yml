@@ -4,7 +4,8 @@ services:
   - docker
 
 before_install:
-  - PATCHCHECK=$(python BaseTools/Scripts/PatchCheck.py master..); ERRORS=$(echo $PATCHCHECK | grep -c 'is not valid'); echo "$PATCHCHECK"; if [[ $ERRORS -gt 0 ]]; then travis_terminate 1; fi
+  - git log -5
+  - HEAD_COMMIT=$(git rev-list --no-merges HEAD | head -1); PATCHCHECK=$(python BaseTools/Scripts/PatchCheck.py master..$HEAD_COMMIT); ERRORS=$(echo $PATCHCHECK | grep -c 'is not valid'); echo "$PATCHCHECK"; if [[ $ERRORS -gt 0 ]]; then travis_terminate 1; fi
   - docker build -t sbl .
   - chmod -R a+w .
 
