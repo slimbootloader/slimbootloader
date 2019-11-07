@@ -4,7 +4,7 @@ services:
   - docker
 
 before_install:
-  - PATCHCHECK=$(python BaseTools/Scripts/PatchCheck.py $TRAVIS_COMMIT_RANGE); ERRORS=$(echo $PATCHCHECK | grep -c 'is not valid'); echo "$PATCHCHECK"; if [[ $ERRORS -gt 0 ]]; then travis_terminate 1; fi
+  - PATCHCHECK=$(python BaseTools/Scripts/PatchCheck.py master..); ERRORS=$(echo $PATCHCHECK | grep -c 'is not valid'); echo "$PATCHCHECK"; if [[ $ERRORS -gt 0 ]]; then travis_terminate 1; fi
   - docker build -t sbl .
   - chmod -R a+w .
 
