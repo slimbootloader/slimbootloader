@@ -16,6 +16,59 @@ volatile MP_DATA_EXCHANGE_STRUCT   mMpDataStruct;
 UINT8                             *mBackupBuffer;
 UINT32                             mMpInitPhase = EnumMpInitNull;
 
+/**
+  Sort the CPU entry according to their thread distances
+
+  It is required to list CPU thread with further distance first so as to
+  fully utilize unshared CPU resources.
+
+  @param[in]  SysCpuInfo     Pointer to the ALL_CPU_INFO structure.
+
+**/
+STATIC
+VOID
+SortSysCpu (
+  IN  ALL_CPU_INFO      *SysCpuInfo
+)
+{
+  UINT32         Idx1;
+  UINT32         Idx2;
+  UINT32         Step;
+  ALL_CPU_INFO   OldSysCpuInfo;
+  CPU_INFO       Temp;
+
+  if (SysCpuInfo->CpuCount <= 1) {
+    return;
+  }
+
+  // Sort by APIC ID first
+  for (Idx1 = 0; Idx1 < SysCpuInfo->CpuCount - 1; Idx1++) {
+    for (Idx2 = Idx1; Idx2 < SysCpuInfo->CpuCount; Idx2++) {
+      if (SysCpuInfo->CpuInfo[Idx1].ApicId > SysCpuInfo->CpuInfo[Idx2].ApicId) {
+        CopyMem (&Temp, &SysCpuInfo->CpuInfo[Idx1], sizeof(CPU_INFO));
+        CopyMem (&SysCpuInfo->CpuInfo[Idx1], &SysCpuInfo->CpuInfo[Idx2], sizeof(CPU_INFO));
+        CopyMem (&SysCpuInfo->CpuInfo[Idx2], &Temp, sizeof(CPU_INFO));
+      }
+    }
+  }
+
+  // Keep a backup copy
+  CopyMem (&OldSysCpuInfo,  SysCpuInfo, sizeof (ALL_CPU_INFO));
+
+  // Rearrange order per thread distance
+  Idx2 = 0;
+  Step = GetPowerOfTwo32 (SysCpuInfo->CpuCount);
+  for (; Step > 0; Step >>= 1) {
+    for (Idx1 = 0; Idx1 < SysCpuInfo->CpuCount; Idx1 += Step) {
+      if ((OldSysCpuInfo.CpuInfo[Idx1].ApicId != 0xFFFFFFFF) && (Idx2 < SysCpuInfo->CpuCount)) {
+        // Fill the CPU_INFO and mark it as consumed
+        CopyMem (&SysCpuInfo->CpuInfo[Idx2], &OldSysCpuInfo.CpuInfo[Idx1], sizeof(CPU_INFO));
+        OldSysCpuInfo.CpuInfo[Idx1].ApicId = 0xFFFFFFFF;
+        Idx2++;
+      }
+    }
+  }
+}
 
 /**
   Relocate SMM base for CPU
@@ -338,6 +391,8 @@ MpInit (
 
       mSysCpuInfo.CpuCount = CpuCount;
       mSysCpuTask.CpuCount = CpuCount;
+      SortSysCpu (&mSysCpuInfo);
+
       for (Index = 0; Index < CpuCount; Index++) {
         DEBUG ((DEBUG_INFO, " CPU %2d APIC ID: %d\n", Index, mSysCpuInfo.CpuInfo[Index].ApicId));
       }
