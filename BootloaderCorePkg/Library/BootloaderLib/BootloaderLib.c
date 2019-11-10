@@ -325,14 +325,6 @@ GetComponentInfo (
 {
   EFI_STATUS            Status;
 
-  if (FeaturePcdGet (PcdFlashMapEnabled) == FALSE) {
-    //
-    // If Flash Map is not enabled, get base and size from PCD's
-    //
-    Status = GetComponentPcdInfo (Signature, Base, Size);
-    return Status;
-  }
-
   if (GetCurrentBootPartition() == 1) {
     Status = GetComponentInfoByPartition (Signature, TRUE, Base, Size);
   } else {

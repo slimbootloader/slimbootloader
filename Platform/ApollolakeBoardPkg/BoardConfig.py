@@ -40,7 +40,6 @@ class Board(BaseBoard):
 		self.HAVE_VBT_BIN         = 1
 		self.HAVE_VERIFIED_BOOT   = 1
 		self.HAVE_MEASURED_BOOT   = 0
-		self.HAVE_FLASH_MAP       = 1
 		self.HAVE_SEED_LIST       = 0
 		self.HAVE_PSD_TABLE       = 1
 

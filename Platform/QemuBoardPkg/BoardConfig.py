@@ -41,7 +41,6 @@ class Board(BaseBoard):
 
 		self.HAVE_VERIFIED_BOOT       = 1
 		self.HAVE_VBT_BIN             = 1
-		self.HAVE_FLASH_MAP           = 1
 		self.ENABLE_SPLASH            = 1
 		self.ENABLE_FRAMEBUFFER_INIT  = 1
 		self.ENABLE_FWU               = 1
