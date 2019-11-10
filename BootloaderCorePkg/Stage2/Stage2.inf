@@ -120,7 +120,6 @@
   gPlatformModuleTokenSpaceGuid.PcdSplashLogoAddress
   gPlatformModuleTokenSpaceGuid.PcdOsBootOptionNumber
   gPlatformModuleTokenSpaceGuid.PcdServiceNumber
-  gPlatformModuleTokenSpaceGuid.PcdFlashMapEnabled
   gPlatformModuleTokenSpaceGuid.PcdFlashBaseAddress
   gPlatformModuleTokenSpaceGuid.PcdFlashSize
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled

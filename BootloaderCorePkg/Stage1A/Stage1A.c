@@ -112,6 +112,7 @@ SecStartup2 (
   UINT32                    Delta;
   UINT32                    Dst;
   UINT32                    Src;
+  UINT32                    Stage1aFvBase;
   UINT32                    AllocateLen;
   UINT32                    ServiceDataLen;
   UINT32                    LibDataLen;
@@ -119,6 +120,7 @@ SecStartup2 (
   CDATA_BLOB               *CfgBlob;
   UINT8                    *BufPtr;
   FLASH_MAP                *FlashMap;
+  UINT32                    FlashMapBase;
   UINT32                    PcdDatabaseLen;
   UINT8                    *PcdDatabasePtr;
   PEI_PCD_DATABASE         *PcdDatabaseBin;
@@ -127,8 +129,8 @@ SecStartup2 (
 
   Stage1aAsmHob = (STAGE1A_ASM_HOB *)Params;
 
-  Src = PcdGet32 (PcdStage1AFdBase) + PcdGet32 (PcdFSPTSize);
-  PeCoffFindAndReportImageInfo ((UINT32) (UINTN) GET_STAGE_MODULE_BASE (Src));
+  Stage1aFvBase = PcdGet32 (PcdStage1AFdBase) + PcdGet32 (PcdFSPTSize);
+  PeCoffFindAndReportImageInfo ((UINT32) (UINTN) GET_STAGE_MODULE_BASE (Stage1aFvBase));
 
   LdrGlobal = GetLoaderGlobalDataPointer ();
 
@@ -150,9 +152,16 @@ SecStartup2 (
   if (FeaturePcdGet (PcdVerifiedBootEnabled)) {
     AllocateLen += sizeof (HASH_STORE_TABLE);
   }
-  if (FeaturePcdGet (PcdFlashMapEnabled) == TRUE) {
-    FlashMap = (FLASH_MAP *) (* (UINT32 *)FLASH_MAP_ADDRESS);
-    AllocateLen += FlashMap->Length;
+
+  FlashMap = NULL;
+  FlashMapBase = (* (UINT32 *)FLASH_MAP_ADDRESS);
+  if ( (FlashMapBase > Stage1aFvBase) && \
+       (FlashMapBase + sizeof(FLASH_MAP) < Stage1aFvBase + PcdGet32 (PcdStage1AFvSize) - 1) ) {
+    // Verify FLASH_MAP is valid before access
+    if (((FLASH_MAP *) FlashMapBase)->Signature == FLASH_MAP_SIG_HEADER) {
+      FlashMap = (FLASH_MAP *) FlashMapBase;
+      AllocateLen += FlashMap->Length;
+    }
   }
   BufPtr = AllocateZeroPool (AllocateLen);
 
@@ -171,8 +180,8 @@ SecStartup2 (
     BufPtr += ALIGN_UP (sizeof (BOOT_LOADER_VERSION), sizeof (UINTN));
 
     // Flash Map
-    if (FeaturePcdGet (PcdFlashMapEnabled) == TRUE) {
-      CopyMem (BufPtr, (VOID *) (* (UINT32 *)FLASH_MAP_ADDRESS), FlashMap->Length);
+    if (FlashMap != NULL) {
+      CopyMem (BufPtr, (VOID *) FlashMap, FlashMap->Length);
       LdrGlobal->FlashMapPtr = BufPtr;
       BufPtr += ALIGN_UP (FlashMap->Length, sizeof (UINTN));
       SetCurrentBootPartition((FlashMap->Attributes & FLASH_MAP_ATTRIBUTES_BACKUP_REGION)? 1 : 0);
@@ -242,6 +251,10 @@ SecStartup2 (
 
   if (Stage1aAsmHob->BistVal != 0) {
     CpuHalt ("CPU BIST failure!\n");
+  }
+
+  if (FlashMap == NULL) {
+    CpuHalt ("Invalid flash map!\n");
   }
 
   if ( (BufPtr == NULL) ||

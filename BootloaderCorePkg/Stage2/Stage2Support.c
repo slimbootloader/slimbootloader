@@ -564,12 +564,10 @@ BuildExtraInfoHob (
   }
 
   // Build flash map info hob
-  if (FeaturePcdGet (PcdFlashMapEnabled) == TRUE) {
-    FlashMapPtr = LdrGlobal->FlashMapPtr;
-    FlashMapHob = BuildGuidHob (&gFlashMapInfoGuid, FlashMapPtr->Length);
-    if (FlashMapHob != NULL) {
-      CopyMem (FlashMapHob, FlashMapPtr, FlashMapPtr->Length);
-    }
+  FlashMapPtr = LdrGlobal->FlashMapPtr;
+  FlashMapHob = BuildGuidHob (&gFlashMapInfoGuid, FlashMapPtr->Length);
+  if (FlashMapHob != NULL) {
+    CopyMem (FlashMapHob, FlashMapPtr, FlashMapPtr->Length);
   }
 
   // Build OS boot medium info hob

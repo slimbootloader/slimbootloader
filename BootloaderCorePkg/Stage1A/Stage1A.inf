@@ -76,7 +76,6 @@
   gPlatformModuleTokenSpaceGuid.PcdMaxServiceNumber
   gPlatformModuleTokenSpaceGuid.PcdEarlyLogBufferSize
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel
-  gPlatformModuleTokenSpaceGuid.PcdFlashMapEnabled
   gPlatformModuleTokenSpaceGuid.PcdFileDataBase
   gPlatformModuleTokenSpaceGuid.PcdVerifiedBootHashMask
 

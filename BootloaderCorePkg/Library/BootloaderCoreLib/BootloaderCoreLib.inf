@@ -43,7 +43,6 @@
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdRedundantRegionSize
   gPlatformModuleTokenSpaceGuid.PcdTopSwapRegionSize
-  gPlatformModuleTokenSpaceGuid.PcdFlashMapEnabled
   gPlatformModuleTokenSpaceGuid.PcdStage1ABase
   gPlatformModuleTokenSpaceGuid.PcdStage1ASize
   gPlatformModuleTokenSpaceGuid.PcdStage1BBase

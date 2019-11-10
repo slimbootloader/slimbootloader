@@ -172,7 +172,6 @@ class BaseBoard(object):
 		self.HAVE_FSP_BIN          = 1
 		self.HAVE_ACPI_TABLE       = 1
 		self.HAVE_PSD_TABLE        = 0
-		self.HAVE_FLASH_MAP        = 1
 		self.HAVE_SEED_LIST        = 0
 
 		self.FIT_ENTRY_MAX_NUM     = 10
@@ -609,10 +608,11 @@ class Build(object):
 			"<Stage1A:__gPcd_BinaryPatch_PcdVerInfoBase>,  {3473A022-C3C2-4964-B309-22B3DFB0B6CA:0x1C}, @Patch VerInfo",
 			"<Stage1A:__gPcd_BinaryPatch_PcdFileDataBase>, {EFAC3859-B680-4232-A159-F886F2AE0B83:0x1C}, @Patch PcdBase"
 		]
-		if self._board.HAVE_FLASH_MAP:
-			extra_cmd.append (
-				"0xFFFFFFF8, {3CEA8EF3-95FC-476F-ABA5-7EC5DFA1D77B:0x1C}, @Patch FlashMap",
-			)
+
+		extra_cmd.append (
+			"0xFFFFFFF8, {3CEA8EF3-95FC-476F-ABA5-7EC5DFA1D77B:0x1C}, @Patch FlashMap",
+		)
+
 		if self._board.HAVE_FIT_TABLE:
 			if self._board.ACM_SIZE > 0:
 				extra_cmd.append (
@@ -994,12 +994,10 @@ class Build(object):
 		gen_file_with_size (os.path.join(self._fv_dir, 'PADDING.bin'),  0)
 
 		# create flashmap file
-		if self._board.HAVE_FLASH_MAP:
-			comp_list = self._comp_list
-			if len(self._comp_list) == 0 and getattr(self._board, "GetFlashMapList", None):
-				comp_list = self._board.GetFlashMapList()
-			gen_flash_map_bin (os.path.join(self._fv_dir, 'FlashMap.bin'), comp_list)
-
+		comp_list = self._comp_list
+		if len(self._comp_list) == 0 and getattr(self._board, "GetFlashMapList", None):
+			comp_list = self._board.GetFlashMapList()
+		gen_flash_map_bin (os.path.join(self._fv_dir, 'FlashMap.bin'), comp_list)
 
 		if not self._board.HAVE_VERIFIED_BOOT and self._board.HAVE_MEASURED_BOOT:
 			raise Exception ('Verified Boot must also enabled to enable Measured Boot!')
@@ -1187,7 +1185,7 @@ class Build(object):
 		self.create_bootloader_image (layout_name)
 
 		# print flash map
-		if self._board.HAVE_FLASH_MAP and len(self._comp_list) > 0:
+		if len(self._comp_list) > 0:
 			print_addr = False if getattr(self._board, "GetFlashMapList", None) else True
 			flash_map_text = decode_flash_map (os.path.join(self._fv_dir, 'FlashMap.bin'), print_addr)
 			print('%s' % flash_map_text)
