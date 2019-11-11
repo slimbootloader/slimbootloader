@@ -121,93 +121,6 @@ PrintMemoryMap (
 }
 
 /**
-  Sort memory map entries based upon PhysicalStart, from low to high.
-
-  @param  BufferToSort   A pointer to the MEMORY_MAP_ENTRY array buffer in which firmware
-                         places the current memory map.
-
-  @param  Count          Entry count of memory map in the MEMORY_MAP_ENTRY array.
-
-  @param  Buffer         Temporary buffer used for sorting. The required buffer size
-                         is MEMORY_MAP_ENTRY.
-**/
-STATIC
-VOID
-SortMemoryMap (
-  IN OUT   MEMORY_MAP_ENTRY            *BufferToSort,
-  IN CONST UINTN                        Count,
-  IN       MEMORY_MAP_ENTRY            *Buffer
-  )
-{
-  MEMORY_MAP_ENTRY        *Pivot;
-  UINTN                    LoopCount;
-  UINTN                    NextSwapLocation;
-
-  if (Count < 2) {
-    return;
-  }
-
-  NextSwapLocation = 0;
-
-  //
-  // pick a pivot (we choose last element)
-  //
-  Pivot = &BufferToSort[Count - 1];
-
-  //
-  // Now get the pivot such that all on "left" are below it
-  // and everything "right" are above it
-  //
-  for ( LoopCount = 0
-                    ; LoopCount < Count - 1
-        ; LoopCount++
-        ) {
-    //
-    // if the element is less than the pivot
-    //
-    if (BufferToSort[LoopCount].Base <= Pivot[0].Base) {
-      //
-      // swap
-      //
-      CopyMem (Buffer, &BufferToSort[NextSwapLocation], sizeof (MEMORY_MAP_ENTRY));
-      CopyMem (&BufferToSort[NextSwapLocation], &BufferToSort[LoopCount], sizeof (MEMORY_MAP_ENTRY));
-      CopyMem (&BufferToSort[LoopCount], Buffer, sizeof (MEMORY_MAP_ENTRY));
-
-      //
-      // increment NextSwapLocation
-      //
-      NextSwapLocation++;
-    }
-  }
-  //
-  // swap pivot to it's final position (NextSwapLocaiton)
-  //
-  CopyMem (Buffer, Pivot, sizeof (MEMORY_MAP_ENTRY));
-  CopyMem (Pivot, &BufferToSort[NextSwapLocation], sizeof (MEMORY_MAP_ENTRY));
-  CopyMem (&BufferToSort[NextSwapLocation], Buffer, sizeof (MEMORY_MAP_ENTRY));
-
-  //
-  // Now recurse on 2 paritial lists.  neither of these will have the 'pivot' element
-  // IE list is sorted left half, pivot element, sorted right half...
-  //
-  if (NextSwapLocation >= 2) {
-    SortMemoryMap (
-      BufferToSort,
-      NextSwapLocation,
-      Buffer);
-  }
-
-  if ((Count - NextSwapLocation - 1) >= 2) {
-    SortMemoryMap (
-      BufferToSort + (NextSwapLocation + 1),
-      Count - NextSwapLocation - 1,
-      Buffer);
-  }
-
-  return;
-}
-
-/**
   Translate the resource HOB into memory map data structure.
 
   @param ResourceDescriptor     Pointer to a resource HOB.
@@ -234,6 +147,30 @@ MemResHobCallback (
     MemoryMapInfo->Count++;
   } else {
     ASSERT (FALSE);
+  }
+}
+
+/**
+  The function is called by PerformQuickSort to sort memory map by its base.
+
+  @param[in] Buffer1         The pointer to first buffer.
+  @param[in] Buffer2         The pointer to second buffer.
+
+  @retval 0                  Buffer1 base is less than Buffer2 base.
+  @retval 1                  Buffer1 base is greater than or equal to Buffer2 base.
+
+**/
+STATIC
+INTN
+CompareMemoryMap (
+  IN CONST VOID                 *Buffer1,
+  IN CONST VOID                 *Buffer2
+  )
+{
+  if (((MEMORY_MAP_ENTRY *)Buffer1)->Base < ((MEMORY_MAP_ENTRY *)Buffer2)->Base) {
+    return  0;
+  } else {
+    return  1;
   }
 }
 
@@ -330,7 +267,7 @@ SplitMemroyMap (
   }
   MemoryMapInfo->Count = NewIdx;
 
-  SortMemoryMap (MemoryMapInfo->Entry, NewIdx, &TempMemoryMap);
+  PerformQuickSort (MemoryMapInfo->Entry, NewIdx, sizeof (MEMORY_MAP_ENTRY), CompareMemoryMap, &TempMemoryMap);
 
   return EFI_SUCCESS;
 }

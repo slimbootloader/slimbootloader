@@ -16,6 +16,31 @@ volatile MP_DATA_EXCHANGE_STRUCT   mMpDataStruct;
 UINT8                             *mBackupBuffer;
 UINT32                             mMpInitPhase = EnumMpInitNull;
 
+
+/**
+  The function is called by PerformQuickSort to sort CPU_INFO by ApicId.
+
+  @param[in] Buffer1         The pointer to first buffer.
+  @param[in] Buffer2         The pointer to second buffer.
+
+  @retval 0                  Buffer1 ApicId is less than Buffer2 ApicId.
+  @retval 1                  Buffer1 ApicId is greater than or equal to Buffer2 ApicId.
+
+**/
+STATIC
+INTN
+CompareCpuApicId (
+  IN CONST VOID                 *Buffer1,
+  IN CONST VOID                 *Buffer2
+  )
+{
+  if (((CPU_INFO *)Buffer1)->ApicId < ((CPU_INFO *)Buffer2)->ApicId) {
+    return  0;
+  } else {
+    return  1;
+  }
+}
+
 /**
   Sort the CPU entry according to their thread distances
 
@@ -42,15 +67,7 @@ SortSysCpu (
   }
 
   // Sort by APIC ID first
-  for (Idx1 = 0; Idx1 < SysCpuInfo->CpuCount - 1; Idx1++) {
-    for (Idx2 = Idx1; Idx2 < SysCpuInfo->CpuCount; Idx2++) {
-      if (SysCpuInfo->CpuInfo[Idx1].ApicId > SysCpuInfo->CpuInfo[Idx2].ApicId) {
-        CopyMem (&Temp, &SysCpuInfo->CpuInfo[Idx1], sizeof(CPU_INFO));
-        CopyMem (&SysCpuInfo->CpuInfo[Idx1], &SysCpuInfo->CpuInfo[Idx2], sizeof(CPU_INFO));
-        CopyMem (&SysCpuInfo->CpuInfo[Idx2], &Temp, sizeof(CPU_INFO));
-      }
-    }
-  }
+  PerformQuickSort (SysCpuInfo->CpuInfo, SysCpuInfo->CpuCount, sizeof (CPU_INFO), CompareCpuApicId, &Temp);
 
   // Keep a backup copy
   CopyMem (&OldSysCpuInfo,  SysCpuInfo, sizeof (ALL_CPU_INFO));

@@ -16,6 +16,7 @@
 #include <Library/TimerLib.h>
 #include <Library/SynchronizationLib.h>
 #include <Library/LocalApicLib.h>
+#include <Library/SortLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include <Library/MpInitLib.h>
