@@ -33,6 +33,7 @@ FillBootOptionListFromCfgData (
 {
   OS_BOOT_OPTION             *BootOption;
   OS_BOOT_OPTION             *BootOptionCfgData;
+  UINT8                       PrevBootOptionIndex;
   UINT8                       UpdateFlag;
   UINTN                       ImageIdx;
   UINTN                       Idx;
@@ -40,8 +41,9 @@ FillBootOptionListFromCfgData (
   CHAR8                      *StrPtr;
 
   ImageIdx        = 1;
-  BootOption      = &OsBootOptionList->OsBootOption[0];
   OsBootOptionList->CurrentBoot = 0;
+  OsBootOptionList->OsBootOptionCount = 0;
+  PrevBootOptionIndex = 0;
   for (Idx = 0; Idx < MAX_BOOT_OPTION_CFGDATA_ENTRY; Idx++) {
     BootOptionCfgData = (OS_BOOT_OPTION *)FindConfigDataByTag (CDATA_BOOT_OPTION_TAG + Idx);
     if (BootOptionCfgData == NULL) {
@@ -57,12 +59,14 @@ FillBootOptionListFromCfgData (
       // This entry is an addendum for previous boot option entry
       if (ImageIdx < ARRAY_SIZE(BootOption->Image)) {
         UpdateFlag = 2;
+        BootOption = &OsBootOptionList->OsBootOption[PrevBootOptionIndex];
       }
     } else {
       // CFGDATA has short structure to save size on flash
       // Need to translate the short format to OS_BOOT_OPTION format
       UpdateFlag = 1;
       ImageIdx   = 0;
+      BootOption = &OsBootOptionList->OsBootOption[OsBootOptionList->OsBootOptionCount];
       CopyMem (BootOption, BootOptionCfgData, OFFSET_OF (OS_BOOT_OPTION, Image[0]));
     }
 
@@ -80,7 +84,7 @@ FillBootOptionListFromCfgData (
                  sizeof (BootOption->Image[ImageIdx].FileName));
       }
       if (UpdateFlag == 1) {
-        BootOption++;
+        PrevBootOptionIndex = OsBootOptionList->OsBootOptionCount;
         OsBootOptionList->OsBootOptionCount++;
         if (OsBootOptionList->OsBootOptionCount >= PcdGet32 (PcdOsBootOptionNumber)) {
           break;
