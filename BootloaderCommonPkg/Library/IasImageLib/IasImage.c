@@ -129,11 +129,13 @@ IasGetFiles (
     // Return Addr single entry (namely the entire payload) for plain images.
     Img[0].Addr = Addr = (UINT32 *) IAS_PAYLOAD (IasImage);
     Img[0].Size = Size = IasImage->DataLength;
+    Img[0].AllocType = ImageAllocateTypePointer;
 
     // If there are sub-images (Index.e NumFile > 0) return their addresses and sizes.
     for (Index = 0 ; Index < NumImg && Index < NumFile ; Index += 1) {
       Img[Index].Addr = Addr;
       Img[Index].Size = Size = ImgSize[Index];
+      Img[Index].AllocType = ImageAllocateTypePointer;
       Addr = (UINT32 *) ((UINT8 *)Addr + ROUNDED_UP (Size, 4));
     }
   }

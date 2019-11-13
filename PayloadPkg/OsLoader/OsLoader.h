@@ -123,7 +123,6 @@ typedef struct {
   IMAGE_DATA              CmdFile;
 } COMMON_IMAGE;
 
-
 typedef union {
   COMMON_IMAGE            Common;
   MULTIBOOT_IMAGE         MultiBoot;
@@ -138,6 +137,7 @@ typedef struct {
   EFI_HANDLE              HwPartHandle;
   LOADED_IMAGE_TYPE       Image;
   UINT8                   ImageHash[SHA256_DIGEST_SIZE];
+  RESERVED_CMDLINE_DATA   ReservedCmdlineData;
 } LOADED_IMAGE;
 
 /**
@@ -225,12 +225,38 @@ GetLoadedImageByType (
 
   @param[in]  LoadedImageHandle Loaded Image handle
 
-  @retval     none
 **/
 VOID
 EFIAPI
 UnloadBootImages (
   IN  EFI_HANDLE       LoadedImageHandle
+  );
+
+/**
+  Free all allocated memory in a loaded image
+
+  This function will clean up all temporary resources used to load a single image.
+
+  @param[in]  LoadedImage     A load image pointer which has a boot image info
+
+**/
+VOID
+UnloadLoadedImage (
+  IN  LOADED_IMAGE  *LoadedImage
+  );
+
+/**
+  Free the allocated memory in an image data
+
+  This function free a memory allocated in IMAGE_DATA according to Allocation Type.
+
+  @param[in]  ImageData       An image data pointer which has allocated memory address,
+                              its size, and allocation type.
+
+**/
+VOID
+FreeImageData (
+  IN  IMAGE_DATA    *ImageData
   );
 
 /**

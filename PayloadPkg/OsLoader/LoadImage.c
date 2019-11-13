@@ -45,10 +45,10 @@ GetBootImageFromRawPartition (
   VOID                       *Buffer;
   UINTN                      ImageSize;
   LOGICAL_BLOCK_DEVICE       LogicBlkDev;
-  UINTN                      AlginedHeaderSize;
-  UINTN                      AlginedImageSize;
+  UINTN                      AlignedHeaderSize;
+  UINTN                      AlignedImageSize;
   UINT32                     BlockSize;
-  UINT8                      BlockData[4096];
+  VOID                      *BlockData;
   EFI_LBA                    LbaAddr;
   UINT8                      SwPart;
   CONTAINER_HDR             *ContainerHdr;
@@ -85,13 +85,18 @@ GetBootImageFromRawPartition (
   // Make sure to round the Header size to be block aligned in bytes.
   //
   BlockSize = BlockInfo.BlockSize;
-  AlginedHeaderSize = ((sizeof (IAS_HEADER) % BlockSize) == 0) ? \
+  AlignedHeaderSize = ((sizeof (IAS_HEADER) % BlockSize) == 0) ? \
                       sizeof (IAS_HEADER) : \
                       ((sizeof (IAS_HEADER) / BlockSize) + 1) * BlockSize;
+
+  BlockData = AllocatePages (EFI_SIZE_TO_PAGES (AlignedHeaderSize));
+  if (BlockData == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
   Status = MediaReadBlocks (
              BootOption->HwPart,
              LogicBlkDev.StartBlock + LbaAddr,
-             AlginedHeaderSize,
+             AlignedHeaderSize,
              BlockData
              );
   if (EFI_ERROR (Status)) {
@@ -112,42 +117,56 @@ GetBootImageFromRawPartition (
     return EFI_LOAD_ERROR;
   }
 
-  AlginedImageSize = ((ImageSize % BlockSize) == 0) ? \
-                     ImageSize : \
-                     ((ImageSize / BlockSize) + 1) * BlockSize;
-  if (AlginedImageSize > MAX_IAS_IMAGE_SIZE) {
-    DEBUG ((DEBUG_INFO, "Image is bigger than limitation (0x%x). ImageSize=0x%x\n",
-            MAX_IAS_IMAGE_SIZE, AlginedImageSize));
+  //
+  // Check image size from the image header
+  //
+  if (ImageSize == 0) {
     return EFI_LOAD_ERROR;
   }
 
-  Buffer = (UINT8 *) AllocatePages (EFI_SIZE_TO_PAGES (AlginedImageSize));
+  AlignedImageSize = ((ImageSize % BlockSize) == 0) ? \
+                     ImageSize : \
+                     ((ImageSize / BlockSize) + 1) * BlockSize;
+  if (AlignedImageSize > MAX_IAS_IMAGE_SIZE) {
+    DEBUG ((DEBUG_INFO, "Image is bigger than limitation (0x%x). ImageSize=0x%x\n",
+            MAX_IAS_IMAGE_SIZE, AlignedImageSize));
+    //
+    // Free temporary pages used for image header
+    //
+    FreePages (BlockData, EFI_SIZE_TO_PAGES (AlignedHeaderSize));
+    return EFI_LOAD_ERROR;
+  }
+
+  Buffer = (UINT8 *) AllocatePages (EFI_SIZE_TO_PAGES (AlignedImageSize));
   if (Buffer == NULL) {
-    DEBUG ((DEBUG_INFO, "Allocate memory (size:0x%x) fail.\n", AlginedImageSize));
+    DEBUG ((DEBUG_INFO, "Allocate memory (size:0x%x) fail.\n", AlignedImageSize));
     return EFI_OUT_OF_RESOURCES;
   }
-  CopyMem (Buffer, BlockData, AlginedHeaderSize);
+  CopyMem (Buffer, BlockData, AlignedHeaderSize);
+
+  //
+  // Free temporary pages used for image header
+  //
+  FreePages (BlockData, EFI_SIZE_TO_PAGES (AlignedHeaderSize));
 
   //
   // Read the rest of the IAS image into the buffer
   //
   Status = MediaReadBlocks (
              BootOption->HwPart,
-             LogicBlkDev.StartBlock + LbaAddr + (AlginedHeaderSize / BlockSize),
-             AlginedImageSize,
-             & (((UINT8 *)Buffer)[AlginedHeaderSize])
+             LogicBlkDev.StartBlock + LbaAddr + (AlignedHeaderSize / BlockSize),
+             (AlignedImageSize - AlignedHeaderSize),
+             (VOID *)((UINTN)Buffer + AlignedHeaderSize)
              );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "Read rest of image error, Status = %r\n", Status));
-    return  Status;
-  }
-
-  if ((Buffer == NULL) || (ImageSize == 0)) {
-    return EFI_LOAD_ERROR;
+    FreePages (Buffer, EFI_SIZE_TO_PAGES (AlignedImageSize));
+    return Status;
   }
 
   LoadedImage->IasImage.Addr = Buffer;
   LoadedImage->IasImage.Size = ImageSize;
+  LoadedImage->IasImage.AllocType = ImageAllocateTypePage;
   if ( *((UINT32 *) Buffer) == CONTAINER_BOOT_SIGNATURE ) {
     LoadedImage->Flags      |= LOADED_IMAGE_CONTAINER;
   } else if ( *((UINT32 *) Buffer) == IAS_MAGIC_PATTERN ) {
@@ -309,6 +328,9 @@ LoadLinuxFile (
   Status = ReadFile (FileHandle, &FileBuffer, &FileSize);
   DEBUG ((DEBUG_INFO, "Load file %a [size %d bytes]: %r\n", Ptr, FileSize, Status));
   if (!EFI_ERROR (Status)) {
+    // Free pre-allocated memory
+    FreeImageData (ImageData);
+    // Re-assign new memory
     ImageData->Addr = FileBuffer;
     ImageData->Size = FileSize;
   } else {
@@ -393,6 +415,9 @@ GetTraditionalLinux (
       DEBUG ((DEBUG_INFO, "Load file %s [size 0x%x]: %r\n", (CHAR16 *)mConfigFileName[Index], ConfigFileSize, Status));
       break;
     }
+
+    FreePool (ConfigFile);
+    ConfigFile = NULL;
   }
 
   if (EFI_ERROR (Status)) {
@@ -449,7 +474,7 @@ GetTraditionalLinux (
   if ((LinuxImage->CmdFile.Size > 0) && (ConfigFile != NULL)) {
     Ptr = (CHAR8 *)ConfigFile + LinuxBootCfg.MenuEntry[EntryIdx].Command.Pos;
     Ptr[LinuxImage->CmdFile.Size] = 0;
-    LinuxImage->CmdFile.Addr = Ptr;
+    CopyMem (LinuxImage->CmdFile.Addr, Ptr, LinuxImage->CmdFile.Size);
   } else {
     LinuxImage->CmdFile.Addr = 0;
   }
@@ -517,13 +542,124 @@ GetLoadedImageByType (
 }
 
 /**
+  Free the allocated memory in an image data
+
+  This function free a memory allocated in IMAGE_DATA according to Allocation Type.
+
+  @param[in]  ImageData       An image data pointer which has allocated memory address,
+                              its size, and allocation type.
+
+**/
+VOID
+FreeImageData (
+  IN  IMAGE_DATA    *ImageData
+  )
+{
+  if ((ImageData == NULL) || (ImageData->Addr == NULL) || (ImageData->Size == 0)) {
+    return;
+  }
+
+  if (ImageData->AllocType >= ImageAllocateTypeMax) {
+    return;
+  } else if (ImageData->AllocType == ImageAllocateTypePool) {
+    FreePool (ImageData->Addr);
+  } else if (ImageData->AllocType == ImageAllocateTypePage) {
+    FreePages (ImageData->Addr, EFI_SIZE_TO_PAGES (ImageData->Size));
+  }
+  ZeroMem (ImageData, sizeof (IMAGE_DATA));
+}
+
+/**
+  Free all allocated memory in a loaded image
+
+  This function will clean up all temporary resources used to load a single image.
+
+  @param[in]  LoadedImage     A load image pointer which has a boot image info
+
+**/
+VOID
+UnloadLoadedImage (
+  IN  LOADED_IMAGE  *LoadedImage
+  )
+{
+  COMMON_IMAGE               *CommonImage;
+  LINUX_IMAGE                *LinuxImage;
+  MULTIBOOT_IMAGE            *MultiBootImage;
+  MULTIBOOT_MODULE_DATA      *MbModuleData;
+  TRUSTY_IMAGE_DATA          *TrustyImageData;
+  MULTIBOOT_INFO             *MbInfo;
+  UINT32                      Index;
+  UINT32                      Count;
+
+  if (LoadedImage == NULL) {
+    return;
+  }
+
+  //
+  // Free Boot Image Data loaded from FS or RAW partition
+  //
+  FreeImageData (&LoadedImage->IasImage);
+
+  //
+  // Free Common Boot & Cmdline Data
+  //
+  CommonImage = &LoadedImage->Image.Common;
+  FreeImageData (&CommonImage->BootFile);
+  FreeImageData (&CommonImage->CmdFile);
+
+  //
+  // Free Linux Image Data
+  //
+  if (LoadedImage->Flags & LOADED_IMAGE_LINUX) {
+    LinuxImage = &LoadedImage->Image.Linux;
+    FreeImageData (&LinuxImage->InitrdFile);
+
+    Count = ARRAY_SIZE (LinuxImage->ExtraBlob);
+    for (Index = 0; Index < Count; Index++) {
+      FreeImageData (&LinuxImage->ExtraBlob[Index]);
+    }
+  }
+
+  //
+  // Free MultiBoot Image Data
+  //
+  if (LoadedImage->Flags & LOADED_IMAGE_MULTIBOOT) {
+    MultiBootImage = &LoadedImage->Image.MultiBoot;
+
+    // Free Module Image Data
+    MbModuleData = MultiBootImage->MbModuleData;
+    for (Index = 0; Index < MultiBootImage->MbModuleNumber; Index++) {
+      FreeImageData (&MbModuleData[Index].CmdFile);
+      FreeImageData (&MbModuleData[Index].ImgFile);
+    }
+
+    // Free Trusty Image Data
+    TrustyImageData = &MultiBootImage->TrustyImageData;
+    FreeImageData (&TrustyImageData->VmmImageData.VmmRuntimeAddr);
+    FreeImageData (&TrustyImageData->VmmImageData.VmmHeapAddr);
+    FreeImageData (&TrustyImageData->VmmImageData.VmmBootParams);
+    FreeImageData (&TrustyImageData->BootParamsData.PlatformInfo);
+    FreeImageData (&TrustyImageData->BootParamsData.SeedList);
+    FreeImageData (&TrustyImageData->BootParamsData.Base);
+
+    // Free MmapAddr which is allocated in SetupMultibootInfo ()
+    MbInfo = &MultiBootImage->MbInfo;
+    if ((MbInfo->MmapAddr != NULL) && (MbInfo->Flags & MULTIBOOT_INFO_HAS_MMAP)) {
+      FreePool (MbInfo->MmapAddr);
+      MbInfo->MmapAddr = NULL;
+    }
+  }
+
+  FreePool (LoadedImage);
+}
+
+/**
   Free all temporary resources used for Boot Image
 
   This function will clean up all temporary resources used to load Boot Image.
 
   @param[in]  LoadedImageHandle Loaded Image handle
 
-  @retval     none
 **/
 VOID
 EFIAPI
@@ -533,29 +669,18 @@ UnloadBootImages (
 {
   LOADED_IMAGES_INFO        *LoadedImagesInfo;
   LOADED_IMAGE              *LoadedImage;
-  IMAGE_DATA                *ImageData;
   UINT8                      Index;
 
   LoadedImagesInfo = (LOADED_IMAGES_INFO *)LoadedImageHandle;
   if ((LoadedImagesInfo == NULL) || (LoadedImagesInfo->Signature != LOADED_IMAGES_INFO_SIGNATURE)) {
-    ASSERT (FALSE);
-    DEBUG ((DEBUG_INFO, "Invalid LoadedImageHandle parameter!"));
+    DEBUG ((DEBUG_INFO, "Invalid LoadedImageHandle parameter!\n"));
     return;
   }
 
   for (Index = 0; Index < LoadImageTypeMax; Index++) {
     LoadedImage = (LOADED_IMAGE *)LoadedImagesInfo->LoadedImageList[Index];
-    if (LoadedImage != NULL) {
-      // TBD: Need to add cleanup api in each LOADED_IMAGE
-      ImageData = &LoadedImage->Image.Common.CmdFile;
-      if (ImageData->Addr != NULL) {
-        FreePages (ImageData->Addr, EFI_SIZE_TO_PAGES (CMDLINE_LENGTH_MAX));
-        ImageData->Addr = NULL;
-      }
-
-      FreePool (LoadedImage);
-      LoadedImagesInfo->LoadedImageList[Index] = NULL;
-    }
+    UnloadLoadedImage (LoadedImage);
+    LoadedImagesInfo->LoadedImageList[Index] = NULL;
   }
 
   FreePool (LoadedImagesInfo);

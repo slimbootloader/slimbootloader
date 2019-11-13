@@ -55,9 +55,17 @@ typedef struct {               // an IAS image generic header:
   UINT32    HeaderCrc;       // CRC-32C over entire header
 } IAS_HEADER;
 
+typedef enum {
+  ImageAllocateTypePool = 0,      // Allocate memory in Pool
+  ImageAllocateTypePage,          // Allocate memory in Page
+  ImageAllocateTypePointer,       // No allocate memory, but pointer to the existing memory
+  ImageAllocateTypeMax
+} IMAGE_ALLOCATE_TYPE;
+
 typedef struct {        /* a file (sub-image) inside a boot image */
-  VOID      *Addr;
-  UINT32    Size;
+  VOID                 *Addr;
+  UINT32                Size;
+  IMAGE_ALLOCATE_TYPE   AllocType;
 } IMAGE_DATA;
 
 //
