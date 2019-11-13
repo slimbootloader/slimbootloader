@@ -10,6 +10,7 @@
 #include <Library/DebugLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/PciExpressLib.h>
+#include <Library/SortLib.h>
 #include <InternalPciEnumerationLib.h>
 
 #define  DEBUG_PCI_ENUM    0
@@ -772,37 +773,31 @@ PciScanBus (
 }
 
 /**
-  Insert the given entry to the Sorted list.
+  The function is called by PerformInsertionSortList to sort PCI Bar by its alignment.
 
-  @param ListHead   pointer to the head of the list
-  @param Entry      point at which the list is inserted.
- **/
-VOID
-EFIAPI
-InsertSortedList (
-  IN OUT  LIST_ENTRY                *ListHead,
-  IN OUT  LIST_ENTRY                *Entry
+  @param[in] Buffer1         The pointer to first list entry.
+  @param[in] Buffer2         The pointer to second list entry.
+
+  @retval 0                  Buffer2 alignment is less than or equal to Buffer1 alignment.
+  @retval 1                  Buffer2 alignment is greater than Buffer1 alignment.
+
+**/
+INTN
+ComparePciBarRes (
+  IN CONST VOID                 *Buffer1,
+  IN CONST VOID                 *Buffer2
   )
 {
-  LIST_ENTRY            *Curr;
+  PCI_BAR_RESOURCE      *NewResBar;
   PCI_BAR_RESOURCE      *CurrResBar;
-  PCI_BAR_RESOURCE      *ResBar;
 
-  ResBar = PCI_BAR_RESOURCE_FROM_LINK (Entry);
+  NewResBar   = PCI_BAR_RESOURCE_FROM_LINK (Buffer1);
+  CurrResBar  = PCI_BAR_RESOURCE_FROM_LINK (Buffer2);
 
-  Curr = ListHead->ForwardLink;
-  while (Curr != ListHead) {
-    CurrResBar = PCI_BAR_RESOURCE_FROM_LINK (Curr);
-    if (ResBar->PciBar->Alignment >= CurrResBar->PciBar->Alignment) {
-      break;
-    }
-    Curr = Curr->ForwardLink;
-  }
-
-  Curr->BackLink->ForwardLink = Entry;
-  Entry->ForwardLink = Curr;
-  Entry->BackLink = Curr->BackLink;
-  Curr->BackLink = Entry;
+  //
+  // Descending Order
+  //
+  return (CurrResBar->PciBar->Alignment > NewResBar->PciBar->Alignment) ? 1 : 0;
 }
 
 /**
@@ -983,7 +978,7 @@ CalculateResource (
       if (PciIoDevice->PciBar[Idx].BarType == BarType) {
         PciBarRes = (PCI_BAR_RESOURCE *)PciAllocatePool (sizeof (PCI_BAR_RESOURCE));
         PciBarRes->PciBar = &PciIoDevice->PciBar[Idx];
-        InsertSortedList (&ParentRes.Link, &PciBarRes->Link);
+        PerformInsertionSortList (&ParentRes.Link, &PciBarRes->Link, ComparePciBarRes);
       }
     }
     CurrentLink = CurrentLink->ForwardLink;

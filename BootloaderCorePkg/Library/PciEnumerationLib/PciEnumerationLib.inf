@@ -19,23 +19,25 @@
 #  VALID_ARCHITECTURES           = IA32 X64 IPF
 #
 
-[Sources]  
+[Sources]
   InternalPciEnumerationLib.h
   PciEnumerationLib.c
 
 [Packages]
-  MdePkg/MdePkg.dec  
+  MdePkg/MdePkg.dec
   IntelFsp2Pkg/IntelFsp2Pkg.dec
   BootloaderCorePkg/BootloaderCorePkg.dec
-  
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+
 [LibraryClasses]
   BaseLib
   DebugLib
   PciExpressLib
+  SortLib
 
 [Guids]
   gFspNonVolatileStorageHobGuid
-  
+
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress  ## CONSUMES
   gPlatformModuleTokenSpaceGuid.PcdPciResourceIoBase
