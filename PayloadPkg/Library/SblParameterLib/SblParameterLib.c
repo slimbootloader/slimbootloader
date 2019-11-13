@@ -49,19 +49,20 @@ GetResetReasonStr (
   Based on boot option list, if OS is booted from SPI device, generate
   a boot device list and pass the list address to OS from command line.
 
-  @param[in]     BootOption        Current boot option
-  @param[out]    CommandLine       Command line for adding new parameters
-  @param[in]     MaxCmdSize        The max size of buffer CommandLine
+  @param[in]     BootOption           Current boot option
+  @param[out]    CommandLine          Command line for adding new parameters
+  @param[in]     MaxCmdSize           The max size of buffer CommandLine
+  @param[in,out] ReservedCmdlineData  Reserved memory info about kernel command line for OS
 
-
-  @retval  EFI_SUCCESS            New parameter added to command line
-  @retval  Others                 Has error to add parameter
+  @retval  EFI_SUCCESS                New parameter added to command line
+  @retval  Others                     Has error to add parameter
 **/
 EFI_STATUS
 AppendBootDevices (
-  IN     OS_BOOT_OPTION     *BootOption,
-  OUT    CHAR8              *CommandLine,
-  IN     UINT32             MaxCmdSize
+  IN     OS_BOOT_OPTION         *BootOption,
+  OUT    CHAR8                  *CommandLine,
+  IN     UINT32                  MaxCmdSize,
+  IN OUT RESERVED_CMDLINE_DATA  *ReservedCmdlineData
   )
 {
   OS_BOOT_OPTION_LIST       *OsBootOptionList;
@@ -94,6 +95,13 @@ AppendBootDevices (
     DEBUG ((DEBUG_INFO, "Could not allocate memory for boot device buffer"));
     return EFI_OUT_OF_RESOURCES;
   }
+
+  //
+  // Update Boot Device Info
+  //
+  ReservedCmdlineData->BootDevicesData.Addr = (VOID *)BootDevicesData;
+  ReservedCmdlineData->BootDevicesData.Size = BootDevicesSize;
+  ReservedCmdlineData->BootDevicesData.AllocType = ImageAllocateTypePage;
 
   BootDevicesData->Revision        = OsBootOptionList->Revision;
   BootDevicesData->BootDeviceCount = OsBootOptionList->OsBootOptionCount;
@@ -174,14 +182,19 @@ AddBootModeCommandLine (
   This function will append boot perfomance data parameter to
   current command line.
 
-  @param[out]    CommandLine       Command line for adding new parameters
-  @param[in]     MaxCmdSize        The max size of buffer CommandLine
+  @param[out]     CommandLine           Command line for adding new parameters
+  @param[in]      MaxCmdSize            The max size of buffer CommandLine
+  @param[in,out]  ReservedCmdlineData   Reserved memory info about kernel command line for OS
+
+  @return         EFI_SUCCESS           Add timestamp info to command line successfully
+  @return         Others                An error while adding timestamp info
 
 **/
 EFI_STATUS
 AddTimeStampsCommandLine (
-  OUT     CHAR8             *CommandLine,
-  IN     UINT32             MaxCmdSize
+  OUT    CHAR8                  *CommandLine,
+  IN     UINT32                  MaxCmdSize,
+  IN OUT RESERVED_CMDLINE_DATA  *ReservedCmdlineData
   )
 {
   UINT32                    OsPerfDataSize;
@@ -210,6 +223,14 @@ AddTimeStampsCommandLine (
     DEBUG ((DEBUG_INFO, "Could not allocate memory for TimeStamps buffer"));
     return EFI_OUT_OF_RESOURCES;
   }
+
+  //
+  // Update Reserved Commandline Info
+  //
+  ReservedCmdlineData->OsPerfData.Addr = (VOID *)OsPerfData;
+  ReservedCmdlineData->OsPerfData.Size = OsPerfDataSize;
+  ReservedCmdlineData->OsPerfData.AllocType = ImageAllocateTypePage;
+
   OsPerfData->Signature = PERF_DATA_SIGNATURE;
   OsPerfData->Flags     = 0;
   OsPerfData->Count     = (UINT16)BlPerfData->PerfIndex;
@@ -227,19 +248,21 @@ AddTimeStampsCommandLine (
 
   Some Os requires SBL specific command line parameters.
 
-  @param[in]     BootOption        Current boot option
-  @param[out]    CommandLine       Command line for adding new parameters
-  @param[in,out] CommandLineSize   The max size of buffer CommandLine when input.
-                                   and the actual Command line string size, including NULL
-                                   terminator when return.
+  @param[in]     BootOption           Current boot option
+  @param[out]    CommandLine          Command line for adding new parameters
+  @param[in,out] CommandLineSize      The max size of buffer CommandLine when input.
+                                      and the actual Command line string size, including NULL
+                                      terminator when return.
+  @param[in,out] ReservedCmdlineData  Reserved memory info about kernel command line for OS
 
 **/
 EFI_STATUS
 EFIAPI
 AddSblCommandLine (
-  IN     OS_BOOT_OPTION     *BootOption,
-  OUT    CHAR8              *CommandLine,
-  IN OUT UINT32             *CommandLineSize
+  IN     OS_BOOT_OPTION         *BootOption,
+  OUT    CHAR8                  *CommandLine,
+  IN OUT UINT32                 *CommandLineSize,
+  IN OUT RESERVED_CMDLINE_DATA  *ReservedCmdlineData
   )
 {
   EFI_STATUS                Status;
@@ -279,9 +302,17 @@ AddSblCommandLine (
   if ((OsConfigData != NULL) && (OsConfigData->OsCrashMemorySize != 0)) {
     Buffer = AllocateReservedPages (EFI_SIZE_TO_PAGES (OsConfigData->OsCrashMemorySize));
     if (Buffer == NULL) {
-      DEBUG ((DEBUG_INFO, "Memory allocation error for OS crash memory"));
+      DEBUG ((DEBUG_INFO, "Memory allocation error for OS crash memory\n"));
       return EFI_OUT_OF_RESOURCES;
     }
+
+    //
+    // Update OsCrashMemory Info
+    //
+    ReservedCmdlineData->OsCrashMemoryData.Addr = Buffer;
+    ReservedCmdlineData->OsCrashMemoryData.Size = OsConfigData->OsCrashMemorySize;
+    ReservedCmdlineData->OsCrashMemoryData.AllocType = ImageAllocateTypePage;
+
     AsciiSPrint (ParamValue, sizeof (ParamValue), " ramoops.mem_address=0x%p", Buffer);
     AsciiStrCatS (CommandLine, MaxCmdSize, ParamValue);
 
@@ -342,7 +373,7 @@ AddSblCommandLine (
   //
   // Add performance data parameters
   //
-  Status = AddTimeStampsCommandLine (CommandLine, MaxCmdSize);
+  Status = AddTimeStampsCommandLine (CommandLine, MaxCmdSize, ReservedCmdlineData);
   if (EFI_ERROR (Status)) {
     return Status;
   }
@@ -350,7 +381,7 @@ AddSblCommandLine (
   //
   // Add boot device list command line to OS from SPI flash (for fastboot).
   //
-  Status = AppendBootDevices (BootOption, CommandLine, MaxCmdSize);
+  Status = AppendBootDevices (BootOption, CommandLine, MaxCmdSize, ReservedCmdlineData);
   if (EFI_ERROR (Status)) {
     return Status;
   }
