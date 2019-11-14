@@ -66,6 +66,7 @@
   ResetSystemLib
   BootloaderCommonLib
   MemoryAllocationLib
+  SortLib
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress

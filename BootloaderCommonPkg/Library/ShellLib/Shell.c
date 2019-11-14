@@ -13,6 +13,7 @@
 #include <Library/DebugLib.h>
 #include <Library/TimerLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/SortLib.h>
 #include "Shell.h"
 #include "History.h"
 #include "Parsing.h"
@@ -91,21 +92,6 @@ ReadShellCommand (
   IN        SHELL  *Shell,
   OUT       CHAR16 *Buffer,
   IN  CONST UINTN   BufferSize
-  );
-
-/**
-  Insert the given entry to the Sorted list.
-
-  @param[in/out]  ListHead    pointer to the head of the list
-  @param[in/out]  Entry       point at which the list is inserted.
-
- **/
-STATIC
-VOID
-EFIAPI
-InsertSortedCommandList (
-  IN OUT  LIST_ENTRY                *ListHead,
-  IN OUT  LIST_ENTRY                *Entry
   );
 
 /**
@@ -598,38 +584,32 @@ FindShellCommand (
 }
 
 /**
-  Insert the given entry to the Sorted list.
+  The function is called by PerformInsertionSortList to sort Shell commands by its name.
 
-  @param[in/out]  ListHead    pointer to the head of the list
-  @param[in/out]  Entry       point at which the list is inserted.
+  @param[in] Buffer1         The pointer to first list entry.
+  @param[in] Buffer2         The pointer to second list entry.
 
- **/
+  @retval 0                  Buffer1 name is less than Buffer2 name.
+  @retval 1                  Buffer1 name is greater than or equal to Buffer2 name.
+
+**/
 STATIC
-VOID
-EFIAPI
-InsertSortedCommandList (
-  IN OUT  LIST_ENTRY                *ListHead,
-  IN OUT  LIST_ENTRY                *Entry
+INTN
+CompareCommandEntry (
+  IN CONST VOID                 *Buffer1,
+  IN CONST VOID                 *Buffer2
   )
 {
-  LIST_ENTRY                *Curr;
-  SHELL_COMMAND_LIST_ENTRY  *CurrEntry;
   SHELL_COMMAND_LIST_ENTRY  *NewEntry;
+  SHELL_COMMAND_LIST_ENTRY  *CurrEntry;
 
-  Curr = ListHead->ForwardLink;
-  NewEntry = BASE_CR (Entry, SHELL_COMMAND_LIST_ENTRY, Link);
-  while (Curr != ListHead) {
-    CurrEntry = BASE_CR (Curr, SHELL_COMMAND_LIST_ENTRY, Link);
-    if (StrCmp (CurrEntry->ShellCommand->Name, NewEntry->ShellCommand->Name) >= 0) {
-      break;
-    }
-    Curr = Curr->ForwardLink;
-  }
+  NewEntry  = BASE_CR (Buffer1, SHELL_COMMAND_LIST_ENTRY, Link);
+  CurrEntry = BASE_CR (Buffer2, SHELL_COMMAND_LIST_ENTRY, Link);
 
-  Curr->BackLink->ForwardLink = Entry;
-  Entry->ForwardLink          = Curr;
-  Entry->BackLink             = Curr->BackLink;
-  Curr->BackLink              = Entry;
+  //
+  // Ascending Order
+  //
+  return StrCmp (NewEntry->ShellCommand->Name, CurrEntry->ShellCommand->Name) >= 0 ? 1: 0;
 }
 
 /**
@@ -658,7 +638,7 @@ ShellCommandRegister (
   Entry->Signature = SHELL_COMMAND_LIST_ENTRY_SIGNATURE;
 
   EntryList = GetShellCommandEntryList ();
-  InsertSortedCommandList (EntryList, &Entry->Link);
+  PerformInsertionSortList (EntryList, &Entry->Link, CompareCommandEntry);
 
   return EFI_SUCCESS;
 }

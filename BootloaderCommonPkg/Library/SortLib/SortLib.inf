@@ -22,6 +22,7 @@
 
 [Sources.common]
   SortLib.c
+  InsertionSort.c
 
 [Packages]
   MdePkg/MdePkg.dec

@@ -57,4 +57,24 @@ PerformQuickSort (
   IN VOID                               *Buffer
   );
 
+/**
+  Insertion Sort for doubly-linked list
+
+  This function is to insert a new list entry to a sorted doubly-linked list head.
+
+  @param[in, out] ListHead          A pointer to the head node of doubly-linked list
+  @param[in, out] Entry             A pointer to the new entry node to be inserted
+                                    to the sorted list head
+  @param[in]      CompareFunction   The function to call to perform the comparison
+                                    of any 2 elements
+
+**/
+VOID
+EFIAPI
+PerformInsertionSortList (
+  IN OUT  LIST_ENTRY                *ListHead,
+  IN OUT  LIST_ENTRY                *Entry,
+  IN      SORT_COMPARE               CompareFunction
+  );
+
 #endif //__SORT_LIB_H__
