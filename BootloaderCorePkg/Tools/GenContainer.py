@@ -483,7 +483,7 @@ class CONTAINER ():
 
 		return out_file
 
-	def replace (self, comp_name, comp_file, comp_alg, key_file, new_name):
+	def replace (self, comp_name, comp_file, comp_alg, key_file, hash_type, new_name):
 		if self.header.flags & CONTAINER_HDR._flags['MONO_SIGNING']:
 			raise Exception ("Counld not replace component for monolithically signed container!")
 
@@ -504,7 +504,7 @@ class CONTAINER ():
 			lz_file = compress (comp_file, comp_alg, self.out_dir, self.tool_dir)
 			if auth_type_str.startswith ('RSA') and key_file == '':
 				raise Exception ("Signing key needs to be specified !")
-			hash_data, auth_data = CONTAINER.calculate_auth_data (lz_file, auth_type_str, key_file, self.out_dir, self.hash_type)
+			hash_data, auth_data = CONTAINER.calculate_auth_data (lz_file, auth_type_str, key_file, self.out_dir, hash_type)
 			data = get_file_data (lz_file)
 		component.data = bytearray(data)
 		component.auth_data = bytearray(auth_data)
@@ -660,7 +660,7 @@ def replace_component (args):
 	data = get_file_data (args.image)
 	container = CONTAINER (data)
 	container.set_dir_path (args.out_dir, '.', '.', tool_dir)
-	file = container.replace (args.comp_name, args.comp_file, args.compress, args.key_file, args.new_name)
+	file = container.replace (args.comp_name, args.comp_file, args.compress, args.key_file, args.hash_type, args.new_name)
 	print ("Component '%s' was replaced successfully at:\n  %s" % (args.comp_name, file))
 
 def sign_component (args):
@@ -703,6 +703,7 @@ def main():
 	cmd_display.add_argument('-t', dest='img_type',  type=str, default='CLASSIC', help='Container Image Type : [NORMAL, CLASSIC, MULTIBOOT]')
 	cmd_display.add_argument('-o', dest='out_path',  type=str, default='.', help='Container output directory/file')
 	cmd_display.add_argument('-k', dest='key_path',  type=str, default='', help='Input key directory/file')
+	cmd_display.add_argument('-ht', dest='hash_type', type=str, default='SHA2_256', help='Hash Alg for signing')
 	cmd_display.add_argument('-cd', dest='comp_dir', type=str, default='', help='Componet image input directory')
 	cmd_display.add_argument('-td', dest='tool_dir', type=str, default='', help='Compression tool directory')
 	cmd_display.set_defaults(func=create_container)
@@ -723,6 +724,7 @@ def main():
 	cmd_display.add_argument('-f',  dest='comp_file',  type=str, required=True, help='Component input file path')
 	cmd_display.add_argument('-c',  dest='compress', choices=['lz4', 'lzma', 'dummy'], default='dummy', help='compression algorithm')
 	cmd_display.add_argument('-k',  dest='key_file',  type=str, default='', help='Private key file path to sign component')
+	cmd_display.add_argument('-ht', dest='hash_type', type=str, default='SHA2_256', help='Hash Alg for signing')
 	cmd_display.add_argument('-od', dest='out_dir',  type=str, default='.', help='Output directory')
 	cmd_display.add_argument('-td', dest='tool_dir', type=str, default='', help='Compression tool directory')
 	cmd_display.set_defaults(func=replace_component)
@@ -734,6 +736,7 @@ def main():
 	cmd_display.add_argument('-c',  dest='compress', choices=['lz4', 'lzma', 'dummy'],  default='dummy', help='compression algorithm')
 	cmd_display.add_argument('-a',  dest='auth', choices=['rsa2048', 'sha256', 'none'], default='none',  help='authentication algorithm')
 	cmd_display.add_argument('-k',  dest='key_file',  type=str, default='', help='Private key file path to sign component')
+	cmd_display.add_argument('-ht', dest='hash_type', type=str, default='SHA2_256', help='Hash Alg for signing')
 	cmd_display.add_argument('-od', dest='out_dir',  type=str, default='.', help='Output directory')
 	cmd_display.add_argument('-td', dest='tool_dir', type=str, default='',  help='Compression tool directory')
 	cmd_display.set_defaults(func=sign_component)
