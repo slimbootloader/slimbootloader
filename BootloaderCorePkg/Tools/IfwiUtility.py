@@ -342,8 +342,13 @@ class IFWI_PARSER:
             print ("\nBPDT Space Information:")
             for idx in range(2):
                 bp = IFWI_PARSER.locate_component (root, 'IFWI/BIOS/BP%d' % idx)
-                sbpdt = bp.child[1]
-                print ("  BP%d Free Space: 0x%05X" % (idx,  bp.length - ((sbpdt.offset + sbpdt.length) - bp.offset)))
+                if len(bp.child) > 1:
+                    sbpdt = bp.child[1]
+                    bplen = bp.length - ((sbpdt.offset + sbpdt.length) - bp.offset)
+                else:
+                    bplen = bp.length
+                print ("  BP%d Free Space: 0x%05X" % (idx, bplen))
+
 
     @staticmethod
     def find_ifwi_region (spi_descriptor, rgn_name):
@@ -387,6 +392,30 @@ class IFWI_PARSER:
         return 0
 
     @staticmethod
+    def extract_component (ifwi_bin, comp_bin, path):
+        bins_comp = bytearray ()
+
+        ifwi = IFWI_PARSER.parse_ifwi_binary (ifwi_bin)
+        if not ifwi:
+            print ("Not a valid ifwi image!")
+            return -1
+
+        ifwi_comps = IFWI_PARSER.locate_components (ifwi, path)
+        if len(ifwi_comps) == 0:
+            print ("Cannot find path '%s' in ifwi image!" % path)
+            return -2
+
+        if len(ifwi_comps) > 1:
+            print ("Found multiple components for '%s'!" % path)
+            return -3
+
+        ifwi_comp   = ifwi_comps[0]
+        comp_bin[:] = ifwi_bin[ifwi_comp.offset:ifwi_comp.offset + ifwi_comp.length]
+
+        return 0
+
+
+    @staticmethod
     def bpdt_parser (bin_data, bpdt_offset, offset):
         sub_part_list = []
         idx = bpdt_offset + offset
@@ -403,6 +432,8 @@ class IFWI_PARSER:
 
             if bpdt_entry.sub_part_size > sizeof(SUBPART_DIR_HEADER):
                 part_idx = bpdt_offset + bpdt_entry.sub_part_offset
+                if  part_idx > len(bin_data):
+                    break
                 sub_part_dir_hdr = SUBPART_DIR_HEADER.from_buffer(
                     bytearray(bin_data[part_idx:part_idx + sizeof(
                         SUBPART_DIR_HEADER)]), 0)
@@ -567,13 +598,13 @@ if __name__ == '__main__':
     parser     = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(title='commands')
 
-    parser_view     = subparsers.add_parser('view',  help='print IFWI componet layout')
+    parser_view     = subparsers.add_parser('view',  help='print IFWI component layout')
     parser_view.set_defaults(which='view')
     parser_view.add_argument('-i', '--input-image', dest='ifwi_image', type=str,
                     required=True, help='Specify input IFWI image file path')
 
 
-    parser_replace  = subparsers.add_parser('replace',  help='replace componet in IFWI')
+    parser_replace  = subparsers.add_parser('replace',  help='replace component in IFWI')
     parser_replace.set_defaults(which='replace')
     parser_replace.add_argument('-f', '--component-image', dest='comp_image', type=str,
                     default = '', help='Specify component image file')
@@ -581,8 +612,17 @@ if __name__ == '__main__':
                     required=True, help='Specify input IFWI image file path')
     parser_replace.add_argument('-o', '--output-image', dest='output_image', type=str,
                     default = '',  help='Specify output IFWI image file path')
-    parser_replace.add_argument('-p', '--path', dest='replace_path', type=str,
+    parser_replace.add_argument('-p', '--path', dest='component_path', type=str,
                     default = '',  help='Specify replace path in IFWI image flashmap')
+
+    parser_extract  = subparsers.add_parser('extract',  help='extract component from IFWI')
+    parser_extract.set_defaults(which='extract')
+    parser_extract.add_argument('-i', '--input-image', dest='ifwi_image', type=str,
+                    required=True, help='Specify input IFWI image file path')
+    parser_extract.add_argument('-o', '--output-component', dest='output_image', type=str,
+                    default = '',  help='Specify output component image file path')
+    parser_extract.add_argument('-p', '--path', dest='component_path', type=str,
+                    default = '',  help='Specify component path to be extracted from IFWI image')
 
     args = parser.parse_args()
 
@@ -593,19 +633,32 @@ if __name__ == '__main__':
     show = False
     if args.which == 'view':
         show = True
+
+    elif args.which == 'extract':
+        comp_bin = bytearray ()
+        if not args.component_path:
+            show = True
+        else:
+            ret = IFWI_PARSER.extract_component (ifwi_bin, comp_bin, args.component_path)
+            if ret == 0:
+                out_image = args.output_image
+                if out_image:
+                    gen_file_from_object (out_image, comp_bin)
+                    print ("Components @ %s was extracted successfully!" % args.component_path)
+
     elif args.which == 'replace':
-        if args.replace_path and not args.comp_image:
+        if args.component_path and not args.comp_image:
             parser_replace.error('Component image file is required when path is specified!')
 
-        if not args.replace_path:
+        if not args.component_path:
             show = True
         else:
             comp_bin = bytearray (get_file_data (args.comp_image))
-            ret = IFWI_PARSER.replace_component (ifwi_bin, comp_bin, args.replace_path)
+            ret = IFWI_PARSER.replace_component (ifwi_bin, comp_bin, args.component_path)
             if ret == 0:
                 out_image = args.output_image if args.output_image else args.ifwi_image
                 gen_file_from_object (out_image, ifwi_bin)
-                print ("Components @ %s was replaced successfully!" % args.replace_path)
+                print ("Components @ %s was replaced successfully!" % args.component_path)
 
     if show:
         ifwi = IFWI_PARSER.parse_ifwi_binary (ifwi_bin)
