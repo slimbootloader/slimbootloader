@@ -1778,6 +1778,23 @@ UpdateFspConfig (
 }
 
 /**
+  This function will set the DISB - DRAM Initialization Scratchpad Bit.
+
+**/
+STATIC
+VOID
+SetDramInitScratchpad (
+  IN  VOID
+  )
+{
+  MmioAndThenOr8 (
+    PCH_PWRM_BASE_ADDRESS + R_PMC_PWRM_GEN_PMCON_A + 2,
+    (UINT8) ~((B_PMC_PWRM_GEN_PMCON_A_MS4V | B_PMC_PWRM_GEN_PMCON_A_SUS_PWR_FLR) >> 16),
+    B_PMC_PWRM_GEN_PMCON_A_DISB >> 16
+    );
+}
+
+/**
   Save MRC data into the reserved SPI region
 
   @param[in]  Buffer            The pointer to MRC data to be saved.
@@ -1811,7 +1828,8 @@ SaveNvsData (
   // Compare input data against the stored MRC training data
   // if they match, no need to update again.
   //
-  if (CompareMem ((VOID *)Address, Buffer, Length) == 0){
+  if (CompareMem ((VOID *)Address, Buffer, Length) == 0) {
+    SetDramInitScratchpad ();
     return EFI_ALREADY_STARTED;
   }
 
@@ -1836,11 +1854,7 @@ SaveNvsData (
       Status = SpiFlashWrite (FlashRegionBios, Address, Length, Buffer);
       if (!EFI_ERROR(Status)) {
         DEBUG ((DEBUG_INFO, "MRC data successfully cached to 0x%X\n", Address));
-        MmioAndThenOr8 (
-          PCH_PWRM_BASE_ADDRESS + R_PMC_PWRM_GEN_PMCON_A + 2,
-          (UINT8) ~((B_PMC_PWRM_GEN_PMCON_A_MS4V | B_PMC_PWRM_GEN_PMCON_A_SUS_PWR_FLR) >> 16),
-          B_PMC_PWRM_GEN_PMCON_A_DISB >> 16
-          );
+        SetDramInitScratchpad ();
       }
     }
   }
