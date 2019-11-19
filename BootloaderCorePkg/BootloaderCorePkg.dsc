@@ -259,11 +259,12 @@
   gPlatformModuleTokenSpaceGuid.PcdGraphicsVbtAddress| 0xFF000000
   gPlatformModuleTokenSpaceGuid.PcdDeviceTreeBase    | 0xFF000000
   gPlatformCommonLibTokenSpaceGuid.PcdAcpiPmTimerBase   | $(ACPI_PM_TIMER_BASE)
+  gPlatformModuleTokenSpaceGuid.PcdFSPSBase          | $(FSP_S_BASE)
   gPlatformModuleTokenSpaceGuid.PcdHashStoreBase     | 0xFF000000
   gPlatformModuleTokenSpaceGuid.PcdVerInfoBase       | 0xFF000000
   gPlatformModuleTokenSpaceGuid.PcdFileDataBase      | 0xFF000000
-  gPlatformModuleTokenSpaceGuid.PcdFSPSBase          | $(FSP_S_BASE)
   gPlatformModuleTokenSpaceGuid.PcdSplashLogoAddress | 0xFF000000
+  gPlatformModuleTokenSpaceGuid.PcdCfgDataIntBase    | 0xFF000000
   gPlatformCommonLibTokenSpaceGuid.PcdEmmcMaxRwBlockNumber     | 0xFFFF
   gPlatformModuleTokenSpaceGuid.PcdPayloadReservedMemSize | $(PLD_RSVD_MEM_SIZE)
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase     | 0xFF000000

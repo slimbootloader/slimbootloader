@@ -171,7 +171,8 @@ CreateConfigDatabase (
       }
     }
 
-    IntCfgAddPtr = (UINT8 *)GetBuiltInConfigData ();
+    // Add internal CFGDATA at the end
+    IntCfgAddPtr = (UINT8 *)PCD_GET32_WITH_ADJUST (PcdCfgDataIntBase);
     if (IntCfgAddPtr != NULL) {
       Status = AddConfigData (IntCfgAddPtr);
       if (!EFI_ERROR (Status)) {

@@ -392,9 +392,6 @@ def gen_config_file (fv_dir, brd_name, platform_id, pri_key, cfg_db_size, cfg_si
 			if bin_file_size >= cfg_rgn_size:
 				raise Exception ('CFGDATA_SIZE is too small, requested 0x%X for %s CFGDATA !' % (bin_file_size, cfg_rgn_name))
 
-			if cfg_file_list is cfg_int:
-				gen_cfg_data ("GENINC", cfg_merged_bin_file, cfg_inc_file)
-
 	if not os.path.exists(cfg_merged_bin_file):
 		cfg_merged_bin_file = cfg_bin_int_file
 

@@ -23,7 +23,6 @@
 #include <Library/VariableLib.h>
 #include <Library/BootloaderCoreLib.h>
 #include <Library/BoardSupportLib.h>
-#include <ConfigDataBlob.h>
 #include <FspmUpd.h>
 #include <BlCommon.h>
 #include <ConfigDataDefs.h>
@@ -265,21 +264,4 @@ LoadExternalConfigData (
 {
 
   return SpiLoadExternalConfigData (Dst, Src, Len);
-}
-
-/**
-  Get the pointer to the Built-In Config Data
-
-  @retval UINT8*    Pointer to the Built-In Config Data
-**/
-UINT8 *
-GetBuiltInConfigData(
-  IN  VOID
-)
-{
-  if (PcdGet32 (PcdCfgDatabaseSize) > 0) {
-    return (UINT8 *) &mConfigDataBlob[16];
-  } else {
-    return NULL;
-  }
 }

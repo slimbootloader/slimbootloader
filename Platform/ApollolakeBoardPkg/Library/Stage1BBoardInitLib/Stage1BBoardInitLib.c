@@ -34,11 +34,8 @@
 #include <Library/HeciLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include <Library/BoardSupportLib.h>
-
 #include <FspmUpd.h>
 #include <GpioDefines.h>
-#include <ConfigDataBlob.h>
-
 #include <PlatformBase.h>
 #include "ScRegs/RegsPmc.h"
 #include <Pi/PiBootMode.h>
@@ -930,24 +927,6 @@ LoadExternalConfigData (
   return SpiLoadExternalConfigData (Dst, Src, Len);
 
 }
-
-/**
-  Get the pointer to the Built-In Config Data.
-
-  @retval UINT8*    Pointer to the Built-In Config Data
-**/
-UINT8 *
-GetBuiltInConfigData (
-  IN  VOID
-  )
-{
-  if (PcdGet32 (PcdCfgDatabaseSize) > 0) {
-    return (UINT8 *) &mConfigDataBlob[16];
-  } else {
-    return NULL;
-  }
-}
-
 
 /**
   Get the reset reason from the PMC registers.
