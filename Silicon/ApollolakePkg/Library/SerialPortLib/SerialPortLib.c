@@ -111,7 +111,8 @@ SerialPortInitialize (
   UINTN  Divisor;
   UINT8  OutputData;
 
-  if ((SerialPortReadRegister (SCR_OFFSET) & UART_MAGIC_MASK) != UART_MAGIC_VAL) {
+  if (FeaturePcdGet (PcdForceToInitSerialPort) || \
+    ((SerialPortReadRegister (SCR_OFFSET) & UART_MAGIC_MASK) != UART_MAGIC_VAL)) {
     //
     // Calculate divisor for baud generator
     //

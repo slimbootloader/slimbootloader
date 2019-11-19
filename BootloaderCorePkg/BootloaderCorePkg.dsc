@@ -336,6 +336,7 @@
   $(PLATFORM_PACKAGE)/Stage1A/Stage1A.inf {
     <PcdsFeatureFlag>
       gPlatformCommonLibTokenSpaceGuid.PcdMinDecompression | TRUE
+      gPlatformCommonLibTokenSpaceGuid.PcdForceToInitSerialPort | TRUE
     <LibraryClasses>
       BaseMemoryLib| MdePkg/Library/BaseMemoryLibRepStr/BaseMemoryLibRepStr.inf
       SocInitLib   | Silicon/$(SILICON_PKG_NAME)/Library/Stage1ASocInitLib/Stage1ASocInitLib.inf

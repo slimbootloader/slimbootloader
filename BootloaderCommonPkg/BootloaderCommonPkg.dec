@@ -217,3 +217,5 @@
   gPlatformCommonLibTokenSpaceGuid.PcdEmmcHs400SupportEnabled | TRUE       | BOOLEAN | 0x20000214
   # Determine if the Pre-OS checker should be executed or not.
   gPlatformCommonLibTokenSpaceGuid.PcdPreOsCheckerEnabled     | FALSE      | BOOLEAN | 0x20000215
+  # This PCD will force to initialize SerialPort regardless of its initialized state
+  gPlatformCommonLibTokenSpaceGuid.PcdForceToInitSerialPort   | FALSE      | BOOLEAN | 0x20000216

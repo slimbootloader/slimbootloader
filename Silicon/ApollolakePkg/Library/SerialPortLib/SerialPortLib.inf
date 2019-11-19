@@ -33,3 +33,4 @@
   PlatformHookLib
 
 [Pcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdForceToInitSerialPort
