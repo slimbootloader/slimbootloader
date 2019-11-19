@@ -157,6 +157,10 @@ FV = OsLoader
 
   INF $(PLATFORM_PACKAGE)/Stage1B/Stage1B.inf
 
+  FILE FREEFORM = 016E6CD0-4834-4C7E-BCFE-41DFB88A6A6D {
+    SECTION RAW = $(FV_DIR)/CfgDataInt.bin
+  }
+
 #------------------------------------------------------------------------------
 # STAGE2 FV
 #------------------------------------------------------------------------------

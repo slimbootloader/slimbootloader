@@ -97,6 +97,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
   gPlatformModuleTokenSpaceGuid.PcdEarlyLogBufferSize
   gPlatformModuleTokenSpaceGuid.PcdLogBufferSize
+  gPlatformModuleTokenSpaceGuid.PcdCfgDataIntBase
 
 [Depex]
   TRUE

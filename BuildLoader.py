@@ -643,6 +643,7 @@ class Build(object):
 				"STAGE1B:STAGE1B",
 				"_OFFS_STAGE1B_,        Stage1B:__ModuleEntryPoint,        @Patch Stage1B Entry",
 				"_OFFS_STAGE1B_+4,      Stage1B:BASE,                      @Patch Stage1B Base",
+				"<Stage1B:__gPcd_BinaryPatch_PcdCfgDataIntBase>, {016E6CD0-4834-4C7E-BCFE-41DFB88A6A6D:0x1C}, @Patch Internal CfgDataBase"
 				)
 
 		print('Patching STAGE2')

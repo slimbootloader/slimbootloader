@@ -129,6 +129,7 @@
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase          | 0xFF000000 | UINT32 | 0x20000120
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegSize          | 0x00000000 | UINT32 | 0x20000121
   gPlatformModuleTokenSpaceGuid.PcdHashStoreBase          | 0xFF000000 | UINT32 | 0x20000181
+  gPlatformModuleTokenSpaceGuid.PcdCfgDataIntBase         | 0xFF000000 | UINT32 | 0x20000182
   gPlatformModuleTokenSpaceGuid.PcdDeviceTreeBase         | 0xFF000000 | UINT32 | 0x20000183
   gPlatformModuleTokenSpaceGuid.PcdSplashLogoAddress      | 0xFF000000 | UINT32 | 0x20000184
   gPlatformModuleTokenSpaceGuid.PcdFileDataBase           | 0xFF000000 | UINT32 | 0x20000185

@@ -98,15 +98,6 @@ LoadExternalConfigData (
   IN UINT32  Len
   );
 
-/**
-  Get the pointer to the Built-In Config Data.
-
-  @retval UINT8*    Pointer to the Built-In Config Data
-**/
-UINT8 *
-GetBuiltInConfigData (
-  IN  VOID
-  );
 
 /**
   Find configuration data header by its tag and platform ID.

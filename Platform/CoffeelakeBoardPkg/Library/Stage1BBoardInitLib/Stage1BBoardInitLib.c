@@ -29,7 +29,6 @@
 #include <Library/BoardSupportLib.h>
 #include <RegAccess.h>
 #include <Library/CryptoLib.h>
-#include <ConfigDataBlob.h>
 #include <Library/PchInfoLib.h>
 #include <Library/SocInitLib.h>
 #include <Library/TpmLib.h>
@@ -708,22 +707,4 @@ LoadExternalConfigData (
 {
 
   return SpiLoadExternalConfigData (Dst, Src, Len);
-}
-
-
-/**
-  Get the pointer to the Built-In Config Data
-
-  @retval UINT8*    Pointer to the Built-In Config Data
-**/
-UINT8 *
-GetBuiltInConfigData(
-  IN  VOID
-)
-{
-  if (PcdGet32 (PcdCfgDatabaseSize) > 0) {
-    return (UINT8 *) &mConfigDataBlob[16];
-  } else {
-    return NULL;
-  }
 }
