@@ -13,7 +13,7 @@
 #define PCI_VENDOR_ID_OFFSET            0x00
 #define PCI_DEVICE_ID_OFFSET            0x02
 
-#define R_PCH_P2SB_E0			0xE0
+#define R_PCH_P2SB_E0                   0xE0
 
 /**
   Read PCR register.

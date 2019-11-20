@@ -53,7 +53,7 @@ Name(AG3H,0)
     // NHLT Table memory descriptor, returned from _DSM
     Name(NBUF, ResourceTemplate () {
     // NHLT table address (_MIN = NHLT 64bit pointer, _MAX = _MIN + _LEN - 1) and length (_LEN)
-	// Move to 64 bit mode from 32 bit
+    // Move to 64 bit mode from 32 bit
     QWordMemory (ResourceConsumer, , MinNotFixed, MaxNotFixed, NonCacheable, ReadOnly,
                 0x1,                // AddressGranularity
                 0x0000000000000000, // AddressMinimum _MIN

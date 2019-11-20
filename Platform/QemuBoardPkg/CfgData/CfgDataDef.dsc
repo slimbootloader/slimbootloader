@@ -21,7 +21,7 @@
     # !BSF HELP:{GPIO $(1) PAD 0}
     # !BSF MARKER:{GPIO_DATA_$(1)}
     gCfgData.GpioConfPad0_$(1)        |      * | 0x04 | $(2)
-      # !BSF NAME:{GPIOTxState} TYPE:{Combo}	OPTION:{0:0, 1:1}
+      # !BSF NAME:{GPIOTxState} TYPE:{Combo}  OPTION:{0:0, 1:1}
       # !BSF HELP:{GPIO TX State}
       # !BSF CONDITION:{$GpioConfPad1_$(1).GPIOSkip == 0}
       # !BSF FIELD:{GPIOTxState:1b}
@@ -80,11 +80,11 @@
   # !BSF BLOCK:{NAME:"QEMU Platform", VER:"0.1"}
 
   # CFG HDR Format
-	#   UINT32  ConditionNum   :  2;      // [1:0]   #of condition dwords present
-	#   UINT32  Length         : 10;      // [11:2]  total size of item (in dwords)
-	#   UINT32  Flags          :  4;      // [15:12] unused/reserved so far
-	#   UINT32  Version        :  4;      // [19:16] item (payload) format version
-	#   UINT32  Tag            : 12;      // [31:20] identifies item (in payload)
+  #   UINT32  ConditionNum   :  2;      // [1:0]   #of condition dwords present
+  #   UINT32  Length         : 10;      // [11:2]  total size of item (in dwords)
+  #   UINT32  Flags          :  4;      // [15:12] unused/reserved so far
+  #   UINT32  Version        :  4;      // [19:16] item (payload) format version
+  #   UINT32  Tag            : 12;      // [31:20] identifies item (in payload)
 
   # !BSF FIND:{CFGD}
   gCfgData.Signature              | 0x0000 | 0x04 | {'CFGD'}

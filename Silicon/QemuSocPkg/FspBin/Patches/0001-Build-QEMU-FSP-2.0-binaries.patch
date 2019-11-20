@@ -2822,9 +2822,9 @@ index 0000000000..0ebb790c62
 +;
 +;B_Unit Registers
 +;
-+BUNIT_BMISC	                  EQU 6800h
-+  B_BMISC_RESDRAM	            EQU 01h   	;Bit 0 - When this bit is set, reads targeting E-segment are routed to DRAM.
-+  B_BMISC_RFSDRAM	            EQU 02h   	;Bit 1 - When this bit is set, reads targeting F-segment are routed to DRAM.
++BUNIT_BMISC                   EQU 6800h
++  B_BMISC_RESDRAM             EQU 01h   ;Bit 0 - When this bit is set, reads targeting E-segment are routed to DRAM.
++  B_BMISC_RFSDRAM             EQU 02h   ;Bit 1 - When this bit is set, reads targeting F-segment are routed to DRAM.
 +
 +;
 +; HPET compare register
@@ -3120,7 +3120,7 @@ index 0000000000..bdc37670bb
 +;
 +; Port80 Selection
 +;
-+CMOS_PORT80_OFFSET         	  EQU 017h            ; Port80Route
++CMOS_PORT80_OFFSET            EQU 017h            ; Port80Route
 +
 +;
 +;Flash layout map

@@ -25,7 +25,7 @@
     }
     Method(_PSD,0)
     {
-      Return(\_PR.CPU0._PSD)	// Return P0 _PSD.			
+      Return(\_PR.CPU0._PSD)  // Return P0 _PSD.
     }
 
   }
@@ -49,7 +49,7 @@
 
     Method(_PSD,0)
     {
-      Return(\_PR.CPU0._PSD)	// Return P0 _PSD.			
+      Return(\_PR.CPU0._PSD)  // Return P0 _PSD.
     }
 
   }
@@ -74,7 +74,7 @@
 
     Method(_PSD,0)
     {
-      Return(\_PR.CPU0._PSD)	// Return P0 _PSD.			
+      Return(\_PR.CPU0._PSD)  // Return P0 _PSD.
     }
 
   }

@@ -161,7 +161,7 @@ Scope(\_SB) {
 // Note. PRSy name is generated if IRQ Link name starts from "LNK".
 // HLxy , LLxy - reference names, can be used to access bit mask of available IRQs. HL and LL stand for active High(Low) Level triggered Irq model.
 //---------------------------------------------------------------------------
-  Name(PRSA, ResourceTemplate(){	// Link name: LNKA
+  Name(PRSA, ResourceTemplate(){  // Link name: LNKA
     IRQ(Level, ActiveLow, Shared, LLKA) {3,4,5,6,10,11,12,14,15}
   })
   Alias(PRSA,PRSB)  // Link name: LNKB

@@ -13,7 +13,7 @@ Device(XHC) {
   Name (_STR, Unicode ("Broxton XHCI controller (Host only)"))
 
   Method(_S0W, 0x0, NotSerialized)   // _S0W: S0 Device Wake State
-  {	
+  {
     Return(0x3)
   }
   Name (_PRW, Package() {0x0D, 4})  // Declare XHCI GPE status and enable bits are bit 13.

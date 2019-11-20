@@ -191,7 +191,7 @@ DefinitionBlock(
     //   2 - state 2 is the lowest power T-state available.
     //   ...
     //   n - state n is the lowest power T-state available.
-    //	
+    //
     Method(_TDL, 0)
     {
       Store ("Cpu0: _TDL Called", Debug)
@@ -204,7 +204,7 @@ DefinitionBlock(
         Return(Subtract(SizeOf(TSMC),1))
       }
     }
-	
+
     //
     // T-State Dependency
     //
