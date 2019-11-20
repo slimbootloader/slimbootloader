@@ -471,7 +471,7 @@ def main():
 
     parser.add_argument('-p',  '--payload', nargs=2, action='append', type=str, required=True, help='Specify payload information including GUID, FileName')
     parser.add_argument('-k',  '--priv_key', dest='PrivKey', type=str, required=True, help='Private RSA 2048 key in PEM format to sign image')
-    parser.add_argument('-a',  '--alg_hash', dest='HashType', type=str, required=True, help='Hash type for signing')
+    parser.add_argument('-a',  '--alg_hash', dest='HashType', type=str, default='SHA2_256', help='Hash type for signing. Supported types SHA2_256')
     parser.add_argument('-o',  '--output', dest='NewImage', type=str, required=True, help='Output file for signed image')
     parser.add_argument("-v",  "--verbose", dest='Verbose', action="store_true", help= "Turn on verbose output with informational messages printed, including capsule headers and warning messages.")
 
