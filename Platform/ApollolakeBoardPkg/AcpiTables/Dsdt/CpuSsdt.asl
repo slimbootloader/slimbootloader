@@ -71,9 +71,9 @@ Scope(\_PR)
     // PPM Flags Values
     //
     CFGD,    32,       // CFGD - PpmFlags
-	//
-	// Number of Logical Processors Values
-	//
+    //
+    // Number of Logical Processors Values
+    //
     NLPC,    8,        // Number of Logical Processors
     MWEN, 8            // Mwait Enable
   }

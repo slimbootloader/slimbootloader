@@ -83,7 +83,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdFrameBufferMaxConsoleWidth  | 0xFFFFFFFF | UINT32 | 0x20000501
   gPlatformCommonLibTokenSpaceGuid.PcdFrameBufferMaxConsoleHeight | 0xFFFFFFFF | UINT32 | 0x20000502
 
-  gPlatformCommonLibTokenSpaceGuid.PcdLowestSupportedFwVer		  | 0x00000000 | UINT32 | 0x20000601
+  gPlatformCommonLibTokenSpaceGuid.PcdLowestSupportedFwVer        | 0x00000000 | UINT32 | 0x20000601
 
   ## This PCD indicates the HASH algorithm to be included by IPP Crypto library
   #  Based on the value set, the required algorithm hash API would be enabled

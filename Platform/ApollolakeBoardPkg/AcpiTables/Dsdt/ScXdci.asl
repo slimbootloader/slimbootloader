@@ -165,7 +165,7 @@ Scope(\_SB.PCI0)
               Store(Local2, UXPE)
               Return(0)
             }
-			Return(0)
+            Return(0)
           }
 
           Switch(ToInteger(Arg2)){

@@ -62,6 +62,6 @@
 #define RESERVED        0x00
 
 #define PLATFORM_MAX_BUS_NUM                    0xFF
-#define MAIN_COUNTER_MIN_PERIODIC_CLOCK_TICKS	  0x80        //approx 1ms
+#define MAIN_COUNTER_MIN_PERIODIC_CLOCK_TICKS   0x80        //approx 1ms
 
 #endif

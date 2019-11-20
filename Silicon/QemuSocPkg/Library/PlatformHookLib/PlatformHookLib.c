@@ -54,6 +54,6 @@ EFIAPI
 PlatformHookSerialPortInitialize (
   VOID
   )
-{	
+{
   return RETURN_SUCCESS;
 }

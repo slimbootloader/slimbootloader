@@ -729,7 +729,7 @@ def convert_from_inp_to_out (inp_fmt, out_fmt, parts):
 
 # Gen output file in the required format
 def gen_file_from_object (file, object):
-	open (file, 'wb').write(object)
+    open (file, 'wb').write(object)
 
 # Driver function for conversion between formats
 def gpio_convert (args):
