@@ -171,8 +171,10 @@ class CCfgData:
             ('BasePlatformId', c_uint8),
             ('ItemSize', c_uint16),
             ('ItemCount', c_uint16),
-            ('ItemValidByteOffset', c_uint8),
-            ('ItemValidByteMask', c_uint8),
+            ('ItemIdBitOff', c_uint8),
+            ('ItemIdBitLen', c_uint8),
+            ('ItemValidBitOff', c_uint8),
+            ('ItemUnused', c_uint8),
         ]
 
     def __init__ (self):
@@ -231,7 +233,7 @@ class CCfgData:
                         PrintByteArray (CfgData[2], Indent = 5)
                     else:
                         Offset    = 0
-                        DataOffset = CCfgData.CDATA_ITEM_ARRAY.ItemValidByteOffset.offset
+                        DataOffset = sizeof(CCfgData.CDATA_ITEM_ARRAY)
                         BitMaskLen = ArrayInfo.HeaderSize - DataOffset
                         print("    ARRAY HEADER:")
                         PrintByteArray (CfgData[2][:DataOffset], Indent = 5,  Offset=Offset)
@@ -283,7 +285,7 @@ class CCfgData:
                 "Invalid array item count/size field in TAG '0x%03X'!" %
                 Header.Tag)
 
-        BitMaskLen = ArrayInfo.HeaderSize - CCfgData.CDATA_ITEM_ARRAY.ItemValidByteOffset.offset
+        BitMaskLen = ArrayInfo.HeaderSize - sizeof (ArrayInfo)
         ByteWidth  = (ArrayInfo.ItemCount + 7) // 8
         if ByteWidth < 2:
             ByteWidth = 2
@@ -295,8 +297,8 @@ class CCfgData:
         BitMaskDat = bytearray('1' * ArrayInfo.ItemCount + '0' *
                      (BitMaskLen * 8 - ArrayInfo.ItemCount), 'utf-8')
 
-        ItemValidByteOffset = ArrayInfo.ItemValidByteOffset
-        ItemValidByteMask   = ArrayInfo.ItemValidByteMask
+        ItemValidByteOffset = ArrayInfo.ItemValidBitOff // 8
+        ItemValidByteMask   = 1 << (ArrayInfo.ItemValidBitOff & (8 - 1))
 
         DataOff     = ArrayInfo.HeaderSize
         ArrayTagKey = '%03X' % Header.Tag
@@ -336,12 +338,20 @@ class CCfgData:
                 self.CfgDataArrayPidDict[ArrayTagKey]  = self.CfgDataPid[CfgBinFile]
 
             # Check the invliad flag and remove those items
+            ItemDict = {}
             RemovedItem = 0
             Index = 0
             DataLen = len(Data)
             while DataOff < DataLen:
                 Remove = False
                 if ArrayInfo.BasePlatformId == 0x80:
+                    # Check ItemID to make sure it is unique
+                    ItemId = get_bits_from_bytes (Data[DataOff:DataOff + ArrayInfo.ItemSize], ArrayInfo.ItemIdBitOff, ArrayInfo.ItemIdBitLen)
+                    if ItemId not in ItemDict.keys():
+                        ItemDict[ItemId] = 1
+                    else:
+                        raise Exception("ItemId '0x%X' is not unique indicated by ItemIdBitOff/ItemIdBitLen in array header !" % ItemId)
+
                     # It is a base table, remove marker and assemble mask
                     if Data[DataOff + ItemValidByteOffset] & ItemValidByteMask:
                         Data[DataOff + ItemValidByteOffset] = Data[
@@ -372,7 +382,7 @@ class CCfgData:
             BitWidth = BitMaskLen * 8
             MaskHexStr = '{0:0{w}x}'.format(int(BitMaskDat.decode()[::-1], 2), w=BitWidth // 4)
             BinData = bytearray.fromhex(MaskHexStr)[::-1]
-            Offset  = CCfgData.CDATA_ITEM_ARRAY.ItemValidByteOffset.offset
+            Offset  = sizeof (CCfgData.CDATA_ITEM_ARRAY)
             Data[Offset:Offset + BitMaskLen] = BinData
 
             return DataLen

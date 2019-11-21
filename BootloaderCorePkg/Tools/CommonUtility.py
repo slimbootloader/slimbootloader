@@ -61,6 +61,26 @@ AUTH_TYPE_HASH_VALUE = {
 			"RSA3072SHA384"  : 1,
 	}
 
+def get_bits_from_bytes (bytes, start, length):
+	value  = bytes_to_value (bytes)
+	bitlen = 8 * len(bytes)
+	fmt    = "{0:0%db}" % bitlen
+	start  = bitlen - start
+	if start < 0 or start < length:
+		raise Exception ('Invalid bit start and length !')
+	bval  = fmt.format(value)[start - length : start]
+	return int (bval, 2)
+
+def set_bits_to_bytes (bytes, start, length, bvalue):
+	value  = bytes_to_value (bytes)
+	bitlen = 8 * len(bytes)
+	fmt1   = "{0:0%db}" % bitlen
+	fmt2   = "{0:0%db}" % length
+	oldval = fmt1.format(value)[::-1]
+	update = fmt2.format(bvalue)[-length:][::-1]
+	newval = oldval[:start] + update + oldval[start + length:]
+	bytes[:] = value_to_bytes (int(newval[::-1], 2), len(bytes))
+
 def bytes_to_value (bytes):
 	return reduce(lambda x,y: (x<<8)|y,  bytes[::-1] )
 
