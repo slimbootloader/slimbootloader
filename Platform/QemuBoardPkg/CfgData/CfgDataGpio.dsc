@@ -25,16 +25,20 @@
   # !BSF NAME:{ } HELP:{GPIO count in the table} TYPE:{Reserved}
   gCfgData.GpioItemCount          |      * | 0x02  | (_LENGTH_GPIO_CFG_DATA_ - _LENGTH_GPIO_CFG_HDR_) / (_OFFSET_GPIO_DATA_GPP_A1_ - _OFFSET_GPIO_DATA_GPP_A0_)
 
-  # Initial value is GpioValidByteOffset (bit 31 in PAD Cfg DW2) and GpioValidByteMask (0x80) in GpioBaseTableBitMask[0] and [1]
-  # CfgDataTool will check each GPIO table data for:
-  #    *(UINT8 *)(GpioEntryData + GpioValidByteOffset) & GpioValidByteMask
-  #    Ex: (GPIO DW1 >> 24) & 0x80  == if set, skip it. if 0, include this GPIO
-  # If the value is non-zero, a GPIO programming should be skipped.
-  # The CfgDataTool tool will mark a bit in GpioBaseTableBitMask array to indicate a particular GPIO should be skipped or not.
-  #   Length  = Need 1 bit per GPIO entry. There are 8 GPIOs in the below list.
-  #   So 8/8 = 1 bytes needed. Minimum it needs 2 bytes. So reserve 2.
-  # !BSF NAME:{ } HELP:{GPIO bit mask for base table} TYPE:{Reserved}
-  gCfgData.GpioBaseTableBitMask   |      * |    2  | {7, 0x80}  #7 is byte offset 7 within the each GPIO bytes array.  0x80 is the byte mask to indicate if the GPIO pin is used or not.
+  # Bit start offset within each GPIO entry array to identify a GPIO pin uniquely. EX: GPIO pin id
+  # Offset is 2nd DWORD BIT0 = 1 * 32 + 0 = 32
+  gCfgData.GpioItemIdBitOff       |      * | 0x01  | 32
+  # Bit length within each GPIO entry array to identify a GPIO pin uniquely.
+  # Length is 2nd DWORD BIT0 to BIT15 = 16
+  gCfgData.GpioItemIdBitLen       |      * | 0x01  | 16
+  # Bit offset within each GPIO entry array to indicate SKIP a GPIO programming
+  # Offset is 2nd DWORD BIT31 = 63
+  gCfgData.GpioItemValidBitOff    |      * | 0x01  | 63
+  gCfgData.GpioItemUnused         |      * | 0x01  | 0
+
+  # Need 1 bit per GPIO. So this mask byte length needs to be at least (GpioNumber + 7) / 8
+  # Padding can be added to let the whole length aligned at DWORD boundary
+  gCfgData.GpioBaseTableBitMask   |      * |    2  | {0}
 
   gCfgData.GpioTableData          |      * |    0  | 0
   # !HDR EMBED:{GPIO_CFG_HDR:GpioCfgHdr:END}
