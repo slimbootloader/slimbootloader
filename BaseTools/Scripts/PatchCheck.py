@@ -374,8 +374,7 @@ class GitDiffCheck:
         if self.force_crlf and eol != '\r\n':
             self.added_line_error('Line ending (%s) is not CRLF' % repr(eol),
                                   line)
-        # TBD: Skip python file for now
-        if '\t' in line and not self.filename.endswith('.py'):
+        if '\t' in line:
             self.added_line_error('Tab character used', line)
         if len(stripped) < len(line):
             self.added_line_error('Trailing whitespace found', line)
