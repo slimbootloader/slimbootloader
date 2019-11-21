@@ -42,9 +42,10 @@
 
     // NOTE:  Any PCIE Hot-Plug dependency for this port is
     // specific to the CRB.  Please modify the code based on
-    // your platform requirements.
+    // your platform requirements: see the relevant section
+    // in Sc.asl before ScPcie.asl is included.
 
-    Name(_PRW, Package(){8,4}) //Wake bit for WiFi is 8
+    Name(_PRW, Package(){_PRF,4})
   }
 
   //
