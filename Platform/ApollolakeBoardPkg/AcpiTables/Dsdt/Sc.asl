@@ -106,8 +106,9 @@ scope (\_SB.PCI0) {
         Return (0x00140000)
       }
     }
+    Name(_PRF, 0x09)
     Include("ScPcie.asl")
-    Method(_PRW, 0) { Return(GPRW(0x09, 4)) }  // can wakeup from S4 state
+    Method(_PRW, 0) { Return(GPRW(_PRF, 4)) }  // can wakeup from S4 state
     Method(_PRT, 0) {
       If(PICM) { Return(AR04) }// APIC mode
       Return (PR04) // PIC Mode
@@ -125,8 +126,9 @@ scope (\_SB.PCI0) {
         Return (0x00140001)
       }
     }
+    Name(_PRF, 0x08)
     Include("ScPcie.asl")
-    Method(_PRW, 0) { Return(GPRW(0x08, 4)) }  //GPE enable bit for RP2 is 8, can wake up from S4 state
+    Method(_PRW, 0) { Return(GPRW(_PRF, 4)) }  // Leaf Hill CRB: GPE enable bit for RP2 is 8, can wake up from S4 state
     Method(_PRT, 0) {
       If(PICM) { Return(AR05) }// APIC mode
       Return (PR05) // PIC Mode
@@ -145,7 +147,8 @@ scope (\_SB.PCI0) {
       }
     }
     Include("ScPcie.asl")
-    Method(_PRW, 0) { Return(GPRW(0x09, 4)) }  // can wakeup from S4 state
+    Name(_PRF, 0x09)
+    Method(_PRW, 0) { Return(GPRW(_PRF, 4)) }  // can wakeup from S4 state
     Method(_PRT, 0) {
       If(PICM) { Return(AR04) }// APIC mode
       Return (PR04) // PIC Mode
@@ -163,8 +166,9 @@ scope (\_SB.PCI0) {
         Return (0x00130001)
       }
     }
+    Name(_PRF, 0x09)
     Include("ScPcie.asl")
-    Method(_PRW, 0) { Return(GPRW(0x09, 4)) }  // can wakeup from S4 state
+    Method(_PRW, 0) { Return(GPRW(_PRF, 4)) }  // can wakeup from S4 state
     Method(_PRT, 0) {
       If(PICM) { Return(AR05) }// APIC mode
       Return (PR05) // PIC Mode
@@ -182,8 +186,9 @@ scope (\_SB.PCI0) {
         Return (0x00130002)
       }
     }
+    Name(_PRF, 0x03)
     Include("ScPcie.asl")
-    Method(_PRW, 0) { Return(GPRW(0x09, 4)) }  // can wakeup from S4 state
+    Method(_PRW, 0) { Return(GPRW(_PRF, 4)) }  // Leaf Hill CRB: GPE enable bit for RP5 is 3, can wakeup from S4 state
     Method(_PRT, 0) {
       If(PICM) { Return(AR06) }// APIC mode
       Return (PR06) // PIC Mode
@@ -201,8 +206,9 @@ scope (\_SB.PCI0) {
         Return (0x00130003)
       }
     }
+    Name(_PRF, 0x09)
     Include("ScPcie.asl")
-    Method(_PRW, 0) { Return(GPRW(0x09, 4)) }  // can wakeup from S4 state
+    Method(_PRW, 0) { Return(GPRW(_PRF, 4)) }  // can wakeup from S4 state
     Method(_PRT, 0) {
       If(PICM) { Return(AR07) }// APIC mode
       Return (PR07) // PIC Mode

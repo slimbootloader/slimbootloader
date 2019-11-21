@@ -32,6 +32,14 @@ Scope(\_GPE)
       Notify(\_SB.PCI0.SATA.PRT0, 2) // Device Wake (Windows)
     }
 
+  // Leaf Hill CRB: RP05 is LAN
+  // GPE enable bit is 3
+  Method(_L03, 0) {
+    \_SB.PCI0.RP05.HPME()
+    Notify(\_SB.PCI0.RP05, 0x02)
+  }
+  // Leaf Hill CRB: RP02 is WiFi/BT
+  // GPE enable bit is 8
   Method(_L08, 0) {
     \_SB.PCI0.RP02.HPME()
     Notify(\_SB.PCI0.RP02, 0x02)
