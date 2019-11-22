@@ -214,19 +214,19 @@ def decompress (in_file, out_file, tool_dir = ''):
 
     lz_hdr = LZ_HEADER.from_buffer (di)
     offset = sizeof (lz_hdr)
-    if lz_hdr.signature == "LZDM":
+    if lz_hdr.signature == b"LZDM":
         fo = open(out_file,'wb')
         fo.write(di[offset:offset + lz_hdr.compressed_len])
         fo.close()
         return
 
     temp   = os.path.splitext(out_file)[0] + '.tmp'
-    if lz_hdr.signature == "LZMA":
+    if lz_hdr.signature == b"LZMA":
         alg = "Lzma"
-    elif lz_hdr.signature == "LZ4 ":
+    elif lz_hdr.signature == b"LZ4 ":
         alg = "Lz4"
     else:
-        raise Exception ("Unsupported compression '%s' !" % alg)
+        raise Exception ("Unsupported compression '%s' !" % lz_hdr.signature)
     fo = open(temp, 'wb')
     fo.write(di[offset:offset + lz_hdr.compressed_len])
     fo.close()

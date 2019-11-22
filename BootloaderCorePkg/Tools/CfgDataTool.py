@@ -1,6 +1,6 @@
 ## @ CfgDataTool.py
 #
-# Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -11,6 +11,7 @@ sys.dont_write_bytecode = True
 from   IfwiUtility import *
 from   CommonUtility import *
 
+CFGDATA_INT_GUID = b'\xD0\x6C\x6E\x01\x34\x48\x7E\x4C\xBC\xFE\x41\xDF\xB8\x8A\x6A\x6D'
 
 class CDATA_BLOB_HEADER(Structure):
     ATTR_EXTERN = 1 << 0
@@ -584,6 +585,200 @@ class CCfgData:
             Fout.write (CfgdHdr)
             Fout.write (BinDat)
 
+
+def GetCfgDataByTag (CfgData, Pid, Tag, IsInternal = False):
+    Idx = 0 if IsInternal else 1
+    CfgFile, (CfgItemList, CfgBlobHdr, IsBuiltIn) = list(CfgData[Idx].CfgDataBase.items())[0]
+
+    for CfgItem in CfgItemList:
+        TagHdr, CondBin, DataBin = CfgItem[0]
+        CfgTagHdr = CCfgData.CDATA_HEADER.from_buffer(TagHdr)
+        if CfgTagHdr.Tag != Tag:
+            continue
+        if (CfgTagHdr.Tag != CCfgData.CDATA_PLATFORM_ID.TAG) and (CfgItem[1] & (1 << Pid) == 0):
+            continue
+
+        if (CfgTagHdr.Flags & CCfgData.CDATA_HEADER.FLAG_ITEM_TYPE_MASK) == CCfgData.CDATA_HEADER.FLAG_ITEM_TYPE_ARRAY:
+            ArrayInfo = CCfgData.CDATA_ITEM_ARRAY.from_buffer(DataBin)
+            if ArrayInfo.BasePlatformId < 0x80:
+                RefPid = ArrayInfo.BasePlatformId
+                TagHdr, CondBin, BaseDataBin = GetCfgDataByTag (CfgData, RefPid, Tag, True)
+
+                CurrArrayInfo = CCfgData.CDATA_ITEM_ARRAY.from_buffer(DataBin)
+                BaseArrayInfo = CCfgData.CDATA_ITEM_ARRAY.from_buffer(BaseDataBin)
+
+                # Zero masks
+                NewDataBin = bytearray (BaseDataBin)
+                Offset     = BaseArrayInfo.HeaderSize
+                MaskOff    = sizeof(BaseArrayInfo)
+                MaskLen    = Offset - MaskOff
+                NewDataBin[MaskOff : MaskOff + MaskLen] = b'\x00' * MaskLen
+                NewArrayInfo = CCfgData.CDATA_ITEM_ARRAY.from_buffer(NewDataBin)
+                NewArrayInfo.BasePlatformId = 0xFF
+
+                # Copy entries from base table
+                ItemDict = {}
+                ItemLen  = BaseArrayInfo.ItemSize
+                for Idx1 in range (BaseArrayInfo.ItemCount):
+                    Off1     = Offset + Idx1 * ItemLen
+                    BaseItem = BaseDataBin[Off1 : Off1 + ItemLen]
+                    ItemId   = get_bits_from_bytes (BaseItem, BaseArrayInfo.ItemIdBitOff, BaseArrayInfo.ItemIdBitLen)
+                    NewItem  = NewDataBin[Off1 : Off1 + ItemLen]
+                    if DataBin[MaskOff + (Idx1 >> 3)] & (1 << (Idx1 & 7)):
+                        set_bits_to_bytes (NewItem, BaseArrayInfo.ItemValidBitOff, 1, 0)
+                    else:
+                        ItemDict[ItemId] = Idx1
+                        set_bits_to_bytes (NewItem, BaseArrayInfo.ItemValidBitOff, 1, 1)
+                    NewDataBin[Off1 : Off1 + ItemLen] = NewItem
+
+                for Idx2 in range (CurrArrayInfo.ItemCount):
+                    Off2 = Offset + Idx2 * ItemLen
+                    CurrItem = DataBin[Off2 : Off2 + ItemLen]
+                    ItemId   = get_bits_from_bytes (CurrItem, BaseArrayInfo.ItemIdBitOff, BaseArrayInfo.ItemIdBitLen)
+                    Idx1 = ItemDict[ItemId]
+                    Off1 = Offset + Idx1 * ItemLen
+                    NewDataBin[Off1 : Off1 + ItemLen] = CurrItem
+
+                DataBin = NewDataBin
+
+        elif (CfgTagHdr.Flags & CCfgData.CDATA_HEADER.FLAG_ITEM_TYPE_MASK) == CCfgData.CDATA_HEADER.FLAG_ITEM_TYPE_REFER:
+            Refer = CCfgData.CDATA_REFERENCE.from_buffer(DataBin)
+            TagHdrInt, CondBinInt, DataBin = GetCfgDataByTag (CfgData, Refer.PlatformId, Refer.Tag, True)
+
+        return  TagHdr, CondBin, DataBin
+
+
+def CmdExport(Args):
+    OutputDir     = Args.output_dir
+    if not os.path.exists(OutputDir):
+        os.mkdir (OutputDir)
+
+    # Locate CFGDATA in BIOS region
+    IfwiBin = bytearray (get_file_data(Args.ifwi_file))
+    IfwiParser = IFWI_PARSER ()
+    Ifwi = IfwiParser.parse_ifwi_binary (IfwiBin)
+    Cfgs = IfwiParser.find_components(Ifwi, 'CNFG')
+    if not Cfgs:
+        IsBpdt  = True
+        Cfgs = IfwiParser.find_components(Ifwi, 'CFGD')
+    else:
+        IsBpdt  = False
+        PartFmt = '/RD%%d/'
+
+    if len(Cfgs) == 0:
+        print ("ERROR: Conld not find external CFGDATA !")
+        return -1
+
+    # Adjust path to point to proper boot partition
+    Bp = int(Args.boot_part)
+    CfgdPath = ''
+    for Cfgd in Cfgs:
+        CfgdPath = IfwiParser.get_component_path (Cfgd)
+        if IsBpdt:
+            PartStr = '/BP%d/' % Bp
+        else:
+            PartStr = '/RD%d/' % Bp
+        if PartStr in CfgdPath:
+            break
+
+    # For non-redundant layout, just use the 1st CFGD found
+    if CfgdPath == '':
+        print ('INFO: No redundant boot partition found !')
+        CfgdPath = Cfgs[0]
+
+    # Locate Stage1B image
+    Stage1bName = 'IBB' if IsBpdt else 'SG1B'
+    Stage1bPath = '/'.join(CfgdPath.split('/')[:-1]) + '/%s' % Stage1bName
+    Stage1bComp = IfwiParser.locate_component (Ifwi, Stage1bPath)
+    if not Stage1bComp:
+        print ('ERROR: Failed to extract external STAGE1B !')
+        return -2
+
+    # Decompress Stage1B image if required
+    Stage1bBin  = IfwiBin[Stage1bComp.offset : Stage1bComp.offset + Stage1bComp.length]
+    if Stage1bBin[0:2] == b'LZ':
+        if Args.tool_dir == '':
+            print ("ERROR: '-t' is required to specify compress tool directory !")
+            return -3
+
+        Stage1bLz = OutputDir + '/Stage1b.lz'
+        Stage1bFd = OutputDir + '/Stage1b.fd'
+        gen_file_from_object (Stage1bLz, Stage1bBin)
+        decompress (Stage1bLz, Stage1bFd, tool_dir = Args.tool_dir)
+        Stage1bBin = bytearray (get_file_data (Stage1bFd))
+
+    # Locate and generate internal CFGDATA
+    Offset = Stage1bBin.find (CFGDATA_INT_GUID)
+    if Offset < 0:
+        print ('ERROR: Failed to locate internal CFGDATA !')
+        return -4
+
+    Offset += 0x1C
+    CfgBlobHeader = CCfgData.CDATA_BLOB_HEADER.from_buffer(Stage1bBin, Offset)
+    if CfgBlobHeader.Signature != b'CFGD':
+        print ('ERROR: Invalid internal CFGDATA format !')
+        return -5
+
+    CfgDataInt =  Stage1bBin[Offset : Offset + CfgBlobHeader.TotalLength]
+    CfgBinIntFile = OutputDir + '/CfgDataInt.bin'
+    gen_file_from_object (CfgBinIntFile, CfgDataInt)
+
+    # Generate external CFGDATA
+    CfgBinExtFile = OutputDir + '/CfgDataExt.bin'
+    gen_file_from_object (CfgBinExtFile, IfwiBin[Cfgd.offset : Cfgd.offset + Cfgd.length])
+
+    # Parse CFGDATA blobs
+    CfgDataInt = CCfgData()
+    CfgDataInt.Parse(CfgBinIntFile)
+    CfgDataExt = CCfgData()
+    CfgDataExt.Parse(CfgBinExtFile)
+
+    # Generate CfgDataDef blob
+    CfgFile, (CfgIntItemList, CfgIntBlobHdr, IsBuiltIn) = list(CfgDataInt.CfgDataBase.items())[0]
+    CfgDefLen = sizeof(CfgIntBlobHdr)
+    TagDict = collections.OrderedDict()
+    for Idx, CfgIntItem in enumerate(CfgIntItemList):
+        TagHdr, CondBin, DataBin = CfgIntItem[0]
+        CfgTagHdr = CCfgData.CDATA_HEADER.from_buffer(TagHdr)
+        if CfgTagHdr.Tag in TagDict.keys():
+            break
+        else:
+            TagDict[CfgTagHdr.Tag] = Idx
+            CfgDefLen += (len(TagHdr) + len(CondBin) + len(DataBin))
+
+    CfgDefBlobHdr = CCfgData.CDATA_BLOB_HEADER.from_buffer(bytearray(CfgIntBlobHdr))
+    CfgDefBlobHdr.UsedLength   = CfgDefLen
+    CfgDefBlobHdr.TotalLength  = CfgDefLen
+    CfgDefBlobHdr.Attribute    = 0
+
+    # Collect available platform ID
+    PidMask = 0
+    CfgFile, (CfgExtItemList, CfgExtBlobHdr, IsBuiltIn) = list(CfgDataExt.CfgDataBase.items())[0]
+    for CfgItem in CfgExtItemList:
+        PidMask |= CfgItem[1]
+
+    # Export board specific external CFGDATA
+    for Pid in range(32):
+        if (1 << Pid) & PidMask == 0:
+            continue
+
+        print ('Exporting external CFGDATA for PlatformID = 0x%02X' % Pid)
+        CfgDataBrd = bytearray (CfgDefBlobHdr)
+        CfgData    = [CfgDataInt, CfgDataExt]
+        for Tag in TagDict.keys():
+            TagHdr, CondBin, DataBin = GetCfgDataByTag (CfgData, Pid, Tag)
+            CfgTagHdr = CCfgData.CDATA_HEADER.from_buffer(TagHdr)
+            CondBin = b'\x00' * sizeof(CCfgData.CDATA_COND)
+            TagHdr  = bytearray (CfgIntItemList[TagDict[Tag]][0][0])
+            NewData = bytearray (DataBin)
+            if  CfgTagHdr.Tag == CCfgData.CDATA_PLATFORM_ID.TAG:
+                PidCfg = CCfgData.CDATA_PLATFORM_ID.from_buffer(NewData)
+                PidCfg.PlatformId = Pid
+            CfgDataBrd.extend (TagHdr + CondBin + NewData)
+
+        gen_file_from_object (OutputDir + '/CfgData_%02X.bin' % Pid, CfgDataBrd)
+
+
 def CmdView(Args):
     CfgData = CCfgData()
     for CfgBinFile in Args.cfg_in_file:
@@ -816,6 +1011,13 @@ def Main():
     ReplaceParser.add_argument('-o', dest='ifwi_out_file', type=str,  help='Specify IFWI output binary file', default='')
     ReplaceParser.add_argument('-p', dest='pdr', action='store_true', help='Replace CFGDATA in PDR region', default=False)
     ReplaceParser.set_defaults(func=CmdReplace)
+
+    ExportParser = SubParser.add_parser('export', help='Export board external CFGDATA from BIOS or IFWI file')
+    ExportParser.add_argument('-i', dest='ifwi_file',  type=str,  help='Specify BIOS or IFWI input binary file', required=True)
+    ExportParser.add_argument('-b', dest='boot_part', choices=['0', '1'], help='Specify which boot partition to export CFGDATA from', default = '0')
+    ExportParser.add_argument('-o', dest='output_dir', type=str,  help='Specify output directory', default='.')
+    ExportParser.add_argument('-t', dest='tool_dir', type=str,  help='Specify compress tool directory', default='')
+    ExportParser.set_defaults(func=CmdExport)
 
     Args = ArgParser.parse_args()
     Args.func(Args)
