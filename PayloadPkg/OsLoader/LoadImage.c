@@ -376,6 +376,7 @@ GetTraditionalLinux (
   MENU_ENTRY                 *MenuEntry;
   EFI_HANDLE                 FileHandle;
   BOOLEAN                    DefBootOption;
+  UINT32                     Size;
 
   ConfigFile     = NULL;
   ConfigFileSize = 0;
@@ -470,13 +471,18 @@ GetTraditionalLinux (
   }
 
   // Update command line
-  LinuxImage->CmdFile.Size = LinuxBootCfg.MenuEntry[EntryIdx].Command.Len;
-  if ((LinuxImage->CmdFile.Size > 0) && (ConfigFile != NULL)) {
+  Size = LinuxBootCfg.MenuEntry[EntryIdx].Command.Len;
+  FreeImageData (&LinuxImage->CmdFile);
+  if ((Size > 0) && (ConfigFile != NULL)) {
+    LinuxImage->CmdFile.Addr = AllocatePool (Size);
+    if (LinuxImage->CmdFile.Addr == NULL) {
+      FreePool (ConfigFile);
+      return EFI_OUT_OF_RESOURCES;
+    }
+    LinuxImage->CmdFile.Size = Size;
+
     Ptr = (CHAR8 *)ConfigFile + LinuxBootCfg.MenuEntry[EntryIdx].Command.Pos;
-    Ptr[LinuxImage->CmdFile.Size] = 0;
-    CopyMem (LinuxImage->CmdFile.Addr, Ptr, LinuxImage->CmdFile.Size);
-  } else {
-    LinuxImage->CmdFile.Addr = 0;
+    CopyMem (LinuxImage->CmdFile.Addr, Ptr, Size);
   }
 
   // Load InitRd, optional
