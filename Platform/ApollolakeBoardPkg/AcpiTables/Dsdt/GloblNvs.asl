@@ -56,4 +56,11 @@
     M32L,    32,    //   PCIE MMIO resource length
     ADFM,    32,    //   HD-Audio DSP Feature Mask
     ADPM,    32,    //   Hd-Audio DSP Post-Processing Module Mask
+    RPW1,     8,    //   RP 1 wake GPE bit
+    RPW2,     8,    //   RP 2 wake GPE bit
+    RPW3,     8,    //   RP 3 wake GPE bit
+    RPW4,     8,    //   RP 4 wake GPE bit
+    RPW5,     8,    //   RP 5 wake GPE bit
+    RPW6,     8,    //   RP 6 wake GPE bit
+    RSV5,    16,    //   Reserved for alignment
 }

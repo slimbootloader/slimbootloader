@@ -40,12 +40,10 @@
   {
     Name(_ADR, 0x00000000)
 
-    // NOTE:  Any PCIE Hot-Plug dependency for this port is
-    // specific to the CRB.  Please modify the code based on
-    // your platform requirements: see the relevant section
-    // in Sc.asl before ScPcie.asl is included.
+    Method(_PRW, 0) {
+      Return(GPRW(PCIE_WAKE_GPE_BIT, 4))
+    }  // can wakeup from S4 state
 
-    Name(_PRW, Package(){_PRF,4})
   }
 
   //
