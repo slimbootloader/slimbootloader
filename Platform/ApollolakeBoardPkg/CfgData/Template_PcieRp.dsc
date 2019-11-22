@@ -83,7 +83,13 @@
 
       # !BSF NAME:{Power Reserved} TYPE:{Reserved}
       # !BSF CONDITION:{$(COND_PCIE_RP_PWR_PIN_SKIP)}
-      # !BSF FIELD:{Rsvd1:10b}
+      # !BSF FIELD:{Rsvd1:7b}
+
+      # !BSF NAME:{Wake Signal}
+      # !BSF TYPE:{Combo}
+      # !BSF OPTION:{0x0:Disable, 0x1:PCIE_WAKE0, 0x2:PCIE_WAKE1, 0x3:PCIE_WAKE2, 0x4:PCIE_WAKE3}
+      # !BSF HELP:{Specify the PCIE wake signal connected to this port}
+      # !BSF FIELD:{Wake:3b}
 
     # !BSF PAGES:{PLT_RST_$(1):PLT_PCIE_RP_CTRL_PIN_RST:"PCIE RP $(1)"}
     # !BSF PAGE:{PLT_RST_$(1)}

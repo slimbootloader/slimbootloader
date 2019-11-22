@@ -11,6 +11,7 @@
 
 UINT32       mOtgDualRoleCfg0 = 0;
 
+CONST UINT8  mPcieRpWakeGpeBit[5] = {9, 3, 6, 7, 8};
 /**
   Create NHLT (Non HDA-Link Table)
 
@@ -1669,6 +1670,10 @@ PlatformUpdateAcpiGnvs (
   SYS_CPU_INFO         *SysCpuInfo;
   HDA_CFG_DATA         *HdaCfgData;
   DEV_EN_CFG_DATA      *DevEnCfgData;
+  PCIE_RP_CFG_DATA     *PcieRpConfigData;
+  PCIE_RP_PIN_CTRL     *PowerResetData;
+  UINT8                Idx1;
+  UINT8                Idx2;
 
   Gnvs = (GLOBAL_NVS_AREA *)GnvsIn;
   Pnvs = &Gnvs->PlatformNvs;
@@ -1697,6 +1702,19 @@ PlatformUpdateAcpiGnvs (
   if ((HdaCfgData != NULL) && (HdaCfgData->DspEnable == TRUE)) {
     Pnvs->HdaDspFeatureMask     = HdaCfgData->DspFeatureMask;
     Pnvs->HdaDspModMask         = HdaCfgData->DspPpModuleMask;
+  }
+
+  PcieRpConfigData  = (PCIE_RP_CFG_DATA *)FindConfigDataByTag (CDATA_PCIE_RP_TAG);
+  if (PcieRpConfigData != NULL) {
+    PowerResetData = (PCIE_RP_PIN_CTRL *) PcieRpConfigData->PcieRpPinCtrlData0;
+    for (Idx1 = 0; Idx1 < PCIE_MAX_ROOT_PORTS; Idx1++) {
+      Idx2 = (UINT8)PowerResetData->PcieRpPower0.Wake;
+      if (Idx2 > sizeof(mPcieRpWakeGpeBit)) {
+        Idx2 = 0;
+      }
+      Pnvs->PcieRpGpeWakeBit[Idx1] = mPcieRpWakeGpeBit[Idx2];
+      PowerResetData++;
+    }
   }
 
   SocUpdateAcpiGnvs ((VOID *)Gnvs);
