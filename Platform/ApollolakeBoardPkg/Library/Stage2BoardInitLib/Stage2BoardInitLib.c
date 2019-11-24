@@ -590,6 +590,22 @@ ProgramSecuritySetting (
   MmioOr8 (SpiBaseAddress + R_SPI_BCR, (UINT8) (B_SPI_BCR_BLE | B_SPI_BCR_EISS));
 }
 
+/**
+  Set IA Untrust mode at the end.
+
+**/
+VOID
+EFIAPI
+EnterIaUnTrustMode (
+  VOID
+  )
+{
+  UINT64      Data;
+
+  Data = AsmReadMsr64 (EFI_MSR_POWER_MISC);
+  Data |= B_EFI_MSR_POWER_MISC_ENABLE_IA_UNTRUSTED_MODE;
+  AsmWriteMsr64 (EFI_MSR_POWER_MISC, Data);
+}
 
 /**
   Platform specific initialization for BSP and APs.
@@ -605,12 +621,12 @@ PlatformCpuInit (
   UINT32         CpuIndex
   )
 {
-  UINT64         Data;
-
-  // Set IA_Untrusted mode
-  Data = AsmReadMsr64 (EFI_MSR_POWER_MISC);
-  Data |= B_EFI_MSR_POWER_MISC_ENABLE_IA_UNTRUSTED_MODE;
-  AsmWriteMsr64 (EFI_MSR_POWER_MISC, Data);
+  if (CpuIndex != 0) {
+    // Set IA_Untrusted mode for APs.
+    // BSP will be done at the very end. If it is set too early, it will
+    // block FSP functions inside notifications.
+    EnterIaUnTrustMode ();
+  }
 }
 
 /**
@@ -754,6 +770,7 @@ BoardInit (
     break;
   case EndOfFirmware:
     ClearFspHob ();
+    EnterIaUnTrustMode ();
     // Clear known MCA logged in BANK4 and enable this MCA again
     AsmWriteMsr64 (IA32_MC4_STATUS, 0);
     AsmMsrOr32    (IA32_MC4_CTL,    (UINT32)BIT4);
