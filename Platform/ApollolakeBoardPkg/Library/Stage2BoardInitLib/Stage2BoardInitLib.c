@@ -589,8 +589,6 @@ ProgramSecuritySetting (
 
   // Set the BIOS Lock Enable and EISS bits
   MmioOr8 (SpiBaseAddress + R_SPI_BCR, (UINT8) (B_SPI_BCR_BLE | B_SPI_BCR_EISS));
-
-  ClearFspHob ();
 }
 
 
@@ -756,6 +754,7 @@ BoardInit (
     IoWrite32 (ACPI_BASE_ADDRESS + R_TCO1_CNT, TcoCnt | B_TCO1_CNT_LOCK);
     break;
   case EndOfFirmware:
+    ClearFspHob ();
     // Clear known MCA logged in BANK4 and enable this MCA again
     AsmWriteMsr64 (IA32_MC4_STATUS, 0);
     AsmMsrOr32    (IA32_MC4_CTL,    (UINT32)BIT4);

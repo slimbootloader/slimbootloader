@@ -1172,8 +1172,6 @@ BoardInit (
     if ((GetBootMode() != BOOT_ON_FLASH_UPDATE) && (GetPayloadId() != 0)) {
       // Set the BIOS Lock Enable and EISS bits
       MmioOr8 (SpiBaseAddress + R_SPI_BCR, (UINT8) (B_SPI_BCR_BLE | B_SPI_BCR_EISS));
-
-      ClearFspHob ();
     }
     break;
   case ReadyToBoot:
@@ -1232,8 +1230,6 @@ BoardInit (
     //
     MmioOr8 (PCH_PWRM_BASE_ADDRESS + R_PMC_PWRM_GEN_PMCON_B, (UINT8)B_PMC_PWRM_GEN_PMCON_B_SMI_LOCK);
 
-    ClearFspHob ();
-
     //
     // Lock down Tco WDT just before handling off to OS
     //
@@ -1241,6 +1237,7 @@ BoardInit (
     IoOr16 ((TcoBase + R_TCO_IO_TCO1_CNT), B_TCO_IO_TCO1_CNT_LOCK);
     break;
   case EndOfFirmware:
+    ClearFspHob ();
     break;
   default:
     break;
