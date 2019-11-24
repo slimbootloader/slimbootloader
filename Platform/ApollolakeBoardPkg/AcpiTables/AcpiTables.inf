@@ -34,6 +34,8 @@
   Platform/CommonBoardPkg/AcpiTables/Tpm/Tpm2.aslc
   Platform/CommonBoardPkg/AcpiTables/Tpm/TpmSsdt.asl
   Platform/CommonBoardPkg/AcpiTables/Fpdt/Fpdt.aslc
+  Platform/CommonBoardPkg/AcpiTables/Dsdt/AslInc.h
+
 
 [Packages]
   MdePkg/MdePkg.dec
