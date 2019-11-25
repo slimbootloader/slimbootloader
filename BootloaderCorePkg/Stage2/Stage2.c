@@ -368,32 +368,23 @@ SecStartup (
 
   // Call FspSiliconInit
   BoardInit (PreSiliconInit);
-  AddMeasurePoint (0x3020);
+
+  AddMeasurePoint (0x3010);
 
   // Save NVS data
   NvsData = GetFspNvsDataBuffer (LdrGlobal->FspHobList, &MrcDataLen);
   if ((NvsData != NULL) && (MrcDataLen > 0)) {
     DEBUG ((DEBUG_INFO, "Save MRC Training Data (0x%p 0x%06X) ... ", NvsData, MrcDataLen));
     SubStatus = SaveNvsData (NvsData, MrcDataLen);
-    AddMeasurePoint (0x3070);
     DEBUG ((DEBUG_INFO, "%X\n", SubStatus));
   }
 
+  DEBUG ((DEBUG_INIT, "Silicon Init\n"));
+  AddMeasurePoint (0x3020);
   Status = CallFspSiliconInit ();
   AddMeasurePoint (0x3030);
+  FspResetHandler (Status);
   ASSERT_EFI_ERROR (Status);
-
-  //
-  // Reset the system if FSP API returned FSP_STATUS_RESET_REQUIRED status
-  //
-  if ((Status >= FSP_STATUS_RESET_REQUIRED_COLD) && (Status <= FSP_STATUS_RESET_REQUIRED_8)) {
-    DEBUG ((DEBUG_INIT, "FSP Reboot\n"));
-    if (Status == FSP_STATUS_RESET_REQUIRED_WARM) {
-      ResetSystem(EfiResetWarm);
-    } else {
-      ResetSystem(EfiResetCold);
-    }
-  }
 
   BoardInit (PostSiliconInit);
   AddMeasurePoint (0x3040);

@@ -85,8 +85,10 @@ DefPerfIdToStr (
     return "Rebase Stage2";
   case 0x3000:
     return "Stage2 entry point";
-  case 0x3020:
+  case 0x3010:
     return "Board PreSiliconInit hook";
+  case 0x3020:
+    return "Save NVS data";
   case 0x3030:
     return "FSP SiliconInit";
   case 0x3040:
@@ -95,8 +97,6 @@ DefPerfIdToStr (
     return "Display splash";
   case 0x3060:
     return "MP wake up";
-  case 0x3070:
-    return "Save NVS data";
   case 0x3080:
     return "MP init run";
   case 0x3090:

@@ -297,6 +297,7 @@ SecStartup2 (
   AddMeasurePoint (0x2020);
   Status = CallFspMemoryInit (PCD_GET32_WITH_ADJUST (PcdFSPMBase), &HobList);
   AddMeasurePoint (0x2030);
+  FspResetHandler (Status);
   ASSERT_EFI_ERROR (Status);
 
   //

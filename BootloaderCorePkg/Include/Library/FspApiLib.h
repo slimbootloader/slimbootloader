@@ -126,4 +126,17 @@ RebaseFspComponent (
   UINT32   Delta
   );
 
+
+/**
+  This function will handle FSP reset request.
+
+  @param[in] Status     FSP API return status.
+
+**/
+VOID
+EFIAPI
+FspResetHandler (
+  IN  EFI_STATUS   Status
+  );
+
 #endif
