@@ -16,6 +16,7 @@ const PLATFORM_SERVICE   mPlatformService = {
   .NotifyPhase      = BoardNotifyPhase
 };
 
+
 /**
   Platform notify service.
 
@@ -29,6 +30,7 @@ BoardNotifyPhase (
 {
   FSP_INIT_PHASE  FspPhase;
   UINT8           FspPhaseMask;
+  EFI_STATUS      Status;
 
   // This is board notification from payload
   FspPhaseMask = 0;
@@ -46,7 +48,10 @@ BoardNotifyPhase (
   if (FspPhaseMask != 0) {
     if ((FspPhaseMask & mFspPhaseMask) == 0) {
       // Only call FSP notify once
-      CallFspNotifyPhase (FspPhase);
+      Status = CallFspNotifyPhase (FspPhase);
+      FspResetHandler (Status);
+      ASSERT_EFI_ERROR (Status);
+
       mFspPhaseMask |= FspPhaseMask;
     }
 

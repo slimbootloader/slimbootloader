@@ -25,7 +25,7 @@
   FspMemoryInit.c
   FspSiliconInit.c
   FspNotifyPhase.c
-  FspRebase.c
+  FspMisc.c
 
 [Sources.IA32]
   Ia32/FspTempRamInit.nasm
@@ -40,6 +40,7 @@
   BaseLib
   DebugLib
   BaseMemoryLib
+  ResetSystemLib
 
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdFSPMBase
