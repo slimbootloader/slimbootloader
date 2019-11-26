@@ -315,6 +315,9 @@ SecStartup (
   TimeStamp     = ReadTimeStamp ();
   Stage1aAsmHob = (STAGE1A_ASM_HOB *)Params;
 
+  // Enable more CPU featurs
+  AsmEnableAvx ();
+
   // Init global data
   LdrGlobal = &LdrGlobalData;
   ZeroMem (LdrGlobal, sizeof (LOADER_GLOBAL_DATA));

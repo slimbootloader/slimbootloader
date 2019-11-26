@@ -50,6 +50,7 @@
   FspApiLib
   CpuExceptionLib
   DebugAgentLib
+  ExtraBaseLib
 
 [Guids]
   gPlatformModuleTokenSpaceGuid

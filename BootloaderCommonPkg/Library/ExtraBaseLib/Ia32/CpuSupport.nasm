@@ -47,3 +47,36 @@ FlushExit:
     pop     ecx
     ret
 
+
+;------------------------------------------------------------------------------
+; VOID
+; EFIAPI
+; AsmEnableAvx (
+;   VOID
+;   );
+;------------------------------------------------------------------------------
+global ASM_PFX(AsmEnableAvx)
+ASM_PFX(AsmEnableAvx):
+    ;
+    ; Check if AVX is supported
+    ;
+    mov     eax, 1
+    cpuid
+    and     ecx, 014000000h
+    cmp     ecx, 014000000h       ; check both XSAVE and AVX feature flags
+    jne     NoAvxSupport
+
+    ;
+    ; Enable AVX
+    ;
+    mov     eax, cr4
+    or      eax, 00040000h
+    mov     cr4, eax
+    xor     ecx, ecx              ; XFEATURE_ENABLED_MASK register
+    xor     edx, edx
+    xor     eax, eax
+    mov     ax,  7h               ; mask in edx:eax
+    xsetbv
+
+NoAvxSupport:
+    ret

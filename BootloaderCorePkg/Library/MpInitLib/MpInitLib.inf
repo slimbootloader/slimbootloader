@@ -39,6 +39,7 @@
   LocalApicLib
   SynchronizationLib
   SortLib
+  ExtraBaseLib
 
 [Guids]
 
