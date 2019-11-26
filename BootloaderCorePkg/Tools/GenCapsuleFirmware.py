@@ -16,7 +16,7 @@ from ctypes import *
 
 sys.dont_write_bytecode = True
 from BuildUtility import rsa_sign_file, gen_pub_key
-
+from CommonUtility import *
 
 class FmpCapsuleImageHeaderClass(object):
     # typedef struct {
@@ -408,6 +408,12 @@ def SignImage(RawData, OutFile, HashType, PrivKey):
 
     file_size = len(RawData)
 
+    key_type = get_priv_key_type(PrivKey, get_openssl_path())
+    if key_type ==  'RSA2048':
+        key_size = 256
+    elif key_type ==  'RSA3072':
+        key_size = 384
+
     header.FileGuid         = (c_ubyte *16).from_buffer_copy(FIRMWARE_UPDATE_IMAGE_FILE_GUID.bytes_le)
     header.HeaderSize       = sizeof(Firmware_Update_Header)
     header.FirmwreVersion   = 1
@@ -415,7 +421,7 @@ def SignImage(RawData, OutFile, HashType, PrivKey):
     header.ImageOffset      = header.HeaderSize
     header.ImageSize        = file_size
     header.SignatureOffset  = header.ImageOffset + header.ImageSize
-    header.SignatureSize    = 256
+    header.SignatureSize    = sizeof(Signature) + key_size
     header.PubKeyOffset     = header.SignatureOffset + header.SignatureSize
 
     pubkey_file = 'fwu_public_key.bin'

@@ -853,6 +853,8 @@ AuthenticateCapsule (
   UINT8                     *Signature;
   FW_UPDATE_STATUS          FwUpdStatus;
   UINT32                    FwUpdStatusOffset;
+  PUB_KEY                   *PublicKey;
+  SIGNATURE                 *Sign;
 
   FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
 
@@ -881,6 +883,9 @@ AuthenticateCapsule (
   Key       = FwImage + Header->PubKeyOffset;
   Signature = FwImage + Header->SignatureOffset;
 
+  Sign      = (SIGNATURE *) Signature;
+  PublicKey = (PUB_KEY *) Key;
+
   //
   // Copy fw update status structure to memory
   //
@@ -900,7 +905,7 @@ AuthenticateCapsule (
     }
   }
 
-  Status    = DoRsaVerify (FwImage, Header->SignatureOffset, COMP_TYPE_PUBKEY_FWU, Signature, Key, NULL, NULL);
+  Status    = DoRsaVerify (FwImage, Header->SignatureOffset, COMP_TYPE_PUBKEY_FWU, Sign, PublicKey, NULL, NULL);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Image verification failed, %r!\n", Status));
     return EFI_SECURITY_VIOLATION;
