@@ -20,6 +20,9 @@
 #include <Library/MemoryAllocationLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include <Library/MpInitLib.h>
+#include <Library/ExtraBaseLib.h>
+#include <Library/BootloaderCoreLib.h>
+#include <Library/S3SaveRestoreLib.h>
 
 #define   AP_BUFFER_ADDRESS        0x38000
 #define   AP_BUFFER_SIZE           0x8000

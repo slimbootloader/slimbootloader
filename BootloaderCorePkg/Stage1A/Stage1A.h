@@ -10,6 +10,7 @@
 
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
+#include <Library/ExtraBaseLib.h>
 #include <Library/PcdLib.h>
 #include <Library/SocInitLib.h>
 #include <Library/BoardInitLib.h>

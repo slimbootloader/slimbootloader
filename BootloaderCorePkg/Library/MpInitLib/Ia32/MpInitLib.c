@@ -6,8 +6,6 @@
 
 **/
 #include <MpInitLibInternal.h>
-#include <Library/BootloaderCoreLib.h>
-#include <Library/S3SaveRestoreLib.h>
 
 MP_ASSEMBLY_ADDRESS_MAP            mAddressMap;
 ALL_CPU_INFO                       mSysCpuInfo;
@@ -185,6 +183,9 @@ ApFunc (
   BOOLEAN            WaitTask;
   CPU_TASK_PROC      ApRunTask;
   volatile UINT32   *State;
+
+  // Enable more CPU featurs
+  AsmEnableAvx ();
 
   //
   // CPU specific init
