@@ -48,7 +48,6 @@ DebugPrint (
   CHAR8    Buffer[MAX_DEBUG_MESSAGE_LENGTH];
   VA_LIST  Marker;
   UINTN    Length;
-  BOOLEAN  OutputToSerial;
 
 
   //
@@ -75,24 +74,20 @@ DebugPrint (
   //
   // Send the print string to debug output handler
   //
-  if (PcdGet32 (PcdDebugOutputDeviceMask) & DEBUG_OUTPUT_DEVICE_LOG_BUFFER) {
+  if ((PcdGet32 (PcdDebugInterfaceFlags) & DEBUG_DEVICE_RAM) != 0) {
     DebugLogBufferWrite  ((UINT8 *)Buffer, Length);
   }
 
-  OutputToSerial = (PcdGet32 (PcdDebugOutputDeviceMask) & DEBUG_OUTPUT_DEVICE_SERIAL_PORT) ? TRUE : FALSE;
-  if (PcdGet32 (PcdDebugOutputDeviceMask) & DEBUG_OUTPUT_DEVICE_CONSOLE) {
-    ConsoleWrite ((UINT8 *)Buffer, Length);
+  ConsoleWrite ((UINT8 *)Buffer, Length);
 
+  if ((PcdGet32 (PcdDebugInterfaceFlags) & (DEBUG_DEVICE_ISA_SERIAL | DEBUG_DEVICE_SERIALIO)) != 0) {
     // If serial port is part of console output devices, skip the output below.
     // since it has been outputed in ConsoleWrite().
-    if ( (PcdGet32 (PcdConsoleOutDeviceMask) & ConsoleOutSerialPort) != 0) {
-      OutputToSerial = FALSE;
+    if ( (PcdGet32 (PcdConsoleOutDeviceMask) & ConsoleOutSerialPort) == 0) {
+      SerialPortWrite ((UINT8 *)Buffer, Length);
     }
   }
 
-  if (OutputToSerial) {
-    SerialPortWrite ((UINT8 *)Buffer, Length);
-  }
 }
 
 /**

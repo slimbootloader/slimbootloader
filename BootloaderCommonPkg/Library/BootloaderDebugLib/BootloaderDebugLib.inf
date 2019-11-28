@@ -42,5 +42,5 @@
   gEfiMdePkgTokenSpaceGuid.PcdDebugClearMemoryValue          ## CONSUMES
   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask              ## CONSUMES
   gEfiMdePkgTokenSpaceGuid.PcdFixedDebugPrintErrorLevel      ## CONSUMES
-  gPlatformCommonLibTokenSpaceGuid.PcdDebugOutputDeviceMask  ## CONSUMES
+  gPlatformCommonLibTokenSpaceGuid.PcdDebugInterfaceFlags    ## CONSUMES
   gPlatformCommonLibTokenSpaceGuid.PcdConsoleOutDeviceMask   ## CONSUMES

@@ -28,7 +28,7 @@
 
 [Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdMaxLibraryDataEntry
-  gPlatformCommonLibTokenSpaceGuid.PcdDebugOutputDeviceMask
+  gPlatformCommonLibTokenSpaceGuid.PcdDebugInterfaceFlags
 
 [LibraryClasses]
   BaseLib

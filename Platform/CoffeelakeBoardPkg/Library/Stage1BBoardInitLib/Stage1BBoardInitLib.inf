@@ -49,7 +49,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
   gPlatformModuleTokenSpaceGuid.PcdCfgDatabaseSize
   gPlatformModuleTokenSpaceGuid.PcdCfgDataLoadSource
-  gPlatformModuleTokenSpaceGuid.PcdDebugInterfaceFlags
+  gPlatformCommonLibTokenSpaceGuid.PcdDebugInterfaceFlags
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
   gPlatformModuleTokenSpaceGuid.PcdSmmRebaseMode

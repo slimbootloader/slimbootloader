@@ -151,19 +151,24 @@ EarlyPlatformDataCheck (
 )
 {
   STITCH_DATA          *StitchData;
+  UINT8                DebugDevice;
 
   // Stitching process might pass some plafform specific data.
   StitchData = (STITCH_DATA *)(0xFFFFFFF4);
   if (StitchData->Marker != 0xAA) {
-    // No data, set default debug port to 2
     // PlatformID will be deferred to be detected
-    SetDebugPort (0xFF);
+    DebugDevice = PcdGet8 (PcdDebugDeviceNumber);
+    if ((PcdGet32 (PcdDebugInterfaceFlags) & DEBUG_DEVICE_ISA_SERIAL) != 0) {
+      // Indicate ISA serial debug device is used
+      DebugDevice |= BIT7;
+    }
   } else {
-    SetDebugPort  (StitchData->DebugUart);
+    DebugDevice = StitchData->DebugUart;
     if ((StitchData->PlatformId > 0) && (StitchData->PlatformId < 32)) {
       SetPlatformId (StitchData->PlatformId);
     }
   }
+  SetDebugPort (DebugDevice);
 }
 
 /**
@@ -247,7 +252,8 @@ BoardInit (
   UINT64                    MskLen;
 
   // DebugPort:
-  //   0xFF: External 0x3F8 based I/O UART
+  //   0x80 : External 0x2F8 based I/O UART
+  //   0x81   External 0x3F8 based I/O UART
   //   0,1,2: Internal SOC MMIO UART
 
   switch (InitPhase) {

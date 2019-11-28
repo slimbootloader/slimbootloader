@@ -1,7 +1,7 @@
 /** @file
   This file defines the hob structure for the memory map entries.
 
-  Copyright (c) 2014 - 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2014 - 2019, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -17,7 +17,7 @@
 #define MEM_MAP_TYPE_ACPI_NVS     0x04
 
 ///
-/// Serial Port Information GUID
+/// Memory Map Information GUID
 ///
 extern EFI_GUID gLoaderMemoryMapInfoGuid;
 

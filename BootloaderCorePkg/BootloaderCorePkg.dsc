@@ -154,11 +154,8 @@
   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask            | 0x27
 !endif
 
-  # Limit DEBUG output device to be serial port (BIT1) and log buffer (BIT0) for stages.
-  # Once in payload, more debug devices can be enabled, such as frame buffer.
-  gPlatformCommonLibTokenSpaceGuid.PcdDebugOutputDeviceMask  | $(DEBUG_OUTPUT_DEVICE_MASK) & 3
-
-  gPlatformModuleTokenSpaceGuid.PcdDebugInterfaceFlags    | $(DEBUG_INTERFACE_FLAGS)
+  gPlatformCommonLibTokenSpaceGuid.PcdDebugInterfaceFlags    | $(DEBUG_INTERFACE_FLAGS)
+  gPlatformCommonLibTokenSpaceGuid.PcdDebugDeviceNumber      | $(DEBUG_DEVICE_NUMBER)
 
   gPlatformModuleTokenSpaceGuid.PcdPciMmcfgBase           | $(PCI_EXPRESS_BASE)
   gPlatformModuleTokenSpaceGuid.PcdPciResourceIoBase      | $(PCI_IO_BASE)
@@ -361,8 +358,6 @@
   }
 
   PayloadPkg/OsLoader/OsLoader.inf {
-    <PcdsFixedAtBuild>
-      gPlatformCommonLibTokenSpaceGuid.PcdDebugOutputDeviceMask  | $(DEBUG_OUTPUT_DEVICE_MASK)
     <LibraryClasses>
       MemoryAllocationLib | BootloaderCommonPkg/Library/FullMemoryAllocationLib/FullMemoryAllocationLib.inf
       PayloadEntryLib     | PayloadPkg/Library/PayloadEntryLib/PayloadEntryLib.inf
@@ -375,8 +370,6 @@
 
 !if $(ENABLE_FWU)
   PayloadPkg/FirmwareUpdate/FirmwareUpdate.inf {
-    <PcdsFixedAtBuild>
-      gPlatformCommonLibTokenSpaceGuid.PcdDebugOutputDeviceMask  | $(DEBUG_OUTPUT_DEVICE_MASK)
     <LibraryClasses>
       MemoryAllocationLib     | BootloaderCommonPkg/Library/FullMemoryAllocationLib/FullMemoryAllocationLib.inf
       PayloadEntryLib         | PayloadPkg/Library/PayloadEntryLib/PayloadEntryLib.inf

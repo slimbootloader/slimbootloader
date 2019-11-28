@@ -35,4 +35,4 @@
 
 [Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdConsoleOutDeviceMask
-  gPlatformCommonLibTokenSpaceGuid.PcdDebugOutputDeviceMask
+  gPlatformCommonLibTokenSpaceGuid.PcdDebugInterfaceFlags

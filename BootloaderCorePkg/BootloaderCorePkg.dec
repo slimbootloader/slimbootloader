@@ -34,7 +34,6 @@
   gPlatformModuleTokenSpaceGuid.PcdFlashBaseAddress       | 0x00000000 | UINT32 | 0x20000010
   gPlatformModuleTokenSpaceGuid.PcdFlashSize              | 0x00000000 | UINT32 | 0x20000011
   gPlatformModuleTokenSpaceGuid.PcdFlashBlockSize         | 0x00001000 | UINT32 | 0x20000012
-  gPlatformModuleTokenSpaceGuid.PcdDebugInterfaceFlags    | 0x00000000 | UINT32 | 0x20000013
 
 
   # PcdStageBase:     Flash address to the stage binary (Could be compressed binary)

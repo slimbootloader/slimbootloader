@@ -10,6 +10,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #ifndef __PLATFORM_HOOK_LIB__
 #define __PLATFORM_HOOK_LIB__
+#include <Guid/LoaderPlatformDataGuid.h>
 
 /**
   Get serial port stride register size.

@@ -46,22 +46,25 @@ EarlyPlatformDataCheck (
   VOID
 )
 {
-  UINT32                Data;
   STITCH_DATA          *StitchData;
+  UINT8                DebugDevice;
 
   // Stitching process might pass some plafform specific data.
-  Data       = *(UINT32 *)0xFFFFFFF4;
-  StitchData = (STITCH_DATA *)&Data;
+  StitchData = (STITCH_DATA *)(0xFFFFFFF4);
   if (StitchData->Marker != 0xAA) {
-    // No data, set default debug port to 2
     // PlatformID will be deferred to be detected
-    SetDebugPort (2);
+    DebugDevice = PcdGet8 (PcdDebugDeviceNumber);
+    if ((PcdGet32 (PcdDebugInterfaceFlags) & DEBUG_DEVICE_ISA_SERIAL) != 0) {
+      // Indicate ISA serial debug device is used
+      DebugDevice |= BIT7;
+    }
   } else {
-    SetDebugPort  (StitchData->DebugUart);
+    DebugDevice = StitchData->DebugUart;
     if ((StitchData->PlatformId > 0) && (StitchData->PlatformId < 32)) {
       SetPlatformId (StitchData->PlatformId);
     }
   }
+  SetDebugPort (DebugDevice);
 }
 
 

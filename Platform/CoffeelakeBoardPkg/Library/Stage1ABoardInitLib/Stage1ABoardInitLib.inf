@@ -53,3 +53,5 @@
   gPlatformModuleTokenSpaceGuid.PcdUcodeSize
   gPlatformModuleTokenSpaceGuid.PcdPayloadBase
   gPlatformModuleTokenSpaceGuid.PcdPciMmcfgBase
+  gPlatformCommonLibTokenSpaceGuid.PcdDebugInterfaceFlags
+  gPlatformCommonLibTokenSpaceGuid.PcdDebugDeviceNumber

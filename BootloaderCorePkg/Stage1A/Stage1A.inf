@@ -57,7 +57,7 @@
 [Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdMaxLibraryDataEntry
   gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
-  gPlatformCommonLibTokenSpaceGuid.PcdDebugOutputDeviceMask
+  gPlatformCommonLibTokenSpaceGuid.PcdDebugInterfaceFlags
   gPlatformModuleTokenSpaceGuid.PcdStage1StackSize
   gPlatformModuleTokenSpaceGuid.PcdStage1BFdBase
   gPlatformModuleTokenSpaceGuid.PcdStage1BLoadBase

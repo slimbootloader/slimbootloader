@@ -1,13 +1,14 @@
 /** @file
   This file defines platform data to be passed to payload.
 
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018 - 2019, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
 #ifndef __LOADER_PLATFORM_DATA_GUID_H__
 #define __LOADER_PLATFORM_DATA_GUID_H__
+#include <Uefi/UefiBaseType.h>
 
 ///
 /// Debug Log Buffer Information GUID
@@ -16,9 +17,14 @@ extern EFI_GUID gLoaderPlatformDataGuid;
 
 #define  DEBUG_LOG_BUFFER_SIGNATURE         SIGNATURE_32 ('D', 'L', 'O', 'G')
 
-#define  DEBUG_OUTPUT_DEVICE_LOG_BUFFER     BIT0
-#define  DEBUG_OUTPUT_DEVICE_SERIAL_PORT    BIT1
-#define  DEBUG_OUTPUT_DEVICE_CONSOLE        BIT2
+//
+// Debug Interfaces
+//
+#define  DEBUG_DEVICE_RAM                   BIT0
+#define  DEBUG_DEVICE_ISA_SERIAL            BIT1
+#define  DEBUG_DEVICE_USB                   BIT3
+#define  DEBUG_DEVICE_SERIALIO              BIT4
+#define  DEBUG_DEVICE_TRACEHUB              BIT5
 
 typedef struct {
   UINT32  Signature;

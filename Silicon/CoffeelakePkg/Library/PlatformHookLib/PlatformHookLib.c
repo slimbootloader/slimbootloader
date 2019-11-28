@@ -40,7 +40,7 @@ GetSerialPortStrideSize (
   )
 {
   if (GetDebugPort () >= PCH_MAX_SERIALIO_UART_CONTROLLERS) {
-    // External UART, assume 0x3F8 I/O port
+    // ISA UART, 0x2F8 or 0x3F8 I/O port
     return 1;
   } else {
     // SOC UART, MMIO only
@@ -66,7 +66,7 @@ GetSerialPortBase (
 
   DebugPort = GetDebugPort ();
   if (DebugPort >=  PCH_MAX_SERIALIO_UART_CONTROLLERS) {
-    if (DebugPort == 0xFE) {
+    if (DebugPort == 0x80) {
       return 0x2F8;
     } else {
       return 0x3F8;

@@ -94,7 +94,7 @@
   gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
-  gPlatformCommonLibTokenSpaceGuid.PcdDebugOutputDeviceMask
+  gPlatformCommonLibTokenSpaceGuid.PcdDebugInterfaceFlags
   gPayloadTokenSpaceGuid.PcdPayloadHeapSize
   gPlatformCommonLibTokenSpaceGuid.PcdSeedListEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdConsoleInDeviceMask
