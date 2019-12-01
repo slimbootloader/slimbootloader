@@ -401,30 +401,47 @@ def gen_config_file (fv_dir, brd_name, platform_id, pri_key, cfg_db_size, cfg_si
     else:
         shutil.copy(cfg_merged_bin_file, cfg_final_file)
 
+    # copy delta files
+    dlt_list  = cfg_int[1:] + cfg_ext
+    for dlt_file in dlt_list:
+        copy_expanded_file (os.path.join (brd_cfg_dir, dlt_file), os.path.join (fv_dir, dlt_file))
+
     # generate CfgDataStitch script
     tool_dir    = os.path.abspath(os.path.dirname(__file__))
     src_file    = os.path.join (tool_dir, 'CfgDataStitch.py')
     dst_file    = os.path.join (fv_dir,   'CfgDataStitch.py')
 
+    # locate pid in dlt
+    dlt_id_list = []
+    dlt_list    = cfg_ext
+    dlt_text    = []
+    for each in dlt_list:
+        fd    = open (os.path.join (fv_dir, each))
+        lines = fd.readlines()
+        fd.close()
+        pid   = None
+        for line in lines:
+            if line.startswith('PLATFORMID_CFG_DATA.PlatformId'):
+                pid = int(line.split('|')[1].strip(), 0)
+                break
+        if pid is None:
+            raise Exception ("Failed to identify PlatformId from file '' !" % each)
+        dlt_id_list.append((pid, each))
+        dlt_text.append("  (0x%02X, '%s')" % (pid, each))
+
+    # patch pid list in CfgDataStitch script
     fd = open(src_file, 'r')
     script_txt  = fd.read()
     fd.close ()
+    new_txt = 'dlt_files = [\n%s\n]\n' % (',\n'.join(dlt_text))
+    replace_txt = script_txt.replace ('dlt_files = [] # TO BE PATCHED', new_txt)
 
-    def_dlt_file = 'CfgData_Default.dlt'
-    dlt_list    = cfg_int[1:] + cfg_ext
-    dlt_files   = str([def_dlt_file] + dlt_list)
-    replace_txt = script_txt.replace ('dlt_files = [] # TO BE PATCHED', 'dlt_files = %s' % (dlt_files))
-    if dlt_files not in replace_txt:
+    if new_txt not in replace_txt:
         raise Exception ('Failed to generate project CfgDataStitch.py script !')
-
     fd = open(dst_file, 'w')
     fd.write(replace_txt)
     fd.close()
 
-    # copy delta files
-    copy_expanded_file (os.path.join (com_brd_cfg_dir, def_dlt_file), os.path.join (fv_dir, def_dlt_file))
-    for dlt_file in dlt_list:
-        copy_expanded_file (os.path.join (brd_cfg_dir, dlt_file), os.path.join (fv_dir, dlt_file))
 
 def gen_payload_bin (fv_dir, pld_list, pld_bin, priv_key, brd_name = None):
     fv_dir = os.path.dirname (pld_bin)
