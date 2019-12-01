@@ -600,21 +600,16 @@ def GetCfgDataByTag (CfgData, Pid, Tag, IsInternal = False):
 
         if (CfgTagHdr.Flags & CCfgData.CDATA_HEADER.FLAG_ITEM_TYPE_MASK) == CCfgData.CDATA_HEADER.FLAG_ITEM_TYPE_ARRAY:
             ArrayInfo = CCfgData.CDATA_ITEM_ARRAY.from_buffer(DataBin)
+            Offset     = ArrayInfo.HeaderSize
+            MaskOff    = sizeof(ArrayInfo)
+            MaskLen    = Offset - MaskOff
             if ArrayInfo.BasePlatformId < 0x80:
                 RefPid = ArrayInfo.BasePlatformId
                 TagHdr, CondBin, BaseDataBin = GetCfgDataByTag (CfgData, RefPid, Tag, True)
 
                 CurrArrayInfo = CCfgData.CDATA_ITEM_ARRAY.from_buffer(DataBin)
                 BaseArrayInfo = CCfgData.CDATA_ITEM_ARRAY.from_buffer(BaseDataBin)
-
-                # Zero masks
                 NewDataBin = bytearray (BaseDataBin)
-                Offset     = BaseArrayInfo.HeaderSize
-                MaskOff    = sizeof(BaseArrayInfo)
-                MaskLen    = Offset - MaskOff
-                NewDataBin[MaskOff : MaskOff + MaskLen] = b'\x00' * MaskLen
-                NewArrayInfo = CCfgData.CDATA_ITEM_ARRAY.from_buffer(NewDataBin)
-                NewArrayInfo.BasePlatformId = 0xFF
 
                 # Copy entries from base table
                 ItemDict = {}
@@ -638,8 +633,14 @@ def GetCfgDataByTag (CfgData, Pid, Tag, IsInternal = False):
                     Idx1 = ItemDict[ItemId]
                     Off1 = Offset + Idx1 * ItemLen
                     NewDataBin[Off1 : Off1 + ItemLen] = CurrItem
+            elif ArrayInfo.BasePlatformId == 0x80:
+                NewDataBin = bytearray (DataBin)
 
-                DataBin = NewDataBin
+            # Zero masks and base pid
+            NewDataBin[MaskOff : MaskOff + MaskLen] = b'\x00' * MaskLen
+            NewArrayInfo = CCfgData.CDATA_ITEM_ARRAY.from_buffer(NewDataBin)
+            NewArrayInfo.BasePlatformId = 0xFF
+            DataBin = NewDataBin
 
         elif (CfgTagHdr.Flags & CCfgData.CDATA_HEADER.FLAG_ITEM_TYPE_MASK) == CCfgData.CDATA_HEADER.FLAG_ITEM_TYPE_REFER:
             Refer = CCfgData.CDATA_REFERENCE.from_buffer(DataBin)
@@ -647,8 +648,22 @@ def GetCfgDataByTag (CfgData, Pid, Tag, IsInternal = False):
 
         return  TagHdr, CondBin, DataBin
 
+    if Idx == 1:
+        # Try to find it in internal database
+        return GetCfgDataByTag (CfgData, Pid, Tag, True)
+    else:
+        raise Exception ('Could not find TAG:0x%03X for PID:0x%02X in internal or external CFGDATA !' % Tag)
+
 
 def CmdExport(Args):
+    BrdNameDict = {}
+    if Args.board_name_list:
+      Parts = Args.board_name_list.split(',')
+      for Part in Parts:
+        Info = Part.split(':')
+        if len(Info) == 2:
+          BrdNameDict[int(Info[0],0)] = Info[1].strip()
+
     OutputDir     = Args.output_dir
     if not os.path.exists(OutputDir):
         os.mkdir (OutputDir)
@@ -735,7 +750,7 @@ def CmdExport(Args):
 
     # Generate CfgDataDef blob
     CfgFile, (CfgIntItemList, CfgIntBlobHdr, IsBuiltIn) = list(CfgDataInt.CfgDataBase.items())[0]
-    CfgDefLen = sizeof(CfgIntBlobHdr)
+    CfgDef  = bytearray(CfgIntBlobHdr)
     TagDict = collections.OrderedDict()
     for Idx, CfgIntItem in enumerate(CfgIntItemList):
         TagHdr, CondBin, DataBin = CfgIntItem[0]
@@ -744,8 +759,9 @@ def CmdExport(Args):
             break
         else:
             TagDict[CfgTagHdr.Tag] = Idx
-            CfgDefLen += (len(TagHdr) + len(CondBin) + len(DataBin))
+            CfgDef.extend(TagHdr + CondBin + DataBin)
 
+    CfgDefLen = len(CfgDef)
     CfgDefBlobHdr = CCfgData.CDATA_BLOB_HEADER.from_buffer(bytearray(CfgIntBlobHdr))
     CfgDefBlobHdr.UsedLength   = CfgDefLen
     CfgDefBlobHdr.TotalLength  = CfgDefLen
@@ -776,8 +792,11 @@ def CmdExport(Args):
                 PidCfg.PlatformId = Pid
             CfgDataBrd.extend (TagHdr + CondBin + NewData)
 
-        gen_file_from_object (OutputDir + '/CfgData_%02X.bin' % Pid, CfgDataBrd)
-
+        if Pid in BrdNameDict.keys():
+            Ext = BrdNameDict[Pid]
+        else:
+            Ext = 'CfgDataExt_%02X' % Pid
+        gen_file_from_object (OutputDir + '/%s.bin' % Ext, CfgDataBrd)
 
 def CmdView(Args):
     CfgData = CCfgData()
@@ -1017,10 +1036,11 @@ def Main():
     ExportParser.add_argument('-b', dest='boot_part', choices=['0', '1'], help='Specify which boot partition to export CFGDATA from', default = '0')
     ExportParser.add_argument('-o', dest='output_dir', type=str,  help='Specify output directory', default='.')
     ExportParser.add_argument('-t', dest='tool_dir', type=str,  help='Specify compress tool directory', default='')
+    ExportParser.add_argument('-n', dest='board_name_list', type=str,  help='Specify board name to id map list', default='')
     ExportParser.set_defaults(func=CmdExport)
 
     Args = ArgParser.parse_args()
-    Args.func(Args)
+    return Args.func(Args)
 
 if __name__ == '__main__':
     sys.exit(Main())
