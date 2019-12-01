@@ -112,21 +112,35 @@ class FitEntry(Structure):
         self.checksum = _checksum
 
 
-class HashStore(Structure):
+class HashStoreData(Structure):
+
+    _pack_ = 1
+    _fields_ = [
+        ('Usage',           c_uint32),
+        ('HashAlg',         c_uint8),
+        ('Reserved',        c_uint8),
+        ('DigestLen',       c_uint16),
+        ('Digest',          ARRAY(c_uint8, 0)),
+        ]
+
+class HashStoreTable(Structure):
 
     HASH_STORE_SIGNATURE    = b'_HS_'
-    HASH_STORE_MAX_IDX_NUM  = 8
-    HASH_STORE_ENTRY_LEN    = 32
+    HASH_STORE_MAX_IDX_NUM  = 7         #STAGE1B.hash, STAGE2.hash, PAYLOAD.hash, FWUPDATE.hash, CFGKEY.hash, FWUKEY.hash, OSKEY.hash
 
     _pack_ = 1
     _fields_ = [
         ('Signature',         ARRAY(c_char, 4)),
-        ('Valid',             c_uint32),
-        ('Data',              ARRAY(c_uint8, HASH_STORE_ENTRY_LEN * HASH_STORE_MAX_IDX_NUM)),
+        ('Revision',          c_uint8),
+        ('Reserved',          ARRAY(c_uint8, 3)),
+        ('UsedLength',        c_uint32),
+        ('TotalLength',       c_uint32),
+        ('Data',              ARRAY(c_uint8, 0)),
         ]
 
     def __init__(self):
-        self.Signature = HashStore.HASH_STORE_SIGNATURE
+        self.Signature = HashStoreTable.HASH_STORE_SIGNATURE
+        self.Revision  = 1
 
 
 class ImageVer(Structure):

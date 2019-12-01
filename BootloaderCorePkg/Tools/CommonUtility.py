@@ -37,28 +37,36 @@ class LZ_HEADER(Structure):
 # Hash values defined should match with cryptolib.h
 HASH_TYPE_VALUE = {
 # {   Hash_string:        Hash_Value}
-            "SHA2_256"    : 0,
-            "SHA2_384"    : 1,
-            "SHA2_512"    : 2,
-            "SM3_256"     : 3,
+            "SHA2_256"    : 1,
+            "SHA2_384"    : 2,
+            "SHA2_512"    : 3,
+            "SM3_256"     : 4,
     }
 
 # Sign values defined should match with cryptolib.h
 SIGN_TYPE_VALUE = {
 # {   Sign_string:        Sign_Value}
-            "RSA2048"     : 0,
-            "RSA3072 "    : 1,
-            "SM2     "    : 2,
+            "RSA2048"     : 1,
+            "RSA3072 "    : 2,
+            "SM2     "    : 3,
     }
 
 AUTH_TYPE_HASH_VALUE = {
 # {   Auth_type:        Hash_type}
-            "SHA2_256"       : 0,
-            "SHA2_384"       : 1,
-            "SHA2_512"       : 2,
-            "SM3_256"        : 3,
-            "RSA2048SHA256"  : 0,
-            "RSA3072SHA384"  : 1,
+            "SHA2_256"       : 1,
+            "SHA2_384"       : 2,
+            "SHA2_512"       : 3,
+            "SM3_256"        : 4,
+            "RSA2048SHA256"  : 1,
+            "RSA3072SHA384"  : 2,
+    }
+
+HASH_DIGEST_SIZE = {
+# {   Hash_string:   Hash_Size}
+            "SHA2_256"    : 32,
+            "SHA2_384"    : 48,
+            "SHA2_512"    : 64,
+            "SM3_256"     : 32,
     }
 
 def get_bits_from_bytes (bytes, start, length):

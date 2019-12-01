@@ -26,15 +26,15 @@ from   ctypes import *
 from   BuildUtility import *
 
 IPP_CRYPTO_OPTIMIZATION_MASK = {
-# {   Auth_type:        Hash_type}
+# {         Opt Type:        Mask}
             "SHA256_V8"       : 0x0001,
             "SHA256_NI"       : 0x0002,
             "SHA384_W7"       : 0x0004,
             "SHA384_G9"       : 0x0008,
     }
 
-IPP_CRYPTO_ALG_MASK= {
-# {   Auth_type:        Hash_type}
+IPP_CRYPTO_ALG_MASK = {
+# {        Hash_type:        Hash_Maske}
             "SHA1"           : 0x0001,
             "SHA2_256"       : 0x0002,
             "SHA2_384"       : 0x0004,
@@ -278,6 +278,8 @@ class BaseBoard(object):
 
         self.IPP_HASH_LIB_SUPPORTED_MASK   = IPP_CRYPTO_ALG_MASK['SHA2_256']
 
+        self.HASH_STORE_SIZE       = 0x200  #Hash store size to be allocated in bootloader
+
         for key, value in list(kwargs.items()):
             setattr(self, '%s' % key, value)
 
@@ -496,20 +498,22 @@ class Build(object):
         stage1_bins = bytearray(fi.read())
         fi.close()
 
-        hs_offset = stage1_bins.find (HashStore.HASH_STORE_SIGNATURE)
+        hs_offset = stage1_bins.find (HashStoreTable.HASH_STORE_SIGNATURE)
         if hs_offset < 0:
-            raise Exceptoin ("HashStore not found in '%s'!" % os.path.basename(img_file))
+            raise Exceptoin ("HashStoreTable not found in '%s'!" % os.path.basename(img_file))
 
         comp_name, part_name = get_redundant_info (img_file)
         if part_name:
             part_name = '_' + part_name
 
-        hash_file_list = [('STAGE1B%s.hash' % part_name, 0), ('STAGE2.hash', 1), ('PAYLOAD.hash', 2), ('FWUPDATE.hash', 3), ('CFGKEY.hash', 4), ('FWUKEY.hash', 5), ('OSKEY.hash', 6),  ('PLDDYN', 7)]
-        if len(hash_file_list) > HashStore.HASH_STORE_MAX_IDX_NUM:
+        hash_file_list = [('STAGE1B%s.hash' % part_name, 0), ('STAGE2.hash', 1), ('PAYLOAD.hash', 2), ('FWUPDATE.hash', 3), ('CFGKEY.hash', 4), ('FWUKEY.hash', 5), ('OSKEY.hash', 6)]
+        if len(hash_file_list) > HashStoreTable.HASH_STORE_MAX_IDX_NUM:
             raise Exception ('Insufficant hash entries !')
 
-        hash_store = HashStore.from_buffer(stage1_bins, hs_offset)
-        hash_len   = HashStore.HASH_STORE_ENTRY_LEN
+        hash_store = HashStoreTable.from_buffer(stage1_bins, hs_offset)
+        hash_len   = HASH_DIGEST_SIZE[self._board.SIGN_HASH_TYPE]
+        hash_store_data_buf = bytearray()
+        hash_store.UsedLength = sizeof(HashStoreTable())
         for hash_file, hash_idx in hash_file_list:
             # If the hash verification is not required for certain stage, skip it
             if ((1 << hash_idx) & self._board.VERIFIED_BOOT_HASH_MASK) == 0:
@@ -528,17 +532,25 @@ class Build(object):
                     raise Exception ("Hash data file '%s' length is incorrect !" % hash_file )
 
             # update hash data
-            start = hash_len * hash_idx
-            hash_store.Data[start:start+hash_len] = hash_data
+            hashstoredata = HashStoreData()
+            hashstoredata.Usage |= 1 << hash_idx
+            hashstoredata.HashAlg = HASH_TYPE_VALUE[self._board.SIGN_HASH_TYPE]
+            hashstoredata.DigestLen = hash_len
 
-            # update valid bit
-            hash_store.Valid |= 1 << hash_idx
+            hash_store.UsedLength += hash_len + sizeof(HashStoreData())
 
-            print(' Update HashStore entry %d at offset 0x%08X:0x%X with file %s' % (hash_idx, start, hash_len, hash_file))
+            #Append hash store data entries
+            hash_store_data_buf = hash_store_data_buf + bytearray(hashstoredata) + hash_data
 
+            print(' Update HashStore entry %d with file %s' % (hash_idx, hash_file))
+
+        #Update Hash store Table
         fo = open(img_file,'r+b')
         fo.seek(hs_offset)
         fo.write(hash_store)
+        #Update Hash store data
+        fo.seek(hs_offset + sizeof(hash_store))
+        fo.write(hash_store_data_buf)
         fo.close()
 
 
@@ -1026,7 +1038,15 @@ class Build(object):
 
         # create hashstore file
         if self._board.HAVE_VERIFIED_BOOT:
-            gen_file_from_object (os.path.join(self._fv_dir, 'HashStore.bin'), HashStore())
+            hash_store_size = sizeof(HashStoreTable) + (sizeof(HashStoreData) + HASH_DIGEST_SIZE[self._board.SIGN_HASH_TYPE]) * HashStoreTable().HASH_STORE_MAX_IDX_NUM
+            gen_file_with_size (os.path.join(self._fv_dir, 'HashStore.bin'), hash_store_size)
+
+            #Intialize with HashStoreTable
+            fo = open(os.path.join(self._fv_dir, 'HashStore.bin'),'r+b')
+            hash_store_table = HashStoreTable()
+            hash_store_table.TotalLength = hash_store_size
+            fo.write(hash_store_table)
+            fo.close()
         else:
             self._board.VERIFIED_BOOT_HASH_MASK = 0
 
