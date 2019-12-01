@@ -51,6 +51,7 @@ class Board(BaseBoard):
         self.HAVE_PSD_TABLE       = 1
         self.ENABLE_GRUB_CONFIG   = 1
         self.ENABLE_CSME_UPDATE   = 0
+        self.DEBUG_PORT_NUMBER    = 0xFF
 
         # CSME update library is required to enable this option and will be available as part of CSME kit
         self.BUILD_CSME_UPDATE_DRIVER   = 0

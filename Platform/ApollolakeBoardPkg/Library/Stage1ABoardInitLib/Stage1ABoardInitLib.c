@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -46,16 +46,13 @@ EarlyPlatformDataCheck (
   VOID
 )
 {
-  UINT32                Data;
   STITCH_DATA          *StitchData;
 
   // Stitching process might pass some plafform specific data.
-  Data       = *(UINT32 *)0xFFFFFFF4;
-  StitchData = (STITCH_DATA *)&Data;
+  StitchData = (STITCH_DATA *) 0xFFFFFFF4;
   if (StitchData->Marker != 0xAA) {
-    // No data, set default debug port to 2
     // PlatformID will be deferred to be detected
-    SetDebugPort (2);
+    SetDebugPort ( PcdGet8 (PcdDebugPortNumber));
   } else {
     SetDebugPort  (StitchData->DebugUart);
     if ((StitchData->PlatformId > 0) && (StitchData->PlatformId < 32)) {

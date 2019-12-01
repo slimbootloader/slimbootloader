@@ -117,6 +117,11 @@
   ## This PCD controls enabled debug output devcie
   gPlatformCommonLibTokenSpaceGuid.PcdDebugOutputDeviceMask    |0x00000003|UINT32|0x20000400
 
+  ## This PCD controls debug port number
+  # MMIO Serial device: 0 - Serial UART0, 1 - Serial UART1, 2 - Serial UART2,
+  # IO ISA UART       : 0xFF - IO base 0x3F8, 0xFE - IO base 0x2F8
+  gPlatformCommonLibTokenSpaceGuid.PcdDebugPortNumber        |0x02|UINT8|0x20000410
+
   ## Indicates the 16550 serial port registers are in MMIO space, or in I/O space. Default is I/O space.<BR><BR>
   #   TRUE  - 16550 serial port registers are in MMIO space.<BR>
   #   FALSE - 16550 serial port registers are in I/O space.<BR>
