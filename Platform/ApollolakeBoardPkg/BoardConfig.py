@@ -15,6 +15,7 @@ import sys
 sys.dont_write_bytecode = True
 sys.path.append (os.path.join('..', '..'))
 from BuildLoader import FLASH_MAP, BaseBoard, STITCH_OPS
+from BuildLoader import IPP_CRYPTO_OPTIMIZATION_MASK, IPP_CRYPTO_ALG_MASK
 
 class Board(BaseBoard):
     def __init__(self, *args, **kwargs):
@@ -44,12 +45,14 @@ class Board(BaseBoard):
         self.HAVE_PSD_TABLE       = 1
 
         self.ENABLE_FSP_LOAD_IMAGE    = 0
-        self.ENABLE_CRYPTO_SHA_NI     = 1
         self.ENABLE_VTD               = 1
         self.ENABLE_FWU               = 1
         self.ENABLE_SPLASH            = 1
         self.ENABLE_FRAMEBUFFER_INIT  = 1
         self.ENABLE_GRUB_CONFIG       = 1
+
+        # G9 for 384 | W7 Opt for SHA384| Ni  Opt for SHA256| V8 Opt for SHA256
+        self.ENABLE_CRYPTO_SHA_OPT    = IPP_CRYPTO_OPTIMIZATION_MASK['SHA256_NI']
 
         # To enable source debug, set 1 to self.ENABLE_SOURCE_DEBUG
         # self.ENABLE_SOURCE_DEBUG   = 1

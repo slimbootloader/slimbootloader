@@ -51,6 +51,8 @@
 [Sources.IA32]
   $(IPP_PATH)/Ia32/pcpsha256v8as.nasm
   $(IPP_PATH)/Ia32/pcpsha256nias.nasm
+  $(IPP_PATH)/Ia32/pcpsha512w7as.nasm
+  $(IPP_PATH)/Ia32/pcpsha512g9as.nasm
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -61,7 +63,7 @@
   DebugLib
 
 [FixedPcd]
-  gPlatformCommonLibTokenSpaceGuid.PcdCryptoShaNiEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdCryptoShaOptMask
   gPlatformCommonLibTokenSpaceGuid.PcdIppHashLibSupportedMask
 
 [BuildOptions]

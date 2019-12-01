@@ -167,14 +167,20 @@ void UpdateSHA256Compact(void* uniHash, const Ipp8u* mblk, int mlen, const void*
 
 void UpdateSHA256(void* pHash, const Ipp8u* pMsg, int msgLen, const void* pParam)
 {
-#if FixedPcdGetBool (PcdCryptoShaNiEnabled)
-    UpdateSHA256Ni(pHash, pMsg, msgLen, pParam);
+#if defined(_SLIMBOOT_OPT)
+
+  if (FixedPcdGet32 (PcdCryptoShaOptMask) & IPP_CRYPTO_SHA256_NI) {
+      UpdateSHA256Ni(pHash, pMsg, msgLen, pParam);
+   } else {
+      UpdateSHA256V8(pHash, pMsg, msgLen, pParam);
+   }
+
 #else
-#if defined(_ALG_SHA256_COMPACT_)
+  #if defined(_ALG_SHA256_COMPACT_)
     UpdateSHA256Compact(pHash, pMsg, msgLen, pParam);
-#else
+  #else
     UpdateSHA256V8(pHash, pMsg, msgLen, pParam);
-#endif
+  #endif
 #endif
 }
 

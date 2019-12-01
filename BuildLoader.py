@@ -25,6 +25,23 @@ import multiprocessing
 from   ctypes import *
 from   BuildUtility import *
 
+IPP_CRYPTO_OPTIMIZATION_MASK = {
+# {   Auth_type:        Hash_type}
+            "SHA256_V8"       : 0x0001,
+            "SHA256_NI"       : 0x0002,
+            "SHA384_W7"       : 0x0004,
+            "SHA384_G9"       : 0x0008,
+    }
+
+IPP_CRYPTO_ALG_MASK= {
+# {   Auth_type:        Hash_type}
+            "SHA1"           : 0x0001,
+            "SHA2_256"       : 0x0002,
+            "SHA2_384"       : 0x0004,
+            "SHA2_512"       : 0x0008,
+            "SM3_256"        : 0x0010
+    }
+
 def rebuild_basetools ():
     exe_list = 'GenFfs  GenFv  GenFw  GenSec  Lz4Compress  LzmaCompress'.split()
     ret = 0
@@ -184,7 +201,7 @@ class BaseBoard(object):
         self.ENABLE_SPLASH         = 0
         self.ENABLE_FRAMEBUFFER_INIT = 0
         self.ENABLE_PRE_OS_CHECKER = 0
-        self.ENABLE_CRYPTO_SHA_NI  = 0
+        self.ENABLE_CRYPTO_SHA_OPT  = IPP_CRYPTO_OPTIMIZATION_MASK['SHA256_V8']
         self.ENABLE_FWU            = 0
         self.ENABLE_SOURCE_DEBUG   = 0
         self.ENABLE_SMM_REBASE     = 0
@@ -259,7 +276,7 @@ class BaseBoard(object):
         self._CFGDATA_INT_FILE     = []
         self._CFGDATA_EXT_FILE     = []
 
-        self.IPP_HASH_LIB_SUPPORTED_MASK   = 0x0002 #SHA256 for default
+        self.IPP_HASH_LIB_SUPPORTED_MASK   = IPP_CRYPTO_ALG_MASK['SHA2_256']
 
         for key, value in list(kwargs.items()):
             setattr(self, '%s' % key, value)

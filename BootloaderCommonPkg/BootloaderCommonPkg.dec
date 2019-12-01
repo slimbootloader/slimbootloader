@@ -63,10 +63,20 @@
   gPlatformCommonLibTokenSpaceGuid.PcdSupportedMediaTypeMask | 0xFFFFFFFF | UINT32  | 0x20000187
   gPlatformCommonLibTokenSpaceGuid.PcdMmcTuningLba           | 0x00000040 | UINT32  | 0x20000188
   gPlatformCommonLibTokenSpaceGuid.PcdSupportedFileSystemMask| 0x00000003 | UINT32  | 0x20000189
-  gPlatformCommonLibTokenSpaceGuid.PcdCryptoShaNiEnabled     | FALSE      | BOOLEAN | 0x20000200
+
+  ## This PCD indicates the IA32 optimizations enabled in IPP Crypto library
+  #  Based on the value set, required algorithm hash API would be enabled
+  #  Using an single PCD to all supported optimizations for SHA256 and SHA384
+  #     0x0001    - V8 Method SHA Extensions optimized implementation of a SHA-256 update.<BR>
+  #     0x0002    - Ni Method SHA Extensions optimized implementation of a SHA-256 update.<BR>
+  #     0x0004    - W7 Method SHA Extensions optimized implementation of a SHA-384 update.<BR>
+  #     0x0008    - G9 Method SHA Extensions optimized implementation of a SHA-384 update.<BR>
+  gPlatformCommonLibTokenSpaceGuid.PcdCryptoShaOptMask       | 0x0      | UINT32 | 0x20000200
+
   gPlatformCommonLibTokenSpaceGuid.PcdSeedListEnabled        | FALSE      | BOOLEAN | 0x20000203
   gPlatformCommonLibTokenSpaceGuid.PcdConsoleInDeviceMask    | 0x00000001 | UINT32  | 0x20000300
   gPlatformCommonLibTokenSpaceGuid.PcdConsoleOutDeviceMask   | 0x00000001 | UINT32  | 0x20000301
+
 
   ## The data buffer size used by debug port in debug communication library instances.
   #  Its value is not suggested to be changed in platform DSC file.
