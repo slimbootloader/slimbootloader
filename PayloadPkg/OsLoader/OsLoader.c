@@ -1091,13 +1091,15 @@ PayloadMain (
   )
 {
   OS_BOOT_OPTION_LIST   *OsBootOptionList;
+  LOADER_PLATFORM_INFO  *LoaderPlatformInfo;
+  OS_BOOT_OPTION         OsBootOption;
   BOOLEAN                BootShell;
   UINTN                  ShellTimeout;
-  OS_BOOT_OPTION         OsBootOption;
   UINT8                  CurrIdx;
   UINT8                  BootIdx;
 
   mEntryStack = Param;
+  LoaderPlatformInfo = (LOADER_PLATFORM_INFO *)GetLoaderPlatformInfoPtr();
 
   DEBUG ((DEBUG_INFO, "\n\n====================Os Loader====================\n\n"));
   AddMeasurePoint (0x4010);
@@ -1129,8 +1131,10 @@ PayloadMain (
   //
   // Load PreOsChecker
   //
-  if (FeaturePcdGet (PcdPreOsCheckerEnabled)) {
-    LoadPreOsChecker ();
+  if (LoaderPlatformInfo != NULL) {
+    if (FeaturePcdGet (PcdPreOsCheckerEnabled) && (LoaderPlatformInfo->LdrFeatures & FEATURE_PRE_OS_CHECKER_BOOT)) {
+      LoadPreOsChecker ();
+    }
   }
 
   while (OsBootOptionList != NULL) {
