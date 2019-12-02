@@ -156,11 +156,11 @@ EnumerateNvmeDevNamespace (
     //
     // Dump NvmExpress Identify Namespace Data
     //
-    DEBUG ((EFI_D_INFO, " == NVME IDENTIFY NAMESPACE [%d] DATA ==\n", NamespaceId));
-    DEBUG ((EFI_D_INFO, "    NSZE        : 0x%x\n", NamespaceData->Nsze));
-    DEBUG ((EFI_D_INFO, "    NCAP        : 0x%x\n", NamespaceData->Ncap));
-    DEBUG ((EFI_D_INFO, "    NUSE        : 0x%x\n", NamespaceData->Nuse));
-    DEBUG ((EFI_D_INFO, "    LBAF0.LBADS : 0x%x\n", (NamespaceData->LbaFormat[0].Lbads)));
+    DEBUG ((DEBUG_INFO, " == NVME IDENTIFY NAMESPACE [%d] DATA ==\n", NamespaceId));
+    DEBUG ((DEBUG_INFO, "    NSZE        : 0x%x\n", NamespaceData->Nsze));
+    DEBUG ((DEBUG_INFO, "    NCAP        : 0x%x\n", NamespaceData->Ncap));
+    DEBUG ((DEBUG_INFO, "    NUSE        : 0x%x\n", NamespaceData->Nuse));
+    DEBUG ((DEBUG_INFO, "    LBAF0.LBADS : 0x%x\n", (NamespaceData->LbaFormat[0].Lbads)));
 
     //
     // Build controller name for Component Name (2) protocol.
@@ -274,7 +274,7 @@ NvmeInitialize (
     return EFI_SUCCESS;
   }
 
-  DEBUG ((EFI_D_INFO, "NvmExpressDriverBindingStart: start\n"));
+  DEBUG ((DEBUG_INFO, "NvmExpressDriverBindingStart: start\n"));
 
   Private          = NULL;
 
@@ -284,7 +284,7 @@ NvmeInitialize (
   Private = AllocateZeroPool (sizeof (NVME_CONTROLLER_PRIVATE_DATA));
 
   if (Private == NULL) {
-    DEBUG ((EFI_D_ERROR, "NvmExpressDriverBindingStart: allocating pool for Nvme Private Data failed!\n"));
+    DEBUG ((DEBUG_ERROR, "NvmExpressDriverBindingStart: allocating pool for Nvme Private Data failed!\n"));
     Status = EFI_OUT_OF_RESOURCES;
     goto Exit;
   }
@@ -322,7 +322,7 @@ NvmeInitialize (
              Private
              );
 
-  DEBUG ((EFI_D_INFO, "NvmExpressDriverBindingStart: end successfully\n"));
+  DEBUG ((DEBUG_INFO, "NvmExpressDriverBindingStart: end successfully\n"));
   return EFI_SUCCESS;
 
 Exit:
@@ -332,7 +332,7 @@ Exit:
     }
   }
 
-  DEBUG ((EFI_D_INFO, "NvmExpressDriverBindingStart: end with %r\n", Status));
+  DEBUG ((DEBUG_INFO, "NvmExpressDriverBindingStart: end with %r\n", Status));
 
   return Status;
 }

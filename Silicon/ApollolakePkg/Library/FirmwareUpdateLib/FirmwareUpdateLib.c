@@ -171,7 +171,7 @@ MarkBootParitionBpdt (
 
   BpdtHeader = (BPDT_HEADER *)SourceAddress;
   if (((BpdtHeader->Signature != BPDT_SIGN_GREEN) && (BpdtHeader->Signature != BPDT_SIGN_RED)) || (BpdtHeader->DscCount > MAX_PARTITION_NUM)) {
-    DEBUG ((EFI_D_ERROR, "BPDT header Signature or partition number verification failed.\n"));
+    DEBUG ((DEBUG_ERROR, "BPDT header Signature or partition number verification failed.\n"));
     return EFI_UNSUPPORTED;
   }
 
@@ -310,7 +310,7 @@ GetFirmwareUpdateInfo (
 
   Status = mFwuSpiService->SpiGetRegion (FlashRegionBios, &RgnBase, &RgnSize);
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "GetPartitionSize Status = 0x%x\n", Status));
+    DEBUG ((DEBUG_ERROR, "GetPartitionSize Status = 0x%x\n", Status));
     return Status;
   }
 
@@ -326,7 +326,7 @@ GetFirmwareUpdateInfo (
   //
   Status = MarkBootParitionBpdt (BiosAddress, BPDT_SIGN_RED, NULL);
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "SetBootPartitionInvalid failed! Status = 0x%x\n", Status));
+    DEBUG ((DEBUG_ERROR, "SetBootPartitionInvalid failed! Status = 0x%x\n", Status));
     return Status;
   }
 
@@ -339,7 +339,7 @@ GetFirmwareUpdateInfo (
   if (FwPolicy.Fields.UpdatePartitionB == 1) {
     Status = GetComponentInfoByPartition (FLASH_MAP_SIG_BLRESERVED, FALSE, &RsvdRgnBase, &RsvdRgnSize);
     if (EFI_ERROR (Status)) {
-      DEBUG ((EFI_D_ERROR, "Could not get reserved region base from flash map\n"));
+      DEBUG ((DEBUG_ERROR, "Could not get reserved region base from flash map\n"));
       RsvdRgnSize = 0;
     }
     UpdateRegion->UpdateSize      = (RgnSize >> 1) - RsvdRgnSize;
@@ -351,7 +351,7 @@ GetFirmwareUpdateInfo (
   //
   Status = MarkBootParitionBpdt (BiosAddress, BPDT_SIGN_GREEN, NULL);
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "SetBootPartitionInvalid failed! Status = 0x%x\n", Status));
+    DEBUG ((DEBUG_ERROR, "SetBootPartitionInvalid failed! Status = 0x%x\n", Status));
     return Status;
   }
 
@@ -402,7 +402,7 @@ SetBootPartition (
   //
   Status = BootMediaErase (0, BPDT_SIZE);
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "Could not flip boot partition\n", Status));
+    DEBUG ((DEBUG_ERROR, "Could not flip boot partition\n", Status));
     return Status;
   }
 
@@ -454,11 +454,11 @@ EndFirmwareUpdate (
   HECI_SERVICE      *HeciService;
   PLATFORM_SERVICE  *PlatformService;
 
-  DEBUG ((EFI_D_INFO, "Firmware update Done! clear CSE flag to normal boot mode.\n"));
+  DEBUG ((DEBUG_INFO, "Firmware update Done! clear CSE flag to normal boot mode.\n"));
 
   HeciService = (HECI_SERVICE *) GetServiceBySignature (HECI_SERVICE_SIGNATURE);
   if ((HeciService == NULL) || (HeciService->SimpleHeciCommand == NULL)) {
-    DEBUG ((EFI_D_INFO, "Heci service unable, Could not exit firmware update mode.\n"));
+    DEBUG ((DEBUG_INFO, "Heci service unable, Could not exit firmware update mode.\n"));
     return EFI_UNSUPPORTED;
   }
 
@@ -476,7 +476,7 @@ EndFirmwareUpdate (
   //
   PlatformService = (PLATFORM_SERVICE *) GetServiceBySignature (PLATFORM_SERVICE_SIGNATURE);
   if (PlatformService != NULL && PlatformService->ResetSystem != NULL) {
-    DEBUG ((EFI_D_INIT, "Rebooting ...\n"));
+    DEBUG ((DEBUG_INIT, "Rebooting ...\n"));
     PlatformService->ResetSystem(EfiResetCold);
   }
 

@@ -64,8 +64,8 @@ PrintBlobheader (
 /**
   Print configuration data only for specified tag.
 
-  @param[in]  Address      The buffer address to dump 
-  @param[in]  Length       The total length to dump 
+  @param[in]  Address      The buffer address to dump
+  @param[in]  Length       The total length to dump
 
 **/
 VOID
@@ -127,7 +127,7 @@ PrintCfgItem (
   Print configuration data only for specified tag.
 
   @param[in]  CdataBlob    The pointer to config database
-  @param[in]  Tag          The configuration tag 
+  @param[in]  Tag          The configuration tag
 
 **/
 VOID

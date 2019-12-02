@@ -342,7 +342,7 @@ AhciInitialize (
   EFI_STATUS            Status;
   EFI_AHCI_CONTROLLER  *AhciPrivateData;
 
-  DEBUG ((EFI_D_INFO, "%a AHCI controller %X\n", (DevInitPhase == DevDeinit) ? "Deinit" : "Init", AhciHcPciBase));
+  DEBUG ((DEBUG_INFO, "%a AHCI controller %X\n", (DevInitPhase == DevDeinit) ? "Deinit" : "Init", AhciHcPciBase));
 
   if (DevInitPhase == DevDeinit) {
     if (mAhciPrivateData != NULL) {
@@ -357,7 +357,7 @@ AhciInitialize (
   }
 
   if (mAhciPrivateData != NULL) {
-    DEBUG ((EFI_D_INFO, "Skip reinit AHCI controller\n"));
+    DEBUG ((DEBUG_INFO, "Skip reinit AHCI controller\n"));
     return EFI_SUCCESS;
   }
 

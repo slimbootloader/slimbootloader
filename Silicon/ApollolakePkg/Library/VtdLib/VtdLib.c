@@ -179,7 +179,7 @@ UpdateDrhd2 (
       // Update source id for IoApic's device scope entry
       //
       Data16 = MmioRead16 (P2sbMmbase + R_PCH_P2SB_IBDF);
-      DEBUG ((EFI_D_INFO, " VtdLib: P2sbMmbase = 0x%X, IBDF = 0x%X\n", P2sbMmbase, Data16));
+      DEBUG ((DEBUG_INFO, " VtdLib: P2sbMmbase = 0x%X, IBDF = 0x%X\n", P2sbMmbase, Data16));
       Bus     = (UINT8) (Data16 >> 8);
       Path[0] = (UINT8) ((Data16 & 0xff) >> 3);
       Path[1] = (UINT8) (Data16 & 0x7);
@@ -192,7 +192,7 @@ UpdateDrhd2 (
       // Update APIC ID
       //
       DrhdEngine->DeviceScope[Index].EnumId = GetIoApicId();
-      DEBUG ((EFI_D_INFO, " VtdLib: IoApicId 0x%x\n", GetIoApicId()));
+      DEBUG ((DEBUG_INFO, " VtdLib: IoApicId 0x%x\n", GetIoApicId()));
     }
 
     if (Index == 1) {

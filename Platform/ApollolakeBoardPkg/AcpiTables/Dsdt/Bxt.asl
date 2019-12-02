@@ -9,8 +9,8 @@
 Scope (\_SB.PCI0) {
   //
   // Integrated Sensor Hub - Device 17, Function 0
-  //  
-  Device(ISH0) { 
+  //
+  Device(ISH0) {
     Name(_ADR, 0x00110000)
     Method (_STA, 0, NotSerialized) {
       Return (0x0F)
@@ -31,7 +31,7 @@ Scope (\_SB.PCI0) {
             Return(0) // Revision mismatch
           }
         }
-        // Function 1 : 
+        // Function 1 :
         Return(0)
 
       } Else {
@@ -46,5 +46,5 @@ Scope (\_SB.PCI0) {
     }
 
   }
-    
+
 }//end scope

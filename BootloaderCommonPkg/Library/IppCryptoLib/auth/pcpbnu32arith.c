@@ -5,22 +5,22 @@
 
 **/
 
-/* 
+/*
 //  Purpose:
 //     Intel(R) Integrated Performance Primitives. Cryptography Primitives.
 //     Internal BNU32 arithmetic.
-// 
+//
 //  Contents:
-// 
+//
 //     cpAdd_BNU32()
 //     cpSub_BNU32()
-// 
+//
 //     cpMulDgt_BNU32()
 //     cpSubMulDgt_BNU32()
-// 
+//
 //     cpDiv_BNU32()
-// 
-// 
+//
+//
 */
 
 #include "owncp.h"

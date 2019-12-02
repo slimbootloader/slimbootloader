@@ -5,13 +5,13 @@
 
 **/
 
-/* 
+/*
 //  Purpose:
 //     Intel(R) Integrated Performance Primitives.
 //     BNU data type definition
-// 
-// 
-// 
+//
+//
+//
 */
 
 #if !defined(_CP_BNU_IMPL_H)

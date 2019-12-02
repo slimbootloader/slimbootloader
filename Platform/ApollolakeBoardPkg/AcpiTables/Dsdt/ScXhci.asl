@@ -28,7 +28,7 @@ Device(XHC) {
   }
 
   Method (_DSW, 3, NotSerialized)  // _DSW: Device Sleep Wake
-  {  
+  {
      Store (Arg0, PMEE)
   }
 
@@ -46,7 +46,7 @@ Device(XHC) {
   Device(RHUB)
   {
     Name(_ADR, Zero)
-    
+
     Method(TPLD, 2, Serialized) { // For the port related with USB Tyep C. copied and modifined from GPLD
     // Arg0:  Visiable
     // Arg1:  Group position
@@ -71,7 +71,7 @@ Device(XHC) {
     }
     Method(TUPC, 1, Serialized) { // For the port related with USB Tyep C. copied and modifined from GUPC
     // Arg0: Type
-    // Type: 
+    // Type:
     //  0x08:     Type-C connector - USB2-only
     //  0x09:     Type-C connector - USB2 and SS with Switch
     //  0x0A:     Type-C connector - USB2 and SS without Switch
@@ -111,20 +111,20 @@ Device(XHC) {
       Method(_PLD,0,Serialized) {
           Name(PLDP, Package() {
               Buffer(0x14)
-              { 
+              {
               //31:0   - Bit[6:0]=2 revision is 0x2, Bit[7]=1 Ignore Color Bit[31:8]=0 RGB color is ignored
-              0x82, 0x00, 0x00, 0x00, 
+              0x82, 0x00, 0x00, 0x00,
               //63:32 - Bit[47:32]=0 width: 0x0000  Bit[63:48]=0 Height:0x0000
               0x00, 0x00, 0x00, 0x00,
               //95:64 - bit[66:64]=b'011 visiable/docking/no lid bit[69:67]=b'001 bottom panel bit[71:70]=b'01 Center  bit[73:72]=b'01 Center
               //           bit[77:74]=6 Horizontal Trapezoid bit[78]=0 bit[86:79]=0 bit[94:87]='0 no group info' bit[95]=0 not a bay
               //[71:64][79:72][87:80][95:88]
-              0x41, 0x08, 0x02, 0x00, 
+              0x41, 0x08, 0x02, 0x00,
               //127:96 -bit[96]=1 Ejectable bit[97]=1 OSPM Ejection required Bit[105:98]=0 no Cabinet Number
               //            bit[113:106]=0 no Card cage Number bit[114]=0 no reference shape Bit[118:115]=0 no rotation Bit[123:119]=0 no order
               0x00, 0x00, 0x00, 0x00,
               //159:128  Vert. and Horiz. Offsets not supplied
-              0xFF, 0xFF, 0xFF, 0xFF              
+              0xFF, 0xFF, 0xFF, 0xFF
               }
               })
 
@@ -145,18 +145,18 @@ Device(XHC) {
               Buffer(0x14)
               {
               //31:0   - Bit[6:0]=2 revision is 0x2, Bit[7]=1 Ignore Color Bit[31:8]=0 RGB color is ignored
-              0x82, 0x00, 0x00, 0x00, 
+              0x82, 0x00, 0x00, 0x00,
               //63:32 - Bit[47:32]=0 width: 0x0000  Bit[63:48]=0 Height:0x0000
               0x00, 0x00, 0x00, 0x00,
               //95:64 - bit[66:64]=b'011 visiable/docking/no lid bit[69:67]=b'001 bottom panel bit[71:70]=b'01 Center  bit[73:72]=b'01 Center
               //           bit[77:74]=6 Horizontal Trapezoid bit[78]=0 bit[86:79]=0 bit[94:87]='0 no group info' bit[95]=0 not a bay
               //[71:64][79:72][87:80][95:88]
-              0x40, 0x08, 0x03, 0x00, 
+              0x40, 0x08, 0x03, 0x00,
               //127:96 -bit[96]=1 Ejectable bit[97]=1 OSPM Ejection required Bit[105:98]=0 no Cabinet Number
               //            bit[113:106]=0 no Card cage Number bit[114]=0 no reference shape Bit[118:115]=0 no rotation Bit[123:119]=0 no order
               0x00, 0x00, 0x00, 0x00,
               //159:128  Vert. and Horiz. Offsets not supplied
-              0xFF, 0xFF, 0xFF, 0xFF              
+              0xFF, 0xFF, 0xFF, 0xFF
               }
               })
 
@@ -177,18 +177,18 @@ Device(XHC) {
               Buffer(0x14)
               {
               //31:0   - Bit[6:0]=2 revision is 0x2, Bit[7]=1 Ignore Color Bit[31:8]=0 RGB color is ignored
-              0x82, 0x00, 0x00, 0x00, 
+              0x82, 0x00, 0x00, 0x00,
               //63:32 - Bit[47:32]=0 width: 0x0000  Bit[63:48]=0 Height:0x0000
               0x00, 0x00, 0x00, 0x00,
               //95:64 - bit[66:64]=b'011 visiable/docking/no lid bit[69:67]=b'001 bottom panel bit[71:70]=b'01 Center  bit[73:72]=b'01 Center
               //           bit[77:74]=6 Horizontal Trapezoid bit[78]=0 bit[86:79]=0 bit[94:87]='0 no group info' bit[95]=0 not a bay
               //[71:64][79:72][87:80][95:88]
-              0x41, 0x08, 0x04, 0x00, 
+              0x41, 0x08, 0x04, 0x00,
               //127:96 -bit[96]=1 Ejectable bit[97]=1 OSPM Ejection required Bit[105:98]=0 no Cabinet Number
               //            bit[113:106]=0 no Card cage Number bit[114]=0 no reference shape Bit[118:115]=0 no rotation Bit[123:119]=0 no order
               0x00, 0x00, 0x00, 0x00,
               //159:128  Vert. and Horiz. Offsets not supplied
-              0xFF, 0xFF, 0xFF, 0xFF              
+              0xFF, 0xFF, 0xFF, 0xFF
               }
               })
 
@@ -209,13 +209,13 @@ Device(XHC) {
               Buffer(0x14)
               {
               //31:0   - Bit[6:0]=2 revision is 0x2, Bit[7]=1 Ignore Color Bit[31:8]=0 RGB color is ignored
-              0x82, 0x00, 0x00, 0x00, 
+              0x82, 0x00, 0x00, 0x00,
               //63:32 - Bit[47:32]=0 width: 0x0000  Bit[63:48]=0 Height:0x0000
               0x00, 0x00, 0x00, 0x00,
               //95:64 - bit[66:64]=b'011 visiable/docking/no lid bit[69:67]=b'001 bottom panel bit[71:70]=b'01 Center  bit[73:72]=b'01 Center
               //           bit[77:74]=6 Horizontal Trapezoid bit[78]=0 bit[86:79]=0 bit[94:87]='0 no group info' bit[95]=0 not a bay
               //[71:64][79:72][87:80][95:88]
-              0x41, 0x08, 0x05, 0x00, 
+              0x41, 0x08, 0x05, 0x00,
               //127:96 -bit[96]=1 Ejectable bit[97]=1 OSPM Ejection required Bit[105:98]=0 no Cabinet Number
               //            bit[113:106]=0 no Card cage Number bit[114]=0 no reference shape Bit[118:115]=0 no rotation Bit[123:119]=0 no order
               0x00, 0x00, 0x00, 0x00,
@@ -233,7 +233,7 @@ Device(XHC) {
       Name(_ADR, 0x06)
       Method(_UPC,0,Serialized) {
           // No connect
-          Name(UPCP, Package() { 0x00,0xFF,0x00,0x00 }) 
+          Name(UPCP, Package() { 0x00,0xFF,0x00,0x00 })
           Return(UPCP)
       }
 
@@ -242,13 +242,13 @@ Device(XHC) {
               Buffer(0x14)
               {
               //31:0   - Bit[6:0]=2 revision is 0x2, Bit[7]=1 Ignore Color Bit[31:8]=0 RGB color is ignored
-              0x82, 0x00, 0x00, 0x00, 
+              0x82, 0x00, 0x00, 0x00,
               //63:32 - Bit[47:32]=0 width: 0x0000  Bit[63:48]=0 Height:0x0000
               0x00, 0x00, 0x00, 0x00,
               //95:64 - bit[66:64]=b'011 visiable/docking/no lid bit[69:67]=b'001 bottom panel bit[71:70]=b'01 Center  bit[73:72]=b'01 Center
               //           bit[77:74]=6 Horizontal Trapezoid bit[78]=0 bit[86:79]=0 bit[94:87]='0 no group info' bit[95]=0 not a bay
               //[71:64][79:72][87:80][95:88]
-              0x40, 0x08, 0x06, 0x00, 
+              0x40, 0x08, 0x06, 0x00,
               //127:96 -bit[96]=1 Ejectable bit[97]=1 OSPM Ejection required Bit[105:98]=0 no Cabinet Number
               //            bit[113:106]=0 no Card cage Number bit[114]=0 no reference shape Bit[118:115]=0 no rotation Bit[123:119]=0 no order
               0x00, 0x00, 0x00, 0x00,
@@ -275,18 +275,18 @@ Device(XHC) {
               Buffer(0x14)
               {
               //31:0   - Bit[6:0]=2 revision is 0x2, Bit[7]=1 Ignore Color Bit[31:8]=0 RGB color is ignored
-              0x82, 0x00, 0x00, 0x00, 
+              0x82, 0x00, 0x00, 0x00,
               //63:32 - Bit[47:32]=0 width: 0x0000  Bit[63:48]=0 Height:0x0000
               0x00, 0x00, 0x00, 0x00,
               //95:64 - bit[66:64]=b'011 visiable/docking/no lid bit[69:67]=b'001 bottom panel bit[71:70]=b'01 Center  bit[73:72]=b'01 Center
               //           bit[77:74]=6 Horizontal Trapezoid bit[78]=0 bit[86:79]=0 bit[94:87]='0 no group info' bit[95]=0 not a bay
               //[71:64][79:72][87:80][95:88]
-              0x40, 0x08, 0x07, 0x00, 
+              0x40, 0x08, 0x07, 0x00,
               //127:96 -bit[96]=1 Ejectable bit[97]=1 OSPM Ejection required Bit[105:98]=0 no Cabinet Number
               //            bit[113:106]=0 no Card cage Number bit[114]=0 no reference shape Bit[118:115]=0 no rotation Bit[123:119]=0 no order
               0x00, 0x00, 0x00, 0x00,
               //159:128  Vert. and Horiz. Offsets not supplied
-              0xFF, 0xFF, 0xFF, 0xFF              
+              0xFF, 0xFF, 0xFF, 0xFF
               }
               })
 
@@ -308,29 +308,29 @@ Device(XHC) {
               Buffer(0x14)
               {
               //31:0   - Bit[6:0]=2 revision is 0x2, Bit[7]=1 Ignore Color Bit[31:8]=0 RGB color is ignored
-              0x82, 0x00, 0x00, 0x00, 
+              0x82, 0x00, 0x00, 0x00,
               //63:32 - Bit[47:32]=0 width: 0x0000  Bit[63:48]=0 Height:0x0000
               0x00, 0x00, 0x00, 0x00,
               //95:64 - bit[66:64]=b'011 visiable/docking/no lid bit[69:67]=b'001 bottom panel bit[71:70]=b'01 Center  bit[73:72]=b'01 Center
               //           bit[77:74]=6 Horizontal Trapezoid bit[78]=0 bit[86:79]=0 bit[94:87]='0 no group info' bit[95]=0 not a bay
               //[71:64][79:72][87:80][95:88]
-              0x40, 0x08, 0x08, 0x00, 
+              0x40, 0x08, 0x08, 0x00,
               //127:96 -bit[96]=1 Ejectable bit[97]=1 OSPM Ejection required Bit[105:98]=0 no Cabinet Number
               //            bit[113:106]=0 no Card cage Number bit[114]=0 no reference shape Bit[118:115]=0 no rotation Bit[123:119]=0 no order
               0x00, 0x00, 0x00, 0x00,
               //159:128  Vert. and Horiz. Offsets not supplied
-              0xFF, 0xFF, 0xFF, 0xFF              
+              0xFF, 0xFF, 0xFF, 0xFF
               }
               })
 
           Return (PLDP)
       }
-      
+
       // Add Camera built in Device
       Device (FCAM)
       {
         Name(_ADR, 0x08)
-        
+
          Method(_UPC,0,Serialized) {
            Name(UPCP, Package() { 0xFF,0xFF,0x00,0x00 }) // Connectable, Proprietary connector
            Return(UPCP)
@@ -341,18 +341,18 @@ Device(XHC) {
            Buffer(0x14)
            {
              //31:0   - Bit[6:0]=2 revision is 0x2, Bit[7]=1 Ignore Color Bit[31:8]=0 RGB color is ignored
-             0x82, 0x00, 0x00, 0x00, 
+             0x82, 0x00, 0x00, 0x00,
              //63:32 - Bit[47:32]=0 width: 0x0000  Bit[63:48]=0 Height:0x0000
              0x00, 0x00, 0x00, 0x00,
              //95:64 - bit[66:64]=b'000 in-visiable/ no docking/no lid bit[69:67]=b'100 front panel bit[71:70]=b'01 Center  bit[73:72]=b'01 Center
              //           bit[77:74]=6 Horizontal Trapezoid bit[78]=0 bit[86:79]=0 bit[94:87]='0 no group info' bit[95]=0 not a bay
              //[71:64][79:72][87:80][95:88]
-             0x60, 0x08, 0x08, 0x00, 
+             0x60, 0x08, 0x08, 0x00,
              //127:96 -bit[96]=1 Ejectable bit[97]=1 OSPM Ejection required Bit[105:98]=0 no Cabinet Number
              //            bit[113:106]=0 no Card cage Number bit[114]=0 no reference shape Bit[118:115]=0 no rotation Bit[123:119]=0 no order
              0x00, 0x00, 0x00, 0x00,
              //159:128  Vert. and Horiz. Offsets not supplied
-             0xFF, 0xFF, 0xFF, 0xFF              
+             0xFF, 0xFF, 0xFF, 0xFF
            }
            })
 
@@ -394,13 +394,13 @@ Device(XHC) {
                 Buffer(0x14)
                 {
                 //31:0   - Bit[6:0]=2 revision is 0x2, Bit[7]=1 Ignore Color Bit[31:8]=0 RGB color is ignored
-                0x82, 0x00, 0x00, 0x00, 
+                0x82, 0x00, 0x00, 0x00,
                 //63:32 - Bit[47:32]=0 width: 0x0000  Bit[63:48]=0 Height:0x0000
                 0x00, 0x00, 0x00, 0x00,
                 //95:64 - bit[66:64]=b'011 visiable/docking/no lid bit[69:67]=b'001 bottom panel bit[71:70]=b'01 Center  bit[73:72]=b'01 Center
                 //           bit[77:74]=6 Horizontal Trapezoid bit[78]=0 bit[86:79]=0 bit[94:87]='0 no group info' bit[95]=0 not a bay
                 //[71:64][79:72][87:80][95:88]
-                0x41, 0x08, 0x02, 0x00, 
+                0x41, 0x08, 0x02, 0x00,
                 //127:96 -bit[96]=1 Ejectable bit[97]=1 OSPM Ejection required Bit[105:98]=0 no Cabinet Number
                 //            bit[113:106]=0 no Card cage Number bit[114]=0 no reference shape Bit[118:115]=0 no rotation Bit[123:119]=0 no order
                 0x00, 0x00, 0x00, 0x00,
@@ -429,15 +429,15 @@ Device(XHC) {
         Method(_PLD,0,Serialized) {
             Name(PLDP, Package() {     //pls check ACPI 5.0 section 6.1.8
                 Buffer(0x14)
-                { 
+                {
                 //31:0   - Bit[6:0]=2 revision is 0x2, Bit[7]=1 Ignore Color Bit[31:8]=0 RGB color is ignored
-                0x82, 0x00, 0x00, 0x00, 
+                0x82, 0x00, 0x00, 0x00,
                 //63:32 - Bit[47:32]=0 width: 0x0000  Bit[63:48]=0 Height:0x0000
                 0x00, 0x00, 0x00, 0x00,
                 //95:64 - bit[66:64]=b'011 visiable/docking/no lid bit[69:67]=b'001 bottom panel bit[71:70]=b'01 Center  bit[73:72]=b'01 Center
                 //           bit[77:74]=6 Horizontal Trapezoid bit[78]=0 bit[86:79]=0 bit[94:87]='0 no group info' bit[95]=0 not a bay
                 //[71:64][79:72][87:80][95:88]
-                0x40, 0x08, 0x03, 0x00, 
+                0x40, 0x08, 0x03, 0x00,
                 //127:96 -bit[96]=1 Ejectable bit[97]=1 OSPM Ejection required Bit[105:98]=0 no Cabinet Number
                 //            bit[113:106]=0 no Card cage Number bit[114]=0 no reference shape Bit[118:115]=0 no rotation Bit[123:119]=0 no order
                 0x00, 0x00, 0x00, 0x00,
@@ -468,13 +468,13 @@ Device(XHC) {
                 Buffer(0x14)
                 {
                 //31:0   - Bit[6:0]=2 revision is 0x2, Bit[7]=1 Ignore Color Bit[31:8]=0 RGB color is ignored
-                0x82, 0x00, 0x00, 0x00, 
+                0x82, 0x00, 0x00, 0x00,
                 //63:32 - Bit[47:32]=0 width: 0x0000  Bit[63:48]=0 Height:0x0000
                 0x00, 0x00, 0x00, 0x00,
                 //95:64 - bit[66:64]=b'011 visiable/docking/no lid bit[69:67]=b'001 bottom panel bit[71:70]=b'01 Center  bit[73:72]=b'01 Center
                 //           bit[77:74]=6 Horizontal Trapezoid bit[78]=0 bit[86:79]=0 bit[94:87]='0 no group info' bit[95]=0 not a bay
                 //[71:64][79:72][87:80][95:88]
-                0x40, 0x08, 0x04, 0x00, 
+                0x40, 0x08, 0x04, 0x00,
                 //127:96 -bit[96]=1 Ejectable bit[97]=1 OSPM Ejection required Bit[105:98]=0 no Cabinet Number
                 //            bit[113:106]=0 no Card cage Number bit[114]=0 no reference shape Bit[118:115]=0 no rotation Bit[123:119]=0 no order
                 0x00, 0x00, 0x00, 0x00,
@@ -505,13 +505,13 @@ Device(XHC) {
                 Buffer(0x14)
                 {
                 //31:0   - Bit[6:0]=2 revision is 0x2, Bit[7]=1 Ignore Color Bit[31:8]=0 RGB color is ignored
-                0x82, 0x00, 0x00, 0x00, 
+                0x82, 0x00, 0x00, 0x00,
                 //63:32 - Bit[47:32]=0 width: 0x0000  Bit[63:48]=0 Height:0x0000
                 0x00, 0x00, 0x00, 0x00,
                 //95:64 - bit[66:64]=b'011 visiable/docking/no lid bit[69:67]=b'001 bottom panel bit[71:70]=b'01 Center  bit[73:72]=b'01 Center
                 //           bit[77:74]=6 Horizontal Trapezoid bit[78]=0 bit[86:79]=0 bit[94:87]='0 no group info' bit[95]=0 not a bay
                 //[71:64][79:72][87:80][95:88]
-                0x41, 0x08, 0x05, 0x00, 
+                0x41, 0x08, 0x05, 0x00,
                 //127:96 -bit[96]=1 Ejectable bit[97]=1 OSPM Ejection required Bit[105:98]=0 no Cabinet Number
                 //            bit[113:106]=0 no Card cage Number bit[114]=0 no reference shape Bit[118:115]=0 no rotation Bit[123:119]=0 no order
                 0x00, 0x00, 0x00, 0x00,
@@ -542,13 +542,13 @@ Device(XHC) {
                 Buffer(0x14)
                 {
                 //31:0   - Bit[6:0]=2 revision is 0x2, Bit[7]=1 Ignore Color Bit[31:8]=0 RGB color is ignored
-                0x82, 0x00, 0x00, 0x00, 
+                0x82, 0x00, 0x00, 0x00,
                 //63:32 - Bit[47:32]=0 width: 0x0000  Bit[63:48]=0 Height:0x0000
                 0x00, 0x00, 0x00, 0x00,
                 //95:64 - bit[66:64]=b'011 visiable/docking/no lid bit[69:67]=b'001 bottom panel bit[71:70]=b'01 Center  bit[73:72]=b'01 Center
                 //           bit[77:74]=6 Horizontal Trapezoid bit[78]=0 bit[86:79]=0 bit[94:87]='0 no group info' bit[95]=0 not a bay
                 //[71:64][79:72][87:80][95:88]
-                0x40, 0x08, 0x06, 0x00, 
+                0x40, 0x08, 0x06, 0x00,
                 //127:96 -bit[96]=1 Ejectable bit[97]=1 OSPM Ejection required Bit[105:98]=0 no Cabinet Number
                 //            bit[113:106]=0 no Card cage Number bit[114]=0 no reference shape Bit[118:115]=0 no rotation Bit[123:119]=0 no order
                 0x00, 0x00, 0x00, 0x00,
@@ -582,13 +582,13 @@ Device(XHC) {
                 Buffer(0x14)
                 {
                 //31:0   - Bit[6:0]=2 revision is 0x2, Bit[7]=1 Ignore Color Bit[31:8]=0 RGB color is ignored
-                0x82, 0x00, 0x00, 0x00, 
+                0x82, 0x00, 0x00, 0x00,
                 //63:32 - Bit[47:32]=0 width: 0x0000  Bit[63:48]=0 Height:0x0000
                 0x00, 0x00, 0x00, 0x00,
                 //95:64 - bit[66:64]=b'011 visiable/docking/no lid bit[69:67]=b'001 bottom panel bit[71:70]=b'01 Center  bit[73:72]=b'01 Center
                 //           bit[77:74]=6 Horizontal Trapezoid bit[78]=0 bit[86:79]=0 bit[94:87]='0 no group info' bit[95]=0 not a bay
                 //[71:64][79:72][87:80][95:88]
-                0x40, 0x08, 0x07, 0x00, 
+                0x40, 0x08, 0x07, 0x00,
                 //127:96 -bit[96]=1 Ejectable bit[97]=1 OSPM Ejection required Bit[105:98]=0 no Cabinet Number
                 //            bit[113:106]=0 no Card cage Number bit[114]=0 no reference shape Bit[118:115]=0 no rotation Bit[123:119]=0 no order
                 0x00, 0x00, 0x00, 0x00,

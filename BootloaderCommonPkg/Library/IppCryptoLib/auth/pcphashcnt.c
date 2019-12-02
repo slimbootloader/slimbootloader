@@ -5,14 +5,14 @@
 
 **/
 
-/* 
-// 
+/*
+//
 //  Purpose:
 //     Cryptography Primitive.
 //     Security Hash Standard
 //     Constants
-// 
-// 
+//
+//
 */
 
 #include "owndefs.h"

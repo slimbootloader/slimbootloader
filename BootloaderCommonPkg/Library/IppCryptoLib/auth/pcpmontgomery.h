@@ -5,11 +5,11 @@
 
 **/
 
-/* 
+/*
 //               Intel(R) Integrated Performance Primitives
 //                   Cryptographic Primitives (ippcp)
-// 
-// 
+//
+//
 */
 
 #if !defined(_CP_MONTGOMETRY_H)

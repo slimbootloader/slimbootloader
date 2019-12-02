@@ -1262,7 +1262,7 @@ AhciPortReset (
              );
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "Port %d COMRESET failed: %r\n", Port, Status));
+    DEBUG ((DEBUG_ERROR, "Port %d COMRESET failed: %r\n", Port, Status));
     return Status;
   }
 
@@ -1396,12 +1396,12 @@ AhciAtaSmartReturnStatusCheck (
       //
       // The threshold exceeded condition is not detected by the device
       //
-      DEBUG ((EFI_D_INFO, "The S.M.A.R.T threshold exceeded condition is not detected\n"));
+      DEBUG ((DEBUG_INFO, "The S.M.A.R.T threshold exceeded condition is not detected\n"));
     } else if ((LBAMid == 0xf4) && (LBAHigh == 0x2c)) {
       //
       // The threshold exceeded condition is detected by the device
       //
-      DEBUG ((EFI_D_INFO, "The S.M.A.R.T threshold exceeded condition is detected\n"));
+      DEBUG ((DEBUG_INFO, "The S.M.A.R.T threshold exceeded condition is detected\n"));
     }
   }
 
@@ -1440,7 +1440,7 @@ AhciAtaSmartSupport (
     //
     // S.M.A.R.T is not supported by the device
     //
-    DEBUG ((EFI_D_INFO, "S.M.A.R.T feature is not supported at port [%d] PortMultiplier [%d]!\n",
+    DEBUG ((DEBUG_INFO, "S.M.A.R.T feature is not supported at port [%d] PortMultiplier [%d]!\n",
             Port, PortMultiplier));
   } else {
     //
@@ -1506,7 +1506,7 @@ AhciAtaSmartSupport (
         }
       }
     }
-    DEBUG ((EFI_D_INFO, "Enabled S.M.A.R.T feature at port [%d] PortMultiplier [%d]!\n",
+    DEBUG ((DEBUG_INFO, "Enabled S.M.A.R.T feature at port [%d] PortMultiplier [%d]!\n",
             Port, PortMultiplier));
   }
 
@@ -2047,7 +2047,7 @@ AhciModeInitialization (
       } while (PhyDetectDelay > 0);
 
       if (PhyDetectDelay == 0) {
-        DEBUG ((EFI_D_ERROR, "Port %d Device presence detected but phy not ready (TFD=0x%X)\n", Port, Data));
+        DEBUG ((DEBUG_ERROR, "Port %d Device presence detected but phy not ready (TFD=0x%X)\n", Port, Data));
         continue;
       }
 
@@ -2085,7 +2085,7 @@ AhciModeInitialization (
       } else {
         continue;
       }
-      DEBUG ((EFI_D_INFO, "AHCI port [%d] has a [%a]\n",
+      DEBUG ((DEBUG_INFO, "AHCI port [%d] has a [%a]\n",
               Port, DeviceType == EfiIdeCdrom ? "cdrom" : "harddisk"));
 
       //
@@ -2141,7 +2141,7 @@ AhciModeInitialization (
       if (TransferMode != 0xFFFFFFFF) {
         Status = AhciDeviceSetFeature (AhciController, AhciRegisters, Port, 0, 0x03, TransferMode);
         if (EFI_ERROR (Status)) {
-          DEBUG ((EFI_D_ERROR, "Set transfer Mode Fail, Status = %r\n", Status));
+          DEBUG ((DEBUG_ERROR, "Set transfer Mode Fail, Status = %r\n", Status));
           continue;
         }
       }

@@ -28,7 +28,7 @@
   Silicon/ApollolakePkg/ApollolakePkg.dec
 
 [LibraryClasses]
-  BaseLib  
+  BaseLib
   IoLib
   PcdLib
   DebugLib

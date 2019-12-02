@@ -1952,7 +1952,7 @@ UpdateSmmInfo (
   LdrSmmInfo->SmmSize = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + BGSM) & ~0xF;
   LdrSmmInfo->SmmSize -= LdrSmmInfo->SmmBase;
   LdrSmmInfo->Flags = SMM_FLAGS_4KB_COMMUNICATION;
-  DEBUG ((EFI_D_ERROR, "Stage2: SmmRamBase = 0x%x, SmmRamSize = 0x%x\n", LdrSmmInfo->SmmBase, LdrSmmInfo->SmmSize));
+  DEBUG ((DEBUG_ERROR, "Stage2: SmmRamBase = 0x%x, SmmRamSize = 0x%x\n", LdrSmmInfo->SmmBase, LdrSmmInfo->SmmSize));
   //
   // Update the HOB with smi ctrl register data
   //
@@ -1991,7 +1991,7 @@ UpdateLoaderPlatformInfo (
     else if (PlatformData->BtGuardInfo.TpmType == TpmNone)
       LoaderPlatformInfo->TpmType = TPM_TYPE_NONE;
 
-    DEBUG ((EFI_D_INFO, "Stage2: HwState 0x%x\n", LoaderPlatformInfo->HwState));
+    DEBUG ((DEBUG_INFO, "Stage2: HwState 0x%x\n", LoaderPlatformInfo->HwState));
   }
 }
 

@@ -1005,7 +1005,7 @@ EndList
 
         NewLines = []
         for LineNum, Line in enumerate(Lines):
-            Match = re.match("^!include\s*(.+)?$", Line)
+            Match = re.match("^!include\s*(.+)?$", Line.strip())
             if Match:
                 IncPath = Match.group(1)
                 TmpPath = os.path.join(CurDir, IncPath)

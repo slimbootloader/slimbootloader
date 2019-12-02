@@ -24,9 +24,6 @@
 #include <Library/UsbBusLib.h>
 #include <IndustryStandard/Usb.h>
 
-#undef   EFI_D_INFO
-#define  EFI_D_INFO  EFI_D_VERBOSE
-
 #define  PeiServicesAllocatePages(a, b, c)   \
          (((*(c) = (UINTN)AllocatePages (b)) != 0) ? EFI_SUCCESS : EFI_OUT_OF_RESOURCES)
 

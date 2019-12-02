@@ -5,33 +5,33 @@
 
 **/
 
-/* 
+/*
 //  Purpose:
 //     Intel(R) Integrated Performance Primitives. Cryptography Primitives.
 //     Internal Unsigned arithmetic
-// 
+//
 //  Contents:
 //     cpAdd_BNU()
 //     cpSub_BNU()
 //     cpInc_BNU()
 //     cpDec_BNU()
-// 
+//
 //     cpAddAdd_BNU()
 //     cpAddSub_BNU()
-// 
+//
 //     cpMuldgt_BNU()
 //     cpAddMulDgt_BNU()
 //     cpSubMulDgt_BNU()
-// 
+//
 //     cpMulAdc_BNU_school()
 //     cpSqrAdc_BNU_school()
-// 
+//
 //     cpDiv_BNU()
 //     cpMod_BNU()
 //     cpGcd_BNU()
 //     cpModInv_BNU()
-// 
-// 
+//
+//
 */
 
 #include "owncp.h"

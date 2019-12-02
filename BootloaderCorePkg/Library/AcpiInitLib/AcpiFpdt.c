@@ -119,11 +119,11 @@ GetFpdtS3Table (
       if (DEBUG_PRINT_FPDT_DATA == 1) {
         BOOT_PERFORMANCE_TABLE  *BootTable;
         BootTable = (BOOT_PERFORMANCE_TABLE *)(UINTN)Fpdt->BootPointerRecord.BootPerformanceTablePointer;
-        DEBUG ((EFI_D_INFO, "FPDT: ResetEnd                = %ld\n", BootTable->BasicBoot.ResetEnd));
-        DEBUG ((EFI_D_INFO, "FPDT: OsLoaderLoadImageStart  = %ld\n", BootTable->BasicBoot.OsLoaderLoadImageStart));
-        DEBUG ((EFI_D_INFO, "FPDT: OsLoaderStartImageStart = %ld\n", BootTable->BasicBoot.OsLoaderStartImageStart));
-        DEBUG ((EFI_D_INFO, "FPDT: ExitBootServicesEntry   = %ld\n", BootTable->BasicBoot.ExitBootServicesEntry));
-        DEBUG ((EFI_D_INFO, "FPDT: ExitBootServicesExit    = %ld\n", BootTable->BasicBoot.ExitBootServicesExit));
+        DEBUG ((DEBUG_INFO, "FPDT: ResetEnd                = %ld\n", BootTable->BasicBoot.ResetEnd));
+        DEBUG ((DEBUG_INFO, "FPDT: OsLoaderLoadImageStart  = %ld\n", BootTable->BasicBoot.OsLoaderLoadImageStart));
+        DEBUG ((DEBUG_INFO, "FPDT: OsLoaderStartImageStart = %ld\n", BootTable->BasicBoot.OsLoaderStartImageStart));
+        DEBUG ((DEBUG_INFO, "FPDT: ExitBootServicesEntry   = %ld\n", BootTable->BasicBoot.ExitBootServicesEntry));
+        DEBUG ((DEBUG_INFO, "FPDT: ExitBootServicesExit    = %ld\n", BootTable->BasicBoot.ExitBootServicesExit));
       }
       return (UINTN)Fpdt->S3PointerRecord.S3PerformanceTablePointer;
     }
@@ -175,9 +175,9 @@ UpdateFpdtS3Table (
   S3Resume->AverageResume = DivU64x32 (TotalResumeTime, S3Resume->ResumeCount);
 
   if (DEBUG_PRINT_FPDT_DATA == 1) {
-    DEBUG ((EFI_D_INFO, "FPDT: S3Resume->AverageResume = %ld\n", S3Resume->AverageResume));
-    DEBUG ((EFI_D_INFO, "FPDT: S3Resume->ResumeCount   = %d\n",  S3Resume->ResumeCount));
-    DEBUG ((EFI_D_INFO, "FPDT: S3Resume->FullResume    = %ld\n", S3Resume->FullResume));
+    DEBUG ((DEBUG_INFO, "FPDT: S3Resume->AverageResume = %ld\n", S3Resume->AverageResume));
+    DEBUG ((DEBUG_INFO, "FPDT: S3Resume->ResumeCount   = %d\n",  S3Resume->ResumeCount));
+    DEBUG ((DEBUG_INFO, "FPDT: S3Resume->FullResume    = %ld\n", S3Resume->FullResume));
   }
   return  EFI_SUCCESS;
 }
@@ -202,7 +202,7 @@ UpdateFpdt (
   S3_PERFORMANCE_TABLE                *S3PerfTable;
 
   if ( Table == NULL) {
-    DEBUG((EFI_D_WARN, "TABLE is NULL\n"));
+    DEBUG((DEBUG_WARN, "TABLE is NULL\n"));
     return EFI_INVALID_PARAMETER;
   }
 

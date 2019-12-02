@@ -112,7 +112,7 @@ InitializeUfsHcPeim_org (
         BaseClass = PciRead8 (PCI_LIB_ADDRESS (Bus, Device, Function, 0x0B));
 
         if ((SubClass == 0x09) && (BaseClass == PCI_CLASS_MASS_STORAGE)) {
-          DEBUG ((EFI_D_ERROR, "Find UFS device: Bus:0x%x, Device:0x%x, Function:0x%x\n", Bus, Device, Function));
+          DEBUG ((DEBUG_ERROR, "Find UFS device: Bus:0x%x, Device:0x%x, Function:0x%x\n", Bus, Device, Function));
           //
           // Get the Ufs Pci host controller's MMIO region size.
           //

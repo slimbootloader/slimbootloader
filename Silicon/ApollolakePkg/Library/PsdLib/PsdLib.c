@@ -199,9 +199,9 @@ UpdateAcpiPsdTable (
   EFI_STATUS                      Status;
   UINT8                           HashIndex;
 
-  DEBUG((EFI_D_INFO, "UpdateAcpiPsdTable start\n"));
+  DEBUG((DEBUG_INFO, "UpdateAcpiPsdTable start\n"));
   if ( Table == NULL) {
-    DEBUG((EFI_D_WARN, "EFI_ACPI_PSD_TABLE IS NULL\n"));
+    DEBUG((DEBUG_WARN, "EFI_ACPI_PSD_TABLE IS NULL\n"));
     return EFI_BUFFER_TOO_SMALL;
   }
   mPsdt = (EFI_ACPI_PSD_TABLE*)Table;
@@ -219,49 +219,49 @@ UpdateAcpiPsdTable (
   mPsdt->Header.CreatorRevision         = EFI_ACPI_CREATOR_REVISION;
   ZeroMem( mPsdt +  sizeof (EFI_ACPI_DESCRIPTION_HEADER) , \
      sizeof(EFI_ACPI_PSD_TABLE) - sizeof(EFI_ACPI_DESCRIPTION_HEADER) );
-  DEBUG( (EFI_D_INFO, "Address of PSD_TABLE=%x\n", mPsdt));
-  DEBUG( (EFI_D_INFO, "PSD Values: Signature=%x\n", mPsdt->Header.Signature) );
-  DEBUG( (EFI_D_INFO, "PSD Values: Length=%x\n", mPsdt->Header.Length ));
-  DEBUG( (EFI_D_INFO, "PSD Values: Revision=%x\n", mPsdt->Header.Revision ));
-  DEBUG( (EFI_D_INFO, "PSD Values: Checksum=%x\n", mPsdt->Header.Checksum ));
-  DEBUG( (EFI_D_INFO, "PSD Values: OemId=%x\n", mPsdt->Header.OemId ));
-  DEBUG( (EFI_D_INFO, "PSD Values: OemTableId=%x\n", mPsdt->Header.OemTableId ));
+  DEBUG( (DEBUG_INFO, "Address of PSD_TABLE=%x\n", mPsdt));
+  DEBUG( (DEBUG_INFO, "PSD Values: Signature=%x\n", mPsdt->Header.Signature) );
+  DEBUG( (DEBUG_INFO, "PSD Values: Length=%x\n", mPsdt->Header.Length ));
+  DEBUG( (DEBUG_INFO, "PSD Values: Revision=%x\n", mPsdt->Header.Revision ));
+  DEBUG( (DEBUG_INFO, "PSD Values: Checksum=%x\n", mPsdt->Header.Checksum ));
+  DEBUG( (DEBUG_INFO, "PSD Values: OemId=%x\n", mPsdt->Header.OemId ));
+  DEBUG( (DEBUG_INFO, "PSD Values: OemTableId=%x\n", mPsdt->Header.OemTableId ));
 
   mPsdt->PsdVersion.PsdVerMajor = PSD_VERSION_MAJOR;
   mPsdt->PsdVersion.PsdVerMinor = PSD_VERSION_MINOR;
-  DEBUG( (EFI_D_INFO, "PSD Values:  PsdVerMajor=%x\n", mPsdt->PsdVersion.PsdVerMajor ));
-  DEBUG( (EFI_D_INFO, "PSD Values:  PsdVerMinor=%x\n", mPsdt->PsdVersion.PsdVerMinor ));
+  DEBUG( (DEBUG_INFO, "PSD Values:  PsdVerMajor=%x\n", mPsdt->PsdVersion.PsdVerMajor ));
+  DEBUG( (DEBUG_INFO, "PSD Values:  PsdVerMinor=%x\n", mPsdt->PsdVersion.PsdVerMinor ));
 
   //Eom State,
   Status = GetEomState(&mPsdt->EomState);
   if (EFI_ERROR(Status)) {
-    DEBUG((EFI_D_INFO, " GetEomState failed =%x\n",Status));
+    DEBUG((DEBUG_INFO, " GetEomState failed =%x\n",Status));
   }
-  DEBUG( (EFI_D_INFO, "PSD Values:  EomState =%x\n", mPsdt->EomState ));
+  DEBUG( (DEBUG_INFO, "PSD Values:  EomState =%x\n", mPsdt->EomState ));
 
   //Sec Capabilities,
   Status = GetSecCapability( &(mPsdt->CsmeSecCapabilities) );
   if (EFI_ERROR(Status)) {
-    DEBUG((EFI_D_INFO, " GetSecCapability failed =%x\n",Status));
+    DEBUG((DEBUG_INFO, " GetSecCapability failed =%x\n",Status));
   }
-  DEBUG((EFI_D_INFO, "PSD Values: CsmeSecCapabilities=%x\n", mPsdt->CsmeSecCapabilities));
+  DEBUG((DEBUG_INFO, "PSD Values: CsmeSecCapabilities=%x\n", mPsdt->CsmeSecCapabilities));
 
   //FW version,
   Status = GetSecFwVersion( &(mPsdt->FwVer) );
   if (EFI_ERROR(Status)) {
-    DEBUG((EFI_D_INFO, " GetSecCFwVersion failed =%x\n",Status));
+    DEBUG((DEBUG_INFO, " GetSecCFwVersion failed =%x\n",Status));
   }
-  DEBUG( (EFI_D_INFO, "PSD Values:  CodeMajor=%x\n", mPsdt->FwVer.CodeMajor ));
-  DEBUG( (EFI_D_INFO, "PSD Values:  CodeMinor=%x\n", mPsdt->FwVer.CodeMinor ));
-  DEBUG( (EFI_D_INFO, "PSD Values:  CodeHotFix=%x\n", mPsdt->FwVer.CodeHotFix ));
-  DEBUG( (EFI_D_INFO, "PSD Values:  CodeBuildNo=%x \n", mPsdt->FwVer.CodeBuildNo ));
+  DEBUG( (DEBUG_INFO, "PSD Values:  CodeMajor=%x\n", mPsdt->FwVer.CodeMajor ));
+  DEBUG( (DEBUG_INFO, "PSD Values:  CodeMinor=%x\n", mPsdt->FwVer.CodeMinor ));
+  DEBUG( (DEBUG_INFO, "PSD Values:  CodeHotFix=%x\n", mPsdt->FwVer.CodeHotFix ));
+  DEBUG( (DEBUG_INFO, "PSD Values:  CodeBuildNo=%x \n", mPsdt->FwVer.CodeBuildNo ));
   if( &(mPsdt->FwVendor) == NULL) {
     return RETURN_BUFFER_TOO_SMALL;
   }
   CopyMem(&mPsdt->FwVendor, EFI_ACPI_PSD_FW_VENDOR, EFI_ACPI_PSD_FW_VENDOR_SIZE);
   PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr();
   if (PlatformData == NULL) {
-    DEBUG(( EFI_D_INFO, "PSD Values:  GetPlatformDataPtr Failed\n" ));
+    DEBUG(( DEBUG_INFO, "PSD Values:  GetPlatformDataPtr Failed\n" ));
     return  EFI_UNSUPPORTED;
   }
 
@@ -273,9 +273,9 @@ UpdateAcpiPsdTable (
   mPsdt->PsdtType                      = 3;
   mPsdt->FwHashIndex                    = PsdCseHash;
   mPsdt->FwHashDataLen                  = EFI_ACPI_PSD_FW_HASH_DATA_LEN;
-  DEBUG((EFI_D_INFO, "PSD Values:  SecureBootEnabled=%x\n", mPsdt->SecureBoot));
-  DEBUG((EFI_D_INFO, "PSD Values:  MeasuredBootEnabled=%x\n", mPsdt->MeasuredBoot));
-  DEBUG((EFI_D_INFO, "PSD Values:  PsdtType=%x\n", mPsdt->PsdtType));
+  DEBUG((DEBUG_INFO, "PSD Values:  SecureBootEnabled=%x\n", mPsdt->SecureBoot));
+  DEBUG((DEBUG_INFO, "PSD Values:  MeasuredBootEnabled=%x\n", mPsdt->MeasuredBoot));
+  DEBUG((DEBUG_INFO, "PSD Values:  PsdtType=%x\n", mPsdt->PsdtType));
 
   if ( mPsdt->SecureBoot ) {
     // When measured boot is enable, hashes will be extended to FIT table by CSE,
@@ -331,11 +331,11 @@ UpdateAcpiPsdTable (
       }
     }
   }
-  DEBUG( (EFI_D_INFO, "PSD Values:  FwHashIndex=%x\n", mPsdt->FwHashIndex ));
-  DEBUG( (EFI_D_INFO, "PSD Values:  FwHashDataLen=%x\n", mPsdt->FwHashDataLen ));
-  DEBUG( (EFI_D_INFO, "PSD Values:  FwHashDataSize=%x\n", sizeof(mPsdt->FwHashData) ));
+  DEBUG( (DEBUG_INFO, "PSD Values:  FwHashIndex=%x\n", mPsdt->FwHashIndex ));
+  DEBUG( (DEBUG_INFO, "PSD Values:  FwHashDataLen=%x\n", mPsdt->FwHashDataLen ));
+  DEBUG( (DEBUG_INFO, "PSD Values:  FwHashDataSize=%x\n", sizeof(mPsdt->FwHashData) ));
   DumpHex (2, 0, sizeof(EFI_ACPI_PSD_TABLE), (VOID *)Table);
-  DEBUG( (EFI_D_INFO, "UpdateAcpiPsdTable() end\n") );
+  DEBUG( (DEBUG_INFO, "UpdateAcpiPsdTable() end\n") );
 
   return  EFI_SUCCESS;
 }

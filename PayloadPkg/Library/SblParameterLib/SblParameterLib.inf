@@ -26,5 +26,5 @@
   BootloaderCommonPkg/BootloaderCommonPkg.dec
 
 [Guids]
-  
+
 [Pcd]

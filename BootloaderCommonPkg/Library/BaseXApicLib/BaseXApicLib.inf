@@ -27,9 +27,9 @@
 
 [Packages]
   MdePkg/MdePkg.dec
-  IntelFsp2Pkg/IntelFsp2Pkg.dec  
+  IntelFsp2Pkg/IntelFsp2Pkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
-  
+
 [LibraryClasses]
   BaseLib
   DebugLib

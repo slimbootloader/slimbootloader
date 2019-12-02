@@ -22,5 +22,5 @@ ASM_PFX(EarlyBoardInit):
         ; ESI, EDI need to be preserved
         ; ESP contains return address
         ;
-        jmp     esp        
+        jmp     esp
 

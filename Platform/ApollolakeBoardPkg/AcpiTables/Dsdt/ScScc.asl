@@ -50,7 +50,7 @@ scope (\_SB.PCI0) {
   //   Arg3: RID
   //
   //  Return Value:
-  //    ReadData 
+  //    ReadData
   //
   Method (SBIM, 4, Serialized)
   {
@@ -94,7 +94,7 @@ scope (\_SB.PCI0) {
         Sleep (1)
       }
       Store (SBDA, local0)
-      
+
       // Hide P2SB CFG Space
       Store (1, P2HD)
     }
@@ -553,7 +553,7 @@ scope (\_SB.PCI0) {
       If (LEqual(\_SB.PCI0.GRR3, 1))
       {
         SBIM (0xD6000034, 0, 0x1, 0x30D8)
-        SBIM (0xD6000038, 0, 0x1, 0x30D8)        
+        SBIM (0xD6000038, 0, 0x1, 0x30D8)
       }
 
       //

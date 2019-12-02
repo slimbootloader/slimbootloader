@@ -391,7 +391,7 @@ RegisterContainer (
 
   ContainerHdr     = (CONTAINER_HDR *)ContainerBase;
   SignatureBuffer  = ContainerHdr->Signature;
-  DEBUG ((EFI_D_INFO, "Registering container %4a\n", (CHAR8 *)&SignatureBuffer));
+  DEBUG ((DEBUG_INFO, "Registering container %4a\n", (CHAR8 *)&SignatureBuffer));
 
   // Register container
   Status = RegisterContainerInternal (ContainerBase);
@@ -404,7 +404,7 @@ RegisterContainer (
   }
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_INFO, "Registering container failed due to %r\n", Status));
+    DEBUG ((DEBUG_INFO, "Registering container failed due to %r\n", Status));
   }
 
   return Status;

@@ -15,7 +15,7 @@
 
 // ACPI Base Address: PcdScAcpiIoPortBaseAddress
 
-#define GMADR_BASE_ADDRESS                0xA0000000  
+#define GMADR_BASE_ADDRESS                0xA0000000
 #define GTTMM_BASE_ADDRESS                0xBF000000
 
 #define XHCI_TEMP_MEM_BASE_ADDRESS        0xC2C00000
@@ -31,13 +31,13 @@
 #endif
 
 #define ACPI_MMIO_BASE_ADDRESS            0xD0000000
-#define SPI_TEMP_MEM_BASE_ADDRESS         0xD2000000 
+#define SPI_TEMP_MEM_BASE_ADDRESS         0xD2000000
 #define PWM_TEMP_MEM_BASE_ADDRESS         0xD3000000
 #define PCIEX_BASE_ADDRESS                0xE0000000
 
 #define FW_BASE_ADDRESS                   0xFE240000
 #define LPSS_I2C0_TMP_BAR0                0xFE910000
-#define MPHY_BASE_ADDRESS                 0xFEA00000                        
+#define MPHY_BASE_ADDRESS                 0xFEA00000
 #define CRAB_ABORT                        0xFEB00000
 #define LPSS_UART_TEMP_BASE_ADDRESS       0xFE800000
 
@@ -71,7 +71,7 @@
 //
 #define GMADR_SIZE                        0x20000000   //512M
 
-#define SPI_TEMP_MEM_SIZE                 0x1000       //4K 
+#define SPI_TEMP_MEM_SIZE                 0x1000       //4K
 #define SW_SIZE                           0x800000     //8M
 #define MTB_SIZE                          0x100000     //1M
 #define HECI_SIZE                         0x1000       //4K

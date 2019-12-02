@@ -29,7 +29,7 @@
   MdePkg/MdePkg.dec
   IntelFsp2Pkg/IntelFsp2Pkg.dec
   BootloaderCorePkg/BootloaderCorePkg.dec
-  BootloaderCommonPkg/BootloaderCommonPkg.dec 
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
   Silicon/ApollolakePkg/ApollolakePkg.dec
   Platform/CommonBoardPkg/CommonBoardPkg.dec
   Platform/ApollolakeBoardPkg/ApollolakeBoardPkg.dec
@@ -38,7 +38,7 @@
   BaseLib
   SocInitLib
   PlatformHookLib
-  SerialPortLib  
+  SerialPortLib
   LoaderLib
   GpioLib
   BootGuardLib

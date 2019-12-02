@@ -526,7 +526,7 @@ UpdateStatus (
 /**
   Perform csme Firmware update.
 
-  This function based on the image type id guid from the image header will 
+  This function based on the image type id guid from the image header will
   call the respective functions to perform capsule update.
 
   @param[in] CapImage           The pointer to the firmware update capsule image.

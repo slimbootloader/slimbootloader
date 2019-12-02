@@ -1026,14 +1026,14 @@ PrepareCseForFirmwareUpdate (
   }
 
   if (Response->MkhiHeader.Fields.Result != 0x0) {
-    DEBUG ((EFI_D_ERROR, "Rejected request IFWI prepare update \n"));
+    DEBUG ((DEBUG_ERROR, "Rejected request IFWI prepare update \n"));
     return EFI_ACCESS_DENIED;
   }
-  
+
   if (Response->Flag == 0x02) {
     return EFI_SUCCESS;
   } else {
-    DEBUG ((EFI_D_ERROR, "HECI/CSE prepare for update not ready yet \n"));
+    DEBUG ((DEBUG_ERROR, "HECI/CSE prepare for update not ready yet \n"));
     return EFI_DEVICE_ERROR;
   }
 

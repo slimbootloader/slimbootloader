@@ -33,17 +33,17 @@ GetSpiFlashRegionBase (
   SpiPciBase = GetDeviceAddr (OsBootDeviceSpi, 0);
   SpiPciBase = TO_MM_PCI_ADDRESS (SpiPciBase);
   SpiBar0 = MmioRead32 (SpiPciBase + R_SPI_BASE) & B_SPI_BASE_BAR;
-  DEBUG((EFI_D_INFO, "SpiBar0 = 0x%x\n", SpiBar0));
+  DEBUG((DEBUG_INFO, "SpiBar0 = 0x%x\n", SpiBar0));
 
   FlashRegBase = MmioRead32 (SpiBar0 + R_SPI_FREG0_FLASHD + RegNum * 4) & B_SPI_FREG0_BASE_MASK;
-  DEBUG((EFI_D_INFO, "FlashRegBase = 0x%x\n", FlashRegBase));
+  DEBUG((DEBUG_INFO, "FlashRegBase = 0x%x\n", FlashRegBase));
 
   if (FlashRegBase == V_SPI_FLREG_DISABLED) {
     FlashRegBase = 0;
-    DEBUG((EFI_D_ERROR, "SPI FLREG%d is disabled!!!\n", RegNum));
+    DEBUG((DEBUG_ERROR, "SPI FLREG%d is disabled!!!\n", RegNum));
   }
   FlashRegBase <<= N_SPI_FREG0_BASE;
-  DEBUG((EFI_D_INFO, "SPI FLREG%d base = 0x%x\n", RegNum, FlashRegBase));
+  DEBUG((DEBUG_INFO, "SPI FLREG%d base = 0x%x\n", RegNum, FlashRegBase));
 
   return FlashRegBase;
 }
@@ -72,7 +72,7 @@ GetSpiFlashRegionLimit (
   FlashRegLimit >>= N_SPI_FREG1_LIMIT;
   FlashRegLimit  |= 0xFFF;
 
-  DEBUG ((EFI_D_INFO, "SPI FLREG%d limit = 0x%x\n", RegNum, FlashRegLimit));
+  DEBUG ((DEBUG_INFO, "SPI FLREG%d limit = 0x%x\n", RegNum, FlashRegLimit));
 
   return FlashRegLimit;
 }

@@ -20,7 +20,7 @@
   PlatformHookLib.c
 
 [LibraryClasses]
-  HobLib  
+  HobLib
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -29,11 +29,11 @@
 
 [Guids]
   gLoaderSerialPortInfoGuid
-  
+
 [Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdSerialUseMmio         ## PRODUCES
   gPlatformCommonLibTokenSpaceGuid.PcdSerialRegisterBase    ## PRODUCES
   gPlatformCommonLibTokenSpaceGuid.PcdSerialBaudRate        ## PRODUCES
   gPlatformCommonLibTokenSpaceGuid.PcdSerialRegisterStride  ## PRODUCES
-  gPlatformCommonLibTokenSpaceGuid.PcdSerialClockRate       ## PRODUCES    
+  gPlatformCommonLibTokenSpaceGuid.PcdSerialClockRate       ## PRODUCES
   gPayloadTokenSpaceGuid.PcdPayloadHobList        ## PRODUCES

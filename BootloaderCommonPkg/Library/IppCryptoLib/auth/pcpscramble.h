@@ -5,17 +5,17 @@
 
 **/
 
-/* 
-// 
+/*
+//
 //  Purpose:
 //     Cryptography Primitive.
 //     Fixed window exponentiation scramble/unscramble
-// 
+//
 //  Contents:
 //     cpScramblePut()
 //     cpScrambleGet()
-// 
-// 
+//
+//
 */
 
 #if !defined(_PC_SCRAMBLE_H)

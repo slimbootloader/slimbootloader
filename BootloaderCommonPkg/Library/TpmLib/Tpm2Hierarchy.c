@@ -121,7 +121,7 @@ Tpm2HierarchyChangeAuth (
   }
 
   if (ResultBufSize > sizeof (Res)) {
-    DEBUG ((EFI_D_ERROR, "HierarchyChangeAuth: Failed ExecuteCommand: Buffer Too Small\r\n"));
+    DEBUG ((DEBUG_ERROR, "HierarchyChangeAuth: Failed ExecuteCommand: Buffer Too Small\r\n"));
     Status = EFI_BUFFER_TOO_SMALL;
     goto Done;
   }
@@ -131,7 +131,7 @@ Tpm2HierarchyChangeAuth (
   //
   RespSize = SwapBytes32 (Res.Header.paramSize);
   if (RespSize > sizeof (Res)) {
-    DEBUG ((EFI_D_ERROR, "HierarchyChangeAuth: Response size too large! %d\r\n", RespSize));
+    DEBUG ((DEBUG_ERROR, "HierarchyChangeAuth: Response size too large! %d\r\n", RespSize));
     Status = EFI_BUFFER_TOO_SMALL;
     goto Done;
   }
@@ -140,7 +140,7 @@ Tpm2HierarchyChangeAuth (
   // Fail if command failed
   //
   if (SwapBytes32 (Res.Header.responseCode) != TPM_RC_SUCCESS) {
-    DEBUG ((EFI_D_ERROR, "HierarchyChangeAuth: Response Code error! 0x%08x\r\n", SwapBytes32 (Res.Header.responseCode)));
+    DEBUG ((DEBUG_ERROR, "HierarchyChangeAuth: Response Code error! 0x%08x\r\n", SwapBytes32 (Res.Header.responseCode)));
     Status = EFI_DEVICE_ERROR;
     goto Done;
   }
@@ -229,7 +229,7 @@ Tpm2HierarchyControl (
   }
 
   if (ResultBufSize > sizeof (Res)) {
-    DEBUG ((EFI_D_ERROR, "HierarchyControl: Failed ExecuteCommand: Buffer Too Small\r\n"));
+    DEBUG ((DEBUG_ERROR, "HierarchyControl: Failed ExecuteCommand: Buffer Too Small\r\n"));
     Status = EFI_BUFFER_TOO_SMALL;
     goto Done;
   }
@@ -239,7 +239,7 @@ Tpm2HierarchyControl (
   //
   RespSize = SwapBytes32 (Res.Header.paramSize);
   if (RespSize > sizeof (Res)) {
-    DEBUG ((EFI_D_ERROR, "HierarchyControl: Response size too large! %d\r\n", RespSize));
+    DEBUG ((DEBUG_ERROR, "HierarchyControl: Response size too large! %d\r\n", RespSize));
     Status = EFI_BUFFER_TOO_SMALL;
     goto Done;
   }
@@ -248,7 +248,7 @@ Tpm2HierarchyControl (
   // Fail if command failed
   //
   if (SwapBytes32 (Res.Header.responseCode) != TPM_RC_SUCCESS) {
-    DEBUG ((EFI_D_ERROR, "HierarchyControl: Response Code error! 0x%08x\r\n", SwapBytes32 (Res.Header.responseCode)));
+    DEBUG ((DEBUG_ERROR, "HierarchyControl: Response Code error! 0x%08x\r\n", SwapBytes32 (Res.Header.responseCode)));
     Status = EFI_DEVICE_ERROR;
     goto Done;
   }

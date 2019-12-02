@@ -197,7 +197,7 @@ PeCoffRelocateImage (
   // than 8 are remaining, then those are the orphans and we need to disregard them.
   RelocDataPtr =  (UINT16 *) (ImageBase + RelocSectionOffset);
   while (RelocSectionSize >= 8) {
-    //DEBUG ((EFI_D_INFO, "RelocSectionSize = %08x\n", RelocSectionSize));
+    //DEBUG ((DEBUG_INFO, "RelocSectionSize = %08x\n", RelocSectionSize));
 
     // Read the Page RVA and Block Size for the current fixup block.
     PageRva   = * (UINT32 *) (RelocDataPtr + 0);
@@ -205,7 +205,7 @@ PeCoffRelocateImage (
     RelocDataPtr += 4;
 
     if (BlockSize == 0) {
-      //DEBUG ((EFI_D_INFO, "BlockSize is 0, done...\n"));
+      //DEBUG ((DEBUG_INFO, "BlockSize is 0, done...\n"));
       break;
     }
 
@@ -215,14 +215,14 @@ PeCoffRelocateImage (
     // Loop count = Number of relocation items =
     // (Block Size - 4 bytes (Page RVA field) - 4 bytes (Block Size field)) divided
     // by 2 (each Type/Offset entry takes 2 bytes).
-    // DEBUG ((EFI_D_INFO, "LoopCount = %04x\n", ((BlockSize - 2 * sizeof(UINT32)) / sizeof(UINT16))));
+    // DEBUG ((DEBUG_INFO, "LoopCount = %04x\n", ((BlockSize - 2 * sizeof(UINT32)) / sizeof(UINT16))));
     for (Index = 0; Index < ((BlockSize - 2 * sizeof (UINT32)) / sizeof (UINT16)); Index++) {
       TypeOffset = *RelocDataPtr++;
       Type   = (UINT8) ((TypeOffset & 0xf000) >> 12);
       Offset = (UINT16) ((UINT16)TypeOffset & 0x0fff);
       RelocSectionSize -= sizeof (UINT16);
       ImgOffset = PageRva + Offset - Adjust;
-      // DEBUG ((EFI_D_INFO, "%d: PageRva: %08x Offset: %04x Type: %x \n", Index, PageRva, ImgOffset, Type));
+      // DEBUG ((DEBUG_INFO, "%d: PageRva: %08x Offset: %04x Type: %x \n", Index, PageRva, ImgOffset, Type));
       Data = * (UINT32 *) (ImageBase + ImgOffset);
       switch (Type) {
       case 0:
@@ -237,7 +237,7 @@ PeCoffRelocateImage (
         Data += FixupDelta;
         break;
       default:
-        //DEBUG ((EFI_D_INFO, "Unknown Type!\n"));
+        //DEBUG ((DEBUG_INFO, "Unknown Type!\n"));
         break;
       }
       * (UINT32 *) (ImageBase + ImgOffset) = Data;

@@ -1352,7 +1352,7 @@ UsbDeviceRun (
                  );
       if (!EFI_ERROR (Status)) {
         Status = BS_SET_TIMER (XdciDevContext->XdciPollTimer, TimerPeriodic, EFI_TIMER_PERIOD_MILLISECONDS (20));
-        // DEBUG ((EFI_D_ERROR, "UsbDeviceRun Create Event\n"));
+        // DEBUG ((DEBUG_ERROR, "UsbDeviceRun Create Event\n"));
       }
     }
 
@@ -1374,7 +1374,7 @@ UsbDeviceRun (
       //
       if (!mXdciRun) {
         if (XdciDevContext->XdciPollTimer != NULL) {
-          DEBUG ((EFI_D_ERROR, "UsbDeviceRun close Event\n"));
+          DEBUG ((DEBUG_ERROR, "UsbDeviceRun close Event\n"));
           BS_SET_TIMER (XdciDevContext->XdciPollTimer, TimerCancel, 0);
           BS_CLOSE_EVENT (XdciDevContext->XdciPollTimer);
           XdciDevContext->XdciPollTimer = NULL;

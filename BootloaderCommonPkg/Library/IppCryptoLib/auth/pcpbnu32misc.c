@@ -5,22 +5,22 @@
 
 **/
 
-/* 
+/*
 //  Purpose:
 //     Intel(R) Integrated Performance Primitives. Cryptography Primitives.
 //     Unsigned internal BNU32 misc functionality
-// 
+//
 //  Contents:
 //     cpNLZ_BNU32()
 //     cpNTZ_BNU32()
-// 
+//
 //     cpLSL_BNU32()
 //     cpLSR_BNU32()
-// 
+//
 //     cpFromOctStr_BNU32()
 //     cpToOctStr_BNU32()
-// 
-// 
+//
+//
 */
 
 #include "owncp.h"

@@ -5,13 +5,13 @@
 
 **/
 
-/* 
-// 
+/*
+//
 //  Purpose:
 //     Cryptography Primitive.
 //     Security Hash Standard
 //     Generalized Functionality
-// 
+//
 //  Contents:
 //     ippsHashGetSize_rmf()
 //     ippsHashInit_rmf()
@@ -22,7 +22,7 @@
 //     ippsHashGetTag_rmf()
 //     ippsHashFinal_rmf()
 //     ippsHashMessage_rmf()
-// 
+//
 */
 
 #include "owndefs.h"
@@ -269,7 +269,7 @@ static void cpFinalize_rmf(DigestSHA512 pHash,
 
    /* local buffer and it length */
    Ipp8u buffer[MBS_SHA512*2];
-   int bufferLen = inpLen < (mbs-mrl)? mbs : mbs*2; 
+   int bufferLen = inpLen < (mbs-mrl)? mbs : mbs*2;
 
    /* copy rest of message into internal buffer */
    CopyBlock(inpBuffer, buffer, inpLen);
