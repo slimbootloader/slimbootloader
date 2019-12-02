@@ -1353,7 +1353,7 @@ index 0000000000..c0b627a32a
 +  //
 +  HostBridgeDevId = PciCf8Read16 (OVMF_HOSTBRIDGE_DID);
 +  if (HostBridgeDevId != INTEL_Q35_MCH_DEVICE_ID) {
-+    DEBUG ((EFI_D_ERROR, "Unknown Host Bridge Device ID: 0x%04x\n"));
++    DEBUG ((DEBUG_ERROR, "Unknown Host Bridge Device ID: 0x%04x\n"));
 +    ASSERT (FALSE);
 +    return EFI_UNSUPPORTED;
 +  }
@@ -1367,7 +1367,7 @@ index 0000000000..c0b627a32a
 +
 +/**
 +  Initialize TSEG size
-+  
++
 +  @retval     TSEG size supported by platform.
 +
 +**/
@@ -1378,7 +1378,7 @@ index 0000000000..c0b627a32a
 +{
 +  UINT16        ExtendedTsegMbytes;
 +  UINT16        TsegMbytes;
-+  
++
 +  //
 +  // Check if QEMU offers an extended TSEG.
 +  //
@@ -1398,7 +1398,7 @@ index 0000000000..c0b627a32a
 +  PciWrite16 (DRAMC_REGISTER_Q35 (MCH_EXT_TSEG_MB), MCH_EXT_TSEG_MB_QUERY);
 +  ExtendedTsegMbytes = PciRead16 (DRAMC_REGISTER_Q35 (MCH_EXT_TSEG_MB));
 +  if (ExtendedTsegMbytes == MCH_EXT_TSEG_MB_QUERY) {
-+    TsegMbytes = 0x10;    
++    TsegMbytes = 0x10;
 +    PciWrite16 (DRAMC_REGISTER_Q35 (MCH_EXT_TSEG_MB), TsegMbytes);
 +  } else {
 +    TsegMbytes = ExtendedTsegMbytes;
@@ -1432,8 +1432,8 @@ index 0000000000..c0b627a32a
 +  UINT64                          HighMemLen;
 +  UINT32                          TsegSize;
 +  UINT32                          TsegBase;
-+  
-+  DEBUG ((EFI_D_INFO, "FspmInitPoint() - Begin\n"));
++
++  DEBUG ((DEBUG_INFO, "FspmInitPoint() - Begin\n"));
 +
 +  //
 +  // QEMU init
@@ -1463,7 +1463,7 @@ index 0000000000..c0b627a32a
 +
 +  LowMemLen  = GetSystemMemorySizeBelow4Gb();
 +  HighMemLen = GetSystemMemorySizeAbove4Gb();
-+  
++
 +  TsegSize   = InitializeSmramTsegSize ();
 +  TsegBase   = LowMemLen - TsegSize;
 +
@@ -1542,10 +1542,10 @@ index 0000000000..c0b627a32a
 +      TsegSize,
 +      &gFspReservedMemoryResourceHobTsegGuid
 +    );
-+  
++
 +  Status = PeiServicesInstallPeiMemory (PeiMemBase, PeiMemSize);
 +
-+  DEBUG ((EFI_D_INFO, "FspmInitPoint() - End\n"));
++  DEBUG ((DEBUG_INFO, "FspmInitPoint() - End\n"));
 +
 +  return Status;
 +}
@@ -1680,7 +1680,7 @@ index 0000000000..97bb04c421
 +  gFspReservedMemoryResourceHobGuid         ## CONSUMES
 +  gFspBootLoaderTolumHobGuid                ## CONSUMES
 +  gFspReservedMemoryResourceHobTsegGuid     ## CONSUMES
-+  
++
 +[Protocols]
 +  gEfiPciEnumerationCompleteProtocolGuid    ## CONSUMES
 +
@@ -1815,9 +1815,9 @@ index 0000000000..dc756ac2fe
 +  )
 +{
 +  // Place holder
-+  DEBUG ((EFI_D_INFO, "FspInitEndOfPeiCallback++\n"));
++  DEBUG ((DEBUG_INFO, "FspInitEndOfPeiCallback++\n"));
 +
-+  DEBUG ((EFI_D_INFO, "FspInitEndOfPeiCallback--\n"));
++  DEBUG ((DEBUG_INFO, "FspInitEndOfPeiCallback--\n"));
 +
 +  return EFI_SUCCESS;
 +}
@@ -1842,9 +1842,9 @@ index 0000000000..dc756ac2fe
 +  )
 +{
 +  // Place holder
-+  DEBUG ((EFI_D_INFO, "FspInitAfterPciEnumerationCallback++\n"));
++  DEBUG ((DEBUG_INFO, "FspInitAfterPciEnumerationCallback++\n"));
 +
-+  DEBUG ((EFI_D_INFO, "FspInitAfterPciEnumerationCallback--\n"));
++  DEBUG ((DEBUG_INFO, "FspInitAfterPciEnumerationCallback--\n"));
 +
 +  return EFI_SUCCESS;
 +}
@@ -1869,9 +1869,9 @@ index 0000000000..dc756ac2fe
 +  )
 +{
 +  // Place holder
-+  DEBUG ((EFI_D_INFO, "FspReadyToBootCallback++\n"));
++  DEBUG ((DEBUG_INFO, "FspReadyToBootCallback++\n"));
 +
-+  DEBUG ((EFI_D_INFO, "FspReadyToBootCallback--\n"));
++  DEBUG ((DEBUG_INFO, "FspReadyToBootCallback--\n"));
 +
 +  return EFI_SUCCESS;
 +}
@@ -1896,9 +1896,9 @@ index 0000000000..dc756ac2fe
 +  )
 +{
 +  // Place holder
-+  DEBUG ((EFI_D_INFO, "FspEndOfFirmwareCallback++\n"));
++  DEBUG ((DEBUG_INFO, "FspEndOfFirmwareCallback++\n"));
 +
-+  DEBUG ((EFI_D_INFO, "FspEndOfFirmwareCallback--\n"));
++  DEBUG ((DEBUG_INFO, "FspEndOfFirmwareCallback--\n"));
 +
 +  return EFI_SUCCESS;
 +}
@@ -5639,7 +5639,7 @@ index 0000000000..68217cb1ef
 +  GfxPtr  = (GRAPHICS_DATA *)FspsUpd->FspsConfig.GraphicsConfigPtr;
 +
 +  if (!(GfxPtr && (GfxPtr->Signature == GRAPHICS_DATA_SIG))) {
-+    DEBUG ((EFI_D_INFO, "NO valid graphics config data found!\n"));
++    DEBUG ((DEBUG_INFO, "NO valid graphics config data found!\n"));
 +    return EFI_SUCCESS;
 +  }
 +
@@ -5673,7 +5673,7 @@ index 0000000000..68217cb1ef
 +  Status = PeiServicesInstallPpi (&mPeiGraphicsPpi[0]);
 +  if (EFI_ERROR (Status)) {
 +    Status = EFI_DEVICE_ERROR;
-+    DEBUG ((EFI_D_ERROR, "Failed to install Pei Graphics PPI\n"));
++    DEBUG ((DEBUG_ERROR, "Failed to install Pei Graphics PPI\n"));
 +    ASSERT (FALSE);
 +  }
 +
@@ -5694,7 +5694,7 @@ index 0000000000..68217cb1ef
 +  )
 +{
 +  if (mMode == NULL) {
-+    DEBUG ((EFI_D_ERROR,"[ERROR]:[GetCurrentMode()]:[No current mode created]\n"));
++    DEBUG ((DEBUG_ERROR,"[ERROR]:[GetCurrentMode()]:[No current mode created]\n"));
 +    return EFI_NOT_READY;
 +  }
 +
@@ -5780,7 +5780,7 @@ index 0000000000..68217cb1ef
 +
 +  Address = PCI_LIB_ADDRESS (0, 1, 0, PCI_VENDOR_ID_OFFSET);
 +  if (PciRead32(Address) != QEMU_VGA_VID_DID) {
-+    DEBUG ((EFI_D_ERROR, "Not supported GFX device!\n"));
++    DEBUG ((DEBUG_ERROR, "Not supported GFX device!\n"));
 +    return;
 +  }
 +
@@ -5834,13 +5834,13 @@ index 0000000000..68217cb1ef
 +  UINT32                       ResX;
 +  UINT32                       ResY;
 +
-+  DEBUG ((EFI_D_INFO, "[INFO]:[QemuPeiGraphicsInit]: \n"));
++  DEBUG ((DEBUG_INFO, "[INFO]:[QemuPeiGraphicsInit]: \n"));
 +
 +  ResX = mMode->Info->HorizontalResolution;
 +  ResY = mMode->Info->VerticalResolution;
 +
 +  FspsUpd = (FSPS_UPD *)GetFspSiliconInitUpdDataPointer();
-+  DEBUG ((EFI_D_INFO, "Initialize GFX mode to %dx%dx%d\n", ResX, ResY, BPP));
++  DEBUG ((DEBUG_INFO, "Initialize GFX mode to %dx%dx%d\n", ResX, ResY, BPP));
 +
 +  BochsInitMode ((UINT16)ResX, (UINT16)ResY, BPP, FspsUpd->FspsConfig.PciTempResourceBase);
 +
@@ -5870,7 +5870,7 @@ index 0000000000..68217cb1ef
 +  EFI_STATUS Status;
 +
 +  if (GfxMode == NULL) {
-+    DEBUG ((EFI_D_ERROR,"[ERROR]:[IntelPeiGraphicsGetMode()]:[Error creating Mode information]\n"));
++    DEBUG ((DEBUG_ERROR,"[ERROR]:[IntelPeiGraphicsGetMode()]:[Error creating Mode information]\n"));
 +    return EFI_INVALID_PARAMETER;
 +  }
 +
@@ -5879,8 +5879,8 @@ index 0000000000..68217cb1ef
 +    return Status;
 +  }
 +
-+  DEBUG ((EFI_D_INFO,"[INFO]:[IntelPeiGraphicsGetMode()]:[Current Mode HRes = %d]\n", GfxMode->Info->HorizontalResolution));
-+  DEBUG ((EFI_D_INFO,"[INFO]:[IntelPeiGraphicsGetMode()]:[Current Mode VRes = %d]\n", GfxMode->Info->VerticalResolution));
++  DEBUG ((DEBUG_INFO,"[INFO]:[IntelPeiGraphicsGetMode()]:[Current Mode HRes = %d]\n", GfxMode->Info->HorizontalResolution));
++  DEBUG ((DEBUG_INFO,"[INFO]:[IntelPeiGraphicsGetMode()]:[Current Mode VRes = %d]\n", GfxMode->Info->VerticalResolution));
 +
 +  return EFI_SUCCESS;
 +}
@@ -6068,6 +6068,6 @@ index 0000000000..16023b57c1
 +[Depex]
 +  TRUE
 +
--- 
+--
 2.17.0.windows.1
 

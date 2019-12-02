@@ -20,10 +20,10 @@
 /**
   Find payload in the capsule image.
 
-  This function will parse through the capsule image to find the payload 
-  matching the input guid. 
+  This function will parse through the capsule image to find the payload
+  matching the input guid.
 
-  This function if provided with an empty guid will return the first payload 
+  This function if provided with an empty guid will return the first payload
   found
 
   @param[in] ImageId        Guid to identify payload in the capsule image
@@ -64,7 +64,7 @@ StartCsmeUpdate (
 /**
   Display send image status.
 
-  A callback function that reports the progress of sending 
+  A callback function that reports the progress of sending
   the update image buffer to FW (not the progress of the update itself).
 
   @param[in] bytesSentToFw         The number of bytes of the buffer, that were already sent to FW.
@@ -80,14 +80,14 @@ DisplaySendStatus (
   Check if the update image has the same version as the flash image.
 
   @param[in]  buffer         Buffer of Update Image.
-  @param[in]  bufferLength   Length of the buffer in bytes. 
+  @param[in]  bufferLength   Length of the buffer in bytes.
   @param[in]  UpdateApi      Pointer to update service API's
   @param[out] isSameVersion  TRUE if same version, FALSE if not. Caller allocated.
 
   @retval  EFI_SUCCESS      Update successful
   @retval  other            error status from the routine
 **/
-static UINT32 
+static UINT32
 IsUpdateToSameVersion(
   IN  UINT8   *Buffer,
   IN  UINT32  BufferLength,
@@ -139,15 +139,15 @@ IsUpdateToSameVersion(
 /**
   Display send image status.
 
-  A callback function that reports the progress of sending 
+  A callback function that reports the progress of sending
   the update image buffer to FW (not the progress of the update itself).
 
   @param[in] bytesSentToFw         The number of bytes of the buffer, that were already sent to FW.
   @param[in] totalBytesToSendToFw  The total number of bytes of the buffer.
 **/
-static void 
+static void
 DisplaySendStatus (
-  IN UINT32 bytesSentToFw, 
+  IN UINT32 bytesSentToFw,
   IN UINT32 totalBytesToSendToFw
   )
 {

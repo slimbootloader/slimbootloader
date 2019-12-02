@@ -5,23 +5,23 @@
 
 **/
 
-/* 
+/*
 //               Intel(R) Integrated Performance Primitives
 //                   Cryptographic Primitives (ippcp)
-// 
+//
 //  Contents:
 //     ippsBigNumGetSize()
 //     ippsBigNumInit()
-// 
+//
 //     ippsSet_BN()
 //     ippsGet_BN()
 //     ippsGetSize_BN()
 //     ippsExtGet_BN()
 //     ippsRef_BN()
-// 
+//
 //     ippsCmpZero_BN()
 //     ippsCmp_BN()
-// 
+//
 //     ippsAdd_BN()
 //     ippsSub_BN()
 //     ippsMul_BN()
@@ -30,10 +30,10 @@
 //     ippsMod_BN()
 //     ippsGcd_BN()
 //     ippsModInv_BN()
-// 
+//
 //     cpPackBigNumCtx(), cpUnpackBigNumCtx()
-// 
-// 
+//
+//
 */
 
 #include "owndefs.h"

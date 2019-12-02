@@ -168,34 +168,34 @@ DumpUicCmdExecResult (
     case 0x00:
       break;
     case 0x01:
-      DEBUG ((EFI_D_VERBOSE, "UIC configuration command fails - INVALID_MIB_ATTRIBUTE\n"));
+      DEBUG ((DEBUG_VERBOSE, "UIC configuration command fails - INVALID_MIB_ATTRIBUTE\n"));
       break;
     case 0x02:
-      DEBUG ((EFI_D_VERBOSE, "UIC configuration command fails - INVALID_MIB_ATTRIBUTE_VALUE\n"));
+      DEBUG ((DEBUG_VERBOSE, "UIC configuration command fails - INVALID_MIB_ATTRIBUTE_VALUE\n"));
       break;
     case 0x03:
-      DEBUG ((EFI_D_VERBOSE, "UIC configuration command fails - READ_ONLY_MIB_ATTRIBUTE\n"));
+      DEBUG ((DEBUG_VERBOSE, "UIC configuration command fails - READ_ONLY_MIB_ATTRIBUTE\n"));
       break;
     case 0x04:
-      DEBUG ((EFI_D_VERBOSE, "UIC configuration command fails - WRITE_ONLY_MIB_ATTRIBUTE\n"));
+      DEBUG ((DEBUG_VERBOSE, "UIC configuration command fails - WRITE_ONLY_MIB_ATTRIBUTE\n"));
       break;
     case 0x05:
-      DEBUG ((EFI_D_VERBOSE, "UIC configuration command fails - BAD_INDEX\n"));
+      DEBUG ((DEBUG_VERBOSE, "UIC configuration command fails - BAD_INDEX\n"));
       break;
     case 0x06:
-      DEBUG ((EFI_D_VERBOSE, "UIC configuration command fails - LOCKED_MIB_ATTRIBUTE\n"));
+      DEBUG ((DEBUG_VERBOSE, "UIC configuration command fails - LOCKED_MIB_ATTRIBUTE\n"));
       break;
     case 0x07:
-      DEBUG ((EFI_D_VERBOSE, "UIC configuration command fails - BAD_TEST_FEATURE_INDEX\n"));
+      DEBUG ((DEBUG_VERBOSE, "UIC configuration command fails - BAD_TEST_FEATURE_INDEX\n"));
       break;
     case 0x08:
-      DEBUG ((EFI_D_VERBOSE, "UIC configuration command fails - PEER_COMMUNICATION_FAILURE\n"));
+      DEBUG ((DEBUG_VERBOSE, "UIC configuration command fails - PEER_COMMUNICATION_FAILURE\n"));
       break;
     case 0x09:
-      DEBUG ((EFI_D_VERBOSE, "UIC configuration command fails - BUSY\n"));
+      DEBUG ((DEBUG_VERBOSE, "UIC configuration command fails - BUSY\n"));
       break;
     case 0x0A:
-      DEBUG ((EFI_D_VERBOSE, "UIC configuration command fails - DME_FAILURE\n"));
+      DEBUG ((DEBUG_VERBOSE, "UIC configuration command fails - DME_FAILURE\n"));
       break;
     default :
       ASSERT (FALSE);
@@ -206,7 +206,7 @@ DumpUicCmdExecResult (
     case 0x00:
       break;
     case 0x01:
-      DEBUG ((EFI_D_VERBOSE, "UIC control command fails - FAILURE\n"));
+      DEBUG ((DEBUG_VERBOSE, "UIC control command fails - FAILURE\n"));
       break;
     default :
       ASSERT (FALSE);
@@ -228,34 +228,34 @@ DumpQueryResponseResult (
 {
   switch (Result) {
   case 0xF6:
-    DEBUG ((EFI_D_VERBOSE, "Query Response with Parameter Not Readable\n"));
+    DEBUG ((DEBUG_VERBOSE, "Query Response with Parameter Not Readable\n"));
     break;
   case 0xF7:
-    DEBUG ((EFI_D_VERBOSE, "Query Response with Parameter Not Writeable\n"));
+    DEBUG ((DEBUG_VERBOSE, "Query Response with Parameter Not Writeable\n"));
     break;
   case 0xF8:
-    DEBUG ((EFI_D_VERBOSE, "Query Response with Parameter Already Written\n"));
+    DEBUG ((DEBUG_VERBOSE, "Query Response with Parameter Already Written\n"));
     break;
   case 0xF9:
-    DEBUG ((EFI_D_VERBOSE, "Query Response with Invalid Length\n"));
+    DEBUG ((DEBUG_VERBOSE, "Query Response with Invalid Length\n"));
     break;
   case 0xFA:
-    DEBUG ((EFI_D_VERBOSE, "Query Response with Invalid Value\n"));
+    DEBUG ((DEBUG_VERBOSE, "Query Response with Invalid Value\n"));
     break;
   case 0xFB:
-    DEBUG ((EFI_D_VERBOSE, "Query Response with Invalid Selector\n"));
+    DEBUG ((DEBUG_VERBOSE, "Query Response with Invalid Selector\n"));
     break;
   case 0xFC:
-    DEBUG ((EFI_D_VERBOSE, "Query Response with Invalid Index\n"));
+    DEBUG ((DEBUG_VERBOSE, "Query Response with Invalid Index\n"));
     break;
   case 0xFD:
-    DEBUG ((EFI_D_VERBOSE, "Query Response with Invalid Idn\n"));
+    DEBUG ((DEBUG_VERBOSE, "Query Response with Invalid Idn\n"));
     break;
   case 0xFE:
-    DEBUG ((EFI_D_VERBOSE, "Query Response with Invalid Opcode\n"));
+    DEBUG ((DEBUG_VERBOSE, "Query Response with Invalid Opcode\n"));
     break;
   case 0xFF:
-    DEBUG ((EFI_D_VERBOSE, "Query Response with General Failure\n"));
+    DEBUG ((DEBUG_VERBOSE, "Query Response with General Failure\n"));
     break;
   default :
     ASSERT (FALSE);
@@ -413,7 +413,7 @@ UfsInitUtpPrdt (
 
   if ((BufferSize & (BIT0 | BIT1)) != 0) {
     BufferSize &= ~ (BIT0 | BIT1);
-    DEBUG ((EFI_D_WARN, "UfsInitUtpPrdt: The BufferSize [%d] is not dword-aligned!\n", BufferSize));
+    DEBUG ((DEBUG_WARN, "UfsInitUtpPrdt: The BufferSize [%d] is not dword-aligned!\n", BufferSize));
   }
 
   if (BufferSize == 0) {
@@ -972,7 +972,7 @@ UfsRwDeviceDescInternal (
   Status = UfsWaitMemSet8 ((UINTN)&QueryResp->QueryResp, 0xFF, 0, TIMEOUT_WMS_8);
   if (EFI_ERROR (Status)) {
     DumpQueryResponseResult (QueryResp->QueryResp);
-    DEBUG ((EFI_D_ERROR, "UFS ERROR: QueryResp->QueryResp = 0x%x\n", QueryResp->QueryResp));
+    DEBUG ((DEBUG_ERROR, "UFS ERROR: QueryResp->QueryResp = 0x%x\n", QueryResp->QueryResp));
     Status = EFI_DEVICE_ERROR;
     goto Exit;
   }
@@ -1535,7 +1535,7 @@ UfsExecScsiCmdsInternal (
   //
   Status = UfsWaitMemSet8 ((UINTN)&Response->Response, 0xFF, 0, TIMEOUT_WMS_8);
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "UfsExecScsiCmds() fails with Target Failure (0x%x)\n", Response->Response));
+    DEBUG ((DEBUG_ERROR, "UfsExecScsiCmds() fails with Target Failure (0x%x)\n", Response->Response));
     Status = EFI_DEVICE_ERROR;
     goto Exit;
   }
@@ -1743,7 +1743,7 @@ UfsChangePowerMode (
   Data      = MmioRead32 (UfsHcBase + UFS_HC_IS_OFFSET);
   DEBUG ((DEBUG_INFO, "UFS HC interrupt status, default value = 0x%x\n", Data));
   if ((Data & UFS_HC_IS_UE) != 0) {
-    MmioWrite32 (UfsHcBase + UFS_HC_IS_OFFSET, UFS_HC_IS_UE);   
+    MmioWrite32 (UfsHcBase + UFS_HC_IS_OFFSET, UFS_HC_IS_UE);
   }
 
   if ((Data & UFS_HC_IS_UCCS) != 0) {
@@ -1751,7 +1751,7 @@ UfsChangePowerMode (
   }
 
   if ((Data & UFS_HC_IS_UPMS) != 0) {
-    MmioWrite32 (UfsHcBase + UFS_HC_IS_OFFSET, UFS_HC_IS_UPMS);   
+    MmioWrite32 (UfsHcBase + UFS_HC_IS_OFFSET, UFS_HC_IS_UPMS);
   }
 
   // Check UIC Power Mode Status is clear.
@@ -1795,7 +1795,7 @@ UfsChangePowerMode (
     return EFI_DEVICE_ERROR;
   }
 
-  Status = UfsExecUicCommands (Private, UfsUicDmeSet, PA_ACTIVE_RX_DATA_LANES << 16, 0, PA_AVAILABLE_RX_LANES, NULL); 
+  Status = UfsExecUicCommands (Private, UfsUicDmeSet, PA_ACTIVE_RX_DATA_LANES << 16, 0, PA_AVAILABLE_RX_LANES, NULL);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "PA_ACTIVE_RX_DATA_LANES:  UfsExecUicCommands = %r\n", Status));
     return EFI_DEVICE_ERROR;
@@ -2138,25 +2138,25 @@ UfsControllerInit (
 
   Status = UfsEnableHostController (Private);
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "UfsDevicePei: Enable Host Controller Fails, Status = %r\n", Status));
+    DEBUG ((DEBUG_ERROR, "UfsDevicePei: Enable Host Controller Fails, Status = %r\n", Status));
     return Status;
   }
 
   Status = UfsDeviceDetection (Private);
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "UfsDevicePei: Device Detection Fails, Status = %r\n", Status));
+    DEBUG ((DEBUG_ERROR, "UfsDevicePei: Device Detection Fails, Status = %r\n", Status));
     return Status;
   }
 
   Status = UfsInitTaskManagementRequestList (Private);
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "UfsDevicePei: Task management list initialization Fails, Status = %r\n", Status));
+    DEBUG ((DEBUG_ERROR, "UfsDevicePei: Task management list initialization Fails, Status = %r\n", Status));
     return Status;
   }
 
   Status = UfsInitTransferRequestList (Private);
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "UfsDevicePei: Transfer list initialization Fails, Status = %r\n", Status));
+    DEBUG ((DEBUG_ERROR, "UfsDevicePei: Transfer list initialization Fails, Status = %r\n", Status));
     return Status;
   }
 
@@ -2164,12 +2164,12 @@ UfsControllerInit (
   // Some UFS device could not support HS mode.
   Status = UfsChangePowerMode (Private, 4);
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "UfsDevicePei: UfsChangePowerMode, Status = %r\n", Status));
+    DEBUG ((DEBUG_ERROR, "UfsDevicePei: UfsChangePowerMode, Status = %r\n", Status));
     return Status;
   }
 #endif
 
-  DEBUG ((EFI_D_INFO, "UfsDevicePei Finished\n"));
+  DEBUG ((DEBUG_INFO, "UfsDevicePei Finished\n"));
   return EFI_SUCCESS;
 }
 
@@ -2221,7 +2221,7 @@ UfsControllerStop (
     return EFI_DEVICE_ERROR;
   }
 
-  DEBUG ((EFI_D_INFO, "UfsDevicePei: Stop the UFS Host Controller\n"));
+  DEBUG ((DEBUG_INFO, "UfsDevicePei: Stop the UFS Host Controller\n"));
 
   return EFI_SUCCESS;
 }

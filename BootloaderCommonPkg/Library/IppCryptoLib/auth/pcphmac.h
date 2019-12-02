@@ -5,14 +5,14 @@
 
 **/
 
-/* 
-// 
+/*
+//
 //  Purpose:
 //     Cryptography Primitive.
 //     Hash Message Authentication Code
 //     Internal Definitions and Internal Functions Prototypes
-// 
-// 
+//
+//
 */
 
 #if !defined(_PCP_HMAC_H)

@@ -5,19 +5,19 @@
 
 **/
 
-/* 
-// 
+/*
+//
 //  Purpose:
 //     Cryptography Primitive.
 //     RSA Functions
-// 
+//
 //  Contents:
 //     ippsRSA_GetSizePublicKey()
 //     ippsRSA_InitPublicKey()
 //     ippsRSA_SetPublicKey()
 //     ippsRSA_GetPublicKey()
-// 
-// 
+//
+//
 */
 
 #include "owndefs.h"

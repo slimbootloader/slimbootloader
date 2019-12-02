@@ -369,8 +369,6 @@ class GitDiffCheck:
 
         stripped = line.rstrip()
 
-        # TBD: Disable force_crlf in Slim Bootloader for now
-        self.force_crlf = False
         if self.force_crlf and eol != '\r\n':
             self.added_line_error('Line ending (%s) is not CRLF' % repr(eol),
                                   line)

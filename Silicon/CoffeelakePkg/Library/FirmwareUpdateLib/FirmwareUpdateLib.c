@@ -362,7 +362,7 @@ GetFirmwareUpdateInfo (
   UpdateRegion->SourceAddress   = (UINT8 *)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER) + (UINTN)UpdateRegion->ToUpdateAddress);
   UpdatePartition->RegionCount += 1;
 
-  if ((FwPolicy.Fields.StateMachine == FW_UPDATE_SM_PART_A) || 
+  if ((FwPolicy.Fields.StateMachine == FW_UPDATE_SM_PART_A) ||
       (FwPolicy.Fields.StateMachine == FW_UPDATE_SM_PART_B)) {
     //
     // Non-redundant region
@@ -426,7 +426,7 @@ EndFirmwareUpdate (
 {
   UINT16   FirmwareUpdateStatus;
 
-  DEBUG ((EFI_D_INFO, "Firmware update Done! clear CSE flag to normal boot mode.\n"));
+  DEBUG ((DEBUG_INFO, "Firmware update Done! clear CSE flag to normal boot mode.\n"));
 
   //
   // This is platform specific method. Here just use COMS address 0x40.

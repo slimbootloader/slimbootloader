@@ -278,7 +278,7 @@ BoardInit (
     Buffer = NULL;
     Length = 0;
     Status = LoadComponent (SIGNATURE_32('I', 'P', 'F', 'W'), SIGNATURE_32('T', 'S', 'T', '3'), &Buffer,  &Length);
-    DEBUG ((EFI_D_INFO, "Load IP firmware @ %p:0x%X - %r\n", Buffer, Length, Status));
+    DEBUG ((DEBUG_INFO, "Load IP firmware @ %p:0x%X - %r\n", Buffer, Length, Status));
     break;
 
   case PostPciEnumeration:
@@ -476,7 +476,7 @@ UpdateSmmInfo (
     SmmInfoHob->SmmBase = PcdGet32 (PcdSmramTsegBase);
     SmmInfoHob->SmmSize = TsegSize;
     SmmInfoHob->Flags   = 0;
-    DEBUG ((EFI_D_INFO, "SmmRamBase = 0x%x, SmmRamSize = 0x%x\n", SmmInfoHob->SmmBase, SmmInfoHob->SmmSize));
+    DEBUG ((DEBUG_INFO, "SmmRamBase = 0x%x, SmmRamSize = 0x%x\n", SmmInfoHob->SmmBase, SmmInfoHob->SmmSize));
   }
 }
 

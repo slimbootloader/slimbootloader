@@ -63,7 +63,7 @@ typedef struct {
 
 typedef struct {
   UINT8     Type;           // Seed info struct: svn_seed_info or rpmbseed or attestation key
-  UINT8     Usage;          // If same type, is it used or dseed. 
+  UINT8     Usage;          // If same type, is it used or dseed.
                             // For RPMB, // Bit 0 => 0 = RPMB key is based on card serial number
                             //                       1 = RPMB key is not based on card serial number
   UINT8     Idx;            // MAX_ENTRIES: 4. If Same type and Usage, which seed Idx is this: {0,1,2,3}.

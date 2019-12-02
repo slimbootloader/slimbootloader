@@ -24,15 +24,15 @@
 
 [Packages]
   MdePkg/MdePkg.dec
-  BootloaderCorePkg/BootloaderCorePkg.dec  
-  Silicon/ApollolakePkg/ApollolakePkg.dec  
-  
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  Silicon/ApollolakePkg/ApollolakePkg.dec
+
 [LibraryClasses]
   BaseLib
   PcdLib
   IoLib
-  PciLib  
+  PciLib
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
-  
+

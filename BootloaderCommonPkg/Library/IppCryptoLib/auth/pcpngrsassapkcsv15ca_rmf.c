@@ -5,20 +5,20 @@
 
 **/
 
-/* 
-// 
+/*
+//
 //  Purpose:
 //     Cryptography Primitive.
 //     RSASSA-PKCS-v1_5
-// 
+//
 //     Signatire Scheme with Appendix Signatute Generation
-// 
+//
 //  Contents:
 //     ippsRSASign_PKCS1v15()
 //     ippsRSASignHash_PKCS1v15()
 //     ippsRSAVerify_PKCS1v15()
 //     ippsRSAVerifyHash_PKCS1v15()
-// 
+//
 */
 
 #include "owndefs.h"

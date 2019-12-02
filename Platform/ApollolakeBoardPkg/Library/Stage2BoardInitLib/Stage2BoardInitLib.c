@@ -1391,7 +1391,7 @@ UpdateSmmInfo (
   SmmInfoHob->SmmSize = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + BGSM) & ~0xF;
   SmmInfoHob->SmmSize -= SmmInfoHob->SmmBase;
   SmmInfoHob->Flags   = SMM_FLAGS_4KB_COMMUNICATION;
-  DEBUG ((EFI_D_INFO, "SmmRamBase = 0x%x, SmmRamSize = 0x%x\n", SmmInfoHob->SmmBase, SmmInfoHob->SmmSize));
+  DEBUG ((DEBUG_INFO, "SmmRamBase = 0x%x, SmmRamSize = 0x%x\n", SmmInfoHob->SmmBase, SmmInfoHob->SmmSize));
   //
   // Update the HOB with smi ctrl register data
   //
@@ -1493,7 +1493,7 @@ CpuPssPatch (
   BusRatioRange = MaxBusRatio - MinBusRatio;
   PowerRange    = FVID_MAX_POWER - FVID_MIN_POWER;
   NumberOfStates = ((UINT32)(BusRatioRange + 1) < MaxNumberOfStates ? (BusRatioRange + 1) : MaxNumberOfStates);
-  DEBUG((EFI_D_INFO, "Number of P States: %d (Ratio %d ~ %d)\n", NumberOfStates, MinBusRatio, MaxBusRatio));
+  DEBUG((DEBUG_INFO, "Number of P States: %d (Ratio %d ~ %d)\n", NumberOfStates, MinBusRatio, MaxBusRatio));
 
   NewPackageLength = (UINT16) (NumberOfStates * sizeof (PSS_PACKAGE_LAYOUT) + 3);
   Ptr[7]           = (UINT8) NumberOfStates;

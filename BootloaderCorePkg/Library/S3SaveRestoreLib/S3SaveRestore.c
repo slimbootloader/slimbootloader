@@ -140,7 +140,7 @@ FindS3Info (
   This function is only called in the S3 resume path.
 
   @param    S3SaveReg               S3_SAVE_REG info offset
-    
+
   @retval   EFI_INVALID_PARAMETER   Invalid pointer to S3_SAVE_REG in Communicaton region
   @retval   EFI_INVALID_PARAMETER   Invalid Type and Width
   @retval   EFI_SUCCESS             Restore successful

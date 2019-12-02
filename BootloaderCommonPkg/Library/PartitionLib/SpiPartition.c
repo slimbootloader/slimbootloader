@@ -36,7 +36,7 @@ AddSpiPartition (
   BlockDev = &PartBlockDev->BlockDevice[PartBlockDev->BlockDeviceCount];
   DEBUG ((DEBUG_INFO, "Part %02d: ", PartBlockDev->BlockDeviceCount));
   if (RegionSize == 0) {
-    // Use 0xFFFFFFFF in StartBlock to indicate it is not a valid software partition. 
+    // Use 0xFFFFFFFF in StartBlock to indicate it is not a valid software partition.
     BlockDev->StartBlock = 0xFFFFFFFF;
     BlockDev->LastBlock  = 0;
     DEBUG ((DEBUG_INFO, "Partition size is 0, no data in this partition\n"));

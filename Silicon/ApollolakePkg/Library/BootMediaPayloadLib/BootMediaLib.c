@@ -13,7 +13,7 @@
 #include <Library/BootloaderCoreLib.h>
 #include <Guid/LoaderFspInfoGuid.h>
 
-typedef struct {  
+typedef struct {
   UINT32      BPDTOffset;
   UINT32      PhysicalData;
   UINT32      PhysicalDeviceArea;

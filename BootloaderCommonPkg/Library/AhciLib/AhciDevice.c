@@ -197,7 +197,7 @@ AhciReadWriteBlock (
                ReadBuf
                );
     if (EFI_ERROR (Status)) {
-      DEBUG ((EFI_D_ERROR, "AhciDeviceRead Status = %r\n", Status));
+      DEBUG ((DEBUG_ERROR, "AhciDeviceRead Status = %r\n", Status));
       return EFI_DEVICE_ERROR;
     }
 

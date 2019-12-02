@@ -26,7 +26,7 @@
 
 [Packages]
   MdePkg/MdePkg.dec
-  BootloaderCommonPkg/BootloaderCommonPkg.dec 
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
 
 [LibraryClasses]
   BaseLib

@@ -63,21 +63,21 @@ Method(_CRS,0,Serialized) {
   Decrement(GSMX)
 
   Add(Subtract(GSMX, GSMN), 1, GSLN)
-  
+
   //
   // Create pointers to Base of Graphics Stolen Memory Values
   //
   CreateDwordField(RES0, ^GSM1._MIN, GDMN)
   CreateDwordField(RES0, ^GSM1._MAX, GDMX)
   CreateDwordField(RES0, ^GSM1._LEN, GDLN)
-  
+
   // Read C-Unit PCI CFG Reg. 0xB4 for BGSM
   Store(^VLVC.BGSM, GDMN)
-  
+
   // Read C-Unit PCI CFG Reg. 0xBC for TOLUD
   And(^VLVC.BDSM, 0xFFFFF000, GDMX)
   Decrement(GDMX)
-  
+
   Add(Subtract(GDMX, GDMN), 1, GDLN)
 
   Return(RES0)
@@ -95,7 +95,7 @@ Name( RES0,ResourceTemplate() {
           0x0000,                // Translation
           0x0100                 // Range Length = Max-Min+1
           )
-    
+
   IO (Decode16, 0x70, 0x77, 0x01, 0x08)         //Consumed resource (0xCF8-0xCFF)
   IO (Decode16, 0xCF8, 0xCF8, 0x01, 0x08)       //Consumed resource (0xCF8-0xCFF)
 
@@ -201,7 +201,7 @@ Name( RES0,ResourceTemplate() {
           ,,,
           DSM1
           )
-  
+
   DWORDMEMORY (                  // Descriptor for Base of Graphics Stolen Memory
           ResourceProducer,      // bit 0 of general flags is 0
           PosDecode,

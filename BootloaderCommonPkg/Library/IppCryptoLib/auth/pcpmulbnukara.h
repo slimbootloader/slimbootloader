@@ -5,20 +5,20 @@
 
 **/
 
-/* 
-// 
+/*
+//
 //  Purpose:
 //     Cryptography Primitive.
 //     BN Multiplication (Karatsuba method) Definitions & Function Prototypes
-// 
+//
 //  Contents:
 //     cpKaratsubaBufferSize()
 //     cpMul_BNU_karatuba()
 //     cpSqr_BNU_karatuba()
 //     cpKAdd_BNU()
 //     cpKSub_BNU()
-// 
-// 
+//
+//
 */
 
 #if !defined(_KARATSUBA_MUL_)

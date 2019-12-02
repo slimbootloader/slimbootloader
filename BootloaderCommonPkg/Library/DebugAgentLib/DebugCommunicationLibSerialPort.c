@@ -59,10 +59,10 @@ DebugPortInitialize (
 
   Status = SerialPortInitialize ();
   if (RETURN_ERROR(Status)) {
-    DEBUG ((EFI_D_ERROR, "Debug Serial Port: Initialization failed!\n"));
+    DEBUG ((DEBUG_ERROR, "Debug Serial Port: Initialization failed!\n"));
   }
 
-  DEBUG ((EFI_D_ERROR, "Debug Serial Port: Initialization success!\n"));
+  DEBUG ((DEBUG_ERROR, "Debug Serial Port: Initialization success!\n"));
   if (Function != NULL) {
     Function (Context, NULL);
   }

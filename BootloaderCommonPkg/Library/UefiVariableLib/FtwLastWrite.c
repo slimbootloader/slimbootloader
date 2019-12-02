@@ -142,12 +142,12 @@ IsValidWorkSpace (
   }
 
   if ((WorkingHeader->WorkingBlockValid != FTW_VALID_STATE) || (WorkingHeader->WorkingBlockInvalid == FTW_VALID_STATE)) {
-    DEBUG ((EFI_D_ERROR, "FtwPei: Work block header valid bit check error\n"));
+    DEBUG ((DEBUG_ERROR, "FtwPei: Work block header valid bit check error\n"));
     return FALSE;
   }
 
   if (WorkingHeader->WriteQueueSize != (WorkingLength - sizeof (UEFI_FAULT_TOLERANT_WORKING_BLOCK_HEADER))) {
-    DEBUG ((EFI_D_ERROR, "FtwPei: Work block header WriteQueueSize check error\n"));
+    DEBUG ((DEBUG_ERROR, "FtwPei: Work block header WriteQueueSize check error\n"));
     return FALSE;
   }
 
@@ -155,7 +155,7 @@ IsValidWorkSpace (
   // Check signature with gEdkiiWorkingBlockSignatureGuid
   //
   if (!CompareGuid (&gEdkiiWorkingBlockSignatureGuid, &WorkingHeader->Signature)) {
-    DEBUG ((EFI_D_ERROR, "FtwPei: Work block header signature check error, it should be gEdkiiWorkingBlockSignatureGuid\n"));
+    DEBUG ((DEBUG_ERROR, "FtwPei: Work block header signature check error, it should be gEdkiiWorkingBlockSignatureGuid\n"));
     //
     // To be compatible with old signature gEfiSystemNvDataFvGuid.
     //
@@ -164,7 +164,7 @@ IsValidWorkSpace (
     } else {
       Data = *(UINT8 *) (WorkingHeader + 1);
       if (Data != 0xff) {
-        DEBUG ((EFI_D_ERROR, "FtwPei: Old format FTW structure can't be handled\n"));
+        DEBUG ((DEBUG_ERROR, "FtwPei: Old format FTW structure can't be handled\n"));
         ASSERT (FALSE);
         return FALSE;
       }

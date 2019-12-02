@@ -40,7 +40,7 @@ UINT32
 GetSpiFlashRegionBase (
   IN UINTN        RegNum
   );
-  
+
 /**
   Return SPI linear region limit of BIOS region
 
@@ -51,6 +51,6 @@ GetSpiFlashRegionLimit (
   IN UINTN        RegNum
   );
 
-  
+
 
 #endif

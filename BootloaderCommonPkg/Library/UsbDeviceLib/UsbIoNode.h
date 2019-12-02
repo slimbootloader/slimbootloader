@@ -12,8 +12,8 @@
 #include <PiPei.h>
 #include <Library/BaseMemoryLib.h>
 
-#define  USB_DEBUG_MEM_NODE_INFO  EFI_D_INIT
-#define  USB_DEBUG_MEM_NODE_ERROR EFI_D_ERROR
+#define  USB_DEBUG_MEM_NODE_INFO  DEBUG_INIT
+#define  USB_DEBUG_MEM_NODE_ERROR DEBUG_ERROR
 
 
 typedef struct {

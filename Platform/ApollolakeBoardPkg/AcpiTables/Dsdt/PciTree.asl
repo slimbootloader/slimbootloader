@@ -55,7 +55,7 @@ Scope(\_SB) {
     Package(){0x0013FFFF, 1, 0, 23 },  // PCIE0
     Package(){0x0013FFFF, 2, 0, 20 },  // PCIE0
     Package(){0x0013FFFF, 3, 0, 21 },  // PCIE0
-    
+
 // D20: PCI Express Port 1-2
     Package(){0x0014FFFF, 0, 0, 22 },  // PCIE1
     Package(){0x0014FFFF, 1, 0, 23 },  // PCIE1

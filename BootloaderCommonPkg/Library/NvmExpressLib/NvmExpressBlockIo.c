@@ -209,7 +209,7 @@ NvmeRead (
     }
   }
 
-  DEBUG ((EFI_D_VERBOSE, "%a: Lba = 0x%08Lx, Original = 0x%08Lx, "
+  DEBUG ((DEBUG_VERBOSE, "%a: Lba = 0x%08Lx, Original = 0x%08Lx, "
           "Remaining = 0x%08Lx, BlockSize = 0x%x, Status = %r\n", __FUNCTION__, Lba,
           (UINT64)OrginalBlocks, (UINT64)Blocks, BlockSize, Status));
 
@@ -284,7 +284,7 @@ NvmeWrite (
     }
   }
 
-  DEBUG ((EFI_D_VERBOSE, "%a: Lba = 0x%08Lx, Original = 0x%08Lx, "
+  DEBUG ((DEBUG_VERBOSE, "%a: Lba = 0x%08Lx, Original = 0x%08Lx, "
           "Remaining = 0x%08Lx, BlockSize = 0x%x, Status = %r\n", __FUNCTION__, Lba,
           (UINT64)OrginalBlocks, (UINT64)Blocks, BlockSize, Status));
 

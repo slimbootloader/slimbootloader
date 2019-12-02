@@ -281,15 +281,15 @@ PcrExtend (
 );
 
 /**
-  Prepare CSE for firmware update 
-  
+  Prepare CSE for firmware update
+
   @return EFI_STATUS
 **/
 EFI_STATUS
 PrepareCseForFirmwareUpdate (
   VOID
   );
-  
+
 /**
 Send Get Firmware Version Request to Sec
 

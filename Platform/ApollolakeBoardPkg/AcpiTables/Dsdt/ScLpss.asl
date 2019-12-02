@@ -322,7 +322,7 @@ scope (\_SB.PCI0) {
         Package (2) {"clock-frequency", IC3S}
       }
     })
-    
+
     Method (FMCN, 0x0, Serialized)
     {
       Name (PKG, Package(3) { 100, 214, 28 })
@@ -373,7 +373,7 @@ scope (\_SB.PCI0) {
         Package (2) {"clock-frequency", IC4S}
       }
     })
-    
+
     Method (FMCN, 0x0, Serialized)
     {
       Name (PKG, Package(3) { 100, 214, 28 })

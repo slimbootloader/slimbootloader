@@ -30,7 +30,7 @@ Scope(\_SB.PCI0)
           , 6,
       PMES, 1       // bit 15, PME Status
     }
-    
+
     Name (_DDN, "Broxton XDCI controller")  // _DDN: DOS Device Name
     Name (_STR, Unicode ("Broxton XDCI controller"))  // _STR: Description String
 
@@ -40,17 +40,17 @@ Scope(\_SB.PCI0)
     }
 
     Method (_DSW, 3)  // _DSW: Device Sleep Wake
-    {  
+    {
        Return (Zero)
     }
 
     Name (_PRW, Package() {0x0C, 4})  // Declare xDCI GPE status and enable bits are bit 12.
-  
+
     Method(XDBA, 0)
     {
       Return(And(^XDCB, 0xFFFFFFFFFFFFFF00))
-    }  
-  
+    }
+
      //
     // Arg0: UUID = {732b85d5-b7a7-4a1b-9ba0-4bbd00ffd511}
     // Arg1: Revision ID = 1
@@ -182,10 +182,10 @@ Scope(\_SB.PCI0)
             }
             Case(3){
               // Function 3: Check xDCI status
-              // Return (0x0), xDCI disabled 
-              // Return (0x1), xDCI enabled 
+              // Return (0x0), xDCI disabled
+              // Return (0x1), xDCI enabled
               Return(XDCE)
-            }            
+            }
             Case(4){
               // Function 4: Set PMU Power State Method, clear PMU PME
               // Arg3: A package consisting of 1 ULONG value
@@ -258,11 +258,11 @@ Scope(\_SB.PCI0)
               }
               Store(P2PS, Local0)
               Return(Local0)
-            }            
+            }
           } // Switch Arg2
-        } // if Rev == 1 
+        } // if Rev == 1
       } // if UUID match
       Return(0)
-    } // _DSM      
+    } // _DSM
   } // XDCI
 }

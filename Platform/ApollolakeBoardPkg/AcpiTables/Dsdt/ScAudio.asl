@@ -75,7 +75,7 @@ Name(AG3H,0)
     Method(_PS3,0,Serialized)     /// D3 Method for HD-A Controller(Dummy routine to support D3 state)
     {
     }
-   
+
     Method(_INI, 0, NotSerialized)  // _INI: Initialize
     {
       // Update resource according to NVS
@@ -86,7 +86,7 @@ Name(AG3H,0)
       CreateQWordField(NBUF, ^NHLT._LEN, NLEN)
       Store(NHLA, NBAS)
       Add(NHLA, Subtract(NHLL, 1), NMAS)
-      Store(NHLL, NLEN) 
+      Store(NHLL, NLEN)
     }
 
     Method(_DSM, 0x4, Serialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj}) {
@@ -143,7 +143,7 @@ Name(AG3H,0)
             //
             Return(ADFM)
           }
-          // Function 3: Query Pre/Post Processing Module Support 
+          // Function 3: Query Pre/Post Processing Module Support
           //                    Used by the Intel Offload Engine Driver to determine if a
           //                    specified PP Module is allowed to be supported on this platform
           // Arg2 - Function Index: 0x03 (Integer)

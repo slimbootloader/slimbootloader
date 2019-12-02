@@ -268,7 +268,7 @@ DebugReadBreakSymbol (
 
   @param[in] ErrorLevel  The error level of the debug message.
   @param[in] Format      Format string for the debug message to print.
-  @param[in] ...         Variable argument list whose contents are accessed 
+  @param[in] ...         Variable argument list whose contents are accessed
                          based on the format string specified by Format.
 
 **/
@@ -305,11 +305,11 @@ MultiProcessorDebugSupport (
 
 /**
   Find and report module image info to HOST.
- 
+
   @param[in] AlignSize      Image aligned size.
- 
+
 **/
-VOID 
+VOID
 FindAndReportModuleImageInfo (
   IN UINTN          AlignSize
   );
@@ -382,7 +382,7 @@ GetDebugFlag (
   @param[in]  Mailbox  Debug Agent Mailbox pointer.
   @param[in]  Index    Mailbox content index.
   @param[in]  Value    Value to be set into mail box.
- 
+
 **/
 VOID
 UpdateMailboxContent (

@@ -165,7 +165,7 @@ HistoryPrint (
   UINTN  Index;
 
   for (Index = 0; Index < MAX_HISTORY_REC; Index++) {
-    DEBUG ((EFI_D_INFO, "CMD%02d: %s\n", Index, GetLine (Index)));
+    DEBUG ((DEBUG_INFO, "CMD%02d: %s\n", Index, GetLine (Index)));
   }
-  DEBUG ((EFI_D_INFO, "\n"));
+  DEBUG ((DEBUG_INFO, "\n"));
 }

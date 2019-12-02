@@ -5,10 +5,10 @@
 
 **/
 
-/* 
+/*
 //               Intel(R) Integrated Performance Primitives
 //                   Cryptographic Primitives (ippcp)
-// 
+//
 */
 #if !defined(_CP_MONTRED_H)
 #define _CP_MONTRED_H

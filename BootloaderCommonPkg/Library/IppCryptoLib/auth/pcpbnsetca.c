@@ -5,17 +5,17 @@
 
 **/
 
-/* 
-// 
+/*
+//
 //  Purpose:
 //     Cryptography Primitive.
 //     Big Number Operations
-// 
+//
 //  Contents:
 //     ippsSetOctString_BN()
 //     ippsGetOctString_BN()
-// 
-// 
+//
+//
 */
 
 #include "owndefs.h"

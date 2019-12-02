@@ -81,7 +81,7 @@ XhcPeiCmdTransfer (
   Status = EFI_DEVICE_ERROR;
 
   if (XhcPeiIsHalt (Xhc) || XhcPeiIsSysError (Xhc)) {
-    DEBUG ((EFI_D_ERROR, "XhcPeiCmdTransfer: HC is halted or has system error\n"));
+    DEBUG ((DEBUG_ERROR, "XhcPeiCmdTransfer: HC is halted or has system error\n"));
     goto ON_EXIT;
   }
 
@@ -90,7 +90,7 @@ XhcPeiCmdTransfer (
   //
   Urb = XhcPeiCreateCmdTrb (Xhc, CmdTrb);
   if (Urb == NULL) {
-    DEBUG ((EFI_D_ERROR, "XhcPeiCmdTransfer: failed to create URB\n"));
+    DEBUG ((DEBUG_ERROR, "XhcPeiCmdTransfer: failed to create URB\n"));
     Status = EFI_OUT_OF_RESOURCES;
     goto ON_EXIT;
   }
@@ -168,7 +168,7 @@ XhcPeiCreateUrb (
 
   Status = XhcPeiCreateTransferTrb (Xhc, Urb);
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "XhcPeiCreateUrb: XhcPeiCreateTransferTrb Failed, Status = %r\n", Status));
+    DEBUG ((DEBUG_ERROR, "XhcPeiCreateUrb: XhcPeiCreateTransferTrb Failed, Status = %r\n", Status));
     FreePool (Urb);
     Urb = NULL;
   }
@@ -408,7 +408,7 @@ XhcPeiCreateTransferTrb (
     break;
 
   default:
-    DEBUG ((EFI_D_ERROR, "Not supported EPType 0x%x!\n", EPType));
+    DEBUG ((DEBUG_ERROR, "Not supported EPType 0x%x!\n", EPType));
     return EFI_UNSUPPORTED;
   }
 
@@ -446,14 +446,14 @@ XhcPeiRecoverHaltedEndpoint (
   }
   Dci = XhcPeiEndpointToDci (Urb->Ep.EpAddr, (UINT8) (Urb->Ep.Direction));
 
-  DEBUG ((EFI_D_INFO, "XhcPeiRecoverHaltedEndpoint: Recovery Halted Slot = %x, Dci = %x\n", SlotId, Dci));
+  DEBUG ((DEBUG_VERBOSE, "XhcPeiRecoverHaltedEndpoint: Recovery Halted Slot = %x, Dci = %x\n", SlotId, Dci));
 
   //
   // 1) Send Reset endpoint command to transit from halt to stop state
   //
   Status = XhcPeiResetEndpoint (Xhc, SlotId, Dci);
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "XhcPeiRecoverHaltedEndpoint: Reset Endpoint Failed, Status = %r\n", Status));
+    DEBUG ((DEBUG_ERROR, "XhcPeiRecoverHaltedEndpoint: Reset Endpoint Failed, Status = %r\n", Status));
     goto Done;
   }
 
@@ -462,7 +462,7 @@ XhcPeiRecoverHaltedEndpoint (
   //
   Status = XhcPeiSetTrDequeuePointer (Xhc, SlotId, Dci, Urb);
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "XhcPeiRecoverHaltedEndpoint: Set Dequeue Pointer Failed, Status = %r\n", Status));
+    DEBUG ((DEBUG_ERROR, "XhcPeiRecoverHaltedEndpoint: Set Dequeue Pointer Failed, Status = %r\n", Status));
     goto Done;
   }
 
@@ -505,14 +505,14 @@ XhcPeiDequeueTrbFromEndpoint (
   }
   Dci = XhcPeiEndpointToDci (Urb->Ep.EpAddr, (UINT8) (Urb->Ep.Direction));
 
-  DEBUG ((EFI_D_INFO, "XhcPeiDequeueTrbFromEndpoint: Stop Slot = %x, Dci = %x\n", SlotId, Dci));
+  DEBUG ((DEBUG_VERBOSE, "XhcPeiDequeueTrbFromEndpoint: Stop Slot = %x, Dci = %x\n", SlotId, Dci));
 
   //
   // 1) Send Stop endpoint command to stop endpoint.
   //
   Status = XhcPeiStopEndpoint (Xhc, SlotId, Dci);
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "XhcPeiDequeueTrbFromEndpoint: Stop Endpoint Failed, Status = %r\n", Status));
+    DEBUG ((DEBUG_ERROR, "XhcPeiDequeueTrbFromEndpoint: Stop Endpoint Failed, Status = %r\n", Status));
     goto Done;
   }
 
@@ -521,7 +521,7 @@ XhcPeiDequeueTrbFromEndpoint (
   //
   Status = XhcPeiSetTrDequeuePointer (Xhc, SlotId, Dci, Urb);
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "XhcPeiDequeueTrbFromEndpoint: Set Dequeue Pointer Failed, Status = %r\n", Status));
+    DEBUG ((DEBUG_ERROR, "XhcPeiDequeueTrbFromEndpoint: Set Dequeue Pointer Failed, Status = %r\n", Status));
     goto Done;
   }
 
@@ -652,31 +652,31 @@ XhcPeiCheckUrbResult (
     case TRB_COMPLETION_STALL_ERROR:
       CheckedUrb->Result  |= EFI_USB_ERR_STALL;
       CheckedUrb->Finished = TRUE;
-      DEBUG ((EFI_D_ERROR, "XhcPeiCheckUrbResult: STALL_ERROR! Completecode = %x\n", EvtTrb->Completecode));
+      DEBUG ((DEBUG_ERROR, "XhcPeiCheckUrbResult: STALL_ERROR! Completecode = %x\n", EvtTrb->Completecode));
       goto EXIT;
 
     case TRB_COMPLETION_BABBLE_ERROR:
       CheckedUrb->Result  |= EFI_USB_ERR_BABBLE;
       CheckedUrb->Finished = TRUE;
-      DEBUG ((EFI_D_ERROR, "XhcPeiCheckUrbResult: BABBLE_ERROR! Completecode = %x\n", EvtTrb->Completecode));
+      DEBUG ((DEBUG_ERROR, "XhcPeiCheckUrbResult: BABBLE_ERROR! Completecode = %x\n", EvtTrb->Completecode));
       goto EXIT;
 
     case TRB_COMPLETION_DATA_BUFFER_ERROR:
       CheckedUrb->Result  |= EFI_USB_ERR_BUFFER;
       CheckedUrb->Finished = TRUE;
-      DEBUG ((EFI_D_ERROR, "XhcPeiCheckUrbResult: ERR_BUFFER! Completecode = %x\n", EvtTrb->Completecode));
+      DEBUG ((DEBUG_ERROR, "XhcPeiCheckUrbResult: ERR_BUFFER! Completecode = %x\n", EvtTrb->Completecode));
       goto EXIT;
 
     case TRB_COMPLETION_USB_TRANSACTION_ERROR:
       CheckedUrb->Result  |= EFI_USB_ERR_TIMEOUT;
       CheckedUrb->Finished = TRUE;
-      DEBUG ((EFI_D_ERROR, "XhcPeiCheckUrbResult: TRANSACTION_ERROR! Completecode = %x\n", EvtTrb->Completecode));
+      DEBUG ((DEBUG_ERROR, "XhcPeiCheckUrbResult: TRANSACTION_ERROR! Completecode = %x\n", EvtTrb->Completecode));
       goto EXIT;
 
     case TRB_COMPLETION_SHORT_PACKET:
     case TRB_COMPLETION_SUCCESS:
       if (EvtTrb->Completecode == TRB_COMPLETION_SHORT_PACKET) {
-        DEBUG ((EFI_D_VERBOSE, "XhcPeiCheckUrbResult: short packet happens!\n"));
+        DEBUG ((DEBUG_VERBOSE, "XhcPeiCheckUrbResult: short packet happens!\n"));
       }
 
       TRBType = (UINT8) (TRBPtr->Type);
@@ -689,7 +689,7 @@ XhcPeiCheckUrbResult (
       break;
 
     default:
-      DEBUG ((EFI_D_ERROR, "XhcPeiCheckUrbResult: Transfer Default Error Occur! Completecode = 0x%x!\n",
+      DEBUG ((DEBUG_ERROR, "XhcPeiCheckUrbResult: Transfer Default Error Occur! Completecode = 0x%x!\n",
               EvtTrb->Completecode));
       CheckedUrb->Result  |= EFI_USB_ERR_TIMEOUT;
       CheckedUrb->Finished = TRUE;
@@ -829,7 +829,7 @@ XhcPeiPollPortStatusChange (
   UINT8             SlotId;
   USB_DEV_ROUTE     RouteChart;
 
-  DEBUG ((EFI_D_INFO, "XhcPeiPollPortStatusChange: PortChangeStatus: %x PortStatus: %x\n", PortState->PortChangeStatus,
+  DEBUG ((DEBUG_VERBOSE, "XhcPeiPollPortStatusChange: PortChangeStatus: %x PortStatus: %x\n", PortState->PortChangeStatus,
           PortState->PortStatus));
 
   Status = EFI_SUCCESS;
@@ -1054,11 +1054,11 @@ XhcPeiInitializeDeviceSlot (
              (TRB_TEMPLATE **) (UINTN) &EvtTrb
              );
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "XhcPeiInitializeDeviceSlot: Enable Slot Failed, Status = %r\n", Status));
+    DEBUG ((DEBUG_ERROR, "XhcPeiInitializeDeviceSlot: Enable Slot Failed, Status = %r\n", Status));
     return Status;
   }
   ASSERT (EvtTrb->SlotId <= Xhc->MaxSlotsEn);
-  DEBUG ((EFI_D_INFO, "XhcPeiInitializeDeviceSlot: Enable Slot Successfully, The Slot ID = 0x%x\n", EvtTrb->SlotId));
+  DEBUG ((DEBUG_VERBOSE, "XhcPeiInitializeDeviceSlot: Enable Slot Successfully, The Slot ID = 0x%x\n", EvtTrb->SlotId));
   SlotId = (UINT8) EvtTrb->SlotId;
   ASSERT (SlotId != 0);
 
@@ -1212,11 +1212,11 @@ XhcPeiInitializeDeviceSlot (
              );
   if (!EFI_ERROR (Status)) {
     DeviceAddress = (UINT8) OutputContext->Slot.DeviceAddress;
-    DEBUG ((EFI_D_INFO, "XhcPeiInitializeDeviceSlot: Address %d assigned successfully\n", DeviceAddress));
+    DEBUG ((DEBUG_VERBOSE, "XhcPeiInitializeDeviceSlot: Address %d assigned successfully\n", DeviceAddress));
     Xhc->UsbDevContext[SlotId].XhciDevAddr = DeviceAddress;
   }
 
-  DEBUG ((EFI_D_INFO, "XhcPeiInitializeDeviceSlot: Enable Slot, Status = %r\n", Status));
+  DEBUG ((DEBUG_VERBOSE, "XhcPeiInitializeDeviceSlot: Enable Slot, Status = %r\n", Status));
   return Status;
 }
 
@@ -1266,11 +1266,11 @@ XhcPeiInitializeDeviceSlot64 (
              (TRB_TEMPLATE **) (UINTN) &EvtTrb
              );
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "XhcPeiInitializeDeviceSlot64: Enable Slot Failed, Status = %r\n", Status));
+    DEBUG ((DEBUG_ERROR, "XhcPeiInitializeDeviceSlot64: Enable Slot Failed, Status = %r\n", Status));
     return Status;
   }
   ASSERT (EvtTrb->SlotId <= Xhc->MaxSlotsEn);
-  DEBUG ((EFI_D_INFO, "XhcPeiInitializeDeviceSlot64: Enable Slot Successfully, The Slot ID = 0x%x\n", EvtTrb->SlotId));
+  DEBUG ((DEBUG_VERBOSE, "XhcPeiInitializeDeviceSlot64: Enable Slot Successfully, The Slot ID = 0x%x\n", EvtTrb->SlotId));
   SlotId = (UINT8)EvtTrb->SlotId;
   ASSERT (SlotId != 0);
 
@@ -1424,11 +1424,11 @@ XhcPeiInitializeDeviceSlot64 (
              );
   if (!EFI_ERROR (Status)) {
     DeviceAddress = (UINT8) OutputContext->Slot.DeviceAddress;
-    DEBUG ((EFI_D_INFO, "XhcPeiInitializeDeviceSlot64: Address %d assigned successfully\n", DeviceAddress));
+    DEBUG ((DEBUG_VERBOSE, "XhcPeiInitializeDeviceSlot64: Address %d assigned successfully\n", DeviceAddress));
     Xhc->UsbDevContext[SlotId].XhciDevAddr = DeviceAddress;
   }
 
-  DEBUG ((EFI_D_INFO, "XhcPeiInitializeDeviceSlot64: Enable Slot, Status = %r\n", Status));
+  DEBUG ((DEBUG_VERBOSE, "XhcPeiInitializeDeviceSlot64: Enable Slot, Status = %r\n", Status));
   return Status;
 }
 
@@ -1468,7 +1468,7 @@ XhcPeiDisableSlotCmd (
     Status = XhcPeiDisableSlotCmd (Xhc, Xhc->UsbDevContext[Index + 1].SlotId);
 
     if (EFI_ERROR (Status)) {
-      DEBUG ((EFI_D_ERROR, "XhcPeiDisableSlotCmd: failed to disable child, ignore error\n"));
+      DEBUG ((DEBUG_ERROR, "XhcPeiDisableSlotCmd: failed to disable child, ignore error\n"));
       Xhc->UsbDevContext[Index + 1].SlotId = 0;
     }
   }
@@ -1476,7 +1476,7 @@ XhcPeiDisableSlotCmd (
   //
   // Construct the disable slot command
   //
-  DEBUG ((EFI_D_INFO, "XhcPeiDisableSlotCmd: Disable device slot %d!\n", SlotId));
+  DEBUG ((DEBUG_VERBOSE, "XhcPeiDisableSlotCmd: Disable device slot %d!\n", SlotId));
 
   ZeroMem (&CmdTrbDisSlot, sizeof (CmdTrbDisSlot));
   CmdTrbDisSlot.CycleBit = 1;
@@ -1489,7 +1489,7 @@ XhcPeiDisableSlotCmd (
              (TRB_TEMPLATE **) (UINTN) &EvtTrb
              );
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "XhcPeiDisableSlotCmd: Disable Slot Command Failed, Status = %r\n", Status));
+    DEBUG ((DEBUG_ERROR, "XhcPeiDisableSlotCmd: Disable Slot Command Failed, Status = %r\n", Status));
     return Status;
   }
   //
@@ -1532,7 +1532,7 @@ XhcPeiDisableSlotCmd (
   Xhc->UsbDevContext[SlotId].Enabled = FALSE;
   Xhc->UsbDevContext[SlotId].SlotId  = 0;
 
-  DEBUG ((EFI_D_INFO, "XhcPeiDisableSlotCmd: Disable Slot Command, Status = %r\n", Status));
+  DEBUG ((DEBUG_VERBOSE, "XhcPeiDisableSlotCmd: Disable Slot Command, Status = %r\n", Status));
   return Status;
 }
 
@@ -1571,7 +1571,7 @@ XhcPeiDisableSlotCmd64 (
     Status = XhcPeiDisableSlotCmd64 (Xhc, Xhc->UsbDevContext[Index + 1].SlotId);
 
     if (EFI_ERROR (Status)) {
-      DEBUG ((EFI_D_ERROR, "XhcPeiDisableSlotCmd64: failed to disable child, ignore error\n"));
+      DEBUG ((DEBUG_ERROR, "XhcPeiDisableSlotCmd64: failed to disable child, ignore error\n"));
       Xhc->UsbDevContext[Index + 1].SlotId = 0;
     }
   }
@@ -1579,7 +1579,7 @@ XhcPeiDisableSlotCmd64 (
   //
   // Construct the disable slot command
   //
-  DEBUG ((EFI_D_INFO, "XhcPeiDisableSlotCmd64: Disable device slot %d!\n", SlotId));
+  DEBUG ((DEBUG_VERBOSE, "XhcPeiDisableSlotCmd64: Disable device slot %d!\n", SlotId));
 
   ZeroMem (&CmdTrbDisSlot, sizeof (CmdTrbDisSlot));
   CmdTrbDisSlot.CycleBit = 1;
@@ -1592,7 +1592,7 @@ XhcPeiDisableSlotCmd64 (
              (TRB_TEMPLATE **) (UINTN) &EvtTrb
              );
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "XhcPeiDisableSlotCmd64: Disable Slot Command Failed, Status = %r\n", Status));
+    DEBUG ((DEBUG_ERROR, "XhcPeiDisableSlotCmd64: Disable Slot Command Failed, Status = %r\n", Status));
     return Status;
   }
   //
@@ -1635,7 +1635,7 @@ XhcPeiDisableSlotCmd64 (
   Xhc->UsbDevContext[SlotId].Enabled = FALSE;
   Xhc->UsbDevContext[SlotId].SlotId  = 0;
 
-  DEBUG ((EFI_D_INFO, "XhcPeiDisableSlotCmd64: Disable Slot Command, Status = %r\n", Status));
+  DEBUG ((DEBUG_VERBOSE, "XhcPeiDisableSlotCmd64: Disable Slot Command, Status = %r\n", Status));
   return Status;
 }
 
@@ -1766,7 +1766,7 @@ XhcPeiSetConfigCmd (
         //
         // Do not support isochronous transfer now.
         //
-        DEBUG ((EFI_D_INFO, "XhcPeiSetConfigCmd: Unsupport ISO EP found, Transfer ring is not allocated.\n"));
+        DEBUG ((DEBUG_VERBOSE, "XhcPeiSetConfigCmd: Unsupport ISO EP found, Transfer ring is not allocated.\n"));
         EpDesc = (USB_ENDPOINT_DESCRIPTOR *) ((UINTN)EpDesc + EpDesc->Length);
         continue;
       case USB_ENDPOINT_INTERRUPT:
@@ -1810,9 +1810,9 @@ XhcPeiSetConfigCmd (
         //
         // Do not support control transfer now.
         //
-        DEBUG ((EFI_D_INFO, "XhcPeiSetConfigCmd: Unsupport Control EP found, Transfer ring is not allocated.\n"));
+        DEBUG ((DEBUG_VERBOSE, "XhcPeiSetConfigCmd: Unsupport Control EP found, Transfer ring is not allocated.\n"));
       default:
-        DEBUG ((EFI_D_INFO, "XhcPeiSetConfigCmd: Unknown EP found, Transfer ring is not allocated.\n"));
+        DEBUG ((DEBUG_VERBOSE, "XhcPeiSetConfigCmd: Unknown EP found, Transfer ring is not allocated.\n"));
         EpDesc = (USB_ENDPOINT_DESCRIPTOR *) ((UINTN)EpDesc + EpDesc->Length);
         continue;
       }
@@ -1845,7 +1845,7 @@ XhcPeiSetConfigCmd (
   CmdTrbCfgEP.CycleBit = 1;
   CmdTrbCfgEP.Type     = TRB_TYPE_CON_ENDPOINT;
   CmdTrbCfgEP.SlotId   = Xhc->UsbDevContext[SlotId].SlotId;
-  DEBUG ((EFI_D_INFO, "XhcSetConfigCmd: Configure Endpoint\n"));
+  DEBUG ((DEBUG_VERBOSE, "XhcSetConfigCmd: Configure Endpoint\n"));
   Status = XhcPeiCmdTransfer (
              Xhc,
              (TRB_TEMPLATE *) (UINTN) &CmdTrbCfgEP,
@@ -1853,7 +1853,7 @@ XhcPeiSetConfigCmd (
              (TRB_TEMPLATE **) (UINTN) &EvtTrb
              );
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "XhcSetConfigCmd: Config Endpoint Failed, Status = %r\n", Status));
+    DEBUG ((DEBUG_ERROR, "XhcSetConfigCmd: Config Endpoint Failed, Status = %r\n", Status));
   }
   return Status;
 }
@@ -1986,7 +1986,7 @@ XhcPeiSetConfigCmd64 (
         //
         // Do not support isochronous transfer now.
         //
-        DEBUG ((EFI_D_INFO, "XhcPeiSetConfigCmd64: Unsupport ISO EP found, Transfer ring is not allocated.\n"));
+        DEBUG ((DEBUG_VERBOSE, "XhcPeiSetConfigCmd64: Unsupport ISO EP found, Transfer ring is not allocated.\n"));
         EpDesc = (USB_ENDPOINT_DESCRIPTOR *) ((UINTN)EpDesc + EpDesc->Length);
         continue;
       case USB_ENDPOINT_INTERRUPT:
@@ -2030,9 +2030,9 @@ XhcPeiSetConfigCmd64 (
         //
         // Do not support control transfer now.
         //
-        DEBUG ((EFI_D_INFO, "XhcPeiSetConfigCmd64: Unsupport Control EP found, Transfer ring is not allocated.\n"));
+        DEBUG ((DEBUG_VERBOSE, "XhcPeiSetConfigCmd64: Unsupport Control EP found, Transfer ring is not allocated.\n"));
       default:
-        DEBUG ((EFI_D_INFO, "XhcPeiSetConfigCmd64: Unknown EP found, Transfer ring is not allocated.\n"));
+        DEBUG ((DEBUG_VERBOSE, "XhcPeiSetConfigCmd64: Unknown EP found, Transfer ring is not allocated.\n"));
         EpDesc = (USB_ENDPOINT_DESCRIPTOR *) ((UINTN)EpDesc + EpDesc->Length);
         continue;
       }
@@ -2067,7 +2067,7 @@ XhcPeiSetConfigCmd64 (
   CmdTrbCfgEP.CycleBit = 1;
   CmdTrbCfgEP.Type     = TRB_TYPE_CON_ENDPOINT;
   CmdTrbCfgEP.SlotId   = Xhc->UsbDevContext[SlotId].SlotId;
-  DEBUG ((EFI_D_INFO, "XhcSetConfigCmd64: Configure Endpoint\n"));
+  DEBUG ((DEBUG_VERBOSE, "XhcSetConfigCmd64: Configure Endpoint\n"));
   Status = XhcPeiCmdTransfer (
              Xhc,
              (TRB_TEMPLATE *) (UINTN) &CmdTrbCfgEP,
@@ -2075,7 +2075,7 @@ XhcPeiSetConfigCmd64 (
              (TRB_TEMPLATE **) (UINTN) &EvtTrb
              );
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "XhcSetConfigCmd64: Config Endpoint Failed, Status = %r\n", Status));
+    DEBUG ((DEBUG_ERROR, "XhcSetConfigCmd64: Config Endpoint Failed, Status = %r\n", Status));
   }
 
   return Status;
@@ -2123,7 +2123,7 @@ XhcPeiEvaluateContext (
   CmdTrbEvalu.CycleBit = 1;
   CmdTrbEvalu.Type     = TRB_TYPE_EVALU_CONTXT;
   CmdTrbEvalu.SlotId   = Xhc->UsbDevContext[SlotId].SlotId;
-  DEBUG ((EFI_D_INFO, "XhcEvaluateContext: Evaluate context\n"));
+  DEBUG ((DEBUG_VERBOSE, "XhcEvaluateContext: Evaluate context\n"));
   Status = XhcPeiCmdTransfer (
              Xhc,
              (TRB_TEMPLATE *) (UINTN) &CmdTrbEvalu,
@@ -2131,7 +2131,7 @@ XhcPeiEvaluateContext (
              (TRB_TEMPLATE **) (UINTN) &EvtTrb
              );
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "XhcEvaluateContext: Evaluate Context Failed, Status = %r\n", Status));
+    DEBUG ((DEBUG_ERROR, "XhcEvaluateContext: Evaluate Context Failed, Status = %r\n", Status));
   }
   return Status;
 }
@@ -2177,7 +2177,7 @@ XhcPeiEvaluateContext64 (
   CmdTrbEvalu.CycleBit = 1;
   CmdTrbEvalu.Type     = TRB_TYPE_EVALU_CONTXT;
   CmdTrbEvalu.SlotId   = Xhc->UsbDevContext[SlotId].SlotId;
-  DEBUG ((EFI_D_INFO, "XhcEvaluateContext64: Evaluate context 64\n"));
+  DEBUG ((DEBUG_VERBOSE, "XhcEvaluateContext64: Evaluate context 64\n"));
   Status = XhcPeiCmdTransfer (
              Xhc,
              (TRB_TEMPLATE *) (UINTN) &CmdTrbEvalu,
@@ -2185,7 +2185,7 @@ XhcPeiEvaluateContext64 (
              (TRB_TEMPLATE **) (UINTN) &EvtTrb
              );
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "XhcEvaluateContext64: Evaluate Context Failed, Status = %r\n", Status));
+    DEBUG ((DEBUG_ERROR, "XhcEvaluateContext64: Evaluate Context Failed, Status = %r\n", Status));
   }
   return Status;
 }
@@ -2245,7 +2245,7 @@ XhcPeiConfigHubContext (
   CmdTrbCfgEP.CycleBit = 1;
   CmdTrbCfgEP.Type     = TRB_TYPE_CON_ENDPOINT;
   CmdTrbCfgEP.SlotId   = Xhc->UsbDevContext[SlotId].SlotId;
-  DEBUG ((EFI_D_INFO, "Configure Hub Slot Context\n"));
+  DEBUG ((DEBUG_VERBOSE, "Configure Hub Slot Context\n"));
   Status = XhcPeiCmdTransfer (
              Xhc,
              (TRB_TEMPLATE *) (UINTN) &CmdTrbCfgEP,
@@ -2253,7 +2253,7 @@ XhcPeiConfigHubContext (
              (TRB_TEMPLATE **) (UINTN) &EvtTrb
              );
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "XhcConfigHubContext: Config Endpoint Failed, Status = %r\n", Status));
+    DEBUG ((DEBUG_ERROR, "XhcConfigHubContext: Config Endpoint Failed, Status = %r\n", Status));
   }
   return Status;
 }
@@ -2313,7 +2313,7 @@ XhcPeiConfigHubContext64 (
   CmdTrbCfgEP.CycleBit = 1;
   CmdTrbCfgEP.Type     = TRB_TYPE_CON_ENDPOINT;
   CmdTrbCfgEP.SlotId   = Xhc->UsbDevContext[SlotId].SlotId;
-  DEBUG ((EFI_D_INFO, "Configure Hub Slot Context 64\n"));
+  DEBUG ((DEBUG_VERBOSE, "Configure Hub Slot Context 64\n"));
   Status = XhcPeiCmdTransfer (
              Xhc,
              (TRB_TEMPLATE *) (UINTN) &CmdTrbCfgEP,
@@ -2321,7 +2321,7 @@ XhcPeiConfigHubContext64 (
              (TRB_TEMPLATE **) (UINTN) &EvtTrb
              );
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "XhcConfigHubContext64: Config Endpoint Failed, Status = %r\n", Status));
+    DEBUG ((DEBUG_ERROR, "XhcConfigHubContext64: Config Endpoint Failed, Status = %r\n", Status));
   }
   return Status;
 }
@@ -2349,7 +2349,7 @@ XhcPeiStopEndpoint (
   EVT_TRB_COMMAND_COMPLETION    *EvtTrb;
   CMD_TRB_STOP_ENDPOINT         CmdTrbStopED;
 
-  DEBUG ((EFI_D_INFO, "XhcPeiStopEndpoint: Slot = 0x%x, Dci = 0x%x\n", SlotId, Dci));
+  DEBUG ((DEBUG_VERBOSE, "XhcPeiStopEndpoint: Slot = 0x%x, Dci = 0x%x\n", SlotId, Dci));
 
   //
   // Send stop endpoint command to transit Endpoint from running to stop state
@@ -2366,7 +2366,7 @@ XhcPeiStopEndpoint (
              (TRB_TEMPLATE **) (UINTN) &EvtTrb
              );
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "XhcPeiStopEndpoint: Stop Endpoint Failed, Status = %r\n", Status));
+    DEBUG ((DEBUG_ERROR, "XhcPeiStopEndpoint: Stop Endpoint Failed, Status = %r\n", Status));
   }
 
   return Status;
@@ -2395,7 +2395,7 @@ XhcPeiResetEndpoint (
   EVT_TRB_COMMAND_COMPLETION  *EvtTrb;
   CMD_TRB_RESET_ENDPOINT      CmdTrbResetED;
 
-  DEBUG ((EFI_D_INFO, "XhcPeiResetEndpoint: Slot = 0x%x, Dci = 0x%x\n", SlotId, Dci));
+  DEBUG ((DEBUG_VERBOSE, "XhcPeiResetEndpoint: Slot = 0x%x, Dci = 0x%x\n", SlotId, Dci));
 
   //
   // Send stop endpoint command to transit Endpoint from running to stop state
@@ -2412,7 +2412,7 @@ XhcPeiResetEndpoint (
              (TRB_TEMPLATE **) (UINTN) &EvtTrb
              );
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "XhcPeiResetEndpoint: Reset Endpoint Failed, Status = %r\n", Status));
+    DEBUG ((DEBUG_ERROR, "XhcPeiResetEndpoint: Reset Endpoint Failed, Status = %r\n", Status));
   }
 
   return Status;
@@ -2445,7 +2445,7 @@ XhcPeiSetTrDequeuePointer (
   CMD_SET_TR_DEQ_POINTER      CmdSetTRDeq;
   EFI_PHYSICAL_ADDRESS        PhyAddr;
 
-  DEBUG ((EFI_D_INFO, "XhcPeiSetTrDequeuePointer: Slot = 0x%x, Dci = 0x%x, Urb = 0x%x\n", SlotId, Dci, Urb));
+  DEBUG ((DEBUG_VERBOSE, "XhcPeiSetTrDequeuePointer: Slot = 0x%x, Dci = 0x%x, Urb = 0x%x\n", SlotId, Dci, Urb));
 
   //
   // Send stop endpoint command to transit Endpoint from running to stop state
@@ -2465,7 +2465,7 @@ XhcPeiSetTrDequeuePointer (
              (TRB_TEMPLATE **) (UINTN) &EvtTrb
              );
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "XhcPeiSetTrDequeuePointer: Set TR Dequeue Pointer Failed, Status = %r\n", Status));
+    DEBUG ((DEBUG_ERROR, "XhcPeiSetTrDequeuePointer: Set TR Dequeue Pointer Failed, Status = %r\n", Status));
   }
 
   return Status;
@@ -2911,7 +2911,7 @@ XhcPeiInitSched (
   XhcPeiWriteOpReg (Xhc, XHC_DCBAAP_OFFSET, XHC_LOW_32BIT (DcbaaPhy));
   XhcPeiWriteOpReg (Xhc, XHC_DCBAAP_OFFSET + 4, XHC_HIGH_32BIT (DcbaaPhy));
 
-  DEBUG ((EFI_D_INFO, "XhcPeiInitSched:DCBAA=0x%x\n", Xhc->DCBAA));
+  DEBUG ((DEBUG_VERBOSE, "XhcPeiInitSched:DCBAA=0x%x\n", Xhc->DCBAA));
 
   //
   // Define the Command Ring Dequeue Pointer by programming the Command Ring Control Register
@@ -2936,7 +2936,7 @@ XhcPeiInitSched (
   XhcPeiWriteOpReg (Xhc, XHC_CRCR_OFFSET, XHC_LOW_32BIT (CmdRingPhy));
   XhcPeiWriteOpReg (Xhc, XHC_CRCR_OFFSET + 4, XHC_HIGH_32BIT (CmdRingPhy));
 
-  DEBUG ((EFI_D_INFO, "XhcPeiInitSched:XHC_CRCR=0x%x\n", Xhc->CmdRing.RingSeg0));
+  DEBUG ((DEBUG_VERBOSE, "XhcPeiInitSched:XHC_CRCR=0x%x\n", Xhc->CmdRing.RingSeg0));
 
   //
   // Disable the 'interrupter enable' bit in USB_CMD
@@ -2952,7 +2952,7 @@ XhcPeiInitSched (
   // Allocate EventRing for Cmd, Ctrl, Bulk, Interrupt, AsynInterrupt transfer
   //
   XhcPeiCreateEventRing (Xhc, &Xhc->EventRing);
-  DEBUG ((EFI_D_INFO, "XhcPeiInitSched:XHC_EVENTRING=0x%x\n", Xhc->EventRing.EventRingSeg0));
+  DEBUG ((DEBUG_VERBOSE, "XhcPeiInitSched:XHC_EVENTRING=0x%x\n", Xhc->EventRing.EventRingSeg0));
 }
 
 /**

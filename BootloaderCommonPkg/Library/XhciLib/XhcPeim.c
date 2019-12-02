@@ -408,7 +408,7 @@ XhcPeiResetHC (
   MicroSecondDelay (1000);
   Status = XhcPeiWaitOpRegBit (Xhc, XHC_USBCMD_OFFSET, XHC_USBCMD_RESET, FALSE, Timeout);
 ON_EXIT:
-  DEBUG ((EFI_D_INFO, "XhcPeiResetHC: %r\n", Status));
+  DEBUG ((DEBUG_VERBOSE, "XhcPeiResetHC: %r\n", Status));
   return Status;
 }
 
@@ -432,7 +432,7 @@ XhcPeiHaltHC (
 
   XhcPeiClearOpRegBit (Xhc, XHC_USBCMD_OFFSET, XHC_USBCMD_RUN);
   Status = XhcPeiWaitOpRegBit (Xhc, XHC_USBSTS_OFFSET, XHC_USBSTS_HALT, TRUE, Timeout);
-  DEBUG ((EFI_D_INFO, "XhcPeiHaltHC: %r\n", Status));
+  DEBUG ((DEBUG_VERBOSE, "XhcPeiHaltHC: %r\n", Status));
   return Status;
 }
 
@@ -456,7 +456,7 @@ XhcPeiRunHC (
 
   XhcPeiSetOpRegBit (Xhc, XHC_USBCMD_OFFSET, XHC_USBCMD_RUN);
   Status = XhcPeiWaitOpRegBit (Xhc, XHC_USBSTS_OFFSET, XHC_USBSTS_HALT, FALSE, Timeout);
-  DEBUG ((EFI_D_INFO, "XhcPeiRunHC: %r\n", Status));
+  DEBUG ((DEBUG_VERBOSE, "XhcPeiRunHC: %r\n", Status));
   return Status;
 }
 
@@ -566,7 +566,7 @@ XhcPeiControlTransfer (
   Len             = 0;
 
   if (XhcPeiIsHalt (Xhc) || XhcPeiIsSysError (Xhc)) {
-    DEBUG ((EFI_D_ERROR, "XhcPeiControlTransfer: HC is halted or has system error\n"));
+    DEBUG ((DEBUG_ERROR, "XhcPeiControlTransfer: HC is halted or has system error\n"));
     goto ON_EXIT;
   }
 
@@ -633,7 +633,7 @@ XhcPeiControlTransfer (
           );
 
   if (Urb == NULL) {
-    DEBUG ((EFI_D_ERROR, "XhcPeiControlTransfer: failed to create URB"));
+    DEBUG ((DEBUG_ERROR, "XhcPeiControlTransfer: failed to create URB"));
     Status = EFI_OUT_OF_RESOURCES;
     goto ON_EXIT;
   }
@@ -653,7 +653,7 @@ XhcPeiControlTransfer (
     //
     RecoveryStatus = XhcPeiDequeueTrbFromEndpoint (Xhc, Urb);
     if (EFI_ERROR (RecoveryStatus)) {
-      DEBUG ((EFI_D_ERROR, "XhcPeiControlTransfer: XhcPeiDequeueTrbFromEndpoint failed\n"));
+      DEBUG ((DEBUG_ERROR, "XhcPeiControlTransfer: XhcPeiDequeueTrbFromEndpoint failed\n"));
     }
     goto FREE_URB;
   } else {
@@ -662,7 +662,7 @@ XhcPeiControlTransfer (
     } else if (*TransferResult == EFI_USB_ERR_STALL) {
       RecoveryStatus = XhcPeiRecoverHaltedEndpoint (Xhc, Urb);
       if (EFI_ERROR (RecoveryStatus)) {
-        DEBUG ((EFI_D_ERROR, "XhcPeiControlTransfer: XhcPeiRecoverHaltedEndpoint failed\n"));
+        DEBUG ((DEBUG_ERROR, "XhcPeiControlTransfer: XhcPeiRecoverHaltedEndpoint failed\n"));
       }
       Status = EFI_DEVICE_ERROR;
       goto FREE_URB;
@@ -735,7 +735,7 @@ XhcPeiControlTransfer (
         // Don't support multi-TT feature for super speed hub now.
         //
         MTT = 0;
-        DEBUG ((EFI_D_ERROR, "XHCI: Don't support multi-TT feature for Hub now. (force to disable MTT)\n"));
+        DEBUG ((DEBUG_ERROR, "XHCI: Don't support multi-TT feature for Hub now. (force to disable MTT)\n"));
       } else {
         MTT = 0;
       }
@@ -845,7 +845,7 @@ FREE_URB:
 ON_EXIT:
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "XhcPeiControlTransfer: error - %r, transfer - %x\n", Status, *TransferResult));
+    DEBUG ((DEBUG_ERROR, "XhcPeiControlTransfer: error - %r, transfer - %x\n", Status, *TransferResult));
   }
 
   return Status;
@@ -945,7 +945,7 @@ XhcPeiBulkTransfer (
   Status          = EFI_DEVICE_ERROR;
 
   if (XhcPeiIsHalt (Xhc) || XhcPeiIsSysError (Xhc)) {
-    DEBUG ((EFI_D_ERROR, "XhcPeiBulkTransfer: HC is halted or has system error\n"));
+    DEBUG ((DEBUG_ERROR, "XhcPeiBulkTransfer: HC is halted or has system error\n"));
     goto ON_EXIT;
   }
 
@@ -976,7 +976,7 @@ XhcPeiBulkTransfer (
           );
 
   if (Urb == NULL) {
-    DEBUG ((EFI_D_ERROR, "XhcPeiBulkTransfer: failed to create URB\n"));
+    DEBUG ((DEBUG_ERROR, "XhcPeiBulkTransfer: failed to create URB\n"));
     Status = EFI_OUT_OF_RESOURCES;
     goto ON_EXIT;
   }
@@ -992,7 +992,7 @@ XhcPeiBulkTransfer (
     //
     RecoveryStatus = XhcPeiDequeueTrbFromEndpoint (Xhc, Urb);
     if (EFI_ERROR (RecoveryStatus)) {
-      DEBUG ((EFI_D_ERROR, "XhcPeiBulkTransfer: XhcPeiDequeueTrbFromEndpoint failed\n"));
+      DEBUG ((DEBUG_ERROR, "XhcPeiBulkTransfer: XhcPeiDequeueTrbFromEndpoint failed\n"));
     }
   } else {
     if (*TransferResult == EFI_USB_NOERROR) {
@@ -1000,7 +1000,7 @@ XhcPeiBulkTransfer (
     } else if (*TransferResult == EFI_USB_ERR_STALL) {
       RecoveryStatus = XhcPeiRecoverHaltedEndpoint (Xhc, Urb);
       if (EFI_ERROR (RecoveryStatus)) {
-        DEBUG ((EFI_D_ERROR, "XhcPeiBulkTransfer: XhcPeiRecoverHaltedEndpoint failed\n"));
+        DEBUG ((DEBUG_ERROR, "XhcPeiBulkTransfer: XhcPeiRecoverHaltedEndpoint failed\n"));
       }
       Status = EFI_DEVICE_ERROR;
     }
@@ -1013,7 +1013,7 @@ ON_EXIT:
   if (EFI_ERROR (Status)) {
     // Interrupt Transfer might return EFI_TIMEOUT if no data is ready.
     if (!(IsInterruptTransfer && (Status == EFI_TIMEOUT))) {
-      DEBUG ((EFI_D_ERROR, "XhcPeiBulkTransfer: error - %r, transfer - %x\n", Status, *TransferResult));
+      DEBUG ((DEBUG_ERROR, "XhcPeiBulkTransfer: error - %r, transfer - %x\n", Status, *TransferResult));
     }
   }
 
@@ -1048,7 +1048,7 @@ XhcPeiGetRootHubPortNumber (
   }
 
   *PortNumber = XhcDev->HcSParams1.Data.MaxPorts;
-  DEBUG ((EFI_D_INFO, "XhcPeiGetRootHubPortNumber: PortNumber = %x\n", *PortNumber));
+  DEBUG ((DEBUG_VERBOSE, "XhcPeiGetRootHubPortNumber: PortNumber = %x\n", *PortNumber));
   return EFI_SUCCESS;
 }
 
@@ -1091,7 +1091,7 @@ XhcPeiClearRootHubPortFeature (
 
   Offset = (UINT32) (XHC_PORTSC_OFFSET + (0x10 * PortNumber));
   State = XhcPeiReadOpReg (Xhc, Offset);
-  DEBUG ((EFI_D_INFO, "XhcPeiClearRootHubPortFeature: Port: %x State: %x\n", PortNumber, State));
+  DEBUG ((DEBUG_VERBOSE, "XhcPeiClearRootHubPortFeature: Port: %x State: %x\n", PortNumber, State));
 
   //
   // Mask off the port status change bits, these bits are
@@ -1185,7 +1185,7 @@ XhcPeiClearRootHubPortFeature (
   }
 
 ON_EXIT:
-  DEBUG ((EFI_D_INFO, "XhcPeiClearRootHubPortFeature: PortFeature: %x Status = %r\n", PortFeature, Status));
+  DEBUG ((DEBUG_VERBOSE, "XhcPeiClearRootHubPortFeature: PortFeature: %x Status = %r\n", PortFeature, Status));
   return Status;
 }
 
@@ -1226,7 +1226,7 @@ XhcPeiSetRootHubPortFeature (
 
   Offset = (UINT32) (XHC_PORTSC_OFFSET + (0x10 * PortNumber));
   State = XhcPeiReadOpReg (Xhc, Offset);
-  DEBUG ((EFI_D_INFO, "XhcPeiSetRootHubPortFeature: Port: %x State: %x\n", PortNumber, State));
+  DEBUG ((DEBUG_VERBOSE, "XhcPeiSetRootHubPortFeature: Port: %x State: %x\n", PortNumber, State));
 
   //
   // Mask off the port status change bits, these bits are
@@ -1293,7 +1293,7 @@ XhcPeiSetRootHubPortFeature (
   }
 
 ON_EXIT:
-  DEBUG ((EFI_D_INFO, "XhcPeiSetRootHubPortFeature: PortFeature: %x Status = %r\n", PortFeature, Status));
+  DEBUG ((DEBUG_VERBOSE, "XhcPeiSetRootHubPortFeature: PortFeature: %x Status = %r\n", PortFeature, Status));
   return Status;
 }
 
@@ -1344,7 +1344,7 @@ XhcPeiGetRootHubPortStatus (
 
   Offset                        = (UINT32) (XHC_PORTSC_OFFSET + (0x10 * PortNumber));
   State                         = XhcPeiReadOpReg (Xhc, Offset);
-  DEBUG ((EFI_D_INFO, "XhcPeiGetRootHubPortStatus: Port: %x State: %x\n", PortNumber, State));
+  DEBUG ((DEBUG_VERBOSE, "XhcPeiGetRootHubPortStatus: Port: %x State: %x\n", PortNumber, State));
 
   //
   // According to XHCI 1.0 spec, bit 10~13 of the root port status register identifies the speed of the attached device.
@@ -1407,7 +1407,7 @@ XhcPeiGetRootHubPortStatus (
   ParentRouteChart.Dword = 0;
   XhcPeiPollPortStatusChange (Xhc, ParentRouteChart, PortNumber, PortStatus);
 
-  DEBUG ((EFI_D_INFO, "XhcPeiGetRootHubPortStatus: PortChangeStatus: %x PortStatus: %x\n", PortStatus->PortChangeStatus,
+  DEBUG ((DEBUG_VERBOSE, "XhcPeiGetRootHubPortStatus: PortChangeStatus: %x PortStatus: %x\n", PortStatus->PortChangeStatus,
           PortStatus->PortStatus));
   return EFI_SUCCESS;
 }
@@ -1493,14 +1493,14 @@ UsbInitCtrl (
   PageSize         = XhcPeiReadOpReg (XhcDev, XHC_PAGESIZE_OFFSET) & XHC_PAGESIZE_MASK;
   XhcDev->PageSize = 1 << (HighBitSet32 (PageSize) + 12);
 
-  DEBUG ((EFI_D_INFO, "XhciPei: UsbHostControllerBaseAddress: %x\n", XhcDev->UsbHostControllerBaseAddress));
-  DEBUG ((EFI_D_INFO, "XhciPei: CapLength:                    %x\n", XhcDev->CapLength));
-  DEBUG ((EFI_D_INFO, "XhciPei: HcSParams1:                   %x\n", XhcDev->HcSParams1.Dword));
-  DEBUG ((EFI_D_INFO, "XhciPei: HcSParams2:                   %x\n", XhcDev->HcSParams2.Dword));
-  DEBUG ((EFI_D_INFO, "XhciPei: HcCParams:                    %x\n", XhcDev->HcCParams.Dword));
-  DEBUG ((EFI_D_INFO, "XhciPei: DBOff:                        %x\n", XhcDev->DBOff));
-  DEBUG ((EFI_D_INFO, "XhciPei: RTSOff:                       %x\n", XhcDev->RTSOff));
-  DEBUG ((EFI_D_INFO, "XhciPei: PageSize:                     %x\n", XhcDev->PageSize));
+  DEBUG ((DEBUG_VERBOSE, "XhciPei: UsbHostControllerBaseAddress: %x\n", XhcDev->UsbHostControllerBaseAddress));
+  DEBUG ((DEBUG_VERBOSE, "XhciPei: CapLength:                    %x\n", XhcDev->CapLength));
+  DEBUG ((DEBUG_VERBOSE, "XhciPei: HcSParams1:                   %x\n", XhcDev->HcSParams1.Dword));
+  DEBUG ((DEBUG_VERBOSE, "XhciPei: HcSParams2:                   %x\n", XhcDev->HcSParams2.Dword));
+  DEBUG ((DEBUG_VERBOSE, "XhciPei: HcCParams:                    %x\n", XhcDev->HcCParams.Dword));
+  DEBUG ((DEBUG_VERBOSE, "XhciPei: DBOff:                        %x\n", XhcDev->DBOff));
+  DEBUG ((DEBUG_VERBOSE, "XhciPei: RTSOff:                       %x\n", XhcDev->RTSOff));
+  DEBUG ((DEBUG_VERBOSE, "XhciPei: PageSize:                     %x\n", XhcDev->PageSize));
 
   XhcPeiResetHC (XhcDev, XHC_RESET_TIMEOUT);
   ASSERT (XhcPeiIsHalt (XhcDev));

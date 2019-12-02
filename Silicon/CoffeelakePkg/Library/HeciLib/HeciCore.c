@@ -1769,7 +1769,7 @@ HeciGetFwVersionMsg (
   MBP_ITEM_HEADER           *MBPItem;
   MBP_VERSION               *MBPVersion;
 
-  DEBUG ((EFI_D_ERROR, "HeciGetFwVersionMsg Called \n"));
+  DEBUG ((DEBUG_ERROR, "HeciGetFwVersionMsg Called \n"));
   if ( MsgAck == NULL ) {
     return EFI_INVALID_PARAMETER;
   }
@@ -1796,7 +1796,7 @@ HeciGetFwVersionMsg (
       }
     }
   }
-  DEBUG ((EFI_D_ERROR, "HeciGetFwVersionMsg by HECI Interfaces \n"));
+  DEBUG ((DEBUG_ERROR, "HeciGetFwVersionMsg by HECI Interfaces \n"));
   //
   // Allocate MsgGenGetFwVersion data structure
   //
@@ -1807,12 +1807,12 @@ HeciGetFwVersionMsg (
 
   Length = sizeof (GEN_GET_FW_VER);
 
-  DEBUG ((EFI_D_ERROR, "before CheckAndFixHeciForAccess Called \n"));
+  DEBUG ((DEBUG_ERROR, "before CheckAndFixHeciForAccess Called \n"));
   if (CheckAndFixHeciForAccess (HECI1_DEVICE) == 0) {
     return EFI_NOT_FOUND;
   }
 
-  DEBUG ((EFI_D_ERROR, "after CheckAndFixHeciForAccess Called \n"));
+  DEBUG ((DEBUG_ERROR, "after CheckAndFixHeciForAccess Called \n"));
   //
   // Send Get FW SKU Request to SEC
   //

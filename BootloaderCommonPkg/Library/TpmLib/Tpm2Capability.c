@@ -183,7 +183,7 @@ Tpm2GetCapabilitySupportedAndActivePcrs (
   // If error, assume that we have at least SHA-1 (and return the error.)
   //
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "GetSupportedAndActivePcrs - Tpm2GetCapabilityPcrs fail!\n"));
+    DEBUG ((DEBUG_ERROR, "GetSupportedAndActivePcrs - Tpm2GetCapabilityPcrs fail!\n"));
     *TpmHashAlgorithmBitmap = HASH_ALG_SHA1;
     *ActivePcrBanks         = HASH_ALG_SHA1;
   }
@@ -192,48 +192,48 @@ Tpm2GetCapabilitySupportedAndActivePcrs (
   // and currently allocated.
   //
   else {
-    DEBUG ((EFI_D_INFO, "GetSupportedAndActivePcrs - Count = %08x\n", Pcrs.count));
+    DEBUG ((DEBUG_INFO, "GetSupportedAndActivePcrs - Count = %08x\n", Pcrs.count));
     *TpmHashAlgorithmBitmap = 0;
     *ActivePcrBanks         = 0;
     for (Index = 0; Index < Pcrs.count; Index++) {
       switch (Pcrs.pcrSelections[Index].hash) {
       case TPM_ALG_SHA1:
-        DEBUG ((EFI_D_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA1 present.\n"));
+        DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA1 present.\n"));
         *TpmHashAlgorithmBitmap |= HASH_ALG_SHA1;
         if (!IsZeroBuffer (Pcrs.pcrSelections[Index].pcrSelect, Pcrs.pcrSelections[Index].sizeofSelect)) {
-          DEBUG ((EFI_D_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA1 active.\n"));
+          DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA1 active.\n"));
           *ActivePcrBanks |= HASH_ALG_SHA1;
         }
         break;
       case TPM_ALG_SHA256:
-        DEBUG ((EFI_D_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA256 present.\n"));
+        DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA256 present.\n"));
         *TpmHashAlgorithmBitmap |= HASH_ALG_SHA256;
         if (!IsZeroBuffer (Pcrs.pcrSelections[Index].pcrSelect, Pcrs.pcrSelections[Index].sizeofSelect)) {
-          DEBUG ((EFI_D_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA256 active.\n"));
+          DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA256 active.\n"));
           *ActivePcrBanks |= HASH_ALG_SHA256;
         }
         break;
       case TPM_ALG_SHA384:
-        DEBUG ((EFI_D_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA384 present.\n"));
+        DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA384 present.\n"));
         *TpmHashAlgorithmBitmap |= HASH_ALG_SHA384;
         if (!IsZeroBuffer (Pcrs.pcrSelections[Index].pcrSelect, Pcrs.pcrSelections[Index].sizeofSelect)) {
-          DEBUG ((EFI_D_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA384 active.\n"));
+          DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA384 active.\n"));
           *ActivePcrBanks |= HASH_ALG_SHA384;
         }
         break;
       case TPM_ALG_SHA512:
-        DEBUG ((EFI_D_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA512 present.\n"));
+        DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA512 present.\n"));
         *TpmHashAlgorithmBitmap |= HASH_ALG_SHA512;
         if (!IsZeroBuffer (Pcrs.pcrSelections[Index].pcrSelect, Pcrs.pcrSelections[Index].sizeofSelect)) {
-          DEBUG ((EFI_D_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA512 active.\n"));
+          DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA512 active.\n"));
           *ActivePcrBanks |= HASH_ALG_SHA512;
         }
         break;
       case TPM_ALG_SM3_256:
-        DEBUG ((EFI_D_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SM3_256 present.\n"));
+        DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SM3_256 present.\n"));
         *TpmHashAlgorithmBitmap |= HASH_ALG_SM3_256;
         if (!IsZeroBuffer (Pcrs.pcrSelections[Index].pcrSelect, Pcrs.pcrSelections[Index].sizeofSelect)) {
-          DEBUG ((EFI_D_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SM3_256 active.\n"));
+          DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SM3_256 active.\n"));
           *ActivePcrBanks |= HASH_ALG_SM3_256;
         }
         break;

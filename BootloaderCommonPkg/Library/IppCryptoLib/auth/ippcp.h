@@ -5,11 +5,11 @@
 
 **/
 
-/* 
+/*
 //              Intel(R) Integrated Performance Primitives (Intel(R) IPP)
 //              Cryptographic Primitives (ippCP)
-// 
-// 
+//
+//
 */
 
 #if !defined( __IPPCP_H__ ) || defined( _OWN_BLDPCS )

@@ -27,6 +27,6 @@
   BootloaderCommonPkg/BootloaderCommonPkg.dec
 
 [Guids]
-  
+
 [Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdSeedListEnabled

@@ -597,7 +597,7 @@ PciSearchDevice (
 
 #if DEBUG_PCI_ENUM
   DEBUG ((
-           EFI_D_INFO,
+           DEBUG_INFO,
            "PciBus: Discovered %s @ [%02x|%02x|%02x]\n",
            IS_PCI_BRIDGE (Pci) ?     L"PPB" :
            IS_CARDBUS_BRIDGE (Pci) ? L"P2C" :
@@ -1073,20 +1073,20 @@ DumpResourceBar (
   Address = PciIoDevice->Address;
   Indent[ (Level << 1) + 1] = 0;
   if (Address >= 0x80000000) {
-    DEBUG ((EFI_D_INFO, "PCI HOST: Bus(0x%02X-%02X)\n", 0, (UINT8) (Address & 0xFF)));
+    DEBUG ((DEBUG_INFO, "PCI HOST: Bus(0x%02X-%02X)\n", 0, (UINT8) (Address & 0xFF)));
   } else {
-    DEBUG ((EFI_D_INFO, "%aPCI(%02X,%02X,%02X)\n", Indent, (Address >> 20) & 0xFF, (Address >> 15) & 0x1F,
+    DEBUG ((DEBUG_INFO, "%aPCI(%02X,%02X,%02X)\n", Indent, (Address >> 20) & 0xFF, (Address >> 15) & 0x1F,
             (Address >> 12) & 0x07));
   }
   for (Idx = 0; Idx < PCI_MAX_BAR; Idx++) {
     if (PciIoDevice->PciBar[Idx].Length == 0) {
       continue;
     }
-    DEBUG ((EFI_D_INFO, "%a  BAR[%d].TYP = %d\n", Indent,  Idx, PciIoDevice->PciBar[Idx].BarType));
-    DEBUG ((EFI_D_INFO, "%a  BAR[%d].OFF = 0x%02X\n", Indent,  Idx, PciIoDevice->PciBar[Idx].Offset));
-    DEBUG ((EFI_D_INFO, "%a  BAR[%d].BAS = %016X", Indent,  Idx, PciIoDevice->PciBar[Idx].BaseAddress));
-    DEBUG ((EFI_D_INFO, "  BAR[%d].LEN = %016X",   Idx, PciIoDevice->PciBar[Idx].Length));
-    DEBUG ((EFI_D_INFO, "  BAR[%d].ALN = %016X\n", Idx, PciIoDevice->PciBar[Idx].Alignment));
+    DEBUG ((DEBUG_INFO, "%a  BAR[%d].TYP = %d\n", Indent,  Idx, PciIoDevice->PciBar[Idx].BarType));
+    DEBUG ((DEBUG_INFO, "%a  BAR[%d].OFF = 0x%02X\n", Indent,  Idx, PciIoDevice->PciBar[Idx].Offset));
+    DEBUG ((DEBUG_INFO, "%a  BAR[%d].BAS = %016X", Indent,  Idx, PciIoDevice->PciBar[Idx].BaseAddress));
+    DEBUG ((DEBUG_INFO, "  BAR[%d].LEN = %016X",   Idx, PciIoDevice->PciBar[Idx].Length));
+    DEBUG ((DEBUG_INFO, "  BAR[%d].ALN = %016X\n", Idx, PciIoDevice->PciBar[Idx].Alignment));
   }
   Indent[ (Level << 1) + 1] = ' ';
 }
@@ -1162,7 +1162,7 @@ PciEnumeration (
 #if DEBUG_PCI_ENUM
   DumpDeivceTree  (Root);
   DumpResourceBar (Root);
-  DEBUG ((EFI_D_INFO, "MEM Pool Used: 0x%08X\n", (UINT32)GetAllocationPool() - (UINT32)MemPool));
+  DEBUG ((DEBUG_INFO, "MEM Pool Used: 0x%08X\n", (UINT32)GetAllocationPool() - (UINT32)MemPool));
 #endif
 
   // Free memory pool

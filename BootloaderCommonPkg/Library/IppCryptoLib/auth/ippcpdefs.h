@@ -5,18 +5,18 @@
 
 **/
 
-/* 
+/*
 //              Intel(R) Integrated Performance Primitives (Intel(R) IPP)
 //              Cryptographic Primitives (ippCP) definitions.
-// 
-// 
+//
+//
 */
 
-/* 
+/*
 //              Intel(R) Integrated Performance Primitives (Intel(R) IPP)
 //              Basic Types and Macro Definitions
-// 
-// 
+//
+//
 */
 
 
@@ -249,9 +249,9 @@ typedef enum {
    ipp64fc  = 20
 } IppDataType;
 
-typedef enum { 
-    ippFalse = 0, 
-    ippTrue = 1 
+typedef enum {
+    ippFalse = 0,
+    ippTrue = 1
 } IppBool;
 
 #ifdef __cplusplus

@@ -658,21 +658,21 @@ UfsParsingSenseKeys (
       (SenseData->Addnl_Sense_Code == EFI_SCSI_ASC_NO_MEDIA)) {
     Media->MediaPresent = FALSE;
     *NeedRetry = FALSE;
-    DEBUG ((EFI_D_VERBOSE, "UfsBlockIoPei: Is No Media\n"));
+    DEBUG ((DEBUG_VERBOSE, "UfsBlockIoPei: Is No Media\n"));
     return EFI_DEVICE_ERROR;
   }
 
   if ((SenseData->Sense_Key == EFI_SCSI_SK_UNIT_ATTENTION) &&
       (SenseData->Addnl_Sense_Code == EFI_SCSI_ASC_MEDIA_CHANGE)) {
     *NeedRetry = TRUE;
-    DEBUG ((EFI_D_VERBOSE, "UfsBlockIoPei: Is Media Change\n"));
+    DEBUG ((DEBUG_VERBOSE, "UfsBlockIoPei: Is Media Change\n"));
     return EFI_SUCCESS;
   }
 
   if ((SenseData->Sense_Key == EFI_SCSI_SK_UNIT_ATTENTION) &&
       (SenseData->Addnl_Sense_Code == EFI_SCSI_ASC_RESET)) {
     *NeedRetry = TRUE;
-    DEBUG ((EFI_D_VERBOSE, "UfsBlockIoPei: Was Reset Before\n"));
+    DEBUG ((DEBUG_VERBOSE, "UfsBlockIoPei: Was Reset Before\n"));
     return EFI_SUCCESS;
   }
 
@@ -680,13 +680,13 @@ UfsParsingSenseKeys (
       ((SenseData->Sense_Key == EFI_SCSI_SK_NOT_READY) &&
        (SenseData->Addnl_Sense_Code == EFI_SCSI_ASC_MEDIA_UPSIDE_DOWN))) {
     *NeedRetry = FALSE;
-    DEBUG ((EFI_D_VERBOSE, "UfsBlockIoPei: Media Error\n"));
+    DEBUG ((DEBUG_VERBOSE, "UfsBlockIoPei: Media Error\n"));
     return EFI_DEVICE_ERROR;
   }
 
   if (SenseData->Sense_Key == EFI_SCSI_SK_HARDWARE_ERROR) {
     *NeedRetry = FALSE;
-    DEBUG ((EFI_D_VERBOSE, "UfsBlockIoPei: Hardware Error\n"));
+    DEBUG ((DEBUG_VERBOSE, "UfsBlockIoPei: Hardware Error\n"));
     return EFI_DEVICE_ERROR;
   }
 
@@ -694,12 +694,12 @@ UfsParsingSenseKeys (
       (SenseData->Addnl_Sense_Code == EFI_SCSI_ASC_NOT_READY) &&
       (SenseData->Addnl_Sense_Code_Qualifier == EFI_SCSI_ASCQ_IN_PROGRESS)) {
     *NeedRetry = TRUE;
-    DEBUG ((EFI_D_VERBOSE, "UfsBlockIoPei: Was Reset Before\n"));
+    DEBUG ((DEBUG_VERBOSE, "UfsBlockIoPei: Was Reset Before\n"));
     return EFI_SUCCESS;
   }
 
   *NeedRetry = FALSE;
-  DEBUG ((EFI_D_VERBOSE, "UfsBlockIoPei: Sense Key = 0x%x ASC = 0x%x!\n", SenseData->Sense_Key,
+  DEBUG ((DEBUG_VERBOSE, "UfsBlockIoPei: Sense Key = 0x%x ASC = 0x%x!\n", SenseData->Sense_Key,
           SenseData->Addnl_Sense_Code));
   return EFI_DEVICE_ERROR;
 }
@@ -1306,7 +1306,7 @@ InitializeUfs (
 
   gPrivate = (UFS_PEIM_HC_PRIVATE_DATA *)AllocatePool (sizeof (UFS_PEIM_HC_PRIVATE_DATA));
   if (gPrivate == NULL) {
-    DEBUG ((EFI_D_ERROR, "Failed to allocate memory for UFS_PEIM_HC_PRIVATE_DATA! \n"));
+    DEBUG ((DEBUG_ERROR, "Failed to allocate memory for UFS_PEIM_HC_PRIVATE_DATA! \n"));
     return EFI_OUT_OF_RESOURCES;
   }
 
@@ -1316,7 +1316,7 @@ InitializeUfs (
 
   UfsPrivateHcData = (UFS_HC_PEI_PRIVATE_DATA *)AllocatePool (sizeof (UFS_HC_PEI_PRIVATE_DATA));
   if (UfsPrivateHcData == NULL) {
-    DEBUG ((EFI_D_ERROR, "Failed to allocate memory for UFS_HC_PEI_PRIVATE_DATA! \n"));
+    DEBUG ((DEBUG_ERROR, "Failed to allocate memory for UFS_HC_PEI_PRIVATE_DATA! \n"));
     return EFI_OUT_OF_RESOURCES;
   }
 
@@ -1355,7 +1355,7 @@ InitializeUfs (
     //
     Status = UfsControllerInit (Private);
     if (EFI_ERROR (Status)) {
-      DEBUG ((EFI_D_ERROR, "UfsDevicePei: Host Controller Initialization Error, Status = %r\n", Status));
+      DEBUG ((DEBUG_ERROR, "UfsDevicePei: Host Controller Initialization Error, Status = %r\n", Status));
       Controller++;
       continue;
     }
@@ -1367,7 +1367,7 @@ InitializeUfs (
     //
     Status = UfsExecNopCmds (Private);
     if (EFI_ERROR (Status)) {
-      DEBUG ((EFI_D_ERROR, "Ufs Sending NOP IN command Error, Status = %r\n", Status));
+      DEBUG ((DEBUG_ERROR, "Ufs Sending NOP IN command Error, Status = %r\n", Status));
       Controller++;
       continue;
     }
@@ -1377,7 +1377,7 @@ InitializeUfs (
     //
     Status = UfsSetFlag (Private, UfsFlagDevInit);
     if (EFI_ERROR (Status)) {
-      DEBUG ((EFI_D_ERROR, "Ufs Set fDeviceInit Flag Error, Status = %r\n", Status));
+      DEBUG ((DEBUG_ERROR, "Ufs Set fDeviceInit Flag Error, Status = %r\n", Status));
       Controller++;
       continue;
     }
@@ -1387,7 +1387,7 @@ InitializeUfs (
     //
     Status = UfsRwDeviceDesc (Private, TRUE, UfsConfigDesc, 0, 0, &Config, sizeof (UFS_CONFIG_DESC));
     if (EFI_ERROR (Status)) {
-      DEBUG ((EFI_D_ERROR, "Ufs Get Configuration Descriptor Error, Status = %r\n", Status));
+      DEBUG ((DEBUG_ERROR, "Ufs Get Configuration Descriptor Error, Status = %r\n", Status));
       Controller++;
       continue;
     }
@@ -1395,7 +1395,7 @@ InitializeUfs (
     for (Index = 0; Index < UFS_PEIM_MAX_LUNS; Index++) {
       if (Config.UnitDescConfParams[Index].LunEn != 0) {
         Private->Luns.BitMask |= (BIT0 << Index);
-        DEBUG ((EFI_D_INFO, "Ufs %d Lun %d is enabled\n", Controller, Index));
+        DEBUG ((DEBUG_INFO, "Ufs %d Lun %d is enabled\n", Controller, Index));
       }
     }
 

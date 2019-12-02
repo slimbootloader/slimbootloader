@@ -5,12 +5,12 @@
 
 **/
 
-/* 
+/*
 //  Purpose:
 //     Intel(R) Integrated Performance Primitives.
 //     Internal Unsigned internal arithmetic
-// 
-// 
+//
+//
 */
 
 #if !defined(_CP_BNU_ARITH_H)

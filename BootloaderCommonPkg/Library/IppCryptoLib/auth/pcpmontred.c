@@ -5,10 +5,10 @@
 
 **/
 
-/* 
+/*
 //               Intel(R) Integrated Performance Primitives
 //                   Cryptographic Primitives (ippcp)
-// 
+//
 */
 
 #include "owncp.h"

@@ -3,7 +3,7 @@ Lite variable service library
 
 Copyright (c) 2006 - 2016, Intel Corporation. All rights reserved.<BR>
 Portions copyright (c) 2008 - 2009, Apple Inc. All rights reserved.<BR>
-SPDX-License-Identifier: BSD-2-Clause-Patent 
+SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 

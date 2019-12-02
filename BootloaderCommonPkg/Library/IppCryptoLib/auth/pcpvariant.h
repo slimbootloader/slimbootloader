@@ -4,14 +4,14 @@
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
-/* 
+/*
 //               Intel(R) Integrated Performance Primitives
 //                   Cryptographic Primitives (ippcp)
-// 
+//
 //   Purpose:
 //     Define ippCP variant
-// 
-// 
+//
+//
 */
 
 #if !defined(_CP_VARIANT_H)

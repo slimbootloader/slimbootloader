@@ -68,7 +68,7 @@ Tpm2Startup (
     DEBUG ((DEBUG_INFO, "TPM2Startup: TPM_RC_INITIALIZE\n"));
     return EFI_SUCCESS;
   default:
-    DEBUG ((EFI_D_ERROR, "Tpm2Startup: Response Code error! 0x%08x\r\n", ResponseCode));
+    DEBUG ((DEBUG_ERROR, "Tpm2Startup: Response Code error! 0x%08x\r\n", ResponseCode));
     return EFI_DEVICE_ERROR;
   }
 }
