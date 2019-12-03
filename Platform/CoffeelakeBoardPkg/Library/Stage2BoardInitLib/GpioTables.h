@@ -30,6 +30,6 @@ typedef struct {
   UINT32    Rsvd2:3;
 } GPIO_CFG_DATA_DW1;
 
-#define CNL_LP_CHIPSET_ID   0x4
-#define CNL_H_CHIPSET_ID    0x3
-
+#define CNL_LP_CHIPSET_ID         0x4
+#define CNL_H_CHIPSET_ID          0x3
+#define CNL_UNKNOWN_CHIPSET_ID    0xFF

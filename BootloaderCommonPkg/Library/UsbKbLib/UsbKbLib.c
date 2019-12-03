@@ -345,23 +345,23 @@ UsbFindUsbKbDevice (
     UsbKbDevice->InterfaceDescriptor = *InterfaceDesc;
     UsbKbDevice->EndpointDescriptor  = *EndpointDescriptor;
     UsbKbDevice->TimeStampFreqKhz    = GetTimeStampFrequency ();
-  }
 
-  Status = UsbSetProtocolRequest (
-    UsbKbDevice->UsbIo,
-    UsbKbDevice->InterfaceDescriptor.InterfaceNumber,
-    0
-    );
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
+    Status = UsbSetProtocolRequest (
+      UsbKbDevice->UsbIo,
+      UsbKbDevice->InterfaceDescriptor.InterfaceNumber,
+      0
+      );
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
 
-  Status = UsbSetIdleRequest (
-    UsbKbDevice->UsbIo,
-    UsbKbDevice->InterfaceDescriptor.InterfaceNumber,
-    0,
-    10
-    );
+    Status = UsbSetIdleRequest (
+      UsbKbDevice->UsbIo,
+      UsbKbDevice->InterfaceDescriptor.InterfaceNumber,
+      0,
+      10
+      );
+  }
 
   return Status;
 }

@@ -409,8 +409,9 @@ GetRegionOffsetSize (
   RegionSize = 0;
   Offset = 0xFFFFFFFF;
 
+  // Invalid Parameter
   if (FlashMap == NULL) {
-    FlashMap = GetFlashMapPtr ();
+    return 0;
   }
 
   //

@@ -238,36 +238,37 @@ BuildOsConfigDataHob (
     return EFI_OUT_OF_RESOURCES;
   }
 
-  OsConfigData->Revision = 1;
-
   GenCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);
-  if ((GenCfgData != NULL) && (GenCfgData->OsCrashMemorySize != 0)) {
-    switch (GenCfgData->OsCrashMemorySize) {
-    case 0:
-      MemorySize = 0;
-      break;
-    case 1:
-      MemorySize = 0x400000;
-      break;
-    case 2:
-      MemorySize = 0x800000;
-      break;
-    case 3:
-      MemorySize = 0x1000000;
-      break;
-    case 4:
-      MemorySize = 0x2000000;
-      break;
-    case 5:
-      MemorySize = 0x4000000;
-      break;
-    default:
-      MemorySize = 0x400000;
-      break;
-    }
+  if (GenCfgData == NULL) {
+    return EFI_NOT_FOUND;
+  }
+
+  switch (GenCfgData->OsCrashMemorySize) {
+  case 0:
+    MemorySize = 0;
+    break;
+  case 1:
+    MemorySize = 0x400000;
+    break;
+  case 2:
+    MemorySize = 0x800000;
+    break;
+  case 3:
+    MemorySize = 0x1000000;
+    break;
+  case 4:
+    MemorySize = 0x2000000;
+    break;
+  case 5:
+    MemorySize = 0x4000000;
+    break;
+  default:
+    MemorySize = 0x400000;
+    break;
   }
 
   Status = EFI_SUCCESS;
+  OsConfigData->Revision          = 1;
   OsConfigData->OsCrashMemorySize = MemorySize;
   OsConfigData->EnableCrashMode   = GenCfgData->EnableCrashMode;
   if (MemorySize > 0) {
@@ -601,11 +602,7 @@ EnterIaUnTrustMode (
   VOID
   )
 {
-  UINT64      Data;
-
-  Data = AsmReadMsr64 (EFI_MSR_POWER_MISC);
-  Data |= B_EFI_MSR_POWER_MISC_ENABLE_IA_UNTRUSTED_MODE;
-  AsmWriteMsr64 (EFI_MSR_POWER_MISC, Data);
+  AsmMsrOr64 (EFI_MSR_POWER_MISC, B_EFI_MSR_POWER_MISC_ENABLE_IA_UNTRUSTED_MODE);
 }
 
 /**
@@ -1725,7 +1722,7 @@ PlatformUpdateAcpiGnvs (
     PowerResetData = (PCIE_RP_PIN_CTRL *) PcieRpConfigData->PcieRpPinCtrlData0;
     for (Idx1 = 0; Idx1 < PCIE_MAX_ROOT_PORTS; Idx1++) {
       Idx2 = (UINT8)PowerResetData->PcieRpPower0.Wake;
-      if (Idx2 > sizeof(mPcieRpWakeGpeBit)) {
+      if (Idx2 >= sizeof(mPcieRpWakeGpeBit)) {
         Idx2 = 0;
       }
       Pnvs->PcieRpGpeWakeBit[Idx1] = mPcieRpWakeGpeBit[Idx2];

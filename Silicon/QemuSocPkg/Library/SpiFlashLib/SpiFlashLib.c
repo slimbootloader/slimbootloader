@@ -219,13 +219,16 @@ SpiGetRegionAddress (
 {
   SPI_INSTANCE   *SpiInstance;
 
-  SpiInstance = GetSpiInstance();
-
   if ((FlashRegionType == FlashRegionAll) || (FlashRegionType == FlashRegionBios)) {
     if (BaseAddress != NULL) {
       *BaseAddress   = 0;
     }
     if (RegionSize  != NULL) {
+      SpiInstance = GetSpiInstance();
+      if (SpiInstance == NULL) {
+        return EFI_DEVICE_ERROR;
+      }
+
       *RegionSize    = SpiInstance->TotalFlashSize;
     }
     return EFI_SUCCESS;
@@ -259,9 +262,13 @@ SpiFlashRead (
   EFI_STATUS      Status;
   SPI_INSTANCE   *SpiInstance;
 
-  SpiInstance = GetSpiInstance();
   if ((FlashRegionType != FlashRegionAll) && (FlashRegionType != FlashRegionBios)) {
     return EFI_INVALID_PARAMETER;
+  }
+
+  SpiInstance = GetSpiInstance();
+  if (SpiInstance == NULL) {
+    return EFI_DEVICE_ERROR;
   }
 
   Address = Address - SpiInstance->TotalFlashSize - SpiInstance->StoreBase;
@@ -308,9 +315,13 @@ SpiFlashWrite (
   UINT8           Old;
   volatile UINT8 *Ptr;
 
-  SpiInstance = GetSpiInstance();
   if ((FlashRegionType != FlashRegionAll) && (FlashRegionType != FlashRegionBios)) {
     return EFI_INVALID_PARAMETER;
+  }
+
+  SpiInstance = GetSpiInstance();
+  if (SpiInstance == NULL) {
+    return EFI_DEVICE_ERROR;
   }
 
   Address = Address - SpiInstance->TotalFlashSize - SpiInstance->StoreBase;
@@ -368,9 +379,13 @@ SpiFlashErase (
   UINT32          Offset;
   volatile UINT8 *Ptr;
 
-  SpiInstance = GetSpiInstance();
   if ((FlashRegionType != FlashRegionAll) && (FlashRegionType != FlashRegionBios)) {
     return EFI_INVALID_PARAMETER;
+  }
+
+  SpiInstance = GetSpiInstance();
+  if (SpiInstance == NULL) {
+    return EFI_DEVICE_ERROR;
   }
 
   Address = Address - SpiInstance->TotalFlashSize - SpiInstance->StoreBase;

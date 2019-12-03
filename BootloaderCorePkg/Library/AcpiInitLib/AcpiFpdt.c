@@ -13,8 +13,6 @@
 #include <Library/AcpiInitLib.h>
 #include <Library/TimeStampLib.h>
 
-#define DEBUG_PRINT_FPDT_DATA   0
-
 BOOT_PERFORMANCE_TABLE mBootPerformanceTableTemplate = {
   {
     EFI_ACPI_5_0_FPDT_BOOT_PERFORMANCE_TABLE_SIGNATURE,
@@ -106,6 +104,7 @@ GetFpdtS3Table (
   UINT32                                       NumEntries;
   FIRMWARE_PERFORMANCE_TABLE                   *Fpdt;
   UINT8                                        Index;
+  BOOT_PERFORMANCE_TABLE                       *BootTable;
 
   Rsdp = (EFI_ACPI_5_0_ROOT_SYSTEM_DESCRIPTION_POINTER *) AcpiTableBase;
   Rsdt = (EFI_ACPI_DESCRIPTION_HEADER *) (UINTN) Rsdp->RsdtAddress;
@@ -116,15 +115,13 @@ GetFpdtS3Table (
     Hdr = (EFI_ACPI_COMMON_HEADER *) (UINTN) RsdtEntry[Index];
     if (Hdr->Signature == EFI_ACPI_5_0_FIRMWARE_PERFORMANCE_DATA_TABLE_SIGNATURE) {
       Fpdt = (FIRMWARE_PERFORMANCE_TABLE *) Hdr;
-      if (DEBUG_PRINT_FPDT_DATA == 1) {
-        BOOT_PERFORMANCE_TABLE  *BootTable;
-        BootTable = (BOOT_PERFORMANCE_TABLE *)(UINTN)Fpdt->BootPointerRecord.BootPerformanceTablePointer;
-        DEBUG ((DEBUG_INFO, "FPDT: ResetEnd                = %ld\n", BootTable->BasicBoot.ResetEnd));
-        DEBUG ((DEBUG_INFO, "FPDT: OsLoaderLoadImageStart  = %ld\n", BootTable->BasicBoot.OsLoaderLoadImageStart));
-        DEBUG ((DEBUG_INFO, "FPDT: OsLoaderStartImageStart = %ld\n", BootTable->BasicBoot.OsLoaderStartImageStart));
-        DEBUG ((DEBUG_INFO, "FPDT: ExitBootServicesEntry   = %ld\n", BootTable->BasicBoot.ExitBootServicesEntry));
-        DEBUG ((DEBUG_INFO, "FPDT: ExitBootServicesExit    = %ld\n", BootTable->BasicBoot.ExitBootServicesExit));
-      }
+      BootTable = (BOOT_PERFORMANCE_TABLE *)(UINTN)Fpdt->BootPointerRecord.BootPerformanceTablePointer;
+      DEBUG ((DEBUG_VERBOSE, "FPDT: ResetEnd                = %ld\n", BootTable->BasicBoot.ResetEnd));
+      DEBUG ((DEBUG_VERBOSE, "FPDT: OsLoaderLoadImageStart  = %ld\n", BootTable->BasicBoot.OsLoaderLoadImageStart));
+      DEBUG ((DEBUG_VERBOSE, "FPDT: OsLoaderStartImageStart = %ld\n", BootTable->BasicBoot.OsLoaderStartImageStart));
+      DEBUG ((DEBUG_VERBOSE, "FPDT: ExitBootServicesEntry   = %ld\n", BootTable->BasicBoot.ExitBootServicesEntry));
+      DEBUG ((DEBUG_VERBOSE, "FPDT: ExitBootServicesExit    = %ld\n", BootTable->BasicBoot.ExitBootServicesExit));
+
       return (UINTN)Fpdt->S3PointerRecord.S3PerformanceTablePointer;
     }
   }
@@ -174,11 +171,10 @@ UpdateFpdtS3Table (
   S3Resume->ResumeCount++;
   S3Resume->AverageResume = DivU64x32 (TotalResumeTime, S3Resume->ResumeCount);
 
-  if (DEBUG_PRINT_FPDT_DATA == 1) {
-    DEBUG ((DEBUG_INFO, "FPDT: S3Resume->AverageResume = %ld\n", S3Resume->AverageResume));
-    DEBUG ((DEBUG_INFO, "FPDT: S3Resume->ResumeCount   = %d\n",  S3Resume->ResumeCount));
-    DEBUG ((DEBUG_INFO, "FPDT: S3Resume->FullResume    = %ld\n", S3Resume->FullResume));
-  }
+  DEBUG ((DEBUG_VERBOSE, "FPDT: S3Resume->AverageResume = %ld\n", S3Resume->AverageResume));
+  DEBUG ((DEBUG_VERBOSE, "FPDT: S3Resume->ResumeCount   = %d\n",  S3Resume->ResumeCount));
+  DEBUG ((DEBUG_VERBOSE, "FPDT: S3Resume->FullResume    = %ld\n", S3Resume->FullResume));
+
   return  EFI_SUCCESS;
 }
 

@@ -252,7 +252,7 @@ GenerateSeeds (
   // Get EmmcTuningData.SerialNumber from SPI using variable service
   VariableLen = sizeof (EmmcTuningData);
   Status = GetVariable ("MMCDLL", NULL, &VariableLen, (void *)&EmmcTuningData);
-  if ((Status != EFI_SUCCESS) || (AsciiStrCmp(EmmcTuningData.SerialNumber,"badbadbadbadba") == 0)) {
+  if ((Status != EFI_SUCCESS) || (AsciiStrnCmp (EmmcTuningData.SerialNumber, "badbadbadbadba", sizeof (EmmcTuningData.SerialNumber)) == 0)) {
     RpmbSerialNumberValid = FALSE;
   } else {
     AsciiStrCpyS (SerialNum, sizeof(SerialNum), EmmcTuningData.SerialNumber);

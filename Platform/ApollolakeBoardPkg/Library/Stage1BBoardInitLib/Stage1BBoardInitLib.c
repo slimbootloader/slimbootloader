@@ -1735,8 +1735,8 @@ BoardInit (
     PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
     if (PlatformData != NULL) {
       FetchPostRBPData (& (PlatformData->BtGuardInfo));
+      DEBUG ((DEBUG_INFO, "BootPolicy : 0x%08X\n", PlatformData->BtGuardInfo.Bpm));
     }
-    DEBUG ((DEBUG_INFO, "BootPolicy : 0x%08X\n", PlatformData->BtGuardInfo.Bpm));
     GpioPadConfigTable (sizeof (mGpioInitTbl) / sizeof (mGpioInitTbl[0]), (BXT_GPIO_PAD_INIT *)mGpioInitTbl);
     EarlyPcieLinkUp ();
     break;

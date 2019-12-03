@@ -392,8 +392,11 @@ SpiFlashReadSfdp (
   SPI_INSTANCE      *SpiInstance;
 
   SpiInstance       = GetSpiInstance();
-  Status            = EFI_SUCCESS;
+  if (SpiInstance == NULL) {
+    return EFI_DEVICE_ERROR;
+  }
 
+  Status            = EFI_SUCCESS;
   if ((ByteCount > 64) || (ComponentNumber > SpiInstance->NumberOfComponents)) {
     ASSERT (FALSE);
     return EFI_INVALID_PARAMETER;
@@ -441,8 +444,11 @@ SpiFlashReadJedecId (
   SPI_INSTANCE      *SpiInstance;
 
   SpiInstance       = GetSpiInstance();
-  Status            = EFI_SUCCESS;
+  if (SpiInstance == NULL) {
+    return EFI_DEVICE_ERROR;
+  }
 
+  Status            = EFI_SUCCESS;
   if (ComponentNumber > SpiInstance->NumberOfComponents) {
     ASSERT (FALSE);
     return EFI_INVALID_PARAMETER;
@@ -555,6 +561,9 @@ SpiReadPchSoftStrap (
   SPI_INSTANCE      *SpiInstance;
 
   SpiInstance = GetSpiInstance();
+  if (SpiInstance == NULL) {
+    return EFI_DEVICE_ERROR;
+  }
   ASSERT (SpiInstance->StrapBaseAddress != 0);
   ///
   /// SC Strap Flash Address = FPSBA + RamAddr
@@ -610,6 +619,10 @@ SendSpiCmd (
   SPI_INSTANCE    *SpiInstance;
 
   SpiInstance    = GetSpiInstance();
+  if (SpiInstance == NULL) {
+    return EFI_DEVICE_ERROR;
+  }
+
   Status         = EFI_SUCCESS;
   SpiBaseAddress = SpiInstance->PchSpiBase;
   ScSpiBar0      = AcquireSpiBar0 (SpiBaseAddress);
@@ -979,6 +992,10 @@ SpiGetRegionAddress (
   }
 
   SpiInstance = GetSpiInstance();
+  if (SpiInstance == NULL) {
+    return EFI_DEVICE_ERROR;
+  }
+
   if (FlashRegionType == FlashRegionAll) {
     if (BaseAddress != NULL) {
       *BaseAddress  = 0;

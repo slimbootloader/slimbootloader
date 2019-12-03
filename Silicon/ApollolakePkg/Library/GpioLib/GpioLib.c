@@ -173,9 +173,11 @@ GetSideBandMmioAddress(
   IN UINT16 TargetRegister
   )
 {
-  UINT32 Temp = MmioRead32(MM_PCI_ADDRESS(0, PCI_DEVICE_NUMBER_P2SB, PCI_FUNCTION_NUMBER_P2SB, 0) + R_P2SB_BASE) & 0xff000000;
-  Temp |= TargetPortId << 16;
-  Temp |= TargetRegister;
+  UINT32 Temp;
+
+  Temp  = MmioRead32 (MM_PCI_ADDRESS(0, PCI_DEVICE_NUMBER_P2SB, PCI_FUNCTION_NUMBER_P2SB, 0) + R_P2SB_BASE) & 0xff000000;
+  Temp |= (UINT32)(TargetPortId << 16);
+  Temp |= (UINT32)(TargetRegister);
 
   return Temp;
 }
