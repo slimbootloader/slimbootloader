@@ -14,21 +14,23 @@
 ///
 extern EFI_GUID gPayloadKeyHashGuid;
 
-#ifndef    SHA256_DIGEST_SIZE
-#define    SHA256_DIGEST_SIZE   32
-#endif
-#define    MAX_KEY_DIGEST_COUNT 3
+
+#pragma pack(1)
+typedef struct {
+  UINT32           Usage;
+  UINT8            HashAlg;
+  UINT8            Reserved;
+  UINT16           DigestLen;
+  UINT8            Digest[0];
+} HASH_STORE_DATA;
 
 typedef struct {
-  UINT32               ComponentType;
-  UINT8                Digest[SHA256_DIGEST_SIZE];
-} KEY_HASH_ITEM;
-
-typedef struct {
-  UINT8                Revision;
-  UINT8                Reserved0[3];
-  UINT32               DigestCount;
-  KEY_HASH_ITEM        KeyHash[0];
-} PAYLOAD_KEY_HASH;
-
+  UINT32             Signature;
+  UINT8              Revision;
+  UINT8              Reserved[3];
+  UINT32             UsedLength;
+  UINT32             TotalLength;
+  UINT8              Data[0];
+} HASH_STORE_TABLE;
+#pragma pack()
 #endif

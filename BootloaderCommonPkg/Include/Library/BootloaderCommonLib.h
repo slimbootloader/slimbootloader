@@ -99,11 +99,13 @@ GetLoaderStage (
   VOID
   );
 
+
 /**
   Get the component hash data by the component type.
 
   @param[in]  ComponentType   Component type.
   @param[out] HashData        Hash data pointer corresponding Component type.
+  @param[out] HashType        Hash Type for Hash store.
 
   @retval RETURN_SUCCESS             Get hash data succeeded.
   @retval RETURN_UNSUPPORTED         Hash component type is not supported.
@@ -113,7 +115,8 @@ GetLoaderStage (
 RETURN_STATUS
 GetComponentHash (
   IN        UINT8            ComponentType,
-  OUT CONST UINT8            **HashData
+  OUT CONST UINT8            **HashData,
+  OUT       UINT8            *HashType
   );
 
 

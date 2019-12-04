@@ -104,8 +104,8 @@ PreparePayload (
       ComponentEntry = NULL;
       LocateComponentEntry (ContainerSig, ComponentName, NULL, &ComponentEntry);
       if (ComponentEntry != NULL)  {
-        if (ComponentEntry->HashSize == HASH_STORE_DIGEST_LENGTH) {
-          TpmExtendHash (ComponentEntry->HashData, HASH_ALG_SHA256);
+        if (ComponentEntry->HashSize == SHA256_DIGEST_SIZE) {
+          TpmExtendHash (ComponentEntry->HashData, HASH_TYPE_SHA256);
         } else {
           DEBUG ((DEBUG_INFO, "EPAYLOAD hash does not exist !"));
         }

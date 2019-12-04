@@ -42,6 +42,7 @@ DoHashVerify (
   RETURN_STATUS        Status;
   UINT8                Digest[SHA256_DIGEST_SIZE];
   CONST UINT8          *HashData;
+  UINT8                HashType;
 
   if (HashAlg != HASH_TYPE_SHA256) {
     return RETURN_UNSUPPORTED;
@@ -51,7 +52,7 @@ DoHashVerify (
   if (ComponentType >= COMP_TYPE_INVALID) {
     HashData = Hash;
   } else {
-    Status = GetComponentHash (ComponentType, &HashData);
+    Status = GetComponentHash (ComponentType, &HashData, &HashType);
     if (RETURN_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "Warning: Component (%d) verification is bypassed.\n", ComponentType));
       return Status;

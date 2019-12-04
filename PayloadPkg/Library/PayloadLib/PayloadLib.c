@@ -22,6 +22,7 @@
 
   @param[in]  ComponentType   Component type.
   @param[out] HashData        Hash data pointer corresponding Component type.
+  @param[out] HashAlg         Hash Type for Hash store.
 
   @retval RETURN_SUCCESS             Get hash data succeeded.
   @retval RETURN_UNSUPPORTED         Hash component type is not supported.
@@ -32,14 +33,17 @@
 RETURN_STATUS
 GetComponentHash (
   IN        UINT8            ComponentType,
-  OUT CONST UINT8            **HashData
+  OUT CONST UINT8            **HashData,
+  OUT       UINT8            *HashAlg
   )
 {
   VOID                       *GuidHob;
-  PAYLOAD_KEY_HASH           *PayloadKeyHash;
-  UINT32                     Index;
+  HASH_STORE_TABLE           *PayloadKeyHash;
+  HASH_STORE_DATA            *KeyHashData;
+  UINT8                      *KeyHashDataPtr;
+  UINT8                      *PayloadKeyEndPtr;
 
-  if (HashData == NULL) {
+  if ((HashData == NULL) || (HashAlg == NULL)) {
     return RETURN_INVALID_PARAMETER;
   }
 
@@ -50,18 +54,26 @@ GetComponentHash (
   ASSERT (GuidHob != NULL);
 
   *HashData = NULL;
-  PayloadKeyHash = (PAYLOAD_KEY_HASH *)GET_GUID_HOB_DATA (GuidHob);
-  for (Index = 0; Index < PayloadKeyHash->DigestCount; Index++) {
-    if (PayloadKeyHash->KeyHash[Index].ComponentType == ComponentType) {
+  PayloadKeyHash = (HASH_STORE_TABLE *)GET_GUID_HOB_DATA (GuidHob);
+  KeyHashDataPtr =  (UINT8 *) PayloadKeyHash->Data;
+  PayloadKeyEndPtr = (UINT8 *) PayloadKeyHash +  PayloadKeyHash->UsedLength;
+
+ while (KeyHashDataPtr < PayloadKeyEndPtr) {
+    KeyHashData = (HASH_STORE_DATA *) KeyHashDataPtr;
+    if (KeyHashData->Usage & (1 << ComponentType)) {
+     // Component entry found
       break;
     }
+
+    KeyHashDataPtr =    (UINT8 *)KeyHashData->Digest +  KeyHashData->DigestLen;
   }
-  if (PayloadKeyHash->DigestCount == Index) {
+  if (KeyHashDataPtr == PayloadKeyEndPtr) {
     DEBUG ((DEBUG_ERROR, "NOT found hash data for component type %d!\n", ComponentType));
     return EFI_NOT_FOUND;
   }
 
-  *HashData = &PayloadKeyHash->KeyHash[Index].Digest[0];
+  *HashData = KeyHashData->Digest;
+  *HashAlg  = KeyHashData->HashAlg;
 
   return RETURN_SUCCESS;
 }

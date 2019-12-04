@@ -126,6 +126,7 @@ SecStartup2 (
   PEI_PCD_DATABASE         *PcdDatabaseBin;
   UINT32                    PlatformDataLen;
   DEBUG_LOG_BUFFER_HEADER  *LogBufHdr;
+  HASH_STORE_TABLE          *HashStoreTable;
 
   Stage1aAsmHob = (STAGE1A_ASM_HOB *)Params;
 
@@ -150,7 +151,7 @@ SecStartup2 (
                 + LibDataLen + ServiceDataLen + PcdDatabaseLen + PlatformDataLen \
                 + LogBufLen + sizeof (UINTN) * 16;
   if (FeaturePcdGet (PcdVerifiedBootEnabled)) {
-    AllocateLen += sizeof (HASH_STORE_TABLE);
+    AllocateLen += PcdGet32 (PcdHashStoreSize);
   }
 
   FlashMap = NULL;
@@ -189,9 +190,15 @@ SecStartup2 (
 
     // Key Store
     if (FeaturePcdGet (PcdVerifiedBootEnabled)) {
-      CopyMem (BufPtr, (VOID *)PcdGet32 (PcdHashStoreBase), sizeof (HASH_STORE_TABLE));
+      HashStoreTable = (HASH_STORE_TABLE *)PcdGet32 (PcdHashStoreBase);
+      CopyMem (BufPtr, (VOID *)PcdGet32 (PcdHashStoreBase), HashStoreTable->UsedLength);
       LdrGlobal->HashStorePtr = BufPtr;
-      BufPtr += ALIGN_UP (sizeof (HASH_STORE_TABLE), sizeof (UINTN));
+
+      //Update the Total length allocated
+      HashStoreTable = (HASH_STORE_TABLE *) BufPtr;
+      HashStoreTable->TotalLength = PcdGet32 (PcdHashStoreSize);
+
+      BufPtr += ALIGN_UP (HashStoreTable->UsedLength, sizeof (UINTN));
     }
 
     // Library data
