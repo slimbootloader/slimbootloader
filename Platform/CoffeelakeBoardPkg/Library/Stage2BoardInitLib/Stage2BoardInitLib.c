@@ -970,10 +970,13 @@ GpioInit (
   GpioTable  = (UINT8 *)AllocateTemporaryMemory (0);  //allocate new buffer
   GpioCfgDataBuffer = GpioTable;
 
-  if (IsPchH()) {
+  ChipsetId = CNL_UNKNOWN_CHIPSET_ID;
+  if (IsPchH ()) {
     ChipsetId = CNL_H_CHIPSET_ID;
-  } else if (IsPchLp()) {
+  } else if (IsPchLp ()) {
     ChipsetId = CNL_LP_CHIPSET_ID;
+  } else {
+    CpuHalt (NULL);
   }
 
   for (Index = 0; Index  < GpioCfgHdr->GpioItemCount; Index++) {

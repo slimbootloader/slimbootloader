@@ -273,6 +273,9 @@ GetFirmwareUpdateInfo (
 
   // Get current boot partition - Primary or backup blocks
   FlashMap      = GetFlashMapPtr();
+  if (FlashMap == NULL) {
+    return EFI_NOT_FOUND;
+  }
   BootPartition = GetCurrentBootPartition ();
 
   // Maximum update regions

@@ -917,6 +917,10 @@ ProgramResource (
   PCI_IO_DEVICE             *PciIoDevice;
   UINT32                     Idx;
 
+  if ((BarType == PciBarTypeUnknown) || (BarType > PciBarTypePMem64)) {
+    return;
+  }
+
   CurrentLink = Parent->ChildList.ForwardLink;
   while (CurrentLink != NULL && CurrentLink != &Parent->ChildList) {
     PciIoDevice = PCI_IO_DEVICE_FROM_LINK (CurrentLink);
@@ -965,6 +969,10 @@ CalculateResource (
   PCI_BAR_RESOURCE           *PciBarRes;
   UINT64                      Base;
   UINT64                      Alignment;
+
+  if ((BarType == PciBarTypeUnknown) || (BarType > PciBarTypePMem64)) {
+    return;
+  }
 
   ParentRes.PciBar = NULL;
   InitializeListHead (&ParentRes.Link);

@@ -1164,7 +1164,7 @@ HeciGetFwCapsSkuMsg (
   MBP_CMD_RESP_DATA         *MBPHeader;
   MBP_ITEM_HEADER           *MBPItem;
 
-  if ( (MsgGetFwCaps == NULL) && (MsgGetFwCapsAck == NULL) ) {
+  if ((MsgGetFwCaps == NULL) || (MsgGetFwCapsAck == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
   MsgGenGetFwCapsSku = (GEN_GET_FW_CAPSKU *)MsgGetFwCaps;
