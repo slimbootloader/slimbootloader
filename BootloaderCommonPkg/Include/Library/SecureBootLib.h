@@ -8,10 +8,6 @@
 #ifndef __VERIFIED_BOOT_LIB_H__
 #define __VERIFIED_BOOT_LIB_H__
 
-#define  HASH_TYPE_SHA256              0
-#define  HASH_TYPE_SHA384              1
-#define  HASH_TYPE_SHA512              2
-
 #define  SIG_TYPE_RSA2048_SHA256       0
 #define  SIG_TYPE_RSA3072_SHA384       1
 

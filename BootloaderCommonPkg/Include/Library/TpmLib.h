@@ -131,7 +131,7 @@ TpmExtendStageHash (
 RETURN_STATUS
 TpmExtendHash (
   IN       UINT8            *Digest,
-  IN       UINT16            HashAlg
+  IN       UINT8             HashAlg
   );
 
 /**

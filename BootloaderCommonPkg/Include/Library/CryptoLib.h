@@ -17,17 +17,16 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #define SIG_TYPE_RSA2048SHA256   0
 
-
-#define  HASH_TYPE_SHA256              0
-#define  HASH_TYPE_SHA384              1
-#define  HASH_TYPE_SHA512              2
-#define  HASH_TYPE_SM3                 3
+#define  HASH_TYPE_SHA256              1
+#define  HASH_TYPE_SHA384              2
+#define  HASH_TYPE_SHA512              3
+#define  HASH_TYPE_SM3                 4
 
 #define SHA256_DIGEST_SIZE       32
 #define SHA384_DIGEST_SIZE       48
 #define SM3_DIGEST_SIZE          32
 #define SHA512_DIGEST_SIZE       64
-#define HASH_DIGEST_MAX          SHA384_DIGEST_SIZE
+#define HASH_DIGEST_MAX          SHA512_DIGEST_SIZE
 
 #define RSA2048NUMBYTES          256
 #define RSA3072NUMBYTES          384
@@ -45,6 +44,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define IPP_HASHLIB_SHA2_384     0x0004
 #define IPP_HASHLIB_SHA2_512     0x0008
 #define IPP_HASHLIB_SM3_256      0x0010
+
 
 typedef UINT8 HASH_CTX[IPP_HASH_CTX_SIZE];   //IPP Hash context buffer
 

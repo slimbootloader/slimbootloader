@@ -304,13 +304,11 @@ BuildBaseInfoHob (
   EFI_PEI_GRAPHICS_DEVICE_INFO_HOB     *BlGfxDeviceInfo;
   EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *GfxMode;
   EFI_STATUS                           Status;
-  PAYLOAD_KEY_HASH                     *HashHob;
+  UINT8*                               *HashHob;
   UINT32                               HobDataSize;
-  CONST UINT8                          *PubKeyHash;
-  UINT8                                Index;
-  UINT8                                CompType;
   EXT_BOOT_LOADER_VERSION              *VersionHob;
   SEED_LIST_INFO_HOB                   *SeedListInfoHob;
+  HASH_STORE_TABLE                     *HashStorePtr;
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
 
@@ -374,21 +372,13 @@ BuildBaseInfoHob (
 
   // Build key hash Hob for Payload
   if (LdrGlobal->HashStorePtr != NULL) {
-    HobDataSize = sizeof (PAYLOAD_KEY_HASH) + sizeof (KEY_HASH_ITEM) * MAX_KEY_DIGEST_COUNT;
-    HashHob     = BuildGuidHob (&gPayloadKeyHashGuid, HobDataSize);
-    if (HashHob != NULL) {
-      HashHob->DigestCount = MAX_KEY_DIGEST_COUNT;
-      for (Index = 0; Index < MAX_KEY_DIGEST_COUNT; Index++) {
-        CompType = COMP_TYPE_PUBKEY_CFG_DATA + Index;
-        Status   = GetComponentHash (CompType, &PubKeyHash);
-        if (EFI_ERROR (Status)) {
-          HashHob->KeyHash[Index].ComponentType = HASH_INDEX_MAX_NUM;
-        } else {
-          HashHob->KeyHash[Index].ComponentType = CompType;
-          CopyMem (&HashHob->KeyHash[Index].Digest, PubKeyHash, SHA256_DIGEST_SIZE);
-        }
-      }
-    }
+
+    HashStorePtr = (HASH_STORE_TABLE *)LdrGlobal->HashStorePtr;
+    HashHob      = BuildGuidHob (&gPayloadKeyHashGuid, HashStorePtr->UsedLength);
+
+    //Copy the hash store to key hash Hob
+    CopyMem (HashHob, (UINT8 *) HashStorePtr, HashStorePtr->UsedLength);
+
   }
 
   // Build boot loader version Hob for Payload

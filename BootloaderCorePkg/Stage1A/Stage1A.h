@@ -17,6 +17,7 @@
 #include <Library/BootloaderCoreLib.h>
 #include <Library/LoaderLib.h>
 #include <Library/SecureBootLib.h>
+#include <Library/CryptoLib.h>
 #include <Library/DecompressLib.h>
 #include <Library/TimeStampLib.h>
 #include <Library/ConfigDataLib.h>

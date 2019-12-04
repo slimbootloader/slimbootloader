@@ -15,11 +15,13 @@
 #include <Library/PcdLib.h>
 #include <HashStore.h>
 
+
 /**
   Get the component hash data by the component type.
 
   @param[in]  ComponentType   Component type.
   @param[out] HashData        Hash data pointer corresponding Component type.
+  @param[out] HashAlg         Hash Alg for Hash store.
 
   @retval RETURN_SUCCESS             Get hash data succeeded.
   @retval RETURN_UNSUPPORTED         Hash component type is not supported.
@@ -30,14 +32,18 @@
 RETURN_STATUS
 GetComponentHash (
   IN        UINT8            ComponentType,
-  OUT CONST UINT8            **HashData
+  OUT CONST UINT8            **HashData,
+  OUT       UINT8            *HashAlg
   )
 {
   LOADER_GLOBAL_DATA  *LdrGlobal;
   HASH_STORE_TABLE    *HashStorePtr;
   UINT8                HashIndex;
+  HASH_STORE_DATA     *HashEntryData;
+  UINT8               *HashEntryPtr;
+  UINT8               *HashEndPtr;
 
-  if (HashData == NULL) {
+  if ((HashData == NULL) || (HashAlg == NULL)) {
     return RETURN_INVALID_PARAMETER;
   }
 
@@ -49,11 +55,30 @@ GetComponentHash (
 
   LdrGlobal = GetLoaderGlobalDataPointer ();
   HashStorePtr = (HASH_STORE_TABLE *)LdrGlobal->HashStorePtr;
-  if ((HashStorePtr == NULL) || (! (HashStorePtr->Valid & (1 << HashIndex)))) {
+  if (HashStorePtr == NULL) {
     return RETURN_NOT_FOUND;
   }
 
-  *HashData = (UINT8 *)HashStorePtr->Data[HashIndex].Data;
+  HashEntryPtr = HashStorePtr->Data;
+  HashEndPtr   = (UINT8 *) HashStorePtr +  HashStorePtr->UsedLength;
+
+  while (HashEntryPtr < HashEndPtr) {
+
+    HashEntryData = (HASH_STORE_DATA *) HashEntryPtr;
+    if(HashEntryData->Usage & (1 << HashIndex)){
+      //Hash Entry found
+      break;
+    } else {
+      HashEntryPtr +=  sizeof(HASH_STORE_DATA) + HashEntryData->DigestLen;
+    }
+  }
+
+  if (HashEntryPtr == HashEndPtr){
+    return RETURN_NOT_FOUND;
+  } else {
+    *HashData = (UINT8 *)HashEntryData->Digest;
+    *HashAlg  = HashEntryData->HashAlg;
+  }
 
   return RETURN_SUCCESS;
 }

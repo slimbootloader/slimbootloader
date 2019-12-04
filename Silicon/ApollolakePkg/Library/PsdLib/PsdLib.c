@@ -198,6 +198,7 @@ UpdateAcpiPsdTable (
   CONST UINT8                     *PubKeyHash;
   EFI_STATUS                      Status;
   UINT8                           HashIndex;
+  UINT8                           HashType;
 
   DEBUG((DEBUG_INFO, "UpdateAcpiPsdTable start\n"));
   if ( Table == NULL) {
@@ -317,7 +318,7 @@ UpdateAcpiPsdTable (
     //Stage-2 HASH,
     if ( (PlatformData->BtGuardInfo.Bpm.Vb) || (mPsdt->MeasuredBoot) ) {
       // Get public key hash of Stage-2
-      Status = GetComponentHash (COMP_TYPE_STAGE_2, &PubKeyHash);
+      Status = GetComponentHash (COMP_TYPE_STAGE_2, &PubKeyHash, &HashType);
       if (RETURN_ERROR (Status)) {
         DEBUG ((DEBUG_ERROR, "Warning: Component (%d) verification is bypassed.\n", COMP_TYPE_STAGE_2));
       } else {

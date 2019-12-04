@@ -79,6 +79,7 @@
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel
   gPlatformModuleTokenSpaceGuid.PcdFileDataBase
   gPlatformModuleTokenSpaceGuid.PcdVerifiedBootHashMask
+  gPlatformModuleTokenSpaceGuid.PcdHashStoreSize
 
 [Depex]
   TRUE

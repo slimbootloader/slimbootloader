@@ -611,18 +611,19 @@ TpmExtendStageHash (
 {
   RETURN_STATUS        Status;
   CONST UINT8         *Digest;
+  UINT8                HashAlg;
 
   // Get public key hash
-  Status = GetComponentHash (ComponentType, &Digest);
+  Status = GetComponentHash (ComponentType, &Digest, &HashAlg);
   if(Status == EFI_SUCCESS) {
     Status = TpmExtendPcrAndLogEvent ( 0, TPM_ALG_SHA256, Digest,
       EV_POST_CODE, POST_CODE_STR_LEN, (UINT8 *)EV_POSTCODE_INFO_POST_CODE);
   } else {
     DEBUG ((DEBUG_ERROR, "Error: Component (%d) is not measured in TPM.\n", ComponentType));
   }
+
   return Status;
 }
-
 
 
 /**
@@ -639,7 +640,7 @@ TpmExtendStageHash (
 RETURN_STATUS
 TpmExtendHash (
   IN       UINT8            *Digest,
-  IN       UINT16            HashAlg
+  IN       UINT8             HashAlg
   )
 {
   RETURN_STATUS        Status;

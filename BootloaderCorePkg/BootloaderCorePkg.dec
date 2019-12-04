@@ -111,6 +111,9 @@
 
   gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesSize       |     0x1000 | UINT16 | 0x200000E3
 
+  # Size of the Hash store allocated in bootloader
+  gPlatformModuleTokenSpaceGuid.PcdHashStoreSize       | 0x00000200 | UINT32 | 0x200000F1
+
 [PcdsFixedAtBuild, PcdsPatchableInModule]
   #
   # For module patchable PCDs, if it is required to do static patching during the build
