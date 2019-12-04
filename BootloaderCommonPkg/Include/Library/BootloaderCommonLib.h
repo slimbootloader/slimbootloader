@@ -116,23 +116,6 @@ GetComponentHash (
   OUT CONST UINT8            **HashData
   );
 
-/**
-  Set the component hash data by the component type.
-
-  @param[in]  ComponentType   Component type.
-  @param[in]  HashData        Hash data pointer corresponding component type.
-
-  @retval RETURN_SUCCESS             Set hash data succeeded.
-  @retval RETURN_UNSUPPORTED         Hash component type is not supported.
-  @retval RETURN_NOT_FOUND           Hash data is not found.
-  @retval RETURN_INVALID_PARAMETER   HashData is NULL.
-
-**/
-RETURN_STATUS
-SetComponentHash (
-  IN       UINT8             ComponentType,
-  IN CONST UINT8            *HashData
-  );
 
 /**
   Returns the pointer to the Flash Map.

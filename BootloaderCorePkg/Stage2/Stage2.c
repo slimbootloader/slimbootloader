@@ -105,14 +105,16 @@ PreparePayload (
       LocateComponentEntry (ContainerSig, ComponentName, NULL, &ComponentEntry);
       if (ComponentEntry != NULL)  {
         if (ComponentEntry->HashSize == HASH_STORE_DIGEST_LENGTH) {
-          SetComponentHash (COMP_TYPE_PAYLOAD_DYNAMIC, ComponentEntry->HashData);
+          TpmExtendHash (ComponentEntry->HashData, HASH_ALG_SHA256);
         } else {
           DEBUG ((DEBUG_INFO, "EPAYLOAD hash does not exist !"));
         }
+        AddMeasurePoint (0x3150);
       }
+    } else {
+      TpmExtendStageHash (HashIdx);
+      AddMeasurePoint (0x3150);
     }
-    TpmExtendStageHash (HashIdx);
-    AddMeasurePoint (0x3150);
   }
 
   Stage2Hob->PayloadActualLength = DstLen;

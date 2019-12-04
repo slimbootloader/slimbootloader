@@ -58,42 +58,6 @@ GetComponentHash (
   return RETURN_SUCCESS;
 }
 
-/**
-  Set the component hash data by the component type.
-
-  @param[in]  ComponentType   Component type.
-  @param[in] HashData        Hash data pointer corresponding Component type.
-
-  @retval RETURN_SUCCESS             Set hash data succeeded.
-  @retval RETURN_UNSUPPORTED         Hash component type is not supported.
-  @retval RETURN_NOT_FOUND           Hash data is not found.
-  @retval RETURN_INVALID_PARAMETER   HashData is NULL.
-
-**/
-RETURN_STATUS
-SetComponentHash (
-  IN       UINT8             ComponentType,
-  IN CONST UINT8            *HashData
-  )
-{
-  LOADER_GLOBAL_DATA  *LdrGlobal;
-  HASH_STORE_TABLE    *HashStorePtr;
-  UINT8               HashIndex;
-
-  if (HashData == NULL) {
-    return RETURN_INVALID_PARAMETER;
-  }
-
-  HashIndex = ComponentType;
-  LdrGlobal = GetLoaderGlobalDataPointer ();
-  HashStorePtr = (HASH_STORE_TABLE *)LdrGlobal->HashStorePtr;
-  if ((HashStorePtr == NULL) || (HashIndex != COMP_TYPE_PAYLOAD_DYNAMIC)) {
-    return RETURN_UNSUPPORTED;
-  }
-
-  CopyMem ((UINT8 *)HashStorePtr->Data[HashIndex].Data, HashData, HASH_STORE_DIGEST_LENGTH);
-  return RETURN_SUCCESS;
-}
 
 /**
   Returns the pointer to the Flash Map.

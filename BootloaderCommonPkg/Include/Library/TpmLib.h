@@ -116,6 +116,24 @@ TpmExtendStageHash (
   IN       UINT8            ComponentType
   );
 
+
+/**
+  Extend  hash provided in PCR 0 with EV_POST_CODE event type.
+
+  @param[in] Digest                    Hash Digest to extend
+  @param[in] HashAlg                   Tcg Alg to extend
+
+  @retval RETURN_SUCCESS               Operation completed successfully.
+  @retval RETURN_INVALID_PARAMETER     Imvalid Digest  buf
+
+  @retval Others                       Unable to extend stage hash.
+**/
+RETURN_STATUS
+TpmExtendHash (
+  IN       UINT8            *Digest,
+  IN       UINT16            HashAlg
+  );
+
 /**
   Log a PCR event in TCG 2.0 format.
 
