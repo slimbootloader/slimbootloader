@@ -565,13 +565,13 @@ void UpdateSHA512Normal(void* uniHash, const Ipp8u* mblk, int mlen, const void* 
 void UpdateSHA512(void* uniHash, const Ipp8u* mblk, int mlen, const void* uniPraram)
 {
 #if defined(_SLIMBOOT_OPT)
-
-   if (FixedPcdGet32 (PcdCryptoShaOptMask) & IPP_CRYPTO_SHA384_G9) {
+   #if (FixedPcdGet32 (PcdCryptoShaOptMask) & IPP_CRYPTO_SHA384_G9)
       UpdateSHA512G9 (uniHash, mblk, mlen, uniPraram);
-   } else {
+   #elif (FixedPcdGet32 (PcdCryptoShaOptMask) & IPP_CRYPTO_SHA384_W7)
       UpdateSHA512W7 (uniHash, mblk, mlen, uniPraram);
-   }
-
+   #else
+      UpdateSHA512Compact (uniHash, mblk, mlen, uniPraram);
+   #endif
 #else
 
 #if  defined(_ALG_SHA512_COMPACT_)

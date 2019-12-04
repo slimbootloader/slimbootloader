@@ -16,7 +16,8 @@
 #if defined(_SLIMBOOT_OPT)
   #define _SHA_NI_ENABLING_   _FEATURE_OFF_
   #define _DISABLE_ALG_SHA1_
-  //#define _ALG_SHA256_COMPACT_
+  #define _ALG_SHA512_COMPACT_
+  #define _ALG_SHA256_COMPACT_
   #define _ALG_SM3_COMPACT_
 #else
   #define _SHA_NI_ENABLING_ _FEATURE_ON_
