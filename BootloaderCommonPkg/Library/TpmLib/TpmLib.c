@@ -622,3 +622,34 @@ TpmExtendStageHash (
   }
   return Status;
 }
+
+
+
+/**
+  Extend  hash provided in PCR 0 with EV_POST_CODE event type.
+
+  @param[in] Digest                    Hash Digest to extend
+  @param[in] HashAlg                   Tcg Alg to extend
+
+  @retval RETURN_SUCCESS               Operation completed successfully.
+  @retval RETURN_INVALID_PARAMETER     Imvalid Digest  buf
+
+  @retval Others                       Unable to extend stage hash.
+**/
+RETURN_STATUS
+TpmExtendHash (
+  IN       UINT8            *Digest,
+  IN       UINT16            HashAlg
+  )
+{
+  RETURN_STATUS        Status;
+
+  if (Digest == NULL) {
+    return RETURN_INVALID_PARAMETER;
+  }
+
+  Status = TpmExtendPcrAndLogEvent ( 0, TPM_ALG_SHA256, Digest,
+      EV_POST_CODE, POST_CODE_STR_LEN, (UINT8 *)EV_POSTCODE_INFO_POST_CODE);
+
+  return Status;
+}

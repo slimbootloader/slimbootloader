@@ -67,24 +67,6 @@ GetComponentHash (
 }
 
 /**
-  Set the component hash data by the component type.
-
-  @param[in]  ComponentType   Component type.
-  @param[in] HashData        Hash data pointer corresponding component type.
-
-  @retval RETURN_UNSUPPORTED  Hash component type is not supported for PayloadLib.
-
-**/
-RETURN_STATUS
-SetComponentHash (
-  IN       UINT8             ComponentType,
-  IN CONST UINT8            *HashData
-  )
-{
-  return RETURN_UNSUPPORTED;
-}
-
-/**
   Returns the pointer to the HOB list.
 
   If the pointer to the HOB list is NULL, then ASSERT().
