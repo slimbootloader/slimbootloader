@@ -243,6 +243,9 @@ SecStartup2 (
   BoardInit (PostTempRamInit);
   AddMeasurePoint (0x1040);
 
+  // Enable more CPU featurs
+  AsmEnableAvx ();
+
   if (DebugCodeEnabled()) {
     DEBUG ((DEBUG_INFO, "\n============= %a STAGE1A =============\n",mBootloaderName));
   } else {
@@ -314,9 +317,6 @@ SecStartup (
 
   TimeStamp     = ReadTimeStamp ();
   Stage1aAsmHob = (STAGE1A_ASM_HOB *)Params;
-
-  // Enable more CPU featurs
-  AsmEnableAvx ();
 
   // Init global data
   LdrGlobal = &LdrGlobalData;

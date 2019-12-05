@@ -57,6 +57,7 @@ FlushExit:
 ;------------------------------------------------------------------------------
 global ASM_PFX(AsmEnableAvx)
 ASM_PFX(AsmEnableAvx):
+    push    ebx
     ;
     ; Check if AVX is supported
     ;
@@ -79,4 +80,5 @@ ASM_PFX(AsmEnableAvx):
     xsetbv
 
 NoAvxSupport:
+    pop     ebx
     ret
