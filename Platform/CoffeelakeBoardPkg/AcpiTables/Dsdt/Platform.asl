@@ -1339,3 +1339,28 @@ Scope(\_SB)
 // -------------------------------------------------------
 //        CoExistence device ACPI implementation - End
 // -------------------------------------------------------
+
+OperationRegion (OCWD, SystemIO, (ACPI_BASE_ADDRESS + R_ACPI_IO_OC_WDT_CTL), 0x4)
+Field(OCWD, DWordAcc, NoLock, Preserve)
+{
+    ,      8,
+    ,      8,
+    FWSC,  8,    // Over-Clocking WDT Scratchpad (OC_WDT_SCRATCH)
+}
+
+//
+// Platform specific FWU trigger method
+//
+Method(FWUC, 2)
+{
+  If(LEqual(Arg0, Zero)) {
+    // Read
+    And(FWSC, 0x00FF, Local0)
+  } Else {
+    // Write
+    And(ToInteger(Arg1), 0xFF, Local0)
+    And(FWSC, 0xFF00, Local1)
+    Or(Local0, Local1, FWSC)
+  }
+  Return (Local0)
+}

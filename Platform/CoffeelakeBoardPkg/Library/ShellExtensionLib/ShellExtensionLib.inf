@@ -30,6 +30,7 @@
   PayloadPkg/PayloadPkg.dec
   Platform/CommonBoardPkg/CommonBoardPkg.dec
   Platform/CoffeelakeBoardPkg/CoffeelakeBoardPkg.dec
+  Silicon/CoffeelakePkg/CoffeelakePkg.dec
 
 [LibraryClasses]
 

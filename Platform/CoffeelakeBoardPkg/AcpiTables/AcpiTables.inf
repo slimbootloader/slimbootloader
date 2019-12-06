@@ -47,6 +47,7 @@
   CpuSsdt/ApTst.asl
   CpuSsdt/CpuSsdt.asl
   Psd/Psd.aslc
+  Platform/CommonBoardPkg/AcpiTables/Dsdt/AslInc.h
 
 [Binaries.IA32]
   ASL|Dsdt/NHLT.bin

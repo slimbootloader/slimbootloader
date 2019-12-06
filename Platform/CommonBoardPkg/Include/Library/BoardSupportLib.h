@@ -9,6 +9,7 @@
 #define _BOARD_SUPPORT_LIB_H_
 
 #include <Guid/OsBootOptionGuid.h>
+#include <Library/FirmwareUpdateLib.h>
 
 /**
   Fill the boot option list data with CFGDATA info
@@ -53,6 +54,22 @@ SpiLoadExternalConfigData (
   IN UINT32  Dst,
   IN UINT32  Src,
   IN UINT32  Len
+  );
+
+/**
+  Check state machine.
+
+  This function will check state machine to see if capsule is pending
+
+  @param[in]    pFwUpdStatus     Pointer to FW_UPDATE_STATUS structure.
+
+  @retval  EFI_SUCCESS           State machine initialized in reserved region.
+  @retval  EFI_UNSUPPORTED       Failure occured during state machine init.
+  @retval  others                Error occured during state machine init.
+**/
+EFI_STATUS
+CheckStateMachine (
+  IN FW_UPDATE_STATUS    *pFwUpdStatus
   );
 
 #endif

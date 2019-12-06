@@ -31,6 +31,7 @@
 #include <Library/ConfigDataLib.h>
 #include <Service/PlatformService.h>
 #include <Service/HeciService.h>
+#include <Library/ResetSystemLib.h>
 
 #define FLASH_MAP_IN_FV_OFFSET   0xA4
 
@@ -387,8 +388,18 @@ SetBootPartition (
   )
 {
   EFI_STATUS    Status;
+  UINT8         StateMachine;
 
   if (Partition == PrimaryPartition) {
+    //
+    // HECI command to clear MBP data is ignored when booting from BP2
+    // reset here so that we can boot from BP1
+    //
+    GetStateMachineFlag(&StateMachine);
+    if (StateMachine == FW_UPDATE_SM_PART_AB) {
+      ResetSystem (EfiResetWarm);
+      CpuDeadLoop ();
+    }
     //
     // For APL platform, CSE always boot from Primary partition unless it is corrupt
     // hence, we do not need to do anything here
@@ -483,4 +494,19 @@ EndFirmwareUpdate (
   return EFI_SUCCESS;
 }
 
+/**
+  Platform hook point to clear firmware update trigger.
 
+  This function is responsible for clearing firmware update trigger.
+
+  @retval  EFI_SUCCESS        Update successfully.
+
+**/
+EFI_STATUS
+EFIAPI
+ClearFwUpdateTrigger (
+  VOID
+  )
+{
+  return EFI_SUCCESS;
+}
