@@ -13,7 +13,7 @@
 #include <Library/HobLib.h>
 #include <Library/PayloadLib.h>
 #include <Library/DebugLogBufferLib.h>
-#include <Guid/PayloadKeyHashGuid.h>
+#include <Guid/KeyHashGuid.h>
 #include <Guid/FlashMapInfoGuid.h>
 #include <Guid/LoaderPlatformInfoGuid.h>
 
