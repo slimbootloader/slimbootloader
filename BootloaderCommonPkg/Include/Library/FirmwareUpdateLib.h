@@ -24,6 +24,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define FW_UPDATE_SM_PART_A           0x7E
 #define FW_UPDATE_SM_PART_B           0x7D
 #define FW_UPDATE_SM_PART_AB          0x7C
+#define FW_UPDATE_SM_DONE             0x77 // Lower 3 bits are ignored
 
 #define FW_UPDATE_IMAGE_UPDATE_NONE         0xFF
 #define FW_UPDATE_IMAGE_UPDATE_PENDING      0xFE
@@ -543,5 +544,19 @@ UpdateCsme (
   IN  UINT32                        CapImageSize,
   IN  VOID                          *CsmeUpdInputData,
   IN  EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
+  );
+
+/**
+  Platform hook point to clear firmware update trigger.
+
+  This function is responsible for clearing firmware update trigger.
+
+  @retval  EFI_SUCCESS        Update successfully.
+
+**/
+EFI_STATUS
+EFIAPI
+ClearFwUpdateTrigger (
+  VOID
   );
 #endif

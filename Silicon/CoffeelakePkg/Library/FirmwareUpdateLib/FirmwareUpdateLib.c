@@ -408,6 +408,25 @@ PrepareRegionsUpdate (
 }
 
 /**
+  Platform hook point to clear firmware update trigger.
+
+  This function is responsible for clearing firmware update trigger.
+
+  @retval  EFI_SUCCESS        Update successfully.
+
+**/
+EFI_STATUS
+EFIAPI
+ClearFwUpdateTrigger (
+  VOID
+  )
+{
+  IoAnd32(ACPI_BASE_ADDRESS + R_ACPI_IO_OC_WDT_CTL, 0xFF00FFFF);
+
+  return EFI_SUCCESS;
+}
+
+/**
   Platform hook point after firmware update is done.
 
   This function will do some platform specific things after all new firmware
@@ -424,24 +443,5 @@ EndFirmwareUpdate (
   VOID
   )
 {
-  UINT16   FirmwareUpdateStatus;
-
-  DEBUG ((DEBUG_INFO, "Firmware update Done! clear CSE flag to normal boot mode.\n"));
-
-  //
-  // This is platform specific method. Here just use COMS address 0x40.
-  //
-  IoWrite8 (CMOS_ADDREG, FWU_BOOT_MODE_OFFSET);
-  FirmwareUpdateStatus = IoRead8 (CMOS_DATAREG);
-
-  if (FirmwareUpdateStatus != 0) {
-    // clear it
-    IoWrite8 (CMOS_ADDREG, FWU_BOOT_MODE_OFFSET);
-    IoWrite8 (CMOS_DATAREG, 0x0);
-    FirmwareUpdateStatus = IoRead8 (CMOS_DATAREG);
-    DEBUG ((DEBUG_INFO, "Fw Update trigger status=0x%x, clear it!\n", FirmwareUpdateStatus));
-  }
   return EFI_SUCCESS;
 }
-
-

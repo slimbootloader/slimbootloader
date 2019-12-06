@@ -258,15 +258,17 @@ SpiControllerInitialize (
 BOOLEAN
 IsFirmwareUpdate ()
 {
-  UINT16  FirmwareUpdateStatus;
+  //
+  // Check if state machine is set to capsule processing mode.
+  //
+  if (CheckStateMachine (NULL) == EFI_SUCCESS) {
+    return TRUE;
+  }
 
   //
-  // This is platform specific method. Here just use COMS.
+  // Check if platform firmware update trigger is set.
   //
-  IoWrite8(0x70, 0x40);
-  FirmwareUpdateStatus = IoRead8(0x71);
-
-  if (FirmwareUpdateStatus == 0x5A) {
+  if (IoRead32 (ACPI_BASE_ADDRESS + R_ACPI_IO_OC_WDT_CTL) & BIT16) {
     return TRUE;
   }
 

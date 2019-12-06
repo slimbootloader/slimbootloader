@@ -11,6 +11,7 @@
 #include <Library/PcdLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/ConfigDataLib.h>
+#include <Library/FirmwareUpdateLib.h>
 #include <Library/BoardSupportLib.h>
 #include <ConfigDataCommonDefs.h>
 #include <Library/BootloaderCoreLib.h>
@@ -208,4 +209,48 @@ SpiLoadExternalConfigData (
   }
 
   return Status;
+}
+
+/**
+  Check state machine.
+
+  This function will check state machine to see if capsule is pending
+
+  @param[in]    pFwUpdStatus     Pointer to FW_UPDATE_STATUS structure.
+
+  @retval  EFI_SUCCESS           State machine initialized in reserved region.
+  @retval  EFI_UNSUPPORTED       Failure occured during state machine init.
+  @retval  others                Error occured during state machine init.
+**/
+EFI_STATUS
+CheckStateMachine (
+  IN FW_UPDATE_STATUS    *pFwUpdStatus
+  )
+{
+  EFI_STATUS          Status;
+  UINT32              RsvdBase;
+  UINT32              RsvdSize;
+
+  if (pFwUpdStatus == NULL) {
+    Status = GetComponentInfoByPartition (FLASH_MAP_SIG_BLRESERVED, FALSE, &RsvdBase, &RsvdSize);
+    if (EFI_ERROR (Status)) {
+      DEBUG((DEBUG_ERROR, "Could not get component information for bootloader reserved region\n"));
+      return Status;
+    }
+    pFwUpdStatus = (FW_UPDATE_STATUS *)RsvdBase;
+  }
+
+  //
+  // If state machine is already initialized, or if it is set to done, this indicates that this boot is part of
+  // firmare update process, continue doing firmware update
+  // If Bit 3 of State Machine is 0, SM is set to Done. Rest of the bits are ignored while checking for Done state.
+  //
+  if (pFwUpdStatus->Signature == FW_UPDATE_STATUS_SIGNATURE) {
+    if ((pFwUpdStatus->StateMachine != FW_UPDATE_SM_INIT) && (pFwUpdStatus->StateMachine & BIT3)) {
+      DEBUG((DEBUG_ERROR, "State Machine set to processing mode, triggering firmware update\n"));
+      return EFI_SUCCESS;
+    }
+  }
+
+  return EFI_UNSUPPORTED;
 }

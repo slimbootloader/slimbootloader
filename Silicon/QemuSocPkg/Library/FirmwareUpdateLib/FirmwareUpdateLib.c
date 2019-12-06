@@ -496,4 +496,19 @@ EndFirmwareUpdate (
   return EFI_SUCCESS;
 }
 
+/**
+  Platform hook point to clear firmware update trigger.
 
+  This function is responsible for clearing firmware update trigger.
+
+  @retval  EFI_SUCCESS        Update successfully.
+
+**/
+EFI_STATUS
+EFIAPI
+ClearFwUpdateTrigger (
+  VOID
+  )
+{
+  return EFI_SUCCESS;
+}

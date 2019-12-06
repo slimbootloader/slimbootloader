@@ -61,11 +61,17 @@ PreparePayload (
   UINT8                          HashIdx;
   COMPONENT_ENTRY               *ComponentEntry;
 
+  BootMode = GetBootMode();
+  //
+  // Force PayloadId to 0 during firmware update mode.
+  //
+  if (BootMode == BOOT_ON_FLASH_UPDATE) {
+    SetPayloadId(0);
+  }
   // Load payload to PcdPayloadLoadBase.
   PayloadId   = GetPayloadId ();
   DEBUG ((DEBUG_INFO, "Loading Payload ID 0x%08X\n", PayloadId));
   IsNormalPld = (PayloadId == 0) ? TRUE : FALSE;
-  BootMode = GetBootMode();
   if (BootMode == BOOT_ON_FLASH_UPDATE) {
     ContainerSig  = COMP_TYPE_PAYLOAD_FWU;
     ComponentName = FLASH_MAP_SIG_FWUPDATE;
