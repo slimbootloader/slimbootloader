@@ -8,18 +8,11 @@
 #ifndef __VERIFIED_BOOT_LIB_H__
 #define __VERIFIED_BOOT_LIB_H__
 
+#include <Guid/KeyHashGuid.h>
+
 #define  SIG_TYPE_RSA2048_SHA256       0
 #define  SIG_TYPE_RSA3072_SHA384       1
 
-#define  COMP_TYPE_STAGE_1B            0
-#define  COMP_TYPE_STAGE_2             1
-#define  COMP_TYPE_PAYLOAD             2
-#define  COMP_TYPE_FIRMWARE_UPDATE     3
-#define  COMP_TYPE_PUBKEY_CFG_DATA     4
-#define  COMP_TYPE_PUBKEY_FWU          5
-#define  COMP_TYPE_PUBKEY_OS           6
-#define  COMP_TYPE_PAYLOAD_DYNAMIC     7
-#define  COMP_TYPE_INVALID             8
 
 /**
   Verify data block hash with the built-in one.

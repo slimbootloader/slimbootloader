@@ -8,7 +8,7 @@
 #ifndef __HASH_STORE_H__
 #define __HASH_STORE_H__
 
-#include <Guid/PayloadKeyHashGuid.h>
+#include <Guid/KeyHashGuid.h>
 
 #define  HASH_STORE_SIGNATURE                SIGNATURE_32('_', 'H', 'S', '_')
 

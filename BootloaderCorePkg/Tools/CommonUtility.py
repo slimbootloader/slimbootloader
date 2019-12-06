@@ -43,14 +43,6 @@ HASH_TYPE_VALUE = {
             "SM3_256"     : 4,
     }
 
-# Sign values defined should match with cryptolib.h
-SIGN_TYPE_VALUE = {
-# {   Sign_string:        Sign_Value}
-            "RSA2048"     : 1,
-            "RSA3072 "    : 2,
-            "SM2     "    : 3,
-    }
-
 AUTH_TYPE_HASH_VALUE = {
 # {   Auth_type:        Hash_type}
             "SHA2_256"       : 1,
