@@ -10,8 +10,6 @@
 
 #include <Guid/KeyHashGuid.h>
 
-#define  HASH_STORE_SIGNATURE                SIGNATURE_32('_', 'H', 'S', '_')
-
 #define  HASH_INDEX_MAX_NUM                  8
 
 
