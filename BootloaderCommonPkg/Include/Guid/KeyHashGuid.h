@@ -14,6 +14,8 @@
 ///
 extern EFI_GUID gPayloadKeyHashGuid;
 
+#define  HASH_STORE_SIGNATURE          SIGNATURE_32('_', 'H', 'S', '_')
+
 #define  COMP_TYPE_STAGE_1B            0
 #define  COMP_TYPE_STAGE_2             1
 #define  COMP_TYPE_PAYLOAD             2
@@ -64,7 +66,8 @@ typedef struct {
 typedef struct {
   UINT32             Signature;
   UINT8              Revision;
-  UINT8              Reserved[3];
+  UINT8              HeaderLength;
+  UINT8              Reserved[2];
   //
   // Total valid  hash store data including the header
   //

@@ -132,7 +132,8 @@ class HashStoreTable(Structure):
     _fields_ = [
         ('Signature',         ARRAY(c_char, 4)),
         ('Revision',          c_uint8),
-        ('Reserved',          ARRAY(c_uint8, 3)),
+        ('HeaderLength',      c_uint8),
+        ('Reserved',          ARRAY(c_uint8, 2)),
         ('UsedLength',        c_uint32),
         ('TotalLength',       c_uint32),
         ('Data',              ARRAY(c_uint8, 0)),
@@ -141,6 +142,7 @@ class HashStoreTable(Structure):
     def __init__(self):
         self.Signature = HashStoreTable.HASH_STORE_SIGNATURE
         self.Revision  = 1
+        self.HeaderLength  = sizeof(HashStoreTable)
 
 
 class ImageVer(Structure):
