@@ -198,7 +198,7 @@ SecStartup2 (
       HashStoreTable = (HASH_STORE_TABLE *) BufPtr;
       HashStoreTable->TotalLength = PcdGet32 (PcdHashStoreSize);
 
-      BufPtr += ALIGN_UP (HashStoreTable->UsedLength, sizeof (UINTN));
+      BufPtr += ALIGN_UP (PcdGet32 (PcdHashStoreSize), sizeof (UINTN));
     }
 
     // Library data
