@@ -17,6 +17,7 @@ import shutil
 import subprocess
 import struct
 import hashlib
+import string
 from   functools import reduce
 from   ctypes import *
 
@@ -60,6 +61,18 @@ HASH_DIGEST_SIZE = {
             "SHA2_512"    : 64,
             "SM3_256"     : 32,
     }
+
+def print_bytes (data, indent=0, offset=0, show_ascii = True):
+    bytes_per_line = 16
+    printable = ' ' + string.ascii_letters + string.digits + string.punctuation
+    str_fmt = '{:s}{:04x}: {:%ds} {:s}' % (bytes_per_line * 3)
+    bytes_per_line
+    data_array = bytearray(data)
+    for idx in range(0, len(data_array), bytes_per_line):
+        hex_str = ' '.join('%02X' % val for val in data_array[idx:idx + bytes_per_line])
+        asc_str = ''.join('%c' % (val if (chr(val) in printable) else '.')
+                          for val in data_array[idx:idx + bytes_per_line])
+        print (str_fmt.format(indent * ' ', offset + idx, hex_str, ' ' + asc_str if show_ascii else ''))
 
 def get_bits_from_bytes (bytes, start, length):
     value  = bytes_to_value (bytes)
