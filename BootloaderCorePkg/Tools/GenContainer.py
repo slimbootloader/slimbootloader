@@ -148,14 +148,12 @@ class CONTAINER ():
             auth_type_str = CONTAINER.get_auth_type_str (auth_type)
         else:
             auth_type_str = auth_type
-        lib_id_len   = 4
-        key_exp_len  = 4
         if  auth_type_str == 'NONE':
             auth_len = 0
         elif auth_type_str.startswith ('RSA'):
             auth_len = int(auth_type_str[3:]) >> 3
             if signed:
-                auth_len = auth_len * 2 + lib_id_len + key_exp_len
+                auth_len = auth_len * 2 + sizeof(PUB_KEY_HDR) + sizeof(SIGNATURE_HDR) +  4
         elif auth_type_str.startswith ('SHA2_'):
             auth_len = int(auth_type_str[5:]) >> 3
             if signed:
@@ -219,8 +217,8 @@ class CONTAINER ():
     def get_pub_key_hash (key, hash_type):
         # calculate publish key hash
         if hash_type == 'SHA2_256':
-            dh = bytearray (key)[4:]
-            dh = dh[:0x100][::-1] + dh[0x100:][::-1]
+            dh = bytearray (key)[sizeof(PUB_KEY_HDR):]
+            dh = dh[:0x100] + dh[0x100:]
             return bytearray(hashlib.sha256(dh).digest())
         else:
             raise Exception ("Unsupported hash type in get_pub_key_hash!")
@@ -245,7 +243,7 @@ class CONTAINER ():
             rsa_sign_file (priv_key, pub_key, hash_type, file, out_file, False, True)
             auth_data.extend (get_file_data(out_file))
         else:
-            raise Exception ("Unsupport AuthTupe '%s' !" % auth_type)
+            raise Exception ("Unsupport AuthType '%s' !" % auth_type)
         return hash_data, auth_data
 
 
@@ -299,7 +297,7 @@ class CONTAINER ():
                     key_hash = self.get_pub_key_hash (file_data[offset:])
                     hash_data.extend (key_hash)
                 else:
-                    raise Exception ("Unsupport AuthTupe '%s' !" % auth_type)
+                    raise Exception ("Unsupport AuthType '%s' !" % auth_type)
         return data, hash_data, auth_data
 
     def adjust_header (self):

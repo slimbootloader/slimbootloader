@@ -86,7 +86,7 @@ class CRsaSign:
         if (len(Mod) != 256):
             raise Exception('Unsupported modulus length!')
 
-        Key = b"$IPP" + Mod + Exp
+        Key = Mod + Exp
 
         return Key
 
@@ -109,11 +109,20 @@ class CRsaSign:
         else:
             Bins = bytearray()
 
-        Sign = open(OutFile, 'rb').read()
-        Bins.extend(Sign)
+        signature = open(OutFile, 'rb').read()
+
+        sign = SIGNATURE_HDR()
+        sign.SigSize = len(signature)
+        sign.SigType = SIGN_TYPE_SCHEME['RSA_PCKS_1_5']
+        sign.HashAlg = HASH_TYPE_VALUE['SHA2_256']
+        Bins.extend(bytearray(sign) + signature)
 
         if IncKey:
-            Bins.extend(PubKey)
+            publickey = PUB_KEY_HDR()
+            publickey.KeySize    = len(PubKey)
+            KeyType    = PUB_KEY_TYPE['RSA']
+
+            Bins.extend(bytearray(publickey) + PubKey)
 
         open(OutFile, 'wb').write(Bins)
 
