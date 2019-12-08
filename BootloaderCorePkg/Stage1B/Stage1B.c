@@ -121,6 +121,7 @@ CreateConfigDatabase (
   UINT8                    *IntCfgAddPtr;
   UINT8                    *SigPtr;
   UINT8                    *KeyPtr;
+  SIGNATURE_HDR            *SignHdr;
   UINT32                    CfgDataBase;
   UINT32                    CfgDataLength;
 
@@ -152,10 +153,12 @@ CreateConfigDatabase (
       if (FeaturePcdGet (PcdVerifiedBootEnabled)) {
         // Verify CFG public key
         CfgBlob = (CDATA_BLOB *)ExtCfgAddPtr;
-        SigPtr  = (UINT8 *)CfgBlob + CfgBlob->UsedLength;
-        KeyPtr  = SigPtr + RSA2048NUMBYTES;
+        SigPtr  =  (UINT8 *) CfgBlob + CfgBlob->UsedLength;
+        SignHdr    = (SIGNATURE_HDR *) SigPtr;
+        KeyPtr  = (UINT8 *)SignHdr + sizeof(SIGNATURE_HDR) + SignHdr->SigSize ;
+
         Status  = DoRsaVerify ((UINT8 *)CfgBlob, CfgBlob->UsedLength, COMP_TYPE_PUBKEY_CFG_DATA,
-                     SigPtr, KeyPtr, NULL, Stage1bHob->ConfigDataHash);
+                    SignHdr, (PUB_KEY_HDR *) KeyPtr, NULL, Stage1bHob->ConfigDataHash);
         if (EFI_ERROR (Status)) {
           DEBUG ((DEBUG_INFO, "EXT CFG Data ignored ... %r\n", Status));
           ExtCfgAddPtr = NULL;

@@ -9,6 +9,7 @@
 #define __VERIFIED_BOOT_LIB_H__
 
 #include <Guid/KeyHashGuid.h>
+#include <Library/CryptoLib.h>
 
 #define  SIG_TYPE_RSA2048_SHA256       0
 #define  SIG_TYPE_RSA3072_SHA384       1
@@ -47,8 +48,8 @@ DoHashVerify (
   @param[in]  Data            Data buffer pointer.
   @param[in]  Length          Data buffer size.
   @param[in]  ComponentType   Component type.
-  @param[in]  Signature       Signature for the data buffer.
-  @param[in]  PubKey          Public key data pointer.
+  @param[in]  SignatureHdr    Signature header for singanture data.
+  @param[in]  PubKeyHdr       Public key header for key data
   @param[in]  PubKeyHash      Public key hash value when ComponentType is not used.
   @param[out] OutHash         Calculated data hash value.
 
@@ -64,8 +65,8 @@ DoRsaVerify (
   IN CONST UINT8           *Data,
   IN       UINT32           Length,
   IN       UINT8            ComponentType,
-  IN CONST UINT8           *Signature,
-  IN       UINT8           *PubKey,
+  IN CONST SIGNATURE_HDR   *SignatureHdr,
+  IN       PUB_KEY_HDR     *PubKeyHdr,
   IN       UINT8           *PubKeyHash      OPTIONAL,
   OUT      UINT8           *OutHash         OPTIONAL
   );

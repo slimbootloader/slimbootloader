@@ -37,11 +37,14 @@ IsIasImageValid (
 {
   EFI_STATUS                 Status;
   IAS_HEADER                 *Hdr;
-  IAS_PUB_KEY                Key;
-  UINT8                      *Signature;
+  SIGNATURE_HDR              *SignHdr;
+  PUB_KEY_HDR                *PubKeyHdr;
+  IAS_PUB_KEY                *Key;
   UINT32                     CrcOut;
   UINT32                     Index;
   UINT32                     KeyIdx;
+  UINT8                      PubKeyBuf[sizeof(PUB_KEY_HDR) + RSA2048_NUMBYTES + RSA_E_SIZE];
+  UINT8                      SignBuf[sizeof(SIGNATURE_HDR) + RSA2048_NUMBYTES];
 
   Hdr = (IAS_HEADER *) ImageAddr;
 
@@ -73,19 +76,36 @@ IsIasImageValid (
     return NULL;
   }
 
-  Key.Signature = RSA_KEY_IPP_SIGNATURE;
-  CopyMem (&Key.PubKeyMod, ((UINT8 *) IAS_PUBLIC_KEY (Hdr)), sizeof (Key.PubKeyMod));
+  SignHdr     = (SIGNATURE_HDR *) SignBuf;
+  //Update SIGNATURE_HDR Info
+  SignHdr->Identifier = SIGNATURE_IDENTIFIER;
+  SignHdr->SigSize = RSA2048_NUMBYTES;
+  SignHdr->SigType = SIGNING_TYPE_RSA_PKCS_1_5;
+  SignHdr->HashAlg = HASH_TYPE_SHA256;
+
+  CopyMem (SignBuf + sizeof(SIGNATURE_HDR), (UINT8 *) IAS_SIGNATURE (Hdr), RSA2048_NUMBYTES);
+
+  PubKeyHdr     = (PUB_KEY_HDR *) PubKeyBuf;
+
+  //Update  PUB_KEY_HDR Info
+  PubKeyHdr->Identifier = PUBKEY_IDENTIFIER;
+  PubKeyHdr->KeySize = RSA_E_SIZE + RSA2048_NUMBYTES;
+  PubKeyHdr->KeyType = KEY_TYPE_RSA;
+
+  Key = (IAS_PUB_KEY *) (PubKeyBuf + sizeof(PUB_KEY_HDR));
+  CopyMem (Key->Modulus, ((UINT8 *) IAS_PUBLIC_KEY (Hdr)), RSA2048_NUMBYTES);
+
   //
   // The byte order of RSA public key exponent is opposite between what iastool.py
   // generates and what RsaVerify API expects. Thus reverse it here.
   //
   for (Index = 0, KeyIdx = (RSA_E_SIZE + RSA_MOD_SIZE - 1); Index < RSA_E_SIZE; Index++, KeyIdx--) {
-    Key.PubKeyExp[Index] = ((UINT8 *) IAS_PUBLIC_KEY (Hdr))[KeyIdx];
+    Key->PubExp[Index]  = ((UINT8 *) IAS_PUBLIC_KEY (Hdr))[KeyIdx];
   }
 
-  Signature = (UINT8 *) IAS_SIGNATURE (Hdr);
+
   Status = DoRsaVerify ((CONST UINT8 *)Hdr, ((UINT32)IAS_PAYLOAD_END (Hdr)) - ((UINT32)Hdr), COMP_TYPE_PUBKEY_OS,
-                        Signature, (UINT8 *)&Key, NULL, ImageHash);
+                         SignHdr,  PubKeyHdr, NULL, ImageHash);
   if (EFI_ERROR (Status) != EFI_SUCCESS) {
     DEBUG ((DEBUG_ERROR, "IAS image verification failed!\n"));
     return NULL;

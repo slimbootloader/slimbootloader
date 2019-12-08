@@ -28,6 +28,7 @@
 #include <Library/FspApiLib.h>
 #include <Library/BlMemoryAllocationLib.h>
 #include <Library/SecureBootLib.h>
+#include <Library/CryptoLib.h>
 #include <Library/CpuExceptionLib.h>
 #include <Library/DebugDataLib.h>
 #include <Library/DebugLogBufferLib.h>

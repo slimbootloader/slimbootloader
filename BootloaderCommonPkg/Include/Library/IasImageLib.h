@@ -69,12 +69,11 @@ typedef struct {        /* a file (sub-image) inside a boot image */
 } IMAGE_DATA;
 
 //
-// IAS Pub Key format for use with IPP CryptoLib
+// IAS Pub Key format for use
 //
 typedef struct {
-  UINT32  Signature;
-  UINT8 PubKeyMod[RSA_MOD_SIZE];
-  UINT8 PubKeyExp[RSA_E_SIZE];
+  UINT8 Modulus[RSA_MOD_SIZE];
+  UINT8 PubExp[RSA_E_SIZE];
 } IAS_PUB_KEY;
 
 /**

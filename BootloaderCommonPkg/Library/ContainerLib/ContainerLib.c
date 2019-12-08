@@ -257,6 +257,9 @@ AuthenticateComponent (
   )
 {
   EFI_STATUS  Status;
+  UINT8                    *SigPtr;
+  UINT8                    *KeyPtr;
+  SIGNATURE_HDR            *SignHdr;
 
   if (!FeaturePcdGet (PcdVerifiedBootEnabled)) {
     Status = EFI_SUCCESS;
@@ -264,8 +267,12 @@ AuthenticateComponent (
     if (AuthType == AUTH_TYPE_SHA2_256) {
       Status = DoHashVerify (Data, Length, HASH_TYPE_SHA256, CompType, HashData);
     } else if (AuthType == AUTH_TYPE_SIG_RSA2048_SHA256) {
-      Status = DoRsaVerify (Data, Length, CompType, AuthData,
-                            AuthData + RSA2048NUMBYTES, HashData, NULL);
+
+      SigPtr   = (UINT8 *) AuthData;
+      SignHdr  = (SIGNATURE_HDR *) SigPtr;
+      KeyPtr   = (UINT8 *)SignHdr + sizeof(SIGNATURE_HDR) + SignHdr->SigSize ;
+      Status   = DoRsaVerify (Data, Length, CompType, SignHdr,
+                            (PUB_KEY_HDR *) KeyPtr, HashData, NULL);
     } else if (AuthType == AUTH_TYPE_NONE) {
       Status = EFI_SUCCESS;
     } else {

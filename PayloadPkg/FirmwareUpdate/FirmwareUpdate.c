@@ -849,8 +849,8 @@ AuthenticateCapsule (
 {
   EFI_STATUS                Status;
   FIRMWARE_UPDATE_HEADER    *Header;
-  UINT8                     *Key;
-  UINT8                     *Signature;
+  PUB_KEY_HDR               *PubKeyHdr;
+  SIGNATURE_HDR             *SignatureHdr;
   FW_UPDATE_STATUS          FwUpdStatus;
   UINT32                    FwUpdStatusOffset;
 
@@ -878,8 +878,8 @@ AuthenticateCapsule (
     return EFI_INVALID_PARAMETER;
   }
 
-  Key       = FwImage + Header->PubKeyOffset;
-  Signature = FwImage + Header->SignatureOffset;
+  PubKeyHdr       = (PUB_KEY_HDR *) (FwImage + Header->PubKeyOffset);
+  SignatureHdr    = (SIGNATURE_HDR *) (FwImage + Header->SignatureOffset);
 
   //
   // Copy fw update status structure to memory
@@ -895,12 +895,12 @@ AuthenticateCapsule (
   // it indicates that capsule image is modified in between firmware update.
   //
   if (*(UINT32 *)(FwUpdStatus.CapsuleSig) != 0xFFFFFFFF) {
-    if (CompareMem(&FwUpdStatus.CapsuleSig, Signature, FW_UPDATE_SIG_LENGTH) != 0) {
+    if (CompareMem(&FwUpdStatus.CapsuleSig, SignatureHdr, FW_UPDATE_SIG_LENGTH) != 0) {
       return EFI_COMPROMISED_DATA;
     }
   }
 
-  Status    = DoRsaVerify (FwImage, Header->SignatureOffset, COMP_TYPE_PUBKEY_FWU, Signature, Key, NULL, NULL);
+  Status    = DoRsaVerify (FwImage, Header->SignatureOffset, COMP_TYPE_PUBKEY_FWU, SignatureHdr, PubKeyHdr, NULL, NULL);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Image verification failed, %r!\n", Status));
     return EFI_SECURITY_VIOLATION;
@@ -912,7 +912,7 @@ AuthenticateCapsule (
   //
   if (*(UINT32 *)(FwUpdStatus.CapsuleSig) != 0xFFFFFFFF) {
 
-    CopyMem((VOID *)&FwUpdStatus.CapsuleSig, (VOID *)Signature, sizeof(FW_UPDATE_SIG_LENGTH));
+    CopyMem((VOID *)&FwUpdStatus.CapsuleSig, (VOID *)SignatureHdr, sizeof(FW_UPDATE_SIG_LENGTH));
 
     Status = BootMediaWrite (FwUpdStatusOffset, sizeof(FW_UPDATE_STATUS), (UINT8 *)&FwUpdStatus);
     if (EFI_ERROR (Status)) {

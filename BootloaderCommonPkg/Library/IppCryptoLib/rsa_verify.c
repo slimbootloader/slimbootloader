@@ -103,16 +103,16 @@ int VerifyRsaSignature (const void *hash, const void *rsa_n,  const void *rsa_e,
  * Returns RETURN_SUCCESS on success, others on failure.
  */
 RETURN_STATUS
-RsaVerify(const RSA_PUB_KEY *key, const Ipp8u *sig, const Ipp32u sig_len, const Ipp8u  sig_type, const Ipp8u *hash)
+RsaVerify_Pkcs_1_5 (CONST PUB_KEY_HDR *PubKeyHdr, CONST SIGNATURE_HDR *SignatureHdr,  CONST UINT8  *Hash)
 {
   Ipp8u  *rsa_n;
   Ipp8u  *rsa_e;
 
-  if ((key->Signature != RSA_KEY_IPP_SIGNATURE) || (sig_type != SIG_TYPE_RSA2048SHA256) || (sig_len != RSA_MOD_SIZE)) {
+  if ((SignatureHdr->SigType != SIGNING_TYPE_RSA_PKCS_1_5) || (SignatureHdr->SigSize != RSA_MOD_SIZE)) {
     return RETURN_INVALID_PARAMETER;
   } else {
-    rsa_n = (Ipp8u *)key->PubKeyData;
-    rsa_e = rsa_n + RSA_MOD_SIZE;
-    return VerifyRsaSignature (hash, rsa_n, rsa_e, sig) ? RETURN_SECURITY_VIOLATION : RETURN_SUCCESS ;
+    rsa_n = (Ipp8u *) PubKeyHdr->KeyData;
+    rsa_e = (Ipp8u *) PubKeyHdr->KeyData + PubKeyHdr->KeySize - RSA_E_SIZE;
+    return VerifyRsaSignature (Hash, rsa_n, rsa_e, SignatureHdr->Signature) ? RETURN_SECURITY_VIOLATION : RETURN_SUCCESS ;
   }
 }
