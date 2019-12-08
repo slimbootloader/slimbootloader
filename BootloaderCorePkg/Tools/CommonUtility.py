@@ -35,6 +35,39 @@ class LZ_HEADER(Structure):
         'LZMA' : 'Lzma',
     }
 
+# Reference header for Public key
+class PUB_KEY (Structure):
+    _fields_ = [
+        ('Modulus', ARRAY(c_uint8, 0)),      #RSA2K/RSA3K in bytes
+        ('PubExp',  ARRAY(c_uint8, 4)),
+        ]
+
+class PUB_KEY_HDR (Structure):
+    _pack_ = 1
+    _fields_ = [
+        ('Identifier', ARRAY(c_char, 4)),      #signature ('P', 'U', 'B', 'K')
+        ('KeySize',    c_uint16),              #Length of Public Key
+        ('KeyType',    c_uint8),               #RSA or ECC
+        ('Reserved',   ARRAY(c_uint8, 1)),
+        ('KeyData',    ARRAY(c_uint8, 0)),   #Pubic key data with KeySize bytes for RSA_KEY() format
+        ]
+
+    def __init__(self):
+        self.Identifier = b'PUBK'
+
+class SIGNATURE_HDR (Structure):
+    _pack_ = 1
+    _fields_ = [
+        ('Identifier', ARRAY(c_char, 4)),      #signature Identifier('S', 'I', 'G', 'N')
+        ('SigSize',    c_uint16),              #Length of signature 2K and 3K in bytes
+        ('SigType',    c_uint8),               #PKCSv1.5 or RSA-PSS or ECC
+        ('HashAlg',    c_uint8),               #Hash Alg for signingh SHA256, 384
+        ('Signature',  ARRAY(c_uint8, 0)),     #Signature length defined by SigSize bytes
+        ]
+
+    def __init__(self):
+        self.Identifier = b'SIGN'
+
 # Hash values defined should match with cryptolib.h
 HASH_TYPE_VALUE = {
 # {   Hash_string:        Hash_Value}
@@ -93,6 +126,24 @@ def set_bits_to_bytes (bytes, start, length, bvalue):
     update = fmt2.format(bvalue)[-length:][::-1]
     newval = oldval[:start] + update + oldval[start + length:]
     bytes[:] = value_to_bytes (int(newval[::-1], 2), len(bytes))
+
+# Key types  defined should match with cryptolib.h
+PUB_KEY_TYPE = {
+# {   key_type:   key_val}
+            "RSA"       : 1,
+            "ECC"       : 2,
+            "DSA"       : 3,
+    }
+
+# Signing type schemes  defined should match with cryptolib.h
+SIGN_TYPE_SCHEME = {
+# {   key_type:   key_val}
+            "RSA_PCKS_1_5"        : 1,
+            "RSA_PSS"             : 2,
+            "ECC"                 : 3,
+            "DSA"                 : 4,
+    }
+
 
 def bytes_to_value (bytes):
     return reduce(lambda x,y: (x<<8)|y,  bytes[::-1] )
@@ -166,9 +217,9 @@ def run_process (arg_list, print_cmd = False, capture_out = False):
 def rsa_sign_file (priv_key, pub_key, hash_type, in_file, out_file, inc_dat = False, inc_key = False):
 
     _hash_type_string = {
-            "SHA2_256"    : '-sha256',
-            "SHA2_384"    : '-sha384',
-            "SHA2_512"    : '-sha512',
+        "SHA2_256"    : '-sha256',
+        "SHA2_384"    : '-sha384',
+        "SHA2_512"    : '-sha512',
     }
 
     cmdargs = [get_openssl_path(), 'dgst' , '%s' % _hash_type_string[hash_type], '-sign', '%s' % priv_key,
@@ -179,10 +230,17 @@ def rsa_sign_file (priv_key, pub_key, hash_type, in_file, out_file, inc_dat = Fa
     if inc_dat:
         bins.extend(get_file_data(in_file))
     out_data = get_file_data(out_file)
-    bins.extend(out_data)
+
+    sign = SIGNATURE_HDR()
+    sign.SigSize = len(out_data)
+    sign.SigType = SIGN_TYPE_SCHEME['RSA_PCKS_1_5']
+    sign.HashAlg = HASH_TYPE_VALUE['SHA2_256']
+
+    bins.extend(bytearray(sign) + out_data)
     if inc_key:
         key = gen_pub_key (priv_key, pub_key)
         bins.extend(key)
+
     if len(bins) != len(out_data):
         gen_file_from_object (out_file, bins)
 
@@ -208,9 +266,9 @@ def gen_pub_key (in_key, pub_key = None):
     output = run_process (cmdline, capture_out = capture)
     if not capture:
         output = get_file_data(pub_key, 'r')
-    data   = output.replace('\r', '')
-    data   = data.replace('\n', '')
-    data   = data.replace('  ', '')
+    data     = output.replace('\r', '')
+    data     = data.replace('\n', '')
+    data     = data.replace('  ', '')
 
     # Extract the modulus
     if is_prv_key:
@@ -219,15 +277,23 @@ def gen_pub_key (in_key, pub_key = None):
         match = re.search('Modulus(?:.*?):(.*)Exponent:\s+(\d+)\s+', data)
     if not match:
         raise Exception('Public key not found!')
-    modulus = match.group(1).replace(':', '')
+    modulus  = match.group(1).replace(':', '')
     exponent = int(match.group(2))
 
     # Remove the '00' from the front if the MSB is 1
     if (len(modulus) != 512):
         modulus = modulus[2:]
+
     mod = bytearray.fromhex(modulus)
     exp = bytearray.fromhex('{:08x}'.format(exponent))
-    key = b"$IPP" + mod + exp
+
+    keydata   = mod + exp
+    publickey = PUB_KEY_HDR()
+    publickey.KeySize  = len(keydata)
+    publickey.KeyType  = PUB_KEY_TYPE['RSA']
+
+    key =  bytearray(publickey) +  keydata
+
     if pub_key:
         gen_file_from_object (pub_key, key)
 
@@ -310,9 +376,9 @@ def compress (in_file, alg, out_path = '', tool_dir = ''):
 
     return out_file
 
-def get_priv_key_type (priv_key, openssl_path):
+def get_rsa_priv_key_type (priv_key, openssl_path):
 
-    print ("get_priv_key_type")
+    print ("get_rsa_priv_key_type info..")
     Output = subprocess.check_output(
             [openssl_path, 'rsa', '-pubout', '-text', '-noout', '-in',
              '%s' % priv_key],
@@ -322,6 +388,8 @@ def get_priv_key_type (priv_key, openssl_path):
     temp = re.findall(r'\d+', Match.group(1))
     key_type = list(map(int, temp))
 
-    print ("Key Type: RSA%s" % key_type[0])
 
-    return key_type
+    priv_key_str = 'RSA' + str(key_type[0])
+    print ("Key Type: %s" % priv_key_str)
+
+    return priv_key_str

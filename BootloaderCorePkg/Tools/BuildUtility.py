@@ -65,15 +65,6 @@ class FLASH_REGION_TYPE:
     ALL          = 0x6
     MAX          = 0x7
 
-class RsaSignature (Structure):
-    _pack_ = 1
-    _fields_ = [
-        ('Signature',  ARRAY(c_uint8, 256)),
-        ('Identifier', c_uint32),
-        ('PubKeyMod',  ARRAY(c_uint8, 256)),
-        ('PubKeyExp',  ARRAY(c_uint8, 4)),
-        ('Padding',    ARRAY(c_uint8, 8)),
-        ]
 
 class UcodeHeader(Structure):
     _pack_ = 1
@@ -506,17 +497,16 @@ def gen_hash_file (src_path, hash_type, hash_path = '', is_key = False):
     with open(src_path,'rb') as fi:
         di = bytearray(fi.read())
     if is_key:
-        if len(di) != 0x108:
+        if len(di) != (0x104 + sizeof(PUB_KEY_HDR)):
             raise Exception ("Invalid public key binary!")
-        di = di[4:]
-        di = di[:0x100][::-1] + di[0x100:][::-1]
+        di = di[sizeof(PUB_KEY_HDR):]
+        di = di[:0x100] + di[0x100:]
     if hash_type == 'SHA2_256':
         ho = hashlib.sha256(di)
     else:
         raise Exception ("Unsupported hash type provided!")
     with open(hash_path,'wb') as fo:
         fo.write(ho.digest())
-
 
 def align_pad_file (src, dst, val, mode = STITCH_OPS.MODE_FILE_ALIGN, pos = STITCH_OPS.MODE_POS_TAIL):
     fi = open(src, 'rb')
@@ -885,4 +875,3 @@ def find_component_in_image_list (comp_name, img_list):
 def print_component_list (comp_list):
     for comp in comp_list:
         print('%-20s BASE=0x%08X' % (comp['name'], comp['base']))
-
