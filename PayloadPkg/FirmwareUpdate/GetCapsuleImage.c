@@ -171,7 +171,7 @@ GetCapsuleFromRawPartition (
     return EFI_NOT_FOUND;
   }
 
-  if (FwUpdHeader->SignatureSize != RSA2048NUMBYTES) {
+  if (FwUpdHeader->SignatureSize != RSA2048_NUMBYTES) {
     DEBUG ((DEBUG_INFO, "Invalid Capsule image found, Signature size mismatch\n"));
     return EFI_NOT_FOUND;
   }

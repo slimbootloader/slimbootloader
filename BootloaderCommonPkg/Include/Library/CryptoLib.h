@@ -14,9 +14,27 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #define RSA_KEY_VB_SIGNATURE     SIGNATURE_32 ('$', '_', 'V', 'B')
 #define RSA_KEY_IPP_SIGNATURE    SIGNATURE_32 ('$', 'I', 'P', 'P')
+#define PUBKEY_IDENTIFIER        SIGNATURE_32 ('P', 'U', 'B', 'K')
+#define SIGNATURE_IDENTIFIER     SIGNATURE_32 ('S', 'I', 'G', 'N')
+
 
 #define SIG_TYPE_RSA2048SHA256   0
+#define SIG_TYPE_RSA3072SHA384   1
 
+typedef UINT8 SIGN_TYPE;
+#define SIGNING_TYPE_RSA_PKCS_1_5     1
+#define SIGNING_TYPE_RSA_PSS          2
+
+typedef UINT8 KEY_TYPE;
+#define KEY_TYPE_RSA                  1
+
+#define RSA2048_NUMBYTES              256
+#define RSA3072_NUMBYTES              384
+
+#define RSA_MOD_SIZE 256 //hardcode n size to be 256
+#define RSA_E_SIZE   4   //hardcode e size to be 4
+
+typedef UINT8 HASH_ALG_TYPE;
 #define  HASH_TYPE_SHA256              1
 #define  HASH_TYPE_SHA384              2
 #define  HASH_TYPE_SHA512              3
@@ -31,12 +49,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define RSA2048NUMBYTES          256
 #define RSA3072NUMBYTES          384
 
-
-#define RSA_MOD_SIZE 256 //hardcode n size to be 256
-#define RSA_E_SIZE   4   //hardcode e size to be 4
-
-#define RSA_SIGNATURE_AND_KEY_SIZE  (RSA2048NUMBYTES + RSA_MOD_SIZE + RSA_E_SIZE + sizeof(UINT32))
-
 #define IPP_HASH_CTX_SIZE  256   //IPP Hash context size
 
 #define IPP_HASHLIB_SHA1         0x0001
@@ -48,13 +60,45 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 typedef UINT8 HASH_CTX[IPP_HASH_CTX_SIZE];   //IPP Hash context buffer
 
-//
-// RSA verify required key parameter format
-//
+
 typedef struct {
-  UINT32                   Signature;
-  UINT8                    PubKeyData[0];
-} RSA_PUB_KEY;
+  //signature ('P', 'U', 'B', 'K')
+  UINT32                   Identifier;
+
+  //Length of Public Key
+  UINT16                   KeySize;
+
+  //KeyType RSA or ECC
+  KEY_TYPE                 KeyType;
+
+  UINT8                    Rsvd;
+
+  //Pubic key data with KeySize bytes
+  //Contains Modulus(256/384 sized) and PubExp[4]
+  UINT8                    KeyData[0];
+} PUB_KEY_HDR;
+
+typedef struct {
+  //signature Identifier('S', 'I', 'G', 'N')
+  UINT32                   Identifier;
+
+  //Length of signature 2K and 3K in bytes
+  UINT16                   SigSize;
+
+ //PKCSv1.5 or RSA-PSS or ECC
+  SIGN_TYPE                SigType;
+
+  //Hash Alg for signingh SHA256, SHA384
+  HASH_ALG_TYPE            HashAlg;
+
+  //Signature length defined by SigSize bytes
+  UINT8                    Signature[0];
+} SIGNATURE_HDR;
+
+
+#define RSA_SIGNATURE_SIZE         (RSA2048_NUMBYTES + sizeof(SIGNATURE_HDR))
+#define RSA_KEYSIZE_SIZE           (RSA_MOD_SIZE + RSA_E_SIZE + sizeof(PUB_KEY_HDR))
+#define RSA_SIGNATURE_AND_KEY_SIZE  (RSA_SIGNATURE_SIZE + RSA_KEYSIZE_SIZE)
 
 /**
   Computes the SHA-256 message digest of a input data buffer.
@@ -132,11 +176,9 @@ Sm3 (
 
 **/
 RETURN_STATUS
-RsaVerify (
-  CONST RSA_PUB_KEY        *PubKey,
-  CONST UINT8              *Signature,
-  CONST UINT32              SignatureLen,
-  CONST UINT8               SignatureType,
+RsaVerify_Pkcs_1_5 (
+  CONST PUB_KEY_HDR        *PubKeyHdr,
+  CONST SIGNATURE_HDR      *SignatureHdr,
   CONST UINT8              *Hash
   );
 
