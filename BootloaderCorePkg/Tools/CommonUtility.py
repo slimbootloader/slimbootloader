@@ -173,8 +173,19 @@ def rsa_sign_file (priv_key, pub_key, hash_type, in_file, out_file, inc_dat = Fa
     if len(bins) != len(out_data):
         gen_file_from_object (out_file, bins)
 
-def gen_pub_key (priv_key, pub_key = None):
-    cmdline = [get_openssl_path(), 'rsa', '-pubout', '-text', '-noout', '-in', '%s' % priv_key]
+def gen_pub_key (in_key, pub_key = None):
+    # Expect key to be in PEM format
+    is_prv_key = False
+    cmdline = [get_openssl_path(), 'rsa', '-pubout', '-text', '-noout', '-in', '%s' % in_key]
+    # Check if it is public key or private key
+    text = get_file_data(in_key, 'r')
+    if '-BEGIN RSA PRIVATE KEY-' in text:
+        is_prv_key = True
+    elif '-BEGIN PUBLIC KEY-' in text:
+        cmdline.extend (['-pubin'])
+    else:
+        raise Exception('Unknown key format "%s" !' % in_key)
+
     if pub_key:
         cmdline.extend (['-out', '%s' % pub_key])
         capture = False
@@ -189,7 +200,10 @@ def gen_pub_key (priv_key, pub_key = None):
     data   = data.replace('  ', '')
 
     # Extract the modulus
-    match = re.search('modulus(.*)publicExponent:\s+(\d+)\s+', data)
+    if is_prv_key:
+        match = re.search('modulus(.*)publicExponent:\s+(\d+)\s+', data)
+    else:
+        match = re.search('Modulus(?:.*?):(.*)Exponent:\s+(\d+)\s+', data)
     if not match:
         raise Exception('Public key not found!')
     modulus = match.group(1).replace(':', '')
