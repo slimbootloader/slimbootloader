@@ -25,23 +25,6 @@ import multiprocessing
 from   ctypes import *
 from   BuildUtility import *
 
-IPP_CRYPTO_OPTIMIZATION_MASK = {
-# {         Opt Type:        Mask}
-            "SHA256_V8"       : 0x0001,
-            "SHA256_NI"       : 0x0002,
-            "SHA384_W7"       : 0x0004,
-            "SHA384_G9"       : 0x0008,
-    }
-
-IPP_CRYPTO_ALG_MASK = {
-# {        Hash_type:        Hash_Maske}
-            "SHA1"           : 0x0001,
-            "SHA2_256"       : 0x0002,
-            "SHA2_384"       : 0x0004,
-            "SHA2_512"       : 0x0008,
-            "SM3_256"        : 0x0010
-    }
-
 def rebuild_basetools ():
     exe_list = 'GenFfs  GenFv  GenFw  GenSec  Lz4Compress  LzmaCompress'.split()
     ret = 0
@@ -148,9 +131,12 @@ class BaseBoard(object):
 
         # Define default private key (PEM format) used to sign configuration data, firmware capsule and IAS image
         key_dir = os.path.join('BootloaderCorePkg', 'Tools', 'Keys')
-        self._CFG_PRIVATE_KEY       = os.path.join(key_dir, 'TestSigningPrivateKey.pem')
-        self._FWU_PRIVATE_KEY       = os.path.join(key_dir, 'TestSigningPrivateKey.pem')
-        self._IAS_PRIVATE_KEY       = os.path.join(key_dir, 'TestSigningPrivateKey.pem')
+        # Allow master key to be able to sign everything by default
+        self._MASTER_KEY_USAGE      = HASH_USAGE['PUBKEY_CFG_DATA'] | HASH_USAGE['PUBKEY_FWU'] | HASH_USAGE['PUBKEY_OS'] | \
+                                      HASH_USAGE['PUBKEY_CONT_DEF']
+        self._MASTER_PRIVATE_KEY    = os.path.join(key_dir, 'TestSigningPrivateKey.pem')
+        self._CFGDATA_PRIVATE_KEY   = os.path.join(key_dir, 'TestSigningPrivateKey.pem')
+        self._CONTAINER_PRIVATE_KEY = os.path.join(key_dir, 'TestSigningPrivateKey.pem')
         self.LOGO_FILE              = 'Platform/CommonBoardPkg/Logo/Logo.bmp'
 
         self.RSA_SIGN_TYPE          = 'RSA2048'
@@ -506,19 +492,24 @@ class Build(object):
         if part_name:
             part_name = '_' + part_name
 
-        hash_file_list = [('STAGE1B%s.hash' % part_name, 0), ('STAGE2.hash', 1), ('PAYLOAD.hash', 2), ('FWUPDATE.hash', 3), ('CFGKEY.hash', 4), ('FWUKEY.hash', 5), ('OSKEY.hash', 6)]
+        hash_file_list = [
+           ('STAGE1B%s.hash' % part_name, HASH_USAGE['STAGE_1B']),
+           ('STAGE2.hash',                HASH_USAGE['STAGE_2']),
+           ('PAYLOAD.hash',               HASH_USAGE['PAYLOAD']),
+           ('FWUPDATE.hash',              HASH_USAGE['PAYLOAD_FWU']),
+           ('MSTKEY.hash',                HASH_USAGE['PUBKEY_MASTER'] | self._board._MASTER_KEY_USAGE)
+        ]
+
         if len(hash_file_list) > HashStoreTable.HASH_STORE_MAX_IDX_NUM:
             raise Exception ('Insufficant hash entries !')
 
+        hash_idx   = 0
         hash_store = HashStoreTable.from_buffer(stage1_bins, hs_offset)
         hash_len   = HASH_DIGEST_SIZE[self._board.SIGN_HASH_TYPE]
         hash_store_data_buf = bytearray()
         hash_store.UsedLength = sizeof(HashStoreTable())
-        for hash_file, hash_idx in hash_file_list:
+        for hash_file, usage in hash_file_list:
             # If the hash verification is not required for certain stage, skip it
-            if ((1 << hash_idx) & self._board.VERIFIED_BOOT_HASH_MASK) == 0:
-                continue
-
             if hash_file == 'PLDDYN':
                 hash_data = bytearray(b'\x00' * hash_len)
             else:
@@ -533,7 +524,7 @@ class Build(object):
 
             # update hash data
             hashstoredata = HashStoreData()
-            hashstoredata.Usage |= 1 << hash_idx
+            hashstoredata.Usage   = usage
             hashstoredata.HashAlg = HASH_TYPE_VALUE[self._board.SIGN_HASH_TYPE]
             hashstoredata.DigestLen = hash_len
 
@@ -541,8 +532,8 @@ class Build(object):
 
             #Append hash store data entries
             hash_store_data_buf = hash_store_data_buf + bytearray(hashstoredata) + hash_data
-
             print(' Update HashStore entry %d with file %s' % (hash_idx, hash_file))
+            hash_idx += 1
 
         #Update Hash store Table
         fo = open(img_file,'r+b')
@@ -1037,6 +1028,8 @@ class Build(object):
             raise Exception ('Verified Boot must also enabled to enable Measured Boot!')
 
         # create hashstore file
+        key_hash_list = []
+        mst_key = None
         if self._board.HAVE_VERIFIED_BOOT:
             hash_store_size = sizeof(HashStoreTable) + (sizeof(HashStoreData) + HASH_DIGEST_SIZE[self._board.SIGN_HASH_TYPE]) * HashStoreTable().HASH_STORE_MAX_IDX_NUM
             gen_file_with_size (os.path.join(self._fv_dir, 'HashStore.bin'), hash_store_size)
@@ -1047,9 +1040,16 @@ class Build(object):
             hash_store_table.TotalLength = hash_store_size
             fo.write(hash_store_table)
             fo.close()
+
+            # create key hash file
+            mst_key = self._board._MASTER_PRIVATE_KEY
+            if getattr(self._board, "GetKeyHashList", None):
+                key_hash_list = self._board.GetKeyHashList ()
         else:
             self._board.VERIFIED_BOOT_HASH_MASK = 0
 
+        gen_pub_key_hash_store (mst_key, key_hash_list, self._board.SIGN_HASH_TYPE,
+                                self._key_dir, os.path.join(self._fv_dir, 'KEYHASH.bin'))
 
         # create fit table
         if self._board.HAVE_FIT_TABLE:
@@ -1091,21 +1091,19 @@ class Build(object):
             rebase_fsp(fsp_path, self._fv_dir, self._board.FSP_T_BASE, self._board.FSP_M_BASE, self._board.FSP_S_BASE)
             split_fsp(os.path.join(self._fv_dir, 'Fsp.bin'), self._fv_dir)
 
+        # create master key hash
+        if self._board.HAVE_VERIFIED_BOOT:
+            mst_priv_key     = self._board._MASTER_PRIVATE_KEY
+            mst_pub_key_file = os.path.join(self._fv_dir, "MSTKEY.bin")
+            gen_pub_key (mst_priv_key, mst_pub_key_file)
+            gen_hash_file (mst_pub_key_file, self._board.SIGN_HASH_TYPE, '', True)
 
         # create configuration data
         if self._board.CFGDATA_SIZE > 0:
-            # create config key hash
-            if self._board.HAVE_VERIFIED_BOOT:
-                cfg_priv_key     = self._board._CFG_PRIVATE_KEY
-                cfg_pub_key_file = os.path.join(self._fv_dir, "CFGKEY.bin")
-                gen_pub_key (cfg_priv_key, cfg_pub_key_file)
-                gen_hash_file (cfg_pub_key_file, self._board.SIGN_HASH_TYPE, '', True)
-            else:
-                cfg_priv_key = None
             # create config data files
             gen_config_file (self._fv_dir, self._board.BOARD_PKG_NAME, self._board._PLATFORM_ID,
-                                             cfg_priv_key, self._board.CFG_DATABASE_SIZE, self._board.CFGDATA_SIZE,
-                                             self._board._CFGDATA_INT_FILE, self._board._CFGDATA_EXT_FILE, self._board.SIGN_HASH_TYPE)
+                             self._board._CFGDATA_PRIVATE_KEY, self._board.CFG_DATABASE_SIZE, self._board.CFGDATA_SIZE,
+                             self._board._CFGDATA_INT_FILE, self._board._CFGDATA_EXT_FILE, self._board.SIGN_HASH_TYPE)
 
         # rebuild reset vector
         vtf_dir = os.path.join('BootloaderCorePkg', 'Stage1A', 'Ia32', 'Vtf0')
@@ -1178,18 +1176,10 @@ class Build(object):
                 os.path.join(self._fv_dir, '../IA32/Microcode.bin'),
                 os.path.join(self._fv_dir, "UCODE.bin"))
 
-
-        # create OS public key hash
-        if self._board.HAVE_VERIFIED_BOOT:
-            ias_pub_key_file = os.path.join(self._fv_dir, "OSKEY.bin")
-            gen_pub_key (self._board._IAS_PRIVATE_KEY, ias_pub_key_file)
-            gen_hash_file (ias_pub_key_file, self._board.SIGN_HASH_TYPE, '', True)
-
-
         # generate payload
         gen_payload_bin (self._fv_dir, self._pld_list,
                          os.path.join(self._fv_dir, "PAYLOAD.bin"),
-                         self._board._CFG_PRIVATE_KEY, self._board.BOARD_PKG_NAME)
+                         self._board._CONTAINER_PRIVATE_KEY, self._board.BOARD_PKG_NAME)
 
         # create firmware update key
         if self._board.ENABLE_FWU:
@@ -1197,10 +1187,6 @@ class Build(object):
             shutil.copyfile(
                 os.path.join(self._fv_dir, srcfile),
                 os.path.join(self._fv_dir, "FWUPDATE.bin"))
-            fwup_key_file = os.path.join(self._fv_dir, "FWUKEY.bin")
-            gen_pub_key (self._board._FWU_PRIVATE_KEY, fwup_key_file)
-            gen_hash_file (fwup_key_file, self._board.SIGN_HASH_TYPE, '', True)
-
 
         # create SPI IAS image if required
         if self._board.SPI_IAS1_SIZE > 0 or self._board.SPI_IAS2_SIZE > 0:

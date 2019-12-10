@@ -43,7 +43,6 @@
 #include <Guid/LoaderPlatformInfoGuid.h>
 #include <Guid/LoaderPlatformDataGuid.h>
 #include <Guid/SeedInfoHobGuid.h>
-#include <Guid/KeyHashGuid.h>
 #include <Guid/LoaderLibraryDataGuid.h>
 #include <Guid/GraphicsInfoHob.h>
 #include <Guid/SmmInformationGuid.h>

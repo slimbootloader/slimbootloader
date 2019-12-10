@@ -218,6 +218,7 @@ class FLASH_MAP(Structure):
         "SPI_IAS2"      : "IAS2",
         "FWUPDATE"      : "FWUP",
         "CFGDATA"       : "CNFG",
+        "KEYHASH"       : "KEYH",
         "BPM"           : "_BPM",
         "OEMKEY"        : "OEMK",
         "SBLRSVD"       : "RSVD",

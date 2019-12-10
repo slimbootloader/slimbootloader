@@ -900,7 +900,7 @@ AuthenticateCapsule (
     }
   }
 
-  Status    = DoRsaVerify (FwImage, Header->SignatureOffset, COMP_TYPE_PUBKEY_FWU, SignatureHdr, PubKeyHdr, NULL, NULL);
+  Status    = DoRsaVerify (FwImage, Header->SignatureOffset, HASH_USAGE_PUBKEY_FWU, SignatureHdr, PubKeyHdr, NULL, NULL);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Image verification failed, %r!\n", Status));
     return EFI_SECURITY_VIOLATION;

@@ -65,19 +65,17 @@ class Board(BaseBoard):
             self.FIT_ENTRY_MAX_NUM  = 12
 
         self.STAGE1A_SIZE         = 0x00010000
-        self.STAGE1B_SIZE         = 0x00100000
-        self.STAGE2_SIZE          = 0x000EA000
+        self.STAGE1B_SIZE         = 0x000DB000
+        self.STAGE2_SIZE          = 0x00080000
         if self.ENABLE_SOURCE_DEBUG:
             self.STAGE1B_SIZE += 0x4000
 
         self.ENABLE_FWU           = 1
         self.ENABLE_SMBIOS        = 1
 
-        # OS_PK | FWU_PK | CFG_PK | FWU_PLD | PLD | Stage2 | Stage1B
+        # FWU_PLD | PLD | Stage2 | Stage1B
         # Stage1B is verified by ACM
-        self.VERIFIED_BOOT_HASH_MASK  = 0x000000D6
-        if self.ENABLE_FWU:
-            self.VERIFIED_BOOT_HASH_MASK  |= 0x00000028
+        self.VERIFIED_BOOT_HASH_MASK  = 0x000000E
 
         # Verify required minimum FSP version
         self.MIN_FSP_REVISION     = 0x07006440
@@ -99,16 +97,18 @@ class Board(BaseBoard):
         else:
             self.UEFI_VARIABLE_SIZE = 0x1000
         self.EPAYLOAD_SIZE        = 0x00190000
-        self.UCODE_SIZE           = 0x0007A000
+        self.UCODE_SIZE           = 0x00080000
         self.MRCDATA_SIZE         = 0x00008000
         self.CFGDATA_SIZE         = 0x00004000
+        self.KEYHASH_SIZE         = 0x00001000
         self.VARIABLE_SIZE        = 0x00002000
         self.SBLRSVD_SIZE         = 0x00001000
         self.FWUPDATE_SIZE        = 0x00020000 if self.ENABLE_FWU else 0
 
         self.TOP_SWAP_SIZE        = 0x020000
-        self.REDUNDANT_SIZE  = self.UCODE_SIZE + self.STAGE2_SIZE + self.STAGE1B_SIZE + self.FWUPDATE_SIZE + self.CFGDATA_SIZE
-        self.NON_REDUNDANT_SIZE   = 0x2AF000
+        self.REDUNDANT_SIZE  = self.UCODE_SIZE + self.STAGE2_SIZE + self.STAGE1B_SIZE + \
+                               self.FWUPDATE_SIZE + self.CFGDATA_SIZE + self.KEYHASH_SIZE
+        self.NON_REDUNDANT_SIZE   = 0x3BF000
         self.NON_VOLATILE_SIZE    = 0x001000
         self.SLIMBOOTLOADER_SIZE  = (self.TOP_SWAP_SIZE + self.REDUNDANT_SIZE) * 2 + \
             self.NON_REDUNDANT_SIZE + self.NON_VOLATILE_SIZE
@@ -197,6 +197,7 @@ class Board(BaseBoard):
                     ('STAGE2.fd'    ,  'Lz4'     , self.STAGE2_SIZE,   STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
                     ('FWUPDATE.bin' ,  'Lzma'    , self.FWUPDATE_SIZE, STITCH_OPS.MODE_FILE_PAD | fwu_flag,  STITCH_OPS.MODE_POS_TAIL),
                     ('CFGDATA.bin'  , ''         , self.CFGDATA_SIZE,  STITCH_OPS.MODE_FILE_PAD | cfg_flag, STITCH_OPS.MODE_POS_TAIL),
+                    ('KEYHASH.bin'  , ''         , self.KEYHASH_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
                     ('STAGE1B_A.fd' ,  ''        , self.STAGE1B_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
                     ]
                 ),
@@ -205,6 +206,7 @@ class Board(BaseBoard):
                     ('STAGE2.fd'    ,  'Lz4'     , self.STAGE2_SIZE,   STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
                     ('FWUPDATE.bin' ,  'Lzma'    , self.FWUPDATE_SIZE, STITCH_OPS.MODE_FILE_PAD | fwu_flag,  STITCH_OPS.MODE_POS_TAIL),
                     ('CFGDATA.bin'  , ''         , self.CFGDATA_SIZE,  STITCH_OPS.MODE_FILE_PAD | cfg_flag, STITCH_OPS.MODE_POS_TAIL),
+                    ('KEYHASH.bin'  , ''         , self.KEYHASH_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
                     ('STAGE1B_B.fd' ,  ''        , self.STAGE1B_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
                     ]
                 ),

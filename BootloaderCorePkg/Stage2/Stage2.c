@@ -67,9 +67,9 @@ PreparePayload (
   IsNormalPld = (PayloadId == 0) ? TRUE : FALSE;
   BootMode = GetBootMode();
   if (BootMode == BOOT_ON_FLASH_UPDATE) {
-    ContainerSig  = COMP_TYPE_FIRMWARE_UPDATE;
+    ContainerSig  = COMP_TYPE_PAYLOAD_FWU;
     ComponentName = FLASH_MAP_SIG_FWUPDATE;
-    HashIdx = COMP_TYPE_FIRMWARE_UPDATE;
+    HashIdx = COMP_TYPE_PAYLOAD_FWU;
   } else {
     if (IsNormalPld) {
       ContainerSig  = COMP_TYPE_PAYLOAD;
@@ -78,7 +78,7 @@ PreparePayload (
     } else {
       ContainerSig  = FLASH_MAP_SIG_EPAYLOAD;
       ComponentName = PayloadId;
-      HashIdx       = COMP_TYPE_PAYLOAD_DYNAMIC;
+      HashIdx       = COMP_TYPE_INVALID;
     }
   }
 
@@ -100,7 +100,7 @@ PreparePayload (
   }
 
   if (MEASURED_BOOT_ENABLED() && (BootMode != BOOT_ON_S3_RESUME)) {
-    if (HashIdx == COMP_TYPE_PAYLOAD_DYNAMIC) {
+    if (HashIdx == COMP_TYPE_INVALID) {
       ComponentEntry = NULL;
       LocateComponentEntry (ContainerSig, ComponentName, NULL, &ComponentEntry);
       if (ComponentEntry != NULL)  {

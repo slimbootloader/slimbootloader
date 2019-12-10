@@ -222,13 +222,14 @@ def rsa_sign_file (priv_key, pub_key, hash_type, in_file, out_file, inc_dat = Fa
         "SHA2_512"    : '-sha512',
     }
 
+    bins = bytearray()
+    if inc_dat:
+        bins.extend(get_file_data(in_file))
+
     cmdargs = [get_openssl_path(), 'dgst' , '%s' % _hash_type_string[hash_type], '-sign', '%s' % priv_key,
                '-out', '%s' % out_file, '%s' % in_file]
     run_process (cmdargs)
 
-    bins = bytearray()
-    if inc_dat:
-        bins.extend(get_file_data(in_file))
     out_data = get_file_data(out_file)
 
     sign = SIGNATURE_HDR()

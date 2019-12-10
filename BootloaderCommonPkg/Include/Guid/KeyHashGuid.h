@@ -19,13 +19,8 @@ extern EFI_GUID gPayloadKeyHashGuid;
 #define  COMP_TYPE_STAGE_1B            0
 #define  COMP_TYPE_STAGE_2             1
 #define  COMP_TYPE_PAYLOAD             2
-#define  COMP_TYPE_FIRMWARE_UPDATE     3
-#define  COMP_TYPE_PUBKEY_CFG_DATA     4
-#define  COMP_TYPE_PUBKEY_FWU          5
-#define  COMP_TYPE_PUBKEY_OS           6
-#define  COMP_TYPE_PAYLOAD_DYNAMIC     7
-#define  COMP_TYPE_INVALID             8
-
+#define  COMP_TYPE_PAYLOAD_FWU         3
+#define  COMP_TYPE_INVALID             4
 
 //
 // Hash Table Definition for Component and Public key usage
@@ -33,14 +28,16 @@ extern EFI_GUID gPayloadKeyHashGuid;
 
 typedef UINT32 HASH_COMP_USAGE;
 
-#define HASH_USAGE_STAGE_1B              BIT0
-#define HASH_USAGE_STAGE_2               BIT1
-#define HASH_USAGE_PAYLOAD               BIT2
-#define HASH_USAGE_FIRMWARE_UPDATE       BIT3
-#define HASH_USAGE_PUBKEY_CFG_DATA       BIT4
-#define HASH_USAGE_PUBKEY_FWU            BIT5
-#define HASH_USAGE_PUBKEY_OS             BIT6
+#define HASH_USAGE_STAGE_1B              (1 << COMP_TYPE_STAGE_1B)
+#define HASH_USAGE_STAGE_2               (1 << COMP_TYPE_STAGE_2)
+#define HASH_USAGE_PAYLOAD               (1 << COMP_TYPE_PAYLOAD)
+#define HASH_USAGE_FIRMWARE_UPDATE       (1 << COMP_TYPE_PAYLOAD_FWU)
 
+#define HASH_USAGE_PUBKEY_MASTER         BIT8
+#define HASH_USAGE_PUBKEY_CFG_DATA       BIT9
+#define HASH_USAGE_PUBKEY_FWU            BIT10
+#define HASH_USAGE_PUBKEY_OS             BIT11
+#define HASH_USAGE_PUBKEY_CONTAINER_DEF  BIT12
 
 #pragma pack(1)
 typedef struct {

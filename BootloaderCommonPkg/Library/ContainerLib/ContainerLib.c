@@ -238,7 +238,7 @@ LocateComponentEntryFromContainer (
   @param[in] AuthType     Authentication type.
   @param[in] AuthData     Authentication data buffer.
   @param[in] HashData     Hash data buffer.
-  @param[in] CompType     Component type.
+  @param[in] Usage        Hash usage.
 
   @retval EFI_UNSUPPORTED          Unsupported AuthType.
   @retval EFI_SECURITY_VIOLATION   Authentication failed.
@@ -253,7 +253,7 @@ AuthenticateComponent (
   IN  UINT8     AuthType,
   IN  UINT8    *AuthData,
   IN  UINT8    *HashData,
-  IN  UINT8     CompType
+  IN  UINT32    Usage
   )
 {
   EFI_STATUS  Status;
@@ -265,14 +265,14 @@ AuthenticateComponent (
     Status = EFI_SUCCESS;
   } else {
     if (AuthType == AUTH_TYPE_SHA2_256) {
-      Status = DoHashVerify (Data, Length, HASH_TYPE_SHA256, CompType, HashData);
+      Status = DoHashVerify (Data, Length, Usage, HASH_TYPE_SHA256, HashData);
     } else if (AuthType == AUTH_TYPE_SIG_RSA2048_SHA256) {
 
       SigPtr   = (UINT8 *) AuthData;
       SignHdr  = (SIGNATURE_HDR *) SigPtr;
       KeyPtr   = (UINT8 *)SignHdr + sizeof(SIGNATURE_HDR) + SignHdr->SigSize ;
-      Status   = DoRsaVerify (Data, Length, CompType, SignHdr,
-                            (PUB_KEY_HDR *) KeyPtr, HashData, NULL);
+      Status   = DoRsaVerify (Data, Length, Usage, SignHdr,
+                             (PUB_KEY_HDR *) KeyPtr, HashData, NULL);
     } else if (AuthType == AUTH_TYPE_NONE) {
       Status = EFI_SUCCESS;
     } else {
@@ -291,15 +291,15 @@ AuthenticateComponent (
   @retval                       COMP_TYPE_PUBKEY_OS for CONTAINER boot image
                                 COMP_TYPE_PUBKEY_CFG_DATA, otherwise
 **/
-UINT8
-GetContainerKeyTypeBySig (
+UINT32
+GetContainerKeyUsageBySig (
   IN  UINT32    ContainerSig
   )
 {
   if (ContainerSig == CONTAINER_BOOT_SIGNATURE) {
-    return COMP_TYPE_PUBKEY_OS;
+    return HASH_USAGE_PUBKEY_OS;
   } else {
-    return COMP_TYPE_PUBKEY_CFG_DATA;
+    return HASH_USAGE_PUBKEY_CONTAINER_DEF;
   }
 }
 
@@ -344,7 +344,8 @@ AutheticateContainerInternal (
         Status = EFI_SECURITY_VIOLATION;
       } else {
         Status = AuthenticateComponent ((UINT8 *)ContainerHdr, ContainerHdrSize,
-                                        AuthType, AuthData, NULL, GetContainerKeyTypeBySig(ContainerHeader->Signature) );
+                                        AuthType, AuthData, NULL,
+                                        GetContainerKeyUsageBySig (ContainerHeader->Signature));
       }
     }
   }
@@ -368,7 +369,7 @@ AutheticateContainerInternal (
         DataBuf  = (UINT8 *)(ContainerEntry->Base + ContainerHdr->DataOffset);
         DataLen  = CompEntry->Offset;
         Status   = AuthenticateComponent (DataBuf, DataLen, CompEntry->AuthType,
-                                          AuthData, CompEntry->HashData, COMP_TYPE_INVALID);
+                                          AuthData, CompEntry->HashData, 0);
       }
     }
   }
@@ -642,7 +643,7 @@ LoadComponentWithCallback (
   VOID                     *ScrBuf;
   VOID                     *AllocBuf;
   VOID                     *ReqCompBase;
-  UINT8                     CompType;
+  UINT32                    Usage;
   UINT8                     AuthType;
   UINT32                    DecompressedLen;
   UINT32                    CompLen;
@@ -654,7 +655,7 @@ LoadComponentWithCallback (
 
   if (ContainerSig < COMP_TYPE_INVALID) {
     // Check if it is container signature or component type
-    CompType     = (UINT8)ContainerSig;
+    Usage        =  1 << ContainerSig;
     ContainerSig = 0;
 
     Status = GetComponentInfo (ComponentName, (UINT32 *)&CompData,  &CompLen);
@@ -683,7 +684,7 @@ LoadComponentWithCallback (
     ContainerHdr = (CONTAINER_HDR *)ContainerEntry->HeaderCache;
     AuthType  = CompEntry->AuthType;
     HashData  = CompEntry->HashData;
-    CompType  = COMP_TYPE_INVALID;
+    Usage     = 0;
     CompData  = (UINT8 *)(ContainerEntry->Base + ContainerHdr->DataOffset + CompEntry->Offset);
     CompLen   = CompEntry->Size;
   }
@@ -742,7 +743,7 @@ LoadComponentWithCallback (
 
   // Verify the component
   Status = AuthenticateComponent (CompBuf, SignedDataLen, AuthType,
-             CompData + ALIGN_UP(SignedDataLen, AUTH_DATA_ALIGN),  HashData, CompType);
+             CompData + ALIGN_UP(SignedDataLen, AUTH_DATA_ALIGN),  HashData, Usage);
   if (LoadComponentCallback != NULL) {
     LoadComponentCallback (PROGESS_ID_AUTHENTICATE);
   }

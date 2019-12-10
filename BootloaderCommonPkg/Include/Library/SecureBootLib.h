@@ -20,8 +20,8 @@
 
   @param[in]  Data           Data buffer pointer.
   @param[in]  Length         Data buffer size.
+  @param[in]  Usage          Hash usage.
   @param[in]  HashAlg        Specify hash algorithm.
-  @param[in]  ComponentType  Component type.
   @param[in,out]  Hash       On input,  expected hash value when ComponentType is not used.
                              On output, calculated hash value when verification succeeds.
 
@@ -36,8 +36,8 @@ RETURN_STATUS
 DoHashVerify (
   IN CONST UINT8           *Data,
   IN       UINT32           Length,
+  IN       HASH_COMP_USAGE  Usage,
   IN       UINT8            HashAlg,
-  IN       UINT8            ComponentType,
   IN OUT   UINT8           *Hash
   );
 
@@ -47,7 +47,7 @@ DoHashVerify (
 
   @param[in]  Data            Data buffer pointer.
   @param[in]  Length          Data buffer size.
-  @param[in]  ComponentType   Component type.
+  @param[in]  Usage           Hash usage.
   @param[in]  SignatureHdr    Signature header for singanture data.
   @param[in]  PubKeyHdr       Public key header for key data
   @param[in]  PubKeyHash      Public key hash value when ComponentType is not used.
@@ -64,7 +64,7 @@ RETURN_STATUS
 DoRsaVerify (
   IN CONST UINT8           *Data,
   IN       UINT32           Length,
-  IN       UINT8            ComponentType,
+  IN       HASH_COMP_USAGE  Usage,
   IN CONST SIGNATURE_HDR   *SignatureHdr,
   IN       PUB_KEY_HDR     *PubKeyHdr,
   IN       UINT8           *PubKeyHash      OPTIONAL,

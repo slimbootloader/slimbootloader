@@ -75,11 +75,9 @@ class Board(BaseBoard):
         # EXT | FAT
         self.FILE_SYSTEM_SUPPORT_MASK  = 3
 
-        # OS_PK | FWU_PK | CFG_PK | FWU_PLD | PLD | Stage2 | Stage1B
+        # FWU_PLD | PLD | Stage2 | Stage1B
         # Stage1B is verified by CSE
-        self.VERIFIED_BOOT_HASH_MASK  = 0x000000D6
-        if self.ENABLE_FWU:
-            self.VERIFIED_BOOT_HASH_MASK  |= 0x00000028
+        self.VERIFIED_BOOT_HASH_MASK  = 0x000000E        # Stage1B is verified by CSE
 
         # Verify required minimum FSP version
         self.MIN_FSP_REVISION     = 0x01040301
@@ -134,6 +132,7 @@ class Board(BaseBoard):
 
         self.FWUPDATE_SIZE        = 0x00020000
         self.CFGDATA_SIZE         = 0x00004000
+        self.KEYHASH_SIZE         = 0x00001000
         self.CFG_DATABASE_SIZE    = self.CFGDATA_SIZE
         self.MRCDATA_SIZE         = 0x00004000
         self.VARIABLE_SIZE        = 0x00002000
@@ -239,6 +238,9 @@ class Board(BaseBoard):
                     ),
                     ('Stitch_CFGDATA.bin', [
                         ('CFGDATA.bin',  '',     self.CFGDATA_SIZE,   STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL)]
+                    ),
+                    ('Stitch_KEYHASH.bin', [
+                        ('KEYHASH.bin',  '',     self.KEYHASH_SIZE,   STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL)]
                     ),
                     ('Stitch_OBB.bin', [
                         ('STAGE2.fd',    'Lz4',  self.STAGE2_SIZE,    STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL)]

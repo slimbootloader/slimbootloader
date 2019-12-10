@@ -100,6 +100,76 @@ PrepareStage2 (
 }
 
 /**
+  Load, verify and append a hashes from external hash store compoment.
+
+  @param[in] LdrGlobal   Pointer to loader global data.
+
+  @retval   EFI_SUCCESS             Hash store was appended successfully.
+  @retval   EFI_NOT_FOUND           Could not locate the external hash store.
+  @retval   EFI_OUT_OF_RESOURCES    Not enough buffer to load the external hash store.
+  @retval   EFI_UNSUPPORTED         Hash store format is not valid.
+  @retval   EFI_SECURITY_VIOLATION  Hash store authentication failed.
+**/
+EFI_STATUS
+AppendHashStore (
+  IN LOADER_GLOBAL_DATA       *LdrGlobal
+  )
+{
+  EFI_STATUS           Status;
+  HASH_STORE_TABLE    *LdrKeyHashBlob;
+  HASH_STORE_TABLE    *OemKeyHashBlob;
+  HASH_STORE_TABLE    *OemKeyHashComp;
+  UINT32               OemKeyHashCompBase;
+  UINT32               OemKeyHashUsedLength;
+  INT32                KeyHashSize;
+  UINT8                AuthInfo[RSA_SIGNATURE_AND_KEY_SIZE];
+  SIGNATURE_HDR       *SignHdr;
+  PUB_KEY_HDR         *PubKeyHdr;
+
+  Status = GetComponentInfo (FLASH_MAP_SIG_KEYHASH, &OemKeyHashCompBase, NULL);
+  if (EFI_ERROR(Status)) {
+    return EFI_NOT_FOUND;
+  }
+
+  // Check used length before copying to temporary memory
+  OemKeyHashComp = (HASH_STORE_TABLE *) OemKeyHashCompBase;
+  LdrKeyHashBlob = (HASH_STORE_TABLE *) LdrGlobal->HashStorePtr;
+  OemKeyHashUsedLength  = OemKeyHashComp->UsedLength;
+  if (OemKeyHashUsedLength > LdrKeyHashBlob->TotalLength - LdrKeyHashBlob->UsedLength) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+  // Copy to temporary memory
+  OemKeyHashBlob = (HASH_STORE_TABLE *)((UINT8 *)LdrKeyHashBlob + LdrKeyHashBlob->UsedLength);
+  CopyMem (OemKeyHashBlob, (UINT8 *)OemKeyHashComp, OemKeyHashUsedLength);
+
+  // Check the header length
+  KeyHashSize = OemKeyHashUsedLength - OemKeyHashBlob->HeaderLength;
+  if (KeyHashSize <= 0) {
+    return EFI_UNSUPPORTED;
+  }
+
+  // Copy anthentication info to stack
+  if (!FeaturePcdGet (PcdVerifiedBootEnabled)) {
+    Status = EFI_SUCCESS;
+  } else {
+    CopyMem (AuthInfo, (UINT8 *)OemKeyHashComp + OemKeyHashUsedLength, sizeof(AuthInfo));
+    SignHdr   = (SIGNATURE_HDR *) AuthInfo;
+    PubKeyHdr = (PUB_KEY_HDR *)((UINT8 *)SignHdr + sizeof(SIGNATURE_HDR) + SignHdr->SigSize);
+    Status = DoRsaVerify ((UINT8 *)OemKeyHashBlob, OemKeyHashBlob->UsedLength,
+                          HASH_USAGE_PUBKEY_MASTER, SignHdr, PubKeyHdr, NULL, NULL);
+  }
+  if (EFI_ERROR (Status)) {
+    return EFI_SECURITY_VIOLATION;
+  }
+
+  // Append hash to the end and adjust used length
+  CopyMem ((UINT8 *)OemKeyHashBlob, (UINT8 *)OemKeyHashBlob + OemKeyHashBlob->HeaderLength, KeyHashSize);
+  LdrKeyHashBlob->UsedLength += KeyHashSize;
+
+  return EFI_SUCCESS;
+}
+
+/**
   Load configuration data.
 
   This function will find external and internal configuration data,
@@ -119,8 +189,7 @@ CreateConfigDatabase (
   CDATA_BLOB               *CfgBlob;
   UINT8                    *ExtCfgAddPtr;
   UINT8                    *IntCfgAddPtr;
-  UINT8                    *SigPtr;
-  UINT8                    *KeyPtr;
+  PUB_KEY_HDR              *PubKeyHdr;
   SIGNATURE_HDR            *SignHdr;
   UINT32                    CfgDataBase;
   UINT32                    CfgDataLength;
@@ -152,13 +221,11 @@ CreateConfigDatabase (
     if (!EFI_ERROR (Status)) {
       if (FeaturePcdGet (PcdVerifiedBootEnabled)) {
         // Verify CFG public key
-        CfgBlob = (CDATA_BLOB *)ExtCfgAddPtr;
-        SigPtr  =  (UINT8 *) CfgBlob + CfgBlob->UsedLength;
-        SignHdr    = (SIGNATURE_HDR *) SigPtr;
-        KeyPtr  = (UINT8 *)SignHdr + sizeof(SIGNATURE_HDR) + SignHdr->SigSize ;
-
-        Status  = DoRsaVerify ((UINT8 *)CfgBlob, CfgBlob->UsedLength, COMP_TYPE_PUBKEY_CFG_DATA,
-                    SignHdr, (PUB_KEY_HDR *) KeyPtr, NULL, Stage1bHob->ConfigDataHash);
+        CfgBlob   = (CDATA_BLOB *)ExtCfgAddPtr;
+        SignHdr   = (SIGNATURE_HDR *)((UINT8 *) CfgBlob + CfgBlob->UsedLength);
+        PubKeyHdr = (PUB_KEY_HDR *)((UINT8 *)SignHdr + sizeof(SIGNATURE_HDR) + SignHdr->SigSize);
+        Status  = DoRsaVerify ((UINT8 *)CfgBlob, CfgBlob->UsedLength, HASH_USAGE_PUBKEY_CFG_DATA,
+                    SignHdr, PubKeyHdr, NULL, Stage1bHob->ConfigDataHash);
         if (EFI_ERROR (Status)) {
           DEBUG ((DEBUG_INFO, "EXT CFG Data ignored ... %r\n", Status));
           ExtCfgAddPtr = NULL;
@@ -272,6 +339,9 @@ SecStartup2 (
 
   // Perform pre-config board init
   BoardInit (PreConfigInit);
+
+  Status = AppendHashStore (LdrGlobal);
+  DEBUG ((DEBUG_INFO,  "Append public key hash into store: %r\n", Status));
 
   CreateConfigDatabase (LdrGlobal, &Stage1bHob);
 
