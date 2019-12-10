@@ -19,7 +19,7 @@
 
   @param[in]  Data            Data buffer pointer.
   @param[in]  Length          Data buffer size.
-  @param[in]  ComponentType   Component type.
+  @param[in]  Usage           Hash usage.
   @param[in]  Signature       Signature header for singanture data.
   @param[in]  PubKeyHdr       Public key header for key data
   @param[in]  PubKeyHash      Public key hash value when ComponentType is not used.
@@ -36,7 +36,7 @@ RETURN_STATUS
 DoRsaVerify (
   IN CONST UINT8           *Data,
   IN       UINT32           Length,
-  IN       UINT8            ComponentType,
+  IN       HASH_COMP_USAGE  Usage,
   IN CONST SIGNATURE_HDR   *SignatureHdr,
   IN       PUB_KEY_HDR     *PubKeyHdr,
   IN       UINT8           *PubKeyHash      OPTIONAL,
@@ -53,7 +53,7 @@ DoRsaVerify (
   }
 
   // Verify public key first
-  Status = DoHashVerify (PublicKey->KeyData, RSA_MOD_SIZE + RSA_E_SIZE, HASH_TYPE_SHA256, ComponentType, PubKeyHash);
+  Status = DoHashVerify (PublicKey->KeyData, RSA_MOD_SIZE + RSA_E_SIZE, Usage, HASH_TYPE_SHA256, PubKeyHash);
   if (RETURN_ERROR (Status)) {
     return Status;
   }
@@ -66,35 +66,31 @@ DoRsaVerify (
   }
 
   if(SignatureHdr->SigType == SIGNING_TYPE_RSA_PKCS_1_5) {
-
     Status = RsaVerify_Pkcs_1_5 (PublicKey, SignatureHdr, Digest);
-    if (RETURN_ERROR (Status)) {
-      DEBUG_CODE_BEGIN();
-
-      DEBUG ((DEBUG_INFO, "RSA Verification Failed!\n"));
-
-      DEBUG ((DEBUG_INFO, "First 32Bytes Input Data\n"));
-      DumpHex (2, 0, SHA256_DIGEST_SIZE, (VOID *)Data);
-
-      DEBUG ((DEBUG_INFO, "Last 32Bytes Input Data\n"));
-      DumpHex (2, 0, SHA256_DIGEST_SIZE, (VOID *) (Data + Length - 32));
-
-      DEBUG ((DEBUG_INFO, "Image Digest\n"));
-      DumpHex (2, 0, SHA256_DIGEST_SIZE, (VOID *)Digest);
-
-      DEBUG ((DEBUG_INFO, "Signature\n"));
-      DumpHex (2, 0, RSA2048_NUMBYTES, (VOID *)(SignatureHdr->Signature));
-
-      DEBUG ((DEBUG_INFO, "Public Key\n"));
-      DumpHex (2, 0, RSA_MOD_SIZE + RSA_E_SIZE + sizeof (UINT32), PubKeyHdr->KeyData);
-
-      DEBUG_CODE_END();
-
-    } else {
-      DEBUG ((DEBUG_INFO, "RSA Verification Success!\n"));
-    }
   } else {
-    return RETURN_UNSUPPORTED;
+    Status = RETURN_UNSUPPORTED;
+  }
+
+  DEBUG ((DEBUG_INFO, "RSA  verification for usage (0x%08X): %r\n", Usage, Status));
+  if (RETURN_ERROR (Status)) {
+    DEBUG_CODE_BEGIN();
+
+    DEBUG ((DEBUG_INFO, "First 32Bytes Input Data\n"));
+    DumpHex (2, 0, SHA256_DIGEST_SIZE, (VOID *)Data);
+
+    DEBUG ((DEBUG_INFO, "Last 32Bytes Input Data\n"));
+    DumpHex (2, 0, SHA256_DIGEST_SIZE, (VOID *) (Data + Length - 32));
+
+    DEBUG ((DEBUG_INFO, "Image Digest\n"));
+    DumpHex (2, 0, SHA256_DIGEST_SIZE, (VOID *)Digest);
+
+    DEBUG ((DEBUG_INFO, "Signature\n"));
+    DumpHex (2, 0, RSA2048_NUMBYTES, (VOID *)(SignatureHdr->Signature));
+
+    DEBUG ((DEBUG_INFO, "Public Key\n"));
+    DumpHex (2, 0, RSA_MOD_SIZE + RSA_E_SIZE + sizeof (UINT32), PubKeyHdr->KeyData);
+
+    DEBUG_CODE_END();
   }
 
   return Status;

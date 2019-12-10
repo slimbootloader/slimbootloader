@@ -638,3 +638,55 @@ GetDeviceAddr (
   }
   return DeviceBase;
 }
+
+/**
+  Match a given hash with the ones in hash store.
+
+  @param[in]  Usatge      Hash usage.
+  @param[in]  HashData    Hash data pointer.
+  @param[in]  HashAlg     Hash algorithm.
+
+  @retval RETURN_SUCCESS             Found a match in hash store.
+  @retval RETURN_INVALID_PARAMETER   HashData is NULL.
+  @retval RETURN_NOT_FOUND           Hash data is not found.
+
+**/
+RETURN_STATUS
+MatchHashInStore (
+  IN       UINT32           Usage,
+  IN       UINT8            HashAlg,
+  IN       UINT8           *HashData
+  )
+{
+  HASH_STORE_TABLE    *HashStorePtr;
+  HASH_STORE_DATA     *HashEntryData;
+  UINT8               *HashEntryPtr;
+  UINT8               *HashEndPtr;
+  EFI_STATUS           Status;
+
+  if (HashData == NULL) {
+    return RETURN_INVALID_PARAMETER;
+  }
+
+  HashStorePtr = (HASH_STORE_TABLE *) GetHashStorePtr();
+  if (HashStorePtr == NULL) {
+    return RETURN_NOT_FOUND;
+  }
+
+  Status = RETURN_NOT_FOUND;
+  HashEntryPtr = HashStorePtr->Data;
+  HashEndPtr   = (UINT8 *) HashStorePtr +  HashStorePtr->UsedLength;
+  while (HashEntryPtr < HashEndPtr) {
+    HashEntryData = (HASH_STORE_DATA *) HashEntryPtr;
+    if (((HashEntryData->Usage & Usage) != 0) && (HashEntryData->HashAlg == HashAlg)) {
+      // Usage and hash type matched, check hash now
+      if (CompareMem (HashData, HashEntryData->Digest, HashEntryData->DigestLen) == 0) {
+        Status = RETURN_SUCCESS;
+        break;
+      }
+    }
+    HashEntryPtr +=  sizeof(HASH_STORE_DATA) + HashEntryData->DigestLen;
+  }
+
+  return Status;
+}

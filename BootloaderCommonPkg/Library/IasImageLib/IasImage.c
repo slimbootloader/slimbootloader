@@ -104,8 +104,8 @@ IsIasImageValid (
   }
 
 
-  Status = DoRsaVerify ((CONST UINT8 *)Hdr, ((UINT32)IAS_PAYLOAD_END (Hdr)) - ((UINT32)Hdr), COMP_TYPE_PUBKEY_OS,
-                         SignHdr,  PubKeyHdr, NULL, ImageHash);
+  Status = DoRsaVerify ((CONST UINT8 *)Hdr, ((UINT32)IAS_PAYLOAD_END (Hdr)) - ((UINT32)Hdr),
+                         HASH_USAGE_PUBKEY_OS, SignHdr, PubKeyHdr, NULL, ImageHash);
   if (EFI_ERROR (Status) != EFI_SUCCESS) {
     DEBUG ((DEBUG_ERROR, "IAS image verification failed!\n"));
     return NULL;

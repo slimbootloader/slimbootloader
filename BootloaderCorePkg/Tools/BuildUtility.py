@@ -65,6 +65,44 @@ class FLASH_REGION_TYPE:
     ALL          = 0x6
     MAX          = 0x7
 
+IPP_CRYPTO_OPTIMIZATION_MASK = {
+    # Opt Type        : Mask
+    "SHA256_V8"       : 0x0001,
+    "SHA256_NI"       : 0x0002,
+    "SHA384_W7"       : 0x0004,
+    "SHA384_G9"       : 0x0008,
+    }
+
+IPP_CRYPTO_ALG_MASK = {
+    # Hash_type      : Mask
+    "SHA1"           : 0x0001,
+    "SHA2_256"       : 0x0002,
+    "SHA2_384"       : 0x0004,
+    "SHA2_512"       : 0x0008,
+    "SM3_256"        : 0x0010
+    }
+
+HASH_USAGE = {
+    'STAGE_1B'            : (1<<0),
+    'STAGE_2'             : (1<<1),
+    'PAYLOAD'             : (1<<2),
+    'PAYLOAD_FWU'         : (1<<3),
+    'PUBKEY_MASTER'       : (1<<8),
+    'PUBKEY_CFG_DATA'     : (1<<9),
+    'PUBKEY_FWU'          : (1<<10),
+    'PUBKEY_OS'           : (1<<11),
+    'PUBKEY_CONT_DEF'     : (1<<12),
+}
+
+class RsaSignature (Structure):
+    _pack_ = 1
+    _fields_ = [
+        ('Signature',  ARRAY(c_uint8, 256)),
+        ('Identifier', c_uint32),
+        ('PubKeyMod',  ARRAY(c_uint8, 256)),
+        ('PubKeyExp',  ARRAY(c_uint8, 4)),
+        ('Padding',    ARRAY(c_uint8, 8)),
+        ]
 
 class UcodeHeader(Structure):
     _pack_ = 1
@@ -117,7 +155,7 @@ class HashStoreData(Structure):
 class HashStoreTable(Structure):
 
     HASH_STORE_SIGNATURE    = b'_HS_'
-    HASH_STORE_MAX_IDX_NUM  = 7         #STAGE1B.hash, STAGE2.hash, PAYLOAD.hash, FWUPDATE.hash, CFGKEY.hash, FWUKEY.hash, OSKEY.hash
+    HASH_STORE_MAX_IDX_NUM  = 5         #STAGE1B.hash, STAGE2.hash, PAYLOAD.hash, FWUPDATE.hash, MSTKEY.hash
 
     _pack_ = 1
     _fields_ = [
@@ -283,6 +321,31 @@ def get_payload_list (payloads):
         pld_lst.append(dict(pld_tmp))
 
     return pld_lst
+
+
+def gen_pub_key_hash_store (signing_key, pub_key_hash_list, hash_alg, pub_key_dir, out_file):
+    # Build key hash blob
+    key_hash_buf = bytearray (HashStoreTable())
+    idx = 0
+    for usage, key_file in pub_key_hash_list:
+        pub_key_file = os.path.dirname(out_file) + '/PUBKEY%02d.bin' % idx
+        gen_pub_key (os.path.join(pub_key_dir, key_file), pub_key_file)
+        hash_data = gen_hash_file (pub_key_file, hash_alg, None, True)
+        key_hash_entry = HashStoreData()
+        key_hash_entry.Usage     = usage
+        key_hash_entry.HashAlg   = HASH_TYPE_VALUE[hash_alg]
+        key_hash_entry.DigestLen = len(hash_data)
+        key_hash_buf.extend (bytearray(key_hash_entry) + hash_data)
+        idx += 1
+    hash_store_table = HashStoreTable.from_buffer(key_hash_buf)
+    hash_store_table.UsedLength  = len(key_hash_buf)
+    hash_store_table.TotalLength = hash_store_table.UsedLength
+    gen_file_from_object (out_file, key_hash_buf)
+
+    # Sign the key hash
+    if signing_key:
+        rsa_sign_file (signing_key, None, hash_alg, out_file, out_file + '.sig', True, True)
+        shutil.copy(out_file + '.sig', out_file)
 
 
 def gen_ias_file (rel_file_path, file_space, out_file):
@@ -505,8 +568,12 @@ def gen_hash_file (src_path, hash_type, hash_path = '', is_key = False):
         ho = hashlib.sha256(di)
     else:
         raise Exception ("Unsupported hash type provided!")
-    with open(hash_path,'wb') as fo:
-        fo.write(ho.digest())
+    hash = ho.digest()
+    if hash_path:
+        with open(hash_path,'wb') as fo:
+            fo.write(hash)
+    return hash
+
 
 def align_pad_file (src, dst, val, mode = STITCH_OPS.MODE_FILE_ALIGN, pos = STITCH_OPS.MODE_POS_TAIL):
     fi = open(src, 'rb')

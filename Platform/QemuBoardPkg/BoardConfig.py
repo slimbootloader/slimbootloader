@@ -14,7 +14,7 @@ import sys
 
 sys.dont_write_bytecode = True
 sys.path.append (os.path.join('..', '..'))
-from BuildLoader import BaseBoard, STITCH_OPS
+from BuildLoader import BaseBoard, STITCH_OPS, HASH_USAGE
 
 class Board(BaseBoard):
 
@@ -65,10 +65,9 @@ class Board(BaseBoard):
         # BIT0:Serial  BIT1:GFX
         self.CONSOLE_OUT_DEVICE_MASK = 0x00000001
 
-        # OS_PK | FWU_PK | CFG_PK | FWU_PLD | PLD | Stage2 | Stage1B
-        self.VERIFIED_BOOT_HASH_MASK  = 0x000000D7
-        if self.ENABLE_FWU:
-            self.VERIFIED_BOOT_HASH_MASK  |= 0x00000028
+        # FWU_PLD | PLD | Stage2 | Stage1B
+        # Let Stage1A verifies Stage1B
+        self.VERIFIED_BOOT_HASH_MASK  = 0x000000F
 
         self.STAGE1B_XIP          = 0
 
@@ -80,6 +79,7 @@ class Board(BaseBoard):
         self.EPAYLOAD_SIZE        = 0x0020D000
         self.PAYLOAD_SIZE         = 0x00020000
         self.CFGDATA_SIZE         = 0x00001000
+        self.KEYHASH_SIZE         = 0x00001000
         self.VARIABLE_SIZE        = 0x00002000
         self.SBLRSVD_SIZE         = 0x00001000
         self.FWUPDATE_SIZE        = 0x00018000 if self.ENABLE_FWU else 0
@@ -156,6 +156,18 @@ class Board(BaseBoard):
         ]
         return dsc_libs
 
+    def GetKeyHashList (self):
+        # Define a set of new key used for different purposes
+        # The key is either public key PEM format or private key PEM format
+        pub_key_list = [
+          (
+            # Use a single test key
+            HASH_USAGE['PUBKEY_CFG_DATA'] | HASH_USAGE['PUBKEY_FWU'] | HASH_USAGE['PUBKEY_OS'] | HASH_USAGE['PUBKEY_CONT_DEF'],
+            'TestSigningPrivateKey.pem'
+          ),
+        ]
+        return pub_key_list
+
     def GetContainerList (self):
         container_list = []
         container_list.append ([
@@ -212,6 +224,7 @@ class Board(BaseBoard):
                     ('STAGE1B_A.fd' ,  compress  , self.STAGE1B_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
                     ('FWUPDATE.bin' ,  'Lzma'    , self.FWUPDATE_SIZE, fwu_mode,                 STITCH_OPS.MODE_POS_TAIL),
                     ('CFGDATA.bin'  ,  ''        , self.CFGDATA_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
+                    ('KEYHASH.bin'  ,  ''        , self.KEYHASH_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
                     ]
                 ),
                 ('REDUNDANT_B.bin', [
@@ -219,6 +232,7 @@ class Board(BaseBoard):
                     ('STAGE1B_B.fd' ,  compress  , self.STAGE1B_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
                     ('FWUPDATE.bin' ,  'Lzma'    , self.FWUPDATE_SIZE, fwu_mode,                 STITCH_OPS.MODE_POS_TAIL),
                     ('CFGDATA.bin'  , ''         , self.CFGDATA_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
+                    ('KEYHASH.bin'  ,  ''        , self.KEYHASH_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
                     ]
                 ),
                 ('TOP_SWAP_A.bin', [

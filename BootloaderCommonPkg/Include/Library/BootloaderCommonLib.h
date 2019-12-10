@@ -120,7 +120,6 @@ GetComponentHash (
   OUT       UINT8            *HashType
   );
 
-
 /**
   Returns the pointer to the Flash Map.
 
@@ -554,6 +553,25 @@ VOID *
 EFIAPI
 GetHashStorePtr (
   VOID
+  );
+
+/**
+  Match a given hash with the ones in hash store.
+
+  @param[in]  Usage       Hash usage.
+  @param[in]  HashData    Hash data pointer.
+  @param[in]  HashAlg     Hash algorithm.
+
+  @retval RETURN_SUCCESS             Found a match in hash store.
+  @retval RETURN_INVALID_PARAMETER   HashData is NULL.
+  @retval RETURN_NOT_FOUND           Hash data is not found.
+
+**/
+RETURN_STATUS
+MatchHashInStore (
+  IN       UINT32           Usage,
+  IN       UINT8            HashAlg,
+  IN       UINT8           *HashData
   );
 
 #endif
