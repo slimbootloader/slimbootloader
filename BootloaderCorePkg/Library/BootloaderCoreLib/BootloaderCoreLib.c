@@ -11,7 +11,6 @@
 #include <Library/DebugLib.h>
 #include <Library/HobLib.h>
 #include <Library/BootloaderCoreLib.h>
-#include <HashStore.h>
 #include <Guid/FlashMapInfoGuid.h>
 
 /**

@@ -18,67 +18,6 @@
 #include <Guid/LoaderPlatformInfoGuid.h>
 
 /**
-  Get the component hash data by the component type
-
-  @param[in]  ComponentType   Component type.
-  @param[out] HashData        Hash data pointer corresponding Component type.
-  @param[out] HashAlg         Hash Type for Hash store.
-
-  @retval RETURN_SUCCESS             Get hash data succeeded.
-  @retval RETURN_UNSUPPORTED         Hash component type is not supported.
-  @retval RETURN_NOT_FOUND           Hash data is not found.
-  @retval RETURN_INVALID_PARAMETER   HashData is NULL.
-
-**/
-RETURN_STATUS
-GetComponentHash (
-  IN        UINT8            ComponentType,
-  OUT CONST UINT8            **HashData,
-  OUT       UINT8            *HashAlg
-  )
-{
-  VOID                       *GuidHob;
-  HASH_STORE_TABLE           *PayloadKeyHash;
-  HASH_STORE_DATA            *KeyHashData;
-  UINT8                      *KeyHashDataPtr;
-  UINT8                      *PayloadKeyEndPtr;
-
-  if ((HashData == NULL) || (HashAlg == NULL)) {
-    return RETURN_INVALID_PARAMETER;
-  }
-
-  //
-  // Get public key hash from HOB
-  //
-  GuidHob = GetNextGuidHob (&gPayloadKeyHashGuid, GetHobList());
-  ASSERT (GuidHob != NULL);
-
-  *HashData = NULL;
-  PayloadKeyHash = (HASH_STORE_TABLE *)GET_GUID_HOB_DATA (GuidHob);
-  KeyHashDataPtr =  (UINT8 *) PayloadKeyHash->Data;
-  PayloadKeyEndPtr = (UINT8 *) PayloadKeyHash +  PayloadKeyHash->UsedLength;
-
- while (KeyHashDataPtr < PayloadKeyEndPtr) {
-    KeyHashData = (HASH_STORE_DATA *) KeyHashDataPtr;
-    if (KeyHashData->Usage & (1 << ComponentType)) {
-     // Component entry found
-      break;
-    }
-
-    KeyHashDataPtr =    (UINT8 *)KeyHashData->Digest +  KeyHashData->DigestLen;
-  }
-  if (KeyHashDataPtr == PayloadKeyEndPtr) {
-    DEBUG ((DEBUG_ERROR, "NOT found hash data for component type %d!\n", ComponentType));
-    return EFI_NOT_FOUND;
-  }
-
-  *HashData = KeyHashData->Digest;
-  *HashAlg  = KeyHashData->HashAlg;
-
-  return RETURN_SUCCESS;
-}
-
-/**
   Returns the pointer to the HOB list.
 
   If the pointer to the HOB list is NULL, then ASSERT().
@@ -301,39 +240,6 @@ GetCurrentBootPartition (
   return LoaderPlatformInfo->BootPartition;
 }
 
-/**
-  Gets component information from the flash map.
-
-  This function will look for the component based on the input signature
-  in the flash map, if found, will return the base address and size of the component.
-
-  @param[in]  Signature     Signature of the component information required
-  @param[out] Base          Base address of the component
-  @param[out] Size          Size of the component
-
-  @retval    EFI_SUCCESS    Found the component with the matching signature.
-  @retval    EFI_NOT_FOUND  Component with the matching signature not found.
-
-**/
-EFI_STATUS
-EFIAPI
-GetComponentInfo (
-  IN  UINT32     Signature,
-  OUT UINT32     *Base,
-  OUT UINT32     *Size
-  )
-{
-  EFI_STATUS            Status;
-
-  if (GetCurrentBootPartition() == 1) {
-    Status = GetComponentInfoByPartition (Signature, TRUE, Base, Size);
-  } else {
-    Status = GetComponentInfoByPartition (Signature, FALSE, Base, Size);
-  }
-
-  return Status;
-}
-
 
 /**
   Returns the current stage of Bootloader execution.
@@ -405,4 +311,23 @@ GetContainerListPtr (
   PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)PcdGet32 (PcdGlobalDataAddress);
 
   return PayloadGlobalDataPtr->ContainerList;
+}
+
+/**
+  This function retrieves hash store pointer.
+
+  @retval    The hash store pointer.
+
+**/
+VOID *
+EFIAPI
+GetHashStorePtr (
+  VOID
+  )
+{
+  PAYLOAD_GLOBAL_DATA     *PayloadGlobalDataPtr;
+
+  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)PcdGet32 (PcdGlobalDataAddress);
+
+  return PayloadGlobalDataPtr->HashStorePtr;
 }

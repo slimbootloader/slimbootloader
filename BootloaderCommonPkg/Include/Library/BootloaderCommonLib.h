@@ -13,6 +13,7 @@
 #include <Guid/FlashMapInfoGuid.h>
 #include <Guid/LoaderPlatformDataGuid.h>
 #include <Guid/DeviceTableHobGuid.h>
+#include <Guid/KeyHashGuid.h>
 
 #define  STACK_DEBUG_FILL_PATTERN     0x5AA55AA5
 #define  UEFI_PAYLOAD_ID_SIGNATURE    SIGNATURE_32('U', 'E', 'F', 'I')
@@ -540,6 +541,18 @@ GetDeviceAddr (
 VOID *
 EFIAPI
 GetContainerListPtr (
+  VOID
+  );
+
+/**
+  This function retrieves hash store pointer.
+
+  @retval    The hash store pointer.
+
+**/
+VOID *
+EFIAPI
+GetHashStorePtr (
   VOID
   );
 

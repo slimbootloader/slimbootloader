@@ -380,6 +380,104 @@ GetComponentInfoByPartition (
   return Status;
 }
 
+/**
+  Gets component information from the flash map.
+
+  This function will look for the component based on the input signature
+  in the flash map, if found, will return the base address and size of the component.
+
+  @param[in]  Signature     Signature of the component information required
+  @param[out] Base          Base address of the component
+  @param[out] Size          Size of the component
+
+  @retval    EFI_SUCCESS    Found the component with the matching signature.
+  @retval    EFI_NOT_FOUND  Component with the matching signature not found.
+
+**/
+EFI_STATUS
+EFIAPI
+GetComponentInfo (
+  IN  UINT32     Signature,
+  OUT UINT32     *Base,
+  OUT UINT32     *Size
+)
+{
+  EFI_STATUS            Status;
+
+  if (GetCurrentBootPartition() == 1) {
+    Status = GetComponentInfoByPartition (Signature, TRUE, Base, Size);
+  } else {
+    Status = GetComponentInfoByPartition (Signature, FALSE, Base, Size);
+  }
+
+  return Status;
+}
+
+/**
+  Get the component hash data by the component type.
+
+  @param[in]  ComponentType   Component type.
+  @param[out] HashData        Hash data pointer corresponding Component type.
+  @param[out] HashAlg         Hash Alg for Hash store.
+
+  @retval RETURN_SUCCESS             Get hash data succeeded.
+  @retval RETURN_UNSUPPORTED         Hash component type is not supported.
+  @retval RETURN_NOT_FOUND           Hash data is not found.
+  @retval RETURN_INVALID_PARAMETER   HashData is NULL.
+
+**/
+RETURN_STATUS
+GetComponentHash (
+  IN        UINT8            ComponentType,
+  OUT CONST UINT8            **HashData,
+  OUT       UINT8            *HashAlg
+  )
+{
+  HASH_STORE_TABLE    *HashStorePtr;
+  UINT8                HashIndex;
+  HASH_STORE_DATA     *HashEntryData;
+  UINT8               *HashEntryPtr;
+  UINT8               *HashEndPtr;
+
+  if ((HashData == NULL) || (HashAlg == NULL)) {
+    return RETURN_INVALID_PARAMETER;
+  }
+
+  HashIndex = ComponentType;
+  *HashData = NULL;
+  if (HashIndex >= COMP_TYPE_INVALID) {
+    return RETURN_UNSUPPORTED;
+  }
+
+  HashStorePtr = (HASH_STORE_TABLE *) GetHashStorePtr();
+  if (HashStorePtr == NULL) {
+    return RETURN_NOT_FOUND;
+  }
+
+  HashEntryPtr = HashStorePtr->Data;
+  HashEndPtr   = (UINT8 *) HashStorePtr +  HashStorePtr->UsedLength;
+
+  while (HashEntryPtr < HashEndPtr) {
+
+    HashEntryData = (HASH_STORE_DATA *) HashEntryPtr;
+    if(HashEntryData->Usage & (1 << HashIndex)){
+      //Hash Entry found
+      break;
+    } else {
+      HashEntryPtr +=  sizeof(HASH_STORE_DATA) + HashEntryData->DigestLen;
+    }
+  }
+
+  if (HashEntryPtr == HashEndPtr){
+    return RETURN_NOT_FOUND;
+  } else {
+    *HashData = (UINT8 *)HashEntryData->Digest;
+    *HashAlg  = HashEntryData->HashAlg;
+  }
+
+  return RETURN_SUCCESS;
+}
+
 
 /**
   Get region size from flash map.
@@ -540,4 +638,3 @@ GetDeviceAddr (
   }
   return DeviceBase;
 }
-

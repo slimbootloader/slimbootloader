@@ -29,6 +29,7 @@ typedef struct {
   VOID             *CfgDataPtr;
   VOID             *DeviceTable;
   VOID             *ContainerList;
+  VOID             *HashStorePtr;
   UINT32           LdrFeatures;
   BL_PERF_DATA     PerfData;
 } PAYLOAD_GLOBAL_DATA;

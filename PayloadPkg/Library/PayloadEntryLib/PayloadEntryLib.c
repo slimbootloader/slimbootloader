@@ -20,9 +20,7 @@
 #include <Library/DebugLogBufferLib.h>
 #include <Library/DebugPrintErrorLevelLib.h>
 #include <Library/ContainerLib.h>
-#include <Guid/BootLoaderServiceGuid.h>
 #include <Guid/BootLoaderVersionGuid.h>
-#include <Guid/LoaderPlatformDataGuid.h>
 #include <Guid/LoaderPlatformInfoGuid.h>
 #include <Library/GraphicsLib.h>
 
@@ -218,6 +216,13 @@ SecStartup (
     GlobalDataPtr->ServiceList = &BldServicesList->ServiceList;
   }
 
+  // Get public key hash from HOB
+  GuidHob = GetNextGuidHob (&gPayloadKeyHashGuid, GetHobListPtr());
+  if (GuidHob != NULL) {
+    GlobalDataPtr->HashStorePtr = GET_GUID_HOB_DATA (GuidHob);
+  }
+
+  // Init features
   LoaderPlatformInfo = (LOADER_PLATFORM_INFO  *) GetGuidHobData (NULL, NULL, &gLoaderPlatformInfoGuid);
   if (LoaderPlatformInfo != NULL) {
     GlobalDataPtr->LdrFeatures = LoaderPlatformInfo->LdrFeatures;
