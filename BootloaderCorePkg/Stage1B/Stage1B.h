@@ -38,8 +38,6 @@
 #include <Guid/PcdDataBaseSignatureGuid.h>
 #include <Guid/LoaderPlatformDataGuid.h>
 #include <VerInfo.h>
-#include <HashStore.h>
-
 
 /**
   Continue Stage1B execution.
