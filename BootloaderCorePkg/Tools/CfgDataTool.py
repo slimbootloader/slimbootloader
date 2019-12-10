@@ -26,106 +26,6 @@ class CDATA_BLOB_HEADER(Structure):
         ('TotalLength', c_uint32),
     ]
 
-
-def PrintByteArray (Array, Indent=0, Offset=0):
-    DataArray = bytearray(Array)
-    for Idx in range(0, len(DataArray), 16):
-        HexStr = ' '.join('%02X' % Val for Val in DataArray[Idx:Idx + 16])
-        print ('{:s}{:04x}: {:s}'.format(Indent * ' ', Offset + Idx, HexStr))
-
-
-class CRsaSign:
-    def __init__(self, PrivateKey):
-        self._PriKey = PrivateKey
-        self._OpensslPath = os.path.join(
-            os.environ.get('OPENSSL_PATH', ''), 'openssl')
-
-    def _CheckOpenssl(self):
-        #
-        # Check openssl tool first
-        #
-        try:
-            Output = subprocess.check_output(
-                [self._OpensslPath, 'version'],
-                stderr=subprocess.STDOUT).decode()
-        except:
-            Output = ''
-        if not Output.startswith('OpenSSL'):
-            raise Exception(
-                "Cannot find 'openssl' tool, please make sure it is listed in PATH environment variable!")
-        return
-
-    def _GetPublicKey(self):
-
-        self._CheckOpenssl()
-
-        PrivateKey = self._PriKey
-        Output = subprocess.check_output(
-            [self._OpensslPath, 'rsa', '-pubout', '-text', '-noout', '-in',
-             '%s' % PrivateKey],
-            stderr=subprocess.STDOUT).decode()
-
-        #
-        # Extract the modulus
-        #
-        Output = Output.replace('\r', '').replace('\n', '').replace('  ', '')
-        Match = re.search('modulus(.*)publicExponent:\s+(\d+)\s+', Output)
-        if not Match:
-            raise Exception('Public key not found!')
-
-        Modulus = Match.group(1).replace(':', '')
-        Exponent = int(Match.group(2))
-
-        # Remove the '00' from the front if the MSB is 1
-        if (len(Modulus) != 512):
-            Modulus = Modulus[2:]
-
-        Mod = bytearray.fromhex(Modulus)
-        Exp = bytearray.fromhex('{:08x}'.format(Exponent))
-
-        if (len(Mod) != 256):
-            raise Exception('Unsupported modulus length!')
-
-        Key = Mod + Exp
-
-        return Key
-
-    def RsaSignFile(self, InFile, OutFile, IncDat=False, IncKey=False):
-        #
-        # Generate public key
-        #
-        PubKey = self._GetPublicKey()
-
-        CmdLine = os.path.join(os.environ.get('OPENSSL_PATH', ''), 'openssl')
-        x = subprocess.call([
-            self._OpensslPath, 'dgst', '-sha256', '-sign', '%s' % self._PriKey,
-            '-out', '%s' % OutFile, '%s' % InFile
-        ])
-        if x:
-            raise Exception('Failed to generate signature using openssl !')
-
-        if IncDat:
-            Bins = bytearray(open(InFile, 'rb').read())
-        else:
-            Bins = bytearray()
-
-        signature = open(OutFile, 'rb').read()
-
-        sign = SIGNATURE_HDR()
-        sign.SigSize = len(signature)
-        sign.SigType = SIGN_TYPE_SCHEME['RSA_PCKS_1_5']
-        sign.HashAlg = HASH_TYPE_VALUE['SHA2_256']
-        Bins.extend(bytearray(sign) + signature)
-
-        if IncKey:
-            publickey = PUB_KEY_HDR()
-            publickey.KeySize    = len(PubKey)
-            KeyType    = PUB_KEY_TYPE['RSA']
-
-            Bins.extend(bytearray(publickey) + PubKey)
-
-        open(OutFile, 'wb').write(Bins)
-
 class CCfgData:
 
     DEBUG_FLAG_PARSE  = (1 << 0)
@@ -240,23 +140,23 @@ class CCfgData:
             if Flag & CCfgData.DUMP_FLAG_VERBOSE:
                 if PrintData:
                     if not IsArray:
-                        PrintByteArray (CfgData[2], Indent = 5)
+                        print_bytes (CfgData[2], 5)
                     else:
                         Offset    = 0
                         DataOffset = sizeof(CCfgData.CDATA_ITEM_ARRAY)
                         BitMaskLen = ArrayInfo.HeaderSize - DataOffset
                         print("    ARRAY HEADER:")
-                        PrintByteArray (CfgData[2][:DataOffset], Indent = 5,  Offset=Offset)
+                        print_bytes (CfgData[2][:DataOffset], 5,  Offset)
                         Offset  +=  DataOffset
                         print("    ARRAY MASK:")
-                        PrintByteArray (CfgData[2][DataOffset:DataOffset+BitMaskLen], Indent = 5,  Offset=Offset)
+                        print_bytes (CfgData[2][DataOffset:DataOffset+BitMaskLen], 5, Offset)
                         Offset  +=  BitMaskLen
                         if ArrayInfo.ItemCount > 0:
                             print("    ARRAY DATA:")
                             ArrayData  = CfgData[2][ArrayInfo.HeaderSize:]
                             DataOffset = 0
                             for Idx in range (ArrayInfo.ItemCount):
-                                PrintByteArray (ArrayData[DataOffset:DataOffset + ArrayInfo.ItemSize], Offset=Offset, Indent = 5)
+                                print_bytes (ArrayData[DataOffset:DataOffset + ArrayInfo.ItemSize], 5, Offset)
                                 DataOffset += ArrayInfo.ItemSize
                                 Offset     += ArrayInfo.ItemSize
 
@@ -845,7 +745,6 @@ def CmdMerge(Args):
     print ("%d config binary files were merged successfully!" % len(Args.cfg_in_file))
 
 def CmdSign(Args):
-    RsaSign  = CRsaSign (Args.cfg_pri_key)
     Fd       = open (Args.cfg_in_file, 'rb')
     FileData = bytearray (Fd.read ())
     Fd.close ()
@@ -860,7 +759,7 @@ def CmdSign(Args):
     Fd.write (FileData)
     Fd.close ()
 
-    RsaSign.RsaSignFile (TmpFile, Args.cfg_out_file, True, True)
+    rsa_sign_file (Args.cfg_pri_key, None, 'SHA2_256', TmpFile, Args.cfg_out_file, True, True)
     if os.path.exists(TmpFile):
       os.remove(TmpFile)
 
@@ -887,7 +786,7 @@ def CmdExtract(Args):
     if Found:
         BinDat = bytearray()
         BinDat.extend (TagHdr + CondBin + DataBin)
-        PrintByteArray(BinDat)
+        print_bytes (BinDat)
         if Args.cfg_out_file != None:
             with open(Args.cfg_out_file, "wb") as Fout:
                 Fout.write (BinDat)

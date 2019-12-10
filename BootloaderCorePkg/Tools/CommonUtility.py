@@ -95,7 +95,7 @@ HASH_DIGEST_SIZE = {
             "SM3_256"     : 32,
     }
 
-def print_bytes (data, indent=0, offset=0, show_ascii = True):
+def print_bytes (data, indent=0, offset=0, show_ascii = False):
     bytes_per_line = 16
     printable = ' ' + string.ascii_letters + string.digits + string.punctuation
     str_fmt = '{:s}{:04x}: {:%ds} {:s}' % (bytes_per_line * 3)

@@ -497,10 +497,10 @@ def gen_hash_file (src_path, hash_type, hash_path = '', is_key = False):
     with open(src_path,'rb') as fi:
         di = bytearray(fi.read())
     if is_key:
-        if len(di) != (0x104 + sizeof(PUB_KEY_HDR)):
+        key_len = 0x104
+        if len(di) != (key_len + sizeof(PUB_KEY_HDR)):
             raise Exception ("Invalid public key binary!")
         di = di[sizeof(PUB_KEY_HDR):]
-        di = di[:0x100] + di[0x100:]
     if hash_type == 'SHA2_256':
         ho = hashlib.sha256(di)
     else:
