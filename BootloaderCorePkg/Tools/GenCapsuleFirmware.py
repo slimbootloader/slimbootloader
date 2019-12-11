@@ -408,7 +408,7 @@ def SignImage(RawData, OutFile, HashType, PrivKey):
 
     file_size = len(RawData)
 
-    key_type = get_rsa_priv_key_type(PrivKey, get_openssl_path())
+    key_type = get_key_type (PrivKey)
     if key_type ==  'RSA2048':
         key_size = 256
     elif key_type ==  'RSA3072':
