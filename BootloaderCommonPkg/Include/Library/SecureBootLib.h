@@ -14,6 +14,27 @@
 #define  SIG_TYPE_RSA2048_SHA256       0
 #define  SIG_TYPE_RSA3072_SHA384       1
 
+/**
+  Calculate hash API.
+
+  @param[in]  Data           Data buffer pointer.
+  @param[in]  Length         Data buffer size.
+  @param[in]  HashAlg        Specify hash algrothsm.
+  @param[in,out]  OutHash    Hash of Data buffer
+
+
+  @retval RETURN_SUCCESS             Hash Calculation succeeded.
+  @retval RETRUN_INVALID_PARAMETER   Hash parameter is not valid.
+  @retval RETURN_UNSUPPORTED         Hash Alg type is not supported.
+
+**/
+RETURN_STATUS
+CalculateHash  (
+  IN CONST UINT8          *Data,
+  IN       UINT32          Length,
+  IN       UINT8           HashAlg,
+  IN OUT   UINT8          *OutHash
+  );
 
 /**
   Verify data block hash with the built-in one.

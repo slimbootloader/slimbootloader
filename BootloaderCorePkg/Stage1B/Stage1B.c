@@ -122,7 +122,7 @@ AppendHashStore (
   UINT32               OemKeyHashCompBase;
   UINT32               OemKeyHashUsedLength;
   INT32                KeyHashSize;
-  UINT8                AuthInfo[RSA_SIGNATURE_AND_KEY_SIZE];
+  UINT8                AuthInfo[SIGNATURE_AND_KEY_SIZE_MAX];
   SIGNATURE_HDR       *SignHdr;
   PUB_KEY_HDR         *PubKeyHdr;
 
@@ -467,6 +467,7 @@ SecStartup2 (
   if (LdrGlobal->FlashMapPtr) {
     LdrGlobal->FlashMapPtr = (UINT8 *)LdrGlobal->FlashMapPtr + Delta;
   }
+
   if (LdrGlobal->LibDataPtr) {
     LibDataPtr  = (LIBRARY_DATA *) ((UINT8 *)LdrGlobal->LibDataPtr + Delta);
     AllocateLen = 0;

@@ -8,6 +8,7 @@
 #ifndef _BOOTLOADER_CORE_LIB_H_
 #define _BOOTLOADER_CORE_LIB_H_
 #include <Library/BootloaderCommonLib.h>
+#include <Library/CryptoLib.h>
 #include <Guid/FlashMapInfoGuid.h>
 
 #define  MPLD_SIGNATURE               SIGNATURE_32 ('$', 'P', 'L', 'D')
@@ -66,7 +67,7 @@ typedef struct {
   UINT32        CarTop;
   UINT32        PayloadBase;
   UINT8         ConfigDataHashValid;
-  UINT8         ConfigDataHash[32];
+  UINT8         ConfigDataHash[HASH_DIGEST_MAX];
 } STAGE1B_HOB;
 
 typedef struct {
@@ -84,14 +85,6 @@ typedef struct {
   UINT32        EntrySize;
   UINT32        Reserved;
 } MULTI_PAYLOAD_HEADER;
-
-typedef struct {
-  UINT32        Name;
-  UINT32        Offset;
-  UINT32        Size;
-  UINT32        Reserved;
-  UINT8         Hash[32];
-} MULTI_PAYLOAD_ENTRY;
 
 typedef struct {
   UINT32        Signature;

@@ -14,6 +14,56 @@
 #include <Library/BootloaderCommonLib.h>
 
 /**
+  Calculate hash API.
+
+  @param[in]  Data           Data buffer pointer.
+  @param[in]  Length         Data buffer size.
+  @param[in]  HashAlg        Specify hash algrothsm.
+  @param[in,out]  OutHash    Hash of Data buffer
+
+
+  @retval RETURN_SUCCESS             Hash Calculation succeeded.
+  @retval RETRUN_INVALID_PARAMETER   Hash parameter is not valid.
+  @retval RETURN_UNSUPPORTED         Hash Alg type is not supported.
+
+**/
+RETURN_STATUS
+CalculateHash  (
+  IN CONST UINT8          *Data,
+  IN       UINT32          Length,
+  IN       UINT8           HashAlg,
+  IN OUT   UINT8          *OutHash
+  )
+{
+  UINT8 Digest[HASH_DIGEST_MAX];
+  UINT8 DigestSize;
+  UINT8 *HashRetVal;
+
+  if(Digest != NULL){
+    if (HashAlg == HASH_TYPE_SHA256) {
+      HashRetVal = Sha256 (Data, Length, Digest);
+      DigestSize = SHA256_DIGEST_SIZE;
+    } else if (HashAlg == HASH_TYPE_SHA384) {
+      HashRetVal = Sha384 (Data, Length, Digest);
+      DigestSize = SHA384_DIGEST_SIZE;
+    } else if (HashAlg == HASH_TYPE_SM3) {
+      HashRetVal = Sm3 (Data, Length, Digest);
+      DigestSize = SM3_DIGEST_SIZE;
+    } else {
+      return RETURN_UNSUPPORTED;
+    }
+
+    if (HashRetVal == NULL){
+      return RETURN_UNSUPPORTED;
+    } else{
+      CopyMem (OutHash, Digest, DigestSize);
+    }
+  }
+  return RETURN_SUCCESS;
+}
+
+
+/**
   Verify data block hash with the built-in one.
 
   @param[in]  Data           Data buffer pointer.
@@ -41,7 +91,9 @@ DoHashVerify (
 {
   RETURN_STATUS        Status;
   RETURN_STATUS        Status2;
-  UINT8                Digest[SHA256_DIGEST_SIZE];
+  UINT8                Digest[HASH_DIGEST_MAX];
+  UINT8                DigestSize;
+
 
   if ((Data == NULL) || (HashAlg != HASH_TYPE_SHA256)) {
     return RETURN_INVALID_PARAMETER;
@@ -51,12 +103,23 @@ DoHashVerify (
     return RETURN_INVALID_PARAMETER;
   }
 
-  Sha256 (Data, Length, Digest);
+  if (HashAlg == HASH_TYPE_SHA256) {
+    DigestSize = SHA256_DIGEST_SIZE;
+  } else if (HashAlg == HASH_TYPE_SHA384) {
+    DigestSize = SHA384_DIGEST_SIZE;
+  } else {
+    return RETURN_INVALID_PARAMETER;
+  }
+
+  Status = CalculateHash (Data, Length, HashAlg, Digest);
+  if (EFI_ERROR(Status)) {
+    return RETURN_UNSUPPORTED;
+  }
 
   Status = RETURN_SECURITY_VIOLATION;
   if (Usage == 0) {
     // Compare hash with the buffer passed in
-    if (CompareMem (HashData, (VOID *)Digest, sizeof(Digest)) == 0) {
+    if (CompareMem (HashData, (VOID *)Digest, DigestSize) == 0) {
       Status = RETURN_SUCCESS;
     }
   } else {
@@ -64,7 +127,7 @@ DoHashVerify (
     Status2 = MatchHashInStore (Usage, HashAlg, Digest);
     if (!EFI_ERROR(Status2)) {
       if (HashData != NULL) {
-        CopyMem (HashData, Digest, sizeof(Digest));
+        CopyMem (HashData, Digest, DigestSize);
       }
       Status = RETURN_SUCCESS;
     }
@@ -74,17 +137,17 @@ DoHashVerify (
   if (EFI_ERROR(Status)) {
     DEBUG_CODE_BEGIN();
 
-    DEBUG ((DEBUG_INFO, "First 32Bytes Input Data\n"));
-    DumpHex (2, 0, SHA256_DIGEST_SIZE, (VOID *)Data);
+    DEBUG ((DEBUG_INFO, "First %d Bytes Input Data\n", DigestSize));
+    DumpHex (2, 0, DigestSize, (VOID *)Data);
 
-    DEBUG ((DEBUG_INFO, "Last 32Bytes Input Data\n"));
-    DumpHex (2, 0, SHA256_DIGEST_SIZE, (VOID *) (Data + Length - 32));
+    DEBUG ((DEBUG_INFO, "Last %d Bytes Input Data\n", DigestSize));
+    DumpHex (2, 0, DigestSize, (VOID *) (Data + Length - DigestSize));
 
     DEBUG ((DEBUG_INFO, "Image Digest\n"));
-    DumpHex (2, 0, SHA256_DIGEST_SIZE, (VOID *)Digest);
+    DumpHex (2, 0, DigestSize, (VOID *)Digest);
 
     DEBUG ((DEBUG_INFO, "HashStore Digest\n"));
-    DumpHex (2, 0, SHA256_DIGEST_SIZE, (VOID *)HashData);
+    DumpHex (2, 0, DigestSize, (VOID *)HashData);
 
     DEBUG_CODE_END();
   }

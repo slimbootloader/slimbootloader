@@ -17,7 +17,7 @@
 /* Wrapper function for RSAVerify to make the inferface consistent.
  * Returns non-zero on failure, 0 on success.
  */
-int VerifyRsaSignature (const void *hash, const void *rsa_n,  const void *rsa_e, const void *sig)
+int VerifyRsaSignature (CONST PUB_KEY_HDR *PubKeyHdr, CONST SIGNATURE_HDR *SignatureHdr,  CONST UINT8  *Hash)
 {
   int    sz_n;
   int    sz_e;
@@ -25,20 +25,27 @@ int VerifyRsaSignature (const void *hash, const void *rsa_n,  const void *rsa_e,
   int    sz_adj;
   int    signature_verified;
 
+  Ipp8u  *rsa_n;
+  Ipp8u  *rsa_e;
+  Ipp16u  mod_len;
   Ipp8u  bn_buf[3400];
   IppsBigNumState *bn_rsa_n;
   IppsBigNumState *bn_rsa_e;
   Ipp8u *scratch_buf;
   IppStatus err;
   IppsRSAPublicKeyState *rsa_key_s;
+  const IppsHashMethod  *pHashMethod = NULL;
 
+  rsa_n = (Ipp8u *) PubKeyHdr->KeyData;
+  rsa_e = (Ipp8u *) PubKeyHdr->KeyData + PubKeyHdr->KeySize - RSA_E_SIZE;
+  mod_len = PubKeyHdr->KeySize - RSA_E_SIZE;
 
-  err = ippsRSA_GetSizePublicKey(RSA_MOD_SIZE * 8, RSA_E_SIZE * 8, &sz_rsa);
+  err = ippsRSA_GetSizePublicKey(mod_len * 8, RSA_E_SIZE * 8, &sz_rsa);
   if (err != ippStsNoErr) {
     return err;
   }
 
-  err = ippsBigNumGetSize(RSA_MOD_SIZE / sizeof(Ipp32u), &sz_n);
+  err = ippsBigNumGetSize(mod_len / sizeof(Ipp32u), &sz_n);
   if (err != ippStsNoErr) {
     return err;
   }
@@ -60,12 +67,12 @@ int VerifyRsaSignature (const void *hash, const void *rsa_n,  const void *rsa_e,
     return ippStsNoMemErr;
   }
 
-  err = ippsBigNumInit(RSA_MOD_SIZE / sizeof(Ipp32u), bn_rsa_n);
+  err = ippsBigNumInit(mod_len / sizeof(Ipp32u), bn_rsa_n);
   if (err != ippStsNoErr) {
     return err;
   }
 
-  err = ippsSetOctString_BN(rsa_n, RSA_MOD_SIZE, bn_rsa_n);
+  err = ippsSetOctString_BN(rsa_n, mod_len, bn_rsa_n);
   if (err != ippStsNoErr) {
     return err;
   }
@@ -80,7 +87,7 @@ int VerifyRsaSignature (const void *hash, const void *rsa_n,  const void *rsa_e,
     return err;
   }
 
-  err = ippsRSA_InitPublicKey(RSA_MOD_SIZE * 8, RSA_E_SIZE * 8, rsa_key_s, sz_rsa);
+  err = ippsRSA_InitPublicKey(mod_len * 8, RSA_E_SIZE * 8, rsa_key_s, sz_rsa);
   if (err != ippStsNoErr) {
     return err;
   }
@@ -91,7 +98,20 @@ int VerifyRsaSignature (const void *hash, const void *rsa_n,  const void *rsa_e,
   }
 
   signature_verified = 0;
-  err = ippsRSAVerifyHash_PKCS1v15_rmf((const Ipp8u *)hash, (Ipp8u *)sig, &signature_verified, rsa_key_s, ippsHashMethod_SHA256 (), scratch_buf);
+  if ((SignatureHdr->HashAlg == HASH_TYPE_SHA256)
+          && (FixedPcdGet8(PcdIppHashLibSupportedMask) & IPP_HASHLIB_SHA2_256)){
+    pHashMethod = ippsHashMethod_SHA256();
+  } else if ((SignatureHdr->HashAlg == HASH_TYPE_SHA384)
+          && (FixedPcdGet8(PcdIppHashLibSupportedMask) & IPP_HASHLIB_SHA2_384)){
+     pHashMethod = ippsHashMethod_SHA384();
+  }
+
+  if (pHashMethod != NULL) {
+    err = ippsRSAVerifyHash_PKCS1v15_rmf((const Ipp8u *)Hash, (Ipp8u *)SignatureHdr->Signature, &signature_verified, rsa_key_s, pHashMethod, scratch_buf);
+  } else {
+    err = ippStsNoOperation;
+  }
+
   if (err != ippStsNoErr) {
     return err;
   }
@@ -105,14 +125,11 @@ int VerifyRsaSignature (const void *hash, const void *rsa_n,  const void *rsa_e,
 RETURN_STATUS
 RsaVerify_Pkcs_1_5 (CONST PUB_KEY_HDR *PubKeyHdr, CONST SIGNATURE_HDR *SignatureHdr,  CONST UINT8  *Hash)
 {
-  Ipp8u  *rsa_n;
-  Ipp8u  *rsa_e;
 
-  if ((SignatureHdr->SigType != SIGNING_TYPE_RSA_PKCS_1_5) || (SignatureHdr->SigSize != RSA_MOD_SIZE)) {
+  if ((SignatureHdr->SigType != SIGNING_TYPE_RSA_PKCS_1_5) ||
+                  ((SignatureHdr->SigSize != RSA2048_MOD_SIZE) && (SignatureHdr->SigSize != RSA3072_MOD_SIZE))) {
     return RETURN_INVALID_PARAMETER;
   } else {
-    rsa_n = (Ipp8u *) PubKeyHdr->KeyData;
-    rsa_e = (Ipp8u *) PubKeyHdr->KeyData + PubKeyHdr->KeySize - RSA_E_SIZE;
-    return VerifyRsaSignature (Hash, rsa_n, rsa_e, SignatureHdr->Signature) ? RETURN_SECURITY_VIOLATION : RETURN_SUCCESS ;
+    return VerifyRsaSignature (PubKeyHdr, SignatureHdr, Hash) ? RETURN_SECURITY_VIOLATION : RETURN_SUCCESS ;
   }
 }

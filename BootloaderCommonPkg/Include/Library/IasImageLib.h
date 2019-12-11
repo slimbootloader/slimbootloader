@@ -70,9 +70,10 @@ typedef struct {        /* a file (sub-image) inside a boot image */
 
 //
 // IAS Pub Key format for use
+// Supported for only RSA2048
 //
 typedef struct {
-  UINT8 Modulus[RSA_MOD_SIZE];
+  UINT8 Modulus[RSA2048_MOD_SIZE];
   UINT8 PubExp[RSA_E_SIZE];
 } IAS_PUB_KEY;
 
