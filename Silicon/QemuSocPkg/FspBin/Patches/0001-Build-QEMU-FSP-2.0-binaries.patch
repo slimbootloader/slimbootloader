@@ -1,11 +1,12 @@
-From 1f767d08ae2e79d8ff1e68eef3de925d6e8f04cb Mon Sep 17 00:00:00 2001
-From: Maurice Ma <maurice.ma@intel.com>
-Date: Sun, 26 Aug 2018 22:13:05 -0700
+From 63155b0f70454795303f0a133b4ab3a6f332649c Mon Sep 17 00:00:00 2001
+From: Aiden Park <aiden.park@intel.com>
+Date: Wed, 11 Dec 2019 10:00:41 -0800
 Subject: [PATCH] Build QEMU FSP 2.0 binaries
 
 Signed-off-by: Aiden Park <aiden.park@intel.com>
 Signed-off-by: Maurice Ma <maurice.ma@intel.com>
 ---
+ BaseTools/Source/C/Makefiles/NmakeSubdirs.py  |   2 +-
  BuildFsp.cmd                                  |  19 +
  BuildFsp.py                                   | 309 +++++++
  QemuFspPkg/BuildFv.cmd                        | 248 ++++++
@@ -43,7 +44,7 @@ Signed-off-by: Maurice Ma <maurice.ma@intel.com>
  QemuFspPkg/QemuVideo/QemuVideo.c              | 761 ++++++++++++++++++
  QemuFspPkg/QemuVideo/QemuVideo.h              | 115 +++
  QemuFspPkg/QemuVideo/QemuVideo.inf            |  56 ++
- 37 files changed, 5761 insertions(+)
+ 38 files changed, 5762 insertions(+), 1 deletion(-)
  create mode 100644 BuildFsp.cmd
  create mode 100644 BuildFsp.py
  create mode 100644 QemuFspPkg/BuildFv.cmd
@@ -82,9 +83,22 @@ Signed-off-by: Maurice Ma <maurice.ma@intel.com>
  create mode 100644 QemuFspPkg/QemuVideo/QemuVideo.h
  create mode 100644 QemuFspPkg/QemuVideo/QemuVideo.inf
 
+diff --git a/BaseTools/Source/C/Makefiles/NmakeSubdirs.py b/BaseTools/Source/C/Makefiles/NmakeSubdirs.py
+index 30a481613e..5f0236b838 100644
+--- a/BaseTools/Source/C/Makefiles/NmakeSubdirs.py
++++ b/BaseTools/Source/C/Makefiles/NmakeSubdirs.py
+@@ -33,7 +33,7 @@ def RunCommand(WorkDir=None, *Args, **kwargs):
+     if "stderr" not in kwargs:
+         kwargs["stderr"] = subprocess.STDOUT
+     if "stdout" not in kwargs:
+-        kwargs["stdout"] = subprocess.PIPE
++        kwargs["stdout"] = sys.stdout
+     p = subprocess.Popen(Args, cwd=WorkDir, stderr=kwargs["stderr"], stdout=kwargs["stdout"])
+     stdout, stderr = p.communicate()
+     message = ""
 diff --git a/BuildFsp.cmd b/BuildFsp.cmd
 new file mode 100644
-index 0000000000..15b97ad490
+index 0000000000..2fc7502318
 --- /dev/null
 +++ b/BuildFsp.cmd
 @@ -0,0 +1,19 @@
@@ -109,7 +123,7 @@ index 0000000000..15b97ad490
 +python  BuildFsp.py  %*
 diff --git a/BuildFsp.py b/BuildFsp.py
 new file mode 100644
-index 0000000000..c89fe93f38
+index 0000000000..edfe7b1340
 --- /dev/null
 +++ b/BuildFsp.py
 @@ -0,0 +1,309 @@
@@ -424,7 +438,7 @@ index 0000000000..c89fe93f38
 +    sys.exit(Main())
 diff --git a/QemuFspPkg/BuildFv.cmd b/QemuFspPkg/BuildFv.cmd
 new file mode 100644
-index 0000000000..c43b05031b
+index 0000000000..a535d68b7c
 --- /dev/null
 +++ b/QemuFspPkg/BuildFv.cmd
 @@ -0,0 +1,248 @@
@@ -678,7 +692,7 @@ index 0000000000..c43b05031b
 +echo.
 diff --git a/QemuFspPkg/FspDescription/FspDescription.inf b/QemuFspPkg/FspDescription/FspDescription.inf
 new file mode 100644
-index 0000000000..552648668e
+index 0000000000..6b32295f5f
 --- /dev/null
 +++ b/QemuFspPkg/FspDescription/FspDescription.inf
 @@ -0,0 +1,29 @@
@@ -713,7 +727,7 @@ index 0000000000..552648668e
 +  BIN|FspDescription.txt|*
 diff --git a/QemuFspPkg/FspDescription/FspDescription.txt b/QemuFspPkg/FspDescription/FspDescription.txt
 new file mode 100644
-index 0000000000..1aa7f58280
+index 0000000000..b42a4e5095
 --- /dev/null
 +++ b/QemuFspPkg/FspDescription/FspDescription.txt
 @@ -0,0 +1,2 @@
@@ -721,7 +735,7 @@ index 0000000000..1aa7f58280
 +  QEMU Q35/ICH9
 diff --git a/QemuFspPkg/FspHeader/FspHeader.aslc b/QemuFspPkg/FspHeader/FspHeader.aslc
 new file mode 100644
-index 0000000000..a3dfdf09b6
+index 0000000000..47c0b675c3
 --- /dev/null
 +++ b/QemuFspPkg/FspHeader/FspHeader.aslc
 @@ -0,0 +1,90 @@
@@ -815,10 +829,9 @@ index 0000000000..a3dfdf09b6
 +  //
 +  return (VOID*)&mTable;
 +}
-\ No newline at end of file
 diff --git a/QemuFspPkg/FspHeader/FspHeader.inf b/QemuFspPkg/FspHeader/FspHeader.inf
 new file mode 100644
-index 0000000000..c5c23500f2
+index 0000000000..d5ffe3d433
 --- /dev/null
 +++ b/QemuFspPkg/FspHeader/FspHeader.inf
 @@ -0,0 +1,49 @@
@@ -871,10 +884,9 @@ index 0000000000..c5c23500f2
 +
 +[FixedPcd]
 +  gIntelFsp2PkgTokenSpaceGuid.PcdFspMaxPatchEntry
-\ No newline at end of file
 diff --git a/QemuFspPkg/FspmInit/FspmInit.c b/QemuFspPkg/FspmInit/FspmInit.c
 new file mode 100644
-index 0000000000..c0b627a32a
+index 0000000000..07a72dc19a
 --- /dev/null
 +++ b/QemuFspPkg/FspmInit/FspmInit.c
 @@ -0,0 +1,671 @@
@@ -1551,7 +1563,7 @@ index 0000000000..c0b627a32a
 +}
 diff --git a/QemuFspPkg/FspmInit/FspmInit.h b/QemuFspPkg/FspmInit/FspmInit.h
 new file mode 100644
-index 0000000000..f7eca68b20
+index 0000000000..7d69a0ddb1
 --- /dev/null
 +++ b/QemuFspPkg/FspmInit/FspmInit.h
 @@ -0,0 +1,77 @@
@@ -1634,7 +1646,7 @@ index 0000000000..f7eca68b20
 +#endif
 diff --git a/QemuFspPkg/FspmInit/FspmInit.inf b/QemuFspPkg/FspmInit/FspmInit.inf
 new file mode 100644
-index 0000000000..97bb04c421
+index 0000000000..fce0bc4ea7
 --- /dev/null
 +++ b/QemuFspPkg/FspmInit/FspmInit.inf
 @@ -0,0 +1,67 @@
@@ -1707,7 +1719,7 @@ index 0000000000..97bb04c421
 +  TRUE
 diff --git a/QemuFspPkg/FspsInit/FspsInit.c b/QemuFspPkg/FspsInit/FspsInit.c
 new file mode 100644
-index 0000000000..dc756ac2fe
+index 0000000000..cd1024fea7
 --- /dev/null
 +++ b/QemuFspPkg/FspsInit/FspsInit.c
 @@ -0,0 +1,234 @@
@@ -1945,10 +1957,9 @@ index 0000000000..dc756ac2fe
 +  DEBUG ((DEBUG_INFO, "FspInitEntryPoint() - end\n"));
 +  return Status;
 +}
-\ No newline at end of file
 diff --git a/QemuFspPkg/FspsInit/FspsInit.h b/QemuFspPkg/FspsInit/FspsInit.h
 new file mode 100644
-index 0000000000..910010d893
+index 0000000000..5c5e2801b1
 --- /dev/null
 +++ b/QemuFspPkg/FspsInit/FspsInit.h
 @@ -0,0 +1,124 @@
@@ -2078,7 +2089,7 @@ index 0000000000..910010d893
 +#endif
 diff --git a/QemuFspPkg/FspsInit/FspsInit.inf b/QemuFspPkg/FspsInit/FspsInit.inf
 new file mode 100644
-index 0000000000..81576a878a
+index 0000000000..3744dd2e53
 --- /dev/null
 +++ b/QemuFspPkg/FspsInit/FspsInit.inf
 @@ -0,0 +1,55 @@
@@ -2139,7 +2150,7 @@ index 0000000000..81576a878a
 +  TRUE
 diff --git a/QemuFspPkg/Include/BootLoaderPlatformData.h b/QemuFspPkg/Include/BootLoaderPlatformData.h
 new file mode 100644
-index 0000000000..757f21c5d0
+index 0000000000..4ee96bbf49
 --- /dev/null
 +++ b/QemuFspPkg/Include/BootLoaderPlatformData.h
 @@ -0,0 +1,33 @@
@@ -2178,7 +2189,7 @@ index 0000000000..757f21c5d0
 +#endif
 diff --git a/QemuFspPkg/Include/ChipsetAccess.h b/QemuFspPkg/Include/ChipsetAccess.h
 new file mode 100644
-index 0000000000..0018a10cfc
+index 0000000000..7a27644eca
 --- /dev/null
 +++ b/QemuFspPkg/Include/ChipsetAccess.h
 @@ -0,0 +1,23 @@
@@ -2207,7 +2218,7 @@ index 0000000000..0018a10cfc
 +#endif
 diff --git a/QemuFspPkg/Include/FspUpd.h b/QemuFspPkg/Include/FspUpd.h
 new file mode 100644
-index 0000000000..6ddf2ed781
+index 0000000000..0845cf600c
 --- /dev/null
 +++ b/QemuFspPkg/Include/FspUpd.h
 @@ -0,0 +1,48 @@
@@ -2261,7 +2272,7 @@ index 0000000000..6ddf2ed781
 +#endif
 diff --git a/QemuFspPkg/Include/FspmUpd.h b/QemuFspPkg/Include/FspmUpd.h
 new file mode 100644
-index 0000000000..6833af61a1
+index 0000000000..5931bfdc23
 --- /dev/null
 +++ b/QemuFspPkg/Include/FspmUpd.h
 @@ -0,0 +1,108 @@
@@ -2375,7 +2386,7 @@ index 0000000000..6833af61a1
 +#endif
 diff --git a/QemuFspPkg/Include/FspsUpd.h b/QemuFspPkg/Include/FspsUpd.h
 new file mode 100644
-index 0000000000..df8a0c9a12
+index 0000000000..a109552c9f
 --- /dev/null
 +++ b/QemuFspPkg/Include/FspsUpd.h
 @@ -0,0 +1,101 @@
@@ -2482,7 +2493,7 @@ index 0000000000..df8a0c9a12
 +#endif
 diff --git a/QemuFspPkg/Include/FsptUpd.h b/QemuFspPkg/Include/FsptUpd.h
 new file mode 100644
-index 0000000000..adaaa21554
+index 0000000000..4340184d3f
 --- /dev/null
 +++ b/QemuFspPkg/Include/FsptUpd.h
 @@ -0,0 +1,101 @@
@@ -2589,7 +2600,7 @@ index 0000000000..adaaa21554
 +#endif
 diff --git a/QemuFspPkg/Include/OvmfPlatforms.h b/QemuFspPkg/Include/OvmfPlatforms.h
 new file mode 100644
-index 0000000000..57f467398b
+index 0000000000..74ce51d6ea
 --- /dev/null
 +++ b/QemuFspPkg/Include/OvmfPlatforms.h
 @@ -0,0 +1,44 @@
@@ -2639,7 +2650,7 @@ index 0000000000..57f467398b
 +#endif
 diff --git a/QemuFspPkg/Include/Q35MchIch9.h b/QemuFspPkg/Include/Q35MchIch9.h
 new file mode 100644
-index 0000000000..e86c154f18
+index 0000000000..09201f52f0
 --- /dev/null
 +++ b/QemuFspPkg/Include/Q35MchIch9.h
 @@ -0,0 +1,112 @@
@@ -2757,7 +2768,7 @@ index 0000000000..e86c154f18
 +#endif
 diff --git a/QemuFspPkg/Library/PlatformSecLib/Ia32/Chipset.inc b/QemuFspPkg/Library/PlatformSecLib/Ia32/Chipset.inc
 new file mode 100644
-index 0000000000..0ebb790c62
+index 0000000000..7c0183d1fe
 --- /dev/null
 +++ b/QemuFspPkg/Library/PlatformSecLib/Ia32/Chipset.inc
 @@ -0,0 +1,119 @@
@@ -2882,7 +2893,7 @@ index 0000000000..0ebb790c62
 +MMCFG_BASE                    EQU CPU_HEC_BASE    ; 4GB-128MB
 diff --git a/QemuFspPkg/Library/PlatformSecLib/Ia32/Ia32Nasm.inc b/QemuFspPkg/Library/PlatformSecLib/Ia32/Ia32Nasm.inc
 new file mode 100644
-index 0000000000..eab7382ed4
+index 0000000000..c50997e54b
 --- /dev/null
 +++ b/QemuFspPkg/Library/PlatformSecLib/Ia32/Ia32Nasm.inc
 @@ -0,0 +1,169 @@
@@ -3057,7 +3068,7 @@ index 0000000000..eab7382ed4
 +
 diff --git a/QemuFspPkg/Library/PlatformSecLib/Ia32/PlatformNasm.inc b/QemuFspPkg/Library/PlatformSecLib/Ia32/PlatformNasm.inc
 new file mode 100644
-index 0000000000..bdc37670bb
+index 0000000000..58acba976d
 --- /dev/null
 +++ b/QemuFspPkg/Library/PlatformSecLib/Ia32/PlatformNasm.inc
 @@ -0,0 +1,143 @@
@@ -3206,7 +3217,7 @@ index 0000000000..bdc37670bb
 +BSPApicIDSaveStart            EQU 24
 diff --git a/QemuFspPkg/Library/PlatformSecLib/Ia32/SecCoreNasm.inc b/QemuFspPkg/Library/PlatformSecLib/Ia32/SecCoreNasm.inc
 new file mode 100644
-index 0000000000..33ba7ef64b
+index 0000000000..5651e377e6
 --- /dev/null
 +++ b/QemuFspPkg/Library/PlatformSecLib/Ia32/SecCoreNasm.inc
 @@ -0,0 +1,61 @@
@@ -3273,7 +3284,7 @@ index 0000000000..33ba7ef64b
 +AP_SIPI_SWITCH_BSP          EQU   003h
 diff --git a/QemuFspPkg/Library/PlatformSecLib/Ia32/SecEntry.nasm b/QemuFspPkg/Library/PlatformSecLib/Ia32/SecEntry.nasm
 new file mode 100644
-index 0000000000..f48a1dad62
+index 0000000000..c0f2520d3f
 --- /dev/null
 +++ b/QemuFspPkg/Library/PlatformSecLib/Ia32/SecEntry.nasm
 @@ -0,0 +1,706 @@
@@ -3985,7 +3996,7 @@ index 0000000000..f48a1dad62
 +    DW  MTRR_PHYS_MASK_9
 diff --git a/QemuFspPkg/Library/PlatformSecLib/PlatformSecLib.c b/QemuFspPkg/Library/PlatformSecLib/PlatformSecLib.c
 new file mode 100644
-index 0000000000..019a640aae
+index 0000000000..f71759653c
 --- /dev/null
 +++ b/QemuFspPkg/Library/PlatformSecLib/PlatformSecLib.c
 @@ -0,0 +1,85 @@
@@ -4076,7 +4087,7 @@ index 0000000000..019a640aae
 +
 diff --git a/QemuFspPkg/Library/PlatformSecLib/PlatformSecLib.h b/QemuFspPkg/Library/PlatformSecLib/PlatformSecLib.h
 new file mode 100644
-index 0000000000..197e965dbb
+index 0000000000..0ecdfbdbdf
 --- /dev/null
 +++ b/QemuFspPkg/Library/PlatformSecLib/PlatformSecLib.h
 @@ -0,0 +1,48 @@
@@ -4130,7 +4141,7 @@ index 0000000000..197e965dbb
 +
 diff --git a/QemuFspPkg/Library/PlatformSecLib/Vtf0PlatformSecMLib.inf b/QemuFspPkg/Library/PlatformSecLib/Vtf0PlatformSecMLib.inf
 new file mode 100644
-index 0000000000..1d9a216710
+index 0000000000..edaa85303b
 --- /dev/null
 +++ b/QemuFspPkg/Library/PlatformSecLib/Vtf0PlatformSecMLib.inf
 @@ -0,0 +1,61 @@
@@ -4197,7 +4208,7 @@ index 0000000000..1d9a216710
 +  gIntelFsp2PkgTokenSpaceGuid.PcdTemporaryRamSize
 diff --git a/QemuFspPkg/Library/PlatformSecLib/Vtf0PlatformSecSLib.inf b/QemuFspPkg/Library/PlatformSecLib/Vtf0PlatformSecSLib.inf
 new file mode 100644
-index 0000000000..fbfb0cc804
+index 0000000000..d2f841ad2e
 --- /dev/null
 +++ b/QemuFspPkg/Library/PlatformSecLib/Vtf0PlatformSecSLib.inf
 @@ -0,0 +1,63 @@
@@ -4266,7 +4277,7 @@ index 0000000000..fbfb0cc804
 +  gIntelFsp2PkgTokenSpaceGuid.PcdTemporaryRamSize
 diff --git a/QemuFspPkg/Library/PlatformSecLib/Vtf0PlatformSecTLib.inf b/QemuFspPkg/Library/PlatformSecLib/Vtf0PlatformSecTLib.inf
 new file mode 100644
-index 0000000000..ca5911c023
+index 0000000000..2f80ba02d2
 --- /dev/null
 +++ b/QemuFspPkg/Library/PlatformSecLib/Vtf0PlatformSecTLib.inf
 @@ -0,0 +1,67 @@
@@ -4339,7 +4350,7 @@ index 0000000000..ca5911c023
 +
 diff --git a/QemuFspPkg/QemuFspPkg.dec b/QemuFspPkg/QemuFspPkg.dec
 new file mode 100644
-index 0000000000..29aa5d6660
+index 0000000000..8c437138ed
 --- /dev/null
 +++ b/QemuFspPkg/QemuFspPkg.dec
 @@ -0,0 +1,51 @@
@@ -4396,7 +4407,7 @@ index 0000000000..29aa5d6660
 +
 diff --git a/QemuFspPkg/QemuFspPkg.dsc b/QemuFspPkg/QemuFspPkg.dsc
 new file mode 100644
-index 0000000000..2e2d8d8c93
+index 0000000000..9eda80796b
 --- /dev/null
 +++ b/QemuFspPkg/QemuFspPkg.dsc
 @@ -0,0 +1,434 @@
@@ -4836,7 +4847,7 @@ index 0000000000..2e2d8d8c93
 +  *_GCC5_IA32_ASLDLINK_FLAGS = -no-pie
 diff --git a/QemuFspPkg/QemuFspPkg.fdf b/QemuFspPkg/QemuFspPkg.fdf
 new file mode 100644
-index 0000000000..a3047a8220
+index 0000000000..35983b0bcf
 --- /dev/null
 +++ b/QemuFspPkg/QemuFspPkg.fdf
 @@ -0,0 +1,278 @@
@@ -5120,7 +5131,7 @@ index 0000000000..a3047a8220
 +  }
 diff --git a/QemuFspPkg/QemuVideo/QemuVideo.c b/QemuFspPkg/QemuVideo/QemuVideo.c
 new file mode 100644
-index 0000000000..68217cb1ef
+index 0000000000..acf84a670b
 --- /dev/null
 +++ b/QemuFspPkg/QemuVideo/QemuVideo.c
 @@ -0,0 +1,761 @@
@@ -5887,7 +5898,7 @@ index 0000000000..68217cb1ef
 +
 diff --git a/QemuFspPkg/QemuVideo/QemuVideo.h b/QemuFspPkg/QemuVideo/QemuVideo.h
 new file mode 100644
-index 0000000000..b228ec5ad5
+index 0000000000..fd51bb4ebc
 --- /dev/null
 +++ b/QemuFspPkg/QemuVideo/QemuVideo.h
 @@ -0,0 +1,115 @@
@@ -6008,7 +6019,7 @@ index 0000000000..b228ec5ad5
 +#endif
 diff --git a/QemuFspPkg/QemuVideo/QemuVideo.inf b/QemuFspPkg/QemuVideo/QemuVideo.inf
 new file mode 100644
-index 0000000000..16023b57c1
+index 0000000000..4c6bc6a0f1
 --- /dev/null
 +++ b/QemuFspPkg/QemuVideo/QemuVideo.inf
 @@ -0,0 +1,56 @@
@@ -6069,5 +6080,5 @@ index 0000000000..16023b57c1
 +  TRUE
 +
 --
-2.17.0.windows.1
+2.20.1
 

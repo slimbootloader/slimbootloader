@@ -200,7 +200,7 @@ def BuildFspBins (fsp_dir, sbl_dir, silicon_pkg_name, flag):
     cmd = 'git am --abort'
     with open(os.devnull, 'w') as fnull:
         ret = subprocess.call(cmd.split(' '), cwd=fsp_dir, stdout=fnull, stderr=subprocess.STDOUT)
-    cmd = 'git am --whitespace=nowarn %s/0001-Build-QEMU-FSP-2.0-binaries.patch' % patch_dir
+    cmd = 'git am --keep-cr --whitespace=nowarn %s/0001-Build-QEMU-FSP-2.0-binaries.patch' % patch_dir
     ret = subprocess.call(cmd.split(' '), cwd=fsp_dir)
     if ret:
         Fatal ('Failed to apply QEMU FSP patch !')
