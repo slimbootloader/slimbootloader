@@ -21,26 +21,49 @@ import string
 from   functools import reduce
 from   ctypes import *
 
-class LZ_HEADER(Structure):
-    _pack_ = 1
-    _fields_ = [
-        ('signature',       ARRAY(c_char, 4)),
-        ('compressed_len',  c_uint32),
-        ('length',          c_uint32),
-        ('reserved',        c_uint32)
-    ]
-    _compress_alg = {
-        'LZDM' : 'Dummy',
-        'LZ4 ' : 'Lz4',
-        'LZMA' : 'Lzma',
+# Key types  defined should match with cryptolib.h
+PUB_KEY_TYPE = {
+           # key_type   : key_val
+            "RSA"       : 1,
+            "ECC"       : 2,
+            "DSA"       : 3,
     }
 
-# Reference header for Public key
-class PUB_KEY (Structure):
-    _fields_ = [
-        ('Modulus', ARRAY(c_uint8, 0)),      #RSA2K/RSA3K in bytes
-        ('PubExp',  ARRAY(c_uint8, 4)),
-        ]
+# Signing type schemes  defined should match with cryptolib.h
+SIGN_TYPE_SCHEME = {
+           # sign_type            : key_val
+            "RSA_PCKS_1_5"        : 1,
+            "RSA_PSS"             : 2,
+            "ECC"                 : 3,
+            "DSA"                 : 4,
+    }
+
+# Hash values defined should match with cryptolib.h
+HASH_TYPE_VALUE = {
+            # Hash_string : Hash_Value
+            "SHA2_256"    : 1,
+            "SHA2_384"    : 2,
+            "SHA2_512"    : 3,
+            "SM3_256"     : 4,
+    }
+
+AUTH_TYPE_HASH_VALUE = {
+            # Auth_type      : Hash_type
+            "SHA2_256"       : 1,
+            "SHA2_384"       : 2,
+            "SHA2_512"       : 3,
+            "SM3_256"        : 4,
+            "RSA2048SHA256"  : 1,
+            "RSA3072SHA384"  : 2,
+    }
+
+HASH_DIGEST_SIZE = {
+            # Hash_string : Hash_Size
+            "SHA2_256"    : 32,
+            "SHA2_384"    : 48,
+            "SHA2_512"    : 64,
+            "SM3_256"     : 32,
+    }
 
 class PUB_KEY_HDR (Structure):
     _pack_ = 1
@@ -68,31 +91,18 @@ class SIGNATURE_HDR (Structure):
     def __init__(self):
         self.Identifier = b'SIGN'
 
-# Hash values defined should match with cryptolib.h
-HASH_TYPE_VALUE = {
-# {   Hash_string:        Hash_Value}
-            "SHA2_256"    : 1,
-            "SHA2_384"    : 2,
-            "SHA2_512"    : 3,
-            "SM3_256"     : 4,
-    }
-
-AUTH_TYPE_HASH_VALUE = {
-# {   Auth_type:        Hash_type}
-            "SHA2_256"       : 1,
-            "SHA2_384"       : 2,
-            "SHA2_512"       : 3,
-            "SM3_256"        : 4,
-            "RSA2048SHA256"  : 1,
-            "RSA3072SHA384"  : 2,
-    }
-
-HASH_DIGEST_SIZE = {
-# {   Hash_string:   Hash_Size}
-            "SHA2_256"    : 32,
-            "SHA2_384"    : 48,
-            "SHA2_512"    : 64,
-            "SM3_256"     : 32,
+class LZ_HEADER(Structure):
+    _pack_ = 1
+    _fields_ = [
+        ('signature',       ARRAY(c_char, 4)),
+        ('compressed_len',  c_uint32),
+        ('length',          c_uint32),
+        ('reserved',        c_uint32)
+    ]
+    _compress_alg = {
+        'LZDM' : 'Dummy',
+        'LZ4 ' : 'Lz4',
+        'LZMA' : 'Lzma',
     }
 
 def print_bytes (data, indent=0, offset=0, show_ascii = False):
@@ -126,24 +136,6 @@ def set_bits_to_bytes (bytes, start, length, bvalue):
     update = fmt2.format(bvalue)[-length:][::-1]
     newval = oldval[:start] + update + oldval[start + length:]
     bytes[:] = value_to_bytes (int(newval[::-1], 2), len(bytes))
-
-# Key types  defined should match with cryptolib.h
-PUB_KEY_TYPE = {
-# {   key_type:   key_val}
-            "RSA"       : 1,
-            "ECC"       : 2,
-            "DSA"       : 3,
-    }
-
-# Signing type schemes  defined should match with cryptolib.h
-SIGN_TYPE_SCHEME = {
-# {   key_type:   key_val}
-            "RSA_PCKS_1_5"        : 1,
-            "RSA_PSS"             : 2,
-            "ECC"                 : 3,
-            "DSA"                 : 4,
-    }
-
 
 def bytes_to_value (bytes):
     return reduce(lambda x,y: (x<<8)|y,  bytes[::-1] )
@@ -244,6 +236,12 @@ def rsa_sign_file (priv_key, pub_key, hash_type, in_file, out_file, inc_dat = Fa
     if len(bins) != len(out_data):
         gen_file_from_object (out_file, bins)
 
+def get_key_type (in_key):
+    pub_key = gen_pub_key (in_key)
+    pub_key_hdr = PUB_KEY_HDR.from_buffer(pub_key)
+    key_type = (key for key, value in PUB_KEY_TYPE.items() if value == pub_key_hdr.KeyType).next()
+    return '%s%d' % (key_type, (pub_key_hdr.KeySize - 4) * 8)
+
 def gen_pub_key (in_key, pub_key = None):
     # Expect key to be in PEM format
     is_prv_key = False
@@ -280,11 +278,10 @@ def gen_pub_key (in_key, pub_key = None):
     modulus  = match.group(1).replace(':', '')
     exponent = int(match.group(2))
 
-    # Remove the '00' from the front if the MSB is 1
-    if (len(modulus) != 512):
-        modulus = modulus[2:]
-
     mod = bytearray.fromhex(modulus)
+    # Remove the '00' from the front if the MSB is 1
+    if mod[0] == 0 and (mod[1] & 0x80):
+        mod = mod[1:]
     exp = bytearray.fromhex('{:08x}'.format(exponent))
 
     keydata   = mod + exp
@@ -376,20 +373,3 @@ def compress (in_file, alg, out_path = '', tool_dir = ''):
 
     return out_file
 
-def get_rsa_priv_key_type (priv_key, openssl_path):
-
-    print ("get_rsa_priv_key_type info..")
-    Output = subprocess.check_output(
-            [openssl_path, 'rsa', '-pubout', '-text', '-noout', '-in',
-             '%s' % priv_key],
-            stderr=subprocess.STDOUT).decode()
-
-    Match = re.match(r'Private-Key: (.*)\n', Output, re.M|re.I)
-    temp = re.findall(r'\d+', Match.group(1))
-    key_type = list(map(int, temp))
-
-
-    priv_key_str = 'RSA' + str(key_type[0])
-    print ("Key Type: %s" % priv_key_str)
-
-    return priv_key_str
