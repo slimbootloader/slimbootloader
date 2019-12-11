@@ -397,6 +397,7 @@ def gen_meu_sbl_xml (meu_dir, src, dst):
       ("OBB",   "OBB"),
       ("FWUP",  "FWU"),
       ("CFGD",  "CFGDATA"),
+      ("KEYH",  "KEYHASH"),
       ("PLD",   "PLD"),
       ("VAR",   "VAR"),
       ("MRCD",  "MRCDATA")

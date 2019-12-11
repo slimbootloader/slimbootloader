@@ -521,6 +521,11 @@ def create_ifwi_image (ifwi_in, ifwi_out, bios_out, platform_data, non_redundant
           ('PLD'  , 'PLD'),
         ]
 
+        # optional components
+        opt_list = [
+          'EPLD', 'UVAR'
+        ]
+
         if redundant_payload:
             del obb_list[-1]
         else:
@@ -542,7 +547,7 @@ def create_ifwi_image (ifwi_in, ifwi_out, bios_out, platform_data, non_redundant
                 file_path = ''
             else:
                 file_path = os.path.join(stitch_dir, 'Stitch_%s.bin' % file_name)
-            if (comp_name == 'EPLD' or comp_name == 'UVAR') and not os.path.exists(file_path):
+            if (comp_name in opt_list) and not os.path.exists(file_path):
                 ret = 0
             else:
                 ret = manipulate_ifwi  ('ADD', bp1sbpdt + comp_name,  ifwi_data, file_path)
