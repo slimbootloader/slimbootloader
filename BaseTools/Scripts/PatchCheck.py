@@ -369,7 +369,7 @@ class GitDiffCheck:
 
         stripped = line.rstrip()
 
-        if self.force_crlf and eol != '\r\n':
+        if self.force_crlf and eol != '\r\n' and not self.filename.endswith('.patch'):
             self.added_line_error('Line ending (%s) is not CRLF' % repr(eol),
                                   line)
         if '\t' in line:
