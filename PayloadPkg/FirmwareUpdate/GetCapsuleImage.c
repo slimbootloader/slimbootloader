@@ -166,7 +166,7 @@ GetCapsuleFromRawPartition (
     return EFI_NOT_FOUND;
   }
 
-  if (FwUpdHeader->PubKeySize != RSA_MOD_SIZE + RSA_E_SIZE + sizeof (UINT32)) {
+  if (FwUpdHeader->PubKeySize != RSA2048_MOD_SIZE + RSA_E_SIZE + sizeof (UINT32)) {
     DEBUG ((DEBUG_INFO, "Invalid Capsule image found, Public Key size mismatch\n"));
     return EFI_NOT_FOUND;
   }

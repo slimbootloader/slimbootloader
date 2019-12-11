@@ -99,7 +99,7 @@ IsIasImageValid (
   // The byte order of RSA public key exponent is opposite between what iastool.py
   // generates and what RsaVerify API expects. Thus reverse it here.
   //
-  for (Index = 0, KeyIdx = (RSA_E_SIZE + RSA_MOD_SIZE - 1); Index < RSA_E_SIZE; Index++, KeyIdx--) {
+  for (Index = 0, KeyIdx = (RSA_E_SIZE + RSA2048_MOD_SIZE - 1); Index < RSA_E_SIZE; Index++, KeyIdx--) {
     Key->PubExp[Index]  = ((UINT8 *) IAS_PUBLIC_KEY (Hdr))[KeyIdx];
   }
 

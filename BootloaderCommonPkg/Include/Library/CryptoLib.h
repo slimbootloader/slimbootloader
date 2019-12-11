@@ -18,44 +18,44 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define SIGNATURE_IDENTIFIER     SIGNATURE_32 ('S', 'I', 'G', 'N')
 
 
-#define SIG_TYPE_RSA2048SHA256   0
-#define SIG_TYPE_RSA3072SHA384   1
+#define SIG_TYPE_RSA2048SHA256          0
+#define SIG_TYPE_RSA3072SHA384          1
 
 typedef UINT8 SIGN_TYPE;
-#define SIGNING_TYPE_RSA_PKCS_1_5     1
-#define SIGNING_TYPE_RSA_PSS          2
+#define SIGNING_TYPE_RSA_PKCS_1_5       1
+#define SIGNING_TYPE_RSA_PSS            2
 
 typedef UINT8 KEY_TYPE;
-#define KEY_TYPE_RSA                  1
+#define KEY_TYPE_RSA                    1
 
-#define RSA2048_NUMBYTES              256
-#define RSA3072_NUMBYTES              384
+#define RSA2048_NUMBYTES                256
+#define RSA3072_NUMBYTES                384
 
-#define RSA_MOD_SIZE 256 //hardcode n size to be 256
-#define RSA_E_SIZE   4   //hardcode e size to be 4
+#define RSA2048_MOD_SIZE                256 //n size to be 256
+#define RSA3072_MOD_SIZE                384 //n size to be 384
+#define RSA_MOD_SIZE_MAX                RSA3072_MOD_SIZE
+
+#define RSA_E_SIZE                       4   //hardcode e size to be 4
 
 typedef UINT8 HASH_ALG_TYPE;
-#define  HASH_TYPE_SHA256              1
-#define  HASH_TYPE_SHA384              2
-#define  HASH_TYPE_SHA512              3
-#define  HASH_TYPE_SM3                 4
+#define  HASH_TYPE_SHA256                1
+#define  HASH_TYPE_SHA384                2
+#define  HASH_TYPE_SHA512                3
+#define  HASH_TYPE_SM3                   4
 
-#define SHA256_DIGEST_SIZE       32
-#define SHA384_DIGEST_SIZE       48
-#define SM3_DIGEST_SIZE          32
-#define SHA512_DIGEST_SIZE       64
-#define HASH_DIGEST_MAX          SHA512_DIGEST_SIZE
+#define SHA256_DIGEST_SIZE               32
+#define SHA384_DIGEST_SIZE               48
+#define SM3_DIGEST_SIZE                  32
+#define SHA512_DIGEST_SIZE               64
+#define HASH_DIGEST_MAX                  SHA512_DIGEST_SIZE
 
-#define RSA2048NUMBYTES          256
-#define RSA3072NUMBYTES          384
+#define IPP_HASH_CTX_SIZE                256   //IPP Hash context size
 
-#define IPP_HASH_CTX_SIZE  256   //IPP Hash context size
-
-#define IPP_HASHLIB_SHA1         0x0001
-#define IPP_HASHLIB_SHA2_256     0x0002
-#define IPP_HASHLIB_SHA2_384     0x0004
-#define IPP_HASHLIB_SHA2_512     0x0008
-#define IPP_HASHLIB_SM3_256      0x0010
+#define IPP_HASHLIB_SHA1                 0x0001
+#define IPP_HASHLIB_SHA2_256             0x0002
+#define IPP_HASHLIB_SHA2_384             0x0004
+#define IPP_HASHLIB_SHA2_512             0x0008
+#define IPP_HASHLIB_SM3_256              0x0010
 
 
 typedef UINT8 HASH_CTX[IPP_HASH_CTX_SIZE];   //IPP Hash context buffer
@@ -96,9 +96,15 @@ typedef struct {
 } SIGNATURE_HDR;
 
 
-#define RSA_SIGNATURE_SIZE         (RSA2048_NUMBYTES + sizeof(SIGNATURE_HDR))
-#define RSA_KEYSIZE_SIZE           (RSA_MOD_SIZE + RSA_E_SIZE + sizeof(PUB_KEY_HDR))
-#define RSA_SIGNATURE_AND_KEY_SIZE  (RSA_SIGNATURE_SIZE + RSA_KEYSIZE_SIZE)
+#define RSA2048_SIGNATURE_SIZE             (RSA2048_NUMBYTES + sizeof(SIGNATURE_HDR))
+#define RSA2048_KEYSIZE_SIZE               (RSA2048_MOD_SIZE + RSA_E_SIZE + sizeof(PUB_KEY_HDR))
+#define RSA2048_SIGNATURE_AND_KEY_SIZE     (RSA2048_SIGNATURE_SIZE + RSA2048_KEYSIZE_SIZE)
+
+#define RSA3072_SIGNATURE_SIZE             (RSA3072_NUMBYTES + sizeof(SIGNATURE_HDR))
+#define RSA3072_KEYSIZE_SIZE               (RSA3072_MOD_SIZE + RSA_E_SIZE + sizeof(PUB_KEY_HDR))
+#define RSA3072_SIGNATURE_AND_KEY_SIZE     (RSA3072_SIGNATURE_SIZE + RSA3072_KEYSIZE_SIZE)
+
+#define SIGNATURE_AND_KEY_SIZE_MAX         RSA3072_SIGNATURE_AND_KEY_SIZE
 
 /**
   Computes the SHA-256 message digest of a input data buffer.

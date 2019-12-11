@@ -45,7 +45,9 @@ DoRsaVerify (
 {
   RETURN_STATUS    Status;
   PUB_KEY_HDR     *PublicKey;
-  UINT8            Digest[SHA256_DIGEST_SIZE];
+  UINT8            Digest[HASH_DIGEST_MAX];
+  UINT8            DigestSize;
+
 
   PublicKey = PubKeyHdr;
   if ((PublicKey->Identifier != PUBKEY_IDENTIFIER) || (SignatureHdr->Identifier != SIGNATURE_IDENTIFIER)){
@@ -53,16 +55,24 @@ DoRsaVerify (
   }
 
   // Verify public key first
-  Status = DoHashVerify (PublicKey->KeyData, RSA_MOD_SIZE + RSA_E_SIZE, Usage, HASH_TYPE_SHA256, PubKeyHash);
+  Status = DoHashVerify (PublicKey->KeyData, PublicKey->KeySize, Usage, SignatureHdr->HashAlg, PubKeyHash);
   if (RETURN_ERROR (Status)) {
     return Status;
   }
 
   // Verify payload data
-  Sha256 (Data, Length, Digest);
+  if (SignatureHdr->HashAlg == HASH_TYPE_SHA256) {
+    DigestSize = SHA256_DIGEST_SIZE;
+  } else if (SignatureHdr->HashAlg == HASH_TYPE_SHA384) {
+    DigestSize = SHA384_DIGEST_SIZE;
+  } else {
+    return RETURN_INVALID_PARAMETER;
+  }
+
+  CalculateHash  (Data, Length, SignatureHdr->HashAlg, Digest);
 
   if (OutHash != NULL) {
-    CopyMem (OutHash, Digest, sizeof (Digest));
+    CopyMem (OutHash, Digest, DigestSize);
   }
 
   if(SignatureHdr->SigType == SIGNING_TYPE_RSA_PKCS_1_5) {
@@ -75,20 +85,20 @@ DoRsaVerify (
   if (RETURN_ERROR (Status)) {
     DEBUG_CODE_BEGIN();
 
-    DEBUG ((DEBUG_INFO, "First 32Bytes Input Data\n"));
-    DumpHex (2, 0, SHA256_DIGEST_SIZE, (VOID *)Data);
+    DEBUG ((DEBUG_INFO, "First %d Bytes Input Data\n", DigestSize));
+    DumpHex (2, 0, DigestSize, (VOID *)Data);
 
-    DEBUG ((DEBUG_INFO, "Last 32Bytes Input Data\n"));
-    DumpHex (2, 0, SHA256_DIGEST_SIZE, (VOID *) (Data + Length - 32));
+    DEBUG ((DEBUG_INFO, "Last %d Bytes Input Data\n", DigestSize));
+    DumpHex (2, 0, DigestSize, (VOID *) (Data + Length - DigestSize));
 
     DEBUG ((DEBUG_INFO, "Image Digest\n"));
-    DumpHex (2, 0, SHA256_DIGEST_SIZE, (VOID *)Digest);
+    DumpHex (2, 0, DigestSize, (VOID *)Digest);
 
     DEBUG ((DEBUG_INFO, "Signature\n"));
-    DumpHex (2, 0, RSA2048_NUMBYTES, (VOID *)(SignatureHdr->Signature));
+    DumpHex (2, 0, SignatureHdr->SigSize, (VOID *)(SignatureHdr->Signature));
 
     DEBUG ((DEBUG_INFO, "Public Key\n"));
-    DumpHex (2, 0, RSA_MOD_SIZE + RSA_E_SIZE + sizeof (UINT32), PubKeyHdr->KeyData);
+    DumpHex (2, 0, PubKeyHdr->KeySize , PubKeyHdr->KeyData);
 
     DEBUG_CODE_END();
   }
