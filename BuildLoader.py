@@ -495,10 +495,12 @@ class Build(object):
         hash_file_list = [
            ('STAGE1B%s.hash' % part_name, HASH_USAGE['STAGE_1B']),
            ('STAGE2.hash',                HASH_USAGE['STAGE_2']),
-           ('PAYLOAD.hash',               HASH_USAGE['PAYLOAD']),
-           ('FWUPDATE.hash',              HASH_USAGE['PAYLOAD_FWU']),
-           ('MSTKEY.hash',                HASH_USAGE['PUBKEY_MASTER'] | self._board._MASTER_KEY_USAGE)
+           ('PAYLOAD.hash',               HASH_USAGE['PAYLOAD'])
         ]
+        if self._board.ENABLE_FWU:
+            hash_file_list.append (('FWUPDATE.hash', HASH_USAGE['PAYLOAD_FWU']))
+
+        hash_file_list.append (('MSTKEY.hash', HASH_USAGE['PUBKEY_MASTER'] | self._board._MASTER_KEY_USAGE))
 
         if len(hash_file_list) > HashStoreTable.HASH_STORE_MAX_IDX_NUM:
             raise Exception ('Insufficant hash entries !')
