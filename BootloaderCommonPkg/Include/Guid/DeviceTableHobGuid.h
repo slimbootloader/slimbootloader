@@ -14,6 +14,10 @@
 ///
 extern EFI_GUID gDeviceTableHobGuid;
 
+typedef enum {
+  PltDeviceSmbus = 0x20
+} PLT_MEDIUM_MISC_TYPE;
+
 typedef struct {
   UINT32        PciFunctionNumber:8;
   UINT32        PciDeviceNumber:8;
