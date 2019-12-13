@@ -118,6 +118,29 @@ PlatformNameInit (
 }
 
 
+/*
+
+  Config Data Layout
+
+--> +---------------------------+
+|-S |       CFG HEADER          |
+| I +---------------------------+
+| G |                           |
+| N |       CFG DATA            |
+| E |                           |
+| D |                           |
+| - |---------------------------+
+|   |       SIGNATURE HDR       |
+|   |---------------------------+
+|   |       SIGNATURE           |
+|   |---------------------------+
+|   |       PUBKEY HDR          |
+|   |---------------------------+
+|   |       PUBKEY DATA         |
+|---|---------------------------|
+
+*/
+
 /**
   Load the configuration data blob from SPI flash into destination buffer.
   It supports the sources: PDR, BIOS for external Cfgdata.
@@ -141,15 +164,18 @@ SpiLoadExternalConfigData (
   IN UINT32  Len
   )
 {
-  EFI_STATUS   Status;
-  UINT32       Address;
-  UINT32       BlobSize;
-  UINT8       *Buffer;
-  CDATA_BLOB  *CfgBlob;
-  UINT32       SignedLen;
-  UINT32       CfgDataLoadSrc;
-  UINT32       Base;
-  UINT32       Length;
+  EFI_STATUS      Status;
+  UINT32          Address;
+  UINT32          BlobSize;
+  UINT8          *Buffer;
+  CDATA_BLOB     *CfgBlob;
+  UINT32          CfgDataLoadSrc;
+  UINT32          Base;
+  UINT32          Length;
+  PUB_KEY_HDR    *PubKeyHdr;
+  SIGNATURE_HDR  *SignatureHdr;
+  UINT32          SizeRead;
+  UINT32          LenToRead;
 
   Address  = 0;
   BlobSize = sizeof(CDATA_BLOB);
@@ -183,27 +209,80 @@ SpiLoadExternalConfigData (
   // Check the configuration signature and size
   //
   CfgBlob = (CDATA_BLOB  *)Buffer;
+
   if ((CfgBlob == NULL) || (CfgBlob->Signature != CFG_DATA_SIGNATURE)) {
     return EFI_NOT_FOUND;
   }
 
-  SignedLen = CfgBlob->UsedLength;
+  LenToRead  = CfgBlob->UsedLength - BlobSize;
+  SizeRead = BlobSize;
+
   if (FeaturePcdGet (PcdVerifiedBootEnabled)) {
-    SignedLen += RSA2048_SIGNATURE_AND_KEY_SIZE;
-  }
+    LenToRead  +=  sizeof(SIGNATURE_HDR);
 
-  if ((SignedLen > Len) || (SignedLen <= sizeof(CDATA_BLOB))) {
-    return EFI_OUT_OF_RESOURCES;
-  }
+     if ((SizeRead + LenToRead)  > Len) {
+      return EFI_OUT_OF_RESOURCES;
+    }
 
-  //
-  // Read the full configuration data
-  //
-  if (CfgDataLoadSrc == FlashRegionPlatformData) {
-    Status = SpiFlashRead (FlashRegionPlatformData, Address + BlobSize, SignedLen - BlobSize, Buffer + BlobSize);
+    // Read CFG Data and Signature HDR
+    if (CfgDataLoadSrc == FlashRegionPlatformData) {
+      Status = SpiFlashRead (FlashRegionPlatformData, Address + SizeRead, LenToRead, Buffer + SizeRead);
+    } else {
+      if (Base > 0) {
+        CopyMem (Buffer + SizeRead, (VOID *)(Base + SizeRead), LenToRead);
+      }
+    }
+
+    SizeRead += LenToRead;
+    SignatureHdr = (SIGNATURE_HDR *) (Buffer + SizeRead  - sizeof(SIGNATURE_HDR));
+    LenToRead = SignatureHdr->SigSize + sizeof(PUB_KEY_HDR);
+
+    if ((SizeRead + LenToRead)  > Len) {
+      return EFI_OUT_OF_RESOURCES;
+    }
+
+   // Read Sinature and Pub Key HDR
+    if (CfgDataLoadSrc == FlashRegionPlatformData) {
+      Status = SpiFlashRead (FlashRegionPlatformData, Address + SizeRead, LenToRead, Buffer + SizeRead);
+    } else {
+      if (Base > 0) {
+        CopyMem (Buffer + SizeRead, (VOID *)(Base + SizeRead), LenToRead);
+      }
+    }
+
+    SizeRead += LenToRead;
+    PubKeyHdr = (PUB_KEY_HDR *) (Buffer + SizeRead - sizeof(PUB_KEY_HDR));
+    LenToRead = PubKeyHdr->KeySize;
+
+    if ((SizeRead + LenToRead)  > Len) {
+      return EFI_OUT_OF_RESOURCES;
+    }
+
+    // Read Sinature and Pub Key HDR
+    if (CfgDataLoadSrc == FlashRegionPlatformData) {
+      Status = SpiFlashRead (FlashRegionPlatformData, Address + SizeRead, LenToRead, Buffer + SizeRead);
+    } else {
+      if (Base > 0) {
+        CopyMem (Buffer + SizeRead, (VOID *)(Base + SizeRead), LenToRead);
+      }
+    }
+
+
   } else {
-    if (Base > 0) {
-      CopyMem (Buffer + BlobSize, (VOID *)(Base + BlobSize), SignedLen - BlobSize);
+
+    if ((SizeRead + LenToRead)  > Len) {
+      return EFI_OUT_OF_RESOURCES;
+    }
+
+    //
+    // Read the full configuration data
+    //
+    if (CfgDataLoadSrc == FlashRegionPlatformData) {
+      Status = SpiFlashRead (FlashRegionPlatformData, Address + SizeRead, LenToRead, Buffer + SizeRead);
+    } else {
+      if (Base > 0) {
+        CopyMem (Buffer + SizeRead, (VOID *)(Base + SizeRead), LenToRead);
+      }
     }
   }
 
