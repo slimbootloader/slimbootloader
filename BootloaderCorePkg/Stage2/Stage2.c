@@ -39,7 +39,7 @@ LoadComponentCallback (
 /**
   Prepare and load payload into proper location for execution.
 
-  @param[in]  Stage2Hob    HOB pointer for Stage2
+  @param[in]  Stage2Param    Param pointer for Stage2
 
   @retval     The base address of the payload.
               0 if loading fails.
@@ -47,7 +47,7 @@ LoadComponentCallback (
 **/
 UINT32
 PreparePayload (
-  IN STAGE2_HOB   *Stage2Hob
+  IN STAGE2_PARAM   *Stage2Param
   )
 {
   EFI_STATUS                     Status;
@@ -123,7 +123,7 @@ PreparePayload (
     }
   }
 
-  Stage2Hob->PayloadActualLength = DstLen;
+  Stage2Param->PayloadActualLength = DstLen;
   DEBUG ((DEBUG_INFO, "Load Payload ID 0x%08X @ 0x%08X\n", PayloadId, Dst));
   return Dst;
 }
@@ -131,12 +131,12 @@ PreparePayload (
 /**
   Normal boot flow.
 
-  @param[in]   Stage2Hob            STAGE2_HOB HOB pointer.
+  @param[in]   Stage2Param            STAGE2_PARAM Param pointer.
 
 **/
 VOID
 NormalBootPath (
-  IN STAGE2_HOB    *Stage2Hob
+  IN STAGE2_PARAM    *Stage2Param
   )
 {
   UINT32                         *Dst;
@@ -158,7 +158,7 @@ NormalBootPath (
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
 
   // Load payload
-  Dst = (UINT32 *)PreparePayload (Stage2Hob);
+  Dst = (UINT32 *)PreparePayload (Stage2Param);
   if (Dst == NULL) {
     CpuHalt ("Failed to load payload !");
   }
@@ -182,7 +182,7 @@ NormalBootPath (
     // It is a FV format
     DEBUG ((DEBUG_INFO, "FV Format Payload\n"));
     UefiSig = Dst[0];
-    Status  = LoadFvImage (Dst, Stage2Hob->PayloadActualLength, (VOID **)&PldEntry);
+    Status  = LoadFvImage (Dst, Stage2Param->PayloadActualLength, (VOID **)&PldEntry);
   } else if (IsElfImage (Dst)) {
     Status = LoadElfImage (Dst, (VOID *)&PldEntry);
   } else {
@@ -252,7 +252,7 @@ NormalBootPath (
   AddMeasurePoint (0x31F0);
 
   DEBUG ((DEBUG_INFO, "HOB @ 0x%08X\n", LdrGlobal->LdrHobList));
-  PldHobList = BuildExtraInfoHob (Stage2Hob);
+  PldHobList = BuildExtraInfoHob (Stage2Param);
 
   DEBUG_CODE_BEGIN ();
   PrintStackHeapInfo ();
@@ -268,12 +268,12 @@ NormalBootPath (
 /**
   S3 resume flow.
 
-  @param Stage2Hob            STAGE2_HOB HOB pointer.
+  @param Stage2Param            STAGE2_PARAM Param pointer.
 
 **/
 VOID
 S3ResumePath (
-  STAGE2_HOB   *Stage2Hob
+  STAGE2_PARAM   *Stage2Param
   )
 {
   LOADER_GLOBAL_DATA             *LdrGlobal;
@@ -314,7 +314,7 @@ S3ResumePath (
   Stage2 will complete the remaining system initialization and load payload.
   It will be executed from memory.
 
-  @param Params            STAGE2_HOB HOB pointer.
+  @param Params            STAGE2_PARAM Param pointer.
 
 **/
 VOID
@@ -325,7 +325,7 @@ SecStartup (
 {
   EFI_STATUS                      Status;
   EFI_STATUS                      SubStatus;
-  STAGE2_HOB                     *Stage2Hob;
+  STAGE2_PARAM                   *Stage2Param;
   VOID                           *NvsData;
   UINT32                          MrcDataLen;
   VOID                           *MemPool;
@@ -358,8 +358,8 @@ SecStartup (
   BootMode = GetBootMode ();
 
   // Update Patchable PCD in case Stage2 is loaded into high mem
-  Stage2Hob = (STAGE2_HOB *)Params;
-  Delta = Stage2Hob->Stage2ExeBase - PCD_GET32_WITH_ADJUST (PcdStage2FdBase);
+  Stage2Param = (STAGE2_PARAM *)Params;
+  Delta = Stage2Param->Stage2ExeBase - PCD_GET32_WITH_ADJUST (PcdStage2FdBase);
   Status = PcdSet32S (PcdFSPSBase,             PCD_GET32_WITH_ADJUST (PcdFSPSBase) + Delta);
   Status = PcdSet32S (PcdAcpiTablesAddress,    PCD_GET32_WITH_ADJUST (PcdAcpiTablesAddress) + Delta);
   Status = PcdSet32S (PcdGraphicsVbtAddress,   PCD_GET32_WITH_ADJUST (PcdGraphicsVbtAddress) + Delta);
@@ -398,7 +398,7 @@ SecStartup (
   AddMeasurePoint (0x3040);
 
   // Create base HOB
-  BuildBaseInfoHob (Stage2Hob);
+  BuildBaseInfoHob (Stage2Param);
 
   // Display splash
   if (FixedPcdGetBool (PcdSplashEnabled)) {
@@ -503,9 +503,9 @@ SecStartup (
 
   // Continue boot flow
   if (ACPI_ENABLED() && (BootMode == BOOT_ON_S3_RESUME)) {
-    S3ResumePath (Stage2Hob);
+    S3ResumePath (Stage2Param);
   } else {
-    NormalBootPath (Stage2Hob);
+    NormalBootPath (Stage2Param);
   }
 
   // Should not reach here!

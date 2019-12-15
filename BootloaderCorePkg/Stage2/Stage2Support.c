@@ -284,14 +284,14 @@ SplitMemroyMap (
   to build some basic HOBs. These HOBs could be used/updated
   by stage2 code, or used by payload.
 
-  @param Stage2Hob         Stage2 HOB pointer.
+  @param Stage2Param         Stage2 Param pointer.
 
   @return                  The HOB list pointer.
 **/
 VOID *
 EFIAPI
 BuildBaseInfoHob (
-  IN  STAGE2_HOB                       *Stage2Hob
+  IN  STAGE2_PARAM                     *Stage2Param
   )
 {
   SERIAL_PORT_INFO                     *SerialPortInfo;
@@ -412,14 +412,14 @@ BuildBaseInfoHob (
   Before jumping to payload, more information is available, so update some HOBs
   built early, and build more HOBs for payload.
 
-  @param Stage2Hob         Stage2 HOB pointer.
+  @param Stage2Param         Stage2 Param pointer.
 
   @return                  The HOB list pointer.
 **/
 VOID *
 EFIAPI
 BuildExtraInfoHob (
-  IN  STAGE2_HOB                   *Stage2Hob
+  IN  STAGE2_PARAM                 *Stage2Param
   )
 {
   LOADER_GLOBAL_DATA               *LdrGlobal;

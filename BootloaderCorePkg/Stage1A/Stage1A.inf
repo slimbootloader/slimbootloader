@@ -80,6 +80,7 @@
   gPlatformModuleTokenSpaceGuid.PcdFileDataBase
   gPlatformModuleTokenSpaceGuid.PcdVerifiedBootHashMask
   gPlatformModuleTokenSpaceGuid.PcdHashStoreSize
+  gPlatformCommonLibTokenSpaceGuid.PcdPcdLibId
 
 [Depex]
   TRUE

@@ -93,7 +93,6 @@
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel
   gPlatformModuleTokenSpaceGuid.PcdS3DebugEnabled
   gPlatformModuleTokenSpaceGuid.PcdCfgDataLoadSource
-  gPlatformCommonLibTokenSpaceGuid.PcdPcdLibId
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
   gPlatformModuleTokenSpaceGuid.PcdEarlyLogBufferSize
   gPlatformModuleTokenSpaceGuid.PcdLogBufferSize
