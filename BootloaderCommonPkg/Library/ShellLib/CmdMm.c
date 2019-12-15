@@ -117,8 +117,12 @@ MmRead (
 
   // Pad backward to 16-byte boundary
   ItemsPerRow  = 16 / Width;
-  Start        = (Addr & 0xF) / Width;
-  Count       += Start;
+  if (Count == 1) {
+    Start = 0;
+  } else {
+    Start = (Addr & 0xF) / Width;
+  }
+  Count  += Start;
 
   if (Start > 0) {
     ShellPrint (L"%08X: ", Addr & ~0xF);
