@@ -81,7 +81,7 @@ GetConfigDataPtr (
   VOID
   )
 {
-  return GetLoaderGlobalDataPointer()->ConfDataPtr;
+  return GetLoaderGlobalDataPointer()->CfgDataPtr;
 }
 
 /**

@@ -18,8 +18,8 @@
 #define  IS_FLASH_SPACE(x)            (((x) >= PcdGet32 (PcdFlashBaseAddress)) && \
                                       ((x) <= PcdGet32 (PcdFlashBaseAddress) + PcdGet32 (PcdFlashSize) - 1))
 
-#define  GET_STAGE_MODULE_ENTRY(x)       (STAGE_ENTRY) ((STAGE_HDR *)(x))->Entry
-#define  GET_STAGE_MODULE_BASE(x)        (STAGE_ENTRY) ((STAGE_HDR *)(x))->Base
+#define  GET_STAGE_MODULE_ENTRY(x)    (STAGE_ENTRY) ((STAGE_HDR *)(x))->Entry
+#define  GET_STAGE_MODULE_BASE(x)     (STAGE_ENTRY) ((STAGE_HDR *)(x))->Base
 
 #define  PCD_GET32_WITH_ADJUST(x)     GetAdjustedPcdBase (PcdGet32 (x))
 
@@ -35,6 +35,19 @@ typedef  VOID   (*KERNEL_ENTRY) (UINT32 Zero, UINT32 Arch, UINT32 Params);
 
 #define  PLATFORM_NAME_SIZE           8
 
+typedef enum {
+  EnumBufFlashMap,
+  EnumBufVerInfo,
+  EnumBufHashStore,
+  EnumBufLibData,
+  EnumBufService,
+  EnumBufPcdData,
+  EnumBufPlatData,
+  EnumBufCfgData,
+  EnumBufLogBuf,
+  EnumBufMax
+} BUF_INFO_ID;
+
 typedef struct {
   UINT32        LdrGlobal;
   UINT64        IdtTable[STAGE_IDT_ENTRY_COUNT];
@@ -49,42 +62,36 @@ typedef struct {
   UINT32        CarBase;
   UINT32        CarTop;
   UINT64        TimeStamp;
-  UINT32        BistVal;
-} STAGE1A_ASM_HOB;
+  UINT32        CpuBist;
+} STAGE1A_ASM_PARAM;
+
+typedef struct {
+  VOID         *SrcBase;
+  VOID         *DstBase;
+  UINT32        AllocLen;
+  UINT32        CopyLen;
+} BUF_INFO;
 
 typedef struct {
   UINT32        CarBase;
   UINT32        CarTop;
-  UINT32        HashStoreBase;
-  UINT32        VerInfoBase;
+  UINT32        Stage1BBase;
   UINT32        AllocDataBase;
   UINT32        AllocDataLen;
-  UINT32        Stage1BBase;
-} STAGE1A_HOB;
+  BUF_INFO      BufInfo[EnumBufMax];
+} STAGE1A_PARAM;
 
 typedef struct {
-  UINT32        CarBase;
-  UINT32        CarTop;
   UINT32        PayloadBase;
   UINT8         ConfigDataHashValid;
   UINT8         ConfigDataHash[HASH_DIGEST_MAX];
-} STAGE1B_HOB;
+} STAGE1B_PARAM;
 
 typedef struct {
   UINT32        PayloadBase;
-  UINT32        PayloadId;
-  UINT32        PayloadOffset;
-  UINT32        PayloadLength;
   UINT32        PayloadActualLength;
   UINT32        Stage2ExeBase;
-} STAGE2_HOB;
-
-typedef struct {
-  UINT32        Signature;
-  UINT32        EntryNum;
-  UINT32        EntrySize;
-  UINT32        Reserved;
-} MULTI_PAYLOAD_HEADER;
+} STAGE2_PARAM;
 
 typedef struct {
   UINT32        Signature;
@@ -170,19 +177,19 @@ typedef struct {
   UINT8             Padding[3];
   VOID             *FspHobList;
   VOID             *LdrHobList;
+  VOID             *FlashMapPtr;
   VOID             *VerInfoPtr;
   VOID             *HashStorePtr;
-  VOID             *ConfDataPtr;
-  VOID             *S3DataPtr;
-  VOID             *DebugDataPtr;
-  VOID             *PlatDataPtr;
   VOID             *LibDataPtr;
-  VOID             *FlashMapPtr;
   VOID             *ServicePtr;
   VOID             *PcdDataPtr;
+  VOID             *PlatDataPtr;
+  VOID             *CfgDataPtr;
   VOID             *LogBufPtr;
   VOID             *DeviceTable;
   VOID             *ContainerList;
+  VOID             *S3DataPtr;
+  VOID             *DebugDataPtr;
   UINT8             PlatformName[PLATFORM_NAME_SIZE];
   UINT32            LdrFeatures;
   BL_PERF_DATA      PerfData;

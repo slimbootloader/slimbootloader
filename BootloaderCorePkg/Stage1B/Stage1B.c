@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2016 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2016 - 2019, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -41,7 +41,7 @@ LoadComponentCallback (
   - Check if stage2 need to be loaded to high mem.
   - uncompress stage2 and rebase if required.
 
-  @param[in]  Stage1bHob    HOB pointer for Stage1B
+  @param[in]  Stage1bParam    Param pointer for Stage1B
 
   @retval     The base address of the stage.
               0 if loading fails
@@ -49,7 +49,7 @@ LoadComponentCallback (
 **/
 UINT32
 PrepareStage2 (
-  IN STAGE1B_HOB   *Stage1bHob
+  IN STAGE1B_PARAM   *Stage1bParam
   )
 {
   UINT32                    Dst;
@@ -176,13 +176,13 @@ AppendHashStore (
   verify it if verified boot is enabled and append it to config database.
 
   @param[in] LdrGlobal            Pointer to loader global data.
-  @param[in] Stage1bHob           Pointer to Stage1b HOB.
+  @param[in] Stage1bParam           Pointer to Stage1b Param.
 
 **/
 VOID
 CreateConfigDatabase (
   IN LOADER_GLOBAL_DATA       *LdrGlobal,
-  IN STAGE1B_HOB              *Stage1bHob
+  IN STAGE1B_PARAM            *Stage1bParam
   )
 {
   EFI_STATUS                Status;
@@ -201,7 +201,7 @@ CreateConfigDatabase (
   // PcdCfgDatabaseSize: It is the size for both internal + external cfg data
   //
   if (PcdGet32 (PcdCfgDataSize) > 0) {
-    CfgBlob = (CDATA_BLOB *)LdrGlobal->ConfDataPtr;
+    CfgBlob = (CDATA_BLOB *)LdrGlobal->CfgDataPtr;
     ExtCfgAddPtr = (UINT8 *)CfgBlob + CfgBlob->UsedLength;
     Status = GetComponentInfo (FLASH_MAP_SIG_CFGDATA, &CfgDataBase, &CfgDataLength);
     if (!EFI_ERROR (Status)) {
@@ -225,7 +225,7 @@ CreateConfigDatabase (
         SignHdr   = (SIGNATURE_HDR *)((UINT8 *) CfgBlob + CfgBlob->UsedLength);
         PubKeyHdr = (PUB_KEY_HDR *)((UINT8 *)SignHdr + sizeof(SIGNATURE_HDR) + SignHdr->SigSize);
         Status  = DoRsaVerify ((UINT8 *)CfgBlob, CfgBlob->UsedLength, HASH_USAGE_PUBKEY_CFG_DATA,
-                    SignHdr, PubKeyHdr, NULL, Stage1bHob->ConfigDataHash);
+                    SignHdr, PubKeyHdr, NULL, Stage1bParam->ConfigDataHash);
         if (EFI_ERROR (Status)) {
           DEBUG ((DEBUG_INFO, "EXT CFG Data ignored ... %r\n", Status));
           ExtCfgAddPtr = NULL;
@@ -236,7 +236,7 @@ CreateConfigDatabase (
         if (EFI_ERROR (Status)) {
           DEBUG ((DEBUG_INFO, "Append EXT CFG Data ... %r\n", Status));
         } else {
-          Stage1bHob->ConfigDataHashValid = 1;
+          Stage1bParam->ConfigDataHashValid = 1;
         }
       }
     }
@@ -249,7 +249,7 @@ CreateConfigDatabase (
         // Update the built-in CFGDATA offset
         CfgBlob       = (CDATA_BLOB *) IntCfgAddPtr;
         CfgDataLength = CfgBlob->UsedLength - CfgBlob->HeaderLength;
-        CfgBlob       = (CDATA_BLOB *) LdrGlobal->ConfDataPtr;
+        CfgBlob       = (CDATA_BLOB *) LdrGlobal->CfgDataPtr;
         CfgBlob->InternalDataOffset = (UINT16) ((CfgBlob->UsedLength - CfgDataLength) >> 2);
       } else {
         DEBUG ((DEBUG_INFO, "Append Built-In CFG Data ... %r\n", Status));
@@ -280,13 +280,13 @@ SecStartup2 (
   )
 {
   STAGE_IDT_TABLE          *IdtTablePtr;
-  STAGE1A_HOB              *Stage1aHob;
+  STAGE1A_PARAM            *Stage1aParam;
   LOADER_GLOBAL_DATA       *LdrGlobal;
   LOADER_GLOBAL_DATA       *OldLdrGlobal;
   UINT32                    FspReservedMemBase;
   UINT64                    FspReservedMemSize;
-  STAGE1B_HOB               Stage1bHob;
-  STAGE1B_HOB              *Stage1bHobInMem;
+  STAGE1B_PARAM             Stage1bParam;
+  STAGE1B_PARAM            *Stage1bParamInMem;
   UINT32                    StackTop;
   VOID                     *HobList;
   EFI_STATUS                Status;
@@ -294,6 +294,7 @@ SecStartup2 (
   UINT32                    MemPoolEnd;
   UINT32                    MemPoolCurrTop;
   UINT32                    AllocateLen;
+  UINT32                    Offset;
   UINT32                    Delta;
   UINT32                    Idx;
   UINT8                    *BufPtr;
@@ -301,8 +302,6 @@ SecStartup2 (
   VOID                     *SavedLdrHobList;
   LIBRARY_DATA             *LibDataPtr;
   SERVICES_LIST            *ServiceList;
-  UINT32                    PcdDatabaseLen;
-  PEI_PCD_DATABASE         *PcdDatabaseBin;
   PLATFORMID_CFG_DATA      *PidCfgData;
   UINT8                     PlatformName[PLATFORM_NAME_SIZE + 1];
   DEBUG_LOG_BUFFER_HEADER  *NewLogBuf;
@@ -310,6 +309,7 @@ SecStartup2 (
   BOOLEAN                   OldStatus;
   PLT_DEVICE_TABLE         *DeviceTable;
   CONTAINER_LIST           *ContainerList;
+  VOID                    **FieldPtr;
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
   ASSERT (LdrGlobal != NULL);
@@ -318,18 +318,16 @@ SecStartup2 (
 
   DEBUG ((DEBUG_INFO, "\n============= Intel Slim Bootloader STAGE1B =============\n"));
 
-  Stage1aHob = (STAGE1A_HOB *) Params;
-  if (Stage1aHob->Stage1BBase != 0) {
-    PeCoffFindAndReportImageInfo ((UINT32) (UINTN) GET_STAGE_MODULE_BASE (Stage1aHob->Stage1BBase));
+  Stage1aParam = (STAGE1A_PARAM *) Params;
+  if (Stage1aParam->Stage1BBase != 0) {
+    PeCoffFindAndReportImageInfo ((UINT32) (UINTN) GET_STAGE_MODULE_BASE (Stage1aParam->Stage1BBase));
   }
 
   // Reload Exception handler
   UpdateExceptionHandler (NULL);
 
-  // Migrate data from Stage1A HOB to Stage1B HOB
-  ZeroMem (&Stage1bHob, sizeof (STAGE1B_HOB));
-  Stage1bHob.CarBase  = Stage1aHob->CarBase;
-  Stage1bHob.CarTop   = Stage1aHob->CarTop;
+  // Migrate data from Stage1A Param to Stage1B Param
+  ZeroMem (&Stage1bParam, sizeof (STAGE1B_PARAM));
 
   // Remove all services in previous stage
   ServiceList = (SERVICES_LIST *)LdrGlobal->ServicePtr;
@@ -343,7 +341,7 @@ SecStartup2 (
   Status = AppendHashStore (LdrGlobal);
   DEBUG ((DEBUG_INFO,  "Append public key hash into store: %r\n", Status));
 
-  CreateConfigDatabase (LdrGlobal, &Stage1bHob);
+  CreateConfigDatabase (LdrGlobal, &Stage1bParam);
 
   // Overwrite platform ID if CFGDATA contains it
   PidCfgData = (PLATFORMID_CFG_DATA *)FindConfigDataByTag (CDATA_PLATFORMID_TAG);
@@ -438,7 +436,7 @@ SecStartup2 (
   InitializeDebugAgent (DEBUG_AGENT_INIT_POSTMEM_SEC, NULL, NULL);
   SaveAndSetDebugTimerInterrupt (OldStatus);
 
-  // Restore PlatformData in new LoaderGlobal
+  // Restore S3_DATA in new LoaderGlobal
   LdrGlobal->S3DataPtr = AllocatePool (sizeof (S3_DATA));
   if (LdrGlobal->BootMode != BOOT_ON_S3_RESUME) {
     ZeroMem (LdrGlobal->S3DataPtr, sizeof (S3_DATA));
@@ -450,26 +448,24 @@ SecStartup2 (
   }
 
   // Migrate data from CAR to memory
-  AllocateLen = Stage1aHob->AllocDataLen;
-  OldBufPtr   = (UINT8 *)Stage1aHob->AllocDataBase;
+  AllocateLen = Stage1aParam->AllocDataLen;
+  OldBufPtr   = (UINT8 *)Stage1aParam->AllocDataBase;
   BufPtr = AllocatePool (AllocateLen);
   CopyMem (BufPtr, OldBufPtr, AllocateLen);
   Delta = BufPtr - OldBufPtr;
-  if (LdrGlobal->VerInfoPtr) {
-    LdrGlobal->VerInfoPtr = (UINT8 *)LdrGlobal->VerInfoPtr + Delta;
-  }
-  if (LdrGlobal->HashStorePtr) {
-    LdrGlobal->HashStorePtr = (UINT8 *)LdrGlobal->HashStorePtr + Delta;
-  }
-  if (LdrGlobal->ConfDataPtr) {
-    LdrGlobal->ConfDataPtr = (UINT8 *)LdrGlobal->ConfDataPtr + Delta;
-  }
-  if (LdrGlobal->FlashMapPtr) {
-    LdrGlobal->FlashMapPtr = (UINT8 *)LdrGlobal->FlashMapPtr + Delta;
+
+  // Adjust buffer pointer
+  for (Idx = 0; Idx < EnumBufMax; Idx++) {
+    Offset   = (UINT8 *)Stage1aParam->BufInfo[Idx].DstBase - (UINT8 *)OldLdrGlobal;
+    FieldPtr = (VOID **)((UINT8 *)LdrGlobal + Offset);
+    if (*FieldPtr != NULL) {
+      *FieldPtr = (UINT8 *)(*FieldPtr) + Delta;
+    }
   }
 
-  if (LdrGlobal->LibDataPtr) {
-    LibDataPtr  = (LIBRARY_DATA *) ((UINT8 *)LdrGlobal->LibDataPtr + Delta);
+  // Re-allocate Lib Data
+  LibDataPtr  = (LIBRARY_DATA *) LdrGlobal->LibDataPtr;
+  if (LibDataPtr != NULL) {
     AllocateLen = 0;
     for (Idx = 0; Idx < PcdGet32 (PcdMaxLibraryDataEntry); Idx++) {
       AllocateLen += ALIGN_UP (LibDataPtr[Idx].BufSize, sizeof (UINTN));
@@ -484,24 +480,10 @@ SecStartup2 (
         }
       }
     }
-    LdrGlobal->LibDataPtr = (VOID *)LibDataPtr;
-  }
-  if (LdrGlobal->PcdDataPtr) {
-    LdrGlobal->PcdDataPtr = (UINT8 *)LdrGlobal->PcdDataPtr + Delta;
-    PcdDatabaseBin = (PEI_PCD_DATABASE *) (LdrGlobal->PcdDataPtr);
-    PcdDatabaseLen = PcdDatabaseBin->Length + PcdDatabaseBin->UninitDataBaseSize;
-    SetLibraryData (PcdGet8 (PcdPcdLibId), LdrGlobal->PcdDataPtr, PcdDatabaseLen);
-  }
-  if (LdrGlobal->ServicePtr) {
-    LdrGlobal->ServicePtr = (UINT8 *)LdrGlobal->ServicePtr + Delta;
   }
 
-  if (LdrGlobal->PlatDataPtr) {
-    LdrGlobal->PlatDataPtr = (UINT8 *)LdrGlobal->PlatDataPtr + Delta;
-  }
-
-  if (LdrGlobal->LogBufPtr) {
-    LdrGlobal->LogBufPtr   = (UINT8 *)LdrGlobal->LogBufPtr + Delta;
+  // Re-allocate Log Buf if required
+  if (LdrGlobal->LogBufPtr != NULL) {
     if (PcdGet32 (PcdEarlyLogBufferSize) < PcdGet32 (PcdLogBufferSize)) {
       // If log buffer needs to be bigger post memory, increase it.
       OldLogBuf = (DEBUG_LOG_BUFFER_HEADER *)LdrGlobal->LogBufPtr;
@@ -515,13 +497,14 @@ SecStartup2 (
   }
 
   // Copy device table to memory
-  if (LdrGlobal->DeviceTable != NULL) {
-    DeviceTable = (PLT_DEVICE_TABLE *) LdrGlobal->DeviceTable;
+  DeviceTable = (PLT_DEVICE_TABLE *) LdrGlobal->DeviceTable;
+  if (DeviceTable != NULL) {
     AllocateLen = DeviceTable->DeviceNumber * sizeof (PLT_DEVICE) + sizeof (PLT_DEVICE_TABLE);
     LdrGlobal->DeviceTable = AllocatePool (AllocateLen);
     CopyMem (LdrGlobal->DeviceTable, DeviceTable, AllocateLen);
   }
 
+  // Allocate container list
   AllocateLen = PcdGet32 (PcdContainerMaxNumber) * sizeof (CONTAINER_ENTRY) + sizeof (CONTAINER_LIST);
   LdrGlobal->ContainerList = AllocateZeroPool (AllocateLen);
   ContainerList = (CONTAINER_LIST *) LdrGlobal->ContainerList;
@@ -530,17 +513,18 @@ SecStartup2 (
     ContainerList->TotalLength = AllocateLen;
   }
 
+  // Call back into board hooks post memory
   BoardInit (PostMemoryInit);
   AddMeasurePoint (0x2040);
 
   // Switch to memory-based stack and continue execution at ContinueFunc
-  StackTop  = LdrGlobal->StackTop - (sizeof (STAGE2_HOB) + sizeof (STAGE1B_HOB) + 0x40);
+  StackTop  = LdrGlobal->StackTop - (sizeof (STAGE2_PARAM) + sizeof (STAGE1B_PARAM) + 0x40);
   StackTop  = ALIGN_DOWN (StackTop, 0x100);
-  Stage1bHobInMem = (STAGE1B_HOB *)StackTop;
-  CopyMem (Stage1bHobInMem, &Stage1bHob, sizeof (STAGE1B_HOB));
+  Stage1bParamInMem = (STAGE1B_PARAM *)StackTop;
+  CopyMem (Stage1bParamInMem, &Stage1bParam, sizeof (STAGE1B_PARAM));
 
   DEBUG ((DEBUG_INFO, "Switch to memory stack @ 0x%08X\n", StackTop));
-  SwitchStack (ContinueFunc, Stage1bHobInMem, (VOID *)OldLdrGlobal, (VOID *)StackTop);
+  SwitchStack (ContinueFunc, Stage1bParamInMem, (VOID *)OldLdrGlobal, (VOID *)StackTop);
 }
 
 /**
@@ -566,7 +550,7 @@ SecStartup (
 
   This function will continue Stage1B execution with a new memory-based stack.
 
-  @param[in]  Context1        Pointer to STAGE1B_HOB in main memory.
+  @param[in]  Context1        Pointer to STAGE1B_PARAM in main memory.
   @param[in]  Context2        Unused.
 
 **/
@@ -576,8 +560,8 @@ ContinueFunc (
   IN VOID                      *Context2
   )
 {
-  STAGE1B_HOB              *Stage1bHob;
-  STAGE2_HOB               *Stage2Hob;
+  STAGE1B_PARAM            *Stage1bParam;
+  STAGE2_PARAM             *Stage2Param;
   UINT32                    StackBot;
   UINT32                    Dst;
   UINT32                    StackTop;
@@ -585,7 +569,7 @@ ContinueFunc (
   LOADER_GLOBAL_DATA       *LdrGlobal;
   LOADER_GLOBAL_DATA       *OldLdrGlobal;
 
-  Stage1bHob   = (STAGE1B_HOB *)Context1;
+  Stage1bParam   = (STAGE1B_PARAM *)Context1;
   OldLdrGlobal = (LOADER_GLOBAL_DATA *)Context2;
 
   BoardInit (PreTempRamExit);
@@ -619,8 +603,8 @@ ContinueFunc (
   // Extend External Config Data hash
   if (MEASURED_BOOT_ENABLED() ) {
     if (GetBootMode() != BOOT_ON_S3_RESUME) {
-      if (Stage1bHob->ConfigDataHashValid == 1) {
-        TpmExtendPcrAndLogEvent ( 1, TPM_ALG_SHA256, Stage1bHob->ConfigDataHash,
+      if (Stage1bParam->ConfigDataHashValid == 1) {
+        TpmExtendPcrAndLogEvent ( 1, TPM_ALG_SHA256, Stage1bParam->ConfigDataHash,
                 EV_EFI_VARIABLE_DRIVER_CONFIG, sizeof("Ext Config Data"), (UINT8 *)"Ext Config Data");
       }
     }
@@ -630,21 +614,21 @@ ContinueFunc (
   DEBUG ((DEBUG_INFO, "Memory FSP @ 0x%08X\n", LdrGlobal->StackTop));
   DEBUG ((DEBUG_INFO, "Memory TOP @ 0x%08X\n", LdrGlobal->MemPoolStart));
 
-  Dst = PrepareStage2 (Stage1bHob);
+  Dst = PrepareStage2 (Stage1bParam);
   if (Dst == 0) {
     CpuHalt ("Failed to load Stage2!");
   }
 
   // Configure stack
-  StackTop = ALIGN_DOWN (LdrGlobal->StackTop - sizeof (STAGE2_HOB), 0x10);
+  StackTop = ALIGN_DOWN (LdrGlobal->StackTop - sizeof (STAGE2_PARAM), 0x10);
 
-  // Build Stage2 HOB
-  Stage2Hob = (STAGE2_HOB *)StackTop;
-  SetMem (Stage2Hob, sizeof (STAGE2_HOB), 0);
-  Stage2Hob->Stage2ExeBase = Dst;
-  Stage2Hob->PayloadBase   = Stage1bHob->PayloadBase;
+  // Build Stage2 Param
+  Stage2Param = (STAGE2_PARAM *)StackTop;
+  SetMem (Stage2Param, sizeof (STAGE2_PARAM), 0);
+  Stage2Param->Stage2ExeBase = Dst;
+  Stage2Param->PayloadBase   = Stage1bParam->PayloadBase;
 
-  SwitchStack ((SWITCH_STACK_ENTRY_POINT)GET_STAGE_MODULE_ENTRY (Dst), Stage2Hob, NULL, (VOID *)StackTop);
+  SwitchStack ((SWITCH_STACK_ENTRY_POINT)GET_STAGE_MODULE_ENTRY (Dst), Stage2Param, NULL, (VOID *)StackTop);
 
   // Error: Stage 2 returned!
   CpuHalt (NULL);
