@@ -24,6 +24,8 @@
 
 [LibraryClasses]
   BaseLib
+  SerialPortLib
+  UsbKbLib
 
 [Guids]
 

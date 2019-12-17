@@ -67,11 +67,16 @@
   BootloaderCommonLib
   MemoryAllocationLib
   SortLib
+  FileSystemLib
+  PartitionLib
+  ShellExtensionLib
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
+  gPlatformCommonLibTokenSpaceGuid.PcdMiniShellEnabled
 
 [Guids]
   gLoaderPerformanceInfoGuid
   gLoaderMemoryMapInfoGuid
   gOsBootOptionGuid
+  gLoaderFspInfoGuid
