@@ -11,9 +11,13 @@
 #include <PiPei.h>
 #include <Library/BaseLib.h>
 
-#define MAX_COMMAND_LINE_LEN 256
-
-typedef struct _SHELL SHELL;
+typedef struct {
+  LIST_ENTRY            CommandEntryList;
+  CHAR16               *CommandLineHist;
+  INTN                  CommandLineIdx;
+  UINTN                 CommandLineMaxLen;
+  BOOLEAN               ShouldExit;
+} SHELL;
 
 typedef EFI_STATUS (EFIAPI *SHELL_COMMAND_ENTRY_FUNC) (SHELL *Shell, UINTN Argc, CHAR16 *Argv[]);
 
@@ -22,13 +26,6 @@ typedef struct {
   CONST CHAR16             *Desc;
   SHELL_COMMAND_ENTRY_FUNC  Entry;
 } SHELL_COMMAND;
-
-struct _SHELL {
-  LIST_ENTRY            CommandEntryList;
-  CHAR16               *CommandLineHist;
-  INTN                  CommandLineIdx;
-  BOOLEAN               ShouldExit;
-};
 
 /**
   Begin a run-time interactive shell.

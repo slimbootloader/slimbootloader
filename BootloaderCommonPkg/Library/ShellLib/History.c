@@ -23,7 +23,7 @@ HistoryInit (
   UINTN   BufLen;
 
   if (IsInit) {
-    BufLen = MAX_HISTORY_REC * MAX_COMMAND_LINE_LEN * sizeof(CHAR16);
+    BufLen = MAX_HISTORY_REC * (Shell->CommandLineMaxLen * sizeof(CHAR16));
     if (Shell->CommandLineHist == NULL) {
       Shell->CommandLineHist = AllocateZeroPool (BufLen);
     } else {
@@ -56,7 +56,7 @@ GetLine (
   ASSERT (Shell->CommandLineHist != NULL);
 
   if ((Index < MAX_HISTORY_REC) && (Index >= 0)) {
-    return Shell->CommandLineHist + Index * MAX_COMMAND_LINE_LEN;
+    return Shell->CommandLineHist + Index * Shell->CommandLineMaxLen;
   } else {
     return NULL;
   }
@@ -92,7 +92,7 @@ HistoryDown (
     Line[0] = 0;
     return 0;
   } else {
-    StrCpyS (Line, MAX_COMMAND_LINE_LEN, GetLine (Shell, Shell->CommandLineIdx));
+    StrCpyS (Line, Shell->CommandLineMaxLen, GetLine (Shell, Shell->CommandLineIdx));
     return StrLen (Line);
   }
 }
@@ -118,7 +118,7 @@ HistoryUp (
     Line[0] = 0;
     return 0;
   } else {
-    StrCpyS (Line, MAX_COMMAND_LINE_LEN, GetLine (Shell, Shell->CommandLineIdx));
+    StrCpyS (Line, Shell->CommandLineMaxLen, GetLine (Shell, Shell->CommandLineIdx));
     return StrLen (Line);
   }
 }
@@ -153,10 +153,10 @@ HistoryAdd (
 
   // Move everything backwards to add new command line at index 0
   for (; Index > 0; --Index) {
-    StrCpyS (GetLine (Shell, Index), MAX_COMMAND_LINE_LEN, GetLine (Shell, Index - 1));
+    StrCpyS (GetLine (Shell, Index), Shell->CommandLineMaxLen, GetLine (Shell, Index - 1));
   }
 
-  StrCpyS (GetLine (Shell, 0), MAX_COMMAND_LINE_LEN, Line);
+  StrCpyS (GetLine (Shell, 0), Shell->CommandLineMaxLen, Line);
 }
 
 /**

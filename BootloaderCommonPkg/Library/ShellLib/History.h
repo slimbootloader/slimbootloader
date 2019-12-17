@@ -14,7 +14,9 @@
 #include <Library/MemoryAllocationLib.h>
 #include <Library/ShellLib.h>
 
-#define   MAX_HISTORY_REC    32
+#define  MAX_HISTORY_REC                  8
+#define  MAX_COMMAND_LINE_LEN             256
+#define  MAX_COMMAND_LINE_LEN_MINI_SHELL  80
 
 /**
   Initialize command line history buffer and index.

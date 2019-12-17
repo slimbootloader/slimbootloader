@@ -113,6 +113,9 @@ Shell (
   ZeroMem (&Shell, sizeof (Shell));
   InitializeListHead (&Shell.CommandEntryList);
 
+  Shell.CommandLineMaxLen = FeaturePcdGet (PcdMiniShellEnabled) ? \
+                            MAX_COMMAND_LINE_LEN_MINI_SHELL : MAX_COMMAND_LINE_LEN;
+
   LoadShellCommands (&Shell);
   Shell.ShouldExit = FALSE;
 
@@ -173,7 +176,7 @@ ShellPrompt (
   ASSERT (Shell != NULL);
   ShellPrint (L"\nShell> ");
 
-  Status = ReadShellCommand (Shell, CommandLine, sizeof (CommandLine));
+  Status = ReadShellCommand (Shell, CommandLine, Shell->CommandLineMaxLen * sizeof (CHAR16));
   if (EFI_ERROR (Status)) {
     return Status;
   }
@@ -270,7 +273,7 @@ ReadShellCommand (
           ShellPrint (L"\b");
         }
         if (HistoryLineLen > 0) {
-          StrCpyS (Buffer, MAX_COMMAND_LINE_LEN, HistoryLine);
+          StrCpyS (Buffer, Shell->CommandLineMaxLen, HistoryLine);
           ShellPrint (L"%s", Buffer);
         }
         if (CurrCount > HistoryLineLen) {
@@ -503,7 +506,7 @@ RunShellCommand (
   CHAR16              *Argv[8]; // FIXME: Use allocator once that's available
 
   // Parse the command line parameters
-  BufRemaining = sizeof (Buf);
+  BufRemaining = Shell->CommandLineMaxLen * sizeof(CHAR16);
   Ptr          = Buf;
   Walker       = CmdLine;
 
