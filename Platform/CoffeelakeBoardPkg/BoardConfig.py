@@ -169,14 +169,6 @@ class Board(BaseBoard):
         fwu_flag = 0 if self.ENABLE_FWU else STITCH_OPS.MODE_FILE_IGNOR
         cfg_flag = 0 if len(self._CFGDATA_EXT_FILE) > 0 and self.CFGDATA_REGION_TYPE == FLASH_REGION_TYPE.BIOS else STITCH_OPS.MODE_FILE_IGNOR
 
-        if len(self._CFGDATA_EXT_FILE) > 0 and self.CFGDATA_REGION_TYPE == FLASH_REGION_TYPE.PLATFORMDATA:
-            img_list.extend ([
-                    ('CFGDATA_PDR.bin', [
-                            ('CFGDATA.bin',   '',   self.CFGDATA_SIZE,     STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
-                    ]
-                ),
-            ])
-
         # output files need to have unique base name (excluding file extension)
         # output files ends with 'rom' extension will be copied over for final stitching
         img_list.extend ([

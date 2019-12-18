@@ -121,7 +121,7 @@ PlatformNameInit (
 
 /**
   Load the configuration data blob from SPI flash into destination buffer.
-  It supports the sources: PDR, BIOS for external Cfgdata.
+  It supports the sources:  BIOS for external Cfgdata.
 
   @param[in]    Dst        Destination address to load configuration data blob.
   @param[in]    Src        Source address to load configuration data blob.
@@ -143,7 +143,6 @@ SpiLoadExternalConfigData (
   )
 {
   EFI_STATUS   Status;
-  UINT32       Address;
   UINT32       BlobSize;
   UINT8       *Buffer;
   CDATA_BLOB  *CfgBlob;
@@ -152,7 +151,6 @@ SpiLoadExternalConfigData (
   UINT32       Base;
   UINT32       Length;
 
-  Address  = 0;
   BlobSize = sizeof(CDATA_BLOB);
   Buffer   = (UINT8 *)Dst;
   Base     = 0;
@@ -169,7 +167,8 @@ SpiLoadExternalConfigData (
   //
   Status = EFI_UNSUPPORTED;
   if (CfgDataLoadSrc == FlashRegionPlatformData) {
-    Status = SpiFlashRead (FlashRegionPlatformData, Address, BlobSize, Buffer);
+    DEBUG((DEBUG_ERROR, "CFGDATA in Flash Platform Data region is not supported\n"));
+    return EFI_UNSUPPORTED;
   } else if (CfgDataLoadSrc == FlashRegionBios) {
     Status = GetComponentInfo (FLASH_MAP_SIG_CFGDATA, &Base, &Length);
     if (!EFI_ERROR(Status)) {
@@ -190,7 +189,7 @@ SpiLoadExternalConfigData (
 
   SignedLen = CfgBlob->UsedLength;
   if (FeaturePcdGet (PcdVerifiedBootEnabled)) {
-    SignedLen += RSA2048_SIGNATURE_AND_KEY_SIZE;
+    SignedLen += SIGNATURE_AND_KEY_SIZE_MAX;
   }
 
   if ((SignedLen > Len) || (SignedLen <= sizeof(CDATA_BLOB))) {
@@ -200,12 +199,8 @@ SpiLoadExternalConfigData (
   //
   // Read the full configuration data
   //
-  if (CfgDataLoadSrc == FlashRegionPlatformData) {
-    Status = SpiFlashRead (FlashRegionPlatformData, Address + BlobSize, SignedLen - BlobSize, Buffer + BlobSize);
-  } else {
-    if (Base > 0) {
-      CopyMem (Buffer + BlobSize, (VOID *)(Base + BlobSize), SignedLen - BlobSize);
-    }
+  if (Base > 0) {
+    CopyMem (Buffer + BlobSize, (VOID *)(Base + BlobSize), SignedLen - BlobSize);
   }
 
   return Status;
