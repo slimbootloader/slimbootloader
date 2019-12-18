@@ -58,7 +58,7 @@ ShellCommandHelpFunc (
   LIST_ENTRY                *Link;
   SHELL_COMMAND_LIST_ENTRY  *Entry;
 
-  EntryList = GetShellCommandEntryList ();
+  EntryList = &Shell->CommandEntryList;
   for (Link = EntryList->ForwardLink; Link != EntryList; Link = Link->ForwardLink) {
     Entry = CR (Link, SHELL_COMMAND_LIST_ENTRY, Link, SHELL_COMMAND_LIST_ENTRY_SIGNATURE);
 

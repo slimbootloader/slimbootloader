@@ -24,6 +24,9 @@ typedef struct {
 } SHELL_COMMAND;
 
 struct _SHELL {
+  LIST_ENTRY            CommandEntryList;
+  CHAR16               *CommandLineHist;
+  INTN                  CommandLineIdx;
   BOOLEAN               ShouldExit;
 };
 
@@ -63,6 +66,7 @@ ShellPrint (
 /**
   Register a Shell Command
 
+  @param[in]  Shell        Shell Context
   @param[in]  ShellCommand A Shell Command to be registered
 
   @retval EFI_SUCCESS
@@ -71,6 +75,7 @@ ShellPrint (
 EFI_STATUS
 EFIAPI
 ShellCommandRegister (
+  IN  SHELL                 *Shell,
   IN  CONST SHELL_COMMAND   *ShellCommand
   );
 
