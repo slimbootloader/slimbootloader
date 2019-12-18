@@ -57,15 +57,4 @@ ShellReadUintn (
   OUT       BOOLEAN *IsHex
   );
 
-/**
-  Return a Shell Command Entry List Pointer
-
-  @retval LIST_ENTRY Pointer
-**/
-LIST_ENTRY *
-EFIAPI
-GetShellCommandEntryList (
-  VOID
-  );
-
 #endif

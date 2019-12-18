@@ -21,9 +21,6 @@
 
 #define ESC   '\x1b'
 
-STATIC LIST_ENTRY mShellCommandEntryList =
-  INITIALIZE_LIST_HEAD_VARIABLE (mShellCommandEntryList);
-
 /**
   Prompt user for command, receive command, run command.
 
@@ -113,7 +110,10 @@ Shell (
   SHELL   Shell;
   UINT8   Buffer;
 
-  LoadShellCommands ();
+  ZeroMem (&Shell, sizeof (Shell));
+  InitializeListHead (&Shell.CommandEntryList);
+
+  LoadShellCommands (&Shell);
   Shell.ShouldExit = FALSE;
 
   if (Timeout != 0) {
@@ -141,13 +141,13 @@ Shell (
     }
   }
 
-  HistoryInit (TRUE);
+  HistoryInit (&Shell, TRUE);
 
   while (! (Shell.ShouldExit)) {
     ShellPrompt (&Shell);
   }
 
-  HistoryInit (FALSE);
+  HistoryInit (&Shell, FALSE);
 
   return EFI_SUCCESS;
 }
@@ -178,7 +178,7 @@ ShellPrompt (
     return Status;
   }
 
-  HistoryAdd (CommandLine);
+  HistoryAdd (Shell, CommandLine);
 
   return RunShellCommand (Shell, CommandLine);
 }
@@ -257,9 +257,9 @@ ReadShellCommand (
 
         HistoryLineLen = 0;
         if (Char == 'A') { // Up
-          HistoryLineLen = HistoryUp (HistoryLine);
+          HistoryLineLen = HistoryUp (Shell, HistoryLine);
         } else if (Char == 'B') { // Down
-          HistoryLineLen = HistoryDown (HistoryLine);
+          HistoryLineLen = HistoryDown (Shell, HistoryLine);
         } else if (Char == 'C') { // Right
         } else if (Char == 'D') { // Left
         }
@@ -571,7 +571,7 @@ FindShellCommand (
     Name = L"help";
   }
 
-  EntryList = GetShellCommandEntryList ();
+  EntryList = &Shell->CommandEntryList;
   for (Link = EntryList->ForwardLink; Link != EntryList; Link = Link->ForwardLink) {
     Entry = CR (Link, SHELL_COMMAND_LIST_ENTRY, Link, SHELL_COMMAND_LIST_ENTRY_SIGNATURE);
     if (StrCmp (Name, Entry->ShellCommand->Name) == 0) {
@@ -615,6 +615,7 @@ CompareCommandEntry (
 /**
   Register a Shell Command
 
+  @param[in]  Shell        Shell Context
   @param[in]  ShellCommand A Shell Command to be registered
 
   @retval EFI_SUCCESS
@@ -623,6 +624,7 @@ CompareCommandEntry (
 EFI_STATUS
 EFIAPI
 ShellCommandRegister (
+  IN  SHELL                 *Shell,
   IN  CONST SHELL_COMMAND   *ShellCommand
   )
 {
@@ -637,22 +639,8 @@ ShellCommandRegister (
   Entry->ShellCommand = ShellCommand;
   Entry->Signature = SHELL_COMMAND_LIST_ENTRY_SIGNATURE;
 
-  EntryList = GetShellCommandEntryList ();
+  EntryList = &Shell->CommandEntryList;
   PerformInsertionSortList (EntryList, &Entry->Link, CompareCommandEntry);
 
   return EFI_SUCCESS;
-}
-
-/**
-  Return a Shell Command Entry List Pointer
-
-  @retval LIST_ENTRY Pointer
-**/
-LIST_ENTRY *
-EFIAPI
-GetShellCommandEntryList (
-  VOID
-  )
-{
-  return &mShellCommandEntryList;
 }
