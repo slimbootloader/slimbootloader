@@ -41,6 +41,7 @@
 
 [Guids]
   gEsrtSystemFirmwareGuid
+  gCsmeFWUDriverImageFileGuid
 
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdAcpiTablesRsdp
