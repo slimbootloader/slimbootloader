@@ -105,6 +105,14 @@
   #     0x0010    - SM3_256.<BR>
   gPlatformCommonLibTokenSpaceGuid.PcdIppHashLibSupportedMask     |        0x02| UINT16 | 0x20000701
 
+  ## This PCD indicates the signing HASH algorithm used for Component signing
+  #  Based on the value set, the required algorithm should be used while verfication
+  #     0x01    - SHA2_256.<BR>
+  #     0x02    - SHA2_384.<BR>
+  #     0x03    - SHA2_512.<BR>
+  #     0x04    - SM3_256.<BR>
+  gPlatformCommonLibTokenSpaceGuid.PcdCompSignHashAlg                 |        0x01| UINT8 | 0x20000702
+
 [PcdsFixedAtBuild, PcdsPatchableInModule]
   # For patchable PCDs, try to set the default as none-zero
   # It is to prevent it from being put into BSS section, thus cause patching issue

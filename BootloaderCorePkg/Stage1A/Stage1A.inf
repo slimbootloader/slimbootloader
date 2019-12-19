@@ -81,6 +81,7 @@
   gPlatformModuleTokenSpaceGuid.PcdVerifiedBootHashMask
   gPlatformModuleTokenSpaceGuid.PcdHashStoreSize
   gPlatformCommonLibTokenSpaceGuid.PcdPcdLibId
+  gPlatformCommonLibTokenSpaceGuid.PcdCompSignHashAlg
 
 [Depex]
   TRUE

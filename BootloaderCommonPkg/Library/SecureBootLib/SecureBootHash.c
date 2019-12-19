@@ -39,6 +39,7 @@ CalculateHash  (
   UINT8 DigestSize;
   UINT8 *HashRetVal;
 
+
   if(Digest != NULL){
     if (HashAlg == HASH_TYPE_SHA256) {
       HashRetVal = Sha256 (Data, Length, Digest);
@@ -95,7 +96,8 @@ DoHashVerify (
   UINT8                DigestSize;
 
 
-  if ((Data == NULL) || (HashAlg != HASH_TYPE_SHA256)) {
+  if ((Data == NULL) ||
+      ((HashAlg != HASH_TYPE_SHA256) && (HashAlg != HASH_TYPE_SHA384))) {
     return RETURN_INVALID_PARAMETER;
   }
 

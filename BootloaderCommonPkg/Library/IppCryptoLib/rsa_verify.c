@@ -28,7 +28,7 @@ int VerifyRsaSignature (CONST PUB_KEY_HDR *PubKeyHdr, CONST SIGNATURE_HDR *Signa
   Ipp8u  *rsa_n;
   Ipp8u  *rsa_e;
   Ipp16u  mod_len;
-  Ipp8u  bn_buf[3400];
+  Ipp8u  bn_buf[5200];
   IppsBigNumState *bn_rsa_n;
   IppsBigNumState *bn_rsa_e;
   Ipp8u *scratch_buf;

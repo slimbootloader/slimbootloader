@@ -140,7 +140,7 @@ class BaseBoard(object):
         self.LOGO_FILE              = 'Platform/CommonBoardPkg/Logo/Logo.bmp'
 
         self.RSA_SIGN_TYPE          = 'RSA2048'
-        self.SIGN_HASH_TYPE         = 'SHA2_256'
+        self.SIGN_HASH_TYPE         = HASH_TYPE_VALUE['SHA2_256']
         self.VERINFO_IMAGE_ID       = 'SB_???? '
         self.VERINFO_PROJ_ID        = 1
         self.VERINFO_CORE_MAJOR_VER = 0
@@ -507,7 +507,7 @@ class Build(object):
 
         hash_idx   = 0
         hash_store = HashStoreTable.from_buffer(stage1_bins, hs_offset)
-        hash_len   = HASH_DIGEST_SIZE[self._board.SIGN_HASH_TYPE]
+        hash_len   = HASH_DIGEST_SIZE[HASH_VAL_STRING[self._board.SIGN_HASH_TYPE]]
         hash_store_data_buf = bytearray()
         hash_store.UsedLength = sizeof(HashStoreTable())
         for hash_file, usage in hash_file_list:
@@ -527,7 +527,7 @@ class Build(object):
             # update hash data
             hashstoredata = HashStoreData()
             hashstoredata.Usage   = usage
-            hashstoredata.HashAlg = HASH_TYPE_VALUE[self._board.SIGN_HASH_TYPE]
+            hashstoredata.HashAlg = self._board.SIGN_HASH_TYPE
             hashstoredata.DigestLen = hash_len
 
             hash_store.UsedLength += hash_len + sizeof(HashStoreData())
@@ -887,7 +887,7 @@ class Build(object):
                     if src == 'STAGE2.fd':
                         raise Exception ("STAGE2.fd must be compressed, please change BoardConfig.py file !")
                 if src not in rgn_name_list:
-                    gen_hash_file (src_path, self._board.SIGN_HASH_TYPE, '', False)
+                    gen_hash_file (src_path, HASH_VAL_STRING[self._board.SIGN_HASH_TYPE], '', False)
 
                 if mode != STITCH_OPS.MODE_FILE_NOP:
                     dst_path = bas_path + '.pad'
@@ -1033,7 +1033,7 @@ class Build(object):
         key_hash_list = []
         mst_key = None
         if self._board.HAVE_VERIFIED_BOOT:
-            hash_store_size = sizeof(HashStoreTable) + (sizeof(HashStoreData) + HASH_DIGEST_SIZE[self._board.SIGN_HASH_TYPE]) * HashStoreTable().HASH_STORE_MAX_IDX_NUM
+            hash_store_size = sizeof(HashStoreTable) + (sizeof(HashStoreData) + HASH_DIGEST_SIZE[HASH_VAL_STRING[self._board.SIGN_HASH_TYPE]]) * HashStoreTable().HASH_STORE_MAX_IDX_NUM
             gen_file_with_size (os.path.join(self._fv_dir, 'HashStore.bin'), hash_store_size)
 
             #Intialize with HashStoreTable
@@ -1050,7 +1050,7 @@ class Build(object):
         else:
             self._board.VERIFIED_BOOT_HASH_MASK = 0
 
-        gen_pub_key_hash_store (mst_key, key_hash_list, self._board.SIGN_HASH_TYPE,
+        gen_pub_key_hash_store (mst_key, key_hash_list, HASH_VAL_STRING[self._board.SIGN_HASH_TYPE],
                                 self._key_dir, os.path.join(self._fv_dir, 'KEYHASH.bin'))
 
         # create fit table
@@ -1098,14 +1098,14 @@ class Build(object):
             mst_priv_key     = self._board._MASTER_PRIVATE_KEY
             mst_pub_key_file = os.path.join(self._fv_dir, "MSTKEY.bin")
             gen_pub_key (mst_priv_key, mst_pub_key_file)
-            gen_hash_file (mst_pub_key_file, self._board.SIGN_HASH_TYPE, '', True)
+            gen_hash_file (mst_pub_key_file, HASH_VAL_STRING[self._board.SIGN_HASH_TYPE], '', True)
 
         # create configuration data
         if self._board.CFGDATA_SIZE > 0:
             # create config data files
             gen_config_file (self._fv_dir, self._board.BOARD_PKG_NAME, self._board._PLATFORM_ID,
                              self._board._CFGDATA_PRIVATE_KEY, self._board.CFG_DATABASE_SIZE, self._board.CFGDATA_SIZE,
-                             self._board._CFGDATA_INT_FILE, self._board._CFGDATA_EXT_FILE, self._board.SIGN_HASH_TYPE)
+                             self._board._CFGDATA_INT_FILE, self._board._CFGDATA_EXT_FILE, HASH_VAL_STRING[self._board.SIGN_HASH_TYPE])
 
         # rebuild reset vector
         vtf_dir = os.path.join('BootloaderCorePkg', 'Stage1A', 'Ia32', 'Vtf0')
@@ -1181,7 +1181,7 @@ class Build(object):
         # generate payload
         gen_payload_bin (self._fv_dir, self._pld_list,
                          os.path.join(self._fv_dir, "PAYLOAD.bin"),
-                         self._board._CONTAINER_PRIVATE_KEY, self._board.BOARD_PKG_NAME)
+                         self._board._CONTAINER_PRIVATE_KEY, HASH_VAL_STRING[self._board.SIGN_HASH_TYPE], self._board.BOARD_PKG_NAME)
 
         # create firmware update key
         if self._board.ENABLE_FWU:
@@ -1201,7 +1201,7 @@ class Build(object):
         if getattr(self._board, "GetContainerList", None):
           container_list = self._board.GetContainerList ()
           component_dir = os.path.join(os.environ['PLT_SOURCE'], 'Platform', self._board.BOARD_PKG_NAME, 'Binaries')
-          gen_container_bin (container_list, self._fv_dir, component_dir, self._key_dir, '', self._board.SIGN_HASH_TYPE)
+          gen_container_bin (container_list, self._fv_dir, component_dir, self._key_dir, '', HASH_VAL_STRING[self._board.SIGN_HASH_TYPE])
 
         # patch stages
         self.patch_stages ()
