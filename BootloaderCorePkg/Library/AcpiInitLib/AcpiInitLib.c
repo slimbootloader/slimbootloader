@@ -470,10 +470,12 @@ UpdateFwst (
   FwstAcpiTablePtr = (EFI_FWST_ACPI_DESCRIPTION_TABLE *)Current;
   FwUpdCompStatus = (FW_UPDATE_COMP_STATUS *)(RsvdBase + sizeof(FW_UPDATE_STATUS));
   for (Count = 0; Count < MAX_FW_COMPONENTS; Count ++) {
-    CopyMem(&(FwstAcpiTablePtr->EsrtTableEntry[Count].FwClass), &(FwUpdCompStatus->FirmwareId), sizeof(EFI_GUID));
-    FwstAcpiTablePtr->EsrtTableEntry[Count].FwType = ESRT_FW_TYPE_SYSTEMFIRMWARE;
-    FwstAcpiTablePtr->EsrtTableEntry[Count].LastAttemptVersion = FwUpdCompStatus->LastAttemptVersion;
-    FwstAcpiTablePtr->EsrtTableEntry[Count].LastAttemptStatus = FwUpdCompStatus->LastAttemptStatus;
+    if (!CompareGuid(&FwUpdCompStatus->FirmwareId, &gCsmeFWUDriverImageFileGuid)) {
+      CopyMem(&(FwstAcpiTablePtr->EsrtTableEntry[Count].FwClass), &(FwUpdCompStatus->FirmwareId), sizeof(EFI_GUID));
+      FwstAcpiTablePtr->EsrtTableEntry[Count].FwType = ESRT_FW_TYPE_SYSTEMFIRMWARE;
+      FwstAcpiTablePtr->EsrtTableEntry[Count].LastAttemptVersion = FwUpdCompStatus->LastAttemptVersion;
+      FwstAcpiTablePtr->EsrtTableEntry[Count].LastAttemptStatus = FwUpdCompStatus->LastAttemptStatus;
+    }
     FwUpdCompStatus = (FW_UPDATE_COMP_STATUS *)((UINT32)FwUpdCompStatus + sizeof(FW_UPDATE_COMP_STATUS));
   }
 
