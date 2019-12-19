@@ -30,3 +30,4 @@
 [Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdContainerMaxNumber
   gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdCompSignHashAlg

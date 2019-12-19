@@ -94,16 +94,6 @@ HASH_USAGE = {
     'PUBKEY_CONT_DEF'     : (1<<12),
 }
 
-class RsaSignature (Structure):
-    _pack_ = 1
-    _fields_ = [
-        ('Signature',  ARRAY(c_uint8, 256)),
-        ('Identifier', c_uint32),
-        ('PubKeyMod',  ARRAY(c_uint8, 256)),
-        ('PubKeyExp',  ARRAY(c_uint8, 4)),
-        ('Padding',    ARRAY(c_uint8, 8)),
-        ]
-
 class UcodeHeader(Structure):
     _pack_ = 1
     _fields_ = [
@@ -467,7 +457,7 @@ def gen_config_file (fv_dir, brd_name, platform_id, pri_key, cfg_db_size, cfg_si
 
     cfg_final_file = os.path.join(fv_dir, "CFGDATA.bin")
     if pri_key:
-        cfg_data_tool ('sign', ['-k', pri_key, '-auth', hash_type, cfg_merged_bin_file], cfg_final_file)
+        cfg_data_tool ('sign', ['-k', pri_key, '-a', hash_type, cfg_merged_bin_file], cfg_final_file)
     else:
         shutil.copy(cfg_merged_bin_file, cfg_final_file)
 
@@ -513,7 +503,7 @@ def gen_config_file (fv_dir, brd_name, platform_id, pri_key, cfg_db_size, cfg_si
     fd.close()
 
 
-def gen_payload_bin (fv_dir, pld_list, pld_bin, priv_key, brd_name = None):
+def gen_payload_bin (fv_dir, pld_list, pld_bin, priv_key, hash_alg, brd_name = None):
     fv_dir = os.path.dirname (pld_bin)
     for idx, pld in enumerate(pld_list):
         if pld['file'] in ['OsLoader.efi', 'FirmwareUpdate.efi']:
@@ -548,11 +538,17 @@ def gen_payload_bin (fv_dir, pld_list, pld_bin, priv_key, brd_name = None):
     # E-payloads container format
     alignment = 0x10
     key_dir  = os.path.dirname (priv_key)
-    pld_list = [('EPLD', '%s' % epld_bin, '', 'RSA2048', '%s' % os.path.basename(priv_key), alignment, 0)]
+    key_type = get_key_type(priv_key)
+    pld_list = [('EPLD', '%s' % epld_bin, '', key_type, '%s' % os.path.basename(priv_key), alignment, 0)]
     for pld in ext_list:
-        pld_list.append ((pld['name'], pld['file'], pld['algo'], 'SHA2_256', '', 0, 0))
-    gen_container_bin ([pld_list], fv_dir, fv_dir, key_dir, '')
+        pld_list.append ((pld['name'], pld['file'], pld['algo'], hash_alg, '', 0, 0))
+    gen_container_bin ([pld_list], fv_dir, fv_dir, key_dir, '', hash_alg)
 
+def pub_key_valid (pubkey):
+    if (len(pubkey) - sizeof(PUB_KEY_HDR)) in [0x104, 0x184]:
+        return True
+    else:
+        return False
 
 def gen_hash_file (src_path, hash_type, hash_path = '', is_key = False):
     if not hash_path:
@@ -560,12 +556,13 @@ def gen_hash_file (src_path, hash_type, hash_path = '', is_key = False):
     with open(src_path,'rb') as fi:
         di = bytearray(fi.read())
     if is_key:
-        key_len = 0x104
-        if len(di) != (key_len + sizeof(PUB_KEY_HDR)):
+        if pub_key_valid(di) == False:
             raise Exception ("Invalid public key binary!")
         di = di[sizeof(PUB_KEY_HDR):]
     if hash_type == 'SHA2_256':
         ho = hashlib.sha256(di)
+    elif hash_type == 'SHA2_384':
+        ho = hashlib.sha384(di)
     else:
         raise Exception ("Unsupported hash type provided!")
     hash = ho.digest()

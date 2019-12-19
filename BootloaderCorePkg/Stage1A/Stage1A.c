@@ -147,6 +147,7 @@ PrepareStage1B (
   UINT32                    Length;
   EFI_STATUS                Status;
   LOADER_COMPRESSED_HEADER *Hdr;
+  UINT8                     SignHashAlg;
 
   // Load Stage 1B
   Status = GetComponentInfo (FLASH_MAP_SIG_STAGE1B, &Src, &Length);
@@ -172,7 +173,13 @@ PrepareStage1B (
     if (IS_COMPRESSED (Src)) {
       Length = sizeof (LOADER_COMPRESSED_HEADER) + Hdr->CompressedSize;
     }
-    Status = DoHashVerify ((CONST UINT8 *)Src, Length, HASH_USAGE_STAGE_1B, HASH_TYPE_SHA256, NULL);
+    if(PcdGet8(PcdCompSignHashAlg) == HASH_TYPE_SHA256){
+      SignHashAlg = HASH_TYPE_SHA256;
+    } else if(PcdGet8(PcdCompSignHashAlg) == HASH_TYPE_SHA384){
+      SignHashAlg = HASH_TYPE_SHA384;
+    }
+
+    Status = DoHashVerify ((CONST UINT8 *)Src, Length, HASH_USAGE_STAGE_1B, SignHashAlg, NULL);
     AddMeasurePoint (0x10A0);
     if (EFI_ERROR (Status)) {
       if (Status != RETURN_NOT_FOUND) {

@@ -47,6 +47,9 @@ HASH_TYPE_VALUE = {
             "SM3_256"     : 4,
     }
 
+# Hash values defined should match with cryptolib.h
+HASH_VAL_STRING = dict(map(reversed, HASH_TYPE_VALUE.items()))
+
 AUTH_TYPE_HASH_VALUE = {
             # Auth_type      : Hash_type
             "SHA2_256"       : 1,
@@ -227,7 +230,7 @@ def rsa_sign_file (priv_key, pub_key, hash_type, in_file, out_file, inc_dat = Fa
     sign = SIGNATURE_HDR()
     sign.SigSize = len(out_data)
     sign.SigType = SIGN_TYPE_SCHEME['RSA_PCKS_1_5']
-    sign.HashAlg = HASH_TYPE_VALUE['SHA2_256']
+    sign.HashAlg = HASH_TYPE_VALUE[hash_type]
 
     bins.extend(bytearray(sign) + out_data)
     if inc_key:
