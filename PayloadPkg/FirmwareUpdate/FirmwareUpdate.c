@@ -1198,16 +1198,26 @@ ApplyFwImage (
 {
   EFI_STATUS  Status;
   VOID        *CsmeUpdateInData;
+  BOOT_PARTITION  Partition;
 
   Status = EFI_SUCCESS;
   *ResetRequired = FALSE;
 
-  if (CompareGuid(&ImageHdr->UpdateImageTypeId, &gSblFWUpdateImageFileGuid) == TRUE) {
+  if (CompareGuid(&ImageHdr->UpdateImageTypeId, &gSblFWUpdateImageFileGuid)) {
     Status = UpdateSystemFirmware(ImageHdr);
-  } else if (CompareGuid(&ImageHdr->UpdateImageTypeId, &gCfgFWUpdateImageFileGuid) == TRUE) {
+  } else if (CompareGuid(&ImageHdr->UpdateImageTypeId, &gCfgFWUpdateImageFileGuid)) {
     Status = UpdateSystemFirmware(ImageHdr);
-  } else if (CompareGuid(&ImageHdr->UpdateImageTypeId, &gCsmeFWUpdateImageFileGuid) == TRUE) {
+  } else if (CompareGuid(&ImageHdr->UpdateImageTypeId, &gCsmeFWUpdateImageFileGuid)) {
     if (FeaturePcdGet(PcdCsmeUpdateEnabled) == 1) {
+      //
+      // CSME update will only work when updated from primary partition
+      //
+      Partition = (BOOT_PARTITION)GetCurrentBootPartition ();
+      if (Partition == BackupPartition) {
+        SetBootPartition (PrimaryPartition);
+        ResetSystem (EfiResetCold);
+        CpuDeadLoop ();
+      }
       CsmeUpdateInData = InitCsmeUpdInputData();
       if (CsmeUpdateInData != NULL) {
         Status = UpdateCsme(CapImage, CapImageSize, CsmeUpdateInData, ImageHdr);
