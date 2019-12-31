@@ -66,6 +66,7 @@
   gPayloadTokenSpaceGuid.PcdRsvdRegionBase
   gPlatformCommonLibTokenSpaceGuid.PcdLowestSupportedFwVer
   gPayloadTokenSpaceGuid.PcdCsmeUpdateEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdCompSignHashAlg
 
 [Depex]
   TRUE

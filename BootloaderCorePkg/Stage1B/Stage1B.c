@@ -156,7 +156,7 @@ AppendHashStore (
     SignHdr   = (SIGNATURE_HDR *) AuthInfo;
     PubKeyHdr = (PUB_KEY_HDR *)((UINT8 *)SignHdr + sizeof(SIGNATURE_HDR) + SignHdr->SigSize);
     Status = DoRsaVerify ((UINT8 *)OemKeyHashBlob, OemKeyHashBlob->UsedLength,
-                          HASH_USAGE_PUBKEY_MASTER, SignHdr, PubKeyHdr, NULL, NULL);
+                          HASH_USAGE_PUBKEY_MASTER, SignHdr, PubKeyHdr, PcdGet8(PcdCompSignHashAlg), NULL, NULL);
   }
   if (EFI_ERROR (Status)) {
     return EFI_SECURITY_VIOLATION;
@@ -225,7 +225,7 @@ CreateConfigDatabase (
         SignHdr   = (SIGNATURE_HDR *)((UINT8 *) CfgBlob + CfgBlob->UsedLength);
         PubKeyHdr = (PUB_KEY_HDR *)((UINT8 *)SignHdr + sizeof(SIGNATURE_HDR) + SignHdr->SigSize);
         Status  = DoRsaVerify ((UINT8 *)CfgBlob, CfgBlob->UsedLength, HASH_USAGE_PUBKEY_CFG_DATA,
-                    SignHdr, PubKeyHdr, NULL, Stage1bParam->ConfigDataHash);
+                    SignHdr, PubKeyHdr, PcdGet8(PcdCompSignHashAlg), NULL, Stage1bParam->ConfigDataHash);
         if (EFI_ERROR (Status)) {
           DEBUG ((DEBUG_INFO, "EXT CFG Data ignored ... %r\n", Status));
           ExtCfgAddPtr = NULL;

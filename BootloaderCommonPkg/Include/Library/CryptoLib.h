@@ -38,6 +38,7 @@ typedef UINT8 KEY_TYPE;
 #define RSA_E_SIZE                       4   //hardcode e size to be 4
 
 typedef UINT8 HASH_ALG_TYPE;
+#define  HASH_TYPE_NONE                  0
 #define  HASH_TYPE_SHA256                1
 #define  HASH_TYPE_SHA384                2
 #define  HASH_TYPE_SHA512                3

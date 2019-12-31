@@ -71,6 +71,7 @@ DoHashVerify (
   @param[in]  Usage           Hash usage.
   @param[in]  SignatureHdr    Signature header for singanture data.
   @param[in]  PubKeyHdr       Public key header for key data
+  @param[in]  PubKeyHashAlg   Hash Alg for PubKeyHash.
   @param[in]  PubKeyHash      Public key hash value when ComponentType is not used.
   @param[out] OutHash         Calculated data hash value.
 
@@ -88,6 +89,7 @@ DoRsaVerify (
   IN       HASH_COMP_USAGE  Usage,
   IN CONST SIGNATURE_HDR   *SignatureHdr,
   IN       PUB_KEY_HDR     *PubKeyHdr,
+  IN       UINT8            PubKeyHashAlg,
   IN       UINT8           *PubKeyHash      OPTIONAL,
   OUT      UINT8           *OutHash         OPTIONAL
   );
