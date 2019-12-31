@@ -231,6 +231,32 @@ LocateComponentEntryFromContainer (
 }
 
 /**
+  This function returns the hash alg type from auth type.
+
+  @param[in] AuthType    Authorization Type.
+
+  @retval         Hash Algorithm Type.
+
+**/
+HASH_ALG_TYPE
+GetHashAlg(
+  AUTH_TYPE AuthType
+  )
+{
+  HASH_ALG_TYPE HashAlg;
+
+  HashAlg = HASH_TYPE_NONE;
+
+  if(AuthType == AUTH_TYPE_SIG_RSA2048_SHA256){
+    HashAlg = HASH_TYPE_SHA256;
+  } else if (AuthType == AUTH_TYPE_SIG_RSA3072_SHA384){
+    HashAlg = HASH_TYPE_SHA384;
+  }
+
+  return HashAlg;
+}
+
+/**
   Authenticate a container header or component.
 
   @param[in] Data         Data buffer to be authenticated.
@@ -273,7 +299,7 @@ AuthenticateComponent (
       SignHdr  = (SIGNATURE_HDR *) SigPtr;
       KeyPtr   = (UINT8 *)SignHdr + sizeof(SIGNATURE_HDR) + SignHdr->SigSize ;
       Status   = DoRsaVerify (Data, Length, Usage, SignHdr,
-                             (PUB_KEY_HDR *) KeyPtr, HashData, NULL);
+                             (PUB_KEY_HDR *) KeyPtr, GetHashAlg(AuthType), HashData, NULL);
     } else if (AuthType == AUTH_TYPE_NONE) {
       Status = EFI_SUCCESS;
     } else {

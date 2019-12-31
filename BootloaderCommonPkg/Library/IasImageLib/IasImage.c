@@ -105,7 +105,7 @@ IsIasImageValid (
 
 
   Status = DoRsaVerify ((CONST UINT8 *)Hdr, ((UINT32)IAS_PAYLOAD_END (Hdr)) - ((UINT32)Hdr),
-                         HASH_USAGE_PUBKEY_OS, SignHdr, PubKeyHdr, NULL, ImageHash);
+                         HASH_USAGE_PUBKEY_OS, SignHdr, PubKeyHdr, PcdGet8(PcdCompSignHashAlg), NULL, ImageHash);
   if (EFI_ERROR (Status) != EFI_SUCCESS) {
     DEBUG ((DEBUG_ERROR, "IAS image verification failed!\n"));
     return NULL;

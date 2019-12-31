@@ -17,6 +17,7 @@
 #define PROGESS_ID_AUTHENTICATE       3
 #define PROGESS_ID_DECOMPRESS         4
 
+typedef UINT8 AUTH_TYPE;
 #define AUTH_TYPE_NONE                0
 #define AUTH_TYPE_SHA2_256            1
 #define AUTH_TYPE_SHA2_384            2

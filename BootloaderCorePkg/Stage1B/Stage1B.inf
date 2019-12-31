@@ -97,6 +97,7 @@
   gPlatformModuleTokenSpaceGuid.PcdEarlyLogBufferSize
   gPlatformModuleTokenSpaceGuid.PcdLogBufferSize
   gPlatformModuleTokenSpaceGuid.PcdCfgDataIntBase
+  gPlatformCommonLibTokenSpaceGuid.PcdCompSignHashAlg
 
 [Depex]
   TRUE
