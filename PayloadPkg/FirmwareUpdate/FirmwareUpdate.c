@@ -362,6 +362,14 @@ VerifyFwVersion (
 
   CurrentBlVersion = NULL;
   CapsuleBlVersion = NULL;
+
+  //
+  // For now - Perform version check only for Slim Bootloader
+  //
+  if (CompareGuid(&ImageHdr->UpdateImageTypeId, &gSblFWUpdateImageFileGuid) != 0) {
+    return EFI_SUCCESS;
+  }
+
   //
   // Get base address of Stage 1A from current firmware
   //
