@@ -54,38 +54,26 @@ def rebuild_basetools ():
         print ("Build BaseTools failed, please check required build environment and utilities !")
         sys.exit(1)
 
-
 def prep_env ():
     sblsource = os.path.dirname(os.path.realpath(__file__))
     os.chdir(sblsource)
     if os.name == 'posix':
         toolchain = 'GCC49'
-        gcc_ver = subprocess.Popen(['gcc', '-dumpversion'], stdout=subprocess.PIPE)
-        (gcc_ver, err) = subprocess.Popen(['sed', 's/\\..*//'], stdin=gcc_ver.stdout, stdout=subprocess.PIPE).communicate()
-        if int(gcc_ver) > 4:
+        gcc_ver = run_process (['gcc', '-dumpversion'], capture_out = True)
+        gcc_ver = gcc_ver.strip()
+        if int(gcc_ver.split('.')[0]) > 4:
             toolchain = 'GCC5'
-
         os.environ['PATH'] = os.environ['PATH'] + ':' + os.path.join(sblsource, 'BaseTools/BinWrappers/PosixLike')
+        toolchain_ver = gcc_ver
     elif os.name == 'nt':
-        toolchain = ''
         os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.join(sblsource, 'BaseTools\\Bin\\Win32')
         os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.join(sblsource, 'BaseTools\\BinWrappers\\WindowsLike')
         os.environ['PYTHONPATH'] = os.path.join(sblsource, 'BaseTools', 'Source', 'Python')
-        vs_ver_list = [
-            ('2015', 'VS140COMNTOOLS'),
-            ('2013', 'VS120COMNTOOLS'),
-            ('2012', 'VS110COMNTOOLS'),
-            ('2010', 'VS100COMNTOOLS'),
-            ('2008', 'VS90COMNTOOLS'),
-            ('2005', 'VS80COMNTOOLS')
-        ]
-        for vs_ver, vs_tool in vs_ver_list:
-            if vs_tool in os.environ:
-                toolchain='VS%s%s' % (vs_ver, 'x86')
-                toolchainprefix = 'VS%s_PREFIX' % (vs_ver)
-                os.environ[toolchainprefix] = os.path.join(os.environ[vs_tool], '..//..//')
-                break
-        if not toolchain:
+
+        toolchain, toolchain_prefix, toolchain_path, toolchain_ver = get_visual_studio_info ()
+        if toolchain:
+            os.environ[toolchain_prefix] = toolchain_path
+        else:
             print("Could not find supported Visual Studio version !")
             sys.exit(1)
         if 'NASM_PREFIX' not in os.environ:
@@ -97,6 +85,8 @@ def prep_env ():
     else:
         print("Unsupported operating system !")
         sys.exit(1)
+
+    print ('Using %s, Version %s' % (toolchain, toolchain_ver))
 
     check_for_openssl()
     check_for_nasm()
@@ -231,7 +221,7 @@ class BaseBoard(object):
         self.FWUPDATE_LOAD_BASE    = 0
 
         # OS Loader FD/FV sizes
-        self.OS_LOADER_FD_SIZE     = 0x00040000
+        self.OS_LOADER_FD_SIZE     = 0x00042000
         self.OS_LOADER_FD_NUMBLK   = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         self.PLD_HEAP_SIZE         = 0x02000000

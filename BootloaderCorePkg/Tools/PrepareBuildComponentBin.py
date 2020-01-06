@@ -157,7 +157,7 @@ def BuildFspBins (fsp_dir, sbl_dir, silicon_pkg_name, flag):
     if CheckFileListExist(copy_list, sbl_dir):
         return
 
-    edk2_base_tag = 'edk2-stable201905'
+    edk2_base_tag = 'edk2-stable201911'
     print ('Building QEMU FSP binaries from EDKII repo (Base Tag: %s)' % edk2_base_tag)
     if not os.path.exists(fsp_dir + '/.git'):
         print ('Cloning EDKII repo ...')
@@ -174,9 +174,6 @@ def BuildFspBins (fsp_dir, sbl_dir, silicon_pkg_name, flag):
                 Fatal ('Failed to fetch all tags !')
 
     print ('Checking out EDKII stable tag (%s)...' % edk2_base_tag)
-
-    if os.path.exists(fsp_dir + '/BuildFsp.cmd'):
-        os.remove (fsp_dir + '/BuildFsp.cmd')
 
     if os.path.exists(fsp_dir + '/BuildFsp.py'):
         os.remove (fsp_dir + '/BuildFsp.py')
@@ -213,16 +210,13 @@ def BuildFspBins (fsp_dir, sbl_dir, silicon_pkg_name, flag):
     else:
         flags = [flag]
 
-    print(flags)
     for flag in flags:
         os.environ['WORKSPACE'] = ''
         os.environ['EDK_TOOLS_PATH'] = ''
         os.environ['EDK_TOOLS_BIN'] = ''
+        os.environ['BASE_TOOLS_PATH'] = ''
         os.environ['CONF_PATH'] = ''
-        if os.name == 'nt':
-            ret = subprocess.call([os.path.join(fsp_dir, 'BuildFsp.cmd'), flag], cwd=fsp_dir)
-        else:
-            ret = subprocess.call([sys.executable, os.path.join(fsp_dir, 'BuildFsp.py'), flag], cwd=fsp_dir)
+        ret = subprocess.call([sys.executable, os.path.join(fsp_dir, 'BuildFsp.py'), flag], cwd=fsp_dir)
         if ret:
             Fatal ('Failed to build QEMU FSP binary !')
 
