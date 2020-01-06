@@ -243,7 +243,7 @@ def rsa_sign_file (priv_key, pub_key, hash_type, in_file, out_file, inc_dat = Fa
 def get_key_type (in_key):
     pub_key = gen_pub_key (in_key)
     pub_key_hdr = PUB_KEY_HDR.from_buffer(pub_key)
-    key_type = (key for key, value in PUB_KEY_TYPE.items() if value == pub_key_hdr.KeyType).next()
+    key_type = next((key for key, value in PUB_KEY_TYPE.items() if value == pub_key_hdr.KeyType))
     return '%s%d' % (key_type, (pub_key_hdr.KeySize - 4) * 8)
 
 def gen_pub_key (in_key, pub_key = None):

@@ -355,7 +355,7 @@ class CONTAINER ():
     def locate_component (self, comp_name):
         component = None
         for each in self.header.comp_entry:
-            if each.name == comp_name.upper():
+            if each.name.decode() == comp_name.upper():
                 component = each
                 break;
         return component
