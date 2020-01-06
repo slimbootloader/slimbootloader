@@ -123,9 +123,6 @@
   SerialPortLib|BootloaderCommonPkg/Library/SerialPortLib/SerialPortLib.inf
   SortLib|BootloaderCommonPkg/Library/SortLib/SortLib.inf
 
-!if $(HAVE_FSP_BIN)
-  FspApiLib|$(PLATFORM_PACKAGE)/Library/FspApiLib/FspApiLib.inf
-!endif
 !if $(ENABLE_SOURCE_DEBUG)
   DebugAgentLib|BootloaderCommonPkg/Library/DebugAgentLib/DebugAgentLib.inf
 !else
@@ -343,6 +340,7 @@
       gPlatformCommonLibTokenSpaceGuid.PcdMinDecompression | TRUE
       gPlatformCommonLibTokenSpaceGuid.PcdForceToInitSerialPort | TRUE
     <LibraryClasses>
+      FspApiLib    | $(PLATFORM_PACKAGE)/Library/FspApiLib/FsptApiLib.inf
       BaseMemoryLib| MdePkg/Library/BaseMemoryLibRepStr/BaseMemoryLibRepStr.inf
       SocInitLib   | Silicon/$(SILICON_PKG_NAME)/Library/Stage1ASocInitLib/Stage1ASocInitLib.inf
       BoardInitLib | Platform/$(BOARD_PKG_NAME)/Library/Stage1ABoardInitLib/Stage1ABoardInitLib.inf
@@ -353,6 +351,7 @@
 
   $(PLATFORM_PACKAGE)/Stage1B/Stage1B.inf {
     <LibraryClasses>
+      FspApiLib    | $(PLATFORM_PACKAGE)/Library/FspApiLib/FspmApiLib.inf
       BaseMemoryLib| MdePkg/Library/BaseMemoryLibRepStr/BaseMemoryLibRepStr.inf
       SocInitLib   | Silicon/$(SILICON_PKG_NAME)/Library/Stage1BSocInitLib/Stage1BSocInitLib.inf
       BoardInitLib | Platform/$(BOARD_PKG_NAME)/Library/Stage1BBoardInitLib/Stage1BBoardInitLib.inf
@@ -360,6 +359,7 @@
 
   $(PLATFORM_PACKAGE)/Stage2/Stage2.inf {
     <LibraryClasses>
+      FspApiLib    | $(PLATFORM_PACKAGE)/Library/FspApiLib/FspsApiLib.inf
       SocInitLib   | Silicon/$(SILICON_PKG_NAME)/Library/Stage2SocInitLib/Stage2SocInitLib.inf
       BoardInitLib | Platform/$(BOARD_PKG_NAME)/Library/Stage2BoardInitLib/Stage2BoardInitLib.inf
   }

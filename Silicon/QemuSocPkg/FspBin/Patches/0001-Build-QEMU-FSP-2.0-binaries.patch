@@ -1,4 +1,4 @@
-From 63155b0f70454795303f0a133b4ab3a6f332649c Mon Sep 17 00:00:00 2001
+From 1bf51a46fa7e7ec4f874478e6a947b1cff9492d7 Mon Sep 17 00:00:00 2001
 From: Aiden Park <aiden.park@intel.com>
 Date: Wed, 11 Dec 2019 10:00:41 -0800
 Subject: [PATCH] Build QEMU FSP 2.0 binaries
@@ -7,8 +7,7 @@ Signed-off-by: Aiden Park <aiden.park@intel.com>
 Signed-off-by: Maurice Ma <maurice.ma@intel.com>
 ---
  BaseTools/Source/C/Makefiles/NmakeSubdirs.py  |   2 +-
- BuildFsp.cmd                                  |  19 +
- BuildFsp.py                                   | 309 +++++++
+ BuildFsp.py                                   | 389 +++++++++
  QemuFspPkg/BuildFv.cmd                        | 248 ++++++
  QemuFspPkg/FspDescription/FspDescription.inf  |  29 +
  QemuFspPkg/FspDescription/FspDescription.txt  |   2 +
@@ -44,8 +43,7 @@ Signed-off-by: Maurice Ma <maurice.ma@intel.com>
  QemuFspPkg/QemuVideo/QemuVideo.c              | 761 ++++++++++++++++++
  QemuFspPkg/QemuVideo/QemuVideo.h              | 115 +++
  QemuFspPkg/QemuVideo/QemuVideo.inf            |  56 ++
- 38 files changed, 5762 insertions(+), 1 deletion(-)
- create mode 100644 BuildFsp.cmd
+ 37 files changed, 5823 insertions(+), 1 deletion(-)
  create mode 100644 BuildFsp.py
  create mode 100644 QemuFspPkg/BuildFv.cmd
  create mode 100644 QemuFspPkg/FspDescription/FspDescription.inf
@@ -84,7 +82,7 @@ Signed-off-by: Maurice Ma <maurice.ma@intel.com>
  create mode 100644 QemuFspPkg/QemuVideo/QemuVideo.inf
 
 diff --git a/BaseTools/Source/C/Makefiles/NmakeSubdirs.py b/BaseTools/Source/C/Makefiles/NmakeSubdirs.py
-index 30a481613e..5f0236b838 100644
+index 356f5aca63..c77bfb095c 100644
 --- a/BaseTools/Source/C/Makefiles/NmakeSubdirs.py
 +++ b/BaseTools/Source/C/Makefiles/NmakeSubdirs.py
 @@ -33,7 +33,7 @@ def RunCommand(WorkDir=None, *Args, **kwargs):
@@ -96,37 +94,12 @@ index 30a481613e..5f0236b838 100644
      p = subprocess.Popen(Args, cwd=WorkDir, stderr=kwargs["stderr"], stdout=kwargs["stdout"])
      stdout, stderr = p.communicate()
      message = ""
-diff --git a/BuildFsp.cmd b/BuildFsp.cmd
-new file mode 100644
-index 0000000000..2fc7502318
---- /dev/null
-+++ b/BuildFsp.cmd
-@@ -0,0 +1,19 @@
-+@REM @file
-+@REM   Windows batch file
-+@REM
-+@REM Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
-+@REM
-+@REM This program and the accompanying materials
-+@REM are licensed and made available under the terms and conditions of the BSD License
-+@REM which accompanies this distribution.  The full text of the license may be found at
-+@REM http://opensource.org/licenses/bsd-license.php
-+@REM
-+@REM THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-+@REM WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
-+@REM
-+@echo off
-+
-+call    EdkSetup.bat
-+
-+echo.
-+python  BuildFsp.py  %*
 diff --git a/BuildFsp.py b/BuildFsp.py
 new file mode 100644
-index 0000000000..edfe7b1340
+index 0000000000..4856517b72
 --- /dev/null
 +++ b/BuildFsp.py
-@@ -0,0 +1,309 @@
+@@ -0,0 +1,389 @@
 +#!/usr/bin/env python
 +## @ BuildFsp.py
 +# Build FSP main script
@@ -156,40 +129,126 @@ index 0000000000..edfe7b1340
 +import multiprocessing
 +from ctypes import *
 +
++def get_file_data (file, mode = 'rb'):
++    return open(file, mode).read()
 +
-+def rebuild_basetools():
++def run_process (arg_list, print_cmd = False, capture_out = False):
++    sys.stdout.flush()
++    if print_cmd:
++        print (' '.join(arg_list))
 +
++    exc    = None
++    result = 0
++    output = ''
++    try:
++        if capture_out:
++            output = subprocess.check_output(arg_list).decode()
++        else:
++            result = subprocess.call (arg_list)
++    except Exception as ex:
++        result = 1
++        exc    = ex
++
++    if result:
++        if not print_cmd:
++            print ('Error in running process:\n  %s' % ' '.join(arg_list))
++        if exc is None:
++            sys.exit(1)
++        else:
++            raise exc
++
++    return output
++
++
++def check_files_exist (base_name_list, dir = '', ext = ''):
++    for each in base_name_list:
++        if not os.path.exists (os.path.join (dir, each + ext)):
++            return False
++    return True
++
++
++def get_visual_studio_info ():
++
++    toolchain        = ''
++    toolchain_prefix = ''
++    toolchain_path   = ''
++    toolchain_ver    = ''
++
++    # check new Visual Studio Community version first
++    vswhere_path = "%s/Microsoft Visual Studio/Installer/vswhere.exe" % os.environ['ProgramFiles(x86)']
++    if os.path.exists (vswhere_path):
++        cmd = [vswhere_path, '-all', '-property', 'installationPath']
++        lines = run_process (cmd, capture_out = True)
++        vscommon_path = ''
++        for each in lines.splitlines ():
++            each = each.strip()
++            if each and os.path.isdir(each):
++                vscommon_path = each
++        vcver_file = vscommon_path + '\\VC\\Auxiliary\\Build\\Microsoft.VCToolsVersion.default.txt'
++        if os.path.exists(vcver_file):
++            for vs_ver in ['2017']:
++                check_path = '\\Microsoft Visual Studio\\%s\\' % vs_ver
++                if check_path in vscommon_path:
++                    toolchain_ver    = get_file_data (vcver_file, 'r').strip()
++                    toolchain_prefix = 'VS%s_PREFIX' % (vs_ver)
++                    toolchain_path   = vscommon_path + '\\VC\\Tools\\MSVC\\%s\\' % toolchain_ver
++                    toolchain='VS%s' % (vs_ver)
++                    break
++
++    if toolchain == '':
++        vs_ver_list = [
++            ('2015', 'VS140COMNTOOLS'),
++            ('2013', 'VS120COMNTOOLS')
++        ]
++        for vs_ver, vs_tool in vs_ver_list:
++            if vs_tool in os.environ:
++                toolchain        ='VS%s%s' % (vs_ver, 'x86')
++                toolchain_prefix = 'VS%s_PREFIX' % (vs_ver)
++                toolchain_path   = os.path.join(os.environ[vs_tool], '..//..//')
++                toolchain_ver    = vs_ver
++                parts   = os.environ[vs_tool].split('\\')
++                vs_node = 'Microsoft Visual Studio '
++                for part in parts:
++                    if part.startswith(vs_node):
++                        toolchain_ver = part[len(vs_node):]
++                break
++
++    return (toolchain, toolchain_prefix, toolchain_path, toolchain_ver)
++
++
++def rebuild_basetools ():
++    exe_list = 'GenFfs  GenFv  GenFw  GenSec LzmaCompress'.split()
 +    ret = 0
 +    workspace = os.environ['WORKSPACE']
 +
++    cmd = [sys.executable, '-c', 'import sys; import platform; print(", ".join([sys.executable, platform.python_version()]))']
++    py_out = run_process (cmd, capture_out = True)
++    parts  = py_out.split(',')
++    if len(parts) > 1:
++        py_exe, py_ver = parts
++        os.environ['PYTHON_COMMAND'] = py_exe
++        print ('Using %s, Version %s' % (os.environ['PYTHON_COMMAND'], py_ver.rstrip()))
++    else:
++        os.environ['PYTHON_COMMAND'] = 'python'
++
 +    if os.name == 'posix':
-+        genffs_exe_path = os.path.join(workspace, 'BaseTools', 'Source', 'C',
-+                                       'bin', 'GenFfs')
-+        genffs_exist = os.path.exists(genffs_exe_path)
-+        if not genffs_exist:
++        if not check_files_exist (exe_list, os.path.join(workspace, 'BaseTools', 'Source', 'C', 'bin')):
 +            ret = subprocess.call(['make', '-C', 'BaseTools'])
 +
 +    elif os.name == 'nt':
-+        genffs_exe_path = os.path.join(workspace, 'BaseTools', 'Bin', 'Win32',
-+                                       'GenFfs.exe')
-+        genffs_exist = os.path.exists(genffs_exe_path)
-+        if not genffs_exist:
-+            print "Could not find pre-built BaseTools binaries, try to rebuild BaseTools ..."
-+            if 'PYTHON_HOME' not in os.environ:
-+                os.environ['PYTHON_HOME'] = 'C:\\Python27'
-+            ret = subprocess.call(['BaseTools\\toolsetup.bat', 'forcerebuild'])
++
++        if not check_files_exist (exe_list, os.path.join(workspace, 'BaseTools', 'Bin', 'Win32'), '.exe'):
++            print ("Could not find pre-built BaseTools binaries, try to rebuild BaseTools ...")
++            ret = run_process (['BaseTools\\toolsetup.bat', 'forcerebuild'])
 +
 +    if ret:
-+        print "Build BaseTools failed, please check required build environment and utilities !"
++        print ("Build BaseTools failed, please check required build environment and utilities !")
 +        sys.exit(1)
-+
-+        genffs_exist = os.path.exists(genffs_exe_path)
-+        if not genffs_exist:
-+            print "Build python executables failed !"
-+            sys.exit(1)
 +
 +
 +def prep_env():
++    work_dir = os.path.dirname(os.path.realpath(__file__))
++    os.chdir(work_dir)
 +    if os.name == 'posix':
 +        toolchain = 'GCC49'
 +        gcc_ver = subprocess.Popen(['gcc', '-dumpversion'], stdout=subprocess.PIPE)
@@ -197,48 +256,40 @@ index 0000000000..edfe7b1340
 +        if int(gcc_ver) > 4:
 +            toolchain = 'GCC5'
 +
-+        workspace = os.path.dirname(os.path.realpath(__file__))
-+        os.environ['PATH'] = os.environ['PATH'] + ':' + os.path.join(
-+            workspace, 'BaseTools/BinWrappers/PosixLike')
++        os.environ['PATH'] = os.environ['PATH'] + ':' + os.path.join(work_dir, 'BaseTools/BinWrappers/PosixLike')
++        toolchain_ver = gcc_ver
 +    elif os.name == 'nt':
-+        if 'WORKSPACE' not in os.environ:
-+            print "Please run EdkSetup.bat first !"
-+            sys.exit(1)
-+        toolchain = ''
-+        workspace = os.environ['WORKSPACE']
-+        os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.join(
-+            workspace, 'BaseTools/Bin/Win32')
-+        os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.join(
-+            workspace, 'BaseTools/BinWrappers/WindowsLike')
-+        os.environ['PYTHONPATH'] = os.path.join(workspace, 'BaseTools/Source/Python')
-+        vs_ver = ['2015', '2013', '2012', '2010', '2008']
-+        for each in vs_ver:
-+            vs_test = 'VS%s_PREFIX' % (each)
-+            if vs_test in os.environ:
-+                toolchain = 'VS%s%s' % (each, 'x86' if
-+                                        '(x86)' in os.environ[vs_test] else '')
-+                break
-+        if not toolchain:
-+            print "Could not find supported Visual Studio version !"
++        os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.join(work_dir, 'BaseTools\\Bin\\Win32')
++        os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.join(work_dir, 'BaseTools\\BinWrappers\\WindowsLike')
++        os.environ['PYTHONPATH'] = os.path.join(work_dir, 'BaseTools', 'Source', 'Python')
++
++        toolchain, toolchain_prefix, toolchain_path, toolchain_ver = get_visual_studio_info ()
++        if toolchain:
++            os.environ[toolchain_prefix] = toolchain_path
++        else:
++            print("Could not find supported Visual Studio version !")
 +            sys.exit(1)
 +        if 'NASM_PREFIX' not in os.environ:
 +            os.environ['NASM_PREFIX'] = "C:\\Nasm\\"
 +        if 'OPENSSL_PATH' not in os.environ:
 +            os.environ['OPENSSL_PATH'] = "C:\\Openssl\\"
++        if 'IASL_PREFIX' not in os.environ:
++            os.environ['IASL_PREFIX'] = "C:\\ASL\\"
 +    else:
-+        print "Unsupported operating system !"
++        print("Unsupported operating system !")
 +        sys.exit(1)
 +
++    print ('Using %s, Version %s' % (toolchain, toolchain_ver))
++
 +    # Update Environment vars
-+    os.environ['WORKSPACE'] = workspace
-+    os.environ['EDK_TOOLS_PATH'] = os.path.join(workspace, 'BaseTools')
-+    os.environ['BASE_TOOLS_PATH'] = os.path.join(workspace, 'BaseTools')
-+    os.environ['CONF_PATH'] = os.path.join(workspace, 'Conf')
++    os.environ['EDK_TOOLS_PATH'] = os.path.join(work_dir, 'BaseTools')
++    os.environ['BASE_TOOLS_PATH'] = os.path.join(work_dir, 'BaseTools')
++    if 'WORKSPACE' not in os.environ:
++        os.environ['WORKSPACE'] = work_dir
++    os.environ['CONF_PATH']     = os.path.join(os.environ['WORKSPACE'], 'Conf')
++    os.environ['TOOL_CHAIN']    = toolchain
 +
-+    # Check if BaseTools has been compiled
-+    rebuild_basetools()
-+
-+    return (workspace, toolchain)
++    return (work_dir, toolchain)
 +
 +
 +def Fatal(msg):
@@ -260,8 +311,9 @@ index 0000000000..edfe7b1340
 +
 +def Prebuild(target, toolchain):
 +
-+    workspace = os.environ['WORKSPACE']
++    rebuild_basetools ()
 +
++    workspace = os.environ['WORKSPACE']
 +    if not os.path.exists(os.path.join(workspace, 'Conf')):
 +        os.makedirs(os.path.join(workspace, 'Conf'))
 +    for name in ['target', 'tools_def', 'build_rule']:
@@ -427,6 +479,7 @@ index 0000000000..edfe7b1340
 +            return -1
 +
 +    workspace, toolchain = prep_env()
++    os.environ['WORKSPACE'] = workspace
 +    Prebuild  (target, toolchain)
 +    Build     (target, toolchain)
 +    PostBuild (target, toolchain)
@@ -6080,5 +6133,5 @@ index 0000000000..4c6bc6a0f1
 +  TRUE
 +
 --
-2.20.1
+2.22.0.windows.1
 

@@ -8,7 +8,7 @@
 
 [Defines]
   INF_VERSION                    = 0x00010005
-  BASE_NAME                      = FspApiLib
+  BASE_NAME                      = FspsApiLib
   FILE_GUID                      = 06156ECD-38DF-4e8a-AE96-077234A56C80
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
@@ -21,14 +21,9 @@
 #
 
 [Sources]
-  FspTempRamExit.c
-  FspMemoryInit.c
   FspSiliconInit.c
   FspNotifyPhase.c
   FspMisc.c
-
-[Sources.IA32]
-  Ia32/FspTempRamInit.nasm
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -43,10 +38,7 @@
   ResetSystemLib
 
 [Pcd]
-  gPlatformModuleTokenSpaceGuid.PcdFSPMBase
   gPlatformModuleTokenSpaceGuid.PcdFSPSBase
-  gPlatformModuleTokenSpaceGuid.PcdFSPTBase
 
 [FixedPcd]
-  gPlatformModuleTokenSpaceGuid.PcdFSPMUpdSize
   gPlatformModuleTokenSpaceGuid.PcdFSPSUpdSize

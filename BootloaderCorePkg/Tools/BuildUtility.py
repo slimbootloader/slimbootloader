@@ -204,6 +204,55 @@ class VariableRegionHeader(Structure):
         ]
 
 
+def get_visual_studio_info ():
+
+    toolchain        = ''
+    toolchain_prefix = ''
+    toolchain_path   = ''
+    toolchain_ver    = ''
+
+    # check new Visual Studio Community version first
+    vswhere_path = "%s/Microsoft Visual Studio/Installer/vswhere.exe" % os.environ['ProgramFiles(x86)']
+    if os.path.exists (vswhere_path):
+        cmd = [vswhere_path, '-all', '-property', 'installationPath']
+        lines = run_process (cmd, capture_out = True)
+        vscommon_path = ''
+        for each in lines.splitlines ():
+            each = each.strip()
+            if each and os.path.isdir(each):
+                vscommon_path = each
+        vcver_file = vscommon_path + '\\VC\\Auxiliary\\Build\\Microsoft.VCToolsVersion.default.txt'
+        if os.path.exists(vcver_file):
+            for vs_ver in ['2017']:
+                check_path = '\\Microsoft Visual Studio\\%s\\' % vs_ver
+                if check_path in vscommon_path:
+                    toolchain_ver    = get_file_data (vcver_file, 'r').strip()
+                    toolchain_prefix = 'VS%s_PREFIX' % (vs_ver)
+                    toolchain_path   = vscommon_path + '\\VC\\Tools\\MSVC\\%s\\' % toolchain_ver
+                    toolchain='VS%s' % (vs_ver)
+                    break
+
+    if toolchain == '':
+        vs_ver_list = [
+            ('2015', 'VS140COMNTOOLS'),
+            ('2013', 'VS120COMNTOOLS')
+        ]
+        for vs_ver, vs_tool in vs_ver_list:
+            if vs_tool in os.environ:
+                toolchain        ='VS%s%s' % (vs_ver, 'x86')
+                toolchain_prefix = 'VS%s_PREFIX' % (vs_ver)
+                toolchain_path   = os.path.join(os.environ[vs_tool], '..//..//')
+                toolchain_ver    = vs_ver
+                parts   = os.environ[vs_tool].split('\\')
+                vs_node = 'Microsoft Visual Studio '
+                for part in parts:
+                    if part.startswith(vs_node):
+                        toolchain_ver = part[len(vs_node):]
+                break
+
+    return (toolchain, toolchain_prefix, toolchain_path, toolchain_ver)
+
+
 def split_fsp(path, out_dir):
     run_process ([
                 sys.executable,
