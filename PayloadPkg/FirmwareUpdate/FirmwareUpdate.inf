@@ -22,6 +22,7 @@
 
 [Sources]
   FirmwareUpdate.c
+  FirmwareUpdateHelper.c
   GetCapsuleImage.c
   CsmeFwUpdate.c
   ErrorList.c

@@ -432,22 +432,6 @@ GetStateMachineFlag (
   );
 
 /**
-  Set state machine flag in flash.
-
-  This function will set state machine flag in the bootloader reserved region
-  First byte in the booloader reserved region is state machine flag.
-
-  @param[in] StateMachine     State machine flag byte.
-
-  @retval  EFI_SUCCESS        State machine flag set.
-  @retval  others             Error while setting state machine flag.
-**/
-EFI_STATUS
-SetStateMachineFlag (
-  IN UINT8    StateMachine
-);
-
-/**
   Switch between the boot partitions.
 
   This function will use platform specific method of switching
@@ -462,49 +446,6 @@ EFI_STATUS
 SetBootPartition (
   IN BOOT_PARTITION  Partition
   );
-
-/**
-  This function will enforce firmware update policy.
-
-  Firmware update policy
-
-  ----------------------------------------------------------
-  |  SM   |   TS   |             Operation                 |
-  ----------------------------------------------------------
-  |  FF   |    0   | Set SM to FE, Set TS and reboot       |
-  |  FF   |    1   | Set SM to FD, clear TS and reboot     |
-  |  FE   |    0   | Set TS and reboot                     |
-  |  FE   |    1   | Set SM to FC, clear TS and reboot     |
-  |  FD   |    0   | Set SM to FC, reboot                  |
-  |  FD   |    1   | clear TS and reboot                   |
-  |  FC   |    0   | Clear IBB signal,Set SM to FF, reboot |
-  |  FC   |    1   | Clear IBB signal,Set SM to FF, reboot |
-  ----------------------------------------------------------
-  @param[in][out] FwPolicy    Pointer to Firmware update policy.
-
-  @retval  EFI_SUCCESS        The operation completed successfully.
-  @retval  others             There is error happening.
-**/
-EFI_STATUS
-EnforceFwUpdatePolicy (
-  IN FIRMWARE_UPDATE_POLICY   *FwPolicy
- );
-
-/**
-  This function will enforce firmware update policy after
-  partition update is successful.
-
-  After update firmware update policy
-
-  @param[in] FwPolicy         Firmware update policy.
-
-  @retval  EFI_SUCCESS        The operation completed successfully.
-  @retval  others             There is error happening.
-**/
-EFI_STATUS
-AfterUpdateEnforceFwUpdatePolicy (
-  IN FIRMWARE_UPDATE_POLICY   FwPolicy
- );
 
 /**
   This function will be called after the firmware update is complete.
