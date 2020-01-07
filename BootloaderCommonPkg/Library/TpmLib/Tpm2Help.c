@@ -12,6 +12,7 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
+#include <Library/CryptoLib.h>
 
 typedef struct {
   TPMI_ALG_HASH              HashAlgo;

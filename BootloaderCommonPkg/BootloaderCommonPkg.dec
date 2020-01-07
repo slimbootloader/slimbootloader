@@ -230,6 +230,16 @@
   # @Prompt Minimum length(in bytes) of the system preboot TCG event log area(LAML).
   gPlatformCommonLibTokenSpaceGuid.PcdTcgLogAreaMinLen|0x10000|UINT32|0x00010081
 
+[PcdsDynamic]
+  ## This PCD indicates the PCR bank to be enabled/supported by Slim Bootloader for measured boot
+  #  Based on the value set, PCR bank world be enabled and extended
+  #  This PCD could be updated based on TPM hash alg info from Config data blob
+  #     0x00000001    - SHA1.<BR>
+  #     0x00000002    - SHA2_256.<BR>
+  #     0x00000004    - SHA2_384.<BR>
+  #     0x00000008    - SHA2_512.<BR>
+  #     0x00000010    - SM3_256.<BR>
+  gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootHashMask    |         0x00000002 | UINT32  | 0x20000703
 
 
 [PcdsFeatureFlag]

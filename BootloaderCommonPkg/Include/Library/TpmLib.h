@@ -11,6 +11,8 @@
 #include <IndustryStandard/Tpm20.h>
 #include <IndustryStandard/UefiTcgPlatform.h>
 #include <IndustryStandard/Tpm2Acpi.h>
+#include <Library/CryptoLib.h>
+
 
 #define ACPI_SSDT_TPM2_DEVICE_OEM_TABLE_ID  SIGNATURE_64('T', 'p', 'm', '2', 'T', 'a', 'b', 'l')
 
@@ -79,6 +81,30 @@ MeasureSeparatorEvent (
 
 
 /**
+Hash and Extend a PCR and log it into TCG event log.
+
+@param[in] PcrHandle    PCR index to extend.
+@param[in] Data         Data pointer.
+@param[in] Length       Data Length.
+@param[in] EventType    EventType to be logged in TCG Event log.
+@param[in] EventSize    size of the event.
+@param[in] Event        Event data.
+
+@retval RETURN_SUCCESS      Operation completed successfully.
+@retval Others              Unable to extend PCR.
+**/
+RETURN_STATUS
+TpmHashAndExtendPcrEventLog (
+IN         TPMI_DH_PCR               PcrHandle,
+IN         UINT8                     *Data,
+IN         UINT32                    Length,
+IN         TCG_EVENTTYPE             EventType,
+IN         UINT32                    EventSize,
+IN  CONST  UINT8                     *Event
+);
+
+
+/**
   Extend a PCR and log it into TCG event log.
 
   @param[in] PcrHandle    PCR index to extend.
@@ -107,13 +133,15 @@ TpmExtendPcrAndLogEvent (
   in PCR 0 with EV_POST_CODE event type.
 
   @param[in] ComponentType    Stage whose measurement need to be extended.
+  @param[in] Signature        Signature of the component
 
   @retval RETURN_SUCCESS      Operation completed successfully.
   @retval Others              Unable to extend stage hash.
 **/
 RETURN_STATUS
 TpmExtendStageHash (
-  IN       UINT8            ComponentType
+  IN       UINT8            ComponentType,
+  IN       UINT32           Signature
   );
 
 
@@ -121,7 +149,7 @@ TpmExtendStageHash (
   Extend  hash provided in PCR 0 with EV_POST_CODE event type.
 
   @param[in] Digest                    Hash Digest to extend
-  @param[in] HashAlg                   Tcg Alg to extend
+  @param[in] HashAlg                   Hash Alg to extend
 
   @retval RETURN_SUCCESS               Operation completed successfully.
   @retval RETURN_INVALID_PARAMETER     Imvalid Digest  buf
@@ -130,8 +158,8 @@ TpmExtendStageHash (
 **/
 RETURN_STATUS
 TpmExtendHash (
-  IN       UINT8            *Digest,
-  IN       UINT8             HashAlg
+  IN       UINT8            *Src,
+  IN       HASH_ALG_TYPE     HashAlg
   );
 
 /**
@@ -162,5 +190,18 @@ TpmLogEvent (
 RETURN_STATUS
 TpmIndicateReadyToBoot (
   VOID
+  );
+
+
+/**
+  Get Crypto Lib Hash alg required by bootloader.
+
+  @param  TcgAlgMask    TCG Alg Mask
+
+  @retval CryptoHashAlg Crypo Hash Alg.
+**/
+UINT8
+GetCryptoHashAlg (
+  UINT32 TcgAlgMask
   );
 #endif  // _TPM_LIB_H

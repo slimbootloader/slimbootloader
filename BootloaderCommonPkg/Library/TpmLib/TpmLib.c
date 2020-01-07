@@ -17,10 +17,83 @@
 #include <Library/PcdLib.h>
 #include <Pi/PiBootMode.h>
 #include <IndustryStandard/Tpm2Acpi.h>
+#include <Library/SecureBootLib.h>
 #include "Tpm2CommandLib.h"
 #include "Tpm2DeviceLib.h"
 #include "TpmLibInternal.h"
 #include "TpmEventLog.h"
+
+/**
+  Count Number of PCR Active banks.
+
+  @param  PcrBankActive Pcr Active Bank Mask
+  @retval Count         Active banks count
+**/
+UINT8
+CountPcrBankActive (
+  UINT32 PcrBankActiveMask
+  )
+{
+    UINT8 Count = 0;
+    while (PcrBankActiveMask) {
+        PcrBankActiveMask &= (PcrBankActiveMask - 1);
+        Count++;
+    }
+    return Count;
+}
+
+/**
+  Get Crypto Lib Hash alg required by bootloader.
+
+  @param  TcgAlgHash    TCG Alg type
+  @retval CryptoHashAlg Crypo Hash Alg.
+**/
+UINT8
+GetCryptoHashAlg (
+  UINT32 TcgAlgMask
+  )
+{
+  HASH_ALG_TYPE CryptoHashAlg = 0;
+
+  if(TcgAlgMask == HASH_ALG_SHA256){
+    CryptoHashAlg = HASH_TYPE_SHA256;
+  } else if (TcgAlgMask == HASH_ALG_SHA384){
+    CryptoHashAlg = HASH_TYPE_SHA384;
+  } else if (TcgAlgMask == HASH_ALG_SHA512){
+    CryptoHashAlg = HASH_TYPE_SHA512;
+  } else if (TcgAlgMask == HASH_ALG_SM3_256){
+    CryptoHashAlg = HASH_TYPE_SM3;
+  }
+
+  return CryptoHashAlg;
+}
+
+
+/**
+  Get Tpm Hash Algo type requested.
+
+  @retval PcdHashType    TPM Algorithm Id.
+**/
+UINT32
+GetTpmHashAlg (
+   UINT32 TcgAlgHash
+  )
+{
+  UINT32 TpmHashAlg = 0;
+
+  if(TcgAlgHash == HASH_ALG_SHA256){
+    TpmHashAlg = TPM_ALG_SHA256;
+  } else if (TcgAlgHash == HASH_ALG_SHA384){
+    TpmHashAlg = TPM_ALG_SHA384;
+  } else if (TcgAlgHash == HASH_ALG_SHA512){
+    TpmHashAlg = TPM_ALG_SHA512;
+  } else if (TcgAlgHash == HASH_ALG_SM3_256){
+    TpmHashAlg = TPM_ALG_SM3_256;
+  }
+
+  return TpmHashAlg;
+}
+
 
 //@todo What happens to TPM_LIB_PRIVATE_DATA memory during S3 resume?
 
@@ -143,6 +216,36 @@ TpmLibSetActivePcrBanks (
   return Status;
 }
 
+/**
+  Get ActivePCR banks info from TPM_LIB_PRIVATE_DATA instance.
+
+  @param  ActivePcrBanks       Active PCR banks in TPM
+
+  @retval EFI_SUCCESS          Operation executed successfully.
+  @retval EFI_NOT_FOUND        TPM Lib data not found.
+**/
+RETURN_STATUS
+TpmLibGetActivePcrBanks (
+  IN UINT32 *ActivePcrBanks
+  )
+{
+  EFI_STATUS                   Status;
+  TPM_LIB_PRIVATE_DATA        *PrivateData;
+
+  PrivateData = NULL;
+
+  PrivateData = TpmLibGetPrivateData ();
+  if (PrivateData == NULL) {
+    return EFI_NOT_FOUND;
+  }
+
+  Status = GetLibraryData (PcdGet8 (PcdTpmLibId), (VOID *) &PrivateData);
+
+  *ActivePcrBanks = PrivateData->ActivePcrBanks;
+
+  return Status;
+}
+
 
 /**
   Checks if bootloader supported PCR bank is enabled in TPM.
@@ -153,7 +256,7 @@ TpmLibSetActivePcrBanks (
 **/
 RETURN_STATUS
 TpmPcrBankCheck (
-  VOID
+  OUT UINT32  *PcrBanks
   )
 {
   EFI_STATUS            Status;
@@ -162,25 +265,32 @@ TpmPcrBankCheck (
 
   Status = Tpm2GetCapabilitySupportedAndActivePcrs (&TpmHashAlgorithmBitmap, &ActivePcrBanks);
   if (Status == EFI_SUCCESS) {
+
+    DEBUG ((DEBUG_INFO, "TpmHashAlgorithmBitmap 0x%08x ActivePcrBanks 0x%08x\n", TpmHashAlgorithmBitmap, ActivePcrBanks));
+
     // Update Active PCR banks info in TPM Library data
     TpmLibSetActivePcrBanks (ActivePcrBanks);
 
-    // Check if TPM supports SHA256 PCR bank
-    if ((TpmHashAlgorithmBitmap & HASH_ALG_SHA256) == 0) {
-      DEBUG ((DEBUG_ERROR, "SHA256 hash algorithm is NOT supported. This should never happen with TPM2.0 device. \n"));
+    // Check if TPM supports  PCR bank
+    if (!(TpmHashAlgorithmBitmap & (HASH_ALG_SHA256 | HASH_ALG_SHA384 | HASH_ALG_SM3_256))){
+      DEBUG ((DEBUG_ERROR, "Hash algorithm is NOT supported. This should never happen with TPM2.0 device. \n"));
       return EFI_UNSUPPORTED;
     }
 
-    // Check if 'only' SHA256 PCR bank is enabled
-    if (ActivePcrBanks == HASH_ALG_SHA256) {
-      DEBUG ((DEBUG_INFO, "SHA256 PCR Bank is enabled. \n"));
+    // Check if required PCR bank is enabled
+    if (ActivePcrBanks == PcdGet32(PcdMeasuredBootHashMask)) {
+      DEBUG ((DEBUG_INFO, "Bootloader requested PCR Bank is enabled. \n"));
     } else {
-      Status = Tpm2PcrAllocateBanks (NULL, TpmHashAlgorithmBitmap, HASH_ALG_SHA256);
+      Status = Tpm2PcrAllocateBanks (NULL, TpmHashAlgorithmBitmap, PcdGet32(PcdMeasuredBootHashMask));
       if (Status == EFI_SUCCESS) {
-        DEBUG ((DEBUG_INFO, "Successfully enabled SHA256 PCR Bank. It will be available after next platform reset. \n"));
+        DEBUG ((DEBUG_INFO, "Successfully enabled requested PCR Bank. It will be available after next platform reset. \n"));
+      } else {
+        DEBUG ((DEBUG_INFO, "Requested pcrbank 0x%x allocation failed\n", PcdGet32(PcdMeasuredBootHashMask)));
       }
     }
   }
+
+  *PcrBanks = ActivePcrBanks;
 
   return Status;
 }
@@ -337,6 +447,7 @@ TpmInit(
   )
 {
   EFI_STATUS                   Status;
+  UINT32                       ActivePcrBank;
 
   // Detect if any TPM is available.
   if (EFI_ERROR (IsSupportedTpmPresent()) || EFI_ERROR (Tpm2RequestUseTpm ())) {
@@ -362,8 +473,8 @@ TpmInit(
     }
   }
 
-  // Check for appropriate PCR Bank. Allocate SHA256 PCR Bank, if it is not enabled.
-  if (TpmPcrBankCheck() != EFI_SUCCESS) {
+  // Check for appropriate PCR Bank. Allocate PCR Bank requested, if it is not enabled.
+  if (TpmPcrBankCheck(&ActivePcrBank) != EFI_SUCCESS) {
     DisableTpm();
     goto TpmError;
   }
@@ -381,7 +492,7 @@ TpmInit(
     if (Status == EFI_SUCCESS) {
       if (!BypassTpmInit) {
         // TPM_Start was done by SBL via Locality 0
-        TpmLogLocalityEvent (0);
+        TpmLogLocalityEvent (0, ActivePcrBank);
       }
     }
   }
@@ -417,6 +528,7 @@ MeasureSeparatorEvent (
   TCG_PCR_EVENT2_HDR         PcrEventHdr;
   UINT32                     Data;
   UINT32                     PcrHandle;
+  UINT32                     PcrBankActive;
 
   if (!IsTpmEnabled()){
     return RETURN_DEVICE_ERROR;
@@ -426,9 +538,34 @@ MeasureSeparatorEvent (
   Data = WithError;
   Digests = &PcrEventHdr.Digests;
   Digests->count = 1;
-  Digests->digests[0].hashAlg = TPM_ALG_SHA256;
 
-  Sha256 ((UINT8 *)&Data, sizeof (Data), (UINT8 *) (& (Digests->digests[0].digest)));
+  TpmLibGetActivePcrBanks(&PcrBankActive);
+
+  Digests->count = 0;
+
+  if ((PcrBankActive & HASH_ALG_SHA256) != 0) {
+      Digests->digests[Digests->count].hashAlg = (TPMI_ALG_HASH) GetTpmHashAlg(HASH_ALG_SHA256);
+      CalculateHash ((UINT8 *)&Data, sizeof (Data), GetCryptoHashAlg(HASH_ALG_SHA256) , (UINT8 *) (&(Digests->digests[Digests->count].digest)));
+      Digests->count++;
+  }
+
+  if ((PcrBankActive & HASH_ALG_SHA384) != 0) {
+      Digests->digests[Digests->count].hashAlg = (TPMI_ALG_HASH) GetTpmHashAlg(HASH_ALG_SHA384);
+      CalculateHash ((UINT8 *)&Data, sizeof (Data), GetCryptoHashAlg(HASH_ALG_SHA384) , (UINT8 *) (&(Digests->digests[Digests->count].digest)));
+      Digests->count++;
+  }
+
+  if ((PcrBankActive & HASH_ALG_SHA512) != 0) {
+      Digests->digests[Digests->count].hashAlg = (TPMI_ALG_HASH) GetTpmHashAlg(HASH_ALG_SHA512);
+      CalculateHash ((UINT8 *)&Data, sizeof (Data), GetCryptoHashAlg(HASH_ALG_SHA512) , (UINT8 *) (&(Digests->digests[Digests->count].digest)));
+      Digests->count++;
+  }
+
+  if ((PcrBankActive & HASH_ALG_SM3_256) != 0) {
+      Digests->digests[Digests->count].hashAlg = (TPMI_ALG_HASH) GetTpmHashAlg(HASH_ALG_SM3_256);
+      CalculateHash ((UINT8 *)&Data, sizeof (Data), GetCryptoHashAlg(HASH_ALG_SM3_256) , (UINT8 *) (&(Digests->digests[Digests->count].digest)));
+      Digests->count++;
+  }
 
   for (PcrHandle = 0; PcrHandle <= 7; PcrHandle++) {
     Status = Tpm2PcrExtend (PcrHandle, Digests);
@@ -448,6 +585,88 @@ MeasureSeparatorEvent (
   }
 
   DEBUG ((DEBUG_INFO, "Capped PCR[0-7] with hash value of (%u). Status : %u\n", WithError, Status));
+  return Status;
+}
+
+
+/**
+Hash and Extend a PCR and log it into TCG event log.
+
+@param[in] PcrHandle    PCR index to extend.
+@param[in] Data         Data pointer.
+@param[in] Length       Data Length.
+@param[in] EventType    EventType to be logged in TCG Event log.
+@param[in] EventSize    size of the event.
+@param[in] Event        Event data.
+
+@retval RETURN_SUCCESS      Operation completed successfully.
+@retval Others              Unable to extend PCR.
+**/
+RETURN_STATUS
+TpmHashAndExtendPcrEventLog (
+IN         TPMI_DH_PCR               PcrHandle,
+IN         UINT8                     *Data,
+IN         UINT32                    Length,
+IN         TCG_EVENTTYPE             EventType,
+IN         UINT32                    EventSize,
+IN  CONST  UINT8                     *Event
+)
+{
+  EFI_STATUS                 Status;
+  TCG_PCR_EVENT2_HDR         PcrEventHdr;
+  TPML_DIGEST_VALUES        *Digests;
+  UINT32                     PcrBankActive;
+
+  if (Data == NULL || Event == NULL) {
+    return RETURN_INVALID_PARAMETER;
+  }
+
+  if (!IsTpmEnabled()){
+    return RETURN_DEVICE_ERROR;
+  }
+
+  Digests = &PcrEventHdr.Digests;
+  Digests->count = 0;
+
+  TpmLibGetActivePcrBanks(&PcrBankActive);
+
+  if ((PcrBankActive & HASH_ALG_SHA256) != 0) {
+      Digests->digests[Digests->count].hashAlg = (TPMI_ALG_HASH) GetTpmHashAlg(HASH_ALG_SHA256);
+      CalculateHash (Data, Length, GetCryptoHashAlg(HASH_ALG_SHA256) , (UINT8 *) (&(Digests->digests[Digests->count].digest)));
+      Digests->count++;
+  }
+  if ((PcrBankActive & HASH_ALG_SHA384) != 0) {
+      Digests->digests[Digests->count].hashAlg = (TPMI_ALG_HASH) GetTpmHashAlg(HASH_ALG_SHA384);
+      CalculateHash (Data, Length, GetCryptoHashAlg(HASH_ALG_SHA384) , (UINT8 *) (&(Digests->digests[Digests->count].digest)));
+      Digests->count++;
+  }
+  if ((PcrBankActive & HASH_ALG_SHA512) != 0) {
+      Digests->digests[Digests->count].hashAlg = (TPMI_ALG_HASH) GetTpmHashAlg(HASH_ALG_SHA512);
+      CalculateHash (Data, Length, GetCryptoHashAlg(HASH_ALG_SHA512) , (UINT8 *) (&(Digests->digests[Digests->count].digest)));
+      Digests->count++;
+  }
+  if ((PcrBankActive & HASH_ALG_SM3_256) != 0) {
+      Digests->digests[Digests->count].hashAlg = (TPMI_ALG_HASH) GetTpmHashAlg(HASH_ALG_SM3_256);
+      CalculateHash (Data, Length, GetCryptoHashAlg(HASH_ALG_SM3_256) , (UINT8 *) (&(Digests->digests[Digests->count].digest)));
+      Digests->count++;
+  }
+
+  Status = Tpm2PcrExtend (PcrHandle, Digests);
+  if (Status == EFI_SUCCESS) {
+    DEBUG ((DEBUG_INFO, "PCR (%u) extended successfully with (%u) event type.\n",
+            PcrHandle, EventType));
+
+    PcrEventHdr.PCRIndex = PcrHandle;
+    PcrEventHdr.EventType = EventType;
+    PcrEventHdr.EventSize = EventSize;
+
+    TpmLogEvent ( &PcrEventHdr, Event);
+
+  } else {
+    DEBUG ((DEBUG_ERROR, "PCR (%u) extend FAIL with error (0x%8x) .\n",
+      PcrHandle, Status));
+  }
+
   return Status;
 }
 
@@ -526,13 +745,10 @@ TpmExtendSecureBootPolicy (
 {
   EFI_STATUS                 Status;
   UINT8                      Data;
-  UINT8                      Hash[SHA256_DIGEST_SIZE];
 
   Data = FeaturePcdGet (PcdVerifiedBootEnabled);
 
-  Sha256((UINT8*)&Data, sizeof(Data), Hash);
-  Status = TpmExtendPcrAndLogEvent ( 7, TPM_ALG_SHA256, Hash, EV_EFI_VARIABLE_DRIVER_CONFIG,
-      sizeof ("SecureBootPolicy"), (UINT8*)"SecureBootPolicy");
+  Status = TpmHashAndExtendPcrEventLog (7, &Data, sizeof (Data), EV_EFI_VARIABLE_DRIVER_CONFIG, sizeof ("SecureBootPolicy"), (UINT8*)"SecureBootPolicy");
 
   return Status;
 }
@@ -549,8 +765,19 @@ TpmChangePlatformAuth (
 {
   TPM2B_AUTH           NewPlatformAuth;
   RETURN_STATUS        Status;
+  UINT32               PcrBankActive;
 
-  NewPlatformAuth.size = SHA256_DIGEST_SIZE;
+  TpmLibGetActivePcrBanks(&PcrBankActive);
+
+  if (PcrBankActive & HASH_ALG_SHA256){
+    NewPlatformAuth.size = SHA256_DIGEST_SIZE;
+  } else if (PcrBankActive & HASH_ALG_SHA384){
+    NewPlatformAuth.size = SHA384_DIGEST_SIZE;
+  } else if (PcrBankActive & HASH_ALG_SHA512){
+    NewPlatformAuth.size = SHA512_DIGEST_SIZE;
+  } else if (PcrBankActive & HASH_ALG_SM3_256){
+    NewPlatformAuth.size = SM3_DIGEST_SIZE;
+  }
 
   if ((GetRandomBytes(NewPlatformAuth.buffer, NewPlatformAuth.size) == 0) &&
       (Tpm2HierarchyChangeAuth (TPM_RH_PLATFORM, NULL, &NewPlatformAuth) == EFI_SUCCESS)) {
@@ -604,20 +831,47 @@ TpmIndicateReadyToBoot (
   @retval RETURN_SUCCESS      Operation completed successfully.
   @retval Others              Unable to extend stage hash.
 **/
+
 RETURN_STATUS
 TpmExtendStageHash (
-  IN       UINT8            ComponentType
+  IN       UINT8            ComponentType,
+  IN       UINT32           Signature
   )
 {
   RETURN_STATUS        Status;
   CONST UINT8         *Digest;
-  UINT8                HashAlg;
+  HASH_ALG_TYPE        HashAlg;
+  UINT32               Src;
+  UINT32               Length;
+  UINT8                DigestHash[HASH_DIGEST_MAX];
+  UINT32               PcrBankActive;
+
+  TpmLibGetActivePcrBanks(&PcrBankActive);
+
+  if(CountPcrBankActive(PcrBankActive) != 1) {
+    DEBUG ((DEBUG_ERROR, "Multiple PCR bannks were active. Currently not supported \n"));
+    return RETURN_UNSUPPORTED;
+  }
 
   // Get public key hash
   Status = GetComponentHash (ComponentType, &Digest, &HashAlg);
   if(Status == EFI_SUCCESS) {
-    Status = TpmExtendPcrAndLogEvent ( 0, TPM_ALG_SHA256, Digest,
-      EV_POST_CODE, POST_CODE_STR_LEN, (UINT8 *)EV_POSTCODE_INFO_POST_CODE);
+    if (HashAlg == GetCryptoHashAlg(PcrBankActive)){
+
+      Status = TpmExtendPcrAndLogEvent ( 0, (TPMI_ALG_HASH) GetTpmHashAlg(PcrBankActive), Digest,
+        EV_POST_CODE, POST_CODE_STR_LEN, (UINT8 *)EV_POSTCODE_INFO_POST_CODE);
+    } else {
+      DEBUG ((DEBUG_INFO, "Calculate Hash for the components\n"));
+      Status = GetComponentInfo (Signature, &Src, &Length);
+      if (!EFI_ERROR (Status)) {
+        CalculateHash ((UINT8 *)&Src, Length, GetCryptoHashAlg(PcrBankActive), (UINT8 *) &DigestHash);
+
+        Status = TpmExtendPcrAndLogEvent ( 0, (TPMI_ALG_HASH) GetTpmHashAlg(PcrBankActive), DigestHash,
+                                EV_POST_CODE, POST_CODE_STR_LEN, (UINT8 *)EV_POSTCODE_INFO_POST_CODE);
+      } else {
+        DEBUG ((DEBUG_ERROR, "Error: Component (%d) is not measured in TPM.\n", ComponentType));
+      }
+    }
   } else {
     DEBUG ((DEBUG_ERROR, "Error: Component (%d) is not measured in TPM.\n", ComponentType));
   }
@@ -625,12 +879,11 @@ TpmExtendStageHash (
   return Status;
 }
 
-
 /**
   Extend  hash provided in PCR 0 with EV_POST_CODE event type.
 
   @param[in] Digest                    Hash Digest to extend
-  @param[in] HashAlg                   Tcg Alg to extend
+  @param[in] HashAlg                   Hash Alg to extend
 
   @retval RETURN_SUCCESS               Operation completed successfully.
   @retval RETURN_INVALID_PARAMETER     Imvalid Digest  buf
@@ -640,16 +893,29 @@ TpmExtendStageHash (
 RETURN_STATUS
 TpmExtendHash (
   IN       UINT8            *Digest,
-  IN       UINT8             HashAlg
+  IN       HASH_ALG_TYPE     HashAlg
   )
 {
   RETURN_STATUS        Status;
+  UINT32               PcrBankActive;
 
   if (Digest == NULL) {
     return RETURN_INVALID_PARAMETER;
   }
 
-  Status = TpmExtendPcrAndLogEvent ( 0, TPM_ALG_SHA256, Digest,
+  TpmLibGetActivePcrBanks(&PcrBankActive);
+
+  if(CountPcrBankActive(PcrBankActive) != 1) {
+    DEBUG ((DEBUG_ERROR, "Multiple PCR bannks were active. Currently not supported \n"));
+    return RETURN_UNSUPPORTED;
+  }
+
+  if (HashAlg != GetCryptoHashAlg(PcrBankActive)) {
+    DEBUG ((DEBUG_ERROR, "Hash Alg doesn't match with Active bank \n"));
+    return RETURN_UNSUPPORTED;
+  }
+
+  Status = TpmExtendPcrAndLogEvent (0, (TPMI_ALG_HASH) GetTpmHashAlg(PcrBankActive), Digest,
       EV_POST_CODE, POST_CODE_STR_LEN, (UINT8 *)EV_POSTCODE_INFO_POST_CODE);
 
   return Status;

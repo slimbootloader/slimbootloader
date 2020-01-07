@@ -259,10 +259,28 @@ TpmLogSpecIDEvent (
   if ((ActivePcr & HASH_ALG_SHA256) != 0) {
     DigestSize[NumberOfAlgorithms].algorithmId = TPM_ALG_SHA256;
     DigestSize[NumberOfAlgorithms].digestSize = SHA256_DIGEST_SIZE;
-
-    DigestSize = &DigestSize[1];
-    ++NumberOfAlgorithms;
+    NumberOfAlgorithms++;
   }
+
+  if ((ActivePcr & HASH_ALG_SHA384) != 0) {
+    DigestSize[NumberOfAlgorithms].algorithmId = TPM_ALG_SHA384;
+    DigestSize[NumberOfAlgorithms].digestSize = SHA384_DIGEST_SIZE;
+    NumberOfAlgorithms++;
+  }
+
+  if ((ActivePcr & HASH_ALG_SHA512) != 0) {
+    DigestSize[NumberOfAlgorithms].algorithmId = TPM_ALG_SHA512;
+    DigestSize[NumberOfAlgorithms].digestSize = SHA512_DIGEST_SIZE;
+    NumberOfAlgorithms++;
+  }
+
+  if ((ActivePcr & HASH_ALG_SM3_256) != 0) {
+    DigestSize[NumberOfAlgorithms].algorithmId = TPM_ALG_SM3_256;
+    DigestSize[NumberOfAlgorithms].digestSize = SM3_DIGEST_SIZE;
+    NumberOfAlgorithms++;
+  }
+
+  DigestSize = &DigestSize[NumberOfAlgorithms];
 
   CopyMem (SpecIdEvent + 1, &NumberOfAlgorithms, sizeof (NumberOfAlgorithms));
 
@@ -345,13 +363,13 @@ TpmLogEvent (
 **/
 VOID
 TpmLogLocalityEvent (
-  IN UINT8 StartupLocality
+  IN UINT8 StartupLocality,
+  IN UINT32 ActivePcrBanks
   )
 {
   TCG_EfiStartupLocalityEvent     StartupLocalityEvent;
   TCG_PCR_EVENT2_HDR              PcrEventHdr;
   TPML_DIGEST_VALUES              *Digests;
-  UINT32                          ActivePcrBanks;
   TPM_LIB_PRIVATE_DATA            *TpmLibData;
 
   CopyMem (StartupLocalityEvent.Signature, TCG_EfiStartupLocalityEvent_SIGNATURE,
@@ -366,15 +384,28 @@ TpmLogLocalityEvent (
   Digests = &PcrEventHdr.Digests;
   Digests->count = 0;
 
-  ActivePcrBanks = HASH_ALG_SHA256;
   TpmLibData = TpmLibGetPrivateData ();
   if (TpmLibData != NULL) {
     ActivePcrBanks = TpmLibData->ActivePcrBanks;
   }
-
   if ((ActivePcrBanks & HASH_ALG_SHA256) != 0) {
     Digests->digests[Digests->count].hashAlg = TPM_ALG_SHA256;
     ZeroMem (& (Digests->digests[Digests->count].digest), GetHashSizeFromAlgo (TPM_ALG_SHA256));
+    Digests->count = Digests->count + 1;
+  }
+  if ((ActivePcrBanks & HASH_ALG_SHA384) != 0) {
+    Digests->digests[Digests->count].hashAlg = TPM_ALG_SHA384;
+    ZeroMem (& (Digests->digests[Digests->count].digest), GetHashSizeFromAlgo (TPM_ALG_SHA384));
+    Digests->count = Digests->count + 1;
+  }
+  if ((ActivePcrBanks & HASH_ALG_SHA512) != 0) {
+    Digests->digests[Digests->count].hashAlg = TPM_ALG_SHA512;
+    ZeroMem (& (Digests->digests[Digests->count].digest), GetHashSizeFromAlgo (TPM_ALG_SHA512));
+    Digests->count = Digests->count + 1;
+  }
+  if ((ActivePcrBanks & HASH_ALG_SM3_256) != 0) {
+    Digests->digests[Digests->count].hashAlg = TPM_ALG_SM3_256;
+    ZeroMem (& (Digests->digests[Digests->count].digest), GetHashSizeFromAlgo (TPM_ALG_SM3_256));
     Digests->count = Digests->count + 1;
   }
 

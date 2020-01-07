@@ -131,6 +131,7 @@
   gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesSize
   gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled
   gPlatformModuleTokenSpaceGuid.PcdLinuxPayloadEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootHashMask
 
 [Depex]
   TRUE

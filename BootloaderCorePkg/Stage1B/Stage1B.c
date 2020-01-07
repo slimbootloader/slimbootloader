@@ -75,7 +75,7 @@ PrepareStage2 (
 
   // Extend hash of Stage2 image into TPM.
   if (MEASURED_BOOT_ENABLED() && (GetBootMode() != BOOT_ON_S3_RESUME)) {
-    TpmExtendStageHash (COMP_TYPE_STAGE_2);
+    TpmExtendStageHash (COMP_TYPE_STAGE_2, FLASH_MAP_SIG_STAGE2);
     AddMeasurePoint (0x20C0);
   }
 
