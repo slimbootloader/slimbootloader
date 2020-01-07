@@ -313,6 +313,7 @@
 
 [PcdsDynamicDefault]
   gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut         | 2
+  gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootHashMask | 0x00000002
 
 ###############################################################################
 ##

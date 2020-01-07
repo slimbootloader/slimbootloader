@@ -37,6 +37,65 @@ LoadComponentCallback (
 }
 
 /**
+  Extend EPayload to TPM.
+
+  @param[in]  ContainerSig    Containetr Signature
+  @param[in]  ComponentName   Component Name
+
+  @retval RETURN_SUCCESS      Operation completed successfully.
+  @retval RETURN_NOT_FOUND    EPayload hash Not found
+**/
+RETURN_STATUS
+ExtendEpayload (
+  UINT32    ContainerSig,
+  UINT32    ComponentName
+  )
+{
+  UINT8                         HashAlg;
+  UINT16                        HashSize;
+  UINT32                        Src;
+  UINT32                        Length;
+  UINT8                         DigestHash[HASH_DIGEST_MAX];
+  COMPONENT_ENTRY               *ComponentEntry;
+  EFI_STATUS                     Status;
+
+  Status = RETURN_SUCCESS;
+  ComponentEntry = NULL;
+  LocateComponentEntry (ContainerSig, ComponentName, NULL, &ComponentEntry);
+  if (ComponentEntry != NULL)  {
+
+    // Get the HashAlg and HashSize from Component Auth Type
+    if ((ComponentEntry->AuthType == AUTH_TYPE_SHA2_256) || (ComponentEntry->AuthType == AUTH_TYPE_SIG_RSA2048_SHA256)){
+      HashAlg = HASH_TYPE_SHA256;
+      HashSize = SHA256_DIGEST_SIZE;
+    } else if ((ComponentEntry->AuthType == AUTH_TYPE_SHA2_384) || (ComponentEntry->AuthType == AUTH_TYPE_SIG_RSA3072_SHA384)){
+      HashAlg = HASH_TYPE_SHA384;
+      HashSize = SHA384_DIGEST_SIZE;
+    }
+
+    // Check if Hash data algorithm matches to requested PCR HashMask
+    if (HashAlg == GetCryptoHashAlg(PcdGet32(PcdMeasuredBootHashMask))){
+      if (ComponentEntry->HashSize == HashSize) {
+        // Extend Epayload Hash Data if its valid
+        TpmExtendHash (ComponentEntry->HashData, HashAlg);
+      } else {
+        DEBUG ((DEBUG_INFO, "EPAYLOAD hash in invalid!"));
+        return RETURN_NOT_FOUND;
+      }
+    } else {
+      // Calculate Hash if Component Hash data algorithm matches doesn't allign to requested PCR HashMask
+      Status = GetComponentInfo (ContainerSig, &Src, &Length);
+      if (!EFI_ERROR (Status)) {
+        CalculateHash ((UINT8 *)&Src, Length, GetCryptoHashAlg(PcdGet32(PcdMeasuredBootHashMask)), (UINT8 *) &DigestHash);
+        TpmExtendHash (DigestHash, GetCryptoHashAlg(PcdGet32(PcdMeasuredBootHashMask)));
+      }
+    }
+  }
+
+  return  Status;
+}
+
+/**
   Prepare and load payload into proper location for execution.
 
   @param[in]  Stage2Param    Param pointer for Stage2
@@ -59,7 +118,6 @@ PreparePayload (
   UINT32                         ComponentName;
   UINT8                          BootMode;
   UINT8                          HashIdx;
-  COMPONENT_ENTRY               *ComponentEntry;
 
   BootMode = GetBootMode();
   //
@@ -107,26 +165,18 @@ PreparePayload (
 
   if (MEASURED_BOOT_ENABLED() && (BootMode != BOOT_ON_S3_RESUME)) {
     if (HashIdx == COMP_TYPE_INVALID) {
-      ComponentEntry = NULL;
-      LocateComponentEntry (ContainerSig, ComponentName, NULL, &ComponentEntry);
-      if (ComponentEntry != NULL)  {
-        if (ComponentEntry->HashSize == SHA256_DIGEST_SIZE) {
-          TpmExtendHash (ComponentEntry->HashData, HASH_TYPE_SHA256);
-        } else {
-          DEBUG ((DEBUG_INFO, "EPAYLOAD hash does not exist !"));
-        }
-        AddMeasurePoint (0x3150);
-      }
+      ExtendEpayload (ContainerSig, ComponentName);
     } else {
-      TpmExtendStageHash (HashIdx);
-      AddMeasurePoint (0x3150);
+      TpmExtendStageHash (HashIdx, ContainerSig);
     }
+    AddMeasurePoint (0x3150);
   }
 
   Stage2Param->PayloadActualLength = DstLen;
   DEBUG ((DEBUG_INFO, "Load Payload ID 0x%08X @ 0x%08X\n", PayloadId, Dst));
   return Dst;
 }
+
 
 /**
   Normal boot flow.

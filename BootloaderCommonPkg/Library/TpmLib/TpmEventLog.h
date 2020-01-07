@@ -46,7 +46,8 @@ TpmLogSpecIDEvent (
 **/
 VOID
 TpmLogLocalityEvent (
-  IN UINT8 StartupLocality
+  IN UINT8 StartupLocality,
+  IN UINT32 ActivePcrBank
   );
 
 #endif //_TPM_EVENT_LIB_H_

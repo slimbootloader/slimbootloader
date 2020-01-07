@@ -136,7 +136,7 @@ typedef struct {
   IMAGE_DATA              IasImage;
   EFI_HANDLE              HwPartHandle;
   LOADED_IMAGE_TYPE       Image;
-  UINT8                   ImageHash[SHA256_DIGEST_SIZE];
+  UINT8                   ImageHash[HASH_DIGEST_MAX];
   RESERVED_CMDLINE_DATA   ReservedCmdlineData;
 } LOADED_IMAGE;
 
