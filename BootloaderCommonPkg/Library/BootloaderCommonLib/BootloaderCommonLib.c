@@ -297,6 +297,63 @@ DetectUsedStackBottom (
 }
 
 /**
+  Gets component entry from the flash map by partition.
+
+  This function will look for the component matching the input signature
+  in the flash map, if found, it will look for the component with back up
+  flag based on the backup partition parmeter and will return the
+  entry of the component from flash map.
+
+  @param[in]  Signature         Signature of the component information required
+  @param[in]  IsBackupPartition TRUE for Back up copy, FALSE for primary copy
+
+  @retval    NULL    Component entry not found in flash map
+  @retval    Others  Pointer to component entry
+
+**/
+FLASH_MAP_ENTRY_DESC *
+EFIAPI
+GetComponentEntryByPartition (
+  IN  UINT32                Signature,
+  IN  BOOLEAN               IsBackupPartition
+  )
+{
+  UINTN                 Index;
+  UINT32                MaxEntries;
+  FLASH_MAP             *FlashMapPtr;
+  FLASH_MAP_ENTRY_DESC  *EntryDesc;
+
+  FlashMapPtr = GetFlashMapPtr ();
+  if (FlashMapPtr == NULL) {
+    return NULL;
+  }
+
+  MaxEntries = ((FlashMapPtr->Length - FLASH_MAP_HEADER_SIZE) / sizeof (FLASH_MAP_ENTRY_DESC));
+
+  for (Index = 0; Index < MaxEntries; Index++) {
+    EntryDesc = (FLASH_MAP_ENTRY_DESC *)&FlashMapPtr->EntryDesc[Index];
+    //
+    // Look for the component with desired signature
+    //
+    if (EntryDesc->Signature == 0xFFFFFFFF) {
+      break;
+    }
+    if (EntryDesc->Signature == Signature) {
+      //
+      // Check if need to get back up copy
+      // Back up copies can be identified with back up flag
+      //
+      if ( ((EntryDesc->Flags & (FLASH_MAP_FLAGS_NON_REDUNDANT_REGION | FLASH_MAP_FLAGS_NON_VOLATILE_REGION)) != 0) ||
+           (((IsBackupPartition ? FLASH_MAP_FLAGS_BACKUP : 0) ^ (EntryDesc->Flags & FLASH_MAP_FLAGS_BACKUP)) == 0) ) {
+        return EntryDesc;
+      }
+    }
+  }
+
+  return NULL;
+}
+
+/**
   Gets component information from the flash map by partition.
 
   This function will look for the component matching the input signature
@@ -322,62 +379,29 @@ GetComponentInfoByPartition (
   OUT UINT32     *Size
   )
 {
-  UINTN                 Index;
-  UINT32                MaxEntries;
-  UINT32                PcdBase;
-  UINT32                PcdSize;
-  UINT32                RomBase;
+  FLASH_MAP_ENTRY_DESC  *Entry;
   FLASH_MAP             *FlashMapPtr;
-  EFI_STATUS            Status;
-  FLASH_MAP_ENTRY_DESC  EntryDesc;
+  UINT32                RomBase;
 
-  PcdBase = 0;
-  PcdSize = 0;
-  Status = EFI_NOT_FOUND;
+  Entry = GetComponentEntryByPartition(Signature, IsBackupPartition);
+  if (Entry == NULL) {
+    return EFI_NOT_FOUND;
+  }
 
   FlashMapPtr = GetFlashMapPtr ();
-  if (FlashMapPtr == NULL) {
-    return EFI_UNSUPPORTED;
-  }
-
   RomBase = (UINT32) (0x100000000ULL - FlashMapPtr->RomSize);
-  MaxEntries = ((FlashMapPtr->Length - FLASH_MAP_HEADER_SIZE) / sizeof (FLASH_MAP_ENTRY_DESC));
-
-  for (Index = 0; Index < MaxEntries; Index++) {
-    EntryDesc = FlashMapPtr->EntryDesc[Index];
-    //
-    // Look for the component with desired signature
-    //
-    if (EntryDesc.Signature == 0xFFFFFFFF) {
-      Status = EFI_NOT_FOUND;
-      break;
-    }
-    if (EntryDesc.Signature == Signature) {
-      //
-      // Check if need to get back up copy
-      // Back up copies can be identified with back up flag
-      //
-      if ( ((EntryDesc.Flags & (FLASH_MAP_FLAGS_NON_REDUNDANT_REGION | FLASH_MAP_FLAGS_NON_VOLATILE_REGION)) != 0) ||
-           (((IsBackupPartition ? FLASH_MAP_FLAGS_BACKUP : 0) ^ (EntryDesc.Flags & FLASH_MAP_FLAGS_BACKUP)) == 0) ) {
-        PcdBase = (UINT32) (RomBase + EntryDesc.Offset);
-        PcdSize = EntryDesc.Size;
-        Status = EFI_SUCCESS;
-        break;
-      }
-    }
-  }
 
   //
-  // If base and pcdbase are not 0, fill and return the value
+  // If base is not 0, fill and return the value
   //
-  if ((Base != NULL) && (PcdBase != 0)) {
-    *Base = PcdBase;
+  if (Base != NULL) {
+    *Base = (UINT32) (RomBase + Entry->Offset);
   }
-  if ((Size != NULL) && (PcdSize != 0)) {
-    *Size = PcdSize;
+  if (Size != NULL) {
+    *Size = Entry->Size;
   }
 
-  return Status;
+  return EFI_SUCCESS;
 }
 
 /**

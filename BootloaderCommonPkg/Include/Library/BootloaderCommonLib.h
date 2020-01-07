@@ -396,6 +396,28 @@ GetPlatformDataPtr (
   );
 
 /**
+  Gets component entry from the flash map by partition.
+
+  This function will look for the component matching the input signature
+  in the flash map, if found, it will look for the component with back up
+  flag based on the backup partition parmeter and will return the
+  entry of the component from flash map.
+
+  @param[in]  Signature         Signature of the component information required
+  @param[in]  IsBackupPartition TRUE for Back up copy, FALSE for primary copy
+
+  @retval    NULL    Component entry not found in flash map
+  @retval    Others  Pointer to component entry
+
+**/
+FLASH_MAP_ENTRY_DESC *
+EFIAPI
+GetComponentEntryByPartition (
+  IN  UINT32                Signature,
+  IN  BOOLEAN               IsBackupPartition
+  );
+
+/**
   Gets component information from the flash map by partition.
 
   This function will look for the component matching the input signature
