@@ -588,10 +588,11 @@ def gen_payload_bin (fv_dir, pld_list, pld_bin, priv_key, hash_alg, brd_name = N
     alignment = 0x10
     key_dir  = os.path.dirname (priv_key)
     key_type = get_key_type(priv_key)
-    pld_list = [('EPLD', '%s' % epld_bin, '', key_type, '%s' % os.path.basename(priv_key), alignment, 0)]
+    auth_type = key_type + '_' + hash_alg
+    pld_list = [('EPLD', '%s' % epld_bin, '', auth_type, '%s' % os.path.basename(priv_key), alignment, 0)]
     for pld in ext_list:
         pld_list.append ((pld['name'], pld['file'], pld['algo'], hash_alg, '', 0, 0))
-    gen_container_bin ([pld_list], fv_dir, fv_dir, key_dir, '', hash_alg)
+    gen_container_bin ([pld_list], fv_dir, fv_dir, key_dir, '')
 
 def pub_key_valid (pubkey):
     if (len(pubkey) - sizeof(PUB_KEY_HDR)) in [0x104, 0x184]:

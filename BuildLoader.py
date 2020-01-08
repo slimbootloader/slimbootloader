@@ -1188,7 +1188,7 @@ class Build(object):
         if getattr(self._board, "GetContainerList", None):
           container_list = self._board.GetContainerList ()
           component_dir = os.path.join(os.environ['PLT_SOURCE'], 'Platform', self._board.BOARD_PKG_NAME, 'Binaries')
-          gen_container_bin (container_list, self._fv_dir, component_dir, self._key_dir, '', HASH_VAL_STRING[self._board.SIGN_HASH_TYPE])
+          gen_container_bin (container_list, self._fv_dir, component_dir, self._key_dir, '')
 
         # patch stages
         self.patch_stages ()
