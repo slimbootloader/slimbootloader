@@ -2,7 +2,7 @@
 ## @ BuildLoader.py
 # Build bootloader main script
 #
-# Copyright (c) 2016 - 2019, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2016 - 2020, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 
 ##
@@ -25,20 +25,11 @@ import multiprocessing
 from   ctypes import *
 from   BuildUtility import *
 
+
 def rebuild_basetools ():
     exe_list = 'GenFfs  GenFv  GenFw  GenSec  Lz4Compress  LzmaCompress'.split()
     ret = 0
     sblsource = os.environ['SBL_SOURCE']
-
-    cmd = [sys.executable, '-c', 'import sys; import platform; print(", ".join([sys.executable, platform.python_version()]))']
-    py_out = run_process (cmd, capture_out = True)
-    parts  = py_out.split(',')
-    if len(parts) > 1:
-        py_exe, py_ver = parts
-        os.environ['PYTHON_COMMAND'] = py_exe
-        print ('Using %s, Version %s' % (os.environ['PYTHON_COMMAND'], py_ver.rstrip()))
-    else:
-        os.environ['PYTHON_COMMAND'] = 'python'
 
     if os.name == 'posix':
         if not check_files_exist (exe_list, os.path.join(sblsource, 'BaseTools', 'Source', 'C', 'bin')):
@@ -55,6 +46,11 @@ def rebuild_basetools ():
         sys.exit(1)
 
 def prep_env ():
+    # check python version first
+    version = check_for_python ()
+    os.environ['PYTHON_COMMAND'] = sys.executable
+    print ('Using %s, Version %s' % (os.environ['PYTHON_COMMAND'], version.strip()))
+
     sblsource = os.path.dirname(os.path.realpath(__file__))
     os.chdir(sblsource)
     if os.name == 'posix':
