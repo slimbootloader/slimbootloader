@@ -620,6 +620,18 @@ def gen_layout (comp_list, img_type, sign_hash_alg, out_file, key_dir, key_file)
     layout += end_layout
     return layout
 
+def validate_hash_type (key_file, hash_type):
+    if key_file:
+        key_type = get_key_type (key_file)
+        if key_type == 'RSA2048' and hash_type == 'SHA2_256':
+           return True
+        elif key_type == 'RSA3072' and hash_type == 'SHA2_384':
+           return True
+        else:
+            return False
+
+    return True
+
 def create_container (args):
     layout = ""
     # if '-l', get the layout content directly
@@ -646,10 +658,14 @@ def create_container (args):
             out_dir = os.path.dirname(args.out_path)
             out_file = os.path.basename(args.out_path)
 
+        if validate_hash_type(key_file, args.hash_type) == False:
+            raise Exception ("Invalid hash type combination with key used")
         layout = gen_layout (args.comp_list, args.img_type, args.hash_type, out_file, key_dir, key_file)
     comp_dir = args.comp_dir if args.comp_dir else def_inp_dir
     tool_dir = args.tool_dir if args.tool_dir else def_inp_dir
     container_list = eval ('[[%s]]' % layout.replace('\\', '/'))
+    if validate_hash_type(key_file, args.hash_type) == False:
+            raise Exception ("Invalid hash type combination with key used")
     gen_container_bin (container_list, out_dir, comp_dir, key_dir, tool_dir, args.hash_type)
 
 def extract_container (args):
@@ -665,6 +681,8 @@ def replace_component (args):
     data = get_file_data (args.image)
     container = CONTAINER (data)
     container.set_dir_path (args.out_dir, '.', '.', tool_dir)
+    if validate_hash_type(args.key_file, args.hash_type) == False:
+        raise Exception ("Invalid hash type combination with key used")
     file = container.replace (args.comp_name, args.comp_file, args.compress, args.key_file, args.hash_type, args.new_name)
     print ("Component '%s' was replaced successfully at:\n  %s" % (args.comp_name, file))
 
@@ -673,6 +691,8 @@ def sign_component (args):
     compress_alg = compress_alg[0].upper() + compress_alg[1:]
     lz_file = compress (args.comp_file, compress_alg, args.out_dir, args.tool_dir)
     data = bytearray(get_file_data (lz_file))
+    if validate_hash_type(args.key_file, args.hash_type) == False:
+        raise Exception ("Invalid hash type combination with key used")
     hash_data, auth_data = CONTAINER.calculate_auth_data (lz_file, args.auth, args.key_file, args.out_dir, args.hash_type)
     sign_file = os.path.join (args.out_dir, args.sign_file)
     data.extend (b'\xff' * get_padding_length(len(data)))
@@ -703,7 +723,7 @@ def main():
     cmd_display.add_argument('-t', dest='img_type',  type=str, default='CLASSIC', help='Container Image Type : [NORMAL, CLASSIC, MULTIBOOT]')
     cmd_display.add_argument('-o', dest='out_path',  type=str, default='.', help='Container output directory/file')
     cmd_display.add_argument('-k', dest='key_path',  type=str, default='', help='Input key directory/file')
-    cmd_display.add_argument('-ht', dest='hash_type', type=str, choices=['SHA2_256', 'SHA2_384'], default='SHA2_256', help='Hash Alg for signing')
+    cmd_display.add_argument('-ht', dest='hash_type', type=str, choices=['SHA2_256', 'SHA2_384'], default='SHA2_256', help='Hash Algorithm Type')
     cmd_display.add_argument('-cd', dest='comp_dir', type=str, default='', help='Componet image input directory')
     cmd_display.add_argument('-td', dest='tool_dir', type=str, default='', help='Compression tool directory')
     cmd_display.set_defaults(func=create_container)
@@ -724,7 +744,7 @@ def main():
     cmd_display.add_argument('-f',  dest='comp_file',  type=str, required=True, help='Component input file path')
     cmd_display.add_argument('-c',  dest='compress', choices=['lz4', 'lzma', 'dummy'], default='dummy', help='compression algorithm')
     cmd_display.add_argument('-k',  dest='key_file',  type=str, default='', help='Private key file path to sign component')
-    cmd_display.add_argument('-ht', dest='hash_type', type=str, choices=['SHA2_256', 'SHA2_384'], default='SHA2_256', help='Hash Alg for signing')
+    cmd_display.add_argument('-ht', dest='hash_type', type=str, choices=['SHA2_256', 'SHA2_384'], default='SHA2_256', help='Hash Algorithm Type')
     cmd_display.add_argument('-od', dest='out_dir',  type=str, default='.', help='Output directory')
     cmd_display.add_argument('-td', dest='tool_dir', type=str, default='', help='Compression tool directory')
     cmd_display.set_defaults(func=replace_component)
@@ -736,7 +756,7 @@ def main():
     cmd_display.add_argument('-c',  dest='compress', choices=['lz4', 'lzma', 'dummy'],  default='dummy', help='compression algorithm')
     cmd_display.add_argument('-a',  dest='auth', choices=['SHA2_256', 'SHA2_384', 'RSA2048', 'RSA3072' 'none'], default='none',  help='authentication algorithm')
     cmd_display.add_argument('-k',  dest='key_file',  type=str, default='', help='Private key file path to sign component')
-    cmd_display.add_argument('-ht', dest='hash_type', type=str,  choices=['SHA2_256', 'SHA2_384'], default='SHA2_256', help='Signing Hash Alg when auth type is RSA2048,RSA3072')
+    cmd_display.add_argument('-ht', dest='hash_type', type=str, choices=['SHA2_256', 'SHA2_384'], default='SHA2_256', help='Hash Algorithm Type')
     cmd_display.add_argument('-od', dest='out_dir',  type=str, default='.', help='Output directory')
     cmd_display.add_argument('-td', dest='tool_dir', type=str, default='',  help='Compression tool directory')
     cmd_display.set_defaults(func=sign_component)
