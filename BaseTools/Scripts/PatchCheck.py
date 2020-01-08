@@ -360,7 +360,16 @@ class GitDiffCheck:
                    ''',
                    re.VERBOSE)
 
+    skip_check_file_types = (
+        '.patch',
+        '.pem',
+        )
+
     def check_added_line(self, line):
+        f_name, f_ext = os.path.splitext(self.filename)
+        if f_ext in self.skip_check_file_types:
+            return
+
         eol = ''
         for an_eol in self.line_endings:
             if line.endswith(an_eol):
@@ -369,7 +378,7 @@ class GitDiffCheck:
 
         stripped = line.rstrip()
 
-        if self.force_crlf and eol != '\r\n' and not self.filename.endswith('.patch'):
+        if self.force_crlf and eol != '\r\n':
             self.added_line_error('Line ending (%s) is not CRLF' % repr(eol),
                                   line)
         if '\t' in line:
