@@ -2,7 +2,7 @@
 ## @ BuildUtility.py
 # Build bootloader main script
 #
-# Copyright (c) 2016 - 2018, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2016 - 2020, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -783,6 +783,19 @@ def gen_ver_info_txt (ver_file, ver_info):
     h_file.write('Dirty         = %d\n'    % ver_info.ImageVersion.Dirty)
     h_file.close()
 
+def check_for_python():
+    '''
+    Verify Python executable is at required version
+    '''
+    cmd = [sys.executable, '-c', 'import sys; import platform; print(platform.python_version())']
+    version = run_process (cmd, capture_out = True).strip()
+    ver_parts = version.split('.')
+    # Require Python 3.6 or above
+    if not (len(ver_parts) >= 2 and int(ver_parts[0]) >= 3 and int(ver_parts[1]) >= 6):
+        print('WARNING: Python version %s is unsupported, potential build issue might encounter !\n         '
+              'Please consider installing and using Python 3.6 or above to launch build script !\n') % version
+
+    return version
 
 def check_for_openssl():
     '''

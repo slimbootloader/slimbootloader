@@ -9,7 +9,7 @@ before_install:
   - chmod -R a+w .
 
 env:
-  - BUILD_TARGET=qemu  PYTHON_VER=2
+  - BUILD_TARGET=qemu  PYTHON_VER=3
   - BUILD_TARGET=apl   PYTHON_VER=2  BUILD_REL=-r
   - BUILD_TARGET=apl   PYTHON_VER=3
   - BUILD_TARGET=cfl   PYTHON_VER=2
