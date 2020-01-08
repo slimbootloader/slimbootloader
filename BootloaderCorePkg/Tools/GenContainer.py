@@ -14,6 +14,7 @@ from   ctypes import *
 from   CommonUtility import *
 
 
+
 class COMPONENT_ENTRY (Structure):
     _pack_ = 1
     _fields_ = [
@@ -107,11 +108,19 @@ class CONTAINER_HDR (Structure):
 class CONTAINER ():
     _struct_display_indent = 18
     _auth_type_value = {
-            "NONE"        : 0,
-            "SHA2_256"    : 1,
-            "SHA2_384"    : 2,
-            "RSA2048"     : 3,
-            "RSA3072"     : 4,
+            "NONE"                 : 0,
+            "SHA2_256"             : 1,
+            "SHA2_384"             : 2,
+            "RSA2048_SHA2_256"     : 3,
+            "RSA3072_SHA2_384"     : 4,
+        }
+
+    _auth_to_hashalg_str = {
+    "NONE"                 : "NONE",
+    "SHA2_256"             : "SHA2_256",
+    "SHA2_384"             : "SHA2_384",
+    "RSA2048_SHA2_256"     : "SHA2_256",
+    "RSA3072_SHA2_384"     : "SHA2_384",
         }
 
     def __init__(self, buf = None):
@@ -151,7 +160,7 @@ class CONTAINER ():
         if  auth_type_str == 'NONE':
             auth_len = 0
         elif auth_type_str.startswith ('RSA'):
-            auth_len = int(auth_type_str[3:]) >> 3
+            auth_len = int(auth_type_str[3:7]) >> 3
             if signed:
                 auth_len = auth_len * 2 + sizeof(PUB_KEY_HDR) + sizeof(SIGNATURE_HDR) +  4
         elif auth_type_str.startswith ('SHA2_'):
@@ -225,7 +234,7 @@ class CONTAINER ():
             raise Exception ("Unsupported hash type in get_pub_key_hash!")
 
     @staticmethod
-    def calculate_auth_data (file, auth_type, priv_key, out_dir, hash_type = 'SHA2_256'):
+    def calculate_auth_data (file, auth_type, priv_key, out_dir):
         # calculate auth info for a given file
         hash_data = bytearray()
         auth_data = bytearray()
@@ -238,25 +247,24 @@ class CONTAINER ():
         elif auth_type in ["SHA2_384"]:
             data = get_file_data (file)
             hash_data.extend (hashlib.sha384(data).digest())
-        elif auth_type in ['RSA2048', 'RSA3072']:
+        elif auth_type in ['RSA2048_SHA2_256', 'RSA3072_SHA2_384']:
             pub_key = os.path.join(out_dir, basename + '.pub')
             di = gen_pub_key (priv_key, pub_key)
-            key_hash = CONTAINER.get_pub_key_hash (di, hash_type)
+            key_hash = CONTAINER.get_pub_key_hash (di, CONTAINER._auth_to_hashalg_str[auth_type])
             hash_data.extend (key_hash)
             out_file = os.path.join(out_dir, basename + '.sig')
-            rsa_sign_file (priv_key, pub_key, hash_type, file, out_file, False, True)
+            rsa_sign_file (priv_key, pub_key, CONTAINER._auth_to_hashalg_str[auth_type], file, out_file, False, True)
             auth_data.extend (get_file_data(out_file))
         else:
             raise Exception ("Unsupport AuthType '%s' !" % auth_type)
         return hash_data, auth_data
 
 
-    def set_dir_path(self, out_dir, inp_dir, key_dir, tool_dir, hash_type=None):
+    def set_dir_path(self, out_dir, inp_dir, key_dir, tool_dir):
         self.out_dir   = out_dir
         self.inp_dir   = inp_dir
         self.key_dir   = key_dir
         self.tool_dir  = tool_dir
-        self.hash_type  = hash_type
 
     def set_header_flags (self, flags, overwrite = False):
         if overwrite:
@@ -325,7 +333,7 @@ class CONTAINER ():
             hdr_data.extend (component)
             hdr_data.extend (component.hash_data)
         gen_file_from_object (hdr_file, hdr_data)
-        hash_data, auth_data = CONTAINER.calculate_auth_data (hdr_file, auth_type, header.priv_key, self.out_dir, self.hash_type)
+        hash_data, auth_data = CONTAINER.calculate_auth_data (hdr_file, auth_type, header.priv_key, self.out_dir)
         if len(auth_data) != len(header.auth_data):
             raise Exception ("Unexpected authentication data length for container header !")
         header.auth_data = auth_data
@@ -435,7 +443,7 @@ class CONTAINER ():
             component.data = bytearray(get_file_data (lz_file))
 
             # calculate the component auth info
-            component.hash_data, component.auth_data = CONTAINER.calculate_auth_data (lz_file, auth_type, key_file, self.out_dir, self.hash_type)
+            component.hash_data, component.auth_data = CONTAINER.calculate_auth_data (lz_file, auth_type, key_file, self.out_dir)
             component.hash_size = len(component.hash_data)
             if region_size == 0:
                 # arrange the region size automatically
@@ -477,7 +485,7 @@ class CONTAINER ():
             pods_comp = self.header.comp_entry[-1]
             pods_data = data[:pods_comp.offset]
             gen_file_from_object (in_file, pods_data)
-            pods_comp.hash_data, pods_comp.auth_data = CONTAINER.calculate_auth_data (in_file, auth_type, key_file, self.out_dir, self.hash_type)
+            pods_comp.hash_data, pods_comp.auth_data = CONTAINER.calculate_auth_data (in_file, auth_type, key_file, self.out_dir)
 
         self.adjust_header ()
         data = self.get_data ()
@@ -487,7 +495,7 @@ class CONTAINER ():
 
         return out_file
 
-    def replace (self, comp_name, comp_file, comp_alg, key_file, hash_type, new_name):
+    def replace (self, comp_name, comp_file, comp_alg, key_file, new_name):
         if self.header.flags & CONTAINER_HDR._flags['MONO_SIGNING']:
             raise Exception ("Counld not replace component for monolithically signed container!")
 
@@ -508,7 +516,7 @@ class CONTAINER ():
             lz_file = compress (comp_file, comp_alg, self.out_dir, self.tool_dir)
             if auth_type_str.startswith ('RSA') and key_file == '':
                 raise Exception ("Signing key needs to be specified !")
-            hash_data, auth_data = CONTAINER.calculate_auth_data (lz_file, auth_type_str, key_file, self.out_dir, hash_type)
+            hash_data, auth_data = CONTAINER.calculate_auth_data (lz_file, auth_type_str, key_file, self.out_dir)
             data = get_file_data (lz_file)
         component.data = bytearray(data)
         component.auth_data = bytearray(auth_data)
@@ -591,19 +599,21 @@ class CONTAINER ():
                 else:
                     raise Exception ("Unknown LZ format!")
 
-def gen_container_bin (container_list, out_dir, inp_dir, key_dir = '.', tool_dir = '', hash_type = 'SHA2_256'):
+def gen_container_bin (container_list, out_dir, inp_dir, key_dir = '.', tool_dir = ''):
     for each in container_list:
         container = CONTAINER ()
-        container.set_dir_path (out_dir, inp_dir, key_dir, tool_dir, hash_type)
+        container.set_dir_path (out_dir, inp_dir, key_dir, tool_dir)
         out_file = container.create (each)
         print ("Container '%s' was created successfully at:  \n  %s" % (container.header.signature.decode(), out_file))
 
 def gen_layout (comp_list, img_type, sign_hash_alg, out_file, key_dir, key_file):
     sign_key_type = get_key_type(os.path.join(key_dir, key_file))
+    auth_type = sign_key_type + '_' + sign_hash_alg
+
     # prepare the layout from individual components from '-cl'
     if img_type not in CONTAINER_HDR._image_type.keys():
         raise Exception ("Invalid Container Type '%s' !" % img_type)
-    layout = "('BOOT', '%s', '%s', '%s' , '%s', 0x10, 0),\n" % (out_file, img_type, sign_key_type, key_file)
+    layout = "('BOOT', '%s', '%s', '%s' , '%s', 0x10, 0),\n" % (out_file, img_type, auth_type, key_file)
     end_layout = "('_SG_', '', 'Dummy', '%s', '', 0, 0)," %(sign_hash_alg)
     for idx, each in enumerate(comp_list):
         parts = each.split(':')
@@ -646,11 +656,11 @@ def create_container (args):
             out_dir = os.path.dirname(args.out_path)
             out_file = os.path.basename(args.out_path)
 
-        layout = gen_layout (args.comp_list, args.img_type, args.hash_type, out_file, key_dir, key_file)
+        layout = gen_layout (args.comp_list, args.img_type, CONTAINER._auth_to_hashalg_str[args.auth], out_file, key_dir, key_file)
     comp_dir = args.comp_dir if args.comp_dir else def_inp_dir
     tool_dir = args.tool_dir if args.tool_dir else def_inp_dir
     container_list = eval ('[[%s]]' % layout.replace('\\', '/'))
-    gen_container_bin (container_list, out_dir, comp_dir, key_dir, tool_dir, args.hash_type)
+    gen_container_bin (container_list, out_dir, comp_dir, key_dir, tool_dir, CONTAINER._auth_to_hashalg_str[args.auth])
 
 def extract_container (args):
     tool_dir = args.tool_dir if args.tool_dir else '.'
@@ -665,7 +675,7 @@ def replace_component (args):
     data = get_file_data (args.image)
     container = CONTAINER (data)
     container.set_dir_path (args.out_dir, '.', '.', tool_dir)
-    file = container.replace (args.comp_name, args.comp_file, args.compress, args.key_file, args.hash_type, args.new_name)
+    file = container.replace (args.comp_name, args.comp_file, args.compress, args.key_file, args.new_name)
     print ("Component '%s' was replaced successfully at:\n  %s" % (args.comp_name, file))
 
 def sign_component (args):
@@ -673,7 +683,7 @@ def sign_component (args):
     compress_alg = compress_alg[0].upper() + compress_alg[1:]
     lz_file = compress (args.comp_file, compress_alg, args.out_dir, args.tool_dir)
     data = bytearray(get_file_data (lz_file))
-    hash_data, auth_data = CONTAINER.calculate_auth_data (lz_file, args.auth, args.key_file, args.out_dir, args.hash_type)
+    hash_data, auth_data = CONTAINER.calculate_auth_data (lz_file, args.auth, args.key_file, args.out_dir)
     sign_file = os.path.join (args.out_dir, args.sign_file)
     data.extend (b'\xff' * get_padding_length(len(data)))
     data.extend (auth_data)
@@ -703,7 +713,7 @@ def main():
     cmd_display.add_argument('-t', dest='img_type',  type=str, default='CLASSIC', help='Container Image Type : [NORMAL, CLASSIC, MULTIBOOT]')
     cmd_display.add_argument('-o', dest='out_path',  type=str, default='.', help='Container output directory/file')
     cmd_display.add_argument('-k', dest='key_path',  type=str, default='', help='Input key directory/file')
-    cmd_display.add_argument('-ht', dest='hash_type', type=str, choices=['SHA2_256', 'SHA2_384'], default='SHA2_256', help='Hash Alg for signing')
+    cmd_display.add_argument('-a',  dest='auth', choices=['SHA2_256', 'SHA2_384', 'RSA2048_SHA2_256', 'RSA3072_SHA2_384', 'none'], default='none',  help='authentication algorithm')
     cmd_display.add_argument('-cd', dest='comp_dir', type=str, default='', help='Componet image input directory')
     cmd_display.add_argument('-td', dest='tool_dir', type=str, default='', help='Compression tool directory')
     cmd_display.set_defaults(func=create_container)
@@ -724,7 +734,6 @@ def main():
     cmd_display.add_argument('-f',  dest='comp_file',  type=str, required=True, help='Component input file path')
     cmd_display.add_argument('-c',  dest='compress', choices=['lz4', 'lzma', 'dummy'], default='dummy', help='compression algorithm')
     cmd_display.add_argument('-k',  dest='key_file',  type=str, default='', help='Private key file path to sign component')
-    cmd_display.add_argument('-ht', dest='hash_type', type=str, choices=['SHA2_256', 'SHA2_384'], default='SHA2_256', help='Hash Alg for signing')
     cmd_display.add_argument('-od', dest='out_dir',  type=str, default='.', help='Output directory')
     cmd_display.add_argument('-td', dest='tool_dir', type=str, default='', help='Compression tool directory')
     cmd_display.set_defaults(func=replace_component)
@@ -734,9 +743,8 @@ def main():
     cmd_display.add_argument('-f',  dest='comp_file',  type=str, required=True, help='Component input file path')
     cmd_display.add_argument('-o',  dest='sign_file',  type=str, default='', help='Signed output image name')
     cmd_display.add_argument('-c',  dest='compress', choices=['lz4', 'lzma', 'dummy'],  default='dummy', help='compression algorithm')
-    cmd_display.add_argument('-a',  dest='auth', choices=['SHA2_256', 'SHA2_384', 'RSA2048', 'RSA3072' 'none'], default='none',  help='authentication algorithm')
+    cmd_display.add_argument('-a',  dest='auth', choices=['SHA2_256', 'SHA2_384', 'RSA2048_SHA2_256', 'RSA3072_SHA2_384', 'none'], default='none',  help='authentication algorithm')
     cmd_display.add_argument('-k',  dest='key_file',  type=str, default='', help='Private key file path to sign component')
-    cmd_display.add_argument('-ht', dest='hash_type', type=str,  choices=['SHA2_256', 'SHA2_384'], default='SHA2_256', help='Signing Hash Alg when auth type is RSA2048,RSA3072')
     cmd_display.add_argument('-od', dest='out_dir',  type=str, default='.', help='Output directory')
     cmd_display.add_argument('-td', dest='tool_dir', type=str, default='',  help='Compression tool directory')
     cmd_display.set_defaults(func=sign_component)
