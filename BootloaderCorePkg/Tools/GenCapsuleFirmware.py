@@ -442,7 +442,7 @@ def SignImage(RawData, OutFile, HashType, PrivKey):
 def main():
     PredefinedUuidDict = {
         'BIOS': '605C6813-C2C7-4242-9C27-50A4C363DBA4',  # SBL  BIOS Region
-        'CFGD': '66030B7A-47D1-4958-B73D-00B44B9DD4B6',  # SBL  CFGDATA
+        'MISC': '66030B7A-47D1-4958-B73D-00B44B9DD4B6',  # SBL  COMPONENT
         'CSME': '43AEF186-0CA5-4230-B1BD-193FB4627201',  # IFWI ME/CSME
         'CSMD': '4A467997-A909-4678-910C-E0FE1C9056EA',  # CSME Update driver
     }
@@ -496,9 +496,32 @@ def main():
         Result = FmpPayloadHeader.Encode()
 
         if PldUuid in PredefinedUuidDict:
+            HardwareInstance = '00000000' + PldUuid[::-1].encode("hex")
             PldUuid = PredefinedUuidDict[PldUuid]
+        else:
+            CompName = PldUuid.upper()
+
+            if ":" in CompName:
+                items = CompName.split(":")
+                item_cnt = len(items)
+                if item_cnt > 2:
+                    raise Exception ('more than 2 strings in component descriptor')
+
+                if len(items[0]) != 4 or len(items[1]) != 4:
+                    raise Exception ('%s is not a  4 character string' % CompName)
+
+                ContainerCompName = items[0][::-1].encode("hex")
+                SblComponentName = items[1][::-1].encode("hex")
+            else:
+                if len(CompName) != 4:
+                    raise Exception ('%s is not a  4 character string' % CompName)
+                ContainerCompName = '00000000'
+                SblComponentName = CompName[::-1].encode("hex")
+            HardwareInstance = ContainerCompName + SblComponentName
+            PldUuid = PredefinedUuidDict['MISC']
+        HardwareInstance = int (HardwareInstance, 16)
         Guid = ValidateRegistryFormatGuid(PldUuid)
-        FmpCapsuleHeader.AddPayload(Guid, Result, HardwareInstance=0)
+        FmpCapsuleHeader.AddPayload(Guid, Result, '', HardwareInstance)
 
     Result = FmpCapsuleHeader.Encode()
 

@@ -54,10 +54,6 @@
   gFirmwareUpdateImageFileGuid
   gFlashMapInfoGuid
   gBootLoaderVersionFileGuid
-  gSblFWUpdateImageFileGuid
-  gCfgFWUpdateImageFileGuid
-  gCsmeFWUpdateImageFileGuid
-  gCsmeFWUDriverImageFileGuid
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress

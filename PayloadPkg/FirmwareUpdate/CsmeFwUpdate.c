@@ -26,7 +26,7 @@
   This function if provided with an empty guid will return the first payload
   found
 
-  @param[in] ImageId        Guid to identify payload in the capsule image
+  @param[in] Signature      Signature of component to update.
   @param[in] CapImage       Pointer to the capsule Image
   @param[in] CapImageSize   Size of the capsule image in bytes
   @param[in] ImageHdr       Pointer to the capsule Image header
@@ -36,7 +36,7 @@
 **/
 EFI_STATUS
 FindImage (
-  IN  EFI_GUID                      *ImageId,
+  IN  UINT64                        Signature,
   IN  UINT8                         *CapImage,
   IN  UINT32                        CapImageSize,
   OUT EFI_FW_MGMT_CAP_IMAGE_HEADER  **ImageHdr
@@ -446,9 +446,9 @@ UpdateCsme (
     return EFI_INVALID_PARAMETER;
   }
 
-  ZeroMem((VOID *)&DriverParams, sizeof(DriverParams));
+  ZeroMem ((VOID *)&DriverParams, sizeof(DriverParams));
 
-  Status = FindImage(&gCsmeFWUDriverImageFileGuid, CapImage, CapImageSize, &CsmeDriverImageHdr);
+  Status = FindImage (FW_UPDATE_COMP_CSME_DRIVER, CapImage, CapImageSize, &CsmeDriverImageHdr);
   if ((EFI_ERROR (Status)) || (CsmeDriverImageHdr == NULL)) {
     DEBUG((DEBUG_ERROR, "Finding CSME update driver failed with Status = %r\n", Status));
     return Status;
@@ -462,7 +462,7 @@ UpdateCsme (
     return Status;
   }
 
-  Status = PeCoffLoaderGetEntryPoint(DriverPtr, (VOID *)&DriverEntry);
+  Status = PeCoffLoaderGetEntryPoint (DriverPtr, (VOID *)&DriverEntry);
   if (EFI_ERROR(Status)) {
     DEBUG((DEBUG_ERROR, "Getting entry point for CSME Update driver failed with status = %r\n", Status));
     return Status;
@@ -471,7 +471,7 @@ UpdateCsme (
   DriverParams.CsmeUpdDriverInFunc = CsmeUpdInputData;
   *(DriverParams.OutputFunc) = NULL;
 
-  DriverEntry((VOID *)&DriverParams);
+  DriverEntry ((VOID *)&DriverParams);
 
   CsmeUpdateApi = *(DriverParams.OutputFunc);
 

@@ -103,7 +103,7 @@ VerifyFwVersion (
   //
   // For now - Perform version check only for Slim Bootloader
   //
-  if (CompareGuid(&ImageHdr->UpdateImageTypeId, &gSblFWUpdateImageFileGuid) != 0) {
+  if ((UINT32)ImageHdr->UpdateHardwareInstance != FW_UPDATE_COMP_BIOS_REGION) {
     return EFI_SUCCESS;
   }
 
@@ -150,7 +150,7 @@ VerifyFwVersion (
   //
   // Update last update version to the version we are about to update
   //
-  Status = UpdateStatus(&ImageHdr->UpdateImageTypeId, \
+  Status = UpdateStatus(ImageHdr->UpdateHardwareInstance, \
                         (CapsuleBlVersion->ImageVersion.ProjMajorVersion << 8) | CapsuleBlVersion->ImageVersion.ProjMinorVersion, \
                         0xFFFFFFFF);
   if (EFI_ERROR (Status)) {
@@ -416,7 +416,7 @@ AfterUpdateEnforceFwUpdatePolicy (
   This function will be called after the firmware update is complete.
   This function will update firmware update status structure in reserved region
 
-  @param[in] ImageHdr           Pointer to Fw update image guid
+  @param[in] Signature          Signature of component to update.
   @param[in] LastAttemptVersion Version of last firmware update attempted.
   @param[in] LastAttemptStatus  Status of last firmware update attempted.
 
@@ -425,7 +425,7 @@ AfterUpdateEnforceFwUpdatePolicy (
 **/
 EFI_STATUS
 UpdateStatus (
-  IN EFI_GUID   *ImageId,
+  IN UINT64     Signature,
   IN UINT16     LastAttemptVersion,
   IN EFI_STATUS LastAttemptStatus
  )
@@ -452,7 +452,7 @@ UpdateStatus (
   // Find the required component to update status
   //
   for (Count = 0; Count < MAX_FW_COMPONENTS; Count ++) {
-    if (CompareGuid(&(FwUpdCompStatus[Count].FirmwareId), ImageId) == TRUE) {
+    if (FwUpdCompStatus[Count].HardwareInstance == Signature) {
       DEBUG((DEBUG_VERBOSE, "FOund the component to update status\n"));
       break;
     }
@@ -742,6 +742,7 @@ ProcessCapsule (
     // Create new structure
     //
     CopyMem((VOID *)&(FwUpdCompStatus[Count].FirmwareId), (VOID *)&(ImgHeader->UpdateImageTypeId), sizeof(EFI_GUID));
+    FwUpdCompStatus[Count].HardwareInstance = ImgHeader->UpdateHardwareInstance;
     FwUpdCompStatus[Count].LastAttemptVersion = 0xFFFFFFFF;
     FwUpdCompStatus[Count].LastAttemptStatus = 0xFFFFFFFF;
     FwUpdCompStatus[Count].UpdatePending = FW_UPDATE_IMAGE_UPDATE_PENDING;
@@ -774,7 +775,7 @@ ProcessCapsule (
   This function if provided with an empty guid will return the first payload
   found
 
-  @param[in] ImageId        Guid to identify payload in the capsule image
+  @param[in] Signature      Signature of component to update.
   @param[in] CapImage       Pointer to the capsule Image
   @param[in] CapImageSize   Size of the capsule image in bytes
   @param[in] ImageHdr       Pointer to the capsule Image header
@@ -784,7 +785,7 @@ ProcessCapsule (
 **/
 EFI_STATUS
 FindImage (
-  IN  EFI_GUID                      *ImageId,
+  IN  UINT64                        Signature,
   IN  UINT8                         *CapImage,
   IN  UINT32                        CapImageSize,
   OUT EFI_FW_MGMT_CAP_IMAGE_HEADER  **ImageHdr
@@ -815,20 +816,12 @@ FindImage (
   CapImageHdr = (EFI_FW_MGMT_CAP_IMAGE_HEADER *)((UINTN)CapHeader + sizeof(EFI_FW_MGMT_CAP_HEADER) + TotalPayloadCount * sizeof(UINT64));
 
   //
-  // If input guid is NULL, return the first payload header
-  //
-  if (ImageId == NULL) {
-    *ImageHdr = CapImageHdr;
-    return EFI_SUCCESS;
-  }
-
-  //
   // Loop through all the payloads
   // if matching guid, return the payload header
   // Boundary check to see if image header address exceeds the capsule region
   //
   for (Count = 0; Count < CapHeader->PayloadItemCount; Count++) {
-    if (CompareGuid(&CapImageHdr->UpdateImageTypeId, ImageId) == TRUE) {
+    if (CapImageHdr->UpdateHardwareInstance == Signature) {
       *ImageHdr = CapImageHdr;
       return EFI_SUCCESS;
     }
@@ -863,18 +856,26 @@ ApplyFwImage (
     OUT BOOLEAN                       *ResetRequired
   )
 {
-  EFI_STATUS  Status;
-  VOID        *CsmeUpdateInData;
+  EFI_STATUS      Status;
+  UINT32          Signature;
+  VOID            *CsmeUpdateInData;
   BOOT_PARTITION  Partition;
 
   Status = EFI_SUCCESS;
   *ResetRequired = FALSE;
 
-  if (CompareGuid(&ImageHdr->UpdateImageTypeId, &gSblFWUpdateImageFileGuid)) {
+  if (ImageHdr == NULL) {
+    return EFI_NOT_FOUND;
+  }
+
+  Signature = (UINT32)ImageHdr->UpdateHardwareInstance;
+
+  switch (Signature) {
+  case FW_UPDATE_COMP_BIOS_REGION:
     Status = UpdateSystemFirmware(ImageHdr);
-  } else if (CompareGuid(&ImageHdr->UpdateImageTypeId, &gCfgFWUpdateImageFileGuid)) {
-    Status = UpdateSystemFirmware(ImageHdr);
-  } else if (CompareGuid(&ImageHdr->UpdateImageTypeId, &gCsmeFWUpdateImageFileGuid)) {
+    break;
+  case FW_UPDATE_COMP_CSME_REGION:
+    Status = EFI_UNSUPPORTED;
     if (FeaturePcdGet(PcdCsmeUpdateEnabled) == 1) {
       //
       // CSME update will only work when updated from primary partition
@@ -891,6 +892,9 @@ ApplyFwImage (
         *ResetRequired = TRUE;
       }
     }
+    break;
+  default:
+    break;
   }
 
   return Status;
@@ -989,7 +993,7 @@ InitFirmwareUpdate (
       //
       // Find payload associated with component in the capsule image
       //
-      Status = FindImage(&(FwUpdCompStatus[Count].FirmwareId), CapsuleImage, CapsuleSize, &ImgHdr);
+      Status = FindImage(FwUpdCompStatus[Count].HardwareInstance, CapsuleImage, CapsuleSize, &ImgHdr);
       if (!EFI_ERROR (Status)) {
         //
         // Start firmware udpate for the component
@@ -1005,7 +1009,7 @@ InitFirmwareUpdate (
       //
       // Update firmware update status of the component in reserved region
       //
-      Status = UpdateStatus(&(ImgHdr->UpdateImageTypeId), (UINT16)ImgHdr->Version, Status);
+      Status = UpdateStatus(ImgHdr->UpdateHardwareInstance, (UINT16)ImgHdr->Version, Status);
       if (EFI_ERROR (Status)) {
         DEBUG ((DEBUG_ERROR, "UpdateStatus failed! Status = %r\n", Status));
       }
