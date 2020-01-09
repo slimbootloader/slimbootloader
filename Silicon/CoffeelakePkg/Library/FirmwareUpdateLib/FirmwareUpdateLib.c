@@ -289,19 +289,23 @@ GetFirmwareUpdateInfo (
   UINT32                        TopSwapRegionOffset;
   UINT32                        RedundantRegionOffset;
   UINT32                        NonRedundantRegionOffset;
+  UINT32                        CompBase;
+  UINT32                        CompSize;
   FIRMWARE_UPDATE_PARTITION     *UpdatePartition;
   FIRMWARE_UPDATE_REGION        *UpdateRegion;
-  UINT8                          Idx;
+  UINT8                         Idx;
   FLASH_MAP                     *FlashMap;
+  BOOLEAN                       IsBackup;
+  EFI_STATUS                    Status;
 
   TopSwapRegionOffset       = 0;
   RedundantRegionOffset     = 0;
   NonRedundantRegionOffset  = 0;
 
-  //
-  // Get Region sizes from flash map
-  //
-  GetRegionInfo (&TopSwapRegionSize, &RedundantRegionSize, &NonRedundantRegionSize);
+  FlashMap = GetFlashMapPtr();
+  if (FlashMap == NULL) {
+    return EFI_NOT_FOUND;
+  }
 
   AllocateSize    = sizeof (FIRMWARE_UPDATE_PARTITION) + (MAX_UPDATE_REGIONS - 1) * sizeof(FIRMWARE_UPDATE_REGION);
   UpdatePartition = (FIRMWARE_UPDATE_PARTITION *) AllocateZeroPool(AllocateSize);
@@ -309,69 +313,102 @@ GetFirmwareUpdateInfo (
 
   UpdatePartition->RegionCount   = 0;
 
-  // BIOS region layout is as below.
-  //
-  //  +-------------------------+
-  //  +        Top Swap         +
-  //  +-------------------------+
-  //  +     Top Swap Backup     +
-  //  +-------------------------+
-  //  +    Redundant Region     +
-  //  +-------------------------+
-  //  + Redundant Region Backup +
-  //  +-------------------------+
-  //  +  Non Redundant Region   +
-  //  +-------------------------+
-
-  FlashMap = GetFlashMapPtr();
-  if (FlashMap == NULL) {
-    return EFI_NOT_FOUND;
-  }
-
-  NonRedundantRegionOffset = \
-                             FlashMap->RomSize - (TopSwapRegionSize + RedundantRegionSize) * 2 - NonRedundantRegionSize;
-
-  TopSwapRegionOffset   = FlashMap->RomSize - TopSwapRegionSize;
-  RedundantRegionOffset = TopSwapRegionOffset - TopSwapRegionSize - RedundantRegionSize;
-
-  if (FwPolicy.Fields.UpdatePartitionB == 1) {
-    TopSwapRegionOffset   -= TopSwapRegionSize;
-    RedundantRegionOffset -= RedundantRegionSize;
-  }
-
-  DEBUG ((DEBUG_INFO, "TopSwapRegion      Offset/Size = 0x%08X/0x%X\n", TopSwapRegionOffset, TopSwapRegionSize));
-  DEBUG ((DEBUG_INFO, "RedundantRegion    Offset/Size = 0x%08X/0x%X\n", RedundantRegionOffset, RedundantRegionSize));
-  DEBUG ((DEBUG_INFO, "NonRedundantRegion Offset/Size = 0x%08X/0x%X\n", NonRedundantRegionOffset,
-          NonRedundantRegionSize));
-
-  //
-  // Top Swap region
-  //
-  UpdateRegion                  = &UpdatePartition->FwRegion[0];
-  UpdateRegion->ToUpdateAddress = TopSwapRegionOffset;
-  UpdateRegion->UpdateSize      = TopSwapRegionSize;
-  UpdateRegion->SourceAddress   = (UINT8 *)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER)+ (UINTN)UpdateRegion->ToUpdateAddress);
-  UpdatePartition->RegionCount += 1;
-
-  //
-  // Redundant region
-  //
-  UpdateRegion                  = &UpdatePartition->FwRegion[1];
-  UpdateRegion->ToUpdateAddress = RedundantRegionOffset;
-  UpdateRegion->UpdateSize      = RedundantRegionSize;
-  UpdateRegion->SourceAddress   = (UINT8 *)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER) + (UINTN)UpdateRegion->ToUpdateAddress);
-  UpdatePartition->RegionCount += 1;
-
-  if ((FwPolicy.Fields.StateMachine == FW_UPDATE_SM_PART_A) ||
-      (FwPolicy.Fields.StateMachine == FW_UPDATE_SM_PART_B)) {
+  if (CompareGuid(&ImageHdr->UpdateImageTypeId, &gSblCompFWUpdateImageFileGuid)) {
     //
-    // Non-redundant region
+    // Update SblComponent
     //
-    UpdateRegion                  = &UpdatePartition->FwRegion[2];
-    UpdateRegion->ToUpdateAddress = NonRedundantRegionOffset;
-    UpdateRegion->UpdateSize      = NonRedundantRegionSize;
-    UpdateRegion->SourceAddress   = (UINT8 *)((UINT32)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER) + NonRedundantRegionOffset);
+
+    // Get SBL component
+    IsBackup = (FwPolicy.Fields.UpdatePartitionB == 1) ? TRUE : FALSE;
+    Status = GetComponentInfoByPartition ((UINT32)ImageHdr->UpdateHardwareInstance, IsBackup, &CompBase, &CompSize);
+    if (EFI_ERROR(Status)) {
+      DEBUG ((DEBUG_INFO, "No SBL component found !"));
+      return Status;
+    }
+
+    if (ImageHdr->UpdateImageSize & 0xFFF) {
+      DEBUG ((DEBUG_INFO, "capsule payload size is not block aligned!"));
+      return EFI_UNSUPPORTED;
+    }
+
+    if (ImageHdr->UpdateImageSize > CompSize) {
+      DEBUG ((DEBUG_INFO, "capsule payload size is too big for the region on flash!"));
+      return EFI_UNSUPPORTED;
+    }
+
+    UpdateRegion                  = &UpdatePartition->FwRegion[0];
+    UpdateRegion->ToUpdateAddress = FlashMap->RomSize + CompBase;
+    UpdateRegion->UpdateSize      = ImageHdr->UpdateImageSize;
+    UpdateRegion->SourceAddress   = (UINT8 *)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
+    UpdatePartition->RegionCount  = 1;
+
+  } else {
+    //
+    // Update Bootloader
+    //
+
+    // Get Region sizes from flash map
+    GetRegionInfo (&TopSwapRegionSize, &RedundantRegionSize, &NonRedundantRegionSize);
+
+    // BIOS region layout is as below.
+    //
+    //  +-------------------------+
+    //  +        Top Swap         +
+    //  +-------------------------+
+    //  +     Top Swap Backup     +
+    //  +-------------------------+
+    //  +    Redundant Region     +
+    //  +-------------------------+
+    //  + Redundant Region Backup +
+    //  +-------------------------+
+    //  +  Non Redundant Region   +
+    //  +-------------------------+
+
+    NonRedundantRegionOffset = \
+                               FlashMap->RomSize - (TopSwapRegionSize + RedundantRegionSize) * 2 - NonRedundantRegionSize;
+
+    TopSwapRegionOffset   = FlashMap->RomSize - TopSwapRegionSize;
+    RedundantRegionOffset = TopSwapRegionOffset - TopSwapRegionSize - RedundantRegionSize;
+
+    if (FwPolicy.Fields.UpdatePartitionB == 1) {
+      TopSwapRegionOffset   -= TopSwapRegionSize;
+      RedundantRegionOffset -= RedundantRegionSize;
+    }
+
+    DEBUG ((DEBUG_INFO, "TopSwapRegion      Offset/Size = 0x%08X/0x%X\n", TopSwapRegionOffset, TopSwapRegionSize));
+    DEBUG ((DEBUG_INFO, "RedundantRegion    Offset/Size = 0x%08X/0x%X\n", RedundantRegionOffset, RedundantRegionSize));
+    DEBUG ((DEBUG_INFO, "NonRedundantRegion Offset/Size = 0x%08X/0x%X\n", NonRedundantRegionOffset,
+            NonRedundantRegionSize));
+
+    //
+    // Top Swap region
+    //
+    UpdateRegion                  = &UpdatePartition->FwRegion[0];
+    UpdateRegion->ToUpdateAddress = TopSwapRegionOffset;
+    UpdateRegion->UpdateSize      = TopSwapRegionSize;
+    UpdateRegion->SourceAddress   = (UINT8 *)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER)+ (UINTN)UpdateRegion->ToUpdateAddress);
     UpdatePartition->RegionCount += 1;
+
+    //
+    // Redundant region
+    //
+    UpdateRegion                  = &UpdatePartition->FwRegion[1];
+    UpdateRegion->ToUpdateAddress = RedundantRegionOffset;
+    UpdateRegion->UpdateSize      = RedundantRegionSize;
+    UpdateRegion->SourceAddress   = (UINT8 *)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER) + (UINTN)UpdateRegion->ToUpdateAddress);
+    UpdatePartition->RegionCount += 1;
+
+    if ((FwPolicy.Fields.StateMachine == FW_UPDATE_SM_PART_A) ||
+        (FwPolicy.Fields.StateMachine == FW_UPDATE_SM_PART_B)) {
+      //
+      // Non-redundant region
+      //
+      UpdateRegion                  = &UpdatePartition->FwRegion[2];
+      UpdateRegion->ToUpdateAddress = NonRedundantRegionOffset;
+      UpdateRegion->UpdateSize      = NonRedundantRegionSize;
+      UpdateRegion->SourceAddress   = (UINT8 *)((UINT32)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER) + NonRedundantRegionOffset);
+      UpdatePartition->RegionCount += 1;
+    }
   }
 
   for (Idx = 0; Idx < UpdatePartition->RegionCount; Idx++) {

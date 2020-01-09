@@ -41,6 +41,10 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #define CAPSULE_FLAGS_CFG_DATA  BIT0
 
+#define FW_UPDATE_COMP_BIOS_REGION SIGNATURE_32('B', 'I', 'O', 'S')
+#define FW_UPDATE_COMP_CSME_REGION SIGNATURE_32('C', 'S', 'M', 'E')
+#define FW_UPDATE_COMP_CSME_DRIVER SIGNATURE_32('C', 'S', 'M', 'D')
+
 #define FW_UPDATE_STATUS_SIGNATURE SIGNATURE_32 ('F', 'W', 'U', 'S')
 #define FW_UPDATE_STATUS_VERSION   0x1
 
@@ -97,6 +101,7 @@ typedef struct {
 
 typedef struct {
   EFI_GUID              FirmwareId;
+  UINT64                HardwareInstance;
   UINT32                LastAttemptVersion;
   UINT32                LastAttemptStatus;
   UINT8                 UpdatePending;
@@ -451,7 +456,7 @@ SetBootPartition (
   This function will be called after the firmware update is complete.
   This function will update firmware update status structure in reserved region
 
-  @param[in] ImageHdr           Pointer to Fw update image guid
+  @param[in] Signature          Signature of component to update.
   @param[in] LastAttemptVersion Version of last firmware update attempted.
   @param[in] LastAttemptStatus  Status of last firmware update attempted.
 
@@ -460,7 +465,7 @@ SetBootPartition (
 **/
 EFI_STATUS
 UpdateStatus (
-  IN EFI_GUID   *ImageId,
+  IN UINT64     Signature,
   IN UINT16     LastAttemptVersion,
   IN EFI_STATUS LastAttemptStatus
  );
