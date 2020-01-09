@@ -206,6 +206,7 @@ class BaseBoard(object):
 
         self.STAGE1A_XIP           = 1
         self.STAGE1B_XIP           = 1
+        self.STAGE1_STACK_BASE_OFFSET = 0x00000000
         self.STAGE2_XIP            = 0
         self.STAGE2_LOAD_HIGH      = 1
         self.PAYLOAD_LOAD_HIGH     = 1

@@ -66,6 +66,7 @@
 
   gPlatformModuleTokenSpaceGuid.PcdStage1StackSize        | 0x00000000 | UINT32 | 0x20000060
   gPlatformModuleTokenSpaceGuid.PcdStage1DataSize         | 0x00000000 | UINT32 | 0x20000061
+  gPlatformModuleTokenSpaceGuid.PcdStage1StackBaseOffset  | 0x00000000 | UINT32 | 0x20000062
   gPlatformModuleTokenSpaceGuid.PcdCfgDatabaseSize        | 0x00000000 | UINT32 | 0x20000063
   gPlatformModuleTokenSpaceGuid.PcdStage2LoadHigh         | FALSE      | BOOLEAN| 0x20000068
   gPlatformModuleTokenSpaceGuid.PcdPayloadLoadHigh        | FALSE      | BOOLEAN| 0x20000069

@@ -62,7 +62,11 @@ typedef struct {
   UINT32        CarBase;
   UINT32        CarTop;
   UINT64        TimeStamp;
-  UINT32        CpuBist;
+  struct _STATUS {
+    UINT32      CpuBist           :  1;
+    UINT32      StackOutOfRange   :  1;
+    UINT32      RsvdBits          : 30;
+  } Status;
 } STAGE1A_ASM_PARAM;
 
 typedef struct {

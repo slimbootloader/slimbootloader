@@ -190,6 +190,7 @@
   gPlatformModuleTokenSpaceGuid.PcdStage2FvSize           | $(STAGE2_FV_SIZE)
 
   gPlatformModuleTokenSpaceGuid.PcdStage1StackSize        | $(STAGE1_STACK_SIZE)
+  gPlatformModuleTokenSpaceGuid.PcdStage1StackBaseOffset  | $(STAGE1_STACK_BASE_OFFSET)
   gPlatformModuleTokenSpaceGuid.PcdStage1DataSize         | $(STAGE1_DATA_SIZE)
   gPlatformModuleTokenSpaceGuid.PcdStage2LoadHigh         | $(STAGE2_LOAD_HIGH)
 
