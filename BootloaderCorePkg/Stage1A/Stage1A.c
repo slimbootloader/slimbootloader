@@ -336,8 +336,12 @@ SecStartup2 (
     DEBUG ((DEBUG_INIT, "\n%a\n", mBootloaderName));
   }
 
-  if (Stage1aAsmParam->CpuBist != 0) {
+  if (Stage1aAsmParam->Status.CpuBist != 0) {
     CpuHalt ("CPU BIST failure!\n");
+  }
+
+  if (Stage1aAsmParam->Status.StackOutOfRange != 0) {
+    CpuHalt ("Stack base offset is too big!\n");
   }
 
   if (FlashMap == NULL) {
@@ -407,7 +411,7 @@ SecStartup (
   // Init global data
   LdrGlobal = &LdrGlobalData;
   ZeroMem (LdrGlobal, sizeof (LOADER_GLOBAL_DATA));
-  StackTop = Stage1aAsmParam->CarBase + PcdGet32 (PcdStage1StackSize);
+  StackTop = (UINT32)(UINTN)Params + sizeof (STAGE1A_ASM_PARAM);
   LdrGlobal->Signature             = LDR_GDATA_SIGNATURE;
   LdrGlobal->LoaderStage           = LOADER_STAGE_1A;
   LdrGlobal->StackTop              = StackTop;

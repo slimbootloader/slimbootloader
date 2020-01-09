@@ -65,7 +65,7 @@
   gPlatformModuleTokenSpaceGuid.PcdHashStoreBase
   gPlatformModuleTokenSpaceGuid.PcdVerInfoBase
   gPlatformModuleTokenSpaceGuid.PcdStage1DataSize
-  gPlatformModuleTokenSpaceGuid.PcdStage1StackSize
+  gPlatformModuleTokenSpaceGuid.PcdStage1StackBaseOffset
   gPlatformModuleTokenSpaceGuid.PcdStage1BXip
   gPlatformModuleTokenSpaceGuid.PcdCfgDatabaseSize
   gPlatformModuleTokenSpaceGuid.PcdStage1AXip
