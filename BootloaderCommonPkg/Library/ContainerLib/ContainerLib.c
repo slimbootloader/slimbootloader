@@ -247,9 +247,9 @@ GetHashAlg(
 
   HashAlg = HASH_TYPE_NONE;
 
-  if(AuthType == AUTH_TYPE_SIG_RSA2048_SHA256){
+  if((AuthType == AUTH_TYPE_SIG_RSA2048_SHA256) || (AuthType == AUTH_TYPE_SHA2_256)) {
     HashAlg = HASH_TYPE_SHA256;
-  } else if (AuthType == AUTH_TYPE_SIG_RSA3072_SHA384){
+  } else if ((AuthType == AUTH_TYPE_SIG_RSA3072_SHA384) ||  (AuthType == AUTH_TYPE_SHA2_384)) {
     HashAlg = HASH_TYPE_SHA384;
   }
 
@@ -679,6 +679,10 @@ LoadComponentWithCallback (
   UINT32                    DstLen;
   UINT32                    ScrLen;
   BOOLEAN                   IsInFlash;
+  COMPONENT_CALLBACK_INFO   CbInfo;
+  UINT32                    ComponentId;
+
+  ComponentId = ContainerSig;
 
   if (ContainerSig < COMP_TYPE_INVALID) {
     // Check if it is component type
@@ -723,7 +727,7 @@ LoadComponentWithCallback (
   }
 
   if (LoadComponentCallback != NULL) {
-    LoadComponentCallback (PROGESS_ID_LOCATE);
+    LoadComponentCallback (PROGESS_ID_LOCATE, NULL);
   }
 
   // Component must have LOADER_COMPRESSED_HEADER
@@ -767,7 +771,7 @@ LoadComponentWithCallback (
     ScrBuf  = (UINT8 *)AllocBuf + ALIGN_UP (SignedDataLen, TEMP_BUF_ALIGN);
     CopyMem (CompBuf, CompData, SignedDataLen);
     if (LoadComponentCallback != NULL) {
-      LoadComponentCallback (PROGESS_ID_COPY);
+      LoadComponentCallback (PROGESS_ID_COPY, NULL);
     }
   } else {
     CompBuf = CompData;
@@ -778,7 +782,18 @@ LoadComponentWithCallback (
   Status = AuthenticateComponent (CompBuf, SignedDataLen, AuthType,
              CompData + ALIGN_UP(SignedDataLen, AUTH_DATA_ALIGN),  HashData, Usage);
   if (LoadComponentCallback != NULL) {
-    LoadComponentCallback (PROGESS_ID_AUTHENTICATE);
+    if(Status == EFI_SUCCESS){
+      // Update component Call back info after authenticaton is done
+      // This info will used by firmware stage to extend to TPM
+      CbInfo.ComponentType    = ComponentId;
+      CbInfo.CompBuf          = CompBuf;
+      CbInfo.CompLen          = SignedDataLen;
+      CbInfo.HashAlg          = GetHashAlg(AuthType);
+      CbInfo.HashData         = HashData;
+      LoadComponentCallback (PROGESS_ID_AUTHENTICATE, &CbInfo);
+    } else {
+      LoadComponentCallback (PROGESS_ID_AUTHENTICATE, NULL);
+    }
   }
   if (!EFI_ERROR (Status)) {
     CompressHdr = (LOADER_COMPRESSED_HEADER *)CompBuf;
@@ -791,7 +806,7 @@ LoadComponentWithCallback (
       Status = Decompress (CompressHdr->Signature, CompressHdr->Data, CompressHdr->CompressedSize,
                            CompBase, ScrBuf);
       if (LoadComponentCallback != NULL) {
-        LoadComponentCallback (PROGESS_ID_DECOMPRESS);
+        LoadComponentCallback (PROGESS_ID_DECOMPRESS, NULL);
       }
       if (EFI_ERROR (Status)) {
         if (ReqCompBase == NULL) {
