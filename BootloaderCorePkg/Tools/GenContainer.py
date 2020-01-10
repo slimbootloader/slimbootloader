@@ -201,7 +201,7 @@ class CONTAINER ():
             rep = ''
             if type(val) is str:
                 rep = "0x%X ('%s')" % (bytes_to_value(bytearray(val)), val)
-            elif type(val) in [int, long]:
+            elif type(val) in [int]:
                 rep = CONTAINER.decode_field ('%s.%s' % (obj.__class__.__name__, key), val)
                 if not rep:
                     rep = '0x%X' % (val)
@@ -743,7 +743,11 @@ def main():
 
     # Parse arguments and run sub-command
     args = parser.parse_args()
-    args.func(args)
+    try:
+        func = args.func
+    except AttributeError:
+        parser.error("too few arguments")
+    func(args)
 
 
 if __name__ == '__main__':
