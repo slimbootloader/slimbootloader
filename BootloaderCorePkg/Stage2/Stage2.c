@@ -8,16 +8,46 @@
 #include "Stage2.h"
 
 /**
+  Function to extend Payload hash
+
+  @param[in]  CbInfo    Component Call Back Info
+
+**/
+VOID
+ExtendStage (
+  IN  COMPONENT_CALLBACK_INFO   *CbInfo
+  )
+{
+  UINT8                     BootMode;
+
+  //Check the boot mode
+   BootMode = GetBootMode();
+  if (MEASURED_BOOT_ENABLED() && (BootMode != BOOT_ON_S3_RESUME)) {
+    //Extend hash for Component Types  Payload, Epayload and FWPayload
+    if ((CbInfo != NULL ) &&  ((CbInfo->ComponentType == COMP_TYPE_PAYLOAD)
+                              || (CbInfo->ComponentType == FLASH_MAP_SIG_EPAYLOAD)
+                              || (CbInfo->ComponentType == COMP_TYPE_PAYLOAD_FWU ))) {
+      TpmExtendStageHash((UINT8) CbInfo->ComponentType, CbInfo->HashData, CbInfo->HashAlg,
+                          CbInfo->CompBuf, CbInfo->CompLen);
+    }
+  }
+}
+
+/**
   Callback function to add performance measure point during component loading.
 
   @param[in]  ProgressId    Component loading progress ID code.
+  @param[in]  CbInfo    Component Call Back Info
 
 **/
 VOID
 LoadComponentCallback (
-  IN  UINT32   ProgressId
+  IN  UINT32                     ProgressId,
+  IN  COMPONENT_CALLBACK_INFO   *CbInfo
   )
 {
+
+  // Update Progress Info
   switch (ProgressId) {
   case PROGESS_ID_LOCATE:
     AddMeasurePoint (0x3110);
@@ -26,6 +56,7 @@ LoadComponentCallback (
     AddMeasurePoint (0x3120);
     break;
   case PROGESS_ID_AUTHENTICATE:
+    ExtendStage (CbInfo);
     AddMeasurePoint (0x3130);
     break;
   case PROGESS_ID_DECOMPRESS:
@@ -34,65 +65,8 @@ LoadComponentCallback (
   default:
     break;
   }
-}
 
-/**
-  Extend EPayload to TPM.
 
-  @param[in]  ContainerSig    Containetr Signature
-  @param[in]  ComponentName   Component Name
-
-  @retval RETURN_SUCCESS      Operation completed successfully.
-  @retval RETURN_NOT_FOUND    EPayload hash Not found
-**/
-RETURN_STATUS
-ExtendEpayload (
-  UINT32    ContainerSig,
-  UINT32    ComponentName
-  )
-{
-  UINT8                         HashAlg;
-  UINT16                        HashSize;
-  UINT32                        Src;
-  UINT32                        Length;
-  UINT8                         DigestHash[HASH_DIGEST_MAX];
-  COMPONENT_ENTRY               *ComponentEntry;
-  EFI_STATUS                     Status;
-
-  Status = RETURN_SUCCESS;
-  ComponentEntry = NULL;
-  LocateComponentEntry (ContainerSig, ComponentName, NULL, &ComponentEntry);
-  if (ComponentEntry != NULL)  {
-
-    // Get the HashAlg and HashSize from Component Auth Type
-    if ((ComponentEntry->AuthType == AUTH_TYPE_SHA2_256) || (ComponentEntry->AuthType == AUTH_TYPE_SIG_RSA2048_SHA256)){
-      HashAlg = HASH_TYPE_SHA256;
-      HashSize = SHA256_DIGEST_SIZE;
-    } else if ((ComponentEntry->AuthType == AUTH_TYPE_SHA2_384) || (ComponentEntry->AuthType == AUTH_TYPE_SIG_RSA3072_SHA384)){
-      HashAlg = HASH_TYPE_SHA384;
-      HashSize = SHA384_DIGEST_SIZE;
-    }
-
-    // Check if Hash data algorithm matches to requested PCR HashMask
-    if (HashAlg == GetCryptoHashAlg(PcdGet32(PcdMeasuredBootHashMask))){
-      if (ComponentEntry->HashSize == HashSize) {
-        // Extend Epayload Hash Data if its valid
-        TpmExtendHash (ComponentEntry->HashData, HashAlg);
-      } else {
-        DEBUG ((DEBUG_INFO, "EPAYLOAD hash in invalid!"));
-        return RETURN_NOT_FOUND;
-      }
-    } else {
-      // Calculate Hash if Component Hash data algorithm matches doesn't allign to requested PCR HashMask
-      Status = GetComponentInfo (ContainerSig, &Src, &Length);
-      if (!EFI_ERROR (Status)) {
-        CalculateHash ((UINT8 *)&Src, Length, GetCryptoHashAlg(PcdGet32(PcdMeasuredBootHashMask)), (UINT8 *) &DigestHash);
-        TpmExtendHash (DigestHash, GetCryptoHashAlg(PcdGet32(PcdMeasuredBootHashMask)));
-      }
-    }
-  }
-
-  return  Status;
 }
 
 /**
@@ -117,7 +91,6 @@ PreparePayload (
   UINT32                         ContainerSig;
   UINT32                         ComponentName;
   UINT8                          BootMode;
-  UINT8                          HashIdx;
 
   BootMode = GetBootMode();
   //
@@ -133,16 +106,13 @@ PreparePayload (
   if (BootMode == BOOT_ON_FLASH_UPDATE) {
     ContainerSig  = COMP_TYPE_PAYLOAD_FWU;
     ComponentName = FLASH_MAP_SIG_FWUPDATE;
-    HashIdx = COMP_TYPE_PAYLOAD_FWU;
   } else {
     if (IsNormalPld) {
       ContainerSig  = COMP_TYPE_PAYLOAD;
       ComponentName = FLASH_MAP_SIG_PAYLOAD;
-      HashIdx       = COMP_TYPE_PAYLOAD;
     } else {
       ContainerSig  = FLASH_MAP_SIG_EPAYLOAD;
       ComponentName = PayloadId;
-      HashIdx       = COMP_TYPE_INVALID;
     }
   }
 
@@ -163,14 +133,7 @@ PreparePayload (
     return 0;
   }
 
-  if (MEASURED_BOOT_ENABLED() && (BootMode != BOOT_ON_S3_RESUME)) {
-    if (HashIdx == COMP_TYPE_INVALID) {
-      ExtendEpayload (ContainerSig, ComponentName);
-    } else {
-      TpmExtendStageHash (HashIdx, ContainerSig);
-    }
-    AddMeasurePoint (0x3150);
-  }
+  AddMeasurePoint (0x3150);
 
   Stage2Param->PayloadActualLength = DstLen;
   DEBUG ((DEBUG_INFO, "Load Payload ID 0x%08X @ 0x%08X\n", PayloadId, Dst));

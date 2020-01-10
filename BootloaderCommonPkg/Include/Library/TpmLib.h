@@ -129,11 +129,39 @@ TpmExtendPcrAndLogEvent (
 
 
 /**
-  Retrieve hash of a firmware stage from Component hash table and extend it
-  in PCR 0 with EV_POST_CODE event type.
+  Extend Config Data Hash provided into PCR 1 with Ext Config Data event type.
 
-  @param[in] ComponentType    Stage whose measurement need to be extended.
-  @param[in] Signature        Signature of the component
+  @param[in] Digest                    Hash Digest to extend
+  @param[in] HashAlg                   Hash Alg to extend
+  @param[in] Src                       Config Buffer Address
+  @param[in] CfgDataLen                Data Len
+
+  @retval RETURN_SUCCESS               Operation completed successfully.
+  @retval RETURN_INVALID_PARAMETER     Invalid Digest  buf
+
+  @retval Others                       Unable to extend stage hash.
+**/
+RETURN_STATUS
+TpmExtendConfigData (
+  IN       UINT8            *Digest,
+  IN       HASH_ALG_TYPE     HashAlg,
+  IN       UINT8            *Src,
+  IN       UINT32            CfgDataLen
+  );
+
+
+/**
+  Extend hash of a firmware stage component. in PCR 0 with EV_POST_CODE event type
+  Hash extend would be in either of ways
+  Check Hash and Hash Alg provided and extend if they are valid
+  Retriev Hash from Component hash table
+  Calcluate Hash using source buf and length provided
+
+  @param[in] ComponentType             Stage whose measurement need to be extended.
+  @param[in] Digest                    Hash Digest to extend
+  @param[in] HashDataAlg               Hash Alg to extend
+  @param[in] Src                       Buffer Address
+  @param[in] CfgDataLen                Data Len
 
   @retval RETURN_SUCCESS      Operation completed successfully.
   @retval Others              Unable to extend stage hash.
@@ -141,25 +169,10 @@ TpmExtendPcrAndLogEvent (
 RETURN_STATUS
 TpmExtendStageHash (
   IN       UINT8            ComponentType,
-  IN       UINT32           Signature
-  );
-
-
-/**
-  Extend  hash provided in PCR 0 with EV_POST_CODE event type.
-
-  @param[in] Digest                    Hash Digest to extend
-  @param[in] HashAlg                   Hash Alg to extend
-
-  @retval RETURN_SUCCESS               Operation completed successfully.
-  @retval RETURN_INVALID_PARAMETER     Imvalid Digest  buf
-
-  @retval Others                       Unable to extend stage hash.
-**/
-RETURN_STATUS
-TpmExtendHash (
-  IN       UINT8            *Src,
-  IN       HASH_ALG_TYPE     HashAlg
+  IN       UINT8           *HashData,
+  IN       HASH_ALG_TYPE    HashDataAlg,
+  IN       UINT8           *Src,
+  IN       UINT32           Length
   );
 
 /**

@@ -9,6 +9,8 @@
 #define _CONTAINER_LIB_H_
 
 #include <Library/PcdLib.h>
+#include <Library/CryptoLib.h>
+
 
 #define CONTAINER_LIST_SIGNATURE SIGNATURE_32('C','T','N', 'L')
 
@@ -33,7 +35,16 @@ typedef UINT8 AUTH_TYPE;
 // Attributes for COMPONENT_ENTRY
 #define COMPONENT_ENTRY_ATTR_RESERVED       BIT7
 
-typedef VOID (*LOAD_COMPONENT_CALLBACK) (UINT32 ProgressId);
+
+typedef struct {
+  UINT32           ComponentType;
+  UINT8           *CompBuf;
+  UINT32           CompLen;
+  HASH_ALG_TYPE    HashAlg;
+  UINT8           *HashData;
+} COMPONENT_CALLBACK_INFO;
+
+typedef VOID (*LOAD_COMPONENT_CALLBACK) (UINT32 ProgressId, COMPONENT_CALLBACK_INFO *CbInfo);
 
 typedef struct {
   UINT32           Signature;

@@ -83,6 +83,7 @@ typedef struct {
 
 typedef struct {
   UINT32        PayloadBase;
+  UINT32        CfgDataAddr;
   UINT8         ConfigDataHashValid;
   UINT8         ConfigDataHash[HASH_DIGEST_MAX];
 } STAGE1B_PARAM;

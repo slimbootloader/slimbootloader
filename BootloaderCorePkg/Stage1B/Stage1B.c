@@ -8,21 +8,49 @@
 #include "Stage1B.h"
 
 /**
+  Function to extend stage2 hash
+
+  @param[in]  CbInfo    Component Call Back Info
+
+**/
+VOID
+ExtendStage (
+  IN  COMPONENT_CALLBACK_INFO   *CbInfo
+  )
+{
+  UINT8                     BootMode;
+
+  //Check the boot mode
+  BootMode = GetBootMode();
+  if (MEASURED_BOOT_ENABLED() && (BootMode != BOOT_ON_S3_RESUME)) {
+    //Extend  hash if ComponentType is stage2
+    if ((CbInfo != NULL ) && (CbInfo->ComponentType == COMP_TYPE_STAGE_2)) {
+      TpmExtendStageHash((UINT8) CbInfo->ComponentType, CbInfo->HashData, CbInfo->HashAlg,
+                          CbInfo->CompBuf, CbInfo->CompLen);
+    }
+  }
+}
+
+/**
   Callback function to add performance measure point during component loading.
 
   @param[in]  ProgressId    Component loading progress ID code.
+  @param[in]  CbInfo    Component Call Back Info
 
 **/
 VOID
 LoadComponentCallback (
-  IN  UINT32   ProgressId
+  IN  UINT32                     ProgressId,
+  IN  COMPONENT_CALLBACK_INFO   *CbInfo
   )
 {
+
   switch (ProgressId) {
   case PROGESS_ID_COPY:
     AddMeasurePoint (0x2090);
     break;
   case PROGESS_ID_AUTHENTICATE:
+    ExtendStage (CbInfo);
     AddMeasurePoint (0x20A0);
     break;
   case PROGESS_ID_DECOMPRESS:
@@ -31,6 +59,8 @@ LoadComponentCallback (
   default:
     break;
   }
+
+
 }
 
 /**
@@ -73,11 +103,7 @@ PrepareStage2 (
     return 0;
   }
 
-  // Extend hash of Stage2 image into TPM.
-  if (MEASURED_BOOT_ENABLED() && (GetBootMode() != BOOT_ON_S3_RESUME)) {
-    TpmExtendStageHash (COMP_TYPE_STAGE_2, FLASH_MAP_SIG_STAGE2);
-    AddMeasurePoint (0x20C0);
-  }
+   AddMeasurePoint (0x20C0);
 
   // Rebase Stage2 if required
   if (Dst != PCD_GET32_WITH_ADJUST (PcdStage2FdBase)) {
@@ -237,6 +263,7 @@ CreateConfigDatabase (
           DEBUG ((DEBUG_INFO, "Append EXT CFG Data ... %r\n", Status));
         } else {
           Stage1bParam->ConfigDataHashValid = 1;
+          Stage1bParam->CfgDataAddr = (UINT32) ExtCfgAddPtr;
         }
       }
     }
@@ -603,10 +630,12 @@ ContinueFunc (
   // Extend External Config Data hash
   if (MEASURED_BOOT_ENABLED() ) {
     if (GetBootMode() != BOOT_ON_S3_RESUME) {
-      if (Stage1bParam->ConfigDataHashValid == 1) {
-        TpmExtendPcrAndLogEvent ( 1, TPM_ALG_SHA256, Stage1bParam->ConfigDataHash,
-                EV_EFI_VARIABLE_DRIVER_CONFIG, sizeof("Ext Config Data"), (UINT8 *)"Ext Config Data");
-      }
+        if (Stage1bParam->ConfigDataHashValid == 1) {
+          TpmExtendConfigData (Stage1bParam->ConfigDataHash,
+            PcdGet8(PcdCompSignHashAlg),
+            (UINT8 *) Stage1bParam->CfgDataAddr,
+            ((CDATA_BLOB *) Stage1bParam->CfgDataAddr)->UsedLength);
+        }
     }
   }
 

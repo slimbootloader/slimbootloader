@@ -823,10 +823,17 @@ TpmIndicateReadyToBoot (
 
 
 /**
-  Retrieve hash of a firmware stage from Component hash table and extend it
-  in PCR 0 with EV_POST_CODE event type.
+  Extend hash of a firmware stage component. in PCR 0 with EV_POST_CODE event type
+  Hash extend would be in either of ways
+  Check Hash and Hash Alg provided and extend if they are valid
+  Retriev Hash from Component hash table
+  Calcluate Hash using source buf and length provided
 
-  @param[in] ComponentType    Stage whose measurement need to be extended.
+  @param[in] ComponentType             Stage whose measurement need to be extended.
+  @param[in] Digest                    Hash Digest to extend
+  @param[in] HashDataAlg               Hash Alg to extend
+  @param[in] Src                       Buffer Address
+  @param[in] CfgDataLen                Data Len
 
   @retval RETURN_SUCCESS      Operation completed successfully.
   @retval Others              Unable to extend stage hash.
@@ -835,69 +842,81 @@ TpmIndicateReadyToBoot (
 RETURN_STATUS
 TpmExtendStageHash (
   IN       UINT8            ComponentType,
-  IN       UINT32           Signature
+  IN       UINT8           *HashData,
+  IN       HASH_ALG_TYPE    HashDataAlg,
+  IN       UINT8           *Src,
+  IN       UINT32           Length
   )
 {
   RETURN_STATUS        Status;
   CONST UINT8         *Digest;
   HASH_ALG_TYPE        HashAlg;
-  UINT32               Src;
-  UINT32               Length;
   UINT8                DigestHash[HASH_DIGEST_MAX];
   UINT32               PcrBankActive;
 
   TpmLibGetActivePcrBanks(&PcrBankActive);
 
   if(CountPcrBankActive(PcrBankActive) != 1) {
-    DEBUG ((DEBUG_ERROR, "Multiple PCR bannks were active. Currently not supported \n"));
+    DEBUG ((DEBUG_ERROR, "Multiple PCR banks were active. Currently not supported \n"));
     return RETURN_UNSUPPORTED;
   }
 
-  // Get public key hash
-  Status = GetComponentHash (ComponentType, &Digest, &HashAlg);
-  if(Status == EFI_SUCCESS) {
-    if (HashAlg == GetCryptoHashAlg(PcrBankActive)){
+  // TPM Hash can be extended in one of the three ways
+  // Get componenet hash from hash store based on Componen Id and extend if hash is valid
+  // Incase Component hash is not valid, validate hash provided by caller
+  // Incase Hash provided by caller is not valid calculate hash for src buf for TPM PCR active banks.
 
+  // Hash validity check - hash alg should match with PCR bank active
+
+  // Get componenet hash from hash store based on Componen Id
+  Status = GetComponentHash (ComponentType, &Digest, &HashAlg);
+  if((Status == EFI_SUCCESS) && (HashAlg == GetCryptoHashAlg(PcrBankActive))) {
+      //Extend from Hash retrieved from hash Component Table
       Status = TpmExtendPcrAndLogEvent ( 0, (TPMI_ALG_HASH) GetTpmHashAlg(PcrBankActive), Digest,
         EV_POST_CODE, POST_CODE_STR_LEN, (UINT8 *)EV_POSTCODE_INFO_POST_CODE);
-    } else {
-      DEBUG ((DEBUG_INFO, "Calculate Hash for the components\n"));
-      Status = GetComponentInfo (Signature, &Src, &Length);
-      if (!EFI_ERROR (Status)) {
-        CalculateHash ((UINT8 *)&Src, Length, GetCryptoHashAlg(PcrBankActive), (UINT8 *) &DigestHash);
-
-        Status = TpmExtendPcrAndLogEvent ( 0, (TPMI_ALG_HASH) GetTpmHashAlg(PcrBankActive), DigestHash,
+    } else if ((HashData != NULL) && (HashAlg == GetCryptoHashAlg(PcrBankActive))) {
+      // Check for hash data validitity
+      Status = TpmExtendPcrAndLogEvent (0, (TPMI_ALG_HASH) GetTpmHashAlg(PcrBankActive), HashData,
+        EV_POST_CODE, POST_CODE_STR_LEN, (UINT8 *)EV_POSTCODE_INFO_POST_CODE);
+    } else if (Src != NULL) {
+      // Calculate and extend the hash
+      DEBUG ((DEBUG_INFO, "Calculate Hash for  component as its not available in Component hash table \n"));
+      CalculateHash ((UINT8 *)Src, Length, GetCryptoHashAlg(PcrBankActive), (UINT8 *) &DigestHash);
+      Status = TpmExtendPcrAndLogEvent ( 0, (TPMI_ALG_HASH) GetTpmHashAlg(PcrBankActive), DigestHash,
                                 EV_POST_CODE, POST_CODE_STR_LEN, (UINT8 *)EV_POSTCODE_INFO_POST_CODE);
-      } else {
-        DEBUG ((DEBUG_ERROR, "Error: Component (%d) is not measured in TPM.\n", ComponentType));
-      }
+
+    } else {
+      DEBUG ((DEBUG_ERROR, "Error: Component (%d) is not measured in TPM.\n", ComponentType));
     }
-  } else {
-    DEBUG ((DEBUG_ERROR, "Error: Component (%d) is not measured in TPM.\n", ComponentType));
-  }
 
   return Status;
 }
 
+
 /**
-  Extend  hash provided in PCR 0 with EV_POST_CODE event type.
+  Extend Config Data Hash provided into PCR 1 with Ext Config Data event type.
 
   @param[in] Digest                    Hash Digest to extend
   @param[in] HashAlg                   Hash Alg to extend
+  @param[in] Src                       Config Buffer Address
+  @param[in] CfgDataLen                Data Len
 
   @retval RETURN_SUCCESS               Operation completed successfully.
-  @retval RETURN_INVALID_PARAMETER     Imvalid Digest  buf
+  @retval RETURN_INVALID_PARAMETER     Invalid Digest  buf
 
   @retval Others                       Unable to extend stage hash.
 **/
 RETURN_STATUS
-TpmExtendHash (
+TpmExtendConfigData (
   IN       UINT8            *Digest,
-  IN       HASH_ALG_TYPE     HashAlg
+  IN       HASH_ALG_TYPE     HashAlg,
+  IN       UINT8            *Src,
+  IN       UINT32            CfgDataLen
   )
 {
   RETURN_STATUS        Status;
   UINT32               PcrBankActive;
+  UINT8                DigestHash[HASH_DIGEST_MAX];
 
   if (Digest == NULL) {
     return RETURN_INVALID_PARAMETER;
@@ -906,17 +925,28 @@ TpmExtendHash (
   TpmLibGetActivePcrBanks(&PcrBankActive);
 
   if(CountPcrBankActive(PcrBankActive) != 1) {
-    DEBUG ((DEBUG_ERROR, "Multiple PCR bannks were active. Currently not supported \n"));
+    DEBUG ((DEBUG_ERROR, "Multiple PCR banks were active. Currently not supported \n"));
     return RETURN_UNSUPPORTED;
   }
 
-  if (HashAlg != GetCryptoHashAlg(PcrBankActive)) {
-    DEBUG ((DEBUG_ERROR, "Hash Alg doesn't match with Active bank \n"));
-    return RETURN_UNSUPPORTED;
-  }
+  // Config Hash can be extended in one of the ways
+  // Validate hash provided by caller and extend
+  // Incase Hash provided by caller is not valid calculate hash for src buf for TPM PCR active banks.
 
-  Status = TpmExtendPcrAndLogEvent (0, (TPMI_ALG_HASH) GetTpmHashAlg(PcrBankActive), Digest,
-      EV_POST_CODE, POST_CODE_STR_LEN, (UINT8 *)EV_POSTCODE_INFO_POST_CODE);
+  // Hash validity check - hash alg should match with PCR bank active
+
+  if ((Digest != NULL) && (HashAlg != GetCryptoHashAlg(PcrBankActive))) {
+    //Extend Digest provided by caller
+    Status =  TpmExtendPcrAndLogEvent ( 1, (TPMI_ALG_HASH) GetTpmHashAlg(PcrBankActive), Digest,
+                    EV_EFI_VARIABLE_DRIVER_CONFIG, sizeof("Ext Config Data"), (UINT8 *)"Ext Config Data");
+  } else if (Src != NULL) {
+    //Calculate Hash data if Digest privided is not valid
+    CalculateHash ((UINT8 *)Src, CfgDataLen, GetCryptoHashAlg(PcrBankActive), (UINT8 *) &DigestHash);
+    Status =  TpmExtendPcrAndLogEvent ( 1, (TPMI_ALG_HASH) GetTpmHashAlg(PcrBankActive), DigestHash,
+                    EV_EFI_VARIABLE_DRIVER_CONFIG, sizeof("Ext Config Data"), (UINT8 *)"Ext Config Data");
+  } else {
+    DEBUG ((DEBUG_ERROR, "Error: Config Data is not measured in TPM.\n"));
+  }
 
   return Status;
 }
