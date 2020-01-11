@@ -125,8 +125,9 @@ class BaseBoard(object):
         self._CONTAINER_PRIVATE_KEY = os.path.join(key_dir, 'TestSigningPrivateKey.pem')
         self.LOGO_FILE              = 'Platform/CommonBoardPkg/Logo/Logo.bmp'
 
-        self.RSA_SIGN_TYPE          = 'RSA2048'
-        self.SIGN_HASH_TYPE         = HASH_TYPE_VALUE['SHA2_256']
+        self._RSA_SIGN_TYPE          = 'RSA2048'
+        self._SIGN_HASH              = 'SHA2_256'
+        self.SIGN_HASH_TYPE          = HASH_TYPE_VALUE[self._SIGN_HASH]
         self.VERINFO_IMAGE_ID       = 'SB_???? '
         self.VERINFO_PROJ_ID        = 1
         self.VERINFO_CORE_MAJOR_VER = 0
@@ -249,7 +250,7 @@ class BaseBoard(object):
         self._CFGDATA_INT_FILE     = []
         self._CFGDATA_EXT_FILE     = []
 
-        self.IPP_HASH_LIB_SUPPORTED_MASK   = IPP_CRYPTO_ALG_MASK['SHA2_256']
+        self.IPP_HASH_LIB_SUPPORTED_MASK   = IPP_CRYPTO_ALG_MASK[self._SIGN_HASH]
 
         self.HASH_STORE_SIZE       = 0x200  #Hash store size to be allocated in bootloader
 
