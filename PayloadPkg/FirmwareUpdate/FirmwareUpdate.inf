@@ -45,6 +45,7 @@
   SecureBootLib
   LiteFvLib
   ConfigDataLib
+  ContainerLib
 
 [Guids]
   gLoaderMemoryMapInfoGuid

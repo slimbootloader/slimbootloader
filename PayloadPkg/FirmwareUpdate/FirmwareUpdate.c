@@ -592,7 +592,7 @@ AuthenticateCapsule (
     }
   }
 
-  Status    = DoRsaVerify (FwImage, Header->SignatureOffset, HASH_USAGE_PUBKEY_FWU, SignatureHdr, PubKeyHdr, PcdGet8(PcdCompSignHashAlg), NULL, NULL);
+  Status = DoRsaVerify (FwImage, Header->SignatureOffset, HASH_USAGE_PUBKEY_FWU, SignatureHdr, PubKeyHdr, PcdGet8(PcdCompSignHashAlg), NULL, NULL);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Image verification failed, %r!\n", Status));
     return EFI_SECURITY_VIOLATION;
@@ -894,7 +894,7 @@ ApplyFwImage (
     }
     break;
   default:
-    break;
+    Status = UpdateSblComponent (ImageHdr);
   }
 
   return Status;
