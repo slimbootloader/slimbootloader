@@ -12,6 +12,7 @@ import sys
 import re
 import struct
 import uuid
+import binascii
 from ctypes import *
 
 sys.dont_write_bytecode = True
@@ -81,7 +82,7 @@ class FmpCapsuleImageHeaderClass(object):
             self.UpdateImageIndex, 0, 0, 0, self.UpdateImageSize,
             self.UpdateVendorCodeSize, self.UpdateHardwareInstance)
         self._Valid = True
-        return FmpCapsuleImageHeader + self.Payload + self.VendorCodeBytes
+        return FmpCapsuleImageHeader + self.Payload + (self.VendorCodeBytes).encode()
 
     def Decode(self, Buffer):
         if len(Buffer) < self._StructSize:
@@ -333,6 +334,8 @@ class FmpCapsuleHeaderClass(object):
             FmpCapsuleImageHeader.DumpInfo('  ')
             print('')
 
+def UnicodeStrToHexString(Str):
+    return (binascii.hexlify(Str.encode('utf-8'))).decode()
 
 def _SIGNATURE_32(A, B, C, D):
     return struct.unpack('=I', bytearray(A + B + C + D, 'ascii'))[0]
@@ -496,7 +499,7 @@ def main():
         Result = FmpPayloadHeader.Encode()
 
         if PldUuid in PredefinedUuidDict:
-            HardwareInstance = '00000000' + PldUuid[::-1].encode("hex")
+            HardwareInstance = '00000000' + UnicodeStrToHexString(PldUuid[::-1])
             PldUuid = PredefinedUuidDict[PldUuid]
         else:
             CompName = PldUuid.upper()
@@ -510,13 +513,13 @@ def main():
                 if len(items[0]) != 4 or len(items[1]) != 4:
                     raise Exception ('%s is not a  4 character string' % CompName)
 
-                ContainerCompName = items[0][::-1].encode("hex")
-                SblComponentName = items[1][::-1].encode("hex")
+                ContainerCompName = UnicodeStrToHexString(items[0][::-1])
+                SblComponentName = UnicodeStrToHexString(items[1][::-1])
             else:
                 if len(CompName) != 4:
                     raise Exception ('%s is not a  4 character string' % CompName)
                 ContainerCompName = '00000000'
-                SblComponentName = CompName[::-1].encode("hex")
+                SblComponentName = UnicodeStrToHexString(CompName[::-1])
             HardwareInstance = ContainerCompName + SblComponentName
             PldUuid = PredefinedUuidDict['MISC']
         HardwareInstance = int (HardwareInstance, 16)
