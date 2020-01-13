@@ -377,3 +377,195 @@ UpdateSystemFirmware (
 
   return Status;
 }
+
+/**
+  Perform single component update.
+
+  This function will create update partition region for a single
+  non reundant component.
+
+  @param[in] CompBase       Base address of the component.
+  @param[in] CompSize       Size of the component.
+  @param[in] ImageHdr       Pointer to fw mgmt capsule Image header
+
+  @retval  EFI_SUCCESS      Update successful.
+  @retval  other            error occurred during firmware update
+**/
+EFI_STATUS
+UpdateSingleComponent (
+  IN UINT32                         CompBase,
+  IN UINT32                         CompSize,
+  IN EFI_FW_MGMT_CAP_IMAGE_HEADER   *ImageHdr
+  )
+{
+  EFI_STATUS                Status;
+  UINT32                    CompName;
+  FLASH_MAP                 *FlashMap;
+  UINT32                    AllocateSize;
+  FIRMWARE_UPDATE_PARTITION *UpdatePartition;
+  FIRMWARE_UPDATE_REGION    *UpdateRegion;
+
+  if (ImageHdr == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  CompName = (UINT32)ImageHdr->UpdateHardwareInstance;
+
+  if (ImageHdr->UpdateImageSize > CompSize) {
+    DEBUG ((DEBUG_INFO, "%4a component capsule payload size is too big for the region on flash! \n", (CHAR8 *)&CompName));
+    return EFI_UNSUPPORTED;
+  }
+
+  // Get current boot partition - Primary or backup blocks
+  FlashMap = GetFlashMapPtr();
+  if (FlashMap == NULL) {
+    return EFI_NOT_FOUND;
+  }
+
+  AllocateSize    = sizeof (FIRMWARE_UPDATE_PARTITION) + sizeof (FIRMWARE_UPDATE_REGION);
+  UpdatePartition = (FIRMWARE_UPDATE_PARTITION *) AllocatePool (AllocateSize);
+  ASSERT (UpdatePartition != NULL);
+
+  UpdateRegion                  = &UpdatePartition->FwRegion[0];
+  UpdateRegion->ToUpdateAddress = FlashMap->RomSize + CompBase;
+  UpdateRegion->UpdateSize      = ImageHdr->UpdateImageSize;
+  UpdateRegion->SourceAddress   = (UINT8 *)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
+  UpdatePartition->RegionCount  = 1;
+
+  //
+  // Do boot partition update.
+  //
+  Status = UpdateBootPartition (UpdatePartition);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Updating component %4a failed with status = %r\n", (CHAR8 *)&CompName, Status));
+  }
+
+  return Status;
+}
+
+/**
+  Perform non redundant component update.
+
+  This function will update single non redundant component update.
+
+  @param[in] ImageHdr       Pointer to fw mgmt capsule Image header
+
+  @retval  EFI_SUCCESS      Update successful.
+  @retval  other            error occurred during firmware update
+**/
+EFI_STATUS
+UpdateNonRedundantComp (
+  IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
+  )
+{
+  EFI_STATUS                    Status;
+  UINT32                        CompBase;
+  UINT32                        CompSize;
+
+  Status = GetComponentInfoByPartition ((UINT32)ImageHdr->UpdateHardwareInstance, FALSE, &CompBase, &CompSize);
+  if (EFI_ERROR(Status)) {
+    DEBUG ((DEBUG_INFO, "No component with signature 0x%x found ! \n", (UINT32)ImageHdr->UpdateHardwareInstance));
+    return Status;
+  }
+
+  //
+  // Update the component
+  //
+  Status = UpdateSingleComponent (CompBase, CompSize, ImageHdr);
+
+  return Status;
+}
+
+/**
+  Perform container component update.
+
+  This function will try to locate component inside the container
+  and if found, will update the container component.
+
+  @param[in] ImageHdr       Pointer to fw mgmt capsule Image header
+
+  @retval  EFI_SUCCESS      Update successful.
+  @retval  other            error occurred during firmware update
+**/
+EFI_STATUS
+UpdateContainerComp (
+  IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
+  )
+{
+  EFI_STATUS        Status;
+  UINT32            ContainerName;
+  UINT32            ComponentName;
+  UINT32            ComponentBase;
+  CONTAINER_ENTRY   *ContainerEntryPtr;
+  COMPONENT_ENTRY   *ComponentEntryPtr;
+  CONTAINER_HDR     *ContainerHdr;
+
+  ComponentName = (UINT32)RShiftU64 (ImageHdr->UpdateHardwareInstance, 32);
+  ContainerName = (UINT32)ImageHdr->UpdateHardwareInstance;
+
+  Status = LocateComponentEntry (ContainerName, ComponentName, &ContainerEntryPtr, &ComponentEntryPtr);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Container component update failed with status: %r \n", Status));
+    return Status;
+  }
+
+  //
+  // Update the component
+  //
+  ContainerHdr = (CONTAINER_HDR *)ContainerEntryPtr->HeaderCache;
+  //
+  // Component base = Container base + data offset from container base + offset of component inside container
+  //
+  ComponentBase = ContainerEntryPtr->Base + ContainerHdr->DataOffset + ComponentEntryPtr->Offset;
+  Status = UpdateSingleComponent (ComponentBase, ComponentEntryPtr->Size, ImageHdr);
+
+  return Status;
+}
+
+/**
+  Perform Slim Bootloader component update.
+
+  This function will try to locate component in the flash map,
+  if found, will update the component.
+
+  @param[in] ImageHdr       Pointer to fw mgmt capsule Image header
+
+  @retval  EFI_SUCCESS      Update successful.
+  @retval  other            error occurred during firmware update
+**/
+EFI_STATUS
+UpdateSblComponent (
+  IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
+  )
+{
+  EFI_STATUS    Status;
+  FLASH_MAP_ENTRY_DESC  *Entry;
+
+  DEBUG ((DEBUG_INFO, "UpdateSblComponent : %x \n", (UINT32)ImageHdr->UpdateHardwareInstance));
+
+  if ((UINT32)RShiftU64 (ImageHdr->UpdateHardwareInstance, 32)){
+    //
+    // Upper 4 bytes are not null, this is a container update.
+    //
+    DEBUG ((DEBUG_INFO, "Container component update requested! \n"));
+    Status = UpdateContainerComp (ImageHdr);
+    return Status;
+  }
+  //
+  // This is a SBL component update, check if it is a redundant component
+  //
+  Entry = GetComponentEntryByPartition((UINT32)ImageHdr->UpdateHardwareInstance, TRUE);
+  if (Entry == NULL) {
+    return EFI_NOT_FOUND;
+  }
+
+  if ((Entry->Flags & FLASH_MAP_FLAGS_NON_REDUNDANT_REGION) != 0){
+    DEBUG ((DEBUG_INFO, "Non redundant component update requested! \n"));
+    Status = UpdateNonRedundantComp(ImageHdr);
+  } else if ((Entry->Flags & FLASH_MAP_FLAGS_REDUNDANT_REGION) != 0) {
+    DEBUG ((DEBUG_INFO, "Redundant component update requested! \n"));
+    Status = UpdateSystemFirmware(ImageHdr);
+  }
+
+  return Status;
+}
