@@ -2,7 +2,7 @@
 ## @ GenContainer.py
 # Tools to operate on a container image
 #
-# Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2019 - 2020, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -28,7 +28,7 @@ class COMPONENT_ENTRY (Structure):
         ]
 
     _attr = {
-      'RESERVED' : 0x80
+        'RESERVED' : 0x80
     }
 
     def __new__(cls, buf = None):
@@ -132,6 +132,8 @@ class CONTAINER ():
             self.header = CONTAINER_HDR ()
         else:
             self.header = CONTAINER_HDR (buf)
+            # Check if image type is valid
+            image_type_str = CONTAINER.get_image_type_str(self.header.image_type)
 
     def init_header (self, signature, alignment, image_type = 'NORMAL'):
         self.header.signature  = signature
@@ -143,12 +145,24 @@ class CONTAINER ():
         self.header.image_type = CONTAINER_HDR._image_type[image_type]
 
     @staticmethod
+    def get_image_type_str (image_type_val):
+        try:
+            image_type_str = next((key for key, value in CONTAINER_HDR._image_type.items() if value == image_type_val))
+        except StopIteration:
+            raise Exception ("Unknown image type value 0x%x in container header !" % image_type_val)
+        return image_type_str
+
+    @staticmethod
     def get_auth_type_val (auth_type_str):
         return CONTAINER._auth_type_value[auth_type_str]
 
     @staticmethod
     def get_auth_type_str (auth_type_val):
-        return next(k for k, v in CONTAINER._auth_type_value.items() if v == auth_type_val)
+        try:
+            auth_type_str = next(k for k, v in CONTAINER._auth_type_value.items() if v == auth_type_val)
+        except StopIteration:
+            raise Exception ("Unknown auth type value 0x%x !" % auth_type_val)
+        return auth_type_str
 
     @staticmethod
     def get_auth_size (auth_type, signed = False):
@@ -248,6 +262,7 @@ class CONTAINER ():
             data = get_file_data (file)
             hash_data.extend (hashlib.sha384(data).digest())
         elif auth_type in ['RSA2048_SHA2_256', 'RSA3072_SHA2_384']:
+            auth_type = adjust_auth_type (auth_type, priv_key)
             pub_key = os.path.join(out_dir, basename + '.pub')
             di = gen_pub_key (priv_key, pub_key)
             key_hash = CONTAINER.get_pub_key_hash (di, CONTAINER._auth_to_hashalg_str[auth_type])
@@ -335,6 +350,7 @@ class CONTAINER ():
         gen_file_from_object (hdr_file, hdr_data)
         hash_data, auth_data = CONTAINER.calculate_auth_data (hdr_file, auth_type, header.priv_key, self.out_dir)
         if len(auth_data) != len(header.auth_data):
+            print (len(auth_data) , len(header.auth_data))
             raise Exception ("Unexpected authentication data length for container header !")
         header.auth_data = auth_data
 
@@ -354,7 +370,7 @@ class CONTAINER ():
             padding = b'\xff' * get_padding_length (len(comp_data))
             comp_data.extend (padding + component.auth_data)
             if len(comp_data) > component.size:
-                raise Exception ("Component '%s' needs space 0x%X, but region size is 0x%X !" % (component.name, len(comp_data), component.size))
+                raise Exception ("Component '%s' needs space 0x%X, but region size is 0x%X !" % (component.name.decode(), len(comp_data), component.size))
             data.extend (comp_data)
         offset = header.data_offset + header.data_size
         data.extend (b'\xff' * (offset - len(data)))
@@ -375,7 +391,7 @@ class CONTAINER ():
             print ('%s' % self.output_struct (component))
             print (self.hex_str (component.hash_data, 'hash_data'))
             print (self.hex_str (component.auth_data, 'auth_data'))
-            print (self.hex_str (component.data, 'data') + ' %s' % str(component.data[:4]))
+            print (self.hex_str (component.data, 'data') + ' %s' % str(component.data[:4].decode()))
 
     def create (self, layout):
 
@@ -397,7 +413,9 @@ class CONTAINER ():
 
         if container_file == '':
             container_file = container_sig + '.bin'
-        key_path = os.path.join(self.key_dir, key_file)
+        key_path  = os.path.join(self.key_dir, key_file)
+        if os.path.isfile (key_path):
+            auth_type = adjust_auth_type (auth_type, key_path)
 
         # build header
         self.init_header (container_sig.encode(), alignment, image_type)
@@ -545,10 +563,10 @@ class CONTAINER ():
             auth_type_str = self.get_auth_type_str (self.header.auth_type)
             key_file = 'TestSigningPrivateKey.pem' if auth_type_str.startswith('RSA') else ''
             alignment = self.header.alignment
-            header = ['%s' % self.header.signature.decode(), file_name, '',  auth_type_str,  key_file]
+            image_type_str = CONTAINER.get_image_type_str(self.header.image_type)
+            header = ['%s' % self.header.signature.decode(), file_name, image_type_str,  auth_type_str,  key_file]
             layout = [(' Name', ' ImageFile', ' CompAlg', ' AuthType',  ' KeyFile', ' Alignment', ' Size')]
             layout.append(tuple(["'%s'" % x for x in header] + ['0x%x' % alignment, '0']))
-
             # create component entry
             for component in self.header.comp_entry:
                 auth_type_str = self.get_auth_type_str (component.auth_type)
@@ -563,18 +581,18 @@ class CONTAINER ():
                 layout.append(tuple(["'%s'" % x for x in comp] + ['0x%x' % (1 << component.alignment), '0x%x' % component.size]))
 
             # write layout file
-            layout_file = os.path.join(self.out_dir, self.header.signature + '.txt')
+            layout_file = os.path.join(self.out_dir, self.header.signature.decode() + '.txt')
             fo = open (layout_file, 'w')
             fo.write ('# Container Layout File\n#\n')
             for idx, each in enumerate(layout):
-                line = ' %-6s, %-16s, %-10s, %-10s, %-30s, %-8s, %-8s' % each
+                line = ' %-6s, %-16s, %-10s, %-18s, %-30s, %-10s, %-10s' % each
                 if idx == 0:
                     line = '#  %s\n' % line
                 else:
                     line = '  (%s),\n' % line
                 fo.write (line)
                 if idx == 0:
-                    line = '# %s\n' % ('=' * 100)
+                    line = '# %s\n' % ('=' * 120)
                     fo.write (line)
             fo.close()
 
@@ -590,11 +608,12 @@ class CONTAINER ():
 
                 bin_file = basename + '.bin'
                 lz_header = LZ_HEADER.from_buffer(component.data)
-                if lz_header.signature in ['LZDM']:
+                signature = lz_header.signature
+                if signature in [b'LZDM']:
                     offset = sizeof(lz_header)
                     data = component.data[offset : offset + lz_header.compressed_len]
                     gen_file_from_object (bin_file, data)
-                elif lz_header.signature in ['LZMA', 'LZ4 ']:
+                elif signature in [b'LZMA', b'LZ4 ']:
                     decompress (sig_file, bin_file, self.tool_dir)
                 else:
                     raise Exception ("Unknown LZ format!")
@@ -606,15 +625,28 @@ def gen_container_bin (container_list, out_dir, inp_dir, key_dir = '.', tool_dir
         out_file = container.create (each)
         print ("Container '%s' was created successfully at:  \n  %s" % (container.header.signature.decode(), out_file))
 
-def gen_layout (comp_list, img_type, sign_hash_alg, out_file, key_dir, key_file):
-    sign_key_type = get_key_type(os.path.join(key_dir, key_file))
-    auth_type = sign_key_type + '_' + sign_hash_alg
+def adjust_auth_type (auth_type_str, key_path):
+    if os.path.exists(key_path):
+        sign_key_type = get_key_type(key_path)
+        auth_type, hash_type = get_auth_hash_type (sign_key_type)
+        if auth_type_str and (auth_type != auth_type_str):
+            print ("Override auth type to '%s' in order to match the private key type !" % auth_type)
+        auth_type_str = auth_type
+    return auth_type_str
+
+def gen_layout (comp_list, img_type, auth_type_str, out_file, key_dir, key_file):
+    hash_type = CONTAINER._auth_to_hashalg_str[auth_type_str] if auth_type_str else ''
+    auth_type = auth_type_str
+    key_path  = os.path.join(key_dir, key_file)
+    auth_type = adjust_auth_type (auth_type, key_path)
+    if auth_type == '':
+        raise Exception ("'auth' parameter is expected  !")
 
     # prepare the layout from individual components from '-cl'
     if img_type not in CONTAINER_HDR._image_type.keys():
         raise Exception ("Invalid Container Type '%s' !" % img_type)
     layout = "('BOOT', '%s', '%s', '%s' , '%s', 0x10, 0),\n" % (out_file, img_type, auth_type, key_file)
-    end_layout = "('_SG_', '', 'Dummy', '%s', '', 0, 0)," %(sign_hash_alg)
+    end_layout = "('_SG_', '', 'Dummy', '%s', '', 0, 0)," % (hash_type)
     for idx, each in enumerate(comp_list):
         parts = each.split(':')
         comp_name = parts[0]
@@ -634,33 +666,55 @@ def create_container (args):
     layout = ""
     # if '-l', get the layout content directly
     # if '-cl' prepare the layout
-    if args.layout:
-        def_inp_dir = os.path.dirname (args.layout)
-        layout = get_file_data(args.layout, 'r')
-        key_dir = args.key_path if args.key_path else def_inp_dir
-        out_dir = args.out_path if args.out_path else def_inp_dir
-    elif args.comp_list:
-        def_inp_dir = '.'
-        #extract key dir and file
-        if os.path.isdir(args.key_path):
-            key_dir = args.key_path
-            key_file = 'TestSigningPrivateKey.pem'
-        else:
-            key_dir = os.path.dirname(args.key_path)
-            key_file = os.path.basename(args.key_path)
-        #extract out dir and file
-        if os.path.isdir(args.out_path):
-            out_dir = args.out_path
-            out_file = ''
-        else:
-            out_dir = os.path.dirname(args.out_path)
-            out_file = os.path.basename(args.out_path)
 
-        layout = gen_layout (args.comp_list, args.img_type, CONTAINER._auth_to_hashalg_str[args.auth], out_file, key_dir, key_file)
-    comp_dir = args.comp_dir if args.comp_dir else def_inp_dir
-    tool_dir = args.tool_dir if args.tool_dir else def_inp_dir
+    #extract key dir and file
+    key_path = os.path.abspath(args.key_path)
+    if os.path.isdir(key_path):
+        key_dir  = key_path
+        key_file = ''
+    else:
+        key_dir  = os.path.dirname(key_path)
+        key_file = os.path.basename(key_path)
+
+    #extract out dir and file
+    out_path = os.path.abspath(args.out_path)
+    if os.path.isdir(out_path):
+        out_dir  = out_path
+        out_file = ''
+    else:
+        out_dir  = os.path.dirname(out_path)
+        out_file = os.path.basename(out_path)
+
+    if args.layout:
+        # Using layout file
+        layout = get_file_data(args.layout, 'r')
+    else:
+        # Using component list
+        if not key_file:
+            key_file = 'TestSigningPrivateKey.pem'
+        layout = gen_layout (args.comp_list, args.img_type, args.auth, out_file, key_dir, key_file)
     container_list = eval ('[[%s]]' % layout.replace('\\', '/'))
-    gen_container_bin (container_list, out_dir, comp_dir, key_dir, tool_dir, CONTAINER._auth_to_hashalg_str[args.auth])
+
+    comp_dir = os.path.abspath(args.comp_dir)
+    if not os.path.isdir(comp_dir):
+        raise Exception ("'comp_dir' expects a directory path !")
+    tool_dir = os.path.abspath(args.tool_dir)
+    if not os.path.isdir(tool_dir):
+        raise Exception ("'tool_dir' expects a directory path !")
+
+    if out_file:
+        # override the output file name
+        hdr_entry = list (container_list[0][0])
+        hdr_entry[1] = out_file
+        container_list[0][0] = tuple(hdr_entry)
+
+    if args.layout and args.auth:
+        # override auth
+        hdr_entry = list (container_list[0][0])
+        hdr_entry[3] = args.auth
+        container_list[0][0] = tuple(hdr_entry)
+
+    gen_container_bin (container_list, out_dir, comp_dir, key_dir, tool_dir)
 
 def extract_container (args):
     tool_dir = args.tool_dir if args.tool_dir else '.'
@@ -674,17 +728,25 @@ def replace_component (args):
     tool_dir = args.tool_dir if args.tool_dir else '.'
     data = get_file_data (args.image)
     container = CONTAINER (data)
-    container.set_dir_path (args.out_dir, '.', '.', tool_dir)
-    file = container.replace (args.comp_name, args.comp_file, args.compress, args.key_file, args.new_name)
+    out_path = os.path.abspath(args.out_image)
+    out_dir  = os.path.dirname(out_path)
+    out_file = os.path.basename(out_path)
+    container.set_dir_path (out_dir, '.', '.', tool_dir)
+    file = container.replace (args.comp_name, args.comp_file, args.compress, args.key_file, out_file)
     print ("Component '%s' was replaced successfully at:\n  %s" % (args.comp_name, file))
 
 def sign_component (args):
     compress_alg = args.compress
     compress_alg = compress_alg[0].upper() + compress_alg[1:]
-    lz_file = compress (args.comp_file, compress_alg, args.out_dir, args.tool_dir)
+
+    #extract out dir and file
+    sign_file = os.path.abspath(args.out_file)
+    out_dir   = os.path.dirname(sign_file)
+
+    lz_file = compress (args.comp_file, compress_alg, out_dir, args.tool_dir)
     data = bytearray(get_file_data (lz_file))
-    hash_data, auth_data = CONTAINER.calculate_auth_data (lz_file, args.auth, args.key_file, args.out_dir)
-    sign_file = os.path.join (args.out_dir, args.sign_file)
+    hash_data, auth_data = CONTAINER.calculate_auth_data (lz_file, args.auth, args.key_file, out_dir)
+
     data.extend (b'\xff' * get_padding_length(len(data)))
     data.extend (auth_data)
     gen_file_from_object (sign_file, data)
@@ -713,7 +775,7 @@ def main():
     cmd_display.add_argument('-t', dest='img_type',  type=str, default='CLASSIC', help='Container Image Type : [NORMAL, CLASSIC, MULTIBOOT]')
     cmd_display.add_argument('-o', dest='out_path',  type=str, default='.', help='Container output directory/file')
     cmd_display.add_argument('-k', dest='key_path',  type=str, default='', help='Input key directory/file')
-    cmd_display.add_argument('-a',  dest='auth', choices=['SHA2_256', 'SHA2_384', 'RSA2048_SHA2_256', 'RSA3072_SHA2_384', 'none'], default='none',  help='authentication algorithm')
+    cmd_display.add_argument('-a',  dest='auth', choices=['SHA2_256', 'SHA2_384', 'RSA2048_SHA2_256', 'RSA3072_SHA2_384', 'NONE'], default='',  help='authentication algorithm')
     cmd_display.add_argument('-cd', dest='comp_dir', type=str, default='', help='Componet image input directory')
     cmd_display.add_argument('-td', dest='tool_dir', type=str, default='', help='Compression tool directory')
     cmd_display.set_defaults(func=create_container)
@@ -729,23 +791,21 @@ def main():
     # Command for replace
     cmd_display = sub_parser.add_parser('replace', help='replace a component image')
     cmd_display.add_argument('-i',  dest='image',  type=str, required=True, help='Container input image path')
-    cmd_display.add_argument('-o',  dest='new_name',  type=str, default='', help='Container new output image name')
+    cmd_display.add_argument('-o',  dest='out_image',  type=str, default='', help='Container new output image path')
     cmd_display.add_argument('-n',  dest='comp_name',  type=str, required=True, help='Component name to replace')
     cmd_display.add_argument('-f',  dest='comp_file',  type=str, required=True, help='Component input file path')
     cmd_display.add_argument('-c',  dest='compress', choices=['lz4', 'lzma', 'dummy'], default='dummy', help='compression algorithm')
     cmd_display.add_argument('-k',  dest='key_file',  type=str, default='', help='Private key file path to sign component')
-    cmd_display.add_argument('-od', dest='out_dir',  type=str, default='.', help='Output directory')
     cmd_display.add_argument('-td', dest='tool_dir', type=str, default='', help='Compression tool directory')
     cmd_display.set_defaults(func=replace_component)
 
     # Command for sign
     cmd_display = sub_parser.add_parser('sign', help='compress and sign a component image')
     cmd_display.add_argument('-f',  dest='comp_file',  type=str, required=True, help='Component input file path')
-    cmd_display.add_argument('-o',  dest='sign_file',  type=str, default='', help='Signed output image name')
+    cmd_display.add_argument('-o',  dest='out_file',  type=str, default='', help='Signed output image path')
     cmd_display.add_argument('-c',  dest='compress', choices=['lz4', 'lzma', 'dummy'],  default='dummy', help='compression algorithm')
-    cmd_display.add_argument('-a',  dest='auth', choices=['SHA2_256', 'SHA2_384', 'RSA2048_SHA2_256', 'RSA3072_SHA2_384', 'none'], default='none',  help='authentication algorithm')
+    cmd_display.add_argument('-a',  dest='auth', choices=['SHA2_256', 'SHA2_384', 'RSA2048_SHA2_256', 'RSA3072_SHA2_384', 'NONE'], default='NONE',  help='authentication algorithm')
     cmd_display.add_argument('-k',  dest='key_file',  type=str, default='', help='Private key file path to sign component')
-    cmd_display.add_argument('-od', dest='out_dir',  type=str, default='.', help='Output directory')
     cmd_display.add_argument('-td', dest='tool_dir', type=str, default='',  help='Compression tool directory')
     cmd_display.set_defaults(func=sign_component)
 
@@ -755,6 +815,12 @@ def main():
         func = args.func
     except AttributeError:
         parser.error("too few arguments")
+
+    # Additional check
+    if args.func == sign_component:
+        if args.auth.startswith('RSA') and args.key_file == '':
+            parser.error("the following arguments are required: -k")
+
     func(args)
 
 

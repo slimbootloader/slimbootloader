@@ -2,7 +2,7 @@
 ## @ CommonUtility.py
 # Common utility script
 #
-# Copyright (c) 2016 - 2019, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2016 - 2020, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -103,9 +103,9 @@ class LZ_HEADER(Structure):
         ('reserved',        c_uint32)
     ]
     _compress_alg = {
-        'LZDM' : 'Dummy',
-        'LZ4 ' : 'Lz4',
-        'LZMA' : 'Lzma',
+        b'LZDM' : 'Dummy',
+        b'LZ4 ' : 'Lz4',
+        b'LZMA' : 'Lzma',
     }
 
 def print_bytes (data, indent=0, offset=0, show_ascii = False):
@@ -210,7 +210,6 @@ def run_process (arg_list, print_cmd = False, capture_out = False):
     return output
 
 def rsa_sign_file (priv_key, pub_key, hash_type, in_file, out_file, inc_dat = False, inc_key = False):
-
     _hash_type_string = {
         "SHA2_256"    : '-sha256',
         "SHA2_384"    : '-sha384',
@@ -246,7 +245,21 @@ def get_key_type (in_key):
     key_type = next((key for key, value in PUB_KEY_TYPE.items() if value == pub_key_hdr.KeyType))
     return '%s%d' % (key_type, (pub_key_hdr.KeySize - 4) * 8)
 
+def get_auth_hash_type (key_type):
+    if key_type == "RSA2048":
+        hash_type = 'SHA2_256'
+        auth_type = 'RSA2048_SHA2_256'
+    elif key_type == "RSA3072":
+        hash_type = 'SHA2_384'
+        auth_type = 'RSA3072_SHA2_384'
+    else:
+        hash_type = ''
+        auth_type = ''
+    return auth_type, hash_type
+
 def gen_pub_key (in_key, pub_key = None):
+    if not os.path.isfile(in_key):
+        raise Exception ("Invalid input key file '%s' !" % in_key)
     # Expect key to be in PEM format
     is_prv_key = False
     cmdline = [get_openssl_path(), 'rsa', '-pubout', '-text', '-noout', '-in', '%s' % in_key]
@@ -301,6 +314,9 @@ def gen_pub_key (in_key, pub_key = None):
     return key
 
 def decompress (in_file, out_file, tool_dir = ''):
+    if not os.path.isfile(in_file):
+        raise Exception ("Invalid input file '%s' !" % in_file)
+
     # Remove the Lz Header
     fi = open(in_file,'rb')
     di = bytearray(fi.read())
@@ -335,6 +351,9 @@ def decompress (in_file, out_file, tool_dir = ''):
     os.remove(temp)
 
 def compress (in_file, alg, out_path = '', tool_dir = ''):
+    if not os.path.isfile(in_file):
+        raise Exception ("Invalid input file '%s' !" % in_file)
+
     basename, ext = os.path.splitext(os.path.basename (in_file))
     if out_path:
         if os.path.isdir (out_path):

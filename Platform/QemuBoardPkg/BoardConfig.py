@@ -171,15 +171,15 @@ class Board(BaseBoard):
     def GetContainerList (self):
         container_list = []
         container_list.append ([
-          # Name       | Image File |    CompressAlg  | AuthType   | Key File                     | Region Align | Region Size
-          # ===================================================================================================================================
-          ('IPFW',      'SIIPFW.bin',    '',           'RSA2048_SHA2_256',   'TestSigningPrivateKey.pem',    0,            0     ),   # Container Header
-          ('TST1',      '',              'Dummy',      '',          '',                             0,            0x2000),   # Component 1
-          ('TST2',      '',              'Lz4',        '',          '',                             0,            0x3000),   # Component 2
-          ('TST3',      '',              'Lz4',        'RSA2048_SHA2_256',   'TestSigningPrivateKey.pem',    0,            0x3000),   # Component 3
-          ('TST4',      '',              'Lzma',       'SHA2_256',  '',                             0,            0x3000),   # Component 4
-          ('TST5',      '',              'Dummy',      'RSA2048_SHA2_256',   'TestSigningPrivateKey.pem',    0,            0x3000),   # Component 5
-          ('TST6',      '',              '',           '',          '',                             0,            0x1000),   # Component 6
+          # Name       | Image File |    CompressAlg  | AuthType             | Key File                      | Region Align | Region Size
+          # ============================================================================================================================================
+          ('IPFW',      'SIIPFW.bin',    '',           'RSA2048_SHA2_256',   'TestSigningPrivateKey.pem',    0,             0     ),   # Container Header
+          ('TST1',      '',              'Dummy',      '',                   '',                             0,             0x2000),   # Component 1
+          ('TST2',      '',              'Lz4',        '',                   '',                             0,             0x3000),   # Component 2
+          ('TST3',      '',              'Lz4',        'RSA2048_SHA2_256',   'TestSigningPrivateKey.pem',    0,             0x3000),   # Component 3
+          ('TST4',      '',              'Lzma',       'SHA2_256',           '',                             0,             0x3000),   # Component 4
+          ('TST5',      '',              'Dummy',      'RSA2048_SHA2_256',   'TestSigningPrivateKey.pem',    0,             0x3000),   # Component 5
+          ('TST6',      '',              '',           '',                   '',                             0,             0x1000),   # Component 6
         ])
         return container_list
 
