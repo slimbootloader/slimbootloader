@@ -18,6 +18,7 @@
 #include <Pi/PiBootMode.h>
 #include <IndustryStandard/Tpm2Acpi.h>
 #include <Library/SecureBootLib.h>
+#include <Library/ResetSystemLib.h>
 #include "Tpm2CommandLib.h"
 #include "Tpm2DeviceLib.h"
 #include "TpmLibInternal.h"
@@ -284,6 +285,9 @@ TpmPcrBankCheck (
       Status = Tpm2PcrAllocateBanks (NULL, TpmHashAlgorithmBitmap, PcdGet32(PcdMeasuredBootHashMask));
       if (Status == EFI_SUCCESS) {
         DEBUG ((DEBUG_INFO, "Successfully enabled requested PCR Bank. It will be available after next platform reset. \n"));
+
+        DEBUG ((DEBUG_INFO, "SYSTEM REBOOT \n"));
+        ResetSystem(EfiResetCold);
       } else {
         DEBUG ((DEBUG_INFO, "Requested pcrbank 0x%x allocation failed\n", PcdGet32(PcdMeasuredBootHashMask)));
       }
