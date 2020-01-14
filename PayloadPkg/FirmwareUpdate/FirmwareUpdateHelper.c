@@ -33,89 +33,6 @@
 **/
 EFI_STATUS
 EFIAPI
-UpdateRegionLessthan4k (
-  IN  UINT64    Address,
-  IN  VOID      *Buffer,
-  IN  UINT32    Length
-  )
-{
-  EFI_STATUS    Status;
-  UINT8         *ReadBuffer;
-  UINT32        Index;
-  UINT8         *Src;
-
-  ReadBuffer = NULL;
-
-  if (Length == 0) {
-    return EFI_SUCCESS;
-  }
-
-  ReadBuffer = AllocatePages (EFI_SIZE_TO_PAGES (SIZE_4KB));
-  if (ReadBuffer == NULL) {
-    return EFI_OUT_OF_RESOURCES;
-  }
-
-  Src = (UINT8 *)Buffer;
-
-  //
-  // Read, compare, write, read, compare
-  //
-  Status = BootMediaRead (Address, Length, ReadBuffer);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "BootMediaRead.  readaddr: 0x%llx, Status = 0x%x\n", Address, Status));
-    goto End;
-  }
-  Index = CompareMem (Src, ReadBuffer, Length);
-  if (Index == 0) {
-    DEBUG ((DEBUG_INIT, "."));
-    Status = EFI_SUCCESS;
-    goto End;
-  }
-
-  //
-  // Write to the boot media
-  //
-  Status = BootMediaWrite ((UINT32) (Address),  Length, Src);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "ERROR: in BootDeviceWrite. Status = 0x%x\n", Status));
-    goto End;
-  }
-
-  //
-  // Verify the written data
-  //
-  Status = BootMediaRead (Address, Length, ReadBuffer);
-  Index = CompareMem (Src, ReadBuffer, Length);
-  if (Index != 0) {
-    DEBUG ((DEBUG_ERROR, "Verify Error at [%x], org=0x%x, read=0x%x\n", Index, Src[Index],
-            ReadBuffer[Index]));
-    Status = EFI_DEVICE_ERROR;
-    goto End;
-  }
-
-End:
-  if (ReadBuffer != NULL) {
-    FreePool (ReadBuffer);
-  }
-
-  return Status;
-}
-
-/**
-  Update a region block.
-
-  This is the acture function to update boot meia. It will erase boot device,
-  write new data to boot device, and verify the written data.
-
-  @param[in] Address          The boot media address to be update.
-  @param[in] Buffer           The source buffer to write to the boot media.
-  @param[in] Length           The length of data to write to boot media.
-
-  @retval  EFI_SUCCESS        Update successfully.
-  @retval  others             Error happening when updating.
-**/
-EFI_STATUS
-EFIAPI
 UpdateRegionBlock (
   IN  UINT64    Address,
   IN  VOID      *Buffer,
@@ -192,7 +109,7 @@ UpdateRegionBlock (
 
 End:
   if (ReadBuffer != NULL) {
-    FreePool (ReadBuffer);
+    FreePages (ReadBuffer, EFI_SIZE_TO_PAGES (SIZE_4KB));
   }
 
   return Status;
