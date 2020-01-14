@@ -24,27 +24,6 @@
 **/
 EFI_STATUS
 EFIAPI
-UpdateRegionLessthan4k (
-  IN  UINT64    Address,
-  IN  VOID      *Buffer,
-  IN  UINT32    Length
-  );
-
-/**
-  Update a region block.
-
-  This is the acture function to update boot meia. It will erase boot device,
-  write new data to boot device, and verify the written data.
-
-  @param[in] Address          The boot media address to be update.
-  @param[in] Buffer           The source buffer to write to the boot media.
-  @param[in] Length           The length of data to write to boot media.
-
-  @retval  EFI_SUCCESS        Update successfully.
-  @retval  others             Error happening when updating.
-**/
-EFI_STATUS
-EFIAPI
 UpdateRegionBlock (
   IN  UINT64    Address,
   IN  VOID      *Buffer,
