@@ -49,7 +49,7 @@ def prep_env ():
     # check python version first
     version = check_for_python ()
     os.environ['PYTHON_COMMAND'] = sys.executable
-    print ('Using %s, Version %s' % (os.environ['PYTHON_COMMAND'], version.strip()))
+    print_tool_version_info(os.environ['PYTHON_COMMAND'], version.strip())
 
     sblsource = os.path.dirname(os.path.realpath(__file__))
     os.chdir(sblsource)
@@ -82,10 +82,11 @@ def prep_env ():
         print("Unsupported operating system !")
         sys.exit(1)
 
-    print ('Using %s, Version %s' % (toolchain, toolchain_ver))
+    print_tool_version_info(toolchain, toolchain_ver)
 
     check_for_openssl()
     check_for_nasm()
+    check_for_git()
 
     # Update Environment vars
     os.environ['SBL_SOURCE']     = sblsource
