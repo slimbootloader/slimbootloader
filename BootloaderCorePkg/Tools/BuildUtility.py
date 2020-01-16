@@ -798,30 +798,52 @@ def check_for_python():
 
     return version
 
+def print_tool_version_info(cmd, version):
+    try:
+        if os.name == 'posix':
+            cmd = subprocess.check_output(['which', cmd], stderr=subprocess.STDOUT).decode().strip()
+    except:
+        pass
+    print ('Using %s, Version %s' % (cmd, version))
+
 def check_for_openssl():
     '''
     Verify OpenSSL executable is available
     '''
-    cmdline = get_openssl_path ()
+    cmd = get_openssl_path ()
     try:
-        version = subprocess.check_output([cmdline, 'version']).decode()
+        version = subprocess.check_output([cmd, 'version']).decode().strip()
     except:
         print('ERROR: OpenSSL not available. Please set OPENSSL_PATH.')
         sys.exit(1)
+    print_tool_version_info(cmd, version)
     return version
 
 def check_for_nasm():
     '''
     Verify NASM executable is available
     '''
-    cmdline = os.path.join(os.environ.get('NASM_PREFIX', ''), 'nasm')
+    cmd = os.path.join(os.environ.get('NASM_PREFIX', ''), 'nasm')
     try:
-        version = subprocess.check_output([cmdline, '-v']).decode()
+        version = subprocess.check_output([cmd, '-v']).decode().strip()
     except:
         print('ERROR: NASM not available. Please set NASM_PREFIX.')
         sys.exit(1)
+    print_tool_version_info(cmd, version)
     return version
 
+def check_for_git():
+    '''
+    Verify Git executable is available
+    '''
+    cmd = 'git'
+    try:
+        version = subprocess.check_output([cmd, '--version']).decode().strip()
+    except:
+        print('ERROR: Git not found. Please install Git or check if Git is in the PATH environment variable.')
+        sys.exit(1)
+    print_tool_version_info(cmd, version)
+    return version
 
 def copy_images_to_output (fv_dir, zip_file, img_list, rgn_name_list, out_list):
     zip_path_file = os.path.join (os.environ['WORKSPACE'], zip_file)
