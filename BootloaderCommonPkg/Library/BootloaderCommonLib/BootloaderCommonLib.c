@@ -15,6 +15,7 @@
 #include <Library/SerialPortLib.h>
 #include <Library/HobLib.h>
 #include <Library/BootloaderCommonLib.h>
+#include <Library/SecureBootLib.h>
 
 CONST CHAR8  mHex[]   = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 CONST CHAR8 *mStage[] = { "1A", "1B", "2", "PAYLOAD"};
@@ -710,6 +711,74 @@ MatchHashInStore (
       }
     }
     HashEntryPtr +=  sizeof(HASH_STORE_DATA) + HashEntryData->DigestLen;
+  }
+
+  return Status;
+}
+
+
+/**
+  Get hash to extend a firmware stage component
+  Hash calculation to extend would be in either of ways
+  Retrieve Hash from Component hash table or
+  Calculate Hash using source buf and length provided
+
+  @param[in] ComponentType             Stage whose measurement need to be extended.
+  @param[in] HashType                  Hash type required
+  @param[in] Src                       Buffer Address
+  @param[in] Length                    Data Len
+  @param[out] HashData                 Hash Data buf addr
+
+  @retval RETURN_SUCCESS      Operation completed successfully.
+  @retval Others              Unable to calcuate hash.
+**/
+RETURN_STATUS
+GetHashToExtend (
+  IN       UINT8            ComponentType,
+  IN       HASH_ALG_TYPE    HashType,
+  IN       UINT8           *Src,
+  IN       UINT32           Length,
+  OUT      UINT8           *HashData
+  )
+{
+  RETURN_STATUS        Status;
+  HASH_ALG_TYPE        CompHashAlg;
+  CONST UINT8         *Digest;
+  UINT8                DigestSize;
+
+  if (HashData == NULL) {
+    return RETURN_INVALID_PARAMETER;
+  }
+
+  if (HashType == HASH_TYPE_SHA256) {
+    DigestSize = SHA256_DIGEST_SIZE;
+  } else if (HashType == HASH_TYPE_SHA384) {
+    DigestSize = SHA384_DIGEST_SIZE;
+  }  else if (HashType == HASH_TYPE_SM3) {
+    DigestSize = SM3_DIGEST_SIZE;
+  } else {
+    return RETURN_INVALID_PARAMETER;
+  }
+
+  // Hash can be calcluated in one of the two ways
+  // Get componenet hash from hash store based on Componen Id and return if hash is valid
+  // Incase component hash is not avilable calculate hash from src buf and HashType provided.
+
+  // Get componenet hash from hash store based on Componen Id
+  if ((ComponentType >= COMP_TYPE_STAGE_1B) && (ComponentType < COMP_TYPE_INVALID)) {
+    Status = GetComponentHash (ComponentType, &Digest, &CompHashAlg);
+    if((Status == EFI_SUCCESS) && (CompHashAlg == HashType)) {
+      CopyMem (HashData, Digest, DigestSize);
+      return RETURN_SUCCESS;
+    }
+  }
+
+  // Calculate hash for a ComponentType if hash is not retrieved from GetComponentHash
+  if ((Src != NULL) && (Length > 0)) {
+    DEBUG ((DEBUG_INFO, "Calculate Hash for component Type 0x%x as its not available in Component hash table \n", ComponentType));
+    Status = CalculateHash ((UINT8 *)Src, Length, HashType, (UINT8 *) HashData);
+  } else{
+    return RETURN_INVALID_PARAMETER;
   }
 
   return Status;

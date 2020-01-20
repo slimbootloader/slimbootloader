@@ -90,6 +90,8 @@ typedef struct {
   UINT32        CfgDataAddr;
   UINT8         ConfigDataHashValid;
   UINT8         ConfigDataHash[HASH_DIGEST_MAX];
+  UINT8         KeyHashManifestHashValid;
+  UINT8         KeyHashManifestHash[HASH_DIGEST_MAX];
 } STAGE1B_PARAM;
 
 typedef struct {

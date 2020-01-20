@@ -129,53 +129,6 @@ TpmExtendPcrAndLogEvent (
 
 
 /**
-  Extend Config Data Hash provided into PCR 1 with Ext Config Data event type.
-
-  @param[in] Digest                    Hash Digest to extend
-  @param[in] HashAlg                   Hash Alg to extend
-  @param[in] Src                       Config Buffer Address
-  @param[in] CfgDataLen                Data Len
-
-  @retval RETURN_SUCCESS               Operation completed successfully.
-  @retval RETURN_INVALID_PARAMETER     Invalid Digest  buf
-
-  @retval Others                       Unable to extend stage hash.
-**/
-RETURN_STATUS
-TpmExtendConfigData (
-  IN       UINT8            *Digest,
-  IN       HASH_ALG_TYPE     HashAlg,
-  IN       UINT8            *Src,
-  IN       UINT32            CfgDataLen
-  );
-
-
-/**
-  Extend hash of a firmware stage component. in PCR 0 with EV_POST_CODE event type
-  Hash extend would be in either of ways
-  Check Hash and Hash Alg provided and extend if they are valid
-  Retriev Hash from Component hash table
-  Calcluate Hash using source buf and length provided
-
-  @param[in] ComponentType             Stage whose measurement need to be extended.
-  @param[in] Digest                    Hash Digest to extend
-  @param[in] HashDataAlg               Hash Alg to extend
-  @param[in] Src                       Buffer Address
-  @param[in] CfgDataLen                Data Len
-
-  @retval RETURN_SUCCESS      Operation completed successfully.
-  @retval Others              Unable to extend stage hash.
-**/
-RETURN_STATUS
-TpmExtendStageHash (
-  IN       UINT8            ComponentType,
-  IN       UINT8           *HashData,
-  IN       HASH_ALG_TYPE    HashDataAlg,
-  IN       UINT8           *Src,
-  IN       UINT32           Length
-  );
-
-/**
   Log a PCR event in TCG 2.0 format.
 
   @param[in] EventHdr      New event which needs to be logged.
@@ -216,5 +169,16 @@ TpmIndicateReadyToBoot (
 UINT8
 GetCryptoHashAlg (
   UINT32 TcgAlgMask
+  );
+
+
+/**
+  Get Tpm Hash Algo type requested.
+
+  @retval PcdHashType    TPM Algorithm Id.
+**/
+UINT32
+GetTpmHashAlg (
+   UINT32 TcgAlgHash
   );
 #endif  // _TPM_LIB_H
