@@ -103,7 +103,7 @@ class Board(BaseBoard):
         self.STAGE1A_XIP          = EXECUTE_IN_PLACE
         if not self.STAGE1A_XIP:
             # For Stage1A, STAGE1_FD_BASE is always located at 4GB - STAGE1_FD_SIZE
-            # And execution will start from there.  If STAGE1A_XIP is 1, Stage1A
+            # And execution will start from there.  If STAGE1A_XIP is 0, Stage1A
             # will relocate itself to STAGE1A_LOAD_BASE to continue execution
             self.STAGE1A_LOAD_BASE  = FREE_TEMP_RAM_TOP
 

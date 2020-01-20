@@ -13,7 +13,7 @@
 #include "AcpiTablePlatform.h"
 #include <Library/FirmwareUpdateLib.h>
 
-// BDAT Table Template
+// FW States Table Template
 EFI_FWST_ACPI_DESCRIPTION_TABLE FwstTable = {
   {
     EFI_FIRMWARE_UPDATE_STATUS_TABLE_SIGNATURE, // Signature
