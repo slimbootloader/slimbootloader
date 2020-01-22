@@ -14,6 +14,7 @@
 #include <Guid/LoaderPlatformDataGuid.h>
 #include <Guid/DeviceTableHobGuid.h>
 #include <Guid/KeyHashGuid.h>
+#include <Library/CryptoLib.h>
 
 #define  STACK_DEBUG_FILL_PATTERN     0x5AA55AA5
 #define  UEFI_PAYLOAD_ID_SIGNATURE    SIGNATURE_32('U', 'E', 'F', 'I')
@@ -594,6 +595,31 @@ MatchHashInStore (
   IN       UINT32           Usage,
   IN       UINT8            HashAlg,
   IN       UINT8           *HashData
+  );
+
+
+/**
+  Get hash to extend a firmware stage component
+  Hash calculation to extend would be in either of ways
+  Retrieve Hash from Component hash table or
+  Calculate Hash using source buf and length provided
+
+  @param[in]  ComponentType             Stage whose measurement need to be extended.
+  @param[in]  HashType                  Hash type required
+  @param[in]  Src                       Buffer Address
+  @param[in]  Length                    Data Len
+  @param[out] HashData                  Hash Data buf addr
+
+  @retval RETURN_SUCCESS      Operation completed successfully.
+  @retval Others              Unable to calcuate hash.
+**/
+RETURN_STATUS
+GetHashToExtend (
+  IN       UINT8            ComponentType,
+  IN       HASH_ALG_TYPE    HashType,
+  IN       UINT8           *Src,
+  IN       UINT32           Length,
+  OUT      UINT8           *HashData
   );
 
 #endif

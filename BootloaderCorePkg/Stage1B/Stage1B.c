@@ -14,19 +14,46 @@
 
 **/
 VOID
-ExtendStage (
+ExtendStageHash (
   IN  COMPONENT_CALLBACK_INFO   *CbInfo
   )
 {
-  UINT8                     BootMode;
+  UINT8                BootMode;
+  UINT8                DigestHash[HASH_DIGEST_MAX];
+  HASH_ALG_TYPE        MbHashType;
+  TPMI_ALG_HASH        MbTmpAlgHash;
+  UINT8               *HashPtr;
+  RETURN_STATUS        Status;
+
+  //Convert Measured boot Hash Mask to HASH_ALG_TYPE (CryptoLib)
+  MbHashType   = GetCryptoHashAlg(PcdGet32(PcdMeasuredBootHashMask));
+
+  //Convert Measured boot Hash Mask to TPMI_ALG_HASH (TPM ALG ID)
+  MbTmpAlgHash = (TPMI_ALG_HASH) GetTpmHashAlg(PcdGet32(PcdMeasuredBootHashMask));
 
   //Check the boot mode
   BootMode = GetBootMode();
   if (MEASURED_BOOT_ENABLED() && (BootMode != BOOT_ON_S3_RESUME)) {
     //Extend  hash if ComponentType is stage2
     if ((CbInfo != NULL ) && (CbInfo->ComponentType == COMP_TYPE_STAGE_2)) {
-      TpmExtendStageHash((UINT8) CbInfo->ComponentType, CbInfo->HashData, CbInfo->HashAlg,
-                          CbInfo->CompBuf, CbInfo->CompLen);
+      // Check Hash data alg match to PcdMeasuredBootHashMask
+      if ((CbInfo->HashAlg == MbHashType) && (CbInfo->HashData != NULL)) {
+        // Extend CbInfo->HashData if hashalg is valid
+        HashPtr = CbInfo->HashData;
+        Status = EFI_SUCCESS;
+      } else {
+        // Get Hash to extend based on component type and component src addresss
+        Status = GetHashToExtend ((UINT8) CbInfo->ComponentType,
+                                    MbHashType, CbInfo->CompBuf, CbInfo->CompLen, DigestHash);
+        HashPtr = DigestHash;
+      }
+
+      if ((Status == EFI_SUCCESS) && (HashPtr != NULL)) {
+        TpmExtendPcrAndLogEvent (0, MbTmpAlgHash, HashPtr,
+                                  EV_POST_CODE, POST_CODE_STR_LEN, (UINT8 *)EV_POSTCODE_INFO_POST_CODE);
+      } else {
+        DEBUG((DEBUG_INFO, "Stage2 TPM PCR(0) extend failed!! \n"));
+      }
     }
   }
 }
@@ -50,7 +77,7 @@ LoadComponentCallback (
     AddMeasurePoint (0x2090);
     break;
   case PROGESS_ID_AUTHENTICATE:
-    ExtendStage (CbInfo);
+    ExtendStageHash (CbInfo);
     AddMeasurePoint (0x20A0);
     break;
   case PROGESS_ID_DECOMPRESS:
@@ -128,7 +155,8 @@ PrepareStage2 (
 /**
   Load, verify and append a hashes from external hash store compoment.
 
-  @param[in] LdrGlobal   Pointer to loader global data.
+  @param[in] LdrGlobal      Pointer to loader global data.
+  @param[in] Stage1bParam   Pointer to Stage1B params.
 
   @retval   EFI_SUCCESS             Hash store was appended successfully.
   @retval   EFI_NOT_FOUND           Could not locate the external hash store.
@@ -138,7 +166,8 @@ PrepareStage2 (
 **/
 EFI_STATUS
 AppendHashStore (
-  IN LOADER_GLOBAL_DATA       *LdrGlobal
+  IN LOADER_GLOBAL_DATA       *LdrGlobal,
+  IN STAGE1B_PARAM            *Stage1bParam
   )
 {
   EFI_STATUS           Status;
@@ -151,6 +180,8 @@ AppendHashStore (
   UINT8                AuthInfo[SIGNATURE_AND_KEY_SIZE_MAX];
   SIGNATURE_HDR       *SignHdr;
   PUB_KEY_HDR         *PubKeyHdr;
+  HASH_ALG_TYPE        MbHashType;
+
 
   Status = GetComponentInfo (FLASH_MAP_SIG_KEYHASH, &OemKeyHashCompBase, NULL);
   if (EFI_ERROR(Status)) {
@@ -181,11 +212,37 @@ AppendHashStore (
     CopyMem (AuthInfo, (UINT8 *)OemKeyHashComp + OemKeyHashUsedLength, sizeof(AuthInfo));
     SignHdr   = (SIGNATURE_HDR *) AuthInfo;
     PubKeyHdr = (PUB_KEY_HDR *)((UINT8 *)SignHdr + sizeof(SIGNATURE_HDR) + SignHdr->SigSize);
-    Status = DoRsaVerify ((UINT8 *)OemKeyHashBlob, OemKeyHashBlob->UsedLength,
-                          HASH_USAGE_PUBKEY_MASTER, SignHdr, PubKeyHdr, PcdGet8(PcdCompSignHashAlg), NULL, NULL);
+    Status = DoRsaVerify ((UINT8 *)OemKeyHashBlob,
+                          OemKeyHashBlob->UsedLength,
+                          HASH_USAGE_PUBKEY_MASTER,
+                          SignHdr, PubKeyHdr,
+                          PcdGet8(PcdCompSignHashAlg),
+                          NULL,
+                          Stage1bParam->KeyHashManifestHash);
   }
   if (EFI_ERROR (Status)) {
+    Stage1bParam->KeyHashManifestHashValid = 0;
     return EFI_SECURITY_VIOLATION;
+  }
+
+  if (MEASURED_BOOT_ENABLED()) {
+    //Convert Measured boot Hash Mask to HASH_ALG_TYPE (CryptoLib)
+    MbHashType   = GetCryptoHashAlg(PcdGet32(PcdMeasuredBootHashMask));
+
+    if (PcdGet8(PcdCompSignHashAlg) == MbHashType) {
+      Stage1bParam->KeyHashManifestHashValid = 1;
+    } else {
+    // Check validition of Stage1bParam->KeyHashManifestHash generated.
+    // Calcluate the digest to extend if measured boot hash alg doesn't match
+      Status = GetHashToExtend (COMP_TYPE_INVALID,
+                                    MbHashType,
+                                    (UINT8 *) OemKeyHashBlob,
+                                    OemKeyHashBlob->UsedLength,
+                                    Stage1bParam->KeyHashManifestHash);
+      if (Status == EFI_SUCCESS) {
+        Stage1bParam->KeyHashManifestHashValid = 1;
+      }
+    }
   }
 
   // Append hash to the end and adjust used length
@@ -219,6 +276,7 @@ CreateConfigDatabase (
   SIGNATURE_HDR            *SignHdr;
   UINT32                    CfgDataBase;
   UINT32                    CfgDataLength;
+  HASH_ALG_TYPE             MbHashType;
 
   //
   // In the config data base, the config data near the data base heaser has high priority.
@@ -258,12 +316,29 @@ CreateConfigDatabase (
         }
       }
       if (ExtCfgAddPtr != NULL) {
+       if (MEASURED_BOOT_ENABLED()) {
+          //Convert Measured boot Hash Mask to HASH_ALG_TYPE (CryptoLib)
+          MbHashType   = GetCryptoHashAlg(PcdGet32(PcdMeasuredBootHashMask));
+
+         // Check if Stage1bParam->ConfigDataHash generated matches PcdMeasuredBootHashMask
+         if (PcdGet8(PcdCompSignHashAlg) == MbHashType) {
+           Stage1bParam->ConfigDataHashValid = 1;
+         } else {
+            // Get config hash to extend if config data hash type do not match PcdMeasuredBootHashMask
+            Status = GetHashToExtend (COMP_TYPE_INVALID,
+                                  MbHashType,
+                                  ExtCfgAddPtr,
+                                  ((CDATA_BLOB *) ExtCfgAddPtr)->UsedLength,
+                                  Stage1bParam->ConfigDataHash);
+            if (!EFI_ERROR (Status)){
+              Stage1bParam->ConfigDataHashValid = 1;
+            }
+          }
+        }
         Status = AddConfigData (ExtCfgAddPtr);
         if (EFI_ERROR (Status)) {
           DEBUG ((DEBUG_INFO, "Append EXT CFG Data ... %r\n", Status));
-        } else {
-          Stage1bParam->ConfigDataHashValid = 1;
-          Stage1bParam->CfgDataAddr = (UINT32) ExtCfgAddPtr;
+          Stage1bParam->ConfigDataHashValid = 0;
         }
       }
     }
@@ -365,7 +440,7 @@ SecStartup2 (
   // Perform pre-config board init
   BoardInit (PreConfigInit);
 
-  Status = AppendHashStore (LdrGlobal);
+  Status = AppendHashStore (LdrGlobal, &Stage1bParam);
   DEBUG ((DEBUG_INFO,  "Append public key hash into store: %r\n", Status));
 
   CreateConfigDatabase (LdrGlobal, &Stage1bParam);
@@ -595,6 +670,7 @@ ContinueFunc (
   EFI_STATUS                Status;
   LOADER_GLOBAL_DATA       *LdrGlobal;
   LOADER_GLOBAL_DATA       *OldLdrGlobal;
+  TPMI_ALG_HASH             MbTmpAlgHash;
 
   Stage1bParam   = (STAGE1B_PARAM *)Context1;
   OldLdrGlobal = (LOADER_GLOBAL_DATA *)Context2;
@@ -627,14 +703,29 @@ ContinueFunc (
   BoardInit (PostTempRamExit);
   AddMeasurePoint (0x2070);
 
-  // Extend External Config Data hash
-  if (MEASURED_BOOT_ENABLED() ) {
+  if (MEASURED_BOOT_ENABLED()) {
     if (GetBootMode() != BOOT_ON_S3_RESUME) {
+        //Convert Measured boot Hash Mask to TPMI_ALG_HASH (TPM ALG ID)
+        MbTmpAlgHash = (TPMI_ALG_HASH) GetTpmHashAlg(PcdGet32(PcdMeasuredBootHashMask));
+
+        // Extend External Config Data hash
         if (Stage1bParam->ConfigDataHashValid == 1) {
-          TpmExtendConfigData (Stage1bParam->ConfigDataHash,
-            PcdGet8(PcdCompSignHashAlg),
-            (UINT8 *) Stage1bParam->CfgDataAddr,
-            ((CDATA_BLOB *) Stage1bParam->CfgDataAddr)->UsedLength);
+          TpmExtendPcrAndLogEvent ( 1,
+                    MbTmpAlgHash,
+                    Stage1bParam->ConfigDataHash,
+                    EV_EFI_VARIABLE_DRIVER_CONFIG,
+                    sizeof("Ext Config Data"),
+                     (UINT8 *)"Ext Config Data");
+        }
+
+        // Extend Key hash manifest digest
+        if (Stage1bParam->KeyHashManifestHashValid == 1) {
+          TpmExtendPcrAndLogEvent (1,
+                    MbTmpAlgHash,
+                    Stage1bParam->KeyHashManifestHash,
+                    EV_EFI_VARIABLE_DRIVER_CONFIG,
+                    sizeof("Key Manifest"),
+                     (UINT8 *)"Key Manifest");
         }
     }
   }
