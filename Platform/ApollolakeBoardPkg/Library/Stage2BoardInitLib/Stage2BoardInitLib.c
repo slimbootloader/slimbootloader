@@ -1453,64 +1453,25 @@ CpuPssPatch (
   IN GLOBAL_NVS_AREA      *Gnvs
 )
 {
-  UINT8              *Ptr;
-  PSS_PACKAGE_LAYOUT *PssPackage;
-  UINT16             *PackageLength;
-  UINT32              NumberOfStates;
-  UINT32              MaxNumberOfStates;
-  UINT32              Index;
   MSR_REGISTER        PlatformInfoMsr;
   MSR_REGISTER        TurboRatioLimit;
-  UINT8               MaxBusRatio;
-  UINT8               MinBusRatio;
-  UINT8               TurboBusRatio;
-  UINT8               BusRatio;
-  UINT8               BusRatioRange;
-  UINT16              PowerRange;
-  UINT8               Turbo;
-  UINT32              PowerStep;
-  UINT16              NewPackageLength;
-
-  Ptr = PssTbl;
-  MaxNumberOfStates = Ptr[7];
-  PssPackage = (PSS_PACKAGE_LAYOUT *) &Ptr[8];
-
-  // Determine whether turbo mode is supported or not
-  Turbo = ((Gnvs->CpuNvs.PpmFlags & PPM_TURBO) ? 1 : 0);
+  UINT16              MaxBusRatio;
+  UINT16              MinBusRatio;
+  UINT16              TurboBusRatio;
 
   // Determine the bus ratio range
   PlatformInfoMsr.Qword = AsmReadMsr64 (MSR_PLATFORM_INFO);
-  TurboRatioLimit.Qword = AsmReadMsr64 (MSR_TURBO_RATIO_LIMIT);
   MaxBusRatio           = PlatformInfoMsr.Bytes.SecondByte;
   MinBusRatio           = PlatformInfoMsr.Bytes.SixthByte;
-  TurboBusRatio         = (UINT8) (TurboRatioLimit.Dwords.Low & B_MSR_TURBO_RATIO_LIMIT_1C);
-  if (Turbo != 0) {
-    MaxBusRatio = TurboBusRatio;
-  }
-  BusRatioRange = MaxBusRatio - MinBusRatio;
-  PowerRange    = FVID_MAX_POWER - FVID_MIN_POWER;
-  NumberOfStates = ((UINT32)(BusRatioRange + 1) < MaxNumberOfStates ? (BusRatioRange + 1) : MaxNumberOfStates);
-  DEBUG((DEBUG_INFO, "Number of P States: %d (Ratio %d ~ %d)\n", NumberOfStates, MinBusRatio, MaxBusRatio));
-
-  NewPackageLength = (UINT16) (NumberOfStates * sizeof (PSS_PACKAGE_LAYOUT) + 3);
-  Ptr[7]           = (UINT8) NumberOfStates;
-  PackageLength    = (UINT16 *) &Ptr[5];
-  *PackageLength   = ((NewPackageLength & 0x0F) | 0x40) | ((NewPackageLength << 4) & 0x0FF00);
-
-  PowerStep = PowerRange / NumberOfStates;
-  for (Index = 0; Index < NumberOfStates; Index++) {
-    BusRatio = (UINT8)(MaxBusRatio - Index);
-    PssPackage->CoreFrequency = BusRatio * 100;
-    PssPackage->Control       = ((UINT32)BusRatio) << 8;
-    PssPackage->Status        = ((UINT32)BusRatio) << 8;
-    PssPackage->Power         = FVID_MAX_POWER - Index * PowerStep;
-    PssPackage->TransLatency  = NATIVE_PSTATE_LATENCY;
-    PssPackage->BMLatency     = PSTATE_BM_LATENCY;
-    PssPackage++;
+  if ((Gnvs->CpuNvs.PpmFlags & PPM_TURBO) != 0) {
+    TurboRatioLimit.Qword = AsmReadMsr64 (MSR_TURBO_RATIO_LIMIT);
+    TurboBusRatio = (UINT8) (TurboRatioLimit.Dwords.Low & B_MSR_TURBO_RATIO_LIMIT_1C);
+  } else {
+    TurboBusRatio = 0;
   }
 
-  // Set remaining as padding byte
-  SetMem (PssPackage, (MaxNumberOfStates - Index) * sizeof (PSS_PACKAGE_LAYOUT), AML_NOOP_OP);
+  AcpiPatchPssTable (PssTbl, TurboBusRatio, MaxBusRatio, MinBusRatio,
+    FVID_MAX_POWER, FVID_MIN_POWER, NULL, TRUE);
 
   return;
 }
