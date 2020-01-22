@@ -12,6 +12,22 @@
 #include <Library/FirmwareUpdateLib.h>
 
 /**
+  A function pointer to get relative power number in mW
+
+  @param[in]  BaseRatio     Base bus ratio
+  @param[in]  CurrRatio     Current bus ratio to get relative power
+  @param[in]  BasePower     Base power number in mW
+
+  @retval                   Calculated power number in mW
+
+**/
+typedef UINT32 (EFIAPI *GET_RELATIVE_POWER_FUNC) (
+  UINT16  BaseRatio,
+  UINT16  CurrRatio,
+  UINT32  BasePower
+  );
+
+/**
   Fill the boot option list data with CFGDATA info
 
   @param[in, out]   OsBootOptionList pointer to boot option list.
@@ -70,6 +86,36 @@ SpiLoadExternalConfigData (
 EFI_STATUS
 CheckStateMachine (
   IN FW_UPDATE_STATUS    *pFwUpdStatus
+  );
+
+/**
+  Patch ACPI CPU Pss Table
+
+  This function will patch PSS table. Caller MUST guarantee valid table address.
+
+  @param[in,out]  PssTableAddr      Pointer to PSS Table to be updated
+  @param[in]      TurboBusRatio     Turbo bus ratio
+  @param[in]      MaxBusRatio       Maximum bus ratio
+  @param[in]      MinBusRatio       Mimimum bus ratio
+  @param[in]      PackageMaxPower   Maximum package power
+  @param[in]      PackageMinPower   Minimum package power
+  @param[in]      GetRelativePower  A func pointer to get relative power
+  @param[in]      DoListAll         List all from LFM to Turbo
+
+  @retval         EFI_SUCCESS       Patch done successfully
+  @retval         others            Error occured during patching the table
+
+**/
+EFI_STATUS
+AcpiPatchPssTable (
+  IN OUT  UINT8                          *PssTableAddr,
+  IN      UINT16                          TurboBusRatio,
+  IN      UINT16                          MaxBusRatio,
+  IN      UINT16                          MinBusRatio,
+  IN      UINT32                          PackageMaxPower,
+  IN      UINT32                          PackageMinPower,
+  IN      GET_RELATIVE_POWER_FUNC         GetRelativePower, OPTIONAL
+  IN      BOOLEAN                         DoListAll
   );
 
 #endif

@@ -21,6 +21,32 @@
 #define  IMAGE_TYPE_ADDENDUM  0xFE
 #define  IMAGE_TYPE_NOT_USED  0xFF
 
+#define NATIVE_PSTATE_LATENCY         10
+#define PSTATE_BM_LATENCY             10
+
+//
+// ASL PSS package structure layout
+//
+#pragma pack (1)
+typedef struct {
+  UINT8     NameOp;           // 12h ;First opcode is a NameOp.
+  UINT8     PackageLead;      // 20h ;First opcode is a NameOp.
+  UINT8     NumEntries;       // 06h ;First opcode is a NameOp.
+  UINT8     DwordPrefix1;     // 0Ch
+  UINT32    CoreFrequency;    // 00h
+  UINT8     DwordPrefix2;     // 0Ch
+  UINT32    Power;            // 00h
+  UINT8     DwordPrefix3;     // 0Ch
+  UINT32    TransLatency;     // 00h
+  UINT8     DwordPrefix4;     // 0Ch
+  UINT32    BmLatency;        // 00h
+  UINT8     DwordPrefix5;     // 0Ch
+  UINT32    Control;          // 00h
+  UINT8     DwordPrefix6;     // 0Ch
+  UINT32    Status;           // 00h
+} PSS_PACKAGE_LAYOUT;
+#pragma pack()
+
 /**
   Fill the boot option list data with CFGDATA info
 
@@ -248,4 +274,172 @@ CheckStateMachine (
   }
 
   return EFI_UNSUPPORTED;
+}
+
+/**
+  This patches the PSS entry according to input.
+
+  @param [in]  PssEntry                  PSS entry.
+  @param [in]  IsTurboEnabled            Is turbo is enabled.
+  @param [in]  IsFirstEntry              Is first PSS entry.
+  @param [in]  HfmBusRatio               HFM bus ratio. Only valid when IsFirstEntry is TRUE.
+  @param [in]  BusRatio                  Assigned bus ratio.
+  @param [in]  Power                     Assigned power.
+  @param [in]  MaximumNonTurboRatio      Max non turbo ratio.
+  @param [in]  MaximumEfficiencyRatio    Max efficient ratio.
+**/
+STATIC
+VOID
+PatchPssEntry (
+  PSS_PACKAGE_LAYOUT *PssEntry,
+  BOOLEAN            IsTurboEnabled,
+  BOOLEAN            IsFirstEntry,
+  UINT32             HfmBusRatio,
+  UINT32             BusRatio,
+  UINT32             Power,
+  UINT16             MaximumNonTurboRatio,
+  UINT16             MaximumEfficiencyRatio
+  )
+{
+  UINT16             PnPercent;
+  ///
+  /// Update the _PSS table. If Turbo mode is supported, add one to the Max Non-Turbo frequency
+  ///
+  if (IsTurboEnabled && IsFirstEntry) {
+    PssEntry->CoreFrequency = (HfmBusRatio * 100) + 1;
+  } else if (BusRatio < MaximumEfficiencyRatio) {
+    PnPercent = (MaximumEfficiencyRatio * 100) / MaximumNonTurboRatio;
+    PssEntry->CoreFrequency = (MaximumNonTurboRatio * (PnPercent - 1)); // Simplified Calculation.
+  } else {
+    PssEntry->CoreFrequency = BusRatio * 100;
+  }
+  PssEntry->Power = Power;
+  ///
+  /// If it's PSS table, Control is the PERF_CTL value.
+  /// Status entry is the same as control entry.
+  /// TransLatency uses 10
+  ///
+  PssEntry->TransLatency  = NATIVE_PSTATE_LATENCY;
+  PssEntry->Control       = (UINT32) LShiftU64 (BusRatio, 8);
+  //
+  // Ensure any future OS would not look for the IA32_PERF_STATUS MSR to check if the value matches
+  //
+  if (BusRatio < MaximumEfficiencyRatio) {
+    PssEntry->Status        = (UINT32) LShiftU64 (MaximumEfficiencyRatio, 8);
+  } else {
+    PssEntry->Status        = (UINT32) LShiftU64 (BusRatio, 8);
+  }
+  PssEntry->BmLatency     = PSTATE_BM_LATENCY;
+}
+
+/**
+  Patch ACPI CPU Pss Table
+
+  This function will patch PSS table. Caller MUST guarantee valid table address.
+
+  @param[in,out]  PssTableAddr      Pointer to PSS Table to be updated
+  @param[in]      TurboBusRatio     Turbo bus ratio
+  @param[in]      MaxBusRatio       Maximum bus ratio
+  @param[in]      MinBusRatio       Mimimum bus ratio
+  @param[in]      PackageMaxPower   Maximum package power
+  @param[in]      PackageMinPower   Minimum package power
+  @param[in]      GetRelativePower  A func pointer to get relative power
+  @param[in]      DoListAll         List all from LFM to Turbo
+
+  @retval         EFI_SUCCESS       Patch done successfully
+  @retval         others            Error occured during patching the table
+
+**/
+EFI_STATUS
+AcpiPatchPssTable (
+  IN OUT  UINT8                          *PssTableAddr,
+  IN      UINT16                          TurboBusRatio,
+  IN      UINT16                          MaxBusRatio,
+  IN      UINT16                          MinBusRatio,
+  IN      UINT32                          PackageMaxPower,
+  IN      UINT32                          PackageMinPower,
+  IN      GET_RELATIVE_POWER_FUNC         GetRelativePower, OPTIONAL
+  IN      BOOLEAN                         DoListAll
+  )
+{
+  UINT16                Turbo;
+  UINT16                MaxNumberOfStates;
+  UINT16                NumberOfStates;
+  UINT16                BusRatioRange;
+  UINT32                PowerRange;
+  UINT32                PowerStep;
+  UINT32                Power;
+  UINT16                NewPackageLength;
+  UINT16                Index;
+  UINT16               *PackageLength;
+  PSS_PACKAGE_LAYOUT   *PssPackage;
+
+  if (PssTableAddr == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  DEBUG ((DEBUG_VERBOSE, "PssTable 0x%p, TurboBusRatio %d, MaxBusRatio %d, "
+    "MinBusRatio %d, PackageMaxPower %d, PackageMinPower %d, "
+    "GetRelativePower 0x%p, DoListAll %d\n",
+    PssTableAddr, TurboBusRatio, MaxBusRatio, MinBusRatio, PackageMaxPower,
+    PackageMinPower, GetRelativePower, DoListAll));
+
+  MaxNumberOfStates = (UINT16)PssTableAddr[7];
+  PssPackage = (PSS_PACKAGE_LAYOUT *) &PssTableAddr[8];
+
+  Turbo = (TurboBusRatio > MaxBusRatio) ? 1 : 0;
+  if ((Turbo == 1) && DoListAll) {
+    MaxBusRatio = TurboBusRatio;
+    Turbo = 0;
+  }
+  BusRatioRange = MaxBusRatio - MinBusRatio + 1;
+  NumberOfStates = ((BusRatioRange + Turbo) < MaxNumberOfStates ?
+    (BusRatioRange + Turbo) : MaxNumberOfStates);
+
+  NewPackageLength  = (UINT16) (NumberOfStates * sizeof (PSS_PACKAGE_LAYOUT) + 3);
+  PssTableAddr[7]   = (UINT8)NumberOfStates;
+  PackageLength     = (UINT16 *) &PssTableAddr[5];
+  *PackageLength    = ((NewPackageLength & 0x0F) | 0x40);
+  *PackageLength   |= ((NewPackageLength << 4) & 0xFF00);
+
+  DEBUG ((DEBUG_VERBOSE, "PssPackage 0x%p, MaxNumberOfStates %d, NumberOfStates %d\n",
+    PssPackage, MaxNumberOfStates, NumberOfStates));
+
+  DEBUG ((DEBUG_VERBOSE, "NewPackageLength 0x%X, PackageLength 0x%X\n",
+    NewPackageLength, *PackageLength));
+
+  PowerRange = PackageMaxPower - PackageMinPower;
+  PowerStep = PowerRange / (NumberOfStates - 1 - Turbo);
+  for (Index = 0; Index < NumberOfStates; Index++) {
+    if (Index == 0) {
+      Power = PackageMaxPower;
+    } else {
+      if (GetRelativePower != NULL) {
+        Power = GetRelativePower (MaxBusRatio, MaxBusRatio - Index + Turbo, PackageMaxPower);
+      } else {
+        Power = PackageMaxPower - ((Index - Turbo) * PowerStep);
+      }
+    }
+
+    PatchPssEntry (PssPackage,
+      Turbo == 1,
+      Index == 0,
+      Index == 0 ? TurboBusRatio : 0,
+      Index == 0 ? TurboBusRatio : MaxBusRatio - Index + Turbo,
+      Power,
+      MaxBusRatio,
+      MinBusRatio);
+
+    DEBUG ((DEBUG_VERBOSE, "PssPackage[%02d]: CoreFrequency %d, Control %d, Power %d\n",
+      Index, PssPackage->CoreFrequency, (PssPackage->Control >> 8) & 0xFF, PssPackage->Power));
+
+    PssPackage++;
+  }
+
+  // Set remaining as padding byte
+  if (Index < MaxNumberOfStates) {
+    SetMem (PssPackage, (MaxNumberOfStates - Index) * sizeof (PSS_PACKAGE_LAYOUT), AML_NOOP_OP);
+  }
+
+  return EFI_SUCCESS;
 }
