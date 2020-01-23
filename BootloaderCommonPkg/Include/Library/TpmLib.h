@@ -12,7 +12,7 @@
 #include <IndustryStandard/UefiTcgPlatform.h>
 #include <IndustryStandard/Tpm2Acpi.h>
 #include <Library/CryptoLib.h>
-
+#include <Library/ContainerLib.h>
 
 #define ACPI_SSDT_TPM2_DEVICE_OEM_TABLE_ID  SIGNATURE_64('T', 'p', 'm', '2', 'T', 'a', 'b', 'l')
 
@@ -180,5 +180,17 @@ GetCryptoHashAlg (
 UINT32
 GetTpmHashAlg (
    UINT32 TcgAlgHash
+  );
+
+
+/**
+  Function to extend Stage component hash
+
+  @param[in]  CbInfo    Component Call Back Info
+
+**/
+VOID
+ExtendStageHash (
+  IN  COMPONENT_CALLBACK_INFO   *CbInfo
   );
 #endif  // _TPM_LIB_H

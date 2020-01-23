@@ -10,6 +10,28 @@
 UINT8    mCurrentBoot;
 VOID    *mEntryStack;
 
+/**
+  Callback function to add performance measure point during component loading.
+
+  @param[in]  ProgressId    Component loading progress ID code.
+  @param[in]  CbInfo    Component Call Back Info
+
+**/
+VOID
+LoadComponentCallback (
+  IN  UINT32                     ProgressId,
+  IN  COMPONENT_CALLBACK_INFO   *CbInfo
+  )
+{
+  if (ProgressId == PROGESS_ID_AUTHENTICATE) {
+    AddMeasurePoint (0x4080);
+  }
+
+  if (FeaturePcdGet (PcdMeasuredBootEnabled) && (GetFeatureCfg() & FEATURE_MEASURED_BOOT)) {
+    // Extend the OS component hash
+    ExtendStageHash (CbInfo);
+  }
+}
 
 /**
   Update fields of LoadedImage
@@ -175,13 +197,13 @@ ParseContainerImage (
   if (ContainerHdr->Signature != CONTAINER_BOOT_SIGNATURE) {
     return EFI_UNSUPPORTED;
   }
-  Status = RegisterContainer ((UINT32) ContainerHdr);
+
+  Status = RegisterContainer ((UINT32) ContainerHdr, LoadComponentCallback);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "Image given is not a valid CONTAINER image\n"));
     return EFI_LOAD_ERROR;
   }
 
-  AddMeasurePoint (0x4080);
   ZeroMem (File, sizeof (File));
 
   DEBUG ((DEBUG_INFO, "CONTAINER size = 0x%x, image type = 0x%x, # of components = %d\n", LoadedImage->IasImage.Size, ContainerHdr->ImageType, ContainerHdr->Count));
@@ -259,13 +281,28 @@ ParseIasImage (
   UINT32                     NumFiles;
   IMAGE_DATA                 File[MAX_IAS_SUB_IMAGE];
   UINT32                     ImageType;
+  IAS_IMAGE_INFO             IasImageInfo;
+  COMPONENT_CALLBACK_INFO    CompInfo;
   EFI_STATUS                 Status;
 
-  IasImage = IsIasImageValid (LoadedImage->IasImage.Addr, LoadedImage->IasImage.Size, LoadedImage->ImageHash);
+  IasImage = IsIasImageValid (LoadedImage->IasImage.Addr, LoadedImage->IasImage.Size, &IasImageInfo);
   if (IasImage == NULL) {
     DEBUG ((DEBUG_INFO, "Image given is not a valid IAS image\n"));
     return EFI_LOAD_ERROR;
   }
+
+  if (FeaturePcdGet (PcdMeasuredBootEnabled) && (GetFeatureCfg() & FEATURE_MEASURED_BOOT)) {
+    // Fill  COMPONENT_CALLBACK_INFO
+    CompInfo.ComponentType =  CONTAINER_BOOT_SIGNATURE;
+    CompInfo.CompBuf       =  IasImageInfo.CompBuf;
+    CompInfo.CompLen       =  IasImageInfo.CompLen;
+    CompInfo.HashAlg       =  IasImageInfo.HashAlg;
+    CompInfo.HashData      =  IasImageInfo.HashData;
+
+  // Extend OsImage hash to TPM
+    ExtendStageHash (&CompInfo);
+  }
+
   AddMeasurePoint (0x4080);
 
   ZeroMem (File, sizeof (File));
@@ -301,7 +338,6 @@ SetupBootImage (
   )
 {
   EFI_STATUS                 Status;
-  LOADER_PLATFORM_INFO      *LoaderPlatformInfo;
   UINT32                    *EntryPoint;
   UINT8                     *NewCmdBuffer;
   MULTIBOOT_IMAGE           *MultiBoot;
@@ -379,17 +415,6 @@ SetupBootImage (
       UpdateLinuxBootParams ();
       LinuxImage->BootParams = GetLinuxBootParams ();
       LoadedImage->Flags  = (LoadedImage->Flags  & ~LOADED_IMAGE_MULTIBOOT) | LOADED_IMAGE_LINUX;
-    }
-  }
-
-  if (!EFI_ERROR (Status)) {
-    LoaderPlatformInfo = (LOADER_PLATFORM_INFO *)GetLoaderPlatformInfoPtr();
-    if (LoaderPlatformInfo != NULL) {
-      if (FeaturePcdGet (PcdMeasuredBootEnabled) && (LoaderPlatformInfo->LdrFeatures & FEATURE_MEASURED_BOOT)) {
-        // Extend hash of the image into TPM.
-        TpmExtendPcrAndLogEvent (8, TPM_ALG_SHA256, LoadedImage->ImageHash,
-          EV_COMPACT_HASH, sizeof("LinuxLoaderPkg: OS Image"), (UINT8 *)"LinuxLoaderPkg: OS Image");
-      }
     }
   }
 

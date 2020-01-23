@@ -77,15 +77,26 @@ typedef struct {
   UINT8 PubExp[RSA_E_SIZE];
 } IAS_PUB_KEY;
 
+//
+// IAS Iamge buf address and hash info for use
+//
+
+typedef struct {
+  UINT8           *CompBuf;  // IAS Image buffer address
+  UINT32           CompLen;  // IAS image length
+  HASH_ALG_TYPE    HashAlg;  // Hash Alg used for HashData
+  UINT8           *HashData; // Hash of the IAS image
+} IAS_IMAGE_INFO;
+
 /**
 Check the Addr parameter for a valid IAS image; ensure the format is correct,
 confirm the IAS header CRC is correct, and (optional) confirm the hash of the
 data region of the IAS image matches the expected value. Also, return the
-hash of the IAS image to the caller.
+buffer and hash info of the IAS image to the caller.
 
-@param           Addr              Address of the IAS image to be verified for validity.
-@param           Size              Size of the IAS image to be verified for validity.
-@param           ImageHash         Hash of the IAS image is returned to the caller.
+@param  Addr              Address of the IAS image to be verified for validity.
+@param  Size              Size of the IAS image to be verified for validity.
+@param  IasImageInfo      IasImage buffer and hash info data structure
 
 @retval NULL  The IAS image is compromised.
 @retval Hdr   The IAS image is valid.
@@ -93,9 +104,9 @@ hash of the IAS image to the caller.
 **/
 IAS_HEADER *
 IsIasImageValid (
-  IN  VOID  *Addr,
-  IN  UINT32 Size,
-  OUT UINT8 *ImageHash
+  IN  VOID               *Addr,
+  IN  UINT32              Size,
+  OUT IAS_IMAGE_INFO     *IasImageInfo
   );
 
 /**
