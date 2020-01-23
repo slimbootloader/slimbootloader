@@ -202,6 +202,7 @@ GetNextAvailableComponent (
   This function registers a container.
 
   @param[in]  ContainerBase      Container base address to register.
+  @param[in]  ContainerCallback  Callback regsiterd to notify container buf info
 
   @retval EFI_NOT_READY          Not ready for register yet.
   @retval EFI_BUFFER_TOO_SMALL   Insufficant max container entry number.
@@ -211,7 +212,8 @@ GetNextAvailableComponent (
 **/
 EFI_STATUS
 RegisterContainer (
-  IN  UINT32   ContainerBase
+  IN  UINT32                    ContainerBase,
+  IN  LOAD_COMPONENT_CALLBACK   ContainerCallback
   );
 
 /**

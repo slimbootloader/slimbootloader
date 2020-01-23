@@ -820,3 +820,63 @@ TpmIndicateReadyToBoot (
   }
   return EFI_SUCCESS;
 }
+
+
+
+/**
+  Function to extend Stage component hash
+
+  @param[in]  CbInfo    Component Call Back Info
+
+**/
+VOID
+ExtendStageHash (
+  IN  COMPONENT_CALLBACK_INFO   *CbInfo
+  )
+{
+  UINT8                DigestHash[HASH_DIGEST_MAX];
+  HASH_ALG_TYPE        MbHashType;
+  TPMI_ALG_HASH        MbTmpAlgHash;
+  UINT8               *HashPtr;
+  RETURN_STATUS        Status;
+
+  //Convert Measured boot Hash Mask to HASH_ALG_TYPE (CryptoLib)
+  MbHashType   = GetCryptoHashAlg(PcdGet32(PcdMeasuredBootHashMask));
+
+  //Convert Measured boot Hash Mask to TPMI_ALG_HASH (TPM ALG ID)
+  MbTmpAlgHash = (TPMI_ALG_HASH) GetTpmHashAlg(PcdGet32(PcdMeasuredBootHashMask));
+
+  //Extend  hash if ComponentType matches
+  if ((CbInfo != NULL ) && ((CbInfo->ComponentType == COMP_TYPE_STAGE_2)
+                            || (CbInfo->ComponentType == COMP_TYPE_PAYLOAD)
+                            || (CbInfo->ComponentType == FLASH_MAP_SIG_EPAYLOAD)
+                            || (CbInfo->ComponentType == COMP_TYPE_PAYLOAD_FWU )
+                            || (CbInfo->ComponentType == CONTAINER_BOOT_SIGNATURE ))) {
+    // Check Hash data alg match to PcdMeasuredBootHashMask
+    if ((CbInfo->HashAlg == MbHashType) && (CbInfo->HashData != NULL)) {
+      // Extend CbInfo->HashData if hashalg is valid
+      HashPtr = CbInfo->HashData;
+      Status = EFI_SUCCESS;
+    } else {
+      // Get Hash to extend based on component type and component src addresss
+      Status = GetHashToExtend ((UINT8) CbInfo->ComponentType,
+                                  MbHashType, CbInfo->CompBuf, CbInfo->CompLen, DigestHash);
+      HashPtr = DigestHash;
+    }
+
+    if ((Status == EFI_SUCCESS) && (HashPtr != NULL)) {
+
+      if (CbInfo->ComponentType == CONTAINER_BOOT_SIGNATURE) {
+        // TPM Extend for OS Image
+        TpmExtendPcrAndLogEvent (8, MbTmpAlgHash, HashPtr,
+                              EV_COMPACT_HASH, sizeof("LinuxLoaderPkg: OS Image"), (UINT8 *)"LinuxLoaderPkg: OS Image");
+      } else {
+        // TPM Extend for Stage components and payloads
+        TpmExtendPcrAndLogEvent (0, MbTmpAlgHash, HashPtr,
+                              EV_POST_CODE, POST_CODE_STR_LEN, (UINT8 *)EV_POSTCODE_INFO_POST_CODE);
+      }
+    } else {
+      DEBUG((DEBUG_INFO, "Stage2 TPM PCR(0) extend failed!! \n"));
+    }
+  }
+}

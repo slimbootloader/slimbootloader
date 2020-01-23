@@ -621,5 +621,4 @@ GetHashToExtend (
   IN       UINT32           Length,
   OUT      UINT8           *HashData
   );
-
 #endif

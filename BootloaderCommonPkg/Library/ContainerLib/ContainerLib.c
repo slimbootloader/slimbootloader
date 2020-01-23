@@ -334,6 +334,7 @@ GetContainerKeyUsageBySig (
   This function authenticates a container
 
   @param[in]  ContainerHeader    Container base address to register.
+  @param[in]  ContainerCallback  Callback regsiterd to notify container buf info
 
   @retval EFI_SUCCESS            The container has been authenticated successfully.
   @retval EFI_UNSUPPORTED        If container header is invalid or autheication fails
@@ -341,7 +342,8 @@ GetContainerKeyUsageBySig (
 **/
 EFI_STATUS
 AutheticateContainerInternal (
-  IN  CONTAINER_HDR      *ContainerHeader
+  IN  CONTAINER_HDR            *ContainerHeader,
+  IN  LOAD_COMPONENT_CALLBACK  ContainerCallback
   )
 {
   CONTAINER_HDR            *ContainerHdr;
@@ -357,6 +359,7 @@ AutheticateContainerInternal (
   UINT32                    Index;
   LOADER_COMPRESSED_HEADER *CompressHdr;
   EFI_STATUS                Status;
+  COMPONENT_CALLBACK_INFO   CbInfo;
 
   // Find authentication data offset and authenticate the container header
   Status = EFI_UNSUPPORTED;
@@ -373,6 +376,16 @@ AutheticateContainerInternal (
         Status = AuthenticateComponent ((UINT8 *)ContainerHdr, ContainerHdrSize,
                                         AuthType, AuthData, NULL,
                                         GetContainerKeyUsageBySig (ContainerHeader->Signature));
+        if ((!EFI_ERROR(Status)) && (ContainerCallback != NULL)) {
+          // Update component Call back info after container header authenticaton is done
+          // This info will used by firmware stage to extend to TPM
+          CbInfo.ComponentType    = ContainerHeader->Signature;
+          CbInfo.CompBuf          = (UINT8 *)ContainerHdr;
+          CbInfo.CompLen          = ContainerHdrSize;
+          CbInfo.HashAlg          = GetHashAlg(AuthType);
+          CbInfo.HashData         = NULL;
+          ContainerCallback (PROGESS_ID_AUTHENTICATE, &CbInfo);
+        }
       }
     }
   }
@@ -397,6 +410,17 @@ AutheticateContainerInternal (
         DataLen  = CompEntry->Offset;
         Status   = AuthenticateComponent (DataBuf, DataLen, CompEntry->AuthType,
                                           AuthData, CompEntry->HashData, 0);
+
+        if ((!EFI_ERROR(Status)) && (ContainerCallback != NULL)) {
+          // Update component Call back info after authenticaton is done
+          // This info will used by firmware stage to extend to TPM
+          CbInfo.ComponentType    = ContainerHeader->Signature;
+          CbInfo.CompBuf          = DataBuf;
+          CbInfo.CompLen          = DataLen;
+          CbInfo.HashAlg          = GetHashAlg(CompEntry->AuthType);
+          CbInfo.HashData         = CompEntry->HashData;
+          ContainerCallback (PROGESS_ID_AUTHENTICATE, &CbInfo);
+        }
       }
     }
   }
@@ -408,6 +432,7 @@ AutheticateContainerInternal (
   This function registers a container.
 
   @param[in]  ContainerBase      Container base address to register.
+  @param[in]  ContainerCallback  Callback regsiterd to notify container buf info
 
   @retval EFI_NOT_READY          Not ready for register yet.
   @retval EFI_BUFFER_TOO_SMALL   Insufficant max container entry number.
@@ -417,7 +442,8 @@ AutheticateContainerInternal (
 **/
 EFI_STATUS
 RegisterContainer (
-  IN  UINT32   ContainerBase
+  IN  UINT32                    ContainerBase,
+  IN  LOAD_COMPONENT_CALLBACK   ContainerCallback
   )
 {
   EFI_STATUS                Status;
@@ -431,7 +457,7 @@ RegisterContainer (
   // Register container
   Status = RegisterContainerInternal (ContainerBase);
   if (!EFI_ERROR (Status)) {
-    Status = AutheticateContainerInternal (ContainerHdr);
+    Status = AutheticateContainerInternal (ContainerHdr, ContainerCallback);
     if (EFI_ERROR (Status)) {
       // Unregister the container since authentication failed
       UnregisterContainer (ContainerHdr->Signature);
@@ -484,7 +510,7 @@ LocateComponentEntry (
     }
 
     // Register container temporarily
-    Status = RegisterContainer (ContainerBase);
+    Status = RegisterContainer (ContainerBase, NULL);
     if (EFI_ERROR (Status)) {
       return EFI_UNSUPPORTED;
     }

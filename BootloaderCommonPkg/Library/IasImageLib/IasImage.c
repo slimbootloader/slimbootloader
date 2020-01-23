@@ -17,12 +17,12 @@
 /**
 Check the Addr parameter for a valid IAS image; ensure the format is correct,
 confirm the IAS header CRC is correct, and (optional) confirm the hash of the
-data region of the IAS image matches the expected value.Also, return the
-hash of the IAS image to the caller.
+data region of the IAS image matches the expected value. Also, return the
+buffer and hash info of the IAS image to the caller.
 
-@param           Addr              Address of the IAS image to be verified for validity.
-@param           Size              Size of the IAS image to be verified for validity.
-@param           ImageHash         Hash of the IAS image is returned to the caller.
+@param  Addr              Address of the IAS image to be verified for validity.
+@param  Size              Size of the IAS image to be verified for validity.
+@param  IasImageInfo      IasImage buffer and hash info data structure
 
 @retval NULL  The IAS image is compromised.
 @retval Hdr   The IAS image is valid.
@@ -30,9 +30,9 @@ hash of the IAS image to the caller.
 **/
 IAS_HEADER *
 IsIasImageValid (
-  IN  VOID     *ImageAddr,
-  IN  UINT32    Size,
-  OUT UINT8    *ImageHash
+  IN  VOID               *ImageAddr,
+  IN  UINT32              Size,
+  OUT IAS_IMAGE_INFO     *IasImageInfo
   )
 {
   EFI_STATUS                 Status;
@@ -45,6 +45,7 @@ IsIasImageValid (
   UINT32                     KeyIdx;
   UINT8                      PubKeyBuf[sizeof(PUB_KEY_HDR) + RSA2048_NUMBYTES + RSA_E_SIZE];
   UINT8                      SignBuf[sizeof(SIGNATURE_HDR) + RSA2048_NUMBYTES];
+  UINT8                      DigestHash[HASH_DIGEST_MAX];
 
   Hdr = (IAS_HEADER *) ImageAddr;
 
@@ -105,12 +106,18 @@ IsIasImageValid (
 
 
   Status = DoRsaVerify ((CONST UINT8 *)Hdr, ((UINT32)IAS_PAYLOAD_END (Hdr)) - ((UINT32)Hdr),
-                         HASH_USAGE_PUBKEY_OS, SignHdr, PubKeyHdr, PcdGet8(PcdCompSignHashAlg), NULL, ImageHash);
+                         HASH_USAGE_PUBKEY_OS, SignHdr, PubKeyHdr, PcdGet8(PcdCompSignHashAlg), NULL, DigestHash);
   if (EFI_ERROR (Status) != EFI_SUCCESS) {
     DEBUG ((DEBUG_ERROR, "IAS image verification failed!\n"));
     return NULL;
   }
   DEBUG ((DEBUG_INFO, "IAS image is properly signed/verified\n"));
+
+  // populate IAS_IMAGE_INFO
+  IasImageInfo->CompBuf  = (UINT8 *)Hdr;
+  IasImageInfo->CompLen  = ((UINT32)IAS_PAYLOAD_END (Hdr)) - ((UINT32)Hdr);
+  IasImageInfo->HashAlg  = PcdGet8(PcdCompSignHashAlg);
+  IasImageInfo->HashData = DigestHash;
 
   return Hdr;
 }
