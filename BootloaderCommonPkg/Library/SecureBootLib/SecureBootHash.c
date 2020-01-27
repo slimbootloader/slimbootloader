@@ -54,6 +54,7 @@ CalculateHash  (
     }
 
     if (HashRetVal == NULL){
+      DEBUG((DEBUG_INFO, "Hash Calculation is invalid!!\n"));
       return RETURN_UNSUPPORTED;
     } else{
       CopyMem (OutHash, Digest, DigestSize);
@@ -134,7 +135,7 @@ DoHashVerify (
     }
   }
 
-  DEBUG ((DEBUG_INFO, "HASH verification for usage (0x%08X): %r\n", Usage, Status));
+  DEBUG ((DEBUG_INFO, "HASH verification for usage (0x%08X) with Hash Alg (0x%x): %r\n", Usage, HashAlg, Status));
   if (EFI_ERROR(Status)) {
     DEBUG_CODE_BEGIN();
 

@@ -71,11 +71,17 @@ DoRsaVerify (
     return RETURN_INVALID_PARAMETER;
   }
 
-  CalculateHash  (Data, Length, SignatureHdr->HashAlg, Digest);
+  Status =CalculateHash  (Data, Length, SignatureHdr->HashAlg, Digest);
+  if (EFI_ERROR(Status)) {
+    return RETURN_UNSUPPORTED;
+  }
 
   if (OutHash != NULL) {
     CopyMem (OutHash, Digest, DigestSize);
   }
+
+  DEBUG ((DEBUG_INFO, "SignType (0x%x) SignSize (0x%x)  SignHashAlg (0x%x)\n", \
+                  SignatureHdr->SigType, SignatureHdr->SigSize, SignatureHdr->HashAlg));
 
   if(SignatureHdr->SigType == SIGNING_TYPE_RSA_PKCS_1_5) {
     Status = RsaVerify_Pkcs_1_5 (PublicKey, SignatureHdr, Digest);
@@ -83,7 +89,7 @@ DoRsaVerify (
     Status = RETURN_UNSUPPORTED;
   }
 
-  DEBUG ((DEBUG_INFO, "RSA  verification for usage (0x%08X): %r\n", Usage, Status));
+  DEBUG ((DEBUG_INFO, "RSA verification for usage (0x%08X): %r\n", Usage, Status));
   if (RETURN_ERROR (Status)) {
     DEBUG_CODE_BEGIN();
 
