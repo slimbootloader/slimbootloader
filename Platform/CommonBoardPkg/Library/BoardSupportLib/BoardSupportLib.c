@@ -338,45 +338,50 @@ PatchPssEntry (
   This function will patch PSS table. Caller MUST guarantee valid table address.
 
   @param[in,out]  PssTableAddr      Pointer to PSS Table to be updated
-  @param[in]      TurboBusRatio     Turbo bus ratio
-  @param[in]      MaxBusRatio       Maximum bus ratio
-  @param[in]      MinBusRatio       Mimimum bus ratio
-  @param[in]      PackageMaxPower   Maximum package power
-  @param[in]      PackageMinPower   Minimum package power
-  @param[in]      GetRelativePower  A func pointer to get relative power
-  @param[in]      DoListAll         List all from LFM to Turbo
-
+  @param[in]      PssParams         All PSS calculation related info
   @retval         EFI_SUCCESS       Patch done successfully
   @retval         others            Error occured during patching the table
 
 **/
 EFI_STATUS
 AcpiPatchPssTable (
-  IN OUT  UINT8                          *PssTableAddr,
-  IN      UINT16                          TurboBusRatio,
-  IN      UINT16                          MaxBusRatio,
-  IN      UINT16                          MinBusRatio,
-  IN      UINT32                          PackageMaxPower,
-  IN      UINT32                          PackageMinPower,
-  IN      GET_RELATIVE_POWER_FUNC         GetRelativePower, OPTIONAL
-  IN      BOOLEAN                         DoListAll
+  IN OUT        UINT8                    *PssTableAddr,
+  IN      CONST PSS_PARAMS               *PssParams
   )
 {
-  UINT16                Turbo;
-  UINT16                MaxNumberOfStates;
-  UINT16                NumberOfStates;
-  UINT16                BusRatioRange;
-  UINT32                PowerRange;
-  UINT32                PowerStep;
-  UINT32                Power;
-  UINT16                NewPackageLength;
-  UINT16                Index;
-  UINT16               *PackageLength;
-  PSS_PACKAGE_LAYOUT   *PssPackage;
+  UINT16                    Turbo;
+  UINT16                    MaxNumberOfStates;
+  UINT16                    NumberOfStates;
+  UINT16                    BusRatioRange;
+  UINT32                    PowerRange;
+  UINT32                    PowerStep;
+  UINT32                    Power;
+  UINT16                    NewPackageLength;
+  UINT16                    Index;
+  UINT16                   *PackageLength;
+  PSS_PACKAGE_LAYOUT       *PssPackage;
+  UINT16                    TurboBusRatio;
+  UINT16                    MaxBusRatio;
+  UINT16                    MinBusRatio;
+  UINT32                    PackageMaxPower;
+  UINT32                    PackageMinPower;
+  GET_RELATIVE_POWER_FUNC   GetRelativePower;
+  BOOLEAN                   DoListAll;
 
-  if (PssTableAddr == NULL) {
+  if ((PssTableAddr == NULL) || (PssParams == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
+
+  //
+  // PSS params will be updated. Copy input params to keep the original(CONST).
+  //
+  TurboBusRatio = PssParams->TurboBusRatio;
+  MaxBusRatio = PssParams->MaxBusRatio;
+  MinBusRatio = PssParams->MinBusRatio;
+  PackageMaxPower = PssParams->PackageMaxPower;
+  PackageMinPower = PssParams->PackageMinPower;
+  GetRelativePower = PssParams->GetRelativePower;
+  DoListAll = PssParams->DoListAll;
 
   DEBUG ((DEBUG_VERBOSE, "PssTable 0x%p, TurboBusRatio %d, MaxBusRatio %d, "
     "MinBusRatio %d, PackageMaxPower %d, PackageMinPower %d, "

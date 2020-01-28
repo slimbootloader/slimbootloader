@@ -28,6 +28,28 @@ typedef UINT32 (EFIAPI *GET_RELATIVE_POWER_FUNC) (
   );
 
 /**
+  All PSS calculation related parameters. GetRelativePower can be optional.
+
+  @param[in]      TurboBusRatio     Turbo bus ratio
+  @param[in]      MaxBusRatio       Maximum bus ratio
+  @param[in]      MinBusRatio       Mimimum bus ratio
+  @param[in]      PackageMaxPower   Maximum package power
+  @param[in]      PackageMinPower   Minimum package power
+  @param[in]      GetRelativePower  A func pointer to get relative power
+  @param[in]      DoListAll         List all from LFM to Turbo
+
+**/
+typedef struct {
+  UINT16                    TurboBusRatio;
+  UINT16                    MaxBusRatio;
+  UINT16                    MinBusRatio;
+  UINT32                    PackageMaxPower;
+  UINT32                    PackageMinPower;
+  GET_RELATIVE_POWER_FUNC   GetRelativePower;
+  BOOLEAN                   DoListAll;
+} PSS_PARAMS;
+
+/**
   Fill the boot option list data with CFGDATA info
 
   @param[in, out]   OsBootOptionList pointer to boot option list.
@@ -94,28 +116,15 @@ CheckStateMachine (
   This function will patch PSS table. Caller MUST guarantee valid table address.
 
   @param[in,out]  PssTableAddr      Pointer to PSS Table to be updated
-  @param[in]      TurboBusRatio     Turbo bus ratio
-  @param[in]      MaxBusRatio       Maximum bus ratio
-  @param[in]      MinBusRatio       Mimimum bus ratio
-  @param[in]      PackageMaxPower   Maximum package power
-  @param[in]      PackageMinPower   Minimum package power
-  @param[in]      GetRelativePower  A func pointer to get relative power
-  @param[in]      DoListAll         List all from LFM to Turbo
-
+  @param[in]      PssParams         All PSS calculation related info
   @retval         EFI_SUCCESS       Patch done successfully
   @retval         others            Error occured during patching the table
 
 **/
 EFI_STATUS
 AcpiPatchPssTable (
-  IN OUT  UINT8                          *PssTableAddr,
-  IN      UINT16                          TurboBusRatio,
-  IN      UINT16                          MaxBusRatio,
-  IN      UINT16                          MinBusRatio,
-  IN      UINT32                          PackageMaxPower,
-  IN      UINT32                          PackageMinPower,
-  IN      GET_RELATIVE_POWER_FUNC         GetRelativePower, OPTIONAL
-  IN      BOOLEAN                         DoListAll
+  IN OUT        UINT8                    *PssTableAddr,
+  IN      CONST PSS_PARAMS               *PssParams
   );
 
 #endif

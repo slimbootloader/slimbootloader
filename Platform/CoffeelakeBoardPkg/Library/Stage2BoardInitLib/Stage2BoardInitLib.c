@@ -354,15 +354,11 @@ PatchCpuIstTable (
   UINT8               *End;
   UINT8               *Lpss;
   UINT8               *Tpss;
-  UINT16              MaxBusRatio;
-  UINT16              MinBusRatio;
-  UINT16              TurboBusRatio;
   UINT16              PackageTdp;
   UINT32              PackageTdpWatt;
-  UINT32              PackageMaxPower;
-  UINT32              PackageMinPower;
   UINT8               ProcessorPowerUnit;
   MSR_REGISTER        MsrValue;
+  PSS_PARAMS          PssParams;
 
   Ptr = (UINT8 *)Table;
   End = (UINT8 *)Table+ Table->Length;
@@ -385,13 +381,13 @@ PatchCpuIstTable (
   }
 
   MsrValue.Qword = AsmReadMsr64 (MSR_PLATFORM_INFO);
-  MaxBusRatio    = MsrValue.Bytes.SecondByte;
-  MinBusRatio    = MsrValue.Bytes.SixthByte;
+  PssParams.MaxBusRatio = MsrValue.Bytes.SecondByte;
+  PssParams.MinBusRatio = MsrValue.Bytes.SixthByte;
   if ((GlobalNvs->CpuNvs.PpmFlags & PPM_TURBO) != 0) {
     MsrValue.Qword = AsmReadMsr64 (MSR_TURBO_RATIO_LIMIT);
-    TurboBusRatio = (UINT8)(MsrValue.Dwords.Low & 0xFF);
+    PssParams.TurboBusRatio = (UINT8)(MsrValue.Dwords.Low & 0xFF);
   } else {
-    TurboBusRatio = 0;
+    PssParams.TurboBusRatio = 0;
   }
 
   MsrValue.Qword = AsmReadMsr64 (MSR_PACKAGE_POWER_SKU_UNIT);
@@ -406,17 +402,19 @@ PatchCpuIstTable (
   PackageTdp = (UINT16)(MsrValue.Dwords.Low & 0x7FFF);
   PackageTdpWatt = (UINT32)DivU64x32 (PackageTdp, ProcessorPowerUnit);
 
-  PackageMaxPower = (PackageTdpWatt * 1000);
-  PackageMinPower = CalculateRelativePower (MaxBusRatio, MinBusRatio, PackageMaxPower);
+  PssParams.PackageMaxPower = (PackageTdpWatt * 1000);
+  PssParams.PackageMinPower = CalculateRelativePower (PssParams.MaxBusRatio,
+                                                      PssParams.MinBusRatio,
+                                                      PssParams.PackageMaxPower);
+  PssParams.GetRelativePower = CalculateRelativePower;
+  PssParams.DoListAll = FALSE;
 
   if (Lpss != NULL) {
-    AcpiPatchPssTable (Lpss, TurboBusRatio, MaxBusRatio, MinBusRatio,
-      PackageMaxPower, PackageMinPower, CalculateRelativePower, FALSE);
+    AcpiPatchPssTable (Lpss, &PssParams);
   }
 
   if (Tpss != NULL) {
-    AcpiPatchPssTable (Tpss, TurboBusRatio, MaxBusRatio, MinBusRatio,
-      PackageMaxPower, PackageMinPower, CalculateRelativePower, FALSE);
+    AcpiPatchPssTable (Tpss, &PssParams);
   }
 
   return EFI_SUCCESS;
