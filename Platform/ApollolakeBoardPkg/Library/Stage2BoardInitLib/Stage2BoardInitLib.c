@@ -1455,23 +1455,24 @@ CpuPssPatch (
 {
   MSR_REGISTER        PlatformInfoMsr;
   MSR_REGISTER        TurboRatioLimit;
-  UINT16              MaxBusRatio;
-  UINT16              MinBusRatio;
-  UINT16              TurboBusRatio;
+  PSS_PARAMS          PssParams;
 
   // Determine the bus ratio range
   PlatformInfoMsr.Qword = AsmReadMsr64 (MSR_PLATFORM_INFO);
-  MaxBusRatio           = PlatformInfoMsr.Bytes.SecondByte;
-  MinBusRatio           = PlatformInfoMsr.Bytes.SixthByte;
+  PssParams.MaxBusRatio = PlatformInfoMsr.Bytes.SecondByte;
+  PssParams.MinBusRatio = PlatformInfoMsr.Bytes.SixthByte;
   if ((Gnvs->CpuNvs.PpmFlags & PPM_TURBO) != 0) {
     TurboRatioLimit.Qword = AsmReadMsr64 (MSR_TURBO_RATIO_LIMIT);
-    TurboBusRatio = (UINT8) (TurboRatioLimit.Dwords.Low & B_MSR_TURBO_RATIO_LIMIT_1C);
+    PssParams.TurboBusRatio = (UINT16) (TurboRatioLimit.Dwords.Low & B_MSR_TURBO_RATIO_LIMIT_1C);
   } else {
-    TurboBusRatio = 0;
+    PssParams.TurboBusRatio = 0;
   }
+  PssParams.PackageMaxPower = FVID_MAX_POWER;
+  PssParams.PackageMinPower = FVID_MIN_POWER;
+  PssParams.GetRelativePower = NULL;
+  PssParams.DoListAll = TRUE;
 
-  AcpiPatchPssTable (PssTbl, TurboBusRatio, MaxBusRatio, MinBusRatio,
-    FVID_MAX_POWER, FVID_MIN_POWER, NULL, TRUE);
+  AcpiPatchPssTable (PssTbl, &PssParams);
 
   return;
 }
