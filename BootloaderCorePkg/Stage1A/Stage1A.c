@@ -47,8 +47,8 @@ GetFlashMapBufInfo (
   UINT32         Stage1aFvBase;
 
   FlashMap      = NULL;
-  FlashMapBase  = (* (UINT32 *)FLASH_MAP_ADDRESS);
   Stage1aFvBase = PcdGet32 (PcdStage1AFdBase) + PcdGet32 (PcdFSPTSize);
+  FlashMapBase  = (* (UINT32 *)(UINT32)(Stage1aFvBase + PcdGet32 (PcdStage1AFvSize) + FLASH_MAP_ADDRESS));
   if ( (FlashMapBase > Stage1aFvBase) && \
        (FlashMapBase + sizeof(FLASH_MAP) < Stage1aFvBase + PcdGet32 (PcdStage1AFvSize) - 1) ) {
     // Verify FLASH_MAP is valid before access
