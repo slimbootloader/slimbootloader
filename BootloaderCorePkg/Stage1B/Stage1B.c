@@ -426,18 +426,6 @@ SecStartup2 (
   FspResetHandler (Status);
   ASSERT_EFI_ERROR (Status);
 
-  //
-  // Reset the system if FSP API returned FSP_STATUS_RESET_REQUIRED status
-  //
-  if ((Status >= FSP_STATUS_RESET_REQUIRED_COLD) && (Status <= FSP_STATUS_RESET_REQUIRED_8)) {
-    DEBUG ((DEBUG_INIT, "FSP Reboot\n"));
-    if (Status == FSP_STATUS_RESET_REQUIRED_WARM) {
-      ResetSystem(EfiResetWarm);
-    } else {
-      ResetSystem(EfiResetCold);
-    }
-  }
-
   FspReservedMemBase = (UINT32)GetFspReservedMemoryFromGuid (
                          HobList,
                          &FspReservedMemSize,
