@@ -14,9 +14,9 @@
 ; Notes:
 ;
 ;------------------------------------------------------------------------------
- 
+
     SECTION .text
- 
+
 ;------------------------------------------------------------------------------
 ; VOID
 ; EFIAPI
@@ -65,30 +65,3 @@ ASM_PFX(DisablePaging32):
 
     popfd
     ret
-
-;------------------------------------------------------------------------------
-; VOID *
-; EFIAPI
-; FlushCacheLine (
-;   IN      VOID                      *StartAddress,
-;   IN      VOID                      *EndAddress
-;   );
-;------------------------------------------------------------------------------
-global ASM_PFX(FlushCacheLine)
-ASM_PFX(FlushCacheLine):
-    ;
-    ; If the CPU does not support CLFLUSH instruction, 
-    ; then promote flush range to flush entire cache.
-    ;    
-    push    ecx
-    mov     eax, [esp +  8]    
-    mov     ecx, [esp + 12]    
-    sub     ecx, eax
-    shr     ecx, 6
-FlushNext:
-    clflush [eax]
-    add     eax, 64
-    loop    FlushNext
-    pop     ecx    
-    ret
-

@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -11,7 +11,7 @@
   FILE_GUID                      = 556f5d10-7309-4af4-b80a-8196bd60946f
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
-  LIBRARY_CLASS                  = PagingLib 
+  LIBRARY_CLASS                  = PagingLib
 
 #
 #  VALID_ARCHITECTURES           = IA32 X64 IPF EBC ARM ARC
@@ -19,13 +19,14 @@
 
 [Sources]
   PagingLib.c
-  
-[Sources.IA32]  
+  Paging32To64.c
+
+[Sources.IA32]
   Ia32/Paging32.nasm
-  
+
 [Packages]
   MdePkg/MdePkg.dec
-  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
 
-[LibraryClasses]  
+[LibraryClasses]
 

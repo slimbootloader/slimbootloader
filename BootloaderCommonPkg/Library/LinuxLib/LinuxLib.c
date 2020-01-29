@@ -1,7 +1,7 @@
 /** @file
   Linux image load library
 
-  Copyright (c) 2011 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2011 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -12,6 +12,7 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/HobLib.h>
 #include <Library/LinuxLib.h>
+#include <Library/PagingLib.h>
 #include <Guid/GraphicsInfoHob.h>
 #include <Guid/MemoryMapInfoGuid.h>
 
@@ -24,6 +25,19 @@
 VOID
 EFIAPI
 JumpToKernel (
+  IN VOID   *KernelStart,
+  IN VOID   *KernelBootParams
+  );
+
+/**
+  Jump to kernel 64-bit entry point.
+
+  @param[in] KernelStart       Pointer to kernel 64-bit entry point.
+  @param[in] KernelBootParams  Pointer to boot parameter structure.
+ **/
+VOID
+EFIAPI
+JumpToKernel64 (
   IN VOID   *KernelStart,
   IN VOID   *KernelBootParams
   );
@@ -305,7 +319,7 @@ UpdateLinuxBootParams (
 /**
   Load linux kernel image to specified address and setup boot parameters.
 
-  @param[in]  HobList    HOB list pointer. Not used for now.
+  @param[in]  HobList    HOB list pointer.
   @param[in]  Params     Extra parameters. Not used for now.
 **/
 VOID
@@ -316,11 +330,24 @@ LinuxBoot (
   )
 {
   BOOT_PARAMS   *Bp;
+  UINTN          KernelStart;
 
   Bp = GetLinuxBootParams ();
   if (Bp != NULL) {
     UpdateLinuxBootParams (Bp);
-    JumpToKernel ((VOID *)Bp->Hdr.Code32Start, Bp);
+    KernelStart = (UINTN)Bp->Hdr.Code32Start;
+    if (!IsLongModeEnabled ()) {
+      if (IsLongModeSupported () && ((Bp->Hdr.XloadFlags & BIT0) == BIT0)) {
+        KernelStart += 0x200;
+        DEBUG ((DEBUG_INFO, "Switch to LongMode and jump to 64-bit kernel entrypoint ...\n"));
+        JumpToLongMode ((UINT64)(UINTN)JumpToKernel64,
+                        (UINT64)KernelStart,
+                        (UINT64)(UINTN)Bp,
+                        (UINT64)(UINTN)HobList);
+      } else {
+        JumpToKernel ((VOID *)KernelStart, Bp);
+      }
+    }
   }
   CpuDeadLoop ();
 }
