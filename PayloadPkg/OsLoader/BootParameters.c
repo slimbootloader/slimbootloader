@@ -200,7 +200,7 @@ DEBUG_CODE_BEGIN ();
     DumpMbInfo (&LoadedImage->Image.MultiBoot.MbInfo);
     DumpMbBootState (&LoadedImage->Image.MultiBoot.BootState);
   } else if ((LoadedImage->Flags & LOADED_IMAGE_LINUX) != 0) {
-    DumpLinuxBootParams (LoadedImage->Image.Linux.BootParams);
+    DumpLinuxBootParams (GetLinuxBootParams ());
   }
 DEBUG_CODE_END ();
 }
@@ -315,7 +315,7 @@ UpdateOsParameters (
 
   UpdateOsMemMap (LoadedImage);
   if ((LoadedImage->Flags & LOADED_IMAGE_LINUX) != 0) {
-    LoadedImage->Image.Linux.BootParams->Hdr.CmdlineSize = LoadedImage->Image.Linux.CmdFile.Size;
+    GetLinuxBootParams ()->Hdr.CmdlineSize = LoadedImage->Image.Linux.CmdFile.Size;
   }
   DEBUG ((DEBUG_INFO, "\nDump normal boot image info:\n"));
   DisplayInfo (LoadedImage);

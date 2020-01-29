@@ -233,15 +233,15 @@ LoadBzImage (
 /**
   Update linux kernel boot parameters.
 
-  @retval EFI_SUCCESS        Linux boot parameters were updated successfully.
+  @param[in]  Bp             BootParams address to be updated
+
 **/
 VOID
 EFIAPI
 UpdateLinuxBootParams (
-  VOID
+  IN  BOOT_PARAMS            *Bp
   )
 {
-  BOOT_PARAMS                *Bp;
   EFI_HOB_GUID_TYPE          *GuidHob;
   EFI_PEI_GRAPHICS_INFO_HOB  *GfxInfoHob;
   UINTN                       MemoryMapSize;
@@ -250,7 +250,9 @@ UpdateLinuxBootParams (
   UINTN                       Index;
   EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *GfxMode;
 
-  Bp = GetLinuxBootParams ();
+  if (Bp == NULL) {
+    return;
+  }
 
   //
   // Get graphics data
@@ -290,7 +292,7 @@ UpdateLinuxBootParams (
   // Get memory map
   E820Entry = &Bp->E820Map[0];
   MemoryMapSize = (UINTN)ARRAY_SIZE (Bp->E820Map);
-  MapInfo = GetMemoryMapInfo();
+  MapInfo = GetMemoryMapInfo ();
   for (Index = 0; Index < MapInfo->Count && Index < MemoryMapSize; Index++) {
     E820Entry->Type = (UINT32)MapInfo->Entry[Index].Type;
     E820Entry->Addr = MapInfo->Entry[Index].Base;
@@ -298,7 +300,6 @@ UpdateLinuxBootParams (
     E820Entry++;
   }
   Bp->E820Entries = (UINT8)MapInfo->Count;
-
 }
 
 /**
@@ -316,7 +317,10 @@ LinuxBoot (
 {
   BOOT_PARAMS   *Bp;
 
-  UpdateLinuxBootParams ();
   Bp = GetLinuxBootParams ();
-  JumpToKernel ((VOID *)Bp->Hdr.Code32Start, Bp);
+  if (Bp != NULL) {
+    UpdateLinuxBootParams (Bp);
+    JumpToKernel ((VOID *)Bp->Hdr.Code32Start, Bp);
+  }
+  CpuDeadLoop ();
 }

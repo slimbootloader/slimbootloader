@@ -115,7 +115,6 @@ typedef struct {
   UINT16                  Reserved;
   UINT16                  ExtraBlobNumber;
   IMAGE_DATA              ExtraBlob[MAX_EXTRA_FILE_NUMBER];
-  BOOT_PARAMS             *BootParams;
 } LINUX_IMAGE;
 
 typedef struct {
@@ -359,20 +358,6 @@ UINT8
 GetNextBootOption (
   IN OS_BOOT_OPTION_LIST     *OsBootOptionList,
   IN UINT8                   BootOptionIndex
-  );
-
-/**
-  ASM function that goes into kernel image.
-
-  @param  KernelStart        Pointer to the start of kernel.
-  @param  KernelBootParams   Pointer to the boot parameter structure.
-
- **/
-VOID
-EFIAPI
-JumpToKernel (
-  VOID *KernelStart,
-  VOID *KernelBootParams
   );
 
 /**
