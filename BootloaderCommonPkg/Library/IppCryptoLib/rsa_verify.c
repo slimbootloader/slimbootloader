@@ -13,6 +13,7 @@
 #include "pcptool.h"
 
 #include <Library/CryptoLib.h>
+#include <Library/BlMemoryAllocationLib.h>
 
 /* Wrapper function for RSAVerify to make the inferface consistent.
  * Returns non-zero on failure, 0 on success.
@@ -22,18 +23,19 @@ int VerifyRsaSignature (CONST PUB_KEY_HDR *PubKeyHdr, CONST SIGNATURE_HDR *Signa
   int    sz_n;
   int    sz_e;
   int    sz_rsa;
-  int    sz_adj;
+  int    sz_scratch;
   int    signature_verified;
 
   Ipp8u  *rsa_n;
   Ipp8u  *rsa_e;
   Ipp16u  mod_len;
-  Ipp8u  bn_buf[5200];
+  Ipp8u  *bn_buf;
   IppsBigNumState *bn_rsa_n;
   IppsBigNumState *bn_rsa_e;
   Ipp8u *scratch_buf;
   IppStatus err;
   IppsRSAPublicKeyState *rsa_key_s;
+  Ipp8u *bn_buf_ptr;
   const IppsHashMethod  *pHashMethod = NULL;
 
   rsa_n = (Ipp8u *) PubKeyHdr->KeyData;
@@ -54,47 +56,62 @@ int VerifyRsaSignature (CONST PUB_KEY_HDR *PubKeyHdr, CONST SIGNATURE_HDR *Signa
     return err;
   }
 
-  rsa_key_s = (IppsRSAPublicKeyState*)bn_buf;
-  sz_adj = ((sz_rsa + sizeof(Ipp32u)) & ~(sizeof(Ipp32u)-1));
-  scratch_buf = bn_buf + sz_adj;
-  sz_adj = sz_adj + sz_adj;
-  bn_rsa_n = (IppsBigNumState *)(bn_buf + sz_adj);
-  sz_adj = sz_adj + ((sz_n + sizeof(Ipp32u)) & ~(sizeof(Ipp32u)-1));
-  bn_rsa_e = (IppsBigNumState *)(bn_buf + sz_adj);
-  sz_adj = sz_adj + ((sz_e + sizeof(Ipp32u)) & ~(sizeof(Ipp32u)-1));
+  // Allign sz
+  sz_rsa = IPP_ALIGNED_SIZE (sz_rsa, sizeof(Ipp32u));
+  sz_n   = IPP_ALIGNED_SIZE (sz_n, sizeof(Ipp32u));
+  sz_e   = IPP_ALIGNED_SIZE (sz_e, sizeof(Ipp32u));
 
-  if (sz_adj > sizeof(bn_buf)) {
+  // Allocate BN Buf
+  bn_buf = AllocateTemporaryMemory (sz_rsa + sz_n + sz_e);
+  if (bn_buf ==  NULL) {
     return ippStsNoMemErr;
   }
 
+  bn_buf_ptr   = bn_buf;
+  rsa_key_s    = (IppsRSAPublicKeyState*) bn_buf_ptr;
+  bn_buf_ptr   = bn_buf_ptr + sz_rsa;
+  bn_rsa_n     = (IppsBigNumState *) bn_buf_ptr;
+  bn_buf_ptr   = bn_buf_ptr + sz_n;
+  bn_rsa_e     = (IppsBigNumState *) bn_buf_ptr;
+
   err = ippsBigNumInit(mod_len / sizeof(Ipp32u), bn_rsa_n);
   if (err != ippStsNoErr) {
-    return err;
+    goto Done;
   }
 
   err = ippsSetOctString_BN(rsa_n, mod_len, bn_rsa_n);
   if (err != ippStsNoErr) {
-    return err;
+    goto Done;
   }
 
   err = ippsBigNumInit(RSA_E_SIZE / sizeof(Ipp32u), bn_rsa_e);
   if (err != ippStsNoErr) {
-    return err;
+    goto Done;
   }
 
   err = ippsSetOctString_BN(rsa_e, RSA_E_SIZE, bn_rsa_e);
   if (err != ippStsNoErr) {
-    return err;
+    goto Done;
   }
 
   err = ippsRSA_InitPublicKey(mod_len * 8, RSA_E_SIZE * 8, rsa_key_s, sz_rsa);
   if (err != ippStsNoErr) {
-    return err;
+    goto Done;
   }
 
   err = ippsRSA_SetPublicKey(bn_rsa_n, bn_rsa_e, rsa_key_s);
   if (err != ippStsNoErr) {
-    return err;
+    goto Done;
+  }
+
+  err =ippsRSA_GetBufferSizePublicKey (&sz_scratch, rsa_key_s);
+  if (err != ippStsNoErr) {
+    goto Done;
+  }
+
+  scratch_buf = AllocateTemporaryMemory (sz_scratch);
+  if (scratch_buf ==  NULL) {
+    goto Done;
   }
 
   signature_verified = 0;
@@ -112,9 +129,17 @@ int VerifyRsaSignature (CONST PUB_KEY_HDR *PubKeyHdr, CONST SIGNATURE_HDR *Signa
     err = ippStsNoOperation;
   }
 
-  if (err != ippStsNoErr) {
-    return err;
-  }
+  Done:
+    if (scratch_buf) {
+      FreeTemporaryMemory (scratch_buf);
+    }
+    if (bn_buf) {
+      FreeTemporaryMemory (bn_buf);
+    }
+    if (err != ippStsNoErr) {
+      return err;
+    }
+
   return !signature_verified;
 }
 
