@@ -33,7 +33,7 @@ def rebuild_basetools ():
 
     if os.name == 'posix':
         if not check_files_exist (exe_list, os.path.join(sblsource, 'BaseTools', 'Source', 'C', 'bin')):
-            ret = subprocess.call(['make', '-C', 'BaseTools'])
+            ret = run_process (['make', '-C', 'BaseTools'])
 
     elif os.name == 'nt':
 
@@ -864,6 +864,9 @@ class Build(object):
                 if mode & STITCH_OPS.MODE_FILE_IGNOR:
                     continue
                 new_list.append((src, algo, val, mode, pos))
+                if src == 'EMPTY':
+                    bins.extend (b'\xff' * val)
+                    continue
                 src_path = os.path.join(self._fv_dir, src)
                 bas_path = os.path.splitext(src_path)[0]
                 if not os.path.exists(src_path):
