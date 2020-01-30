@@ -220,12 +220,13 @@ LoadBzImage (
 /**
   Update linux kernel boot parameters.
 
-  @retval EFI_SUCCESS        Linux boot parameters were updated successfully.
+  @param[in]  Bp             BootParams address to be updated
+
 **/
 VOID
 EFIAPI
 UpdateLinuxBootParams (
-  VOID
+  IN  BOOT_PARAMS            *Bp
   );
 
 /**

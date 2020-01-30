@@ -130,6 +130,7 @@ StartPreOsChecker (
   if (OsBootParam == NULL) {
     return EFI_INVALID_PARAMETER;
   }
+  UpdateLinuxBootParams (OsBootParam);
 
   PreOsParams.Version     = 0x1;
   PreOsParams.HeapSize    = EFI_SIZE_TO_PAGES (0);

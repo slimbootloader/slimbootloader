@@ -412,8 +412,6 @@ SetupBootImage (
                           LinuxImage->InitrdFile.Addr, LinuxImage->InitrdFile.Size,
                           LinuxImage->CmdFile.Addr,    LinuxImage->CmdFile.Size);
     if (!EFI_ERROR (Status)) {
-      UpdateLinuxBootParams ();
-      LinuxImage->BootParams = GetLinuxBootParams ();
       LoadedImage->Flags  = (LoadedImage->Flags  & ~LOADED_IMAGE_MULTIBOOT) | LOADED_IMAGE_LINUX;
     }
   }
@@ -557,7 +555,6 @@ StartBooting (
   )
 {
   MULTIBOOT_IMAGE            *MultiBoot;
-  BOOT_PARAMS                *BootParams;
   EFI_STATUS                 Status;
 
   DEBUG_CODE_BEGIN();
@@ -567,14 +564,12 @@ StartBooting (
   Status = EFI_SUCCESS;
 
   if ((LoadedImage->Flags & LOADED_IMAGE_LINUX) != 0) {
-    BootParams = LoadedImage->Image.Linux.BootParams;
-
     if (FeaturePcdGet (PcdPreOsCheckerEnabled) && IsPreOsCheckerLoaded ()) {
       BeforeOSJump ("Starting Pre-OS Checker ...");
-      StartPreOsChecker (BootParams);
+      StartPreOsChecker (GetLinuxBootParams ());
     } else {
       BeforeOSJump ("Starting Kernel ...");
-      JumpToKernel ((VOID *)BootParams->Hdr.Code32Start, (VOID *) BootParams);
+      LinuxBoot ((VOID *)(UINTN)PcdGet32 (PcdPayloadHobList), NULL);
     }
     Status = EFI_DEVICE_ERROR;
   } else if ((LoadedImage->Flags & LOADED_IMAGE_MULTIBOOT) != 0) {
