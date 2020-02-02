@@ -49,7 +49,7 @@ class EfiSection (EfiSectionClassObject):
     #   @param  Dict        dictionary contains macro and its value
     #   @retval tuple       (Generated file name list, section alignment)
     #
-    def GenSection(self, OutputPath, ModuleName, SecNum, KeyStringList, FfsInf = None, Dict = {}, IsMakefile = False) :
+    def GenSection(self, OutputPath, ModuleName, SecNum, KeyStringList, FfsInf = None, Dict = None, IsMakefile = False) :
 
         if self.FileName is not None and self.FileName.startswith('PCD('):
             self.FileName = GenFdsGlobalVariable.GetPcdValue(self.FileName)
@@ -76,6 +76,8 @@ class EfiSection (EfiSectionClassObject):
 
         """If the file name was pointed out, add it in FileList"""
         FileList = []
+        if Dict is None:
+            Dict = {}
         if Filename is not None:
             Filename = GenFdsGlobalVariable.MacroExtend(Filename, Dict)
             # check if the path is absolute or relative
@@ -93,7 +95,7 @@ class EfiSection (EfiSectionClassObject):
                 if '.depex' in SuffixMap:
                     FileList.append(Filename)
         else:
-            FileList, IsSect = Section.Section.GetFileList(FfsInf, self.FileType, self.FileExtension, Dict, IsMakefile=IsMakefile)
+            FileList, IsSect = Section.Section.GetFileList(FfsInf, self.FileType, self.FileExtension, Dict, IsMakefile=IsMakefile, SectionType=SectionType)
             if IsSect :
                 return FileList, self.Alignment
 
@@ -217,6 +219,26 @@ class EfiSection (EfiSectionClassObject):
                                                      Ui=StringData, IsMakefile=IsMakefile)
                 OutputFileList.append(OutputFile)
 
+        #
+        # If Section Type is BINARY_FILE_TYPE_RAW
+        #
+        elif SectionType == BINARY_FILE_TYPE_RAW:
+            """If File List is empty"""
+            if FileList == []:
+                if self.Optional == True:
+                    GenFdsGlobalVariable.VerboseLogger("Optional Section don't exist!")
+                    return [], None
+                else:
+                    EdkLogger.error("GenFds", GENFDS_ERROR, "Output file for %s section could not be found for %s" % (SectionType, InfFileName))
+
+            elif len(FileList) > 1:
+                EdkLogger.error("GenFds", GENFDS_ERROR,
+                                "Files suffixed with %s are not allowed to have more than one file in %s[Binaries] section" % (
+                                self.FileExtension, InfFileName))
+            else:
+                for File in FileList:
+                    File = GenFdsGlobalVariable.MacroExtend(File, Dict)
+                    OutputFileList.append(File)
 
         else:
             """If File List is empty"""

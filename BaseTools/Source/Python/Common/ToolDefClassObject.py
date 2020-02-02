@@ -14,7 +14,7 @@ import re
 from . import EdkLogger
 
 from .BuildToolError import *
-from Common.TargetTxtClassObject import TargetTxtDict
+from Common.TargetTxtClassObject import TargetTxt
 from Common.LongFilePathSupport import OpenLongFilePath as open
 from Common.Misc import PathClass
 from Common.StringUtils import NormPath
@@ -105,7 +105,7 @@ class ToolDefClassObject(object):
 
     ## IncludeToolDefFile
     #
-    # Load target.txt file and parse it as if it's contents were inside the main file
+    # Load target.txt file and parse it as if its contents were inside the main file
     #
     # @param Filename:  Input value for full path of tools_def.txt
     #
@@ -263,7 +263,7 @@ class ToolDefClassObject(object):
 # @retval ToolDef An instance of ToolDefClassObject() with loaded tools_def.txt
 #
 def ToolDefDict(ConfDir):
-    Target = TargetTxtDict(ConfDir)
+    Target = TargetTxt
     ToolDef = ToolDefClassObject()
     if TAB_TAT_DEFINES_TOOL_CHAIN_CONF in Target.TargetTxtDictionary:
         ToolsDefFile = Target.TargetTxtDictionary[TAB_TAT_DEFINES_TOOL_CHAIN_CONF]
@@ -274,6 +274,8 @@ def ToolDefDict(ConfDir):
     else:
         ToolDef.LoadToolDefFile(os.path.normpath(os.path.join(ConfDir, gDefaultToolsDefFile)))
     return ToolDef
+
+ToolDef = ToolDefDict((os.path.join(os.getenv("WORKSPACE"),"Conf")))
 
 ##
 #

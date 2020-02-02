@@ -33,7 +33,7 @@ def RunCommand(WorkDir=None, *Args, **kwargs):
     if "stderr" not in kwargs:
         kwargs["stderr"] = subprocess.STDOUT
     if "stdout" not in kwargs:
-        kwargs["stdout"] = sys.stdout
+        kwargs["stdout"] = subprocess.PIPE
     p = subprocess.Popen(Args, cwd=WorkDir, stderr=kwargs["stderr"], stdout=kwargs["stdout"])
     stdout, stderr = p.communicate()
     message = ""
@@ -104,7 +104,7 @@ class ThreadControl(object):
         while len(self.running) > 0:
             time.sleep(0.1)
         if self.error:
-            print("subprocess not exit sucessfully")
+            print("subprocess not exit successfully")
             print(self.errorMsg)
 
     def startTask(self):
