@@ -16,6 +16,7 @@
   LIBRARY_CLASS                  = AbSupportLib
 
 [Sources]
+  AbSupport.h
   AbSupportLib.c
 
 [LibraryClasses]

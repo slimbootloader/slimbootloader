@@ -22,6 +22,7 @@
 #  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
 #
 [Sources]
+  UsbKbLibInternal.h
   UsbKbLib.c
 
 [Packages]

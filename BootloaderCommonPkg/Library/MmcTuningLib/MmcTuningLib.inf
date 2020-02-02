@@ -20,6 +20,7 @@
 #
 
 [Sources]
+  MmcTuningLibPrivate.h
   MmcTuningLib.c
 
 [Packages]

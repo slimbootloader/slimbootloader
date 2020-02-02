@@ -22,6 +22,8 @@
 #
 
 [Sources]
+  VariableFormat.h
+  LiteVariableLib.h
   LiteVariableLib.c
 
 [Packages]

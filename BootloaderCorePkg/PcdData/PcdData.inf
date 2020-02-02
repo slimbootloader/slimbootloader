@@ -23,6 +23,7 @@
 #
 
 [Sources]
+  PcdData.h
   PcdData.c
 
 [Packages]

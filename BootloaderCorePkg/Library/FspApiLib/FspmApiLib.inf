@@ -21,6 +21,7 @@
 #
 
 [Sources]
+  FspApiLibInternal.h
   FspTempRamExit.c
   FspMemoryInit.c
   FspMisc.c

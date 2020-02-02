@@ -20,6 +20,9 @@
 #
 
 [Sources]
+  GpioLibrary.h
+  GpioInitLib.h
+  GpioPrivateLib.h
   GpioInitLib.c
   GpioInit.c
   GpioLib.c

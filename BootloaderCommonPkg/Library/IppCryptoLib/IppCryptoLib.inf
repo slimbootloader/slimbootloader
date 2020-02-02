@@ -23,6 +23,35 @@
 #
 
 [Sources]
+  $(IPP_PATH)/pcpmulbnukara.h
+  $(IPP_PATH)/pcpscramble.h
+  $(IPP_PATH)/pcphmac_rmf.h
+  $(IPP_PATH)/pcptool.h
+  $(IPP_PATH)/ippdefs.h
+  $(IPP_PATH)/owncp.h
+  $(IPP_PATH)/pcphmac.h
+  $(IPP_PATH)/pcpngrsamontstuff.h
+  $(IPP_PATH)/ippcpdefs.h
+  $(IPP_PATH)/pcphashmethod_rmf.h
+  $(IPP_PATH)/ipptypes.h
+  $(IPP_PATH)/pcpbnumisc.h
+  $(IPP_PATH)/pcpngrsa.h
+  $(IPP_PATH)/ippcp.h
+  $(IPP_PATH)/pcpvariant.h
+  $(IPP_PATH)/pcphash_rmf.h
+  $(IPP_PATH)/pcpbnu32arith.h
+  $(IPP_PATH)/ippbase.h
+  $(IPP_PATH)/pcpmontgomery.h
+  $(IPP_PATH)/gsmodstuff.h
+  $(IPP_PATH)/pcpmontred.h
+  $(IPP_PATH)/pcphash.h
+  $(IPP_PATH)/pcpbn.h
+  $(IPP_PATH)/pcpvariant_abl.h
+  $(IPP_PATH)/pcpbnuimpl.h
+  $(IPP_PATH)/gsmodmethod.h
+  $(IPP_PATH)/owndefs.h
+  $(IPP_PATH)/pcpbnuarith.h
+  $(IPP_PATH)/pcpbnu32misc.h
   $(IPP_PATH)/gsmodmethod.c
   $(IPP_PATH)/gsmodstuff.c
   $(IPP_PATH)/pcpbnca.c

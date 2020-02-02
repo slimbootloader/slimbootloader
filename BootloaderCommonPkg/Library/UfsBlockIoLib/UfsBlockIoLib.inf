@@ -24,6 +24,10 @@
 #
 
 [Sources]
+  UfsHcMem.h
+  UfsHci.h
+  UfsInternal.h
+  UfsPciHc.h
   UfsBlockIoLib.c
   UfsHci.c
   UfsHcMem.c

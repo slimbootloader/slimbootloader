@@ -23,6 +23,7 @@
 #
 
 [Sources.common]
+  UsbInitLibInternal.h
   UsbInitLib.c
 
 [Packages]

@@ -35,6 +35,7 @@
 #
 
 [Sources]
+  Service.h
   PcdLib.c
   Pcd.c
   Service.c

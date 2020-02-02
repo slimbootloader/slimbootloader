@@ -20,6 +20,11 @@
 #
 
 [Sources]
+  Shell.h
+  ShellCmds.h
+  History.h
+  CmdPciUtil.h
+  Parsing.h
   CmdBoot.c
   CmdCpuid.c
   CmdDmesg.c
