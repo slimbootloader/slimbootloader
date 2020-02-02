@@ -62,6 +62,8 @@ class WorkspaceDatabase(object):
         }
 
         _CACHE_ = {}    # (FilePath, Arch)  : <object>
+        def GetCache(self):
+            return self._CACHE_
 
         # constructor
         def __init__(self, WorkspaceDb):
@@ -184,6 +186,10 @@ class WorkspaceDatabase(object):
             for Package in LibObj.Packages:
                 if Package not in PackageList:
                     PackageList.append(Package)
+        for Package in Pa.Packages:
+            if Package in PackageList:
+                continue
+            PackageList.append(Package)
 
         return PackageList
 
@@ -203,6 +209,7 @@ class WorkspaceDatabase(object):
             EdkLogger.error('build', PARSER_ERROR, "Failed to parser DSC file: %s" % Dscfile)
         return Platform
 
+BuildDB = WorkspaceDatabase()
 ##
 #
 # This acts like the main() function for the script, unless it is 'import'ed into another
