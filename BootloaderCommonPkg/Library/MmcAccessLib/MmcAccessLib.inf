@@ -20,6 +20,10 @@
 #
 
 [Sources]
+  SdMmcPciHci.h
+  SdMmcPassThru.h
+  SdMmcPciHcDxe.h
+  MmcAccessLibPrivate.h
   MmcAccessLib.c
   MmcAccessLibGeneric.c
   SdMmcPciHci.c

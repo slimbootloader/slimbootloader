@@ -21,6 +21,7 @@
 #
 
 [Sources]
+  FspApiLibInternal.h
   FspSiliconInit.c
   FspNotifyPhase.c
   FspMisc.c

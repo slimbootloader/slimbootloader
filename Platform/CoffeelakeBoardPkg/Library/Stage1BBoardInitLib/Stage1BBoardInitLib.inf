@@ -20,6 +20,7 @@
 #
 
 [Sources]
+  PreMemGpioTables.h
   Stage1BBoardInitLib.c
 
 [Packages]

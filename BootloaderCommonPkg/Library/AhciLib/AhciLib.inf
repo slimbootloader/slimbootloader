@@ -21,6 +21,8 @@
 #
 
 [Sources]
+  AhciMode.h
+  AhciDevice.h
   AhciBlkIo.c
   AhciMode.c
   AhciDevice.c

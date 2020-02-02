@@ -20,6 +20,8 @@
 #
 
 [Sources]
+  TpmEventLog.h
+  TpmLibInternal.h
   TpmLib.c
   Tpm2Ptp.c
   Tpm2Tis.c

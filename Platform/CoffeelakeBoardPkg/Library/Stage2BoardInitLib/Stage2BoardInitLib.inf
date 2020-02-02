@@ -20,6 +20,8 @@
 #
 
 [Sources]
+  GpioTables.h
+  HdaVerbTable.h
   Stage2BoardInitLib.c
 
 [Packages]

@@ -21,6 +21,7 @@
 #
 
 [Sources]
+  Stage1B.h
   Stage1B.c
 
 [Sources.IA32]

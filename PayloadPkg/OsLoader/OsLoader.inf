@@ -25,6 +25,9 @@
 #
 
 [Sources]
+  PreOsChecker.h
+  BlockIoTest.h
+  OsLoader.h
   OsLoader.c
   BootOption.c
   BootConfig.c

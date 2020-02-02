@@ -22,6 +22,8 @@
 #
 
 [Sources]
+  PeCoffExtraActionLib.h
+  ImageDebugSupport.h
   DebugAgentLibNull.c
   PeCoffExtraActionLibNull.c
 

@@ -21,6 +21,7 @@
 #
 
 [Sources]
+  FirmwareUpdateHelper.h
   FirmwareUpdate.c
   FirmwareUpdateHelper.c
   GetCapsuleImage.c

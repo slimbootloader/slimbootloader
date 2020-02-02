@@ -21,6 +21,7 @@
 #
 
 [Sources]
+  Stage2.h
   Stage2.c
   Stage2Support.c
 

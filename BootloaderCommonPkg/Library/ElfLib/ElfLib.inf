@@ -20,6 +20,8 @@
 #
 
 [Sources]
+  ElfCommon.h
+  Elf32.h
   ElfLib.c
 
 [Packages]
