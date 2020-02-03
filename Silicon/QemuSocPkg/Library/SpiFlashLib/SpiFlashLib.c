@@ -406,5 +406,9 @@ SpiFlashErase (
     Ptr += 0x1000;
   }
 
+  if (ByteCount > 0) {
+    *(Ptr - 1) = READ_ARRAY_CMD;
+  }
+
   return EFI_SUCCESS;
 }
