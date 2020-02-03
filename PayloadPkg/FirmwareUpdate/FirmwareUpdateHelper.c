@@ -458,6 +458,8 @@ UpdateSblComponent (
   EFI_STATUS    Status;
   FLASH_MAP_ENTRY_DESC  *Entry;
 
+  Status = EFI_NOT_FOUND;
+
   DEBUG ((DEBUG_INFO, "UpdateSblComponent : %x \n", (UINT32)ImageHdr->UpdateHardwareInstance));
 
   if ((UINT32)RShiftU64 (ImageHdr->UpdateHardwareInstance, 32)){

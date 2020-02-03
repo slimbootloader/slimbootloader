@@ -1004,6 +1004,7 @@ InitFirmwareUpdate (
         }
       } else {
         DEBUG((DEBUG_ERROR, "FindImage failed with Status = %r\n", Status));
+        continue;
       }
 
       //
