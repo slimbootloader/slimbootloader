@@ -390,6 +390,10 @@ GetComponentInfoByPartition (
   }
 
   FlashMapPtr = GetFlashMapPtr ();
+  if (FlashMapPtr == NULL) {
+    return EFI_NOT_FOUND;
+  }
+
   RomBase = (UINT32) (0x100000000ULL - FlashMapPtr->RomSize);
 
   //
@@ -481,6 +485,10 @@ GetComponentHash (
 
   HashEntryPtr = HashStorePtr->Data;
   HashEndPtr   = (UINT8 *) HashStorePtr +  HashStorePtr->UsedLength;
+
+  if (HashEntryPtr >= HashEndPtr) {
+    return EFI_INVALID_PARAMETER;
+  }
 
   while (HashEntryPtr < HashEndPtr) {
 
