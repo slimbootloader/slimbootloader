@@ -1539,7 +1539,7 @@ EndList
             if Item['length'] == 0:
                 continue
             if Item['find']:
-                Offset = BinDat.find (Item['find'])
+                Offset = BinDat.find (Item['find'].encode())
                 if Offset >= 0:
                     BaseOff = Offset
                 else:
