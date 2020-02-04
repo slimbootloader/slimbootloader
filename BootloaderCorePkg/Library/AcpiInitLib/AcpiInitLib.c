@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -50,14 +50,16 @@ typedef struct {
 /**
   Update Firmware Performance Data Table (FPDT).
 
-  @param[in] Table          Pointer of ACPI FPDT Table.
+  @param[in]  Table         Pointer of ACPI FPDT Table.
+  @param[out] ExtraSize     Extra size the table needed.
 
   @retval EFI_SUCCESS       Update ACPI FPDT table successfully.
   @retval Others            Failed to update FPDT table.
  **/
 EFI_STATUS
 UpdateFpdt (
-  IN VOID                             *Table
+  IN  UINT8                             *Table,
+  OUT UINT32                            *ExtraSize
   );
 
 const EFI_ACPI_5_0_ROOT_SYSTEM_DESCRIPTION_POINTER RsdpTmp = {
@@ -519,6 +521,7 @@ AcpiInit (
   UINT32                    SectionLen;
   UINT32                    UpdateRdstXsdt;
   EFI_STATUS                Status;
+  UINT32                    ExtraSize;
 
   Facs = NULL;
   Dsdt = NULL;
@@ -577,6 +580,7 @@ AcpiInit (
     }
 
     UpdateRdstXsdt = 1;
+    ExtraSize      = 0;
 
     switch (Table->Signature) {
     case EFI_ACPI_5_0_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE:
@@ -608,7 +612,7 @@ AcpiInit (
       break;
     case EFI_ACPI_5_0_FIRMWARE_PERFORMANCE_DATA_TABLE_SIGNATURE:
       // FPDT
-      Status = UpdateFpdt (Current);
+      Status = UpdateFpdt (Current, &ExtraSize);
       if (Status != EFI_SUCCESS) {
         return Status;
       }
@@ -641,7 +645,7 @@ AcpiInit (
     SectionLen = * (UINT32 *) (TblPtr - 4) & 0x00FFFFFF;
     TblPtr = TblPtr + ((SectionLen + 3) & ~3);
 
-    TotalSize = ((EFI_ACPI_COMMON_HEADER *)Current)->Length;
+    TotalSize = ((EFI_ACPI_COMMON_HEADER *)Current)->Length + ExtraSize;
     Current += TotalSize;
   }
 

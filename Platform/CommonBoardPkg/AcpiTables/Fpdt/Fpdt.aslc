@@ -1,7 +1,7 @@
 /**@file
   This file contains a structure definition for the ACPI FPDT Table.
 
-  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -21,16 +21,10 @@
 #define EFI_ACPI_FPDT_CREATOR_ID       SIGNATURE_32('C','R','E','A')
 #define EFI_ACPI_FPDT_CREATOR_REVISION 0x0100000D
 
-INTERNAL_FIRMWARE_PERFORMANCE_TABLE  FPDT = {
-  { //FIRMWARE_PERFORMANCE_TABLE
+FIRMWARE_PERFORMANCE_TABLE  FPDT = {
     {
       EFI_ACPI_5_0_FIRMWARE_PERFORMANCE_DATA_TABLE_SIGNATURE,
-      //
-      // The FPDT table length should be sizeof (FIRMWARE_PERFORMANCE_TABLE).
-      // Here INTERNAL_FIRMWARE_PERFORMANCE_TABLE includes other tables,  later code will
-      // update the tables and this length in runtime.
-      //
-      sizeof (INTERNAL_FIRMWARE_PERFORMANCE_TABLE),
+      sizeof (FIRMWARE_PERFORMANCE_TABLE),
       EFI_ACPI_5_0_FIRMWARE_PERFORMANCE_DATA_TABLE_REVISION,    // Revision
       0x00,                             // Checksum will be updated at runtime
       EFI_ACPI_FPDT_OEM_ID,             // OEMID, a 6 bytes long field
@@ -63,7 +57,6 @@ INTERNAL_FIRMWARE_PERFORMANCE_TABLE  FPDT = {
       0,  // Reserved
       0   // S3PerformanceTablePointer will be updated at runtime.
     }
-  }
 };
 
 
