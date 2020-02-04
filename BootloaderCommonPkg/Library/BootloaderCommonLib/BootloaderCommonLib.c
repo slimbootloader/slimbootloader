@@ -93,6 +93,10 @@ DumpHex (
   UINTN Size;
   UINTN Index;
 
+  if (UserData == NULL){
+    return;
+  }
+
   Data = UserData;
   while (DataSize != 0) {
     Size = 16;
