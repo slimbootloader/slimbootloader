@@ -777,6 +777,8 @@ TpmChangePlatformAuth (
     NewPlatformAuth.size = SHA512_DIGEST_SIZE;
   } else if (PcrBankActive & HASH_ALG_SM3_256){
     NewPlatformAuth.size = SM3_DIGEST_SIZE;
+  } else {
+    return RETURN_INVALID_PARAMETER;
   }
 
   if ((GetRandomBytes(NewPlatformAuth.buffer, NewPlatformAuth.size) == 0) &&

@@ -38,6 +38,8 @@ int VerifyRsaSignature (CONST PUB_KEY_HDR *PubKeyHdr, CONST SIGNATURE_HDR *Signa
   Ipp8u *bn_buf_ptr;
   const IppsHashMethod  *pHashMethod = NULL;
 
+  signature_verified = 0;
+
   rsa_n = (Ipp8u *) PubKeyHdr->KeyData;
   rsa_e = (Ipp8u *) PubKeyHdr->KeyData + PubKeyHdr->KeySize - RSA_E_SIZE;
   mod_len = PubKeyHdr->KeySize - RSA_E_SIZE;
@@ -114,7 +116,6 @@ int VerifyRsaSignature (CONST PUB_KEY_HDR *PubKeyHdr, CONST SIGNATURE_HDR *Signa
     goto Done;
   }
 
-  signature_verified = 0;
   if ((SignatureHdr->HashAlg == HASH_TYPE_SHA256)
           && (FixedPcdGet8(PcdIppHashLibSupportedMask) & IPP_HASHLIB_SHA2_256)){
     pHashMethod = ippsHashMethod_SHA256();
