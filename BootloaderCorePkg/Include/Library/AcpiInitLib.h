@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -42,17 +42,6 @@ typedef struct {
   EFI_ACPI_5_0_FPDT_PERFORMANCE_TABLE_HEADER  Header;    ///< Common ACPI table header.
   EFI_ACPI_5_0_FPDT_S3_RESUME_RECORD          S3Resume;  ///< Basic S3 Resume performance record.
 } S3_PERFORMANCE_TABLE;
-
-///
-/// This table includes all FPDT related tables.
-/// Make sure the first table is FIRMWARE_PERFORMANCE_TABLE table which would be visible to others.
-/// The other tables would are implementation specific
-///
-typedef struct {
-  FIRMWARE_PERFORMANCE_TABLE             FirmwarePerfTable;
-  BOOT_PERFORMANCE_TABLE                 BootPointerRecord;
-  S3_PERFORMANCE_TABLE                   S3PointerRecord;
-} INTERNAL_FIRMWARE_PERFORMANCE_TABLE;
 
 #pragma pack()
 
