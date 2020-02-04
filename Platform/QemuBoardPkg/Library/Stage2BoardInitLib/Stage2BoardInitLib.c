@@ -279,6 +279,9 @@ BoardInit (
     Length = 0;
     Status = LoadComponent (SIGNATURE_32('I', 'P', 'F', 'W'), SIGNATURE_32('T', 'S', 'T', '3'), &Buffer,  &Length);
     DEBUG ((DEBUG_INFO, "Load IP firmware @ %p:0x%X - %r\n", Buffer, Length, Status));
+    if (!EFI_ERROR(Status)) {
+      DumpHex (2, 0, Length > 16 ? 16 : Length, Buffer);
+    }
     break;
 
   case PostPciEnumeration:
