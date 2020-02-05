@@ -278,4 +278,5 @@ FV = OsLoader
   FILE FREEFORM = $(NAMED_GUID) {
     RAW ACPI  Optional     |.acpi
     RAW ASL   Optional     |.aml
+    RAW BIN   Optional     |.bin
   }
