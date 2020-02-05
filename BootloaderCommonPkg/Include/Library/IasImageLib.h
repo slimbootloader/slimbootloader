@@ -85,7 +85,7 @@ typedef struct {
   UINT8           *CompBuf;  // IAS Image buffer address
   UINT32           CompLen;  // IAS image length
   HASH_ALG_TYPE    HashAlg;  // Hash Alg used for HashData
-  UINT8           *HashData; // Hash of the IAS image
+  UINT8            HashData[HASH_DIGEST_MAX]; // Hash of the IAS image
 } IAS_IMAGE_INFO;
 
 /**
