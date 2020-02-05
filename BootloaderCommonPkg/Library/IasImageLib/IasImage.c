@@ -45,7 +45,6 @@ IsIasImageValid (
   UINT32                     KeyIdx;
   UINT8                      PubKeyBuf[sizeof(PUB_KEY_HDR) + RSA2048_NUMBYTES + RSA_E_SIZE];
   UINT8                      SignBuf[sizeof(SIGNATURE_HDR) + RSA2048_NUMBYTES];
-  UINT8                      DigestHash[HASH_DIGEST_MAX];
 
   Hdr = (IAS_HEADER *) ImageAddr;
 
@@ -106,7 +105,7 @@ IsIasImageValid (
 
 
   Status = DoRsaVerify ((CONST UINT8 *)Hdr, ((UINT32)IAS_PAYLOAD_END (Hdr)) - ((UINT32)Hdr),
-                         HASH_USAGE_PUBKEY_OS, SignHdr, PubKeyHdr, PcdGet8(PcdCompSignHashAlg), NULL, DigestHash);
+                         HASH_USAGE_PUBKEY_OS, SignHdr, PubKeyHdr, PcdGet8(PcdCompSignHashAlg), NULL, IasImageInfo->HashData);
   if (EFI_ERROR (Status) != EFI_SUCCESS) {
     DEBUG ((DEBUG_ERROR, "IAS image verification failed!\n"));
     return NULL;
@@ -117,7 +116,6 @@ IsIasImageValid (
   IasImageInfo->CompBuf  = (UINT8 *)Hdr;
   IasImageInfo->CompLen  = ((UINT32)IAS_PAYLOAD_END (Hdr)) - ((UINT32)Hdr);
   IasImageInfo->HashAlg  = PcdGet8(PcdCompSignHashAlg);
-  IasImageInfo->HashData = DigestHash;
 
   return Hdr;
 }
