@@ -1,7 +1,7 @@
 ## @file
 #  Check a patch for various format issues
 #
-#  Copyright (c) 2015 - 2019, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2015 - 2020, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -9,7 +9,7 @@
 from __future__ import print_function
 
 VersionNumber = '0.1'
-__copyright__ = "Copyright (c) 2015 - 2016, Intel Corporation  All rights reserved."
+__copyright__ = "Copyright (c) 2015 - 2020, Intel Corporation  All rights reserved."
 
 import email
 import argparse
@@ -313,7 +313,10 @@ class GitDiffCheck:
             elif line.startswith('-'):
                 pass
             elif line.startswith('+'):
-                self.check_added_line(line[1:])
+                if re.search("\+Subproject commit [0-9a-f]{40}", line):
+                    pass
+                else:
+                    self.check_added_line(line[1:])
             elif line.startswith('\r\n'):
                 pass
             elif line.startswith(r'\ No newline '):
