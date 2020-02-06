@@ -154,12 +154,6 @@ class InfBuildData(ModuleBuildClassObject):
         self._PcdComments = None
         self._BuildOptions = None
         self._DependencyFileList = None
-        self.LibInstances = []
-        self.ReferenceModules = set()
-
-    def SetReferenceModule(self,Module):
-        self.ReferenceModules.add(Module)
-        return self
 
     ## XXX[key] = value
     def __setitem__(self, key, value):
@@ -655,20 +649,6 @@ class InfBuildData(ModuleBuildClassObject):
             RetVal[CName] = Value
             CommentRecords = self._RawData[MODEL_META_DATA_COMMENT, self._Arch, self._Platform, Record[5]]
             self._GuidComments[CName] = [a[0] for a in CommentRecords]
-
-        for Type in [MODEL_PCD_FIXED_AT_BUILD,MODEL_PCD_PATCHABLE_IN_MODULE,MODEL_PCD_FEATURE_FLAG,MODEL_PCD_DYNAMIC,MODEL_PCD_DYNAMIC_EX]:
-            RecordList = self._RawData[Type, self._Arch, self._Platform]
-            for TokenSpaceGuid, _, _, _, _, _, LineNo in RecordList:
-                # get the guid value
-                if TokenSpaceGuid not in RetVal:
-                    Value = GuidValue(TokenSpaceGuid, self.Packages, self.MetaFile.Path)
-                    if Value is None:
-                        PackageList = "\n\t".join(str(P) for P in self.Packages)
-                        EdkLogger.error('build', RESOURCE_NOT_AVAILABLE,
-                                        "Value of Guid [%s] is not found under [Guids] section in" % TokenSpaceGuid,
-                                        ExtraData=PackageList, File=self.MetaFile, Line=LineNo)
-                    RetVal[TokenSpaceGuid] = Value
-                    self._GuidsUsedByPcd[TokenSpaceGuid] = Value
         return RetVal
 
     ## Retrieve include paths necessary for this module (for Edk.x style of modules)
@@ -725,25 +705,6 @@ class InfBuildData(ModuleBuildClassObject):
         return RetVal
 
     @cached_property
-    def ModulePcdList(self):
-        RetVal = self.Pcds
-        return RetVal
-    @cached_property
-    def LibraryPcdList(self):
-        if bool(self.LibraryClass):
-            return []
-        RetVal = {}
-        Pcds = set()
-        for Library in self.LibInstances:
-            PcdsInLibrary = OrderedDict()
-            for Key in Library.Pcds:
-                if Key in self.Pcds or Key in Pcds:
-                    continue
-                Pcds.add(Key)
-                PcdsInLibrary[Key] = copy.copy(Library.Pcds[Key])
-            RetVal[Library] = PcdsInLibrary
-        return RetVal
-    @cached_property
     def PcdsName(self):
         PcdsName = set()
         for Type in (MODEL_PCD_FIXED_AT_BUILD,MODEL_PCD_PATCHABLE_IN_MODULE,MODEL_PCD_FEATURE_FLAG,MODEL_PCD_DYNAMIC,MODEL_PCD_DYNAMIC_EX):
@@ -787,7 +748,7 @@ class InfBuildData(ModuleBuildClassObject):
                 EdkLogger.error('build', RESOURCE_NOT_AVAILABLE, "No [Depex] section or no valid expression in [Depex] section for [%s] module" \
                                 % self.ModuleType, File=self.MetaFile)
 
-        if len(RecordList) != 0 and (self.ModuleType == SUP_MODULE_USER_DEFINED or self.ModuleType == SUP_MODULE_HOST_APPLICATION):
+        if len(RecordList) != 0 and self.ModuleType == SUP_MODULE_USER_DEFINED:
             for Record in RecordList:
                 if Record[4] not in [SUP_MODULE_PEIM, SUP_MODULE_DXE_DRIVER, SUP_MODULE_DXE_SMM_DRIVER]:
                     EdkLogger.error('build', FORMAT_INVALID,
@@ -858,20 +819,10 @@ class InfBuildData(ModuleBuildClassObject):
         for Arch, ModuleType in TemporaryDictionary:
             RetVal[Arch, ModuleType] = TemporaryDictionary[Arch, ModuleType]
         return RetVal
-    def LocalPkg(self):
-        module_path = self.MetaFile.File
-        subdir = os.path.split(module_path)[0]
-        TopDir = ""
-        while subdir:
-            subdir,TopDir = os.path.split(subdir)
 
-        for file_name in os.listdir(os.path.join(self.MetaFile.Root,TopDir)):
-            if file_name.upper().endswith("DEC"):
-                pkg = os.path.join(TopDir,file_name)
-        return pkg
     @cached_class_function
     def GetGuidsUsedByPcd(self):
-        self.Guid
+        self.Pcds
         return self._GuidsUsedByPcd
 
     ## Retrieve PCD for given type
@@ -883,6 +834,16 @@ class InfBuildData(ModuleBuildClassObject):
         for TokenSpaceGuid, PcdCName, Setting, Arch, Platform, Id, LineNo in RecordList:
             PcdDict[Arch, Platform, PcdCName, TokenSpaceGuid] = (Setting, LineNo)
             PcdList.append((PcdCName, TokenSpaceGuid))
+            # get the guid value
+            if TokenSpaceGuid not in self.Guids:
+                Value = GuidValue(TokenSpaceGuid, self.Packages, self.MetaFile.Path)
+                if Value is None:
+                    PackageList = "\n\t".join(str(P) for P in self.Packages)
+                    EdkLogger.error('build', RESOURCE_NOT_AVAILABLE,
+                                    "Value of Guid [%s] is not found under [Guids] section in" % TokenSpaceGuid,
+                                    ExtraData=PackageList, File=self.MetaFile, Line=LineNo)
+                self.Guids[TokenSpaceGuid] = Value
+                self._GuidsUsedByPcd[TokenSpaceGuid] = Value
             CommentRecords = self._RawData[MODEL_META_DATA_COMMENT, self._Arch, self._Platform, Id]
             Comments = []
             for CmtRec in CommentRecords:
@@ -1059,6 +1020,3 @@ class InfBuildData(ModuleBuildClassObject):
         if (self.Binaries and not self.Sources) or GlobalData.gIgnoreSource:
             return True
         return False
-def ExtendCopyDictionaryLists(CopyToDict, CopyFromDict):
-    for Key in CopyFromDict:
-        CopyToDict[Key].extend(CopyFromDict[Key])

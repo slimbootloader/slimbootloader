@@ -20,7 +20,7 @@ from linecache import getlines
 from io import BytesIO
 
 import Common.LongFilePathOs as os
-from Common.TargetTxtClassObject import TargetTxt
+from Common.TargetTxtClassObject import TargetTxtClassObject
 from Common.DataType import *
 import Common.GlobalData as GlobalData
 from Common import EdkLogger
@@ -93,7 +93,7 @@ def resetFdsGlobalVariable():
     GenFdsGlobalVariable.SecCmdList = []
     GenFdsGlobalVariable.CopyList   = []
     GenFdsGlobalVariable.ModuleFile = ''
-    GenFdsGlobalVariable.EnableGenfdsMultiThread = True
+    GenFdsGlobalVariable.EnableGenfdsMultiThread = False
 
     GenFdsGlobalVariable.LargeFileInFvFlags = []
     GenFdsGlobalVariable.EFI_FIRMWARE_FILE_SYSTEM3_GUID = '5473C07A-3DCB-4dca-BD6F-1E9689E7349A'
@@ -140,8 +140,6 @@ def GenFdsApi(FdsCommandDict, WorkSpaceDataBase=None):
                 GenFdsGlobalVariable.VerboseLogger("Using Workspace:" + Workspace)
             if FdsCommandDict.get("GenfdsMultiThread"):
                 GenFdsGlobalVariable.EnableGenfdsMultiThread = True
-            else:
-                GenFdsGlobalVariable.EnableGenfdsMultiThread = False
         os.chdir(GenFdsGlobalVariable.WorkSpaceDir)
 
         # set multiple workspace
@@ -209,6 +207,8 @@ def GenFdsApi(FdsCommandDict, WorkSpaceDataBase=None):
             GlobalData.gConfDirectory = GenFdsGlobalVariable.ConfDir
         BuildConfigurationFile = os.path.normpath(os.path.join(ConfDirectoryPath, "target.txt"))
         if os.path.isfile(BuildConfigurationFile) == True:
+            TargetTxt = TargetTxtClassObject()
+            TargetTxt.LoadTargetTxtFile(BuildConfigurationFile)
             # if no build target given in command line, get it from target.txt
             if not GenFdsGlobalVariable.TargetName:
                 BuildTargetList = TargetTxt.TargetTxtDictionary[TAB_TAT_DEFINES_TARGET]
@@ -404,7 +404,7 @@ def OptionsToCommandDict(Options):
     FdsCommandDict["quiet"] = Options.quiet
     FdsCommandDict["debug"] = Options.debug
     FdsCommandDict["Workspace"] = Options.Workspace
-    FdsCommandDict["GenfdsMultiThread"] = not Options.NoGenfdsMultiThread
+    FdsCommandDict["GenfdsMultiThread"] = Options.GenfdsMultiThread
     FdsCommandDict["fdf_file"] = [PathClass(Options.filename)] if Options.filename else []
     FdsCommandDict["build_target"] = Options.BuildTarget
     FdsCommandDict["toolchain_tag"] = Options.ToolChain
@@ -461,8 +461,7 @@ def myOptionParser():
     Parser.add_option("--conf", action="store", type="string", dest="ConfDirectory", help="Specify the customized Conf directory.")
     Parser.add_option("--ignore-sources", action="store_true", dest="IgnoreSources", default=False, help="Focus to a binary build and ignore all source files")
     Parser.add_option("--pcd", action="append", dest="OptionPcd", help="Set PCD value by command line. Format: \"PcdName=Value\" ")
-    Parser.add_option("--genfds-multi-thread", action="store_true", dest="GenfdsMultiThread", default=True, help="Enable GenFds multi thread to generate ffs file.")
-    Parser.add_option("--no-genfds-multi-thread", action="store_true", dest="NoGenfdsMultiThread", default=False, help="Disable GenFds multi thread to generate ffs file.")
+    Parser.add_option("--genfds-multi-thread", action="store_true", dest="GenfdsMultiThread", default=False, help="Enable GenFds multi thread to generate ffs file.")
 
     Options, _ = Parser.parse_args()
     return Options

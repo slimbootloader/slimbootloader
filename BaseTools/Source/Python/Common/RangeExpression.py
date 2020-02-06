@@ -342,9 +342,7 @@ class RangeExpression(BaseExpression):
                 raise BadExpression(ERR_STRING_EXPR % Operator)
 
 
-    def __init__(self, Expression, PcdDataType, SymbolTable = None):
-        if SymbolTable is None:
-            SymbolTable = {}
+    def __init__(self, Expression, PcdDataType, SymbolTable = {}):
         super(RangeExpression, self).__init__(self, Expression, PcdDataType, SymbolTable)
         self._NoProcess = False
         if not isinstance(Expression, type('')):

@@ -25,7 +25,6 @@ from . import RuleComplexFile
 from CommonDataClass.FdfClass import FfsInfStatementClassObject
 from Common.MultipleWorkspace import MultipleWorkspace as mws
 from Common.DataType import SUP_MODULE_USER_DEFINED
-from Common.DataType import SUP_MODULE_HOST_APPLICATION
 from Common.StringUtils import *
 from Common.Misc import PathClass
 from Common.Misc import GuidStructureByteArrayToGuidString
@@ -85,12 +84,12 @@ class FfsInfStatement(FfsInfStatementClassObject):
                 self.FinalTargetSuffixMap.setdefault(os.path.splitext(File)[1], []).append(File)
 
             # Check if current INF module has DEPEX
-            if '.depex' not in self.FinalTargetSuffixMap and self.InfModule.ModuleType != SUP_MODULE_USER_DEFINED and self.InfModule.ModuleType != SUP_MODULE_HOST_APPLICATION \
+            if '.depex' not in self.FinalTargetSuffixMap and self.InfModule.ModuleType != SUP_MODULE_USER_DEFINED \
                 and not self.InfModule.DxsFile and not self.InfModule.LibraryClass:
                 ModuleType = self.InfModule.ModuleType
                 PlatformDataBase = GenFdsGlobalVariable.WorkSpace.BuildObject[GenFdsGlobalVariable.ActivePlatform, self.CurrentArch, GenFdsGlobalVariable.TargetName, GenFdsGlobalVariable.ToolChainTag]
 
-                if ModuleType != SUP_MODULE_USER_DEFINED and ModuleType != SUP_MODULE_HOST_APPLICATION:
+                if ModuleType != SUP_MODULE_USER_DEFINED:
                     for LibraryClass in PlatformDataBase.LibraryClasses.GetKeys():
                         if LibraryClass.startswith("NULL") and PlatformDataBase.LibraryClasses[LibraryClass, ModuleType]:
                             self.InfModule.LibraryClasses[LibraryClass] = PlatformDataBase.LibraryClasses[LibraryClass, ModuleType]
@@ -148,7 +147,7 @@ class FfsInfStatement(FfsInfStatementClassObject):
     #   @param  self        The object pointer
     #   @param  Dict        dictionary contains macro and value pair
     #
-    def __InfParse__(self, Dict = None, IsGenFfs=False):
+    def __InfParse__(self, Dict = {}):
 
         GenFdsGlobalVariable.VerboseLogger( " Begine parsing INf file : %s" %self.InfFileName)
 
@@ -349,10 +348,7 @@ class FfsInfStatement(FfsInfStatementClassObject):
         #
         # Set OutputPath = ${WorkSpace}\Build\Fv\Ffs\${ModuleGuid}+ ${ModuleName}\
         #
-        if IsGenFfs:
-            Rule = self.__GetRule__()
-            if GlobalData.gGuidPatternEnd.match(Rule.NameGuid):
-                self.ModuleGuid = Rule.NameGuid
+
         self.OutputPath = os.path.join(GenFdsGlobalVariable.FfsDir, \
                                        self.ModuleGuid + self.BaseName)
         if not os.path.exists(self.OutputPath) :
@@ -379,7 +375,7 @@ class FfsInfStatement(FfsInfStatementClassObject):
         #
         # Only patch file if FileType is PE32 or ModuleType is USER_DEFINED
         #
-        if FileType != BINARY_FILE_TYPE_PE32 and self.ModuleType != SUP_MODULE_USER_DEFINED and self.ModuleType != SUP_MODULE_HOST_APPLICATION:
+        if FileType != BINARY_FILE_TYPE_PE32 and self.ModuleType != SUP_MODULE_USER_DEFINED:
             return EfiFile
 
         #
@@ -437,13 +433,12 @@ class FfsInfStatement(FfsInfStatementClassObject):
     #   @param  FvParentAddr Parent Fv base address
     #   @retval string       Generated FFS file name
     #
-    def GenFfs(self, Dict = None, FvChildAddr = [], FvParentAddr=None, IsMakefile=False, FvName=None):
+    def GenFfs(self, Dict = {}, FvChildAddr = [], FvParentAddr=None, IsMakefile=False, FvName=None):
         #
         # Parse Inf file get Module related information
         #
-        if Dict is None:
-            Dict = {}
-        self.__InfParse__(Dict, IsGenFfs=True)
+
+        self.__InfParse__(Dict)
         Arch = self.GetCurrentArch()
         SrcFile = mws.join( GenFdsGlobalVariable.WorkSpaceDir, self.InfFileName);
         DestFile = os.path.join( self.OutputPath, self.ModuleGuid + '.ffs')
@@ -503,10 +498,7 @@ class FfsInfStatement(FfsInfStatementClassObject):
         if self.IsBinaryModule:
             IsMakefile = False
         if IsMakefile:
-            PathClassObj = PathClass(self.InfFileName, GenFdsGlobalVariable.WorkSpaceDir)
-            if self.OverrideGuid:
-                PathClassObj = ProcessDuplicatedInf(PathClassObj, self.OverrideGuid, GenFdsGlobalVariable.WorkSpaceDir)
-            MakefilePath = PathClassObj.Path, Arch
+            MakefilePath = self.InfFileName, Arch
         if isinstance (Rule, RuleSimpleFile.RuleSimpleFile):
             SectionOutputList = self.__GenSimpleFileSection__(Rule, IsMakefile=IsMakefile)
             FfsOutput = self.__GenSimpleFileFfs__(Rule, SectionOutputList, MakefilePath=MakefilePath)

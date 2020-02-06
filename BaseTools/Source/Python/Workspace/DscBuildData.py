@@ -19,8 +19,8 @@ from Common.Misc import *
 from types import *
 from Common.Expression import *
 from CommonDataClass.CommonClass import SkuInfoClass
-from Common.TargetTxtClassObject import TargetTxt
-from Common.ToolDefClassObject import ToolDef
+from Common.TargetTxtClassObject import TargetTxtClassObject
+from Common.ToolDefClassObject import ToolDefClassObject
 from .MetaDataTable import *
 from .MetaFileTable import *
 from .MetaFileParser import *
@@ -719,24 +719,6 @@ class DscBuildData(PlatformBuildClassObject):
                 self._RawData.DisableOverrideComponent(Components[(file_guid_str,str(ModuleFile))])
             Components[(file_guid_str,str(ModuleFile))] = ModuleId
         self._RawData._PostProcessed = False
-
-    ## Retrieve packages this Platform depends on
-    @cached_property
-    def Packages(self):
-        RetVal = set()
-        RecordList = self._RawData[MODEL_META_DATA_PACKAGE, self._Arch]
-        Macros = self._Macros
-        for Record in RecordList:
-            File = PathClass(NormPath(Record[0], Macros), GlobalData.gWorkspace, Arch=self._Arch)
-            # check the file validation
-            ErrorCode, ErrorInfo = File.Validate('.dec')
-            if ErrorCode != 0:
-                LineNo = Record[-1]
-                EdkLogger.error('build', ErrorCode, ExtraData=ErrorInfo, File=self.MetaFile, Line=LineNo)
-            # parse this package now. we need it to get protocol/ppi/guid value
-            RetVal.add(self._Bdb[File, self._Arch, self._Target, self._Toolchain])
-        return RetVal
-
     ## Retrieve [Components] section information
     @property
     def Modules(self):
@@ -914,8 +896,7 @@ class DscBuildData(PlatformBuildClassObject):
                     continue
                 ModuleData = self._Bdb[ModuleFile, self._Arch, self._Target, self._Toolchain]
                 PkgSet.update(ModuleData.Packages)
-            if self.Packages:
-                PkgSet.update(self.Packages)
+
             self._DecPcds, self._GuidDict = GetDeclaredPcd(self, self._Bdb, self._Arch, self._Target, self._Toolchain, PkgSet)
             self._GuidDict.update(GlobalData.gPlatformPcds)
 
@@ -1094,10 +1075,13 @@ class DscBuildData(PlatformBuildClassObject):
                 GlobalData.BuildOptionPcd[i] = (TokenSpaceGuidCName, TokenCName, FieldName, pcdvalue, ("build command options", 1))
 
         if GlobalData.BuildOptionPcd:
-            inf_objs = [item for item in self._Bdb._CACHE_.values() if item.Arch == self.Arch and item.MetaFile.Ext.lower() == '.inf']
             for pcd in GlobalData.BuildOptionPcd:
                 (TokenSpaceGuidCName, TokenCName, FieldName, pcdvalue, _) = pcd
-                for BuildData in inf_objs:
+                for BuildData in self._Bdb._CACHE_.values():
+                    if BuildData.Arch != self.Arch:
+                        continue
+                    if BuildData.MetaFile.Ext == '.dec' or BuildData.MetaFile.Ext == '.dsc':
+                        continue
                     for key in BuildData.Pcds:
                         PcdItem = BuildData.Pcds[key]
                         if (TokenSpaceGuidCName, TokenCName) == (PcdItem.TokenSpaceGuidCName, PcdItem.TokenCName) and FieldName =="":
@@ -1240,27 +1224,7 @@ class DscBuildData(PlatformBuildClassObject):
                         if ' ' + Option not in self._BuildOptions[CurKey]:
                             self._BuildOptions[CurKey] += ' ' + Option
         return self._BuildOptions
-    def GetBuildOptionsByPkg(self, Module, ModuleType):
 
-        local_pkg = os.path.split(Module.LocalPkg())[0]
-        if self._ModuleTypeOptions is None:
-            self._ModuleTypeOptions = OrderedDict()
-        if ModuleType not in self._ModuleTypeOptions:
-            options = OrderedDict()
-            self._ModuleTypeOptions[ ModuleType] = options
-            RecordList = self._RawData[MODEL_META_DATA_BUILD_OPTION, self._Arch]
-            for ToolChainFamily, ToolChain, Option, Dummy1, Dummy2, Dummy3, Dummy4, Dummy5 in RecordList:
-                if Dummy2 not in (TAB_COMMON,local_pkg.upper(),"EDKII"):
-                    continue
-                Type = Dummy3
-                if Type.upper() == ModuleType.upper():
-                    Key = (ToolChainFamily, ToolChain)
-                    if Key not in options or not ToolChain.endswith('_FLAGS') or Option.startswith('='):
-                        options[Key] = Option
-                    else:
-                        if ' ' + Option not in options[Key]:
-                            options[Key] += ' ' + Option
-        return self._ModuleTypeOptions[ModuleType]
     def GetBuildOptionsByModuleType(self, Edk, ModuleType):
         if self._ModuleTypeOptions is None:
             self._ModuleTypeOptions = OrderedDict()
@@ -1389,11 +1353,11 @@ class DscBuildData(PlatformBuildClassObject):
                                         self._PCD_TYPE_STRING_[MODEL_PCD_FEATURE_FLAG],
                                         self._PCD_TYPE_STRING_[MODEL_PCD_DYNAMIC],
                                         self._PCD_TYPE_STRING_[MODEL_PCD_DYNAMIC_EX]]:
-                        self._Pcds[Name, Guid] = copy.deepcopy(PcdInDec)
-                        self._Pcds[Name, Guid].DefaultValue = NoFiledValues[( Guid, Name)][0]
+                        self.Pcds[Name, Guid] = copy.deepcopy(PcdInDec)
+                        self.Pcds[Name, Guid].DefaultValue = NoFiledValues[( Guid, Name)][0]
                     if PcdInDec.Type in [self._PCD_TYPE_STRING_[MODEL_PCD_DYNAMIC],
                                         self._PCD_TYPE_STRING_[MODEL_PCD_DYNAMIC_EX]]:
-                        self._Pcds[Name, Guid].SkuInfoList = {TAB_DEFAULT:SkuInfoClass(TAB_DEFAULT, self.SkuIds[TAB_DEFAULT][0], '', '', '', '', '', NoFiledValues[( Guid, Name)][0])}
+                        self.Pcds[Name, Guid].SkuInfoList = {TAB_DEFAULT:SkuInfoClass(TAB_DEFAULT, self.SkuIds[TAB_DEFAULT][0], '', '', '', '', '', NoFiledValues[( Guid, Name)][0])}
         return AllPcds
 
     def OverrideByFdfOverAll(self,AllPcds):
@@ -1435,8 +1399,8 @@ class DscBuildData(PlatformBuildClassObject):
                     if PcdInDec.Type in [self._PCD_TYPE_STRING_[MODEL_PCD_FIXED_AT_BUILD],
                                         self._PCD_TYPE_STRING_[MODEL_PCD_PATCHABLE_IN_MODULE],
                                         self._PCD_TYPE_STRING_[MODEL_PCD_FEATURE_FLAG]]:
-                        self._Pcds[Name, Guid] = copy.deepcopy(PcdInDec)
-                        self._Pcds[Name, Guid].DefaultValue = Value
+                        self.Pcds[Name, Guid] = copy.deepcopy(PcdInDec)
+                        self.Pcds[Name, Guid].DefaultValue = Value
         return AllPcds
 
     def ParsePcdNameStruct(self,NamePart1,NamePart2):
@@ -1771,7 +1735,7 @@ class DscBuildData(PlatformBuildClassObject):
         except:
             EdkLogger.error('Build', COMMAND_FAILURE, 'Can not execute command: %s' % Command)
         Result = Process.communicate()
-        return Process.returncode, Result[0].decode(), Result[1].decode()
+        return Process.returncode, Result[0].decode(encoding='utf-8', errors='ignore'), Result[1].decode(encoding='utf-8', errors='ignore')
 
     @staticmethod
     def IntToCString(Value, ValueSize):
@@ -2704,8 +2668,7 @@ class DscBuildData(PlatformBuildClassObject):
             elif len(ArchBuildOptions.keys()) > 1:
                 CommonBuildOptions = reduce(lambda x,y: x&y, ArchBuildOptions.values())
                 BuildOptions['COMMON'] |= CommonBuildOptions
-            ValueList = [item for item in BuildOptions['COMMON'] if item.startswith((r"/U","-U"))]
-            ValueList.extend([item for item in BuildOptions['COMMON'] if item.startswith((r"/D", "-D"))])
+            ValueList = list(BuildOptions['COMMON'])
             CC_FLAGS += " ".join(ValueList)
         MakeApp += CC_FLAGS
 
@@ -3033,7 +2996,7 @@ class DscBuildData(PlatformBuildClassObject):
 
 
         # Remove redundant PCD candidates, per the ARCH and SKU
-        for index,(PcdCName, TokenSpaceGuid, SkuName, DefaultStore, Dummy4) in enumerate(PcdList):
+        for PcdCName, TokenSpaceGuid, SkuName, DefaultStore, Dummy4 in PcdList:
 
             Setting = PcdDict[self._Arch, SkuName, PcdCName, TokenSpaceGuid, DefaultStore]
             if Setting is None:
@@ -3102,7 +3065,7 @@ class DscBuildData(PlatformBuildClassObject):
                     PcdClassObj.UserDefinedDefaultStoresFlag = True
                 Pcds[PcdCName, TokenSpaceGuid] = PcdClassObj
 
-                Pcds[PcdCName, TokenSpaceGuid].CustomAttribute['DscPosition'] = index
+                Pcds[PcdCName, TokenSpaceGuid].CustomAttribute['DscPosition'] = int(Dummy4)
             if SkuName not in Pcds[PcdCName, TokenSpaceGuid].DscRawValue:
                 Pcds[PcdCName, TokenSpaceGuid].DscRawValue[SkuName] = {}
                 Pcds[PcdCName, TokenSpaceGuid].DscRawValueInfo[SkuName] = {}
@@ -3298,11 +3261,15 @@ class DscBuildData(PlatformBuildClassObject):
         self._ToolChainFamily = TAB_COMPILER_MSFT
         BuildConfigurationFile = os.path.normpath(os.path.join(GlobalData.gConfDirectory, "target.txt"))
         if os.path.isfile(BuildConfigurationFile) == True:
+            TargetTxt      = TargetTxtClassObject()
+            TargetTxt.LoadTargetTxtFile(BuildConfigurationFile)
             ToolDefinitionFile = TargetTxt.TargetTxtDictionary[DataType.TAB_TAT_DEFINES_TOOL_CHAIN_CONF]
             if ToolDefinitionFile == '':
                 ToolDefinitionFile = "tools_def.txt"
                 ToolDefinitionFile = os.path.normpath(mws.join(self.WorkspaceDir, 'Conf', ToolDefinitionFile))
             if os.path.isfile(ToolDefinitionFile) == True:
+                ToolDef        = ToolDefClassObject()
+                ToolDef.LoadToolDefFile(ToolDefinitionFile)
                 ToolDefinition = ToolDef.ToolsDefTxtDatabase
                 if TAB_TOD_DEFINES_FAMILY not in ToolDefinition \
                    or self._Toolchain not in ToolDefinition[TAB_TOD_DEFINES_FAMILY] \
@@ -3339,8 +3306,6 @@ class DscBuildData(PlatformBuildClassObject):
                     continue
                 ModuleData = self._Bdb[ModuleFile, self._Arch, self._Target, self._Toolchain]
                 PkgSet.update(ModuleData.Packages)
-            if self.Packages:
-                PkgSet.update(self.Packages)
             self._DecPcds, self._GuidDict = GetDeclaredPcd(self, self._Bdb, self._Arch, self._Target, self._Toolchain, PkgSet)
             self._GuidDict.update(GlobalData.gPlatformPcds)
         return self._DecPcds

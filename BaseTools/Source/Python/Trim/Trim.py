@@ -73,10 +73,8 @@ def TrimPreprocessedFile(Source, Target, ConvertHex, TrimLong):
     try:
         with open(Source, "r") as File:
             Lines = File.readlines()
-    except IOError:
-        EdkLogger.error("Trim", FILE_OPEN_FAILURE, ExtraData=Source)
     except:
-        EdkLogger.error("Trim", AUTOGEN_ERROR, "TrimPreprocessedFile: Error while processing file", File=Source)
+        EdkLogger.error("Trim", FILE_OPEN_FAILURE, ExtraData=Source)
 
     PreprocessedFile = ""
     InjectedFile = ""

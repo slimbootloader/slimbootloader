@@ -243,10 +243,8 @@ def SplitModuleType(Key):
 #
 # @retval NewList           A new string list whose macros are replaced
 #
-def ReplaceMacros(StringList, MacroDefinitions=None, SelfReplacement=False):
+def ReplaceMacros(StringList, MacroDefinitions={}, SelfReplacement=False):
     NewList = []
-    if MacroDefinitions is None:
-        MacroDefinitions = {}
     for String in StringList:
         if isinstance(String, type('')):
             NewList.append(ReplaceMacro(String, MacroDefinitions, SelfReplacement))
@@ -266,10 +264,8 @@ def ReplaceMacros(StringList, MacroDefinitions=None, SelfReplacement=False):
 #
 # @retval string            The string whose macros are replaced
 #
-def ReplaceMacro(String, MacroDefinitions=None, SelfReplacement=False, RaiseError=False):
+def ReplaceMacro(String, MacroDefinitions={}, SelfReplacement=False, RaiseError=False):
     LastString = String
-    if MacroDefinitions is None:
-        MacroDefinitions = {}
     while String and MacroDefinitions:
         MacroUsed = GlobalData.gMacroRefPattern.findall(String)
         # no macro found in String, stop replacing
@@ -302,7 +298,7 @@ def ReplaceMacro(String, MacroDefinitions=None, SelfReplacement=False, RaiseErro
 #
 # @retval Path Formatted path
 #
-def NormPath(Path, Defines=None):
+def NormPath(Path, Defines={}):
     IsRelativePath = False
     if Path:
         if Path[0] == '.':

@@ -73,10 +73,8 @@ class Region(object):
     #   @retval string      Generated FV file path
     #
 
-    def AddToBuffer(self, Buffer, BaseAddress, BlockSizeList, ErasePolarity, ImageBinDict,  MacroDict=None, Flag=False):
+    def AddToBuffer(self, Buffer, BaseAddress, BlockSizeList, ErasePolarity, ImageBinDict,  MacroDict={}, Flag=False):
         Size = self.Size
-        if MacroDict is None:
-            MacroDict = {}
         if not Flag:
             GenFdsGlobalVariable.InfLogger('\nGenerate Region at Offset 0x%X' % self.Offset)
             GenFdsGlobalVariable.InfLogger("   Region Size = 0x%X" % Size)

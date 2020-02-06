@@ -11,6 +11,7 @@
 import Common.LongFilePathOs as os
 from Common.LongFilePathSupport import OpenLongFilePath as open
 import sys
+import re
 
 from optparse import OptionParser
 from optparse import make_option

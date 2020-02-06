@@ -7,7 +7,7 @@
 import sys
 import locale
 
-if sys.platform == "darwin" and sys.version_info[0] < 3:
+if sys.platform == "darwin":
   DefaultLocal = locale.getdefaultlocale()[1]
   if DefaultLocal is None:
     DefaultLocal = 'UTF8'

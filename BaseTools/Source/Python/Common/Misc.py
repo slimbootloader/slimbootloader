@@ -18,7 +18,6 @@ import re
 import pickle
 import array
 import shutil
-import filecmp
 from random import sample
 from struct import pack
 import uuid
@@ -34,8 +33,6 @@ from Common.BuildToolError import *
 from CommonDataClass.DataClass import *
 from Common.Parsing import GetSplitValueList
 from Common.LongFilePathSupport import OpenLongFilePath as open
-from Common.LongFilePathSupport import CopyLongFilePath as CopyLong
-from Common.LongFilePathSupport import LongFilePath as LongFilePath
 from Common.MultipleWorkspace import MultipleWorkspace as mws
 from CommonDataClass.Exceptions import BadExpression
 from Common.caching import cached_property
@@ -81,22 +78,19 @@ def GetVariableOffset(mapfilepath, efifilepath, varnames):
 
     if len(lines) == 0: return None
     firstline = lines[0].strip()
-    if re.match('^\s*Address\s*Size\s*Align\s*Out\s*In\s*Symbol\s*$', firstline):
-        return _parseForXcodeAndClang9(lines, efifilepath, varnames)
     if (firstline.startswith("Archive member included ") and
         firstline.endswith(" file (symbol)")):
         return _parseForGCC(lines, efifilepath, varnames)
     if firstline.startswith("# Path:"):
-        return _parseForXcodeAndClang9(lines, efifilepath, varnames)
+        return _parseForXcode(lines, efifilepath, varnames)
     return _parseGeneral(lines, efifilepath, varnames)
 
-def _parseForXcodeAndClang9(lines, efifilepath, varnames):
+def _parseForXcode(lines, efifilepath, varnames):
     status = 0
     ret = []
     for line in lines:
         line = line.strip()
-        if status == 0 and (re.match('^\s*Address\s*Size\s*Align\s*Out\s*In\s*Symbol\s*$', line) \
-            or line == "# Symbols:"):
+        if status == 0 and line == "# Symbols:":
             status = 1
             continue
         if status == 1 and len(line) != 0:
@@ -169,7 +163,7 @@ def _parseGeneral(lines, efifilepath, varnames):
     status = 0    #0 - beginning of file; 1 - PE section definition; 2 - symbol table
     secs  = []    # key = section name
     varoffset = []
-    symRe = re.compile('^([\da-fA-F]+):([\da-fA-F]+) +([\.:\\\\\w\?@\$-]+) +([\da-fA-F]+)', re.UNICODE)
+    symRe = re.compile('^([\da-fA-F]+):([\da-fA-F]+) +([\.:\\\\\w\?@\$]+) +([\da-fA-F]+)', re.UNICODE)
 
     for line in lines:
         line = line.strip()
@@ -251,8 +245,13 @@ def ProcessDuplicatedInf(Path, BaseName, Workspace):
     else:
         Filename = BaseName + Path.BaseName
 
+    #
+    # If -N is specified on command line, cache is disabled
+    # The directory has to be created
+    #
     DbDir = os.path.split(GlobalData.gDatabasePath)[0]
-
+    if not os.path.exists(DbDir):
+        os.makedirs(DbDir)
     #
     # A temporary INF is copied to database path which must have write permission
     # The temporary will be removed at the end of build
@@ -453,10 +452,7 @@ def RemoveDirectory(Directory, Recursively=False):
 #   @retval     True            If the file content is changed and the file is renewed
 #   @retval     False           If the file content is the same
 #
-def SaveFileOnChange(File, Content, IsBinaryFile=True, FileLock=None):
-
-    # Convert to long file path format
-    File = LongFilePath(File)
+def SaveFileOnChange(File, Content, IsBinaryFile=True):
 
     if os.path.exists(File):
         if IsBinaryFile:
@@ -487,95 +483,22 @@ def SaveFileOnChange(File, Content, IsBinaryFile=True, FileLock=None):
     if IsBinaryFile:
         OpenMode = "wb"
 
-    # use default file_lock if no input new lock
-    if not FileLock:
-        FileLock = GlobalData.file_lock
-    if FileLock:
-        FileLock.acquire()
-
-
     if GlobalData.gIsWindows and not os.path.exists(File):
+        # write temp file, then rename the temp file to the real file
+        # to make sure the file be immediate saved to disk
+        with tempfile.NamedTemporaryFile(OpenMode, dir=os.path.dirname(File), delete=False) as tf:
+            tf.write(Content)
+            tempname = tf.name
         try:
-            with open(File, OpenMode) as tf:
-                tf.write(Content)
-        except IOError as X:
-            if GlobalData.gBinCacheSource:
-                EdkLogger.quiet("[cache error]:fails to save file with error: %s" % (X))
-            else:
-                EdkLogger.error(None, FILE_CREATE_FAILURE, ExtraData='IOError %s' % X)
-        finally:
-            if FileLock:
-                FileLock.release()
+            os.rename(tempname, File)
+        except:
+            EdkLogger.error(None, FILE_CREATE_FAILURE, ExtraData='IOError %s' % X)
     else:
         try:
             with open(File, OpenMode) as Fd:
                 Fd.write(Content)
         except IOError as X:
-            if GlobalData.gBinCacheSource:
-                EdkLogger.quiet("[cache error]:fails to save file with error: %s" % (X))
-            else:
-                EdkLogger.error(None, FILE_CREATE_FAILURE, ExtraData='IOError %s' % X)
-        finally:
-            if FileLock:
-                FileLock.release()
-
-    return True
-
-## Copy source file only if it is different from the destination file
-#
-#  This method is used to copy file only if the source file and destination
-#  file content are different. This is quite useful to avoid duplicated
-#  file writing.
-#
-#   @param      SrcFile   The path of source file
-#   @param      Dst       The path of destination file or folder
-#
-#   @retval     True      The two files content are different and the file is copied
-#   @retval     False     No copy really happen
-#
-def CopyFileOnChange(SrcFile, Dst, FileLock=None):
-
-    # Convert to long file path format
-    SrcFile = LongFilePath(SrcFile)
-    Dst = LongFilePath(Dst)
-
-    if os.path.isdir(SrcFile):
-        EdkLogger.error(None, FILE_COPY_FAILURE, ExtraData='CopyFileOnChange SrcFile is a dir, not a file: %s' % SrcFile)
-        return False
-
-    if os.path.isdir(Dst):
-        DstFile = os.path.join(Dst, os.path.basename(SrcFile))
-    else:
-        DstFile = Dst
-
-    if os.path.exists(DstFile) and filecmp.cmp(SrcFile, DstFile, shallow=False):
-        return False
-
-    DirName = os.path.dirname(DstFile)
-    if not CreateDirectory(DirName):
-        EdkLogger.error(None, FILE_CREATE_FAILURE, "Could not create directory %s" % DirName)
-    else:
-        if DirName == '':
-            DirName = os.getcwd()
-        if not os.access(DirName, os.W_OK):
-            EdkLogger.error(None, PERMISSION_FAILURE, "Do not have write permission on directory %s" % DirName)
-
-    # use default file_lock if no input new lock
-    if not FileLock:
-        FileLock = GlobalData.file_lock
-    if FileLock:
-        FileLock.acquire()
-
-    try:
-        CopyLong(SrcFile, DstFile)
-    except IOError as X:
-        if GlobalData.gBinCacheSource:
-            EdkLogger.quiet("[cache error]:fails to copy file with error: %s" % (X))
-        else:
-            EdkLogger.error(None, FILE_COPY_FAILURE, ExtraData='IOError %s' % X)
-    finally:
-        if FileLock:
-            FileLock.release()
+            EdkLogger.error(None, FILE_CREATE_FAILURE, ExtraData='IOError %s' % X)
 
     return True
 
@@ -675,6 +598,7 @@ def GuidValue(CName, PackageList, Inffile = None):
                 GuidKeys = [x for x in P.Guids if x not in P._PrivateGuids]
         if CName in GuidKeys:
             return P.Guids[CName]
+    return None
     return None
 
 ## A string template class
@@ -1113,7 +1037,7 @@ def ParseFieldValue (Value):
             p.stderr.close()
         if err:
             raise BadExpression("DevicePath: %s" % str(err))
-        out = out.decode()
+        out = out.decode(encoding='utf-8', errors='ignore')
         Size = len(out.split())
         out = ','.join(out.split())
         return '{' + out + '}', Size

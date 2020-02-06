@@ -1017,46 +1017,8 @@ WriteSections64 (
         } else if (mEhdr->e_machine == EM_AARCH64) {
 
           switch (ELF_R_TYPE(Rel->r_info)) {
-            INT64 Offset;
-
-          case R_AARCH64_LD64_GOT_LO12_NC:
-            //
-            // Convert into an ADD instruction - see R_AARCH64_ADR_GOT_PAGE below.
-            //
-            *(UINT32 *)Targ &= 0x3ff;
-            *(UINT32 *)Targ |= 0x91000000 | ((Sym->st_value & 0xfff) << 10);
-            break;
-
-          case R_AARCH64_ADR_GOT_PAGE:
-            //
-            // This relocation points to the GOT entry that contains the absolute
-            // address of the symbol we are referring to. Since EDK2 only uses
-            // fully linked binaries, we can avoid the indirection, and simply
-            // refer to the symbol directly. This implies having to patch the
-            // subsequent LDR instruction (covered by a R_AARCH64_LD64_GOT_LO12_NC
-            // relocation) into an ADD instruction - this is handled above.
-            //
-            Offset = (Sym->st_value - (Rel->r_offset & ~0xfff)) >> 12;
-
-            *(UINT32 *)Targ &= 0x9000001f;
-            *(UINT32 *)Targ |= ((Offset & 0x1ffffc) << (5 - 2)) | ((Offset & 0x3) << 29);
-
-            /* fall through */
 
           case R_AARCH64_ADR_PREL_PG_HI21:
-            //
-            // In order to handle Cortex-A53 erratum #843419, the LD linker may
-            // convert ADRP instructions into ADR instructions, but without
-            // updating the static relocation type, and so we may end up here
-            // while the instruction in question is actually ADR. So let's
-            // just disregard it: the section offset check we apply below to
-            // ADR instructions will trigger for its R_AARCH64_xxx_ABS_LO12_NC
-            // companion instruction as well, so it is safe to omit it here.
-            //
-            if ((*(UINT32 *)Targ & BIT31) == 0) {
-              break;
-            }
-
             //
             // AArch64 PG_H21 relocations are typically paired with ABS_LO12
             // relocations, where a PC-relative reference with +/- 4 GB range is
@@ -1075,6 +1037,7 @@ WriteSections64 (
               // Attempt to convert the ADRP into an ADR instruction.
               // This is only possible if the symbol is within +/- 1 MB.
               //
+              INT64 Offset;
 
               // Decode the ADRP instruction
               Offset = (INT32)((*(UINT32 *)Targ & 0xffffe0) << 8);
@@ -1249,8 +1212,6 @@ WriteRelocations64 (
             case R_AARCH64_LDST32_ABS_LO12_NC:
             case R_AARCH64_LDST64_ABS_LO12_NC:
             case R_AARCH64_LDST128_ABS_LO12_NC:
-            case R_AARCH64_ADR_GOT_PAGE:
-            case R_AARCH64_LD64_GOT_LO12_NC:
               //
               // No fixups are required for relative relocations, provided that
               // the relative offsets between sections have been preserved in

@@ -34,7 +34,7 @@ from Common.BuildToolError import FORMAT_INVALID
 from Common.LongFilePathSupport import OpenLongFilePath as open
 from Common.MultipleWorkspace import MultipleWorkspace as mws
 import Common.GlobalData as GlobalData
-from AutoGen.ModuleAutoGen import ModuleAutoGen
+from AutoGen.AutoGen import ModuleAutoGen
 from Common.Misc import PathClass
 from Common.StringUtils import NormPath
 from Common.DataType import *
@@ -558,7 +558,6 @@ class ModuleReport(object):
     def __init__(self, M, ReportType):
         self.ModuleName = M.Module.BaseName
         self.ModuleInfPath = M.MetaFile.File
-        self.ModuleArch = M.Arch
         self.FileGuid = M.Guid
         self.Size = 0
         self.BuildTimeStamp = None
@@ -669,7 +668,6 @@ class ModuleReport(object):
 
         FileWrite(File, "Module Summary")
         FileWrite(File, "Module Name:          %s" % self.ModuleName)
-        FileWrite(File, "Module Arch:          %s" % self.ModuleArch)
         FileWrite(File, "Module INF Path:      %s" % self.ModuleInfPath)
         FileWrite(File, "File GUID:            %s" % self.FileGuid)
         if self.Size:
@@ -1419,19 +1417,10 @@ class PcdReport(object):
                         FileWrite(File, '%*s' % (self.MaxLen + 4, SkuInfo.VpdOffset))
                         VPDPcdItem = (Pcd.TokenSpaceGuidCName + '.' + PcdTokenCName, SkuIdName, SkuInfo.VpdOffset, Pcd.MaxDatumSize, SkuInfo.DefaultValue)
                         if VPDPcdItem not in VPDPcdList:
-                            PcdGuidList = self.UnusedPcds.get(Pcd.TokenSpaceGuidCName)
-                            if PcdGuidList:
-                                PcdList = PcdGuidList.get(Pcd.Type)
-                                if not PcdList:
-                                    VPDPcdList.append(VPDPcdItem)
-                                for VpdPcd in PcdList:
-                                    if PcdTokenCName == VpdPcd.TokenCName:
-                                        break
-                                else:
-                                    VPDPcdList.append(VPDPcdItem)
+                            VPDPcdList.append(VPDPcdItem)
                     if IsStructure:
                         FiledOverrideFlag = False
-                        OverrideValues = Pcd.SkuOverrideValues.get(Sku)
+                        OverrideValues = Pcd.SkuOverrideValues[Sku]
                         if OverrideValues:
                             Keys = list(OverrideValues.keys())
                             OverrideFieldStruct = self.OverrideFieldValue(Pcd, OverrideValues[Keys[0]])
@@ -2151,7 +2140,7 @@ class PlatformReport(object):
                         INFList = GlobalData.gFdfParser.Profile.InfDict[Pa.Arch]
                         for InfName in INFList:
                             InfClass = PathClass(NormPath(InfName), Wa.WorkspaceDir, Pa.Arch)
-                            Ma = ModuleAutoGen(Wa, InfClass, Pa.BuildTarget, Pa.ToolChain, Pa.Arch, Wa.MetaFile, Pa.DataPipe)
+                            Ma = ModuleAutoGen(Wa, InfClass, Pa.BuildTarget, Pa.ToolChain, Pa.Arch, Wa.MetaFile)
                             if Ma is None:
                                 continue
                             if Ma not in ModuleAutoGenList:

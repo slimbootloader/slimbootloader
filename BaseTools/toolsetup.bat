@@ -3,7 +3,7 @@
 @REM   however it may be executed directly from the BaseTools project folder
 @REM   if the file is not executed within a WORKSPACE\BaseTools folder.
 @REM
-@REM Copyright (c) 2006 - 2019, Intel Corporation. All rights reserved.<BR>
+@REM Copyright (c) 2006 - 2018, Intel Corporation. All rights reserved.<BR>
 @REM (C) Copyright 2016 Hewlett Packard Enterprise Development LP<BR>
 @REM
 @REM SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -11,7 +11,6 @@
 
 @echo off
 pushd .
-set SCRIPT_ERROR=0
 
 @REM ##############################################################
 @REM # You should not have to modify anything below this line
@@ -27,6 +26,14 @@ if /I "%1"=="/?" goto Usage
 
 :loop
   if "%1"=="" goto setup_workspace
+  if /I "%1"=="--nt32" (
+    if /I "%2" == "X64" (
+      shift
+    )
+    @REM Ignore --nt32 flag
+    shift
+    goto loop
+  )
   if /I "%1"=="Reconfig" (
     shift
     set RECONFIG=TRUE
@@ -40,36 +47,6 @@ if /I "%1"=="/?" goto Usage
   if /I "%1"=="ForceRebuild" (
     shift
     set FORCE_REBUILD=TRUE
-    goto loop
-  )
-  if /I "%1"=="VS2019" (
-    shift
-    set VS2019=TRUE
-    set VSTool=VS2019
-    goto loop
-  )
-  if /I "%1"=="VS2017" (
-    shift
-    set VS2017=TRUE
-    set VSTool=VS2017
-    goto loop
-  )
-  if /I "%1"=="VS2015" (
-    shift
-    set VS2015=TRUE
-    set VSTool=VS2015
-    goto loop
-  )
-  if /I "%1"=="VS2013" (
-    shift
-    set VS2013=TRUE
-    set VSTool=VS2013
-    goto loop
-  )
-  if /I "%1"=="VS2012" (
-    shift
-    set VS2012=TRUE
-    set VSTool=VS2012
     goto loop
   )
   if "%1"=="" goto setup_workspace
@@ -182,29 +159,7 @@ IF NOT exist "%EDK_TOOLS_PATH%\set_vsprefix_envs.bat" (
   @echo.
   goto end
 )
-if defined VS2019 (
-  call %EDK_TOOLS_PATH%\set_vsprefix_envs.bat VS2019
-) else if defined VS2017 (
-  call %EDK_TOOLS_PATH%\set_vsprefix_envs.bat VS2017
-) else if defined VS2015 (
-  call %EDK_TOOLS_PATH%\set_vsprefix_envs.bat VS2015
-  call %EDK_TOOLS_PATH%\get_vsvars.bat VS2015
-) else if defined VS2013 (
-  call %EDK_TOOLS_PATH%\set_vsprefix_envs.bat VS2013
-  call %EDK_TOOLS_PATH%\get_vsvars.bat VS2013
-) else if defined VS2012 (
-  call %EDK_TOOLS_PATH%\set_vsprefix_envs.bat VS2012
-  call %EDK_TOOLS_PATH%\get_vsvars.bat VS2012
-) else (
-  call %EDK_TOOLS_PATH%\set_vsprefix_envs.bat
-  call %EDK_TOOLS_PATH%\get_vsvars.bat
-)
-if %SCRIPT_ERROR% NEQ 0 (
-  @echo.
-  @echo !!! ERROR !!! %VSTool% is not installed !!!
-  @echo.
-  goto end
-)
+call %EDK_TOOLS_PATH%\set_vsprefix_envs.bat
 
 if not defined CONF_PATH (
   set CONF_PATH=%WORKSPACE%\Conf
@@ -380,6 +335,7 @@ echo !!! ERROR !!!  PYTHON_HOME is not defined or The value of this variable doe
 echo.
 goto end
 :check_python_available
+echo %PYTHON_COMMAND% %BASE_TOOLS_PATH%\Tests\PythonTest.py
 %PYTHON_COMMAND% %BASE_TOOLS_PATH%\Tests\PythonTest.py >PythonCheck.txt 2>&1
   setlocal enabledelayedexpansion
   set /p PythonCheck=<"PythonCheck.txt"
@@ -418,7 +374,7 @@ goto end
       goto end
     )
   )
-
+  call "%EDK_TOOLS_PATH%\get_vsvars.bat"
   if not defined VCINSTALLDIR (
     @echo.
     @echo !!! ERROR !!!! Cannot find Visual Studio, required to build C tools !!!
@@ -452,7 +408,7 @@ goto end
 
 :Usage
   @echo.
-  echo  Usage: "%0 [-h | -help | --help | /h | /help | /?] [ Rebuild | ForceRebuild ] [Reconfig] [base_tools_path [edk_tools_path]] [VS2019] [VS2017] [VS2015] [VS2013] [VS2012]"
+  echo  Usage: "%0 [-h | -help | --help | /h | /help | /?] [ Rebuild | ForceRebuild ] [Reconfig] [base_tools_path [edk_tools_path]]"
   @echo.
   @echo         base_tools_path   BaseTools project path, BASE_TOOLS_PATH will be set to this path.
   @echo         edk_tools_path    EDK_TOOLS_PATH will be set to this path.
@@ -461,22 +417,11 @@ goto end
   @echo         ForceRebuild      If sources are available, rebuild all tools regardless of
   @echo                           whether they have been updated or not.
   @echo         Reconfig          Reinstall target.txt, tools_def.txt and build_rule.txt.
-  @echo         VS2012            Set the env for VS2012 build.
-  @echo         VS2013            Set the env for VS2013 build.
-  @echo         VS2015            Set the env for VS2015 build.
-  @echo         VS2017            Set the env for VS2017 build.
-  @echo         VS2019            Set the env for VS2019 build.
   @echo.
 
 :end
 set REBUILD=
 set FORCE_REBUILD=
 set RECONFIG=
-set VS2019=
-set VS2017=
-set VS2015=
-set VS2013=
-set VS2012=
-set VSTool=
 popd
 

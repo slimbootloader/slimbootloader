@@ -776,8 +776,7 @@ gModuleTypeHeaderFile = {
     SUP_MODULE_SMM_CORE          :   ["PiDxe.h", "Library/BaseLib.h", "Library/DebugLib.h", "Library/UefiDriverEntryPoint.h"],
     SUP_MODULE_MM_STANDALONE     :   ["PiMm.h", "Library/BaseLib.h", "Library/DebugLib.h", "Library/StandaloneMmDriverEntryPoint.h"],
     SUP_MODULE_MM_CORE_STANDALONE :  ["PiMm.h", "Library/BaseLib.h", "Library/DebugLib.h", "Library/StandaloneMmCoreEntryPoint.h"],
-    SUP_MODULE_USER_DEFINED      :   [gBasicHeaderFile, "Library/DebugLib.h"],
-    SUP_MODULE_HOST_APPLICATION  :   [gBasicHeaderFile, "Library/DebugLib.h"]
+    SUP_MODULE_USER_DEFINED      :   [gBasicHeaderFile, "Library/DebugLib.h"]
 }
 
 ## Autogen internal worker macro to define DynamicEx PCD name includes both the TokenSpaceGuidName
@@ -1340,7 +1339,7 @@ def CreateLibraryConstructorCode(Info, AutoGenC, AutoGenH):
         if Lib.ModuleType in [SUP_MODULE_BASE, SUP_MODULE_SEC]:
             ConstructorPrototypeString.Append(gLibraryStructorPrototype[SUP_MODULE_BASE].Replace(Dict))
             ConstructorCallingString.Append(gLibraryStructorCall[SUP_MODULE_BASE].Replace(Dict))
-        if Info.ModuleType not in [SUP_MODULE_BASE, SUP_MODULE_USER_DEFINED, SUP_MODULE_HOST_APPLICATION]:
+        if Info.ModuleType not in [SUP_MODULE_BASE, SUP_MODULE_USER_DEFINED]:
             if Lib.ModuleType in SUP_MODULE_SET_PEI:
                 ConstructorPrototypeString.Append(gLibraryStructorPrototype['PEI'].Replace(Dict))
                 ConstructorCallingString.Append(gLibraryStructorCall['PEI'].Replace(Dict))
@@ -1369,7 +1368,7 @@ def CreateLibraryConstructorCode(Info, AutoGenC, AutoGenH):
     if Info.IsLibrary:
         AutoGenH.Append("${BEGIN}${FunctionPrototype}${END}", Dict)
     else:
-        if Info.ModuleType in [SUP_MODULE_BASE, SUP_MODULE_SEC, SUP_MODULE_USER_DEFINED, SUP_MODULE_HOST_APPLICATION]:
+        if Info.ModuleType in [SUP_MODULE_BASE, SUP_MODULE_SEC, SUP_MODULE_USER_DEFINED]:
             AutoGenC.Append(gLibraryString[SUP_MODULE_BASE].Replace(Dict))
         elif Info.ModuleType in SUP_MODULE_SET_PEI:
             AutoGenC.Append(gLibraryString['PEI'].Replace(Dict))
@@ -1403,7 +1402,7 @@ def CreateLibraryDestructorCode(Info, AutoGenC, AutoGenH):
         if Lib.ModuleType in [SUP_MODULE_BASE, SUP_MODULE_SEC]:
             DestructorPrototypeString.Append(gLibraryStructorPrototype[SUP_MODULE_BASE].Replace(Dict))
             DestructorCallingString.Append(gLibraryStructorCall[SUP_MODULE_BASE].Replace(Dict))
-        if Info.ModuleType not in [SUP_MODULE_BASE, SUP_MODULE_USER_DEFINED, SUP_MODULE_HOST_APPLICATION]:
+        if Info.ModuleType not in [SUP_MODULE_BASE, SUP_MODULE_USER_DEFINED]:
             if Lib.ModuleType in SUP_MODULE_SET_PEI:
                 DestructorPrototypeString.Append(gLibraryStructorPrototype['PEI'].Replace(Dict))
                 DestructorCallingString.Append(gLibraryStructorCall['PEI'].Replace(Dict))
@@ -1432,7 +1431,7 @@ def CreateLibraryDestructorCode(Info, AutoGenC, AutoGenH):
     if Info.IsLibrary:
         AutoGenH.Append("${BEGIN}${FunctionPrototype}${END}", Dict)
     else:
-        if Info.ModuleType in [SUP_MODULE_BASE, SUP_MODULE_SEC, SUP_MODULE_USER_DEFINED, SUP_MODULE_HOST_APPLICATION]:
+        if Info.ModuleType in [SUP_MODULE_BASE, SUP_MODULE_SEC, SUP_MODULE_USER_DEFINED]:
             AutoGenC.Append(gLibraryString[SUP_MODULE_BASE].Replace(Dict))
         elif Info.ModuleType in SUP_MODULE_SET_PEI:
             AutoGenC.Append(gLibraryString['PEI'].Replace(Dict))
@@ -1450,7 +1449,7 @@ def CreateLibraryDestructorCode(Info, AutoGenC, AutoGenH):
 #   @param      AutoGenH    The TemplateString object for header file
 #
 def CreateModuleEntryPointCode(Info, AutoGenC, AutoGenH):
-    if Info.IsLibrary or Info.ModuleType in [SUP_MODULE_USER_DEFINED, SUP_MODULE_HOST_APPLICATION, SUP_MODULE_SEC]:
+    if Info.IsLibrary or Info.ModuleType in [SUP_MODULE_USER_DEFINED, SUP_MODULE_SEC]:
         return
     #
     # Module Entry Points
@@ -1472,8 +1471,8 @@ def CreateModuleEntryPointCode(Info, AutoGenC, AutoGenH):
 
     if Info.ModuleType in [SUP_MODULE_PEI_CORE, SUP_MODULE_DXE_CORE, SUP_MODULE_SMM_CORE, SUP_MODULE_MM_CORE_STANDALONE]:
         if Info.SourceFileList:
-            if NumEntryPoints != 1:
-                EdkLogger.error(
+          if NumEntryPoints != 1:
+              EdkLogger.error(
                   "build",
                   AUTOGEN_ERROR,
                   '%s must have exactly one entry point' % Info.ModuleType,
@@ -1530,7 +1529,7 @@ def CreateModuleEntryPointCode(Info, AutoGenC, AutoGenH):
 #   @param      AutoGenH    The TemplateString object for header file
 #
 def CreateModuleUnloadImageCode(Info, AutoGenC, AutoGenH):
-    if Info.IsLibrary or Info.ModuleType in [SUP_MODULE_USER_DEFINED, SUP_MODULE_HOST_APPLICATION, SUP_MODULE_BASE, SUP_MODULE_SEC]:
+    if Info.IsLibrary or Info.ModuleType in [SUP_MODULE_USER_DEFINED, SUP_MODULE_BASE, SUP_MODULE_SEC]:
         return
     #
     # Unload Image Handlers
@@ -1550,7 +1549,7 @@ def CreateModuleUnloadImageCode(Info, AutoGenC, AutoGenH):
 #   @param      AutoGenH    The TemplateString object for header file
 #
 def CreateGuidDefinitionCode(Info, AutoGenC, AutoGenH):
-    if Info.ModuleType in [SUP_MODULE_USER_DEFINED, SUP_MODULE_HOST_APPLICATION, SUP_MODULE_BASE]:
+    if Info.ModuleType in [SUP_MODULE_USER_DEFINED, SUP_MODULE_BASE]:
         GuidType = TAB_GUID
     else:
         GuidType = "EFI_GUID"
@@ -1574,7 +1573,7 @@ def CreateGuidDefinitionCode(Info, AutoGenC, AutoGenH):
 #   @param      AutoGenH    The TemplateString object for header file
 #
 def CreateProtocolDefinitionCode(Info, AutoGenC, AutoGenH):
-    if Info.ModuleType in [SUP_MODULE_USER_DEFINED, SUP_MODULE_HOST_APPLICATION, SUP_MODULE_BASE]:
+    if Info.ModuleType in [SUP_MODULE_USER_DEFINED, SUP_MODULE_BASE]:
         GuidType = TAB_GUID
     else:
         GuidType = "EFI_GUID"
@@ -1598,7 +1597,7 @@ def CreateProtocolDefinitionCode(Info, AutoGenC, AutoGenH):
 #   @param      AutoGenH    The TemplateString object for header file
 #
 def CreatePpiDefinitionCode(Info, AutoGenC, AutoGenH):
-    if Info.ModuleType in [SUP_MODULE_USER_DEFINED, SUP_MODULE_HOST_APPLICATION, SUP_MODULE_BASE]:
+    if Info.ModuleType in [SUP_MODULE_USER_DEFINED, SUP_MODULE_BASE]:
         GuidType = TAB_GUID
     else:
         GuidType = "EFI_GUID"
@@ -1629,13 +1628,13 @@ def CreatePcdCode(Info, AutoGenC, AutoGenH):
         if Pcd.Type in PCD_DYNAMIC_EX_TYPE_SET and Pcd.TokenSpaceGuidCName not in TokenSpaceList:
             TokenSpaceList.append(Pcd.TokenSpaceGuidCName)
 
-    SkuMgr = Info.PlatformInfo.Platform.SkuIdMgr
+    SkuMgr = Info.Workspace.Platform.SkuIdMgr
     AutoGenH.Append("\n// Definition of SkuId Array\n")
     AutoGenH.Append("extern UINT64 _gPcd_SkuId_Array[];\n")
     # Add extern declarations to AutoGen.h if one or more Token Space GUIDs were found
     if TokenSpaceList:
         AutoGenH.Append("\n// Definition of PCD Token Space GUIDs used in this module\n\n")
-        if Info.ModuleType in [SUP_MODULE_USER_DEFINED, SUP_MODULE_HOST_APPLICATION, SUP_MODULE_BASE]:
+        if Info.ModuleType in [SUP_MODULE_USER_DEFINED, SUP_MODULE_BASE]:
             GuidType = TAB_GUID
         else:
             GuidType = "EFI_GUID"
@@ -1748,60 +1747,59 @@ def CreateIdfFileCode(Info, AutoGenC, StringH, IdfGenCFlag, IdfGenBinBuffer):
                     for FileObj in ImageFiles.ImageFilesDict[Idf]:
                         ID = FileObj.ImageID
                         File = FileObj.File
-                        try:
-                            SearchImageID (FileObj, FileList)
-                            if FileObj.Referenced:
-                                if (ValueStartPtr - len(DEFINE_STR + ID)) <= 0:
-                                    Line = DEFINE_STR + ' ' + ID + ' ' + DecToHexStr(Index, 4) + '\n'
-                                else:
-                                    Line = DEFINE_STR + ' ' + ID + ' ' * (ValueStartPtr - len(DEFINE_STR + ID)) + DecToHexStr(Index, 4) + '\n'
+                        if not os.path.exists(File.Path) or not os.path.isfile(File.Path):
+                            EdkLogger.error("build", FILE_NOT_FOUND, ExtraData=File.Path)
+                        SearchImageID (FileObj, FileList)
+                        if FileObj.Referenced:
+                            if (ValueStartPtr - len(DEFINE_STR + ID)) <= 0:
+                                Line = DEFINE_STR + ' ' + ID + ' ' + DecToHexStr(Index, 4) + '\n'
+                            else:
+                                Line = DEFINE_STR + ' ' + ID + ' ' * (ValueStartPtr - len(DEFINE_STR + ID)) + DecToHexStr(Index, 4) + '\n'
 
-                                if File not in FileDict:
-                                    FileDict[File] = Index
-                                else:
-                                    DuplicateBlock = pack('B', EFI_HII_IIBT_DUPLICATE)
-                                    DuplicateBlock += pack('H', FileDict[File])
-                                    ImageBuffer += DuplicateBlock
-                                    BufferStr = WriteLine(BufferStr, '// %s: %s: %s' % (DecToHexStr(Index, 4), ID, DecToHexStr(Index, 4)))
-                                    TempBufferList = AscToHexList(DuplicateBlock)
-                                    BufferStr = WriteLine(BufferStr, CreateArrayItem(TempBufferList, 16) + '\n')
-                                    StringH.Append(Line)
-                                    Index += 1
-                                    continue
-
-                                TmpFile = open(File.Path, 'rb')
-                                Buffer = TmpFile.read()
-                                TmpFile.close()
-                                if File.Ext.upper() == '.PNG':
-                                    TempBuffer = pack('B', EFI_HII_IIBT_IMAGE_PNG)
-                                    TempBuffer += pack('I', len(Buffer))
-                                    TempBuffer += Buffer
-                                elif File.Ext.upper() == '.JPG':
-                                    ImageType, = struct.unpack('4s', Buffer[6:10])
-                                    if ImageType != b'JFIF':
-                                        EdkLogger.error("build", FILE_TYPE_MISMATCH, "The file %s is not a standard JPG file." % File.Path)
-                                    TempBuffer = pack('B', EFI_HII_IIBT_IMAGE_JPEG)
-                                    TempBuffer += pack('I', len(Buffer))
-                                    TempBuffer += Buffer
-                                elif File.Ext.upper() == '.BMP':
-                                    TempBuffer, TempPalette = BmpImageDecoder(File, Buffer, PaletteIndex, FileObj.TransParent)
-                                    if len(TempPalette) > 1:
-                                        PaletteIndex += 1
-                                        NewPalette = pack('H', len(TempPalette))
-                                        NewPalette += TempPalette
-                                        PaletteBuffer += NewPalette
-                                        PaletteStr = WriteLine(PaletteStr, '// %s: %s: %s' % (DecToHexStr(PaletteIndex - 1, 4), ID, DecToHexStr(PaletteIndex - 1, 4)))
-                                        TempPaletteList = AscToHexList(NewPalette)
-                                        PaletteStr = WriteLine(PaletteStr, CreateArrayItem(TempPaletteList, 16) + '\n')
-                                ImageBuffer += TempBuffer
+                            if File not in FileDict:
+                                FileDict[File] = Index
+                            else:
+                                DuplicateBlock = pack('B', EFI_HII_IIBT_DUPLICATE)
+                                DuplicateBlock += pack('H', FileDict[File])
+                                ImageBuffer += DuplicateBlock
                                 BufferStr = WriteLine(BufferStr, '// %s: %s: %s' % (DecToHexStr(Index, 4), ID, DecToHexStr(Index, 4)))
-                                TempBufferList = AscToHexList(TempBuffer)
+                                TempBufferList = AscToHexList(DuplicateBlock)
                                 BufferStr = WriteLine(BufferStr, CreateArrayItem(TempBufferList, 16) + '\n')
-
                                 StringH.Append(Line)
                                 Index += 1
-                        except IOError:
-                            EdkLogger.error("build", FILE_NOT_FOUND, ExtraData=File.Path)
+                                continue
+
+                            TmpFile = open(File.Path, 'rb')
+                            Buffer = TmpFile.read()
+                            TmpFile.close()
+                            if File.Ext.upper() == '.PNG':
+                                TempBuffer = pack('B', EFI_HII_IIBT_IMAGE_PNG)
+                                TempBuffer += pack('I', len(Buffer))
+                                TempBuffer += Buffer
+                            elif File.Ext.upper() == '.JPG':
+                                ImageType, = struct.unpack('4s', Buffer[6:10])
+                                if ImageType != b'JFIF':
+                                    EdkLogger.error("build", FILE_TYPE_MISMATCH, "The file %s is not a standard JPG file." % File.Path)
+                                TempBuffer = pack('B', EFI_HII_IIBT_IMAGE_JPEG)
+                                TempBuffer += pack('I', len(Buffer))
+                                TempBuffer += Buffer
+                            elif File.Ext.upper() == '.BMP':
+                                TempBuffer, TempPalette = BmpImageDecoder(File, Buffer, PaletteIndex, FileObj.TransParent)
+                                if len(TempPalette) > 1:
+                                    PaletteIndex += 1
+                                    NewPalette = pack('H', len(TempPalette))
+                                    NewPalette += TempPalette
+                                    PaletteBuffer += NewPalette
+                                    PaletteStr = WriteLine(PaletteStr, '// %s: %s: %s' % (DecToHexStr(PaletteIndex - 1, 4), ID, DecToHexStr(PaletteIndex - 1, 4)))
+                                    TempPaletteList = AscToHexList(NewPalette)
+                                    PaletteStr = WriteLine(PaletteStr, CreateArrayItem(TempPaletteList, 16) + '\n')
+                            ImageBuffer += TempBuffer
+                            BufferStr = WriteLine(BufferStr, '// %s: %s: %s' % (DecToHexStr(Index, 4), ID, DecToHexStr(Index, 4)))
+                            TempBufferList = AscToHexList(TempBuffer)
+                            BufferStr = WriteLine(BufferStr, CreateArrayItem(TempBufferList, 16) + '\n')
+
+                            StringH.Append(Line)
+                            Index += 1
 
             BufferStr = WriteLine(BufferStr, '// End of the Image Info')
             BufferStr = WriteLine(BufferStr, CreateArrayItem(DecToHexList(EFI_HII_IIBT_END, 2)) + '\n')
