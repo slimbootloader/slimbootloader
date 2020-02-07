@@ -22,7 +22,7 @@ import datetime
 import zipfile
 import ntpath
 from   CommonUtility import *
-from   IfwiUtility   import FLASH_MAP, FLASH_MAP_DESC
+from   IfwiUtility   import FLASH_MAP, FLASH_MAP_DESC, FIT_ENTRY, UCODE_HEADER
 
 sys.dont_write_bytecode = True
 sys.path.append (os.path.join(os.path.dirname(__file__), '..', '..', 'IntelFsp2Pkg', 'Tools'))
@@ -93,43 +93,6 @@ HASH_USAGE = {
     'PUBKEY_OS'           : (1<<11),
     'PUBKEY_CONT_DEF'     : (1<<12),
 }
-
-class UcodeHeader(Structure):
-    _pack_ = 1
-    _fields_ = [
-        ('header_version',  c_uint32),
-        ('update_revision',  c_uint32),
-        ('date',  c_uint32),
-        ('processor_signature',  c_uint32),
-        ('checksum',  c_uint32),
-        ('loader_revision',  c_uint32),
-        ('processor_flags',  c_uint32),
-        ('data_size',  c_uint32),
-        ('total_size',  c_uint32),
-        ('reserved',  ARRAY(c_uint32, 12)),
-        ]
-
-
-class FitEntry(Structure):
-
-    FIT_SIGNATURE = b'_FIT_   '
-
-    _pack_ = 1
-    _fields_ = [
-        ('address',  c_uint64),
-        ('size',     c_uint32), # Bits[31:24] Reserved
-        ('version',  c_uint16),
-        ('type',     c_uint8), # Bit[7] = C_V
-        ('checksum', c_uint8),
-        ]
-
-    def set_values(self, _address, _size, _version, _type, _checksum):
-        self.address  = _address
-        self.size     = _size
-        self.version  = _version
-        self.type     = _type
-        self.checksum = _checksum
-
 
 class HashStoreData(Structure):
 
