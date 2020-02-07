@@ -8,7 +8,7 @@
 [Defines]
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = FspSupportLib
-  FILE_GUID                      = 3883C69A-0B2D-4e51-9056-023CC62B4D56  
+  FILE_GUID                      = 3883C69A-0B2D-4e51-9056-023CC62B4D56
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
   LIBRARY_CLASS                  = FspSupportLib
@@ -23,11 +23,11 @@
   FspSupportLib.c
 
 [Packages]
-  MdePkg/MdePkg.dec 
+  MdePkg/MdePkg.dec
   IntelFsp2Pkg/IntelFsp2Pkg.dec
   BootloaderCorePkg/BootloaderCorePkg.dec
-  BootloaderCommonPkg/BootloaderCommonPkg.dec    
-  
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+
 [LibraryClasses]
   BaseLib
   DebugLib
@@ -36,5 +36,5 @@
 
 [Guids]
   gFspNonVolatileStorageHobGuid
-  
+
 [Pcd]

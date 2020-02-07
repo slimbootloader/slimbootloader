@@ -13,7 +13,7 @@
 
 [Defines]
   INF_VERSION                    = 0x00010005
-  BASE_NAME                      = MemoryAllocationLib  
+  BASE_NAME                      = MemoryAllocationLib
   FILE_GUID                      = b694e0dc-cd4e-4b30-885b-9c164ed3e74a
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
@@ -30,9 +30,9 @@
 [Packages]
   MdePkg/MdePkg.dec
   BootloaderCorePkg/BootloaderCorePkg.dec
-  BootloaderCommonPkg/BootloaderCommonPkg.dec  
-  
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+
 [LibraryClasses]
   DebugLib
-  BaseMemoryLib  
+  BaseMemoryLib
   BootloaderCoreLib

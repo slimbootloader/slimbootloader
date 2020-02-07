@@ -8,10 +8,10 @@
 [Defines]
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = Stage2SocInitLib
-  FILE_GUID                      = A6F302B8-4596-42d8-AA1A-E16D7FB940D9  
+  FILE_GUID                      = A6F302B8-4596-42d8-AA1A-E16D7FB940D9
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
-  LIBRARY_CLASS                  = SocInitLib 
+  LIBRARY_CLASS                  = SocInitLib
 
 #
 # The following information is for reference only and not required by the build tools.
@@ -20,17 +20,17 @@
 #
 
 [Sources]
-  Stage2SocInitLib.c     
+  Stage2SocInitLib.c
 
 [Packages]
   MdePkg/MdePkg.dec
-  BootloaderCorePkg/BootloaderCorePkg.dec   
+  BootloaderCorePkg/BootloaderCorePkg.dec
   Silicon/QemuSocPkg/QemuSocPkg.dec
-  
+
 [LibraryClasses]
-  BaseLib  
+  BaseLib
   PcdLib
   IoLib
-      
+
 [Pcd]
 
