@@ -84,7 +84,7 @@ typedef enum
     P_20K_H = 12,       // Pull Up 20K
     P_5K_H  = 10,       // Pull Up  5K
     P_1K2K_H  = 13,     // Pull Up  1K
-    Native_control = 15 
+    Native_control = 15
 } PULL_TYPE;
 
 typedef enum {
@@ -189,8 +189,8 @@ typedef enum
 /*
 I/O Standby Termination
 0 = Same as functional pull
-1 = Disable Pullup and Pulldown 
-2 = Enable Pulldown 
+1 = Disable Pullup and Pulldown
+2 = Enable Pulldown
 3 = Enable Pullup
 */
 typedef enum
@@ -233,9 +233,9 @@ typedef union{
     UINT32 padCnf1;
     struct {
          UINT32 IntSel:7;      // 0-6 Interrupt Select. RO
-         UINT32 Reserved:1;    // 7  Reserved.         
+         UINT32 Reserved:1;    // 7  Reserved.
          UINT32 IOSTerm:2;     // 8-9 I/O Standby Termination (IOSTerm) RW
-         UINT32 Term:4;        // 10-13 Termination, 
+         UINT32 Term:4;        // 10-13 Termination,
                                // 0 000: none;0 010: 5k wpd;0 100: 20k wpd;1 000: none;1 001: 1k wpu;1 011: 2k wpu;1 010: 5k wpu;
                                // 1 100: 20k wpu;1 101: 1k & 2k wpu;1 111: (optional) Native controller selected by Pad Mode controls the Termination
          UINT32 IOSState:4;    // 14-17 I/O Standby State, I/O Standby is not implemented in BXT, RW

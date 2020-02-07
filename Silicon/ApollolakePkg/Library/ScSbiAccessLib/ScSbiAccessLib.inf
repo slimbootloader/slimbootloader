@@ -27,7 +27,7 @@
   BootloaderCorePkg/BootloaderCorePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
   Silicon/ApollolakePkg/ApollolakePkg.dec
- 
+
 [LibraryClasses]
   BaseLib
   IoLib

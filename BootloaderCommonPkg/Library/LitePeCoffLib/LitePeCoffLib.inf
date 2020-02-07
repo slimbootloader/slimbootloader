@@ -16,7 +16,7 @@
   FILE_GUID                      = 556f5d10-7309-4af4-b80a-8196bd60946f
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
-  LIBRARY_CLASS                  = LitePeCoffLib 
+  LIBRARY_CLASS                  = LitePeCoffLib
 
 
 #
