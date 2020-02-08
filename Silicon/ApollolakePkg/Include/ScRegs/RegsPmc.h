@@ -29,8 +29,8 @@
 ///
 /// PMC Registers
 ///
-#define PMC_BASE_ADDRESS                    PcdGet32(PcdPmcIpc1BaseAddress0)
-#define GCR_BASE_ADDRESS                    PcdGet32(PcdPmcGcrBaseAddress)
+#define PMC_BASE_ADDRESS                    0xFE042000
+#define GCR_BASE_ADDRESS                    0xFE043000
 
 #define PCI_DEVICE_NUMBER_PMC               13
 #define PCI_FUNCTION_NUMBER_PMC_SSRAM       3
@@ -42,6 +42,7 @@
 #define R_PMC_BASE                          0x10  ///< BAR0
 #define R_PMC_ACPI_BASE                     0x20  ///< BAR2
 #define R_PMC_GEN_PMCON_1                   0x1020  ///< General PM Configuration 1
+#define R_PMC_BIOS_SCRATCHPAD               0x1090  ///< BIOS_SCRATCHPAD
 #define B_PMC_GEN_PMCON_RTC_PWR_STS         BIT2    ///< RTC Power Status
 
 ///

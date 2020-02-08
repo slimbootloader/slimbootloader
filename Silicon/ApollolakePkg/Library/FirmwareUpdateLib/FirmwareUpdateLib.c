@@ -32,6 +32,7 @@
 #include <Service/PlatformService.h>
 #include <Service/HeciService.h>
 #include <Library/ResetSystemLib.h>
+#include <ScRegs/RegsPmc.h>
 
 #define FLASH_MAP_IN_FV_OFFSET   0xA4
 
@@ -465,6 +466,8 @@ EndFirmwareUpdate (
   HECI_SERVICE      *HeciService;
   PLATFORM_SERVICE  *PlatformService;
 
+  ClearFwUpdateTrigger();
+
   DEBUG ((DEBUG_INFO, "Firmware update Done! clear CSE flag to normal boot mode.\n"));
 
   HeciService = (HECI_SERVICE *) GetServiceBySignature (HECI_SERVICE_SIGNATURE);
@@ -508,5 +511,8 @@ ClearFwUpdateTrigger (
   VOID
   )
 {
+  // Clear platform firmware update trigger.
+  MmioAnd32 (PMC_BASE_ADDRESS + R_PMC_BIOS_SCRATCHPAD, 0xFF00FFFF);
+
   return EFI_SUCCESS;
 }

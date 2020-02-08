@@ -426,6 +426,8 @@ def patch_flash_map (image_data, platform_data = 0xffffffff):
 
             comp  = IFWI_PARSER.locate_component (ifwi, path)
             if not comp:
+                if desc.sig == b'KEYH':
+                    continue
                 raise Exception("Cannot locate component '%s' in BPDT !" % path)
             if (desc.size == 0) and (desc.offset == 0):
                 desc.size = comp.length

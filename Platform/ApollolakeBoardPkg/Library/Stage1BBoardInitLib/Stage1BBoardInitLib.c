@@ -832,15 +832,28 @@ EarlyBootDeviceInit (
 BOOLEAN
 IsFirmwareUpdate ()
 {
-  UINT16          FirmwareUpdateStatus;
+  EFI_STATUS        Status;
+  UINT16            FwuReq;
+  FLASH_MAP        *FlashMapPtr;
+  FW_UPDATE_STATUS  FwUpdStatus;
+  UINT32            OffsetInBiosRgn;
+  UINT32            RsvdBase;
 
-  //
-  // This is platform specific method. Here just use COMS.
-  //
-  IoWrite8 (0x70, FWU_BOOT_MODE_OFFSET);
-  FirmwareUpdateStatus = IoRead8 (0x71);
+  // Check if state machine is set to capsule processing mode.
+  FlashMapPtr = GetFlashMapPtr ();
+  Status = GetComponentInfoByPartition (FLASH_MAP_SIG_BLRESERVED, FALSE, &RsvdBase, NULL);
+  if (!EFI_ERROR (Status) && (FlashMapPtr != NULL)) {
+    OffsetInBiosRgn = FlashMapPtr->RomSize + RsvdBase;
+    ZeroMem (&FwUpdStatus, sizeof(FwUpdStatus));
+    SpiFlashRead (FlashRegionBios, OffsetInBiosRgn, sizeof(FwUpdStatus), (VOID *)&FwUpdStatus);
+    if (CheckStateMachine (&FwUpdStatus) == EFI_SUCCESS) {
+      return TRUE;
+    }
+  }
 
-  if (FirmwareUpdateStatus == FWU_BOOT_MODE_VALUE) {
+  // Check if platform firmware update trigger is set.
+  FwuReq = (MmioRead32 (PMC_BASE_ADDRESS + R_PMC_BIOS_SCRATCHPAD) >> 16) & 0xFF;
+  if ((FwuReq & 0x0F) != 0) {
     return TRUE;
   }
 
