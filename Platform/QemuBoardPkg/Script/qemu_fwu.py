@@ -10,11 +10,10 @@
 
 import os
 import sys
-import re
-import glob
 import struct
-import shutil
+import signal
 import subprocess
+from   threading import Timer
 from ctypes import Structure, c_char, c_uint32, c_uint8, c_uint64, c_uint16, sizeof, ARRAY
 
 
@@ -57,9 +56,56 @@ class FlashMap(Structure):
     ]
 
 
+def  get_check_lines (bp = 0, mode = 0):
+    lines = [
+              "===== Intel Slim Bootloader STAGE1A =====",
+              "===== Intel Slim Bootloader STAGE1B =====",
+              "BOOT: BP%d" % bp,
+              "MODE: %d" % mode,
+              "===== Intel Slim Bootloader STAGE2 ======",
+              "Jump to payload"
+            ]
+    if mode == 0x12:
+        bp_ab = 'AB' if bp == 0 else 'BA'
+        lines.extend ([
+              "===========Read Capsule Image============",
+              "Boot from partition %s, update partition %s" % (bp_ab[0], bp_ab[1]),
+              "Finished   100%",
+              "Reset required to proceed with the firmware update"
+              ])
+    return lines
+
+def  check_result (lines):
+    ret   = 0
+    index = 0
+    cycle = 1
+    count = len(lines)
+    for bp, mode in [(0, 0x12), (1, 0x12), (0, 0)]:
+        for line in get_check_lines (bp, mode):
+            found = False
+            while not found and index < count:
+                if line in lines[index]:
+                    found = True
+                    break
+                else:
+                    index += 1
+            if found:
+                index += 1
+                continue
+            else:
+                print ("Failed locatting '%s' in cycke %d !" % (line, cycle))
+                ret = -1
+                break
+        if ret < 0:
+            break
+        cycle += 1
+
+    return  ret
+
+
 def handle_ts(bios_image, set_ts_val=0):
 
-    # Since QEMU does not support flash top swap, this sccript will help
+    # Since QEMU does not support flash top swap, this script will help
     # reassemble the image according to the top swap request
     inf = open(bios_image, "rb")
     bios_bins = bytearray(inf.read())
@@ -101,7 +147,7 @@ def handle_ts(bios_image, set_ts_val=0):
     if fwu_flg != 0x90:
         tmp[-10] = 0x90
 
-# Get the top swap request from image
+    # Get the top swap request from image
     ts_req = tmp[-11]
     if ts_req != 0x90:
         tmp[-11] = 0x90
@@ -181,7 +227,29 @@ def handle_ts(bios_image, set_ts_val=0):
     return fwu_flg
 
 
-def run_qemu(bios_img, fwu_path, fwu_mode=False, timeout=None):
+def run_process (cmd, timeout = 0):
+    def timerout (p):
+        timer.cancel()
+        os.kill(p.pid, signal.SIGTERM)
+
+    lines = []
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=1, universal_newlines=True)
+    if timeout:
+      timer = Timer(timeout, timerout, args=[p])
+      timer.start()
+    for line in iter(p.stdout.readline, ''):
+        line = line.rstrip()
+        print (line)
+        lines.append (line)
+    p.stdout.close()
+    retcode = p.wait()
+    if timeout:
+        timer.cancel()
+
+    return lines
+
+
+def run_qemu(bios_img, fwu_path, fwu_mode=False, timeout=0):
     if os.name == 'nt':
         path = r"C:\Program Files\qemu\qemu-system-x86_64"
     else:
@@ -194,9 +262,9 @@ def run_qemu(bios_img, fwu_path, fwu_mode=False, timeout=None):
         "ide-hd,drive=mydrive", "-boot", "order=d%s" % ('an' if fwu_mode else ''),
         "-no-reboot", "-drive", "file=%s,if=pflash,format=raw" % bios_img
     ]
-    x = subprocess.call(cmd_list, timeout=timeout)
-    if x:
-        sys.exit(1)
+
+    lines = run_process (cmd_list, timeout)
+    return lines
 
 
 def usage():
@@ -222,8 +290,10 @@ def main():
 
     print("Firmware update for Slim BootLoader")
 
+    output = []
     fwu_mode = 2
-    run_qemu(bios_img, fwu_dir, True if fwu_mode != 0 else False)
+    lines = run_qemu(bios_img, fwu_dir, True if fwu_mode != 0 else False)
+    output.extend(lines)
 
     while fwu_mode:
         print("Reboot ... !")
@@ -231,13 +301,19 @@ def main():
         if fwu_ret == 0x80:
             fwu_mode = 0
             break
-        run_qemu(bios_img, fwu_dir, True if fwu_mode != 0 else False)
+        lines = run_qemu(bios_img, fwu_dir, True if fwu_mode != 0 else False)
+        output.extend(lines)
 
     # Try final normal boot
-    try:
-        run_qemu(bios_img, fwu_dir, True if fwu_mode != 0 else False, timeout=8)
-    except:
-        pass
+    lines = run_qemu(bios_img, fwu_dir, True if fwu_mode != 0 else False, 3)
+    output.extend(lines)
+
+    # check test result
+    ret = check_result (output)
+
+    print ('\nQEMU FWU test %s !\n' % ('PASSED' if ret == 0 else 'FAILED'))
+
+    return ret
 
 if __name__ == '__main__':
     sys.exit(main())
