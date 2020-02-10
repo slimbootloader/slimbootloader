@@ -16,4 +16,9 @@ env:
   - BUILD_TARGET=cfl   PYTHON_VER=3  BUILD_REL=-r
 
 script:
-  - docker run --rm -v ${PWD}:/tmp/sbl -w /tmp/sbl --network=host sbl python${PYTHON_VER} ./BuildLoader.py build ${BUILD_REL} ${BUILD_TARGET}
+  - |
+    if [ ${BUILD_TARGET} == "qemu" ]; then
+      docker run --rm -v ${PWD}:/tmp/sbl -w /tmp/sbl --network=host sbl bash -c "python${PYTHON_VER} ./BuildLoader.py build ${BUILD_REL} ${BUILD_TARGET} && python${PYTHON_VER} ./Platform/QemuBoardPkg/Script/qemu_test.py";
+    else
+      docker run --rm -v ${PWD}:/tmp/sbl -w /tmp/sbl --network=host sbl python${PYTHON_VER} ./BuildLoader.py build ${BUILD_REL} ${BUILD_TARGET};
+    fi
