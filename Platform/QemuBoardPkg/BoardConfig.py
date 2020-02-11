@@ -1,7 +1,7 @@
 ## @file
 # This file is used to provide board specific image information.
 #
-#  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -35,6 +35,18 @@ class Board(BaseBoard):
         self.BOARD_PKG_NAME       = 'QemuBoardPkg'
         self.SILICON_PKG_NAME     = 'QemuSocPkg'
 
+        #
+        # By default,
+        # _PCI_ENUM_DOWNGRADE_IO32  : 1
+        # _PCI_ENUM_DOWNGRADE_MEM64 : 1
+        # _PCI_ENUM_DOWNGRADE_PMEM64: 1
+        # _PCI_ENUM_BUS_SCAN_TYPE   : 0 (0: list, 1: range)
+        #
+        #self._PCI_ENUM_DOWNGRADE_IO32   = 0
+        #self._PCI_ENUM_DOWNGRADE_MEM64  = 0
+        #self._PCI_ENUM_DOWNGRADE_PMEM64 = 0
+        #self._PCI_ENUM_BUS_SCAN_TYPE    = 1
+        self._PCI_ENUM_BUS_SCAN_ITEMS = '0,10,0x35,128,0xff'
         self.PCI_IO_BASE              = 0x00002000
         self.PCI_MEM32_BASE           = 0x80000000
         self.USB_KB_POLLING_TIMEOUT   = 10

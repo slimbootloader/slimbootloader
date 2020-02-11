@@ -167,6 +167,26 @@ class VariableRegionHeader(Structure):
         ]
 
 
+class PciEnumPolicyInfo(Structure):
+    _pack_ = 1
+    _fields_ = [
+        ('DowngradeIo32',   c_uint8),
+        ('DowngradeMem64',  c_uint8),
+        ('DowngradePMem64', c_uint8),
+        ('Reserved',        c_uint8),
+        ('BusScanType',     c_uint8), # 0: list, 1: range
+        ('NumOfBus',        c_uint8),
+        ('BusScanItems',    ARRAY(c_uint8, 0))
+    ]
+
+    def __init__(self):
+        self.DowngradeIo32    = 1
+        self.DowngradeMem64   = 1
+        self.DowngradePMem64  = 1
+        self.Reserved         = 0
+        self.BusScanType      = 0
+        self.NumOfBus         = 0
+
 def get_visual_studio_info ():
 
     toolchain        = ''
@@ -987,3 +1007,43 @@ def find_component_in_image_list (comp_name, img_list):
 def print_component_list (comp_list):
     for comp in comp_list:
         print('%-20s BASE=0x%08X' % (comp['name'], comp['base']))
+
+def gen_pci_enum_policy_info (policy_dict):
+    policy_info   = PciEnumPolicyInfo()
+    struct_string = ''
+    items_string  = ''
+    try:
+        policy_info.DowngradeIo32   = policy_dict['DOWNGRADE_IO32']
+        policy_info.DowngradeMem64  = policy_dict['DOWNGRADE_MEM64']
+        policy_info.DowngradePMem64 = policy_dict['DOWNGRADE_PMEM64']
+        policy_info.BusScanType     = policy_dict['BUS_SCAN_TYPE']
+        bus_scan_items              = policy_dict['BUS_SCAN_ITEMS']
+
+        # Bus Scan List Type
+        if policy_info.BusScanType == 0:
+            # use dictionary key to remove duplicated bus number
+            items_dict = dict((int(elem, 0), 0) for elem in bus_scan_items.split(','))
+            for i in sorted (items_dict.keys()):
+                if i > 255:
+                    raise Exception('Bus number cannot exceed 255!')
+                items_string += (',0x%02x' % i)
+
+            policy_info.NumOfBus = len(items_dict)
+        # Bus Scan Range Type
+        else:
+            items_list = [int(elem, 0) for elem in bus_scan_items.split(',')]
+            policy_info.NumOfBus = len(items_list)
+            if policy_info.NumOfBus != 2:
+                raise Exception('Bus Scan Range type must have two bus number for start and end!')
+
+            items_list.sort()
+            items_string = ',0x%02x,0x%02x' % (items_list[0], items_list[1])
+
+        # combine structure and data
+        struct_data = list(bytearray(policy_info))
+        struct_string = ','.join(['0x%02x' % elem for elem in struct_data])
+        struct_string = '{' + struct_string + items_string + '}'
+    except KeyError:
+        raise Exception ("Failed to generate PCI_ENUM_POLICY_INFO!")
+
+    return struct_string
