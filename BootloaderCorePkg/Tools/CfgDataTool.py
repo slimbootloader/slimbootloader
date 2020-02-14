@@ -368,7 +368,11 @@ class CCfgData:
             CfgItemList.append([(bytearray(CfgTagHdr), CondBin, DataBin[:DataLen]), PidMask, PidMask, IsBuiltIn])
             Offset += CfgDlen
 
+        if (Offset != Length) or (Length % 4 != 0):
+            raise Exception("Invalid CFGDATA binary blob format for file '%s' !" % CfgBinFile)
+
         self.CfgDataBase[CfgBinFile] = (CfgItemList, CfgBlobHeader, IsBuiltIn)
+
 
     def Merge(self, CfgItem, PidMask):
         CfgData = CfgItem[0]
