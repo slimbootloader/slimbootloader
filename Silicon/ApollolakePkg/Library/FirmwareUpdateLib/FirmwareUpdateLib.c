@@ -458,15 +458,13 @@ PrepareRegionsUpdate (
 **/
 EFI_STATUS
 EFIAPI
-EndFirmwareUpdate (
+PlatformEndFirmwareUpdate (
   VOID
   )
 {
   EFI_STATUS        Status;
   HECI_SERVICE      *HeciService;
   PLATFORM_SERVICE  *PlatformService;
-
-  ClearFwUpdateTrigger();
 
   DEBUG ((DEBUG_INFO, "Firmware update Done! clear CSE flag to normal boot mode.\n"));
 
@@ -502,10 +500,8 @@ EndFirmwareUpdate (
 
   This function is responsible for clearing firmware update trigger.
 
-  @retval  EFI_SUCCESS        Update successfully.
-
 **/
-EFI_STATUS
+VOID
 EFIAPI
 ClearFwUpdateTrigger (
   VOID
@@ -513,6 +509,4 @@ ClearFwUpdateTrigger (
 {
   // Clear platform firmware update trigger.
   MmioAnd32 (PMC_BASE_ADDRESS + R_PMC_BIOS_SCRATCHPAD, 0xFF00FFFF);
-
-  return EFI_SUCCESS;
 }

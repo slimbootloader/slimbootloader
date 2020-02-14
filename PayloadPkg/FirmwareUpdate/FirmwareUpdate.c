@@ -703,10 +703,10 @@ ProcessCapsule (
       return Status;
     }
 
-    Status = ClearFwUpdateTrigger();
-    if (EFI_ERROR(Status)) {
-      DEBUG((DEBUG_ERROR, "Clearing firmware update trigger failed with error: %r\n", Status));
-    }
+    //
+    // Clear firmware update trigger
+    //
+    ClearFwUpdateTrigger();
   } else {
     return EFI_SUCCESS;
   }
@@ -1071,6 +1071,29 @@ GetRegionInfo (
   *NonRedundantRegionSize = GetRegionOffsetSize (FlashMap, FLASH_MAP_FLAGS_NON_REDUNDANT_REGION, NULL);
 
   return EFI_SUCCESS;
+}
+
+/**
+  End firmware update.
+
+  This function will clear firmware update trigger and end firmware update.
+
+  @retval  EFI_SUCCESS        Update successfully.
+  @retval  others             Error happened during end firmware update.
+
+**/
+EFI_STATUS
+EFIAPI
+EndFirmwareUpdate (
+  VOID
+  )
+{
+  EFI_STATUS  Status;
+
+  ClearFwUpdateTrigger ();
+
+  Status = PlatformEndFirmwareUpdate ();
+  return Status;
 }
 
 /**
