@@ -48,7 +48,7 @@ def rebuild_basetools ():
 def prep_env ():
     # check python version first
     version = check_for_python ()
-    os.environ['PYTHON_COMMAND'] = sys.executable
+    os.environ['PYTHON_COMMAND'] = '"' + sys.executable + '"'
     print_tool_version_info(os.environ['PYTHON_COMMAND'], version.strip())
 
     sblsource = os.path.dirname(os.path.realpath(__file__))
