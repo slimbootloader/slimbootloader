@@ -68,7 +68,7 @@ IsIasImageValid (
 
   if (!FeaturePcdGet (PcdVerifiedBootEnabled)) {
     DEBUG ((DEBUG_INFO, "IAS image verification is skipped!\n"));
-    return Hdr;
+    return (IAS_HEADER *) ImageAddr;
   }
 
   if (!IAS_IMAGE_IS_SIGNED (Hdr->ImageType)) {
@@ -117,7 +117,7 @@ IsIasImageValid (
   IasImageInfo->CompLen  = ((UINT32)IAS_PAYLOAD_END (Hdr)) - ((UINT32)Hdr);
   IasImageInfo->HashAlg  = PcdGet8(PcdCompSignHashAlg);
 
-  return Hdr;
+  return (IAS_HEADER *) ImageAddr;
 }
 
 /**
