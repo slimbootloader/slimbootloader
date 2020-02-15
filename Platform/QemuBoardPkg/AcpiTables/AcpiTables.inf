@@ -25,6 +25,7 @@
   Mcfg/Mcfg.aslc
   Hpet/Hpet.aslc
   Platform/CommonBoardPkg/AcpiTables/Fpdt/Fpdt.aslc
+  Platform/CommonBoardPkg/AcpiTables/Dsdt/AslInc.h
 
 [Packages]
   MdePkg/MdePkg.dec
