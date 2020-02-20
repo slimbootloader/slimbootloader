@@ -449,18 +449,14 @@ PrepareRegionsUpdate (
 
   This function is responsible for clearing firmware update trigger.
 
-  @retval  EFI_SUCCESS        Update successfully.
-
 **/
-EFI_STATUS
+VOID
 EFIAPI
 ClearFwUpdateTrigger (
   VOID
   )
 {
   IoAnd32(ACPI_BASE_ADDRESS + R_ACPI_IO_OC_WDT_CTL, 0xFF00FFFF);
-
-  return EFI_SUCCESS;
 }
 
 /**
@@ -476,7 +472,7 @@ ClearFwUpdateTrigger (
 **/
 EFI_STATUS
 EFIAPI
-EndFirmwareUpdate (
+PlatformEndFirmwareUpdate (
   VOID
   )
 {

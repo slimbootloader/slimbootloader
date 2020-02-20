@@ -477,7 +477,7 @@ SetBootPartition (
 **/
 EFI_STATUS
 EFIAPI
-EndFirmwareUpdate (
+PlatformEndFirmwareUpdate (
   VOID
   )
 {
@@ -501,14 +501,12 @@ EndFirmwareUpdate (
 
   This function is responsible for clearing firmware update trigger.
 
-  @retval  EFI_SUCCESS        Update successfully.
-
 **/
-EFI_STATUS
+VOID
 EFIAPI
 ClearFwUpdateTrigger (
   VOID
   )
 {
-  return EFI_SUCCESS;
+  return;
 }

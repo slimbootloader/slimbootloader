@@ -277,7 +277,7 @@ PrepareRegionsUpdate (
 **/
 EFI_STATUS
 EFIAPI
-EndFirmwareUpdate (
+PlatformEndFirmwareUpdate (
   VOID
   );
 
@@ -497,10 +497,8 @@ UpdateCsme (
 
   This function is responsible for clearing firmware update trigger.
 
-  @retval  EFI_SUCCESS        Update successfully.
-
 **/
-EFI_STATUS
+VOID
 EFIAPI
 ClearFwUpdateTrigger (
   VOID
