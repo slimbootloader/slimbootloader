@@ -1277,10 +1277,13 @@ PciScanRootBridges (
 
     Address = PCI_EXPRESS_LIB_ADDRESS (Bus, 0, 0, 0);
     if (PciExpressRead16 (Address) != 0xFFFF) {
-      Root = CreatePciIoDevice (NULL, NULL, Bus, 0, 0);
+      Root = CreatePciIoDevice (NULL, NULL, (UINT8)Bus, 0, 0);
 
-      SubBusNumber = Bus;
-      PciScanBus (Root, Bus, &SubBusNumber, NULL);
+      SubBusNumber = (UINT8)Bus;
+      PciScanBus (Root, (UINT8)Bus, &SubBusNumber, NULL);
+      if (Bus == PCI_MAX_BUS) {
+        SubBusNumber = (UINT8)Bus;
+      }
       Root->Address = 0x80000000 + (Bus << 8) + SubBusNumber;
 
       InsertPciDevice (Bridge, Root);
