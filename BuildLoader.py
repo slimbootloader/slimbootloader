@@ -255,6 +255,8 @@ class BaseBoard(object):
 
         self.HASH_STORE_SIZE       = 0x200  #Hash store size to be allocated in bootloader
 
+        self.PCI_MEM64_BASE        = 0
+
         for key, value in list(kwargs.items()):
             setattr(self, '%s' % key, value)
 
@@ -789,6 +791,24 @@ class Build(object):
             acm3_base = getattr(self._board, 'ACM3_BASE')
             if acm3_base & 0x0FFF:
                 raise Exception ('ACM3 base[FSP-T+CAR:0x%x] must be 4KB aligned!' % acm3_base)
+
+        # Generate Pci Enum Policy Info
+        pci_enum_policy_list = ['DOWNGRADE_IO32', 'DOWNGRADE_MEM64', 'DOWNGRADE_PMEM64', 'BUS_SCAN_TYPE', 'BUS_SCAN_ITEMS']
+        pci_enum_policy_dict = {}
+        for policy_list in pci_enum_policy_list:
+            policy_name = '_PCI_ENUM_%s' % policy_list
+            policy_value = None
+            if not hasattr(self._board, policy_name):
+                if policy_list == 'BUS_SCAN_TYPE':
+                    policy_value = 0
+                elif policy_list == 'BUS_SCAN_ITEMS':
+                    policy_value = '0'
+                else:
+                    policy_value = 1
+            else:
+                policy_value = getattr(self._board, policy_name)
+            pci_enum_policy_dict[policy_list] = policy_value
+        self._board.PCI_ENUM_POLICY_INFO = gen_pci_enum_policy_info(pci_enum_policy_dict)
 
     def create_redundant_components (self):
         if self._board.REDUNDANT_SIZE == 0:
