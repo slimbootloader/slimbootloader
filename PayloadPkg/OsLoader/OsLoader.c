@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -249,7 +249,7 @@ ParseContainerImage (
   DEBUG ((DEBUG_INFO, "Unregister done - %r!\n", Status));
 
   // Mask upper nibble in ImageType so that UpdateLoadedImage() supports both IAS and CONTAINER Image types
-  Status = UpdateLoadedImage (ContainerHdr->Count, File, LoadedImage, ContainerHdr->ImageType & 0xF);
+  Status = UpdateLoadedImage (Index, File, LoadedImage, ContainerHdr->ImageType & 0xF);
 
   if (EFI_ERROR (Status)) {
     UnloadLoadedImage (LoadedImage);
