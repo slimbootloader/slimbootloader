@@ -152,8 +152,8 @@ UpdateLoadedImage (
         CopyMem (&MultiBoot->MbModuleData[ModuleIndex].ImgFile, &File[Index + 1], sizeof (IMAGE_DATA));
 
         MultiBoot->MbModule[ModuleIndex].String = (UINT8 *) MultiBoot->MbModuleData[ModuleIndex].CmdFile.Addr;
-        MultiBoot->MbModule[ModuleIndex].Start  = (UINT32) MultiBoot->MbModuleData[ModuleIndex].ImgFile.Addr;
-        MultiBoot->MbModule[ModuleIndex].End    = (UINT32) MultiBoot->MbModuleData[ModuleIndex].ImgFile.Addr
+        MultiBoot->MbModule[ModuleIndex].Start  = (UINT32)(UINTN)MultiBoot->MbModuleData[ModuleIndex].ImgFile.Addr;
+        MultiBoot->MbModule[ModuleIndex].End    = (UINT32)(UINTN)MultiBoot->MbModuleData[ModuleIndex].ImgFile.Addr
           + MultiBoot->MbModuleData[ModuleIndex].ImgFile.Size;
 
         ModuleIndex++;
@@ -198,7 +198,7 @@ ParseContainerImage (
     return EFI_UNSUPPORTED;
   }
 
-  Status = RegisterContainer ((UINT32) ContainerHdr, LoadComponentCallback);
+  Status = RegisterContainer ((UINT32)(UINTN)ContainerHdr, LoadComponentCallback);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "Image given is not a valid CONTAINER image\n"));
     return EFI_LOAD_ERROR;
@@ -383,27 +383,27 @@ SetupBootImage (
         DEBUG ((DEBUG_INFO, "and Image is Multiboot format\n"));
         SetupMultibootInfo (MultiBoot);
       }
-      MultiBoot->BootState.EntryPoint = (UINT32)EntryPoint;
+      MultiBoot->BootState.EntryPoint = (UINT32)(UINTN)EntryPoint;
     }
   } else if (IsMultiboot (BootFile->Addr)) {
     DEBUG ((DEBUG_INFO, "Boot image is Multiboot format...\n"));
     Status = SetupMultibootImage (MultiBoot);
   } else if ((LoadedImage->Flags & LOADED_IMAGE_PE32) != 0) {
     DEBUG ((DEBUG_INFO, "Boot image is PE32 format\n"));
-    Status = PeCoffRelocateImage ((UINT32)BootFile->Addr);
+    Status = PeCoffRelocateImage ((UINT32)(UINTN)BootFile->Addr);
     if (!EFI_ERROR (Status)) {
       Status = PeCoffLoaderGetEntryPoint (BootFile->Addr, (VOID **)&EntryPoint);
     }
     if (!EFI_ERROR (Status)) {
       // Reuse MultiBoot structure to store the PE32 entry point information
-      MultiBoot->BootState.EntryPoint = (UINT32)EntryPoint;
+      MultiBoot->BootState.EntryPoint = (UINT32)(UINTN)EntryPoint;
     }
   } else if ((LoadedImage->Flags & LOADED_IMAGE_FV) != 0) {
     DEBUG ((DEBUG_INFO, "Boot image is FV format\n"));
     Status = LoadFvImage ((UINT32 *)BootFile->Addr, BootFile->Size, (VOID **)&EntryPoint);
     if (!EFI_ERROR (Status)) {
       // Reuse MultiBoot structure to store the FV entry point information
-      MultiBoot->BootState.EntryPoint = (UINT32)EntryPoint;
+      MultiBoot->BootState.EntryPoint = (UINT32)(UINTN)EntryPoint;
     }
   } else {
     DEBUG ((DEBUG_INFO, "Assume BzImage...\n"));
@@ -591,8 +591,8 @@ StartBooting (
     // Use switch stack to ensure stack will be rolled back to original point.
     //
     SwitchStack (
-      (SWITCH_STACK_ENTRY_POINT)MultiBoot->BootState.EntryPoint,
-      (VOID *)PcdGet32 (PcdPayloadHobList),
+      (SWITCH_STACK_ENTRY_POINT)(UINTN)MultiBoot->BootState.EntryPoint,
+      (VOID *)(UINTN)PcdGet32 (PcdPayloadHobList),
       NULL,
       (VOID *)((UINT8 *)mEntryStack + 8)
       );

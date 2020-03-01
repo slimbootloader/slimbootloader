@@ -50,6 +50,7 @@
 
 **/
 VOID
+EFIAPI
 ContinueFunc (
   IN      VOID                      *Context1,  OPTIONAL
   IN      VOID                      *Context2   OPTIONAL

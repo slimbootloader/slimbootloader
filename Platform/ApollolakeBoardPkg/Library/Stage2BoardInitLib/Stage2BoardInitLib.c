@@ -875,6 +875,7 @@ BuildVtdInfo (
 
 **/
 VOID
+EFIAPI
 BoardInit (
   IN  BOARD_INIT_PHASE    InitPhase
   )
@@ -999,6 +1000,7 @@ BoardInit (
 
 **/
 VOID
+EFIAPI
 UpdateFspConfig (
   VOID     *FspsUpdPtr
   )
@@ -1186,7 +1188,7 @@ UpdateFspConfig (
     FspsConfig->DspEndpointI2sHp          = HdaCfgData->DspEndpointI2sHp;
     FspsConfig->DspFeatureMask            = HdaCfgData->DspFeatureMask;
     FspsConfig->DspPpModuleMask           = HdaCfgData->DspPpModuleMask;
-    FspsConfig->HdaVerbTablePtr           = (UINT32) (&HdaVerbTableAlc662);
+    FspsConfig->HdaVerbTablePtr           = (UINT32)(UINTN)(&HdaVerbTableAlc662);
     FspsConfig->HdaVerbTableEntryNum      = 1;
 
     HdaEndpointBtRender.VirtualBusId      = HdaCfgData->VirtualIdBtRender;
@@ -1388,7 +1390,7 @@ SaveNvsData (
 
     DEBUG ((DEBUG_INFO, "Read MRC VarData at 0x%X\n", MrcDataBase + MrcNvDataOffset));
     MrcVarHdr = (MRC_VAR_HDR *)MemPool;
-    CopyMem ((UINT8 *)MrcVarHdr, (UINT8 *)MrcDataBase + MrcNvDataOffset, sizeof (MRC_VAR_HDR));
+    CopyMem ((UINT8 *)MrcVarHdr, (UINT8 *)(UINTN)MrcDataBase + MrcNvDataOffset, sizeof (MRC_VAR_HDR));
 
     ActIdx = 0xFF;
     if (MrcVarHdr->Signature == MRC_VAR_SIGNATURE) {
@@ -1719,7 +1721,7 @@ UpdateAcpiDsdt (
   for (; Ptr < End; Ptr++) {
     if (!PnvsFound && (*(UINT32 *)Ptr == SIGNATURE_32 ('P', 'N', 'V', 'S')) &&
          (*(Ptr - 1) == AML_EXT_REGION_OP)) {
-      * (UINT32 *) (Ptr + 6)  = (UINT32)&Gnvs->CpuNvs;
+      * (UINT32 *) (Ptr + 6)  = (UINT32)(UINTN)&Gnvs->CpuNvs;
       * (UINT16 *) (Ptr + 11) = (UINT16)sizeof(CPU_NVS_AREA);
       PnvsFound = TRUE;
     }

@@ -435,7 +435,7 @@ typedef struct {
   @retval 0 if success
   @retval other if error.
 **/
-INT32
+RETURN_STATUS
 EFIAPI
 BDevStrategy (
   IN  VOID       *DevData,
@@ -525,7 +525,7 @@ Ext2fsLs (
   @retval 0 if superblock compute is success
   @retval other if error.
 **/
-INT32
+RETURN_STATUS
 EFIAPI
 ReadSBlock (
   IN      OPEN_FILE     *File,
@@ -541,7 +541,7 @@ ReadSBlock (
   @retval 0 if Group descriptor read is success
   @retval other if error.
 **/
-INT32
+RETURN_STATUS
 EFIAPI
 ReadGDBlock (
   IN OUT  OPEN_FILE     *File,
@@ -557,7 +557,7 @@ ReadGDBlock (
   @retval         0 if success
   @retval         other if error.
 **/
-INT32
+RETURN_STATUS
 EFIAPI
 ReadInode (
   IN    INODE32      INumber,
@@ -576,7 +576,7 @@ ReadInode (
   @retval     0 if success
   @retval     other if error.
 **/
-INT32
+RETURN_STATUS
 EFIAPI
 BufReadFile (
   IN  OPEN_FILE     *File,

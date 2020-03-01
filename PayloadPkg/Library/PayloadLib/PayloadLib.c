@@ -33,7 +33,7 @@ GetHobListPtr (
 {
   VOID                  *HobList;
 
-  HobList = (VOID *)PcdGet32 (PcdPayloadHobList);
+  HobList = (VOID *)(UINTN)PcdGet32 (PcdPayloadHobList);
   ASSERT (HobList != NULL);
 
   return HobList;
@@ -53,7 +53,7 @@ GetFlashMapPtr (
   FLASH_MAP             *FlashMap;
   EFI_HOB_GUID_TYPE     *GuidHob;
 
-  GuidHob = GetNextGuidHob (&gFlashMapInfoGuid, (VOID *)PcdGet32 (PcdPayloadHobList));
+  GuidHob = GetNextGuidHob (&gFlashMapInfoGuid, (VOID *)(UINTN)PcdGet32 (PcdPayloadHobList));
   if (GuidHob == NULL) {
     return NULL;
   }
@@ -80,7 +80,7 @@ GetPerfDataPtr (
 {
   PAYLOAD_GLOBAL_DATA     *PayloadGlobalDataPtr;
 
-  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *) PcdGet32 (PcdGlobalDataAddress);
+  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)(UINTN)PcdGet32 (PcdGlobalDataAddress);
 
   return &PayloadGlobalDataPtr->PerfData;
 }
@@ -97,7 +97,7 @@ GetConfigDataPtr (
 {
   PAYLOAD_GLOBAL_DATA     *PayloadGlobalDataPtr;
 
-  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *) PcdGet32 (PcdGlobalDataAddress);
+  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)(UINTN)PcdGet32 (PcdGlobalDataAddress);
 
   return PayloadGlobalDataPtr->CfgDataPtr;
 }
@@ -136,7 +136,7 @@ GetDebugLogBufferPtr (
 {
   PAYLOAD_GLOBAL_DATA     *PayloadGlobalDataPtr;
 
-  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *) PcdGet32 (PcdGlobalDataAddress);
+  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)(UINTN)PcdGet32 (PcdGlobalDataAddress);
 
   return PayloadGlobalDataPtr->LogBufPtr;
 }
@@ -155,7 +155,7 @@ GetLibraryDataPtr (
 {
   PAYLOAD_GLOBAL_DATA     *PayloadGlobalDataPtr;
 
-  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *) PcdGet32 (PcdGlobalDataAddress);
+  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)(UINTN)PcdGet32 (PcdGlobalDataAddress);
 
   return PayloadGlobalDataPtr->LibDataPtr;
 }
@@ -174,7 +174,7 @@ GetServiceListPtr (
 {
   PAYLOAD_GLOBAL_DATA     *PayloadGlobalDataPtr;
 
-  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *) PcdGet32 (PcdGlobalDataAddress);
+  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)(UINTN)PcdGet32 (PcdGlobalDataAddress);
 
   return PayloadGlobalDataPtr->ServiceList;
 }
@@ -193,7 +193,7 @@ GetFeatureCfg (
 {
   PAYLOAD_GLOBAL_DATA     *PayloadGlobalDataPtr;
 
-  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *) PcdGet32 (PcdGlobalDataAddress);
+  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)(UINTN)PcdGet32 (PcdGlobalDataAddress);
 
   return PayloadGlobalDataPtr->LdrFeatures;
 }
@@ -212,7 +212,7 @@ GetPcdDataPtr (
 {
   PAYLOAD_GLOBAL_DATA     *PayloadGlobalDataPtr;
 
-  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *) PcdGet32 (PcdGlobalDataAddress);
+  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)(UINTN)PcdGet32 (PcdGlobalDataAddress);
 
   return PayloadGlobalDataPtr->PcdDataPtr;
 }
@@ -231,7 +231,7 @@ GetCurrentBootPartition (
   EFI_HOB_GUID_TYPE     *GuidHob;
   LOADER_PLATFORM_INFO  *LoaderPlatformInfo;
 
-  GuidHob = GetNextGuidHob (&gLoaderPlatformInfoGuid, (VOID *)PcdGet32 (PcdPayloadHobList));
+  GuidHob = GetNextGuidHob (&gLoaderPlatformInfoGuid, (VOID *)(UINTN)PcdGet32 (PcdPayloadHobList));
   if (GuidHob == NULL) {
     return 1;
   }
@@ -270,7 +270,7 @@ SetDeviceTable (
 {
   PAYLOAD_GLOBAL_DATA     *PayloadGlobalDataPtr;
 
-  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *) PcdGet32 (PcdGlobalDataAddress);
+  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)(UINTN)PcdGet32 (PcdGlobalDataAddress);
 
   PayloadGlobalDataPtr->DeviceTable = DeviceTable;
 }
@@ -289,7 +289,7 @@ GetDeviceTable (
 {
   PAYLOAD_GLOBAL_DATA     *PayloadGlobalDataPtr;
 
-  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *) PcdGet32 (PcdGlobalDataAddress);
+  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)(UINTN)PcdGet32 (PcdGlobalDataAddress);
 
   return PayloadGlobalDataPtr->DeviceTable;
 }
@@ -308,7 +308,7 @@ GetContainerListPtr (
 {
   PAYLOAD_GLOBAL_DATA     *PayloadGlobalDataPtr;
 
-  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)PcdGet32 (PcdGlobalDataAddress);
+  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)(UINTN)PcdGet32 (PcdGlobalDataAddress);
 
   return PayloadGlobalDataPtr->ContainerList;
 }
@@ -327,7 +327,7 @@ GetHashStorePtr (
 {
   PAYLOAD_GLOBAL_DATA     *PayloadGlobalDataPtr;
 
-  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)PcdGet32 (PcdGlobalDataAddress);
+  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)(UINTN)PcdGet32 (PcdGlobalDataAddress);
 
   return PayloadGlobalDataPtr->HashStorePtr;
 }

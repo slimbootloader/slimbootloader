@@ -59,7 +59,7 @@ S3DebugRestoreAndCompareCRC32 (
 
   DEBUG ((DEBUG_INFO, "Checking for unmatched-CRC Regions ...\n"));
   for (CrcRegionIdx = 0; SavedS3CrcTable[CrcRegionIdx].RegionSize != 0x00; CrcRegionIdx++) {
-    CalculateCrc32WithType ((UINT8 *) (VOID *) (SavedS3CrcTable[CrcRegionIdx].RegionBase),
+    CalculateCrc32WithType ((UINT8 *)(UINTN) SavedS3CrcTable[CrcRegionIdx].RegionBase,
                     (UINTN) (SavedS3CrcTable[CrcRegionIdx].RegionSize), Crc32TypeCastagnoli, &NewCrcValue);
     if (NewCrcValue != SavedS3CrcTable[CrcRegionIdx].RegionCrc32Value) {
       DEBUG ((DEBUG_INFO, "RegBase=0x%08X  RegLimit=0x%08X  RegSize=0x%08X  SavedS3CrcValue=0x%08X  NewCrcValue=0x%08X\n",
@@ -134,7 +134,7 @@ S3DebugCalculateCRC32 (
                                             S3CrcTable[CrcRegionIdx].RegionBase - 1;
     }
     S3CrcTable[CrcRegionIdx].RegionLimit = S3CrcTable[CrcRegionIdx].RegionBase + S3CrcTable[CrcRegionIdx].RegionSize - 1;
-    CalculateCrc32WithType ((UINT8 *) (VOID *) (S3CrcTable[CrcRegionIdx].RegionBase), (UINTN) (S3CrcTable[CrcRegionIdx].RegionSize),
+    CalculateCrc32WithType ((UINT8 *)(UINTN)S3CrcTable[CrcRegionIdx].RegionBase, (UINTN) (S3CrcTable[CrcRegionIdx].RegionSize),
                     Crc32TypeCastagnoli, & (S3CrcTable[CrcRegionIdx].RegionCrc32Value));
     DEBUG ((DEBUG_INFO, "RegBase=0x%08X RegLimit=0x%08X RegSize=0x%08X  CrcValue=0x%08X\n",
             S3CrcTable[CrcRegionIdx].RegionBase, S3CrcTable[CrcRegionIdx].RegionLimit, S3CrcTable[CrcRegionIdx].RegionSize,

@@ -142,7 +142,7 @@ TpmTcgLogInit (
     // @todo UEFI BIOS fills the buffer with 0xFF. If we do this we will have to check for the
     // presence of 0xFFFFFFFF in EventSize to determine the location for new event while updating
     // TCG Event log
-    ZeroMem ((VOID *) ((UINT32)Lasa),  PcdGet32 (PcdTcgLogAreaMinLen));
+    ZeroMem ((VOID *)(UINTN)Lasa,  PcdGet32 (PcdTcgLogAreaMinLen));
     TpmLibSetEventLogData (Lasa, PcdGet32 (PcdTcgLogAreaMinLen));
 
     TpmLibData = TpmLibGetPrivateData ();
@@ -239,7 +239,7 @@ TpmLogSpecIDEvent (
   }
 
   // Create the event in TPM 1.2 format
-  FirstPcrEvent = (TCG_PCR_EVENT_HDR *)Lasa;
+  FirstPcrEvent = (TCG_PCR_EVENT_HDR *)(UINTN)Lasa;
   FirstPcrEvent->PCRIndex = 0;
   FirstPcrEvent->EventType = EV_NO_ACTION;
   ZeroMem (FirstPcrEvent->Digest.digest, sizeof (FirstPcrEvent->Digest));
@@ -330,11 +330,11 @@ TpmLogEvent (
   // Navigate log area to Locate the empty space for new event log
   // Note : First Event is of type TPM 1.2 (TCG_PCR_EVENT_HDR)
 
-  FirstEvent = (TCG_PCR_EVENT_HDR *) (Lasa);
+  FirstEvent = (TCG_PCR_EVENT_HDR *)(UINTN)Lasa;
   EmptySlot  = (TCG_PCR_EVENT2_HDR *)
                ((UINT8 *)FirstEvent + sizeof (TCG_PCR_EVENT_HDR) + FirstEvent->EventSize);
 
-  while (EmptySlot < (TCG_PCR_EVENT2_HDR *) (Lasa + Laml - 1)) {
+  while (EmptySlot < (TCG_PCR_EVENT2_HDR *)(UINTN)(Lasa + Laml - 1)) {
     EventSize = GetCompressedTCGEventSize (EmptySlot);
     if (EventSize == 0) {
       break;
@@ -346,7 +346,7 @@ TpmLogEvent (
   // Before adding new event, check if there is enough space available.
   EventSize = GetUnCompressedTCGEventSize (EventHdr);
 
-  if ( ((UINT8*)EmptySlot + EventSize) <= (UINT8*)(Lasa + Laml - 1)) {
+  if (((UINT8 *)EmptySlot + EventSize) <= (UINT8 *)(UINTN)(Lasa + Laml - 1)) {
     // Add the new event in the TCG 2.0 log area
     AddEventTCGLog ((UINT8 *)EmptySlot, EventHdr, EventData);
   } else {

@@ -178,7 +178,7 @@ SpiLoadExternalConfigData (
   UINT32       Length;
 
   BlobSize = sizeof(CDATA_BLOB);
-  Buffer   = (UINT8 *)Dst;
+  Buffer   = (UINT8 *)(UINTN)Dst;
   Base     = 0;
 
   CfgDataLoadSrc = PcdGet32 (PcdCfgDataLoadSource);
@@ -198,7 +198,7 @@ SpiLoadExternalConfigData (
   } else if (CfgDataLoadSrc == FlashRegionBios) {
     Status = GetComponentInfo (FLASH_MAP_SIG_CFGDATA, &Base, &Length);
     if (!EFI_ERROR(Status)) {
-      CopyMem (Buffer, (VOID *)Base, BlobSize);
+      CopyMem (Buffer, (VOID *)(UINTN)Base, BlobSize);
     }
   }
   if (EFI_ERROR(Status)) {
@@ -226,7 +226,7 @@ SpiLoadExternalConfigData (
   // Read the full configuration data
   //
   if (Base > 0) {
-    CopyMem (Buffer + BlobSize, (VOID *)(Base + BlobSize), SignedLen - BlobSize);
+    CopyMem (Buffer + BlobSize, (VOID *)(UINTN)(Base + BlobSize), SignedLen - BlobSize);
   }
 
   return Status;
@@ -258,7 +258,7 @@ CheckStateMachine (
       DEBUG((DEBUG_ERROR, "Could not get component information for bootloader reserved region\n"));
       return Status;
     }
-    pFwUpdStatus = (FW_UPDATE_STATUS *)RsvdBase;
+    pFwUpdStatus = (FW_UPDATE_STATUS *)(UINTN)RsvdBase;
   }
 
   //

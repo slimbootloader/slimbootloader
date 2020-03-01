@@ -21,6 +21,7 @@
 
 **/
 EFI_STATUS
+EFIAPI
 ShellCommandCseFunc (
   IN SHELL                  *Shell,
   IN UINTN                  Argc,

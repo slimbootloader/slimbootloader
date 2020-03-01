@@ -454,9 +454,9 @@ UpdateCsme (
     return Status;
   }
 
-  DriverPtr = (UINT32 *)((UINT32)CsmeDriverImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
+  DriverPtr = (UINT32 *)((UINTN)CsmeDriverImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
 
-  Status = PeCoffRelocateImage ((UINT32)DriverPtr);
+  Status = PeCoffRelocateImage ((UINT32)(UINTN)DriverPtr);
   if (EFI_ERROR(Status)) {
     DEBUG((DEBUG_ERROR, "Relocate CSME Update driver failed with status = %r\n", Status));
     return Status;
@@ -484,7 +484,7 @@ UpdateCsme (
   DEBUG((DEBUG_ERROR, "--------------------CSME FW Update START ---------------\n"));
   DEBUG((DEBUG_ERROR, "--------------------------------------------------------\n"));
 
-  DriverPtr = (UINT32 *)((UINT32)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
+  DriverPtr = (UINT32 *)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
 
   Status = StartCsmeUpdate((VOID *)DriverPtr, ImageHdr->UpdateImageSize, CsmeUpdateApi);
 

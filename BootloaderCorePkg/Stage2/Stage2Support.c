@@ -24,6 +24,7 @@ const PLATFORM_SERVICE   mPlatformService = {
 
 **/
 VOID
+EFIAPI
 BoardNotifyPhase (
   IN BOARD_INIT_PHASE   Phase
   )
@@ -98,7 +99,7 @@ DisplaySplash (
 
   // Convert image from BMP format and write to frame buffer
   GopBlt = NULL;
-  SplashLogoBmp = (VOID *) PCD_GET32_WITH_ADJUST (PcdSplashLogoAddress);
+  SplashLogoBmp = (VOID *)(UINTN)PCD_GET32_WITH_ADJUST (PcdSplashLogoAddress);
   ASSERT (SplashLogoBmp != NULL);
   Status = DisplayBmpToFrameBuffer (SplashLogoBmp, (VOID **)&GopBlt, &GopBltSize, GfxInfoHob);
 
@@ -165,8 +166,8 @@ MemResHobCallback (
   @retval 1                  Buffer1 base is greater than or equal to Buffer2 base.
 
 **/
-STATIC
 INTN
+EFIAPI
 CompareMemoryMap (
   IN CONST VOID                 *Buffer1,
   IN CONST VOID                 *Buffer2

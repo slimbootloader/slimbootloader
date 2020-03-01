@@ -33,7 +33,7 @@ LoadStage1B (
   )
 {
   if (Dst != Src) {
-    CopyMem ((VOID *)Dst, (VOID *)Src, Len);
+    CopyMem ((VOID *)(UINTN)Dst, (VOID *)(UINTN)Src, Len);
   }
   return EFI_SUCCESS;
 }
@@ -58,7 +58,7 @@ LoadStage2 (
   )
 {
   if (Dst != Src) {
-    CopyMem ((VOID *)Dst, (VOID *)Src, Len);
+    CopyMem ((VOID *)(UINTN)Dst, (VOID *)(UINTN)Src, Len);
   }
   return EFI_SUCCESS;
 }
@@ -88,7 +88,7 @@ LoadPayload (
   UINT32                          ActualSize;
   LOADER_COMPRESSED_HEADER       *Hdr;
 
-  Hdr = (LOADER_COMPRESSED_HEADER *)Src;
+  Hdr = (LOADER_COMPRESSED_HEADER *)(UINTN)Src;
   if (IS_COMPRESSED (Hdr)) {
     ActualSize = sizeof(LOADER_COMPRESSED_HEADER) + Hdr->CompressedSize;
   } else {
@@ -99,7 +99,7 @@ LoadPayload (
     if (Size < ActualSize) {
       return EFI_BUFFER_TOO_SMALL;
     }
-    CopyMem ((VOID *)Dst, (VOID *)Src, ActualSize);
+    CopyMem ((VOID *)(UINTN)Dst, (VOID *)(UINTN)Src, ActualSize);
   }
 
   return EFI_SUCCESS;

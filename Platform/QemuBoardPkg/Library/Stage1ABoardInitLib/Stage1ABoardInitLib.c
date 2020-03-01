@@ -39,6 +39,7 @@ FSPT_UPD TempRamInitParams = {
 
 **/
 VOID
+EFIAPI
 BoardInit (
   IN  BOARD_INIT_PHASE  InitPhase
 )

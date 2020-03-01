@@ -247,7 +247,7 @@ PlatformGetStage1AOffset (
     for (Index = 0; Index < MaxEntries; Index++) {
       EntryDesc = FlashMapPtr->EntryDesc[Index];
       if (EntryDesc.Signature == FLASH_MAP_SIG_STAGE1A) {
-        *Base  = (UINT32)(Ptr + EntryDesc.Offset);
+        *Base  = (UINT32)(UINTN)(Ptr + EntryDesc.Offset);
         *Size  = EntryDesc.Size;
         Status = EFI_SUCCESS;
         break;

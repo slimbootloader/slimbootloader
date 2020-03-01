@@ -25,8 +25,8 @@
   @retval EFI_SUCCESS
 
 **/
-STATIC
 EFI_STATUS
+EFIAPI
 ShellCommandMmcDllFunc (
   IN SHELL  *Shell,
   IN UINTN   Argc,
@@ -86,8 +86,8 @@ GetMmcBaseAddress (
   @retval EFI_SUCCESS
 
 **/
-STATIC
 EFI_STATUS
+EFIAPI
 ShellCommandMmcDllFunc (
   IN SHELL  *Shell,
   IN UINTN   Argc,
@@ -97,7 +97,7 @@ ShellCommandMmcDllFunc (
   EFI_STATUS                Status;
   UINTN                     EmmcHcPciBase;
   EMMC_TUNING_DATA          EmmcTuningData;
-  UINT32                    VariableLen;
+  UINTN                     VariableLen;
 
   if ((Argc < 2) || (Argc > 3)) {
     goto usage;

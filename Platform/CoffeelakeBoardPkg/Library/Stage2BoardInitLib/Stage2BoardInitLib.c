@@ -309,8 +309,8 @@ ClearSmi (
   @retval                   Calculated power value in mW
 
 **/
-STATIC
 UINT32
+EFIAPI
 CalculateRelativePower (
   IN  UINT16  BaseRatio,
   IN  UINT16  CurrRatio,
@@ -507,7 +507,7 @@ UpdateBlRsvdRegion ()
     return Status;
   }
 
-  CopyMem (&FwUpdStatus, (VOID *)RsvdBase, sizeof(FW_UPDATE_STATUS));
+  CopyMem (&FwUpdStatus, (VOID *)(UINTN)RsvdBase, sizeof(FW_UPDATE_STATUS));
 
   if (FwUpdStatus.StateMachine == FW_UPDATE_SM_PART_AB) {
     Status = SpiFlashErase (FlashRegionBios, FlashMap->RomSize - (~RsvdBase + 1), RsvdSize);
@@ -949,6 +949,7 @@ BuildVtdInfo (
 
 **/
 VOID
+EFIAPI
 BoardInit (
   IN  BOARD_INIT_PHASE    InitPhase
 )
@@ -1193,6 +1194,7 @@ FindSerialIoIrq (
 
 **/
 VOID
+EFIAPI
 UpdateFspConfig (
   IN  VOID     *FspsUpdPtr
 )
@@ -1728,7 +1730,7 @@ SaveNvsData (
   // Compare input data against the stored MRC training data
   // if they match, no need to update again.
   //
-  if (CompareMem ((VOID *)Address, Buffer, Length) == 0) {
+  if (CompareMem ((VOID *)(UINTN)Address, Buffer, Length) == 0) {
     SetDramInitScratchpad ();
     return EFI_ALREADY_STARTED;
   }

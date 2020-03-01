@@ -90,6 +90,7 @@ SetDebugLevelFromCfgData (
 
 **/
 VOID
+EFIAPI
 UpdateFspConfig (
   VOID     *FspmUpdPtr
 )
@@ -126,8 +127,8 @@ UpdateFspConfig (
     CopyMem (&Fspmcfg->SpdAddressTable, MemCfgData->SpdAddressTable, sizeof(MemCfgData->SpdAddressTable));
   } else {
     SpdData[0] = 0;
-    SpdData[1] = (UINT32) (((MEM_SPD0_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD0_TAG))->MemorySpdPtr0);
-    SpdData[2] = (UINT32) (((MEM_SPD1_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD1_TAG))->MemorySpdPtr1);
+    SpdData[1] = (UINT32)(UINTN) (((MEM_SPD0_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD0_TAG))->MemorySpdPtr0);
+    SpdData[2] = (UINT32)(UINTN) (((MEM_SPD1_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD1_TAG))->MemorySpdPtr1);
 
     if (PlatformId == PLATFORM_ID_UPXTREME) {
       // For UPX, using BomID to decide SPD data instead.
@@ -606,6 +607,7 @@ EarlyBootDeviceInit (
 
 **/
 VOID
+EFIAPI
 BoardInit (
   IN  BOARD_INIT_PHASE  InitPhase
 )
@@ -683,10 +685,10 @@ FindNvsData (
     return NULL;
   }
 
-  if (*(UINT32 *)MrcData == 0xFFFFFFFF) {
+  if (*(UINT32 *)(UINTN)MrcData == 0xFFFFFFFF) {
     return NULL;
   } else {
-    return (VOID *)MrcData;
+    return (VOID *)(UINTN)MrcData;
   }
 }
 

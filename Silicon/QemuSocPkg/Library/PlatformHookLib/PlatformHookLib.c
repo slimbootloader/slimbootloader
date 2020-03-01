@@ -17,6 +17,7 @@
 
 **/
 UINT8
+EFIAPI
 GetSerialPortStrideSize (
   VOID
 )
@@ -31,6 +32,7 @@ GetSerialPortStrideSize (
 
 **/
 UINT32
+EFIAPI
 GetSerialPortBase (
   VOID
   )

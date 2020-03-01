@@ -130,9 +130,9 @@ GetVmmBootParam (
   ReserveMemUnder1Mb (BootOsMbi, KB_ (8));
 
   // 64KB, SBL should reserve it in e820
-  VmmBootParam->HeapAddr = (UINT32) VmmImageData->VmmHeapAddr.Addr;
+  VmmBootParam->HeapAddr = (UINT32)(UINTN)VmmImageData->VmmHeapAddr.Addr;
   // 4MB, SBL should reserve it in e820
-  VmmBootParam->VmmRuntimeAddr = (UINT32) VmmImageData->VmmRuntimeAddr.Addr;
+  VmmBootParam->VmmRuntimeAddr = (UINT32)(UINTN)VmmImageData->VmmRuntimeAddr.Addr;
 
   return EFI_SUCCESS;
 }

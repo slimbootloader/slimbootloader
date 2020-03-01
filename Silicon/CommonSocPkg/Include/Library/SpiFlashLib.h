@@ -80,6 +80,7 @@ SpiFlashWrite (
   @exception EFI_UNSUPPORTED      The SC is not supported by this module
 **/
 EFI_STATUS
+EFIAPI
 SpiConstructor (
   VOID
   );

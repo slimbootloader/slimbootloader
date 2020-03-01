@@ -110,7 +110,7 @@ DumpLinuxBootParams (
 
   DEBUG ((DEBUG_INFO, "CmdlineSize: 0x%x\n", Header->CmdlineSize));
   DEBUG ((DEBUG_INFO, "CmdLinePtr: 0x%x\n", Header->CmdLinePtr));
-  DEBUG ((DEBUG_INFO, "Cmd Args: %a\n", (CHAR8 *)Header->CmdLinePtr));
+  DEBUG ((DEBUG_INFO, "Cmd Args: %a\n", (CHAR8 *)(UINTN)Header->CmdLinePtr));
 
   DEBUG ((DEBUG_INFO, "RamDiskStart: 0x%x\n", Header->RamDiskStart));
   DEBUG ((DEBUG_INFO, "RamDisklen: 0x%x\n", Header->RamDisklen));
@@ -236,9 +236,9 @@ LoadBzImage (
   // Update boot params
   //
   Bp->Hdr.LoaderId     = 0xff;
-  Bp->Hdr.CmdLinePtr   = (UINT32)CmdLineBase;
+  Bp->Hdr.CmdLinePtr   = (UINTN)CmdLineBase;
   Bp->Hdr.CmdlineSize  = CmdLineLen;
-  Bp->Hdr.RamDiskStart = (UINT32)InitRdBase;
+  Bp->Hdr.RamDiskStart = (UINTN)InitRdBase;
   Bp->Hdr.RamDisklen   = InitRdLen;
 
   return EFI_SUCCESS;

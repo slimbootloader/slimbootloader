@@ -27,6 +27,7 @@ UINT32                             mMpInitPhase = EnumMpInitNull;
 **/
 STATIC
 INTN
+EFIAPI
 CompareCpuApicId (
   IN CONST VOID                 *Buffer1,
   IN CONST VOID                 *Buffer2
@@ -103,7 +104,7 @@ SmmRebase (
   if (SmmBase == 0) {
     SmmBase = PcdGet32 (PcdSmramTsegBase) + PcdGet32 (PcdSmramTsegSize) - (SMM_BASE_MIN_SIZE + Index * SMM_BASE_GAP);
     // Write 'RSM' at new SMM handler entry
-    *(UINT32 *)(SmmBase + 0x8000) = RSM_SIG;
+    *(UINT32 *)(UINTN)(SmmBase + 0x8000) = RSM_SIG;
   }
 
   AsmWriteCr2 (SmmBase);
@@ -214,7 +215,7 @@ ApFunc (
 
     case EnumCpuStart:
       *State = EnumCpuBusy;
-      ApRunTask = (CPU_TASK_PROC)mSysCpuTask.CpuTask[Index].CProcedure;
+      ApRunTask = (CPU_TASK_PROC)(UINTN)mSysCpuTask.CpuTask[Index].CProcedure;
       if (ApRunTask != NULL) {
         mSysCpuTask.CpuTask[Index].Result = ApRunTask (mSysCpuTask.CpuTask[Index].Argument);
       }
@@ -329,14 +330,14 @@ MpInit (
       //
       Ptr = (UINT32 *) (ApBuffer + mAddressMap.ProtModeJmpPatchOffset);
       Ptr = (UINT32 *) (((UINT8 *) Ptr) + 3);
-      *Ptr = ((UINT32)ApBuffer) + (UINT32)mAddressMap.ProtModeStartOffset;
+      *Ptr = ((UINT32)(UINTN)ApBuffer) + (UINT32)mAddressMap.ProtModeStartOffset;
       Ptr = (UINT32 *) (((UINT8 *) Ptr) + 4);
       * ((UINT16 *)Ptr) = ApDataPtr->BspSelector.CSSelector;
 
       //
       // Patch the BufferStart variable with the address of the buffer
       //
-      ApDataPtr->BufferStart = (UINT32)ApBuffer;
+      ApDataPtr->BufferStart = (UINT32)(UINTN)ApBuffer;
 
 
       //
@@ -348,12 +349,12 @@ MpInit (
       //
       // Patch the C Procedure variable
       //
-      ApDataPtr->CProcedure   = (UINT32)ApFunc;
+      ApDataPtr->CProcedure   = (UINT32)(UINTN)ApFunc;
 
       //
       // Patch the mMpDataStructure Pointer variable
       //
-      ApDataPtr->MpDataStruct = (UINT32)&mMpDataStruct;
+      ApDataPtr->MpDataStruct = (UINT32)(UINTN)&mMpDataStruct;
 
       //
       // Initialize the SpinLock
@@ -375,7 +376,7 @@ MpInit (
       // It includes a 200us delay for AP's check-in
       // If it is not long enough, extra delay can be added after this call
       //
-      SendInitSipiSipiAllExcludingSelf ((UINT32) ApBuffer);
+      SendInitSipiSipiAllExcludingSelf ((UINT32)(UINTN)ApBuffer);
 
       CpuInit (0);
 
@@ -519,7 +520,7 @@ MpRunTask (
     return EFI_NOT_READY;
   }
 
-  mSysCpuTask.CpuTask[Index].CProcedure = (UINT32)TaskProc;
+  mSysCpuTask.CpuTask[Index].CProcedure = (UINT32)(UINTN)TaskProc;
   mSysCpuTask.CpuTask[Index].Argument   = (UINT32)Argument;
   mSysCpuTask.CpuTask[Index].State      = EnumCpuStart;
 

@@ -72,7 +72,7 @@ GetVaraibelStoreBase (
     *Size = VarInstance->StoreSize;
   }
 
-  return (VOID *)VarInstance->StoreBase;
+  return (VOID *)(UINTN)VarInstance->StoreBase;
 }
 
 /**
@@ -97,13 +97,13 @@ EraseVariableStore (
   UINT32              RgnBase;
   UINT32              RgnSize;
 
-  DEBUG ((DEBUG_INFO, "  SPI ERASE: %08X  %08X\n", (UINT32)VariableStore, Length));
+  DEBUG ((DEBUG_INFO, "  SPI ERASE: %08X  %08X\n", (UINT32)(UINTN)VariableStore, Length));
   SpiService = (SPI_FLASH_SERVICE *)GetServiceBySignature (SPI_FLASH_SERVICE_SIGNATURE);
   if (SpiService != NULL) {
     Status = SpiService->SpiGetRegion (FlashRegionBios, &RgnBase, &RgnSize);
     if (!EFI_ERROR (Status)) {
       // BIOS region offset can be calculated by (HostAddress + BiosRgnLimit)
-      BiosRgnOffset = (UINT32)((UINT32)VariableStore + RgnSize);
+      BiosRgnOffset = (UINT32)((UINT32)(UINTN)VariableStore + RgnSize);
       Status = SpiService->SpiErase (FlashRegionBios, BiosRgnOffset, Length);
       AsmFlushCacheRange (VariableStore, Length);
     }
@@ -137,13 +137,13 @@ WriteVariableStore (
   UINT32              RgnBase;
   UINT32              RgnSize;
 
-  DEBUG ((DEBUG_INFO, "  SPI WRITE: %08X  %08X\n", (UINT32)VariableStore, Length));
+  DEBUG ((DEBUG_INFO, "  SPI WRITE: %08X  %08X\n", (UINT32)(UINTN)VariableStore, Length));
   SpiService = (SPI_FLASH_SERVICE *)GetServiceBySignature (SPI_FLASH_SERVICE_SIGNATURE);
   if (SpiService != NULL) {
     Status = SpiService->SpiGetRegion (FlashRegionBios, &RgnBase, &RgnSize);
     if (!EFI_ERROR (Status)) {
       // BIOS region offset can be calculated by (HostAddress + BiosRgnLimit)
-      BiosRgnOffset = (UINT32)((UINT32)VariableStore + RgnSize);
+      BiosRgnOffset = (UINT32)((UINT32)(UINTN)VariableStore + RgnSize);
       Status = SpiService->SpiWrite (FlashRegionBios, BiosRgnOffset, Length, Buffer);
       AsmFlushCacheRange (VariableStore, Length);
     }

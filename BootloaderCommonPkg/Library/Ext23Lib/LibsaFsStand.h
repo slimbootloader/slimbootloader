@@ -130,7 +130,8 @@ Gives the info of device block config.
 @retval EFI_SUCCESS       The function completed successfully.
 @retval !EFI_SUCCESS      Something error while read FILE.
 **/
-INT32
+RETURN_STATUS
+EFIAPI
 BDevStrategy (
   VOID     *DevData,
   INT32     ReadWrite,

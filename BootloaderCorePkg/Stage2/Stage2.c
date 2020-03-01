@@ -152,7 +152,7 @@ NormalBootPath (
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
 
   // Load payload
-  Dst = (UINT32 *)PreparePayload (Stage2Param);
+  Dst = (UINT32 *)(UINTN)PreparePayload (Stage2Param);
   if (Dst == NULL) {
     CpuHalt ("Failed to load payload !");
   }
@@ -168,7 +168,7 @@ NormalBootPath (
   if (Dst[0] == 0x00005A4D) {
     // It is a PE format
     DEBUG ((DEBUG_INFO, "PE32 Format Payload\n"));
-    Status = PeCoffRelocateImage ((UINT32)Dst);
+    Status = PeCoffRelocateImage ((UINT32)(UINTN)Dst);
     if (!EFI_ERROR(Status)) {
       Status = PeCoffLoaderGetEntryPoint (Dst, (VOID *)&PldEntry);
     }
@@ -255,7 +255,7 @@ NormalBootPath (
   DEBUG ((DEBUG_INFO, "Payload entry: 0x%08X\n", PldEntry));
   if (PldEntry != NULL) {
     DEBUG ((DEBUG_INIT, "Jump to payload\n\n"));
-    PldEntry (PldHobList, (VOID *)PldBase);
+    PldEntry (PldHobList, (VOID *)(UINTN)PldBase);
   }
 }
 
@@ -359,7 +359,7 @@ SecStartup (
   Status = PcdSet32S (PcdGraphicsVbtAddress,   PCD_GET32_WITH_ADJUST (PcdGraphicsVbtAddress) + Delta);
   Status = PcdSet32S (PcdSplashLogoAddress,    PCD_GET32_WITH_ADJUST (PcdSplashLogoAddress) + Delta);
 
-  LdrGlobal->LdrHobList = (VOID *)LdrGlobal->MemPoolEnd;
+  LdrGlobal->LdrHobList = (VOID *)(UINTN)LdrGlobal->MemPoolEnd;
   BuildHobHandoffInfoTable (
     BootMode,
     (EFI_PHYSICAL_ADDRESS) (UINTN)LdrGlobal->LdrHobList,
@@ -453,7 +453,7 @@ SecStartup (
 
       S3Data = (S3_DATA *)LdrGlobal->S3DataPtr;
       if (BootMode != BOOT_ON_S3_RESUME) {
-        PlatformUpdateAcpiGnvs ((VOID *)AcpiGnvs);
+        PlatformUpdateAcpiGnvs ((VOID *)(UINTN)AcpiGnvs);
         S3Data->AcpiGnvs = AcpiGnvs;
         S3Data->AcpiBase = AcpiBase;
         DEBUG ((DEBUG_INIT, "ACPI Init\n"));
@@ -480,7 +480,7 @@ SecStartup (
   //
   if (FixedPcdGetBool (PcdSmbiosEnabled)) {
     SmbiosEntry = AllocateZeroPool (PcdGet16(PcdSmbiosTablesSize));
-    Status = PcdSet32S (PcdSmbiosTablesBase, (UINT32)SmbiosEntry);
+    Status = PcdSet32S (PcdSmbiosTablesBase, (UINT32)(UINTN)SmbiosEntry);
     Status = SmbiosInit ();
     if (EFI_ERROR(Status)) {
       DEBUG ((DEBUG_INFO, "SMBIOS init Status = %r\n", Status));

@@ -49,11 +49,11 @@ GetVersionfromFv (
   EFI_FFS_FILE_HEADER         *FfsFile;
   EFI_FIRMWARE_VOLUME_HEADER  *FvHeader;
 
-  FvHeader = (EFI_FIRMWARE_VOLUME_HEADER *)(*Stage1ABase);
+  FvHeader = (EFI_FIRMWARE_VOLUME_HEADER *)(UINTN)(*Stage1ABase);
   //
   // Stage 1A FD has FSPT FV first, so move on to the next FV
   //
-  FvHeader = (EFI_FIRMWARE_VOLUME_HEADER *)((UINT32)FvHeader + (UINT32)FvHeader->FvLength);
+  FvHeader = (EFI_FIRMWARE_VOLUME_HEADER *)((UINTN)FvHeader + (UINTN)FvHeader->FvLength);
 
   //
   // Get version info FFS from FV
@@ -748,7 +748,7 @@ ProcessCapsule (
     FwUpdCompStatus[Count].UpdatePending = FW_UPDATE_IMAGE_UPDATE_PENDING;
 
     ImgHeader = (EFI_FW_MGMT_CAP_IMAGE_HEADER *)((UINTN)ImgHeader + ImgHeader->UpdateImageSize + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
-    if ((UINT32)ImgHeader > (UINTN)((UINTN)CapHeader + FwUpdHeader->ImageSize)) {
+    if ((UINTN)ImgHeader > ((UINTN)CapHeader + FwUpdHeader->ImageSize)) {
       return EFI_NOT_FOUND;
     }
   }

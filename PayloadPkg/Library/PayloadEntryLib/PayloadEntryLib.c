@@ -20,6 +20,7 @@
 #include <Library/DebugLogBufferLib.h>
 #include <Library/DebugPrintErrorLevelLib.h>
 #include <Library/ContainerLib.h>
+#include <Library/TimeStampLib.h>
 #include <Guid/BootLoaderVersionGuid.h>
 #include <Guid/LoaderPlatformInfoGuid.h>
 #include <Library/GraphicsLib.h>
@@ -60,7 +61,7 @@ PayloadInit (
   CONTAINER_LIST            *ContainerList;
   EFI_MEMORY_RANGE_ENTRY    MemoryRanges[3];
 
-  PcdStatus1 = PcdSet32S (PcdPayloadHobList, (UINT32)HobList);
+  PcdStatus1 = PcdSet32S (PcdPayloadHobList, (UINT32)(UINTN)HobList);
 
   //
   // Payload Memmap
@@ -116,7 +117,7 @@ PayloadInit (
   ASSERT_EFI_ERROR (PcdStatus1 | PcdStatus2);
 
   // Create Debug Log Buffer and init configuration data
-  GuidHob = GetNextGuidHob (&gLoaderPlatformDataGuid, (VOID *)PcdGet32 (PcdPayloadHobList));
+  GuidHob = GetNextGuidHob (&gLoaderPlatformDataGuid, (VOID *)(UINTN)PcdGet32 (PcdPayloadHobList));
   if (GuidHob != NULL) {
     LoaderPlatformData = (LOADER_PLATFORM_DATA *) GET_GUID_HOB_DATA (GuidHob);
 
@@ -189,16 +190,16 @@ SecStartup (
   UINT32                     StackSize;
   LOADER_PLATFORM_INFO       *LoaderPlatformInfo;
 
-  TimeStamp = AsmReadTsc();
+  TimeStamp = ReadTimeStamp ();
 
   PayloadInit (Params, &HeapBase, &StackBase, &StackSize);
-  GlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)PcdGet32 (PcdGlobalDataAddress);
+  GlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)(UINTN)PcdGet32 (PcdGlobalDataAddress);
 
   // DEBUG will be available after PayloadInit ()
   DEBUG ((DEBUG_INIT, "\nPayload startup\n"));
 
   // Copy libraries data
-  GuidHob = GetNextGuidHob (&gLoaderLibraryDataGuid, (VOID *)PcdGet32 (PcdPayloadHobList));
+  GuidHob = GetNextGuidHob (&gLoaderLibraryDataGuid, (VOID *)(UINTN)PcdGet32 (PcdPayloadHobList));
   if (GuidHob != NULL) {
     LoaderLibData = (LOADER_LIBRARY_DATA *)GET_GUID_HOB_DATA (GuidHob);
     LibData       = (LIBRARY_DATA *) LoaderLibData->Data;
@@ -218,8 +219,8 @@ SecStartup (
     if (AllocateLen > 0) {
       for (Idx = 0; Idx < LoaderLibData->Count; Idx++) {
         if (LibData[Idx].BufBase != 0) {
-          CopyMem (BufPtr, (VOID *)LibData[Idx].BufBase, LibData[Idx].BufSize);
-          LibData[Idx].BufBase = (UINT32)BufPtr;
+          CopyMem (BufPtr, (VOID *)(UINTN)LibData[Idx].BufBase, LibData[Idx].BufSize);
+          LibData[Idx].BufBase = (UINT32)(UINTN)BufPtr;
           BufPtr += ALIGN_UP (LibData[Idx].BufSize, sizeof (UINTN));
         }
       }
@@ -274,7 +275,7 @@ SecStartup (
   DEBUG_CODE_BEGIN ();
   // Initialize HOB/Stack region with known pattern so that the usage can be detected
   SetMem32 (
-    (VOID *)StackBase,
+    (VOID *)(UINTN)StackBase,
     StackSize,
     STACK_DEBUG_FILL_PATTERN
     );

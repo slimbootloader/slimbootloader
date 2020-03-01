@@ -798,6 +798,7 @@ PciScanBus (
 
 **/
 INTN
+EFIAPI
 ComparePciBarRes (
   IN CONST VOID                 *Buffer1,
   IN CONST VOID                 *Buffer2

@@ -103,8 +103,7 @@ IsIasImageValid (
     Key->PubExp[Index]  = ((UINT8 *) IAS_PUBLIC_KEY (Hdr))[KeyIdx];
   }
 
-
-  Status = DoRsaVerify ((CONST UINT8 *)Hdr, ((UINT32)IAS_PAYLOAD_END (Hdr)) - ((UINT32)Hdr),
+  Status = DoRsaVerify ((CONST UINT8 *)Hdr, ((UINT32)IAS_PAYLOAD_END (Hdr)) - ((UINT32)(UINTN)Hdr),
                          HASH_USAGE_PUBKEY_OS, SignHdr, PubKeyHdr, PcdGet8(PcdCompSignHashAlg), NULL, IasImageInfo->HashData);
   if (EFI_ERROR (Status) != EFI_SUCCESS) {
     DEBUG ((DEBUG_ERROR, "IAS image verification failed!\n"));
@@ -114,7 +113,7 @@ IsIasImageValid (
 
   // populate IAS_IMAGE_INFO
   IasImageInfo->CompBuf  = (UINT8 *)Hdr;
-  IasImageInfo->CompLen  = ((UINT32)IAS_PAYLOAD_END (Hdr)) - ((UINT32)Hdr);
+  IasImageInfo->CompLen  = ((UINT32)IAS_PAYLOAD_END (Hdr)) - ((UINT32)(UINTN)Hdr);
   IasImageInfo->HashAlg  = PcdGet8(PcdCompSignHashAlg);
 
   return Hdr;
@@ -152,7 +151,7 @@ IasGetFiles (
     ZeroMem (Img, NumImg * sizeof (Img[0]));
 
     // Return Addr single entry (namely the entire payload) for plain images.
-    Img[0].Addr = Addr = (UINT32 *) IAS_PAYLOAD (IasImage);
+    Img[0].Addr = Addr = (UINT32 *)(UINTN)IAS_PAYLOAD (IasImage);
     Img[0].Size = Size = IasImage->DataLength;
     Img[0].AllocType = ImageAllocateTypePointer;
 

@@ -254,7 +254,7 @@ LoadCapsuleImage (
   // If we do not have file system, try reading capsule from raw partition
   //
   if (CapsuleInfo->FsType >= EnumFileSystemMax) {
-    Status = GetCapsuleFromRawPartition (CapsuleInfo, HwPartHandle, CapsuleImage, CapsuleImageSize);
+    Status = GetCapsuleFromRawPartition (CapsuleInfo, HwPartHandle, CapsuleImage, (UINTN *)CapsuleImageSize);
     return Status;
   }
 
@@ -291,7 +291,7 @@ LoadCapsuleImage (
       goto Done;
     }
 
-    Status = GetFileSize (FileHandle, CapsuleImageSize);
+    Status = GetFileSize (FileHandle, (UINTN *)CapsuleImageSize);
     if (EFI_ERROR(Status)) {
       DEBUG((DEBUG_ERROR, " Get Capsule File '%s' size Status : %r\n", FileName, Status));
       goto Done;
@@ -303,7 +303,7 @@ LoadCapsuleImage (
       goto Done;
     }
 
-    Status = ReadFile (FileHandle, CapsuleImage, CapsuleImageSize);
+    Status = ReadFile (FileHandle, CapsuleImage, (UINTN *)CapsuleImageSize);
     if (EFI_ERROR(Status)) {
       DEBUG((DEBUG_ERROR, " Read Capsule File '%s' Status : %r\n", FileName, Status));
       goto Done;

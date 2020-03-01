@@ -21,8 +21,8 @@
   @retval EFI_SUCCESS
 
 **/
-STATIC
 EFI_STATUS
+EFIAPI
 ShellCommandMmFunc (
   IN SHELL  *Shell,
   IN UINTN   Argc,
@@ -171,8 +171,8 @@ MmRead (
   @retval EFI_SUCCESS
 
 **/
-STATIC
 EFI_STATUS
+EFIAPI
 ShellCommandMmFunc (
   IN SHELL  *Shell,
   IN UINTN   Argc,

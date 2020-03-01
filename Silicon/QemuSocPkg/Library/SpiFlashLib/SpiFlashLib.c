@@ -80,7 +80,7 @@ QemuFlashPtr (
   IN        UINTN                               Offset
   )
 {
-  return (UINT8 *)PcdGet32 (PcdFlashBaseAddress) + ((UINTN)Lba * PcdGet32 (PcdFlashBlockSize)) + Offset;
+  return (UINT8 *)(UINTN)PcdGet32 (PcdFlashBaseAddress) + ((UINTN)Lba * PcdGet32 (PcdFlashBlockSize)) + Offset;
 }
 
 /**
@@ -282,7 +282,7 @@ SpiFlashRead (
   }
 
   Status = EFI_SUCCESS;
-  CopyMem (Buffer, (VOID *)(Address + SpiInstance->StoreBase), ByteCount);
+  CopyMem (Buffer, (VOID *)(UINTN)(Address + SpiInstance->StoreBase), ByteCount);
 
   return Status;
 }
@@ -335,7 +335,7 @@ SpiFlashWrite (
   }
 
   Status = EFI_SUCCESS;
-  Ptr = (volatile UINT8 *)(Address + SpiInstance->StoreBase);
+  Ptr = (volatile UINT8 *)(UINTN)(Address + SpiInstance->StoreBase);
   for (Idx = 0; Idx < ByteCount; Idx++) {
     if (ByteCount < 0x1000) {
       *Ptr = READ_ARRAY_CMD;
@@ -398,7 +398,7 @@ SpiFlashErase (
     return EFI_INVALID_PARAMETER;
   }
 
-  Ptr = (volatile UINT8 *)(Address + SpiInstance->StoreBase);
+  Ptr = (volatile UINT8 *)(UINTN)(Address + SpiInstance->StoreBase);
 
   for (Offset = 0; Offset < ByteCount; Offset += 0x1000) {
     *Ptr = BLOCK_ERASE_CMD;
