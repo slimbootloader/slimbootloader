@@ -545,8 +545,11 @@ GatherPpbInfo (
                   Func
                   );
 
-  PciExpressWrite16 (PciIoDevice->Address + PCI_COMMAND_OFFSET, 0);
-  PciExpressWrite16 (PciIoDevice->Address + PCI_BRIDGE_CONTROL_REGISTER_OFFSET, 0);
+  //
+  // Clear enable bits in command and control registers
+  //
+  PciExpressAnd16 (PciIoDevice->Address + PCI_COMMAND_OFFSET, (UINT16)~EFI_PCI_COMMAND_BITS_OWNED);
+  PciExpressAnd16 (PciIoDevice->Address + PCI_BRIDGE_CONTROL_REGISTER_OFFSET, (UINT16)~EFI_PCI_BRIDGE_CONTROL_BITS_OWNED);
 
   //
   // PPB can have two BARs
@@ -1054,8 +1057,8 @@ EnablePciDevice (
   CurrentLink = Parent->ChildList.ForwardLink;
   while (CurrentLink != NULL && CurrentLink != &Parent->ChildList) {
     PciIoDevice = PCI_IO_DEVICE_FROM_LINK (CurrentLink);
-    PciExpressWrite32 (PciIoDevice->Address + PCI_COMMAND_OFFSET, \
-                       EFI_PCI_COMMAND_IO_SPACE | EFI_PCI_COMMAND_MEMORY_SPACE | EFI_PCI_COMMAND_BUS_MASTER);
+    PciExpressOr16 (PciIoDevice->Address + PCI_COMMAND_OFFSET, \
+                    EFI_PCI_COMMAND_IO_SPACE | EFI_PCI_COMMAND_MEMORY_SPACE | EFI_PCI_COMMAND_BUS_MASTER);
     if (PciIoDevice->ChildList.ForwardLink != &PciIoDevice->ChildList) {
       EnablePciDevice (PciIoDevice);
     }

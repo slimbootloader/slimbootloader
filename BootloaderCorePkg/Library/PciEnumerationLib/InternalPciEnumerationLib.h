@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -9,6 +9,34 @@
 #define __INTERNAL_PCI_ENUMERTION_LIB_H__
 
 #include <IndustryStandard/Pci.h>
+
+//
+// The PCI Command register bits owned by PCI Bus driver.
+//
+// They should be cleared at the beginning. The other registers
+// are owned by chipset, we should not touch them.
+//
+#define EFI_PCI_COMMAND_BITS_OWNED                          ( \
+                EFI_PCI_COMMAND_IO_SPACE                    | \
+                EFI_PCI_COMMAND_MEMORY_SPACE                | \
+                EFI_PCI_COMMAND_BUS_MASTER                  | \
+                EFI_PCI_COMMAND_MEMORY_WRITE_AND_INVALIDATE | \
+                EFI_PCI_COMMAND_VGA_PALETTE_SNOOP           | \
+                EFI_PCI_COMMAND_FAST_BACK_TO_BACK             \
+                )
+
+//
+// The PCI Bridge Control register bits owned by PCI Bus driver.
+//
+// They should be cleared at the beginning. The other registers
+// are owned by chipset, we should not touch them.
+//
+#define EFI_PCI_BRIDGE_CONTROL_BITS_OWNED                   ( \
+                EFI_PCI_BRIDGE_CONTROL_ISA                  | \
+                EFI_PCI_BRIDGE_CONTROL_VGA                  | \
+                EFI_PCI_BRIDGE_CONTROL_VGA_16               | \
+                EFI_PCI_BRIDGE_CONTROL_FAST_BACK_TO_BACK      \
+                )
 
 #define PPB_BAR_0                             0
 #define PPB_BAR_1                             1
