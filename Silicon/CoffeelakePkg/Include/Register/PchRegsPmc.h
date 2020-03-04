@@ -49,6 +49,9 @@
 
 #define R_ACPI_IO_OC_WDT_CTL                     0x54
 
+#define R_ACPI_IO_GPE0_EN_127_96                 0x7C
+#define B_ACPI_IO_GPE0_STS_127_96_PME_B0         BIT13
+
 #define R_TCO_IO_TCO1_STS                        0x04
 #define R_TCO_IO_TCO1_CNT                        0x08
 #define B_TCO_IO_TCO1_CNT_LOCK                   BIT12
