@@ -288,8 +288,7 @@ UpdateAcpiPsdTable (
   mPsdt->Header.OemRevision             = PSDS_EFI_ACPI_OEM_REVISION;
   mPsdt->Header.CreatorId               = PSDS_EFI_ACPI_CREATOR_ID;
   mPsdt->Header.CreatorRevision         = PSDS_EFI_ACPI_CREATOR_REVISION;
-  ZeroMem( mPsdt +  sizeof (EFI_ACPI_DESCRIPTION_HEADER) , \
-     sizeof(EFI_ACPI_PSD_TABLE) - sizeof(EFI_ACPI_DESCRIPTION_HEADER) );
+
   DEBUG( (DEBUG_INFO, "Address of PSD_TABLE=%x\n", mPsdt));
   DEBUG( (DEBUG_INFO, "PSD Values: Signature=%x\n", mPsdt->Header.Signature) );
   DEBUG( (DEBUG_INFO, "PSD Values: Length=%x\n", mPsdt->Header.Length ));
