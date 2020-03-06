@@ -153,7 +153,7 @@ class Board(BaseBoard):
             'BootMediaLib|Silicon/$(SILICON_PKG_NAME)/Library/BootMediaLib/BootMediaLib.inf',
             'StageCommonLib|Silicon/$(SILICON_PKG_NAME)/Library/StageCommonLib/StageCommonLib.inf',
             'BootGuardLib|Silicon/$(SILICON_PKG_NAME)/Library/BootGuardLib/BootGuardLib.inf',
-            'SgxLib|Platform/CommonBoardPkg/Library/SgxLib/SgxLib.inf',
+            'SgxLib|Silicon/$(SILICON_PKG_NAME)/Library/SgxLib/SgxLib.inf',
             'PsdLib|Silicon/$(SILICON_PKG_NAME)/Library/PsdLib/PsdLib.inf',
             'HeciLib|Silicon/$(SILICON_PKG_NAME)/Library/HeciLib/HeciLib.inf',
             'ShellExtensionLib|Platform/$(BOARD_PKG_NAME)/Library/ShellExtensionLib/ShellExtensionLib.inf',
