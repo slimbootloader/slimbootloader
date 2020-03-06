@@ -28,9 +28,8 @@
   BootloaderCorePkg/BootloaderCorePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
   Silicon/CoffeelakePkg/CoffeelakePkg.dec
-  Silicon/CommonSocPkg/CommonSocPkg.dec
-  Platform/CommonBoardPkg/CommonBoardPkg.dec
   Platform/CoffeelakeBoardPkg/CoffeelakeBoardPkg.dec
+  Platform/CommonBoardPkg/CommonBoardPkg.dec
 
 [LibraryClasses]
   BaseLib
