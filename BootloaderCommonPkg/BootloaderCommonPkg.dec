@@ -230,6 +230,14 @@
   # @Prompt Minimum length(in bytes) of the system preboot TCG event log area(LAML).
   gPlatformCommonLibTokenSpaceGuid.PcdTcgLogAreaMinLen|0x10000|UINT32|0x00010081
 
+  ## This PCD defines length for DMA buffer.
+  # @Prompt DMA buffer allocation length when DMA proteciton is enabled.
+  gPlatformCommonLibTokenSpaceGuid.PcdDmaBufferSize      | 0x00400000 | UINT32 | 0x00010090
+
+  ## This PCD defines length for DMA buffer alignment.
+  # @Prompt DMA buffer allocation alignment when DMA protection is enabled.
+  gPlatformCommonLibTokenSpaceGuid.PcdDmaBufferAlignment | 0x00100000 | UINT32 | 0x00010091
+
 [PcdsDynamic]
   ## This PCD indicates the PCR bank to be enabled/supported by Slim Bootloader for measured boot
   #  Based on the value set, PCR bank world be enabled and extended
@@ -255,3 +263,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdForceToInitSerialPort   | FALSE      | BOOLEAN | 0x20000216
   # This PCD will enable very basic debug Shell so that it can work in early stage such as 1A/1B/2.
   gPlatformCommonLibTokenSpaceGuid.PcdMiniShellEnabled        | FALSE      | BOOLEAN | 0x20000217
+  # This PCD will enable DMA protection
+  gPlatformCommonLibTokenSpaceGuid.PcdDmaProtectionEnabled    | FALSE      | BOOLEAN | 0x20000218
+
+
