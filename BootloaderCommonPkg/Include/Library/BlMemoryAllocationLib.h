@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -9,6 +9,12 @@
 #define __BL_MEMORY_ALLOCATION_LIB_H__
 
 #include <Library/MemoryAllocationLib.h>
+
+typedef struct {
+  EFI_PHYSICAL_ADDRESS  BaseAddress;
+  UINT32                NumberOfPages;
+  UINT32                Type;
+} EFI_MEMORY_RANGE_ENTRY;
 
 /**
   This function allocates temporary memory pool.

@@ -1,32 +1,29 @@
 /** @file
   Payload specific memory allocation library.
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017- 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 #ifndef _PAYLOAD_MEMORY_ALLOCATION_LIB_H_
 #define _PAYLOAD_MEMORY_ALLOCATION_LIB_H_
 
-#include <Library/MemoryAllocationLib.h>
+#include <Library/BlMemoryAllocationLib.h>
 
 /**
   Add system memory resource for allocation.
 
   Add system range into the memory resource pool
 
-  @param  Base            The base of the normal memory range.
-  @param  Pages           The number of pages for the normal memory range.
-  @param  RsvdBase        The base of the reserved memory range.
-  @param  RsvdPages       The number of pages for the reserved memory range.
+  @param[in]  MemoryRanges    Memory range array structure.
+  @param[in]  Count           Memory range entry count.
+
 **/
 VOID
 EFIAPI
 AddMemoryResourceRange (
-  IN  UINT64   Base,
-  IN  UINT32   Pages,
-  IN  UINT64   RsvdBase,
-  IN  UINT32   RsvdPages
+  IN  EFI_MEMORY_RANGE_ENTRY  *MemoryRanges,
+  IN  UINT32                   Count
   );
 
 /**

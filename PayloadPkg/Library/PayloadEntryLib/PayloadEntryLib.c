@@ -1,7 +1,7 @@
 /** @file
   This file provides payload common library interfaces.
 
-  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -56,6 +56,7 @@ PayloadInit (
   EFI_STATUS                PcdStatus1;
   EFI_STATUS                PcdStatus2;
   CONTAINER_LIST            *ContainerList;
+  EFI_MEMORY_RANGE_ENTRY    MemoryRanges[2];
 
   PcdStatus1 = PcdSet32S (PcdPayloadHobList, (UINT32)HobList);
 
@@ -84,8 +85,13 @@ PayloadInit (
   StackBase = HeapBase - StackSize;
 
   // Add payload reserved memory region and free memory region
-  AddMemoryResourceRange (HeapBase, EFI_SIZE_TO_PAGES (HeapSize), \
-                          RsvdBase, EFI_SIZE_TO_PAGES ((UINT32)RsvdSize));
+  MemoryRanges[0].BaseAddress   = HeapBase;
+  MemoryRanges[0].NumberOfPages = EFI_SIZE_TO_PAGES (HeapSize);
+  MemoryRanges[0].Type          = EfiBootServicesData;
+  MemoryRanges[1].BaseAddress   = RsvdBase;
+  MemoryRanges[1].NumberOfPages = EFI_SIZE_TO_PAGES ((UINT32)RsvdSize);
+  MemoryRanges[1].Type          = EfiReservedMemoryType;
+  AddMemoryResourceRange (MemoryRanges, 2);
 
   GlobalDataPtr = AllocateZeroPool (sizeof (PAYLOAD_GLOBAL_DATA));
   ASSERT (GlobalDataPtr != NULL);
