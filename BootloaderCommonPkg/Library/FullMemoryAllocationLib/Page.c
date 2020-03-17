@@ -51,7 +51,7 @@ CONST EFI_MEMORY_TYPE_STATISTICS mMemoryTypeStatisticsInit[EfiMaxMemoryType + 1]
   { 0, 0, 0, 0, EfiMaxMemoryType, FALSE, FALSE },  // EfiBootServicesCode
   { 0, MAX_ADDRESS, 0, 0, EfiMaxMemoryType, FALSE, FALSE },  // EfiBootServicesData
   { 0, 0, 0, 0, EfiMaxMemoryType, TRUE,  TRUE  },  // EfiRuntimeServicesCode
-  { 0, 0, 0, 0, EfiMaxMemoryType, TRUE,  TRUE  },  // EfiRuntimeServicesData
+  { 0, MAX_ADDRESS, 0, 0, EfiMaxMemoryType, TRUE,  TRUE  },  // EfiRuntimeServicesData
   { 0, MAX_ADDRESS, 0, 0, EfiMaxMemoryType, FALSE, FALSE },  // EfiConventionalMemory
   { 0, 0, 0, 0, EfiMaxMemoryType, FALSE, FALSE },  // EfiUnusableMemory
   { 0, 0, 0, 0, EfiMaxMemoryType, TRUE,  FALSE },  // EfiACPIReclaimMemory

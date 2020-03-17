@@ -348,6 +348,7 @@ SecStartup2 (
   UINT32                    MemPoolStart;
   UINT32                    MemPoolEnd;
   UINT32                    MemPoolCurrTop;
+  UINT32                    DmaBuffer;
   UINT32                    AllocateLen;
   UINT32                    Offset;
   UINT32                    Delta;
@@ -455,6 +456,16 @@ SecStartup2 (
   LdrGlobal->MemPoolStart      = MemPoolStart;
   LdrGlobal->MemPoolCurrTop    = MemPoolCurrTop;
   LdrGlobal->MemPoolCurrBottom = MemPoolStart;
+  LdrGlobal->MemUsableTop      = (UINT32)(FspReservedMemBase + FspReservedMemSize);
+
+  if (FeaturePcdGet (PcdDmaProtectionEnabled)) {
+    DmaBuffer = MemPoolStart - (PcdGet32 (PcdLoaderAcpiNvsSize) + PcdGet32 (PcdLoaderAcpiReclaimSize)
+                + PcdGet32 (PcdPayloadReservedMemSize) + PcdGet32 (PcdDmaBufferSize));
+    DmaBuffer = ALIGN_DOWN (DmaBuffer, PcdGet32 (PcdDmaBufferAlignment));
+  } else {
+    DmaBuffer = 0;
+  }
+  LdrGlobal->DmaBufferPtr      = (VOID *)(UINTN)DmaBuffer;
 
   DEBUG_CODE_BEGIN ();
   // Initialize HOB/Stack region with known pattern so that the usage can be detected

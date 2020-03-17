@@ -144,9 +144,15 @@ typedef struct {
   +------------------------------+  ACPI Reclaim MEM Base
   |       PLD Reserved MEM       |
   +------------------------------+  PLD Reserved MEM Base
+  |         DMA Buffer           |
+  +------------------------------+  DMA Buffer MEM Base
+  |          PLD Heap            |
+  +------------------------------+  PLD Heap MEM Base
+  |          PLD Stack           |
+  +------------------------------+  PLD Stack MEM Base
 
         Loader Reserved MEM
-  +------------------------------+  StackTop
+  +------------------------------+  FSP Reserved MEM Base
   |       LDR Stack (Down)       |
   |                              |
   |         LDR HOB (Up)         |
@@ -178,6 +184,7 @@ typedef struct {
   UINT32            MemPoolStart;
   UINT32            MemPoolCurrTop;
   UINT32            MemPoolCurrBottom;
+  UINT32            MemUsableTop;
   UINT32            PayloadId;
   UINT32            DebugPrintErrorLevel;
   UINT8             DebugPortIdx;
@@ -197,6 +204,7 @@ typedef struct {
   VOID             *ContainerList;
   VOID             *S3DataPtr;
   VOID             *DebugDataPtr;
+  VOID             *DmaBufferPtr;
   UINT8             PlatformName[PLATFORM_NAME_SIZE];
   UINT32            LdrFeatures;
   BL_PERF_DATA      PerfData;
@@ -439,6 +447,30 @@ GetComponentPcdInfo (
   IN  UINT32     Signature,
   OUT UINT32     *Base,
   OUT UINT32     *Size
+  );
+
+/**
+  This function retrieves DMA buffer base.
+
+  @retval    DMA buffer base.
+
+**/
+VOID *
+EFIAPI
+GetDmaBufferPtr (
+  VOID
+  );
+
+/**
+  This function retrieves usable memory top.
+
+  @retval    Usable memory top.
+
+**/
+UINT32
+EFIAPI
+GetUsableMemoryTop (
+  VOID
   );
 
 #endif
