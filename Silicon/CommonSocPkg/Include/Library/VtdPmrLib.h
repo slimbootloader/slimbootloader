@@ -17,45 +17,27 @@ typedef struct {
   UINT64                                  EngineMask;
   UINT8                                   HostAddressWidth;
   UINTN                                   VTdEngineCount;
-  UINT64                                  VTdEngineAddress[0];
+  UINT64                                  VTdEngineAddress[1];
 } VTD_INFO;
 
 /**
-  Set DMA protected region.
+  Enable or disable DMA protection using VTD PMR.
 
-  @param VTdInfo            The VTd engine context information.
-  @param EngineMask         The mask of the VTd engine to be accessed.
-  @param LowMemoryBase      The protected low memory region base.
-  @param LowMemoryLength    The protected low memory region length.
-  @param HighMemoryBase     The protected high memory region base.
-  @param HighMemoryLength   The protected high memory region length.
+  This function will enable/disable DMA protection.
 
-  @retval EFI_SUCCESS      The DMA protection is set.
-  @retval EFI_UNSUPPORTED  The DMA protection is not set.
+  @param[in] VtdInfo            VT-d info structure pointer.
+  @param[in] Enable             Enable/Disable DMA protection.
+
+  @retval     EFI_UNSUPPORTED   DMA protection is not supported.
+  @retval     EFI_SUCCESS       DMA protection is enabled or disabled successfully.
+
 **/
 EFI_STATUS
-SetDmaProtectedRange (
-  IN VTD_INFO      *VTdInfo,
-  IN UINT64        EngineMask,
-  IN UINT32        LowMemoryBase,
-  IN UINT32        LowMemoryLength,
-  IN UINT64        HighMemoryBase,
-  IN UINT64        HighMemoryLength
-  );
-
-/**
-  Diable DMA protection.
-
-  @param VTdInfo            The VTd engine context information.
-  @param EngineMask         The mask of the VTd engine to be accessed.
-
-  @retval EFI_SUCCESS DMA protection is disabled.
-**/
-EFI_STATUS
-DisableDmaProtection (
-  IN VTD_INFO      *VTdInfo,
-  IN UINT64        EngineMask
-  );
+EFIAPI
+SetDmaProtection (
+  IN  VTD_INFO     *VtdInfo,
+  IN  BOOLEAN       Enable
+);
 
 #endif
 

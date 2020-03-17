@@ -12,6 +12,7 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/IoLib.h>
 #include <Library/DebugLib.h>
+#include <Library/BootloaderCoreLib.h>
 
 /**
   Get protected low memory alignment.
@@ -22,6 +23,7 @@
   @return protected low memory alignment.
 **/
 UINT32
+STATIC
 GetPlmrAlignment (
   IN UINT8         HostAddressWidth,
   IN UINTN         VtdUnitBaseAddress
@@ -44,6 +46,7 @@ GetPlmrAlignment (
 
   @return protected high memory alignment.
 **/
+STATIC
 UINT64
 GetPhmrAlignment (
   IN UINT8         HostAddressWidth,
@@ -130,6 +133,7 @@ GetHighMemoryAlignment (
   @retval EFI_SUCCESS      The PMR is enabled.
   @retval EFI_UNSUPPORTED  The PMR is not supported.
 **/
+STATIC
 EFI_STATUS
 EnablePmr (
   IN UINTN         VtdUnitBaseAddress
@@ -167,6 +171,7 @@ EnablePmr (
   @retval EFI_SUCCESS      The PMR is disabled.
   @retval EFI_UNSUPPORTED  The PMR is not supported.
 **/
+STATIC
 EFI_STATUS
 DisablePmr (
   IN UINTN         VtdUnitBaseAddress
@@ -209,6 +214,7 @@ DisablePmr (
   @retval EFI_SUCCESS      The PMR is set to protected region.
   @retval EFI_UNSUPPORTED  The PMR is not supported.
 **/
+STATIC
 EFI_STATUS
 SetPmrRegion (
   IN UINT8         HostAddressWidth,
@@ -241,6 +247,12 @@ SetPmrRegion (
     return EFI_UNSUPPORTED;
   }
 
+  if ((PcdGet32 (PcdDmaBufferAlignment) < PlmrAlignment) ||
+      (PcdGet32 (PcdDmaBufferAlignment) < PhmrAlignment)) {
+    DEBUG ((DEBUG_ERROR, "PcdDmaBufferAlignment does not match VT-d PMR\n"));
+    return EFI_UNSUPPORTED;
+  }
+
   if (LowMemoryBase == 0 && LowMemoryLength == 0) {
     LowMemoryBase = 0xFFFFFFFF;
   }
@@ -269,6 +281,7 @@ SetPmrRegion (
   @retval EFI_SUCCESS      The DMA protection is set.
   @retval EFI_UNSUPPORTED  The DMA protection is not set.
 **/
+STATIC
 EFI_STATUS
 SetDmaProtectedRange (
   IN VTD_INFO      *VTdInfo,
@@ -286,8 +299,9 @@ SetDmaProtectedRange (
     return EFI_UNSUPPORTED;
   }
 
-  DEBUG ((DEBUG_INFO, "SetDmaProtectedRange:\n  [0x%x, 0x%x]\n  [0x%016lx, 0x%016lx]\n",
-         LowMemoryBase, LowMemoryLength, HighMemoryBase, HighMemoryLength));
+  DEBUG ((DEBUG_INFO, "SetDmaProtectedRange:\n  [0x%x, 0x%x]\n  [0x%lx, 0x%lx]\n",
+          LowMemoryBase, LowMemoryBase + LowMemoryLength,
+          HighMemoryBase, HighMemoryBase + HighMemoryLength));
 
   for (Index = 0; Index < VTdInfo->VTdEngineCount; Index++) {
     if ((EngineMask & LShiftU64(1, Index)) == 0) {
@@ -322,6 +336,7 @@ SetDmaProtectedRange (
 
   @retval EFI_SUCCESS DMA protection is disabled.
 **/
+STATIC
 EFI_STATUS
 DisableDmaProtection (
   IN VTD_INFO      *VTdInfo,
@@ -354,6 +369,7 @@ DisableDmaProtection (
   @retval TRUE  PMR is enabled.
   @retval FALSE PMR is disabled or unsupported.
 **/
+STATIC
 BOOLEAN
 IsPmrEnabled (
   IN UINTN         VtdUnitBaseAddress
@@ -408,4 +424,43 @@ GetDmaProtectionEnabledEngineMask (
 
   DEBUG ((DEBUG_INFO, "EnabledEngineMask - 0x%lx\n", EnabledEngineMask));
   return EnabledEngineMask;
+}
+
+
+/**
+  Enable or disable DMA protection using VTD PMR.
+
+  This function will enable/disable DMA protection.
+
+  @param[in] VtdInfo            VT-d info structure pointer.
+  @param[in] Enable             Enable/Disable DMA protection.
+
+  @retval     EFI_UNSUPPORTED   DMA protection is not supported.
+  @retval     EFI_SUCCESS       DMA protection is enabled or disabled successfully.
+
+**/
+EFI_STATUS
+EFIAPI
+SetDmaProtection (
+  IN  VTD_INFO     *VtdInfo,
+  IN  BOOLEAN       Enable
+)
+{
+  UINT32        MemTop;
+  UINT32        DmaStart;
+  UINT32        DmaEnd;
+  EFI_STATUS    Status;
+
+  if (Enable) {
+    MemTop   = GetUsableMemoryTop ();
+    MemTop   = ALIGN_UP (MemTop, PcdGet32 (PcdDmaBufferAlignment));
+    DmaStart = (UINT32)GetDmaBufferPtr ();
+    DmaEnd   = DmaStart + ALIGN_UP (PcdGet32 (PcdDmaBufferSize), PcdGet32 (PcdDmaBufferAlignment));
+    Status = SetDmaProtectedRange (VtdInfo, VTD_ENGINE_ALL, 0, DmaStart, DmaEnd, MemTop - DmaEnd);
+  } else {
+    Status = DisableDmaProtection (VtdInfo, VTD_ENGINE_ALL);
+  }
+
+  DEBUG ((DEBUG_INFO, "DMA protection %aabling: %r\n", Enable ? "en" : "dis", Status));
+  return Status;
 }
