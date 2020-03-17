@@ -10,6 +10,7 @@
 #define __VTD_PMR_LIB_H__
 
 #include <IndustryStandard/Vtd.h>
+#include <Library/PcdLib.h>
 
 #define  VTD_ENGINE_ALL                   ((UINT64)(-1))
 
@@ -17,7 +18,7 @@ typedef struct {
   UINT64                                  EngineMask;
   UINT8                                   HostAddressWidth;
   UINTN                                   VTdEngineCount;
-  UINT64                                  VTdEngineAddress[1];
+  UINT64                                  VTdEngineAddress[8];
 } VTD_INFO;
 
 /**
