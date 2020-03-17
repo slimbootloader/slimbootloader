@@ -36,6 +36,7 @@ typedef struct {
   DEBUG_LOG_BUFFER_HEADER  *DebugLogBuffer;
   VOID                     *ConfigDataPtr;
   VOID                     *ContainerList;
+  VOID                     *DmaBufferPtr;
 } LOADER_PLATFORM_DATA;
 
 #endif

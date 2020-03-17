@@ -50,13 +50,15 @@ PayloadInit (
   UINT32                    HeapSize;
   UINT64                    RsvdBase;
   UINT64                    RsvdSize;
+  UINT32                    DmaBase;
+  UINT32                    DmaSize;
   UINT32                    StackBase;
   UINT32                    StackSize;
   LOADER_PLATFORM_DATA      *LoaderPlatformData;
   EFI_STATUS                PcdStatus1;
   EFI_STATUS                PcdStatus2;
   CONTAINER_LIST            *ContainerList;
-  EFI_MEMORY_RANGE_ENTRY    MemoryRanges[2];
+  EFI_MEMORY_RANGE_ENTRY    MemoryRanges[3];
 
   PcdStatus1 = PcdSet32S (PcdPayloadHobList, (UINT32)HobList);
 
@@ -78,20 +80,32 @@ PayloadInit (
   GetPayloadReservedRamRegion (&RsvdBase, &RsvdSize);
   ASSERT ((RsvdBase & EFI_PAGE_MASK) == 0);
 
+  if (FeaturePcdGet (PcdDmaProtectionEnabled)) {
+    DmaSize = ALIGN_UP (PcdGet32 (PcdDmaBufferSize), EFI_PAGE_SIZE);
+  } else {
+    DmaSize = 0;
+  }
+  DmaBase  = (UINT32)RsvdBase - DmaSize;
+  DmaBase  = ALIGN_DOWN(DmaBase, PcdGet32 (PcdDmaBufferAlignment));
+
   HeapSize  = ALIGN_UP (PcdGet32 (PcdPayloadHeapSize), EFI_PAGE_SIZE);
-  HeapBase = (UINT32)RsvdBase - HeapSize;
+  HeapBase = DmaBase - HeapSize;
 
   StackSize = ALIGN_UP (PcdGet32 (PcdPayloadStackSize), EFI_PAGE_SIZE);
   StackBase = HeapBase - StackSize;
 
   // Add payload reserved memory region and free memory region
+  // Use EfiRuntimeServicesData as DMA memory pool
   MemoryRanges[0].BaseAddress   = HeapBase;
   MemoryRanges[0].NumberOfPages = EFI_SIZE_TO_PAGES (HeapSize);
   MemoryRanges[0].Type          = EfiBootServicesData;
   MemoryRanges[1].BaseAddress   = RsvdBase;
   MemoryRanges[1].NumberOfPages = EFI_SIZE_TO_PAGES ((UINT32)RsvdSize);
   MemoryRanges[1].Type          = EfiReservedMemoryType;
-  AddMemoryResourceRange (MemoryRanges, 2);
+  MemoryRanges[2].BaseAddress   = DmaBase;
+  MemoryRanges[2].NumberOfPages = EFI_SIZE_TO_PAGES (DmaSize);
+  MemoryRanges[2].Type          = EfiRuntimeServicesData;
+  AddMemoryResourceRange (MemoryRanges, 3);
 
   GlobalDataPtr = AllocateZeroPool (sizeof (PAYLOAD_GLOBAL_DATA));
   ASSERT (GlobalDataPtr != NULL);
@@ -103,6 +117,12 @@ PayloadInit (
   GuidHob = GetNextGuidHob (&gLoaderPlatformDataGuid, (VOID *)PcdGet32 (PcdPayloadHobList));
   if (GuidHob != NULL) {
     LoaderPlatformData = (LOADER_PLATFORM_DATA *) GET_GUID_HOB_DATA (GuidHob);
+
+    if (LoaderPlatformData->DmaBufferPtr != NULL) {
+      // Verify the DMA buffer is aligned with core allocation
+      ASSERT ((UINT32)(UINTN)LoaderPlatformData->DmaBufferPtr == DmaBase);
+    }
+
     GlobalDataPtr->CfgDataPtr = LoaderPlatformData->ConfigDataPtr;
 
     DebugLogBufferHdr  = LoaderPlatformData->DebugLogBuffer;
