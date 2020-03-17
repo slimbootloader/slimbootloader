@@ -40,7 +40,7 @@
   # !BSF TYPE:{Combo}
   # !BSF OPTION:{ 0:0MB, 1:4MB, 2:8MB, 3:16MB, 4:32MB, 5:64MB}
   # !BSF HELP:{Specify reserved memory size for OS to save OS crash data. The reserved memory address should be same across reset.}
-  gCfgData.OsCrashMemorySize           |      * | 0x01 | 1
+  gCfgData.OsCrashMemorySize           |      * | 0x01 | 0
 
   # !BSF NAME:{Enable Crash Mode}
   # !BSF OPTION:{$EN_DIS}
