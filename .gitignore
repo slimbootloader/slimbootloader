@@ -15,6 +15,7 @@ FspRel.bin
 /Stitch
 /Build
 /Conf
+/Download
 /PayloadPkg/PayloadBins
 Platform/ApollolakeBoardPkg/VbtBin
 Platform/CoffeelakeBoardPkg/VbtBin
