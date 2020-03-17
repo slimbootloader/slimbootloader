@@ -69,6 +69,8 @@ PayloadInit (
   // +--------------------------------------------+ RsvdBase + RsvdSize
   // |   Reserved memory for Payload              |
   // +--------------------------------------------+ RsvdBase
+  // |   + DMA buffer                             |
+  // +--------------------------------------------+ DmaBase
   // |   + Payload heap                           |
   // +--------------------------------------------+ HeapBase
   // |   + Payload stack                          |
