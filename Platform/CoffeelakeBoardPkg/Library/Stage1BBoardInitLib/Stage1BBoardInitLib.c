@@ -223,6 +223,9 @@ UpdateFspConfig (
     DEBUG ((DEBUG_INFO, "FSP-M variables for Intel(R) SGX were NOT updated.\n"));
   }
 
+  // Enable VT-d
+  FspmcfgTest->VtdDisable = 0;
+
   Fspmcfg->PlatformDebugConsent = MemCfgData->PlatformDebugConsent;
   Fspmcfg->PchTraceHubMode      = MemCfgData->PchTraceHubMode;
 }

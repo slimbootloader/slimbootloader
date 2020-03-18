@@ -10,6 +10,7 @@
 
 #include <Library/BootGuardLib.h>
 #include <Library/BootloaderCoreLib.h>
+#include <Library/VtdPmrLib.h>
 
 typedef struct {
   UINT8               PlatformId : 5;
@@ -21,6 +22,7 @@ typedef struct {
 
 typedef struct {
   BOOT_GUARD_INFO     BtGuardInfo;
+  VTD_INFO            VtdInfo;
 } PLATFORM_DATA;
 
 #endif /* __PLATFORM_DATA_H__ */
