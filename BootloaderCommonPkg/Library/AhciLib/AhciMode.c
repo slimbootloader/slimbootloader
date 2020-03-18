@@ -1,7 +1,7 @@
 /** @file
   The file for AHCI mode of ATA host controller.
 
-  Copyright (c) 2010 - 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2010 - 2020, Intel Corporation. All rights reserved.<BR>
   (C) Copyright 2015 Hewlett Packard Enterprise Development LP<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
@@ -667,6 +667,8 @@ AhciPioTransfer (
   BOOLEAN                       InfiniteWait;
   BOOLEAN                       PioFisReceived;
   BOOLEAN                       D2hFisReceived;
+  UINTN                         MapLength;
+  VOID                          *MapData;
 
   if (Timeout == 0) {
     InfiniteWait = TRUE;
@@ -677,7 +679,18 @@ AhciPioTransfer (
   //
   // construct command list and command table with pci bus address
   //
-  PhyAddr   = (EFI_PHYSICAL_ADDRESS) (UINTN)MemoryAddr;
+  MapData   = NULL;
+  MapLength = DataCount;
+  Status    = IoMmuMap (
+                Read ? EdkiiIoMmuOperationBusMasterWrite : EdkiiIoMmuOperationBusMasterRead,
+                MemoryAddr,
+                &MapLength,
+                &PhyAddr,
+                &MapData
+                );
+  if (EFI_ERROR (Status) || (MapLength != DataCount)) {
+    return EFI_OUT_OF_RESOURCES;
+  }
 
   //
   // Package read needed
@@ -809,6 +822,10 @@ Exit:
     Timeout
     );
 
+  if (MapData != NULL) {
+    IoMmuUnmap (MapData);
+  }
+
   AhciDumpPortStatus (AhciController, AhciRegisters, Port, AtaStatusBlock);
 
   return Status;
@@ -861,15 +878,28 @@ AhciDmaTransfer (
   EFI_AHCI_COMMAND_LIST         CmdList;
   UINTN                         FisBaseAddr;
   UINT32                        PortTfd;
+  UINTN                         MapLength;
+  VOID                          *MapData;
 
   if (AhciController == NULL) {
     return EFI_INVALID_PARAMETER;
   }
 
   //
-  // Construct command list and command table with pci bus address.
+  // construct command list and command table with pci bus address
   //
-  PhyAddr   = (EFI_PHYSICAL_ADDRESS) (UINTN)MemoryAddr;
+  MapData   = NULL;
+  MapLength = DataCount;
+  Status    = IoMmuMap (
+                Read ? EdkiiIoMmuOperationBusMasterWrite : EdkiiIoMmuOperationBusMasterRead,
+                MemoryAddr,
+                &MapLength,
+                &PhyAddr,
+                &MapData
+                );
+  if (EFI_ERROR (Status) || (MapLength != DataCount)) {
+    return EFI_OUT_OF_RESOURCES;
+  }
 
   //
   // Package read needed
@@ -947,6 +977,10 @@ Exit:
     Port,
     Timeout
     );
+
+  if (MapData != NULL) {
+    IoMmuUnmap (MapData);
+  }
 
   AhciDumpPortStatus (AhciController, AhciRegisters, Port, AtaStatusBlock);
   return Status;
@@ -1704,18 +1738,19 @@ AhciCreateTransferDescriptor (
 {
   EFI_STATUS            Status;
   VOID                  *Buffer;
-
   UINT32                Capability;
   UINT32                PortImplementBitMap;
   UINT8                 MaxPortNumber;
   UINT8                 MaxCommandSlotNumber;
   BOOLEAN               Support64Bit;
-  UINT64                MaxReceiveFisSize;
-  UINT64                MaxCommandListSize;
-  UINT64                MaxCommandTableSize;
+  UINT32                MaxReceiveFisSize;
+  UINT32                MaxCommandListSize;
+  UINT32                MaxCommandTableSize;
   EFI_PHYSICAL_ADDRESS  AhciRFisPciAddr;
   EFI_PHYSICAL_ADDRESS  AhciCmdListPciAddr;
   EFI_PHYSICAL_ADDRESS  AhciCommandTablePciAddr;
+  EFI_PHYSICAL_ADDRESS  DeviceAddress;
+  VOID                  *Mapping;
 
   Buffer = NULL;
   //
@@ -1738,14 +1773,20 @@ AhciCreateTransferDescriptor (
   }
 
   MaxReceiveFisSize    = MaxPortNumber * sizeof (EFI_AHCI_RECEIVED_FIS);
-  Buffer = AllocatePages (EFI_SIZE_TO_PAGES ((UINTN) MaxReceiveFisSize));
-  if (Buffer == NULL) {
+  Status = IoMmuAllocateBuffer (
+             EFI_SIZE_TO_PAGES (MaxReceiveFisSize),
+             &Buffer,
+             &DeviceAddress,
+             &Mapping
+             );
+  if (EFI_ERROR(Status) || (Buffer == NULL)) {
     return EFI_OUT_OF_RESOURCES;
   }
 
   ZeroMem (Buffer, (UINTN)MaxReceiveFisSize);
 
   AhciRegisters->AhciRFis          = Buffer;
+  AhciRegisters->AhciRFisMap       = Mapping;
   AhciRegisters->MaxReceiveFisSize = MaxReceiveFisSize;
 
   AhciRFisPciAddr = (EFI_PHYSICAL_ADDRESS) (UINTN)Buffer;
@@ -1765,8 +1806,13 @@ AhciCreateTransferDescriptor (
   //
   Buffer = NULL;
   MaxCommandListSize = MaxCommandSlotNumber * sizeof (EFI_AHCI_COMMAND_LIST);
-  Buffer = AllocatePages (EFI_SIZE_TO_PAGES ((UINTN) MaxCommandListSize));
-  if (Buffer == NULL) {
+  Status = IoMmuAllocateBuffer (
+             EFI_SIZE_TO_PAGES (MaxCommandListSize),
+             &Buffer,
+             &DeviceAddress,
+             &Mapping
+             );
+  if (EFI_ERROR(Status) || (Buffer == NULL)) {
     //
     // Free mapped resource.
     //
@@ -1777,6 +1823,7 @@ AhciCreateTransferDescriptor (
   ZeroMem (Buffer, (UINTN)MaxCommandListSize);
 
   AhciRegisters->AhciCmdList        = Buffer;
+  AhciRegisters->AhciCmdListMap     = Mapping;
   AhciRegisters->MaxCommandListSize = MaxCommandListSize;
 
   AhciCmdListPciAddr = (EFI_PHYSICAL_ADDRESS) (UINTN)Buffer;
@@ -1796,10 +1843,14 @@ AhciCreateTransferDescriptor (
   //
   Buffer = NULL;
   MaxCommandTableSize = sizeof (EFI_AHCI_COMMAND_TABLE);
+  Status = IoMmuAllocateBuffer (
+             EFI_SIZE_TO_PAGES (MaxCommandTableSize),
+             &Buffer,
+             &DeviceAddress,
+             &Mapping
+             );
 
-
-  Buffer = AllocatePages (EFI_SIZE_TO_PAGES ((UINTN) MaxCommandTableSize));
-  if (Buffer == NULL) {
+  if (EFI_ERROR(Status) || (Buffer == NULL)) {
     //
     // Free mapped resource.
     //
@@ -1810,6 +1861,7 @@ AhciCreateTransferDescriptor (
   ZeroMem (Buffer, (UINTN)MaxCommandTableSize);
 
   AhciRegisters->AhciCommandTable    = Buffer;
+  AhciRegisters->AhciCommandTableMap = Mapping;
   AhciRegisters->MaxCommandTableSize = MaxCommandTableSize;
 
   AhciCommandTablePciAddr = (EFI_PHYSICAL_ADDRESS) (UINTN)Buffer;
@@ -1824,24 +1876,42 @@ AhciCreateTransferDescriptor (
   AhciRegisters->AhciCommandTablePciAddr = (EFI_AHCI_COMMAND_TABLE *) (UINTN)AhciCommandTablePciAddr;
 
   return EFI_SUCCESS;
+
   //
   // Map error or unable to map the whole CmdList buffer into a contiguous region.
   //
 Error1:
-  FreePages (
-    AhciRegisters->AhciCommandTable,
-    EFI_SIZE_TO_PAGES ((UINTN) MaxCommandTableSize)
-    );
+  if (AhciRegisters->AhciCommandTableMap != NULL) {
+    IoMmuFreeBuffer (
+       EFI_SIZE_TO_PAGES (AhciRegisters->MaxCommandTableSize),
+       AhciRegisters->AhciCommandTable,
+       AhciRegisters->AhciCommandTableMap
+       );
+    AhciRegisters->AhciCommandTable    = NULL;
+    AhciRegisters->AhciCommandTableMap = NULL;
+  }
+
 Error3:
-  FreePages (
-    AhciRegisters->AhciCmdList,
-    EFI_SIZE_TO_PAGES ((UINTN) MaxCommandListSize)
-    );
+  if (AhciRegisters->AhciCmdListMap != NULL) {
+    IoMmuFreeBuffer (
+       EFI_SIZE_TO_PAGES (AhciRegisters->MaxCommandListSize),
+       AhciRegisters->AhciCmdList,
+       AhciRegisters->AhciCmdListMap
+       );
+    AhciRegisters->AhciCmdList = NULL;
+    AhciRegisters->AhciCmdListMap = NULL;
+  }
+
 Error5:
-  FreePages (
-    AhciRegisters->AhciRFis,
-    EFI_SIZE_TO_PAGES ((UINTN) MaxReceiveFisSize)
-    );
+  if (AhciRegisters->AhciRFisMap != NULL) {
+    IoMmuFreeBuffer (
+       EFI_SIZE_TO_PAGES (AhciRegisters->MaxReceiveFisSize),
+       AhciRegisters->AhciRFis,
+       AhciRegisters->AhciRFisMap
+       );
+    AhciRegisters->AhciRFis = NULL;
+    AhciRegisters->AhciRFisMap = NULL;
+  }
 
   return Status;
 }

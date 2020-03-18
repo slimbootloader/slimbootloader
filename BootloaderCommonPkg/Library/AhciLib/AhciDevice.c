@@ -24,11 +24,25 @@ GetMaxTransferSector (
   IN EFI_ATA_DEVICE_INFO *AtaDevice
   )
 {
+  UINT32  BlkCnt;
+
   if (AtaDevice->DeviceFeature & DEVICE_LBA_48_SUPPORT) {
-    return AHCI_MAX_48_TRANSFER_SECTOR;
+    if (FeaturePcdGet(PcdDmaProtectionEnabled)) {
+      // When DMA protection is enabled, only tranfer less than DMA buffer size
+      // Use half for safe.  Around 1MB will be used for CmdTable.
+      BlkCnt = (PcdGet32 (PcdDmaBufferSize) >> 1) / AtaDevice->BlockSize;
+      if (BlkCnt == 0) {
+        BlkCnt = 1;
+      } else if (BlkCnt > AHCI_MAX_48_TRANSFER_SECTOR) {
+        BlkCnt = AHCI_MAX_48_TRANSFER_SECTOR;
+      }
+    } else {
+      BlkCnt = AHCI_MAX_48_TRANSFER_SECTOR;
+    }
   } else {
-    return AHCI_MAX_28_TRANSFER_SECTOR;
+    BlkCnt = AHCI_MAX_28_TRANSFER_SECTOR;
   }
+  return BlkCnt;
 }
 
 /**

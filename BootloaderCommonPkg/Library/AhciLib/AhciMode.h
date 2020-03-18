@@ -509,14 +509,17 @@ typedef union {
 
 typedef struct {
   EFI_AHCI_RECEIVED_FIS     *AhciRFis;
+  VOID                      *AhciRFisMap;
   EFI_AHCI_COMMAND_LIST     *AhciCmdList;
+  VOID                      *AhciCmdListMap;
   EFI_AHCI_COMMAND_TABLE    *AhciCommandTable;
+  VOID                      *AhciCommandTableMap;
   EFI_AHCI_RECEIVED_FIS     *AhciRFisPciAddr;
   EFI_AHCI_COMMAND_LIST     *AhciCmdListPciAddr;
   EFI_AHCI_COMMAND_TABLE    *AhciCommandTablePciAddr;
-  UINT64                    MaxCommandListSize;
-  UINT64                    MaxCommandTableSize;
-  UINT64                    MaxReceiveFisSize;
+  UINT32                    MaxCommandListSize;
+  UINT32                    MaxCommandTableSize;
+  UINT32                    MaxReceiveFisSize;
 } EFI_AHCI_REGISTERS;
 
 typedef struct {
