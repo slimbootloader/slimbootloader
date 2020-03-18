@@ -43,6 +43,7 @@ class Board(BaseBoard):
         self.HAVE_MEASURED_BOOT   = 0
         self.HAVE_SEED_LIST       = 0
         self.HAVE_PSD_TABLE       = 1
+        self.ENABLE_SMBIOS        = 1
 
         self.ENABLE_FSP_LOAD_IMAGE    = 0
         self.ENABLE_VTD               = 1
@@ -85,11 +86,11 @@ class Board(BaseBoard):
         self.FSP_IMAGE_ID         = '$APLFSP$'
 
         self.STAGE1A_SIZE         = 0x00008000
-        self.STAGE1B_SIZE         = 0x00035000
+        self.STAGE1B_SIZE         = 0x00036000
         if self.ENABLE_SOURCE_DEBUG:
             self.STAGE1B_SIZE += 0x2000
         self.STAGE2_SIZE          = 0x00032000
-        self.PAYLOAD_SIZE         = 0x0001F000
+        self.PAYLOAD_SIZE         = 0x00023000
 
         if len(self._PAYLOAD_NAME.split(';')) > 1:
             # EPAYLOAD is specified
