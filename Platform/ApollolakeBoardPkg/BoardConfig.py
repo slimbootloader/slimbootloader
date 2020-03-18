@@ -86,11 +86,11 @@ class Board(BaseBoard):
         self.FSP_IMAGE_ID         = '$APLFSP$'
 
         self.STAGE1A_SIZE         = 0x00008000
-        self.STAGE1B_SIZE         = 0x00036000
+        self.STAGE1B_SIZE         = 0x00035000
         if self.ENABLE_SOURCE_DEBUG:
             self.STAGE1B_SIZE += 0x2000
         self.STAGE2_SIZE          = 0x00032000
-        self.PAYLOAD_SIZE         = 0x00023000
+        self.PAYLOAD_SIZE         = 0x0001F000
 
         if len(self._PAYLOAD_NAME.split(';')) > 1:
             # EPAYLOAD is specified
