@@ -18,6 +18,7 @@
 #include <Library/TimerLib.h>
 #include <Library/DebugLib.h>
 #include <Library/IoLib.h>
+#include <Library/IoMmuLib.h>
 #include "AhciMode.h"
 
 #define  ATA_ATAPI_DEVICE_SIGNATURE     SIGNATURE_32 ('a', 'd', 'e', 'v')
