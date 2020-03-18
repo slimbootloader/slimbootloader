@@ -54,6 +54,7 @@
   PsdLib
   S3SaveRestoreLib
   BoardSupportLib
+  VtdPmrLib
 
 [Guids]
   gSmmInformationGuid
@@ -84,3 +85,6 @@
   gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesBase
   gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdEmmcHs400SupportEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdDmaProtectionEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdDmaBufferAlignment
+  gPlatformCommonLibTokenSpaceGuid.PcdDmaBufferSize
