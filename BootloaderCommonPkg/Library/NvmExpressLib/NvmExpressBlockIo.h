@@ -1,7 +1,7 @@
 /** @file
   Header file for EFI_BLOCK_IO_PROTOCOL interface.
 
-Copyright (c) 2013 - 2016, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2013 - 2020, Intel Corporation. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
