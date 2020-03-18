@@ -1,8 +1,8 @@
 /** @file
-  NvmExpressDxe driver is used to manage non-volatile memory subsystem which follows
+  NvmExpress driver is used to manage non-volatile memory subsystem which follows
   NVM Express specification.
 
-  Copyright (c) 2013 - 2016, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2013 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -260,7 +260,7 @@ NvmeInitialize (
 {
   EFI_STATUS                          Status;
   NVME_CONTROLLER_PRIVATE_DATA        *Private;
-  EFI_PHYSICAL_ADDRESS                PhysicalAddress;
+  EFI_PHYSICAL_ADDRESS                MappedAddr;
 
   if (NvmeInitMode == DevDeinit) {
     Private = mNvmeCtrlPrivate;
@@ -300,9 +300,16 @@ NvmeInitialize (
   //
   // Allocate 6 pages of memory, then map it for bus master read and write.
   //
-  PhysicalAddress = (UINT64) (UINTN) AllocatePages (6);
-
-  Private->Buffer                    = (UINT8 *) (UINTN)PhysicalAddress;
+  Status = IoMmuAllocateBuffer (
+             6,
+             (VOID**)&Private->Buffer,
+             &MappedAddr,
+             &Private->Mapping
+             );
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+  Private->BufferPciAddr             = (UINT8 *)(UINTN)MappedAddr;
   Private->Signature                 = NVME_CONTROLLER_PRIVATE_DATA_SIGNATURE;
   Private->NvmeHCBase                = MmioRead32 (NvmeHcPciBase + PCI_BASE_ADDRESSREG_OFFSET) & 0xFFFFF000;
   Private->Passthru.Mode             = &Private->PassThruMode;
@@ -326,6 +333,10 @@ NvmeInitialize (
   return EFI_SUCCESS;
 
 Exit:
+  if ((Private != NULL) && (Private->Mapping != NULL)) {
+    IoMmuFreeBuffer (6, Private->Buffer, Private->Mapping);
+  }
+
   if (EFI_ERROR (Status)) {
     if ((Private != NULL) && (Private->ControllerData != NULL)) {
       FreePool (Private->ControllerData);
