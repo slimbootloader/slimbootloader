@@ -1310,8 +1310,9 @@ UpdateFspConfig (
   }
 
   if (PlatformId == PLATFORM_ID_UPXTREME) {
-    // Workaround for USB issue on port 9, disable it for now
-    FspsUpd->FspsConfig.PortUsb20Enable[9] = 0;
+    // Workaround for USB issue on port 8, it does not respond to USB enumeration.
+    // Disable this port for now
+    FspsUpd->FspsConfig.PortUsb20Enable[7] = 0;
   }
 
   Length = GetPchXhciMaxUsb3PortNum ();
