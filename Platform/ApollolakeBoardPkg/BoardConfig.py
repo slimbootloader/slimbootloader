@@ -43,6 +43,7 @@ class Board(BaseBoard):
         self.HAVE_MEASURED_BOOT   = 0
         self.HAVE_SEED_LIST       = 0
         self.HAVE_PSD_TABLE       = 1
+        self.ENABLE_SMBIOS        = 1
 
         self.ENABLE_FSP_LOAD_IMAGE    = 0
         self.ENABLE_VTD               = 1
