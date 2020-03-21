@@ -186,17 +186,17 @@ InitializeSmbiosInfo (
   AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
     1, "Intel Corporation");
   if (PlatformId == PLATFORM_ID_OXH) {
-    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "OXH Client Platform");
+    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "Oxbow Hill CRB Client Platform");
   } else if(PlatformId == PLATFORM_ID_LFH){
-    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "LFH Client Platform");
+    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "Leaf Hill CRB Client Platform");
   } else if(PlatformId == PLATFORM_ID_JNH){
-    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "JNH Client Platform");
+    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "Juniper Hill CRB Client Platform");
   } else if(PlatformId == PLATFORM_ID_UP2){
-    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "UP2 Client Platform");
+    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "UP Squared Client Platform");
   } else if(PlatformId == PLATFORM_ID_GPMRB){
-    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "GPMRB Client Platform");
+    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "Gordon Peak MRB Client Platform");
   } else if(PlatformId == PLATFORM_ID_MB3){
-    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "MB3 Client Platform");
+    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "MinnowBoad 3 Client Platform");
   } else {
     AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "Unknown");
   }
@@ -217,17 +217,17 @@ InitializeSmbiosInfo (
   AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BASEBOARD_INFORMATION,
     1, "Intel Corporation");
   if (PlatformId == PLATFORM_ID_OXH) {
-    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "OXH Platform");
+    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "Oxbow Hill CRB Board");
   } else if(PlatformId == PLATFORM_ID_LFH){
-    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "LFH Platform");
+    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "Leaf Hill CRB Board");
   } else if(PlatformId == PLATFORM_ID_JNH){
-    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "JNH Platform");
+    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "Juniper Hill CRB Board");
   } else if(PlatformId == PLATFORM_ID_UP2){
-    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "UP2 Platform");
+    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "UP Squared Board");
   } else if(PlatformId == PLATFORM_ID_GPMRB){
-    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "GPMRB Platform");
+    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "Gordon Peak MRB Board");
   } else if(PlatformId == PLATFORM_ID_MB3){
-    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "MB3 Platform");
+    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "MinnowBoad 3 Board");
   } else {
     AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "Unknown");
   }
@@ -891,11 +891,11 @@ BoardInit (
       PciWrite8 (PCI_LIB_ADDRESS(SA_IGD_BUS, SA_IGD_DEV, SA_IGD_FUN_0, PCI_COMMAND_OFFSET), \
                  EFI_PCI_COMMAND_MEMORY_SPACE | EFI_PCI_COMMAND_BUS_MASTER);
     }
-	//
+    //
     // Initialize Smbios Info for SmbiosInit
     //
     if (FeaturePcdGet (PcdSmbiosEnabled)) {
-		InitializeSmbiosInfo ();
+	  InitializeSmbiosInfo ();
     }
     BuildOsConfigDataHob ();
     break;
