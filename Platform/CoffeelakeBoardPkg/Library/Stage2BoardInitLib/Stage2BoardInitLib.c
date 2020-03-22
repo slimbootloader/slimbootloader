@@ -62,6 +62,7 @@
 #include <Library/SmbiosInitLib.h>
 #include <IndustryStandard/SmBios.h>
 #include <VerInfo.h>
+#include <Library/VtdPmrLib.h>
 #include <Library/S3SaveRestoreLib.h>
 #include "GpioTables.h"
 #include <Library/PchSpiLib.h>
@@ -906,6 +907,42 @@ UpdatePayloadId (
 }
 
 /**
+  Build VT-d information to prepare PMR program
+
+**/
+STATIC
+VOID
+BuildVtdInfo (
+  VOID
+  )
+{
+  VTD_INFO     *VtdInfo;
+  UINT32        McD0BaseAddress;
+  UINT32        MchBar;
+  UINT32        Idx;
+  UINT32        VtdIdx;
+  UINT32        Data;
+  UINT32        RegOff[2] = {R_SA_MCHBAR_VTD1_OFFSET, R_SA_MCHBAR_VTD3_OFFSET};
+
+  VtdInfo = &((PLATFORM_DATA *)GetPlatformDataPtr ())->VtdInfo;
+  McD0BaseAddress = MM_PCI_ADDRESS (SA_MC_BUS, 0, 0, 0);
+  MchBar          = MmioRead32 (McD0BaseAddress + R_SA_MCHBAR) & ~BIT0;
+  VtdInfo->HostAddressWidth = 39;
+
+  VtdIdx = 0;
+  for (Idx = 0; Idx < ARRAY_SIZE(RegOff); Idx++) {
+    Data = MmioRead32 (MchBar + RegOff[Idx]) & ~3;
+    if (Data != 0) {
+      DEBUG ((DEBUG_INFO, "VT-d Engine %d @ 0x%08X\n", VtdIdx, Data));
+      VtdInfo->VTdEngineAddress[VtdIdx++] = Data;
+      ASSERT (VtdIdx <= ARRAY_SIZE(VtdInfo->VTdEngineAddress));
+    }
+  }
+
+  VtdInfo->VTdEngineCount = VtdIdx;
+}
+
+/**
   Initialize Board specific things in Stage2 Phase
 
   @param[in]  InitPhase            Indicates a board init phase to be initialized
@@ -927,7 +964,7 @@ BoardInit (
   UINT32          AddressPort;
   UINTN           SpiBar0;
   UINT32          Length;
-
+  VTD_INFO                  *VtdInfo;
   EFI_PEI_GRAPHICS_INFO_HOB *FspGfxHob;
   LOADER_GLOBAL_DATA        *LdrGlobal;
 
@@ -991,6 +1028,13 @@ BoardInit (
     //
     if (FeaturePcdGet (PcdSmbiosEnabled)) {
       InitializeSmbiosInfo ();
+    }
+
+    // Enable DMA protection
+    if (FeaturePcdGet (PcdDmaProtectionEnabled)) {
+      BuildVtdInfo ();
+      VtdInfo = &((PLATFORM_DATA *)GetPlatformDataPtr ())->VtdInfo;
+      SetDmaProtection (VtdInfo, TRUE);
     }
     break;
   case PrePciEnumeration:
@@ -1091,6 +1135,11 @@ BoardInit (
     break;
   case EndOfFirmware:
     ClearFspHob ();
+    if (FeaturePcdGet (PcdDmaProtectionEnabled)) {
+      // Disable DMA protection
+      VtdInfo = &((PLATFORM_DATA *)GetPlatformDataPtr ())->VtdInfo;
+      SetDmaProtection (VtdInfo, FALSE);
+    }
     break;
   default:
     break;
@@ -1261,8 +1310,9 @@ UpdateFspConfig (
   }
 
   if (PlatformId == PLATFORM_ID_UPXTREME) {
-    // Workaround for USB issue on port 9, disable it for now
-    FspsUpd->FspsConfig.PortUsb20Enable[9] = 0;
+    // Workaround for USB issue on port 8, it does not respond to USB enumeration.
+    // Disable this port for now
+    FspsUpd->FspsConfig.PortUsb20Enable[7] = 0;
   }
 
   Length = GetPchXhciMaxUsb3PortNum ();

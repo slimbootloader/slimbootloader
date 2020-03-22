@@ -1,7 +1,7 @@
 /** @file
 Private Header file for Usb Host Controller PEIM
 
-Copyright (c) 2014, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2014 - 2018, Intel Corporation. All rights reserved.<BR>
 
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
@@ -75,9 +75,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define XHC_PORTSC_PED                  BIT1    // Port Enabled/Disabled
 #define XHC_PORTSC_OCA                  BIT3    // Over-current Active
 #define XHC_PORTSC_RESET                BIT4    // Port Reset
-#define XHC_PORTSC_PLS                  (BIT5|BIT6|BIT7|BIT8)   // Port Link State
+#define XHC_PORTSC_PLS                  (BIT5|BIT6|BIT7|BIT8)     // Port Link State
 #define XHC_PORTSC_PP                   BIT9    // Port Power
-#define XHC_PORTSC_PS                   (BIT10|BIT11|BIT12)     // Port Speed
+#define XHC_PORTSC_PS                   (BIT10|BIT11|BIT12|BIT13) // Port Speed
 #define XHC_PORTSC_LWS                  BIT16   // Port Link State Write Strobe
 #define XHC_PORTSC_CSC                  BIT17   // Connect Status Change
 #define XHC_PORTSC_PEC                  BIT18   // Port Enabled/Disabled Change
@@ -109,8 +109,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #pragma pack (1)
 typedef struct {
   UINT8                 MaxSlots;       // Number of Device Slots
-  UINT16                MaxIntrs: 11;   // Number of Interrupters
-  UINT16                Rsvd: 5;
+  UINT16                MaxIntrs:11;    // Number of Interrupters
+  UINT16                Rsvd:5;
   UINT8                 MaxPorts;       // Number of Ports
 } HCSPARAMS1;
 
@@ -123,12 +123,12 @@ typedef union {
 } XHC_HCSPARAMS1;
 
 typedef struct {
-  UINT32                Ist: 4;         // Isochronous Scheduling Threshold
-  UINT32                Erst: 4;        // Event Ring Segment Table Max
-  UINT32                Rsvd: 13;
-  UINT32                ScratchBufHi: 5; // Max Scratchpad Buffers Hi
-  UINT32                Spr: 1;         // Scratchpad Restore
-  UINT32                ScratchBufLo: 5; // Max Scratchpad Buffers Lo
+  UINT32                Ist:4;          // Isochronous Scheduling Threshold
+  UINT32                Erst:4;         // Event Ring Segment Table Max
+  UINT32                Rsvd:13;
+  UINT32                ScratchBufHi:5; // Max Scratchpad Buffers Hi
+  UINT32                Spr:1;          // Scratchpad Restore
+  UINT32                ScratchBufLo:5; // Max Scratchpad Buffers Lo
 } HCSPARAMS2;
 
 //
@@ -140,17 +140,17 @@ typedef union {
 } XHC_HCSPARAMS2;
 
 typedef struct {
-  UINT16                Ac64: 1;       // 64-bit Addressing Capability
-  UINT16                Bnc: 1;        // BW Negotiation Capability
-  UINT16                Csz: 1;        // Context Size
-  UINT16                Ppc: 1;        // Port Power Control
-  UINT16                Pind: 1;       // Port Indicators
-  UINT16                Lhrc: 1;       // Light HC Reset Capability
-  UINT16                Ltc: 1;        // Latency Tolerance Messaging Capability
-  UINT16                Nss: 1;        // No Secondary SID Support
-  UINT16                Pae: 1;        // Parse All Event Data
-  UINT16                Rsvd: 3;
-  UINT16                MaxPsaSize: 4; // Maximum Primary Stream Array Size
+  UINT16                Ac64:1;        // 64-bit Addressing Capability
+  UINT16                Bnc:1;         // BW Negotiation Capability
+  UINT16                Csz:1;         // Context Size
+  UINT16                Ppc:1;         // Port Power Control
+  UINT16                Pind:1;        // Port Indicators
+  UINT16                Lhrc:1;        // Light HC Reset Capability
+  UINT16                Ltc:1;         // Latency Tolerance Messaging Capability
+  UINT16                Nss:1;         // No Secondary SID Support
+  UINT16                Pae:1;         // Parse All Event Data
+  UINT16                Rsvd:3;
+  UINT16                MaxPsaSize:4;  // Maximum Primary Stream Array Size
   UINT16                ExtCapReg;     // xHCI Extended Capabilities Pointer
 } HCCPARAMS;
 
@@ -280,7 +280,7 @@ XhcPeiClearOpRegBit (
   @param  Offset        The offset of the operational register.
   @param  Bit           The bit of the register to wait for.
   @param  WaitToSet     Wait the bit to set or clear.
-  @param  Timeout       The time to wait before abort (in microsecond, us).
+  @param  Timeout       The time to wait before abort (in millisecond, ms).
 
   @retval EFI_SUCCESS   The bit successfully changed by host controller.
   @retval EFI_TIMEOUT   The time out occurred.
@@ -295,20 +295,6 @@ XhcPeiWaitOpRegBit (
   IN UINT32             Timeout
   );
 
-/**
-  Read XHCI door bell register.
-
-  @param  Xhc           The XHCI device.
-  @param  Offset        The offset of the door bell register.
-
-  @return The register content read
-
-**/
-UINT32
-XhcPeiReadDoorBellReg (
-  IN  PEI_XHC_DEV       *Xhc,
-  IN  UINT32            Offset
-  );
 
 /**
   Write the data to the XHCI door bell register.

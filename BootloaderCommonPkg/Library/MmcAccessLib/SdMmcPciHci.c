@@ -4,7 +4,7 @@
 
   It would expose EFI_SD_MMC_PASS_THRU_PROTOCOL for upper layer use.
 
-  Copyright (c) 2015 - 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2015 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -12,6 +12,7 @@
 #include <Library/BaseLib.h>
 #include <Library/IoLib.h>
 #include <Library/TimerLib.h>
+#include <Library/IoMmuLib.h>
 #include "SdMmcPciHcDxe.h"
 
 /**
@@ -1025,8 +1026,9 @@ BuildAdmaDescTable (
   UINT64                    Remaining;
   UINT32                    Address;
   UINTN                     TableSize;
+  EFI_STATUS                Status;
 
-  Data    = (EFI_PHYSICAL_ADDRESS) (UINTN)Trb->Data;
+  Data    = (EFI_PHYSICAL_ADDRESS) (UINTN)Trb->DataPhy;
   DataLen = Trb->DataLen;
 
   DEBUG ((DEBUG_INFO, "BuildAdmaDescTable Data=0x%08X DataLen=0x%08X\n", (UINT32) (UINTN)Data, (UINT32)DataLen));
@@ -1047,11 +1049,18 @@ BuildAdmaDescTable (
   Entries   = DivU64x32 ((DataLen + ADMA_MAX_DATA_PER_LINE - 1), ADMA_MAX_DATA_PER_LINE);
   TableSize = (UINTN)MultU64x32 (Entries, sizeof (SD_MMC_HC_ADMA_DESC_LINE));
   Trb->AdmaPages = (UINT32)EFI_SIZE_TO_PAGES (TableSize);
-  Trb->AdmaDesc  = AllocatePages (Trb->AdmaPages);
 
-  if (Trb->AdmaDesc == NULL) {
+  Status = IoMmuAllocateBuffer (
+                                EFI_SIZE_TO_PAGES (TableSize),
+                                (VOID **)&Trb->AdmaDesc,
+                                &Trb->AdmaDescPhy,
+                                &Trb->AdmaMap
+                               );
+  if (EFI_ERROR (Status)) {
     return EFI_OUT_OF_RESOURCES;
   }
+
+  ZeroMem ((VOID *) (UINTN) Trb->AdmaDesc, TableSize);
 
   Remaining = DataLen;
   Address   = (UINT32)Data;
@@ -1079,6 +1088,40 @@ BuildAdmaDescTable (
   Trb->AdmaDesc[Index].End = 1;
   return EFI_SUCCESS;
 }
+
+/**
+  Sets up host memory to allow DMA transfer.
+
+  @param[in] Trb       A pointer to the SD command TRB structure.
+
+  @retval EFI_SUCCESS  Memory has been mapped for DMA transfer.
+  @retval Others       Memory has not been mapped.
+**/
+EFI_STATUS
+SdMmcSetupMemoryForDmaTransfer (
+  IN SD_MMC_HC_TRB           *Trb
+  )
+{
+  UINTN                         MapLength;
+  EFI_STATUS                    Status;
+
+  if (Trb->Data != NULL && Trb->DataLen != 0) {
+    MapLength = Trb->DataLen;
+    Status = IoMmuMap (
+                      Trb->Read ? EdkiiIoMmuOperationBusMasterWrite : EdkiiIoMmuOperationBusMasterRead,
+                      Trb->Data,
+                      &MapLength,
+                      &Trb->DataPhy,
+                      &Trb->DataMap
+                      );
+    if (EFI_ERROR (Status) || (Trb->DataLen != MapLength)) {
+      return EFI_BAD_BUFFER_SIZE;
+    }
+  }
+
+  return EFI_SUCCESS;
+}
+
 
 /**
   Create a new TRB for the SD/MMC cmd request.
@@ -1140,12 +1183,20 @@ SdMmcCreateTrb (
       Trb->Mode = SdMmcNoData;
     } else if (Private->Capability.Adma2 != 0) {
       Trb->Mode = SdMmcAdmaMode;
+      Status = SdMmcSetupMemoryForDmaTransfer (Trb);
+      if (EFI_ERROR (Status)) {
+        goto Error;
+      }
       Status = BuildAdmaDescTable (Trb);
       if (EFI_ERROR (Status)) {
         goto Error;
       }
     } else if (Private->Capability.Sdma != 0) {
       Trb->Mode = SdMmcSdmaMode;
+      Status = SdMmcSetupMemoryForDmaTransfer (Trb);
+      if (EFI_ERROR (Status)) {
+        goto Error;
+      }
     } else {
       Trb->Mode = SdMmcPioMode;
     }
@@ -1171,7 +1222,10 @@ SdMmcFreeTrb (
 {
   if (Trb != NULL) {
     if (Trb->AdmaDesc != NULL) {
-      FreePages (Trb->AdmaDesc, Trb->AdmaPages);
+      IoMmuFreeBuffer (Trb->AdmaPages, Trb->AdmaDesc, Trb->AdmaMap);
+    }
+    if (Trb->DataMap != NULL) {
+      IoMmuUnmap (Trb->DataMap);
     }
     FreePool (Trb);
   }
@@ -1341,17 +1395,17 @@ SdMmcExecTrb (
   SdMmcHcLedOnOff (Address, TRUE);
 
   if (Trb->Mode == SdMmcSdmaMode) {
-    if ((UINT64) (UINTN)Trb->Data >= 0x100000000ul) {
+    if ((UINT64) (UINTN)Trb->DataPhy >= 0x100000000ul) {
       return EFI_INVALID_PARAMETER;
     }
 
-    SdmaAddr = (UINT32) (UINTN)Trb->Data;
+    SdmaAddr = (UINT32) (UINTN)Trb->DataPhy;
     Status   = SdMmcHcRwMmio (Address, SD_MMC_HC_SDMA_ADDR, FALSE, sizeof (SdmaAddr), (VOID *) (UINTN)&SdmaAddr);
     if (EFI_ERROR (Status)) {
       return Status;
     }
   } else if (Trb->Mode == SdMmcAdmaMode) {
-    AdmaAddr = (UINT64) (UINTN)Trb->AdmaDesc;
+    AdmaAddr = (UINT64) (UINTN)Trb->AdmaDescPhy;
     Status   = SdMmcHcRwMmio (Address, SD_MMC_HC_ADMA_SYS_ADDR, FALSE, sizeof (AdmaAddr), (VOID *) (UINTN)&AdmaAddr);
     if (EFI_ERROR (Status)) {
       return Status;
@@ -1598,7 +1652,7 @@ SdMmcCheckTrbResult (
     //
     // Update SDMA Address register.
     //
-    SdmaAddr = SD_MMC_SDMA_ROUND_UP ((UINT32) (UINTN)Trb->Data, SD_MMC_SDMA_BOUNDARY);
+    SdmaAddr = SD_MMC_SDMA_ROUND_UP ((UINT32) (UINTN)Trb->DataPhy, SD_MMC_SDMA_BOUNDARY);
     Status   = SdMmcHcRwMmio (
                  Private->SdMmcHcBase,
                  SD_MMC_HC_SDMA_ADDR,
@@ -1609,7 +1663,7 @@ SdMmcCheckTrbResult (
     if (EFI_ERROR (Status)) {
       goto Done;
     }
-    Trb->Data = (VOID *) (UINTN)SdmaAddr;
+    Trb->DataPhy = (EFI_PHYSICAL_ADDRESS) (UINTN)SdmaAddr;
   }
 
   if ((Packet->SdMmcCmdBlk->CommandType != SdMmcCommandTypeAdtc) &&
@@ -1813,12 +1867,7 @@ SdMmcSendCommand (
   }
 
 Done:
-  if ((Trb != NULL) && (Trb->AdmaDesc != NULL)) {
-    FreePages (Trb->AdmaDesc, Trb->AdmaPages);
-  }
+  SdMmcFreeTrb (Trb);
 
-  if (Trb != NULL) {
-    FreePool (Trb);
-  }
   return Status;
 }

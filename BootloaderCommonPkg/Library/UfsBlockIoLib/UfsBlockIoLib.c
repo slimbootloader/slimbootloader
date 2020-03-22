@@ -90,10 +90,11 @@ UFS_PEIM_HC_PRIVATE_DATA   gUfsHcTemplate = {
   0,                              // TaskTag
   0,                              // UtpTrlBase
   0,                              // Nutrs
+  NULL,                           // TrlMapping
   0,                              // UtpTmrlBase
   0,                              // Nutmrs
-  {
-    // Luns
+  NULL,                           // TmrlMapping
+  {                               // Luns
     {
       UFS_LUN_0,                      // Ufs Common Lun 0
       UFS_LUN_1,                      // Ufs Common Lun 1
@@ -1298,7 +1299,31 @@ InitializeUfs (
 
   if (DevInitPhase == DevDeinit) {
     if (gPrivate != NULL) {
-      FreePool (gPrivate);
+      Private = gPrivate;
+
+      if ((Private->Pool != NULL) && (Private->Pool->Head != NULL)) {
+        UfsFreeMemPool (Private->Pool);
+      }
+
+      if (Private->UtpTmrlBase != NULL) {
+        IoMmuFreeBuffer (
+          EFI_SIZE_TO_PAGES (Private->Nutmrs * sizeof (UTP_TMRD)),
+          Private->UtpTmrlBase,
+          Private->TmrlMapping
+          );
+      }
+
+      if (Private->UtpTrlBase != NULL) {
+        IoMmuFreeBuffer (
+          EFI_SIZE_TO_PAGES (Private->Nutrs * sizeof (UTP_TRD)),
+          Private->UtpTrlBase,
+          Private->TrlMapping
+          );
+      }
+
+      UfsControllerStop (Private);
+
+      FreePool (Private);
       gPrivate = NULL;
     }
     return EFI_SUCCESS;

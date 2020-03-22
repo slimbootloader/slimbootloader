@@ -33,6 +33,7 @@
   Silicon/CoffeelakePkg/CoffeelakePkg.dec
   Platform/CoffeelakeBoardPkg/CoffeelakeBoardPkg.dec
   Platform/CommonBoardPkg/CommonBoardPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
 
 [LibraryClasses]
   BaseLib

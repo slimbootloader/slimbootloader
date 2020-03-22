@@ -41,6 +41,7 @@
 #include <Library/SpiFlashLib.h>
 #include <Library/TpmLib.h>
 #include <Library/VtdLib.h>
+#include <Library/VtdPmrLib.h>
 #include <RegAccess.h>
 #include <IndustryStandard/Pci.h>
 #include <IndustryStandard/Acpi.h>

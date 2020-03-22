@@ -42,4 +42,7 @@
 [LibraryClasses]
   DebugLib
   PrintLib
+  IoMmuLib
 
+[Pcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdDmaBufferSize

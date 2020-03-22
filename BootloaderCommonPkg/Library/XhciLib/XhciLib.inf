@@ -42,3 +42,4 @@
   TimerLib
   BaseMemoryLib
   MemoryAllocationLib
+  IoMmuLib

@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -38,8 +38,11 @@
   IoLib
   DebugLib
   TimerLib
+  IoMmuLib
 
 [Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdEmmcBlockDeviceLibId
   gPlatformCommonLibTokenSpaceGuid.PcdEmmcMaxRwBlockNumber
   gPlatformCommonLibTokenSpaceGuid.PcdEmmcHs400SupportEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdDmaBufferSize
+  gPlatformCommonLibTokenSpaceGuid.PcdDmaProtectionEnabled

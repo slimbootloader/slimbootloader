@@ -290,25 +290,29 @@ AhciDeinitialize (
   }
 
   AhciRegisters = &AhciController->AhciRegisters;
-  if (AhciRegisters->AhciCommandTable != NULL) {
-    FreePages (
-      AhciController->AhciRegisters.AhciCommandTable,
-      EFI_SIZE_TO_PAGES ((UINTN) AhciRegisters->MaxCommandTableSize)
-      );
+
+  if (AhciRegisters->AhciCommandTableMap != NULL) {
+    IoMmuFreeBuffer (
+       EFI_SIZE_TO_PAGES (AhciRegisters->MaxCommandTableSize),
+       AhciRegisters->AhciCommandTable,
+       AhciRegisters->AhciCommandTableMap
+       );
   }
 
-  if (AhciRegisters->AhciCmdList != NULL) {
-    FreePages (
-      AhciRegisters->AhciCmdList,
-      EFI_SIZE_TO_PAGES ((UINTN) AhciRegisters->MaxCommandListSize)
-      );
+  if (AhciRegisters->AhciCmdListMap != NULL) {
+    IoMmuFreeBuffer (
+       EFI_SIZE_TO_PAGES (AhciRegisters->MaxCommandListSize),
+       AhciRegisters->AhciCmdList,
+       AhciRegisters->AhciCmdListMap
+       );
   }
 
-  if (AhciRegisters->AhciRFis != NULL) {
-    FreePages (
-      AhciRegisters->AhciRFis,
-      EFI_SIZE_TO_PAGES ((UINTN) AhciRegisters->MaxReceiveFisSize)
-      );
+  if (AhciRegisters->AhciRFisMap != NULL) {
+    IoMmuFreeBuffer (
+       EFI_SIZE_TO_PAGES (AhciRegisters->MaxReceiveFisSize),
+       AhciRegisters->AhciRFis,
+       AhciRegisters->AhciRFisMap
+       );
   }
 
   FreePool (AhciController);

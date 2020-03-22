@@ -54,7 +54,7 @@ CONST UINT32 mUpxGpioBomPad[]  = {
   GPIO_CNL_LP_GPP_C10,  // BRD_ID2
   GPIO_CNL_LP_GPP_C9,   // BRD_ID1
   GPIO_CNL_LP_GPP_C8,   // BRD_ID0
-  GPIO_CNL_LP_GPP_A23,  // DDR_ID2
+  GPIO_CNL_LP_GPP_A12,  // DDR_ID2
   GPIO_CNL_LP_GPP_A18,  // DDR_ID1
   GPIO_CNL_LP_GPP_C11   // DDR_ID0
 };
@@ -223,6 +223,9 @@ UpdateFspConfig (
     DEBUG ((DEBUG_INFO, "FSP-M variables for Intel(R) SGX were NOT updated.\n"));
   }
 
+  // Enable VT-d
+  FspmcfgTest->VtdDisable = 0;
+
   Fspmcfg->PlatformDebugConsent = MemCfgData->PlatformDebugConsent;
   Fspmcfg->PchTraceHubMode      = MemCfgData->PchTraceHubMode;
 }
@@ -323,7 +326,7 @@ PlatformIdInitialize (
       if (EFI_ERROR(Status)) {
         break;
       }
-      BomId = (BomId << 1) + (GpioData & 1);
+      BomId = (BomId << 1) + ((GpioData & BIT1) >> 1);
     }
 
     if (Idx == ARRAY_SIZE(mUpxGpioBomPad)) {

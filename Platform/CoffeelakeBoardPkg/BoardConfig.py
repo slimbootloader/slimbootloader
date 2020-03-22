@@ -51,6 +51,7 @@ class Board(BaseBoard):
         self.HAVE_PSD_TABLE       = 1
         self.ENABLE_GRUB_CONFIG   = 1
         self.ENABLE_CSME_UPDATE   = 0
+        self.ENABLE_DMA_PROTECTION    = 0
         self.DEBUG_PORT_NUMBER    = 0xFF
 
         # CSME update library is required to enable this option and will be available as part of CSME kit
@@ -91,7 +92,7 @@ class Board(BaseBoard):
         self.STAGE1_DATA_SIZE     = 0x0000E000
 
         self.PAYLOAD_EXE_BASE     = 0x00B00000
-        self.PAYLOAD_SIZE         = 0x00025000
+        self.PAYLOAD_SIZE         = 0x00028000
         if len(self._PAYLOAD_NAME.split(';')) > 1:
             self.UEFI_VARIABLE_SIZE = 0x00040000
         else:
@@ -157,6 +158,7 @@ class Board(BaseBoard):
             'PsdLib|Silicon/$(SILICON_PKG_NAME)/Library/PsdLib/PsdLib.inf',
             'HeciLib|Silicon/$(SILICON_PKG_NAME)/Library/HeciLib/HeciLib.inf',
             'ShellExtensionLib|Platform/$(BOARD_PKG_NAME)/Library/ShellExtensionLib/ShellExtensionLib.inf',
+            'VtdPmrLib|Silicon/CommonSocPkg/Library/VtdPmrLib/VtdPmrLib.inf'
         ]
         if self.BUILD_CSME_UPDATE_DRIVER:
             dsc_libs['IA32'].append ('MeFwUpdateLib|Silicon/$(SILICON_PKG_NAME)/Library/MeFwUpdateLib/MeFwUpdateLib.inf')

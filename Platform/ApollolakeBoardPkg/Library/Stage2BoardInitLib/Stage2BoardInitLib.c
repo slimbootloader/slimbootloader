@@ -831,6 +831,42 @@ UpdatePayloadId (
 }
 
 /**
+  Build VT-d information to prepare PMR program
+
+**/
+STATIC
+VOID
+BuildVtdInfo (
+  VOID
+  )
+{
+  VTD_INFO     *VtdInfo;
+  UINT32        McD0BaseAddress;
+  UINT32        MchBar;
+  UINT32        Idx;
+  UINT32        VtdIdx;
+  UINT32        Data;
+  UINT32        RegOff[2] = {R_SA_MCHBAR_VTD1_OFFSET, R_SA_MCHBAR_VTD2_OFFSET};
+
+  VtdInfo = &((PLATFORM_DATA *)GetPlatformDataPtr ())->VtdInfo;
+  McD0BaseAddress = MM_PCI_ADDRESS (SA_MC_BUS, 0, 0, 0);
+  MchBar          = MmioRead32 (McD0BaseAddress + R_SA_MCHBAR_REG) & ~BIT0;
+  VtdInfo->HostAddressWidth = 38;
+
+  VtdIdx = 0;
+  for (Idx = 0; Idx < ARRAY_SIZE(RegOff); Idx++) {
+    Data = MmioRead32 (MchBar + RegOff[Idx]) & ~3;
+    if (Data != 0) {
+      DEBUG ((DEBUG_INFO, "VT-d Engine %d @ 0x%08X\n", VtdIdx, Data));
+      VtdInfo->VTdEngineAddress[VtdIdx++] = Data;
+      ASSERT (VtdIdx <= ARRAY_SIZE(VtdInfo->VTdEngineAddress));
+    }
+  }
+
+  VtdInfo->VTdEngineCount = VtdIdx;
+}
+
+/**
   Board specific hook points.
 
   Implement board specific initialization during the boot flow.
@@ -850,6 +886,7 @@ BoardInit (
   LOADER_GLOBAL_DATA *LdrGlobal;
   UINT32              TsegBase;
   UINT64              TsegSize;
+  VTD_INFO           *VtdInfo;
 
   switch (InitPhase) {
   case PreSiliconInit:
@@ -895,7 +932,13 @@ BoardInit (
     // Initialize Smbios Info for SmbiosInit
     //
     if (FeaturePcdGet (PcdSmbiosEnabled)) {
-	  InitializeSmbiosInfo ();
+	    InitializeSmbiosInfo ();
+    }
+    // Enable DMA protection
+    if (FeaturePcdGet (PcdDmaProtectionEnabled)) {
+      BuildVtdInfo ();
+      VtdInfo = &((PLATFORM_DATA *)GetPlatformDataPtr ())->VtdInfo;
+      SetDmaProtection (VtdInfo, TRUE);
     }
     BuildOsConfigDataHob ();
     break;
@@ -934,6 +977,11 @@ BoardInit (
     break;
   case EndOfFirmware:
     ClearFspHob ();
+    if (FeaturePcdGet (PcdDmaProtectionEnabled)) {
+      // Disable DMA protection
+      VtdInfo = &((PLATFORM_DATA *)GetPlatformDataPtr ())->VtdInfo;
+      SetDmaProtection (VtdInfo, FALSE);
+    }
     EnterIaUnTrustMode ();
     // Clear known MCA logged in BANK4 and enable this MCA again
     AsmWriteMsr64 (IA32_MC4_STATUS, 0);
@@ -1468,7 +1516,6 @@ UpdateOsBootMediumInfo (
     DEBUG ((DEBUG_INFO, "Set boot to shell!\n"));
     OsBootOptionList->BootToShell = 1;
   }
-
 }
 
 /**

@@ -1,7 +1,7 @@
 /** @file
 Private Header file for Usb Host Controller PEIM
 
-Copyright (c) 2014 - 2018, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2014 - 2015, Intel Corporation. All rights reserved.<BR>
 
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
@@ -78,15 +78,15 @@ typedef struct _USB_DEV_TOPOLOGY {
   //
   // The tier concatenation of down stream port.
   //
-  UINT32 RouteString: 20;
+  UINT32 RouteString:20;
   //
   // The root port number of the chain.
   //
-  UINT32 RootPortNum: 8;
+  UINT32 RootPortNum:8;
   //
   // The Tier the device reside.
   //
-  UINT32 TierNum: 4;
+  UINT32 TierNum:4;
 } USB_DEV_TOPOLOGY;
 
 //
@@ -125,10 +125,10 @@ typedef struct _TRB_TEMPLATE {
 
   UINT32                    Status;
 
-  UINT32                    CycleBit: 1;
-  UINT32                    RsvdZ1: 9;
-  UINT32                    Type: 6;
-  UINT32                    Control: 16;
+  UINT32                    CycleBit:1;
+  UINT32                    RsvdZ1:9;
+  UINT32                    Type:6;
+  UINT32                    Control:16;
 } TRB_TEMPLATE;
 
 typedef struct _TRANSFER_RING {
@@ -164,6 +164,7 @@ typedef struct _URB {
   VOID                              *Data;
   UINTN                             DataLen;
   VOID                              *DataPhy;
+  VOID                              *DataMap;
   EFI_ASYNC_USB_TRANSFER_CALLBACK   Callback;
   VOID                              *Context;
   //
@@ -198,8 +199,8 @@ typedef struct _URB {
 typedef struct _EVENT_RING_SEG_TABLE_ENTRY {
   UINT32                    PtrLo;
   UINT32                    PtrHi;
-  UINT32                    RingTrbSize: 16;
-  UINT32                    RsvdZ1: 16;
+  UINT32                    RingTrbSize:16;
+  UINT32                    RsvdZ1:16;
   UINT32                    RsvdZ2;
 } EVENT_RING_SEG_TABLE_ENTRY;
 
@@ -214,21 +215,21 @@ typedef struct _TRANSFER_TRB_NORMAL {
 
   UINT32                    TRBPtrHi;
 
-  UINT32                    Length: 17;
-  UINT32                    TDSize: 5;
-  UINT32                    IntTarget: 10;
+  UINT32                    Length:17;
+  UINT32                    TDSize:5;
+  UINT32                    IntTarget:10;
 
-  UINT32                    CycleBit: 1;
-  UINT32                    ENT: 1;
-  UINT32                    ISP: 1;
-  UINT32                    NS: 1;
-  UINT32                    CH: 1;
-  UINT32                    IOC: 1;
-  UINT32                    IDT: 1;
-  UINT32                    RsvdZ1: 2;
-  UINT32                    BEI: 1;
-  UINT32                    Type: 6;
-  UINT32                    RsvdZ2: 16;
+  UINT32                    CycleBit:1;
+  UINT32                    ENT:1;
+  UINT32                    ISP:1;
+  UINT32                    NS:1;
+  UINT32                    CH:1;
+  UINT32                    IOC:1;
+  UINT32                    IDT:1;
+  UINT32                    RsvdZ1:2;
+  UINT32                    BEI:1;
+  UINT32                    Type:6;
+  UINT32                    RsvdZ2:16;
 } TRANSFER_TRB_NORMAL;
 
 //
@@ -236,25 +237,25 @@ typedef struct _TRANSFER_TRB_NORMAL {
 // A Setup Stage TRB is created by system software to initiate a USB Setup packet on a control endpoint.
 //
 typedef struct _TRANSFER_TRB_CONTROL_SETUP {
-  UINT32                    bmRequestType: 8;
-  UINT32                    bRequest: 8;
-  UINT32                    wValue: 16;
+  UINT32                    bmRequestType:8;
+  UINT32                    bRequest:8;
+  UINT32                    wValue:16;
 
-  UINT32                    wIndex: 16;
-  UINT32                    wLength: 16;
+  UINT32                    wIndex:16;
+  UINT32                    wLength:16;
 
-  UINT32                    Length: 17;
-  UINT32                    RsvdZ1: 5;
-  UINT32                    IntTarget: 10;
+  UINT32                    Length:17;
+  UINT32                    RsvdZ1:5;
+  UINT32                    IntTarget:10;
 
-  UINT32                    CycleBit: 1;
-  UINT32                    RsvdZ2: 4;
-  UINT32                    IOC: 1;
-  UINT32                    IDT: 1;
-  UINT32                    RsvdZ3: 3;
-  UINT32                    Type: 6;
-  UINT32                    TRT: 2;
-  UINT32                    RsvdZ4: 14;
+  UINT32                    CycleBit:1;
+  UINT32                    RsvdZ2:4;
+  UINT32                    IOC:1;
+  UINT32                    IDT:1;
+  UINT32                    RsvdZ3:3;
+  UINT32                    Type:6;
+  UINT32                    TRT:2;
+  UINT32                    RsvdZ4:14;
 } TRANSFER_TRB_CONTROL_SETUP;
 
 //
@@ -266,21 +267,21 @@ typedef struct _TRANSFER_TRB_CONTROL_DATA {
 
   UINT32                    TRBPtrHi;
 
-  UINT32                    Length: 17;
-  UINT32                    TDSize: 5;
-  UINT32                    IntTarget: 10;
+  UINT32                    Length:17;
+  UINT32                    TDSize:5;
+  UINT32                    IntTarget:10;
 
-  UINT32                    CycleBit: 1;
-  UINT32                    ENT: 1;
-  UINT32                    ISP: 1;
-  UINT32                    NS: 1;
-  UINT32                    CH: 1;
-  UINT32                    IOC: 1;
-  UINT32                    IDT: 1;
-  UINT32                    RsvdZ1: 3;
-  UINT32                    Type: 6;
-  UINT32                    DIR: 1;
-  UINT32                    RsvdZ2: 15;
+  UINT32                    CycleBit:1;
+  UINT32                    ENT:1;
+  UINT32                    ISP:1;
+  UINT32                    NS:1;
+  UINT32                    CH:1;
+  UINT32                    IOC:1;
+  UINT32                    IDT:1;
+  UINT32                    RsvdZ1:3;
+  UINT32                    Type:6;
+  UINT32                    DIR:1;
+  UINT32                    RsvdZ2:15;
 } TRANSFER_TRB_CONTROL_DATA;
 
 //
@@ -291,18 +292,18 @@ typedef struct _TRANSFER_TRB_CONTROL_STATUS {
   UINT32                    RsvdZ1;
   UINT32                    RsvdZ2;
 
-  UINT32                    RsvdZ3: 22;
-  UINT32                    IntTarget: 10;
+  UINT32                    RsvdZ3:22;
+  UINT32                    IntTarget:10;
 
-  UINT32                    CycleBit: 1;
-  UINT32                    ENT: 1;
-  UINT32                    RsvdZ4: 2;
-  UINT32                    CH: 1;
-  UINT32                    IOC: 1;
-  UINT32                    RsvdZ5: 4;
-  UINT32                    Type: 6;
-  UINT32                    DIR: 1;
-  UINT32                    RsvdZ6: 15;
+  UINT32                    CycleBit:1;
+  UINT32                    ENT:1;
+  UINT32                    RsvdZ4:2;
+  UINT32                    CH:1;
+  UINT32                    IOC:1;
+  UINT32                    RsvdZ5:4;
+  UINT32                    Type:6;
+  UINT32                    DIR:1;
+  UINT32                    RsvdZ6:15;
 } TRANSFER_TRB_CONTROL_STATUS;
 
 //
@@ -315,17 +316,17 @@ typedef struct _EVT_TRB_TRANSFER {
 
   UINT32                    TRBPtrHi;
 
-  UINT32                    Length: 24;
-  UINT32                    Completecode: 8;
+  UINT32                    Length:24;
+  UINT32                    Completecode:8;
 
-  UINT32                    CycleBit: 1;
-  UINT32                    RsvdZ1: 1;
-  UINT32                    ED: 1;
-  UINT32                    RsvdZ2: 7;
-  UINT32                    Type: 6;
-  UINT32                    EndpointId: 5;
-  UINT32                    RsvdZ3: 3;
-  UINT32                    SlotId: 8;
+  UINT32                    CycleBit:1;
+  UINT32                    RsvdZ1:1;
+  UINT32                    ED:1;
+  UINT32                    RsvdZ2:7;
+  UINT32                    Type:6;
+  UINT32                    EndpointId:5;
+  UINT32                    RsvdZ3:3;
+  UINT32                    SlotId:8;
 } EVT_TRB_TRANSFER;
 
 //
@@ -338,14 +339,14 @@ typedef struct _EVT_TRB_COMMAND_COMPLETION {
 
   UINT32                    TRBPtrHi;
 
-  UINT32                    RsvdZ2: 24;
-  UINT32                    Completecode: 8;
+  UINT32                    RsvdZ2:24;
+  UINT32                    Completecode:8;
 
-  UINT32                    CycleBit: 1;
-  UINT32                    RsvdZ3: 9;
-  UINT32                    Type: 6;
-  UINT32                    VFID: 8;
-  UINT32                    SlotId: 8;
+  UINT32                    CycleBit:1;
+  UINT32                    RsvdZ3:9;
+  UINT32                    Type:6;
+  UINT32                    VFID:8;
+  UINT32                    SlotId:8;
 } EVT_TRB_COMMAND_COMPLETION;
 
 typedef union _TRB {
@@ -366,10 +367,10 @@ typedef struct _CMD_TRB_NO_OP {
   UINT32                    RsvdZ1;
   UINT32                    RsvdZ2;
 
-  UINT32                    CycleBit: 1;
-  UINT32                    RsvdZ3: 9;
-  UINT32                    Type: 6;
-  UINT32                    RsvdZ4: 16;
+  UINT32                    CycleBit:1;
+  UINT32                    RsvdZ3:9;
+  UINT32                    Type:6;
+  UINT32                    RsvdZ4:16;
 } CMD_TRB_NO_OP;
 
 //
@@ -382,10 +383,10 @@ typedef struct _CMD_TRB_ENABLE_SLOT {
   UINT32                    RsvdZ1;
   UINT32                    RsvdZ2;
 
-  UINT32                    CycleBit: 1;
-  UINT32                    RsvdZ3: 9;
-  UINT32                    Type: 6;
-  UINT32                    RsvdZ4: 16;
+  UINT32                    CycleBit:1;
+  UINT32                    RsvdZ3:9;
+  UINT32                    Type:6;
+  UINT32                    RsvdZ4:16;
 } CMD_TRB_ENABLE_SLOT;
 
 //
@@ -398,11 +399,11 @@ typedef struct _CMD_TRB_DISABLE_SLOT {
   UINT32                    RsvdZ1;
   UINT32                    RsvdZ2;
 
-  UINT32                    CycleBit: 1;
-  UINT32                    RsvdZ3: 9;
-  UINT32                    Type: 6;
-  UINT32                    RsvdZ4: 8;
-  UINT32                    SlotId: 8;
+  UINT32                    CycleBit:1;
+  UINT32                    RsvdZ3:9;
+  UINT32                    Type:6;
+  UINT32                    RsvdZ4:8;
+  UINT32                    SlotId:8;
 } CMD_TRB_DISABLE_SLOT;
 
 //
@@ -418,12 +419,12 @@ typedef struct _CMD_TRB_ADDRESS_DEVICE {
 
   UINT32                    RsvdZ1;
 
-  UINT32                    CycleBit: 1;
-  UINT32                    RsvdZ2: 8;
-  UINT32                    BSR: 1;
-  UINT32                    Type: 6;
-  UINT32                    RsvdZ3: 8;
-  UINT32                    SlotId: 8;
+  UINT32                    CycleBit:1;
+  UINT32                    RsvdZ2:8;
+  UINT32                    BSR:1;
+  UINT32                    Type:6;
+  UINT32                    RsvdZ3:8;
+  UINT32                    SlotId:8;
 } CMD_TRB_ADDRESS_DEVICE;
 
 //
@@ -438,12 +439,12 @@ typedef struct _CMD_TRB_CONFIG_ENDPOINT {
 
   UINT32                    RsvdZ1;
 
-  UINT32                    CycleBit: 1;
-  UINT32                    RsvdZ2: 8;
-  UINT32                    DC: 1;
-  UINT32                    Type: 6;
-  UINT32                    RsvdZ3: 8;
-  UINT32                    SlotId: 8;
+  UINT32                    CycleBit:1;
+  UINT32                    RsvdZ2:8;
+  UINT32                    DC:1;
+  UINT32                    Type:6;
+  UINT32                    RsvdZ3:8;
+  UINT32                    SlotId:8;
 } CMD_TRB_CONFIG_ENDPOINT;
 
 //
@@ -459,11 +460,11 @@ typedef struct _CMD_TRB_EVALUATE_CONTEXT {
 
   UINT32                    RsvdZ1;
 
-  UINT32                    CycleBit: 1;
-  UINT32                    RsvdZ2: 9;
-  UINT32                    Type: 6;
-  UINT32                    RsvdZ3: 8;
-  UINT32                    SlotId: 8;
+  UINT32                    CycleBit:1;
+  UINT32                    RsvdZ2:9;
+  UINT32                    Type:6;
+  UINT32                    RsvdZ3:8;
+  UINT32                    SlotId:8;
 } CMD_TRB_EVALUATE_CONTEXT;
 
 //
@@ -475,13 +476,13 @@ typedef struct _CMD_TRB_RESET_ENDPOINT {
   UINT32                    RsvdZ1;
   UINT32                    RsvdZ2;
 
-  UINT32                    CycleBit: 1;
-  UINT32                    RsvdZ3: 8;
-  UINT32                    TSP: 1;
-  UINT32                    Type: 6;
-  UINT32                    EDID: 5;
-  UINT32                    RsvdZ4: 3;
-  UINT32                    SlotId: 8;
+  UINT32                    CycleBit:1;
+  UINT32                    RsvdZ3:8;
+  UINT32                    TSP:1;
+  UINT32                    Type:6;
+  UINT32                    EDID:5;
+  UINT32                    RsvdZ4:3;
+  UINT32                    SlotId:8;
 } CMD_TRB_RESET_ENDPOINT;
 
 //
@@ -494,13 +495,13 @@ typedef struct _CMD_TRB_STOP_ENDPOINT {
   UINT32                    RsvdZ1;
   UINT32                    RsvdZ2;
 
-  UINT32                    CycleBit: 1;
-  UINT32                    RsvdZ3: 9;
-  UINT32                    Type: 6;
-  UINT32                    EDID: 5;
-  UINT32                    RsvdZ4: 2;
-  UINT32                    SP: 1;
-  UINT32                    SlotId: 8;
+  UINT32                    CycleBit:1;
+  UINT32                    RsvdZ3:9;
+  UINT32                    Type:6;
+  UINT32                    EDID:5;
+  UINT32                    RsvdZ4:2;
+  UINT32                    SP:1;
+  UINT32                    SlotId:8;
 } CMD_TRB_STOP_ENDPOINT;
 
 //
@@ -513,15 +514,15 @@ typedef struct _CMD_SET_TR_DEQ_POINTER {
 
   UINT32                    PtrHi;
 
-  UINT32                    RsvdZ1: 16;
-  UINT32                    StreamID: 16;
+  UINT32                    RsvdZ1:16;
+  UINT32                    StreamID:16;
 
-  UINT32                    CycleBit: 1;
-  UINT32                    RsvdZ2: 9;
-  UINT32                    Type: 6;
-  UINT32                    Endpoint: 5;
-  UINT32                    RsvdZ3: 3;
-  UINT32                    SlotId: 8;
+  UINT32                    CycleBit:1;
+  UINT32                    RsvdZ2:9;
+  UINT32                    Type:6;
+  UINT32                    Endpoint:5;
+  UINT32                    RsvdZ3:3;
+  UINT32                    SlotId:8;
 } CMD_SET_TR_DEQ_POINTER;
 
 //
@@ -533,43 +534,43 @@ typedef struct _LINK_TRB {
 
   UINT32                    PtrHi;
 
-  UINT32                    RsvdZ1: 22;
-  UINT32                    InterTarget: 10;
+  UINT32                    RsvdZ1:22;
+  UINT32                    InterTarget:10;
 
-  UINT32                    CycleBit: 1;
-  UINT32                    TC: 1;
-  UINT32                    RsvdZ2: 2;
-  UINT32                    CH: 1;
-  UINT32                    IOC: 1;
-  UINT32                    RsvdZ3: 4;
-  UINT32                    Type: 6;
-  UINT32                    RsvdZ4: 16;
+  UINT32                    CycleBit:1;
+  UINT32                    TC:1;
+  UINT32                    RsvdZ2:2;
+  UINT32                    CH:1;
+  UINT32                    IOC:1;
+  UINT32                    RsvdZ3:4;
+  UINT32                    Type:6;
+  UINT32                    RsvdZ4:16;
 } LINK_TRB;
 
 //
 // 6.2.2 Slot Context
 //
 typedef struct _SLOT_CONTEXT {
-  UINT32                    RouteString: 20;
-  UINT32                    Speed: 4;
-  UINT32                    RsvdZ1: 1;
-  UINT32                    MTT: 1;
-  UINT32                    Hub: 1;
-  UINT32                    ContextEntries: 5;
+  UINT32                    RouteString:20;
+  UINT32                    Speed:4;
+  UINT32                    RsvdZ1:1;
+  UINT32                    MTT:1;
+  UINT32                    Hub:1;
+  UINT32                    ContextEntries:5;
 
-  UINT32                    MaxExitLatency: 16;
-  UINT32                    RootHubPortNum: 8;
-  UINT32                    PortNum: 8;
+  UINT32                    MaxExitLatency:16;
+  UINT32                    RootHubPortNum:8;
+  UINT32                    PortNum:8;
 
-  UINT32                    TTHubSlotId: 8;
-  UINT32                    TTPortNum: 8;
-  UINT32                    TTT: 2;
-  UINT32                    RsvdZ2: 4;
-  UINT32                    InterTarget: 10;
+  UINT32                    TTHubSlotId:8;
+  UINT32                    TTPortNum:8;
+  UINT32                    TTT:2;
+  UINT32                    RsvdZ2:4;
+  UINT32                    InterTarget:10;
 
-  UINT32                    DeviceAddress: 8;
-  UINT32                    RsvdZ3: 19;
-  UINT32                    SlotState: 5;
+  UINT32                    DeviceAddress:8;
+  UINT32                    RsvdZ3:19;
+  UINT32                    SlotState:5;
 
   UINT32                    RsvdZ4;
   UINT32                    RsvdZ5;
@@ -578,26 +579,26 @@ typedef struct _SLOT_CONTEXT {
 } SLOT_CONTEXT;
 
 typedef struct _SLOT_CONTEXT_64 {
-  UINT32                    RouteString: 20;
-  UINT32                    Speed: 4;
-  UINT32                    RsvdZ1: 1;
-  UINT32                    MTT: 1;
-  UINT32                    Hub: 1;
-  UINT32                    ContextEntries: 5;
+  UINT32                    RouteString:20;
+  UINT32                    Speed:4;
+  UINT32                    RsvdZ1:1;
+  UINT32                    MTT:1;
+  UINT32                    Hub:1;
+  UINT32                    ContextEntries:5;
 
-  UINT32                    MaxExitLatency: 16;
-  UINT32                    RootHubPortNum: 8;
-  UINT32                    PortNum: 8;
+  UINT32                    MaxExitLatency:16;
+  UINT32                    RootHubPortNum:8;
+  UINT32                    PortNum:8;
 
-  UINT32                    TTHubSlotId: 8;
-  UINT32                    TTPortNum: 8;
-  UINT32                    TTT: 2;
-  UINT32                    RsvdZ2: 4;
-  UINT32                    InterTarget: 10;
+  UINT32                    TTHubSlotId:8;
+  UINT32                    TTPortNum:8;
+  UINT32                    TTT:2;
+  UINT32                    RsvdZ2:4;
+  UINT32                    InterTarget:10;
 
-  UINT32                    DeviceAddress: 8;
-  UINT32                    RsvdZ3: 19;
-  UINT32                    SlotState: 5;
+  UINT32                    DeviceAddress:8;
+  UINT32                    RsvdZ3:19;
+  UINT32                    SlotState:5;
 
   UINT32                    RsvdZ4;
   UINT32                    RsvdZ5;
@@ -621,28 +622,28 @@ typedef struct _SLOT_CONTEXT_64 {
 // 6.2.3 Endpoint Context
 //
 typedef struct _ENDPOINT_CONTEXT {
-  UINT32                    EPState: 3;
-  UINT32                    RsvdZ1: 5;
-  UINT32                    Mult: 2;
-  UINT32                    MaxPStreams: 5;
-  UINT32                    LSA: 1;
-  UINT32                    Interval: 8;
-  UINT32                    RsvdZ2: 8;
+  UINT32                    EPState:3;
+  UINT32                    RsvdZ1:5;
+  UINT32                    Mult:2;
+  UINT32                    MaxPStreams:5;
+  UINT32                    LSA:1;
+  UINT32                    Interval:8;
+  UINT32                    RsvdZ2:8;
 
-  UINT32                    RsvdZ3: 1;
-  UINT32                    CErr: 2;
-  UINT32                    EPType: 3;
-  UINT32                    RsvdZ4: 1;
-  UINT32                    HID: 1;
-  UINT32                    MaxBurstSize: 8;
-  UINT32                    MaxPacketSize: 16;
+  UINT32                    RsvdZ3:1;
+  UINT32                    CErr:2;
+  UINT32                    EPType:3;
+  UINT32                    RsvdZ4:1;
+  UINT32                    HID:1;
+  UINT32                    MaxBurstSize:8;
+  UINT32                    MaxPacketSize:16;
 
   UINT32                    PtrLo;
 
   UINT32                    PtrHi;
 
-  UINT32                    AverageTRBLength: 16;
-  UINT32                    MaxESITPayload: 16;
+  UINT32                    AverageTRBLength:16;
+  UINT32                    MaxESITPayload:16;
 
   UINT32                    RsvdZ5;
   UINT32                    RsvdZ6;
@@ -650,28 +651,28 @@ typedef struct _ENDPOINT_CONTEXT {
 } ENDPOINT_CONTEXT;
 
 typedef struct _ENDPOINT_CONTEXT_64 {
-  UINT32                    EPState: 3;
-  UINT32                    RsvdZ1: 5;
-  UINT32                    Mult: 2;
-  UINT32                    MaxPStreams: 5;
-  UINT32                    LSA: 1;
-  UINT32                    Interval: 8;
-  UINT32                    RsvdZ2: 8;
+  UINT32                    EPState:3;
+  UINT32                    RsvdZ1:5;
+  UINT32                    Mult:2;
+  UINT32                    MaxPStreams:5;
+  UINT32                    LSA:1;
+  UINT32                    Interval:8;
+  UINT32                    RsvdZ2:8;
 
-  UINT32                    RsvdZ3: 1;
-  UINT32                    CErr: 2;
-  UINT32                    EPType: 3;
-  UINT32                    RsvdZ4: 1;
-  UINT32                    HID: 1;
-  UINT32                    MaxBurstSize: 8;
-  UINT32                    MaxPacketSize: 16;
+  UINT32                    RsvdZ3:1;
+  UINT32                    CErr:2;
+  UINT32                    EPType:3;
+  UINT32                    RsvdZ4:1;
+  UINT32                    HID:1;
+  UINT32                    MaxBurstSize:8;
+  UINT32                    MaxPacketSize:16;
 
   UINT32                    PtrLo;
 
   UINT32                    PtrHi;
 
-  UINT32                    AverageTRBLength: 16;
-  UINT32                    MaxESITPayload: 16;
+  UINT32                    AverageTRBLength:16;
+  UINT32                    MaxESITPayload:16;
 
   UINT32                    RsvdZ5;
   UINT32                    RsvdZ6;
@@ -1157,7 +1158,7 @@ XhcPeiDequeueTrbFromEndpoint (
   @return Created URB or NULL
 
 **/
-URB *
+URB*
 XhcPeiCreateUrb (
   IN PEI_XHC_DEV                        *Xhc,
   IN UINT8                              DevAddr,
