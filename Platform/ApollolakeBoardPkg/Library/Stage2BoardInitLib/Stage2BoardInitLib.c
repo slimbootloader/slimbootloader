@@ -932,7 +932,7 @@ BoardInit (
     // Initialize Smbios Info for SmbiosInit
     //
     if (FeaturePcdGet (PcdSmbiosEnabled)) {
-	    InitializeSmbiosInfo ();
+	  InitializeSmbiosInfo ();
     }
     // Enable DMA protection
     if (FeaturePcdGet (PcdDmaProtectionEnabled)) {
