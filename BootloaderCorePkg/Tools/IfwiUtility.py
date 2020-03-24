@@ -243,7 +243,7 @@ class FLASH_MAP(Structure):
         "STAGE1B"       : "SG1B",
         "STAGE2"        : "SG02",
         "ACM"           : "ACM0",
-        "ACM3"           : "ACM3",
+        "DIAGNOSTICACM" : "DACM",
         "UCODE"         : "UCOD",
         "MRCDATA"       : "MRCD",
         "VARIABLE"      : "VARS",
