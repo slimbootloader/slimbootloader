@@ -18,6 +18,9 @@
 
 %include "CommonMacros.inc"
 %include "Ia16/Real16ToFlat32.asm"
+%ifdef ARCH_X64
+  %include "PageTables.asm"
+%endif
 %include "Main.asm"
 %include "Ia16/Init16.asm"
 %include "Ia16/ResetVectorVtf0.asm"

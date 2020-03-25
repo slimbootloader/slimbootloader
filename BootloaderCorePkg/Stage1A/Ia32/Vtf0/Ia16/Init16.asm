@@ -15,14 +15,14 @@ BITS    16
 ;
 EarlyBspInitReal16:
     mov     di, 'BP'
-    jmp     short Main16
+    jmp     Main16
 
 ;
 ; @param[out] DI    'AP' to indicate application processor
 ;
 EarlyApInitReal16:
     mov     di, 'AP'
-    jmp     short Main16
+    jmp     Main16
 
 ;
 ; Modified:  EAX
