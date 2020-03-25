@@ -192,7 +192,7 @@ class BaseBoard(object):
         self.CPU_MAX_LOGICAL_PROCESSOR_NUMBER = 16
 
         self.ACM_SIZE              = 0
-        self.ACM3_SIZE             = 0
+        self.DIAGNOSTICACM_SIZE    = 0
         self.UCODE_SIZE            = 0
         self.CFGDATA_SIZE          = 0
         self.MRCDATA_SIZE          = 0
@@ -355,11 +355,11 @@ class Build(object):
             print ('  Patching entry %d with 0x%08X:0x%08X - ACM' % (num_fit_entries, fit_entry.address, fit_entry.size))
             num_fit_entries     += 1
 
-            # ACM3 Fit entry should be in sequential order with/without BTG enabled
-            # Save the next FIT entry for ACM3 here and set it later below
-            if self._board.ACM3_SIZE > 0:
-                acm3_index       = num_fit_entries
-                num_fit_entries     += 1
+            # Diagnostic ACM Fit entry should be in sequential order with/without BTG enabled
+            # Save the next FIT entry for Diagnostic ACM here and set it later below
+            if self._board.DIAGNOSTICACM_SIZE > 0:
+                diagnosticacm_index      = num_fit_entries
+                num_fit_entries          += 1
 
             # BIOS Module (IBB segment 0): from FIT table end to 4GB
             # Record it now and update later since the FIT size is unknown yet
@@ -407,17 +407,17 @@ class Build(object):
             print ('  Patching entry %d with 0x%08X:0x%08X - BIOS Module(FIT table end to 4GB)' % (patch_entry, fit_entry.address, fit_entry.size))
 
         else :
-            if self._board.ACM3_SIZE > 0:
-                acm3_index       = num_fit_entries
-                num_fit_entries  += 1
+            if self._board.DIAGNOSTICACM_SIZE > 0:
+                diagnosticacm_index       = num_fit_entries
+                num_fit_entries           += 1
 
             addr = fit_address.value + (num_fit_entries + 1) * 16
 
-        # Add ACM3 with the reserved fit entry saved
-        if self._board.ACM3_SIZE > 0:
-            fit_entry = FIT_ENTRY.from_buffer(rom, fit_offset + (acm3_index+1)*16)
-            fit_entry.set_values(self._board.ACM3_BASE, self._board.ACM3_SIZE, 0x100, 0x3, 0)
-            print('  Patching entry %d with 0x%08X:0x%08X - ACM3' % (acm3_index, fit_entry.address, fit_entry.size))
+        # Add Diagnostic ACM with the reserved fit entry saved
+        if self._board.DIAGNOSTICACM_SIZE > 0:
+            fit_entry = FIT_ENTRY.from_buffer(rom, fit_offset + (diagnosticacm_index+1)*16)
+            fit_entry.set_values(self._board.DIAGNOSTICACM_BASE, self._board.DIAGNOSTICACM_SIZE, 0x100, 0x3, 0)
+            print('  Patching entry %d with 0x%08X:0x%08X - Diagnostic ACM' % (diagnosticacm_index, fit_entry.address, fit_entry.size))
 
         # Check FIT length
         spaceleft = addr - (fit_address.value + fit_header.size)
@@ -788,10 +788,10 @@ class Build(object):
             if acm_base & 0x7FFF:
                 raise Exception ('ACM base[FSP-T+CAR:0x%x] must be 32KB aligned!' % acm_base)
 
-        if getattr(self._board, 'ACM3_SIZE') > 0:
-            acm3_base = getattr(self._board, 'ACM3_BASE')
-            if acm3_base & 0x0FFF:
-                raise Exception ('ACM3 base[FSP-T+CAR:0x%x] must be 4KB aligned!' % acm3_base)
+        if getattr(self._board, 'DIAGNOSTICACM_SIZE') > 0:
+            diagnosticacm_base = getattr(self._board, 'DIAGNOSTICACM_BASE')
+            if diagnosticacm_base & 0x0FFF:
+                raise Exception ('Diagnostic ACM base[FSP-T+CAR:0x%x] must be 4KB aligned!' % diagnosticacm_base)
 
         # Generate Pci Enum Policy Info
         pci_enum_policy_list = ['DOWNGRADE_IO32', 'DOWNGRADE_MEM64', 'DOWNGRADE_PMEM64', 'BUS_SCAN_TYPE', 'BUS_SCAN_ITEMS']
@@ -1164,9 +1164,9 @@ class Build(object):
         if self._board.ACM_SIZE > 0:
             gen_file_with_size (os.path.join(self._fv_dir, 'ACM.bin'), self._board.ACM_SIZE)
 
-        # create ACM3 binary
-        if self._board.ACM3_SIZE > 0:
-            gen_file_with_size (os.path.join(self._fv_dir, 'ACM3.bin'), self._board.ACM3_SIZE)
+        # create Diagnostic ACM binary
+        if self._board.DIAGNOSTICACM_SIZE > 0:
+            gen_file_with_size (os.path.join(self._fv_dir, 'DIAGNOSTICACM.bin'), self._board.DIAGNOSTICACM_SIZE)
 
         # create MRC data
         if self._board.MRCDATA_SIZE:
