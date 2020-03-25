@@ -187,9 +187,11 @@ ParseLinuxBootConfig (
   UINT32      Idx;
   UINT32      LineLen;
   UINT32      EntryNum;
+  BOOLEAN     FirstEntry;
 
   MenuEntry = LinuxBootCfg->MenuEntry;
 
+  FirstEntry = TRUE;
   EntryNum = 0;
   CurrLine = CfgBuffer;
   while ((CurrLine != NULL) && (EntryNum < MAX_BOOT_MENU_ENTRY)) {
@@ -220,6 +222,11 @@ ParseLinuxBootConfig (
       }
     } else if (MatchKeyWord (CurrLine, "menuentry") > 0) {
       // Mark boot option name
+      if (FirstEntry) {
+        FirstEntry = FALSE;
+      } else {
+        EntryNum++;
+      }
       CurrLine += 9;
       CurrLine  = TrimLeft (CurrLine);
       for (Idx = 0; Idx < 2; Idx++) {
@@ -235,7 +242,6 @@ ParseLinuxBootConfig (
           CurrLine++;
         }
       }
-      EntryNum++;
     } else if (MatchKeyWord (CurrLine, "linux") > 0) {
       CurrLine += 5;
 
