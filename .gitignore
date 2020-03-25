@@ -7,7 +7,7 @@ ConfigDataDynamic.h
 ConfigDataStruct.h
 ConfigDataCommonStruct.h
 CfgDataDef.bsf
-ResetVector.ia32.raw
+ResetVector.*.raw
 Fsp.bsf
 FspDbg.bin
 FspRel.bin
