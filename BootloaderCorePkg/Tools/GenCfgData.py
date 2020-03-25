@@ -1897,16 +1897,21 @@ EndList
                 if TagName == '':
                     continue
 
+                ValStr = self.FormatDeltaValue (Item)
                 if not Item['subreg']:
-                    ValStr = self.FormatDeltaValue (Item)
                     Text = '%-40s | %s' % (FullName, ValStr)
                     if 'PLATFORMID_CFG_DATA.PlatformId' == FullName:
                         PlatformId = Array2Val(Item['value'])
                     else:
                         Lines.append(Text)
                 else:
+                    if Full:
+                        Text = '## %-40s | %s' % (FullName, ValStr)
+                        Lines.append(Text)
+
                     OldArray = OldData[Start:End]
                     NewArray = NewData[Start:End]
+
                     for SubItem in Item['subreg']:
                         NewBitValue = self.GetBsfBitFields(SubItem, NewArray)
                         OldBitValue = self.GetBsfBitFields(SubItem, OldArray)
