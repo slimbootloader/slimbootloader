@@ -270,6 +270,7 @@ class Build(object):
         self._workspace                    = os.environ['WORKSPACE']
         self._board                        = board
         self._image                        = "SlimBootloader.bin"
+        self._arch                         = board.BUILD_ARCH
         self._target                       = 'RELEASE' if board.RELEASE_MODE  else 'NOOPT' if board.NO_OPT_MODE else 'DEBUG'
         self._fsp_basename                 = 'FspDbg'  if board.FSPDEBUG_MODE else 'FspRel'
         self._fv_dir                       = os.path.join(self._workspace, 'Build', 'BootloaderCorePkg', '%s_%s' % (self._target, self._toolchain), 'FV')
@@ -627,6 +628,14 @@ class Build(object):
             "<Stage1A:__gPcd_BinaryPatch_PcdVerInfoBase>,  {3473A022-C3C2-4964-B309-22B3DFB0B6CA:0x1C}, @Patch VerInfo",
             "<Stage1A:__gPcd_BinaryPatch_PcdFileDataBase>, {EFAC3859-B680-4232-A159-F886F2AE0B83:0x1C}, @Patch PcdBase"
         ]
+
+        if self._arch == 'X64':
+            # Find signature at top 4KB
+            vtf_patch_data_base = get_vtf_patch_base (os.path.join(self._fv_dir, 'STAGE1A.fd'))
+            extra_cmd.extend ([
+                "0x%08X, _BASE_STAGE1A_ - _OFFS_STAGE1A_,                    @FSP-T Base" % (vtf_patch_data_base + 0x04),
+                "0x%08X, Stage1A:_TempRamInitParams,                         @FSP-T UPD"  % (vtf_patch_data_base + 0x0C),
+            ])
 
         extra_cmd.append (
             "0xFFFFFFF8, {3CEA8EF3-95FC-476F-ABA5-7EC5DFA1D77B:0x1C}, @Patch FlashMap",
@@ -1123,7 +1132,7 @@ class Build(object):
 
         # rebuild reset vector
         vtf_dir = os.path.join('BootloaderCorePkg', 'Stage1A', 'Ia32', 'Vtf0')
-        x = subprocess.call([sys.executable, 'Build.py'],  cwd=vtf_dir)
+        x = subprocess.call([sys.executable, 'Build.py', self._arch.lower()],  cwd=vtf_dir)
         if x: raise Exception ('Failed to build reset vector !')
 
     def build(self):
@@ -1137,7 +1146,7 @@ class Build(object):
             "build" if os.name == 'posix' else "build.bat",
             "--platform", os.path.join('BootloaderCorePkg', 'BootloaderCorePkg.dsc'),
             "-b",         self._target,
-            "--arch",     'IA32',
+            "--arch",     self._arch,
             "--tagname",  self._toolchain,
             "-n",         str(multiprocessing.cpu_count()),
             "-y",         "Report.log",
@@ -1189,17 +1198,17 @@ class Build(object):
         # create microcode binary
         if self._board.UCODE_SIZE > 0:
             shutil.copy (
-                os.path.join(self._fv_dir, '../IA32/Microcode.bin'),
+                os.path.join(self._fv_dir, '../%s/Microcode.bin' % self._arch),
                 os.path.join(self._fv_dir, "UCODE.bin"))
 
         # generate payload
-        gen_payload_bin (self._fv_dir, self._pld_list,
+        gen_payload_bin (self._fv_dir, self._arch, self._pld_list,
                          os.path.join(self._fv_dir, "PAYLOAD.bin"),
                          self._board._CONTAINER_PRIVATE_KEY, HASH_VAL_STRING[self._board.SIGN_HASH_TYPE], self._board.BOARD_PKG_NAME)
 
         # create firmware update key
         if self._board.ENABLE_FWU:
-            srcfile = "../IA32/PayloadPkg/FirmwareUpdate/FirmwareUpdate/OUTPUT/FirmwareUpdate.efi"
+            srcfile = "../%s/PayloadPkg/FirmwareUpdate/FirmwareUpdate/OUTPUT/FirmwareUpdate.efi" % self._arch
             shutil.copyfile(
                 os.path.join(self._fv_dir, srcfile),
                 os.path.join(self._fv_dir, "FWUPDATE.bin"))
@@ -1264,6 +1273,7 @@ def main():
             if args.board == name:
                 brdcfg = imp.load_source('BoardConfig', board_cfgs[index])
                 board  = brdcfg.Board(
+                                        BUILD_ARCH        = args.arch.upper(), \
                                         RELEASE_MODE      = args.release,     \
                                         NO_OPT_MODE       = args.noopt,       \
                                         FSPDEBUG_MODE     = args.fspdebug,    \
@@ -1280,6 +1290,7 @@ def main():
     buildp.add_argument('-v',  '--usever',  action='store_true', help='Use board version file')
     buildp.add_argument('-fp', dest='fsppath', type=str, help='FSP binary path relative to FspBin in Silicon folder', default='')
     buildp.add_argument('-fd', '--fspdebug', action='store_true', help='Use debug FSP binary')
+    buildp.add_argument('-a',  '--arch', choices=['ia32', 'x64'], help='Specify the ARCH for build. Default is to build IA32 image.', default ='ia32')
     buildp.add_argument('-no', '--noopt', action='store_true', help='No compile/link optimization for debugging purpose. Not enabled in Release build.')
     buildp.add_argument('-p',  '--payload' , dest='payload', type=str, help='Payload file name', default ='OsLoader.efi')
     buildp.add_argument('board', metavar='board', choices=board_names, help='Board Name (%s)' % ', '.join(board_names))

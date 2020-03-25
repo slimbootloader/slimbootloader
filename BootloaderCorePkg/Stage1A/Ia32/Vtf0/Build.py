@@ -27,8 +27,11 @@ def FixupForRawSection(sectionFile):
 for filename in glob.glob(os.path.join('Bin', '*.raw')):
     os.remove(filename)
 
-
-arch = 'ia32'
+# It takes one argument to indicate build arch 'ia32' or 'x64'
+if len(sys.argv) < 2:
+    arch = 'ia32'
+else:
+    arch = sys.argv[1]
 debugType = None
 output = os.path.join('Bin', 'ResetVector')
 output += '.' + arch
