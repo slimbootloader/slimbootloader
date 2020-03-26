@@ -335,6 +335,7 @@ SecStartup2 (
   )
 {
   STAGE_IDT_TABLE          *IdtTablePtr;
+  STAGE_GDT_TABLE          *GdtTablePtr;
   STAGE1A_PARAM            *Stage1aParam;
   LOADER_GLOBAL_DATA       *LdrGlobal;
   LOADER_GLOBAL_DATA       *OldLdrGlobal;
@@ -442,6 +443,8 @@ SecStartup2 (
   LdrGlobal      = (LOADER_GLOBAL_DATA *)MemPoolCurrTop;
   MemPoolCurrTop = ALIGN_DOWN (MemPoolCurrTop - sizeof (STAGE_IDT_TABLE), 0x10);
   IdtTablePtr    = (STAGE_IDT_TABLE *)MemPoolCurrTop;
+  MemPoolCurrTop = ALIGN_DOWN (MemPoolCurrTop - sizeof (STAGE_GDT_TABLE), 0x10);
+  GdtTablePtr    = (STAGE_GDT_TABLE *)MemPoolCurrTop;
   MemPoolCurrTop = ALIGN_DOWN (MemPoolCurrTop, EFI_PAGE_SIZE);
 
   if (FixedPcdGetBool (PcdS3DebugEnabled)) {
@@ -477,6 +480,7 @@ SecStartup2 (
   DEBUG_CODE_END ();
 
   // Setup global data in memory
+  LoadGdt (GdtTablePtr);
   LoadIdt (IdtTablePtr, (UINT32)LdrGlobal);
   SetLoaderGlobalDataPointer (LdrGlobal);
   DEBUG ((DEBUG_INFO, "Loader global data @ 0x%08X\n", (UINT32)LdrGlobal));

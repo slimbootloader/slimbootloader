@@ -9,12 +9,15 @@
 //
 // Global Descriptor Table (GDT)
 //
-CONST GLOBAL_REMOVE_IF_UNREFERENCED IA32_SEGMENT_DESCRIPTOR mGdtEntries[] = {
+CONST GLOBAL_REMOVE_IF_UNREFERENCED IA32_SEGMENT_DESCRIPTOR
+mGdtEntries[STAGE_GDT_ENTRY_COUNT] = {
   /* selector { Global Segment Descriptor                              } */
   /* 0x00 */  {{0,      0,  0,  0,    0,  0,  0,  0,    0,  0, 0,  0,  0}}, //null descriptor
   /* 0x08 */  {{0xffff, 0,  0,  0x2,  1,  0,  1,  0xf,  0,  0, 1,  1,  0}}, //linear data segment descriptor
   /* 0x10 */  {{0xffff, 0,  0,  0xf,  1,  0,  1,  0xf,  0,  0, 1,  1,  0}}, //linear code segment descriptor
   /* 0x18 */  {{0xffff, 0,  0,  0x3,  1,  0,  1,  0xf,  0,  0, 1,  1,  0}}, //system data segment descriptor
+  /* 0x20 */  {{0xffff, 0,  0,  0x2,  1,  0,  1,  0x0,  0,  0, 0,  0,  0}}, //16-bit data segment descriptor
+  /* 0x28 */  {{0xffff, 0,  0,  0xB,  1,  0,  1,  0x0,  0,  0, 0,  0,  0}}, //16-bit code segment descriptor
 };
 
 /**
@@ -48,6 +51,34 @@ LoadIdt (
 }
 
 /**
+  Load GDT table for current processor.
+
+  It function initializes GDT table and loads it into current processor.
+
+  @param[in]  GdtTable  Pointer to STAGE_GDT_TABLE structure.
+
+**/
+VOID
+LoadGdt (
+  IN STAGE_GDT_TABLE   *GdtTable
+  )
+{
+  IA32_DESCRIPTOR     Gdtr;
+  UINT32              GdtLen;
+
+  AsmReadGdtr (&Gdtr);
+  GdtLen = sizeof(GdtTable->GdtTable);
+  if (GdtLen > sizeof(mGdtEntries)) {
+    GdtLen = sizeof(mGdtEntries);
+  }
+  CopyMem (GdtTable->GdtTable, mGdtEntries, GdtLen);
+  Gdtr.Base  = (UINTN) GdtTable->GdtTable;
+  Gdtr.Limit = (UINT16) (GdtLen - 1);
+  AsmWriteGdtr (&Gdtr);
+}
+
+
+/**
   Execute necessary actions after a stage is relocated.
 
 **/
@@ -56,13 +87,6 @@ PostStageRelocation (
   VOID
   )
 {
-  IA32_DESCRIPTOR      GdtDesc;
-
-  // Reload GDT
-  GdtDesc.Base  = (UINTN)mGdtEntries;
-  GdtDesc.Limit = sizeof (mGdtEntries) - 1;
-  AsmWriteGdtr (&GdtDesc);
-
   // Update exception handler in IDT
   UpdateExceptionHandler (NULL);
 }
