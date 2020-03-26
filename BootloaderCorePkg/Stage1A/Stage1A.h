@@ -34,6 +34,19 @@
 #include <VerInfo.h>
 
 /**
+  Load GDT table for current processor.
+
+  It function initializes GDT table and loads it into current processor.
+
+  @param  GdtTable  Pointer to STAGE_GDT_TABLE structure.
+
+**/
+VOID
+LoadGdt (
+  IN STAGE_GDT_TABLE   *GdtTable
+  );
+
+/**
   Load IDT table for current processor.
 
   It function initializes the exception handlers in IDT table and

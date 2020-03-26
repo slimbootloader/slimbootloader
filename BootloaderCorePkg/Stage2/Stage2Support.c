@@ -645,5 +645,3 @@ InitializeService (
   RegisterService ((VOID *)&mPlatformService);
 
 }
-
-

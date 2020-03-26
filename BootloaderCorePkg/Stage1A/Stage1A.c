@@ -400,6 +400,7 @@ SecStartup (
 {
   LOADER_GLOBAL_DATA        LdrGlobalData;
   STAGE_IDT_TABLE           IdtTable;
+  STAGE_GDT_TABLE           GdtTable;
   LOADER_GLOBAL_DATA       *LdrGlobal;
   STAGE1A_ASM_PARAM        *Stage1aAsmParam;
   UINT32                    StackTop;
@@ -429,6 +430,7 @@ SecStartup (
   // the config data passed in or these defaults remain
   LdrGlobal->LdrFeatures           = FEATURE_MEASURED_BOOT | FEATURE_ACPI;
 
+  LoadGdt (&GdtTable);
   LoadIdt (&IdtTable, (UINT32)LdrGlobal);
   SetLoaderGlobalDataPointer (LdrGlobal);
 

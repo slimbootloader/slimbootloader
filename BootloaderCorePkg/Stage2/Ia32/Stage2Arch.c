@@ -7,20 +7,6 @@
 
 #include "Stage2.h"
 
-//
-// Global Descriptor Table (GDT)
-//
-CONST GLOBAL_REMOVE_IF_UNREFERENCED IA32_SEGMENT_DESCRIPTOR mGdtEntries[] = {
-  /* selector { Global Segment Descriptor                              } */
-  /* 0x00 */  {{0,      0,  0,  0,    0,  0,  0,  0,    0,  0, 0,  0,  0}}, //null descriptor
-  /* 0x08 */  {{0xffff, 0,  0,  0x2,  1,  0,  1,  0xf,  0,  0, 1,  1,  0}}, //linear data segment descriptor
-  /* 0x10 */  {{0xffff, 0,  0,  0xf,  1,  0,  1,  0xf,  0,  0, 1,  1,  0}}, //linear code segment descriptor
-  /* 0x18 */  {{0xffff, 0,  0,  0x3,  1,  0,  1,  0xf,  0,  0, 1,  1,  0}}, //system data segment descriptor
-  /* 0x20 */  {{0xffff, 0,  0,  0x2,  1,  0,  1,  0x0,  0,  0, 0,  0,  0}}, //16-bit data segment descriptor
-  /* 0x28 */  {{0xffff, 0,  0,  0xB,  1,  0,  1,  0x0,  0,  0, 0,  0,  0}}, //16-bit code segment descriptor
-};
-
-
 /**
   Unmap the previous mapped stage images.
 
@@ -32,15 +18,6 @@ UnmapStage (
   VOID
   )
 {
-  IA32_DESCRIPTOR                 GdtDesc;
-
-  //
-  // Reload GDT table into Stage2 memory
-  //
-  GdtDesc.Base  = (UINTN)mGdtEntries;
-  GdtDesc.Limit = sizeof (mGdtEntries) - 1;
-  AsmWriteGdtr (&GdtDesc);
-
   //
   // Reload Exception handler
   //

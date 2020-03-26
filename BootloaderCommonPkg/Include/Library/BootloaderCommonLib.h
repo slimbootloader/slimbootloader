@@ -14,6 +14,7 @@
 #include <Guid/LoaderPlatformDataGuid.h>
 #include <Guid/DeviceTableHobGuid.h>
 #include <Guid/KeyHashGuid.h>
+#include <Library/BaseLib.h>
 #include <Library/CryptoLib.h>
 
 #define  STACK_DEBUG_FILL_PATTERN     0x5AA55AA5
