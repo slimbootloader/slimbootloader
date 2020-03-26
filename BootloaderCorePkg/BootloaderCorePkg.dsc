@@ -310,6 +310,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdEmmcHs400SupportEnabled | $(ENABLE_EMMC_HS400)
   gPlatformCommonLibTokenSpaceGuid.PcdPreOsCheckerEnabled | $(ENABLE_PRE_OS_CHECKER)
   gPlatformCommonLibTokenSpaceGuid.PcdDmaProtectionEnabled | $(ENABLE_DMA_PROTECTION)
+  gPlatformCommonLibTokenSpaceGuid.PcdMultiUsbBootDeviceEnabled |  $(ENABLE_MULTI_USB_BOOT_DEV)
 
 !ifdef $(S3_DEBUG)
   gPlatformModuleTokenSpaceGuid.PcdS3DebugEnabled         | $(S3_DEBUG)

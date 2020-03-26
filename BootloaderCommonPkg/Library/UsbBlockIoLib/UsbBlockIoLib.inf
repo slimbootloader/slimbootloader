@@ -47,5 +47,5 @@
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdUsbTransferTimeoutValue  ## CONSUMES
-
+  gPlatformCommonLibTokenSpaceGuid.PcdMultiUsbBootDeviceEnabled ## CONSUMES
 

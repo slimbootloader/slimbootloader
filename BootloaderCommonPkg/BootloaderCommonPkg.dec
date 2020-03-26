@@ -265,5 +265,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdMiniShellEnabled        | FALSE      | BOOLEAN | 0x20000217
   # This PCD will enable DMA protection
   gPlatformCommonLibTokenSpaceGuid.PcdDmaProtectionEnabled    | FALSE      | BOOLEAN | 0x20000218
+  # This PCD will enable multiple USB mass storage boot device support
+  gPlatformCommonLibTokenSpaceGuid.PcdMultiUsbBootDeviceEnabled   | FALSE  | BOOLEAN | 0x20000219
 
 
