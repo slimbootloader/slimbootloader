@@ -29,6 +29,10 @@
   Ia32/SecEntry.nasm
   Ia32/Stage1AArch.c
 
+[Sources.X64]
+  X64/SecEntry.nasm
+  X64/Stage1AArch.c
+
 [Packages]
   MdePkg/MdePkg.dec
   BootloaderCorePkg/BootloaderCorePkg.dec

@@ -24,10 +24,12 @@
 [Sources]
   CpuExceptionCommon.h
 
-
 [Sources.IA32]
   Ia32/CpuExceptionHandler.c
   Ia32/ExceptionHandler.nasm
+
+[Sources.X64]
+  X64/CpuExceptionHandler.c
 
 [Packages]
   MdePkg/MdePkg.dec

@@ -27,6 +27,9 @@
 [Sources.IA32]
   Ia32/Stage1BArch.c
 
+[Sources.X64]
+  X64/Stage1BArch.c
+
 [Sources.ARC]
   Arc/Stage1BArch.c
 

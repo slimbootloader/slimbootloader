@@ -29,6 +29,9 @@
 [Sources.IA32]
   Ia32/MultibootJump.nasm
 
+[Sources.X64]
+  X64/MultibootJump.nasm
+
 [Packages]
   MdePkg/MdePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec

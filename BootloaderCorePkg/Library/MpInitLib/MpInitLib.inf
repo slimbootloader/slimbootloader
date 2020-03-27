@@ -24,6 +24,11 @@
   Ia32/MpInitLib.c
   Ia32/MpFuncs.nasm
 
+[Sources.X64]
+  X64/MpInitLibInternal.h
+  X64/MpInitLib.c
+  X64/MpFuncs.nasm
+
 [Packages]
   MdePkg/MdePkg.dec
   IntelFsp2Pkg/IntelFsp2Pkg.dec
@@ -35,7 +40,7 @@
   DebugLib
   S3SaveRestoreLib
 
-[LibraryClasses.IA32]
+[LibraryClasses.IA32, LibraryClasses.X64]
   LocalApicLib
   SynchronizationLib
   SortLib

@@ -21,7 +21,7 @@
 #
 # VALID_ARCHITECTURES = IA32 X64 IPF EBC
 #
-[Sources.IA32]
+[Sources.IA32, Sources.X64]
   Ia32/SecEntry.nasm
 
 [Packages]
