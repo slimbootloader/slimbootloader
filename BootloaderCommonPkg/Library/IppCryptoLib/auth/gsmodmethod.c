@@ -261,7 +261,7 @@ static BNU_CHUNK_T* gs_mont_mul(BNU_CHUNK_T* pr, const BNU_CHUNK_T* pa, const BN
       int i, j;
 
       /* clear buffer */
-      for(i=0; i<mLen; i++) pBuffer[i] = 0;
+      ZEXPAND_BNU (pBuffer, 0, mLen);
 
       /* mont mul */
       for(i=0; i<mLen; i++) {

@@ -23,6 +23,9 @@
 [Sources.IA32]
   Ia32/FspTempRamInit.nasm
 
+[Sources.X64]
+  X64/FspTempRamInit.nasm
+
 [Packages]
   MdePkg/MdePkg.dec
   BootloaderCorePkg/BootloaderCorePkg.dec

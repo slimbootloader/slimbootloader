@@ -28,8 +28,8 @@
 [Sources.IA32]
   Ia32/Stage2Arch.c
 
-[Sources.ARC]
-  Arc/Stage2Arch.c
+[Sources.X64]
+  X64/Stage2Arch.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -38,7 +38,6 @@
   IntelFsp2Pkg/IntelFsp2Pkg.dec
 
 [LibraryClasses.IA32]
-  FspSupportLib
   PagingLib
 
 [LibraryClasses]
@@ -59,6 +58,7 @@
   MpInitLib
   SecureBootLib
   FspApiLib
+  FspSupportLib
   LoaderLib
   GraphicsLib
   CpuExceptionLib

@@ -92,11 +92,7 @@ cpSize cpToOctStr_BNU32(Ipp8u* pStr, cpSize strLen, const Ipp32u* pBNU, cpSize b
       int bnuBitSize = BITSIZE_BNU32(pBNU, bnuSize);
       if(bnuBitSize <= strLen*BYTESIZE) {
          Ipp32u x = pBNU[bnuSize-1];
-#ifdef _SLIMBOOT_OPT
-         SetMem (pStr, strLen, 0);
-#else
          ZEXPAND_BNU(pStr, 0, strLen);
-#endif
          pStr += strLen - BITS2WORD8_SIZE(bnuBitSize);
 
          if(x) {

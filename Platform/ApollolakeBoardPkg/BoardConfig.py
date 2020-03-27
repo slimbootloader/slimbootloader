@@ -152,7 +152,7 @@ class Board(BaseBoard):
     def GetDscLibrarys (self, BuildPkgName = "BootLoaderCorePkg"):
         dsc_libs = {}
         # These libraries will be added into the DSC files
-        dsc_libs['IA32'] = [
+        common_libs = [
             'LoaderLib|Platform/$(BOARD_PKG_NAME)/Library/LoaderLib/LoaderLib.inf',
             'SerialPortLib|Silicon/$(SILICON_PKG_NAME)/Library/SerialPortLib/SerialPortLib.inf',
             'SocInfoLib|Silicon/$(SILICON_PKG_NAME)/Library/SocInfoLib/SocInfoLib.inf',
@@ -174,6 +174,8 @@ class Board(BaseBoard):
             'HdaLib|Platform/$(BOARD_PKG_NAME)/Library/HdaLib/HdaLib.inf',
             'VtdPmrLib|Silicon/CommonSocPkg/Library/VtdPmrLib/VtdPmrLib.inf'
         ]
+        dsc_libs['IA32'] = common_libs
+        dsc_libs['X64'] = common_libs
         return dsc_libs
 
     def GetFlashMapList (self):

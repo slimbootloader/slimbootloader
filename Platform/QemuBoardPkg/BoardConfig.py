@@ -160,12 +160,14 @@ class Board(BaseBoard):
     def GetDscLibrarys (self):
         dsc_libs = {}
         # These libraries will be added into the DSC files
-        dsc_libs['IA32'] = [
+        common_libs = [
             'LoaderLib|Platform/CommonBoardPkg/Library/LoaderLib/LoaderLib.inf',
             'PlatformHookLib|Silicon/$(SILICON_PKG_NAME)/Library/PlatformHookLib/PlatformHookLib.inf',
             'GpioLib|Silicon/$(SILICON_PKG_NAME)/Library/GpioLib/GpioLib.inf',
             'SpiFlashLib|Silicon/$(SILICON_PKG_NAME)/Library/SpiFlashLib/SpiFlashLib.inf',
         ]
+        dsc_libs['IA32'] = common_libs
+        dsc_libs['X64'] = common_libs
         return dsc_libs
 
     def GetKeyHashList (self):

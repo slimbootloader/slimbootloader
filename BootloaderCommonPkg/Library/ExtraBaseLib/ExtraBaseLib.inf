@@ -24,6 +24,9 @@
 [Sources.IA32]
   Ia32/CpuSupport.nasm
 
+[Sources.X64]
+  X64/CpuSupport.nasm
+
 [Packages]
   MdePkg/MdePkg.dec
 

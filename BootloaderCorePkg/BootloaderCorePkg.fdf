@@ -9,7 +9,7 @@
 [Defines]
 DEFINE FLASH_ERASE_POLARITY   = 1
 DEFINE FV_DIR                 = $(OUTPUT_DIRECTORY)/$(TARGET)_$(TOOL_CHAIN_TAG)/FV
-DEFINE IA_DIR                 = $(OUTPUT_DIRECTORY)/$(TARGET)_$(TOOL_CHAIN_TAG)/IA32
+DEFINE ARCH_DIR               = $(OUTPUT_DIRECTORY)/$(TARGET)_$(TOOL_CHAIN_TAG)/$(ARCH)
 
 #------------------------------------------------------------------------------
 # STAGE1A FD
@@ -124,12 +124,12 @@ FV = OsLoader
 !endif
 
   FILE RAW = EFAC3859-B680-4232-A159-F886F2AE0B83 {
-    SECTION RAW = $(IA_DIR)/BootloaderCorePkg/PcdData/PcdData/OUTPUT/PEIPcdDataBase.raw
+    SECTION RAW = $(ARCH_DIR)/BootloaderCorePkg/PcdData/PcdData/OUTPUT/PEIPcdDataBase.raw
   }
 
   INF $(PLATFORM_PACKAGE)/Stage1A/Stage1A.inf
 
-  INF RuleOverride = RESET_VECTOR USE = IA32 $(PLATFORM_PACKAGE)/Stage1A/Ia32/Vtf0/Bin/ResetVector.inf
+  INF RuleOverride = RESET_VECTOR USE = $(ARCH) $(PLATFORM_PACKAGE)/Stage1A/Ia32/Vtf0/Bin/ResetVector.inf
 
 
 #------------------------------------------------------------------------------
