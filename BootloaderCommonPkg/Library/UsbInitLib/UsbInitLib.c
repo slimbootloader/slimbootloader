@@ -89,7 +89,7 @@ InitUsbDevices (
   )
 {
   EFI_STATUS  Status;
-  UINT32      PcieAddress;
+  UINTN       PcieAddress;
   UINT32      XhciMmioBase;
   UINT32      Data;
   UINT8      *Class;

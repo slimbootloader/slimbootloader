@@ -83,7 +83,7 @@ ShellCommandMtrrFunc (
   IN CHAR16 *Argv[]
   )
 {
-  UINTN   Index, BaseMsr, MaskMsr, Type;
+  UINT32  Index, BaseMsr, MaskMsr, Type;
   BOOLEAN MtrrEnabled, FixedMtrrEnabled, Valid, Verbose;
   UINT64  DefType, BaseVal, Base, MaskVal, Mask, Range, Limit;
 

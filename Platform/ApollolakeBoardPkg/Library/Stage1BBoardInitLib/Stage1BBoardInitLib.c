@@ -788,7 +788,7 @@ EarlyBootDeviceInit (
 )
 {
   EFI_STATUS  Status        = EFI_SUCCESS;
-  UINT32      EmmcHcPciBase;
+  UINTN       EmmcHcPciBase;
 
   EmmcHcPciBase = GetDeviceAddr (OsBootDeviceEmmc, 0);
   EmmcHcPciBase = TO_MM_PCI_ADDRESS (EmmcHcPciBase);
@@ -1173,7 +1173,7 @@ IocInitialize (
   Status = UartPortInitialize (IocUartData->DeviceIndex);
   ASSERT_EFI_ERROR (Status);
 
-  PciBar = GetUartBaseAddress (IocUartData->DeviceIndex);
+  PciBar = (UINT32)GetUartBaseAddress (IocUartData->DeviceIndex);
   ASSERT (PciBar != 0xFFFFFFFF);
 
   Status = UartGpioInitialize (IocUartData->DeviceIndex);
@@ -1397,7 +1397,7 @@ EarlyPcieLinkUp (
     MmioWrite8 (Address, Data8);
     DEBUG ((DEBUG_INFO, "Address = 0x%08X Value = 0x%X\n", Address, Data8));
 
-    Address = MM_PCI_ADDRESS (0, SC_PCIE_ROOT_PORT_BUS (PortIndex), SC_PCIE_ROOT_PORT_FUNC (PortIndex), 0);
+    Address = (UINT32)MM_PCI_ADDRESS (0, SC_PCIE_ROOT_PORT_BUS (PortIndex), SC_PCIE_ROOT_PORT_FUNC (PortIndex), 0);
     DEBUG ((DEBUG_INFO, "RpBase = 0x%08X\n", Address));
     MmioOr16 (Address + R_PCH_PCIE_XCAP, B_PCIE_XCAP_SI);
   }
@@ -1842,7 +1842,7 @@ FindNvsData (
     CopyMem (CompressedData, (UINT8 *)(UINTN)MrcDataBase + MrcParamsOffset + sizeof (MRC_PARAM_HDR), DataSize);
 
     DEBUG ((DEBUG_INFO, "Decompress ParamData\n"));
-    DataSize = RleDecompressData (CompressedData, DataSize, MrcParamData);
+    DataSize = (UINT32)RleDecompressData (CompressedData, DataSize, MrcParamData);
 
     DEBUG ((DEBUG_INFO, "Read MRC VarData at 0x%X\n", MrcDataBase + MrcNvDataOffset));
     MrcVarHdr = (MRC_VAR_HDR *)MemPool;

@@ -80,7 +80,7 @@ SpiReadBlocks (
     return EFI_NO_MEDIA;
   }
 
-  Status = mSpiService->SpiRead (FlashRegionAll, (UINT32) (Address * SPI_BLOCK_SIZE), BufferSize, Buffer);
+  Status = mSpiService->SpiRead (FlashRegionAll, (UINT32) (Address * SPI_BLOCK_SIZE), (UINT32)BufferSize, Buffer);
 
   return Status;
 }

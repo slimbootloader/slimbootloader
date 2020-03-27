@@ -69,7 +69,7 @@ UpdateDrhd (
   UINT16                        DisableBit;
   BOOLEAN                       NeedRemove;
   EFI_ACPI_DRHD_ENGINE1_STRUCT  *DrhdEngine;
-  UINT32                        PciAddress;
+  UINTN                         PciAddress;
 
   //
   // Convert DrhdEnginePtr to EFI_ACPI_DRHD_ENGINE1_STRUCT Pointer
@@ -253,7 +253,7 @@ UpdateRmrr (
   UINTN                     Index;
   BOOLEAN                   NeedRemove;
   EFI_ACPI_RMRR_HECI_STRUC  *Rmrr;
-  UINT32                    PciAddress;
+  UINTN                     PciAddress;
 
   //
   // To make sure all device scope can be checked,

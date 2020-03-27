@@ -143,7 +143,7 @@ UsbGetMediaInfo (
     if (!EFI_ERROR (Status)) {
       if (DevBlockInfo != NULL) {
         DevBlockInfo->BlockNum  = MediaInfo.LastBlock + 1;
-        DevBlockInfo->BlockSize = MediaInfo.BlockSize;
+        DevBlockInfo->BlockSize = (UINT32)MediaInfo.BlockSize;
       }
     }
   }

@@ -46,7 +46,7 @@ UsbSetIdleRequest (
   IN UINT8                   Duration
   )
 {
-  UINT32                  Status;
+  EFI_STATUS              Status;
   EFI_USB_DEVICE_REQUEST  Request;
 
   ASSERT (UsbIo != NULL);

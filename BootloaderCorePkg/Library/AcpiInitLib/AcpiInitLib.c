@@ -427,7 +427,7 @@ UpdateMadt (
   //
   // Update Table Length
   //
-  Length = Current - (UINT8 *)Table;
+  Length = (UINT32)(UINTN)(Current - (UINT8 *)Table);
   Table->Length = Length;
 
   return EFI_SUCCESS;

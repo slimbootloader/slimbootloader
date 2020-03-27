@@ -53,7 +53,7 @@ ShellCommandMsrFunc (
   )
 {
   BOOLEAN Write;
-  UINTN   Addr;
+  UINT32  Addr;
   UINT64  Value;
 
   if (Argc == 2) {
@@ -65,7 +65,7 @@ ShellCommandMsrFunc (
     goto usage;
   }
 
-  Addr = StrHexToUintn (Argv[1]);
+  Addr = (UINT32)StrHexToUintn (Argv[1]);
 
   if (Write) {
     AsmWriteMsr64 (Addr, Value);

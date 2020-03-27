@@ -323,7 +323,7 @@ AddSblCommandLine (
   // Add serial number
   LoaderPlatformInfo = (LOADER_PLATFORM_INFO *)GetLoaderPlatformInfoPtr();
   if (LoaderPlatformInfo != NULL) {
-    SerialNumberLength = AsciiStrLen (LoaderPlatformInfo->SerialNumber);
+    SerialNumberLength = (UINT32)AsciiStrLen (LoaderPlatformInfo->SerialNumber);
     if (SerialNumberLength > 0 && SerialNumberLength <= MAX_SERIAL_NUMBER_LENGTH) {
       AsciiSPrint (ParamValue, sizeof (ParamValue), " androidboot.serialno=%a", LoaderPlatformInfo->SerialNumber);
       AsciiStrCatS (CommandLine, MaxCmdSize, ParamValue);
@@ -394,7 +394,7 @@ AddSblCommandLine (
     return Status;
   }
 
-  *CommandLineSize = AsciiStrLen (CommandLine);
+  *CommandLineSize = (UINT32)AsciiStrLen (CommandLine);
 
   return Status;
 }

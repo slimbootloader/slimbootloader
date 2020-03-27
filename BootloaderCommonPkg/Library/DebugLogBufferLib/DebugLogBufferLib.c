@@ -54,7 +54,7 @@ DebugLogBufferWrite (
 
   if (NumberOfBytes > 0) {
     CopyMem ((UINT8 *)LogBufHdr + LogBufHdr->UsedLength, Buffer, NumberOfBytes);
-    LogBufHdr->UsedLength += NumberOfBytes;
+    LogBufHdr->UsedLength += (UINT32)NumberOfBytes;
   }
 
   return NumberOfBytes;

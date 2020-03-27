@@ -287,8 +287,8 @@ ShellCommandFsFunc (
   SubCmd = Argv[1];
   if (StrCmp (SubCmd, L"init") == 0) {
     DeviceType = (Argc < 3) ? 0 : (OS_BOOT_MEDIUM_TYPE)StrHexToUintn (Argv[2]);
-    HwPartNo = (Argc < 4) ? 0 : StrHexToUintn (Argv[3]);
-    SwPartNo = (Argc < 5) ? 0 : StrHexToUintn (Argv[4]);
+    HwPartNo = (Argc < 4) ? 0 : (UINT32)StrHexToUintn (Argv[3]);
+    SwPartNo = (Argc < 5) ? 0 : (UINT32)StrHexToUintn (Argv[4]);
     Status = CmdFsInit (DeviceType, HwPartNo, SwPartNo);
   } else if (StrCmp (SubCmd, L"close") == 0) {
     Status = CmdFsClose ();

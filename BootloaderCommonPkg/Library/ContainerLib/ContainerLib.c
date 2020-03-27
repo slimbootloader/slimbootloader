@@ -177,7 +177,7 @@ GetContainerHeaderSize (
   IN  CONTAINER_HDR  *ContainerHdr
   )
 {
-  INT32                 Offset;
+  INTN                  Offset;
   UINT32                Index;
   COMPONENT_ENTRY      *CompEntry;
 

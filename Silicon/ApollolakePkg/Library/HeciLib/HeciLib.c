@@ -757,7 +757,7 @@ EnterDnxMode (
   UINT8  DataBuffer[sizeof (HECI_REQ_CSE_DNX_REQ)];
   UINT32 HeciSendLength;
   UINT32 HeciRecvLength;
-  UINT32 Status;
+  EFI_STATUS Status;
   HECI_REQ_CSE_DNX_REQ *Request;
   HECI_RES_CSE_DNX_REQ *Response;
 
@@ -998,7 +998,7 @@ PrepareCseForFirmwareUpdate (
   UINT8   DataBuffer[sizeof (HECI_RES_IFWI_PREPARE_FOR_UPDATE)];
   UINT32  HeciSendLength;
   UINT32  HeciRecvLength;
-  UINT32  Status;
+  EFI_STATUS  Status;
   HECI_REQ_IFWI_PREPARE_FOR_UPDATE *Request;
   HECI_RES_IFWI_PREPARE_FOR_UPDATE *Response;
 

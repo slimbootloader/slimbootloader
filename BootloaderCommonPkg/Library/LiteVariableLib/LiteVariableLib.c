@@ -373,7 +373,7 @@ InternalGetVariable (
     return EFI_VOLUME_CORRUPTED;
   }
 
-  VariableNameLen = AsciiStrLen (VariableName) + 1;
+  VariableNameLen = (UINT32)AsciiStrLen (VariableName) + 1;
   VarHdrPtr = (VARIABLE_HEADER *)&VarStoreHdrPtr[1];
   VarEndPtr = (UINT8 *)VarStoreHdrPtr + VarStoreHdrPtr->Size;
 
@@ -543,7 +543,7 @@ GetNextVariableName (
     return EFI_NOT_FOUND;
   }
 
-  VariableNameLen = AsciiStrLen ((CONST CHAR8 *)&FindVarHdrPtr[1]) + 1;
+  VariableNameLen = (UINT32)AsciiStrLen ((CONST CHAR8 *)&FindVarHdrPtr[1]) + 1;
   if (*VariableNameSize < VariableNameLen) {
     *VariableNameSize = VariableNameLen;
     return EFI_BUFFER_TOO_SMALL;
@@ -752,14 +752,14 @@ SetVariable (
   VarHdrPtr = (VARIABLE_HEADER *)&VarStoreHdrPtr[1];
   VarEndPtr = (UINT8 *)VarStoreHdrPtr + VarStoreHdrPtr->Size;
 
-  VariableNameLen = AsciiStrLen (VariableName) + 1;
+  VariableNameLen = (UINT32)AsciiStrLen (VariableName) + 1;
   if (DataSize == 0) {
     //
     // Need to delete a variable
     //
     TotalLen = 0;
   } else {
-    TotalLen = sizeof (VARIABLE_HEADER) + VariableNameLen + DataSize;
+    TotalLen = sizeof (VARIABLE_HEADER) + VariableNameLen + (UINT32)DataSize;
   }
 
   if (TotalLen > 0xFFFF) {
@@ -931,7 +931,7 @@ SetVariable (
     //
     // Write the variable data
     //
-    Status = WriteVariableStore ((UINT8 *)&VarHdrPtr[1] + VariableNameLen, DataSize, Data);
+    Status = WriteVariableStore ((UINT8 *)&VarHdrPtr[1] + VariableNameLen, (UINT32)DataSize, Data);
     if (EFI_ERROR (Status)) {
       return Status;
     }

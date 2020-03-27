@@ -129,7 +129,6 @@ Ext2fsLs (
   ENTRY         **NextPtr;
   EXT2FS_DIRECT  *Dp;
   EXT2FS_DIRECT  *EdPtr;
-  INT32           Rc;
   UINT32          FileSize;
   ENTRY          *PNames;
   CONST CHAR8    *Type;
@@ -152,8 +151,8 @@ Ext2fsLs (
   Names = NULL;
   Fp->SeekPtr = 0;
   while (Fp->SeekPtr < (OFFSET)Fp->DiskInode.Ext2DInodeSize) {
-    Rc = BufReadFile (File, &Buf, &BufSize);
-    if (Rc != 0) {
+    Status = BufReadFile (File, &Buf, &BufSize);
+    if (RETURN_ERROR (Status)) {
       Status = EFI_DEVICE_ERROR;
       goto out;
     }
@@ -223,11 +222,12 @@ Ext2fsLs (
         ConsoleOutFunc (L"  %a/\n", New->EntryName);
       } else if (New->EntryType == 1) {
         FileSize = 0;
-        Rc = ReadInode (New->EntryInode, File);
-        if (!Rc) {
+        Status = ReadInode (New->EntryInode, File);
+        if (!RETURN_ERROR (Status)) {
           Fp = (FILE *)File->FileSystemSpecificData;
           FileSize = Fp->DiskInode.Ext2DInodeSize;
         }
+        Status = RETURN_SUCCESS;
         ConsoleOutFunc (L"  %-16a %d\n", New->EntryName, FileSize);
       }
       PNames = New->EntryNext;

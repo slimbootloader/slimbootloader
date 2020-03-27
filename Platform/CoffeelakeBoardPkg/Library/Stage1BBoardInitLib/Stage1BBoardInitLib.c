@@ -569,7 +569,7 @@ EarlyBootDeviceInit (
 )
 {
   EFI_STATUS  Status        = EFI_SUCCESS;
-  UINT32      EmmcHcPciBase = MmPciBase(0, 0x1A, 0);
+  UINTN       EmmcHcPciBase = MmPciBase(0, 0x1A, 0);
   UINT32      Base          = 0xFE600000;
 
   /* Configure EMMC GPIO Pad */
@@ -622,10 +622,10 @@ BoardInit (
 DEBUG_CODE_BEGIN();
     UINT32  Data;
 
-    Data = *(UINT32 *) (0xFED30328);
+    Data = *(UINT32 *)(UINTN)(0xFED30328);
     DEBUG ((DEBUG_ERROR, "[Boot Guard] AcmStatus : 0x%08X\n", Data));
 
-    Data = *(UINT32 *) (0xFED300A4);
+    Data = *(UINT32 *)(UINTN)(0xFED300A4);
     DEBUG ((DEBUG_ERROR, "[Boot Guard] BootStatus: 0x%08X\n", Data));
 
     if ((Data & (BIT31 | BIT30)) != BIT31) {

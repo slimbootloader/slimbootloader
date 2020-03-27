@@ -74,7 +74,7 @@ AllocatePool (
 
   LdrGlobal = GetLoaderGlobalDataPointer();
   Top  = LdrGlobal->MemPoolCurrTop;
-  Top -= AllocationSize;
+  Top -= (UINT32)AllocationSize;
   Top  = ALIGN_DOWN (Top, POOL_MIN_ALIGNMENT);
   InternalUpdateMemPoolTop (Top);
   return (VOID *)(UINTN)Top;
@@ -137,7 +137,7 @@ AllocatePages (
   LdrGlobal = GetLoaderGlobalDataPointer();
   Top  = LdrGlobal->MemPoolCurrTop;
   Top  = ALIGN_DOWN (Top, EFI_PAGE_SIZE);
-  Top -= Pages * EFI_PAGE_SIZE;
+  Top -= (UINT32)(Pages * EFI_PAGE_SIZE);
   InternalUpdateMemPoolTop (Top);
   return (VOID *)(UINTN)Top;
 }
@@ -177,7 +177,7 @@ AllocateAlignedPages (
   LdrGlobal = GetLoaderGlobalDataPointer();
   Top  = LdrGlobal->MemPoolCurrTop;
   Top  = ALIGN_DOWN (Top, EFI_PAGE_SIZE);
-  Top -= Pages * EFI_PAGE_SIZE;
+  Top -= (UINT32)(Pages * EFI_PAGE_SIZE);
   if (Alignment > EFI_PAGE_SIZE) {
     Top  = ALIGN_DOWN (Top, Alignment);
   }
@@ -209,7 +209,7 @@ AllocateTemporaryMemory (
   LdrGlobal = GetLoaderGlobalDataPointer();
   Bottom  = LdrGlobal->MemPoolCurrBottom;
   Bottom  = ALIGN_UP (Bottom, POOL_MIN_ALIGNMENT);
-  NewBottom = Bottom + AllocationSize;
+  NewBottom = Bottom + (UINT32)AllocationSize;
   InternalUpdateMemPoolBottom (NewBottom);
   return (VOID *)(UINTN)Bottom;
 }

@@ -220,7 +220,7 @@ ShellCommandCdataFunc (
     }
     if (StrCmp (Argv[Index], L"-t") == 0) {
       Index++;
-      Tag = StrHexToUintn (Argv[Index]);
+      Tag = (UINT32)StrHexToUintn (Argv[Index]);
       UsagePrint = FALSE;
     }
   }

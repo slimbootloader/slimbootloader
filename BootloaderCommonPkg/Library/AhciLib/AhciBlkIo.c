@@ -160,7 +160,7 @@ AhciReadBlocks (
     return EFI_UNSUPPORTED;
   }
 
-  AtaDeviceData = AhciFindDeviceData (mAhciPrivateData, DeviceIndex, 0xFFFFFFFF);
+  AtaDeviceData = AhciFindDeviceData (mAhciPrivateData, (UINT32)DeviceIndex, 0xFFFFFFFF);
 
   if (AtaDeviceData == NULL) {
     return EFI_NOT_FOUND;
@@ -203,7 +203,7 @@ AhciWriteBlocks (
     return EFI_UNSUPPORTED;
   }
 
-  AtaDeviceData = AhciFindDeviceData (mAhciPrivateData, DeviceIndex, 0xFFFFFFFF);
+  AtaDeviceData = AhciFindDeviceData (mAhciPrivateData, (UINT32)DeviceIndex, 0xFFFFFFFF);
 
   if (AtaDeviceData == NULL) {
     return EFI_NOT_FOUND;
@@ -244,7 +244,7 @@ AhciGetMediaInfo (
     return EFI_UNSUPPORTED;
   }
 
-  AtaDeviceData = AhciFindDeviceData (mAhciPrivateData, DeviceIndex, 0xFFFFFFFF);
+  AtaDeviceData = AhciFindDeviceData (mAhciPrivateData, (UINT32)DeviceIndex, 0xFFFFFFFF);
 
   if (AtaDeviceData == NULL) {
     return EFI_NOT_FOUND;

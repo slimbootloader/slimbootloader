@@ -165,7 +165,7 @@ GetBootImageFromRawPartition (
   }
 
   LoadedImage->IasImage.Addr = Buffer;
-  LoadedImage->IasImage.Size = ImageSize;
+  LoadedImage->IasImage.Size = (UINT32)ImageSize;
   LoadedImage->IasImage.AllocType = ImageAllocateTypePage;
   if ( *((UINT32 *) Buffer) == CONTAINER_BOOT_SIGNATURE ) {
     LoadedImage->Flags      |= LOADED_IMAGE_CONTAINER;
@@ -249,7 +249,7 @@ GetBootImageFromFs (
   DEBUG ((DEBUG_INFO, "Get file '%s' (size:0x%x) success.\n", FilePath, ImageSize));
 
   LoadedImage->IasImage.Addr = Image;
-  LoadedImage->IasImage.Size = ImageSize;
+  LoadedImage->IasImage.Size = (UINT32)ImageSize;
   if ( *((UINT32 *) Image) == CONTAINER_BOOT_SIGNATURE ) {
     LoadedImage->Flags      |= LOADED_IMAGE_CONTAINER;
   } else if ( *((UINT32 *) Image) == IAS_MAGIC_PATTERN ) {
@@ -332,7 +332,7 @@ LoadLinuxFile (
     FreeImageData (ImageData);
     // Re-assign new memory
     ImageData->Addr = FileBuffer;
-    ImageData->Size = FileSize;
+    ImageData->Size = (UINT32)FileSize;
   } else {
     if (FileBuffer != NULL) {
       FreePool (FileBuffer);
@@ -458,7 +458,7 @@ GetTraditionalLinux (
     MenuEntry[0].Kernel.Len  = 7;
     AsciiStrCpyS (MenuEntry[0].Kernel.Buf, sizeof(MenuEntry[0].Kernel.Buf), "vmlinuz");
     MenuEntry[0].Command.Pos = 0;
-    MenuEntry[0].Command.Len = ConfigFileSize;
+    MenuEntry[0].Command.Len = (UINT32)ConfigFileSize;
     EntryIdx = 0;
   }
 

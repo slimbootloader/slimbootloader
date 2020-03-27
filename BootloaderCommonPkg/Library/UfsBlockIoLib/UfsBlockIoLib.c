@@ -1075,7 +1075,7 @@ UfsReadBlocks (
   LbaAddress = StartLba;
   while (ReadSize < BufferSize) {
     if (ReadSize + SIZE_64KB > BufferSize) {
-      ReadBlockSize = BufferSize - ReadSize;
+      ReadBlockSize = (UINT32)BufferSize - ReadSize;
     } else {
       ReadBlockSize = SIZE_64KB;
     }

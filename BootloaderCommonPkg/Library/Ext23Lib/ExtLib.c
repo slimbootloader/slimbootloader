@@ -114,8 +114,7 @@ ExtFsOpenFile (
   PEI_EXT_PRIVATE_DATA   *PrivateData;
   OPEN_FILE              *OpenFile;
   CHAR8                  *NameBuffer;
-  UINT32                  NameSize;
-  INT32                   Ret;
+  UINTN                   NameSize;
 
   PrivateData = (PEI_EXT_PRIVATE_DATA *)FsHandle;
   if (PrivateData == NULL || PrivateData->Signature != FS_EXT_SIGNATURE) {
@@ -137,9 +136,8 @@ ExtFsOpenFile (
   }
 
   OpenFile->FileDevData = PrivateData;
-  Ret = Ext2fsOpen (NameBuffer, OpenFile);
-  if (Ret != 0) {
-    Status = EFI_NOT_FOUND;
+  Status = Ext2fsOpen (NameBuffer, OpenFile);
+  if (EFI_ERROR (Status)) {
     goto Error;
   }
 
@@ -215,7 +213,7 @@ ExtFsReadFile (
   VOID                   *FileBuffer;
   UINT32                  FileSize;
   UINT32                  Residual;
-  INT32                   Ret;
+  EFI_STATUS              Status;
 
   OpenFile = (OPEN_FILE *)FileHandle;
   ASSERT (OpenFile != NULL);
@@ -235,10 +233,8 @@ ExtFsReadFile (
 
   FileBuffer = *FileBufferPtr;
   Residual = 0;
-  Ret = Ext2fsRead (OpenFile, FileBuffer, FileSize, &Residual);
-  ASSERT (Ret == 0);
-  ASSERT (Residual == 0);
-  if (Ret != 0 || Residual != 0) {
+  Status = Ext2fsRead (OpenFile, FileBuffer, FileSize, &Residual);
+  if (EFI_ERROR (Status) || (Residual != 0)) {
     return EFI_LOAD_ERROR;
   } else {
     *FileSizePtr = FileSize;
