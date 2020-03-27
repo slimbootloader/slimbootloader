@@ -549,6 +549,7 @@ BuildExtraInfoHob (
   // Build SMMRAM info Hob
   SmmInfoHob = BuildGuidHob (&gSmmInformationGuid, sizeof (LDR_SMM_INFO));
   if (SmmInfoHob != NULL) {
+    ZeroMem (SmmInfoHob, sizeof (LDR_SMM_INFO));
     PlatformUpdateHobInfo (&gSmmInformationGuid, SmmInfoHob);
   }
 

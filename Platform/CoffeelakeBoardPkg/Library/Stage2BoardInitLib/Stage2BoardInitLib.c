@@ -246,7 +246,7 @@ STATIC SMMBASE_INFO mSmmBaseInfo = {
 
 STATIC S3_SAVE_REG mS3SaveReg = {
   { BL_PLD_COMM_SIG, S3_SAVE_REG_COMM_ID, 1, 0 },
-  { { IO, WIDE32, { 0, 0}, (ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN), 0x00000000 } }
+  { { REG_TYPE_IO, WIDE32, { 0, 0}, (ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN), 0x00000000 } }
 };
 
 UINT8
@@ -1858,15 +1858,32 @@ UpdateSmmInfo (
   LdrSmmInfo->SmmSize -= LdrSmmInfo->SmmBase;
   LdrSmmInfo->Flags = SMM_FLAGS_4KB_COMMUNICATION;
   DEBUG ((DEBUG_ERROR, "Stage2: SmmRamBase = 0x%x, SmmRamSize = 0x%x\n", LdrSmmInfo->SmmBase, LdrSmmInfo->SmmSize));
+
   //
-  // Update the HOB with smi ctrl register data
+  // Update smi ctrl register data
   //
-  LdrSmmInfo->SmiCtrlReg.RegType    = IO;
-  LdrSmmInfo->SmiCtrlReg.RegWidth   = WIDE32;
-  LdrSmmInfo->SmiCtrlReg.SmiGblPos  = B_ACPI_IO_SMI_EN_GBL_SMI;
-  LdrSmmInfo->SmiCtrlReg.SmiApmPos  = B_ACPI_IO_SMI_EN_APMC;
-  LdrSmmInfo->SmiCtrlReg.SmiEosPos  = B_ACPI_IO_SMI_EN_EOS;
+  LdrSmmInfo->SmiCtrlReg.RegType    = (UINT8)REG_TYPE_IO;
+  LdrSmmInfo->SmiCtrlReg.RegWidth   = (UINT8)WIDE32;
+  LdrSmmInfo->SmiCtrlReg.SmiGblPos  = (UINT8)HighBitSet32 (B_ACPI_IO_SMI_EN_GBL_SMI);
+  LdrSmmInfo->SmiCtrlReg.SmiApmPos  = (UINT8)HighBitSet32 (B_ACPI_IO_SMI_EN_APMC);
+  LdrSmmInfo->SmiCtrlReg.SmiEosPos  = (UINT8)HighBitSet32 (B_ACPI_IO_SMI_EN_EOS);
   LdrSmmInfo->SmiCtrlReg.Address    = (UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN);
+
+  //
+  // Update smi status register data
+  //
+  LdrSmmInfo->SmiStsReg.RegType    = (UINT8)REG_TYPE_IO;
+  LdrSmmInfo->SmiStsReg.RegWidth   = (UINT8)WIDE32;
+  LdrSmmInfo->SmiStsReg.SmiApmPos  = (UINT8)HighBitSet32 (B_ACPI_IO_SMI_STS_APM);
+  LdrSmmInfo->SmiStsReg.Address    = (UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_STS);
+
+  //
+  // Update smi lock register data
+  //
+  LdrSmmInfo->SmiLockReg.RegType    = (UINT8)REG_TYPE_MMIO;
+  LdrSmmInfo->SmiLockReg.RegWidth   = (UINT8)WIDE32;
+  LdrSmmInfo->SmiLockReg.SmiLockPos = (UINT8)HighBitSet32 (B_PMC_PWRM_GEN_PMCON_B_SMI_LOCK);
+  LdrSmmInfo->SmiLockReg.Address    = (UINT32)(PCH_PWRM_BASE_ADDRESS + R_PMC_PWRM_GEN_PMCON_B);
 }
 
 /**
