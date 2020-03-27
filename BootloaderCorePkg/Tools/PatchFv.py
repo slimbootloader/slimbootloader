@@ -425,8 +425,8 @@ class Symbols:
             prefix = '_'
         else:
             #MSFT
-            #0003:00000190       _gComBase                  00007a50     SerialPo
-            patchMapFileMatchString =  "^\s[0-9a-fA-F]{4}:[0-9a-fA-F]{8}\s+(\w+)\s+([0-9a-fA-F]{8}\s+)"
+            #0003:00000190       _gComBase                     00007a50     SerialPort
+            patchMapFileMatchString =  "^\s[0-9a-fA-F]{4}:[0-9a-fA-F]{8}\s+(\w+)\s+([0-9a-fA-F]{8,16})\s+"
             matchKeyGroupIndex = 1
             matchSymbolGroupIndex  = 2
             prefix = ''
@@ -434,7 +434,10 @@ class Symbols:
         for reportLine in reportLines:
             match = re.match(patchMapFileMatchString, reportLine)
             if match is not None:
-                modSymbols[prefix + match.group(matchKeyGroupIndex)] = match.group(matchSymbolGroupIndex)
+                if prefix == '' and len(match.group(matchSymbolGroupIndex)) > 8:
+                    prefix = '_'
+                keyname = '%s' % (prefix + match.group(matchKeyGroupIndex))
+                modSymbols[keyname] = match.group(matchSymbolGroupIndex)
 
         # Handle extra module patchable PCD variable in Linux map since it might have different format
         # .data._gPcd_BinaryPatch_PcdVpdBaseAddress
