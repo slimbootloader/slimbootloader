@@ -83,6 +83,12 @@
   $(IPP_PATH)/Ia32/pcpsha512w7as.nasm
   $(IPP_PATH)/Ia32/pcpsha512g9as.nasm
 
+[Sources.X64]
+  $(IPP_PATH)/X64/pcpsha256v8as.nasm
+  $(IPP_PATH)/X64/pcpsha256nias.nasm
+  $(IPP_PATH)/X64/pcpsha512w7as.nasm
+  $(IPP_PATH)/X64/pcpsha512g9as.nasm
+
 [Packages]
   MdePkg/MdePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec

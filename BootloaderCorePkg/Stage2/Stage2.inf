@@ -32,7 +32,6 @@
   IntelFsp2Pkg/IntelFsp2Pkg.dec
 
 [LibraryClasses.IA32]
-  FspSupportLib
   PagingLib
 
 [LibraryClasses]
@@ -53,6 +52,7 @@
   MpInitLib
   SecureBootLib
   FspApiLib
+  FspSupportLib
   LoaderLib
   GraphicsLib
   CpuExceptionLib

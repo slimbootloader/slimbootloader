@@ -26,6 +26,9 @@
 [Sources.IA32]
   Ia32/BootloaderArch.c
 
+[Sources.X64]
+  X64/BootloaderArch.c
+
 [Packages]
   MdePkg/MdePkg.dec
   BootloaderCorePkg/BootloaderCorePkg.dec
