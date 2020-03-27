@@ -95,7 +95,7 @@ AppendSeedData (
     SeedEntryData  = (SEED_ENTRY *)((UINT8 *)SeedEntryData + SeedEntryData->SeedEntrySize);
   }
 
-  TotalSeedEntryDataSize = ((UINT8 *)SeedEntryData + (UINT32)NewSeedEntrySize - (UINT8 *)SeedListInfoHob);
+  TotalSeedEntryDataSize = ((UINT32)(UINTN)SeedEntryData + (UINT32)NewSeedEntrySize - (UINT32)(UINTN)SeedListInfoHob);
 
   if ( TotalSeedEntryDataSize > SeedListInfoHob->BufferSize) {
     DEBUG ((DEBUG_WARN, "SeedLib HOB: Out of resources\n"));

@@ -64,9 +64,9 @@ ShellCommandCpuidFunc (
     return EFI_ABORTED;
   }
 
-  Index = StrHexToUintn (Argv[1]);
+  Index = (UINT32)StrHexToUintn (Argv[1]);
   if (Argc == 3) {
-    SubIndex = StrHexToUintn (Argv[2]);
+    SubIndex = (UINT32)StrHexToUintn (Argv[2]);
   } else {
     SubIndex = 0;
   }

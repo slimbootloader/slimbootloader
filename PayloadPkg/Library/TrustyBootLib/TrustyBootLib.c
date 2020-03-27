@@ -23,7 +23,7 @@ ReserveMemUnder1Mb (
   IN     UINT32              MemorySize
   )
 {
-  UINTN                      Index;
+  UINT32                     Index;
   UINT32                     Count;
   MULTIBOOT_MMAP             *MbMmap;
   UINT32                     FreeMemoryIndex;
@@ -206,7 +206,7 @@ UpdateCmdLine (
 
   AsciiSPrint (ParamValue, sizeof (ParamValue), " ImageBootParamsAddr=0x%x", BootParams);
   AsciiStrCatS ((CHAR8 *)CmdFile->Addr, CmdBufLen, ParamValue);
-  CmdFile->Size = AsciiStrLen ((CHAR8 *)CmdFile->Addr);
+  CmdFile->Size = (UINT32)AsciiStrLen ((CHAR8 *)CmdFile->Addr);
   return EFI_SUCCESS;
 }
 

@@ -90,7 +90,7 @@ GetFfsFileByName (
   EFI_FFS_FILE_HEADER             *CurrentFile;
   EFI_FFS_FILE_HEADER             *NextFile;
   EFI_FFS_FILE_HEADER             *EndFile;
-  UINT32                           Offset;
+  UINTN                            Offset;
 
   //
   // Verify library has been initialized.
@@ -161,7 +161,7 @@ GetFfsFileByType (
   EFI_FFS_FILE_HEADER             *NextFile;
   EFI_FFS_FILE_HEADER             *EndFile;
   UINT32                           Count;
-  UINT32                           Offset;
+  UINTN                            Offset;
 
   //
   // Verify library has been initialized.
@@ -327,14 +327,14 @@ LoadFvImage (
   }
 
   // Check preferred image base
-  SecCoreImageBase = (UINTN)Section;
+  SecCoreImageBase = (UINT32)(UINTN)Section;
   Status = PeCoffGetPreferredBase ((VOID *)(UINTN)SecCoreImageBase, &PreferredBase);
   if (EFI_ERROR (Status)) {
     return Status;
   }
 
   // Move FV to preferred base if required
-  Gap = (UINT32)(UINTN)PreferredBase - SecCoreImageBase;
+  Gap = (UINT32)PreferredBase - SecCoreImageBase;
   if (Gap != 0) {
     CopyMem ((UINT8 *)FvHeader + Gap, FvHeader, FvLength);
     SecCoreImageBase += Gap;

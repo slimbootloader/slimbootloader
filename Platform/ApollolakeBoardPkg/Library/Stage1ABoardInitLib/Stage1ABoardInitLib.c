@@ -49,7 +49,7 @@ EarlyPlatformDataCheck (
   STITCH_DATA          *StitchData;
 
   // Stitching process might pass some plafform specific data.
-  StitchData = (STITCH_DATA *) 0xFFFFFFF4;
+  StitchData = (STITCH_DATA *)(UINTN)0xFFFFFFF4;
   if (StitchData->Marker != 0xAA) {
     // PlatformID will be deferred to be detected
     SetDebugPort ( PcdGet8 (PcdDebugPortNumber));

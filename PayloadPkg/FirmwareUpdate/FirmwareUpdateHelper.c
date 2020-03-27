@@ -42,7 +42,7 @@ UpdateRegionBlock (
   EFI_STATUS    Status;
   UINT8         *ReadBuffer;
   UINT32        Count;
-  UINT32        Index;
+  INTN          Index;
   UINT32        BlockLen;
   UINT8         *Src;
 

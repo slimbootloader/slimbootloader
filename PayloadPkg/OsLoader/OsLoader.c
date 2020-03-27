@@ -358,10 +358,10 @@ SetupBootImage (
   CmdFile = &LoadedImage->Image.Common.CmdFile;
   Size = 0;
   if (CmdFile->Addr != NULL && CmdFile->Size != 0) {
-    Size = GetFromConfigFile (NewCmdBuffer, CMDLINE_LENGTH_MAX, (UINT8 *)CmdFile->Addr, CmdFile->Size);
+    Size = (UINT32)GetFromConfigFile (NewCmdBuffer, CMDLINE_LENGTH_MAX, (UINT8 *)CmdFile->Addr, CmdFile->Size);
   }
   if (Size == 0) {
-    Size = AsciiStrSize (DEFAULT_COMMAND_LINE);
+    Size = (UINT32)AsciiStrSize (DEFAULT_COMMAND_LINE);
     CopyMem (NewCmdBuffer, DEFAULT_COMMAND_LINE, Size);
   }
   // Free Allocated Memory earlier first
@@ -1037,7 +1037,7 @@ InitConsole (
   VOID
 )
 {
-  UINT32                    CtrlPciBase;
+  UINTN                     CtrlPciBase;
   EFI_STATUS                Status;
   UINT32                    Height;
   UINT32                    Width;

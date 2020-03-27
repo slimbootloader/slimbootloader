@@ -30,7 +30,7 @@ GetNextLine (
     Ptr++;
   }
 
-  *Length = Ptr - Start;
+  *Length = (UINT32)(Ptr - Start);
   if (Ptr[0] == 0) {
     return NULL;
   } else {
@@ -126,7 +126,7 @@ MatchKeyWord (
 {
   UINT32 KeywordLen;
 
-  KeywordLen = AsciiStrLen (Keyword);
+  KeywordLen = (UINT32)AsciiStrLen (Keyword);
   if (AsciiStrnCmp (Line, Keyword, KeywordLen) == 0) {
     // A separator is required to follow the keyword
     if (((Line[KeywordLen] == 0)) || (Line[KeywordLen] == ' ') || (Line[KeywordLen] == '\t')) {
@@ -156,7 +156,7 @@ MatchAssignment (
 {
   UINT32 VarLen;
 
-  VarLen = AsciiStrLen (Variable);
+  VarLen = (UINT32)AsciiStrLen (Variable);
   if (AsciiStrnCmp (Line, Variable, VarLen) == 0) {
     if (Line[VarLen] == '=') {
       return VarLen;
@@ -211,13 +211,13 @@ ParseLinuxBootConfig (
       if (CurrLine[0] == '=') {
         CurrLine++;
         if (MatchAssignment (StartLine, "timeout") > 0) {
-          LinuxBootCfg->Settings.Timeout = AsciiStrDecimalToUintn (CurrLine);
+          LinuxBootCfg->Settings.Timeout = (UINT32)AsciiStrDecimalToUintn (CurrLine);
         } else if (MatchAssignment (StartLine, "default") > 0) {
           if (CurrLine[0] == '"') {
             CurrLine++;
           }
           // Support boot option number string only
-          LinuxBootCfg->Settings.Default = AsciiStrDecimalToUintn (CurrLine);
+          LinuxBootCfg->Settings.Default = (UINT32)AsciiStrDecimalToUintn (CurrLine);
         }
       }
     } else if (MatchKeyWord (CurrLine, "menuentry") > 0) {
@@ -235,9 +235,9 @@ ParseLinuxBootConfig (
         }
         if ((CurrLine[0] == '"') || (CurrLine[0] == '\'')) {
           if (Idx == 0) {
-            MenuEntry[EntryNum].Name.Pos = CurrLine - CfgBuffer + 1;
+            MenuEntry[EntryNum].Name.Pos = (UINT32)(CurrLine - CfgBuffer + 1);
           } else {
-            MenuEntry[EntryNum].Name.Len = CurrLine - CfgBuffer - MenuEntry[EntryNum].Name.Pos;
+            MenuEntry[EntryNum].Name.Len = (UINT32)(CurrLine - CfgBuffer - MenuEntry[EntryNum].Name.Pos);
           }
           CurrLine++;
         }
@@ -247,23 +247,23 @@ ParseLinuxBootConfig (
 
       // Mark kernel path
       CurrLine  = TrimLeft (CurrLine);
-      MenuEntry[EntryNum].Kernel.Pos = CurrLine - CfgBuffer;
+      MenuEntry[EntryNum].Kernel.Pos = (UINT32)(CurrLine - CfgBuffer);
       CurrLine  = GetNextSpace (CurrLine, EndLine);
-      MenuEntry[EntryNum].Kernel.Len = CurrLine - CfgBuffer - MenuEntry[EntryNum].Kernel.Pos;
+      MenuEntry[EntryNum].Kernel.Len = (UINT32)(CurrLine - CfgBuffer - MenuEntry[EntryNum].Kernel.Pos);
 
       // Mark command line
       CurrLine = TrimLeft (CurrLine);
-      MenuEntry[EntryNum].Command.Pos = CurrLine - CfgBuffer;
+      MenuEntry[EntryNum].Command.Pos = (UINT32)(CurrLine - CfgBuffer);
       EndLine  = TrimRight (EndLine);
-      MenuEntry[EntryNum].Command.Len = EndLine - CfgBuffer - MenuEntry[EntryNum].Command.Pos + 1;
+      MenuEntry[EntryNum].Command.Len = (UINT32)(EndLine - CfgBuffer - MenuEntry[EntryNum].Command.Pos + 1);
     } else if (MatchKeyWord (CurrLine, "initrd") > 0) {
       CurrLine += 6;
 
       // Mark initrd path
       CurrLine = TrimLeft (CurrLine);
-      MenuEntry[EntryNum].InitRd.Pos = CurrLine - CfgBuffer;
+      MenuEntry[EntryNum].InitRd.Pos = (UINT32)(CurrLine - CfgBuffer);
       EndLine  = TrimRight (EndLine);
-      MenuEntry[EntryNum].InitRd.Len = EndLine - CfgBuffer - MenuEntry[EntryNum].InitRd.Pos + 1;
+      MenuEntry[EntryNum].InitRd.Len = (UINT32)(EndLine - CfgBuffer - MenuEntry[EntryNum].InitRd.Pos + 1);
     }
 
     CurrLine = NextLine;

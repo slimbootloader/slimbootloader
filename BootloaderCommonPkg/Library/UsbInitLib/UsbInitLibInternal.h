@@ -24,7 +24,7 @@
 
 typedef struct {
   EFI_HANDLE                      UsbHostHandle;
-  UINTN                           UsbIoCount;
+  UINT32                          UsbIoCount;
   PEI_USB_IO_PPI                 *UsbIoArray[MAX_USB_DEVICE_NUMBER];
 } USB_INIT_INSTANCE;
 

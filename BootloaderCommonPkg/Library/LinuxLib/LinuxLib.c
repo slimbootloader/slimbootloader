@@ -236,9 +236,9 @@ LoadBzImage (
   // Update boot params
   //
   Bp->Hdr.LoaderId     = 0xff;
-  Bp->Hdr.CmdLinePtr   = (UINTN)CmdLineBase;
+  Bp->Hdr.CmdLinePtr   = (UINT32)(UINTN)CmdLineBase;
   Bp->Hdr.CmdlineSize  = CmdLineLen;
-  Bp->Hdr.RamDiskStart = (UINTN)InitRdBase;
+  Bp->Hdr.RamDiskStart = (UINT32)(UINTN)InitRdBase;
   Bp->Hdr.RamDisklen   = InitRdLen;
 
   return EFI_SUCCESS;

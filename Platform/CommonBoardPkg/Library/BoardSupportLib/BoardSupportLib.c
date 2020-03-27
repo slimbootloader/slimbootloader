@@ -63,7 +63,7 @@ FillBootOptionListFromCfgData (
   UINT8                       PrevBootOptionIndex;
   UINT8                       UpdateFlag;
   UINTN                       ImageIdx;
-  UINTN                       Idx;
+  UINT32                      Idx;
   UINT64                      Lba;
   CHAR8                      *StrPtr;
 

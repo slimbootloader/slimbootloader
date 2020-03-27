@@ -37,7 +37,7 @@
 extern "C" {
 #endif
 
-typedef unsigned int size_t;
+typedef UINTN size_t;
 
 /*
  * lz4.h provides raw compression format functions, for optimal performance and integration into programs.

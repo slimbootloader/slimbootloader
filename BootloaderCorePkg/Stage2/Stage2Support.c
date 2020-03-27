@@ -198,7 +198,7 @@ SplitMemroyMap (
   )
 {
   UINTN            Idx;
-  UINTN            NewIdx;
+  UINT32           NewIdx;
   UINTN            Loop;
   UINT8            Flag;
   UINT8            Type;

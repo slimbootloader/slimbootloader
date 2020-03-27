@@ -37,9 +37,9 @@
 #define  CSE2HOST               0x60
 #define  PCIE_MMCFG_BASE        0xE0000000
 #define  CSE_CFG_BASE           (PCIE_MMCFG_BASE + 0x78000)
-#define  CSE_VIDDID             (*(volatile UINT32 *)CSE_CFG_BASE)
-#define  CSE_HOST2CSE           (*(volatile UINT32 *)(CSE_CFG_BASE + HOST2CSE))
-#define  CSE_CSE2HOST           (*(volatile UINT32 *)(CSE_CFG_BASE + CSE2HOST))
+#define  CSE_VIDDID             (*(volatile UINT32 *)(UINTN)CSE_CFG_BASE)
+#define  CSE_HOST2CSE           (*(volatile UINT32 *)(UINTN)(CSE_CFG_BASE + HOST2CSE))
+#define  CSE_CSE2HOST           (*(volatile UINT32 *)(UINTN)(CSE_CFG_BASE + CSE2HOST))
 
 /**
   Load Stage1B raw image to destination address.

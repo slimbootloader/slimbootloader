@@ -466,7 +466,7 @@ ResetSystemIocIpc (
     ASSERT (IocUartData->DeviceIndex < 4);
     ASSERT (IocUartData->DeviceIndex != 2);
 
-    PciBar = GetUartBaseAddress (IocUartData->DeviceIndex);
+    PciBar = (UINT32)GetUartBaseAddress (IocUartData->DeviceIndex);
     ASSERT (PciBar != 0xFFFFFFFF);
 
     MmioWrite32 (PciBar + R_LPSS_IO_MEM_RESETS, 0);
@@ -526,7 +526,7 @@ AssignPciIrqs (
   VOID
   )
 {
-  UINT32 PciBase;
+  UINTN  PciBase;
   UINT8  Bus;
   UINT8  Function;
   UINT8  IntPin;
@@ -561,7 +561,7 @@ SaveOtgRole (
   VOID
   )
 {
-  UINT32                            XhciPciBase;
+  UINTN                             XhciPciBase;
   UINT32                            XhciBar;
   UINT8                             BootMode;
 
@@ -656,7 +656,7 @@ RestoreOtgRole (
   VOID
   )
 {
-  UINT32                            XhciPciBase;
+  UINTN                             XhciPciBase;
   UINT32                            XhciBar;
   UINT32                            DualRoleCfg0;
   UINT8                             BootMode;
@@ -729,7 +729,7 @@ ClearFspHob (
   LdrGlobal  = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
   HandOffHob = (EFI_HOB_HANDOFF_INFO_TABLE  *) LdrGlobal->FspHobList;
   if (HandOffHob != NULL) {
-    Length     = (UINT8 *) (UINTN) HandOffHob->EfiEndOfHobList - (UINT8 *)HandOffHob;
+    Length     = (UINT32)((UINTN)HandOffHob->EfiEndOfHobList - (UINTN)HandOffHob);
     ZeroMem (HandOffHob, Length);
     LdrGlobal->FspHobList = NULL;
   }
@@ -841,7 +841,7 @@ BuildVtdInfo (
   )
 {
   VTD_INFO     *VtdInfo;
-  UINT32        McD0BaseAddress;
+  UINTN         McD0BaseAddress;
   UINT32        MchBar;
   UINT32        Idx;
   UINT32        VtdIdx;
@@ -1346,7 +1346,7 @@ SaveNvsData (
       break;
     }
 
-    DataSize  = RleCompressData (Buffer, Length, (UINT8 *)MemPool + sizeof (MRC_PARAM_HDR));
+    DataSize  = (UINT32)RleCompressData (Buffer, Length, (UINT8 *)MemPool + sizeof (MRC_PARAM_HDR));
     DataSize += sizeof (MRC_PARAM_HDR);
 
     DEBUG ((DEBUG_INFO, "Writing MRC ParamData to SPI BIOS @ 0x%X:0x%X\n", BiosOffset + MrcParamsOffset, DataSize));
@@ -1777,7 +1777,7 @@ PlatformUpdateAcpiTable (
 
     Hpet->BaseAddressLower32Bit.Address = HPET_BASE_ADDRESS;
     Hpet->EventTimerBlockId             = EFI_ACPI_EVENT_TIMER_BLOCK_ID;
-    Data16 = * (UINT16 *) HPET_BASE_ADDRESS;
+    Data16 = * (UINT16 *)(UINTN) HPET_BASE_ADDRESS;
     Data16 &= B_HPET_GCID_NT;
     if (Data16 != 0) {
       Hpet->EventTimerBlockId = Hpet->EventTimerBlockId | Data16;

@@ -88,7 +88,7 @@ GetCompressedTCGEventSize (
     Loc += sizeof (EventSize) + EventSize;
   }
 
-  return Loc - (UINT8 *)EventHdr;
+  return (UINT32)(Loc - (UINT8 *)EventHdr);
 }
 
 

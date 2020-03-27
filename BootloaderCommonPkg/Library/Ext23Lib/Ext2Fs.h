@@ -453,10 +453,10 @@ BDevStrategy (
   @param[in]      Path          Path to locate the file
   @param[in/out]  File          The struct having the device and file info
 
-  @retval 0 if file open is success
+  @retval RETURN_SUCCESS if file open is success
   @retval other if error.
 **/
-INT32
+RETURN_STATUS
 EFIAPI
 Ext2fsOpen (
   IN      CHAR8         *Path,
@@ -468,9 +468,9 @@ Ext2fsOpen (
 
   @param[in/out]    File        File to be closed.
 
-  @retval 0 regardless of success/fail condition
+  @retval RETURN_SUCCESS regardless of success/fail condition
 **/
-INT32
+RETURN_STATUS
 EFIAPI
 Ext2fsClose (
   IN OUT  OPEN_FILE     *File
@@ -485,10 +485,10 @@ Ext2fsClose (
   @param[in]        Size      Size to be read
   @param[out]       ResId     Actual read size
 
-  @retval 0 if file read is success
+  @retval RETURN_SUCCESS if file read is success
   @retval other if error.
 **/
-INT32
+RETURN_STATUS
 EFIAPI
 Ext2fsRead (
   IN OUT  OPEN_FILE     *File,

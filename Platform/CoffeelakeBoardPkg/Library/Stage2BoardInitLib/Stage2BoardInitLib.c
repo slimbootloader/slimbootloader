@@ -539,7 +539,7 @@ ClearFspHob (
   }
 
   HandOffHob = (EFI_HOB_HANDOFF_INFO_TABLE  *) LdrGlobal->FspHobList;
-  Length     = (UINT8 *) (UINTN) HandOffHob->EfiEndOfHobList - (UINT8 *)HandOffHob;
+  Length     = (UINT32)((UINTN)HandOffHob->EfiEndOfHobList - (UINTN)HandOffHob);
   ZeroMem (HandOffHob, Length);
   LdrGlobal->FspHobList = NULL;
 }
@@ -917,7 +917,7 @@ BuildVtdInfo (
   )
 {
   VTD_INFO     *VtdInfo;
-  UINT32        McD0BaseAddress;
+  UINTN         McD0BaseAddress;
   UINT32        MchBar;
   UINT32        Idx;
   UINT32        VtdIdx;
@@ -958,7 +958,7 @@ BoardInit (
   EFI_STATUS      Status;
   UINT32          RgnBase;
   UINT32          RgnSize;
-  UINT32          LpcBase;
+  UINTN           LpcBase;
   UINTN           SpiBaseAddress;
   UINT16          TcoBase;
   UINT32          SaMcAddress;

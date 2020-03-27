@@ -391,7 +391,7 @@ PeiUsbRead10 (
   BlockSize       = (UINT32) PeiBotDevice->Media.BlockSize;
 
   MaxBlock        = (UINT16) (65535 / BlockSize);
-  BlocksRemaining = NumberOfBlocks;
+  BlocksRemaining = (UINT32) NumberOfBlocks;
 
   Status          = EFI_SUCCESS;
   while (BlocksRemaining > 0) {

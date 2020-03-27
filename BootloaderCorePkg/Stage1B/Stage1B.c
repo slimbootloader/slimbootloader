@@ -510,11 +510,11 @@ SecStartup2 (
   OldBufPtr   = (UINT8 *)(UINTN)Stage1aParam->AllocDataBase;
   BufPtr = AllocatePool (AllocateLen);
   CopyMem (BufPtr, OldBufPtr, AllocateLen);
-  Delta = BufPtr - OldBufPtr;
+  Delta = (UINT32)(BufPtr - OldBufPtr);
 
   // Adjust buffer pointer
   for (Idx = 0; Idx < EnumBufMax; Idx++) {
-    Offset   = (UINT8 *)Stage1aParam->BufInfo[Idx].DstBase - (UINT8 *)OldLdrGlobal;
+    Offset   = (UINT32)((UINT8 *)Stage1aParam->BufInfo[Idx].DstBase - (UINT8 *)OldLdrGlobal);
     FieldPtr = (VOID **)((UINT8 *)LdrGlobal + Offset);
     if (*FieldPtr != NULL) {
       *FieldPtr = (UINT8 *)(*FieldPtr) + Delta;

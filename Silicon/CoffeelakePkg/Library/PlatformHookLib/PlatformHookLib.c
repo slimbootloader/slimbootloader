@@ -61,7 +61,7 @@ GetSerialPortBase (
   )
 {
   UINT16  Cmd16;
-  UINT32  PciAddress;
+  UINTN   PciAddress;
   UINT8   DebugPort;
 
   DebugPort = GetDebugPort ();
@@ -147,7 +147,7 @@ PlatformHookSerialPortInitialize (
   VOID
   )
 {
-  UINT32  PciAddress;
+  UINTN   PciAddress;
   UINT32  BarAddress;
   UINT8   DebugPort;
 

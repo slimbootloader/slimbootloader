@@ -582,7 +582,7 @@ Lz4Decompress (
   DecompressedSize  = * (UINT32 *)Source;
   Source = (VOID *) ((CHAR8 *)Source + sizeof (UINT32));
   SourceSize -= sizeof (UINT32);
-  Size = (UINT32)LZ4_decompress_safe (Source, Destination, SourceSize, DecompressedSize);
+  Size = (UINT32)LZ4_decompress_safe (Source, Destination, (INT32)SourceSize, DecompressedSize);
   if ((UINT32)Size == DecompressedSize) {
     return RETURN_SUCCESS;
   } else {

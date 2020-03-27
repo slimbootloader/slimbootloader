@@ -71,7 +71,7 @@ GetNextFilePathNode (
   if (Ptr != NULL) {
     while (TRUE) {
       if ((*Ptr == 0) || (*Ptr == '\\') || (*Ptr == '/')) {
-        Len = Ptr - FileName;
+        Len = (UINT32)(Ptr - FileName);
         break;
       }
       Ptr++;

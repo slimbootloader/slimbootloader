@@ -217,7 +217,7 @@ UpdateFpdt (
     UpdateFpdtBootTable (BootPerfTable);
 
     if (ExtraSize != NULL) {
-      *ExtraSize = (UINT8 *) (S3PerfTable + 1) - Table - Fpdt->Header.Length;
+      *ExtraSize = (UINT32)((UINT8 *) (S3PerfTable + 1) - Table - Fpdt->Header.Length);
     }
 
   }
