@@ -179,6 +179,7 @@ VOID BoardDetection (
 
 **/
 VOID
+EFIAPI
 BoardInit (
   IN  BOARD_INIT_PHASE  InitPhase
 )
@@ -233,10 +234,10 @@ FindNvsData (
     return NULL;
   }
 
-  if (*(UINT32 *)MrcData == 0xFFFFFFFF) {
+  if (*(UINT32 *)(UINTN)MrcData == 0xFFFFFFFF) {
     return NULL;
   } else {
-    return (VOID *)MrcData;
+    return (VOID *)(UINTN)MrcData;
   }
 }
 

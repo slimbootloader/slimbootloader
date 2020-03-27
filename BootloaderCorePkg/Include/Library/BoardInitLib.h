@@ -28,6 +28,7 @@
 
 **/
 VOID
+EFIAPI
 BoardInit (
   IN  BOARD_INIT_PHASE  InitPhase
   );
@@ -38,6 +39,7 @@ BoardInit (
   @param  FspUpdPtr            The pointer to the FSP-S/FSP-M UPD to be updated.
 **/
 VOID
+EFIAPI
 UpdateFspConfig (
   VOID     *FspUpdPtr
   );
@@ -46,6 +48,7 @@ UpdateFspConfig (
   Disable watch dog timer (Halt TCO timer).
 **/
 VOID
+EFIAPI
 DisableWatchDogTimer (
   VOID
   );
@@ -54,6 +57,7 @@ DisableWatchDogTimer (
   Enables the execution by writing to the MSR.
 **/
 VOID
+EFIAPI
 EnableCodeExecution (
   VOID
   );
@@ -99,6 +103,7 @@ SaveNvsData (
 
 **/
 EFI_STATUS
+EFIAPI
 BuildHobHandoffInfoTable (
   IN EFI_BOOT_MODE         BootMode,
   IN EFI_PHYSICAL_ADDRESS  MemoryBegin,
@@ -127,6 +132,7 @@ PlatformUpdateHobInfo (
 
 **/
 EFI_STATUS
+EFIAPI
 PlatformUpdateAcpiTable (
   IN UINT8    *Current
   );

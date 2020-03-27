@@ -133,17 +133,17 @@ InitCsmeUpdInputData (
 
   CsmeUpdDriverInput = (CSME_UPDATE_DRIVER_INPUT *)AllocateZeroPool (sizeof(CSME_UPDATE_DRIVER_INPUT));
 
-  CsmeUpdDriverInput->AllocatePool     = (VOID *)((UINT32)AllocatePool);
-  CsmeUpdDriverInput->AllocateZeroPool = (VOID *)((UINT32)AllocateZeroPool);
-  CsmeUpdDriverInput->FreePool         = (VOID *)((UINT32)FreePool);
-  CsmeUpdDriverInput->CopyMem          = (VOID *)((UINT32)CopyMem);
-  CsmeUpdDriverInput->SetMem           = (VOID *)((UINT32)SetMem);
-  CsmeUpdDriverInput->CompareMem       = (VOID *)((UINT32)CompareMem);
-  CsmeUpdDriverInput->Stall            = (VOID *)((UINT32)MicroSecondDelay);
-  CsmeUpdDriverInput->PciRead          = (VOID *)((UINT32)PciReadBuffer);
-  CsmeUpdDriverInput->HeciReadMessage  = (VOID *)((UINT32)HeciReceive);
-  CsmeUpdDriverInput->HeciSendMessage  = (VOID *)((UINT32)HeciSend);
-  CsmeUpdDriverInput->HeciReset        = (VOID *)((UINT32)ResetHeciInterface);
+  CsmeUpdDriverInput->AllocatePool     = (VOID *)((UINTN)AllocatePool);
+  CsmeUpdDriverInput->AllocateZeroPool = (VOID *)((UINTN)AllocateZeroPool);
+  CsmeUpdDriverInput->FreePool         = (VOID *)((UINTN)FreePool);
+  CsmeUpdDriverInput->CopyMem          = (VOID *)((UINTN)CopyMem);
+  CsmeUpdDriverInput->SetMem           = (VOID *)((UINTN)SetMem);
+  CsmeUpdDriverInput->CompareMem       = (VOID *)((UINTN)CompareMem);
+  CsmeUpdDriverInput->Stall            = (VOID *)((UINTN)MicroSecondDelay);
+  CsmeUpdDriverInput->PciRead          = (VOID *)((UINTN)PciReadBuffer);
+  CsmeUpdDriverInput->HeciReadMessage  = (VOID *)((UINTN)HeciReceive);
+  CsmeUpdDriverInput->HeciSendMessage  = (VOID *)((UINTN)HeciSend);
+  CsmeUpdDriverInput->HeciReset        = (VOID *)((UINTN)ResetHeciInterface);
 
   return CsmeUpdDriverInput;
 }
@@ -406,7 +406,7 @@ GetFirmwareUpdateInfo (
       UpdateRegion                  = &UpdatePartition->FwRegion[2];
       UpdateRegion->ToUpdateAddress = NonRedundantRegionOffset;
       UpdateRegion->UpdateSize      = NonRedundantRegionSize;
-      UpdateRegion->SourceAddress   = (UINT8 *)((UINT32)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER) + NonRedundantRegionOffset);
+      UpdateRegion->SourceAddress   = (UINT8 *)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER) + NonRedundantRegionOffset);
       UpdatePartition->RegionCount += 1;
     }
   }

@@ -160,6 +160,7 @@ InitializeService (
 
 **/
 VOID
+EFIAPI
 BoardNotifyPhase (
   IN BOARD_INIT_PHASE   Phase
   );

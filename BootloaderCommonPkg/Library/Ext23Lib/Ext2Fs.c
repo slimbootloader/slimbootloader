@@ -108,7 +108,7 @@
   @retval other if error.
 **/
 STATIC
-INT32
+RETURN_STATUS
 BlockMap (
   IN  OPEN_FILE     *File,
   IN  INDPTR         FileBlock,
@@ -127,7 +127,7 @@ BlockMap (
   @retval other if error.
 **/
 STATIC
-INT32
+RETURN_STATUS
 SearchDirectory (
   IN      CHAR8         *Name,
   IN      INT32          Length,
@@ -148,7 +148,7 @@ SearchDirectory (
   @retval 0 if success
   @retval other if error.
 **/
-INT32
+RETURN_STATUS
 EFIAPI
 BDevStrategy (
   IN  VOID       *DevData,
@@ -193,7 +193,7 @@ BDevStrategy (
   @retval         0 if success
   @retval         other if error.
 **/
-INT32
+RETURN_STATUS
 EFIAPI
 ReadInode (
   IN    INODE32      INumber,
@@ -213,7 +213,7 @@ ReadInode (
   FileSystem = Fp->SuperBlockPtr;
 
   Ext2FsGrpDes = FileSystem->Ext2FsGrpDes;
-  Ext2FsGrpDes = (EXT2GD*)((UINT32)Ext2FsGrpDes + (INOTOCG(FileSystem, INumber) * FileSystem->Ext2FsGDSize));
+  Ext2FsGrpDes = (EXT2GD*)((UINTN)Ext2FsGrpDes + (INOTOCG(FileSystem, INumber) * FileSystem->Ext2FsGDSize));
 
   InodeSector = (DADDRESS) (Ext2FsGrpDes->Ext2BGDInodeTables + DivU64x32 (ModU64x32 ((INumber - 1), FileSystem->Ext2Fs.Ext2FsINodesPerGroup), FileSystem->Ext2FsInodesPerBlock));
 
@@ -261,7 +261,7 @@ ReadInode (
   @retval other if error.
 **/
 STATIC
-INT32
+RETURN_STATUS
 BlockMap (
   IN  OPEN_FILE     *File,
   IN  INDPTR         FileBlock,
@@ -444,7 +444,7 @@ BlockMap (
   @retval     0 if success
   @retval     other if error.
 **/
-INT32
+RETURN_STATUS
 EFIAPI
 BufReadFile (
   IN  OPEN_FILE     *File,
@@ -458,7 +458,7 @@ BufReadFile (
   INDPTR FileBlock;
   INDPTR DiskBlock;
   UINT32 BlockSize;
-  INT32 Rc;
+  RETURN_STATUS Rc;
 
   Fp = (FILE *)File->FileSystemSpecificData;
   FileSystem = Fp->SuperBlockPtr;
@@ -522,7 +522,7 @@ BufReadFile (
   @retval other if error.
 **/
 STATIC
-INT32
+RETURN_STATUS
 SearchDirectory (
   IN      CHAR8         *Name,
   IN      INT32          Length,
@@ -585,7 +585,7 @@ SearchDirectory (
   @retval 0 if superblock compute is success
   @retval other if error.
 **/
-INT32
+RETURN_STATUS
 EFIAPI
 ReadSBlock (
   IN      OPEN_FILE     *File,
@@ -596,7 +596,7 @@ ReadSBlock (
   UINT8 *Buffer;
   EXT2FS Ext2Fs;
   UINT32 BufSize;
-  INT32  Rc;
+  RETURN_STATUS Rc;
   UINT32 SbOffset;
 
   Rc = 0;
@@ -668,7 +668,7 @@ Exit:
   @retval 0 if Group descriptor read is success
   @retval other if error.
 **/
-INT32
+RETURN_STATUS
 EFIAPI
 ReadGDBlock (
   IN OUT  OPEN_FILE     *File,
@@ -730,7 +730,7 @@ Ext2fsOpen (
   INODE32 INumber;
   FILE *Fp;
   M_EXT2FS *FileSystem;
-  INT32 Rc;
+  RETURN_STATUS Rc;
 #ifndef LIBSA_NO_FS_SYMLINK
   INODE32 ParentInumber;
   INT32 Nlinks;

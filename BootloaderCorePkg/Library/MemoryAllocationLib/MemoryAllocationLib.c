@@ -77,7 +77,7 @@ AllocatePool (
   Top -= AllocationSize;
   Top  = ALIGN_DOWN (Top, POOL_MIN_ALIGNMENT);
   InternalUpdateMemPoolTop (Top);
-  return (VOID *)Top;
+  return (VOID *)(UINTN)Top;
 }
 
 /**
@@ -139,7 +139,7 @@ AllocatePages (
   Top  = ALIGN_DOWN (Top, EFI_PAGE_SIZE);
   Top -= Pages * EFI_PAGE_SIZE;
   InternalUpdateMemPoolTop (Top);
-  return (VOID *)Top;
+  return (VOID *)(UINTN)Top;
 }
 
 /**
@@ -183,7 +183,7 @@ AllocateAlignedPages (
   }
   Top  = ALIGN_DOWN (Top, EFI_PAGE_SIZE);
   InternalUpdateMemPoolTop (Top);
-  return (VOID *)Top;
+  return (VOID *)(UINTN)Top;
 }
 
 /**
@@ -211,7 +211,7 @@ AllocateTemporaryMemory (
   Bottom  = ALIGN_UP (Bottom, POOL_MIN_ALIGNMENT);
   NewBottom = Bottom + AllocationSize;
   InternalUpdateMemPoolBottom (NewBottom);
-  return (VOID *)Bottom;
+  return (VOID *)(UINTN)Bottom;
 }
 
 /**
@@ -233,7 +233,7 @@ FreeTemporaryMemory (
   if (Buffer == NULL) {
     LdrGlobal->MemPoolCurrBottom = LdrGlobal->MemPoolStart;
   } else {
-    NewBottom = (UINT32)Buffer;
+    NewBottom = (UINT32)(UINTN)Buffer;
     if (NewBottom < LdrGlobal->MemPoolCurrBottom) {
       InternalUpdateMemPoolBottom (NewBottom);
     }

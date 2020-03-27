@@ -48,12 +48,12 @@ GetFlashMapBufInfo (
 
   FlashMap      = NULL;
   Stage1aFvBase = PcdGet32 (PcdStage1AFdBase) + PcdGet32 (PcdFSPTSize);
-  FlashMapBase  = (* (UINT32 *)(UINT32)(Stage1aFvBase + PcdGet32 (PcdStage1AFvSize) + FLASH_MAP_ADDRESS));
+  FlashMapBase  = (* (UINT32 *)(UINTN)(Stage1aFvBase + PcdGet32 (PcdStage1AFvSize) + FLASH_MAP_ADDRESS));
   if ( (FlashMapBase > Stage1aFvBase) && \
        (FlashMapBase + sizeof(FLASH_MAP) < Stage1aFvBase + PcdGet32 (PcdStage1AFvSize) - 1) ) {
     // Verify FLASH_MAP is valid before access
-    if (((FLASH_MAP *) FlashMapBase)->Signature == FLASH_MAP_SIG_HEADER) {
-      FlashMap = (FLASH_MAP *) FlashMapBase;
+    if (((FLASH_MAP *)(UINTN)FlashMapBase)->Signature == FLASH_MAP_SIG_HEADER) {
+      FlashMap = (FLASH_MAP *)(UINTN)FlashMapBase;
       BufInfo->SrcBase   = FlashMap;
       BufInfo->AllocLen  = FlashMap->Length;
     }
@@ -97,7 +97,7 @@ AllocateCopyBuffer (
 
   if (BufPtr != NULL) {
     Stage1aParam->AllocDataLen  = AllocLen;
-    Stage1aParam->AllocDataBase = (UINT32) BufPtr;
+    Stage1aParam->AllocDataBase = (UINT32)(UINTN)BufPtr;
 
     // Copy buffer if required
     BufInfo = Stage1aParam->BufInfo;
@@ -166,7 +166,7 @@ PrepareStage1B (
 
   Src = Dst;
   Dst = Exe;
-  Hdr = (LOADER_COMPRESSED_HEADER *) Src;
+  Hdr = (LOADER_COMPRESSED_HEADER *)(UINTN)Src;
 
   // Verify Stage 1B
   if (FixedPcdGet32(PcdVerifiedBootHashMask) & (1 << COMP_TYPE_STAGE_1B)) {
@@ -179,7 +179,7 @@ PrepareStage1B (
       SignHashAlg = HASH_TYPE_SHA384;
     }
 
-    Status = DoHashVerify ((CONST UINT8 *)Src, Length, HASH_USAGE_STAGE_1B, SignHashAlg, NULL);
+    Status = DoHashVerify ((CONST UINT8 *)(UINTN)Src, Length, HASH_USAGE_STAGE_1B, SignHashAlg, NULL);
     AddMeasurePoint (0x10A0);
     if (EFI_ERROR (Status)) {
       if (Status != RETURN_NOT_FOUND) {
@@ -190,7 +190,7 @@ PrepareStage1B (
 
   if (!FeaturePcdGet (PcdStage1BXip)) {
     // Decompress Stage 1B
-    Status = Decompress (Hdr->Signature, Hdr->Data, Hdr->CompressedSize, (VOID *)Dst, NULL);
+    Status = Decompress (Hdr->Signature, Hdr->Data, Hdr->CompressedSize, (VOID *)(UINTN)Dst, NULL);
     AddMeasurePoint (0x10B0);
     if (EFI_ERROR (Status)) {
       Dst = 0;
@@ -255,13 +255,13 @@ SecStartup2 (
 
   // Ver Info
   BufInfo = &Stage1aParam.BufInfo[EnumBufVerInfo];
-  BufInfo->SrcBase   = (VOID *)PcdGet32 (PcdVerInfoBase);
+  BufInfo->SrcBase   = (VOID *)(UINTN)PcdGet32 (PcdVerInfoBase);
   BufInfo->AllocLen  = sizeof (BOOT_LOADER_VERSION);
   BufInfo->DstBase   = &LdrGlobal->VerInfoPtr;
 
   // Hash Store
   BufInfo = &Stage1aParam.BufInfo[EnumBufHashStore];
-  HashStoreTable     = (HASH_STORE_TABLE *)PcdGet32 (PcdHashStoreBase);
+  HashStoreTable     = (HASH_STORE_TABLE *)(UINTN)PcdGet32 (PcdHashStoreBase);
   BufInfo->SrcBase   = HashStoreTable;
   BufInfo->AllocLen  = PcdGet32 (PcdHashStoreSize);
   BufInfo->CopyLen   = HashStoreTable->UsedLength;
@@ -280,7 +280,7 @@ SecStartup2 (
 
   // Pcd Database, only copy initialized data
   BufInfo = &Stage1aParam.BufInfo[EnumBufPcdData];
-  PcdDatabaseBin = (PEI_PCD_DATABASE *)PcdGet32 (PcdFileDataBase);
+  PcdDatabaseBin = (PEI_PCD_DATABASE *)(UINTN)PcdGet32 (PcdFileDataBase);
   BufInfo->SrcBase   = (VOID *)PcdDatabaseBin;
   BufInfo->AllocLen  = PcdDatabaseBin->Length + PcdDatabaseBin->UninitDataBaseSize;
   BufInfo->CopyLen   = PcdDatabaseBin->Length;
@@ -293,7 +293,7 @@ SecStartup2 (
 
   // Config data
   BufInfo = &Stage1aParam.BufInfo[EnumBufCfgData];
-  PcdDatabaseBin = (PEI_PCD_DATABASE *)PcdGet32 (PcdFileDataBase);
+  PcdDatabaseBin = (PEI_PCD_DATABASE *)(UINTN)PcdGet32 (PcdFileDataBase);
   BufInfo->SrcBase   = (VOID *)&mCfgBlobTmpl;
   BufInfo->AllocLen  = PcdGet32 (PcdCfgDatabaseSize);
   BufInfo->CopyLen   = sizeof(CDATA_BLOB);
@@ -360,15 +360,15 @@ SecStartup2 (
     // Need to relocate itself into temporary memory
     Dst = PcdGet32 (PcdStage1ALoadBase);
     Src = PcdGet32 (PcdStage1AFdBase) + PcdGet32 (PcdFSPTSize);
-    CopyMem ((VOID *)Dst, (VOID *)Src, PcdGet32 (PcdStage1AFvSize));
+    CopyMem ((VOID *)(UINTN)Dst, (VOID *)(UINTN)Src, PcdGet32 (PcdStage1AFvSize));
     Delta    = Dst - Src;
-    StageHdr = (STAGE_HDR *)Dst;
+    StageHdr = (STAGE_HDR *)(UINTN)Dst;
     StageHdr->Entry += Delta;
     StageHdr->Base  += Delta;
     Status = PeCoffRelocateImage (StageHdr->Base);
     if (!EFI_ERROR (Status)) {
       EnableCodeExecution ();
-      ContinueEntry = (STAGE_ENTRY) ((UINT32)ContinueFunc + Delta);
+      ContinueEntry = (STAGE_ENTRY) ((UINTN)ContinueFunc + Delta);
     } else {
       CpuHalt ("Relocation failed!\n");
     }
@@ -431,7 +431,7 @@ SecStartup (
   LdrGlobal->LdrFeatures           = FEATURE_MEASURED_BOOT | FEATURE_ACPI;
 
   LoadGdt (&GdtTable);
-  LoadIdt (&IdtTable, (UINT32)LdrGlobal);
+  LoadIdt (&IdtTable, (UINT32)(UINTN)LdrGlobal);
   SetLoaderGlobalDataPointer (LdrGlobal);
 
   InitializeDebugAgent (DEBUG_AGENT_INIT_PREMEM_SEC, Params, SecStartup2);
@@ -450,7 +450,6 @@ SecStartup (
 
 **/
 VOID
-EFIAPI
 ContinueFunc (
   IN VOID  *Params
   )
@@ -496,11 +495,11 @@ ContinueFunc (
           VerInfoTbl->ImageVersion.FspDebug ? 'D' : 'R'));
 
   // Print FSP version
-  FspInfoHdr = (FSP_INFO_HEADER *) (PcdGet32 (PcdFSPTBase) + FSP_INFO_HEADER_OFF);
+  FspInfoHdr = (FSP_INFO_HEADER *)(UINTN)(PcdGet32 (PcdFSPTBase) + FSP_INFO_HEADER_OFF);
   CopyMem (ImageId, &FspInfoHdr->ImageId, sizeof (UINT64));
   DEBUG ((DEBUG_INFO, "FSPV: ID(%a) REV(%08X)\n", ImageId, FspInfoHdr->ImageRevision));
 
-  DEBUG ((DEBUG_INFO, "Loader global data @ 0x%08X\n", (UINT32)LdrGlobal));
+  DEBUG ((DEBUG_INFO, "Loader global data @ 0x%08X\n", (UINT32)(UINTN)LdrGlobal));
   DEBUG ((DEBUG_INFO, "Run  STAGE1A @ 0x%08X\n", PcdGet32 (PcdStage1ALoadBase)));
 
   // Load Stage 1B if required
@@ -508,7 +507,7 @@ ContinueFunc (
 
   // Jump into Stage 1B entry
   if (StageBase != 0) {
-    PeCoffFindAndReportImageInfo ((UINT32) GET_STAGE_MODULE_BASE (StageBase));
+    PeCoffFindAndReportImageInfo ((UINT32)(UINTN)GET_STAGE_MODULE_BASE (StageBase));
     StageEntry = (STAGE_ENTRY) GET_STAGE_MODULE_ENTRY (StageBase);
     if (StageEntry != NULL) {
       Stage1aParam->Stage1BBase = StageBase;

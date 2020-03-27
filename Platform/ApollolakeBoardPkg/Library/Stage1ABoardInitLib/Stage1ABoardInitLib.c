@@ -71,6 +71,7 @@ EarlyPlatformDataCheck (
 
 **/
 VOID
+EFIAPI
 BoardInit (
   IN  BOARD_INIT_PHASE  InitPhase
   )

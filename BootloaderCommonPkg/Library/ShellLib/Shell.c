@@ -596,8 +596,8 @@ FindShellCommand (
   @retval 1                  Buffer1 name is greater than or equal to Buffer2 name.
 
 **/
-STATIC
 INTN
+EFIAPI
 CompareCommandEntry (
   IN CONST VOID                 *Buffer1,
   IN CONST VOID                 *Buffer2

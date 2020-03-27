@@ -328,7 +328,7 @@ LoadFvImage (
 
   // Check preferred image base
   SecCoreImageBase = (UINTN)Section;
-  Status = PeCoffGetPreferredBase ((VOID *)SecCoreImageBase, &PreferredBase);
+  Status = PeCoffGetPreferredBase ((VOID *)(UINTN)SecCoreImageBase, &PreferredBase);
   if (EFI_ERROR (Status)) {
     return Status;
   }
@@ -340,7 +340,7 @@ LoadFvImage (
     SecCoreImageBase += Gap;
   }
 
-  Status = PeCoffLoaderGetEntryPoint ((VOID *)SecCoreImageBase, EntryPoint);
+  Status = PeCoffLoaderGetEntryPoint ((VOID *)(UINTN)SecCoreImageBase, EntryPoint);
 
   return Status;
 }

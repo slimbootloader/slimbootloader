@@ -16,7 +16,7 @@
 
 #define  LZDM_SIGNATURE     SIGNATURE_32 ('L', 'Z', 'D', 'M')
 #define  LZ_SIGNATURE_16    SIGNATURE_16 ('L', 'Z')
-#define  IS_COMPRESSED(x)   (*(UINT16 *)(x) == LZ_SIGNATURE_16)
+#define  IS_COMPRESSED(x)   (*(UINT16 *)(UINTN)(x) == LZ_SIGNATURE_16)
 
 
 /**

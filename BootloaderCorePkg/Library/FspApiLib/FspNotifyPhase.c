@@ -33,7 +33,7 @@ CallFspNotifyPhase (
   NOTIFY_PHASE_PARAMS         NotifyPhaseParams;
   EFI_STATUS                  Status;
 
-  FspHeader = (FSP_INFO_HEADER *) (PcdGet32 (PcdFSPSBase) + FSP_INFO_HEADER_OFF);
+  FspHeader = (FSP_INFO_HEADER *)(UINTN)(PcdGet32 (PcdFSPSBase) + FSP_INFO_HEADER_OFF);
 
   ASSERT (FspHeader->Signature == FSP_INFO_HEADER_SIGNATURE);
   ASSERT (FspHeader->ImageBase == PcdGet32 (PcdFSPSBase));
@@ -42,8 +42,8 @@ CallFspNotifyPhase (
     return EFI_UNSUPPORTED;
   }
 
-  NotifyPhase = (FSP_NOTIFY_PHASE) (FspHeader->ImageBase +
-                                    FspHeader->NotifyPhaseEntryOffset);
+  NotifyPhase = (FSP_NOTIFY_PHASE)(UINTN)(FspHeader->ImageBase +
+                                          FspHeader->NotifyPhaseEntryOffset);
 
   NotifyPhaseParams.Phase = Phase;
 

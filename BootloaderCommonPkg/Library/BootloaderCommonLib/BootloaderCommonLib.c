@@ -193,7 +193,7 @@ SetLibraryData (
   Status     = EFI_ABORTED;
   LibDataPtr = (LIBRARY_DATA *) GetLibraryDataPtr ();
   if (LibDataPtr != NULL) {
-    LibDataPtr[LibId].BufBase = (UINT32)BufPtr;
+    LibDataPtr[LibId].BufBase = (UINT32)(UINTN)BufPtr;
     LibDataPtr[LibId].BufSize = BufSize;
     Status = EFI_SUCCESS;
   }
@@ -292,13 +292,13 @@ DetectUsedStackBottom (
   StackBot = (UINT32 *) ((StackTop - StackSize) & ~ (sizeof (UINTN) - 1));
   ASSERT (*StackBot == STACK_DEBUG_FILL_PATTERN);
 
-  while ((UINT32)StackBot < StackTop) {
+  while ((UINT32)(UINTN)StackBot < StackTop) {
     if (*StackBot != STACK_DEBUG_FILL_PATTERN) {
       break;
     }
     StackBot++;
   }
-  return (UINT32)StackBot;
+  return (UINT32)(UINTN)StackBot;
 }
 
 /**

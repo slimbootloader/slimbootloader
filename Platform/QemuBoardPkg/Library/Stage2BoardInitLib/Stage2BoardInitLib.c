@@ -44,16 +44,19 @@ typedef struct {
 } GRAPHICS_DATA;
 
 UINT8
+EFIAPI
 GetSerialPortStrideSize (
   VOID
 );
 
 UINT32
+EFIAPI
 GetSerialPortBase (
   VOID
   );
 
 VOID
+EFIAPI
 EnableLegacyRegions (
   VOID
 );
@@ -125,7 +128,7 @@ LocateVbtByImageId (
   UINT32          VbtAddr;
   UINTN           Idx;
 
-  VbtMbHdr = (VBT_MB_HDR* )PcdGet32 (PcdGraphicsVbtAddress);
+  VbtMbHdr = (VBT_MB_HDR* )(UINTN)PcdGet32 (PcdGraphicsVbtAddress);
   if ((VbtMbHdr == NULL) || (VbtMbHdr->Signature != MVBT_SIGNATURE)) {
     return 0;
   }
@@ -134,7 +137,7 @@ LocateVbtByImageId (
   VbtEntry = (VBT_ENTRY_HDR *)&VbtMbHdr[1];
   for (Idx = 0; Idx < VbtMbHdr->EntryNum; Idx++) {
     if (VbtEntry->ImageId == ImageId) {
-      VbtAddr = (UINT32)VbtEntry->Data;
+      VbtAddr = (UINT32)(UINTN)VbtEntry->Data;
       break;
     }
     VbtEntry = (VBT_ENTRY_HDR *)((UINT8 *)VbtEntry + VbtEntry->Length);
@@ -229,6 +232,7 @@ GpioInit (
 
 **/
 VOID
+EFIAPI
 BoardInit (
   IN  BOARD_INIT_PHASE    InitPhase
 )

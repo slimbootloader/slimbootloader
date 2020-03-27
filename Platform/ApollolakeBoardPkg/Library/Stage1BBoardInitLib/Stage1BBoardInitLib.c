@@ -511,6 +511,7 @@ SetDebugLevelFromCfgData (
 
 **/
 VOID
+EFIAPI
 UpdateFspConfig (
   VOID     *FspmUpdPtr
   )
@@ -612,7 +613,7 @@ UpdateFspConfig (
   // The NVS buffer will be loaded to PcdStage1BLoadBase FindNvsData()
   // The PcdStage1BLoadBase is not used any more after Stage1B is loaded, so reuse it to save CAR space.
   //
-  Fspmcfg->VariableNvsBufferPtr      = (VOID *)PcdGet32 (PcdStage1BLoadBase);
+  Fspmcfg->VariableNvsBufferPtr      = (VOID *)(UINTN)PcdGet32 (PcdStage1BLoadBase);
 
   //
   // This will be done by configuration data
@@ -1701,6 +1702,7 @@ PlatformFeaturesInit (
 
 **/
 VOID
+EFIAPI
 BoardInit (
   IN  BOARD_INIT_PHASE  InitPhase
   )
@@ -1815,7 +1817,7 @@ FindNvsData (
 
   // Reuse Stage1B loading base as buffer for decompression
   // All MRC NVS data should be less than 64KB
-  MrcVarData   = (VOID *)PcdGet32 (PcdStage1BLoadBase);
+  MrcVarData   = (VOID *)(UINTN)PcdGet32 (PcdStage1BLoadBase);
   MrcParamData = (UINT8 *)MrcVarData + SIZE_1KB;
   MemPool      = (UINT8 *)MrcVarData + SIZE_64KB;
 
@@ -1827,7 +1829,7 @@ FindNvsData (
       break;
     }
 
-    CopyMem (&MrcParamHdr,  (UINT8 *)MrcDataBase + MrcParamsOffset, sizeof (MRC_PARAM_HDR));
+    CopyMem (&MrcParamHdr,  (UINT8 *)(UINTN)MrcDataBase + MrcParamsOffset, sizeof (MRC_PARAM_HDR));
     if (MrcParamHdr.Signature != MRC_PARAM_SIGNATURE) {
       Status = EFI_NOT_FOUND;
       break;
@@ -1837,14 +1839,14 @@ FindNvsData (
     DataSize       = MrcParamHdr.Length - sizeof (MRC_PARAM_HDR);
 
     DEBUG ((DEBUG_INFO, "Read MRC ParamData at 0x%X\n", MrcDataBase + MrcParamsOffset));
-    CopyMem (CompressedData, (UINT8 *)MrcDataBase + MrcParamsOffset + sizeof (MRC_PARAM_HDR), DataSize);
+    CopyMem (CompressedData, (UINT8 *)(UINTN)MrcDataBase + MrcParamsOffset + sizeof (MRC_PARAM_HDR), DataSize);
 
     DEBUG ((DEBUG_INFO, "Decompress ParamData\n"));
     DataSize = RleDecompressData (CompressedData, DataSize, MrcParamData);
 
     DEBUG ((DEBUG_INFO, "Read MRC VarData at 0x%X\n", MrcDataBase + MrcNvDataOffset));
     MrcVarHdr = (MRC_VAR_HDR *)MemPool;
-    CopyMem ((UINT8 *)MrcVarHdr, (UINT8 *)MrcDataBase + MrcNvDataOffset,  sizeof (MRC_VAR_HDR));
+    CopyMem ((UINT8 *)MrcVarHdr, (UINT8 *)(UINTN)MrcDataBase + MrcNvDataOffset,  sizeof (MRC_VAR_HDR));
 
     ActIdx = 0xFF;
     if (MrcVarHdr->Signature == MRC_VAR_SIGNATURE) {
@@ -1875,7 +1877,7 @@ FindNvsData (
 
     // Read NV data from the slot
     Offset = MrcNvDataOffset + sizeof (MRC_VAR_HDR) + ActIdx * MRC_VAR_SLOT_LENGTH;
-    CopyMem ((UINT8 *)MrcVarData, (UINT8 *)MrcDataBase + Offset, MRC_VAR_LENGTH);
+    CopyMem ((UINT8 *)MrcVarData, (UINT8 *)(UINTN)MrcDataBase + Offset, MRC_VAR_LENGTH);
 
   } while (EFI_ERROR (Status));
 

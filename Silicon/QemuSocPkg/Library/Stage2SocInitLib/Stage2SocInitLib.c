@@ -47,6 +47,7 @@ SocUpdateAcpiGnvs (
 }
 
 VOID
+EFIAPI
 EnableLegacyRegions (
   VOID
 )

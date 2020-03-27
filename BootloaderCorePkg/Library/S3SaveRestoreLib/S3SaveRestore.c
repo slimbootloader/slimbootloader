@@ -61,7 +61,7 @@ AppendS3Info (
   BL_PLD_COMM_HDR   *CommHdr;
 
   PlatformUpdateHobInfo (&gSmmInformationGuid, &LdrSmmInfo);
-  SmmBase = (UINT8 *) LdrSmmInfo.SmmBase;
+  SmmBase = (UINT8 *)(UINTN)LdrSmmInfo.SmmBase;
   if (LdrSmmInfo.Flags & SMM_FLAGS_4KB_COMMUNICATION) {
     SmmSize = SIZE_4KB;
   } else {
@@ -105,7 +105,7 @@ FindS3Info (
   BL_PLD_COMM_HDR   *CommHdr;
 
   PlatformUpdateHobInfo (&gSmmInformationGuid, &LdrSmmInfo);
-  SmmBase = (UINT8 *) LdrSmmInfo.SmmBase;
+  SmmBase = (UINT8 *)(UINTN)LdrSmmInfo.SmmBase;
   if (LdrSmmInfo.Flags & SMM_FLAGS_4KB_COMMUNICATION) {
     SmmSize = SIZE_4KB;
   } else {

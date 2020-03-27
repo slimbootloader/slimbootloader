@@ -1114,6 +1114,7 @@ Exit:
 
 **/
 EFI_STATUS
+EFIAPI
 UfsExecScsiCmds (
   IN     UFS_PEIM_HC_PRIVATE_DATA      *Private,
   IN     UINT8                         Lun,

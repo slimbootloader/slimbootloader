@@ -130,6 +130,7 @@ InternalPeiCreateHob (
 
 **/
 EFI_STATUS
+EFIAPI
 BuildHobHandoffInfoTable (
   IN EFI_BOOT_MODE         BootMode,
   IN EFI_PHYSICAL_ADDRESS  MemoryBegin,

@@ -16,7 +16,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 //
 // To redirect output message to consoles (serial, graphic console and etc.)
 //
-typedef UINTN (* CONSOLE_OUT_FUNC) (CONST CHAR16 *Format, ...);
+typedef UINTN (EFIAPI *CONSOLE_OUT_FUNC) (CONST CHAR16 *Format, ...);
 
 /**
   Initialize file systems.

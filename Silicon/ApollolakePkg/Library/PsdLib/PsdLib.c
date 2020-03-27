@@ -157,7 +157,7 @@ GetIbbHashDataFromBpm (
   }
   DEBUG ((DEBUG_INFO, "SubPartitoinPayload BpmBase=0x%p, size=0x%x\n", BpmBase, BpmSize));
 
-  BpmData = (BPMDATA*)(BpmBase);
+  BpmData = (BPMDATA*)(UINTN)BpmBase;
   //IBBL Hash
   if(BpmData->IbblHash == NULL) {
     return RETURN_BUFFER_TOO_SMALL;

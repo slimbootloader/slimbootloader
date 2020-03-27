@@ -84,7 +84,7 @@ RegisterContainerInternal (
     return EFI_NOT_READY;
   }
 
-  ContainerHdr   = (CONTAINER_HDR *)ContainerBase;
+  ContainerHdr   = (CONTAINER_HDR *)(UINTN)ContainerBase;
   ContainerEntry = GetContainerBySignature (ContainerHdr->Signature);
   if (ContainerEntry != NULL) {
     return EFI_UNSUPPORTED;
@@ -101,9 +101,9 @@ RegisterContainerInternal (
   }
 
   ContainerList->Entry[Index].Signature   = ContainerHdr->Signature;
-  ContainerList->Entry[Index].HeaderCache = (UINT32)Buffer;
+  ContainerList->Entry[Index].HeaderCache = (UINT32)(UINTN)Buffer;
   ContainerList->Entry[Index].Base        = ContainerBase;
-  CopyMem (Buffer, (VOID *)ContainerBase, ContainerHdr->DataOffset);
+  CopyMem (Buffer, (VOID *)(UINTN)ContainerBase, ContainerHdr->DataOffset);
   ContainerList->Count++;
 
   return EFI_SUCCESS;
@@ -154,7 +154,7 @@ UnregisterContainer (
   }
 
   if (Index < ContainerList->Count) {
-    FreePool ((VOID *)ContainerList->Entry[Index].HeaderCache);
+    FreePool ((VOID *)(UINTN)ContainerList->Entry[Index].HeaderCache);
     ContainerList->Entry[Index] = ContainerList->Entry[LastIndex];
     ContainerList->Count--;
     Status = EFI_SUCCESS;
@@ -365,7 +365,7 @@ AutheticateContainerInternal (
   Status = EFI_UNSUPPORTED;
   ContainerEntry   = GetContainerBySignature (ContainerHeader->Signature);
   if (ContainerEntry != NULL) {
-    ContainerHdr     = (CONTAINER_HDR *)ContainerEntry->HeaderCache;
+    ContainerHdr     = (CONTAINER_HDR *)(UINTN)ContainerEntry->HeaderCache;
     ContainerHdrSize = GetContainerHeaderSize (ContainerHdr);
     if (ContainerHdrSize > 0) {
       AuthType = ContainerHdr->AuthType;
@@ -401,12 +401,12 @@ AutheticateContainerInternal (
       for (Index = 0; Index < (UINT32)(ContainerHdr->Count - 1); Index++) {
         CompEntry = (COMPONENT_ENTRY *)((UINT8 *)(CompEntry + 1) + CompEntry->HashSize);
       }
-      CompData    = (UINT8 *)(ContainerEntry->Base + ContainerHdr->DataOffset + CompEntry->Offset);
+      CompData    = (UINT8 *)(UINTN)(ContainerEntry->Base + ContainerHdr->DataOffset + CompEntry->Offset);
       CompressHdr = (LOADER_COMPRESSED_HEADER *)CompData;
       if (CompressHdr->Signature == LZDM_SIGNATURE) {
         SignedDataLen = sizeof (LOADER_COMPRESSED_HEADER) + CompressHdr->CompressedSize;
         AuthData = CompData + ALIGN_UP(SignedDataLen, AUTH_DATA_ALIGN);
-        DataBuf  = (UINT8 *)(ContainerEntry->Base + ContainerHdr->DataOffset);
+        DataBuf  = (UINT8 *)(UINTN)(ContainerEntry->Base + ContainerHdr->DataOffset);
         DataLen  = CompEntry->Offset;
         Status   = AuthenticateComponent (DataBuf, DataLen, CompEntry->AuthType,
                                           AuthData, CompEntry->HashData, 0);
@@ -450,7 +450,7 @@ RegisterContainer (
   CONTAINER_HDR            *ContainerHdr;
   UINT64                    SignatureBuffer;
 
-  ContainerHdr     = (CONTAINER_HDR *)ContainerBase;
+  ContainerHdr     = (CONTAINER_HDR *)(UINTN)ContainerBase;
   SignatureBuffer  = ContainerHdr->Signature;
   DEBUG ((DEBUG_INFO, "Registering container %4a\n", (CHAR8 *)&SignatureBuffer));
 
@@ -523,7 +523,7 @@ LocateComponentEntry (
   }
 
   // Locate the component from the container header
-  ContainerHdr = (CONTAINER_HDR *)ContainerEntry->HeaderCache;
+  ContainerHdr = (CONTAINER_HDR *)(UINTN)ContainerEntry->HeaderCache;
   CompEntry = LocateComponentEntryFromContainer (ContainerHdr, ComponentName);
   if (CompEntry == NULL) {
     return EFI_NOT_FOUND;
@@ -576,7 +576,7 @@ GetNextAvailableComponent (
     return Status;
   }
 
-  ContainerHdr = (CONTAINER_HDR *)ContainerEntry->HeaderCache;
+  ContainerHdr = (CONTAINER_HDR *)(UINTN)ContainerEntry->HeaderCache;
   if (ContainerHdr->Count == 0) {
     return Status;
   }
@@ -646,9 +646,9 @@ LocateComponent (
     return Status;
   }
 
-  ContainerHdr = (CONTAINER_HDR *)ContainerEntry->HeaderCache;
+  ContainerHdr = (CONTAINER_HDR *)(UINTN)ContainerEntry->HeaderCache;
   if (Buffer != NULL) {
-    *Buffer = (VOID *)(ContainerEntry->Base + ContainerHdr->DataOffset + CompEntry->Offset);
+    *Buffer = (VOID *)(UINTN)(ContainerEntry->Base + ContainerHdr->DataOffset + CompEntry->Offset);
   }
   if (Length != NULL) {
     *Length = CompEntry->Size;
@@ -744,11 +744,11 @@ LoadComponentWithCallback (
     }
 
     // Collect component info
-    ContainerHdr = (CONTAINER_HDR *)ContainerEntry->HeaderCache;
+    ContainerHdr = (CONTAINER_HDR *)(UINTN)ContainerEntry->HeaderCache;
     AuthType  = CompEntry->AuthType;
     HashData  = CompEntry->HashData;
     Usage     = 0;
-    CompData  = (UINT8 *)(ContainerEntry->Base + ContainerHdr->DataOffset + CompEntry->Offset);
+    CompData  = (UINT8 *)(UINTN)(ContainerEntry->Base + ContainerHdr->DataOffset + CompEntry->Offset);
     CompLen   = CompEntry->Size;
   }
 

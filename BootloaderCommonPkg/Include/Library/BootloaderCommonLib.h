@@ -98,6 +98,7 @@ typedef enum {
   @retval LOADER_STAGE  Current stage of bootloader execution.
 **/
 LOADER_STAGE
+EFIAPI
 GetLoaderStage (
   VOID
   );

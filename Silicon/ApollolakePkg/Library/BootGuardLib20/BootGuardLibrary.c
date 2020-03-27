@@ -116,7 +116,7 @@ FetchPreRBPData(
     // IBB hash will be populated by TXE after RBP. Just cache the IBB hash location here.
     FitData = FindFitEntryData (  FIT_TABLE_TYPE_TXE_SECURE_BOOT,   FIT_ENTRY_SUB_TYPE_IBB_HASH  );
     if (FitData != NULL) {
-      BtGuardInfo->IbbHash.HashPtr = (UINT32)FitData;
+      BtGuardInfo->IbbHash.HashPtr = (UINT32)(UINTN)FitData;
       DEBUG ((DEBUG_INFO, "IBB Hash: 0x%08x\n", BtGuardInfo->IbbHash.HashPtr));
     }
   }
@@ -138,7 +138,7 @@ FetchPostRBPData(
   UINT8 IbbHash[SHA256_DIGEST_SIZE];
 
   if ((BtGuardInfo->Bpm.Mb) && (BtGuardInfo->IbbHash.HashPtr != 0)) {
-    CopyMem (IbbHash, (VOID*)(BtGuardInfo->IbbHash.HashPtr), sizeof (IbbHash));
+    CopyMem (IbbHash, (VOID*)(UINTN)(BtGuardInfo->IbbHash.HashPtr), sizeof (IbbHash));
     CopyMem (BtGuardInfo->IbbHash.Hash, IbbHash, sizeof (BtGuardInfo->IbbHash));
 
     DEBUG ((DEBUG_INFO, "IBB Hash: 0x%08x\n", BtGuardInfo->IbbHash.Hash));

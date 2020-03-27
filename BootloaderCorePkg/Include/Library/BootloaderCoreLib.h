@@ -18,8 +18,8 @@
 #define  IS_FLASH_SPACE(x)            (((x) >= PcdGet32 (PcdFlashBaseAddress)) && \
                                       ((x) <= PcdGet32 (PcdFlashBaseAddress) + PcdGet32 (PcdFlashSize) - 1))
 
-#define  GET_STAGE_MODULE_ENTRY(x)    (STAGE_ENTRY) ((STAGE_HDR *)(x))->Entry
-#define  GET_STAGE_MODULE_BASE(x)     (STAGE_ENTRY) ((STAGE_HDR *)(x))->Base
+#define  GET_STAGE_MODULE_ENTRY(x)    (STAGE_ENTRY) (UINTN)((STAGE_HDR *)(UINTN)(x))->Entry
+#define  GET_STAGE_MODULE_BASE(x)     (STAGE_ENTRY) (UINTN)((STAGE_HDR *)(UINTN)(x))->Base
 
 #define  PCD_GET32_WITH_ADJUST(x)     GetAdjustedPcdBase (PcdGet32 (x))
 

@@ -126,7 +126,7 @@ WaitForCseReady (
 )
 {
   MicroSecondDelay (1);
-  volatile CseControlRegister *CseControlReg = (volatile CseControlRegister*)(*((UINT32*)Arg) + SEC_CSR_HA);
+  volatile CseControlRegister *CseControlReg = (volatile CseControlRegister*)(UINTN)(*((UINT32*)Arg) + SEC_CSR_HA);
   return (CseControlReg->r.SecRdyHra == 0 ? EFI_NOT_READY : EFI_SUCCESS);
 }
 
@@ -147,7 +147,7 @@ WaitForCseToHostInterrupt (
 )
 {
   MicroSecondDelay (1);
-  volatile HostControlRegister *HostControlReg = (volatile HostControlRegister*)(*((UINT32*)Arg) + H_CSR);
+  volatile HostControlRegister *HostControlReg = (volatile HostControlRegister*)(UINTN)(*((UINT32*)Arg) + H_CSR);
   return (HostControlReg->r.His == 0 ? EFI_NOT_READY : EFI_SUCCESS);
 }
 
@@ -168,7 +168,7 @@ WaitForCseRegCbrpCbwp (
 )
 {
   MicroSecondDelay (1);
-  volatile CseControlRegister *CseControlReg = (volatile CseControlRegister*)(*((UINT32*)Arg) + SEC_CSR_HA);
+  volatile CseControlRegister *CseControlReg = (volatile CseControlRegister*)(UINTN)(*((UINT32*)Arg) + SEC_CSR_HA);
   return (CseControlReg->r.SecCbrpHra == CseControlReg->r.SecCbwpHra ? EFI_NOT_READY : EFI_SUCCESS);
 }
 
@@ -188,7 +188,7 @@ WaitForResetStarted (
 )
 {
   MicroSecondDelay (1);
-  volatile HostControlRegister *HostControlReg = (volatile HostControlRegister*)(*((UINT32*)Arg) + H_CSR);
+  volatile HostControlRegister *HostControlReg = (volatile HostControlRegister*)(UINTN)(*((UINT32*)Arg) + H_CSR);
   return (HostControlReg->r.Hrdy == 1 ? EFI_NOT_READY : EFI_SUCCESS);
 }
 
@@ -204,7 +204,7 @@ WaitForResetStarted (
 STATIC
 EFI_STATUS
 HeciGetSecMode (
-  UINTN *SecMode
+  UINT32 *SecMode
 )
 {
   HECI_FWS_REGISTER SeCFirmwareStatus;
@@ -343,9 +343,9 @@ HeciSend (
   volatile CseControlRegister *CseControlReg;
 
   DEBUG ((DEBUG_VERBOSE, "Start HeciSend\n"));
-  HostControlReg = (volatile HostControlRegister *) (HeciBar + H_CSR);
-  CseControlReg = (volatile CseControlRegister *) (HeciBar + SEC_CSR_HA);
-  WriteBuffer = (UINT32*) (HeciBar + H_CB_WW);
+  HostControlReg = (volatile HostControlRegister *)(UINTN)(HeciBar + H_CSR);
+  CseControlReg = (volatile CseControlRegister *)(UINTN)(HeciBar + SEC_CSR_HA);
+  WriteBuffer = (UINT32*)(UINTN)(HeciBar + H_CB_WW);
   MessageBody = (UINT32*) Message;
 
   MaxBuffer = HostControlReg->r.Hcbd;
@@ -451,9 +451,9 @@ HeciReceive (
 
   DEBUG ((DEBUG_VERBOSE, "Start HeciReceive\n"));
 
-  HostControlReg = (volatile HostControlRegister*) (HeciBar + H_CSR);
+  HostControlReg = (volatile HostControlRegister*)(UINTN)(HeciBar + H_CSR);
 
-  ReadBuffer = (UINT32*) (HeciBar + SEC_CB_RW);
+  ReadBuffer = (UINT32*)(UINTN)(HeciBar + SEC_CB_RW);
   MessageBody = (UINT32*) Message;
   while (1) {
     DEBUG ((DEBUG_VERBOSE, "Waiting for CSE notify, HostControlReg: %08x\n", HostControlReg->Data));
@@ -666,7 +666,7 @@ CheckCseResetAndIssueHeciReset (
   volatile CseControlRegister *SecControlReg;
 
   *ResetStatus = FALSE;
-  SecControlReg = (volatile CseControlRegister *) (HeciBar + SEC_CSR_HA);
+  SecControlReg = (volatile CseControlRegister *)(UINTN)(HeciBar + SEC_CSR_HA);
   if (SecControlReg->r.SecRstHra == 1) {
     DEBUG ((DEBUG_INFO, "CSE IS IN RESET - executing HECI interface reset procedure\n"));
 

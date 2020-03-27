@@ -45,13 +45,13 @@ CallFspMemoryInit (
   FSPM_UPD_COMMON            *FspmUpdCommon;
   EFI_STATUS                  Status;
 
-  FspHeader = (FSP_INFO_HEADER *) (FspmBase + FSP_INFO_HEADER_OFF);
+  FspHeader = (FSP_INFO_HEADER *)(UINTN)(FspmBase + FSP_INFO_HEADER_OFF);
 
   ASSERT (FspHeader->Signature == FSP_INFO_HEADER_SIGNATURE);
   ASSERT (FspHeader->ImageBase == FspmBase);
 
   // Copy default UPD data
-  DefaultMemoryInitUpd = (UINT8 *) (FspHeader->ImageBase + FspHeader->CfgRegionOffset);
+  DefaultMemoryInitUpd = (UINT8 *)(UINTN)(FspHeader->ImageBase + FspHeader->CfgRegionOffset);
   CopyMem (&FspmUpd, DefaultMemoryInitUpd, FspHeader->CfgRegionSize);
 
   /* Update architectural UPD fields */
@@ -63,8 +63,8 @@ CallFspMemoryInit (
   UpdateFspConfig (FspmUpd);
 
   ASSERT (FspHeader->FspMemoryInitEntryOffset != 0);
-  FspMemoryInit = (FSP_MEMORY_INIT) (FspHeader->ImageBase + \
-                                     FspHeader->FspMemoryInitEntryOffset);
+  FspMemoryInit = (FSP_MEMORY_INIT)(UINTN)(FspHeader->ImageBase + \
+                                           FspHeader->FspMemoryInitEntryOffset);
 
   DEBUG ((DEBUG_INFO, "Call FspMemoryInit ... "));
   Status = FspMemoryInit (&FspmUpd, HobList);

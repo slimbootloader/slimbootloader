@@ -150,7 +150,7 @@ PeCoffRelocateImage (
 
   Status = RETURN_SUCCESS;
 
-  if (!IsTePe32Image ((VOID *)ImageBase, &Hdr)) {
+  if (!IsTePe32Image ((VOID *)(UINTN)ImageBase, &Hdr)) {
     return RETURN_UNSUPPORTED;
   }
 
@@ -195,7 +195,7 @@ PeCoffRelocateImage (
   // changed the check to a greater-than-eight. It should be at least eight
   // because the PageRva and the BlockSize together take eight bytes. If less
   // than 8 are remaining, then those are the orphans and we need to disregard them.
-  RelocDataPtr =  (UINT16 *) (ImageBase + RelocSectionOffset);
+  RelocDataPtr =  (UINT16 *)(UINTN)(ImageBase + RelocSectionOffset);
   while (RelocSectionSize >= 8) {
     //DEBUG ((DEBUG_INFO, "RelocSectionSize = %08x\n", RelocSectionSize));
 
@@ -223,7 +223,7 @@ PeCoffRelocateImage (
       RelocSectionSize -= sizeof (UINT16);
       ImgOffset = PageRva + Offset - Adjust;
       // DEBUG ((DEBUG_INFO, "%d: PageRva: %08x Offset: %04x Type: %x \n", Index, PageRva, ImgOffset, Type));
-      Data = * (UINT32 *) (ImageBase + ImgOffset);
+      Data = * (UINT32 *)(UINTN)(ImageBase + ImgOffset);
       switch (Type) {
       case 0:
         break;
@@ -240,7 +240,7 @@ PeCoffRelocateImage (
         //DEBUG ((DEBUG_INFO, "Unknown Type!\n"));
         break;
       }
-      * (UINT32 *) (ImageBase + ImgOffset) = Data;
+      * (UINT32 *)(UINTN)(ImageBase + ImgOffset) = Data;
     }
   }
 

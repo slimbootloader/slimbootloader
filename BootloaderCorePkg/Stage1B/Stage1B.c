@@ -89,7 +89,7 @@ PrepareStage2 (
   if (Dst != PCD_GET32_WITH_ADJUST (PcdStage2FdBase)) {
     // Fix Stage 2 entry and base
     Delta = Dst - PCD_GET32_WITH_ADJUST (PcdStage2FdBase);
-    StageHdr = (STAGE_HDR *)Dst;
+    StageHdr = (STAGE_HDR *)(UINTN)Dst;
     StageHdr->Entry += Delta;
     StageHdr->Base  += Delta;
     PeCoffRelocateImage (StageHdr->Base);
@@ -142,8 +142,8 @@ AppendHashStore (
   }
 
   // Check used length before copying to temporary memory
-  OemKeyHashComp = (HASH_STORE_TABLE *) OemKeyHashCompBase;
-  LdrKeyHashBlob = (HASH_STORE_TABLE *) LdrGlobal->HashStorePtr;
+  OemKeyHashComp = (HASH_STORE_TABLE *)(UINTN)OemKeyHashCompBase;
+  LdrKeyHashBlob = (HASH_STORE_TABLE *)(UINTN)LdrGlobal->HashStorePtr;
   OemKeyHashUsedLength  = OemKeyHashComp->UsedLength;
   if (OemKeyHashUsedLength > LdrKeyHashBlob->TotalLength - LdrKeyHashBlob->UsedLength) {
     return EFI_OUT_OF_RESOURCES;
@@ -243,7 +243,7 @@ CreateConfigDatabase (
     Status = GetComponentInfo (FLASH_MAP_SIG_CFGDATA, &CfgDataBase, &CfgDataLength);
     if (!EFI_ERROR (Status)) {
       Status = LoadExternalConfigData (
-               (UINT32)ExtCfgAddPtr,
+               (UINT32)(UINTN)ExtCfgAddPtr,
                CfgDataBase,
                PcdGet32 (PcdCfgDatabaseSize) - CfgBlob->UsedLength
                );
@@ -297,7 +297,7 @@ CreateConfigDatabase (
     }
 
     // Add internal CFGDATA at the end
-    IntCfgAddPtr = (UINT8 *)PCD_GET32_WITH_ADJUST (PcdCfgDataIntBase);
+    IntCfgAddPtr = (UINT8 *)(UINTN)PCD_GET32_WITH_ADJUST (PcdCfgDataIntBase);
     if (IntCfgAddPtr != NULL) {
       Status = AddConfigData (IntCfgAddPtr);
       if (!EFI_ERROR (Status)) {
@@ -440,11 +440,11 @@ SecStartup2 (
   MemPoolStart   = FspReservedMemBase - PcdGet32 (PcdLoaderReservedMemSize);
   MemPoolEnd     = FspReservedMemBase - PcdGet32 (PcdLoaderHobStackSize);
   MemPoolCurrTop = ALIGN_DOWN (MemPoolEnd - sizeof (LOADER_GLOBAL_DATA), 0x10);
-  LdrGlobal      = (LOADER_GLOBAL_DATA *)MemPoolCurrTop;
+  LdrGlobal      = (LOADER_GLOBAL_DATA *)(UINTN)MemPoolCurrTop;
   MemPoolCurrTop = ALIGN_DOWN (MemPoolCurrTop - sizeof (STAGE_IDT_TABLE), 0x10);
-  IdtTablePtr    = (STAGE_IDT_TABLE *)MemPoolCurrTop;
+  IdtTablePtr    = (STAGE_IDT_TABLE *)(UINTN)MemPoolCurrTop;
   MemPoolCurrTop = ALIGN_DOWN (MemPoolCurrTop - sizeof (STAGE_GDT_TABLE), 0x10);
-  GdtTablePtr    = (STAGE_GDT_TABLE *)MemPoolCurrTop;
+  GdtTablePtr    = (STAGE_GDT_TABLE *)(UINTN)MemPoolCurrTop;
   MemPoolCurrTop = ALIGN_DOWN (MemPoolCurrTop, EFI_PAGE_SIZE);
 
   if (FixedPcdGetBool (PcdS3DebugEnabled)) {
@@ -473,7 +473,7 @@ SecStartup2 (
   DEBUG_CODE_BEGIN ();
   // Initialize HOB/Stack region with known pattern so that the usage can be detected
   SetMem32 (
-    (VOID *)LdrGlobal->MemPoolEnd,
+    (VOID *)(UINTN)LdrGlobal->MemPoolEnd,
     LdrGlobal->StackTop - LdrGlobal->MemPoolEnd,
     STACK_DEBUG_FILL_PATTERN
     );
@@ -481,9 +481,9 @@ SecStartup2 (
 
   // Setup global data in memory
   LoadGdt (GdtTablePtr);
-  LoadIdt (IdtTablePtr, (UINT32)LdrGlobal);
+  LoadIdt (IdtTablePtr, (UINT32)(UINTN)LdrGlobal);
   SetLoaderGlobalDataPointer (LdrGlobal);
-  DEBUG ((DEBUG_INFO, "Loader global data @ 0x%08X\n", (UINT32)LdrGlobal));
+  DEBUG ((DEBUG_INFO, "Loader global data @ 0x%08X\n", (UINT32)(UINTN)LdrGlobal));
 
   if (!FeaturePcdGet (PcdStage1BXip)) {
     // Reload GDT table into memory
@@ -507,7 +507,7 @@ SecStartup2 (
 
   // Migrate data from CAR to memory
   AllocateLen = Stage1aParam->AllocDataLen;
-  OldBufPtr   = (UINT8 *)Stage1aParam->AllocDataBase;
+  OldBufPtr   = (UINT8 *)(UINTN)Stage1aParam->AllocDataBase;
   BufPtr = AllocatePool (AllocateLen);
   CopyMem (BufPtr, OldBufPtr, AllocateLen);
   Delta = BufPtr - OldBufPtr;
@@ -532,8 +532,8 @@ SecStartup2 (
       BufPtr = AllocatePool (AllocateLen);
       for (Idx = 0; Idx < PcdGet32 (PcdMaxLibraryDataEntry); Idx++) {
         if (LibDataPtr[Idx].BufBase != 0) {
-          CopyMem (BufPtr, (VOID *)LibDataPtr[Idx].BufBase, LibDataPtr[Idx].BufSize);
-          LibDataPtr[Idx].BufBase = (UINT32)BufPtr;
+          CopyMem (BufPtr, (VOID *)(UINTN)LibDataPtr[Idx].BufBase, LibDataPtr[Idx].BufSize);
+          LibDataPtr[Idx].BufBase = (UINT32)(UINTN)BufPtr;
           BufPtr += ALIGN_UP (LibDataPtr[Idx].BufSize, sizeof (UINTN));
         }
       }
@@ -578,11 +578,11 @@ SecStartup2 (
   // Switch to memory-based stack and continue execution at ContinueFunc
   StackTop  = LdrGlobal->StackTop - (sizeof (STAGE2_PARAM) + sizeof (STAGE1B_PARAM) + 0x40);
   StackTop  = ALIGN_DOWN (StackTop, 0x100);
-  Stage1bParamInMem = (STAGE1B_PARAM *)StackTop;
+  Stage1bParamInMem = (STAGE1B_PARAM *)(UINTN)StackTop;
   CopyMem (Stage1bParamInMem, &Stage1bParam, sizeof (STAGE1B_PARAM));
 
   DEBUG ((DEBUG_INFO, "Switch to memory stack @ 0x%08X\n", StackTop));
-  SwitchStack (ContinueFunc, Stage1bParamInMem, (VOID *)OldLdrGlobal, (VOID *)StackTop);
+  SwitchStack (ContinueFunc, Stage1bParamInMem, (VOID *)OldLdrGlobal, (VOID *)(UINTN)StackTop);
 }
 
 /**
@@ -613,6 +613,7 @@ SecStartup (
 
 **/
 VOID
+EFIAPI
 ContinueFunc (
   IN VOID                      *Context1,
   IN VOID                      *Context2
@@ -699,12 +700,12 @@ ContinueFunc (
   StackTop = ALIGN_DOWN (LdrGlobal->StackTop - sizeof (STAGE2_PARAM), 0x10);
 
   // Build Stage2 Param
-  Stage2Param = (STAGE2_PARAM *)StackTop;
+  Stage2Param = (STAGE2_PARAM *)(UINTN)StackTop;
   SetMem (Stage2Param, sizeof (STAGE2_PARAM), 0);
   Stage2Param->Stage2ExeBase = Dst;
   Stage2Param->PayloadBase   = Stage1bParam->PayloadBase;
 
-  SwitchStack ((SWITCH_STACK_ENTRY_POINT)GET_STAGE_MODULE_ENTRY (Dst), Stage2Param, NULL, (VOID *)StackTop);
+  SwitchStack ((SWITCH_STACK_ENTRY_POINT)GET_STAGE_MODULE_ENTRY (Dst), Stage2Param, NULL, (VOID *)(UINTN)StackTop);
 
   // Error: Stage 2 returned!
   CpuHalt (NULL);

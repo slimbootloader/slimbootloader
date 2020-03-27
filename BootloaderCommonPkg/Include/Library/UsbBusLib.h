@@ -10,7 +10,7 @@
 
 #include <Ppi/UsbIo.h>
 
-typedef EFI_STATUS (*USB_IO_CALLBACK) (PEI_USB_IO_PPI *UsbIoPpi);
+typedef EFI_STATUS (EFIAPI *USB_IO_CALLBACK) (PEI_USB_IO_PPI *UsbIoPpi);
 
 /**
   Enumerate devices on the USB bus.

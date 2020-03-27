@@ -29,8 +29,8 @@ STATIC  EFI_HANDLE          mFsHandle     = NULL;
   @retval EFI_SUCCESS
 
 **/
-STATIC
 EFI_STATUS
+EFIAPI
 ShellCommandFsFunc (
   IN SHELL  *Shell,
   IN UINTN   Argc,
@@ -266,8 +266,8 @@ CmdFsInfo (
   @retval EFI_SUCCESS
 
 **/
-STATIC
 EFI_STATUS
+EFIAPI
 ShellCommandFsFunc (
   IN SHELL  *Shell,
   IN UINTN   Argc,

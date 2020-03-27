@@ -543,7 +543,7 @@ CreateIbbHash (
   if (Sha256Init (&HashCtx,  sizeof (HASH_CTX)) == RETURN_SUCCESS) {
     for (Index = 0; Index < BpmIbb->SegmentCount; Index++) {
       if (BpmIbb->IbbSegment[Index].Flags == IBB_SEGMENT_FLAG_IBB) {
-        Sha256Update (&HashCtx, (VOID *)BpmIbb->IbbSegment[Index].Base, BpmIbb->IbbSegment[Index].Size);
+        Sha256Update (&HashCtx, (VOID *)(UINTN)BpmIbb->IbbSegment[Index].Base, BpmIbb->IbbSegment[Index].Size);
       }
     }
 

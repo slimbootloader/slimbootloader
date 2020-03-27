@@ -134,10 +134,10 @@ StartPreOsChecker (
 
   PreOsParams.Version     = 0x1;
   PreOsParams.HeapSize    = EFI_SIZE_TO_PAGES (0);
-  PreOsParams.HeapAddr    = (UINT32) AllocatePages (PreOsParams.HeapSize);
+  PreOsParams.HeapAddr    = (UINT32)(UINTN)AllocatePages (PreOsParams.HeapSize);
   PreOsParams.HobListPtr  = PcdGet32 (PcdPayloadHobList);
 
-  PreOsParams.OsBootState.Esi     = (UINT32) OsBootParam;
+  PreOsParams.OsBootState.Esi     = (UINT32)(UINTN)OsBootParam;
   PreOsParams.OsBootState.Eip     = OsBootParam->Hdr.Code32Start;
   PreOsParams.OsBootState.Eflags  = 0;
 

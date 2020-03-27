@@ -173,7 +173,7 @@ FindAcpiTableBySignature (
   RsdtEntry = (UINT32 *) ((UINT8 *)Rsdt + sizeof (EFI_ACPI_DESCRIPTION_HEADER));
   EntryNum  = (Rsdt->Length - sizeof (EFI_ACPI_DESCRIPTION_HEADER)) / sizeof (UINT32);
   for (Index = 0; Index < EntryNum; Index++) {
-    CurrHdr = (EFI_ACPI_DESCRIPTION_HEADER *)RsdtEntry[Index];
+    CurrHdr = (EFI_ACPI_DESCRIPTION_HEADER *)(UINTN)RsdtEntry[Index];
     if ((CurrHdr != NULL) && (CurrHdr->Signature == Signature)) {
       if (EntryIndex != NULL) {
         *EntryIndex = Index;
@@ -197,6 +197,7 @@ FindAcpiTableBySignature (
   @retval EFI_ABORTED             Error occrued
 **/
 EFI_STATUS
+EFIAPI
 AcpiTableUpdate (
   IN     UINT8                      *AcpiTable,
   IN     UINT32                      Length
@@ -224,7 +225,7 @@ AcpiTableUpdate (
     return EFI_INVALID_PARAMETER;
   }
 
-  Rsdp = (EFI_ACPI_5_0_ROOT_SYSTEM_DESCRIPTION_POINTER *)PcdGet32 (PcdAcpiTablesRsdp);
+  Rsdp = (EFI_ACPI_5_0_ROOT_SYSTEM_DESCRIPTION_POINTER *)(UINTN)PcdGet32 (PcdAcpiTablesRsdp);
   Rsdt = (EFI_ACPI_DESCRIPTION_HEADER *)(UINTN)Rsdp->RsdtAddress;
   Xsdt = (EFI_ACPI_DESCRIPTION_HEADER *)(UINTN)Rsdp->XsdtAddress;
   RsdtEntry = (UINT32 *) ((UINT8 *)Rsdt + sizeof (EFI_ACPI_DESCRIPTION_HEADER));
@@ -233,7 +234,7 @@ AcpiTableUpdate (
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
   S3Data    = (S3_DATA *)LdrGlobal->S3DataPtr;
-  Current   = (UINT8 *)S3Data->AcpiTop;
+  Current   = (UINT8 *)(UINTN)S3Data->AcpiTop;
   AcpiMax   = S3Data->AcpiBase + PcdGet32 (PcdLoaderAcpiReclaimSize);
 
   Status = EFI_SUCCESS;
@@ -259,7 +260,7 @@ AcpiTableUpdate (
     // Determine policy
     Previous = Current;
     ACPI_ALIGN ();
-    if (((UINT32)Current + AcpiHdr->Length) > AcpiMax) {
+    if (((UINT32)(UINTN)Current + AcpiHdr->Length) > AcpiMax) {
       Status = EFI_OUT_OF_RESOURCES;
       break;
     }
@@ -320,7 +321,7 @@ AcpiTableUpdate (
   //
   // Check ACPI memory range again since a Table length may increase in hook
   //
-  if ((UINT32)Current > AcpiMax) {
+  if ((UINT32)(UINTN)Current > AcpiMax) {
     Status = EFI_OUT_OF_RESOURCES;
   }
 
@@ -478,7 +479,7 @@ UpdateFwst (
       FwstAcpiTablePtr->EsrtTableEntry[Count].LastAttemptVersion = FwUpdCompStatus->LastAttemptVersion;
       FwstAcpiTablePtr->EsrtTableEntry[Count].LastAttemptStatus = FwUpdCompStatus->LastAttemptStatus;
     }
-    FwUpdCompStatus = (FW_UPDATE_COMP_STATUS *)((UINT32)FwUpdCompStatus + sizeof(FW_UPDATE_COMP_STATUS));
+    FwUpdCompStatus = (FW_UPDATE_COMP_STATUS *)((UINT32)(UINTN)FwUpdCompStatus + sizeof(FW_UPDATE_COMP_STATUS));
   }
 
   return EFI_SUCCESS;
@@ -528,7 +529,7 @@ AcpiInit (
   Facp = NULL;
   UpdateRdstXsdt = 0;
 
-  Current = (UINT8 *)(*AcpiMemBase);
+  Current = (UINT8 *)(UINTN)(*AcpiMemBase);
 
   //
   // Create RSDP
@@ -561,7 +562,7 @@ AcpiInit (
   TotalSize = sizeof (EFI_ACPI_DESCRIPTION_HEADER) + PcdGet32 (PcdAcpiTablesMaxEntry) * sizeof (UINT64);
   Current += TotalSize;
 
-  TblPtr  = (UINT8 *)PcdGet32 (PcdAcpiTablesAddress);
+  TblPtr  = (UINT8 *)(UINTN)PcdGet32 (PcdAcpiTablesAddress);
   EndPtr  = TblPtr + ((* ((UINT32 *) (TblPtr - 8)) & 0xFFFFFF) - 28);
   while (TblPtr < EndPtr) {
     Previous = Current;
@@ -669,16 +670,16 @@ AcpiInit (
   //
   // Update RSDP
   //
-  Rsdp->RsdtAddress = (UINT32)Rsdt;
-  Rsdp->XsdtAddress = (UINT64) (UINTN)Xsdt;
+  Rsdp->RsdtAddress = (UINT32)(UINTN)Rsdt;
+  Rsdp->XsdtAddress = (UINT64)(UINTN)Xsdt;
   Rsdp->Checksum    = CalculateCheckSum8 ((UINT8 *)Rsdp, sizeof (EFI_ACPI_1_0_ROOT_SYSTEM_DESCRIPTION_POINTER));
   Rsdp->ExtendedChecksum = CalculateCheckSum8 ((UINT8 *)Rsdp, Rsdp->Length);
-  *AcpiMemBase = (UINT32)Current;
+  *AcpiMemBase = (UINT32)(UINTN)Current;
 
   //
   // Keep a copy at F segment so that non-UEFI OS will find ACPI tables
   //
-  Status = PcdSet32S (PcdAcpiTablesRsdp, (UINT32)Rsdp);
+  Status = PcdSet32S (PcdAcpiTablesRsdp, (UINT32)(UINTN)Rsdp);
   CopyMem ((VOID *)0xFFF80, Rsdp, sizeof (RsdpTmp));
 
   // Update ACPI update service so that payload can have opportunity to update ACPI tables
@@ -718,15 +719,15 @@ FindAcpiWakeVectorAndJump (
   UINT32                                          WakeVector;
   DOWAKEUP                                        DoWake;
 
-  Rsdp = (EFI_ACPI_5_0_ROOT_SYSTEM_DESCRIPTION_POINTER *) AcpiTableBase;
-  Xsdt = (EFI_ACPI_DESCRIPTION_HEADER *) (UINTN)Rsdp->XsdtAddress;
+  Rsdp = (EFI_ACPI_5_0_ROOT_SYSTEM_DESCRIPTION_POINTER *)(UINTN)AcpiTableBase;
+  Xsdt = (EFI_ACPI_DESCRIPTION_HEADER *)(UINTN)Rsdp->XsdtAddress;
   XsdtEntry = (UINT64 *) ((UINT8 *)Xsdt + sizeof (EFI_ACPI_DESCRIPTION_HEADER));
 
   for (Index = 0; Index < PcdGet32 (PcdAcpiTablesMaxEntry); ++Index) {
     Hdr = (EFI_ACPI_COMMON_HEADER *) (UINTN)XsdtEntry[Index];
     if (Hdr->Signature == EFI_ACPI_5_0_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE) {
       Facp = (EFI_ACPI_5_0_FIXED_ACPI_DESCRIPTION_TABLE *) Hdr;
-      Facs = (EFI_ACPI_5_0_FIRMWARE_ACPI_CONTROL_STRUCTURE *) Facp->FirmwareCtrl;
+      Facs = (EFI_ACPI_5_0_FIRMWARE_ACPI_CONTROL_STRUCTURE *)(UINTN)Facp->FirmwareCtrl;
       if (Facs->Signature == EFI_ACPI_5_0_FIRMWARE_ACPI_CONTROL_STRUCTURE_SIGNATURE) {
         WakeVector = Facs->FirmwareWakingVector;
         // Calculate CRC32 for 0x00000000 ---> BootLoaderRsvdMemBase and
@@ -736,8 +737,8 @@ FindAcpiWakeVectorAndJump (
             return;
           }
         }
-        CopyMem ((VOID *)WakeUpBuffer, &WakeUp, WakeUpSize);
-        DoWake = (DOWAKEUP)WakeUpBuffer;
+        CopyMem ((VOID *)(UINTN)WakeUpBuffer, &WakeUp, WakeUpSize);
+        DoWake = (DOWAKEUP)(UINTN)WakeUpBuffer;
         DEBUG ((DEBUG_INIT, "Jump to Wake vector = 0x%x\n", WakeVector));
         DoWake (WakeVector);
         //

@@ -139,14 +139,14 @@ IasGetFiles (
 
 // Find the extended header, payload data and CRC, and the RSA signature from the generic header:
 #define IAS_EXT_HDR_SIZE(h)           ((h)->DataOffset - sizeof(IAS_HEADER))
-#define IAS_EXT_HDR(h)                ((UINT32*) (((UINT32) (h)) + sizeof(IAS_HEADER)))
-#define IAS_PAYLOAD(h)                ((((UINT32) (h)) + (h)->DataOffset))
+#define IAS_EXT_HDR(h)                ((UINT32*) (((UINT32)(UINTN)(h)) + sizeof(IAS_HEADER)))
+#define IAS_PAYLOAD(h)                ((((UINT32)(UINTN)(h)) + (h)->DataOffset))
 #define IAS_PAYLOAD_CRC(h)            (* (UINT32*) (((UINT32*) (h)) + (h)->DataOffset + (h)->DataLength))
 #define IAS_PAYLOAD_END(h)            (IAS_PAYLOAD(h) + (h)->DataLength + sizeof(UINT32))
-#define IAS_SIGNATURE(h)              (((UINT32) h) + ROUNDED_UP((h)->DataOffset + (h)->DataLength + sizeof(UINT32), 256))
+#define IAS_SIGNATURE(h)              (((UINT32)(UINTN)h) + ROUNDED_UP((h)->DataOffset + (h)->DataLength + sizeof(UINT32), 256))
 #define IAS_PUBLIC_KEY(h)             ((IAS_SIGNATURE(h) + 256))
 #define IAS_IMAGE_END(h)              ((IAS_PUBLIC_KEY(h) + (( (h)->ImageType  & 1<<9 ) == (1 <<9) ? 260 : 0)))
-#define IAS_IMAGE_SIZE(h)             (((UINT32) IAS_IMAGE_END(h)) - ((UINT32) h))
+#define IAS_IMAGE_SIZE(h)             (((UINT32) IAS_IMAGE_END(h)) - ((UINT32)(UINTN)h))
 
 // Note: Alignment argument must be a power of two.
 #define ROUNDED_DOWN(val, align)    ((val) & ~((align) - 1))

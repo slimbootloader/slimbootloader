@@ -454,7 +454,7 @@ SetDmaProtection (
   if (Enable) {
     MemTop   = GetUsableMemoryTop ();
     MemTop   = ALIGN_UP (MemTop, PcdGet32 (PcdDmaBufferAlignment));
-    DmaStart = (UINT32)GetDmaBufferPtr ();
+    DmaStart = (UINT32)(UINTN)GetDmaBufferPtr ();
     DmaEnd   = DmaStart + ALIGN_UP (PcdGet32 (PcdDmaBufferSize), PcdGet32 (PcdDmaBufferAlignment));
     Status = SetDmaProtectedRange (VtdInfo, VTD_ENGINE_ALL, 0, DmaStart, DmaEnd, MemTop - DmaEnd);
   } else {

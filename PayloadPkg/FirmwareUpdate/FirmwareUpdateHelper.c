@@ -429,7 +429,7 @@ UpdateContainerComp (
   //
   // Update the component
   //
-  ContainerHdr = (CONTAINER_HDR *)ContainerEntryPtr->HeaderCache;
+  ContainerHdr = (CONTAINER_HDR *)(UINTN)ContainerEntryPtr->HeaderCache;
   //
   // Component base = Container base + data offset from container base + offset of component inside container
   //

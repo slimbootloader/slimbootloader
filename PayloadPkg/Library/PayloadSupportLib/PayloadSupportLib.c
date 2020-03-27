@@ -30,7 +30,7 @@ GetSystemTableInfo (
 {
   EFI_HOB_GUID_TYPE             *GuidHob;
 
-  GuidHob = GetNextGuidHob (&gLoaderSystemTableInfoGuid, (VOID *)PcdGet32 (PcdPayloadHobList));
+  GuidHob = GetNextGuidHob (&gLoaderSystemTableInfoGuid, (VOID *)(UINTN)PcdGet32 (PcdPayloadHobList));
   if (GuidHob == NULL) {
     ASSERT (GuidHob);
     return NULL;
@@ -56,7 +56,7 @@ GetLoaderPlatformInfoPtr (
   LOADER_PLATFORM_INFO  *LoaderInfo;
   EFI_HOB_GUID_TYPE     *GuidHob;
 
-  GuidHob = GetNextGuidHob (&gLoaderPlatformInfoGuid, (VOID *)PcdGet32 (PcdPayloadHobList));
+  GuidHob = GetNextGuidHob (&gLoaderPlatformInfoGuid, (VOID *)(UINTN)PcdGet32 (PcdPayloadHobList));
   if (GuidHob == NULL) {
     return NULL;
   }
@@ -96,6 +96,9 @@ ParseAcpiTableInfo (
     Xsdt = NULL;
   }
   ASSERT (Xsdt != NULL);
+  if (Xsdt == NULL) {
+    return;
+  }
 
   Fadt = NULL;
   Mcfg = NULL;
@@ -138,7 +141,7 @@ GetMemoryMapInfo (
 {
   EFI_HOB_GUID_TYPE             *GuidHob;
 
-  GuidHob = GetNextGuidHob (&gLoaderMemoryMapInfoGuid, (VOID *)PcdGet32 (PcdPayloadHobList));
+  GuidHob = GetNextGuidHob (&gLoaderMemoryMapInfoGuid, (VOID *)(UINTN)PcdGet32 (PcdPayloadHobList));
   if (GuidHob == NULL) {
     ASSERT (GuidHob);
     return NULL;
@@ -278,7 +281,7 @@ GetLoaderPerformanceInfo (
   EFI_HOB_GUID_TYPE             *GuidHob;
   PERFORMANCE_INFO              *PerfInfo;
 
-  GuidHob = GetNextGuidHob (&gLoaderPerformanceInfoGuid, (VOID *)PcdGet32 (PcdPayloadHobList));
+  GuidHob = GetNextGuidHob (&gLoaderPerformanceInfoGuid, (VOID *)(UINTN)PcdGet32 (PcdPayloadHobList));
   if (GuidHob == NULL) {
     return RETURN_NOT_FOUND;
   }
