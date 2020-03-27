@@ -186,6 +186,7 @@ class BaseBoard(object):
         self.ENABLE_CSME_UPDATE    = 0
         self.ENABLE_EMMC_HS400     = 1
         self.ENABLE_DMA_PROTECTION = 0
+        self.ENABLE_MULTI_USB_BOOT_DEV = 0
 
         self.BUILD_CSME_UPDATE_DRIVER    = 0
 
