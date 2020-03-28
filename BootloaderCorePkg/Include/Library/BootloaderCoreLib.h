@@ -51,6 +51,7 @@ typedef enum {
 
 typedef struct {
   UINT32        LdrGlobal;
+  UINT32        Reserved;
   UINT64        IdtTable[STAGE_IDT_ENTRY_COUNT];
 } STAGE_IDT_TABLE;
 
@@ -71,6 +72,7 @@ typedef struct {
     UINT32      CpuBist           :  1;
     UINT32      StackOutOfRange   :  1;
     UINT32      RsvdBits          : 30;
+    UINT32      RsvdBits2         : 32;
   } Status;
 } STAGE1A_ASM_PARAM;
 

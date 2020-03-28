@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -19,6 +19,19 @@ LoadGdt (
   IN STAGE_GDT_TABLE   *GdtTable
   )
 {
+  IA32_DESCRIPTOR     Gdtr;
+  UINTN               GdtLen;
+
+  AsmReadGdtr (&Gdtr);
+  GdtLen = sizeof(GdtTable->GdtTable);
+  if (GdtLen > (UINTN)Gdtr.Limit + 1) {
+    GdtLen = Gdtr.Limit + 1;
+  }
+  CopyMem (GdtTable->GdtTable, (VOID *)Gdtr.Base, GdtLen);
+
+  Gdtr.Base  = (UINTN) GdtTable->GdtTable;
+  Gdtr.Limit = (UINT16) (GdtLen - 1);
+  AsmWriteGdtr (&Gdtr);
 }
 
 /**
@@ -42,6 +55,13 @@ LoadIdt (
   IN UINT32             Data
   )
 {
+  IA32_DESCRIPTOR   Idtr;
+
+  IdtTable->LdrGlobal  = Data;
+
+  Idtr.Base  = (UINTN) &IdtTable->IdtTable;
+  Idtr.Limit = (UINT16) (sizeof (IdtTable->IdtTable) - 1);
+  UpdateExceptionHandler (&Idtr);
 }
 
 /**
@@ -55,4 +75,32 @@ RemapStage (
   VOID
   )
 {
+  RANGE                Ranges[2];
+  UINT32               RoundSize;
+  VOID                *IbbMemBase;
+  UINT64              *PageEntry;
+  UINT32               Start;
+  UINT32               End;
+  UINT32               Curr;
+  UINTN                PageTable;
+
+  IbbMemBase  = AllocateTemporaryMemory (PcdGet32 (PcdStage1BFdSize));
+
+  DEBUG ((DEBUG_INFO, "Enable Paging ...\n"));
+  CopyMem (IbbMemBase, (VOID *)(UINTN)PcdGet32 (PcdStage1BFdBase), PcdGet32 (PcdStage1BFdSize));
+  EnableCodeExecution ();
+
+  RoundSize         = ALIGN_UP (PcdGet32 (PcdStage1BFdSize), EFI_PAGE_SIZE);
+  Ranges[0].Start   = PcdGet32 (PcdStage1BFdBase);
+  Ranges[0].Limit   = Ranges[0].Start + RoundSize - 1;
+  Ranges[0].Mapping = (UINT32)(UINTN)IbbMemBase;
+
+  Start = Ranges[0].Start & ~(SIZE_2MB - 1);
+  End   = (Ranges[0].Limit + SIZE_2MB) & ~(SIZE_2MB - 1);
+  PageTable = AsmReadCr3();
+  PageEntry = (UINT64 *)(UINTN)(PageTable + SIZE_4KB * 2);
+  for (Curr = Start; Curr <= End; Curr += SIZE_2MB) {
+    PageEntry[(Curr >> 21)] = (Ranges[0].Mapping + (Curr - Start)) | 0xE3;
+  }
+  AsmWriteCr3 (PageTable);
 }

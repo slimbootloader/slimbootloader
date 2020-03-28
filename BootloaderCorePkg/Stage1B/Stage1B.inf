@@ -30,19 +30,14 @@
 [Sources.X64]
   X64/Stage1BArch.c
 
-[Sources.ARC]
-  Arc/Stage1BArch.c
-
 [Packages]
   MdePkg/MdePkg.dec
   BootloaderCorePkg/BootloaderCorePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
   IntelFsp2Pkg/IntelFsp2Pkg.dec
 
-[LibraryClasses.IA32]
-  PagingLib
-
 [LibraryClasses]
+  PagingLib
   ModuleEntryLib
   BaseLib
   IoLib
