@@ -24,7 +24,7 @@ SetLoaderGlobalDataPointer (
   IA32_DESCRIPTOR        Idtr;
 
   AsmReadIdtr (&Idtr);
-  (* (UINTN *) (Idtr.Base - sizeof (UINTN))) = (UINTN)LoaderData;
+  (* (UINTN *) (Idtr.Base - sizeof (UINT64))) = (UINTN)LoaderData;
 }
 
 /**
@@ -40,5 +40,5 @@ GetLoaderGlobalDataPointer (
   IA32_DESCRIPTOR     Idtr;
 
   AsmReadIdtr (&Idtr);
-  return (LOADER_GLOBAL_DATA *) (* (UINTN *) (Idtr.Base - sizeof (UINTN)));
+  return (LOADER_GLOBAL_DATA *) (* (UINTN *) (Idtr.Base - sizeof (UINT64)));
 }
