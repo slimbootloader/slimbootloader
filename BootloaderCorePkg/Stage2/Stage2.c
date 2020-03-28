@@ -67,6 +67,7 @@ PreparePayload (
   EFI_STATUS                     Status;
   UINT32                         Dst;
   UINT32                         DstLen;
+  VOID                          *DstAdr;
   BOOLEAN                        IsNormalPld;
   UINT32                         PayloadId;
   UINT32                         ContainerSig;
@@ -107,8 +108,9 @@ PreparePayload (
 
   AddMeasurePoint (0x3100);
   DstLen = 0;
+  DstAdr = NULL;
   Status = LoadComponentWithCallback (ContainerSig, ComponentName,
-                                     (VOID *)&Dst, &DstLen, LoadComponentCallback);
+                                      &DstAdr, &DstLen, LoadComponentCallback);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Loading payload error - %r !", Status));
     return 0;
@@ -116,6 +118,7 @@ PreparePayload (
 
   AddMeasurePoint (0x3150);
 
+  Dst = (UINT32)(UINTN)DstAdr;
   Stage2Param->PayloadActualLength = DstLen;
   DEBUG ((DEBUG_INFO, "Load Payload ID 0x%08X @ 0x%08X\n", PayloadId, Dst));
   return Dst;

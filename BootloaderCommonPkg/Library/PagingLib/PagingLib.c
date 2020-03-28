@@ -5,8 +5,10 @@
 
 **/
 
-#include <Base.h>
+#include <PiPei.h>
 #include <Library/DebugLib.h>
+#include <Library/BaseMemoryLib.h>
+#include <Library/MemoryAllocationLib.h>
 #include <Library/PagingLib.h>
 
 //
@@ -166,4 +168,40 @@ GetPageTablesMemorySize (
   )
 {
   return 2 * SIZE_4KB;
+}
+
+
+/**
+  This function create and load 4GB identical mapping paging table.
+**/
+VOID
+EFIAPI
+LoadPageTable (
+  VOID
+  )
+{
+  VOID     *Buffer;
+  UINT64   *PageTable;
+  UINT64    Base;
+  UINTN     Idx;
+
+  Buffer    = AllocatePages (8);
+  ZeroMem (Buffer, 2 * EFI_PAGE_SIZE);
+
+  PageTable    = (UINT64 *)Buffer;
+  PageTable[0] = (UINTN)PageTable + EFI_PAGE_SIZE * 1 + 0x23;
+
+  PageTable    = (UINT64 *)((UINTN)Buffer + EFI_PAGE_SIZE * 1);
+  PageTable[0] = (UINTN)PageTable + EFI_PAGE_SIZE * 1 + 0x23;
+  PageTable[1] = (UINTN)PageTable + EFI_PAGE_SIZE * 2 + 0x23;
+  PageTable[2] = (UINTN)PageTable + EFI_PAGE_SIZE * 3 + 0x23;
+  PageTable[3] = (UINTN)PageTable + EFI_PAGE_SIZE * 4 + 0x23;
+
+  Base = 0;
+  PageTable    = (UINT64 *)((UINTN)Buffer + EFI_PAGE_SIZE * 2);
+  for (Idx = 0; Idx < 2048; Idx++) {
+    PageTable[Idx] = Base + 0xE3;
+    Base += SIZE_2MB;
+  }
+  AsmWriteCr3 ((UINTN)Buffer);
 }

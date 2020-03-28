@@ -51,8 +51,8 @@ CommonExceptionHandler (
                              if it is 0,  the IDT descriptor will be retrieved from IDT base register.
 
 **/
-STATIC
 VOID
+EFIAPI
 UpdateExceptionHandler2 (
   IN VOID                    *IdtDescriptor
 )

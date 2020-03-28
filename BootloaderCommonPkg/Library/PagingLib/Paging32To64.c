@@ -542,7 +542,7 @@ IsLongModeEnabled (
   UINT64  Msr;
 
   Msr = AsmReadMsr64 (0xc0000080);
-  return ((Msr & BIT0) == BIT0) ? TRUE : FALSE;
+  return ((Msr & BIT8) == BIT8) ? TRUE : FALSE;
 }
 
 /**

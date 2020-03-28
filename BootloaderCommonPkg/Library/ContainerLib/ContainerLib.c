@@ -700,6 +700,7 @@ LoadComponentWithCallback (
   UINT8                     AuthType;
   UINT32                    DecompressedLen;
   UINT32                    CompLen;
+  UINT32                    CompLoc;
   UINT32                    AllocLen;
   UINT32                    SignedDataLen;
   UINT32                    DstLen;
@@ -714,12 +715,11 @@ LoadComponentWithCallback (
     // Check if it is component type
     Usage        =  1 << ContainerSig;
     ContainerSig = 0;
-
-    Status = GetComponentInfo (ComponentName, (UINT32 *)&CompData,  &CompLen);
+    Status = GetComponentInfo (ComponentName, &CompLoc, &CompLen);
     if (EFI_ERROR (Status)) {
       return EFI_NOT_FOUND;
     }
-
+    CompData = (VOID *)(UINTN)CompLoc;
     if (FeaturePcdGet (PcdVerifiedBootEnabled)) {
       if(FixedPcdGet8(PcdCompSignHashAlg) == HASH_TYPE_SHA256) {
         AuthType = AUTH_TYPE_SHA2_256;
