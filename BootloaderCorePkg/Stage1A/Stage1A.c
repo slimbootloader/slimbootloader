@@ -368,7 +368,7 @@ SecStartup2 (
     Status = PeCoffRelocateImage (StageHdr->Base);
     if (!EFI_ERROR (Status)) {
       EnableCodeExecution ();
-      ContinueEntry = (STAGE_ENTRY) ((UINTN)ContinueFunc + Delta);
+      ContinueEntry = (STAGE_ENTRY)(UINTN)((UINT32)(UINTN)ContinueFunc + Delta);
     } else {
       CpuHalt ("Relocation failed!\n");
     }
@@ -404,10 +404,13 @@ SecStartup (
   LOADER_GLOBAL_DATA       *LdrGlobal;
   STAGE1A_ASM_PARAM        *Stage1aAsmParam;
   UINT32                    StackTop;
+  UINT32                    PageTblSize;
   UINT64                    TimeStamp;
 
-  TimeStamp     = ReadTimeStamp ();
+  TimeStamp   = ReadTimeStamp ();
   Stage1aAsmParam = (STAGE1A_ASM_PARAM *)Params;
+
+  PageTblSize = IS_X64 ? 8 * EFI_PAGE_SIZE : 0;
 
   // Init global data
   LdrGlobal = &LdrGlobalData;
@@ -416,7 +419,7 @@ SecStartup (
   LdrGlobal->Signature             = LDR_GDATA_SIGNATURE;
   LdrGlobal->LoaderStage           = LOADER_STAGE_1A;
   LdrGlobal->StackTop              = StackTop;
-  LdrGlobal->MemPoolEnd            = StackTop + PcdGet32 (PcdStage1DataSize);
+  LdrGlobal->MemPoolEnd            = StackTop + PcdGet32 (PcdStage1DataSize) - PageTblSize;
   LdrGlobal->MemPoolStart          = StackTop;
   LdrGlobal->MemPoolCurrTop        = LdrGlobal->MemPoolEnd;
   LdrGlobal->MemPoolCurrBottom     = LdrGlobal->MemPoolStart;
@@ -488,10 +491,11 @@ ContinueFunc (
           VerInfoTbl->ImageVersion.BuildNumber));
 
   DEBUG ((DEBUG_INFO,  "SVER: %016lX%a\n"
-          "FDBG: BLD(%c) FSP(%c)\n",
+          "FDBG: BLD(%c %a) FSP(%c)\n",
           VerInfoTbl->SourceVersion,
           VerInfoTbl->ImageVersion.Dirty ? "-dirty" : "",
           VerInfoTbl->ImageVersion.BldDebug ? 'D' : 'R',
+          sizeof(UINTN) == sizeof(UINT32) ? "IA32" : "X64",
           VerInfoTbl->ImageVersion.FspDebug ? 'D' : 'R'));
 
   // Print FSP version

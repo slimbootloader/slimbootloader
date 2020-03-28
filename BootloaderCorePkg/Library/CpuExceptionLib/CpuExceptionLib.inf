@@ -30,6 +30,7 @@
 
 [Sources.X64]
   X64/CpuExceptionHandler.c
+  X64/ExceptionHandler.nasm
 
 [Packages]
   MdePkg/MdePkg.dec
