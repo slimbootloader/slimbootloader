@@ -52,7 +52,7 @@ align 16
     ; Below fields will be patched by post build process
     ;
 BuildPatchData:
-    DD      0x55AA0FF0 ; Signature
+    DD      0x55AA0FF0 ; Pagee Table Offset
     DD      0x12345678 ; FSP-T Base
 TempRamInitStack:
     DD      ADDR_OF(TempRamInitDone)
@@ -93,6 +93,10 @@ FspApiSuccess:
     mov     ebp, ecx
     mov     esp, edx
 
+    ; Create page tables
+    ;   ECX: Page base
+    mov     eax, ADDR_OF(BuildPatchData)
+    add     ecx, dword [eax + 0x00]
     OneTimeCall  PreparePagingTable
 
     ;

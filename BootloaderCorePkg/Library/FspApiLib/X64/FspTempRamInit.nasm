@@ -1,6 +1,6 @@
 ;------------------------------------------------------------------------------
 ;
-; Copyright (c) 2006 - 2020, Intel Corporation. All rights reserved.<BR>
+; Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
 ; SPDX-License-Identifier: BSD-2-Clause-Patent
 ;
 ;
@@ -17,6 +17,9 @@
 
 SECTION .text
 
-global  ASM_PFX(FspTempRamInit)
-ASM_PFX(FspTempRamInit):
-        ret
+;
+; FspTampInit has been moved into VTF0 in x64 mode
+;
+global ASM_PFX(DummyCode)
+ASM_PFX(DummyCode):
+    ret

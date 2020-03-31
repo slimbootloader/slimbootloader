@@ -57,12 +57,12 @@ typedef struct {
   /// Pointer to the non-volatile storage (NVS) data buffer.
   /// If it is NULL it indicates the NVS data is not available.
   ///
-  VOID                        *NvsBufferPtr;
+  UINT32                      NvsBufferPtr;
   ///
   /// Pointer to the temporary stack base address to be
   /// consumed inside FspMemoryInit() API.
   ///
-  VOID                        *StackBase;
+  UINT32                      StackBase;
   ///
   /// Temporary stack size to be consumed inside
   /// FspMemoryInit() API.

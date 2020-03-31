@@ -18,7 +18,9 @@
 ;------------------------------------------------------------------------------
 global ASM_PFX(JumpToKernel)
 ASM_PFX(JumpToKernel):
-    hlt
+    mov     rsi, rdx
+    call    rcx
+    ret
 
 ;------------------------------------------------------------------------------
 ; VOID
@@ -30,6 +32,4 @@ ASM_PFX(JumpToKernel):
 ;------------------------------------------------------------------------------
 global ASM_PFX(JumpToKernel64)
 ASM_PFX(JumpToKernel64):
-    mov     rsi, rdx
-    call    rcx
-    hlt
+    jmp    JumpToKernel

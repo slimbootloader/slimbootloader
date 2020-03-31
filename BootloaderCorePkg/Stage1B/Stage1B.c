@@ -63,6 +63,7 @@ PrepareStage2 (
   )
 {
   UINT32                    Dst;
+  VOID                     *DstAdr;
   UINT32                    DstLen;
   EFI_STATUS                Status;
   UINT32                    Delta;
@@ -70,20 +71,21 @@ PrepareStage2 (
 
 
   if (FixedPcdGetBool (PcdStage2LoadHigh)) {
-    Dst = 0;
+    DstAdr = NULL;
   } else {
-    Dst = PCD_GET32_WITH_ADJUST (PcdStage2FdBase);
+    DstAdr = (VOID *)(UINTN)PCD_GET32_WITH_ADJUST (PcdStage2FdBase);
   }
 
   AddMeasurePoint (0x2080);
   Status = LoadComponentWithCallback (COMP_TYPE_STAGE_2, FLASH_MAP_SIG_STAGE2,
-                                     (VOID *)&Dst, &DstLen, LoadComponentCallback);
+                                     &DstAdr, &DstLen, LoadComponentCallback);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Loading Stage2 error - %r !", Status));
     return 0;
   }
+  AddMeasurePoint (0x20C0);
 
-   AddMeasurePoint (0x20C0);
+  Dst = (UINT32)(UINTN)DstAdr;
 
   // Rebase Stage2 if required
   if (Dst != PCD_GET32_WITH_ADJUST (PcdStage2FdBase)) {
@@ -421,6 +423,7 @@ SecStartup2 (
   BoardInit (PreMemoryInit);
 
   // Initialize memory
+  HobList = NULL;
   DEBUG ((DEBUG_INIT, "Memory Init\n"));
   AddMeasurePoint (0x2020);
   Status = CallFspMemoryInit (PCD_GET32_WITH_ADJUST (PcdFSPMBase), &HobList);
@@ -568,6 +571,12 @@ SecStartup2 (
   if (ContainerList != NULL) {
     ContainerList->Signature   = CONTAINER_LIST_SIGNATURE;
     ContainerList->TotalLength = AllocateLen;
+  }
+
+  if (IS_X64) {
+    // Load new paging table from memory
+    DEBUG ((DEBUG_INFO, "Load paging table\n"));
+    LoadPageTable ();
   }
 
   // Call back into board hooks post memory

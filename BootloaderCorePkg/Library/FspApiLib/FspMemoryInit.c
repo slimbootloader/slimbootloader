@@ -58,7 +58,7 @@ CallFspMemoryInit (
   FspmUpdCommon = (FSPM_UPD_COMMON *)FspmUpd;
   FspmUpdCommon->FspmArchUpd.BootLoaderTolumSize = 0;
   FspmUpdCommon->FspmArchUpd.BootMode            = (UINT32)GetBootMode();
-  FspmUpdCommon->FspmArchUpd.NvsBufferPtr        = FindNvsData();
+  FspmUpdCommon->FspmArchUpd.NvsBufferPtr        = (UINT32)(UINTN)FindNvsData();
 
   UpdateFspConfig (FspmUpd);
 
@@ -67,7 +67,12 @@ CallFspMemoryInit (
                                            FspHeader->FspMemoryInitEntryOffset);
 
   DEBUG ((DEBUG_INFO, "Call FspMemoryInit ... "));
-  Status = FspMemoryInit (&FspmUpd, HobList);
+  if (IS_X64) {
+    Status = Execute32BitCode ((UINTN)FspMemoryInit, (UINTN)FspmUpd, (UINTN)HobList);
+    Status = (UINTN)LShiftU64 (Status & ((UINTN)MAX_INT32 + 1), 32) | (Status & MAX_INT32);
+  } else {
+    Status = FspMemoryInit (&FspmUpd, HobList);
+  }
   DEBUG ((DEBUG_INFO, "%r\n", Status));
 
   return Status;

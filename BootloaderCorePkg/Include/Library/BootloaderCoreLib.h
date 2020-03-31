@@ -32,7 +32,7 @@ typedef  VOID   (*KERNEL_ENTRY) (UINT32 Zero, UINT32 Arch, UINT32 Params);
 #pragma pack(1)
 
 #define  STAGE_IDT_ENTRY_COUNT        34
-#define  STAGE_GDT_ENTRY_COUNT        6
+#define  STAGE_GDT_ENTRY_COUNT        7
 
 #define  PLATFORM_NAME_SIZE           8
 
@@ -52,11 +52,11 @@ typedef enum {
 typedef struct {
   UINT32        LdrGlobal;
   UINT32        Reserved;
-  UINT64        IdtTable[STAGE_IDT_ENTRY_COUNT];
+  IA32_IDT_GATE_DESCRIPTOR  IdtTable[STAGE_IDT_ENTRY_COUNT];
 } STAGE_IDT_TABLE;
 
 typedef struct {
-  UINT64        GdtTable[STAGE_GDT_ENTRY_COUNT];
+  IA32_SEGMENT_DESCRIPTOR   GdtTable[STAGE_GDT_ENTRY_COUNT];
 } STAGE_GDT_TABLE;
 
 typedef struct {

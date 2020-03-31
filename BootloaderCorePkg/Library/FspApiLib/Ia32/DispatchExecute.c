@@ -1,20 +1,17 @@
 /** @file
+  Execute 32-bit code in Long Mode.
+  Provide a thunk function to transition from long mode to compatibility mode to execute 32-bit code and then transit
+  back to long mode.
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2014 - 2018, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-#ifndef _FSP_API_LIB_INTERNAL_H_
-#define _FSP_API_LIB_INTERNAL_H_
-
 #include <PiPei.h>
-#include <Guid/FspHeaderFile.h>
-#include <FspEas/FspApi.h>
-#include <Library/PcdLib.h>
-#include <Library/DebugLib.h>
-#include <Library/BaseMemoryLib.h>
-#include <Library/BootloaderCommonLib.h>
+#include <Library/BaseLib.h>
+#include <FspEas.h>
+
 
 /**
   Wrapper for a thunk  to transition from long mode to compatibility mode to execute 32-bit code and then transit back to
@@ -31,6 +28,8 @@ Execute32BitCode (
   IN UINT64      Function,
   IN UINT64      Param1,
   IN UINT64      Param2
-  );
+  )
+{
+  return EFI_SUCCESS;
+}
 
-#endif

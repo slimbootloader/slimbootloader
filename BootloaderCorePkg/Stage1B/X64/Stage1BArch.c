@@ -75,32 +75,4 @@ RemapStage (
   VOID
   )
 {
-  RANGE                Ranges[2];
-  UINT32               RoundSize;
-  VOID                *IbbMemBase;
-  UINT64              *PageEntry;
-  UINT32               Start;
-  UINT32               End;
-  UINT32               Curr;
-  UINTN                PageTable;
-
-  IbbMemBase  = AllocateTemporaryMemory (PcdGet32 (PcdStage1BFdSize));
-
-  DEBUG ((DEBUG_INFO, "Enable Paging ...\n"));
-  CopyMem (IbbMemBase, (VOID *)(UINTN)PcdGet32 (PcdStage1BFdBase), PcdGet32 (PcdStage1BFdSize));
-  EnableCodeExecution ();
-
-  RoundSize         = ALIGN_UP (PcdGet32 (PcdStage1BFdSize), EFI_PAGE_SIZE);
-  Ranges[0].Start   = PcdGet32 (PcdStage1BFdBase);
-  Ranges[0].Limit   = Ranges[0].Start + RoundSize - 1;
-  Ranges[0].Mapping = (UINT32)(UINTN)IbbMemBase;
-
-  Start = Ranges[0].Start & ~(SIZE_2MB - 1);
-  End   = (Ranges[0].Limit + SIZE_2MB) & ~(SIZE_2MB - 1);
-  PageTable = AsmReadCr3();
-  PageEntry = (UINT64 *)(UINTN)(PageTable + SIZE_4KB * 2);
-  for (Curr = Start; Curr <= End; Curr += SIZE_2MB) {
-    PageEntry[(Curr >> 21)] = (Ranges[0].Mapping + (Curr - Start)) | 0xE3;
-  }
-  AsmWriteCr3 (PageTable);
 }

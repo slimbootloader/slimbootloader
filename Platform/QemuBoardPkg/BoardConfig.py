@@ -138,7 +138,7 @@ class Board(BaseBoard):
             self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         self.STAGE1_STACK_SIZE    = 0x00002000
-        self.STAGE1_DATA_SIZE     = 0x00006000
+        self.STAGE1_DATA_SIZE     = 0x0000E000
 
         self.CFG_DATABASE_SIZE    = self.CFGDATA_SIZE
 

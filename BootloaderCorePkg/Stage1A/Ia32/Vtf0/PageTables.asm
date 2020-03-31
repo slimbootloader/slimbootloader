@@ -86,4 +86,5 @@ pageTableEntriesLoop:
     mov     [(ecx * 8 + esi + (0x2000 - 8)) + 4], edx
     loop    pageTableEntriesLoop
 
+    mov     eax, esi
     OneTimeCallRet  PreparePagingTable

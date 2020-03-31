@@ -347,6 +347,15 @@ LinuxBoot (
       } else {
         JumpToKernel ((VOID *)KernelStart, Bp);
       }
+    } else {
+      if ((Bp->Hdr.XloadFlags & BIT0) == BIT0) {
+        DEBUG ((DEBUG_INFO, "Jump to 64-bit kernel entrypoint ...\n"));
+        KernelStart += 0x200;
+        JumpToKernel ((VOID *)KernelStart, Bp);
+      } else {
+        // In long mode already, but kernel is not 64-bit
+        DEBUG ((DEBUG_ERROR, "Unsupported kernel mode !\n"));
+      }
     }
   }
   CpuDeadLoop ();

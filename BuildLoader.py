@@ -639,7 +639,14 @@ class Build(object):
         if self._arch == 'X64':
             # Find signature at top 4KB
             vtf_patch_data_base = get_vtf_patch_base (os.path.join(self._fv_dir, 'STAGE1A.fd'))
+            page_table_len = 0x8000
+            if self._board.STAGE1_DATA_SIZE < page_table_len:
+                raise Exception ("STAGE1_DATA_SIZE is too small to build x64 page table, "
+                                 "it requires at least 0x%X !" % page_table_len)
+            page_tbl_off = self._board.STAGE1_STACK_BASE_OFFSET + self._board.STAGE1_STACK_SIZE + \
+                           self._board.STAGE1_DATA_SIZE - page_table_len
             extra_cmd.extend ([
+                "0x%08X, 0x%08X,                                        @Page Table Offset" % (vtf_patch_data_base + 0x00, page_tbl_off),
                 "0x%08X, _BASE_STAGE1A_ - _OFFS_STAGE1A_,                    @FSP-T Base" % (vtf_patch_data_base + 0x04),
                 "0x%08X, Stage1A:_TempRamInitParams,                         @FSP-T UPD"  % (vtf_patch_data_base + 0x0C),
             ])
