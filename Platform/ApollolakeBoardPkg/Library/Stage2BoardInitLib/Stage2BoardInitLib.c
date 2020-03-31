@@ -1588,29 +1588,48 @@ UpdateLoaderPlatformInfo (
 /**
  Update loader SMM info.
 
- @param[out] SmmInfoHob     pointer to SMM information HOB
+ @param[out] LdrSmmInfo     pointer to SMM information HOB
 
 **/
 VOID
 UpdateSmmInfo (
-  OUT  LDR_SMM_INFO           *SmmInfoHob
+  OUT  LDR_SMM_INFO           *LdrSmmInfo
 )
 {
+  if (LdrSmmInfo == NULL) {
+    return;
+  }
+  LdrSmmInfo->SmmBase = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + TSEG) & ~0xF;
+  LdrSmmInfo->SmmSize = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + BGSM) & ~0xF;
+  LdrSmmInfo->SmmSize -= LdrSmmInfo->SmmBase;
+  LdrSmmInfo->Flags = SMM_FLAGS_4KB_COMMUNICATION;
+  DEBUG ((DEBUG_ERROR, "Stage2: SmmRamBase = 0x%x, SmmRamSize = 0x%x\n", LdrSmmInfo->SmmBase, LdrSmmInfo->SmmSize));
 
-  SmmInfoHob->SmmBase = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + TSEG) & ~0xF;
-  SmmInfoHob->SmmSize = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + BGSM) & ~0xF;
-  SmmInfoHob->SmmSize -= SmmInfoHob->SmmBase;
-  SmmInfoHob->Flags   = SMM_FLAGS_4KB_COMMUNICATION;
-  DEBUG ((DEBUG_INFO, "SmmRamBase = 0x%x, SmmRamSize = 0x%x\n", SmmInfoHob->SmmBase, SmmInfoHob->SmmSize));
   //
-  // Update the HOB with smi ctrl register data
+  // Update smi ctrl register data
   //
-  SmmInfoHob->SmiCtrlReg.RegType    = IO;
-  SmmInfoHob->SmiCtrlReg.RegWidth   = WIDE32;
-  SmmInfoHob->SmiCtrlReg.SmiGblPos  = B_SMI_EN_GBL_SMI;
-  SmmInfoHob->SmiCtrlReg.SmiApmPos  = B_SMI_EN_APMC;
-  SmmInfoHob->SmiCtrlReg.SmiEosPos  = B_SMI_EN_EOS;
-  SmmInfoHob->SmiCtrlReg.Address    = (UINT32)(ACPI_BASE_ADDRESS + R_SMI_EN);
+  LdrSmmInfo->SmiCtrlReg.RegType    = (UINT8)REG_TYPE_IO;
+  LdrSmmInfo->SmiCtrlReg.RegWidth   = (UINT8)WIDE32;
+  LdrSmmInfo->SmiCtrlReg.SmiGblPos  = (UINT8)HighBitSet32 (B_SMI_EN_GBL_SMI);
+  LdrSmmInfo->SmiCtrlReg.SmiApmPos  = (UINT8)HighBitSet32 (B_SMI_EN_APMC);
+  LdrSmmInfo->SmiCtrlReg.SmiEosPos  = (UINT8)HighBitSet32 (B_SMI_EN_EOS);
+  LdrSmmInfo->SmiCtrlReg.Address    = (UINT32)(ACPI_BASE_ADDRESS + R_SMI_EN);
+
+  //
+  // Update smi status register data
+  //
+  LdrSmmInfo->SmiStsReg.RegType    = (UINT8)REG_TYPE_IO;
+  LdrSmmInfo->SmiStsReg.RegWidth   = (UINT8)WIDE32;
+  LdrSmmInfo->SmiStsReg.SmiApmPos  = (UINT8)HighBitSet32 (B_SMI_STS_APMC);
+  LdrSmmInfo->SmiStsReg.Address    = (UINT32)(ACPI_BASE_ADDRESS + R_SMI_STS);
+
+  //
+  // Update smi lock register data
+  //
+  LdrSmmInfo->SmiLockReg.RegType    = (UINT8)REG_TYPE_MMIO;
+  LdrSmmInfo->SmiLockReg.RegWidth   = (UINT8)WIDE32;
+  LdrSmmInfo->SmiLockReg.SmiLockPos = (UINT8)HighBitSet32 (B_PMC_GEN_PMCON_2_SMI_LOCK);
+  LdrSmmInfo->SmiLockReg.Address    = (UINT32)(PMC_BASE_ADDRESS + R_PMC_GEN_PMCON_2);
 }
 
 

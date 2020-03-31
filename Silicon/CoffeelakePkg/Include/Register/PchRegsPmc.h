@@ -45,6 +45,8 @@
 #define B_ACPI_IO_SMI_EN_EOS                     BIT1
 #define B_ACPI_IO_SMI_EN_GBL_SMI                 BIT0
 
+#define R_ACPI_IO_SMI_STS                        0x34
+
 #define R_ACPI_IO_GPE_CNTL                       0x40
 
 #define R_ACPI_IO_OC_WDT_CTL                     0x54
