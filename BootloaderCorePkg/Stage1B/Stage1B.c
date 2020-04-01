@@ -480,15 +480,14 @@ SecStartup2 (
   DEBUG_CODE_END ();
 
   // Setup global data in memory
-  LoadGdt (GdtTablePtr);
+  LoadGdt (GdtTablePtr, NULL);
   LoadIdt (IdtTablePtr, (UINT32)(UINTN)LdrGlobal);
   SetLoaderGlobalDataPointer (LdrGlobal);
   DEBUG ((DEBUG_INFO, "Loader global data @ 0x%08X\n", (UINT32)(UINTN)LdrGlobal));
 
-  if (!FeaturePcdGet (PcdStage1BXip)) {
-    // Reload GDT table into memory
-    RemapStage ();
-  }
+  // Reload GDT table into memory
+  RemapStage ();
+  EnableCodeExecution ();
 
   OldStatus = SaveAndSetDebugTimerInterrupt (FALSE);
   InitializeDebugAgent (DEBUG_AGENT_INIT_POSTMEM_SEC, NULL, NULL);

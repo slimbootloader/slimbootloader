@@ -19,10 +19,8 @@
 
 [Sources]
   PagingLib.c
+  PagingMap.c
   Paging32To64.c
-
-[Sources.IA32]
-  Ia32/Paging32.nasm
 
 [Packages]
   MdePkg/MdePkg.dec

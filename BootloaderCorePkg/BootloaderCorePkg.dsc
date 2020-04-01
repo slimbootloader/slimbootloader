@@ -68,6 +68,7 @@
   LoaderPerformanceLib|BootloaderCommonPkg/Library/LoaderPerformanceLib/LoaderPerformanceLib.inf
   MemoryAllocationLib|BootloaderCorePkg/Library/MemoryAllocationLib/MemoryAllocationLib.inf
   MpInitLib|BootloaderCorePkg/Library/MpInitLib/MpInitLib.inf
+  StageLib|BootloaderCorePkg/Library/StageLib/StageLib.inf
   LocalApicLib|BootloaderCommonPkg/Library/BaseXApicLib/BaseXApicLib.inf
   SecureBootLib|BootloaderCommonPkg/Library/SecureBootLib/SecureBootLib.inf
   TpmLib|BootloaderCommonPkg/Library/TpmLib/TpmLib.inf

@@ -27,7 +27,6 @@
 
 [Sources.IA32]
   Ia32/SecEntry.nasm
-  Ia32/Stage1AArch.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -51,6 +50,7 @@
   CpuExceptionLib
   DebugAgentLib
   ExtraBaseLib
+  StageLib
 
 [Guids]
   gPlatformModuleTokenSpaceGuid

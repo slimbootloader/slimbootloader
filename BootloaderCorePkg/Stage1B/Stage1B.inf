@@ -24,12 +24,6 @@
   Stage1B.h
   Stage1B.c
 
-[Sources.IA32]
-  Ia32/Stage1BArch.c
-
-[Sources.ARC]
-  Arc/Stage1BArch.c
-
 [Packages]
   MdePkg/MdePkg.dec
   BootloaderCorePkg/BootloaderCorePkg.dec
@@ -62,6 +56,7 @@
   ResetSystemLib
   DebugAgentLib
   ContainerLib
+  StageLib
 
 [Guids]
   gPlatformModuleTokenSpaceGuid

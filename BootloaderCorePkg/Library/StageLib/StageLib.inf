@@ -1,0 +1,38 @@
+## @file
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = StageLib
+  FILE_GUID                      = BA714111-62C0-4C59-9898-E34A766E1515
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = StageLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF
+#
+
+[Sources]
+  StageLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  PagingLib
+
+[Pcd]
+  gPlatformModuleTokenSpaceGuid.PcdStage1BXip
+  gPlatformModuleTokenSpaceGuid.PcdStage1BFdBase
+  gPlatformModuleTokenSpaceGuid.PcdStage1BFdSize
