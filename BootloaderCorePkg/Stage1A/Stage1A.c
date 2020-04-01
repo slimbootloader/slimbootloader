@@ -177,6 +177,8 @@ PrepareStage1B (
       SignHashAlg = HASH_TYPE_SHA256;
     } else if(PcdGet8(PcdCompSignHashAlg) == HASH_TYPE_SHA384){
       SignHashAlg = HASH_TYPE_SHA384;
+    } else {
+      SignHashAlg = HASH_TYPE_NONE;
     }
 
     Status = DoHashVerify ((CONST UINT8 *)(UINTN)Src, Length, HASH_USAGE_STAGE_1B, SignHashAlg, NULL);

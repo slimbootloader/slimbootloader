@@ -15,7 +15,7 @@
 */
 
 #if !defined(_PC_TOOL_H)
-#define _CP_TOOL_H
+#define _PC_TOOL_H
 
 #define _NEW_COPY16_
 #define _NEW_XOR16_

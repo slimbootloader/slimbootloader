@@ -220,7 +220,7 @@ LoadBzImage (
   BaseBp = (BOOT_PARAMS *) ImageBase;
   Bp = GetLinuxBootParams ();
   ZeroMem ((VOID *)Bp, sizeof (BOOT_PARAMS));
-  Bp->Hdr = BaseBp->Hdr;
+  CopyMem (&Bp->Hdr, &BaseBp->Hdr, sizeof (SETUP_HEADER));
 
   if (Bp->Hdr.SetupSectorss != 0) {
     BootParamSize = (Bp->Hdr.SetupSectorss + 1) * 512;

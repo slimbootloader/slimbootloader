@@ -69,6 +69,7 @@ int VerifyRsaSignature (CONST PUB_KEY_HDR *PubKeyHdr, CONST SIGNATURE_HDR *Signa
     return ippStsNoMemErr;
   }
 
+  scratch_buf  = NULL;
   bn_buf_ptr   = bn_buf;
   rsa_key_s    = (IppsRSAPublicKeyState*) bn_buf_ptr;
   bn_buf_ptr   = bn_buf_ptr + sz_rsa;
@@ -116,12 +117,12 @@ int VerifyRsaSignature (CONST PUB_KEY_HDR *PubKeyHdr, CONST SIGNATURE_HDR *Signa
     goto Done;
   }
 
-  if ((SignatureHdr->HashAlg == HASH_TYPE_SHA256)
-          && (FixedPcdGet8(PcdIppHashLibSupportedMask) & IPP_HASHLIB_SHA2_256)){
+  if ((SignatureHdr->HashAlg == HASH_TYPE_SHA256) &&
+      ((FixedPcdGet8(PcdIppHashLibSupportedMask) & IPP_HASHLIB_SHA2_256) != 0)) {
     pHashMethod = ippsHashMethod_SHA256();
-  } else if ((SignatureHdr->HashAlg == HASH_TYPE_SHA384)
-          && (FixedPcdGet8(PcdIppHashLibSupportedMask) & IPP_HASHLIB_SHA2_384)){
-     pHashMethod = ippsHashMethod_SHA384();
+  } else if ((SignatureHdr->HashAlg == HASH_TYPE_SHA384) &&
+             ((FixedPcdGet8(PcdIppHashLibSupportedMask) & IPP_HASHLIB_SHA2_384) != 0)) {
+    pHashMethod = ippsHashMethod_SHA384();
   }
 
   if (pHashMethod != NULL) {

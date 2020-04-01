@@ -1,4 +1,4 @@
-From 1bf51a46fa7e7ec4f874478e6a947b1cff9492d7 Mon Sep 17 00:00:00 2001
+From 88041e41c986da377a5ca13bd77698660c16b2e4 Mon Sep 17 00:00:00 2001
 From: Aiden Park <aiden.park@intel.com>
 Date: Wed, 11 Dec 2019 10:00:41 -0800
 Subject: [PATCH] Build QEMU FSP 2.0 binaries
@@ -7,7 +7,8 @@ Signed-off-by: Aiden Park <aiden.park@intel.com>
 Signed-off-by: Maurice Ma <maurice.ma@intel.com>
 ---
  BaseTools/Source/C/Makefiles/NmakeSubdirs.py  |   2 +-
- BuildFsp.py                                   | 389 +++++++++
+ BuildFsp.py                                   | 395 +++++++++
+ IntelFsp2Pkg/Tools/PatchFv.py                 |   7 +
  QemuFspPkg/BuildFv.cmd                        | 248 ++++++
  QemuFspPkg/FspDescription/FspDescription.inf  |  29 +
  QemuFspPkg/FspDescription/FspDescription.txt  |   2 +
@@ -38,12 +39,12 @@ Signed-off-by: Maurice Ma <maurice.ma@intel.com>
  .../PlatformSecLib/Vtf0PlatformSecSLib.inf    |  63 ++
  .../PlatformSecLib/Vtf0PlatformSecTLib.inf    |  67 ++
  QemuFspPkg/QemuFspPkg.dec                     |  51 ++
- QemuFspPkg/QemuFspPkg.dsc                     | 434 ++++++++++
+ QemuFspPkg/QemuFspPkg.dsc                     | 435 ++++++++++
  QemuFspPkg/QemuFspPkg.fdf                     | 278 +++++++
  QemuFspPkg/QemuVideo/QemuVideo.c              | 761 ++++++++++++++++++
  QemuFspPkg/QemuVideo/QemuVideo.h              | 115 +++
  QemuFspPkg/QemuVideo/QemuVideo.inf            |  56 ++
- 37 files changed, 5823 insertions(+), 1 deletion(-)
+ 38 files changed, 5837 insertions(+), 1 deletion(-)
  create mode 100644 BuildFsp.py
  create mode 100644 QemuFspPkg/BuildFv.cmd
  create mode 100644 QemuFspPkg/FspDescription/FspDescription.inf
@@ -96,10 +97,10 @@ index 356f5aca63..c77bfb095c 100644
      message = ""
 diff --git a/BuildFsp.py b/BuildFsp.py
 new file mode 100644
-index 0000000000..4856517b72
+index 0000000000..dd3f3ccb6e
 --- /dev/null
 +++ b/BuildFsp.py
-@@ -0,0 +1,389 @@
+@@ -0,0 +1,395 @@
 +#!/usr/bin/env python
 +## @ BuildFsp.py
 +# Build FSP main script
@@ -249,7 +250,13 @@ index 0000000000..4856517b72
 +def prep_env():
 +    work_dir = os.path.dirname(os.path.realpath(__file__))
 +    os.chdir(work_dir)
-+    if os.name == 'posix':
++    if sys.platform == 'darwin':
++        toolchain = 'XCODE5'
++        os.environ['PATH'] = os.environ['PATH'] + ':' + os.path.join(work_dir, 'BaseTools/BinWrappers/PosixLike')
++        clang_ver = run_process (['clang', '-dumpversion'], capture_out = True)
++        clang_ver = clang_ver.strip()
++        toolchain_ver = clang_ver
++    elif os.name == 'posix':
 +        toolchain = 'GCC49'
 +        gcc_ver = subprocess.Popen(['gcc', '-dumpversion'], stdout=subprocess.PIPE)
 +        (gcc_ver, err) = subprocess.Popen(['sed', 's/\\..*//'], stdin=gcc_ver.stdout, stdout=subprocess.PIPE).communicate()
@@ -489,6 +496,24 @@ index 0000000000..4856517b72
 +
 +if __name__ == '__main__':
 +    sys.exit(Main())
+diff --git a/IntelFsp2Pkg/Tools/PatchFv.py b/IntelFsp2Pkg/Tools/PatchFv.py
+index edb30c816b..c1594f1a96 100644
+--- a/IntelFsp2Pkg/Tools/PatchFv.py
++++ b/IntelFsp2Pkg/Tools/PatchFv.py
+@@ -420,6 +420,13 @@ class Symbols:
+             matchKeyGroupIndex = 2
+             matchSymbolGroupIndex  = 1
+             prefix = '_'
++        elif reportLine.strip().find("XCODE") != -1:
++            #XCODE
++            #0x00001E29      0x00000013      [ 53] __ModuleEntryPoint
++            patchMapFileMatchString = "(0x[0-9a-fA-F]{8})\s+0x[0-9a-fA-F]{8}\s+\[.*\]\s+(\w+)$"
++            matchKeyGroupIndex = 2
++            matchSymbolGroupIndex  = 1
++            prefix = ''
+         else:
+             #MSFT
+             #0003:00000190       _gComBase                  00007a50     SerialPo
 diff --git a/QemuFspPkg/BuildFv.cmd b/QemuFspPkg/BuildFv.cmd
 new file mode 100644
 index 0000000000..a535d68b7c
@@ -4460,10 +4485,10 @@ index 0000000000..8c437138ed
 +
 diff --git a/QemuFspPkg/QemuFspPkg.dsc b/QemuFspPkg/QemuFspPkg.dsc
 new file mode 100644
-index 0000000000..9eda80796b
+index 0000000000..4c066d392f
 --- /dev/null
 +++ b/QemuFspPkg/QemuFspPkg.dsc
-@@ -0,0 +1,434 @@
+@@ -0,0 +1,435 @@
 +## @file
 +# FSP DSC build file for QEMU platform
 +#
@@ -4898,9 +4923,10 @@ index 0000000000..9eda80796b
 +  *_GCC5_IA32_DLINK_FLAGS = -no-pie
 +  *_GCC5_IA32_ASLCC_FLAGS = -fno-pic
 +  *_GCC5_IA32_ASLDLINK_FLAGS = -no-pie
++  *_XCODE5_IA32_CC_FLAGS = -flto
 diff --git a/QemuFspPkg/QemuFspPkg.fdf b/QemuFspPkg/QemuFspPkg.fdf
 new file mode 100644
-index 0000000000..35983b0bcf
+index 0000000000..7ab51f9d1b
 --- /dev/null
 +++ b/QemuFspPkg/QemuFspPkg.fdf
 @@ -0,0 +1,278 @@
@@ -4926,8 +4952,8 @@ index 0000000000..35983b0bcf
 +#
 +# Flash Size for Visual Studio and GCC
 +#
-+DEFINE FLASH_SIZE           = 0x00038000
-+DEFINE FLASH_NUM_BLOCKS     = 0x380          #The number of blocks
++DEFINE FLASH_SIZE           = 0x0003A000
++DEFINE FLASH_NUM_BLOCKS     = 0x3A0          #The number of blocks
 +
 +SET gQemuFspPkgTokenSpaceGuid.PcdFlashFvFspsBase  = 0x00000000
 +SET gQemuFspPkgTokenSpaceGuid.PcdFlashFvFspsSize  = 0x00015000
@@ -4936,7 +4962,7 @@ index 0000000000..35983b0bcf
 +SET gQemuFspPkgTokenSpaceGuid.PcdFlashFvFspmSize  = 0x00022000
 +
 +SET gQemuFspPkgTokenSpaceGuid.PcdFlashFvFsptBase  = 0x00037000
-+SET gQemuFspPkgTokenSpaceGuid.PcdFlashFvFsptSize  = 0x00001000
++SET gQemuFspPkgTokenSpaceGuid.PcdFlashFvFsptSize  = 0x00003000
 +
 +################################################################################
 +#
@@ -6132,6 +6158,6 @@ index 0000000000..4c6bc6a0f1
 +[Depex]
 +  TRUE
 +
---
-2.22.0.windows.1
+-- 
+2.21.0 (Apple Git-122.2)
 

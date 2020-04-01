@@ -99,3 +99,4 @@
 [BuildOptions]
   MSFT:*_*_*_CC_FLAGS = -D_SLIMBOOT_OPT -D_ARCH_IA32 -D_IPP_LE
   GCC:*_*_*_CC_FLAGS  = -D_SLIMBOOT_OPT -D_ARCH_IA32 -D_IPP_LE -Wno-unused-but-set-variable
+  XCODE:*_*_*_CC_FLAGS  = -D_SLIMBOOT_OPT -D_ARCH_IA32 -D_IPP_LE
