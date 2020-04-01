@@ -53,7 +53,13 @@ def prep_env ():
 
     sblsource = os.path.dirname(os.path.realpath(__file__))
     os.chdir(sblsource)
-    if os.name == 'posix':
+    if sys.platform == 'darwin':
+        toolchain = 'XCODE5'
+        os.environ['PATH'] = os.environ['PATH'] + ':' + os.path.join(sblsource, 'BaseTools/BinWrappers/PosixLike')
+        clang_ver = run_process (['clang', '-dumpversion'], capture_out = True)
+        clang_ver = clang_ver.strip()
+        toolchain_ver = clang_ver
+    elif os.name == 'posix':
         toolchain = 'GCC49'
         gcc_ver = run_process (['gcc', '-dumpversion'], capture_out = True)
         gcc_ver = gcc_ver.strip()
@@ -222,7 +228,7 @@ class BaseBoard(object):
         self.FWUPDATE_LOAD_BASE    = 0
 
         # OS Loader FD/FV sizes
-        self.OS_LOADER_FD_SIZE     = 0x00042000
+        self.OS_LOADER_FD_SIZE     = 0x00046000
         self.OS_LOADER_FD_NUMBLK   = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         self.PLD_HEAP_SIZE         = 0x02000000

@@ -14,7 +14,7 @@
 */
 
 #if !defined(_PCP_HASH_RMF_H)
-#define __PCP_HASH_RMF_H
+#define _PCP_HASH_RMF_H
 
 #include "pcphash.h"
 #include "pcphashmethod_rmf.h"
