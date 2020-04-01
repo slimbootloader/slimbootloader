@@ -232,7 +232,7 @@ GetBootImageFromFs (
     goto Done;
   }
 
-  Image = AllocatePool (ImageSize);
+  Image = AllocatePages (EFI_SIZE_TO_PAGES (ImageSize));
   if (Image == NULL) {
     Status = EFI_OUT_OF_RESOURCES;
     goto Done;
@@ -250,6 +250,7 @@ GetBootImageFromFs (
 
   LoadedImage->IasImage.Addr = Image;
   LoadedImage->IasImage.Size = (UINT32)ImageSize;
+  LoadedImage->IasImage.AllocType = ImageAllocateTypePage;
   if ( *((UINT32 *) Image) == CONTAINER_BOOT_SIGNATURE ) {
     LoadedImage->Flags      |= LOADED_IMAGE_CONTAINER;
   } else if ( *((UINT32 *) Image) == IAS_MAGIC_PATTERN ) {
