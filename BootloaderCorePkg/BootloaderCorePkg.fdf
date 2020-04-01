@@ -127,9 +127,9 @@ FV = OsLoader
     SECTION RAW = $(IA_DIR)/BootloaderCorePkg/PcdData/PcdData/OUTPUT/PEIPcdDataBase.raw
   }
 
-  INF $(PLATFORM_PACKAGE)/Stage1A/Stage1A.inf
+  INF BootloaderCorePkg/Stage1A/Stage1A.inf
 
-  INF RuleOverride = RESET_VECTOR USE = IA32 $(PLATFORM_PACKAGE)/Stage1A/Ia32/Vtf0/Bin/ResetVector.inf
+  INF RuleOverride = RESET_VECTOR USE = IA32 BootloaderCorePkg/Stage1A/Ia32/Vtf0/Bin/ResetVector.inf
 
 
 #------------------------------------------------------------------------------
@@ -155,7 +155,7 @@ FV = OsLoader
   READ_LOCK_CAP      = TRUE
   READ_LOCK_STATUS   = TRUE
 
-  INF $(PLATFORM_PACKAGE)/Stage1B/Stage1B.inf
+  INF BootloaderCorePkg/Stage1B/Stage1B.inf
 
   FILE FREEFORM = 016E6CD0-4834-4C7E-BCFE-41DFB88A6A6D {
     SECTION RAW = $(FV_DIR)/CfgDataInt.bin
@@ -183,7 +183,7 @@ FV = OsLoader
   READ_LOCK_CAP      = TRUE
   READ_LOCK_STATUS   = TRUE
 
-  INF $(PLATFORM_PACKAGE)/Stage2/Stage2.inf
+  INF BootloaderCorePkg/Stage2/Stage2.inf
 
 !if $(HAVE_ACPI_TABLE)
   INF RuleOverride = ACPITABLE Platform/$(BOARD_PKG_NAME)/AcpiTables/AcpiTables.inf
