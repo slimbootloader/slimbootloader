@@ -16,18 +16,11 @@
   PLATFORM_GUID                       = 0E8F73FA-CF73-4AA2-A406-1610CCF49EF1
   PLATFORM_VERSION                    = 0.1
   DSC_SPECIFICATION                   = 0x00010005
-  OUTPUT_DIRECTORY                    = Build/$(PLATFORM_NAME)
+  OUTPUT_DIRECTORY                    = Build/BootloaderCorePkg
   SUPPORTED_ARCHITECTURES             = IA32|X64|ARC
   BUILD_TARGETS                       = DEBUG|RELEASE|NOOPT
   SKUID_IDENTIFIER                    = DEFAULT
-  FLASH_DEFINITION                    = $(PLATFORM_NAME)/$(PLATFORM_NAME).fdf
-
-  #
-  # Set platform specific package/folder names, same as passed from PREBUILD script.
-  # PLATFORM_PACKAGE would be the same as PLATFORM_NAME as well as package build folder
-  # The CORE_PACKAGES value could be set to '.' if Core packages get moved to Workspace root
-  #
-  DEFINE PLATFORM_PACKAGE             = $(PLATFORM_NAME)
+  FLASH_DEFINITION                    = BootloaderCorePkg/BootloaderCorePkg.fdf
 
 !include Platform.dsc
 
@@ -51,7 +44,7 @@
   PciLib|MdePkg/Library/BasePciLibPciExpress/BasePciLibPciExpress.inf
   PciCf8Lib|MdePkg/Library/BasePciCf8Lib/BasePciCf8Lib.inf
   PciExpressLib|MdePkg/Library/BasePciExpressLib/BasePciExpressLib.inf
-  DebugPrintErrorLevelLib|$(PLATFORM_PACKAGE)/Library/DebugPrintErrorLevelLib/DebugPrintErrorLevelLib.inf
+  DebugPrintErrorLevelLib|BootloaderCorePkg/Library/DebugPrintErrorLevelLib/DebugPrintErrorLevelLib.inf
   PrintLib|MdePkg/Library/BasePrintLib/BasePrintLib.inf
   BaseMemoryLib|MdePkg/Library/BaseMemoryLibSse2/BaseMemoryLibSse2.inf
   SynchronizationLib|MdePkg/Library/BaseSynchronizationLib/BaseSynchronizationLib.inf
@@ -62,19 +55,19 @@
   Lz4DecompressLib|BootloaderCommonPkg/Library/Lz4DecompressLib/Lz4DecompressLib.inf
   DecompressLib|BootloaderCommonPkg/Library/DecompressLib/DecompressLib.inf
   RleCompressLib|BootloaderCommonPkg/Library/RleCompressLib/RleCompressLib.inf
-  FspSupportLib|$(PLATFORM_PACKAGE)/Library/FspSupportLib/FspSupportLib.inf
-  BootloaderLib|$(PLATFORM_PACKAGE)/Library/BootloaderLib/BootloaderLib.inf
-  BootloaderCoreLib|$(PLATFORM_PACKAGE)/Library/BootloaderCoreLib/BootloaderCoreLib.inf
-  PciEnumerationLib|$(PLATFORM_PACKAGE)/Library/PciEnumerationLib/PciEnumerationLib.inf
-  AcpiInitLib|$(PLATFORM_PACKAGE)/Library/AcpiInitLib/AcpiInitLib.inf
-  SmbiosInitLib|$(PLATFORM_PACKAGE)/Library/SmbiosInitLib/SmbiosInitLib.inf
+  FspSupportLib|BootloaderCorePkg/Library/FspSupportLib/FspSupportLib.inf
+  BootloaderLib|BootloaderCorePkg/Library/BootloaderLib/BootloaderLib.inf
+  BootloaderCoreLib|BootloaderCorePkg/Library/BootloaderCoreLib/BootloaderCoreLib.inf
+  PciEnumerationLib|BootloaderCorePkg/Library/PciEnumerationLib/PciEnumerationLib.inf
+  AcpiInitLib|BootloaderCorePkg/Library/AcpiInitLib/AcpiInitLib.inf
+  SmbiosInitLib|BootloaderCorePkg/Library/SmbiosInitLib/SmbiosInitLib.inf
   LitePeCoffLib|BootloaderCommonPkg/Library/LitePeCoffLib/LitePeCoffLib.inf
   HobLib|BootloaderCommonPkg/Library/HobLib/HobLib.inf
-  HobBuildLib|$(PLATFORM_PACKAGE)/Library/HobBuildLib/HobBuildLib.inf
+  HobBuildLib|BootloaderCorePkg/Library/HobBuildLib/HobBuildLib.inf
   LiteFvLib|BootloaderCommonPkg/Library/LiteFvLib/LiteFvLib.inf
   LoaderPerformanceLib|BootloaderCommonPkg/Library/LoaderPerformanceLib/LoaderPerformanceLib.inf
-  MemoryAllocationLib|$(PLATFORM_PACKAGE)/Library/MemoryAllocationLib/MemoryAllocationLib.inf
-  MpInitLib|$(PLATFORM_PACKAGE)/Library/MpInitLib/MpInitLib.inf
+  MemoryAllocationLib|BootloaderCorePkg/Library/MemoryAllocationLib/MemoryAllocationLib.inf
+  MpInitLib|BootloaderCorePkg/Library/MpInitLib/MpInitLib.inf
   LocalApicLib|BootloaderCommonPkg/Library/BaseXApicLib/BaseXApicLib.inf
   SecureBootLib|BootloaderCommonPkg/Library/SecureBootLib/SecureBootLib.inf
   TpmLib|BootloaderCommonPkg/Library/TpmLib/TpmLib.inf
@@ -84,8 +77,8 @@
   GraphicsLib|BootloaderCommonPkg/Library/GraphicsLib/GraphicsLib.inf
   Crc32Lib|BootloaderCommonPkg/Library/Crc32Lib/Crc32Lib.inf
   VariableLib|BootloaderCommonPkg/Library/LiteVariableLib/LiteVariableLib.inf
-  DebugDataLib|$(PLATFORM_PACKAGE)/Library/DebugDataLib/DebugDataLib.inf
-  CpuExceptionLib|$(PLATFORM_PACKAGE)/Library/CpuExceptionLib/CpuExceptionLib.inf
+  DebugDataLib|BootloaderCorePkg/Library/DebugDataLib/DebugDataLib.inf
+  CpuExceptionLib|BootloaderCorePkg/Library/CpuExceptionLib/CpuExceptionLib.inf
   FileSystemLib|BootloaderCommonPkg/Library/FileSystemLib/FileSystemLib.inf
   FatLib|BootloaderCommonPkg/Library/FatLib/FatLib.inf
   PartitionLib|BootloaderCommonPkg/Library/PartitionLib/PartitionLib.inf
@@ -130,7 +123,7 @@
   DebugAgentLib|BootloaderCommonPkg/Library/DebugAgentLib/DebugAgentLibNull.inf
 !endif
   ElfLib|BootloaderCommonPkg/Library/ElfLib/ElfLib.inf
-  S3SaveRestoreLib|$(PLATFORM_PACKAGE)/Library/S3SaveRestoreLib/S3SaveRestoreLib.inf
+  S3SaveRestoreLib|BootloaderCorePkg/Library/S3SaveRestoreLib/S3SaveRestoreLib.inf
 
   BoardSupportLib|Platform/CommonBoardPkg/Library/BoardSupportLib/BoardSupportLib.inf
 
@@ -340,14 +333,14 @@
   #
   # SEC
   #
-  $(PLATFORM_PACKAGE)/PcdData/PcdData.inf
+  BootloaderCorePkg/PcdData/PcdData.inf
 
-  $(PLATFORM_PACKAGE)/Stage1A/Stage1A.inf {
+  BootloaderCorePkg/Stage1A/Stage1A.inf {
     <PcdsFeatureFlag>
       gPlatformCommonLibTokenSpaceGuid.PcdMinDecompression | TRUE
       gPlatformCommonLibTokenSpaceGuid.PcdForceToInitSerialPort | TRUE
     <LibraryClasses>
-      FspApiLib    | $(PLATFORM_PACKAGE)/Library/FspApiLib/FsptApiLib.inf
+      FspApiLib    | BootloaderCorePkg/Library/FspApiLib/FsptApiLib.inf
       BaseMemoryLib| MdePkg/Library/BaseMemoryLibRepStr/BaseMemoryLibRepStr.inf
       SocInitLib   | Silicon/$(SILICON_PKG_NAME)/Library/Stage1ASocInitLib/Stage1ASocInitLib.inf
       BoardInitLib | Platform/$(BOARD_PKG_NAME)/Library/Stage1ABoardInitLib/Stage1ABoardInitLib.inf
@@ -356,17 +349,17 @@
 !endif
   }
 
-  $(PLATFORM_PACKAGE)/Stage1B/Stage1B.inf {
+  BootloaderCorePkg/Stage1B/Stage1B.inf {
     <LibraryClasses>
-      FspApiLib    | $(PLATFORM_PACKAGE)/Library/FspApiLib/FspmApiLib.inf
+      FspApiLib    | BootloaderCorePkg/Library/FspApiLib/FspmApiLib.inf
       BaseMemoryLib| MdePkg/Library/BaseMemoryLibRepStr/BaseMemoryLibRepStr.inf
       SocInitLib   | Silicon/$(SILICON_PKG_NAME)/Library/Stage1BSocInitLib/Stage1BSocInitLib.inf
       BoardInitLib | Platform/$(BOARD_PKG_NAME)/Library/Stage1BBoardInitLib/Stage1BBoardInitLib.inf
   }
 
-  $(PLATFORM_PACKAGE)/Stage2/Stage2.inf {
+  BootloaderCorePkg/Stage2/Stage2.inf {
     <LibraryClasses>
-      FspApiLib    | $(PLATFORM_PACKAGE)/Library/FspApiLib/FspsApiLib.inf
+      FspApiLib    | BootloaderCorePkg/Library/FspApiLib/FspsApiLib.inf
       SocInitLib   | Silicon/$(SILICON_PKG_NAME)/Library/Stage2SocInitLib/Stage2SocInitLib.inf
       BoardInitLib | Platform/$(BOARD_PKG_NAME)/Library/Stage2BoardInitLib/Stage2BoardInitLib.inf
   }
