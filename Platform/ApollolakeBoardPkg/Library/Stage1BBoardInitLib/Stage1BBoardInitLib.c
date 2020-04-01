@@ -655,6 +655,21 @@ UpdateFspConfig (
         Fspmcfg->Ch3_RankEnable        = 3;
         Fspmcfg->Ch3_DramDensity       = 2;
         break;
+
+      case 3: /* 8GB  not fully supported */
+        Fspmcfg->DualRankSupportEnable = 1;
+        Fspmcfg->Ch0_RankEnable        = 1;
+        Fspmcfg->Ch0_DramDensity       = 2;
+        Fspmcfg->Ch1_RankEnable        = 1;
+        Fspmcfg->Ch1_DramDensity       = 2;
+
+        Fspmcfg->Ch2_RankEnable        = 1;
+        Fspmcfg->Ch2_DramDensity       = 2;
+        Fspmcfg->Ch3_RankEnable        = 1;
+        Fspmcfg->Ch3_DramDensity       = 2;
+        Fspmcfg->RmtCheckRun           = 3;
+        break;
+
       default:
         break;
     };
