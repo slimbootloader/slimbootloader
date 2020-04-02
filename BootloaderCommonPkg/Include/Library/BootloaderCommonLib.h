@@ -17,6 +17,8 @@
 #include <Library/BaseLib.h>
 #include <Library/CryptoLib.h>
 
+#define  IS_X64   (sizeof(UINT64) == sizeof(UINTN))
+
 #define  STACK_DEBUG_FILL_PATTERN     0x5AA55AA5
 #define  UEFI_PAYLOAD_ID_SIGNATURE    SIGNATURE_32('U', 'E', 'F', 'I')
 #define  LINX_PAYLOAD_ID_SIGNATURE    SIGNATURE_32('L', 'I', 'N', 'X')

@@ -27,6 +27,29 @@ CONST DEBUG_LOG_BUFFER_HEADER mLogBufHdrTmpl = {
   FixedPcdGet32 (PcdEarlyLogBufferSize)
 };
 
+//
+// Global Descriptor Table (GDT)
+//
+STATIC
+CONST IA32_SEGMENT_DESCRIPTOR
+mGdtEntries[STAGE_GDT_ENTRY_COUNT] = {
+  /* selector { Global Segment Descriptor                              } */
+  /* 0x00 */  {{0,      0,  0,  0,    0,  0,  0,  0,    0,  0, 0,  0,  0}}, //null descriptor
+  /* 0x08 */  {{0xffff, 0,  0,  0x2,  1,  0,  1,  0xf,  0,  0, 1,  1,  0}}, //linear data segment descriptor
+  /* 0x10 */  {{0xffff, 0,  0,  0xf,  1,  0,  1,  0xf,  0,  0, 1,  1,  0}}, //linear code segment descriptor
+  /* 0x18 */  {{0xffff, 0,  0,  0x3,  1,  0,  1,  0xf,  0,  0, 1,  1,  0}}, //system data segment descriptor
+  /* 0x20 */  {{0xffff, 0,  0,  0x2,  1,  0,  1,  0x0,  0,  0, 0,  0,  0}}, //16-bit data segment descriptor
+  /* 0x28 */  {{0xffff, 0,  0,  0xB,  1,  0,  1,  0x0,  0,  0, 0,  0,  0}}, //16-bit code segment descriptor
+};
+
+//
+// IA32 Gdt register
+//
+STATIC
+CONST IA32_DESCRIPTOR mGdt = {
+  sizeof (mGdtEntries) - 1,
+  (UINTN) mGdtEntries
+  };
 
 /**
   Get flash map info.
@@ -432,7 +455,7 @@ SecStartup (
   // the config data passed in or these defaults remain
   LdrGlobal->LdrFeatures           = FEATURE_MEASURED_BOOT | FEATURE_ACPI;
 
-  LoadGdt (&GdtTable);
+  LoadGdt (&GdtTable, (IA32_DESCRIPTOR *)&mGdt);
   LoadIdt (&IdtTable, (UINT32)(UINTN)LdrGlobal);
   SetLoaderGlobalDataPointer (LdrGlobal);
 
@@ -468,7 +491,8 @@ ContinueFunc (
   AddMeasurePoint (0x1060);
 
   if (!FeaturePcdGet (PcdStage1AXip)) {
-    PostStageRelocation ();
+    // Update exception handler in IDT
+    UpdateExceptionHandler (NULL);
   }
 
   // Migrate data from Stage1A Param to Stage1B Param

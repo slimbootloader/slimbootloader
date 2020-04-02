@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2016 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2016 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -37,6 +37,7 @@
 #include <Library/DebugLogBufferLib.h>
 #include <Library/LiteFvLib.h>
 #include <Library/SortLib.h>
+#include <Library/StageLib.h>
 #include <Library/ContainerLib.h>
 #include <Guid/BootLoaderServiceGuid.h>
 #include <Guid/BootLoaderVersionGuid.h>
@@ -58,17 +59,6 @@
 #include <VerInfo.h>
 
 #define UIMAGE_FIT_MAGIC               (0x56190527)
-
-/**
-  Unmap the previous mapped stage images.
-
-  It will reload GDT and disable paging so that the memory goes back to 1:1 mapping.
-
-**/
-VOID
-UnmapStage (
-  VOID
-  );
 
 /**
   Build some basic HOBs
