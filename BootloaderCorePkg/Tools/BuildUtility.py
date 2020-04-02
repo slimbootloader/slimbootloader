@@ -345,7 +345,7 @@ def get_payload_list (payloads):
     return pld_lst
 
 
-def gen_pub_key_hash_store (signing_key, pub_key_hash_list, hash_alg, pub_key_dir, out_file):
+def gen_pub_key_hash_store (signing_key, pub_key_hash_list, hash_alg, sign_scheme, pub_key_dir, out_file):
     # Build key hash blob
     key_hash_buf = bytearray (HashStoreTable())
     idx = 0
@@ -366,7 +366,7 @@ def gen_pub_key_hash_store (signing_key, pub_key_hash_list, hash_alg, pub_key_di
 
     # Sign the key hash
     if signing_key:
-        rsa_sign_file (signing_key, None, hash_alg, out_file, out_file + '.sig', True, True)
+        rsa_sign_file (signing_key, None, hash_alg, sign_scheme, out_file, out_file + '.sig', True, True)
         shutil.copy(out_file + '.sig', out_file)
 
 
@@ -406,7 +406,7 @@ def gen_flash_map_bin (flash_map_file, comp_list):
 def copy_expanded_file (src, dst):
     gen_cfg_data ("GENDLT", src, dst)
 
-def gen_config_file (fv_dir, brd_name, platform_id, pri_key, cfg_db_size, cfg_size, cfg_int, cfg_ext, hash_type):
+def gen_config_file (fv_dir, brd_name, platform_id, pri_key, cfg_db_size, cfg_size, cfg_int, cfg_ext, sign_scheme, hash_type):
     # Remove previous generated files
     for file in glob.glob(os.path.join(fv_dir, "CfgData*.*")):
             os.remove(file)
@@ -489,7 +489,7 @@ def gen_config_file (fv_dir, brd_name, platform_id, pri_key, cfg_db_size, cfg_si
 
     cfg_final_file = os.path.join(fv_dir, "CFGDATA.bin")
     if pri_key:
-        cfg_data_tool ('sign', ['-k', pri_key, '-a', hash_type, cfg_merged_bin_file], cfg_final_file)
+        cfg_data_tool ('sign', ['-k', pri_key, '-a', hash_type, '-s', sign_scheme, cfg_merged_bin_file], cfg_final_file)
     else:
         shutil.copy(cfg_merged_bin_file, cfg_final_file)
 
@@ -535,7 +535,7 @@ def gen_config_file (fv_dir, brd_name, platform_id, pri_key, cfg_db_size, cfg_si
     fd.close()
 
 
-def gen_payload_bin (fv_dir, arch_dir, pld_list, pld_bin, priv_key, hash_alg, brd_name = None):
+def gen_payload_bin (fv_dir, arch_dir, pld_list, pld_bin, priv_key, hash_alg, sign_scheme, brd_name = None):
     fv_dir = os.path.dirname (pld_bin)
     for idx, pld in enumerate(pld_list):
         if pld['file'] in ['OsLoader.efi', 'FirmwareUpdate.efi']:
@@ -571,7 +571,8 @@ def gen_payload_bin (fv_dir, arch_dir, pld_list, pld_bin, priv_key, hash_alg, br
     alignment = 0x10
     key_dir  = os.path.dirname (priv_key)
     key_type = get_key_type(priv_key)
-    auth_type = key_type + '_' + hash_alg
+    sign_scheme = sign_scheme[sign_scheme.index("_")+1:]
+    auth_type = key_type + '_' + sign_scheme +  '_' + hash_alg
     pld_list = [('EPLD', '%s' % epld_bin, '', auth_type, '%s' % os.path.basename(priv_key), alignment, 0)]
     for pld in ext_list:
         pld_list.append ((pld['name'], pld['file'], pld['algo'], hash_alg, '', 0, 0))

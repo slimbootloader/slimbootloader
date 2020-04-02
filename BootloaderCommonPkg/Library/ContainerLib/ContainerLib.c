@@ -247,9 +247,11 @@ GetHashAlg(
 
   HashAlg = HASH_TYPE_NONE;
 
-  if((AuthType == AUTH_TYPE_SIG_RSA2048_SHA256) || (AuthType == AUTH_TYPE_SHA2_256)) {
+  if((AuthType == AUTH_TYPE_SIG_RSA2048_PKCSI1_SHA256)
+                  || (AuthType == AUTH_TYPE_SIG_RSA2048_PSS_SHA256) || (AuthType == AUTH_TYPE_SHA2_256)) {
     HashAlg = HASH_TYPE_SHA256;
-  } else if ((AuthType == AUTH_TYPE_SIG_RSA3072_SHA384) ||  (AuthType == AUTH_TYPE_SHA2_384)) {
+  } else if ((AuthType == AUTH_TYPE_SIG_RSA3072_PKCSI1_SHA384)
+            || (AuthType == AUTH_TYPE_SIG_RSA3072_PSS_SHA384) || (AuthType == AUTH_TYPE_SHA2_384)) {
     HashAlg = HASH_TYPE_SHA384;
   }
 
@@ -294,7 +296,8 @@ AuthenticateComponent (
       Status = DoHashVerify (Data, Length, Usage, HASH_TYPE_SHA256, HashData);
     } else if (AuthType == AUTH_TYPE_SHA2_384) {
       Status = DoHashVerify (Data, Length, Usage, HASH_TYPE_SHA384, HashData);
-    } else if ((AuthType == AUTH_TYPE_SIG_RSA2048_SHA256) || ( AuthType == AUTH_TYPE_SIG_RSA3072_SHA384)) {
+    } else if ((AuthType == AUTH_TYPE_SIG_RSA2048_PKCSI1_SHA256) || ( AuthType == AUTH_TYPE_SIG_RSA3072_PKCSI1_SHA384)
+           || (AuthType == AUTH_TYPE_SIG_RSA2048_PSS_SHA256) || ( AuthType == AUTH_TYPE_SIG_RSA3072_PSS_SHA384)) {
       SigPtr   = (UINT8 *) AuthData;
       SignHdr  = (SIGNATURE_HDR *) SigPtr;
       KeyPtr   = (UINT8 *)SignHdr + sizeof(SIGNATURE_HDR) + SignHdr->SigSize ;

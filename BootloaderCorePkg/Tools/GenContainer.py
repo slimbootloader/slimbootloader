@@ -19,11 +19,12 @@ class COMPONENT_ENTRY (Structure):
     _pack_ = 1
     _fields_ = [
         ('name',        ARRAY(c_char, 4)),   # SBL pod entry name
-        ('offset',      c_uint32),   # Component offset in byte from the payload (data)
+        ('offset',      c_uint32),   # Component offset in byte from the payload (data)        ('size',        c_uint32),   # Region/Component size in byte
         ('size',        c_uint32),   # Region/Component size in byte
         ('attribute',   c_uint8),    # Attribute:  BIT7 Reserved component entry
         ('alignment',   c_uint8),    # This image need to be loaded to memory  in (1 << Alignment) address
-        ('auth_type',   c_uint8),    # Refer AUTH_TYPE_VALUE: 0 - "NONE"; 1- "SHA2_256";  2- "SHA2_384";  3- "RSA2048SHA256"; 4 - RSA3072SHA384
+        ('auth_type',   c_uint8),    # Refer AUTH_TYPE_VALUE: 0 - "NONE"; 1- "SHA2_256";  2- "SHA2_384";  3- "RSA2048_PKCS1_SHA2_256"; 4 - RSA3072_PKCS1_SHA2_384;
+                                     # 5 - RSA2048_PSS_SHA2_256; 6 - RSA3072_PSS_SHA2_384
         ('hash_size',   c_uint8)     # Hash data size, it could be image hash or public key hash
         ]
 
@@ -54,7 +55,8 @@ class CONTAINER_HDR (Structure):
         ('version',      c_uint16),         # Header version
         ('data_offset',  c_uint16),         # Offset of payload (data) from header in byte
         ('data_size',    c_uint32),         # Size of payload (data) in byte
-        ('auth_type',    c_uint8),          # Refer AUTH_TYPE_VALUE: 0 - "NONE"; 2- "RSA2048SHA256"; 4 - RSA3072SHA384
+        ('auth_type',    c_uint8),          # Refer AUTH_TYPE_VALUE: 0 - "NONE"; 1- "SHA2_256";  2- "SHA2_384";  3- "RSA2048_PKCS1_SHA2_256"; 4 - RSA3072_PKCS1_SHA2_384;
+                                            # 5 - RSA2048_PSS_SHA2_256; 6 - RSA3072_PSS_SHA2_384
         ('image_type',   c_uint8),          # 0: Normal
         ('flags',        c_uint8),          # BIT0: monolithic signing
         ('entry_count',  c_uint8),          # Number of entry in the header
@@ -108,19 +110,34 @@ class CONTAINER_HDR (Structure):
 class CONTAINER ():
     _struct_display_indent = 18
     _auth_type_value = {
-            "NONE"                 : 0,
-            "SHA2_256"             : 1,
-            "SHA2_384"             : 2,
-            "RSA2048_SHA2_256"     : 3,
-            "RSA3072_SHA2_384"     : 4,
+            "NONE"                       : 0,
+            "SHA2_256"                   : 1,
+            "SHA2_384"                   : 2,
+            "RSA2048_PKCS1_SHA2_256"     : 3,
+            "RSA3072_PKCS1_SHA2_384"     : 4,
+            "RSA2048_PSS_SHA2_256"       : 5,
+            "RSA3072_PSS_SHA2_384"       : 6,
         }
 
     _auth_to_hashalg_str = {
-    "NONE"                 : "NONE",
-    "SHA2_256"             : "SHA2_256",
-    "SHA2_384"             : "SHA2_384",
-    "RSA2048_SHA2_256"     : "SHA2_256",
-    "RSA3072_SHA2_384"     : "SHA2_384",
+        "NONE"                       : "NONE",
+        "SHA2_256"                   : "SHA2_256",
+        "SHA2_384"                   : "SHA2_384",
+        "RSA2048_PKCS1_SHA2_256"     : "SHA2_256",
+        "RSA3072_PKCS1_SHA2_384"     : "SHA2_384",
+        "RSA2048_PSS_SHA2_256"       : "SHA2_256",
+        "RSA3072_PSS_SHA2_384"       : "SHA2_384",
+        }
+
+
+    _auth_to_signscheme_str = {
+        "NONE"                       : "",
+        "SHA2_256"                   : "",
+        "SHA2_384"                   : "",
+        "RSA2048_PKCS1_SHA2_256"     : "RSA_PKCS1",
+        "RSA3072_PKCS1_SHA2_384"     : "RSA_PKCS1",
+        "RSA2048_PSS_SHA2_256"       : "RSA_PSS",
+        "RSA3072_PSS_SHA2_384"       : "RSA_PSS",
         }
 
     def __init__(self, buf = None):
@@ -154,6 +171,7 @@ class CONTAINER ():
 
     @staticmethod
     def get_auth_type_val (auth_type_str):
+        print ('auth_type_str %s' % auth_type_str)
         return CONTAINER._auth_type_value[auth_type_str]
 
     @staticmethod
@@ -261,14 +279,14 @@ class CONTAINER ():
         elif auth_type in ["SHA2_384"]:
             data = get_file_data (file)
             hash_data.extend (hashlib.sha384(data).digest())
-        elif auth_type in ['RSA2048_SHA2_256', 'RSA3072_SHA2_384']:
+        elif auth_type in ['RSA2048_PKCS1_SHA2_256', 'RSA3072_PKCS1_SHA2_384', 'RSA2048_PSS_SHA2_256', 'RSA3072_PSS_SHA2_384' ]:
             auth_type = adjust_auth_type (auth_type, priv_key)
             pub_key = os.path.join(out_dir, basename + '.pub')
             di = gen_pub_key (priv_key, pub_key)
             key_hash = CONTAINER.get_pub_key_hash (di, CONTAINER._auth_to_hashalg_str[auth_type])
             hash_data.extend (key_hash)
             out_file = os.path.join(out_dir, basename + '.sig')
-            rsa_sign_file (priv_key, pub_key, CONTAINER._auth_to_hashalg_str[auth_type], file, out_file, False, True)
+            rsa_sign_file (priv_key, pub_key, CONTAINER._auth_to_hashalg_str[auth_type], CONTAINER._auth_to_signscheme_str[auth_type], file, out_file, False, True)
             auth_data.extend (get_file_data(out_file))
         else:
             raise Exception ("Unsupport AuthType '%s' !" % auth_type)
@@ -626,15 +644,23 @@ def gen_container_bin (container_list, out_dir, inp_dir, key_dir = '.', tool_dir
         print ("Container '%s' was created successfully at:  \n  %s" % (container.header.signature.decode(), out_file))
 
 def adjust_auth_type (auth_type_str, key_path):
+    print('auth_type_str %s key_path %s' % (auth_type_str, key_path))
     if os.path.exists(key_path):
         sign_key_type = get_key_type(key_path)
-        auth_type, hash_type = get_auth_hash_type (sign_key_type)
+        if auth_type_str != '':
+            sign_scheme = CONTAINER._auth_to_signscheme_str[auth_type_str]
+        else:
+            # Set to default signing scheme if auth type is generated.
+            sign_scheme = 'RSA_PSS'
+        auth_type, hash_type = get_auth_hash_type (sign_key_type, sign_scheme)
         if auth_type_str and (auth_type != auth_type_str):
             print ("Override auth type to '%s' in order to match the private key type !" % auth_type)
         auth_type_str = auth_type
+
     return auth_type_str
 
 def gen_layout (comp_list, img_type, auth_type_str, out_file, key_dir, key_file):
+    print ("auth_type_str1 %s" % auth_type_str)
     hash_type = CONTAINER._auth_to_hashalg_str[auth_type_str] if auth_type_str else ''
     auth_type = auth_type_str
     key_path  = os.path.join(key_dir, key_file)
@@ -775,7 +801,8 @@ def main():
     cmd_display.add_argument('-t', dest='img_type',  type=str, default='CLASSIC', help='Container Image Type : [NORMAL, CLASSIC, MULTIBOOT]')
     cmd_display.add_argument('-o', dest='out_path',  type=str, default='.', help='Container output directory/file')
     cmd_display.add_argument('-k', dest='key_path',  type=str, default='', help='Input key directory/file')
-    cmd_display.add_argument('-a',  dest='auth', choices=['SHA2_256', 'SHA2_384', 'RSA2048_SHA2_256', 'RSA3072_SHA2_384', 'NONE'], default='',  help='authentication algorithm')
+    cmd_display.add_argument('-a',  dest='auth', choices=['SHA2_256', 'SHA2_384', 'RSA2048_PKCS1_SHA2_256',
+                    'RSA3072_PKCS1_SHA2_384', 'RSA2048_PSS_SHA2_256', 'RSA3072_PSS_SHA2_384', 'NONE'], default='',  help='authentication algorithm')
     cmd_display.add_argument('-cd', dest='comp_dir', type=str, default='', help='Componet image input directory')
     cmd_display.add_argument('-td', dest='tool_dir', type=str, default='', help='Compression tool directory')
     cmd_display.set_defaults(func=create_container)
@@ -804,7 +831,8 @@ def main():
     cmd_display.add_argument('-f',  dest='comp_file',  type=str, required=True, help='Component input file path')
     cmd_display.add_argument('-o',  dest='out_file',  type=str, default='', help='Signed output image path')
     cmd_display.add_argument('-c',  dest='compress', choices=['lz4', 'lzma', 'dummy'],  default='dummy', help='compression algorithm')
-    cmd_display.add_argument('-a',  dest='auth', choices=['SHA2_256', 'SHA2_384', 'RSA2048_SHA2_256', 'RSA3072_SHA2_384', 'NONE'], default='NONE',  help='authentication algorithm')
+    cmd_display.add_argument('-a',  dest='auth', choices=['SHA2_256', 'SHA2_384', 'RSA2048_PKCS1_SHA2_256',
+                'RSA3072_PKCS1_SHA2_384', 'RSA2048_PSS_SHA2_256', 'RSA3072_PSS_SHA2_384', 'NONE'], default='NONE',  help='authentication algorithm')
     cmd_display.add_argument('-k',  dest='key_file',  type=str, default='', help='Private key file path to sign component')
     cmd_display.add_argument('-td', dest='tool_dir', type=str, default='',  help='Compression tool directory')
     cmd_display.set_defaults(func=sign_component)

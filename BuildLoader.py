@@ -135,6 +135,8 @@ class BaseBoard(object):
         self._RSA_SIGN_TYPE          = 'RSA2048'
         self._SIGN_HASH              = 'SHA2_256'
         self.SIGN_HASH_TYPE          = HASH_TYPE_VALUE[self._SIGN_HASH]
+        self._SIGNING_SCHEME         = 'RSA_PSS'
+
         self.VERINFO_IMAGE_ID       = 'SB_???? '
         self.VERINFO_PROJ_ID        = 1
         self.VERINFO_CORE_MAJOR_VER = 0
@@ -1097,7 +1099,7 @@ class Build(object):
             self._board.VERIFIED_BOOT_HASH_MASK = 0
 
         gen_pub_key_hash_store (mst_key, key_hash_list, HASH_VAL_STRING[self._board.SIGN_HASH_TYPE],
-                                self._key_dir, os.path.join(self._fv_dir, 'KEYHASH.bin'))
+                                self._board._SIGNING_SCHEME, self._key_dir, os.path.join(self._fv_dir, 'KEYHASH.bin'))
 
         # create fit table
         if self._board.HAVE_FIT_TABLE:
@@ -1151,7 +1153,8 @@ class Build(object):
             # create config data files
             gen_config_file (self._fv_dir, self._board.BOARD_PKG_NAME, self._board._PLATFORM_ID,
                              self._board._CFGDATA_PRIVATE_KEY, self._board.CFG_DATABASE_SIZE, self._board.CFGDATA_SIZE,
-                             self._board._CFGDATA_INT_FILE, self._board._CFGDATA_EXT_FILE, HASH_VAL_STRING[self._board.SIGN_HASH_TYPE])
+                             self._board._CFGDATA_INT_FILE, self._board._CFGDATA_EXT_FILE,
+                             self._board._SIGNING_SCHEME, HASH_VAL_STRING[self._board.SIGN_HASH_TYPE])
 
         # rebuild reset vector
         vtf_dir = os.path.join('BootloaderCorePkg', 'Stage1A', 'Ia32', 'Vtf0')
@@ -1227,7 +1230,8 @@ class Build(object):
         # generate payload
         gen_payload_bin (self._fv_dir, self._arch, self._pld_list,
                          os.path.join(self._fv_dir, "PAYLOAD.bin"),
-                         self._board._CONTAINER_PRIVATE_KEY, HASH_VAL_STRING[self._board.SIGN_HASH_TYPE], self._board.BOARD_PKG_NAME)
+                         self._board._CONTAINER_PRIVATE_KEY, HASH_VAL_STRING[self._board.SIGN_HASH_TYPE],
+                         self._board._SIGNING_SCHEME, self._board.BOARD_PKG_NAME)
 
         # create firmware update key
         if self._board.ENABLE_FWU:
@@ -1247,7 +1251,7 @@ class Build(object):
         if getattr(self._board, "GetContainerList", None):
             container_list = self._board.GetContainerList ()
             component_dir = os.path.join(os.environ['PLT_SOURCE'], 'Platform', self._board.BOARD_PKG_NAME, 'Binaries')
-            gen_container_bin (container_list, self._fv_dir, component_dir, self._key_dir, '')
+            gen_container_bin (container_list, self._fv_dir, component_dir, self._key_dir , '')
 
         # patch stages
         self.patch_stages ()

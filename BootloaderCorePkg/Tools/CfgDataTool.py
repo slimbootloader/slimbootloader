@@ -1,6 +1,6 @@
 ## @ CfgDataTool.py
 #
-# Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -763,7 +763,7 @@ def CmdSign(Args):
     Fd.write (FileData)
     Fd.close ()
 
-    rsa_sign_file (Args.cfg_pri_key, None, Args.hash_alg, TmpFile, Args.cfg_out_file, True, True)
+    rsa_sign_file (Args.cfg_pri_key, None, Args.hash_alg, Args.sign_scheme, TmpFile, Args.cfg_out_file, True, True)
     if os.path.exists(TmpFile):
       os.remove(TmpFile)
 
@@ -922,6 +922,7 @@ def Main():
     SignParser.add_argument('-o', dest='cfg_out_file', type=str, help='Signed configuration output binary file name to be generated', required=True)
     SignParser.add_argument('-k', dest='cfg_pri_key', type=str, help='Private key file (PEM format) used to sign configuration data', required=True)
     SignParser.add_argument('-a', dest='hash_alg', type=str, choices=['SHA2_256', 'SHA2_384'], help='Hash Type for signing',  default = 'SHA2_256')
+    SignParser.add_argument('-s', dest='sign_scheme', type=str, choices=['RSA_PKCS1', 'RSA_PSS'], help='Signing Scheme',   default = 'RSA_PSS')
     SignParser.set_defaults(func=CmdSign)
 
     ExtractParser = SubParser.add_parser('extract', help='extract a single config data to a file')
