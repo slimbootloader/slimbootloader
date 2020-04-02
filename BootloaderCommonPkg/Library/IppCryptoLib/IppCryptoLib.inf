@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2017-2019, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2017-2020, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -67,6 +67,8 @@
   $(IPP_PATH)/pcpngrsakeypublic.c
   $(IPP_PATH)/pcpngrsamontstuff.c
   $(IPP_PATH)/pcpngrsassapkcsv15ca_rmf.c
+  $(IPP_PATH)/pcpngrsapss_rmf.c
+  $(IPP_PATH)/pcpmgf1ca_rmf.c
   $(IPP_PATH)/pcpsha256ca.c
   $(IPP_PATH)/pcpsha512ca.c
   $(IPP_PATH)/pcpsm3ca.c
@@ -101,6 +103,7 @@
 [FixedPcd]
   gPlatformCommonLibTokenSpaceGuid.PcdCryptoShaOptMask
   gPlatformCommonLibTokenSpaceGuid.PcdIppHashLibSupportedMask
+  gPlatformCommonLibTokenSpaceGuid.PcdCompSignSchemeSupportedMask
 
 [BuildOptions]
   MSFT:*_*_*_CC_FLAGS = -D_SLIMBOOT_OPT -D_ARCH_IA32 -D_IPP_LE

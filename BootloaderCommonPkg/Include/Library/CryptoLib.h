@@ -1,7 +1,7 @@
 /** @file
   Provides sha256 and RSA2048 verify functions.
 
-Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2017-2020, Intel Corporation. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -57,6 +57,9 @@ typedef UINT8 HASH_ALG_TYPE;
 #define IPP_HASHLIB_SHA2_384             0x0004
 #define IPP_HASHLIB_SHA2_512             0x0008
 #define IPP_HASHLIB_SM3_256              0x0010
+
+#define IPP_RSALIB_PKCS_1_5              0x0001
+#define IPP_RSALIB_PSS                   0x0002
 
 
 typedef UINT8 HASH_CTX[IPP_HASH_CTX_SIZE];   //IPP Hash context buffer
@@ -171,11 +174,9 @@ Sm3 (
 /**
   Verifies the RSA signature with PKCS1-v1_5 encoding scheme defined in RSA PKCS#1.
 
-  @param[in]  PubKey         Pointer to a pre-processed RSA key data.
-  @param[in]  Signature      Pointer to RSA PKCS1-v1_5 signature to be verified.
-  @param[in]  SignatureLen   Length of the signature in bytes.
-  @param[in]  SignatureType  Now only support signature type SIG_TYPE_RSA2048SHA256.
-  @param[in]  Hash           Pointer to octet message hash to be checked.
+  @param[in]  PubKeyHdr         Pointer to a PubKey data.
+  @param[in]  SignatureHdr      Pointer to signature data to be verified.
+  @param[in]  Hash              Pointer to octet message hash to be checked.
 
   @retval  RETURN_SUCCESS             Valid signature.
   @retval  RETURN_INVALID_PARAMETER   Key or signature format is incorrect.
@@ -183,11 +184,37 @@ Sm3 (
 
 **/
 RETURN_STATUS
+EFIAPI
 RsaVerify_Pkcs_1_5 (
-  CONST PUB_KEY_HDR        *PubKeyHdr,
-  CONST SIGNATURE_HDR      *SignatureHdr,
-  CONST UINT8              *Hash
+  IN CONST PUB_KEY_HDR        *PubKeyHdr,
+  IN CONST SIGNATURE_HDR      *SignatureHdr,
+  IN CONST UINT8              *Hash
   );
+
+
+/**
+  Verifies the RSA signature with PSS encoding scheme defined in RSA PSS.
+
+  @param[in]  PubKeyHdr         Pointer to a PubKey data.
+  @param[in]  SignatureHdr      Pointer to signature data to be verified.
+  @param[in]  Src               Pointer to meassage.
+  @param[in]  SrcSize           Size of the message.
+
+  @retval  RETURN_SUCCESS             Valid signature.
+  @retval  RETURN_INVALID_PARAMETER   Key or signature format is incorrect.
+  @retval  RETURN_SECURITY_VIOLATION  Invalid signature.
+
+**/
+
+RETURN_STATUS
+EFIAPI
+RsaVerify_PSS (
+  IN CONST PUB_KEY_HDR        *PubKeyHdr,
+  IN CONST SIGNATURE_HDR      *SignatureHdr,
+  IN CONST UINT8              *Src,
+  IN CONST UINT32             SrcSize
+  );
+
 
 /**
   Computes the HMAC SHA-256 message digest of a input data buffer.

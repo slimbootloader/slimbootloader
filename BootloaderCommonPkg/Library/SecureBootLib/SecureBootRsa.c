@@ -1,7 +1,7 @@
 /** @file
   Secure boot library routines to provide RSA signature verification.
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017-2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -71,21 +71,36 @@ DoRsaVerify (
     return RETURN_INVALID_PARAMETER;
   }
 
-  Status =CalculateHash  (Data, Length, SignatureHdr->HashAlg, Digest);
-  if (EFI_ERROR(Status)) {
-    return RETURN_UNSUPPORTED;
-  }
-
-  if (OutHash != NULL) {
-    CopyMem (OutHash, Digest, DigestSize);
-  }
-
   DEBUG ((DEBUG_INFO, "SignType (0x%x) SignSize (0x%x)  SignHashAlg (0x%x)\n", \
                   SignatureHdr->SigType, SignatureHdr->SigSize, SignatureHdr->HashAlg));
 
   if(SignatureHdr->SigType == SIGNING_TYPE_RSA_PKCS_1_5) {
+    Status = CalculateHash  (Data, Length, SignatureHdr->HashAlg, Digest);
+    if (EFI_ERROR(Status)) {
+      return RETURN_UNSUPPORTED;
+    }
+
+    if (OutHash != NULL) {
+      CopyMem (OutHash, Digest, DigestSize);
+    }
+
     Status = RsaVerify_Pkcs_1_5 (PublicKey, SignatureHdr, Digest);
-  } else {
+
+  } else if(SignatureHdr->SigType == SIGNING_TYPE_RSA_PSS) {
+
+    // Calculate Hash only when OutHash is valid
+    // RSA PSS requires to pass message to be verified
+    if (OutHash != NULL) {
+      Status = CalculateHash  (Data, Length, SignatureHdr->HashAlg, Digest);
+      if (EFI_ERROR(Status)) {
+        return RETURN_UNSUPPORTED;
+      }
+      CopyMem (OutHash, Digest, DigestSize);
+    }
+
+    Status = RsaVerify_PSS (PublicKey, SignatureHdr, Data, Length);
+
+  }  else {
     Status = RETURN_UNSUPPORTED;
   }
 

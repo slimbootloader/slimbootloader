@@ -113,6 +113,12 @@
   #     0x04    - SM3_256.<BR>
   gPlatformCommonLibTokenSpaceGuid.PcdCompSignHashAlg                 |        0x01| UINT8 | 0x20000702
 
+  ## This PCD indicates the signing scheme type included in IPP Crypto library
+  #  Based on the value set, the required algorithm should be used while verfication
+  #     0x0001    - RSA_PKCS_1_5.<BR>
+  #     0x0002    - RSA_PSS.<BR>
+  gPlatformCommonLibTokenSpaceGuid.PcdCompSignSchemeSupportedMask      |        0x03| UINT8 | 0x20000704
+
 [PcdsFixedAtBuild, PcdsPatchableInModule]
   # For patchable PCDs, try to set the default as none-zero
   # It is to prevent it from being put into BSS section, thus cause patching issue
