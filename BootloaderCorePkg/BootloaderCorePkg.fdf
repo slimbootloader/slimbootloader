@@ -129,7 +129,7 @@ FV = OsLoader
 
   INF BootloaderCorePkg/Stage1A/Stage1A.inf
 
-  INF RuleOverride = RESET_VECTOR USE = $(ARCH) $(PLATFORM_PACKAGE)/Stage1A/Ia32/Vtf0/Bin/ResetVector.inf
+  INF RuleOverride = RESET_VECTOR USE = $(ARCH) BootloaderCorePkg/Stage1A/Ia32/Vtf0/Bin/ResetVector.inf
 
 #------------------------------------------------------------------------------
 # STAGE1B FV

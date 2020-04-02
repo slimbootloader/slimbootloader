@@ -50,8 +50,7 @@ typedef enum {
 } BUF_INFO_ID;
 
 typedef struct {
-  UINT32        LdrGlobal;
-  UINT32        Reserved;
+  UINT64        LdrGlobal;
   IA32_IDT_GATE_DESCRIPTOR  IdtTable[STAGE_IDT_ENTRY_COUNT];
 } STAGE_IDT_TABLE;
 

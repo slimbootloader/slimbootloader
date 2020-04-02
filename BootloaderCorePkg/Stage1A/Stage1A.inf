@@ -30,7 +30,6 @@
 
 [Sources.X64]
   X64/SecEntry.nasm
-  X64/Stage1AArch.c
 
 [Packages]
   MdePkg/MdePkg.dec
