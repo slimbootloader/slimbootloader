@@ -9,8 +9,6 @@
 
 BITS    16
 
-%define FSP_HEADER_TEMPRAMINIT_OFFSET    0x30
-
 ;
 ; Modified:  EBX, ECX, EDX, EBP
 ;

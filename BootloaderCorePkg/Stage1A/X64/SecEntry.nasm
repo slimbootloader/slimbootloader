@@ -97,6 +97,7 @@ CheckStatusDone:
         mov     rcx, rsp             ; Argument 1
 
         sub     rsp, 32              ; 32 bytes shadow store for x64
+        and     esp, 0xfffffff0      ; Align stack to 16 bytes
         call    ASM_PFX(SecStartup)  ; Jump to C code
         jmp     $
 

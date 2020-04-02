@@ -324,21 +324,18 @@ MpInit (
       AsmGetBspSelectors (& (ApDataPtr->BspSelector));
       AsmReadGdtr ((IA32_DESCRIPTOR *)&ApDataPtr->Gdtr);
       AsmReadIdtr ((IA32_DESCRIPTOR *)&ApDataPtr->Idtr);
+      ApDataPtr->Cr3 = (UINT32)AsmReadCr3 ();
 
       //
       // Patch the Segment/Offset for the far Jump into PMODE code
       //
-      Ptr = (UINT32 *) (ApBuffer + mAddressMap.ProtModeJmpPatchOffset);
-      Ptr = (UINT32 *) (((UINT8 *) Ptr) + 3);
-      *Ptr = ((UINT32)(UINTN)ApBuffer) + (UINT32)mAddressMap.ProtModeStartOffset;
-      Ptr = (UINT32 *) (((UINT8 *) Ptr) + 4);
-      * ((UINT16 *)Ptr) = ApDataPtr->BspSelector.CSSelector;
+      Ptr  = (UINT32 *)(ApBuffer + mAddressMap.ProtModeJmpPatchOffset + 3);
+      *Ptr = (UINT32)(UINTN)ApBuffer + mAddressMap.ProtModeStartOffset;
 
       //
       // Patch the BufferStart variable with the address of the buffer
       //
       ApDataPtr->BufferStart = (UINT32)(UINTN)ApBuffer;
-
 
       //
       // Patch the Stack size and base
@@ -409,7 +406,6 @@ MpInit (
       }
 
       mSysCpuInfo.CpuCount = CpuCount;
-      mSysCpuTask.CpuCount = CpuCount;
       SortSysCpu (&mSysCpuInfo);
 
       for (Index = 0; Index < CpuCount; Index++) {

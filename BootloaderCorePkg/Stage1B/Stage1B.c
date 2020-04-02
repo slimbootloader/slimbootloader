@@ -448,7 +448,6 @@ SecStartup2 (
   IdtTablePtr    = (STAGE_IDT_TABLE *)(UINTN)MemPoolCurrTop;
   MemPoolCurrTop = ALIGN_DOWN (MemPoolCurrTop - sizeof (STAGE_GDT_TABLE), 0x10);
   GdtTablePtr    = (STAGE_GDT_TABLE *)(UINTN)MemPoolCurrTop;
-  MemPoolCurrTop = ALIGN_DOWN (MemPoolCurrTop, EFI_PAGE_SIZE);
 
   if (FixedPcdGetBool (PcdS3DebugEnabled)) {
     SavedLdrHobList = LdrGlobal->LdrHobList;
@@ -519,7 +518,7 @@ SecStartup2 (
     Offset   = (UINT32)((UINT8 *)Stage1aParam->BufInfo[Idx].DstBase - (UINT8 *)OldLdrGlobal);
     FieldPtr = (VOID **)((UINT8 *)LdrGlobal + Offset);
     if (*FieldPtr != NULL) {
-      *FieldPtr = (UINT8 *)(*FieldPtr) + Delta;
+      *FieldPtr = (UINT8 *)(UINTN)((UINT32)(Delta + (UINTN)(*FieldPtr)));
     }
   }
 
@@ -571,12 +570,6 @@ SecStartup2 (
   if (ContainerList != NULL) {
     ContainerList->Signature   = CONTAINER_LIST_SIGNATURE;
     ContainerList->TotalLength = AllocateLen;
-  }
-
-  if (IS_X64) {
-    // Load new paging table from memory
-    DEBUG ((DEBUG_INFO, "Load paging table\n"));
-    LoadPageTable ();
   }
 
   // Call back into board hooks post memory

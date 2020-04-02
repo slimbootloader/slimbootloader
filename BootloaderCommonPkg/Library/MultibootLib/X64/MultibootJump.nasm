@@ -24,4 +24,6 @@ SECTION .text
 ;------------------------------------------------------------------------------
 global ASM_PFX(JumpToMultibootOs)
 ASM_PFX(JumpToMultibootOs):
+    ; TBD: Need porting
+    jmp    $
     ret

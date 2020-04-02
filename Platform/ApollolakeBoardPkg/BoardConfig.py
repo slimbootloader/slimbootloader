@@ -174,8 +174,7 @@ class Board(BaseBoard):
             'HdaLib|Platform/$(BOARD_PKG_NAME)/Library/HdaLib/HdaLib.inf',
             'VtdPmrLib|Silicon/CommonSocPkg/Library/VtdPmrLib/VtdPmrLib.inf'
         ]
-        dsc_libs['IA32'] = common_libs
-        dsc_libs['X64'] = common_libs
+        dsc_libs[self.BUILD_ARCH] = common_libs
         return dsc_libs
 
     def GetFlashMapList (self):

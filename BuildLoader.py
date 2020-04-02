@@ -216,7 +216,7 @@ class BaseBoard(object):
 
         self.STAGE1A_XIP           = 1
         self.STAGE1B_XIP           = 1
-        self.STAGE1_STACK_BASE_OFFSET = 0x00000000
+        self.STAGE1_STACK_BASE_OFFSET = 0
         self.STAGE2_XIP            = 0
         self.STAGE2_LOAD_HIGH      = 1
         self.PAYLOAD_LOAD_HIGH     = 1
@@ -228,8 +228,7 @@ class BaseBoard(object):
         self.FWUPDATE_LOAD_BASE    = 0
 
         # OS Loader FD/FV sizes
-        self.OS_LOADER_FD_SIZE     = 0x00047000
-
+        self.OS_LOADER_FD_SIZE     = 0x00046000
         self.OS_LOADER_FD_NUMBLK   = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         self.PLD_HEAP_SIZE         = 0x02000000

@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -19,8 +19,8 @@
 #  VALID_ARCHITECTURES           = IA32 X64 IPF
 #
 
-[Sources.IA32, Sources.X64]
-  Ia32/TimeStampLib.c
+[Sources]
+  TimeStampLib.c
 
 [Packages]
   MdePkg/MdePkg.dec

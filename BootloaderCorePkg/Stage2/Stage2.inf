@@ -31,10 +31,9 @@
   BootloaderCommonPkg/BootloaderCommonPkg.dec
   IntelFsp2Pkg/IntelFsp2Pkg.dec
 
-[LibraryClasses.IA32]
-  PagingLib
-
 [LibraryClasses]
+  FspSupportLib
+  PagingLib
   BaseLib
   ModuleEntryLib
   DecompressLib

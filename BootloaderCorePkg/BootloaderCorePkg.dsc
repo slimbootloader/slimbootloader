@@ -17,7 +17,7 @@
   PLATFORM_VERSION                    = 0.1
   DSC_SPECIFICATION                   = 0x00010005
   OUTPUT_DIRECTORY                    = Build/BootloaderCorePkg
-  SUPPORTED_ARCHITECTURES             = IA32|X64|ARC
+  SUPPORTED_ARCHITECTURES             = IA32|X64
   BUILD_TARGETS                       = DEBUG|RELEASE|NOOPT
   SKUID_IDENTIFIER                    = DEFAULT
   FLASH_DEFINITION                    = BootloaderCorePkg/BootloaderCorePkg.fdf
@@ -125,9 +125,7 @@
 !endif
   ElfLib|BootloaderCommonPkg/Library/ElfLib/ElfLib.inf
   S3SaveRestoreLib|BootloaderCorePkg/Library/S3SaveRestoreLib/S3SaveRestoreLib.inf
-
   BoardSupportLib|Platform/CommonBoardPkg/Library/BoardSupportLib/BoardSupportLib.inf
-
   PagingLib|BootloaderCommonPkg/Library/PagingLib/PagingLib.inf
   TimerLib|BootloaderCommonPkg/Library/AcpiTimerLib/AcpiTimerLib.inf
 

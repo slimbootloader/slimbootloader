@@ -42,7 +42,6 @@ UpdateRegionBlock (
   EFI_STATUS    Status;
   UINT8         *ReadBuffer;
   UINT32        Count;
-  INTN          Index;
   UINT32        BlockLen;
   UINT8         *Src;
 
@@ -69,8 +68,8 @@ UpdateRegionBlock (
       DEBUG ((DEBUG_ERROR, "BootMediaRead.  readaddr: 0x%llx, Status = 0x%x\n", Address + Count, Status));
       goto End;
     }
-    Index = CompareMem (Src + Count, ReadBuffer, BlockLen);
-    if (Index == 0) {
+
+    if (CompareMem (Src + Count, ReadBuffer, BlockLen) == 0) {
       DEBUG ((DEBUG_INIT, "."));
       continue;
     }
@@ -98,10 +97,8 @@ UpdateRegionBlock (
     // Verify the written data
     //
     Status = BootMediaRead (Address + Count, BlockLen, ReadBuffer);
-    Index = CompareMem (Src + Count, ReadBuffer, BlockLen);
-    if (Index != 0) {
-      DEBUG ((DEBUG_ERROR, "Verify Error at [%x], org=0x%x, read=0x%x\n", Count + Index, Src[Count + Index],
-              ReadBuffer[Index]));
+    if (CompareMem (Src + Count, ReadBuffer, BlockLen) != 0) {
+      DEBUG ((DEBUG_ERROR, "Verify Error !\n"));
       Status = EFI_DEVICE_ERROR;
       goto End;
     }

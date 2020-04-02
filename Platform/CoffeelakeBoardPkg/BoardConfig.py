@@ -162,8 +162,7 @@ class Board(BaseBoard):
         ]
         if self.BUILD_CSME_UPDATE_DRIVER:
             common_libs.append ('MeFwUpdateLib|Silicon/$(SILICON_PKG_NAME)/Library/MeFwUpdateLib/MeFwUpdateLib.inf')
-        dsc_libs['IA32'] = common_libs
-        dsc_libs['X64'] = common_libs
+        dsc_libs[self.BUILD_ARCH] = common_libs        
         return dsc_libs
 
     def GetImageLayout (self):

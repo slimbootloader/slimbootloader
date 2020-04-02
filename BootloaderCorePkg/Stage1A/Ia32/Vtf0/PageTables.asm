@@ -1,8 +1,8 @@
 ;------------------------------------------------------------------------------
 ; @file
-; Main routine of the pre-SEC code up through the jump into SEC
+; Build paging tables dynamically for x64 mode
 ;
-; Copyright (c) 2008 - 2015, Intel Corporation. All rights reserved.<BR>
+; Copyright (c) 2020 Intel Corporation. All rights reserved.<BR>
 ; SPDX-License-Identifier: BSD-2-Clause-Patent
 ;
 ;------------------------------------------------------------------------------

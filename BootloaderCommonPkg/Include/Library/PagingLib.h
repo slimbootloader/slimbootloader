@@ -189,13 +189,4 @@ IsLongModeSupported (
   VOID
   );
 
-/**
-  This function create and load 4GB identical mapping paging table.
-**/
-VOID
-EFIAPI
-LoadPageTable (
-  VOID
-  );
-
 #endif
