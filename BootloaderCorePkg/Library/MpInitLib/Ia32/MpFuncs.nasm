@@ -1,6 +1,6 @@
 ;------------------------------------------------------------------------------
 ;
-; Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+; Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
 ; SPDX-License-Identifier: BSD-2-Clause-Patent
 ;
 ; Module Name:
@@ -31,86 +31,85 @@ RendezvousFunnelProcStart:
 ; At this point CS = 0x(vv00) and ip= 0x0.
 BITS 16
 
-  mov eax, cr2
-  or  eax, eax
+  mov              eax, cr2
+  or               eax, eax
 
   ; For SMM rebase flow, CR2 will be pre-filled with SMBASE
   ; The same stub code will be shared for SMM rebasing and start IPI.
-  jz StartIpi
+  jz               StartIpi
 
   ; The ASM code needs to use same 0x3800 segment as start IPI.
   ; At initial SMM entry the segment is 0x3000, so force a long jump.
-  jmp 0x3800:(StartIpi - RendezvousFunnelProcStart)
+  jmp              0x3800:(StartIpi - RendezvousFunnelProcStart)
 
 StartIpi:
-    mov        ax,  cs
-    mov        ds,  ax
-    mov        es,  ax
-    mov        ss,  ax
-    xor        ax,  ax
-    mov        fs,  ax
-    mov        gs,  ax
+    mov            ax,  cs
+    mov            ds,  ax
+    mov            es,  ax
+    mov            ss,  ax
+    xor            ax,  ax
+    mov            fs,  ax
+    mov            gs,  ax
 
-    mov        si, BufferStartLocation
-    mov        edx, dword [si]    ; EDX is keeping the start address of wakeup buffer
+    mov            si, BufferStartLocation
+    mov            edx, dword [si]    ; EDX is keeping the start address of wakeup buffer
 
-    mov        si, GdtrLocation
-o32 lgdt       [cs:si]
+    mov            si, GdtrLocation
+o32 lgdt           [si]
 
-    mov        si, IdtrLocation
-o32 lidt       [cs:si]
+    mov            si, IdtrLocation
+o32 lidt           [si]
 
     ; Switch to protected mode
-    mov        eax, cr0           ; Get control register 0
-    or         eax, 000000003h    ; Set PE bit (bit #0) & MP
-    mov        cr0, eax
+    mov            eax, cr0           ; Get control register 0
+    or             eax, 000000003h    ; Set PE bit (bit #0) & MP
+    mov            cr0, eax
 
 FLAT32_JUMP:
-
-    db 66h, 67h, 0EAh             ; far jump
-    dd 0h                         ; 32-bit offset
-    dw 0h                         ; 16-bit selector
+    db             66h, 67h, 0EAh             ; far jump
+    dd             0h                         ; 32-bit offset
+    dw             0x10                       ; 16-bit selector
 
 BITS 32
 SmmRebase:
-    mov         edi,  0x3fef8     ; SMBASE offset
-    mov         dword [edi], eax  ; change to new  SMBASE
+    mov            edi,  0x3fef8     ; SMBASE offset
+    mov            [edi], eax        ; change to new  SMBASE
     rsm
-    jmp         $
+    jmp            $
 
 ProtModeStart:                    ; protected mode entry point
     ; Since CS and DS base is set to 0, we need to add the buffer start to use the offset
 
-    mov        esi, edx           ; EDX is keeping the start address of wakeup buffer
+    mov            esi, edx           ; EDX is keeping the start address of wakeup buffer
 
-    mov        ax, word [cs:esi + DSSelectorLocation]
-    mov        ds, ax
+    mov            ax, word [cs:esi + DSSelectorLocation]
+    mov            ds, ax
 
-    mov        ax, word [cs:esi + ESSelectorLocation]
-    mov        es, ax
+    mov            ax, word [cs:esi + ESSelectorLocation]
+    mov            es, ax
 
-    mov        ax, word [cs:esi + FSSelectorLocation]
-    mov        fs, ax
+    mov            ax, word [cs:esi + FSSelectorLocation]
+    mov            fs, ax
 
-    mov        ax, word [cs:esi + GSSelectorLocation]
-    mov        gs, ax
+    mov            ax, word [cs:esi + GSSelectorLocation]
+    mov            gs, ax
 
-    mov        ax, word [cs:esi + SSSelectorLocation]
-    mov        ss, ax
+    mov            ax, word [cs:esi + SSSelectorLocation]
+    mov            ss, ax
 
     cli
 
-    mov        eax, cr2           ; CR2 will be set to the new SMBASE before SMI IPI is generated
-    or         eax, eax
-    jnz        SmmRebase
+    mov            eax, cr2           ; CR2 will be set to the new SMBASE before SMI IPI is generated
+    or             eax, eax
+    jnz            SmmRebase
 
-    mov        eax, cr0           ; Enable cache
-    and        eax, 09fffffffh
-    mov        cr0, eax
+    mov            eax, cr0           ; Enable cache
+    and            eax, 09fffffffh
+    mov            cr0, eax
 
-    mov        eax, cr4           ; ENABLE_SSE
-    or         eax, 00000600h
-    mov        cr4, eax
+    mov            eax, cr4           ; ENABLE_SSE
+    or             eax, 00000600h
+    mov            cr4, eax
 
 CallApFunc:
     ; Acquire Lock
@@ -152,7 +151,7 @@ CallApFunc:
 GoToSleep:
     cli
     hlt
-    jmp         $-2
+    jmp            $-2
 
 RendezvousFunnelProcEnd:
 
@@ -203,6 +202,9 @@ ApStackSizeLocation           equ        BufferStartLocation + 38h
 dd      0
 
 MpDataStructureLocation       equ        BufferStartLocation + 3Ch
+dd      0
+
+Cr3Location                   equ        BufferStartLocation + 40h
 dd      0
 
 MpDataAreaEnd:
@@ -271,18 +273,15 @@ ASM_PFX(AsmCliHlt):
         jmp         $-2
 
 
-
 global ASM_PFX(AsmMtrrSynchUpEntry)
 ASM_PFX(AsmMtrrSynchUpEntry):
-    push eax
-
     ;
     ; Disable Cache in CR0
     ;
-    mov     eax, cr0
-    bts     eax, 30
-    btr     eax, 29
-    mov     cr0, eax
+    mov             eax, cr0
+    bts             eax, 30
+    btr             eax, 29
+    mov             cr0, eax
 
     ;
     ; Flush cache
@@ -292,31 +291,26 @@ ASM_PFX(AsmMtrrSynchUpEntry):
     ;
     ; Flush all TLBs
     ;
-    mov eax, cr3
-    mov cr3, eax
-
-    pop eax
+    mov             eax, cr3
+    mov             cr3, eax
 
     ret
 
 
 global ASM_PFX(AsmMtrrSynchUpExit)
 ASM_PFX(AsmMtrrSynchUpExit):
-    push eax
-
     ;
     ; Flush all TLBs the second time
     ;
-    mov eax, cr3
-    mov cr3, eax
+    mov             eax, cr3
+    mov             cr3, eax
 
     ;
     ; Enable Normal Mode caching CD=NW=0, CD(Bit30), NW(Bit29)
     ;
-    mov eax, cr0
-    and eax, 09FFFFFFFh
-    mov cr0, eax
+    mov             eax, cr0
+    and             eax, 09FFFFFFFh
+    mov             cr0, eax
 
-    pop eax
     ret
 

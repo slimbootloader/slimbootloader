@@ -30,7 +30,7 @@ ASM_PFX(WakeUp):
     mov   [eax], ebx
     retf
 jmp_retf:
-    db    0b8h, 20h, 0      ; mov ax, 20h as selector
+    db    0b8h, 30h, 0      ; mov ax, 30h as selector
     mov   ds, ax
     mov   es, ax
     mov   fs, ax

@@ -19,9 +19,11 @@
 #  VALID_ARCHITECTURES           = IA32 X64 IPF
 #
 
+[Sources]
+  MpInitLibInternal.h
+  MpInitLib.c
+
 [Sources.IA32]
-  Ia32/MpInitLibInternal.h
-  Ia32/MpInitLib.c
   Ia32/MpFuncs.nasm
 
 [Packages]
@@ -35,7 +37,7 @@
   DebugLib
   S3SaveRestoreLib
 
-[LibraryClasses.IA32]
+[LibraryClasses.IA32, LibraryClasses.X64]
   LocalApicLib
   SynchronizationLib
   SortLib

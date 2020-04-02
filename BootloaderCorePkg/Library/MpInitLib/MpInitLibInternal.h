@@ -39,12 +39,12 @@
 
 #pragma pack(1)
 typedef struct {
-  UINT16 CSSelector;
-  UINT16 DSSelector;
-  UINT16 ESSelector;
-  UINT16 SSSelector;
-  UINT16 FSSelector;
-  UINT16 GSSelector;
+  UINT16            CSSelector;
+  UINT16            DSSelector;
+  UINT16            ESSelector;
+  UINT16            SSSelector;
+  UINT16            FSSelector;
+  UINT16            GSSelector;
 } MP_BSP_SELECTORS;
 
 typedef struct {
@@ -59,26 +59,27 @@ typedef struct {
   UINT32            ApCounter;
   UINT32            ApStackSize;
   UINT32            MpDataStruct;
+  UINT32            Cr3;
 } AP_DATA_STRUCT;
 
 typedef struct {
-  UINT8 *RendezvousFunnelAddress;
-  UINT32 CodeSize;
-  UINT32 MpDataSize;
-  UINT32 ProtModeStartOffset;
-  UINT32 ProtModeJmpPatchOffset;
+  UINT8             *RendezvousFunnelAddress;
+  UINT32            CodeSize;
+  UINT32            MpDataSize;
+  UINT32            ProtModeStartOffset;
+  UINT32            ProtModeJmpPatchOffset;
 } MP_ASSEMBLY_ADDRESS_MAP;
 
 typedef struct {
-  UINT32           ApDoneCounter;
-  UINT32           SmmRebaseDoneCounter;
-  SPIN_LOCK        SpinLock;
+  UINT32            ApDoneCounter;
+  UINT32            SmmRebaseDoneCounter;
+  SPIN_LOCK         SpinLock;
 } MP_DATA_EXCHANGE_STRUCT;
 #pragma pack()
 
 typedef struct {
-  UINT32           CpuCount;
-  CPU_INFO         CpuInfo[FixedPcdGet32 (PcdCpuMaxLogicalProcessorNumber)];
+  UINT32            CpuCount;
+  CPU_INFO          CpuInfo[FixedPcdGet32 (PcdCpuMaxLogicalProcessorNumber)];
 } ALL_CPU_INFO;
 
 typedef struct {

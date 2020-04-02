@@ -38,8 +38,9 @@ mGdtEntries[STAGE_GDT_ENTRY_COUNT] = {
   /* 0x08 */  {{0xffff, 0,  0,  0x2,  1,  0,  1,  0xf,  0,  0, 1,  1,  0}}, //linear data segment descriptor
   /* 0x10 */  {{0xffff, 0,  0,  0xf,  1,  0,  1,  0xf,  0,  0, 1,  1,  0}}, //linear code segment descriptor
   /* 0x18 */  {{0xffff, 0,  0,  0x3,  1,  0,  1,  0xf,  0,  0, 1,  1,  0}}, //system data segment descriptor
-  /* 0x20 */  {{0xffff, 0,  0,  0x2,  1,  0,  1,  0x0,  0,  0, 0,  0,  0}}, //16-bit data segment descriptor
+  /* 0x20 */  {{0xffff, 0,  0,  0xb,  1,  0,  1,  0xf,  0,  1, 0,  1,  0}}, //linear code (64-bit) segment descriptor
   /* 0x28 */  {{0xffff, 0,  0,  0xB,  1,  0,  1,  0x0,  0,  0, 0,  0,  0}}, //16-bit code segment descriptor
+  /* 0x30 */  {{0xffff, 0,  0,  0x2,  1,  0,  1,  0x0,  0,  0, 0,  0,  0}}, //16-bit data segment descriptor
 };
 
 //
@@ -393,7 +394,7 @@ SecStartup2 (
     Status = PeCoffRelocateImage (StageHdr->Base);
     if (!EFI_ERROR (Status)) {
       EnableCodeExecution ();
-      ContinueEntry = (STAGE_ENTRY) ((UINTN)ContinueFunc + Delta);
+      ContinueEntry = (STAGE_ENTRY)(UINTN)((UINT32)(Delta + (UINTN)ContinueFunc));
     } else {
       CpuHalt ("Relocation failed!\n");
     }
@@ -429,19 +430,21 @@ SecStartup (
   LOADER_GLOBAL_DATA       *LdrGlobal;
   STAGE1A_ASM_PARAM        *Stage1aAsmParam;
   UINT32                    StackTop;
+  UINT32                    PageTblSize;
   UINT64                    TimeStamp;
 
   TimeStamp     = ReadTimeStamp ();
   Stage1aAsmParam = (STAGE1A_ASM_PARAM *)Params;
 
   // Init global data
+  PageTblSize = IS_X64 ? 8 * EFI_PAGE_SIZE : 0;
   LdrGlobal = &LdrGlobalData;
   ZeroMem (LdrGlobal, sizeof (LOADER_GLOBAL_DATA));
   StackTop = (UINT32)(UINTN)Params + sizeof (STAGE1A_ASM_PARAM);
   LdrGlobal->Signature             = LDR_GDATA_SIGNATURE;
   LdrGlobal->LoaderStage           = LOADER_STAGE_1A;
   LdrGlobal->StackTop              = StackTop;
-  LdrGlobal->MemPoolEnd            = StackTop + PcdGet32 (PcdStage1DataSize);
+  LdrGlobal->MemPoolEnd            = StackTop + PcdGet32 (PcdStage1DataSize) - PageTblSize;
   LdrGlobal->MemPoolStart          = StackTop;
   LdrGlobal->MemPoolCurrTop        = LdrGlobal->MemPoolEnd;
   LdrGlobal->MemPoolCurrBottom     = LdrGlobal->MemPoolStart;
@@ -514,10 +517,11 @@ ContinueFunc (
           VerInfoTbl->ImageVersion.BuildNumber));
 
   DEBUG ((DEBUG_INFO,  "SVER: %016lX%a\n"
-          "FDBG: BLD(%c) FSP(%c)\n",
+          "FDBG: BLD(%c %a) FSP(%c)\n",
           VerInfoTbl->SourceVersion,
           VerInfoTbl->ImageVersion.Dirty ? "-dirty" : "",
           VerInfoTbl->ImageVersion.BldDebug ? 'D' : 'R',
+          sizeof(UINTN) == sizeof(UINT32) ? "IA32" : "X64",
           VerInfoTbl->ImageVersion.FspDebug ? 'D' : 'R'));
 
   // Print FSP version

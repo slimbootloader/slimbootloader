@@ -22,9 +22,7 @@
 
 [Sources]
   BootloaderCoreLib.c
-
-[Sources.IA32]
-  Ia32/BootloaderArch.c
+  BootloaderArch.c
 
 [Packages]
   MdePkg/MdePkg.dec

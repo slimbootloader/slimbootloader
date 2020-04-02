@@ -535,12 +535,12 @@ def gen_config_file (fv_dir, brd_name, platform_id, pri_key, cfg_db_size, cfg_si
     fd.close()
 
 
-def gen_payload_bin (fv_dir, pld_list, pld_bin, priv_key, hash_alg, brd_name = None):
+def gen_payload_bin (fv_dir, arch_dir, pld_list, pld_bin, priv_key, hash_alg, brd_name = None):
     fv_dir = os.path.dirname (pld_bin)
     for idx, pld in enumerate(pld_list):
         if pld['file'] in ['OsLoader.efi', 'FirmwareUpdate.efi']:
             pld_base_name = pld['file'].split('.')[0]
-            src_file = "../IA32/PayloadPkg/%s/%s/OUTPUT/%s.efi" % (pld_base_name, pld_base_name, pld_base_name)
+            src_file = "../%s/PayloadPkg/%s/%s/OUTPUT/%s.efi" % (arch_dir, pld_base_name, pld_base_name, pld_base_name)
             src_file = os.path.join(fv_dir, src_file)
         else:
             src_file = os.path.join(os.environ['PLT_SOURCE'], 'Platform', brd_name, 'Binaries', pld['file'])
@@ -1047,3 +1047,20 @@ def gen_pci_enum_policy_info (policy_dict):
         raise Exception ("Failed to generate PCI_ENUM_POLICY_INFO!")
 
     return struct_string
+
+def get_vtf_patch_base (stage1a_fd):
+    stage1a_bin = bytearray (get_file_data (stage1a_fd))
+    dlen = len(stage1a_bin) & ~0xF
+    if dlen > 0x1000:
+      dlen = 0x1000
+
+    found = 0
+    for i in range (0, dlen, 16):
+      if stage1a_bin[-i:-i+8] == b"\xF0\x0F\xAA\x55\x78\x56\x34\x12":
+        found = 0x100000000 - i
+        break
+
+    if not found:
+      raise Exception ("Could not find patchable data region in VTF !")
+
+    return found
