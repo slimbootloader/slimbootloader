@@ -9,16 +9,17 @@ before_install:
   - chmod -R a+w .
 
 env:
-  - BUILD_TARGET=qemu  PYTHON_VER=3
-  - BUILD_TARGET=apl   PYTHON_VER=2  BUILD_REL=-r
-  - BUILD_TARGET=apl   PYTHON_VER=3
-  - BUILD_TARGET=cfl   PYTHON_VER=2
-  - BUILD_TARGET=cfl   PYTHON_VER=3  BUILD_REL=-r
+  - BUILD_TARGET=qemu  PYTHON_VER=3  BUILD_ARCH=""
+  - BUILD_TARGET=qemu  PYTHON_VER=2  BUILD_ARCH="-a x64"
+  - BUILD_TARGET=apl   PYTHON_VER=2  BUILD_ARCH=""        BUILD_REL=-r
+  - BUILD_TARGET=apl   PYTHON_VER=3  BUILD_ARCH=""
+  - BUILD_TARGET=cfl   PYTHON_VER=2  BUILD_ARCH=""
+  - BUILD_TARGET=cfl   PYTHON_VER=3  BUILD_ARCH=""        BUILD_REL=-r
 
 script:
   - |
-    if [ ${BUILD_TARGET} == "qemu" ]; then
+    if [ ${BUILD_TARGET} == "qemu" && ${BUILD_ARCH} == "" ]; then
       docker run --rm -v ${PWD}:/tmp/sbl -w /tmp/sbl --network=host sbl bash -c "python${PYTHON_VER} ./BuildLoader.py build ${BUILD_REL} ${BUILD_TARGET} && python${PYTHON_VER} ./Platform/QemuBoardPkg/Script/qemu_test.py";
     else
-      docker run --rm -v ${PWD}:/tmp/sbl -w /tmp/sbl --network=host sbl python${PYTHON_VER} ./BuildLoader.py build ${BUILD_REL} ${BUILD_TARGET};
+      docker run --rm -v ${PWD}:/tmp/sbl -w /tmp/sbl --network=host sbl python${PYTHON_VER} ./BuildLoader.py build ${BUILD_REL} ${BUILD_TARGET} ${BUILD_ARCH};
     fi
