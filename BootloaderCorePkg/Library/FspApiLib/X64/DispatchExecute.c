@@ -3,13 +3,15 @@
   Provide a thunk function to transition from long mode to compatibility mode to execute 32-bit code and then transit
   back to long mode.
 
-  Copyright (c) 2014 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2014 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
 #include <PiPei.h>
 #include <Library/BaseLib.h>
+#include <Library/BaseMemoryLib.h>
+#include <Library/BlMemoryAllocationLib.h>
 #include <FspEas.h>
 
 #pragma pack(1)
@@ -33,23 +35,6 @@ typedef union {
 } IA32_GDT;
 #pragma pack()
 
-STATIC
-GLOBAL_REMOVE_IF_UNREFERENCED IA32_GDT mGdtEntries[] = {
-  {{0,      0,  0,  0,    0,  0,  0,  0,    0,  0, 0,  0,  0}}, /* 0x0:  reserve */
-  {{0xFFFF, 0,  0,  0xB,  1,  0,  1,  0xF,  0,  0, 1,  1,  0}}, /* 0x8:  compatibility mode */
-  {{0xFFFF, 0,  0,  0xB,  1,  0,  1,  0xF,  0,  1, 0,  1,  0}}, /* 0x10: for long mode */
-  {{0xFFFF, 0,  0,  0x3,  1,  0,  1,  0xF,  0,  0, 1,  1,  0}}, /* 0x18: data */
-  {{0,      0,  0,  0,    0,  0,  0,  0,    0,  0, 0,  0,  0}}, /* 0x20: reserve */
-};
-
-//
-// IA32 Gdt register
-//
-STATIC
-GLOBAL_REMOVE_IF_UNREFERENCED IA32_DESCRIPTOR mGdt = {
-  sizeof (mGdtEntries) - 1,
-  (UINTN) mGdtEntries
-  };
 
 /**
   Assembly function to transition from long mode to compatibility mode to execute 32-bit code and then transit back to
@@ -72,36 +57,66 @@ AsmExecute32BitCode (
   );
 
 /**
+  Assembly function to get the length of AsmExecute32BitCode() function
+
+  @return  The length of AsmExecute32BitCode() function.
+**/
+UINT32
+EFIAPI
+AsmGetExecute32CodeLength (
+  VOID
+);
+
+typedef EFI_STATUS (EFIAPI *EXECUTE_32BIT_CODE) \
+        (UINT64  Function, UINT64 Param1, UINT64 Param2, IA32_DESCRIPTOR  *InternalGdtr);
+
+/**
   Wrapper for a thunk  to transition from long mode to compatibility mode to execute 32-bit code and then transit back to
   long mode.
 
   @param[in] Function     The 32bit code entry to be executed.
   @param[in] Param1       The first parameter to pass to 32bit code.
   @param[in] Param2       The second parameter to pass to 32bit code.
+  @param[in] ExeInMem     If thunk needs to be executed from memory copy.
 
   @return EFI_STATUS.
 **/
 EFI_STATUS
+EFIAPI
 Execute32BitCode (
   IN UINT64      Function,
   IN UINT64      Param1,
-  IN UINT64      Param2
+  IN UINT64      Param2,
+  IN BOOLEAN     ExeInMem
   )
 {
   EFI_STATUS       Status;
   IA32_DESCRIPTOR  Idtr;
   IA32_DESCRIPTOR  IdtrNul;
+  IA32_DESCRIPTOR  Gdtr;
+  EXECUTE_32BIT_CODE ExecuteCode;
 
   //
   // Idtr might be changed inside of FSP. 32bit FSP only knows the <4G address.
   // If IDTR.Base is >4G, FSP can not handle. So we need save/restore IDTR here for X64 only.
   // Interrupt is already disabled here, so it is safety to update IDTR.
   //
-  IdtrNul.Base  = 0x00;
-  IdtrNul.Limit = 0x07;
+  AsmReadGdtr (&Gdtr);
+  if (ExeInMem && (Param1 == 0) && (Param2 == 0)) {
+    // For TempRamInit in XIP, it might be running from temp memory.
+    // To be safe, need to copy the thunk code into memory for execution to prevent crash.
+    ExecuteCode = (EXECUTE_32BIT_CODE)AllocateTemporaryMemory (0);
+    CopyMem ((VOID *)ExecuteCode, (VOID *)AsmExecute32BitCode, AsmGetExecute32CodeLength());
+  } else {
+    ExecuteCode = (EXECUTE_32BIT_CODE)AsmExecute32BitCode;
+  }
+
   AsmReadIdtr (&Idtr);
+  // Let FSP to setup the IDT
+  IdtrNul.Base  = 0x0000;
+  IdtrNul.Limit = 0xFFFF;
   AsmWriteIdtr (&IdtrNul);
-  Status = AsmExecute32BitCode (Function, Param1, Param2, &mGdt);
+  Status = ExecuteCode (Function, Param1, Param2, &Gdtr);
   AsmWriteIdtr (&Idtr);
 
   return Status;

@@ -49,7 +49,7 @@ CallFspNotifyPhase (
 
   DEBUG ((DEBUG_INFO, "Call FspNotifyPhase(%02X) ... ", Phase));
   if (IS_X64) {
-    Status = Execute32BitCode ((UINTN)NotifyPhase, (UINTN)&NotifyPhaseParams, (UINTN)0);
+    Status = Execute32BitCode ((UINTN)NotifyPhase, (UINTN)&NotifyPhaseParams, (UINTN)0, FALSE);
     Status = (UINTN)LShiftU64 (Status & ((UINTN)MAX_INT32 + 1), 32) | (Status & MAX_INT32);
   } else {
     Status = NotifyPhase (&NotifyPhaseParams);

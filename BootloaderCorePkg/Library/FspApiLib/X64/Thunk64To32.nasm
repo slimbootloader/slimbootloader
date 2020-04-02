@@ -36,6 +36,7 @@
 ;----------------------------------------------------------------------------
 global ASM_PFX(AsmExecute32BitCode)
 ASM_PFX(AsmExecute32BitCode):
+AsmExecute32BitCodeStart:
     ;
     ; save IFLAG and disable it
     ;
@@ -73,9 +74,9 @@ ASM_PFX(AsmExecute32BitCode):
     ;
     ; Prepare the CS and return address for the transition from 32-bit to 64-bit mode
     ;
-    mov     rax, dword 0x10              ; load long mode selector
+    mov     rax, dword 0x20             ; load long mode selector
     shl     rax, 32
-    mov     r9,  ReloadCS                ;Assume the ReloadCS is under 4G
+    lea     r9,  [ReloadCS]             ;Assume the ReloadCS is under 4G
     or      rax, r9
     push    rax
     ;
@@ -89,7 +90,7 @@ ASM_PFX(AsmExecute32BitCode):
     ; save the 32-bit function entry and the return address into stack which will be
     ; retrieve in compatibility mode.
     ;
-    mov     rax, ReturnBack     ;Assume the ReloadCS is under 4G
+    lea     rax, [ReturnBack]     ;Assume the ReloadCS is under 4G
     shl     rax, 32
     or      rax, rcx
     push    rax
@@ -102,9 +103,9 @@ ASM_PFX(AsmExecute32BitCode):
     ;
     ; Change to Compatible Segment
     ;
-    mov     rcx, dword 0x8               ; load compatible mode selector
+    mov     rcx, dword 0x10     ; load compatible mode selector
     shl     rcx, 32
-    mov     rdx, Compatible   ; assume address < 4G
+    lea     rdx, [Compatible]   ; assume address < 4G
     or      rcx, rdx
     push    rcx
     retf
@@ -222,4 +223,23 @@ ReloadCS:
     popfq
 
     ret
+AsmExecute32BitCodeEnd:
 
+; Procedure:    AsmGetExecute32CodeLength
+;
+; Input:        None
+;
+; Output:       Length of the AsmGetExecute32Code function
+;
+; Prototype:    UINT32
+;               AsmGetExecute32CodeLength (
+;                 VOID
+;                 );
+;
+;
+; Description:  Get AsmGetExecute32Code function length
+;
+global ASM_PFX(AsmGetExecute32CodeLength)
+ASM_PFX(AsmGetExecute32CodeLength):
+    mov     rax, (AsmExecute32BitCodeEnd - AsmExecute32BitCodeStart)
+    ret
