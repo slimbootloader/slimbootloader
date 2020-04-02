@@ -108,7 +108,7 @@ PreparePayload (
 
   AddMeasurePoint (0x3100);
   DstLen = 0;
-  DstAdr = NULL;
+  DstAdr = (VOID *)(UINTN)Dst;
   Status = LoadComponentWithCallback (ContainerSig, ComponentName,
                                       &DstAdr, &DstLen, LoadComponentCallback);
   if (EFI_ERROR (Status)) {
