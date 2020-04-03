@@ -1,30 +1,3 @@
-;------------------------------------------------------------------------------
-;
-; Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
-; SPDX-License-Identifier: BSD-2-Clause-Patent
-;
-;
-;     Purpose:  Cryptography Primitive.
-;               Message block processing according to SHA256
-;
-;     Content:
-;        UpdateSHA256
-;
-;
-
-
-    SECTION .text
-
-%define  IPP_ALIGN_FACTOR   32
-%define  sizeof_oword       16
-%define  sizeof_dword       4
-;;
-;; SHA256(Ipp32u digest[], Ipp8u dataBlock[], int dataLen, Ipp32u K_256[])
-;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-global ASM_PFX(UpdateSHA256V8)
-
-
 ;===============================================================================
 ; Copyright 2015-2020 Intel Corporation
 ;
@@ -50,6 +23,10 @@ global ASM_PFX(UpdateSHA256V8)
 ;        UpdateSHA256
 ;
 ;
+
+%include "ia_32e.inc"
+
+%xdefine LOCAL_FRAME  sizeof(oword) * 2
 
 %xdefine XMM_SHUFB_BSWAP  xmm6
 %xdefine W0   xmm0
@@ -195,7 +172,7 @@ global ASM_PFX(UpdateSHA256V8)
   %xdefine %%T1 %10
   %xdefine %%T2 %11
 
-   add      %%H, dword [rsp+(%%nr & 3)*sizeof_dword]
+   add      %%H, dword [rsp+(%%nr & 3)*sizeof(dword)]
    Summ1    %%T1, %%E, %%T2
    Chj      %%T2, %%E,%%F,%%G
    add      %%H, %%T1
@@ -265,7 +242,7 @@ global ASM_PFX(UpdateSHA256V8)
    pxor     %%SIGMA1, %%X
 
    movdqa   %%SIGMA0, %%xS4             ;; SIGMA0 = {W[4],W[4],W[3],W[3]}
-   palignr  %%SIGMA0, %%xS0, (3*sizeof_dword)
+   palignr  %%SIGMA0, %%xS0, (3*sizeof(dword))
    pshufd   %%SIGMA0, %%SIGMA0, 01010000b
    movdqa   %%X, %%SIGMA0
    psrld    %%SIGMA0, 3
@@ -275,7 +252,7 @@ global ASM_PFX(UpdateSHA256V8)
    pxor     %%SIGMA0, %%X
 
    movdqa   %%X, %%xS12
-   palignr  %%X, %%xS8, (3*sizeof_dword)  ;; {W[14],W[13],W[12],W[11]}
+   palignr  %%X, %%xS8, (3*sizeof(dword))  ;; {W[14],W[13],W[12],W[11]}
    pshufd   %%xS0, %%xS0, 11111010b        ;; {W[ 3],W[ 3],W[ 2],W[ 2]}
    pshufd   %%X, %%X, 01010000b            ;; {W[12],W[12],W[11],W[11]}
    paddd    %%xS0, %%SIGMA1
@@ -284,7 +261,7 @@ global ASM_PFX(UpdateSHA256V8)
 
    pshufd   %%xS, %%xS, 10001000b          ;; {W[1],W[0],W[1],W[0]}
    pshufd   %%xS0, %%xS0, 10001000b        ;; {W[3],W[2],W[3],W[2]}
-   palignr  %%xS0, %%xS, (2*sizeof_dword) ;; {W[3],W[2],W[1],W[0]}
+   palignr  %%xS0, %%xS, (2*sizeof(dword)) ;; {W[3],W[2],W[1],W[0]}
    movdqa   %%xS, %%xS0
 %endmacro
 
@@ -308,25 +285,12 @@ ASM_PFX(UpdateSHA256V8):
 
 ;; imortant:
 ;;   stack is 8 byte aligned at this point.
-;;   do a dummy 'push rcx' to make stack aligned at 16
-   push     rcx
-
-;; save all changed registers
-   push     rbx
-   push     rsi
-   push     rdi
-   push     rbp
-   push     r12
-   push     r13
-   push     r14
-   push     r15
-
-   sub      rsp, 16 * 2
-   movdqa   [rsp + 0x00], xmm6
-   movdqa   [rsp + 0x10], xmm7
+;;   needs to save odd number of GPR so that stack is 16 byte aligned
+   SAVE_GPR rcx,rbx,rsi,rdi,rbp,r12,r13,r14,r15
+   SAVE_XMM xmm6,xmm7
 
 ;; keep space on statck frame
-   sub      rsp,  32
+   sub      rsp,  LOCAL_FRAME
 
 ;; convert calling conversion
    mov      rdi,  rcx
@@ -343,7 +307,7 @@ ASM_PFX(UpdateSHA256V8):
 %xdefine MBS_SHA256    (64)
 
    movsxd   rdx, edx
-   mov      qword [rsp+sizeof_oword], rdx   ; save length of buffer
+   mov      qword [rsp+sizeof(oword)], rdx   ; save length of buffer
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -354,18 +318,18 @@ ASM_PFX(UpdateSHA256V8):
 .sha256_block_loop:
 
    movdqu         W0, oword [rsi]       ; load buffer content
-   movdqu         W4, oword [rsi+sizeof_oword]
-   movdqu         W8, oword [rsi+sizeof_oword*2]
-   movdqu         W12,oword [rsi+sizeof_oword*3]
+   movdqu         W4, oword [rsi+sizeof(oword)]
+   movdqu         W8, oword [rsi+sizeof(oword)*2]
+   movdqu         W12,oword [rsi+sizeof(oword)*3]
 
    mov            A, dword [rdi]         ; load initial hash value
-   mov            B, dword [rdi+sizeof_dword]
-   mov            C, dword [rdi+sizeof_dword*2]
-   mov            D, dword [rdi+sizeof_dword*3]
-   mov            E, dword [rdi+sizeof_dword*4]
-   mov            F, dword [rdi+sizeof_dword*5]
-   mov            G, dword [rdi+sizeof_dword*6]
-   mov            H, dword [rdi+sizeof_dword*7]
+   mov            B, dword [rdi+sizeof(dword)]
+   mov            C, dword [rdi+sizeof(dword)*2]
+   mov            D, dword [rdi+sizeof(dword)*3]
+   mov            E, dword [rdi+sizeof(dword)*4]
+   mov            F, dword [rdi+sizeof(dword)*5]
+   mov            G, dword [rdi+sizeof(dword)*6]
+   mov            H, dword [rdi+sizeof(dword)*7]
 
    movdqa         XMM_SHUFB_BSWAP, oword [rel pByteSwp] ; load shuffle mask
 
@@ -374,7 +338,7 @@ ASM_PFX(UpdateSHA256V8):
    ;; perform 0-3 regular rounds
    pshufb   W0, XMM_SHUFB_BSWAP                 ; swap input
    movdqa   W, W0                               ; T = W[0-3]
-   paddd    W, oword [rcx+sizeof_oword*0]  ; T += K_SHA256[0-3]
+   paddd    W, oword [rcx+sizeof(oword)*0]  ; T += K_SHA256[0-3]
    movdqa   oword [rsp], W
    ROUND    0, A,B,C,D,E,F,G,H, T1,T2
    ROUND    1, H,A,B,C,D,E,F,G, T1,T2
@@ -384,7 +348,7 @@ ASM_PFX(UpdateSHA256V8):
    ;; perform next 4-7 regular rounds
    pshufb   W4, XMM_SHUFB_BSWAP                 ; swap input
    movdqa   W, W4                               ; T = W[4-7]
-   paddd    W, oword [rcx+sizeof_oword*1]  ; T += K_SHA256[4-7]
+   paddd    W, oword [rcx+sizeof(oword)*1]  ; T += K_SHA256[4-7]
    movdqa   oword [rsp], W
    ROUND    4, E,F,G,H,A,B,C,D, T1,T2
    ROUND    5, D,E,F,G,H,A,B,C, T1,T2
@@ -394,7 +358,7 @@ ASM_PFX(UpdateSHA256V8):
    ;; perform next 8-11 regular rounds
    pshufb   W8, XMM_SHUFB_BSWAP                 ; swap input
    movdqa   W, W8                               ; T = W[8-11]
-   paddd    W, oword [rcx+sizeof_oword*2]  ; T += K_SHA256[8-11]
+   paddd    W, oword [rcx+sizeof(oword)*2]  ; T += K_SHA256[8-11]
    movdqa   oword [rsp], W
    ROUND    8, A,B,C,D,E,F,G,H, T1,T2
    ROUND    9, H,A,B,C,D,E,F,G, T1,T2
@@ -404,7 +368,7 @@ ASM_PFX(UpdateSHA256V8):
    ;; perform next 12-15 regular rounds
    pshufb   W12, XMM_SHUFB_BSWAP                ; swap input
    movdqa   W, W12                              ; T = W[12-15]
-   paddd    W, oword [rcx+sizeof_oword*3]  ; T += K_SHA256[12-15]
+   paddd    W, oword [rcx+sizeof(oword)*3]  ; T += K_SHA256[12-15]
    movdqa   oword [rsp], W
    ROUND   12, E,F,G,H,A,B,C,D, T1,T2
    ROUND   13, D,E,F,G,H,A,B,C, T1,T2
@@ -412,7 +376,7 @@ ASM_PFX(UpdateSHA256V8):
    ROUND   15, B,C,D,E,F,G,H,A, T1,T2
 
    UPDATE_W    W, W0, W4, W8, W12, SIG1,SIG0,X     ; round: 16-19
-   paddd       W, oword [rcx+sizeof_oword*4]  ; T += K_SHA256[16-19]
+   paddd       W, oword [rcx+sizeof(oword)*4]  ; T += K_SHA256[16-19]
    movdqa      oword [rsp], W
    ROUND   16, A,B,C,D,E,F,G,H, T1,T2
    ROUND   17, H,A,B,C,D,E,F,G, T1,T2
@@ -420,7 +384,7 @@ ASM_PFX(UpdateSHA256V8):
    ROUND   19, F,G,H,A,B,C,D,E, T1,T2
 
    UPDATE_W    W, W4, W8, W12,W0,  SIG1,SIG0,X     ; round: 20-23
-   paddd       W, oword [rcx+sizeof_oword*5]  ; T += K_SHA256[20-23]
+   paddd       W, oword [rcx+sizeof(oword)*5]  ; T += K_SHA256[20-23]
    movdqa      oword [rsp], W
    ROUND   20, E,F,G,H,A,B,C,D, T1,T2
    ROUND   21, D,E,F,G,H,A,B,C, T1,T2
@@ -428,7 +392,7 @@ ASM_PFX(UpdateSHA256V8):
    ROUND   23, B,C,D,E,F,G,H,A, T1,T2
 
    UPDATE_W    W, W8, W12,W0, W4,  SIG1,SIG0,X     ; round: 24-27
-   paddd       W, oword [rcx+sizeof_oword*6]  ; T += K_SHA256[24-27]
+   paddd       W, oword [rcx+sizeof(oword)*6]  ; T += K_SHA256[24-27]
    movdqa      oword [rsp], W
    ROUND   24, A,B,C,D,E,F,G,H, T1,T2
    ROUND   25, H,A,B,C,D,E,F,G, T1,T2
@@ -436,7 +400,7 @@ ASM_PFX(UpdateSHA256V8):
    ROUND   27, F,G,H,A,B,C,D,E, T1,T2
 
    UPDATE_W    W, W12,W0, W4, W8,  SIG1,SIG0,X     ; round: 28-31
-   paddd       W, oword [rcx+sizeof_oword*7]  ; T += K_SHA256[28-31]
+   paddd       W, oword [rcx+sizeof(oword)*7]  ; T += K_SHA256[28-31]
    movdqa      oword [rsp], W
    ROUND   28, E,F,G,H,A,B,C,D, T1,T2
    ROUND   29, D,E,F,G,H,A,B,C, T1,T2
@@ -444,7 +408,7 @@ ASM_PFX(UpdateSHA256V8):
    ROUND   31, B,C,D,E,F,G,H,A, T1,T2
 
    UPDATE_W    W, W0, W4, W8, W12, SIG1,SIG0,X     ; round: 32-35
-   paddd       W, oword [rcx+sizeof_oword*8]  ; T += K_SHA256[32-35]
+   paddd       W, oword [rcx+sizeof(oword)*8]  ; T += K_SHA256[32-35]
    movdqa      oword [rsp], W
    ROUND   32, A,B,C,D,E,F,G,H, T1,T2
    ROUND   33, H,A,B,C,D,E,F,G, T1,T2
@@ -452,7 +416,7 @@ ASM_PFX(UpdateSHA256V8):
    ROUND   35, F,G,H,A,B,C,D,E, T1,T2
 
    UPDATE_W    W, W4, W8, W12,W0,  SIG1,SIG0,X     ; round: 36-39
-   paddd       W, oword [rcx+sizeof_oword*9]  ; T += K_SHA256[36-39]
+   paddd       W, oword [rcx+sizeof(oword)*9]  ; T += K_SHA256[36-39]
    movdqa      oword [rsp], W
    ROUND   36, E,F,G,H,A,B,C,D, T1,T2
    ROUND   37, D,E,F,G,H,A,B,C, T1,T2
@@ -460,7 +424,7 @@ ASM_PFX(UpdateSHA256V8):
    ROUND   39, B,C,D,E,F,G,H,A, T1,T2
 
    UPDATE_W    W, W8, W12,W0, W4,  SIG1,SIG0,X     ; round: 40-43
-   paddd       W, oword [rcx+sizeof_oword*10] ; T += K_SHA256[40-43]
+   paddd       W, oword [rcx+sizeof(oword)*10] ; T += K_SHA256[40-43]
    movdqa      oword [rsp], W
    ROUND   40, A,B,C,D,E,F,G,H, T1,T2
    ROUND   41, H,A,B,C,D,E,F,G, T1,T2
@@ -468,7 +432,7 @@ ASM_PFX(UpdateSHA256V8):
    ROUND   43, F,G,H,A,B,C,D,E, T1,T2
 
    UPDATE_W    W, W12,W0, W4, W8,  SIG1,SIG0,X     ; round: 44-47
-   paddd       W, oword [rcx+sizeof_oword*11] ; T += K_SHA256[44-47]
+   paddd       W, oword [rcx+sizeof(oword)*11] ; T += K_SHA256[44-47]
    movdqa      oword [rsp], W
    ROUND   44, E,F,G,H,A,B,C,D, T1,T2
    ROUND   45, D,E,F,G,H,A,B,C, T1,T2
@@ -476,7 +440,7 @@ ASM_PFX(UpdateSHA256V8):
    ROUND   47, B,C,D,E,F,G,H,A, T1,T2
 
    UPDATE_W    W, W0, W4, W8, W12, SIG1,SIG0,X     ; round: 48-51
-   paddd       W, oword [rcx+sizeof_oword*12] ; T += K_SHA256[48-51]
+   paddd       W, oword [rcx+sizeof(oword)*12] ; T += K_SHA256[48-51]
    movdqa      oword [rsp], W
    ROUND   48, A,B,C,D,E,F,G,H, T1,T2
    ROUND   49, H,A,B,C,D,E,F,G, T1,T2
@@ -484,7 +448,7 @@ ASM_PFX(UpdateSHA256V8):
    ROUND   51, F,G,H,A,B,C,D,E, T1,T2
 
    UPDATE_W    W, W4, W8, W12,W0,  SIG1,SIG0,X     ; round: 52-55
-   paddd       W, oword [rcx+sizeof_oword*13] ; T += K_SHA256[52-55]
+   paddd       W, oword [rcx+sizeof(oword)*13] ; T += K_SHA256[52-55]
    movdqa      oword [rsp], W
    ROUND   52, E,F,G,H,A,B,C,D, T1,T2
    ROUND   53, D,E,F,G,H,A,B,C, T1,T2
@@ -492,7 +456,7 @@ ASM_PFX(UpdateSHA256V8):
    ROUND   55, B,C,D,E,F,G,H,A, T1,T2
 
    UPDATE_W    W, W8, W12,W0, W4,  SIG1,SIG0,X     ; round: 56-59
-   paddd       W, oword [rcx+sizeof_oword*14] ; T += K_SHA256[56-59]
+   paddd       W, oword [rcx+sizeof(oword)*14] ; T += K_SHA256[56-59]
    movdqa      oword [rsp], W
    ROUND   56, A,B,C,D,E,F,G,H, T1,T2
    ROUND   57, H,A,B,C,D,E,F,G, T1,T2
@@ -500,7 +464,7 @@ ASM_PFX(UpdateSHA256V8):
    ROUND   59, F,G,H,A,B,C,D,E, T1,T2
 
    UPDATE_W    W, W12,W0, W4, W8,  SIG1,SIG0,X     ; round: 60-63
-   paddd       W, oword [rcx+sizeof_oword*15] ; T += K_SHA256[60-63]
+   paddd       W, oword [rcx+sizeof(oword)*15] ; T += K_SHA256[60-63]
    movdqa      oword [rsp], W
    ROUND   60, E,F,G,H,A,B,C,D, T1,T2
    ROUND   61, D,E,F,G,H,A,B,C, T1,T2
@@ -508,32 +472,21 @@ ASM_PFX(UpdateSHA256V8):
    ROUND   63, B,C,D,E,F,G,H,A, T1,T2
 
    add            dword [rdi], A         ; update hash
-   add            dword [rdi+sizeof_dword*1], B
-   add            dword [rdi+sizeof_dword*2], C
-   add            dword [rdi+sizeof_dword*3], D
-   add            dword [rdi+sizeof_dword*4], E
-   add            dword [rdi+sizeof_dword*5], F
-   add            dword [rdi+sizeof_dword*6], G
-   add            dword [rdi+sizeof_dword*7], H
+   add            dword [rdi+sizeof(dword)*1], B
+   add            dword [rdi+sizeof(dword)*2], C
+   add            dword [rdi+sizeof(dword)*3], D
+   add            dword [rdi+sizeof(dword)*4], E
+   add            dword [rdi+sizeof(dword)*5], F
+   add            dword [rdi+sizeof(dword)*6], G
+   add            dword [rdi+sizeof(dword)*7], H
 
    add      rsi, MBS_SHA256
-   sub      qword [rsp+sizeof_oword], MBS_SHA256
+   sub      qword [rsp+sizeof(oword)], MBS_SHA256
    jg       .sha256_block_loop
 
+   add         rsp,  LOCAL_FRAME
 
-   add         rsp,  32
-   movdqu      xmm6,  [rsp + 0x00]
-   movdqu      xmm7,  [rsp + 0x10]
-   add         rsp,  16 * 2
-
-   pop      r15
-   pop      r14
-   pop      r13
-   pop      r12
-   pop      rbp
-   pop      rdi
-   pop      rsi
-   pop      rbx
-   pop      rcx
+   REST_XMM xmm6,xmm7
+   REST_GPR rcx,rbx,rsi,rdi,rbp,r12,r13,r14,r15
 
    ret

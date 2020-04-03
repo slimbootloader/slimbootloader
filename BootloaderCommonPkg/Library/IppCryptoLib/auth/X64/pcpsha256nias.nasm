@@ -25,7 +25,9 @@
 ;
     SECTION .text
 
-%define  IPP_ALIGN_FACTOR   32
+%include "ia_32e.inc"
+
+%xdefine LOCAL_FRAME  sizeof(oword) * 2
 
 align IPP_ALIGN_FACTOR
 PSHUFFLE_BYTE_FLIP_MASK \
@@ -64,12 +66,7 @@ ASM_PFX(UpdateSHA256Ni):
 %xdefine ABEF_SAVE  xmm9
 %xdefine CDGH_SAVE  xmm10
 
-   sub      rsp, 16 * 5
-   movdqu   [rsp + 0x00], xmm6
-   movdqu   [rsp + 0x10], xmm7
-   movdqu   [rsp + 0x20], xmm8
-   movdqu   [rsp + 0x30], xmm9
-   movdqu   [rsp + 0x40], xmm10
+   SAVE_XMM  xmm6,xmm7,xmm8,xmm9,xmm10
 
    test     MSG_LEN, MSG_LEN
    jz       .quit
@@ -294,12 +291,7 @@ ASM_PFX(UpdateSHA256Ni):
    movdqu      oword [HASH_PTR + 1*16], STATE1
 
 .quit:
-   movdqu      xmm6,  [rsp + 0x00]
-   movdqu      xmm7,  [rsp + 0x10]
-   movdqu      xmm8,  [rsp + 0x20]
-   movdqu      xmm9,  [rsp + 0x30]
-   movdqu      xmm10, [rsp + 0x40]
-   add         rsp, 16 * 5
+   REST_XMM  xmm6,xmm7,xmm8,xmm9,xmm10
 
    ret
 

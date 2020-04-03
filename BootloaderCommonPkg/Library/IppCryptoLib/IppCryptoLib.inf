@@ -86,8 +86,8 @@
 [Sources.X64]
   $(IPP_PATH)/X64/pcpsha256u8as.nasm
   $(IPP_PATH)/X64/pcpsha256nias.nasm
-  $(IPP_PATH)/X64/pcpsha512w7as.nasm
-  $(IPP_PATH)/X64/pcpsha512g9as.nasm
+  $(IPP_PATH)/X64/pcpsha512m7as.nasm
+  $(IPP_PATH)/X64/pcpsha512e9as.nasm
 
 [Packages]
   MdePkg/MdePkg.dec
