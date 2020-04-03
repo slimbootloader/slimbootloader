@@ -89,7 +89,7 @@ class Board(BaseBoard):
         self.STAGE2_FD_SIZE       = 0x000E0000
 
         self.STAGE1_STACK_SIZE    = 0x00002000
-        self.STAGE1_DATA_SIZE     = 0x0000E000
+        self.STAGE1_DATA_SIZE     = 0x00014000
 
         self.PAYLOAD_EXE_BASE     = 0x00B00000
         self.PAYLOAD_SIZE         = 0x00028000
