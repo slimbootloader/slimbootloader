@@ -137,9 +137,8 @@ class Board(BaseBoard):
         self._CFGDATA_INT_FILE    = ['CfgDataInt_Cfls.dlt', 'CfgDataInt_Cflh.dlt', 'CfgDataInt_Whl.dlt']
         self._CFGDATA_EXT_FILE    = ['CfgDataExt_Upx.dlt']
 
-    def GetDscLibrarys (self):
-        dsc_libs = {}
-        # These libraries will be added into the DSC files
+    def GetPlatformDsc (self):
+        dsc = {}
         common_libs = [
             'LoaderLib|Platform/CommonBoardPkg/Library/LoaderLib/LoaderLib.inf',
             'PlatformHookLib|Silicon/$(SILICON_PKG_NAME)/Library/PlatformHookLib/PlatformHookLib.inf',
@@ -162,8 +161,8 @@ class Board(BaseBoard):
         ]
         if self.BUILD_CSME_UPDATE_DRIVER:
             common_libs.append ('MeFwUpdateLib|Silicon/$(SILICON_PKG_NAME)/Library/MeFwUpdateLib/MeFwUpdateLib.inf')
-        dsc_libs[self.BUILD_ARCH] = common_libs        
-        return dsc_libs
+        dsc['LibraryClasses.%s' % self.BUILD_ARCH] = common_libs
+        return dsc
 
     def GetImageLayout (self):
         img_list = []

@@ -157,17 +157,18 @@ class Board(BaseBoard):
         #   VbtBin folder.
         self._MULTI_VBT_FILE      = {1:'Vbt800x600.dat', 2:'Vbt1024x768.dat'}
 
-    def GetDscLibrarys (self):
-        dsc_libs = {}
-        # These libraries will be added into the DSC files
-        common_libs = [
+    def GetPlatformDsc (self):
+        dsc = {}
+        dsc['LibraryClasses.%s' % self.BUILD_ARCH] = [
             'LoaderLib|Platform/CommonBoardPkg/Library/LoaderLib/LoaderLib.inf',
             'PlatformHookLib|Silicon/$(SILICON_PKG_NAME)/Library/PlatformHookLib/PlatformHookLib.inf',
             'GpioLib|Silicon/$(SILICON_PKG_NAME)/Library/GpioLib/GpioLib.inf',
             'SpiFlashLib|Silicon/$(SILICON_PKG_NAME)/Library/SpiFlashLib/SpiFlashLib.inf',
         ]
-        dsc_libs[self.BUILD_ARCH] = common_libs        
-        return dsc_libs
+        dsc['PcdsFeatureFlag.%s' % self.BUILD_ARCH] = [
+            'gPlatformCommonLibTokenSpaceGuid.PcdMultiUsbBootDeviceEnabled | TRUE'
+        ]
+        return dsc
 
     def GetKeyHashList (self):
         # Define a set of new key used for different purposes
