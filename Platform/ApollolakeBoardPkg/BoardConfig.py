@@ -17,6 +17,32 @@ sys.path.append (os.path.join('..', '..'))
 from BuildLoader import FLASH_MAP, BaseBoard, STITCH_OPS
 from BuildLoader import IPP_CRYPTO_OPTIMIZATION_MASK, IPP_CRYPTO_ALG_MASK
 
+#
+#    Temporary Memory Layout for APL
+#
+#  FF000000 +--------------------------+
+#           |        Stage1B           |
+#           |     (Decompressed)       |
+#  FEF80000 +--------------------------+
+#           |     Stage1 Heap/Stack    |
+#  FEF70000 +--------------------------+
+#           |        Not Used          |
+#           +-------------+------------+
+#           |           Free           |
+#           |             |------------|
+#           +-------------+   MRC NVS  |
+#           |             |            |
+#  FEF40000 +-  Stage1B  -+------------+
+#           |  Compressed |  FSP Mem   |
+#  FEF16000 |             +------------+
+#           |             |            |
+#  FEF10000 --------------+------------+
+#           |     N/A (Don't use)      |
+#  FEF08000 +--------------------------+
+#           |        Stage1A           |
+#  FEF00000 +--------------------------+
+#
+
 class Board(BaseBoard):
     def __init__(self, *args, **kwargs):
 
@@ -107,11 +133,10 @@ class Board(BaseBoard):
             self.STAGE2_SIZE  += 0x0000F000
 
         self.STAGE1A_XIP          = 0
-        self.STAGE1A_LOAD_BASE    = 0xFEF80000
-
+        self.STAGE1A_LOAD_BASE    = 0xFEF00000
         self.STAGE1B_XIP          = 0
-        self.STAGE1B_LOAD_BASE    = 0xFEF40000
-        self.STAGE1B_FD_BASE      = 0xFEF88000
+        self.STAGE1B_LOAD_BASE    = 0xFEF10000
+        self.STAGE1B_FD_BASE      = 0xFEF80000
         self.STAGE1B_FD_SIZE      = 0x0006B000
         if self.RELEASE_MODE == 0:
             self.STAGE1B_FD_SIZE += 0x00002000
@@ -123,7 +148,9 @@ class Board(BaseBoard):
         self.STAGE2_LOAD_BASE     = 0x00100000
 
         self.STAGE1_STACK_SIZE    = 0x00002000
-        self.STAGE1_DATA_SIZE     = 0x00006000
+        self.STAGE1_DATA_SIZE     = 0x0000E000
+        # Offset is relative to the temporary memory base 0xFEF00000
+        self.STAGE1_STACK_BASE_OFFSET = 0x00080000 - (self.STAGE1_STACK_SIZE + self.STAGE1_DATA_SIZE)
 
         # To support large payload such as UEFI
         self.LOADER_RSVD_MEM_SIZE = 0x00B8C000

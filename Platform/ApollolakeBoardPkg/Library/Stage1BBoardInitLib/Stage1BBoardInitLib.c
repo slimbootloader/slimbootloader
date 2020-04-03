@@ -47,6 +47,7 @@
 #include <PlatformData.h>
 #include <Register/RegsSpi.h>
 
+#define APL_FSP_STACK_TOP       0xFEF40000
 #define MRC_PARAMS_BYTE_OFFSET_MRC_VERSION 14
 
 CONST PLT_DEVICE  mPlatformDevices[]= {
@@ -613,7 +614,7 @@ UpdateFspConfig (
   // The NVS buffer will be loaded to PcdStage1BLoadBase FindNvsData()
   // The PcdStage1BLoadBase is not used any more after Stage1B is loaded, so reuse it to save CAR space.
   //
-  Fspmcfg->VariableNvsBufferPtr      = (VOID *)(UINTN)PcdGet32 (PcdStage1BLoadBase);
+  Fspmcfg->VariableNvsBufferPtr      = (VOID *)(UINTN)APL_FSP_STACK_TOP;
 
   //
   // This will be done by configuration data
@@ -1830,9 +1831,8 @@ FindNvsData (
   MrcNvDataOffset = 0;
   MrcParamsOffset = MrcNvDataOffset + RegionSize;
 
-  // Reuse Stage1B loading base as buffer for decompression
   // All MRC NVS data should be less than 64KB
-  MrcVarData   = (VOID *)(UINTN)PcdGet32 (PcdStage1BLoadBase);
+  MrcVarData   = (VOID *)(UINTN)APL_FSP_STACK_TOP;
   MrcParamData = (UINT8 *)MrcVarData + SIZE_1KB;
   MemPool      = (UINT8 *)MrcVarData + SIZE_64KB;
 
