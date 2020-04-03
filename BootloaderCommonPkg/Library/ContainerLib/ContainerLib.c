@@ -710,6 +710,7 @@ LoadComponentWithCallback (
   UINT32                    ComponentId;
 
   ComponentId = ContainerSig;
+  CompLoc = 0;
 
   if (ContainerSig < COMP_TYPE_INVALID) {
     // Check if it is component type
