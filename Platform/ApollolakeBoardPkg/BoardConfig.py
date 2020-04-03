@@ -149,9 +149,8 @@ class Board(BaseBoard):
         self._CFGDATA_INT_FILE = ['CfgData_Int_LeafHill.dlt']
         self._CFGDATA_EXT_FILE = ['CfgData_Ext_Gpmrb.dlt', 'CfgData_Ext_Up2.dlt','CfgData_Ext_OxbHill.dlt','CfgData_Ext_MB3.dlt','CfgData_Ext_JuniperHill.dlt']
 
-    def GetDscLibrarys (self, BuildPkgName = "BootLoaderCorePkg"):
-        dsc_libs = {}
-        # These libraries will be added into the DSC files
+    def GetPlatformDsc (self):
+        dsc = {}
         common_libs = [
             'LoaderLib|Platform/$(BOARD_PKG_NAME)/Library/LoaderLib/LoaderLib.inf',
             'SerialPortLib|Silicon/$(SILICON_PKG_NAME)/Library/SerialPortLib/SerialPortLib.inf',
@@ -174,8 +173,8 @@ class Board(BaseBoard):
             'HdaLib|Platform/$(BOARD_PKG_NAME)/Library/HdaLib/HdaLib.inf',
             'VtdPmrLib|Silicon/CommonSocPkg/Library/VtdPmrLib/VtdPmrLib.inf'
         ]
-        dsc_libs[self.BUILD_ARCH] = common_libs
-        return dsc_libs
+        dsc['LibraryClasses.%s' % self.BUILD_ARCH] = common_libs
+        return dsc
 
     def GetFlashMapList (self):
         img_list  = self.GetImageLayout ()

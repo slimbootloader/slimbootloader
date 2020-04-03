@@ -725,7 +725,17 @@ class Build(object):
                     value = '0x%08X' % value
             lines.append('  DEFINE %-24s = %s\n'   % (attr, value))
 
-        if getattr(self._board, "GetDscLibrarys", None):
+        if getattr(self._board, "GetPlatformDsc", None):
+            dsc_dict = self._board.GetPlatformDsc()
+            for sect in dsc_dict:
+                lines.append('\n# Platform specific sections\n')
+                lines.append('[%s]\n' % sect)
+                for line in dsc_dict[sect]:
+                    lines.append('  %s\n' % line)
+                lines.append('\n')
+
+        elif getattr(self._board, "GetDscLibrarys", None):
+            # Deprecated, please use GetPlatformDsc instead
             libsdict = self._board.GetDscLibrarys()
             for arch in libsdict:
                 lines.append('\n# Platform specific libraries\n')
