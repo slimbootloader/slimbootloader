@@ -117,6 +117,7 @@
   SerialPortLib|BootloaderCommonPkg/Library/SerialPortLib/SerialPortLib.inf
   SortLib|BootloaderCommonPkg/Library/SortLib/SortLib.inf
   IoMmuLib|BootloaderCommonPkg/Library/IoMmuLib/IoMmuLib.inf
+  MtrrLib|BootloaderCommonPkg/Library/MtrrLib/MtrrLib.inf
 
 !if $(ENABLE_SOURCE_DEBUG)
   DebugAgentLib|BootloaderCommonPkg/Library/DebugAgentLib/DebugAgentLib.inf
