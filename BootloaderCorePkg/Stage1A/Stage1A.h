@@ -43,6 +43,7 @@
 
 **/
 VOID
+EFIAPI
 ContinueFunc (
   IN VOID  *Params
   );
