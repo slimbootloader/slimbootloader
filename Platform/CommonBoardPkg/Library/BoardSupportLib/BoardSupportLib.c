@@ -58,6 +58,7 @@ FillBootOptionListFromCfgData (
   IN OUT   OS_BOOT_OPTION_LIST   *OsBootOptionList
 )
 {
+  GEN_CFG_DATA               *GenCfgData;
   OS_BOOT_OPTION             *BootOption;
   OS_BOOT_OPTION             *BootOptionCfgData;
   UINT8                       PrevBootOptionIndex;
@@ -121,7 +122,18 @@ FillBootOptionListFromCfgData (
     }
   }
 
-  DEBUG ((DEBUG_INFO, "Created %d OS boot options\n",  OsBootOptionList->OsBootOptionCount));
+  GenCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);
+  if (GenCfgData != NULL) {
+    OsBootOptionList->CurrentBoot = GenCfgData->CurrentBoot;
+    if (OsBootOptionList->CurrentBoot != MAX_BOOT_OPTION_CFGDATA_ENTRY) {
+      if (OsBootOptionList->CurrentBoot >= OsBootOptionList->OsBootOptionCount) {
+        OsBootOptionList->CurrentBoot = 0;
+      }
+    }
+  }
+
+  DEBUG ((DEBUG_INFO, "Created %d OS boot options (Current: %d)\n",  \
+          OsBootOptionList->OsBootOptionCount, OsBootOptionList->CurrentBoot));
 }
 
 /**

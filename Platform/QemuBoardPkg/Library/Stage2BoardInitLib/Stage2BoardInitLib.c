@@ -406,25 +406,31 @@ UpdateOsBootMediumInfo (
 
   FillBootOptionListFromCfgData (OsBootOptionList);
 
-  //
-  // Read boot order, it is passed in by QEMU command
-  //   QEMU boot order (a=1 c=2 d=3 n=4 at CMOS 0x3D)
-  //   By default, this CMOS value at offset 0x3D is 0x03
-  //   Use '-boot order=c' or default to boot from eMMC
-  //   Use '-boot order=d' to boot from SATA
-  //   Use '-boot order=n' to boot from NVMe
-  //
-  IoWrite8 (0x70, 0x3D);
-  BootOrder = IoRead8  (0x71);
+  if (OsBootOptionList->CurrentBoot == MAX_BOOT_OPTION_CFGDATA_ENTRY) {
+    //
+    // Read boot order, it is passed in by QEMU command
+    //   QEMU boot order (a=1 c=2 d=3 n=4 at CMOS 0x3D)
+    //   By default, this CMOS value at offset 0x3D is 0x03
+    //   Use '-boot order=c' or default to boot from eMMC
+    //   Use '-boot order=d' to boot from SATA
+    //   Use '-boot order=n' to boot from NVMe
+    //
+    IoWrite8 (0x70, 0x3D);
+    BootOrder = IoRead8  (0x71);
 
-  if ((BootOrder & 0x0F) == 3) {
-    // SATA boot first
-    OsBootOptionList->CurrentBoot = 1;
-  } else if ((BootOrder & 0x0F) == 4) {
-    // NVMe boot first
-    OsBootOptionList->CurrentBoot = 2;
-  } else {
-    // SD boot first
+    if ((BootOrder & 0x0F) == 3) {
+      // SATA boot first
+      OsBootOptionList->CurrentBoot = 1;
+    } else if ((BootOrder & 0x0F) == 4) {
+      // NVMe boot first
+      OsBootOptionList->CurrentBoot = 2;
+    } else {
+      // SD boot first
+      OsBootOptionList->CurrentBoot = 0;
+    }
+  }
+
+  if (OsBootOptionList->CurrentBoot >= OsBootOptionList->OsBootOptionCount) {
     OsBootOptionList->CurrentBoot = 0;
   }
 }
