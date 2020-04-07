@@ -21,20 +21,20 @@
   #
   # --------------------------------------------------------------------------------------
   # !BSF PAGE:{GEN}
-  gCfgData.CfgHeader              |      * | 0x04 | {0x01:2b, ((_LENGTH_GEN_CFG_DATA_+8)/4):10b, 0:4b, 0:4b, _TAG_GEN_CFG_DATA_:12b}
-  gCfgData.CondValue              |      * | 0x04 | 0x00000000
+  gCfgData.CfgHeader                   |      * | 0x04 | {0x01:2b, ((_LENGTH_GEN_CFG_DATA_+8)/4):10b, 0:4b, 0:4b, _TAG_GEN_CFG_DATA_:12b}
+  gCfgData.CondValue                   |      * | 0x04 | 0x00000000
 
   # !HDR HEADER:{ON}
   # !HDR EMBED:{GEN_CFG_DATA:TAG_010:START}
   # !BSF NAME:{Debug Print Level}
   # !BSF TYPE:{EditNum, HEX, (0x00000000,0xFFFFFFFF)}
   # !BSF HELP:{Specify debug print level}
-  gCfgData.DebugPrintLevel        |      * | 0x04 | 0x8000004F
+  gCfgData.DebugPrintLevel             |      * | 0x04 | 0x8000004F
 
   # !BSF NAME:{Payload ID}
   # !BSF TYPE:{EditText}
   # !BSF HELP:{Specify payload ID string. Empty will boot default payload. Otherwise, boot specified payload ID in multi-payload binary.}
-  gCfgData.PayloadId             |      * | 0x04 | ''
+  gCfgData.PayloadId                   |      * | 0x04 | ''
 
   # !BSF NAME:{OS Crash Memory Size}
   # !BSF TYPE:{Combo}
@@ -51,5 +51,11 @@
   # !BSF HELP:{Enable or disable Rpmb Key Provisioning}
   gCfgData.RpmbKeyProvisioning         |      * | 0x01 | 0
 
-  gCfgData.Reserved                    |      * | 0x01 | 0
+  # !BSF PAGE:{OS}
+  # !BSF NAME:{Current Boot Option}
+  # !BSF OPTION:{ 16:AUTO, 0:0, 1:1, 2:2, 3:3, 4:4, 5:5, 6:6, 7:7, 8:8, 9:9, 10:10, 11:11, 10:10, 11:11, 12:12, 13:13, 14:14, 15:15}
+  # !BSF HELP:{Set the current boot option. It indicates the boot option index (0-15) to be tried first on the boot flow. }
+  # !BSF HELP:{+AUTO allows platform to set current boot option using platform specific policy. }
+  gCfgData.CurrentBoot                 |      * | 0x01 | 0
+
   # !HDR EMBED:{GEN_CFG_DATA:TAG_010:END}
