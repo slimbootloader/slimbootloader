@@ -760,6 +760,10 @@ LoadComponentWithCallback (
   // Component must have LOADER_COMPRESSED_HEADER
   Status = EFI_UNSUPPORTED;
   CompressHdr  = (LOADER_COMPRESSED_HEADER *)CompData;
+  if (CompressHdr == NULL) {
+    return EFI_NOT_FOUND;
+  }
+
   if (IS_COMPRESSED (CompressHdr)) {
     SignedDataLen = sizeof (LOADER_COMPRESSED_HEADER) + CompressHdr->CompressedSize;
     if (SignedDataLen <= CompLen) {
