@@ -645,15 +645,15 @@ class IFWI_PARSER:
     def parse_bios_bpdt (img_data):
         offset = 0
         bios_hdr = BIOS_ENTRY.from_buffer(img_data, offset)
-        if bios_hdr.name != "BIOS":
+        if bios_hdr.name != b"BIOS":
             return None
 
-        bios_comp = COMPONENT(bios_hdr.name, COMPONENT.COMP_TYPE['RGN'], 0, len(img_data))
+        bios_comp = COMPONENT(bios_hdr.name.decode(), COMPONENT.COMP_TYPE['RGN'], 0, len(img_data))
         offset += sizeof(bios_hdr)
         entry_num = bios_hdr.offset
         for idx in range(entry_num):
             part_entry = BIOS_ENTRY.from_buffer(img_data, offset)
-            part_comp = COMPONENT(part_entry.name, COMPONENT.COMP_TYPE['PART'],
+            part_comp = COMPONENT(part_entry.name.decode(), COMPONENT.COMP_TYPE['PART'],
                                  part_entry.offset, part_entry.length)
             bios_comp.add_child(part_comp)
             sub_part_dir_hdr = SUBPART_DIR_HEADER.from_buffer(img_data,
@@ -663,7 +663,7 @@ class IFWI_PARSER:
                     part_dir = SUBPART_DIR_ENTRY.from_buffer(
                         img_data, part_entry.offset + sizeof(SUBPART_DIR_HEADER) +
                         sizeof(SUBPART_DIR_ENTRY) * dir)
-                    dir_comp = COMPONENT(part_dir.entry_name, COMPONENT.COMP_TYPE['FILE'],
+                    dir_comp = COMPONENT(part_dir.entry_name.decode(), COMPONENT.COMP_TYPE['FILE'],
                                         part_entry.offset + part_dir.entry_offset,
                                         part_dir.entry_size)
                     part_comp.add_child(dir_comp)
