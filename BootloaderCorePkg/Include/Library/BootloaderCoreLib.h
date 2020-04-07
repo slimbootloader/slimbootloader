@@ -23,11 +23,9 @@
 
 #define  PCD_GET32_WITH_ADJUST(x)     GetAdjustedPcdBase (PcdGet32 (x))
 
-typedef  VOID   (*STAGE_ENTRY) (VOID *Params);
+typedef  VOID   (EFIAPI *STAGE_ENTRY)   (VOID *Params);
 
-typedef  VOID   (*PAYLOAD_ENTRY) (VOID *HobList, VOID *Params);
-
-typedef  VOID   (*KERNEL_ENTRY) (UINT32 Zero, UINT32 Arch, UINT32 Params);
+typedef  VOID   (EFIAPI *PAYLOAD_ENTRY) (VOID *HobList, VOID *Params);
 
 #pragma pack(1)
 
