@@ -34,9 +34,11 @@
   DebugLib
   PciExpressLib
   SortLib
+  HobLib
 
 [Guids]
   gFspNonVolatileStorageHobGuid
+  gLoaderPciRootBridgeInfoGuid
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress  ## CONSUMES
