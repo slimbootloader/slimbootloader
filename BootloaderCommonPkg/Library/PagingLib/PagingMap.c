@@ -152,7 +152,7 @@ UnmapMemoryRange (
   Start = (UINT32) RShiftU64 (Ranges[0].Start, PageBits);
   End   = (UINT32) RShiftU64 (Ranges[0].Limit, PageBits);
   for (Idx = Start; Idx < End + 1; Idx++) {
-    PageTable[Idx] = LShiftU64 (Idx, PageBits) | Attribute | IA32_PG_PD;
+    PageTable[Idx] = (UINTN)LShiftU64 (Idx, PageBits) | Attribute | IA32_PG_PD;
   }
 
   return EFI_SUCCESS;
