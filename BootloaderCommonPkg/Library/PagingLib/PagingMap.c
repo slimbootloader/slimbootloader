@@ -124,6 +124,8 @@ UnmapMemoryRange (
   UINTN          Start;
   UINTN          End;
   UINT32         PageBits;
+  UINT32         PdeOffset;
+  UINT32         Attribute;
 
   if (PageBuffer == NULL) {
     return EFI_INVALID_PARAMETER;
@@ -134,13 +136,23 @@ UnmapMemoryRange (
     return EFI_INVALID_PARAMETER;
   }
 
+  Attribute    = IA32_PG_P | IA32_PG_RW | IA32_PG_AC;
+
   // Remove 4KB pages from PDE
   PageBits  = GetPageShiftBits ();
-  PageTable = (UINTN *)((UINTN)PageBuffer);
+  if (PageBits == 21) {
+    // 64 bit mode
+    PdeOffset = 2 * EFI_PAGE_SIZE;
+  } else {
+    // 32 bit mode
+    PdeOffset = 0;
+  }
+
+  PageTable = (UINTN *)((UINTN)PageBuffer + PdeOffset);
   Start = (UINT32) RShiftU64 (Ranges[0].Start, PageBits);
-  End   = (UINT32) RShiftU64 (Ranges[0].Limit + 1, PageBits);
-  for (Idx = Start; Idx < End; Idx++) {
-    PageTable[Idx] |= IA32_PG_PD;
+  End   = (UINT32) RShiftU64 (Ranges[0].Limit, PageBits);
+  for (Idx = Start; Idx < End + 1; Idx++) {
+    PageTable[Idx] = LShiftU64 (Idx, PageBits) | Attribute | IA32_PG_PD;
   }
 
   return EFI_SUCCESS;
