@@ -105,8 +105,8 @@ Execute32BitCode (
   if (ExeInMem && (Param1 == 0) && (Param2 == 0)) {
     // For TempRamInit in XIP, it might be running from temp memory.
     // To be safe, need to copy the thunk code into memory for execution to prevent crash.
-    ExecuteCode = (EXECUTE_32BIT_CODE)AllocateTemporaryMemory (0);
-    CopyMem ((VOID *)ExecuteCode, (VOID *)AsmExecute32BitCode, AsmGetExecute32CodeLength());
+    ExecuteCode = (EXECUTE_32BIT_CODE)(UINTN)AllocateTemporaryMemory (0);
+    CopyMem ((VOID *)(UINTN)ExecuteCode, (VOID *)(UINTN)AsmExecute32BitCode, AsmGetExecute32CodeLength());
   } else {
     ExecuteCode = (EXECUTE_32BIT_CODE)AsmExecute32BitCode;
   }
