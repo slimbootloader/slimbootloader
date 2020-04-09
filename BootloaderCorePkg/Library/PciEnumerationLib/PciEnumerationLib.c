@@ -11,8 +11,8 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/PciExpressLib.h>
 #include <Library/SortLib.h>
+#include <Library/HobLib.h>
 #include <InternalPciEnumerationLib.h>
-#include <Library/BootloaderCommonLib.h>
 
 #define  DEBUG_PCI_ENUM    0
 
@@ -1162,6 +1162,43 @@ DumpPciResources (
     CurrentLink = CurrentLink->ForwardLink;
   }
 }
+
+/**
+  Dump PCI Root Bridge Info Hob
+
+**/
+VOID
+DumpPciRootBridgeInfoHob (
+  VOID
+  )
+{
+  PCI_ROOT_BRIDGE_INFO_HOB    *RootBridgeInfoHob;
+  UINT8                        Count;
+  UINT8                        Index;
+
+  RootBridgeInfoHob = (PCI_ROOT_BRIDGE_INFO_HOB *) GetGuidHobData (NULL, NULL,
+    &gLoaderPciRootBridgeInfoGuid);
+
+  if (RootBridgeInfoHob != NULL) {
+    DEBUG ((DEBUG_INFO, "PciRootBridgeInfoHob: Rev 0x%X, Count 0x%X\n",
+      RootBridgeInfoHob->Revision, RootBridgeInfoHob->Count));
+
+    for (Count = 0; Count < RootBridgeInfoHob->Count; Count++) {
+      DEBUG ((DEBUG_INFO, "Bus(0x%02X-%02X)\n",
+        RootBridgeInfoHob->Entry[Count].BusBase,
+        RootBridgeInfoHob->Entry[Count].BusLimit));
+
+      for (Index = 0; Index < PCI_MAX_BAR; Index++) {
+        if (RootBridgeInfoHob->Entry[Count].Resource[Index].ResLength > 0) {
+          DEBUG ((DEBUG_INFO, "  BarType-%d: Base 0x%016lX Length 0x%016lX\n",
+            Index,
+            RootBridgeInfoHob->Entry[Count].Resource[Index].ResBase,
+            RootBridgeInfoHob->Entry[Count].Resource[Index].ResLength));
+        }
+      }
+    }
+  }
+}
 #endif
 
 /**
@@ -1236,14 +1273,16 @@ PciProgramResources (
 /**
  Scan Root Bridges depending on Pci Enumeration Policy
 
- @param [in]      EnumPolicy  PciEnum Policy with root bridge mask to be scanned
- @param [in,out]  RootBridge  A pointer which has root bridges in ChildList
+ @param [in]  EnumPolicy        PciEnum Policy with root bridge mask to be scanned
+ @param [out] RootBridge        A pointer which has root bridges in ChildList
+ @param [out] RootBridgeCount   The number of detected Root Bridges
 
  **/
 EFI_STATUS
 PciScanRootBridges (
   IN      PCI_ENUM_POLICY_INFO   *EnumPolicy,
-  IN  OUT PCI_IO_DEVICE         **RootBridge
+  OUT     PCI_IO_DEVICE         **RootBridge,
+  OUT     UINT8                  *RootBridgeCount
   )
 {
   UINT32                            Address;
@@ -1254,10 +1293,12 @@ PciScanRootBridges (
   UINT16                            Index;
   UINT16                            StartIndex;
   UINT16                            EndIndex;
+  UINT8                             Count;
 
   Bridge = (PCI_IO_DEVICE *)PciAllocatePool (sizeof (PCI_IO_DEVICE));
   ZeroMem (Bridge, sizeof (PCI_IO_DEVICE));
   InitializeListHead (&Bridge->ChildList);
+  Count = 0;
 
   //
   // By default, enumerate Bus-0 only
@@ -1291,6 +1332,7 @@ PciScanRootBridges (
       Root->Address = 0x80000000 + (Bus << 8) + SubBusNumber;
 
       InsertPciDevice (Bridge, Root);
+      Count++;
 
       if (EnumPolicy->BusScanType != BusScanTypeList) {
         Index = SubBusNumber;
@@ -1298,8 +1340,118 @@ PciScanRootBridges (
     }
   }
   *RootBridge = Bridge;
+  *RootBridgeCount = Count;
 
   return EFI_SUCCESS;
+}
+
+/**
+  Fill PCI Root Bridge Resource Info into HOB
+
+  @param [in] Root                A pointer of the current root bridge
+  @param [in] RootBridgeInfoHob   A pointer of root bridge resource info HOB
+  @param [in] MaxRootBridgeCount  The maximum number of root bridges
+
+  @retval EFI_SUCCESS             Create HOBs successfully
+  @retval EFI_INVALID_PARAMETER   Invalid parameters passing
+  @retval EFI_LOAD_ERROR          Invalid data integrity
+
+ **/
+EFI_STATUS
+FillPciRootBridgeInfo (
+  IN      PCI_IO_DEVICE             *Root,
+  IN OUT  PCI_ROOT_BRIDGE_INFO_HOB  *RootBridgeInfoHob,
+  IN      UINT8                      MaxRootBridgeCount
+  )
+{
+  UINT32          Address;
+  UINT8           Index;
+  UINT8           Count;
+  PCI_BAR_TYPE    BarType;
+
+  if ((RootBridgeInfoHob == NULL) || (Root == NULL)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  Count = RootBridgeInfoHob->Count;
+  if (Count >= MaxRootBridgeCount) {
+    return EFI_LOAD_ERROR;
+  }
+
+  Address = Root->Address;
+  RootBridgeInfoHob->Entry[Count].BusBase  = ((Address >> 8) & 0xFF);
+  RootBridgeInfoHob->Entry[Count].BusLimit = (UINT8)(Address & 0xFF);
+  for (Index = 0; Index < PCI_MAX_BAR; Index++) {
+    if (Root->PciBar[Index].Length == 0) {
+      continue;
+    }
+    BarType = Root->PciBar[Index].BarType;
+    if ((BarType == PciBarTypeUnknown) || (BarType > PciBarTypePMem64)) {
+      continue;
+    }
+    RootBridgeInfoHob->Entry[Count].Resource[BarType - 1].ResBase   = Root->PciBar[Index].BaseAddress;
+    RootBridgeInfoHob->Entry[Count].Resource[BarType - 1].ResLength = Root->PciBar[Index].Length;
+  }
+  RootBridgeInfoHob->Count++;
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Build PCI Root Bridge Info HOB
+
+  @param [in] RootBridge        A pointer of Root Bridges List
+  @param [in] RootBridgeCount   The number of found root bridges
+
+  @retval EFI_SUCCESS           Create HOBs successfully
+  @retval EFI_OUT_OF_RESOURCES  Out of Hob resource
+  @retval EFI_LOAD_ERROR        Invalid data integrity
+
+ **/
+EFI_STATUS
+BuildPciRootBridgeInfoHob (
+  IN  PCI_IO_DEVICE     *RootBridge,
+  IN  UINT8              RootBridgeCount
+  )
+{
+  EFI_STATUS                 Status;
+  LIST_ENTRY                *CurrentLink;
+  PCI_ROOT_BRIDGE_INFO_HOB  *RootBridgeInfoHob;
+  PCI_IO_DEVICE             *Root;
+  UINTN                      Length;
+
+  Status = EFI_SUCCESS;
+
+  Length  = sizeof (PCI_ROOT_BRIDGE_INFO_HOB);
+  Length += sizeof (PCI_ROOT_BRIDGE_ENTRY) * RootBridgeCount;
+  RootBridgeInfoHob = BuildGuidHob (&gLoaderPciRootBridgeInfoGuid, Length);
+  if (RootBridgeInfoHob == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  ZeroMem (RootBridgeInfoHob, Length);
+  RootBridgeInfoHob->Revision = 1;
+  RootBridgeInfoHob->Count    = 0;
+
+  CurrentLink = RootBridge->ChildList.ForwardLink;
+  while ((CurrentLink != NULL) && (CurrentLink != &RootBridge->ChildList)) {
+    Root = PCI_IO_DEVICE_FROM_LINK (CurrentLink);
+    Status = FillPciRootBridgeInfo (Root, RootBridgeInfoHob, RootBridgeCount);
+    if (EFI_ERROR (Status)) {
+      break;
+    }
+
+    CurrentLink = CurrentLink->ForwardLink;
+  }
+
+  if (RootBridgeInfoHob->Count != RootBridgeCount) {
+    Status = EFI_LOAD_ERROR;
+  }
+
+  if (EFI_ERROR (Status)) {
+    RootBridgeInfoHob->Count = 0;
+  }
+  return Status;
 }
 
 /**
@@ -1317,13 +1469,15 @@ PciEnumeration (
   PCI_ENUM_POLICY_INFO    *EnumPolicy;
   PCI_IO_DEVICE           *RootBridge;
   UINT64                   BaseAddress;
+  UINT8                    RootBridgeCount;
 
   SetAllocationPool (MemPool);
 
   EnumPolicy = (PCI_ENUM_POLICY_INFO *)PcdGetPtr (PcdPciEnumPolicyInfo);
   ASSERT (EnumPolicy != NULL);
 
-  PciScanRootBridges (EnumPolicy, &RootBridge);
+  PciScanRootBridges (EnumPolicy, &RootBridge, &RootBridgeCount);
+  ASSERT (RootBridgeCount > 0);
 
   BaseAddress = PcdGet32 (PcdPciResourceIoBase);
   BaseAddress = PciProgramResources (RootBridge, PciBarTypeIo16, BaseAddress);
@@ -1354,8 +1508,11 @@ PciEnumeration (
 
   PciEnableDevices (RootBridge);
 
+  BuildPciRootBridgeInfoHob (RootBridge, RootBridgeCount);
+
 #if DEBUG_PCI_ENUM
   DumpPciResources (RootBridge);
+  DumpPciRootBridgeInfoHob ();
   DEBUG ((DEBUG_INFO, "MEM Pool Used: 0x%08X\n", (UINT32)GetAllocationPool() - (UINT32)MemPool));
 #endif
 

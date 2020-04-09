@@ -9,6 +9,7 @@
 #define __INTERNAL_PCI_ENUMERTION_LIB_H__
 
 #include <IndustryStandard/Pci.h>
+#include <Guid/PciRootBridgeInfoGuid.h>
 
 //
 // The PCI Command register bits owned by PCI Bus driver.
@@ -44,19 +45,6 @@
 #define PCI_IO_DEVICE_FROM_LINK(a)       BASE_CR (a, PCI_IO_DEVICE, Link)
 #define PCI_BAR_RESOURCE_FROM_LINK(a)    BASE_CR (a, PCI_BAR_RESOURCE, Link)
 #define ALIGN(Base, Align)               ((Base + Align) & (~(Align)))
-
-typedef enum {
-  PciBarTypeUnknown = 0,
-  PciBarTypeIo16,
-  PciBarTypeIo32,
-  PciBarTypeMem32,
-  PciBarTypePMem32,
-  PciBarTypeMem64,
-  PciBarTypePMem64,
-  PciBarTypeIo,
-  PciBarTypeMem,
-  PciBarTypeMaxType
-} PCI_BAR_TYPE;
 
 //
 // PCI BAR parameters
