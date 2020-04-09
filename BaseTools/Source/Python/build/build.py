@@ -46,6 +46,9 @@ import Common.EdkLogger as EdkLogger
 
 from Workspace.WorkspaceDatabase import BuildDB
 
+# workaround to address Travis Windows build issue
+sys.path.append(path.dirname(path.realpath(__file__)))
+
 from BuildReport import BuildReport
 from GenPatchPcdTable.GenPatchPcdTable import PeImageClass,parsePcdInfoFromMapFile
 from PatchPcdValue.PatchPcdValue import PatchBinaryFile
