@@ -1483,7 +1483,7 @@ UsbDeinitCtrl (
 EFI_STATUS
 EFIAPI
 UsbInitCtrl (
-  IN     UINT32                          BaseAddress,
+  IN     UINTN                          BaseAddress,
   IN OUT EFI_HANDLE                     *UsbHostHandle
   )
 {
@@ -1506,7 +1506,7 @@ UsbInitCtrl (
   XhcDev = (PEI_XHC_DEV *) ((UINTN) TempPtr);
 
   XhcDev->Signature = USB_XHC_DEV_SIGNATURE;
-  XhcDev->UsbHostControllerBaseAddress = (UINT32) BaseAddress;
+  XhcDev->UsbHostControllerBaseAddress = BaseAddress;
   XhcDev->CapLength           = (UINT8) (XhcPeiReadCapRegister (XhcDev, XHC_CAPLENGTH_OFFSET) & 0x0FF);
   XhcDev->HcSParams1.Dword    = XhcPeiReadCapRegister (XhcDev, XHC_HCSPARAMS1_OFFSET);
   XhcDev->HcSParams2.Dword    = XhcPeiReadCapRegister (XhcDev, XHC_HCSPARAMS2_OFFSET);
