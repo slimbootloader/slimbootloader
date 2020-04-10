@@ -624,7 +624,7 @@ def main():
 
     args = ap.parse_args()
 
-    stitch_dir = args.stitch_dir
+    stitch_dir = os.path.abspath (args.stitch_dir)
     if clean (stitch_dir, args.clean):
         raise Exception ('Stitching clean up failed !')
 
