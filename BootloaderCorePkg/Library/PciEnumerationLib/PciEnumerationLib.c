@@ -13,6 +13,7 @@
 #include <Library/SortLib.h>
 #include <Library/HobLib.h>
 #include <InternalPciEnumerationLib.h>
+#include <Library/BootloaderCommonLib.h>
 
 #define  DEBUG_PCI_ENUM    0
 
@@ -1513,7 +1514,7 @@ PciEnumeration (
 #if DEBUG_PCI_ENUM
   DumpPciResources (RootBridge);
   DumpPciRootBridgeInfoHob ();
-  DEBUG ((DEBUG_INFO, "MEM Pool Used: 0x%08X\n", (UINT32)GetAllocationPool() - (UINT32)MemPool));
+  DEBUG ((DEBUG_INFO, "MEM Pool Used: 0x%08X\n", (UINT32)(UINTN)GetAllocationPool() - (UINT32)(UINTN)MemPool));
 #endif
 
   // Free memory pool
