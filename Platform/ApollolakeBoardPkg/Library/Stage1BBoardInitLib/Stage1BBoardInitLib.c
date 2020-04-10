@@ -163,7 +163,7 @@ CONST UINT16 mGpMrbModuleIdOffset[] = {
 };
 
 CONST UINT16 mUp2ModuleIdOffset[] = {
-  0x00D8, 0x00E0
+  0x00D8, 0x00E0, 0x00F0
 };
 
 typedef struct {
@@ -469,7 +469,7 @@ ModuleIdInitialize (
       ModuleId |= (UINT16) (PadConfg0.r.GPIORxState << Index);
     }
     PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
-    PlatformData->ModuleIdInfo.ModuleId = ModuleId & 0x3;
+    PlatformData->ModuleIdInfo.ModuleId = ModuleId & 0x7;
 
     break;
 
@@ -624,18 +624,7 @@ UpdateFspConfig (
 
     DEBUG ((DEBUG_INFO, "UP2 memory SKU ID is 0x%x\n", PlatformData->ModuleIdInfo.Bits.MemSkuId));
     switch (PlatformData->ModuleIdInfo.Bits.MemSkuId) {
-      case 0: /* 2GB */
-        Fspmcfg->DualRankSupportEnable = 0;
-        Fspmcfg->Ch0_RankEnable        = 1;
-        Fspmcfg->Ch0_DramDensity       = 2;
-        Fspmcfg->Ch1_RankEnable        = 1;
-        Fspmcfg->Ch1_DramDensity       = 2;
-
-        Fspmcfg->Ch2_RankEnable        = 0;
-        Fspmcfg->Ch3_RankEnable        = 0;
-        break;
-      case 1: /* 4GB */
-        Fspmcfg->DualRankSupportEnable = 1;
+      case 5: /* 4GB */
         Fspmcfg->Ch0_RankEnable        = 1;
         Fspmcfg->Ch0_DramDensity       = 2;
         Fspmcfg->Ch1_RankEnable        = 1;
@@ -645,8 +634,7 @@ UpdateFspConfig (
         Fspmcfg->Ch3_RankEnable        = 1;
         Fspmcfg->Ch3_DramDensity       = 2;
         break;
-      case 2: /* 8GB */
-        Fspmcfg->DualRankSupportEnable = 1;
+      case 6: /* 8GB */
         Fspmcfg->Ch0_RankEnable        = 3;
         Fspmcfg->Ch0_DramDensity       = 2;
         Fspmcfg->Ch1_RankEnable        = 3;
@@ -657,21 +645,24 @@ UpdateFspConfig (
         Fspmcfg->Ch3_DramDensity       = 2;
         break;
 
-      case 3: /* 8GB  not fully supported */
-        Fspmcfg->DualRankSupportEnable = 1;
+      case 7: /* 8GB */
+        Fspmcfg->Ch0_RankEnable        = 1;
+        Fspmcfg->Ch0_DramDensity       = 4;
+        Fspmcfg->Ch1_RankEnable        = 1;
+        Fspmcfg->Ch1_DramDensity       = 4;
+        Fspmcfg->Ch2_RankEnable        = 1;
+        Fspmcfg->Ch2_DramDensity       = 4;
+        Fspmcfg->Ch3_RankEnable        = 1;
+        Fspmcfg->Ch3_DramDensity       = 4;
+        break;
+
+      default: /* 2GB */
         Fspmcfg->Ch0_RankEnable        = 1;
         Fspmcfg->Ch0_DramDensity       = 2;
         Fspmcfg->Ch1_RankEnable        = 1;
         Fspmcfg->Ch1_DramDensity       = 2;
-
-        Fspmcfg->Ch2_RankEnable        = 1;
-        Fspmcfg->Ch2_DramDensity       = 2;
-        Fspmcfg->Ch3_RankEnable        = 1;
-        Fspmcfg->Ch3_DramDensity       = 2;
-        Fspmcfg->RmtCheckRun           = 3;
-        break;
-
-      default:
+        Fspmcfg->Ch2_RankEnable        = 0;
+        Fspmcfg->Ch3_RankEnable        = 0;
         break;
     };
 
