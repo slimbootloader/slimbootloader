@@ -144,7 +144,7 @@ struct _PEI_XHC_DEV {
   UINTN                             Signature;
   PEI_USB2_HOST_CONTROLLER_PPI      Usb2HostControllerPpi;
   EFI_PEI_PPI_DESCRIPTOR            PpiDescriptor;
-  UINT32                            UsbHostControllerBaseAddress;
+  UINTN                             UsbHostControllerBaseAddress;
   USBHC_MEM_POOL                    *MemPool;
 
   //
