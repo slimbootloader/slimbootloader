@@ -176,6 +176,14 @@ class Board(BaseBoard):
         self._CFGDATA_INT_FILE = ['CfgData_Int_LeafHill.dlt']
         self._CFGDATA_EXT_FILE = ['CfgData_Ext_Gpmrb.dlt', 'CfgData_Ext_Up2.dlt','CfgData_Ext_OxbHill.dlt','CfgData_Ext_MB3.dlt','CfgData_Ext_JuniperHill.dlt']
 
+        # If mulitple VBT table support is required, list them as:
+        #   {VbtImageId1 : VbtFileName1, VbtImageId2 : VbtFileName2, ...}
+        # VbtImageId is ID to identify a VBT image. It is a UINT32 number to match
+        #   the ImageId field in the VBT container.
+        # VbtFileName is the VBT file name. It needs to be located under platform
+        #   VbtBin folder.
+        self._MULTI_VBT_FILE      = {1:'Vbt.dat', 2:'Vbt_Up2.dat'}
+
     def GetPlatformDsc (self):
         dsc = {}
         common_libs = [
