@@ -1,6 +1,6 @@
 ## @ GenCapsuleFirmware.py
 #
-# Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2017-2020, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -400,7 +400,7 @@ class Firmware_Update_Header(Structure):
   ]
 
 
-def SignImage(RawData, OutFile, HashType, PrivKey):
+def SignImage(RawData, OutFile, HashType, SignScheme, PrivKey):
 
     #
     # Generate the new image layout
@@ -436,7 +436,7 @@ def SignImage(RawData, OutFile, HashType, PrivKey):
     fwupdate_bin_file = 'fwupdate_unsigned.bin'
     open(fwupdate_bin_file, 'wb').write(unsigned_image + RawData)
 
-    rsa_sign_file(PrivKey, pubkey_file, HashType, fwupdate_bin_file, OutFile, True, True )
+    rsa_sign_file(PrivKey, pubkey_file, HashType, SignScheme, fwupdate_bin_file, OutFile, True, True )
 
     os.remove(pubkey_file)
     os.remove(fwupdate_bin_file)
@@ -480,7 +480,8 @@ def main():
 
     parser.add_argument('-p',  '--payload', nargs=2, action='append', type=str, required=True, help='Specify payload information including GUID, FileName')
     parser.add_argument('-k',  '--priv_key', dest='PrivKey', type=str, required=True, help='Private RSA 2048 key in PEM format to sign image')
-    parser.add_argument('-a',  '--alg_hash', dest='HashType', type=str, default='SHA2_256', help='Hash type for signing. Supported types SHA2_256')
+    parser.add_argument('-a',  '--alg_hash', dest='HashType', type=str, choices=['SHA2_256', 'SHA2_384'], default='SHA2_256', help='Hash type for signing')
+    parser.add_argument('-s',  '--sign_scheme', dest='SignScheme', type=str, choices=['RSA_PKCS1', 'RSA_PSS'], default='RSA_PSS', help='Signing Scheme types')
     parser.add_argument('-o',  '--output', dest='NewImage', type=str, required=True, help='Output file for signed image')
     parser.add_argument("-v",  "--verbose", dest='Verbose', action="store_true", help= "Turn on verbose output with informational messages printed, including capsule headers and warning messages.")
 
@@ -537,7 +538,7 @@ def main():
     #
     # Create final capsule
     #
-    SignImage(Result, args.NewImage, args.HashType, args.PrivKey)
+    SignImage(Result, args.NewImage, args.HashType, args.SignScheme, args.PrivKey)
 
     print('Success')
 

@@ -20,11 +20,13 @@
 #define PROGESS_ID_DECOMPRESS         4
 
 typedef UINT8 AUTH_TYPE;
-#define AUTH_TYPE_NONE                0
-#define AUTH_TYPE_SHA2_256            1
-#define AUTH_TYPE_SHA2_384            2
-#define AUTH_TYPE_SIG_RSA2048_SHA256  3
-#define AUTH_TYPE_SIG_RSA3072_SHA384  4
+#define AUTH_TYPE_NONE                       0
+#define AUTH_TYPE_SHA2_256                   1
+#define AUTH_TYPE_SHA2_384                   2
+#define AUTH_TYPE_SIG_RSA2048_PKCSI1_SHA256  3
+#define AUTH_TYPE_SIG_RSA3072_PKCSI1_SHA384  4
+#define AUTH_TYPE_SIG_RSA2048_PSS_SHA256     5
+#define AUTH_TYPE_SIG_RSA3072_PSS_SHA384     6
 
 #define CONTAINER_BOOT_SIGNATURE      SIGNATURE_32 ('B', 'O', 'O', 'T')
 #define CONTAINER_MONO_SIGN_SIGNATURE SIGNATURE_32 ('_', 'S', 'G', '_')
