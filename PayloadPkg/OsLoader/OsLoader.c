@@ -1174,6 +1174,14 @@ PayloadMain (
       CopyMem ((VOID *)&OsBootOption, (VOID *)&OsBootOptionList->OsBootOption[CurrIdx], sizeof (OS_BOOT_OPTION));
       BootOsImage (&OsBootOption);
 
+      // De-init the current boot devices
+      // If USB keyboard console is used, don't DeInit USB yet at this moment.
+      // It will be handled just before transfering to OS.
+      if (!((OsBootOption.DevType == OsBootDeviceUsb) &&
+          ((PcdGet32 (PcdConsoleInDeviceMask) & ConsoleInUsbKeyboard) != 0))) {
+        MediaInitialize (0, DevDeinit);
+      }
+
       // Move to next boot option
       CurrIdx = GetNextBootOption (OsBootOptionList, CurrIdx);
       if (CurrIdx >= OsBootOptionList->OsBootOptionCount) {
@@ -1187,9 +1195,6 @@ PayloadMain (
     } else {
       break;
     }
-
-    // De-init boot devices while restarting payload.
-    DeinitBootDevices ();
   }
 
   CpuHalt (NULL);
