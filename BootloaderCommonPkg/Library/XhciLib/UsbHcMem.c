@@ -374,21 +374,17 @@ UsbHcFreeMemPool (
   IN USBHC_MEM_POOL     *Pool
   )
 {
-  USBHC_MEM_BLOCK       *Block;
+  USBHC_MEM_BLOCK         *Block;
+  USBHC_MEM_BLOCK         *Current;
 
-  ASSERT (Pool->Head != NULL);
+  Block = Pool->Head;
+  ASSERT (Block != NULL);
 
-  //
-  // Unlink all the memory blocks from the pool, then free them.
-  // UsbHcUnlinkMemBlock can't be used to unlink and free the
-  // first block.
-  //
-  for (Block = Pool->Head->Next; Block != NULL; Block = Pool->Head->Next) {
-    //UsbHcUnlinkMemBlock (Pool->Head, Block);
-    UsbHcFreeMemBlock (Pool, Block);
+  while (Block != NULL) {
+    Current = Block;
+    Block   = Block->Next;
+    UsbHcFreeMemBlock (Pool, Current);
   }
-
-  UsbHcFreeMemBlock (Pool, Pool->Head);
 }
 
 /**
