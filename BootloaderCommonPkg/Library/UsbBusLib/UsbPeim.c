@@ -1167,3 +1167,34 @@ UsbEnumBus (
   mUsbIoCb = UsbIoCb;
   return PeiUsbEnumeration ((EFI_PEI_SERVICES **) NULL, NULL, (PEI_USB2_HOST_CONTROLLER_PPI *)UsbHostHandle);
 }
+
+/**
+  Free USB device memory.
+
+  @param  UsbIo     UsbIo instance associated with the device.
+
+  @retval EFI_SUCCESS            The usb device memory was de-allocated successfully.
+  @retval EFI_INVALID_PARAMETER  Invalid UsbIo instance.
+
+**/
+EFI_STATUS
+EFIAPI
+UsbDeinitDevice (
+  IN VOID     *UsbIo
+  )
+{
+  PEI_USB_IO_PPI   *This;
+  PEI_USB_DEVICE   *PeiUsbDev;
+  UINTN             MemPages;
+
+  if (UsbIo == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  This = (PEI_USB_IO_PPI *)UsbIo;
+  PeiUsbDev = PEI_USB_DEVICE_FROM_THIS (This);
+  MemPages = sizeof (PEI_USB_DEVICE) / EFI_PAGE_SIZE + 1;
+  FreePages (PeiUsbDev, MemPages);
+
+  return EFI_SUCCESS;
+}
