@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -665,13 +665,15 @@ UnloadLoadedImage (
 
   This function will clean up all temporary resources used to load Boot Image.
 
-  @param[in]  LoadedImageHandle Loaded Image handle
-
+  @param[in]  LoadedImageHandle   Loaded Image handle.
+  @param[in]  KeepRootNode        TRUE,  do not free memory for LOADED_IMAGES_INFO root node.
+                                  FALSE, free memory for LOADED_IMAGES_INFO root node.
 **/
 VOID
 EFIAPI
 UnloadBootImages (
-  IN  EFI_HANDLE       LoadedImageHandle
+  IN  EFI_HANDLE       LoadedImageHandle,
+  IN  BOOLEAN          KeepRootNode
   )
 {
   LOADED_IMAGES_INFO        *LoadedImagesInfo;
@@ -690,7 +692,9 @@ UnloadBootImages (
     LoadedImagesInfo->LoadedImageList[Index] = NULL;
   }
 
-  FreePool (LoadedImagesInfo);
+  if (!KeepRootNode) {
+    FreePool (LoadedImagesInfo);
+  }
 }
 
 /**
@@ -763,13 +767,13 @@ LoadBootImages (
       Status = GetBootImageFromRawPartition (OsBootOption, LoadedImage);
     }
 
+    DEBUG ((DEBUG_INFO, "LoadBootImage ImageType-%d Image\n", Index));
+    LoadedImagesInfo->LoadedImageList[Index] = LoadedImage;
+
     if (EFI_ERROR (Status)) {
       // UnloadBootImages () will free all unnecessary Memory
       break;
     }
-
-    DEBUG ((DEBUG_INFO, "LoadBootImage ImageType-%d Image\n", Index));
-    LoadedImagesInfo->LoadedImageList[Index] = LoadedImage;
   }
 
   //
@@ -777,6 +781,8 @@ LoadBootImages (
   //
   if (DebugCodeEnabled () || !FeaturePcdGet (PcdVerifiedBootEnabled)) {
     if (EFI_ERROR (Status) && (FsHandle != NULL)) {
+      // Free loaded images previously, but keep LoadedImagesInfo structure
+      UnloadBootImages ((EFI_HANDLE)(UINTN)LoadedImagesInfo, TRUE);
       LoadedImage = LoadedImagesInfo->LoadedImageList[LoadImageTypeNormal];
       if (LoadedImage == NULL) {
         LoadedImage = (LOADED_IMAGE *)AllocateZeroPool (sizeof (LOADED_IMAGE));
@@ -801,7 +807,7 @@ LoadBootImages (
   // Free allocated memory if not successful
   //
   if (EFI_ERROR (Status)) {
-    UnloadBootImages (*LoadedImageHandle);
+    UnloadBootImages (*LoadedImageHandle, FALSE);
     *LoadedImageHandle = NULL;
   }
 
