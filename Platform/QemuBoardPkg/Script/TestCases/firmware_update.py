@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-## @ qemu_fwu.py
+## @ firmware_update.py
 #
-# QEMU firmware update test script
+# Test firmware update on QEMU
 #
 # Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -14,7 +14,8 @@ import struct
 import signal
 import subprocess
 from   threading import Timer
-from ctypes import Structure, c_char, c_uint32, c_uint8, c_uint64, c_uint16, sizeof, ARRAY
+from   ctypes import Structure, c_char, c_uint32, c_uint8, c_uint64, c_uint16, sizeof, ARRAY
+from   test_base import *
 
 
 class FlashMapDesc(Structure):
@@ -75,16 +76,17 @@ def  get_check_lines (bp = 0, mode = 0):
               ])
     return lines
 
-def  check_result (lines):
+
+def check_fwu_result (output):
     ret   = 0
     index = 0
     cycle = 1
-    count = len(lines)
+    count = len(output)
     for bp, mode in [(0, 0x12), (1, 0x12), (0, 0)]:
         for line in get_check_lines (bp, mode):
             found = False
             while not found and index < count:
-                if line in lines[index]:
+                if line in output[index]:
                     found = True
                     break
                 else:
@@ -93,7 +95,7 @@ def  check_result (lines):
                 index += 1
                 continue
             else:
-                print ("Failed locatting '%s' in cycke %d !" % (line, cycle))
+                print ("Failed locating '%s' in cycle %d !" % (line, cycle))
                 ret = -1
                 break
         if ret < 0:
@@ -227,46 +229,6 @@ def handle_ts(bios_image, set_ts_val=0):
     return fwu_flg
 
 
-def run_process (cmd, timeout = 0):
-    def timerout (p):
-        timer.cancel()
-        os.kill(p.pid, signal.SIGTERM)
-
-    lines = []
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=1, universal_newlines=True)
-    if timeout:
-      timer = Timer(timeout, timerout, args=[p])
-      timer.start()
-    for line in iter(p.stdout.readline, ''):
-        line = line.rstrip()
-        print (line)
-        lines.append (line)
-    p.stdout.close()
-    retcode = p.wait()
-    if timeout:
-        timer.cancel()
-
-    return lines
-
-
-def run_qemu(bios_img, fwu_path, fwu_mode=False, timeout=0):
-    if os.name == 'nt':
-        path = r"C:\Program Files\qemu\qemu-system-x86_64"
-    else:
-        path = r"qemu-system-x86_64"
-    cmd_list = [
-        path, "-nographic",  "-machine", "q35,accel=tcg",
-        "-serial", "mon:stdio",
-        "-m", "256M", "-drive",
-        "id=mydrive,if=none,format=raw,file=fat:rw:%s" % fwu_path, "-device",
-        "ide-hd,drive=mydrive", "-boot", "order=d%s" % ('an' if fwu_mode else ''),
-        "-no-reboot", "-drive", "file=%s,if=pflash,format=raw" % bios_img
-    ]
-
-    lines = run_process (cmd_list, timeout)
-    return lines
-
-
 def usage():
     print("usage:\n  python %s bios_image fwu_cap_dir\n" % sys.argv[0])
     print("  bios_image :  QEMU Slim Bootloader firmware image.")
@@ -290,6 +252,22 @@ def main():
 
     print("Firmware update for Slim BootLoader")
 
+    # create FWU capsule
+    create_dirs ([fwu_dir])
+    cmd = [ sys.executable,
+            'BootloaderCorePkg/Tools/GenCapsuleFirmware.py',
+            '-p',  'BIOS', bios_img,
+            '-k',  'BootloaderCorePkg/Tools/Keys/TestSigningPrivateKey.pem',
+            '-o',  '%s/FwuImage.bin' % fwu_dir
+          ]
+    try:
+        output = subprocess.run (cmd)
+        output.check_returncode()
+    except subprocess.CalledProcessError:
+        print ('Failed to generate QEMU SlimBootloader capsule image !')
+        return -3
+
+    # run FWU
     output = []
     fwu_mode = 2
     lines = run_qemu(bios_img, fwu_dir, True if fwu_mode != 0 else False)
@@ -309,7 +287,7 @@ def main():
     output.extend(lines)
 
     # check test result
-    ret = check_result (output)
+    ret = check_fwu_result (output)
 
     print ('\nQEMU FWU test %s !\n' % ('PASSED' if ret == 0 else 'FAILED'))
 

@@ -12,48 +12,40 @@ import sys
 import shutil
 import subprocess
 
+
 def main():
 
     sbl_img = 'Outputs/qemu/SlimBootloader.bin'
     tst_img = 'Outputs/qemu/SblFwuTest.bin'
-    fwu_dir = 'Outputs/qemu/temp'
+    tmp_dir = 'Outputs/qemu/temp'
+    fwu_dir = 'Outputs/qemu/fwu'
+    img_dir = 'Outputs/qemu/image'
 
     # check QEMU SlimBootloader.bin
     if not os.path.exists(sbl_img):
         print ('Could not find QEMU SlimBootloader.bin image !')
         return -1
 
-    # copy a test image so that the original image will not change
-    shutil.copyfile (sbl_img, tst_img)
+    # run test cases
+    test_cases = [
+      ('firmware_update.py',  [tst_img, fwu_dir]),
+      ('linux_boot.py'     ,  [tst_img, img_dir])
+    ]
 
-    # generate QEMU FWU capsule
-    if not os.path.exists(fwu_dir):
-        os.mkdir (fwu_dir)
-    cmd = [ sys.executable,
-            'BootloaderCorePkg/Tools/GenCapsuleFirmware.py',
-            '-p',  'BIOS', tst_img,
-            '-k',  'BootloaderCorePkg/Tools/Keys/TestSigningPrivateKey.pem',
-            '-o',  '%s/FwuImage.bin' % fwu_dir
-          ]
-    try:
-        output = subprocess.run (cmd)
-        output.check_returncode()
-    except subprocess.CalledProcessError:
-        print ('Failed to generate QEMU SlimBootloader capsule image !')
-        return -2
+    for test_file, test_args in test_cases:
+        print ('######### Running run test %s' % test_file)
+        # copy a test image so that the original image will not change
+        shutil.copyfile (sbl_img, tst_img)
 
-    # run QEMU FWU test
-    cmd = [ sys.executable,
-            'Platform/QemuBoardPkg/Script/qemu_fwu.py',
-            tst_img,
-            fwu_dir
-          ]
-    try:
-        output = subprocess.run (cmd)
-        output.check_returncode()
-    except subprocess.CalledProcessError:
-        print ('Failed to run QEMU firmware update test !')
-        return -3
+        # run QEMU test cases
+        cmd = [ sys.executable, 'Platform/QemuBoardPkg/Script/TestCases/%s' % test_file] + test_args
+        try:
+            output = subprocess.run (cmd)
+            output.check_returncode()
+        except subprocess.CalledProcessError:
+            print ('Failed to run test %s !' % test_file)
+            return -3
+        print ('######### Completed test %s\n\n' % test_file)
 
     print ('\nAll tests passed !\n')
 
