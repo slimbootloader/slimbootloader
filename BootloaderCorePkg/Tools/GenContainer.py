@@ -171,7 +171,6 @@ class CONTAINER ():
 
     @staticmethod
     def get_auth_type_val (auth_type_str):
-        print ('auth_type_str %s' % auth_type_str)
         return CONTAINER._auth_type_value[auth_type_str]
 
     @staticmethod
@@ -644,7 +643,6 @@ def gen_container_bin (container_list, out_dir, inp_dir, key_dir = '.', tool_dir
         print ("Container '%s' was created successfully at:  \n  %s" % (container.header.signature.decode(), out_file))
 
 def adjust_auth_type (auth_type_str, key_path):
-    print('auth_type_str %s key_path %s' % (auth_type_str, key_path))
     if os.path.exists(key_path):
         sign_key_type = get_key_type(key_path)
         if auth_type_str != '':
@@ -660,7 +658,6 @@ def adjust_auth_type (auth_type_str, key_path):
     return auth_type_str
 
 def gen_layout (comp_list, img_type, auth_type_str, out_file, key_dir, key_file):
-    print ("auth_type_str1 %s" % auth_type_str)
     hash_type = CONTAINER._auth_to_hashalg_str[auth_type_str] if auth_type_str else ''
     auth_type = auth_type_str
     key_path  = os.path.join(key_dir, key_file)

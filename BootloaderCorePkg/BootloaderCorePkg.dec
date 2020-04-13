@@ -124,7 +124,7 @@
   gPlatformModuleTokenSpaceGuid.PcdTopSwapRegionSize      | 0x00000000 | UINT32 | 0x200000C0
   gPlatformModuleTokenSpaceGuid.PcdRedundantRegionSize    | 0x00000000 | UINT32 | 0x200000C1
 
-  gPlatformModuleTokenSpaceGuid.PcdVerifiedBootHashMask   | 0x00000000 | UINT32 | 0x200000D0
+  gPlatformModuleTokenSpaceGuid.PcdVerifiedBootStage1B   | 0x0 | BOOLEAN | 0x200000D0
 
   gPlatformModuleTokenSpaceGuid.PcdCpuMaxLogicalProcessorNumber | 16   | UINT32 | 0x200000E0
   gPlatformModuleTokenSpaceGuid.PcdMaxServiceNumber       | 8          | UINT32 | 0x200000E1

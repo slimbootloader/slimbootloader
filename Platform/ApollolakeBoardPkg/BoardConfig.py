@@ -103,10 +103,6 @@ class Board(BaseBoard):
         # EXT | FAT
         self.FILE_SYSTEM_SUPPORT_MASK  = 3
 
-        # FWU_PLD | PLD | Stage2 | Stage1B
-        # Stage1B is verified by CSE
-        self.VERIFIED_BOOT_HASH_MASK  = 0x000000E        # Stage1B is verified by CSE
-
         # Verify required minimum FSP version
         self.MIN_FSP_REVISION     = 0x01040301
         # Verify FSP image ID. Empty string means skipping verification

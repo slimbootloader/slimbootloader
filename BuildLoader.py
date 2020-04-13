@@ -158,7 +158,7 @@ class BaseBoard(object):
         self.ACPI_PM_TIMER_BASE     = 0x0408
         self.USB_KB_POLLING_TIMEOUT = 1
 
-        self.VERIFIED_BOOT_HASH_MASK  = 0x00000000
+        self.VERIFIED_BOOT_STAGE_1B   = 0x0
         self.BOOT_MEDIA_SUPPORT_MASK  = 0xFFFFFFFF
         self.FILE_SYSTEM_SUPPORT_MASK = 0x00000003
         self.DEBUG_OUTPUT_DEVICE_MASK = 0x00000003
@@ -1095,8 +1095,6 @@ class Build(object):
             mst_key = self._board._MASTER_PRIVATE_KEY
             if getattr(self._board, "GetKeyHashList", None):
                 key_hash_list = self._board.GetKeyHashList ()
-        else:
-            self._board.VERIFIED_BOOT_HASH_MASK = 0
 
         gen_pub_key_hash_store (mst_key, key_hash_list, HASH_VAL_STRING[self._board.SIGN_HASH_TYPE],
                                 self._board._SIGNING_SCHEME, self._key_dir, os.path.join(self._fv_dir, 'KEYHASH.bin'))

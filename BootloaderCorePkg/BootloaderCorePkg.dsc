@@ -226,7 +226,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdConsoleInDeviceMask  | $(CONSOLE_IN_DEVICE_MASK)
   gPlatformCommonLibTokenSpaceGuid.PcdConsoleOutDeviceMask | $(CONSOLE_OUT_DEVICE_MASK)
 
-  gPlatformModuleTokenSpaceGuid.PcdVerifiedBootHashMask   | $(VERIFIED_BOOT_HASH_MASK)
+  gPlatformModuleTokenSpaceGuid.PcdVerifiedBootStage1B   | $(VERIFIED_BOOT_STAGE_1B)
   gPlatformCommonLibTokenSpaceGuid.PcdCryptoShaOptMask    | $(ENABLE_CRYPTO_SHA_OPT)
 
   gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImageRegionType    | $(SPI_IAS_REGION_TYPE)
