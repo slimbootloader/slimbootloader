@@ -1,7 +1,7 @@
 /** @file
   A minimal command-line shell.
 
-  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -20,171 +20,6 @@
 #include "ShellCmds.h"
 
 #define ESC   '\x1b'
-
-/**
-  Prompt user for command, receive command, run command.
-
-  @param[in]  Shell        shell instance
-
-  @retval EFI_SUCCESS
-  @retval RETURN_ABORTED
-
-**/
-STATIC
-EFI_STATUS
-ShellPrompt (
-  IN SHELL *Shell
-  );
-
-/**
-  Find shell command by name.
-
-  @param[in]  Shell        shell instance
-  @param[in]  Name         name of command
-  @param[in]  Ptr          pointer to string pointer
-
-  @retval EFI_SUCCESS
-  @retval EFI_NOT_FOUND
-
-**/
-STATIC
-EFI_STATUS
-FindShellCommand (
-  IN       SHELL         *Shell,
-  IN CONST CHAR16        *Name,
-  IN CONST SHELL_COMMAND **Ptr
-  );
-
-/**
-  Process and run a command line.
-
-  @param[in] Shell        shell instance
-  @param[in] CmdLine      command line to parse
-
-  @retval EFI_SUCCESS     command was completed
-
-**/
-STATIC
-EFI_STATUS
-RunShellCommand (
-  IN       SHELL  *Shell,
-  IN CONST CHAR16 *CmdLine
-  );
-
-/**
-  Wait for command line input from the serial port.
-
-  @param[in]  Shell        shell instance
-  @param[out] Buffer       buffer to receive command line
-  @param[in]  BufferSize   size (in bytes) of the buffer
-
-  @retval EFI_SUCCESS
-  @retval EFI_BUFFER_TOO_SMALL
-  @retval EFI_TIMEOUT
-
-**/
-STATIC
-EFI_STATUS
-ReadShellCommand (
-  IN        SHELL  *Shell,
-  OUT       CHAR16 *Buffer,
-  IN  CONST UINTN   BufferSize
-  );
-
-/**
-  Begin a run-time interactive shell.
-
-  @param[in]  Timeout       seconds to wait for input before returning (0 for no timeout)
-
-  @retval EFI_SUCCESS
-
-**/
-EFI_STATUS
-EFIAPI
-Shell (
-  IN       UINTN           Timeout
-  )
-{
-  BOOLEAN Start;
-  UINTN   Index, Index1;
-  SHELL   Shell;
-  UINT8   Buffer;
-
-  ZeroMem (&Shell, sizeof (Shell));
-  InitializeListHead (&Shell.CommandEntryList);
-
-  Shell.CommandLineMaxLen = FeaturePcdGet (PcdMiniShellEnabled) ? \
-                            MAX_COMMAND_LINE_LEN_MINI_SHELL : MAX_COMMAND_LINE_LEN;
-
-  LoadShellCommands (&Shell);
-  Shell.ShouldExit = FALSE;
-
-  if (Timeout != 0) {
-    ShellPrint (L"\n");
-    while (ConsolePoll ()) {
-      ConsoleRead (&Buffer, 1);
-    }
-    for (Index = Timeout; Index > 0; Index--) {
-      ShellPrint (L"Press any key within %d second(s) to enter the command shell", Index);
-      for (Index1 = 0; Index1 < 10; Index1++) {
-        Start = ConsolePoll ();
-        if (Start) {
-          break;
-        }
-        MicroSecondDelay (100 * 1000);
-      }
-      ShellPrint(L"\r");
-      if (Start) {
-        break;
-      }
-    }
-    ShellPrint (L"\n");
-    if (!Start) {
-      return EFI_ABORTED;
-    }
-  }
-
-  HistoryInit (&Shell, TRUE);
-
-  while (! (Shell.ShouldExit)) {
-    ShellPrompt (&Shell);
-  }
-
-  HistoryInit (&Shell, FALSE);
-
-  return EFI_SUCCESS;
-}
-
-/**
-  Prompt user for command, receive command, run command.
-
-  @param[in]  Shell        shell instance
-
-  @retval EFI_SUCCESS
-  @retval RETURN_ABORTED
-
-**/
-STATIC
-EFI_STATUS
-ShellPrompt (
-  IN SHELL *Shell
-  )
-{
-  CHAR16     CommandLine[MAX_COMMAND_LINE_LEN];
-  EFI_STATUS Status;
-
-  ASSERT (Shell != NULL);
-  ShellPrint (L"\nShell> ");
-
-  Status = ReadShellCommand (Shell, CommandLine, Shell->CommandLineMaxLen * sizeof (CHAR16));
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  HistoryAdd (Shell, CommandLine);
-
-  return RunShellCommand (Shell, CommandLine);
-}
 
 /**
   Wait for command line input from the serial port.
@@ -482,6 +317,48 @@ ShellReadUintn (
 }
 
 /**
+  Find shell command by name.
+
+  @param[in]  Shell        shell instance
+  @param[in]  Name         name of command
+  @param[in]  Ptr          pointer to string pointer
+
+  @retval EFI_SUCCESS
+  @retval EFI_NOT_FOUND
+
+**/
+STATIC
+EFI_STATUS
+FindShellCommand (
+  IN       SHELL         *Shell,
+  IN CONST CHAR16        *Name,
+  IN CONST SHELL_COMMAND **Ptr
+  )
+{
+  LIST_ENTRY                *Link;
+  SHELL_COMMAND_LIST_ENTRY  *Entry;
+  LIST_ENTRY                *EntryList;
+
+  //
+  // Add '?' alias for help
+  //
+  if (Name[0] == '?') {
+    Name = L"help";
+  }
+
+  EntryList = &Shell->CommandEntryList;
+  for (Link = EntryList->ForwardLink; Link != EntryList; Link = Link->ForwardLink) {
+    Entry = CR (Link, SHELL_COMMAND_LIST_ENTRY, Link, SHELL_COMMAND_LIST_ENTRY_SIGNATURE);
+    if (StrCmp (Name, Entry->ShellCommand->Name) == 0) {
+      *Ptr = Entry->ShellCommand;
+      return EFI_SUCCESS;
+    }
+  }
+
+  return EFI_NOT_FOUND;
+}
+
+/**
   Process and run a command line.
 
   @param[in] Shell        shell instance
@@ -545,45 +422,34 @@ RunShellCommand (
 }
 
 /**
-  Find shell command by name.
+  Prompt user for command, receive command, run command.
 
   @param[in]  Shell        shell instance
-  @param[in]  Name         name of command
-  @param[in]  Ptr          pointer to string pointer
 
   @retval EFI_SUCCESS
-  @retval EFI_NOT_FOUND
+  @retval RETURN_ABORTED
 
 **/
 STATIC
 EFI_STATUS
-FindShellCommand (
-  IN       SHELL         *Shell,
-  IN CONST CHAR16        *Name,
-  IN CONST SHELL_COMMAND **Ptr
+ShellPrompt (
+  IN SHELL *Shell
   )
 {
-  LIST_ENTRY                *Link;
-  SHELL_COMMAND_LIST_ENTRY  *Entry;
-  LIST_ENTRY                *EntryList;
+  CHAR16     CommandLine[MAX_COMMAND_LINE_LEN];
+  EFI_STATUS Status;
 
-  //
-  // Add '?' alias for help
-  //
-  if (Name[0] == '?') {
-    Name = L"help";
+  ASSERT (Shell != NULL);
+  ShellPrint (L"\nShell> ");
+
+  Status = ReadShellCommand (Shell, CommandLine, Shell->CommandLineMaxLen * sizeof (CHAR16));
+  if (EFI_ERROR (Status)) {
+    return Status;
   }
 
-  EntryList = &Shell->CommandEntryList;
-  for (Link = EntryList->ForwardLink; Link != EntryList; Link = Link->ForwardLink) {
-    Entry = CR (Link, SHELL_COMMAND_LIST_ENTRY, Link, SHELL_COMMAND_LIST_ENTRY_SIGNATURE);
-    if (StrCmp (Name, Entry->ShellCommand->Name) == 0) {
-      *Ptr = Entry->ShellCommand;
-      return EFI_SUCCESS;
-    }
-  }
+  HistoryAdd (Shell, CommandLine);
 
-  return EFI_NOT_FOUND;
+  return RunShellCommand (Shell, CommandLine);
 }
 
 /**
@@ -646,4 +512,104 @@ ShellCommandRegister (
   PerformInsertionSortList (EntryList, &Entry->Link, CompareCommandEntry);
 
   return EFI_SUCCESS;
+}
+
+/**
+  Unregister all Shell commands
+
+  @param[in]  Shell        Shell Context
+
+  @retval EFI_SUCCESS
+
+**/
+EFI_STATUS
+EFIAPI
+ShellCommandUnRegisterAll (
+  IN  SHELL                 *Shell
+  )
+{
+  LIST_ENTRY                *Link;
+  SHELL_COMMAND_LIST_ENTRY  *Entry;
+  LIST_ENTRY                *EntryList;
+
+  EntryList = &Shell->CommandEntryList;
+  for (Link = EntryList->ForwardLink; Link != EntryList;) {
+    Entry = CR (Link, SHELL_COMMAND_LIST_ENTRY, Link, SHELL_COMMAND_LIST_ENTRY_SIGNATURE);
+    Link = Link->ForwardLink;
+    FreePool (Entry);
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Begin a run-time interactive shell.
+
+  @param[in]  Timeout       seconds to wait for input before returning (0 for no timeout)
+
+  @retval EFI_SUCCESS
+
+**/
+EFI_STATUS
+EFIAPI
+Shell (
+  IN       UINTN           Timeout
+  )
+{
+  EFI_STATUS  Status;
+  BOOLEAN     Start;
+  UINTN       Index;
+  UINTN       Index1;
+  SHELL       Shell;
+  UINT8       Buffer;
+
+  ZeroMem (&Shell, sizeof (Shell));
+  InitializeListHead (&Shell.CommandEntryList);
+
+  Shell.CommandLineMaxLen = FeaturePcdGet (PcdMiniShellEnabled) ? \
+                            MAX_COMMAND_LINE_LEN_MINI_SHELL : MAX_COMMAND_LINE_LEN;
+
+  LoadShellCommands (&Shell);
+  Shell.ShouldExit = FALSE;
+
+  if (Timeout != 0) {
+    ShellPrint (L"\n");
+    while (ConsolePoll ()) {
+      ConsoleRead (&Buffer, 1);
+    }
+    for (Index = Timeout; Index > 0; Index--) {
+      ShellPrint (L"Press any key within %d second(s) to enter the command shell", Index);
+      for (Index1 = 0; Index1 < 10; Index1++) {
+        Start = ConsolePoll ();
+        if (Start) {
+          break;
+        }
+        MicroSecondDelay (100 * 1000);
+      }
+      ShellPrint(L"\r");
+      if (Start) {
+        break;
+      }
+    }
+    ShellPrint (L"\n");
+    if (!Start) {
+      Status = EFI_ABORTED;
+      goto Exit;
+    }
+  }
+
+  HistoryInit (&Shell, TRUE);
+
+  while (! (Shell.ShouldExit)) {
+    ShellPrompt (&Shell);
+  }
+
+  HistoryInit (&Shell, FALSE);
+
+  Status = EFI_SUCCESS;
+
+Exit:
+  ShellCommandUnRegisterAll (&Shell);
+
+  return Status;
 }
