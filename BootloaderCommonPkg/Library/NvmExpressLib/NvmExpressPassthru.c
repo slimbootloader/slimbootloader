@@ -679,7 +679,7 @@ EXIT:
     IoMmuUnmap (MapMeta);
   }
 
-  if (MapPrpList != NULL) {
+  if (PrpListHost != NULL) {
     IoMmuFreeBuffer (PrpListNo, PrpListHost, MapPrpList);
   }
 
