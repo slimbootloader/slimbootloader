@@ -103,9 +103,13 @@ UsbHcFreeMemBlock (
 
   IoMmuFreeBuffer (EFI_SIZE_TO_PAGES (Block->BufLen), Block->BufHost, Block->Mapping);
 
-  //
-  // No free memory in PEI.
-  //
+  if (Block->Bits != NULL) {
+    FreePages (Block->Bits, EFI_SIZE_TO_PAGES (Block->BitsLen));
+  }
+
+  if (Block != NULL) {
+    FreePages (Block, EFI_SIZE_TO_PAGES (sizeof (USBHC_MEM_BLOCK)));
+  }
 }
 
 /**
