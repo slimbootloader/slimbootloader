@@ -268,17 +268,16 @@ UfsFreeMemPool (
   )
 {
   UFS_PEIM_MEM_BLOCK         *Block;
+  UFS_PEIM_MEM_BLOCK         *Current;
 
-  ASSERT (Pool->Head != NULL);
+  Block = Pool->Head;
+  ASSERT (Block != NULL);
 
-  //
-  // Unlink all the memory blocks from the pool, then free them.
-  //
-  for (Block = Pool->Head->Next; Block != NULL; Block = Pool->Head->Next) {
-    UfsFreeMemBlock (Pool, Block);
+  while (Block != NULL) {
+    Current = Block;
+    Block   = Block->Next;
+    UfsFreeMemBlock (Pool, Current);
   }
-
-  UfsFreeMemBlock (Pool, Pool->Head);
 
   return EFI_SUCCESS;
 }
