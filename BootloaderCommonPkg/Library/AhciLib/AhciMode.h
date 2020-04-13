@@ -524,6 +524,7 @@ typedef struct {
 
 typedef struct {
   UINT32                    Signature;
+  UINT32                    AhciPciCfgAddr;
   UINT32                    AhciMemAddr;
   EFI_AHCI_REGISTERS        AhciRegisters;
   LIST_ENTRY                DeviceList;
@@ -651,6 +652,24 @@ AhciDmaTransfer (
   IN OUT VOID                       *MemoryAddr,
   IN     UINT32                     DataCount,
   IN     UINT64                     Timeout
+  );
+
+/**
+  Do AHCI HBA reset.
+
+  @param  AhciController              The AHCI controller protocol instance.
+  @param  Timeout            The timeout value of reset, uses 100ns as a unit.
+
+  @retval EFI_DEVICE_ERROR   AHCI controller is failed to complete hardware reset.
+  @retval EFI_TIMEOUT        The reset operation is time out.
+  @retval EFI_SUCCESS        AHCI controller is reset successfully.
+
+**/
+EFI_STATUS
+EFIAPI
+AhciReset (
+  IN  EFI_AHCI_CONTROLLER       *AhciController,
+  IN  UINT64                    Timeout
   );
 
 #endif

@@ -1881,7 +1881,7 @@ AhciCreateTransferDescriptor (
   // Map error or unable to map the whole CmdList buffer into a contiguous region.
   //
 Error1:
-  if (AhciRegisters->AhciCommandTableMap != NULL) {
+  if (AhciRegisters->AhciCommandTable != NULL) {
     IoMmuFreeBuffer (
        EFI_SIZE_TO_PAGES (AhciRegisters->MaxCommandTableSize),
        AhciRegisters->AhciCommandTable,
@@ -1892,7 +1892,7 @@ Error1:
   }
 
 Error3:
-  if (AhciRegisters->AhciCmdListMap != NULL) {
+  if (AhciRegisters->AhciCmdList != NULL) {
     IoMmuFreeBuffer (
        EFI_SIZE_TO_PAGES (AhciRegisters->MaxCommandListSize),
        AhciRegisters->AhciCmdList,
@@ -1903,7 +1903,7 @@ Error3:
   }
 
 Error5:
-  if (AhciRegisters->AhciRFisMap != NULL) {
+  if (AhciRegisters->AhciRFis != NULL) {
     IoMmuFreeBuffer (
        EFI_SIZE_TO_PAGES (AhciRegisters->MaxReceiveFisSize),
        AhciRegisters->AhciRFis,
