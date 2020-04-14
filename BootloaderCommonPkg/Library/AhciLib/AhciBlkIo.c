@@ -282,6 +282,9 @@ AhciDeinitialize (
     return EFI_INVALID_PARAMETER;
   }
 
+  AhciReset (AhciController, 10000);
+  MmioAnd8 (AhciController->AhciPciCfgAddr + PCI_COMMAND_OFFSET,  (UINT8)(~(EFI_PCI_COMMAND_MEMORY_SPACE | EFI_PCI_COMMAND_BUS_MASTER)));
+
   Link  = AhciController->DeviceList.ForwardLink;
   while (Link != &AhciController->DeviceList) {
     AhciDeviceData = EFI_ATA_DEVICE_FROM_LINK (Link);
@@ -291,7 +294,7 @@ AhciDeinitialize (
 
   AhciRegisters = &AhciController->AhciRegisters;
 
-  if (AhciRegisters->AhciCommandTableMap != NULL) {
+  if (AhciRegisters->AhciCommandTable != NULL) {
     IoMmuFreeBuffer (
        EFI_SIZE_TO_PAGES (AhciRegisters->MaxCommandTableSize),
        AhciRegisters->AhciCommandTable,
@@ -299,7 +302,7 @@ AhciDeinitialize (
        );
   }
 
-  if (AhciRegisters->AhciCmdListMap != NULL) {
+  if (AhciRegisters->AhciCmdList != NULL) {
     IoMmuFreeBuffer (
        EFI_SIZE_TO_PAGES (AhciRegisters->MaxCommandListSize),
        AhciRegisters->AhciCmdList,
@@ -307,7 +310,7 @@ AhciDeinitialize (
        );
   }
 
-  if (AhciRegisters->AhciRFisMap != NULL) {
+  if (AhciRegisters->AhciRFis != NULL) {
     IoMmuFreeBuffer (
        EFI_SIZE_TO_PAGES (AhciRegisters->MaxReceiveFisSize),
        AhciRegisters->AhciRFis,
@@ -377,6 +380,7 @@ AhciInitialize (
   //
   // Enable AHCI controller
   //
+  AhciPrivateData->AhciPciCfgAddr = (UINT32)AhciHcPciBase;
   AhciPrivateData->AhciMemAddr = MmioRead32 (AhciHcPciBase + EFI_AHCI_BAR_OFFSET) & ~0xF;
   MmioOr8 (AhciHcPciBase + PCI_COMMAND_OFFSET, EFI_PCI_COMMAND_MEMORY_SPACE | EFI_PCI_COMMAND_BUS_MASTER);
 
