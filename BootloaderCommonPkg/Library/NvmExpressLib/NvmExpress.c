@@ -229,6 +229,43 @@ DiscoverAllNamespaces (
 }
 
 /**
+  De-initialize the NVMe controller.
+
+  @param[in]  Private        NVMe controller private data pointer.
+
+  @retval EFI_SUCCESS        Always return EFI_SUCCESS.
+
+**/
+EFI_STATUS
+NvmeDeInitialize (
+  IN  NVME_CONTROLLER_PRIVATE_DATA        *Private
+  )
+{
+  UINTN   Index;
+
+  NvmeDisableController (Private);
+
+  for (Index = 0; Index < ARRAY_SIZE (mMultiNvmeDrive); Index++) {
+    if (mMultiNvmeDrive[Index] != NULL) {
+      FreePool (mMultiNvmeDrive[Index]);
+      mMultiNvmeDrive[Index] = NULL;
+    }
+  }
+
+  if (Private->Buffer != NULL) {
+    IoMmuFreeBuffer (6, Private->Buffer, Private->Mapping);
+  }
+
+  if (Private->ControllerData != NULL) {
+    FreePool (Private->ControllerData);
+  }
+
+  FreePool (Private);
+
+  return EFI_SUCCESS;
+}
+
+/**
   Starts a device controller or a bus controller.
 
   The Start() function is designed to be invoked from the EFI boot service ConnectController().
@@ -263,14 +300,10 @@ NvmeInitialize (
   EFI_PHYSICAL_ADDRESS                MappedAddr;
 
   if (NvmeInitMode == DevDeinit) {
-    Private = mNvmeCtrlPrivate;
-    if ((Private != NULL) && (Private->ControllerData != NULL)) {
-      FreePool (Private->ControllerData);
+    if (mNvmeCtrlPrivate != NULL) {
+      NvmeDeInitialize (mNvmeCtrlPrivate);
+      mNvmeCtrlPrivate = NULL;
     }
-    if (Private != NULL) {
-      FreePool (Private);
-    }
-    mNvmeCtrlPrivate = NULL;
     return EFI_SUCCESS;
   }
 
@@ -333,7 +366,7 @@ NvmeInitialize (
   return EFI_SUCCESS;
 
 Exit:
-  if ((Private != NULL) && (Private->Mapping != NULL)) {
+  if ((Private != NULL) && (Private->Buffer != NULL)) {
     IoMmuFreeBuffer (6, Private->Buffer, Private->Mapping);
   }
 

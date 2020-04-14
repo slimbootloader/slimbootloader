@@ -97,5 +97,19 @@ NvmeIdentifyNamespace (
   IN VOID                              *Buffer
   );
 
+/**
+  Disable the Nvm Express controller.
+
+  @param  Private          The pointer to the NVME_CONTROLLER_PRIVATE_DATA data structure.
+
+  @return EFI_SUCCESS      Successfully disable the controller.
+  @return EFI_DEVICE_ERROR Fail to disable the controller.
+
+**/
+EFI_STATUS
+NvmeDisableController (
+  IN NVME_CONTROLLER_PRIVATE_DATA     *Private
+  );
+
 #endif
 
