@@ -1007,7 +1007,7 @@ BootOsImage (
 
 Exit:
   if (LoadedImageHandle != NULL) {
-    UnloadBootImages (LoadedImageHandle);
+    UnloadBootImages (LoadedImageHandle, FALSE);
   }
 
   if (FsHandle != NULL) {

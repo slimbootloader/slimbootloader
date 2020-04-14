@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -222,13 +222,15 @@ GetLoadedImageByType (
 
   This function will clean up all temporary resources used to load Boot Image.
 
-  @param[in]  LoadedImageHandle Loaded Image handle
-
+  @param[in]  LoadedImageHandle   Loaded Image handle.
+  @param[in]  KeepRootNode        TRUE,  do not free memory for LOADED_IMAGES_INFO root node.
+                                  FALSE, free memory for LOADED_IMAGES_INFO root node.
 **/
 VOID
 EFIAPI
 UnloadBootImages (
-  IN  EFI_HANDLE       LoadedImageHandle
+  IN  EFI_HANDLE       LoadedImageHandle,
+  IN  BOOLEAN          KeepRootNode
   );
 
 /**
