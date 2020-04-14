@@ -1533,6 +1533,7 @@ XhcPeiDisableSlotCmd (
   for (Index = 0; Index < Xhc->UsbDevContext[SlotId].DevDesc.NumConfigurations; Index++) {
     if (Xhc->UsbDevContext[SlotId].ConfDesc[Index] != NULL) {
       FreePool (Xhc->UsbDevContext[SlotId].ConfDesc[Index]);
+      Xhc->UsbDevContext[SlotId].ConfDesc[Index] = NULL;
     }
   }
 
@@ -3022,6 +3023,7 @@ XhcPeiFreeSched (
   //
   if (Xhc->MemPool != NULL) {
     UsbHcFreeMemPool (Xhc->MemPool);
+    FreePages (Xhc->MemPool, EFI_SIZE_TO_PAGES (sizeof (USBHC_MEM_POOL)));
     Xhc->MemPool = NULL;
   }
 }

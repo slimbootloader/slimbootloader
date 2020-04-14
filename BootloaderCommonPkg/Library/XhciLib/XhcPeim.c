@@ -1392,34 +1392,46 @@ XhcPeiGetRootHubPortStatus (
   return EFI_SUCCESS;
 }
 
+
 /**
-  One notified function to stop the Host Controller at the end of PEI
+  Free the USB device context.
 
-  @param[in]  PeiServices        Pointer to PEI Services Table.
-  @param[in]  NotifyDescriptor   Pointer to the descriptor for the Notification event that
-                                 caused this function to execute.
-  @param[in]  Ppi                Pointer to the PPI data associated with this function.
+  @param  Xhc       The XHCI device.
 
-  @retval     EFI_SUCCESS  The function completes successfully
-  @retval     others
 **/
-EFI_STATUS
+VOID
 EFIAPI
-XhcEndOfPei (
-  IN EFI_PEI_SERVICES           **PeiServices,
-  IN EFI_PEI_NOTIFY_DESCRIPTOR  *NotifyDescriptor,
-  IN VOID                       *Ppi
+XhcPeiFreeDevContext (
+  IN PEI_XHC_DEV    *Xhc
   )
 {
-  PEI_XHC_DEV    *Xhc;
+  UINTN                           Index;
+  UINTN                           Index2;
+  USB_DEV_CONTEXT                *UsbDevContext;
 
-  Xhc = PEI_RECOVERY_USB_XHC_DEV_FROM_THIS_NOTIFY(NotifyDescriptor);
+  for (Index = 0; Index < 255; Index++) {
+    UsbDevContext = &Xhc->UsbDevContext[Index];
+    if (UsbDevContext->Enabled) {
 
-  XhcPeiHaltHC (Xhc, XHC_GENERIC_TIMEOUT);
+      if (UsbDevContext->ConfDesc != NULL) {
+        for (Index2 = 0; Index2 < UsbDevContext->DevDesc.NumConfigurations; Index2++) {
+          if (UsbDevContext->ConfDesc[Index2] != NULL) {
+            FreePool (UsbDevContext->ConfDesc[Index2]);
+            UsbDevContext->ConfDesc[Index2] = NULL;
+          }
+        }
+        FreePool (UsbDevContext->ConfDesc);
+        UsbDevContext->ConfDesc = NULL;
+      }
 
-  XhcPeiFreeSched (Xhc);
-
-  return EFI_SUCCESS;
+      for (Index2 = 0; Index2 < 31; Index2++) {
+        if (UsbDevContext->EndpointTransferRing[Index2] != NULL) {
+          FreePool (UsbDevContext->EndpointTransferRing[Index2]);
+          UsbDevContext->EndpointTransferRing[Index2] = NULL;
+        }
+      }
+    }
+  }
 }
 
 /**
@@ -1438,6 +1450,7 @@ UsbDeinitCtrl (
 {
   PEI_XHC_DEV                    *Xhc;
   PEI_USB2_HOST_CONTROLLER_PPI   *This;
+  UINTN                           MemPages;
 
   if (UsbHostHandle == NULL) {
     return EFI_INVALID_PARAMETER;
@@ -1449,6 +1462,11 @@ UsbDeinitCtrl (
   XhcPeiHaltHC (Xhc, XHC_GENERIC_TIMEOUT);
 
   XhcPeiFreeSched (Xhc);
+
+  XhcPeiFreeDevContext (Xhc);
+
+  MemPages = EFI_SIZE_TO_PAGES (sizeof (PEI_XHC_DEV));
+  FreePages (Xhc, MemPages);
 
   return EFI_SUCCESS;
 }

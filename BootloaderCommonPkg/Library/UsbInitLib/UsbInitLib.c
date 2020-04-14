@@ -55,16 +55,21 @@ DeinitUsbDevices (
   )
 {
   EFI_STATUS  Status;
+  UINTN                Index;
 
   if (mUsbInit.UsbHostHandle == NULL) {
     return EFI_NOT_FOUND;
   }
 
   Status = UsbDeinitCtrl (mUsbInit.UsbHostHandle);
-  if (!EFI_ERROR (Status)) {
-    ZeroMem (&mUsbInit, sizeof(mUsbInit));
+
+  UsbDeInitBot ();
+
+  for (Index = 0; Index < mUsbInit.UsbIoCount; Index++) {
+    UsbDeinitDevice (mUsbInit.UsbIoArray[Index]);
   }
 
+  ZeroMem (&mUsbInit, sizeof(mUsbInit));
   return Status;
 }
 
