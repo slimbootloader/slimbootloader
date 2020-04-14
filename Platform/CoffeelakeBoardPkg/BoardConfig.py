@@ -74,10 +74,6 @@ class Board(BaseBoard):
         self.ENABLE_FWU           = 1
         self.ENABLE_SMBIOS        = 1
 
-        # FWU_PLD | PLD | Stage2 | Stage1B
-        # Stage1B is verified by ACM
-        self.VERIFIED_BOOT_HASH_MASK  = 0x000000E
-
         # Verify required minimum FSP version
         self.MIN_FSP_REVISION     = 0x07006440
         # Verify FSP image ID. Empty string means skipping verification

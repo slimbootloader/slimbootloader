@@ -77,9 +77,8 @@ class Board(BaseBoard):
         # BIT0:Serial  BIT1:GFX
         self.CONSOLE_OUT_DEVICE_MASK = 0x00000001
 
-        # FWU_PLD | PLD | Stage2 | Stage1B
         # Let Stage1A verifies Stage1B
-        self.VERIFIED_BOOT_HASH_MASK  = 0x000000F
+        self.VERIFIED_BOOT_STAGE_1B  = 0x1
 
         self.STAGE1B_XIP          = 0
 

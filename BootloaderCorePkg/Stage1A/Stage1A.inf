@@ -81,7 +81,7 @@
   gPlatformModuleTokenSpaceGuid.PcdEarlyLogBufferSize
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel
   gPlatformModuleTokenSpaceGuid.PcdFileDataBase
-  gPlatformModuleTokenSpaceGuid.PcdVerifiedBootHashMask
+  gPlatformModuleTokenSpaceGuid.PcdVerifiedBootStage1B
   gPlatformModuleTokenSpaceGuid.PcdHashStoreSize
   gPlatformCommonLibTokenSpaceGuid.PcdPcdLibId
   gPlatformCommonLibTokenSpaceGuid.PcdCompSignHashAlg

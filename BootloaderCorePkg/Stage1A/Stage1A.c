@@ -193,7 +193,7 @@ PrepareStage1B (
   Hdr = (LOADER_COMPRESSED_HEADER *)(UINTN)Src;
 
   // Verify Stage 1B
-  if (FixedPcdGet32(PcdVerifiedBootHashMask) & (1 << COMP_TYPE_STAGE_1B)) {
+  if (FeaturePcdGet (PcdVerifiedBootEnabled)  && FixedPcdGetBool(PcdVerifiedBootStage1B)) {
     if (IS_COMPRESSED (Src)) {
       Length = sizeof (LOADER_COMPRESSED_HEADER) + Hdr->CompressedSize;
     }
