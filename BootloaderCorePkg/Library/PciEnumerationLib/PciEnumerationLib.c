@@ -1192,7 +1192,7 @@ DumpPciRootBridgeInfoHob (
       for (Index = 0; Index < PCI_MAX_BAR; Index++) {
         if (RootBridgeInfoHob->Entry[Count].Resource[Index].ResLength > 0) {
           DEBUG ((DEBUG_INFO, "  BarType-%d: Base 0x%016lX Length 0x%016lX\n",
-            Index,
+            Index + 1,
             RootBridgeInfoHob->Entry[Count].Resource[Index].ResBase,
             RootBridgeInfoHob->Entry[Count].Resource[Index].ResLength));
         }
