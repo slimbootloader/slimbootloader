@@ -1,6 +1,6 @@
 /** @file
 
-Copyright (c) 2006 - 2015, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2006 - 2020, Intel Corporation. All rights reserved.<BR>
 
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
@@ -504,7 +504,6 @@ PeiBotDetectMedia (
   EFI_STATUS                  FloppyStatus;
   UINTN                       SenseCounts;
   BOOLEAN                     NeedReadCapacity;
-  EFI_PHYSICAL_ADDRESS        AllocateAddress;
   ATAPI_REQUEST_SENSE_DATA    *SensePtr;
   UINTN                       Retry;
 
@@ -515,15 +514,6 @@ PeiBotDetectMedia (
   //
   SenseCounts       = 0;
   NeedReadCapacity  = TRUE;
-
-  Status = PeiServicesAllocatePages (
-             EfiBootServicesCode,
-             1,
-             &AllocateAddress
-             );
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
 
   SensePtr = PeiBotDev->SensePtr;
   ZeroMem (SensePtr, EFI_PAGE_SIZE);

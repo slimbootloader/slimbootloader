@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -45,6 +45,34 @@ UsbBlkCallback (
   return EFI_SUCCESS;
 }
 
+/**
+  This funciton de-allocate memory allocated for USB BOT devices.
+
+  @retval EFI_SUCCESS            This routinue alwasy return success.
+
+**/
+EFI_STATUS
+EFIAPI
+UsbDeInitBot (
+  VOID
+)
+{
+  UINTN            Index;
+  UINTN            MemPages;
+  PEI_BOT_DEVICE  *PeiBotDev;
+
+  MemPages = sizeof (PEI_BOT_DEVICE) / EFI_PAGE_SIZE + 1;
+  for (Index = 0; Index < mUsbBlkCount; Index++) {
+    PeiBotDev = PEI_BOT_DEVICE_FROM_THIS (mUsbBlkArray[Index]);
+    if (PeiBotDev->SensePtr != NULL) {
+      FreePages (PeiBotDev->SensePtr, 1);
+    }
+    FreePages (PeiBotDev, MemPages);
+  }
+  mUsbBlkCount = 0;
+
+  return EFI_SUCCESS;
+}
 
 /**
   The function will initialize USB device.
@@ -74,7 +102,6 @@ InitializeUsb (
 
   if (DevInitPhase == DevDeinit) {
     DeinitUsbDevices ();
-    mUsbBlkCount = 0;
     return EFI_SUCCESS;
   }
 
