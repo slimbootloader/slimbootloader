@@ -288,6 +288,10 @@ class Build(object):
         self._comp_list                    = []
         self._region_list                  = []
 
+    def board_build_hook (self, phase):
+        if getattr(self._board, "PlatformBuildHook", None):
+            self._board.PlatformBuildHook (self, phase)
+
     def update_fit_table (self):
 
         if not self._board.HAVE_FIT_TABLE:
@@ -1163,7 +1167,9 @@ class Build(object):
         print("Build [%s] ..." % self._board.BOARD_NAME)
 
         # Run pre-build
+        self.board_build_hook ('pre-build:before')
         self.pre_build()
+        self.board_build_hook ('post-build:after')
 
         # Run build
         cmd_args = [
@@ -1180,7 +1186,9 @@ class Build(object):
         run_process (cmd_args)
 
         # Run post-build
+        self.board_build_hook ('post-build:before')
         self.post_build()
+        self.board_build_hook ('post-build:after')
 
         print("Done [%s] !" % self._board.BOARD_NAME)
 

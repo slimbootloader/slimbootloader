@@ -86,6 +86,7 @@ class Board(BaseBoard):
         self.STAGE1B_SIZE         = 0x00030000
         self.STAGE2_SIZE          = 0x00018000
 
+        self.TEST_SIZE            = 0x00001000
         self.SIIPFW_SIZE          = 0x00010000
         self.EPAYLOAD_SIZE        = 0x0020D000
         self.PAYLOAD_SIZE         = 0x00020000
@@ -155,6 +156,14 @@ class Board(BaseBoard):
         # VbtFileName is the VBT file name. It needs to be located under platform
         #   VbtBin folder.
         self._MULTI_VBT_FILE      = {1:'Vbt800x600.dat', 2:'Vbt1024x768.dat'}
+
+    def PlatformBuildHook (self, build, phase):
+        if phase == 'post-build:before':
+          # Create PTEST.bin
+          bins = bytearray (b'12345678')
+          file = build._fv_dir + '/PTEST.bin'
+          with open(file, 'wb') as fd:
+              fd.write(bins)
 
     def GetPlatformDsc (self):
         dsc = {}
@@ -230,6 +239,7 @@ class Board(BaseBoard):
                     ('PAYLOAD.bin'  ,  'Lzma'    , self.PAYLOAD_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
                     ('EPAYLOAD.bin' ,  ''        , self.EPAYLOAD_SIZE, STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
                     ('SIIPFW.bin'   ,  ''        , self.SIIPFW_SIZE,   STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
+                    ('PTEST.bin'    ,  ''        , self.TEST_SIZE,     STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
                     ]
                 ),
                 ('REDUNDANT_A.bin', [
