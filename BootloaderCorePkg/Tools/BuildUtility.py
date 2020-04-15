@@ -390,7 +390,16 @@ def gen_flash_map_bin (flash_map_file, comp_list):
     flash_map = FLASH_MAP()
     for comp in reversed(comp_list):
         desc  = FLASH_MAP_DESC ()
-        desc.sig    = FLASH_MAP.FLASH_MAP_COMPONENT_SIGNATURE[comp['bname']].encode()
+        if comp['bname'] not in FLASH_MAP.FLASH_MAP_COMPONENT_SIGNATURE:
+            if len(comp['bname']) < 4:
+                # For short names, prefix with '_'
+                bname = '_' * (4 - len(comp['bname'])) + comp['bname']
+            else:
+                # For long names, use the 1st 4 chars
+                bname = comp['bname'][:4]
+            desc.sig    = bname.encode()
+        else:
+            desc.sig    = FLASH_MAP.FLASH_MAP_COMPONENT_SIGNATURE[comp['bname']].encode()
         desc.flags  = comp['flag']
         desc.offset = comp['offset']
         desc.size   = comp['size']
