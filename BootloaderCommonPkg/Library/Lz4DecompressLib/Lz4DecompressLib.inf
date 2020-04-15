@@ -27,7 +27,6 @@
 #
 
 [Sources]
-  Lz4.h
   Lz4DecompressLib.c
 
 [Packages]
