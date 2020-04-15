@@ -95,7 +95,7 @@ InitUsbDevices (
 {
   EFI_STATUS  Status;
   UINTN       PcieAddress;
-  UINT32      XhciMmioBase;
+  UINTN       XhciMmioBase;
   UINT32      Data;
   UINT8      *Class;
 
@@ -109,7 +109,7 @@ InitUsbDevices (
         (Class[2] == PCI_CLASS_SERIAL))) {
       // Enable XHCI controller
       MmioOr8 (PcieAddress + PCI_COMMAND_OFFSET, EFI_PCI_COMMAND_MEMORY_SPACE | EFI_PCI_COMMAND_BUS_MASTER);
-      XhciMmioBase = MmioRead32 (PcieAddress + PCI_BASE_ADDRESSREG_OFFSET) & ~0xF;
+      XhciMmioBase = (UINTN) MmioRead64 (PcieAddress + PCI_BASE_ADDRESSREG_OFFSET) & ~0xF;
 
       Status = UsbInitCtrl (XhciMmioBase, &mUsbInit.UsbHostHandle);
       DEBUG ((DEBUG_INFO, "Init USB XHCI - %r\n", Status));

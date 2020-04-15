@@ -266,6 +266,7 @@ class BaseBoard(object):
         self.HASH_STORE_SIZE       = 0x200  #Hash store size to be allocated in bootloader
 
         self.PCI_MEM64_BASE        = 0
+        self.BUILD_ARCH            = 'IA32'
 
         for key, value in list(kwargs.items()):
             setattr(self, '%s' % key, value)
