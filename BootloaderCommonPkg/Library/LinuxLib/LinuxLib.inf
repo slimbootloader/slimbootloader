@@ -31,9 +31,11 @@
   BaseMemoryLib
   DebugLib
   PagingLib
+  PrintLib
 
 [Guids]
   gEfiGraphicsInfoHobGuid
   gLoaderMemoryMapInfoGuid
+  gLoaderSystemTableInfoGuid
 
 [Pcd]

@@ -65,10 +65,6 @@
 
 #define DEFAULT_COMMAND_LINE     "console=ttyS0,115200\0"
 
-#define BOOT_PARAMS_BASE         0x00090000
-#define LINUX_KERNEL_BASE        0x00100000
-#define CMDLINE_OFFSET           0xF000
-#define CMDLINE_LENGTH_MAX       0x800
 #define EOF                      "<eof>"
 #define GPT_PART_ENTRIES_MAX     4
 
