@@ -13,8 +13,12 @@
 #include <Library/HobLib.h>
 #include <Library/LinuxLib.h>
 #include <Library/PagingLib.h>
+#include <Library/PrintLib.h>
 #include <Guid/GraphicsInfoHob.h>
 #include <Guid/MemoryMapInfoGuid.h>
+#include <Guid/SystemTableInfoGuid.h>
+
+#define ACPI_RSDP_CMDLINE_STR         "acpi_rsdp="
 
 /**
   Jump to kernel entry point.
@@ -263,6 +267,8 @@ UpdateLinuxBootParams (
   MEMORY_MAP_INFO            *MapInfo;
   UINTN                       Index;
   EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *GfxMode;
+  SYSTEM_TABLE_INFO          *SystemTableInfo;
+  CHAR8                       ParamValue[64];
 
   if (Bp == NULL) {
     return;
@@ -314,6 +320,23 @@ UpdateLinuxBootParams (
     E820Entry++;
   }
   Bp->E820Entries = (UINT8)MapInfo->Count;
+
+  //
+  // Append acpi_rsdp only if it does not exist in the kernel command line
+  // to allow a user override acpi_rdsp kernel parameter.
+  // To check the existence, simply search for "acpi_rsdp=" string since it's
+  // case-sensitive with the immediate '=' trailing according to kernel spec.
+  //
+  if (AsciiStrStr ((CHAR8 *)(UINTN)Bp->Hdr.CmdLinePtr,(CHAR8 *)ACPI_RSDP_CMDLINE_STR) == NULL) {
+    GuidHob = GetFirstGuidHob (&gLoaderSystemTableInfoGuid);
+    if (GuidHob != NULL) {
+      SystemTableInfo = (SYSTEM_TABLE_INFO *)GET_GUID_HOB_DATA (GuidHob);
+
+      AsciiSPrint (ParamValue, sizeof (ParamValue), " %a0x%lx", ACPI_RSDP_CMDLINE_STR, SystemTableInfo->AcpiTableBase);
+      AsciiStrCatS ((CHAR8 *)(UINTN)Bp->Hdr.CmdLinePtr, CMDLINE_LENGTH_MAX, ParamValue);
+      Bp->Hdr.CmdlineSize = (UINT32)AsciiStrLen ((CHAR8 *)(UINTN)Bp->Hdr.CmdLinePtr);
+    }
+  }
 }
 
 /**

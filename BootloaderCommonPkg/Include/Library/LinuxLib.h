@@ -13,6 +13,8 @@
 
 #define BOOT_PARAMS_BASE      0x00090000
 #define LINUX_KERNEL_BASE     0x00100000
+#define CMDLINE_OFFSET        0xF000
+#define CMDLINE_LENGTH_MAX    0x800
 
 #define E820_RAM              1
 #define E820_RESERVED         2
