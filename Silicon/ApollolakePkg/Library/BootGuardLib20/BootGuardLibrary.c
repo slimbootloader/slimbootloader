@@ -11,7 +11,7 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/PcdLib.h>
 #include <Library/IoLib.h>
-#include <Library/BootGuardLib.h>
+#include <Library/BootGuardLib20.h>
 #include <Library/BootloaderCommonLib.h>
 #include <Library/TpmLib.h>
 

@@ -28,7 +28,7 @@
 #include <Library/RleCompressLib.h>
 #include <PlatformBase.h>
 #include <RegAccess.h>
-#include <Library/BootGuardLib.h>
+#include <Library/BootGuardLib20.h>
 #include <Library/TpmLib.h>
 #include <Library/LoaderLib.h>
 #include <Library/HeciLib.h>

@@ -5,8 +5,8 @@
 
 **/
 
-#ifndef _BOOT_GUARD_LIB_H_
-#define _BOOT_GUARD_LIB_H_
+#ifndef _BOOT_GUARD_LIB_20_H_
+#define _BOOT_GUARD_LIB_20_H_
 
 #include <IndustryStandard/Tpm20.h>
 

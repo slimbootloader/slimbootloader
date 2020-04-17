@@ -20,7 +20,7 @@
 #include <Library/HeciLib/HeciRegs.h>
 #include <Library/HeciLib/CseMsg.h>
 #include <Library/PciLib.h>
-#include <Library/BootGuardLib.h>
+#include <Library/BootGuardLib20.h>
 #include <Library/SecureBootLib.h>
 #include <Guid/PcdDataBaseSignatureGuid.h>
 #include <Library/ConfigDataLib.h>
