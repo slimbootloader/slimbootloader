@@ -11,6 +11,9 @@
 #include <Library/LoaderPerformanceLib.h>
 #include <Library/PrintLib.h>
 #include <Library/HobLib.h>
+#include <Guid/LoaderFspInfoGuid.h>
+#include <Library/BaseMemoryLib.h>
+#include "ExtendedFirmwarePerformance.h"
 
 /**
   Convert GUID to String.
@@ -140,6 +143,42 @@ DefPerfIdToStr (
 }
 
 /**
+  Provide description string corresponding to FSP performance Id.
+
+  @param[in]  Id                MeasurePoint Id
+
+  @retval Default description string
+**/
+CHAR8 *
+FspPerfIdToStr (
+  IN UINT32 Id
+  )
+{
+
+  switch (Id) {
+  case 0xF000:
+    return "TempRamInit entry";
+  case 0xF07F:
+    return "TempRamInit exit";
+  case 0xD000:
+    return "MemoryInit entry";
+  case 0xD07F:
+    return "MemoryInit exit";
+  case 0xB000:
+    return "TempRamExit entry";
+  case 0xB07F:
+    return "TempRamExit exit";
+  case 0x9000:
+    return "SiliconInit entry";
+  case 0x907F:
+    return "SiliconInit exit";
+
+  }
+  return NULL;
+}
+
+
+/**
   Provide description string corresponding to Id.
 
   If there is a description in default description table corresponding to Id,
@@ -175,6 +214,128 @@ PerfIdToStr (
   return Desc;
 }
 
+
+/**
+  Get Measurement form Fpdt records.
+
+  @param[in]   RecordHeader        Pointer to the FPDT record.
+  @param[out]  Measurement         Pointer to the measurement which need to be filled.
+
+**/
+VOID
+GetMeasurementInfo (
+  IN     EFI_ACPI_5_0_FPDT_PERFORMANCE_RECORD_HEADER  *RecordHeader,
+  OUT    MEASUREMENT_RECORD                           *Measurement
+  )
+{
+  switch (RecordHeader->Type) {
+  case FPDT_GUID_EVENT_TYPE:
+    CopyMem (&(Measurement->ModuleGuid), &(((FPDT_GUID_EVENT_RECORD *)RecordHeader)->Guid), sizeof (EFI_GUID));
+    Measurement->Identifier       = ((UINT32)((FPDT_GUID_EVENT_RECORD *)RecordHeader)->ProgressID);
+    Measurement->StartTimeStamp   = ((FPDT_GUID_EVENT_RECORD *)RecordHeader)->Timestamp;
+    Measurement->Token            = "PEIM";
+    break;
+
+  case FPDT_DYNAMIC_STRING_EVENT_TYPE:
+    CopyMem (&(Measurement->ModuleGuid), &(((FPDT_DYNAMIC_STRING_EVENT_RECORD *)RecordHeader)->Guid), sizeof (EFI_GUID));
+    Measurement->Identifier       = ((UINT32)((FPDT_DYNAMIC_STRING_EVENT_RECORD *)RecordHeader)->ProgressID);
+    Measurement->StartTimeStamp   = ((FPDT_DYNAMIC_STRING_EVENT_RECORD *)RecordHeader)->Timestamp;
+    Measurement->Token            = ((FPDT_DYNAMIC_STRING_EVENT_RECORD *)RecordHeader)->String;
+    Measurement->Module           = ((FPDT_DYNAMIC_STRING_EVENT_RECORD *)RecordHeader)->String;
+
+    break;
+
+  case FPDT_GUID_QWORD_EVENT_TYPE:
+    CopyMem (&(Measurement->ModuleGuid), &(((FPDT_GUID_QWORD_EVENT_RECORD *)RecordHeader)->Guid), sizeof (EFI_GUID));
+    Measurement->Identifier       = ((UINT32)((FPDT_GUID_QWORD_EVENT_RECORD *)RecordHeader)->ProgressID);
+    Measurement->StartTimeStamp   = ((FPDT_GUID_QWORD_EVENT_RECORD *)RecordHeader)->Timestamp;
+    Measurement->Token            = "LoadImage";
+    break;
+
+  case  FPDT_GUID_QWORD_STRING_EVENT_TYPE:
+    CopyMem (&(Measurement->ModuleGuid), &(((FPDT_GUID_QWORD_STRING_EVENT_RECORD *)RecordHeader)->Guid), sizeof (EFI_GUID));
+    Measurement->Identifier       = ((UINT32)((FPDT_GUID_QWORD_STRING_EVENT_RECORD *)RecordHeader)->ProgressID);
+    Measurement->StartTimeStamp   = ((FPDT_GUID_QWORD_STRING_EVENT_RECORD*)RecordHeader)->Timestamp;
+    Measurement->Token            = "DB_start";
+    break;
+
+  case FPDT_DUAL_GUID_STRING_EVENT_TYPE:
+    CopyMem (&(Measurement->ModuleGuid), &(((FPDT_DUAL_GUID_STRING_EVENT_RECORD *)RecordHeader)->Guid1), sizeof (EFI_GUID));
+    Measurement->Identifier       = ((UINT32)((FPDT_DUAL_GUID_STRING_EVENT_RECORD *)RecordHeader)->ProgressID);
+    Measurement->StartTimeStamp   = ((FPDT_DUAL_GUID_STRING_EVENT_RECORD *)RecordHeader)->Timestamp;
+    Measurement->Token            = ((FPDT_DUAL_GUID_STRING_EVENT_RECORD *)RecordHeader)->String;
+    break;
+
+  default:
+    break;
+  }
+
+  if (FspPerfIdToStr (Measurement->Identifier) != NULL) {
+    Measurement->Token = FspPerfIdToStr (Measurement->Identifier);
+  }
+}
+
+
+/**
+  Print FSP Measure Point information.
+
+**/
+VOID
+PrintFspPerfData (
+  VOID
+  )
+{
+  UINT8                                       *FspFirmwarePerformance;
+  EFI_HOB_GUID_TYPE                           *GuidHob;
+  FPDT_PEI_EXT_PERF_HEADER                    *FspPerformanceLogHeader;
+  MEASUREMENT_RECORD                          Rec;
+  EFI_ACPI_5_0_FPDT_PERFORMANCE_RECORD_HEADER *RecordHeader;
+  UINT8                                       *StartRecordEvent;
+  UINT32                                      DataSize;
+  UINT32                                      Time;
+  LOADER_FSP_INFO                            *FspInfo;
+
+  // Get FSP Info HOB
+  FspInfo = GetFirstGuidHob (&gLoaderFspInfoGuid);
+  if (FspInfo == NULL) {
+    return;
+  }
+  FspInfo = GET_GUID_HOB_DATA (FspInfo);
+
+  FspFirmwarePerformance = NULL;
+  GuidHob = GetNextGuidHob (&gEdkiiFpdtExtendedFirmwarePerformanceGuid, FspInfo->FspHobList);
+  while (GuidHob != NULL) {
+    FspFirmwarePerformance   = (UINT8*)GET_GUID_HOB_DATA (GuidHob);
+    FspPerformanceLogHeader = (FPDT_PEI_EXT_PERF_HEADER *)FspFirmwarePerformance;
+
+    DEBUG ((DEBUG_INFO | DEBUG_EVENT, " FspPerfHob: HobIsFull             - 0x%x\n", FspPerformanceLogHeader->HobIsFull));
+    DEBUG ((DEBUG_INFO | DEBUG_EVENT, " FspPerfHob: SizeOfAllEntries      - 0x%x\n", FspPerformanceLogHeader->SizeOfAllEntries));
+
+    DEBUG ((DEBUG_INFO | DEBUG_EVENT, " Dump performance data for FSP HOB:\n"));
+    DEBUG ((DEBUG_INFO | DEBUG_EVENT, " Id   | Time (ms)  |  Token                   |            Module        \n"));
+    DEBUG ((DEBUG_INFO | DEBUG_EVENT, "------+------------+--------------------------|--------------------------\n"));
+
+    DataSize = 0;
+    RecordHeader = (EFI_ACPI_5_0_FPDT_PERFORMANCE_RECORD_HEADER *)(FspFirmwarePerformance + sizeof (FPDT_PEI_EXT_PERF_HEADER));
+    StartRecordEvent  = (UINT8 *)RecordHeader;
+    while (DataSize < FspPerformanceLogHeader->SizeOfAllEntries) {
+      RecordHeader = (EFI_ACPI_5_0_FPDT_PERFORMANCE_RECORD_HEADER *)(StartRecordEvent + DataSize);
+      GetMeasurementInfo (RecordHeader, &Rec);
+      Time = (UINT32)DivU64x32 (Rec.StartTimeStamp, 1000000);
+      DEBUG ((DEBUG_INFO | DEBUG_EVENT, " %4X | %7d ms | %-25a| %g\n", Rec.Identifier, Time, Rec.Token, Rec.ModuleGuid));
+      DataSize += RecordHeader->Length;
+    }
+
+    //
+    // Previous HOB is used, then find next one.
+    //
+    GuidHob = GetNextGuidHob (&gEdkiiFpdtExtendedFirmwarePerformanceGuid, GET_NEXT_HOB (GuidHob));
+  }
+
+  DEBUG ((DEBUG_INFO | DEBUG_EVENT,   "------+------------+--------------------------|--------------------------\n"));
+}
+
+
 /**
   Print Bootloader Measure Point information.
 
@@ -183,8 +344,7 @@ PerfIdToStr (
 
 **/
 VOID
-EFIAPI
-PrintMeasurePoint (
+PrintBootloaderPerfData (
   IN BL_PERF_DATA   *PerfData,
   IN PERF_ID_TO_STR  PerfIdToStrTbl
   )
@@ -210,4 +370,29 @@ PrintMeasurePoint (
     PrevTime = Time;
   }
   DEBUG ((DEBUG_INFO | DEBUG_EVENT, "------+------------+------------+----------------------------------\n"));
+}
+
+/**
+  Print Bootloader Measure Point information.
+
+  @param[in]  PerfData          A pointer indicating BL_PERF_DATA instance to print performance data
+  @param[in]  PerfIdToStrTbl    A pointer to description table corresponding to Id
+
+**/
+VOID
+EFIAPI
+PrintMeasurePoint (
+  IN BL_PERF_DATA   *PerfData,
+  IN PERF_ID_TO_STR  PerfIdToStrTbl
+  )
+{
+  // Print bootloader performance
+  if ((PcdGet32 (PcdBootPerformanceMask) & BIT0) != 0) {
+    PrintBootloaderPerfData (PerfData, PerfIdToStrTbl);
+  }
+
+  // Print FSP boot performance
+  if ((PcdGet32 (PcdBootPerformanceMask) & BIT1) != 0) {
+    PrintFspPerfData ();
+  }
 }

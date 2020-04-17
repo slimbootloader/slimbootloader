@@ -47,6 +47,7 @@
   gEfiSystemNvDataFvGuid                        = { 0xFFF12B8D, 0x7696, 0x4C8B, { 0xA9, 0x85, 0x27, 0x47, 0x07, 0x5B, 0x4F, 0x50 } }
   gEfiVariableIndexTableGuid                    = { 0x8cfdb8c8, 0xd6b2, 0x40f3, { 0x8e, 0x97, 0x02, 0x30, 0x7c, 0xc9, 0x8b, 0x7c } }
   gEdkiiWorkingBlockSignatureGuid               = { 0x9e58292b, 0x7c68, 0x497d, { 0xa0, 0xce, 0x65,  0x0, 0xfd, 0x9f, 0x1b, 0x95 } }
+  gEdkiiFpdtExtendedFirmwarePerformanceGuid     = { 0x3b387bfd, 0x7abc, 0x4cf2, { 0xa0, 0xca, 0xb6, 0xa1, 0x6c, 0x1b, 0x1b, 0x25 } }
 
 [PcdsFixedAtBuild]
   gPlatformCommonLibTokenSpaceGuid.PcdMaxLibraryDataEntry    |          8 | UINT32 | 0x20000100
@@ -244,6 +245,11 @@
   ## This PCD defines length for DMA buffer alignment.
   # @Prompt DMA buffer allocation alignment when DMA protection is enabled.
   gPlatformCommonLibTokenSpaceGuid.PcdDmaBufferAlignment | 0x00100000 | UINT32 | 0x00010091
+
+  ## This PCD defines bootloader boot performance related behavior
+  #     BIT0    - Print Slim Bootloader boot performance.<BR>
+  #     BIT1    - Print FSP HOB boot performance data.<BR>
+  gPlatformCommonLibTokenSpaceGuid.PcdBootPerformanceMask | 0x00000001 | UINT32 | 0x00010092
 
 [PcdsDynamic]
   ## This PCD indicates the PCR bank to be enabled/supported by Slim Bootloader for measured boot
