@@ -1,7 +1,7 @@
 ## @ StitchIfwi.py
 #  This is a python stitching script for Slim Bootloader WHL/CFL build
 #
-# Copyright (c) 2019, Intel Corporation. All rights reserved. <BR>
+# Copyright (c) 2019 - 2020, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -9,6 +9,7 @@
 import sys
 import os
 import re
+import imp
 import struct
 import argparse
 import zipfile
@@ -19,10 +20,9 @@ import subprocess
 import xml.etree.ElementTree as ET
 from   xml.dom import minidom
 from   ctypes  import *
+from   StitchLoader import *
 from   subprocess   import call
-
 sys.dont_write_bytecode = True
-from   StitchLoader import IFWI_PARSER, add_platform_data, get_file_data, gen_file_from_object
 
 btg_profile_values = [\
                     "Boot Guard Profile 0 - No_FVME",\
@@ -33,248 +33,45 @@ btg_profile_values = [\
                     "Boot Guard Profile 5 - FVME"]
 
 extra_usage_txt = \
-"""This script creates a new Whiskey Lake/Coffee Lake Slim Bootloader IFWI image using FIT
-tool.  For the FIT tool and stitching ingredients listed in step 2 below, please
-contact your Intel representative.
+"""This is an IFWI stitch config script for Slim Bootloader For the FIT tool and
+stitching ingredients listed in step 2 below, please contact your Intel representative.
 
-Please follow the steps below for WHL/CFL IFWI stitching.
-
-  1. Create a stitching workspace. The paths mentioned below are all relative
-     to it.
+  1. Create a stitching workspace directory. The paths mentioned below are all
+     relative to it.
 
   2. Extract required tools and ingredients to stitching workspace.
      - FIT tool
-       Copy 'fit.exe' or 'fit' and 'vsccommn.bin' to 'CSE/FIT' folder
-       Copy 'cse_image.bin' to 'CSE/Silicon/cse_image.bin'
+       Copy 'fit.exe' or 'fit' and 'vsccommn.bin' to 'Fit' folder
+     - BPMGEN2 Tool
+       Copy the contents of the tool to Bpmgen2 folder
+       Rename the bpmgen2 parameter to bpmgen2.params if its name is not this name.
+      - Components
+       Copy 'cse_image.bin'     to 'Input/cse_image.bin'
+       Copy PMC firmware image  to 'Input/pmc.bin'.
+       Copy EC firmware image   to 'Input/ec.bin'.
+       copy ECregionpointer.bin to 'Input/ecregionpointer.bin'
+       Copy GBE binary image    to 'Input/gbe.bin'.
+       Copy ACM firmware image  to 'Input/acm.bin'.
 
-     - PMC firmware
-       Copy PMC firmware image to 'PMC/pmc.bin'.
-
-     - EC firmware
-       Copy EC firmware image to 'EC/ec.bin'.
-       copy ECregionpointer.bin to 'EC/ecregionpointer.bin'
-
-     - GBE Binary
-       Copy GBE binary image to 'GBE/gbe.bin'.
-
-     - ACM firmware
-       Copy ACM firmware image to 'ACM/acm.bin'.
-
-     - BPMGEN2 - Tool to create boot policy manifest
-       Copy the contents of the tool to bpmgen2 folder
-
-  3. Extract additional public released ingredients to stitching workspace.
-     - Openssl
-       For Windows environment, please download required OpenSSL tool.
-       For example, it can be downloaded from:
-       https://sourceforge.net/projects/openssl
-       Once downloaded, please extract the executable openssl.exe and configuration file
-       openssl.cnf into 'Openssl' folder in stitching workspace.
-       For Linux environment, please install openssl package directly.
+  3. Openssl
+       Openssl is required for stitch. the stitch tool will search evn OPENSSL_PATH,
+       to find Openssl. If evn OPENSSL_PATH is not found, will find openssl from
+       "C:\\Openssl\\Openssl"
 
   4. Stitch the final image
-     Run this script from Slim Bootloader root directory:
-     EX:
+       EX:
        Assuming stitching workspace is at D:\Stitch and building ifwi for WHL platform
-       To stitch IFWI with SPI QUAD mode and Boot Guard profile VM:
-         python  Platform\CoffeelakeBoardPkg\Script\StitchIfwi.py -b vm -q -a whl -w D:\Stitch -s Stitch_Components.zip -t ptt
-       To clean all generated files:
-         python  Platform\CoffeelakeBoardPkg\Script\StitchIfwi.py -c -w D:\Stitch
+       To stitch IFWI with Boot Guard profile VM:
+         StitchIfwi.py -b vm -p whl -w D:\Stitch -s Stitch_Components.zip -c StitchIfwiConfig.py
 
 """
-def get_config ():
-    # This dictionary defines path for stitching components
-    cfg_var = {
-      'wkspace'   :   'output',
-      'fitinput'  :   'Output/input',
-      'ifwiname'  :   'SBL_IFWI',
-      'fit'       :   'CSE/FIT/fit%s' %     ('.exe' if os.name == 'nt' else ''),
-      'vsccommn'  :   'CSE/FIT/vsccommn.bin',
-      'openssl'   :   'Openssl/openssl.exe' if os.name == 'nt' else '/usr/bin/openssl',
-      'cseimg'    :   'CSE/Silicon/cse_image.bin',
-      'acm'       :   'ACM/acm.bin',
-      'pmc'       :   'PMC/pmc.bin',
-      'ec'        :   'EC/ec.bin',
-      'ecptr'     :   'EC/ecregionpointer.bin',
-      'gbe'       :   'GBE/gbe.bin',
-      'bpm'       :   'bpmgen2',
-      'bpm_params':   'bpmgen2/Example.bpDef',
-    }
-    return cfg_var
 
-def get_bpmgen2_params_change_list ():
-    params_change_list = []
-    params_change_list.append ([
-      # variable                | value |
-      # ===================================
-      ('PlatformRules',         'CFL Client'),
-      ('BpmStrutVersion',       '0x10'),
-      ('BpmRevision',           '0x01'),
-      ('BpmRevocation',         '1'),
-      ('AcmRevocation',         '2'),
-      ('NEMPages',              '3'),
-      ('IbbFlags',              '0x2'),
-      ('TxtInclude',            'FALSE'),
-      ('BpmSigScheme',          '0x14:RSASSA'),
-      ('BpmSigPubKey',          'keys\pubkey.pem'),
-      ('BpmSigPrivKey',         'keys\privkey.pem'),
-      ])
-    return params_change_list
-
-def get_xml_change_list (platform, spi_quad):
-    # Disable Quad Io and Out read enable
-    if spi_quad:
-        value = 'Yes'
-    else:
-        value = 'No'
-    xml_change_list = []
-    xml_change_list.append ([
-      # Path                                                                            | value |
-      # =========================================================================================
-      #Region Order
-      ('./BuildSettings/BuildResults/RegionOrder',                                        '45321'),
-      ('./FlashLayout/BiosRegion/InputFile',                                              '$SourceDir\Slimbootloader.bin'),
-      ('./FlashLayout/Ifwi_IntelMePmcRegion/MeRegionFile',                                '$SourceDir\cse_image.bin'),
-      ('./FlashLayout/Ifwi_IntelMePmcRegion/PmcBinary',                                   '$SourceDir\pmc.bin'),
-      ('./FlashLayout/EcRegion/InputFile',                                                '$SourceDir\ec.bin'),
-      ('./FlashLayout/EcRegion/Enabled',                                                  'Enabled'),
-      ('./FlashLayout/EcRegion/EcRegionPointer',                                          '$SourceDir\ecregionpointer.bin'),
-      ('./FlashLayout/GbeRegion/Enabled',                                                 'Enabled'),
-      ('./FlashLayout/GbeRegion/InputFile',                                               '$SourceDir\gbe.bin'),
-      ('./FlashSettings/FlashConfiguration/QuadIoReadEnable',                             value),
-      ('./FlashSettings/FlashConfiguration/QuadOutReadEnable',                            value),
-      #VsccTable
-      ('./FlashSettings/VsccTable/VsccEntries/VsccEntry/VsccEntryName',                   'W25Q256FV'),
-      ('./FlashSettings/VsccTable/VsccEntries/VsccEntry/VsccEntryVendorId',               '0xEF'),
-      ('./FlashSettings/VsccTable/VsccEntries/VsccEntry/VsccEntryDeviceId0',              '0x40'),
-      ('./FlashSettings/VsccTable/VsccEntries/VsccEntry/VsccEntryDeviceId1',              '0x19'),
-      #PttConfiguration
-      ('./PlatformProtection/IntelPttConfiguration/PttSupported',                         'No'),
-      ('./PlatformProtection/IntelPttConfiguration/PttPwrUpState',                        'Disabled'),
-      #BootGuardConfiguration
-      ('./PlatformProtection/BiosGuardConfiguration/BiosGrdProtOvrdEn',                   'No'),
-      #ICC
-      ('./Icc/IccPolicies/Profiles/Profile/ClockOutputConfiguration/ClkoutCpunsscPnPath', 'Direct XTAL IN / Out Path'),
-      #Networking
-      ('./NetworkingConnectivity/WiredLanConfiguration/PhyConnected',                     'PHY on SMLink0'),
-      #ISH
-      ('./IntegratedSensorHub/IshSupported',                                              'No'),
-      ])
-
-    if platform == 'whl':
-        xml_change_list.append ([
-            ('./PlatformProtection/IntelPttConfiguration/PttSupportedFpf',                'No'),
-            #IntelMekernel
-            ('./IntelMeKernel/Processor/ProcEmulation',                                   'EMULATE Intel (R) vPro (TM) capable Processor'),
-            #StrapsDifferences
-            #CPU Straps
-            ('./CpuStraps/IaPowerPlaneTopology',                                          '0x00000000'),
-            ('./CpuStraps/RingPowerPlaneTopology',                                        '0x00000000'),
-            ('./CpuStraps/GtUsPowerPlaneTopology',                                        '0x00000001'),
-            ('./CpuStraps/GtSPowerPlaneTopology',                                         '0x00000001'),
-            ('./StrapsDifferences/PCH_Strap_SPI_touch2_max_freq_Diff',                    '0x03'),
-            ('./StrapsDifferences/PCH_Strap_PN0_RPCFG_0_Diff',                            '0x03'),
-            ('./StrapsDifferences/PCH_Strap_PN1_RPCFG_0_Diff',                            '0x03'),
-            ('./StrapsDifferences/PCH_Strap_PN2_RPCFG_0_Diff',                            '0x00'),
-            ('./StrapsDifferences/PCH_Strap_PN3_RPCFG_0_Diff',                            '0x03'),
-            ('./StrapsDifferences/PCH_Strap_EXI_PTSS_PORT3_Diff',                         '0x01'),
-            ('./StrapsDifferences/PCH_Strap_EXI_PTSS_PORT1_Diff',                         '0x01'),
-            ('./StrapsDifferences/PCH_Strap_GBE_SMLink1_Frequency_Diff',                  '0x00'),
-            ('./StrapsDifferences/PCH_Strap_GBE_Reserved3_Diff',                          '0x0F'),
-            ('./StrapsDifferences/CPU_Strap_SEPARATE_VCCAGSH_EXISTS_Diff',                '0x00'),
-            #FlexIO
-            ('./FlexIO/PciePortConfiguration/PCIeContoller2Config',                       '1x4'),
-            ('./FlexIO/SataPcieComboPortConfiguration/SataPCIeComboPort0',                'PCIe'),
-            ('./FlexIO/SataPcieComboPortConfiguration/SataPCIeComboPort2',                'PCIe'),
-            ('./FlexIO/Usb3PortConfiguration/USB3Prt2ConTypeSel',                         'Type A'),
-            ('./FlexIO/Usb3PortConfiguration/USB3Prt3ConTypeSel',                         'Type A'),
-            ('./FlexIO/Usb2PortConfiguration/USB2Prt2ConTypeSel',                         'Type C'),
-            ('./FlexIO/Usb2PortConfiguration/USB2Prt3ConTypeSel',                         'Type A'),
-            ('./FlexIO/Usb2PortConfiguration/USB2Prt5ConTypeSel',                         'Type A'),
-            #GPIO
-            ('./Gpio/GpioVccioVoltageControl/GppA7voltSelect',                            '3.3Volts'),
-            ('./Gpio/GpioVccioVoltageControl/GppA8voltSelect',                            '3.3Volts'),
-            ('./Gpio/GpioVccioVoltageControl/GppA16voltSelect',                           '3.3Volts'),
-            ('./Gpio/GpioVccioVoltageControl/GppA21voltSelect',                           '3.3Volts'),
-            ('./Gpio/GpioVccioVoltageControl/GppC11voltSelect',                           '3.3Volts'),
-            ('./Gpio/GpioVccioVoltageControl/GppD9voltSelect',                            '1.8Volts'),
-            ('./Gpio/GpioVccioVoltageControl/GppH12voltSelect',                           '3.3Volts'),
-            ('./Gpio/GpioVccioVoltageControl/GppH14voltSelect',                           '3.3Volts'),
-            ('./Gpio/GpioVccioVoltageControl/GppH16voltSelect',                           '1.8Volts'),
-            ('./Gpio/GpioVccioVoltageControl/GppH17voltSelect',                           '1.8Volts'),
-            ('./Gpio/GpioVccioVoltageControl/GppH20voltSelect',                           '3.3Volts'),
-            ('./Gpio/GpioVccioVoltageControl/GppH22voltSelect',                           '3.3Volts'),
-            #SMBUS
-            ('./InternalPchBuses/SmbusSmlinkConfiguration/SLink1freq',                    '1 MHz'),
-            ])
-
-    if platform == 'cflh':
-        xml_change_list.append ([
-            #Networking
-            ('./NetworkingConnectivity/WiredLanConfiguration/GbePCIePortSelect',          'Port 5'),
-            ('./InternalPchBuses/DmiConfiguration/DmiLaneReversal',                       'No'),
-            ('./Debug/DirectConnectInterfaceConfiguration/Usb9DciBssbEnable',             'Yes'),
-            ('./CpuStraps/SaVrType',                                                      'SVID'),
-            ('./CpuStraps/VccinSvidAddrs',                                                '0x0'),
-            ('./CpuStraps/VccinVrType',                                                   'SVID'),
-            ('./StrapsDifferences/PCH_Strap_PN1_RPCFG_2_Diff',                            '0x2'),
-            ('./StrapsDifferences/PCH_Strap_PN2_RPCFG_2_Diff',                            '0x2'),
-            ('./FlexIO/IntelRstForPcieConfiguration/RstPCIeController3',                  '2x2'),
-            ('./FlexIO/PcieLaneReversalConfiguration/PCIeCtrl3LnReversal',                'Yes'),
-            ('./FlexIO/PciePortConfiguration/PCIeContoller2Config',                       '4x1'),
-            ('./FlexIO/PciePortConfiguration/PCIeContoller5Config',                       '4x1'),
-            ('./FlexIO/SataPcieComboPortConfiguration/SataPCIeComboPort1',                'GPIO Polarity PCIe'),
-            ('./FlexIO/SataPcieComboPortConfiguration/SataPCIeComboPort2',                'Disabled'),
-            ('./FlexIO/SataPcieComboPortConfiguration/SataPCIeComboPort3',                'Disabled'),
-            ('./FlexIO/SataPcieComboPortConfiguration/SataPCIeComboPort6',                'SATA'),
-            ('./FlexIO/SataPcieComboPortConfiguration/SataPCIeComboPort7',                'SATA'),
-            ('./FlexIO/SataPcieComboPortConfiguration/SataPCIeComboPort8',                'SATA'),
-            ('./FlexIO/SataPcieComboPortConfiguration/SataPCIeComboPort9',                'SATA'),
-            ('./FlexIO/Usb3PortConfiguration/USB3PCIeComboPort2',                         'USB3'),
-            ('./FlexIO/Usb3PortConfiguration/USB3Prt9ConTypeSel',                         'Type A'),
-            ('./FlexIO/Usb2PortConfiguration/USB2Prt9ConTypeSel',                         'Type A'),
-            ('./FlexIO/Usb2PortConfiguration/USB2Prt14ConTypeSel',                        'Express Card / M.2 S2'),
-            ('./Gpio/MeFeaturePins/TouchResetGpio',                                       'GPP_B_14'),
-            ('./Gpio/MeFeaturePins/TouchIntGpio',                                         'GPP_D_15'),
-            ('./Gpio/GpioVccioVoltageControl/Clkout48ModeConfig',                         'GPP_A16'),
-            ])
-
-    if platform == 'cfls':
-        xml_change_list.append ([
-            #IntelMekernel
-            ('./IntelMeKernel/Processor/ProcEmulation',                                   'EMULATE Intel (R) vPro (TM) capable Processor'),
-            ])
-
-    return xml_change_list
-
-def run_cmd (cmd, cwd):
-    sys.stdout.flush()
-    try:
-        cmd_args = shlex.split(cmd)
-        if os.name == 'nt':
-            shell = True
-            if cmd_args[0].startswith('./'):
-                cmd_args[0] = cmd_args[0][2:]
-        else:
-            shell = False
-        proc = subprocess.Popen(cmd_args, shell = shell, cwd=cwd)
-        out, err = proc.communicate()
-        ret = proc.returncode
-    except Exception as e:
-        out, err = '', e
-        ret = 1
-    if ret:
-        sys.stdout.flush()
-        print('%s\n%s' % (out, err))
-        print("Failed to run command:\n  PATH: %s\n   CMD: %s" % (cwd, ' '.join(cmd_args)))
-        sys.exit(1)
-
-def gen_bpmgen2_params (InFile, OutFile):
-    InFileptr = open(InFile, 'rb')
+def gen_bpmgen2_params (stitch_cfg_file, InFile, OutFile):
+    InFileptr = open(InFile, 'r')
     lines = InFileptr.readlines()
     InFileptr.close()
 
-    params_change_list = get_bpmgen2_params_change_list()
+    params_change_list = stitch_cfg_file.get_bpmgen2_params_change_list()
 
     for item in params_change_list:
         for variable, value in item:
@@ -286,7 +83,7 @@ def gen_bpmgen2_params (InFile, OutFile):
     if OutFile == '':
         OutFile = Infile
 
-    Outfileptr = open(OutFile, 'wb')
+    Outfileptr = open(OutFile, 'w')
     Outfileptr.write("".join(lines))
     Outfileptr.close()
 
@@ -315,58 +112,78 @@ def swap_ts_block(in_file, out_file, ts_size):
     out_file_ptr.write(block_data)
     out_file_ptr.close()
 
-def sign_binary(infile, stitch_dir, cfg_var):
-    cfg_var      = get_config ()
-    openssl_path = (stitch_dir.replace('\\', '/') + '/' if os.name == 'nt' else '') + cfg_var['openssl']
+def sign_binary(infile, stitch_dir, stitch_cfg_file):
+    openssl_path = get_openssl_path()
 
-    output_dir = os.path.join(stitch_dir,"Output", "input")
+    output_dir = os.path.join(stitch_dir, "Temp")
     shutil.copy(infile, os.path.join(output_dir,"sbl_sec_temp.bin"))
 
     print("Generating new keys....")
 
-    bpm_gen2dir = stitch_dir + '/' + 'bpmgen2'
-    if not os.path.exists(os.path.join(stitch_dir,"bpmgen2", "keys")):
-        os.mkdir(os.path.join(bpm_gen2dir, "keys"))
+    bpm_gen2dir = os.path.join (stitch_dir, 'bpmgen2')
+    bpm_key_dir = os.path.join (bpm_gen2dir, 'keys')
+    if not os.path.exists(bpm_key_dir):
+        os.mkdir(bpm_key_dir)
 
-        cmd = '%s genrsa -F4 -out keys/keyprivkey.pem 2048' % openssl_path
-        run_cmd (cmd, bpm_gen2dir)
+        cmd = '%s genrsa -F4 -out %s/keyprivkey.pem 2048' % (openssl_path, bpm_key_dir)
+        run_process (cmd.split())
 
-        cmd = '%s rsa -pubout -in keys/keyprivkey.pem -out keys/keypubkey.pem' % openssl_path
-        run_cmd (cmd, bpm_gen2dir)
+        cmd = '%s rsa -pubout -in %s/keyprivkey.pem -out %s/keypubkey.pem' % (openssl_path, bpm_key_dir, bpm_key_dir)
+        run_process (cmd.split())
 
-        cmd = '%s genrsa -F4 -out keys/privkey.pem 2048' % openssl_path
-        run_cmd (cmd, bpm_gen2dir)
+        cmd = '%s genrsa -F4 -out %s/privkey.pem 2048' % (openssl_path, bpm_key_dir)
+        run_process (cmd.split())
 
-        cmd = '%s rsa -pubout -in keys/privkey.pem -out keys/pubkey.pem' % openssl_path
-        run_cmd (cmd, bpm_gen2dir)
+        cmd = '%s rsa -pubout -in %s/privkey.pem -out %s/pubkey.pem' % (openssl_path, bpm_key_dir, bpm_key_dir)
+        run_process (cmd.split())
 
-    print "Generating BPM GEN2 params file"
-    gen_bpmgen2_params(os.path.join(bpm_gen2dir, "Example.bpDef"), os.path.join(bpm_gen2dir, "bpmgen2.params"))
+    print ("Generating BPM GEN2 params file")
+    gen_bpmgen2_params(stitch_cfg_file, os.path.join(bpm_gen2dir, "Example.bpDef"), os.path.join(output_dir, "bpmgen2.params"))
 
-    print("Generating KeyManifest.bin....")
-    cmd = './bpmgen2 KM1GEN -KEY keys/pubkey.pem BPM -KM ../output/input/KeyManifest.bin -SIGNKEY keys/keyprivkey.pem -SIGNPUBKEY keys/keypubkey.pem -KMID 0x01 -SVN 0 -d:2 > ../output/input/bpmgen2_km.txt'
-    run_cmd (cmd, bpm_gen2dir)
+    print("Generating Btg KeyManifest.bin....")
+    run_process ([os.path.join (bpm_gen2dir, 'bpmgen2'),
+        'KM1GEN',
+        '-KEY',        os.path.join (bpm_key_dir, 'pubkey.pem'), 'BPM',
+        '-KM',         os.path.join (output_dir,  'KeyManifest.bin'),
+        '-SIGNKEY',    os.path.join (bpm_key_dir, 'keyprivkey.pem'),
+        '-SIGNPUBKEY', os.path.join (bpm_key_dir, 'keypubkey.pem'),
+        '-KMID',       '0x01',
+        '-SVN',        '0',
+        '-d:2'])
 
-    print("Generating Manifest.bin....")
-    cmd = './bpmgen2 GEN ../output/input/sbl_sec_temp.bin bpmgen2.params -BPM ../output/input/Manifest.bin -U ../output/input/sbl_sec.bin -KM ../output/input/KeyManifest.bin -d:2 > ../output/input/bpmgen2_bpm.txt'
-    run_cmd (cmd, bpm_gen2dir)
+    print("Generating Btg Boot Policy Manifest (BPM).bin....")
+    run_process ([os.path.join (bpm_gen2dir, 'bpmgen2'),
+        'GEN',
+        os.path.join (output_dir, 'sbl_sec_temp.bin'),
+        os.path.join (output_dir, 'bpmgen2.params'),
+        '-BPM',        os.path.join (output_dir, 'Manifest.bin'),
+        '-U',          os.path.join (output_dir, 'sbl_sec.bin'),
+        '-KM',         os.path.join (output_dir, 'KeyManifest.bin'),
+        '-d:2'])
 
-    print("Calculate public key hash....")
-    print("Extract Public key")
-    cmd = '%s rsa -in %s -pubin -modulus > pubkey.txt' % (openssl_path, '../../bpmgen2/keys/keypubkey.pem')
-    run_cmd (cmd, output_dir)
+def gen_oem_key_hash(stitch_dir):
 
-    line=open('output/input/pubkey'+'.txt','r').readline()[8:8+256*2]
+    output_dir = os.path.join(stitch_dir, "Temp")
+    kmsigpubkeytxtfile  = os.path.join(output_dir, "kmsigpubkey.txt")
+    kmsigpubkeybinfile  = os.path.join(output_dir, "kmsigpubkey.bin")
+
+    with open(kmsigpubkeytxtfile, "w") as kmsigpubkeytxt_fh:
+        run_process ([get_openssl_path(), 'rsa' , '-in', 'bpmgen2/keys/keypubkey.pem',
+            '-pubin', '-modulus', '-out', 'Temp/kmsigpubkeytxt_fh'])
+    shutil.copy(os.path.join(output_dir, "kmsigpubkeytxt_fh"), kmsigpubkeytxtfile)
+
+    line=open(kmsigpubkeytxtfile,"r").readline()[8:8+256*2]
     if sys.hexversion >= 0x3000000:
         keybin = bytearray.fromhex(line)
     else:
         keybin = line.decode('hex')
-    open('output/input/pubkey'+'.bin','wb').write(keybin[::-1])
-    cmd = '%s dgst -sha256 -binary -out pubkey.hash pubkey.bin' % openssl_path
-    run_cmd (cmd, output_dir)
-    print("printing hash")
-    hash = bytearray(open('output/input/pubkey'+'.hash','rb').read())
-    print(''.join('%02X ' % b for b in hash))
+    open(kmsigpubkeybinfile,"wb").write(keybin[::-1])
+
+    # public exponent (i.e. 65537) is concatenated for OEM key hash calculation.
+    line=open(kmsigpubkeytxtfile,"r").readline()[8:8+256*2]
+    open(kmsigpubkeybinfile,"ab").write(bytearray.fromhex('01000100'))
+    run_process ([get_openssl_path(), 'dgst', '-sha256', '-binary',
+        '-out', 'Temp/kmsigpubkey.hash', 'Temp/kmsigpubkey.bin'])
 
 def update_tpm_type(tpm_type, tree):
 
@@ -404,33 +221,19 @@ def update_tpm_type(tpm_type, tree):
 
   print("[INFO] TPM device type enabled for Measured Boot: %s" % tpm_type)
 
-def update_ifwi_xml(btguardprofile, stitch_dir, cfg_var, tree):
-    cfg_var      = get_config ()
-    openssl_path = (stitch_dir.replace('\\', '/') + '/' if os.name == 'nt' else '') + cfg_var['openssl']
-
-    output_dir = os.path.join(stitch_dir,"Output", "input")
-    kmsigpubkeytxtfile  = os.path.join(output_dir, "kmsigpubkey.txt")
-    kmsigpubkeybinfile  = os.path.join(output_dir, "kmsigpubkey.bin")
+def update_btGuard_xml(btg_profile, stitch_dir, tree):
+    output_dir = os.path.join(stitch_dir, "Temp")
     kmsigpubkeyhashfile = os.path.join(output_dir, "kmsigpubkey.hash")
 
-    with open(kmsigpubkeytxtfile, "w") as kmsigpubkeytxt_fh:
-        cmd = '%s rsa -in ../../bpmgen2/keys/keypubkey.pem -pubin -modulus > kmsigpubkeytxt_fh'  % openssl_path
-        run_cmd (cmd, output_dir)
-
-    shutil.copy(os.path.join(output_dir, "kmsigpubkeytxt_fh"), kmsigpubkeytxtfile)
-
-    line=open(kmsigpubkeytxtfile,"r").readline()[8:8+256*2]
-    if sys.hexversion >= 0x3000000:
-        keybin = bytearray.fromhex(line)
+    if btg_profile == 'vm':
+        btguardprofile = 3
+    elif btg_profile == 'fve':
+        btguardprofile = 4
+    elif btg_profile == 'fvme':
+        btguardprofile = 5
     else:
-        keybin = line.decode('hex')
-    open(kmsigpubkeybinfile,"wb").write(keybin[::-1])
-
-    # In, CFL and  future platforms, public exponent (i.e. 65537) is concatenated for OEM key hash calculation.
-    line=open(kmsigpubkeytxtfile,"r").readline()[8:8+256*2]
-    open(kmsigpubkeybinfile,"ab").write(bytearray.fromhex('01000100'))
-    cmd = '%s dgst -sha256 -binary -out Output/input/kmsigpubkey.hash Output/input/kmsigpubkey.bin' % openssl_path
-    run_cmd (cmd, stitch_dir)
+       print ("Boot Guard is NOT enabled.....")
+       btguardprofile = 0
 
     # Convert OEM key hash into hexadecimal for Fit tool consumption
     with open(kmsigpubkeyhashfile,"rb") as kmsigpubkeyhash_fh:
@@ -438,6 +241,7 @@ def update_ifwi_xml(btguardprofile, stitch_dir, cfg_var, tree):
         oemkeyhash = ""
         for b in hash:
             oemkeyhash = oemkeyhash + "%02X " % b
+    print("oemkeyhash:")
     print(oemkeyhash)
 
     node = tree.find('./PlatformProtection/BootGuardConfiguration/BtGuardKeyManifestId')
@@ -449,111 +253,164 @@ def update_ifwi_xml(btguardprofile, stitch_dir, cfg_var, tree):
     node = tree.find('./PlatformProtection/BootGuardConfiguration/BtGuardProfileConfig')
     node.attrib['value'] = btg_profile_values[btguardprofile]
 
-def update_btGuard_manifests(stitch_dir, cfg_var):
+def update_btGuard_manifests(stitch_dir, stitch_cfg_file):
     print("Sigining Coffeelake....")
 
-    output_dir = os.path.join(stitch_dir,"Output", "input")
-
-    print("Patch ACM binary in both partitions....")
+    output_dir = os.path.join(stitch_dir, "Temp")
     sbl_file = os.path.join (output_dir, 'SlimBootloader.bin')
+
+    print("Replace components in both partitions....")
+    replace_components (sbl_file, stitch_cfg_file)
+
+    # get topswap size
     sbl_bin  = bytearray (get_file_data (sbl_file))
-    acm_bin  = bytearray (get_file_data (os.path.join (stitch_dir, 'Output/input/acm.bin')))
-    ifwi = IFWI_PARSER.parse_ifwi_binary (sbl_bin)
-    for x in range (2):
-      ret  = IFWI_PARSER.replace_component (sbl_bin, acm_bin, 'IFWI/BIOS/TS%d/ACM0' % x)
-      if ret:
-          raise Exception("Failed to inject ACM binary !")
-    gen_file_from_object (sbl_file, sbl_bin)
+    ifwi     = IFWI_PARSER.parse_ifwi_binary (sbl_bin)
+    ifwi_comps = IFWI_PARSER.locate_components (ifwi, 'IFWI/BIOS/TS0')
+    if len(ifwi_comps) == 0:
+        raise Exception("Cannot find path 'IFWI/BIOS/TS0' in ifwi image!")
+    for ifwi_comp in ifwi_comps:
+        top_swap_size = ifwi_comp.length
 
     print("Sign primary partition....")
-    sign_binary(os.path.join(output_dir,"SlimBootloader.bin"), stitch_dir, cfg_var)
+    sign_binary(os.path.join(output_dir,"SlimBootloader.bin"), stitch_dir, stitch_cfg_file)
 
     print("Swap top swap block....")
-    swap_ts_block(os.path.join(output_dir, "sbl_sec.bin"), os.path.join(output_dir, "SwappedA.bin"), 0x20000)
+    swap_ts_block(os.path.join(output_dir, "sbl_sec.bin"), os.path.join(output_dir, "SwappedA.bin"), top_swap_size)
 
     print("Sign backup partition....")
-    sign_binary(os.path.join(output_dir,"SwappedA.bin"), stitch_dir, cfg_var)
+    sign_binary(os.path.join(output_dir,"SwappedA.bin"), stitch_dir, stitch_cfg_file)
     os.remove(os.path.join(output_dir,"SwappedA.bin"))
 
     print("Swap to original top swap block....")
-    swap_ts_block(os.path.join(output_dir, "sbl_sec.bin"), os.path.join(output_dir, "SwappedA.bin"), 0x20000)
+    swap_ts_block(os.path.join(output_dir, "sbl_sec.bin"), os.path.join(output_dir, "SwappedA.bin"), top_swap_size)
     shutil.copy(os.path.join(output_dir, "SwappedA.bin"), os.path.join(output_dir, "SlimBootloader.bin"))
+    shutil.copy(os.path.join(output_dir, "SlimBootloader.bin"), os.path.join(output_dir, "BiosRegion.bin"))
     os.remove(os.path.join(output_dir,"SwappedA.bin"))
 
-def gen_xml_file(stitch_dir, cfg_var, btg_profile, spi_quad, platform, tpm):
+    # Generate OemKeyHash
+    gen_oem_key_hash(stitch_dir)
+
+def gen_xml_file(stitch_dir, stitch_cfg_file, btg_profile, platform, tpm):
 
     print ("Generating xml file .........")
 
-    if platform == 'whl':
-        cmd = './fit -sku "CNP-LP Base U" -save new.xml'
-    elif platform == 'cfls':
-        cmd = './fit -sku Q370 -save new.xml'
-    elif platform == 'cflh':
-        cmd = './fit -sku QM370 -save new.xml'
-    run_cmd (cmd, os.path.join(stitch_dir, cfg_var['fitinput']))
+    fit_tool     = os.path.join (stitch_dir, 'Fit', 'fit')
+    new_xml_file = os.path.join (stitch_dir, 'Temp', 'new.xml')
+    updated_xml_file = os.path.join (stitch_dir, 'Temp', 'updated.xml')
+    sku = stitch_cfg_file.get_platform_sku().get(platform)
+    cmd = [fit_tool, '-sku', sku, '-save', new_xml_file, '-w', os.path.join (stitch_dir, 'Temp')]
+    run_process (cmd)
 
-    tree = ET.parse(os.path.join(stitch_dir, cfg_var['fitinput'], 'new.xml'))
+    tree = ET.parse(new_xml_file)
 
-    xml_change_list = get_xml_change_list (platform, spi_quad)
+    xml_change_list = stitch_cfg_file.get_xml_change_list (platform)
     for each in xml_change_list:
         for xml_path, value in each:
             node = tree.find('%s' % xml_path)
-            node.attrib['value'] = value
+            node.set('value', value)
+            print (value)
 
-    if (btg_profile == 'vm') or (btg_profile == 'fve') or (btg_profile == 'fvme'):
-        print ("Boot Guard is enabled.....")
-        update_btGuard_manifests(stitch_dir, cfg_var)
-        if btg_profile == 'vm':
-            update_ifwi_xml(3, stitch_dir, cfg_var, tree)
-        if btg_profile == 'fve':
-            update_ifwi_xml(4, stitch_dir, cfg_var, tree)
-        if btg_profile == 'fvme':
-            update_ifwi_xml(5, stitch_dir, cfg_var, tree)
-
+    update_btGuard_manifests(stitch_dir, stitch_cfg_file)
+    update_btGuard_xml(btg_profile, stitch_dir, tree)
     update_tpm_type(tpm, tree)
+    tree.write(updated_xml_file)
 
-    tree.write(os.path.join(stitch_dir, cfg_var['fitinput'], 'Platform.xml'))
+def replace_component (ifwi_src_path, flash_path, file_path, comp_alg, pri_key):
+    print ("Replacing components.......")
+    work_dir = os.getcwd()
+    ifwi_bin = bytearray (get_file_data (ifwi_src_path))
+    ifwi = IFWI_PARSER.parse_ifwi_binary (ifwi_bin)
 
-def stitch (stitch_dir, stitch_zip, btg_profile, spi_quad_mode, platform_data, platform, tpm, full_rdundant = True):
+    # assume a flash map path first
+    comp_name     = ''
+    replace_comps = IFWI_PARSER.locate_components (ifwi, flash_path)
+    if len(replace_comps) == 0:
+        # assume a container path if not in flash map
+        nodes      = flash_path.split('/')
+        comp_name  = nodes[-1]
+        flash_path = '/'.join(nodes[:-1])
+        replace_comps = IFWI_PARSER.locate_components (ifwi, flash_path)
 
-    cfg_var    = get_config ()
+    if len(replace_comps) == 0:
+        raise Exception ("Could not locate component '%s' !" % flash_path)
 
-    print ("\nUnpack files from stitching zip file ...")
-    if not os.path.isabs(stitch_zip):
-        stitch_zip = os.path.join(os.getcwd(), stitch_zip)
+    if len(replace_comps) > 1:
+        raise Exception ("Multiple components were located for '%s' !" % flash_path)
 
-    zf = zipfile.ZipFile(stitch_zip, 'r', zipfile.ZIP_DEFLATED)
-    zf.extractall(os.path.join(stitch_dir, cfg_var['fitinput']))
-    zf.close()
+    replace_comp = replace_comps[0]
+    if comp_name:
+        # extract container image
+        container_file = os.path.join(work_dir, 'CTN_%s.bin') % comp_name
+        gen_file_from_object (container_file, ifwi_bin[replace_comp.offset:replace_comp.offset + replace_comp.length])
+        comp_file     = os.path.join(work_dir, file_path)
+        sblopen_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), '../../../../', 'SblOpen')
+        if not os.path.exists (sblopen_dir):
+            sblopen_dir = os.getenv('SBL_SOURCE', '')
 
-    os.chdir(stitch_dir)
+        if not os.path.exists (sblopen_dir):
+           raise  Exception("Please set env 'SBL_SOURCE' to SBL open source root folder")
+
+        if os.name == 'nt':
+            tool_bin_dir  = os.path.join(sblopen_dir, "BaseTools", "Bin", "Win32")
+        else:
+            tool_bin_dir  = os.path.join(sblopen_dir, "BaseTools", "BinWrappers", "PosixLike")
+        gen_container = os.path.join(sblopen_dir, "BootloaderCorePkg" , "Tools", "GenContainer.py")
+        if not os.path.isabs(pri_key):
+            pri_key = os.path.join (work_dir, pri_key)
+        cmd_line = [sys.executable, gen_container, 'replace', '-i', container_file, '-o', container_file, '-n', comp_name,
+                                    '-f', comp_file, '-c', comp_alg, '-k', pri_key, '-td', tool_bin_dir]
+        run_process (cmd_line, True)
+        comp_bin = bytearray (get_file_data (container_file))
+    else:
+        # replace directly in flash map
+        comp_bin = bytearray (get_file_data (file_path))
+    IFWI_PARSER.replace_component (ifwi_bin, comp_bin, flash_path)
+    gen_file_from_object (ifwi_src_path, ifwi_bin)
+
+def replace_components (ifwi_src_path, stitch_cfg_file):
+    print ("Replacing components.......")
+    replace_list = stitch_cfg_file.get_component_replace_list ()
+    for flash_path, file_path, comp_alg, pri_key in replace_list:
+        replace_component (ifwi_src_path, flash_path, file_path, comp_alg, pri_key)
+
+def stitch (stitch_dir, stitch_cfg_file, sbl_file, btg_profile, platform_data, platform, tpm, full_rdundant = True):
+
+    temp_dir = os.path.abspath(os.path.join (stitch_dir, 'Temp'))
+    if os.path.exists(temp_dir):
+        shutil.rmtree(temp_dir, ignore_errors=True)
+    shutil.copytree (os.path.join (stitch_dir, 'Input'), temp_dir)
+
+    # Get bios region image ready
+    sbl_image_ext = os.path.splitext(sbl_file)
+
+    if sbl_image_ext[1] != ".zip":
+        print ("\nCopy SBL image %s for stitch" % sbl_file)
+        shutil.copy(sbl_file, os.path.join(temp_dir, "SlimBootloader.bin"))
+    else:
+        print ("\nUnpack files from zip file ...")
+        zf = zipfile.ZipFile(sbl_file, 'r', zipfile.ZIP_DEFLATED)
+        zf.extractall(temp_dir)
+        zf.close()
 
     if platform_data:
-        fd = open(os.path.join(stitch_dir, cfg_var['fitinput'], "SlimBootloader.bin"), "rb")
+        fd = open(os.path.join(temp_dir, "SlimBootloader.bin"), "rb")
         input_data = bytearray(fd.read())
         fd.close()
         print ("\n Adding platform data to Slimbootloader ...")
         data = add_platform_data(input_data, platform_data)
-        fd = open(os.path.join(stitch_dir, cfg_var['fitinput'], "SlimBootloader.bin"), "wb")
+        fd = open(os.path.join(temp_dir, "SlimBootloader.bin"), "wb")
         fd.write(data)
         fd.close()
 
-    print ("\nChecking and copying components ...")
-    copy_list = ['cseimg', 'pmc', 'gbe', 'ec', 'ecptr', 'acm', 'fit', 'vsccommn']
-    for each in ['fit', 'openssl'] + copy_list:
-        if not os.path.exists(cfg_var[each]):
-             raise Exception ("Could not find file '%s' !" % cfg_var[each])
-
-    for each in copy_list:
-        shutil.copy (cfg_var[each], cfg_var['fitinput'])
-
-    gen_xml_file(stitch_dir, cfg_var, btg_profile, spi_quad_mode, platform, tpm)
+    gen_xml_file(stitch_dir, stitch_cfg_file, btg_profile, platform, tpm)
 
     print ("Run fit tool to generate ifwi.........")
-    cmd = './fit -b -o Ifwi.bin -f Platform.xml'
-    run_cmd (cmd, os.path.join(stitch_dir, cfg_var['fitinput']))
-
+    run_process (['./Fit/fit', '-b', '-o', 'Temp/Ifwi.bin', '-f', os.path.join (temp_dir, 'updated.xml'),
+        '-s', temp_dir, '-w', temp_dir, '-d', temp_dir])
     return 0
+#    cmd = './fit -b -o Ifwi.bin -f Platform.xml'
+#    run_cmd (cmd, os.path.join(stitch_dir, cfg_var['fitinput']))
+#    return 0
 
 def clean (stitch_dir, dist_mode):
     print ("Clean up workspace ...")
@@ -593,7 +450,7 @@ def main():
 
     ap.add_argument('-s',
                     '--stitch-zip-file',
-                    dest='stitch_zip',
+                    dest='sbl_file',
                     type=str,
                     default='Outputs/cfl/Stitch_Components.zip',
                     help='specify input stitching zip package file path')
@@ -640,40 +497,59 @@ def main():
                     choices=['ptt', 'dtpm', 'none'],
                     help='specify TPM type')
 
+    ap.add_argument('-cfg',
+                    dest='config_file',
+                    type=str, required=True,
+                    help='specify the platform specific stitch config file')
+
     args = ap.parse_args()
 
-    stitch_dir = args.stitch_dir
-    if not os.path.isabs(stitch_dir):
-        stitch_dir = os.path.join(os.getcwd(), stitch_dir)
+    stitch_cfg_file = imp.load_source('StitchIfwiConfig', args.config_file)
+    if args.stitch_dir == '':
+        print ("Please specify stitch work directory")
+        print ('%s' % stitch_cfg_file.extra_usage_txt)
+        return 0
 
-    print ("Clean all temporary files.....")
-    if clean (stitch_dir, args.clean):
-        raise Exception ('Stitching clean up failed !')
-
-    if args.clean:
-        print ("Cleaning completed successfully !\n")
+    sku_dict = stitch_cfg_file.get_platform_sku()
+    if len (sku_dict) == 1 and args.platform == '':
+        for sku in sku_dict:
+            args.platform =  sku
+            print ("No sku is given, set to default sku value %s" % sku)
+    if args.platform == '' or args.platform not in sku_dict:
+        print ("Invalid sku (%s), Please provide valid sku:" % args.platform)
+        for sku in sku_dict :
+            print (" %s - 'For %s'" % (sku, sku_dict[sku]))
         return 0
 
     if args.btg_profile in ["vm","fvme"] and args.tpm == "none":
-        print "ERROR: Choose appropriate Tpm type for BootGuard profile 3 and 5"
+        print ("ERROR: Choose appropriate Tpm type for BootGuard profile 3 and 5")
+        return 0
+
+    if args.clean:
+        shutil.rmtree(os.path.join(stitch_dir, 'Temp'), ignore_errors=True)
+        print ("Cleaning completed successfully !\n")
         return 0
 
     print ("Executing stitch.......")
-    if stitch (stitch_dir, args.stitch_zip, args.btg_profile, args.quad_mode, args.plat_data, args.platform, args.tpm):
+    curr_dir = os.getcwd()
+    sbl_file = os.path.abspath(os.path.join (curr_dir, args.sbl_file))
+
+    stitch_dir = os.path.abspath (args.stitch_dir)
+    os.chdir(stitch_dir)
+    if stitch (stitch_dir, stitch_cfg_file, sbl_file, args.btg_profile, args.plat_data, args.platform, args.tpm):
         raise Exception ('Stitching process failed !')
+    os.chdir(curr_dir)
 
-    cfg_var       = get_config ()
-    ifwi_file_name = '%s/%s/%s_%s.bin' % (stitch_dir, cfg_var['wkspace'], cfg_var['ifwiname'], args.platform)
-    ifwi_file_name = os.path.normpath (ifwi_file_name)
+    generated_ifwi_file = os.path.join(stitch_dir, 'Temp', 'Ifwi.bin')
 
-    shutil.copy (os.path.join(stitch_dir, cfg_var['fitinput'], 'Ifwi.bin'), ifwi_file_name)
+    ifwi_file_name = 'sbl_ifwi_%s.bin' % (args.platform)
+    shutil.copy(generated_ifwi_file, ifwi_file_name)
 
     print ("\nIFWI Stitching completed successfully !")
     print ("Boot Guard Profile: %s" % args.btg_profile.upper())
     print ("IFWI image: %s\n" % ifwi_file_name)
 
     return 0
-
 
 if __name__ == '__main__':
     sys.exit(main())
