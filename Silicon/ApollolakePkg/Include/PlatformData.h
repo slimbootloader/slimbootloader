@@ -8,7 +8,7 @@
 #ifndef __PLATFORM_DATA_H__
 #define __PLATFORM_DATA_H__
 
-#include <Library/BootGuardLib.h>
+#include <Library/BootGuardLib20.h>
 #include <Library/BootloaderCoreLib.h>
 #include <Library/VtdPmrLib.h>
 

@@ -11,7 +11,7 @@
 #include <Library/GpioLib.h>
 #include <Library/SerialPortLib.h>
 #include <Library/PlatformHookLib.h>
-#include <Library/BootGuardLib.h>
+#include <Library/BootGuardLib20.h>
 #include <Library/BootloaderCoreLib.h>
 #include <FsptUpd.h>
 #include <GpioDefines.h>
