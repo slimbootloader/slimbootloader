@@ -500,6 +500,9 @@ EndList
         Line = self.ExpandMacros(Line, True)
         for Idx in range(len(Vars)-1, 0, -1):
             Line = Line.replace('$(%d)' % Idx, Vars[Idx].strip())
+        Remaining = re.findall ('\$\(\d+\)', Line)
+        if len(Remaining) > 0:
+            raise Exception ("ERROR: Unknown argument '%s' for template '%s' !" % (Remaining[0], Vars[0]))
         return Line
 
     def CfgDuplicationCheck (self, CfgDict, Name):
