@@ -492,7 +492,7 @@ class Application(Frame):
             # Only scroll when it is in active area
             min, max = self.PageScroll.get()
             if not ((min == 0.0) and (max == 1.0)):
-                self.ConfCanvas.yview_scroll(-1 * (Event.delta / 120), 'units')
+                self.ConfCanvas.yview_scroll(-1 * int(Event.delta / 120), 'units')
 
     def UpdateVisibilityForWidget(self, Widget, Args):
 
