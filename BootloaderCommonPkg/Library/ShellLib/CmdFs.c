@@ -11,6 +11,7 @@
 #include <Library/PartitionLib.h>
 #include <Library/FileSystemLib.h>
 #include <Library/MediaAccessLib.h>
+#include <Library/ConsoleInLib.h>
 #include <Guid/OsBootOptionGuid.h>
 #include <Library/BootOptionLib.h>
 #include <Guid/DeviceTableHobGuid.h>
@@ -97,8 +98,15 @@ CmdFsClose (
   }
 
   if (mDeviceType != OsBootDeviceMax) {
+    // De-init the current media device
+    // If USB keyboard console is used, don't DeInit USB yet.
+    if (!((mDeviceType == OsBootDeviceUsb) &&
+        ((PcdGet32 (PcdConsoleInDeviceMask) & ConsoleInUsbKeyboard) != 0))) {
+      MediaInitialize (0, DevDeinit);
+    }
     mDeviceType = OsBootDeviceMax;
   }
+
   return EFI_SUCCESS;
 }
 
@@ -148,12 +156,12 @@ CmdFsInit (
 
   Status = MediaInitialize (BaseAddress, DevInitAll);
   ShellPrint (L"Media(%a) Init ", GetBootDeviceNameString (DeviceType));
+  mDeviceType = DeviceType;
   if (!EFI_ERROR (Status)) {
     ShellPrint (L"Success!\n");
-    mDeviceType = DeviceType;
   } else {
     ShellPrint (L"Fail!\n");
-    return EFI_ABORTED;
+    goto Error;
   }
 
   // Find a partition
