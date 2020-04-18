@@ -79,6 +79,7 @@
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
   gPlatformCommonLibTokenSpaceGuid.PcdMiniShellEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdConsoleInDeviceMask
 
 [Guids]
   gLoaderPerformanceInfoGuid
