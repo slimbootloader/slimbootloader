@@ -288,6 +288,7 @@ AuthenticateComponent (
   UINT8                    *SigPtr;
   UINT8                    *KeyPtr;
   SIGNATURE_HDR            *SignHdr;
+  UINT8                     HashAlg;
 
   if (!FeaturePcdGet (PcdVerifiedBootEnabled)) {
     Status = EFI_SUCCESS;
@@ -301,8 +302,15 @@ AuthenticateComponent (
       SigPtr   = (UINT8 *) AuthData;
       SignHdr  = (SIGNATURE_HDR *) SigPtr;
       KeyPtr   = (UINT8 *)SignHdr + sizeof(SIGNATURE_HDR) + SignHdr->SigSize ;
+
+      if (Usage == 0x0) {
+        HashAlg =  GetHashAlg(AuthType);
+      }  else {
+        HashAlg =  PcdGet8(PcdCompSignHashAlg);
+      }
+
       Status   = DoRsaVerify (Data, Length, Usage, SignHdr,
-                             (PUB_KEY_HDR *) KeyPtr, GetHashAlg(AuthType), HashData, NULL);
+                             (PUB_KEY_HDR *) KeyPtr, HashAlg, HashData, NULL);
     } else if (AuthType == AUTH_TYPE_NONE) {
       Status = EFI_SUCCESS;
     } else {
