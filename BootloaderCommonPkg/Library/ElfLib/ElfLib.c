@@ -6,62 +6,87 @@
 
 **/
 
-#include <Uefi/UefiBaseType.h>
-#include <Library/BaseLib.h>
-#include <Library/DebugLib.h>
-#include <Library/BaseMemoryLib.h>
-#include "ElfCommon.h"
-#include "Elf32.h"
+#include "ElfLibInternal.h"
 
 /**
-  Load a single segment from each program header
+  Check if the image has ELF Header
 
-  @param[in]  ImageBase           Memory address of an image.
-  @param[out] ProgramHdr          A specific program header to be loaded
+  @param[in]  ImageBase       Memory address of an image.
 
-  @retval EFI_INVALID_PARAMETER   Input parameters are not valid.
-  @retval EFI_LOAD_ERROR          ELF binary loading error.
-  @retval EFI_SUCCESS             ELF binary is loaded successfully.
+  @retval     TRUE if found ELF Header, otherwise FALSE
 
 **/
 STATIC
-EFI_STATUS
-LoadSegments32 (
-  IN  CONST VOID                  *ImageBase,
-  IN  CONST Elf32_Phdr            *ProgramHdr
+BOOLEAN
+IsElfHeader (
+  IN  CONST UINT8             *ImageBase
   )
 {
-  ASSERT (ImageBase != NULL);
-  ASSERT (ProgramHdr != NULL);
-  if (ImageBase == NULL || ProgramHdr == NULL) {
-    return EFI_INVALID_PARAMETER;
+  return ((ImageBase != NULL) &&
+          (ImageBase[EI_MAG0] == ELFMAG0) &&
+          (ImageBase[EI_MAG1] == ELFMAG1) &&
+          (ImageBase[EI_MAG2] == ELFMAG2) &&
+          (ImageBase[EI_MAG3] == ELFMAG3));
+}
+
+/**
+  Check if the image is 32-bit ELF Format
+
+  @param[in]  ImageBase       Memory address of an image.
+
+  @retval     TRUE if ELF32, otherwise FALSE
+
+**/
+STATIC
+BOOLEAN
+IsElfFormat (
+  IN  CONST UINT8             *ImageBase
+  )
+{
+  Elf_Ehdr                  *ElfHdr;
+
+  if (ImageBase == NULL) {
+    return FALSE;
   }
 
-  if (ProgramHdr->p_type != PT_LOAD) {
-    return EFI_SUCCESS;
+  ElfHdr = (Elf_Ehdr *)ImageBase;
+
+  //
+  // Check 32/64-bit architecture
+  //
+  if (ElfHdr->e_ident[EI_CLASS] != ELFCLASS) {
+    return FALSE;
   }
 
   //
-  // Skip 0 size segment. But, allow 0x0 address.
+  // Support little-endian only
   //
-  if (ProgramHdr->p_memsz == 0) {
-    return EFI_SUCCESS;
+  if (ElfHdr->e_ident[EI_DATA] != ELFDATA2LSB) {
+    return FALSE;
   }
 
-  if (ProgramHdr->p_filesz > ProgramHdr->p_memsz) {
-    return EFI_LOAD_ERROR;
+  //
+  // Support intel architecture only for now
+  //
+  if (ElfHdr->e_machine != ELF_EM) {
+    return FALSE;
   }
 
-  CopyMem ((VOID *)(UINTN)ProgramHdr->p_paddr,
-      (UINT8 *)ImageBase + ProgramHdr->p_offset,
-      ProgramHdr->p_filesz);
-
-  if (ProgramHdr->p_memsz > ProgramHdr->p_filesz) {
-    ZeroMem ((VOID *)((UINTN)ProgramHdr->p_paddr + ProgramHdr->p_filesz),
-      ProgramHdr->p_memsz - ProgramHdr->p_filesz);
+  //
+  //  Support ELF types: EXEC (Executable file), DYN (Shared object file)
+  //
+  if ((ElfHdr->e_type != ET_EXEC) && (ElfHdr->e_type != ET_DYN)) {
+    return FALSE;
   }
 
-  return EFI_SUCCESS;
+  //
+  // Support current ELF version only
+  //
+  if (ElfHdr->e_version != EV_CURRENT) {
+    return FALSE;
+  }
+
+  return TRUE;
 }
 
 /**
@@ -76,27 +101,46 @@ LoadSegments32 (
 **/
 STATIC
 EFI_STATUS
-LoadElf32 (
-  IN  CONST VOID             *ImageBase,
+LoadElfSegments (
+  IN  CONST UINT8            *ImageBase,
   OUT       VOID            **EntryPoint
   )
 {
-  EFI_STATUS    Status;
-  Elf32_Ehdr   *ElfHdr;
-  Elf32_Phdr   *ProgramHdr;
+  Elf_Ehdr   *ElfHdr;
+  Elf_Phdr   *ProgramHdr;
   UINT16        Index;
 
-  ElfHdr      = (Elf32_Ehdr *)ImageBase;
-  ProgramHdr  = (Elf32_Phdr *)((UINT8 *)ElfHdr + ElfHdr->e_phoff);
-  for (Index = 0; Index < ElfHdr->e_shnum; Index++) {
-    Status = LoadSegments32 (ImageBase, ProgramHdr);
-    if (EFI_ERROR (Status)) {
-      return Status;
+  if ((ImageBase == NULL) || (EntryPoint == NULL)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  ElfHdr      = (Elf_Ehdr *)ImageBase;
+  ProgramHdr  = (Elf_Phdr *)(ImageBase + ElfHdr->e_phoff);
+  for (Index = 0; Index < ElfHdr->e_phnum; Index++) {
+    ProgramHdr = (Elf_Phdr *)((UINT8 *)ProgramHdr + Index * ElfHdr->e_phentsize);
+
+    if ((ProgramHdr->p_type != PT_LOAD) ||
+        (ProgramHdr->p_memsz == 0) ||
+        (ProgramHdr->p_offset == 0)) {
+      continue;
     }
-    ProgramHdr = (Elf32_Phdr *)((UINT8 *)ProgramHdr + ElfHdr->e_phentsize);
+
+    if (ProgramHdr->p_filesz > ProgramHdr->p_memsz) {
+      return EFI_LOAD_ERROR;
+    }
+
+    CopyMem ((VOID *)(UINTN)ProgramHdr->p_paddr,
+        ImageBase + ProgramHdr->p_offset,
+        (UINTN)ProgramHdr->p_filesz);
+
+    if (ProgramHdr->p_memsz > ProgramHdr->p_filesz) {
+      ZeroMem ((VOID *)(UINTN)(ProgramHdr->p_paddr + ProgramHdr->p_filesz),
+        (UINTN)(ProgramHdr->p_memsz - ProgramHdr->p_filesz));
+    }
   }
 
   *EntryPoint = (VOID *)(UINTN)ElfHdr->e_entry;
+
   return EFI_SUCCESS;
 }
 
@@ -114,43 +158,9 @@ IsElfImage (
   IN  CONST VOID            *ImageBase
   )
 {
-  Elf32_Ehdr *ElfHdr;
-
-  ElfHdr = (Elf32_Ehdr *)ImageBase;
-
-  //
-  // Support 32-bit architecture only
-  //
-  if (ElfHdr->e_ident[EI_CLASS] != ELFCLASS32) {
-    return FALSE;
-  }
-
-  //
-  // Support little-endian only
-  //
-  if (ElfHdr->e_ident[EI_DATA] != ELFDATA2LSB) {
-    return FALSE;
-  }
-
-  //
-  // Support intel architecture only for now
-  //
-  if (ElfHdr->e_machine != EM_386) {
-    return FALSE;
-  }
-
-  //
-  //  Support ELF types: EXEC (Executable file), DYN (Shared object file)
-  //
-  if ((ElfHdr->e_type != ET_EXEC) && (ElfHdr->e_type != ET_DYN)) {
-    return FALSE;
-  }
-
-  if (ElfHdr->e_version != EV_CURRENT) {
-    return FALSE;
-  }
-
-  return TRUE;
+  return ((ImageBase != NULL) &&
+          (IsElfHeader (ImageBase)) &&
+          (IsElfFormat ((CONST UINT8 *)ImageBase)));
 }
 
 /**
@@ -169,26 +179,22 @@ IsElfImage (
 **/
 EFI_STATUS
 LoadElfImage (
-  IN  CONST VOID                  *ImageBase,
+  IN  CONST VOID                  *ElfBuffer,
   OUT       VOID                 **EntryPoint
   )
 {
   EFI_STATUS    Status;
-  UINT8         EiClass;
+  CONST UINT8  *ImageBase;
 
-  ASSERT (ImageBase != NULL);
+  ASSERT (ElfBuffer != NULL);
   ASSERT (EntryPoint != NULL);
-  if (ImageBase == NULL || EntryPoint == NULL) {
+  if (ElfBuffer == NULL || EntryPoint == NULL) {
     return EFI_INVALID_PARAMETER;
   }
-  if (!IsElfImage (ImageBase)) {
-    return EFI_UNSUPPORTED;
-  }
 
-  Status = EFI_LOAD_ERROR;
-  EiClass = ((UINT8 *)ImageBase)[EI_CLASS];
-  if (EiClass == ELFCLASS32) {
-    Status = LoadElf32 (ImageBase, EntryPoint);
+  ImageBase = ElfBuffer;
+  if (IsElfImage (ImageBase)) {
+    Status = LoadElfSegments (ImageBase, EntryPoint);
   } else {
     Status = EFI_UNSUPPORTED;
   }
