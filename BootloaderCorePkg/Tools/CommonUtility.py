@@ -276,8 +276,14 @@ def rsa_sign_file (priv_key, pub_key, hash_type, sign_scheme, in_file, out_file,
         gen_file_from_object (out_file, bins)
 
 def get_key_type (in_key):
-    pub_key = gen_pub_key (in_key)
-    pub_key_hdr = PUB_KEY_HDR.from_buffer(pub_key)
+
+    # Check for public key in binary format.
+    key = bytearray(get_file_data(in_key))
+    pub_key_hdr = PUB_KEY_HDR.from_buffer(key)
+    if pub_key_hdr.Identifier != b'PUBK':
+        pub_key = gen_pub_key (in_key)
+        pub_key_hdr = PUB_KEY_HDR.from_buffer(pub_key)
+
     key_type = next((key for key, value in PUB_KEY_TYPE.items() if value == pub_key_hdr.KeyType))
     return '%s%d' % (key_type, (pub_key_hdr.KeySize - 4) * 8)
 
