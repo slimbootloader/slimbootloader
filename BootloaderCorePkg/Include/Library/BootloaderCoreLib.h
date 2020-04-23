@@ -43,6 +43,7 @@ typedef enum {
   EnumBufPcdData,
   EnumBufPlatData,
   EnumBufCfgData,
+  EnumBufCtnList,
   EnumBufLogBuf,
   EnumBufMax
 } BUF_INFO_ID;

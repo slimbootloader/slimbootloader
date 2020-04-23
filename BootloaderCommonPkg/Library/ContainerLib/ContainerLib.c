@@ -56,6 +56,40 @@ GetContainerBySignature (
 }
 
 /**
+  This function returns the container header size.
+
+  @param[in] ContainerEntry    Container entry pointer.
+
+  @retval         Container header size.
+
+**/
+STATIC
+UINT32
+GetContainerHeaderSize (
+  IN  CONTAINER_HDR  *ContainerHdr
+  )
+{
+  INTN                  Offset;
+  UINT32                Index;
+  COMPONENT_ENTRY      *CompEntry;
+
+  Offset = 0;
+  if (ContainerHdr != NULL) {
+    CompEntry   = (COMPONENT_ENTRY *)&ContainerHdr[1];
+    for (Index = 0; Index < ContainerHdr->Count; Index++) {
+      CompEntry = (COMPONENT_ENTRY *)((UINT8 *)(CompEntry + 1) + CompEntry->HashSize);
+      Offset = (UINT8 *)CompEntry - (UINT8 *)ContainerHdr;
+      if ((Offset < 0) || (Offset >= ContainerHdr->DataOffset)) {
+        Offset = 0;
+        break;
+      }
+    }
+  }
+
+  return (UINT32)Offset;
+}
+
+/**
   This function registers a container.
 
   @param[in]  ContainerBase      Container base address to register.
@@ -78,6 +112,7 @@ RegisterContainerInternal (
   CONTAINER_ENTRY      *ContainerEntry;
   UINT32                Index;
   VOID                 *Buffer;
+  UINT32                MaxHdrSize;
 
   ContainerList = (CONTAINER_LIST *)GetContainerListPtr ();
   if (ContainerList == NULL) {
@@ -95,15 +130,21 @@ RegisterContainerInternal (
     return EFI_BUFFER_TOO_SMALL;
   }
 
-  Buffer = AllocatePool (ContainerHdr->DataOffset);
+  MaxHdrSize = GetContainerHeaderSize (ContainerHdr) + SIGNATURE_AND_KEY_SIZE_MAX;
+  if (MaxHdrSize > ContainerHdr->DataOffset) {
+    MaxHdrSize = ContainerHdr->DataOffset;
+  }
+
+  Buffer  = AllocatePool (MaxHdrSize);
   if (Buffer == NULL) {
     return  EFI_OUT_OF_RESOURCES;
   }
 
   ContainerList->Entry[Index].Signature   = ContainerHdr->Signature;
   ContainerList->Entry[Index].HeaderCache = (UINT32)(UINTN)Buffer;
+  ContainerList->Entry[Index].HeaderSize  = MaxHdrSize ;
   ContainerList->Entry[Index].Base        = ContainerBase;
-  CopyMem (Buffer, (VOID *)(UINTN)ContainerBase, ContainerHdr->DataOffset);
+  CopyMem (Buffer, (VOID *)(UINTN)ContainerBase, MaxHdrSize);
   ContainerList->Count++;
 
   return EFI_SUCCESS;
@@ -161,40 +202,6 @@ UnregisterContainer (
   }
 
   return Status;
-}
-
-/**
-  This function returns the container header size.
-
-  @param[in] ContainerEntry    Container entry pointer.
-
-  @retval         Container header size.
-
-**/
-STATIC
-UINT32
-GetContainerHeaderSize (
-  IN  CONTAINER_HDR  *ContainerHdr
-  )
-{
-  INTN                  Offset;
-  UINT32                Index;
-  COMPONENT_ENTRY      *CompEntry;
-
-  Offset = 0;
-  if (ContainerHdr != NULL) {
-    CompEntry   = (COMPONENT_ENTRY *)&ContainerHdr[1];
-    for (Index = 0; Index < ContainerHdr->Count; Index++) {
-      CompEntry = (COMPONENT_ENTRY *)((UINT8 *)(CompEntry + 1) + CompEntry->HashSize);
-      Offset = (UINT8 *)CompEntry - (UINT8 *)ContainerHdr;
-      if ((Offset < 0) || (Offset >= ContainerHdr->DataOffset)) {
-        Offset = 0;
-        break;
-      }
-    }
-  }
-
-  return (UINT32)Offset;
 }
 
 /**
