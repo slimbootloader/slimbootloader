@@ -344,6 +344,18 @@ def get_payload_list (payloads):
 
     return pld_lst
 
+# Adjust hash type algorithm based on Public key file
+def adjust_hash_type (pub_key_file):
+    key_type =  get_key_type (pub_key_file)
+    if key_type ==  'RSA2048':
+        hash_type = 'SHA2_256'
+    elif key_type ==  'RSA3072':
+        hash_type = 'SHA2_384'
+    else:
+        hash_type = None
+
+    return hash_type
+
 
 def gen_pub_key_hash_store (signing_key, pub_key_hash_list, hash_alg, sign_scheme, pub_key_dir, out_file):
     # Build key hash blob
@@ -352,10 +364,11 @@ def gen_pub_key_hash_store (signing_key, pub_key_hash_list, hash_alg, sign_schem
     for usage, key_file in pub_key_hash_list:
         pub_key_file = os.path.dirname(out_file) + '/PUBKEY%02d.bin' % idx
         gen_pub_key (os.path.join(pub_key_dir, key_file), pub_key_file)
-        hash_data = gen_hash_file (pub_key_file, hash_alg, None, True)
+        key_hash_alg = adjust_hash_type (pub_key_file)
+        hash_data = gen_hash_file (pub_key_file, key_hash_alg, None, True)
         key_hash_entry = HashStoreData()
         key_hash_entry.Usage     = usage
-        key_hash_entry.HashAlg   = HASH_TYPE_VALUE[hash_alg]
+        key_hash_entry.HashAlg   = HASH_TYPE_VALUE[key_hash_alg]
         key_hash_entry.DigestLen = len(hash_data)
         key_hash_buf.extend (bytearray(key_hash_entry) + hash_data)
         idx += 1
