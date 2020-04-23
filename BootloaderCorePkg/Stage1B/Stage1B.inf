@@ -63,7 +63,6 @@
 [Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdMaxLibraryDataEntry
   gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
-  gPlatformCommonLibTokenSpaceGuid.PcdContainerMaxNumber
   gPlatformModuleTokenSpaceGuid.PcdStage1StackSize
   gPlatformModuleTokenSpaceGuid.PcdStage1DataSize
   gPlatformModuleTokenSpaceGuid.PcdFSPTBase

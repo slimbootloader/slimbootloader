@@ -27,6 +27,7 @@
 #include <Library/CpuExceptionLib.h>
 #include <Library/DebugLogBufferLib.h>
 #include <Library/DebugAgentLib.h>
+#include <Library/ContainerLib.h>
 #include <Library/StageLib.h>
 #include <Guid/FspHeaderFile.h>
 #include <Guid/FlashMapInfoGuid.h>

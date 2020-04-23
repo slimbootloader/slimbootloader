@@ -368,6 +368,7 @@ SecStartup2 (
   BOOLEAN                   OldStatus;
   PLT_DEVICE_TABLE         *DeviceTable;
   CONTAINER_LIST           *ContainerList;
+  CONTAINER_ENTRY          *ContainerEntry;
   VOID                    **FieldPtr;
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
@@ -563,13 +564,20 @@ SecStartup2 (
     CopyMem (LdrGlobal->DeviceTable, DeviceTable, AllocateLen);
   }
 
-  // Allocate container list
-  AllocateLen = PcdGet32 (PcdContainerMaxNumber) * sizeof (CONTAINER_ENTRY) + sizeof (CONTAINER_LIST);
-  LdrGlobal->ContainerList = AllocateZeroPool (AllocateLen);
+  // Migrate container header cache into memory
   ContainerList = (CONTAINER_LIST *) LdrGlobal->ContainerList;
   if (ContainerList != NULL) {
-    ContainerList->Signature   = CONTAINER_LIST_SIGNATURE;
-    ContainerList->TotalLength = AllocateLen;
+    for (Idx = 0; Idx < ContainerList->Count; Idx++) {
+      ContainerEntry = (CONTAINER_ENTRY *)&ContainerList->Entry[Idx];
+      if (ContainerEntry->HeaderSize == 0) {
+        continue;
+      }
+      BufPtr = AllocatePool (ContainerEntry->HeaderSize);
+      if (BufPtr != NULL) {
+        CopyMem (BufPtr, (VOID *)(UINTN)ContainerEntry->HeaderCache, ContainerEntry->HeaderSize);
+        ContainerEntry->HeaderCache = (UINT32)(UINTN)BufPtr;
+      }
+    }
   }
 
   // Call back into board hooks post memory

@@ -264,6 +264,7 @@ SecStartup2 (
   HASH_STORE_TABLE         *HashStoreTable;
   SERVICES_LIST            *ServiceList;
   BUF_INFO                 *BufInfo;
+  CONTAINER_LIST           *ContainerList;
 
   Stage1aFvBase = PcdGet32 (PcdStage1AFdBase) + PcdGet32 (PcdFSPTSize);
   PeCoffFindAndReportImageInfo ((UINT32) (UINTN) GET_STAGE_MODULE_BASE (Stage1aFvBase));
@@ -325,6 +326,11 @@ SecStartup2 (
   BufInfo->CopyLen   = sizeof(CDATA_BLOB);
   BufInfo->DstBase   = &LdrGlobal->CfgDataPtr;
 
+  // Container list
+  BufInfo = &Stage1aParam.BufInfo[EnumBufCtnList];
+  BufInfo->AllocLen  = PcdGet32 (PcdContainerMaxNumber) * sizeof (CONTAINER_ENTRY) + sizeof (CONTAINER_LIST);
+  BufInfo->DstBase   = &LdrGlobal->ContainerList;
+
   // Log Buffer
   BufInfo = &Stage1aParam.BufInfo[EnumBufLogBuf];
   BufInfo->SrcBase   = (VOID *)&mLogBufHdrTmpl;
@@ -343,13 +349,19 @@ SecStartup2 (
     if (HashStoreTable != NULL) {
       HashStoreTable->TotalLength = PcdGet32 (PcdHashStoreSize);
     }
+    ContainerList = (CONTAINER_LIST *) LdrGlobal->ContainerList;
+    if (ContainerList != NULL) {
+      BufInfo = &Stage1aParam.BufInfo[EnumBufCtnList];
+      ContainerList->Signature   = CONTAINER_LIST_SIGNATURE;
+      ContainerList->TotalLength = BufInfo->AllocLen;
+    }
     BufInfo = &Stage1aParam.BufInfo[EnumBufPcdData];
     SetLibraryData (PcdGet8 (PcdPcdLibId), LdrGlobal->PcdDataPtr, BufInfo->AllocLen);
   }
 
   // Extra initialization
   if (FlashMap != NULL) {
-    SetCurrentBootPartition((FlashMap->Attributes & FLASH_MAP_ATTRIBUTES_BACKUP_REGION)? 1 : 0);
+    SetCurrentBootPartition ((FlashMap->Attributes & FLASH_MAP_ATTRIBUTES_BACKUP_REGION) ? 1 : 0);
   }
 
   // Call board hook to enable debug

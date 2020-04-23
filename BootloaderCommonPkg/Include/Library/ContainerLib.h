@@ -51,8 +51,8 @@ typedef VOID (*LOAD_COMPONENT_CALLBACK) (UINT32 ProgressId, COMPONENT_CALLBACK_I
 typedef struct {
   UINT32           Signature;
   UINT32           HeaderCache;
+  UINT32           HeaderSize;
   UINT32           Base;
-  UINT32           Reserved;
 } CONTAINER_ENTRY;
 
 typedef struct {
