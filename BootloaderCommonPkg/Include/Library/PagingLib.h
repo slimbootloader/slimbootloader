@@ -15,9 +15,10 @@
 #define  IA32_PG_PD                  BIT7
 
 typedef struct {
-  UINT32  Start;
-  UINT32  Limit;
-  UINT32  Mapping;
+  UINTN   Start;
+  UINTN   Limit;
+  UINTN   Mapping;
+  UINT32  PageSize;
 } MAP_RANGE;
 
 /**
@@ -32,6 +33,20 @@ UINT32
 EFIAPI
 GetPageTablesMemorySize (
   IN BOOLEAN     IsX64Mode
+  );
+
+/**
+  This function dumps the current PageTables
+
+  @param None
+
+  @retval None
+**/
+
+VOID
+EFIAPI
+DumpPageTables (
+  VOID
   );
 
 /**

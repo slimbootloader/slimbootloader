@@ -124,10 +124,11 @@ RemapStage (
     Stage1bBase = AllocateTemporaryMemory (PcdGet32 (PcdStage1BFdSize));
     DEBUG ((DEBUG_INFO, "Remapping Stage to 0x%08X\n", Stage1bBase));
     CopyMem (Stage1bBase, (VOID *)(UINTN)PcdGet32 (PcdStage1BFdBase), PcdGet32 (PcdStage1BFdSize));
-    RoundSize         = ALIGN_UP (PcdGet32 (PcdStage1BFdSize), EFI_PAGE_SIZE);
-    Ranges[0].Start   = PcdGet32 (PcdStage1BFdBase);
-    Ranges[0].Limit   = Ranges[0].Start + RoundSize - 1;
-    Ranges[0].Mapping = (UINT32)(UINTN)Stage1bBase;
+    RoundSize          = ALIGN_UP (PcdGet32 (PcdStage1BFdSize), EFI_PAGE_SIZE);
+    Ranges[0].Start    = (UINTN)PcdGet32 (PcdStage1BFdBase);
+    Ranges[0].Limit    = (UINTN)Ranges[0].Start + RoundSize - 1;
+    Ranges[0].Mapping  = (UINTN)Stage1bBase;
+    Ranges[0].PageSize = SIZE_4KB;
     Status = MapMemoryRange (Ranges, PageBuffer);
   }
   ASSERT_EFI_ERROR (Status);
