@@ -32,19 +32,24 @@ extern EFI_GUID gLoaderPlatformInfoGuid;
 //
 
 /// Verified boot state (0- disabled, 1 - enabled), based on boot guard profile.
-#define        HWSTATE_VERIFIED_BOOT            BIT0
+#define        HWSTATE_VERIFIED_BOOT               BIT0
 
 // Measured boot state (0- disabled, 1 - enabled), based on boot guard profile.
-#define        HWSTATE_MEASURED_BOOT            BIT1
+#define        HWSTATE_MEASURED_BOOT               BIT1
 
-// Manufacturing state (0 - ready for production; 1 - not ready for production)
-//  (This comes from CSE. When this bit is 1, it is still in manufacturing mode. Host
-//  can use this bit to inform user that platform is NOT ready for production yet.
-//  when this bit is 0, then it is ready for production)
-#define        HWSTATE_IN_MANUFACTURING_MODE     BIT2
 
-//Secure debug (0 - disabled, 1 - enabled)
-#define        HWSTATE_SECURE_DEBUG              BIT3
+// Combined flag for Manufacturing state or Secure debug mode is ON
+// 0 - ready for production and secure debug mode is OFF
+// 1 - not ready for production or secure debug mode is ON
+//  (Manufacturing state comes from CSE)
+//  (Platform is in Secure Debug mode is when secure debug token is enabled)
+#define        HWSTATE_IN_MANU_SECURE_DEBUG_MODE   BIT2
+
+// Hw Platform production mode (0 - disabled, 1 - enabled)
+// This flag would be enabled when platform is pre-production
+// This flag would be disabled when platform is in production.
+#define        HWSTATE_PLATFORM_PRE_PRODUCTION     BIT3
+
 
 //Definition for LOADER_PLATFORM_INFO.Flags
 
