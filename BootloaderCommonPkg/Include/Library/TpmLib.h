@@ -150,12 +150,14 @@ TpmLogEvent (
   randomize platform auth, add EV_SEPARATOR event etc) as indicated in
   PC Client Specific Firmware Profile specification.
 
+  @param[in] FwDebugEnabled    Firmware Debug Mode enabled/disabled.
+
   @retval RETURN_SUCCESS   Operation completed successfully.
   @retval Others           Unable to finish handling ReadyToBoot events.
 **/
 RETURN_STATUS
 TpmIndicateReadyToBoot (
-  VOID
+  IN UINT8   FwDebugEnabled
   );
 
 

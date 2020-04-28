@@ -251,7 +251,7 @@ RpmbKeyProvisioning (
   }
 
   // Get manufacturing state
-  Eom = ((LoaderPlatformInfo->HwState & HWSTATE_IN_MANUFACTURING_MODE) == 0) ?TRUE:FALSE;
+  Eom = ((LoaderPlatformInfo->HwState & HWSTATE_IN_MANU_SECURE_DEBUG_MODE) == 0) ? TRUE : FALSE;
 
   // Proceed further only if its in production mode and if the verified boot is enabled
   if((Eom) || ((LoaderPlatformInfo->LdrFeatures & FEATURE_VERIFIED_BOOT) == FEATURE_VERIFIED_BOOT)) {

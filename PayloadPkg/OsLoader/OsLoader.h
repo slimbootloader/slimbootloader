@@ -60,6 +60,7 @@
 #include <Uefi/UefiGpt.h>
 #include "BlockIoTest.h"
 #include <ConfigDataCommonDefs.h>
+#include <Register/Intel/Msr/ArchitecturalMsr.h>
 #include "PreOsChecker.h"
 
 #define MKHI_BOOTLOADER_SEED_LEN       64
