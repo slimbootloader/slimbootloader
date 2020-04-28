@@ -176,6 +176,7 @@ CpuInit (
 
 **/
 VOID
+EFIAPI
 ApFunc (
   UINT32                   Index,
   MP_DATA_EXCHANGE_STRUCT *mMpDataStructPtr
