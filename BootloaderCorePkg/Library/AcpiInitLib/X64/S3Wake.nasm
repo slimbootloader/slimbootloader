@@ -17,32 +17,36 @@ ASM_PFX(WakeUpBuffer):
 
 global ASM_PFX(WakeUp)
 ASM_PFX(WakeUp):
-    push  rbp
-    mov   ebp, esp
-    mov   edx, dword [ASM_PFX(WakeUpBuffer)]
-    lea   eax, [jmp_retf - ASM_PFX(WakeUp) + edx ]
-    push  28h               ; CS
+    ; rcx S3WakingVector    :DWORD
+    lea   eax, [.0]
+    mov   r8, 0x2800000000
+    or    rax, r8
     push  rax
-    mov   ecx, [ebp + 8]
     shrd  ebx, ecx, 20
-    and   ecx, 0fh
+    and   ecx, 0xf
     mov   bx, cx
-    lea   eax, [os_jmp_addr - ASM_PFX(WakeUp) + edx ]
-    mov   [eax], ebx
+    mov   [@jmp_addr + 1], ebx
     retf
-jmp_retf:
-    db    0b8h, 30h, 0      ; mov ax, 30h as selector
+BITS 16
+.0:
+    mov   ax, 0x30
     mov   ds, ax
     mov   es, ax
     mov   fs, ax
     mov   gs, ax
     mov   ss, ax
-    mov   rax, cr0          ; Get control register 0
-    db    66h
-    db    83h, 0e0h, 0feh   ; and    eax, 0fffffffeh  ; Clear PE bit (bit #0)
-    db    0fh, 22h, 0c0h    ; mov    cr0, eax         ; Activate real mode
-    db    0eah              ; jmp far @jmp_addr
-os_jmp_addr   dd  0
+    mov   eax, cr0
+    mov   ebx, cr4
+    and   eax, ((~ 0x80000001) & 0xffffffff)
+    and   bl, ~ (1 << 5)
+    mov   cr0, eax
+    mov   ecx, 0xc0000080
+    rdmsr
+    and   ah, ~ 1
+    wrmsr
+    mov   cr4, ebx
+@jmp_addr:
+    jmp   0x0:0x0
 
 global ASM_PFX(WakeUpSize)
 ASM_PFX(WakeUpSize):

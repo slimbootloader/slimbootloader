@@ -7,13 +7,13 @@
 **/
 #include <MpInitLibInternal.h>
 
-MP_ASSEMBLY_ADDRESS_MAP            mAddressMap;
-ALL_CPU_INFO                       mSysCpuInfo;
-volatile ALL_CPU_TASK              mSysCpuTask;
-volatile MP_DATA_EXCHANGE_STRUCT   mMpDataStruct;
-UINT8                             *mBackupBuffer;
-UINT32                             mMpInitPhase = EnumMpInitNull;
-
+STATIC MP_ASSEMBLY_ADDRESS_MAP            mAddressMap;
+STATIC ALL_CPU_INFO                       mSysCpuInfo;
+STATIC volatile ALL_CPU_TASK              mSysCpuTask;
+STATIC volatile MP_DATA_EXCHANGE_STRUCT   mMpDataStruct;
+STATIC UINT8                             *mBackupBuffer;
+STATIC UINT32                             mMpInitPhase = EnumMpInitNull;
+STATIC SMMBASE_INFO                      *mSmmBaseInfo = NULL;
 
 /**
   The function is called by PerformQuickSort to sort CPU_INFO by ApicId.
@@ -143,17 +143,15 @@ CpuInit (
   }
 
   if (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE_ON_S3_RESUME_ONLY) {
-    if (GetBootMode() == BOOT_ON_S3_RESUME) {
-      SmmBaseInfo = (SMMBASE_INFO *) FindS3Info (SMMBASE_INFO_COMM_ID);
-      if (SmmBaseInfo != NULL) {
-        for (CpuIdx = 0; CpuIdx < SmmBaseInfo->SmmBaseHdr.Count; CpuIdx++) {
-          if (ApicId == SmmBaseInfo->SmmBase[CpuIdx].ApicId) {
-            SmmRebase (Index, ApicId, SmmBaseInfo->SmmBase[CpuIdx].SmmBase);
-            break;
-          }
+    if ((GetBootMode() == BOOT_ON_S3_RESUME) && (mSmmBaseInfo != NULL)) {
+      SmmBaseInfo = mSmmBaseInfo;
+      for (CpuIdx = 0; CpuIdx < SmmBaseInfo->SmmBaseHdr.Count; CpuIdx++) {
+        if (ApicId == SmmBaseInfo->SmmBase[CpuIdx].ApicId) {
+          SmmRebase (Index, ApicId, SmmBaseInfo->SmmBase[CpuIdx].SmmBase);
+          break;
         }
-        ASSERT (CpuIdx < SmmBaseInfo->SmmBaseHdr.Count);
       }
+      ASSERT (CpuIdx < SmmBaseInfo->SmmBaseHdr.Count);
     }
   } else if (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE) {
     SmmRebase (Index, ApicId, 0);
@@ -368,6 +366,15 @@ MpInit (
       // Initialize the mMpDataStructure
       //
       mMpDataStruct.ApDoneCounter    = 0;
+
+      //
+      // Get SMM Base Info for S3 resume
+      //
+      if (GetBootMode() == BOOT_ON_S3_RESUME) {
+        mSmmBaseInfo = (SMMBASE_INFO *) FindS3Info (SMMBASE_INFO_COMM_ID);
+      } else {
+        mSmmBaseInfo = NULL;
+      }
 
       //
       // Send Init-SIPI-SIPI to all APs and wait for completion
