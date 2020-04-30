@@ -108,16 +108,17 @@ LoadElfSegments (
 {
   Elf_Ehdr   *ElfHdr;
   Elf_Phdr   *ProgramHdr;
-  UINT16        Index;
+  Elf_Phdr   *ProgramHdrBase;
+  UINT16      Index;
 
   if ((ImageBase == NULL) || (EntryPoint == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
-  ElfHdr      = (Elf_Ehdr *)ImageBase;
-  ProgramHdr  = (Elf_Phdr *)(ImageBase + ElfHdr->e_phoff);
+  ElfHdr         = (Elf_Ehdr *)ImageBase;
+  ProgramHdrBase = (Elf_Phdr *)(ImageBase + ElfHdr->e_phoff);
   for (Index = 0; Index < ElfHdr->e_phnum; Index++) {
-    ProgramHdr = (Elf_Phdr *)((UINT8 *)ProgramHdr + Index * ElfHdr->e_phentsize);
+    ProgramHdr = (Elf_Phdr *)((UINT8 *)ProgramHdrBase + Index * ElfHdr->e_phentsize);
 
     if ((ProgramHdr->p_type != PT_LOAD) ||
         (ProgramHdr->p_memsz == 0) ||
