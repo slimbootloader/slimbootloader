@@ -16,6 +16,7 @@
 #include <Library/HobLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include <Library/SecureBootLib.h>
+#include <Library/DebugLogBufferLib.h>
 
 CONST CHAR8  mHex[]   = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 CONST CHAR8 *mStage[] = { "1A", "1B", "2", "PAYLOAD"};

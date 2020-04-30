@@ -46,6 +46,7 @@
 #include <Library/ElfLib.h>
 #include <Library/LinuxLib.h>
 #include <Library/ContainerLib.h>
+#include <Library/DebugLogBufferLib.h>
 #include <Guid/SeedInfoHobGuid.h>
 #include <Guid/OsConfigDataHobGuid.h>
 #include <Guid/OsBootOptionGuid.h>

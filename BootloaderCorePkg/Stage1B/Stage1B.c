@@ -552,6 +552,11 @@ SecStartup2 (
         CopyMem ((VOID *)NewLogBuf, (VOID *)OldLogBuf, OldLogBuf->UsedLength);
         NewLogBuf->TotalLength = PcdGet32 (PcdLogBufferSize);
         LdrGlobal->LogBufPtr = NewLogBuf;
+        //
+        // No ring buffer manipulation here even if early log buffer was full.
+        // Simply clear FULL attribute and continue to overwrite logs.
+        //
+        NewLogBuf->Attribute &= (UINT8)~(DEBUG_LOG_BUFFER_ATTRIBUTE_FULL);
       }
     }
   }
