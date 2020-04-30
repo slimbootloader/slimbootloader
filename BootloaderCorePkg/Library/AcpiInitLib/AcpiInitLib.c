@@ -727,7 +727,11 @@ FindAcpiWakeVectorAndJump (
     Hdr = (EFI_ACPI_COMMON_HEADER *) (UINTN)XsdtEntry[Index];
     if (Hdr->Signature == EFI_ACPI_5_0_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE) {
       Facp = (EFI_ACPI_5_0_FIXED_ACPI_DESCRIPTION_TABLE *) Hdr;
-      Facs = (EFI_ACPI_5_0_FIRMWARE_ACPI_CONTROL_STRUCTURE *)(UINTN)Facp->FirmwareCtrl;
+      if (Facp->XFirmwareCtrl != 0) {
+        Facs = (EFI_ACPI_5_0_FIRMWARE_ACPI_CONTROL_STRUCTURE *)(UINTN)Facp->XFirmwareCtrl;
+      } else {
+        Facs = (EFI_ACPI_5_0_FIRMWARE_ACPI_CONTROL_STRUCTURE *)(UINTN)Facp->FirmwareCtrl;
+      }
       if (Facs->Signature == EFI_ACPI_5_0_FIRMWARE_ACPI_CONTROL_STRUCTURE_SIGNATURE) {
         WakeVector = Facs->FirmwareWakingVector;
         // Calculate CRC32 for 0x00000000 ---> BootLoaderRsvdMemBase and
@@ -737,7 +741,7 @@ FindAcpiWakeVectorAndJump (
             return;
           }
         }
-        CopyMem ((VOID *)(UINTN)WakeUpBuffer, &WakeUp, WakeUpSize);
+        CopyMem ((VOID *)(UINTN)WakeUpBuffer, (VOID *)(UINTN)&WakeUp, WakeUpSize);
         DoWake = (DOWAKEUP)(UINTN)WakeUpBuffer;
         DEBUG ((DEBUG_INIT, "Jump to Wake vector = 0x%x\n", WakeVector));
         DoWake (WakeVector);
