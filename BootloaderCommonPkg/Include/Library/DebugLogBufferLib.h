@@ -9,6 +9,20 @@
 #ifndef __DEBUG_LOG_BUFFER_LIB_H__
 #define __DEBUG_LOG_BUFFER_LIB_H__
 
+#define  DEBUG_LOG_BUFFER_SIGNATURE         SIGNATURE_32 ('D', 'L', 'O', 'G')
+
+#define  DEBUG_LOG_BUFFER_ATTRIBUTE_FULL    BIT0
+
+typedef struct {
+  UINT32  Signature;
+  UINT8   HeaderLength;
+  UINT8   Attribute;
+  UINT8   Reserved[2];
+  UINT32  UsedLength;
+  UINT32  TotalLength;
+  UINT8   Buffer[0];
+} DEBUG_LOG_BUFFER_HEADER;
+
 /**
   Write data from buffer to console buffer.
 
