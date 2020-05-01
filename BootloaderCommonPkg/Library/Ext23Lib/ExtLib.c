@@ -1,7 +1,7 @@
 /** @file
   ExtLib APIs
 
-Copyright (c) 2006 - 2019, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2006 - 2020, Intel Corporation. All rights reserved.<BR>
 
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
@@ -283,8 +283,7 @@ EFI_STATUS
 EFIAPI
 ExtFsListDir (
   IN  EFI_HANDLE                                  FsHandle,
-  IN  CHAR16                                     *DirFilePath,
-  IN  CONSOLE_OUT_FUNC                            ConsoleOutFunc
+  IN  CHAR16                                     *DirFilePath
   )
 {
   EFI_STATUS              Status;
@@ -293,14 +292,10 @@ ExtFsListDir (
   Status = EFI_UNSUPPORTED;
 
 DEBUG_CODE_BEGIN ();
-  if (ConsoleOutFunc == NULL) {
-    return EFI_INVALID_PARAMETER;
-  }
-
   FileHandle = NULL;
   Status = ExtFsOpenFile (FsHandle, DirFilePath, &FileHandle);
   if (!EFI_ERROR (Status)) {
-    Status = Ext2fsLs ((OPEN_FILE *)FileHandle, NULL, ConsoleOutFunc);
+    Status = Ext2fsLs ((OPEN_FILE *)FileHandle, NULL);
   }
   if (FileHandle != NULL) {
     ExtFsCloseFile (FileHandle);

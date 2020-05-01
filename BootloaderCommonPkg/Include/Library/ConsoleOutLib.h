@@ -1,7 +1,7 @@
 /** @file
   Provide Console output library functions.
 
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -11,6 +11,70 @@
 
 #include <PiPei.h>
 #include <Library/BaseLib.h>
+
+//
+// NOT RECOMMEND to use __CONSOLE_PRINT directly
+//
+#define __CONSOLE_PRINT_FUNC(Format, ...)                               \
+  do {                                                                  \
+    ConsolePrint (Format, ##__VA_ARGS__);                               \
+  } while (FALSE)
+
+#define __CONSOLE_PRINT_UNICODE_FUNC(Format, ...)                       \
+  do {                                                                  \
+    ConsolePrintUnicode (Format, ##__VA_ARGS__);                        \
+  } while (FALSE)
+
+#define __CONSOLE_PRINT_CONDITION_FUNC(PrintLevel, Format, ...)         \
+  do {                                                                  \
+    ConsolePrint (Format, ##__VA_ARGS__);                               \
+  } while (FALSE)
+
+#define __CONSOLE_PRINT_UNICODE_CONDITION_FUNC(PrintLevel, Format, ...) \
+  do {                                                                  \
+    ConsolePrintUnicode (Format, ##__VA_ARGS__);                        \
+  } while (FALSE)
+
+#define __CONSOLE_PRINT_CONDITION(Expression)                           \
+  __CONSOLE_PRINT_CONDITION_FUNC          Expression
+
+#define __CONSOLE_PRINT_UNICODE_CONDITION(Expression)                   \
+  __CONSOLE_PRINT_UNICODE_CONDITION_FUNC  Expression
+//
+// NOT RECOMMEND to use __CONSOLE_PRINT directly
+//
+
+//
+// CONSOLE_PRINT will redirect log messages to consoles
+// Expression does not have PrintLevel(ErrorLevel).
+//
+#define CONSOLE_PRINT(Expression)                                       \
+  __CONSOLE_PRINT_FUNC           Expression
+
+#define CONSOLE_PRINT_UNICODE(Expression)                               \
+  __CONSOLE_PRINT_UNICODE_FUNC   Expression
+
+//
+// ErrorLevel is ignored when log message is redirect to consoles.
+// Valid only at DEBUG().
+//
+#define CONSOLE_PRINT_CONDITION(ConsoleOut, Expression)                 \
+  do {                                                                  \
+    if (ConsoleOut) {                                                   \
+      __CONSOLE_PRINT_CONDITION(Expression);                            \
+    } else {                                                            \
+      DEBUG(Expression);                                                \
+    }                                                                   \
+  } while (FALSE)
+
+#define CONSOLE_PRINT_UNICODE_CONDITION(ConsoleOut, Expression)         \
+  do {                                                                  \
+    if (ConsoleOut) {                                                   \
+      __CONSOLE_PRINT_UNICODE_CONDITION(Expression);                    \
+    } else {                                                            \
+      DEBUG(Expression);                                                \
+    }                                                                   \
+  } while (FALSE)
 
 typedef enum {
   ConsoleOutSerialPort  = BIT0,
@@ -37,6 +101,40 @@ EFIAPI
 ConsoleWrite (
   IN UINT8     *Buffer,
   IN UINTN      NumberOfBytes
+  );
+
+/**
+  Print Ascii debug message to consoles
+
+  If Format is NULL, then ASSERT().
+
+  @param  Format      The format string for the debug message to print.
+  @param  ...         The variable argument list whose contents are accessed
+                      based on the format string specified by Format.
+
+**/
+UINTN
+EFIAPI
+ConsolePrint (
+  IN  CONST CHAR8          *Format,
+  ...
+  );
+
+/**
+  Print Unicode debug message to consoles
+
+  If Format is NULL, then ASSERT().
+
+  @param  Format      The format string for the debug message to print.
+  @param  ...         The variable argument list whose contents are accessed
+                      based on the format string specified by Format.
+
+**/
+UINTN
+EFIAPI
+ConsolePrintUnicode (
+  IN  CONST CHAR16         *Format,
+  ...
   );
 
 #endif

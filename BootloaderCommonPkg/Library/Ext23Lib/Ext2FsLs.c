@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
   Copyright (c) 1997 Manuel Bouyer.
@@ -87,6 +87,7 @@
 #include <Library/DebugLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/MediaAccessLib.h>
+#include <Library/ConsoleOutLib.h>
 #include "Ext2Fs.h"
 #include "LibsaFsStand.h"
 
@@ -105,7 +106,6 @@ STATIC CONST CHAR8 *CONST mTypeStr[] = { "unknown", "REG",  "DIR",  "CHR",  "BLK
 
   @param[in] File           pointer to an file private data
   @param[in] Pattern        not used for now
-  @param[in] ConsoleOutFunc redirect output message to a console
 
   @retval EFI_SUCCESS       list directories or files successfully
   @retval EFI_NOT_FOUND     not found specified dir or file
@@ -115,8 +115,7 @@ EFI_STATUS
 EFIAPI
 Ext2fsLs (
   IN  OPEN_FILE         *File,
-  IN  CONST CHAR8       *Pattern,
-  IN  CONSOLE_OUT_FUNC   ConsoleOutFunc
+  IN  CONST CHAR8       *Pattern
   )
 {
   EFI_STATUS      Status;
@@ -133,15 +132,11 @@ Ext2fsLs (
   ENTRY          *PNames;
   CONST CHAR8    *Type;
 
-  if (ConsoleOutFunc == NULL) {
-    return EFI_INVALID_PARAMETER;
-  }
-
   Status = EFI_SUCCESS;
   Fp = (FILE *)File->FileSystemSpecificData;
 
   if ((Fp->DiskInode.Ext2DInodeMode & EXT2_IFMT) == EXT2_IFREG) {
-    ConsoleOutFunc (L"  %-16a %d\n", File->FileNamePtr, Fp->DiskInode.Ext2DInodeSize);
+    CONSOLE_PRINT_UNICODE ((L"  %-16a %d\n", File->FileNamePtr, Fp->DiskInode.Ext2DInodeSize));
     return EFI_SUCCESS;
   } else if ((Fp->DiskInode.Ext2DInodeMode & EXT2_IFMT) != EXT2_IFDIR) {
     return EFI_NOT_FOUND;
@@ -219,7 +214,7 @@ Ext2fsLs (
     do {
       New = PNames;
       if (New->EntryType == 2) {
-        ConsoleOutFunc (L"  %a/\n", New->EntryName);
+        CONSOLE_PRINT_UNICODE ((L"  %a/\n", New->EntryName));
       } else if (New->EntryType == 1) {
         FileSize = 0;
         Status = ReadInode (New->EntryInode, File);
@@ -228,7 +223,7 @@ Ext2fsLs (
           FileSize = Fp->DiskInode.Ext2DInodeSize;
         }
         Status = RETURN_SUCCESS;
-        ConsoleOutFunc (L"  %-16a %d\n", New->EntryName, FileSize);
+        CONSOLE_PRINT_UNICODE ((L"  %-16a %d\n", New->EntryName, FileSize));
       }
       PNames = New->EntryNext;
     } while (PNames != NULL);

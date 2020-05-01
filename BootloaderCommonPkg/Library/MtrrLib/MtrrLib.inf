@@ -29,6 +29,7 @@
 [LibraryClasses]
   BaseLib
   DebugLib
+  ConsoleOutLib
 
 [Guids]
 

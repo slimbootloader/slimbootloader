@@ -11,17 +11,18 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <PiPei.h>
 
-
 /**
   Print MTRR settings.
 
-  @param[in]  Str     A string will be print before MTRR data if it is not NULL.
+  @param[in]  Str           A string will be print before MTRR data if it is not NULL.
+  @param[in]  ConsoleOut    Redirect to consoles if TRUE. Otherwise, DEBUG()
 
 **/
 VOID
 EFIAPI
 PrintMtrr (
-  IN  CHAR8   *Str
+  IN  CHAR8               *Str,
+  IN  BOOLEAN              ConsoleOut
   );
 
 #endif

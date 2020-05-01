@@ -1,7 +1,7 @@
 /** @file
   Function prototypes for FAT library
 
-Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
 
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
@@ -135,7 +135,6 @@ FatFsCloseFile (
 
   @param[in]     FsHandle         file system handle.
   @param[in]     DirFilePath      directory or file path
-  @param[in]     ConsoleOutFunc   redirect output message to a console
 
   @retval EFI_SUCCESS             list directories of files successfully
   @retval EFI_UNSUPPORTED         this api is not supported
@@ -146,8 +145,7 @@ EFI_STATUS
 EFIAPI
 FatFsListDir (
   IN  EFI_HANDLE                                  FsHandle,
-  IN  CHAR16                                     *DirFilePath,
-  IN  CONSOLE_OUT_FUNC                            ConsoleOutFunc
+  IN  CHAR16                                     *DirFilePath
   );
 
 #endif // _FAT_LIB_H_
