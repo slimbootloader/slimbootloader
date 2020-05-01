@@ -98,6 +98,14 @@ Tpm2GetCapability (
   }
 
   //
+  // Fail if command failed
+  //
+  if (SwapBytes32(RecvBuffer.Header.responseCode) != TPM_RC_SUCCESS) {
+    DEBUG ((DEBUG_VERBOSE, "Tpm2GetCapability: Response Code error! 0x%08x\r\n", SwapBytes32(RecvBuffer.Header.responseCode)));
+    return EFI_DEVICE_ERROR;
+  }
+
+  //
   // Return the response
   //
   *MoreData = RecvBuffer.MoreData;
@@ -142,9 +150,18 @@ Tpm2GetCapabilityPcrs (
   }
 
   Pcrs->count = SwapBytes32 (TpmCap.data.assignedPCR.count);
+  if (Pcrs->count > HASH_COUNT) {
+    DEBUG ((DEBUG_VERBOSE, "Tpm2GetCapabilityPcrs - Pcrs->count error %x\n", Pcrs->count));
+    return EFI_DEVICE_ERROR;
+  }
+
   for (Index = 0; Index < Pcrs->count; Index++) {
     Pcrs->pcrSelections[Index].hash = SwapBytes16 (TpmCap.data.assignedPCR.pcrSelections[Index].hash);
     Pcrs->pcrSelections[Index].sizeofSelect = TpmCap.data.assignedPCR.pcrSelections[Index].sizeofSelect;
+    if (Pcrs->pcrSelections[Index].sizeofSelect > PCR_SELECT_MAX) {
+      DEBUG ((DEBUG_VERBOSE, "Tpm2GetCapabilityPcrs - sizeofSelect error %x\n", Pcrs->pcrSelections[Index].sizeofSelect));
+      return EFI_DEVICE_ERROR;
+    }
     CopyMem (Pcrs->pcrSelections[Index].pcrSelect, TpmCap.data.assignedPCR.pcrSelections[Index].pcrSelect,
              Pcrs->pcrSelections[Index].sizeofSelect);
   }
