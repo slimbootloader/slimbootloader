@@ -1170,7 +1170,7 @@ class Build(object):
         # Run pre-build
         self.board_build_hook ('pre-build:before')
         self.pre_build()
-        self.board_build_hook ('post-build:after')
+        self.board_build_hook ('pre-build:after')
 
         # Run build
         cmd_args = [
