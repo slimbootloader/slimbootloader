@@ -8,6 +8,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
+#include <Library/ConsoleOutLib.h>
 
 /**
   Convert the MTRR memory type to a readable str
@@ -39,15 +40,17 @@ MtrrTypeToStr (
 }
 
 /**
-  Print MTRR settings
+  Print MTRR settings.
 
-  @param[in]  Str     A string will be print before MTRR data if it is not NULL.
+  @param[in]  Str           A string will be print before MTRR data if it is not NULL.
+  @param[in]  ConsoleOut    Redirect to consoles if TRUE. Otherwise, DEBUG()
 
 **/
 VOID
 EFIAPI
 PrintMtrr (
-  IN CHAR8    *Str
+  IN  CHAR8               *Str,
+  IN  BOOLEAN              ConsoleOut
   )
 {
   UINT32      Index;
@@ -66,19 +69,22 @@ PrintMtrr (
   UINT64      Limit;
 
   if (Str != NULL) {
-    DEBUG ((DEBUG_INFO, "%a\n", Str));
+    CONSOLE_PRINT_CONDITION (ConsoleOut, (DEBUG_INFO, "%a\n", Str));
   }
 
   // Dump IA32_MTRR_DEF_TYPE
   DefType          = AsmReadMsr64 (0x2ff);
   MtrrEnabled      = ((DefType & (1 << 11)) != 0);
   FixedMtrrEnabled = ((DefType & (1 << 10)) != 0);
-  DEBUG ((DEBUG_INFO, "MTRRs..............: %a\n", MtrrEnabled      ? "Enabled" : "Disabled"));
-  DEBUG ((DEBUG_INFO, "Fixed MTRRs........: %a\n", FixedMtrrEnabled ? "Enabled" : "Disabled"));
-  DEBUG ((DEBUG_INFO, "Default............: %a\n\n", MtrrTypeToStr (DefType & 0xff)));
+  CONSOLE_PRINT_CONDITION (ConsoleOut,
+    (DEBUG_INFO, "MTRRs......: %a\n", MtrrEnabled ? "Enabled" : "Disabled"));
+  CONSOLE_PRINT_CONDITION (ConsoleOut,
+    (DEBUG_INFO, "Fixed MTRRs: %a\n", FixedMtrrEnabled ? "Enabled" : "Disabled"));
+  CONSOLE_PRINT_CONDITION (ConsoleOut,
+    (DEBUG_INFO, "Default....: %a\n\n", MtrrTypeToStr (DefType & 0xff)));
 
   // Dump Variable MTRR registers
-  DEBUG ((DEBUG_INFO, "Variable MTRRs\n"));
+  CONSOLE_PRINT_CONDITION (ConsoleOut, (DEBUG_INFO, "Variable MTRRs\n"));
   for (Index = 0; Index < 10; Index++) {
     BaseMsr = 0x200 + (Index * 2);
     MaskMsr = BaseMsr + 1;
@@ -97,9 +103,11 @@ PrintMtrr (
     Range = (~Mask & 0xfffffffffull);
     Limit = Base + Range;
 
-    DEBUG ((DEBUG_INFO, "[0x%09llx-0x%09llx] %a\n", Base, Limit, MtrrTypeToStr (Type)));
-    DEBUG ((DEBUG_INFO, "   IA32_MTRR_PHYSBASE_%d (0x%x): 0x%016llx\n", Index, BaseMsr, BaseVal));
-    DEBUG ((DEBUG_INFO, "   IA32_MTRR_PHYSMASK_%d (0x%x): 0x%016llx\n", Index, MaskMsr, MaskVal));
+    CONSOLE_PRINT_CONDITION (ConsoleOut,
+      (DEBUG_INFO, "[0x%09llx-0x%09llx] %a\n", Base, Limit, MtrrTypeToStr (Type)));
+    CONSOLE_PRINT_CONDITION (ConsoleOut,
+      (DEBUG_INFO, "   IA32_MTRR_PHYSBASE_%d (0x%x): 0x%016llx\n", Index, BaseMsr, BaseVal));
+    CONSOLE_PRINT_CONDITION (ConsoleOut,
+      (DEBUG_INFO, "   IA32_MTRR_PHYSMASK_%d (0x%x): 0x%016llx\n", Index, MaskMsr, MaskVal));
   }
 }
-

@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -46,7 +46,6 @@
   CmdFs.c
   ShellCmds.c
   Parsing.c
-  Printing.c
   History.c
   Shell.c
 
@@ -75,6 +74,7 @@
   FileSystemLib
   PartitionLib
   ShellExtensionLib
+  MtrrLib
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress

@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
   Copyright (c) 1982, 1986, 1989, 1993
@@ -502,7 +502,6 @@ Ext2fsRead (
 
   @param[in] File           pointer to an file private data
   @param[in] Pattern        not used for now
-  @param[in] ConsoleOutFunc redirect output message to a console
 
   @retval EFI_SUCCESS       list directories or files successfully
   @retval EFI_NOT_FOUND     not found specified dir or file
@@ -512,8 +511,7 @@ EFI_STATUS
 EFIAPI
 Ext2fsLs (
   IN  OPEN_FILE         *File,
-  IN  CONST CHAR8       *Pattern,
-  IN  CONSOLE_OUT_FUNC   ConsoleOutFunc
+  IN  CONST CHAR8       *Pattern
   );
 
 /**

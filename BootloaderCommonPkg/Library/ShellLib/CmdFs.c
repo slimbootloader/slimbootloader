@@ -1,7 +1,7 @@
 /** @file
   Shell command `fs` to view partition information
 
-  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -214,7 +214,7 @@ CmdFsFsListDir (
     return EFI_ABORTED;
   }
 
-  Status = ListDir (mFsHandle, DirFilePath, ShellPrint);
+  Status = ListDir (mFsHandle, DirFilePath);
   if (Status == EFI_NOT_FOUND) {
     ShellPrint (L"Not found!\n");
   } else if (Status == EFI_UNSUPPORTED) {

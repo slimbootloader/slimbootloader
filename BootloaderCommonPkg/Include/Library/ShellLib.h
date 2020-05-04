@@ -1,7 +1,7 @@
 /** @file
   A minimal command-line shell.
 
-  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -10,6 +10,9 @@
 
 #include <PiPei.h>
 #include <Library/BaseLib.h>
+#include <Library/ConsoleOutLib.h>
+
+#define ShellPrint      ConsolePrintUnicode
 
 typedef struct {
   LIST_ENTRY            CommandEntryList;
@@ -39,25 +42,6 @@ EFI_STATUS
 EFIAPI
 Shell (
   IN       UINTN           Timeout
-  );
-
-/**
-  Prints a message to the serial port.
-
-  If Format is NULL, then ASSERT().
-
-  @param  Format      Format string for the message to print.
-  @param  ...         Variable argument list whose contents are accessed
-                      based on the format string specified by Format.
-
-  @retval Number of characters written
-
-**/
-UINTN
-EFIAPI
-ShellPrint (
-  IN  CONST CHAR16 *Format,
-  ...
   );
 
 /**
