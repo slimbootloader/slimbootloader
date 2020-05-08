@@ -21,6 +21,7 @@ typedef VOID   (*REG_WRITE) (UINTN, UINT32);
 
 #define NUM_TYPE    2
 #define NUM_WIDTH   3
+#define REG_APM_CNT   0xB2
 
 const REG_WRITE  mRegWrite[NUM_TYPE][NUM_WIDTH] = {
   { (REG_WRITE) MmioWrite8, (REG_WRITE) MmioWrite16, (REG_WRITE) MmioWrite32 },
@@ -37,6 +38,23 @@ const UINT8 mWidthToIdx[NUM_WIDTH][2] = {
   { 1, WIDE16 },
   { 2, WIDE32 }
 };
+
+/**
+  Trigger payload software SMI
+
+  This function triggers software SMI. SMI number will be obtained
+  from SMM communication area.
+
+  @param[in]  SwSmiNumber   Software smi number to be triggered.
+
+**/
+VOID
+TriggerPayloadSwSmi (
+  IN UINT8  SwSmiNumber
+)
+{
+  IoWrite8(REG_APM_CNT, SwSmiNumber);
+}
 
 /**
   This function appends information in TSEG area
