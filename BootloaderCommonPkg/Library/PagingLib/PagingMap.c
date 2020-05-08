@@ -66,6 +66,10 @@ MapMemoryRange (
   UINTN          Alignment;
   UINT32         PageBits;
 
+  PageTable1G = 0;
+  PageTable2M = 0;
+  PageTable4K = 0;
+
   Attribute = IA32_PG_P | IA32_PG_RW | IA32_PG_AC;
 
   Alignment = Ranges[0].PageSize - 1;
