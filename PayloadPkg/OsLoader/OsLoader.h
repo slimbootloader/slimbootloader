@@ -62,6 +62,8 @@
 #include <ConfigDataCommonDefs.h>
 #include <Register/Intel/Msr/ArchitecturalMsr.h>
 #include "PreOsChecker.h"
+#include <Library/StringSupportLib.h>
+
 
 #define MKHI_BOOTLOADER_SEED_LEN       64
 
