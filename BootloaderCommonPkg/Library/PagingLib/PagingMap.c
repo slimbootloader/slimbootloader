@@ -122,6 +122,9 @@ MapMemoryRange (
 
     Address = PageBase;
     // Create 4KB pages and remap the CAR region into a different memory location
+    if (PageTable4K == NULL) {
+      return EFI_NOT_FOUND;
+    }
     for (Idx = 0; Idx < EntryNum; Idx++) {
       if ((Address >= Ranges[0].Start) && (Address <= Ranges[0].Limit)) {
         PageTable4K[Idx]   = Ranges[0].Mapping + (Attribute | IA32_PG_PD);
@@ -134,6 +137,9 @@ MapMemoryRange (
 
     // Split the 2MB page containing the CAR region into 4KB pages
     Idx = (UINT32) RShiftU64 (PageBase, PageBits);
+    if (PageTable2M == NULL) {
+      return EFI_NOT_FOUND;
+    }
     PageTable2M[Idx] = (UINTN)PageTable4K + Attribute;
 
     break;
@@ -142,6 +148,9 @@ MapMemoryRange (
     Address = Ranges[0].Mapping;
     Idx = (UINT32) RShiftU64 (PageBase, PageBits);
     End = (UINT32) RShiftU64 (Ranges[0].Limit + 1, PageBits);
+    if (PageTable1G == NULL) {
+      return EFI_NOT_FOUND;
+    }
     for (; Idx < End; Idx++) {
       PageTable1G[Idx] = Address + (Attribute | IA32_PG_PD);
       Address += SIZE_1GB;
