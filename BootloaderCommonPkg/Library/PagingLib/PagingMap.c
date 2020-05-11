@@ -66,10 +66,6 @@ MapMemoryRange (
   UINTN          Alignment;
   UINT32         PageBits;
 
-  PageTable1G = 0;
-  PageTable2M = 0;
-  PageTable4K = 0;
-
   Attribute = IA32_PG_P | IA32_PG_RW | IA32_PG_AC;
 
   Alignment = Ranges[0].PageSize - 1;
@@ -98,23 +94,10 @@ MapMemoryRange (
     }
     PageTable4K = (UINTN *)((UINTN)PageBuffer + PteOffset);
     PageTable2M = (UINTN *)((UINTN)PageBuffer + PdeOffset);
-    break;
-  case SIZE_1GB:
-    ASSERT (Ranges[0].Limit < SIZE_512GB);
-    PageBits    = GetPageShiftBits (PDP_PG_LVL);
-    PdpOffset   = 1 * EFI_PAGE_SIZE;
-    EntryNum    = 512;
-    PageTable1G = (UINTN *)((UINTN)PageBuffer + PdpOffset);
-    break;
-  default:
-    return EFI_INVALID_PARAMETER;
-  }
 
-  Alignment = (UINTN) LShiftU64 (1, PageBits) - 1;
-  PageBase  = Ranges[0].Start & ~Alignment;
+    Alignment = (UINTN) LShiftU64 (1, PageBits) - 1;
+    PageBase  = Ranges[0].Start & ~Alignment;
 
-  switch (Ranges[0].PageSize) {
-  case SIZE_4KB:
     // Check if the limit is in the same page
     if ((Ranges[0].Limit & ~Alignment) != PageBase) {
       return EFI_INVALID_PARAMETER;
@@ -135,9 +118,17 @@ MapMemoryRange (
     // Split the 2MB page containing the CAR region into 4KB pages
     Idx = (UINT32) RShiftU64 (PageBase, PageBits);
     PageTable2M[Idx] = (UINTN)PageTable4K + Attribute;
-
     break;
   case SIZE_1GB:
+    ASSERT (Ranges[0].Limit < SIZE_512GB);
+    PageBits    = GetPageShiftBits (PDP_PG_LVL);
+    PdpOffset   = 1 * EFI_PAGE_SIZE;
+    EntryNum    = 512;
+    PageTable1G = (UINTN *)((UINTN)PageBuffer + PdpOffset);
+
+    Alignment = (UINTN) LShiftU64 (1, PageBits) - 1;
+    PageBase  = Ranges[0].Start & ~Alignment;
+
     // Get the start and ending index into 1G table and add 1G entries
     Address = Ranges[0].Mapping;
     Idx = (UINT32) RShiftU64 (PageBase, PageBits);
@@ -146,10 +137,9 @@ MapMemoryRange (
       PageTable1G[Idx] = Address + (Attribute | IA32_PG_PD);
       Address += SIZE_1GB;
     }
-
     break;
-    default:
-      return EFI_INVALID_PARAMETER;
+  default:
+    return EFI_INVALID_PARAMETER;
   }
 
   return EFI_SUCCESS;
