@@ -34,7 +34,7 @@
     gCfgData.Reserved_$(1)                  |      * | 0x01 | 0x5A
     # !BSF NAME:{Boot Device type}
     # !BSF TYPE:{Combo}
-    # !BSF OPTION:{0:SATA, 1:SD, 2:EMMC, 3:UFS, 4:SPI, 5:USB, 6:NVME, 7:MAX}
+    # !BSF OPTION:{0:SATA, 1:SD, 2:EMMC, 3:UFS, 4:SPI, 5:USB, 6:NVME, 7:MEMORY}
     # !BSF HELP:{Specify boot device type}
     # !BSF ORDER:{0000.0000}
     # !BSF CONDITION:{$ImageType_$(1) < 0xFE}
