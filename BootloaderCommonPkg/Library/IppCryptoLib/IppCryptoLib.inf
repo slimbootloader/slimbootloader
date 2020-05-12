@@ -52,6 +52,7 @@
   $(IPP_PATH)/owndefs.h
   $(IPP_PATH)/pcpbnuarith.h
   $(IPP_PATH)/pcpbnu32misc.h
+  $(IPP_PATH)/pcprsa_pss_preproc.h
   $(IPP_PATH)/gsmodmethod.c
   $(IPP_PATH)/gsmodstuff.c
   $(IPP_PATH)/pcpbnca.c
