@@ -164,9 +164,9 @@ GetBootImageFromRawPartition (
     return Status;
   }
 
-  LoadedImage->IasImage.Addr = Buffer;
-  LoadedImage->IasImage.Size = (UINT32)ImageSize;
-  LoadedImage->IasImage.AllocType = ImageAllocateTypePage;
+  LoadedImage->ImageData.Addr = Buffer;
+  LoadedImage->ImageData.Size = (UINT32)ImageSize;
+  LoadedImage->ImageData.AllocType = ImageAllocateTypePage;
   if ( *((UINT32 *) Buffer) == CONTAINER_BOOT_SIGNATURE ) {
     LoadedImage->Flags      |= LOADED_IMAGE_CONTAINER;
   } else if ( *((UINT32 *) Buffer) == IAS_MAGIC_PATTERN ) {
@@ -248,9 +248,9 @@ GetBootImageFromFs (
   }
   DEBUG ((DEBUG_INFO, "Get file '%s' (size:0x%x) success.\n", FilePath, ImageSize));
 
-  LoadedImage->IasImage.Addr = Image;
-  LoadedImage->IasImage.Size = (UINT32)ImageSize;
-  LoadedImage->IasImage.AllocType = ImageAllocateTypePage;
+  LoadedImage->ImageData.Addr = Image;
+  LoadedImage->ImageData.Size = (UINT32)ImageSize;
+  LoadedImage->ImageData.AllocType = ImageAllocateTypePage;
   if ( *((UINT32 *) Image) == CONTAINER_BOOT_SIGNATURE ) {
     LoadedImage->Flags      |= LOADED_IMAGE_CONTAINER;
   } else if ( *((UINT32 *) Image) == IAS_MAGIC_PATTERN ) {
@@ -605,7 +605,7 @@ UnloadLoadedImage (
   //
   // Free Boot Image Data loaded from FS or RAW partition
   //
-  FreeImageData (&LoadedImage->IasImage);
+  FreeImageData (&LoadedImage->ImageData);
 
   //
   // Free Common Boot & Cmdline Data
