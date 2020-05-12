@@ -14,6 +14,7 @@
 #include <Library/HobLib.h>
 #include <InternalPciEnumerationLib.h>
 #include <Library/BootloaderCommonLib.h>
+#include "PciAri.h"
 
 #define  DEBUG_PCI_ENUM    0
 
@@ -458,6 +459,13 @@ CreatePciIoDevice (
   InitializeListHead (&PciIoDevice->ChildList);
   if (Pci != NULL) {
     CopyMem (& (PciIoDevice->Pci), Pci, sizeof (PCI_TYPE00));
+  }
+
+  PciIoDevice->IsPciExp = FALSE;
+  PciIoDevice->PciExpressCapabilityOffset = 0;
+  if (FeaturePcdGet (PcdAriSupport)) {
+    InitializePciExpCapability (PciIoDevice);
+    InitializeAri (PciIoDevice);
   }
 
   return PciIoDevice;
@@ -1102,6 +1110,15 @@ DumpResourceBar (
   } else {
     DEBUG ((DEBUG_INFO, "%aPCI(%02X,%02X,%02X)\n", Indent, (Address >> 20) & 0xFF, (Address >> 15) & 0x1F,
             (Address >> 12) & 0x07));
+    if (FeaturePcdGet (PcdAriSupport) && (PciIoDevice->AriCapabilityOffset != 0)) {
+      DEBUG ((DEBUG_INFO, "%aARI: forwarding enabled for PPB[%02x:%02x:%02x]\n",
+        Indent,
+        (PciIoDevice->Parent->Address >> 20) & 0xFF,
+        (PciIoDevice->Parent->Address >> 15) & 0x1F,
+        (PciIoDevice->Parent->Address >> 12) & 0x07));
+      DEBUG ((DEBUG_INFO, "%aARI: CapOffset = 0x%X\n",
+        Indent, PciIoDevice->AriCapabilityOffset));
+    }
   }
   for (Idx = 0; Idx < PCI_MAX_BAR; Idx++) {
     if (PciIoDevice->PciBar[Idx].Length == 0) {

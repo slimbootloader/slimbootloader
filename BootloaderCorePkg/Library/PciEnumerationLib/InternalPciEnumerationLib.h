@@ -86,6 +86,13 @@ struct _PCI_IO_DEVICE {
   PCI_BAR                                   PciBar[PCI_MAX_BAR];
 
   //
+  // ARI (Alternative Routing ID)
+  //
+  BOOLEAN                                   IsPciExp;
+  UINT8                                     PciExpressCapabilityOffset;
+  UINT32                                    AriCapabilityOffset;
+
+  //
   // The bridge device this pci device is subject to
   //
   PCI_IO_DEVICE                             *Parent;
