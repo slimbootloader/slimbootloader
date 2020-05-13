@@ -21,6 +21,10 @@
 
 [Sources]
   InternalPciEnumerationLib.h
+  PciCommand.h
+  PciAri.h
+  PciCommand.c
+  PciAri.c
   PciEnumerationLib.c
 
 [Packages]
@@ -46,3 +50,4 @@
   gPlatformModuleTokenSpaceGuid.PcdPciResourceMem32Base
   gPlatformModuleTokenSpaceGuid.PcdPciEnumPolicyInfo
   gPlatformModuleTokenSpaceGuid.PcdPciResourceMem64Base
+  gPlatformModuleTokenSpaceGuid.PcdAriSupport

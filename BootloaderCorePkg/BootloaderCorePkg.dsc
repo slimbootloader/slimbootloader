@@ -303,6 +303,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdPreOsCheckerEnabled | $(ENABLE_PRE_OS_CHECKER)
   gPlatformCommonLibTokenSpaceGuid.PcdDmaProtectionEnabled | $(ENABLE_DMA_PROTECTION)
   gPlatformCommonLibTokenSpaceGuid.PcdMultiUsbBootDeviceEnabled |  $(ENABLE_MULTI_USB_BOOT_DEV)
+  gPlatformModuleTokenSpaceGuid.PcdAriSupport             | $(SUPPORT_ARI)
 
 !ifdef $(S3_DEBUG)
   gPlatformModuleTokenSpaceGuid.PcdS3DebugEnabled         | $(S3_DEBUG)
