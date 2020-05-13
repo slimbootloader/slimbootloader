@@ -196,6 +196,9 @@ class BaseBoard(object):
         self.ENABLE_DMA_PROTECTION = 0
         self.ENABLE_MULTI_USB_BOOT_DEV = 0
 
+        self.SUPPORT_ARI           = 0
+        self.SUPPORT_SR_IOV        = 0
+
         self.BUILD_CSME_UPDATE_DRIVER    = 0
 
         self.CPU_MAX_LOGICAL_PROCESSOR_NUMBER = 16

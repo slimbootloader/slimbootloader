@@ -186,3 +186,4 @@
   gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled          | FALSE      | BOOLEAN | 0x2000020F
   gPlatformModuleTokenSpaceGuid.PcdLinuxPayloadEnabled    | FALSE      | BOOLEAN | 0x20000210
   gPlatformModuleTokenSpaceGuid.PcdAriSupport             | FALSE      | BOOLEAN | 0x20000211
+  gPlatformModuleTokenSpaceGuid.PcdSrIovSupport           | FALSE      | BOOLEAN | 0x20000212
