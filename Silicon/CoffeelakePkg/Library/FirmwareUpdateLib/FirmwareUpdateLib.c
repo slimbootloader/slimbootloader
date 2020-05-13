@@ -478,3 +478,51 @@ PlatformEndFirmwareUpdate (
 {
   return EFI_SUCCESS;
 }
+
+
+/**
+  Me Named Variable region lock
+
+  This function will do some command buffer parsing and check
+  for additional parameters
+
+  @param[in]  CmdDataBuf    Pointer to command buffer.
+  @param[in]  CmdDataSize   size of command data.
+
+  @retval  EFI_SUCCESS      NVar region lock successfully.
+  @retval  others           Error happening when updating.
+
+**/
+EFI_STATUS
+EFIAPI
+MeNvarRegionLock (
+  IN  CHAR8      *CmdDataBuf,
+  IN  UINT32     CmdDataSize
+  )
+{
+  return EFI_UNSUPPORTED;
+}
+
+
+/**
+  Flash descriptor region lock
+
+  This function will do some command buffer parsing and check
+  for additional parameters
+
+  @param[in]  CmdDataBuf    Pointer to command buffer.
+  @param[in]  CmdDataSize   size of command data.
+
+  @retval  EFI_SUCCESS      Flash descriptor lock successfully.
+  @retval  others           Error happening when updating.
+
+**/
+EFI_STATUS
+EFIAPI
+SetFlashDescriptorLock (
+  IN  CHAR8      *CmdDataBuf,
+  IN  UINT32     CmdDataSize
+  )
+{
+  return EFI_UNSUPPORTED;
+}

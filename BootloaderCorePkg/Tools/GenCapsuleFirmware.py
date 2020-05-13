@@ -448,6 +448,8 @@ def main():
         'MISC': '66030B7A-47D1-4958-B73D-00B44B9DD4B6',  # SBL  COMPONENT
         'CSME': '43AEF186-0CA5-4230-B1BD-193FB4627201',  # IFWI ME/CSME
         'CSMD': '4A467997-A909-4678-910C-E0FE1C9056EA',  # CSME Update driver
+        'CMDI': '9034cab1-4d19-4856-a3cd-f074263c4a4d',  # FLEX Command
+
     }
 
     def ValidateUnsignedInteger(Argument):
