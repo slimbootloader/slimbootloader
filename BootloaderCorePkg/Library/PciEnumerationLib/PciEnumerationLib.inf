@@ -23,8 +23,11 @@
   InternalPciEnumerationLib.h
   PciCommand.h
   PciAri.h
+  PciIov.h
+  InternalPciEnumerationLib.c
   PciCommand.c
   PciAri.c
+  PciIov.c
   PciEnumerationLib.c
 
 [Packages]
@@ -51,3 +54,4 @@
   gPlatformModuleTokenSpaceGuid.PcdPciEnumPolicyInfo
   gPlatformModuleTokenSpaceGuid.PcdPciResourceMem64Base
   gPlatformModuleTokenSpaceGuid.PcdAriSupport
+  gPlatformModuleTokenSpaceGuid.PcdSrIovSupport

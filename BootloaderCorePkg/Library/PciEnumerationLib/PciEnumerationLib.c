@@ -15,24 +15,9 @@
 #include <InternalPciEnumerationLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include "PciAri.h"
+#include "PciIov.h"
 
 #define  DEBUG_PCI_ENUM    0
-
-typedef enum {
-  BusScanTypeList     = 0,
-  BusScanTypeRange    = 1,
-  BusScanTypeInvalid  = 0xFF
-} BUS_SCAN_TYPE;
-
-typedef struct {
-  UINT8           DowngradeIo32;
-  UINT8           DowngradeMem64;
-  UINT8           DowngradePMem64;
-  UINT8           Reserved;
-  UINT8           BusScanType;
-  UINT8           NumOfBus;
-  UINT8           BusScanItems[0];
-} PCI_ENUM_POLICY_INFO;
 
 UINT8   *mPoolPtr;
 
@@ -127,53 +112,6 @@ PciDevicePresent (
     return EFI_SUCCESS;
   }
 }
-
-/**
-  Check whether the bar is existed or not.
-
-  @param PciIoDevice       A pointer to the PCI_IO_DEVICE.
-  @param Offset            The offset.
-  @param BarLengthValue    The bar length value returned.
-  @param OriginalBarValue  The original bar value returned.
-
-  @retval EFI_NOT_FOUND    The bar doesn't exist.
-  @retval EFI_SUCCESS      The bar exist.
-
-**/
-EFI_STATUS
-BarExisted (
-  IN  PCI_IO_DEVICE *PciIoDevice,
-  IN  UINTN         Offset,
-  OUT UINT32        *BarLengthValue,
-  OUT UINT32        *OriginalBarValue
-  )
-{
-  UINT32              OriginalValue;
-  UINT32              Value;
-
-  //
-  // Preserve the original value
-  //
-  OriginalValue = PciExpressRead32 (PciIoDevice->Address + Offset);
-  PciExpressWrite32 (PciIoDevice->Address + Offset, 0xFFFFFFFF);
-  Value = PciExpressRead32 (PciIoDevice->Address + Offset);
-  PciExpressWrite32 (PciIoDevice->Address + Offset, OriginalValue);
-
-  if (BarLengthValue != NULL) {
-    *BarLengthValue = Value;
-  }
-
-  if (OriginalBarValue != NULL) {
-    *OriginalBarValue = OriginalValue;
-  }
-
-  if (Value == 0) {
-    return EFI_NOT_FOUND;
-  } else {
-    return EFI_SUCCESS;
-  }
-}
-
 
 /**
   Parse PCI bar information and fill them into PCI device instance.
@@ -463,9 +401,14 @@ CreatePciIoDevice (
 
   PciIoDevice->IsPciExp = FALSE;
   PciIoDevice->PciExpressCapabilityOffset = 0;
-  if (FeaturePcdGet (PcdAriSupport)) {
+  if (FeaturePcdGet (PcdAriSupport) || FeaturePcdGet (PcdSrIovSupport)) {
     InitializePciExpCapability (PciIoDevice);
+  }
+  if (FeaturePcdGet (PcdAriSupport)) {
     InitializeAri (PciIoDevice);
+  }
+  if (FeaturePcdGet (PcdSrIovSupport)) {
+    InitializeSrIov (PciIoDevice, Bus, Device, Func);
   }
 
   return PciIoDevice;
@@ -516,6 +459,17 @@ GatherDeviceInfo (
   //
   for (Offset = 0x10, BarIndex = 0; Offset <= 0x24 && BarIndex < PCI_MAX_BAR; BarIndex++) {
     Offset = PciParseBar (PciIoDevice, Offset, BarIndex);
+  }
+
+  //
+  // Parse the SR-IOV VF bars
+  //
+  if (PcdGetBool (PcdSrIovSupport) && PciIoDevice->SrIovCapabilityOffset != 0) {
+    for (Offset = PciIoDevice->SrIovCapabilityOffset + EFI_PCIE_CAPABILITY_ID_SRIOV_BAR0, BarIndex = 0;
+         Offset <= PciIoDevice->SrIovCapabilityOffset + EFI_PCIE_CAPABILITY_ID_SRIOV_BAR5 && BarIndex < PCI_MAX_BAR;
+         BarIndex++) {
+      Offset = PciIovParseVfBar (PciIoDevice, Offset, BarIndex);
+    }
   }
 
   PciExpressWrite16 (PCI_EXPRESS_LIB_ADDRESS (Bus, Device, Func, PCI_COMMAND_OFFSET), Value);
@@ -705,6 +659,7 @@ PciScanBus (
   UINT32                            Address;
   UINT8                             SecondBus;
   UINT16                            Register;
+  UINT16                            TempReservedBusNum;
   PCI_IO_DEVICE                     *PciDevice;
 
   SecondBus       = 0;
@@ -712,7 +667,7 @@ PciScanBus (
   PciDevice       = NULL;
 
   for (Device = 0; Device <= PCI_MAX_DEVICE; Device++) {
-    for (Func = 0; Func <= PCI_MAX_FUNC; Func++) {
+    for (Func = 0, TempReservedBusNum = 0; Func <= PCI_MAX_FUNC; Func++) {
 
       //
       // Check to see whether a pci device is present
@@ -780,6 +735,17 @@ PciScanBus (
         //
         Address = PCI_EXPRESS_LIB_ADDRESS (StartBusNumber, Device, Func, PCI_BRIDGE_SUBORDINATE_BUS_REGISTER_OFFSET);
         PciExpressWrite8 (Address, *SubBusNumber);
+      } else {
+        //
+        // If PCI device has SR-IOV capability, check bus reservation for PCI IOV
+        // Go through each function, just reserve the MAX ReservedBusNum for one device
+        //
+        if (FeaturePcdGet (PcdSrIovSupport) && PciDevice->SrIovCapabilityOffset != 0) {
+          if (TempReservedBusNum < PciDevice->ReservedBusNum) {
+            *SubBusNumber += (UINT8)(PciDevice->ReservedBusNum - TempReservedBusNum);
+            TempReservedBusNum = PciDevice->ReservedBusNum;
+          }
+        }
       }
 
       if (Func == 0 && !IS_PCI_MULTI_FUNC (&Pci)) {
@@ -828,33 +794,43 @@ ComparePciBarRes (
 /**
  Program the Base address register with the base address of PCI devices.
 
- @param PciIoDevice  pointer to PCI IO device.
- @param BarIdx       BAR index to program the address.
+ @param[in] PciIoDevice  pointer to PCI IO device.
+ @param[in] BarIdx       BAR index to program the address.
+ @param[in] Virtual      To program virtual function device BAR
+
  **/
 VOID
 ProgramBar (
   IN PCI_IO_DEVICE         *PciIoDevice,
-  IN UINT32                              BarIdx
+  IN UINT32                 BarIdx,
+  IN BOOLEAN                Virtual
   )
 {
   PCI_BAR_TYPE                        BarType;
   UINT64                              Address64;
+  PCI_BAR                            *PciBar;
 
-  BarType = PciIoDevice->PciBar[BarIdx].OrgBarType;
+  if (FeaturePcdGet (PcdSrIovSupport) && Virtual) {
+    PciBar = PciIoDevice->VfPciBar;
+  } else {
+    PciBar = PciIoDevice->PciBar;
+  }
+
+  BarType = PciBar[BarIdx].OrgBarType;
   switch (BarType) {
   case PciBarTypeIo16:
   case PciBarTypeIo32:
   case PciBarTypeMem32:
   case PciBarTypePMem32:
-    PciExpressWrite32 (PciIoDevice->Address + PciIoDevice->PciBar[BarIdx].Offset,
-                       (UINT32)PciIoDevice->PciBar[BarIdx].BaseAddress);
+    PciExpressWrite32 (PciIoDevice->Address + PciBar[BarIdx].Offset,
+                       (UINT32)PciBar[BarIdx].BaseAddress);
     break;
 
   case PciBarTypeMem64:
   case PciBarTypePMem64:
-    Address64 = PciIoDevice->PciBar[BarIdx].BaseAddress;
-    PciExpressWrite32 (PciIoDevice->Address + PciIoDevice->PciBar[BarIdx].Offset, (UINT32)Address64);
-    PciExpressWrite32 (PciIoDevice->Address + PciIoDevice->PciBar[BarIdx].Offset + 4, (UINT32)RShiftU64 (Address64, 32));
+    Address64 = PciBar[BarIdx].BaseAddress;
+    PciExpressWrite32 (PciIoDevice->Address + PciBar[BarIdx].Offset, (UINT32)Address64);
+    PciExpressWrite32 (PciIoDevice->Address + PciBar[BarIdx].Offset + 4, (UINT32)RShiftU64 (Address64, 32));
     break;
 
   default:
@@ -950,14 +926,20 @@ ProgramResource (
   while (CurrentLink != NULL && CurrentLink != &Parent->ChildList) {
     PciIoDevice = PCI_IO_DEVICE_FROM_LINK (CurrentLink);
     for (Idx = 0; Idx < PCI_MAX_BAR; Idx++) {
-      if (PciIoDevice->PciBar[Idx].Length && (PciIoDevice->PciBar[Idx].BarType == BarType)) {
+      if ((PciIoDevice->PciBar[Idx].Length > 0) && (PciIoDevice->PciBar[Idx].BarType == BarType)) {
         PciIoDevice->PciBar[Idx].BaseAddress += PciIoDevice->Parent->PciBar[BarType - 1].BaseAddress;
         if (PciIoDevice->PciBar[Idx].Offset >= 0x100) {
           // Bridge
           ProgramPpbApperture (PciIoDevice, Idx);
         } else {
           // Device
-          ProgramBar (PciIoDevice, Idx);
+          ProgramBar (PciIoDevice, Idx, FALSE);
+        }
+      }
+      if (FeaturePcdGet (PcdSrIovSupport)) {
+        if ((PciIoDevice->VfPciBar[Idx].Length > 0) && (PciIoDevice->VfPciBar[Idx].BarType == BarType)) {
+          PciIoDevice->VfPciBar[Idx].BaseAddress += PciIoDevice->Parent->PciBar[BarType - 1].BaseAddress;
+          ProgramBar (PciIoDevice, Idx, TRUE);
         }
       }
     }
@@ -1012,6 +994,13 @@ CalculateResource (
         PciBarRes = (PCI_BAR_RESOURCE *)PciAllocatePool (sizeof (PCI_BAR_RESOURCE));
         PciBarRes->PciBar = &PciIoDevice->PciBar[Idx];
         PerformInsertionSortList (&ParentRes.Link, &PciBarRes->Link, ComparePciBarRes);
+      }
+      if (FeaturePcdGet (PcdSrIovSupport)) {
+        if (PciIoDevice->VfPciBar[Idx].BarType == BarType) {
+          PciBarRes = (PCI_BAR_RESOURCE *)PciAllocatePool (sizeof (PCI_BAR_RESOURCE));
+          PciBarRes->PciBar = &PciIoDevice->VfPciBar[Idx];
+          PerformInsertionSortList (&ParentRes.Link, &PciBarRes->Link, ComparePciBarRes);
+        }
       }
     }
     CurrentLink = CurrentLink->ForwardLink;
@@ -1130,6 +1119,19 @@ DumpResourceBar (
     DEBUG ((DEBUG_INFO, "  BAR[%d].LEN = %016lX",   Idx, PciIoDevice->PciBar[Idx].Length));
     DEBUG ((DEBUG_INFO, "  BAR[%d].ALN = %016lX\n", Idx, PciIoDevice->PciBar[Idx].Alignment));
   }
+  if (FeaturePcdGet (PcdSrIovSupport)) {
+    for (Idx = 0; Idx < PCI_MAX_BAR; Idx++) {
+      if (PciIoDevice->VfPciBar[Idx].Length == 0) {
+        continue;
+      }
+      DEBUG ((DEBUG_INFO, "%a  VFBAR[%d].TYP = %d\n", Indent,  Idx, PciIoDevice->VfPciBar[Idx].BarType));
+      DEBUG ((DEBUG_INFO, "%a  VFBAR[%d].OFF = 0x%02X\n", Indent,  Idx, PciIoDevice->VfPciBar[Idx].Offset));
+      DEBUG ((DEBUG_INFO, "%a  VFBAR[%d].BAS = %016lX", Indent,  Idx, PciIoDevice->VfPciBar[Idx].BaseAddress));
+      DEBUG ((DEBUG_INFO, "  VFBAR[%d].LEN = %016lX",   Idx, PciIoDevice->VfPciBar[Idx].Length));
+      DEBUG ((DEBUG_INFO, "  VFBAR[%d].ALN = %016lX\n", Idx, PciIoDevice->VfPciBar[Idx].Alignment));
+    }
+  }
+
   Indent[ (Level << 1) + 1] = ' ';
 }
 
