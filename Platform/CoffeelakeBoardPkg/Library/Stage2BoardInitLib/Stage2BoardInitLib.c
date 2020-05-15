@@ -62,6 +62,7 @@
 #include <Library/SmbiosInitLib.h>
 #include <IndustryStandard/SmBios.h>
 #include <VerInfo.h>
+#include <Library/VtdPmrLib.h>
 #include <Library/S3SaveRestoreLib.h>
 #include "GpioTables.h"
 #include <Library/PchSpiLib.h>
@@ -90,7 +91,6 @@
 #define GPIO_CFG_PIN_TO_PAD(A) \
   ((UINT32) (((A).PinNum) | (((A).Group) << 16)))
 
-FVID_TABLE                  *mFvidPointer    = NULL;
 ///
 /// Overcurrent pins, the values match the setting of EDS, please refer to EDS for more details
 ///
@@ -246,7 +246,7 @@ STATIC SMMBASE_INFO mSmmBaseInfo = {
 
 STATIC S3_SAVE_REG mS3SaveReg = {
   { BL_PLD_COMM_SIG, S3_SAVE_REG_COMM_ID, 1, 0 },
-  { { IO, WIDE32, { 0, 0}, (ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN), 0x00000000 } }
+  { { REG_TYPE_IO, WIDE32, { 0, 0}, (ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN), 0x00000000 } }
 };
 
 UINT8
@@ -299,273 +299,124 @@ ClearSmi (
   IoWrite32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN + 4), SmiSts);
 }
 
+/**
+  Calculate relative power
 
-//
-// Update ACPI PerfomanceStates tables
-//
+  @param[in]  BaseRatio     Maximum bus ratio
+  @param[in]  CurrRatio     Current bus ratio to get relative power
+  @param[in]  TdpMilliWatt  Maximum power in mW
+
+  @retval                   Calculated power value in mW
+
+**/
+UINT32
+EFIAPI
+CalculateRelativePower (
+  IN  UINT16  BaseRatio,
+  IN  UINT16  CurrRatio,
+  IN  UINT32  TdpMilliWatt
+  )
+{
+  UINT64  Power1;
+  UINT64  Power2;
+  UINT32  BasePower;
+
+  ASSERT (CurrRatio <= BaseRatio);
+
+  BasePower = (TdpMilliWatt / 1000);
+
+  Power1 = (110000 - ((BaseRatio - CurrRatio) * 625));
+  Power1 = DivU64x32 (Power1, 11);
+  Power1 = MultU64x64 (Power1, Power1);
+
+  Power2 = ((CurrRatio * 100) / BaseRatio);
+  Power2 = DivU64x32 (MultU64x32 (MultU64x64 (Power2, Power1), BasePower), 10000000);
+
+  return (UINT32)Power2;
+}
 
 /**
-  Patch the native _PSS package with the EIST values
-  Uses ratio/VID values from the FVID table to fix up the control values in the _PSS.
+  Update ACPI CPU P-state PSS table
 
-  (1) Find _PSS package:
-    (1.1) Find the _PR_CPU0 scope.
-    (1.2) Save a pointer to the package length.
-    (1.3) Find the _PSS AML name object.
-  (2) Resize the _PSS package.
-  (3) Fix up the _PSS package entries
-    (3.1) Check Turbo mode support.
-    (3.2) Check Dynamic FSB support.
-  (4) Fix up the Processor block and \_PR_CPU0 Scope length.
-  (5) Update SSDT Header with new length.
+  @param[in]  PssTbl        Pointer to Cpu0Ist table
+  @param[in]  GlobalNvs     Pointer to platform global NVS data
 
-  @retval EFI_SUCCESS   - on success
-  @retval EFI_NOT_FOUND - if _PR_.CPU0 scope is not foud in the ACPI tables
+  @retval EFI_SUCCESS       Updated PSS successfully
+  @retval Ohteres           Errors during updating PSS table
+
 **/
 EFI_STATUS
 PatchCpuIstTable (
-  EFI_ACPI_DESCRIPTION_HEADER   *Table,
-  IN GLOBAL_NVS_AREA            *GlobalNvs
+  IN  EFI_ACPI_DESCRIPTION_HEADER   *Table,
+  IN  GLOBAL_NVS_AREA               *GlobalNvs
   )
 {
-  UINT8              *CurrPtr;
-  UINT8              *EndOfTable;
-  UINT8              Index;
-  UINT16             NewPackageLength;
-  UINT16             LpssMaxPackageLength;
-  UINT16             TpssMaxPackageLength;
-  UINT16             Temp;
-  UINT16             *PackageLength;
-  UINT16             *ScopePackageLengthPtr;
-  UINT32             *Signature;
-  PSS_PACKAGE_LAYOUT *PssPackage;
-  MSR_REGISTER        TempMsr;
-  UINT16              MaximumEfficiencyRatio;
-  UINT16              MaximumNonTurboRatio;
-  UINT16              PnPercent;
-  UINT16              NumberOfStates;
-  CPU_NVS_AREA       *CpuNvs;
+  UINT8               *Ptr;
+  UINT8               *End;
+  UINT8               *Lpss;
+  UINT8               *Tpss;
+  UINT16              PackageTdp;
+  UINT32              PackageTdpWatt;
+  UINT8               ProcessorPowerUnit;
+  MSR_REGISTER        MsrValue;
+  PSS_PARAMS          PssParams;
 
-  CpuNvs      = (CPU_NVS_AREA *) &GlobalNvs->CpuNvs;
-
-  ScopePackageLengthPtr = NULL;
-  PssPackage            = NULL;
-
-  //
-  // Get Maximum Efficiency bus ratio (LFM) from Platform Info MSR Bits[47:40]
-  // Get Maximum Non Turbo bus ratio from Platform Info MSR Bits[15:8]
-  //
-  TempMsr.Qword = AsmReadMsr64 (MSR_PLATFORM_INFO);
-  MaximumEfficiencyRatio = TempMsr.Bytes.SixthByte;
-  MaximumNonTurboRatio = TempMsr.Bytes.SecondByte;
-  NumberOfStates = mFvidPointer[0].FvidHeader.EistStates;
-
-  DEBUG ((DEBUG_INFO, "FVID number of states: %d\n", NumberOfStates));
-
-  ///
-  /// Calculate new package length
-  ///
-  NewPackageLength      = Temp = (UINT16) (NumberOfStates * sizeof (PSS_PACKAGE_LAYOUT) + 3);
-  LpssMaxPackageLength  = (UINT16) (LPSS_FVID_MAX_STATES * sizeof (PSS_PACKAGE_LAYOUT) + 3);
-  TpssMaxPackageLength  = (UINT16) (TPSS_FVID_MAX_STATES * sizeof (PSS_PACKAGE_LAYOUT) + 3);
-  ///
-  /// Locate the SSDT package in the IST table
-  ///
-  CurrPtr     = (UINT8 *) Table;
-  EndOfTable  = (UINT8 *) (CurrPtr + Table->Length);
-  for (CurrPtr = (UINT8 *) Table; CurrPtr <= EndOfTable; CurrPtr++) {
-    Signature = (UINT32 *) (CurrPtr + 1);
-    ///
-    /// If we find the _SB_PR00 scope, save a pointer to the package length
-    ///
-    if ((*CurrPtr == AML_SCOPE_OP) &&
-        (*(Signature + 1) == SIGNATURE_32 ('_', 'S', 'B', '_')) &&
-        (*(Signature + 2) == SIGNATURE_32 ('P', 'R', '0', '0'))
-        ) {
-      ScopePackageLengthPtr = (UINT16 *) (CurrPtr + 1);
+  Ptr = (UINT8 *)Table;
+  End = (UINT8 *)Table+ Table->Length;
+  for (Lpss = NULL, Tpss = NULL; Ptr < End; Ptr++) {
+    if ((Lpss == NULL) && (*(UINT32 *)Ptr == SIGNATURE_32 ('L', 'P', 'S', 'S')) && (*(Ptr - 1) == AML_NAME_OP)) {
+      Lpss = Ptr;
     }
-    ///
-    /// Patch the LPSS package with 16 P-states for _PSS Method
-    ///
-    if ((*CurrPtr == AML_NAME_OP) && (*Signature == SIGNATURE_32 ('L', 'P', 'S', 'S'))) {
-      /*
-        Check table dimensions.
-        PSS package reserve space for LPSS_FVID_MAX_STATES number of P-states so check if the
-        current number of P- states is more than LPSS_FVID_MAX_STATES. Also need to update the SSDT contents
-        if the current number of P-states is less than LPSS_FVID_MAX_STATES.
-      */
-      PackageLength  = (UINT16 *) (CurrPtr + 6);
-
-      if (NumberOfStates > LPSS_FVID_MAX_STATES) {
-        *(CurrPtr + 8)  = (UINT8) LPSS_FVID_MAX_STATES;
-        ///
-        /// Update the Package length in AML package length format
-        ///
-        *PackageLength = ((LpssMaxPackageLength & 0x0F) | 0x40) | ((LpssMaxPackageLength << 4) & 0x0FF00);
-      } else {
-        *(CurrPtr + 8)  = (UINT8) NumberOfStates;
-        ///
-        /// Update the Package length in AML package length format
-        ///
-        *PackageLength = ((NewPackageLength & 0x0F) | 0x40) | ((Temp << 4) & 0x0FF00);
-        ///
-        /// Move SSDT contents
-        ///
-        CopyMem ((CurrPtr + NewPackageLength), (CurrPtr + LpssMaxPackageLength), EndOfTable - (CurrPtr + LpssMaxPackageLength));
-
-        ///
-        /// Save the new end of the SSDT
-        ///
-        EndOfTable = EndOfTable - (LpssMaxPackageLength - NewPackageLength);
-      }
-
-      PssPackage = (PSS_PACKAGE_LAYOUT *) (CurrPtr + 9);
-      if (NumberOfStates > LPSS_FVID_MAX_STATES) {
-        for (Index = 1; Index <= LPSS_FVID_MAX_STATES; Index++) {
-          ///
-          /// Update the _PSS table. If Turbo mode is supported, add one to the Max Non-Turbo frequency
-          ///
-          if ((CpuNvs->PpmFlags & PPM_TURBO) && (Index == 1)) {
-            PssPackage->CoreFrequency = (UINT32) ((mFvidPointer[Index + 1].FvidState.Limit16BusRatio)* 100) + 1;
-          } else if (mFvidPointer[Index].FvidState.Limit16BusRatio < MaximumEfficiencyRatio) {
-            //
-            // If cTDP Down Ratio == LFM, set it to 1% lower than LFM.
-            //
-            PnPercent = (MaximumEfficiencyRatio * 100) / MaximumNonTurboRatio;
-            PssPackage->CoreFrequency = (MaximumNonTurboRatio * (PnPercent - 1)); // Simplified Calculation.
-          } else {
-            PssPackage->CoreFrequency = (UINT32) (mFvidPointer[Index].FvidState.Limit16BusRatio) * 100;
-          }
-          PssPackage->Power = (UINT32) mFvidPointer[Index].FvidState.Limit16Power;
-          ///
-          /// If it's PSS table, Control is the PERF_CTL value.
-          /// Status entry is the same as control entry.
-          /// TransLatency uses 10
-          ///
-          PssPackage->TransLatency  = NATIVE_PSTATE_LATENCY;
-          PssPackage->Control       = (UINT32) LShiftU64 (mFvidPointer[Index].FvidState.Limit16BusRatio, 8);
-          //
-          // Ensure any future OS would not look for the IA32_PERF_STATUS MSR to check if the value matches
-          //
-          if (mFvidPointer[Index].FvidState.Limit16BusRatio < MaximumEfficiencyRatio) {
-            PssPackage->Status        = (UINT32) LShiftU64 (MaximumEfficiencyRatio, 8);
-          } else {
-            PssPackage->Status        = (UINT32) LShiftU64 (mFvidPointer[Index].FvidState.Limit16BusRatio, 8);
-          }
-          PssPackage->BmLatency     = PSTATE_BM_LATENCY;
-          PssPackage++;
-        }
-      } else {
-        for (Index = 1; Index <= NumberOfStates; Index++) {
-          ///
-          /// Update the _PSS table. If Turbo mode is supported, add one to the Max Non-Turbo frequency
-          ///
-          if ((CpuNvs->PpmFlags & PPM_TURBO) && (Index == 1)) {
-            PssPackage->CoreFrequency = (UINT32) ((mFvidPointer[Index + 1].FvidState.BusRatio)* 100) + 1;
-          } else if (mFvidPointer[Index].FvidState.BusRatio < MaximumEfficiencyRatio) {
-            //
-            // If cTDP Down Ratio == LFM, set it to 1% lower than LFM.
-            //
-            PnPercent = (MaximumEfficiencyRatio * 100) / MaximumNonTurboRatio;
-            PssPackage->CoreFrequency = (MaximumNonTurboRatio * (PnPercent - 1)); // Simplified Calculation.
-          } else {
-            PssPackage->CoreFrequency = (UINT32) (mFvidPointer[Index].FvidState.BusRatio) * 100;
-          }
-          PssPackage->Power = (UINT32) mFvidPointer[Index].FvidState.Power;
-          ///
-          /// If it's PSS table, Control is the PERF_CTL value.
-          /// Status entry is the same as control entry.
-          /// TransLatency uses 10
-          ///
-          PssPackage->TransLatency  = NATIVE_PSTATE_LATENCY;
-          PssPackage->Control       = (UINT32) LShiftU64 (mFvidPointer[Index].FvidState.BusRatio, 8);
-          //
-          // Ensure any future OS would not look for the IA32_PERF_STATUS MSR to check if the value matches
-          //
-          if (mFvidPointer[Index].FvidState.BusRatio < MaximumEfficiencyRatio) {
-            PssPackage->Status        = (UINT32) LShiftU64 (MaximumEfficiencyRatio, 8);
-          } else {
-            PssPackage->Status        = (UINT32) LShiftU64 (mFvidPointer[Index].FvidState.BusRatio, 8);
-          }
-          PssPackage->BmLatency     = PSTATE_BM_LATENCY;
-          PssPackage++;
-        }
-      }
+    if ((Tpss == NULL) && (*(UINT32 *)Ptr == SIGNATURE_32 ('T', 'P', 'S', 'S')) && (*(Ptr - 1) == AML_NAME_OP)) {
+      Tpss = Ptr;
     }
 
-    ///
-    /// Patch the TPSS package with no limit P-states for _PSS Method
-    ///
-    if ((*CurrPtr == AML_NAME_OP) && (*Signature == SIGNATURE_32 ('T', 'P', 'S', 'S'))) {
-      ASSERT (NumberOfStates <= TPSS_FVID_MAX_STATES);
-      if (NumberOfStates <= TPSS_FVID_MAX_STATES) {
-
-        *(CurrPtr + 8)  = (UINT8) NumberOfStates;
-        PackageLength   = (UINT16 *) (CurrPtr + 6);
-        ///
-        /// Update the Package length in AML package length format
-        ///
-        *PackageLength = ((NewPackageLength & 0x0F) | 0x40) | ((Temp << 4) & 0x0FF00);
-        ///
-        /// Move SSDT contents
-        ///
-        CopyMem ((CurrPtr + NewPackageLength), (CurrPtr + TpssMaxPackageLength), EndOfTable - (CurrPtr + TpssMaxPackageLength));
-        ///
-        /// Save the new end of the SSDT
-        ///
-        EndOfTable = EndOfTable - (TpssMaxPackageLength - NewPackageLength);
-      }
-
-      PssPackage = (PSS_PACKAGE_LAYOUT *) (CurrPtr + 9);
-      for (Index = 1; Index <= NumberOfStates; Index++) {
-        ///
-        /// Update the _PSS table. If Turbo mode is supported, add one to the Max Non-Turbo frequency
-        ///
-        if ((CpuNvs->PpmFlags & PPM_TURBO) && (Index == 1)) {
-          PssPackage->CoreFrequency = (UINT32) ((mFvidPointer[Index + 1].FvidState.BusRatio)* 100) + 1;
-        } else if (mFvidPointer[Index].FvidState.BusRatio < MaximumEfficiencyRatio) {
-          //
-          // If cTDP Down Ratio == LFM, set it to 1% lower than LFM.
-          //
-          PnPercent = (MaximumEfficiencyRatio * 100) / MaximumNonTurboRatio;
-          PssPackage->CoreFrequency = (MaximumNonTurboRatio * (PnPercent - 1)); // Simplified Calculation.
-        } else {
-          PssPackage->CoreFrequency = (UINT32) (mFvidPointer[Index].FvidState.BusRatio) * 100;
-        }
-        PssPackage->Power = (UINT32) mFvidPointer[Index].FvidState.Power;
-        ///
-        /// If it's PSS table, Control is the PERF_CTL value.
-        /// Status entry is the same as control entry.
-        /// TransLatency uses 10
-        ///
-        PssPackage->TransLatency  = NATIVE_PSTATE_LATENCY;
-        PssPackage->Control       = (UINT32) LShiftU64 (mFvidPointer[Index].FvidState.BusRatio, 8);
-        //
-        // Ensure any future OS would not look for the IA32_PERF_STATUS MSR to check if the value matches
-        //
-        if (mFvidPointer[Index].FvidState.BusRatio < MaximumEfficiencyRatio) {
-          PssPackage->Status        = (UINT32) LShiftU64 (MaximumEfficiencyRatio, 8);
-        } else {
-          PssPackage->Status        = (UINT32) LShiftU64 (mFvidPointer[Index].FvidState.BusRatio, 8);
-        }
-        PssPackage->BmLatency     = PSTATE_BM_LATENCY;
-        PssPackage++;
-      }
+    if ((Lpss != NULL) && (Tpss != NULL)) {
+      break;
     }
   }
 
-  ASSERT (ScopePackageLengthPtr != NULL);
-  if (ScopePackageLengthPtr == NULL) {
+  if ((Lpss == NULL) && (Tpss == NULL)) {
+    DEBUG ((DEBUG_INFO, "Failed to find LPSS/TPSS in Cpu0Ist\n"));
     return EFI_NOT_FOUND;
   }
 
-  ///
-  /// Update the Package length in AML package length format
-  ///
-  CurrPtr                 = (UINT8 *) ScopePackageLengthPtr;
-  NewPackageLength        = Temp = (UINT16) (EndOfTable - CurrPtr);
-  *ScopePackageLengthPtr  = ((NewPackageLength & 0x0F) | 0x40) | ((Temp << 4) & 0x0FF00);
-  Table->Length   = (UINT32) (EndOfTable - (UINT8 *) Table);
+  MsrValue.Qword = AsmReadMsr64 (MSR_PLATFORM_INFO);
+  PssParams.MaxBusRatio = MsrValue.Bytes.SecondByte;
+  PssParams.MinBusRatio = MsrValue.Bytes.SixthByte;
+  if ((GlobalNvs->CpuNvs.PpmFlags & PPM_TURBO) != 0) {
+    MsrValue.Qword = AsmReadMsr64 (MSR_TURBO_RATIO_LIMIT);
+    PssParams.TurboBusRatio = (UINT8)(MsrValue.Dwords.Low & 0xFF);
+  } else {
+    PssParams.TurboBusRatio = 0;
+  }
+
+  MsrValue.Qword = AsmReadMsr64 (MSR_PACKAGE_POWER_SKU_UNIT);
+  ProcessorPowerUnit = (UINT8)(MsrValue.Bytes.FirstByte & 0xF);
+  if (ProcessorPowerUnit == 0) {
+    ProcessorPowerUnit = 1;
+  } else {
+    ProcessorPowerUnit = (UINT8) LShiftU64 (2, (ProcessorPowerUnit - 1));
+  }
+
+  MsrValue.Qword = AsmReadMsr64 (MSR_PACKAGE_POWER_LIMIT);
+  PackageTdp = (UINT16)(MsrValue.Dwords.Low & 0x7FFF);
+  PackageTdpWatt = (UINT32)DivU64x32 (PackageTdp, ProcessorPowerUnit);
+
+  PssParams.PackageMaxPower = (PackageTdpWatt * 1000);
+  PssParams.PackageMinPower = CalculateRelativePower (PssParams.MaxBusRatio,
+                                                      PssParams.MinBusRatio,
+                                                      PssParams.PackageMaxPower);
+  PssParams.GetRelativePower = CalculateRelativePower;
+  PssParams.DoListAll = FALSE;
+
+  if (Lpss != NULL) {
+    AcpiPatchPssTable (Lpss, &PssParams);
+  }
+
+  if (Tpss != NULL) {
+    AcpiPatchPssTable (Tpss, &PssParams);
+  }
 
   return EFI_SUCCESS;
 }
@@ -656,7 +507,7 @@ UpdateBlRsvdRegion ()
     return Status;
   }
 
-  CopyMem (&FwUpdStatus, (VOID *)RsvdBase, sizeof(FW_UPDATE_STATUS));
+  CopyMem (&FwUpdStatus, (VOID *)(UINTN)RsvdBase, sizeof(FW_UPDATE_STATUS));
 
   if (FwUpdStatus.StateMachine == FW_UPDATE_SM_PART_AB) {
     Status = SpiFlashErase (FlashRegionBios, FlashMap->RomSize - (~RsvdBase + 1), RsvdSize);
@@ -688,7 +539,7 @@ ClearFspHob (
   }
 
   HandOffHob = (EFI_HOB_HANDOFF_INFO_TABLE  *) LdrGlobal->FspHobList;
-  Length     = (UINT8 *) (UINTN) HandOffHob->EfiEndOfHobList - (UINT8 *)HandOffHob;
+  Length     = (UINT32)((UINTN)HandOffHob->EfiEndOfHobList - (UINTN)HandOffHob);
   ZeroMem (HandOffHob, Length);
   LdrGlobal->FspHobList = NULL;
 }
@@ -970,10 +821,13 @@ GpioInit (
   GpioTable  = (UINT8 *)AllocateTemporaryMemory (0);  //allocate new buffer
   GpioCfgDataBuffer = GpioTable;
 
-  if (IsPchH()) {
+  ChipsetId = CNL_UNKNOWN_CHIPSET_ID;
+  if (IsPchH ()) {
     ChipsetId = CNL_H_CHIPSET_ID;
-  } else if (IsPchLp()) {
+  } else if (IsPchLp ()) {
     ChipsetId = CNL_LP_CHIPSET_ID;
+  } else {
+    CpuHalt (NULL);
   }
 
   for (Index = 0; Index  < GpioCfgHdr->GpioItemCount; Index++) {
@@ -1053,12 +907,49 @@ UpdatePayloadId (
 }
 
 /**
+  Build VT-d information to prepare PMR program
+
+**/
+STATIC
+VOID
+BuildVtdInfo (
+  VOID
+  )
+{
+  VTD_INFO     *VtdInfo;
+  UINTN         McD0BaseAddress;
+  UINT32        MchBar;
+  UINT32        Idx;
+  UINT32        VtdIdx;
+  UINT32        Data;
+  UINT32        RegOff[2] = {R_SA_MCHBAR_VTD1_OFFSET, R_SA_MCHBAR_VTD3_OFFSET};
+
+  VtdInfo = &((PLATFORM_DATA *)GetPlatformDataPtr ())->VtdInfo;
+  McD0BaseAddress = MM_PCI_ADDRESS (SA_MC_BUS, 0, 0, 0);
+  MchBar          = MmioRead32 (McD0BaseAddress + R_SA_MCHBAR) & ~BIT0;
+  VtdInfo->HostAddressWidth = 39;
+
+  VtdIdx = 0;
+  for (Idx = 0; Idx < ARRAY_SIZE(RegOff); Idx++) {
+    Data = MmioRead32 (MchBar + RegOff[Idx]) & ~3;
+    if (Data != 0) {
+      DEBUG ((DEBUG_INFO, "VT-d Engine %d @ 0x%08X\n", VtdIdx, Data));
+      VtdInfo->VTdEngineAddress[VtdIdx++] = Data;
+      ASSERT (VtdIdx <= ARRAY_SIZE(VtdInfo->VTdEngineAddress));
+    }
+  }
+
+  VtdInfo->VTdEngineCount = VtdIdx;
+}
+
+/**
   Initialize Board specific things in Stage2 Phase
 
   @param[in]  InitPhase            Indicates a board init phase to be initialized
 
 **/
 VOID
+EFIAPI
 BoardInit (
   IN  BOARD_INIT_PHASE    InitPhase
 )
@@ -1067,14 +958,15 @@ BoardInit (
   EFI_STATUS      Status;
   UINT32          RgnBase;
   UINT32          RgnSize;
-  UINT32          LpcBase;
+  UINTN           LpcBase;
   UINTN           SpiBaseAddress;
   UINT16          TcoBase;
   UINT32          SaMcAddress;
   UINT32          AddressPort;
   UINTN           SpiBar0;
   UINT32          Length;
-
+  BL_SW_SMI_INFO            *BlSwSmiInfo;
+  VTD_INFO                  *VtdInfo;
   EFI_PEI_GRAPHICS_INFO_HOB *FspGfxHob;
   LOADER_GLOBAL_DATA        *LdrGlobal;
 
@@ -1139,10 +1031,35 @@ BoardInit (
     if (FeaturePcdGet (PcdSmbiosEnabled)) {
       InitializeSmbiosInfo ();
     }
+
+    // Enable DMA protection
+    if (FeaturePcdGet (PcdDmaProtectionEnabled)) {
+      BuildVtdInfo ();
+      VtdInfo = &((PLATFORM_DATA *)GetPlatformDataPtr ())->VtdInfo;
+      SetDmaProtection (VtdInfo, TRUE);
+    }
     break;
   case PrePciEnumeration:
     break;
   case PostPciEnumeration:
+    if (GetBootMode() == BOOT_ON_S3_RESUME) {
+      //
+      // Clear Smi
+      //
+      ClearSmi ();
+      RestoreS3RegInfo (FindS3Info (S3_SAVE_REG_COMM_ID));
+      BlSwSmiInfo = NULL;
+
+      //
+      // If UEFI payload registered a software SMI handler
+      // for bootloader to restore SMRR base and mask in
+      // S3 resume path, trigger sw smi
+      //
+      BlSwSmiInfo = FindS3Info (BL_SW_SMI_COMM_ID);
+      if (BlSwSmiInfo != NULL) {
+        TriggerPayloadSwSmi (BlSwSmiInfo->BlSwSmiHandlerInput);
+      }
+    }
     break;
   case PrePayloadLoading:
     Status = IgdOpRegionInit ();
@@ -1172,19 +1089,9 @@ BoardInit (
     if ((GetBootMode() != BOOT_ON_FLASH_UPDATE) && (GetPayloadId() != 0)) {
       // Set the BIOS Lock Enable and EISS bits
       MmioOr8 (SpiBaseAddress + R_SPI_BCR, (UINT8) (B_SPI_BCR_BLE | B_SPI_BCR_EISS));
-
-      ClearFspHob ();
     }
     break;
   case ReadyToBoot:
-    //
-    // Clear Smi and restore S3 regs on S3 resume
-    //
-    ClearSmi ();
-    if ((GetBootMode() == BOOT_ON_S3_RESUME) && (GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE)) {
-      RestoreS3RegInfo (FindS3Info (S3_SAVE_REG_COMM_ID));
-    }
-
     //
     // Do necessary locks, and clean up before jumping tp OS
     //
@@ -1232,8 +1139,6 @@ BoardInit (
     //
     MmioOr8 (PCH_PWRM_BASE_ADDRESS + R_PMC_PWRM_GEN_PMCON_B, (UINT8)B_PMC_PWRM_GEN_PMCON_B_SMI_LOCK);
 
-    ClearFspHob ();
-
     //
     // Lock down Tco WDT just before handling off to OS
     //
@@ -1241,6 +1146,12 @@ BoardInit (
     IoOr16 ((TcoBase + R_TCO_IO_TCO1_CNT), B_TCO_IO_TCO1_CNT_LOCK);
     break;
   case EndOfFirmware:
+    ClearFspHob ();
+    if (FeaturePcdGet (PcdDmaProtectionEnabled)) {
+      // Disable DMA protection
+      VtdInfo = &((PLATFORM_DATA *)GetPlatformDataPtr ())->VtdInfo;
+      SetDmaProtection (VtdInfo, FALSE);
+    }
     break;
   default:
     break;
@@ -1294,6 +1205,7 @@ FindSerialIoIrq (
 
 **/
 VOID
+EFIAPI
 UpdateFspConfig (
   IN  VOID     *FspsUpdPtr
 )
@@ -1411,8 +1323,9 @@ UpdateFspConfig (
   }
 
   if (PlatformId == PLATFORM_ID_UPXTREME) {
-    // Workaround for USB issue on port 9, disable it for now
-    FspsUpd->FspsConfig.PortUsb20Enable[9] = 0;
+    // Workaround for USB issue on port 8, it does not respond to USB enumeration.
+    // Disable this port for now
+    FspsUpd->FspsConfig.PortUsb20Enable[7] = 0;
   }
 
   Length = GetPchXhciMaxUsb3PortNum ();
@@ -1778,6 +1691,23 @@ UpdateFspConfig (
 }
 
 /**
+  This function will set the DISB - DRAM Initialization Scratchpad Bit.
+
+**/
+STATIC
+VOID
+SetDramInitScratchpad (
+  IN  VOID
+  )
+{
+  MmioAndThenOr8 (
+    PCH_PWRM_BASE_ADDRESS + R_PMC_PWRM_GEN_PMCON_A + 2,
+    (UINT8) ~((B_PMC_PWRM_GEN_PMCON_A_MS4V | B_PMC_PWRM_GEN_PMCON_A_SUS_PWR_FLR) >> 16),
+    B_PMC_PWRM_GEN_PMCON_A_DISB >> 16
+    );
+}
+
+/**
   Save MRC data into the reserved SPI region
 
   @param[in]  Buffer            The pointer to MRC data to be saved.
@@ -1811,7 +1741,8 @@ SaveNvsData (
   // Compare input data against the stored MRC training data
   // if they match, no need to update again.
   //
-  if (CompareMem ((VOID *)Address, Buffer, Length) == 0){
+  if (CompareMem ((VOID *)(UINTN)Address, Buffer, Length) == 0) {
+    SetDramInitScratchpad ();
     return EFI_ALREADY_STARTED;
   }
 
@@ -1836,11 +1767,7 @@ SaveNvsData (
       Status = SpiFlashWrite (FlashRegionBios, Address, Length, Buffer);
       if (!EFI_ERROR(Status)) {
         DEBUG ((DEBUG_INFO, "MRC data successfully cached to 0x%X\n", Address));
-        MmioAndThenOr8 (
-          PCH_PWRM_BASE_ADDRESS + R_PMC_PWRM_GEN_PMCON_A + 2,
-          (UINT8) ~((B_PMC_PWRM_GEN_PMCON_A_MS4V | B_PMC_PWRM_GEN_PMCON_A_SUS_PWR_FLR) >> 16),
-          B_PMC_PWRM_GEN_PMCON_A_DISB >> 16
-          );
+        SetDramInitScratchpad ();
       }
     }
   }
@@ -1941,16 +1868,33 @@ UpdateSmmInfo (
   LdrSmmInfo->SmmSize = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + BGSM) & ~0xF;
   LdrSmmInfo->SmmSize -= LdrSmmInfo->SmmBase;
   LdrSmmInfo->Flags = SMM_FLAGS_4KB_COMMUNICATION;
-  DEBUG ((EFI_D_ERROR, "Stage2: SmmRamBase = 0x%x, SmmRamSize = 0x%x\n", LdrSmmInfo->SmmBase, LdrSmmInfo->SmmSize));
+  DEBUG ((DEBUG_ERROR, "Stage2: SmmRamBase = 0x%x, SmmRamSize = 0x%x\n", LdrSmmInfo->SmmBase, LdrSmmInfo->SmmSize));
+
   //
-  // Update the HOB with smi ctrl register data
+  // Update smi ctrl register data
   //
-  LdrSmmInfo->SmiCtrlReg.RegType    = IO;
-  LdrSmmInfo->SmiCtrlReg.RegWidth   = WIDE32;
-  LdrSmmInfo->SmiCtrlReg.SmiGblPos  = B_ACPI_IO_SMI_EN_GBL_SMI;
-  LdrSmmInfo->SmiCtrlReg.SmiApmPos  = B_ACPI_IO_SMI_EN_APMC;
-  LdrSmmInfo->SmiCtrlReg.SmiEosPos  = B_ACPI_IO_SMI_EN_EOS;
+  LdrSmmInfo->SmiCtrlReg.RegType    = (UINT8)REG_TYPE_IO;
+  LdrSmmInfo->SmiCtrlReg.RegWidth   = (UINT8)WIDE32;
+  LdrSmmInfo->SmiCtrlReg.SmiGblPos  = (UINT8)HighBitSet32 (B_ACPI_IO_SMI_EN_GBL_SMI);
+  LdrSmmInfo->SmiCtrlReg.SmiApmPos  = (UINT8)HighBitSet32 (B_ACPI_IO_SMI_EN_APMC);
+  LdrSmmInfo->SmiCtrlReg.SmiEosPos  = (UINT8)HighBitSet32 (B_ACPI_IO_SMI_EN_EOS);
   LdrSmmInfo->SmiCtrlReg.Address    = (UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN);
+
+  //
+  // Update smi status register data
+  //
+  LdrSmmInfo->SmiStsReg.RegType    = (UINT8)REG_TYPE_IO;
+  LdrSmmInfo->SmiStsReg.RegWidth   = (UINT8)WIDE32;
+  LdrSmmInfo->SmiStsReg.SmiApmPos  = (UINT8)HighBitSet32 (B_ACPI_IO_SMI_STS_APM);
+  LdrSmmInfo->SmiStsReg.Address    = (UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_STS);
+
+  //
+  // Update smi lock register data
+  //
+  LdrSmmInfo->SmiLockReg.RegType    = (UINT8)REG_TYPE_MMIO;
+  LdrSmmInfo->SmiLockReg.RegWidth   = (UINT8)WIDE32;
+  LdrSmmInfo->SmiLockReg.SmiLockPos = (UINT8)HighBitSet32 (B_PMC_PWRM_GEN_PMCON_B_SMI_LOCK);
+  LdrSmmInfo->SmiLockReg.Address    = (UINT32)(PCH_PWRM_BASE_ADDRESS + R_PMC_PWRM_GEN_PMCON_B);
 }
 
 /**
@@ -1980,7 +1924,7 @@ UpdateLoaderPlatformInfo (
     else if (PlatformData->BtGuardInfo.TpmType == TpmNone)
       LoaderPlatformInfo->TpmType = TPM_TYPE_NONE;
 
-    DEBUG ((EFI_D_INFO, "Stage2: HwState 0x%x\n", LoaderPlatformInfo->HwState));
+    DEBUG ((DEBUG_INFO, "Stage2: HwState 0x%x\n", LoaderPlatformInfo->HwState));
   }
 }
 
@@ -2181,11 +2125,6 @@ UpdateCpuNvs (
   DEBUG ((DEBUG_INFO, "Update Cpu Nvs Done\n"));
 
   DEBUG ((DEBUG_INFO, "Revision 0x%X, PpmFlags 0x%08X\n", CpuNvs->Revision, CpuNvs->PpmFlags));
-
-  ///
-  /// Initialize FVID table pointer
-  ///
-  mFvidPointer = (FVID_TABLE *) (UINTN) CpuInitDataHob->FvidTable;
 }
 
 /**

@@ -55,16 +55,21 @@ DeinitUsbDevices (
   )
 {
   EFI_STATUS  Status;
+  UINTN                Index;
 
   if (mUsbInit.UsbHostHandle == NULL) {
     return EFI_NOT_FOUND;
   }
 
   Status = UsbDeinitCtrl (mUsbInit.UsbHostHandle);
-  if (!EFI_ERROR (Status)) {
-    ZeroMem (&mUsbInit, sizeof(mUsbInit));
+
+  UsbDeInitBot ();
+
+  for (Index = 0; Index < mUsbInit.UsbIoCount; Index++) {
+    UsbDeinitDevice (mUsbInit.UsbIoArray[Index]);
   }
 
+  ZeroMem (&mUsbInit, sizeof(mUsbInit));
   return Status;
 }
 
@@ -89,10 +94,11 @@ InitUsbDevices (
   )
 {
   EFI_STATUS  Status;
-  UINT32      PcieAddress;
-  UINT32      XhciMmioBase;
+  UINTN       PcieAddress;
+  UINT64      XhciMmioBase;
   UINT32      Data;
   UINT8      *Class;
+  UINT8       BarType;
 
   Status = EFI_SUCCESS;
   if (mUsbInit.UsbHostHandle == NULL) {
@@ -104,9 +110,16 @@ InitUsbDevices (
         (Class[2] == PCI_CLASS_SERIAL))) {
       // Enable XHCI controller
       MmioOr8 (PcieAddress + PCI_COMMAND_OFFSET, EFI_PCI_COMMAND_MEMORY_SPACE | EFI_PCI_COMMAND_BUS_MASTER);
-      XhciMmioBase = MmioRead32 (PcieAddress + PCI_BASE_ADDRESSREG_OFFSET) & ~0xF;
 
-      Status = UsbInitCtrl (XhciMmioBase, &mUsbInit.UsbHostHandle);
+      // Read high 32-bit BAR only if BAR type is 64-bit address space
+      XhciMmioBase = (UINT32)MmioRead32 (PcieAddress + PCI_BASE_ADDRESSREG_OFFSET);
+      BarType = (UINT8)XhciMmioBase & 0xF;
+      XhciMmioBase &= (UINT32)(~BarType);
+      if ((BarType & 0x04) != 0) {
+        XhciMmioBase |= LShiftU64 ((UINT64)MmioRead32 (PcieAddress + PCI_BASE_ADDRESSREG_OFFSET + 0x4), 32);
+      }
+
+      Status = UsbInitCtrl ((UINTN)XhciMmioBase, &mUsbInit.UsbHostHandle);
       DEBUG ((DEBUG_INFO, "Init USB XHCI - %r\n", Status));
       if (!EFI_ERROR (Status)) {
         // Enumerate USB bus to register all devices

@@ -15,6 +15,8 @@
 #include <Library/SerialPortLib.h>
 #include <Library/HobLib.h>
 #include <Library/BootloaderCommonLib.h>
+#include <Library/SecureBootLib.h>
+#include <Library/DebugLogBufferLib.h>
 
 CONST CHAR8  mHex[]   = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 CONST CHAR8 *mStage[] = { "1A", "1B", "2", "PAYLOAD"};
@@ -91,6 +93,10 @@ DumpHex (
   UINT8 TempByte;
   UINTN Size;
   UINTN Index;
+
+  if (UserData == NULL){
+    return;
+  }
 
   Data = UserData;
   while (DataSize != 0) {
@@ -188,7 +194,7 @@ SetLibraryData (
   Status     = EFI_ABORTED;
   LibDataPtr = (LIBRARY_DATA *) GetLibraryDataPtr ();
   if (LibDataPtr != NULL) {
-    LibDataPtr[LibId].BufBase = (UINT32)BufPtr;
+    LibDataPtr[LibId].BufBase = (UINT32)(UINTN)BufPtr;
     LibDataPtr[LibId].BufSize = BufSize;
     Status = EFI_SUCCESS;
   }
@@ -287,13 +293,70 @@ DetectUsedStackBottom (
   StackBot = (UINT32 *) ((StackTop - StackSize) & ~ (sizeof (UINTN) - 1));
   ASSERT (*StackBot == STACK_DEBUG_FILL_PATTERN);
 
-  while ((UINT32)StackBot < StackTop) {
+  while ((UINT32)(UINTN)StackBot < StackTop) {
     if (*StackBot != STACK_DEBUG_FILL_PATTERN) {
       break;
     }
     StackBot++;
   }
-  return (UINT32)StackBot;
+  return (UINT32)(UINTN)StackBot;
+}
+
+/**
+  Gets component entry from the flash map by partition.
+
+  This function will look for the component matching the input signature
+  in the flash map, if found, it will look for the component with back up
+  flag based on the backup partition parmeter and will return the
+  entry of the component from flash map.
+
+  @param[in]  Signature         Signature of the component information required
+  @param[in]  IsBackupPartition TRUE for Back up copy, FALSE for primary copy
+
+  @retval    NULL    Component entry not found in flash map
+  @retval    Others  Pointer to component entry
+
+**/
+FLASH_MAP_ENTRY_DESC *
+EFIAPI
+GetComponentEntryByPartition (
+  IN  UINT32                Signature,
+  IN  BOOLEAN               IsBackupPartition
+  )
+{
+  UINTN                 Index;
+  UINT32                MaxEntries;
+  FLASH_MAP             *FlashMapPtr;
+  FLASH_MAP_ENTRY_DESC  *EntryDesc;
+
+  FlashMapPtr = GetFlashMapPtr ();
+  if (FlashMapPtr == NULL) {
+    return NULL;
+  }
+
+  MaxEntries = ((FlashMapPtr->Length - FLASH_MAP_HEADER_SIZE) / sizeof (FLASH_MAP_ENTRY_DESC));
+
+  for (Index = 0; Index < MaxEntries; Index++) {
+    EntryDesc = (FLASH_MAP_ENTRY_DESC *)&FlashMapPtr->EntryDesc[Index];
+    //
+    // Look for the component with desired signature
+    //
+    if (EntryDesc->Signature == 0xFFFFFFFF) {
+      break;
+    }
+    if (EntryDesc->Signature == Signature) {
+      //
+      // Check if need to get back up copy
+      // Back up copies can be identified with back up flag
+      //
+      if ( ((EntryDesc->Flags & (FLASH_MAP_FLAGS_NON_REDUNDANT_REGION | FLASH_MAP_FLAGS_NON_VOLATILE_REGION)) != 0) ||
+           (((IsBackupPartition ? FLASH_MAP_FLAGS_BACKUP : 0) ^ (EntryDesc->Flags & FLASH_MAP_FLAGS_BACKUP)) == 0) ) {
+        return EntryDesc;
+      }
+    }
+  }
+
+  return NULL;
 }
 
 /**
@@ -322,62 +385,135 @@ GetComponentInfoByPartition (
   OUT UINT32     *Size
   )
 {
-  UINTN                 Index;
-  UINT32                MaxEntries;
-  UINT32                PcdBase;
-  UINT32                PcdSize;
-  UINT32                RomBase;
+  FLASH_MAP_ENTRY_DESC  *Entry;
   FLASH_MAP             *FlashMapPtr;
-  EFI_STATUS            Status;
-  FLASH_MAP_ENTRY_DESC  EntryDesc;
+  UINT32                RomBase;
 
-  PcdBase = 0;
-  PcdSize = 0;
-  Status = EFI_NOT_FOUND;
+  Entry = GetComponentEntryByPartition(Signature, IsBackupPartition);
+  if (Entry == NULL) {
+    return EFI_NOT_FOUND;
+  }
 
   FlashMapPtr = GetFlashMapPtr ();
   if (FlashMapPtr == NULL) {
-    return EFI_UNSUPPORTED;
+    return EFI_NOT_FOUND;
   }
 
   RomBase = (UINT32) (0x100000000ULL - FlashMapPtr->RomSize);
-  MaxEntries = ((FlashMapPtr->Length - FLASH_MAP_HEADER_SIZE) / sizeof (FLASH_MAP_ENTRY_DESC));
-
-  for (Index = 0; Index < MaxEntries; Index++) {
-    EntryDesc = FlashMapPtr->EntryDesc[Index];
-    //
-    // Look for the component with desired signature
-    //
-    if (EntryDesc.Signature == 0xFFFFFFFF) {
-      Status = EFI_NOT_FOUND;
-      break;
-    }
-    if (EntryDesc.Signature == Signature) {
-      //
-      // Check if need to get back up copy
-      // Back up copies can be identified with back up flag
-      //
-      if ( ((EntryDesc.Flags & (FLASH_MAP_FLAGS_NON_REDUNDANT_REGION | FLASH_MAP_FLAGS_NON_VOLATILE_REGION)) != 0) ||
-           (((IsBackupPartition ? FLASH_MAP_FLAGS_BACKUP : 0) ^ (EntryDesc.Flags & FLASH_MAP_FLAGS_BACKUP)) == 0) ) {
-        PcdBase = (UINT32) (RomBase + EntryDesc.Offset);
-        PcdSize = EntryDesc.Size;
-        Status = EFI_SUCCESS;
-        break;
-      }
-    }
-  }
 
   //
-  // If base and pcdbase are not 0, fill and return the value
+  // If base is not 0, fill and return the value
   //
-  if ((Base != NULL) && (PcdBase != 0)) {
-    *Base = PcdBase;
+  if (Base != NULL) {
+    *Base = (UINT32) (RomBase + Entry->Offset);
   }
-  if ((Size != NULL) && (PcdSize != 0)) {
-    *Size = PcdSize;
+  if (Size != NULL) {
+    *Size = Entry->Size;
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Gets component information from the flash map.
+
+  This function will look for the component based on the input signature
+  in the flash map, if found, will return the base address and size of the component.
+
+  @param[in]  Signature     Signature of the component information required
+  @param[out] Base          Base address of the component
+  @param[out] Size          Size of the component
+
+  @retval    EFI_SUCCESS    Found the component with the matching signature.
+  @retval    EFI_NOT_FOUND  Component with the matching signature not found.
+
+**/
+EFI_STATUS
+EFIAPI
+GetComponentInfo (
+  IN  UINT32     Signature,
+  OUT UINT32     *Base,
+  OUT UINT32     *Size
+)
+{
+  EFI_STATUS            Status;
+
+  if (GetCurrentBootPartition() == 1) {
+    Status = GetComponentInfoByPartition (Signature, TRUE, Base, Size);
+  } else {
+    Status = GetComponentInfoByPartition (Signature, FALSE, Base, Size);
   }
 
   return Status;
+}
+
+/**
+  Get the component hash data by the component type.
+
+  @param[in]  ComponentType   Component type.
+  @param[out] HashData        Hash data pointer corresponding Component type.
+  @param[out] HashAlg         Hash Alg for Hash store.
+
+  @retval RETURN_SUCCESS             Get hash data succeeded.
+  @retval RETURN_UNSUPPORTED         Hash component type is not supported.
+  @retval RETURN_NOT_FOUND           Hash data is not found.
+  @retval RETURN_INVALID_PARAMETER   HashData is NULL.
+
+**/
+RETURN_STATUS
+GetComponentHash (
+  IN        UINT8            ComponentType,
+  OUT CONST UINT8            **HashData,
+  OUT       UINT8            *HashAlg
+  )
+{
+  HASH_STORE_TABLE    *HashStorePtr;
+  UINT8                HashIndex;
+  HASH_STORE_DATA     *HashEntryData;
+  UINT8               *HashEntryPtr;
+  UINT8               *HashEndPtr;
+
+  if ((HashData == NULL) || (HashAlg == NULL)) {
+    return RETURN_INVALID_PARAMETER;
+  }
+
+  HashIndex = ComponentType;
+  *HashData = NULL;
+  if (HashIndex >= COMP_TYPE_INVALID) {
+    return RETURN_UNSUPPORTED;
+  }
+
+  HashStorePtr = (HASH_STORE_TABLE *) GetHashStorePtr();
+  if (HashStorePtr == NULL) {
+    return RETURN_NOT_FOUND;
+  }
+
+  HashEntryPtr = HashStorePtr->Data;
+  HashEndPtr   = (UINT8 *) HashStorePtr +  HashStorePtr->UsedLength;
+
+  if (HashEntryPtr >= HashEndPtr) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  while (HashEntryPtr < HashEndPtr) {
+
+    HashEntryData = (HASH_STORE_DATA *) HashEntryPtr;
+    if(HashEntryData->Usage & (1 << HashIndex)){
+      //Hash Entry found
+      break;
+    } else {
+      HashEntryPtr +=  sizeof(HASH_STORE_DATA) + HashEntryData->DigestLen;
+    }
+  }
+
+  if (HashEntryPtr == HashEndPtr){
+    return RETURN_NOT_FOUND;
+  } else {
+    *HashData = (UINT8 *)HashEntryData->Digest;
+    *HashAlg  = HashEntryData->HashAlg;
+  }
+
+  return RETURN_SUCCESS;
 }
 
 
@@ -409,8 +545,9 @@ GetRegionOffsetSize (
   RegionSize = 0;
   Offset = 0xFFFFFFFF;
 
+  // Invalid Parameter
   if (FlashMap == NULL) {
-    FlashMap = GetFlashMapPtr ();
+    return 0;
   }
 
   //
@@ -540,3 +677,122 @@ GetDeviceAddr (
   return DeviceBase;
 }
 
+/**
+  Match a given hash with the ones in hash store.
+
+  @param[in]  Usatge      Hash usage.
+  @param[in]  HashData    Hash data pointer.
+  @param[in]  HashAlg     Hash algorithm.
+
+  @retval RETURN_SUCCESS             Found a match in hash store.
+  @retval RETURN_INVALID_PARAMETER   HashData is NULL.
+  @retval RETURN_NOT_FOUND           Hash data is not found.
+
+**/
+RETURN_STATUS
+MatchHashInStore (
+  IN       UINT32           Usage,
+  IN       UINT8            HashAlg,
+  IN       UINT8           *HashData
+  )
+{
+  HASH_STORE_TABLE    *HashStorePtr;
+  HASH_STORE_DATA     *HashEntryData;
+  UINT8               *HashEntryPtr;
+  UINT8               *HashEndPtr;
+  EFI_STATUS           Status;
+
+  if (HashData == NULL) {
+    return RETURN_INVALID_PARAMETER;
+  }
+
+  HashStorePtr = (HASH_STORE_TABLE *) GetHashStorePtr();
+  if (HashStorePtr == NULL) {
+    return RETURN_NOT_FOUND;
+  }
+
+  Status = RETURN_NOT_FOUND;
+  HashEntryPtr = HashStorePtr->Data;
+  HashEndPtr   = (UINT8 *) HashStorePtr +  HashStorePtr->UsedLength;
+  while (HashEntryPtr < HashEndPtr) {
+    HashEntryData = (HASH_STORE_DATA *) HashEntryPtr;
+    if (((HashEntryData->Usage & Usage) != 0) && (HashEntryData->HashAlg == HashAlg)) {
+      // Usage and hash type matched, check hash now
+      if (CompareMem (HashData, HashEntryData->Digest, HashEntryData->DigestLen) == 0) {
+        Status = RETURN_SUCCESS;
+        break;
+      }
+    }
+    HashEntryPtr +=  sizeof(HASH_STORE_DATA) + HashEntryData->DigestLen;
+  }
+
+  return Status;
+}
+
+
+/**
+  Get hash to extend a firmware stage component
+  Hash calculation to extend would be in either of ways
+  Retrieve Hash from Component hash table or
+  Calculate Hash using source buf and length provided
+
+  @param[in] ComponentType             Stage whose measurement need to be extended.
+  @param[in] HashType                  Hash type required
+  @param[in] Src                       Buffer Address
+  @param[in] Length                    Data Len
+  @param[out] HashData                 Hash Data buf addr
+
+  @retval RETURN_SUCCESS      Operation completed successfully.
+  @retval Others              Unable to calcuate hash.
+**/
+RETURN_STATUS
+GetHashToExtend (
+  IN       UINT8            ComponentType,
+  IN       HASH_ALG_TYPE    HashType,
+  IN       UINT8           *Src,
+  IN       UINT32           Length,
+  OUT      UINT8           *HashData
+  )
+{
+  RETURN_STATUS        Status;
+  HASH_ALG_TYPE        CompHashAlg;
+  CONST UINT8         *Digest;
+  UINT8                DigestSize;
+
+  if (HashData == NULL) {
+    return RETURN_INVALID_PARAMETER;
+  }
+
+  if (HashType == HASH_TYPE_SHA256) {
+    DigestSize = SHA256_DIGEST_SIZE;
+  } else if (HashType == HASH_TYPE_SHA384) {
+    DigestSize = SHA384_DIGEST_SIZE;
+  }  else if (HashType == HASH_TYPE_SM3) {
+    DigestSize = SM3_DIGEST_SIZE;
+  } else {
+    return RETURN_INVALID_PARAMETER;
+  }
+
+  // Hash can be calcluated in one of the two ways
+  // Get componenet hash from hash store based on Componen Id and return if hash is valid
+  // Incase component hash is not avilable calculate hash from src buf and HashType provided.
+
+  // Get componenet hash from hash store based on Componen Id
+  if ((ComponentType >= COMP_TYPE_STAGE_1B) && (ComponentType < COMP_TYPE_INVALID)) {
+    Status = GetComponentHash (ComponentType, &Digest, &CompHashAlg);
+    if((Status == EFI_SUCCESS) && (CompHashAlg == HashType)) {
+      CopyMem (HashData, Digest, DigestSize);
+      return RETURN_SUCCESS;
+    }
+  }
+
+  // Calculate hash for a ComponentType if hash is not retrieved from GetComponentHash
+  if ((Src != NULL) && (Length > 0)) {
+    DEBUG ((DEBUG_INFO, "Calculate Hash for component Type 0x%x as its not available in Component hash table \n", ComponentType));
+    Status = CalculateHash ((UINT8 *)Src, Length, HashType, (UINT8 *) HashData);
+  } else{
+    return RETURN_INVALID_PARAMETER;
+  }
+
+  return Status;
+}

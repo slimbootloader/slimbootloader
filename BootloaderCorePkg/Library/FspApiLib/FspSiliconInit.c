@@ -32,24 +32,29 @@ CallFspSiliconInit (
   FSP_SILICON_INIT            FspSiliconInit;
   EFI_STATUS                  Status;
 
-  FspHeader = (FSP_INFO_HEADER *) (PcdGet32 (PcdFSPSBase) + FSP_INFO_HEADER_OFF);
+  FspHeader = (FSP_INFO_HEADER *)(UINTN)(PcdGet32 (PcdFSPSBase) + FSP_INFO_HEADER_OFF);
 
   ASSERT (FspHeader->Signature == FSP_INFO_HEADER_SIGNATURE);
   ASSERT (FspHeader->ImageBase == PcdGet32 (PcdFSPSBase));
 
   // Copy default UPD data
-  DefaultSiliconInitUpd = (UINT8 *) (FspHeader->ImageBase + FspHeader->CfgRegionOffset);
+  DefaultSiliconInitUpd = (UINT8 *)(UINTN)(FspHeader->ImageBase + FspHeader->CfgRegionOffset);
   CopyMem (&FspsUpd, DefaultSiliconInitUpd, FspHeader->CfgRegionSize);
 
   /* Update architectural UPD fields */
   UpdateFspConfig (FspsUpd);
 
   ASSERT (FspHeader->FspSiliconInitEntryOffset != 0);
-  FspSiliconInit = (FSP_SILICON_INIT) (FspHeader->ImageBase + \
-                                       FspHeader->FspSiliconInitEntryOffset);
+  FspSiliconInit = (FSP_SILICON_INIT)(UINTN)(FspHeader->ImageBase + \
+                                             FspHeader->FspSiliconInitEntryOffset);
 
   DEBUG ((DEBUG_INFO, "Call FspSiliconInit ... \n"));
-  Status = FspSiliconInit (&FspsUpd);
+  if (IS_X64) {
+    Status = Execute32BitCode ((UINTN)FspSiliconInit, (UINTN)FspsUpd, (UINTN)0, FALSE);
+    Status = (UINTN)LShiftU64 (Status & ((UINTN)MAX_INT32 + 1), 32) | (Status & MAX_INT32);
+  } else {
+    Status = FspSiliconInit (&FspsUpd);
+  }
   DEBUG ((DEBUG_INFO, "%r\n", Status));
 
   return Status;

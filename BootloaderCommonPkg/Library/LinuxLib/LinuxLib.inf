@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2019 - 2020, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -19,6 +19,9 @@
 [Sources.IA32]
   Ia32/JumpToKernel.nasm
 
+[Sources.X64]
+  X64/JumpToKernel.nasm
+
 [Packages]
   MdePkg/MdePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
@@ -27,9 +30,12 @@
   BaseLib
   BaseMemoryLib
   DebugLib
+  PagingLib
+  PrintLib
 
 [Guids]
   gEfiGraphicsInfoHobGuid
   gLoaderMemoryMapInfoGuid
+  gLoaderSystemTableInfoGuid
 
 [Pcd]

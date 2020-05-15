@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -8,6 +8,7 @@
 #ifndef _BOOTLOADER_CORE_LIB_H_
 #define _BOOTLOADER_CORE_LIB_H_
 #include <Library/BootloaderCommonLib.h>
+#include <Library/CryptoLib.h>
 #include <Guid/FlashMapInfoGuid.h>
 
 #define  MPLD_SIGNATURE               SIGNATURE_32 ('$', 'P', 'L', 'D')
@@ -17,27 +18,44 @@
 #define  IS_FLASH_SPACE(x)            (((x) >= PcdGet32 (PcdFlashBaseAddress)) && \
                                       ((x) <= PcdGet32 (PcdFlashBaseAddress) + PcdGet32 (PcdFlashSize) - 1))
 
-#define  GET_STAGE_MODULE_ENTRY(x)       (STAGE_ENTRY) ((STAGE_HDR *)(x))->Entry
-#define  GET_STAGE_MODULE_BASE(x)        (STAGE_ENTRY) ((STAGE_HDR *)(x))->Base
+#define  GET_STAGE_MODULE_ENTRY(x)    (STAGE_ENTRY) (UINTN)((STAGE_HDR *)(UINTN)(x))->Entry
+#define  GET_STAGE_MODULE_BASE(x)     (STAGE_ENTRY) (UINTN)((STAGE_HDR *)(UINTN)(x))->Base
 
 #define  PCD_GET32_WITH_ADJUST(x)     GetAdjustedPcdBase (PcdGet32 (x))
 
-typedef  VOID   (*STAGE_ENTRY) (VOID *Params);
+typedef  VOID   (EFIAPI *STAGE_ENTRY)   (VOID *Params);
 
-typedef  VOID   (*PAYLOAD_ENTRY) (VOID *HobList, VOID *Params);
-
-typedef  VOID   (*KERNEL_ENTRY) (UINT32 Zero, UINT32 Arch, UINT32 Params);
+typedef  VOID   (EFIAPI *PAYLOAD_ENTRY) (VOID *HobList, VOID *Params);
 
 #pragma pack(1)
 
 #define  STAGE_IDT_ENTRY_COUNT        34
+#define  STAGE_GDT_ENTRY_COUNT        7
 
 #define  PLATFORM_NAME_SIZE           8
 
+typedef enum {
+  EnumBufFlashMap,
+  EnumBufVerInfo,
+  EnumBufHashStore,
+  EnumBufLibData,
+  EnumBufService,
+  EnumBufPcdData,
+  EnumBufPlatData,
+  EnumBufCfgData,
+  EnumBufCtnList,
+  EnumBufLogBuf,
+  EnumBufMax
+} BUF_INFO_ID;
+
 typedef struct {
-  UINT32        LdrGlobal;
-  UINT64        IdtTable[STAGE_IDT_ENTRY_COUNT];
+  UINT64        LdrGlobal;
+  IA32_IDT_GATE_DESCRIPTOR  IdtTable[STAGE_IDT_ENTRY_COUNT];
 } STAGE_IDT_TABLE;
+
+typedef struct {
+  IA32_SEGMENT_DESCRIPTOR   GdtTable[STAGE_GDT_ENTRY_COUNT];
+} STAGE_GDT_TABLE;
 
 typedef struct {
   UINT32        Entry;
@@ -48,50 +66,44 @@ typedef struct {
   UINT32        CarBase;
   UINT32        CarTop;
   UINT64        TimeStamp;
-  UINT32        BistVal;
-} STAGE1A_ASM_HOB;
+  struct _STATUS {
+    UINT32      CpuBist           :  1;
+    UINT32      StackOutOfRange   :  1;
+    UINT32      RsvdBits          : 30;
+    UINT32      RsvdBits2         : 32;
+  } Status;
+} STAGE1A_ASM_PARAM;
+
+typedef struct {
+  VOID         *SrcBase;
+  VOID         *DstBase;
+  UINT32        AllocLen;
+  UINT32        CopyLen;
+} BUF_INFO;
 
 typedef struct {
   UINT32        CarBase;
   UINT32        CarTop;
-  UINT32        HashStoreBase;
-  UINT32        VerInfoBase;
+  UINT32        Stage1BBase;
   UINT32        AllocDataBase;
   UINT32        AllocDataLen;
-  UINT32        Stage1BBase;
-} STAGE1A_HOB;
+  BUF_INFO      BufInfo[EnumBufMax];
+} STAGE1A_PARAM;
 
 typedef struct {
-  UINT32        CarBase;
-  UINT32        CarTop;
   UINT32        PayloadBase;
+  UINT32        CfgDataAddr;
   UINT8         ConfigDataHashValid;
-  UINT8         ConfigDataHash[32];
-} STAGE1B_HOB;
+  UINT8         ConfigDataHash[HASH_DIGEST_MAX];
+  UINT8         KeyHashManifestHashValid;
+  UINT8         KeyHashManifestHash[HASH_DIGEST_MAX];
+} STAGE1B_PARAM;
 
 typedef struct {
   UINT32        PayloadBase;
-  UINT32        PayloadId;
-  UINT32        PayloadOffset;
-  UINT32        PayloadLength;
   UINT32        PayloadActualLength;
   UINT32        Stage2ExeBase;
-} STAGE2_HOB;
-
-typedef struct {
-  UINT32        Signature;
-  UINT32        EntryNum;
-  UINT32        EntrySize;
-  UINT32        Reserved;
-} MULTI_PAYLOAD_HEADER;
-
-typedef struct {
-  UINT32        Name;
-  UINT32        Offset;
-  UINT32        Size;
-  UINT32        Reserved;
-  UINT8         Hash[32];
-} MULTI_PAYLOAD_ENTRY;
+} STAGE2_PARAM;
 
 typedef struct {
   UINT32        Signature;
@@ -137,9 +149,15 @@ typedef struct {
   +------------------------------+  ACPI Reclaim MEM Base
   |       PLD Reserved MEM       |
   +------------------------------+  PLD Reserved MEM Base
+  |         DMA Buffer           |
+  +------------------------------+  DMA Buffer MEM Base
+  |          PLD Heap            |
+  +------------------------------+  PLD Heap MEM Base
+  |          PLD Stack           |
+  +------------------------------+  PLD Stack MEM Base
 
         Loader Reserved MEM
-  +------------------------------+  StackTop
+  +------------------------------+  FSP Reserved MEM Base
   |       LDR Stack (Down)       |
   |                              |
   |         LDR HOB (Up)         |
@@ -171,25 +189,27 @@ typedef struct {
   UINT32            MemPoolStart;
   UINT32            MemPoolCurrTop;
   UINT32            MemPoolCurrBottom;
+  UINT32            MemUsableTop;
   UINT32            PayloadId;
   UINT32            DebugPrintErrorLevel;
   UINT8             DebugPortIdx;
   UINT8             Padding[3];
   VOID             *FspHobList;
   VOID             *LdrHobList;
+  VOID             *FlashMapPtr;
   VOID             *VerInfoPtr;
   VOID             *HashStorePtr;
-  VOID             *ConfDataPtr;
-  VOID             *S3DataPtr;
-  VOID             *DebugDataPtr;
-  VOID             *PlatDataPtr;
   VOID             *LibDataPtr;
-  VOID             *FlashMapPtr;
   VOID             *ServicePtr;
   VOID             *PcdDataPtr;
+  VOID             *PlatDataPtr;
+  VOID             *CfgDataPtr;
   VOID             *LogBufPtr;
   VOID             *DeviceTable;
   VOID             *ContainerList;
+  VOID             *S3DataPtr;
+  VOID             *DebugDataPtr;
+  VOID             *DmaBufferPtr;
   UINT8             PlatformName[PLATFORM_NAME_SIZE];
   UINT32            LdrFeatures;
   BL_PERF_DATA      PerfData;
@@ -432,6 +452,30 @@ GetComponentPcdInfo (
   IN  UINT32     Signature,
   OUT UINT32     *Base,
   OUT UINT32     *Size
+  );
+
+/**
+  This function retrieves DMA buffer base.
+
+  @retval    DMA buffer base.
+
+**/
+VOID *
+EFIAPI
+GetDmaBufferPtr (
+  VOID
+  );
+
+/**
+  This function retrieves usable memory top.
+
+  @retval    Usable memory top.
+
+**/
+UINT32
+EFIAPI
+GetUsableMemoryTop (
+  VOID
   );
 
 #endif

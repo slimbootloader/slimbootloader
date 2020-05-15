@@ -66,7 +66,7 @@ C/  - C files
         LzmaEnc.*  - LZMA encoding
         LzmaLib.*  - LZMA Library for DLL calling
         Types.h    - Basic types for another .c files
-	Threads.*  - The code for multithreading.
+        Threads.*  - The code for multithreading.
 
     LzmaLib  - LZMA Library (.DLL for Windows)
     
@@ -369,8 +369,8 @@ Interface:
     propData - LZMA properties  (5 bytes)
     propSize - size of propData buffer (5 bytes)
     finishMode - It has meaning only if the decoding reaches output limit (*destLen).
-	 LZMA_FINISH_ANY - Decode just destLen bytes.
-	 LZMA_FINISH_END - Stream must be finished after (*destLen).
+         LZMA_FINISH_ANY - Decode just destLen bytes.
+         LZMA_FINISH_END - Stream must be finished after (*destLen).
                            You can use LZMA_FINISH_END, when you know that 
                            current output buffer covers last bytes of stream. 
     alloc    - Memory allocator.
@@ -431,7 +431,7 @@ Memory Requirements:
   {
     ... 
     int res = LzmaDec_DecodeToBuf(CLzmaDec *p, Byte *dest, SizeT *destLen, 
-    	const Byte *src, SizeT *srcLen, ELzmaFinishMode finishMode);
+      const Byte *src, SizeT *srcLen, ELzmaFinishMode finishMode);
     ...
   }
 

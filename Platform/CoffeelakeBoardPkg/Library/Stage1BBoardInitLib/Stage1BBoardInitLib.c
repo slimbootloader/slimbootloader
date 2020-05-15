@@ -29,7 +29,6 @@
 #include <Library/BoardSupportLib.h>
 #include <RegAccess.h>
 #include <Library/CryptoLib.h>
-#include <ConfigDataBlob.h>
 #include <Library/PchInfoLib.h>
 #include <Library/SocInitLib.h>
 #include <Library/TpmLib.h>
@@ -55,7 +54,7 @@ CONST UINT32 mUpxGpioBomPad[]  = {
   GPIO_CNL_LP_GPP_C10,  // BRD_ID2
   GPIO_CNL_LP_GPP_C9,   // BRD_ID1
   GPIO_CNL_LP_GPP_C8,   // BRD_ID0
-  GPIO_CNL_LP_GPP_A23,  // DDR_ID2
+  GPIO_CNL_LP_GPP_A12,  // DDR_ID2
   GPIO_CNL_LP_GPP_A18,  // DDR_ID1
   GPIO_CNL_LP_GPP_C11   // DDR_ID0
 };
@@ -91,6 +90,7 @@ SetDebugLevelFromCfgData (
 
 **/
 VOID
+EFIAPI
 UpdateFspConfig (
   VOID     *FspmUpdPtr
 )
@@ -127,8 +127,8 @@ UpdateFspConfig (
     CopyMem (&Fspmcfg->SpdAddressTable, MemCfgData->SpdAddressTable, sizeof(MemCfgData->SpdAddressTable));
   } else {
     SpdData[0] = 0;
-    SpdData[1] = (UINT32) (((MEM_SPD0_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD0_TAG))->MemorySpdPtr0);
-    SpdData[2] = (UINT32) (((MEM_SPD1_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD1_TAG))->MemorySpdPtr1);
+    SpdData[1] = (UINT32)(UINTN) (((MEM_SPD0_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD0_TAG))->MemorySpdPtr0);
+    SpdData[2] = (UINT32)(UINTN) (((MEM_SPD1_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD1_TAG))->MemorySpdPtr1);
 
     if (PlatformId == PLATFORM_ID_UPXTREME) {
       // For UPX, using BomID to decide SPD data instead.
@@ -224,6 +224,9 @@ UpdateFspConfig (
     DEBUG ((DEBUG_INFO, "FSP-M variables for Intel(R) SGX were NOT updated.\n"));
   }
 
+  // Enable VT-d
+  FspmcfgTest->VtdDisable = 0;
+
   Fspmcfg->PlatformDebugConsent = MemCfgData->PlatformDebugConsent;
   Fspmcfg->PchTraceHubMode      = MemCfgData->PchTraceHubMode;
 }
@@ -259,15 +262,17 @@ SpiControllerInitialize (
 BOOLEAN
 IsFirmwareUpdate ()
 {
-  UINT16  FirmwareUpdateStatus;
+  //
+  // Check if state machine is set to capsule processing mode.
+  //
+  if (CheckStateMachine (NULL) == EFI_SUCCESS) {
+    return TRUE;
+  }
 
   //
-  // This is platform specific method. Here just use COMS.
+  // Check if platform firmware update trigger is set.
   //
-  IoWrite8(0x70, 0x40);
-  FirmwareUpdateStatus = IoRead8(0x71);
-
-  if (FirmwareUpdateStatus == 0x5A) {
+  if (IoRead32 (ACPI_BASE_ADDRESS + R_ACPI_IO_OC_WDT_CTL) & BIT16) {
     return TRUE;
   }
 
@@ -322,7 +327,7 @@ PlatformIdInitialize (
       if (EFI_ERROR(Status)) {
         break;
       }
-      BomId = (BomId << 1) + (GpioData & 1);
+      BomId = (BomId << 1) + ((GpioData & BIT1) >> 1);
     }
 
     if (Idx == ARRAY_SIZE(mUpxGpioBomPad)) {
@@ -538,6 +543,8 @@ GetPlatformPowerState (
   ///
   IoAndThenOr32 (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS, (UINT32)~B_ACPI_IO_PM1_EN_PWRBTN_EN, B_ACPI_IO_PM1_STS_WAK);
 
+  IoAnd32 (ACPI_BASE_ADDRESS + R_ACPI_IO_GPE0_EN_127_96, (UINT32)~B_ACPI_IO_GPE0_STS_127_96_PME_B0);
+
   if ((MmioRead8 (PCH_PWRM_BASE_ADDRESS + R_PMC_PWRM_GEN_PMCON_B) & B_PMC_PWRM_GEN_PMCON_B_RTC_PWR_STS) != 0) {
     BootMode = BOOT_WITH_FULL_CONFIGURATION;
 
@@ -562,7 +569,7 @@ EarlyBootDeviceInit (
 )
 {
   EFI_STATUS  Status        = EFI_SUCCESS;
-  UINT32      EmmcHcPciBase = MmPciBase(0, 0x1A, 0);
+  UINTN       EmmcHcPciBase = MmPciBase(0, 0x1A, 0);
   UINT32      Base          = 0xFE600000;
 
   /* Configure EMMC GPIO Pad */
@@ -600,6 +607,7 @@ EarlyBootDeviceInit (
 
 **/
 VOID
+EFIAPI
 BoardInit (
   IN  BOARD_INIT_PHASE  InitPhase
 )
@@ -614,10 +622,10 @@ BoardInit (
 DEBUG_CODE_BEGIN();
     UINT32  Data;
 
-    Data = *(UINT32 *) (0xFED30328);
+    Data = *(UINT32 *)(UINTN)(0xFED30328);
     DEBUG ((DEBUG_ERROR, "[Boot Guard] AcmStatus : 0x%08X\n", Data));
 
-    Data = *(UINT32 *) (0xFED300A4);
+    Data = *(UINT32 *)(UINTN)(0xFED300A4);
     DEBUG ((DEBUG_ERROR, "[Boot Guard] BootStatus: 0x%08X\n", Data));
 
     if ((Data & (BIT31 | BIT30)) != BIT31) {
@@ -677,10 +685,10 @@ FindNvsData (
     return NULL;
   }
 
-  if (*(UINT32 *)MrcData == 0xFFFFFFFF) {
+  if (*(UINT32 *)(UINTN)MrcData == 0xFFFFFFFF) {
     return NULL;
   } else {
-    return (VOID *)MrcData;
+    return (VOID *)(UINTN)MrcData;
   }
 }
 
@@ -708,22 +716,4 @@ LoadExternalConfigData (
 {
 
   return SpiLoadExternalConfigData (Dst, Src, Len);
-}
-
-
-/**
-  Get the pointer to the Built-In Config Data
-
-  @retval UINT8*    Pointer to the Built-In Config Data
-**/
-UINT8 *
-GetBuiltInConfigData(
-  IN  VOID
-)
-{
-  if (PcdGet32 (PcdCfgDatabaseSize) > 0) {
-    return (UINT8 *) &mConfigDataBlob[16];
-  } else {
-    return NULL;
-  }
 }

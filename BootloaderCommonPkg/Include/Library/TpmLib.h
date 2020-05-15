@@ -11,6 +11,8 @@
 #include <IndustryStandard/Tpm20.h>
 #include <IndustryStandard/UefiTcgPlatform.h>
 #include <IndustryStandard/Tpm2Acpi.h>
+#include <Library/CryptoLib.h>
+#include <Library/ContainerLib.h>
 
 #define ACPI_SSDT_TPM2_DEVICE_OEM_TABLE_ID  SIGNATURE_64('T', 'p', 'm', '2', 'T', 'a', 'b', 'l')
 
@@ -79,6 +81,30 @@ MeasureSeparatorEvent (
 
 
 /**
+Hash and Extend a PCR and log it into TCG event log.
+
+@param[in] PcrHandle    PCR index to extend.
+@param[in] Data         Data pointer.
+@param[in] Length       Data Length.
+@param[in] EventType    EventType to be logged in TCG Event log.
+@param[in] EventSize    size of the event.
+@param[in] Event        Event data.
+
+@retval RETURN_SUCCESS      Operation completed successfully.
+@retval Others              Unable to extend PCR.
+**/
+RETURN_STATUS
+TpmHashAndExtendPcrEventLog (
+IN         TPMI_DH_PCR               PcrHandle,
+IN         UINT8                     *Data,
+IN         UINT32                    Length,
+IN         TCG_EVENTTYPE             EventType,
+IN         UINT32                    EventSize,
+IN  CONST  UINT8                     *Event
+);
+
+
+/**
   Extend a PCR and log it into TCG event log.
 
   @param[in] PcrHandle    PCR index to extend.
@@ -103,20 +129,6 @@ TpmExtendPcrAndLogEvent (
 
 
 /**
-  Retrieve hash of a firmware stage from Component hash table and extend it
-  in PCR 0 with EV_POST_CODE event type.
-
-  @param[in] ComponentType    Stage whose measurement need to be extended.
-
-  @retval RETURN_SUCCESS      Operation completed successfully.
-  @retval Others              Unable to extend stage hash.
-**/
-RETURN_STATUS
-TpmExtendStageHash (
-  IN       UINT8            ComponentType
-  );
-
-/**
   Log a PCR event in TCG 2.0 format.
 
   @param[in] EventHdr      New event which needs to be logged.
@@ -138,11 +150,49 @@ TpmLogEvent (
   randomize platform auth, add EV_SEPARATOR event etc) as indicated in
   PC Client Specific Firmware Profile specification.
 
+  @param[in] FwDebugEnabled    Firmware Debug Mode enabled/disabled.
+
   @retval RETURN_SUCCESS   Operation completed successfully.
   @retval Others           Unable to finish handling ReadyToBoot events.
 **/
 RETURN_STATUS
 TpmIndicateReadyToBoot (
-  VOID
+  IN UINT8   FwDebugEnabled
+  );
+
+
+/**
+  Get Crypto Lib Hash alg required by bootloader.
+
+  @param  TcgAlgMask    TCG Alg Mask
+
+  @retval CryptoHashAlg Crypo Hash Alg.
+**/
+UINT8
+GetCryptoHashAlg (
+  UINT32 TcgAlgMask
+  );
+
+
+/**
+  Get Tpm Hash Algo type requested.
+
+  @retval PcdHashType    TPM Algorithm Id.
+**/
+UINT32
+GetTpmHashAlg (
+   UINT32 TcgAlgHash
+  );
+
+
+/**
+  Function to extend Stage component hash
+
+  @param[in]  CbInfo    Component Call Back Info
+
+**/
+VOID
+ExtendStageHash (
+  IN  COMPONENT_CALLBACK_INFO   *CbInfo
   );
 #endif  // _TPM_LIB_H

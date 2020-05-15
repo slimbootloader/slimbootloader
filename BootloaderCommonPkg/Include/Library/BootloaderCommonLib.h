@@ -13,6 +13,11 @@
 #include <Guid/FlashMapInfoGuid.h>
 #include <Guid/LoaderPlatformDataGuid.h>
 #include <Guid/DeviceTableHobGuid.h>
+#include <Guid/KeyHashGuid.h>
+#include <Library/BaseLib.h>
+#include <Library/CryptoLib.h>
+
+#define  IS_X64                       (sizeof(UINT64) == sizeof(UINTN))
 
 #define  STACK_DEBUG_FILL_PATTERN     0x5AA55AA5
 #define  UEFI_PAYLOAD_ID_SIGNATURE    SIGNATURE_32('U', 'E', 'F', 'I')
@@ -95,15 +100,18 @@ typedef enum {
   @retval LOADER_STAGE  Current stage of bootloader execution.
 **/
 LOADER_STAGE
+EFIAPI
 GetLoaderStage (
   VOID
   );
+
 
 /**
   Get the component hash data by the component type.
 
   @param[in]  ComponentType   Component type.
   @param[out] HashData        Hash data pointer corresponding Component type.
+  @param[out] HashType        Hash Type for Hash store.
 
   @retval RETURN_SUCCESS             Get hash data succeeded.
   @retval RETURN_UNSUPPORTED         Hash component type is not supported.
@@ -113,25 +121,8 @@ GetLoaderStage (
 RETURN_STATUS
 GetComponentHash (
   IN        UINT8            ComponentType,
-  OUT CONST UINT8            **HashData
-  );
-
-/**
-  Set the component hash data by the component type.
-
-  @param[in]  ComponentType   Component type.
-  @param[in]  HashData        Hash data pointer corresponding component type.
-
-  @retval RETURN_SUCCESS             Set hash data succeeded.
-  @retval RETURN_UNSUPPORTED         Hash component type is not supported.
-  @retval RETURN_NOT_FOUND           Hash data is not found.
-  @retval RETURN_INVALID_PARAMETER   HashData is NULL.
-
-**/
-RETURN_STATUS
-SetComponentHash (
-  IN       UINT8             ComponentType,
-  IN CONST UINT8            *HashData
+  OUT CONST UINT8            **HashData,
+  OUT       UINT8            *HashType
   );
 
 /**
@@ -410,6 +401,28 @@ GetPlatformDataPtr (
   );
 
 /**
+  Gets component entry from the flash map by partition.
+
+  This function will look for the component matching the input signature
+  in the flash map, if found, it will look for the component with back up
+  flag based on the backup partition parmeter and will return the
+  entry of the component from flash map.
+
+  @param[in]  Signature         Signature of the component information required
+  @param[in]  IsBackupPartition TRUE for Back up copy, FALSE for primary copy
+
+  @retval    NULL    Component entry not found in flash map
+  @retval    Others  Pointer to component entry
+
+**/
+FLASH_MAP_ENTRY_DESC *
+EFIAPI
+GetComponentEntryByPartition (
+  IN  UINT32                Signature,
+  IN  BOOLEAN               IsBackupPartition
+  );
+
+/**
   Gets component information from the flash map by partition.
 
   This function will look for the component matching the input signature
@@ -557,4 +570,59 @@ GetContainerListPtr (
   VOID
   );
 
+/**
+  This function retrieves hash store pointer.
+
+  @retval    The hash store pointer.
+
+**/
+VOID *
+EFIAPI
+GetHashStorePtr (
+  VOID
+  );
+
+/**
+  Match a given hash with the ones in hash store.
+
+  @param[in]  Usage       Hash usage.
+  @param[in]  HashData    Hash data pointer.
+  @param[in]  HashAlg     Hash algorithm.
+
+  @retval RETURN_SUCCESS             Found a match in hash store.
+  @retval RETURN_INVALID_PARAMETER   HashData is NULL.
+  @retval RETURN_NOT_FOUND           Hash data is not found.
+
+**/
+RETURN_STATUS
+MatchHashInStore (
+  IN       UINT32           Usage,
+  IN       UINT8            HashAlg,
+  IN       UINT8           *HashData
+  );
+
+
+/**
+  Get hash to extend a firmware stage component
+  Hash calculation to extend would be in either of ways
+  Retrieve Hash from Component hash table or
+  Calculate Hash using source buf and length provided
+
+  @param[in]  ComponentType             Stage whose measurement need to be extended.
+  @param[in]  HashType                  Hash type required
+  @param[in]  Src                       Buffer Address
+  @param[in]  Length                    Data Len
+  @param[out] HashData                  Hash Data buf addr
+
+  @retval RETURN_SUCCESS      Operation completed successfully.
+  @retval Others              Unable to calcuate hash.
+**/
+RETURN_STATUS
+GetHashToExtend (
+  IN       UINT8            ComponentType,
+  IN       HASH_ALG_TYPE    HashType,
+  IN       UINT8           *Src,
+  IN       UINT32           Length,
+  OUT      UINT8           *HashData
+  );
 #endif

@@ -9,6 +9,8 @@
 #define _CONTAINER_LIB_H_
 
 #include <Library/PcdLib.h>
+#include <Library/CryptoLib.h>
+
 
 #define CONTAINER_LIST_SIGNATURE SIGNATURE_32('C','T','N', 'L')
 
@@ -17,11 +19,14 @@
 #define PROGESS_ID_AUTHENTICATE       3
 #define PROGESS_ID_DECOMPRESS         4
 
-#define AUTH_TYPE_NONE                0
-#define AUTH_TYPE_SHA2_256            1
-#define AUTH_TYPE_SHA2_384            2
-#define AUTH_TYPE_SIG_RSA2048_SHA256  3
-#define AUTH_TYPE_SIG_RSA3072_SHA384  4
+typedef UINT8 AUTH_TYPE;
+#define AUTH_TYPE_NONE                       0
+#define AUTH_TYPE_SHA2_256                   1
+#define AUTH_TYPE_SHA2_384                   2
+#define AUTH_TYPE_SIG_RSA2048_PKCSI1_SHA256  3
+#define AUTH_TYPE_SIG_RSA3072_PKCSI1_SHA384  4
+#define AUTH_TYPE_SIG_RSA2048_PSS_SHA256     5
+#define AUTH_TYPE_SIG_RSA3072_PSS_SHA384     6
 
 #define CONTAINER_BOOT_SIGNATURE      SIGNATURE_32 ('B', 'O', 'O', 'T')
 #define CONTAINER_MONO_SIGN_SIGNATURE SIGNATURE_32 ('_', 'S', 'G', '_')
@@ -32,13 +37,22 @@
 // Attributes for COMPONENT_ENTRY
 #define COMPONENT_ENTRY_ATTR_RESERVED       BIT7
 
-typedef VOID (*LOAD_COMPONENT_CALLBACK) (UINT32 ProgressId);
+
+typedef struct {
+  UINT32           ComponentType;
+  UINT8           *CompBuf;
+  UINT32           CompLen;
+  HASH_ALG_TYPE    HashAlg;
+  UINT8           *HashData;
+} COMPONENT_CALLBACK_INFO;
+
+typedef VOID (*LOAD_COMPONENT_CALLBACK) (UINT32 ProgressId, COMPONENT_CALLBACK_INFO *CbInfo);
 
 typedef struct {
   UINT32           Signature;
   UINT32           HeaderCache;
+  UINT32           HeaderSize;
   UINT32           Base;
-  UINT32           Reserved;
 } CONTAINER_ENTRY;
 
 typedef struct {
@@ -190,6 +204,7 @@ GetNextAvailableComponent (
   This function registers a container.
 
   @param[in]  ContainerBase      Container base address to register.
+  @param[in]  ContainerCallback  Callback regsiterd to notify container buf info
 
   @retval EFI_NOT_READY          Not ready for register yet.
   @retval EFI_BUFFER_TOO_SMALL   Insufficant max container entry number.
@@ -199,7 +214,8 @@ GetNextAvailableComponent (
 **/
 EFI_STATUS
 RegisterContainer (
-  IN  UINT32   ContainerBase
+  IN  UINT32                    ContainerBase,
+  IN  LOAD_COMPONENT_CALLBACK   ContainerCallback
   );
 
 /**

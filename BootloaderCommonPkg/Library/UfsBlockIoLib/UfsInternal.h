@@ -18,6 +18,7 @@
 #include <Library/TimerLib.h>
 #include <IndustryStandard/Scsi.h>
 #include <Library/UfsBlockIoLib.h>
+#include <Library/IoMmuLib.h>
 #include <Ppi/BlockIo.h>
 
 #include "UfsHci.h"
@@ -137,8 +138,10 @@ typedef struct _UFS_PEIM_HC_PRIVATE_DATA {
 
   VOID                              *UtpTrlBase;
   UINT8                             Nutrs;
+  VOID                              *TrlMapping;
   VOID                              *UtpTmrlBase;
   UINT8                             Nutmrs;
+  VOID                              *TmrlMapping;
 
   UFS_PEIM_EXPOSED_LUNS             Luns;
 } UFS_PEIM_HC_PRIVATE_DATA;
@@ -187,6 +190,7 @@ typedef struct _UFS_DEVICE_MANAGEMENT_REQUEST_PACKET {
 
 **/
 EFI_STATUS
+EFIAPI
 UfsExecScsiCmds (
   IN     UFS_PEIM_HC_PRIVATE_DATA      *Private,
   IN     UINT8                         Lun,
@@ -326,6 +330,20 @@ UfsFreeMem (
   IN UFS_PEIM_MEM_POOL    *Pool,
   IN VOID                 *Mem,
   IN UINTN                Size
+  );
+
+/**
+  Release the memory management pool.
+
+  @param  Pool                  The memory pool to free.
+
+  @retval EFI_DEVICE_ERROR      Fail to free the memory pool.
+  @retval EFI_SUCCESS           The memory pool is freed.
+
+**/
+EFI_STATUS
+UfsFreeMemPool (
+  IN UFS_PEIM_MEM_POOL       *Pool
   );
 
 #endif

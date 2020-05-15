@@ -261,7 +261,7 @@ UpdateDebugAgentIdt (
     if (Function != NULL) {
       Function (IdtDescriptor);
     }
-    DEBUG ((EFI_D_WARN, "Debug Agent: The DebugAgent is not initialized yet!\n"));
+    DEBUG ((DEBUG_WARN, "Debug Agent: The DebugAgent is not initialized yet!\n"));
     return;
   }
 
@@ -368,7 +368,7 @@ InitializeDebugAgent (
   switch (InitFlag) {
   case DEBUG_AGENT_INIT_PREMEM_SEC:
     if (IsDebugAgentInitialzed() == TRUE) {
-      DEBUG ((EFI_D_WARN, "Debug Agent: The DebugAgent has already been enabled!\n"));
+      DEBUG ((DEBUG_WARN, "Debug Agent: The DebugAgent has already been enabled!\n"));
       break;
     }
 
@@ -402,7 +402,7 @@ InitializeDebugAgent (
     //
     // If reaches here, it means Debug Port initialization failed.
     //
-    DEBUG ((EFI_D_ERROR, "Debug Agent: Debug port initialization failed.\n"));
+    DEBUG ((DEBUG_ERROR, "Debug Agent: Debug port initialization failed.\n"));
     break;
 
   case DEBUG_AGENT_INIT_POSTMEM_SEC:
@@ -448,7 +448,7 @@ InitializeDebugAgent (
     // Only DEBUG_AGENT_INIT_PREMEM_SEC and DEBUG_AGENT_INIT_POSTMEM_SEC are allowed for this
     // Debug Agent library instance.
     //
-    DEBUG ((EFI_D_ERROR, "Debug Agent: The InitFlag value is not allowed!\n"));
+    DEBUG ((DEBUG_ERROR, "Debug Agent: The InitFlag value is not allowed!\n"));
     CpuDeadLoop ();
     break;
   }

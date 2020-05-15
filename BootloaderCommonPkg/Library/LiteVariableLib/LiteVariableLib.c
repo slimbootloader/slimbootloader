@@ -3,7 +3,7 @@ Lite variable service library
 
 Copyright (c) 2006 - 2016, Intel Corporation. All rights reserved.<BR>
 Portions copyright (c) 2008 - 2009, Apple Inc. All rights reserved.<BR>
-SPDX-License-Identifier: BSD-2-Clause-Patent 
+SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
@@ -72,7 +72,7 @@ GetVaraibelStoreBase (
     *Size = VarInstance->StoreSize;
   }
 
-  return (VOID *)VarInstance->StoreBase;
+  return (VOID *)(UINTN)VarInstance->StoreBase;
 }
 
 /**
@@ -97,13 +97,13 @@ EraseVariableStore (
   UINT32              RgnBase;
   UINT32              RgnSize;
 
-  DEBUG ((DEBUG_INFO, "  SPI ERASE: %08X  %08X\n", (UINT32)VariableStore, Length));
+  DEBUG ((DEBUG_INFO, "  SPI ERASE: %08X  %08X\n", (UINT32)(UINTN)VariableStore, Length));
   SpiService = (SPI_FLASH_SERVICE *)GetServiceBySignature (SPI_FLASH_SERVICE_SIGNATURE);
   if (SpiService != NULL) {
     Status = SpiService->SpiGetRegion (FlashRegionBios, &RgnBase, &RgnSize);
     if (!EFI_ERROR (Status)) {
       // BIOS region offset can be calculated by (HostAddress + BiosRgnLimit)
-      BiosRgnOffset = (UINT32)((UINT32)VariableStore + RgnSize);
+      BiosRgnOffset = (UINT32)((UINT32)(UINTN)VariableStore + RgnSize);
       Status = SpiService->SpiErase (FlashRegionBios, BiosRgnOffset, Length);
       AsmFlushCacheRange (VariableStore, Length);
     }
@@ -137,13 +137,13 @@ WriteVariableStore (
   UINT32              RgnBase;
   UINT32              RgnSize;
 
-  DEBUG ((DEBUG_INFO, "  SPI WRITE: %08X  %08X\n", (UINT32)VariableStore, Length));
+  DEBUG ((DEBUG_INFO, "  SPI WRITE: %08X  %08X\n", (UINT32)(UINTN)VariableStore, Length));
   SpiService = (SPI_FLASH_SERVICE *)GetServiceBySignature (SPI_FLASH_SERVICE_SIGNATURE);
   if (SpiService != NULL) {
     Status = SpiService->SpiGetRegion (FlashRegionBios, &RgnBase, &RgnSize);
     if (!EFI_ERROR (Status)) {
       // BIOS region offset can be calculated by (HostAddress + BiosRgnLimit)
-      BiosRgnOffset = (UINT32)((UINT32)VariableStore + RgnSize);
+      BiosRgnOffset = (UINT32)((UINT32)(UINTN)VariableStore + RgnSize);
       Status = SpiService->SpiWrite (FlashRegionBios, BiosRgnOffset, Length, Buffer);
       AsmFlushCacheRange (VariableStore, Length);
     }
@@ -373,7 +373,7 @@ InternalGetVariable (
     return EFI_VOLUME_CORRUPTED;
   }
 
-  VariableNameLen = AsciiStrLen (VariableName) + 1;
+  VariableNameLen = (UINT32)AsciiStrLen (VariableName) + 1;
   VarHdrPtr = (VARIABLE_HEADER *)&VarStoreHdrPtr[1];
   VarEndPtr = (UINT8 *)VarStoreHdrPtr + VarStoreHdrPtr->Size;
 
@@ -543,7 +543,7 @@ GetNextVariableName (
     return EFI_NOT_FOUND;
   }
 
-  VariableNameLen = AsciiStrLen ((CONST CHAR8 *)&FindVarHdrPtr[1]) + 1;
+  VariableNameLen = (UINT32)AsciiStrLen ((CONST CHAR8 *)&FindVarHdrPtr[1]) + 1;
   if (*VariableNameSize < VariableNameLen) {
     *VariableNameSize = VariableNameLen;
     return EFI_BUFFER_TOO_SMALL;
@@ -752,14 +752,14 @@ SetVariable (
   VarHdrPtr = (VARIABLE_HEADER *)&VarStoreHdrPtr[1];
   VarEndPtr = (UINT8 *)VarStoreHdrPtr + VarStoreHdrPtr->Size;
 
-  VariableNameLen = AsciiStrLen (VariableName) + 1;
+  VariableNameLen = (UINT32)AsciiStrLen (VariableName) + 1;
   if (DataSize == 0) {
     //
     // Need to delete a variable
     //
     TotalLen = 0;
   } else {
-    TotalLen = sizeof (VARIABLE_HEADER) + VariableNameLen + DataSize;
+    TotalLen = sizeof (VARIABLE_HEADER) + VariableNameLen + (UINT32)DataSize;
   }
 
   if (TotalLen > 0xFFFF) {
@@ -931,7 +931,7 @@ SetVariable (
     //
     // Write the variable data
     //
-    Status = WriteVariableStore ((UINT8 *)&VarHdrPtr[1] + VariableNameLen, DataSize, Data);
+    Status = WriteVariableStore ((UINT8 *)&VarHdrPtr[1] + VariableNameLen, (UINT32)DataSize, Data);
     if (EFI_ERROR (Status)) {
       return Status;
     }

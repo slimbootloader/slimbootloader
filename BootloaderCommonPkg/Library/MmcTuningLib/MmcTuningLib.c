@@ -930,7 +930,7 @@ MmcTuning (
   EFI_STATUS                Status;
   EMMC_TUNING_DATA          EmmcTuningData;
   UINTN                     VariableLen;
-  UINTN                     PrintLevel;
+  UINT32                    PrintLevel;
   UINT32                    FeatureCfg;
   EMMC_DLL_TUNING_REG_LIST  EmmcDllTuningRegList;
 

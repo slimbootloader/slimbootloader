@@ -177,7 +177,7 @@ DisplayBmpToFrameBuffer (
   BltBuffer = *GopBlt;
 
   FrameBufferPtr = (UINT32 *) (((UINTN) GfxInfoHob->FrameBufferBase));
-  FrameBufferOffset = (OffY + PixelHeight) * GfxInfoHob->GraphicsMode.HorizontalResolution + OffX;
+  FrameBufferOffset = (UINT32)((OffY + PixelHeight) * GfxInfoHob->GraphicsMode.HorizontalResolution + OffX);
 
   Status = EFI_SUCCESS;
 

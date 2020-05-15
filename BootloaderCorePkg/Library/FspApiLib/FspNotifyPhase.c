@@ -33,7 +33,7 @@ CallFspNotifyPhase (
   NOTIFY_PHASE_PARAMS         NotifyPhaseParams;
   EFI_STATUS                  Status;
 
-  FspHeader = (FSP_INFO_HEADER *) (PcdGet32 (PcdFSPSBase) + FSP_INFO_HEADER_OFF);
+  FspHeader = (FSP_INFO_HEADER *)(UINTN)(PcdGet32 (PcdFSPSBase) + FSP_INFO_HEADER_OFF);
 
   ASSERT (FspHeader->Signature == FSP_INFO_HEADER_SIGNATURE);
   ASSERT (FspHeader->ImageBase == PcdGet32 (PcdFSPSBase));
@@ -42,13 +42,18 @@ CallFspNotifyPhase (
     return EFI_UNSUPPORTED;
   }
 
-  NotifyPhase = (FSP_NOTIFY_PHASE) (FspHeader->ImageBase +
-                                    FspHeader->NotifyPhaseEntryOffset);
+  NotifyPhase = (FSP_NOTIFY_PHASE)(UINTN)(FspHeader->ImageBase +
+                                          FspHeader->NotifyPhaseEntryOffset);
 
   NotifyPhaseParams.Phase = Phase;
 
   DEBUG ((DEBUG_INFO, "Call FspNotifyPhase(%02X) ... ", Phase));
-  Status = NotifyPhase (&NotifyPhaseParams);
+  if (IS_X64) {
+    Status = Execute32BitCode ((UINTN)NotifyPhase, (UINTN)&NotifyPhaseParams, (UINTN)0, FALSE);
+    Status = (UINTN)LShiftU64 (Status & ((UINTN)MAX_INT32 + 1), 32) | (Status & MAX_INT32);
+  } else {
+    Status = NotifyPhase (&NotifyPhaseParams);
+  }
   DEBUG ((DEBUG_INFO, "%r\n", Status));
 
   return Status;

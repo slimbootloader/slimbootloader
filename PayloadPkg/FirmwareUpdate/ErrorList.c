@@ -18,7 +18,7 @@ static const char* gErrorCategories[ERROR_CATEGORIES_COUNT + 1] =
 #ifdef CATEGORY_DEFINE_HELPER
 #error "Rename CATEGORY_DEFINE_HELPER to name that not in use"
 #endif
-#define CATEGORY_DEFINE_HELPER(eenum, sstring)    sstring, 
+#define CATEGORY_DEFINE_HELPER(eenum, sstring)    sstring,
     CATEGORY_LIST_HELPER1
 #undef CATEGORY_DEFINE_HELPER
 };

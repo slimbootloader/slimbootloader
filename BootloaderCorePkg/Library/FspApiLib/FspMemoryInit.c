@@ -45,29 +45,34 @@ CallFspMemoryInit (
   FSPM_UPD_COMMON            *FspmUpdCommon;
   EFI_STATUS                  Status;
 
-  FspHeader = (FSP_INFO_HEADER *) (FspmBase + FSP_INFO_HEADER_OFF);
+  FspHeader = (FSP_INFO_HEADER *)(UINTN)(FspmBase + FSP_INFO_HEADER_OFF);
 
   ASSERT (FspHeader->Signature == FSP_INFO_HEADER_SIGNATURE);
   ASSERT (FspHeader->ImageBase == FspmBase);
 
   // Copy default UPD data
-  DefaultMemoryInitUpd = (UINT8 *) (FspHeader->ImageBase + FspHeader->CfgRegionOffset);
+  DefaultMemoryInitUpd = (UINT8 *)(UINTN)(FspHeader->ImageBase + FspHeader->CfgRegionOffset);
   CopyMem (&FspmUpd, DefaultMemoryInitUpd, FspHeader->CfgRegionSize);
 
   /* Update architectural UPD fields */
   FspmUpdCommon = (FSPM_UPD_COMMON *)FspmUpd;
   FspmUpdCommon->FspmArchUpd.BootLoaderTolumSize = 0;
   FspmUpdCommon->FspmArchUpd.BootMode            = (UINT32)GetBootMode();
-  FspmUpdCommon->FspmArchUpd.NvsBufferPtr        = FindNvsData();
+  FspmUpdCommon->FspmArchUpd.NvsBufferPtr        = (UINT32)(UINTN)FindNvsData();
 
   UpdateFspConfig (FspmUpd);
 
   ASSERT (FspHeader->FspMemoryInitEntryOffset != 0);
-  FspMemoryInit = (FSP_MEMORY_INIT) (FspHeader->ImageBase + \
-                                     FspHeader->FspMemoryInitEntryOffset);
+  FspMemoryInit = (FSP_MEMORY_INIT)(UINTN)(FspHeader->ImageBase + \
+                                           FspHeader->FspMemoryInitEntryOffset);
 
   DEBUG ((DEBUG_INFO, "Call FspMemoryInit ... "));
-  Status = FspMemoryInit (&FspmUpd, HobList);
+  if (IS_X64) {
+    Status = Execute32BitCode ((UINTN)FspMemoryInit, (UINTN)FspmUpd, (UINTN)HobList, FALSE);
+    Status = (UINTN)LShiftU64 (Status & ((UINTN)MAX_INT32 + 1), 32) | (Status & MAX_INT32);
+  } else {
+    Status = FspMemoryInit (&FspmUpd, HobList);
+  }
   DEBUG ((DEBUG_INFO, "%r\n", Status));
 
   return Status;

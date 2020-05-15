@@ -1,6 +1,6 @@
 ## @ GenCapsuleFirmware.py
 #
-# Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2017-2020, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -12,11 +12,12 @@ import sys
 import re
 import struct
 import uuid
+import binascii
 from ctypes import *
 
 sys.dont_write_bytecode = True
 from BuildUtility import rsa_sign_file, gen_pub_key
-
+from CommonUtility import *
 
 class FmpCapsuleImageHeaderClass(object):
     # typedef struct {
@@ -81,7 +82,7 @@ class FmpCapsuleImageHeaderClass(object):
             self.UpdateImageIndex, 0, 0, 0, self.UpdateImageSize,
             self.UpdateVendorCodeSize, self.UpdateHardwareInstance)
         self._Valid = True
-        return FmpCapsuleImageHeader + self.Payload + self.VendorCodeBytes
+        return FmpCapsuleImageHeader + self.Payload + (self.VendorCodeBytes).encode()
 
     def Decode(self, Buffer):
         if len(Buffer) < self._StructSize:
@@ -333,6 +334,8 @@ class FmpCapsuleHeaderClass(object):
             FmpCapsuleImageHeader.DumpInfo('  ')
             print('')
 
+def UnicodeStrToHexString(Str):
+    return (binascii.hexlify(Str.encode('utf-8'))).decode()
 
 def _SIGNATURE_32(A, B, C, D):
     return struct.unpack('=I', bytearray(A + B + C + D, 'ascii'))[0]
@@ -397,7 +400,7 @@ class Firmware_Update_Header(Structure):
   ]
 
 
-def SignImage(RawData, OutFile, PrivKey):
+def SignImage(RawData, OutFile, HashType, SignScheme, PrivKey):
 
     #
     # Generate the new image layout
@@ -408,6 +411,12 @@ def SignImage(RawData, OutFile, PrivKey):
 
     file_size = len(RawData)
 
+    key_type = get_key_type (PrivKey)
+    if key_type ==  'RSA2048':
+        key_size = 256
+    elif key_type ==  'RSA3072':
+        key_size = 384
+
     header.FileGuid         = (c_ubyte *16).from_buffer_copy(FIRMWARE_UPDATE_IMAGE_FILE_GUID.bytes_le)
     header.HeaderSize       = sizeof(Firmware_Update_Header)
     header.FirmwreVersion   = 1
@@ -415,7 +424,7 @@ def SignImage(RawData, OutFile, PrivKey):
     header.ImageOffset      = header.HeaderSize
     header.ImageSize        = file_size
     header.SignatureOffset  = header.ImageOffset + header.ImageSize
-    header.SignatureSize    = 256
+    header.SignatureSize    = sizeof(SIGNATURE_HDR) + key_size
     header.PubKeyOffset     = header.SignatureOffset + header.SignatureSize
 
     pubkey_file = 'fwu_public_key.bin'
@@ -427,7 +436,7 @@ def SignImage(RawData, OutFile, PrivKey):
     fwupdate_bin_file = 'fwupdate_unsigned.bin'
     open(fwupdate_bin_file, 'wb').write(unsigned_image + RawData)
 
-    rsa_sign_file(PrivKey, pubkey_file, fwupdate_bin_file, OutFile, True, True)
+    rsa_sign_file(PrivKey, pubkey_file, HashType, SignScheme, fwupdate_bin_file, OutFile, True, True )
 
     os.remove(pubkey_file)
     os.remove(fwupdate_bin_file)
@@ -436,7 +445,7 @@ def SignImage(RawData, OutFile, PrivKey):
 def main():
     PredefinedUuidDict = {
         'BIOS': '605C6813-C2C7-4242-9C27-50A4C363DBA4',  # SBL  BIOS Region
-        'CFGD': '66030B7A-47D1-4958-B73D-00B44B9DD4B6',  # SBL  CFGDATA
+        'MISC': '66030B7A-47D1-4958-B73D-00B44B9DD4B6',  # SBL  COMPONENT
         'CSME': '43AEF186-0CA5-4230-B1BD-193FB4627201',  # IFWI ME/CSME
         'CSMD': '4A467997-A909-4678-910C-E0FE1C9056EA',  # CSME Update driver
     }
@@ -471,6 +480,8 @@ def main():
 
     parser.add_argument('-p',  '--payload', nargs=2, action='append', type=str, required=True, help='Specify payload information including GUID, FileName')
     parser.add_argument('-k',  '--priv_key', dest='PrivKey', type=str, required=True, help='Private RSA 2048 key in PEM format to sign image')
+    parser.add_argument('-a',  '--alg_hash', dest='HashType', type=str, choices=['SHA2_256', 'SHA2_384'], default='SHA2_256', help='Hash type for signing')
+    parser.add_argument('-s',  '--sign_scheme', dest='SignScheme', type=str, choices=['RSA_PKCS1', 'RSA_PSS'], default='RSA_PSS', help='Signing Scheme types')
     parser.add_argument('-o',  '--output', dest='NewImage', type=str, required=True, help='Output file for signed image')
     parser.add_argument("-v",  "--verbose", dest='Verbose', action="store_true", help= "Turn on verbose output with informational messages printed, including capsule headers and warning messages.")
 
@@ -489,9 +500,32 @@ def main():
         Result = FmpPayloadHeader.Encode()
 
         if PldUuid in PredefinedUuidDict:
+            HardwareInstance = '00000000' + UnicodeStrToHexString(PldUuid[::-1])
             PldUuid = PredefinedUuidDict[PldUuid]
+        else:
+            CompName = PldUuid.upper()
+
+            if ":" in CompName:
+                items = CompName.split(":")
+                item_cnt = len(items)
+                if item_cnt > 2:
+                    raise Exception ('more than 2 strings in component descriptor')
+
+                if len(items[0]) != 4 or len(items[1]) != 4:
+                    raise Exception ('%s is not a  4 character string' % CompName)
+
+                ContainerCompName = UnicodeStrToHexString(items[0][::-1])
+                SblComponentName = UnicodeStrToHexString(items[1][::-1])
+            else:
+                if len(CompName) != 4:
+                    raise Exception ('%s is not a  4 character string' % CompName)
+                ContainerCompName = '00000000'
+                SblComponentName = UnicodeStrToHexString(CompName[::-1])
+            HardwareInstance = ContainerCompName + SblComponentName
+            PldUuid = PredefinedUuidDict['MISC']
+        HardwareInstance = int (HardwareInstance, 16)
         Guid = ValidateRegistryFormatGuid(PldUuid)
-        FmpCapsuleHeader.AddPayload(Guid, Result, HardwareInstance=0)
+        FmpCapsuleHeader.AddPayload(Guid, Result, '', HardwareInstance)
 
     Result = FmpCapsuleHeader.Encode()
 
@@ -504,7 +538,7 @@ def main():
     #
     # Create final capsule
     #
-    SignImage(Result, args.NewImage, args.PrivKey)
+    SignImage(Result, args.NewImage, args.HashType, args.SignScheme, args.PrivKey)
 
     print('Success')
 

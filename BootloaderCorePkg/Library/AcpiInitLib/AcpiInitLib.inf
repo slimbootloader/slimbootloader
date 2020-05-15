@@ -21,6 +21,9 @@
 [Sources.IA32]
   Ia32/S3Wake.nasm
 
+[Sources.X64]
+  X64/S3Wake.nasm
+
 [Sources]
   AcpiInitLib.c
   AcpiFpdt.c
@@ -41,6 +44,7 @@
 
 [Guids]
   gEsrtSystemFirmwareGuid
+  gCsmeFWUDriverImageFileGuid
 
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdAcpiTablesRsdp

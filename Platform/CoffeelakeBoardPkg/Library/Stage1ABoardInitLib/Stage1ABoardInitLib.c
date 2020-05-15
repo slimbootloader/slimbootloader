@@ -153,11 +153,10 @@ EarlyPlatformDataCheck (
   STITCH_DATA          *StitchData;
 
   // Stitching process might pass some plafform specific data.
-  StitchData = (STITCH_DATA *)(0xFFFFFFF4);
+  StitchData = (STITCH_DATA *)(UINTN)0xFFFFFFF4;
   if (StitchData->Marker != 0xAA) {
-    // No data, set default debug port to 2
     // PlatformID will be deferred to be detected
-    SetDebugPort (0xFF);
+    SetDebugPort ( PcdGet8 (PcdDebugPortNumber));
   } else {
     SetDebugPort  (StitchData->DebugUart);
     if ((StitchData->PlatformId > 0) && (StitchData->PlatformId < 32)) {
@@ -179,7 +178,7 @@ GetBootPartition (
   OUT BOOT_PARTITION_SELECT      *BootPartition
   )
 {
-  UINT32    P2sbBase;
+  UINTN     P2sbBase;
   UINT32    P2sbBar;
   //UINT16    RegOffset;
   //UINT8     RtcPortId;
@@ -234,6 +233,7 @@ GetBootPartition (
 
 **/
 VOID
+EFIAPI
 BoardInit (
   IN  BOARD_INIT_PHASE  InitPhase
 )

@@ -16,6 +16,12 @@
   LIBRARY_CLASS                  = HeciLib
 
 [Sources]
+  HeciInitLib.h
+  HeciHelper.h
+  HeciCore.h
+  PciSegmentLib.h
+  CseMsg.h
+  HeciHpet.h
   PciSegmentLib.c
   HeciCore.c
   HeciHpet.c

@@ -22,6 +22,10 @@
 #
 
 [Sources]
+  Ext2Fs.h
+  Ext2FsDiNode.h
+  LibsaFsStand.h
+  Ext2FsDir.h
   ExtLib.c
   Ext2Fs.c
   Ext2FsLs.c

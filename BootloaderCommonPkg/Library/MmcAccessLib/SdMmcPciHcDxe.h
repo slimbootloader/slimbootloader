@@ -94,6 +94,7 @@ typedef struct {
   VOID                                *Data;
   UINT32                              DataLen;
   BOOLEAN                             Read;
+
   EFI_PHYSICAL_ADDRESS                DataPhy;
   VOID                                *DataMap;
   SD_MMC_HC_TRANSFER_MODE             Mode;
@@ -102,6 +103,8 @@ typedef struct {
   UINT64                              Timeout;
 
   SD_MMC_HC_ADMA_DESC_LINE            *AdmaDesc;
+  EFI_PHYSICAL_ADDRESS                AdmaDescPhy;
+  VOID                                *AdmaMap;
   UINT32                              AdmaPages;
 
   SD_MMC_HC_PRIVATE_DATA              *Private;

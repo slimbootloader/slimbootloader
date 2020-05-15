@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2016 - 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2016 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -36,13 +36,14 @@
 #include <Library/LinuxLib.h>
 #include <Library/DebugLogBufferLib.h>
 #include <Library/LiteFvLib.h>
+#include <Library/SortLib.h>
+#include <Library/StageLib.h>
 #include <Library/ContainerLib.h>
 #include <Guid/BootLoaderServiceGuid.h>
 #include <Guid/BootLoaderVersionGuid.h>
 #include <Guid/LoaderPlatformInfoGuid.h>
 #include <Guid/LoaderPlatformDataGuid.h>
 #include <Guid/SeedInfoHobGuid.h>
-#include <Guid/PayloadKeyHashGuid.h>
 #include <Guid/LoaderLibraryDataGuid.h>
 #include <Guid/GraphicsInfoHob.h>
 #include <Guid/SmmInformationGuid.h>
@@ -54,23 +55,10 @@
 #include <Library/ConfigDataLib.h>
 #include <Library/DebugAgentLib.h>
 #include <Library/ElfLib.h>
-#include <HashStore.h>
+#include <Library/SmbiosInitLib.h>
 #include <VerInfo.h>
 
-#include <Library/SmbiosInitLib.h>
-
 #define UIMAGE_FIT_MAGIC               (0x56190527)
-
-/**
-  Unmap the previous mapped stage images.
-
-  It will reload GDT and disable paging so that the memory goes back to 1:1 mapping.
-
-**/
-VOID
-UnmapStage (
-  VOID
-  );
 
 /**
   Build some basic HOBs
@@ -79,14 +67,14 @@ UnmapStage (
   to build some basic HOBs. These HOBs could be used/updated
   by stage2 code, or used by payload.
 
-  @param Stage2Hob         Stage2 HOB pointer.
+  @param Stage2Param         Stage2 Param pointer.
 
   @return                  The HOB list pointer.
 **/
 VOID *
 EFIAPI
 BuildBaseInfoHob (
-  IN  STAGE2_HOB                   *Stage2Hob
+  IN  STAGE2_PARAM                   *Stage2Param
   );
 
 /**
@@ -95,14 +83,14 @@ BuildBaseInfoHob (
   Before jumping to payload, more information is available, so update some HOBs
   built early, and build more HOBs for payload.
 
-  @param Stage2Hob         Stage2 HOB pointer.
+  @param Stage2Param         Stage2 Param pointer.
 
   @return                  The HOB list pointer.
 **/
 VOID *
 EFIAPI
 BuildExtraInfoHob (
-  IN  STAGE2_HOB                   *Stage2Hob
+  IN  STAGE2_PARAM                   *Stage2Param
   );
 
 /**
@@ -122,7 +110,7 @@ DisplaySplash (
 /**
   Load payload from boot media to its execution address.
 
-  @param[in]  Stage2Hob         STAGE2_HOB HOB pointer.
+  @param[in]  Stage2Param       STAGE2 Param pointer.
   @param[out] ExeAddress        The payload execution address.
 
   @retval     EFI_SUCCESS       Load payload successfully.
@@ -131,7 +119,7 @@ DisplaySplash (
 **/
 EFI_STATUS
 LoadPayloadImage (
-  IN  STAGE2_HOB                  *Stage2Hob,
+  IN  STAGE2_PARAM                *Stage2Param,
   OUT UINT32                     **ExeAddress
   );
 
@@ -162,6 +150,7 @@ InitializeService (
 
 **/
 VOID
+EFIAPI
 BoardNotifyPhase (
   IN BOARD_INIT_PHASE   Phase
   );

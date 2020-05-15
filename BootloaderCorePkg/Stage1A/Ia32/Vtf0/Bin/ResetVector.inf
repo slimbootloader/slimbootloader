@@ -23,5 +23,8 @@
 [Binaries.Ia32]
   RAW|ResetVector.ia32.raw|*
 
+[Binaries.X64]
+  RAW|ResetVector.x64.raw|*
+
 [Depex]
   TRUE

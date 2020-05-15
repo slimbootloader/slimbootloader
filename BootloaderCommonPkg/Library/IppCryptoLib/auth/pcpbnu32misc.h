@@ -5,12 +5,12 @@
 
 **/
 
-/* 
+/*
 //  Purpose:
 //     Intel(R) Integrated Performance Primitives. Cryptography Primitives.
 //     Internal Miscellaneous BNU 32 bit Definitions & Function Prototypes
-// 
-// 
+//
+//
 */
 
 #if !defined(_CP_BNU32_MISC_H)

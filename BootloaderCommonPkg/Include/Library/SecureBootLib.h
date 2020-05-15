@@ -8,30 +8,41 @@
 #ifndef __VERIFIED_BOOT_LIB_H__
 #define __VERIFIED_BOOT_LIB_H__
 
-#define  HASH_TYPE_SHA256              0
-#define  HASH_TYPE_SHA384              1
-#define  HASH_TYPE_SHA512              2
+#include <Guid/KeyHashGuid.h>
+#include <Library/CryptoLib.h>
 
 #define  SIG_TYPE_RSA2048_SHA256       0
 #define  SIG_TYPE_RSA3072_SHA384       1
 
-#define  COMP_TYPE_STAGE_1B            0
-#define  COMP_TYPE_STAGE_2             1
-#define  COMP_TYPE_PAYLOAD             2
-#define  COMP_TYPE_FIRMWARE_UPDATE     3
-#define  COMP_TYPE_PUBKEY_CFG_DATA     4
-#define  COMP_TYPE_PUBKEY_FWU          5
-#define  COMP_TYPE_PUBKEY_OS           6
-#define  COMP_TYPE_PAYLOAD_DYNAMIC     7
-#define  COMP_TYPE_INVALID             8
+/**
+  Calculate hash API.
+
+  @param[in]  Data           Data buffer pointer.
+  @param[in]  Length         Data buffer size.
+  @param[in]  HashAlg        Specify hash algrothsm.
+  @param[in,out]  OutHash    Hash of Data buffer
+
+
+  @retval RETURN_SUCCESS             Hash Calculation succeeded.
+  @retval RETRUN_INVALID_PARAMETER   Hash parameter is not valid.
+  @retval RETURN_UNSUPPORTED         Hash Alg type is not supported.
+
+**/
+RETURN_STATUS
+CalculateHash  (
+  IN CONST UINT8          *Data,
+  IN       UINT32          Length,
+  IN       UINT8           HashAlg,
+  IN OUT   UINT8          *OutHash
+  );
 
 /**
   Verify data block hash with the built-in one.
 
   @param[in]  Data           Data buffer pointer.
   @param[in]  Length         Data buffer size.
+  @param[in]  Usage          Hash usage.
   @param[in]  HashAlg        Specify hash algorithm.
-  @param[in]  ComponentType  Component type.
   @param[in,out]  Hash       On input,  expected hash value when ComponentType is not used.
                              On output, calculated hash value when verification succeeds.
 
@@ -46,8 +57,8 @@ RETURN_STATUS
 DoHashVerify (
   IN CONST UINT8           *Data,
   IN       UINT32           Length,
+  IN       HASH_COMP_USAGE  Usage,
   IN       UINT8            HashAlg,
-  IN       UINT8            ComponentType,
   IN OUT   UINT8           *Hash
   );
 
@@ -57,9 +68,10 @@ DoHashVerify (
 
   @param[in]  Data            Data buffer pointer.
   @param[in]  Length          Data buffer size.
-  @param[in]  ComponentType   Component type.
-  @param[in]  Signature       Signature for the data buffer.
-  @param[in]  PubKey          Public key data pointer.
+  @param[in]  Usage           Hash usage.
+  @param[in]  SignatureHdr    Signature header for singanture data.
+  @param[in]  PubKeyHdr       Public key header for key data
+  @param[in]  PubKeyHashAlg   Hash Alg for PubKeyHash.
   @param[in]  PubKeyHash      Public key hash value when ComponentType is not used.
   @param[out] OutHash         Calculated data hash value.
 
@@ -74,9 +86,10 @@ RETURN_STATUS
 DoRsaVerify (
   IN CONST UINT8           *Data,
   IN       UINT32           Length,
-  IN       UINT8            ComponentType,
-  IN CONST UINT8           *Signature,
-  IN       UINT8           *PubKey,
+  IN       HASH_COMP_USAGE  Usage,
+  IN CONST SIGNATURE_HDR   *SignatureHdr,
+  IN       PUB_KEY_HDR     *PubKeyHdr,
+  IN       UINT8            PubKeyHashAlg,
   IN       UINT8           *PubKeyHash      OPTIONAL,
   OUT      UINT8           *OutHash         OPTIONAL
   );

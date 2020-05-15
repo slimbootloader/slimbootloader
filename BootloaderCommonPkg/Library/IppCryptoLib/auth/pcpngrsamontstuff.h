@@ -5,14 +5,14 @@
 
 **/
 
-/* 
-// 
+/*
+//
 //  Purpose:
 //     Cryptography Primitive.
 //     Internal Definitions and
 //     Internal ng RSA Function Prototypes
-// 
-// 
+//
+//
 */
 
 #if !defined(_CP_NG_RSA_MONT_STUFF_H)

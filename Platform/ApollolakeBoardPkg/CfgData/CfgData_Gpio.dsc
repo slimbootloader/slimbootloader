@@ -19,14 +19,28 @@
   gCfgData.GpioBaseTableId        |      * | 0x01  | 0xFF
   gCfgData.GpioItemSize           |      * | 0x02  | 8
   gCfgData.GpioItemCount          |      * | 0x02  | (_LENGTH_GPIO_CFG_DATA_ - _LENGTH_GPIO_CFG_HDR_) / 8
-  gCfgData.GpioBaseTableBitMask   |      * |   38  | {3, 0x80}
+
+  # Bit start offset within each GPIO entry array to identify a GPIO pin uniquely. EX: GPIO group id + pad id
+  # Offset is 1st DWORD BIT0 = 0
+  gCfgData.GpioItemIdBitOff       |      * | 0x01  | 0
+  # Bit length within each GPIO entry array to identify a GPIO pin uniquely.
+  # Length is 1st DWORD BIT0 to BIT23 = 24
+  gCfgData.GpioItemIdBitLen       |      * | 0x01  | 24
+  # Bit offset within each GPIO entry array to indicate SKIP a GPIO programming
+  # Offset is 1st DWORD BIT31 = 31
+  gCfgData.GpioItemValidBitOff    |      * | 0x01  | 31
+  gCfgData.GpioItemUnused         |      * | 0x01  | 0
+
+  # Need 1 bit per GPIO. So this mask byte length needs to be at least (GpioNumber + 7) / 8
+  # Padding can be added to let the whole length aligned at DWORD boundary
+  gCfgData.GpioBaseTableBitMask   |      * |   38  | {0}
 
   gCfgData.GpioTableData          |      * |    0  | 0
   # !HDR EMBED:{GPIO_CFG_HDR:GpioCfgHdr:END}
 
   # !HDR HEADER:{OFF}
 
- 
+
   # !BSF SUBT:{GPIO_TMPL:GPIO_0                 :0x000500c5     :0x1d008008}
   # !BSF SUBT:{GPIO_TMPL:GPIO_1                 :0x000508c5     :0x1d008008}
   # !BSF SUBT:{GPIO_TMPL:GPIO_2                 :0x000510c5     :0x1d008008}
@@ -36,7 +50,7 @@
   # !BSF SUBT:{GPIO_TMPL:GPIO_6                 :0x000530c5     :0x1d008008}
   # !BSF SUBT:{GPIO_TMPL:GPIO_7                 :0x000538c5     :0x1d008008}
   # !BSF SUBT:{GPIO_TMPL:GPIO_8                 :0x000540c5     :0x1d008008}
-  # !BSF SUBT:{GPIO_TMPL:GPIO_9                 :0x000548c5     :0x01008008}  
+  # !BSF SUBT:{GPIO_TMPL:GPIO_9                 :0x000548c5     :0x01008008}
   # !BSF SUBT:{GPIO_TMPL:GPIO_10                :0x000550c5     :0xa5001202}
   # !BSF SUBT:{GPIO_TMPL:GPIO_11                :0x000558c5     :0x01008008}
   # !BSF SUBT:{GPIO_TMPL:GPIO_12                :0x000560c5     :0x81008008}

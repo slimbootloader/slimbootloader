@@ -1,6 +1,6 @@
 /** @file
 
-Copyright (c) 2014 - 2017, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2014 - 2020, Intel Corporation. All rights reserved.<BR>
 
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
@@ -22,8 +22,11 @@ UfsAllocMemBlock (
   )
 {
   UFS_PEIM_MEM_BLOCK           *Block;
+  VOID                         *BufHost;
+  VOID                         *Mapping;
+  EFI_PHYSICAL_ADDRESS         MappedAddr;
+  EFI_STATUS                   Status;
   VOID                         *TempPtr;
-  EFI_PHYSICAL_ADDRESS         Address;
 
   TempPtr = NULL;
   Block   = NULL;
@@ -54,14 +57,21 @@ UfsAllocMemBlock (
 
   Block->Bits = (UINT8 *) (UINTN)TempPtr;
 
-  Address = (UINTN)AllocatePages (Pages);
-  if ((VOID *) (UINTN)Address == NULL) {
+  Status = IoMmuAllocateBuffer (
+             Pages,
+             &BufHost,
+             &MappedAddr,
+             &Mapping
+             );
+  if (EFI_ERROR (Status)) {
     return NULL;
   }
 
-  ZeroMem ((VOID *) (UINTN)Address, EFI_PAGES_TO_SIZE (Pages));
+  ZeroMem ((VOID*)(UINTN)BufHost, EFI_PAGES_TO_SIZE (Pages));
 
-  Block->Buf  = (UINT8 *) ((UINTN)Address);
+  Block->BufHost = (UINT8 *) (UINTN) BufHost;
+  Block->Buf     = (UINT8 *) (UINTN) MappedAddr;
+  Block->Mapping = Mapping;
   Block->Next = NULL;
 
   return Block;
@@ -81,6 +91,8 @@ UfsFreeMemBlock (
   )
 {
   ASSERT ((Pool != NULL) && (Block != NULL));
+
+  IoMmuFreeBuffer (EFI_SIZE_TO_PAGES (Block->BufLen), Block->BufHost, Block->Mapping);
 }
 
 /**
@@ -200,31 +212,7 @@ UfsIsMemBlockEmpty (
   return TRUE;
 }
 
-/**
-  Unlink the memory block from the pool's list.
 
-  @param  Head           The block list head of the memory's pool.
-  @param  BlockToUnlink  The memory block to unlink.
-
-**/
-VOID
-UfsUnlinkMemBlock (
-  IN UFS_PEIM_MEM_BLOCK      *Head,
-  IN UFS_PEIM_MEM_BLOCK      *BlockToUnlink
-  )
-{
-  UFS_PEIM_MEM_BLOCK         *Block;
-
-  ASSERT ((Head != NULL) && (BlockToUnlink != NULL));
-
-  for (Block = Head; Block != NULL; Block = Block->Next) {
-    if (Block->Next == BlockToUnlink) {
-      Block->Next         = BlockToUnlink->Next;
-      BlockToUnlink->Next = NULL;
-      break;
-    }
-  }
-}
 
 /**
   Initialize the memory management pool for the host controller.
@@ -280,19 +268,16 @@ UfsFreeMemPool (
   )
 {
   UFS_PEIM_MEM_BLOCK         *Block;
+  UFS_PEIM_MEM_BLOCK         *Current;
 
-  ASSERT (Pool->Head != NULL);
+  Block = Pool->Head;
+  ASSERT (Block != NULL);
 
-  //
-  // Unlink all the memory blocks from the pool, then free them.
-  // UfsUnlinkMemBlock can't be used to unlink and free the
-  // first block.
-  //
-  for (Block = Pool->Head->Next; Block != NULL; Block = Pool->Head->Next) {
-    UfsFreeMemBlock (Pool, Block);
+  while (Block != NULL) {
+    Current = Block;
+    Block   = Block->Next;
+    UfsFreeMemBlock (Pool, Current);
   }
-
-  UfsFreeMemBlock (Pool, Pool->Head);
 
   return EFI_SUCCESS;
 }

@@ -7,17 +7,23 @@
 
 #include "Stage2.h"
 
+
 /**
   Callback function to add performance measure point during component loading.
 
   @param[in]  ProgressId    Component loading progress ID code.
+  @param[in]  CbInfo        Component Call Back Info
 
 **/
 VOID
 LoadComponentCallback (
-  IN  UINT32   ProgressId
+  IN  UINT32                     ProgressId,
+  IN  COMPONENT_CALLBACK_INFO   *CbInfo
   )
 {
+  UINT8             BootMode;
+
+  // Update Progress Info
   switch (ProgressId) {
   case PROGESS_ID_LOCATE:
     AddMeasurePoint (0x3110);
@@ -26,6 +32,12 @@ LoadComponentCallback (
     AddMeasurePoint (0x3120);
     break;
   case PROGESS_ID_AUTHENTICATE:
+    //Check the boot mode
+    BootMode = GetBootMode();
+    if (MEASURED_BOOT_ENABLED() && (BootMode != BOOT_ON_S3_RESUME)) {
+      // Extend the stage hash
+      ExtendStageHash (CbInfo);
+    }
     AddMeasurePoint (0x3130);
     break;
   case PROGESS_ID_DECOMPRESS:
@@ -34,12 +46,14 @@ LoadComponentCallback (
   default:
     break;
   }
+
+
 }
 
 /**
   Prepare and load payload into proper location for execution.
 
-  @param[in]  Stage2Hob    HOB pointer for Stage2
+  @param[in]  Stage2Param    Param pointer for Stage2
 
   @retval     The base address of the payload.
               0 if loading fails.
@@ -47,38 +61,40 @@ LoadComponentCallback (
 **/
 UINT32
 PreparePayload (
-  IN STAGE2_HOB   *Stage2Hob
+  IN STAGE2_PARAM   *Stage2Param
   )
 {
   EFI_STATUS                     Status;
   UINT32                         Dst;
   UINT32                         DstLen;
+  VOID                          *DstAdr;
   BOOLEAN                        IsNormalPld;
   UINT32                         PayloadId;
   UINT32                         ContainerSig;
   UINT32                         ComponentName;
   UINT8                          BootMode;
-  UINT8                          HashIdx;
-  COMPONENT_ENTRY               *ComponentEntry;
 
+  BootMode = GetBootMode();
+  //
+  // Force PayloadId to 0 during firmware update mode.
+  //
+  if (BootMode == BOOT_ON_FLASH_UPDATE) {
+    SetPayloadId(0);
+  }
   // Load payload to PcdPayloadLoadBase.
   PayloadId   = GetPayloadId ();
   DEBUG ((DEBUG_INFO, "Loading Payload ID 0x%08X\n", PayloadId));
   IsNormalPld = (PayloadId == 0) ? TRUE : FALSE;
-  BootMode = GetBootMode();
   if (BootMode == BOOT_ON_FLASH_UPDATE) {
-    ContainerSig  = COMP_TYPE_FIRMWARE_UPDATE;
+    ContainerSig  = COMP_TYPE_PAYLOAD_FWU;
     ComponentName = FLASH_MAP_SIG_FWUPDATE;
-    HashIdx = COMP_TYPE_FIRMWARE_UPDATE;
   } else {
     if (IsNormalPld) {
       ContainerSig  = COMP_TYPE_PAYLOAD;
       ComponentName = FLASH_MAP_SIG_PAYLOAD;
-      HashIdx       = COMP_TYPE_PAYLOAD;
     } else {
       ContainerSig  = FLASH_MAP_SIG_EPAYLOAD;
       ComponentName = PayloadId;
-      HashIdx       = COMP_TYPE_PAYLOAD_DYNAMIC;
     }
   }
 
@@ -92,43 +108,32 @@ PreparePayload (
 
   AddMeasurePoint (0x3100);
   DstLen = 0;
+  DstAdr = (VOID *)(UINTN)Dst;
   Status = LoadComponentWithCallback (ContainerSig, ComponentName,
-                                     (VOID *)&Dst, &DstLen, LoadComponentCallback);
+                                      &DstAdr, &DstLen, LoadComponentCallback);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Loading payload error - %r !", Status));
     return 0;
   }
 
-  if (MEASURED_BOOT_ENABLED() && (BootMode != BOOT_ON_S3_RESUME)) {
-    if (HashIdx == COMP_TYPE_PAYLOAD_DYNAMIC) {
-      ComponentEntry = NULL;
-      LocateComponentEntry (ContainerSig, ComponentName, NULL, &ComponentEntry);
-      if (ComponentEntry != NULL)  {
-        if (ComponentEntry->HashSize == HASH_STORE_DIGEST_LENGTH) {
-          SetComponentHash (COMP_TYPE_PAYLOAD_DYNAMIC, ComponentEntry->HashData);
-        } else {
-          DEBUG ((DEBUG_INFO, "EPAYLOAD hash does not exist !"));
-        }
-      }
-    }
-    TpmExtendStageHash (HashIdx);
-    AddMeasurePoint (0x3150);
-  }
+  AddMeasurePoint (0x3150);
 
-  Stage2Hob->PayloadActualLength = DstLen;
+  Dst = (UINT32)(UINTN)DstAdr;
+  Stage2Param->PayloadActualLength = DstLen;
   DEBUG ((DEBUG_INFO, "Load Payload ID 0x%08X @ 0x%08X\n", PayloadId, Dst));
   return Dst;
 }
 
+
 /**
   Normal boot flow.
 
-  @param[in]   Stage2Hob            STAGE2_HOB HOB pointer.
+  @param[in]   Stage2Param            STAGE2_PARAM Param pointer.
 
 **/
 VOID
 NormalBootPath (
-  IN STAGE2_HOB    *Stage2Hob
+  IN STAGE2_PARAM    *Stage2Param
   )
 {
   UINT32                         *Dst;
@@ -150,7 +155,7 @@ NormalBootPath (
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
 
   // Load payload
-  Dst = (UINT32 *)PreparePayload (Stage2Hob);
+  Dst = (UINT32 *)(UINTN)PreparePayload (Stage2Param);
   if (Dst == NULL) {
     CpuHalt ("Failed to load payload !");
   }
@@ -166,7 +171,7 @@ NormalBootPath (
   if (Dst[0] == 0x00005A4D) {
     // It is a PE format
     DEBUG ((DEBUG_INFO, "PE32 Format Payload\n"));
-    Status = PeCoffRelocateImage ((UINT32)Dst);
+    Status = PeCoffRelocateImage ((UINT32)(UINTN)Dst);
     if (!EFI_ERROR(Status)) {
       Status = PeCoffLoaderGetEntryPoint (Dst, (VOID *)&PldEntry);
     }
@@ -174,7 +179,7 @@ NormalBootPath (
     // It is a FV format
     DEBUG ((DEBUG_INFO, "FV Format Payload\n"));
     UefiSig = Dst[0];
-    Status  = LoadFvImage (Dst, Stage2Hob->PayloadActualLength, (VOID **)&PldEntry);
+    Status  = LoadFvImage (Dst, Stage2Param->PayloadActualLength, (VOID **)&PldEntry);
   } else if (IsElfImage (Dst)) {
     Status = LoadElfImage (Dst, (VOID *)&PldEntry);
   } else {
@@ -244,7 +249,7 @@ NormalBootPath (
   AddMeasurePoint (0x31F0);
 
   DEBUG ((DEBUG_INFO, "HOB @ 0x%08X\n", LdrGlobal->LdrHobList));
-  PldHobList = BuildExtraInfoHob (Stage2Hob);
+  PldHobList = BuildExtraInfoHob (Stage2Param);
 
   DEBUG_CODE_BEGIN ();
   PrintStackHeapInfo ();
@@ -253,19 +258,19 @@ NormalBootPath (
   DEBUG ((DEBUG_INFO, "Payload entry: 0x%08X\n", PldEntry));
   if (PldEntry != NULL) {
     DEBUG ((DEBUG_INIT, "Jump to payload\n\n"));
-    PldEntry (PldHobList, (VOID *)PldBase);
+    PldEntry (PldHobList, (VOID *)(UINTN)PldBase);
   }
 }
 
 /**
   S3 resume flow.
 
-  @param Stage2Hob            STAGE2_HOB HOB pointer.
+  @param Stage2Param            STAGE2_PARAM Param pointer.
 
 **/
 VOID
 S3ResumePath (
-  STAGE2_HOB   *Stage2Hob
+  STAGE2_PARAM   *Stage2Param
   )
 {
   LOADER_GLOBAL_DATA             *LdrGlobal;
@@ -306,7 +311,7 @@ S3ResumePath (
   Stage2 will complete the remaining system initialization and load payload.
   It will be executed from memory.
 
-  @param Params            STAGE2_HOB HOB pointer.
+  @param Params            STAGE2_PARAM Param pointer.
 
 **/
 VOID
@@ -317,7 +322,7 @@ SecStartup (
 {
   EFI_STATUS                      Status;
   EFI_STATUS                      SubStatus;
-  STAGE2_HOB                     *Stage2Hob;
+  STAGE2_PARAM                   *Stage2Param;
   VOID                           *NvsData;
   UINT32                          MrcDataLen;
   VOID                           *MemPool;
@@ -350,14 +355,14 @@ SecStartup (
   BootMode = GetBootMode ();
 
   // Update Patchable PCD in case Stage2 is loaded into high mem
-  Stage2Hob = (STAGE2_HOB *)Params;
-  Delta = Stage2Hob->Stage2ExeBase - PCD_GET32_WITH_ADJUST (PcdStage2FdBase);
+  Stage2Param = (STAGE2_PARAM *)Params;
+  Delta = Stage2Param->Stage2ExeBase - PCD_GET32_WITH_ADJUST (PcdStage2FdBase);
   Status = PcdSet32S (PcdFSPSBase,             PCD_GET32_WITH_ADJUST (PcdFSPSBase) + Delta);
   Status = PcdSet32S (PcdAcpiTablesAddress,    PCD_GET32_WITH_ADJUST (PcdAcpiTablesAddress) + Delta);
   Status = PcdSet32S (PcdGraphicsVbtAddress,   PCD_GET32_WITH_ADJUST (PcdGraphicsVbtAddress) + Delta);
   Status = PcdSet32S (PcdSplashLogoAddress,    PCD_GET32_WITH_ADJUST (PcdSplashLogoAddress) + Delta);
 
-  LdrGlobal->LdrHobList = (VOID *)LdrGlobal->MemPoolEnd;
+  LdrGlobal->LdrHobList = (VOID *)(UINTN)LdrGlobal->MemPoolEnd;
   BuildHobHandoffInfoTable (
     BootMode,
     (EFI_PHYSICAL_ADDRESS) (UINTN)LdrGlobal->LdrHobList,
@@ -368,38 +373,29 @@ SecStartup (
 
   // Call FspSiliconInit
   BoardInit (PreSiliconInit);
-  AddMeasurePoint (0x3020);
+
+  AddMeasurePoint (0x3010);
 
   // Save NVS data
   NvsData = GetFspNvsDataBuffer (LdrGlobal->FspHobList, &MrcDataLen);
   if ((NvsData != NULL) && (MrcDataLen > 0)) {
     DEBUG ((DEBUG_INFO, "Save MRC Training Data (0x%p 0x%06X) ... ", NvsData, MrcDataLen));
     SubStatus = SaveNvsData (NvsData, MrcDataLen);
-    AddMeasurePoint (0x3070);
     DEBUG ((DEBUG_INFO, "%X\n", SubStatus));
   }
 
+  DEBUG ((DEBUG_INIT, "Silicon Init\n"));
+  AddMeasurePoint (0x3020);
   Status = CallFspSiliconInit ();
   AddMeasurePoint (0x3030);
+  FspResetHandler (Status);
   ASSERT_EFI_ERROR (Status);
-
-  //
-  // Reset the system if FSP API returned FSP_STATUS_RESET_REQUIRED status
-  //
-  if ((Status >= FSP_STATUS_RESET_REQUIRED_COLD) && (Status <= FSP_STATUS_RESET_REQUIRED_8)) {
-    DEBUG ((DEBUG_INIT, "FSP Reboot\n"));
-    if (Status == FSP_STATUS_RESET_REQUIRED_WARM) {
-      ResetSystem(EfiResetWarm);
-    } else {
-      ResetSystem(EfiResetCold);
-    }
-  }
 
   BoardInit (PostSiliconInit);
   AddMeasurePoint (0x3040);
 
   // Create base HOB
-  BuildBaseInfoHob (Stage2Hob);
+  BuildBaseInfoHob (Stage2Param);
 
   // Display splash
   if (FixedPcdGetBool (PcdSplashEnabled)) {
@@ -460,7 +456,7 @@ SecStartup (
 
       S3Data = (S3_DATA *)LdrGlobal->S3DataPtr;
       if (BootMode != BOOT_ON_S3_RESUME) {
-        PlatformUpdateAcpiGnvs ((VOID *)AcpiGnvs);
+        PlatformUpdateAcpiGnvs ((VOID *)(UINTN)AcpiGnvs);
         S3Data->AcpiGnvs = AcpiGnvs;
         S3Data->AcpiBase = AcpiBase;
         DEBUG ((DEBUG_INIT, "ACPI Init\n"));
@@ -487,7 +483,7 @@ SecStartup (
   //
   if (FixedPcdGetBool (PcdSmbiosEnabled)) {
     SmbiosEntry = AllocateZeroPool (PcdGet16(PcdSmbiosTablesSize));
-    Status = PcdSet32S (PcdSmbiosTablesBase, (UINT32)SmbiosEntry);
+    Status = PcdSet32S (PcdSmbiosTablesBase, (UINT32)(UINTN)SmbiosEntry);
     Status = SmbiosInit ();
     if (EFI_ERROR(Status)) {
       DEBUG ((DEBUG_INFO, "SMBIOS init Status = %r\n", Status));
@@ -504,9 +500,9 @@ SecStartup (
 
   // Continue boot flow
   if (ACPI_ENABLED() && (BootMode == BOOT_ON_S3_RESUME)) {
-    S3ResumePath (Stage2Hob);
+    S3ResumePath (Stage2Param);
   } else {
-    NormalBootPath (Stage2Hob);
+    NormalBootPath (Stage2Param);
   }
 
   // Should not reach here!

@@ -1,13 +1,14 @@
-From 1f767d08ae2e79d8ff1e68eef3de925d6e8f04cb Mon Sep 17 00:00:00 2001
-From: Maurice Ma <maurice.ma@intel.com>
-Date: Sun, 26 Aug 2018 22:13:05 -0700
+From 88041e41c986da377a5ca13bd77698660c16b2e4 Mon Sep 17 00:00:00 2001
+From: Aiden Park <aiden.park@intel.com>
+Date: Wed, 11 Dec 2019 10:00:41 -0800
 Subject: [PATCH] Build QEMU FSP 2.0 binaries
 
 Signed-off-by: Aiden Park <aiden.park@intel.com>
 Signed-off-by: Maurice Ma <maurice.ma@intel.com>
 ---
- BuildFsp.cmd                                  |  19 +
- BuildFsp.py                                   | 309 +++++++
+ BaseTools/Source/C/Makefiles/NmakeSubdirs.py  |   2 +-
+ BuildFsp.py                                   | 395 +++++++++
+ IntelFsp2Pkg/Tools/PatchFv.py                 |   7 +
  QemuFspPkg/BuildFv.cmd                        | 248 ++++++
  QemuFspPkg/FspDescription/FspDescription.inf  |  29 +
  QemuFspPkg/FspDescription/FspDescription.txt  |   2 +
@@ -38,13 +39,12 @@ Signed-off-by: Maurice Ma <maurice.ma@intel.com>
  .../PlatformSecLib/Vtf0PlatformSecSLib.inf    |  63 ++
  .../PlatformSecLib/Vtf0PlatformSecTLib.inf    |  67 ++
  QemuFspPkg/QemuFspPkg.dec                     |  51 ++
- QemuFspPkg/QemuFspPkg.dsc                     | 434 ++++++++++
+ QemuFspPkg/QemuFspPkg.dsc                     | 435 ++++++++++
  QemuFspPkg/QemuFspPkg.fdf                     | 278 +++++++
  QemuFspPkg/QemuVideo/QemuVideo.c              | 761 ++++++++++++++++++
  QemuFspPkg/QemuVideo/QemuVideo.h              | 115 +++
  QemuFspPkg/QemuVideo/QemuVideo.inf            |  56 ++
- 37 files changed, 5761 insertions(+)
- create mode 100644 BuildFsp.cmd
+ 38 files changed, 5837 insertions(+), 1 deletion(-)
  create mode 100644 BuildFsp.py
  create mode 100644 QemuFspPkg/BuildFv.cmd
  create mode 100644 QemuFspPkg/FspDescription/FspDescription.inf
@@ -82,37 +82,25 @@ Signed-off-by: Maurice Ma <maurice.ma@intel.com>
  create mode 100644 QemuFspPkg/QemuVideo/QemuVideo.h
  create mode 100644 QemuFspPkg/QemuVideo/QemuVideo.inf
 
-diff --git a/BuildFsp.cmd b/BuildFsp.cmd
-new file mode 100644
-index 0000000000..15b97ad490
---- /dev/null
-+++ b/BuildFsp.cmd
-@@ -0,0 +1,19 @@
-+@REM @file
-+@REM   Windows batch file
-+@REM
-+@REM Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
-+@REM
-+@REM This program and the accompanying materials
-+@REM are licensed and made available under the terms and conditions of the BSD License
-+@REM which accompanies this distribution.  The full text of the license may be found at
-+@REM http://opensource.org/licenses/bsd-license.php
-+@REM
-+@REM THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-+@REM WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
-+@REM
-+@echo off
-+
-+call    EdkSetup.bat
-+
-+echo.
-+python  BuildFsp.py  %*
+diff --git a/BaseTools/Source/C/Makefiles/NmakeSubdirs.py b/BaseTools/Source/C/Makefiles/NmakeSubdirs.py
+index 356f5aca63..c77bfb095c 100644
+--- a/BaseTools/Source/C/Makefiles/NmakeSubdirs.py
++++ b/BaseTools/Source/C/Makefiles/NmakeSubdirs.py
+@@ -33,7 +33,7 @@ def RunCommand(WorkDir=None, *Args, **kwargs):
+     if "stderr" not in kwargs:
+         kwargs["stderr"] = subprocess.STDOUT
+     if "stdout" not in kwargs:
+-        kwargs["stdout"] = subprocess.PIPE
++        kwargs["stdout"] = sys.stdout
+     p = subprocess.Popen(Args, cwd=WorkDir, stderr=kwargs["stderr"], stdout=kwargs["stdout"])
+     stdout, stderr = p.communicate()
+     message = ""
 diff --git a/BuildFsp.py b/BuildFsp.py
 new file mode 100644
-index 0000000000..c89fe93f38
+index 0000000000..dd3f3ccb6e
 --- /dev/null
 +++ b/BuildFsp.py
-@@ -0,0 +1,309 @@
+@@ -0,0 +1,395 @@
 +#!/usr/bin/env python
 +## @ BuildFsp.py
 +# Build FSP main script
@@ -142,89 +130,173 @@ index 0000000000..c89fe93f38
 +import multiprocessing
 +from ctypes import *
 +
++def get_file_data (file, mode = 'rb'):
++    return open(file, mode).read()
 +
-+def rebuild_basetools():
++def run_process (arg_list, print_cmd = False, capture_out = False):
++    sys.stdout.flush()
++    if print_cmd:
++        print (' '.join(arg_list))
 +
++    exc    = None
++    result = 0
++    output = ''
++    try:
++        if capture_out:
++            output = subprocess.check_output(arg_list).decode()
++        else:
++            result = subprocess.call (arg_list)
++    except Exception as ex:
++        result = 1
++        exc    = ex
++
++    if result:
++        if not print_cmd:
++            print ('Error in running process:\n  %s' % ' '.join(arg_list))
++        if exc is None:
++            sys.exit(1)
++        else:
++            raise exc
++
++    return output
++
++
++def check_files_exist (base_name_list, dir = '', ext = ''):
++    for each in base_name_list:
++        if not os.path.exists (os.path.join (dir, each + ext)):
++            return False
++    return True
++
++
++def get_visual_studio_info ():
++
++    toolchain        = ''
++    toolchain_prefix = ''
++    toolchain_path   = ''
++    toolchain_ver    = ''
++
++    # check new Visual Studio Community version first
++    vswhere_path = "%s/Microsoft Visual Studio/Installer/vswhere.exe" % os.environ['ProgramFiles(x86)']
++    if os.path.exists (vswhere_path):
++        cmd = [vswhere_path, '-all', '-property', 'installationPath']
++        lines = run_process (cmd, capture_out = True)
++        vscommon_path = ''
++        for each in lines.splitlines ():
++            each = each.strip()
++            if each and os.path.isdir(each):
++                vscommon_path = each
++        vcver_file = vscommon_path + '\\VC\\Auxiliary\\Build\\Microsoft.VCToolsVersion.default.txt'
++        if os.path.exists(vcver_file):
++            for vs_ver in ['2017']:
++                check_path = '\\Microsoft Visual Studio\\%s\\' % vs_ver
++                if check_path in vscommon_path:
++                    toolchain_ver    = get_file_data (vcver_file, 'r').strip()
++                    toolchain_prefix = 'VS%s_PREFIX' % (vs_ver)
++                    toolchain_path   = vscommon_path + '\\VC\\Tools\\MSVC\\%s\\' % toolchain_ver
++                    toolchain='VS%s' % (vs_ver)
++                    break
++
++    if toolchain == '':
++        vs_ver_list = [
++            ('2015', 'VS140COMNTOOLS'),
++            ('2013', 'VS120COMNTOOLS')
++        ]
++        for vs_ver, vs_tool in vs_ver_list:
++            if vs_tool in os.environ:
++                toolchain        ='VS%s%s' % (vs_ver, 'x86')
++                toolchain_prefix = 'VS%s_PREFIX' % (vs_ver)
++                toolchain_path   = os.path.join(os.environ[vs_tool], '..//..//')
++                toolchain_ver    = vs_ver
++                parts   = os.environ[vs_tool].split('\\')
++                vs_node = 'Microsoft Visual Studio '
++                for part in parts:
++                    if part.startswith(vs_node):
++                        toolchain_ver = part[len(vs_node):]
++                break
++
++    return (toolchain, toolchain_prefix, toolchain_path, toolchain_ver)
++
++
++def rebuild_basetools ():
++    exe_list = 'GenFfs  GenFv  GenFw  GenSec LzmaCompress'.split()
 +    ret = 0
 +    workspace = os.environ['WORKSPACE']
 +
++    cmd = [sys.executable, '-c', 'import sys; import platform; print(", ".join([sys.executable, platform.python_version()]))']
++    py_out = run_process (cmd, capture_out = True)
++    parts  = py_out.split(',')
++    if len(parts) > 1:
++        py_exe, py_ver = parts
++        os.environ['PYTHON_COMMAND'] = py_exe
++        print ('Using %s, Version %s' % (os.environ['PYTHON_COMMAND'], py_ver.rstrip()))
++    else:
++        os.environ['PYTHON_COMMAND'] = 'python'
++
 +    if os.name == 'posix':
-+        genffs_exe_path = os.path.join(workspace, 'BaseTools', 'Source', 'C',
-+                                       'bin', 'GenFfs')
-+        genffs_exist = os.path.exists(genffs_exe_path)
-+        if not genffs_exist:
++        if not check_files_exist (exe_list, os.path.join(workspace, 'BaseTools', 'Source', 'C', 'bin')):
 +            ret = subprocess.call(['make', '-C', 'BaseTools'])
 +
 +    elif os.name == 'nt':
-+        genffs_exe_path = os.path.join(workspace, 'BaseTools', 'Bin', 'Win32',
-+                                       'GenFfs.exe')
-+        genffs_exist = os.path.exists(genffs_exe_path)
-+        if not genffs_exist:
-+            print "Could not find pre-built BaseTools binaries, try to rebuild BaseTools ..."
-+            if 'PYTHON_HOME' not in os.environ:
-+                os.environ['PYTHON_HOME'] = 'C:\\Python27'
-+            ret = subprocess.call(['BaseTools\\toolsetup.bat', 'forcerebuild'])
++
++        if not check_files_exist (exe_list, os.path.join(workspace, 'BaseTools', 'Bin', 'Win32'), '.exe'):
++            print ("Could not find pre-built BaseTools binaries, try to rebuild BaseTools ...")
++            ret = run_process (['BaseTools\\toolsetup.bat', 'forcerebuild'])
 +
 +    if ret:
-+        print "Build BaseTools failed, please check required build environment and utilities !"
++        print ("Build BaseTools failed, please check required build environment and utilities !")
 +        sys.exit(1)
-+
-+        genffs_exist = os.path.exists(genffs_exe_path)
-+        if not genffs_exist:
-+            print "Build python executables failed !"
-+            sys.exit(1)
 +
 +
 +def prep_env():
-+    if os.name == 'posix':
++    work_dir = os.path.dirname(os.path.realpath(__file__))
++    os.chdir(work_dir)
++    if sys.platform == 'darwin':
++        toolchain = 'XCODE5'
++        os.environ['PATH'] = os.environ['PATH'] + ':' + os.path.join(work_dir, 'BaseTools/BinWrappers/PosixLike')
++        clang_ver = run_process (['clang', '-dumpversion'], capture_out = True)
++        clang_ver = clang_ver.strip()
++        toolchain_ver = clang_ver
++    elif os.name == 'posix':
 +        toolchain = 'GCC49'
 +        gcc_ver = subprocess.Popen(['gcc', '-dumpversion'], stdout=subprocess.PIPE)
 +        (gcc_ver, err) = subprocess.Popen(['sed', 's/\\..*//'], stdin=gcc_ver.stdout, stdout=subprocess.PIPE).communicate()
 +        if int(gcc_ver) > 4:
 +            toolchain = 'GCC5'
 +
-+        workspace = os.path.dirname(os.path.realpath(__file__))
-+        os.environ['PATH'] = os.environ['PATH'] + ':' + os.path.join(
-+            workspace, 'BaseTools/BinWrappers/PosixLike')
++        os.environ['PATH'] = os.environ['PATH'] + ':' + os.path.join(work_dir, 'BaseTools/BinWrappers/PosixLike')
++        toolchain_ver = gcc_ver
 +    elif os.name == 'nt':
-+        if 'WORKSPACE' not in os.environ:
-+            print "Please run EdkSetup.bat first !"
-+            sys.exit(1)
-+        toolchain = ''
-+        workspace = os.environ['WORKSPACE']
-+        os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.join(
-+            workspace, 'BaseTools/Bin/Win32')
-+        os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.join(
-+            workspace, 'BaseTools/BinWrappers/WindowsLike')
-+        os.environ['PYTHONPATH'] = os.path.join(workspace, 'BaseTools/Source/Python')
-+        vs_ver = ['2015', '2013', '2012', '2010', '2008']
-+        for each in vs_ver:
-+            vs_test = 'VS%s_PREFIX' % (each)
-+            if vs_test in os.environ:
-+                toolchain = 'VS%s%s' % (each, 'x86' if
-+                                        '(x86)' in os.environ[vs_test] else '')
-+                break
-+        if not toolchain:
-+            print "Could not find supported Visual Studio version !"
++        os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.join(work_dir, 'BaseTools\\Bin\\Win32')
++        os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.join(work_dir, 'BaseTools\\BinWrappers\\WindowsLike')
++        os.environ['PYTHONPATH'] = os.path.join(work_dir, 'BaseTools', 'Source', 'Python')
++
++        toolchain, toolchain_prefix, toolchain_path, toolchain_ver = get_visual_studio_info ()
++        if toolchain:
++            os.environ[toolchain_prefix] = toolchain_path
++        else:
++            print("Could not find supported Visual Studio version !")
 +            sys.exit(1)
 +        if 'NASM_PREFIX' not in os.environ:
 +            os.environ['NASM_PREFIX'] = "C:\\Nasm\\"
 +        if 'OPENSSL_PATH' not in os.environ:
 +            os.environ['OPENSSL_PATH'] = "C:\\Openssl\\"
++        if 'IASL_PREFIX' not in os.environ:
++            os.environ['IASL_PREFIX'] = "C:\\ASL\\"
 +    else:
-+        print "Unsupported operating system !"
++        print("Unsupported operating system !")
 +        sys.exit(1)
 +
++    print ('Using %s, Version %s' % (toolchain, toolchain_ver))
++
 +    # Update Environment vars
-+    os.environ['WORKSPACE'] = workspace
-+    os.environ['EDK_TOOLS_PATH'] = os.path.join(workspace, 'BaseTools')
-+    os.environ['BASE_TOOLS_PATH'] = os.path.join(workspace, 'BaseTools')
-+    os.environ['CONF_PATH'] = os.path.join(workspace, 'Conf')
++    os.environ['EDK_TOOLS_PATH'] = os.path.join(work_dir, 'BaseTools')
++    os.environ['BASE_TOOLS_PATH'] = os.path.join(work_dir, 'BaseTools')
++    if 'WORKSPACE' not in os.environ:
++        os.environ['WORKSPACE'] = work_dir
++    os.environ['CONF_PATH']     = os.path.join(os.environ['WORKSPACE'], 'Conf')
++    os.environ['TOOL_CHAIN']    = toolchain
 +
-+    # Check if BaseTools has been compiled
-+    rebuild_basetools()
-+
-+    return (workspace, toolchain)
++    return (work_dir, toolchain)
 +
 +
 +def Fatal(msg):
@@ -246,8 +318,9 @@ index 0000000000..c89fe93f38
 +
 +def Prebuild(target, toolchain):
 +
-+    workspace = os.environ['WORKSPACE']
++    rebuild_basetools ()
 +
++    workspace = os.environ['WORKSPACE']
 +    if not os.path.exists(os.path.join(workspace, 'Conf')):
 +        os.makedirs(os.path.join(workspace, 'Conf'))
 +    for name in ['target', 'tools_def', 'build_rule']:
@@ -413,6 +486,7 @@ index 0000000000..c89fe93f38
 +            return -1
 +
 +    workspace, toolchain = prep_env()
++    os.environ['WORKSPACE'] = workspace
 +    Prebuild  (target, toolchain)
 +    Build     (target, toolchain)
 +    PostBuild (target, toolchain)
@@ -422,9 +496,27 @@ index 0000000000..c89fe93f38
 +
 +if __name__ == '__main__':
 +    sys.exit(Main())
+diff --git a/IntelFsp2Pkg/Tools/PatchFv.py b/IntelFsp2Pkg/Tools/PatchFv.py
+index edb30c816b..c1594f1a96 100644
+--- a/IntelFsp2Pkg/Tools/PatchFv.py
++++ b/IntelFsp2Pkg/Tools/PatchFv.py
+@@ -420,6 +420,13 @@ class Symbols:
+             matchKeyGroupIndex = 2
+             matchSymbolGroupIndex  = 1
+             prefix = '_'
++        elif reportLine.strip().find("XCODE") != -1:
++            #XCODE
++            #0x00001E29      0x00000013      [ 53] __ModuleEntryPoint
++            patchMapFileMatchString = "(0x[0-9a-fA-F]{8})\s+0x[0-9a-fA-F]{8}\s+\[.*\]\s+(\w+)$"
++            matchKeyGroupIndex = 2
++            matchSymbolGroupIndex  = 1
++            prefix = ''
+         else:
+             #MSFT
+             #0003:00000190       _gComBase                  00007a50     SerialPo
 diff --git a/QemuFspPkg/BuildFv.cmd b/QemuFspPkg/BuildFv.cmd
 new file mode 100644
-index 0000000000..c43b05031b
+index 0000000000..a535d68b7c
 --- /dev/null
 +++ b/QemuFspPkg/BuildFv.cmd
 @@ -0,0 +1,248 @@
@@ -678,7 +770,7 @@ index 0000000000..c43b05031b
 +echo.
 diff --git a/QemuFspPkg/FspDescription/FspDescription.inf b/QemuFspPkg/FspDescription/FspDescription.inf
 new file mode 100644
-index 0000000000..552648668e
+index 0000000000..6b32295f5f
 --- /dev/null
 +++ b/QemuFspPkg/FspDescription/FspDescription.inf
 @@ -0,0 +1,29 @@
@@ -713,7 +805,7 @@ index 0000000000..552648668e
 +  BIN|FspDescription.txt|*
 diff --git a/QemuFspPkg/FspDescription/FspDescription.txt b/QemuFspPkg/FspDescription/FspDescription.txt
 new file mode 100644
-index 0000000000..1aa7f58280
+index 0000000000..b42a4e5095
 --- /dev/null
 +++ b/QemuFspPkg/FspDescription/FspDescription.txt
 @@ -0,0 +1,2 @@
@@ -721,7 +813,7 @@ index 0000000000..1aa7f58280
 +  QEMU Q35/ICH9
 diff --git a/QemuFspPkg/FspHeader/FspHeader.aslc b/QemuFspPkg/FspHeader/FspHeader.aslc
 new file mode 100644
-index 0000000000..a3dfdf09b6
+index 0000000000..47c0b675c3
 --- /dev/null
 +++ b/QemuFspPkg/FspHeader/FspHeader.aslc
 @@ -0,0 +1,90 @@
@@ -815,10 +907,9 @@ index 0000000000..a3dfdf09b6
 +  //
 +  return (VOID*)&mTable;
 +}
-\ No newline at end of file
 diff --git a/QemuFspPkg/FspHeader/FspHeader.inf b/QemuFspPkg/FspHeader/FspHeader.inf
 new file mode 100644
-index 0000000000..c5c23500f2
+index 0000000000..d5ffe3d433
 --- /dev/null
 +++ b/QemuFspPkg/FspHeader/FspHeader.inf
 @@ -0,0 +1,49 @@
@@ -871,10 +962,9 @@ index 0000000000..c5c23500f2
 +
 +[FixedPcd]
 +  gIntelFsp2PkgTokenSpaceGuid.PcdFspMaxPatchEntry
-\ No newline at end of file
 diff --git a/QemuFspPkg/FspmInit/FspmInit.c b/QemuFspPkg/FspmInit/FspmInit.c
 new file mode 100644
-index 0000000000..c0b627a32a
+index 0000000000..07a72dc19a
 --- /dev/null
 +++ b/QemuFspPkg/FspmInit/FspmInit.c
 @@ -0,0 +1,671 @@
@@ -1353,7 +1443,7 @@ index 0000000000..c0b627a32a
 +  //
 +  HostBridgeDevId = PciCf8Read16 (OVMF_HOSTBRIDGE_DID);
 +  if (HostBridgeDevId != INTEL_Q35_MCH_DEVICE_ID) {
-+    DEBUG ((EFI_D_ERROR, "Unknown Host Bridge Device ID: 0x%04x\n"));
++    DEBUG ((DEBUG_ERROR, "Unknown Host Bridge Device ID: 0x%04x\n"));
 +    ASSERT (FALSE);
 +    return EFI_UNSUPPORTED;
 +  }
@@ -1367,7 +1457,7 @@ index 0000000000..c0b627a32a
 +
 +/**
 +  Initialize TSEG size
-+  
++
 +  @retval     TSEG size supported by platform.
 +
 +**/
@@ -1378,7 +1468,7 @@ index 0000000000..c0b627a32a
 +{
 +  UINT16        ExtendedTsegMbytes;
 +  UINT16        TsegMbytes;
-+  
++
 +  //
 +  // Check if QEMU offers an extended TSEG.
 +  //
@@ -1398,7 +1488,7 @@ index 0000000000..c0b627a32a
 +  PciWrite16 (DRAMC_REGISTER_Q35 (MCH_EXT_TSEG_MB), MCH_EXT_TSEG_MB_QUERY);
 +  ExtendedTsegMbytes = PciRead16 (DRAMC_REGISTER_Q35 (MCH_EXT_TSEG_MB));
 +  if (ExtendedTsegMbytes == MCH_EXT_TSEG_MB_QUERY) {
-+    TsegMbytes = 0x10;    
++    TsegMbytes = 0x10;
 +    PciWrite16 (DRAMC_REGISTER_Q35 (MCH_EXT_TSEG_MB), TsegMbytes);
 +  } else {
 +    TsegMbytes = ExtendedTsegMbytes;
@@ -1432,8 +1522,8 @@ index 0000000000..c0b627a32a
 +  UINT64                          HighMemLen;
 +  UINT32                          TsegSize;
 +  UINT32                          TsegBase;
-+  
-+  DEBUG ((EFI_D_INFO, "FspmInitPoint() - Begin\n"));
++
++  DEBUG ((DEBUG_INFO, "FspmInitPoint() - Begin\n"));
 +
 +  //
 +  // QEMU init
@@ -1463,7 +1553,7 @@ index 0000000000..c0b627a32a
 +
 +  LowMemLen  = GetSystemMemorySizeBelow4Gb();
 +  HighMemLen = GetSystemMemorySizeAbove4Gb();
-+  
++
 +  TsegSize   = InitializeSmramTsegSize ();
 +  TsegBase   = LowMemLen - TsegSize;
 +
@@ -1542,16 +1632,16 @@ index 0000000000..c0b627a32a
 +      TsegSize,
 +      &gFspReservedMemoryResourceHobTsegGuid
 +    );
-+  
++
 +  Status = PeiServicesInstallPeiMemory (PeiMemBase, PeiMemSize);
 +
-+  DEBUG ((EFI_D_INFO, "FspmInitPoint() - End\n"));
++  DEBUG ((DEBUG_INFO, "FspmInitPoint() - End\n"));
 +
 +  return Status;
 +}
 diff --git a/QemuFspPkg/FspmInit/FspmInit.h b/QemuFspPkg/FspmInit/FspmInit.h
 new file mode 100644
-index 0000000000..f7eca68b20
+index 0000000000..7d69a0ddb1
 --- /dev/null
 +++ b/QemuFspPkg/FspmInit/FspmInit.h
 @@ -0,0 +1,77 @@
@@ -1634,7 +1724,7 @@ index 0000000000..f7eca68b20
 +#endif
 diff --git a/QemuFspPkg/FspmInit/FspmInit.inf b/QemuFspPkg/FspmInit/FspmInit.inf
 new file mode 100644
-index 0000000000..97bb04c421
+index 0000000000..fce0bc4ea7
 --- /dev/null
 +++ b/QemuFspPkg/FspmInit/FspmInit.inf
 @@ -0,0 +1,67 @@
@@ -1680,7 +1770,7 @@ index 0000000000..97bb04c421
 +  gFspReservedMemoryResourceHobGuid         ## CONSUMES
 +  gFspBootLoaderTolumHobGuid                ## CONSUMES
 +  gFspReservedMemoryResourceHobTsegGuid     ## CONSUMES
-+  
++
 +[Protocols]
 +  gEfiPciEnumerationCompleteProtocolGuid    ## CONSUMES
 +
@@ -1707,7 +1797,7 @@ index 0000000000..97bb04c421
 +  TRUE
 diff --git a/QemuFspPkg/FspsInit/FspsInit.c b/QemuFspPkg/FspsInit/FspsInit.c
 new file mode 100644
-index 0000000000..dc756ac2fe
+index 0000000000..cd1024fea7
 --- /dev/null
 +++ b/QemuFspPkg/FspsInit/FspsInit.c
 @@ -0,0 +1,234 @@
@@ -1815,9 +1905,9 @@ index 0000000000..dc756ac2fe
 +  )
 +{
 +  // Place holder
-+  DEBUG ((EFI_D_INFO, "FspInitEndOfPeiCallback++\n"));
++  DEBUG ((DEBUG_INFO, "FspInitEndOfPeiCallback++\n"));
 +
-+  DEBUG ((EFI_D_INFO, "FspInitEndOfPeiCallback--\n"));
++  DEBUG ((DEBUG_INFO, "FspInitEndOfPeiCallback--\n"));
 +
 +  return EFI_SUCCESS;
 +}
@@ -1842,9 +1932,9 @@ index 0000000000..dc756ac2fe
 +  )
 +{
 +  // Place holder
-+  DEBUG ((EFI_D_INFO, "FspInitAfterPciEnumerationCallback++\n"));
++  DEBUG ((DEBUG_INFO, "FspInitAfterPciEnumerationCallback++\n"));
 +
-+  DEBUG ((EFI_D_INFO, "FspInitAfterPciEnumerationCallback--\n"));
++  DEBUG ((DEBUG_INFO, "FspInitAfterPciEnumerationCallback--\n"));
 +
 +  return EFI_SUCCESS;
 +}
@@ -1869,9 +1959,9 @@ index 0000000000..dc756ac2fe
 +  )
 +{
 +  // Place holder
-+  DEBUG ((EFI_D_INFO, "FspReadyToBootCallback++\n"));
++  DEBUG ((DEBUG_INFO, "FspReadyToBootCallback++\n"));
 +
-+  DEBUG ((EFI_D_INFO, "FspReadyToBootCallback--\n"));
++  DEBUG ((DEBUG_INFO, "FspReadyToBootCallback--\n"));
 +
 +  return EFI_SUCCESS;
 +}
@@ -1896,9 +1986,9 @@ index 0000000000..dc756ac2fe
 +  )
 +{
 +  // Place holder
-+  DEBUG ((EFI_D_INFO, "FspEndOfFirmwareCallback++\n"));
++  DEBUG ((DEBUG_INFO, "FspEndOfFirmwareCallback++\n"));
 +
-+  DEBUG ((EFI_D_INFO, "FspEndOfFirmwareCallback--\n"));
++  DEBUG ((DEBUG_INFO, "FspEndOfFirmwareCallback--\n"));
 +
 +  return EFI_SUCCESS;
 +}
@@ -1945,10 +2035,9 @@ index 0000000000..dc756ac2fe
 +  DEBUG ((DEBUG_INFO, "FspInitEntryPoint() - end\n"));
 +  return Status;
 +}
-\ No newline at end of file
 diff --git a/QemuFspPkg/FspsInit/FspsInit.h b/QemuFspPkg/FspsInit/FspsInit.h
 new file mode 100644
-index 0000000000..910010d893
+index 0000000000..5c5e2801b1
 --- /dev/null
 +++ b/QemuFspPkg/FspsInit/FspsInit.h
 @@ -0,0 +1,124 @@
@@ -2078,7 +2167,7 @@ index 0000000000..910010d893
 +#endif
 diff --git a/QemuFspPkg/FspsInit/FspsInit.inf b/QemuFspPkg/FspsInit/FspsInit.inf
 new file mode 100644
-index 0000000000..81576a878a
+index 0000000000..3744dd2e53
 --- /dev/null
 +++ b/QemuFspPkg/FspsInit/FspsInit.inf
 @@ -0,0 +1,55 @@
@@ -2139,7 +2228,7 @@ index 0000000000..81576a878a
 +  TRUE
 diff --git a/QemuFspPkg/Include/BootLoaderPlatformData.h b/QemuFspPkg/Include/BootLoaderPlatformData.h
 new file mode 100644
-index 0000000000..757f21c5d0
+index 0000000000..4ee96bbf49
 --- /dev/null
 +++ b/QemuFspPkg/Include/BootLoaderPlatformData.h
 @@ -0,0 +1,33 @@
@@ -2178,7 +2267,7 @@ index 0000000000..757f21c5d0
 +#endif
 diff --git a/QemuFspPkg/Include/ChipsetAccess.h b/QemuFspPkg/Include/ChipsetAccess.h
 new file mode 100644
-index 0000000000..0018a10cfc
+index 0000000000..7a27644eca
 --- /dev/null
 +++ b/QemuFspPkg/Include/ChipsetAccess.h
 @@ -0,0 +1,23 @@
@@ -2207,7 +2296,7 @@ index 0000000000..0018a10cfc
 +#endif
 diff --git a/QemuFspPkg/Include/FspUpd.h b/QemuFspPkg/Include/FspUpd.h
 new file mode 100644
-index 0000000000..6ddf2ed781
+index 0000000000..0845cf600c
 --- /dev/null
 +++ b/QemuFspPkg/Include/FspUpd.h
 @@ -0,0 +1,48 @@
@@ -2261,7 +2350,7 @@ index 0000000000..6ddf2ed781
 +#endif
 diff --git a/QemuFspPkg/Include/FspmUpd.h b/QemuFspPkg/Include/FspmUpd.h
 new file mode 100644
-index 0000000000..6833af61a1
+index 0000000000..5931bfdc23
 --- /dev/null
 +++ b/QemuFspPkg/Include/FspmUpd.h
 @@ -0,0 +1,108 @@
@@ -2375,7 +2464,7 @@ index 0000000000..6833af61a1
 +#endif
 diff --git a/QemuFspPkg/Include/FspsUpd.h b/QemuFspPkg/Include/FspsUpd.h
 new file mode 100644
-index 0000000000..df8a0c9a12
+index 0000000000..a109552c9f
 --- /dev/null
 +++ b/QemuFspPkg/Include/FspsUpd.h
 @@ -0,0 +1,101 @@
@@ -2482,7 +2571,7 @@ index 0000000000..df8a0c9a12
 +#endif
 diff --git a/QemuFspPkg/Include/FsptUpd.h b/QemuFspPkg/Include/FsptUpd.h
 new file mode 100644
-index 0000000000..adaaa21554
+index 0000000000..4340184d3f
 --- /dev/null
 +++ b/QemuFspPkg/Include/FsptUpd.h
 @@ -0,0 +1,101 @@
@@ -2589,7 +2678,7 @@ index 0000000000..adaaa21554
 +#endif
 diff --git a/QemuFspPkg/Include/OvmfPlatforms.h b/QemuFspPkg/Include/OvmfPlatforms.h
 new file mode 100644
-index 0000000000..57f467398b
+index 0000000000..74ce51d6ea
 --- /dev/null
 +++ b/QemuFspPkg/Include/OvmfPlatforms.h
 @@ -0,0 +1,44 @@
@@ -2639,7 +2728,7 @@ index 0000000000..57f467398b
 +#endif
 diff --git a/QemuFspPkg/Include/Q35MchIch9.h b/QemuFspPkg/Include/Q35MchIch9.h
 new file mode 100644
-index 0000000000..e86c154f18
+index 0000000000..09201f52f0
 --- /dev/null
 +++ b/QemuFspPkg/Include/Q35MchIch9.h
 @@ -0,0 +1,112 @@
@@ -2757,7 +2846,7 @@ index 0000000000..e86c154f18
 +#endif
 diff --git a/QemuFspPkg/Library/PlatformSecLib/Ia32/Chipset.inc b/QemuFspPkg/Library/PlatformSecLib/Ia32/Chipset.inc
 new file mode 100644
-index 0000000000..0ebb790c62
+index 0000000000..7c0183d1fe
 --- /dev/null
 +++ b/QemuFspPkg/Library/PlatformSecLib/Ia32/Chipset.inc
 @@ -0,0 +1,119 @@
@@ -2822,9 +2911,9 @@ index 0000000000..0ebb790c62
 +;
 +;B_Unit Registers
 +;
-+BUNIT_BMISC	                  EQU 6800h
-+  B_BMISC_RESDRAM	            EQU 01h   	;Bit 0 - When this bit is set, reads targeting E-segment are routed to DRAM.
-+  B_BMISC_RFSDRAM	            EQU 02h   	;Bit 1 - When this bit is set, reads targeting F-segment are routed to DRAM.
++BUNIT_BMISC                   EQU 6800h
++  B_BMISC_RESDRAM             EQU 01h   ;Bit 0 - When this bit is set, reads targeting E-segment are routed to DRAM.
++  B_BMISC_RFSDRAM             EQU 02h   ;Bit 1 - When this bit is set, reads targeting F-segment are routed to DRAM.
 +
 +;
 +; HPET compare register
@@ -2882,7 +2971,7 @@ index 0000000000..0ebb790c62
 +MMCFG_BASE                    EQU CPU_HEC_BASE    ; 4GB-128MB
 diff --git a/QemuFspPkg/Library/PlatformSecLib/Ia32/Ia32Nasm.inc b/QemuFspPkg/Library/PlatformSecLib/Ia32/Ia32Nasm.inc
 new file mode 100644
-index 0000000000..eab7382ed4
+index 0000000000..c50997e54b
 --- /dev/null
 +++ b/QemuFspPkg/Library/PlatformSecLib/Ia32/Ia32Nasm.inc
 @@ -0,0 +1,169 @@
@@ -3057,7 +3146,7 @@ index 0000000000..eab7382ed4
 +
 diff --git a/QemuFspPkg/Library/PlatformSecLib/Ia32/PlatformNasm.inc b/QemuFspPkg/Library/PlatformSecLib/Ia32/PlatformNasm.inc
 new file mode 100644
-index 0000000000..bdc37670bb
+index 0000000000..58acba976d
 --- /dev/null
 +++ b/QemuFspPkg/Library/PlatformSecLib/Ia32/PlatformNasm.inc
 @@ -0,0 +1,143 @@
@@ -3120,7 +3209,7 @@ index 0000000000..bdc37670bb
 +;
 +; Port80 Selection
 +;
-+CMOS_PORT80_OFFSET         	  EQU 017h            ; Port80Route
++CMOS_PORT80_OFFSET            EQU 017h            ; Port80Route
 +
 +;
 +;Flash layout map
@@ -3206,7 +3295,7 @@ index 0000000000..bdc37670bb
 +BSPApicIDSaveStart            EQU 24
 diff --git a/QemuFspPkg/Library/PlatformSecLib/Ia32/SecCoreNasm.inc b/QemuFspPkg/Library/PlatformSecLib/Ia32/SecCoreNasm.inc
 new file mode 100644
-index 0000000000..33ba7ef64b
+index 0000000000..5651e377e6
 --- /dev/null
 +++ b/QemuFspPkg/Library/PlatformSecLib/Ia32/SecCoreNasm.inc
 @@ -0,0 +1,61 @@
@@ -3273,7 +3362,7 @@ index 0000000000..33ba7ef64b
 +AP_SIPI_SWITCH_BSP          EQU   003h
 diff --git a/QemuFspPkg/Library/PlatformSecLib/Ia32/SecEntry.nasm b/QemuFspPkg/Library/PlatformSecLib/Ia32/SecEntry.nasm
 new file mode 100644
-index 0000000000..f48a1dad62
+index 0000000000..c0f2520d3f
 --- /dev/null
 +++ b/QemuFspPkg/Library/PlatformSecLib/Ia32/SecEntry.nasm
 @@ -0,0 +1,706 @@
@@ -3985,7 +4074,7 @@ index 0000000000..f48a1dad62
 +    DW  MTRR_PHYS_MASK_9
 diff --git a/QemuFspPkg/Library/PlatformSecLib/PlatformSecLib.c b/QemuFspPkg/Library/PlatformSecLib/PlatformSecLib.c
 new file mode 100644
-index 0000000000..019a640aae
+index 0000000000..f71759653c
 --- /dev/null
 +++ b/QemuFspPkg/Library/PlatformSecLib/PlatformSecLib.c
 @@ -0,0 +1,85 @@
@@ -4076,7 +4165,7 @@ index 0000000000..019a640aae
 +
 diff --git a/QemuFspPkg/Library/PlatformSecLib/PlatformSecLib.h b/QemuFspPkg/Library/PlatformSecLib/PlatformSecLib.h
 new file mode 100644
-index 0000000000..197e965dbb
+index 0000000000..0ecdfbdbdf
 --- /dev/null
 +++ b/QemuFspPkg/Library/PlatformSecLib/PlatformSecLib.h
 @@ -0,0 +1,48 @@
@@ -4130,7 +4219,7 @@ index 0000000000..197e965dbb
 +
 diff --git a/QemuFspPkg/Library/PlatformSecLib/Vtf0PlatformSecMLib.inf b/QemuFspPkg/Library/PlatformSecLib/Vtf0PlatformSecMLib.inf
 new file mode 100644
-index 0000000000..1d9a216710
+index 0000000000..edaa85303b
 --- /dev/null
 +++ b/QemuFspPkg/Library/PlatformSecLib/Vtf0PlatformSecMLib.inf
 @@ -0,0 +1,61 @@
@@ -4197,7 +4286,7 @@ index 0000000000..1d9a216710
 +  gIntelFsp2PkgTokenSpaceGuid.PcdTemporaryRamSize
 diff --git a/QemuFspPkg/Library/PlatformSecLib/Vtf0PlatformSecSLib.inf b/QemuFspPkg/Library/PlatformSecLib/Vtf0PlatformSecSLib.inf
 new file mode 100644
-index 0000000000..fbfb0cc804
+index 0000000000..d2f841ad2e
 --- /dev/null
 +++ b/QemuFspPkg/Library/PlatformSecLib/Vtf0PlatformSecSLib.inf
 @@ -0,0 +1,63 @@
@@ -4266,7 +4355,7 @@ index 0000000000..fbfb0cc804
 +  gIntelFsp2PkgTokenSpaceGuid.PcdTemporaryRamSize
 diff --git a/QemuFspPkg/Library/PlatformSecLib/Vtf0PlatformSecTLib.inf b/QemuFspPkg/Library/PlatformSecLib/Vtf0PlatformSecTLib.inf
 new file mode 100644
-index 0000000000..ca5911c023
+index 0000000000..2f80ba02d2
 --- /dev/null
 +++ b/QemuFspPkg/Library/PlatformSecLib/Vtf0PlatformSecTLib.inf
 @@ -0,0 +1,67 @@
@@ -4339,7 +4428,7 @@ index 0000000000..ca5911c023
 +
 diff --git a/QemuFspPkg/QemuFspPkg.dec b/QemuFspPkg/QemuFspPkg.dec
 new file mode 100644
-index 0000000000..29aa5d6660
+index 0000000000..8c437138ed
 --- /dev/null
 +++ b/QemuFspPkg/QemuFspPkg.dec
 @@ -0,0 +1,51 @@
@@ -4396,10 +4485,10 @@ index 0000000000..29aa5d6660
 +
 diff --git a/QemuFspPkg/QemuFspPkg.dsc b/QemuFspPkg/QemuFspPkg.dsc
 new file mode 100644
-index 0000000000..2e2d8d8c93
+index 0000000000..4c066d392f
 --- /dev/null
 +++ b/QemuFspPkg/QemuFspPkg.dsc
-@@ -0,0 +1,434 @@
+@@ -0,0 +1,435 @@
 +## @file
 +# FSP DSC build file for QEMU platform
 +#
@@ -4834,9 +4923,10 @@ index 0000000000..2e2d8d8c93
 +  *_GCC5_IA32_DLINK_FLAGS = -no-pie
 +  *_GCC5_IA32_ASLCC_FLAGS = -fno-pic
 +  *_GCC5_IA32_ASLDLINK_FLAGS = -no-pie
++  *_XCODE5_IA32_CC_FLAGS = -flto
 diff --git a/QemuFspPkg/QemuFspPkg.fdf b/QemuFspPkg/QemuFspPkg.fdf
 new file mode 100644
-index 0000000000..a3047a8220
+index 0000000000..7ab51f9d1b
 --- /dev/null
 +++ b/QemuFspPkg/QemuFspPkg.fdf
 @@ -0,0 +1,278 @@
@@ -4862,8 +4952,8 @@ index 0000000000..a3047a8220
 +#
 +# Flash Size for Visual Studio and GCC
 +#
-+DEFINE FLASH_SIZE           = 0x00038000
-+DEFINE FLASH_NUM_BLOCKS     = 0x380          #The number of blocks
++DEFINE FLASH_SIZE           = 0x0003A000
++DEFINE FLASH_NUM_BLOCKS     = 0x3A0          #The number of blocks
 +
 +SET gQemuFspPkgTokenSpaceGuid.PcdFlashFvFspsBase  = 0x00000000
 +SET gQemuFspPkgTokenSpaceGuid.PcdFlashFvFspsSize  = 0x00015000
@@ -4872,7 +4962,7 @@ index 0000000000..a3047a8220
 +SET gQemuFspPkgTokenSpaceGuid.PcdFlashFvFspmSize  = 0x00022000
 +
 +SET gQemuFspPkgTokenSpaceGuid.PcdFlashFvFsptBase  = 0x00037000
-+SET gQemuFspPkgTokenSpaceGuid.PcdFlashFvFsptSize  = 0x00001000
++SET gQemuFspPkgTokenSpaceGuid.PcdFlashFvFsptSize  = 0x00003000
 +
 +################################################################################
 +#
@@ -5120,7 +5210,7 @@ index 0000000000..a3047a8220
 +  }
 diff --git a/QemuFspPkg/QemuVideo/QemuVideo.c b/QemuFspPkg/QemuVideo/QemuVideo.c
 new file mode 100644
-index 0000000000..68217cb1ef
+index 0000000000..acf84a670b
 --- /dev/null
 +++ b/QemuFspPkg/QemuVideo/QemuVideo.c
 @@ -0,0 +1,761 @@
@@ -5639,7 +5729,7 @@ index 0000000000..68217cb1ef
 +  GfxPtr  = (GRAPHICS_DATA *)FspsUpd->FspsConfig.GraphicsConfigPtr;
 +
 +  if (!(GfxPtr && (GfxPtr->Signature == GRAPHICS_DATA_SIG))) {
-+    DEBUG ((EFI_D_INFO, "NO valid graphics config data found!\n"));
++    DEBUG ((DEBUG_INFO, "NO valid graphics config data found!\n"));
 +    return EFI_SUCCESS;
 +  }
 +
@@ -5673,7 +5763,7 @@ index 0000000000..68217cb1ef
 +  Status = PeiServicesInstallPpi (&mPeiGraphicsPpi[0]);
 +  if (EFI_ERROR (Status)) {
 +    Status = EFI_DEVICE_ERROR;
-+    DEBUG ((EFI_D_ERROR, "Failed to install Pei Graphics PPI\n"));
++    DEBUG ((DEBUG_ERROR, "Failed to install Pei Graphics PPI\n"));
 +    ASSERT (FALSE);
 +  }
 +
@@ -5694,7 +5784,7 @@ index 0000000000..68217cb1ef
 +  )
 +{
 +  if (mMode == NULL) {
-+    DEBUG ((EFI_D_ERROR,"[ERROR]:[GetCurrentMode()]:[No current mode created]\n"));
++    DEBUG ((DEBUG_ERROR,"[ERROR]:[GetCurrentMode()]:[No current mode created]\n"));
 +    return EFI_NOT_READY;
 +  }
 +
@@ -5780,7 +5870,7 @@ index 0000000000..68217cb1ef
 +
 +  Address = PCI_LIB_ADDRESS (0, 1, 0, PCI_VENDOR_ID_OFFSET);
 +  if (PciRead32(Address) != QEMU_VGA_VID_DID) {
-+    DEBUG ((EFI_D_ERROR, "Not supported GFX device!\n"));
++    DEBUG ((DEBUG_ERROR, "Not supported GFX device!\n"));
 +    return;
 +  }
 +
@@ -5834,13 +5924,13 @@ index 0000000000..68217cb1ef
 +  UINT32                       ResX;
 +  UINT32                       ResY;
 +
-+  DEBUG ((EFI_D_INFO, "[INFO]:[QemuPeiGraphicsInit]: \n"));
++  DEBUG ((DEBUG_INFO, "[INFO]:[QemuPeiGraphicsInit]: \n"));
 +
 +  ResX = mMode->Info->HorizontalResolution;
 +  ResY = mMode->Info->VerticalResolution;
 +
 +  FspsUpd = (FSPS_UPD *)GetFspSiliconInitUpdDataPointer();
-+  DEBUG ((EFI_D_INFO, "Initialize GFX mode to %dx%dx%d\n", ResX, ResY, BPP));
++  DEBUG ((DEBUG_INFO, "Initialize GFX mode to %dx%dx%d\n", ResX, ResY, BPP));
 +
 +  BochsInitMode ((UINT16)ResX, (UINT16)ResY, BPP, FspsUpd->FspsConfig.PciTempResourceBase);
 +
@@ -5870,7 +5960,7 @@ index 0000000000..68217cb1ef
 +  EFI_STATUS Status;
 +
 +  if (GfxMode == NULL) {
-+    DEBUG ((EFI_D_ERROR,"[ERROR]:[IntelPeiGraphicsGetMode()]:[Error creating Mode information]\n"));
++    DEBUG ((DEBUG_ERROR,"[ERROR]:[IntelPeiGraphicsGetMode()]:[Error creating Mode information]\n"));
 +    return EFI_INVALID_PARAMETER;
 +  }
 +
@@ -5879,15 +5969,15 @@ index 0000000000..68217cb1ef
 +    return Status;
 +  }
 +
-+  DEBUG ((EFI_D_INFO,"[INFO]:[IntelPeiGraphicsGetMode()]:[Current Mode HRes = %d]\n", GfxMode->Info->HorizontalResolution));
-+  DEBUG ((EFI_D_INFO,"[INFO]:[IntelPeiGraphicsGetMode()]:[Current Mode VRes = %d]\n", GfxMode->Info->VerticalResolution));
++  DEBUG ((DEBUG_INFO,"[INFO]:[IntelPeiGraphicsGetMode()]:[Current Mode HRes = %d]\n", GfxMode->Info->HorizontalResolution));
++  DEBUG ((DEBUG_INFO,"[INFO]:[IntelPeiGraphicsGetMode()]:[Current Mode VRes = %d]\n", GfxMode->Info->VerticalResolution));
 +
 +  return EFI_SUCCESS;
 +}
 +
 diff --git a/QemuFspPkg/QemuVideo/QemuVideo.h b/QemuFspPkg/QemuVideo/QemuVideo.h
 new file mode 100644
-index 0000000000..b228ec5ad5
+index 0000000000..fd51bb4ebc
 --- /dev/null
 +++ b/QemuFspPkg/QemuVideo/QemuVideo.h
 @@ -0,0 +1,115 @@
@@ -6008,7 +6098,7 @@ index 0000000000..b228ec5ad5
 +#endif
 diff --git a/QemuFspPkg/QemuVideo/QemuVideo.inf b/QemuFspPkg/QemuVideo/QemuVideo.inf
 new file mode 100644
-index 0000000000..16023b57c1
+index 0000000000..4c6bc6a0f1
 --- /dev/null
 +++ b/QemuFspPkg/QemuVideo/QemuVideo.inf
 @@ -0,0 +1,56 @@
@@ -6069,5 +6159,5 @@ index 0000000000..16023b57c1
 +  TRUE
 +
 -- 
-2.17.0.windows.1
+2.21.0 (Apple Git-122.2)
 

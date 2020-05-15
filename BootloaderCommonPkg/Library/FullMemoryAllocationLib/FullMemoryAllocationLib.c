@@ -1,57 +1,41 @@
 /** @file
   Support routines for memory allocation routines.
 
-  Copyright (c) 2006 - 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2006 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
 #include <Imem.h>
-
-typedef struct {
-  EFI_PHYSICAL_ADDRESS  BaseAddress;
-  UINT32                NumberOfPages;
-  UINT32                Type;
-} EFI_MEMORY_RANGE_ENTRY;
+#include <Library/BlMemoryAllocationLib.h>
 
 /**
   Add system memory resource for allocation.
 
   Add system range into the memory resource pool
 
-  @param  Base            The base of the normal memory range.
-  @param  Pages           The number of pages for the normal memory range.
-  @param  RsvdBase        The base of the reserved memory range.
-  @param  RsvdPages       The number of pages for the reserved memory range.
+  @param[in]  MemoryRanges    Memory range array structure.
+  @param[in]  Count           Memory range entry count.
+
 **/
 VOID
 EFIAPI
 AddMemoryResourceRange (
-  IN  UINT64   Base,
-  IN  UINT32   Pages,
-  IN  UINT64   RsvdBase,
-  IN  UINT32   RsvdPages
+  IN  EFI_MEMORY_RANGE_ENTRY  *MemoryRanges,
+  IN  UINT32                   Count
   )
 {
   UINTN                   Index;
-  EFI_MEMORY_RANGE_ENTRY  MemoryRanges[3];
 
   CoreInitializePool ();
   CoreInitializePages ();
 
-  MemoryRanges[0].BaseAddress   = Base;
-  MemoryRanges[0].NumberOfPages = Pages;
-  MemoryRanges[0].Type          = EfiBootServicesData;
-  MemoryRanges[1].BaseAddress   = RsvdBase;
-  MemoryRanges[1].NumberOfPages = RsvdPages;
-  MemoryRanges[1].Type          = EfiReservedMemoryType;
-  MemoryRanges[2].Type          = EfiMaxMemoryType;
-
-  for (Index = 0; (Index < ARRAY_SIZE (MemoryRanges)) && (MemoryRanges[Index].Type != EfiMaxMemoryType); Index++) {
-    CoreAddMemoryDescriptor (MemoryRanges[Index].Type, MemoryRanges[Index].BaseAddress, MemoryRanges[Index].NumberOfPages,
-                             MEMORY_ATTRIBUTE_DEFAULT);
+  for (Index = 0; (Index < Count) && (MemoryRanges[Index].Type != EfiMaxMemoryType); Index++) {
+    if (MemoryRanges[Index].NumberOfPages > 0) {
+      CoreAddMemoryDescriptor (MemoryRanges[Index].Type, MemoryRanges[Index].BaseAddress,
+                               MemoryRanges[Index].NumberOfPages, MEMORY_ATTRIBUTE_DEFAULT);
+    }
   }
-
 }
 
 

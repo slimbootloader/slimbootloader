@@ -21,13 +21,8 @@
 #
 
 [Sources]
+  Stage1B.h
   Stage1B.c
-
-[Sources.IA32]
-  Ia32/Stage1BArch.c
-
-[Sources.ARC]
-  Arc/Stage1BArch.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -35,10 +30,8 @@
   BootloaderCommonPkg/BootloaderCommonPkg.dec
   IntelFsp2Pkg/IntelFsp2Pkg.dec
 
-[LibraryClasses.IA32]
-  PagingLib
-
 [LibraryClasses]
+  PagingLib
   ModuleEntryLib
   BaseLib
   IoLib
@@ -61,6 +54,7 @@
   ResetSystemLib
   DebugAgentLib
   ContainerLib
+  StageLib
 
 [Guids]
   gPlatformModuleTokenSpaceGuid
@@ -69,7 +63,6 @@
 [Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdMaxLibraryDataEntry
   gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
-  gPlatformCommonLibTokenSpaceGuid.PcdContainerMaxNumber
   gPlatformModuleTokenSpaceGuid.PcdStage1StackSize
   gPlatformModuleTokenSpaceGuid.PcdStage1DataSize
   gPlatformModuleTokenSpaceGuid.PcdFSPTBase
@@ -93,10 +86,18 @@
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel
   gPlatformModuleTokenSpaceGuid.PcdS3DebugEnabled
   gPlatformModuleTokenSpaceGuid.PcdCfgDataLoadSource
-  gPlatformCommonLibTokenSpaceGuid.PcdPcdLibId
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
   gPlatformModuleTokenSpaceGuid.PcdEarlyLogBufferSize
   gPlatformModuleTokenSpaceGuid.PcdLogBufferSize
+  gPlatformModuleTokenSpaceGuid.PcdCfgDataIntBase
+  gPlatformCommonLibTokenSpaceGuid.PcdCompSignHashAlg
+  gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootHashMask
+  gPlatformCommonLibTokenSpaceGuid.PcdDmaProtectionEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdDmaBufferAlignment
+  gPlatformCommonLibTokenSpaceGuid.PcdDmaBufferSize
+  gPlatformModuleTokenSpaceGuid.PcdPayloadReservedMemSize
+  gPlatformModuleTokenSpaceGuid.PcdLoaderAcpiNvsSize
+  gPlatformModuleTokenSpaceGuid.PcdLoaderAcpiReclaimSize
 
 [Depex]
   TRUE

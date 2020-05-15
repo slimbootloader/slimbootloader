@@ -1,6 +1,6 @@
 ## @ GenCfgData.py
 #
-# Copyright (c) 2014 - 2018, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2014 - 2019, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -135,6 +135,8 @@ class CLogicalExpression:
         var = var.strip()
         if   re.match('^0x[a-fA-F0-9]+$', var):
             value = int(var, 16)
+        elif re.match('^0b[01]+$', var):
+            value = int(var, 2)
         elif re.match('^[+-]?\d+$', var):
             value = int(var, 10)
         else:
@@ -434,6 +436,8 @@ EndList
                 LastInBitField = InBitField
         elif ValueStr.startswith("'") and ValueStr.endswith("'"):
             Result = Str2Bytes (ValueStr, Length)
+        elif ValueStr.startswith('"') and ValueStr.endswith('"'):
+            Result = Str2Bytes (ValueStr, Length)
         else:
             Result = Val2Bytes (self.EvaluateExpress(ValueStr), Length)
         return Result
@@ -496,6 +500,9 @@ EndList
         Line = self.ExpandMacros(Line, True)
         for Idx in range(len(Vars)-1, 0, -1):
             Line = Line.replace('$(%d)' % Idx, Vars[Idx].strip())
+        Remaining = re.findall ('\$\(\d+\)', Line)
+        if len(Remaining) > 0:
+            raise Exception ("ERROR: Unknown argument '%s' for template '%s' !" % (Remaining[0], Vars[0]))
         return Line
 
     def CfgDuplicationCheck (self, CfgDict, Name):
@@ -559,7 +566,7 @@ EndList
         BsfRegExp    = re.compile("(%s):{(.+?)}(?:$|\s+)" % '|'.join(self._BsfKeyList))
         HdrRegExp    = re.compile("(%s):{(.+?)}" % '|'.join(self._HdrKeyList))
         CfgRegExp    = re.compile("^([_a-zA-Z0-9]+)\s*\|\s*(0x[0-9A-F]+|\*)\s*\|\s*(\d+|0x[0-9a-fA-F]+)\s*\|\s*(.+)")
-
+        TksRegExp    = re.compile("^(g[_a-zA-Z0-9]+\.)(.+)")
         SkipLines = 0
         while len(DscLines):
             DscLine  = DscLines.pop(0).strip()
@@ -593,12 +600,14 @@ EndList
                         'struct'    : '',
                         'embed'     : '',
                         'marker'    : '',
+                        'option'    : '',
                         'comment'   : '',
                         'condition' : '',
                         'order'     : -1,
                         'subreg'    : []
                     }
                     IsUpdSect = True
+                    Offset    = 0
             else:
                 if IsDefSect or IsPcdSect or IsUpdSect or IsTmpSect:
                     Match = False if DscLine[0] != '!' else True
@@ -734,12 +743,14 @@ EndList
                                     PageList = Remaining.split(',')
                                     for Page in PageList:
                                         Page  = Page.strip()
-                                        Match = re.match('(\w+):(\w*):\"(.+)\"', Page)
+                                        Match = re.match('(\w+):(\w*:)?\"(.+)\"', Page)
                                         if Match:
                                             PageName   = Match.group(1)
                                             ParentName = Match.group(2)
-                                            if not ParentName:
+                                            if not ParentName or ParentName == ':' :
                                                 ParentName = 'root'
+                                            else:
+                                                ParentName = ParentName[:-1]
                                             if not self.AddBsfChildPage (PageName, ParentName):
                                                 raise Exception("Cannot find parent page '%s'!" % ParentName)
                                             self._CfgPageDict[PageName] = Match.group(3)
@@ -785,6 +796,11 @@ EndList
                 # Check CFG line
                 #   gCfgData.VariableName   |    * | 0x01 | 0x1
                 Clear = False
+
+                Match = TksRegExp.match (DscLine)
+                if Match:
+                    DscLine = 'gCfgData.%s' % Match.group(2)
+
                 if DscLine.startswith('gCfgData.'):
                     Match = CfgRegExp.match(DscLine[9:])
                 else:
@@ -906,8 +922,9 @@ EndList
     def CreateVarDict (self):
         Error = 0
         self._VarDict = {}
-        Item = self._CfgItemList[-1]
-        self._VarDict['_LENGTH_'] = '%d' % (Item['offset'] + Item['length'])
+        if len(self._CfgItemList) > 0:
+            Item = self._CfgItemList[-1]
+            self._VarDict['_LENGTH_'] = '%d' % (Item['offset'] + Item['length'])
         for Item in self._CfgItemList:
             Embed = Item['embed']
             Match = re.match("^(\w+):(\w+):(START|END)", Embed)
@@ -963,7 +980,7 @@ EndList
         for Idx, Item in enumerate(self._CfgItemList):
             if len(Item['subreg']) == 0:
                 Value = Item['value']
-                if (len(Value) > 0) and (Value[0] == '{' or Value[0] == "'"):
+                if (len(Value) > 0) and (Value[0] == '{' or Value[0] == "'" or Value[0] == '"'):
                     # {XXX} or 'XXX' strings
                     self.FormatListValue(self._CfgItemList[Idx])
                 else:
@@ -991,7 +1008,7 @@ EndList
 
         NewLines = []
         for LineNum, Line in enumerate(Lines):
-            Match = re.match("^!include\s*(.+)?$", Line)
+            Match = re.match("^!include\s*(.+)?$", Line.strip())
             if Match:
                 IncPath = Match.group(1)
                 TmpPath = os.path.join(CurDir, IncPath)
@@ -1075,8 +1092,6 @@ EndList
                   Item['value'] = '0x%X' % (int(BitsValue, 2))
           else:
               if Item['value'].startswith('{') and  not ValueStr.startswith('{'):
-                  print (Item['value'])
-                  print (ValueStr)
                   raise Exception("Data array required for '%s' (File:'%s' Line:%d) !" % (Name, FilePath, LineNum + 1))
               Item['value'] = ValueStr
 
@@ -1249,6 +1264,7 @@ EndList
         BaseOffset     = 0
         IsCommonStruct = False
 
+        EmbedStructRe  = re.compile("^/\*\sEMBED_STRUCT:([\w\[\]\*]+):([\w\[\]\*]+):(\w+):(START|END)([\s\d]+)\*/([\s\S]*)")
         for Line in TextBody:
             if Line.startswith('#define '):
                 IncTextBody.append(Line)
@@ -1257,7 +1273,7 @@ EndList
             if not Line.startswith ('/* EMBED_STRUCT:'):
                 Match = False
             else:
-                Match = re.match("^/\*\sEMBED_STRUCT:([\w\[\]\*]+):([\w\[\]\*]+):(\w+):(START|END)([\s\d]+)\*/\s([\s\S]*)", Line)
+                Match = EmbedStructRe.match(Line)
             if Match:
                 ArrayMarker = Match.group(5)
                 if Match.group(4) == 'END':
@@ -1521,16 +1537,22 @@ EndList
         Item['value'] = NewValue
 
     def LoadDefaultFromBinaryArray (self, BinDat):
+        BaseOff = 0
         for Item in self._CfgItemList:
             if Item['length'] == 0:
                 continue
+            if Item['find']:
+                Offset = BinDat.find (Item['find'].encode())
+                if Offset >= 0:
+                    BaseOff = Offset
+                else:
+                    raise Exception ('Could not find "%s" !' % Item['find'])
             if Item['offset'] + Item['length'] > len(BinDat):
                 raise Exception ('Mismatching format between DSC and BIN files !')
-            ValStr = Bytes2Str(BinDat[Item['offset']:Item['offset']+Item['length']])
+            ValStr = Bytes2Str(BinDat[BaseOff + Item['offset']:BaseOff + Item['offset']+Item['length']])
             self.UpdateConfigItemValue (Item, ValStr)
 
         self.UpdateDefaultValue()
-
 
     def GenerateBinaryArray (self):
         BinDat = bytearray()
@@ -1847,77 +1869,80 @@ EndList
             DltFd.write ('%s\n' % Line)
         DltFd.close()
 
-    def GenerateDeltaFile (self, OutFile, AbsfFile):
-        # Parse ABSF Build in dict
-        if not os.path.exists(AbsfFile):
-            Lines = []
-        else:
-            with open(AbsfFile) as Fin:
-                Lines = Fin.readlines()
+    def GenerateDeltaFile(self, DeltaFile, BinFile, Full=False):
+        Fd = open (BinFile, 'rb')
+        NewData = bytearray(Fd.read())
+        Fd.close()
+        OldData = self.GenerateBinaryArray()
+        return self.GenerateDeltaFileFromBin (DeltaFile, OldData, NewData, Full)
 
-        AbsfBuiltValDict = {}
-        Process = False
-        for Line in Lines:
-            Line = Line.strip()
-            if Line.startswith('StructDef'):
-                Process = True
-            if Line.startswith('EndStruct'):
-                break
-            if not Process:
-                continue
-            Match = re.match('\s*\$gCfgData_(\w+)\s+(\d+)\s+(bits|bytes)\s+\$_AS_BUILT_\s+=\s+(.+)\$', Line)
-            if Match:
-                if Match.group(1) not in AbsfBuiltValDict:
-                    AbsfBuiltValDict[Match.group(1)] = Match.group(4).strip()
-                else:
-                    raise Exception ("Duplicated configuration name '%s' found !", Match.group(1))
-
-        # Match config item in DSC
+    def GenerateDeltaFileFromBin (self, DeltaFile, OldData, NewData, Full=False):
+        self.LoadDefaultFromBinaryArray (NewData)
+        Lines = []
+        TagName = ''
+        Level = 0
         PlatformId = None
-        OutLines   = []
-        TagName    = ''
-        Level      = 0
+        DefPlatformId = 0
+
         for Item in self._CfgItemList:
-            Name = None
             if Level == 0 and Item['embed'].endswith(':START'):
                 TagName = Item['embed'].split(':')[0]
-                Level  += 1
-            if Item['cname'] in AbsfBuiltValDict:
-                ValStr = AbsfBuiltValDict[Item['cname']]
-                Name   = '%s.%s' % (TagName, Item['cname'])
-                if not Item['subreg'] and Item['value'].startswith('{'):
-                    Value   = Array2Val(Item['value'])
-                    IsArray = True
-                else:
-                    Value   = int(Item['value'], 16)
-                    IsArray = False
-                AbsfVal = Array2Val(ValStr)
-                if AbsfVal != Value:
-                    if 'PLATFORMID_CFG_DATA.PlatformId' == Name:
-                        PlatformId = AbsfVal
-                    self.WriteDeltaLine (OutLines, Name, ValStr, IsArray)
-                else:
-                    if 'PLATFORMID_CFG_DATA.PlatformId' == Name:
-                        raise Exception ("'PlatformId' has the same value as DSC default !")
+                Level += 1
 
-            if Item['subreg']:
-                for SubItem in Item['subreg']:
-                    if SubItem['cname'] in AbsfBuiltValDict:
-                        ValStr = AbsfBuiltValDict[SubItem['cname']]
-                        if Array2Val(ValStr) == int(SubItem['value'], 16):
-                            continue
-                        Name   = '%s.%s.%s' % (TagName, Item['cname'], SubItem['cname'])
-                        self.WriteDeltaLine (OutLines, Name, ValStr, False)
+            Start = Item['offset']
+            End = Start + Item['length']
+            FullName = '%s.%s' % (TagName, Item['cname'])
+            if 'PLATFORMID_CFG_DATA.PlatformId' == FullName:
+                DefPlatformId = Bytes2Val(OldData[Start:End])
+
+            if NewData[Start:End] != OldData[Start:End] or (
+                    Full and Item['name'] and (Item['cname'] != 'Dummy')):
+                if TagName == '':
+                    continue
+
+                ValStr = self.FormatDeltaValue (Item)
+                if not Item['subreg']:
+                    Text = '%-40s | %s' % (FullName, ValStr)
+                    if 'PLATFORMID_CFG_DATA.PlatformId' == FullName:
+                        PlatformId = Array2Val(Item['value'])
+                    else:
+                        Lines.append(Text)
+                else:
+                    if Full:
+                        Text = '## %-40s | %s' % (FullName, ValStr)
+                        Lines.append(Text)
+
+                    OldArray = OldData[Start:End]
+                    NewArray = NewData[Start:End]
+
+                    for SubItem in Item['subreg']:
+                        NewBitValue = self.GetBsfBitFields(SubItem, NewArray)
+                        OldBitValue = self.GetBsfBitFields(SubItem, OldArray)
+                        if OldBitValue != NewBitValue or (
+                                Full and Item['name'] and
+                            (Item['cname'] != 'Dummy')):
+                            if SubItem['cname'].startswith(Item['cname']):
+                                Offset = len(Item['cname']) + 1
+                                FieldName = '%s.%s' % (
+                                    FullName, SubItem['cname'][Offset:])
+                            ValStr = self.FormatDeltaValue (SubItem)
+                            Text = '%-40s | %s' % (FieldName, ValStr)
+                            Lines.append(Text)
 
             if Item['embed'].endswith(':END'):
-                Level  -= 1
+                EndTagName = Item['embed'].split(':')[0]
+                if EndTagName == TagName:
+                    Level -= 1
 
-        if PlatformId is None and Lines:
-            raise Exception ("'PlatformId' configuration is missing in ABSF file!")
-        else:
-            PlatformId = 0
+        if PlatformId is None or DefPlatformId == PlatformId:
+            PlatformId = DefPlatformId
+            print("WARNING: 'PlatformId' configuration is same as default %d!"
+                  % PlatformId)
 
-        self.WriteDeltaFile (OutFile, PlatformId, Lines)
+        Lines.insert(0, '%-40s | %s\n\n' %
+                     ('PLATFORMID_CFG_DATA.PlatformId', '0x%04X' % PlatformId))
+
+        self.WriteDeltaFile (DeltaFile, PlatformId, Lines)
 
         return 0
 
@@ -1937,7 +1962,7 @@ def Usage():
           "    GenCfgData  GENINC  DscFile[;DltFile]   IncOutFile   [-D Macros]",
           "    GenCfgData  GENBIN  DscFile[;DltFile]   BinOutFile   [-D Macros]",
           "    GenCfgData  GENBSF  DscFile[;DltFile]   BsfOutFile   [-D Macros]",
-          "    GenCfgData  GENDLT  DscFile[;AbsfFile]  DltOutFile   [-D Macros]",
+          "    GenCfgData  GENDLT  DscFile[;BinFile]   DltOutFile   [-D Macros]",
           "    GenCfgData  GENDSC  DscFile             DscOutFile   [-D Macros]",
           "    GenCfgData  GENHDR  DscFile[;DltFile]   HdrOutFile[;ComHdrOutFile]   [-D Macros]"
           ]))
@@ -1981,12 +2006,12 @@ def Main():
     if not os.path.exists(DscFile):
         raise Exception ("ERROR: Cannot open file '%s' !" % DscFile)
 
-    AbsfFile  = ''
+    CfgBinFile  = ''
     if DltFile:
         if not os.path.exists(DltFile):
             raise Exception ("ERROR: Cannot open file '%s' !" % DltFile)
         if Command == "GENDLT":
-            AbsfFile = DltFile
+            CfgBinFile = DltFile
             DltFile  = ''
 
     BinFile = ''
@@ -2050,7 +2075,7 @@ def Main():
             raise Exception (GenCfgData.Error)
 
     elif sys.argv[1] == "GENDLT":
-        if GenCfgData.GenerateDeltaFile(OutFile, AbsfFile) != 0:
+        if GenCfgData.GenerateDeltaFile(OutFile, CfgBinFile) != 0:
             raise Exception (GenCfgData.Error)
 
     elif sys.argv[1] == "GENDSC":

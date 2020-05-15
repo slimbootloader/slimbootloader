@@ -1,7 +1,7 @@
 /** @file
   This file provides payload common library interfaces.
 
-  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -20,9 +20,8 @@
 #include <Library/DebugLogBufferLib.h>
 #include <Library/DebugPrintErrorLevelLib.h>
 #include <Library/ContainerLib.h>
-#include <Guid/BootLoaderServiceGuid.h>
+#include <Library/TimeStampLib.h>
 #include <Guid/BootLoaderVersionGuid.h>
-#include <Guid/LoaderPlatformDataGuid.h>
 #include <Guid/LoaderPlatformInfoGuid.h>
 #include <Library/GraphicsLib.h>
 
@@ -52,14 +51,17 @@ PayloadInit (
   UINT32                    HeapSize;
   UINT64                    RsvdBase;
   UINT64                    RsvdSize;
+  UINT32                    DmaBase;
+  UINT32                    DmaSize;
   UINT32                    StackBase;
   UINT32                    StackSize;
   LOADER_PLATFORM_DATA      *LoaderPlatformData;
   EFI_STATUS                PcdStatus1;
   EFI_STATUS                PcdStatus2;
   CONTAINER_LIST            *ContainerList;
+  EFI_MEMORY_RANGE_ENTRY    MemoryRanges[3];
 
-  PcdStatus1 = PcdSet32S (PcdPayloadHobList, (UINT32)HobList);
+  PcdStatus1 = PcdSet32S (PcdPayloadHobList, (UINT32)(UINTN)HobList);
 
   //
   // Payload Memmap
@@ -68,6 +70,8 @@ PayloadInit (
   // +--------------------------------------------+ RsvdBase + RsvdSize
   // |   Reserved memory for Payload              |
   // +--------------------------------------------+ RsvdBase
+  // |   + DMA buffer                             |
+  // +--------------------------------------------+ DmaBase
   // |   + Payload heap                           |
   // +--------------------------------------------+ HeapBase
   // |   + Payload stack                          |
@@ -79,15 +83,32 @@ PayloadInit (
   GetPayloadReservedRamRegion (&RsvdBase, &RsvdSize);
   ASSERT ((RsvdBase & EFI_PAGE_MASK) == 0);
 
+  if (FeaturePcdGet (PcdDmaProtectionEnabled)) {
+    DmaSize = ALIGN_UP (PcdGet32 (PcdDmaBufferSize), EFI_PAGE_SIZE);
+  } else {
+    DmaSize = 0;
+  }
+  DmaBase  = (UINT32)RsvdBase - DmaSize;
+  DmaBase  = ALIGN_DOWN(DmaBase, PcdGet32 (PcdDmaBufferAlignment));
+
   HeapSize  = ALIGN_UP (PcdGet32 (PcdPayloadHeapSize), EFI_PAGE_SIZE);
-  HeapBase = (UINT32)RsvdBase - HeapSize;
+  HeapBase = DmaBase - HeapSize;
 
   StackSize = ALIGN_UP (PcdGet32 (PcdPayloadStackSize), EFI_PAGE_SIZE);
   StackBase = HeapBase - StackSize;
 
   // Add payload reserved memory region and free memory region
-  AddMemoryResourceRange (HeapBase, EFI_SIZE_TO_PAGES (HeapSize), \
-                          RsvdBase, EFI_SIZE_TO_PAGES ((UINT32)RsvdSize));
+  // Use EfiRuntimeServicesData as DMA memory pool
+  MemoryRanges[0].BaseAddress   = HeapBase;
+  MemoryRanges[0].NumberOfPages = EFI_SIZE_TO_PAGES (HeapSize);
+  MemoryRanges[0].Type          = EfiBootServicesData;
+  MemoryRanges[1].BaseAddress   = RsvdBase;
+  MemoryRanges[1].NumberOfPages = EFI_SIZE_TO_PAGES ((UINT32)RsvdSize);
+  MemoryRanges[1].Type          = EfiReservedMemoryType;
+  MemoryRanges[2].BaseAddress   = DmaBase;
+  MemoryRanges[2].NumberOfPages = EFI_SIZE_TO_PAGES (DmaSize);
+  MemoryRanges[2].Type          = EfiRuntimeServicesData;
+  AddMemoryResourceRange (MemoryRanges, 3);
 
   GlobalDataPtr = AllocateZeroPool (sizeof (PAYLOAD_GLOBAL_DATA));
   ASSERT (GlobalDataPtr != NULL);
@@ -96,9 +117,15 @@ PayloadInit (
   ASSERT_EFI_ERROR (PcdStatus1 | PcdStatus2);
 
   // Create Debug Log Buffer and init configuration data
-  GuidHob = GetNextGuidHob (&gLoaderPlatformDataGuid, (VOID *)PcdGet32 (PcdPayloadHobList));
+  GuidHob = GetNextGuidHob (&gLoaderPlatformDataGuid, (VOID *)(UINTN)PcdGet32 (PcdPayloadHobList));
   if (GuidHob != NULL) {
     LoaderPlatformData = (LOADER_PLATFORM_DATA *) GET_GUID_HOB_DATA (GuidHob);
+
+    if (LoaderPlatformData->DmaBufferPtr != NULL) {
+      // Verify the DMA buffer is aligned with core allocation
+      ASSERT ((UINT32)(UINTN)LoaderPlatformData->DmaBufferPtr == DmaBase);
+    }
+
     GlobalDataPtr->CfgDataPtr = LoaderPlatformData->ConfigDataPtr;
 
     DebugLogBufferHdr  = LoaderPlatformData->DebugLogBuffer;
@@ -163,16 +190,16 @@ SecStartup (
   UINT32                     StackSize;
   LOADER_PLATFORM_INFO       *LoaderPlatformInfo;
 
-  TimeStamp = AsmReadTsc();
+  TimeStamp = ReadTimeStamp ();
 
   PayloadInit (Params, &HeapBase, &StackBase, &StackSize);
-  GlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)PcdGet32 (PcdGlobalDataAddress);
+  GlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)(UINTN)PcdGet32 (PcdGlobalDataAddress);
 
   // DEBUG will be available after PayloadInit ()
   DEBUG ((DEBUG_INIT, "\nPayload startup\n"));
 
   // Copy libraries data
-  GuidHob = GetNextGuidHob (&gLoaderLibraryDataGuid, (VOID *)PcdGet32 (PcdPayloadHobList));
+  GuidHob = GetNextGuidHob (&gLoaderLibraryDataGuid, (VOID *)(UINTN)PcdGet32 (PcdPayloadHobList));
   if (GuidHob != NULL) {
     LoaderLibData = (LOADER_LIBRARY_DATA *)GET_GUID_HOB_DATA (GuidHob);
     LibData       = (LIBRARY_DATA *) LoaderLibData->Data;
@@ -192,8 +219,8 @@ SecStartup (
     if (AllocateLen > 0) {
       for (Idx = 0; Idx < LoaderLibData->Count; Idx++) {
         if (LibData[Idx].BufBase != 0) {
-          CopyMem (BufPtr, (VOID *)LibData[Idx].BufBase, LibData[Idx].BufSize);
-          LibData[Idx].BufBase = (UINT32)BufPtr;
+          CopyMem (BufPtr, (VOID *)(UINTN)LibData[Idx].BufBase, LibData[Idx].BufSize);
+          LibData[Idx].BufBase = (UINT32)(UINTN)BufPtr;
           BufPtr += ALIGN_UP (LibData[Idx].BufSize, sizeof (UINTN));
         }
       }
@@ -218,6 +245,13 @@ SecStartup (
     GlobalDataPtr->ServiceList = &BldServicesList->ServiceList;
   }
 
+  // Get public key hash from HOB
+  GuidHob = GetNextGuidHob (&gPayloadKeyHashGuid, GetHobListPtr());
+  if (GuidHob != NULL) {
+    GlobalDataPtr->HashStorePtr = GET_GUID_HOB_DATA (GuidHob);
+  }
+
+  // Init features
   LoaderPlatformInfo = (LOADER_PLATFORM_INFO  *) GetGuidHobData (NULL, NULL, &gLoaderPlatformInfoGuid);
   if (LoaderPlatformInfo != NULL) {
     GlobalDataPtr->LdrFeatures = LoaderPlatformInfo->LdrFeatures;
@@ -241,7 +275,7 @@ SecStartup (
   DEBUG_CODE_BEGIN ();
   // Initialize HOB/Stack region with known pattern so that the usage can be detected
   SetMem32 (
-    (VOID *)StackBase,
+    (VOID *)(UINTN)StackBase,
     StackSize,
     STACK_DEBUG_FILL_PATTERN
     );

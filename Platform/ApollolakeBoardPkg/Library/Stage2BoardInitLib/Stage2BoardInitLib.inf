@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -20,6 +20,7 @@
 #
 
 [Sources]
+  Stage2BoardInitLib.h
   Stage2BoardInitLib.c
   SeedSupport.c
 
@@ -57,6 +58,7 @@
   BootOptionLib
   HdaLib
   BoardSupportLib
+  VtdPmrLib
 
 [Guids]
   gOsConfigDataGuid
@@ -90,6 +92,10 @@
   gPlatformCommonLibTokenSpaceGuid.PcdSeedListEnabled
   gPlatformModuleTokenSpaceGuid.PcdPayloadReservedMemSize
   gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsPtr
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsCnt
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesBase
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
   gPlatformModuleTokenSpaceGuid.PcdSplashEnabled
@@ -98,4 +104,7 @@
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegSize
   gPlatformModuleTokenSpaceGuid.PcdFuncCpuInitHook
+  gPlatformCommonLibTokenSpaceGuid.PcdDmaProtectionEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdDmaBufferAlignment
+  gPlatformCommonLibTokenSpaceGuid.PcdDmaBufferSize
   gPlatformCommonLibTokenSpaceGuid.PcdEmmcHs400SupportEnabled

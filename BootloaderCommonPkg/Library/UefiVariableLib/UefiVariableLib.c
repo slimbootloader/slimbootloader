@@ -578,7 +578,7 @@ GetVariableStore (
             //
             // Found the workspace.
             //
-            DEBUG ((EFI_D_INFO, "FtwPei: workspace in spare block is at 0x%x.\n", (UINTN) WorkSpaceInSpareArea));
+            DEBUG ((DEBUG_INFO, "FtwPei: workspace in spare block is at 0x%x.\n", (UINTN) WorkSpaceInSpareArea));
             FtwWorkingHeader = (UEFI_FAULT_TOLERANT_WORKING_BLOCK_HEADER *) (UINTN) WorkSpaceInSpareArea;
             break;
           }
@@ -605,7 +605,7 @@ GetVariableStore (
       // Check if the Firmware Volume is not corrupted
       //
       if ((FvHeader->Signature != EFI_FVH_SIGNATURE) || (!CompareGuid (&gEfiSystemNvDataFvGuid, &FvHeader->FileSystemGuid))) {
-        DEBUG ((EFI_D_ERROR, "Firmware Volume for Variable Store is corrupted\n"));
+        DEBUG ((DEBUG_ERROR, "Firmware Volume for Variable Store is corrupted\n"));
         break;
       }
 

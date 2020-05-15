@@ -39,13 +39,12 @@ typedef struct {
 
 **/
 EFI_STATUS
+EFIAPI
 GetUfsHcMmioBar (
   IN     UFS_HC_PEI_PRIVATE_DATA      *Private,
   IN     UINT8                         ControllerId,
   OUT UINTN                         *MmioBar
   );
-
-
 
 /**
   The user code starts with this function.

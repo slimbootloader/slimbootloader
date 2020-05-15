@@ -166,8 +166,8 @@ VerifyMailboxChecksum (
   //
   if (CheckSum != Mailbox->CheckSum && CheckSum != Mailbox->ToBeCheckSum) {
     DumpHex (2, 0, sizeof (DEBUG_AGENT_MAILBOX), Mailbox);
-    DEBUG ((EFI_D_ERROR, "DebugAgent: Mailbox checksum error, stack or heap crashed!\n"));
-    DEBUG ((EFI_D_ERROR, "DebugAgent: CheckSum = %x, Mailbox->CheckSum = %x, Mailbox->ToBeCheckSum = %x\n", CheckSum, Mailbox->CheckSum, Mailbox->ToBeCheckSum));
+    DEBUG ((DEBUG_ERROR, "DebugAgent: Mailbox checksum error, stack or heap crashed!\n"));
+    DEBUG ((DEBUG_ERROR, "DebugAgent: CheckSum = %x, Mailbox->CheckSum = %x, Mailbox->ToBeCheckSum = %x\n", CheckSum, Mailbox->CheckSum, Mailbox->ToBeCheckSum));
     CpuDeadLoop ();
   }
 }

@@ -13,10 +13,10 @@
 #include <Library/BootloaderCoreLib.h>
 
 typedef struct {
-	UINT32      BPDTOffset;
-	UINT32      PhysicalData;
-	UINT32      PhysicalDeviceArea;
-	UINT32      LogicalData;
+  UINT32      BPDTOffset;
+  UINT32      PhysicalData;
+  UINT32      PhysicalDeviceArea;
+  UINT32      LogicalData;
 }CURRENT_BOOT_MEDIA;
 
 /**

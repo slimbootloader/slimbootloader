@@ -171,13 +171,13 @@ WriteNvmeControllerConfiguration (
     return Status;
   }
 
-  DEBUG ((EFI_D_INFO, "Cc.En: %d\n", Cc->En));
-  DEBUG ((EFI_D_INFO, "Cc.Css: %d\n", Cc->Css));
-  DEBUG ((EFI_D_INFO, "Cc.Mps: %d\n", Cc->Mps));
-  DEBUG ((EFI_D_INFO, "Cc.Ams: %d\n", Cc->Ams));
-  DEBUG ((EFI_D_INFO, "Cc.Shn: %d\n", Cc->Shn));
-  DEBUG ((EFI_D_INFO, "Cc.Iosqes: %d\n", Cc->Iosqes));
-  DEBUG ((EFI_D_INFO, "Cc.Iocqes: %d\n", Cc->Iocqes));
+  DEBUG ((DEBUG_INFO, "Cc.En: %d\n", Cc->En));
+  DEBUG ((DEBUG_INFO, "Cc.Css: %d\n", Cc->Css));
+  DEBUG ((DEBUG_INFO, "Cc.Mps: %d\n", Cc->Mps));
+  DEBUG ((DEBUG_INFO, "Cc.Ams: %d\n", Cc->Ams));
+  DEBUG ((DEBUG_INFO, "Cc.Shn: %d\n", Cc->Shn));
+  DEBUG ((DEBUG_INFO, "Cc.Iosqes: %d\n", Cc->Iosqes));
+  DEBUG ((DEBUG_INFO, "Cc.Iocqes: %d\n", Cc->Iocqes));
 
   return EFI_SUCCESS;
 }
@@ -263,8 +263,8 @@ WriteNvmeAdminQueueAttributes (
     return Status;
   }
 
-  DEBUG ((EFI_D_INFO, "Aqa.Asqs: %d\n", Aqa->Asqs));
-  DEBUG ((EFI_D_INFO, "Aqa.Acqs: %d\n", Aqa->Acqs));
+  DEBUG ((DEBUG_INFO, "Aqa.Asqs: %d\n", Aqa->Asqs));
+  DEBUG ((DEBUG_INFO, "Aqa.Acqs: %d\n", Aqa->Acqs));
 
   return EFI_SUCCESS;
 }
@@ -323,7 +323,7 @@ WriteNvmeAdminSubmissionQueueBaseAddress (
     return Status;
   }
 
-  DEBUG ((EFI_D_INFO, "Asq: %lx\n", *Asq));
+  DEBUG ((DEBUG_INFO, "Asq: %lx\n", *Asq));
 
   return EFI_SUCCESS;
 }
@@ -382,7 +382,7 @@ WriteNvmeAdminCompletionQueueBaseAddress (
     return Status;
   }
 
-  DEBUG ((EFI_D_INFO, "Acq: %lxh\n", *Acq));
+  DEBUG ((DEBUG_INFO, "Acq: %lxh\n", *Acq));
 
   return EFI_SUCCESS;
 }
@@ -462,7 +462,7 @@ NvmeDisableController (
     Status = EFI_DEVICE_ERROR;
   }
 
-  DEBUG ((EFI_D_INFO, "NVMe controller is disabled with status [%r].\n", Status));
+  DEBUG ((DEBUG_INFO, "NVMe controller is disabled with status [%r].\n", Status));
   return Status;
 }
 
@@ -537,7 +537,7 @@ NvmeEnableController (
     Status = EFI_TIMEOUT;
   }
 
-  DEBUG ((EFI_D_INFO, "NVMe controller is enabled with status [%r].\n", Status));
+  DEBUG ((DEBUG_INFO, "NVMe controller is enabled with status [%r].\n", Status));
   return Status;
 }
 
@@ -821,7 +821,7 @@ NvmeControllerInit (
   }
 
   if (Private->Cap.Css != 0x01) {
-    DEBUG ((EFI_D_INFO, "NvmeControllerInit: the controller doesn't support NVMe command set\n"));
+    DEBUG ((DEBUG_INFO, "NvmeControllerInit: the controller doesn't support NVMe command set\n"));
     return EFI_UNSUPPORTED;
   }
 
@@ -879,15 +879,15 @@ NvmeControllerInit (
   Private->SqBuffer[2]        = (NVME_SQ *) (UINTN) (Private->Buffer + 4 * EFI_PAGE_SIZE);
   Private->CqBuffer[2]        = (NVME_CQ *) (UINTN) (Private->Buffer + 5 * EFI_PAGE_SIZE);
 
-  DEBUG ((EFI_D_INFO, "Private->Buffer = [%016X]\n", (UINT64) (UINTN)Private->Buffer));
-  DEBUG ((EFI_D_INFO, "Admin     Submission Queue size (Aqa.Asqs) = [%08X]\n", Aqa.Asqs));
-  DEBUG ((EFI_D_INFO, "Admin     Completion Queue size (Aqa.Acqs) = [%08X]\n", Aqa.Acqs));
-  DEBUG ((EFI_D_INFO, "Admin     Submission Queue (SqBuffer[0]) = [%016X]\n", Private->SqBuffer[0]));
-  DEBUG ((EFI_D_INFO, "Admin     Completion Queue (CqBuffer[0]) = [%016X]\n", Private->CqBuffer[0]));
-  DEBUG ((EFI_D_INFO, "Sync  I/O Submission Queue (SqBuffer[1]) = [%016X]\n", Private->SqBuffer[1]));
-  DEBUG ((EFI_D_INFO, "Sync  I/O Completion Queue (CqBuffer[1]) = [%016X]\n", Private->CqBuffer[1]));
-  DEBUG ((EFI_D_INFO, "Async I/O Submission Queue (SqBuffer[2]) = [%016X]\n", Private->SqBuffer[2]));
-  DEBUG ((EFI_D_INFO, "Async I/O Completion Queue (CqBuffer[2]) = [%016X]\n", Private->CqBuffer[2]));
+  DEBUG ((DEBUG_INFO, "Private->Buffer = [%016X]\n", (UINT64) (UINTN)Private->Buffer));
+  DEBUG ((DEBUG_INFO, "Admin     Submission Queue size (Aqa.Asqs) = [%08X]\n", Aqa.Asqs));
+  DEBUG ((DEBUG_INFO, "Admin     Completion Queue size (Aqa.Acqs) = [%08X]\n", Aqa.Acqs));
+  DEBUG ((DEBUG_INFO, "Admin     Submission Queue (SqBuffer[0]) = [%016X]\n", Private->SqBuffer[0]));
+  DEBUG ((DEBUG_INFO, "Admin     Completion Queue (CqBuffer[0]) = [%016X]\n", Private->CqBuffer[0]));
+  DEBUG ((DEBUG_INFO, "Sync  I/O Submission Queue (SqBuffer[1]) = [%016X]\n", Private->SqBuffer[1]));
+  DEBUG ((DEBUG_INFO, "Sync  I/O Completion Queue (CqBuffer[1]) = [%016X]\n", Private->CqBuffer[1]));
+  DEBUG ((DEBUG_INFO, "Async I/O Submission Queue (SqBuffer[2]) = [%016X]\n", Private->SqBuffer[2]));
+  DEBUG ((DEBUG_INFO, "Async I/O Completion Queue (CqBuffer[2]) = [%016X]\n", Private->CqBuffer[2]));
 
   //
   // Program admin queue attributes.
@@ -950,18 +950,18 @@ NvmeControllerInit (
   Sn[20] = 0;
   CopyMem (Mn, Private->ControllerData->Mn, sizeof (Private->ControllerData->Mn));
   Mn[40] = 0;
-  DEBUG ((EFI_D_INFO, " == NVME IDENTIFY CONTROLLER DATA ==\n"));
-  DEBUG ((EFI_D_INFO, "    PCI VID   : 0x%x\n", Private->ControllerData->Vid));
-  DEBUG ((EFI_D_INFO, "    PCI SSVID : 0x%x\n", Private->ControllerData->Ssvid));
-  DEBUG ((EFI_D_INFO, "    SN        : %a\n",   Sn));
-  DEBUG ((EFI_D_INFO, "    MN        : %a\n",   Mn));
-  DEBUG ((EFI_D_INFO, "    FR        : 0x%x\n", * ((UINT64 *)Private->ControllerData->Fr)));
-  DEBUG ((EFI_D_INFO, "    RAB       : 0x%x\n", Private->ControllerData->Rab));
-  DEBUG ((EFI_D_INFO, "    IEEE      : 0x%x\n", * (UINT32 *)Private->ControllerData->Ieee_oui));
-  DEBUG ((EFI_D_INFO, "    AERL      : 0x%x\n", Private->ControllerData->Aerl));
-  DEBUG ((EFI_D_INFO, "    SQES      : 0x%x\n", Private->ControllerData->Sqes));
-  DEBUG ((EFI_D_INFO, "    CQES      : 0x%x\n", Private->ControllerData->Cqes));
-  DEBUG ((EFI_D_INFO, "    NN        : 0x%x\n", Private->ControllerData->Nn));
+  DEBUG ((DEBUG_INFO, " == NVME IDENTIFY CONTROLLER DATA ==\n"));
+  DEBUG ((DEBUG_INFO, "    PCI VID   : 0x%x\n", Private->ControllerData->Vid));
+  DEBUG ((DEBUG_INFO, "    PCI SSVID : 0x%x\n", Private->ControllerData->Ssvid));
+  DEBUG ((DEBUG_INFO, "    SN        : %a\n",   Sn));
+  DEBUG ((DEBUG_INFO, "    MN        : %a\n",   Mn));
+  DEBUG ((DEBUG_INFO, "    FR        : 0x%x\n", * ((UINT64 *)Private->ControllerData->Fr)));
+  DEBUG ((DEBUG_INFO, "    RAB       : 0x%x\n", Private->ControllerData->Rab));
+  DEBUG ((DEBUG_INFO, "    IEEE      : 0x%x\n", * (UINT32 *)Private->ControllerData->Ieee_oui));
+  DEBUG ((DEBUG_INFO, "    AERL      : 0x%x\n", Private->ControllerData->Aerl));
+  DEBUG ((DEBUG_INFO, "    SQES      : 0x%x\n", Private->ControllerData->Sqes));
+  DEBUG ((DEBUG_INFO, "    CQES      : 0x%x\n", Private->ControllerData->Cqes));
+  DEBUG ((DEBUG_INFO, "    NN        : 0x%x\n", Private->ControllerData->Nn));
 
   //
   // Create two I/O completion queues.

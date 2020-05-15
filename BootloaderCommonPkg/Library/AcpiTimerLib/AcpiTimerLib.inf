@@ -27,10 +27,10 @@
   MdePkg/MdePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
 
-[LibraryClasses]  
+[LibraryClasses]
   BaseLib
-  IoLib  
+  IoLib
   DebugLib
-  
-[Pcd]  
+
+[Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdAcpiPmTimerBase

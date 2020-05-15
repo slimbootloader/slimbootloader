@@ -6,31 +6,31 @@
 ##
 
 [Defines]
-	INF_VERSION                    = 0x00010005
-	BASE_NAME = BootGuardLib
-	FILE_GUID = 4AECEA3D-82F6-4796-9934-6371D97B7FED
-	MODULE_TYPE = BASE
-	VERSION_STRING = 1.0
-	LIBRARY_CLASS = BootGuardLib
+  INF_VERSION                    = 0x00010005
+  BASE_NAME = BootGuardLib
+  FILE_GUID = 4AECEA3D-82F6-4796-9934-6371D97B7FED
+  MODULE_TYPE = BASE
+  VERSION_STRING = 1.0
+  LIBRARY_CLASS = BootGuardLib
 
 
 [LibraryClasses]
-	BaseLib
-	DebugLib
-#	PciSegmentLib
-	PciLib
+  BaseLib
+  DebugLib
+#  PciSegmentLib
+  PciLib
 
 
 [Packages]
-	MdePkg/MdePkg.dec
-	BootloaderCommonPkg/BootloaderCommonPkg.dec
-  	BootloaderCorePkg/BootloaderCorePkg.dec
-  	Silicon/CoffeelakePkg/CoffeelakePkg.dec
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  Silicon/CoffeelakePkg/CoffeelakePkg.dec
 
 
 [Sources]
-	BootGuardLibrary.c
-	BootGuardTpmEventLogLib.c
+  BootGuardLibrary.c
+  BootGuardTpmEventLogLib.c
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress

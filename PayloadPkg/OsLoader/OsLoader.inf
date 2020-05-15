@@ -25,6 +25,9 @@
 #
 
 [Sources]
+  PreOsChecker.h
+  BlockIoTest.h
+  OsLoader.h
   OsLoader.c
   BootOption.c
   BootConfig.c
@@ -77,6 +80,7 @@
   LiteFvLib
   LinuxLib
   ContainerLib
+  StringSupportLib
 
 [Guids]
   gOsConfigDataGuid
@@ -104,6 +108,7 @@
   gPayloadTokenSpaceGuid.PcdGrubBootCfgEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdContainerBootEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdPreOsCheckerEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootHashMask
 
 [Depex]
   TRUE

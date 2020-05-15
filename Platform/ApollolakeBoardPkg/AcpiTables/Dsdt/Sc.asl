@@ -17,7 +17,13 @@ Scope(\)
       ,      8,
       PWBS,  1,    // Power Button Status
     Offset(0x20),
-      ,      13,
+      ,      3,
+      WK3S,  1,
+      ,      2,
+      WK6S,  1,
+      WK7S,  1,
+      WK8S,  1,
+      ,      4,
       PMEB,  1,    // PME_B0_STS
     Offset(0x42),  // General Purpose Control
       ,      1,
@@ -106,8 +112,15 @@ scope (\_SB.PCI0) {
         Return (0x00140000)
       }
     }
-    Include("ScPcie.asl")
-    Method(_PRW, 0) { Return(GPRW(0x09, 4)) }  // can wakeup from S4 state
+
+    #define PCIE_WAKE_GPE_BIT  RPW1
+    #include "ScPcie.asl"
+    #undef  PCIE_WAKE_GPE_BIT
+
+    Method(_PRW, 0) {
+      Return(GPRW(RPW1, 4))
+    }  // can wakeup from S4 state
+
     Method(_PRT, 0) {
       If(PICM) { Return(AR04) }// APIC mode
       Return (PR04) // PIC Mode
@@ -125,8 +138,15 @@ scope (\_SB.PCI0) {
         Return (0x00140001)
       }
     }
-    Include("ScPcie.asl")
-    Method(_PRW, 0) { Return(GPRW(0x08, 4)) }  //GPE enable bit for RP2 is 8, can wake up from S4 state
+
+    #define PCIE_WAKE_GPE_BIT  RPW2
+    #include "ScPcie.asl"
+    #undef  PCIE_WAKE_GPE_BIT
+
+    Method(_PRW, 0) {
+      Return(GPRW(RPW2, 4))
+    }  // can wakeup from S4 state
+
     Method(_PRT, 0) {
       If(PICM) { Return(AR05) }// APIC mode
       Return (PR05) // PIC Mode
@@ -144,8 +164,15 @@ scope (\_SB.PCI0) {
         Return (0x00130000)
       }
     }
-    Include("ScPcie.asl")
-    Method(_PRW, 0) { Return(GPRW(0x09, 4)) }  // can wakeup from S4 state
+
+    #define PCIE_WAKE_GPE_BIT  RPW3
+    #include "ScPcie.asl"
+    #undef  PCIE_WAKE_GPE_BIT
+
+    Method(_PRW, 0) {
+      Return(GPRW(RPW3, 4))
+    }  // can wakeup from S4 state
+
     Method(_PRT, 0) {
       If(PICM) { Return(AR04) }// APIC mode
       Return (PR04) // PIC Mode
@@ -163,8 +190,15 @@ scope (\_SB.PCI0) {
         Return (0x00130001)
       }
     }
-    Include("ScPcie.asl")
-    Method(_PRW, 0) { Return(GPRW(0x09, 4)) }  // can wakeup from S4 state
+
+    #define PCIE_WAKE_GPE_BIT  RPW4
+    #include "ScPcie.asl"
+    #undef  PCIE_WAKE_GPE_BIT
+
+    Method(_PRW, 0) {
+      Return(GPRW(RPW4, 4))
+    }  // can wakeup from S4 state
+
     Method(_PRT, 0) {
       If(PICM) { Return(AR05) }// APIC mode
       Return (PR05) // PIC Mode
@@ -182,8 +216,15 @@ scope (\_SB.PCI0) {
         Return (0x00130002)
       }
     }
-    Include("ScPcie.asl")
-    Method(_PRW, 0) { Return(GPRW(0x09, 4)) }  // can wakeup from S4 state
+
+    #define PCIE_WAKE_GPE_BIT  RPW5
+    #include "ScPcie.asl"
+    #undef  PCIE_WAKE_GPE_BIT
+
+    Method(_PRW, 0) {
+      Return(GPRW(RPW5, 4))
+    }  // can wakeup from S4 state
+
     Method(_PRT, 0) {
       If(PICM) { Return(AR06) }// APIC mode
       Return (PR06) // PIC Mode
@@ -201,8 +242,12 @@ scope (\_SB.PCI0) {
         Return (0x00130003)
       }
     }
-    Include("ScPcie.asl")
-    Method(_PRW, 0) { Return(GPRW(0x09, 4)) }  // can wakeup from S4 state
+
+    #define PCIE_WAKE_GPE_BIT  RPW6
+    #include "ScPcie.asl"
+    #undef  PCIE_WAKE_GPE_BIT
+
+    Method(_PRW, 0) { Return(GPRW(RPW6, 4)) }  // can wakeup from S4 state
     Method(_PRT, 0) {
       If(PICM) { Return(AR07) }// APIC mode
       Return (PR07) // PIC Mode

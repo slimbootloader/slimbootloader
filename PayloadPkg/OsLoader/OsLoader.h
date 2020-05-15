@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -46,6 +46,7 @@
 #include <Library/ElfLib.h>
 #include <Library/LinuxLib.h>
 #include <Library/ContainerLib.h>
+#include <Library/DebugLogBufferLib.h>
 #include <Guid/SeedInfoHobGuid.h>
 #include <Guid/OsConfigDataHobGuid.h>
 #include <Guid/OsBootOptionGuid.h>
@@ -59,16 +60,15 @@
 #include <Uefi/UefiGpt.h>
 #include "BlockIoTest.h"
 #include <ConfigDataCommonDefs.h>
+#include <Register/Intel/Msr/ArchitecturalMsr.h>
 #include "PreOsChecker.h"
+#include <Library/StringSupportLib.h>
+
 
 #define MKHI_BOOTLOADER_SEED_LEN       64
 
 #define DEFAULT_COMMAND_LINE     "console=ttyS0,115200\0"
 
-#define BOOT_PARAMS_BASE         0x00090000
-#define LINUX_KERNEL_BASE        0x00100000
-#define CMDLINE_OFFSET           0xF000
-#define CMDLINE_LENGTH_MAX       0x800
 #define EOF                      "<eof>"
 #define GPT_PART_ENTRIES_MAX     4
 
@@ -115,14 +115,12 @@ typedef struct {
   UINT16                  Reserved;
   UINT16                  ExtraBlobNumber;
   IMAGE_DATA              ExtraBlob[MAX_EXTRA_FILE_NUMBER];
-  BOOT_PARAMS             *BootParams;
 } LINUX_IMAGE;
 
 typedef struct {
   IMAGE_DATA              BootFile;
   IMAGE_DATA              CmdFile;
 } COMMON_IMAGE;
-
 
 typedef union {
   COMMON_IMAGE            Common;
@@ -134,10 +132,11 @@ typedef struct {
   UINT8                   Flags;
   UINT8                   LoadImageType;
   UINT16                  Reserved;
-  IMAGE_DATA              IasImage;
+  IMAGE_DATA              ImageData;
   EFI_HANDLE              HwPartHandle;
   LOADED_IMAGE_TYPE       Image;
-  UINT8                   ImageHash[SHA256_DIGEST_SIZE];
+  UINT8                   ImageHash[HASH_DIGEST_MAX];
+  RESERVED_CMDLINE_DATA   ReservedCmdlineData;
 } LOADED_IMAGE;
 
 /**
@@ -223,14 +222,42 @@ GetLoadedImageByType (
 
   This function will clean up all temporary resources used to load Boot Image.
 
-  @param[in]  LoadedImageHandle Loaded Image handle
-
-  @retval     none
+  @param[in]  LoadedImageHandle   Loaded Image handle.
+  @param[in]  KeepRootNode        TRUE,  do not free memory for LOADED_IMAGES_INFO root node.
+                                  FALSE, free memory for LOADED_IMAGES_INFO root node.
 **/
 VOID
 EFIAPI
 UnloadBootImages (
-  IN  EFI_HANDLE       LoadedImageHandle
+  IN  EFI_HANDLE       LoadedImageHandle,
+  IN  BOOLEAN          KeepRootNode
+  );
+
+/**
+  Free all allocated memory in a loaded image
+
+  This function will clean up all temporary resources used to load a single image.
+
+  @param[in]  LoadedImage     A load image pointer which has a boot image info
+
+**/
+VOID
+UnloadLoadedImage (
+  IN  LOADED_IMAGE  *LoadedImage
+  );
+
+/**
+  Free the allocated memory in an image data
+
+  This function free a memory allocated in IMAGE_DATA according to Allocation Type.
+
+  @param[in]  ImageData       An image data pointer which has allocated memory address,
+                              its size, and allocation type.
+
+**/
+VOID
+FreeImageData (
+  IN  IMAGE_DATA    *ImageData
   );
 
 /**
@@ -333,20 +360,6 @@ UINT8
 GetNextBootOption (
   IN OS_BOOT_OPTION_LIST     *OsBootOptionList,
   IN UINT8                   BootOptionIndex
-  );
-
-/**
-  ASM function that goes into kernel image.
-
-  @param  KernelStart        Pointer to the start of kernel.
-  @param  KernelBootParams   Pointer to the boot parameter structure.
-
- **/
-VOID
-EFIAPI
-JumpToKernel (
-  VOID *KernelStart,
-  VOID *KernelBootParams
   );
 
 /**

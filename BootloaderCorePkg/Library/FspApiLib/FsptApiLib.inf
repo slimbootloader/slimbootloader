@@ -1,0 +1,41 @@
+## @file
+#  FSP API interfaces
+#
+#  Copyright (c) 2016 - 2017, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = FsptApiLib
+  FILE_GUID                      = 06156ECD-38DF-4e8a-AE96-077234A56C80
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = FspApiLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+#
+
+[Sources.Ia32]
+  Ia32/FspTempRamInit.nasm
+
+[Sources.X64]
+  X64/FspTempRamInit.nasm
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  IntelFsp2Pkg/IntelFsp2Pkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  BaseMemoryLib
+
+[Pcd]
+  gPlatformModuleTokenSpaceGuid.PcdFSPTBase

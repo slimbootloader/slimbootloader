@@ -447,14 +447,21 @@ class Application(Frame):
 
         if len(sys.argv) > 1:
             Path = sys.argv[1]
-            if Path.endswith('.dlt'):
+            if not Path.endswith('.dsc'):
                 DscPath = os.path.join (os.path.dirname(Path), 'CfgDataDef.dsc')
             else:
                 DscPath = Path
-            if DscPath.endswith('.dsc'):
-                if self.LoadDscFile (DscPath) == 0:
-                    if DscPath != Path:
-                        self.LoadDeltaFile (Path)
+            if self.LoadDscFile (DscPath) == 0:
+                if Path.endswith('.dsc') and len(sys.argv) > 2:
+                    Path = sys.argv[2]
+                if not (Path.endswith('.dlt') or Path.endswith('.bin') or Path.endswith('.dsc')):
+                    messagebox.showerror('LOADING ERROR', "Unsupported file '%s' !" % Path)
+                    return
+                if Path.endswith('.dlt'):
+                    self.LoadDeltaFile (Path)
+                elif Path.endswith('.bin'):
+                    self.LoadBinFile (Path)
+
 
     def SetObjectName(self, Widget, Name):
         self.ConfList[id(Widget)] = Name
@@ -485,7 +492,7 @@ class Application(Frame):
             # Only scroll when it is in active area
             min, max = self.PageScroll.get()
             if not ((min == 0.0) and (max == 1.0)):
-                self.ConfCanvas.yview_scroll(-1 * (Event.delta / 120), 'units')
+                self.ConfCanvas.yview_scroll(-1 * int(Event.delta / 120), 'units')
 
     def UpdateVisibilityForWidget(self, Widget, Args):
 
@@ -710,11 +717,15 @@ class Application(Frame):
         Path = self.GetOpenFileName('bin')
         if not Path:
             return
+        self.LoadBinFile (Path)
 
+    def LoadBinFile (self, Path):
         with open(Path, 'rb') as Fd:
             BinData = bytearray(Fd.read())
+        if len(BinData) < len(self.OrgCfgDataBin):
+            messagebox.showerror('Binary file size is smaller than what DSC requires !')
+            return
 
-        self.ReloadConfigDataFromBin(BinData)
         try:
             self.ReloadConfigDataFromBin(BinData)
         except Exception as e:
@@ -759,15 +770,14 @@ class Application(Frame):
         else:
             return None
 
-
-
     def SaveDeltaFile(self, Full=False):
         Path = self.GetSaveFileName (".dlt")
         if not Path:
             return
 
         self.UpdateConfigDataOnPage()
-        self.GenerateDeltaFile(Path, Full)
+        NewData = self.CfgDataObj.GenerateBinaryArray()
+        self.CfgDataObj.GenerateDeltaFileFromBin (Path, self.OrgCfgDataBin, NewData, Full)
 
     def SaveToDelta(self):
         self.SaveDeltaFile()
@@ -785,66 +795,6 @@ class Application(Frame):
             Bins = self.CfgDataObj.GenerateBinaryArray()
             Fd.write(Bins)
 
-    def GenerateDeltaFile(self, DeltaFile, Full=False):
-        NewData = self.CfgDataObj.GenerateBinaryArray()
-        Lines = []
-        TagName = ''
-        Level = 0
-        PlatformId = None
-        DefPlatformId = 0
-
-        for Item in self.CfgDataObj._CfgItemList:
-            if Level == 0 and Item['embed'].endswith(':START'):
-                TagName = Item['embed'].split(':')[0]
-                Level += 1
-
-            Start = Item['offset']
-            End = Start + Item['length']
-            FullName = '%s.%s' % (TagName, Item['cname'])
-            if 'PLATFORMID_CFG_DATA.PlatformId' == FullName:
-                DefPlatformId = Bytes2Val(self.OrgCfgDataBin[Start:End])
-
-            if NewData[Start:End] != self.OrgCfgDataBin[Start:End] or (
-                    Full and Item['name'] and (Item['cname'] != 'Dummy')):
-                if not Item['subreg']:
-                    ValStr = self.CfgDataObj.FormatDeltaValue (Item)
-                    Text = '%-40s | %s' % (FullName, ValStr)
-                    if 'PLATFORMID_CFG_DATA.PlatformId' == FullName:
-                        PlatformId = Array2Val(Item['value'])
-                    else:
-                        Lines.append(Text)
-                else:
-                    OldArray = self.OrgCfgDataBin[Start:End]
-                    NewArray = NewData[Start:End]
-                    for SubItem in Item['subreg']:
-                        NewBitValue = self.CfgDataObj.GetBsfBitFields(SubItem,
-                                                                      NewArray)
-                        OldBitValue = self.CfgDataObj.GetBsfBitFields(SubItem,
-                                                                      OldArray)
-                        if OldBitValue != NewBitValue or (
-                                Full and Item['name'] and
-                            (Item['cname'] != 'Dummy')):
-                            if SubItem['cname'].startswith(Item['cname']):
-                                Offset = len(Item['cname']) + 1
-                                FieldName = '%s.%s' % (
-                                    FullName, SubItem['cname'][Offset:])
-                            ValStr = self.CfgDataObj.FormatDeltaValue (SubItem)
-                            Text = '%-40s | %s' % (FieldName, ValStr)
-                            Lines.append(Text)
-
-            if Item['embed'].endswith(':END'):
-                EndTagName = Item['embed'].split(':')[0]
-                if EndTagName == TagName:
-                    Level -= 1
-
-        if PlatformId is None or DefPlatformId == PlatformId:
-            PlatformId = DefPlatformId
-            print("WARNING: 'PlatformId' configuration is same as default %d!"
-                  % PlatformId)
-
-        Lines.insert(0, '%-40s | %s\n\n' %
-                     ('PLATFORMID_CFG_DATA.PlatformId', '0x%04X' % PlatformId))
-        self.CfgDataObj.WriteDeltaFile(DeltaFile, PlatformId, Lines)
 
     def RefreshConfigDataPage(self):
         self.ClearWidgetsInLayout()

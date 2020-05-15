@@ -191,7 +191,7 @@ AddConfigData (
   } else {
     //
     // Newly added config data has high priority
-    // so move the the old config data firstly, 
+    // so move the the old config data firstly,
     // then copy new config data just below header
     //
     CopyMem ((UINT8 *)LdrCfgBlob + LdrCfgBlob->HeaderLength + CfgAddSize,

@@ -16,6 +16,7 @@
   LIBRARY_CLASS                  = SblParameterLib
 
 [Sources]
+  SblParameter.h
   SblParameterLib.c
 
 [LibraryClasses]
@@ -26,5 +27,5 @@
   BootloaderCommonPkg/BootloaderCommonPkg.dec
 
 [Guids]
-  
+
 [Pcd]

@@ -20,13 +20,13 @@
 /**
   Find payload in the capsule image.
 
-  This function will parse through the capsule image to find the payload 
-  matching the input guid. 
+  This function will parse through the capsule image to find the payload
+  matching the input guid.
 
-  This function if provided with an empty guid will return the first payload 
+  This function if provided with an empty guid will return the first payload
   found
 
-  @param[in] ImageId        Guid to identify payload in the capsule image
+  @param[in] Signature      Signature of component to update.
   @param[in] CapImage       Pointer to the capsule Image
   @param[in] CapImageSize   Size of the capsule image in bytes
   @param[in] ImageHdr       Pointer to the capsule Image header
@@ -36,7 +36,7 @@
 **/
 EFI_STATUS
 FindImage (
-  IN  EFI_GUID                      *ImageId,
+  IN  UINT64                        Signature,
   IN  UINT8                         *CapImage,
   IN  UINT32                        CapImageSize,
   OUT EFI_FW_MGMT_CAP_IMAGE_HEADER  **ImageHdr
@@ -64,7 +64,7 @@ StartCsmeUpdate (
 /**
   Display send image status.
 
-  A callback function that reports the progress of sending 
+  A callback function that reports the progress of sending
   the update image buffer to FW (not the progress of the update itself).
 
   @param[in] bytesSentToFw         The number of bytes of the buffer, that were already sent to FW.
@@ -80,14 +80,14 @@ DisplaySendStatus (
   Check if the update image has the same version as the flash image.
 
   @param[in]  buffer         Buffer of Update Image.
-  @param[in]  bufferLength   Length of the buffer in bytes. 
+  @param[in]  bufferLength   Length of the buffer in bytes.
   @param[in]  UpdateApi      Pointer to update service API's
   @param[out] isSameVersion  TRUE if same version, FALSE if not. Caller allocated.
 
   @retval  EFI_SUCCESS      Update successful
   @retval  other            error status from the routine
 **/
-static UINT32 
+static UINT32
 IsUpdateToSameVersion(
   IN  UINT8   *Buffer,
   IN  UINT32  BufferLength,
@@ -139,15 +139,15 @@ IsUpdateToSameVersion(
 /**
   Display send image status.
 
-  A callback function that reports the progress of sending 
+  A callback function that reports the progress of sending
   the update image buffer to FW (not the progress of the update itself).
 
   @param[in] bytesSentToFw         The number of bytes of the buffer, that were already sent to FW.
   @param[in] totalBytesToSendToFw  The total number of bytes of the buffer.
 **/
-static void 
+static void
 DisplaySendStatus (
-  IN UINT32 bytesSentToFw, 
+  IN UINT32 bytesSentToFw,
   IN UINT32 totalBytesToSendToFw
   )
 {
@@ -446,23 +446,23 @@ UpdateCsme (
     return EFI_INVALID_PARAMETER;
   }
 
-  ZeroMem((VOID *)&DriverParams, sizeof(DriverParams));
+  ZeroMem ((VOID *)&DriverParams, sizeof(DriverParams));
 
-  Status = FindImage(&gCsmeFWUDriverImageFileGuid, CapImage, CapImageSize, &CsmeDriverImageHdr);
+  Status = FindImage (FW_UPDATE_COMP_CSME_DRIVER, CapImage, CapImageSize, &CsmeDriverImageHdr);
   if ((EFI_ERROR (Status)) || (CsmeDriverImageHdr == NULL)) {
     DEBUG((DEBUG_ERROR, "Finding CSME update driver failed with Status = %r\n", Status));
     return Status;
   }
 
-  DriverPtr = (UINT32 *)((UINT32)CsmeDriverImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
+  DriverPtr = (UINT32 *)((UINTN)CsmeDriverImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
 
-  Status = PeCoffRelocateImage ((UINT32)DriverPtr);
+  Status = PeCoffRelocateImage ((UINT32)(UINTN)DriverPtr);
   if (EFI_ERROR(Status)) {
     DEBUG((DEBUG_ERROR, "Relocate CSME Update driver failed with status = %r\n", Status));
     return Status;
   }
 
-  Status = PeCoffLoaderGetEntryPoint(DriverPtr, (VOID *)&DriverEntry);
+  Status = PeCoffLoaderGetEntryPoint (DriverPtr, (VOID *)&DriverEntry);
   if (EFI_ERROR(Status)) {
     DEBUG((DEBUG_ERROR, "Getting entry point for CSME Update driver failed with status = %r\n", Status));
     return Status;
@@ -471,7 +471,7 @@ UpdateCsme (
   DriverParams.CsmeUpdDriverInFunc = CsmeUpdInputData;
   *(DriverParams.OutputFunc) = NULL;
 
-  DriverEntry((VOID *)&DriverParams);
+  DriverEntry ((VOID *)&DriverParams);
 
   CsmeUpdateApi = *(DriverParams.OutputFunc);
 
@@ -484,7 +484,7 @@ UpdateCsme (
   DEBUG((DEBUG_ERROR, "--------------------CSME FW Update START ---------------\n"));
   DEBUG((DEBUG_ERROR, "--------------------------------------------------------\n"));
 
-  DriverPtr = (UINT32 *)((UINT32)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
+  DriverPtr = (UINT32 *)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
 
   Status = StartCsmeUpdate((VOID *)DriverPtr, ImageHdr->UpdateImageSize, CsmeUpdateApi);
 

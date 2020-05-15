@@ -29,9 +29,17 @@ extern CONST SHELL_COMMAND ShellCommandUcode;
 extern CONST SHELL_COMMAND ShellCommandCls;
 extern CONST SHELL_COMMAND ShellCommandFs;
 
+/**
+  Load shell commands.
+
+  @param[in]  Shell        shell instance
+
+  @retval EFI_SUCCESS      Shell command loaded successfully
+
+**/
 EFI_STATUS
 LoadShellCommands (
-  VOID
+  IN SHELL   *Shell
   );
 
 #endif /* __SHELL_CMDS_H__ */

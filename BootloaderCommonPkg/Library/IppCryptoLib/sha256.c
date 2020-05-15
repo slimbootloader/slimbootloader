@@ -14,10 +14,31 @@
 
 #include <Library/CryptoLib.h>
 
+
+/**
+  Computes the SHA-256 message digest of a input data buffer.
+
+  This function performs the SHA-256 message digest of a given data buffer, and places
+  the digest value into the specified memory.
+
+  @param[in]   pMsg        Pointer to the buffer containing the data to be hashed.
+  @param[in]   msgLen      Length of Data buffer in bytes.
+  @param[out]  pMD         Pointer to a buffer that receives the SHA-256 digest
+                           value (32 bytes).
+
+  @retval                  A pointer to SHA-256 digest value
+**/
 Ipp8u* Sha256 (const Ipp8u* pMsg, Ipp32u msgLen, Ipp8u* pMD)
 {
-  ippsHashMessage_rmf(pMsg, msgLen, pMD, ippsHashMethod_SHA256 ());
-  return pMD;
+  if (FixedPcdGet8(PcdIppHashLibSupportedMask) & IPP_HASHLIB_SHA2_256) {
+
+    ippsHashMessage_rmf(pMsg, msgLen, pMD, ippsHashMethod_SHA256 ());
+    return pMD;
+
+  } else {
+    pMD = NULL;
+    return pMD;
+  }
 }
 
 /**
@@ -36,15 +57,20 @@ Sha256Init (
   IN      Ipp32u      HashCtxSize
   )
 {
-  if (HashCtxSize < sizeof(IppsHashState_rmf)) {
-    return RETURN_BUFFER_TOO_SMALL;
-  }
+  if (FixedPcdGet8(PcdIppHashLibSupportedMask) & IPP_HASHLIB_SHA2_256) {
+    if (HashCtxSize < sizeof(IppsHashState_rmf)) {
+      return RETURN_BUFFER_TOO_SMALL;
+    }
 
-  if (ippsHashInit_rmf((IppsHashState_rmf*)HashCtx, ippsHashMethod_SHA256 ()) == ippStsNoErr) {
-    return RETURN_SUCCESS;
-  }
+    if (ippsHashInit_rmf((IppsHashState_rmf*)HashCtx, ippsHashMethod_SHA256 ()) == ippStsNoErr) {
+      return RETURN_SUCCESS;
+    }
 
-  return RETURN_SECURITY_VIOLATION;
+    return RETURN_SECURITY_VIOLATION;
+
+  } else {
+    return RETURN_UNSUPPORTED;
+  }
 }
 
 /**
@@ -65,11 +91,16 @@ Sha256Update (
   IN        Ipp32u      MsgLen
   )
 {
-  if (ippsHashUpdate_rmf(Msg, MsgLen, (IppsHashState_rmf*)HashCtx) == ippStsNoErr) {
-    return RETURN_SUCCESS;
-  }
+  if (FixedPcdGet8(PcdIppHashLibSupportedMask) & IPP_HASHLIB_SHA2_256) {
+    if (ippsHashUpdate_rmf(Msg, MsgLen, (IppsHashState_rmf*)HashCtx) == ippStsNoErr) {
+      return RETURN_SUCCESS;
+    }
 
-  return RETURN_SECURITY_VIOLATION;
+    return RETURN_SECURITY_VIOLATION;
+
+  }  else {
+    return RETURN_UNSUPPORTED;
+  }
 }
 
 
@@ -88,9 +119,14 @@ Sha256Final (
   OUT      Ipp8u      *Hash
   )
 {
-  if (ippsHashFinal_rmf(Hash, (IppsHashState_rmf*)HashCtx) == ippStsNoErr) {
-    return RETURN_SUCCESS;
-  }
+  if (FixedPcdGet8(PcdIppHashLibSupportedMask) & IPP_HASHLIB_SHA2_256) {
+    if (ippsHashFinal_rmf(Hash, (IppsHashState_rmf*)HashCtx) == ippStsNoErr) {
+      return RETURN_SUCCESS;
+    }
 
-  return RETURN_SECURITY_VIOLATION;
+    return RETURN_SECURITY_VIOLATION;
+
+  } else {
+    return RETURN_UNSUPPORTED;
+  }
 }

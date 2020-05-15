@@ -9,7 +9,7 @@
 #define __FSP_SUPPORT_LIB_H__
 
 typedef VOID \
-(*MEM_RES_HOB_CALLBACK) (EFI_HOB_RESOURCE_DESCRIPTOR *ResourceDescriptor, VOID *Param);
+(EFIAPI *MEM_RES_HOB_CALLBACK) (EFI_HOB_RESOURCE_DESCRIPTOR *ResourceDescriptor, VOID *Param);
 
 /**
   This function retrieves FSP Non-volatile Storage HOB buffer and size.
@@ -22,6 +22,7 @@ typedef VOID \
 
 **/
 VOID *
+EFIAPI
 GetFspNvsDataBuffer (
   CONST VOID             *HobListPtr,
   UINT32                 *Length
@@ -38,6 +39,7 @@ GetFspNvsDataBuffer (
 
 **/
 UINT64
+EFIAPI
 GetFspReservedMemoryFromGuid (
   CONST VOID     *HobListPtr,
   UINT64         *Length,

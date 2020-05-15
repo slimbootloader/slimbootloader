@@ -11,6 +11,7 @@
   Enables the execution by writing to the MSR.
 **/
 VOID
+EFIAPI
 EnableCodeExecution (
   VOID
   );
@@ -19,6 +20,7 @@ EnableCodeExecution (
   Disable watch dog timer (Halt TCO timer).
 **/
 VOID
+EFIAPI
 DisableWatchDogTimer (
   VOID
   );

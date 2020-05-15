@@ -21,9 +21,10 @@ extern EFI_GUID gSmmInformationGuid;
 #define   SMM_FLAGS_4KB_COMMUNICATION  BIT0
 
 typedef enum {
-  MEM,
-  IO,
-  PCICFG
+  REG_TYPE_MEM,
+  REG_TYPE_IO,
+  REG_TYPE_PCICFG,
+  REG_TYPE_MMIO,
 } REG_TYPE;
 
 typedef enum {
@@ -35,21 +36,47 @@ typedef enum {
 #pragma pack(1)
 
 ///
-/// Generic Address Space
+/// SMI control register
 ///
 typedef struct {
   UINT8   RegType;
   UINT8   RegWidth;
-  /// The bit value for Global SMI Enable (GBL_SMI_EN)
-  UINT8   SmiGblPos;
-  /// The bit value for APMC Enable (APMC_EN).
+  /// The bit index for APMC Enable (APMC_EN).
   UINT8   SmiApmPos;
-  /// The bit value for End of SMI (EOS)
+  /// The bit index for Global SMI Enable (GBL_SMI_EN)
+  UINT8   SmiGblPos;
+  /// The bit index for End of SMI (EOS)
   UINT8   SmiEosPos;
   UINT8   Rsvd[3];
-  /// IO based address for SMM control and enable register
+  /// Address for SMM control and enable register
   UINT32  Address;
 } SMI_CTRL_REG;
+
+///
+/// SMI status register
+///
+typedef struct {
+  UINT8   RegType;
+  UINT8   RegWidth;
+  /// The bit index for APM Status (APM_STS).
+  UINT8   SmiApmPos;
+  UINT8   Rsvd[5];
+  /// Address for SMM status register
+  UINT32  Address;
+} SMI_STS_REG;
+
+///
+/// SMI lock register
+///
+typedef struct {
+  UINT8   RegType;
+  UINT8   RegWidth;
+  /// The bit index for SMI Lock (SMI_LOCK)
+  UINT8   SmiLockPos;
+  UINT8   Rsvd;
+  /// Register address for SMM SMI lock
+  UINT32  Address;
+} SMI_LOCK_REG;
 
 typedef struct {
   UINT8                       Revision;
@@ -58,8 +85,11 @@ typedef struct {
   UINT32                      SmmBase;
   UINT32                      SmmSize;
   SMI_CTRL_REG                SmiCtrlReg;
+  SMI_STS_REG                 SmiStsReg;
+  SMI_LOCK_REG                SmiLockReg;
 } LDR_SMM_INFO;
 
 #pragma pack()
+
 
 #endif

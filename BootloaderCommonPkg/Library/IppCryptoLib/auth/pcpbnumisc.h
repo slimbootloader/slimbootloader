@@ -5,12 +5,12 @@
 
 **/
 
-/* 
+/*
 //  Purpose:
 //     Intel(R) Integrated Performance Primitives. Cryptography Primitives.
 //     Internal Miscellaneous BNU Definitions & Function Prototypes
-// 
-// 
+//
+//
 */
 
 #if !defined(_PCP_BNUMISC_H)
@@ -36,6 +36,26 @@
 /* mask for top BNU_CHUNK_T */
 #define MASK_BNU_CHUNK(nbits) ((BNU_CHUNK_T)(-1) >>((BNU_CHUNK_BITS- ((nbits)&(BNU_CHUNK_BITS-1))) &(BNU_CHUNK_BITS-1)))
 
+#if _SLIMBOOT_OPT
+/* copy BNU content */
+#define COPY_BNU(dst, src, len) \
+{ \
+  CopyMem (dst, src, len * sizeof (BNU_CHUNK_T)); \
+}
+
+/* expand by zeros */
+#define ZEXPAND_BNU(srcdst,srcLen, dstLen) \
+{ \
+  SetMem (srcdst + srcLen * sizeof (BNU_CHUNK_T), (dstLen - srcLen) * sizeof (BNU_CHUNK_T), 0); \
+}
+
+/* copy and expand by zeros */
+#define ZEXPAND_COPY_BNU(dst,dstLen, src,srcLen) \
+{ \
+  COPY_BNU (dst, src, srcLen); \
+  ZEXPAND_BNU (dst, srcLen, dstLen); \
+}
+#else
 /* copy BNU content */
 #define COPY_BNU(dst, src, len) \
 { \
@@ -57,6 +77,7 @@
    for(__idx=0; __idx<(srcLen); __idx++) (dst)[__idx] = (src)[__idx]; \
    for(; __idx<(dstLen); __idx++)    (dst)[__idx] = 0; \
 }
+#endif
 
 /* fix actual length */
 #define FIX_BNU(src,srcLen) \

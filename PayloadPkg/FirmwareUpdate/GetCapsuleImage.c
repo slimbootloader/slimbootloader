@@ -166,12 +166,12 @@ GetCapsuleFromRawPartition (
     return EFI_NOT_FOUND;
   }
 
-  if (FwUpdHeader->PubKeySize != RSA_MOD_SIZE + RSA_E_SIZE + sizeof (UINT32)) {
+  if (FwUpdHeader->PubKeySize != RSA2048_MOD_SIZE + RSA_E_SIZE + sizeof (UINT32)) {
     DEBUG ((DEBUG_INFO, "Invalid Capsule image found, Public Key size mismatch\n"));
     return EFI_NOT_FOUND;
   }
 
-  if (FwUpdHeader->SignatureSize != RSA2048NUMBYTES) {
+  if (FwUpdHeader->SignatureSize != RSA2048_NUMBYTES) {
     DEBUG ((DEBUG_INFO, "Invalid Capsule image found, Signature size mismatch\n"));
     return EFI_NOT_FOUND;
   }
@@ -254,7 +254,7 @@ LoadCapsuleImage (
   // If we do not have file system, try reading capsule from raw partition
   //
   if (CapsuleInfo->FsType >= EnumFileSystemMax) {
-    Status = GetCapsuleFromRawPartition (CapsuleInfo, HwPartHandle, CapsuleImage, CapsuleImageSize);
+    Status = GetCapsuleFromRawPartition (CapsuleInfo, HwPartHandle, CapsuleImage, (UINTN *)CapsuleImageSize);
     return Status;
   }
 
@@ -291,7 +291,7 @@ LoadCapsuleImage (
       goto Done;
     }
 
-    Status = GetFileSize (FileHandle, CapsuleImageSize);
+    Status = GetFileSize (FileHandle, (UINTN *)CapsuleImageSize);
     if (EFI_ERROR(Status)) {
       DEBUG((DEBUG_ERROR, " Get Capsule File '%s' size Status : %r\n", FileName, Status));
       goto Done;
@@ -303,7 +303,7 @@ LoadCapsuleImage (
       goto Done;
     }
 
-    Status = ReadFile (FileHandle, CapsuleImage, CapsuleImageSize);
+    Status = ReadFile (FileHandle, CapsuleImage, (UINTN *)CapsuleImageSize);
     if (EFI_ERROR(Status)) {
       DEBUG((DEBUG_ERROR, " Read Capsule File '%s' Status : %r\n", FileName, Status));
       goto Done;

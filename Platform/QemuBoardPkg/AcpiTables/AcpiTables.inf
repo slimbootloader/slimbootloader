@@ -16,17 +16,20 @@
   EFI_SPECIFICATION_VERSION      = 0x00020000
 
 [sources.common]
+  AcpiTablePlatform.h
+  Madt/Madt.h
   Dsdt/Dsdt.asl
   Facs/Facs.aslc
   Facp/Facp.aslc
   Madt/Madt30.aslc
   Mcfg/Mcfg.aslc
-  Hpet/Hpet.aslc  
+  Hpet/Hpet.aslc
   Platform/CommonBoardPkg/AcpiTables/Fpdt/Fpdt.aslc
+  Platform/CommonBoardPkg/AcpiTables/Dsdt/AslInc.h
 
 [Packages]
   MdePkg/MdePkg.dec
   Silicon/QemuSocPkg/QemuSocPkg.dec
   Platform/QemuBoardPkg/QemuBoardPkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
-  BootloaderCorePkg/BootloaderCorePkg.dec  
+  BootloaderCorePkg/BootloaderCorePkg.dec

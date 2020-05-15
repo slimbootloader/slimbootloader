@@ -16,5 +16,6 @@ PLATFORMID_CFG_DATA.PlatformId | 1
 PLAT_NAME_CFG_DATA.PlatformName            | 'QEMU_01'
 
 GEN_CFG_DATA.PayloadId                     | 'AUTO'
+GEN_CFG_DATA.CurrentBoot                   | 16
 
 !include CfgDataExt_Inc.dlt

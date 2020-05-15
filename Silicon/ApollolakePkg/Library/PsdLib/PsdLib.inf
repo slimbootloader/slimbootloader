@@ -27,6 +27,7 @@ MdePkg/MdePkg.dec
 IntelFsp2Pkg/IntelFsp2Pkg.dec
 BootloaderCorePkg/BootloaderCorePkg.dec
 BootloaderCommonPkg/BootloaderCommonPkg.dec
+Silicon/CommonSocPkg/CommonSocPkg.dec
 Silicon/ApollolakePkg/ApollolakePkg.dec
 Platform/ApollolakeBoardPkg/ApollolakeBoardPkg.dec
 
@@ -53,4 +54,4 @@ gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
 gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
 gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled
 gPlatformCommonLibTokenSpaceGuid.PcdHeciLibId
-gPlatformModuleTokenSpaceGuid.PcdFlashMapEnabled
+

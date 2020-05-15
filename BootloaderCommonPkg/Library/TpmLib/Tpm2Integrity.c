@@ -103,7 +103,7 @@ Tpm2PcrExtend (
     Buffer += sizeof (UINT16);
     DigestSize = GetHashSizeFromAlgo (Digests->digests[Index].hashAlg);
     if (DigestSize == 0) {
-      DEBUG ((EFI_D_ERROR, "Unknown hash algorithm %d\r\n", Digests->digests[Index].hashAlg));
+      DEBUG ((DEBUG_ERROR, "Unknown hash algorithm %d\r\n", Digests->digests[Index].hashAlg));
       return EFI_DEVICE_ERROR;
     }
     CopyMem (
@@ -124,7 +124,7 @@ Tpm2PcrExtend (
   }
 
   if (ResultBufSize > sizeof (Res)) {
-    DEBUG ((EFI_D_ERROR, "Tpm2PcrExtend: Failed ExecuteCommand: Buffer Too Small\r\n"));
+    DEBUG ((DEBUG_ERROR, "Tpm2PcrExtend: Failed ExecuteCommand: Buffer Too Small\r\n"));
     return EFI_BUFFER_TOO_SMALL;
   }
 
@@ -133,7 +133,7 @@ Tpm2PcrExtend (
   //
   RespSize = SwapBytes32 (Res.Header.paramSize);
   if (RespSize > sizeof (Res)) {
-    DEBUG ((EFI_D_ERROR, "Tpm2PcrExtend: Response size too large! %d\r\n", RespSize));
+    DEBUG ((DEBUG_ERROR, "Tpm2PcrExtend: Response size too large! %d\r\n", RespSize));
     return EFI_BUFFER_TOO_SMALL;
   }
 
@@ -141,7 +141,7 @@ Tpm2PcrExtend (
   // Fail if command failed
   //
   if (SwapBytes32 (Res.Header.responseCode) != TPM_RC_SUCCESS) {
-    DEBUG ((EFI_D_ERROR, "Tpm2PcrExtend: Response Code error! 0x%08x\r\n", SwapBytes32 (Res.Header.responseCode)));
+    DEBUG ((DEBUG_ERROR, "Tpm2PcrExtend: Response Code error! 0x%08x\r\n", SwapBytes32 (Res.Header.responseCode)));
     return EFI_DEVICE_ERROR;
   }
 
@@ -242,7 +242,7 @@ Tpm2PcrAllocate (
   }
 
   if (ResultBufSize > sizeof (Res)) {
-    DEBUG ((EFI_D_ERROR, "Tpm2PcrAllocate: Failed ExecuteCommand: Buffer Too Small\r\n"));
+    DEBUG ((DEBUG_ERROR, "Tpm2PcrAllocate: Failed ExecuteCommand: Buffer Too Small\r\n"));
     Status = EFI_BUFFER_TOO_SMALL;
     goto Done;
   }
@@ -252,7 +252,7 @@ Tpm2PcrAllocate (
   //
   RespSize = SwapBytes32 (Res.Header.paramSize);
   if (RespSize > sizeof (Res)) {
-    DEBUG ((EFI_D_ERROR, "Tpm2PcrAllocate: Response size too large! %d\r\n", RespSize));
+    DEBUG ((DEBUG_ERROR, "Tpm2PcrAllocate: Response size too large! %d\r\n", RespSize));
     Status = EFI_BUFFER_TOO_SMALL;
     goto Done;
   }
@@ -261,7 +261,7 @@ Tpm2PcrAllocate (
   // Fail if command failed
   //
   if (SwapBytes32 (Res.Header.responseCode) != TPM_RC_SUCCESS) {
-    DEBUG ((EFI_D_ERROR, "Tpm2PcrAllocate: Response Code error! 0x%08x\r\n", SwapBytes32 (Res.Header.responseCode)));
+    DEBUG ((DEBUG_ERROR, "Tpm2PcrAllocate: Response Code error! 0x%08x\r\n", SwapBytes32 (Res.Header.responseCode)));
     Status = EFI_DEVICE_ERROR;
     goto Done;
   }
@@ -402,15 +402,15 @@ Tpm2PcrAllocateBanks (
              &SizeNeeded,
              &SizeAvailable
              );
-  DEBUG ((EFI_D_INFO, "Tpm2PcrAllocateBanks call Tpm2PcrAllocate - %r\n", Status));
+  DEBUG ((DEBUG_INFO, "Tpm2PcrAllocateBanks call Tpm2PcrAllocate - %r\n", Status));
   if (EFI_ERROR (Status)) {
     goto Done;
   }
 
-  DEBUG ((EFI_D_INFO, "AllocationSuccess - %02x\n", AllocationSuccess));
-  DEBUG ((EFI_D_INFO, "MaxPCR            - %08x\n", MaxPCR));
-  DEBUG ((EFI_D_INFO, "SizeNeeded        - %08x\n", SizeNeeded));
-  DEBUG ((EFI_D_INFO, "SizeAvailable     - %08x\n", SizeAvailable));
+  DEBUG ((DEBUG_INFO, "AllocationSuccess - %02x\n", AllocationSuccess));
+  DEBUG ((DEBUG_INFO, "MaxPCR            - %08x\n", MaxPCR));
+  DEBUG ((DEBUG_INFO, "SizeNeeded        - %08x\n", SizeNeeded));
+  DEBUG ((DEBUG_INFO, "SizeAvailable     - %08x\n", SizeAvailable));
 
 Done:
   ZeroMem (&LocalAuthSession.hmac, sizeof (LocalAuthSession.hmac));

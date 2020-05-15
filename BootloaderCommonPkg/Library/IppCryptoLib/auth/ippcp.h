@@ -1,15 +1,15 @@
 /** @file
 
-  Copyright (c) 2018-2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018-2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-/* 
+/*
 //              Intel(R) Integrated Performance Primitives (Intel(R) IPP)
 //              Cryptographic Primitives (ippCP)
-// 
-// 
+//
+//
 */
 
 #if !defined( __IPPCP_H__ ) || defined( _OWN_BLDPCS )
@@ -92,6 +92,10 @@ IPPAPI(IppStatus, ippsHashFinal_rmf,(Ipp8u* pMD, IppsHashState_rmf* pCtx))
 IPPAPI(IppStatus, ippsHashMessage_rmf,(const Ipp8u* pMsg, int len, Ipp8u* pMD, const IppsHashMethod* pMethod))
 
 
+/* general MGF Primitives*/
+IPPAPI(IppStatus, ippsMGF,(const Ipp8u* pSeed, int seedLen, Ipp8u* pMask, int maskLen, IppHashAlgId hashAlg))
+IPPAPI(IppStatus, ippsMGF1_rmf,(const Ipp8u* pSeed, int seedLen, Ipp8u* pMask, int maskLen, const IppsHashMethod* pMethod))
+IPPAPI(IppStatus, ippsMGF2_rmf,(const Ipp8u* pSeed, int seedLen, Ipp8u* pMask, int maskLen, const IppsHashMethod* pMethod))
 /*
 // =========================================================
 // Keyed-Hash Message Authentication Codes
@@ -219,6 +223,12 @@ IPPAPI(IppStatus, ippsRSAVerifyHash_PKCS1v15_rmf,(const Ipp8u* md,
                                                   const IppsHashMethod* pMethod,
                                                         Ipp8u* pBuffer))
 
+IPPAPI(IppStatus, ippsRSAVerify_PSS_rmf,(const Ipp8u* pMsg,  int msgLen,
+                                         const Ipp8u* pSign,
+                                          int* pIsValid,
+                                         const IppsRSAPublicKeyState*  pKey,
+                                         const IppsHashMethod* pMethod,
+                                               Ipp8u* pBuffer))
 #ifdef  __cplusplus
 }
 #endif

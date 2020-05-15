@@ -1,7 +1,7 @@
 ## @file
 #   Library instance for ResetSystem library class for PCAT systems
 #
-#  Copyright (c) 2006 - 2016, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2006 - 2020, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -20,8 +20,8 @@
 #  VALID_ARCHITECTURES           = IA32 X64 IPF
 #
 
-[Sources.IA32]
-  Ia32/ResetSystemLib.c
+[Sources]
+  ResetSystemLib.c
 
 [Packages]
   MdePkg/MdePkg.dec

@@ -1,0 +1,42 @@
+## @file
+#
+#  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = VtdPmrLib
+  FILE_GUID                      = 891F1E7F-E48E-418A-BA80-A08D249CCCB8
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = VtdPmrLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  IntelVtdPmr.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+
+[LibraryClasses]
+  BaseLib
+  PcdLib
+  IoLib
+  PciLib
+
+[Pcd]
+  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
+  gPlatformCommonLibTokenSpaceGuid.PcdDmaProtectionEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdDmaBufferAlignment
+  gPlatformCommonLibTokenSpaceGuid.PcdDmaBufferSize
+

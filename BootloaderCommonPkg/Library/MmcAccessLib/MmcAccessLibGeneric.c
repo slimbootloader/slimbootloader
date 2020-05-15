@@ -12,6 +12,7 @@
 #include <Library/MemoryAllocationLib.h>
 #include <Library/IoLib.h>
 #include <Library/TimerLib.h>
+#include <Library/IoMmuLib.h>
 #include "SdMmcPciHcDxe.h"
 #include "MmcAccessLibPrivate.h"
 #include <Library/SecureBootLib.h>
@@ -1370,7 +1371,19 @@ MmcReadWrite (
   BlockNum  = (BufferSize + CardData->BlockLen - 1) / CardData->BlockLen;
 
   Remaining = BlockNum;
-  MaxBlock  = PcdGet16 (PcdEmmcMaxRwBlockNumber);
+
+  MaxBlock = PcdGet16 (PcdEmmcMaxRwBlockNumber);
+  if (FeaturePcdGet(PcdDmaProtectionEnabled)) {
+    // When DMA protection is enabled, only tranfer less than DMA buffer size
+    // Use half for safe.  Around 1MB will be used for CmdTable.
+    MaxBlock = (PcdGet32 (PcdDmaBufferSize) >> 1) / CardData->BlockLen;
+    if (MaxBlock == 0) {
+      MaxBlock = 1;
+    }
+    if (MaxBlock > PcdGet16 (PcdEmmcMaxRwBlockNumber)) {
+      MaxBlock = PcdGet16 (PcdEmmcMaxRwBlockNumber);
+    }
+  }
 
   DEBUG ((DEBUG_VERBOSE, "MmcReadWrite Lba=0x%x Buffer=0x%p BufferSize=0x%x, BlockNum=0x%x\n",
           (UINT32)Lba, Buffer, BufferSize, BlockNum));

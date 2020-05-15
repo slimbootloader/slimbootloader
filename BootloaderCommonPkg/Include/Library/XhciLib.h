@@ -22,22 +22,8 @@
 EFI_STATUS
 EFIAPI
 UsbInitCtrl (
-  IN     UINT32                          BaseAddress,
+  IN     UINTN                           BaseAddress,
   IN OUT EFI_HANDLE                     *UsbHostHandle
-  );
-
-/**
-  USB deinitialization interface.
-
-  @param UsbHostHandle   USB host controller handle to deinitalize.
-
-  @retval EFI_SUCCESS              USB host controller was deinitialized successfully.
-  @retval EFI_INVALID_PARAMETER    USB host controller handle is invalid.
-**/
-EFI_STATUS
-EFIAPI
-UsbDeinitCtrl (
-  IN  EFI_HANDLE      UsbHostHandle
   );
 
 #endif

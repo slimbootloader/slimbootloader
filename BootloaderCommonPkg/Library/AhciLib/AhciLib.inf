@@ -21,6 +21,8 @@
 #
 
 [Sources]
+  AhciMode.h
+  AhciDevice.h
   AhciBlkIo.c
   AhciMode.c
   AhciDevice.c
@@ -34,3 +36,8 @@
   TimerLib
   BaseMemoryLib
   MemoryAllocationLib
+  IoMmuLib
+
+[Pcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdDmaBufferSize
+  gPlatformCommonLibTokenSpaceGuid.PcdDmaProtectionEnabled

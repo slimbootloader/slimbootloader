@@ -37,7 +37,7 @@ GetSeedListInfoHOB (
   @param  IN Idx                  MAX_ENTRIES: 4. Iff Same type and Usage, which seed Idx is this: {0,1,2,3}.
   @param  IN HeciSeedSize         Size of Heci Seed length. Ex: HECI_SEED_INFO or RPMB Seed size.
   @param  IN HeciSeedDataBuffer   Actual Seed Data: SVN_SEED_INFO or RPMB Seed.
-  
+
   @retval EFI_NOT_FOUND         Failed to find the GUID HOB.
   @retval EFI_OUT_OF_RESOURCES  GUID HOB data buffer is out of space.
 

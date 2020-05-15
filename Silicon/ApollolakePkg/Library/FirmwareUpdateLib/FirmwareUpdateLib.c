@@ -31,6 +31,8 @@
 #include <Library/ConfigDataLib.h>
 #include <Service/PlatformService.h>
 #include <Service/HeciService.h>
+#include <Library/ResetSystemLib.h>
+#include <ScRegs/RegsPmc.h>
 
 #define FLASH_MAP_IN_FV_OFFSET   0xA4
 
@@ -171,7 +173,7 @@ MarkBootParitionBpdt (
 
   BpdtHeader = (BPDT_HEADER *)SourceAddress;
   if (((BpdtHeader->Signature != BPDT_SIGN_GREEN) && (BpdtHeader->Signature != BPDT_SIGN_RED)) || (BpdtHeader->DscCount > MAX_PARTITION_NUM)) {
-    DEBUG ((EFI_D_ERROR, "BPDT header Signature or partition number verification failed.\n"));
+    DEBUG ((DEBUG_ERROR, "BPDT header Signature or partition number verification failed.\n"));
     return EFI_UNSUPPORTED;
   }
 
@@ -245,7 +247,7 @@ PlatformGetStage1AOffset (
     for (Index = 0; Index < MaxEntries; Index++) {
       EntryDesc = FlashMapPtr->EntryDesc[Index];
       if (EntryDesc.Signature == FLASH_MAP_SIG_STAGE1A) {
-        *Base  = (UINT32)(Ptr + EntryDesc.Offset);
+        *Base  = (UINT32)(UINTN)(Ptr + EntryDesc.Offset);
         *Size  = EntryDesc.Size;
         Status = EFI_SUCCESS;
         break;
@@ -310,7 +312,7 @@ GetFirmwareUpdateInfo (
 
   Status = mFwuSpiService->SpiGetRegion (FlashRegionBios, &RgnBase, &RgnSize);
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "GetPartitionSize Status = 0x%x\n", Status));
+    DEBUG ((DEBUG_ERROR, "GetPartitionSize Status = 0x%x\n", Status));
     return Status;
   }
 
@@ -326,7 +328,7 @@ GetFirmwareUpdateInfo (
   //
   Status = MarkBootParitionBpdt (BiosAddress, BPDT_SIGN_RED, NULL);
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "SetBootPartitionInvalid failed! Status = 0x%x\n", Status));
+    DEBUG ((DEBUG_ERROR, "SetBootPartitionInvalid failed! Status = 0x%x\n", Status));
     return Status;
   }
 
@@ -339,7 +341,7 @@ GetFirmwareUpdateInfo (
   if (FwPolicy.Fields.UpdatePartitionB == 1) {
     Status = GetComponentInfoByPartition (FLASH_MAP_SIG_BLRESERVED, FALSE, &RsvdRgnBase, &RsvdRgnSize);
     if (EFI_ERROR (Status)) {
-      DEBUG ((EFI_D_ERROR, "Could not get reserved region base from flash map\n"));
+      DEBUG ((DEBUG_ERROR, "Could not get reserved region base from flash map\n"));
       RsvdRgnSize = 0;
     }
     UpdateRegion->UpdateSize      = (RgnSize >> 1) - RsvdRgnSize;
@@ -351,7 +353,7 @@ GetFirmwareUpdateInfo (
   //
   Status = MarkBootParitionBpdt (BiosAddress, BPDT_SIGN_GREEN, NULL);
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "SetBootPartitionInvalid failed! Status = 0x%x\n", Status));
+    DEBUG ((DEBUG_ERROR, "SetBootPartitionInvalid failed! Status = 0x%x\n", Status));
     return Status;
   }
 
@@ -387,8 +389,18 @@ SetBootPartition (
   )
 {
   EFI_STATUS    Status;
+  UINT8         StateMachine;
 
   if (Partition == PrimaryPartition) {
+    //
+    // HECI command to clear MBP data is ignored when booting from BP2
+    // reset here so that we can boot from BP1
+    //
+    GetStateMachineFlag(&StateMachine);
+    if (StateMachine == FW_UPDATE_SM_PART_AB) {
+      ResetSystem (EfiResetWarm);
+      CpuDeadLoop ();
+    }
     //
     // For APL platform, CSE always boot from Primary partition unless it is corrupt
     // hence, we do not need to do anything here
@@ -402,7 +414,7 @@ SetBootPartition (
   //
   Status = BootMediaErase (0, BPDT_SIZE);
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "Could not flip boot partition\n", Status));
+    DEBUG ((DEBUG_ERROR, "Could not flip boot partition\n", Status));
     return Status;
   }
 
@@ -446,7 +458,7 @@ PrepareRegionsUpdate (
 **/
 EFI_STATUS
 EFIAPI
-EndFirmwareUpdate (
+PlatformEndFirmwareUpdate (
   VOID
   )
 {
@@ -454,11 +466,11 @@ EndFirmwareUpdate (
   HECI_SERVICE      *HeciService;
   PLATFORM_SERVICE  *PlatformService;
 
-  DEBUG ((EFI_D_INFO, "Firmware update Done! clear CSE flag to normal boot mode.\n"));
+  DEBUG ((DEBUG_INFO, "Firmware update Done! clear CSE flag to normal boot mode.\n"));
 
   HeciService = (HECI_SERVICE *) GetServiceBySignature (HECI_SERVICE_SIGNATURE);
   if ((HeciService == NULL) || (HeciService->SimpleHeciCommand == NULL)) {
-    DEBUG ((EFI_D_INFO, "Heci service unable, Could not exit firmware update mode.\n"));
+    DEBUG ((DEBUG_INFO, "Heci service unable, Could not exit firmware update mode.\n"));
     return EFI_UNSUPPORTED;
   }
 
@@ -476,11 +488,25 @@ EndFirmwareUpdate (
   //
   PlatformService = (PLATFORM_SERVICE *) GetServiceBySignature (PLATFORM_SERVICE_SIGNATURE);
   if (PlatformService != NULL && PlatformService->ResetSystem != NULL) {
-    DEBUG ((EFI_D_INIT, "Rebooting ...\n"));
+    DEBUG ((DEBUG_INIT, "Rebooting ...\n"));
     PlatformService->ResetSystem(EfiResetCold);
   }
 
   return EFI_SUCCESS;
 }
 
+/**
+  Platform hook point to clear firmware update trigger.
 
+  This function is responsible for clearing firmware update trigger.
+
+**/
+VOID
+EFIAPI
+ClearFwUpdateTrigger (
+  VOID
+  )
+{
+  // Clear platform firmware update trigger.
+  MmioAnd32 (PMC_BASE_ADDRESS + R_PMC_BIOS_SCRATCHPAD, 0xFF00FFFF);
+}

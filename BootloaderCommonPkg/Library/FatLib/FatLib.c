@@ -1,13 +1,14 @@
 /** @file
   FatLib APIs
 
-Copyright (c) 2006 - 2019, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2006 - 2020, Intel Corporation. All rights reserved.<BR>
 
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
 #include <Library/FatLib.h>
+#include <Library/ConsoleOutLib.h>
 #include "FatLitePeim.h"
 #include "FatLiteApi.h"
 #include "FatLiteFmt.h"
@@ -16,7 +17,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
   Print directory or file name in debug output
 
   @param[in]     File             The File pointer to be printed
-  @param[in]     ConsoleOutFunc   Redirect output message to a console
 
   @retval        none
 
@@ -24,13 +24,12 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 STATIC
 VOID
 PrintFileName (
-  IN  PEI_FAT_FILE        *File,
-  IN  CONSOLE_OUT_FUNC     ConsoleOutFunc
+  IN  PEI_FAT_FILE        *File
   )
 {
   CHAR16  *FileName;
 
-  if ((File == NULL) || (ConsoleOutFunc == NULL)) {
+  if (File == NULL) {
     return;
   }
 
@@ -40,9 +39,9 @@ PrintFileName (
   }
 
   if (File->Attributes & FAT_ATTR_DIRECTORY) {
-    ConsoleOutFunc (L"  %s/\n", FileName);
+    CONSOLE_PRINT_UNICODE ((L"  %s/\n", FileName));
   } else {
-    ConsoleOutFunc (L"  %-16s %d\n", FileName, File->FileSize);
+    CONSOLE_PRINT_UNICODE ((L"  %-16s %d\n", FileName, File->FileSize));
   }
 }
 
@@ -71,7 +70,7 @@ GetNextFilePathNode (
   if (Ptr != NULL) {
     while (TRUE) {
       if ((*Ptr == 0) || (*Ptr == '\\') || (*Ptr == '/')) {
-        Len = Ptr - FileName;
+        Len = (UINT32)(Ptr - FileName);
         break;
       }
       Ptr++;
@@ -504,7 +503,6 @@ FatFsCloseFile (
 
   @param[in]     FsHandle         file system handle.
   @param[in]     DirFilePath      directory or file path
-  @param[in]     ConsoleOutFunc   redirect output message to a console
 
   @retval EFI_SUCCESS             list directories of files successfully
   @retval EFI_UNSUPPORTED         this api is not supported
@@ -515,8 +513,7 @@ EFI_STATUS
 EFIAPI
 FatFsListDir (
   IN  EFI_HANDLE                                    FsHandle,
-  IN  CHAR16                                       *DirFilePath,
-  IN  CONSOLE_OUT_FUNC                              ConsoleOutFunc
+  IN  CHAR16                                       *DirFilePath
   )
 {
   EFI_STATUS              Status;
@@ -528,10 +525,6 @@ FatFsListDir (
   Status = EFI_UNSUPPORTED;
 
 DEBUG_CODE_BEGIN ();
-  if (ConsoleOutFunc == NULL) {
-    return EFI_INVALID_PARAMETER;
-  }
-
   FileHandle = NULL;
   Status = FatFsOpenFile (FsHandle, DirFilePath, &FileHandle);
   if (!EFI_ERROR (Status)) {
@@ -546,10 +539,10 @@ DEBUG_CODE_BEGIN ();
           Status = EFI_SUCCESS;
           break;
         }
-        PrintFileName (File, ConsoleOutFunc);
+        PrintFileName (File);
       } while (Status == EFI_SUCCESS);
     } else {
-      PrintFileName (File, ConsoleOutFunc);
+      PrintFileName (File);
     }
   }
   if (FileHandle != NULL) {

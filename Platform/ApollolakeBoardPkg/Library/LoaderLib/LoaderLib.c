@@ -37,9 +37,9 @@
 #define  CSE2HOST               0x60
 #define  PCIE_MMCFG_BASE        0xE0000000
 #define  CSE_CFG_BASE           (PCIE_MMCFG_BASE + 0x78000)
-#define  CSE_VIDDID             (*(volatile UINT32 *)CSE_CFG_BASE)
-#define  CSE_HOST2CSE           (*(volatile UINT32 *)(CSE_CFG_BASE + HOST2CSE))
-#define  CSE_CSE2HOST           (*(volatile UINT32 *)(CSE_CFG_BASE + CSE2HOST))
+#define  CSE_VIDDID             (*(volatile UINT32 *)(UINTN)CSE_CFG_BASE)
+#define  CSE_HOST2CSE           (*(volatile UINT32 *)(UINTN)(CSE_CFG_BASE + HOST2CSE))
+#define  CSE_CSE2HOST           (*(volatile UINT32 *)(UINTN)(CSE_CFG_BASE + CSE2HOST))
 
 /**
   Load Stage1B raw image to destination address.
@@ -123,8 +123,8 @@ LoadStage1B (
     RingIdx = (UINT8) (ChunkIndex % NumberOfChunks);
     if ((State & (1 << RingIdx)) != 0) {
       /* Calculate the source and destionation address in ring buffer */
-      Src = (UINT8 *) (SramBase + ChunkSize * RingIdx);
-      Dst = (UINT8 *) (IbbDst  + ChunkSize * ChunkIndex);
+      Src = (UINT8 *)(UINTN)(SramBase + ChunkSize * RingIdx);
+      Dst = (UINT8 *)(UINTN)(IbbDst  + ChunkSize * ChunkIndex);
 
       if (IbbSizeLeft < ChunkSize) {
         Size = IbbSizeLeft;
@@ -133,7 +133,7 @@ LoadStage1B (
       }
 
       /* Move data from SRAM into temporary memory */
-      if ((UINT32)Src >= SRAM_REMAPPING) {
+      if ((UINT32)(UINTN)Src >= SRAM_REMAPPING) {
         AsmFlushCacheRange (Src, Size);
       }
       CopyMem (Dst, Src, Size);
@@ -197,7 +197,7 @@ LoadStage2 (
   }
 
   ImageSize = Size;
-  Hdr = (LOADER_COMPRESSED_HEADER *)Src;
+  Hdr = (LOADER_COMPRESSED_HEADER *)(UINTN)Src;
   if ((Hdr == NULL) || (ImageSize == 0)) {
     return EFI_NOT_FOUND;
   }
@@ -207,7 +207,7 @@ LoadStage2 (
   }
 
   if (Src != Dst) {
-    CopyMem ((VOID *)Dst, (VOID *)Src, ImageSize);
+    CopyMem ((VOID *)(UINTN)Dst, (VOID *)(UINTN)Src, ImageSize);
   }
 
   return EFI_SUCCESS;
@@ -236,7 +236,7 @@ LoadPayload (
   UINT32                          ActualSize;
   LOADER_COMPRESSED_HEADER       *Hdr;
 
-  Hdr = (LOADER_COMPRESSED_HEADER *)Src;
+  Hdr = (LOADER_COMPRESSED_HEADER *)(UINTN)Src;
   if (IS_COMPRESSED (Hdr)) {
     ActualSize = sizeof(LOADER_COMPRESSED_HEADER) + Hdr->CompressedSize;
   } else {
@@ -247,7 +247,7 @@ LoadPayload (
     if (Size < ActualSize) {
       return EFI_BUFFER_TOO_SMALL;
     }
-    CopyMem ((VOID *)Dst, (VOID *)Src, ActualSize);
+    CopyMem ((VOID *)(UINTN)Dst, (VOID *)(UINTN)Src, ActualSize);
   }
 
   return EFI_SUCCESS;

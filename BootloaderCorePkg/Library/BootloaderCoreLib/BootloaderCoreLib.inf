@@ -22,9 +22,7 @@
 
 [Sources]
   BootloaderCoreLib.c
-
-[Sources.IA32]
-  Ia32/BootloaderArch.c
+  BootloaderArch.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -43,7 +41,6 @@
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdRedundantRegionSize
   gPlatformModuleTokenSpaceGuid.PcdTopSwapRegionSize
-  gPlatformModuleTokenSpaceGuid.PcdFlashMapEnabled
   gPlatformModuleTokenSpaceGuid.PcdStage1ABase
   gPlatformModuleTokenSpaceGuid.PcdStage1ASize
   gPlatformModuleTokenSpaceGuid.PcdStage1BBase

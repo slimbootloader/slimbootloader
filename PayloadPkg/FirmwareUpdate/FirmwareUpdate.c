@@ -28,270 +28,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/LiteFvLib.h>
 #include <Library/FirmwareUpdateLib.h>
 #include <Guid/SystemResourceTable.h>
-
-/**
-  Update a region block.
-
-  This is the acture function to update boot meia. It will erase boot device,
-  write new data to boot device, and verify the written data.
-
-  @param[in] Address          The boot media address to be update.
-  @param[in] Buffer           The source buffer to write to the boot media.
-  @param[in] Length           The length of data to write to boot media.
-
-  @retval  EFI_SUCCESS        Update successfully.
-  @retval  others             Error happening when updating.
-**/
-EFI_STATUS
-EFIAPI
-UpdateRegionLessthan4k (
-  IN  UINT64    Address,
-  IN  VOID      *Buffer,
-  IN  UINT32    Length
-  )
-{
-  EFI_STATUS    Status;
-  UINT8         ReadBuffer[0x1000];
-  UINT32        Index;
-  UINT8         *Src;
-
-  if (Length == 0) {
-    return EFI_SUCCESS;
-  }
-
-  Src = (UINT8 *)Buffer;
-
-  //
-  // Read, compare, write, read, compare
-  //
-  Status = BootMediaRead (Address, Length, ReadBuffer);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "BootMediaRead.  readaddr: 0x%llx, Status = 0x%x\n", Address, Status));
-    return Status;
-  }
-  Index = CompareMem (Src, ReadBuffer, Length);
-  if (Index == 0) {
-    DEBUG ((DEBUG_INIT, "."));
-    return EFI_SUCCESS;
-  }
-
-  //
-  // Write to the boot media
-  //
-  Status = BootMediaWrite ((UINT32) (Address),  Length, Src);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "ERROR: in BootDeviceWrite. Status = 0x%x\n", Status));
-    return Status;
-  }
-
-  //
-  // Verify the written data
-  //
-  Status = BootMediaRead (Address, Length, ReadBuffer);
-  Index = CompareMem (Src, ReadBuffer, Length);
-  if (Index != 0) {
-    DEBUG ((DEBUG_ERROR, "Verify Error at [%x], org=0x%x, read=0x%x\n", Index, Src[Index],
-            ReadBuffer[Index]));
-    return EFI_DEVICE_ERROR;
-  }
-
-  return EFI_SUCCESS;
-}
-
-/**
-  Update a region block.
-
-  This is the acture function to update boot meia. It will erase boot device,
-  write new data to boot device, and verify the written data.
-
-  @param[in] Address          The boot media address to be update.
-  @param[in] Buffer           The source buffer to write to the boot media.
-  @param[in] Length           The length of data to write to boot media.
-
-  @retval  EFI_SUCCESS        Update successfully.
-  @retval  others             Error happening when updating.
-**/
-EFI_STATUS
-EFIAPI
-UpdateRegionBlock (
-  IN  UINT64    Address,
-  IN  VOID      *Buffer,
-  IN  UINT32    Length
-  )
-{
-  EFI_STATUS    Status;
-  UINT8         ReadBuffer[0x1000];
-  UINT32        Count;
-  UINT32        Index;
-  UINT32        BlockLen;
-  UINT8         *Src;
-
-  if (Length == 0) {
-    return EFI_SUCCESS;
-  }
-
-  BlockLen   = 0x1000;
-  if (((Address & (BlockLen - 1)) > 0) || ((Length & (BlockLen - 1)) > 0)) {
-    return EFI_INVALID_PARAMETER;
-  }
-
-  Src = (UINT8 *)Buffer;
-
-  //
-  // Read, compare, erase, write, read, compare
-  //
-  for (Count = 0; Count < Length; Count += BlockLen) {
-    Status = BootMediaRead (Address + Count, BlockLen, ReadBuffer);
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "BootMediaRead.  readaddr: 0x%llx, Status = 0x%x\n", Address + Count, Status));
-      return Status;
-    }
-    Index = CompareMem (Src + Count, ReadBuffer, BlockLen);
-    if (Index == 0) {
-      DEBUG ((DEBUG_INIT, "."));
-      continue;
-    }
-
-    //
-    // Erase the boot media
-    //
-    DEBUG ((DEBUG_INIT, "x"));
-    Status = BootMediaErase ((UINT32) (Address + Count),  BlockLen);
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "ERROR: in BootMediaErase. Status = 0x%x\n", Status));
-      return Status;
-    }
-
-    //
-    // Write to the boot media
-    //
-    Status = BootMediaWrite ((UINT32) (Address + Count),  BlockLen, Src + Count);
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "ERROR: in BootDeviceWrite. Status = 0x%x\n", Status));
-      return Status;
-    }
-
-    //
-    // Verify the written data
-    //
-    Status = BootMediaRead (Address + Count, BlockLen, ReadBuffer);
-    Index = CompareMem (Src + Count, ReadBuffer, BlockLen);
-    if (Index != 0) {
-      DEBUG ((DEBUG_ERROR, "Verify Error at [%x], org=0x%x, read=0x%x\n", Count + Index, Src[Count + Index],
-              ReadBuffer[Index]));
-      return EFI_DEVICE_ERROR;
-    }
-  }
-
-  return EFI_SUCCESS;
-}
-
-/**
-  Update a boot region.
-
-  This function also output the update process info.
-
-  @param[in] UpdateRegion     The detail information for this region to update.
-  @param[in] WrittenSize      The data size has been written before this region.
-  @param[in] TotalSize        The total size need to write for the partition.
-
-  @retval  EFI_SUCCESS        Update this boot region successfully.
-  @retval  others             Error happening when updating boot region.
-**/
-EFI_STATUS
-UpdateBootRegion (
-  IN  FIRMWARE_UPDATE_REGION     *UpdateRegion,
-  IN  UINT32                     WrittenSize,
-  IN  UINT32                     TotalSize
-  )
-{
-  EFI_STATUS    Status;
-  UINT32        UpdateBlockSize;
-  UINT32        UpdatedSize;
-  UINT64        UpdateAddress;
-  UINT8         *Buffer;
-
-  //
-  // Here write 64KB every time in order to show update process.
-  //
-  UpdateAddress   = UpdateRegion->ToUpdateAddress;
-  Buffer          = UpdateRegion->SourceAddress;
-
-  UpdatedSize = 0;
-  while (UpdatedSize < UpdateRegion->UpdateSize) {
-    if (UpdateRegion->UpdateSize < SIZE_4KB) {
-      UpdateBlockSize = UpdateRegion->UpdateSize;
-    } else {
-      if (UpdatedSize + SIZE_64KB > UpdateRegion->UpdateSize) {
-        UpdateBlockSize = UpdateRegion->UpdateSize - UpdatedSize;
-      } else {
-        UpdateBlockSize = SIZE_64KB;
-      }
-    }
-    DEBUG ((DEBUG_INIT, "Updating 0x%08llx, Size:0x%05x\n", UpdateAddress, UpdateBlockSize));
-    if (UpdateRegion->UpdateSize < SIZE_4KB) {
-      Status = UpdateRegionLessthan4k (UpdateAddress, Buffer, UpdateBlockSize);
-    } else {
-      Status = UpdateRegionBlock (UpdateAddress, Buffer, UpdateBlockSize);
-    }
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "\nFailed! Address=0x%08llx, Status = %r\n", UpdateAddress, Status));
-      return Status;
-    }
-    UpdateAddress += UpdateBlockSize;
-    Buffer        += UpdateBlockSize;
-    UpdatedSize   += UpdateBlockSize;
-    DEBUG ((DEBUG_INIT, "\nFinished   %3d%%\n", (WrittenSize + UpdatedSize) * 100 / TotalSize));
-  }
-
-  return EFI_SUCCESS;
-}
-
-
-/**
-  Update all the regions in this boot partition.
-
-  @param[in] UpdatePartition  The detail information for this update.
-
-  @retval  EFI_SUCCESS        Update this boot partition successfully.
-  @retval  others             Error happening when updating boot partition.
-**/
-EFI_STATUS
-UpdateBootPartition (
-  IN FIRMWARE_UPDATE_PARTITION   *UpdatePartition
-  )
-{
-  EFI_STATUS                     Status;
-  UINT32                         Index;
-  FIRMWARE_UPDATE_REGION         *UpdateRegion;
-  UINT32                         TotalUpdateSize;
-  UINT32                         WrittenSize;
-
-  Status = PrepareRegionsUpdate (UpdatePartition);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "PrepareRegionsUpdate, Status = 0x%x\n", Status));
-    return Status;
-  }
-
-  TotalUpdateSize = 0;
-  for (Index = 0; Index < UpdatePartition->RegionCount; Index++) {
-    UpdateRegion     = &UpdatePartition->FwRegion[Index];
-    TotalUpdateSize += UpdateRegion->UpdateSize;
-  }
-
-  WrittenSize = 0;
-  for (Index = 0; Index < UpdatePartition->RegionCount; Index++) {
-    UpdateRegion = &UpdatePartition->FwRegion[Index];
-    Status = UpdateBootRegion (UpdateRegion, WrittenSize, TotalUpdateSize);
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "UpdateBootRegion failed! Status = 0x%x\n", Status));
-      return Status;
-    }
-    WrittenSize += UpdateRegion->UpdateSize;
-  }
-
-  return Status;
-}
+#include "FirmwareUpdateHelper.h"
 
 /**
   Verify the firmware version to make sure it is no less than current firmware version.
@@ -312,11 +49,11 @@ GetVersionfromFv (
   EFI_FFS_FILE_HEADER         *FfsFile;
   EFI_FIRMWARE_VOLUME_HEADER  *FvHeader;
 
-  FvHeader = (EFI_FIRMWARE_VOLUME_HEADER *)(*Stage1ABase);
+  FvHeader = (EFI_FIRMWARE_VOLUME_HEADER *)(UINTN)(*Stage1ABase);
   //
   // Stage 1A FD has FSPT FV first, so move on to the next FV
   //
-  FvHeader = (EFI_FIRMWARE_VOLUME_HEADER *)((UINT32)FvHeader + (UINT32)FvHeader->FvLength);
+  FvHeader = (EFI_FIRMWARE_VOLUME_HEADER *)((UINTN)FvHeader + (UINTN)FvHeader->FvLength);
 
   //
   // Get version info FFS from FV
@@ -362,6 +99,14 @@ VerifyFwVersion (
 
   CurrentBlVersion = NULL;
   CapsuleBlVersion = NULL;
+
+  //
+  // For now - Perform version check only for Slim Bootloader
+  //
+  if ((UINT32)ImageHdr->UpdateHardwareInstance != FW_UPDATE_COMP_BIOS_REGION) {
+    return EFI_SUCCESS;
+  }
+
   //
   // Get base address of Stage 1A from current firmware
   //
@@ -405,7 +150,7 @@ VerifyFwVersion (
   //
   // Update last update version to the version we are about to update
   //
-  Status = UpdateStatus(&ImageHdr->UpdateImageTypeId, \
+  Status = UpdateStatus(ImageHdr->UpdateHardwareInstance, \
                         (CapsuleBlVersion->ImageVersion.ProjMajorVersion << 8) | CapsuleBlVersion->ImageVersion.ProjMinorVersion, \
                         0xFFFFFFFF);
   if (EFI_ERROR (Status)) {
@@ -480,78 +225,16 @@ SetStateMachineFlag (
 )
 {
   EFI_STATUS              Status;
-  UINT32                  UpdateSize;
   UINT32                  FwUpdStatusOffset;
-  FW_UPDATE_STATUS        FwUpdStatus;
-  FW_UPDATE_COMP_STATUS   FwUpdCompStatus[MAX_FW_COMPONENTS];
 
   DEBUG((DEBUG_INIT, "Set next FWU state: 0x%02X\n", StateMachine));
 
   FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
 
-  //
-  // Read the reserved region structure to process state machine
-  //
-  Status = BootMediaRead (FwUpdStatusOffset, sizeof(FW_UPDATE_STATUS), (UINT8 *)&FwUpdStatus);
-  if (EFI_ERROR (Status)) {
-    DEBUG((DEBUG_ERROR, "BootMediaRead.  FwUpdStatusOffset: 0x%llx, Status = 0x%x\n", FwUpdStatusOffset, Status));
-    return Status;
-  }
-
-  //
-  // If we are to clear state machine, Wipe the whole region and preserve
-  // the last update status and version for all firmwares
-  //
-  // If we are to set the capsule to processing, then this is start of the firmware update
-  // in this case, clear the whole region.
-  //
-  if ((StateMachine == FW_UPDATE_SM_INIT) || (StateMachine == FW_UPDATE_SM_CAP_PROCESSING)){
-    if (StateMachine == FW_UPDATE_SM_INIT) {
-      Status = BootMediaRead((FwUpdStatusOffset + sizeof(FW_UPDATE_STATUS)),\
-                              MAX_FW_COMPONENTS * sizeof(FW_UPDATE_COMP_STATUS), (UINT8 *)&FwUpdCompStatus);
-      if (EFI_ERROR (Status)) {
-        DEBUG((DEBUG_ERROR, "BootMediaRead failed with status %r\n", Status));
-        return Status;
-      }
-    }
-
-    Status = BootMediaErase (FwUpdStatusOffset, EFI_PAGE_SIZE);
-    if (EFI_ERROR (Status)) {
-      DEBUG((DEBUG_ERROR, "BootMediaErase failed with status %r\n", Status));
-      return Status;
-    }
-  }
-
-  //
-  // Set desired state machine
-  //
-  FwUpdStatus.StateMachine = StateMachine;
-
-  if (StateMachine == FW_UPDATE_SM_INIT) {
-    //
-    // If we are resetting state machine, just preserve signature, length and version
-    // last update status and version for all the firmwares
-    //
-    UpdateSize = sizeof(UINT64);
-
-    //
-    // Write back the firware update status
-    //
-    Status = BootMediaWrite((FwUpdStatusOffset + sizeof(FW_UPDATE_STATUS)),\
-                            MAX_FW_COMPONENTS * sizeof(FW_UPDATE_COMP_STATUS), (UINT8 *)&FwUpdCompStatus);
-    if (EFI_ERROR (Status)) {
-      DEBUG((DEBUG_ERROR, "BootMediaWrite failed with status %r\n", Status));
-      return Status;
-    }
-
-  } else {
-    UpdateSize = sizeof(FW_UPDATE_STATUS);
-  }
-
-  Status = BootMediaWrite (FwUpdStatusOffset, UpdateSize, (UINT8 *)&FwUpdStatus);
+  FwUpdStatusOffset += OFFSET_OF(FW_UPDATE_STATUS, StateMachine);
+  Status = BootMediaWrite (FwUpdStatusOffset, sizeof(UINT8), (UINT8 *)&(StateMachine));
   if (EFI_ERROR (Status)) {
     DEBUG((DEBUG_ERROR, "BootMediaWrite.  readaddr: 0x%llx, Status = 0x%x\n", FwUpdStatusOffset, Status));
-    return Status;
   }
 
   return Status;
@@ -631,7 +314,7 @@ EnforceFwUpdatePolicy (
       FwPolicy->Fields.StateMachine       = FW_UPDATE_SM_PART_AB;
       FwPolicy->Fields.UpdatePartitionA   = 0x1;
       FwPolicy->Fields.SwitchtoBackupPart = 0;
-      FwPolicy->Fields.Reboot             = 0x1;
+      FwPolicy->Fields.Reboot             = 0;
     }
     break;
 
@@ -640,7 +323,7 @@ EnforceFwUpdatePolicy (
       FwPolicy->Fields.StateMachine       = FW_UPDATE_SM_PART_AB;
       FwPolicy->Fields.UpdatePartitionB   = 0x1;
       FwPolicy->Fields.SwitchtoBackupPart = 0;
-      FwPolicy->Fields.Reboot             = 0x1;
+      FwPolicy->Fields.Reboot             = 0;
     } else if (LoaderInfo->BootPartition == FW_UPDATE_PARTITION_B){
       SetBootPartition (PrimaryPartition);
       ResetRequired = TRUE;
@@ -717,6 +400,15 @@ AfterUpdateEnforceFwUpdatePolicy (
     CpuDeadLoop ();
   }
 
+  //
+  // When we are setting SM as FW_UPDATE_SM_PART_AB, this indicates
+  // SBL update is done, One more reset is not required, end the
+  // firmware update and reset the system.
+  //
+  if (FwPolicy.Fields.StateMachine == FW_UPDATE_SM_PART_AB) {
+    return EFI_END_OF_FILE;
+  }
+
   return EFI_SUCCESS;
 }
 
@@ -724,7 +416,7 @@ AfterUpdateEnforceFwUpdatePolicy (
   This function will be called after the firmware update is complete.
   This function will update firmware update status structure in reserved region
 
-  @param[in] ImageHdr           Pointer to Fw update image guid
+  @param[in] Signature          Signature of component to update.
   @param[in] LastAttemptVersion Version of last firmware update attempted.
   @param[in] LastAttemptStatus  Status of last firmware update attempted.
 
@@ -733,7 +425,7 @@ AfterUpdateEnforceFwUpdatePolicy (
 **/
 EFI_STATUS
 UpdateStatus (
-  IN EFI_GUID   *ImageId,
+  IN UINT64     Signature,
   IN UINT16     LastAttemptVersion,
   IN EFI_STATUS LastAttemptStatus
  )
@@ -760,7 +452,7 @@ UpdateStatus (
   // Find the required component to update status
   //
   for (Count = 0; Count < MAX_FW_COMPONENTS; Count ++) {
-    if (CompareGuid(&(FwUpdCompStatus[Count].FirmwareId), ImageId) == TRUE) {
+    if (FwUpdCompStatus[Count].HardwareInstance == Signature) {
       DEBUG((DEBUG_VERBOSE, "FOund the component to update status\n"));
       break;
     }
@@ -849,8 +541,8 @@ AuthenticateCapsule (
 {
   EFI_STATUS                Status;
   FIRMWARE_UPDATE_HEADER    *Header;
-  UINT8                     *Key;
-  UINT8                     *Signature;
+  PUB_KEY_HDR               *PubKeyHdr;
+  SIGNATURE_HDR             *SignatureHdr;
   FW_UPDATE_STATUS          FwUpdStatus;
   UINT32                    FwUpdStatusOffset;
 
@@ -878,8 +570,8 @@ AuthenticateCapsule (
     return EFI_INVALID_PARAMETER;
   }
 
-  Key       = FwImage + Header->PubKeyOffset;
-  Signature = FwImage + Header->SignatureOffset;
+  PubKeyHdr       = (PUB_KEY_HDR *) (FwImage + Header->PubKeyOffset);
+  SignatureHdr    = (SIGNATURE_HDR *) (FwImage + Header->SignatureOffset);
 
   //
   // Copy fw update status structure to memory
@@ -895,12 +587,12 @@ AuthenticateCapsule (
   // it indicates that capsule image is modified in between firmware update.
   //
   if (*(UINT32 *)(FwUpdStatus.CapsuleSig) != 0xFFFFFFFF) {
-    if (CompareMem(&FwUpdStatus.CapsuleSig, Signature, FW_UPDATE_SIG_LENGTH) != 0) {
+    if (CompareMem(&FwUpdStatus.CapsuleSig, SignatureHdr, FW_UPDATE_SIG_LENGTH) != 0) {
       return EFI_COMPROMISED_DATA;
     }
   }
 
-  Status    = DoRsaVerify (FwImage, Header->SignatureOffset, COMP_TYPE_PUBKEY_FWU, Signature, Key, NULL, NULL);
+  Status = DoRsaVerify (FwImage, Header->SignatureOffset, HASH_USAGE_PUBKEY_FWU, SignatureHdr, PubKeyHdr, PcdGet8(PcdCompSignHashAlg), NULL, NULL);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Image verification failed, %r!\n", Status));
     return EFI_SECURITY_VIOLATION;
@@ -912,7 +604,7 @@ AuthenticateCapsule (
   //
   if (*(UINT32 *)(FwUpdStatus.CapsuleSig) != 0xFFFFFFFF) {
 
-    CopyMem((VOID *)&FwUpdStatus.CapsuleSig, (VOID *)Signature, sizeof(FW_UPDATE_SIG_LENGTH));
+    CopyMem((VOID *)&FwUpdStatus.CapsuleSig, (VOID *)SignatureHdr, sizeof(FW_UPDATE_SIG_LENGTH));
 
     Status = BootMediaWrite (FwUpdStatusOffset, sizeof(FW_UPDATE_STATUS), (UINT8 *)&FwUpdStatus);
     if (EFI_ERROR (Status)) {
@@ -967,12 +659,54 @@ ProcessCapsule (
   }
 
   //
+  // If Bit 3 is 0, SM is set to Done.
+  // When SM is DONE, we are performing new firmware
+  // update, clear whole reserved region and start fresh.
+  //
+  if ((FwUpdStatus.StateMachine & BIT3) == 0) {
+    Status = BootMediaErase(FwUpdStatusOffset, EFI_PAGE_SIZE);
+    if (EFI_ERROR (Status)) {
+      DEBUG((DEBUG_ERROR, "BootMediaErase failed with status %r\n", Status));
+      return Status;
+    }
+
+    //
+    // Since we cleared the whole region, lets read it one more time.
+    //
+    Status = BootMediaRead (FwUpdStatusOffset, sizeof(FW_UPDATE_STATUS), (UINT8 *)&FwUpdStatus);
+    if (EFI_ERROR (Status)) {
+      DEBUG((DEBUG_ERROR, "BootMediaRead. offset: 0x%llx, Status = 0x%x\n", FwUpdStatusOffset, Status));
+      return Status;
+    }
+  }
+
+  //
   // If state machine is 0xFF, Capsule is not processed yet
   // set SM to capsule processing stage, this will reset back to
   // init at the end of firmware update
   //
   if (FwUpdStatus.StateMachine == FW_UPDATE_SM_INIT) {
-    SetStateMachineFlag(FW_UPDATE_SM_CAP_PROCESSING);
+    //
+    // Initialize reserved region structure
+    //
+    FwUpdStatus.Signature = FW_UPDATE_STATUS_SIGNATURE;
+    FwUpdStatus.Version = FW_UPDATE_STATUS_VERSION;
+    FwUpdStatus.Length = sizeof(FW_UPDATE_STATUS);
+
+    Status = BootMediaWrite(FwUpdStatusOffset, sizeof(FW_UPDATE_STATUS), (UINT8 *)&FwUpdStatus);
+    if (EFI_ERROR(Status)) {
+      return Status;
+    }
+
+    Status = SetStateMachineFlag (FW_UPDATE_SM_CAP_PROCESSING);
+    if (EFI_ERROR(Status)) {
+      return Status;
+    }
+
+    //
+    // Clear firmware update trigger
+    //
+    ClearFwUpdateTrigger();
   } else {
     return EFI_SUCCESS;
   }
@@ -996,16 +730,6 @@ ProcessCapsule (
   //
   ZeroMem((VOID *)&FwUpdCompStatus, MAX_FW_COMPONENTS * sizeof(FW_UPDATE_COMP_STATUS));
 
-  //
-  // Uninitialized update structure in flash
-  // initialize it
-  //
-  if (FwUpdStatus.Signature == 0xFFFFFFFF) {
-    FwUpdStatus.Signature = FW_UPDATE_STATUS_SIGNATURE;
-    FwUpdStatus.Version = FW_UPDATE_STATUS_VERSION;
-    FwUpdStatus.Length = sizeof(FW_UPDATE_STATUS);
-  }
-
   ImgHeader = (EFI_FW_MGMT_CAP_IMAGE_HEADER *)((UINTN)CapHeader + sizeof(EFI_FW_MGMT_CAP_HEADER) + TotalPayloadCount * sizeof (UINT64));
 
   //
@@ -1018,12 +742,13 @@ ProcessCapsule (
     // Create new structure
     //
     CopyMem((VOID *)&(FwUpdCompStatus[Count].FirmwareId), (VOID *)&(ImgHeader->UpdateImageTypeId), sizeof(EFI_GUID));
+    FwUpdCompStatus[Count].HardwareInstance = ImgHeader->UpdateHardwareInstance;
     FwUpdCompStatus[Count].LastAttemptVersion = 0xFFFFFFFF;
     FwUpdCompStatus[Count].LastAttemptStatus = 0xFFFFFFFF;
     FwUpdCompStatus[Count].UpdatePending = FW_UPDATE_IMAGE_UPDATE_PENDING;
 
     ImgHeader = (EFI_FW_MGMT_CAP_IMAGE_HEADER *)((UINTN)ImgHeader + ImgHeader->UpdateImageSize + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
-    if ((UINT32)ImgHeader > (UINTN)((UINTN)CapHeader + FwUpdHeader->ImageSize)) {
+    if ((UINTN)ImgHeader > ((UINTN)CapHeader + FwUpdHeader->ImageSize)) {
       return EFI_NOT_FOUND;
     }
   }
@@ -1050,7 +775,7 @@ ProcessCapsule (
   This function if provided with an empty guid will return the first payload
   found
 
-  @param[in] ImageId        Guid to identify payload in the capsule image
+  @param[in] Signature      Signature of component to update.
   @param[in] CapImage       Pointer to the capsule Image
   @param[in] CapImageSize   Size of the capsule image in bytes
   @param[in] ImageHdr       Pointer to the capsule Image header
@@ -1060,7 +785,7 @@ ProcessCapsule (
 **/
 EFI_STATUS
 FindImage (
-  IN  EFI_GUID                      *ImageId,
+  IN  UINT64                        Signature,
   IN  UINT8                         *CapImage,
   IN  UINT32                        CapImageSize,
   OUT EFI_FW_MGMT_CAP_IMAGE_HEADER  **ImageHdr
@@ -1082,7 +807,7 @@ FindImage (
   // If capsule header is NULL or no payloads found in the capsule
   // return EFI_NOT_FOUND;
   //
-  if ((CapHeader != NULL) && (CapHeader->PayloadItemCount == 0)) {
+  if ((CapHeader == NULL) || (CapHeader->PayloadItemCount == 0)) {
     return EFI_NOT_FOUND;
   }
 
@@ -1091,20 +816,12 @@ FindImage (
   CapImageHdr = (EFI_FW_MGMT_CAP_IMAGE_HEADER *)((UINTN)CapHeader + sizeof(EFI_FW_MGMT_CAP_HEADER) + TotalPayloadCount * sizeof(UINT64));
 
   //
-  // If input guid is NULL, return the first payload header
-  //
-  if (ImageId == NULL) {
-    *ImageHdr = CapImageHdr;
-    return EFI_SUCCESS;
-  }
-
-  //
   // Loop through all the payloads
   // if matching guid, return the payload header
   // Boundary check to see if image header address exceeds the capsule region
   //
   for (Count = 0; Count < CapHeader->PayloadItemCount; Count++) {
-    if (CompareGuid(&CapImageHdr->UpdateImageTypeId, ImageId) == TRUE) {
+    if (CapImageHdr->UpdateHardwareInstance == Signature) {
       *ImageHdr = CapImageHdr;
       return EFI_SUCCESS;
     }
@@ -1118,85 +835,15 @@ FindImage (
 }
 
 /**
-  Perform system Firmware update.
-
-  This function will update SBL or Configuration data alone.
-
-  @param[in] ImageHdr       Pointer to fw mgmt capsule Image header
-
-  @retval  EFI_SUCCESS      Update successful.
-  @retval  other            error occurred during firmware update
-**/
-EFI_STATUS
-UpdateSystemFirmware (
-  IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
-  )
-{
-  EFI_STATUS              Status;
-  FIRMWARE_UPDATE_PARTITION   *UpdatePartition;
-  FIRMWARE_UPDATE_POLICY  FwPolicy;
-
-  //
-  // 1. Enforce firmware update policy.
-  //
-  Status = EnforceFwUpdatePolicy (&FwPolicy);
-  if (EFI_ERROR (Status)) {
-    if (Status == EFI_ALREADY_STARTED) {
-      return EFI_SUCCESS;
-    }
-    DEBUG((DEBUG_ERROR, "EnforceFwUpdatePolicy: Status = 0x%x\n", Status));
-    return Status;
-  }
-
-  //
-  // 2. Check firmware version.
-  //
-  Status = VerifyFwVersion (ImageHdr, FwPolicy);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, " VerifyFwVersion failed with Status = 0x%x\n", Status));
-    return Status;
-  }
-
-  //
-  // 3. Get firmware update required information.
-  //
-  Status = GetFirmwareUpdateInfo (ImageHdr, FwPolicy, &UpdatePartition);
-  if (EFI_ERROR(Status)) {
-    DEBUG((DEBUG_ERROR, "GetFirmwareUpdateInfo, Status = 0x%x\n", Status));
-    return Status;
-  }
-
-  //
-  // 4. Do boot partition update.
-  //
-  Status = UpdateBootPartition (UpdatePartition);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "UpdateBootPartition, Status = 0x%x\n", Status));
-    return Status;
-  }
-
-  //
-  // 5. After update Enforce firmware update policy
-  //
-  Status = AfterUpdateEnforceFwUpdatePolicy(FwPolicy);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "AfterUpdateEnforceFwUpdatePolicy failed! Status = %r\n", Status));
-    return Status;
-  }
-
-  return Status;
-}
-
-/**
   Perform Firmware update.
 
   This function based on the image type id guid from the image header will
   call the respective functions to perform capsule update.
-*
+
   @param[in] CapImage       Pointer to the capsule Image
   @param[in] CapImageSize   Size of the capsule image in bytes
-* @param[in] ImageHdr       Pointer to fw mgmt capsule Image header
-* @param[in] ResetRequired  Pointer to boolean reset required
+  @param[in] ImageHdr       Pointer to fw mgmt capsule Image header
+  @param[in] ResetRequired  Pointer to boolean reset required
 
   @retval  EFI_SUCCESS      Update successful.
   @retval  other            error status from the update routine
@@ -1209,26 +856,45 @@ ApplyFwImage (
     OUT BOOLEAN                       *ResetRequired
   )
 {
-  EFI_STATUS  Status;
-  VOID        *CsmeUpdateInData;
+  EFI_STATUS      Status;
+  UINT32          Signature;
+  VOID            *CsmeUpdateInData;
+  BOOT_PARTITION  Partition;
 
   Status = EFI_SUCCESS;
   *ResetRequired = FALSE;
 
-  if (CompareGuid(&ImageHdr->UpdateImageTypeId, &gSblFWUpdateImageFileGuid) == TRUE) {
+  if (ImageHdr == NULL) {
+    return EFI_NOT_FOUND;
+  }
+
+  Signature = (UINT32)ImageHdr->UpdateHardwareInstance;
+
+  switch (Signature) {
+  case FW_UPDATE_COMP_BIOS_REGION:
     Status = UpdateSystemFirmware(ImageHdr);
-    *ResetRequired = TRUE;
-  } else if (CompareGuid(&ImageHdr->UpdateImageTypeId, &gCfgFWUpdateImageFileGuid) == TRUE) {
-    Status = UpdateSystemFirmware(ImageHdr);
-    *ResetRequired = TRUE;
-  } else if (CompareGuid(&ImageHdr->UpdateImageTypeId, &gCsmeFWUpdateImageFileGuid) == TRUE) {
+    break;
+  case FW_UPDATE_COMP_CSME_REGION:
+    Status = EFI_UNSUPPORTED;
     if (FeaturePcdGet(PcdCsmeUpdateEnabled) == 1) {
+      //
+      // CSME update will only work when updated from primary partition
+      //
+      Partition = (BOOT_PARTITION)GetCurrentBootPartition ();
+      if (Partition == BackupPartition) {
+        SetBootPartition (PrimaryPartition);
+        ResetSystem (EfiResetCold);
+        CpuDeadLoop ();
+      }
       CsmeUpdateInData = InitCsmeUpdInputData();
       if (CsmeUpdateInData != NULL) {
         Status = UpdateCsme(CapImage, CapImageSize, CsmeUpdateInData, ImageHdr);
         *ResetRequired = TRUE;
       }
     }
+    break;
+  default:
+    Status = UpdateSblComponent (ImageHdr);
   }
 
   return Status;
@@ -1321,34 +987,32 @@ InitFirmwareUpdate (
         Status = BootMediaWrite(ByteOffset, sizeof(UINT8), (UINT8 *)&(FwUpdCompStatus[Count].UpdatePending));
         if (EFI_ERROR (Status)) {
           DEBUG((DEBUG_ERROR, "BootMediaWrite. offset: 0x%llx, Status = 0x%x\n", (FwUpdStatusOffset + sizeof(FW_UPDATE_STATUS)), Status));
-          return Status;
         }
       }
 
       //
       // Find payload associated with component in the capsule image
       //
-      Status = FindImage(&(FwUpdCompStatus[Count].FirmwareId), CapsuleImage, CapsuleSize, &ImgHdr);
-      if (EFI_ERROR (Status)) {
+      Status = FindImage(FwUpdCompStatus[Count].HardwareInstance, CapsuleImage, CapsuleSize, &ImgHdr);
+      if (!EFI_ERROR (Status)) {
+        //
+        // Start firmware udpate for the component
+        //
+        Status = ApplyFwImage(CapsuleImage, CapsuleSize, ImgHdr, &ResetRequired);
+        if (EFI_ERROR (Status)) {
+          DEBUG((DEBUG_ERROR, "ApplyFwImage failed with Status = %r\n", Status));
+        }
+      } else {
         DEBUG((DEBUG_ERROR, "FindImage failed with Status = %r\n", Status));
-        return Status;
-      }
-
-      //
-      // Start firmware udpate for the component
-      //
-      Status = ApplyFwImage(CapsuleImage, CapsuleSize, ImgHdr, &ResetRequired);
-      if (EFI_ERROR (Status)) {
-        DEBUG((DEBUG_ERROR, "ApplyFwImage failed with Status = %r\n", Status));
+        continue;
       }
 
       //
       // Update firmware update status of the component in reserved region
       //
-      Status = UpdateStatus(&(ImgHdr->UpdateImageTypeId), (UINT16)ImgHdr->Version, Status);
+      Status = UpdateStatus(ImgHdr->UpdateHardwareInstance, (UINT16)ImgHdr->Version, Status);
       if (EFI_ERROR (Status)) {
         DEBUG ((DEBUG_ERROR, "UpdateStatus failed! Status = %r\n", Status));
-        DEBUG((DEBUG_ERROR, "Reset required to proceed with the firmware update.\n"));
       }
 
       //
@@ -1366,7 +1030,7 @@ InitFirmwareUpdate (
   // Clear the state machine and exit
   //
   if (Count == MAX_FW_COMPONENTS) {
-    SetStateMachineFlag(FW_UPDATE_SM_INIT);
+    SetStateMachineFlag(FW_UPDATE_SM_DONE);
   } else {
     return EFI_ABORTED;
   }
@@ -1407,6 +1071,29 @@ GetRegionInfo (
   *NonRedundantRegionSize = GetRegionOffsetSize (FlashMap, FLASH_MAP_FLAGS_NON_REDUNDANT_REGION, NULL);
 
   return EFI_SUCCESS;
+}
+
+/**
+  End firmware update.
+
+  This function will clear firmware update trigger and end firmware update.
+
+  @retval  EFI_SUCCESS        Update successfully.
+  @retval  others             Error happened during end firmware update.
+
+**/
+EFI_STATUS
+EFIAPI
+EndFirmwareUpdate (
+  VOID
+  )
+{
+  EFI_STATUS  Status;
+
+  ClearFwUpdateTrigger ();
+
+  Status = PlatformEndFirmwareUpdate ();
+  return Status;
 }
 
 /**
@@ -1494,5 +1181,3 @@ PayloadMain (
   ResetSystem (EfiResetCold);
   CpuDeadLoop ();
 }
-
-

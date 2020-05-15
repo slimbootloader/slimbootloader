@@ -21,7 +21,7 @@
 
 /**
   This function calculated the HMAC SHA-256 by taking in the Input Key and Message through RPMB data frame.
-  The key used for the MAC calculation is always the 32 bytes Authentication Key stored in the storage device 
+  The key used for the MAC calculation is always the 32 bytes Authentication Key stored in the storage device
   RPMB partition. Output is the 32 byte MAC that is calculated using the HMAC function.
 
   @param[in]       Frames               A pointer to RPMB_DATA_FRAME i.e; Message to send.
@@ -178,7 +178,7 @@ RpmbGetResponse (
 }
 
 /**
-  This function is a combination of send request and get response types from/to RPMB memory partition. 
+  This function is a combination of send request and get response types from/to RPMB memory partition.
   Request and Response Message Types that can be send to RPMB are as described in above functions.
 
   @param[in]       DeviceIndex            Specifies the block device to which the function wants
@@ -241,7 +241,7 @@ RpmbRequestResponse (
   This function reads the counter value of the RPMB Partition.
 
   @param[in]       MediumType           Current Medium Type option: eMMC, UFS, NVMe
-  @param[in]       Key                  Input Key to authenticate and compare against the 
+  @param[in]       Key                  Input Key to authenticate and compare against the
                                         embbeded MAC in RPMB_DATA_FRAME.
   @param[in]       KeySize              Size of the Input Key.
   @param[out]      WriteCounter         How many times a successful write request has been done so far.
@@ -278,7 +278,7 @@ RpmbGetCounter (
   } else {
     return EFI_UNSUPPORTED;
   }
-  
+
   ZeroMem(&CounterFrame, sizeof(CounterFrame));
   CounterFrame.ReqResp = SwapBytes16(RPMB_REQUEST_COUNTER_READ);
 
@@ -349,7 +349,7 @@ RpmbProgramKey (
   if ((Key == NULL) || (ResponseResult == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
-  
+
   // Assign the HW partition number correctly based on which storage device it is
   if (MediumType == OsBootDeviceEmmc) {
     DeviceIndex = 3;    //eMMC RPMB Partition
@@ -456,13 +456,13 @@ RpmbWriteData (
   if (DataInFrame == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
-  
+
   Status = RpmbGetCounter(MediumType, Key, KeySize, &WriteCounter, Result);
   if (EFI_ERROR(Status)) {
     DEBUG ((DEBUG_ERROR, "WriteRpmbData: Failed to get counter %r\n", Status));
     goto Exit;
   }
-  
+
   // Loop through block count
   for (Loop = 0; Loop < BlkCnt; Loop++) {
 
@@ -483,7 +483,7 @@ RpmbWriteData (
       goto Exit;
     }
     CopyMem(DataInFrame->KeyMac, Mac, RPMB_DATA_MAC);
-    
+
     Status  = RpmbSendRequest (DeviceIndex, Lba, DataInFrame, (RPMB_DATA_FRAME_SIZE * 1));
     if (EFI_ERROR(Status)) {
       DEBUG ((DEBUG_ERROR, "WriteRpmbData: Failed to send request: %r\n", Status));
@@ -491,14 +491,14 @@ RpmbWriteData (
     }
     ZeroMem(&StatusFrame, sizeof(StatusFrame));
     StatusFrame.ReqResp = SwapBytes16(RPMB_REQUEST_STATUS);
-    
+
     Status = RpmbRequestResponse(DeviceIndex, Lba, &StatusFrame, &StatusFrame, RPMB_RESPONSE_AUTH_WRITE, Result);
     if (EFI_ERROR(Status)) {
       DEBUG ((DEBUG_ERROR, "WriteRpmbData: Failed to request response: Status: %r, Result: %d\n", Status, *Result));
       goto Exit;
     }
 
-    // Sanity check if WriteCounter has incremented or not because by this time, 
+    // Sanity check if WriteCounter has incremented or not because by this time,
     // StatusFrame.WriteCounter should have been incremented atleast by 1
     if (WriteCounter >= SwapBytes32(StatusFrame.WriteCounter)) {
       DEBUG ((DEBUG_ERROR, "WriteRpmbData: RPMB WriteCounter >= returned WriteCounter 0x%0x \n",StatusFrame.WriteCounter));
@@ -558,7 +558,7 @@ RpmbReadData (
 
   Status = EFI_SUCCESS;
   DataOutFrame  = NULL;
-  
+
   if ((Buffer == NULL) || (Result == NULL)) {
     return EFI_INVALID_PARAMETER;
   }

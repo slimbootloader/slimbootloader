@@ -41,6 +41,7 @@
 [Guids]
   gEfiPartTypeSystemPartGuid
   gOsBootOptionGuid
+  gSblCompFWUpdateImageFileGuid
 
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdTopSwapRegionSize

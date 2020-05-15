@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -29,16 +29,17 @@
   MdePkg/MdePkg.dec
   IntelFsp2Pkg/IntelFsp2Pkg.dec
   BootloaderCorePkg/BootloaderCorePkg.dec
-  BootloaderCommonPkg/BootloaderCommonPkg.dec 
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
   Silicon/ApollolakePkg/ApollolakePkg.dec
   Platform/CommonBoardPkg/CommonBoardPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
   Platform/ApollolakeBoardPkg/ApollolakeBoardPkg.dec
 
 [LibraryClasses]
   BaseLib
   SocInitLib
   PlatformHookLib
-  SerialPortLib  
+  SerialPortLib
   LoaderLib
   GpioLib
   BootGuardLib
@@ -48,3 +49,4 @@
 
 [Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdDebugPortNumber

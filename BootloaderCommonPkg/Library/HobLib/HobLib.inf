@@ -8,7 +8,7 @@
 [Defines]
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = HobLib
-  FILE_GUID                      = 3883C69A-0B2D-4e51-9056-023CC62B4D56  
+  FILE_GUID                      = 3883C69A-0B2D-4e51-9056-023CC62B4D56
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
   LIBRARY_CLASS                  = HobLib
@@ -32,6 +32,6 @@
   BootloaderLib
 
 [Guids]
-  
+
 
 [Pcd]

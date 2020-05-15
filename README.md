@@ -16,12 +16,12 @@ components of the system when it is powered on, followed by the loading and
 launching of the desired operating system.
 
 Slim Bootloader offers the flexibility for OEMs, device manufacturers, and hobbyists
-to isolate, configure, and optimize for the the specific requirements of the system 
+to isolate, configure, and optimize for the the specific requirements of the system
 thereby achieving unparalleled boot performance and minimizing firmware footprint.
 
 Supported Platforms
 -------------------
-Please visit [Supported Hardware](https://slimbootloader.github.io/supported-hardware/index.html) page for a list of platforms supported by Slim Bootloader. 
+Please visit [Supported Hardware](https://slimbootloader.github.io/supported-hardware/index.html) page for a list of platforms supported by Slim Bootloader.
 
 Getting Started
 ---------------
@@ -30,12 +30,12 @@ Documentation for compiling, using, and extending Slim Bootloader can be found
 
 Mailing List
 --------------
-You can subscribe to our mailing list for questions or share your learnings: 
+You can subscribe to our mailing list for questions or share your learnings:
 https://lists.01.org/postorius/lists/sbl-devel.lists.01.org/
 
 Archives:  https://lists.01.org/hyperkitty/list/sbl-devel@lists.01.org/
 
 License
 -------
-Slim Bootloader is released under the terms of the BSD-2-Clause Plus Patent License. 
+Slim Bootloader is released under the terms of the BSD-2-Clause Plus Patent License.
 Please see the `LICENSE` file for the full terms of the license.

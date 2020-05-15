@@ -23,7 +23,7 @@ ReserveMemUnder1Mb (
   IN     UINT32              MemorySize
   )
 {
-  UINTN                      Index;
+  UINT32                     Index;
   UINT32                     Count;
   MULTIBOOT_MMAP             *MbMmap;
   UINT32                     FreeMemoryIndex;
@@ -58,101 +58,66 @@ ReserveMemUnder1Mb (
 }
 
 /**
-  Get the Platform info parameters.
-
-  Pass this as a cmd line pointer to all OSes.
-
-  @retval  PlatformInfo           The platform info data was successfully setup.
-  @retval  NULL                   The platform info data could not be allocated.
-
-**/
-LOADER_PLATFORM_INFO *
-GetPlatformInfo (
-  VOID
-  )
-{
-  LOADER_PLATFORM_INFO    *LoaderPlatformInfo;
-  LOADER_PLATFORM_INFO    *PlatformInfo;
-
-  LoaderPlatformInfo = (LOADER_PLATFORM_INFO *)GetLoaderPlatformInfoPtr();
-  if (LoaderPlatformInfo == NULL) {
-    return NULL;
-  }
-
-  PlatformInfo = (LOADER_PLATFORM_INFO *) AllocateReservedPool (sizeof (LOADER_PLATFORM_INFO));
-  if (PlatformInfo == NULL) {
-    return NULL;
-  }
-  ZeroMem (PlatformInfo, sizeof (LOADER_PLATFORM_INFO));
-  CopyMem (PlatformInfo, LoaderPlatformInfo, sizeof(LOADER_PLATFORM_INFO));
-
-  return PlatformInfo;
-}
-
-/**
-  Get SeedList info.
-
-  Pass this as a cmd line pointer.
-
-  @retval  SeedList           SeedList data was successfully setup.
-  @retval  NULL               SeedList data could not be allocated.
-
-**/
-SEED_LIST_INFO_HOB *
-GetSeedListInfo (
-  VOID
-  )
-{
-  SEED_LIST_INFO_HOB      *SeedList;
-  SEED_LIST_INFO_HOB      *SeedListInfoHob;
-  UINT32                  SeedListLen;
-
-  SeedList = NULL;
-  if (PcdGetBool (PcdSeedListEnabled)) {
-    // Get Seed List HOB from Stage2
-    SeedListInfoHob = GetSeedListInfoHOB(&SeedListLen);
-    if ((SeedListInfoHob == NULL) || (SeedListLen == 0)) {
-      return NULL;
-    }
-
-    // Allocate reserved memory for SeedList to pass to Trusty
-    SeedList = AllocateReservedPool (SeedListLen);
-    if (SeedList == NULL) {
-      return NULL;
-    }
-    ZeroMem (SeedList, SeedListLen);
-    CopyMem (SeedList, SeedListInfoHob, SeedListLen);
-  }
-  return SeedList;
-}
-
-
-/**
   Get the VMM boot parameters information
 
   When performing Trusty boot there are memory map requirements
   to allocate some memory for the vmm to use during its execution.
 
+  @param[in,out]  VmmImageData    The VMM image data pointer which manages reserved memories for VMM
   @param[in,out]  TrustyMbi       The primary Multiboot module's information.
   @param[in,out]  BootOsMbi       The secondary Multiboot module's information.
 
-  @retval  VmmBootParam           The VMM boot parameters were successfully setup.
-  @retval  NULL                   The VMM boot parameters could not be allocated.
+  @retval         EFI_SUCCESS     The VMM boot parameters were successfully setup.
+  @retval         Others          The VMM boot parameters could not be allocated.
 **/
-VMM_BOOT_PARAM *
+EFI_STATUS
 GetVmmBootParam (
+  IN OUT  VMM_IMAGE_DATA    *VmmImageData,
   IN OUT  MULTIBOOT_INFO    *TrustyMbi,
   IN OUT  MULTIBOOT_INFO    *BootOsMbi
   )
 {
   VMM_BOOT_PARAM *VmmBootParam;
+  UINT32          Size;
 
-  VmmBootParam = (VMM_BOOT_PARAM *) AllocateReservedPool (sizeof (VMM_BOOT_PARAM));
-  if (VmmBootParam == NULL) {
-    return NULL;
+  ZeroMem (VmmImageData, sizeof (VMM_IMAGE_DATA));
+
+  //
+  // Reserve Memory for Vmm Boot Params
+  //
+  Size = sizeof (VMM_BOOT_PARAM);
+  VmmImageData->VmmBootParams.Addr = AllocateReservedPool (Size);
+  if (VmmImageData->VmmBootParams.Addr == NULL) {
+    return EFI_OUT_OF_RESOURCES;
   }
-  ZeroMem (VmmBootParam, sizeof (VMM_BOOT_PARAM));
+  VmmImageData->VmmBootParams.Size = Size;
 
+  //
+  // Reserve Memory for Vmm Heap Memory
+  //
+  Size = EFI_SIZE_TO_PAGES (VMM_OS_HEAP_SIZE);
+  VmmImageData->VmmHeapAddr.Addr = AllocateReservedPages (Size);
+  if (VmmImageData->VmmHeapAddr.Addr == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+  VmmImageData->VmmHeapAddr.Size = VMM_OS_HEAP_SIZE;
+  VmmImageData->VmmHeapAddr.AllocType = ImageAllocateTypePage;
+
+  //
+  // Reserve Memory for Vmm Runtime Memory
+  //
+  Size = EFI_SIZE_TO_PAGES (VMM_OS_RUNTIME_MEM_SIZE);
+  VmmImageData->VmmRuntimeAddr.Addr = AllocateReservedPages (Size);
+  if (VmmImageData->VmmRuntimeAddr.Addr == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+  VmmImageData->VmmRuntimeAddr.Size = VMM_OS_RUNTIME_MEM_SIZE;
+  VmmImageData->VmmRuntimeAddr.AllocType = ImageAllocateTypePage;
+
+  //
+  // Update VmmBootParam Info
+  //
+  VmmBootParam = (VMM_BOOT_PARAM *)VmmImageData->VmmBootParams.Addr;
   VmmBootParam->SizeOfThisStruct = sizeof (VMM_BOOT_PARAM);
 
   // 4KB under 1M reserved in e820.
@@ -165,14 +130,11 @@ GetVmmBootParam (
   ReserveMemUnder1Mb (BootOsMbi, KB_ (8));
 
   // 64KB, SBL should reserve it in e820
-  VmmBootParam->HeapAddr = (UINT32) AllocateReservedPages (EFI_SIZE_TO_PAGES (VMM_OS_HEAP_SIZE));
+  VmmBootParam->HeapAddr = (UINT32)(UINTN)VmmImageData->VmmHeapAddr.Addr;
   // 4MB, SBL should reserve it in e820
-  VmmBootParam->VmmRuntimeAddr = (UINT32) AllocateReservedPages (EFI_SIZE_TO_PAGES (VMM_OS_RUNTIME_MEM_SIZE));
+  VmmBootParam->VmmRuntimeAddr = (UINT32)(UINTN)VmmImageData->VmmRuntimeAddr.Addr;
 
-  if ((VmmBootParam->HeapAddr == 0) || (VmmBootParam->VmmRuntimeAddr == 0)) {
-    return NULL;
-  }
-  return VmmBootParam;
+  return EFI_SUCCESS;
 }
 
 /**
@@ -244,7 +206,7 @@ UpdateCmdLine (
 
   AsciiSPrint (ParamValue, sizeof (ParamValue), " ImageBootParamsAddr=0x%x", BootParams);
   AsciiStrCatS ((CHAR8 *)CmdFile->Addr, CmdBufLen, ParamValue);
-  CmdFile->Size = AsciiStrLen ((CHAR8 *)CmdFile->Addr);
+  CmdFile->Size = (UINT32)AsciiStrLen ((CHAR8 *)CmdFile->Addr);
   return EFI_SUCCESS;
 }
 
@@ -254,33 +216,65 @@ UpdateCmdLine (
 
   Pass this as a cmd line pointer.
 
-  @retval  BootParams        Boot Parameter structure was successfully returned.
-  @retval  NULL              Boot Parameter structure could not be allocated.
+  @param[in,out]  BootParamsData    The Boot Parameter data pointer which manages reserved memories for Boot Parameter
+
+  @retval         EFI_SUCCESS       Boot Parameter structure was successfully built.
+  @retval         Others            Boot Parameter structure could not be allocated.
 **/
-IMAGE_BOOT_PARAM *
+EFI_STATUS
 GetImageBootParamInfo (
-  VOID
+  IN OUT  BOOTPARAMS_IMAGE_DATA   *BootParamsData
   )
 {
   IMAGE_BOOT_PARAM          *BootParams;
+  LOADER_PLATFORM_INFO      *LoaderPlatformInfo;
+  SEED_LIST_INFO_HOB        *SeedListInfoHob;
+  UINT32                     Length;
 
-  BootParams = (IMAGE_BOOT_PARAM *) AllocateReservedPool (sizeof (IMAGE_BOOT_PARAM));
-  if (BootParams == NULL) {
-    return NULL;
+  if (BootParamsData == NULL) {
+    return EFI_INVALID_PARAMETER;
   }
+  ZeroMem (BootParamsData, sizeof (BOOTPARAMS_IMAGE_DATA));
+  BootParamsData->Base.Addr = AllocateReservedPool (sizeof (IMAGE_BOOT_PARAM));
+  if (BootParamsData->Base.Addr == NULL) {
+    return RETURN_OUT_OF_RESOURCES;
+  }
+  BootParamsData->Base.Size = sizeof (IMAGE_BOOT_PARAM);
+
+  BootParams = (IMAGE_BOOT_PARAM *)BootParamsData->Base.Addr;
   BootParams->SizeOfThisStruct = sizeof (IMAGE_BOOT_PARAM);
   BootParams->Version = 0;
 
+  // Update SEED List
   if (PcdGetBool (PcdSeedListEnabled)) {
-    BootParams->SeedListInfoAddr = (UINT64) (UINTN)GetSeedListInfo ();
+    SeedListInfoHob = GetSeedListInfoHOB (&Length);
+    if ((SeedListInfoHob == NULL) || (Length == 0)) {
+      return EFI_NOT_FOUND;
+    }
+    // Allocate reserved memory for SeedList to pass to Trusty
+    BootParamsData->SeedList.Addr = AllocateReservedPool (Length);
+    if (BootParamsData->SeedList.Addr == NULL) {
+      return RETURN_OUT_OF_RESOURCES;
+    }
+    BootParamsData->SeedList.Size = Length;
+
+    ZeroMem (BootParamsData->SeedList.Addr, Length);
+    CopyMem (BootParamsData->SeedList.Addr, SeedListInfoHob, Length);
   }
-  BootParams->PlatformInfoAddr  = (UINT64) (UINTN)GetPlatformInfo ();
 
-  // VmmBootParams is only applicable for Trusty. Set it to zero by default
-  // and update this in TrustyBoot function
-  BootParams->VmmBootParamAddr = 0;
+  // Update Platform Info
+  LoaderPlatformInfo = (LOADER_PLATFORM_INFO *)GetLoaderPlatformInfoPtr();
+  if (LoaderPlatformInfo != NULL) {
+    Length = sizeof (LOADER_PLATFORM_INFO);
+    BootParamsData->PlatformInfo.Addr = (LOADER_PLATFORM_INFO *) AllocateReservedPool (Length);
+    if (BootParamsData->PlatformInfo.Addr != NULL) {
+      BootParamsData->PlatformInfo.Size = Length;
+      ZeroMem (BootParamsData->PlatformInfo.Addr, Length);
+      CopyMem (BootParamsData->PlatformInfo.Addr, LoaderPlatformInfo, Length);
+    }
+  }
 
-  return BootParams;
+  return EFI_SUCCESS;
 }
 
 /**
@@ -299,24 +293,36 @@ SetupTrustyBoot (
   IN OUT  MULTIBOOT_IMAGE    *BootOsImage
   )
 {
+  RETURN_STATUS              Status;
   IMAGE_BOOT_PARAM          *BootParams;
   VMM_BOOT_PARAM            *VmmBootParams;
-  RETURN_STATUS             Status;
+  BOOTPARAMS_IMAGE_DATA     *TrustyBootParamsData;
+  BOOTPARAMS_IMAGE_DATA     *NormalBootParamsData;
+  VMM_IMAGE_DATA            *VmmImageData;
 
   //
   // Update Trusty OS command line parameter
   //
-  BootParams = GetImageBootParamInfo();
-  if (BootParams == NULL) {
-    return RETURN_OUT_OF_RESOURCES;
+  TrustyBootParamsData = &TrustyImage->TrustyImageData.BootParamsData;
+  Status = GetImageBootParamInfo (TrustyBootParamsData);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+  BootParams = (IMAGE_BOOT_PARAM *) TrustyBootParamsData->Base.Addr;
+
+  //
+  // Get VmmBootParams is required for trusty OS
+  //
+  VmmImageData = &TrustyImage->TrustyImageData.VmmImageData;
+  Status = GetVmmBootParam (VmmImageData, &TrustyImage->MbInfo, &BootOsImage->MbInfo);
+  if (!EFI_ERROR (Status)) {
+    VmmBootParams = (VMM_BOOT_PARAM *)VmmImageData->VmmBootParams.Addr;
+    SetCpuState (&VmmBootParams->CpuState, &BootOsImage->BootState);
+    BootParams->VmmBootParamAddr = (UINT64) (UINTN)VmmBootParams;
+  } else {
+    return Status;
   }
 
-  // Get VmmBootParams is required for trusty OS
-  VmmBootParams = GetVmmBootParam (&TrustyImage->MbInfo, &BootOsImage->MbInfo);
-  if (VmmBootParams != NULL) {
-    SetCpuState (& (VmmBootParams->CpuState), &BootOsImage->BootState);
-    BootParams->VmmBootParamAddr  = (UINT64) (UINTN)VmmBootParams;
-  }
   Status = UpdateCmdLine (&TrustyImage->CmdFile, BootParams, TrustyImage->CmdBufferSize);
   if (EFI_ERROR (Status)) {
     return Status;
@@ -327,10 +333,12 @@ SetupTrustyBoot (
   //
   // Update normal OS command line parameter
   //
-  BootParams = GetImageBootParamInfo();
-  if (BootParams == NULL) {
-    return RETURN_OUT_OF_RESOURCES;
+  NormalBootParamsData = &BootOsImage->TrustyImageData.BootParamsData;
+  Status = GetImageBootParamInfo (NormalBootParamsData);
+  if (EFI_ERROR (Status)) {
+    return Status;
   }
+  BootParams = (IMAGE_BOOT_PARAM *) NormalBootParamsData->Base.Addr;
 
   Status = UpdateCmdLine (&BootOsImage->CmdFile, BootParams, BootOsImage->CmdBufferSize);
   if (EFI_ERROR (Status)) {
@@ -339,4 +347,3 @@ SetupTrustyBoot (
 
   return Status;
 }
-

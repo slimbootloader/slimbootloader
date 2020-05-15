@@ -11,7 +11,7 @@ BITS    16
 
 ALIGN   16
 FITHeader:
-	DQ 0,0,0,0
+        DQ 0,0,0,0
 
 applicationProcessorEntryPoint:
 ;

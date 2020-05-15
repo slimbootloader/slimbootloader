@@ -56,7 +56,7 @@ typedef struct {
 typedef struct {
   EFI_ACPI_DESCRIPTION_HEADER      Header;
   PSD_VERSION_INFO                 PsdVersion;
-  UINT32                           CsmeSecCapabilities; //in APL it is called TXE. 
+  UINT32                           CsmeSecCapabilities; //in APL it is called TXE.
   SEC_VERSION_INFO                 FwVer;
   UINT8                            FwVendor[EFI_ACPI_PSD_FW_VENDOR_SIZE];
   UINT8                            EomState;

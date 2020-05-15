@@ -13,6 +13,7 @@
 #include <Library/ConsoleInLib.h>
 #include <Library/ConsoleOutLib.h>
 #include <Library/BootloaderCommonLib.h>
+#include <Library/DebugLogBufferLib.h>
 
 /**
   Print the contents of the log buffer
@@ -65,6 +66,8 @@ ShellCommandDmesgFunc (
   UINTN                    Index;
   UINT8                    Buf[1];
   BOOLEAN                  Paged = FALSE;
+  UINTN                    Length;
+  UINTN                    BufIndex;
 
   for (Index = 1; Index < Argc; Index++) {
     if (StrCmp (Argv[Index], L"-h") == 0) {
@@ -77,11 +80,27 @@ ShellCommandDmesgFunc (
 
   PageLineCount = 0;
   LogBufHdr = (DEBUG_LOG_BUFFER_HEADER *) GetDebugLogBufferPtr ();
-  for (Index = 0; Index < (LogBufHdr->UsedLength - LogBufHdr->HeaderLength); Index++) {
-    ConsoleWrite ((UINT8 *)&LogBufHdr->Buffer[Index], 1);
+  if (LogBufHdr == NULL) {
+    return EFI_UNSUPPORTED;
+  }
+
+  if (LogBufHdr->UsedLength > LogBufHdr->TotalLength) {
+    return EFI_LOAD_ERROR;
+  }
+
+  if ((LogBufHdr->Attribute & DEBUG_LOG_BUFFER_ATTRIBUTE_FULL) != 0) {
+    BufIndex = LogBufHdr->UsedLength - LogBufHdr->HeaderLength;
+    Length   = LogBufHdr->TotalLength - LogBufHdr->HeaderLength;
+  } else {
+    BufIndex = 0;
+    Length   = LogBufHdr->UsedLength - LogBufHdr->HeaderLength;
+  }
+
+  for (Index = 0; Index < Length; Index++, BufIndex++) {
+    ConsoleWrite ((UINT8 *)&LogBufHdr->Buffer[BufIndex % Length], 1);
 
     // Page out the log contents if requested
-    if (Paged && (LogBufHdr->Buffer[Index] == '\n') && (++PageLineCount == LinesPerPage)) {
+    if (Paged && (LogBufHdr->Buffer[BufIndex % Length] == '\n') && (++PageLineCount == LinesPerPage)) {
       ShellPrint (L"[Press <ESC> to stop, or any other key to continue...]");
       ConsoleRead (Buf, 1);
       if (Buf[0] == '\x1b') { break; }

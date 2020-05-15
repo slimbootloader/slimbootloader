@@ -2,12 +2,45 @@
   NvmExpressDxe driver is used to manage non-volatile memory subsystem which follows
   NVM Express specification.
 
-  Copyright (c) 2013 - 2016, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2013 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
 #include "NvmExpress.h"
+
+/**
+  Get max transfer block number.
+
+  @param[in]  Private       The pointer to the NVME_CONTROLLER_PRIVATE_DATA data structure.
+  @param[in]  BlockSize     The media block size.
+
+  @retval Max transfer block.
+
+**/
+STATIC
+UINT32
+GetMaxTransferBlockNumber (
+  IN  NVME_CONTROLLER_PRIVATE_DATA   *Private,
+  IN  UINT32                          BlockSize
+)
+{
+  UINT32  MaxTransferBlocks;
+  UINT32  MaxDmaTransferBlocks;
+
+  if (Private->ControllerData->Mdts != 0) {
+    MaxTransferBlocks = (1 << (Private->ControllerData->Mdts)) * (1 << (Private->Cap.Mpsmin + 12)) / BlockSize;
+  } else {
+    MaxTransferBlocks = 1024;
+  }
+
+  MaxDmaTransferBlocks = (PcdGet32 (PcdDmaBufferSize) >> 1) / BlockSize;
+  if (MaxDmaTransferBlocks < MaxTransferBlocks) {
+    MaxTransferBlocks = MaxDmaTransferBlocks;
+  }
+  return MaxTransferBlocks;
+}
+
 
 /**
   Read some sectors from the device.
@@ -156,7 +189,7 @@ WriteSectors (
 EFI_STATUS
 NvmeRead (
   IN     NVME_DEVICE_PRIVATE_DATA       *Device,
-  OUT VOID                           *Buffer,
+  OUT VOID                              *Buffer,
   IN     UINT64                         Lba,
   IN     UINTN                          Blocks
   )
@@ -186,12 +219,7 @@ NvmeRead (
   BlockSize     = Device->Media.BlockSize;
   OrginalBlocks = Blocks;
 
-  if (Private->ControllerData->Mdts != 0) {
-    MaxTransferBlocks = (1 << (Private->ControllerData->Mdts)) * (1 << (Private->Cap.Mpsmin + 12)) / BlockSize;
-  } else {
-    MaxTransferBlocks = 1024;
-  }
-
+  MaxTransferBlocks = GetMaxTransferBlockNumber (Private, BlockSize);
   while (Blocks > 0) {
     if (Blocks > MaxTransferBlocks) {
       Status = ReadSectors (Device, (UINT64) (UINTN)Buffer, Lba, MaxTransferBlocks);
@@ -209,7 +237,7 @@ NvmeRead (
     }
   }
 
-  DEBUG ((EFI_D_VERBOSE, "%a: Lba = 0x%08Lx, Original = 0x%08Lx, "
+  DEBUG ((DEBUG_VERBOSE, "%a: Lba = 0x%08Lx, Original = 0x%08Lx, "
           "Remaining = 0x%08Lx, BlockSize = 0x%x, Status = %r\n", __FUNCTION__, Lba,
           (UINT64)OrginalBlocks, (UINT64)Blocks, BlockSize, Status));
 
@@ -261,12 +289,7 @@ NvmeWrite (
   BlockSize     = Device->Media.BlockSize;
   OrginalBlocks = Blocks;
 
-  if (Private->ControllerData->Mdts != 0) {
-    MaxTransferBlocks = (1 << (Private->ControllerData->Mdts)) * (1 << (Private->Cap.Mpsmin + 12)) / BlockSize;
-  } else {
-    MaxTransferBlocks = 1024;
-  }
-
+  MaxTransferBlocks = GetMaxTransferBlockNumber (Private, BlockSize);
   while (Blocks > 0) {
     if (Blocks > MaxTransferBlocks) {
       Status = WriteSectors (Device, (UINT64) (UINTN)Buffer, Lba, MaxTransferBlocks);
@@ -284,7 +307,7 @@ NvmeWrite (
     }
   }
 
-  DEBUG ((EFI_D_VERBOSE, "%a: Lba = 0x%08Lx, Original = 0x%08Lx, "
+  DEBUG ((DEBUG_VERBOSE, "%a: Lba = 0x%08Lx, Original = 0x%08Lx, "
           "Remaining = 0x%08Lx, BlockSize = 0x%x, Status = %r\n", __FUNCTION__, Lba,
           (UINT64)OrginalBlocks, (UINT64)Blocks, BlockSize, Status));
 

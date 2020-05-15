@@ -16,6 +16,7 @@
   LIBRARY_CLASS                  = TrustyBootLib
 
 [Sources]
+  TrustyBoot.h
   TrustyBootLib.c
 
 [LibraryClasses]
@@ -27,6 +28,6 @@
   BootloaderCommonPkg/BootloaderCommonPkg.dec
 
 [Guids]
-  
+
 [Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdSeedListEnabled

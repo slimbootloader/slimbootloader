@@ -82,7 +82,7 @@ static void sha512_384_hashInit(void* pHash)
 
 static void sha512_hashUpdate(void* pHash, const Ipp8u* pMsg, int msgLen)
 {
-   UpdateSHA512(pHash, pMsg, msgLen, sha512_cnt);
+   UpdateSHA512 (pHash, pMsg, msgLen, sha512_cnt);
 }
 
 /* convert hash into big endian */
@@ -144,7 +144,7 @@ static void cpFinalizeSHA512(DigestSHA512 pHash,
    ((Ipp64u*)(buffer+bufferLen))[-1] = ENDIANNESS64(lenLo);
 
    /* copmplete hash computation */
-   UpdateSHA512(pHash, buffer, bufferLen, sha512_cnt);
+   UpdateSHA512 (pHash, buffer, bufferLen, sha512_cnt);
 }
 
 // #endif /* #if !defined(_PCP_SHA512_STUFF_H) */
@@ -429,28 +429,16 @@ IPPFUN( const IppsHashMethod*, ippsHashMethod_SHA512, (void) )
    (A) = _T1+_T2; \
 }
 
-/*F*
-//    Name: UpdateSHA512
-//
-// Purpose: Update internal hash according to input message stream.
-//
-// Parameters:
-//    uniHash  pointer to in/out hash
-//    mblk     pointer to message stream
-//    mlen     message stream length (multiple by message block size)
-//    uniParam pointer to the optional parameter
-//
-*F*/
+
 #if defined(_ALG_SHA512_COMPACT_)
 #pragma message("SHA512 compact")
 
-void UpdateSHA512(void* uniHash, const Ipp8u* mblk, int mlen, const void* uniPraram)
+void UpdateSHA512Compact(void* uniHash, const Ipp8u* mblk, int mlen, const void* uniPraram)
 {
    Ipp32u* data = (Ipp32u*)mblk;
 
    Ipp64u* digest = (Ipp64u*)uniHash;
    Ipp64u* SHA512_cnt_loc = (Ipp64u*)uniPraram;
-
 
    for(; mlen>=MBS_SHA512; data += MBS_SHA512/sizeof(Ipp32u), mlen -= MBS_SHA512) {
       int t;
@@ -501,9 +489,9 @@ void UpdateSHA512(void* uniHash, const Ipp8u* mblk, int mlen, const void* uniPra
       }
    }
 }
+#endif
 
-#else
-void UpdateSHA512(void* uniHash, const Ipp8u* mblk, int mlen, const void* uniPraram)
+void UpdateSHA512Normal(void* uniHash, const Ipp8u* mblk, int mlen, const void* uniPraram)
 {
    Ipp32u* data = (Ipp32u*)mblk;
 
@@ -560,6 +548,39 @@ void UpdateSHA512(void* uniHash, const Ipp8u* mblk, int mlen, const void* uniPra
       digest[7] += v[7];
    }
 }
+
+/*F*
+//    Name: UpdateSHA512
+//
+// Purpose: Update internal hash according to input message stream.
+//
+// Parameters:
+//    uniHash  pointer to in/out hash
+//    mblk     pointer to message stream
+//    mlen     message stream length (multiple by message block size)
+//    uniParam pointer to the optional parameter
+//
+*F*/
+
+void UpdateSHA512(void* uniHash, const Ipp8u* mblk, int mlen, const void* uniPraram)
+{
+#if defined(_SLIMBOOT_OPT)
+   #if (FixedPcdGet32 (PcdCryptoShaOptMask) & IPP_CRYPTO_SHA384_G9)
+      UpdateSHA512G9 (uniHash, mblk, mlen, uniPraram);
+   #elif (FixedPcdGet32 (PcdCryptoShaOptMask) & IPP_CRYPTO_SHA384_W7)
+      UpdateSHA512W7 (uniHash, mblk, mlen, uniPraram);
+   #else
+      UpdateSHA512Compact (uniHash, mblk, mlen, uniPraram);
+   #endif
+#else
+
+#if  defined(_ALG_SHA512_COMPACT_)
+  UpdateSHA512Compact (uniHash, mblk, mlen, uniPraram);
+#else
+  UpdateSHA512Normal (uniHash, mblk, mlen, uniPraram);
 #endif
+
+#endif //_SLIMBOOT_OPT
+}
 
 #endif

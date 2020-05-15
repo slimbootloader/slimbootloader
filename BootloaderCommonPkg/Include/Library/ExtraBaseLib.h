@@ -33,4 +33,15 @@ AsmFlushCacheRange (
   IN      UINTN                     Length
   );
 
+/**
+  Enable CPU AVX support if the CPU is capable.
+  CPU.
+
+**/
+VOID
+EFIAPI
+AsmEnableAvx (
+  VOID
+);
+
 #endif

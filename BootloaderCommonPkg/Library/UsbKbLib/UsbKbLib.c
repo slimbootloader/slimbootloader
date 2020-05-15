@@ -1,7 +1,7 @@
 /** @file
   USB keyboard library implementation.
 
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -15,7 +15,8 @@ CONST  CHAR8  *mKeyboardKeyMap[] = {
   "abcdefghijklmnopqrstuvwxyz1234567890\r\x1b\b\t -=[]\\ ;'`,./",
   "ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()\r\x1b\b\t _+{}| :\"~<>?",
   "/*-+\r1234567890.",
-  "CDBA"
+  "MQNP5OJRKIL",
+  "CDBA",
 };
 
 USB_KB_DEV     mUsbKbDevice;
@@ -46,7 +47,7 @@ UsbSetIdleRequest (
   IN UINT8                   Duration
   )
 {
-  UINT32                  Status;
+  EFI_STATUS              Status;
   EFI_USB_DEVICE_REQUEST  Request;
 
   ASSERT (UsbIo != NULL);
@@ -345,23 +346,23 @@ UsbFindUsbKbDevice (
     UsbKbDevice->InterfaceDescriptor = *InterfaceDesc;
     UsbKbDevice->EndpointDescriptor  = *EndpointDescriptor;
     UsbKbDevice->TimeStampFreqKhz    = GetTimeStampFrequency ();
-  }
 
-  Status = UsbSetProtocolRequest (
-    UsbKbDevice->UsbIo,
-    UsbKbDevice->InterfaceDescriptor.InterfaceNumber,
-    0
-    );
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
+    Status = UsbSetProtocolRequest (
+      UsbKbDevice->UsbIo,
+      UsbKbDevice->InterfaceDescriptor.InterfaceNumber,
+      0
+      );
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
 
-  Status = UsbSetIdleRequest (
-    UsbKbDevice->UsbIo,
-    UsbKbDevice->InterfaceDescriptor.InterfaceNumber,
-    0,
-    10
-    );
+    Status = UsbSetIdleRequest (
+      UsbKbDevice->UsbIo,
+      UsbKbDevice->InterfaceDescriptor.InterfaceNumber,
+      0,
+      10
+      );
+  }
 
   return Status;
 }
@@ -582,15 +583,18 @@ ConvertKeyToAscii (
     return mKeyboardKeyMap[Shift][Key - 0x04];
   }
 
-  if (mUsbKbDevice.NumLockOn) {
-     if (Key >= 0x54 && Key <= 0x63) {
-       return mKeyboardKeyMap[2][Key - 0x54];
-     }
+  if (Key >= 0x54 && Key <= 0x63) {
+    // For keypad keys with NumLock on
+    if (mUsbKbDevice.NumLockOn || (Key < 0x59)) {
+      return mKeyboardKeyMap[2][Key - 0x54];
+    }
+    // For keypad keys with NumLock off
+    Key = (UINT8)mKeyboardKeyMap[3][Key - 0x59];
   }
 
   if (Key >= 0x4F && Key <= 0x52) {
     // Arrow key
-    return ARROW_KEY_MODIFIER | mKeyboardKeyMap[3][Key - 0x4F];
+    return ARROW_KEY_MODIFIER | mKeyboardKeyMap[4][Key - 0x4F];
   }
 
   if (Key == 0x53) {

@@ -29,7 +29,7 @@
   MdePkg/MdePkg.dec
   IntelFsp2Pkg/IntelFsp2Pkg.dec
   BootloaderCorePkg/BootloaderCorePkg.dec
-  BootloaderCommonPkg/BootloaderCommonPkg.dec 
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
   Silicon/QemuSocPkg/QemuSocPkg.dec
   Platform/QemuBoardPkg/QemuBoardPkg.dec
 

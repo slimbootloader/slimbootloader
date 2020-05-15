@@ -39,12 +39,15 @@
   gDeviceTableHobGuid                           = { 0xd21fc32c, 0x7fd2, 0x435b, { 0xb8, 0xef, 0xc0, 0x42, 0x66, 0xa8, 0xf4, 0xf5 } }
   gSmmInformationGuid                           = { 0x2d939d66, 0xceec, 0x4244, { 0x94, 0x97, 0x6e, 0x1c, 0x6f, 0x92, 0x54, 0x2c } }
   gEsrtSystemFirmwareGuid                       = { 0xbfbaf62d, 0x0a27, 0x4390, { 0x99, 0xf6, 0x8a, 0xe1, 0xca, 0x62, 0x62, 0x77 } }
+  gCsmeFWUDriverImageFileGuid                   = { 0x4A467997, 0xA909, 0x4678, { 0x91, 0x0C, 0xE0, 0xFE, 0x1C, 0x90, 0x56, 0xEA } }
+  gLoaderPciRootBridgeInfoGuid                  = { 0xb7f3d111, 0xb98d, 0x422f, { 0x84, 0x31, 0xa7, 0xd8, 0x29, 0xec, 0x00, 0x87 } }
 
   gEfiVariableGuid                              = { 0xddcf3616, 0x3275, 0x4164, { 0x98, 0xb6, 0xfe, 0x85, 0x70, 0x7f, 0xfe, 0x7d } }
   gEfiAuthenticatedVariableGuid                 = { 0xaaf32c78, 0x947b, 0x439a, { 0xa1, 0x80, 0x2e, 0x14, 0x4e, 0xc3, 0x77, 0x92 } }
   gEfiSystemNvDataFvGuid                        = { 0xFFF12B8D, 0x7696, 0x4C8B, { 0xA9, 0x85, 0x27, 0x47, 0x07, 0x5B, 0x4F, 0x50 } }
   gEfiVariableIndexTableGuid                    = { 0x8cfdb8c8, 0xd6b2, 0x40f3, { 0x8e, 0x97, 0x02, 0x30, 0x7c, 0xc9, 0x8b, 0x7c } }
   gEdkiiWorkingBlockSignatureGuid               = { 0x9e58292b, 0x7c68, 0x497d, { 0xa0, 0xce, 0x65,  0x0, 0xfd, 0x9f, 0x1b, 0x95 } }
+  gEdkiiFpdtExtendedFirmwarePerformanceGuid     = { 0x3b387bfd, 0x7abc, 0x4cf2, { 0xa0, 0xca, 0xb6, 0xa1, 0x6c, 0x1b, 0x1b, 0x25 } }
 
 [PcdsFixedAtBuild]
   gPlatformCommonLibTokenSpaceGuid.PcdMaxLibraryDataEntry    |          8 | UINT32 | 0x20000100
@@ -63,10 +66,20 @@
   gPlatformCommonLibTokenSpaceGuid.PcdSupportedMediaTypeMask | 0xFFFFFFFF | UINT32  | 0x20000187
   gPlatformCommonLibTokenSpaceGuid.PcdMmcTuningLba           | 0x00000040 | UINT32  | 0x20000188
   gPlatformCommonLibTokenSpaceGuid.PcdSupportedFileSystemMask| 0x00000003 | UINT32  | 0x20000189
-  gPlatformCommonLibTokenSpaceGuid.PcdCryptoShaNiEnabled     | FALSE      | BOOLEAN | 0x20000200
+
+  ## This PCD indicates the IA32 optimizations enabled in IPP Crypto library
+  #  Based on the value set, required algorithm hash API would be enabled
+  #  Using an single PCD to all supported optimizations for SHA256 and SHA384
+  #     0x0001    - V8 Method SHA Extensions optimized implementation of a SHA-256 update.<BR>
+  #     0x0002    - Ni Method SHA Extensions optimized implementation of a SHA-256 update.<BR>
+  #     0x0004    - W7 Method SHA Extensions optimized implementation of a SHA-384 update.<BR>
+  #     0x0008    - G9 Method SHA Extensions optimized implementation of a SHA-384 update.<BR>
+  gPlatformCommonLibTokenSpaceGuid.PcdCryptoShaOptMask       | 0x0      | UINT32 | 0x20000200
+
   gPlatformCommonLibTokenSpaceGuid.PcdSeedListEnabled        | FALSE      | BOOLEAN | 0x20000203
   gPlatformCommonLibTokenSpaceGuid.PcdConsoleInDeviceMask    | 0x00000001 | UINT32  | 0x20000300
   gPlatformCommonLibTokenSpaceGuid.PcdConsoleOutDeviceMask   | 0x00000001 | UINT32  | 0x20000301
+
 
   ## The data buffer size used by debug port in debug communication library instances.
   #  Its value is not suggested to be changed in platform DSC file.
@@ -83,7 +96,30 @@
   gPlatformCommonLibTokenSpaceGuid.PcdFrameBufferMaxConsoleWidth  | 0xFFFFFFFF | UINT32 | 0x20000501
   gPlatformCommonLibTokenSpaceGuid.PcdFrameBufferMaxConsoleHeight | 0xFFFFFFFF | UINT32 | 0x20000502
 
-  gPlatformCommonLibTokenSpaceGuid.PcdLowestSupportedFwVer		  | 0x00000000 | UINT32 | 0x20000601
+  gPlatformCommonLibTokenSpaceGuid.PcdLowestSupportedFwVer        | 0x00000000 | UINT32 | 0x20000601
+
+  ## This PCD indicates the HASH algorithm to be included by IPP Crypto library
+  #  Based on the value set, the required algorithm hash API would be enabled
+  #     0x0001    - SHA1.<BR>
+  #     0x0002    - SHA2_256.<BR>
+  #     0x0004    - SHA2_384.<BR>
+  #     0x0008    - SHA2_512.<BR>
+  #     0x0010    - SM3_256.<BR>
+  gPlatformCommonLibTokenSpaceGuid.PcdIppHashLibSupportedMask     |        0x02| UINT16 | 0x20000701
+
+  ## This PCD indicates the signing HASH algorithm used for Component signing
+  #  Based on the value set, the required algorithm should be used while verfication
+  #     0x01    - SHA2_256.<BR>
+  #     0x02    - SHA2_384.<BR>
+  #     0x03    - SHA2_512.<BR>
+  #     0x04    - SM3_256.<BR>
+  gPlatformCommonLibTokenSpaceGuid.PcdCompSignHashAlg                 |        0x01| UINT8 | 0x20000702
+
+  ## This PCD indicates the signing scheme type included in IPP Crypto library
+  #  Based on the value set, the required algorithm should be used while verfication
+  #     0x0001    - RSA_PKCS_1_5.<BR>
+  #     0x0002    - RSA_PSS.<BR>
+  gPlatformCommonLibTokenSpaceGuid.PcdCompSignSchemeSupportedMask      |        0x03| UINT8 | 0x20000704
 
 [PcdsFixedAtBuild, PcdsPatchableInModule]
   # For patchable PCDs, try to set the default as none-zero
@@ -107,6 +143,11 @@
 
   ## This PCD controls enabled debug output devcie
   gPlatformCommonLibTokenSpaceGuid.PcdDebugOutputDeviceMask    |0x00000003|UINT32|0x20000400
+
+  ## This PCD controls debug port number
+  # MMIO Serial device: 0 - Serial UART0, 1 - Serial UART1, 2 - Serial UART2,
+  # IO ISA UART       : 0xFF - IO base 0x3F8, 0xFE - IO base 0x2F8
+  gPlatformCommonLibTokenSpaceGuid.PcdDebugPortNumber        |0x02|UINT8|0x20000410
 
   ## Indicates the 16550 serial port registers are in MMIO space, or in I/O space. Default is I/O space.<BR><BR>
   #   TRUE  - 16550 serial port registers are in MMIO space.<BR>
@@ -197,6 +238,29 @@
   # @Prompt Minimum length(in bytes) of the system preboot TCG event log area(LAML).
   gPlatformCommonLibTokenSpaceGuid.PcdTcgLogAreaMinLen|0x10000|UINT32|0x00010081
 
+  ## This PCD defines length for DMA buffer.
+  # @Prompt DMA buffer allocation length when DMA proteciton is enabled.
+  gPlatformCommonLibTokenSpaceGuid.PcdDmaBufferSize      | 0x00400000 | UINT32 | 0x00010090
+
+  ## This PCD defines length for DMA buffer alignment.
+  # @Prompt DMA buffer allocation alignment when DMA protection is enabled.
+  gPlatformCommonLibTokenSpaceGuid.PcdDmaBufferAlignment | 0x00100000 | UINT32 | 0x00010091
+
+  ## This PCD defines bootloader boot performance related behavior
+  #     BIT0    - Print Slim Bootloader boot performance.<BR>
+  #     BIT1    - Print FSP HOB boot performance data.<BR>
+  gPlatformCommonLibTokenSpaceGuid.PcdBootPerformanceMask | 0x00000001 | UINT32 | 0x00010092
+
+[PcdsDynamic]
+  ## This PCD indicates the PCR bank to be enabled/supported by Slim Bootloader for measured boot
+  #  Based on the value set, PCR bank world be enabled and extended
+  #  This PCD could be updated based on TPM hash alg info from Config data blob
+  #     0x00000001    - SHA1.<BR>
+  #     0x00000002    - SHA2_256.<BR>
+  #     0x00000004    - SHA2_384.<BR>
+  #     0x00000008    - SHA2_512.<BR>
+  #     0x00000010    - SM3_256.<BR>
+  gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootHashMask    |         0x00000002 | UINT32  | 0x20000703
 
 
 [PcdsFeatureFlag]
@@ -208,3 +272,13 @@
   gPlatformCommonLibTokenSpaceGuid.PcdEmmcHs400SupportEnabled | TRUE       | BOOLEAN | 0x20000214
   # Determine if the Pre-OS checker should be executed or not.
   gPlatformCommonLibTokenSpaceGuid.PcdPreOsCheckerEnabled     | FALSE      | BOOLEAN | 0x20000215
+  # This PCD will force to initialize SerialPort regardless of its initialized state
+  gPlatformCommonLibTokenSpaceGuid.PcdForceToInitSerialPort   | FALSE      | BOOLEAN | 0x20000216
+  # This PCD will enable very basic debug Shell so that it can work in early stage such as 1A/1B/2.
+  gPlatformCommonLibTokenSpaceGuid.PcdMiniShellEnabled        | FALSE      | BOOLEAN | 0x20000217
+  # This PCD will enable DMA protection
+  gPlatformCommonLibTokenSpaceGuid.PcdDmaProtectionEnabled    | FALSE      | BOOLEAN | 0x20000218
+  # This PCD will enable multiple USB mass storage boot device support
+  gPlatformCommonLibTokenSpaceGuid.PcdMultiUsbBootDeviceEnabled   | FALSE  | BOOLEAN | 0x20000219
+
+

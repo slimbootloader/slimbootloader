@@ -54,3 +54,6 @@
   gPayloadTokenSpaceGuid.PcdGlobalDataAddress
   gPlatformCommonLibTokenSpaceGuid.PcdEmmcMaxRwBlockNumber
   gPlatformCommonLibTokenSpaceGuid.PcdPcdLibId
+  gPlatformCommonLibTokenSpaceGuid.PcdDmaProtectionEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdDmaBufferSize
+  gPlatformCommonLibTokenSpaceGuid.PcdDmaBufferAlignment

@@ -5,25 +5,25 @@
 
 **/
 
-/* 
+/*
 //  Purpose:
 //     Intel(R) Integrated Performance Primitives. Cryptography Primitives.
 //     Internal Unsigned BNU misc functionality
-// 
+//
 //  Contents:
 //     cpNLZ_BNU()
 //     cpNTZ_BNU()
-// 
+//
 //     cpLSL_BNU()
 //     cpLSR_BNU()
-// 
+//
 //     cpLSBit_BNU()
 //     cpMSBit_BNU()
-// 
+//
 //     cpFromOctStr_BNU()
 //     cpToOctStrS_BNU()
-// 
-// 
+//
+//
 */
 
 #include "owncp.h"

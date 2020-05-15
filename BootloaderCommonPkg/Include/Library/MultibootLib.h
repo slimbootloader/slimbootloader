@@ -212,6 +212,27 @@ typedef struct {
   UINT32  Reserved;
 } MULTIBOOT_MODULE;
 
+typedef struct {
+  IMAGE_DATA  CmdFile;
+  IMAGE_DATA  ImgFile;
+} MULTIBOOT_MODULE_DATA;
+
+typedef struct {
+  IMAGE_DATA              VmmBootParams;
+  IMAGE_DATA              VmmHeapAddr;
+  IMAGE_DATA              VmmRuntimeAddr;
+} VMM_IMAGE_DATA;
+
+typedef struct {
+  IMAGE_DATA              Base;
+  IMAGE_DATA              SeedList;
+  IMAGE_DATA              PlatformInfo;
+} BOOTPARAMS_IMAGE_DATA;
+
+typedef struct {
+  VMM_IMAGE_DATA          VmmImageData;
+  BOOTPARAMS_IMAGE_DATA   BootParamsData;
+} TRUSTY_IMAGE_DATA;
 
 #define MAX_MULTIBOOT_MODULE_NUMBER  16
 typedef struct {
@@ -222,8 +243,9 @@ typedef struct {
   UINT16                  CmdBufferSize;
   UINT16                  MbModuleNumber;
   MULTIBOOT_MODULE        MbModule[MAX_MULTIBOOT_MODULE_NUMBER];
+  MULTIBOOT_MODULE_DATA   MbModuleData[MAX_MULTIBOOT_MODULE_NUMBER];
+  TRUSTY_IMAGE_DATA       TrustyImageData;
 } MULTIBOOT_IMAGE;
-
 
 /**
   Check if it is Multiboot image

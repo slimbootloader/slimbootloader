@@ -57,7 +57,7 @@ GetFvVbt (
 
   // Get the vbt address
   VbtAddress = PcdGet32(PcdGraphicsVbtAddress);
-  DEBUG ((EFI_D_INFO, "VbtAddress =0x%x \n", VbtAddress));
+  DEBUG ((DEBUG_INFO, "VbtAddress =0x%x \n", VbtAddress));
 
   ///
   /// Check VBT signature

@@ -34,7 +34,7 @@ IsDrxEnabled (
   Common routine to report the PE/COFF image loading/relocating or unloading event.
 
   If ImageContext is NULL, then ASSERT().
- 
+
   @param  ImageContext  Pointer to the image context structure that describes the
                         PE/COFF image.
   @param  Signature     IMAGE_LOAD_SIGNATURE or IMAGE_UNLOAD_SIGNATURE.
@@ -64,7 +64,7 @@ PeCoffLoaderExtraActionCommon (
   ASSERT (ImageContext != NULL);
 
   if (ImageContext->PdbPointer != NULL) {
-    DEBUG((EFI_D_ERROR, "    PDB = %a\n", ImageContext->PdbPointer));
+    DEBUG ((DEBUG_ERROR, "    PDB = %a\n", ImageContext->PdbPointer));
   }
 
   //

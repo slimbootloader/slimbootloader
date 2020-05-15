@@ -270,9 +270,9 @@ UpdateAcpiPsdTable (
   PLATFORM_DATA                   *PlatformData;
   EFI_STATUS                      Status;
 
-  DEBUG((EFI_D_INFO, "UpdateAcpiPsdTable start\n"));
+  DEBUG((DEBUG_INFO, "UpdateAcpiPsdTable start\n"));
   if ( Table == NULL) {
-    DEBUG((EFI_D_WARN, "EFI_ACPI_PSD_TABLE IS NULL\n"));
+    DEBUG((DEBUG_WARN, "EFI_ACPI_PSD_TABLE IS NULL\n"));
     return EFI_BUFFER_TOO_SMALL;
   }
   mPsdt = (EFI_ACPI_PSD_TABLE*)Table;
@@ -288,34 +288,33 @@ UpdateAcpiPsdTable (
   mPsdt->Header.OemRevision             = PSDS_EFI_ACPI_OEM_REVISION;
   mPsdt->Header.CreatorId               = PSDS_EFI_ACPI_CREATOR_ID;
   mPsdt->Header.CreatorRevision         = PSDS_EFI_ACPI_CREATOR_REVISION;
-  ZeroMem( mPsdt +  sizeof (EFI_ACPI_DESCRIPTION_HEADER) , \
-     sizeof(EFI_ACPI_PSD_TABLE) - sizeof(EFI_ACPI_DESCRIPTION_HEADER) );
-  DEBUG( (EFI_D_INFO, "Address of PSD_TABLE=%x\n", mPsdt));
-  DEBUG( (EFI_D_INFO, "PSD Values: Signature=%x\n", mPsdt->Header.Signature) );
-  DEBUG( (EFI_D_INFO, "PSD Values: Length=%x\n", mPsdt->Header.Length ));
-  DEBUG( (EFI_D_INFO, "PSD Values: Revision=%x\n", mPsdt->Header.Revision ));
-  DEBUG( (EFI_D_INFO, "PSD Values: Checksum=%x\n", mPsdt->Header.Checksum ));
-  DEBUG( (EFI_D_INFO, "PSD Values: OemId=%x\n", mPsdt->Header.OemId ));
-  DEBUG( (EFI_D_INFO, "PSD Values: OemTableId=%x\n", mPsdt->Header.OemTableId ));
+
+  DEBUG( (DEBUG_INFO, "Address of PSD_TABLE=%x\n", mPsdt));
+  DEBUG( (DEBUG_INFO, "PSD Values: Signature=%x\n", mPsdt->Header.Signature) );
+  DEBUG( (DEBUG_INFO, "PSD Values: Length=%x\n", mPsdt->Header.Length ));
+  DEBUG( (DEBUG_INFO, "PSD Values: Revision=%x\n", mPsdt->Header.Revision ));
+  DEBUG( (DEBUG_INFO, "PSD Values: Checksum=%x\n", mPsdt->Header.Checksum ));
+  DEBUG( (DEBUG_INFO, "PSD Values: OemId=%x\n", mPsdt->Header.OemId ));
+  DEBUG( (DEBUG_INFO, "PSD Values: OemTableId=%x\n", mPsdt->Header.OemTableId ));
 
   mPsdt->PsdVersion.PsdVerMajor = PSD_VERSION_MAJOR;
   mPsdt->PsdVersion.PsdVerMinor = PSD_VERSION_MINOR;
-  DEBUG( (EFI_D_INFO, "PSD Values:  PsdVerMajor=%x\n", mPsdt->PsdVersion.PsdVerMajor ));
-  DEBUG( (EFI_D_INFO, "PSD Values:  PsdVerMinor=%x\n", mPsdt->PsdVersion.PsdVerMinor ));
+  DEBUG( (DEBUG_INFO, "PSD Values:  PsdVerMajor=%x\n", mPsdt->PsdVersion.PsdVerMajor ));
+  DEBUG( (DEBUG_INFO, "PSD Values:  PsdVerMinor=%x\n", mPsdt->PsdVersion.PsdVerMinor ));
 
   //Eom State,
   Status = GetEomState(&mPsdt->EomState);
   if (EFI_ERROR(Status)) {
     DEBUG((DEBUG_ERROR, " GetEomState failed =%x\n",Status));
   }
-  DEBUG( (EFI_D_INFO, "PSD Values:  EomState =%x\n", mPsdt->EomState ));
+  DEBUG( (DEBUG_INFO, "PSD Values:  EomState =%x\n", mPsdt->EomState ));
 
   //Sec Capabilities,
   Status = GetSecCapability( &(mPsdt->CsmeSecCapabilities) );
   if (EFI_ERROR(Status)) {
     DEBUG((DEBUG_ERROR, " GetSecCapability failed =%x\n",Status));
   }
-  DEBUG((EFI_D_INFO, "PSD Values: CsmeSecCapabilities=%x\n", mPsdt->CsmeSecCapabilities));
+  DEBUG((DEBUG_INFO, "PSD Values: CsmeSecCapabilities=%x\n", mPsdt->CsmeSecCapabilities));
 
   //SGX Capabilities
   GetSgxCapabilities(&(mPsdt->SgxCapabilities));
@@ -325,10 +324,10 @@ UpdateAcpiPsdTable (
   if (EFI_ERROR(Status)) {
     DEBUG((DEBUG_ERROR, " GetSecCFwVersion failed =%x\n",Status));
   }
-  DEBUG( (EFI_D_INFO, "PSD Values:  CodeMajor=%x\n", mPsdt->FwVer.CodeMajor ));
-  DEBUG( (EFI_D_INFO, "PSD Values:  CodeMinor=%x\n", mPsdt->FwVer.CodeMinor ));
-  DEBUG( (EFI_D_INFO, "PSD Values:  CodeHotFix=%x\n", mPsdt->FwVer.CodeHotFix ));
-  DEBUG( (EFI_D_INFO, "PSD Values:  CodeBuildNo=%x \n", mPsdt->FwVer.CodeBuildNo ));
+  DEBUG( (DEBUG_INFO, "PSD Values:  CodeMajor=%x\n", mPsdt->FwVer.CodeMajor ));
+  DEBUG( (DEBUG_INFO, "PSD Values:  CodeMinor=%x\n", mPsdt->FwVer.CodeMinor ));
+  DEBUG( (DEBUG_INFO, "PSD Values:  CodeHotFix=%x\n", mPsdt->FwVer.CodeHotFix ));
+  DEBUG( (DEBUG_INFO, "PSD Values:  CodeBuildNo=%x \n", mPsdt->FwVer.CodeBuildNo ));
   if( &(mPsdt->FwVendor) == NULL) {
     return RETURN_BUFFER_TOO_SMALL;
   }
@@ -346,11 +345,11 @@ UpdateAcpiPsdTable (
 
   //0 - No HWRoT; 1 - ROM based RoT; 2 - TXE; 3 - CSE; 4 - ACM; 5 - TXT
   mPsdt->HwrotType                      = PSD_HROT_ACM;
-  DEBUG((EFI_D_INFO, "PSD Values:  SecureBootEnabled=%x\n", mPsdt->SecureBoot));
-  DEBUG((EFI_D_INFO, "PSD Values:  MeasuredBootEnabled=%x\n", mPsdt->MeasuredBoot));
-  DEBUG((EFI_D_INFO, "PSD Values:  HwrotType=%x\n", mPsdt->HwrotType));
+  DEBUG((DEBUG_INFO, "PSD Values:  SecureBootEnabled=%x\n", mPsdt->SecureBoot));
+  DEBUG((DEBUG_INFO, "PSD Values:  MeasuredBootEnabled=%x\n", mPsdt->MeasuredBoot));
+  DEBUG((DEBUG_INFO, "PSD Values:  HwrotType=%x\n", mPsdt->HwrotType));
   DumpHex (2, 0, sizeof(EFI_ACPI_PSD_TABLE), (VOID *)Table);
-  DEBUG( (EFI_D_INFO, "UpdateAcpiPsdTable() end\n") );
+  DEBUG( (DEBUG_INFO, "UpdateAcpiPsdTable() end\n") );
 
   return  EFI_SUCCESS;
 }

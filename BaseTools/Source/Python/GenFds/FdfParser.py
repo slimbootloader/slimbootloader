@@ -3543,7 +3543,7 @@ class FdfParser:
                 SUP_MODULE_DXE_CORE, SUP_MODULE_DXE_DRIVER,
                 SUP_MODULE_DXE_SAL_DRIVER, SUP_MODULE_DXE_SMM_DRIVER,
                 SUP_MODULE_DXE_RUNTIME_DRIVER, SUP_MODULE_UEFI_DRIVER,
-                SUP_MODULE_UEFI_APPLICATION, SUP_MODULE_USER_DEFINED,
+                SUP_MODULE_UEFI_APPLICATION, SUP_MODULE_USER_DEFINED, SUP_MODULE_HOST_APPLICATION,
                 TAB_DEFAULT, SUP_MODULE_BASE,
                 EDK_COMPONENT_TYPE_SECURITY_CORE,
                 EDK_COMPONENT_TYPE_COMBINED_PEIM_DRIVER,
@@ -3749,8 +3749,19 @@ class FdfParser:
     #
     def _GetEfiSection(self, Obj):
         OldPos = self.GetFileBufferPos()
+        EfiSectionObj = EfiSection()
         if not self._GetNextWord():
-            return False
+            CurrentLine = self._CurrentLine()[self.CurrentOffsetWithinLine:].split()[0].strip()
+            if self._Token == '{' and Obj.FvFileType == "RAW" and TAB_SPLIT in CurrentLine:
+                if self._IsToken(TAB_VALUE_SPLIT):
+                    EfiSectionObj.FileExtension = self._GetFileExtension()
+                elif self._GetNextToken():
+                    EfiSectionObj.FileName = self._Token
+                EfiSectionObj.SectionType = BINARY_FILE_TYPE_RAW
+                Obj.SectionList.append(EfiSectionObj)
+                return True
+            else:
+                return False
         SectionName = self._Token
 
         if SectionName not in {
@@ -3816,7 +3827,6 @@ class FdfParser:
             Obj.SectionList.append(FvImageSectionObj)
             return True
 
-        EfiSectionObj = EfiSection()
         EfiSectionObj.SectionType = SectionName
 
         if not self._GetNextToken():

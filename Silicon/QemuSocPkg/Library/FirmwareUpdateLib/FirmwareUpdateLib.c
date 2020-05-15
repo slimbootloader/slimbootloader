@@ -261,8 +261,8 @@ GetFirmwareUpdateInfo (
   UINT32                         TopSwapRegionOffset;
   UINT32                         RedundantRegionOffset;
   UINT32                         NonRedundantRegionOffset;
-  UINT32                         CfgDataBase;
-  UINT32                         CfgDataSize;
+  UINT32                         CompBase;
+  UINT32                         CompSize;
   UINT8                          BootPartition;
   FIRMWARE_UPDATE_PARTITION      *UpdatePartition;
   FIRMWARE_UPDATE_REGION         *UpdateRegion;
@@ -273,6 +273,9 @@ GetFirmwareUpdateInfo (
 
   // Get current boot partition - Primary or backup blocks
   FlashMap      = GetFlashMapPtr();
+  if (FlashMap == NULL) {
+    return EFI_NOT_FOUND;
+  }
   BootPartition = GetCurrentBootPartition ();
 
   // Maximum update regions
@@ -282,31 +285,31 @@ GetFirmwareUpdateInfo (
   ASSERT (UpdatePartition != NULL);
   UpdatePartition->RegionCount   = RegionNumber;
 
-  if (CompareGuid(&ImageHdr->UpdateImageTypeId, &gCfgFWUpdateImageFileGuid) == TRUE) {
+  if (CompareGuid(&ImageHdr->UpdateImageTypeId, &gSblCompFWUpdateImageFileGuid)) {
     //
-    // Update CfgData
+    // Update SblComponent
     //
 
-    // Get CFGDATA component
-    IsBackup = (BootPartition == 0) ? TRUE : FALSE;
-    Status = GetComponentInfoByPartition (FLASH_MAP_SIG_CFGDATA, IsBackup, &CfgDataBase, &CfgDataSize);
+    // Get SBL component
+    IsBackup = (FwPolicy.Fields.UpdatePartitionB == 1) ? TRUE : FALSE;
+    Status = GetComponentInfoByPartition ((UINT32)ImageHdr->UpdateHardwareInstance, IsBackup, &CompBase, &CompSize);
     if (EFI_ERROR(Status)) {
-      DEBUG ((DEBUG_INFO, "No CFGDATA component found !"));
+      DEBUG ((DEBUG_INFO, "No SBL component found !"));
       return Status;
     }
 
     if (ImageHdr->UpdateImageSize & 0xFFF) {
-      DEBUG ((DEBUG_INFO, "CFGDATA capsule payload size is not block aligned!"));
+      DEBUG ((DEBUG_INFO, "capsule payload size is not block aligned!"));
       return EFI_UNSUPPORTED;
     }
 
-    if (ImageHdr->UpdateImageSize > CfgDataSize) {
-      DEBUG ((DEBUG_INFO, "CFGDATA capsule payload size is too big for the region on flash!"));
+    if (ImageHdr->UpdateImageSize > CompSize) {
+      DEBUG ((DEBUG_INFO, "capsule payload size is too big for the region on flash!"));
       return EFI_UNSUPPORTED;
     }
 
     UpdateRegion                  = &UpdatePartition->FwRegion[0];
-    UpdateRegion->ToUpdateAddress = FlashMap->RomSize + CfgDataBase;
+    UpdateRegion->ToUpdateAddress = FlashMap->RomSize + CompBase;
     UpdateRegion->UpdateSize      = ImageHdr->UpdateImageSize;
     UpdateRegion->SourceAddress   = (UINT8 *)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
     UpdatePartition->RegionCount  = 1;
@@ -474,13 +477,13 @@ SetBootPartition (
 **/
 EFI_STATUS
 EFIAPI
-EndFirmwareUpdate (
+PlatformEndFirmwareUpdate (
   VOID
   )
 {
   UINT8    Data;
 
-  DEBUG ((EFI_D_INIT, "Firmware update Done! clear FWU flag to normal boot mode.\n"));
+  DEBUG ((DEBUG_INIT, "Firmware update Done! clear FWU flag to normal boot mode.\n"));
 
   //
   // This is platform specific method.
@@ -493,4 +496,17 @@ EndFirmwareUpdate (
   return EFI_SUCCESS;
 }
 
+/**
+  Platform hook point to clear firmware update trigger.
 
+  This function is responsible for clearing firmware update trigger.
+
+**/
+VOID
+EFIAPI
+ClearFwUpdateTrigger (
+  VOID
+  )
+{
+  return;
+}

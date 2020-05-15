@@ -24,6 +24,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define FW_UPDATE_SM_PART_A           0x7E
 #define FW_UPDATE_SM_PART_B           0x7D
 #define FW_UPDATE_SM_PART_AB          0x7C
+#define FW_UPDATE_SM_DONE             0x77 // Lower 3 bits are ignored
 
 #define FW_UPDATE_IMAGE_UPDATE_NONE         0xFF
 #define FW_UPDATE_IMAGE_UPDATE_PENDING      0xFE
@@ -39,6 +40,10 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define MAX_FW_COMPONENTS       3
 
 #define CAPSULE_FLAGS_CFG_DATA  BIT0
+
+#define FW_UPDATE_COMP_BIOS_REGION SIGNATURE_32('B', 'I', 'O', 'S')
+#define FW_UPDATE_COMP_CSME_REGION SIGNATURE_32('C', 'S', 'M', 'E')
+#define FW_UPDATE_COMP_CSME_DRIVER SIGNATURE_32('C', 'S', 'M', 'D')
 
 #define FW_UPDATE_STATUS_SIGNATURE SIGNATURE_32 ('F', 'W', 'U', 'S')
 #define FW_UPDATE_STATUS_VERSION   0x1
@@ -96,6 +101,7 @@ typedef struct {
 
 typedef struct {
   EFI_GUID              FirmwareId;
+  UINT64                HardwareInstance;
   UINT32                LastAttemptVersion;
   UINT32                LastAttemptStatus;
   UINT8                 UpdatePending;
@@ -271,7 +277,7 @@ PrepareRegionsUpdate (
 **/
 EFI_STATUS
 EFIAPI
-EndFirmwareUpdate (
+PlatformEndFirmwareUpdate (
   VOID
   );
 
@@ -431,22 +437,6 @@ GetStateMachineFlag (
   );
 
 /**
-  Set state machine flag in flash.
-
-  This function will set state machine flag in the bootloader reserved region
-  First byte in the booloader reserved region is state machine flag.
-
-  @param[in] StateMachine     State machine flag byte.
-
-  @retval  EFI_SUCCESS        State machine flag set.
-  @retval  others             Error while setting state machine flag.
-**/
-EFI_STATUS
-SetStateMachineFlag (
-  IN UINT8    StateMachine
-);
-
-/**
   Switch between the boot partitions.
 
   This function will use platform specific method of switching
@@ -463,53 +453,10 @@ SetBootPartition (
   );
 
 /**
-  This function will enforce firmware update policy.
-
-  Firmware update policy
-
-  ----------------------------------------------------------
-  |  SM   |   TS   |             Operation                 |
-  ----------------------------------------------------------
-  |  FF   |    0   | Set SM to FE, Set TS and reboot       |
-  |  FF   |    1   | Set SM to FD, clear TS and reboot     |
-  |  FE   |    0   | Set TS and reboot                     |
-  |  FE   |    1   | Set SM to FC, clear TS and reboot     |
-  |  FD   |    0   | Set SM to FC, reboot                  |
-  |  FD   |    1   | clear TS and reboot                   |
-  |  FC   |    0   | Clear IBB signal,Set SM to FF, reboot |
-  |  FC   |    1   | Clear IBB signal,Set SM to FF, reboot |
-  ----------------------------------------------------------
-  @param[in][out] FwPolicy    Pointer to Firmware update policy.
-
-  @retval  EFI_SUCCESS        The operation completed successfully.
-  @retval  others             There is error happening.
-**/
-EFI_STATUS
-EnforceFwUpdatePolicy (
-  IN FIRMWARE_UPDATE_POLICY   *FwPolicy
- );
-
-/**
-  This function will enforce firmware update policy after
-  partition update is successful.
-
-  After update firmware update policy
-
-  @param[in] FwPolicy         Firmware update policy.
-
-  @retval  EFI_SUCCESS        The operation completed successfully.
-  @retval  others             There is error happening.
-**/
-EFI_STATUS
-AfterUpdateEnforceFwUpdatePolicy (
-  IN FIRMWARE_UPDATE_POLICY   FwPolicy
- );
-
-/**
   This function will be called after the firmware update is complete.
   This function will update firmware update status structure in reserved region
 
-  @param[in] ImageHdr           Pointer to Fw update image guid
+  @param[in] Signature          Signature of component to update.
   @param[in] LastAttemptVersion Version of last firmware update attempted.
   @param[in] LastAttemptStatus  Status of last firmware update attempted.
 
@@ -518,7 +465,7 @@ AfterUpdateEnforceFwUpdatePolicy (
 **/
 EFI_STATUS
 UpdateStatus (
-  IN EFI_GUID   *ImageId,
+  IN UINT64     Signature,
   IN UINT16     LastAttemptVersion,
   IN EFI_STATUS LastAttemptStatus
  );
@@ -526,7 +473,7 @@ UpdateStatus (
 /**
   Perform csme Firmware update.
 
-  This function based on the image type id guid from the image header will 
+  This function based on the image type id guid from the image header will
   call the respective functions to perform capsule update.
 
   @param[in] CapImage           The pointer to the firmware update capsule image.
@@ -543,5 +490,17 @@ UpdateCsme (
   IN  UINT32                        CapImageSize,
   IN  VOID                          *CsmeUpdInputData,
   IN  EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
+  );
+
+/**
+  Platform hook point to clear firmware update trigger.
+
+  This function is responsible for clearing firmware update trigger.
+
+**/
+VOID
+EFIAPI
+ClearFwUpdateTrigger (
+  VOID
   );
 #endif

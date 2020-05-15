@@ -17,12 +17,12 @@
 /**
 Check the Addr parameter for a valid IAS image; ensure the format is correct,
 confirm the IAS header CRC is correct, and (optional) confirm the hash of the
-data region of the IAS image matches the expected value.Also, return the
-hash of the IAS image to the caller.
+data region of the IAS image matches the expected value. Also, return the
+buffer and hash info of the IAS image to the caller.
 
-@param           Addr              Address of the IAS image to be verified for validity.
-@param           Size              Size of the IAS image to be verified for validity.
-@param           ImageHash         Hash of the IAS image is returned to the caller.
+@param  Addr              Address of the IAS image to be verified for validity.
+@param  Size              Size of the IAS image to be verified for validity.
+@param  IasImageInfo      IasImage buffer and hash info data structure
 
 @retval NULL  The IAS image is compromised.
 @retval Hdr   The IAS image is valid.
@@ -30,18 +30,21 @@ hash of the IAS image to the caller.
 **/
 IAS_HEADER *
 IsIasImageValid (
-  IN  VOID     *ImageAddr,
-  IN  UINT32    Size,
-  OUT UINT8    *ImageHash
+  IN  VOID               *ImageAddr,
+  IN  UINT32              Size,
+  OUT IAS_IMAGE_INFO     *IasImageInfo
   )
 {
   EFI_STATUS                 Status;
   IAS_HEADER                 *Hdr;
-  IAS_PUB_KEY                Key;
-  UINT8                      *Signature;
+  SIGNATURE_HDR              *SignHdr;
+  PUB_KEY_HDR                *PubKeyHdr;
+  IAS_PUB_KEY                *Key;
   UINT32                     CrcOut;
   UINT32                     Index;
   UINT32                     KeyIdx;
+  UINT8                      PubKeyBuf[sizeof(PUB_KEY_HDR) + RSA2048_NUMBYTES + RSA_E_SIZE];
+  UINT8                      SignBuf[sizeof(SIGNATURE_HDR) + RSA2048_NUMBYTES];
 
   Hdr = (IAS_HEADER *) ImageAddr;
 
@@ -73,24 +76,45 @@ IsIasImageValid (
     return NULL;
   }
 
-  Key.Signature = RSA_KEY_IPP_SIGNATURE;
-  CopyMem (&Key.PubKeyMod, ((UINT8 *) IAS_PUBLIC_KEY (Hdr)), sizeof (Key.PubKeyMod));
+  SignHdr     = (SIGNATURE_HDR *) SignBuf;
+  //Update SIGNATURE_HDR Info
+  SignHdr->Identifier = SIGNATURE_IDENTIFIER;
+  SignHdr->SigSize = RSA2048_NUMBYTES;
+  SignHdr->SigType = SIGNING_TYPE_RSA_PKCS_1_5;
+  SignHdr->HashAlg = HASH_TYPE_SHA256;
+
+  CopyMem (SignBuf + sizeof(SIGNATURE_HDR), (UINT8 *) IAS_SIGNATURE (Hdr), RSA2048_NUMBYTES);
+
+  PubKeyHdr     = (PUB_KEY_HDR *) PubKeyBuf;
+
+  //Update  PUB_KEY_HDR Info
+  PubKeyHdr->Identifier = PUBKEY_IDENTIFIER;
+  PubKeyHdr->KeySize = RSA_E_SIZE + RSA2048_NUMBYTES;
+  PubKeyHdr->KeyType = KEY_TYPE_RSA;
+
+  Key = (IAS_PUB_KEY *) (PubKeyBuf + sizeof(PUB_KEY_HDR));
+  CopyMem (Key->Modulus, ((UINT8 *) IAS_PUBLIC_KEY (Hdr)), RSA2048_NUMBYTES);
+
   //
   // The byte order of RSA public key exponent is opposite between what iastool.py
   // generates and what RsaVerify API expects. Thus reverse it here.
   //
-  for (Index = 0, KeyIdx = (RSA_E_SIZE + RSA_MOD_SIZE - 1); Index < RSA_E_SIZE; Index++, KeyIdx--) {
-    Key.PubKeyExp[Index] = ((UINT8 *) IAS_PUBLIC_KEY (Hdr))[KeyIdx];
+  for (Index = 0, KeyIdx = (RSA_E_SIZE + RSA2048_MOD_SIZE - 1); Index < RSA_E_SIZE; Index++, KeyIdx--) {
+    Key->PubExp[Index]  = ((UINT8 *) IAS_PUBLIC_KEY (Hdr))[KeyIdx];
   }
 
-  Signature = (UINT8 *) IAS_SIGNATURE (Hdr);
-  Status = DoRsaVerify ((CONST UINT8 *)Hdr, ((UINT32)IAS_PAYLOAD_END (Hdr)) - ((UINT32)Hdr), COMP_TYPE_PUBKEY_OS,
-                        Signature, (UINT8 *)&Key, NULL, ImageHash);
+  Status = DoRsaVerify ((CONST UINT8 *)Hdr, ((UINT32)IAS_PAYLOAD_END (Hdr)) - ((UINT32)(UINTN)Hdr),
+                         HASH_USAGE_PUBKEY_OS, SignHdr, PubKeyHdr, PcdGet8(PcdCompSignHashAlg), NULL, IasImageInfo->HashData);
   if (EFI_ERROR (Status) != EFI_SUCCESS) {
     DEBUG ((DEBUG_ERROR, "IAS image verification failed!\n"));
     return NULL;
   }
   DEBUG ((DEBUG_INFO, "IAS image is properly signed/verified\n"));
+
+  // populate IAS_IMAGE_INFO
+  IasImageInfo->CompBuf  = (UINT8 *)Hdr;
+  IasImageInfo->CompLen  = ((UINT32)IAS_PAYLOAD_END (Hdr)) - ((UINT32)(UINTN)Hdr);
+  IasImageInfo->HashAlg  = PcdGet8(PcdCompSignHashAlg);
 
   return Hdr;
 }
@@ -127,13 +151,15 @@ IasGetFiles (
     ZeroMem (Img, NumImg * sizeof (Img[0]));
 
     // Return Addr single entry (namely the entire payload) for plain images.
-    Img[0].Addr = Addr = (UINT32 *) IAS_PAYLOAD (IasImage);
+    Img[0].Addr = Addr = (UINT32 *)(UINTN)IAS_PAYLOAD (IasImage);
     Img[0].Size = Size = IasImage->DataLength;
+    Img[0].AllocType = ImageAllocateTypePointer;
 
     // If there are sub-images (Index.e NumFile > 0) return their addresses and sizes.
     for (Index = 0 ; Index < NumImg && Index < NumFile ; Index += 1) {
       Img[Index].Addr = Addr;
       Img[Index].Size = Size = ImgSize[Index];
+      Img[Index].AllocType = ImageAllocateTypePointer;
       Addr = (UINT32 *) ((UINT8 *)Addr + ROUNDED_UP (Size, 4));
     }
   }

@@ -41,6 +41,7 @@
 #include <Library/SpiFlashLib.h>
 #include <Library/TpmLib.h>
 #include <Library/VtdLib.h>
+#include <Library/VtdPmrLib.h>
 #include <RegAccess.h>
 #include <IndustryStandard/Pci.h>
 #include <IndustryStandard/Acpi.h>
@@ -73,30 +74,8 @@
 #define IOC_UART_PPR_CLK_M_DIV        0x40
 #define R_XHCI_MEM_DUAL_ROLE_CFG0     0x80D8
 
-#define NATIVE_PSTATE_LATENCY         10
-#define PSTATE_BM_LATENCY             10
 #define FVID_MAX_POWER                35000
 #define FVID_MIN_POWER                15000
-
-#pragma pack (1)
-typedef struct {
-  UINT8     NameOp;           // 12h ; First opcode is a NameOp
-  UINT8     PackageLead;      // 20h ; Package OpCode
-  UINT8     NumEntries;       // 06h ; Number of entries
-  UINT8     DwordPrefix1;     // 0Ch
-  UINT32    CoreFrequency;    // 00h
-  UINT8     DwordPrefix2;     // 0Ch
-  UINT32    Power;            // 00h
-  UINT8     DwordPrefix3;     // 0Ch
-  UINT32    TransLatency;     // 00h
-  UINT8     DwordPrefix4;     // 0Ch
-  UINT32    BMLatency;        // 00h
-  UINT8     DwordPrefix5;     // 0Ch
-  UINT32    Control;          // 00h
-  UINT8     DwordPrefix6;     // 0Ch
-  UINT32    Status;           // 00h
-} PSS_PACKAGE_LAYOUT;
-#pragma pack()
 
 typedef struct {
   UINT32    VendorDeviceId;   // Codec Vendor/Device ID

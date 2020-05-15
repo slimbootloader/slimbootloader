@@ -131,7 +131,7 @@
   ##  @libraryclass  The multiple segments PCI configuration Library Services that carry out
   ##                 PCI configuration and enable the PCI operations to be replayed during an
   ##                 S3 resume. This library class maps directly on top of the PciSegmentLib class.
-  S3PciSegmentLib|Include/Library/PciSegmentLib.h
+  S3PciSegmentLib|Include/Library/S3PciSegmentLib.h
 
   ##  @libraryclass  Provides services to access PCI Configuration Space.
   PciLib|Include/Library/PciLib.h
@@ -749,6 +749,9 @@
   ## Include/Guid/GraphicsInfoHob.h
   gEfiGraphicsDeviceInfoHobGuid     = { 0xe5cb2ac9, 0xd35d, 0x4430, { 0x93, 0x6e, 0x1d, 0xe3, 0x32, 0x47, 0x8d, 0xe7 }}
 
+  ## Include/Guid/SmramMemoryReserve.h
+  gEfiSmmSmramMemoryGuid            = { 0x6dadf1d1, 0xd4cc, 0x4910, { 0xbb, 0x6e, 0x82, 0xb1, 0xfd, 0x80, 0xff, 0x3d }}
+
   #
   # GUID defined in PI1.6
   #
@@ -924,6 +927,12 @@
 
   ## Include/Ppi/SecHobData.h
   gEfiSecHobDataPpiGuid = { 0x3ebdaf20, 0x6667, 0x40d8, {0xb4, 0xee, 0xf5, 0x99, 0x9a, 0xc1, 0xb7, 0x1f } }
+
+  ## Include/Ppi/MmAccess.h
+  gEfiPeiMmAccessPpiGuid          =  { 0x268f33a9, 0xcccd, 0x48be, { 0x88, 0x17, 0x86, 0x5, 0x3a, 0xc3, 0x2e, 0xd6 }}
+
+  ## Include/Ppi/MmControl.h
+  gEfiPeiMmControlPpiGuid         =  { 0x61c68702, 0x4d7e, 0x4f43, { 0x8d, 0xef, 0xa7, 0x43, 0x5, 0xce, 0x74, 0xc5 }}
 
   #
   # PPIs defined in PI 1.7.
@@ -1166,6 +1175,9 @@
   #
   # Protocols defined in PI 1.5.
   #
+
+  ## Include/Protocol/MmMp.h
+  gEfiMmMpProtocolGuid = { 0x5d5450d7, 0x990c, 0x4180, { 0xa8, 0x3, 0x8e, 0x63, 0xf0, 0x60, 0x83, 0x7 }}
 
   ## Include/Protocol/MmEndOfDxe.h
   gEfiMmEndOfDxeProtocolGuid = { 0x24e70042, 0xd5c5, 0x4260, { 0x8c, 0x39, 0xa, 0xd3, 0xaa, 0x32, 0xe9, 0x3d }}

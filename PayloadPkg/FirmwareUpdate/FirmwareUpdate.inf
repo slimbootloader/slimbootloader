@@ -21,7 +21,9 @@
 #
 
 [Sources]
+  FirmwareUpdateHelper.h
   FirmwareUpdate.c
+  FirmwareUpdateHelper.c
   GetCapsuleImage.c
   CsmeFwUpdate.c
   ErrorList.c
@@ -44,6 +46,7 @@
   SecureBootLib
   LiteFvLib
   ConfigDataLib
+  ContainerLib
 
 [Guids]
   gLoaderMemoryMapInfoGuid
@@ -53,10 +56,6 @@
   gFirmwareUpdateImageFileGuid
   gFlashMapInfoGuid
   gBootLoaderVersionFileGuid
-  gSblFWUpdateImageFileGuid
-  gCfgFWUpdateImageFileGuid
-  gCsmeFWUpdateImageFileGuid
-  gCsmeFWUDriverImageFileGuid
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
@@ -66,6 +65,7 @@
   gPayloadTokenSpaceGuid.PcdRsvdRegionBase
   gPlatformCommonLibTokenSpaceGuid.PcdLowestSupportedFwVer
   gPayloadTokenSpaceGuid.PcdCsmeUpdateEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdCompSignHashAlg
 
 [Depex]
   TRUE

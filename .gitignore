@@ -7,7 +7,7 @@ ConfigDataDynamic.h
 ConfigDataStruct.h
 ConfigDataCommonStruct.h
 CfgDataDef.bsf
-ResetVector.ia32.raw
+ResetVector.*.raw
 Fsp.bsf
 FspDbg.bin
 FspRel.bin
@@ -15,6 +15,7 @@ FspRel.bin
 /Stitch
 /Build
 /Conf
+/Download
 /PayloadPkg/PayloadBins
 Platform/ApollolakeBoardPkg/VbtBin
 Platform/CoffeelakeBoardPkg/VbtBin

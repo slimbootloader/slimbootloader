@@ -41,7 +41,7 @@ InternalGetBpSpi (
   )
 {
   UINT32                         BiosAddr;
-  
+
   //
   // Compute BP FlashLinearAddress
   //
@@ -68,7 +68,7 @@ InternalGetBpSpi (
   if (LbpPointer != NULL) {
     *LbpPointer = (VOID *)((UINTN)0xFFFFFFFF - BiosAddr);
   }
-	
+
   DEBUG ((DEBUG_INFO, "Flash address of BP%d = %X\n", BpSel+1, (VOID *)((UINTN)0xFFFFFFFF - BiosAddr)));
 
   // since BPDT is in front of BIOS region, need minus that one.
@@ -347,9 +347,9 @@ GetSubPartitionDataByName (
 
 /**
   Get BPDT partition size.
-  
+
   NOTE: Two BPDT partition size is same.
-  
+
   @param[out]   PartitionSize    The partition size.
 
   @retval  EFI_SUCCESS           Get the partition size successfully.
@@ -365,13 +365,13 @@ GetPartitionSize (
   EFI_STATUS                     Status;
   VOID                           *BpPointer1;
   VOID                           *BpPointer2;
-  	
+
    Status = GetBootPartitionPointer(BootPartition1, &BpPointer1);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Get BootPartition1, Status=0x%x\n", Status));
-	return Status;
+    return Status;
   }
-	
+
   Status = GetBootPartitionPointer(BootPartition2, &BpPointer2);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Get BootPartition2, Status=0x%x\n", Status));
@@ -513,7 +513,7 @@ InitializeBootDevice(
     case BootMediaEmmc:
     case BootMediaUfs:
       DEBUG ((DEBUG_INFO, "Boot Device is EMMC/UFS, not support now.\n"));
-			ASSERT (FALSE);
+      ASSERT (FALSE);
       break;
     case BootMediaSpi:
       Status = SpiConstructor ();
@@ -521,9 +521,9 @@ InitializeBootDevice(
       break;
     default:
       DEBUG ((DEBUG_ERROR, "Unable to determine boot device!\n"));
-			ASSERT (FALSE);
+      ASSERT (FALSE);
       break;
   }
-  
+
 }
 

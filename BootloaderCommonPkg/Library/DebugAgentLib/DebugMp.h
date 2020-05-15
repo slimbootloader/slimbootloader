@@ -202,7 +202,7 @@ IsAllCpuRunning (
   If yes, halt other processors.
 
   @param[in] ProcessorIndex   Processor index value.
- 
+
   @return TRUE       This processor is the first breaking processor.
   @return FALSE      This processor is not the first breaking processor.
 

@@ -183,6 +183,8 @@ DefinitionBlock (
   Include ("SerialIoDevices.asl")
   Include ("PinDriverLib.asl")
 
+  Include ("FwuWmi.asl")
+
   If (LAnd(LNotEqual(WLGP, 0), LEqual(WLRP, 0x03))) {
     Scope(\_SB.PCI0.RP03) {
       Method (PPRW, 0) {

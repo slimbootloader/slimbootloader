@@ -37,7 +37,7 @@ CheckSmbiosOverflow (
 {
   SMBIOS_TABLE_ENTRY_POINT      *SmbiosEntry;
 
-  SmbiosEntry = (SMBIOS_TABLE_ENTRY_POINT *) PcdGet32 (PcdSmbiosTablesBase);
+  SmbiosEntry = (SMBIOS_TABLE_ENTRY_POINT *)(UINTN)PcdGet32 (PcdSmbiosTablesBase);
   if (SmbiosEntry == NULL) {
     return EFI_DEVICE_ERROR;
   }
@@ -68,14 +68,14 @@ FindSmbiosType (
   SMBIOS_TABLE_ENTRY_POINT      *SmbiosEntry;
   UINT8                         *StringPtr;
 
-  SmbiosEntry = (SMBIOS_TABLE_ENTRY_POINT *) PcdGet32 (PcdSmbiosTablesBase);
+  SmbiosEntry = (SMBIOS_TABLE_ENTRY_POINT *)(UINTN)PcdGet32 (PcdSmbiosTablesBase);
   if (SmbiosEntry == NULL) {
     return NULL;
   }
 
-  TypeHdr = (SMBIOS_STRUCTURE *)(SmbiosEntry->TableAddress);
+  TypeHdr = (SMBIOS_STRUCTURE *)(UINTN)SmbiosEntry->TableAddress;
   for (; TypeHdr->Type != SMBIOS_TYPE_END_OF_TABLE;) {
-    if ( (UINT32)TypeHdr > (PcdGet32 (PcdSmbiosTablesBase) + (UINT32)PcdGet16 (PcdSmbiosTablesSize)) ) {
+    if ( (UINT32)(UINTN)TypeHdr > (PcdGet32 (PcdSmbiosTablesBase) + (UINT32)PcdGet16 (PcdSmbiosTablesSize)) ) {
       return NULL;
     }
     if (TypeHdr->Type == Type) {
@@ -117,7 +117,7 @@ FinalizeSmbios (
   EFI_STATUS                    Status;
   SMBIOS_TABLE_ENTRY_POINT      *SmbiosEntry;
 
-  SmbiosEntry = (SMBIOS_TABLE_ENTRY_POINT *) PcdGet32 (PcdSmbiosTablesBase);
+  SmbiosEntry = (SMBIOS_TABLE_ENTRY_POINT *)(UINTN)PcdGet32 (PcdSmbiosTablesBase);
   if (SmbiosEntry == NULL) {
     return EFI_DEVICE_ERROR;
   }
@@ -133,7 +133,7 @@ FinalizeSmbios (
   //
   // Create Type127 and update global Type127 for the next append
   //
-  Type127 = (SMBIOS_TABLE_TYPE127 *) (SmbiosEntry->TableAddress + SmbiosEntry->TableLength);
+  Type127 = (SMBIOS_TABLE_TYPE127 *)(UINTN)(SmbiosEntry->TableAddress + SmbiosEntry->TableLength);
   Type127->Hdr.Type = SMBIOS_TYPE_END_OF_TABLE;
   Type127->Hdr.Length = sizeof (SMBIOS_STRUCTURE);
   mType127Ptr = (VOID *) Type127;
@@ -150,6 +150,11 @@ FinalizeSmbios (
   SmbiosEntry->EntryPointStructureChecksum  = 0;
   SmbiosEntry->IntermediateChecksum         = CalculateCheckSum8 ((UINT8 *)SmbiosEntry + 0x10, sizeof (SMBIOS_TABLE_ENTRY_POINT) - 0x10);
   SmbiosEntry->EntryPointStructureChecksum  = CalculateCheckSum8 ((UINT8 *)SmbiosEntry       , sizeof (SMBIOS_TABLE_ENTRY_POINT)       );
+
+  //
+  // Keep a copy in legacy F segment so that non-UEFI can locate it
+  //
+  CopyMem ((VOID *)0xFFF60, SmbiosEntry, sizeof (SMBIOS_TABLE_ENTRY_POINT));
 
   return Status;
 }
@@ -178,7 +183,7 @@ AppendSmbiosType (
   EFI_STATUS                  Status;
   SMBIOS_STRUCTURE            *TypeHdr;
 
-  SmbiosEntry = (SMBIOS_TABLE_ENTRY_POINT *) PcdGet32 (PcdSmbiosTablesBase);
+  SmbiosEntry = (SMBIOS_TABLE_ENTRY_POINT *)(UINTN)PcdGet32 (PcdSmbiosTablesBase);
   if (SmbiosEntry == NULL || mType127Ptr == NULL || TypeLength > SMBIOS_TABLE_MAX_LENGTH) {
     return EFI_DEVICE_ERROR;
   }
@@ -237,7 +242,7 @@ GetSmbiosString (
   SMBIOS_TYPE_STRINGS       *SmbiosStrings;
   UINT16                    Index;
 
-  SmbiosStrings = (SMBIOS_TYPE_STRINGS *) PcdGet32 (PcdSmbiosStringsPtr);
+  SmbiosStrings = (SMBIOS_TYPE_STRINGS *)(UINTN)PcdGet32 (PcdSmbiosStringsPtr);
   if (SmbiosStrings == NULL) {
     return "Unknown";
   }
@@ -307,7 +312,7 @@ AddSmbiosType (
   UINT8                         StrIdx;
   UINT8                         NumStr;
 
-  SmbiosEntry = (SMBIOS_TABLE_ENTRY_POINT *) PcdGet32 (PcdSmbiosTablesBase);
+  SmbiosEntry = (SMBIOS_TABLE_ENTRY_POINT *)(UINTN)PcdGet32 (PcdSmbiosTablesBase);
 
   //
   // Prepare type info
@@ -395,7 +400,7 @@ SmbiosInit (
   //
   // Create Entry Point structure
   //
-  SmbiosEntryPoint = (SMBIOS_TABLE_ENTRY_POINT *) PcdGet32 (PcdSmbiosTablesBase);
+  SmbiosEntryPoint = (SMBIOS_TABLE_ENTRY_POINT *)(UINTN)PcdGet32 (PcdSmbiosTablesBase);
   if (SmbiosEntryPoint == NULL) {
     DEBUG ((DEBUG_INFO, "Memory not allocated for SMBIOS tables"));
     return EFI_DEVICE_ERROR;
@@ -408,7 +413,7 @@ SmbiosInit (
   SmbiosEntryPoint->TableLength                               = 0;
   *((UINT32 *)&(SmbiosEntryPoint->IntermediateAnchorString))  = SIGNATURE_32('_', 'D', 'M', 'I');
   SmbiosEntryPoint->IntermediateAnchorString[4]               = '_';
-  SmbiosEntryPoint->TableAddress                              = (UINT32)SmbiosEntryPoint + sizeof (SMBIOS_TABLE_ENTRY_POINT) + sizeof (UINT8);
+  SmbiosEntryPoint->TableAddress                              = (UINT32)(UINTN)SmbiosEntryPoint + sizeof (SMBIOS_TABLE_ENTRY_POINT) + sizeof (UINT8);
 
   //
   // Add common SMBIOS Types' information.

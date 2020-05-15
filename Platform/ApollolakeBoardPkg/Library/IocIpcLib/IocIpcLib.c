@@ -97,8 +97,8 @@ UartWriteReg (
   @retval Others            The operation fails.
 
 **/
-STATIC
 EFI_STATUS
+EFIAPI
 IpcResetUart (
   IN  IOC_IPC_DEVICE    *IpcDevice
   )
@@ -123,8 +123,8 @@ IpcResetUart (
   @retval Others            The operation fails.
 
 **/
-STATIC
 EFI_STATUS
+EFIAPI
 IpcInitUart (
   IN IOC_IPC_DEVICE   *IpcDevice
   )
@@ -162,8 +162,8 @@ IpcInitUart (
   @retval Others            The operation fails.
 
 **/
-STATIC
 EFI_STATUS
+EFIAPI
 IpcSendUart (
   IN  IOC_IPC_DEVICE  *IpcDevice,
   IN  UINT8           Ch
@@ -194,8 +194,8 @@ IpcSendUart (
   @retval Others            The operation fails.
 
 **/
-STATIC
 EFI_STATUS
+EFIAPI
 IpcReceiveUart (
   IN  IOC_IPC_DEVICE    *IpcDevice,
   OUT CHAR8             *Buffer,

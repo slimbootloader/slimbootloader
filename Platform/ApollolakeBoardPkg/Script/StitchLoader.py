@@ -366,6 +366,7 @@ def patch_flash_map (image_data, platform_data = 0xffffffff):
       b'VARS' : "IFWI/BIOS/BP0/BPDT/BpdtIbb/VAR",
       b'MRCD' : "IFWI/BIOS/BP0/BPDT/BpdtIbb/MRCD",
       b'CNFG' : "IFWI/BIOS/BP0/BPDT/BpdtIbb/CFGD",
+      b'KEYH' : "IFWI/BIOS/BP0/BPDT/BpdtIbb/KEYH",
       b'FWUP' : "IFWI/BIOS/BP0/BPDT/BpdtIbb/FWUP",
       b'SG02' : "IFWI/BIOS/BP0/BPDT/BpdtIbb/OBB",
       b'SG1B' : "IFWI/BIOS/BP0/BPDT/BpdtIbb/IBB",
@@ -425,6 +426,8 @@ def patch_flash_map (image_data, platform_data = 0xffffffff):
 
             comp  = IFWI_PARSER.locate_component (ifwi, path)
             if not comp:
+                if desc.sig == b'KEYH':
+                    continue
                 raise Exception("Cannot locate component '%s' in BPDT !" % path)
             if (desc.size == 0) and (desc.offset == 0):
                 desc.size = comp.length
@@ -507,6 +510,7 @@ def create_ifwi_image (ifwi_in, ifwi_out, bios_out, platform_data, non_redundant
           ('OBB'  , 'OBB'),
           ('FWUP' , 'FWU'),
           ('CFGD' , 'CFGDATA'),
+          ('KEYH' , 'KEYHASH'),
           ('VAR'  , 'VAR'),
           ('MRCD' , 'MRCDATA'),
           ('PLD'  , 'PLD'),
@@ -517,6 +521,11 @@ def create_ifwi_image (ifwi_in, ifwi_out, bios_out, platform_data, non_redundant
           ('EPLD' , 'EPLD'),
           ('UVAR' , 'UVAR'),
           ('PLD'  , 'PLD'),
+        ]
+
+        # optional components
+        opt_list = [
+          'EPLD', 'UVAR'
         ]
 
         if redundant_payload:
@@ -540,7 +549,7 @@ def create_ifwi_image (ifwi_in, ifwi_out, bios_out, platform_data, non_redundant
                 file_path = ''
             else:
                 file_path = os.path.join(stitch_dir, 'Stitch_%s.bin' % file_name)
-            if (comp_name == 'EPLD' or comp_name == 'UVAR') and not os.path.exists(file_path):
+            if (comp_name in opt_list) and not os.path.exists(file_path):
                 ret = 0
             else:
                 ret = manipulate_ifwi  ('ADD', bp1sbpdt + comp_name,  ifwi_data, file_path)

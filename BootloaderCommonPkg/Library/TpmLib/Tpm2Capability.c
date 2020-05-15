@@ -44,7 +44,7 @@ typedef struct {
   NOTE:
   To simplify this function, leave returned CapabilityData for caller to unpack since there are
   many capability categories and only few categories will be used in firmware. It means the caller
-  need swap the byte order for the feilds in CapabilityData.
+  need swap the byte order for the fields in CapabilityData.
 
   @param[in]  Capability         Group selection; determines the format of the response.
   @param[in]  Property           Further definition of information.
@@ -98,11 +98,19 @@ Tpm2GetCapability (
   }
 
   //
+  // Fail if command failed
+  //
+  if (SwapBytes32(RecvBuffer.Header.responseCode) != TPM_RC_SUCCESS) {
+    DEBUG ((DEBUG_VERBOSE, "Tpm2GetCapability: Response Code error! 0x%08x\r\n", SwapBytes32(RecvBuffer.Header.responseCode)));
+    return EFI_DEVICE_ERROR;
+  }
+
+  //
   // Return the response
   //
   *MoreData = RecvBuffer.MoreData;
   //
-  // Does not unpack all possiable property here, the caller should unpack it and note the byte order.
+  // Does not unpack all possible property here, the caller should unpack it and note the byte order.
   //
   CopyMem (CapabilityData, &RecvBuffer.CapabilityData, RecvBufferSize - sizeof (TPM2_RESPONSE_HEADER) - sizeof (UINT8));
 
@@ -142,9 +150,18 @@ Tpm2GetCapabilityPcrs (
   }
 
   Pcrs->count = SwapBytes32 (TpmCap.data.assignedPCR.count);
+  if (Pcrs->count > HASH_COUNT) {
+    DEBUG ((DEBUG_VERBOSE, "Tpm2GetCapabilityPcrs - Pcrs->count error %x\n", Pcrs->count));
+    return EFI_DEVICE_ERROR;
+  }
+
   for (Index = 0; Index < Pcrs->count; Index++) {
     Pcrs->pcrSelections[Index].hash = SwapBytes16 (TpmCap.data.assignedPCR.pcrSelections[Index].hash);
     Pcrs->pcrSelections[Index].sizeofSelect = TpmCap.data.assignedPCR.pcrSelections[Index].sizeofSelect;
+    if (Pcrs->pcrSelections[Index].sizeofSelect > PCR_SELECT_MAX) {
+      DEBUG ((DEBUG_VERBOSE, "Tpm2GetCapabilityPcrs - sizeofSelect error %x\n", Pcrs->pcrSelections[Index].sizeofSelect));
+      return EFI_DEVICE_ERROR;
+    }
     CopyMem (Pcrs->pcrSelections[Index].pcrSelect, TpmCap.data.assignedPCR.pcrSelections[Index].pcrSelect,
              Pcrs->pcrSelections[Index].sizeofSelect);
   }
@@ -183,7 +200,7 @@ Tpm2GetCapabilitySupportedAndActivePcrs (
   // If error, assume that we have at least SHA-1 (and return the error.)
   //
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "GetSupportedAndActivePcrs - Tpm2GetCapabilityPcrs fail!\n"));
+    DEBUG ((DEBUG_ERROR, "GetSupportedAndActivePcrs - Tpm2GetCapabilityPcrs fail!\n"));
     *TpmHashAlgorithmBitmap = HASH_ALG_SHA1;
     *ActivePcrBanks         = HASH_ALG_SHA1;
   }
@@ -192,48 +209,48 @@ Tpm2GetCapabilitySupportedAndActivePcrs (
   // and currently allocated.
   //
   else {
-    DEBUG ((EFI_D_INFO, "GetSupportedAndActivePcrs - Count = %08x\n", Pcrs.count));
+    DEBUG ((DEBUG_INFO, "GetSupportedAndActivePcrs - Count = %08x\n", Pcrs.count));
     *TpmHashAlgorithmBitmap = 0;
     *ActivePcrBanks         = 0;
     for (Index = 0; Index < Pcrs.count; Index++) {
       switch (Pcrs.pcrSelections[Index].hash) {
       case TPM_ALG_SHA1:
-        DEBUG ((EFI_D_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA1 present.\n"));
+        DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA1 present.\n"));
         *TpmHashAlgorithmBitmap |= HASH_ALG_SHA1;
         if (!IsZeroBuffer (Pcrs.pcrSelections[Index].pcrSelect, Pcrs.pcrSelections[Index].sizeofSelect)) {
-          DEBUG ((EFI_D_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA1 active.\n"));
+          DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA1 active.\n"));
           *ActivePcrBanks |= HASH_ALG_SHA1;
         }
         break;
       case TPM_ALG_SHA256:
-        DEBUG ((EFI_D_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA256 present.\n"));
+        DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA256 present.\n"));
         *TpmHashAlgorithmBitmap |= HASH_ALG_SHA256;
         if (!IsZeroBuffer (Pcrs.pcrSelections[Index].pcrSelect, Pcrs.pcrSelections[Index].sizeofSelect)) {
-          DEBUG ((EFI_D_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA256 active.\n"));
+          DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA256 active.\n"));
           *ActivePcrBanks |= HASH_ALG_SHA256;
         }
         break;
       case TPM_ALG_SHA384:
-        DEBUG ((EFI_D_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA384 present.\n"));
+        DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA384 present.\n"));
         *TpmHashAlgorithmBitmap |= HASH_ALG_SHA384;
         if (!IsZeroBuffer (Pcrs.pcrSelections[Index].pcrSelect, Pcrs.pcrSelections[Index].sizeofSelect)) {
-          DEBUG ((EFI_D_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA384 active.\n"));
+          DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA384 active.\n"));
           *ActivePcrBanks |= HASH_ALG_SHA384;
         }
         break;
       case TPM_ALG_SHA512:
-        DEBUG ((EFI_D_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA512 present.\n"));
+        DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA512 present.\n"));
         *TpmHashAlgorithmBitmap |= HASH_ALG_SHA512;
         if (!IsZeroBuffer (Pcrs.pcrSelections[Index].pcrSelect, Pcrs.pcrSelections[Index].sizeofSelect)) {
-          DEBUG ((EFI_D_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA512 active.\n"));
+          DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA512 active.\n"));
           *ActivePcrBanks |= HASH_ALG_SHA512;
         }
         break;
       case TPM_ALG_SM3_256:
-        DEBUG ((EFI_D_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SM3_256 present.\n"));
+        DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SM3_256 present.\n"));
         *TpmHashAlgorithmBitmap |= HASH_ALG_SM3_256;
         if (!IsZeroBuffer (Pcrs.pcrSelections[Index].pcrSelect, Pcrs.pcrSelections[Index].sizeofSelect)) {
-          DEBUG ((EFI_D_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SM3_256 active.\n"));
+          DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SM3_256 active.\n"));
           *ActivePcrBanks |= HASH_ALG_SM3_256;
         }
         break;

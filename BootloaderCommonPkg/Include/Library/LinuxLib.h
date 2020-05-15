@@ -13,6 +13,8 @@
 
 #define BOOT_PARAMS_BASE      0x00090000
 #define LINUX_KERNEL_BASE     0x00100000
+#define CMDLINE_OFFSET        0xF000
+#define CMDLINE_LENGTH_MAX    0x800
 
 #define E820_RAM              1
 #define E820_RESERVED         2
@@ -220,12 +222,13 @@ LoadBzImage (
 /**
   Update linux kernel boot parameters.
 
-  @retval EFI_SUCCESS        Linux boot parameters were updated successfully.
+  @param[in]  Bp             BootParams address to be updated
+
 **/
 VOID
 EFIAPI
 UpdateLinuxBootParams (
-  VOID
+  IN  BOOT_PARAMS            *Bp
   );
 
 /**

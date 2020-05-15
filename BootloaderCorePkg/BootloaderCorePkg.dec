@@ -1,7 +1,7 @@
 ## @file
 # Provides bootloader driver related package definitions.
 #
-# Copyright (c) 2016 - 2019, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2016 - 2020, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -34,7 +34,6 @@
   gPlatformModuleTokenSpaceGuid.PcdFlashBaseAddress       | 0x00000000 | UINT32 | 0x20000010
   gPlatformModuleTokenSpaceGuid.PcdFlashSize              | 0x00000000 | UINT32 | 0x20000011
   gPlatformModuleTokenSpaceGuid.PcdFlashBlockSize         | 0x00001000 | UINT32 | 0x20000012
-  gPlatformModuleTokenSpaceGuid.PcdDebugInterfaceFlags    | 0x00000000 | UINT32 | 0x20000013
 
 
   # PcdStageBase:     Flash address to the stage binary (Could be compressed binary)
@@ -67,6 +66,7 @@
 
   gPlatformModuleTokenSpaceGuid.PcdStage1StackSize        | 0x00000000 | UINT32 | 0x20000060
   gPlatformModuleTokenSpaceGuid.PcdStage1DataSize         | 0x00000000 | UINT32 | 0x20000061
+  gPlatformModuleTokenSpaceGuid.PcdStage1StackBaseOffset  | 0x00000000 | UINT32 | 0x20000062
   gPlatformModuleTokenSpaceGuid.PcdCfgDatabaseSize        | 0x00000000 | UINT32 | 0x20000063
   gPlatformModuleTokenSpaceGuid.PcdStage2LoadHigh         | FALSE      | BOOLEAN| 0x20000068
   gPlatformModuleTokenSpaceGuid.PcdPayloadLoadHigh        | FALSE      | BOOLEAN| 0x20000069
@@ -93,6 +93,26 @@
   gPlatformModuleTokenSpaceGuid.PcdOsBootOptionNumber     | 0x00000008 | UINT32 | 0x200000A3
   gPlatformModuleTokenSpaceGuid.PcdServiceNumber          | 0x00000004 | UINT32 | 0x200000A4
 
+  #
+  # typedef struct {
+  #   UINT8           DowngradeIo32;  // default: 1
+  #   UINT8           DowngradeMem64; // default: 1
+  #   UINT8           DowngradePMem64;// default: 1
+  #   UINT8           Reserved;
+  #   UINT8           BusScanType;    // default:0 (0: list, 1: range)
+  #   UINT8           NumOfBus;       // the number of BusScanItems
+  #   UINT8           BusScanItems[0];
+  # } PCI_ENUM_POLICY_INFO;
+  #
+  # Update BoardConfig.py if necessary
+  # self._PCI_ENUM_DOWNGRADE_IO32   = 0
+  # self._PCI_ENUM_DOWNGRADE_MEM64  = 0
+  # self._PCI_ENUM_DOWNGRADE_PMEM64 = 0
+  # self._PCI_ENUM_BUS_SCAN_TYPE    = 1
+  # self._PCI_ENUM_BUS_SCAN_ITEMS   = '0,0xff'
+  gPlatformModuleTokenSpaceGuid.PcdPciEnumPolicyInfo      | {0x00}     | VOID*  | 0x200000A5
+  gPlatformModuleTokenSpaceGuid.PcdPciResourceMem64Base   | 0x0000000000000000  | UINT64     | 0x200000A6
+
   gPlatformModuleTokenSpaceGuid.PcdLoaderHobStackSize     | 0x00040000 | UINT32 | 0x200000B0
   gPlatformModuleTokenSpaceGuid.PcdEarlyLogBufferSize     | 0x00000400 | UINT32 | 0x200000B1
   gPlatformModuleTokenSpaceGuid.PcdLogBufferSize          | 0x00008000 | UINT32 | 0x200000B2
@@ -104,13 +124,16 @@
   gPlatformModuleTokenSpaceGuid.PcdTopSwapRegionSize      | 0x00000000 | UINT32 | 0x200000C0
   gPlatformModuleTokenSpaceGuid.PcdRedundantRegionSize    | 0x00000000 | UINT32 | 0x200000C1
 
-  gPlatformModuleTokenSpaceGuid.PcdVerifiedBootHashMask   | 0x00000000 | UINT32 | 0x200000D0
+  gPlatformModuleTokenSpaceGuid.PcdVerifiedBootStage1B   | 0x0 | BOOLEAN | 0x200000D0
 
   gPlatformModuleTokenSpaceGuid.PcdCpuMaxLogicalProcessorNumber | 16   | UINT32 | 0x200000E0
   gPlatformModuleTokenSpaceGuid.PcdMaxServiceNumber       | 8          | UINT32 | 0x200000E1
   gPlatformModuleTokenSpaceGuid.PcdSeedListBufferSize     | 0x00000400 | UINT32 | 0x200000E2
 
   gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesSize       |     0x1000 | UINT16 | 0x200000E3
+
+  # Size of the Hash store allocated in bootloader
+  gPlatformModuleTokenSpaceGuid.PcdHashStoreSize       | 0x00000200 | UINT32 | 0x200000F1
 
 [PcdsFixedAtBuild, PcdsPatchableInModule]
   #
@@ -129,6 +152,7 @@
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase          | 0xFF000000 | UINT32 | 0x20000120
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegSize          | 0x00000000 | UINT32 | 0x20000121
   gPlatformModuleTokenSpaceGuid.PcdHashStoreBase          | 0xFF000000 | UINT32 | 0x20000181
+  gPlatformModuleTokenSpaceGuid.PcdCfgDataIntBase         | 0xFF000000 | UINT32 | 0x20000182
   gPlatformModuleTokenSpaceGuid.PcdDeviceTreeBase         | 0xFF000000 | UINT32 | 0x20000183
   gPlatformModuleTokenSpaceGuid.PcdSplashLogoAddress      | 0xFF000000 | UINT32 | 0x20000184
   gPlatformModuleTokenSpaceGuid.PcdFileDataBase           | 0xFF000000 | UINT32 | 0x20000185
@@ -141,7 +165,6 @@
   gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsPtr       | 0x00000000 | UINT32 | 0x20000198
   gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsCnt       |     0x0000 | UINT16 | 0x20000199
   gPlatformModuleTokenSpaceGuid.PcdFuncCpuInitHook        | 0x00000000 | UINT32 | 0x2000019A
-
 
 [PcdsFeatureFlag]
   # Determine if the Intel GFX device should be enabled or not in system
@@ -158,9 +181,9 @@
   gPlatformModuleTokenSpaceGuid.PcdStage1AXip             | TRUE       | BOOLEAN | 0x20000208
   gPlatformModuleTokenSpaceGuid.PcdLoadImageUseFsp        | FALSE      | BOOLEAN | 0x20000209
   gPlatformModuleTokenSpaceGuid.PcdVtdEnabled             | FALSE      | BOOLEAN | 0x2000020B
-  gPlatformModuleTokenSpaceGuid.PcdFlashMapEnabled        | FALSE      | BOOLEAN | 0x2000020C
   gPlatformModuleTokenSpaceGuid.PcdS3DebugEnabled         | FALSE      | BOOLEAN | 0x2000020D
   gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled         | FALSE      | BOOLEAN | 0x2000020E
   gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled          | FALSE      | BOOLEAN | 0x2000020F
   gPlatformModuleTokenSpaceGuid.PcdLinuxPayloadEnabled    | FALSE      | BOOLEAN | 0x20000210
-
+  gPlatformModuleTokenSpaceGuid.PcdAriSupport             | FALSE      | BOOLEAN | 0x20000211
+  gPlatformModuleTokenSpaceGuid.PcdSrIovSupport           | FALSE      | BOOLEAN | 0x20000212

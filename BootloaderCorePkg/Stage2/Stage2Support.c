@@ -16,6 +16,7 @@ const PLATFORM_SERVICE   mPlatformService = {
   .NotifyPhase      = BoardNotifyPhase
 };
 
+
 /**
   Platform notify service.
 
@@ -23,12 +24,14 @@ const PLATFORM_SERVICE   mPlatformService = {
 
 **/
 VOID
+EFIAPI
 BoardNotifyPhase (
   IN BOARD_INIT_PHASE   Phase
   )
 {
   FSP_INIT_PHASE  FspPhase;
   UINT8           FspPhaseMask;
+  EFI_STATUS      Status;
 
   // This is board notification from payload
   FspPhaseMask = 0;
@@ -46,7 +49,10 @@ BoardNotifyPhase (
   if (FspPhaseMask != 0) {
     if ((FspPhaseMask & mFspPhaseMask) == 0) {
       // Only call FSP notify once
-      CallFspNotifyPhase (FspPhase);
+      Status = CallFspNotifyPhase (FspPhase);
+      FspResetHandler (Status);
+      ASSERT_EFI_ERROR (Status);
+
       mFspPhaseMask |= FspPhaseMask;
     }
 
@@ -93,7 +99,7 @@ DisplaySplash (
 
   // Convert image from BMP format and write to frame buffer
   GopBlt = NULL;
-  SplashLogoBmp = (VOID *) PCD_GET32_WITH_ADJUST (PcdSplashLogoAddress);
+  SplashLogoBmp = (VOID *)(UINTN)PCD_GET32_WITH_ADJUST (PcdSplashLogoAddress);
   ASSERT (SplashLogoBmp != NULL);
   Status = DisplayBmpToFrameBuffer (SplashLogoBmp, (VOID **)&GopBlt, &GopBltSize, GfxInfoHob);
 
@@ -118,93 +124,6 @@ PrintMemoryMap (
             MemoryMapInfo->Entry[Idx].Base,  MemoryMapInfo->Entry[Idx].Size, \
             MemoryMapInfo->Entry[Idx].Flag,  MemoryMapInfo->Entry[Idx].Type));
   }
-}
-
-/**
-  Sort memory map entries based upon PhysicalStart, from low to high.
-
-  @param  BufferToSort   A pointer to the MEMORY_MAP_ENTRY array buffer in which firmware
-                         places the current memory map.
-
-  @param  Count          Entry count of memory map in the MEMORY_MAP_ENTRY array.
-
-  @param  Buffer         Temporary buffer used for sorting. The required buffer size
-                         is MEMORY_MAP_ENTRY.
-**/
-STATIC
-VOID
-SortMemoryMap (
-  IN OUT   MEMORY_MAP_ENTRY            *BufferToSort,
-  IN CONST UINTN                        Count,
-  IN       MEMORY_MAP_ENTRY            *Buffer
-  )
-{
-  MEMORY_MAP_ENTRY        *Pivot;
-  UINTN                    LoopCount;
-  UINTN                    NextSwapLocation;
-
-  if (Count < 2) {
-    return;
-  }
-
-  NextSwapLocation = 0;
-
-  //
-  // pick a pivot (we choose last element)
-  //
-  Pivot = &BufferToSort[Count - 1];
-
-  //
-  // Now get the pivot such that all on "left" are below it
-  // and everything "right" are above it
-  //
-  for ( LoopCount = 0
-                    ; LoopCount < Count - 1
-        ; LoopCount++
-        ) {
-    //
-    // if the element is less than the pivot
-    //
-    if (BufferToSort[LoopCount].Base <= Pivot[0].Base) {
-      //
-      // swap
-      //
-      CopyMem (Buffer, &BufferToSort[NextSwapLocation], sizeof (MEMORY_MAP_ENTRY));
-      CopyMem (&BufferToSort[NextSwapLocation], &BufferToSort[LoopCount], sizeof (MEMORY_MAP_ENTRY));
-      CopyMem (&BufferToSort[LoopCount], Buffer, sizeof (MEMORY_MAP_ENTRY));
-
-      //
-      // increment NextSwapLocation
-      //
-      NextSwapLocation++;
-    }
-  }
-  //
-  // swap pivot to it's final position (NextSwapLocaiton)
-  //
-  CopyMem (Buffer, Pivot, sizeof (MEMORY_MAP_ENTRY));
-  CopyMem (Pivot, &BufferToSort[NextSwapLocation], sizeof (MEMORY_MAP_ENTRY));
-  CopyMem (&BufferToSort[NextSwapLocation], Buffer, sizeof (MEMORY_MAP_ENTRY));
-
-  //
-  // Now recurse on 2 paritial lists.  neither of these will have the 'pivot' element
-  // IE list is sorted left half, pivot element, sorted right half...
-  //
-  if (NextSwapLocation >= 2) {
-    SortMemoryMap (
-      BufferToSort,
-      NextSwapLocation,
-      Buffer);
-  }
-
-  if ((Count - NextSwapLocation - 1) >= 2) {
-    SortMemoryMap (
-      BufferToSort + (NextSwapLocation + 1),
-      Count - NextSwapLocation - 1,
-      Buffer);
-  }
-
-  return;
 }
 
 /**
@@ -238,6 +157,30 @@ MemResHobCallback (
 }
 
 /**
+  The function is called by PerformQuickSort to sort memory map by its base.
+
+  @param[in] Buffer1         The pointer to first buffer.
+  @param[in] Buffer2         The pointer to second buffer.
+
+  @retval 0                  Buffer1 base is less than Buffer2 base.
+  @retval 1                  Buffer1 base is greater than or equal to Buffer2 base.
+
+**/
+INTN
+EFIAPI
+CompareMemoryMap (
+  IN CONST VOID                 *Buffer1,
+  IN CONST VOID                 *Buffer2
+  )
+{
+  if (((MEMORY_MAP_ENTRY *)Buffer1)->Base < ((MEMORY_MAP_ENTRY *)Buffer2)->Base) {
+    return  0;
+  } else {
+    return  1;
+  }
+}
+
+/**
   Carve out a bootloader reserved, AcpiNvs, AcpiRecalim and payload reserved memory range
   from the system memory map.
 
@@ -255,7 +198,7 @@ SplitMemroyMap (
   )
 {
   UINTN            Idx;
-  UINTN            NewIdx;
+  UINT32           NewIdx;
   UINTN            Loop;
   UINT8            Flag;
   UINT8            Type;
@@ -330,7 +273,7 @@ SplitMemroyMap (
   }
   MemoryMapInfo->Count = NewIdx;
 
-  SortMemoryMap (MemoryMapInfo->Entry, NewIdx, &TempMemoryMap);
+  PerformQuickSort (MemoryMapInfo->Entry, NewIdx, sizeof (MEMORY_MAP_ENTRY), CompareMemoryMap, &TempMemoryMap);
 
   return EFI_SUCCESS;
 }
@@ -342,14 +285,14 @@ SplitMemroyMap (
   to build some basic HOBs. These HOBs could be used/updated
   by stage2 code, or used by payload.
 
-  @param Stage2Hob         Stage2 HOB pointer.
+  @param Stage2Param         Stage2 Param pointer.
 
   @return                  The HOB list pointer.
 **/
 VOID *
 EFIAPI
 BuildBaseInfoHob (
-  IN  STAGE2_HOB                       *Stage2Hob
+  IN  STAGE2_PARAM                     *Stage2Param
   )
 {
   SERIAL_PORT_INFO                     *SerialPortInfo;
@@ -362,13 +305,11 @@ BuildBaseInfoHob (
   EFI_PEI_GRAPHICS_DEVICE_INFO_HOB     *BlGfxDeviceInfo;
   EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *GfxMode;
   EFI_STATUS                           Status;
-  PAYLOAD_KEY_HASH                     *HashHob;
+  UINT8*                               *HashHob;
   UINT32                               HobDataSize;
-  CONST UINT8                          *PubKeyHash;
-  UINT8                                Index;
-  UINT8                                CompType;
   EXT_BOOT_LOADER_VERSION              *VersionHob;
   SEED_LIST_INFO_HOB                   *SeedListInfoHob;
+  HASH_STORE_TABLE                     *HashStorePtr;
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
 
@@ -432,21 +373,13 @@ BuildBaseInfoHob (
 
   // Build key hash Hob for Payload
   if (LdrGlobal->HashStorePtr != NULL) {
-    HobDataSize = sizeof (PAYLOAD_KEY_HASH) + sizeof (KEY_HASH_ITEM) * MAX_KEY_DIGEST_COUNT;
-    HashHob     = BuildGuidHob (&gPayloadKeyHashGuid, HobDataSize);
-    if (HashHob != NULL) {
-      HashHob->DigestCount = MAX_KEY_DIGEST_COUNT;
-      for (Index = 0; Index < MAX_KEY_DIGEST_COUNT; Index++) {
-        CompType = COMP_TYPE_PUBKEY_CFG_DATA + Index;
-        Status   = GetComponentHash (CompType, &PubKeyHash);
-        if (EFI_ERROR (Status)) {
-          HashHob->KeyHash[Index].ComponentType = HASH_INDEX_MAX_NUM;
-        } else {
-          HashHob->KeyHash[Index].ComponentType = CompType;
-          CopyMem (&HashHob->KeyHash[Index].Digest, PubKeyHash, SHA256_DIGEST_SIZE);
-        }
-      }
-    }
+
+    HashStorePtr = (HASH_STORE_TABLE *)LdrGlobal->HashStorePtr;
+    HashHob      = BuildGuidHob (&gPayloadKeyHashGuid, HashStorePtr->UsedLength);
+
+    //Copy the hash store to key hash Hob
+    CopyMem (HashHob, (UINT8 *) HashStorePtr, HashStorePtr->UsedLength);
+
   }
 
   // Build boot loader version Hob for Payload
@@ -480,14 +413,14 @@ BuildBaseInfoHob (
   Before jumping to payload, more information is available, so update some HOBs
   built early, and build more HOBs for payload.
 
-  @param Stage2Hob         Stage2 HOB pointer.
+  @param Stage2Param         Stage2 Param pointer.
 
   @return                  The HOB list pointer.
 **/
 VOID *
 EFIAPI
 BuildExtraInfoHob (
-  IN  STAGE2_HOB                   *Stage2Hob
+  IN  STAGE2_PARAM                 *Stage2Param
   )
 {
   LOADER_GLOBAL_DATA               *LdrGlobal;
@@ -561,15 +494,14 @@ BuildExtraInfoHob (
     LoaderPlatformData->DebugLogBuffer = (DEBUG_LOG_BUFFER_HEADER *) GetDebugLogBufferPtr ();
     LoaderPlatformData->ConfigDataPtr  = GetConfigDataPtr ();
     LoaderPlatformData->ContainerList  = GetContainerListPtr ();
+    LoaderPlatformData->DmaBufferPtr   = GetDmaBufferPtr ();
   }
 
   // Build flash map info hob
-  if (FeaturePcdGet (PcdFlashMapEnabled) == TRUE) {
-    FlashMapPtr = LdrGlobal->FlashMapPtr;
-    FlashMapHob = BuildGuidHob (&gFlashMapInfoGuid, FlashMapPtr->Length);
-    if (FlashMapHob != NULL) {
-      CopyMem (FlashMapHob, FlashMapPtr, FlashMapPtr->Length);
-    }
+  FlashMapPtr = LdrGlobal->FlashMapPtr;
+  FlashMapHob = BuildGuidHob (&gFlashMapInfoGuid, FlashMapPtr->Length);
+  if (FlashMapHob != NULL) {
+    CopyMem (FlashMapHob, FlashMapPtr, FlashMapPtr->Length);
   }
 
   // Build OS boot medium info hob
@@ -617,6 +549,7 @@ BuildExtraInfoHob (
   // Build SMMRAM info Hob
   SmmInfoHob = BuildGuidHob (&gSmmInformationGuid, sizeof (LDR_SMM_INFO));
   if (SmmInfoHob != NULL) {
+    ZeroMem (SmmInfoHob, sizeof (LDR_SMM_INFO));
     PlatformUpdateHobInfo (&gSmmInformationGuid, SmmInfoHob);
   }
 
@@ -714,5 +647,3 @@ InitializeService (
   RegisterService ((VOID *)&mPlatformService);
 
 }
-
-

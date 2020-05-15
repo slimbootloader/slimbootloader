@@ -7,41 +7,41 @@
 
 #include  "History.h"
 
-CHAR16    *mCommandLineHist;
-INTN       mCommandLineIdx;
-
 /**
   Initialize command line history buffer and index.
 
+  @param[in]  Shell        Shell instance
   @param[in]  IsInit       Indicate initialization or de-initialization
 
 **/
 VOID
 HistoryInit (
+  IN SHELL     *Shell,
   IN BOOLEAN    IsInit
   )
 {
   UINTN   BufLen;
 
   if (IsInit) {
-    BufLen = MAX_HISTORY_REC * MAX_COMMAND_LINE_LEN * sizeof(CHAR16);
-    if (mCommandLineHist == NULL) {
-      mCommandLineHist = AllocateZeroPool (BufLen);
+    BufLen = MAX_HISTORY_REC * (Shell->CommandLineMaxLen * sizeof(CHAR16));
+    if (Shell->CommandLineHist == NULL) {
+      Shell->CommandLineHist = AllocateZeroPool (BufLen);
     } else {
-      ZeroMem (mCommandLineHist, BufLen);
+      ZeroMem (Shell->CommandLineHist, BufLen);
     }
   } else {
-    if (mCommandLineHist != NULL) {
-      FreePool (mCommandLineHist);
-      mCommandLineHist = NULL;
+    if (Shell->CommandLineHist != NULL) {
+      FreePool (Shell->CommandLineHist);
+      Shell->CommandLineHist = NULL;
     }
   }
-  mCommandLineIdx = -1;
+  Shell->CommandLineIdx = -1;
 }
 
 /**
   Get command line history buffer from index.
 
+  @param[in]  Shell    Shell instance
   @param[in]  Index    Command line history buffer index
 
   @retval     Pointer to the command line in history buffer
@@ -49,13 +49,14 @@ HistoryInit (
 STATIC
 CHAR16 *
 GetLine (
-  IN  INTN    Index
+  IN SHELL     *Shell,
+  IN  INTN      Index
 )
 {
-  ASSERT (mCommandLineHist != NULL);
+  ASSERT (Shell->CommandLineHist != NULL);
 
   if ((Index < MAX_HISTORY_REC) && (Index >= 0)) {
-    return mCommandLineHist + Index * MAX_COMMAND_LINE_LEN;
+    return Shell->CommandLineHist + Index * Shell->CommandLineMaxLen;
   } else {
     return NULL;
   }
@@ -64,32 +65,34 @@ GetLine (
 /**
   Fill command buffer with next command line history.
 
-  @param[in]  Line    command line buffer to fill
+  @param[in]  Shell   Shell instance
+  @param[in]  Line    Command line buffer to fill
 
   @retval     Length of the command line returned
 **/
 UINTN
 HistoryDown (
+  IN SHELL        *Shell,
   IN OUT CHAR16   *Line
   )
 {
-  mCommandLineIdx -= 1;
+  Shell->CommandLineIdx -= 1;
 
   // Find first valid command line history
-  while (mCommandLineIdx >= 0) {
-    if (StrLen(GetLine (mCommandLineIdx)) > 0) {
+  while (Shell->CommandLineIdx >= 0) {
+    if (StrLen(GetLine (Shell, Shell->CommandLineIdx)) > 0) {
       break;
     }
-    mCommandLineIdx--;
+    Shell->CommandLineIdx--;
   }
 
-  if (mCommandLineIdx < 0)  {
+  if (Shell->CommandLineIdx < 0)  {
     // -1 indicates the bottom of history buffer
-    mCommandLineIdx = -1;
+    Shell->CommandLineIdx = -1;
     Line[0] = 0;
     return 0;
   } else {
-    StrCpyS (Line, MAX_COMMAND_LINE_LEN, GetLine (mCommandLineIdx));
+    StrCpyS (Line, Shell->CommandLineMaxLen, GetLine (Shell, Shell->CommandLineIdx));
     return StrLen (Line);
   }
 }
@@ -97,23 +100,25 @@ HistoryDown (
 /**
   Fill command buffer with previous command line history.
 
+  @param[in]  Shell   Shell instance
   @param[in]  Line    Command line buffer to fill
 
   @retval     Length of the command line returned
 **/
 UINTN
 HistoryUp (
+  IN SHELL      *Shell,
   IN OUT CHAR16 *Line
   )
 {
-  mCommandLineIdx ++;
-  if (mCommandLineIdx >= MAX_HISTORY_REC) {
+  Shell->CommandLineIdx ++;
+  if (Shell->CommandLineIdx >= MAX_HISTORY_REC) {
     // MAX_HISTORY_REC indicates the top of history buffer
-    mCommandLineIdx = MAX_HISTORY_REC;
+    Shell->CommandLineIdx = MAX_HISTORY_REC;
     Line[0] = 0;
     return 0;
   } else {
-    StrCpyS (Line, MAX_COMMAND_LINE_LEN, GetLine (mCommandLineIdx));
+    StrCpyS (Line, Shell->CommandLineMaxLen, GetLine (Shell, Shell->CommandLineIdx));
     return StrLen (Line);
   }
 }
@@ -121,17 +126,19 @@ HistoryUp (
 /**
   Append a command lihe into command line history buffer.
 
+  @param[in]  Shell   Shell instance
   @param[in]  Line    Command line buffer to append
 
 **/
 VOID
 HistoryAdd (
+  IN SHELL      *Shell,
   IN OUT CHAR16 *Line
   )
 {
   UINTN   Index;
 
-  mCommandLineIdx = -1;
+  Shell->CommandLineIdx = -1;
 
   if (StrLen (Line) == 0) {
     return;
@@ -139,33 +146,35 @@ HistoryAdd (
 
   // Check if the command line is already in the history buffer
   for (Index = 0; Index < MAX_HISTORY_REC - 1; Index++) {
-    if (StrCmp(GetLine (Index), Line) == 0) {
+    if (StrCmp(GetLine (Shell, Index), Line) == 0) {
       break;
     }
   }
 
   // Move everything backwards to add new command line at index 0
   for (; Index > 0; --Index) {
-    StrCpyS (GetLine (Index), MAX_COMMAND_LINE_LEN, GetLine (Index - 1));
+    StrCpyS (GetLine (Shell, Index), Shell->CommandLineMaxLen, GetLine (Shell, Index - 1));
   }
 
-  StrCpyS (GetLine (0), MAX_COMMAND_LINE_LEN, Line);
+  StrCpyS (GetLine (Shell, 0), Shell->CommandLineMaxLen, Line);
 }
 
 /**
   Print all command lines in history buffer.
 
+  @param[in]  Shell        Shell instance
+
   This is used for debug only.
 **/
 VOID
 HistoryPrint (
-  VOID
+  IN SHELL     *Shell
   )
 {
   UINTN  Index;
 
   for (Index = 0; Index < MAX_HISTORY_REC; Index++) {
-    DEBUG ((EFI_D_INFO, "CMD%02d: %s\n", Index, GetLine (Index)));
+    DEBUG ((DEBUG_INFO, "CMD%02d: %s\n", Index, GetLine (Shell, Index)));
   }
-  DEBUG ((EFI_D_INFO, "\n"));
+  DEBUG ((DEBUG_INFO, "\n"));
 }

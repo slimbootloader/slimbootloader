@@ -1,8 +1,8 @@
 /** @file
-  NvmExpressDxe driver is used to manage non-volatile memory subsystem which follows
+  NvmExpress driver is used to manage non-volatile memory subsystem which follows
   NVM Express specification.
 
-  Copyright (c) 2013 - 2016, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2013 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -156,11 +156,11 @@ EnumerateNvmeDevNamespace (
     //
     // Dump NvmExpress Identify Namespace Data
     //
-    DEBUG ((EFI_D_INFO, " == NVME IDENTIFY NAMESPACE [%d] DATA ==\n", NamespaceId));
-    DEBUG ((EFI_D_INFO, "    NSZE        : 0x%x\n", NamespaceData->Nsze));
-    DEBUG ((EFI_D_INFO, "    NCAP        : 0x%x\n", NamespaceData->Ncap));
-    DEBUG ((EFI_D_INFO, "    NUSE        : 0x%x\n", NamespaceData->Nuse));
-    DEBUG ((EFI_D_INFO, "    LBAF0.LBADS : 0x%x\n", (NamespaceData->LbaFormat[0].Lbads)));
+    DEBUG ((DEBUG_INFO, " == NVME IDENTIFY NAMESPACE [%d] DATA ==\n", NamespaceId));
+    DEBUG ((DEBUG_INFO, "    NSZE        : 0x%x\n", NamespaceData->Nsze));
+    DEBUG ((DEBUG_INFO, "    NCAP        : 0x%x\n", NamespaceData->Ncap));
+    DEBUG ((DEBUG_INFO, "    NUSE        : 0x%x\n", NamespaceData->Nuse));
+    DEBUG ((DEBUG_INFO, "    LBAF0.LBADS : 0x%x\n", (NamespaceData->LbaFormat[0].Lbads)));
 
     //
     // Build controller name for Component Name (2) protocol.
@@ -229,6 +229,43 @@ DiscoverAllNamespaces (
 }
 
 /**
+  De-initialize the NVMe controller.
+
+  @param[in]  Private        NVMe controller private data pointer.
+
+  @retval EFI_SUCCESS        Always return EFI_SUCCESS.
+
+**/
+EFI_STATUS
+NvmeDeInitialize (
+  IN  NVME_CONTROLLER_PRIVATE_DATA        *Private
+  )
+{
+  UINTN   Index;
+
+  NvmeDisableController (Private);
+
+  for (Index = 0; Index < ARRAY_SIZE (mMultiNvmeDrive); Index++) {
+    if (mMultiNvmeDrive[Index] != NULL) {
+      FreePool (mMultiNvmeDrive[Index]);
+      mMultiNvmeDrive[Index] = NULL;
+    }
+  }
+
+  if (Private->Buffer != NULL) {
+    IoMmuFreeBuffer (6, Private->Buffer, Private->Mapping);
+  }
+
+  if (Private->ControllerData != NULL) {
+    FreePool (Private->ControllerData);
+  }
+
+  FreePool (Private);
+
+  return EFI_SUCCESS;
+}
+
+/**
   Starts a device controller or a bus controller.
 
   The Start() function is designed to be invoked from the EFI boot service ConnectController().
@@ -260,21 +297,17 @@ NvmeInitialize (
 {
   EFI_STATUS                          Status;
   NVME_CONTROLLER_PRIVATE_DATA        *Private;
-  EFI_PHYSICAL_ADDRESS                PhysicalAddress;
+  EFI_PHYSICAL_ADDRESS                MappedAddr;
 
   if (NvmeInitMode == DevDeinit) {
-    Private = mNvmeCtrlPrivate;
-    if ((Private != NULL) && (Private->ControllerData != NULL)) {
-      FreePool (Private->ControllerData);
+    if (mNvmeCtrlPrivate != NULL) {
+      NvmeDeInitialize (mNvmeCtrlPrivate);
+      mNvmeCtrlPrivate = NULL;
     }
-    if (Private != NULL) {
-      FreePool (Private);
-    }
-    mNvmeCtrlPrivate = NULL;
     return EFI_SUCCESS;
   }
 
-  DEBUG ((EFI_D_INFO, "NvmExpressDriverBindingStart: start\n"));
+  DEBUG ((DEBUG_INFO, "NvmExpressDriverBindingStart: start\n"));
 
   Private          = NULL;
 
@@ -284,7 +317,7 @@ NvmeInitialize (
   Private = AllocateZeroPool (sizeof (NVME_CONTROLLER_PRIVATE_DATA));
 
   if (Private == NULL) {
-    DEBUG ((EFI_D_ERROR, "NvmExpressDriverBindingStart: allocating pool for Nvme Private Data failed!\n"));
+    DEBUG ((DEBUG_ERROR, "NvmExpressDriverBindingStart: allocating pool for Nvme Private Data failed!\n"));
     Status = EFI_OUT_OF_RESOURCES;
     goto Exit;
   }
@@ -300,9 +333,16 @@ NvmeInitialize (
   //
   // Allocate 6 pages of memory, then map it for bus master read and write.
   //
-  PhysicalAddress = (UINT64) (UINTN) AllocatePages (6);
-
-  Private->Buffer                    = (UINT8 *) (UINTN)PhysicalAddress;
+  Status = IoMmuAllocateBuffer (
+             6,
+             (VOID**)&Private->Buffer,
+             &MappedAddr,
+             &Private->Mapping
+             );
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+  Private->BufferPciAddr             = (UINT8 *)(UINTN)MappedAddr;
   Private->Signature                 = NVME_CONTROLLER_PRIVATE_DATA_SIGNATURE;
   Private->NvmeHCBase                = MmioRead32 (NvmeHcPciBase + PCI_BASE_ADDRESSREG_OFFSET) & 0xFFFFF000;
   Private->Passthru.Mode             = &Private->PassThruMode;
@@ -322,17 +362,21 @@ NvmeInitialize (
              Private
              );
 
-  DEBUG ((EFI_D_INFO, "NvmExpressDriverBindingStart: end successfully\n"));
+  DEBUG ((DEBUG_INFO, "NvmExpressDriverBindingStart: end successfully\n"));
   return EFI_SUCCESS;
 
 Exit:
+  if ((Private != NULL) && (Private->Buffer != NULL)) {
+    IoMmuFreeBuffer (6, Private->Buffer, Private->Mapping);
+  }
+
   if (EFI_ERROR (Status)) {
     if ((Private != NULL) && (Private->ControllerData != NULL)) {
       FreePool (Private->ControllerData);
     }
   }
 
-  DEBUG ((EFI_D_INFO, "NvmExpressDriverBindingStart: end with %r\n", Status));
+  DEBUG ((DEBUG_INFO, "NvmExpressDriverBindingStart: end with %r\n", Status));
 
   return Status;
 }

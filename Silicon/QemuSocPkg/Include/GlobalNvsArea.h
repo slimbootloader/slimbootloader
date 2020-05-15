@@ -46,7 +46,7 @@ typedef struct {
 **/
   PCI_WINDOW PciWindow32;
   PCI_WINDOW PciWindow64;
-  
+
 } EFI_GLOBAL_NVS_AREA;
 #pragma pack ()
 

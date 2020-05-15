@@ -56,4 +56,8 @@
 #define MSR_PRMRR_PHYS_BASE                                           0x1F4
 #define MSR_PRMRR_PHYS_MASK                                           0x1F5
 
+#define MSR_TURBO_RATIO_LIMIT                                         0x000001AD
+#define MSR_PACKAGE_POWER_SKU_UNIT                                    0x00000606
+#define MSR_PACKAGE_POWER_LIMIT                                       0x00000610
+
 #endif

@@ -5,12 +5,12 @@
 
 **/
 
-/* 
-// 
+/*
+//
 //  Purpose:
 //     Cryptography Primitive.
 //     HMAC General Functionality
-// 
+//
 //  Contents:
 //     ippsHMACGetSize_rmf()
 //     ippsHMACInit_rmf()
@@ -21,8 +21,8 @@
 //     ippsHMACGetTag_rmf()
 //     ippsHMACFinal_rmf()
 //     ippsHMACMessage_rmf()
-// 
-// 
+//
+//
 */
 
 #include "owndefs.h"

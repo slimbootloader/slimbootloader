@@ -17,14 +17,21 @@
   gCfgData.GpioBaseTableId        |      * | 0x01  | 0xFF
   gCfgData.GpioItemSize           |      * | 0x02  | 8
   gCfgData.GpioItemCount          |      * | 0x02  | (_LENGTH_GPIO_CFG_DATA_ - _LENGTH_GPIO_CFG_HDR_) / 8
-  # Initial value is GpioValidByteOffset (bit 31 in PAD Cfg DW2) and GpioValidByteMask (0x80) in GpioBaseTableBitMask[0] and [1]
-  # CfgDataTool will check each GPIO table data for:
-  #    *(UINT8 *)(GpioEntryData + GpioValidByteOffset) & GpioValidByteMask
-  # Ex:                               (GPIO DW2 >> 24) & 0x80  == if set, skip it. if 0, include it in BCT
-  # If the value is non-zero, a GPIO programming should be skipped.
-  # The CfgDataTool tool will mark a bit in GpioBaseTableBitMask array to indicate a particular GPIO should be skipped or not.
-  # Length  = 26 because we need 1 bit per GPIO entry. If there are 165 GPIOs in the below list. So 165/8 = 21 bytes needed. Reserve 26 for future GPIO pins addition
-  gCfgData.GpioBaseTableBitMask   |      * |   34  | {7, 0x80}  #7 is byte offset 7 within the 34 bytes array.  0x80 is the byte mask to indicate if the GPIO pin is used or not.
+
+  # Bit start offset within each GPIO entry array to identify a GPIO pin uniquely. EX: GPIO group id + pad id
+  # Offset is 2nd DWORD BIT16 = 1 * 32 + 16 = 48
+  gCfgData.GpioItemIdBitOff       |      * | 0x01  | 48
+  # Bit length within each GPIO entry array to identify a GPIO pin uniquely.
+  # Length is 2nd DWORD BIT16 to BIT28 = 13
+  gCfgData.GpioItemIdBitLen       |      * | 0x01  | 13
+  # Bit offset within each GPIO entry array to indicate SKIP a GPIO programming
+  # Offset is 2nd DWORD BIT31 = 63
+  gCfgData.GpioItemValidBitOff    |      * | 0x01  | 63
+  gCfgData.GpioItemUnused         |      * | 0x01  | 0
+
+  # Need 1 bit per GPIO. So this mask byte length needs to be at least (GpioNumber + 7) / 8
+  # Padding can be added to let the whole length aligned at DWORD boundary
+  gCfgData.GpioBaseTableBitMask   |      * |   34  | {0}
 
   gCfgData.GpioTableData          |      * |    0  | 0
   # !HDR EMBED:{GPIO_CFG_HDR:GpioCfgHdr:END}
@@ -291,7 +298,7 @@
 # !BSF SUBT:{GPIO_TMPL:GPP_d09: 0x07502283: 0x8B092001: N/A                                               : N/A                                               : N/A                                               : N/A}
 # !BSF SUBT:{GPIO_TMPL:GPP_d10: 0x07502283: 0x8B0A2001: N/A                                               : N/A                                               : N/A                                               : N/A}
 # !BSF SUBT:{GPIO_TMPL:GPP_d11: 0x07502283: 0x8B0B2001: N/A                                               : N/A                                               : N/A                                               : N/A}
-# !BSF SUBT:{GPIO_TMPL:GPP_PEC: 0x00000000: 0x80000000: N/A                                               : N/A                                               : N/A                                               : N/A}
+# !BSF SUBT:{GPIO_TMPL:GPP_PEC: 0x00000000: 0x8C040009: N/A                                               : N/A                                               : N/A                                               : N/A}
 
   # !HDR EMBED:{GPIO_CFG_DATA:TAG_400:END}
 

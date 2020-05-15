@@ -29,8 +29,8 @@
 ///
 /// PMC Registers
 ///
-#define PMC_BASE_ADDRESS                    PcdGet32(PcdPmcIpc1BaseAddress0)
-#define GCR_BASE_ADDRESS                    PcdGet32(PcdPmcGcrBaseAddress)
+#define PMC_BASE_ADDRESS                    0xFE042000
+#define GCR_BASE_ADDRESS                    0xFE043000
 
 #define PCI_DEVICE_NUMBER_PMC               13
 #define PCI_FUNCTION_NUMBER_PMC_SSRAM       3
@@ -42,6 +42,9 @@
 #define R_PMC_BASE                          0x10  ///< BAR0
 #define R_PMC_ACPI_BASE                     0x20  ///< BAR2
 #define R_PMC_GEN_PMCON_1                   0x1020  ///< General PM Configuration 1
+#define R_PMC_GEN_PMCON_2                   0x1024  ///< General PM Configuration 2
+#define B_PMC_GEN_PMCON_2_SMI_LOCK          BIT4    ///< SMI LOCK
+#define R_PMC_BIOS_SCRATCHPAD               0x1090  ///< BIOS_SCRATCHPAD
 #define B_PMC_GEN_PMCON_RTC_PWR_STS         BIT2    ///< RTC Power Status
 
 ///
@@ -68,6 +71,9 @@
 #define B_SMI_EN_EOS                          BIT1  ///< End Of Service
 #define B_SMI_EN_APMC                         BIT5  ///< APMC Enable
 #define B_SMI_EN_SWSMI_TMR                    BIT6  ///< Software SMI Timer Enable
+
+#define R_SMI_STS                             0x44  ///< SMI Status
+#define B_SMI_STS_APMC                        BIT5  ///< APMC status
 
 #define R_TCO_STS                             0x64  ///< TCO Timer Status
 #define B_TCO_STS_SECOND_TO                   BIT17 ///< Second Timeout Status

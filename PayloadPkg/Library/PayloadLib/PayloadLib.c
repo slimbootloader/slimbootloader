@@ -13,76 +13,9 @@
 #include <Library/HobLib.h>
 #include <Library/PayloadLib.h>
 #include <Library/DebugLogBufferLib.h>
-#include <Guid/PayloadKeyHashGuid.h>
+#include <Guid/KeyHashGuid.h>
 #include <Guid/FlashMapInfoGuid.h>
 #include <Guid/LoaderPlatformInfoGuid.h>
-
-/**
-  Get the component hash data by the component type
-
-  @param[in]  ComponentType   Component type.
-  @param[out] HashData        Hash data pointer corresponding Component type.
-
-  @retval RETURN_SUCCESS             Get hash data succeeded.
-  @retval RETURN_UNSUPPORTED         Hash component type is not supported.
-  @retval RETURN_NOT_FOUND           Hash data is not found.
-  @retval RETURN_INVALID_PARAMETER   HashData is NULL.
-
-**/
-RETURN_STATUS
-GetComponentHash (
-  IN        UINT8            ComponentType,
-  OUT CONST UINT8            **HashData
-  )
-{
-  VOID                       *GuidHob;
-  PAYLOAD_KEY_HASH           *PayloadKeyHash;
-  UINT32                     Index;
-
-  if (HashData == NULL) {
-    return RETURN_INVALID_PARAMETER;
-  }
-
-  //
-  // Get public key hash from HOB
-  //
-  GuidHob = GetNextGuidHob (&gPayloadKeyHashGuid, GetHobList());
-  ASSERT (GuidHob != NULL);
-
-  *HashData = NULL;
-  PayloadKeyHash = (PAYLOAD_KEY_HASH *)GET_GUID_HOB_DATA (GuidHob);
-  for (Index = 0; Index < PayloadKeyHash->DigestCount; Index++) {
-    if (PayloadKeyHash->KeyHash[Index].ComponentType == ComponentType) {
-      break;
-    }
-  }
-  if (PayloadKeyHash->DigestCount == Index) {
-    DEBUG ((DEBUG_ERROR, "NOT found hash data for component type %d!\n", ComponentType));
-    return EFI_NOT_FOUND;
-  }
-
-  *HashData = &PayloadKeyHash->KeyHash[Index].Digest[0];
-
-  return RETURN_SUCCESS;
-}
-
-/**
-  Set the component hash data by the component type.
-
-  @param[in]  ComponentType   Component type.
-  @param[in] HashData        Hash data pointer corresponding component type.
-
-  @retval RETURN_UNSUPPORTED  Hash component type is not supported for PayloadLib.
-
-**/
-RETURN_STATUS
-SetComponentHash (
-  IN       UINT8             ComponentType,
-  IN CONST UINT8            *HashData
-  )
-{
-  return RETURN_UNSUPPORTED;
-}
 
 /**
   Returns the pointer to the HOB list.
@@ -100,7 +33,7 @@ GetHobListPtr (
 {
   VOID                  *HobList;
 
-  HobList = (VOID *)PcdGet32 (PcdPayloadHobList);
+  HobList = (VOID *)(UINTN)PcdGet32 (PcdPayloadHobList);
   ASSERT (HobList != NULL);
 
   return HobList;
@@ -120,7 +53,7 @@ GetFlashMapPtr (
   FLASH_MAP             *FlashMap;
   EFI_HOB_GUID_TYPE     *GuidHob;
 
-  GuidHob = GetNextGuidHob (&gFlashMapInfoGuid, (VOID *)PcdGet32 (PcdPayloadHobList));
+  GuidHob = GetNextGuidHob (&gFlashMapInfoGuid, (VOID *)(UINTN)PcdGet32 (PcdPayloadHobList));
   if (GuidHob == NULL) {
     return NULL;
   }
@@ -147,7 +80,7 @@ GetPerfDataPtr (
 {
   PAYLOAD_GLOBAL_DATA     *PayloadGlobalDataPtr;
 
-  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *) PcdGet32 (PcdGlobalDataAddress);
+  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)(UINTN)PcdGet32 (PcdGlobalDataAddress);
 
   return &PayloadGlobalDataPtr->PerfData;
 }
@@ -164,7 +97,7 @@ GetConfigDataPtr (
 {
   PAYLOAD_GLOBAL_DATA     *PayloadGlobalDataPtr;
 
-  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *) PcdGet32 (PcdGlobalDataAddress);
+  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)(UINTN)PcdGet32 (PcdGlobalDataAddress);
 
   return PayloadGlobalDataPtr->CfgDataPtr;
 }
@@ -203,7 +136,7 @@ GetDebugLogBufferPtr (
 {
   PAYLOAD_GLOBAL_DATA     *PayloadGlobalDataPtr;
 
-  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *) PcdGet32 (PcdGlobalDataAddress);
+  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)(UINTN)PcdGet32 (PcdGlobalDataAddress);
 
   return PayloadGlobalDataPtr->LogBufPtr;
 }
@@ -222,7 +155,7 @@ GetLibraryDataPtr (
 {
   PAYLOAD_GLOBAL_DATA     *PayloadGlobalDataPtr;
 
-  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *) PcdGet32 (PcdGlobalDataAddress);
+  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)(UINTN)PcdGet32 (PcdGlobalDataAddress);
 
   return PayloadGlobalDataPtr->LibDataPtr;
 }
@@ -241,7 +174,7 @@ GetServiceListPtr (
 {
   PAYLOAD_GLOBAL_DATA     *PayloadGlobalDataPtr;
 
-  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *) PcdGet32 (PcdGlobalDataAddress);
+  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)(UINTN)PcdGet32 (PcdGlobalDataAddress);
 
   return PayloadGlobalDataPtr->ServiceList;
 }
@@ -260,7 +193,7 @@ GetFeatureCfg (
 {
   PAYLOAD_GLOBAL_DATA     *PayloadGlobalDataPtr;
 
-  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *) PcdGet32 (PcdGlobalDataAddress);
+  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)(UINTN)PcdGet32 (PcdGlobalDataAddress);
 
   return PayloadGlobalDataPtr->LdrFeatures;
 }
@@ -279,7 +212,7 @@ GetPcdDataPtr (
 {
   PAYLOAD_GLOBAL_DATA     *PayloadGlobalDataPtr;
 
-  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *) PcdGet32 (PcdGlobalDataAddress);
+  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)(UINTN)PcdGet32 (PcdGlobalDataAddress);
 
   return PayloadGlobalDataPtr->PcdDataPtr;
 }
@@ -298,46 +231,13 @@ GetCurrentBootPartition (
   EFI_HOB_GUID_TYPE     *GuidHob;
   LOADER_PLATFORM_INFO  *LoaderPlatformInfo;
 
-  GuidHob = GetNextGuidHob (&gLoaderPlatformInfoGuid, (VOID *)PcdGet32 (PcdPayloadHobList));
+  GuidHob = GetNextGuidHob (&gLoaderPlatformInfoGuid, (VOID *)(UINTN)PcdGet32 (PcdPayloadHobList));
   if (GuidHob == NULL) {
     return 1;
   }
 
   LoaderPlatformInfo = (LOADER_PLATFORM_INFO *)GET_GUID_HOB_DATA (GuidHob);
   return LoaderPlatformInfo->BootPartition;
-}
-
-/**
-  Gets component information from the flash map.
-
-  This function will look for the component based on the input signature
-  in the flash map, if found, will return the base address and size of the component.
-
-  @param[in]  Signature     Signature of the component information required
-  @param[out] Base          Base address of the component
-  @param[out] Size          Size of the component
-
-  @retval    EFI_SUCCESS    Found the component with the matching signature.
-  @retval    EFI_NOT_FOUND  Component with the matching signature not found.
-
-**/
-EFI_STATUS
-EFIAPI
-GetComponentInfo (
-  IN  UINT32     Signature,
-  OUT UINT32     *Base,
-  OUT UINT32     *Size
-  )
-{
-  EFI_STATUS            Status;
-
-  if (GetCurrentBootPartition() == 1) {
-    Status = GetComponentInfoByPartition (Signature, TRUE, Base, Size);
-  } else {
-    Status = GetComponentInfoByPartition (Signature, FALSE, Base, Size);
-  }
-
-  return Status;
 }
 
 
@@ -370,7 +270,7 @@ SetDeviceTable (
 {
   PAYLOAD_GLOBAL_DATA     *PayloadGlobalDataPtr;
 
-  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *) PcdGet32 (PcdGlobalDataAddress);
+  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)(UINTN)PcdGet32 (PcdGlobalDataAddress);
 
   PayloadGlobalDataPtr->DeviceTable = DeviceTable;
 }
@@ -389,7 +289,7 @@ GetDeviceTable (
 {
   PAYLOAD_GLOBAL_DATA     *PayloadGlobalDataPtr;
 
-  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *) PcdGet32 (PcdGlobalDataAddress);
+  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)(UINTN)PcdGet32 (PcdGlobalDataAddress);
 
   return PayloadGlobalDataPtr->DeviceTable;
 }
@@ -408,7 +308,26 @@ GetContainerListPtr (
 {
   PAYLOAD_GLOBAL_DATA     *PayloadGlobalDataPtr;
 
-  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)PcdGet32 (PcdGlobalDataAddress);
+  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)(UINTN)PcdGet32 (PcdGlobalDataAddress);
 
   return PayloadGlobalDataPtr->ContainerList;
+}
+
+/**
+  This function retrieves hash store pointer.
+
+  @retval    The hash store pointer.
+
+**/
+VOID *
+EFIAPI
+GetHashStorePtr (
+  VOID
+  )
+{
+  PAYLOAD_GLOBAL_DATA     *PayloadGlobalDataPtr;
+
+  PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)(UINTN)PcdGet32 (PcdGlobalDataAddress);
+
+  return PayloadGlobalDataPtr->HashStorePtr;
 }

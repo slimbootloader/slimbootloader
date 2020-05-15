@@ -13,6 +13,8 @@
 #include <Library/DebugLib.h>
 #include <Library/ShellExtensionLib.h>
 #include <Library/FirmwareUpdateLib.h>
+#include <Register/PchRegsPmc.h>
+#include <PlatformBase.h>
 
 #define FWU_BOOT_MODE_OFFSET   0x40
 #define FWU_BOOT_MODE_VALUE    0x5A
@@ -62,12 +64,14 @@ ShellCommandFwUpdateFunc (
   )
 {
   PLATFORM_SERVICE      *PlatformService;
+  UINT32                OcWdtRegData;
 
   //
   // This is platform specific method. Here just use CMOS address 0x40.
   //
-  IoWrite8 (CMOS_ADDREG, FWU_BOOT_MODE_OFFSET);
-  IoWrite8 (CMOS_DATAREG, FWU_BOOT_MODE_VALUE);
+  OcWdtRegData = IoRead32 (ACPI_BASE_ADDRESS + R_ACPI_IO_OC_WDT_CTL);
+  OcWdtRegData |= BIT16;
+  IoWrite32 (ACPI_BASE_ADDRESS + R_ACPI_IO_OC_WDT_CTL, OcWdtRegData);
 
   //
   // Reset the platform

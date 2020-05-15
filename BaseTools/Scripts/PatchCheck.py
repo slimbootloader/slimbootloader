@@ -1,7 +1,7 @@
 ## @file
 #  Check a patch for various format issues
 #
-#  Copyright (c) 2015 - 2019, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2015 - 2020, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -9,7 +9,7 @@
 from __future__ import print_function
 
 VersionNumber = '0.1'
-__copyright__ = "Copyright (c) 2015 - 2016, Intel Corporation  All rights reserved."
+__copyright__ = "Copyright (c) 2015 - 2020, Intel Corporation  All rights reserved."
 
 import email
 import argparse
@@ -313,7 +313,10 @@ class GitDiffCheck:
             elif line.startswith('-'):
                 pass
             elif line.startswith('+'):
-                self.check_added_line(line[1:])
+                if re.search("\+Subproject commit [0-9a-f]{40}", line):
+                    pass
+                else:
+                    self.check_added_line(line[1:])
             elif line.startswith('\r\n'):
                 pass
             elif line.startswith(r'\ No newline '):
@@ -360,7 +363,16 @@ class GitDiffCheck:
                    ''',
                    re.VERBOSE)
 
+    skip_check_file_types = (
+        '.patch',
+        '.pem',
+        )
+
     def check_added_line(self, line):
+        f_name, f_ext = os.path.splitext(self.filename)
+        if f_ext in self.skip_check_file_types:
+            return
+
         eol = ''
         for an_eol in self.line_endings:
             if line.endswith(an_eol):
@@ -369,13 +381,10 @@ class GitDiffCheck:
 
         stripped = line.rstrip()
 
-        # TBD: Disable force_crlf in Slim Bootloader for now
-        self.force_crlf = False
         if self.force_crlf and eol != '\r\n':
             self.added_line_error('Line ending (%s) is not CRLF' % repr(eol),
                                   line)
-        # TBD: Skip python file for now
-        if '\t' in line and not self.filename.endswith('.py'):
+        if '\t' in line:
             self.added_line_error('Tab character used', line)
         if len(stripped) < len(line):
             self.added_line_error('Trailing whitespace found', line)

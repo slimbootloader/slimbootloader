@@ -31,6 +31,7 @@ Silicon/CoffeelakePkg/CoffeelakePkg.dec
 
 
 [Sources]
+  PchInfoLib.h
 PchInfoLib.c
 PchInfoLibCnl.c
 

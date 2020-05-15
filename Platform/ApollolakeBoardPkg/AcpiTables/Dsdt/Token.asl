@@ -45,4 +45,4 @@ Name(PEER, 0x1)         // _OSC: Pci Express Advanced Error Reporting control
 Name(PECS, 0x1)         // _OSC: Pci Express Capability Structure control
 Name(ITKE, 0x0)         // This will be overridden by the ITK module.
 Name(GRBM, 0xF)         // Board id for Gordon Ridge BMP MRB
-Name(XDCE, 0x1) // xDCI enabled 
+Name(XDCE, 0x1) // xDCI enabled

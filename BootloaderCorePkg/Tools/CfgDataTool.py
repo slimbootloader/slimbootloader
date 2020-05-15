@@ -1,6 +1,6 @@
 ## @ CfgDataTool.py
 #
-# Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -9,7 +9,9 @@ import collections
 
 sys.dont_write_bytecode = True
 from   IfwiUtility import *
+from   CommonUtility import *
 
+CFGDATA_INT_GUID = b'\xD0\x6C\x6E\x01\x34\x48\x7E\x4C\xBC\xFE\x41\xDF\xB8\x8A\x6A\x6D'
 
 class CDATA_BLOB_HEADER(Structure):
     ATTR_EXTERN = 1 << 0
@@ -23,98 +25,6 @@ class CDATA_BLOB_HEADER(Structure):
         ('UsedLength', c_uint32),
         ('TotalLength', c_uint32),
     ]
-
-
-def PrintByteArray (Array, Indent=0, Offset=0):
-    DataArray = bytearray(Array)
-    for Idx in range(0, len(DataArray), 16):
-        HexStr = ' '.join('%02X' % Val for Val in DataArray[Idx:Idx + 16])
-        print ('{:s}{:04x}: {:s}'.format(Indent * ' ', Offset + Idx, HexStr))
-
-
-class CRsaSign:
-    def __init__(self, PrivateKey):
-        self._PriKey = PrivateKey
-        self._OpensslPath = os.path.join(
-            os.environ.get('OPENSSL_PATH', ''), 'openssl')
-
-    def _CheckOpenssl(self):
-        #
-        # Check openssl tool first
-        #
-        try:
-            Output = subprocess.check_output(
-                [self._OpensslPath, 'version'],
-                stderr=subprocess.STDOUT).decode()
-        except:
-            Output = ''
-        if not Output.startswith('OpenSSL'):
-            raise Exception(
-                "Cannot find 'openssl' tool, please make sure it is listed in PATH environment variable!")
-        return
-
-    def _GetPublicKey(self):
-
-        self._CheckOpenssl()
-
-        PrivateKey = self._PriKey
-        Output = subprocess.check_output(
-            [self._OpensslPath, 'rsa', '-pubout', '-text', '-noout', '-in',
-             '%s' % PrivateKey],
-            stderr=subprocess.STDOUT).decode()
-
-        #
-        # Extract the modulus
-        #
-        Output = Output.replace('\r', '').replace('\n', '').replace('  ', '')
-        Match = re.search('modulus(.*)publicExponent:\s+(\d+)\s+', Output)
-        if not Match:
-            raise Exception('Public key not found!')
-
-        Modulus = Match.group(1).replace(':', '')
-        Exponent = int(Match.group(2))
-
-        # Remove the '00' from the front if the MSB is 1
-        if (len(Modulus) != 512):
-            Modulus = Modulus[2:]
-
-        Mod = bytearray.fromhex(Modulus)
-        Exp = bytearray.fromhex('{:08x}'.format(Exponent))
-
-        if (len(Mod) != 256):
-            raise Exception('Unsupported modulus length!')
-
-        Key = b"$IPP" + Mod + Exp
-
-        return Key
-
-    def RsaSignFile(self, InFile, OutFile, IncDat=False, IncKey=False):
-        #
-        # Generate public key
-        #
-        PubKey = self._GetPublicKey()
-
-        CmdLine = os.path.join(os.environ.get('OPENSSL_PATH', ''), 'openssl')
-        x = subprocess.call([
-            self._OpensslPath, 'dgst', '-sha256', '-sign', '%s' % self._PriKey,
-            '-out', '%s' % OutFile, '%s' % InFile
-        ])
-        if x:
-            raise Exception('Failed to generate signature using openssl !')
-
-        if IncDat:
-            Bins = bytearray(open(InFile, 'rb').read())
-        else:
-            Bins = bytearray()
-
-        Sign = open(OutFile, 'rb').read()
-        Bins.extend(Sign)
-
-        if IncKey:
-            Bins.extend(PubKey)
-
-        open(OutFile, 'wb').write(Bins)
-
 
 class CCfgData:
 
@@ -171,8 +81,10 @@ class CCfgData:
             ('BasePlatformId', c_uint8),
             ('ItemSize', c_uint16),
             ('ItemCount', c_uint16),
-            ('ItemValidByteOffset', c_uint8),
-            ('ItemValidByteMask', c_uint8),
+            ('ItemIdBitOff', c_uint8),
+            ('ItemIdBitLen', c_uint8),
+            ('ItemValidBitOff', c_uint8),
+            ('ItemUnused', c_uint8),
         ]
 
     def __init__ (self):
@@ -228,23 +140,23 @@ class CCfgData:
             if Flag & CCfgData.DUMP_FLAG_VERBOSE:
                 if PrintData:
                     if not IsArray:
-                        PrintByteArray (CfgData[2], Indent = 5)
+                        print_bytes (CfgData[2], 5)
                     else:
                         Offset    = 0
-                        DataOffset = CCfgData.CDATA_ITEM_ARRAY.ItemValidByteOffset.offset
+                        DataOffset = sizeof(CCfgData.CDATA_ITEM_ARRAY)
                         BitMaskLen = ArrayInfo.HeaderSize - DataOffset
                         print("    ARRAY HEADER:")
-                        PrintByteArray (CfgData[2][:DataOffset], Indent = 5,  Offset=Offset)
+                        print_bytes (CfgData[2][:DataOffset], 5,  Offset)
                         Offset  +=  DataOffset
                         print("    ARRAY MASK:")
-                        PrintByteArray (CfgData[2][DataOffset:DataOffset+BitMaskLen], Indent = 5,  Offset=Offset)
+                        print_bytes (CfgData[2][DataOffset:DataOffset+BitMaskLen], 5, Offset)
                         Offset  +=  BitMaskLen
                         if ArrayInfo.ItemCount > 0:
                             print("    ARRAY DATA:")
                             ArrayData  = CfgData[2][ArrayInfo.HeaderSize:]
                             DataOffset = 0
                             for Idx in range (ArrayInfo.ItemCount):
-                                PrintByteArray (ArrayData[DataOffset:DataOffset + ArrayInfo.ItemSize], Offset=Offset, Indent = 5)
+                                print_bytes (ArrayData[DataOffset:DataOffset + ArrayInfo.ItemSize], 5, Offset)
                                 DataOffset += ArrayInfo.ItemSize
                                 Offset     += ArrayInfo.ItemSize
 
@@ -283,7 +195,7 @@ class CCfgData:
                 "Invalid array item count/size field in TAG '0x%03X'!" %
                 Header.Tag)
 
-        BitMaskLen = ArrayInfo.HeaderSize - CCfgData.CDATA_ITEM_ARRAY.ItemValidByteOffset.offset
+        BitMaskLen = ArrayInfo.HeaderSize - sizeof (ArrayInfo)
         ByteWidth  = (ArrayInfo.ItemCount + 7) // 8
         if ByteWidth < 2:
             ByteWidth = 2
@@ -295,8 +207,8 @@ class CCfgData:
         BitMaskDat = bytearray('1' * ArrayInfo.ItemCount + '0' *
                      (BitMaskLen * 8 - ArrayInfo.ItemCount), 'utf-8')
 
-        ItemValidByteOffset = ArrayInfo.ItemValidByteOffset
-        ItemValidByteMask   = ArrayInfo.ItemValidByteMask
+        ItemValidByteOffset = ArrayInfo.ItemValidBitOff // 8
+        ItemValidByteMask   = 1 << (ArrayInfo.ItemValidBitOff & (8 - 1))
 
         DataOff     = ArrayInfo.HeaderSize
         ArrayTagKey = '%03X' % Header.Tag
@@ -336,12 +248,20 @@ class CCfgData:
                 self.CfgDataArrayPidDict[ArrayTagKey]  = self.CfgDataPid[CfgBinFile]
 
             # Check the invliad flag and remove those items
+            ItemDict = {}
             RemovedItem = 0
             Index = 0
             DataLen = len(Data)
             while DataOff < DataLen:
                 Remove = False
                 if ArrayInfo.BasePlatformId == 0x80:
+                    # Check ItemID to make sure it is unique
+                    ItemId = get_bits_from_bytes (Data[DataOff:DataOff + ArrayInfo.ItemSize], ArrayInfo.ItemIdBitOff, ArrayInfo.ItemIdBitLen)
+                    if ItemId not in ItemDict.keys():
+                        ItemDict[ItemId] = 1
+                    else:
+                        raise Exception("ItemId '0x%X' is not unique indicated by ItemIdBitOff/ItemIdBitLen in array header !" % ItemId)
+
                     # It is a base table, remove marker and assemble mask
                     if Data[DataOff + ItemValidByteOffset] & ItemValidByteMask:
                         Data[DataOff + ItemValidByteOffset] = Data[
@@ -372,7 +292,7 @@ class CCfgData:
             BitWidth = BitMaskLen * 8
             MaskHexStr = '{0:0{w}x}'.format(int(BitMaskDat.decode()[::-1], 2), w=BitWidth // 4)
             BinData = bytearray.fromhex(MaskHexStr)[::-1]
-            Offset  = CCfgData.CDATA_ITEM_ARRAY.ItemValidByteOffset.offset
+            Offset  = sizeof (CCfgData.CDATA_ITEM_ARRAY)
             Data[Offset:Offset + BitMaskLen] = BinData
 
             return DataLen
@@ -448,7 +368,11 @@ class CCfgData:
             CfgItemList.append([(bytearray(CfgTagHdr), CondBin, DataBin[:DataLen]), PidMask, PidMask, IsBuiltIn])
             Offset += CfgDlen
 
+        if (Offset != Length) or (Length % 4 != 0):
+            raise Exception("Invalid CFGDATA binary blob format for file '%s' !" % CfgBinFile)
+
         self.CfgDataBase[CfgBinFile] = (CfgItemList, CfgBlobHeader, IsBuiltIn)
+
 
     def Merge(self, CfgItem, PidMask):
         CfgData = CfgItem[0]
@@ -574,6 +498,219 @@ class CCfgData:
             Fout.write (CfgdHdr)
             Fout.write (BinDat)
 
+
+def GetCfgDataByTag (CfgData, Pid, Tag, IsInternal = False):
+    Idx = 0 if IsInternal else 1
+    CfgFile, (CfgItemList, CfgBlobHdr, IsBuiltIn) = list(CfgData[Idx].CfgDataBase.items())[0]
+
+    for CfgItem in CfgItemList:
+        TagHdr, CondBin, DataBin = CfgItem[0]
+        CfgTagHdr = CCfgData.CDATA_HEADER.from_buffer(TagHdr)
+        if CfgTagHdr.Tag != Tag:
+            continue
+        if (CfgTagHdr.Tag != CCfgData.CDATA_PLATFORM_ID.TAG) and (CfgItem[1] & (1 << Pid) == 0):
+            continue
+
+        if (CfgTagHdr.Flags & CCfgData.CDATA_HEADER.FLAG_ITEM_TYPE_MASK) == CCfgData.CDATA_HEADER.FLAG_ITEM_TYPE_ARRAY:
+            ArrayInfo = CCfgData.CDATA_ITEM_ARRAY.from_buffer(DataBin)
+            Offset     = ArrayInfo.HeaderSize
+            MaskOff    = sizeof(ArrayInfo)
+            MaskLen    = Offset - MaskOff
+            if ArrayInfo.BasePlatformId < 0x80:
+                RefPid = ArrayInfo.BasePlatformId
+                TagHdr, CondBin, BaseDataBin = GetCfgDataByTag (CfgData, RefPid, Tag, True)
+
+                CurrArrayInfo = CCfgData.CDATA_ITEM_ARRAY.from_buffer(DataBin)
+                BaseArrayInfo = CCfgData.CDATA_ITEM_ARRAY.from_buffer(BaseDataBin)
+                NewDataBin = bytearray (BaseDataBin)
+
+                # Copy entries from base table
+                ItemDict = {}
+                ItemLen  = BaseArrayInfo.ItemSize
+                for Idx1 in range (BaseArrayInfo.ItemCount):
+                    Off1     = Offset + Idx1 * ItemLen
+                    BaseItem = BaseDataBin[Off1 : Off1 + ItemLen]
+                    ItemId   = get_bits_from_bytes (BaseItem, BaseArrayInfo.ItemIdBitOff, BaseArrayInfo.ItemIdBitLen)
+                    NewItem  = NewDataBin[Off1 : Off1 + ItemLen]
+                    if DataBin[MaskOff + (Idx1 >> 3)] & (1 << (Idx1 & 7)):
+                        set_bits_to_bytes (NewItem, BaseArrayInfo.ItemValidBitOff, 1, 0)
+                    else:
+                        ItemDict[ItemId] = Idx1
+                        set_bits_to_bytes (NewItem, BaseArrayInfo.ItemValidBitOff, 1, 1)
+                    NewDataBin[Off1 : Off1 + ItemLen] = NewItem
+
+                for Idx2 in range (CurrArrayInfo.ItemCount):
+                    Off2 = Offset + Idx2 * ItemLen
+                    CurrItem = DataBin[Off2 : Off2 + ItemLen]
+                    ItemId   = get_bits_from_bytes (CurrItem, BaseArrayInfo.ItemIdBitOff, BaseArrayInfo.ItemIdBitLen)
+                    Idx1 = ItemDict[ItemId]
+                    Off1 = Offset + Idx1 * ItemLen
+                    NewDataBin[Off1 : Off1 + ItemLen] = CurrItem
+            elif ArrayInfo.BasePlatformId == 0x80:
+                NewDataBin = bytearray (DataBin)
+
+            # Zero masks and base pid
+            NewDataBin[MaskOff : MaskOff + MaskLen] = b'\x00' * MaskLen
+            NewArrayInfo = CCfgData.CDATA_ITEM_ARRAY.from_buffer(NewDataBin)
+            NewArrayInfo.BasePlatformId = 0xFF
+            DataBin = NewDataBin
+
+        elif (CfgTagHdr.Flags & CCfgData.CDATA_HEADER.FLAG_ITEM_TYPE_MASK) == CCfgData.CDATA_HEADER.FLAG_ITEM_TYPE_REFER:
+            Refer = CCfgData.CDATA_REFERENCE.from_buffer(DataBin)
+            TagHdrInt, CondBinInt, DataBin = GetCfgDataByTag (CfgData, Refer.PlatformId, Refer.Tag, True)
+
+        return  TagHdr, CondBin, DataBin
+
+    if Idx == 1:
+        # Try to find it in internal database
+        return GetCfgDataByTag (CfgData, Pid, Tag, True)
+    else:
+        raise Exception ('Could not find TAG:0x%03X for PID:0x%02X in internal or external CFGDATA !' % Tag)
+
+
+def CmdExport(Args):
+    BrdNameDict = {}
+    if Args.board_name_list:
+      Parts = Args.board_name_list.split(',')
+      for Part in Parts:
+        Info = Part.split(':')
+        if len(Info) == 2:
+          BrdNameDict[int(Info[0],0)] = Info[1].strip()
+
+    OutputDir     = Args.output_dir
+    if not os.path.exists(OutputDir):
+        os.mkdir (OutputDir)
+
+    # Locate CFGDATA in BIOS region
+    IfwiBin = bytearray (get_file_data(Args.ifwi_file))
+    IfwiParser = IFWI_PARSER ()
+    Ifwi = IfwiParser.parse_ifwi_binary (IfwiBin)
+    Cfgs = IfwiParser.find_components(Ifwi, 'CNFG')
+    if not Cfgs:
+        IsBpdt  = True
+        Cfgs = IfwiParser.find_components(Ifwi, 'CFGD')
+    else:
+        IsBpdt  = False
+        PartFmt = '/RD%%d/'
+
+    if len(Cfgs) == 0:
+        print ("ERROR: Conld not find external CFGDATA !")
+        return -1
+
+    # Adjust path to point to proper boot partition
+    Bp = int(Args.boot_part)
+    CfgdPath = ''
+    for Cfgd in Cfgs:
+        CfgdPath = IfwiParser.get_component_path (Cfgd)
+        if IsBpdt:
+            PartStr = '/BP%d/' % Bp
+        else:
+            PartStr = '/RD%d/' % Bp
+        if PartStr in CfgdPath:
+            break
+
+    # For non-redundant layout, just use the 1st CFGD found
+    if CfgdPath == '':
+        print ('INFO: No redundant boot partition found !')
+        CfgdPath = Cfgs[0]
+
+    # Locate Stage1B image
+    Stage1bName = 'IBB' if IsBpdt else 'SG1B'
+    Stage1bPath = '/'.join(CfgdPath.split('/')[:-1]) + '/%s' % Stage1bName
+    Stage1bComp = IfwiParser.locate_component (Ifwi, Stage1bPath)
+    if not Stage1bComp:
+        print ('ERROR: Failed to extract external STAGE1B !')
+        return -2
+
+    # Decompress Stage1B image if required
+    Stage1bBin  = IfwiBin[Stage1bComp.offset : Stage1bComp.offset + Stage1bComp.length]
+    if Stage1bBin[0:2] == b'LZ':
+        if Args.tool_dir == '':
+            print ("ERROR: '-t' is required to specify compress tool directory !")
+            return -3
+
+        Stage1bLz = OutputDir + '/Stage1b.lz'
+        Stage1bFd = OutputDir + '/Stage1b.fd'
+        gen_file_from_object (Stage1bLz, Stage1bBin)
+        decompress (Stage1bLz, Stage1bFd, tool_dir = Args.tool_dir)
+        Stage1bBin = bytearray (get_file_data (Stage1bFd))
+
+    # Locate and generate internal CFGDATA
+    Offset = Stage1bBin.find (CFGDATA_INT_GUID)
+    if Offset < 0:
+        print ('ERROR: Failed to locate internal CFGDATA !')
+        return -4
+
+    Offset += 0x1C
+    CfgBlobHeader = CCfgData.CDATA_BLOB_HEADER.from_buffer(Stage1bBin, Offset)
+    if CfgBlobHeader.Signature != b'CFGD':
+        print ('ERROR: Invalid internal CFGDATA format !')
+        return -5
+
+    CfgDataInt =  Stage1bBin[Offset : Offset + CfgBlobHeader.TotalLength]
+    CfgBinIntFile = OutputDir + '/CfgDataInt.bin'
+    gen_file_from_object (CfgBinIntFile, CfgDataInt)
+
+    # Generate external CFGDATA
+    CfgBinExtFile = OutputDir + '/CfgDataExt.bin'
+    gen_file_from_object (CfgBinExtFile, IfwiBin[Cfgd.offset : Cfgd.offset + Cfgd.length])
+
+    # Parse CFGDATA blobs
+    CfgDataInt = CCfgData()
+    CfgDataInt.Parse(CfgBinIntFile)
+    CfgDataExt = CCfgData()
+    CfgDataExt.Parse(CfgBinExtFile)
+
+    # Generate CfgDataDef blob
+    CfgFile, (CfgIntItemList, CfgIntBlobHdr, IsBuiltIn) = list(CfgDataInt.CfgDataBase.items())[0]
+    CfgDef  = bytearray(CfgIntBlobHdr)
+    TagDict = collections.OrderedDict()
+    for Idx, CfgIntItem in enumerate(CfgIntItemList):
+        TagHdr, CondBin, DataBin = CfgIntItem[0]
+        CfgTagHdr = CCfgData.CDATA_HEADER.from_buffer(TagHdr)
+        if CfgTagHdr.Tag in TagDict.keys():
+            break
+        else:
+            TagDict[CfgTagHdr.Tag] = Idx
+            CfgDef.extend(TagHdr + CondBin + DataBin)
+
+    CfgDefLen = len(CfgDef)
+    CfgDefBlobHdr = CCfgData.CDATA_BLOB_HEADER.from_buffer(bytearray(CfgIntBlobHdr))
+    CfgDefBlobHdr.UsedLength   = CfgDefLen
+    CfgDefBlobHdr.TotalLength  = CfgDefLen
+    CfgDefBlobHdr.Attribute    = 0
+
+    # Collect available platform ID
+    PidMask = 0
+    CfgFile, (CfgExtItemList, CfgExtBlobHdr, IsBuiltIn) = list(CfgDataExt.CfgDataBase.items())[0]
+    for CfgItem in CfgExtItemList:
+        PidMask |= CfgItem[1]
+
+    # Export board specific external CFGDATA
+    for Pid in range(32):
+        if (1 << Pid) & PidMask == 0:
+            continue
+
+        print ('Exporting external CFGDATA for PlatformID = 0x%02X' % Pid)
+        CfgDataBrd = bytearray (CfgDefBlobHdr)
+        CfgData    = [CfgDataInt, CfgDataExt]
+        for Tag in TagDict.keys():
+            TagHdr, CondBin, DataBin = GetCfgDataByTag (CfgData, Pid, Tag)
+            CfgTagHdr = CCfgData.CDATA_HEADER.from_buffer(TagHdr)
+            CondBin = b'\x00' * sizeof(CCfgData.CDATA_COND)
+            TagHdr  = bytearray (CfgIntItemList[TagDict[Tag]][0][0])
+            NewData = bytearray (DataBin)
+            if  CfgTagHdr.Tag == CCfgData.CDATA_PLATFORM_ID.TAG:
+                PidCfg = CCfgData.CDATA_PLATFORM_ID.from_buffer(NewData)
+                PidCfg.PlatformId = Pid
+            CfgDataBrd.extend (TagHdr + CondBin + NewData)
+
+        if Pid in BrdNameDict.keys():
+            Ext = BrdNameDict[Pid]
+        else:
+            Ext = 'CfgDataExt_%02X' % Pid
+        gen_file_from_object (OutputDir + '/%s.bin' % Ext, CfgDataBrd)
+
 def CmdView(Args):
     CfgData = CCfgData()
     for CfgBinFile in Args.cfg_in_file:
@@ -612,7 +749,6 @@ def CmdMerge(Args):
     print ("%d config binary files were merged successfully!" % len(Args.cfg_in_file))
 
 def CmdSign(Args):
-    RsaSign  = CRsaSign (Args.cfg_pri_key)
     Fd       = open (Args.cfg_in_file, 'rb')
     FileData = bytearray (Fd.read ())
     Fd.close ()
@@ -627,7 +763,7 @@ def CmdSign(Args):
     Fd.write (FileData)
     Fd.close ()
 
-    RsaSign.RsaSignFile (TmpFile, Args.cfg_out_file, True, True)
+    rsa_sign_file (Args.cfg_pri_key, None, Args.hash_alg, Args.sign_scheme, TmpFile, Args.cfg_out_file, True, True)
     if os.path.exists(TmpFile):
       os.remove(TmpFile)
 
@@ -654,7 +790,7 @@ def CmdExtract(Args):
     if Found:
         BinDat = bytearray()
         BinDat.extend (TagHdr + CondBin + DataBin)
-        PrintByteArray(BinDat)
+        print_bytes (BinDat)
         if Args.cfg_out_file != None:
             with open(Args.cfg_out_file, "wb") as Fout:
                 Fout.write (BinDat)
@@ -785,6 +921,8 @@ def Main():
                             help='Configuration binary file')
     SignParser.add_argument('-o', dest='cfg_out_file', type=str, help='Signed configuration output binary file name to be generated', required=True)
     SignParser.add_argument('-k', dest='cfg_pri_key', type=str, help='Private key file (PEM format) used to sign configuration data', required=True)
+    SignParser.add_argument('-a', dest='hash_alg', type=str, choices=['SHA2_256', 'SHA2_384'], help='Hash Type for signing',  default = 'SHA2_256')
+    SignParser.add_argument('-s', dest='sign_scheme', type=str, choices=['RSA_PKCS1', 'RSA_PSS'], help='Signing Scheme',   default = 'RSA_PSS')
     SignParser.set_defaults(func=CmdSign)
 
     ExtractParser = SubParser.add_parser('extract', help='extract a single config data to a file')
@@ -806,8 +944,16 @@ def Main():
     ReplaceParser.add_argument('-p', dest='pdr', action='store_true', help='Replace CFGDATA in PDR region', default=False)
     ReplaceParser.set_defaults(func=CmdReplace)
 
+    ExportParser = SubParser.add_parser('export', help='Export board external CFGDATA from BIOS or IFWI file')
+    ExportParser.add_argument('-i', dest='ifwi_file',  type=str,  help='Specify BIOS or IFWI input binary file', required=True)
+    ExportParser.add_argument('-b', dest='boot_part', choices=['0', '1'], help='Specify which boot partition to export CFGDATA from', default = '0')
+    ExportParser.add_argument('-o', dest='output_dir', type=str,  help='Specify output directory', default='.')
+    ExportParser.add_argument('-t', dest='tool_dir', type=str,  help='Specify compress tool directory', default='')
+    ExportParser.add_argument('-n', dest='board_name_list', type=str,  help='Specify board name to id map list', default='')
+    ExportParser.set_defaults(func=CmdExport)
+
     Args = ArgParser.parse_args()
-    Args.func(Args)
+    return Args.func(Args)
 
 if __name__ == '__main__':
     sys.exit(Main())

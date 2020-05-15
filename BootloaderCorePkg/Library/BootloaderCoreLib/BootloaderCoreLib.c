@@ -11,7 +11,6 @@
 #include <Library/DebugLib.h>
 #include <Library/HobLib.h>
 #include <Library/BootloaderCoreLib.h>
-#include <HashStore.h>
 #include <Guid/FlashMapInfoGuid.h>
 
 /**
@@ -378,3 +377,33 @@ SetHobList (
   GetLoaderGlobalDataPointer()->LdrHobList = HobList;
 }
 
+
+/**
+  This function retrieves DMA buffer base.
+
+  @retval    DMA buffer base.
+
+**/
+VOID *
+EFIAPI
+GetDmaBufferPtr (
+  VOID
+  )
+{
+  return GetLoaderGlobalDataPointer()->DmaBufferPtr;
+}
+
+/**
+  This function retrieves usable memory top.
+
+  @retval    Usable memory top.
+
+**/
+UINT32
+EFIAPI
+GetUsableMemoryTop (
+  VOID
+  )
+{
+  return GetLoaderGlobalDataPointer()->MemUsableTop;
+}

@@ -1,7 +1,7 @@
 /** @file
   Provides sha256 and RSA2048 verify functions.
 
-Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2017-2020, Intel Corporation. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -14,28 +14,101 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #define RSA_KEY_VB_SIGNATURE     SIGNATURE_32 ('$', '_', 'V', 'B')
 #define RSA_KEY_IPP_SIGNATURE    SIGNATURE_32 ('$', 'I', 'P', 'P')
+#define PUBKEY_IDENTIFIER        SIGNATURE_32 ('P', 'U', 'B', 'K')
+#define SIGNATURE_IDENTIFIER     SIGNATURE_32 ('S', 'I', 'G', 'N')
 
-#define SIG_TYPE_RSA2048SHA256   0
 
-#define SHA256_DIGEST_SIZE       32
-#define RSA2048NUMBYTES          256
+#define SIG_TYPE_RSA2048SHA256          0
+#define SIG_TYPE_RSA3072SHA384          1
 
-#define RSA_MOD_SIZE 256 //hardcode n size to be 256
-#define RSA_E_SIZE   4   //hardcode e size to be 4
+typedef UINT8 SIGN_TYPE;
+#define SIGNING_TYPE_RSA_PKCS_1_5       1
+#define SIGNING_TYPE_RSA_PSS            2
 
-#define RSA_SIGNATURE_AND_KEY_SIZE  (RSA2048NUMBYTES + RSA_MOD_SIZE + RSA_E_SIZE + sizeof(UINT32))
+typedef UINT8 KEY_TYPE;
+#define KEY_TYPE_RSA                    1
 
-#define IPP_HASH_CTX_SIZE  256   //IPP Hash context size
+#define RSA2048_NUMBYTES                256
+#define RSA3072_NUMBYTES                384
+
+#define RSA2048_MOD_SIZE                256 //n size to be 256
+#define RSA3072_MOD_SIZE                384 //n size to be 384
+#define RSA_MOD_SIZE_MAX                RSA3072_MOD_SIZE
+
+#define RSA_E_SIZE                       4   //hardcode e size to be 4
+
+typedef UINT8 HASH_ALG_TYPE;
+#define  HASH_TYPE_NONE                  0
+#define  HASH_TYPE_SHA256                1
+#define  HASH_TYPE_SHA384                2
+#define  HASH_TYPE_SHA512                3
+#define  HASH_TYPE_SM3                   4
+
+#define SHA256_DIGEST_SIZE               32
+#define SHA384_DIGEST_SIZE               48
+#define SM3_DIGEST_SIZE                  32
+#define SHA512_DIGEST_SIZE               64
+#define HASH_DIGEST_MAX                  SHA512_DIGEST_SIZE
+
+#define IPP_HASH_CTX_SIZE                256   //IPP Hash context size
+
+#define IPP_HASHLIB_SHA1                 0x0001
+#define IPP_HASHLIB_SHA2_256             0x0002
+#define IPP_HASHLIB_SHA2_384             0x0004
+#define IPP_HASHLIB_SHA2_512             0x0008
+#define IPP_HASHLIB_SM3_256              0x0010
+
+#define IPP_RSALIB_PKCS_1_5              0x0001
+#define IPP_RSALIB_PSS                   0x0002
+
 
 typedef UINT8 HASH_CTX[IPP_HASH_CTX_SIZE];   //IPP Hash context buffer
 
-//
-// RSA verify required key parameter format
-//
+
 typedef struct {
-  UINT32                   Signature;
-  UINT8                    PubKeyData[0];
-} RSA_PUB_KEY;
+  //signature ('P', 'U', 'B', 'K')
+  UINT32                   Identifier;
+
+  //Length of Public Key
+  UINT16                   KeySize;
+
+  //KeyType RSA or ECC
+  KEY_TYPE                 KeyType;
+
+  UINT8                    Rsvd;
+
+  //Pubic key data with KeySize bytes
+  //Contains Modulus(256/384 sized) and PubExp[4]
+  UINT8                    KeyData[0];
+} PUB_KEY_HDR;
+
+typedef struct {
+  //signature Identifier('S', 'I', 'G', 'N')
+  UINT32                   Identifier;
+
+  //Length of signature 2K and 3K in bytes
+  UINT16                   SigSize;
+
+ //PKCSv1.5 or RSA-PSS or ECC
+  SIGN_TYPE                SigType;
+
+  //Hash Alg for signingh SHA256, SHA384
+  HASH_ALG_TYPE            HashAlg;
+
+  //Signature length defined by SigSize bytes
+  UINT8                    Signature[0];
+} SIGNATURE_HDR;
+
+
+#define RSA2048_SIGNATURE_SIZE             (RSA2048_NUMBYTES + sizeof(SIGNATURE_HDR))
+#define RSA2048_KEYSIZE_SIZE               (RSA2048_MOD_SIZE + RSA_E_SIZE + sizeof(PUB_KEY_HDR))
+#define RSA2048_SIGNATURE_AND_KEY_SIZE     (RSA2048_SIGNATURE_SIZE + RSA2048_KEYSIZE_SIZE)
+
+#define RSA3072_SIGNATURE_SIZE             (RSA3072_NUMBYTES + sizeof(SIGNATURE_HDR))
+#define RSA3072_KEYSIZE_SIZE               (RSA3072_MOD_SIZE + RSA_E_SIZE + sizeof(PUB_KEY_HDR))
+#define RSA3072_SIGNATURE_AND_KEY_SIZE     (RSA3072_SIGNATURE_SIZE + RSA3072_KEYSIZE_SIZE)
+
+#define SIGNATURE_AND_KEY_SIZE_MAX         RSA3072_SIGNATURE_AND_KEY_SIZE
 
 /**
   Computes the SHA-256 message digest of a input data buffer.
@@ -57,14 +130,53 @@ Sha256 (
   OUT       UINT8          *Digest
   );
 
+
+/**
+  Computes the SHA-384 message digest of a input data buffer.
+
+  This function performs the SHA-384 message digest of a given data buffer, and places
+  the digest value into the specified memory.
+
+  @param[in]   Data        Pointer to the buffer containing the data to be hashed.
+  @param[in]   Length      Length of Data buffer in bytes.
+  @param[out]  Digest      Pointer to a buffer that receives the SHA-384 digest
+                           value (48 bytes).
+
+  @retval                  A pointer to SHA-384 digest value
+**/
+UINT8 *
+Sha384 (
+  IN  CONST UINT8          *Data,
+  IN        UINT32          Length,
+  OUT       UINT8          *Digest
+  );
+
+/**
+  Computes the SM3 message digest of a input data buffer.
+
+  This function performs the SM3 message digest of a given data buffer, and places
+  the digest value into the specified memory.
+
+  @param[in]   Data        Pointer to the buffer containing the data to be hashed.
+  @param[in]   Length      Length of Data buffer in bytes.
+  @param[out]  Digest      Pointer to a buffer that receives the SM3 digest
+                           value (32 bytes).
+
+  @retval                  A pointer to SM3 digest value
+**/
+UINT8 *
+Sm3 (
+  IN  CONST UINT8          *Data,
+  IN        UINT32          Length,
+  OUT       UINT8          *Digest
+  );
+
 /**
   Verifies the RSA signature with PKCS1-v1_5 encoding scheme defined in RSA PKCS#1.
 
-  @param[in]  PubKey         Pointer to a pre-processed RSA key data.
-  @param[in]  Signature      Pointer to RSA PKCS1-v1_5 signature to be verified.
-  @param[in]  SignatureLen   Length of the signature in bytes.
-  @param[in]  SignatureType  Now only support signature type SIG_TYPE_RSA2048SHA256.
-  @param[in]  Hash           Pointer to octet message hash to be checked.
+  @param[in]  PubKeyHdr         Pointer to a PubKey data.
+  @param[in]  SignatureHdr      Pointer to signature data to be verified.
+  @param[in]  Hash              Pointer to octet message hash to be checked.
 
   @retval  RETURN_SUCCESS             Valid signature.
   @retval  RETURN_INVALID_PARAMETER   Key or signature format is incorrect.
@@ -72,13 +184,37 @@ Sha256 (
 
 **/
 RETURN_STATUS
-RsaVerify (
-  CONST RSA_PUB_KEY        *PubKey,
-  CONST UINT8              *Signature,
-  CONST UINT32              SignatureLen,
-  CONST UINT8               SignatureType,
-  CONST UINT8              *Hash
+EFIAPI
+RsaVerify_Pkcs_1_5 (
+  IN CONST PUB_KEY_HDR        *PubKeyHdr,
+  IN CONST SIGNATURE_HDR      *SignatureHdr,
+  IN CONST UINT8              *Hash
   );
+
+
+/**
+  Verifies the RSA signature with PSS encoding scheme defined in RSA PSS.
+
+  @param[in]  PubKeyHdr         Pointer to a PubKey data.
+  @param[in]  SignatureHdr      Pointer to signature data to be verified.
+  @param[in]  Src               Pointer to meassage.
+  @param[in]  SrcSize           Size of the message.
+
+  @retval  RETURN_SUCCESS             Valid signature.
+  @retval  RETURN_INVALID_PARAMETER   Key or signature format is incorrect.
+  @retval  RETURN_SECURITY_VIOLATION  Invalid signature.
+
+**/
+
+RETURN_STATUS
+EFIAPI
+RsaVerify_PSS (
+  IN CONST PUB_KEY_HDR        *PubKeyHdr,
+  IN CONST SIGNATURE_HDR      *SignatureHdr,
+  IN CONST UINT8              *Src,
+  IN CONST UINT32             SrcSize
+  );
+
 
 /**
   Computes the HMAC SHA-256 message digest of a input data buffer.
@@ -182,6 +318,105 @@ Sha256Update (
 **/
 RETURN_STATUS
 Sha256Final (
+  IN       HASH_CTX   *HashCtx,
+  OUT      UINT8      *Hash
+  );
+
+
+/**
+  Initializes the hash context for SHA384 hashing.
+
+  @param[in]   HashCtx       Pointer to the hash context buffer.
+  @param[in]   HashCtxSize   Length of the hash context.
+
+  @retval  RETURN_SUCCESS             Success.
+  @retval  RETURN_BUFFER_TOO_SMALL    Hash context buffer size is not large enough.
+  @retval  RETURN_SECURITY_VIOLATION  All other errors.
+**/
+RETURN_STATUS
+Sha384Init (
+  IN      HASH_CTX   *HashCtx,
+  IN      UINT32      HashCtxSize
+  );
+
+/**
+  Consumes the data for SHA384 hashing.
+  This method can be called multiple times to hash separate pieces of data.
+
+  @param[in]   HashCtx     Pointer to the hash context buffer.
+  @param[in]   Msg         Data to be hashed.
+  @param[in]   MsgLen      Length of data to be hashed.
+
+  @retval  RETURN_SUCCESS             Success.
+  @retval  RETURN_SECURITY_VIOLATION  All other errors.
+**/
+RETURN_STATUS
+Sha384Update (
+  IN        HASH_CTX   *HashCtx,
+  IN CONST  UINT8      *Msg,
+  IN        UINT32      MsgLen
+  );
+
+/**
+  Finalizes the SHA384 hashing and returns the hash.
+
+  @param[in]   HashCtx     Pointer to the hash context buffer.
+  @param[out]  Hash        Sha384 hash of the data.
+
+  @retval  RETURN_SUCCESS             Success.
+  @retval  RETURN_SECURITY_VIOLATION  All other errors.
+**/
+RETURN_STATUS
+Sha384Final (
+  IN       HASH_CTX   *HashCtx,
+  OUT      UINT8      *Hash
+  );
+
+/**
+  Initializes the hash context for SM3 hashing.
+
+  @param[in]   HashCtx       Pointer to the hash context buffer.
+  @param[in]   HashCtxSize   Length of the hash context.
+
+  @retval  RETURN_SUCCESS             Success.
+  @retval  RETURN_BUFFER_TOO_SMALL    Hash context buffer size is not large enough.
+  @retval  RETURN_SECURITY_VIOLATION  All other errors.
+**/
+RETURN_STATUS
+Sm3Init (
+  IN      HASH_CTX   *HashCtx,
+  IN      UINT32      HashCtxSize
+  );
+
+/**
+  Consumes the data for SM3 hashing.
+  This method can be called multiple times to hash separate pieces of data.
+
+  @param[in]   HashCtx     Pointer to the hash context buffer.
+  @param[in]   Msg         Data to be hashed.
+  @param[in]   MsgLen      Length of data to be hashed.
+
+  @retval  RETURN_SUCCESS             Success.
+  @retval  RETURN_SECURITY_VIOLATION  All other errors.
+**/
+RETURN_STATUS
+Sm3Update (
+  IN        HASH_CTX   *HashCtx,
+  IN CONST  UINT8      *Msg,
+  IN        UINT32      MsgLen
+  );
+
+/**
+  Finalizes the SM3 hashing and returns the hash.
+
+  @param[in]   HashCtx     Pointer to the hash context buffer.
+  @param[out]  Hash        Sm3 hash of the data.
+
+  @retval  RETURN_SUCCESS             Success.
+  @retval  RETURN_SECURITY_VIOLATION  All other errors.
+**/
+RETURN_STATUS
+Sm3Final (
   IN       HASH_CTX   *HashCtx,
   OUT      UINT8      *Hash
   );

@@ -39,6 +39,7 @@ DebugLogBufferWrite (
   )
 {
   DEBUG_LOG_BUFFER_HEADER  *LogBufHdr;
+  UINTN                     RemainingBytes;
 
   // This function will be called by DEBUG or ASSERT macro.
   // So please DON'T use DEBUG/ASSERT macro inside this function,
@@ -48,14 +49,37 @@ DebugLogBufferWrite (
     return 0;
   }
 
+  if (LogBufHdr->Signature != DEBUG_LOG_BUFFER_SIGNATURE) {
+    return 0;
+  }
+
+  //
+  // Something wrong in Debug Log Buffer.
+  // Reset buffer index and continue to record logs.
+  //
+  if (LogBufHdr->UsedLength > LogBufHdr->TotalLength) {
+    LogBufHdr->UsedLength = LogBufHdr->HeaderLength;
+  }
+
+  RemainingBytes = 0;
   if (LogBufHdr->UsedLength + NumberOfBytes > LogBufHdr->TotalLength) {
-    NumberOfBytes = LogBufHdr->TotalLength - LogBufHdr->UsedLength;
+    RemainingBytes = LogBufHdr->UsedLength + NumberOfBytes - LogBufHdr->TotalLength;
+    NumberOfBytes  = LogBufHdr->TotalLength - LogBufHdr->UsedLength;
   }
 
   if (NumberOfBytes > 0) {
-    CopyMem ((UINT8 *)LogBufHdr + LogBufHdr->UsedLength, Buffer, NumberOfBytes);
-    LogBufHdr->UsedLength += NumberOfBytes;
+    CopyMem (&LogBufHdr->Buffer[LogBufHdr->UsedLength - LogBufHdr->HeaderLength], Buffer, NumberOfBytes);
+    LogBufHdr->UsedLength += (UINT32)NumberOfBytes;
   }
 
-  return NumberOfBytes;
+  //
+  // Handle Ring Buffer
+  //
+  if (RemainingBytes > 0) {
+    CopyMem (&LogBufHdr->Buffer[0], Buffer + NumberOfBytes, RemainingBytes);
+    LogBufHdr->UsedLength = LogBufHdr->HeaderLength + (UINT32)RemainingBytes;
+    LogBufHdr->Attribute |= DEBUG_LOG_BUFFER_ATTRIBUTE_FULL;
+  }
+
+  return (NumberOfBytes + RemainingBytes);
 }

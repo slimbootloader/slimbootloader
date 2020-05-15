@@ -35,3 +35,4 @@
   DebugLib
   BootloaderLib
   HobLib
+  TpmLib

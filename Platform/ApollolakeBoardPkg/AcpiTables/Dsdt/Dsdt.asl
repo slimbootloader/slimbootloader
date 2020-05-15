@@ -22,7 +22,7 @@ DefinitionBlock (
 {
   // Miscellaneous services enabled in Project
   include ("Token.asl")
-  Include ("AmlUpd.asl")
+  include ("AmlUpd.asl")
   include ("GloblNvs.asl")
   include ("PciTree.asl")
   include ("Sc.asl")
@@ -41,6 +41,8 @@ DefinitionBlock (
   include ("ApIst.asl")
 
   include ("Gfx.asl")
+
+  #include "FwuWmi.asl"
 
 // Sleep states supported by Chipset/Board.
 //----------------------------------------------------------------------

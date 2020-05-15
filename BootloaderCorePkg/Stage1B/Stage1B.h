@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2016 - 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2016 - 2019, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -28,18 +28,18 @@
 #include <Library/FspApiLib.h>
 #include <Library/BlMemoryAllocationLib.h>
 #include <Library/SecureBootLib.h>
+#include <Library/CryptoLib.h>
 #include <Library/CpuExceptionLib.h>
 #include <Library/DebugDataLib.h>
 #include <Library/DebugLogBufferLib.h>
 #include <Library/LocalApicLib.h>
 #include <Library/DebugAgentLib.h>
 #include <Library/TpmLib.h>
+#include <Library/StageLib.h>
 #include <Library/ContainerLib.h>
 #include <Guid/PcdDataBaseSignatureGuid.h>
 #include <Guid/LoaderPlatformDataGuid.h>
 #include <VerInfo.h>
-#include <HashStore.h>
-
 
 /**
   Continue Stage1B execution.
@@ -51,30 +51,10 @@
 
 **/
 VOID
+EFIAPI
 ContinueFunc (
   IN      VOID                      *Context1,  OPTIONAL
   IN      VOID                      *Context2   OPTIONAL
-  );
-
-/**
-  Load IDT table for current processor.
-
-  It function initializes the exception handlers in IDT table and
-  loads it into current processor.  It also try to store a specific DWORD
-  data just before actual IDT base. It is used to set/get bootloader
-  global data structure pointer.
-
-  @param  IdtTable  Contain the IDT table pointer.
-                    It must point to a STAGE_IDT_TABLE buffer preallocated.
-
-  @param  Data      It contains a DWORD data that will be stored just before the actual IDT table.
-                    It can be used to set/get global data using IDT pointer.
-
-**/
-VOID
-LoadIdt (
-  IN  STAGE_IDT_TABLE   *IdtTable,
-  IN  UINT32             Data
   );
 
 /**

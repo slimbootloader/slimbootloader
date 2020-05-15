@@ -22,12 +22,12 @@
 //
 // Debug message setting
 //
-#define USB_FUIO_DEBUG_INFO              EFI_D_INFO
-#define USB_FUIO_DEBUG_LOAD              EFI_D_LOAD
-#define USB_FUIO_DEBUG_ERROR             EFI_D_ERROR
+#define USB_FUIO_DEBUG_INFO              DEBUG_INFO
+#define USB_FUIO_DEBUG_LOAD              DEBUG_LOAD
+#define USB_FUIO_DEBUG_ERROR             DEBUG_ERROR
 #define USB_FUIO_DEBUG_EVENT_I           0 //DEBUG_INIT
-#define USB_FUIO_DEBUG_EVENT_D           EFI_D_ERROR
-#define USB_FUIO_DEBUG_EVENT_NOTREADY_D  EFI_D_ERROR
+#define USB_FUIO_DEBUG_EVENT_D           DEBUG_ERROR
+#define USB_FUIO_DEBUG_EVENT_NOTREADY_D  DEBUG_ERROR
 #define USB_FUIO_DEBUG_EVENT_NOTREADY_I  0 //DEBUG_INIT
 
 #define MAX_TRANSFER_PACKET     (8 * 1024 * 1024)

@@ -20,6 +20,8 @@
 #
 
 [Sources]
+  TpmEventLog.h
+  TpmLibInternal.h
   TpmLib.c
   Tpm2Ptp.c
   Tpm2Tis.c
@@ -41,6 +43,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdTcgLogAreaMinLen          ## CONSUMES
   gPlatformCommonLibTokenSpaceGuid.PcdTpmLibId                  ## CONSUMES
   gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled       ## CONSUMES
+  gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootHashMask      ## CONSUMES
 
 [LibraryClasses]
   BaseLib

@@ -618,29 +618,6 @@ typedef struct {
   UINT16 VrVoltageLimit;
 } CPU_VR_OVERRIDE_TABLE;
 
-//
-// ASL PSS package structure layout
-//
-#pragma pack (1)
-typedef struct {
-  UINT8     NameOp;           // 12h ;First opcode is a NameOp.
-  UINT8     PackageLead;      // 20h ;First opcode is a NameOp.
-  UINT8     NumEntries;       // 06h ;First opcode is a NameOp.
-  UINT8     DwordPrefix1;     // 0Ch
-  UINT32    CoreFrequency;    // 00h
-  UINT8     DwordPrefix2;     // 0Ch
-  UINT32    Power;            // 00h
-  UINT8     DwordPrefix3;     // 0Ch
-  UINT32    TransLatency;     // 00h
-  UINT8     DwordPrefix4;     // 0Ch
-  UINT32    BmLatency;        // 00h
-  UINT8     DwordPrefix5;     // 0Ch
-  UINT32    Control;          // 00h
-  UINT8     DwordPrefix6;     // 0Ch
-  UINT32    Status;           // 00h
-} PSS_PACKAGE_LAYOUT;
-
-
 ///
 /// MSR_REGISTER definition as a Union of QWORDS, DWORDS and BYTES
 ///

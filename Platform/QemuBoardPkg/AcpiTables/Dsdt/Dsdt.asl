@@ -23,7 +23,7 @@ DefinitionBlock (
 )
 {
   OperationRegion(GNVS, SystemMemory, 0xFFFF0000, 0xAA55)
-     
+
   //
   // System Sleep States
   //
@@ -45,6 +45,13 @@ DefinitionBlock (
       Name (_ADR, 0x00000000)
       Name (_BBN, 0x00)
       Name (_UID, 0x00)
+
+      OperationRegion(HBUS, PCI_Config, 0x00, 0xFF)
+      Field(HBUS, DWordAcc, NoLock, Preserve)
+      {
+        Offset(0xDC),
+        SKPD, 32            // SKPD (0:0:0:dc)
+      }
 
       //
       // BUS, I/O, and MMIO resources
@@ -144,7 +151,7 @@ DefinitionBlock (
       Method (_CRS, 0, Serialized) {
         //
         // see the FIRMWARE_DATA structure in "OvmfPkg/AcpiPlatformDxe/Qemu.c"
-        //        
+        //
         Field(GNVS, QWordAcc, NoLock, Preserve) {
           P0S, 64,               // PciWindow32.Base
           P0E, 64,               // PciWindow32.End
@@ -590,7 +597,7 @@ DefinitionBlock (
             IO (Decode16, 0x160, 0x160, 0x00, 0x10)
             IO (Decode16, 0x278, 0x278, 0x00, 0x08)
             IO (Decode16, 0x370, 0x370, 0x00, 0x02)
-            IO (Decode16, 0x378, 0x378, 0x00, 0x08)            
+            IO (Decode16, 0x378, 0x378, 0x00, 0x08)
             IO (Decode16, 0x440, 0x440, 0x00, 0x10)
             IO (Decode16, 0x678, 0x678, 0x00, 0x08)
             IO (Decode16, 0x778, 0x778, 0x00, 0x08)
@@ -705,5 +712,20 @@ DefinitionBlock (
       }
     }
   }
-  
+
+  //
+  // Platform specific FWU trigger method
+  //
+  Method(FWUC, 2)
+  {
+    If(LNot(LEqual(Arg0, Zero))) {
+      // Write
+      Store(ToInteger(Arg1), \_SB.PCI0.SKPD)
+    }
+    // Read
+    Store(\_SB.PCI0.SKPD, Local0)
+    Return (Local0)
+  }
+
+  #include "FwuWmi.asl"
 }

@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
   Copyright (c) 1982, 1986, 1989, 1993
@@ -435,7 +435,7 @@ typedef struct {
   @retval 0 if success
   @retval other if error.
 **/
-INT32
+RETURN_STATUS
 EFIAPI
 BDevStrategy (
   IN  VOID       *DevData,
@@ -453,10 +453,10 @@ BDevStrategy (
   @param[in]      Path          Path to locate the file
   @param[in/out]  File          The struct having the device and file info
 
-  @retval 0 if file open is success
+  @retval RETURN_SUCCESS if file open is success
   @retval other if error.
 **/
-INT32
+RETURN_STATUS
 EFIAPI
 Ext2fsOpen (
   IN      CHAR8         *Path,
@@ -468,9 +468,9 @@ Ext2fsOpen (
 
   @param[in/out]    File        File to be closed.
 
-  @retval 0 regardless of success/fail condition
+  @retval RETURN_SUCCESS regardless of success/fail condition
 **/
-INT32
+RETURN_STATUS
 EFIAPI
 Ext2fsClose (
   IN OUT  OPEN_FILE     *File
@@ -485,10 +485,10 @@ Ext2fsClose (
   @param[in]        Size      Size to be read
   @param[out]       ResId     Actual read size
 
-  @retval 0 if file read is success
+  @retval RETURN_SUCCESS if file read is success
   @retval other if error.
 **/
-INT32
+RETURN_STATUS
 EFIAPI
 Ext2fsRead (
   IN OUT  OPEN_FILE     *File,
@@ -502,7 +502,6 @@ Ext2fsRead (
 
   @param[in] File           pointer to an file private data
   @param[in] Pattern        not used for now
-  @param[in] ConsoleOutFunc redirect output message to a console
 
   @retval EFI_SUCCESS       list directories or files successfully
   @retval EFI_NOT_FOUND     not found specified dir or file
@@ -512,8 +511,7 @@ EFI_STATUS
 EFIAPI
 Ext2fsLs (
   IN  OPEN_FILE         *File,
-  IN  CONST CHAR8       *Pattern,
-  IN  CONSOLE_OUT_FUNC   ConsoleOutFunc
+  IN  CONST CHAR8       *Pattern
   );
 
 /**
@@ -525,7 +523,7 @@ Ext2fsLs (
   @retval 0 if superblock compute is success
   @retval other if error.
 **/
-INT32
+RETURN_STATUS
 EFIAPI
 ReadSBlock (
   IN      OPEN_FILE     *File,
@@ -541,7 +539,7 @@ ReadSBlock (
   @retval 0 if Group descriptor read is success
   @retval other if error.
 **/
-INT32
+RETURN_STATUS
 EFIAPI
 ReadGDBlock (
   IN OUT  OPEN_FILE     *File,
@@ -557,7 +555,7 @@ ReadGDBlock (
   @retval         0 if success
   @retval         other if error.
 **/
-INT32
+RETURN_STATUS
 EFIAPI
 ReadInode (
   IN    INODE32      INumber,
@@ -576,7 +574,7 @@ ReadInode (
   @retval     0 if success
   @retval     other if error.
 **/
-INT32
+RETURN_STATUS
 EFIAPI
 BufReadFile (
   IN  OPEN_FILE     *File,

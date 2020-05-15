@@ -55,10 +55,10 @@ StartIpi:
     mov        edx, dword [si]    ; EDX is keeping the start address of wakeup buffer
 
     mov        si, GdtrLocation
-o32 lgdt       [cs:si]
+o32 lgdt           [si]
 
     mov        si, IdtrLocation
-o32 lidt       [cs:si]
+o32 lidt           [si]
 
     ; Switch to protected mode
     mov        eax, cr0           ; Get control register 0
@@ -66,15 +66,14 @@ o32 lidt       [cs:si]
     mov        cr0, eax
 
 FLAT32_JUMP:
-
     db 66h, 67h, 0EAh             ; far jump
     dd 0h                         ; 32-bit offset
-    dw 0h                         ; 16-bit selector
+    dw 0x10                       ; 16-bit selector
 
 BITS 32
 SmmRebase:
     mov         edi,  0x3fef8     ; SMBASE offset
-    mov         dword [edi], eax  ; change to new  SMBASE
+    mov         [edi], eax        ; change to new  SMBASE
     rsm
     jmp         $
 
@@ -205,6 +204,9 @@ dd      0
 MpDataStructureLocation       equ        BufferStartLocation + 3Ch
 dd      0
 
+Cr3Location                   equ        BufferStartLocation + 40h
+dd      0
+
 MpDataAreaEnd:
 
 %if (MpDataAreaEnd - RendezvousFunnelProcStart) > 0x8000   ;AP_BUFFER_SIZE
@@ -271,11 +273,8 @@ ASM_PFX(AsmCliHlt):
         jmp         $-2
 
 
-
 global ASM_PFX(AsmMtrrSynchUpEntry)
 ASM_PFX(AsmMtrrSynchUpEntry):
-    push eax
-
     ;
     ; Disable Cache in CR0
     ;
@@ -295,15 +294,11 @@ ASM_PFX(AsmMtrrSynchUpEntry):
     mov eax, cr3
     mov cr3, eax
 
-    pop eax
-
     ret
 
 
 global ASM_PFX(AsmMtrrSynchUpExit)
 ASM_PFX(AsmMtrrSynchUpExit):
-    push eax
-
     ;
     ; Flush all TLBs the second time
     ;
@@ -317,6 +312,5 @@ ASM_PFX(AsmMtrrSynchUpExit):
     and eax, 09FFFFFFFh
     mov cr0, eax
 
-    pop eax
     ret
 

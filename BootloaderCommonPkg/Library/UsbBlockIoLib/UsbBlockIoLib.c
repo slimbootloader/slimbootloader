@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -16,7 +16,7 @@
 #include <UsbBotPeim.h>
 #include <BlockDevice.h>
 
-#define  MAX_USB_BLOCK_DEVICE_NUMBER   1
+#define  MAX_USB_BLOCK_DEVICE_NUMBER   8
 
 UINTN                           mUsbBlkCount;
 EFI_PEI_RECOVERY_BLOCK_IO_PPI  *mUsbBlkArray[MAX_USB_BLOCK_DEVICE_NUMBER];
@@ -45,6 +45,34 @@ UsbBlkCallback (
   return EFI_SUCCESS;
 }
 
+/**
+  This funciton de-allocate memory allocated for USB BOT devices.
+
+  @retval EFI_SUCCESS            This routinue alwasy return success.
+
+**/
+EFI_STATUS
+EFIAPI
+UsbDeInitBot (
+  VOID
+)
+{
+  UINTN            Index;
+  UINTN            MemPages;
+  PEI_BOT_DEVICE  *PeiBotDev;
+
+  MemPages = sizeof (PEI_BOT_DEVICE) / EFI_PAGE_SIZE + 1;
+  for (Index = 0; Index < mUsbBlkCount; Index++) {
+    PeiBotDev = PEI_BOT_DEVICE_FROM_THIS (mUsbBlkArray[Index]);
+    if (PeiBotDev->SensePtr != NULL) {
+      FreePages (PeiBotDev->SensePtr, 1);
+    }
+    FreePages (PeiBotDev, MemPages);
+  }
+  mUsbBlkCount = 0;
+
+  return EFI_SUCCESS;
+}
 
 /**
   The function will initialize USB device.
@@ -74,7 +102,6 @@ InitializeUsb (
 
   if (DevInitPhase == DevDeinit) {
     DeinitUsbDevices ();
-    mUsbBlkCount = 0;
     return EFI_SUCCESS;
   }
 
@@ -90,10 +117,16 @@ InitializeUsb (
 
   for (Index = 0; Index < UsbIoCount; Index++) {
     Status = UsbFindBlockDevice (UsbIoArray[Index], UsbBlkCallback);
-    if (!EFI_ERROR (Status) && (mUsbBlkCount > 0)) {
-      DEBUG ((DEBUG_INFO, "Found mass storage on device %d\n", Index));
-      break;
+    if (!FeaturePcdGet(PcdMultiUsbBootDeviceEnabled)) {
+      if (!EFI_ERROR (Status) && (mUsbBlkCount > 0)) {
+        DEBUG ((DEBUG_INFO, "Use the 1st mass storage device\n"));
+        break;
+      }
     }
+  }
+
+  if (mUsbBlkCount > 0) {
+    DEBUG ((DEBUG_INFO, "Found %d mass storage devices\n", mUsbBlkCount));
   }
 
   if (mUsbBlkCount > 0) {
@@ -130,14 +163,14 @@ UsbGetMediaInfo (
   EFI_STATUS                      Status;
   EFI_PEI_BLOCK_IO_MEDIA          MediaInfo;
 
-  if (mUsbBlkCount == 0) {
+  if (DeviceIndex >= mUsbBlkCount) {
     Status = EFI_DEVICE_ERROR;
   } else {
-    Status = mUsbBlkArray[0]->GetBlockDeviceMediaInfo (NULL, mUsbBlkArray[0], 0, &MediaInfo);
+    Status = mUsbBlkArray[DeviceIndex]->GetBlockDeviceMediaInfo (NULL, mUsbBlkArray[DeviceIndex], 0, &MediaInfo);
     if (!EFI_ERROR (Status)) {
       if (DevBlockInfo != NULL) {
         DevBlockInfo->BlockNum  = MediaInfo.LastBlock + 1;
-        DevBlockInfo->BlockSize = MediaInfo.BlockSize;
+        DevBlockInfo->BlockSize = (UINT32)MediaInfo.BlockSize;
       }
     }
   }
@@ -182,10 +215,10 @@ UsbReadBlocks (
 {
   EFI_STATUS  Status;
 
-  if (mUsbBlkCount == 0) {
+  if (DeviceIndex >= mUsbBlkCount) {
     Status = EFI_DEVICE_ERROR;
   } else {
-    Status = mUsbBlkArray[0]->ReadBlocks (NULL, mUsbBlkArray[0], DeviceIndex, StartLBA, BufferSize, Buffer);
+    Status = mUsbBlkArray[DeviceIndex]->ReadBlocks (NULL, mUsbBlkArray[DeviceIndex], DeviceIndex, StartLBA, BufferSize, Buffer);
   }
   return Status;
 }

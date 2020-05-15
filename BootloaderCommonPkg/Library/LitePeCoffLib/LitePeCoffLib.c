@@ -2,7 +2,7 @@
   Base PE/COFF loader supports loading any PE32/PE32+ or TE image, but
   only supports relocating IA32, x64, IPF, and EBC images.
 
-  Copyright (c) 2006 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2006 - 2020, Intel Corporation. All rights reserved.<BR>
   Portions copyright (c) 2008 - 2009, Apple Inc. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
@@ -134,23 +134,24 @@ PeCoffRelocateImage (
   UINT32                          RelocSectionSize;
   UINT32                          RelocSectionOffset;
   UINT16                         *RelocDataPtr;
-  UINT32                          FixupDelta;
+  UINT64                          FixupDelta;
   UINT32                          PageRva;
   UINT32                          BlockSize;
   UINTN                           Index;
   UINT8                           Type;
-  UINT32                          Data;
+  UINT32                         *DataPtr;
   UINT16                          Offset;
   UINT16                          TypeOffset;
   UINT32                          ImgOffset;
   UINT32                          Adjust;
   EFI_TE_IMAGE_HEADER            *Te;
   EFI_IMAGE_NT_HEADERS32         *Pe32;
+  EFI_IMAGE_NT_HEADERS64         *Pe64;
   EFI_IMAGE_OPTIONAL_HEADER_PTR_UNION    Hdr;
 
   Status = RETURN_SUCCESS;
 
-  if (!IsTePe32Image ((VOID *)ImageBase, &Hdr)) {
+  if (!IsTePe32Image ((VOID *)(UINTN)ImageBase, &Hdr)) {
     return RETURN_UNSUPPORTED;
   }
 
@@ -160,10 +161,15 @@ PeCoffRelocateImage (
   //
   Te   = NULL;
   Pe32 = NULL;
+  Pe64 = NULL;
   if (Hdr.Te->Signature == EFI_TE_IMAGE_HEADER_SIGNATURE) {
     Te   = Hdr.Te;
   } else if (Hdr.Pe32->Signature == EFI_IMAGE_NT_SIGNATURE) {
-    Pe32 = Hdr.Pe32;
+    if (Hdr.Pe32->OptionalHeader.Magic == EFI_IMAGE_NT_OPTIONAL_HDR32_MAGIC) {
+      Pe32 = Hdr.Pe32;
+    } else if (Hdr.Pe32->OptionalHeader.Magic == EFI_IMAGE_NT_OPTIONAL_HDR64_MAGIC) {
+      Pe64 = Hdr.Pe32Plus;
+    }
   } else {
     return RETURN_UNSUPPORTED;
   }
@@ -172,7 +178,7 @@ PeCoffRelocateImage (
     // Handle relocation data
     // Calculate the fixup delta.
     Adjust = Te->StrippedSize - sizeof (EFI_TE_IMAGE_HEADER);
-    FixupDelta = ImageBase - ((UINT32)Te->ImageBase + Adjust);
+    FixupDelta = (UINT64)ImageBase - (Te->ImageBase + Adjust);
 
     RelocSectionOffset = Te->DataDirectory[0].VirtualAddress - Adjust;
     RelocSectionSize   = Te->DataDirectory[0].Size;
@@ -181,9 +187,17 @@ PeCoffRelocateImage (
       return RETURN_UNSUPPORTED;
     }
     Adjust = 0;
-    FixupDelta = ImageBase - Hdr.Pe32->OptionalHeader.ImageBase;
+    FixupDelta = (UINT64)ImageBase - Pe32->OptionalHeader.ImageBase;
     RelocSectionOffset = Pe32->OptionalHeader.DataDirectory[EFI_IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress;
     RelocSectionSize   = Pe32->OptionalHeader.DataDirectory[EFI_IMAGE_DIRECTORY_ENTRY_BASERELOC].Size;
+  } else if (Pe64 != NULL) {
+    if (Pe64->OptionalHeader.NumberOfRvaAndSizes <= EFI_IMAGE_DIRECTORY_ENTRY_BASERELOC) {
+      return RETURN_UNSUPPORTED;
+    }
+    Adjust = 0;
+    FixupDelta = (UINT64)ImageBase - Pe64->OptionalHeader.ImageBase;
+    RelocSectionOffset = Pe64->OptionalHeader.DataDirectory[EFI_IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress;
+    RelocSectionSize   = Pe64->OptionalHeader.DataDirectory[EFI_IMAGE_DIRECTORY_ENTRY_BASERELOC].Size;
   } else {
     return RETURN_UNSUPPORTED;
   }
@@ -195,17 +209,14 @@ PeCoffRelocateImage (
   // changed the check to a greater-than-eight. It should be at least eight
   // because the PageRva and the BlockSize together take eight bytes. If less
   // than 8 are remaining, then those are the orphans and we need to disregard them.
-  RelocDataPtr =  (UINT16 *) (ImageBase + RelocSectionOffset);
+  RelocDataPtr =  (UINT16 *)(UINTN)(ImageBase + RelocSectionOffset);
   while (RelocSectionSize >= 8) {
-    //DEBUG ((EFI_D_INFO, "RelocSectionSize = %08x\n", RelocSectionSize));
-
     // Read the Page RVA and Block Size for the current fixup block.
     PageRva   = * (UINT32 *) (RelocDataPtr + 0);
     BlockSize = * (UINT32 *) (RelocDataPtr + 2);
     RelocDataPtr += 4;
 
     if (BlockSize == 0) {
-      //DEBUG ((EFI_D_INFO, "BlockSize is 0, done...\n"));
       break;
     }
 
@@ -215,39 +226,43 @@ PeCoffRelocateImage (
     // Loop count = Number of relocation items =
     // (Block Size - 4 bytes (Page RVA field) - 4 bytes (Block Size field)) divided
     // by 2 (each Type/Offset entry takes 2 bytes).
-    // DEBUG ((EFI_D_INFO, "LoopCount = %04x\n", ((BlockSize - 2 * sizeof(UINT32)) / sizeof(UINT16))));
+    DEBUG ((DEBUG_VERBOSE, "LoopCount = %04x\n", ((BlockSize - 2 * sizeof(UINT32)) / sizeof(UINT16))));
     for (Index = 0; Index < ((BlockSize - 2 * sizeof (UINT32)) / sizeof (UINT16)); Index++) {
       TypeOffset = *RelocDataPtr++;
       Type   = (UINT8) ((TypeOffset & 0xf000) >> 12);
       Offset = (UINT16) ((UINT16)TypeOffset & 0x0fff);
       RelocSectionSize -= sizeof (UINT16);
       ImgOffset = PageRva + Offset - Adjust;
-      // DEBUG ((EFI_D_INFO, "%d: PageRva: %08x Offset: %04x Type: %x \n", Index, PageRva, ImgOffset, Type));
-      Data = * (UINT32 *) (ImageBase + ImgOffset);
+      DEBUG ((DEBUG_VERBOSE, "%d: PageRva: %08x Offset: %04x Type: %x \n", Index, PageRva, ImgOffset, Type));
+      DataPtr = (UINT32 *)(UINTN)(ImageBase + ImgOffset);
       switch (Type) {
       case 0:
         break;
       case 1:
-        Data += (FixupDelta >> 16) & 0x0000ffff;
+        *DataPtr += (((UINT32)FixupDelta >> 16) & 0x0000ffff);
         break;
       case 2:
-        Data += FixupDelta & 0x0000ffff;
+        *DataPtr += ((UINT32)FixupDelta & 0x0000ffff);
         break;
       case 3:
-        Data += FixupDelta;
+        *DataPtr += (UINT32)FixupDelta;
+        break;
+      case 10:
+        *(UINT64 *)DataPtr += FixupDelta;
         break;
       default:
-        //DEBUG ((EFI_D_INFO, "Unknown Type!\n"));
+        DEBUG ((DEBUG_ERROR, "Unknown RELOC type: %d\n", Type));
         break;
       }
-      * (UINT32 *) (ImageBase + ImgOffset) = Data;
     }
   }
 
   if (Te != NULL) {
     Te->ImageBase   += FixupDelta;
+  } else if (Pe32 != NULL) {
+    Pe32->OptionalHeader.ImageBase += (UINT32)FixupDelta;
   } else {
-    Pe32->OptionalHeader.ImageBase += FixupDelta;
+    Pe64->OptionalHeader.ImageBase += FixupDelta;
   }
 
   PeCoffFindAndReportImageInfo (ImageBase);
@@ -299,4 +314,3 @@ PeCoffGetPreferredBase (
 
   return RETURN_SUCCESS;
 }
-

@@ -13,6 +13,7 @@
 
 #define SMMBASE_INFO_COMM_ID  1
 #define S3_SAVE_REG_COMM_ID   2
+#define BL_SW_SMI_COMM_ID     3
 
 //
 // Format to share info between bootloader and payload.
@@ -89,7 +90,26 @@ typedef struct {
   CPU_SMMBASE     SmmBase[];
 } SMMBASE_INFO;
 
+typedef struct {
+  BL_PLD_COMM_HDR BlSwSmiHdr;
+  UINT8           BlSwSmiHandlerInput;
+} BL_SW_SMI_INFO;
+
 #pragma pack()
+
+/**
+  Trigger Payload software SMI
+
+  This function triggers software SMI. SMI number will be obtained
+  from SMM communication area.
+
+  @param[in]  SwSmiNumber   Software smi number to be triggered.
+
+**/
+VOID
+TriggerPayloadSwSmi (
+  IN UINT8  SwSmiNumber
+);
 
 /**
   This function appends information in TSEG area

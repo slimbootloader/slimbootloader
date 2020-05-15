@@ -88,7 +88,7 @@ GetCompressedTCGEventSize (
     Loc += sizeof (EventSize) + EventSize;
   }
 
-  return Loc - (UINT8 *)EventHdr;
+  return (UINT32)(Loc - (UINT8 *)EventHdr);
 }
 
 
@@ -142,7 +142,7 @@ TpmTcgLogInit (
     // @todo UEFI BIOS fills the buffer with 0xFF. If we do this we will have to check for the
     // presence of 0xFFFFFFFF in EventSize to determine the location for new event while updating
     // TCG Event log
-    ZeroMem ((VOID *) ((UINT32)Lasa),  PcdGet32 (PcdTcgLogAreaMinLen));
+    ZeroMem ((VOID *)(UINTN)Lasa,  PcdGet32 (PcdTcgLogAreaMinLen));
     TpmLibSetEventLogData (Lasa, PcdGet32 (PcdTcgLogAreaMinLen));
 
     TpmLibData = TpmLibGetPrivateData ();
@@ -239,7 +239,7 @@ TpmLogSpecIDEvent (
   }
 
   // Create the event in TPM 1.2 format
-  FirstPcrEvent = (TCG_PCR_EVENT_HDR *)Lasa;
+  FirstPcrEvent = (TCG_PCR_EVENT_HDR *)(UINTN)Lasa;
   FirstPcrEvent->PCRIndex = 0;
   FirstPcrEvent->EventType = EV_NO_ACTION;
   ZeroMem (FirstPcrEvent->Digest.digest, sizeof (FirstPcrEvent->Digest));
@@ -259,10 +259,28 @@ TpmLogSpecIDEvent (
   if ((ActivePcr & HASH_ALG_SHA256) != 0) {
     DigestSize[NumberOfAlgorithms].algorithmId = TPM_ALG_SHA256;
     DigestSize[NumberOfAlgorithms].digestSize = SHA256_DIGEST_SIZE;
-
-    DigestSize = &DigestSize[1];
-    ++NumberOfAlgorithms;
+    NumberOfAlgorithms++;
   }
+
+  if ((ActivePcr & HASH_ALG_SHA384) != 0) {
+    DigestSize[NumberOfAlgorithms].algorithmId = TPM_ALG_SHA384;
+    DigestSize[NumberOfAlgorithms].digestSize = SHA384_DIGEST_SIZE;
+    NumberOfAlgorithms++;
+  }
+
+  if ((ActivePcr & HASH_ALG_SHA512) != 0) {
+    DigestSize[NumberOfAlgorithms].algorithmId = TPM_ALG_SHA512;
+    DigestSize[NumberOfAlgorithms].digestSize = SHA512_DIGEST_SIZE;
+    NumberOfAlgorithms++;
+  }
+
+  if ((ActivePcr & HASH_ALG_SM3_256) != 0) {
+    DigestSize[NumberOfAlgorithms].algorithmId = TPM_ALG_SM3_256;
+    DigestSize[NumberOfAlgorithms].digestSize = SM3_DIGEST_SIZE;
+    NumberOfAlgorithms++;
+  }
+
+  DigestSize = &DigestSize[NumberOfAlgorithms];
 
   CopyMem (SpecIdEvent + 1, &NumberOfAlgorithms, sizeof (NumberOfAlgorithms));
 
@@ -312,11 +330,11 @@ TpmLogEvent (
   // Navigate log area to Locate the empty space for new event log
   // Note : First Event is of type TPM 1.2 (TCG_PCR_EVENT_HDR)
 
-  FirstEvent = (TCG_PCR_EVENT_HDR *) (Lasa);
+  FirstEvent = (TCG_PCR_EVENT_HDR *)(UINTN)Lasa;
   EmptySlot  = (TCG_PCR_EVENT2_HDR *)
                ((UINT8 *)FirstEvent + sizeof (TCG_PCR_EVENT_HDR) + FirstEvent->EventSize);
 
-  while (EmptySlot < (TCG_PCR_EVENT2_HDR *) (Lasa + Laml - 1)) {
+  while (EmptySlot < (TCG_PCR_EVENT2_HDR *)(UINTN)(Lasa + Laml - 1)) {
     EventSize = GetCompressedTCGEventSize (EmptySlot);
     if (EventSize == 0) {
       break;
@@ -328,7 +346,7 @@ TpmLogEvent (
   // Before adding new event, check if there is enough space available.
   EventSize = GetUnCompressedTCGEventSize (EventHdr);
 
-  if ( ((UINT8*)EmptySlot + EventSize) <= (UINT8*)(Lasa + Laml - 1)) {
+  if (((UINT8 *)EmptySlot + EventSize) <= (UINT8 *)(UINTN)(Lasa + Laml - 1)) {
     // Add the new event in the TCG 2.0 log area
     AddEventTCGLog ((UINT8 *)EmptySlot, EventHdr, EventData);
   } else {
@@ -345,13 +363,13 @@ TpmLogEvent (
 **/
 VOID
 TpmLogLocalityEvent (
-  IN UINT8 StartupLocality
+  IN UINT8 StartupLocality,
+  IN UINT32 ActivePcrBanks
   )
 {
   TCG_EfiStartupLocalityEvent     StartupLocalityEvent;
   TCG_PCR_EVENT2_HDR              PcrEventHdr;
   TPML_DIGEST_VALUES              *Digests;
-  UINT32                          ActivePcrBanks;
   TPM_LIB_PRIVATE_DATA            *TpmLibData;
 
   CopyMem (StartupLocalityEvent.Signature, TCG_EfiStartupLocalityEvent_SIGNATURE,
@@ -366,15 +384,28 @@ TpmLogLocalityEvent (
   Digests = &PcrEventHdr.Digests;
   Digests->count = 0;
 
-  ActivePcrBanks = HASH_ALG_SHA256;
   TpmLibData = TpmLibGetPrivateData ();
   if (TpmLibData != NULL) {
     ActivePcrBanks = TpmLibData->ActivePcrBanks;
   }
-
   if ((ActivePcrBanks & HASH_ALG_SHA256) != 0) {
     Digests->digests[Digests->count].hashAlg = TPM_ALG_SHA256;
     ZeroMem (& (Digests->digests[Digests->count].digest), GetHashSizeFromAlgo (TPM_ALG_SHA256));
+    Digests->count = Digests->count + 1;
+  }
+  if ((ActivePcrBanks & HASH_ALG_SHA384) != 0) {
+    Digests->digests[Digests->count].hashAlg = TPM_ALG_SHA384;
+    ZeroMem (& (Digests->digests[Digests->count].digest), GetHashSizeFromAlgo (TPM_ALG_SHA384));
+    Digests->count = Digests->count + 1;
+  }
+  if ((ActivePcrBanks & HASH_ALG_SHA512) != 0) {
+    Digests->digests[Digests->count].hashAlg = TPM_ALG_SHA512;
+    ZeroMem (& (Digests->digests[Digests->count].digest), GetHashSizeFromAlgo (TPM_ALG_SHA512));
+    Digests->count = Digests->count + 1;
+  }
+  if ((ActivePcrBanks & HASH_ALG_SM3_256) != 0) {
+    Digests->digests[Digests->count].hashAlg = TPM_ALG_SM3_256;
+    ZeroMem (& (Digests->digests[Digests->count].digest), GetHashSizeFromAlgo (TPM_ALG_SM3_256));
     Digests->count = Digests->count + 1;
   }
 

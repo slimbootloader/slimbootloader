@@ -10,7 +10,7 @@
 
 #include <BlockDevice.h>
 
-typedef EFI_STATUS (*USB_BLK_IO_CALLBACK) \
+typedef EFI_STATUS (EFIAPI *USB_BLK_IO_CALLBACK) \
 (EFI_PEI_RECOVERY_BLOCK_IO_PPI *UsbBlkIoPpi);
 
 /**

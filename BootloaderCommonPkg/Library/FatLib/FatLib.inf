@@ -22,6 +22,9 @@
 #
 
 [Sources]
+  FatLitePeim.h
+  FatLiteApi.h
+  FatLiteFmt.h
   FatLib.c
   FatLiteLib.c
   FatLiteAccess.c

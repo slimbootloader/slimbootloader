@@ -13,87 +13,6 @@
 #include <Library/SecureBootLib.h>
 #include <Library/HobLib.h>
 #include <Library/PcdLib.h>
-#include <HashStore.h>
-
-/**
-  Get the component hash data by the component type.
-
-  @param[in]  ComponentType   Component type.
-  @param[out] HashData        Hash data pointer corresponding Component type.
-
-  @retval RETURN_SUCCESS             Get hash data succeeded.
-  @retval RETURN_UNSUPPORTED         Hash component type is not supported.
-  @retval RETURN_NOT_FOUND           Hash data is not found.
-  @retval RETURN_INVALID_PARAMETER   HashData is NULL.
-
-**/
-RETURN_STATUS
-GetComponentHash (
-  IN        UINT8            ComponentType,
-  OUT CONST UINT8            **HashData
-  )
-{
-  LOADER_GLOBAL_DATA  *LdrGlobal;
-  HASH_STORE_TABLE    *HashStorePtr;
-  UINT8                HashIndex;
-
-  if (HashData == NULL) {
-    return RETURN_INVALID_PARAMETER;
-  }
-
-  HashIndex = ComponentType;
-  *HashData = NULL;
-  if (HashIndex >= HASH_INDEX_MAX_NUM) {
-    return RETURN_UNSUPPORTED;
-  }
-
-  LdrGlobal = GetLoaderGlobalDataPointer ();
-  HashStorePtr = (HASH_STORE_TABLE *)LdrGlobal->HashStorePtr;
-  if ((HashStorePtr == NULL) || (! (HashStorePtr->Valid & (1 << HashIndex)))) {
-    return RETURN_NOT_FOUND;
-  }
-
-  *HashData = (UINT8 *)HashStorePtr->Data[HashIndex].Data;
-
-  return RETURN_SUCCESS;
-}
-
-/**
-  Set the component hash data by the component type.
-
-  @param[in]  ComponentType   Component type.
-  @param[in] HashData        Hash data pointer corresponding Component type.
-
-  @retval RETURN_SUCCESS             Set hash data succeeded.
-  @retval RETURN_UNSUPPORTED         Hash component type is not supported.
-  @retval RETURN_NOT_FOUND           Hash data is not found.
-  @retval RETURN_INVALID_PARAMETER   HashData is NULL.
-
-**/
-RETURN_STATUS
-SetComponentHash (
-  IN       UINT8             ComponentType,
-  IN CONST UINT8            *HashData
-  )
-{
-  LOADER_GLOBAL_DATA  *LdrGlobal;
-  HASH_STORE_TABLE    *HashStorePtr;
-  UINT8               HashIndex;
-
-  if (HashData == NULL) {
-    return RETURN_INVALID_PARAMETER;
-  }
-
-  HashIndex = ComponentType;
-  LdrGlobal = GetLoaderGlobalDataPointer ();
-  HashStorePtr = (HASH_STORE_TABLE *)LdrGlobal->HashStorePtr;
-  if ((HashStorePtr == NULL) || (HashIndex != COMP_TYPE_PAYLOAD_DYNAMIC)) {
-    return RETURN_UNSUPPORTED;
-  }
-
-  CopyMem ((UINT8 *)HashStorePtr->Data[HashIndex].Data, HashData, HASH_STORE_DIGEST_LENGTH);
-  return RETURN_SUCCESS;
-}
 
 /**
   Returns the pointer to the Flash Map.
@@ -162,7 +81,7 @@ GetConfigDataPtr (
   VOID
   )
 {
-  return GetLoaderGlobalDataPointer()->ConfDataPtr;
+  return GetLoaderGlobalDataPointer()->CfgDataPtr;
 }
 
 /**
@@ -302,44 +221,18 @@ GetContainerListPtr  (
 }
 
 /**
-  Gets component information from the flash map.
+  This function retrieves hash store pointer.
 
-  This function will look for the component based on the input signature
-  in the flash map, if found, will return the base address and size of the component.
-
-  @param[in]  Signature     Signature of the component information required
-  @param[out] Base          Base address of the component
-  @param[out] Size          Size of the component
-
-  @retval    EFI_SUCCESS    Found the component with the matching signature.
-  @retval    EFI_NOT_FOUND  Component with the matching signature not found.
+  @retval    The hash store pointer.
 
 **/
-EFI_STATUS
+VOID *
 EFIAPI
-GetComponentInfo (
-  IN  UINT32     Signature,
-  OUT UINT32     *Base,
-  OUT UINT32     *Size
-)
+GetHashStorePtr (
+  VOID
+  )
 {
-  EFI_STATUS            Status;
-
-  if (FeaturePcdGet (PcdFlashMapEnabled) == FALSE) {
-    //
-    // If Flash Map is not enabled, get base and size from PCD's
-    //
-    Status = GetComponentPcdInfo (Signature, Base, Size);
-    return Status;
-  }
-
-  if (GetCurrentBootPartition() == 1) {
-    Status = GetComponentInfoByPartition (Signature, TRUE, Base, Size);
-  } else {
-    Status = GetComponentInfoByPartition (Signature, FALSE, Base, Size);
-  }
-
-  return Status;
+  return GetLoaderGlobalDataPointer()->HashStorePtr;
 }
 
 /**

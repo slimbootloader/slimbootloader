@@ -1,7 +1,7 @@
 /** @file
   A minimal command-line shell.
 
-  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -13,189 +13,13 @@
 #include <Library/DebugLib.h>
 #include <Library/TimerLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/SortLib.h>
 #include "Shell.h"
 #include "History.h"
 #include "Parsing.h"
 #include "ShellCmds.h"
 
 #define ESC   '\x1b'
-
-STATIC LIST_ENTRY mShellCommandEntryList =
-  INITIALIZE_LIST_HEAD_VARIABLE (mShellCommandEntryList);
-
-/**
-  Prompt user for command, receive command, run command.
-
-  @param[in]  Shell        shell instance
-
-  @retval EFI_SUCCESS
-  @retval RETURN_ABORTED
-
-**/
-STATIC
-EFI_STATUS
-ShellPrompt (
-  IN SHELL *Shell
-  );
-
-/**
-  Find shell command by name.
-
-  @param[in]  Shell        shell instance
-  @param[in]  Name         name of command
-  @param[in]  Ptr          pointer to string pointer
-
-  @retval EFI_SUCCESS
-  @retval EFI_NOT_FOUND
-
-**/
-STATIC
-EFI_STATUS
-FindShellCommand (
-  IN       SHELL         *Shell,
-  IN CONST CHAR16        *Name,
-  IN CONST SHELL_COMMAND **Ptr
-  );
-
-/**
-  Process and run a command line.
-
-  @param[in] Shell        shell instance
-  @param[in] CmdLine      command line to parse
-
-  @retval EFI_SUCCESS     command was completed
-
-**/
-STATIC
-EFI_STATUS
-RunShellCommand (
-  IN       SHELL  *Shell,
-  IN CONST CHAR16 *CmdLine
-  );
-
-/**
-  Wait for command line input from the serial port.
-
-  @param[in]  Shell        shell instance
-  @param[out] Buffer       buffer to receive command line
-  @param[in]  BufferSize   size (in bytes) of the buffer
-
-  @retval EFI_SUCCESS
-  @retval EFI_BUFFER_TOO_SMALL
-  @retval EFI_TIMEOUT
-
-**/
-STATIC
-EFI_STATUS
-ReadShellCommand (
-  IN        SHELL  *Shell,
-  OUT       CHAR16 *Buffer,
-  IN  CONST UINTN   BufferSize
-  );
-
-/**
-  Insert the given entry to the Sorted list.
-
-  @param[in/out]  ListHead    pointer to the head of the list
-  @param[in/out]  Entry       point at which the list is inserted.
-
- **/
-STATIC
-VOID
-EFIAPI
-InsertSortedCommandList (
-  IN OUT  LIST_ENTRY                *ListHead,
-  IN OUT  LIST_ENTRY                *Entry
-  );
-
-/**
-  Begin a run-time interactive shell.
-
-  @param[in]  Timeout       seconds to wait for input before returning (0 for no timeout)
-
-  @retval EFI_SUCCESS
-
-**/
-EFI_STATUS
-EFIAPI
-Shell (
-  IN       UINTN           Timeout
-  )
-{
-  BOOLEAN Start;
-  UINTN   Index, Index1;
-  SHELL   Shell;
-  UINT8   Buffer;
-
-  LoadShellCommands ();
-  Shell.ShouldExit = FALSE;
-
-  if (Timeout != 0) {
-    ShellPrint (L"\n");
-    while (ConsolePoll ()) {
-      ConsoleRead (&Buffer, 1);
-    }
-    for (Index = Timeout; Index > 0; Index--) {
-      ShellPrint (L"Press any key within %d second(s) to enter the command shell", Index);
-      for (Index1 = 0; Index1 < 10; Index1++) {
-        Start = ConsolePoll ();
-        if (Start) {
-          break;
-        }
-        MicroSecondDelay (100 * 1000);
-      }
-      ShellPrint(L"\r");
-      if (Start) {
-        break;
-      }
-    }
-    ShellPrint (L"\n");
-    if (!Start) {
-      return EFI_ABORTED;
-    }
-  }
-
-  HistoryInit (TRUE);
-
-  while (! (Shell.ShouldExit)) {
-    ShellPrompt (&Shell);
-  }
-
-  HistoryInit (FALSE);
-
-  return EFI_SUCCESS;
-}
-
-/**
-  Prompt user for command, receive command, run command.
-
-  @param[in]  Shell        shell instance
-
-  @retval EFI_SUCCESS
-  @retval RETURN_ABORTED
-
-**/
-STATIC
-EFI_STATUS
-ShellPrompt (
-  IN SHELL *Shell
-  )
-{
-  CHAR16     CommandLine[MAX_COMMAND_LINE_LEN];
-  EFI_STATUS Status;
-
-  ASSERT (Shell != NULL);
-  ShellPrint (L"\nShell> ");
-
-  Status = ReadShellCommand (Shell, CommandLine, sizeof (CommandLine));
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  HistoryAdd (CommandLine);
-
-  return RunShellCommand (Shell, CommandLine);
-}
 
 /**
   Wait for command line input from the serial port.
@@ -271,9 +95,9 @@ ReadShellCommand (
 
         HistoryLineLen = 0;
         if (Char == 'A') { // Up
-          HistoryLineLen = HistoryUp (HistoryLine);
+          HistoryLineLen = HistoryUp (Shell, HistoryLine);
         } else if (Char == 'B') { // Down
-          HistoryLineLen = HistoryDown (HistoryLine);
+          HistoryLineLen = HistoryDown (Shell, HistoryLine);
         } else if (Char == 'C') { // Right
         } else if (Char == 'D') { // Left
         }
@@ -284,7 +108,7 @@ ReadShellCommand (
           ShellPrint (L"\b");
         }
         if (HistoryLineLen > 0) {
-          StrCpyS (Buffer, MAX_COMMAND_LINE_LEN, HistoryLine);
+          StrCpyS (Buffer, Shell->CommandLineMaxLen, HistoryLine);
           ShellPrint (L"%s", Buffer);
         }
         if (CurrCount > HistoryLineLen) {
@@ -493,6 +317,48 @@ ShellReadUintn (
 }
 
 /**
+  Find shell command by name.
+
+  @param[in]  Shell        shell instance
+  @param[in]  Name         name of command
+  @param[in]  Ptr          pointer to string pointer
+
+  @retval EFI_SUCCESS
+  @retval EFI_NOT_FOUND
+
+**/
+STATIC
+EFI_STATUS
+FindShellCommand (
+  IN       SHELL         *Shell,
+  IN CONST CHAR16        *Name,
+  IN CONST SHELL_COMMAND **Ptr
+  )
+{
+  LIST_ENTRY                *Link;
+  SHELL_COMMAND_LIST_ENTRY  *Entry;
+  LIST_ENTRY                *EntryList;
+
+  //
+  // Add '?' alias for help
+  //
+  if (Name[0] == '?') {
+    Name = L"help";
+  }
+
+  EntryList = &Shell->CommandEntryList;
+  for (Link = EntryList->ForwardLink; Link != EntryList; Link = Link->ForwardLink) {
+    Entry = CR (Link, SHELL_COMMAND_LIST_ENTRY, Link, SHELL_COMMAND_LIST_ENTRY_SIGNATURE);
+    if (StrCmp (Name, Entry->ShellCommand->Name) == 0) {
+      *Ptr = Entry->ShellCommand;
+      return EFI_SUCCESS;
+    }
+  }
+
+  return EFI_NOT_FOUND;
+}
+
+/**
   Process and run a command line.
 
   @param[in] Shell        shell instance
@@ -517,7 +383,7 @@ RunShellCommand (
   CHAR16              *Argv[8]; // FIXME: Use allocator once that's available
 
   // Parse the command line parameters
-  BufRemaining = sizeof (Buf);
+  BufRemaining = Shell->CommandLineMaxLen * sizeof(CHAR16);
   Ptr          = Buf;
   Walker       = CmdLine;
 
@@ -556,85 +422,69 @@ RunShellCommand (
 }
 
 /**
-  Find shell command by name.
+  Prompt user for command, receive command, run command.
 
   @param[in]  Shell        shell instance
-  @param[in]  Name         name of command
-  @param[in]  Ptr          pointer to string pointer
 
   @retval EFI_SUCCESS
-  @retval EFI_NOT_FOUND
+  @retval RETURN_ABORTED
 
 **/
 STATIC
 EFI_STATUS
-FindShellCommand (
-  IN       SHELL         *Shell,
-  IN CONST CHAR16        *Name,
-  IN CONST SHELL_COMMAND **Ptr
+ShellPrompt (
+  IN SHELL *Shell
   )
 {
-  LIST_ENTRY                *Link;
-  SHELL_COMMAND_LIST_ENTRY  *Entry;
-  LIST_ENTRY                *EntryList;
+  CHAR16     CommandLine[MAX_COMMAND_LINE_LEN];
+  EFI_STATUS Status;
 
-  //
-  // Add '?' alias for help
-  //
-  if (Name[0] == '?') {
-    Name = L"help";
+  ASSERT (Shell != NULL);
+  ShellPrint (L"\nShell> ");
+
+  Status = ReadShellCommand (Shell, CommandLine, Shell->CommandLineMaxLen * sizeof (CHAR16));
+  if (EFI_ERROR (Status)) {
+    return Status;
   }
 
-  EntryList = GetShellCommandEntryList ();
-  for (Link = EntryList->ForwardLink; Link != EntryList; Link = Link->ForwardLink) {
-    Entry = CR (Link, SHELL_COMMAND_LIST_ENTRY, Link, SHELL_COMMAND_LIST_ENTRY_SIGNATURE);
-    if (StrCmp (Name, Entry->ShellCommand->Name) == 0) {
-      *Ptr = Entry->ShellCommand;
-      return EFI_SUCCESS;
-    }
-  }
+  HistoryAdd (Shell, CommandLine);
 
-  return EFI_NOT_FOUND;
+  return RunShellCommand (Shell, CommandLine);
 }
 
 /**
-  Insert the given entry to the Sorted list.
+  The function is called by PerformInsertionSortList to sort Shell commands by its name.
 
-  @param[in/out]  ListHead    pointer to the head of the list
-  @param[in/out]  Entry       point at which the list is inserted.
+  @param[in] Buffer1         The pointer to first list entry.
+  @param[in] Buffer2         The pointer to second list entry.
 
- **/
-STATIC
-VOID
+  @retval 0                  Buffer1 name is less than Buffer2 name.
+  @retval 1                  Buffer1 name is greater than or equal to Buffer2 name.
+
+**/
+INTN
 EFIAPI
-InsertSortedCommandList (
-  IN OUT  LIST_ENTRY                *ListHead,
-  IN OUT  LIST_ENTRY                *Entry
+CompareCommandEntry (
+  IN CONST VOID                 *Buffer1,
+  IN CONST VOID                 *Buffer2
   )
 {
-  LIST_ENTRY                *Curr;
-  SHELL_COMMAND_LIST_ENTRY  *CurrEntry;
   SHELL_COMMAND_LIST_ENTRY  *NewEntry;
+  SHELL_COMMAND_LIST_ENTRY  *CurrEntry;
 
-  Curr = ListHead->ForwardLink;
-  NewEntry = BASE_CR (Entry, SHELL_COMMAND_LIST_ENTRY, Link);
-  while (Curr != ListHead) {
-    CurrEntry = BASE_CR (Curr, SHELL_COMMAND_LIST_ENTRY, Link);
-    if (StrCmp (CurrEntry->ShellCommand->Name, NewEntry->ShellCommand->Name) >= 0) {
-      break;
-    }
-    Curr = Curr->ForwardLink;
-  }
+  NewEntry  = BASE_CR (Buffer1, SHELL_COMMAND_LIST_ENTRY, Link);
+  CurrEntry = BASE_CR (Buffer2, SHELL_COMMAND_LIST_ENTRY, Link);
 
-  Curr->BackLink->ForwardLink = Entry;
-  Entry->ForwardLink          = Curr;
-  Entry->BackLink             = Curr->BackLink;
-  Curr->BackLink              = Entry;
+  //
+  // Ascending Order
+  //
+  return StrCmp (NewEntry->ShellCommand->Name, CurrEntry->ShellCommand->Name) >= 0 ? 1: 0;
 }
 
 /**
   Register a Shell Command
 
+  @param[in]  Shell        Shell Context
   @param[in]  ShellCommand A Shell Command to be registered
 
   @retval EFI_SUCCESS
@@ -643,6 +493,7 @@ InsertSortedCommandList (
 EFI_STATUS
 EFIAPI
 ShellCommandRegister (
+  IN  SHELL                 *Shell,
   IN  CONST SHELL_COMMAND   *ShellCommand
   )
 {
@@ -657,22 +508,108 @@ ShellCommandRegister (
   Entry->ShellCommand = ShellCommand;
   Entry->Signature = SHELL_COMMAND_LIST_ENTRY_SIGNATURE;
 
-  EntryList = GetShellCommandEntryList ();
-  InsertSortedCommandList (EntryList, &Entry->Link);
+  EntryList = &Shell->CommandEntryList;
+  PerformInsertionSortList (EntryList, &Entry->Link, CompareCommandEntry);
 
   return EFI_SUCCESS;
 }
 
 /**
-  Return a Shell Command Entry List Pointer
+  Unregister all Shell commands
 
-  @retval LIST_ENTRY Pointer
+  @param[in]  Shell        Shell Context
+
+  @retval EFI_SUCCESS
+
 **/
-LIST_ENTRY *
+EFI_STATUS
 EFIAPI
-GetShellCommandEntryList (
-  VOID
+ShellCommandUnRegisterAll (
+  IN  SHELL                 *Shell
   )
 {
-  return &mShellCommandEntryList;
+  LIST_ENTRY                *Link;
+  SHELL_COMMAND_LIST_ENTRY  *Entry;
+  LIST_ENTRY                *EntryList;
+
+  EntryList = &Shell->CommandEntryList;
+  for (Link = EntryList->ForwardLink; Link != EntryList;) {
+    Entry = CR (Link, SHELL_COMMAND_LIST_ENTRY, Link, SHELL_COMMAND_LIST_ENTRY_SIGNATURE);
+    Link = Link->ForwardLink;
+    FreePool (Entry);
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Begin a run-time interactive shell.
+
+  @param[in]  Timeout       seconds to wait for input before returning (0 for no timeout)
+
+  @retval EFI_SUCCESS
+
+**/
+EFI_STATUS
+EFIAPI
+Shell (
+  IN       UINTN           Timeout
+  )
+{
+  EFI_STATUS  Status;
+  BOOLEAN     Start;
+  UINTN       Index;
+  UINTN       Index1;
+  SHELL       Shell;
+  UINT8       Buffer;
+
+  ZeroMem (&Shell, sizeof (Shell));
+  InitializeListHead (&Shell.CommandEntryList);
+
+  Shell.CommandLineMaxLen = FeaturePcdGet (PcdMiniShellEnabled) ? \
+                            MAX_COMMAND_LINE_LEN_MINI_SHELL : MAX_COMMAND_LINE_LEN;
+
+  LoadShellCommands (&Shell);
+  Shell.ShouldExit = FALSE;
+
+  if (Timeout != 0) {
+    ShellPrint (L"\n");
+    while (ConsolePoll ()) {
+      ConsoleRead (&Buffer, 1);
+    }
+    for (Index = Timeout; Index > 0; Index--) {
+      ShellPrint (L"Press any key within %d second(s) to enter the command shell", Index);
+      for (Index1 = 0; Index1 < 10; Index1++) {
+        Start = ConsolePoll ();
+        if (Start) {
+          break;
+        }
+        MicroSecondDelay (100 * 1000);
+      }
+      ShellPrint(L"\r");
+      if (Start) {
+        break;
+      }
+    }
+    ShellPrint (L"\n");
+    if (!Start) {
+      Status = EFI_ABORTED;
+      goto Exit;
+    }
+  }
+
+  HistoryInit (&Shell, TRUE);
+
+  while (! (Shell.ShouldExit)) {
+    ShellPrompt (&Shell);
+  }
+
+  HistoryInit (&Shell, FALSE);
+
+  Status = EFI_SUCCESS;
+
+Exit:
+  ShellCommandUnRegisterAll (&Shell);
+
+  return Status;
 }

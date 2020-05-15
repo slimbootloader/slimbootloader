@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018-2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -14,7 +14,7 @@
 */
 
 #if !defined(_PCP_HASH_RMF_H)
-#define __PCP_HASH_RMF_H
+#define _PCP_HASH_RMF_H
 
 #include "pcphash.h"
 #include "pcphashmethod_rmf.h"

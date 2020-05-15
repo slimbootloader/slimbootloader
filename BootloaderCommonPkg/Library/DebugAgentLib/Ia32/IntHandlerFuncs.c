@@ -74,7 +74,7 @@ SaveAndUpdateIdtEntry1 (
 }
 
 /**
-  Restore IDT entry for INT1. 
+  Restore IDT entry for INT1.
 
   @param[in]  IdtDescriptor      Pointer to IDT Descriptor.
   @param[in]  RestoredIdtEntry   IDT entry to be restored.

@@ -55,29 +55,48 @@ typedef struct {               // an IAS image generic header:
   UINT32    HeaderCrc;       // CRC-32C over entire header
 } IAS_HEADER;
 
+typedef enum {
+  ImageAllocateTypePool = 0,      // Allocate memory in Pool
+  ImageAllocateTypePage,          // Allocate memory in Page
+  ImageAllocateTypePointer,       // No allocate memory, but pointer to the existing memory
+  ImageAllocateTypeMax
+} IMAGE_ALLOCATE_TYPE;
+
 typedef struct {        /* a file (sub-image) inside a boot image */
-  VOID      *Addr;
-  UINT32    Size;
+  VOID                 *Addr;
+  UINT32                Size;
+  IMAGE_ALLOCATE_TYPE   AllocType;
 } IMAGE_DATA;
 
 //
-// IAS Pub Key format for use with IPP CryptoLib
+// IAS Pub Key format for use
+// Supported for only RSA2048
 //
 typedef struct {
-  UINT32  Signature;
-  UINT8 PubKeyMod[RSA_MOD_SIZE];
-  UINT8 PubKeyExp[RSA_E_SIZE];
+  UINT8 Modulus[RSA2048_MOD_SIZE];
+  UINT8 PubExp[RSA_E_SIZE];
 } IAS_PUB_KEY;
+
+//
+// IAS Iamge buf address and hash info for use
+//
+
+typedef struct {
+  UINT8           *CompBuf;  // IAS Image buffer address
+  UINT32           CompLen;  // IAS image length
+  HASH_ALG_TYPE    HashAlg;  // Hash Alg used for HashData
+  UINT8            HashData[HASH_DIGEST_MAX]; // Hash of the IAS image
+} IAS_IMAGE_INFO;
 
 /**
 Check the Addr parameter for a valid IAS image; ensure the format is correct,
 confirm the IAS header CRC is correct, and (optional) confirm the hash of the
 data region of the IAS image matches the expected value. Also, return the
-hash of the IAS image to the caller.
+buffer and hash info of the IAS image to the caller.
 
-@param           Addr              Address of the IAS image to be verified for validity.
-@param           Size              Size of the IAS image to be verified for validity.
-@param           ImageHash         Hash of the IAS image is returned to the caller.
+@param  Addr              Address of the IAS image to be verified for validity.
+@param  Size              Size of the IAS image to be verified for validity.
+@param  IasImageInfo      IasImage buffer and hash info data structure
 
 @retval NULL  The IAS image is compromised.
 @retval Hdr   The IAS image is valid.
@@ -85,9 +104,9 @@ hash of the IAS image to the caller.
 **/
 IAS_HEADER *
 IsIasImageValid (
-  IN  VOID  *Addr,
-  IN  UINT32 Size,
-  OUT UINT8 *ImageHash
+  IN  VOID               *Addr,
+  IN  UINT32              Size,
+  OUT IAS_IMAGE_INFO     *IasImageInfo
   );
 
 /**
@@ -120,14 +139,14 @@ IasGetFiles (
 
 // Find the extended header, payload data and CRC, and the RSA signature from the generic header:
 #define IAS_EXT_HDR_SIZE(h)           ((h)->DataOffset - sizeof(IAS_HEADER))
-#define IAS_EXT_HDR(h)                ((UINT32*) (((UINT32) (h)) + sizeof(IAS_HEADER)))
-#define IAS_PAYLOAD(h)                ((((UINT32) (h)) + (h)->DataOffset))
+#define IAS_EXT_HDR(h)                ((UINT32*) (((UINT32)(UINTN)(h)) + sizeof(IAS_HEADER)))
+#define IAS_PAYLOAD(h)                ((((UINT32)(UINTN)(h)) + (h)->DataOffset))
 #define IAS_PAYLOAD_CRC(h)            (* (UINT32*) (((UINT32*) (h)) + (h)->DataOffset + (h)->DataLength))
 #define IAS_PAYLOAD_END(h)            (IAS_PAYLOAD(h) + (h)->DataLength + sizeof(UINT32))
-#define IAS_SIGNATURE(h)              (((UINT32) h) + ROUNDED_UP((h)->DataOffset + (h)->DataLength + sizeof(UINT32), 256))
+#define IAS_SIGNATURE(h)              (((UINT32)(UINTN)h) + ROUNDED_UP((h)->DataOffset + (h)->DataLength + sizeof(UINT32), 256))
 #define IAS_PUBLIC_KEY(h)             ((IAS_SIGNATURE(h) + 256))
 #define IAS_IMAGE_END(h)              ((IAS_PUBLIC_KEY(h) + (( (h)->ImageType  & 1<<9 ) == (1 <<9) ? 260 : 0)))
-#define IAS_IMAGE_SIZE(h)             (((UINT32) IAS_IMAGE_END(h)) - ((UINT32) h))
+#define IAS_IMAGE_SIZE(h)             (((UINT32) IAS_IMAGE_END(h)) - ((UINT32)(UINTN)h))
 
 // Note: Alignment argument must be a power of two.
 #define ROUNDED_DOWN(val, align)    ((val) & ~((align) - 1))

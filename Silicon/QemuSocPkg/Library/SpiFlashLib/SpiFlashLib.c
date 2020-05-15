@@ -80,7 +80,7 @@ QemuFlashPtr (
   IN        UINTN                               Offset
   )
 {
-  return (UINT8 *)PcdGet32 (PcdFlashBaseAddress) + ((UINTN)Lba * PcdGet32 (PcdFlashBlockSize)) + Offset;
+  return (UINT8 *)(UINTN)PcdGet32 (PcdFlashBaseAddress) + ((UINTN)Lba * PcdGet32 (PcdFlashBlockSize)) + Offset;
 }
 
 /**
@@ -115,35 +115,35 @@ QemuFlashDetected (
   }
 
   if (Offset >= PcdGet32 (PcdFlashBlockSize)) {
-    DEBUG ((EFI_D_INFO, "QEMU Flash: Failed to find probe location\n"));
+    DEBUG ((DEBUG_INFO, "QEMU Flash: Failed to find probe location\n"));
     return FALSE;
   }
 
-  DEBUG ((EFI_D_INFO, "QEMU Flash: Attempting flash detection at %p\n", Ptr));
+  DEBUG ((DEBUG_INFO, "QEMU Flash: Attempting flash detection at %p\n", Ptr));
 
   OriginalUint8 = *Ptr;
   *Ptr = CLEAR_STATUS_CMD;
   ProbeUint8 = *Ptr;
   if (OriginalUint8 != CLEAR_STATUS_CMD &&
       ProbeUint8 == CLEAR_STATUS_CMD) {
-    DEBUG ((EFI_D_INFO, "QemuFlashDetected => FD behaves as RAM\n"));
+    DEBUG ((DEBUG_INFO, "QemuFlashDetected => FD behaves as RAM\n"));
     *Ptr = OriginalUint8;
   } else {
     *Ptr = READ_STATUS_CMD;
     ProbeUint8 = *Ptr;
     if (ProbeUint8 == OriginalUint8) {
-      DEBUG ((EFI_D_INFO, "QemuFlashDetected => FD behaves as ROM\n"));
+      DEBUG ((DEBUG_INFO, "QemuFlashDetected => FD behaves as ROM\n"));
     } else if (ProbeUint8 == READ_STATUS_CMD) {
-      DEBUG ((EFI_D_INFO, "QemuFlashDetected => FD behaves as RAM\n"));
+      DEBUG ((DEBUG_INFO, "QemuFlashDetected => FD behaves as RAM\n"));
       *Ptr = OriginalUint8;
     } else if (ProbeUint8 == CLEARED_ARRAY_STATUS) {
-      DEBUG ((EFI_D_INFO, "QemuFlashDetected => FD behaves as FLASH\n"));
+      DEBUG ((DEBUG_INFO, "QemuFlashDetected => FD behaves as FLASH\n"));
       FlashDetected = TRUE;
       *Ptr = READ_ARRAY_CMD;
     }
   }
 
-  DEBUG ((EFI_D_INFO, "QemuFlashDetected => %a\n",
+  DEBUG ((DEBUG_INFO, "QemuFlashDetected => %a\n",
                       FlashDetected ? "Yes" : "No"));
   return FlashDetected;
 }
@@ -219,13 +219,16 @@ SpiGetRegionAddress (
 {
   SPI_INSTANCE   *SpiInstance;
 
-  SpiInstance = GetSpiInstance();
-
   if ((FlashRegionType == FlashRegionAll) || (FlashRegionType == FlashRegionBios)) {
     if (BaseAddress != NULL) {
       *BaseAddress   = 0;
     }
     if (RegionSize  != NULL) {
+      SpiInstance = GetSpiInstance();
+      if (SpiInstance == NULL) {
+        return EFI_DEVICE_ERROR;
+      }
+
       *RegionSize    = SpiInstance->TotalFlashSize;
     }
     return EFI_SUCCESS;
@@ -259,9 +262,13 @@ SpiFlashRead (
   EFI_STATUS      Status;
   SPI_INSTANCE   *SpiInstance;
 
-  SpiInstance = GetSpiInstance();
   if ((FlashRegionType != FlashRegionAll) && (FlashRegionType != FlashRegionBios)) {
     return EFI_INVALID_PARAMETER;
+  }
+
+  SpiInstance = GetSpiInstance();
+  if (SpiInstance == NULL) {
+    return EFI_DEVICE_ERROR;
   }
 
   Address = Address - SpiInstance->TotalFlashSize - SpiInstance->StoreBase;
@@ -275,7 +282,7 @@ SpiFlashRead (
   }
 
   Status = EFI_SUCCESS;
-  CopyMem (Buffer, (VOID *)(Address + SpiInstance->StoreBase), ByteCount);
+  CopyMem (Buffer, (VOID *)(UINTN)(Address + SpiInstance->StoreBase), ByteCount);
 
   return Status;
 }
@@ -308,9 +315,13 @@ SpiFlashWrite (
   UINT8           Old;
   volatile UINT8 *Ptr;
 
-  SpiInstance = GetSpiInstance();
   if ((FlashRegionType != FlashRegionAll) && (FlashRegionType != FlashRegionBios)) {
     return EFI_INVALID_PARAMETER;
+  }
+
+  SpiInstance = GetSpiInstance();
+  if (SpiInstance == NULL) {
+    return EFI_DEVICE_ERROR;
   }
 
   Address = Address - SpiInstance->TotalFlashSize - SpiInstance->StoreBase;
@@ -324,7 +335,7 @@ SpiFlashWrite (
   }
 
   Status = EFI_SUCCESS;
-  Ptr = (volatile UINT8 *)(Address + SpiInstance->StoreBase);
+  Ptr = (volatile UINT8 *)(UINTN)(Address + SpiInstance->StoreBase);
   for (Idx = 0; Idx < ByteCount; Idx++) {
     if (ByteCount < 0x1000) {
       *Ptr = READ_ARRAY_CMD;
@@ -368,9 +379,13 @@ SpiFlashErase (
   UINT32          Offset;
   volatile UINT8 *Ptr;
 
-  SpiInstance = GetSpiInstance();
   if ((FlashRegionType != FlashRegionAll) && (FlashRegionType != FlashRegionBios)) {
     return EFI_INVALID_PARAMETER;
+  }
+
+  SpiInstance = GetSpiInstance();
+  if (SpiInstance == NULL) {
+    return EFI_DEVICE_ERROR;
   }
 
   Address = Address - SpiInstance->TotalFlashSize - SpiInstance->StoreBase;
@@ -383,12 +398,16 @@ SpiFlashErase (
     return EFI_INVALID_PARAMETER;
   }
 
-  Ptr = (volatile UINT8 *)(Address + SpiInstance->StoreBase);
+  Ptr = (volatile UINT8 *)(UINTN)(Address + SpiInstance->StoreBase);
 
   for (Offset = 0; Offset < ByteCount; Offset += 0x1000) {
     *Ptr = BLOCK_ERASE_CMD;
     *Ptr = BLOCK_ERASE_CONFIRM_CMD;
     Ptr += 0x1000;
+  }
+
+  if (ByteCount > 0) {
+    *(Ptr - 1) = READ_ARRAY_CMD;
   }
 
   return EFI_SUCCESS;

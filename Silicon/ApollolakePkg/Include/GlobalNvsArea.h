@@ -65,6 +65,8 @@ typedef struct {
   UINT32      Mmio32Length;                           ///<   PCIE MMIO resource length
   UINT32      HdaDspFeatureMask;                      ///<   HD-Audio DSP Feature Mask
   UINT32      HdaDspModMask;                          ///<   Hd-Audio DSP Post-Processing Module Mask
+  UINT8       PcieRpGpeWakeBit[6];                    ///<   PCIE RP wake GPE bit offset
+  UINT8       Reserved5[2];
 } PLATFORM_NVS_AREA;
 
 typedef struct {

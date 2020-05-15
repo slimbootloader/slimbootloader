@@ -51,7 +51,7 @@ CONST EFI_MEMORY_TYPE_STATISTICS mMemoryTypeStatisticsInit[EfiMaxMemoryType + 1]
   { 0, 0, 0, 0, EfiMaxMemoryType, FALSE, FALSE },  // EfiBootServicesCode
   { 0, MAX_ADDRESS, 0, 0, EfiMaxMemoryType, FALSE, FALSE },  // EfiBootServicesData
   { 0, 0, 0, 0, EfiMaxMemoryType, TRUE,  TRUE  },  // EfiRuntimeServicesCode
-  { 0, 0, 0, 0, EfiMaxMemoryType, TRUE,  TRUE  },  // EfiRuntimeServicesData
+  { 0, MAX_ADDRESS, 0, 0, EfiMaxMemoryType, TRUE,  TRUE  },  // EfiRuntimeServicesData
   { 0, MAX_ADDRESS, 0, 0, EfiMaxMemoryType, FALSE, FALSE },  // EfiConventionalMemory
   { 0, 0, 0, 0, EfiMaxMemoryType, FALSE, FALSE },  // EfiUnusableMemory
   { 0, 0, 0, 0, EfiMaxMemoryType, TRUE,  FALSE },  // EfiACPIReclaimMemory
@@ -1162,24 +1162,23 @@ CoreFreePoolPages (
 }
 
 /**
-  Finds first free range between specified min and max address.
+  Finds all used pages for given type and count for size.
 
-  @param[in]  MinAddress             The address that the range must be above
-  @param[in]  MaxAddress             The address that the range must be below
+  @param  MemType     The type of memory to count.
 
-  @retval     The memory range entry pointer to MEMORY_MAP structure.
-              NULL if no free range is found.
+  @retval     The total used memory size.
 
 **/
-MEMORY_MAP *
-CoreFindFirstFreeRange (
-  IN UINT64           MinAddress,
-  IN UINT64           MaxAddress
+UINT64
+CoreGetUsedMemorySize (
+  IN EFI_MEMORY_TYPE  MemType
   )
 {
   LIST_ENTRY      *Link;
   MEMORY_MAP      *Entry;
+  UINT64           Length;
 
+  Length = 0;
   Entry = NULL;
   for (Link = gMemoryMap.ForwardLink; Link != &gMemoryMap; Link = Link->ForwardLink) {
     Entry = CR (Link, MEMORY_MAP, Link, MEMORY_MAP_SIGNATURE);
@@ -1187,21 +1186,15 @@ CoreFindFirstFreeRange (
     //
     // If it's not a free entry, don't bother with it
     //
-    if (Entry->Type != EfiConventionalMemory) {
-      continue;
-    }
-
+    if (Entry->Type == MemType) {
     //
     // If desc is past max allowed address or below min allowed address, skip it
     //
-    if ((Entry->Start >= MaxAddress) || (Entry->End < MinAddress)) {
-      continue;
+      Length += (Entry->End - Entry->Start + 1);
     }
-
-    return Entry;
   }
 
-  return NULL;
+  return Length;
 }
 
 /**
@@ -1224,7 +1217,6 @@ GetMemoryResourceInfo (
   OUT  UINT64           *EndAddr    OPTIONAL
   )
 {
-  MEMORY_MAP     *Entry;
   UINT64          Start;
   UINT64          End;
 
@@ -1244,12 +1236,10 @@ GetMemoryResourceInfo (
   }
 
   if (FreeAddr != NULL) {
-    Entry = CoreFindFirstFreeRange (Start, End);
-    if (Entry != NULL) {
-      *FreeAddr = Entry->End;
-    } else {
-      *FreeAddr = End;
-    }
+    // Memory might be allocated in fragmented parts.
+    // Here use a calculated virtual free memory address instead.
+    // UsedMemory = EndAddr - FreeAddr
+    *FreeAddr = End - CoreGetUsedMemorySize (Type);
   }
 
   return EFI_SUCCESS;

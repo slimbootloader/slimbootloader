@@ -334,6 +334,7 @@ PrintBootOption (
   )
 {
   UINT32                     Index;
+  UINT32                     ExtraIndex;
   OS_BOOT_OPTION             *BootOption;
 
   ShellPrint (L"Boot options (in HEX):\n\n");
@@ -365,6 +366,15 @@ PrintBootOption (
                  BootOption->Image[0].LbaImage.SwPart, \
                  BootOption->Image[0].LbaImage.LbaAddr \
                  );
+    }
+
+    for (ExtraIndex = 1; ExtraIndex < LoadImageTypeMax; ExtraIndex++) {
+      if (BootOption->Image[ExtraIndex].LbaImage.Valid == 1) {
+        ShellPrint (L" [%x|0x%x]", BootOption->Image[ExtraIndex].LbaImage.SwPart, \
+          BootOption->Image[ExtraIndex].LbaImage.LbaAddr);
+      } else if (BootOption->Image[ExtraIndex].FileName[0] != '\0') {
+        ShellPrint (L" [%a]", BootOption->Image[ExtraIndex].FileName);
+      }
     }
 
     if (Index == OsBootOptionList->CurrentBoot) {

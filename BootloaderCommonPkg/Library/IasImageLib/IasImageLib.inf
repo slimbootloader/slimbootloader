@@ -40,3 +40,4 @@
 
 [Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdCompSignHashAlg

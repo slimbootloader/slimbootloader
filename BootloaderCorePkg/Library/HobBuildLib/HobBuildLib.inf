@@ -11,7 +11,7 @@
   FILE_GUID                      = 1b24f414-c70d-4fcb-b705-615f7fbb974b
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
-  LIBRARY_CLASS                  = HobBuildLib 
+  LIBRARY_CLASS                  = HobBuildLib
 
 
 #
@@ -26,7 +26,7 @@
   BootloaderCorePkg/BootloaderCorePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
 
-[LibraryClasses]  
+[LibraryClasses]
 
 [Pcd]
 

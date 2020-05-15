@@ -355,7 +355,7 @@ def gen_fit_xml (fit_dir, src, dst, btg_profile, spi_quad):
 
     # Enable PDR region
     node = tree.find('./FlashLayout/SubPartitions/PdrRegion/Enabled')
-    node.attrib['value'] = 'enabled'
+    node.attrib['value'] = 'Enabled'
     node = tree.find('./FlashLayout/SubPartitions/PdrRegion/InputFile')
     node.attrib['value'] = '$SourceDir\input\pdr.bin'
 
@@ -397,6 +397,7 @@ def gen_meu_sbl_xml (meu_dir, src, dst):
       ("OBB",   "OBB"),
       ("FWUP",  "FWU"),
       ("CFGD",  "CFGDATA"),
+      ("KEYH",  "KEYHASH"),
       ("PLD",   "PLD"),
       ("VAR",   "VAR"),
       ("MRCD",  "MRCDATA")
@@ -483,7 +484,7 @@ def stitch (stitch_dir, stitch_zip, btg_profile, spi_quad_mode, platform_data, f
     if not os.path.exists(input_pdr):
         print ("\nGenerating pdr.bin ...")
         fp = open (output_pdr, 'wb')
-        fp.write (b'\xff' * 0xFF000)
+        fp.write (b'\xff' * 0x1000)
         fp.close()
     else:
         shutil.copy (input_pdr, output_pdr)
@@ -623,7 +624,7 @@ def main():
 
     args = ap.parse_args()
 
-    stitch_dir = args.stitch_dir
+    stitch_dir = os.path.abspath (args.stitch_dir)
     if clean (stitch_dir, args.clean):
         raise Exception ('Stitching clean up failed !')
 

@@ -49,15 +49,6 @@ DefinitionBlock (
       }
 
       //
-      // Operational region for Smi Data transfer
-      //
-      OperationRegion (SMDP, SystemIO, 0xB3, 1)
-      Field (SMDP, ByteAcc, NoLock, Preserve)
-      {
-          IOB3, 8
-      }
-
-      //
       // Operational region for TPM access
       //
       OperationRegion (TPMR, SystemMemory, 0xfed40000, 0x5000)
@@ -189,8 +180,7 @@ DefinitionBlock (
             //
             // Trigger the SMI interrupt
             //
-            Store (PPIN, IOB3)
-            Store (0xFF, IOB2)
+            Store (PPIN, IOB2)
             Return (FRET)
 
           }
@@ -228,8 +218,7 @@ DefinitionBlock (
             //
             // Triggle the SMI interrupt
             //
-            Store (PPIN, IOB3)
-            Store (0xFF, IOB2)
+            Store (PPIN, IOB2)
 
             Store (LPPR, Index (TPM3, 0x01))
             Store (PPRP, Index (TPM3, 0x02))
@@ -270,8 +259,7 @@ DefinitionBlock (
             //
             // Trigger the SMI interrupt
             //
-            Store (PPIN, IOB3)
-            Store (0xFF, IOB2)
+            Store (PPIN, IOB2)
             Return (FRET)
           }
           Case (8)
@@ -293,8 +281,7 @@ DefinitionBlock (
             //
             // Trigger the SMI interrupt
             //
-            Store (PPIN, IOB3)
-            Store (0xFF, IOB2)
+            Store (PPIN, IOB2)
 
             //
             // This is not a Physical Presence Request. So restore PPRQ variable value to zero

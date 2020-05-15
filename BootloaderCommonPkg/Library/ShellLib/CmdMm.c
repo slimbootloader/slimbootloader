@@ -21,8 +21,8 @@
   @retval EFI_SUCCESS
 
 **/
-STATIC
 EFI_STATUS
+EFIAPI
 ShellCommandMmFunc (
   IN SHELL  *Shell,
   IN UINTN   Argc,
@@ -49,7 +49,7 @@ VOID
 EFIAPI
 MmWrite (
   IN UINTN  Addr,
-  IN UINTN  Width,
+  IN UINT32 Width,
   IN UINT64 Value,
   IN UINT32 Count,
   IN BOOLEAN IsIoAddr
@@ -106,7 +106,7 @@ VOID
 EFIAPI
 MmRead (
   IN UINTN   Addr,
-  IN UINTN   Width,
+  IN UINT32  Width,
   IN UINT32  Count,
   IN BOOLEAN IsIoAddr
 )
@@ -117,8 +117,12 @@ MmRead (
 
   // Pad backward to 16-byte boundary
   ItemsPerRow  = 16 / Width;
-  Start        = (Addr & 0xF) / Width;
-  Count       += Start;
+  if (Count == 1) {
+    Start = 0;
+  } else {
+    Start = (Addr & 0xF) / Width;
+  }
+  Count  += Start;
 
   if (Start > 0) {
     ShellPrint (L"%08X: ", Addr & ~0xF);
@@ -167,8 +171,8 @@ MmRead (
   @retval EFI_SUCCESS
 
 **/
-STATIC
 EFI_STATUS
+EFIAPI
 ShellCommandMmFunc (
   IN SHELL  *Shell,
   IN UINTN   Argc,
@@ -177,8 +181,8 @@ ShellCommandMmFunc (
 {
   EFI_STATUS Status;
   UINTN   Addr;
-  UINTN   Index;
-  UINTN   Width;
+  UINT32  Index;
+  UINT32  Width;
   UINT64  Value;
   UINT32  Count;
   BOOLEAN Write;
@@ -201,14 +205,14 @@ ShellCommandMmFunc (
     for (Index = 2; Index < Argc; Index++) {
       if (StrCmp (Argv[Index], L"-w") == 0) {
         if ((Index + 1) < Argc) {
-          Width = StrHexToUintn (Argv[Index+1]);
+          Width = (UINT32)StrHexToUintn (Argv[Index+1]);
           Index++;
         } else {
           ShellPrint (L"Error, '-w' requires [1|2|4|8]\n");
         }
       } else if (StrCmp (Argv[Index], L"-c") == 0) {
         if ((Index + 1) < Argc) {
-          Count = StrHexToUintn (Argv[Index+1]);
+          Count = (UINT32)StrHexToUintn (Argv[Index+1]);
           Index++;
         } else {
           ShellPrint (L"Error, '-c' requires a value\n");

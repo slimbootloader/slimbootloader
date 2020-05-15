@@ -159,9 +159,9 @@ typedef enum {
    ipp64fc  = 20
 } IppDataType;
 
-typedef enum { 
-    ippFalse = 0, 
-    ippTrue = 1 
+typedef enum {
+    ippFalse = 0,
+    ippTrue = 1
 } IppBool;
 
 #ifdef __cplusplus

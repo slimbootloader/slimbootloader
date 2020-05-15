@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -12,8 +12,6 @@
 #include <Library/BootloaderCoreLib.h>
 #include <Library/AcpiInitLib.h>
 #include <Library/TimeStampLib.h>
-
-#define DEBUG_PRINT_FPDT_DATA   0
 
 BOOT_PERFORMANCE_TABLE mBootPerformanceTableTemplate = {
   {
@@ -106,9 +104,10 @@ GetFpdtS3Table (
   UINT32                                       NumEntries;
   FIRMWARE_PERFORMANCE_TABLE                   *Fpdt;
   UINT8                                        Index;
+  BOOT_PERFORMANCE_TABLE                       *BootTable;
 
-  Rsdp = (EFI_ACPI_5_0_ROOT_SYSTEM_DESCRIPTION_POINTER *) AcpiTableBase;
-  Rsdt = (EFI_ACPI_DESCRIPTION_HEADER *) (UINTN) Rsdp->RsdtAddress;
+  Rsdp = (EFI_ACPI_5_0_ROOT_SYSTEM_DESCRIPTION_POINTER *)(UINTN)AcpiTableBase;
+  Rsdt = (EFI_ACPI_DESCRIPTION_HEADER *)(UINTN)Rsdp->RsdtAddress;
 
   NumEntries = (Rsdt->Length - sizeof(EFI_ACPI_DESCRIPTION_HEADER)) / sizeof(UINT32);
   RsdtEntry  = (UINT32 *) ((UINT8 *)Rsdt + sizeof (EFI_ACPI_DESCRIPTION_HEADER));
@@ -116,15 +115,13 @@ GetFpdtS3Table (
     Hdr = (EFI_ACPI_COMMON_HEADER *) (UINTN) RsdtEntry[Index];
     if (Hdr->Signature == EFI_ACPI_5_0_FIRMWARE_PERFORMANCE_DATA_TABLE_SIGNATURE) {
       Fpdt = (FIRMWARE_PERFORMANCE_TABLE *) Hdr;
-      if (DEBUG_PRINT_FPDT_DATA == 1) {
-        BOOT_PERFORMANCE_TABLE  *BootTable;
-        BootTable = (BOOT_PERFORMANCE_TABLE *)(UINTN)Fpdt->BootPointerRecord.BootPerformanceTablePointer;
-        DEBUG ((EFI_D_INFO, "FPDT: ResetEnd                = %ld\n", BootTable->BasicBoot.ResetEnd));
-        DEBUG ((EFI_D_INFO, "FPDT: OsLoaderLoadImageStart  = %ld\n", BootTable->BasicBoot.OsLoaderLoadImageStart));
-        DEBUG ((EFI_D_INFO, "FPDT: OsLoaderStartImageStart = %ld\n", BootTable->BasicBoot.OsLoaderStartImageStart));
-        DEBUG ((EFI_D_INFO, "FPDT: ExitBootServicesEntry   = %ld\n", BootTable->BasicBoot.ExitBootServicesEntry));
-        DEBUG ((EFI_D_INFO, "FPDT: ExitBootServicesExit    = %ld\n", BootTable->BasicBoot.ExitBootServicesExit));
-      }
+      BootTable = (BOOT_PERFORMANCE_TABLE *)(UINTN)Fpdt->BootPointerRecord.BootPerformanceTablePointer;
+      DEBUG ((DEBUG_VERBOSE, "FPDT: ResetEnd                = %ld\n", BootTable->BasicBoot.ResetEnd));
+      DEBUG ((DEBUG_VERBOSE, "FPDT: OsLoaderLoadImageStart  = %ld\n", BootTable->BasicBoot.OsLoaderLoadImageStart));
+      DEBUG ((DEBUG_VERBOSE, "FPDT: OsLoaderStartImageStart = %ld\n", BootTable->BasicBoot.OsLoaderStartImageStart));
+      DEBUG ((DEBUG_VERBOSE, "FPDT: ExitBootServicesEntry   = %ld\n", BootTable->BasicBoot.ExitBootServicesEntry));
+      DEBUG ((DEBUG_VERBOSE, "FPDT: ExitBootServicesExit    = %ld\n", BootTable->BasicBoot.ExitBootServicesExit));
+
       return (UINTN)Fpdt->S3PointerRecord.S3PerformanceTablePointer;
     }
   }
@@ -174,11 +171,10 @@ UpdateFpdtS3Table (
   S3Resume->ResumeCount++;
   S3Resume->AverageResume = DivU64x32 (TotalResumeTime, S3Resume->ResumeCount);
 
-  if (DEBUG_PRINT_FPDT_DATA == 1) {
-    DEBUG ((EFI_D_INFO, "FPDT: S3Resume->AverageResume = %ld\n", S3Resume->AverageResume));
-    DEBUG ((EFI_D_INFO, "FPDT: S3Resume->ResumeCount   = %d\n",  S3Resume->ResumeCount));
-    DEBUG ((EFI_D_INFO, "FPDT: S3Resume->FullResume    = %ld\n", S3Resume->FullResume));
-  }
+  DEBUG ((DEBUG_VERBOSE, "FPDT: S3Resume->AverageResume = %ld\n", S3Resume->AverageResume));
+  DEBUG ((DEBUG_VERBOSE, "FPDT: S3Resume->ResumeCount   = %d\n",  S3Resume->ResumeCount));
+  DEBUG ((DEBUG_VERBOSE, "FPDT: S3Resume->FullResume    = %ld\n", S3Resume->FullResume));
+
   return  EFI_SUCCESS;
 }
 
@@ -187,13 +183,15 @@ UpdateFpdtS3Table (
   Update Firmware Performance Data Table (FPDT).
 
   @param[in] Table          Pointer of ACPI FPDT Table.
+  @param[out] ExtraSize     Extra size the table needed.
 
   @retval EFI_SUCCESS       Update ACPI FPDT table successfully.
   @retval Others            Failed to update FPDT table.
  **/
 EFI_STATUS
 UpdateFpdt (
-  IN VOID                             *Table
+  IN  UINT8                           *Table,
+  OUT UINT32                          *ExtraSize
   )
 {
   FIRMWARE_PERFORMANCE_TABLE          *Fpdt;
@@ -202,7 +200,7 @@ UpdateFpdt (
   S3_PERFORMANCE_TABLE                *S3PerfTable;
 
   if ( Table == NULL) {
-    DEBUG((EFI_D_WARN, "TABLE is NULL\n"));
+    DEBUG((DEBUG_WARN, "TABLE is NULL\n"));
     return EFI_INVALID_PARAMETER;
   }
 
@@ -218,8 +216,10 @@ UpdateFpdt (
     CopyMem (S3PerfTable, &mS3PerformanceTableTemplate, sizeof (mS3PerformanceTableTemplate));
     UpdateFpdtBootTable (BootPerfTable);
 
-    // Fixup FPDT table length
-    Fpdt->Header.Length = sizeof (INTERNAL_FIRMWARE_PERFORMANCE_TABLE);
+    if (ExtraSize != NULL) {
+      *ExtraSize = (UINT32)((UINT8 *) (S3PerfTable + 1) - Table - Fpdt->Header.Length);
+    }
+
   }
 
   return  EFI_SUCCESS;

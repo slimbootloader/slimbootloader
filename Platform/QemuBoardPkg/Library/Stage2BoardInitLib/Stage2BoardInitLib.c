@@ -44,16 +44,19 @@ typedef struct {
 } GRAPHICS_DATA;
 
 UINT8
+EFIAPI
 GetSerialPortStrideSize (
   VOID
 );
 
 UINT32
+EFIAPI
 GetSerialPortBase (
   VOID
   );
 
 VOID
+EFIAPI
 EnableLegacyRegions (
   VOID
 );
@@ -125,7 +128,7 @@ LocateVbtByImageId (
   UINT32          VbtAddr;
   UINTN           Idx;
 
-  VbtMbHdr = (VBT_MB_HDR* )PcdGet32 (PcdGraphicsVbtAddress);
+  VbtMbHdr = (VBT_MB_HDR* )(UINTN)PcdGet32 (PcdGraphicsVbtAddress);
   if ((VbtMbHdr == NULL) || (VbtMbHdr->Signature != MVBT_SIGNATURE)) {
     return 0;
   }
@@ -134,7 +137,7 @@ LocateVbtByImageId (
   VbtEntry = (VBT_ENTRY_HDR *)&VbtMbHdr[1];
   for (Idx = 0; Idx < VbtMbHdr->EntryNum; Idx++) {
     if (VbtEntry->ImageId == ImageId) {
-      VbtAddr = (UINT32)VbtEntry->Data;
+      VbtAddr = (UINT32)(UINTN)VbtEntry->Data;
       break;
     }
     VbtEntry = (VBT_ENTRY_HDR *)((UINT8 *)VbtEntry + VbtEntry->Length);
@@ -229,6 +232,7 @@ GpioInit (
 
 **/
 VOID
+EFIAPI
 BoardInit (
   IN  BOARD_INIT_PHASE    InitPhase
 )
@@ -278,7 +282,10 @@ BoardInit (
     Buffer = NULL;
     Length = 0;
     Status = LoadComponent (SIGNATURE_32('I', 'P', 'F', 'W'), SIGNATURE_32('T', 'S', 'T', '3'), &Buffer,  &Length);
-    DEBUG ((EFI_D_INFO, "Load IP firmware @ %p:0x%X - %r\n", Buffer, Length, Status));
+    DEBUG ((DEBUG_INFO, "Load IP firmware @ %p:0x%X - %r\n", Buffer, Length, Status));
+    if (!EFI_ERROR(Status)) {
+      DumpHex (2, 0, Length > 16 ? 16 : Length, Buffer);
+    }
     break;
 
   case PostPciEnumeration:
@@ -399,25 +406,31 @@ UpdateOsBootMediumInfo (
 
   FillBootOptionListFromCfgData (OsBootOptionList);
 
-  //
-  // Read boot order, it is passed in by QEMU command
-  //   QEMU boot order (a=1 c=2 d=3 n=4 at CMOS 0x3D)
-  //   By default, this CMOS value at offset 0x3D is 0x03
-  //   Use '-boot order=c' or default to boot from eMMC
-  //   Use '-boot order=d' to boot from SATA
-  //   Use '-boot order=n' to boot from NVMe
-  //
-  IoWrite8 (0x70, 0x3D);
-  BootOrder = IoRead8  (0x71);
+  if (OsBootOptionList->CurrentBoot == MAX_BOOT_OPTION_CFGDATA_ENTRY) {
+    //
+    // Read boot order, it is passed in by QEMU command
+    //   QEMU boot order (a=1 c=2 d=3 n=4 at CMOS 0x3D)
+    //   By default, this CMOS value at offset 0x3D is 0x03
+    //   Use '-boot order=c' or default to boot from eMMC
+    //   Use '-boot order=d' to boot from SATA
+    //   Use '-boot order=n' to boot from NVMe
+    //
+    IoWrite8 (0x70, 0x3D);
+    BootOrder = IoRead8  (0x71);
 
-  if ((BootOrder & 0x0F) == 3) {
-    // SATA boot first
-    OsBootOptionList->CurrentBoot = 1;
-  } else if ((BootOrder & 0x0F) == 4) {
-    // NVMe boot first
-    OsBootOptionList->CurrentBoot = 2;
-  } else {
-    // SD boot first
+    if ((BootOrder & 0x0F) == 3) {
+      // SATA boot first
+      OsBootOptionList->CurrentBoot = 1;
+    } else if ((BootOrder & 0x0F) == 4) {
+      // NVMe boot first
+      OsBootOptionList->CurrentBoot = 2;
+    } else {
+      // SD boot first
+      OsBootOptionList->CurrentBoot = 0;
+    }
+  }
+
+  if (OsBootOptionList->CurrentBoot >= OsBootOptionList->OsBootOptionCount) {
     OsBootOptionList->CurrentBoot = 0;
   }
 }
@@ -476,7 +489,7 @@ UpdateSmmInfo (
     SmmInfoHob->SmmBase = PcdGet32 (PcdSmramTsegBase);
     SmmInfoHob->SmmSize = TsegSize;
     SmmInfoHob->Flags   = 0;
-    DEBUG ((EFI_D_INFO, "SmmRamBase = 0x%x, SmmRamSize = 0x%x\n", SmmInfoHob->SmmBase, SmmInfoHob->SmmSize));
+    DEBUG ((DEBUG_INFO, "SmmRamBase = 0x%x, SmmRamSize = 0x%x\n", SmmInfoHob->SmmBase, SmmInfoHob->SmmSize));
   }
 }
 

@@ -11,7 +11,7 @@
   FILE_GUID                      = FDEF03CD-B28C-4E1F-ACE6-C3AAD2EB7CC5
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
-  LIBRARY_CLASS                  = SocInfoLib 
+  LIBRARY_CLASS                  = SocInfoLib
 
 #
 # The following information is for reference only and not required by the build tools.

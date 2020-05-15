@@ -1,7 +1,7 @@
 ## @file
 # Provides driver and definitions to build bootloader.
 #
-# Copyright (c) 2016 - 2019, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2016 - 2020, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -16,18 +16,11 @@
   PLATFORM_GUID                       = 0E8F73FA-CF73-4AA2-A406-1610CCF49EF1
   PLATFORM_VERSION                    = 0.1
   DSC_SPECIFICATION                   = 0x00010005
-  OUTPUT_DIRECTORY                    = Build/$(PLATFORM_NAME)
-  SUPPORTED_ARCHITECTURES             = IA32|X64|ARC
+  OUTPUT_DIRECTORY                    = Build/BootloaderCorePkg
+  SUPPORTED_ARCHITECTURES             = IA32|X64
   BUILD_TARGETS                       = DEBUG|RELEASE|NOOPT
   SKUID_IDENTIFIER                    = DEFAULT
-  FLASH_DEFINITION                    = $(PLATFORM_NAME)/$(PLATFORM_NAME).fdf
-
-  #
-  # Set platform specific package/folder names, same as passed from PREBUILD script.
-  # PLATFORM_PACKAGE would be the same as PLATFORM_NAME as well as package build folder
-  # The CORE_PACKAGES value could be set to '.' if Core packages get moved to Workspace root
-  #
-  DEFINE PLATFORM_PACKAGE             = $(PLATFORM_NAME)
+  FLASH_DEFINITION                    = BootloaderCorePkg/BootloaderCorePkg.fdf
 
 !include Platform.dsc
 
@@ -51,7 +44,7 @@
   PciLib|MdePkg/Library/BasePciLibPciExpress/BasePciLibPciExpress.inf
   PciCf8Lib|MdePkg/Library/BasePciCf8Lib/BasePciCf8Lib.inf
   PciExpressLib|MdePkg/Library/BasePciExpressLib/BasePciExpressLib.inf
-  DebugPrintErrorLevelLib|$(PLATFORM_PACKAGE)/Library/DebugPrintErrorLevelLib/DebugPrintErrorLevelLib.inf
+  DebugPrintErrorLevelLib|BootloaderCorePkg/Library/DebugPrintErrorLevelLib/DebugPrintErrorLevelLib.inf
   PrintLib|MdePkg/Library/BasePrintLib/BasePrintLib.inf
   BaseMemoryLib|MdePkg/Library/BaseMemoryLibSse2/BaseMemoryLibSse2.inf
   SynchronizationLib|MdePkg/Library/BaseSynchronizationLib/BaseSynchronizationLib.inf
@@ -62,19 +55,20 @@
   Lz4DecompressLib|BootloaderCommonPkg/Library/Lz4DecompressLib/Lz4DecompressLib.inf
   DecompressLib|BootloaderCommonPkg/Library/DecompressLib/DecompressLib.inf
   RleCompressLib|BootloaderCommonPkg/Library/RleCompressLib/RleCompressLib.inf
-  FspSupportLib|$(PLATFORM_PACKAGE)/Library/FspSupportLib/FspSupportLib.inf
-  BootloaderLib|$(PLATFORM_PACKAGE)/Library/BootloaderLib/BootloaderLib.inf
-  BootloaderCoreLib|$(PLATFORM_PACKAGE)/Library/BootloaderCoreLib/BootloaderCoreLib.inf
-  PciEnumerationLib|$(PLATFORM_PACKAGE)/Library/PciEnumerationLib/PciEnumerationLib.inf
-  AcpiInitLib|$(PLATFORM_PACKAGE)/Library/AcpiInitLib/AcpiInitLib.inf
-  SmbiosInitLib|$(PLATFORM_PACKAGE)/Library/SmbiosInitLib/SmbiosInitLib.inf
+  FspSupportLib|BootloaderCorePkg/Library/FspSupportLib/FspSupportLib.inf
+  BootloaderLib|BootloaderCorePkg/Library/BootloaderLib/BootloaderLib.inf
+  BootloaderCoreLib|BootloaderCorePkg/Library/BootloaderCoreLib/BootloaderCoreLib.inf
+  PciEnumerationLib|BootloaderCorePkg/Library/PciEnumerationLib/PciEnumerationLib.inf
+  AcpiInitLib|BootloaderCorePkg/Library/AcpiInitLib/AcpiInitLib.inf
+  SmbiosInitLib|BootloaderCorePkg/Library/SmbiosInitLib/SmbiosInitLib.inf
   LitePeCoffLib|BootloaderCommonPkg/Library/LitePeCoffLib/LitePeCoffLib.inf
   HobLib|BootloaderCommonPkg/Library/HobLib/HobLib.inf
-  HobBuildLib|$(PLATFORM_PACKAGE)/Library/HobBuildLib/HobBuildLib.inf
+  HobBuildLib|BootloaderCorePkg/Library/HobBuildLib/HobBuildLib.inf
   LiteFvLib|BootloaderCommonPkg/Library/LiteFvLib/LiteFvLib.inf
   LoaderPerformanceLib|BootloaderCommonPkg/Library/LoaderPerformanceLib/LoaderPerformanceLib.inf
-  MemoryAllocationLib|$(PLATFORM_PACKAGE)/Library/MemoryAllocationLib/MemoryAllocationLib.inf
-  MpInitLib|$(PLATFORM_PACKAGE)/Library/MpInitLib/MpInitLib.inf
+  MemoryAllocationLib|BootloaderCorePkg/Library/MemoryAllocationLib/MemoryAllocationLib.inf
+  MpInitLib|BootloaderCorePkg/Library/MpInitLib/MpInitLib.inf
+  StageLib|BootloaderCorePkg/Library/StageLib/StageLib.inf
   LocalApicLib|BootloaderCommonPkg/Library/BaseXApicLib/BaseXApicLib.inf
   SecureBootLib|BootloaderCommonPkg/Library/SecureBootLib/SecureBootLib.inf
   TpmLib|BootloaderCommonPkg/Library/TpmLib/TpmLib.inf
@@ -84,8 +78,8 @@
   GraphicsLib|BootloaderCommonPkg/Library/GraphicsLib/GraphicsLib.inf
   Crc32Lib|BootloaderCommonPkg/Library/Crc32Lib/Crc32Lib.inf
   VariableLib|BootloaderCommonPkg/Library/LiteVariableLib/LiteVariableLib.inf
-  DebugDataLib|$(PLATFORM_PACKAGE)/Library/DebugDataLib/DebugDataLib.inf
-  CpuExceptionLib|$(PLATFORM_PACKAGE)/Library/CpuExceptionLib/CpuExceptionLib.inf
+  DebugDataLib|BootloaderCorePkg/Library/DebugDataLib/DebugDataLib.inf
+  CpuExceptionLib|BootloaderCorePkg/Library/CpuExceptionLib/CpuExceptionLib.inf
   FileSystemLib|BootloaderCommonPkg/Library/FileSystemLib/FileSystemLib.inf
   FatLib|BootloaderCommonPkg/Library/FatLib/FatLib.inf
   PartitionLib|BootloaderCommonPkg/Library/PartitionLib/PartitionLib.inf
@@ -121,22 +115,21 @@
   LinuxLib|BootloaderCommonPkg/Library/LinuxLib/LinuxLib.inf
   UefiVariableLib|BootloaderCommonPkg/Library/UefiVariableLib/UefiVariableLib.inf
   SerialPortLib|BootloaderCommonPkg/Library/SerialPortLib/SerialPortLib.inf
+  SortLib|BootloaderCommonPkg/Library/SortLib/SortLib.inf
+  IoMmuLib|BootloaderCommonPkg/Library/IoMmuLib/IoMmuLib.inf
+  MtrrLib|BootloaderCommonPkg/Library/MtrrLib/MtrrLib.inf
+  StringSupportLib|BootloaderCommonPkg/Library/StringSupportLib/StringSupportLib.inf
 
-!if $(HAVE_FSP_BIN)
-  FspApiLib|$(PLATFORM_PACKAGE)/Library/FspApiLib/FspApiLib.inf
-!endif
+
 !if $(ENABLE_SOURCE_DEBUG)
   DebugAgentLib|BootloaderCommonPkg/Library/DebugAgentLib/DebugAgentLib.inf
 !else
   DebugAgentLib|BootloaderCommonPkg/Library/DebugAgentLib/DebugAgentLibNull.inf
 !endif
   ElfLib|BootloaderCommonPkg/Library/ElfLib/ElfLib.inf
-  S3SaveRestoreLib|$(PLATFORM_PACKAGE)/Library/S3SaveRestoreLib/S3SaveRestoreLib.inf
-
+  S3SaveRestoreLib|BootloaderCorePkg/Library/S3SaveRestoreLib/S3SaveRestoreLib.inf
   BoardSupportLib|Platform/CommonBoardPkg/Library/BoardSupportLib/BoardSupportLib.inf
-
-[LibraryClasses.IA32]
-  PagingLib|$(PLATFORM_PACKAGE)/Library/PagingLib/PagingLib.inf
+  PagingLib|BootloaderCommonPkg/Library/PagingLib/PagingLib.inf
   TimerLib|BootloaderCommonPkg/Library/AcpiTimerLib/AcpiTimerLib.inf
 
 ################################################################################
@@ -157,11 +150,13 @@
   # Once in payload, more debug devices can be enabled, such as frame buffer.
   gPlatformCommonLibTokenSpaceGuid.PcdDebugOutputDeviceMask  | $(DEBUG_OUTPUT_DEVICE_MASK) & 3
 
-  gPlatformModuleTokenSpaceGuid.PcdDebugInterfaceFlags    | $(DEBUG_INTERFACE_FLAGS)
+  gPlatformCommonLibTokenSpaceGuid.PcdDebugPortNumber      | $(DEBUG_PORT_NUMBER)
 
   gPlatformModuleTokenSpaceGuid.PcdPciMmcfgBase           | $(PCI_EXPRESS_BASE)
   gPlatformModuleTokenSpaceGuid.PcdPciResourceIoBase      | $(PCI_IO_BASE)
   gPlatformModuleTokenSpaceGuid.PcdPciResourceMem32Base   | $(PCI_MEM32_BASE)
+  gPlatformModuleTokenSpaceGuid.PcdPciEnumPolicyInfo      | $(PCI_ENUM_POLICY_INFO)
+  gPlatformModuleTokenSpaceGuid.PcdPciResourceMem64Base   | $(PCI_MEM64_BASE)
 
   gPlatformModuleTokenSpaceGuid.PcdLoaderReservedMemSize  | $(LOADER_RSVD_MEM_SIZE)
   gPlatformModuleTokenSpaceGuid.PcdLoaderAcpiNvsSize      | $(LOADER_ACPI_NVS_MEM_SIZE)
@@ -192,6 +187,7 @@
   gPlatformModuleTokenSpaceGuid.PcdStage2FvSize           | $(STAGE2_FV_SIZE)
 
   gPlatformModuleTokenSpaceGuid.PcdStage1StackSize        | $(STAGE1_STACK_SIZE)
+  gPlatformModuleTokenSpaceGuid.PcdStage1StackBaseOffset  | $(STAGE1_STACK_BASE_OFFSET)
   gPlatformModuleTokenSpaceGuid.PcdStage1DataSize         | $(STAGE1_DATA_SIZE)
   gPlatformModuleTokenSpaceGuid.PcdStage2LoadHigh         | $(STAGE2_LOAD_HIGH)
 
@@ -226,13 +222,15 @@
   gPlatformModuleTokenSpaceGuid.PcdCfgDataLoadSource      | $(CFGDATA_REGION_TYPE)
   gPlatformModuleTokenSpaceGuid.PcdCfgDatabaseSize        | $(CFG_DATABASE_SIZE)
 
+  gPlatformModuleTokenSpaceGuid.PcdHashStoreSize             | $(HASH_STORE_SIZE)
+
   gPlatformModuleTokenSpaceGuid.PcdCpuMaxLogicalProcessorNumber | $(CPU_MAX_LOGICAL_PROCESSOR_NUMBER)
 
   gPlatformCommonLibTokenSpaceGuid.PcdConsoleInDeviceMask  | $(CONSOLE_IN_DEVICE_MASK)
   gPlatformCommonLibTokenSpaceGuid.PcdConsoleOutDeviceMask | $(CONSOLE_OUT_DEVICE_MASK)
 
-  gPlatformModuleTokenSpaceGuid.PcdVerifiedBootHashMask   | $(VERIFIED_BOOT_HASH_MASK)
-  gPlatformCommonLibTokenSpaceGuid.PcdCryptoShaNiEnabled  | $(ENABLE_CRYPTO_SHA_NI)
+  gPlatformModuleTokenSpaceGuid.PcdVerifiedBootStage1B   | $(VERIFIED_BOOT_STAGE_1B)
+  gPlatformCommonLibTokenSpaceGuid.PcdCryptoShaOptMask    | $(ENABLE_CRYPTO_SHA_OPT)
 
   gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImageRegionType    | $(SPI_IAS_REGION_TYPE)
   gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImage1RegionBase   | $(SPI_IAS1_BASE)
@@ -245,7 +243,11 @@
 
   gPlatformCommonLibTokenSpaceGuid.PcdSeedListEnabled     | $(HAVE_SEED_LIST)
   gPlatformCommonLibTokenSpaceGuid.PcdUsbKeyboardPollingTimeout | $(USB_KB_POLLING_TIMEOUT)
-  gPlatformCommonLibTokenSpaceGuid.PcdLowestSupportedFwVer		| $(LOWEST_SUPPORTED_FW_VER)
+  gPlatformCommonLibTokenSpaceGuid.PcdLowestSupportedFwVer      | $(LOWEST_SUPPORTED_FW_VER)
+
+  gPlatformCommonLibTokenSpaceGuid.PcdIppHashLibSupportedMask    | $(IPP_HASH_LIB_SUPPORTED_MASK)
+
+ gPlatformCommonLibTokenSpaceGuid.PcdCompSignHashAlg             | $(SIGN_HASH_TYPE)
 
 [PcdsPatchableInModule]
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel   | 0x8000004F
@@ -256,11 +258,12 @@
   gPlatformModuleTokenSpaceGuid.PcdGraphicsVbtAddress| 0xFF000000
   gPlatformModuleTokenSpaceGuid.PcdDeviceTreeBase    | 0xFF000000
   gPlatformCommonLibTokenSpaceGuid.PcdAcpiPmTimerBase   | $(ACPI_PM_TIMER_BASE)
+  gPlatformModuleTokenSpaceGuid.PcdFSPSBase          | $(FSP_S_BASE)
   gPlatformModuleTokenSpaceGuid.PcdHashStoreBase     | 0xFF000000
   gPlatformModuleTokenSpaceGuid.PcdVerInfoBase       | 0xFF000000
   gPlatformModuleTokenSpaceGuid.PcdFileDataBase      | 0xFF000000
-  gPlatformModuleTokenSpaceGuid.PcdFSPSBase          | $(FSP_S_BASE)
   gPlatformModuleTokenSpaceGuid.PcdSplashLogoAddress | 0xFF000000
+  gPlatformModuleTokenSpaceGuid.PcdCfgDataIntBase    | 0xFF000000
   gPlatformCommonLibTokenSpaceGuid.PcdEmmcMaxRwBlockNumber     | 0xFFFF
   gPlatformModuleTokenSpaceGuid.PcdPayloadReservedMemSize | $(PLD_RSVD_MEM_SIZE)
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase     | 0xFF000000
@@ -292,7 +295,6 @@
   gPlatformModuleTokenSpaceGuid.PcdSplashEnabled          | $(ENABLE_SPLASH)
   gPlatformModuleTokenSpaceGuid.PcdFramebufferInitEnabled | $(ENABLE_FRAMEBUFFER_INIT)
   gPlatformModuleTokenSpaceGuid.PcdVtdEnabled             | $(ENABLE_VTD)
-  gPlatformModuleTokenSpaceGuid.PcdFlashMapEnabled        | $(HAVE_FLASH_MAP)
   gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled         | $(HAVE_PSD_TABLE)
   gPayloadTokenSpaceGuid.PcdGrubBootCfgEnabled            | $(ENABLE_GRUB_CONFIG)
   gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled          | $(ENABLE_SMBIOS)
@@ -301,6 +303,10 @@
   gPayloadTokenSpaceGuid.PcdCsmeUpdateEnabled             | $(ENABLE_CSME_UPDATE)
   gPlatformCommonLibTokenSpaceGuid.PcdEmmcHs400SupportEnabled | $(ENABLE_EMMC_HS400)
   gPlatformCommonLibTokenSpaceGuid.PcdPreOsCheckerEnabled | $(ENABLE_PRE_OS_CHECKER)
+  gPlatformCommonLibTokenSpaceGuid.PcdDmaProtectionEnabled | $(ENABLE_DMA_PROTECTION)
+  gPlatformCommonLibTokenSpaceGuid.PcdMultiUsbBootDeviceEnabled |  $(ENABLE_MULTI_USB_BOOT_DEV)
+  gPlatformModuleTokenSpaceGuid.PcdAriSupport             | $(SUPPORT_ARI)
+  gPlatformModuleTokenSpaceGuid.PcdSrIovSupport           | $(SUPPORT_SR_IOV)
 
 !ifdef $(S3_DEBUG)
   gPlatformModuleTokenSpaceGuid.PcdS3DebugEnabled         | $(S3_DEBUG)
@@ -309,6 +315,7 @@
 
 [PcdsDynamicDefault]
   gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut         | 2
+  gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootHashMask | 0x00000002
 
 ###############################################################################
 ##
@@ -329,12 +336,14 @@
   #
   # SEC
   #
-  $(PLATFORM_PACKAGE)/PcdData/PcdData.inf
+  BootloaderCorePkg/PcdData/PcdData.inf
 
-  $(PLATFORM_PACKAGE)/Stage1A/Stage1A.inf {
+  BootloaderCorePkg/Stage1A/Stage1A.inf {
     <PcdsFeatureFlag>
       gPlatformCommonLibTokenSpaceGuid.PcdMinDecompression | TRUE
+      gPlatformCommonLibTokenSpaceGuid.PcdForceToInitSerialPort | TRUE
     <LibraryClasses>
+      FspApiLib    | BootloaderCorePkg/Library/FspApiLib/FsptApiLib.inf
       BaseMemoryLib| MdePkg/Library/BaseMemoryLibRepStr/BaseMemoryLibRepStr.inf
       SocInitLib   | Silicon/$(SILICON_PKG_NAME)/Library/Stage1ASocInitLib/Stage1ASocInitLib.inf
       BoardInitLib | Platform/$(BOARD_PKG_NAME)/Library/Stage1ABoardInitLib/Stage1ABoardInitLib.inf
@@ -343,15 +352,17 @@
 !endif
   }
 
-  $(PLATFORM_PACKAGE)/Stage1B/Stage1B.inf {
+  BootloaderCorePkg/Stage1B/Stage1B.inf {
     <LibraryClasses>
+      FspApiLib    | BootloaderCorePkg/Library/FspApiLib/FspmApiLib.inf
       BaseMemoryLib| MdePkg/Library/BaseMemoryLibRepStr/BaseMemoryLibRepStr.inf
       SocInitLib   | Silicon/$(SILICON_PKG_NAME)/Library/Stage1BSocInitLib/Stage1BSocInitLib.inf
       BoardInitLib | Platform/$(BOARD_PKG_NAME)/Library/Stage1BBoardInitLib/Stage1BBoardInitLib.inf
   }
 
-  $(PLATFORM_PACKAGE)/Stage2/Stage2.inf {
+  BootloaderCorePkg/Stage2/Stage2.inf {
     <LibraryClasses>
+      FspApiLib    | BootloaderCorePkg/Library/FspApiLib/FspsApiLib.inf
       SocInitLib   | Silicon/$(SILICON_PKG_NAME)/Library/Stage2SocInitLib/Stage2SocInitLib.inf
       BoardInitLib | Platform/$(BOARD_PKG_NAME)/Library/Stage2BoardInitLib/Stage2BoardInitLib.inf
   }
@@ -404,6 +415,7 @@
   *_GCC5_IA32_ASLDLINK_FLAGS = -no-pie
   # Force synchronous PDB writes for parallel builds
   *_VS2015x86_IA32_CC_FLAGS = /FS
+  *_XCODE5_IA32_CC_FLAGS = -flto
 
   *_*_*_CC_FLAGS = -DDISABLE_NEW_DEPRECATED_INTERFACES
 !if $(TARGET) == RELEASE

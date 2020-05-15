@@ -31,6 +31,7 @@
   PayloadPkg/PayloadPkg.dec
   Platform/CommonBoardPkg/CommonBoardPkg.dec
   Platform/ApollolakeBoardPkg/ApollolakeBoardPkg.dec
+  Silicon/ApollolakePkg/ApollolakePkg.dec
 
 [LibraryClasses]
 

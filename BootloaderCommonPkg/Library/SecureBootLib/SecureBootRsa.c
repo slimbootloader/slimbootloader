@@ -1,7 +1,7 @@
 /** @file
   Secure boot library routines to provide RSA signature verification.
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017-2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -19,9 +19,10 @@
 
   @param[in]  Data            Data buffer pointer.
   @param[in]  Length          Data buffer size.
-  @param[in]  ComponentType   Component type.
-  @param[in]  Signature       Signature for the data buffer.
-  @param[in]  PubKey          Public key data pointer.
+  @param[in]  Usage           Hash usage.
+  @param[in]  Signature       Signature header for singanture data.
+  @param[in]  PubKeyHdr       Public key header for key data
+  @param[in]  PubKeyHashAlg   Hash Alg for PubKeyHash.
   @param[in]  PubKeyHash      Public key hash value when ComponentType is not used.
   @param[out] OutHash         Calculated data hash value.
 
@@ -36,68 +37,93 @@ RETURN_STATUS
 DoRsaVerify (
   IN CONST UINT8           *Data,
   IN       UINT32           Length,
-  IN       UINT8            ComponentType,
-  IN CONST UINT8           *Signature,
-  IN       UINT8           *PubKey,
+  IN       HASH_COMP_USAGE  Usage,
+  IN CONST SIGNATURE_HDR   *SignatureHdr,
+  IN       PUB_KEY_HDR     *PubKeyHdr,
+  IN       UINT8            PubKeyHashAlg,
   IN       UINT8           *PubKeyHash      OPTIONAL,
   OUT      UINT8           *OutHash         OPTIONAL
   )
 {
-  UINTN            Index;
   RETURN_STATUS    Status;
-  UINT8           *TmpPubKey;
-  RSA_PUB_KEY     *InpPubKey;
-  UINT8            Digest[SHA256_DIGEST_SIZE];
-  UINT8            PubKeyBuf[RSA_MOD_SIZE + RSA_E_SIZE];
+  PUB_KEY_HDR     *PublicKey;
+  UINT8            Digest[HASH_DIGEST_MAX];
+  UINT8            DigestSize;
+
+
+  PublicKey = PubKeyHdr;
+  if ((PublicKey->Identifier != PUBKEY_IDENTIFIER) || (SignatureHdr->Identifier != SIGNATURE_IDENTIFIER)){
+    return RETURN_INVALID_PARAMETER;
+  }
 
   // Verify public key first
-  // Hash caculation for key uses different endian
-  InpPubKey = (RSA_PUB_KEY *)PubKey;
-  TmpPubKey = PubKeyBuf;
-  for (Index = 0; Index < RSA_MOD_SIZE; Index++) {
-    TmpPubKey[Index] = InpPubKey->PubKeyData[RSA_MOD_SIZE - 1 - Index];
-  }
-  for (Index = 0; Index < RSA_E_SIZE; Index++) {
-    TmpPubKey[RSA_MOD_SIZE + Index] = InpPubKey->PubKeyData[RSA_MOD_SIZE + RSA_E_SIZE - 1 - Index];
-  }
-
-  Status = DoHashVerify ((CONST UINT8 *)PubKeyBuf, RSA_MOD_SIZE + RSA_E_SIZE, HASH_TYPE_SHA256, ComponentType, PubKeyHash);
+  Status = DoHashVerify (PublicKey->KeyData, PublicKey->KeySize, Usage, PubKeyHashAlg, PubKeyHash);
   if (RETURN_ERROR (Status)) {
     return Status;
   }
 
   // Verify payload data
-  Sha256 (Data, Length, Digest);
-
-  if (OutHash != NULL) {
-    CopyMem (OutHash, Digest, sizeof (Digest));
+  if (SignatureHdr->HashAlg == HASH_TYPE_SHA256) {
+    DigestSize = SHA256_DIGEST_SIZE;
+  } else if (SignatureHdr->HashAlg == HASH_TYPE_SHA384) {
+    DigestSize = SHA384_DIGEST_SIZE;
+  } else {
+    return RETURN_INVALID_PARAMETER;
   }
 
-  Status = RsaVerify ((RSA_PUB_KEY *)PubKey, Signature, RSA2048NUMBYTES, SIG_TYPE_RSA2048SHA256, Digest);
+  DEBUG ((DEBUG_INFO, "SignType (0x%x) SignSize (0x%x)  SignHashAlg (0x%x)\n", \
+                  SignatureHdr->SigType, SignatureHdr->SigSize, SignatureHdr->HashAlg));
+
+  if(SignatureHdr->SigType == SIGNING_TYPE_RSA_PKCS_1_5) {
+    Status = CalculateHash  (Data, Length, SignatureHdr->HashAlg, Digest);
+    if (EFI_ERROR(Status)) {
+      return RETURN_UNSUPPORTED;
+    }
+
+    if (OutHash != NULL) {
+      CopyMem (OutHash, Digest, DigestSize);
+    }
+
+    Status = RsaVerify_Pkcs_1_5 (PublicKey, SignatureHdr, Digest);
+
+  } else if(SignatureHdr->SigType == SIGNING_TYPE_RSA_PSS) {
+
+    // Calculate Hash only when OutHash is valid
+    // RSA PSS requires to pass message to be verified
+    if (OutHash != NULL) {
+      Status = CalculateHash  (Data, Length, SignatureHdr->HashAlg, Digest);
+      if (EFI_ERROR(Status)) {
+        return RETURN_UNSUPPORTED;
+      }
+      CopyMem (OutHash, Digest, DigestSize);
+    }
+
+    Status = RsaVerify_PSS (PublicKey, SignatureHdr, Data, Length);
+
+  }  else {
+    Status = RETURN_UNSUPPORTED;
+  }
+
+  DEBUG ((DEBUG_INFO, "RSA verification for usage (0x%08X): %r\n", Usage, Status));
   if (RETURN_ERROR (Status)) {
     DEBUG_CODE_BEGIN();
 
-    DEBUG ((DEBUG_INFO, "RSA Verification Failed!\n"));
+    DEBUG ((DEBUG_INFO, "First %d Bytes Input Data\n", DigestSize));
+    DumpHex (2, 0, DigestSize, (VOID *)Data);
 
-    DEBUG ((DEBUG_INFO, "First 32Bytes Input Data\n"));
-    DumpHex (2, 0, SHA256_DIGEST_SIZE, (VOID *)Data);
-
-    DEBUG ((DEBUG_INFO, "Last 32Bytes Input Data\n"));
-    DumpHex (2, 0, SHA256_DIGEST_SIZE, (VOID *) (Data + Length - 32));
+    DEBUG ((DEBUG_INFO, "Last %d Bytes Input Data\n", DigestSize));
+    DumpHex (2, 0, DigestSize, (VOID *) (Data + Length - DigestSize));
 
     DEBUG ((DEBUG_INFO, "Image Digest\n"));
-    DumpHex (2, 0, SHA256_DIGEST_SIZE, (VOID *)Digest);
+    DumpHex (2, 0, DigestSize, (VOID *)Digest);
 
     DEBUG ((DEBUG_INFO, "Signature\n"));
-    DumpHex (2, 0, RSA2048NUMBYTES, (VOID *)Signature);
+    DumpHex (2, 0, SignatureHdr->SigSize, (VOID *)(SignatureHdr->Signature));
 
     DEBUG ((DEBUG_INFO, "Public Key\n"));
-    DumpHex (2, 0, RSA_MOD_SIZE + RSA_E_SIZE + sizeof (UINT32), PubKey);
+    DumpHex (2, 0, PubKeyHdr->KeySize , PubKeyHdr->KeyData);
 
     DEBUG_CODE_END();
-
-  } else {
-    DEBUG ((DEBUG_INFO, "RSA Verification Success!\n"));
   }
 
   return Status;

@@ -31,9 +31,9 @@ def AlignPtrDown(offset, alignment=8):
     return offset & ~(alignment - 1)
 
 def ExecAssignment (var, val):
-	namespace = {}
-	exec ('%s = %s' % (var, val), namespace)
-	return namespace[var]
+    namespace = {}
+    exec ('%s = %s' % (var, val), namespace)
+    return namespace[var]
 
 class c_uint24(Structure):
     _pack_ = 1

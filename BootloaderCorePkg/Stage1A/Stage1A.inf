@@ -27,7 +27,9 @@
 
 [Sources.IA32]
   Ia32/SecEntry.nasm
-  Ia32/Stage1AArch.c
+
+[Sources.X64]
+  X64/SecEntry.nasm
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -50,6 +52,8 @@
   FspApiLib
   CpuExceptionLib
   DebugAgentLib
+  ExtraBaseLib
+  StageLib
 
 [Guids]
   gPlatformModuleTokenSpaceGuid
@@ -58,13 +62,14 @@
   gPlatformCommonLibTokenSpaceGuid.PcdMaxLibraryDataEntry
   gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdDebugOutputDeviceMask
+  gPlatformCommonLibTokenSpaceGuid.PcdContainerMaxNumber
   gPlatformModuleTokenSpaceGuid.PcdStage1StackSize
   gPlatformModuleTokenSpaceGuid.PcdStage1BFdBase
   gPlatformModuleTokenSpaceGuid.PcdStage1BLoadBase
   gPlatformModuleTokenSpaceGuid.PcdHashStoreBase
   gPlatformModuleTokenSpaceGuid.PcdVerInfoBase
   gPlatformModuleTokenSpaceGuid.PcdStage1DataSize
-  gPlatformModuleTokenSpaceGuid.PcdStage1StackSize
+  gPlatformModuleTokenSpaceGuid.PcdStage1StackBaseOffset
   gPlatformModuleTokenSpaceGuid.PcdStage1BXip
   gPlatformModuleTokenSpaceGuid.PcdCfgDatabaseSize
   gPlatformModuleTokenSpaceGuid.PcdStage1AXip
@@ -76,9 +81,11 @@
   gPlatformModuleTokenSpaceGuid.PcdMaxServiceNumber
   gPlatformModuleTokenSpaceGuid.PcdEarlyLogBufferSize
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel
-  gPlatformModuleTokenSpaceGuid.PcdFlashMapEnabled
   gPlatformModuleTokenSpaceGuid.PcdFileDataBase
-  gPlatformModuleTokenSpaceGuid.PcdVerifiedBootHashMask
+  gPlatformModuleTokenSpaceGuid.PcdVerifiedBootStage1B
+  gPlatformModuleTokenSpaceGuid.PcdHashStoreSize
+  gPlatformCommonLibTokenSpaceGuid.PcdPcdLibId
+  gPlatformCommonLibTokenSpaceGuid.PcdCompSignHashAlg
 
 [Depex]
   TRUE

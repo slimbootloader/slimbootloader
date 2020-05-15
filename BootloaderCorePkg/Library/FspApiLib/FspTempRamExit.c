@@ -37,15 +37,20 @@ CallFspTempRamExit (
   FSP_INFO_HEADER    *FspHeader;
   EFI_STATUS          Status;
 
-  FspHeader = (FSP_INFO_HEADER *) (FspmBase + FSP_INFO_HEADER_OFF);
+  FspHeader = (FSP_INFO_HEADER *)(UINTN)(FspmBase + FSP_INFO_HEADER_OFF);
   if (FspHeader->TempRamExitEntryOffset == 0) {
     return EFI_UNSUPPORTED;
   }
 
-  TempRamExit = (FSP_TEMP_RAM_EXIT) (FspHeader->ImageBase + FspHeader->TempRamExitEntryOffset);
+  TempRamExit = (FSP_TEMP_RAM_EXIT)(UINTN)(FspHeader->ImageBase + FspHeader->TempRamExitEntryOffset);
 
   DEBUG ((DEBUG_INFO, "Call FspTempRamExit ... "));
-  Status  = TempRamExit (NULL);
+  if (IS_X64) {
+    Status = Execute32BitCode ((UINTN)TempRamExit, (UINTN)0, (UINTN)0, TRUE);
+    Status = (UINTN)LShiftU64 (Status & ((UINTN)MAX_INT32 + 1), 32) | (Status & MAX_INT32);
+  } else {
+    Status  = TempRamExit (NULL);
+  }
   DEBUG ((DEBUG_INFO, "%r\n", Status));
 
   return Status;

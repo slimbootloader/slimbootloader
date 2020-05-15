@@ -274,7 +274,7 @@ ConfigureEnableEndpoints (
   // Set Configure table
   //
   if (DeviceInfo->DeviceDescriptor->NumConfigurations > 1) {
-    DEBUG ((EFI_D_ERROR, "!!!Error ConfigNum over '1' %d\n", DeviceInfo->DeviceDescriptor->NumConfigurations));
+    DEBUG ((DEBUG_ERROR, "!!!Error ConfigNum over '1' %d\n", DeviceInfo->DeviceDescriptor->NumConfigurations));
   }
   UsbFuncIoDevPtr->IndexPtrConfig.ConfigDescriptor = DeviceInfo->ConfigInfoTable[0]->ConfigDescriptor;
   UsbFuncIoDevPtr->IndexPtrConfig.InterfaceInfoTable[0] = DeviceInfo->ConfigInfoTable[0]->InterfaceInfoTable[0];
@@ -283,7 +283,7 @@ ConfigureEnableEndpoints (
   // Set Interface
   //
   if (DeviceInfo->ConfigInfoTable[0]->ConfigDescriptor->NumInterfaces > 1) {
-    DEBUG ((EFI_D_ERROR, "!!!Error NumInterfaces[0] over '1' %d\n",
+    DEBUG ((DEBUG_ERROR, "!!!Error NumInterfaces[0] over '1' %d\n",
             DeviceInfo->ConfigInfoTable[0]->ConfigDescriptor->NumInterfaces));
   }
   UsbFuncIoDevPtr->IndexPtrInteface.InterfaceDescriptor =
@@ -293,7 +293,7 @@ ConfigureEnableEndpoints (
   // Set Endpoint
   //
   if (UsbFuncIoDevPtr->IndexPtrInteface.InterfaceDescriptor->NumEndpoints > 2) {
-    DEBUG ((EFI_D_ERROR, "!!!Error NumEndPoint[0] over '2' %d\n",
+    DEBUG ((DEBUG_ERROR, "!!!Error NumEndPoint[0] over '2' %d\n",
             UsbFuncIoDevPtr->IndexPtrInteface.InterfaceDescriptor->NumEndpoints));
   }
 

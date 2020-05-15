@@ -1,7 +1,7 @@
 /** @file
   Shell command `fs` to view partition information
 
-  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -11,6 +11,7 @@
 #include <Library/PartitionLib.h>
 #include <Library/FileSystemLib.h>
 #include <Library/MediaAccessLib.h>
+#include <Library/ConsoleInLib.h>
 #include <Guid/OsBootOptionGuid.h>
 #include <Library/BootOptionLib.h>
 #include <Guid/DeviceTableHobGuid.h>
@@ -29,8 +30,8 @@ STATIC  EFI_HANDLE          mFsHandle     = NULL;
   @retval EFI_SUCCESS
 
 **/
-STATIC
 EFI_STATUS
+EFIAPI
 ShellCommandFsFunc (
   IN SHELL  *Shell,
   IN UINTN   Argc,
@@ -97,8 +98,15 @@ CmdFsClose (
   }
 
   if (mDeviceType != OsBootDeviceMax) {
+    // De-init the current media device
+    // If USB keyboard console is used, don't DeInit USB yet.
+    if (!((mDeviceType == OsBootDeviceUsb) &&
+        ((PcdGet32 (PcdConsoleInDeviceMask) & ConsoleInUsbKeyboard) != 0))) {
+      MediaInitialize (0, DevDeinit);
+    }
     mDeviceType = OsBootDeviceMax;
   }
+
   return EFI_SUCCESS;
 }
 
@@ -148,12 +156,12 @@ CmdFsInit (
 
   Status = MediaInitialize (BaseAddress, DevInitAll);
   ShellPrint (L"Media(%a) Init ", GetBootDeviceNameString (DeviceType));
+  mDeviceType = DeviceType;
   if (!EFI_ERROR (Status)) {
     ShellPrint (L"Success!\n");
-    mDeviceType = DeviceType;
   } else {
     ShellPrint (L"Fail!\n");
-    return EFI_ABORTED;
+    goto Error;
   }
 
   // Find a partition
@@ -206,7 +214,7 @@ CmdFsFsListDir (
     return EFI_ABORTED;
   }
 
-  Status = ListDir (mFsHandle, DirFilePath, ShellPrint);
+  Status = ListDir (mFsHandle, DirFilePath);
   if (Status == EFI_NOT_FOUND) {
     ShellPrint (L"Not found!\n");
   } else if (Status == EFI_UNSUPPORTED) {
@@ -266,8 +274,8 @@ CmdFsInfo (
   @retval EFI_SUCCESS
 
 **/
-STATIC
 EFI_STATUS
+EFIAPI
 ShellCommandFsFunc (
   IN SHELL  *Shell,
   IN UINTN   Argc,
@@ -287,8 +295,8 @@ ShellCommandFsFunc (
   SubCmd = Argv[1];
   if (StrCmp (SubCmd, L"init") == 0) {
     DeviceType = (Argc < 3) ? 0 : (OS_BOOT_MEDIUM_TYPE)StrHexToUintn (Argv[2]);
-    HwPartNo = (Argc < 4) ? 0 : StrHexToUintn (Argv[3]);
-    SwPartNo = (Argc < 5) ? 0 : StrHexToUintn (Argv[4]);
+    HwPartNo = (Argc < 4) ? 0 : (UINT32)StrHexToUintn (Argv[3]);
+    SwPartNo = (Argc < 5) ? 0 : (UINT32)StrHexToUintn (Argv[4]);
     Status = CmdFsInit (DeviceType, HwPartNo, SwPartNo);
   } else if (StrCmp (SubCmd, L"close") == 0) {
     Status = CmdFsClose ();

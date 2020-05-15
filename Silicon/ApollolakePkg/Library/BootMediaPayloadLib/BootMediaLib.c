@@ -13,11 +13,11 @@
 #include <Library/BootloaderCoreLib.h>
 #include <Guid/LoaderFspInfoGuid.h>
 
-typedef struct {  
-	UINT32      BPDTOffset;
-	UINT32      PhysicalData;
-	UINT32      PhysicalDeviceArea;
-	UINT32      LogicalData;
+typedef struct {
+  UINT32      BPDTOffset;
+  UINT32      PhysicalData;
+  UINT32      PhysicalDeviceArea;
+  UINT32      LogicalData;
 }CURRENT_BOOT_MEDIA;
 
 /**
@@ -44,7 +44,7 @@ GetBootMediaType (
   FspInfo = GetNextGuidHob(&gLoaderFspInfoGuid, HobList);
   ASSERT(FspInfo != NULL);
   FspInfo = GET_GUID_HOB_DATA(FspInfo);
-	
+
   GuidHob = GetNextGuidHob(&gEfiBootMediaHobGuid, FspInfo->FspHobList);
   ASSERT (GuidHob != NULL);
   BootMediaData = (CURRENT_BOOT_MEDIA *)GET_GUID_HOB_DATA (GuidHob);
@@ -52,7 +52,7 @@ GetBootMediaType (
   if (BootMediaData->PhysicalData >= BootMediaMax) {
     return EFI_NOT_FOUND;
   }
-	
+
   *BootMediaType   = BootMediaData->PhysicalData;
 
   return EFI_SUCCESS;
@@ -91,7 +91,7 @@ GetBootPartition (
   if (BootMediaData->LogicalData >= BootPartitionMax) {
     return EFI_NOT_FOUND;
   }
-	
+
   *BootPartition = BootMediaData->LogicalData;
 
   return EFI_SUCCESS;

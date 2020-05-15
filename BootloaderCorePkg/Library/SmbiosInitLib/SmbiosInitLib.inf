@@ -19,6 +19,7 @@
 #  VALID_ARCHITECTURES           = IA32 X64 IPF
 #
 [Sources]
+  SmbiosTables.h
   SmbiosInitLib.c
 
 [Packages]

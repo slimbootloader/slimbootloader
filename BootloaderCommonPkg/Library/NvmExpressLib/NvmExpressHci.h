@@ -3,7 +3,7 @@
   NVM Express specification.
 
   (C) Copyright 2016 Hewlett Packard Enterprise Development LP<BR>
-  Copyright (c) 2013 - 2015, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2013 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -95,6 +95,20 @@ NvmeIdentifyNamespace (
   IN NVME_CONTROLLER_PRIVATE_DATA      *Private,
   IN UINT32                            NamespaceId,
   IN VOID                              *Buffer
+  );
+
+/**
+  Disable the Nvm Express controller.
+
+  @param  Private          The pointer to the NVME_CONTROLLER_PRIVATE_DATA data structure.
+
+  @return EFI_SUCCESS      Successfully disable the controller.
+  @return EFI_DEVICE_ERROR Fail to disable the controller.
+
+**/
+EFI_STATUS
+NvmeDisableController (
+  IN NVME_CONTROLLER_PRIVATE_DATA     *Private
   );
 
 #endif

@@ -43,7 +43,7 @@ GetSerialPortBase (
   VOID
   )
 {
-  UINT32  PciUartMmBase;
+  UINTN   PciUartMmBase;
   UINT16  Cmd16;
 
   PciUartMmBase = MM_PCI_ADDRESS (
@@ -82,7 +82,7 @@ UartPortInitialize (
   IN  UINT8   Port
   )
 {
-  UINT32            PciUartMmBase;
+  UINTN             PciUartMmBase;
   UINT32            PciBar;
   UINT32            Data32;
 

@@ -19,6 +19,8 @@ SECTION .text
 
 extern  ASM_PFX(SecStartup)
 extern  ASM_PFX(PcdGet32(PcdStage1StackSize))
+extern  ASM_PFX(PcdGet32(PcdStage1DataSize))
+extern  ASM_PFX(PcdGet32(PcdStage1StackBaseOffset))
 extern  ASM_PFX(EarlyBoardInit)
 extern  ASM_PFX(FspTempRamInit)
 
@@ -60,13 +62,41 @@ FspApiSuccess:
         ; EDX: Bootloader stack top
         ;
         mov     esp, ecx
+        add     esp, dword [ASM_PFX(PcdGet32(PcdStage1StackBaseOffset))]
         add     esp, dword [ASM_PFX(PcdGet32(PcdStage1StackSize))]
 
+        xor     ebx, ebx             ; Use EBX for Status
+        ;
+        ; Check stage1 stack base offset
+        ;
+        mov     eax, esp
+        add     eax, dword [ASM_PFX(PcdGet32(PcdStage1DataSize))]
+        cmp     eax, edx
+        jle     CheckStackRangeDone
+
+        ;
+        ; Error in stack range
+        ;
+        bts     ebx, 1               ; Set BIT1 in Status
+        sub     esp, dword [ASM_PFX(PcdGet32(PcdStage1StackBaseOffset))]
+
+CheckStackRangeDone:
+        ;
+        ; CpuBist error check
+        ;
         movd    eax, mm0
         emms                         ; Exit MMX Instruction
+        cmp     eax, 0
+        jz      CheckStatusDone
 
+        ;
+        ; Error in CpuBist
+        ;
+        bts     ebx, 0               ; Set BIT0 in Status
+
+CheckStatusDone:
         ; Setup HOB
-        push    eax                  ; BistVal
+        push    ebx                  ; Status
         push    edi                  ; TimeStamp[0] [63:32]
         push    esi                  ; TimeStamp[0] [31:0]
         push    edx                  ; CarTop

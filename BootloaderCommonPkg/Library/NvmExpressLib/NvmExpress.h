@@ -3,7 +3,7 @@
   NVM Express specification.
 
   (C) Copyright 2016 Hewlett Packard Enterprise Development LP<BR>
-  Copyright (c) 2013 - 2016, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2013 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -27,6 +27,7 @@
 #include <Library/PciNvmCtrlLib.h>
 #include <Library/TimerLib.h>
 #include <Library/PciExpressLib.h>
+#include <Library/IoMmuLib.h>
 
 typedef struct _NVME_CONTROLLER_PRIVATE_DATA NVME_CONTROLLER_PRIVATE_DATA;
 typedef struct _NVME_DEVICE_PRIVATE_DATA     NVME_DEVICE_PRIVATE_DATA;
@@ -110,6 +111,7 @@ struct _NVME_CONTROLLER_PRIVATE_DATA {
   // 6th 4kB boundary is the start of I/O completion queue #2.
   //
   UINT8                               *Buffer;
+  UINT8                               *BufferPciAddr;
 
   //
   // Pointers to 4kB aligned submission & completion queues.

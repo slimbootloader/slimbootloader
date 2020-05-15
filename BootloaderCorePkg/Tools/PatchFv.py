@@ -423,10 +423,17 @@ class Symbols:
             matchKeyGroupIndex = 2
             matchSymbolGroupIndex  = 1
             prefix = '_'
+        elif reportLine.strip().find("XCODE") != -1:
+            #XCODE
+            #0x00001E29      0x00000013      [ 53] __ModuleEntryPoint
+            patchMapFileMatchString = "(0x[0-9a-fA-F]{8})\s+0x[0-9a-fA-F]{8}\s+\[.*\]\s+(\w+)$"
+            matchKeyGroupIndex = 2
+            matchSymbolGroupIndex  = 1
+            prefix = ''
         else:
             #MSFT
-            #0003:00000190       _gComBase                  00007a50     SerialPo
-            patchMapFileMatchString =  "^\s[0-9a-fA-F]{4}:[0-9a-fA-F]{8}\s+(\w+)\s+([0-9a-fA-F]{8}\s+)"
+            #0003:00000190       _gComBase                     00007a50     SerialPort
+            patchMapFileMatchString =  "^\s[0-9a-fA-F]{4}:[0-9a-fA-F]{8}\s+(\w+)\s+([0-9a-fA-F]{8,16})\s+"
             matchKeyGroupIndex = 1
             matchSymbolGroupIndex  = 2
             prefix = ''
@@ -434,7 +441,10 @@ class Symbols:
         for reportLine in reportLines:
             match = re.match(patchMapFileMatchString, reportLine)
             if match is not None:
-                modSymbols[prefix + match.group(matchKeyGroupIndex)] = match.group(matchSymbolGroupIndex)
+                if prefix == '' and len(match.group(matchSymbolGroupIndex)) > 10:
+                    prefix = '_'
+                keyname = '%s' % (prefix + match.group(matchKeyGroupIndex))
+                modSymbols[keyname] = match.group(matchSymbolGroupIndex)
 
         # Handle extra module patchable PCD variable in Linux map since it might have different format
         # .data._gPcd_BinaryPatch_PcdVpdBaseAddress

@@ -79,6 +79,8 @@ Field(SWC1, DWordAcc, NoLock, Preserve)
 OperationRegion (PMCM, SystemMemory, Add(DD1A,0x1000), 0x1000)
 Field (PMCM, ByteAcc, NoLock, Preserve)
 {
+  Offset (0x90),
+  FWSC, 32,
   Offset (0x94),
   DHPD, 32,       // DISPLAY_HPD_CTL
 }
@@ -524,4 +526,22 @@ Scope (\_SB)
 
     Return(Arg3)
   } // End _OSC
+}
+
+//
+// Platform specific FWU trigger method
+//
+Method(FWUC, 2)
+{
+  If(LEqual(Arg0, Zero)) {
+    // Read
+    And(FWSC, 0x00FF0000, Local0)
+    ShiftRight(Local0, 16, Local0)
+  } Else {
+    // Write
+    And(ToInteger(Arg1), 0xFF, Local0)
+    And(FWSC, 0xFF00FFFF, Local1)
+    Or(ShiftLeft(Local0, 16), Local1, FWSC)
+  }
+  Return (Local0)
 }

@@ -173,9 +173,11 @@ GetSideBandMmioAddress(
   IN UINT16 TargetRegister
   )
 {
-  UINT32 Temp = MmioRead32(MM_PCI_ADDRESS(0, PCI_DEVICE_NUMBER_P2SB, PCI_FUNCTION_NUMBER_P2SB, 0) + R_P2SB_BASE) & 0xff000000;
-  Temp |= TargetPortId << 16;
-  Temp |= TargetRegister;
+  UINT32 Temp;
+
+  Temp  = MmioRead32 (MM_PCI_ADDRESS(0, PCI_DEVICE_NUMBER_P2SB, PCI_FUNCTION_NUMBER_P2SB, 0) + R_P2SB_BASE) & 0xff000000;
+  Temp |= (UINT32)(TargetPortId << 16);
+  Temp |= (UINT32)(TargetRegister);
 
   return Temp;
 }
@@ -393,7 +395,7 @@ Arguments:
   D32 = GpioRead(community, PAD_OWNERSHIP_0 + (index/8)*4);
   D32 =  (D32 >> ((index % 8) << 2)) & V_PAD_OWNERSHIP_MASK;
   if (D32 != V_PAD_OWNERSHIP_HOST) { // check the ad_own_xx bit for each pin
-    //DEBUG ((EFI_D_INFO, "Index=%2x is not owned by host! skip it. Ownership: %02X\n", index, D32));
+    //DEBUG ((DEBUG_INFO, "Index=%2x is not owned by host! skip it. Ownership: %02X\n", index, D32));
     return;
   }
 
@@ -419,25 +421,25 @@ Arguments:
   switch (Gpio_Conf_Data.padConfg0.r.GPIRout) {
   case SCI: // SCI/GPE
     if (Gpio_Conf_Data.HostSw == ACPI_D) {
-      //DEBUG ((EFI_D_INFO, "BXT-P configure GPIO to SCI/GPE. \n"));
+      //DEBUG ((DEBUG_INFO, "BXT-P configure GPIO to SCI/GPE. \n"));
       // clear GPE status
       D32 = GpioRead(community, GPI_GPE_STS_0 + (index/32)*4);
-      //DEBUG ((EFI_D_INFO, "Original value of 0x%X: 0x%08X\n", GPI_GPE_STS_0 + (index/32)*4, D32));
+      //DEBUG ((DEBUG_INFO, "Original value of 0x%X: 0x%08X\n", GPI_GPE_STS_0 + (index/32)*4, D32));
       D32 = D32 | (UINT32)(1 << (index%32));
       GpioWrite(community, GPI_GPE_STS_0 + (index/32)*4, D32);
       // Set GPE enable
       D32 = GpioRead(community, GPI_GPE_EN_0 + (index/32)*4);
-      //DEBUG ((EFI_D_INFO, "Original value of 0x%X: 0x%08X\n", GPI_GPE_EN_0 + (index/32)*4, D32));
+      //DEBUG ((DEBUG_INFO, "Original value of 0x%X: 0x%08X\n", GPI_GPE_EN_0 + (index/32)*4, D32));
       D32 = D32 | (UINT32)(1 << (index%32));
       GpioWrite(community, GPI_GPE_EN_0 + (index/32)*4, D32);
       D32 = GpioRead(community, GPI_GPE_EN_0 + (index/32)*4);
-      //DEBUG ((EFI_D_INFO, "New value of 0x%X: 0x%08X\n", GPI_GPE_EN_0 + (index/32)*4, D32));
+      //DEBUG ((DEBUG_INFO, "New value of 0x%X: 0x%08X\n", GPI_GPE_EN_0 + (index/32)*4, D32));
     }
     break;
   case SMI: // No SMI in SBL
     break;
   case IOAPIC: // Direct IRQ
-    //DEBUG ((EFI_D_INFO, "BXT-P configure GPIO to direct IRQ. \n"));
+    //DEBUG ((DEBUG_INFO, "BXT-P configure GPIO to direct IRQ. \n"));
     if (Gpio_Conf_Data.WakeEnabled == Wake_Enabled) {
       ConfigureDirectIrqWakeEvent(community, index);
     }

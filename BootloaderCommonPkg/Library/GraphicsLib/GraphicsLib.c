@@ -78,7 +78,7 @@ BltToFrameBuffer (
 
   // Copy image into frame buffer
   FrameBufferPtr = (UINT32 *) (UINTN) (GfxInfoHob->FrameBufferBase);
-  FrameBufferOffset = OffY * GfxInfoHob->GraphicsMode.HorizontalResolution + OffX;
+  FrameBufferOffset = (UINT32)(OffY * GfxInfoHob->GraphicsMode.HorizontalResolution + OffX);
   for (Row = 0; Row < Height; Row++) {
     CopyMem (&FrameBufferPtr[FrameBufferOffset], &GopBltPixels[Row * Width], Width * 4);
     FrameBufferOffset += GfxInfoHob->GraphicsMode.HorizontalResolution;

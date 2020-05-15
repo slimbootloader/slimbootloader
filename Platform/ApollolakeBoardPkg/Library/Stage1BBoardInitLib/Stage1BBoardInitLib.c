@@ -28,17 +28,14 @@
 #include <Library/RleCompressLib.h>
 #include <PlatformBase.h>
 #include <RegAccess.h>
-#include <Library/BootGuardLib.h>
+#include <Library/BootGuardLib20.h>
 #include <Library/TpmLib.h>
 #include <Library/LoaderLib.h>
 #include <Library/HeciLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include <Library/BoardSupportLib.h>
-
 #include <FspmUpd.h>
 #include <GpioDefines.h>
-#include <ConfigDataBlob.h>
-
 #include <PlatformBase.h>
 #include "ScRegs/RegsPmc.h"
 #include <Pi/PiBootMode.h>
@@ -50,6 +47,7 @@
 #include <PlatformData.h>
 #include <Register/RegsSpi.h>
 
+#define APL_FSP_STACK_TOP       0xFEF40000
 #define MRC_PARAMS_BYTE_OFFSET_MRC_VERSION 14
 
 CONST PLT_DEVICE  mPlatformDevices[]= {
@@ -165,7 +163,7 @@ CONST UINT16 mGpMrbModuleIdOffset[] = {
 };
 
 CONST UINT16 mUp2ModuleIdOffset[] = {
-  0x00D8, 0x00E0
+  0x00D8, 0x00E0, 0x00F0
 };
 
 typedef struct {
@@ -471,7 +469,7 @@ ModuleIdInitialize (
       ModuleId |= (UINT16) (PadConfg0.r.GPIORxState << Index);
     }
     PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
-    PlatformData->ModuleIdInfo.ModuleId = ModuleId & 0x3;
+    PlatformData->ModuleIdInfo.ModuleId = ModuleId & 0x7;
 
     break;
 
@@ -514,6 +512,7 @@ SetDebugLevelFromCfgData (
 
 **/
 VOID
+EFIAPI
 UpdateFspConfig (
   VOID     *FspmUpdPtr
   )
@@ -615,7 +614,7 @@ UpdateFspConfig (
   // The NVS buffer will be loaded to PcdStage1BLoadBase FindNvsData()
   // The PcdStage1BLoadBase is not used any more after Stage1B is loaded, so reuse it to save CAR space.
   //
-  Fspmcfg->VariableNvsBufferPtr      = (VOID *)PcdGet32 (PcdStage1BLoadBase);
+  Fspmcfg->VariableNvsBufferPtr      = (VOID *)(UINTN)APL_FSP_STACK_TOP;
 
   //
   // This will be done by configuration data
@@ -625,18 +624,7 @@ UpdateFspConfig (
 
     DEBUG ((DEBUG_INFO, "UP2 memory SKU ID is 0x%x\n", PlatformData->ModuleIdInfo.Bits.MemSkuId));
     switch (PlatformData->ModuleIdInfo.Bits.MemSkuId) {
-      case 0: /* 2GB */
-        Fspmcfg->DualRankSupportEnable = 0;
-        Fspmcfg->Ch0_RankEnable        = 1;
-        Fspmcfg->Ch0_DramDensity       = 2;
-        Fspmcfg->Ch1_RankEnable        = 1;
-        Fspmcfg->Ch1_DramDensity       = 2;
-
-        Fspmcfg->Ch2_RankEnable        = 0;
-        Fspmcfg->Ch3_RankEnable        = 0;
-        break;
-      case 1: /* 4GB */
-        Fspmcfg->DualRankSupportEnable = 1;
+      case 5: /* 4GB */
         Fspmcfg->Ch0_RankEnable        = 1;
         Fspmcfg->Ch0_DramDensity       = 2;
         Fspmcfg->Ch1_RankEnable        = 1;
@@ -646,8 +634,7 @@ UpdateFspConfig (
         Fspmcfg->Ch3_RankEnable        = 1;
         Fspmcfg->Ch3_DramDensity       = 2;
         break;
-      case 2: /* 8GB */
-        Fspmcfg->DualRankSupportEnable = 1;
+      case 6: /* 8GB */
         Fspmcfg->Ch0_RankEnable        = 3;
         Fspmcfg->Ch0_DramDensity       = 2;
         Fspmcfg->Ch1_RankEnable        = 3;
@@ -657,7 +644,25 @@ UpdateFspConfig (
         Fspmcfg->Ch3_RankEnable        = 3;
         Fspmcfg->Ch3_DramDensity       = 2;
         break;
-      default:
+
+      case 7: /* 8GB */
+        Fspmcfg->Ch0_RankEnable        = 1;
+        Fspmcfg->Ch0_DramDensity       = 4;
+        Fspmcfg->Ch1_RankEnable        = 1;
+        Fspmcfg->Ch1_DramDensity       = 4;
+        Fspmcfg->Ch2_RankEnable        = 1;
+        Fspmcfg->Ch2_DramDensity       = 4;
+        Fspmcfg->Ch3_RankEnable        = 1;
+        Fspmcfg->Ch3_DramDensity       = 4;
+        break;
+
+      default: /* 2GB */
+        Fspmcfg->Ch0_RankEnable        = 1;
+        Fspmcfg->Ch0_DramDensity       = 2;
+        Fspmcfg->Ch1_RankEnable        = 1;
+        Fspmcfg->Ch1_DramDensity       = 2;
+        Fspmcfg->Ch2_RankEnable        = 0;
+        Fspmcfg->Ch3_RankEnable        = 0;
         break;
     };
 
@@ -790,7 +795,7 @@ EarlyBootDeviceInit (
 )
 {
   EFI_STATUS  Status        = EFI_SUCCESS;
-  UINT32      EmmcHcPciBase;
+  UINTN       EmmcHcPciBase;
 
   EmmcHcPciBase = GetDeviceAddr (OsBootDeviceEmmc, 0);
   EmmcHcPciBase = TO_MM_PCI_ADDRESS (EmmcHcPciBase);
@@ -835,15 +840,28 @@ EarlyBootDeviceInit (
 BOOLEAN
 IsFirmwareUpdate ()
 {
-  UINT16          FirmwareUpdateStatus;
+  EFI_STATUS        Status;
+  UINT16            FwuReq;
+  FLASH_MAP        *FlashMapPtr;
+  FW_UPDATE_STATUS  FwUpdStatus;
+  UINT32            OffsetInBiosRgn;
+  UINT32            RsvdBase;
 
-  //
-  // This is platform specific method. Here just use COMS.
-  //
-  IoWrite8 (0x70, FWU_BOOT_MODE_OFFSET);
-  FirmwareUpdateStatus = IoRead8 (0x71);
+  // Check if state machine is set to capsule processing mode.
+  FlashMapPtr = GetFlashMapPtr ();
+  Status = GetComponentInfoByPartition (FLASH_MAP_SIG_BLRESERVED, FALSE, &RsvdBase, NULL);
+  if (!EFI_ERROR (Status) && (FlashMapPtr != NULL)) {
+    OffsetInBiosRgn = FlashMapPtr->RomSize + RsvdBase;
+    ZeroMem (&FwUpdStatus, sizeof(FwUpdStatus));
+    SpiFlashRead (FlashRegionBios, OffsetInBiosRgn, sizeof(FwUpdStatus), (VOID *)&FwUpdStatus);
+    if (CheckStateMachine (&FwUpdStatus) == EFI_SUCCESS) {
+      return TRUE;
+    }
+  }
 
-  if (FirmwareUpdateStatus == FWU_BOOT_MODE_VALUE) {
+  // Check if platform firmware update trigger is set.
+  FwuReq = (MmioRead32 (PMC_BASE_ADDRESS + R_PMC_BIOS_SCRATCHPAD) >> 16) & 0xFF;
+  if ((FwuReq & 0x0F) != 0) {
     return TRUE;
   }
 
@@ -930,24 +948,6 @@ LoadExternalConfigData (
   return SpiLoadExternalConfigData (Dst, Src, Len);
 
 }
-
-/**
-  Get the pointer to the Built-In Config Data.
-
-  @retval UINT8*    Pointer to the Built-In Config Data
-**/
-UINT8 *
-GetBuiltInConfigData (
-  IN  VOID
-  )
-{
-  if (PcdGet32 (PcdCfgDatabaseSize) > 0) {
-    return (UINT8 *) &mConfigDataBlob[16];
-  } else {
-    return NULL;
-  }
-}
-
 
 /**
   Get the reset reason from the PMC registers.
@@ -1180,7 +1180,7 @@ IocInitialize (
   Status = UartPortInitialize (IocUartData->DeviceIndex);
   ASSERT_EFI_ERROR (Status);
 
-  PciBar = GetUartBaseAddress (IocUartData->DeviceIndex);
+  PciBar = (UINT32)GetUartBaseAddress (IocUartData->DeviceIndex);
   ASSERT (PciBar != 0xFFFFFFFF);
 
   Status = UartGpioInitialize (IocUartData->DeviceIndex);
@@ -1404,7 +1404,7 @@ EarlyPcieLinkUp (
     MmioWrite8 (Address, Data8);
     DEBUG ((DEBUG_INFO, "Address = 0x%08X Value = 0x%X\n", Address, Data8));
 
-    Address = MM_PCI_ADDRESS (0, SC_PCIE_ROOT_PORT_BUS (PortIndex), SC_PCIE_ROOT_PORT_FUNC (PortIndex), 0);
+    Address = (UINT32)MM_PCI_ADDRESS (0, SC_PCIE_ROOT_PORT_BUS (PortIndex), SC_PCIE_ROOT_PORT_FUNC (PortIndex), 0);
     DEBUG ((DEBUG_INFO, "RpBase = 0x%08X\n", Address));
     MmioOr16 (Address + R_PCH_PCIE_XCAP, B_PCIE_XCAP_SI);
   }
@@ -1709,6 +1709,7 @@ PlatformFeaturesInit (
 
 **/
 VOID
+EFIAPI
 BoardInit (
   IN  BOARD_INIT_PHASE  InitPhase
   )
@@ -1756,8 +1757,8 @@ BoardInit (
     PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
     if (PlatformData != NULL) {
       FetchPostRBPData (& (PlatformData->BtGuardInfo));
+      DEBUG ((DEBUG_INFO, "BootPolicy : 0x%08X\n", PlatformData->BtGuardInfo.Bpm));
     }
-    DEBUG ((DEBUG_INFO, "BootPolicy : 0x%08X\n", PlatformData->BtGuardInfo.Bpm));
     GpioPadConfigTable (sizeof (mGpioInitTbl) / sizeof (mGpioInitTbl[0]), (BXT_GPIO_PAD_INIT *)mGpioInitTbl);
     EarlyPcieLinkUp ();
     break;
@@ -1821,9 +1822,8 @@ FindNvsData (
   MrcNvDataOffset = 0;
   MrcParamsOffset = MrcNvDataOffset + RegionSize;
 
-  // Reuse Stage1B loading base as buffer for decompression
   // All MRC NVS data should be less than 64KB
-  MrcVarData   = (VOID *)PcdGet32 (PcdStage1BLoadBase);
+  MrcVarData   = (VOID *)(UINTN)APL_FSP_STACK_TOP;
   MrcParamData = (UINT8 *)MrcVarData + SIZE_1KB;
   MemPool      = (UINT8 *)MrcVarData + SIZE_64KB;
 
@@ -1835,7 +1835,7 @@ FindNvsData (
       break;
     }
 
-    CopyMem (&MrcParamHdr,  (UINT8 *)MrcDataBase + MrcParamsOffset, sizeof (MRC_PARAM_HDR));
+    CopyMem (&MrcParamHdr,  (UINT8 *)(UINTN)MrcDataBase + MrcParamsOffset, sizeof (MRC_PARAM_HDR));
     if (MrcParamHdr.Signature != MRC_PARAM_SIGNATURE) {
       Status = EFI_NOT_FOUND;
       break;
@@ -1845,14 +1845,14 @@ FindNvsData (
     DataSize       = MrcParamHdr.Length - sizeof (MRC_PARAM_HDR);
 
     DEBUG ((DEBUG_INFO, "Read MRC ParamData at 0x%X\n", MrcDataBase + MrcParamsOffset));
-    CopyMem (CompressedData, (UINT8 *)MrcDataBase + MrcParamsOffset + sizeof (MRC_PARAM_HDR), DataSize);
+    CopyMem (CompressedData, (UINT8 *)(UINTN)MrcDataBase + MrcParamsOffset + sizeof (MRC_PARAM_HDR), DataSize);
 
     DEBUG ((DEBUG_INFO, "Decompress ParamData\n"));
-    DataSize = RleDecompressData (CompressedData, DataSize, MrcParamData);
+    DataSize = (UINT32)RleDecompressData (CompressedData, DataSize, MrcParamData);
 
     DEBUG ((DEBUG_INFO, "Read MRC VarData at 0x%X\n", MrcDataBase + MrcNvDataOffset));
     MrcVarHdr = (MRC_VAR_HDR *)MemPool;
-    CopyMem ((UINT8 *)MrcVarHdr, (UINT8 *)MrcDataBase + MrcNvDataOffset,  sizeof (MRC_VAR_HDR));
+    CopyMem ((UINT8 *)MrcVarHdr, (UINT8 *)(UINTN)MrcDataBase + MrcNvDataOffset,  sizeof (MRC_VAR_HDR));
 
     ActIdx = 0xFF;
     if (MrcVarHdr->Signature == MRC_VAR_SIGNATURE) {
@@ -1883,7 +1883,7 @@ FindNvsData (
 
     // Read NV data from the slot
     Offset = MrcNvDataOffset + sizeof (MRC_VAR_HDR) + ActIdx * MRC_VAR_SLOT_LENGTH;
-    CopyMem ((UINT8 *)MrcVarData, (UINT8 *)MrcDataBase + Offset, MRC_VAR_LENGTH);
+    CopyMem ((UINT8 *)MrcVarData, (UINT8 *)(UINTN)MrcDataBase + Offset, MRC_VAR_LENGTH);
 
   } while (EFI_ERROR (Status));
 

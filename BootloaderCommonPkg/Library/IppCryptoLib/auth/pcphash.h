@@ -201,6 +201,8 @@ void UpdateSHA256(void* pHash, const Ipp8u* mblk, int mlen, const void* pParam);
 void UpdateSHA256V8(void* pHash, const Ipp8u* mblk, int mlen, const void* pParam);
 void UpdateSHA256Ni(void* pHash, const Ipp8u* mblk, int mlen, const void* pParam);
 void UpdateSHA512(void* pHash, const Ipp8u* mblk, int mlen, const void* pParam);
+void UpdateSHA512W7 (void* uniHash, const Ipp8u* mblk, int mlen, const void* uniPraram);
+void UpdateSHA512G9 (void* uniHash, const Ipp8u* mblk, int mlen, const void* uniPraram);
 void UpdateMD5   (void* pHash, const Ipp8u* mblk, int mlen, const void* pParam);
 void UpdateSM3   (void* pHash, const Ipp8u* mblk, int mlen, const void* pParam);
 

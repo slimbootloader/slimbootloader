@@ -22,6 +22,7 @@
 #
 
 [Sources]
+  FvLib.h
   FvLib.c
 
 [Packages]
