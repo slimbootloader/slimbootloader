@@ -495,6 +495,7 @@ PlatformEndFirmwareUpdate (
   return EFI_SUCCESS;
 }
 
+
 /**
   Platform hook point to clear firmware update trigger.
 
@@ -509,4 +510,28 @@ ClearFwUpdateTrigger (
 {
   // Clear platform firmware update trigger.
   MmioAnd32 (PMC_BASE_ADDRESS + R_PMC_BIOS_SCRATCHPAD, 0xFF00FFFF);
+}
+
+
+/**
+  Flash descriptor region lock
+
+  This function will do some command buffer parsing and check
+  for additional parameters
+
+  @param[in]  CmdDataBuf    Pointer to command buffer.
+  @param[in]  CmdDataSize   size of command data.
+
+  @retval  EFI_SUCCESS      Flash descriptor lock successfully.
+  @retval  others           Error happening when updating.
+
+**/
+EFI_STATUS
+EFIAPI
+SetFlashDescriptorLock (
+  IN  CHAR8      *CmdDataBuf,
+  IN  UINTN      CmdDataSize
+  )
+{
+  return EFI_UNSUPPORTED;
 }

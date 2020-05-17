@@ -27,6 +27,7 @@
   GetCapsuleImage.c
   CsmeFwUpdate.c
   ErrorList.c
+  CmdFwUpdate.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -47,6 +48,7 @@
   LiteFvLib
   ConfigDataLib
   ContainerLib
+  StringSupportLib
 
 [Guids]
   gLoaderMemoryMapInfoGuid
