@@ -834,6 +834,7 @@ FindImage (
   return EFI_NOT_FOUND;
 }
 
+
 /**
   Perform Firmware update.
 
@@ -850,10 +851,10 @@ FindImage (
 **/
 EFI_STATUS
 ApplyFwImage (
-  IN    UINT8                        *CapImage,
-  IN    UINT32                       CapImageSize,
+  IN    UINT8                         *CapImage,
+  IN    UINT32                         CapImageSize,
   IN    EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
-    OUT BOOLEAN                       *ResetRequired
+  OUT BOOLEAN                         *ResetRequired
   )
 {
   EFI_STATUS      Status;
@@ -892,6 +893,9 @@ ApplyFwImage (
         *ResetRequired = TRUE;
       }
     }
+    break;
+  case FW_UPDATE_COMP_CMD_REQUEST:
+    Status = FwCmdUpdateProcess (ImageHdr);
     break;
   default:
     Status = UpdateSblComponent (ImageHdr);
