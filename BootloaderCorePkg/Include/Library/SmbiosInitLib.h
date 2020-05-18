@@ -54,6 +54,15 @@ AppendSmbiosType (
   );
 
 /**
+  This function is called to initialize the SmbiosStringsPtr.
+**/
+VOID
+EFIAPI
+InitSmbiosStringPtr (
+  VOID
+  );
+
+/**
   This function is called to initialize the SMBIOS tables.
 
   @retval       EFI_DEVICE_ERROR, if Smbios Entry is NULL
@@ -65,6 +74,5 @@ EFIAPI
 SmbiosInit (
   VOID
   );
-
 
 #endif

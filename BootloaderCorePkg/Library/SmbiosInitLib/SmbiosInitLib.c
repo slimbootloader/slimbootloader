@@ -18,6 +18,37 @@
 
 VOID      *mType127Ptr            =   NULL;
 
+#define SMBIOS_STRING_UNKNOWN              "Unknown"
+#define SMBIOS_STRING_UNKNOWN_VERSION      "XXXX.XXX.XXX.XXX"
+#define SMBIOS_STRING_VENDOR               "Intel Corporation"
+#define SMBIOS_STRING_PLATFORM             "Client Platform"
+
+//
+// Add more platform specific strings
+// in the following format
+//
+CONST SMBIOS_TYPE_STRINGS  mDefaultSmbiosStrings[] = {
+  // Type                               StrId   String
+  // Type 0
+  {  SMBIOS_TYPE_BIOS_INFORMATION ,        1,  SMBIOS_STRING_VENDOR           },  // Vendor
+  {  SMBIOS_TYPE_BIOS_INFORMATION ,        2,  SMBIOS_STRING_UNKNOWN_VERSION  },  // BIOS Version
+  {  SMBIOS_TYPE_BIOS_INFORMATION ,        3,  SMBIOS_STRING_UNKNOWN          },  // BIOS Release Date
+  // Type 1
+  {  SMBIOS_TYPE_SYSTEM_INFORMATION ,      1,  SMBIOS_STRING_VENDOR           },  // Manufacturer
+  {  SMBIOS_TYPE_SYSTEM_INFORMATION ,      2,  SMBIOS_STRING_UNKNOWN          },  // Product Name
+  {  SMBIOS_TYPE_SYSTEM_INFORMATION ,      3,  SMBIOS_STRING_UNKNOWN_VERSION  },  // Version
+  {  SMBIOS_TYPE_SYSTEM_INFORMATION ,      4,  SMBIOS_STRING_UNKNOWN          },  // Serial Number
+  {  SMBIOS_TYPE_SYSTEM_INFORMATION ,      5,  SMBIOS_STRING_UNKNOWN          },  // SKU Variant
+  {  SMBIOS_TYPE_SYSTEM_INFORMATION ,      6,  SMBIOS_STRING_PLATFORM         },  // Serial Number
+  // Type 2
+  {  SMBIOS_TYPE_BASEBOARD_INFORMATION ,   1,  SMBIOS_STRING_UNKNOWN          },  // Manufacturer
+  {  SMBIOS_TYPE_BASEBOARD_INFORMATION ,   2,  SMBIOS_STRING_UNKNOWN          },  // Product Name
+  {  SMBIOS_TYPE_BASEBOARD_INFORMATION ,   3,  SMBIOS_STRING_UNKNOWN_VERSION  },  // Version
+  {  SMBIOS_TYPE_BASEBOARD_INFORMATION ,   4,  SMBIOS_STRING_UNKNOWN          },  // Serial Number
+  // Type 127 - End of strings
+  {   SMBIOS_TYPE_END_OF_TABLE,            0,  ""                             }
+};
+
 /**
   Check if the Smbios types (including the entry point struct)
   have crossed the statically allocated size for Smbios init
@@ -248,6 +279,9 @@ GetSmbiosString (
   }
 
   for (Index = 0; Index < PcdGet16 (PcdSmbiosStringsCnt); ++Index) {
+    if (SmbiosStrings[Index].Type == SMBIOS_TYPE_END_OF_TABLE) {
+      return "Unknown";
+    }
     if (Type == SmbiosStrings[Index].Type && StringId == SmbiosStrings[Index].Idx) {
       if (SmbiosStrings[Index].String != NULL && AsciiStrLen (SmbiosStrings[Index].String) != 0) {
         return SmbiosStrings[Index].String;
@@ -374,6 +408,49 @@ AddSmbiosType (
 
 }
 
+
+/**
+  This function is called to initialize the SmbiosStringsPtr.
+**/
+VOID
+EFIAPI
+InitSmbiosStringPtr (
+  VOID
+  )
+{
+
+  EFI_STATUS            Status;
+  UINT16                Length;
+  VOID                 *SmbiosStringsPtr;
+
+  //
+  // Allocate the memmory for SMBIOS String Ptr,
+  //
+
+  SmbiosStringsPtr = AllocateZeroPool (PcdGet16(PcdSmbiosStringsCnt) * sizeof (SMBIOS_TYPE_STRINGS));
+  if (SmbiosStringsPtr == NULL) {
+    DEBUG ((DEBUG_INFO, "SmbiosStringsPtr Memory allocation failed"));
+    ASSERT_EFI_ERROR(EFI_OUT_OF_RESOURCES);
+  }
+
+  //
+  // Copy contents from Default String Array
+  //
+
+  Length = sizeof (mDefaultSmbiosStrings);
+  if(Length <= (PcdGet16(PcdSmbiosStringsCnt) * sizeof (SMBIOS_TYPE_STRINGS))) {
+    CopyMem (SmbiosStringsPtr, mDefaultSmbiosStrings, Length);
+  }
+  else {
+     DEBUG ((DEBUG_INFO, "SmbiosStringsPtr Not Sufficient 0x%x", Length));
+     ASSERT_EFI_ERROR(EFI_OUT_OF_RESOURCES);
+  }
+  //
+  // Initialize SMBIOS String Ptr, Update Length
+  //
+  Status = PcdSet32S (PcdSmbiosStringsPtr, (UINT32)(UINTN)SmbiosStringsPtr);
+  ASSERT_EFI_ERROR (Status);
+}
 
 /**
   This function is called to initialize the SMBIOS tables.

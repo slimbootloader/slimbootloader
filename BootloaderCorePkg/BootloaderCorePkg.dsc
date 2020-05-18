@@ -279,7 +279,7 @@
 
   gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesBase  | 0x00000000
   gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsPtr  | 0x00000000
-  gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsCnt  | 0x0000
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsCnt  | 0x40
   gPlatformModuleTokenSpaceGuid.PcdFuncCpuInitHook   | 0x00000000
 
 [PcdsFeatureFlag]
