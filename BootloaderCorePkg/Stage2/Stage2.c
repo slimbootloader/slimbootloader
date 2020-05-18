@@ -391,6 +391,10 @@ SecStartup (
   FspResetHandler (Status);
   ASSERT_EFI_ERROR (Status);
 
+  if (FixedPcdGetBool (PcdSmbiosEnabled)) {
+    InitSmbiosStringPtr ();
+  }
+
   BoardInit (PostSiliconInit);
   AddMeasurePoint (0x3040);
 

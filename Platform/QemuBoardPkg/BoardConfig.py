@@ -60,6 +60,8 @@ class Board(BaseBoard):
         self.ENABLE_LINUX_PAYLOAD     = 1
         self.ENABLE_CRYPTO_SHA_OPT    = 0
 
+        self.ENABLE_SMBIOS            = 1
+
         self.CPU_MAX_LOGICAL_PROCESSOR_NUMBER = 255
 
         # To enable source debug, set 1 to self.ENABLE_SOURCE_DEBUG
