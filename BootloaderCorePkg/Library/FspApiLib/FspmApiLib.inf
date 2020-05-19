@@ -23,9 +23,11 @@
 [Sources.X64]
   X64/DispatchExecute.c
   X64/Thunk64To32.nasm
+  X64/FspSwitchStack.nasm
 
 [Sources.IA32]
   Ia32/DispatchExecute.c
+  Ia32/FspSwitchStack.nasm
 
 [Sources]
   FspApiLibInternal.h
@@ -48,6 +50,7 @@
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdFSPMBase
   gPlatformModuleTokenSpaceGuid.PcdFSPSBase
+  gPlatformModuleTokenSpaceGuid.PcdFSPMStackTop
 
 [FixedPcd]
   gPlatformModuleTokenSpaceGuid.PcdFSPMUpdSize
