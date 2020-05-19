@@ -219,6 +219,7 @@ class BaseBoard(object):
         self.BPM_SIZE              = 0x1000 # valid only if ACM_SIZE > 0
         self.CFG_DATABASE_SIZE     = 0
 
+        self.FSP_M_STACK_TOP       = 0
         self.STAGE1A_XIP           = 1
         self.STAGE1B_XIP           = 1
         self.STAGE1_STACK_BASE_OFFSET = 0

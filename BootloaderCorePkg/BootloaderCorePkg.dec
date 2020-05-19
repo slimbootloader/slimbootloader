@@ -144,6 +144,9 @@
   # If static patching is not required, zero default value can be used with no issue.
   #
   gPlatformModuleTokenSpaceGuid.PcdFSPSBase               | 0xFF000000 | UINT32 | 0x20000100
+  # Switch FSP-M stack top to new value.
+  # 0: do not switch,  0xffffffff: switch to default,  others: switch to specific value
+  gPlatformModuleTokenSpaceGuid.PcdFSPMStackTop           | 0x00000000 | UINT32 | 0x20000101
   gPlatformModuleTokenSpaceGuid.PcdAcpiTablesMaxEntry     |         32 | UINT32 | 0x2000000C
   gPlatformModuleTokenSpaceGuid.PcdAcpiTablesRsdp         | 0x00000000 | UINT32 | 0x2000000D
   gPlatformModuleTokenSpaceGuid.PcdAcpiTablesAddress      | 0xFF000000 | UINT32 | 0x20000110
