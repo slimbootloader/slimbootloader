@@ -9,6 +9,10 @@
 #include "AhciDevice.h"
 #include <BlockDevice.h>
 
+#define IS_SATA_CONTROLLER(_c)            \
+  (((_c)[2] == PCI_CLASS_MASS_STORAGE) && \
+   ((_c)[1] == PCI_CLASS_MASS_STORAGE_SATADPA))
+
 EFI_AHCI_CONTROLLER  *mAhciPrivateData;
 
 
@@ -348,8 +352,15 @@ AhciInitialize (
 {
   EFI_STATUS            Status;
   EFI_AHCI_CONTROLLER  *AhciPrivateData;
+  UINT32                ClassCode;
 
   DEBUG ((DEBUG_INFO, "%a AHCI controller %X\n", (DevInitPhase == DevDeinit) ? "Deinit" : "Init", AhciHcPciBase));
+
+  ClassCode = MmioRead32 (AhciHcPciBase + PCI_REVISION_ID_OFFSET) >> 8;
+  if (!IS_SATA_CONTROLLER ((UINT8 *)&ClassCode)) {
+    DEBUG ((DEBUG_INFO, "Not a AHCI controller or Disabled\n"));
+    return EFI_INVALID_PARAMETER;
+  }
 
   if (DevInitPhase == DevDeinit) {
     if (mAhciPrivateData != NULL) {
