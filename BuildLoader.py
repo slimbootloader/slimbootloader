@@ -1029,6 +1029,14 @@ class Build(object):
         if not os.path.exists(self._fv_dir):
             os.makedirs(self._fv_dir)
 
+        # Validate HASH_TYPE_VALUE config
+        if (HASH_TYPE_VALUE[self._board._SIGN_HASH] != self._board.SIGN_HASH_TYPE):
+            raise Exception  ('SIGN_HASH_TYPE is not set correctly!!')
+
+        # Validate IPP_HASH_LIB_SUPPORTED_MASK config
+        if(IPP_CRYPTO_ALG_MASK[self._board._SIGN_HASH] & self._board.IPP_HASH_LIB_SUPPORTED_MASK) == 0:
+            raise Exception  ('IPP_HASH_LIB_SUPPORTED_MASK is not set correctly!!')
+
         # check if FSP binary exists
         fsp_dir  = os.path.join(plt_dir, 'Silicon', self._board.SILICON_PKG_NAME, "FspBin", self._board._FSP_PATH_NAME)
         work_dir = plt_dir
