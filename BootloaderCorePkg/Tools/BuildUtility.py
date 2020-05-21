@@ -92,6 +92,14 @@ HASH_USAGE = {
     'PUBKEY_FWU'          : (1<<10),
     'PUBKEY_OS'           : (1<<11),
     'PUBKEY_CONT_DEF'     : (1<<12),
+    'PUBKEY_OEM_0'        : (1<<24),
+    'PUBKEY_OEM_1'        : (1<<25),
+    'PUBKEY_OEM_2'        : (1<<26),
+    'PUBKEY_OEM_3'        : (1<<27),
+    'PUBKEY_OEM_4'        : (1<<28),
+    'PUBKEY_OEM_5'        : (1<<29),
+    'PUBKEY_OEM_6'        : (1<<30),
+    'PUBKEY_OEM_7'        : (1<<31),
 }
 
 class HashStoreData(Structure):
