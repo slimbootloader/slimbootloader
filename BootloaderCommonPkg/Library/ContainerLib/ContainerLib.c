@@ -333,11 +333,20 @@ GetContainerKeyUsageBySig (
   IN  UINT32    ContainerSig
   )
 {
+  UINT8  Idx;
+
   if (ContainerSig == CONTAINER_BOOT_SIGNATURE) {
     return HASH_USAGE_PUBKEY_OS;
-  } else {
-    return HASH_USAGE_PUBKEY_CONTAINER_DEF;
   }
+
+  if ((ContainerSig & 0x00FFFFFF) == CONTAINER_OEM_BASE_SIGNATURE) {
+    Idx = (ContainerSig >> 24) - '0';
+    if ((Idx >= 0) && (Idx < 8)) {
+      return HASH_USAGE_PUBKEY_OEM (Idx);
+    }
+  }
+
+  return HASH_USAGE_PUBKEY_CONTAINER_DEF;
 }
 
 /**
