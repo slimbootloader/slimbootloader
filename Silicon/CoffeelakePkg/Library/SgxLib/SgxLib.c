@@ -161,10 +161,8 @@ UpdateFspmSgxConfig (
       } else {
         DEBUG ((DEBUG_ERROR, "Invalid PrmrrSize value set in SGX config.\n"));
       }
-    } else if (SgxCfgData->EnableSgx == CONFIG_SGX_DISABLED) {
-      DEBUG ((DEBUG_WARN, "Intel(R) SGX set to disabled in config.\n"));
     } else {
-      DEBUG ((DEBUG_ERROR, "Invalid EnableSgx value set in SGX config.\n"));
+      DEBUG ((DEBUG_WARN, "Intel(R) SGX set to disabled in config.\n"));
     }
   } else {
     DEBUG ((DEBUG_ERROR, "Failed to find Intel(R) SGX CFG!\n"));
