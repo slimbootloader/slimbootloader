@@ -74,7 +74,6 @@ PciIovParseVfBar (
     //
     // Device I/Os. Impossible
     //
-    ASSERT (FALSE);
     return Offset + 4;
 
   } else {

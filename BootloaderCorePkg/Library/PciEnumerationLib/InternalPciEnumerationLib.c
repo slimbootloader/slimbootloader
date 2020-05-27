@@ -32,7 +32,7 @@ BarExisted (
   )
 {
   UINT32              OriginalValue;
-  UINT32              Value;
+  volatile UINT32     Value;
 
   //
   // Preserve the original value

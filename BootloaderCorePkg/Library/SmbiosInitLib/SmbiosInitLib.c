@@ -354,14 +354,10 @@ AddSmbiosType (
   //
   CopyMem (TypePtr.Raw, HdrInfo, HdrLen);
   StringPtr = (CHAR8 *) (TypePtr.Raw + HdrLen);
-  if (NumStr == 0) {
-    TypeAddr = StringPtr + (sizeof(CHAR8) * TYPE_TERMINATOR_SIZE); // Type is terminated with a 0000 if no strings
-  } else {
-    for (StrIdx = 1; StrIdx <= NumStr; ++StrIdx) {
-      StringPtr = AddSmbiosString (StringPtr, GetSmbiosString (Type, StrIdx));
-    }
-    TypeAddr = StringPtr + sizeof(CHAR8);       // last string is terminated with a 0000
+  for (StrIdx = 1; StrIdx <= NumStr; ++StrIdx) {
+    StringPtr = AddSmbiosString (StringPtr, GetSmbiosString (Type, StrIdx));
   }
+  TypeAddr = StringPtr + sizeof(CHAR8);       // last string is terminated with a 0000
 
   //
   // Update TypeLength, header length, Max Length
@@ -419,7 +415,7 @@ SmbiosInit (
   // Add common SMBIOS Types' information.
   // Types start at 16 byte boundary
   //
-  TypeAddr = (UINT8 *)&SmbiosEntryPoint[1] + sizeof (UINT8);
+  TypeAddr = (VOID *)(UINTN)SmbiosEntryPoint->TableAddress;
   TypeAddr = AddSmbiosType (SMBIOS_TYPE_BIOS_INFORMATION,      TypeAddr, &MaxLength);
   TypeAddr = AddSmbiosType (SMBIOS_TYPE_SYSTEM_INFORMATION,    TypeAddr, &MaxLength);
   TypeAddr = AddSmbiosType (SMBIOS_TYPE_BASEBOARD_INFORMATION, TypeAddr, &MaxLength);
