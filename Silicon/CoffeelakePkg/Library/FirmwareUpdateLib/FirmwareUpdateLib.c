@@ -1,7 +1,7 @@
 /** @file
   This file contains the implementation of FirmwareUpdateLib library.
 
-  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -133,17 +133,19 @@ InitCsmeUpdInputData (
 
   CsmeUpdDriverInput = (CSME_UPDATE_DRIVER_INPUT *)AllocateZeroPool (sizeof(CSME_UPDATE_DRIVER_INPUT));
 
-  CsmeUpdDriverInput->AllocatePool     = (VOID *)((UINTN)AllocatePool);
-  CsmeUpdDriverInput->AllocateZeroPool = (VOID *)((UINTN)AllocateZeroPool);
-  CsmeUpdDriverInput->FreePool         = (VOID *)((UINTN)FreePool);
-  CsmeUpdDriverInput->CopyMem          = (VOID *)((UINTN)CopyMem);
-  CsmeUpdDriverInput->SetMem           = (VOID *)((UINTN)SetMem);
-  CsmeUpdDriverInput->CompareMem       = (VOID *)((UINTN)CompareMem);
-  CsmeUpdDriverInput->Stall            = (VOID *)((UINTN)MicroSecondDelay);
-  CsmeUpdDriverInput->PciRead          = (VOID *)((UINTN)PciReadBuffer);
-  CsmeUpdDriverInput->HeciReadMessage  = (VOID *)((UINTN)HeciReceive);
-  CsmeUpdDriverInput->HeciSendMessage  = (VOID *)((UINTN)HeciSend);
-  CsmeUpdDriverInput->HeciReset        = (VOID *)((UINTN)ResetHeciInterface);
+  if (CsmeUpdDriverInput != NULL) {
+    CsmeUpdDriverInput->AllocatePool     = (VOID *)((UINTN)AllocatePool);
+    CsmeUpdDriverInput->AllocateZeroPool = (VOID *)((UINTN)AllocateZeroPool);
+    CsmeUpdDriverInput->FreePool         = (VOID *)((UINTN)FreePool);
+    CsmeUpdDriverInput->CopyMem          = (VOID *)((UINTN)CopyMem);
+    CsmeUpdDriverInput->SetMem           = (VOID *)((UINTN)SetMem);
+    CsmeUpdDriverInput->CompareMem       = (VOID *)((UINTN)CompareMem);
+    CsmeUpdDriverInput->Stall            = (VOID *)((UINTN)MicroSecondDelay);
+    CsmeUpdDriverInput->PciRead          = (VOID *)((UINTN)PciReadBuffer);
+    CsmeUpdDriverInput->HeciReadMessage  = (VOID *)((UINTN)HeciReceive);
+    CsmeUpdDriverInput->HeciSendMessage  = (VOID *)((UINTN)HeciSend);
+    CsmeUpdDriverInput->HeciReset        = (VOID *)((UINTN)ResetHeciInterface);
+  }
 
   return CsmeUpdDriverInput;
 }
