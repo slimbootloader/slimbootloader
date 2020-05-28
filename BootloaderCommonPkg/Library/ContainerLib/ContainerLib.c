@@ -1,7 +1,7 @@
 /** @file
   Container library implementation.
 
-  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -341,7 +341,7 @@ GetContainerKeyUsageBySig (
 
   if ((ContainerSig & 0x00FFFFFF) == CONTAINER_OEM_BASE_SIGNATURE) {
     Idx = (ContainerSig >> 24) - '0';
-    if ((Idx >= 0) && (Idx < 8)) {
+    if (Idx < 8) {
       return HASH_USAGE_PUBKEY_OEM (Idx);
     }
   }
