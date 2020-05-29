@@ -303,7 +303,13 @@ PeCoffGetPreferredBase (
   if (Hdr.Te->Signature == EFI_TE_IMAGE_HEADER_SIGNATURE) {
     ImageBase = (UINT32)Hdr.Te->ImageBase + Hdr.Te->StrippedSize - sizeof (EFI_TE_IMAGE_HEADER);
   } else if (Hdr.Pe32->Signature == EFI_IMAGE_NT_SIGNATURE) {
-    ImageBase = Hdr.Pe32->OptionalHeader.ImageBase;
+    if (Hdr.Pe32->OptionalHeader.Magic == EFI_IMAGE_NT_OPTIONAL_HDR32_MAGIC) {
+      ImageBase = Hdr.Pe32->OptionalHeader.ImageBase;
+    } else if (Hdr.Pe32->OptionalHeader.Magic == EFI_IMAGE_NT_OPTIONAL_HDR64_MAGIC) {
+      ImageBase = (UINT32)Hdr.Pe32Plus->OptionalHeader.ImageBase;
+    } else {
+      return RETURN_UNSUPPORTED;
+    }
   } else {
     return RETURN_UNSUPPORTED;
   }

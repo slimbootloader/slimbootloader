@@ -139,7 +139,7 @@ NormalBootPath (
   UINT32                         *Dst;
   PAYLOAD_ENTRY                   PldEntry;
   VOID                           *PldHobList;
-  UINT32                          PldBase;
+  UINTN                          PldBase;
   LOADER_GLOBAL_DATA             *LdrGlobal;
   EFI_STATUS                      Status;
   BOOLEAN                         CallBoardNotify;
@@ -258,7 +258,7 @@ NormalBootPath (
   DEBUG ((DEBUG_INFO, "Payload entry: 0x%08X\n", PldEntry));
   if (PldEntry != NULL) {
     DEBUG ((DEBUG_INIT, "Jump to payload\n\n"));
-    PldEntry (PldHobList, (VOID *)(UINTN)PldBase);
+    PldEntry (PldHobList, (VOID *)PldBase);
   }
 }
 
