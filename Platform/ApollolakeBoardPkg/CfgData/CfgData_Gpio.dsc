@@ -271,7 +271,7 @@
   # !BSF SUBT:{GPIO_TMPL:GPIO_176               :0x0005c8c0     :0x1f108008}
   # !BSF SUBT:{GPIO_TMPL:GPIO_177               :0x0005d0c0     :0x64004002}
   # !BSF SUBT:{GPIO_TMPL:GPIO_178               :0x0005d8c0     :0x1f108008}
-  # !BSF SUBT:{GPIO_TMPL:GPIO_186               :0x0005e0c0     :0x5c105002}
+  # !BSF SUBT:{GPIO_TMPL:GPIO_186               :0x0005e0c0     :0x5c105004}
   # !BSF SUBT:{GPIO_TMPL:GPIO_182               :0x0005e8c0     :0x1d008008}
   # !BSF SUBT:{GPIO_TMPL:GPIO_183               :0x0005f0c0     :0x5c108005}
   # !BSF SUBT:{GPIO_TMPL:SMB_ALERTB             :0x0005f8c0     :0x3f008008}
