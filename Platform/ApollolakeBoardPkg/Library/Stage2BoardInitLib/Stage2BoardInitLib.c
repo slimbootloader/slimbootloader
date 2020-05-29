@@ -867,6 +867,31 @@ BuildVtdInfo (
 }
 
 /**
+  Apply SD card power if card is present.
+
+**/
+VOID
+SdcardPowerUp (
+  VOID
+  )
+{
+  UINT16  PlatformId;
+  UINT32  Data;
+
+  PlatformId = GetPlatformId ();
+  if ((PlatformId == PLATFORM_ID_LFH) || (PlatformId == PLATFORM_ID_OXH) || (PlatformId == PLATFORM_ID_JNH)) {
+    // Check if SD card is present using GPIO_177
+    Data = GpioRead ((SW_GPIO_177) >> 16, (SW_GPIO_177) & 0xFFFF) & BIT1;
+    if (Data == 0) {
+      // Card present, so turn on SD card power using GPIO_183
+      Data = GpioRead ((SW_GPIO_183) >> 16, (SW_GPIO_183) & 0xFFFF);
+      GpioWrite ((SW_GPIO_183) >> 16, (SW_GPIO_183) & 0xFFFF, Data & ~BIT0);
+      MmioOr32 (P2SB_MMIO_BASE_ADDRESS + 0xD60608, BIT5);
+    }
+  }
+}
+
+/**
   Board specific hook points.
 
   Implement board specific initialization during the boot flow.
@@ -912,6 +937,8 @@ BoardInit (
       Status = PcdSet32S (PcdSmramTsegBase, TsegBase);
       Status = PcdSet32S (PcdSmramTsegSize, (UINT32)TsegSize);
     }
+
+    SdcardPowerUp();
 
     SaveOtgRole();
     if (PcdGetBool (PcdFramebufferInitEnabled)) {
@@ -966,6 +993,7 @@ BoardInit (
     if (GetPayloadId() != 0) {
       ProgramSecuritySetting ();
     }
+
     break;
   case ReadyToBoot:
     if (GetPayloadId() == 0) {

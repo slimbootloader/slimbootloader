@@ -136,7 +136,7 @@ class Board(BaseBoard):
         self.STAGE1B_FD_SIZE      = 0x0006B000
         if self.RELEASE_MODE == 0:
             self.STAGE1B_FD_SIZE += 0x00002000
-            self.PAYLOAD_SIZE    += 0x00004000
+            self.PAYLOAD_SIZE    += 0x00005000
         # For Stage2, it is always compressed.
         # if STAGE2_LOAD_HIGH is 1, STAGE2_FD_BASE will be ignored
         self.STAGE2_FD_BASE       = 0x01000000

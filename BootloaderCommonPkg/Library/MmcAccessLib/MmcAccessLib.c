@@ -252,7 +252,6 @@ EarlyMmcInitialize (
 {
   RETURN_STATUS    Status;
   EMMC_CARD_DATA  *CardData;
-  UINT32           Argument;
   UINT8            HostCtrl1;
   UINT8            BusWidth;
 
@@ -301,16 +300,7 @@ EarlyMmcInitialize (
       goto Done;
     }
 
-    if (Private->Capability.Voltage33) {
-      Argument = 1 << SD_OCR_33;
-    } else if (Private->Capability.Voltage30) {
-      Argument = 1 << SD_OCR_30;
-    } else if (Private->Capability.Voltage18) {
-      Argument = 1 << SD_OCR_LOW;
-    } else {
-      Argument = 1 << SD_OCR_33;
-    }
-    CardData->Ocr = Argument;
+    CardData->Ocr = 0;
     Status = SdCardSendOpCond (Private, &CardData->Ocr);
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "SdCardSendOpCond Fail Status = 0x%x\n", Status));
@@ -357,6 +347,7 @@ SdMmcInitialize (
 {
   EFI_STATUS                      Status;
   SD_MMC_HC_PRIVATE_DATA         *Private;
+  UINT32                          SdMmcHcBase;
 
   Private = MmcGetHcPrivateData ();
   if (Private == NULL) {
@@ -365,40 +356,47 @@ SdMmcInitialize (
     goto Done;
   }
 
-  Private->SdMmcHcBase = MmioRead32 (SdMmcHcPciBase + PCI_BASE_ADDRESSREG_OFFSET) & 0xFFFFF000;
+  SdMmcHcBase = MmioRead32 (SdMmcHcPciBase + PCI_BASE_ADDRESSREG_OFFSET) & 0xFFFFF000;
+  Private->SdMmcHcBase = SdMmcHcBase;
   if (Private->Signature == SD_MMC_HC_PRIVATE_SIGNATURE) {
+    if (Private->Slot.CardType != CardType) {
+      ZeroMem (Private, sizeof(SD_MMC_HC_PRIVATE_DATA));
+      Private->SdMmcHcBase = SdMmcHcBase;
+    }
+
     if (Private->Slot.Initialized) {
       Status = EFI_SUCCESS;
       goto Done;
     }
-  } else {
-    DEBUG ((DEBUG_INFO, "MMC global data init\n"));
-    Private->Signature   = SD_MMC_HC_PRIVATE_SIGNATURE;
-    Status = SdMmcHcGetCapability (Private->SdMmcHcBase, &Private->Capability);
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "SdMmcHcGetCapability Fail Status = 0x%x\n", Status));
-      goto Done;
-    }
-
-    DEBUG_CODE_BEGIN ();
-    DumpCapabilityReg (&Private->Capability);
-    DEBUG_CODE_END ();
-
-    if (Private->Capability.Adma2 && Private->Capability.Sdma) {
-      DEBUG ((DEBUG_INFO, "Use SDMA instead of ADMA2\n"));
-      Private->Capability.Adma2 = 0;
-    }
-
-    /* Only support eMMC and SD for now */
-    if ((CardType == EmmcCardType) || (CardType == SdCardType)) {
-      Private->Slot.CardType = CardType;
-    } else {
-      DEBUG ((DEBUG_ERROR, "Unsupported card type!\n"));
-      goto Done;
-    }
-
-    Private->Slot.MediaPresent = TRUE;
   }
+
+  DEBUG ((DEBUG_INFO, "MMC global data init\n"));
+  Private->Signature   = SD_MMC_HC_PRIVATE_SIGNATURE;
+  Status = SdMmcHcGetCapability (Private->SdMmcHcBase, &Private->Capability);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "SdMmcHcGetCapability Fail Status = 0x%x\n", Status));
+    goto Done;
+  }
+
+  DEBUG_CODE_BEGIN ();
+  DumpCapabilityReg (&Private->Capability);
+  DEBUG_CODE_END ();
+
+  if (Private->Capability.Adma2 && Private->Capability.Sdma) {
+    DEBUG ((DEBUG_INFO, "Use SDMA instead of ADMA2\n"));
+    Private->Capability.Adma2 = 0;
+  }
+
+  /* Only support eMMC and SD for now */
+  if ((CardType == EmmcCardType) || (CardType == SdCardType)) {
+    Private->Slot.CardType = CardType;
+  } else {
+    DEBUG ((DEBUG_ERROR, "Unsupported card type!\n"));
+    goto Done;
+  }
+
+  Private->Slot.MediaPresent = TRUE;
+
 
   if (MmcInitMode != DevInitOnlyPhase2) {
     Status = EarlyMmcInitialize (Private);
@@ -452,8 +450,14 @@ MmcInitialize (
   IN  DEVICE_INIT_PHASE   MmcInitMode
   )
 {
+  SD_MMC_HC_PRIVATE_DATA   *Private;
+
   if (MmcInitMode == DevDeinit) {
     // Handle Deinit if required.
+    Private = MmcGetHcPrivateData ();
+    if (Private != NULL) {
+      ZeroMem (Private, sizeof(SD_MMC_HC_PRIVATE_DATA));
+    }
     return EFI_SUCCESS;
   }
   return SdMmcInitialize (MmcHcPciBase, EmmcCardType, MmcInitMode);
@@ -483,8 +487,14 @@ SdInitialize (
   IN  DEVICE_INIT_PHASE   SdInitMode
   )
 {
+  SD_MMC_HC_PRIVATE_DATA   *Private;
+
   if (SdInitMode == DevDeinit) {
     // Handle Deinit if required.
+    Private = MmcGetHcPrivateData ();
+    if (Private != NULL) {
+      ZeroMem (Private, sizeof(SD_MMC_HC_PRIVATE_DATA));
+    }
     return EFI_SUCCESS;
   }
   return SdMmcInitialize (SdHcPciBase, SdCardType, SdInitMode);

@@ -30,7 +30,7 @@
 #define ISPMM_BASE_ADDRESS                0xCF000000
 #endif
 
-#define ACPI_MMIO_BASE_ADDRESS            0xD0000000
+#define P2SB_MMIO_BASE_ADDRESS            0xD0000000
 #define SPI_TEMP_MEM_BASE_ADDRESS         0xD2000000
 #define PWM_TEMP_MEM_BASE_ADDRESS         0xD3000000
 #define PCIEX_BASE_ADDRESS                0xE0000000
