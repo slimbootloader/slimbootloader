@@ -47,6 +47,7 @@
 
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdFSPSBase
+  gPlatformModuleTokenSpaceGuid.PcdFspsUpdPtr
 
 [FixedPcd]
   gPlatformModuleTokenSpaceGuid.PcdFSPSUpdSize
