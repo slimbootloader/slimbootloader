@@ -19,6 +19,42 @@ import struct
 import hashlib
 import string
 
+# KEY_SIZE_TYPE defines the key sizes to be used for signing
+# KEY_SIZE_TYPE = RSA2048 uses RSA 2K size keys
+# KEY_SIZE_TYPE = RSA3072 uses RSA 3K size keys
+KEY_SIZE_TYPE = 'RSA2048'
+
+SIGNING_KEY = {
+    # Key Id                    | Key File Name start |
+    # ===========================================================
+    # MASTER_KEY_ID is used for signing Slimboot Key Hash Manifest (KEYH Component)
+    "MASTER_KEY_ID"          :    "MasterTestKey_Priv",
+
+    # CFGDATA_KEY_ID is used for signing external Config data blob)
+    "CFGDATA_KEY_ID"         :    "ConfigTestKey_Priv",
+
+    # FIRMWAREUPDATE_KEY_ID is used for signing capsule firmware update image)
+    "FIRMWAREUPDATE_KEY_ID"  :    "FirmwareUpdateTestKey_Priv",
+
+    # CONTAINER_KEY_ID is used for signing container header with mono signature
+    "CONTAINER_KEY_ID"       :    "ContainerTestKey_Priv",
+
+    # CONTAINER_COMP1_KEY_ID is used for signing container components
+    "CONTAINER_COMP_KEY_ID" :    "ContainerCompTestKey_Priv",
+
+    # OS1_PUBLIC_KEY_ID, OS2_PUBLIC_KEY_ID is used for referencing Boot OS public keys
+    "OS1_PUBLIC_KEY_ID"      :    "OS1_TestKey_Pub",
+    "OS2_PUBLIC_KEY_ID"      :    "OS2_TestKey_Pub",
+
+    }
+
+
+def print_message_slimboot_key_store ():
+    print ("Pre-requiste: SLIMBOOT_KEY_DIR environment variable has to be set!")
+    print ("SLIMBOOT_KEY_DIR is path to keys used for the project!")
+    print ("For Keys generation follow GenerateKey.py availabl in tool directory!")
+
+    return
 
 def get_openssl_path ():
     if os.name == 'nt':
@@ -58,6 +94,53 @@ def run_process (arg_list, print_cmd = False, capture_out = False):
 
     return output
 
+def check_file_pem_format (priv_key):
+    # Check for file .pem format
+    key_name = os.path.basename(priv_key)
+    if os.path.splitext(key_name)[1] == ".pem":
+        return True
+    else:
+        return False
+
+def get_key_id (priv_key):
+    # Extract base name if path is provided.
+    key_name = os.path.basename(priv_key)
+    # Check for KEY_ID at end of string.
+    if (key_name.endswith('KEY_ID')):
+        return key_name
+    else:
+        return None
+
+def get_key_from_store (in_key):
+
+   # Check Key store setting SLIMBOOT_KEY_DIR path
+    slimboot_key_dir = os.environ.get('SLIMBOOT_KEY_DIR')
+    if not os.path.exists(slimboot_key_dir):
+        print_message_slimboot_key_store();
+        raise Exception ("SLIMBOOT_KEY_DIR is not defined. Set SLIMBOOT_KEY_DIR !!")
+
+    # Extract key_id if present
+    priv_key = get_key_id (in_key)
+    if priv_key is not None:
+        if (priv_key in SIGNING_KEY):
+            # Generate key file name from key id
+            priv_key_file = SIGNING_KEY[priv_key] + '_' + KEY_SIZE_TYPE +'.pem'
+        else:
+            raise Exception('KEY_ID %s is not found!' % priv_key)
+    elif check_file_pem_format(in_key) == True:
+        # check if file is of pem format
+        priv_key_file = in_key
+    else:
+        priv_key_file = None
+        raise Exception('key provided %s is not valid!' % in_key)
+
+    try:
+        priv_key = os.path.join (slimboot_key_dir, priv_key_file)
+    except:
+        raise Exception('priv_key is not found %s!' % priv_key)
+
+    return priv_key
+
 #
 # Sign an file using openssl
 #
@@ -89,6 +172,12 @@ def single_sign_file (priv_key, hash_type, sign_scheme, in_file, out_file):
         "RSA_PSS"      : 'pss',
     }
 
+    # Check priv_key is path to private key
+    if not os.path.exists(priv_key):
+        priv_key = get_key_from_store(priv_key)
+
+    if not os.path.isfile(priv_key):
+        raise Exception ("Invalid input key file '%s' !" % priv_key)
 
     # Temporary files to store hash generated
     hash_file_tmp = out_file+'.hash.tmp'
@@ -133,6 +222,11 @@ def single_sign_file (priv_key, hash_type, sign_scheme, in_file, out_file):
 #
 
 def single_sign_gen_pub_key (in_key, pub_key_file = None):
+
+    # Check in_key is path to private key
+    if not os.path.exists(in_key):
+        in_key = get_key_from_store(in_key)
+
     if not os.path.isfile(in_key):
         raise Exception ("Invalid input key file '%s' !" % in_key)
 
