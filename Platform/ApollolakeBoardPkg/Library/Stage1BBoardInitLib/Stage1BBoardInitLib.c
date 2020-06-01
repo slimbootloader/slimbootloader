@@ -47,6 +47,9 @@
 #include <PlatformData.h>
 #include <Register/RegsSpi.h>
 
+#include "ScRegs/SscRegs.h"
+#include "SideBandLib.h"
+
 #define APL_FSP_STACK_TOP       0xFEF40000
 #define MRC_PARAMS_BYTE_OFFSET_MRC_VERSION 14
 
@@ -1699,6 +1702,32 @@ PlatformFeaturesInit (
   }
 }
 
+/**
+    USB3, PCie, SATA, eDP, DP, eMMC, SD and SDIO SSC
+    Partially implemented PeiHighSpeedSerialInterfaceSSCInit
+    to disable SSC in LCPLL_CTRL_1
+**/
+VOID
+EFIAPI
+SetSSCDisable (
+  VOID
+  )
+{
+  LCPLL_CR_RW_CONTROL_1             LCPLL_CTRL_1;
+  LCPLL_CR_RW_CONTROL_2             LCPLL_CTRL_2;
+
+  DEBUG ((DEBUG_INFO, "SetSSCDisable()\n"));
+  LCPLL_CTRL_1.Data = SideBandRead32 (0x99, 0x9910);
+  LCPLL_CTRL_2.Data = SideBandRead32 (0x99, 0x9914);
+  DEBUG ((DEBUG_INFO, "LCPLL_CTRL_1 register: 0x%02X\n", LCPLL_CTRL_1.Data));
+  DEBUG ((DEBUG_INFO, "LCPLL_CTRL_2 register: 0x%02X\n", LCPLL_CTRL_2.Data));
+
+  //disable SSC
+  LCPLL_CTRL_1.Fields.ssc_en = SSC_DISABLE;
+  LCPLL_CTRL_1.Fields.ssc_en_ovr = SSC_DISABLE;
+  DEBUG ((DEBUG_INFO, "LCPLL_CTRL_1 write data: 0x%02X\n", LCPLL_CTRL_1.Data));
+  SideBandWrite32 (0x99, 0x9910, LCPLL_CTRL_1.Data);
+}
 
 /**
   Board specific hook points.
@@ -1752,6 +1781,7 @@ BoardInit (
     PcieRpPwrRstInit ();
     RtcInit ();
     PlatformFeaturesInit ();
+    SetSSCDisable();
     break;
   case PreMemoryInit:
     PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();

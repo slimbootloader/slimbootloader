@@ -21,6 +21,7 @@
 
 [Sources]
   Stage1BBoardInitLib.c
+  SideBandLib.c
 
 [Packages]
   MdePkg/MdePkg.dec
