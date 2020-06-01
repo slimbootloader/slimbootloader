@@ -211,6 +211,7 @@ def run_process (arg_list, print_cmd = False, capture_out = False):
 
     return output
 
+
 def rsa_sign_file (priv_key, pub_key, hash_type, sign_scheme, in_file, out_file, inc_dat = False, inc_key = False):
 
     bins = bytearray()
@@ -236,8 +237,13 @@ def rsa_sign_file (priv_key, pub_key, hash_type, sign_scheme, in_file, out_file,
 
 def get_key_type (in_key):
 
-    # Check for public key in binary format.
-    key = bytearray(get_file_data(in_key))
+    # Check in_key is file or key Id
+    if not os.path.exists(in_key):
+        key = bytearray(gen_pub_key (in_key))
+    else:
+        # Check for public key in binary format.
+        key = bytearray(get_file_data(in_key))
+
     pub_key_hdr = PUB_KEY_HDR.from_buffer(key)
     if pub_key_hdr.Identifier != b'PUBK':
         pub_key = gen_pub_key (in_key)
