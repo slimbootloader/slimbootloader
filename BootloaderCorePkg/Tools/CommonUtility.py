@@ -211,7 +211,23 @@ def run_process (arg_list, print_cmd = False, capture_out = False):
 
     return output
 
+def get_key_id (priv_key):
+    key_name = os.path.basename(priv_key)
+    # Check for KEY_ID at end of string.
+    if (key_name[-6:] == "KEY_ID"):
+        return key_name
+    else:
+        return None
+
+
 def rsa_sign_file (priv_key, pub_key, hash_type, sign_scheme, in_file, out_file, inc_dat = False, inc_key = False):
+
+    # Check priv_key is path to private key
+    # Extract key_id if present
+    if not os.path.exists(priv_key):
+        priv_key = get_key_id (priv_key)
+        if priv_key is None:
+            raise Exception ("priv_key is not valid!!")
 
     bins = bytearray()
     if inc_dat:
@@ -266,6 +282,14 @@ def get_auth_hash_type (key_type, sign_scheme):
     return auth_type, hash_type
 
 def gen_pub_key (in_key, pub_key = None):
+    print ('in_key %s' % in_key)
+
+    # Check priv_key is path to private key
+    # Extract key_id if present
+    if not os.path.exists(in_key):
+        in_key = get_key_id (in_key)
+        if in_key is None:
+            raise Exception ("in_key is not valid!!")
 
     keydata = single_sign_gen_pub_key (in_key, pub_key)
 

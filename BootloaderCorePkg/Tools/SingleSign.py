@@ -19,6 +19,36 @@ import struct
 import hashlib
 import string
 
+# KEY_SIZE_TYPE defines the key sizes to be used for signing
+# KEY_SIZE_TYPE = RSA2048 uses RSA 2K size keys
+# KEY_SIZE_TYPE = RSA3072 uses RSA 3K size keys
+KEY_SIZE_TYPE = 'RSA2048'
+
+SIGNING_KEY = {
+    # Key Id                    | Key File Name start |
+    # ===========================================================
+    # MASTER_KEY_ID is used for signing Slimboot Key Hash Manifest (KEYH Component)
+    "MASTER_KEY_ID"          :    "MasterTestKey",
+
+    # CFGDATA_KEY_ID is used for signing external Config data blob)
+    "CFGDATA_KEY_ID"         :    "ConfigTestKey",
+
+    # FIRMWAREUPDATE_KEY_ID is used for signing capsule firmware update image)
+    "FIRMWAREUPDATE_KEY_ID"  :    "FirmwareTestKey",
+
+    # CONTAINER_KEY_ID is used for signing container header with mono signature
+    "CONTAINER_KEY_ID"       :    "ContainerTestKey",
+
+    # CONTAINER_COMP1_KEY_ID, CONTAINER_COMP2_KEY_ID is used for signing container components
+    "CONTAINER_COMP1_KEY_ID" :    "ContainerComp1TestKey",
+    "CONTAINER_COMP2_KEY_ID" :    "ContainerComp2TestKey",
+
+    # OS1_PUBLIC_KEY_ID, OS2_PUBLIC_KEY_ID is used for referencing Boot OS public keys
+    "OS1_PUBLIC_KEY_ID"      :    "OS1_pubkey",
+    "OS2_PUBLIC_KEY_ID"      :    "OS2_pubkey",
+
+    }
+
 
 def get_openssl_path ():
     if os.name == 'nt':
@@ -89,6 +119,14 @@ def single_sign_file (priv_key, hash_type, sign_scheme, in_file, out_file):
         "RSA_PSS"      : 'pss',
     }
 
+    # Check for Key Id or key path
+    if not os.path.exists(priv_key):
+        slimboot_key_dir = os.environ.get('SLIMBOOT_KEY_DIR')
+        if not os.path.exists(slimboot_key_dir):
+            raise Exception ("SLIMBOOT_KEY_DIR is defined. Set SLIMBOOT_KEY_DIR !!")
+        # Generate key file name from key id
+        priv_key_file = SIGNING_KEY[priv_key] + '_' + KEY_SIZE_TYPE +'.pem'
+        priv_key =  os.path.join (slimboot_key_dir, priv_key_file)
 
     # Temporary files to store hash generated
     hash_file_tmp = out_file+'.hash.tmp'
@@ -133,6 +171,17 @@ def single_sign_file (priv_key, hash_type, sign_scheme, in_file, out_file):
 #
 
 def single_sign_gen_pub_key (in_key, pub_key_file = None):
+
+    # Check for Key Id or key path
+    if not os.path.exists(in_key):
+        # Check if SLIMBOOT_KEY_DIR is set
+        slimboot_key_dir = os.environ.get('SLIMBOOT_KEY_DIR')
+        if not os.path.exists(slimboot_key_dir):
+            raise Exception ("SLIMBOOT_KEY_DIR is defined. Set SLIMBOOT_KEY_DIR !!")
+        # Generate key file name from key_id
+        key_file = SIGNING_KEY[in_key] + '_' + KEY_SIZE_TYPE+'.pem'
+        in_key =  os.path.join (slimboot_key_dir, key_file)
+
     if not os.path.isfile(in_key):
         raise Exception ("Invalid input key file '%s' !" % in_key)
 
