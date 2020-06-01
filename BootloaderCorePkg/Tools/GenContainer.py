@@ -714,7 +714,7 @@ def create_container (args):
     else:
         # Using component list
         if not key_file:
-            key_file = 'TestSigningPrivateKey.pem'
+            raise Exception ("key_path expects a key file path !")
         layout = gen_layout (args.comp_list, args.img_type, args.auth, out_file, key_dir, key_file)
     container_list = eval ('[[%s]]' % layout.replace('\\', '/'))
 
@@ -793,11 +793,12 @@ def main():
     cmd_display = sub_parser.add_parser('create', help='create a container image')
     group = cmd_display.add_mutually_exclusive_group (required=True)
     # '-l' or '-cl', one of them is mandatory
-    group.add_argument('-l',  dest='layout',   type=str, help='Container layout intput file if no -cl')
+    group.add_argument('-l',  dest='layout',   type=str, help='Container layout input file if no -cl')
     group.add_argument('-cl', dest='comp_list',nargs='+', help='List of each component files, following XXXX:FileName format')
     cmd_display.add_argument('-t', dest='img_type',  type=str, default='CLASSIC', help='Container Image Type : [NORMAL, CLASSIC, MULTIBOOT]')
     cmd_display.add_argument('-o', dest='out_path',  type=str, default='.', help='Container output directory/file')
-    cmd_display.add_argument('-k', dest='key_path',  type=str, default='', help='Input key directory/file')
+    cmd_display.add_argument('-k', dest='key_path',  type=str, default='', help='Input key directory/file. Use key directoy path when container layout -l option is used \
+                                                                                 Use key file path when component files with -cl option is specified')
     cmd_display.add_argument('-a',  dest='auth', choices=['SHA2_256', 'SHA2_384', 'RSA2048_PKCS1_SHA2_256',
                     'RSA3072_PKCS1_SHA2_384', 'RSA2048_PSS_SHA2_256', 'RSA3072_PSS_SHA2_384', 'NONE'], default='',  help='authentication algorithm')
     cmd_display.add_argument('-cd', dest='comp_dir', type=str, default='', help='Componet image input directory')

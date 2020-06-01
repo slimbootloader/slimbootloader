@@ -36,7 +36,7 @@ def check_file_exist (chk_files):
     return ''
 
 
-def cfgdata_stitch(ifwi_file, ifwi_out_file, cfg_dir, key_dir, script_dir, tool_dir, platform_id):
+def cfgdata_stitch(ifwi_file, ifwi_out_file, cfg_dir, key_file, script_dir, tool_dir, platform_id):
     if len (dlt_files) == 0:
         raise Exception("Please run the generated CfgDataStitch.py script instead of the original one in source tree !")
 
@@ -69,16 +69,8 @@ def cfgdata_stitch(ifwi_file, ifwi_out_file, cfg_dir, key_dir, script_dir, tool_
         else:
             script_dir = get_script_dir()
 
-    if key_dir == '':
-        if fv_dir:
-            key_dir = os.path.realpath(os.path.join(fv_dir, '../../../../BootloaderCorePkg/Tools/Keys'))
-        else:
-            key_dir = get_script_dir()
-
-    if os.path.isdir(key_dir):
-        key_file = os.path.join(key_dir, 'TestSigningPrivateKey.pem')
-    else:
-        key_file = key_dir
+    if key_file == '':
+        raise Exception("Key file is not specified!!")
 
     if os.name == 'nt' and 'OPENSSL_PATH' not in os.environ:
         os.environ['OPENSSL_PATH'] = "C:\\Openssl\\"
@@ -183,11 +175,11 @@ def main():
                     default='',
                     help='CFGDATA directory path')
     ap.add_argument('-k',
-                    '--key-dir',
-                    dest='key_dir',
+                    '--key-file',
+                    dest='key_file',
                     type=str,
                     default='',
-                    help='Signing key directory path')
+                    help='Signing key path')
     ap.add_argument('-s',
                     '--script-dir',
                     dest='script_dir',
@@ -210,7 +202,7 @@ def main():
     args = ap.parse_args()
 
     cfgdata_stitch(args.ifwi_image, args.output_file, args.cfgdata_dir,
-                   args.key_dir, args.script_dir, args.tool_dir, args.platform_id)
+                   args.key_file, args.script_dir, args.tool_dir, args.platform_id)
 
 
 if __name__ == '__main__':
