@@ -19,14 +19,7 @@
 #include "ScRegs/RegsPcu.h"
 #include "ScRegs/RegsP2sb.h"
 #include "SocRegs.h"
-
-#define MmPciAddress( Segment, Bus, Device, Function, Register ) \
-  ( (UINTN) PcdGet64 (PcdPciExpressBaseAddress) + \
-    (UINTN)(Bus << 20) + \
-    (UINTN)(Device << 15) + \
-    (UINTN)(Function << 12) + \
-    (UINTN)(Register) \
-  )
+#include "SaCommonDefinitions.h"
 
 #define P2SB_PCI_MM_BASE (UINT32)MmPciAddress(0, \
                                               0, \
