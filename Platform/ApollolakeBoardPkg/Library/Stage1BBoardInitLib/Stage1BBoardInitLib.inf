@@ -52,6 +52,7 @@
   BootGuardLib
   HeciLib
   BoardSupportLib
+  BaseIpcLib
 
 [Guids]
   gEfiHeciMbpDataHobGuid

@@ -185,4 +185,9 @@
 #define B_HPET_TXC_IE                 BIT2  ///< Interrupt Enable
 #define B_HPET_TXC_IT                 BIT1  ///< Timer Interrupt Type
 
+
+#define R_P2SB_STSCMD                         0x04  ///< Status & Command Register
+#define B_P2SB_STSCMD_BME                     BIT2  ///< Bus Master Enable
+#define B_P2SB_STSCMD_MSE                     BIT1  ///< Memory Space Enable
+
 #endif
