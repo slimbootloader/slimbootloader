@@ -36,6 +36,15 @@
 #define PCI_FUNCTION_NUMBER_PMC_SSRAM       3
 
 ///
+/// PMC LPC1 Controller Registers (D13:F1)
+///
+#define PCI_DEVICE_NUMBER_PMC_IPC1          PCI_DEVICE_NUMBER_PMC
+#define PCI_FUNCTION_NUMBER_PMC_IPC1        1
+#define R_PMC_IPC1_BASE                     0x10  ///< BAR0
+#define R_PMC_ACPI_BASE                     0x20  ///< BAR2
+#define PMC_GCR_GEN_PMCON1                  0x20
+
+///
 ///  PMC Controller Registers (D13:F1)
 ///
 #define PCI_FUNCTION_NUMBER_PMC             1
