@@ -88,6 +88,9 @@ def prep_env ():
         print("Unsupported operating system !")
         sys.exit(1)
 
+    if 'SLIMBOOT_KEY_DIR' not in os.environ:
+        os.environ['SLIMBOOT_KEY_DIR'] = "./../SlimbootKeyDir/"
+
     print_tool_version_info(toolchain, toolchain_ver)
 
     check_for_openssl()
@@ -127,9 +130,9 @@ class BaseBoard(object):
         # Allow master key to be able to sign everything by default
         self._MASTER_KEY_USAGE      = HASH_USAGE['PUBKEY_CFG_DATA'] | HASH_USAGE['PUBKEY_FWU'] | HASH_USAGE['PUBKEY_OS'] | \
                                       HASH_USAGE['PUBKEY_CONT_DEF']
-        self._MASTER_PRIVATE_KEY    = os.path.join(key_dir, 'TestSigningPrivateKey.pem')
-        self._CFGDATA_PRIVATE_KEY   = os.path.join(key_dir, 'TestSigningPrivateKey.pem')
-        self._CONTAINER_PRIVATE_KEY = os.path.join(key_dir, 'TestSigningPrivateKey.pem')
+        self._MASTER_PRIVATE_KEY    = "MASTER_KEY_ID" #os.path.join(key_dir, 'TestSigningPrivateKey.pem')
+        self._CFGDATA_PRIVATE_KEY   = "CFGDATA_KEY_ID"#$os.path.join(key_dir, 'TestSigningPrivateKey.pem')
+        self._CONTAINER_PRIVATE_KEY = "CONTAINER_KEY_ID" #os.path.join(key_dir, 'TestSigningPrivateKey.pem')
         self.LOGO_FILE              = 'Platform/CommonBoardPkg/Logo/Logo.bmp'
 
         self._RSA_SIGN_TYPE          = 'RSA2048'
@@ -287,7 +290,7 @@ class Build(object):
         self._target                       = 'RELEASE' if board.RELEASE_MODE  else 'NOOPT' if board.NO_OPT_MODE else 'DEBUG'
         self._fsp_basename                 = 'FspDbg'  if board.FSPDEBUG_MODE else 'FspRel'
         self._fv_dir                       = os.path.join(self._workspace, 'Build', 'BootloaderCorePkg', '%s_%s' % (self._target, self._toolchain), 'FV')
-        self._key_dir                      = os.path.join('BootloaderCorePkg', 'Tools', 'Keys')
+        self._key_dir                      = os.environ['SLIMBOOT_KEY_DIR'] #os.path.join('BootloaderCorePkg', 'Tools', 'Keys')
         self._img_list                     = board.GetImageLayout()
         self._pld_list                     = get_payload_list (board._PAYLOAD_NAME.split(';'))
         self._comp_list                    = []

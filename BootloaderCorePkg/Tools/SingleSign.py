@@ -34,7 +34,7 @@ SIGNING_KEY = {
     "CFGDATA_KEY_ID"         :    "ConfigTestKey",
 
     # FIRMWAREUPDATE_KEY_ID is used for signing capsule firmware update image)
-    "FIRMWAREUPDATE_KEY_ID"  :    "FirmwareTestKey",
+    "FIRMWAREUPDATE_KEY_ID"  :    "FirmwareUpdateTestKey",
 
     # CONTAINER_KEY_ID is used for signing container header with mono signature
     "CONTAINER_KEY_ID"       :    "ContainerTestKey",
@@ -122,8 +122,9 @@ def single_sign_file (priv_key, hash_type, sign_scheme, in_file, out_file):
     # Check for Key Id or key path
     if not os.path.exists(priv_key):
         slimboot_key_dir = os.environ.get('SLIMBOOT_KEY_DIR')
+        print ("slimboot_key_dir1 %s" % slimboot_key_dir)
         if not os.path.exists(slimboot_key_dir):
-            raise Exception ("SLIMBOOT_KEY_DIR is defined. Set SLIMBOOT_KEY_DIR !!")
+            raise Exception ("SLIMBOOT_KEY_DIR is not defined. Set SLIMBOOT_KEY_DIR !!")
         # Generate key file name from key id
         priv_key_file = SIGNING_KEY[priv_key] + '_' + KEY_SIZE_TYPE +'.pem'
         priv_key =  os.path.join (slimboot_key_dir, priv_key_file)
@@ -176,8 +177,9 @@ def single_sign_gen_pub_key (in_key, pub_key_file = None):
     if not os.path.exists(in_key):
         # Check if SLIMBOOT_KEY_DIR is set
         slimboot_key_dir = os.environ.get('SLIMBOOT_KEY_DIR')
+        print ("slimboot_key_dir %s" % slimboot_key_dir)
         if not os.path.exists(slimboot_key_dir):
-            raise Exception ("SLIMBOOT_KEY_DIR is defined. Set SLIMBOOT_KEY_DIR !!")
+            raise Exception ("SLIMBOOT_KEY_DIR is not defined. Set SLIMBOOT_KEY_DIR !!")
         # Generate key file name from key_id
         key_file = SIGNING_KEY[in_key] + '_' + KEY_SIZE_TYPE+'.pem'
         in_key =  os.path.join (slimboot_key_dir, key_file)

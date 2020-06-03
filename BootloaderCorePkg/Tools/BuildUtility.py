@@ -371,6 +371,7 @@ def gen_pub_key_hash_store (signing_key, pub_key_hash_list, hash_alg, sign_schem
     idx = 0
     for usage, key_file in pub_key_hash_list:
         pub_key_file = os.path.dirname(out_file) + '/PUBKEY%02d.bin' % idx
+        print ("pub_key_dir %s key_file %s pub_key_file %s" % (pub_key_dir, key_file, pub_key_file))
         gen_pub_key (os.path.join(pub_key_dir, key_file), pub_key_file)
         key_hash_alg = adjust_hash_type (pub_key_file)
         hash_data = gen_hash_file (pub_key_file, key_hash_alg, None, True)

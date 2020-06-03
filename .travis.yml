@@ -42,7 +42,6 @@ matrix:
       os: windows
       language: shell
       env: BUILD_TARGET=cfl BUILD_REL=-r BUILD_ARCH=""  OPENSSL_PATH="/c/Openssl/bin/"  NASM_PREFIX="/c/Program Files/NASM/" IASL_PREFIX="/c/Asl/"
-
     - name: "CFL VC x64 D"
       os: windows
       language: shell
@@ -67,13 +66,13 @@ script:
   - |
     if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
       if [[ "$BUILD_TARGET" == "qemu" && "$BUILD_ARCH" == "" ]]; then
-        docker run --rm -v ${PWD}:/tmp/sbl -w /tmp/sbl --network=host sbl bash -c "python3 ./BuildLoader.py build ${BUILD_REL} ${BUILD_TARGET} && python3 ./Platform/QemuBoardPkg/Script/qemu_test.py";
+        docker run --rm -v ${PWD}:/tmp/sbl -w /tmp/sbl --network=host sbl bash -c "python3 BootloaderCorePkg/Tools/GenerateKeys.py -k ./../SlimbootKeyDir && python3 ./BuildLoader.py build ${BUILD_REL} ${BUILD_TARGET} && python3 ./Platform/QemuBoardPkg/Script/qemu_test.py";
       else
-        docker run --rm -v ${PWD}:/tmp/sbl -w /tmp/sbl --network=host sbl python3 ./BuildLoader.py build ${BUILD_REL} ${BUILD_TARGET} ${BUILD_ARCH};
+        docker run --rm -v ${PWD}:/tmp/sbl -w /tmp/sbl --network=host sbl bash -c "python3 BootloaderCorePkg/Tools/GenerateKeys.py -k ./../SlimbootKeyDir && python3 ./BuildLoader.py build ${BUILD_REL} ${BUILD_TARGET} ${BUILD_ARCH}";
       fi
     else
       git config --global user.email "travis@travis-ci.org"
       git config --global user.name  "Travis CI"
-      python BuildLoader.py build ${BUILD_REL} ${BUILD_TARGET} ${BUILD_ARCH}
+      python BootloaderCorePkg/Tools/GenerateKeys.py -k ./../SlimbootKeyDir && python BuildLoader.py build ${BUILD_REL} ${BUILD_TARGET} ${BUILD_ARCH}
     fi
 

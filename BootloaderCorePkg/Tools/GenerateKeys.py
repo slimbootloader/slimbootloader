@@ -77,7 +77,8 @@ def main():
     args = parser.parse_args()
 
     if not os.path.isdir(args.KeyDir):
-         raise Exception ("Key directory path do not exists!! ")
+         #raise Exception ("Key directory path do not exists!! ")
+        os.mkdir(args.KeyDir)
 
     openssl_path = get_openssl_path()
 
