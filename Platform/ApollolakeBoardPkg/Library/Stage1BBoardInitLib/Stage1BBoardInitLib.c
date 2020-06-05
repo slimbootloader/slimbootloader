@@ -54,9 +54,6 @@
 #define APL_FSP_STACK_TOP       0xFEF40000
 #define MRC_PARAMS_BYTE_OFFSET_MRC_VERSION 14
 
-// SSC (spread spectrum) disable for testing purposes only
-#define SSC_TEST_ENABLE 0
-
 CONST PLT_DEVICE  mPlatformDevices[]= {
   {{0x00001200}, OsBootDeviceSata  , 0 },
   {{0x00001B00}, OsBootDeviceSd    , 0 },
@@ -1706,12 +1703,12 @@ PlatformFeaturesInit (
   }
 }
 
-#if ( SSC_TEST_ENABLE == 1 ) 
 /**
     USB3, PCie, SATA, eDP, DP, eMMC, SD and SDIO SSC
     Partially implemented PeiHighSpeedSerialInterfaceSSCInit and PeiDDRSSCInit
     to disable SSC in LCPLL_CTRL_1 and LJ1PLL_CTRL
 **/
+STATIC
 VOID
 EFIAPI
 SetSSCDisable (
@@ -1800,7 +1797,18 @@ SetSSCDisable (
   SideBandWrite32 (0x99, 0x9910, LCPLL_CTRL_1.Data);
 }
 
-#endif //SSC_TEST_ENABLE
+/**
+    Control SSC enable function
+**/
+VOID
+SetPlatformSsc (
+  IN  BOOLEAN  Enable )
+{
+  if ( !Enable )
+  {
+    SetSSCDisable();
+  }
+}
 
 /**
   Board specific hook points.
@@ -1854,10 +1862,7 @@ BoardInit (
     PcieRpPwrRstInit ();
     RtcInit ();
     PlatformFeaturesInit ();
-
-#if ( SSC_TEST_ENABLE == 1 )
-    SetSSCDisable();
-#endif //SSC_TEST_ENABLE
+    SetPlatformSsc (TRUE);
 
     break;
   case PreMemoryInit:
