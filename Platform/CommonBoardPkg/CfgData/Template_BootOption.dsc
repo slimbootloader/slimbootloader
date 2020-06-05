@@ -50,8 +50,9 @@
 
     # !BSF NAME:{Hardware Partition}
     # !BSF TYPE:{Combo}
-    # !BSF OPTION:{0:User Partition, 1:Boot Partition 1, 2:Boot Partition 2}
-    # !BSF HELP:{Specify hardware partition number}
+    # !BSF OPTION:{0:User Partition, 1:Boot Partition 1, 2:Boot Partition 2, 3:Boot Partition 3, 4:Boot Partition 4}
+    # !BSF HELP:{Specify hardware partition number.}
+    # !BSF HELP:{+ If boot device type is SPI, the hardware partition refers to SPI flash region: 0-Descriptor, 1-BIOS, 2-ME, 3-GbE, 4-PDR Regions}
     # !BSF CONDITION:{$ImageType_$(1) < 0xFE}
     gCfgData.HwPart_$(1)                    |      * | 0x01 | $(6)
 
