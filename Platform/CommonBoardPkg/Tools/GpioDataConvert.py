@@ -2,7 +2,7 @@
 #  This is a python script for generating required output format
 #  of Gpio pin information from a given input format
 #
-# Copyright (c) 2019, Intel Corporation. All rights reserved. <BR>
+# Copyright (c) 2019 - 2020, Intel Corporation. All rights reserved. <BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -11,16 +11,17 @@ import os
 import sys
 import argparse
 import re
+import imp
 from   ctypes import *
 
 DSC_LINE_HDR = "# !BSF SUBT:{GPIO_TMPL:"
 DLT_CFGx_HDR = "GPIO_CFG_DATA.GpioPinConfig"
 DLT_CFG0_HDR = DLT_CFGx_HDR + "0_"
 DLT_CFG1_HDR = DLT_CFGx_HDR + "1_"
-H_STRUCT_HDR = "static GPIO_INIT_CONFIG mGpioTableCnlXXXX[] = {\n"
+H_STRUCT_HDR = "static GPIO_INIT_CONFIG mGpioTable[] = {\n"
 H_STRUCT_FTR = "\n};"
-CSV_FILE_HDR = "GpioPad, PadMode, HostSoftPadOwn, Direction, OutputState, InterruptConfig, PowerConfig, ElectricalConfig, LockConfig\n"
-PAD_NAME_HDR = "GPIO_CNL_XX_"
+CSV_FILE_HDR = "GpioPad, PadMode, HostSoftPadOwn, Direction, OutputState, InterruptConfig, PowerConfig, ElectricalConfig, LockConfig, OtherSettings\n"
+PAD_NAME_HDR = "GPIO_XXX_XX_"
 
 
 # This tool's input/output can be one of the following formats:
@@ -28,16 +29,16 @@ PAD_NAME_HDR = "GPIO_CNL_XX_"
 
 # .h input
 #
-# static GPIO_INIT_CONFIG mGpioTableCnlUDdr4[] =
+# static GPIO_INIT_CONFIG mGpioTable[] =
 # {
-#    //     GpioPad               Pmode            GPI_IS       GpioDir    GPIOTxState      RxEvCfg/GPIRoutConfig        PadRstCfg            Term           LockConfig
-#    {GPIO_XXXXXX_GPP_A7,  { GpioPadModeGpio, GpioHostOwnGpio, GpioDirIn, GpioOutDefault, GpioIntLevel | GpioIntApic, GpioHostDeepReset, GpioTermWpu20K, GpioPadConfigUnlock }},
+#    //     GpioPad               Pmode            GPI_IS       GpioDir    GPIOTxState      RxEvCfg/GPIRoutConfig        PadRstCfg            Term           LockConfig        OtherSettings
+#    {GPIO_XXXXXX_GPP_A7,  { GpioPadModeGpio, GpioHostOwnGpio, GpioDirIn, GpioOutDefault, GpioIntLevel | GpioIntApic, GpioHostDeepReset, GpioTermWpu20K, GpioPadConfigUnlock,  GpioRxRaw1Default}},
 # };
 
 # .csv input
 #
-# GpioPad, PadMode, HostSoftPadOwn, Direction, OutputState, InterruptConfig, PowerConfig, ElectricalConfig, LockConfig
-# GPIO_XXXXXX_GPP_A7,GpioPadModeGpio,GpioHostOwnGpio,GpioDirIn,GpioOutDefault,GpioIntLevel|GpioIntApic,GpioHostDeepReset,GpioTermWpu20K,GpioPadConfigUnlock
+# GpioPad, PadMode, HostSoftPadOwn, Direction, OutputState, InterruptConfig, PowerConfig, ElectricalConfig, LockConfig, OtherSettings
+# GPIO_XXXXXX_GPP_A7,GpioPadModeGpio,GpioHostOwnGpio,GpioDirIn,GpioOutDefault,GpioIntLevel|GpioIntApic,GpioHostDeepReset,GpioTermWpu20K,GpioPadConfigUnlock,GpioRxRaw1Default
 
 # .txt input
 #                    HostSwOwn  PadCfgLock PadCfgLockTx PadCfgDw0 PadCfgDw1
@@ -49,8 +50,8 @@ PAD_NAME_HDR = "GPIO_CNL_XX_"
 
 # .dlt input
 #
-# GPIO_CFG_DATA.GpioPinConfig0_GPP_A07 | 0x********
-# GPIO_CFG_DATA.GpioPinConfig1_GPP_A07 | 0x********
+# GPIO_CFG_DATA.GpioPinConfig0_GPP_A07 | 0x******** # SBL DW0
+# GPIO_CFG_DATA.GpioPinConfig1_GPP_A07 | 0x******** # SBL DW1
 
 
 #
@@ -68,6 +69,7 @@ GPIO_PAD_MODE = {
     'GpioPadModeNative3'    : 0x7,
     'GpioPadModeNative4'    : 0x9,
     'GpioPadModeNative5'    : 0xB,
+    'GpioPadModeNative6'    : 0xD,
 }
 
 GPIO_HOSTSW_OWN = {
@@ -105,17 +107,6 @@ GPIO_INT_CONFIG = {
     'GpioIntBothEdge'       : (0x7 << 5),
 }
 
-GPIO_MIXED_INT_CONFIG = {
-    'GpioIntLevel|GpioIntApic'  : 0x31,
-    'GpioIntLevel|GpioIntSci'   : 0x29,
-    'GpioIntLevel|GpioIntSmi'   : 0x25,
-    'GpioIntEdge|GpioIntSci'    : 0x69,
-    'GpioIntEdge|GpioIntApic'   : 0x71,
-    'GpioIntEdge|GpioIntSmi'    : 0x65,
-    'GpioIntEdge|GpioIntDefault': 0x60,
-    'GpioIntLvlEdgDis|GpioIntDis':0xA1,
-}
-
 GPIO_RESET_CONFIG = {
     'GpioResetDefault'      : 0x00,
     'GpioResumeReset'       : 0x01,
@@ -144,6 +135,12 @@ GPIO_LOCK_CONFIG = {
     'GpioOutputStateUnlock' : 0xC,
     'GpioPadUnlock'         : 0xF,
     'GpioPadLock'           : 0x5,
+}
+
+GPIO_OTHER_CONFIG = {
+    'GpioRxRaw1Default'     : 0x0,
+    'GpioRxRaw1Dis'         : 0x1,
+    'GpioRxRaw1En'          : 0x3,
 }
 
 #
@@ -340,8 +337,8 @@ SBL_DW0_INTCFG_SRC_MASK = 0x1F
 SBL_DW0_DIR_TXRX_MASK   = 0x7
 SBL_DW0_OUT_STATE_MASK  = 0x3
 SBL_DW0_PMODE_MASK      = 0xF
-SBL_DW0_ELEC_CFG_MASK   = 0x1F
-
+SBL_DW1_ELEC_CFG_MASK   = 0x1F
+SBL_DW1_OTHER_RXRAW_MASK= 0x3
 #
 # Misc global end
 #
@@ -404,7 +401,7 @@ def get_parts_from_inp (inp_fmt, line, next_line):
     elif inp_fmt.endswith ('.txt'):
         parts = line.split(':')
     elif inp_fmt.endswith ('.dsc'):
-        if line.startswith (DSC_LINE_HDR):
+        if line.lstrip().startswith (DSC_LINE_HDR):
             line = line.replace(' ', '').rstrip('}\n')
             parts = line.split(':')
     elif inp_fmt.endswith ('dlt'):
@@ -491,16 +488,14 @@ def get_field_from_sbl_dw (s_in, s_mask, bit_pos, e_field, which_dw):
 #
 
 # convert i/p from .h and .csv to SBL GPIO CFG DWs
-def get_sbl_dws_from_h_csv (parts, pad_name, sbl_dw0, sbl_dw1):
+def get_sbl_dws_from_h_csv (parts, pad_name, sbl_dw0, sbl_dw1, gpio_cfg_file):
     # SBL Cfg Dw0
     sbl_dw0.Dw0Tmpl.PadMode         = GPIO_PAD_MODE[parts[1]]
     sbl_dw0.Dw0Tmpl.HostSoftPadOwn  = GPIO_HOSTSW_OWN[parts[2]]
     sbl_dw0.Dw0Tmpl.Direction       = GPIO_DIRECTION[parts[3]]
     sbl_dw0.Dw0Tmpl.OutputState     = GPIO_OUTPUT_STATE[parts[4]]
-    if '|' not in parts[5]:
-        sbl_dw0.Dw0Tmpl.InterruptConfig = GPIO_INT_CONFIG[parts[5]]
-    else:
-        sbl_dw0.Dw0Tmpl.InterruptConfig = GPIO_MIXED_INT_CONFIG[parts[5]]
+    for key in parts[5].split('|'):
+        sbl_dw0.Dw0Tmpl.InterruptConfig |= GPIO_INT_CONFIG[key]
     sbl_dw0.Dw0Tmpl.PowerConfig     = GPIO_RESET_CONFIG[parts[6]]
 
     # SBL Cfg Dw1
@@ -510,8 +505,13 @@ def get_sbl_dws_from_h_csv (parts, pad_name, sbl_dw0, sbl_dw1):
             sbl_dw1.Dw1Tmpl.LockConfig  = GPIO_LOCK_CONFIG[parts[8]]
     else:
         sbl_dw1.Dw1Tmpl.LockConfig  = GPIO_LOCK_CONFIG['GpioLockDefault']
+
+    if len(parts) > 9:
+        if parts[9].startswith('Gpio'):
+            sbl_dw1.Dw1Tmpl.OtherSettings  = GPIO_OTHER_CONFIG[parts[9]]
+
     sbl_dw1.Dw1Tmpl.PadNum          = int (pad_name[5:7])
-    sbl_dw1.Dw1Tmpl.GrpIdx          = GRP_INFO_CFL_WHL[pad_name[0:5]][0]
+    sbl_dw1.Dw1Tmpl.GrpIdx          = gpio_cfg_file.get_grp_info()[pad_name[0:5]][0]
 
 # Map the reset (power) cfg from eds dw to sbl dw
 def get_reset_cfg_from_eds (eDw0):
@@ -530,7 +530,7 @@ def get_reset_cfg_from_eds (eDw0):
     return rst_cfg
 
 # Convert i/p from .txt (GPIO PAD CFG register (EDS) values) to SBL GPIO CFG DWs
-def get_sbl_dws_from_txt (parts, pad_name, sbl_dw0, sbl_dw1):
+def get_sbl_dws_from_txt (parts, pad_name, sbl_dw0, sbl_dw1, gpio_cfg_file):
     eds_dw0 = EDS_DW0 ()
     eds_dw1 = EDS_DW1 ()
 
@@ -554,11 +554,13 @@ def get_sbl_dws_from_txt (parts, pad_name, sbl_dw0, sbl_dw1):
     sbl_dw1.Dw1Tmpl.ElectricalConfig=   get_field_from_eds_dw (eds_dw1.Dw1, 'TERM',         1, 0)
     sbl_dw1.Dw1Tmpl.LockConfig      =   ((not((padcfglock >> padnumpos) & 0x1)) << 1) | 0x1
     sbl_dw1.Dw1Tmpl.LockConfig      |=  ((not((padcfglocktx >> padnumpos) & 0x1)) << 2) | 0x1
+    if (gpio_cfg_file.rxraw_override_cfg()):
+        sbl_dw1.Dw1Tmpl.OtherSettings=  get_field_from_eds_dw (eds_dw0.Dw0, 'RXRAW1',       0, 0)
     sbl_dw1.Dw1Tmpl.PadNum          =   int (pad_name[5:7])
-    sbl_dw1.Dw1Tmpl.GrpIdx          =   GRP_INFO_CFL_WHL[pad_name[0:5]][0]
+    sbl_dw1.Dw1Tmpl.GrpIdx          =   gpio_cfg_file.get_grp_info()[pad_name[0:5]][0]
 
 # Calucalte the SBL Config Dws from '.h' or '.csv' or '.txt' data
-def get_sbl_dws (inp_fmt, parts):
+def get_sbl_dws (inp_fmt, cfg_file, parts):
     sbl_dw0 = SBL_DW0 ()
     sbl_dw1 = SBL_DW1 ()
 
@@ -567,10 +569,12 @@ def get_sbl_dws (inp_fmt, parts):
     if not pad_name.startswith('GPP_'):
         return '', 0x0, 0x0
 
+    gpio_cfg_file = imp.load_source('GenGpioDataConfig', cfg_file)
+
     if inp_fmt.endswith ('.h') or inp_fmt.endswith ('.csv'):
-        get_sbl_dws_from_h_csv (parts, pad_name, sbl_dw0, sbl_dw1)
+        get_sbl_dws_from_h_csv (parts, pad_name, sbl_dw0, sbl_dw1, gpio_cfg_file)
     elif inp_fmt.endswith ('.txt'):
-        get_sbl_dws_from_txt (parts, pad_name, sbl_dw0, sbl_dw1)
+        get_sbl_dws_from_txt (parts, pad_name, sbl_dw0, sbl_dw1, gpio_cfg_file)
     else:
         return '', 0x0, 0x0
 
@@ -585,22 +589,29 @@ def get_sbl_dws (inp_fmt, parts):
 #
 
 # Get .h, .csv line from SBL Config DWs
-def get_h_csv_from_sbl_dws (sbl_dw0, sbl_dw1):
+def get_h_csv_from_sbl_dws (sbl_dw0, sbl_dw1, gpio_cfg_file):
     PadMode         = list(GPIO_PAD_MODE.keys())[list(GPIO_PAD_MODE.values()).index(sbl_dw0.Dw0Tmpl.PadMode)]
     HostSoftPadOwn  = list(GPIO_HOSTSW_OWN.keys())[list(GPIO_HOSTSW_OWN.values()).index(sbl_dw0.Dw0Tmpl.HostSoftPadOwn)]
     Direction       = list(GPIO_DIRECTION.keys())[list(GPIO_DIRECTION.values()).index(sbl_dw0.Dw0Tmpl.Direction)]
     OutputState     = list(GPIO_OUTPUT_STATE.keys())[list(GPIO_OUTPUT_STATE.values()).index(sbl_dw0.Dw0Tmpl.OutputState)]
-    if sbl_dw0.Dw0Tmpl.InterruptConfig in list(GPIO_INT_CONFIG.values()):
+    if sbl_dw0.Dw0Tmpl.InterruptConfig <= 0x1F:
         IntConfig   = list(GPIO_INT_CONFIG.keys())[list(GPIO_INT_CONFIG.values()).index(sbl_dw0.Dw0Tmpl.InterruptConfig)]
     else:
-        IntConfig   =  list(GPIO_MIXED_INT_CONFIG.keys())[list(GPIO_MIXED_INT_CONFIG.values()).index(sbl_dw0.Dw0Tmpl.InterruptConfig)]
+        int_cfg_1   = sbl_dw0.Dw0Tmpl.InterruptConfig & 0x1F
+        int_cfg_2   = sbl_dw0.Dw0Tmpl.InterruptConfig & (~0x1F)
+        IntConfig   =  list(GPIO_INT_CONFIG.keys())[list(GPIO_INT_CONFIG.values()).index(int_cfg_1)] + '|'
+        IntConfig  +=  list(GPIO_INT_CONFIG.keys())[list(GPIO_INT_CONFIG.values()).index(int_cfg_2)]
     PowerConfig     = list(GPIO_RESET_CONFIG.keys())[list(GPIO_RESET_CONFIG.values()).index(sbl_dw0.Dw0Tmpl.PowerConfig)]
 
     ElecConfig      = list(GPIO_ELECTRICAL_CONFIG.keys())[list(GPIO_ELECTRICAL_CONFIG.values()).index(sbl_dw1.Dw1Tmpl.ElectricalConfig)]
     LockConfig      = list(GPIO_LOCK_CONFIG.keys())[list(GPIO_LOCK_CONFIG.values()).index(sbl_dw1.Dw1Tmpl.LockConfig)]
+    if (gpio_cfg_file.rxraw_override_cfg()):
+        OtherSettings= list(GPIO_OTHER_CONFIG.keys())[list(GPIO_OTHER_CONFIG.values()).index(sbl_dw1.Dw1Tmpl.OtherSettings)]
+    else:
+        OtherSettings= ''
 
-    h_csv_line = "%s, %s, %s, %s, %s, %s, %s, %s" % \
-                (PadMode, HostSoftPadOwn, Direction, OutputState, IntConfig, PowerConfig, ElecConfig, LockConfig)
+    h_csv_line = "%s, %s, %s, %s, %s, %s, %s, %s, %s" % \
+                (PadMode, HostSoftPadOwn, Direction, OutputState, IntConfig, PowerConfig, ElecConfig, LockConfig, OtherSettings)
 
     return h_csv_line
 
@@ -623,7 +634,7 @@ def get_reset_cfg_from_sbl (rst_cfg):
     return GPP_RST_CFG_SBL_TO_EDS[rst_cfg]
 
 # Get .txt line from SBL Config DWs
-def get_txt_from_sbl_dws (sbl_dw0, sbl_dw1, pad_name):
+def get_txt_from_sbl_dws (sbl_dw0, sbl_dw1, pad_name, gpio_cfg_file):
     eds_dw0 = EDS_DW0 ()
     eds_dw1 = EDS_DW1 ()
 
@@ -638,7 +649,9 @@ def get_txt_from_sbl_dws (sbl_dw0, sbl_dw1, pad_name):
     eds_dw0.Dw0 |=  get_field_from_sbl_dw (sbl_dw0.Dw0Tmpl.Direction,       SBL_DW0_DIR_RXINV_MASK,    SBL_DW0_DIR_RXINV_OFF,   'RXINV',       0)
     eds_dw0.Dw0 |=  get_field_from_sbl_dw (sbl_dw0.Dw0Tmpl.OutputState,     SBL_DW0_OUT_STATE_MASK,                         0,  'GPIOTXSTATE', 0)
     eds_dw0.Dw0 |=  get_field_from_sbl_dw (sbl_dw0.Dw0Tmpl.PadMode,         SBL_DW0_PMODE_MASK,                             0,  'PMODE',       0)
-    eds_dw1.Dw1 |=  get_field_from_sbl_dw (sbl_dw1.Dw1Tmpl.ElectricalConfig,SBL_DW0_ELEC_CFG_MASK,                          0,  'TERM',        1)
+    if (gpio_cfg_file.rxraw_override_cfg()):
+        eds_dw0.Dw0 |= get_field_from_sbl_dw (sbl_dw1.Dw1.OtherSettings,    SBL_DW1_OTHER_RXRAW_MASK,                       0,  'RXRAW1',      0)
+    eds_dw1.Dw1 |=  get_field_from_sbl_dw (sbl_dw1.Dw1Tmpl.ElectricalConfig,SBL_DW1_ELEC_CFG_MASK,                          0,  'TERM',        1)
 
     padnum      = int (pad_name[5:7])
     padnumpos   = padnum % 32
@@ -660,7 +673,7 @@ def get_txt_from_sbl_dws (sbl_dw0, sbl_dw1, pad_name):
     return txt_line
 
 # Convert SBL Config DWs to .h, .csv, .txt fomrat
-def parse_sbl_dws (inp_fmt, out_fmt, parts):
+def parse_sbl_dws (inp_fmt, out_fmt, cfg_file, parts):
     sbl_dw0 = SBL_DW0 ()
     sbl_dw1 = SBL_DW1 ()
 
@@ -683,10 +696,12 @@ def parse_sbl_dws (inp_fmt, out_fmt, parts):
     if not pad_name.startswith('GPP_'):
         return '', ''
 
+    gpio_cfg_file = imp.load_source('GenGpioDataConfig', cfg_file)
+
     if out_fmt == 'h' or out_fmt == 'csv':
-        out_line = get_h_csv_from_sbl_dws (sbl_dw0, sbl_dw1)
+        out_line = get_h_csv_from_sbl_dws (sbl_dw0, sbl_dw1, gpio_cfg_file)
     elif out_fmt == 'txt':
-        out_line = get_txt_from_sbl_dws (sbl_dw0, sbl_dw1, pad_name)
+        out_line = get_txt_from_sbl_dws (sbl_dw0, sbl_dw1, pad_name, gpio_cfg_file)
     else:
         out_line = ''
 
@@ -701,9 +716,9 @@ def parse_sbl_dws (inp_fmt, out_fmt, parts):
 #
 
 # Convert and populate the global dictionaries
-def convert_from_inp_to_out (inp_fmt, out_fmt, parts):
+def convert_from_inp_to_out (inp_fmt, cfg_file, out_fmt, parts):
     if inp_fmt.endswith ('.h') or inp_fmt.endswith ('.csv') or inp_fmt.endswith ('.txt'):
-        pad_name, dw0, dw1 = get_sbl_dws (inp_fmt, parts)
+        pad_name, dw0, dw1 = get_sbl_dws (inp_fmt, cfg_file, parts)
         if pad_name != '':
             if out_fmt == 'dsc':
                 sbl_dsc_line = DSC_LINE_HDR + pad_name + ": 0x%08X" % dw0 + ": 0x%08X" % dw1 + "}"
@@ -713,7 +728,7 @@ def convert_from_inp_to_out (inp_fmt, out_fmt, parts):
                 sbl_dlt_line += DLT_CFG1_HDR + pad_name + " | 0x%08X"    % dw1
                 dlt_dict[pad_name] = sbl_dlt_line
     elif inp_fmt.endswith ('.dsc') or inp_fmt.endswith ('.dlt'):
-        pad_name, out_line = parse_sbl_dws (inp_fmt, out_fmt, parts)
+        pad_name, out_line = parse_sbl_dws (inp_fmt, out_fmt, cfg_file, parts)
         if pad_name != '':
             if out_fmt == 'h':
                 h_line = "{" + PAD_NAME_HDR + pad_name + ", { " + out_line + "  }},\n"
@@ -725,7 +740,7 @@ def convert_from_inp_to_out (inp_fmt, out_fmt, parts):
                 txt_line = pad_name + ':' + out_line + '\n'
                 txt_dict[pad_name] = txt_line
             else:
-                print 'Invalid out type'
+                print('Invalid out type')
 
 # Gen output file in the required format
 def gen_file_from_object (file, object):
@@ -751,7 +766,7 @@ def gpio_convert (args):
                 parts = get_parts_from_inp (args.inp_fmt, line, '')
             if len(parts) == 0:
                 continue
-            convert_from_inp_to_out (args.inp_fmt, args.out_fmt, parts)
+            convert_from_inp_to_out (args.inp_fmt, args.cfg_file, args.out_fmt, parts)
 
     # Copy the final data to ouput
     sbl_data = ""
@@ -785,7 +800,7 @@ def gpio_convert (args):
         out_dir = os.path.dirname(args.out_path)
         out_file = os.path.basename(args.out_path)
     out_path = os.path.join (out_dir, out_file)
-    gen_file_from_object (out_path, sbl_data)
+    gen_file_from_object (out_path, sbl_data.encode('utf-8'))
 
 #
 # Main helpers end
@@ -796,20 +811,22 @@ if __name__ == '__main__':
 
     ap = argparse.ArgumentParser()
     ap.add_argument(  '-if',
-                        '--inp_fmt',
                         dest='inp_fmt',
                         type=str,
                         required=True,
-                        help='GPIO input data file')
+                        help='Input data file, either [dsc, dlt] or [h , csv, txt]')
+    ap.add_argument(  '-cf',
+                        dest='cfg_file',
+                        type=str,
+                        required=True,
+                        help='Config file containing inputs like Group Info(dict with name & index in GPIO_GROUP_INFO in Gpio Lib code)')
     ap.add_argument(  '-of',
-                        '--out_fmt',
                         dest='out_fmt',
                         choices=['dsc', 'dlt', 'h', 'csv', 'txt'],
                         type=str,
                         required=True,
-                        help='Output SBL format')
+                        help='Output SBL format, either [h, csv, txt] or [dsc, dlt]')
     ap.add_argument(  '-o',
-                        '--out_path',
                         dest='out_path',
                         default='.',
                         type=str,
@@ -817,6 +834,11 @@ if __name__ == '__main__':
     ap.set_defaults(func=gpio_convert)
 
     args = ap.parse_args()
+
+    gpio_cfg_file = imp.load_source('GenGpioDataConfig', args.cfg_file)
+    if (gpio_cfg_file.plat_name() == 'apl'):
+        raise Exception ('Platform unsupported')
+
     args.func(args)
 
     sys.exit(0)
