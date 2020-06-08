@@ -578,7 +578,7 @@ class CONTAINER ():
 
             # create header entry
             auth_type_str = self.get_auth_type_str (self.header.auth_type)
-            key_file = 'TestSigningPrivateKey.pem' if auth_type_str.startswith('RSA') else ''
+            key_file = 'CONTAINER_KEY_ID' if auth_type_str.startswith('RSA') else ''
             alignment = self.header.alignment
             image_type_str = CONTAINER.get_image_type_str(self.header.image_type)
             header = ['%s' % self.header.signature.decode(), file_name, image_type_str,  auth_type_str,  key_file]
@@ -587,7 +587,7 @@ class CONTAINER ():
             # create component entry
             for component in self.header.comp_entry:
                 auth_type_str = self.get_auth_type_str (component.auth_type)
-                key_file      = 'TestSigningPrivateKey.pem' if auth_type_str.startswith('RSA') else ''
+                key_file      = 'CONTAINER_COMP_KEY_ID' if auth_type_str.startswith('RSA') else ''
                 lz_header = LZ_HEADER.from_buffer(component.data)
                 alg = LZ_HEADER._compress_alg[lz_header.signature]
                 if component.attribute & COMPONENT_ENTRY._attr['RESERVED']:
@@ -798,7 +798,7 @@ def main():
     cmd_display.add_argument('-t', dest='img_type',  type=str, default='CLASSIC', help='Container Image Type : [NORMAL, CLASSIC, MULTIBOOT]')
     cmd_display.add_argument('-o', dest='out_path',  type=str, default='.', help='Container output directory/file')
     cmd_display.add_argument('-k', dest='key_path',  type=str, default='', help='Input key directory/file. Use key directoy path when container layout -l option is used \
-                                                                                 Use key file path when component files with -cl option is specified')
+                                                                                 Use Key Id or key file path when component files with -cl option is specified')
     cmd_display.add_argument('-a',  dest='auth', choices=['SHA2_256', 'SHA2_384', 'RSA2048_PKCS1_SHA2_256',
                     'RSA3072_PKCS1_SHA2_384', 'RSA2048_PSS_SHA2_256', 'RSA3072_PSS_SHA2_384', 'NONE'], default='',  help='authentication algorithm')
     cmd_display.add_argument('-cd', dest='comp_dir', type=str, default='', help='Componet image input directory')
@@ -820,7 +820,7 @@ def main():
     cmd_display.add_argument('-n',  dest='comp_name',  type=str, required=True, help='Component name to replace')
     cmd_display.add_argument('-f',  dest='comp_file',  type=str, required=True, help='Component input file path')
     cmd_display.add_argument('-c',  dest='compress', choices=['lz4', 'lzma', 'dummy'], default='dummy', help='compression algorithm')
-    cmd_display.add_argument('-k',  dest='key_file',  type=str, default='', help='Private key file path to sign component')
+    cmd_display.add_argument('-k',  dest='key_file',  type=str, default='', help='Key Id or Private key file path to sign component')
     cmd_display.add_argument('-td', dest='tool_dir', type=str, default='', help='Compression tool directory')
     cmd_display.set_defaults(func=replace_component)
 
@@ -831,7 +831,7 @@ def main():
     cmd_display.add_argument('-c',  dest='compress', choices=['lz4', 'lzma', 'dummy'],  default='dummy', help='compression algorithm')
     cmd_display.add_argument('-a',  dest='auth', choices=['SHA2_256', 'SHA2_384', 'RSA2048_PKCS1_SHA2_256',
                 'RSA3072_PKCS1_SHA2_384', 'RSA2048_PSS_SHA2_256', 'RSA3072_PSS_SHA2_384', 'NONE'], default='NONE',  help='authentication algorithm')
-    cmd_display.add_argument('-k',  dest='key_file',  type=str, default='', help='Private key file path to sign component')
+    cmd_display.add_argument('-k',  dest='key_file',  type=str, default='', help='Key Id or Private key file path to sign component')
     cmd_display.add_argument('-td', dest='tool_dir', type=str, default='',  help='Compression tool directory')
     cmd_display.set_defaults(func=sign_component)
 

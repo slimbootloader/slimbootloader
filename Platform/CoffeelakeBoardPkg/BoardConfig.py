@@ -160,6 +160,33 @@ class Board(BaseBoard):
         dsc['LibraryClasses.%s' % self.BUILD_ARCH] = common_libs
         return dsc
 
+    def GetKeyHashList (self):
+        # Define a set of new key used for different purposes
+        # The key is either key id or public key PEM format or private key PEM format
+        pub_key_list = [
+          (
+            # Key for verifying Config data blob
+            HASH_USAGE['PUBKEY_CFG_DATA'],
+            'CFGDATA_KEY_ID'
+          ),
+          (
+            # Key for verifying firmware update
+            HASH_USAGE['PUBKEY_FWU'],
+            'FIRMWAREUPDATE_KEY_ID'
+          ),
+          (
+            # Key for verifying container header
+            HASH_USAGE['PUBKEY_CONT_DEF'],
+            'CONTAINER_KEY_ID'
+          ),
+          (
+            # key for veryfying OS image.
+            HASH_USAGE['PUBKEY_OS'],
+            'OS1_PUBLIC_KEY_ID'
+          ),
+        ]
+        return pub_key_list
+
     def GetImageLayout (self):
         img_list = []
 
