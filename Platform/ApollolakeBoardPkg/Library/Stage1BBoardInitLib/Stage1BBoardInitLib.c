@@ -1711,7 +1711,7 @@ PlatformFeaturesInit (
 STATIC
 VOID
 EFIAPI
-SetSSCDisable (
+SetSscDisable (
   VOID
   )
 {
@@ -1740,7 +1740,7 @@ SetSSCDisable (
                                                          {No_Clk_Bending, 0x0, 0x7D},
                                                          {Clk_Bending_M09, 0xDB6C20, 0x7B}};
 
-  DEBUG ((DEBUG_INFO, "SetSSCDisable()\n"));
+  DEBUG ((DEBUG_INFO, "SetSscDisable()\n"));
   //
   // default value of the 4 SSC setting registers
   //
@@ -1777,8 +1777,7 @@ SetSSCDisable (
   WBuf.LJ1PLL_CTRL_1.Fields.ssc_en = SSC_DISABLE;
   WBuf.LJ1PLL_CTRL_1.Fields.ssc_en_ovr = SSC_DISABLE;
   Status = IpcSendCommandEx (IPC_CMD_ID_EMI_RFI_SUPPORT, IPC_SUBCMD_ID_SSC_APPLY_NOW, &WBuf, BufferSize);
-  if(EFI_ERROR (Status))
-  {
+  if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "\nFailed to disable LJ1PLL_CTRL SSC \n\r"));
   }
 
@@ -1804,9 +1803,8 @@ VOID
 SetPlatformSsc (
   IN  BOOLEAN  Enable )
 {
-  if ( !Enable )
-  {
-    SetSSCDisable();
+  if (!Enable) {
+    SetSscDisable();
   }
 }
 
