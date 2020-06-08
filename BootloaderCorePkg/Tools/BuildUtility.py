@@ -820,6 +820,7 @@ def print_tool_version_info(cmd, version):
         pass
     print ('Using %s, Version %s' % (cmd, version))
 
+
 def check_for_openssl():
     '''
     Verify OpenSSL executable is available
@@ -858,6 +859,10 @@ def check_for_git():
         sys.exit(1)
     print_tool_version_info(cmd, version)
     return version
+
+def check_for_slimbootkeydir():
+    if not os.path.exists(os.environ.get('SBL_KEY_DIR')):
+        raise Exception ("SBL_KEY_DIR is not valid. Set correct SBL_KEY_DIR path !!")
 
 def copy_images_to_output (fv_dir, zip_file, img_list, rgn_name_list, out_list):
     zip_path_file = os.path.join (os.environ['WORKSPACE'], zip_file)

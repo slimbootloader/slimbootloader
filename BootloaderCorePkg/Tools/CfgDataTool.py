@@ -920,7 +920,7 @@ def Main():
                             type=str,
                             help='Configuration binary file')
     SignParser.add_argument('-o', dest='cfg_out_file', type=str, help='Signed configuration output binary file name to be generated', required=True)
-    SignParser.add_argument('-k', dest='cfg_pri_key', type=str, help='Private key file (PEM format) used to sign configuration data', required=True)
+    SignParser.add_argument('-k', dest='cfg_pri_key', type=str, help='Key Id or Private key file (PEM format) used to sign configuration data', required=True)
     SignParser.add_argument('-a', dest='hash_alg', type=str, choices=['SHA2_256', 'SHA2_384'], help='Hash Type for signing',  default = 'SHA2_256')
     SignParser.add_argument('-s', dest='sign_scheme', type=str, choices=['RSA_PKCS1', 'RSA_PSS'], help='Signing Scheme',   default = 'RSA_PSS')
     SignParser.set_defaults(func=CmdSign)
