@@ -52,7 +52,7 @@ SIGNING_KEY = {
 def print_message_slimboot_key_store ():
     print ("Pre-requiste: SLIMBOOT_KEY_DIR environment variable has to be set!")
     print ("SLIMBOOT_KEY_DIR is path to keys used for the project!")
-    print ("For Keys generation follow GenerateKey.py availabl in tool directory!")
+    print ("For Keys generation follow GenerateKeys.py available in tool directory!")
 
     return
 
@@ -111,13 +111,24 @@ def get_key_id (priv_key):
     else:
         return None
 
-def get_key_from_store (in_key):
+def get_key_dir ():
+    # Check Key store setting SLIMBOOT_KEY_DIR path
+    if 'SLIMBOOT_KEY_DIR' not in os.environ:
+        print_message_slimboot_key_store()
+        raise Exception ("SLIMBOOT_KEY_DIR is not defined. Set SLIMBOOT_KEY_DIR !!")
 
-   # Check Key store setting SLIMBOOT_KEY_DIR path
     slimboot_key_dir = os.environ.get('SLIMBOOT_KEY_DIR')
     if not os.path.exists(slimboot_key_dir):
-        print_message_slimboot_key_store();
-        raise Exception ("SLIMBOOT_KEY_DIR is not defined. Set SLIMBOOT_KEY_DIR !!")
+        print_message_slimboot_key_store()
+        raise Exception ("SLIMBOOT_KEY_DIR is not valid. Set the correct SLIMBOOT_KEY_DIR path !!")
+    else:
+        return slimboot_key_dir
+
+def get_key_from_store (in_key):
+
+    print("in_Key %s" % in_key)
+    # Get Slimboot key dir path
+    slimboot_key_dir = get_key_dir()
 
     # Extract key_id if present
     priv_key = get_key_id (in_key)

@@ -179,7 +179,7 @@ def main():
                     dest='key_file',
                     type=str,
                     default='',
-                    help='Signing key path')
+                    help='Key Id or Signing key path')
     ap.add_argument('-s',
                     '--script-dir',
                     dest='script_dir',
