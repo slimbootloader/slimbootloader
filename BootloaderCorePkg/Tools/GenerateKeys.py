@@ -30,7 +30,7 @@ RSA_KEY_SIZE = {
         "RSA3072"      : '3072',
     }
 
-def signing_keys():
+def signing_priv_keys():
     signing_keys_list = []
     signing_keys_list.append ([
       # Key ID                          | Key File Name start |
@@ -49,18 +49,55 @@ def signing_keys():
 
         # CONTAINER_COMP_KEY_ID is used for signing container components
         # One can add multiple component keys as needed.
-        ("CONTAINER_COMP_KEY_ID",      "ContainerCompTestKey_Priv"),
+        ("CONTAINER_COMP_KEY_ID",       "ContainerCompTestKey_Priv"),
+        ])
+
+    return signing_keys_list
+
+def signing_pub_keys():
+    signing_keys_list = []
+    signing_keys_list.append ([
+      # Key ID                          | Key File Name start |
+      # ===========================================================
+        # OS1_PUBLIC_KEY_ID is used for referencing Boot OS public keys
+        ("OS1_PUBLIC_KEY_ID",           "OS1_TestKey_Pub"),
+
         ])
 
     return signing_keys_list
 
 # Generate RSA Key based on required key size
-def GenerateRsaKeys (openssl_path, key_dir, key_size):
-    key_list = signing_keys()
+def GenerateRsaPrivKeys (openssl_path, key_dir, key_size):
+    key_list = signing_priv_keys()
     for item in key_list:
         for Key_name, Key_file_name in item:
             cmd = '%s genrsa -F4 -out %s/%s_RSA%s.pem %s' % (openssl_path, key_dir, Key_file_name, key_size, key_size)
             run_process (cmd.split())
+
+    # Generate test public keys
+    GenerateRsaPubKeys (openssl_path, key_dir, key_size)
+    return
+
+# Generate RSA Public Keys based on required key size
+# User is required to replace the public keys with their original keys.
+def GenerateRsaPubKeys (openssl_path, key_dir, key_size):
+    key_list = signing_pub_keys()
+    for item in key_list:
+        for Key_name, Key_file_name in item:
+            # Generate an test private key
+            priv_key_temp = '%s/%s_RSA%s_priv.pem' % (key_dir, Key_file_name, key_size)
+            print (priv_key_temp)
+            cmd = '%s genrsa -F4 -out %s %s' % (openssl_path, priv_key_temp, key_size)
+            run_process (cmd.split())
+
+            # Extract public key from private key
+            pub_key_name = '%s/%s_RSA%s.pem' % (key_dir, Key_file_name, key_size)
+            print (pub_key_name)
+            cmd = '%s rsa -pubout -in %s -out %s' % (openssl_path, priv_key_temp, pub_key_name)
+            run_process (cmd.split())
+
+            # Remove the private key generated
+            os.remove(priv_key_temp)
 
     return
 
@@ -83,11 +120,11 @@ def main():
 
     if args.KeySize is 'ALL':
         # Generate keys for key size 2048 and 3072
-        GenerateRsaKeys(openssl_path, args.KeyDir, RSA_KEY_SIZE["RSA2048"])
-        GenerateRsaKeys(openssl_path, args.KeyDir, RSA_KEY_SIZE["RSA3072"])
+        GenerateRsaPrivKeys(openssl_path, args.KeyDir, RSA_KEY_SIZE["RSA2048"])
+        GenerateRsaPrivKeys(openssl_path, args.KeyDir, RSA_KEY_SIZE["RSA3072"])
     else:
         # Generate keys for requested key size
-        GenerateRsaKeys(openssl_path, args.KeyDir, RSA_KEY_SIZE[args.KeySize])
+        GenerateRsaPrivKeys(openssl_path, args.KeyDir, RSA_KEY_SIZE[args.KeySize])
 
     return
 

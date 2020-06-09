@@ -252,12 +252,15 @@ def main():
 
     print("Firmware update for Slim BootLoader")
 
+    print ("SBL_KEY_DIR2 %s" % (os.environ.get('SBL_KEY_DIR')))
+
+
     # create FWU capsule
     create_dirs ([fwu_dir])
     cmd = [ sys.executable,
             'BootloaderCorePkg/Tools/GenCapsuleFirmware.py',
             '-p',  'BIOS', bios_img,
-            '-k',  '../SlimbootKeyDir/FirmwareUpdateTestKey_Priv_RSA2048.pem',
+            '-k',  '../SblKeys/FirmwareUpdateTestKey_Priv_RSA2048.pem',
             '-o',  '%s/FwuImage.bin' % fwu_dir
           ]
     try:

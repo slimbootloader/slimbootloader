@@ -179,6 +179,11 @@ class Board(BaseBoard):
             HASH_USAGE['PUBKEY_CONT_DEF'],
             'CONTAINER_KEY_ID'
           ),
+          (
+            # Use a single test key
+            HASH_USAGE['PUBKEY_OS'],
+            'OS1_PUBLIC_KEY_ID'
+          ),
         ]
         return pub_key_list
 

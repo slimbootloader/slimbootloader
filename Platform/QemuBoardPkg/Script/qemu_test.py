@@ -26,6 +26,8 @@ def main():
         print ('Could not find QEMU SlimBootloader.bin image !')
         return -1
 
+    print ("SBL_KEY_DIR1 %s" % (os.environ.get('SBL_KEY_DIR')))
+
     # run test cases
     test_cases = [
       ('firmware_update.py',  [tst_img, fwu_dir]),

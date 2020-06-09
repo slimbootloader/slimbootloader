@@ -861,8 +861,8 @@ def check_for_git():
     return version
 
 def check_for_slimbootkeydir():
-    if not os.path.exists(os.environ.get('SLIMBOOT_KEY_DIR')):
-        raise Exception ("SLIMBOOT_KEY_DIR is not valid. Set correct SLIMBOOT_KEY_DIR path !!")
+    if not os.path.exists(os.environ.get('SBL_KEY_DIR')):
+        raise Exception ("SBL_KEY_DIR is not valid. Set correct SBL_KEY_DIR path !!")
 
 def copy_images_to_output (fv_dir, zip_file, img_list, rgn_name_list, out_list):
     zip_path_file = os.path.join (os.environ['WORKSPACE'], zip_file)

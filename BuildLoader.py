@@ -88,8 +88,8 @@ def prep_env ():
         print("Unsupported operating system !")
         sys.exit(1)
 
-    if 'SLIMBOOT_KEY_DIR' not in os.environ:
-        os.environ['SLIMBOOT_KEY_DIR'] = "./../SlimbootKeyDir/"
+    if 'SBL_KEY_DIR' not in os.environ:
+        os.environ['SBL_KEY_DIR'] = "../SblKeys/"
 
     print_tool_version_info(toolchain, toolchain_ver)
 
@@ -126,7 +126,7 @@ class BaseBoard(object):
 
         # NOTE: Variables starting with '_' will not be exported to Platform.dsc
 
-        # Default key dir is set by SLIMBOOT_KEY_DIR. _KEY_DIR is set to NULL.
+        # Default key dir is set by SBL_KEY_DIR. _KEY_DIR is set to NULL.
         self._KEY_DIR = ''
         # Allow master key to be able to sign everything by default
         self._MASTER_KEY_USAGE      = HASH_USAGE['PUBKEY_CFG_DATA'] | HASH_USAGE['PUBKEY_FWU'] | HASH_USAGE['PUBKEY_OS'] | \
