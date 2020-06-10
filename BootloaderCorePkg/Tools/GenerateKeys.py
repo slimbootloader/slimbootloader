@@ -96,9 +96,6 @@ def GenerateRsaPubKeys (openssl_path, key_dir, key_size):
             cmd = '%s rsa -pubout -in %s -out %s' % (openssl_path, priv_key_temp, pub_key_name)
             run_process (cmd.split())
 
-            # Remove the private key generated
-            os.remove(priv_key_temp)
-
     return
 
 def main():
