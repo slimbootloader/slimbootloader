@@ -81,6 +81,11 @@ struct _PCI_BAR_RESOURCE {
   PCI_BAR                                  *PciBar;
 };
 
+typedef struct {
+  UINT8                                     BusBase;
+  UINT8                                     BusLimit;
+} PCI_BUS_NUM_RANGE;
+
 typedef struct _PCI_IO_DEVICE              PCI_IO_DEVICE;
 
 struct _PCI_IO_DEVICE {
@@ -100,6 +105,11 @@ struct _PCI_IO_DEVICE {
   // BAR for this PCI Device
   //
   PCI_BAR                                   PciBar[PCI_MAX_BAR];
+
+  //
+  // Bus number ranges for a PCI Root Bridge device
+  //
+  PCI_BUS_NUM_RANGE                         BusNumberRanges;
 
   //
   // ARI (Alternative Routing ID)

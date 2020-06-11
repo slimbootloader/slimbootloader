@@ -631,6 +631,30 @@ PciSearchDevice (
 }
 
 /**
+  Retrieve the max bus number that is assigned to the Root Bridge hierarchy.
+  It can support the case that there are multiple bus ranges.
+
+  @param  Bridge           Bridge device instance.
+
+  @retval                  The max bus number that is assigned to this Root Bridge hierarchy.
+
+**/
+UINT8
+PciGetMaxBusNumber (
+  IN PCI_IO_DEVICE                      *Bridge
+  )
+{
+  UINT8             MaxBusNumber;
+
+  if ((Bridge != NULL) && ((Bridge->Address & BIT31) != 0)) {
+    MaxBusNumber = Bridge->BusNumberRanges.BusLimit;
+  } else {
+    MaxBusNumber = PCI_MAX_BUS;
+  }
+  return MaxBusNumber;
+}
+
+/**
   Scan pci bus and assign bus number to the given PCI bus system.
 
   @param  Bridge           Bridge device instance.
@@ -716,7 +740,7 @@ PciScanBus (
         // Temporarily initialize SubBusNumber to maximum bus number to ensure the
         // PCI configuration transaction to go through any PPB
         //
-        Register  = 0xFF;
+        Register  = PciGetMaxBusNumber (Bridge);
         Address   = PCI_EXPRESS_LIB_ADDRESS (StartBusNumber, Device, Func, PCI_BRIDGE_SUBORDINATE_BUS_REGISTER_OFFSET);
         PciExpressWrite8 (Address, (UINT8)Register);
 
@@ -1094,8 +1118,10 @@ DumpResourceBar (
 
   Address = PciIoDevice->Address;
   Indent[ (Level << 1) + 1] = 0;
-  if (Address >= 0x80000000) {
-    DEBUG ((DEBUG_INFO, "PCI HOST: Bus(0x%02X-%02X)\n", (UINT8) ((Address >> 8) & 0xFF), (UINT8)(Address & 0xFF)));
+  if ((Address & BIT31) != 0) {
+    DEBUG ((DEBUG_INFO, "PCI HOST: Bus(0x%02X-%02X)\n",
+      PciIoDevice->BusNumberRanges.BusBase,
+      PciIoDevice->BusNumberRanges.BusLimit));
   } else {
     DEBUG ((DEBUG_INFO, "%aPCI(%02X,%02X,%02X)\n", Indent, (Address >> 20) & 0xFF, (Address >> 15) & 0x1F,
             (Address >> 12) & 0x07));
@@ -1314,6 +1340,7 @@ PciScanRootBridges (
   UINT16                            StartIndex;
   UINT16                            EndIndex;
   UINT8                             Count;
+  UINT8                             BusLimit;
 
   Bridge = (PCI_IO_DEVICE *)PciAllocatePool (sizeof (PCI_IO_DEVICE));
   ZeroMem (Bridge, sizeof (PCI_IO_DEVICE));
@@ -1333,6 +1360,18 @@ PciScanRootBridges (
     EndIndex    = EnumPolicy->NumOfBus - 1;
   }
 
+  //
+  // Get the number of max bus number.
+  // Use PCI_MAX_BUS if the enum policy has no multiple buses.
+  //
+  BusLimit = PCI_MAX_BUS;
+  EnumPolicy = (PCI_ENUM_POLICY_INFO *)PcdGetPtr (PcdPciEnumPolicyInfo);
+  if ((EnumPolicy != NULL) && (EnumPolicy->NumOfBus > 1)) {
+    if (StartIndex != EndIndex) {
+      BusLimit = EnumPolicy->BusScanItems[EnumPolicy->NumOfBus - 1];
+    }
+  }
+
   for (Index = StartIndex; Index <= EndIndex; Index++) {
     if (EnumPolicy->BusScanType == BusScanTypeList) {
       Bus = EnumPolicy->BusScanItems[Index];
@@ -1343,13 +1382,16 @@ PciScanRootBridges (
     Address = PCI_EXPRESS_LIB_ADDRESS (Bus, 0, 0, 0);
     if (PciExpressRead16 (Address) != 0xFFFF) {
       Root = CreatePciIoDevice (NULL, NULL, (UINT8)Bus, 0, 0);
+      Root->BusNumberRanges.BusBase  = (UINT8)Bus;
+      Root->BusNumberRanges.BusLimit = BusLimit;
 
       SubBusNumber = (UINT8)Bus;
       PciScanBus (Root, (UINT8)Bus, &SubBusNumber, NULL);
       if (Bus == PCI_MAX_BUS) {
         SubBusNumber = (UINT8)Bus;
       }
-      Root->Address = 0x80000000 + (Bus << 8) + SubBusNumber;
+      Root->BusNumberRanges.BusLimit = SubBusNumber;
+      Root->Address |= BIT31;
 
       InsertPciDevice (Bridge, Root);
       Count++;
@@ -1384,7 +1426,6 @@ FillPciRootBridgeInfo (
   IN      UINT8                      MaxRootBridgeCount
   )
 {
-  UINT32          Address;
   UINT8           Index;
   UINT8           Count;
   PCI_BAR_TYPE    BarType;
@@ -1398,9 +1439,8 @@ FillPciRootBridgeInfo (
     return EFI_LOAD_ERROR;
   }
 
-  Address = Root->Address;
-  RootBridgeInfoHob->Entry[Count].BusBase  = ((Address >> 8) & 0xFF);
-  RootBridgeInfoHob->Entry[Count].BusLimit = (UINT8)(Address & 0xFF);
+  RootBridgeInfoHob->Entry[Count].BusBase  = Root->BusNumberRanges.BusBase;
+  RootBridgeInfoHob->Entry[Count].BusLimit = Root->BusNumberRanges.BusLimit;
   for (Index = 0; Index < PCI_MAX_BAR; Index++) {
     if (Root->PciBar[Index].Length == 0) {
       continue;
