@@ -84,11 +84,6 @@ ResetSystem (
 {
   switch (ResetType) {
   case EfiResetWarm:
-    //
-    // Flush the cache in case the changes are needed in next boot.
-    //
-    AsmWbinvd ();
-
     ResetWarm ();
     break;
 

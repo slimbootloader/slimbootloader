@@ -455,7 +455,12 @@ ResetSystemIocIpc (
   UINT32                    PciBar;
   UINT32                    Data32;
 
-  if (ResetType == EfiResetCold) {
+  if (ResetType == EfiResetWarm) {
+    //
+    // Flush the cache in case the changes are needed in next boot.
+    //
+    AsmWbinvd ();
+  } else if (ResetType == EfiResetCold) {
     IocUartData = (IOC_UART_CFG_DATA *)FindConfigDataByTag (CDATA_IOC_UART_TAG);
     if (IocUartData == NULL) {
       DEBUG ((DEBUG_WARN, "CDATA_IOC_UART_TAG Not Found\n"));
