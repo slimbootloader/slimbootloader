@@ -646,7 +646,10 @@ PciGetMaxBusNumber (
 {
   UINT8             MaxBusNumber;
 
-  if ((Bridge != NULL) && ((Bridge->Address & BIT31) != 0)) {
+  //
+  // No Bridge type check here. A caller must guarantee IS_PCI_BRIDGE(Bridge)
+  //
+  if (Bridge != NULL) {
     MaxBusNumber = Bridge->BusNumberRanges.BusLimit;
   } else {
     MaxBusNumber = PCI_MAX_BUS;
