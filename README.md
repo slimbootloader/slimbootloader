@@ -33,6 +33,8 @@ Mailing List
 You can subscribe to our mailing list for questions or share your learnings:
 https://groups.io/g/slimbootloader
 
+Topic Archive: https://groups.io/g/slimbootloader/topics
+
 License
 -------
 Slim Bootloader is released under the terms of the BSD-2-Clause Plus Patent License.
