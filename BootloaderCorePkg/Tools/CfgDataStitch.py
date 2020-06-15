@@ -84,10 +84,12 @@ def cfgdata_stitch(ifwi_file, ifwi_out_file, cfg_dir, key_file, script_dir, tool
 
     # ensure all required files exist
     chk_files = [
-        (script_dir, ['GenCfgData.py', 'CfgDataTool.py']),
-        (os.path.dirname(key_file), [os.path.basename(key_file)]),
-        (cfg_dir, ['CfgDataDef.dsc']),
-    ]
+            (script_dir, ['GenCfgData.py', 'CfgDataTool.py']),
+            (cfg_dir, ['CfgDataDef.dsc']),
+        ]
+    # Check for KEY_ID at end of string
+    if not key_file.endswith('KEY_ID'):
+         chk_files.extend([(os.path.dirname(key_file), [os.path.basename(key_file)])])
 
     result = check_file_exist (chk_files)
     if result:
