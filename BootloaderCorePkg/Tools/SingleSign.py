@@ -47,13 +47,14 @@ SIGNING_KEY = {
     "OS2_PUBLIC_KEY_ID"      :    "OS2_TestKey_Pub",
     }
 
-
-def print_message_sbl_key_dir ():
-    print ("Pre-requiste: SBL_KEY_DIR environment variable has to be set!")
-    print ("SBL_KEY_DIR is path to keys used for the project!")
-    print ("For Keys generation follow GenerateKeys.py available in tool directory!")
-
-    return
+MESSAGE_SBL_KEY_DIR = (
+            "!!! PRE-REQUISITE: Path to SBL_KEY_DIR has to be set with SBL KEYS DIRECTORY !!! \n"
+            "!!! Generate keys using GenerateKeys.py available in BootloaderCorePkg/Tools directory !!! \n"
+            "!!! Run $python BootloaderCorePkg/Tools/GenerateKeys.py -k $PATH_TO_SBL_KEY_DIR !!!\n"
+            "!!! Set SBL_KEY_DIR environ with path to SBL KEYS DIR !!!\n"
+            "!!! Windows $set    SBL_KEY_DIR=$PATH_TO_SBL_KEY_DIR !!!\n"
+            "!!! Linux   $export SBL_KEY_DIR=$PATH_TO_SBL_KEY_DIR !!!\n"
+        )
 
 def get_openssl_path ():
     if os.name == 'nt':
@@ -110,44 +111,53 @@ def get_key_id (priv_key):
     else:
         return None
 
-def get_key_dir ():
+def get_sbl_key_dir ():
     # Check Key store setting SBL_KEY_DIR path
     if 'SBL_KEY_DIR' not in os.environ:
-        print_message_sbl_key_dir()
-        raise Exception ("SBL_KEY_DIR is not defined. Set SBL_KEY_DIR !!")
+        raise Exception ("ERROR: SBL_KEY_DIR is not defined. Set SBL_KEY_DIR with SBL Keys directory!!\n"
+                                                                + MESSAGE_SBL_KEY_DIR)
 
     sbl_key_dir = os.environ.get('SBL_KEY_DIR')
     if not os.path.exists(sbl_key_dir):
-        print_message_sbl_key_dir()
-        raise Exception ("SBL_KEY_DIR is not valid. Set the correct SBL_KEY_DIR path !!")
+        raise Exception (("ERROR:SBL_KEY_DIR set %s is not valid. Set the correct SBL_KEY_DIR path !!\n"
+                                                                        + MESSAGE_SBL_KEY_DIR) % sbl_key_dir)
     else:
         return sbl_key_dir
 
 def get_key_from_store (in_key):
 
-    print("in_Key %s" % in_key)
-    # Get Slimboot key dir path
-    sbl_key_dir = get_key_dir()
+    #Check in_key is path to  key
+    if os.path.exists(in_key):
+        return in_key
 
-    # Extract key_id if present
+    # Get Slimboot key dir path
+    sbl_key_dir = get_sbl_key_dir()
+
+    # Extract if in_key is key_id
     priv_key = get_key_id (in_key)
     if priv_key is not None:
         if (priv_key in SIGNING_KEY):
             # Generate key file name from key id
             priv_key_file = SIGNING_KEY[priv_key] + '_' + KEY_SIZE_TYPE +'.pem'
         else:
-            raise Exception('KEY_ID %s is not found!' % priv_key)
+            raise Exception('KEY_ID %s is not found in supported KEY IDs!!' % priv_key)
     elif check_file_pem_format(in_key) == True:
-        # check if file is of pem format
+        # check if file name is provided in pem format
         priv_key_file = in_key
     else:
         priv_key_file = None
         raise Exception('key provided %s is not valid!' % in_key)
 
+    # Create a file path
+    # Join Key Dir and priv_key_file
     try:
         priv_key = os.path.join (sbl_key_dir, priv_key_file)
     except:
         raise Exception('priv_key is not found %s!' % priv_key)
+
+    # Check for priv_key construted based on KEY ID exists in specified path
+    if not os.path.isfile(priv_key):
+        raise Exception (("!!! ERROR: Key file corresponding to '%s' do not exist in Sbl key directory at '%s' !!! \n" + MESSAGE_SBL_KEY_DIR)  % (in_key, sbl_key_dir))
 
     return priv_key
 
@@ -182,12 +192,7 @@ def single_sign_file (priv_key, hash_type, sign_scheme, in_file, out_file):
         "RSA_PSS"      : 'pss',
     }
 
-    # Check priv_key is path to private key
-    if not os.path.exists(priv_key):
-        priv_key = get_key_from_store(priv_key)
-
-    if not os.path.isfile(priv_key):
-        raise Exception ("Invalid input key file '%s' !" % priv_key)
+    priv_key = get_key_from_store(priv_key)
 
     # Temporary files to store hash generated
     hash_file_tmp = out_file+'.hash.tmp'
@@ -233,12 +238,7 @@ def single_sign_file (priv_key, hash_type, sign_scheme, in_file, out_file):
 
 def single_sign_gen_pub_key (in_key, pub_key_file = None):
 
-    # Check in_key is path to private key
-    if not os.path.exists(in_key):
-        in_key = get_key_from_store(in_key)
-
-    if not os.path.isfile(in_key):
-        raise Exception ("Invalid input key file '%s' !" % in_key)
+    in_key = get_key_from_store(in_key)
 
     # Expect key to be in PEM format
     is_prv_key = False

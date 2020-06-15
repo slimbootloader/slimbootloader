@@ -23,6 +23,7 @@ import zipfile
 import ntpath
 from   CommonUtility import *
 from   IfwiUtility   import FLASH_MAP, FLASH_MAP_DESC, FIT_ENTRY, UCODE_HEADER
+from SingleSign import MESSAGE_SBL_KEY_DIR
 
 sys.dont_write_bytecode = True
 sys.path.append (os.path.join(os.path.dirname(__file__), '..', '..', 'IntelFsp2Pkg', 'Tools'))
@@ -862,7 +863,9 @@ def check_for_git():
 
 def check_for_slimbootkeydir():
     if not os.path.exists(os.environ.get('SBL_KEY_DIR')):
-        raise Exception ("SBL_KEY_DIR is not valid. Set correct SBL_KEY_DIR path !!")
+        print ("!!! ERROR: SBL_KEY_DIR is set to directory %s does not exist!!! \n"  % os.environ['SBL_KEY_DIR'])
+        print (MESSAGE_SBL_KEY_DIR)
+        sys.exit(1)
 
 def copy_images_to_output (fv_dir, zip_file, img_list, rgn_name_list, out_list):
     zip_path_file = os.path.join (os.environ['WORKSPACE'], zip_file)
