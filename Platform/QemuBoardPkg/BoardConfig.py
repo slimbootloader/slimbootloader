@@ -15,6 +15,7 @@ import sys
 sys.dont_write_bytecode = True
 sys.path.append (os.path.join('..', '..'))
 from BuildLoader import BaseBoard, STITCH_OPS, HASH_USAGE
+from BuildLoader import IPP_CRYPTO_OPTIMIZATION_MASK, IPP_CRYPTO_ALG_MASK, HASH_TYPE_VALUE
 
 class Board(BaseBoard):
 
@@ -60,14 +61,24 @@ class Board(BaseBoard):
         self.ENABLE_LINUX_PAYLOAD     = 1
         self.ENABLE_CRYPTO_SHA_OPT    = 0
 
+        # RSA2048 or RSA3072
+        self._RSA_SIGN_TYPE          = 'RSA3072'
+
+        # 'SHA2_256' or 'SHA2_384'
+        self._SIGN_HASH              = 'SHA2_384'
+
+        # 0x01 for SHA2_256 or 0x02 for SHA2_384
+        self.SIGN_HASH_TYPE          = HASH_TYPE_VALUE[self._SIGN_HASH]
+
+        # 0x0010  for SM3_256 | 0x0008 for SHA2_512 | 0x0004 for SHA2_384 | 0x0002 for SHA2_256 | 0x0001 for SHA1
+        self.IPP_HASH_LIB_SUPPORTED_MASK   = IPP_CRYPTO_ALG_MASK[self._SIGN_HASH]
+
         self.ENABLE_SMBIOS            = 1
 
         self.CPU_MAX_LOGICAL_PROCESSOR_NUMBER = 255
 
         # To enable source debug, set 1 to self.ENABLE_SOURCE_DEBUG
         # self.ENABLE_SOURCE_DEBUG  = 1
-
-
 
         # For test purpose
         # self.SKIP_STAGE1A_SOURCE_DEBUG = 1
@@ -212,12 +223,12 @@ class Board(BaseBoard):
         container_list.append ([
           # Name       | Image File |    CompressAlg  | AuthType             | Key File                      | Region Align | Region Size
           # ============================================================================================================================================
-          ('IPFW',      'SIIPFW.bin',    '',           'RSA2048_PSS_SHA2_256',   'CONTAINER_KEY_ID',            0,             0     ),   # Container Header
+          ('IPFW',      'SIIPFW.bin',    '',           'RSA3072_PSS_SHA2_384',   'CONTAINER_KEY_ID',            0,             0     ),   # Container Header
           ('TST1',      '',              'Dummy',      '',                   '',                                 0,             0x2000),   # Component 1
           ('TST2',      '',              'Lz4',        '',                   '',                                 0,             0x3000),   # Component 2
-          ('TST3',      '',              'Lz4',        'RSA2048_PSS_SHA2_256',   'CONTAINER_COMP_KEY_ID',        0,             0x3000),   # Component 3
-          ('TST4',      '',              'Lzma',       'SHA2_256',           '',                                 0,             0x3000),   # Component 4
-          ('TST5',      '',              'Dummy',      'RSA2048_PSS_SHA2_256',   'CONTAINER_COMP_KEY_ID',        0,             0x3000),   # Component 5
+          ('TST3',      '',              'Lz4',        'RSA3072_PSS_SHA2_384',   'CONTAINER_COMP_KEY_ID',        0,             0x3000),   # Component 3
+          ('TST4',      '',              'Lzma',       'SHA2_384',           '',                                 0,             0x3000),   # Component 4
+          ('TST5',      '',              'Dummy',      'RSA3072_PSS_SHA2_384',   'CONTAINER_COMP_KEY_ID',        0,             0x3000),   # Component 5
           ('TST6',      '',              '',           '',                   '',                                 0,             0x1000),   # Component 6
         ])
         return container_list

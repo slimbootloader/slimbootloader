@@ -22,7 +22,6 @@ import string
 # KEY_SIZE_TYPE defines the key sizes to be used for signing
 # KEY_SIZE_TYPE = RSA2048 uses RSA 2K size keys
 # KEY_SIZE_TYPE = RSA3072 uses RSA 3K size keys
-KEY_SIZE_TYPE = 'RSA2048'
 
 SIGNING_KEY = {
     # Key Id                    | Key File Name start |
@@ -94,6 +93,16 @@ def run_process (arg_list, print_cmd = False, capture_out = False):
 
     return output
 
+def get_key_sz_type ():
+
+    if 'KEY_SIZE_TYPE' not in os.environ:
+        # default Key size "RSA2048'
+        key_sz_type = 'RSA2048'
+    else:
+        key_sz_type = os.environ.get('KEY_SIZE_TYPE')
+
+    return key_sz_type
+
 def check_file_pem_format (priv_key):
     # Check for file .pem format
     key_name = os.path.basename(priv_key)
@@ -138,7 +147,7 @@ def get_key_from_store (in_key):
     if priv_key is not None:
         if (priv_key in SIGNING_KEY):
             # Generate key file name from key id
-            priv_key_file = SIGNING_KEY[priv_key] + '_' + KEY_SIZE_TYPE +'.pem'
+            priv_key_file = SIGNING_KEY[priv_key] + '_' + get_key_sz_type() +'.pem'
         else:
             raise Exception('KEY_ID %s is not found in supported KEY IDs!!' % priv_key)
     elif check_file_pem_format(in_key) == True:

@@ -1039,6 +1039,9 @@ class Build(object):
         if(IPP_CRYPTO_ALG_MASK[self._board._SIGN_HASH] & self._board.IPP_HASH_LIB_SUPPORTED_MASK) == 0:
             raise Exception  ('IPP_HASH_LIB_SUPPORTED_MASK is not set correctly!!')
 
+        # set Key size
+        os.environ['KEY_SIZE_TYPE'] = self._board._RSA_SIGN_TYPE
+
         # check if FSP binary exists
         fsp_dir  = os.path.join(plt_dir, 'Silicon', self._board.SILICON_PKG_NAME, "FspBin", self._board._FSP_PATH_NAME)
         work_dir = plt_dir

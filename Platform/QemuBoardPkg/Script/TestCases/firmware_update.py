@@ -257,8 +257,9 @@ def main():
     cmd = [ sys.executable,
             'BootloaderCorePkg/Tools/GenCapsuleFirmware.py',
             '-p',  'BIOS', bios_img,
-            '-k',  '../SblKeys/FirmwareUpdateTestKey_Priv_RSA2048.pem',
-            '-o',  '%s/FwuImage.bin' % fwu_dir
+            '-k',  '../SblKeys/FirmwareUpdateTestKey_Priv_RSA3072.pem',
+            '-o',  '%s/FwuImage.bin' % fwu_dir,
+            '-a',  'SHA2_384'
           ]
     try:
         output = subprocess.run (cmd)
