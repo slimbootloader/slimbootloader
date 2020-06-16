@@ -335,11 +335,11 @@ GetContainerKeyUsageBySig (
 {
   UINT8  Idx;
 
-  if (ContainerSig == CONTAINER_BOOT_SIGNATURE) {
+  if (ContainerSig == CONTAINER_KEY_HASH_STORE_SIGNATURE) {
+    return HASH_USAGE_PUBKEY_MASTER;
+  } else if (ContainerSig == CONTAINER_BOOT_SIGNATURE) {
     return HASH_USAGE_PUBKEY_OS;
-  }
-
-  if ((ContainerSig & 0x00FFFFFF) == CONTAINER_OEM_BASE_SIGNATURE) {
+  } else if ((ContainerSig & 0x00FFFFFF) == CONTAINER_OEM_BASE_SIGNATURE) {
     Idx = (ContainerSig >> 24) - '0';
     if (Idx < 8) {
       return HASH_USAGE_PUBKEY_OEM (Idx);
