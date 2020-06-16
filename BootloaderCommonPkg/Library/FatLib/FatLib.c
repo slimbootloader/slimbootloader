@@ -41,7 +41,7 @@ PrintFileName (
   if (File->Attributes & FAT_ATTR_DIRECTORY) {
     CONSOLE_PRINT_UNICODE ((L"  %s/\n", FileName));
   } else {
-    CONSOLE_PRINT_UNICODE ((L"  %-16s %d\n", FileName, File->FileSize));
+    CONSOLE_PRINT_UNICODE ((L"  %-16s %u\n", FileName, File->FileSize));
   }
 }
 
