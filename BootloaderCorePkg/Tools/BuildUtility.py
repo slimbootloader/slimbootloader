@@ -367,7 +367,7 @@ def adjust_hash_type (pub_key_file):
 
 def gen_pub_key_hash_store (signing_key, pub_key_hash_list, hash_alg, sign_scheme, pub_key_dir, out_file):
     # Build key hash blob
-    key_hash_buf = bytearray (HashStoreTable())
+    key_hash_buf = bytearray ()
     idx = 0
     for usage, key_file in pub_key_hash_list:
         pub_key_file = os.path.dirname(out_file) + '/PUBKEY%02d.bin' % idx
@@ -380,15 +380,20 @@ def gen_pub_key_hash_store (signing_key, pub_key_hash_list, hash_alg, sign_schem
         key_hash_entry.DigestLen = len(hash_data)
         key_hash_buf.extend (bytearray(key_hash_entry) + hash_data)
         idx += 1
-    hash_store_table = HashStoreTable.from_buffer(key_hash_buf)
-    hash_store_table.UsedLength  = len(key_hash_buf)
-    hash_store_table.TotalLength = hash_store_table.UsedLength
-    gen_file_from_object (out_file, key_hash_buf)
 
-    # Sign the key hash
-    if signing_key:
-        rsa_sign_file (signing_key, None, hash_alg, sign_scheme, out_file, out_file + '.sig', True, True)
-        shutil.copy(out_file + '.sig', out_file)
+    key_store_bin_file = out_file + '.raw'
+    gen_file_from_object (key_store_bin_file, key_hash_buf)
+
+    key_store_cnt_file = os.path.basename(out_file)
+    key_store_bin_file = os.path.basename(key_store_bin_file)
+
+    key_type = get_key_type(signing_key)
+    sign_scheme = sign_scheme[sign_scheme.index("_")+1:]
+    auth_type   = key_type + '_' + sign_scheme +  '_' + hash_alg
+    hash_store  = [('KEYH', key_store_cnt_file, '', auth_type, signing_key, 0x10, 0)]
+    hash_store.append ((HashStoreTable.HASH_STORE_SIGNATURE.decode(), key_store_bin_file, '', hash_alg, '', 0x10, 0))
+    out_dir = os.path.dirname(out_file)
+    gen_container_bin ([hash_store], out_dir, out_dir, '', '')
 
 
 def gen_ias_file (rel_file_path, file_space, out_file):
