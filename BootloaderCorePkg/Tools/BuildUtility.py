@@ -353,19 +353,6 @@ def get_payload_list (payloads):
 
     return pld_lst
 
-# Adjust hash type algorithm based on Public key file
-def adjust_hash_type (pub_key_file):
-    key_type =  get_key_type (pub_key_file)
-    if key_type ==  'RSA2048':
-        hash_type = 'SHA2_256'
-    elif key_type ==  'RSA3072':
-        hash_type = 'SHA2_384'
-    else:
-        hash_type = None
-
-    return hash_type
-
-
 def gen_pub_key_hash_store (signing_key, pub_key_hash_list, hash_alg, sign_scheme, pub_key_dir, out_file):
     # Build key hash blob
     key_hash_buf = bytearray ()

@@ -211,6 +211,17 @@ def run_process (arg_list, print_cmd = False, capture_out = False):
 
     return output
 
+# Adjust hash type algorithm based on Public key file
+def adjust_hash_type (pub_key_file):
+    key_type =  get_key_type (pub_key_file)
+    if key_type ==  'RSA2048':
+        hash_type = 'SHA2_256'
+    elif key_type ==  'RSA3072':
+        hash_type = 'SHA2_384'
+    else:
+        hash_type = None
+
+    return hash_type
 
 def rsa_sign_file (priv_key, pub_key, hash_type, sign_scheme, in_file, out_file, inc_dat = False, inc_key = False):
 

@@ -578,7 +578,7 @@ class CONTAINER ():
 
             # create header entry
             auth_type_str = self.get_auth_type_str (self.header.auth_type)
-            key_file = 'CONTAINER_KEY_ID' if auth_type_str.startswith('RSA') else ''
+            key_file = 'KEY_ID_CONTAINER_RSA2048' if auth_type_str.startswith('RSA') else ''
             alignment = self.header.alignment
             image_type_str = CONTAINER.get_image_type_str(self.header.image_type)
             header = ['%s' % self.header.signature.decode(), file_name, image_type_str,  auth_type_str,  key_file]
@@ -587,7 +587,7 @@ class CONTAINER ():
             # create component entry
             for component in self.header.comp_entry:
                 auth_type_str = self.get_auth_type_str (component.auth_type)
-                key_file      = 'CONTAINER_COMP_KEY_ID' if auth_type_str.startswith('RSA') else ''
+                key_file      = 'KEY_ID_CONTAINER_COMP_RSA2048' if auth_type_str.startswith('RSA') else ''
                 lz_header = LZ_HEADER.from_buffer(component.data)
                 alg = LZ_HEADER._compress_alg[lz_header.signature]
                 if component.attribute & COMPONENT_ENTRY._attr['RESERVED']:
