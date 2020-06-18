@@ -126,17 +126,19 @@ class BaseBoard(object):
 
         # NOTE: Variables starting with '_' will not be exported to Platform.dsc
 
-        # Default key dir is set by SBL_KEY_DIR. _KEY_DIR is set to NULL.
-        self._KEY_DIR = ''
-        self._MASTER_PRIVATE_KEY    = 'MASTER_KEY_ID'
-        self._CFGDATA_PRIVATE_KEY   = 'CFGDATA_KEY_ID'
-        self._CONTAINER_PRIVATE_KEY = 'CONTAINER_KEY_ID'
+
         self.LOGO_FILE              = 'Platform/CommonBoardPkg/Logo/Logo.bmp'
 
         self._RSA_SIGN_TYPE          = 'RSA2048'
         self._SIGN_HASH              = 'SHA2_256'
         self.SIGN_HASH_TYPE          = HASH_TYPE_VALUE[self._SIGN_HASH]
         self._SIGNING_SCHEME         = 'RSA_PSS'
+
+        # Default key dir is set by SBL_KEY_DIR. _KEY_DIR is set to NULL.
+        self._KEY_DIR = ''
+        self._MASTER_PRIVATE_KEY    = 'KEY_ID_MASTER' + '_' + self._RSA_SIGN_TYPE
+        self._CFGDATA_PRIVATE_KEY   = 'KEY_ID_CFGDATA' + '_' + self._RSA_SIGN_TYPE
+        self._CONTAINER_PRIVATE_KEY = 'KEY_ID_CONTAINER' + '_' + self._RSA_SIGN_TYPE
 
         self.VERINFO_IMAGE_ID       = 'SB_???? '
         self.VERINFO_PROJ_ID        = 1

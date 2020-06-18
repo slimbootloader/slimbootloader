@@ -19,32 +19,36 @@ import struct
 import hashlib
 import string
 
-# KEY_SIZE_TYPE defines the key sizes to be used for signing
-# KEY_SIZE_TYPE = RSA2048 uses RSA 2K size keys
-# KEY_SIZE_TYPE = RSA3072 uses RSA 3K size keys
-KEY_SIZE_TYPE = 'RSA2048'
-
 SIGNING_KEY = {
-    # Key Id                    | Key File Name start |
-    # ===========================================================
-    # MASTER_KEY_ID is used for signing Slimboot Key Hash Manifest (KEYH Component)
-    "MASTER_KEY_ID"          :    "MasterTestKey_Priv",
+    # Key Id                                | Key File Name start |
+    # =================================================================
+    # KEY_ID_MASTER is used for signing Slimboot Key Hash Manifest container (KEYH Component)
+    "KEY_ID_MASTER_RSA2048"          :    "MasterTestKey_Priv_RSA2048.pem",
+    "KEY_ID_MASTER_RSA3072"          :    "MasterTestKey_Priv_RSA3072.pem",
 
-    # CFGDATA_KEY_ID is used for signing external Config data blob)
-    "CFGDATA_KEY_ID"         :    "ConfigTestKey_Priv",
+    # KEY_ID_CFGDATA is used for signing external Config data blob)
+    "KEY_ID_CFGDATA_RSA2048"         :    "ConfigTestKey_Priv_RSA2048.pem",
+    "KEY_ID_CFGDATA_RSA3072"         :    "ConfigTestKey_Priv_RSA3072.pem",
 
-    # FIRMWAREUPDATE_KEY_ID is used for signing capsule firmware update image)
-    "FIRMWAREUPDATE_KEY_ID"  :    "FirmwareUpdateTestKey_Priv",
+    # KEY_ID_FIRMWAREUPDATE is used for signing capsule firmware update image)
+    "KEY_ID_FIRMWAREUPDATE_RSA2048"  :    "FirmwareUpdateTestKey_Priv_RSA2048.pem",
+    "KEY_ID_FIRMWAREUPDATE_RSA3072"  :    "FirmwareUpdateTestKey_Priv_RSA3072.pem",
 
-    # CONTAINER_KEY_ID is used for signing container header with mono signature
-    "CONTAINER_KEY_ID"       :    "ContainerTestKey_Priv",
+    # KEY_ID_CONTAINER is used for signing container header with mono signature
+    "KEY_ID_CONTAINER_RSA2048"       :    "ContainerTestKey_Priv_RSA2048.pem",
+    "KEY_ID_CONTAINER_RSA3072"       :    "ContainerTestKey_Priv_RSA3072.pem",
 
     # CONTAINER_COMP1_KEY_ID is used for signing container components
-    "CONTAINER_COMP_KEY_ID" :    "ContainerCompTestKey_Priv",
+    "KEY_ID_CONTAINER_COMP_RSA2048" :    "ContainerCompTestKey_Priv_RSA2048.pem",
+    "KEY_ID_CONTAINER_COMP_RSA3072" :    "ContainerCompTestKey_Priv_RSA3072.pem",
 
-    # OS1_PUBLIC_KEY_ID, OS2_PUBLIC_KEY_ID is used for referencing Boot OS public keys
-    "OS1_PUBLIC_KEY_ID"      :    "OS1_TestKey_Pub",
-    "OS2_PUBLIC_KEY_ID"      :    "OS2_TestKey_Pub",
+    # KEY_ID_OS1_PUBLIC, KEY_ID_OS2_PUBLIC is used for referencing Boot OS public keys
+    "KEY_ID_OS1_PUBLIC_RSA2048"      :    "OS1_TestKey_Pub_RSA2048.pem",
+    "KEY_ID_OS1_PUBLIC_RSA3072"      :    "OS1_TestKey_Pub_RSA3072.pem",
+
+    "KEY_ID_OS2_PUBLIC_RSA2048"      :    "OS2_TestKey_Pub_RSA2048.pem",
+    "KEY_ID_OS2_PUBLIC_RSA3072"      :    "OS2_TestKey_Pub_RSA3072.pem",
+
     }
 
 MESSAGE_SBL_KEY_DIR = (
@@ -105,8 +109,8 @@ def check_file_pem_format (priv_key):
 def get_key_id (priv_key):
     # Extract base name if path is provided.
     key_name = os.path.basename(priv_key)
-    # Check for KEY_ID at end of string.
-    if (key_name.endswith('KEY_ID')):
+    # Check for KEY_ID in key naming.
+    if key_name.startswith('KEY_ID'):
         return key_name
     else:
         return None
@@ -138,7 +142,7 @@ def get_key_from_store (in_key):
     if priv_key is not None:
         if (priv_key in SIGNING_KEY):
             # Generate key file name from key id
-            priv_key_file = SIGNING_KEY[priv_key] + '_' + KEY_SIZE_TYPE +'.pem'
+            priv_key_file = SIGNING_KEY[priv_key]
         else:
             raise Exception('KEY_ID %s is not found in supported KEY IDs!!' % priv_key)
     elif check_file_pem_format(in_key) == True:

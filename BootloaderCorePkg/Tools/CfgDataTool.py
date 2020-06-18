@@ -763,6 +763,9 @@ def CmdSign(Args):
     Fd.write (FileData)
     Fd.close ()
 
+    if Args.hash_alg is 'AUTO':
+        Args.hash_alg = adjust_hash_type(Args.cfg_pri_key)
+
     rsa_sign_file (Args.cfg_pri_key, None, Args.hash_alg, Args.sign_scheme, TmpFile, Args.cfg_out_file, True, True)
     if os.path.exists(TmpFile):
       os.remove(TmpFile)
@@ -921,7 +924,7 @@ def Main():
                             help='Configuration binary file')
     SignParser.add_argument('-o', dest='cfg_out_file', type=str, help='Signed configuration output binary file name to be generated', required=True)
     SignParser.add_argument('-k', dest='cfg_pri_key', type=str, help='Key Id or Private key file (PEM format) used to sign configuration data', required=True)
-    SignParser.add_argument('-a', dest='hash_alg', type=str, choices=['SHA2_256', 'SHA2_384'], help='Hash Type for signing',  default = 'SHA2_256')
+    SignParser.add_argument('-a', dest='hash_alg', type=str, choices=['SHA2_256', 'SHA2_384', 'AUTO'], help='Hash Type for signing. For AUTO hash type will be choosen based on key length',  default = 'AUTO')
     SignParser.add_argument('-s', dest='sign_scheme', type=str, choices=['RSA_PKCS1', 'RSA_PSS'], help='Signing Scheme',   default = 'RSA_PSS')
     SignParser.set_defaults(func=CmdSign)
 

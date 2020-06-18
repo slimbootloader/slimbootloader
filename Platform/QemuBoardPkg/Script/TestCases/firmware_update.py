@@ -257,7 +257,7 @@ def main():
     cmd = [ sys.executable,
             'BootloaderCorePkg/Tools/GenCapsuleFirmware.py',
             '-p',  'BIOS', bios_img,
-            '-k',  '../SblKeys/FirmwareUpdateTestKey_Priv_RSA2048.pem',
+            '-k',  '../SblKeys/FirmwareUpdateTestKey_Priv_RSA3072.pem',
             '-o',  '%s/FwuImage.bin' % fwu_dir
           ]
     try:

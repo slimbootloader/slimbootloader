@@ -35,21 +35,21 @@ def signing_priv_keys():
     signing_keys_list.append ([
       # Key ID                          | Key File Name start |
       # ===========================================================
-        # MASTER_KEY_ID is used for signing Slimboot Key Hash Manifest (KEYH Component)
-        ("MASTER_KEY_ID",               "MasterTestKey_Priv"),
+        # KEY_ID_MASTER is used for signing Slimboot Key Hash Manifest (KEYH Component)
+        ("KEY_ID_MASTER",               "MasterTestKey_Priv"),
 
-        # CFGDATA_KEY_ID is used for signing external Config data blob)
-        ("CFGDATA_KEY_ID",              "ConfigTestKey_Priv"),
+        # KEY_ID_CFGDATA is used for signing external Config data blob)
+        ("KEY_ID_CFGDATA",              "ConfigTestKey_Priv"),
 
-        # FIRMWAREUPDATE_KEY_ID is used for signing capsule firmware update image)
-        ("FIRMWAREUPDATE_KEY_ID",       "FirmwareUpdateTestKey_Priv"),
+        # KEY_ID_FIRMWAREUPDATE is used for signing capsule firmware update image)
+        ("KEY_ID_FIRMWAREUPDATE",       "FirmwareUpdateTestKey_Priv"),
 
-        # CONTAINER_KEY_ID is used for signing container header with mono signature
-        ("CONTAINER_KEY_ID",            "ContainerTestKey_Priv"),
+        # KEY_ID_CONTAINER is used for signing container header with mono signature
+        ("KEY_ID_CONTAINER",            "ContainerTestKey_Priv"),
 
-        # CONTAINER_COMP_KEY_ID is used for signing container components
+        # KEY_ID_CONTAINER_COMP is used for signing container components
         # One can add multiple component keys as needed.
-        ("CONTAINER_COMP_KEY_ID",       "ContainerCompTestKey_Priv"),
+        ("KEY_ID_CONTAINER_COMP",       "ContainerCompTestKey_Priv"),
         ])
 
     return signing_keys_list
@@ -59,8 +59,8 @@ def signing_pub_keys():
     signing_keys_list.append ([
       # Key ID                          | Key File Name start |
       # ===========================================================
-        # OS1_PUBLIC_KEY_ID is used for referencing Boot OS public keys
-        ("OS1_PUBLIC_KEY_ID",           "OS1_TestKey_Pub"),
+        # KEY_ID_OS1_PUBLIC is used for referencing Boot OS public keys
+        ("KEY_ID_OS1_PUBLIC",           "OS1_TestKey_Pub"),
 
         ])
 

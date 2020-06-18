@@ -15,6 +15,7 @@ import sys
 sys.dont_write_bytecode = True
 sys.path.append (os.path.join('..', '..'))
 from BuildLoader import BaseBoard, STITCH_OPS, HASH_USAGE
+from BuildLoader import IPP_CRYPTO_OPTIMIZATION_MASK, IPP_CRYPTO_ALG_MASK, HASH_TYPE_VALUE
 
 class Board(BaseBoard):
 
@@ -64,10 +65,22 @@ class Board(BaseBoard):
 
         self.CPU_MAX_LOGICAL_PROCESSOR_NUMBER = 255
 
+        # RSA2048 or RSA3072
+        self._RSA_SIGN_TYPE          = 'RSA3072'
+        # 'SHA2_256' or 'SHA2_384'
+        self._SIGN_HASH              = 'SHA2_384'
+        # 0x01 for SHA2_256 or 0x02 for SHA2_384
+        self.SIGN_HASH_TYPE          = HASH_TYPE_VALUE[self._SIGN_HASH]
+        # 0x0010  for SM3_256 | 0x0008 for SHA2_512 | 0x0004 for SHA2_384 | 0x0002 for SHA2_256 | 0x0001 for SHA1
+        self.IPP_HASH_LIB_SUPPORTED_MASK   = IPP_CRYPTO_ALG_MASK[self._SIGN_HASH]
+
+        self._MASTER_PRIVATE_KEY    = 'KEY_ID_MASTER' + '_' + self._RSA_SIGN_TYPE
+        self._CFGDATA_PRIVATE_KEY   = 'KEY_ID_CFGDATA' + '_' + self._RSA_SIGN_TYPE
+        self._CONTAINER_PRIVATE_KEY = 'KEY_ID_CONTAINER' + '_' + self._RSA_SIGN_TYPE
+
+
         # To enable source debug, set 1 to self.ENABLE_SOURCE_DEBUG
         # self.ENABLE_SOURCE_DEBUG  = 1
-
-
 
         # For test purpose
         # self.SKIP_STAGE1A_SOURCE_DEBUG = 1
@@ -187,38 +200,39 @@ class Board(BaseBoard):
           (
             # Key for verifying Config data blob
             HASH_USAGE['PUBKEY_CFG_DATA'],
-            'CFGDATA_KEY_ID'
+            'KEY_ID_CFGDATA' + '_' + self._RSA_SIGN_TYPE
           ),
           (
             # Key for verifying firmware update
             HASH_USAGE['PUBKEY_FWU'],
-            'FIRMWAREUPDATE_KEY_ID'
+            'KEY_ID_FIRMWAREUPDATE' + '_' + self._RSA_SIGN_TYPE
           ),
           (
             # Key for verifying container header
             HASH_USAGE['PUBKEY_CONT_DEF'],
-            'CONTAINER_KEY_ID'
+            'KEY_ID_CONTAINER' + '_' + self._RSA_SIGN_TYPE
           ),
           (
             # key for veryfying OS image.
             HASH_USAGE['PUBKEY_OS'],
-            'OS1_PUBLIC_KEY_ID'
+            'KEY_ID_OS1_PUBLIC' + '_' + self._RSA_SIGN_TYPE
           ),
         ]
         return pub_key_list
 
     def GetContainerList (self):
         container_list = []
+        container_list_auth_type = self._RSA_SIGN_TYPE + '_'+ self._SIGNING_SCHEME[4:] + '_' + self._SIGN_HASH
         container_list.append ([
-          # Name       | Image File |    CompressAlg  | AuthType             | Key File                      | Region Align | Region Size
-          # ============================================================================================================================================
-          ('IPFW',      'SIIPFW.bin',    '',           'RSA2048_PSS_SHA2_256',   'CONTAINER_KEY_ID',            0,             0     ),   # Container Header
-          ('TST1',      '',              'Dummy',      '',                   '',                                 0,             0x2000),   # Component 1
-          ('TST2',      '',              'Lz4',        '',                   '',                                 0,             0x3000),   # Component 2
-          ('TST3',      '',              'Lz4',        'RSA2048_PSS_SHA2_256',   'CONTAINER_COMP_KEY_ID',        0,             0x3000),   # Component 3
-          ('TST4',      '',              'Lzma',       'SHA2_256',           '',                                 0,             0x3000),   # Component 4
-          ('TST5',      '',              'Dummy',      'RSA2048_PSS_SHA2_256',   'CONTAINER_COMP_KEY_ID',        0,             0x3000),   # Component 5
-          ('TST6',      '',              '',           '',                   '',                                 0,             0x1000),   # Component 6
+          # Name       | Image File |    CompressAlg  | AuthType                           | Key File                              | Region Align | Region Size
+          # =====================================================================================================================================================
+          ('IPFW',      'SIIPFW.bin',    '',           container_list_auth_type,   'KEY_ID_CONTAINER'+'_'+self._RSA_SIGN_TYPE,             0,             0     ),   # Container Header
+          ('TST1',      '',              'Dummy',      '',                                     '',                                         0,             0x2000),   # Component 1
+          ('TST2',      '',              'Lz4',        '',                                     '',                                         0,             0x3000),   # Component 2
+          ('TST3',      '',              'Lz4',        container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,        0,             0x3000),   # Component 3
+          ('TST4',      '',              'Lzma',       self._SIGN_HASH,                        '',                                         0,             0x3000),   # Component 4
+          ('TST5',      '',              'Dummy',      container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,        0,             0x3000),   # Component 5
+          ('TST6',      '',              '',            '',                                    '',                                         0,             0x1000),   # Component 6
         ])
         return container_list
 

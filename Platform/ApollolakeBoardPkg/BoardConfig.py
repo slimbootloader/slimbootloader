@@ -248,22 +248,22 @@ class Board(BaseBoard):
           (
             # Key for verifying Config data blob
             HASH_USAGE['PUBKEY_CFG_DATA'],
-            'CFGDATA_KEY_ID'
+            'KEY_ID_CFGDATA' + '_' + self._RSA_SIGN_TYPE
           ),
           (
             # Key for verifying firmware update
             HASH_USAGE['PUBKEY_FWU'],
-            'FIRMWAREUPDATE_KEY_ID'
+            'KEY_ID_FIRMWAREUPDATE' + '_' + self._RSA_SIGN_TYPE
           ),
           (
             # Key for verifying container header
             HASH_USAGE['PUBKEY_CONT_DEF'],
-            'CONTAINER_KEY_ID'
+            'KEY_ID_CONTAINER' + '_' + self._RSA_SIGN_TYPE
           ),
           (
             # key for veryfying OS image.
             HASH_USAGE['PUBKEY_OS'],
-            'OS1_PUBLIC_KEY_ID'
+            'KEY_ID_OS1_PUBLIC' + '_' + self._RSA_SIGN_TYPE
           ),
         ]
         return pub_key_list
