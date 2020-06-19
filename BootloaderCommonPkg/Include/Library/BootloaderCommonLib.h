@@ -46,7 +46,9 @@ typedef struct {
   UINT32        Signature;
   UINT32        CompressedSize;
   UINT32        Size;
-  UINT32        Reserved;
+  UINT16        Version;
+  UINT8         Svn;
+  UINT8         Attribute;
   UINT8         Data[];
 } LOADER_COMPRESSED_HEADER;
 
