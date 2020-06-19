@@ -102,7 +102,9 @@ class LZ_HEADER(Structure):
         ('signature',       ARRAY(c_char, 4)),
         ('compressed_len',  c_uint32),
         ('length',          c_uint32),
-        ('reserved',        c_uint32)
+        ('version',         c_uint16),
+        ('svn',             c_uint8),
+        ('attribute',       c_uint8)
     ]
     _compress_alg = {
         b'LZDM' : 'Dummy',
@@ -334,7 +336,7 @@ def decompress (in_file, out_file, tool_dir = ''):
     run_process (cmdline, False, True)
     os.remove(temp)
 
-def compress (in_file, alg, out_path = '', tool_dir = ''):
+def compress (in_file, alg, svn=0, out_path = '', tool_dir = ''):
     if not os.path.isfile(in_file):
         raise Exception ("Invalid input file '%s' !" % in_file)
 
@@ -371,6 +373,7 @@ def compress (in_file, alg, out_path = '', tool_dir = ''):
     compress_data = get_file_data(out_file)
     lz_hdr = LZ_HEADER ()
     lz_hdr.signature = sig.encode()
+    lz_hdr.svn = svn
     lz_hdr.compressed_len = len(compress_data)
     lz_hdr.length = os.path.getsize(in_file)
     data = bytearray ()

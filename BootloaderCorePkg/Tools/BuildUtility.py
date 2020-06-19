@@ -353,7 +353,7 @@ def get_payload_list (payloads):
 
     return pld_lst
 
-def gen_pub_key_hash_store (signing_key, pub_key_hash_list, hash_alg, sign_scheme, pub_key_dir, out_file):
+def gen_pub_key_hash_store (signing_key, pub_key_hash_list, hash_alg, sign_scheme, svn, pub_key_dir, out_file):
     # Build key hash blob
     key_hash_buf = bytearray ()
     idx = 0
@@ -378,8 +378,8 @@ def gen_pub_key_hash_store (signing_key, pub_key_hash_list, hash_alg, sign_schem
     key_type = get_key_type(signing_key)
     sign_scheme = sign_scheme[sign_scheme.index("_")+1:]
     auth_type   = key_type + '_' + sign_scheme +  '_' + hash_alg
-    hash_store  = [('KEYH', key_store_cnt_file, '', auth_type, signing_key, 0x10, 0)]
-    hash_store.append ((HashStoreTable.HASH_STORE_SIGNATURE.decode(), key_store_bin_file, '', hash_alg, '', 0x10, 0))
+    hash_store  = [('KEYH', key_store_cnt_file, '', auth_type, signing_key, 0x10, 0, svn)]
+    hash_store.append ((HashStoreTable.HASH_STORE_SIGNATURE.decode(), key_store_bin_file, '', hash_alg, '', 0x10, 0, svn))
     out_dir = os.path.dirname(out_file)
     gen_container_bin ([hash_store], out_dir, out_dir, '', '')
 
@@ -591,14 +591,15 @@ def gen_payload_bin (fv_dir, arch_dir, pld_list, pld_bin, priv_key, hash_alg, si
         return
 
     # E-payloads container format
+    svn = 0x0
     alignment = 0x10
     key_dir  = os.path.dirname (priv_key)
     key_type = get_key_type(priv_key)
     sign_scheme = sign_scheme[sign_scheme.index("_")+1:]
     auth_type = key_type + '_' + sign_scheme +  '_' + hash_alg
-    pld_list = [('EPLD', '%s' % epld_bin, '', auth_type, '%s' % os.path.basename(priv_key), alignment, 0)]
+    pld_list = [('EPLD', '%s' % epld_bin, '', auth_type, '%s' % os.path.basename(priv_key), alignment, 0, svn)]
     for pld in ext_list:
-        pld_list.append ((pld['name'], pld['file'], pld['algo'], hash_alg, '', 0, 0))
+        pld_list.append ((pld['name'], pld['file'], pld['algo'], hash_alg, '', 0, 0, svn))
     gen_container_bin ([pld_list], fv_dir, fv_dir, key_dir, '')
 
 def pub_key_valid (pubkey):

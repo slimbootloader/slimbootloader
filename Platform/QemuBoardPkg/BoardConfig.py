@@ -78,7 +78,6 @@ class Board(BaseBoard):
         self._CFGDATA_PRIVATE_KEY   = 'KEY_ID_CFGDATA' + '_' + self._RSA_SIGN_TYPE
         self._CONTAINER_PRIVATE_KEY = 'KEY_ID_CONTAINER' + '_' + self._RSA_SIGN_TYPE
 
-
         # To enable source debug, set 1 to self.ENABLE_SOURCE_DEBUG
         # self.ENABLE_SOURCE_DEBUG  = 1
 
@@ -224,15 +223,16 @@ class Board(BaseBoard):
         container_list = []
         container_list_auth_type = self._RSA_SIGN_TYPE + '_'+ self._SIGNING_SCHEME[4:] + '_' + self._SIGN_HASH
         container_list.append ([
-          # Name       | Image File |    CompressAlg  | AuthType                           | Key File                              | Region Align | Region Size
-          # =====================================================================================================================================================
-          ('IPFW',      'SIIPFW.bin',    '',           container_list_auth_type,   'KEY_ID_CONTAINER'+'_'+self._RSA_SIGN_TYPE,             0,             0     ),   # Container Header
-          ('TST1',      '',              'Dummy',      '',                                     '',                                         0,             0x2000),   # Component 1
-          ('TST2',      '',              'Lz4',        '',                                     '',                                         0,             0x3000),   # Component 2
-          ('TST3',      '',              'Lz4',        container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,        0,             0x3000),   # Component 3
-          ('TST4',      '',              'Lzma',       self._SIGN_HASH,                        '',                                         0,             0x3000),   # Component 4
-          ('TST5',      '',              'Dummy',      container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,        0,             0x3000),   # Component 5
-          ('TST6',      '',              '',            '',                                    '',                                         0,             0x1000),   # Component 6
+
+          # Name       | Image File |    CompressAlg          | AuthType                               | Key File                    | Region Align | Region Size |  Svn Info
+          # ==================================================================================================================================================================
+          ('IPFW',      'SIIPFW.bin',    '',             container_list_auth_type,   'KEY_ID_CONTAINER'+'_'+self._RSA_SIGN_TYPE,            0,              0,         0),   # Container Header
+          ('TST1',      '',              'Dummy',               '',                                        '',                              0,              0x2000,    0),   # Component 1
+          ('TST2',      '',              'Lz4',                 '',                                        '',                              0,              0x3000,    0),   # Component 2
+          ('TST3',      '',              'Lz4',          container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,       0,              0x3000,    0),   # Component 3
+          ('TST4',      '',              'Lzma',                   'SHA2_384',                               '',                            0,              0x3000,    0),   # Component 4
+          ('TST5',      '',              'Dummy',        container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,       0,              0x3000,    0),   # Component 5
+          ('TST6',      '',               '',                    '',                                    '',                                 0,              0x1000,    0),   # Component 6
         ])
         return container_list
 

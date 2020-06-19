@@ -274,6 +274,7 @@ class BaseBoard(object):
 
         self.PCI_MEM64_BASE        = 0
         self.BUILD_ARCH            = 'IA32'
+        self.KEYH_SVN              = 0
 
         for key, value in list(kwargs.items()):
             setattr(self, '%s' % key, value)
@@ -1116,8 +1117,9 @@ class Build(object):
             if getattr(self._board, "GetKeyHashList", None):
                 key_hash_list = self._board.GetKeyHashList ()
 
+        svn = self._board.KEYH_SVN
         gen_pub_key_hash_store (mst_key, key_hash_list, HASH_VAL_STRING[self._board.SIGN_HASH_TYPE],
-                                self._board._SIGNING_SCHEME, self._key_dir, os.path.join(self._fv_dir, 'KEYHASH.bin'))
+                                self._board._SIGNING_SCHEME, svn, self._key_dir, os.path.join(self._fv_dir, 'KEYHASH.bin'))
 
         # create fit table
         if self._board.HAVE_FIT_TABLE:

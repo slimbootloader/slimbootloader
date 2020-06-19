@@ -67,7 +67,8 @@ typedef struct {
 
 typedef struct {
   UINT32           Signature;
-  UINT16           Version;
+  UINT8            Version;
+  UINT8            Svn;
   UINT16           DataOffset;
   UINT32           DataSize;
   UINT8            AuthType;
