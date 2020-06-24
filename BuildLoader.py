@@ -96,7 +96,6 @@ def prep_env ():
     check_for_openssl()
     check_for_nasm()
     check_for_git()
-    check_for_slimbootkeydir()
 
     # Update Environment vars
     os.environ['SBL_SOURCE']     = sblsource
@@ -139,6 +138,8 @@ class BaseBoard(object):
         self._MASTER_PRIVATE_KEY    = 'KEY_ID_MASTER' + '_' + self._RSA_SIGN_TYPE
         self._CFGDATA_PRIVATE_KEY   = 'KEY_ID_CFGDATA' + '_' + self._RSA_SIGN_TYPE
         self._CONTAINER_PRIVATE_KEY = 'KEY_ID_CONTAINER' + '_' + self._RSA_SIGN_TYPE
+
+        self.KEY_GEN                 = 0
 
         self.VERINFO_IMAGE_ID       = 'SB_???? '
         self.VERINFO_PROJ_ID        = 1
@@ -1021,6 +1022,22 @@ class Build(object):
         if plt_dir != sbl_dir:
             os.environ['PACKAGES_PATH'] += os.pathsep + sbl_dir
 
+        # Generate SblKeys
+        if self._board.KEY_GEN:
+            if not os.path.exists(os.environ.get('SBL_KEY_DIR')):
+                print ("Generating default Sbl Keys to %s !!" % os.environ.get('SBL_KEY_DIR'))
+                key_gen_tool = os.path.join(sbl_dir, 'BootloaderCorePkg', 'Tools', 'GenerateKeys.py')
+                args_list = ['python', key_gen_tool, '-k', os.environ['SBL_KEY_DIR']]
+                ret = subprocess.call(args_list)
+                if ret:
+                    raise Exception  ('Failed to generate keys !!')
+            else:
+                print ("WARNING: Key generation option is set but directory with Sbl Keys exists at %s!!" % os.environ.get('SBL_KEY_DIR'))
+                print ("Skip keys generation!!")
+
+        # Check for SBL Keys directory
+        check_for_slimbootkeydir()
+
         # create conf and build folder if not exist
         if not os.path.exists(os.path.join(self._workspace, 'Conf')):
             os.makedirs(os.path.join(self._workspace, 'Conf'))
@@ -1330,7 +1347,8 @@ def main():
                                         FSPDEBUG_MODE     = args.fspdebug,    \
                                         USE_VERSION       = args.usever,      \
                                         _PAYLOAD_NAME     = args.payload,     \
-                                        _FSP_PATH_NAME    = args.fsppath
+                                        _FSP_PATH_NAME    = args.fsppath,     \
+                                        KEY_GEN           = args.keygen
                                         );
                 os.environ['PLT_SOURCE']  = os.path.abspath (os.path.join (os.path.dirname (board_cfgs[index]), '../..'))
                 Build(board).build()
@@ -1345,6 +1363,7 @@ def main():
     buildp.add_argument('-no', '--noopt', action='store_true', help='No compile/link optimization for debugging purpose. Not enabled in Release build.')
     buildp.add_argument('-p',  '--payload' , dest='payload', type=str, help='Payload file name', default ='OsLoader.efi')
     buildp.add_argument('board', metavar='board', choices=board_names, help='Board Name (%s)' % ', '.join(board_names))
+    buildp.add_argument('-k', '--keygen', action='store_true', help='Generate default keys for signing')
     buildp.set_defaults(func=cmd_build)
 
     def cmd_clean(args):
