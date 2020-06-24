@@ -185,6 +185,23 @@ LocateComponentEntry (
   IN OUT  COMPONENT_ENTRY       **ComponentEntryPtr
   );
 
+
+/**
+  This function returns the component entry info.
+
+  @param[in] ContainerEntry    Container entry pointer.
+  @param[in] ComponentName     Component name in container.
+
+  @retval         Container header size.
+
+**/
+COMPONENT_ENTRY  *
+EFIAPI
+LocateComponentEntryFromContainer (
+  IN  CONTAINER_HDR  *ContainerHdr,
+  IN  UINT32          ComponentName
+  );
+
 /**
   Get Next Component in a container.
 
@@ -235,6 +252,4 @@ EFI_STATUS
 UnregisterContainer (
   IN  UINT32   Signature
   );
-
-
 #endif

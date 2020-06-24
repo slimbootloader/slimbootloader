@@ -213,8 +213,8 @@ UnregisterContainer (
   @retval         Container header size.
 
 **/
-STATIC
 COMPONENT_ENTRY  *
+EFIAPI
 LocateComponentEntryFromContainer (
   IN  CONTAINER_HDR  *ContainerHdr,
   IN  UINT32          ComponentName
@@ -543,9 +543,11 @@ LocateComponentEntry (
 
   // Locate the component from the container header
   ContainerHdr = (CONTAINER_HDR *)(UINTN)ContainerEntry->HeaderCache;
-  CompEntry = LocateComponentEntryFromContainer (ContainerHdr, ComponentName);
-  if (CompEntry == NULL) {
-    return EFI_NOT_FOUND;
+  if (ComponentName != 0) {
+    CompEntry = LocateComponentEntryFromContainer (ContainerHdr, ComponentName);
+    if (CompEntry == NULL) {
+      return EFI_NOT_FOUND;
+    }
   }
 
   if (ContainerEntryPtr != NULL) {
@@ -601,26 +603,27 @@ GetNextAvailableComponent (
   }
 
   CurrEntry = (COMPONENT_ENTRY *)&ContainerHdr[1];
-  NextEntry = (COMPONENT_ENTRY *)((UINT8 *)(CurrEntry + 1) + CurrEntry->HashSize);
-  for (Index = 0; Index < (UINT32)(ContainerHdr->Count - 1); Index++) {
-    if ((CurrEntry->Attribute & COMPONENT_ENTRY_ATTR_RESERVED) == 0) {
-      if (*ComponentName == 0) {
-        *ComponentName = CurrEntry->Name;
-        Status = EFI_SUCCESS;
-        break;
-      } else if (*ComponentName == CurrEntry->Name) {
-        if ((NextEntry->Attribute & COMPONENT_ENTRY_ATTR_RESERVED) == 0) {
-          *ComponentName = NextEntry->Name;
-          Status = EFI_SUCCESS;
-          break;
-        } else {
-          NextEntry = (COMPONENT_ENTRY *)((UINT8 *)(NextEntry + 1) + NextEntry->HashSize);
-          continue;
+   if ((*ComponentName == 0) && ((CurrEntry->Attribute & COMPONENT_ENTRY_ATTR_RESERVED) == 0)){
+    *ComponentName = CurrEntry->Name;
+    Status = EFI_SUCCESS;
+  } else {
+    NextEntry = (COMPONENT_ENTRY *)((UINT8 *)(CurrEntry + 1) + CurrEntry->HashSize);
+    for (Index = 0; Index < (UINT32)(ContainerHdr->Count-1); Index++) {
+      if ((CurrEntry->Attribute & COMPONENT_ENTRY_ATTR_RESERVED) == 0) {
+        if (*ComponentName == CurrEntry->Name) {
+          if ((NextEntry->Attribute & COMPONENT_ENTRY_ATTR_RESERVED) == 0) {
+            *ComponentName = NextEntry->Name;
+            Status = EFI_SUCCESS;
+            break;
+          } else {
+            NextEntry = (COMPONENT_ENTRY *)((UINT8 *)(NextEntry + 1) + NextEntry->HashSize);
+            continue;
+          }
         }
       }
+      CurrEntry = NextEntry;
+      NextEntry = (COMPONENT_ENTRY *)((UINT8 *)(CurrEntry + 1) + CurrEntry->HashSize);
     }
-    CurrEntry = NextEntry;
-    NextEntry = (COMPONENT_ENTRY *)((UINT8 *)(CurrEntry + 1) + CurrEntry->HashSize);
   }
 
   return Status;
