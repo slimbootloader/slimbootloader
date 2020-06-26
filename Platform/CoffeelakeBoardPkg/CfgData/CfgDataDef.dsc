@@ -7,12 +7,7 @@
 
 [Defines]
   # Define all conditions used in configurations
-  DEFINE  COND_GPIO_SKIP            = ($$(1)_Half0.GpioSkip == 0)
-  DEFINE  COND_GPIO_PID_ENABLE      = ($$(1).Enable==1) and ($PlatformId==0)
-  DEFINE  COND_PCIE_RP_PWR_PIN_SKIP = ($PcieRpPower$(1).Skip == 0)
-  DEFINE  COND_PCIE_RP_RST_PIN_SKIP = ($PcieRpReset$(1).Skip == 0)
-  DEFINE  COND_PCIE_RP_EN           = ($PcieRpFeatures$(1).En == 1)
-  DEFINE  COND_PCIE_RP_CLK_REQ_SUP  = (($PcieRpFeatures$(1).ClkReqSup == 1) and ($PcieRpFeatures$(1).En == 1))
+  DEFINE  COND_GPIO_SKIP            = ($GpioPinConfig1_$(1).GPIOSkip_$(1) == 0)
 
 [PcdsDynamicVpd.Tmp]
   !include Template_CfgData.dsc

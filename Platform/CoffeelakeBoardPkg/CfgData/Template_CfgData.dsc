@@ -106,7 +106,7 @@
       # !BSF OPTION:{0x0:Hardware Default, 0x1:GPIO control of the pad, 0x3:Native function 1 < $(4) >, 0x5:Native function 2 < $(5) >, 0x7:Native function 3 < $(6) >, 0x9:Native function 4 < $(7) >}
       # !BSF HELP:{GPIO PAD Mode. If GPIO is set to one of NativeX modes then following settings are not applicable and can be skipped:-}
       # !BSF HELP:{+ Interrupt related settings, Host Software Ownership, Output/Input enabling/disabling, Output lock}
-      # !BSF CONDITION:{$GpioPinConfig1_$(1).Hide_$(1) == 0}
+      # !BSF CONDITION:{ $(COND_GPIO_SKIP) }
       # !BSF FIELD:{GPIOPADMode_$(1):5b}
 
       # !BSF NAME:{HostSoftPadOwn}
@@ -118,7 +118,7 @@
       # !BSF HELP:{+ If GPIO is configured to generate SCI/SMI/NMI then this setting must be used for interrupts to work.}
       # !BSF HELP:{+ - HOST ownership to GPIO Driver mode - Use this setting only if GPIO pad should be controlled by GPIO OS Driver.}
       # !BSF HELP:{+ GPIO OS Driver will be able to control the pad if appropriate entry in ACPI exists.}
-      # !BSF CONDITION:{$GpioPinConfig1_$(1).Hide_$(1) == 0}
+      # !BSF CONDITION:{ $(COND_GPIO_SKIP) }
       # !BSF FIELD:{GPIOHostSoftPadOwn_$(1):2b}
 
       # !BSF NAME:{Direction}
@@ -129,7 +129,7 @@
       # !BSF HELP:{+ - DirInInvOut = Set pad for both output and input with inversion, - DirIn = Set pad for input only, }
       # !BSF HELP:{+ - DirInInv = Set pad for input with inversion, - DirOut = Set pad for output only, }
       # !BSF HELP:{+ - DirNone  = Disable both output and input. }
-      # !BSF CONDITION:{$GpioPinConfig1_$(1).Hide_$(1) == 0}
+      # !BSF CONDITION:{ $(COND_GPIO_SKIP) }
       # !BSF FIELD:{GPIODirection_$(1):6b}
 
       # !BSF NAME:{OutputState}
@@ -137,7 +137,7 @@
       # !BSF OPTION:{0x0:OutDefault, 0x1:OutLow, 0x3:OutHigh}
       # !BSF HELP:{GPIO Output State.This field is relevant only if output is enabled:-}
       # !BSF HELP:{+ - OutDefault = Leave output value unmodified, - OutLow = Set output to low, - OutHigh = Set output to high}
-      # !BSF CONDITION:{$GpioPinConfig1_$(1).Hide_$(1) == 0}
+      # !BSF CONDITION:{ $(COND_GPIO_SKIP) }
       # !BSF FIELD:{GPIOOutputState_$(1):2b}
 
       # !BSF NAME:{InterruptConfig}
@@ -158,7 +158,7 @@
       # !BSF HELP:{+ - IntDefault = Leave value of interrupt routing unmodified, - IntDisable = Disable IOxAPIC/SCI/SMI/NMI interrupt generation,}
       # !BSF HELP:{+ - IntNmi = Enable NMI interrupt only, - IntSmi = Enable SMI interrupt only, - IntSci = Enable SCI interrupt only, - IntApic = Enable IOxAPIC interrupt only, }
       # !BSF HELP:{+ - IntLevel = Set interrupt as level triggered, - IntEdge = Set interrupt as edge triggered, - IntLvlEdgDis = Disable interrupt trigger, - IntBothEdge = Set interrupt as both edge triggered}
-      # !BSF CONDITION:{$GpioPinConfig1_$(1).Hide_$(1) == 0}
+      # !BSF CONDITION:{ $(COND_GPIO_SKIP) }
       # !BSF FIELD:{GPIOInterruptConfig_$(1):9b}
 
       # !BSF NAME:{Power/ResetConfig}
@@ -169,7 +169,7 @@
       # !BSF HELP:{+ - HostDeepReset = Pad settings will reset on:Warm/Cold/Global reset,DeepSx transition,G3,}
       # !BSF HELP:{+ - PlatformReset = Pad settings will reset on:S3/S4/S5 transition, Warm/Cold/Global reset, DeepSx transition, G3}
       # !BSF HELP:{+ - DswReset = Pad settings will reset on G3}
-      # !BSF CONDITION:{$GpioPinConfig1_$(1).Hide_$(1) == 0}
+      # !BSF CONDITION:{ $(COND_GPIO_SKIP) }
       # !BSF FIELD:{GPIOResetConfig_$(1):8b}
 
     #Dword1: GpioPinConfig1
@@ -184,7 +184,7 @@
       # !BSF HELP:{+ - TermWpu1K = 1kOhm weak pull-up, - TermWpu2K = 2kOhm weak pull-up, - TermWpu5K = 5kOhm weak pull-up, - TermWpu20K = 20kOhm weak pull-up, - TermWpu1K2K = 1kOhm & 2kOhm weak pull-up,}
       # !BSF HELP:{+ - TermNative = Native function. This setting is applicable only to some native modes,}
       # !BSF HELP:{+ - NoTolerance1v8 = Disable 1.8V pad tolerance, Tolerance1v8 = Enable 1.8V pad tolerance}
-      # !BSF CONDITION:{$GpioPinConfig1_$(1).Hide_$(1) == 0}
+      # !BSF CONDITION:{ $(COND_GPIO_SKIP) }
       # !BSF FIELD:{GPIOElectricalCfg_$(1):9b}
 
       # !BSF NAME:{LockConfig}
@@ -194,7 +194,7 @@
       # !BSF HELP:{+ - LockDefault = Leave value of pad as-is, - PadConfigLock = Lock Pad configuration,}
       # !BSF HELP:{+ - PadConfigUnlock = Leave Pad configuration unlocked, - PadLock = Lock both Pad configuration and output control,}
       # !BSF HELP:{+ - OutputStateUnlock = Leave Pad output control unlocked, PadUnlock = Leave both Pad configuration and output control unlocked}
-      # !BSF CONDITION:{$GpioPinConfig1_$(1).Hide_$(1) == 0}
+      # !BSF CONDITION:{ $(COND_GPIO_SKIP) }
       # !BSF FIELD:{GPIOLockConfig_$(1):4b}
 
       # !BSF NAME:{Reserved1} TYPE:{Reserved}
@@ -215,7 +215,6 @@
       # !BSF NAME:{GPIO Skip} TYPE:{Combo} OPTION:{$EN_DIS}
       # !BSF HELP:{ENABLE: Skip GPIO PAD programming (keep the defaults). DISABLE: Program GPIO PAD configuration. }
       # !BSF ORDER:{0000.0000}
-      # !BSF CONDITION:{$GpioPinConfig1_$(1).Hide_$(1) == 0}
       # !BSF FIELD:{GPIOSkip_$(1):1b}
 
   # !BSF DEFT:{GPIO_TMPL:END}
