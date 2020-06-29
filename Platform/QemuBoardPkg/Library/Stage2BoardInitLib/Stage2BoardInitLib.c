@@ -213,7 +213,7 @@ GpioInit (
     Offset += GpioCfgHdr->GpioItemSize;
   }
 
-  if (GpioCfgBaseHdr != NULL) {
+  if (GpioCfgCurrHdr != NULL) {
     CopyMem (GpioTable, GpioCfgCurrHdr->GpioTableData, GpioCfgCurrHdr->GpioItemCount * GpioCfgCurrHdr->GpioItemSize);
     GpioEntries += GpioCfgCurrHdr->GpioItemCount;
   }
