@@ -74,6 +74,35 @@ typedef struct {
   UINT32  TotalLength;
 } CDATA_BLOB;
 
+//
+// This data structure is same as CDATA_BLOB
+// Its represents contents stored to flash.
+//
+typedef struct {
+  UINT32  Signature;
+  //
+  // This header Length
+  //
+  UINT8   HeaderLength;
+  UINT8   Attribute;
+  //
+  // Security version number
+  // This is available only in flash. It would be overwritten by CDATA_BLOB.InternalDataOffset in runtime
+  //
+  UINT8   Svn;
+
+  // Reserved
+  UINT8   Rsvd;
+  //
+  // The total valid configuration data length including this header.
+  //
+  UINT32  UsedLength;
+  //
+  // The total space for configration data
+  //
+  UINT32  TotalLength;
+} CDATA_BLOB_ON_FLASH;
+
 #define  CDATA_HDR_WORD(ch)   (*(UINT32 *)(ch))
 
 /**

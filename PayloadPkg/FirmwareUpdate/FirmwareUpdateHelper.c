@@ -17,6 +17,7 @@
 #include <Library/FirmwareUpdateLib.h>
 #include <Library/ContainerLib.h>
 #include <Library/DecompressLib.h>
+#include <Library/ConfigDataLib.h>
 #include "FirmwareUpdateHelper.h"
 
 /**
@@ -585,6 +586,56 @@ IsUpdateComponentForContainer (
 }
 
 /**
+  Perform Config data svn checks
+
+  This function will perform svn checks for cfgdata in flash and
+  config data in capsule.
+
+  @param[in]  ImageHdr       Pointer to fw mgmt capsule Image header
+  @param[out] SvnStatus      Svn compare status
+
+  @retval  EFI_SUCCESS      SVN check successful.
+  @retval  other            error occurred during firmware update
+**/
+EFI_STATUS
+CheckSblConfigDataSvn (
+  IN   EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
+  OUT  UINT8                         *SvnStatus
+  )
+{
+  CDATA_BLOB_ON_FLASH       *CfgBlobCapAddr;
+  CDATA_BLOB_ON_FLASH        CfgBlobFlashAddr;
+  UINT32                     CfgBlobSize;
+  EFI_STATUS                 Status;
+
+  ZeroMem (&CfgBlobFlashAddr, sizeof(CfgBlobFlashAddr));
+  Status = GetComponentInfo (FLASH_MAP_SIG_CFGDATA, (UINT32 *)&CfgBlobFlashAddr, &CfgBlobSize);
+  if (EFI_ERROR (Status)) {
+      DEBUG((DEBUG_INFO, "Config Data component not found\n"));
+      return EFI_NOT_FOUND;
+  }
+
+  // Locate config data blob header info from capsule image
+  CfgBlobCapAddr = (CDATA_BLOB_ON_FLASH *)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
+  if (CfgBlobCapAddr->Signature != CFG_DATA_SIGNATURE){
+    DEBUG((DEBUG_INFO, "Config data signature in capsule image does not match\n"));
+    return EFI_NOT_FOUND;
+  }
+
+  DEBUG ((DEBUG_INFO, "CfgBlobCapAddr->Svn  %x CfgBlobFlashAddr->Svn %x \n", CfgBlobCapAddr->Svn, CfgBlobFlashAddr.Svn));
+  //Check SVN
+  if (CfgBlobCapAddr->Svn >= CfgBlobFlashAddr.Svn){
+    *SvnStatus = 1;
+    Status  = EFI_SUCCESS;
+  } else {
+    *SvnStatus = 0;
+    Status = EFI_UNSUPPORTED;
+  }
+
+  return Status;
+}
+
+/**
   Perform Slim Bootloader component update.
 
   This function will try to locate component in the flash map,
@@ -616,10 +667,18 @@ UpdateSblComponent (
     return Status;
   }
 
-  //
-  // SBL component update, check if it is a container
-  //
-  if (IsUpdateComponentForContainer ((UINT32) ImageHdr->UpdateHardwareInstance)){
+  //Check for Config Data blob update
+  if (((UINT32) ImageHdr->UpdateHardwareInstance) == FLASH_MAP_SIG_CFGDATA){
+    DEBUG((DEBUG_INFO, "Capsule update is for Config data region!!\n"));
+    Status = CheckSblConfigDataSvn (ImageHdr, &SvnStatus);
+    if (SvnStatus != 1) {
+      DEBUG((DEBUG_INFO, "Config blob update Svn check failed!!\n"));
+      return Status;
+    }
+  } else if (IsUpdateComponentForContainer ((UINT32) ImageHdr->UpdateHardwareInstance)){
+    //
+    // SBL component update, check if it is a container
+    //
     DEBUG((DEBUG_INFO, "Capsule update is for container region!!\n"));
     // Check  security version for container and its components to update
     Status = CheckSblContainerSvn (ImageHdr, &SvnStatus);
@@ -628,7 +687,7 @@ UpdateSblComponent (
       return Status;
     }
   } else {
-          DEBUG((DEBUG_INFO, "SBL component update for non-container region!\n"));
+    DEBUG((DEBUG_INFO, "SBL component update for unknown region!\n"));
   }
 
   //
