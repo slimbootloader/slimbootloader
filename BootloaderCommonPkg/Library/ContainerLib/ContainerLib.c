@@ -519,6 +519,8 @@ LocateComponentEntry (
   UINT32                    ContainerBase;
   UINT32                    ContainerSize;
 
+  CompEntry = NULL;
+
   // Search container header from cache
   ContainerEntry = GetContainerBySignature (ContainerSig);
   if (ContainerEntry == NULL) {

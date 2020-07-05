@@ -482,6 +482,8 @@ CheckSblContainerSvn (
   EFI_STATUS                Status;
 
   Status = EFI_SUCCESS;
+  ContainerSvnCheck = 0;
+  ComponentSvnCheck = 0;
 
   // Locate container entry info from flash
   Status = LocateComponentEntry ((UINT32)ImageHdr->UpdateHardwareInstance, 0, &ContainerEntry, NULL);
