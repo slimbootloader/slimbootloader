@@ -682,8 +682,12 @@ def gen_layout (comp_list, img_type, auth_type_str, svn, out_file, key_dir, key_
         if len(comp_name) != 4:
             raise Exception ("Invalid component string format '%s' !" % each)
 
-        comp_file = ':'.join(parts[1:2])
-        com_svn   = ':'.join(parts[2:])
+        if (len(parts)) > 2:
+            comp_file = ':'.join(parts[1:2])
+            com_svn   = ':'.join(parts[2:])
+        else:
+            comp_file = ':'.join(parts[1:])
+            com_svn   = 0    # set to default  svn
 
         if comp_name == 'INRD':
             align = 0x1000
@@ -811,7 +815,7 @@ def main():
                     'RSA3072_PKCS1_SHA2_384', 'RSA2048_PSS_SHA2_256', 'RSA3072_PSS_SHA2_384', 'NONE'], default='',  help='authentication algorithm')
     cmd_display.add_argument('-cd', dest='comp_dir', type=str, default='', help='Componet image input directory')
     cmd_display.add_argument('-td', dest='tool_dir', type=str, default='', help='Compression tool directory')
-    cmd_display.add_argument('-s', dest='svn', type=int, help='Security version number for Container header')
+    cmd_display.add_argument('-s', dest='svn', type=int, default=0, help='Security version number for Container header')
     cmd_display.set_defaults(func=create_container)
 
     # Command for extract
@@ -831,7 +835,7 @@ def main():
     cmd_display.add_argument('-c',  dest='compress', choices=['lz4', 'lzma', 'dummy'], default='dummy', help='compression algorithm')
     cmd_display.add_argument('-k',  dest='key_file',  type=str, default='', help='Key Id or Private key file path to sign component')
     cmd_display.add_argument('-td', dest='tool_dir', type=str, default='', help='Compression tool directory')
-    cmd_display.add_argument('-s', dest='svn', type=int, required=True, help='Security version number for Component')
+    cmd_display.add_argument('-s', dest='svn', type=int,  default=0, help='Security version number for Component')
     cmd_display.set_defaults(func=replace_component)
 
     # Command for sign
