@@ -670,12 +670,16 @@ LocateComponent (
     return Status;
   }
 
-  ContainerHdr = (CONTAINER_HDR *)(UINTN)ContainerEntry->HeaderCache;
-  if (Buffer != NULL) {
-    *Buffer = (VOID *)(UINTN)(ContainerEntry->Base + ContainerHdr->DataOffset + CompEntry->Offset);
-  }
-  if (Length != NULL) {
-    *Length = CompEntry->Size;
+  if ((ContainerEntry != NULL) && (CompEntry != NULL)) {
+    ContainerHdr = (CONTAINER_HDR *)(UINTN)ContainerEntry->HeaderCache;
+    if (Buffer != NULL) {
+      *Buffer = (VOID *)(UINTN)(ContainerEntry->Base + ContainerHdr->DataOffset + CompEntry->Offset);
+    }
+    if (Length != NULL) {
+      *Length = CompEntry->Size;
+    }
+  } else {
+    Status = EFI_NOT_FOUND;
   }
 
   return Status;
@@ -762,6 +766,10 @@ LoadComponentWithCallback (
     Status = LocateComponentEntry (ContainerSig, ComponentName, &ContainerEntry, &CompEntry);
     if (EFI_ERROR (Status)) {
       return Status;
+    }
+
+    if ((ContainerEntry == NULL) || (CompEntry == NULL)) {
+      return EFI_NOT_FOUND;
     }
 
     if ((CompEntry->Attribute & COMPONENT_ENTRY_ATTR_RESERVED) != 0) {

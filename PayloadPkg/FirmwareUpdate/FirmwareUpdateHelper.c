@@ -426,6 +426,10 @@ UpdateContainerComp (
     return Status;
   }
 
+  if ((ContainerEntryPtr == NULL) || (ComponentEntryPtr == NULL)) {
+    return EFI_NOT_FOUND;
+  }
+
   //
   // Update the component
   //
