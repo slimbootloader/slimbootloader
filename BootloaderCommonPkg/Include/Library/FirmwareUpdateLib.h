@@ -526,4 +526,21 @@ SetFlashDescriptorLock (
    IN  CHAR8     *CmdDataBuf,
    IN  UINTN     CmdDataSize
    );
+
+/**
+  Anti Rollback Svn Commit
+
+  @param[in]  CmdDataBuf    Pointer to command buffer.
+  @param[in]  CmdDataSize   size of command data.
+
+  @retval  EFI_SUCCESS      ARB Svn commit is successful.
+  @retval  others           Error happened while doing commit.
+
+**/
+EFI_STATUS
+EFIAPI
+SetArbSvnCommit (
+   IN  CHAR8     *CmdDataBuf,
+   IN  UINTN     CmdDataSize
+   );
 #endif

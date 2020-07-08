@@ -18,10 +18,11 @@
 
 
 #define FLASH_DESCRIPTOR_LOCK_STR     "FLASHDESCLOCK"
+#define ARB_SVN_COMMIT_STR            "ARBSVNCOMMIT"
 
 typedef UINT32 CMDI_TYPE;
 #define CMDI_TYPE_SPI_DESCRIPTOR_LOCK       BIT0
-
+#define CMDI_TYPE_ARB_SVN_COMMIT            BIT1
 
 /*
   Firmware update command handler
@@ -48,9 +49,12 @@ FwUpdateCmdHandler (
   Status = EFI_SUCCESS;
   *CmdProcessed = 0;
 
-  if(AsciiStrnCmp(CmdBuf, FLASH_DESCRIPTOR_LOCK_STR, AsciiStrLen(FLASH_DESCRIPTOR_LOCK_STR)) == 0) {
+  if (AsciiStrnCmp (CmdBuf, FLASH_DESCRIPTOR_LOCK_STR, AsciiStrLen(FLASH_DESCRIPTOR_LOCK_STR)) == 0) {
       *CmdProcessed  =  CMDI_TYPE_SPI_DESCRIPTOR_LOCK;
       Status = SetFlashDescriptorLock (CmdBuf, BufLen);
+  } else if (AsciiStrnCmp (CmdBuf, ARB_SVN_COMMIT_STR, AsciiStrLen(ARB_SVN_COMMIT_STR)) == 0) {
+      *CmdProcessed  =  CMDI_TYPE_ARB_SVN_COMMIT;
+      Status = SetArbSvnCommit (CmdBuf, BufLen);
   }
 
   return Status;
@@ -62,7 +66,8 @@ FwUpdateCmdHandler (
 
  Command format:
  {FLASHDESCLOCK}
- {Command2}
+ {ARBSVNCOMMIT}
+ {Command3}
 
   @param[in]  Buffer            Command buffer.
   @param[in]  BufLength         Command buffer length
