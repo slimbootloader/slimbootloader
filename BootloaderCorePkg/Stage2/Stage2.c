@@ -149,8 +149,6 @@ NormalBootPath (
   UINT8                          *CmdLine;
   UINT32                          CmdLineLen;
   UINT32                          UefiSig;
-  UINT8                           OrgVal;
-
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
 
@@ -194,10 +192,19 @@ NormalBootPath (
         Status = LoadComponent (FLASH_MAP_SIG_EPAYLOAD, SIGNATURE_32 ('C', 'M', 'D', 'L'),
                                 (VOID **)&CmdLine, &CmdLineLen);
         if (!EFI_ERROR (Status)) {
-          OrgVal = CmdLine[CmdLineLen];
+          // Limit max command line length
+          if (CmdLineLen > CMDLINE_LENGTH_MAX - 1) {
+            CmdLineLen = CMDLINE_LENGTH_MAX - 1;
+          }
           CmdLine[CmdLineLen] = 0;
           DEBUG ((DEBUG_INFO, "Kernel command line: \n%a\n", CmdLine));
-          CmdLine[CmdLineLen] = OrgVal;
+        }
+
+        // Try to load InitRd if it exists. If loading fails, continue booting
+        Status = LoadComponent (FLASH_MAP_SIG_EPAYLOAD, SIGNATURE_32 ('I', 'N', 'R', 'D'),
+                                (VOID **)&InitRd, &InitRdLen);
+        if (!EFI_ERROR (Status)) {
+          DEBUG ((DEBUG_INFO, "InitRD is loaded at 0x%x:0x%x\n", InitRd, InitRdLen));
         }
         PldEntry = (PAYLOAD_ENTRY)(UINTN)LinuxBoot;
         Status   = LoadBzImage (Dst, InitRd, InitRdLen, CmdLine, CmdLineLen);
