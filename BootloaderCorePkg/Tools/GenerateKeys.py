@@ -59,9 +59,8 @@ def signing_pub_keys():
     signing_keys_list.append ([
       # Key ID                          | Key File Name start |
       # ===========================================================
-        # KEY_ID_OS1_PUBLIC is used for referencing Boot OS public keys
-        ("KEY_ID_OS1_PUBLIC",           "OS1_TestKey_Pub"),
-
+        # KEY_ID_OS1 is used for referencing Boot OS public keys
+        ("KEY_ID_OS1",           "OS1_TestKey"),
         ])
 
     return signing_keys_list
@@ -71,8 +70,17 @@ def GenerateRsaPrivKeys (openssl_path, key_dir, key_size):
     key_list = signing_priv_keys()
     for item in key_list:
         for Key_name, Key_file_name in item:
-            cmd = '%s genrsa -F4 -out %s/%s_RSA%s.pem %s' % (openssl_path, key_dir, Key_file_name, key_size, key_size)
+            priv_key_name = '%s/%s_RSA%s.pem' % (key_dir, Key_file_name, key_size)
+            if os.path.exists(priv_key_name):
+                print("Key %s already exists!!" % priv_key_name)
+                user_confirm = input("Create and Replace Existing Key yes/no:  ")
+                if user_confirm.lower() != 'y' and user_confirm.lower() != 'yes':
+                    continue
+
+            print(priv_key_name)
+            cmd = '%s genrsa -F4 -out %s %s' % (openssl_path, priv_key_name, key_size)
             run_process (cmd.split())
+
 
     # Generate test public keys
     GenerateRsaPubKeys (openssl_path, key_dir, key_size)
@@ -85,17 +93,21 @@ def GenerateRsaPubKeys (openssl_path, key_dir, key_size):
     for item in key_list:
         for Key_name, Key_file_name in item:
             # Generate an test private key
-            priv_key_temp = '%s/%s_RSA%s_priv.pem' % (key_dir, Key_file_name, key_size)
-            print (priv_key_temp)
-            cmd = '%s genrsa -F4 -out %s %s' % (openssl_path, priv_key_temp, key_size)
+            priv_key_name = '%s/%s_Priv_RSA%s.pem' % (key_dir, Key_file_name, key_size)
+            if os.path.exists(priv_key_name):
+                print("Key %s already exists!!" % priv_key_name)
+                user_confirm = input("Create and Replace Existing Key yes/no:  ")
+                if user_confirm.lower() != 'y' and user_confirm.lower() != 'yes':
+                    continue
+
+            cmd = '%s genrsa -F4 -out %s %s' % (openssl_path, priv_key_name, key_size)
             run_process (cmd.split())
 
             # Extract public key from private key
-            pub_key_name = '%s/%s_RSA%s.pem' % (key_dir, Key_file_name, key_size)
+            pub_key_name = '%s/%s_Pub_RSA%s.pem' % (key_dir, Key_file_name, key_size)
             print (pub_key_name)
-            cmd = '%s rsa -pubout -in %s -out %s' % (openssl_path, priv_key_temp, pub_key_name)
+            cmd = '%s rsa -pubout -in %s -out %s' % (openssl_path, priv_key_name, pub_key_name)
             run_process (cmd.split())
-
     return
 
 def main():
@@ -115,7 +127,7 @@ def main():
 
     openssl_path = get_openssl_path()
 
-    if args.KeySize is 'ALL':
+    if args.KeySize == 'ALL':
         # Generate keys for key size 2048 and 3072
         GenerateRsaPrivKeys(openssl_path, args.KeyDir, RSA_KEY_SIZE["RSA2048"])
         GenerateRsaPrivKeys(openssl_path, args.KeyDir, RSA_KEY_SIZE["RSA3072"])

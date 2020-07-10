@@ -859,6 +859,8 @@ def check_for_slimbootkeydir():
         print ("!!! ERROR: SBL_KEY_DIR is set to directory %s does not exist!!! \n"  % os.environ['SBL_KEY_DIR'])
         print (MESSAGE_SBL_KEY_DIR)
         sys.exit(1)
+    else:
+        print ("SBL_KEY_DIR is set to %s !!" % os.path.abspath(os.environ.get('SBL_KEY_DIR')))
 
 def copy_images_to_output (fv_dir, zip_file, img_list, rgn_name_list, out_list):
     zip_path_file = os.path.join (os.environ['WORKSPACE'], zip_file)
