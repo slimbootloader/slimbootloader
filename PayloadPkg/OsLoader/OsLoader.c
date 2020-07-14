@@ -611,7 +611,7 @@ StartBooting (
   if ((LoadedImage->Flags & LOADED_IMAGE_LINUX) != 0) {
     if (FeaturePcdGet (PcdPreOsCheckerEnabled) && IsPreOsCheckerLoaded ()) {
       BeforeOSJump ("Starting Pre-OS Checker ...");
-      StartPreOsChecker (GetLinuxBootParams ());
+      StartPreOsChecker ((VOID *)GetLinuxBootParams (), LoadedImage->Flags);
     } else {
       BeforeOSJump ("Starting Kernel ...");
       LinuxBoot ((VOID *)(UINTN)PcdGet32 (PcdPayloadHobList), NULL);
@@ -624,8 +624,13 @@ StartBooting (
       DEBUG ((DEBUG_ERROR, "EntryPoint is not found\n"));
       return RETURN_INVALID_PARAMETER;
     }
-    BeforeOSJump ("Starting MB Kernel ...");
-    JumpToMultibootOs((IA32_BOOT_STATE*)&MultiBoot->BootState);
+    if (FeaturePcdGet (PcdPreOsCheckerEnabled) && IsPreOsCheckerLoaded ()) {
+      BeforeOSJump ("Starting Pre-OS Checker ...");
+      StartPreOsChecker ((VOID *)&MultiBoot->BootState, LoadedImage->Flags);
+    } else {
+      BeforeOSJump ("Starting MB Kernel ...");
+      JumpToMultibootOs((IA32_BOOT_STATE*)&MultiBoot->BootState);
+    }
     Status = EFI_DEVICE_ERROR;
 
   } else if ((LoadedImage->Flags & (LOADED_IMAGE_PE32 | LOADED_IMAGE_FV)) != 0) {
