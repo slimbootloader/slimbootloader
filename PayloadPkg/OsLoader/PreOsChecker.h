@@ -1,6 +1,6 @@
 /** @file
 
-Copyright (c) 2019, Intel Corporation. All rights reserved.
+Copyright (c) 2019 - 2020, Intel Corporation. All rights reserved.
 
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
@@ -42,7 +42,8 @@ LoadPreOsChecker (
 /**
   Start PreOsChecker with OS information
 
-  @param[in] OsBootParam          Pointer of OS BOOT_PARAMS
+  @param[in] BootParam            Pointer of OS BOOT_PARAMS or IA32_BOOT_STATE
+  @param[in] ImageFlags           Flags of the loaded image
 
   @retval EFI_NOT_FOUND           PreOsChecker not found
   @retval EFI_INVALID_PARAMETER   Invalid OS BOOT_PARAMS found
@@ -51,7 +52,8 @@ LoadPreOsChecker (
 EFI_STATUS
 EFIAPI
 StartPreOsChecker (
-  IN  BOOT_PARAMS   *OsBootParam
+  IN  VOID   *OsBootParam,
+  IN  UINT8  ImageFlags
   );
 
 #endif /* __PRE_OS_CHECKER_H__ */
