@@ -21,8 +21,7 @@
   #
   # --------------------------------------------------------------------------------------
   # !BSF PAGE:{GEN}
-  gCfgData.CfgHeader                   |      * | 0x04 | {0x01:2b, ((_LENGTH_GEN_CFG_DATA_+8)/4):10b, 0:4b, 0:4b, _TAG_GEN_CFG_DATA_:12b}
-  gCfgData.CondValue                   |      * | 0x04 | 0x00000000
+  # !BSF SUBT:{CFGHDR_TMPL:GEN_CFG_DATA:0:0}
 
   # !HDR HEADER:{ON}
   # !HDR EMBED:{GEN_CFG_DATA:TAG_010:START}
