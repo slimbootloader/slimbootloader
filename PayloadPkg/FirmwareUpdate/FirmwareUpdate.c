@@ -95,78 +95,97 @@ VerifyFwVersion (
   UINT32                CompSize;
   BOOT_LOADER_VERSION   *CurrentBlVersion;
   BOOT_LOADER_VERSION   *CapsuleBlVersion;
+  UINT8                 SvnStatus;
   EFI_STATUS            Status;
 
-  CurrentBlVersion = NULL;
-  CapsuleBlVersion = NULL;
-
   //
-  // For now - Perform version check only for Slim Bootloader
+  // Check SVN for CFGDATA update
   //
-  if ((UINT32)ImageHdr->UpdateHardwareInstance != FW_UPDATE_COMP_BIOS_REGION) {
-    return EFI_SUCCESS;
+  if (((UINT32) ImageHdr->UpdateHardwareInstance) == FLASH_MAP_SIG_CFGDATA){
+    DEBUG((DEBUG_INFO, "Capsule update is for Config data region!!\n"));
+    Status = CheckSblConfigDataSvn (ImageHdr, FwPolicy, &SvnStatus);
+    if (EFI_ERROR(Status)) {
+      return Status;
+    }
+
+    if (SvnStatus == 0) {
+      DEBUG((DEBUG_INFO, "Config blob update Svn check failed!!\n"));
+      return EFI_INCOMPATIBLE_VERSION;
+    } else {
+      return EFI_SUCCESS;
+    }
+  } else if ((UINT32)ImageHdr->UpdateHardwareInstance == FW_UPDATE_COMP_BIOS_REGION) {
+
+    //
+    // SVN check for BIOS
+    //
+    CurrentBlVersion = NULL;
+    CapsuleBlVersion = NULL;
+
+    //
+    // Get base address of Stage 1A from current firmware
+    //
+    Status = EFI_INVALID_PARAMETER;
+    if (FwPolicy.Fields.UpdatePartitionB == 0x1) {
+      Status = GetComponentInfoByPartition(FLASH_MAP_SIG_STAGE1A, FALSE, &CompBase, &CompSize);
+    } else if (FwPolicy.Fields.UpdatePartitionA == 0x1) {
+      Status = GetComponentInfoByPartition(FLASH_MAP_SIG_STAGE1A, TRUE, &CompBase, &CompSize);
+    }
+
+    if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_ERROR, "GetComponentInfoByPartition: %r\n", Status));
+      return Status;
+    }
+
+    Status = GetVersionfromFv (&CompBase, &CurrentBlVersion);
+    if (EFI_ERROR (Status)) {
+      DEBUG((DEBUG_ERROR, "GetVersionfromFv: %r\n", Status));
+      return Status;
+    }
+
+    //
+    // Get base address of Stage 1A in capsule Image
+    //
+    if (FwPolicy.Fields.UpdatePartitionB == 0x1) {
+      Status = PlatformGetStage1AOffset(ImageHdr, FALSE, &CompBase, &CompSize);
+    } else if (FwPolicy.Fields.UpdatePartitionA == 0x1) {
+      Status = PlatformGetStage1AOffset(ImageHdr, TRUE, &CompBase, &CompSize);
+    }
+    if (EFI_ERROR (Status)) {
+      DEBUG((DEBUG_ERROR, "PlatformGetStage1AOffset: %r\n", Status));
+      return Status;
+    }
+
+    Status = GetVersionfromFv (&CompBase, &CapsuleBlVersion);
+    if (EFI_ERROR (Status)) {
+      DEBUG((DEBUG_ERROR, "GetVersionfromFv: %r\n", Status));
+      return Status;
+    }
+
+    //
+    // Update last update version to the version we are about to update
+    //
+    Status = UpdateStatus(ImageHdr->UpdateHardwareInstance, \
+                          (CapsuleBlVersion->ImageVersion.ProjMajorVersion << 8) | CapsuleBlVersion->ImageVersion.ProjMinorVersion, \
+                          0xFFFFFFFF);
+    if (EFI_ERROR (Status)) {
+      DEBUG((DEBUG_ERROR, "Updating status to reserved region failed: %r\n", Status));
+      return Status;
+    }
+
+    if (CapsuleBlVersion->ImageVersion.SecureVerNum >= CurrentBlVersion->ImageVersion.SecureVerNum) {
+      return EFI_SUCCESS;
+    }
+
+    DEBUG((DEBUG_ERROR, "Antirollback - Could not rollback to version %x from current version: %x\n", \
+           CapsuleBlVersion->ImageVersion.SecureVerNum, CurrentBlVersion->ImageVersion.SecureVerNum));
+
+    return EFI_INCOMPATIBLE_VERSION;
   }
 
-  //
-  // Get base address of Stage 1A from current firmware
-  //
-  Status = EFI_INVALID_PARAMETER;
-  if (FwPolicy.Fields.UpdatePartitionB == 0x1) {
-    Status = GetComponentInfoByPartition(FLASH_MAP_SIG_STAGE1A, FALSE, &CompBase, &CompSize);
-  } else if (FwPolicy.Fields.UpdatePartitionA == 0x1) {
-    Status = GetComponentInfoByPartition(FLASH_MAP_SIG_STAGE1A, TRUE, &CompBase, &CompSize);
-  }
-
-  if (EFI_ERROR(Status)) {
-    DEBUG((DEBUG_ERROR, "GetComponentInfoByPartition: %r\n", Status));
-    return Status;
-  }
-
-  Status = GetVersionfromFv (&CompBase, &CurrentBlVersion);
-  if (EFI_ERROR (Status)) {
-    DEBUG((DEBUG_ERROR, "GetVersionfromFv: %r\n", Status));
-    return Status;
-  }
-
-  //
-  // Get base address of Stage 1A in capsule Image
-  //
-  if (FwPolicy.Fields.UpdatePartitionB == 0x1) {
-    Status = PlatformGetStage1AOffset(ImageHdr, FALSE, &CompBase, &CompSize);
-  } else if (FwPolicy.Fields.UpdatePartitionA == 0x1) {
-    Status = PlatformGetStage1AOffset(ImageHdr, TRUE, &CompBase, &CompSize);
-  }
-  if (EFI_ERROR (Status)) {
-    DEBUG((DEBUG_ERROR, "PlatformGetStage1AOffset: %r\n", Status));
-    return Status;
-  }
-
-  Status = GetVersionfromFv (&CompBase, &CapsuleBlVersion);
-  if (EFI_ERROR (Status)) {
-    DEBUG((DEBUG_ERROR, "GetVersionfromFv: %r\n", Status));
-    return Status;
-  }
-
-  //
-  // Update last update version to the version we are about to update
-  //
-  Status = UpdateStatus(ImageHdr->UpdateHardwareInstance, \
-                        (CapsuleBlVersion->ImageVersion.ProjMajorVersion << 8) | CapsuleBlVersion->ImageVersion.ProjMinorVersion, \
-                        0xFFFFFFFF);
-  if (EFI_ERROR (Status)) {
-    DEBUG((DEBUG_ERROR, "Updating status to reserved region failed: %r\n", Status));
-    return Status;
-  }
-
-  if (CapsuleBlVersion->ImageVersion.SecureVerNum >= CurrentBlVersion->ImageVersion.SecureVerNum) {
-    return EFI_SUCCESS;
-  }
-
-  DEBUG((DEBUG_ERROR, "Antirollback - Could not rollback to version %x from current version: %x\n", \
-         CapsuleBlVersion->ImageVersion.SecureVerNum, CurrentBlVersion->ImageVersion.SecureVerNum));
-
-  return EFI_INCOMPATIBLE_VERSION;
+   return EFI_SUCCESS;
 }
+
 
 /**
   Get state machine flag from flash.

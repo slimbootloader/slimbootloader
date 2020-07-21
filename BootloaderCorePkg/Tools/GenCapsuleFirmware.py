@@ -416,7 +416,7 @@ def SignImage(RawData, OutFile, HashType, SignScheme, PrivKey):
     elif key_type ==  'RSA3072':
         key_size = 384
 
-    if HashType is 'AUTO':
+    if HashType == 'AUTO':
         HashType = adjust_hash_type(PrivKey)
 
     header.FileGuid         = (c_ubyte *16).from_buffer_copy(FIRMWARE_UPDATE_IMAGE_FILE_GUID.bytes_le)

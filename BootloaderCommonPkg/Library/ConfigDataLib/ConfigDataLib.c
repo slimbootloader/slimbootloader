@@ -37,7 +37,7 @@ FindConfigHdrByPidMaskTag (
   UINT32               Offset;
 
   CdataBlob = (CDATA_BLOB *) GetConfigDataPtr ();
-  Offset    = IsInternal > 0 ? (CdataBlob->InternalDataOffset * 4) : CdataBlob->HeaderLength;
+  Offset    = IsInternal > 0 ? (CdataBlob->ExtraInfo.InternalDataOffset * 4) : CdataBlob->HeaderLength;
 
   while (Offset < CdataBlob->UsedLength) {
     CdataHdr = (CDATA_HEADER *) ((UINT8 *)CdataBlob + Offset);
@@ -183,7 +183,7 @@ AddConfigData (
     return EFI_OUT_OF_RESOURCES;
   }
 
-  if (LdrCfgBlob->InternalDataOffset == 0) {
+  if (LdrCfgBlob->ExtraInfo.InternalDataOffset == 0) {
     // Append new config data before internal config data is available.
     CopyMem ((UINT8 *)LdrCfgBlob + LdrCfgBlob->UsedLength,
              (UINT8 *)CfgAddBlob + CfgAddBlob->HeaderLength,
@@ -201,7 +201,7 @@ AddConfigData (
     CopyMem ((UINT8 *)LdrCfgBlob + LdrCfgBlob->HeaderLength,
              (UINT8 *)CfgAddBlob + CfgAddBlob->HeaderLength,
              CfgAddSize);
-    LdrCfgBlob->InternalDataOffset += (UINT16) (CfgAddSize >> 2);
+    LdrCfgBlob->ExtraInfo.InternalDataOffset += (UINT16) (CfgAddSize >> 2);
   }
   LdrCfgBlob->UsedLength += CfgAddSize;
 

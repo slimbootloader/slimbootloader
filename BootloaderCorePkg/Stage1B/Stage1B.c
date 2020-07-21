@@ -271,7 +271,7 @@ CreateConfigDatabase (
         CfgBlob       = (CDATA_BLOB *) IntCfgAddPtr;
         CfgDataLength = CfgBlob->UsedLength - CfgBlob->HeaderLength;
         CfgBlob       = (CDATA_BLOB *) LdrGlobal->CfgDataPtr;
-        CfgBlob->InternalDataOffset = (UINT16) ((CfgBlob->UsedLength - CfgDataLength) >> 2);
+        CfgBlob->ExtraInfo.InternalDataOffset = (UINT16) ((CfgBlob->UsedLength - CfgDataLength) >> 2);
       } else {
         DEBUG ((DEBUG_INFO, "Append Built-In CFG Data ... %r\n", Status));
       }

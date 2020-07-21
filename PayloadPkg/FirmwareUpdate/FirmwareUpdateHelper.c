@@ -17,6 +17,7 @@
 #include <Library/FirmwareUpdateLib.h>
 #include <Library/ContainerLib.h>
 #include <Library/DecompressLib.h>
+#include <Library/ConfigDataLib.h>
 #include "FirmwareUpdateHelper.h"
 
 /**
@@ -531,7 +532,7 @@ CheckSblContainerSvn (
     CapCompEntry = NULL;
     CapCompEntry = LocateComponentEntryFromContainer ((CONTAINER_HDR *) CapContainerAddr, (UINT32 ) FlashComponentName);
     if (CapCompEntry != NULL) {
-      CapLzHdr = (LOADER_COMPRESSED_HEADER *)((UINT8 *)CapContainerAddr + FlashContainerHdr->DataOffset + CapCompEntry->Offset);
+      CapLzHdr = (LOADER_COMPRESSED_HEADER *)((UINT8 *)CapContainerAddr + CapContainerAddr->DataOffset + CapCompEntry->Offset);
 
       if ((IS_COMPRESSED (CapLzHdr) == FALSE) || (IS_COMPRESSED (FlashLzHdr) == FALSE)) {
         DEBUG ((DEBUG_INFO, "Component compressed header signature mismatch!!\n"));
@@ -591,6 +592,72 @@ IsUpdateComponentForContainer (
 }
 
 /**
+  Perform Config data svn check
+
+  This function will perform svn checks for cfgdata in flash and
+  config data in capsule.
+
+  @param[in]  ImageHdr       Pointer to fw mgmt capsule Image header
+  @param[in]  FwPolicy       Firmware update policy
+  @param[out] SvnStatus      Svn compare status
+
+  @retval  EFI_SUCCESS      SVN check successful.
+  @retval  other            error occurred during firmware update
+**/
+EFI_STATUS
+CheckSblConfigDataSvn (
+  IN   EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
+  IN   FIRMWARE_UPDATE_POLICY         FwPolicy,
+  OUT  UINT8                         *SvnStatus
+  )
+{
+  CDATA_BLOB                *CfgBlobCapAddr;
+  CDATA_BLOB                *CfgBlobFlashDataPtr;
+  UINT32                     CfgBlobFlashAddr;
+  UINT32                     CfgBlobSize;
+  EFI_STATUS                 Status;
+
+  Status = EFI_INVALID_PARAMETER;
+
+  if ((ImageHdr == NULL) || (SvnStatus == NULL)) {
+    return Status;
+  }
+
+  //
+  // Get base address of CFGDATA from  firmware block to update
+  //
+
+  if (FwPolicy.Fields.UpdatePartitionB == 0x1) {
+    Status = GetComponentInfoByPartition(FLASH_MAP_SIG_CFGDATA, TRUE, (UINT32 *) &CfgBlobFlashAddr, &CfgBlobSize);
+  } else if (FwPolicy.Fields.UpdatePartitionA == 0x1) {
+    Status = GetComponentInfoByPartition(FLASH_MAP_SIG_CFGDATA, FALSE, (UINT32 *) &CfgBlobFlashAddr, &CfgBlobSize);
+  }
+
+  if (EFI_ERROR(Status)) {
+    DEBUG((DEBUG_ERROR, "Error in retrieving config data on flash: %r\n", Status));
+    return Status;
+  }
+
+  CfgBlobFlashDataPtr = (CDATA_BLOB *) (UINTN) CfgBlobFlashAddr;
+
+  // Locate config data blob header info from capsule image
+  CfgBlobCapAddr = (CDATA_BLOB *)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
+  if (CfgBlobCapAddr->Signature != CFG_DATA_SIGNATURE){
+    DEBUG((DEBUG_INFO, "Config data signature in capsule image does not match\n"));
+    return EFI_NOT_FOUND;
+  }
+
+  //Check SVN
+  if (CfgBlobCapAddr->ExtraInfo.Svn >= CfgBlobFlashDataPtr->ExtraInfo.Svn){
+    *SvnStatus = 1;
+  } else {
+    *SvnStatus = 0;
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
   Perform Slim Bootloader component update.
 
   This function will try to locate component in the flash map,
@@ -626,6 +693,7 @@ UpdateSblComponent (
   // SBL component update, check if it is a container
   //
   if (IsUpdateComponentForContainer ((UINT32) ImageHdr->UpdateHardwareInstance)){
+
     DEBUG((DEBUG_INFO, "Capsule update is for container region!!\n"));
     // Check  security version for container and its components to update
     Status = CheckSblContainerSvn (ImageHdr, &SvnStatus);
@@ -634,7 +702,7 @@ UpdateSblComponent (
       return Status;
     }
   } else {
-          DEBUG((DEBUG_INFO, "SBL component update for non-container region!\n"));
+    DEBUG((DEBUG_INFO, "SBL component update for non-container region!\n"));
   }
 
   //

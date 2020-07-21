@@ -429,7 +429,7 @@ def gen_flash_map_bin (flash_map_file, comp_list):
 def copy_expanded_file (src, dst):
     gen_cfg_data ("GENDLT", src, dst)
 
-def gen_config_file (fv_dir, brd_name, platform_id, pri_key, cfg_db_size, cfg_size, cfg_int, cfg_ext, sign_scheme, hash_type):
+def gen_config_file (fv_dir, brd_name, platform_id, pri_key, cfg_db_size, cfg_size, cfg_int, cfg_ext, sign_scheme, hash_type, svn):
     # Remove previous generated files
     for file in glob.glob(os.path.join(fv_dir, "CfgData*.*")):
             os.remove(file)
@@ -515,7 +515,7 @@ def gen_config_file (fv_dir, brd_name, platform_id, pri_key, cfg_db_size, cfg_si
 
     cfg_final_file = os.path.join(fv_dir, "CFGDATA.bin")
     if pri_key:
-        cfg_data_tool ('sign', ['-k', pri_key, '-a', hash_type, '-s', sign_scheme, cfg_merged_bin_file], cfg_final_file)
+        cfg_data_tool ('sign', ['-k', pri_key, '-a', hash_type, '-s', sign_scheme, '-svn', str(svn), cfg_merged_bin_file], cfg_final_file)
     else:
         shutil.copy(cfg_merged_bin_file, cfg_final_file)
 
