@@ -125,30 +125,36 @@ def print_bytes (data, indent=0, offset=0, show_ascii = False):
         print (str_fmt.format(indent * ' ', offset + idx, hex_str, ' ' + asc_str if show_ascii else ''))
 
 def get_bits_from_bytes (bytes, start, length):
-    value  = bytes_to_value (bytes)
-    bitlen = 8 * len(bytes)
-    fmt    = "{0:0%db}" % bitlen
-    start  = bitlen - start
-    if start < 0 or start < length:
-        raise Exception ('Invalid bit start and length !')
-    bval  = fmt.format(value)[start - length : start]
-    return int (bval, 2)
+    if length == 0:
+        return 0
+    byte_start = (start)  // 8
+    byte_end   = (start + length - 1) // 8
+    bit_start  = start & 7
+    mask = (1 << length) - 1
+    val = bytes_to_value (bytes[byte_start:byte_end + 1])
+    val = (val >> bit_start) & mask
+    return val
 
 def set_bits_to_bytes (bytes, start, length, bvalue):
-    value  = bytes_to_value (bytes)
-    bitlen = 8 * len(bytes)
-    fmt1   = "{0:0%db}" % bitlen
-    fmt2   = "{0:0%db}" % length
-    oldval = fmt1.format(value)[::-1]
-    update = fmt2.format(bvalue)[-length:][::-1]
-    newval = oldval[:start] + update + oldval[start + length:]
-    bytes[:] = value_to_bytes (int(newval[::-1], 2), len(bytes))
+    if length == 0:
+        return
+    byte_start = (start)  // 8
+    byte_end   = (start + length - 1) // 8
+    bit_start  = start & 7
+    mask = (1 << length) - 1
+    val  = bytes_to_value (bytes[byte_start:byte_end + 1])
+    val &= ~(mask << bit_start)
+    val |= ((bvalue & mask) << bit_start)
+    bytes[byte_start:byte_end+1] = value_to_bytearray (val, byte_end + 1 - byte_start)
 
 def bytes_to_value (bytes):
     return reduce(lambda x,y: (x<<8)|y,  bytes[::-1] )
 
 def value_to_bytes (value, length):
     return [(value>>(i*8) & 0xff) for i in range(length)]
+
+def value_to_bytearray (value, length):
+    return bytearray(value_to_bytes(value, length))
 
 def get_aligned_value (value, alignment = 4):
     if alignment != (1 << (alignment.bit_length() - 1)):
