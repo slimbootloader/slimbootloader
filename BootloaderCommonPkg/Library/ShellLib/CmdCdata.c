@@ -56,7 +56,7 @@ PrintBlobheader (
   ShellPrint (L"    Signature   :%x\n", CdataBlob->Signature);
   ShellPrint (L"    HeaderLength:%x\n", CdataBlob->HeaderLength);
   ShellPrint (L"    Attribute   :%x\n", CdataBlob->Attribute);
-  ShellPrint (L"    IntCfgOffset:%x\n", CdataBlob->InternalDataOffset * 4);
+  ShellPrint (L"    IntCfgOffset:%x\n", CdataBlob->ExtraInfo.InternalDataOffset * 4);
   ShellPrint (L"    UsedLength  :%x\n", CdataBlob->UsedLength);
   ShellPrint (L"    TotalLength :%x\n", CdataBlob->TotalLength);
 }

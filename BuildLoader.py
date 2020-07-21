@@ -276,6 +276,7 @@ class BaseBoard(object):
         self.PCI_MEM64_BASE        = 0
         self.BUILD_ARCH            = 'IA32'
         self.KEYH_SVN              = 0
+        self.CFGDATA_SVN           = 0
 
         for key, value in list(kwargs.items()):
             setattr(self, '%s' % key, value)
@@ -1187,11 +1188,12 @@ class Build(object):
 
         # create configuration data
         if self._board.CFGDATA_SIZE > 0:
+            svn = self._board.CFGDATA_SVN
             # create config data files
             gen_config_file (self._fv_dir, self._board.BOARD_PKG_NAME, self._board._PLATFORM_ID,
                              self._board._CFGDATA_PRIVATE_KEY, self._board.CFG_DATABASE_SIZE, self._board.CFGDATA_SIZE,
                              self._board._CFGDATA_INT_FILE, self._board._CFGDATA_EXT_FILE,
-                             self._board._SIGNING_SCHEME, HASH_VAL_STRING[self._board.SIGN_HASH_TYPE])
+                             self._board._SIGNING_SCHEME, HASH_VAL_STRING[self._board.SIGN_HASH_TYPE], svn)
 
         # rebuild reset vector
         vtf_dir = os.path.join('BootloaderCorePkg', 'Stage1A', 'Ia32', 'Vtf0')

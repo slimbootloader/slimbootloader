@@ -59,11 +59,18 @@ typedef struct {
   //
   UINT8   HeaderLength;
   UINT8   Attribute;
-  //
-  // Internal configuration data offset in DWORD from the start of data blob.
-  // This value is only valid in runtime.
-  //
-  UINT16  InternalDataOffset;
+  union {
+    //
+    // Internal configuration data offset in DWORD from the start of data blob.
+    // This value is only valid in runtime.
+    //
+    UINT16  InternalDataOffset;
+    //
+    // Security version number
+    // This is available only in flash. It would be overwritten by CDATA_BLOB.InternalDataOffset in runtime
+    //
+    UINT8   Svn;
+  } ExtraInfo;
   //
   // The total valid configuration data length including this header.
   //
