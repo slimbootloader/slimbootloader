@@ -1,0 +1,201 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Default File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+template:
+  CFGHDR_TMPL: >
+    - CfgHeader    :
+        length       : 0x04
+        value        : {0x01:2b, ((_LENGTH_$(1)_)/4):10b, $(3):4b, $(4):4b, $(2):12b}
+    - CondValue    :
+        length       : 0x04
+        value        : 0x00000000
+
+
+  GPIO_TMPL: >
+    - $ACTION      :
+        page         : GIO_$(1):GIO:"GPIO $(1)"
+    - $ACTION      :
+        page         : GIO_$(1)
+    - GpioConfPad0_$(1) :
+      - $STRUCT      :
+          name         : GPIO $(1) PAD 0
+          type         : EditNum, HEX, (0x00000000,0xFFFFFFFF)
+          help         : >
+                         GPIO $(1) PAD 0
+          marker       : GPIO_DATA_$(1)
+          length       : 0x04
+          value        : $(2)
+      - GPIOTxState  :
+          name         : GPIOTxState
+          type         : Combo
+          option       : 0:0, 1:1
+          help         : >
+                         GPIO TX State
+          condition    : $GPIO_CFG_DATA.GpioConfPad1_$(1).GPIOSkip == 0
+          length       : 1b
+      - GPIORxState  :
+          name         : GPIORxState
+          type         : Reserved
+          length       : 1b
+      - Reserved     :
+          name         : Reserved
+          type         : Reserved
+          length       : 28b
+      - GPIODirection :
+          name         : Direction
+          type         : Combo
+          option       : 0x0:DirIn, 0x1:DirOut, 0x2:DirInOut, 0x3:DirNone
+          condition    : $GPIO_CFG_DATA.GpioConfPad1_$(1).GPIOSkip == 0
+          help         : >
+                         GPIO direction
+          length       : 2b
+    - GpioConfPad1_$(1) :
+      - $STRUCT      :
+          name         : GPIO $(1) PAD 1
+          type         : EditNum, HEX, (0x00000000,0xFFFFFFFF)
+          help         : >
+                         GPIO $(1) PAD 1
+          length       : 0x04
+          value        : $(3)
+      - GPIOPin      :
+          name         : GPIO Pin ID
+          type         : Reserved
+          length       : 16b
+      - Reserved     :
+          name         : Reserved
+          type         : Reserved
+          length       : 15b
+      - GPIOSkip     :
+          name         : GPIO Skip
+          type         : Combo
+          option       : $EN_DIS
+          help         : >
+                         ENABLE- Skip GPIO PAD programming (keep the defaults). DISABLE- Program GPIO PAD configuration.
+          order        : 0000.0000
+          length       : 1b
+
+
+
+  - !include Platform/CommonBoardPkg/CfgData/Template_BootOption.yaml
+
+
+
+configs:
+  - $ACTION      :
+      page         : PLT::"Platform", MEM::"Memory Settings", SIL::"Silicon Settings", GIO::"GPIO Settings", OS::"OS Boot Options"
+  - Signature    :
+      length       : 0x04
+      value        : {'CFGD'}
+  - HeaderLength :
+      length       : 0x01
+      value        : 0x10
+  - Reserved     :
+      length       : 0x03
+      value        : {0,0,0}
+  - UsedLength   :
+      length       : 0x04
+      value        : _LENGTH_
+  - TotalLength  :
+      length       : 0x04
+      value        : 0x1000
+
+  - !include Platform/CommonBoardPkg/CfgData/CfgData_Platform.yaml
+
+  - PLATFORM_CFG_DATA :
+    - !expand { CFGHDR_TMPL : [ PLATFORM_CFG_DATA, 0x280, 0, 0 ] }
+    - PlatTest     :
+        name         : Platform Test Data
+        type         : EditText
+        help         : >
+                       Specify platform test data string
+        length       : 0x04
+        value        : ''
+    - VbtImageId   :
+        name         : Platform VBT table
+        type         : Combo
+        option       : 1:800x600, 2:1024x768
+        help         : >
+                       Specify VBT image ID for desired graphics resolution
+        length       : 0x04
+        value        : 1
+
+  - $ACTION      :
+      page         : MEM
+  - MEMORY_CFG_DATA :
+    - !expand { CFGHDR_TMPL : [ MEMORY_CFG_DATA, 0x180, 0, 0 ] }
+    - MemTest1     :
+        name         : Memory Test 1
+        type         : EditNum, HEX, (0x00000000,0xFFFFFFFF)
+        help         : >
+                       Memory Test 1
+        length       : 0x04
+        value        : 0x11223344
+    - MemTest2     :
+        name         : Memory Test 9
+        type         : EditNum, HEX, (0x00000000,0xFFFFFFFF)
+        help         : >
+                       Memory Test 9
+        length       : 0x04
+        value        : 0x11223346
+
+  - $ACTION      :
+      page         : SIL
+  - SILICON_CFG_DATA :
+    - !expand { CFGHDR_TMPL : [ SILICON_CFG_DATA, 0x200, 0, 0 ] }
+    - SiliconTest1 :
+        name         : Silicon Test 1
+        type         : EditNum, HEX, (0x00000000,0xFFFFFFFF)
+        help         : >
+                       Silicon Test 1
+        length       : 0x04
+        value        : 0x11223347
+    - SiliconTest2 :
+        name         : Silicon Test 2
+        type         : Table
+        option       :  0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX
+        help         : >
+                       Silicon Test 2 to show BYTE table configuration
+        length       : 0x04
+        value        : 0x04030201
+    - SiliconTest3 :
+        name         : Silicon Test 3
+        type         : Table
+        option       :  0:2:HEX, 1:2:HEX
+        help         : >
+                       Silicon Test 3 to show UINT16 table configuration
+        struct       : UINT16
+        length       : 0x08
+        value        : {0:0W, 0x1111, 0x2222, 0x3333, 0x4444}
+    - SiliconTest4 :
+        name         : Silicon Test 4
+        type         : Table
+        option       :  0:4:HEX, 1:4:HEX
+        help         : >
+                       Silicon Test 4 to show UINT32 table configuration
+        struct       : UINT32
+        length       : 0x08
+        value        : {0:0D, 0x11112222, 0x33334444}
+
+  - $ACTION      :
+      page         : GEN
+
+  - !include Platform/CommonBoardPkg/CfgData/CfgData_Common.yaml
+
+  - $ACTION      :
+      page         : GIO
+
+  - !include CfgData_Gpio.yaml
+
+
+  - !include CfgData_CapsuleInformation.yaml
+
+
+  - !include CfgData_BootOption.yaml
+

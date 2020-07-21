@@ -1,0 +1,40 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : PLT
+- $ACTION      :
+    page         : PLT_PCIE_RP_CFG_DATA:SIL:"PCIE RP Config Data"
+- $ACTION      :
+    page         : PLT_PCIE_RP_FEAT:PLT_PCIE_RP_CFG_DATA:"PCIE RP Features"
+- $ACTION      :
+    page         : PLT_PCIE_RP_CTRL_PIN:PLT_PCIE_RP_CFG_DATA:"PCIE RP Control Pins"
+- $ACTION      :
+    page         : PLT_PCIE_RP_CTRL_PIN_PWR:PLT_PCIE_RP_CTRL_PIN:"Power Control Pins"
+- $ACTION      :
+    page         : PLT_PCIE_RP_CTRL_PIN_RST:PLT_PCIE_RP_CTRL_PIN:"Reset Control Pins"
+- PCIE_RP_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ PCIE_RP_CFG_DATA, 0x302, 0, 0 ] }
+  - !expand { PCIERP_TMPL : [ 0 ,  0x8B ] }
+  - !expand { PCIERP_TMPL : [ 1 ,  0x8F ] }
+  - !expand { PCIERP_TMPL : [ 2 ,  0x87 ] }
+  - !expand { PCIERP_TMPL : [ 3 ,  0x86 ] }
+  - !expand { PCIERP_TMPL : [ 4 ,  0x83 ] }
+  - !expand { PCIERP_TMPL : [ 5 ,  0x8E ] }
+  - !expand { PCIERP_CTRL_PIN_TMPL : [ 0 ,   0x6021318A  ,  0x0021618E ] }
+  - !expand { PCIERP_CTRL_PIN_TMPL : [ 1 ,   0x8021118A  ,  0x0020D18A ] }
+  - !expand { PCIERP_CTRL_PIN_TMPL : [ 2 ,   0x4000018B  ,  0x0020F18A ] }
+  - !expand { PCIERP_CTRL_PIN_TMPL : [ 3 ,   0x0000018B  ,  0x0022518A ] }
+  - !expand { PCIERP_CTRL_PIN_TMPL : [ 4 ,   0x2000018B  ,  0x0000018B ] }
+  - !expand { PCIERP_CTRL_PIN_TMPL : [ 5 ,   0x0000018B  ,  0x0000018B ] }
+  - Reserved     :
+      length       : 0x02
+      value        : 0
+

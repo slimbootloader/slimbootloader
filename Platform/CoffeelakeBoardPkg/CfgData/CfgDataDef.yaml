@@ -1,0 +1,80 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Default File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+variable:
+  COND_GPIO_SKIP                 : ($GPIO_CFG_DATA.GpioPinConfig1_$(1).GPIOSkip_$(1) == 0)
+
+
+template:
+
+  - !include Template_CfgData.yaml
+
+
+
+configs:
+  - $ACTION      :
+      page         : PLT::"Platform", MEM::"Memory Settings", SIL::"Silicon Settings", GEN::"General Settings", GIO::"GPIO Settings", OS::"OS Boot Options", SEC::"Security Settings"
+  - Signature    :
+      length       : 0x04
+      value        : {'CFGD'}
+  - HeaderLength :
+      length       : 0x01
+      value        : 0x10
+  - Reserved     :
+      length       : 0x03
+      value        : {0,0,0}
+  - UsedLength   :
+      length       : 0x04
+      value        : _LENGTH_
+  - TotalLength  :
+      length       : 0x04
+      value        : 0x2000
+
+  - !include Platform/CommonBoardPkg/CfgData/CfgData_Platform.yaml
+
+
+  - !include Platform/CommonBoardPkg/CfgData/CfgData_Common.yaml
+
+
+  - !include CfgData_Gpio.yaml
+
+
+  - !include CfgData_PcieRp.yaml
+
+
+  - !include CfgData_Memory.yaml
+
+
+  - !include CfgData_MemSpd.yaml
+
+
+  - !include CfgData_BootOption.yaml
+
+
+  - !include CfgData_Silicon.yaml
+
+
+  - !include CfgData_GpuConfig.yaml
+
+
+  - !include CfgData_CapsuleInformation.yaml
+
+
+  - !include CfgData_Features.yaml
+
+
+  - !include CfgData_Security.yaml
+
+
+  - !include CfgData_SgxConfig.yaml
+
+
+  - !include CfgData_Power.yaml
+
