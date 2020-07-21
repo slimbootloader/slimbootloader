@@ -1,0 +1,255 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : MEM
+- MEMORY_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ MEMORY_CFG_DATA, 0x200, 0, 0 ] }
+  - MrcFastBoot  :
+      name         : MrcFastBoot
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/Disable MRC fast boot support
+      length       : 0x01
+      value        : 0x1
+  - Package      :
+      name         : Package
+      type         : Combo
+      option       : 0x0:SODIMM, 0x1:BGA, 0x2:BGA mirrored (LPDDR3 only), 0x3:SODIMM/UDIMM with Rank 1 Mirrored (DDR3L)
+      help         : >
+                     Specifies CA Mapping for all technologies
+      length       : 0x01
+      value        : 0x1
+  - Profile      :
+      name         : Profile
+      type         : EditNum, HEX, (0x00,0xFF)
+      help         : >
+                     Select Profile
+      length       : 0x01
+      value        : 0xB
+  - MemoryDown   :
+      name         : MemoryDown
+      type         : Combo
+      option       : 0x0:No, 0x1:Yes, 0x2:1MD+SODIMM (for DDR3L only) ACRD, 0x3:1x32 LPDDR4
+      help         : >
+                     Memory Down
+      length       : 0x01
+      value        : 0x1
+  - DDR3LPageSize :
+      name         : DDR3LPageSize
+      type         : Combo
+      option       : 0x0:AUTO, 0x1:1KB, 0x2:2KB
+      help         : >
+                     DDR3L Page Size
+      length       : 0x01
+      value        : 0x0
+  - DDR3LASR     :
+      name         : DDR3LASR
+      type         : Combo
+      option       : 0x0:Not Supported, 0x1:Supported
+      help         : >
+                     DDR3L ASR
+      length       : 0x01
+      value        : 0x0
+  - ScramblerSupport :
+      name         : ScramblerSupport
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or disable the memory scrambler
+      length       : 0x01
+      value        : 0x1
+  - ChannelHashMask :
+      name         : ChannelHashMask
+      type         : EditNum, HEX, (0x00,0xFFFF)
+      help         : >
+                     Specify channel hash mask which is an input param to the channel hashing algorithm
+      length       : 0x02
+      value        : 0x0
+  - SliceHashMask :
+      name         : SliceHashMask
+      type         : EditNum, HEX, (0x00,0xFFFF)
+      help         : >
+                     Specify slice hash mask which is an input param to the channel hashing algorithm
+      length       : 0x02
+      value        : 0x0
+  - InterleavedMode :
+      name         : InterleavedMode
+      type         : Combo
+      option       : 0x0:Disable, 0x2:Enable
+      help         : >
+                     Interleaved Mode
+      length       : 0x01
+      value        : 0x0
+  - ChannelsSlicesEnable :
+      name         : ChannelsSlicesEnable
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Channels Slices Enable
+      length       : 0x01
+      value        : 0x0
+  - MinRefRate2xEnable :
+      name         : MinRefRate2xEnable
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     When enabled, it provides defence against Row-Hammer attacks
+      length       : 0x01
+      value        : 0x0
+  - DualRankSupportEnable :
+      name         : DualRankSupportEnable
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Dual Rank Support Enable
+      length       : 0x01
+      value        : 0x1
+  - RmtMode      :
+      name         : RmtMode
+      type         : Combo
+      option       : 0x0:Disabled, 0x1:Enabled, 0x3:Enabled(Enhanced)
+      help         : >
+                     Rank Margin Tool Mode
+      length       : 0x01
+      value        : 0x1
+  - MemorySizeLimit :
+      name         : MemorySizeLimit
+      type         : EditNum, HEX, (0x00,0xFFFF)
+      help         : >
+                     This value(in MB) is used to restrict the total amount of memory and the calculations based on it
+      length       : 0x02
+      value        : 0x1800
+  - LowMemoryMaxValue :
+      name         : LowMemoryMaxValue
+      type         : EditNum, HEX, (0x00,0xFFFF)
+      help         : >
+                     This value(in MB) is used to restrict the amount of memory below 4GB and the calculations based on it
+      length       : 0x02
+      value        : 0x0
+  - HighMemoryMaxValue :
+      name         : HighMemoryMaxValue
+      type         : EditNum, HEX, (0x00,0xFFFF)
+      help         : >
+                     This value(in MB) is used to restrict the amount of memory above 4GB and the calculations based on it
+      length       : 0x02
+      value        : 0x0
+  - DisableFastBoot :
+      name         : DisableFastBoot
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     If enabled, use saved training data (if valid) after first boot
+      length       : 0x01
+      value        : 0x0
+  - DIMM0SPDAddress :
+      name         : DIMM0SPDAddress
+      type         : EditNum, HEX, (0x00,0xFF)
+      help         : >
+                     DIMM0 SPD Address
+      length       : 0x01
+      value        : 0x0
+  - DIMM1SPDAddress :
+      name         : DIMM1SPDAddress
+      type         : EditNum, HEX, (0x00,0xFF)
+      help         : >
+                     DIMM1 SPD Address
+      length       : 0x01
+      value        : 0x0
+  - !expand { MEMCH_TMPL : [  Ch0 ,  0x3 ,  0x1 ,  0x1 ,  0x3 ,  0x0 ,  0x0 ,  0x0 ,  0x0 ] }
+  - !expand { MEMCH_TMPL : [  Ch1 ,  0x3 ,  0x1 ,  0x1 ,  0x3 ,  0x0 ,  0x0 ,  0x0 ,  0x0 ] }
+  - !expand { MEMCH_TMPL : [  Ch2 ,  0x3 ,  0x1 ,  0x1 ,  0x3 ,  0x0 ,  0x0 ,  0x0 ,  0x0 ] }
+  - !expand { MEMCH_TMPL : [  Ch3 ,  0x3 ,  0x1 ,  0x1 ,  0x3 ,  0x0 ,  0x0 ,  0x0 ,  0x0 ] }
+  - RmtCheckRun  :
+      name         : RmtCheckRun
+      type         : EditNum, HEX, (0x00,0xFF)
+      help         : >
+                     Parameter used to determine whether to run the margin check
+      length       : 0x01
+      value        : 0x0
+  - RmtMarginCheckScaleHighThreshold :
+      name         : RmtMarginCheckScaleHighThreshold
+      type         : EditNum, HEX, (0x00,0xFFFF)
+      help         : >
+                     Percentage used to determine the margin tolerances over the failing margin
+      length       : 0x02
+      value        : 0xC8
+  - Ch0_Bit_swizzling :
+      name         : Ch0_Bit_swizzling
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Channel 0 PHY to DUnit DQ mapping
+      length       : 0x20
+      value        : { 0x09, 0x0e, 0x0c, 0x0d, 0x0a, 0x0b, 0x08, 0x0f, 0x05, 0x06, 0x01, 0x00, 0x02, 0x07, 0x04, 0x03, 0x1a, 0x1f, 0x1c, 0x1b, 0x1d, 0x19, 0x18, 0x1e, 0x14, 0x16, 0x17, 0x11, 0x12, 0x13, 0x10, 0x15 }
+  - Ch1_Bit_swizzling :
+      name         : Ch1_Bit_swizzling
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Channel 1 PHY to DUnit DQ mapping
+      length       : 0x20
+      value        : { 0x06, 0x07, 0x05, 0x04, 0x03, 0x01, 0x00, 0x02, 0x0c, 0x0a, 0x0b, 0x0d, 0x0e, 0x08, 0x09, 0x0f, 0x14, 0x10, 0x16, 0x15, 0x12, 0x11, 0x13, 0x17, 0x1e, 0x1c, 0x1d, 0x19, 0x18, 0x1a, 0x1b, 0x1f }
+  - Ch2_Bit_swizzling :
+      name         : Ch2_Bit_swizzling
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Channel 2 PHY to DUnit DQ mapping
+      length       : 0x20
+      value        : { 0x0f, 0x09, 0x08, 0x0b, 0x0c, 0x0d, 0x0e, 0x0a, 0x05, 0x02, 0x00, 0x03, 0x06, 0x07, 0x01, 0x04, 0x19, 0x1c, 0x1e, 0x1f, 0x1a, 0x1b, 0x18, 0x1d, 0x14, 0x17, 0x16, 0x15, 0x12, 0x13, 0x10, 0x11 }
+  - Ch3_Bit_swizzling :
+      name         : Ch3_Bit_swizzling
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Channel 2 PHY to DUnit DQ mapping
+      length       : 0x20
+      value        : { 0x03, 0x04, 0x06, 0x05, 0x00, 0x01, 0x02, 0x07, 0x0b, 0x0a, 0x08, 0x09, 0x0e, 0x0c, 0x0f, 0x0d, 0x11, 0x17, 0x13, 0x10, 0x15, 0x16, 0x14, 0x12, 0x1c, 0x1d, 0x1a, 0x19, 0x1e, 0x1b, 0x18, 0x1f }
+  - MsgLevelMask :
+      name         : MsgLevelMask
+      type         : EditNum, HEX, (0x00,0xFFFFFFFF)
+      help         : >
+                     Specify 32 bits that used to mask out debug messages
+      length       : 0x04
+      value        : 0x0
+  - EnhancePort8xhDecoding :
+      name         : EnhancePort8xhDecoding
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/Disable Enhance the port 8xh decoding
+      length       : 0x01
+      value        : 0x0
+  - MrcDataSaving :
+      name         : MrcDataSaving
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/Disable MRC training data saving in FSP
+      length       : 0x01
+      value        : 0x1
+  - SpdWriteEnable :
+      name         : SpdWriteEnable
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/Disable SPD data write on the SMBUS
+      length       : 0x01
+      value        : 0x0
+  - NpkEn        :
+      name         : NpkEn
+      type         : Combo
+      option       : 0:Disable, 1:Enable, 2:Debugger, 3:Auto
+      help         : >
+                     Enable/Disable Npk. 0:Disable, 1:Enable, 2:Debugger, 3:Auto(Default)
+      length       : 0x01
+      value        : 0x0
+  - MemRsvd      :
+      length       : 0x00
+      value        : 0x0
+
