@@ -78,14 +78,15 @@ def cfgdata_stitch(ifwi_file, ifwi_out_file, cfg_dir, key_file, script_dir, tool
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
-    # CfgDataDef.dsc needs to be under cfgdata_dir
-    if not os.path.exists(os.path.join(cfg_dir ,'CfgDataDef.dsc')):
-        raise Exception("No CfgDataDef.dsc file found under directory '%s' !" % cfg_dir)
+    cfg_ext = 'yaml'
+    # CfgDataDef needs to be under cfgdata_dir
+    if not os.path.exists(os.path.join(cfg_dir ,'CfgDataDef.' + cfg_ext)):
+        raise Exception("No CfgDataDef.%s file found under directory '%s' !" % (cfg_ext, cfg_dir))
 
     # ensure all required files exist
     chk_files = [
             (script_dir, ['GenCfgData.py', 'CfgDataTool.py']),
-            (cfg_dir, ['CfgDataDef.dsc']),
+            (cfg_dir, ['CfgDataDef.' + cfg_ext]),
         ]
     # Check for KEY_ID in key file string
     if not key_file.startswith('KEY_ID'):
@@ -115,7 +116,7 @@ def cfgdata_stitch(ifwi_file, ifwi_out_file, cfg_dir, key_file, script_dir, tool
           dlt_path = os.path.join(cfg_dir, dlt_name)
           bin_path = os.path.join(cfg_dir, bin_name)
           run_cmd([sys.executable, os.path.join(script_dir, 'GenCfgData.py'), 'GENDLT',
-                 os.path.join(cfg_dir, 'CfgDataDef.dsc;%s' % bin_path), dlt_path])
+                 os.path.join(cfg_dir, 'CfgDataDef.%s;%s' % (cfg_ext, bin_path)), dlt_path])
 
     # generate indivisual CFGDATA for each board
     bin_files = []
@@ -123,7 +124,7 @@ def cfgdata_stitch(ifwi_file, ifwi_out_file, cfg_dir, key_file, script_dir, tool
         bin_file = os.path.splitext(dlt)[0] + '.bin'
         bin_file = os.path.join(out_dir, bin_file)
         run_cmd([sys.executable, os.path.join(script_dir, 'GenCfgData.py'), 'GENBIN',
-                 os.path.join(cfg_dir, 'CfgDataDef.dsc;') + os.path.join(
+                 os.path.join(cfg_dir, 'CfgDataDef.%s;') % cfg_ext + os.path.join(
                      cfg_dir, dlt), bin_file])
         bin_files.append(bin_file)
 

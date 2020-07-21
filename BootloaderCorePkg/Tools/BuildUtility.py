@@ -436,6 +436,9 @@ def gen_config_file (fv_dir, brd_name, platform_id, pri_key, cfg_db_size, cfg_si
 
     CfgIntLen = len(cfg_int)
 
+    file_ext = 'yaml'
+    gen_cmd  = { 'yaml':'GENYML', 'dsc':'GENDSC' }
+
     # Generate CFG data
     brd_name_dir      = os.path.join(os.environ['PLT_SOURCE'], 'Platform', brd_name)
     comm_brd_dir      = os.path.join(os.environ['SBL_SOURCE'], 'Platform', 'CommonBoardPkg')
@@ -444,21 +447,21 @@ def gen_config_file (fv_dir, brd_name, platform_id, pri_key, cfg_db_size, cfg_si
     cfg_hdr_file      = os.path.join(brd_name_dir, 'Include', 'ConfigDataStruct.h')
     cfg_com_hdr_file  = os.path.join(comm_brd_dir, 'Include', 'ConfigDataCommonStruct.h')
     cfg_inc_file      = os.path.join(brd_name_dir, 'Include', 'ConfigDataBlob.h')
-    cfg_dsc_file      = os.path.join(brd_cfg_dir, 'CfgDataDef.dsc')
+    cfg_dsc_file      = os.path.join(brd_cfg_dir, 'CfgDataDef.' + file_ext)
     cfg_hdr_dyn_file  = os.path.join(brd_name_dir, 'Include', 'ConfigDataDynamic.h')
-    cfg_dsc_dyn_file  = os.path.join(brd_cfg_dir, 'CfgDataDynamic.dsc')
+    cfg_dsc_dyn_file  = os.path.join(brd_cfg_dir, 'CfgDataDynamic.' + file_ext)
     cfg_pkl_file      = os.path.join(fv_dir, "CfgDataDef.pkl")
     cfg_bin_file      = os.path.join(fv_dir, "CfgDataDef.bin")  #default core dsc file cfg data
     cfg_bin_int_file  = os.path.join(fv_dir, "CfgDataInt.bin")  #_INT_CFG_DATA_FILE settings
     cfg_bin_ext_file  = os.path.join(fv_dir, "CfgDataExt.bin")  #_EXT_CFG_DATA_FILE settings
-    cfg_comb_dsc_file = os.path.join(fv_dir, 'CfgDataDef.dsc')
+    cfg_comb_dsc_file = os.path.join(fv_dir, 'CfgDataDef.' + file_ext)
 
     # Generate parsed result into pickle file to improve performance
     if os.path.exists(cfg_dsc_dyn_file):
             gen_cfg_data ("GENHDR", cfg_dsc_dyn_file, cfg_hdr_dyn_file)
 
     gen_cfg_data ("GENPKL", cfg_dsc_file, cfg_pkl_file)
-    gen_cfg_data ("GENDSC", cfg_pkl_file, cfg_comb_dsc_file)
+    gen_cfg_data (gen_cmd[file_ext], cfg_dsc_file, cfg_comb_dsc_file)
     gen_cfg_data ("GENHDR", cfg_pkl_file, ';'.join([cfg_hdr_file, cfg_com_hdr_file]))
     gen_cfg_data ("GENBIN", cfg_pkl_file, cfg_bin_file)
 
