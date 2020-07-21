@@ -2001,7 +2001,7 @@ PlatformUpdateAcpiGnvs (
 
   PcieRpConfigData  = (PCIE_RP_CFG_DATA *)FindConfigDataByTag (CDATA_PCIE_RP_TAG);
   if (PcieRpConfigData != NULL) {
-    PowerResetData = (PCIE_RP_PIN_CTRL *) PcieRpConfigData->PcieRpPinCtrlData0;
+    PowerResetData = (PCIE_RP_PIN_CTRL *) &PcieRpConfigData->PcieRpPower0;
     for (Idx1 = 0; Idx1 < PCIE_MAX_ROOT_PORTS; Idx1++) {
       Idx2 = (UINT8)PowerResetData->PcieRpPower0.Wake;
       if (Idx2 >= sizeof(mPcieRpWakeGpeBit)) {

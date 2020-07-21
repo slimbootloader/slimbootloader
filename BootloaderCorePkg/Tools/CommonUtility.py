@@ -147,11 +147,11 @@ def set_bits_to_bytes (bytes, start, length, bvalue):
     val |= ((bvalue & mask) << bit_start)
     bytes[byte_start:byte_end+1] = value_to_bytearray (val, byte_end + 1 - byte_start)
 
-def bytes_to_value (bytes):
-    return int.from_bytes (bytes, byteorder = 'little')
-
 def value_to_bytes (value, length):
     return value.to_bytes(length, 'little')
+
+def bytes_to_value (bytes):
+    return int.from_bytes (bytes, 'little')
 
 def value_to_bytearray (value, length):
     return bytearray(value_to_bytes(value, length))

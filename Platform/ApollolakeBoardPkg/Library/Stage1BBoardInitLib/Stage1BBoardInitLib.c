@@ -1540,7 +1540,7 @@ PcieRpPwrRstInit (
     return;
   }
 
-  PowerResetData    = (PCIE_RP_PIN_CTRL *) PcieRpConfigData->PcieRpPinCtrlData0;
+  PowerResetData    = (PCIE_RP_PIN_CTRL *)&PcieRpConfigData->PcieRpReset0;
   for (Idx1 = 0; Idx1 < PCIE_MAX_ROOT_PORTS; Idx1++) {
     if (!PowerResetData->PcieRpReset0.Skip) {
       ConfigureGpioOutPad(PowerResetData->PcieRpReset0.Community, PowerResetData->PcieRpReset0.PadNum, PowerResetData->PcieRpReset0.Drive ^ 1, 0);
