@@ -1908,8 +1908,8 @@ PlatformUpdateAcpiTable (
     }
   }
 
-  if (FeaturePcdGet (PcdVtdEnabled)) {
-    if (Table->Signature == EFI_ACPI_VTD_DMAR_TABLE_SIGNATURE) {
+  if (Table->Signature == EFI_ACPI_VTD_DMAR_TABLE_SIGNATURE) {
+    if (FeaturePcdGet (PcdVtdEnabled)) {
       PlatformData  = (PLATFORM_DATA *)GetPlatformDataPtr ();
       if (PlatformData->RmrrUsbAddress != 0) {
         Dmar = (EFI_ACPI_DMAR_TABLE *)Table;
@@ -1917,6 +1917,8 @@ PlatformUpdateAcpiTable (
         Dmar->RmrrHeci.RmrLimitAddress = Dmar->RmrrHeci.RmrBaseAddress + VTD_RMRR_USB_LENGTH - 1;
       }
       UpdateDmarAcpi (Table);
+    } else {
+      Status = EFI_UNSUPPORTED;
     }
   }
 
@@ -1943,7 +1945,6 @@ PlatformUpdateAcpiTable (
       DEBUG ( (DEBUG_INFO, "Updated Psd Table in AcpiTable Entries\n") );
     }
   }
-  ASSERT_EFI_ERROR (Status);
 
   return Status;
 }
