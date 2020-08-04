@@ -1,9 +1,26 @@
-/** @file
+/*******************************************************************************
+* Copyright 2002-2020 Intel Corporation
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*******************************************************************************/
 
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
-  SPDX-License-Identifier: BSD-2-Clause-Patent
-
-**/
+/*
+//               Intel(R) Integrated Performance Primitives
+//                   Cryptographic Primitives (ippcp)
+//
+//
+//
+*/
 
 #if !defined(_CP_BN_H)
 #define _CP_BN_H
@@ -36,7 +53,7 @@ struct _cpBigNum
 #define BN_BUFFER(pBN)     ((pBN)->buffer)
 #define BN_ROOM(pBN)       ((pBN)->room)
 #define BN_SIZE(pBN)       ((pBN)->size)
-#define BN_SIZE32(pBN)     ((pBN)->size*(sizeof(BNU_CHUNK_T)/sizeof(Ipp32u)))
+#define BN_SIZE32(pBN)     ((pBN)->size*((Ipp32s)(sizeof(BNU_CHUNK_T)/sizeof(Ipp32u))))
 //#define BN_SIZE32(pBN)     (BITS2WORD32_SIZE( BITSIZE_BNU(BN_NUMBER((pBN)),BN_SIZE((pBN)))))
 
 #define BN_VALID_ID(pBN)   (BN_ID((pBN))==idCtxBigNum)
@@ -48,9 +65,9 @@ struct _cpBigNum
 
 /* pack-unpack context */
 #define cpPackBigNumCtx OWNAPI(cpPackBigNumCtx)
-void cpPackBigNumCtx(const IppsBigNumState* pBN, Ipp8u* pBuffer);
+   void cpPackBigNumCtx(const IppsBigNumState* pBN, Ipp8u* pBuffer);
 #define cpUnpackBigNumCtx OWNAPI(cpUnpackBigNumCtx)
-void cpUnpackBigNumCtx(const Ipp8u* pBuffer, IppsBigNumState* pBN);
+   void cpUnpackBigNumCtx(const Ipp8u* pBuffer, IppsBigNumState* pBN);
 
 /* copy BN */
 __INLINE IppsBigNumState* cpBN_copy(IppsBigNumState* pDst, const IppsBigNumState* pSrc)
@@ -184,8 +201,8 @@ IppsBigNumState* cpBN_TwoRef(void);
 #define          cpBN_ThreeRef OWNAPI(cpBN_ThreeRef)
 IppsBigNumState* cpBN_ThreeRef(void);
 
-#define BN_ONE_REF()  cpBN_OneRef()
-#define BN_TWO_REF()  cpBN_TwoRef()
-#define BN_THREE_REF()  cpBN_ThreeRef()
+#define BN_ONE_REF()   cpBN_OneRef()
+#define BN_TWO_REF()   cpBN_TwoRef()
+#define BN_THREE_REF() cpBN_ThreeRef()
 
 #endif /* _CP_BN_H */

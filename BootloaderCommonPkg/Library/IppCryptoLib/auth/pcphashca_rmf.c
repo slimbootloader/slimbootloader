@@ -1,9 +1,18 @@
-/** @file
-
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
-  SPDX-License-Identifier: BSD-2-Clause-Patent
-
-**/
+/*******************************************************************************
+* Copyright 2016-2020 Intel Corporation
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*******************************************************************************/
 
 /*
 //
@@ -75,7 +84,7 @@ IPPFUN(IppStatus, ippsHashInit_rmf,(IppsHashState_rmf* pCtx, const IppsHashMetho
    IPP_BAD_PTR2_RET(pCtx, pMethod);
    pCtx= (IppsHashState_rmf*)( IPP_ALIGNED_PTR(pCtx, HASH_ALIGNMENT) );
 
-   PaddBlock(0, pCtx, sizeof(IppsHashState_rmf));
+   PadBlock(0, pCtx, sizeof(IppsHashState_rmf));
    HASH_METHOD(pCtx) = pMethod;
    HASH_CTX_ID(pCtx) = idCtxHash;
    pMethod->hashInit(HASH_VALUE(pCtx));
@@ -259,7 +268,7 @@ IPPFUN(IppStatus, ippsHashUpdate_rmf,(const Ipp8u* pSrc, int len, IppsHashState_
 }
 
 
-static void cpFinalize_rmf(DigestSHA512 pHash,
+void cpFinalize_rmf(DigestSHA512 pHash,
                            const Ipp8u* inpBuffer, int inpLen,
                            Ipp64u lenLo, Ipp64u lenHi,
                            const IppsHashMethod* method)
@@ -276,7 +285,7 @@ static void cpFinalize_rmf(DigestSHA512 pHash,
 
    /* padd message */
    buffer[inpLen++] = 0x80;
-   PaddBlock(0, buffer+inpLen, bufferLen-inpLen-mrl);
+   PadBlock(0, buffer+inpLen, bufferLen-inpLen-mrl);
 
    /* message length representation */
    method->msgLenRep(buffer+bufferLen-mrl, lenLo, lenHi);

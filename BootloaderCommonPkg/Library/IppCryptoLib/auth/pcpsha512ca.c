@@ -135,7 +135,7 @@ static void cpFinalizeSHA512(DigestSHA512 pHash,
 
    /* padd message */
    buffer[inpLen++] = 0x80;
-   PaddBlock(0, buffer+inpLen, bufferLen-inpLen-MLR_SHA512);
+   PadBlock(0, buffer+inpLen, bufferLen-inpLen-MLR_SHA512);
 
    /* message length representation */
    lenHi = LSL64(lenHi,3) | LSR64(lenLo,63-3);

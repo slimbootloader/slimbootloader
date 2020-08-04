@@ -1,9 +1,18 @@
-/** @file
-
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
-  SPDX-License-Identifier: BSD-2-Clause-Patent
-
-**/
+/*******************************************************************************
+* Copyright 2017-2020 Intel Corporation
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*******************************************************************************/
 
 #include "owndefs.h"
 #include "owncp.h"
@@ -73,7 +82,7 @@ IppStatus gsModEngineInit(gsModEngine* pME, const Ipp32u* pModulus, int modulusB
       Ipp8u* ptr = (Ipp8u*)pME;
 
       /* clear whole context */
-      PaddBlock(0, pME, sizeof(gsModEngine));
+      PadBlock(0, pME, sizeof(gsModEngine));
 
       MOD_PARENT(pME)   = NULL;
       MOD_EXTDEG(pME)   = 1;
