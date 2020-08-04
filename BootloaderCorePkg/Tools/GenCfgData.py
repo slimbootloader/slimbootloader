@@ -96,6 +96,17 @@ def read_lines (file):
     fi.close ()
     return lines
 
+def expand_file_value (path, value_str):
+    result = bytearray()
+    match  = re.match("\{\s*FILE:(.+)\}", value_str)
+    if match:
+        file_list = match.group(1).split(',')
+        for file in file_list:
+            file = file.strip()
+            bin_path = os.path.join(path, file)
+            result.extend(bytearray(open(bin_path, 'rb').read()))
+    return result
+
 class ExpressionEval(ast.NodeVisitor):
     operators = {
         ast.Add:    op.add,
@@ -477,7 +488,14 @@ class CFG_YAML():
                         if self.allow_template and not self.log_line:
                             self.process_expand (line)
                     else:
-                        curr[key] = curr_line[pos + 2:].strip()
+                        value_str = curr_line[pos + 2:].strip()
+                        curr[key] = value_str
+                        if self.log_line and value_str[0] == '{':
+                            # expand {FILE: xxxx} format in the log line
+                            if value_str[1:].rstrip().startswith('FILE:'):
+                                value_bytes = expand_file_value (self.yaml_path, value_str)
+                                value_str = bytes_to_bracket_str (value_bytes)
+                                self.full_lines[-1] = line[:indent] + curr_line[:pos + 2] + value_str
 
             elif marker2 == ':':
                 child = OrderedDict()
@@ -782,15 +800,8 @@ class CGenCfgData:
         elif (',' in value_str) and (value_str[0] != '{'):
             value_str = '{ %s }' % value_str
         if value_str[0] == '{':
-            result = bytearray()
-            match  = re.match("\{\s*FILE:(.+)\}", value_str)
-            if match:
-                file_list = match.group(1).split(',')
-                for file in file_list:
-                    file = file.strip()
-                    bin_path = os.path.join(self._yaml_path, file)
-                    result.extend(bytearray(open(bin_path, 'rb').read()))
-            else:
+            result = expand_file_value (self._yaml_path, value_str)
+            if len(result) == 0 :
                 bin_list = value_str[1:-1].split(',')
                 value            = 0
                 bit_len          = 0
