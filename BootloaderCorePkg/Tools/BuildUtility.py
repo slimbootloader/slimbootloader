@@ -804,8 +804,8 @@ def check_for_python():
     ver_parts = version.split('.')
     # Require Python 3.6 or above
     if not (len(ver_parts) >= 2 and int(ver_parts[0]) >= 3 and int(ver_parts[1]) >= 6):
-        print('WARNING: Python version %s is unsupported, potential build issue might encounter !\n         '
-              'Please consider installing and using Python 3.6 or above to launch build script !\n') % version
+        raise SystemExit ('ERROR: Python version ' + version + ' is not supported any more !\n       ' +
+                          'Please install and use Python 3.6 or above to launch build script !\n')
 
     return version
 
