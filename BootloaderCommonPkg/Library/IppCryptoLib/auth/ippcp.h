@@ -1,9 +1,18 @@
-/** @file
-
-  Copyright (c) 2018-2020, Intel Corporation. All rights reserved.<BR>
-  SPDX-License-Identifier: BSD-2-Clause-Patent
-
-**/
+/*******************************************************************************
+* Copyright 2017-2020 Intel Corporation
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*******************************************************************************/
 
 /*
 //              Intel(R) Integrated Performance Primitives (Intel(R) IPP)
@@ -12,8 +21,8 @@
 //
 */
 
-#if !defined( __IPPCP_H__ ) || defined( _OWN_BLDPCS )
-#define __IPPCP_H__
+#if !defined( IPPCP_H__ ) || defined( _OWN_BLDPCS )
+#define IPPCP_H__
 
 
 #if defined (_WIN32_WCE) && defined (_M_IX86) && defined (__stdcall)
@@ -239,4 +248,4 @@ IPPAPI(IppStatus, ippsRSAVerify_PSS_rmf,(const Ipp8u* pMsg,  int msgLen,
   #define __stdcall __cdecl
 #endif
 
-#endif /* __IPPCP_H__ */
+#endif /* IPPCP_H__ */
