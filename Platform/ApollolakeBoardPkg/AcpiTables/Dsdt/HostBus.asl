@@ -250,6 +250,20 @@ Name( RES0,ResourceTemplate() {
           PM02
           )
 
+  QWORDMEMORY (                  // Descriptor for PCI CFG Space
+          ResourceProducer,      // bit 0 of general flags is 0
+          PosDecode,
+          MinFixed,              // Range is fixed
+          MaxFixed,              // Range is fixed
+          NonCacheable,
+          ReadWrite,
+          0x00000000,            // Granularity
+          0x400000000,            // Min
+          0x7FFFFFFFF,            // Max
+          0x000000000,            // Translation
+          0x400000000             // Range Length
+          )
+
 })
 
 Name(GUID,Buffer(){0x5b, 0x4d, 0xdb, 0x33,
