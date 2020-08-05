@@ -236,7 +236,7 @@ class Board(BaseBoard):
         # define extra images that will be copied to output folder
         img_list = ['SlimBootloader.txt',
                     'CfgDataStitch.py',
-                    'CfgDataDef.dsc',
+                    'CfgDataDef.yaml',
                     'CfgDataInt.bin'
                     ]
         return img_list
