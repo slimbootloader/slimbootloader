@@ -328,11 +328,6 @@ GetFirmwareUpdateInfo (
       return Status;
     }
 
-    if (ImageHdr->UpdateImageSize & 0xFFF) {
-      DEBUG ((DEBUG_INFO, "capsule payload size is not block aligned!"));
-      return EFI_UNSUPPORTED;
-    }
-
     if (ImageHdr->UpdateImageSize > CompSize) {
       DEBUG ((DEBUG_INFO, "capsule payload size is too big for the region on flash!"));
       return EFI_UNSUPPORTED;
