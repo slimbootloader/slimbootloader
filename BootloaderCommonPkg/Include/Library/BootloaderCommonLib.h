@@ -603,28 +603,4 @@ MatchHashInStore (
   IN       UINT8           *HashData
   );
 
-
-/**
-  Get hash to extend a firmware stage component
-  Hash calculation to extend would be in either of ways
-  Retrieve Hash from Component hash table or
-  Calculate Hash using source buf and length provided
-
-  @param[in]  ComponentType             Stage whose measurement need to be extended.
-  @param[in]  HashType                  Hash type required
-  @param[in]  Src                       Buffer Address
-  @param[in]  Length                    Data Len
-  @param[out] HashData                  Hash Data buf addr
-
-  @retval RETURN_SUCCESS      Operation completed successfully.
-  @retval Others              Unable to calcuate hash.
-**/
-RETURN_STATUS
-GetHashToExtend (
-  IN       UINT8            ComponentType,
-  IN       HASH_ALG_TYPE    HashType,
-  IN       UINT8           *Src,
-  IN       UINT32           Length,
-  OUT      UINT8           *HashData
-  );
 #endif
