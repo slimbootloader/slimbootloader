@@ -413,6 +413,11 @@ MpInit (
         DEBUG ((DEBUG_INFO, "MPINIT timeout with %d APs completed.\n", mMpDataStruct.ApDoneCounter));
       }
 
+      if (CpuCount > FixedPcdGet32 (PcdCpuMaxLogicalProcessorNumber)) {
+        CpuCount =  FixedPcdGet32 (PcdCpuMaxLogicalProcessorNumber);
+        DEBUG ((DEBUG_WARN, "PcdCpuMaxLogicalProcessorNumber is too small !\n", mMpDataStruct.ApDoneCounter));
+      }
+
       mSysCpuInfo.CpuCount = CpuCount;
       SortSysCpu (&mSysCpuInfo);
 
