@@ -820,12 +820,15 @@ FindImage (
   CapImageHdr = NULL;
 
   FwUpdHeader = (FIRMWARE_UPDATE_HEADER *)CapImage;
-  CapHeader = (EFI_FW_MGMT_CAP_HEADER *)((UINTN)FwUpdHeader + FwUpdHeader->ImageOffset);
+  if (FwUpdHeader == NULL) {
+    return EFI_NOT_FOUND;
+  }
 
   //
   // If capsule header is NULL or no payloads found in the capsule
   // return EFI_NOT_FOUND;
   //
+  CapHeader = (EFI_FW_MGMT_CAP_HEADER *)((UINTN)FwUpdHeader + FwUpdHeader->ImageOffset);
   if ((CapHeader == NULL) || (CapHeader->PayloadItemCount == 0)) {
     return EFI_NOT_FOUND;
   }
