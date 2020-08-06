@@ -645,12 +645,18 @@ PciGetMaxBusNumber (
   )
 {
   UINT8             MaxBusNumber;
+  PCI_IO_DEVICE    *CurrBridge;
 
   //
   // No Bridge type check here. A caller must guarantee IS_PCI_BRIDGE(Bridge)
   //
   if (Bridge != NULL) {
-    MaxBusNumber = Bridge->BusNumberRanges.BusLimit;
+    // Find the root bridge to get the bus limit
+    CurrBridge = Bridge;
+    while (CurrBridge->Parent != NULL) {
+      CurrBridge = CurrBridge->Parent;
+    }
+    MaxBusNumber = CurrBridge->BusNumberRanges.BusLimit;
   } else {
     MaxBusNumber = PCI_MAX_BUS;
   }
