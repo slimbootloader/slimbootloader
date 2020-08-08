@@ -58,8 +58,10 @@ class Board(BaseBoard):
         self.BOARD_PKG_NAME       = 'ApollolakeBoardPkg'
         self.SILICON_PKG_NAME     = 'ApollolakePkg'
 
+        self._PCI_ENUM_DOWNGRADE_PMEM64 = 1
         self.PCI_IO_BASE          = 0x00001000
         self.PCI_MEM32_BASE       = 0x80000000
+        self.PCI_MEM64_BASE       = 0x400000000
 
         self.FLASH_SIZE           = 0x800000
         self.FLASH_BASE           = self.FLASH_LAYOUT_START - self.FLASH_SIZE

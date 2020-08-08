@@ -1050,7 +1050,6 @@ CalculateResource (
     Base = ALIGN (Base, PciBarRes->PciBar->Alignment);
     PciBarRes->PciBar->BaseAddress = Base;
     Base += PciBarRes->PciBar->Length;
-
     CurrentLink = CurrentLink->ForwardLink;
   }
 
@@ -1064,7 +1063,6 @@ CalculateResource (
       Alignment = 0xFFFFF;
     }
   }
-  Base = ALIGN (Base,  Alignment);
 
   Parent->PciBar[BarType - 1].Alignment = Alignment;
   Parent->PciBar[BarType - 1].BarType   = BarType;
@@ -1307,15 +1305,13 @@ PciProgramResources (
   CurrentLink = RootBridge->ChildList.ForwardLink;
   while ((CurrentLink != NULL) && (CurrentLink != &RootBridge->ChildList)) {
     Root = PCI_IO_DEVICE_FROM_LINK (CurrentLink);
-    Root->PciBar[BarType - 1].BaseAddress = Address;
-
     CalculateResource (Root, BarType);
+    Address = ALIGN(Address, Root->PciBar[BarType - 1].Alignment);
+    Root->PciBar[BarType - 1].BaseAddress = Address;
     ProgramResource (Root, BarType);
 
     // Base Address for next device
     Address += Root->PciBar[BarType - 1].Length;
-    Address = ALIGN (Address, Root->PciBar[BarType - 1].Alignment);
-
     CurrentLink = CurrentLink->ForwardLink;
   }
 
@@ -1557,13 +1553,12 @@ PciEnumeration (
   }
 
   BaseAddress = PcdGet32 (PcdPciResourceMem32Base);
-  BaseAddress = PciProgramResources (RootBridge, PciBarTypeMem32, BaseAddress);
+  BaseAddress = PciProgramResources(RootBridge, PciBarTypeMem32, BaseAddress);
+  BaseAddress = ALIGN(BaseAddress, 0xFFFFFFF);
+  PciProgramResources(RootBridge, PciBarTypePMem32, BaseAddress);
 
-  BaseAddress = ALIGN (BaseAddress, 0xFFFFFFF);
-  PciProgramResources (RootBridge, PciBarTypePMem32, BaseAddress);
-
+  BaseAddress = PcdGet64 (PcdPciResourceMem64Base);
   if ((EnumPolicy != NULL) && (EnumPolicy->DowngradeMem64 == 0)) {
-    BaseAddress = PcdGet64 (PcdPciResourceMem64Base);
     ASSERT (BaseAddress > 0xFFFFFFFF);
     BaseAddress = PciProgramResources (RootBridge, PciBarTypeMem64, BaseAddress);
   }
