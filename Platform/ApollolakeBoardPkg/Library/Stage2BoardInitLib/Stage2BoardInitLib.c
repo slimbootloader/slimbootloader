@@ -694,7 +694,20 @@ SetFrameBufferWriteCombining (
 {
   UINT32             MsrIdx;
   UINT32             MsrMax;
-  UINT32             Base;
+  UINT32             Data;
+  UINT32             GfxPciBase;
+  UINT64             Base64;
+
+  // Skip if GFX device does not exist
+  GfxPciBase = PCI_LIB_ADDRESS (0, 2, 0, 0);
+  if (PciRead16 (GfxPciBase) == 0xFFFF) {
+    return;
+  }
+
+  // Assume fixed 256MB prefetchable space
+  Data    = PciRead32 (GfxPciBase + PCI_BASE_ADDRESSREG_OFFSET + 12);
+  Base64  = LShiftU64 (Data, 32);
+  Base64 += (PciRead32 (GfxPciBase + PCI_BASE_ADDRESSREG_OFFSET + 8) & ~(SIZE_256MB - 1));
 
   // Enable Framebuffer as WC.
   MsrMax = EFI_MSR_CACHE_VARIABLE_MTRR_BASE +
@@ -710,8 +723,7 @@ SetFrameBufferWriteCombining (
     // Framebuffer belongs to PMEM32 in PCI resource allocation.
     // The 1st 256MB from PcdPciResourceMem32Base will be consumed by MEM32 resource.
     // And framebuffer should be allocated to the next 256MB aligned address.
-    Base = (PcdGet32 (PcdPciResourceMem32Base) + SIZE_256MB)  &  ~(SIZE_256MB - 1);
-    AsmWriteMsr64 (MsrIdx,     Base | CACHE_WRITECOMBINING);
+    AsmWriteMsr64 (MsrIdx,     Base64 | CACHE_WRITECOMBINING);
     AsmWriteMsr64 (MsrIdx + 1, 0xF00000000ULL + B_EFI_MSR_CACHE_MTRR_VALID + (UINT32)(~(SIZE_256MB - 1)));
   } else {
     DEBUG ((DEBUG_WARN, "Failed to find a free MTRR pair for framebuffer!\n"));
@@ -944,13 +956,7 @@ BoardInit (
     }
 
     SdcardPowerUp();
-
     SaveOtgRole();
-    if (PcdGetBool (PcdFramebufferInitEnabled)) {
-      // Enable framebuffer as WC for performance
-      SetFrameBufferWriteCombining ();
-    }
-
     Status = PcdSet32S (PcdFuncCpuInitHook, (UINT32)(UINTN) PlatformCpuInit);
     break;
   case PostSiliconInit:
@@ -965,7 +971,7 @@ BoardInit (
     // Initialize Smbios Info for SmbiosInit
     //
     if (FeaturePcdGet (PcdSmbiosEnabled)) {
-	  InitializeSmbiosInfo ();
+      InitializeSmbiosInfo ();
     }
     // Enable DMA protection
     if (FeaturePcdGet (PcdDmaProtectionEnabled)) {
@@ -976,6 +982,10 @@ BoardInit (
     BuildOsConfigDataHob ();
     break;
   case PostPciEnumeration:
+    if (PcdGetBool (PcdFramebufferInitEnabled)) {
+      // Enable framebuffer as WC for performance
+      SetFrameBufferWriteCombining ();
+    }
     if (PcdGetBool (PcdSeedListEnabled)) {
       Status = GenerateSeeds ();
       if (EFI_ERROR (Status)) {
