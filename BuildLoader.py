@@ -826,6 +826,12 @@ class Build(object):
         setattr(self._board, 'FSP_M_BASE'         , getattr(self._board, 'STAGE1B_FD_BASE')   + getattr(self._board, 'FSP_M_OFFSET'))
         setattr(self._board, 'FSP_S_BASE'         , getattr(self._board, 'STAGE2_FD_BASE')    + getattr(self._board, 'FSP_S_OFFSET'))
 
+        for stage_c, fsp_c in [('1A', 'T'), ('1B', 'M'), ('2', 'S')]:
+          fv_size = getattr(self._board, 'STAGE%s_FV_SIZE' % stage_c)
+          if fv_size < 0:
+            raise Exception ('STAGE%s_FD_SIZE is too small, please adjust it to be at least 0x%x in BoardConfig.py !' %
+                            (stage_c, getattr(self._board, 'FSP_%s_SIZE' % fsp_c)))
+
         if getattr(self._board, 'FLASH_SIZE') == 0:
             if not hasattr (self._board, 'SLIMBOOTLOADER_SIZE'):
                 raise Exception ('FLASH_SIZE needs to be defined !')
