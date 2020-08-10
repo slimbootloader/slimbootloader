@@ -1057,11 +1057,12 @@ CalculateResource (
     if (Alignment < 0xFFF) {
       Alignment = 0xFFF;
     }
-    Base = ALIGN (Base,  Alignment);
+    Base = ALIGN (Base,  0xFFF);
   } else {
     if (Alignment < 0xFFFFF) {
       Alignment = 0xFFFFF;
     }
+    Base = ALIGN (Base,  0xFFFFF);
   }
 
   Parent->PciBar[BarType - 1].Alignment = Alignment;
