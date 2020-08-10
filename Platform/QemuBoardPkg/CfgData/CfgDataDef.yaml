@@ -89,7 +89,7 @@ template:
 
 configs:
   - $ACTION      :
-      page         : PLT::"Platform", MEM::"Memory Settings", SIL::"Silicon Settings", GIO::"GPIO Settings", OS::"OS Boot Options"
+      page         : PLT::"Platform", MEM::"Memory Settings", SIL::"Silicon Settings", GEN::"General Settings", GIO::"GPIO Settings", OS::"OS Boot Options"
   - Signature    :
       length       : 0x04
       value        : {'CFGD'}

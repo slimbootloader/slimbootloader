@@ -19,7 +19,7 @@
 //               Intel(R) Integrated Performance Primitives
 //                   Cryptographic Primitives (ippcp)
 //
-//   Intel® Integrated Performance Primitives Cryptography (Intel® IPP Cryptography)
+//   Intel(R) Integrated Performance Primitives Cryptography (Intel(R) IPP Cryptography)
 //
 //   Purpose:
 //     Define ippCP variant
