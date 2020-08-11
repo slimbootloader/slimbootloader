@@ -135,7 +135,6 @@ PciParseBar (
   UINT32                Mask;
   EFI_STATUS            Status;
   PCI_BAR_TYPE          BarType;
-  PCI_ENUM_POLICY_INFO  *EnumPolicy;
 
   BarType       = PciBarTypeUnknown;
   OriginalValue = 0;
@@ -160,7 +159,6 @@ PciParseBar (
     return Offset + 4;
   }
 
-  EnumPolicy = (PCI_ENUM_POLICY_INFO *)PcdGetPtr (PcdPciEnumPolicyInfo);
   PciIoDevice->PciBar[BarIndex].Offset = (UINT8) Offset;
   if ((Value & 0x01) != 0) {
     //
@@ -172,7 +170,7 @@ PciParseBar (
       //
       // It is a IO32 bar
       //
-      if ((EnumPolicy != NULL) && (EnumPolicy->DowngradeIo32 == 0)) {
+      if ((PciIoDevice->Decodes & EFI_BRIDGE_IO32_DECODE_SUPPORTED) != 0) {
         BarType = PciBarTypeIo32;
       } else {
         BarType = PciBarTypeIo16;
@@ -232,13 +230,13 @@ PciParseBar (
     //
     case 0x04:
       if ((Value & 0x08) != 0) {
-        if ((EnumPolicy != NULL) && (EnumPolicy->DowngradePMem64 == 0)) {
+        if ((PciIoDevice->Decodes & EFI_BRIDGE_PMEM64_DECODE_SUPPORTED) != 0) {
           BarType = PciBarTypePMem64;
         } else {
           BarType = PciBarTypePMem32;
         }
       } else {
-        if ((EnumPolicy != NULL) && (EnumPolicy->DowngradeMem64 == 0)) {
+        if ((PciIoDevice->Decodes & EFI_BRIDGE_MEM64_DECODE_SUPPORTED) != 0) {
           BarType = PciBarTypeMem64;
         } else {
           BarType = PciBarTypeMem32;
@@ -364,6 +362,16 @@ InitializePpb (
   PciExpressWrite32 (PciIoDevice->Address + 0x24, 0x0000FFFF);
   PciExpressWrite32 (PciIoDevice->Address + 0x28, 0xFFFFFFFF);
   PciExpressWrite32 (PciIoDevice->Address + 0x2C, 0x00000000);
+
+  //
+  // Don't support use io32 as for now
+  //
+  PciExpressWrite32 (PciIoDevice->Address + 0x30, 0x0000FFFF);
+
+  //
+  // Force Interrupt line to zero for cards that come up randomly
+  //
+  PciExpressWrite8 (PciIoDevice->Address + 0x3C, 0x00);
 }
 
 /**
@@ -399,7 +407,8 @@ CreatePciIoDevice (
     CopyMem (& (PciIoDevice->Pci), Pci, sizeof (PCI_TYPE00));
   }
 
-  PciIoDevice->IsPciExp = FALSE;
+  PciIoDevice->Decodes                    = 0;
+  PciIoDevice->IsPciExp                   = FALSE;
   PciIoDevice->PciExpressCapabilityOffset = 0;
   if (FeaturePcdGet (PcdAriSupport) || FeaturePcdGet (PcdSrIovSupport)) {
     InitializePciExpCapability (PciIoDevice);
@@ -455,6 +464,13 @@ GatherDeviceInfo (
   PciExpressWrite16 (PCI_EXPRESS_LIB_ADDRESS (Bus, Device, Func, PCI_COMMAND_OFFSET), 0);
 
   //
+  // Inherit parent decode capability
+  //
+  if (PciIoDevice->Parent != NULL) {
+    PciIoDevice->Decodes = PciIoDevice->Parent->Decodes;
+  }
+
+  //
   // Start to parse the bars
   //
   for (Offset = 0x10, BarIndex = 0; Offset <= 0x24 && BarIndex < PCI_MAX_BAR; BarIndex++) {
@@ -499,6 +515,12 @@ GatherPpbInfo (
   )
 {
   PCI_IO_DEVICE                   *PciIoDevice;
+  EFI_STATUS                      Status;
+  UINT8                           Value;
+  UINT8                           Temp;
+  UINT32                          PMemBaseLimit;
+  UINT16                          PrefetchableMemoryBase;
+  UINT16                          PrefetchableMemoryLimit;
 
   PciIoDevice = CreatePciIoDevice (
                   Bridge,
@@ -513,6 +535,69 @@ GatherPpbInfo (
   //
   PciExpressAnd16 (PciIoDevice->Address + PCI_COMMAND_OFFSET, (UINT16)~EFI_PCI_COMMAND_BITS_OWNED);
   PciExpressAnd16 (PciIoDevice->Address + PCI_BRIDGE_CONTROL_REGISTER_OFFSET, (UINT16)~EFI_PCI_BRIDGE_CONTROL_BITS_OWNED);
+
+  //
+  // Test whether it support 32 decode or not
+  //
+  Temp = PciExpressRead8 (PciIoDevice->Address + 0x1C);
+  PciExpressWrite8 (PciIoDevice->Address + 0x1C, 0xFF);
+  Value = PciExpressRead8 (PciIoDevice->Address + 0x1C);
+  PciExpressWrite8 (PciIoDevice->Address + 0x1C, Temp);
+
+  if (Value != 0) {
+    if ((Value & 0x01) != 0) {
+      PciIoDevice->Decodes |= EFI_BRIDGE_IO32_DECODE_SUPPORTED;
+    } else {
+      PciIoDevice->Decodes |= EFI_BRIDGE_IO16_DECODE_SUPPORTED;
+    }
+  }
+
+  Status = BarExisted (
+            PciIoDevice,
+            0x24,
+            NULL,
+            &PMemBaseLimit
+            );
+
+  //
+  // Test if it supports 64 memory or not
+  //
+  // The bottom 4 bits of both the Prefetchable Memory Base and Prefetchable Memory Limit
+  // registers:
+  //   0 - the bridge supports only 32 bit addresses.
+  //   1 - the bridge supports 64-bit addresses.
+  //
+  PrefetchableMemoryBase = (UINT16)(PMemBaseLimit & 0xffff);
+  PrefetchableMemoryLimit = (UINT16)(PMemBaseLimit >> 16);
+  if (!EFI_ERROR (Status) &&
+      (PrefetchableMemoryBase & 0x000f) == 0x0001 &&
+      (PrefetchableMemoryLimit & 0x000f) == 0x0001) {
+    Status = BarExisted (
+              PciIoDevice,
+              0x28,
+              NULL,
+              NULL
+              );
+
+    if (!EFI_ERROR (Status)) {
+      PciIoDevice->Decodes |= EFI_BRIDGE_PMEM32_DECODE_SUPPORTED;
+      PciIoDevice->Decodes |= EFI_BRIDGE_PMEM64_DECODE_SUPPORTED;
+    } else {
+      PciIoDevice->Decodes |= EFI_BRIDGE_PMEM32_DECODE_SUPPORTED;
+    }
+  }
+
+  //
+  // Memory 32 code is required for ppb
+  //
+  PciIoDevice->Decodes |= EFI_BRIDGE_MEM32_DECODE_SUPPORTED;
+
+  //
+  // Make sure that PPB is in scope of parent's decode capability
+  //
+  if (PciIoDevice->Parent != NULL) {
+    PciIoDevice->Decodes &= PciIoDevice->Parent->Decodes;
+  }
 
   //
   // PPB can have two BARs
@@ -1332,9 +1417,9 @@ PciProgramResources (
  **/
 EFI_STATUS
 PciScanRootBridges (
-  IN      PCI_ENUM_POLICY_INFO   *EnumPolicy,
-  OUT     PCI_IO_DEVICE         **RootBridge,
-  OUT     UINT8                  *RootBridgeCount
+  IN CONST  PCI_ENUM_POLICY_INFO   *EnumPolicy,
+  OUT       PCI_IO_DEVICE         **RootBridge,
+  OUT       UINT8                  *RootBridgeCount
   )
 {
   UINT32                            Address;
@@ -1347,6 +1432,11 @@ PciScanRootBridges (
   UINT16                            EndIndex;
   UINT8                             Count;
   UINT8                             BusLimit;
+  UINT32                            RootBridgeDecodes;
+
+  if ((EnumPolicy == NULL) || (RootBridge == NULL) || (RootBridgeCount == NULL)) {
+    return EFI_INVALID_PARAMETER;
+  }
 
   Bridge = (PCI_IO_DEVICE *)PciAllocatePool (sizeof (PCI_IO_DEVICE));
   ZeroMem (Bridge, sizeof (PCI_IO_DEVICE));
@@ -1371,11 +1461,24 @@ PciScanRootBridges (
   // Use PCI_MAX_BUS if the enum policy has no multiple buses.
   //
   BusLimit = PCI_MAX_BUS;
-  EnumPolicy = (PCI_ENUM_POLICY_INFO *)PcdGetPtr (PcdPciEnumPolicyInfo);
-  if ((EnumPolicy != NULL) && (EnumPolicy->NumOfBus > 1)) {
+  if (EnumPolicy->NumOfBus > 1) {
     if (StartIndex != EndIndex) {
       BusLimit = EnumPolicy->BusScanItems[EnumPolicy->NumOfBus - 1];
     }
+  }
+
+  //
+  // Root bridge decode space
+  //
+  RootBridgeDecodes = 0xFFFFFFFF;
+  if (EnumPolicy->DowngradeIo32 != 0) {
+    RootBridgeDecodes &= (UINT32)~(EFI_BRIDGE_IO32_DECODE_SUPPORTED);
+  }
+  if (EnumPolicy->DowngradeMem64 != 0) {
+    RootBridgeDecodes &= (UINT32)~(EFI_BRIDGE_MEM64_DECODE_SUPPORTED);
+  }
+  if (EnumPolicy->DowngradePMem64 != 0) {
+    RootBridgeDecodes &= (UINT32)~(EFI_BRIDGE_PMEM64_DECODE_SUPPORTED);
   }
 
   for (Index = StartIndex; Index <= EndIndex; Index++) {
@@ -1388,6 +1491,7 @@ PciScanRootBridges (
     Address = PCI_EXPRESS_LIB_ADDRESS (Bus, 0, 0, 0);
     if (PciExpressRead16 (Address) != 0xFFFF) {
       Root = CreatePciIoDevice (NULL, NULL, (UINT8)Bus, 0, 0);
+      Root->Decodes = RootBridgeDecodes;
       Root->BusNumberRanges.BusBase  = (UINT8)Bus;
       Root->BusNumberRanges.BusLimit = BusLimit;
 
@@ -1532,17 +1636,19 @@ PciEnumeration (
   IN  VOID   *MemPool
   )
 {
-  PCI_ENUM_POLICY_INFO    *EnumPolicy;
-  PCI_IO_DEVICE           *RootBridge;
-  UINT64                   BaseAddress;
-  UINT8                    RootBridgeCount;
+  CONST PCI_ENUM_POLICY_INFO  *EnumPolicy;
+  PCI_IO_DEVICE               *RootBridge;
+  UINT64                      BaseAddress;
+  UINT8                       RootBridgeCount;
+  EFI_STATUS                  Status;
 
   SetAllocationPool (MemPool);
 
   EnumPolicy = (PCI_ENUM_POLICY_INFO *)PcdGetPtr (PcdPciEnumPolicyInfo);
-  ASSERT (EnumPolicy != NULL);
+  RootBridgeCount = 0;
 
-  PciScanRootBridges (EnumPolicy, &RootBridge, &RootBridgeCount);
+  Status = PciScanRootBridges (EnumPolicy, &RootBridge, &RootBridgeCount);
+  ASSERT_EFI_ERROR (Status);
   ASSERT (RootBridgeCount > 0);
 
   BaseAddress = PcdGet32 (PcdPciResourceIoBase);

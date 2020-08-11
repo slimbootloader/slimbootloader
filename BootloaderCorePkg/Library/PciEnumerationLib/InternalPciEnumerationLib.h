@@ -11,6 +11,14 @@
 #include <IndustryStandard/Pci.h>
 #include <Guid/PciRootBridgeInfoGuid.h>
 
+#define EFI_BRIDGE_IO32_DECODE_SUPPORTED      0x0001
+#define EFI_BRIDGE_PMEM32_DECODE_SUPPORTED    0x0002
+#define EFI_BRIDGE_PMEM64_DECODE_SUPPORTED    0x0004
+#define EFI_BRIDGE_IO16_DECODE_SUPPORTED      0x0008
+#define EFI_BRIDGE_PMEM_MEM_COMBINE_SUPPORTED 0x0010
+#define EFI_BRIDGE_MEM64_DECODE_SUPPORTED     0x0020
+#define EFI_BRIDGE_MEM32_DECODE_SUPPORTED     0x0040
+
 //
 // The PCI Command register bits owned by PCI Bus driver.
 //
@@ -105,6 +113,11 @@ struct _PCI_IO_DEVICE {
   // BAR for this PCI Device
   //
   PCI_BAR                                   PciBar[PCI_MAX_BAR];
+
+  //
+  // The resource decode the bridge supports
+  //
+  UINT32                                    Decodes;
 
   //
   // Bus number ranges for a PCI Root Bridge device
