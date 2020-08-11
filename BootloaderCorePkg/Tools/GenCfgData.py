@@ -1129,6 +1129,15 @@ class CGenCfgData:
             condition = self.extend_variable (condition)
         value     = self.extend_variable (value)
 
+        order = str(item.get('order', ''))
+        if order:
+            if '.' in order:
+                (major, minor) = order.split('.')
+                order = int (major, 16)
+            else:
+                order = int (order, 16)
+        else:
+            order = offset
 
         cfg_item = dict()
         cfg_item['length'] = length
@@ -1140,7 +1149,7 @@ class CGenCfgData:
         cfg_item['help']   = help
         cfg_item['option'] = option
         cfg_item['page']   = self._cur_page
-        cfg_item['order']  = 0
+        cfg_item['order']  = order
         cfg_item['path']   = '.'.join(path)
         cfg_item['condition']  = condition
         if 'struct' in item:
@@ -1853,6 +1862,40 @@ def main():
             gen_cfg_data.prepare_marshal (True)
             with open(out_file, "wb") as pkl_file:
                 marshal.dump(gen_cfg_data.__dict__, pkl_file)
+            json_file = os.path.splitext(out_file)[0] + '.json'
+            fo = open (json_file, 'w')
+            path_list = []
+            cfgs = {'_cfg_page' : gen_cfg_data._cfg_page, '_cfg_list':gen_cfg_data._cfg_list, '_path_list' : path_list}
+            # optimize to reduce size
+            path = None
+            for each in cfgs['_cfg_list']:
+                new_path = each['path'][:-len(each['cname'])-1]
+                if path != new_path:
+                    path = new_path
+                    each['path'] = path
+                    path_list.append(path)
+                else:
+                    del each['path']
+                if each['order'] == each['offset']:
+                    del each['order']
+                del each['offset']
+
+                # value is just used to indicate display type
+                value = each['value']
+                if value.startswith ('0x'):
+                    hex_len = ((each['length'] + 7) // 8) * 2
+                    if len(value) == hex_len:
+                        value = 'x%d' % hex_len
+                    else:
+                        value = 'x'
+                    each['value'] = value
+                elif value and value[0] in ['"', "'", '{']:
+                    each['value'] = value[0]
+                else:
+                    del each['value']
+
+            fo.write(repr(cfgs))
+            fo.close ()
             return 0
 
     if dlt_file:
