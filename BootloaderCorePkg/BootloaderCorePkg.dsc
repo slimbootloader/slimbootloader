@@ -283,6 +283,12 @@
   gPlatformModuleTokenSpaceGuid.PcdFuncCpuInitHook   | 0x00000000
   gPlatformModuleTokenSpaceGuid.PcdFspsUpdPtr        | 0x00000000
 
+  gPlatformCommonLibTokenSpaceGuid.PcdSerialUseMmio        | 0
+  gPlatformCommonLibTokenSpaceGuid.PcdSerialRegisterBase   | 0
+  gPlatformCommonLibTokenSpaceGuid.PcdSerialBaudRate       | 0
+  gPlatformCommonLibTokenSpaceGuid.PcdSerialRegisterStride | 0
+  gPlatformCommonLibTokenSpaceGuid.PcdSerialClockRate      | 0
+
 [PcdsFeatureFlag]
   gPlatformCommonLibTokenSpaceGuid.PcdMinDecompression    | FALSE
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled | $(HAVE_MEASURED_BOOT)
@@ -377,6 +383,7 @@
       PayloadEntryLib     | PayloadPkg/Library/PayloadEntryLib/PayloadEntryLib.inf
       PayloadSupportLib   | PayloadPkg/Library/PayloadSupportLib/PayloadSupportLib.inf
       BootloaderLib       | PayloadPkg/Library/PayloadLib/PayloadLib.inf
+      PlatformHookLib     | PayloadPkg/Library/PlatformHookLib/PlatformHookLib.inf
       AbSupportLib        | PayloadPkg/Library/AbSupportLib/AbSupportLib.inf
       SblParameterLib     | PayloadPkg/Library/SblParameterLib/SblParameterLib.inf
       TrustyBootLib       | PayloadPkg/Library/TrustyBootLib/TrustyBootLib.inf
@@ -391,6 +398,7 @@
       PayloadEntryLib         | PayloadPkg/Library/PayloadEntryLib/PayloadEntryLib.inf
       PayloadSupportLib       | PayloadPkg/Library/PayloadSupportLib/PayloadSupportLib.inf
       BootloaderLib           | PayloadPkg/Library/PayloadLib/PayloadLib.inf
+      PlatformHookLib         | PayloadPkg/Library/PlatformHookLib/PlatformHookLib.inf
       FirmwareUpdateLib       | Silicon/$(SILICON_PKG_NAME)/Library/FirmwareUpdateLib/FirmwareUpdateLib.inf
   }
 !endif
