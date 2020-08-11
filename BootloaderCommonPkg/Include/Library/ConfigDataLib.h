@@ -1,7 +1,7 @@
 /** @file
   Config data library instance for data access.
 
-  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -81,7 +81,37 @@ typedef struct {
   UINT32  TotalLength;
 } CDATA_BLOB;
 
-#define  CDATA_HDR_WORD(ch)   (*(UINT32 *)(ch))
+typedef struct {
+
+  /* header size */
+  UINT8                       HeaderSize;
+
+  /* base table ID */
+  UINT8                       BaseTableId;
+
+  /* size in byte for every array entry */
+  UINT16                      ItemSize;
+
+  /* array entry count */
+  UINT16                      ItemCount;
+
+  /* array entry ID bit offset */
+  UINT8                       ItemIdBitOff;
+
+  /* array entry ID bit length */
+  UINT8                       ItemIdBitLen;
+
+  /* array entry valid bit offset */
+  UINT8                       ItemValidBitOff;
+
+  /* unused */
+  UINT8                       ItemUnused;
+
+  /* array entry bit mask, 1 bit per entry to indicate the entry exists or not */
+  UINT8                       BaseTableBitMask[0];
+
+} ARRAY_CFG_HDR;
+
 
 /**
   Load the configuration data blob from media into destination buffer.
@@ -192,18 +222,35 @@ AddConfigData (
   );
 
 /**
-  Get the source of the external configuration data load.
+  Build a full set of CFGDATA for current platform.
 
-  @param[in] Index              Index of the source
+  @param[in] Buffer             Buffer pointer to store the full CFGDATA set.
+  @param[in] Length             Buffer length.
 
-  @retval PDR                   if external data is loaded from SPI Flash PDR region
-  @retval BIOS                  if external data is loaded from SPI Flash BIOS region
-  @retval NULL                  if external data is loaded from niether
+  @retval EFI_BUFFER_TOO_SMALL  The buffer size is too small to store the CFGDATA.
+  @retval EFI_INVALID_PARAMETER The buffer pointer is NULL.
+  @retval EFI_NOT_FOUND         Could not find some CFGDATA tag.
+  @retval EFI_SUCCESS           The full set of CFGDATA was built successfully.
 
 **/
-CHAR8 *
-GetCfgDataSource (
-  IN  UINT8 Index
+EFI_STATUS
+EFIAPI
+BuildConfigData (
+  IN  UINT8      *Buffer,
+  IN  UINT32      Length
+  );
+
+/**
+  Get a full CFGDATA set length.
+
+  @retval   Length of a full CFGDATA set.
+            0 indicates no CFGDATA exists.
+
+**/
+UINT32
+EFIAPI
+GetConfigDataSize (
+  VOID
   );
 
 #endif
