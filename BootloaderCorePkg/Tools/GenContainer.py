@@ -464,12 +464,15 @@ class CONTAINER ():
             component.auth_type = self.get_auth_type_val (auth_type)
             key_file = os.path.join (self.key_dir, key_file)
             if file:
-                if not os.path.isabs(file):
-                    in_file = os.path.join(self.inp_dir, file)
-                else:
+                if os.path.isabs(file):
                     in_file = file
+                else:
+                    for tst in [self.inp_dir, self.out_dir]:
+                        in_file = os.path.join(tst, file)
+                        if os.path.isfile(in_file):
+                            break
                 if not os.path.isfile(in_file):
-                    raise Exception ("Component file path '%s' is invalid !" % in_file)
+                    raise Exception ("Component file path '%s' is invalid !" % file)
             else:
                 in_file = os.path.join(self.out_dir, component.name.decode() + '.bin')
                 gen_file_with_size (in_file, 0x10)
