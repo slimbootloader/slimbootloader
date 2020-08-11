@@ -45,6 +45,18 @@ def rebuild_basetools ():
         print ("Build BaseTools failed, please check required build environment and utilities !")
         sys.exit(1)
 
+def create_conf (workspace, sbl_source):
+    # create conf and build folder if not exist
+    workspace = os.environ['WORKSPACE']
+    if not os.path.exists(os.path.join(workspace, 'Conf')):
+        os.makedirs(os.path.join(workspace, 'Conf'))
+    for name in ['target', 'tools_def', 'build_rule']:
+        txt_file = os.path.join(workspace, 'Conf/%s.txt' % name)
+        if not os.path.exists(txt_file):
+            shutil.copy (
+                os.path.join(sbl_source, 'BaseTools/Conf/%s.template' % name),
+                os.path.join(workspace, 'Conf/%s.txt' % name))
+
 def prep_env ():
     # check python version first
     version = check_for_python ()
@@ -105,6 +117,8 @@ def prep_env ():
         os.environ['WORKSPACE'] = sblsource
     os.environ['CONF_PATH']     = os.path.join(os.environ['WORKSPACE'], 'Conf')
     os.environ['TOOL_CHAIN']    = toolchain
+
+    create_conf (os.environ['WORKSPACE'], sblsource)
 
 def get_board_config_file (check_dir, board_cfgs):
     platform_dir = os.path.join (check_dir, 'Platform')
@@ -1045,16 +1059,7 @@ class Build(object):
         # Check for SBL Keys directory
         check_for_slimbootkeydir()
 
-        # create conf and build folder if not exist
-        if not os.path.exists(os.path.join(self._workspace, 'Conf')):
-            os.makedirs(os.path.join(self._workspace, 'Conf'))
-        for name in ['target', 'tools_def', 'build_rule']:
-            txt_file = os.path.join(self._workspace, 'Conf/%s.txt' % name)
-            if not os.path.exists(txt_file):
-                shutil.copy (
-                    os.path.join(sbl_dir, 'BaseTools/Conf/%s.template' % name),
-                    os.path.join(self._workspace, 'Conf/%s.txt' % name))
-
+        # create build folder if not exist
         if not os.path.exists(self._fv_dir):
             os.makedirs(self._fv_dir)
 
@@ -1362,7 +1367,7 @@ def main():
                 Build(board).build()
                 break
 
-    buildp = sp.add_parser('build', help='build firmware')
+    buildp = sp.add_parser('build', help='build SBL firmware')
     buildp.add_argument('-r',  '--release', action='store_true', help='Release build')
     buildp.add_argument('-v',  '--usever',  action='store_true', help='Use board version file')
     buildp.add_argument('-fp', dest='fsppath', type=str, help='FSP binary path relative to FspBin in Silicon folder', default='')
@@ -1413,7 +1418,40 @@ def main():
     cleanp.add_argument('-d',  '--distclean', action='store_true', help='Distribution clean')
     cleanp.set_defaults(func=cmd_clean)
 
+    def cmd_build_dsc(args):
+        # Check if BaseTools has been compiled
+        rebuild_basetools ()
+
+        # Build a specified DSC file
+        def_list = []
+        if args.define is not None:
+            for each in args.define:
+                def_list.extend (['-D', '%s' % each])
+
+        cmd_args = [
+            "build" if os.name == 'posix' else "build.bat",
+            "--platform", args.dsc,
+            "-b",         'RELEASE' if args.release else 'DEBUG',
+            "--arch",     args.arch.upper(),
+            "--tagname",  os.environ['TOOL_CHAIN'],
+            "-n",         str(multiprocessing.cpu_count()),
+            ] + def_list
+
+        run_process (cmd_args)
+
+    build_dscp = sp.add_parser('build_dsc', help='build a specified dsc file')
+    build_dscp.add_argument('-r',  '--release', action='store_true', help='Release build')
+    build_dscp.add_argument('-a',  '--arch', choices=['ia32', 'x64'], help='Specify the ARCH for build. Default is to build IA32 image.', default ='ia32')
+    build_dscp.add_argument('-d',  '--define', action='append', help='Specify macros to be passed into DSC build')
+    build_dscp.add_argument('-p',  '--dsc', type=str, required=True, help='Specify a DSC file path to build')
+    build_dscp.set_defaults(func=cmd_build_dsc)
+
     args = ap.parse_args()
+    if len(args.__dict__) <= 1:
+        # No arguments or subcommands were given.
+        ap.print_help()
+        ap.exit()
+
     args.func(args)
 
 if __name__ == '__main__':
