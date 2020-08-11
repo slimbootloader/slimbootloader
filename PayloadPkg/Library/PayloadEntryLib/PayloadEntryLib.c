@@ -17,6 +17,7 @@
 #include <Library/LoaderPerformanceLib.h>
 #include <Library/PayloadMemoryAllocationLib.h>
 #include <Library/SerialPortLib.h>
+#include <Library/PlatformHookLib.h>
 #include <Library/DebugLogBufferLib.h>
 #include <Library/DebugPrintErrorLevelLib.h>
 #include <Library/ContainerLib.h>
@@ -144,6 +145,7 @@ PayloadInit (
 
   }
 
+  PlatformHookSerialPortInitialize ();
   SerialPortInitialize ();
 
   if (PldHeapBase != NULL) {
