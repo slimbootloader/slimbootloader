@@ -57,12 +57,12 @@ IsBootGuardSupported (
 VOID
 EFIAPI
 GetBootGuardInfo (
+  IN  UINTN            HeciBaseAddress,
   OUT BOOT_GUARD_INFO *BootGuardInfo
   )
 {
   UINT32                  MsrValue;
   UINT32                  MeFwSts4;
-  UINTN                   HeciBaseAddress;
   UINT32                  BootGuardAcmStatus;
   UINT32                  BootGuardBootStatus;
 
@@ -81,13 +81,6 @@ GetBootGuardInfo (
     ///
     /// Read ME FWS Registers
     ///
-    HeciBaseAddress = MM_PCI_ADDRESS (
-                      ME_BUS,
-                      ME_DEVICE_NUMBER,
-                      HECI_FUNCTION_NUMBER,
-                      0x0
-                      );
-
     MeFwSts4 = MmioRead32 (HeciBaseAddress + R_ME_HFS_4);
     DEBUG ((DEBUG_INFO, "ME FW STS 4 = %x\n", MeFwSts4));
 
