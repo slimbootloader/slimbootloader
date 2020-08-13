@@ -178,7 +178,7 @@ UpdateLoadedImage (
   @param[in]      BootOption    Current boot option
   @param[in, out] LoadedImage   Loaded Image information.
 
-  @retval  RETURN_SUCCESS       Parse IAS image successfully
+  @retval  RETURN_SUCCESS       Parse container image successfully
   @retval  Others               There is error when parsing IAS image.
 **/
 EFI_STATUS
@@ -257,6 +257,37 @@ ParseContainerImage (
   }
 
   AddMeasurePoint (0x40A0);
+  return Status;
+}
+
+/**
+  Parse a single component image
+
+  This function will parse a single image.
+  This image could be TE/PE/FV or multi-boot format.
+
+  @param[in]      BootOption    Current boot option
+  @param[in, out] LoadedImage   Loaded Image information.
+
+  @retval  RETURN_SUCCESS       Parse component image successfully
+  @retval  Others               There is error when parsing IAS image.
+**/
+EFI_STATUS
+ParseComponentImage (
+  IN     OS_BOOT_OPTION      *BootOption,
+  IN OUT LOADED_IMAGE        *LoadedImage
+  )
+{
+  IMAGE_DATA                 File;
+  EFI_STATUS                 Status;
+
+  File.Addr = LoadedImage->ImageData.Addr;
+  File.Size = LoadedImage->ImageData.Size;
+  File.AllocType = ImageAllocateTypePointer;
+  Status = UpdateLoadedImage (1, &File, LoadedImage, 0);
+  if (EFI_ERROR (Status)) {
+    UnloadLoadedImage (LoadedImage);
+  }
   return Status;
 }
 
@@ -783,16 +814,17 @@ InitBootFileSystem (
 {
   EFI_STATUS      Status;
   UINT32          SwPart;
-  UINT32          FsType;
+  UINT32          DevType;
   INT32           BootSlot;
+  OS_FILE_SYSTEM_TYPE  FsType;
 
   ASSERT (OsBootOption != NULL);
 
   SwPart = OsBootOption->SwPart;
   FsType = OsBootOption->FsType;
-
+  DevType = OsBootOption->DevType;
   DEBUG ((DEBUG_INFO, "Init File system\n"));
-  if ((OS_FILE_SYSTEM_TYPE)FsType < EnumFileSystemMax) {
+  if ((DevType != OsBootDeviceSpi) && (DevType != OsBootDeviceMemory) && (FsType < EnumFileSystemMax)) {
     Status = InitFileSystem (SwPart, FsType, HwPartHandle, FsHandle);
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_INFO, "No partitions found, Status = %r\n", Status));
@@ -859,6 +891,8 @@ ParseBootImages (
       }
     } else if ((LoadedImage->Flags & LOADED_IMAGE_IAS) != 0) {
       Status = ParseIasImage (OsBootOption, LoadedImage);
+    } else if ((LoadedImage->Flags & LOADED_IMAGE_COMPONENT) != 0) {
+      Status = ParseComponentImage (OsBootOption, LoadedImage);
     }
 
     if (EFI_ERROR (Status)) {
