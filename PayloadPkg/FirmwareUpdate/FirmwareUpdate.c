@@ -623,7 +623,7 @@ AuthenticateCapsule (
   //
   if (*(UINT32 *)(FwUpdStatus.CapsuleSig) != 0xFFFFFFFF) {
 
-    CopyMem((VOID *)&FwUpdStatus.CapsuleSig, (VOID *)SignatureHdr, sizeof(FW_UPDATE_SIG_LENGTH));
+    CopyMem((VOID *)&FwUpdStatus.CapsuleSig, (VOID *)SignatureHdr, FW_UPDATE_SIG_LENGTH);
 
     Status = BootMediaWrite (FwUpdStatusOffset, sizeof(FW_UPDATE_STATUS), (UINT8 *)&FwUpdStatus);
     if (EFI_ERROR (Status)) {
