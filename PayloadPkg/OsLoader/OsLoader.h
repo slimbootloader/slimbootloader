@@ -62,6 +62,8 @@
 #include <ConfigDataCommonDefs.h>
 #include <Register/Intel/Msr/ArchitecturalMsr.h>
 #include "PreOsChecker.h"
+#include <Library/StringSupportLib.h>
+
 
 #define MKHI_BOOTLOADER_SEED_LEN       64
 
@@ -130,7 +132,7 @@ typedef struct {
   UINT8                   Flags;
   UINT8                   LoadImageType;
   UINT16                  Reserved;
-  IMAGE_DATA              IasImage;
+  IMAGE_DATA              ImageData;
   EFI_HANDLE              HwPartHandle;
   LOADED_IMAGE_TYPE       Image;
   UINT8                   ImageHash[HASH_DIGEST_MAX];

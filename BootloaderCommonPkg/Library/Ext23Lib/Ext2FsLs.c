@@ -136,7 +136,7 @@ Ext2fsLs (
   Fp = (FILE *)File->FileSystemSpecificData;
 
   if ((Fp->DiskInode.Ext2DInodeMode & EXT2_IFMT) == EXT2_IFREG) {
-    CONSOLE_PRINT_UNICODE ((L"  %-16a %d\n", File->FileNamePtr, Fp->DiskInode.Ext2DInodeSize));
+    CONSOLE_PRINT_UNICODE ((L"  %-16a %u\n", File->FileNamePtr, Fp->DiskInode.Ext2DInodeSize));
     return EFI_SUCCESS;
   } else if ((Fp->DiskInode.Ext2DInodeMode & EXT2_IFMT) != EXT2_IFDIR) {
     return EFI_NOT_FOUND;
@@ -223,7 +223,7 @@ Ext2fsLs (
           FileSize = Fp->DiskInode.Ext2DInodeSize;
         }
         Status = RETURN_SUCCESS;
-        CONSOLE_PRINT_UNICODE ((L"  %-16a %d\n", New->EntryName, FileSize));
+        CONSOLE_PRINT_UNICODE ((L"  %-16a %u\n", New->EntryName, FileSize));
       }
       PNames = New->EntryNext;
     } while (PNames != NULL);

@@ -51,6 +51,7 @@ GetBootImageFromRawPartition (
   VOID                      *BlockData;
   EFI_LBA                    LbaAddr;
   UINT8                      SwPart;
+  UINT64                     Address;
   CONTAINER_HDR             *ContainerHdr;
 
   SwPart  = BootOption->Image[LoadedImage->LoadImageType].LbaImage.SwPart;
@@ -93,12 +94,20 @@ GetBootImageFromRawPartition (
   if (BlockData == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
+
+  if ( BootOption->DevType == OsBootDeviceMemory ) {
+    Address =  LogicBlkDev.StartBlock + LbaAddr;
+  } else {
+    Address =  LbaAddr;
+  }
+
   Status = MediaReadBlocks (
              BootOption->HwPart,
-             LogicBlkDev.StartBlock + LbaAddr,
+             Address,
              AlignedHeaderSize,
              BlockData
              );
+
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "Read image error, Status = %r\n", Status));
     return Status;
@@ -152,21 +161,29 @@ GetBootImageFromRawPartition (
   //
   // Read the rest of the IAS image into the buffer
   //
+
+  if ( BootOption->DevType == OsBootDeviceMemory ) {
+    Address =  LogicBlkDev.StartBlock + LbaAddr + AlignedHeaderSize;
+  } else {
+    Address =  LbaAddr + AlignedHeaderSize;
+  }
+
   Status = MediaReadBlocks (
              BootOption->HwPart,
-             LogicBlkDev.StartBlock + LbaAddr + (AlignedHeaderSize / BlockSize),
+             Address,
              (AlignedImageSize - AlignedHeaderSize),
              (VOID *)((UINTN)Buffer + AlignedHeaderSize)
              );
+
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "Read rest of image error, Status = %r\n", Status));
     FreePages (Buffer, EFI_SIZE_TO_PAGES (AlignedImageSize));
     return Status;
   }
 
-  LoadedImage->IasImage.Addr = Buffer;
-  LoadedImage->IasImage.Size = (UINT32)ImageSize;
-  LoadedImage->IasImage.AllocType = ImageAllocateTypePage;
+  LoadedImage->ImageData.Addr = Buffer;
+  LoadedImage->ImageData.Size = (UINT32)ImageSize;
+  LoadedImage->ImageData.AllocType = ImageAllocateTypePage;
   if ( *((UINT32 *) Buffer) == CONTAINER_BOOT_SIGNATURE ) {
     LoadedImage->Flags      |= LOADED_IMAGE_CONTAINER;
   } else if ( *((UINT32 *) Buffer) == IAS_MAGIC_PATTERN ) {
@@ -248,9 +265,9 @@ GetBootImageFromFs (
   }
   DEBUG ((DEBUG_INFO, "Get file '%s' (size:0x%x) success.\n", FilePath, ImageSize));
 
-  LoadedImage->IasImage.Addr = Image;
-  LoadedImage->IasImage.Size = (UINT32)ImageSize;
-  LoadedImage->IasImage.AllocType = ImageAllocateTypePage;
+  LoadedImage->ImageData.Addr = Image;
+  LoadedImage->ImageData.Size = (UINT32)ImageSize;
+  LoadedImage->ImageData.AllocType = ImageAllocateTypePage;
   if ( *((UINT32 *) Image) == CONTAINER_BOOT_SIGNATURE ) {
     LoadedImage->Flags      |= LOADED_IMAGE_CONTAINER;
   } else if ( *((UINT32 *) Image) == IAS_MAGIC_PATTERN ) {
@@ -605,7 +622,7 @@ UnloadLoadedImage (
   //
   // Free Boot Image Data loaded from FS or RAW partition
   //
-  FreeImageData (&LoadedImage->IasImage);
+  FreeImageData (&LoadedImage->ImageData);
 
   //
   // Free Common Boot & Cmdline Data

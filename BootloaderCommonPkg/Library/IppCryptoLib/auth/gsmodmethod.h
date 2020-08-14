@@ -1,9 +1,18 @@
-/** @file
-
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
-  SPDX-License-Identifier: BSD-2-Clause-Patent
-
-**/
+/*******************************************************************************
+* Copyright 2017-2020 Intel Corporation
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*******************************************************************************/
 
 #if !defined(_GS_MOD_METHOD_H)
 #define _GS_MOD_METHOD_H
@@ -43,21 +52,6 @@ typedef struct _gsModMethod {
    mod_mul3 mul3;
 } gsModMethod;
 
-#if 0 // constant exevution time version
-__INLINE BNU_CHUNK_T cpIsZero(BNU_CHUNK_T x)
-{
-   #if (BNU_CHUNK_BITS == BNU_CHUNK_64BIT)
-   x |= x>>32;
-   #endif
-   x |= x>>16;
-   x |= x>>8;
-   x |= x>>4;
-   x |= x>>2;
-   x |= x>>1;
-   return x&1;
-}
-#endif
-
 __INLINE BNU_CHUNK_T cpIsZero(BNU_CHUNK_T x)
 {  return x==0; }
 __INLINE BNU_CHUNK_T cpIsNonZero(BNU_CHUNK_T x)
@@ -78,23 +72,23 @@ __INLINE void cpMaskMove_gs(BNU_CHUNK_T* dst, const BNU_CHUNK_T* src, int len, B
 }
 
 /* common available pre-defined methos */
-#define      gsModMethod OWNAPI(gsModMethod)
+#define      gsModArith OWNAPI(gsModArith)
 gsModMethod* gsModArith(void);
 
 /* available pre-defined methos for RSA */
-#define      gsModMethodRSA OWNAPI(gsModMethodRSA)
+#define      gsModArithRSA OWNAPI(gsModArithRSA)
 gsModMethod* gsModArithRSA(void);
 
 /* available pre-defined methos for ippsMont* */
-#define      gsModMethodMont OWNAPI(gsModMethodMont)
+#define      gsModArithMont OWNAPI(gsModArithMont)
 gsModMethod* gsModArithMont(void);
 
 /* available pre-defined methos for DLP * */
-#define      gsModMethodDLP OWNAPI(gsModMethodDLP)
+#define      gsModArithDLP OWNAPI(gsModArithDLP)
 gsModMethod* gsModArithDLP(void);
 
 /* available pre-defined common methos for GF over prime * */
-#define      gsArithGFpOWNAPI(gsArithGFp)
+#define      gsArithGFp OWNAPI(gsArithGFp)
 gsModMethod* gsArithGFp(void);
 
 /* ... and etc ... */

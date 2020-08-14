@@ -80,7 +80,7 @@ SpiReadBlocks (
     return EFI_NO_MEDIA;
   }
 
-  Status = mSpiService->SpiRead (FlashRegionAll, (UINT32) (Address * SPI_BLOCK_SIZE), (UINT32)BufferSize, Buffer);
+  Status = mSpiService->SpiRead (RegionType, (UINT32) (Address), (UINT32)BufferSize, Buffer);
 
   return Status;
 }
@@ -110,9 +110,7 @@ SpiGetMediaInfo (
 {
   // This Lib will only support Images in PDR region
   // And need minor update this lib to support it.
-  return EFI_UNSUPPORTED;
 
-#if 0
   EFI_STATUS  Status;
   UINT32 FlashBase;
   UINT32 FlashSize;
@@ -131,5 +129,4 @@ SpiGetMediaInfo (
   DevBlockInfo->BlockSize = SPI_BLOCK_SIZE;
 
   return Status;
-#endif
 }

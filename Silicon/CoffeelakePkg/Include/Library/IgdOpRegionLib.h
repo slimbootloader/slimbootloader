@@ -11,7 +11,7 @@
     VBT:        Video BIOS Table (OEM customizable data)
     IPU:        Image Processing Unit
 
-  Copyright (c) 2018 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -20,18 +20,16 @@
 #define _IGD_OP_REGION_LIB_H_
 
 /**
-
   Graphics OpRegion / Software SCI driver installation function.
 
-  @param Void
-
-  @retval EFI_SUCCESS     The driver installed without error.
-  @retval EFI_ABORTED     The driver encountered an error and could not complete
-                          installation of the ACPI tables.
+  @retval EFI_SUCCESS          - The driver installed without error.
+  @retval EFI_OUT_OF_RESOURCES - No resource to complete operations.
+  @retval EFI_ABORTED          - The driver encountered an error and could not complete
+                                 installation of the ACPI tables.
 **/
 EFI_STATUS
 IgdOpRegionInit (
-  void
+  VOID
   );
 
 #endif

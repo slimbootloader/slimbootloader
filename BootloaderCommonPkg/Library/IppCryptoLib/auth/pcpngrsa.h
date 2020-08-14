@@ -1,9 +1,18 @@
-/** @file
-
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
-  SPDX-License-Identifier: BSD-2-Clause-Patent
-
-**/
+/*******************************************************************************
+* Copyright 2013-2020 Intel Corporation
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*******************************************************************************/
 
 /*
 //
@@ -58,7 +67,7 @@ struct _cpRSA_private_key {
    BNU_CHUNK_T*   pDataD;        /* private exp */
    BNU_CHUNK_T*   pDataDp;       /* dp private exp */
    BNU_CHUNK_T*   pDataDq;       /* dq private exp */
-   BNU_CHUNK_T*   pDataQinv;     /* qinv coeff */
+   BNU_CHUNK_T*   pDataQinv;     /* qinv coeff in residue domain */
 
    gsModEngine* pMontP;          /* montgomery engine (P) */
    gsModEngine* pMontQ;          /* montgomery engine (Q) */
@@ -87,6 +96,14 @@ struct _cpRSA_private_key {
 
 /* alignment */
 #define RSA_PRIVATE_KEY_ALIGNMENT ((int)(sizeof(void*)))
+
+#define MOD_ENGINE_RSA_POOL_SIZE    (2)
+
+/*
+// Montgomery engine preparation (GetSize/init/Set)
+*/
+#define rsaMontExpGetSize OWNAPI(rsaMontExpGetSize)
+void rsaMontExpGetSize(int length, int* pSize);
 
 /*
 // pubic and private key operations

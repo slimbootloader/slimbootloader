@@ -1,12 +1,25 @@
-/** @file
+/*******************************************************************************
+* Copyright 2005-2020 Intel Corporation
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*******************************************************************************/
 
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
-  SPDX-License-Identifier: BSD-2-Clause-Patent
 
-**/
 /*
 //               Intel(R) Integrated Performance Primitives
 //                   Cryptographic Primitives (ippcp)
+//
+//   Intel(R) Integrated Performance Primitives Cryptography (Intel(R) IPP Cryptography)
 //
 //   Purpose:
 //     Define ippCP variant
@@ -78,7 +91,7 @@
 #endif
 
 /*
-// IPP supports several hash algorithms by default:
+// Intel IPP Cryptography supports several hash algorithms by default:
 //    SHA-1
 //    SHA-256
 //    SHA-224  (or SHA256/224 by the FIPS180-4 classification)
@@ -87,7 +100,7 @@
 //    MD5
 //    SM3
 //
-// By default all hash algorithms are included in IPP Crypto.
+// By default all hash algorithms are included in Intel IPP Cryptography.
 //
 // If one need excludes code of particular hash, just define
 // suitable _DISABLE_ALG_XXX, where XXX name of the hash algorithm
@@ -148,8 +161,9 @@
 #endif
 
 /*
-// SHA1 plays especial role in IPP. Thus IPP random generator
-// and therefore prime number generator are based on SHA1.
+// SHA1 plays especial role in Intel IPP Cryptography.
+// Thus Intel IPP Cryptography random generator and
+// therefore prime number generator are based on SHA1.
 // So, do no exclude SHA1 from the active list of hash algorithms
 */
 #if defined(_DISABLE_ALG_SHA1_)
@@ -159,7 +173,7 @@
 /*
 // Because of performane reason hash algorithms are implemented in form
 // of unroller cycle and therefore these implementations are big enough.
-// IPP supports "compact" implementation of some basic hash algorithms:
+// Intel IPP Cryptography supports "compact" implementation of some basic hash algorithms:
 //    SHA-1
 //    SHA-256
 //    SHA-512
@@ -172,13 +186,13 @@
 //    _ALG_SM3_COMPACT_
 //
 // to select "compact" implementation of particular hash algorithm.
-// IPP does not define "compact" implementation by default.
+// Intel IPP Cryptography does not define "compact" implementation by default.
 //
 // Don't know what performance degradation leads "compact"
-// in comparison with default IPP implementation.
+// in comparison with default Intel IPP Cryptography implementation.
 //
 // Note: the definition like _ALG_XXX_COMPACT_ has effect
-// if and only if IPP instance is _PX or _MX
+// if and only if Intel IPP Cryptography instance is _PX or _MX
 */
 //#define _ALG_SHA1_COMPACT_
 //#define _ALG_SHA256_COMPACT_

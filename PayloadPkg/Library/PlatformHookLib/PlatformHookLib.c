@@ -14,6 +14,36 @@
 #include <Guid/SerialPortInfoGuid.h>
 
 /**
+  Get serial port stride register size.
+
+  @retval  The serial port register stride size.
+
+**/
+UINT8
+EFIAPI
+GetSerialPortStrideSize (
+  VOID
+  )
+{
+  return (UINT8) PcdGet32 (PcdSerialRegisterStride);
+}
+
+/**
+  Get serial port register base address.
+
+  @retval  The serial port register base address.
+
+**/
+UINT32
+EFIAPI
+GetSerialPortBase (
+  VOID
+  )
+{
+  return (UINT32) PcdGet64 (PcdSerialRegisterBase);
+}
+
+/**
   Performs platform specific initialization required for the CPU to access
   the hardware associated with a SerialPortLib instance.  This function does
   not intiailzie the serial port hardware itself.  Instead, it initializes
@@ -34,7 +64,7 @@ PlatformHookSerialPortInitialize (
   EFI_HOB_GUID_TYPE             *GuidHob;
   SERIAL_PORT_INFO              *PldSerialInfo;
 
-  GuidHob = GetNextGuidHob (&gLoaderSerialPortInfoGuid, (VOID *)PcdGet32 (PcdPayloadHobList));
+  GuidHob = GetNextGuidHob (&gLoaderSerialPortInfoGuid, (VOID *)(UINTN)PcdGet32 (PcdPayloadHobList));
   if (GuidHob == NULL) {
     ASSERT (FALSE);
     return RETURN_NOT_FOUND;

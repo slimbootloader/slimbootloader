@@ -1,0 +1,78 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : SIL
+- SILICON_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ SILICON_CFG_DATA, 0x600, 0, 0 ] }
+  - ECEnable     :
+      name         : Enable EC Device
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/disable EC
+      length       : 0x01
+      value        : 0x01
+  - DebugInterfaceEnable :
+      name         : Enable or Disable processor debug features
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable processor debug features; <b>0- Disable</b>; 1- Enable.
+      length       : 0x01
+      value        : 0x00
+  - EnableLegacySerial :
+      name         : Enable or Disable legacy serial port expose to OS
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable legacy serial port expose to OS; <b>0- Disable</b>; 1- Enable.
+      length       : 0x01
+      value        : 0x00
+  - $ACTION      :
+      page         : PSEL:SIL:"Payload Selection GPIO"
+  - $ACTION      :
+      page         : PSEL
+  - PayloadSelGpio :
+    - $STRUCT      :
+        name         : GPIO pin for switching payload
+        struct       : PAYLOAD_SEL_GPIO_PIN
+        help         : >
+                       specify GPIO PIN number to read and switch payloads
+        length       : 0x02
+        value        : 0
+    - Group        :
+        name         : Pad Group
+        type         : Combo
+        option       : 0x0:GROUP_A, 0x1:GROUP_B, 0x2:GROUP_C, 0x3:GROUP_D, 0x4:GROUP_E, 0x5:GROUP_F, 0x6:GROUP_G, 0x7:GROUP_H, 0x8:GROUP_I, 0x9 :GROUP_J, 0xA:GROUP_K
+        help         : >
+                       Specify Pad Group
+        length       : 4bW
+    - PinNum       :
+        name         : Pin Number
+        type         : EditNum, INT, (0,24)
+        help         : >
+                       Specify Pin Number
+        length       : 5bW
+    - Rsvd1        :
+        name         : Reserved
+        type         : Reserved
+        length       : 6bW
+    - Enable       :
+        name         : Payload Selection Pin Enable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable this pin for payload selection.
+        length       : 1bW
+  - SiliconRsvd  :
+      length       : 0x03
+      value        : 0x00
+

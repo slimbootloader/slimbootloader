@@ -31,9 +31,9 @@ Documentation for compiling, using, and extending Slim Bootloader can be found
 Mailing List
 --------------
 You can subscribe to our mailing list for questions or share your learnings:
-https://lists.01.org/postorius/lists/sbl-devel.lists.01.org/
+https://groups.io/g/slimbootloader
 
-Archives:  https://lists.01.org/hyperkitty/list/sbl-devel@lists.01.org/
+Topic Archive: https://groups.io/g/slimbootloader/topics
 
 License
 -------

@@ -1,0 +1,40 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : MEM_SPD:MEM:"MEM SPD"
+- $ACTION      :
+    page         : MEM_SPD
+- MEM_SPD0_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ MEM_SPD0_CFG_DATA, 0x8F0, 0, 0 ] }
+  - MemorySpdPtr0 :
+      name         : Memory SPD Data 0
+      type         : Table
+      option       : >
+                     0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX,
+                     8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX, E:1:HEX, F:1:HEX
+      help         : >
+                     Pointer to SPD data in Memory
+      length       : 0x200
+      value        : {FILE: Spd_Upx8G.bin}
+
+- MEM_SPD1_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ MEM_SPD1_CFG_DATA, 0x8F1, 0, 0 ] }
+  - MemorySpdPtr1 :
+      name         : Memory SPD Data 1
+      type         : Table
+      option       : >
+                     0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX,
+                     8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX, E:1:HEX, F:1:HEX
+      help         : >
+                     Pointer to SPD data in Memory
+      length       : 0x200
+      value        : {FILE: Spd_Upx4G.bin}
+

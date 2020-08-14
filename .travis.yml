@@ -9,44 +9,44 @@ matrix:
     - name: "QEMU GCC x86 D"
       os: linux
       language: python
-      env: BUILD_TARGET=qemu BUILD_REL="" BUILD_ARCH=""
+      env: BUILD_TARGET=qemu BUILD_REL="" BUILD_ARCH=""  SBL_KEY_DIR="/tmp/SblKeys"
 
     - name: "QEMU GCC x64 R"
       os: linux
       language: python
-      env: BUILD_TARGET=qemu BUILD_REL=-r BUILD_ARCH="-a x64"
+      env: BUILD_TARGET=qemu BUILD_REL=-r BUILD_ARCH="-a x64" SBL_KEY_DIR="/tmp/SblKeys"
 
     - name: "APL GCC x64 D"
       os: linux
       language: python
-      env: BUILD_TARGET=apl BUILD_REL="" BUILD_ARCH="-a x64"
+      env: BUILD_TARGET=apl BUILD_REL="" BUILD_ARCH="-a x64" SBL_KEY_DIR="/tmp/SblKeys"
 
     - name: "CFL GCC x86 R"
       os: linux
       language: python
-      env: BUILD_TARGET=cfl BUILD_REL=-r BUILD_ARCH=""
+      env: BUILD_TARGET=cfl BUILD_REL=-r BUILD_ARCH="" SBL_KEY_DIR="/tmp/SblKeys"
 
 
     # Windows build
     - name: "APL VC x86 D"
       os: windows
       language: shell
-      env: BUILD_TARGET=apl BUILD_REL="" BUILD_ARCH=""  OPENSSL_PATH="/c/Openssl/bin/"  NASM_PREFIX="/c/Program Files/NASM/" IASL_PREFIX="/c/Asl/"
+      env: BUILD_TARGET=apl BUILD_REL="" BUILD_ARCH=""  OPENSSL_PATH="/c/Openssl/bin/"  NASM_PREFIX="/c/Program Files/NASM/" IASL_PREFIX="/c/Asl/" SBL_KEY_DIR="/c/SblKeys"
 
     - name: "APL VC x64 R"
       os: windows
       language: shell
-      env: BUILD_TARGET=apl BUILD_REL=-r BUILD_ARCH="-a x64"   OPENSSL_PATH="/c/Openssl/bin/"  NASM_PREFIX="/c/Program Files/NASM/" IASL_PREFIX="/c/Asl/"
+      env: BUILD_TARGET=apl BUILD_REL=-r BUILD_ARCH="-a x64"   OPENSSL_PATH="/c/Openssl/bin/"  NASM_PREFIX="/c/Program Files/NASM/" IASL_PREFIX="/c/Asl/" SBL_KEY_DIR="/c/SblKeys"
 
     - name: "CFL VC x86 R"
       os: windows
       language: shell
-      env: BUILD_TARGET=cfl BUILD_REL=-r BUILD_ARCH=""  OPENSSL_PATH="/c/Openssl/bin/"  NASM_PREFIX="/c/Program Files/NASM/" IASL_PREFIX="/c/Asl/"
+      env: BUILD_TARGET=cfl BUILD_REL=-r BUILD_ARCH=""  OPENSSL_PATH="/c/Openssl/bin/"  NASM_PREFIX="/c/Program Files/NASM/" IASL_PREFIX="/c/Asl/" SBL_KEY_DIR="/c/SblKeys"
 
     - name: "CFL VC x64 D"
       os: windows
       language: shell
-      env: BUILD_TARGET=cfl BUILD_REL="" BUILD_ARCH="-a x64"  OPENSSL_PATH="/c/Openssl/bin/"  NASM_PREFIX="/c/Program Files/NASM/" IASL_PREFIX="/c/Asl/"
+      env: BUILD_TARGET=cfl BUILD_REL="" BUILD_ARCH="-a x64"  OPENSSL_PATH="/c/Openssl/bin/"  NASM_PREFIX="/c/Program Files/NASM/" IASL_PREFIX="/c/Asl/" SBL_KEY_DIR="/c/SblKeys"
 
 
 before_install:
@@ -56,6 +56,7 @@ before_install:
       docker build -t sbl .
       chmod -R a+w .
     else
+      choco install python3 --version 3.8 --params "/InstallDir:C:\Python3"
       choco install nasm --version 2.14 --params "/InstallDir:C:\Nasm"
       choco install openssl.light --version 1.1.1 --params "/InstallDir:C:\Openssl"
       wget --no-check-certificate https://acpica.org/sites/acpica/files/iasl-win-20160831_0.zip -P "C:\Asl"
@@ -67,13 +68,13 @@ script:
   - |
     if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
       if [[ "$BUILD_TARGET" == "qemu" && "$BUILD_ARCH" == "" ]]; then
-        docker run --rm -v ${PWD}:/tmp/sbl -w /tmp/sbl --network=host sbl bash -c "python3 ./BuildLoader.py build ${BUILD_REL} ${BUILD_TARGET} && python3 ./Platform/QemuBoardPkg/Script/qemu_test.py";
+        docker run --rm -v ${PWD}:/tmp/sbl -w /tmp/sbl --network=host sbl bash -c "python3 BootloaderCorePkg/Tools/GenerateKeys.py -k ${SBL_KEY_DIR} && python3 ./BuildLoader.py build ${BUILD_REL} ${BUILD_TARGET} && python3 ./Platform/QemuBoardPkg/Script/qemu_test.py";
       else
-        docker run --rm -v ${PWD}:/tmp/sbl -w /tmp/sbl --network=host sbl python3 ./BuildLoader.py build ${BUILD_REL} ${BUILD_TARGET} ${BUILD_ARCH};
+        docker run --rm -v ${PWD}:/tmp/sbl -w /tmp/sbl --network=host sbl bash -c "python3 BootloaderCorePkg/Tools/GenerateKeys.py -k ${SBL_KEY_DIR} && python3 ./BuildLoader.py build ${BUILD_REL} ${BUILD_TARGET} ${BUILD_ARCH}";
       fi
     else
       git config --global user.email "travis@travis-ci.org"
       git config --global user.name  "Travis CI"
-      python BuildLoader.py build ${BUILD_REL} ${BUILD_TARGET} ${BUILD_ARCH}
+      C:/Python3/python BootloaderCorePkg/Tools/GenerateKeys.py -k ${SBL_KEY_DIR} && C:/Python3/python BuildLoader.py build ${BUILD_REL} ${BUILD_TARGET} ${BUILD_ARCH}
     fi
 

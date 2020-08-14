@@ -39,6 +39,16 @@ typedef UINT32 HASH_COMP_USAGE;
 #define HASH_USAGE_PUBKEY_OS             BIT11
 #define HASH_USAGE_PUBKEY_CONTAINER_DEF  BIT12
 
+#define HASH_USAGE_PUBKEY_OEM_0          BIT24
+#define HASH_USAGE_PUBKEY_OEM_1          BIT25
+#define HASH_USAGE_PUBKEY_OEM_2          BIT26
+#define HASH_USAGE_PUBKEY_OEM_3          BIT27
+#define HASH_USAGE_PUBKEY_OEM_4          BIT28
+#define HASH_USAGE_PUBKEY_OEM_5          BIT29
+#define HASH_USAGE_PUBKEY_OEM_6          BIT30
+#define HASH_USAGE_PUBKEY_OEM_7          BIT31
+#define HASH_USAGE_PUBKEY_OEM(x)         (HASH_USAGE_PUBKEY_OEM_0 << (x))
+
 #pragma pack(1)
 typedef struct {
   //

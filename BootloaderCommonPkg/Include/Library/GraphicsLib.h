@@ -59,6 +59,7 @@ typedef struct {
   EFI_PEI_GRAPHICS_INFO_HOB     *GfxInfoHob;
   CHAR8                         *TextDisplayBuf;
   CHAR8                         *TextSwapBuf;
+  CHAR8                         *TextDrawBuf;
   UINTN                         OffX;
   UINTN                         OffY;
   UINTN                         Width;
@@ -207,6 +208,31 @@ EFIAPI
 FrameBufferWrite (
   IN UINT8     *Buffer,
   IN UINTN      NumberOfBytes
+  );
+
+/**
+  Draw frame buffer from a given text buffer.
+  The text buffer needs to be compatible with format below:
+  Each text char takes 16 bits:
+    BIT   7:0  ASCII char
+    BIT  11:8  Foreground color
+    BIT 15:12  Background color
+
+  @param[in]  Row      Row number for the text buffer.
+  @param[in]  Col      Column number for the text buffer.
+  @param[in]  Buffer   The pointer to the text buffer.
+
+  @retval EFI_NOT_READY          Frame buffer console has not been initialized yet.
+  @retval EFI_INVALID_PARAMETER  Invalid parameters.
+  @retval EFI_SUCCESS            Text buffer was drawn successfully.
+
+**/
+EFI_STATUS
+EFIAPI
+DrawFrameBuffer (
+  IN UINT32     Row,
+  IN UINT32     Col,
+  IN UINT8     *Buffer
   );
 
 #endif

@@ -118,6 +118,8 @@
   SortLib|BootloaderCommonPkg/Library/SortLib/SortLib.inf
   IoMmuLib|BootloaderCommonPkg/Library/IoMmuLib/IoMmuLib.inf
   MtrrLib|BootloaderCommonPkg/Library/MtrrLib/MtrrLib.inf
+  StringSupportLib|BootloaderCommonPkg/Library/StringSupportLib/StringSupportLib.inf
+
 
 !if $(ENABLE_SOURCE_DEBUG)
   DebugAgentLib|BootloaderCommonPkg/Library/DebugAgentLib/DebugAgentLib.inf
@@ -214,6 +216,7 @@
   gPlatformModuleTokenSpaceGuid.PcdFSPMUpdSize            | $(FSP_M_UPD_SIZE)
   gPlatformModuleTokenSpaceGuid.PcdFSPSSize               | $(FSP_S_SIZE)
   gPlatformModuleTokenSpaceGuid.PcdFSPSUpdSize            | $(FSP_S_UPD_SIZE)
+  gPlatformModuleTokenSpaceGuid.PcdFSPMStackTop           | $(FSP_M_STACK_TOP)
 
   gPlatformModuleTokenSpaceGuid.PcdTopSwapRegionSize      | $(TOP_SWAP_SIZE)
   gPlatformModuleTokenSpaceGuid.PcdRedundantRegionSize    | $(REDUNDANT_SIZE)
@@ -245,7 +248,7 @@
 
   gPlatformCommonLibTokenSpaceGuid.PcdIppHashLibSupportedMask    | $(IPP_HASH_LIB_SUPPORTED_MASK)
 
- gPlatformCommonLibTokenSpaceGuid.PcdCompSignHashAlg             | $(SIGN_HASH_TYPE)
+  gPlatformCommonLibTokenSpaceGuid.PcdCompSignHashAlg             | $(SIGN_HASH_TYPE)
 
 [PcdsPatchableInModule]
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel   | 0x8000004F
@@ -276,8 +279,15 @@
 
   gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesBase  | 0x00000000
   gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsPtr  | 0x00000000
-  gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsCnt  | 0x0000
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsCnt  | 0x40
   gPlatformModuleTokenSpaceGuid.PcdFuncCpuInitHook   | 0x00000000
+  gPlatformModuleTokenSpaceGuid.PcdFspsUpdPtr        | 0x00000000
+
+  gPlatformCommonLibTokenSpaceGuid.PcdSerialUseMmio        | 0
+  gPlatformCommonLibTokenSpaceGuid.PcdSerialRegisterBase   | 0
+  gPlatformCommonLibTokenSpaceGuid.PcdSerialBaudRate       | 0
+  gPlatformCommonLibTokenSpaceGuid.PcdSerialRegisterStride | 0
+  gPlatformCommonLibTokenSpaceGuid.PcdSerialClockRate      | 0
 
 [PcdsFeatureFlag]
   gPlatformCommonLibTokenSpaceGuid.PcdMinDecompression    | FALSE
@@ -303,6 +313,8 @@
   gPlatformCommonLibTokenSpaceGuid.PcdPreOsCheckerEnabled | $(ENABLE_PRE_OS_CHECKER)
   gPlatformCommonLibTokenSpaceGuid.PcdDmaProtectionEnabled | $(ENABLE_DMA_PROTECTION)
   gPlatformCommonLibTokenSpaceGuid.PcdMultiUsbBootDeviceEnabled |  $(ENABLE_MULTI_USB_BOOT_DEV)
+  gPlatformModuleTokenSpaceGuid.PcdAriSupport             | $(SUPPORT_ARI)
+  gPlatformModuleTokenSpaceGuid.PcdSrIovSupport           | $(SUPPORT_SR_IOV)
 
 !ifdef $(S3_DEBUG)
   gPlatformModuleTokenSpaceGuid.PcdS3DebugEnabled         | $(S3_DEBUG)
@@ -371,6 +383,7 @@
       PayloadEntryLib     | PayloadPkg/Library/PayloadEntryLib/PayloadEntryLib.inf
       PayloadSupportLib   | PayloadPkg/Library/PayloadSupportLib/PayloadSupportLib.inf
       BootloaderLib       | PayloadPkg/Library/PayloadLib/PayloadLib.inf
+      PlatformHookLib     | PayloadPkg/Library/PlatformHookLib/PlatformHookLib.inf
       AbSupportLib        | PayloadPkg/Library/AbSupportLib/AbSupportLib.inf
       SblParameterLib     | PayloadPkg/Library/SblParameterLib/SblParameterLib.inf
       TrustyBootLib       | PayloadPkg/Library/TrustyBootLib/TrustyBootLib.inf
@@ -385,6 +398,7 @@
       PayloadEntryLib         | PayloadPkg/Library/PayloadEntryLib/PayloadEntryLib.inf
       PayloadSupportLib       | PayloadPkg/Library/PayloadSupportLib/PayloadSupportLib.inf
       BootloaderLib           | PayloadPkg/Library/PayloadLib/PayloadLib.inf
+      PlatformHookLib         | PayloadPkg/Library/PlatformHookLib/PlatformHookLib.inf
       FirmwareUpdateLib       | Silicon/$(SILICON_PKG_NAME)/Library/FirmwareUpdateLib/FirmwareUpdateLib.inf
   }
 !endif

@@ -194,7 +194,7 @@ ParseContainerImage (
   IMAGE_DATA                  File[MAX_IAS_SUB_IMAGE];
   UINT8                       Index;
 
-  ContainerHdr = (CONTAINER_HDR  *)LoadedImage->IasImage.Addr;
+  ContainerHdr = (CONTAINER_HDR  *)LoadedImage->ImageData.Addr;
   if (ContainerHdr->Signature != CONTAINER_BOOT_SIGNATURE) {
     return EFI_UNSUPPORTED;
   }
@@ -207,7 +207,7 @@ ParseContainerImage (
 
   ZeroMem (File, sizeof (File));
 
-  DEBUG ((DEBUG_INFO, "CONTAINER size = 0x%x, image type = 0x%x, # of components = %d\n", LoadedImage->IasImage.Size, ContainerHdr->ImageType, ContainerHdr->Count));
+  DEBUG ((DEBUG_INFO, "CONTAINER size = 0x%x, image type = 0x%x, # of components = %d\n", LoadedImage->ImageData.Size, ContainerHdr->ImageType, ContainerHdr->Count));
 
   // Enumerate all components
   Index = 0;
@@ -286,7 +286,7 @@ ParseIasImage (
   COMPONENT_CALLBACK_INFO    CompInfo;
   EFI_STATUS                 Status;
 
-  IasImage = IsIasImageValid (LoadedImage->IasImage.Addr, LoadedImage->IasImage.Size, &IasImageInfo);
+  IasImage = IsIasImageValid (LoadedImage->ImageData.Addr, LoadedImage->ImageData.Size, &IasImageInfo);
   if (IasImage == NULL) {
     DEBUG ((DEBUG_INFO, "Image given is not a valid IAS image\n"));
     return EFI_LOAD_ERROR;
@@ -308,7 +308,7 @@ ParseIasImage (
 
   ZeroMem (File, sizeof (File));
   NumFiles = IasGetFiles (IasImage, sizeof (File) / sizeof ((File)[0]), File);
-  DEBUG ((DEBUG_INFO, "IAS size = 0x%x, file number: %d\n", LoadedImage->IasImage.Size, NumFiles));
+  DEBUG ((DEBUG_INFO, "IAS size = 0x%x, file number: %d\n", LoadedImage->ImageData.Size, NumFiles));
 
   ImageType = IAS_IMAGE_TYPE (IasImage->ImageType);
   DEBUG ((DEBUG_INFO, "IAS Image Type = 0x%x\n", ImageType));
@@ -611,7 +611,7 @@ StartBooting (
   if ((LoadedImage->Flags & LOADED_IMAGE_LINUX) != 0) {
     if (FeaturePcdGet (PcdPreOsCheckerEnabled) && IsPreOsCheckerLoaded ()) {
       BeforeOSJump ("Starting Pre-OS Checker ...");
-      StartPreOsChecker (GetLinuxBootParams ());
+      StartPreOsChecker ((VOID *)GetLinuxBootParams (), LoadedImage->Flags);
     } else {
       BeforeOSJump ("Starting Kernel ...");
       LinuxBoot ((VOID *)(UINTN)PcdGet32 (PcdPayloadHobList), NULL);
@@ -624,8 +624,13 @@ StartBooting (
       DEBUG ((DEBUG_ERROR, "EntryPoint is not found\n"));
       return RETURN_INVALID_PARAMETER;
     }
-    BeforeOSJump ("Starting MB Kernel ...");
-    JumpToMultibootOs((IA32_BOOT_STATE*)&MultiBoot->BootState);
+    if (FeaturePcdGet (PcdPreOsCheckerEnabled) && IsPreOsCheckerLoaded ()) {
+      BeforeOSJump ("Starting Pre-OS Checker ...");
+      StartPreOsChecker ((VOID *)&MultiBoot->BootState, LoadedImage->Flags);
+    } else {
+      BeforeOSJump ("Starting MB Kernel ...");
+      JumpToMultibootOs((IA32_BOOT_STATE*)&MultiBoot->BootState);
+    }
     Status = EFI_DEVICE_ERROR;
 
   } else if ((LoadedImage->Flags & (LOADED_IMAGE_PE32 | LOADED_IMAGE_FV)) != 0) {

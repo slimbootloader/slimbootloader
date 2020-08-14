@@ -1,0 +1,105 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : PWR:SIL:"POWER"
+- $ACTION      :
+    page         : PWR
+- POWER_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ POWER_CFG_DATA, 0x610, 0, 0 ] }
+  - OneCoreRatioLimit :
+      name         : 1-Core Ratio Limit
+      type         : EditNum, HEX, (0,0xFF)
+      help         : >
+                     1-Core Ratio Limit- LFM to Fused, For overclocking part- LFM to 255. This 1-Core Ratio Limit Must be greater than or equal to 2-Core Ratio Limit, 3-Core Ratio Limit, 4-Core Ratio Limit, 5-Core Ratio Limit, 6-Core Ratio Limit, 7-Core Ratio Limit, 8-Core Ratio Limit. Range is 0 to 255
+      length       : 0x01
+      value        : 0x2C
+  - TwoCoreRatioLimit :
+      name         : 2-Core Ratio Limit
+      type         : EditNum, HEX, (0,0xFF)
+      help         : >
+                     LFM to Fused, For overclocking part- LFM to 255. This 2-Core Ratio Limit Must be Less than or equal to 1-Core Ratio Limit.Range is 0 to 255
+      length       : 0x01
+      value        : 0x2C
+  - ThreeCoreRatioLimit :
+      name         : 3-Core Ratio Limit
+      type         : EditNum, HEX, (0,0xFF)
+      help         : >
+                     LFM to Fused, For overclocking part- LFM to 255. This 3-Core Ratio Limit Must be Less than or equal to 1-Core Ratio Limit.Range is 0 to 255
+      length       : 0x01
+      value        : 0x2A
+  - FourCoreRatioLimit :
+      name         : 4-Core Ratio Limit
+      type         : EditNum, HEX, (0,0xFF)
+      help         : >
+                     LFM to Fused, For overclocking part- LFM to 255. This 4-Core Ratio Limit Must be Less than or equal to 1-Core Ratio Limit.Range is 0 to 255
+      length       : 0x01
+      value        : 0x2A
+  - FiveCoreRatioLimit :
+      name         : 5-Core Ratio Limit
+      type         : EditNum, HEX, (0,0xFF)
+      help         : >
+                     LFM to Fused, For overclocking part- LFM to 255. This 5-Core Ratio Limit Must be Less than or equal to 1-Core Ratio Limit.Range is 0 to 255 0x0:0xFF
+      length       : 0x01
+      value        : 0
+  - SixCoreRatioLimit :
+      name         : 6-Core Ratio Limit
+      type         : EditNum, HEX, (0,0xFF)
+      help         : >
+                     LFM to Fused, For overclocking part- LFM to 255. This 6-Core Ratio Limit Must be Less than or equal to 1-Core Ratio Limit.Range is 0 to 255 0x0:0xFF
+      length       : 0x01
+      value        : 0
+  - SevenCoreRatioLimit :
+      name         : 7-Core Ratio Limit
+      type         : EditNum, HEX, (0,0xFF)
+      help         : >
+                     LFM to Fused, For overclocking part- LFM to 255. This 7-Core Ratio Limit Must be Less than or equal to 1-Core Ratio Limit.Range is 0 to 255 0x0:0xFF
+      length       : 0x01
+      value        : 0
+  - EightCoreRatioLimit :
+      name         : 8-Core Ratio Limit
+      type         : EditNum, HEX, (0,0xFF)
+      help         : >
+                     LFM to Fused, For overclocking part- LFM to 255. This 8-Core Ratio Limit Must be Less than or equal to 1-Core Ratio Limit.Range is 0 to 255 0x0:0xFF
+      length       : 0x01
+      value        : 0
+  - DmiTS0TW     :
+      name         : Thermal Sensor 0 Target Width
+      type         : Combo
+      option       : 0:x1, 1:x2, 2:x4, 3:x8, 4:x16
+      help         : >
+                     DMT thermal sensor suggested representative values.
+      length       : 0x01
+      value        : 0x3
+  - DmiTS1TW     :
+      name         : Thermal Sensor 1 Target Width
+      type         : Combo
+      option       : 0:x1, 1:x2, 2:x4, 3:x8, 4:x16
+      help         : >
+                     DMT thermal sensor suggested representative values.
+      length       : 0x01
+      value        : 0x2
+  - DmiTS2TW     :
+      name         : Thermal Sensor 2 Target Width
+      type         : Combo
+      option       : 0:x1, 1:x2, 2:x4, 3:x8, 4:x16
+      help         : >
+                     DMT thermal sensor suggested representative values.
+      length       : 0x01
+      value        : 0x1
+  - MemoryThermalMgmt :
+      name         : Memory Thermal Management
+      type         : Combo
+      option       : 0:Disabled, 1:Enabled
+      help         : >
+                     Enable Memory Thermal Management
+      length       : 0x01
+      value        : 0x1
+

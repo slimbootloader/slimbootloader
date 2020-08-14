@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -9,8 +9,11 @@
 #include <Library/ContainerLib.h>
 #include <Library/ElfLib.h>
 #include <Library/LinuxLib.h>
+#include <Library/MultibootLib.h>
+#include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/BootloaderCommonLib.h>
+#include "OsLoader.h"
 
 #define SIGNATURE_IPFW    SIGNATURE_32 ('I', 'P', 'F', 'W')
 #define SIGNATURE_POSC    SIGNATURE_32 ('P', 'O', 'S', 'C')
@@ -107,7 +110,8 @@ LoadPreOsChecker (
 /**
   Start PreOsChecker with OS information
 
-  @param[in] OsBootParam          Pointer of OS BOOT_PARAMS
+  @param[in] BootParam            Pointer of OS BOOT_PARAMS or IA32_BOOT_STATE
+  @param[in] ImageFlags           Flags of the loaded image
 
   @retval EFI_NOT_FOUND           PreOsChecker not found
   @retval EFI_INVALID_PARAMETER   Invalid OS BOOT_PARAMS found
@@ -117,28 +121,46 @@ LoadPreOsChecker (
 EFI_STATUS
 EFIAPI
 StartPreOsChecker (
-  IN  BOOT_PARAMS   *OsBootParam
+  IN  VOID   *BootParam,
+  IN  UINT8  ImageFlags
   )
 {
   PRE_OS_PAYLOAD_PARAM       PreOsParams;
   PRE_OS_CHECKER_ENTRY       EntryPoint;
+  BOOT_PARAMS                *OsBootParam;
+  IA32_BOOT_STATE            *BootState;
 
   if (mPreOsCheckerEntry == NULL) {
     return EFI_NOT_FOUND;
   }
 
-  if (OsBootParam == NULL) {
+  if (BootParam == NULL) {
     return EFI_INVALID_PARAMETER;
   }
-  UpdateLinuxBootParams (OsBootParam);
+
+  ZeroMem ((VOID *)&PreOsParams, (UINTN)sizeof (PreOsParams));
 
   PreOsParams.Version     = 0x1;
   PreOsParams.HeapSize    = EFI_SIZE_TO_PAGES (0);
   PreOsParams.HeapAddr    = (UINT32)(UINTN)AllocatePages (PreOsParams.HeapSize);
   PreOsParams.HobListPtr  = PcdGet32 (PcdPayloadHobList);
 
-  PreOsParams.OsBootState.Esi     = (UINT32)(UINTN)OsBootParam;
-  PreOsParams.OsBootState.Eip     = OsBootParam->Hdr.Code32Start;
+  if ((ImageFlags & LOADED_IMAGE_LINUX) != 0) {
+    OsBootParam = (BOOT_PARAMS*)BootParam;
+    UpdateLinuxBootParams (OsBootParam);
+    PreOsParams.OsBootState.Esi     = (UINT32)(UINTN)OsBootParam;
+    PreOsParams.OsBootState.Eip     = OsBootParam->Hdr.Code32Start;
+  } else if ((ImageFlags & LOADED_IMAGE_MULTIBOOT) != 0) {
+    BootState = (IA32_BOOT_STATE*)BootParam;
+    PreOsParams.OsBootState.Eax     = BootState->Eax;
+    PreOsParams.OsBootState.Ebx     = BootState->Ebx;
+    PreOsParams.OsBootState.Esi     = BootState->Esi;
+    PreOsParams.OsBootState.Edi     = BootState->Edi;
+    PreOsParams.OsBootState.Eip     = BootState->EntryPoint;
+  } else {
+    return EFI_INVALID_PARAMETER;
+  }
+
   PreOsParams.OsBootState.Eflags  = 0;
 
   EntryPoint = (PRE_OS_CHECKER_ENTRY)(UINTN)mPreOsCheckerEntry;

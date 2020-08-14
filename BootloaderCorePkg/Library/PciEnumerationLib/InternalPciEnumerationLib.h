@@ -11,6 +11,14 @@
 #include <IndustryStandard/Pci.h>
 #include <Guid/PciRootBridgeInfoGuid.h>
 
+#define EFI_BRIDGE_IO32_DECODE_SUPPORTED      0x0001
+#define EFI_BRIDGE_PMEM32_DECODE_SUPPORTED    0x0002
+#define EFI_BRIDGE_PMEM64_DECODE_SUPPORTED    0x0004
+#define EFI_BRIDGE_IO16_DECODE_SUPPORTED      0x0008
+#define EFI_BRIDGE_PMEM_MEM_COMBINE_SUPPORTED 0x0010
+#define EFI_BRIDGE_MEM64_DECODE_SUPPORTED     0x0020
+#define EFI_BRIDGE_MEM32_DECODE_SUPPORTED     0x0040
+
 //
 // The PCI Command register bits owned by PCI Bus driver.
 //
@@ -46,6 +54,22 @@
 #define PCI_BAR_RESOURCE_FROM_LINK(a)    BASE_CR (a, PCI_BAR_RESOURCE, Link)
 #define ALIGN(Base, Align)               ((Base + Align) & (~(Align)))
 
+typedef enum {
+  BusScanTypeList     = 0,
+  BusScanTypeRange    = 1,
+  BusScanTypeInvalid  = 0xFF
+} BUS_SCAN_TYPE;
+
+typedef struct {
+  UINT8           DowngradeIo32;
+  UINT8           DowngradeMem64;
+  UINT8           DowngradePMem64;
+  UINT8           Reserved;
+  UINT8           BusScanType;
+  UINT8           NumOfBus;
+  UINT8           BusScanItems[0];
+} PCI_ENUM_POLICY_INFO;
+
 //
 // PCI BAR parameters
 //
@@ -64,6 +88,11 @@ struct _PCI_BAR_RESOURCE {
   LIST_ENTRY                                Link;
   PCI_BAR                                  *PciBar;
 };
+
+typedef struct {
+  UINT8                                     BusBase;
+  UINT8                                     BusLimit;
+} PCI_BUS_NUM_RANGE;
 
 typedef struct _PCI_IO_DEVICE              PCI_IO_DEVICE;
 
@@ -86,6 +115,31 @@ struct _PCI_IO_DEVICE {
   PCI_BAR                                   PciBar[PCI_MAX_BAR];
 
   //
+  // The resource decode the bridge supports
+  //
+  UINT32                                    Decodes;
+
+  //
+  // Bus number ranges for a PCI Root Bridge device
+  //
+  PCI_BUS_NUM_RANGE                         BusNumberRanges;
+
+  //
+  // ARI (Alternative Routing ID)
+  //
+  BOOLEAN                                   IsPciExp;
+  UINT8                                     PciExpressCapabilityOffset;
+  UINT32                                    AriCapabilityOffset;
+  //
+  // SR-IOV
+  //
+  UINT32                                    SrIovCapabilityOffset;
+  PCI_BAR                                   VfPciBar[PCI_MAX_BAR];
+  UINT32                                    SystemPageSize;
+  UINT16                                    InitialVFs;
+  UINT16                                    ReservedBusNum;
+
+  //
   // The bridge device this pci device is subject to
   //
   PCI_IO_DEVICE                             *Parent;
@@ -96,5 +150,26 @@ struct _PCI_IO_DEVICE {
   LIST_ENTRY                                ChildList;
 
 };
+
+/**
+  Check whether the bar is existed or not.
+
+  @param PciIoDevice       A pointer to the PCI_IO_DEVICE.
+  @param Offset            The offset.
+  @param BarLengthValue    The bar length value returned.
+  @param OriginalBarValue  The original bar value returned.
+
+  @retval EFI_NOT_FOUND    The bar doesn't exist.
+  @retval EFI_SUCCESS      The bar exist.
+
+**/
+EFI_STATUS
+EFIAPI
+BarExisted (
+  IN  PCI_IO_DEVICE *PciIoDevice,
+  IN  UINTN         Offset,
+  OUT UINT32        *BarLengthValue,
+  OUT UINT32        *OriginalBarValue
+  );
 
 #endif

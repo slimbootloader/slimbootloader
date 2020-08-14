@@ -1,7 +1,7 @@
 /** @file
   This file Multiboot specification (implementation).
 
-  Copyright (c) 2014 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2014 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -281,10 +281,14 @@ SetupMultibootImage (
   )
 {
   EFI_STATUS                 Status;
-  UINT32                     *LoadAddr;
-  UINT32                     *LoadEnd;
-  UINT32                     *BssEnd;
+  UINT8                      *HeaderAddr;
+  UINT8                      *LoadAddr;
+  UINT8                      *LoadEnd;
+  UINT8                      *BssEnd;
   CONST MULTIBOOT_HEADER     *MbHeader;
+  UINT8                      *CopyStart;
+  UINT32                      ImgOffset;
+  UINT32                      ImgLength;
 
   if (MultiBoot == NULL) {
     return RETURN_INVALID_PARAMETER;
@@ -307,18 +311,21 @@ SetupMultibootImage (
     }
   }
 
-  LoadAddr = MbHeader->LoadAddr;
-  LoadEnd  = MbHeader->LoadEndAddr;
-  BssEnd   = MbHeader->BssEndAddr;
-  DEBUG ((DEBUG_INFO, "Mb: LoadAddr=0x%p, LoadEnd=0x%p , BssEnd=0x%p\n", LoadAddr, LoadEnd, BssEnd));
-  if (LoadEnd == NULL) {
-    // zero means "load the entire file"
-    CopyMem (LoadAddr, (UINT8 * )MultiBoot->BootFile.Addr, MultiBoot->BootFile.Size);
-    DEBUG ((DEBUG_INFO, "Mb: copy image to 0x%p, Size=0x%x\n", LoadAddr, MultiBoot->BootFile.Size));
-  } else {
-    CopyMem (LoadAddr, MultiBoot->BootFile.Addr, sizeof (UINT32) * (LoadEnd - LoadAddr));
-    DEBUG ((DEBUG_INFO, "Mb: copy image to 0x%p, Size=0x%x\n", LoadAddr, sizeof (UINT32) * (LoadEnd - LoadAddr)));
-    if ((UINT32)(UINTN)BssEnd != 0) {
+  HeaderAddr = MbHeader->HeaderAddr;
+  LoadAddr   = MbHeader->LoadAddr;
+  LoadEnd    = MbHeader->LoadEndAddr;
+  BssEnd     = MbHeader->BssEndAddr;
+  ImgOffset  = (UINT32)((UINT8 *)MbHeader - (UINT8 *)MultiBoot->BootFile.Addr - (HeaderAddr - LoadAddr));
+  ImgLength  = (UINT32)((LoadEnd == NULL) ? MultiBoot->BootFile.Size - ImgOffset : LoadEnd - LoadAddr);
+  if ((ImgOffset >= MultiBoot->BootFile.Size) || (ImgOffset + ImgLength > MultiBoot->BootFile.Size)) {
+    return RETURN_LOAD_ERROR;
+  }
+
+  DEBUG ((DEBUG_INFO, "Mb: LoadAddr=0x%p, LoadEnd=0x%p , BssEnd=0x%p, Size=0x%x\n", LoadAddr, LoadEnd, BssEnd, ImgLength));
+  CopyStart = (UINT8 *)MultiBoot->BootFile.Addr + ImgOffset;
+  CopyMem (LoadAddr, CopyStart, ImgLength);
+  if ((BssEnd != NULL) && (LoadEnd != NULL)) {
+    if (BssEnd > LoadEnd) {
       ZeroMem ((VOID *) LoadEnd, BssEnd - LoadEnd);
     }
   }

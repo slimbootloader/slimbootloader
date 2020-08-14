@@ -1,7 +1,7 @@
 /** @file
   This file contains the implementation of FirmwareUpdateLib library.
 
-  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -133,17 +133,19 @@ InitCsmeUpdInputData (
 
   CsmeUpdDriverInput = (CSME_UPDATE_DRIVER_INPUT *)AllocateZeroPool (sizeof(CSME_UPDATE_DRIVER_INPUT));
 
-  CsmeUpdDriverInput->AllocatePool     = (VOID *)((UINTN)AllocatePool);
-  CsmeUpdDriverInput->AllocateZeroPool = (VOID *)((UINTN)AllocateZeroPool);
-  CsmeUpdDriverInput->FreePool         = (VOID *)((UINTN)FreePool);
-  CsmeUpdDriverInput->CopyMem          = (VOID *)((UINTN)CopyMem);
-  CsmeUpdDriverInput->SetMem           = (VOID *)((UINTN)SetMem);
-  CsmeUpdDriverInput->CompareMem       = (VOID *)((UINTN)CompareMem);
-  CsmeUpdDriverInput->Stall            = (VOID *)((UINTN)MicroSecondDelay);
-  CsmeUpdDriverInput->PciRead          = (VOID *)((UINTN)PciReadBuffer);
-  CsmeUpdDriverInput->HeciReadMessage  = (VOID *)((UINTN)HeciReceive);
-  CsmeUpdDriverInput->HeciSendMessage  = (VOID *)((UINTN)HeciSend);
-  CsmeUpdDriverInput->HeciReset        = (VOID *)((UINTN)ResetHeciInterface);
+  if (CsmeUpdDriverInput != NULL) {
+    CsmeUpdDriverInput->AllocatePool     = (VOID *)((UINTN)AllocatePool);
+    CsmeUpdDriverInput->AllocateZeroPool = (VOID *)((UINTN)AllocateZeroPool);
+    CsmeUpdDriverInput->FreePool         = (VOID *)((UINTN)FreePool);
+    CsmeUpdDriverInput->CopyMem          = (VOID *)((UINTN)CopyMem);
+    CsmeUpdDriverInput->SetMem           = (VOID *)((UINTN)SetMem);
+    CsmeUpdDriverInput->CompareMem       = (VOID *)((UINTN)CompareMem);
+    CsmeUpdDriverInput->Stall            = (VOID *)((UINTN)MicroSecondDelay);
+    CsmeUpdDriverInput->PciRead          = (VOID *)((UINTN)PciReadBuffer);
+    CsmeUpdDriverInput->HeciReadMessage  = (VOID *)((UINTN)HeciReceive);
+    CsmeUpdDriverInput->HeciSendMessage  = (VOID *)((UINTN)HeciSend);
+    CsmeUpdDriverInput->HeciReset        = (VOID *)((UINTN)ResetHeciInterface);
+  }
 
   return CsmeUpdDriverInput;
 }
@@ -326,11 +328,6 @@ GetFirmwareUpdateInfo (
       return Status;
     }
 
-    if (ImageHdr->UpdateImageSize & 0xFFF) {
-      DEBUG ((DEBUG_INFO, "capsule payload size is not block aligned!"));
-      return EFI_UNSUPPORTED;
-    }
-
     if (ImageHdr->UpdateImageSize > CompSize) {
       DEBUG ((DEBUG_INFO, "capsule payload size is too big for the region on flash!"));
       return EFI_UNSUPPORTED;
@@ -477,4 +474,48 @@ PlatformEndFirmwareUpdate (
   )
 {
   return EFI_SUCCESS;
+}
+
+
+/**
+  Flash descriptor region lock
+
+  This function will do some command buffer parsing and check
+  for additional parameters
+
+  @param[in]  CmdDataBuf    Pointer to command buffer.
+  @param[in]  CmdDataSize   size of command data.
+
+  @retval  EFI_SUCCESS      Flash descriptor lock successfully.
+  @retval  others           Error happening when updating.
+
+**/
+EFI_STATUS
+EFIAPI
+SetFlashDescriptorLock (
+  IN  CHAR8      *CmdDataBuf,
+  IN  UINTN      CmdDataSize
+  )
+{
+  return EFI_UNSUPPORTED;
+}
+
+/**
+  Anti Rollback Svn Commit
+
+  @param[in]  CmdDataBuf    Pointer to command buffer.
+  @param[in]  CmdDataSize   size of command data.
+
+  @retval  EFI_SUCCESS      Svn commit successfully.
+  @retval  others           Error happening when updating.
+
+**/
+EFI_STATUS
+EFIAPI
+SetArbSvnCommit (
+   IN  CHAR8     *CmdDataBuf,
+   IN  UINTN     CmdDataSize
+   )
+{
+  return EFI_UNSUPPORTED;
 }
