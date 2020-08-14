@@ -208,21 +208,25 @@ def get_visual_studio_info ():
     if os.path.exists (vswhere_path):
         cmd = [vswhere_path, '-all', '-property', 'installationPath']
         lines = run_process (cmd, capture_out = True)
-        vscommon_path = ''
+        vscommon_paths = []
         for each in lines.splitlines ():
             each = each.strip()
             if each and os.path.isdir(each):
-                vscommon_path = each
-        vcver_file = vscommon_path + '\\VC\\Auxiliary\\Build\\Microsoft.VCToolsVersion.default.txt'
-        if os.path.exists(vcver_file):
-            for vs_ver in ['2017']:
-                check_path = '\\Microsoft Visual Studio\\%s\\' % vs_ver
-                if check_path in vscommon_path:
-                    toolchain_ver    = get_file_data (vcver_file, 'r').strip()
-                    toolchain_prefix = 'VS%s_PREFIX' % (vs_ver)
-                    toolchain_path   = vscommon_path + '\\VC\\Tools\\MSVC\\%s\\' % toolchain_ver
-                    toolchain='VS%s' % (vs_ver)
-                    break
+                vscommon_paths.append(each)
+
+        for vs_ver in ['2019', '2017']:
+            for vscommon_path in vscommon_paths:
+                vcver_file = vscommon_path + '\\VC\\Auxiliary\\Build\\Microsoft.VCToolsVersion.default.txt'
+                if os.path.exists(vcver_file):
+                    check_path = '\\Microsoft Visual Studio\\%s\\' % vs_ver
+                    if check_path in vscommon_path:
+                        toolchain_ver    = get_file_data (vcver_file, 'r').strip()
+                        toolchain_prefix = 'VS%s_PREFIX' % (vs_ver)
+                        toolchain_path   = vscommon_path + '\\VC\\Tools\\MSVC\\%s\\' % toolchain_ver
+                        toolchain = 'VS%s' % (vs_ver)
+                        break
+            if toolchain:
+                break
 
     if toolchain == '':
         vs_ver_list = [
