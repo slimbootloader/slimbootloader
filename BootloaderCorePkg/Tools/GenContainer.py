@@ -475,7 +475,7 @@ class CONTAINER ():
                     raise Exception ("Component file path '%s' is invalid !" % file)
             else:
                 in_file = os.path.join(self.out_dir, component.name.decode() + '.bin')
-                gen_file_with_size (in_file, 0x10)
+                gen_file_with_size (in_file, 0)
                 if component.name == mono_sig.encode():
                     component.attribute = COMPONENT_ENTRY._attr['RESERVED']
                     compress_alg        = 'Dummy'

@@ -368,18 +368,23 @@ def compress (in_file, alg, svn=0, out_path = '', tool_dir = ''):
         sig = "LZDM"
     else:
         raise Exception ("Unsupported compression '%s' !" % alg)
-    if sig == "LZDM":
-        shutil.copy(in_file, out_file)
-    else:
-        compress_tool = "%sCompress" % alg
-        cmdline = [
-            os.path.join (tool_dir, compress_tool),
-            "-e",
-            "-o", out_file,
-            in_file]
-        run_process (cmdline, False, True)
 
-    compress_data = get_file_data(out_file)
+    in_len = os.path.getsize(in_file)
+    if in_len > 0:
+        if sig == "LZDM":
+            shutil.copy(in_file, out_file)
+        else:
+            compress_tool = "%sCompress" % alg
+            cmdline = [
+                os.path.join (tool_dir, compress_tool),
+                "-e",
+                "-o", out_file,
+                in_file]
+            run_process (cmdline, False, True)
+        compress_data = get_file_data(out_file)
+    else:
+        compress_data = bytearray()
+
     lz_hdr = LZ_HEADER ()
     lz_hdr.signature = sig.encode()
     lz_hdr.svn = svn

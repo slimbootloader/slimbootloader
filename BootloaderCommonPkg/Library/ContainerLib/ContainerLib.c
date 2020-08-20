@@ -798,9 +798,15 @@ LoadComponentWithCallback (
 
   if (IS_COMPRESSED (CompressHdr)) {
     SignedDataLen = sizeof (LOADER_COMPRESSED_HEADER) + CompressHdr->CompressedSize;
-    if (SignedDataLen <= CompLen) {
-      Status = DecompressGetInfo (CompressHdr->Signature, CompressHdr->Data,
-                                  CompressHdr->CompressedSize, &DstLen, &ScrLen);
+    if (CompressHdr->Size == 0) {
+      Status = EFI_SUCCESS;
+      DstLen = 0;
+      ScrLen = 0;
+    } else {
+      if (SignedDataLen <= CompLen) {
+        Status = DecompressGetInfo (CompressHdr->Signature, CompressHdr->Data,
+                                    CompressHdr->CompressedSize, &DstLen, &ScrLen);
+      }
     }
   }
   if (EFI_ERROR (Status)) {
@@ -865,6 +871,7 @@ LoadComponentWithCallback (
     } else {
       CompBase = ReqCompBase;
     }
+
     if (CompBase != NULL) {
       Status = Decompress (CompressHdr->Signature, CompressHdr->Data, CompressHdr->CompressedSize,
                            CompBase, ScrBuf);
@@ -877,7 +884,11 @@ LoadComponentWithCallback (
         }
       }
     } else {
-      Status = EFI_OUT_OF_RESOURCES;
+      if (CompressHdr->Size == 0) {
+        Status = EFI_SUCCESS;
+      } else {
+        Status = EFI_OUT_OF_RESOURCES;
+      }
     }
 
   } else {
