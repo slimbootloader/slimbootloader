@@ -626,8 +626,8 @@ Reclaim (
       if (!EFI_ERROR (Status)) {
         CopyMem (&VarHdr, VarHdrPtr, sizeof (VarHdr));
         VarHdr.State |= VAR_IN_MIGRATION;
-        Status  = WriteVariableStore (CurPtr, sizeof (VarHdrPtr), &VarHdr);
-        CurPtr += sizeof (VarHdrPtr);
+        Status  = WriteVariableStore (CurPtr, sizeof (VarHdr), &VarHdr);
+        CurPtr += sizeof (VarHdr);
         if (!EFI_ERROR (Status)) {
           Status  = WriteVariableStore (CurPtr, VarHdrPtr->DataSize, (VOID *)&VarHdrPtr[1]);
           CurPtr += VarHdrPtr->DataSize;
