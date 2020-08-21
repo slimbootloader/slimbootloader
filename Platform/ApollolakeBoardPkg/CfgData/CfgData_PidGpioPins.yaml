@@ -1,0 +1,21 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : PLT_PIDGPIO:PLT:"Platform ID GPIO Pins"
+- $ACTION      :
+    page         : PLT_PIDGPIO
+- PID_GPIO_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ PID_GPIO_CFG_DATA, 0x800, 0, 0 ] }
+  - !expand { PIDGPIO_TMPL : [  PidPin0 ,  0x0000F0C4 ] }
+  - !expand { PIDGPIO_TMPL : [  PidPin1 ,  0x0000D0C4 ] }
+  - !expand { PIDGPIO_TMPL : [  PidPin2 ,  0x0000C8C4 ] }
+  - !expand { PIDGPIO_TMPL : [  PidPin3 ,  0x0000C0C4 ] }
+

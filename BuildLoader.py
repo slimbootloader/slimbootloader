@@ -45,6 +45,18 @@ def rebuild_basetools ():
         print ("Build BaseTools failed, please check required build environment and utilities !")
         sys.exit(1)
 
+def create_conf (workspace, sbl_source):
+    # create conf and build folder if not exist
+    workspace = os.environ['WORKSPACE']
+    if not os.path.exists(os.path.join(workspace, 'Conf')):
+        os.makedirs(os.path.join(workspace, 'Conf'))
+    for name in ['target', 'tools_def', 'build_rule']:
+        txt_file = os.path.join(workspace, 'Conf/%s.txt' % name)
+        if not os.path.exists(txt_file):
+            shutil.copy (
+                os.path.join(sbl_source, 'BaseTools/Conf/%s.template' % name),
+                os.path.join(workspace, 'Conf/%s.txt' % name))
+
 def prep_env ():
     # check python version first
     version = check_for_python ()
@@ -88,6 +100,9 @@ def prep_env ():
         print("Unsupported operating system !")
         sys.exit(1)
 
+    if 'SBL_KEY_DIR' not in os.environ:
+        os.environ['SBL_KEY_DIR'] = "../SblKeys/"
+
     print_tool_version_info(toolchain, toolchain_ver)
 
     check_for_openssl()
@@ -102,6 +117,8 @@ def prep_env ():
         os.environ['WORKSPACE'] = sblsource
     os.environ['CONF_PATH']     = os.path.join(os.environ['WORKSPACE'], 'Conf')
     os.environ['TOOL_CHAIN']    = toolchain
+
+    create_conf (os.environ['WORKSPACE'], sblsource)
 
 def get_board_config_file (check_dir, board_cfgs):
     platform_dir = os.path.join (check_dir, 'Platform')
@@ -122,20 +139,21 @@ class BaseBoard(object):
 
         # NOTE: Variables starting with '_' will not be exported to Platform.dsc
 
-        # Define default private key (PEM format) used to sign configuration data, firmware capsule and IAS image
-        key_dir = os.path.join('BootloaderCorePkg', 'Tools', 'Keys')
-        # Allow master key to be able to sign everything by default
-        self._MASTER_KEY_USAGE      = HASH_USAGE['PUBKEY_CFG_DATA'] | HASH_USAGE['PUBKEY_FWU'] | HASH_USAGE['PUBKEY_OS'] | \
-                                      HASH_USAGE['PUBKEY_CONT_DEF']
-        self._MASTER_PRIVATE_KEY    = os.path.join(key_dir, 'TestSigningPrivateKey.pem')
-        self._CFGDATA_PRIVATE_KEY   = os.path.join(key_dir, 'TestSigningPrivateKey.pem')
-        self._CONTAINER_PRIVATE_KEY = os.path.join(key_dir, 'TestSigningPrivateKey.pem')
+
         self.LOGO_FILE              = 'Platform/CommonBoardPkg/Logo/Logo.bmp'
 
         self._RSA_SIGN_TYPE          = 'RSA2048'
         self._SIGN_HASH              = 'SHA2_256'
         self.SIGN_HASH_TYPE          = HASH_TYPE_VALUE[self._SIGN_HASH]
         self._SIGNING_SCHEME         = 'RSA_PSS'
+
+        # Default key dir is set by SBL_KEY_DIR. _KEY_DIR is set to NULL.
+        self._KEY_DIR = ''
+        self._MASTER_PRIVATE_KEY    = 'KEY_ID_MASTER' + '_' + self._RSA_SIGN_TYPE
+        self._CFGDATA_PRIVATE_KEY   = 'KEY_ID_CFGDATA' + '_' + self._RSA_SIGN_TYPE
+        self._CONTAINER_PRIVATE_KEY = 'KEY_ID_CONTAINER' + '_' + self._RSA_SIGN_TYPE
+
+        self.KEY_GEN                 = 0
 
         self.VERINFO_IMAGE_ID       = 'SB_???? '
         self.VERINFO_PROJ_ID        = 1
@@ -219,6 +237,7 @@ class BaseBoard(object):
         self.BPM_SIZE              = 0x1000 # valid only if ACM_SIZE > 0
         self.CFG_DATABASE_SIZE     = 0
 
+        self.FSP_M_STACK_TOP       = 0
         self.STAGE1A_XIP           = 1
         self.STAGE1B_XIP           = 1
         self.STAGE1_STACK_BASE_OFFSET = 0
@@ -266,10 +285,12 @@ class BaseBoard(object):
 
         self.IPP_HASH_LIB_SUPPORTED_MASK   = IPP_CRYPTO_ALG_MASK[self._SIGN_HASH]
 
-        self.HASH_STORE_SIZE       = 0x200  #Hash store size to be allocated in bootloader
+        self.HASH_STORE_SIZE       = 0x400  #Hash store size to be allocated in bootloader
 
         self.PCI_MEM64_BASE        = 0
         self.BUILD_ARCH            = 'IA32'
+        self.KEYH_SVN              = 0
+        self.CFGDATA_SVN           = 0
 
         for key, value in list(kwargs.items()):
             setattr(self, '%s' % key, value)
@@ -286,7 +307,7 @@ class Build(object):
         self._target                       = 'RELEASE' if board.RELEASE_MODE  else 'NOOPT' if board.NO_OPT_MODE else 'DEBUG'
         self._fsp_basename                 = 'FspDbg'  if board.FSPDEBUG_MODE else 'FspRel'
         self._fv_dir                       = os.path.join(self._workspace, 'Build', 'BootloaderCorePkg', '%s_%s' % (self._target, self._toolchain), 'FV')
-        self._key_dir                      = os.path.join('BootloaderCorePkg', 'Tools', 'Keys')
+        self._key_dir                      = self._board._KEY_DIR
         self._img_list                     = board.GetImageLayout()
         self._pld_list                     = get_payload_list (board._PAYLOAD_NAME.split(';'))
         self._comp_list                    = []
@@ -510,7 +531,7 @@ class Build(object):
         if self._board.ENABLE_FWU:
             hash_file_list.append (('FWUPDATE.hash', HASH_USAGE['PAYLOAD_FWU']))
 
-        hash_file_list.append (('MSTKEY.hash', HASH_USAGE['PUBKEY_MASTER'] | self._board._MASTER_KEY_USAGE))
+        hash_file_list.append (('MSTKEY.hash', HASH_USAGE['PUBKEY_MASTER']))
 
         if len(hash_file_list) > HashStoreTable.HASH_STORE_MAX_IDX_NUM:
             raise Exception ('Insufficant hash entries !')
@@ -819,6 +840,12 @@ class Build(object):
         setattr(self._board, 'FSP_M_BASE'         , getattr(self._board, 'STAGE1B_FD_BASE')   + getattr(self._board, 'FSP_M_OFFSET'))
         setattr(self._board, 'FSP_S_BASE'         , getattr(self._board, 'STAGE2_FD_BASE')    + getattr(self._board, 'FSP_S_OFFSET'))
 
+        for stage_c, fsp_c in [('1A', 'T'), ('1B', 'M'), ('2', 'S')]:
+          fv_size = getattr(self._board, 'STAGE%s_FV_SIZE' % stage_c)
+          if fv_size < 0:
+            raise Exception ('STAGE%s_FD_SIZE is too small, please adjust it to be at least 0x%x in BoardConfig.py !' %
+                            (stage_c, getattr(self._board, 'FSP_%s_SIZE' % fsp_c)))
+
         if getattr(self._board, 'FLASH_SIZE') == 0:
             if not hasattr (self._board, 'SLIMBOOTLOADER_SIZE'):
                 raise Exception ('FLASH_SIZE needs to be defined !')
@@ -1016,18 +1043,33 @@ class Build(object):
         if plt_dir != sbl_dir:
             os.environ['PACKAGES_PATH'] += os.pathsep + sbl_dir
 
-        # create conf and build folder if not exist
-        if not os.path.exists(os.path.join(self._workspace, 'Conf')):
-            os.makedirs(os.path.join(self._workspace, 'Conf'))
-        for name in ['target', 'tools_def', 'build_rule']:
-            txt_file = os.path.join(self._workspace, 'Conf/%s.txt' % name)
-            if not os.path.exists(txt_file):
-                shutil.copy (
-                    os.path.join(sbl_dir, 'BaseTools/Conf/%s.template' % name),
-                    os.path.join(self._workspace, 'Conf/%s.txt' % name))
+        # Generate SblKeys
+        if self._board.KEY_GEN:
+            if not os.path.exists(os.environ.get('SBL_KEY_DIR')):
+                print ("Generating default Sbl Keys to %s !!" % os.environ.get('SBL_KEY_DIR'))
+                key_gen_tool = os.path.join(sbl_dir, 'BootloaderCorePkg', 'Tools', 'GenerateKeys.py')
+                args_list = ['python', key_gen_tool, '-k', os.environ['SBL_KEY_DIR']]
+                ret = subprocess.call(args_list)
+                if ret:
+                    raise Exception  ('Failed to generate keys !!')
+            else:
+                print ("WARNING: Key generation option is set but directory with Sbl Keys exists at %s!!" % os.environ.get('SBL_KEY_DIR'))
+                print ("Skip keys generation!!")
 
+        # Check for SBL Keys directory
+        check_for_slimbootkeydir()
+
+        # create build folder if not exist
         if not os.path.exists(self._fv_dir):
             os.makedirs(self._fv_dir)
+
+        # Validate HASH_TYPE_VALUE config
+        if (HASH_TYPE_VALUE[self._board._SIGN_HASH] != self._board.SIGN_HASH_TYPE):
+            raise Exception  ('SIGN_HASH_TYPE is not set correctly!!')
+
+        # Validate IPP_HASH_LIB_SUPPORTED_MASK config
+        if(IPP_CRYPTO_ALG_MASK[self._board._SIGN_HASH] & self._board.IPP_HASH_LIB_SUPPORTED_MASK) == 0:
+            raise Exception  ('IPP_HASH_LIB_SUPPORTED_MASK is not set correctly!!')
 
         # check if FSP binary exists
         fsp_dir  = os.path.join(plt_dir, 'Silicon', self._board.SILICON_PKG_NAME, "FspBin", self._board._FSP_PATH_NAME)
@@ -1104,8 +1146,9 @@ class Build(object):
             if getattr(self._board, "GetKeyHashList", None):
                 key_hash_list = self._board.GetKeyHashList ()
 
+        svn = self._board.KEYH_SVN
         gen_pub_key_hash_store (mst_key, key_hash_list, HASH_VAL_STRING[self._board.SIGN_HASH_TYPE],
-                                self._board._SIGNING_SCHEME, self._key_dir, os.path.join(self._fv_dir, 'KEYHASH.bin'))
+                                self._board._SIGNING_SCHEME, svn, self._key_dir, os.path.join(self._fv_dir, 'KEYHASH.bin'))
 
         # create fit table
         if self._board.HAVE_FIT_TABLE:
@@ -1156,11 +1199,12 @@ class Build(object):
 
         # create configuration data
         if self._board.CFGDATA_SIZE > 0:
+            svn = self._board.CFGDATA_SVN
             # create config data files
             gen_config_file (self._fv_dir, self._board.BOARD_PKG_NAME, self._board._PLATFORM_ID,
                              self._board._CFGDATA_PRIVATE_KEY, self._board.CFG_DATABASE_SIZE, self._board.CFGDATA_SIZE,
                              self._board._CFGDATA_INT_FILE, self._board._CFGDATA_EXT_FILE,
-                             self._board._SIGNING_SCHEME, HASH_VAL_STRING[self._board.SIGN_HASH_TYPE])
+                             self._board._SIGNING_SCHEME, HASH_VAL_STRING[self._board.SIGN_HASH_TYPE], svn)
 
         # rebuild reset vector
         vtf_dir = os.path.join('BootloaderCorePkg', 'Stage1A', 'Ia32', 'Vtf0')
@@ -1316,13 +1360,14 @@ def main():
                                         FSPDEBUG_MODE     = args.fspdebug,    \
                                         USE_VERSION       = args.usever,      \
                                         _PAYLOAD_NAME     = args.payload,     \
-                                        _FSP_PATH_NAME    = args.fsppath
+                                        _FSP_PATH_NAME    = args.fsppath,     \
+                                        KEY_GEN           = args.keygen
                                         );
                 os.environ['PLT_SOURCE']  = os.path.abspath (os.path.join (os.path.dirname (board_cfgs[index]), '../..'))
                 Build(board).build()
                 break
 
-    buildp = sp.add_parser('build', help='build firmware')
+    buildp = sp.add_parser('build', help='build SBL firmware')
     buildp.add_argument('-r',  '--release', action='store_true', help='Release build')
     buildp.add_argument('-v',  '--usever',  action='store_true', help='Use board version file')
     buildp.add_argument('-fp', dest='fsppath', type=str, help='FSP binary path relative to FspBin in Silicon folder', default='')
@@ -1331,6 +1376,7 @@ def main():
     buildp.add_argument('-no', '--noopt', action='store_true', help='No compile/link optimization for debugging purpose. Not enabled in Release build.')
     buildp.add_argument('-p',  '--payload' , dest='payload', type=str, help='Payload file name', default ='OsLoader.efi')
     buildp.add_argument('board', metavar='board', choices=board_names, help='Board Name (%s)' % ', '.join(board_names))
+    buildp.add_argument('-k', '--keygen', action='store_true', help='Generate default keys for signing')
     buildp.set_defaults(func=cmd_build)
 
     def cmd_clean(args):
@@ -1372,7 +1418,40 @@ def main():
     cleanp.add_argument('-d',  '--distclean', action='store_true', help='Distribution clean')
     cleanp.set_defaults(func=cmd_clean)
 
+    def cmd_build_dsc(args):
+        # Check if BaseTools has been compiled
+        rebuild_basetools ()
+
+        # Build a specified DSC file
+        def_list = []
+        if args.define is not None:
+            for each in args.define:
+                def_list.extend (['-D', '%s' % each])
+
+        cmd_args = [
+            "build" if os.name == 'posix' else "build.bat",
+            "--platform", args.dsc,
+            "-b",         'RELEASE' if args.release else 'DEBUG',
+            "--arch",     args.arch.upper(),
+            "--tagname",  os.environ['TOOL_CHAIN'],
+            "-n",         str(multiprocessing.cpu_count()),
+            ] + def_list
+
+        run_process (cmd_args)
+
+    build_dscp = sp.add_parser('build_dsc', help='build a specified dsc file')
+    build_dscp.add_argument('-r',  '--release', action='store_true', help='Release build')
+    build_dscp.add_argument('-a',  '--arch', choices=['ia32', 'x64'], help='Specify the ARCH for build. Default is to build IA32 image.', default ='ia32')
+    build_dscp.add_argument('-d',  '--define', action='append', help='Specify macros to be passed into DSC build')
+    build_dscp.add_argument('-p',  '--dsc', type=str, required=True, help='Specify a DSC file path to build')
+    build_dscp.set_defaults(func=cmd_build_dsc)
+
     args = ap.parse_args()
+    if len(args.__dict__) <= 1:
+        # No arguments or subcommands were given.
+        ap.print_help()
+        ap.exit()
+
     args.func(args)
 
 if __name__ == '__main__':

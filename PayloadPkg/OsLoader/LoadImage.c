@@ -51,117 +51,156 @@ GetBootImageFromRawPartition (
   VOID                      *BlockData;
   EFI_LBA                    LbaAddr;
   UINT8                      SwPart;
+  UINT64                     Address;
   CONTAINER_HDR             *ContainerHdr;
+  CHAR8                     *FileName;
 
-  SwPart  = BootOption->Image[LoadedImage->LoadImageType].LbaImage.SwPart;
-  LbaAddr = BootOption->Image[LoadedImage->LoadImageType].LbaImage.LbaAddr;
+  SwPart   = BootOption->Image[LoadedImage->LoadImageType].LbaImage.SwPart;
+  LbaAddr  = BootOption->Image[LoadedImage->LoadImageType].LbaImage.LbaAddr;
+  FileName = (CHAR8 *)BootOption->Image[LoadedImage->LoadImageType].FileName;
 
-  //
-  // The image_B partition number, is image_A partition number + 1
-  // They share same LBA offset address.
-  //
-  if ((BootOption->BootFlags & LOAD_IMAGE_FROM_BACKUP) != 0) {
-    if ((LoadedImage->LoadImageType == LoadImageTypeTrusty)
-      || (LoadedImage->LoadImageType == LoadImageTypeNormal)) {
-      SwPart++;
+  if ((FileName[0] == '!') && (LbaAddr == 0)) {
+    // Load file from internal container path instead
+    Status = EFI_NOT_FOUND;
+    if ((AsciiStrLen(FileName) > 9) && (FileName[0] == '!') && (FileName[5] == '/')) {
+      Buffer    = NULL;
+      ImageSize = 0;
+      Status = LoadComponent (
+                 *(UINT32 *)(FileName + 1),
+                 *(UINT32 *)(FileName + 6),
+                 (VOID **)&Buffer,
+                 (UINT32 *)&ImageSize
+               );
     }
-  }
-
-  DEBUG ((DEBUG_INFO, "Load image from SwPart (0x%x), LbaAddr(0x%llx)\n", SwPart, LbaAddr));
-  Status = GetLogicalPartitionInfo (SwPart, LoadedImage->HwPartHandle, &LogicBlkDev);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "Get logical partition error, Status = %r\n", Status));
-    return Status;
-  }
-
-  Status = MediaGetMediaInfo (BootOption->HwPart, &BlockInfo);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "GetMediaInfo Error %r\n", Status));
-    return Status;
-  }
-
-  //
-  // Read the IAS Header first to get total size of the IAS image.
-  // Make sure to round the Header size to be block aligned in bytes.
-  //
-  BlockSize = BlockInfo.BlockSize;
-  AlignedHeaderSize = ((sizeof (IAS_HEADER) % BlockSize) == 0) ? \
-                      sizeof (IAS_HEADER) : \
-                      ((sizeof (IAS_HEADER) / BlockSize) + 1) * BlockSize;
-
-  BlockData = AllocatePages (EFI_SIZE_TO_PAGES (AlignedHeaderSize));
-  if (BlockData == NULL) {
-    return EFI_OUT_OF_RESOURCES;
-  }
-  Status = MediaReadBlocks (
-             BootOption->HwPart,
-             LogicBlkDev.StartBlock + LbaAddr,
-             AlignedHeaderSize,
-             BlockData
-             );
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "Read image error, Status = %r\n", Status));
-    return Status;
-  }
-
-  //
-  // Make sure to round the image size to be block aligned in bytes.
-  //
-  ContainerHdr = (CONTAINER_HDR *)BlockData;
-  if (ContainerHdr->Signature == CONTAINER_BOOT_SIGNATURE) {
-    ImageSize = ContainerHdr->DataOffset + ContainerHdr->DataSize;
-  } else if (ContainerHdr->Signature == IAS_MAGIC_PATTERN) {
-    ImageSize = IAS_IMAGE_SIZE ((IAS_HEADER *) BlockData);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_INFO, "Load component '%a' error - %r\n", FileName, Status));
+      return Status;
+    }
+    LoadedImage->Flags |= LOADED_IMAGE_COMPONENT;
   } else {
-    DEBUG ((DEBUG_INFO, "No valid image header found !\n"));
-    return EFI_LOAD_ERROR;
-  }
+    //
+    // The image_B partition number, is image_A partition number + 1
+    // They share same LBA offset address.
+    //
+    if ((BootOption->BootFlags & LOAD_IMAGE_FROM_BACKUP) != 0) {
+      if ((LoadedImage->LoadImageType == LoadImageTypeTrusty)
+        || (LoadedImage->LoadImageType == LoadImageTypeNormal)) {
+        SwPart++;
+      }
+    }
 
-  //
-  // Check image size from the image header
-  //
-  if (ImageSize == 0) {
-    return EFI_LOAD_ERROR;
-  }
+    DEBUG ((DEBUG_INFO, "Load image from SwPart (0x%x), LbaAddr(0x%llx)\n", SwPart, LbaAddr));
+    Status = GetLogicalPartitionInfo (SwPart, LoadedImage->HwPartHandle, &LogicBlkDev);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_INFO, "Get logical partition error - %r\n", Status));
+      return Status;
+    }
 
-  AlignedImageSize = ((ImageSize % BlockSize) == 0) ? \
-                     ImageSize : \
-                     ((ImageSize / BlockSize) + 1) * BlockSize;
-  if (AlignedImageSize > MAX_IAS_IMAGE_SIZE) {
-    DEBUG ((DEBUG_INFO, "Image is bigger than limitation (0x%x). ImageSize=0x%x\n",
-            MAX_IAS_IMAGE_SIZE, AlignedImageSize));
+    Status = MediaGetMediaInfo (BootOption->HwPart, &BlockInfo);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_INFO, "Get media info error - %r\n", Status));
+      return Status;
+    }
+
+    //
+    // Read the IAS Header first to get total size of the IAS image.
+    // Make sure to round the Header size to be block aligned in bytes.
+    //
+    BlockSize = BlockInfo.BlockSize;
+    AlignedHeaderSize = ((sizeof (IAS_HEADER) % BlockSize) == 0) ? \
+                        sizeof (IAS_HEADER) : \
+                        ((sizeof (IAS_HEADER) / BlockSize) + 1) * BlockSize;
+
+    BlockData = AllocatePages (EFI_SIZE_TO_PAGES (AlignedHeaderSize));
+    if (BlockData == NULL) {
+      return EFI_OUT_OF_RESOURCES;
+    }
+
+    if ( BootOption->DevType == OsBootDeviceMemory ) {
+      Address =  LogicBlkDev.StartBlock + LbaAddr;
+    } else {
+      Address =  LbaAddr;
+    }
+
+    Status = MediaReadBlocks (
+               BootOption->HwPart,
+               Address,
+               AlignedHeaderSize,
+               BlockData
+               );
+
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_INFO, "Read image error - %r\n", Status));
+      return Status;
+    }
+
+    //
+    // Make sure to round the image size to be block aligned in bytes.
+    //
+    ContainerHdr = (CONTAINER_HDR *)BlockData;
+    if (ContainerHdr->Signature == CONTAINER_BOOT_SIGNATURE) {
+      ImageSize = ContainerHdr->DataOffset + ContainerHdr->DataSize;
+    } else if (ContainerHdr->Signature == IAS_MAGIC_PATTERN) {
+      ImageSize = IAS_IMAGE_SIZE ((IAS_HEADER *) BlockData);
+    } else {
+      DEBUG ((DEBUG_INFO, "No valid image header found !\n"));
+      return EFI_LOAD_ERROR;
+    }
+
+    //
+    // Check image size from the image header
+    //
+    if (ImageSize == 0) {
+      return EFI_LOAD_ERROR;
+    }
+
+    AlignedImageSize = ((ImageSize % BlockSize) == 0) ? \
+                       ImageSize : \
+                       ((ImageSize / BlockSize) + 1) * BlockSize;
+    if (AlignedImageSize > MAX_IAS_IMAGE_SIZE) {
+      DEBUG ((DEBUG_INFO, "Image is bigger than limitation (0x%x). ImageSize=0x%x\n",
+              MAX_IAS_IMAGE_SIZE, AlignedImageSize));
+      //
+      // Free temporary pages used for image header
+      //
+      FreePages (BlockData, EFI_SIZE_TO_PAGES (AlignedHeaderSize));
+      return EFI_LOAD_ERROR;
+    }
+
+    Buffer = (UINT8 *) AllocatePages (EFI_SIZE_TO_PAGES (AlignedImageSize));
+    if (Buffer == NULL) {
+      DEBUG ((DEBUG_INFO, "Allocate memory (size:0x%x) fail.\n", AlignedImageSize));
+      return EFI_OUT_OF_RESOURCES;
+    }
+    CopyMem (Buffer, BlockData, AlignedHeaderSize);
+
     //
     // Free temporary pages used for image header
     //
     FreePages (BlockData, EFI_SIZE_TO_PAGES (AlignedHeaderSize));
-    return EFI_LOAD_ERROR;
-  }
 
-  Buffer = (UINT8 *) AllocatePages (EFI_SIZE_TO_PAGES (AlignedImageSize));
-  if (Buffer == NULL) {
-    DEBUG ((DEBUG_INFO, "Allocate memory (size:0x%x) fail.\n", AlignedImageSize));
-    return EFI_OUT_OF_RESOURCES;
-  }
-  CopyMem (Buffer, BlockData, AlignedHeaderSize);
+    //
+    // Read the rest of the IAS image into the buffer
+    //
 
-  //
-  // Free temporary pages used for image header
-  //
-  FreePages (BlockData, EFI_SIZE_TO_PAGES (AlignedHeaderSize));
+    if ( BootOption->DevType == OsBootDeviceMemory ) {
+      Address =  LogicBlkDev.StartBlock + LbaAddr + AlignedHeaderSize;
+    } else {
+      Address =  LbaAddr + AlignedHeaderSize;
+    }
 
-  //
-  // Read the rest of the IAS image into the buffer
-  //
-  Status = MediaReadBlocks (
-             BootOption->HwPart,
-             LogicBlkDev.StartBlock + LbaAddr + (AlignedHeaderSize / BlockSize),
-             (AlignedImageSize - AlignedHeaderSize),
-             (VOID *)((UINTN)Buffer + AlignedHeaderSize)
-             );
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "Read rest of image error, Status = %r\n", Status));
-    FreePages (Buffer, EFI_SIZE_TO_PAGES (AlignedImageSize));
-    return Status;
+    Status = MediaReadBlocks (
+               BootOption->HwPart,
+               Address,
+               (AlignedImageSize - AlignedHeaderSize),
+               (VOID *)((UINTN)Buffer + AlignedHeaderSize)
+               );
+
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_INFO, "Read rest of image error - %r\n", Status));
+      FreePages (Buffer, EFI_SIZE_TO_PAGES (AlignedImageSize));
+      return Status;
+    }
   }
 
   LoadedImage->ImageData.Addr = Buffer;

@@ -1,9 +1,18 @@
-/** @file
-
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
-  SPDX-License-Identifier: BSD-2-Clause-Patent
-
-**/
+/*******************************************************************************
+* Copyright 2017-2020 Intel Corporation
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*******************************************************************************/
 
 #if !defined(_GS_MOD_STUFF_H)
 #define _GS_MOD_STUFF_H
@@ -77,11 +86,21 @@ BNU_CHUNK_T gsMontFactor(BNU_CHUNK_T m0);
 /*
 // pool management methods
 */
-//#define      gsModPoolAlloc OWNAPI(gsModPoolAlloc)
-//BNU_CHUNK_T* gsModPoolAlloc(gsModEngine* pME, int poolLen);
 
-//#define gsModPoolFree OWNAPI(gsModPoolFree)
-//void    gsModPoolFree(gsModEngine* pME, int poolLen);
+/*F*
+// Name: gsModPoolAlloc
+//
+// Purpose: Allocation pool.
+//
+// Returns:                        Reason:
+//       pointer to allocate Pool       enough of pool
+//       NULL                           required pool more than pME have
+//
+// Parameters:
+//    pME       ModEngine
+//    poolReq   Required pool
+*F*/
+
 __INLINE BNU_CHUNK_T* gsModPoolAlloc(gsModEngine* pME, int poolReq)
 {
    BNU_CHUNK_T* pPool = MOD_BUFFER(pME, pME->poolLenUsed);
@@ -93,6 +112,19 @@ __INLINE BNU_CHUNK_T* gsModPoolAlloc(gsModEngine* pME, int poolReq)
 
    return pPool;
 }
+
+/*F*
+// Name: gsModPoolFree
+//
+// Purpose: Delete pool.
+//
+// Returns:
+//    nothing
+//
+// Parameters:
+//    pME       ModEngine
+//    poolReq   Required pool
+*F*/
 
 __INLINE void gsModPoolFree(gsModEngine* pME, int poolReq)
 {
@@ -108,14 +140,19 @@ BNU_CHUNK_T* gsModGetPool(gsModEngine* pME);
 /*
 // advanced operations
 */
+typedef int (*alm_inv)(BNU_CHUNK_T* pr, const BNU_CHUNK_T* pa, gsModEngine* pMA);
+
 #define alm_mont_inv OWNAPI(alm_mont_inv)
 int     alm_mont_inv(BNU_CHUNK_T* pr, const BNU_CHUNK_T* pa, gsModEngine* pMA);
 
+#define alm_mont_inv_ct OWNAPI(alm_mont_inv_ct)
+int     alm_mont_inv_ct(BNU_CHUNK_T* pr, const BNU_CHUNK_T* pa, gsModEngine* pMA);
+
 #define      gs_mont_inv OWNAPI(gs_mont_inv)
-BNU_CHUNK_T* gs_mont_inv(BNU_CHUNK_T* pr, const BNU_CHUNK_T* pa, gsModEngine* pMA);
+BNU_CHUNK_T* gs_mont_inv(BNU_CHUNK_T* pr, const BNU_CHUNK_T* pa, gsModEngine* pMA, alm_inv invf);
 
 #define      gs_inv OWNAPI(gs_inv)
-BNU_CHUNK_T* gs_inv(BNU_CHUNK_T* pr, const BNU_CHUNK_T* pa, gsModEngine* pMA);
+BNU_CHUNK_T* gs_inv(BNU_CHUNK_T* pr, const BNU_CHUNK_T* pa, gsModEngine* pMA, alm_inv invf);
 
 /*
 // Pack/Unpack methods

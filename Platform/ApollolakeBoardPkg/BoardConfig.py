@@ -58,8 +58,10 @@ class Board(BaseBoard):
         self.BOARD_PKG_NAME       = 'ApollolakeBoardPkg'
         self.SILICON_PKG_NAME     = 'ApollolakePkg'
 
+        self._PCI_ENUM_DOWNGRADE_PMEM64 = 1
         self.PCI_IO_BASE          = 0x00001000
         self.PCI_MEM32_BASE       = 0x80000000
+        self.PCI_MEM64_BASE       = 0x400000000
 
         self.FLASH_SIZE           = 0x800000
         self.FLASH_BASE           = self.FLASH_LAYOUT_START - self.FLASH_SIZE
@@ -136,7 +138,7 @@ class Board(BaseBoard):
         self.STAGE1B_FD_SIZE      = 0x0006B000
         if self.RELEASE_MODE == 0:
             self.STAGE1B_FD_SIZE += 0x00002000
-            self.PAYLOAD_SIZE    += 0x00004000
+            self.PAYLOAD_SIZE    += 0x00005000
         # For Stage2, it is always compressed.
         # if STAGE2_LOAD_HIGH is 1, STAGE2_FD_BASE will be ignored
         self.STAGE2_FD_BASE       = 0x01000000
@@ -202,7 +204,8 @@ class Board(BaseBoard):
             'VtdLib|Silicon/$(SILICON_PKG_NAME)/Library/VtdLib/VtdLib.inf',
             'SmbusLib|Silicon/$(SILICON_PKG_NAME)/Library/SmbusLib/SmbusLib.inf',
             'HdaLib|Platform/$(BOARD_PKG_NAME)/Library/HdaLib/HdaLib.inf',
-            'VtdPmrLib|Silicon/CommonSocPkg/Library/VtdPmrLib/VtdPmrLib.inf'
+            'VtdPmrLib|Silicon/CommonSocPkg/Library/VtdPmrLib/VtdPmrLib.inf',
+            'BaseIpcLib|Silicon/$(SILICON_PKG_NAME)/Library/BaseIpcLib/BaseIpcLib.inf'
         ]
         dsc['LibraryClasses.%s' % self.BUILD_ARCH] = common_libs
         return dsc
@@ -235,10 +238,37 @@ class Board(BaseBoard):
         # define extra images that will be copied to output folder
         img_list = ['SlimBootloader.txt',
                     'CfgDataStitch.py',
-                    'CfgDataDef.dsc',
+                    'CfgDataDef.yaml',
                     'CfgDataInt.bin'
                     ]
         return img_list
+
+    def GetKeyHashList (self):
+        # Define a set of new key used for different purposes
+        # The key is either key id or public key PEM format or private key PEM format
+        pub_key_list = [
+          (
+            # Key for verifying Config data blob
+            HASH_USAGE['PUBKEY_CFG_DATA'],
+            'KEY_ID_CFGDATA' + '_' + self._RSA_SIGN_TYPE
+          ),
+          (
+            # Key for verifying firmware update
+            HASH_USAGE['PUBKEY_FWU'],
+            'KEY_ID_FIRMWAREUPDATE' + '_' + self._RSA_SIGN_TYPE
+          ),
+          (
+            # Key for verifying container header
+            HASH_USAGE['PUBKEY_CONT_DEF'],
+            'KEY_ID_CONTAINER' + '_' + self._RSA_SIGN_TYPE
+          ),
+          (
+            # key for veryfying OS image.
+            HASH_USAGE['PUBKEY_OS'],
+            'KEY_ID_OS1_PUBLIC' + '_' + self._RSA_SIGN_TYPE
+          ),
+        ]
+        return pub_key_list
 
     def GetImageLayout (self):
         ias1_flag = 0 if self.SPI_IAS1_SIZE > 0 else STITCH_OPS.MODE_FILE_IGNOR

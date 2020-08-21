@@ -1,6 +1,6 @@
 ## @ ConfigEditor.py
 #
-# Copyright (c) 2018 - 2019, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2018 - 2020, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -11,326 +11,319 @@ import sys
 import marshal
 
 sys.dont_write_bytecode = True
-if sys.hexversion >= 0x3000000:
-    # for Python3
-    from tkinter import *   ## notice lowercase 't' in tkinter here
-    import tkinter.ttk as ttk
-    import tkinter.messagebox as messagebox
-    import tkinter.filedialog as filedialog
-else:
-    # for Python2
-    from Tkinter import *   ## notice capitalized T in Tkinter
-    import ttk
-    import tkMessageBox as messagebox
-    import tkFileDialog as filedialog
 
-from GenCfgData import CGenCfgData, Bytes2Str, Bytes2Val, Val2Bytes, Array2Val
+import tkinter
+import tkinter.ttk as ttk
+import tkinter.messagebox as messagebox
+import tkinter.filedialog as filedialog
 
-class CreateToolTip(object):
+from GenCfgData import CGenCfgData, bytes_to_value, bytes_to_bracket_str, value_to_bytes, array_str_to_value
+
+class create_tool_tip(object):
     '''
     create a tooltip for a given widget
     '''
-    InProgress = False
+    in_progress = False
 
-    def __init__(self, Widget, Text=''):
-        self.TopWin = None
-        self.Widget = Widget
-        self.Text = Text
-        self.Widget.bind("<Enter>", self.Enter)
-        self.Widget.bind("<Leave>", self.Leave)
+    def __init__(self, widget, text=''):
+        self.top_win = None
+        self.widget = widget
+        self.text = text
+        self.widget.bind("<Enter>", self.enter)
+        self.widget.bind("<Leave>", self.leave)
 
-    def Enter(self, event=None):
-        if self.InProgress:
+    def enter(self, event=None):
+        if self.in_progress:
             return
-        if self.Widget.winfo_class() == 'Treeview':
+        if self.widget.winfo_class() == 'Treeview':
             # Only show help when cursor is on row header.
-            rowid  = self.Widget.identify_row(event.y)
+            rowid  = self.widget.identify_row(event.y)
             if rowid != '':
                 return
         else:
-            x, y, cx, cy = self.Widget.bbox("insert")
+            x, y, cx, cy = self.widget.bbox("insert")
 
-        Cursor = self.Widget.winfo_pointerxy()
-        x = self.Widget.winfo_rootx() + 35
-        y = self.Widget.winfo_rooty() + 20
-        if Cursor[1] > y and Cursor[1] < y + 20:
+        cursor = self.widget.winfo_pointerxy()
+        x = self.widget.winfo_rootx() + 35
+        y = self.widget.winfo_rooty() + 20
+        if cursor[1] > y and cursor[1] < y + 20:
             y += 20
 
         # creates a toplevel window
-        self.TopWin = Toplevel(self.Widget)
+        self.top_win = tkinter.Toplevel(self.widget)
         # Leaves only the label and removes the app window
-        self.TopWin.wm_overrideredirect(True)
-        self.TopWin.wm_geometry("+%d+%d" % (x, y))
-        label = Message(self.TopWin,
-                      text=self.Text,
+        self.top_win.wm_overrideredirect(True)
+        self.top_win.wm_geometry("+%d+%d" % (x, y))
+        label = tkinter.Message(self.top_win,
+                      text=self.text,
                       justify='left',
                       background='bisque',
                       relief='solid',
                       borderwidth=1,
                       font=("times", "10", "normal"))
         label.pack(ipadx=1)
-        self.InProgress = True
+        self.in_progress = True
 
-    def Leave(self, event=None):
-        if self.TopWin:
-            self.TopWin.destroy()
-            self.InProgress = False
+    def leave(self, event=None):
+        if self.top_win:
+            self.top_win.destroy()
+            self.in_progress = False
 
 
-class ValidatingEntry(Entry):
+class validating_entry(tkinter.Entry):
     def __init__(self, master, **kw):
-        Entry.__init__(*(self, master), **kw)
-        self.Parent    = master
-        self.OldValue  = ''
-        self.LastValue = ''
-        self.Variable  = StringVar()
-        self.Variable.trace("w", self.Callback)
-        self.config(textvariable=self.Variable)
+        tkinter.Entry.__init__(*(self, master), **kw)
+        self.parent    = master
+        self.old_value  = ''
+        self.last_value = ''
+        self.variable  = tkinter.StringVar()
+        self.variable.trace("w", self.callback)
+        self.config(textvariable=self.variable)
         self.config({"background": "#c0c0c0"})
-        self.bind("<Return>", self.MoveNext)
-        self.bind("<Tab>", self.MoveNext)
-        self.bind("<Escape>", self.Cancel)
+        self.bind("<Return>", self.move_next)
+        self.bind("<Tab>", self.move_next)
+        self.bind("<Escape>", self.cancel)
         for each in ['BackSpace', 'Delete']:
-            self.bind("<%s>" % each, self.Ignore)
-        self.Display (None)
+            self.bind("<%s>" % each, self.ignore)
+        self.display (None)
 
-    def Ignore (self, even):
+    def ignore (self, even):
         return "break"
 
-    def MoveNext (self, event):
-        if self.Row < 0:
+    def move_next (self, event):
+        if self.row < 0:
             return
-        Row, Col = self.Row, self.Col
-        Txt, RowId, ColId = self.Parent.GetNextCell (Row, Col)
-        self.Display (Txt, RowId, ColId)
+        row, col = self.row, self.col
+        txt, row_id, col_id = self.parent.get_next_cell (row, col)
+        self.display (txt, row_id, col_id)
         return "break"
 
-    def Cancel (self, event):
-        self.Variable.set(self.OldValue)
-        self.Display (None)
+    def cancel (self, event):
+        self.variable.set(self.old_value)
+        self.display (None)
 
-    def Display (self, Txt, RowId = '', ColId = ''):
-        if Txt is None:
-            self.Row = -1
-            self.Col = -1
+    def display (self, txt, row_id = '', col_id = ''):
+        if txt is None:
+            self.row = -1
+            self.col = -1
             self.place_forget()
         else:
-            Row      = int('0x' + RowId[1:], 0) - 1
-            Col      = int(ColId[1:]) - 1
-            self.Row = Row
-            self.Col = Col
-            self.OldValue  = Txt
-            self.LastValue = Txt
-            x, y, width, height = self.Parent.bbox(RowId, Col)
+            row      = int('0x' + row_id[1:], 0) - 1
+            col      = int(col_id[1:]) - 1
+            self.row = row
+            self.col = col
+            self.old_value  = txt
+            self.last_value = txt
+            x, y, width, height = self.parent.bbox(row_id, col)
             self.place(x=x, y=y, w=width)
-            self.Variable.set(Txt)
+            self.variable.set(txt)
             self.focus_set()
             self.icursor(0)
 
-    def Callback(self, *Args):
-        CurVal = self.Variable.get()
-        NewVal = self.Validate(CurVal)
-        if NewVal is not None and self.Row >= 0:
-            self.LastValue = NewVal
-            self.Parent.SetCell (self.Row , self.Col, NewVal)
-        self.Variable.set(self.LastValue)
+    def callback(self, *Args):
+        cur_val = self.variable.get()
+        new_val = self.validate(cur_val)
+        if new_val is not None and self.row >= 0:
+            self.last_value = new_val
+            self.parent.set_cell (self.row , self.col, new_val)
+        self.variable.set(self.last_value)
 
 
-    def Validate(self, Value):
-        if len(Value) > 0:
+    def validate(self, value):
+        if len(value) > 0:
             try:
-                int(Value, 16)
+                int(value, 16)
             except:
                 return None
 
         # Normalize the cell format
         self.update()
-        CellWidth = self.winfo_width ()
-        MaxLen = CustomTable.ToByteLength(CellWidth) * 2
-        CurPos = self.index("insert")
-        if CurPos == MaxLen + 1:
-            Value = Value[-MaxLen:]
+        cell_width = self.winfo_width ()
+        max_len = custom_table.to_byte_length(cell_width) * 2
+        cur_pos = self.index("insert")
+        if cur_pos == max_len + 1:
+            value = value[-max_len:]
         else:
-            Value = Value[:MaxLen]
-        if Value == '':
-            Value = '0'
-        Fmt =  '%%0%dX' % MaxLen
-        return Fmt % int(Value, 16)
+            value = value[:max_len]
+        if value == '':
+            value = '0'
+        fmt =  '%%0%dX' % max_len
+        return fmt % int(value, 16)
 
 
-class CustomTable(ttk.Treeview):
+class custom_table(ttk.Treeview):
     _Padding   = 20
-    _CharWidth = 6
+    _Char_width = 6
 
-    def __init__(self, Parent, ColHdr, Bins):
-        Cols = len(ColHdr)
+    def __init__(self, parent, col_hdr, bins):
+        cols = len(col_hdr)
 
-        ColByteLen = []
-        for Col in range(Cols):  #Columns
-            ColByteLen.append(int(ColHdr[Col].split(':')[1]))
+        col_byte_len = []
+        for col in range(cols):  #Columns
+            col_byte_len.append(int(col_hdr[col].split(':')[1]))
 
-        ByteLen = sum(ColByteLen)
-        Rows = (len(Bins) + ByteLen - 1) // ByteLen
+        byte_len = sum(col_byte_len)
+        rows = (len(bins) + byte_len - 1) // byte_len
 
-        self.Rows = Rows
-        self.Cols = Cols
-        self.ColByteLen = ColByteLen
-        self.ColHdr = ColHdr
+        self.rows = rows
+        self.cols = cols
+        self.col_byte_len = col_byte_len
+        self.col_hdr = col_hdr
 
-        self.Size = len(Bins)
-        self.LastDir = ''
+        self.size = len(bins)
+        self.last_dir = ''
 
         style = ttk.Style()
-        style.configure("Custom.Treeview.Heading", font=('Calibri', 10, 'bold'),  foreground="blue")
-        ttk.Treeview.__init__(self, Parent, height=Rows, columns=[''] + ColHdr, show='headings', style="Custom.Treeview", selectmode='none')
-        self.bind("<Button-1>", self.Click)
-        self.bind("<FocusOut>", self.FocusOut)
-        self.entry = ValidatingEntry(self, width=4,  justify=CENTER)
+        style.configure("Custom.Treeview.Heading", font=('calibri', 10, 'bold'),  foreground="blue")
+        ttk.Treeview.__init__(self, parent, height=rows, columns=[''] + col_hdr, show='headings', style="Custom.Treeview", selectmode='none')
+        self.bind("<Button-1>", self.click)
+        self.bind("<FocusOut>", self.focus_out)
+        self.entry = validating_entry(self, width=4,  justify=tkinter.CENTER)
 
         self.heading(0, text='LOAD')
-        self.column (0, width=60, stretch=0, anchor=CENTER)
+        self.column (0, width=60, stretch=0, anchor=tkinter.CENTER)
 
-        for Col in range(Cols):  #Columns
-            Text = ColHdr[Col].split(':')[0]
-            ByteLen  = int(ColHdr[Col].split(':')[1])
-            self.heading(Col+1, text=Text)
-            self.column(Col+1, width=self.ToCellWidth(ByteLen), stretch=0, anchor=CENTER)
+        for col in range(cols):  #Columns
+            text = col_hdr[col].split(':')[0]
+            byte_len  = int(col_hdr[col].split(':')[1])
+            self.heading(col+1, text=text)
+            self.column(col+1, width=self.to_cell_width(byte_len), stretch=0, anchor=tkinter.CENTER)
 
-        Idx = 0
-        for Row in range(Rows):  #Rows
-            Text = '%04X' % (Row * len(ColHdr))
-            Vals = ['%04X:' % (Cols * Row)]
-            for Col in range(Cols):  #Columns
-                if Idx >= len(Bins):
+        idx = 0
+        for row in range(rows):  #Rows
+            text = '%04X' % (row * len(col_hdr))
+            vals = ['%04X:' % (cols * row)]
+            for col in range(cols):  #Columns
+                if idx >= len(bins):
                     break
-                ByteLen  = int(ColHdr[Col].split(':')[1])
-                Value = Bytes2Val (Bins[Idx:Idx+ByteLen])
-                Hex = ("%%0%dX" % (ByteLen * 2) ) % Value
-                Vals.append (Hex)
-                Idx += ByteLen
-            self.insert('', 'end', values=tuple(Vals))
-            if Idx >= len(Bins):
+                byte_len  = int(col_hdr[col].split(':')[1])
+                value = bytes_to_value (bins[idx:idx+byte_len])
+                hex = ("%%0%dX" % (byte_len * 2) ) % value
+                vals.append (hex)
+                idx += byte_len
+            self.insert('', 'end', values=tuple(vals))
+            if idx >= len(bins):
                 break
 
     @staticmethod
-    def ToCellWidth(ByteLen):
-        return ByteLen * 2 * CustomTable._CharWidth + CustomTable._Padding
+    def to_cell_width(byte_len):
+        return byte_len * 2 * custom_table._Char_width + custom_table._Padding
 
     @staticmethod
-    def ToByteLength(CellWidth):
-        return (CellWidth - CustomTable._Padding) // (2 * CustomTable._CharWidth)
+    def to_byte_length(cell_width):
+        return (cell_width - custom_table._Padding) // (2 * custom_table._Char_width)
 
-    def FocusOut (self, event):
-        self.entry.Display (None)
+    def focus_out (self, event):
+        self.entry.display (None)
 
-    def RefreshBin (self, Bins):
-        if not Bins:
+    def refresh_bin (self, bins):
+        if not bins:
             return
 
         # Reload binary into widget
-        BinLen = len(Bins)
-        for Row in range(self.Rows):
-            Iid  = self.get_children()[Row]
-            for Col in range(self.Cols):
-                Idx = Row * sum(self.ColByteLen) + sum(self.ColByteLen[:Col])
-                ByteLen = self.ColByteLen[Col]
-                if Idx + ByteLen <= self.Size:
-                    ByteLen  = int(self.ColHdr[Col].split(':')[1])
-                    if Idx + ByteLen > BinLen:
-                      Val = 0
+        bin_len = len(bins)
+        for row in range(self.rows):
+            iid  = self.get_children()[row]
+            for col in range(self.cols):
+                idx = row * sum(self.col_byte_len) + sum(self.col_byte_len[:col])
+                byte_len = self.col_byte_len[col]
+                if idx + byte_len <= self.size:
+                    byte_len  = int(self.col_hdr[col].split(':')[1])
+                    if idx + byte_len > bin_len:
+                      val = 0
                     else:
-                      Val = Bytes2Val (Bins[Idx:Idx+ByteLen])
-                    HexVal = ("%%0%dX" % (ByteLen * 2) ) % Val
-                    self.set (Iid, Col + 1, HexVal)
+                      val = bytes_to_value (bins[idx:idx+byte_len])
+                    hex_val = ("%%0%dX" % (byte_len * 2) ) % val
+                    self.set (iid, col + 1, hex_val)
 
-    def GetCell (self, Row, Col):
-        Iid  = self.get_children()[Row]
-        Txt  = self.item(Iid, 'values')[Col]
-        return Txt
+    def get_cell (self, row, col):
+        iid  = self.get_children()[row]
+        txt  = self.item(iid, 'values')[col]
+        return txt
 
-    def GetNextCell (self, Row, Col):
-        Rows  = self.get_children()
-        Col  += 1
-        if Col > self.Cols:
-          Col = 1
-          Row +=1
-        Cnt = Row * sum(self.ColByteLen) + sum(self.ColByteLen[:Col])
-        if Cnt > self.Size:
+    def get_next_cell (self, row, col):
+        rows  = self.get_children()
+        col  += 1
+        if col > self.cols:
+          col = 1
+          row +=1
+        cnt = row * sum(self.col_byte_len) + sum(self.col_byte_len[:col])
+        if cnt > self.size:
           # Reached the last cell, so roll back to beginning
-          Row  = 0
-          Col  = 1
+          row  = 0
+          col  = 1
 
-        Txt   = self.GetCell(Row, Col)
-        RowId = Rows[Row]
-        ColId = '#%d' % (Col + 1)
-        return (Txt, RowId, ColId)
+        txt   = self.get_cell(row, col)
+        row_id = rows[row]
+        col_id = '#%d' % (col + 1)
+        return (txt, row_id, col_id)
 
-    def SetCell (self, Row, Col, Val):
-        Iid  = self.get_children()[Row]
-        self.set (Iid, Col, Val)
+    def set_cell (self, row, col, val):
+        iid  = self.get_children()[row]
+        self.set (iid, col, val)
 
-    def LoadBin (self):
+    def load_bin (self):
         # Load binary from file
-        Path = filedialog.askopenfilename(
-            initialdir=self.LastDir,
+        path = filedialog.askopenfilename(
+            initialdir=self.last_dir,
             title="Load binary file",
             filetypes=(("Binary files", "*.bin"), (
                 "binary files", "*.bin")))
-        if Path:
-            self.LastDir = os.path.dirname(Path)
-            Fd = open(Path, 'rb')
-            Bins = bytearray(Fd.read())[:self.Size]
-            Fd.close()
-            Bins.extend (b'\x00' * (self.Size - len(Bins)))
-            return Bins
+        if path:
+            self.last_dir = os.path.dirname(path)
+            fd = open(path, 'rb')
+            bins = bytearray(fd.read())[:self.size]
+            fd.close()
+            bins.extend (b'\x00' * (self.size - len(bins)))
+            return bins
 
         return None
 
-    def Click (self, event):
-        RowId  = self.identify_row(event.y)
-        ColId  = self.identify_column(event.x)
-        if RowId == '' and ColId == '#1':
+    def click (self, event):
+        row_id  = self.identify_row(event.y)
+        col_id  = self.identify_column(event.x)
+        if row_id == '' and col_id == '#1':
             # Clicked on "LOAD" cell
-            Bins = self.LoadBin ()
-            self.RefreshBin (Bins)
+            bins = self.load_bin ()
+            self.refresh_bin (bins)
             return
 
-        if ColId == '#1':
+        if col_id == '#1':
             # Clicked on column 1 (Offset column)
             return
 
-        Item = self.identify('item', event.x, event.y)
-        if not Item or not ColId:
+        item = self.identify('item', event.x, event.y)
+        if not item or not col_id:
             # Not clicked on valid cell
             return
 
         # Clicked cell
-        Row    = int('0x' + RowId[1:], 0) - 1
-        Col    = int(ColId[1:]) - 1
-        if Row * self.Cols + Col > self.Size:
+        row    = int('0x' + row_id[1:], 0) - 1
+        col    = int(col_id[1:]) - 1
+        if row * self.cols + col > self.size:
             return
 
-        Vals = self.item(Item, 'values')
-        if Col < len(Vals):
-            Txt = self.item(Item, 'values')[Col]
-            self.entry.Display (Txt, RowId, ColId)
+        vals = self.item(item, 'values')
+        if col < len(vals):
+            txt = self.item(item, 'values')[col]
+            self.entry.display (txt, row_id, col_id)
 
     def get(self):
-        Bins = bytearray()
-        RowIds = self.get_children()
-        for RowId in RowIds:
-            Row = int('0x' + RowId[1:], 0) - 1
-            for Col in range(self.Cols):
-              Idx = Row * sum(self.ColByteLen) + sum(self.ColByteLen[:Col])
-              ByteLen = self.ColByteLen[Col]
-              if Idx + ByteLen > self.Size:
+        bins = bytearray()
+        row_ids = self.get_children()
+        for row_id in row_ids:
+            row = int('0x' + row_id[1:], 0) - 1
+            for col in range(self.cols):
+              idx = row * sum(self.col_byte_len) + sum(self.col_byte_len[:col])
+              byte_len = self.col_byte_len[col]
+              if idx + byte_len > self.size:
                   break
-              Hex = self.item(RowId, 'values')[Col + 1]
-              Values = Val2Bytes (int(Hex, 16) & ((1 << ByteLen * 8) - 1), ByteLen)
-              Bins.extend(Values)
-        return Bins
+              hex = self.item(row_id, 'values')[col + 1]
+              values = value_to_bytes (int(hex, 16) & ((1 << byte_len * 8) - 1), byte_len)
+              bins.extend(values)
+        return bins
 
-class State:
+class state:
     def __init__(self):
         self.state = False
 
@@ -340,711 +333,600 @@ class State:
     def get(self):
         return self.state
 
-class Application(Frame):
+class application(tkinter.Frame):
     def __init__(self, master=None):
-        Root = master
+        root = master
 
-        self.Debug = True
-        self.LastDir = '.'
-        self.PageId = ''
-        self.PageList = {}
-        self.ConfList = {}
-        self.CfgDataObj = None
-        self.OrgCfgDataBin = None
-        self.InLeft  = State()
-        self.InRight = State()
+        self.debug = True
+        self.last_dir = '.'
+        self.page_id = ''
+        self.page_list = {}
+        self.conf_list = {}
+        self.cfg_data_obj = None
+        self.org_cfg_data_bin = None
+        self.in_left  = state()
+        self.in_right = state()
 
-        Frame.__init__(self, master, borderwidth=2)
+        tkinter.Frame.__init__(self, master, borderwidth=2)
 
-        self.MenuString = [
+        self.menu_string = [
             'Save Config Data to Binary', 'Load Config Data from Binary',
             'Load Config Changes from Delta File',
             'Save Config Changes to Delta File',
             'Save Full Config Data to Delta File'
         ]
 
-        Root.geometry("1200x800")
+        root.geometry("1200x800")
 
-        Paned = ttk.Panedwindow(Root, orient=HORIZONTAL)
-        Paned.pack(fill=BOTH, expand=True, padx=(4, 4))
+        paned = ttk.Panedwindow(root, orient=tkinter.HORIZONTAL)
+        paned.pack(fill=tkinter.BOTH, expand=True, padx=(4, 4))
 
-        Status = Label(master, text="", bd=1, relief=SUNKEN, anchor=W)
-        Status.pack(side=BOTTOM, fill=X)
+        status = tkinter.Label(master, text="", bd=1, relief=tkinter.SUNKEN, anchor=tkinter.W)
+        status.pack(side=tkinter.BOTTOM, fill=tkinter.X)
 
-        FrameLeft = ttk.Frame(Paned, height=800, relief="groove")
+        frame_left = ttk.Frame(paned, height=800, relief="groove")
 
-        self.Left = ttk.Treeview(FrameLeft, show="tree")
+        self.left = ttk.Treeview(frame_left, show="tree")
 
         # Set up tree HScroller
-        Pady = (10, 10)
-        self.TreeScroll = ttk.Scrollbar(FrameLeft,
+        pady = (10, 10)
+        self.tree_scroll = ttk.Scrollbar(frame_left,
                                         orient="vertical",
-                                        command=self.Left.yview)
-        self.Left.configure(yscrollcommand=self.TreeScroll.set)
-        self.Left.bind('<<TreeviewSelect>>', self.OnConfigPageSelectChange)
-        self.Left.bind('<Enter>',  lambda e: self.InLeft.set(True))
-        self.Left.bind('<Leave>',  lambda e: self.InLeft.set(False))
-        self.Left.bind('<MouseWheel>',  self.OnTreeScroll)
+                                        command=self.left.yview)
+        self.left.configure(yscrollcommand=self.tree_scroll.set)
+        self.left.bind("<<TreeviewSelect>>", self.on_config_page_select_change)
+        self.left.bind("<Enter>",  lambda e: self.in_left.set(True))
+        self.left.bind("<Leave>",  lambda e: self.in_left.set(False))
+        self.left.bind("<MouseWheel>",  self.on_tree_scroll)
 
-        self.Left.pack(side='left',
-                       fill=BOTH,
+        self.left.pack(side='left',
+                       fill=tkinter.BOTH,
                        expand=True,
                        padx=(5, 0),
-                       pady=Pady)
-        self.TreeScroll.pack(side='right', fill=Y, pady=Pady, padx=(0, 5))
+                       pady=pady)
+        self.tree_scroll.pack(side='right', fill=tkinter.Y, pady=pady, padx=(0, 5))
 
-        FrameRight = ttk.Frame(Paned, relief="groove")
-        self.FrameRight = FrameRight
+        frame_right = ttk.Frame(paned, relief="groove")
+        self.frame_right = frame_right
 
-        self.ConfCanvas = Canvas(FrameRight, highlightthickness=0)
-        self.PageScroll = ttk.Scrollbar(FrameRight,
+        self.conf_canvas = tkinter.Canvas(frame_right, highlightthickness=0)
+        self.page_scroll = ttk.Scrollbar(frame_right,
                                         orient="vertical",
-                                        command=self.ConfCanvas.yview)
-        self.RightGrid = ttk.Frame(self.ConfCanvas)
-        self.ConfCanvas.configure(yscrollcommand=self.PageScroll.set)
-        self.ConfCanvas.pack(side='left',
-                             fill=BOTH,
+                                        command=self.conf_canvas.yview)
+        self.right_grid = ttk.Frame(self.conf_canvas)
+        self.conf_canvas.configure(yscrollcommand=self.page_scroll.set)
+        self.conf_canvas.pack(side='left',
+                             fill=tkinter.BOTH,
                              expand=True,
-                             pady=Pady,
+                             pady=pady,
                              padx=(5, 0))
-        self.PageScroll.pack(side='right', fill=Y, pady=Pady, padx=(0, 5))
-        self.ConfCanvas.create_window(0, 0, window=self.RightGrid, anchor='nw')
-        self.ConfCanvas.bind('<Enter>',  lambda e: self.InRight.set(True))
-        self.ConfCanvas.bind('<Leave>',  lambda e: self.InRight.set(False))
-        self.ConfCanvas.bind("<Configure>", self.OnCanvasConfigure)
-        self.ConfCanvas.bind_all("<MouseWheel>", self.OnPageScroll)
+        self.page_scroll.pack(side='right', fill=tkinter.Y, pady=pady, padx=(0, 5))
+        self.conf_canvas.create_window(0, 0, window=self.right_grid, anchor='nw')
+        self.conf_canvas.bind('<Enter>',  lambda e: self.in_right.set(True))
+        self.conf_canvas.bind('<Leave>',  lambda e: self.in_right.set(False))
+        self.conf_canvas.bind("<Configure>", self.on_canvas_configure)
+        self.conf_canvas.bind_all("<MouseWheel>", self.on_page_scroll)
 
-        Paned.add(FrameLeft, weight=2)
-        Paned.add(FrameRight, weight=10)
+        paned.add(frame_left, weight=2)
+        paned.add(frame_right, weight=10)
 
-        Style = ttk.Style()
-        Style.layout("Treeview", [('Treeview.treearea', {'sticky': 'nswe'})])
+        style = ttk.Style()
+        style.layout("Treeview", [('Treeview.treearea', {'sticky': 'nswe'})])
 
-        Menubar = Menu(Root)
-        FileMenu = Menu(Menubar, tearoff=0)
-        FileMenu.add_command(label="Open Config DSC file...",
-                             command=self.LoadFromDsc)
-        FileMenu.add_command(label=self.MenuString[0],
-                             command=self.SaveToBin,
+        menubar = tkinter.Menu(root)
+        file_menu = tkinter.Menu(menubar, tearoff=0)
+        file_menu.add_command(label="Open Config YAML file...",
+                             command=self.load_from_yaml)
+        file_menu.add_command(label=self.menu_string[0],
+                             command=self.save_to_bin,
                              state='disabled')
-        FileMenu.add_command(label=self.MenuString[1],
-                             command=self.LoadFromBin,
+        file_menu.add_command(label=self.menu_string[1],
+                             command=self.load_from_bin,
                              state='disabled')
-        FileMenu.add_command(label=self.MenuString[2],
-                             command=self.LoadFromDelta,
+        file_menu.add_command(label=self.menu_string[2],
+                             command=self.load_from_delta,
                              state='disabled')
-        FileMenu.add_command(label=self.MenuString[3],
-                             command=self.SaveToDelta,
+        file_menu.add_command(label=self.menu_string[3],
+                             command=self.save_toDelta,
                              state='disabled')
-        FileMenu.add_command(label=self.MenuString[4],
-                             command=self.SaveFullToDelta,
+        file_menu.add_command(label=self.menu_string[4],
+                             command=self.save_full_toDelta,
                              state='disabled')
-        FileMenu.add_command(label="About", command=self.About)
-        Menubar.add_cascade(label="File", menu=FileMenu)
-        self.FileMenu = FileMenu
+        file_menu.add_command(label="About", command=self.about)
+        menubar.add_cascade(label="File", menu=file_menu)
+        self.file_menu = file_menu
 
-        Root.config(menu=Menubar)
+        root.config(menu=menubar)
 
         if len(sys.argv) > 1:
-            Path = sys.argv[1]
-            if not Path.endswith('.dsc'):
-                DscPath = os.path.join (os.path.dirname(Path), 'CfgDataDef.dsc')
+            path = sys.argv[1]
+            if not path.endswith('.yaml') and not path.endswith('.pkl'):
+                messagebox.showerror('LOADING ERROR', "Unsupported file '%s' !" % path)
+                return
             else:
-                DscPath = Path
-            if self.LoadDscFile (DscPath) == 0:
-                if Path.endswith('.dsc') and len(sys.argv) > 2:
-                    Path = sys.argv[2]
-                if not (Path.endswith('.dlt') or Path.endswith('.bin') or Path.endswith('.dsc')):
-                    messagebox.showerror('LOADING ERROR', "Unsupported file '%s' !" % Path)
-                    return
-                if Path.endswith('.dlt'):
-                    self.LoadDeltaFile (Path)
-                elif Path.endswith('.bin'):
-                    self.LoadBinFile (Path)
+                self.load_cfg_file (path)
 
+        if len(sys.argv) > 2:
+            path = sys.argv[2]
+            if path.endswith('.dlt'):
+                self.load_delta_file (path)
+            elif path.endswith('.bin'):
+                self.load_bin_file (path)
+            else:
+                messagebox.showerror('LOADING ERROR', "Unsupported file '%s' !" % path)
+                return
 
-    def SetObjectName(self, Widget, Name):
-        self.ConfList[id(Widget)] = Name
+    def set_object_name(self, widget, name):
+        self.conf_list[id(widget)] = name
 
-    def GetObjectName(self, Widget):
-        if id(Widget) in self.ConfList:
-            return self.ConfList[id(Widget)]
+    def get_object_name(self, widget):
+        if id(widget) in self.conf_list:
+            return self.conf_list[id(widget)]
         else:
             return None
 
-    def LimitEntrySize(self, Variable, Limit):
-        Value = Variable.get()
-        if len(Value) > Limit:
-            Variable.set(Value[:Limit])
+    def limit_entry_size(self, variable, limit):
+        value = variable.get()
+        if len(value) > limit:
+            variable.set(value[:limit])
 
-    def OnCanvasConfigure(self, Event):
-        self.RightGrid.grid_columnconfigure(0, minsize=Event.width)
+    def on_canvas_configure(self, event):
+        self.right_grid.grid_columnconfigure(0, minsize=event.width)
 
-    def OnTreeScroll(self, Event):
-        if not self.InLeft.get() and self.InRight.get():
+    def on_tree_scroll(self, event):
+        if not self.in_left.get() and self.in_right.get():
             # This prevents scroll event from being handled by both left and
             # right frame at the same time.
-            self.OnPageScroll (Event)
+            self.on_page_scroll (event)
             return 'break'
 
-    def OnPageScroll(self, Event):
-        if self.InRight.get():
+    def on_page_scroll(self, event):
+        if self.in_right.get():
             # Only scroll when it is in active area
-            min, max = self.PageScroll.get()
+            min, max = self.page_scroll.get()
             if not ((min == 0.0) and (max == 1.0)):
-                self.ConfCanvas.yview_scroll(-1 * int(Event.delta / 120), 'units')
+                self.conf_canvas.yview_scroll(-1 * int(event.delta / 120), 'units')
 
-    def UpdateVisibilityForWidget(self, Widget, Args):
+    def update_visibility_for_widget(self, widget, args):
 
-        Visible = True
+        visible = True
+        item = self.get_config_data_item_from_widget(widget, True)
+        if item is None:
+            return visible
+        elif not item:
+            return visible
 
-        if isinstance(Widget, Label):
-            Item = self.GetConfigDataItemFromWidget(Widget, True)
-        else:
-            Item = self.GetConfigDataItemFromWidget(Widget, True)
+        result = 1
+        if item['condition']:
+            result = self.evaluate_condition(item)
+            if result == 2:
+                # Gray
+                widget.configure(state='disabled')
+            elif result == 0:
+                # Hide
+                visible = False
+                widget.grid_remove()
+            else:
+                # Show
+                widget.grid()
+                widget.configure(state='normal')
 
-        if Item is None:
-            return Visible
-        elif not Item:
-            return Visible
+        return visible
 
-        if Item['condition']:
-            Visible = self.EvaluateCondition(Item['condition'])
+    def update_widgets_visibility_on_page(self):
+        self.walk_widgets_in_layout(self.right_grid,
+                                 self.update_visibility_for_widget)
 
-        if Visible:
-            Widget.grid()
-        else:
-            Widget.grid_remove()
+    def combo_select_changed(self, event):
+        self.update_config_data_from_widget(event.widget, None)
+        self.update_widgets_visibility_on_page()
 
-        return Visible
-
-    def UpdateWidgetsVisibilityOnPage(self):
-        self.WalkWidgetsInLayout(self.RightGrid,
-                                 self.UpdateVisibilityForWidget)
-
-    def ComboSelectChanged(self, Event):
-        self.UpdateConfigDataFromWidget(Event.widget, None)
-        self.UpdateWidgetsVisibilityOnPage()
-
-    def EditNumFinished(self, Event):
-        Widget = Event.widget
-        Item = self.GetConfigDataItemFromWidget(Widget)
-        if not Item:
+    def edit_num_finished(self, event):
+        widget = event.widget
+        item = self.get_config_data_item_from_widget(widget)
+        if not item:
             return
-        Parts = Item['type'].split(',')
-        if len(Parts) > 3:
-            Min = Parts[2].lstrip()[1:]
-            Max = Parts[3].rstrip()[:-1]
-            MinVal = Array2Val(Min)
-            MaxVal = Array2Val(Max)
-            Text = Widget.get()
-            if ',' in Text:
-                Text = '{ %s }' % Text
+        parts = item['type'].split(',')
+        if len(parts) > 3:
+            min = parts[2].lstrip()[1:]
+            max = parts[3].rstrip()[:-1]
+            min_val = array_str_to_value(min)
+            max_val = array_str_to_value(max)
+            text = widget.get()
+            if ',' in text:
+                text = '{ %s }' % text
             try:
-                Value = Array2Val(Text)
-                if Value < MinVal or Value > MaxVal:
+                value = array_str_to_value(text)
+                if value < min_val or value > max_val:
                     raise Exception('Invalid input!')
-                self.SetConfigItemValue(Item, Text)
+                self.set_config_item_value(item, text)
             except Exception as e:
                 pass
 
-            Text = Item['value'].strip('{').strip('}').strip()
-            Widget.delete(0, END)
-            Widget.insert(0, Text)
+            text = item['value'].strip('{').strip('}').strip()
+            widget.delete(0, END)
+            widget.insert(0, text)
 
-        self.UpdateWidgetsVisibilityOnPage()
+        self.update_widgets_visibility_on_page()
 
-    def UpdatePageScrollBar(self):
+    def update_page_scroll_bar(self):
         # Update scrollbar
-        self.FrameRight.update()
-        self.ConfCanvas.config(scrollregion=self.ConfCanvas.bbox("all"))
+        self.frame_right.update()
+        self.conf_canvas.config(scrollregion=self.conf_canvas.bbox("all"))
 
 
-    def OnConfigPageSelectChange(self, Event):
-        self.UpdateConfigDataOnPage()
-        Sel = self.Left.selection()
-        if len(Sel) > 0:
-            PageId = Sel[0]
-            self.BuildConfigDataPage(PageId)
-            self.UpdateWidgetsVisibilityOnPage()
-            self.UpdatePageScrollBar()
+    def on_config_page_select_change(self, event):
+        self.update_config_data_on_page()
+        sel = self.left.selection()
+        if len(sel) > 0:
+            page_id = sel[0]
+            self.build_config_data_page(page_id)
+            self.update_widgets_visibility_on_page()
+            self.update_page_scroll_bar()
 
-    def WalkWidgetsInLayout(self, Parent, CallbackFunction, Args=None):
-        for Widget in Parent.winfo_children():
-            CallbackFunction(Widget, Args)
+    def walk_widgets_in_layout(self, parent, callback_function, args=None):
+        for widget in parent.winfo_children():
+            callback_function(widget, args)
 
-    def ClearWidgetsInLayout(self, Parent=None):
-        if Parent is None:
-            Parent = self.RightGrid
+    def clear_widgets_inLayout(self, parent=None):
+        if parent is None:
+            parent = self.right_grid
 
-        for Widget in Parent.winfo_children():
-            Widget.destroy()
+        for widget in parent.winfo_children():
+            widget.destroy()
 
-        Parent.grid_forget()
-        self.ConfList.clear()
+        parent.grid_forget()
+        self.conf_list.clear()
 
-    def BuildConfigPageTree(self, CfgPage, Parent):
-        for Page in CfgPage:
-            PageId = next(iter(Page))
+    def build_config_page_tree(self, cfg_page, parent):
+        for page in cfg_page['child']:
+            page_id = next(iter(page))
             # Put CFG items into related page list
-            self.PageList[PageId] = [
-                Item
-                for Item in self.CfgDataObj._CfgItemList
-                if Item['name'] and (Item['page'] == PageId)
-            ]
-            self.PageList[PageId].sort (key=lambda x: x['order'])
-            PageName = self.CfgDataObj._CfgPageDict[PageId]
-            Child = self.Left.insert(
-                Parent, 'end',
-                iid=PageId, text=PageName,
+            self.page_list[page_id] = self.cfg_data_obj.get_cfg_list (page_id)
+            self.page_list[page_id].sort (key=lambda x: x['order'])
+            page_name = self.cfg_data_obj.get_page_title(page_id)
+            child = self.left.insert(
+                parent, 'end',
+                iid=page_id, text=page_name,
                 value=0)
-            if len(Page[PageId]) > 0:
-                self.BuildConfigPageTree(Page[PageId], Child)
+            if len(page[page_id]) > 0:
+                self.build_config_page_tree(page[page_id], child)
 
-    def IsConfigDataLoaded(self):
-        return True if len(self.PageList) else False
 
-    def SetCurrentConfigPage(self, PageId):
-        self.PageId = PageId
+    def is_config_data_loaded(self):
+        return True if len(self.page_list) else False
 
-    def GetCurrentConfigPage(self):
-        return self.PageId
+    def set_current_config_page(self, page_id):
+        self.page_id = page_id
 
-    def GetCurrentConfigData(self):
-        PageId = self.GetCurrentConfigPage()
-        if PageId in self.PageList:
-            return self.PageList[PageId]
+    def get_current_config_page(self):
+        return self.page_id
+
+    def get_current_config_data(self):
+        page_id = self.get_current_config_page()
+        if page_id in self.page_list:
+            return self.page_list[page_id]
         else:
             return []
 
-    def BuildConfigDataPage(self, PageId):
-        self.ClearWidgetsInLayout()
-        self.SetCurrentConfigPage(PageId)
-        DispList = []
-        for Item in self.GetCurrentConfigData():
-            if Item['subreg']:
-                for SubItem in Item['subreg']:
-                    DispList.append(SubItem)
-            else:
-                DispList.append(Item)
-        Row = 0
-        DispList.sort(key=lambda x:x['order'])
-        for Item in DispList:
-            self.AddConfigItem (Item, Row)
-            Row += 2
+    def build_config_data_page(self, page_id):
+        self.clear_widgets_inLayout()
+        self.set_current_config_page(page_id)
+        disp_list = []
+        for item in self.get_current_config_data():
+            disp_list.append(item)
+        row = 0
+        disp_list.sort(key=lambda x:x['order'])
+        for item in disp_list:
+            self.add_config_item (item, row)
+            row += 2
 
-    def LoadConfigData(self, FileName):
-        GenCfgData = CGenCfgData()
-        if FileName.endswith('.pkl'):
-            with open(FileName, "rb") as PklFile:
-                GenCfgData.__dict__ = marshal.load(PklFile)
-        elif FileName.endswith('.dsc'):
-            if GenCfgData.ParseDscFile(FileName) != 0:
-                raise Exception(GenCfgData.Error)
-            if GenCfgData.CreateVarDict() != 0:
-                raise Exception(GenCfgData.Error)
+    def load_config_data(self, file_name):
+        gen_cfg_data = CGenCfgData()
+        if file_name.endswith('.pkl'):
+            with open(file_name, "rb") as pkl_file:
+                gen_cfg_data.__dict__ = marshal.load(pkl_file)
+            gen_cfg_data.prepare_marshal (False)
+        elif file_name.endswith('.yaml'):
+            if gen_cfg_data.load_yaml(file_name) != 0:
+                raise Exception(gen_cfg_data.get_last_error())
         else:
-            raise Exception('Unsupported file "%s" !' % FileName)
-        GenCfgData.UpdateDefaultValue()
-        return GenCfgData
+            raise Exception('Unsupported file "%s" !' % file_name)
+        return gen_cfg_data
 
-    def About(self):
-        Msg = 'Configuration Editor\n--------------------------------\nVersion 0.5\n2018'
-        Lines = Msg.split('\n')
-        Width = 30
-        Text = []
-        for Line in Lines:
-            Text.append(Line.center(Width, ' '))
-        messagebox.showinfo('Config Editor', '\n'.join(Text))
+    def about(self):
+        msg = 'Configuration Editor\n--------------------------------\nVersion 0.8\n2020'
+        lines = msg.split('\n')
+        width = 30
+        text = []
+        for line in lines:
+            text.append(line.center(width, ' '))
+        messagebox.showinfo('Config Editor', '\n'.join(text))
 
-    def UpdateLastDir (self, Path):
-        self.LastDir = os.path.dirname(Path)
+    def update_last_dir (self, path):
+        self.last_dir = os.path.dirname(path)
 
-    def GetOpenFileName(self, Type):
-        if self.IsConfigDataLoaded():
-            if Type == 'dlt':
-                Question = ''
-            elif Type == 'bin':
-                Question = 'All configuration will be reloaded from BIN file, continue ?'
-            elif Type == 'dsc':
-                Question = ''
+    def get_open_file_name(self, ftype):
+        if self.is_config_data_loaded():
+            if ftype == 'dlt':
+                question = ''
+            elif ftype == 'bin':
+                question = 'All configuration will be reloaded from BIN file, continue ?'
+            elif ftype == 'yaml':
+                question = ''
             else:
                 raise Exception('Unsupported file type !')
-            if Question:
-                Reply = messagebox.askquestion('', Question, icon='warning')
-                if Reply == 'no':
+            if question:
+                reply = messagebox.askquestion('', question, icon='warning')
+                if reply == 'no':
                     return None
 
-        if Type == 'dsc':
-            FileType = 'DSC or PKL'
-            FileExt  = 'pkl *Def.dsc'
+        if ftype == 'yaml':
+            file_type = 'YAML or PKL'
+            file_ext  = 'pkl *Def.yaml'
         else:
-            FileType = Type.upper()
-            FileExt  = Type
+            file_type = ftype.upper()
+            file_ext  = ftype
 
-        Path = filedialog.askopenfilename(
-            initialdir=self.LastDir,
+        path = filedialog.askopenfilename(
+            initialdir=self.last_dir,
             title="Load file",
-            filetypes=(("%s files" % FileType, "*.%s" % FileExt), (
+            filetypes=(("%s files" % file_type, "*.%s" % file_ext), (
                 "all files", "*.*")))
-        if Path:
-            self.UpdateLastDir (Path)
-            return Path
+        if path:
+            self.update_last_dir (path)
+            return path
         else:
             return None
 
 
-    def LoadFromDelta(self):
-        Path = self.GetOpenFileName('dlt')
-        if not Path:
+    def load_from_delta(self):
+        path = self.get_open_file_name('dlt')
+        if not path:
             return
-        self.LoadDeltaFile (Path)
+        self.load_delta_file (path)
 
-    def LoadDeltaFile (self, Path):
-        self.ReloadConfigDataFromBin(self.OrgCfgDataBin)
+    def load_delta_file (self, path):
+        self.reload_config_data_from_bin(self.org_cfg_data_bin)
+        try:
+            self.cfg_data_obj.override_default_value(path)
+        except Exception as e:
+            messagebox.showerror('LOADING ERROR', str(e))
+            return
+        self.update_last_dir (path)
+        self.refresh_config_data_page()
+
+    def load_from_bin(self):
+        path = self.get_open_file_name('bin')
+        if not path:
+            return
+        self.load_bin_file (path)
+
+    def load_bin_file (self, path):
+        with open(path, 'rb') as fd:
+            bin_data = bytearray(fd.read())
+        if len(bin_data) < len(self.org_cfg_data_bin):
+            messagebox.showerror('Binary file size is smaller than what YAML requires !')
+            return
 
         try:
-            self.CfgDataObj.OverrideDefaultValue(Path)
-            self.CfgDataObj.UpdateDefaultValue()
+            self.reload_config_data_from_bin(bin_data)
         except Exception as e:
             messagebox.showerror('LOADING ERROR', str(e))
             return
 
-        self.UpdateLastDir (Path)
-        self.RefreshConfigDataPage()
-
-    def LoadFromBin(self):
-        Path = self.GetOpenFileName('bin')
-        if not Path:
-            return
-        self.LoadBinFile (Path)
-
-    def LoadBinFile (self, Path):
-        with open(Path, 'rb') as Fd:
-            BinData = bytearray(Fd.read())
-        if len(BinData) < len(self.OrgCfgDataBin):
-            messagebox.showerror('Binary file size is smaller than what DSC requires !')
-            return
-
-        try:
-            self.ReloadConfigDataFromBin(BinData)
-        except Exception as e:
-            messagebox.showerror('LOADING ERROR', str(e))
-            return
-
-    def LoadDscFile(self, Path):
+    def load_cfg_file(self, path):
         # Save current values in widget and clear  database
-        self.ClearWidgetsInLayout()
-        self.Left.delete(*self.Left.get_children())
+        self.clear_widgets_inLayout()
+        self.left.delete(*self.left.get_children())
 
-        try:
-            self.CfgDataObj = self.LoadConfigData(Path)
-        except Exception as e:
-            messagebox.showerror('LOADING ERROR', str(e))
-            return -1
+        self.cfg_data_obj = self.load_config_data(path)
 
-        self.UpdateLastDir (Path)
-        self.OrgCfgDataBin = self.CfgDataObj.GenerateBinaryArray()
-        self.BuildConfigPageTree(self.CfgDataObj._CfgPageTree['root'], '')
+        self.update_last_dir (path)
+        self.org_cfg_data_bin = self.cfg_data_obj.generate_binary_array()
+        self.build_config_page_tree(self.cfg_data_obj.get_cfg_page()['root'], '')
 
-        for Menu in self.MenuString:
-            self.FileMenu.entryconfig(Menu, state="normal")
+        for menu in self.menu_string:
+            self.file_menu.entryconfig(menu, state="normal")
 
         return 0
 
-    def LoadFromDsc(self):
-        Path = self.GetOpenFileName('dsc')
-        if not Path:
+    def load_from_yaml(self):
+        path = self.get_open_file_name('yaml')
+        if not path:
             return
 
-        self.LoadDscFile(Path)
+        self.load_cfg_file(path)
 
-    def GetSaveFileName (self, Extension):
-        Path = filedialog.asksaveasfilename(
-                  initialdir=self.LastDir,
+    def get_save_file_name (self, extension):
+        path = filedialog.asksaveasfilename(
+                  initialdir=self.last_dir,
                   title="Save file",
-                  defaultextension=Extension)
-        if Path:
-            self.LastDir = os.path.dirname(Path)
-            return Path
+                  defaultextension=extension)
+        if path:
+            self.last_dir = os.path.dirname(path)
+            return path
         else:
             return None
 
-    def SaveDeltaFile(self, Full=False):
-        Path = self.GetSaveFileName (".dlt")
-        if not Path:
+    def save_delta_file(self, full=False):
+        path = self.get_save_file_name (".dlt")
+        if not path:
             return
 
-        self.UpdateConfigDataOnPage()
-        NewData = self.CfgDataObj.GenerateBinaryArray()
-        self.CfgDataObj.GenerateDeltaFileFromBin (Path, self.OrgCfgDataBin, NewData, Full)
+        self.update_config_data_on_page()
+        new_data = self.cfg_data_obj.generate_binary_array()
+        self.cfg_data_obj.generate_delta_file_from_bin (path, self.org_cfg_data_bin, new_data, full)
 
-    def SaveToDelta(self):
-        self.SaveDeltaFile()
+    def save_toDelta(self):
+        self.save_delta_file()
 
-    def SaveFullToDelta(self):
-        self.SaveDeltaFile(True)
+    def save_full_toDelta(self):
+        self.save_delta_file(True)
 
-    def SaveToBin(self):
-        Path = self.GetSaveFileName (".bin")
-        if not Path:
+    def save_to_bin(self):
+        path = self.get_save_file_name (".bin")
+        if not path:
             return
 
-        self.UpdateConfigDataOnPage()
-        with open(Path, 'wb') as Fd:
-            Bins = self.CfgDataObj.GenerateBinaryArray()
-            Fd.write(Bins)
+        self.update_config_data_on_page()
+        with open(path, 'wb') as fd:
+            bins = self.cfg_data_obj.generate_binary_array()
+            fd.write(bins)
 
 
-    def RefreshConfigDataPage(self):
-        self.ClearWidgetsInLayout()
-        self.OnConfigPageSelectChange(None)
+    def refresh_config_data_page(self):
+        self.clear_widgets_inLayout()
+        self.on_config_page_select_change(None)
 
-    def ReloadConfigDataFromBin(self, BinDat):
-        self.CfgDataObj.LoadDefaultFromBinaryArray(BinDat)
-        self.RefreshConfigDataPage()
+    def reload_config_data_from_bin(self, bin_dat):
+        self.cfg_data_obj.load_default_from_bin(bin_dat)
+        self.refresh_config_data_page()
 
-    def NormalizeValueStr(self, Item, ValueStr):
-        IsArray = True if Item['value'].startswith('{') else False
-        if IsArray and not ValueStr.startswith('{'):
-            ValueStr = "{ %s }" % ValueStr
-        try:
-            OldBytes = self.CfgDataObj.ValueToByteArray(Item['value'],
-                                                        Item['length'])
-            NewBytes = self.CfgDataObj.ValueToByteArray(ValueStr,
-                                                        Item['length'])
-            if OldBytes == NewBytes:
-                NewValue = Item['value']
-            else:
-                if IsArray:
-                    NewValue = Bytes2Str(NewBytes)
-                else:
-                    if Item['value'].startswith('0x'):
-                        HexLen = Item['length'] * 2
-                        if len(Item['value']) == HexLen + 2:
-                            Fmt = '0x%%0%dX' % HexLen
-                        else:
-                            Fmt = '0x%X'
-                    else:
-                        Fmt = '%d'
-                    NewValue = Fmt % Bytes2Val(NewBytes)
-        except:
-            NewValue = Item['value']
-        return NewValue
-
-    def SetConfigItemValue(self, Item, ValueStr):
-        Type = Item['type'].split(',')[0]
-        if Type == "Table":
-            NewValue = ValueStr
-        elif Type == "EditText":
-            NewValue = ValueStr[:Item['length']]
-            if Item['value'].startswith("'"):
-                NewValue = "'%s'" % NewValue
+    def set_config_item_value(self, item, value_str):
+        itype = item['type'].split(',')[0]
+        if itype == "Table":
+            new_value = value_str
+        elif itype == "EditText":
+            length = (self.cfg_data_obj.get_cfg_item_length(item) + 7) // 8
+            new_value = value_str[:length]
+            if item['value'].startswith("'"):
+                new_value = "'%s'" % new_value
         else:
-            NewValue = self.NormalizeValueStr(Item, ValueStr)
+            try:
+                new_value = self.cfg_data_obj.reformat_value_str (value_str, self.cfg_data_obj.get_cfg_item_length(item), item['value'])
+            except:
+                print("WARNING: Failed to format value string '%s' for '%s' !" % (value_str, item['path']))
+                new_value = item['value']
 
-        if Item['value'] != NewValue:
-            if self.Debug:
-                print('Update %s from %s to %s !' % (Item['cname'],
-                                                     Item['value'], NewValue))
-            Item['value'] = NewValue
+        if item['value'] != new_value:
+            if self.debug:
+                print('Update %s from %s to %s !' % (item['cname'],  item['value'], new_value))
+            item['value'] = new_value
 
-    def SyncConfigDataFromSubRegion(self):
-        if not len(self.PageList) or not self.PageId:
-            return
 
-        for Item in self.GetCurrentConfigData():
-            if not Item['subreg']:
-                continue
-            ValArray = self.CfgDataObj.ValueToByteArray(Item['value'],
-                                                        Item['length'])
-            for SubItem in Item['subreg']:
-                Value = Array2Val(SubItem['value'])
-                self.CfgDataObj.UpdateBsfBitFields(SubItem, Value, ValArray)
-            if Item['value'].startswith('{'):
-                NewValue = Bytes2Str(ValArray)
-            else:
-                BitsValue = ''.join('{0:08b}'.format(i)
-                                    for i in ValArray[::-1])
-                NewValue = '0x%X' % (int(BitsValue, 2))
-                NewValue = self.NormalizeValueStr(Item, NewValue)
-            if NewValue != Item['value']:
-                if self.Debug:
-                    print('Update Subregion %s from %s to %s' %
-                          (Item['cname'], Item['value'], NewValue))
-                Item['value'] = NewValue
-
-    def GetConfigDataItemFromWidget(self, Widget, Label=False):
-        Name = self.GetObjectName(Widget)
-        if not Name or not len(self.PageList):
+    def get_config_data_item_from_widget(self, widget, label=False):
+        name = self.get_object_name(widget)
+        if not name or not len(self.page_list):
             return None
 
-        if Label and Name.startswith('LABEL_'):
-            Name = Name[6:]
-
-        Item = 0
-        for Conf in self.GetCurrentConfigData():
-            if Conf['subreg']:
-                for SubConf in Conf['subreg']:
-                    if SubConf['cname'] == Name:
-                        Item = SubConf
-                        break
+        if name.startswith('LABEL_'):
+            if label:
+                path = name[6:]
             else:
-                if Conf['cname'] == Name:
-                    Item = Conf
-                    break
-            if Item:
-                break
+                return None
+        else:
+            path = name
+        item = self.cfg_data_obj.get_item_by_path (path)
+        return item
 
-        return Item
 
-    def UpdateConfigDataFromWidget(self, Widget, Args):
-        Item = self.GetConfigDataItemFromWidget(Widget)
-        if Item is None:
+    def update_config_data_from_widget(self, widget, args):
+        item = self.get_config_data_item_from_widget(widget)
+        if item is None:
             return
-        elif not Item:
-            if isinstance(Widget, Label):
+        elif not item:
+            if isinstance(widget, tkinter.Label):
                 return
-            raise Exception('Failed to find "%s" !' %
-                            self.GetObjectName(Widget))
+            raise Exception('Failed to find "%s" !' % self.get_object_name(widget))
 
-        Type = Item['type'].split(',')[0]
-        if Type == "Combo":
-            if Item['option'] in self.CfgDataObj._BuidinOption:
-                OptList = [('0', 'Disable'), ('1', 'Enable')]
-            else:
-                OptList = self.CfgDataObj.GetItemOptionList(Item)
-            TmpList = [Opt[0] for Opt in OptList]
-            Idx = Widget.current()
-            self.SetConfigItemValue(Item, TmpList[Idx])
-        elif Type in ["EditNum", "EditText"]:
-            self.SetConfigItemValue(Item, Widget.get())
-        elif Type in ["Table"]:
-            NewValue = Bytes2Str(Widget.get())
-            self.SetConfigItemValue(Item, NewValue)
+        itype = item['type'].split(',')[0]
+        if itype == "Combo":
+            opt_list = self.cfg_data_obj.get_cfg_item_options (item)
+            tmp_list = [opt[0] for opt in opt_list]
+            idx = widget.current()
+            self.set_config_item_value(item, tmp_list[idx])
+        elif itype in ["EditNum", "EditText"]:
+            self.set_config_item_value(item, widget.get())
+        elif itype in ["Table"]:
+            new_value = bytes_to_bracket_str(widget.get())
+            self.set_config_item_value(item, new_value)
 
-    def GetConfigDataItemFromName(self, Name, InPage=True):
-        CfgItemList = self.GetCurrentConfigData(
-        ) if InPage else self.CfgDataObj._CfgItemList
-        for Item in CfgItemList:
-            if not Item['length'] or not Item['name']:
-                continue
-            if Item['subreg']:
-                for SubItem in Item['subreg']:
-                    if not SubItem['name']:
-                        continue
-                    if SubItem['cname'] == Name:
-                        return SubItem
-            else:
-                if Item['cname'] == Name:
-                    return Item
-        return None
 
-    def EvaluateCondition(self, Cond):
-        Item = None
-        ReplaceList = []
-        Parts = re.findall("\$(\w+)(\.\w+)?", Cond)
-        for Part in Parts:
-            if len(Part) > 1 and len(Part[1]) > 0:
-                Name = Part[0] + '_' + Part[1][1:]
-            else:
-                Name = Part[0]
-            Value = None
-            Item = self.GetConfigDataItemFromName(Name, False)
-            if Item:
-                try:
-                    Value = '0x%x' % Bytes2Val(
-                        self.CfgDataObj.ValueToByteArray(Item['value'], Item[
-                            'length']))
-                except:
-                    Value = None
-            ReplaceList.append(('$' + ''.join(Part), Value))
-
-        OrgCond = Cond
-        Result = True
-        ReplaceList.sort(key=lambda x: len(x[0]), reverse=True)
-        for Each in ReplaceList:
-            if Each[1] is None:
-                break
-            Cond = Cond.replace(Each[0], Each[1])
-
+    def evaluate_condition(self, item):
         try:
-            Result = True if eval(Cond) else False
+            result = self.cfg_data_obj.evaluate_condition(item)
         except:
-            print("WARNING: Condition '%s' is invalid!" % OrgCond)
+            print("WARNING: Condition '%s' is invalid for '%s' !" % (item['condition'], item['path']))
+            result = 1
+        return result
 
-        return Result
 
-    def AddConfigItem(self, Item, Row):
-        Parent = self.RightGrid
+    def add_config_item(self, item, row):
+        parent = self.right_grid
 
-        Name = Label(Parent, text=Item['name'], anchor="w")
+        name = tkinter.Label(parent, text=item['name'], anchor="w")
 
-        Parts = Item['type'].split(',')
-        Type = Parts[0]
-        Widget = None
+        parts = item['type'].split(',')
+        itype = parts[0]
+        widget = None
 
-        if Type == "Combo":
+        if itype == "Combo":
             # Build
-            if Item['option'] in self.CfgDataObj._BuidinOption:
-                OptList = [('0', 'Disable'), ('1', 'Enable')]
-            else:
-                OptList = self.CfgDataObj.GetItemOptionList(Item)
+            opt_list = self.cfg_data_obj.get_cfg_item_options (item)
+            current_value = self.cfg_data_obj.get_cfg_item_value (item, False)
+            option_list = []
+            current = None
 
-            CurrentValue = self.CfgDataObj.ValueToByteArray(Item['value'],
-                                                            Item['length'])
-            OptionList = []
-            Current = None
-            for Idx, Option in enumerate(OptList):
-                OptionValue = self.CfgDataObj.ValueToByteArray(Option[0],
-                                                               Item['length'])
-                if OptionValue == CurrentValue:
-                    Current = Idx
-                OptionList.append(Option[1])
+            for idx, option in enumerate(opt_list):
+                option_str   = option[0]
+                try:
+                    option_value = self.cfg_data_obj.get_value(option_str, len(option_str), False)
+                except:
+                    option_value = 0
+                    print('WARNING: Option "%s" has invalid format for "%s" !' % (option_str, item['path']))
+                if option_value == current_value:
+                    current = idx
+                option_list.append(option[1])
 
-            Widget = ttk.Combobox(Parent, value=OptionList, state="readonly")
-            Widget.bind("<<ComboboxSelected>>", self.ComboSelectChanged)
 
-            if Current is None:
+            widget = ttk.Combobox(parent, value=option_list, state="readonly")
+            widget.bind("<<ComboboxSelected>>", self.combo_select_changed)
+
+            if current is None:
                 print('WARNING: Value "%s" is an invalid option for "%s" !' %
-                      (Bytes2Val(CurrentValue), Item['cname']))
+                      (current_value, item['path']))
             else:
-                Widget.current(Current)
+                widget.current(current)
 
-        elif Type in ["EditNum", "EditText"]:
-            TxtVal = StringVar()
-            Widget = Entry(Parent, textvariable=TxtVal)
-            Value = Item['value'].strip("'")
-            if Type in ["EditText"]:
-                TxtVal.trace(
+        elif itype in ["EditNum", "EditText"]:
+            txt_val = tkinter.StringVar()
+            widget = tkinter.Entry(parent, textvariable=txt_val)
+            value = item['value'].strip("'")
+            if itype in ["EditText"]:
+                txt_val.trace(
                     'w',
-                    lambda *args: self.LimitEntrySize(TxtVal, Item['length']))
-            elif Type in ["EditNum"]:
-                Value = Item['value'].strip("{").strip("}").strip()
-                Widget.bind("<FocusOut>", self.EditNumFinished)
-            TxtVal.set(Value)
+                    lambda *args: self.limit_entry_size(txt_val, (self.cfg_data_obj.get_cfg_item_length(item) + 7) // 8))
+            elif itype in ["EditNum"]:
+                value = item['value'].strip("{").strip("}").strip()
+                widget.bind("<FocusOut>", self.edit_num_finished)
+            txt_val.set(value)
 
-        elif Type in ["Table"]:
-            Bins = self.CfgDataObj.ValueToByteArray(Item['value'],
-                                                    Item['length'])
-            ColHdr = Item['option'].split(',')
-            Widget = CustomTable(Parent, ColHdr, Bins)
+        elif itype in ["Table"]:
+            bins = self.cfg_data_obj.get_cfg_item_value(item, True)
+            col_hdr = item['option'].split(',')
+            widget = custom_table(parent, col_hdr, bins)
 
-        if Widget:
-            Ttp = CreateToolTip(Widget, Item['help'])
-            self.SetObjectName(Name, 'LABEL_' + Item['cname'])
-            self.SetObjectName(Widget, Item['cname'])
-            Name.grid(row=Row, column=0, padx=10, pady=5, sticky="nsew")
-            Widget.grid(row=Row + 1, rowspan=1, column=0, padx=10, pady=5, sticky="nsew")
+        else:
+            if itype and itype not in ["Reserved"]:
+                print ("WARNING: Type '%s' is invalid for '%s' !" % (itype, item['path']))
 
-    def UpdateConfigDataOnPage(self):
-        self.WalkWidgetsInLayout(self.RightGrid,
-                                 self.UpdateConfigDataFromWidget)
-        self.SyncConfigDataFromSubRegion()
+        if widget:
+            ttp = create_tool_tip(widget, item['help'])
+            self.set_object_name(name,   'LABEL_' + item['path'])
+            self.set_object_name(widget, item['path'])
+            name.grid(row=row, column=0, padx=10, pady=5, sticky="nsew")
+            widget.grid(row=row + 1, rowspan=1, column=0, padx=10, pady=5, sticky="nsew")
+
+    def update_config_data_on_page(self):
+        self.walk_widgets_in_layout(self.right_grid,
+                                 self.update_config_data_from_widget)
+
 
 
 if __name__ == '__main__':
-    Root = Tk()
-    App = Application(master=Root)
-    Root.title("Config Editor")
-    Root.mainloop()
+    root = tkinter.Tk()
+    app  = application(master=root)
+    root.title("Config Editor")
+    root.mainloop()
+

@@ -1,0 +1,302 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Template File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+CFGHDR_TMPL: >
+  - CfgHeader    :
+      length       : 0x04
+      value        : {0x01:2b, ((_LENGTH_$(1)_)/4):10b, $(3):4b, $(4):4b, $(2):12b}
+  - CondValue    :
+      length       : 0x04
+      value        : 0x00000000
+
+
+FEATURES_TMPL: >
+  - $ACTION      :
+      page         : PLT_FEATURES:FEATURES:"Features"
+  - $ACTION      :
+      page         : PLT_FEATURES
+  - Features     :
+    - $STRUCT      :
+        name         : PlatformFeatures
+        struct       : FEATURES_DATA
+        length       : 0x04
+        value        : $(1)
+    - Acpi         :
+        name         : ACPI Enable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable ACPI feature. 1:ACPI Enabled, 0:ACPI Disabled
+        length       : 1b
+    - MeasuredBoot :
+        name         : MeasuredBoot Enable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable MeasuredBoot feature. 1:MeasuredBoot Enabled, 0:MeasuredBoot Disabled
+        length       : 1b
+    - Vt           :
+        name         : VT Enable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable Vt-x/Vt-d feature. 1:VT Enabled, 0:VT Disabled
+        length       : 1b
+    - eMMCTuning   :
+        name         : eMMC Tuning Enable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable EMMC feature, if disabled get the DLLs from DLL config data
+        length       : 1b
+    - DciDebug     :
+        name         : DCI Debug Enable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable DCI Debug feature. 1:DCI Debug Enabled, 0:DCI Debug Disabled
+        length       : 1b
+    - Rsvd1        :
+        name         : Reserved
+        type         : Reserved
+        length       : 27b
+
+
+PIDGPIO_TMPL: >
+  - $ACTION      :
+      page         : PLT_$(1):PLT_PIDGPIO:"Platform ID Pin $(1)"
+  - $ACTION      :
+      page         : PLT_$(1)
+  - $(1)         :
+    - $STRUCT      :
+        name         : GPIO $(1) Data
+        struct       : PID_GPIO_PIN_DATA[]
+        length       : 0x04
+        value        : $(2)
+    - PidPadInfo   :
+        name         : Pid Pad Info
+        type         : Combo
+        option       : !include CfgData_GpioPinOption.yaml
+        condition    : $(COND_GPIO_PID_ENABLE)
+        help         : >
+                       Specify the GPIO pin
+        length       : 24b
+    - Rsvd1        :
+        name         : Reserved
+        type         : Reserved
+        length       : 7b
+    - Enable       :
+        name         : PID Pin Enable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable this pin for PID detection.
+        order        : 0000.0000
+        condition    : $PLATFORMID_CFG_DATA.PlatformId==0
+        length       : 1b
+
+
+GPIO_TMPL: >
+  - $ACTION      :
+      page         : GIO_$(1):GIO:"GPIO $(1)"
+  - $ACTION      :
+      page         : GIO_$(1)
+  - $(1)_Half0   :
+    - $STRUCT      :
+        name         : GPIO $(1) Half0
+        marker       : $(1)_Half0
+        length       : 0x04
+        value        : $(2)
+    - Rsvd1        :
+        name         : Reserved
+        type         : Reserved
+        length       : 31b
+    - GpioSkip     :
+        name         : GPIO Skip
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       ENABLE- Skip GPIO PAD programming (keep the defaults). DISABLE- Program GPIO PAD configuration.
+        order        : 0000.0000
+        length       : 1b
+  - $(1)_Half1   :
+    - $STRUCT      :
+        name         : GPIO $(1) Half1
+        type         : EditNum, HEX, (0x00000000,0xFFFFFFFF)
+        help         : >
+                       GPIO $(1) Half1
+        length       : 0x04
+        value        : $(3)
+    - DefValue     :
+        name         : GpioDef
+        type         : Combo
+        option       : 0:Low, 1:High
+        help         : >
+                       GPIO Default Value
+        condition    : $(COND_GPIO_SKIP)
+        length       : 1b
+    - Direction    :
+        name         : GpioDirection
+        type         : Combo
+        option       : 0:GPIO, 1:GPI, 2:GPO, 3:HI_Z, 0xFF:Native
+        help         : >
+                       GPIO GpioDirection
+        condition    : $(COND_GPIO_SKIP)
+        length       : 2b
+    - AltFunc      :
+        name         : GpioAltFunc
+        type         : Combo
+        option       : 0:M0, 1:M1, 2:M2, 3:M3, 4:M4, 5:M5
+        help         : >
+                       GPIO GpioAltFunc
+        condition    : $(COND_GPIO_SKIP)
+        length       : 3b
+    - InterruptRoute :
+        name         : GpioIntRoute
+        type         : Combo
+        option       : 0:None/NA, 1:NMI, 2:SMI, 4:SCI, 8:IOAPIC
+        help         : >
+                       GPIO GpioIntRoute
+        condition    : $(COND_GPIO_SKIP)
+        length       : 6b
+    - RxInvert     :
+        name         : GpioRxInvert
+        type         : Combo
+        option       : 0:NotInverted, 1:Inverted
+        help         : >
+                       GPIO GpioRxInvert
+        condition    : $(COND_GPIO_SKIP)
+        length       : 2b
+    - InterruptType :
+        name         : GpioIntType
+        type         : Combo
+        option       : 0:Level, 1:Edge, 3:Both Edge, 2:Disable
+        help         : >
+                       GPIO GpioIntType
+        condition    : $(COND_GPIO_SKIP)
+        length       : 6b
+    - PuPdEnable   :
+        name         : GpioPuPdEnable
+        type         : Combo
+        option       : 0:Same, 1:Disable PuPd, 2:Enable Pull Down, 3:Enable Pull Up
+        help         : >
+                       GPIO GpioPuPdEnable
+        condition    : $(COND_GPIO_SKIP)
+        length       : 2b
+    - PuPdValue    :
+        name         : GpioPuPdValue
+        type         : Combo
+        option       : 0:None, 2:PD_5K, 4:PD_20K, 9:PU_1K, 11:PU_2K, 12:PU_20K, 10:PU_5K, 13:PU_1K2K, 15:Native
+        help         : >
+                       GPIO GpioPuPdValue
+        condition    : $(COND_GPIO_SKIP)
+        length       : 4b
+    - IoState      :
+        name         : GpioIoState
+        type         : Combo
+        option       : 0:Last Value, 1:D0RxDRx0I, 2:D0RxDRx1I, 3:D1RxDRx0I, 4:D1RxDRx1I, 5:D0RxE, 6:D1RxE, 7:HizRx0I, 8:HizRx1I, 9:TxDRxE, 15:IOS_Masked
+        help         : >
+                       GPIO GpioIoState
+        condition    : $(COND_GPIO_SKIP)
+        length       : 4b
+    - HostSw       :
+        name         : HostSw
+        type         : Combo
+        option       : 0:ACPI driver, 1:GPIO driver
+        help         : >
+                       GPIO HostSw
+        condition    : $(COND_GPIO_SKIP)
+        length       : 1b
+    - WakeCtrl     :
+        condition    : $(COND_GPIO_SKIP)
+        name         : WakeCtrl
+        type         : Combo
+        option       : 0:Disable, 1:Enable
+        help         : >
+                       GPIO WakeCtrl
+        length       : 1b
+
+
+MEMCH_TMPL: >
+  - $(1)_RankEnable :
+      name         : $(1)_RankEnable
+      type         : EditNum, HEX, (0x00,0xFF)
+      help         : >
+                     Bit mask to specify what ranks are enabled for $(1)
+      length       : 0x01
+      value        : $(2)
+  - $(1)_DeviceWidth :
+      name         : $(1)_DeviceWidth
+      type         : Combo
+      option       : 0x0:x8, 0x1:x16, 0x2:x32, 0x3:x64
+      help         : >
+                     $(1) Device Width
+      length       : 0x01
+      value        : $(3)
+  - $(1)_DramDensity :
+      name         : $(1)_DramDensity
+      type         : Combo
+      option       : 0x0:4Gb, 0x1:6Gb, 0x2:8Gb, 0x3:12Gb, 0x4:16Gb
+      help         : >
+                     $(1) Dram Density
+      length       : 0x01
+      value        : $(4)
+  - $(1)_Option  :
+      name         : $(1)_Option
+      type         : EditNum, HEX, (0x00,0xFF)
+      help         : >
+                     Specify $(1) Options- BIT[0] Rank Select Interleaving Enable; BIT[1] Bank Address Hashing Enable; BIT[2] CLK Disable; BIT[5:4] Address Mapping
+      length       : 0x01
+      value        : $(5)
+  - $(1)_OdtConfig :
+      name         : $(1)_OdtConfig
+      type         : EditNum, HEX, (0x00,0xFF)
+      help         : >
+                     Specify $(1) Odt Configuration
+      length       : 0x01
+      value        : $(6)
+  - $(1)_TristateClk1 :
+      name         : $(1)_TristateClk1
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Specify $(1) Tristate Clk1 (Not used)
+      length       : 0x01
+      value        : $(7)
+  - $(1)_Mode2N  :
+      name         : $(1)_Mode2N
+      type         : Combo
+      option       : 0x0:Auto, 0x1:Force 2N CMD Timing Mode
+      help         : >
+                     Configures the DDR3L command timing mode for $(1)
+      length       : 0x01
+      value        : $(8)
+  - $(1)_OdtLevels :
+      name         : $(1)_OdtLevels
+      type         : Combo
+      option       : 0x0:ODT Connected to SoC, 0x1:ODT held high
+      help         : >
+                     Parameter used to determine if ODT will be held high or low for $(1)
+      length       : 0x01
+      value        : $(9)
+
+
+
+- !include Platform/CommonBoardPkg/CfgData/Template_BootOption.yaml
+
+
+- !include Template_PcieRp.yaml
+
+
+- !include Template_Usb.yaml
+
+
+- !include Template_DeviceEnable.yaml
+

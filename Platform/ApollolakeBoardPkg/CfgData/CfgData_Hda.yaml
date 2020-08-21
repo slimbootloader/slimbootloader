@@ -1,0 +1,199 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : HDA:SIL:"HD Audio Config"
+- $ACTION      :
+    page         : HDA
+- HDA_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ HDA_CFG_DATA, 0x303, 0, 0 ] }
+  - HdaEnable    :
+      name         : HD Audio Support
+      type         : Combo
+      option       : 0x1:Enable, 0x0:Disable
+      help         : >
+                     Enable/disable HDA Audio Feature
+      length       : 0x01
+      value        : 1
+  - DspEnable    :
+      name         : HD Audio DSP Support
+      type         : Combo
+      option       : 0x1:Enable, 0x0:Disable
+      help         : >
+                     Enable/disable HDA Audio DSP Feature
+      condition    : $(COND_HDA_EN)
+      length       : 0x01
+      value        : 1
+  - HdAudioDspUaaCompliance :
+      name         : Universal Audio Architecture compliance for DSP enabled system
+      type         : Combo
+      option       : 0:Not-UAA Compliant, 1:UAA Compliant
+      help         : >
+                     Not-UAA Compliant (Intel SST driver supported only) or UAA Compliant (HDA Inbox driver or SST driver supported)
+      condition    : $(COND_HDA_DSP_EN)
+      length       : 0x01
+      value        : 1
+  - Pme          :
+      name         : Azalia wake-on-ring
+      type         : Combo
+      option       : 0x1:Enable, 0x0:Disable
+      help         : >
+                     Enable/disable Azalia wake-on-ring
+      condition    : $(COND_HDA_DSP_EN)
+      length       : 0x01
+      value        : 1
+  - HdAudioIoBufferOwnership :
+      name         : HD-Audio I/O Buffer Ownership
+      type         : Combo
+      option       : 0:HD-Audio link owns all the I/O buffers, 1:HD-Audio link owns 4 I/O buffers and I2S port owns 4 I/O buffers, 3:I2S port owns all the I/O buffers
+      help         : >
+                     Set HD-Audio I/O Buffer Ownership
+      condition    : $(COND_HDA_DSP_EN)
+      length       : 0x01
+      value        : 3
+  - HdAudioVcType :
+      name         : HD-Audio Virtual Channel Type
+      type         : Combo
+      option       : 0:VC0, 1:VC1
+      help         : >
+                     HD-Audio Virtual Channel Type Selectiton
+      condition    : $(COND_HDA_DSP_EN)
+      length       : 0x01
+      value        : 0
+  - HdAudioLinkFrequency :
+      name         : HD-Audio Link Frequency
+      type         : Combo
+      option       : 0:6MHz, 1:12MHz, 2:24MHz, 3:48MHz, 4:96MHz
+      help         : >
+                     HD-Audio Virtual Channel Type Selectiton
+      condition    : $(COND_HDA_DSP_EN)
+      length       : 0x01
+      value        : 2
+  - HdAudioIDispLinkFrequency :
+      name         : HD-Audio iDisp-Link Frequency
+      type         : Combo
+      option       : 0:6MHz, 1:12MHz, 2:24MHz, 3:48MHz, 4:96MHz
+      help         : >
+                     HD-Audio iDisp-Link Frequency Selectiton
+      condition    : $(COND_HDA_DSP_EN)
+      length       : 0x01
+      value        : 4
+  - HdAudioIDispLinkTmode :
+      name         : HD-Audio iDisp-Link T-Mode
+      type         : Combo
+      option       : 0:2T, 1:1T
+      help         : >
+                     HD-Audio iDisp-Link T-Mode Selectiton
+      condition    : $(COND_HDA_DSP_EN)
+      length       : 0x01
+      value        : 0
+  - DspEndpointDmic :
+      name         : HD-Audio Disp DMIC
+      type         : Combo
+      option       : 0:Disable, 1:2ch array, 2:4ch array
+      help         : >
+                     HD-Audio Disp DMIC Selectiton
+      condition    : $(COND_HDA_DSP_EN)
+      length       : 0x01
+      value        : 0
+  - DspEndpointBluetooth :
+      name         : HD-Audio Bluetooth
+      type         : Combo
+      option       : 0x1:Enable, 0x0:Disable
+      help         : >
+                     Enable/Disable HD-Audio bluetooth
+      condition    : $(COND_HDA_DSP_EN)
+      length       : 0x01
+      value        : 1
+  - DspEndpointI2sSpk :
+      name         : HD-Audio I2S SPK
+      type         : Combo
+      option       : 0x1:Enable, 0x0:Disable
+      help         : >
+                     Enable/Disable HD-Audio I2S SPK
+      condition    : $(COND_HDA_DSP_EN)
+      length       : 0x01
+      value        : 1
+  - DspEndpointI2sHp :
+      name         : HD-Audio I2S HP
+      type         : Combo
+      option       : 0x1:Enable, 0x0:Disable
+      help         : >
+                     Enable/Disable HD-Audio I2S HP
+      condition    : $(COND_HDA_DSP_EN)
+      length       : 0x01
+      value        : 1
+  - DspFeatureMask :
+      name         : Bitmask of DSP Feature
+      type         : EditNum, HEX, (0x00, 0xFFFFFFFF)
+      help         : >
+                     [BIT0] - WoV, [BIT1] - BT Sideband, [BIT2] - Codec VAD, [BIT5] - BT Intel HFP, [BIT6] - BT Intel A2DP, [BIT7] - DSP based speech pre-processing disabled, [BIT8] - 0- Intel WoV, 1- Windows Voice Activation
+      condition    : $(COND_HDA_DSP_EN)
+      length       : 0x04
+      value        : 0x2A
+  - DspPpModuleMask :
+      name         : Bitmask of supported DSP Post-Processing Modules
+      type         : EditNum, HEX, (0x00, 0xFFFFFFFF)
+      help         : >
+                     [BIT0] - WoV, [BIT1] - BT Sideband, [BIT2] - Codec VAD, [BIT5] - BT Intel HFP, [BIT6] - BT Intel A2DP, [BIT7] - DSP based speech pre-processing disabled, [BIT8] - 0- Intel WoV, 1- Windows Voice Activation
+      condition    : $(COND_HDA_DSP_EN)
+      length       : 0x04
+      value        : 0
+  - VirtualIdBtRender :
+      name         : BT Render Virtual Bus ID
+      type         : Combo
+      option       : 0:I2S1,1:I2S2,2:I2S3,3:I2S4,4:I25,5:I2S6,0xF:N/A
+      help         : >
+                     BT Render Virtual Bus ID Selection
+      condition    : $(COND_HDA_DSP_EN)
+      length       : 0x01
+      value        : 2
+  - VirtualIdBtCapture :
+      name         : BT Capture Virtual Bus ID
+      type         : Combo
+      option       : 0:I2S1,1:I2S2,2:I2S3,3:I2S4,4:I25,5:I2S6,0xF:N/A
+      help         : >
+                     BT Capture Virtual Bus ID Selection
+      condition    : $(COND_HDA_DSP_EN)
+      length       : 0x01
+      value        : 2
+  - VirtualIdI2sRenderSpk :
+      name         : I2S Render Speaker Virtual Bus ID
+      type         : Combo
+      option       : 0:I2S1,1:I2S2,2:I2S3,3:I2S4,4:I25,5:I2S6,0xF:N/A
+      help         : >
+                     I2S Render Speaker Bus ID Selection
+      condition    : $(COND_HDA_DSP_EN)
+      length       : 0x01
+      value        : 5
+  - VirtualIdI2sRenderHp :
+      name         : I2S Render Headphone Virtual Bus ID
+      type         : Combo
+      option       : 0:I2S1,1:I2S2,2:I2S3,3:I2S4,4:I25,5:I2S6,0xF:N/A
+      help         : >
+                     I2S Render Headphone Virtual Bus ID Selection
+      condition    : $(COND_HDA_DSP_EN)
+      length       : 0x01
+      value        : 5
+  - VirtualIdI2sCapture :
+      name         : I2S Capture Virtual Bus ID
+      type         : Combo
+      option       : 0:I2S1,1:I2S2,2:I2S3,3:I2S4,4:I25,5:I2S6,0xF:N/A
+      help         : >
+                     I2S Capture Virtual Bus ID Selection
+      condition    : $(COND_HDA_DSP_EN)
+      length       : 0x01
+      value        : 5
+  - Reserved     :
+      name         : Hda Reserved
+      type         : Reserved
+      length       : 0x02
+      value        : 0
+

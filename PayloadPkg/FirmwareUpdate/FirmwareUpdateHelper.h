@@ -166,4 +166,40 @@ EFI_STATUS
 UpdateSblComponent (
   IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
   );
+
+
+/**
+  Main routine for Command updates.
+
+  This function has the logic to perform CMD  update.
+
+  @param[in] CapImageHdr    The pointer to the firmware update capsule image
+
+  @retval  EFI_SUCCESS      Update successful
+  @retval  other            error status from the update routine
+**/
+EFI_STATUS
+FwCmdUpdateProcess (
+  EFI_FW_MGMT_CAP_IMAGE_HEADER  *CapImageHdr
+  );
+
+/**
+  Perform Config data svn check
+
+  This function will perform svn checks for cfgdata in flash and
+  config data in capsule.
+
+  @param[in]  ImageHdr       Pointer to fw mgmt capsule Image header
+  @param[in]  FwPolicy       Firmware update policy
+  @param[out] SvnStatus      Svn compare status
+
+  @retval  EFI_SUCCESS      SVN check successful
+  @retval  other            error occurred during firmware update
+**/
+EFI_STATUS
+CheckSblConfigDataSvn (
+  IN   EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
+  IN   FIRMWARE_UPDATE_POLICY         FwPolicy,
+  OUT  UINT8                         *SvnStatus
+  );
 #endif

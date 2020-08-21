@@ -297,6 +297,8 @@ UpdateLinuxBootParams (
       Bp->ScreenInfo.LfbLinelength   = (UINT16) (GfxMode->PixelsPerScanLine * 4);
       Bp->ScreenInfo.LfbDepth        = 32;
       Bp->ScreenInfo.LfbBase         = (UINT32)(UINTN)GfxInfoHob->FrameBufferBase;
+      Bp->ScreenInfo.ExtLfbBase      = (UINT32)RShiftU64 (GfxInfoHob->FrameBufferBase, 32);
+      Bp->ScreenInfo.Capabilities   |= VIDEO_CAPABILITY_64BIT_BASE;
       Bp->ScreenInfo.LfbWidth        = (UINT16)GfxMode->HorizontalResolution;
       Bp->ScreenInfo.LfbHeight       = (UINT16)GfxMode->VerticalResolution;
       Bp->ScreenInfo.Pages           = 1;

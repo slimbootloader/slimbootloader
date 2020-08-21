@@ -16,7 +16,6 @@ import binascii
 from ctypes import *
 
 sys.dont_write_bytecode = True
-from BuildUtility import rsa_sign_file, gen_pub_key
 from CommonUtility import *
 
 class FmpCapsuleImageHeaderClass(object):
@@ -417,6 +416,9 @@ def SignImage(RawData, OutFile, HashType, SignScheme, PrivKey):
     elif key_type ==  'RSA3072':
         key_size = 384
 
+    if HashType == 'AUTO':
+        HashType = adjust_hash_type(PrivKey)
+
     header.FileGuid         = (c_ubyte *16).from_buffer_copy(FIRMWARE_UPDATE_IMAGE_FILE_GUID.bytes_le)
     header.HeaderSize       = sizeof(Firmware_Update_Header)
     header.FirmwreVersion   = 1
@@ -448,6 +450,8 @@ def main():
         'MISC': '66030B7A-47D1-4958-B73D-00B44B9DD4B6',  # SBL  COMPONENT
         'CSME': '43AEF186-0CA5-4230-B1BD-193FB4627201',  # IFWI ME/CSME
         'CSMD': '4A467997-A909-4678-910C-E0FE1C9056EA',  # CSME Update driver
+        'CMDI': '9034cab1-4d19-4856-a3cd-f074263c4a4d',  # Command request
+
     }
 
     def ValidateUnsignedInteger(Argument):
@@ -479,8 +483,8 @@ def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('-p',  '--payload', nargs=2, action='append', type=str, required=True, help='Specify payload information including GUID, FileName')
-    parser.add_argument('-k',  '--priv_key', dest='PrivKey', type=str, required=True, help='Private RSA 2048 key in PEM format to sign image')
-    parser.add_argument('-a',  '--alg_hash', dest='HashType', type=str, choices=['SHA2_256', 'SHA2_384'], default='SHA2_256', help='Hash type for signing')
+    parser.add_argument('-k',  '--priv_key', dest='PrivKey', type=str, required=True, help='Key Id or Private RSA 2048/RSA3072 key in PEM format to sign image')
+    parser.add_argument('-a',  '--alg_hash', dest='HashType', type=str, choices=['SHA2_256', 'SHA2_384', 'AUTO'], default='AUTO', help='Hash type for signing. For AUTO hash type will be choosen based on key length')
     parser.add_argument('-s',  '--sign_scheme', dest='SignScheme', type=str, choices=['RSA_PKCS1', 'RSA_PSS'], default='RSA_PSS', help='Signing Scheme types')
     parser.add_argument('-o',  '--output', dest='NewImage', type=str, required=True, help='Output file for signed image')
     parser.add_argument("-v",  "--verbose", dest='Verbose', action="store_true", help= "Turn on verbose output with informational messages printed, including capsule headers and warning messages.")

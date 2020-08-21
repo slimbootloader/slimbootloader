@@ -1,0 +1,64 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : GPU:SIL:"GPU"
+- $ACTION      :
+    page         : GPU_CFG:GPU:"GPU Config"
+- $ACTION      :
+    page         : GPU_CFG
+- GPU_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ GPU_CFG_DATA, 0x308, 0, 0 ] }
+  - ApertureSize :
+      name         : ApertureSize
+      type         : Combo
+      option       : 0x1:128 MB, 0x2:256 MB, 0x3:512 MB
+      help         : >
+                     Select the Aperture Size used by the Internal Graphics Device. 0x1:128 MB(Default), 0x2:256 MB, 0x3:512 MB.
+      length       : 0x01
+      value        : 0x1
+  - Igd          :
+      name         : Igd
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     When enabled, Integrated Graphics Device (IGD) is selected as the Primary Video
+      length       : 0x01
+      value        : 0x1
+  - IgdDvmt50PreAlloc :
+      name         : IgdDvmt50PreAlloc
+      type         : Combo
+      option       : >
+                     0x02:64 MB, 0x03:96 MB, 0x04:128 MB, 0x05:160 MB, 0x06:192 MB, 0x07:224 MB, 0x08:256 MB, 0x09:288 MB,
+                     0x0A:320 MB, 0x0B:352 MB, 0x0C:384 MB, 0x0D:416 MB, 0x0E:448 MB, 0x0F:480 MB, 0x10:512 MB
+      help         : >
+                     Select DVMT 5.0 Pre-Allocated (Fixed) Graphics Memory size used by the Internal Graphics Device
+      length       : 0x01
+      value        : 0x2
+  - GttSize      :
+      name         : GttSize
+      type         : Combo
+      option       : 0x1:2 MB, 0x2:4 MB, 0x3:8 MB
+      help         : >
+                     Select the GTT Size used by the Internal Graphics Device. 0x1:2 MB, 0x2:4 MB, 0x3:8 MB(Default).
+      length       : 0x01
+      value        : 0x3
+  - PrimaryVideoAdaptor :
+      name         : PrimaryVideoAdaptor
+      type         : Combo
+      option       : 0x0:AUTO, 0x2:IGD, 0x3:PCI
+      help         : >
+                     Select which of IGD/PCI Graphics device should be Primary Display. 0x0:AUTO(Default), 0x2:IGD, 0x3:PCI
+      length       : 0x01
+      value        : 0x0
+  - Dummy        :
+      length       : 0x03
+      value        : 0x0
+

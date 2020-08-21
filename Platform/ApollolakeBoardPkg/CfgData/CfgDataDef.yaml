@@ -1,0 +1,167 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Default File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+variable:
+  COND_GPIO_SKIP                 : ($GPIO_CFG_DATA.$(1)_Half0.GpioSkip == 0)
+  COND_GPIO_PID_ENABLE           : ($PID_GPIO_CFG_DATA.$(1).Enable==1) and ($PLATFORMID_CFG_DATA.PlatformId==0)
+  COND_PCIE_RP_PWR_PIN_SKIP      : ($PCIE_RP_CFG_DATA.PcieRpPower$(1).Skip == 0)
+  COND_PCIE_RP_RST_PIN_SKIP      : ($PCIE_RP_CFG_DATA.PcieRpReset$(1).Skip == 0)
+  COND_PCIE_RP_EN                : ($PCIE_RP_CFG_DATA.PcieRpFeatures$(1).En == 1)
+  COND_PCIE_RP_CLK_REQ_SUP       : (($PCIE_RP_CFG_DATA.PcieRpFeatures$(1).ClkReqSup == 1) and ($PCIE_RP_CFG_DATA.PcieRpFeatures$(1).En == 1))
+  COND_HDA_EN                    : ($HDA_CFG_DATA.HdaEnable == 1)
+  COND_HDA_DSP_EN                : (($HDA_CFG_DATA.HdaEnable == 1) and ($HDA_CFG_DATA.DspEnable == 1))
+
+
+template:
+
+  - !include Template_CfgData.yaml
+
+
+
+configs:
+  - $ACTION      :
+      page         : PLT::"Platform", MEM::"Memory Settings", SIL::"Silicon Settings", GEN::"General Settings", GIO::"Gpio Settings", OS::"OS Boot Options"
+  - Signature    :
+      length       : 0x04
+      value        : {'CFGD'}
+  - HeaderLength :
+      length       : 0x01
+      value        : 0x10
+  - Reserved     :
+      length       : 0x03
+      value        : {0,0,0}
+  - UsedLength   :
+      length       : 0x04
+      value        : _LENGTH_
+  - TotalLength  :
+      length       : 0x04
+      value        : 0x2000
+
+  - !include Platform/CommonBoardPkg/CfgData/CfgData_Platform.yaml
+
+  - $ACTION      :
+      page         : IOCUART:PLT:"IOC Uart Settings"
+  - $ACTION      :
+      page         : IOCUART
+  - IOC_UART_CFG_DATA :
+    - !expand { CFGHDR_TMPL : [ IOC_UART_CFG_DATA, 0x120, 0, 0 ] }
+    - DeviceIndex  :
+        name         : Device Index
+        type         : Combo
+        option       : 0:UART0, 1:UART1, 2:UART2, 3:UART3, 0xF:Disable
+        help         : >
+                       UART device index for IOC interface (0..3 or Disable)
+        length       : 0x01
+        value        : 0xF
+    - BaudRate     :
+        name         : Baud Rate
+        type         : Combo
+        option       : 0:9600, 1:19200, 2:38400, 3:57600, 4:115200, 5:921600, 6:1.5M
+        help         : >
+                       UART Baud Rate
+        length       : 0x01
+        value        : 0
+    - Retries      :
+        name         : Retries
+        type         : EditNum, HEX, (0x00,0xFF)
+        help         : >
+                       specify retry count
+        length       : 0x01
+        value        : 0
+    - TimeoutInitial :
+        name         : TimeoutInitial
+        type         : EditNum, HEX, (0x00,0xFF)
+        help         : >
+                       initial/setup time-out (in milliseconds)
+        length       : 0x01
+        value        : 0
+    - TimeoutXmit  :
+        name         : TimeoutXmit
+        type         : EditNum, HEX, (0x00,0xFF)
+        help         : >
+                       transmission time-out
+        length       : 0x01
+        value        : 0
+    - Rsvd         :
+        length       : 0x03
+        value        : 0
+
+  - $ACTION      :
+      page         : PSEL:PLT:"Payload Selection GPIO"
+  - $ACTION      :
+      page         : PSEL
+  - PLATFORM_CFG_DATA :
+    - !expand { CFGHDR_TMPL : [ PLATFORM_CFG_DATA, 0x280, 0, 0 ] }
+    - PayloadSelGpio :
+      - $STRUCT      :
+          name         : GPIO pin for switching payload
+          struct       : PAYLOAD_SEL_GPIO_PIN
+          length       : 0x04
+          value        : 0x000000c5
+      - PadInfo      :
+          name         : Pin Number
+          type         : Combo
+          option       : !include CfgData_GpioPinOption.yaml
+          condition    : ($PLATFORM_CFG_DATA.PayloadSelGpio.Enable > 0)
+          help         : >
+                         Specify GPIO Pin Number
+          length       : 24b
+      - Rsvd1        :
+          name         : Reserved
+          type         : Reserved
+          length       : 7b
+      - Enable       :
+          name         : Payload Selection Pin Enable
+          type         : Combo
+          option       : $EN_DIS
+          help         : >
+                         Enable/Disable this pin for payload selection.
+          order        : 0000.0000
+          length       : 1b
+
+
+  - !include CfgData_Memory.yaml
+
+
+  - !include CfgData_Silicon.yaml
+
+
+  - !include CfgData_Usb.yaml
+
+
+  - !include CfgData_Gpio.yaml
+
+
+  - !include Platform/CommonBoardPkg/CfgData/CfgData_Common.yaml
+
+
+  - !include CfgData_BootOption.yaml
+
+
+  - !include CfgData_PidGpioPins.yaml
+
+
+  - !include CfgData_PcieRp.yaml
+
+
+  - !include CfgData_GpuConfig.yaml
+
+
+  - !include CfgData_Features.yaml
+
+
+  - !include CfgData_DeviceEnable.yaml
+
+
+  - !include CfgData_Hda.yaml
+
+
+  - !include CfgData_CapsuleInformation.yaml
+

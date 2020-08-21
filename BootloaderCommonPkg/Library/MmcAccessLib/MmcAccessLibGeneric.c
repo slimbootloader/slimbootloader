@@ -764,6 +764,7 @@ MmcSwitchClockFreq (
     DEBUG ((DEBUG_ERROR, "MmcSwitchClockFreq: The switch operation fails as DevStatus is 0x%08x\n", DevStatus));
     return EFI_DEVICE_ERROR;
   }
+
   //
   // Convert the clock freq unit from MHz to KHz.
   //
@@ -807,8 +808,9 @@ MmcSwitchToHighSpeed (
   if (EFI_ERROR (Status)) {
     return Status;
   }
+
   //
-  // Set to Hight Speed timing
+  // Set to High Speed timing
   //
   HostCtrl1 = BIT2;
   Status = SdMmcHcOrMmio (Private->SdMmcHcBase, SD_MMC_HC_HOST_CTRL1, sizeof (HostCtrl1), &HostCtrl1);
@@ -1018,6 +1020,221 @@ MmcSwitchToHS400 (
 }
 
 /**
+  Send command SET_BUS_WIDTH to the SD device to set the bus width.
+
+  Refer to SD Physical Layer Simplified Spec 4.1 Section 4.7 for details.
+
+  @param[in] PassThru       A pointer to the EFI_SD_MMC_PASS_THRU_PROTOCOL instance.
+  @param[in] Slot           The slot number of the SD card to send the command to.
+  @param[in] Rca            The relative device address of addressed device.
+  @param[in] BusWidth       The bus width to be set, it could be 1 or 4.
+
+  @retval EFI_SUCCESS       The operation is done correctly.
+  @retval Others            The operation fails.
+
+**/
+EFI_STATUS
+SdCardSetBusWidth (
+  IN SD_MMC_HC_PRIVATE_DATA            *Private,
+  IN UINT16                             Rca,
+  IN UINT8                              BusWidth
+  )
+{
+  EFI_SD_MMC_COMMAND_BLOCK              SdMmcCmdBlk;
+  EFI_SD_MMC_STATUS_BLOCK               SdMmcStatusBlk;
+  EFI_SD_MMC_PASS_THRU_COMMAND_PACKET   Packet;
+  EFI_STATUS                            Status;
+  UINT8                                 Value;
+
+  ZeroMem (&SdMmcCmdBlk, sizeof (SdMmcCmdBlk));
+  ZeroMem (&SdMmcStatusBlk, sizeof (SdMmcStatusBlk));
+  ZeroMem (&Packet, sizeof (Packet));
+
+  Packet.SdMmcCmdBlk    = &SdMmcCmdBlk;
+  Packet.SdMmcStatusBlk = &SdMmcStatusBlk;
+  Packet.Timeout        = SD_MMC_HC_GENERIC_TIMEOUT;
+
+  SdMmcCmdBlk.CommandIndex = SD_APP_CMD;
+  SdMmcCmdBlk.CommandType  = SdMmcCommandTypeAc;
+  SdMmcCmdBlk.ResponseType = SdMmcResponseTypeR1;
+  SdMmcCmdBlk.CommandArgument = (UINT32)Rca << 16;
+
+  Status = SdMmcSendCommand (Private, &Packet);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  SdMmcCmdBlk.CommandIndex = SD_SET_BUS_WIDTH;
+  SdMmcCmdBlk.CommandType  = SdMmcCommandTypeAc;
+  SdMmcCmdBlk.ResponseType = SdMmcResponseTypeR1;
+
+  if (BusWidth == 1) {
+    Value = 0;
+  } else if (BusWidth == 4) {
+    Value = 2;
+  } else {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  SdMmcCmdBlk.CommandArgument = Value & 0x3;
+  Status = SdMmcSendCommand (Private, &Packet);
+  return Status;
+}
+
+/**
+  Send command SWITCH_FUNC to the SD device to check switchable function or switch card function.
+
+  Refer to SD Physical Layer Simplified Spec 4.1 Section 4.7 for details.
+
+  @param[in]  Slot          The slot number of the SD card to send the command to.
+  @param[in]  AccessMode    The value for access mode group.
+  @param[in]  CommandSystem The value for command set group.
+  @param[in]  DriveStrength The value for drive length group.
+  @param[in]  PowerLimit    The value for power limit group.
+  @param[in]  Mode          Switch or check function.
+  @param[out] SwitchResp    The return switch function status.
+
+  @retval EFI_SUCCESS       The operation is done correctly.
+  @retval Others            The operation fails.
+
+**/
+EFI_STATUS
+SdCardSwitch (
+  IN SD_MMC_HC_PRIVATE_DATA          *Private,
+  IN     UINT8                        AccessMode,
+  IN     UINT8                        CommandSystem,
+  IN     UINT8                        DriveStrength,
+  IN     UINT8                        PowerLimit,
+  IN     BOOLEAN                      Mode,
+  OUT UINT8                          *SwitchResp
+  )
+{
+  EFI_SD_MMC_COMMAND_BLOCK              SdMmcCmdBlk;
+  EFI_SD_MMC_STATUS_BLOCK               SdMmcStatusBlk;
+  EFI_SD_MMC_PASS_THRU_COMMAND_PACKET   Packet;
+  EFI_STATUS                            Status;
+  UINT32                                ModeValue;
+
+  ZeroMem (&SdMmcCmdBlk, sizeof (SdMmcCmdBlk));
+  ZeroMem (&SdMmcStatusBlk, sizeof (SdMmcStatusBlk));
+  ZeroMem (&Packet, sizeof (Packet));
+
+  Packet.SdMmcCmdBlk    = &SdMmcCmdBlk;
+  Packet.SdMmcStatusBlk = &SdMmcStatusBlk;
+  Packet.Timeout        = SD_MMC_HC_GENERIC_TIMEOUT;
+
+  SdMmcCmdBlk.CommandIndex = SD_SWITCH_FUNC;
+  SdMmcCmdBlk.CommandType  = SdMmcCommandTypeAdtc;
+  SdMmcCmdBlk.ResponseType = SdMmcResponseTypeR1;
+
+  ModeValue = Mode ? BIT31 : 0;
+  SdMmcCmdBlk.CommandArgument = (AccessMode & 0xF) | ((PowerLimit & 0xF) << 4) | \
+                             ((DriveStrength & 0xF) << 8) | ((DriveStrength & 0xF) << 12) | \
+                             ModeValue;
+  Packet.InDataBuffer     = SwitchResp;
+  Packet.InTransferLength = 64;
+
+  Status = SdMmcSendCommand (Private, &Packet);
+
+  return Status;
+}
+
+/**
+  Switch the high speed timing according to request.
+
+  Refer to SD Physical Layer Simplified Spec 4.1 Section 4.7 and
+  SD Host Controller Simplified Spec 3.0 section Figure 2-29 for details.
+
+  @param[in] Slot           The slot number of the SD card to send the command to.
+  @param[in] Rca            The relative device address to be assigned.
+  @param[in] S18a           The boolean to show if it's a UHS-I SD card.
+
+  @retval EFI_SUCCESS       The operation is done correctly.
+  @retval Others            The operation fails.
+
+**/
+EFI_STATUS
+SdCardSetBusMode (
+  IN SD_MMC_HC_PRIVATE_DATA            *Private,
+  IN UINT16                             Rca,
+  IN BOOLEAN                            S18a
+)
+{
+  EFI_STATUS                Status;
+  UINT32                    ClockFreq;
+  SD_MMC_HC_SLOT_CAP       *Capability;
+  UINT8                     HostCtrl1;
+  UINT8                     HostCtrl2;
+  UINT32                    DevStatus;
+  UINT8                     SwitchResp[64];
+  UINT8                     AccessMode;
+
+  Status = SdCardSetBusWidth (Private, Rca, 4);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  Status = MmcSendStatus (Private, Rca, &DevStatus);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  SdMmcHcRwMmio (Private->SdMmcHcBase, SD_MMC_HC_HOST_CTRL1, TRUE, sizeof (HostCtrl1), &HostCtrl1);
+  HostCtrl1 |= BIT1;
+  HostCtrl1 &= (UINT8)~BIT5;
+  SdMmcHcRwMmio (Private->SdMmcHcBase, SD_MMC_HC_HOST_CTRL1, FALSE, sizeof (HostCtrl1), &HostCtrl1);
+
+  ZeroMem (SwitchResp, sizeof (SwitchResp));
+  Status = SdCardSwitch (Private, 0xF, 0xF, 0xF, 0xF, FALSE, SwitchResp);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  Capability = &(Private->Capability);
+  //
+  // Calculate supported bus speed/bus width/clock frequency by host and device capability.
+  //
+  ClockFreq = 0;
+  if (S18a && (Capability->Sdr104 != 0) && ((SwitchResp[13] & BIT3) != 0)) {
+    ClockFreq = 208;
+    AccessMode = 3;
+  } else if (S18a && (Capability->Sdr50 != 0) && ((SwitchResp[13] & BIT2) != 0)) {
+    ClockFreq = 100;
+    AccessMode = 2;
+  } else if (S18a && (Capability->Ddr50 != 0) && ((SwitchResp[13] & BIT4) != 0)) {
+    ClockFreq = 50;
+    AccessMode = 4;
+  } else if ((SwitchResp[13] & BIT1) != 0) {
+    ClockFreq = 50;
+    AccessMode = 1;
+  } else {
+    ClockFreq = 25;
+    AccessMode = 0;
+  }
+  Status = SdCardSwitch (Private, AccessMode, 0xF, 0xF, 0xF, TRUE, SwitchResp);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  //
+  // Set to Hight Speed timing
+  //
+  if (AccessMode == 1) {
+    HostCtrl1 = BIT2;
+    SdMmcHcOrMmio (Private->SdMmcHcBase, SD_MMC_HC_HOST_CTRL1, sizeof (HostCtrl1), &HostCtrl1);
+  }
+
+  HostCtrl2 = (UINT8)~0x7;
+  SdMmcHcAndMmio (Private->SdMmcHcBase, SD_MMC_HC_HOST_CTRL2, sizeof (HostCtrl2), &HostCtrl2);
+
+  HostCtrl2 = AccessMode;
+  SdMmcHcOrMmio (Private->SdMmcHcBase, SD_MMC_HC_HOST_CTRL2, sizeof (HostCtrl2), &HostCtrl2);
+
+  Status = SdMmcHcClockSupply (Private->SdMmcHcBase, ClockFreq * 1000, Private->Capability);
+  return EFI_SUCCESS;
+}
+
+/**
   Switch the high speed timing according to request.
 
   Refer to EMMC Electrical Standard Spec 5.1 Section 6.6.8 and SD Host Controller
@@ -1059,7 +1276,9 @@ MmcSetBusMode (
   }
 
   if (Private->Slot.CardType == SdCardType) {
-    return EFI_SUCCESS;
+    Status = SdCardSetBusMode (Private, Rca, (CardData->Ocr & BIT24) != 0);
+    DEBUG ((DEBUG_ERROR, "MmcSetBusMode: Set bus mode for SD card fails with %r\n", Status));
+    return Status;
   }
 
   ASSERT (Private->Capability.BaseClkFreq != 0);
@@ -1546,6 +1765,7 @@ ContinueMmcInitialize (
   if (Private->Slot.CardType == SdCardType) {
     TimeOut = 5000;
     while ((CardData->Ocr & BIT31) == 0) {
+      CardData->Ocr |= 0x41000000;
       Status = SdCardSendOpCond (Private, &CardData->Ocr);
       if (EFI_ERROR (Status)) {
         DEBUG ((DEBUG_ERROR, "SdCardSendOpCond fails with %r\n", Status));

@@ -13,7 +13,7 @@ CONST CDATA_BLOB mCfgBlobTmpl = {
   CFG_DATA_SIGNATURE,
   sizeof (CDATA_BLOB),
   0,
-  0,
+  {0},
   sizeof (CDATA_BLOB),
   FixedPcdGet32 (PcdCfgDatabaseSize)
 };
