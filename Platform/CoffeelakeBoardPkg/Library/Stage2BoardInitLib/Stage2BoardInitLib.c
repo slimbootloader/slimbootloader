@@ -1260,6 +1260,9 @@ UpdateFspConfig (
   FspsUpd->FspsConfig.TcoIrqSelect        = 9;
 
   HdaVerbTablePtr = (UINT32 *) AllocateZeroPool (6 * sizeof (UINT32));  // max 6 tables supported for now
+  if (HdaVerbTablePtr == NULL) {
+    return;
+  }
   HdaVerbTableNum = 0;
   HdaVerbTablePtr[HdaVerbTableNum++]   = (UINT32)(UINTN) &HdaVerbTableDisplayAudio;
   if (IsPchLp()) {
