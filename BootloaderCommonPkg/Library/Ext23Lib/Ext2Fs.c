@@ -748,12 +748,22 @@ Ext2fsOpen (
   // allocate struct file system specific data structure
   //
   Fp = AllocatePool (sizeof (FILE));
+  if (Fp == NULL) {
+    Status = EFI_OUT_OF_RESOURCES;
+    goto out;
+  }
+
   SetMem32 (Fp, sizeof (FILE), 0 );
   File->FileSystemSpecificData = (VOID *)Fp;
   //
   // allocate space and read super block
   //
   FileSystem = AllocatePool (sizeof (*FileSystem));
+  if (FileSystem == NULL) {
+    Status = EFI_OUT_OF_RESOURCES;
+    goto out;
+  }
+
   SetMem32 (FileSystem, sizeof (*FileSystem), 0);
   Fp->SuperBlockPtr = FileSystem;
 

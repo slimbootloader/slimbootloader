@@ -885,7 +885,7 @@ LoadComponentWithCallback (
       }
     } else {
       if (CompressHdr->Size == 0) {
-        Status = EFI_SUCCESS;
+        Status = EFI_BAD_BUFFER_SIZE;
       } else {
         Status = EFI_OUT_OF_RESOURCES;
       }
