@@ -18,7 +18,6 @@ FspRel.bin
 /Download
 /PayloadPkg/PayloadBins
 Platform/ApollolakeBoardPkg/VbtBin
-Platform/CoffeelakeBoardPkg/VbtBin
 Silicon/ApollolakePkg/Include/Fsp*.h
 Silicon/CoffeelakePkg/Include/Fsp*.h
 Silicon/CoffeelakePkg/Microcode/*.mcb

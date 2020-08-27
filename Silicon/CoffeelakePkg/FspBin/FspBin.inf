@@ -22,5 +22,3 @@
   CoffeeLakeFspBinPkg/Include/FsptUpd.h      : Silicon/CoffeelakePkg/Include/FsptUpd.h
   CoffeeLakeFspBinPkg/Include/FspmUpd.h      : Silicon/CoffeelakePkg/Include/FspmUpd.h
   CoffeeLakeFspBinPkg/Include/FspsUpd.h      : Silicon/CoffeelakePkg/Include/FspsUpd.h
-  CoffeeLakeFspBinPkg/SampleCode/Vbt/Vbt.bin : Platform/CoffeelakeBoardPkg/VbtBin/Vbt.dat
-  CoffeeLakeFspBinPkg/SampleCode/Vbt/Vbt.bsf : Platform/CoffeelakeBoardPkg/VbtBin/Vbt.bsf
