@@ -982,10 +982,9 @@ BoardInit (
     BuildOsConfigDataHob ();
     break;
   case PostPciEnumeration:
-    if (PcdGetBool (PcdFramebufferInitEnabled)) {
-      // Enable framebuffer as WC for performance
-      SetFrameBufferWriteCombining ();
-    }
+    // Enable framebuffer as WC for performance
+    SetFrameBufferWriteCombining ();
+
     if (PcdGetBool (PcdSeedListEnabled)) {
       Status = GenerateSeeds ();
       if (EFI_ERROR (Status)) {
