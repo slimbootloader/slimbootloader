@@ -781,7 +781,7 @@ def sign_component (args):
     sign_file = os.path.abspath(args.out_file)
     out_dir   = os.path.dirname(sign_file)
 
-    lz_file = compress (args.comp_file, compress_alg, 0, out_dir, args.tool_dir)
+    lz_file = compress (args.comp_file, compress_alg, args.svn, out_dir, args.tool_dir)
     data = bytearray(get_file_data (lz_file))
     hash_data, auth_data = CONTAINER.calculate_auth_data (lz_file, args.auth, args.key_file, out_dir)
 
@@ -850,6 +850,7 @@ def main():
                 'RSA3072_PKCS1_SHA2_384', 'RSA2048_PSS_SHA2_256', 'RSA3072_PSS_SHA2_384', 'NONE'], default='NONE',  help='authentication algorithm')
     cmd_display.add_argument('-k',  dest='key_file',  type=str, default='', help='Key Id or Private key file path to sign component')
     cmd_display.add_argument('-td', dest='tool_dir', type=str, default='',  help='Compression tool directory')
+    cmd_display.add_argument('-s', dest='svn', type=int,  default=0, help='Security version number for Component')
     cmd_display.set_defaults(func=sign_component)
 
     # Parse arguments and run sub-command
