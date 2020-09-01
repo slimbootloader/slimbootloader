@@ -152,7 +152,7 @@ PlatformNameInit (
   if (PlatNameConfigData != NULL) {
     SetPlatformName ((VOID *)&PlatNameConfigData->PlatformName);
   } else {
-    DEBUG ((DEBUG_INFO, "Platform Name config not found"));
+    DEBUG ((DEBUG_INFO, "Platform Name config not found\n"));
   }
 }
 

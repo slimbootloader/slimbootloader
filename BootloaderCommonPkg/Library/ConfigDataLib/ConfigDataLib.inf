@@ -30,7 +30,6 @@
 [LibraryClasses]
   BaseLib
   DebugLib
-  BootloaderCoreLib
   BaseMemoryLib
 
 [Guids]

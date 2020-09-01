@@ -322,7 +322,7 @@ BuildConfigData (
   UINT32               BitMaskLen;
   UINT32               GpioTableDataOffset;
   UINT32               CfgBlobHdrLen;
-
+  PLATFORMID_CFG_DATA *PidCfg;
 
   Length = GetConfigDataSize ();
   if (Length > BufLen) {
@@ -355,7 +355,7 @@ BuildConfigData (
     if (CdataHdrCurr != NULL) {
       // Set platform mask
       if (CdataHdr->Tag == CDATA_PLATFORMID_TAG) {
-        CdataHdr->Condition[0].Value = 0;
+        CdataHdr->Condition[0].Value = 0xFFFFFFFF;
       } else {
         CdataHdr->Condition[0].Value = (1 << GetPlatformId ());
       }
@@ -405,7 +405,15 @@ BuildConfigData (
         CopyMem (Cdata, CdataCurr, (CdataHdr->Length << 2) - HdrLen);
       }
     } else {
-      return EFI_NOT_FOUND;
+      // Set platform mask
+      if (CdataHdr->Tag == CDATA_PLATFORMID_TAG) {
+        PidCfg = (PLATFORMID_CFG_DATA *)((UINT8 *)CdataHdr + sizeof (CDATA_HEADER) + \
+                 sizeof (CDATA_COND) * CdataHdr->ConditionNum);
+        PidCfg->PlatformId = GetPlatformId ();
+        DEBUG ((DEBUG_INFO, "PID: %d\n", GetPlatformId ()));
+      } else {
+        return EFI_NOT_FOUND;
+      }
     }
 
     Offset += (CdataHdr->Length << 2);

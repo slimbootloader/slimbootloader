@@ -204,6 +204,26 @@ CreateConfigDatabase (
   // PcdCfgDatabaseSize: It is the size for both internal + external cfg data
   //
   if (PcdGet32 (PcdCfgDataSize) > 0) {
+    if (FeaturePcdGet (PcdEnableSetup)) {
+      // Load setup CFGDATA if exists
+      Status = LocateComponent (CONTAINER_SETUP_SIGNATURE,  CFG_DATA_SIGNATURE, \
+                                (VOID **)&CfgDataBase, &CfgDataLength);
+      if (!EFI_ERROR (Status)) {
+        if (((LOADER_COMPRESSED_HEADER *)(UINTN)CfgDataBase)->Signature == LZDM_SIGNATURE) {
+          ExtCfgAddPtr = (UINT8 *)CfgDataBase + sizeof(LOADER_COMPRESSED_HEADER);
+          CfgBlob      = (CDATA_BLOB *)ExtCfgAddPtr;
+          if ((CfgBlob->UsedLength < CfgDataLength) && (CalculateCheckSum16 ((UINT16 *)CfgBlob, CfgBlob->UsedLength) == 0)) {
+            CfgBlob->ExtraInfo.InternalDataOffset = 0;
+            Status = AddConfigData (ExtCfgAddPtr);
+            DEBUG ((DEBUG_INFO, "Append setup CFGDATA ... %r\n", Status));
+            if (!EFI_ERROR (Status)) {
+              return;
+            }
+          }
+        }
+      }
+    }
+
     CfgBlob = (CDATA_BLOB *)LdrGlobal->CfgDataPtr;
     ExtCfgAddPtr = (UINT8 *)CfgBlob + CfgBlob->UsedLength;
     Status = GetComponentInfo (FLASH_MAP_SIG_CFGDATA, &CfgDataBase, &CfgDataLength);

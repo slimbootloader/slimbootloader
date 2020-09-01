@@ -169,6 +169,7 @@
   gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsCnt       |     0x0000 | UINT16 | 0x20000199
   gPlatformModuleTokenSpaceGuid.PcdFuncCpuInitHook        | 0x00000000 | UINT32 | 0x2000019A
   gPlatformModuleTokenSpaceGuid.PcdFspsUpdPtr             | 0x00000000 | UINT32 | 0x2000019B
+
 [PcdsFeatureFlag]
   # Determine if the Intel GFX device should be enabled or not in system
   gPlatformModuleTokenSpaceGuid.PcdIntelGfxEnabled        | TRUE       | BOOLEAN | 0x20000200
@@ -190,3 +191,4 @@
   gPlatformModuleTokenSpaceGuid.PcdLinuxPayloadEnabled    | FALSE      | BOOLEAN | 0x20000210
   gPlatformModuleTokenSpaceGuid.PcdAriSupport             | FALSE      | BOOLEAN | 0x20000211
   gPlatformModuleTokenSpaceGuid.PcdSrIovSupport           | FALSE      | BOOLEAN | 0x20000212
+  gPlatformModuleTokenSpaceGuid.PcdEnableSetup            | FALSE      | BOOLEAN | 0x20000213
