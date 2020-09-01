@@ -15,6 +15,83 @@
 #define IS_PD_SET     (((Address & 0xFFF) & IA32_PG_PD) == IA32_PG_PD)
 #define PD_SET_ADDR   (Address & ~(0xFFFF))
 #define PD_UNSET_ADDR (Address & ~(0xFFF))
+#define MIN_ADDR_BITS 32
+
+/**
+  The function will check if 5-level paging is needed
+
+  @retval TRUE  5-level paging enabling is needed.
+  @retval FALSE 5-level paging enabling is not needed.
+
+**/
+STATIC
+BOOLEAN
+Is5LevelPagingNeeded (
+  VOID
+  )
+{
+  //
+  // Unsupported until a specific usecase requires
+  //
+  return FALSE;
+}
+
+/**
+  The function will check if 1G page is supported.
+
+  @retval TRUE   1G page is supported.
+  @retval FALSE  1G page is not supported.
+
+**/
+STATIC
+BOOLEAN
+IsPage1GSupport (
+  VOID
+  )
+{
+  UINT32            RegEax;
+  UINT32            RegEdx;
+  BOOLEAN           Page1GSupport;
+
+  Page1GSupport = FALSE;
+  AsmCpuid (0x80000000, &RegEax, NULL, NULL, NULL);
+  if (RegEax >= 0x80000001) {
+    AsmCpuid (0x80000001, NULL, NULL, NULL, &RegEdx);
+    if ((RegEdx & BIT26) != 0) {
+      Page1GSupport = TRUE;
+    }
+  }
+
+  return Page1GSupport;
+}
+
+/**
+  Get physical address bits.
+
+  @return Physical address bits.
+
+**/
+STATIC
+UINT8
+GetPhysicalAddressBits (
+  VOID
+  )
+{
+  UINT8             PhysicalAddressBits;
+  UINT32            RegEax;
+
+  //
+  // Default 4GB only
+  //
+  PhysicalAddressBits = MIN_ADDR_BITS;
+  AsmCpuid (0x80000000, &RegEax, NULL, NULL, NULL);
+  if (RegEax >= 0x80000008) {
+    AsmCpuid (0x80000008, &RegEax, NULL, NULL, NULL);
+    PhysicalAddressBits = (UINT8) RegEax;
+  }
+
+  return PhysicalAddressBits;
+}
 
 /**
   This function returns page tables memory size.
@@ -208,6 +285,145 @@ Create4GbPageTables (
       Page32[Idx] = Address + (Attribute | IA32_PG_PD);
       Address += 0x400000;
     }
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Allocates and fills in the Page Directory and Page Table Entries to
+  establish a 1:1 Virtual to Physical mapping.
+
+  @param[in] RequestedAddressBits   If RequestedAddressBits is in valid range
+                                    (MIN_ADDR_BITS < RequestedAddressBits < PhysicalAddressBits),
+                                    paging table will cover the requested physical address range only.
+
+  @retval    EFI_SUCCESS            Page table was created successfully.
+  @retval    EFI_OUT_OF_RESOURCES   Failed to allocate page buffer
+
+**/
+EFI_STATUS
+EFIAPI
+CreateIdentityMappingPageTables (
+  IN  UINT8         RequestedAddressBits
+  )
+{
+  VOID             *PageBuffer;
+  BOOLEAN           Page1GSupport;
+  BOOLEAN           Page5LevelSupport;
+  UINT8             PhysicalAddressBits;
+  UINTN             TotalPagesNum;
+  UINT32            NumOfPml5Entries;
+  UINT32            NumOfPml4Entries;
+  UINT32            NumOfPdpEntries;
+  UINT64           *Page64;
+  UINTN             Idx;
+  UINTN             Entries;
+  UINTN             Address;
+  UINT32            Attribute;
+  UINTN             Cr0;
+
+  PhysicalAddressBits = GetPhysicalAddressBits ();
+  Page1GSupport       = IsPage1GSupport ();
+  Page5LevelSupport   = Is5LevelPagingNeeded ();
+  DEBUG ((DEBUG_INFO, "RequestedAddressBits=%u PhysicalAddressBits=%u 5LevelPaging=%u 1GPage=%u\n",
+    RequestedAddressBits, PhysicalAddressBits, Page5LevelSupport, Page1GSupport));
+
+  ASSERT (PhysicalAddressBits <= 52);
+  if (RequestedAddressBits < MIN_ADDR_BITS) {
+    RequestedAddressBits = MIN_ADDR_BITS;
+  }
+  if (PhysicalAddressBits > RequestedAddressBits) {
+    PhysicalAddressBits = RequestedAddressBits;
+  }
+  if (!Page5LevelSupport && (PhysicalAddressBits > 48)) {
+    PhysicalAddressBits = 48;
+  }
+
+  NumOfPml5Entries = 1;
+  if (PhysicalAddressBits > 48) {
+    NumOfPml5Entries = (UINT32) LShiftU64 (1, PhysicalAddressBits - 48);
+    PhysicalAddressBits = 48;
+  }
+
+  NumOfPml4Entries = 1;
+  if (PhysicalAddressBits > 39) {
+    NumOfPml4Entries = (UINT32) LShiftU64 (1, PhysicalAddressBits - 39);
+    PhysicalAddressBits = 39;
+  }
+
+  NumOfPdpEntries = 1;
+  ASSERT (PhysicalAddressBits > 30);
+  NumOfPdpEntries = (UINT32) LShiftU64 (1, PhysicalAddressBits - 30);
+
+  if (!Page1GSupport) {
+    TotalPagesNum = ((NumOfPdpEntries + 1) * NumOfPml4Entries + 1) * NumOfPml5Entries + 1;
+  } else {
+    TotalPagesNum = (NumOfPml4Entries + 1) * NumOfPml5Entries + 1;
+  }
+
+  if (!Page5LevelSupport) {
+    TotalPagesNum--;
+  }
+
+  DEBUG ((DEBUG_INFO, "Pml5=%u Pml4=%u Pdp=%u TotalPage=%Lu\n",
+    NumOfPml5Entries, NumOfPml4Entries, NumOfPdpEntries, (UINT64)TotalPagesNum));
+
+  PageBuffer = AllocatePages (TotalPagesNum);
+  if (PageBuffer == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  Address   = 0;
+  Attribute = IA32_PG_P | IA32_PG_RW;
+  Page64 = (UINT64 *)PageBuffer;
+
+  // PML5
+  if (Page5LevelSupport) {
+    for (Idx = 0; Idx < NumOfPml5Entries; Idx++) {
+      Page64[Idx] = (UINTN)Page64 + SIZE_4KB * (Idx + 1) + Attribute;
+    }
+    // PML4 Entry
+    Page64 = (UINT64 *)((UINTN)Page64 + SIZE_4KB);
+  }
+
+  // PML4
+  Entries = (NumOfPml5Entries == 1) ? NumOfPml4Entries : 512;
+  for (Idx = 0; Idx < Entries; Idx++) {
+    Page64[Idx] = (UINTN)Page64 + SIZE_4KB * (Idx + 1) + Attribute;
+  }
+
+  Page64 = (UINT64 *)((UINTN)Page64 + SIZE_4KB);
+  if (Page1GSupport) {
+    // PDE
+    Entries *= 512;
+    for (Idx = 0; Idx < Entries; Idx++, Address += SIZE_1GB) {
+      Page64[Idx] = Address + (Attribute | IA32_PG_PD);
+    }
+  } else {
+    // PDP
+    Entries *= (NumOfPml4Entries == 1 ? NumOfPdpEntries : 512);
+    for (Idx = 0; Idx < Entries; Idx++) {
+      Page64[Idx] = (UINTN)Page64 + (Entries * sizeof (UINT64)) + (SIZE_4KB * Idx) + Attribute;
+    }
+
+    // PDE
+    Page64 = (UINT64 *)((UINTN)Page64 + Entries * sizeof(UINT64));
+    Entries *= 512;
+    for (Idx = 0; Idx < Entries; Idx++, Address += SIZE_2MB) {
+      Page64[Idx] = Address + (Attribute | IA32_PG_PD);
+    }
+  }
+
+  Cr0 = AsmReadCr0 ();
+  if (Cr0 & BIT31) {
+    // Alreay in paging mode
+    AsmWriteCr3 ((UINTN)PageBuffer);
+  } else {
+    // Enable paging
+    AsmWriteCr4 (AsmReadCr4() | BIT4);
+    AsmWriteCr3 ((UINTN)PageBuffer);
+    AsmWriteCr0 (Cr0 | BIT31);
   }
 
   return EFI_SUCCESS;
