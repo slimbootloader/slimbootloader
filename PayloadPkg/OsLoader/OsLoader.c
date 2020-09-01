@@ -1219,11 +1219,15 @@ PayloadMain (
       BootShell    = TRUE;
     }
   } else {
-    if (OsBootOptionList->BootToShell != 0) {
-      BootShell    = TRUE;
-    } else if (DebugCodeEnabled ()) {
-      ShellTimeout = (UINTN)PcdGet16 (PcdPlatformBootTimeOut);
-      BootShell    = TRUE;
+    if (OsBootOptionList->RestrictedBoot != 0) {
+      BootShell    = FALSE;
+    } else {
+      if (OsBootOptionList->BootToShell != 0) {
+        BootShell    = TRUE;
+      } else if (DebugCodeEnabled ()) {
+        ShellTimeout = (UINTN)PcdGet16 (PcdPlatformBootTimeOut);
+        BootShell    = TRUE;
+      }
     }
   }
 
@@ -1266,15 +1270,21 @@ PayloadMain (
         MediaInitialize (0, DevDeinit);
       }
 
-      // Move to next boot option
-      CurrIdx = GetNextBootOption (OsBootOptionList, CurrIdx);
-      if (CurrIdx >= OsBootOptionList->OsBootOptionCount) {
-        CurrIdx = 0;
+      if (OsBootOptionList->RestrictedBoot != 0) {
+        // Restricted boot should not try other boot option
+        break;
+      } else {
+        // Move to next boot option
+        CurrIdx = GetNextBootOption (OsBootOptionList, CurrIdx);
+        if (CurrIdx >= OsBootOptionList->OsBootOptionCount) {
+          CurrIdx = 0;
+        }
+        BootIdx++;
       }
-      BootIdx++;
     }
 
-    if (DebugCodeEnabled ()) {
+    if (DebugCodeEnabled () && (OsBootOptionList->RestrictedBoot == 0)) {
+      // Restricted boot should not fall back to shell
       RunShell (0);
     } else {
       break;
