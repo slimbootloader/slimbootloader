@@ -1,7 +1,7 @@
 /** @file
   This file defines the hob structure for the OS boot configuration.
 
-  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -167,7 +167,8 @@ typedef struct {
   UINT8          ResetReason;
   UINT8          BootOptionReset:1;
   UINT8          BootToShell:1;
-  UINT8          CurrentBoot:6;
+  UINT8          RestrictedBoot:1;
+  UINT8          CurrentBoot:5;
   UINT8          OsBootOptionCount;
   OS_BOOT_OPTION OsBootOption[0];
 } OS_BOOT_OPTION_LIST;
