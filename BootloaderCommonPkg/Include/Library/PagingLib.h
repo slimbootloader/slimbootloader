@@ -107,17 +107,18 @@ UnmapMemoryRange (
   Allocates and fills in the Page Directory and Page Table Entries to
   establish a 1:1 Virtual to Physical mapping.
 
-  @param [in] Ranges
-  @param [in] PageTableMem
+  @param[in] RequestedAddressBits   If RequestedAddressBits is in valid range
+                                    (MIN_ADDR_BITS < RequestedAddressBits < PhysicalAddressBits),
+                                    paging table will cover the requested physical address range only.
 
-  @retval The address of 4 level page map.
+  @retval    EFI_SUCCESS            Page table was created successfully.
+  @retval    EFI_OUT_OF_RESOURCES   Failed to allocate page buffer
 
 **/
-UINT32
+EFI_STATUS
 EFIAPI
-Create4GbPageTablesAndRemapRange (
-  IN MAP_RANGE   Ranges[1],
-  IN VOID       *PageTableMem
+CreateIdentityMappingPageTables (
+  IN  UINT8         RequestedAddressBits
   );
 
 /**

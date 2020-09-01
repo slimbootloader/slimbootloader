@@ -39,12 +39,14 @@
   SerialPortLib
   DebugLogBufferLib
   DebugPrintErrorLevelLib
+  PagingLib
 
 [Guids]
   gLoaderLibraryDataGuid
   gLoaderPlatformDataGuid
   gBootLoaderServiceGuid
   gBootLoaderVersionGuid
+  gLoaderPciRootBridgeInfoGuid
 
 [Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdMaxLibraryDataEntry
