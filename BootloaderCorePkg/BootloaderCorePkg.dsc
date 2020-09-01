@@ -316,6 +316,7 @@
   gPlatformModuleTokenSpaceGuid.PcdAriSupport             | $(SUPPORT_ARI)
   gPlatformModuleTokenSpaceGuid.PcdSrIovSupport           | $(SUPPORT_SR_IOV)
   gPlatformModuleTokenSpaceGuid.PcdEnableSetup            | $(ENABLE_SBL_SETUP)
+  gPayloadTokenSpaceGuid.PcdPayloadModuleEnabled          | $(ENABLE_PAYLOD_MODULE)
 
 !ifdef $(S3_DEBUG)
   gPlatformModuleTokenSpaceGuid.PcdS3DebugEnabled         | $(S3_DEBUG)

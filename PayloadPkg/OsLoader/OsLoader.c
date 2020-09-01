@@ -632,6 +632,11 @@ StartBooting (
 {
   MULTIBOOT_IMAGE            *MultiBoot;
   EFI_STATUS                 Status;
+  PLD_MOD_PARAM              PldModParam;
+  OS_BOOT_OPTION_LIST       *OsBootOptionList;
+  UINT32                     CurrIdx;
+  CHAR8                     *PathPtr;
+  CHAR8                      ModCmdLineBuf[16];
 
   DEBUG_CODE_BEGIN();
   PrintStackHeapInfo ();
@@ -668,13 +673,25 @@ StartBooting (
     MultiBoot = &LoadedImage->Image.MultiBoot;
     BeforeOSJump ("Jumping into FV/PE32 ...");
 
+    if (FeaturePcdGet (PcdPayloadModuleEnabled)) {
+      OsBootOptionList = GetBootOptionList ();
+      CurrIdx = GetCurrentBootOption (OsBootOptionList, mCurrentBoot);
+      PathPtr = (CHAR8 *)OsBootOptionList->OsBootOption[CurrIdx].Image[0].FileName;
+      ModCmdLineBuf[0] = 0;
+      ZeroMem (&PldModParam, sizeof(PLD_MOD_PARAM));
+      PldModParam.GetProcAddress = GetProcAddress;
+      PldModParam.CmdLineBuf     = ModCmdLineBuf;
+      PldModParam.CmdLineLen     = sizeof(ModCmdLineBuf);
+      PayloadModuleInit (&PldModParam, PathPtr);
+    }
+
     //
     // Use switch stack to ensure stack will be rolled back to original point.
     //
     SwitchStack (
       (SWITCH_STACK_ENTRY_POINT)(UINTN)MultiBoot->BootState.EntryPoint,
       (VOID *)(UINTN)PcdGet32 (PcdPayloadHobList),
-      NULL,
+      FeaturePcdGet (PcdPayloadModuleEnabled) ? &PldModParam : NULL,
       (VOID *)((UINT8 *)mEntryStack + 8)
       );
     Status = EFI_DEVICE_ERROR;
@@ -1112,13 +1129,15 @@ DEBUG_CODE_END();
 /**
   Initialize platform console.
 
+  @param[in]  ForceFbConsole   Always initialize frame buffer
+
   @retval  EFI_NOT_FOUND    No additional console was found.
   @retval  EFI_SUCCESS      Console has been initialized successfully.
   @retval  Others           There is error during console initialization.
 **/
 EFI_STATUS
-InitConsole (
-  VOID
+LocalConsoleInit (
+  IN  BOOLEAN   ForceFbConsole
 )
 {
   UINTN                     CtrlPciBase;
@@ -1140,7 +1159,7 @@ InitConsole (
     }
   }
 
-  if (PcdGet32 (PcdConsoleOutDeviceMask) & ConsoleOutFrameBuffer) {
+  if (((PcdGet32 (PcdConsoleOutDeviceMask) & ConsoleOutFrameBuffer) != 0) || ForceFbConsole) {
     GfxInfoHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GetGuidHobData (NULL, NULL, &gEfiGraphicsInfoHobGuid);
     if (GfxInfoHob != NULL) {
       Width  = GfxInfoHob->GraphicsMode.HorizontalResolution;
@@ -1173,7 +1192,7 @@ RunShell (
   IN  UINTN    Timeout
   )
 {
-  InitConsole ();
+  LocalConsoleInit (FALSE);
 
   Shell (Timeout);
 }

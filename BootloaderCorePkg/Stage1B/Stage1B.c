@@ -210,7 +210,7 @@ CreateConfigDatabase (
                                 (VOID **)&CfgDataBase, &CfgDataLength);
       if (!EFI_ERROR (Status)) {
         if (((LOADER_COMPRESSED_HEADER *)(UINTN)CfgDataBase)->Signature == LZDM_SIGNATURE) {
-          ExtCfgAddPtr = (UINT8 *)CfgDataBase + sizeof(LOADER_COMPRESSED_HEADER);
+          ExtCfgAddPtr = (UINT8 *)(UINTN)CfgDataBase + sizeof(LOADER_COMPRESSED_HEADER);
           CfgBlob      = (CDATA_BLOB *)ExtCfgAddPtr;
           if ((CfgBlob->UsedLength < CfgDataLength) && (CalculateCheckSum16 ((UINT16 *)CfgBlob, CfgBlob->UsedLength) == 0)) {
             CfgBlob->ExtraInfo.InternalDataOffset = 0;
