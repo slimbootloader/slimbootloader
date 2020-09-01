@@ -63,4 +63,4 @@
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegSize
   gPlatformModuleTokenSpaceGuid.PcdStage1BXip
-
+  gPlatformModuleTokenSpaceGuid.PcdEnableSetup

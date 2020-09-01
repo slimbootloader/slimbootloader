@@ -204,13 +204,15 @@ GpioInit (
   GpioTable  = (UINT8 *)AllocateTemporaryMemory (0);  //allocate new buffer
   GpioCfgDataBuffer = GpioTable;
 
-  for (Index = 0; Index  < GpioCfgHdr->GpioItemCount; Index++) {
-    if (GpioCfgCurrHdr->GpioBaseTableBitMask[Index >> 3] & (1 << (Index & 7))) {
-      CopyMem (GpioTable, GpioCfgHdr->GpioTableData + Offset, GpioCfgHdr->GpioItemSize);
-      GpioTable += GpioCfgHdr->GpioItemSize;
-      GpioEntries++;
+  if (GpioCfgBaseHdr != NULL) {
+    for (Index = 0; Index  < GpioCfgHdr->GpioItemCount; Index++) {
+      if (GpioCfgCurrHdr->GpioBaseTableBitMask[Index >> 3] & (1 << (Index & 7))) {
+        CopyMem (GpioTable, GpioCfgHdr->GpioTableData + Offset, GpioCfgHdr->GpioItemSize);
+        GpioTable += GpioCfgHdr->GpioItemSize;
+        GpioEntries++;
+      }
+      Offset += GpioCfgHdr->GpioItemSize;
     }
-    Offset += GpioCfgHdr->GpioItemSize;
   }
 
   if (GpioCfgCurrHdr != NULL) {
@@ -414,6 +416,7 @@ UpdateOsBootMediumInfo (
     //   Use '-boot order=c' or default to boot from eMMC
     //   Use '-boot order=d' to boot from SATA
     //   Use '-boot order=n' to boot from NVMe
+    //   Use '-boot order=a' to boot to setup
     //
     IoWrite8 (0x70, 0x3D);
     BootOrder = IoRead8  (0x71);
@@ -424,9 +427,20 @@ UpdateOsBootMediumInfo (
     } else if ((BootOrder & 0x0F) == 4) {
       // NVMe boot first
       OsBootOptionList->CurrentBoot = 2;
-    } else {
+    } else if ((BootOrder & 0x0F) == 2) {
       // SD boot first
       OsBootOptionList->CurrentBoot = 0;
+    } else if ((BootOrder & 0x0F) == 1) {
+      // Build setup boot option
+      if (FeaturePcdGet (PcdEnableSetup)) {
+        OsBootOptionList->OsBootOptionCount = 1;
+        OsBootOptionList->CurrentBoot       = 0;
+        OsBootOptionList->RestrictedBoot    = 1;
+        ZeroMem (OsBootOptionList->OsBootOption, sizeof(OS_BOOT_OPTION));
+        OsBootOptionList->OsBootOption[0].DevType   = OsBootDeviceMemory;
+        OsBootOptionList->OsBootOption[0].FsType    = EnumFileSystemTypeAuto;
+        CopyMem (OsBootOptionList->OsBootOption[0].Image[0].FileName, "!SETP/MPYM", 11);
+      }
     }
   }
 
