@@ -168,6 +168,7 @@ def get_char ():
 
 def get_ch ():
     ch = chr(get_char())
+
     if ch == '\x00':
         return b''
 
@@ -185,13 +186,25 @@ def get_ch ():
                 return b'right'
             elif ch == 'D':
                 return b'left'
+            elif ch == '2':
+                return b'ins'
+            elif ch == '3':
+                return b'del'
+            elif ch == '1':
+                return b'home'
+            elif ch == '4':
+                return b'end'
+            elif ch == '5':
+                return b'pgup'
+            elif ch == '6':
+                return b'pgdw'
             return b''
         elif ch in 'kh/?':
-            if ch == 'k':
+            if ch in 'k':
                 return b'end'
-            elif ch == 'h':
+            elif ch in 'h':
                 return b'home'
-            elif ch == '/':
+            elif ch in '/':
                 return b'pgdw'
             else:
                 return b'pgup'

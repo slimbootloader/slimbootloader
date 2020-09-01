@@ -214,6 +214,7 @@ class BaseBoard(object):
         self.ENABLE_DMA_PROTECTION = 0
         self.ENABLE_MULTI_USB_BOOT_DEV = 0
         self.ENABLE_SBL_SETUP      = 0
+        self.ENABLE_PAYLOD_MODULE  = 0
 
         self.SUPPORT_ARI           = 0
         self.SUPPORT_SR_IOV        = 0
@@ -253,7 +254,8 @@ class BaseBoard(object):
         self.FWUPDATE_LOAD_BASE    = 0
 
         # OS Loader FD/FV sizes
-        self.OS_LOADER_FD_SIZE     = 0x0004C000
+        self.OS_LOADER_FD_SIZE     = 0x0004E000
+
         self.OS_LOADER_FD_NUMBLK   = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         self.PLD_HEAP_SIZE         = 0x02000000
@@ -313,6 +315,11 @@ class Build(object):
         self._pld_list                     = get_payload_list (board._PAYLOAD_NAME.split(';'))
         self._comp_list                    = []
         self._region_list                  = []
+
+        # enforce feature configs rules
+        if self._board.ENABLE_SBL_SETUP:
+            self._board.ENABLE_PAYLOD_MODULE = 1
+
 
     def board_build_hook (self, phase):
         if getattr(self._board, "PlatformBuildHook", None):

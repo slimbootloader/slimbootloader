@@ -431,7 +431,7 @@ UpdateOsBootMediumInfo (
       // SD boot first
       OsBootOptionList->CurrentBoot = 0;
     } else if ((BootOrder & 0x0F) == 1) {
-      // Build setup boot option
+      // Build setup boot option to run MicroPython and setup script
       if (FeaturePcdGet (PcdEnableSetup)) {
         OsBootOptionList->OsBootOptionCount = 1;
         OsBootOptionList->CurrentBoot       = 0;
@@ -439,7 +439,7 @@ UpdateOsBootMediumInfo (
         ZeroMem (OsBootOptionList->OsBootOption, sizeof(OS_BOOT_OPTION));
         OsBootOptionList->OsBootOption[0].DevType   = OsBootDeviceMemory;
         OsBootOptionList->OsBootOption[0].FsType    = EnumFileSystemTypeAuto;
-        CopyMem (OsBootOptionList->OsBootOption[0].Image[0].FileName, "!SETP/MPYM", 11);
+        CopyMem (OsBootOptionList->OsBootOption[0].Image[0].FileName, "!SETP/MPYM:STPY", 16);
       }
     }
   }

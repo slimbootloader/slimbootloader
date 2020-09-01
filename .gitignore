@@ -21,3 +21,4 @@ Platform/ApollolakeBoardPkg/VbtBin
 Silicon/ApollolakePkg/Include/Fsp*.h
 Silicon/CoffeelakePkg/Include/Fsp*.h
 Silicon/CoffeelakePkg/Microcode/*.mcb
+PayloadModPkg
