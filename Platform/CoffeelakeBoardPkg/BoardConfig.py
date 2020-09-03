@@ -75,11 +75,14 @@ class Board(BaseBoard):
         self.ENABLE_SMBIOS        = 1
 
         # Verify required minimum FSP version
-        self.MIN_FSP_REVISION     = 0x07006440
+        self.MIN_FSP_REVISION     = 0x07006550
         # Verify FSP image ID. Empty string means skipping verification
         self.FSP_IMAGE_ID         = '$CFLFSP$'
 
         self.STAGE1B_XIP          = 1
+
+        # Stack settings to run FspMemoryInit
+        self.FSP_M_STACK_TOP      = 0xFEF3FF00
 
         self.STAGE2_FD_BASE       = 0x01000000
         self.STAGE2_FD_SIZE       = 0x000E0000

@@ -11,11 +11,11 @@
 
 [UserExtensions.SBL."CloneRepo"]
   REPO    = https://github.com/intel/FSP.git
-  COMMIT  = 59964173e18950debcc6b8856c5c928935ce0b4f
+  COMMIT  = eb25f19ef7fbe88fb207c6896a37a2035bba9bc5
 
 [UserExtensions.SBL."CopyList"]
-  CoffeeLakeFspBinPkg/FSP.fd                 : Silicon/CoffeelakePkg/FspBin/FspDbg.bin
-  CoffeeLakeFspBinPkg/FSP.fd                 : Silicon/CoffeelakePkg/FspBin/FspRel.bin
+  CoffeeLakeFspBinPkg/Fsp.fd                 : Silicon/CoffeelakePkg/FspBin/FspDbg.bin
+  CoffeeLakeFspBinPkg/Fsp.fd                 : Silicon/CoffeelakePkg/FspBin/FspRel.bin
   CoffeeLakeFspBinPkg/Fsp.bsf                : Silicon/CoffeelakePkg/FspBin/Fsp.bsf
   CoffeeLakeFspBinPkg/Include/FspInfoHob.h   : Silicon/CoffeelakePkg/Include/FspInfoHob.h
   CoffeeLakeFspBinPkg/Include/FspUpd.h       : Silicon/CoffeelakePkg/Include/FspUpd.h
