@@ -14,7 +14,7 @@ import re
 import imp
 from   ctypes import *
 
-DSC_LINE_HDR = "# !BSF SUBT:{GPIO_TMPL:"
+YML_LINE_HDR = "- !expand { GPIO_TMPL : [ "
 DLT_CFGx_HDR = "GPIO_CFG_DATA.GpioPinConfig"
 DLT_CFG0_HDR = DLT_CFGx_HDR + "0_"
 DLT_CFG1_HDR = DLT_CFGx_HDR + "1_"
@@ -44,9 +44,9 @@ PAD_NAME_HDR = "GPIO_XXX_XX_"
 #                    HostSwOwn  PadCfgLock PadCfgLockTx PadCfgDw0 PadCfgDw1
 # GPIO_XXXXXX_GPP_A7:0x********:0x********:0x********:0x********:0x********
 
-# .dsc input
-#                                  SBL DW0     SBL DW1
-# # !BSF SUBT:{GPIO_TMPL:GPP_A07: 0x********: 0x********}
+# .yaml input
+#                                       SBL DW0     SBL DW1
+#   - !expand { GPIO_TMPL : [ GPP_A00, 0x00000003, 0x00000000 ] }
 
 # .dlt input
 #
@@ -291,7 +291,7 @@ GRP_INFO_CFL_WHL = {
 }
 
 # global dicts
-dsc_dict = {}
+yml_dict = {}
 dlt_dict = {}
 h_dict   = {}
 csv_dict = {}
@@ -352,10 +352,10 @@ def validate_args (inp_fmt, out_fmt):
     valid = True
     lines = open (inp_fmt, 'r').readlines()
 
-    if ( inp_fmt.split('.')[1] in ['h', 'csv', 'txt'] and out_fmt not in ['dsc', 'dlt'] ):
+    if ( inp_fmt.split('.')[1] in ['h', 'csv', 'txt'] and out_fmt not in ['yaml', 'dlt'] ):
         raise Exception ("Unmatched inp and out formats!")
 
-    if ( inp_fmt.split('.')[1] in ['dsc', 'dlt'] and out_fmt not in ['h', 'csv', 'txt'] ):
+    if ( inp_fmt.split('.')[1] in ['yaml', 'dlt'] and out_fmt not in ['h', 'csv', 'txt'] ):
         raise Exception ("Unmatched inp and out formats!")
 
     if inp_fmt.endswith ('.h'):
@@ -374,7 +374,7 @@ def validate_args (inp_fmt, out_fmt):
        for line in lines:
             if len (line.split(':')) != 6:
                 raise Exception ("Invalid txt input format!")
-    elif inp_fmt.endswith ('.dsc'):
+    elif inp_fmt.endswith ('.yaml'):
         valid = True
     elif inp_fmt.endswith ('.dlt'):
         valid = True
@@ -400,10 +400,10 @@ def get_parts_from_inp (inp_fmt, line, next_line):
             parts = line.split(',')
     elif inp_fmt.endswith ('.txt'):
         parts = line.split(':')
-    elif inp_fmt.endswith ('.dsc'):
-        if line.lstrip().startswith (DSC_LINE_HDR):
-            line = line.replace(' ', '').rstrip('}\n')
-            parts = line.split(':')
+    elif inp_fmt.endswith ('.yaml'):
+        if line.lstrip().startswith (YML_LINE_HDR):
+            line = line.replace(' ', '').rstrip(' ] }\n')
+            parts = line.split(',')
     elif inp_fmt.endswith ('dlt'):
         if line.startswith (DLT_CFG0_HDR):
             line = line.replace(' ', '').rstrip('\n')
@@ -484,7 +484,7 @@ def get_field_from_sbl_dw (s_in, s_mask, bit_pos, e_field, which_dw):
 #
 
 #
-# [h, csv, txt] to [dsc, dlt] start
+# [h, csv, txt] to [yaml, dlt] start
 #
 
 # convert i/p from .h and .csv to SBL GPIO CFG DWs
@@ -581,11 +581,11 @@ def get_sbl_dws (inp_fmt, cfg_file, parts):
     return pad_name, sbl_dw0.Dw0, sbl_dw1.Dw1
 
 #
-# [h, csv, txt] to [dsc, dlt] end
+# [h, csv, txt] to [yaml, dlt] end
 #
 
 #
-# [dsc, dlt] to [h, csv, txt] start
+# [yaml, dlt] to [h, csv, txt] start
 #
 
 # Get .h, .csv line from SBL Config DWs
@@ -679,10 +679,10 @@ def parse_sbl_dws (inp_fmt, out_fmt, cfg_file, parts):
 
     out_line = ''
 
-    if inp_fmt.endswith ('.dsc'):
-        sbl_dw0.Dw0 = int (parts[3], 0)
-        sbl_dw1.Dw1 = int (parts[4], 0)
-        pad_name = parts[2]
+    if inp_fmt.endswith ('.yaml'):
+        sbl_dw0.Dw0 = int (parts[1], 0)
+        sbl_dw1.Dw1 = int (parts[2], 0)
+        pad_name = parts[0][-7:]
     elif inp_fmt.endswith ('.dlt'):
         sbl_dw0.Dw0 = int (parts[1], 0)
         sbl_dw1.Dw1 = int (parts[3], 0)
@@ -708,7 +708,7 @@ def parse_sbl_dws (inp_fmt, out_fmt, cfg_file, parts):
     return pad_name, out_line
 
 #
-# [dsc, dlt] to [h, csv, txt] end
+# [yaml, dlt] to [h, csv, txt] end
 #
 
 #
@@ -720,14 +720,14 @@ def convert_from_inp_to_out (inp_fmt, cfg_file, out_fmt, parts):
     if inp_fmt.endswith ('.h') or inp_fmt.endswith ('.csv') or inp_fmt.endswith ('.txt'):
         pad_name, dw0, dw1 = get_sbl_dws (inp_fmt, cfg_file, parts)
         if pad_name != '':
-            if out_fmt == 'dsc':
-                sbl_dsc_line = DSC_LINE_HDR + pad_name + ": 0x%08X" % dw0 + ": 0x%08X" % dw1 + "}"
-                dsc_dict[pad_name] = sbl_dsc_line
+            if out_fmt == 'yaml':
+                sbl_yml_line = YML_LINE_HDR + pad_name + ", 0x%08X" % dw0 + ", 0x%08X" % dw1 + " ] }"
+                yml_dict[pad_name] = sbl_yml_line
             else:
                 sbl_dlt_line =  DLT_CFG0_HDR + pad_name + " | 0x%08X\n"  % dw0
                 sbl_dlt_line += DLT_CFG1_HDR + pad_name + " | 0x%08X"    % dw1
                 dlt_dict[pad_name] = sbl_dlt_line
-    elif inp_fmt.endswith ('.dsc') or inp_fmt.endswith ('.dlt'):
+    elif inp_fmt.endswith ('.yaml') or inp_fmt.endswith ('.dlt'):
         pad_name, out_line = parse_sbl_dws (inp_fmt, out_fmt, cfg_file, parts)
         if pad_name != '':
             if out_fmt == 'h':
@@ -770,9 +770,9 @@ def gpio_convert (args):
 
     # Copy the final data to ouput
     sbl_data = ""
-    if args.out_fmt == 'dsc':
-        for key in sorted(dsc_dict):
-            sbl_data += dsc_dict[key] + '\n'
+    if args.out_fmt == 'yaml':
+        for key in sorted(yml_dict):
+            sbl_data += yml_dict[key] + '\n'
     elif args.out_fmt == 'dlt':
         for key in sorted(dlt_dict):
             sbl_data += dlt_dict[key] + '\n'
@@ -814,7 +814,7 @@ if __name__ == '__main__':
                         dest='inp_fmt',
                         type=str,
                         required=True,
-                        help='Input data file, either [dsc, dlt] or [h , csv, txt]')
+                        help='Input data file, either [yaml, dlt] or [h , csv, txt]')
     ap.add_argument(  '-cf',
                         dest='cfg_file',
                         type=str,
@@ -822,10 +822,10 @@ if __name__ == '__main__':
                         help='Config file containing inputs like Group Info(dict with name & index in GPIO_GROUP_INFO in Gpio Lib code)')
     ap.add_argument(  '-of',
                         dest='out_fmt',
-                        choices=['dsc', 'dlt', 'h', 'csv', 'txt'],
+                        choices=['yaml', 'dlt', 'h', 'csv', 'txt'],
                         type=str,
                         required=True,
-                        help='Output SBL format, either [h, csv, txt] or [dsc, dlt]')
+                        help='Output SBL format, either [h, csv, txt] or [yaml, dlt]')
     ap.add_argument(  '-o',
                         dest='out_path',
                         default='.',
