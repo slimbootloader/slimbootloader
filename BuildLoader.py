@@ -1137,7 +1137,7 @@ class Build(object):
 
         # create hashstore file
         key_hash_list = []
-        mst_key = None
+        mst_key = self._board._MASTER_PRIVATE_KEY
         if self._board.HAVE_VERIFIED_BOOT:
             hash_store_size = sizeof(HashStoreTable) + (sizeof(HashStoreData) + HASH_DIGEST_SIZE[HASH_VAL_STRING[self._board.SIGN_HASH_TYPE]]) * HashStoreTable().HASH_STORE_MAX_IDX_NUM
             gen_file_with_size (os.path.join(self._fv_dir, 'HashStore.bin'), hash_store_size)
@@ -1150,7 +1150,6 @@ class Build(object):
             fo.close()
 
             # create key hash file
-            mst_key = self._board._MASTER_PRIVATE_KEY
             if getattr(self._board, "GetKeyHashList", None):
                 key_hash_list = self._board.GetKeyHashList ()
 
