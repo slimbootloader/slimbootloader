@@ -28,7 +28,9 @@
 
   @retval                  A pointer to SHA-256 digest value
 **/
-Ipp8u* Sha256 (const Ipp8u* pMsg, Ipp32u msgLen, Ipp8u* pMD)
+Ipp8u*
+EFIAPI
+Sha256 (const Ipp8u* pMsg, Ipp32u msgLen, Ipp8u* pMD)
 {
   if (FixedPcdGet8(PcdIppHashLibSupportedMask) & IPP_HASHLIB_SHA2_256) {
 
@@ -52,6 +54,7 @@ Ipp8u* Sha256 (const Ipp8u* pMsg, Ipp32u msgLen, Ipp8u* pMD)
   @retval  RETURN_SECURITY_VIOLATION  All other errors.
 **/
 RETURN_STATUS
+EFIAPI
 Sha256Init (
   IN      HASH_CTX   *HashCtx,
   IN      Ipp32u      HashCtxSize
@@ -85,6 +88,7 @@ Sha256Init (
   @retval  RETURN_SECURITY_VIOLATION  All other errors.
 **/
 RETURN_STATUS
+EFIAPI
 Sha256Update (
   IN        HASH_CTX   *HashCtx,
   IN CONST  Ipp8u      *Msg,
@@ -114,6 +118,7 @@ Sha256Update (
   @retval  RETURN_SECURITY_VIOLATION  All other errors.
 **/
 RETURN_STATUS
+EFIAPI
 Sha256Final (
   IN       HASH_CTX   *HashCtx,
   OUT      Ipp8u      *Hash

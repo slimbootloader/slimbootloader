@@ -124,6 +124,7 @@ typedef struct {
   @retval                  A pointer to SHA-256 digest value
 **/
 UINT8 *
+EFIAPI
 Sha256 (
   IN  CONST UINT8          *Data,
   IN        UINT32          Length,
@@ -145,6 +146,7 @@ Sha256 (
   @retval                  A pointer to SHA-384 digest value
 **/
 UINT8 *
+EFIAPI
 Sha384 (
   IN  CONST UINT8          *Data,
   IN        UINT32          Length,
@@ -165,6 +167,7 @@ Sha384 (
   @retval                  A pointer to SM3 digest value
 **/
 UINT8 *
+EFIAPI
 Sm3 (
   IN  CONST UINT8          *Data,
   IN        UINT32          Length,
@@ -234,6 +237,7 @@ RsaVerify_PSS (
   @retval   EFI_PROTOCOL_ERROR          Error caused while calculating HMAC SHA256
 **/
 EFI_STATUS
+EFIAPI
 HmacSha256 (
   IN  CONST UINT8          *Msg,
   IN        UINT32          MsgLen,
@@ -284,6 +288,7 @@ HkdfExtractExpand (
   @retval  RETURN_SECURITY_VIOLATION  All other errors.
 **/
 RETURN_STATUS
+EFIAPI
 Sha256Init (
   IN      HASH_CTX   *HashCtx,
   IN      UINT32      HashCtxSize
@@ -301,6 +306,7 @@ Sha256Init (
   @retval  RETURN_SECURITY_VIOLATION  All other errors.
 **/
 RETURN_STATUS
+EFIAPI
 Sha256Update (
   IN        HASH_CTX   *HashCtx,
   IN CONST  UINT8      *Msg,
@@ -317,6 +323,7 @@ Sha256Update (
   @retval  RETURN_SECURITY_VIOLATION  All other errors.
 **/
 RETURN_STATUS
+EFIAPI
 Sha256Final (
   IN       HASH_CTX   *HashCtx,
   OUT      UINT8      *Hash
@@ -334,6 +341,7 @@ Sha256Final (
   @retval  RETURN_SECURITY_VIOLATION  All other errors.
 **/
 RETURN_STATUS
+EFIAPI
 Sha384Init (
   IN      HASH_CTX   *HashCtx,
   IN      UINT32      HashCtxSize
@@ -351,6 +359,7 @@ Sha384Init (
   @retval  RETURN_SECURITY_VIOLATION  All other errors.
 **/
 RETURN_STATUS
+EFIAPI
 Sha384Update (
   IN        HASH_CTX   *HashCtx,
   IN CONST  UINT8      *Msg,
@@ -367,6 +376,7 @@ Sha384Update (
   @retval  RETURN_SECURITY_VIOLATION  All other errors.
 **/
 RETURN_STATUS
+EFIAPI
 Sha384Final (
   IN       HASH_CTX   *HashCtx,
   OUT      UINT8      *Hash
@@ -383,6 +393,7 @@ Sha384Final (
   @retval  RETURN_SECURITY_VIOLATION  All other errors.
 **/
 RETURN_STATUS
+EFIAPI
 Sm3Init (
   IN      HASH_CTX   *HashCtx,
   IN      UINT32      HashCtxSize
@@ -400,6 +411,7 @@ Sm3Init (
   @retval  RETURN_SECURITY_VIOLATION  All other errors.
 **/
 RETURN_STATUS
+EFIAPI
 Sm3Update (
   IN        HASH_CTX   *HashCtx,
   IN CONST  UINT8      *Msg,
@@ -416,6 +428,7 @@ Sm3Update (
   @retval  RETURN_SECURITY_VIOLATION  All other errors.
 **/
 RETURN_STATUS
+EFIAPI
 Sm3Final (
   IN       HASH_CTX   *HashCtx,
   OUT      UINT8      *Hash
