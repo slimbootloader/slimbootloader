@@ -30,6 +30,7 @@
   @retval Others              Unable to calcuate hash.
 **/
 RETURN_STATUS
+EFIAPI
 GetHashToExtend (
   IN       UINT8            ComponentType,
   IN       HASH_ALG_TYPE    HashType,
@@ -53,6 +54,7 @@ GetHashToExtend (
 
 **/
 RETURN_STATUS
+EFIAPI
 CalculateHash  (
   IN CONST UINT8          *Data,
   IN       UINT32          Length,
@@ -78,6 +80,7 @@ CalculateHash  (
 
 **/
 RETURN_STATUS
+EFIAPI
 DoHashVerify (
   IN CONST UINT8           *Data,
   IN       UINT32           Length,
@@ -107,6 +110,7 @@ DoHashVerify (
 
 **/
 RETURN_STATUS
+EFIAPI
 DoRsaVerify (
   IN CONST UINT8           *Data,
   IN       UINT32           Length,
