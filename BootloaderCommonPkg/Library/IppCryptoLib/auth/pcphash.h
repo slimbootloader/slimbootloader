@@ -209,11 +209,11 @@ void cpComputeDigest(Ipp8u* pHashTag, int hashTagLen, const IppsHashState* pCtx)
 void UpdateSHA1  (void* pHash, const Ipp8u* mblk, int mlen, const void* pParam);
 #define UpdateSHA256 OWNAPI(UpdateSHA256)
 void UpdateSHA256(void* pHash, const Ipp8u* mblk, int mlen, const void* pParam);
-void UpdateSHA256V8(void* pHash, const Ipp8u* mblk, int mlen, const void* pParam);
-void UpdateSHA256Ni(void* pHash, const Ipp8u* mblk, int mlen, const void* pParam);
+void EFIAPI UpdateSHA256V8(void* pHash, const Ipp8u* mblk, int mlen, const void* pParam);
+void EFIAPI UpdateSHA256Ni(void* pHash, const Ipp8u* mblk, int mlen, const void* pParam);
 void UpdateSHA512(void* pHash, const Ipp8u* mblk, int mlen, const void* pParam);
-void UpdateSHA512W7 (void* uniHash, const Ipp8u* mblk, int mlen, const void* uniPraram);
-void UpdateSHA512G9 (void* uniHash, const Ipp8u* mblk, int mlen, const void* uniPraram);
+void EFIAPI UpdateSHA512W7 (void* uniHash, const Ipp8u* mblk, int mlen, const void* uniPraram);
+void EFIAPI UpdateSHA512G9 (void* uniHash, const Ipp8u* mblk, int mlen, const void* uniPraram);
 void UpdateMD5   (void* pHash, const Ipp8u* mblk, int mlen, const void* pParam);
 void UpdateSM3   (void* pHash, const Ipp8u* mblk, int mlen, const void* pParam);
 
