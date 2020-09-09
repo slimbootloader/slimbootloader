@@ -12,6 +12,7 @@
 import os
 import sys
 import shutil
+import time
 
 sys.dont_write_bytecode = True
 sys.path.append (os.path.join('..', '..'))
@@ -24,9 +25,9 @@ class Board(BaseBoard):
 
         self.VERINFO_IMAGE_ID          = 'SB_CFL'
         self.VERINFO_PROJ_MAJOR_VER    = 1
-        self.VERINFO_PROJ_MINOR_VER    = 0
+        self.VERINFO_PROJ_MINOR_VER    = 1
         self.VERINFO_SVN               = 1
-        self.VERINFO_BUILD_DATE        = '05/24/2019'
+        self.VERINFO_BUILD_DATE        = time.strftime("%m/%d/%Y")
         self.LOWEST_SUPPORTED_FW_VER   = ((self.VERINFO_PROJ_MAJOR_VER << 8) + self.VERINFO_PROJ_MINOR_VER)
 
         self.BOARD_NAME           = 'cfl'
