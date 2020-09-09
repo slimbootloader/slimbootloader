@@ -675,6 +675,9 @@ StartBooting (
 
     if (FeaturePcdGet (PcdPayloadModuleEnabled)) {
       OsBootOptionList = GetBootOptionList ();
+      if (OsBootOptionList == NULL) {
+        return EFI_NOT_FOUND;
+      }
       CurrIdx = GetCurrentBootOption (OsBootOptionList, mCurrentBoot);
       PathPtr = (CHAR8 *)OsBootOptionList->OsBootOption[CurrIdx].Image[0].FileName;
       ModCmdLineBuf[0] = 0;
