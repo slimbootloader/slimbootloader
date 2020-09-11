@@ -81,7 +81,7 @@ PCIERP_CTRL_PIN_TMPL: >
         length       : 8b
     - PadNum       :
         name         : Power Pad Number
-        type         : EditNum, INT, (0,4095)
+        type         : EditNum, DEC, (0,4095)
         help         : >
                        Specify Pad Number
         condition    : $(COND_PCIE_RP_PWR_PIN_SKIP)
@@ -135,7 +135,7 @@ PCIERP_CTRL_PIN_TMPL: >
         length       : 8b
     - PadNum       :
         name         : Reset Pad Number
-        type         : EditNum, INT, (0,4095)
+        type         : EditNum, DEC, (0,4095)
         help         : >
                        Specify Pad Number
         condition    : $(COND_PCIE_RP_RST_PIN_SKIP)

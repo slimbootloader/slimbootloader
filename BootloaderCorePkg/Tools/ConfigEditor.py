@@ -544,7 +544,7 @@ class application(tkinter.Frame):
                 pass
 
             text = item['value'].strip('{').strip('}').strip()
-            widget.delete(0, END)
+            widget.delete(0, tkinter.END)
             widget.insert(0, text)
 
         self.update_widgets_visibility_on_page()
