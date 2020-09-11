@@ -1,0 +1,23 @@
+#/** @file
+# Platform Package
+#
+# This package provides platform specific modules.
+# Copyright (c) 2009 - 2017, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+
+#**/
+
+[Defines]
+  DEC_SPECIFICATION              = 0x00010005
+  PACKAGE_NAME                   = CometlakevBoardPkg
+  PACKAGE_GUID                   = d04c3e8e-6e07-4286-867d-0f1296774fbf
+  PACKAGE_VERSION                = 0.1
+
+[Guids]
+  gMeBiosPayloadHobGuid      = { 0x992c52c8, 0xbc01, 0x4ecd, { 0x20, 0xbf, 0xf9, 0x57, 0x16, 0x0e, 0x9e, 0xf7 } }
+  gCpuInitDataHobGuid        = { 0x266e31cc, 0x13c5, 0x4807, { 0xb9, 0xdc, 0x39, 0xa6, 0xba, 0x88, 0xff, 0x1a } }
+  gSchemaListGuid            = { 0x3047C2AC, 0x5E8E, 0x4C55, { 0xA1, 0xCB, 0xEA, 0xAD, 0x0A, 0x88, 0x86, 0x1B } }
+
+[Includes]
+  Include

@@ -1,0 +1,42 @@
+## @file
+#
+#  Copyright (c) 2018 - 2019, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+# Delta configuration values for platform ID 0x001B
+#
+# This file is not auto-generated. Rather, users must input all the settings
+# that are needed to be overwritten from the base DSC into this file.
+# This file is similar to changing BSF file in BCT for the new settings.
+#
+
+PLATFORMID_CFG_DATA.PlatformId            | 0x15
+PLAT_NAME_CFG_DATA.PlatformName           | 'CML_V'
+#GEN_CFG_DATA.PayloadId | 'UEFI'
+
+PCIE_CFG_DATA.ClkFeatures0.ClkUsage       | 0xFF
+PCIE_CFG_DATA.ClkFeatures1.ClkUsage       | 0x02
+PCIE_CFG_DATA.ClkFeatures2.ClkUsage       | 0x70
+PCIE_CFG_DATA.ClkFeatures3.ClkUsage       | 0xFF
+PCIE_CFG_DATA.ClkFeatures4.ClkUsage       | 0x04
+PCIE_CFG_DATA.ClkFeatures5.ClkUsage       | 0xFF
+PCIE_CFG_DATA.ClkFeatures6.ClkUsage       | 0x08
+PCIE_CFG_DATA.ClkFeatures7.ClkUsage       | 0x10
+PCIE_CFG_DATA.ClkFeatures8.ClkUsage       | 0x40
+PCIE_CFG_DATA.ClkFeatures9.ClkUsage       | 0xFF
+PCIE_CFG_DATA.ClkFeatures10.ClkUsage      | 0x14
+PCIE_CFG_DATA.ClkFeatures11.ClkUsage      | 0xFF
+PCIE_CFG_DATA.ClkFeatures12.ClkUsage      | 0xFF
+PCIE_CFG_DATA.ClkFeatures13.ClkUsage      | 0xFF
+PCIE_CFG_DATA.ClkFeatures14.ClkUsage      | 0xFF
+PCIE_CFG_DATA.ClkFeatures15.ClkUsage      | 0xFF
+
+MEMORY_CFG_DATA.SpdAddressTable           | {0xA0, 0xA2, 0xA4, 0xA6}
+MEMORY_CFG_DATA.FClkFrequency             | 0x01
+MEMORY_CFG_DATA.UserBd                    | 0x01
+MEMORY_CFG_DATA.DualDpc                   | 0x01
+
+GPU_CFG_DATA.DdiPortBDdc                  | 0x0
+GPU_CFG_DATA.DdiPortFDdc                  | 0x1
+
+GPIO_CFG_DATA.GpioPinConfig1_GPP_I03.GPIOSkip_GPP_I03 | 1
