@@ -1,0 +1,17 @@
+## @file
+#
+#  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+[Defines]
+  DEC_SPECIFICATION              = 0x00010005
+  PACKAGE_NAME                   = CometlakePkg
+  PACKAGE_GUID                   = 61BEAA84-3430-413D-8DD1-A8EBE7960921
+  PACKAGE_VERSION                = 0.1
+
+[Includes]
+  Include
+
+[Guids]
+  gEfiHeciMbpDataHobGuid         = {0x992c52c8, 0xbc01, 0x4ecd, {0x20, 0xbf, 0xf9, 0x57, 0x16, 0x0e, 0x9e, 0xf7}}
