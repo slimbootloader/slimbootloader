@@ -57,7 +57,7 @@
         length       : 4bW
     - PinNum       :
         name         : Pin Number
-        type         : EditNum, INT, (0,24)
+        type         : EditNum, DEC, (0,24)
         help         : >
                        Specify Pin Number
         length       : 5bW
