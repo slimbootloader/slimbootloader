@@ -292,6 +292,9 @@ S3ResumePath (
     AddMeasurePoint (0x31C0);
   }
 
+  // Call the board notification
+  BoardInit (EndOfStages);
+
   // Call board and FSP Notify ReadyToBoot
   BoardNotifyPhase (ReadyToBoot);
   AddMeasurePoint (0x31D0);
