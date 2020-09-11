@@ -1,0 +1,85 @@
+## @file
+#
+#  Copyright (c) 2017-2019, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = IbblBoardInitLib
+  FILE_GUID                      = 382FF3D3-6872-4737-9CD3-7232AF2C6748
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = BoardInitLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF
+#
+
+[Sources]
+  GpioTables.h
+  HdaVerbTable.h
+  Stage2BoardInitLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  IntelFsp2Pkg/IntelFsp2Pkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/CometlakePkg/CometlakePkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+  Platform/CommonBoardPkg/CommonBoardPkg.dec
+  Platform/CometlakeBoardPkg/CometlakeBoardPkg.dec
+
+[LibraryClasses]
+  SerialPortLib
+  BaseLib
+  DebugLib
+  SpiFlashLib
+  MemoryAllocationLib
+  PrintLib
+  BootloaderCoreLib
+  ConfigDataLib
+  BootloaderCoreLib
+  PchInfoLib
+  IgdOpRegionLib
+  BdatLib
+  VariableLib
+  PchSerialIoLib
+  SgxLib
+  GpioLib
+  PsdLib
+  S3SaveRestoreLib
+  BoardSupportLib
+
+[Guids]
+  gSmmInformationGuid
+  gCpuInitDataHobGuid
+  gEfiGraphicsInfoHobGuid
+
+[Pcd]
+  gPlatformModuleTokenSpaceGuid.PcdGraphicsVbtAddress
+  gPlatformCommonLibTokenSpaceGuid.PcdCpuInitIpiDelayInMicroSeconds
+  gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImageRegionType
+  gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImage1RegionSize
+  gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImage2RegionSize
+  gPlatformModuleTokenSpaceGuid.PcdIntelGfxEnabled
+  gPlatformModuleTokenSpaceGuid.PcdAcpiGnvsAddress
+  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
+  gPlatformModuleTokenSpaceGuid.PcdPciResourceMem32Base
+  gPlatformModuleTokenSpaceGuid.PcdServiceNumber
+  gPlatformModuleTokenSpaceGuid.PcdOsBootOptionNumber
+  gPlatformModuleTokenSpaceGuid.PcdMaxServiceNumber
+  gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
+  gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase
+  gPlatformModuleTokenSpaceGuid.PcdSmmRebaseMode
+  gPlatformModuleTokenSpaceGuid.PcdFramebufferInitEnabled
+  gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsPtr
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsCnt
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesBase
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled
