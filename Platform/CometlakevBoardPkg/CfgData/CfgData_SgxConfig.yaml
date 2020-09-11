@@ -1,0 +1,58 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : SGX:SEC:"SGX"
+- $ACTION      :
+    page         : SGX
+- SGX_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ SGX_CFG_DATA, 0x500, 0, 0 ] }
+  - EnableSgx    :
+      name         : Software Guard eXtensions (SGX)
+      type         : Combo
+      option       : 0:Disabled, 1:Enabled
+      help         : >
+                     Enable/Disable Software Guard eXtensions (SGX).
+      length       : 0x01
+      value        : 0x1
+  - EpochUpdate  :
+      condition    : $SGX_CFG_DATA.EnableSgx != 0
+      name         : Select Owner EPOCH input type
+      type         : Combo
+      option       : 0:No Change in Owner EPOCHs, 1:Manual User Defined Owner EPOCHs
+      help         : >
+                     There are two Owner EPOCH modes (Each EPOCH is 64bit)- no change in owner epoch and manually entered by user. After the user enters epoch values manually, the values will not be visible, for security reasons.
+      length       : 0x01
+      value        : 0x0
+  - SgxEpoch0    :
+      condition    : $SGX_CFG_DATA.EnableSgx != 0x0 and $SGX_CFG_DATA.EpochUpdate == 0x1
+      name         : Software Guard eXtensions Epoch 0
+      type         : EditNum, HEX, (0x0,0xFFFFFFFFFFFFFFFF)
+      length       : 0x8
+      value        : 0x553DFD8D5FA48F27
+  - SgxEpoch1    :
+      condition    : $SGX_CFG_DATA.EnableSgx != 0x0 and $SGX_CFG_DATA.EpochUpdate == 0x1
+      name         : Software Guard eXtensions Epoch 1
+      type         : EditNum, HEX, (0x0,0xFFFFFFFFFFFFFFFF)
+      length       : 0x8
+      value        : 0xD76767B9BE4BFDC1
+  - PrmrrSize    :
+      condition    : $SGX_CFG_DATA.EnableSgx == 0x1
+      name         : PRMRR Size
+      type         : Combo
+      option       : 0x2000000:32MB, 0x4000000:64MB, 0x8000000:128MB
+      help         : >
+                     Setting the PRMRR Size
+      length       : 0x04
+      value        : 0x4000000
+  - PaddingBytes :
+      length       : 0x02
+      value        : 0x0
+
