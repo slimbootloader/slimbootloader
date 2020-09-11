@@ -26,6 +26,26 @@ matrix:
       language: python
       env: BUILD_TARGET=cfl BUILD_REL=-r BUILD_ARCH="" SBL_KEY_DIR="/tmp/SblKeys"
 
+    - name: "CML GCC x86 D"
+      os: linux
+      language: python
+      env: BUILD_TARGET=cml BUILD_REL="" BUILD_ARCH=""  SBL_KEY_DIR="/tmp/SblKeys"
+
+    - name: "CML GCC x64 R"
+      os: linux
+      language: python
+      env: BUILD_TARGET=cml BUILD_REL=-r BUILD_ARCH="-a x64" SBL_KEY_DIR="/tmp/SblKeys"
+
+    - name: "CMLV GCC x86 D"
+      os: linux
+      language: python
+      env: BUILD_TARGET=cmlv BUILD_REL="" BUILD_ARCH=""  SBL_KEY_DIR="/tmp/SblKeys"
+
+    - name: "CMLV GCC x64 R"
+      os: linux
+      language: python
+      env: BUILD_TARGET=cmlv BUILD_REL=-r BUILD_ARCH="-a x64" SBL_KEY_DIR="/tmp/SblKeys"
+
 
     # Windows build
     - name: "APL VC x86 D"
@@ -47,6 +67,26 @@ matrix:
       os: windows
       language: shell
       env: BUILD_TARGET=cfl BUILD_REL="" BUILD_ARCH="-a x64"  OPENSSL_PATH="/c/Openssl/bin/"  NASM_PREFIX="/c/Program Files/NASM/" IASL_PREFIX="/c/Asl/" SBL_KEY_DIR="/c/SblKeys"
+
+    - name: "CML VC x86 R"
+      os: windows
+      language: shell
+      env: BUILD_TARGET=cml BUILD_REL=-r BUILD_ARCH=""  OPENSSL_PATH="/c/Openssl/bin/"  NASM_PREFIX="/c/Program Files/NASM/" IASL_PREFIX="/c/Asl/" SBL_KEY_DIR="/c/SblKeys"
+
+    - name: "CML VC x64 D"
+      os: windows
+      language: shell
+      env: BUILD_TARGET=cml BUILD_REL="" BUILD_ARCH="-a x64"  OPENSSL_PATH="/c/Openssl/bin/"  NASM_PREFIX="/c/Program Files/NASM/" IASL_PREFIX="/c/Asl/" SBL_KEY_DIR="/c/SblKeys"
+
+    - name: "CMLV VC x86 R"
+      os: windows
+      language: shell
+      env: BUILD_TARGET=cmlv BUILD_REL=-r BUILD_ARCH=""  OPENSSL_PATH="/c/Openssl/bin/"  NASM_PREFIX="/c/Program Files/NASM/" IASL_PREFIX="/c/Asl/" SBL_KEY_DIR="/c/SblKeys"
+
+    - name: "CMLV VC x64 D"
+      os: windows
+      language: shell
+      env: BUILD_TARGET=cmlv BUILD_REL="" BUILD_ARCH="-a x64"  OPENSSL_PATH="/c/Openssl/bin/"  NASM_PREFIX="/c/Program Files/NASM/" IASL_PREFIX="/c/Asl/" SBL_KEY_DIR="/c/SblKeys"
 
 
 before_install:
