@@ -105,51 +105,6 @@ TestVariableService (
   }
 }
 
-
-/**
-  Find the actual VBT image from the container.
-
-  In case of multiple VBT tables are packed into a single FFS, the PcdGraphicsVbtAddress could
-  point to the container address instead. This function checks this condition and locates the
-  actual VBT table address within the container.
-
-  @param[in] ImageId    Image ID for VBT binary to locate in the container
-
-  @retval               Actual VBT address found in the container. 0 if not found.
-
-**/
-UINT32
-LocateVbtByImageId (
-  IN  UINT32     ImageId
-)
-{
-  VBT_MB_HDR     *VbtMbHdr;
-  VBT_ENTRY_HDR  *VbtEntry;
-  UINT32          VbtAddr;
-  UINTN           Idx;
-
-  VbtMbHdr = (VBT_MB_HDR* )(UINTN)PcdGet32 (PcdGraphicsVbtAddress);
-  if ((VbtMbHdr == NULL) || (VbtMbHdr->Signature != MVBT_SIGNATURE)) {
-    return 0;
-  }
-
-  VbtAddr  = 0;
-  VbtEntry = (VBT_ENTRY_HDR *)&VbtMbHdr[1];
-  for (Idx = 0; Idx < VbtMbHdr->EntryNum; Idx++) {
-    if (VbtEntry->ImageId == ImageId) {
-      VbtAddr = (UINT32)(UINTN)VbtEntry->Data;
-      break;
-    }
-    VbtEntry = (VBT_ENTRY_HDR *)((UINT8 *)VbtEntry + VbtEntry->Length);
-  }
-
-  DEBUG ((DEBUG_INFO, "%a VBT ImageId 0x%08X\n",
-                      (VbtAddr == 0) ? "Cannot find" : "Select", ImageId));
-
-  return VbtAddr;
-}
-
-
 /**
   Initialization of the GPIO table specific to each SOC. First find the relevant GPIO Config Data based on the Platform ID.
   Once the GPIO table data is fetched from configuration region, program the GPIO PADs and interrupt registers.
@@ -240,12 +195,10 @@ BoardInit (
 )
 {
   EFI_STATUS           Status;
-  PLATFORM_CFG_DATA   *PlatformCfgData;
   GEN_CFG_DATA        *GenericCfgData;
   LOADER_GLOBAL_DATA  *LdrGlobal;
   UINT32               TsegBase;
   UINT64               TsegSize;
-  UINT32               VbtAddress;
   UINT8                BootDev;
   VOID                *Buffer;
   UINT32               Length;
@@ -271,14 +224,6 @@ BoardInit (
     if (TsegBase != 0) {
       Status = PcdSet32S (PcdSmramTsegBase, TsegBase);
       Status = PcdSet32S (PcdSmramTsegSize, (UINT32)TsegSize);
-    }
-    // Locate VBT binary from VBT container
-    PlatformCfgData = (PLATFORM_CFG_DATA *)FindConfigDataByTag (CDATA_PLATFORM_TAG);
-    if (PlatformCfgData != NULL) {
-      VbtAddress = LocateVbtByImageId (PlatformCfgData->VbtImageId);
-      if (VbtAddress != 0) {
-        Status = PcdSet32S (PcdGraphicsVbtAddress,  VbtAddress);
-      }
     }
     // Load IP firmware from container
     Buffer = NULL;
@@ -345,7 +290,7 @@ UpdateFspConfig (
   FspsConfig = &FspsUpd->FspsConfig;
 
   if (PcdGetBool (PcdFramebufferInitEnabled)) {
-    FspsConfig->GraphicsConfigPtr = PcdGet32 (PcdGraphicsVbtAddress);
+    FspsConfig->GraphicsConfigPtr = (UINT32)GetVbtAddress ();
   } else {
     FspsConfig->GraphicsConfigPtr = 0;
   }
