@@ -1036,49 +1036,6 @@ BoardInit (
 }
 
 /**
-  Find the actual VBT image from the container.
-
-  In case of multiple VBT tables are packed into a single FFS, the PcdGraphicsVbtAddress could
-  point to the container address instead. This function checks this condition and locates the
-  actual VBT table address within the container.
-
-  @param[in] ImageId    Image ID for VBT binary to locate in the container
-
-  @retval               Actual VBT address found in the container. 0 if not found.
-
-**/
-UINT32
-LocateVbtByImageId (
-  IN  UINT32     ImageId
-)
-{
-  VBT_MB_HDR     *VbtMbHdr;
-  VBT_ENTRY_HDR  *VbtEntry;
-  UINT32          VbtAddr;
-  UINTN           Idx;
-
-  VbtMbHdr = (VBT_MB_HDR* )(UINTN)PcdGet32 (PcdGraphicsVbtAddress);
-  if ((VbtMbHdr == NULL) || (VbtMbHdr->Signature != MVBT_SIGNATURE)) {
-    return 0;
-  }
-
-  VbtAddr  = 0;
-  VbtEntry = (VBT_ENTRY_HDR *)&VbtMbHdr[1];
-  for (Idx = 0; Idx < VbtMbHdr->EntryNum; Idx++) {
-    if (VbtEntry->ImageId == ImageId) {
-      VbtAddr = (UINT32)(UINTN)VbtEntry->Data;
-      break;
-    }
-    VbtEntry = (VBT_ENTRY_HDR *)((UINT8 *)VbtEntry + VbtEntry->Length);
-  }
-
-  DEBUG ((DEBUG_INFO, "%a VBT ImageId 0x%08X\n",
-                      (VbtAddr == 0) ? "Cannot find" : "Select", ImageId));
-
-  return VbtAddr;
-}
-
-/**
   Update FSP-S UPD config data.
 
   @param  FspsUpdPtr    The pointer to the FSP-S UPD to be updated.
@@ -1104,8 +1061,6 @@ UpdateFspConfig (
   PCIE_RP_CFG_DATA       *PcieRpConfigData;
   DEV_EN_CFG_DATA        *DevEnCfgData;
   HDA_CFG_DATA           *HdaCfgData;
-  UINT32                  VbtAddress;
-  UINT32                  VbtImageId;
 
   FspsUpd    = (FSPS_UPD *)FspsUpdPtr;
   FspsConfig = &FspsUpd->FspsConfig;
@@ -1285,21 +1240,11 @@ UpdateFspConfig (
     HdaEndpointI2sCapture.VirtualBusId    = HdaCfgData->VirtualIdI2sCapture;
   }
 
-  VbtAddress = 0;
   if (PcdGetBool (PcdFramebufferInitEnabled)) {
-    // Locate VBT binary from VBT container
-    if (GetPlatformId () == PLATFORM_ID_UP2) {
-      VbtImageId = 2;
-    } else {
-      VbtImageId = 1;
-    }
-    VbtAddress = LocateVbtByImageId (VbtImageId);
-    if (VbtAddress != 0) {
-      (VOID) PcdSet32S (PcdGraphicsVbtAddress,  VbtAddress);
-    }
+    FspsConfig->GraphicsConfigPtr   = (UINT32)GetVbtAddress ();
+  } else {
+    FspsConfig->GraphicsConfigPtr = 0;
   }
-  FspsConfig->GraphicsConfigPtr = VbtAddress;
-
 
   FspsConfig->InitS3Cpu                   = 1;
 

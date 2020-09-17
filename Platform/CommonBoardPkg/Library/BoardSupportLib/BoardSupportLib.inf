@@ -31,3 +31,4 @@
   gPlatformModuleTokenSpaceGuid.PcdCfgDataLoadSource
   gPlatformModuleTokenSpaceGuid.PcdCfgDatabaseSize
   gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
+  gPlatformModuleTokenSpaceGuid.PcdGraphicsVbtAddress

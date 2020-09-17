@@ -893,7 +893,7 @@ UpdatePayloadId (
     Status = GpioGetInputValue (PayloadSelGpioPad, &PayloadSelGpioData);
     if (!EFI_ERROR (Status)) {
       if (PayloadSelGpioData == 1) {
-        PayloadId = 0;
+        PayloadId = UEFI_PAYLOAD_ID_SIGNATURE;
       } else {
         if ((GenericCfgData != NULL) && (GenericCfgData->PayloadId == AUTO_PAYLOAD_ID_SIGNATURE)) {
           PayloadId = UEFI_PAYLOAD_ID_SIGNATURE;
@@ -1273,7 +1273,11 @@ UpdateFspConfig (
   FspsUpd->FspsConfig.PchHdaVerbTablePtr      = (UINT32)(UINTN) HdaVerbTablePtr;
   FspsUpd->FspsConfig.PchHdaVerbTableEntryNum = HdaVerbTableNum;
 
-  FspsUpd->FspsConfig.GraphicsConfigPtr   = PcdGet32(PcdGraphicsVbtAddress);
+  if (PcdGetBool (PcdFramebufferInitEnabled)) {
+    FspsUpd->FspsConfig.GraphicsConfigPtr   = (UINT32)GetVbtAddress ();
+  } else {
+    FspsUpd->FspsConfig.GraphicsConfigPtr = 0;
+  }
 
   CopyMem (&FspsUpd->FspsConfig.PxRcConfig, mPxRcConfig, sizeof(mPxRcConfig));
 
