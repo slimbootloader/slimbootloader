@@ -60,10 +60,12 @@ BOOT_OPTION_TMPL: >
     - HwPart_$(1)  :
         name         : Hardware Partition
         type         : Combo
-        option       : 0:User Partition, 1:Boot Partition 1, 2:Boot Partition 2, 3:Boot Partition 3, 4:Boot Partition 4, 5:Boot Partition 5, 6:Boot Partition 6, 7:Boot Partition 7
+        option       : 0:User Partition, 1:Boot Partition 1, 2:Boot Partition 2, 3:Boot Partition 3, 4:Boot Partition 4, 5:Boot Partition 5, 6:Boot Partition 6, 7:Boot Partition 7, 255:SATA Auto 255
         help         : >
                        Specify hardware partition number.
-                       If boot device type is SPI, the hardware partition refers to SPI flash region- 0-Descriptor, 1-BIOS, 2-ME, 3-GbE, 4-PDR Regions
+                       If boot device type is SPI, the hardware partition refers to SPI flash region- 0-Descriptor, 1-BIOS, 2-ME, 3-GbE, 4-PDR Regions.
+                       If boot device type is SATA, the hardware partition refers to the SATA port number on the system; setting to 255 uses the first detected SATA device.
+                       If boot device type is USB, the hardware partition refers to the order in which the USB block devices are detected when multiple USB block devices are connected.
         condition    : $BOOT_OPTION_CFG_DATA_$(1).ImageType_$(1) < 0xFE
         length       : 0x01
         value        : $(6)
