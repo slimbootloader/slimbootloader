@@ -678,6 +678,51 @@ GetDeviceAddr (
 }
 
 /**
+  Set device address in the device table
+
+  If the device is PCI device, the device address format is 0x00BBDDFF, where
+  BB, DD and FF are PCI bus, device and function number.
+  If the device is MMIO device, the device address format is 0xMMxxxxxx, where
+  MM should be non-zero value, xxxxxx could be any value.
+
+  @param[in]  DeviceType         The device type, refer OS_BOOT_MEDIUM_TYPE.
+  @param[in]  DeviceInstance     The device instance number starting from 0.
+  @param[in]  DeviceAddr         The device address.
+
+  @retval     EFI_SUCCESS        If the given device type and instance are found and set.
+              EFI_NOT_FOUND      The given device type and instance are not found.
+
+**/
+EFI_STATUS
+EFIAPI
+SetDeviceAddr (
+  IN  UINT8          DeviceType,
+  IN  UINT8          DeviceInstance,
+  IN  UINT32         DeviceAddr
+  )
+{
+  PLT_DEVICE_TABLE   *DeviceTable;
+  PLT_DEVICE         *Device;
+  UINT32             Index;
+
+  Device = NULL;
+  DeviceTable = (PLT_DEVICE_TABLE *)GetDeviceTable();
+  for (Index = 0; Index < DeviceTable->DeviceNumber; Index++) {
+    Device = &DeviceTable->Device[Index];
+    if ((Device->Type == DeviceType) && (Device->Instance == DeviceInstance)){
+      if (Device->Dev.DevAddr != DeviceAddr) {
+        DEBUG ((DEBUG_INFO, "Update device table: type (0x%x) instance (%x) from 0x%x to 0x%x\n", \
+               DeviceType, DeviceInstance, Device->Dev.DevAddr, DeviceAddr));
+        Device->Dev.DevAddr = DeviceAddr;
+      }
+      return EFI_SUCCESS;
+    }
+  }
+
+  return EFI_NOT_FOUND;
+}
+
+/**
   Match a given hash with the ones in hash store.
 
   @param[in]  Usatge      Hash usage.
