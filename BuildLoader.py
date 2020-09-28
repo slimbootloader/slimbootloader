@@ -280,6 +280,7 @@ class BaseBoard(object):
 
         self._PAYLOAD_NAME         = ''
         self._FSP_PATH_NAME        = ''
+        self._EXTRA_INC_PATH       = []
 
         self._PLATFORM_ID          = None
         self._MULTI_VBT_FILE       = {}
@@ -766,6 +767,14 @@ class Build(object):
 
         if getattr(self._board, "GetPlatformDsc", None):
             dsc_dict = self._board.GetPlatformDsc()
+
+            # add extra include searching path
+            if len(self._board._EXTRA_INC_PATH) > 0:
+                inc_dir = []
+                for each in self._board._EXTRA_INC_PATH:
+                    inc_dir.append(('-I$(WORKSPACE)/%s' % each).replace('/', os.sep))
+                dsc_dict['BuildOptions.Common.EDKII'] = ['*_*_*_CC_FLAGS = ' + ' '.join(inc_dir)]
+
             for sect in dsc_dict:
                 lines.append('\n# Platform specific sections\n')
                 lines.append('[%s]\n' % sect)
