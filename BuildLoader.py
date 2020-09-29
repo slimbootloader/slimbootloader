@@ -1089,10 +1089,15 @@ class Build(object):
             raise Exception  ('IPP_HASH_LIB_SUPPORTED_MASK is not set correctly!!')
 
         # check if FSP binary exists
-        fsp_dir  = os.path.join(plt_dir, 'Silicon', self._board.SILICON_PKG_NAME, "FspBin", self._board._FSP_PATH_NAME)
+        if self._board._FSP_PATH_NAME != '':
+            fsp_path_name = self._board._FSP_PATH_NAME
+        else:
+            fsp_path_name = os.path.join('Silicon', self._board.SILICON_PKG_NAME, "FspBin")
+
+        fsp_dir  = os.path.join(plt_dir,  fsp_path_name)
         work_dir = plt_dir
         if not os.path.exists(fsp_dir):
-            fsp_dir  = os.path.join(sbl_dir, 'Silicon', self._board.SILICON_PKG_NAME, "FspBin", self._board._FSP_PATH_NAME)
+            fsp_dir  = os.path.join(sbl_dir, fsp_path_name)
             work_dir = sbl_dir
         fsp_path = os.path.join(fsp_dir, self._fsp_basename + '.bin')
 
