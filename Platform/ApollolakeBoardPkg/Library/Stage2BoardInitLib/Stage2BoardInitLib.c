@@ -1001,7 +1001,7 @@ BoardInit (
     }
     break;
   case EndOfStages:
-    RegisterHeciService();
+    HeciRegisterHeciService ();
     InitPlatformService ();
 
     if (GetPayloadId() != 0) {
@@ -1622,7 +1622,7 @@ UpdateLoaderPlatformInfo (
                                         ((PlatformData->BtGuardInfo.Bpm.Mb) << 1);
 
     // Get Manufacturing Mode from Heci
-    ReadHeciFwStatus(&HeciFwSts);
+    HeciReadFwStatus (&HeciFwSts);
     LoaderPlatformInfo->HwState |= (HeciFwSts & BIT4) >> 2;
   }
 }
