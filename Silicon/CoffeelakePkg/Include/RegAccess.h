@@ -19,11 +19,6 @@
 #include <PcieRegs.h>
 #include <Register/CpuRegs.h>
 #include <Register/SaRegs.h>
-#include <Register/MeChipset.h>
-#include <Register/HeciRegs.h>
-#include <Register/MkhiMsgs.h>
-#include <Register/MeState.h>
-#include <Register/BupMsgs.h>
 #include <PchLimits.h>
 #include <PchReservedResources.h>
 #include <Register/PchRegsGpio.h>

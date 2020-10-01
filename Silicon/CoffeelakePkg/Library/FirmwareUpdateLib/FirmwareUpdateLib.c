@@ -144,7 +144,7 @@ InitCsmeUpdInputData (
     CsmeUpdDriverInput->PciRead          = (VOID *)((UINTN)PciReadBuffer);
     CsmeUpdDriverInput->HeciReadMessage  = (VOID *)((UINTN)HeciReceive);
     CsmeUpdDriverInput->HeciSendMessage  = (VOID *)((UINTN)HeciSend);
-    CsmeUpdDriverInput->HeciReset        = (VOID *)((UINTN)ResetHeciInterface);
+    CsmeUpdDriverInput->HeciReset        = (VOID *)((UINTN)HeciResetInterface);
   }
 
   return CsmeUpdDriverInput;

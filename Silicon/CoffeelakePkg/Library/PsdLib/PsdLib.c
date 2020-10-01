@@ -16,7 +16,6 @@
 #include <IndustryStandard/Acpi.h>
 #include <IndustryStandard/Tpm20.h>
 #include <Library/HeciLib.h>
-#include <Library/HeciLib/CseMsg.h>
 #include <Library/PciLib.h>
 #include <Library/BootGuardLib.h>
 #include <Library/SecureBootLib.h>
@@ -178,12 +177,12 @@ GetEomState (
   EFI_STATUS            Status;
   UINT32                FwSts;
 
-  if(EomState == NULL) {
+  if (EomState == NULL) {
     DEBUG ((DEBUG_ERROR, "EomState is not valid pointer\n"));
     return EFI_INVALID_PARAMETER;
   }
-  Status = ReadHeciFwStatus( &FwSts);
-  if (Status == EFI_SUCCESS ) {
+  Status = HeciReadFwStatus (&FwSts);
+  if (!EFI_ERROR (Status)) {
     *EomState = (UINT8)((FwSts & BIT4) >> 4);
   }
   return Status;
@@ -205,19 +204,21 @@ GetSecFwVersion (
   GEN_GET_FW_VER_ACK    MsgGenGetFwVersionAckData;
   DEBUG ((DEBUG_ERROR, "GetSecFwVersion called\n"));
 
-  if(SecVersion == NULL) {
+  if (SecVersion == NULL) {
     DEBUG ((DEBUG_ERROR, "GetSecFwVersion Failed Status=0x%x\n",EFI_INVALID_PARAMETER));
     return EFI_INVALID_PARAMETER;
   }
 
-  Status = HeciGetFwVersionMsg( (UINT8 *)&MsgGenGetFwVersionAckData);
-  if (Status == EFI_SUCCESS) {
-    SecVersion->CodeMajor = MsgGenGetFwVersionAckData.Data.CodeMajor;
-    SecVersion->CodeMinor = MsgGenGetFwVersionAckData.Data.CodeMinor;
-    SecVersion->CodeHotFix = MsgGenGetFwVersionAckData.Data.CodeHotFix;
+  Status = MeGetFwVersionFromMbp (&MsgGenGetFwVersionAckData.Data);
+  if (EFI_ERROR (Status)) {
+    Status = HeciGetFwVersionMsg( (UINT8 *)&MsgGenGetFwVersionAckData);
+  }
+  if (!EFI_ERROR (Status)) {
+    SecVersion->CodeMajor   = MsgGenGetFwVersionAckData.Data.CodeMajor;
+    SecVersion->CodeMinor   = MsgGenGetFwVersionAckData.Data.CodeMinor;
+    SecVersion->CodeHotFix  = MsgGenGetFwVersionAckData.Data.CodeHotFix;
     SecVersion->CodeBuildNo = MsgGenGetFwVersionAckData.Data.CodeBuildNo;
   }
-
   return Status;
 }
 

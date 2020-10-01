@@ -14,6 +14,8 @@
 #include <Library/IoLib.h>
 #include <Library/BootGuardLib.h>
 #include <RegAccess.h>
+#include <MkhiMsgs.h>
+#include <MeChipset.h>
 
 /**
   Determine if Boot Guard is supported
@@ -52,7 +54,7 @@ GetBootGuardInfo (
   )
 {
   UINT32                  MsrValue;
-  HECI_GS_SHDW_REGISTER   MeFwSts2;
+  UINT32                  MeFwSts2;
   UINT32                  MeFwSts4;
   UINT32                  MeFwSts5;
   UINT32                  MeFwSts6;
@@ -80,8 +82,8 @@ GetBootGuardInfo (
                       ME_DEVICE_NUMBER,
                       HECI_FUNCTION_NUMBER
                       );
-    MeFwSts2.ul = MmioRead32 (HeciBaseAddress + R_ME_GS_SHDW);
-    DEBUG ((DEBUG_INFO, "ME FW STS 2 = %x\n", MeFwSts2.r));
+    MeFwSts2 = MmioRead32 (HeciBaseAddress + R_ME_GS_SHDW);
+    DEBUG ((DEBUG_INFO, "ME FW STS 2 = %x\n", MeFwSts2));
 
     MeFwSts4 = MmioRead32 (HeciBaseAddress + R_ME_HFS_4);
     DEBUG ((DEBUG_INFO, "ME FW STS 4 = %x\n", MeFwSts4));
