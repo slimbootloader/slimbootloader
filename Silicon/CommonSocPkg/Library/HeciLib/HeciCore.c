@@ -16,6 +16,8 @@
 #include <IndustryStandard/Pci.h>
 #include "HeciRegs.h"
 
+#define HECI_DEBUG_LEVEL          DEBUG_VERBOSE
+
 #define HECI_CB_OVERFLOW          0xFFFFFFFF  // Circular buffer overflow
 
 #define HECI_WAIT_DELAY           1000        // 1ms timeout for IO delay
@@ -435,7 +437,7 @@ HeciInitialize (
   UINTN                               HeciMmPciAddress;
   EFI_STATUS                          Status;
 
-  DEBUG ((DEBUG_INFO, "HeciInitialize () - Start\n"));
+  DEBUG ((HECI_DEBUG_LEVEL, "HeciInitialize () - Start\n"));
 
   ///
   /// Check for the HECI PCI device availability
@@ -451,13 +453,12 @@ HeciInitialize (
   /// Read H_RDY bit to check if we're already initialized
   ///
   if (HeciCsrHost.Fields.Ready == 1) {
-    DEBUG ((DEBUG_INFO, "InitializeHeci () - H_RDY is already initialized\n"));
+    DEBUG ((HECI_DEBUG_LEVEL, "InitializeHeci () - H_RDY is already initialized\n"));
     return EFI_SUCCESS;
   }
 
   HeciMmPciAddress = MeGetHeciMmPciAddress (HeciDev, 0);
   MeFirmwareStatus.ul = MmioRead32 (HeciMmPciAddress + R_ME_HFS);
-  DEBUG ((DEBUG_INFO, "[HECI%d] HfSts1 = 0x%08X\n", HeciDev, MeFirmwareStatus.ul));
   if (MeFirmwareStatus.ul == 0 || MeFirmwareStatus.ul == 0xFFFFFFFF) {
     return EFI_DEVICE_ERROR;
   }
@@ -492,7 +493,7 @@ HeciInitialize (
   ///     b) Set H_RDY
   ///     c) Set H_IG
   ///
-  DEBUG ((DEBUG_INFO, "InitializeHeci () -  Set H_RDY\n"));
+  DEBUG ((HECI_DEBUG_LEVEL, "InitializeHeci () -  Set H_RDY\n"));
   HeciCsrHost.Data  = MmioRead32 (HeciMemBar + H_CSR);
   if (HeciCsrHost.Fields.Ready == 0) {
     HeciCsrHost.Fields.Reset       = 0;
@@ -527,7 +528,7 @@ HeciReInitialize (
   if (HeciMemBar == 0) {
     return EFI_DEVICE_ERROR;
   }
-  DEBUG ((DEBUG_INFO, "HeciReInitialize..... \n"));
+  DEBUG ((HECI_DEBUG_LEVEL, "HeciReInitialize..... \n"));
 
   Status = EFI_SUCCESS;
   ///
@@ -636,7 +637,7 @@ HeciReceive (
     if (EFI_ERROR (Status) && Status != EFI_BUFFER_TOO_SMALL) {
       if (Status != EFI_NO_RESPONSE) {
         HeciResetInterface (HeciDev);
-        DEBUG ((DEBUG_VERBOSE, "[HECI%d] Got msg %r: %08X\n", HeciDev, Status, PacketHeader.Data));
+        DEBUG ((HECI_DEBUG_LEVEL, "[HECI%d] Got msg %r: %08X\n", HeciDev, Status, PacketHeader.Data));
       }
       *Length = TotalLength;
       return Status;
@@ -854,7 +855,7 @@ HeciResetInterface (
   UINT32                       Timeout;
   UINTN                        HeciMemBar;
 
-  DEBUG ((DEBUG_INFO, "[HECI%d] Resetting interface\n", HeciDev));
+  DEBUG ((HECI_DEBUG_LEVEL, "[HECI%d] Resetting interface\n", HeciDev));
 
   ///
   /// Make sure that HECI device BAR is correct and device is enabled.
@@ -868,7 +869,7 @@ HeciResetInterface (
   /// Enable Reset
   ///
   HeciCsrHost.Data = MmioRead32 (HeciMemBar + H_CSR);
-  DEBUG ((DEBUG_INFO, "[HECI%d] - Step1 Enable Host Reset : H_CSR = 0x%08X\n", HeciDev, HeciCsrHost.Data));
+  DEBUG ((HECI_DEBUG_LEVEL, "[HECI%d] - Step1 Enable Host Reset : H_CSR = 0x%08X\n", HeciDev, HeciCsrHost.Data));
 
   if (!HeciCsrHost.Fields.Reset) {
     HeciCsrHost.Fields.Reset       = 1;
@@ -879,7 +880,7 @@ HeciResetInterface (
   ///
   /// Make sure that the reset started
   ///
-  DEBUG ((DEBUG_INFO, "[HECI%d] - Step2 Wait for reset started: H_CSR = 0x%08X\n", HeciDev, HeciCsrHost.Data));
+  DEBUG ((HECI_DEBUG_LEVEL, "[HECI%d] - Step2 Wait for reset started: H_CSR = 0x%08X\n", HeciDev, HeciCsrHost.Data));
   Timeout = HECI_TIMEOUT_COUNT (HECI_INIT_TIMEOUT);
 
   HeciCsrHost.Data = MmioRead32 (HeciMemBar + H_CSR);
@@ -896,7 +897,7 @@ HeciResetInterface (
   /// Wait for ME to perform reset
   ///
   HeciCsrMeHra.Data = MmioRead32 (HeciMemBar + ME_CSR_HA);
-  DEBUG ((DEBUG_INFO, "[HECI%d] - Step3  Wait for ME reset: ME_CSR_HA = 0x%08X\n", HeciDev, HeciCsrMeHra.Data));
+  DEBUG ((HECI_DEBUG_LEVEL, "[HECI%d] - Step3  Wait for ME reset: ME_CSR_HA = 0x%08X\n", HeciDev, HeciCsrMeHra.Data));
   while (HeciCsrMeHra.Fields.Ready == 0) {
     if (Timeout-- == 0) {
       return EFI_TIMEOUT;
