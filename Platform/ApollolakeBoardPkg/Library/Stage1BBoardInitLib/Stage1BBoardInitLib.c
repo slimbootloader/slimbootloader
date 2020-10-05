@@ -52,13 +52,6 @@
 #include "ScRegs/SscRegs.h"
 #include <MeBiosPayloadData.h>
 
-typedef struct {
-  UINT32  BPDTOffset;
-  UINT32  PhysicalData;
-  UINT32  PhysicalDeviceArea;
-  UINT32  LogicalData;
-} MBP_CURRENT_BOOT_MEDIA;
-
 #define APL_FSP_STACK_TOP       0xFEF40000
 #define MRC_PARAMS_BYTE_OFFSET_MRC_VERSION 14
 

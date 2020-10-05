@@ -15,7 +15,7 @@
 #include <Library/HeciLib.h>
 #include <Library/BootloaderCoreLib.h>
 #include <Library/BootloaderCommonLib.h>
-#include <MeBiosPayloadData.h>
+#include <MeBiosPayloadDataCommon.h>
 
 STATIC CONST HECI_SERVICE mHeciService = {
   .Header.Signature  = HECI_SERVICE_SIGNATURE,
@@ -142,7 +142,7 @@ MeGetFwVersionFromMbp (
   )
 {
   UINT8                    *DataPtr;
-  ME_BIOS_PAYLOAD          *MbpDataHob;
+  MBP_FW_VERSION_NAME      *MbpFwVersion;
 
   if (AckData == NULL) {
     return EFI_INVALID_PARAMETER;
@@ -153,11 +153,11 @@ MeGetFwVersionFromMbp (
     return EFI_NOT_FOUND;
   }
 
-  MbpDataHob = (ME_BIOS_PAYLOAD *)(DataPtr + 4);
-  AckData->CodeMinor   = MbpDataHob->FwVersionName.MinorVersion;
-  AckData->CodeMajor   = MbpDataHob->FwVersionName.MajorVersion;
-  AckData->CodeBuildNo = MbpDataHob->FwVersionName.BuildVersion;
-  AckData->CodeHotFix  = MbpDataHob->FwVersionName.HotfixVersion;
+  MbpFwVersion = (MBP_FW_VERSION_NAME *)(DataPtr + 4);
+  AckData->CodeMinor   = MbpFwVersion->MinorVersion;
+  AckData->CodeMajor   = MbpFwVersion->MajorVersion;
+  AckData->CodeBuildNo = MbpFwVersion->BuildVersion;
+  AckData->CodeHotFix  = MbpFwVersion->HotfixVersion;
   DEBUG ((DEBUG_INFO, "FwVersion found from MBP!\n"));
 
   return EFI_SUCCESS;

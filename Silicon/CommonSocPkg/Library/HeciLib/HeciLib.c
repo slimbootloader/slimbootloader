@@ -69,7 +69,6 @@ HeciGetMeMode (
     default:
       *MeMode = ME_MODE_FAILED;
   }
-  DEBUG ((DEBUG_INFO, "[HECI1] MeMode %d (Hfsts1: %08X)\n", *MeMode, MeFirmwareStatus.ul));
 
   return EFI_SUCCESS;
 }

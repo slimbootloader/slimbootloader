@@ -5,27 +5,10 @@
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
-#ifndef _MBP_DATA_PROTOCOL_H_
-#define _MBP_DATA_PROTOCOL_H_
+#ifndef _MBP_DATA_COMMON_H_
+#define _MBP_DATA_COMMON_H_
 
 #include <MkhiMsgs.h>
-
-///
-/// Revision 1:  Original version
-/// Revision 2:  Deprecate MBP_ICC_PROFILE from ME_BIOS_PAYLOAD
-/// Revision 3:  Add Anti-Rollback SVN support
-///
-#define MBP_DATA_PROTOCOL_REVISION  3
-
-#define MBP_ITEM_FLAG_SENSITIVE     BIT0  ///< Item contains sensitive data.  Do not store in flash.
-#define MBP_ITEM_FLAG_RUNTIME       BIT1  ///< Item is generated at runtime.  Do not store in flash.
-
-#define MBP_APP_ID_KERNEL                     1
-#define MBP_APP_ID_NVM                        8
-#define MBP_ITEM_ID_FW_VER_NAME               1
-#define MBP_ITEM_ID_CURRENT_BOOT_MEDIA        1
-#define MBP_APP_ABL_SIG                       0x9
-#define MBP_ITEM_ID_IAFW_IBB_SIG              0x1
 
 #pragma pack(push, 1)
 
@@ -155,43 +138,27 @@ typedef struct {
   UINT8                       Reserved[3];
 } MBP_ARB_SVN_STATE;
 
-///
-/// ME BIOS Payload structure containing insensitive data only
-///
 typedef struct {
-  MBP_FW_VERSION_NAME        FwVersionName;
-  MBP_FW_CAPS_SKU            FwCapsSku;
-  MBP_FW_FEATURES_STATE      FwFeaturesState;
-  MBP_PLAT_TYPE              FwPlatType;
-  MBP_ICC_PROFILE            IccProfile; //@deprecated since version 2 : Replaced with GetIccProfile HECI
-  MBP_HWA_REQ                HwaRequest;
-  PLAT_BOOT_PERF_DATA        PlatBootPerfData;
-  MBP_ME_UNCONF_ON_RTC_STATE UnconfigOnRtcClearState;
-  UINT32                     ChipsetInitVerData[3];
-  MBP_ARB_SVN_STATE          ArbSvnState;
-} ME_BIOS_PAYLOAD;
-
-///
-/// All items which can't be available when 3rd part OPROMs/drivers are loaded
-/// must be added to below structure only
-///
-typedef struct {
-  MBP_PLATFORM_KEY           PlatformKey;
-} ME_BIOS_PAYLOAD_SENSITIVE;
+  UINT32 ChipsetInitVer[3];
+} MBP_MPHY_DATA;
 
 typedef struct {
-  UINT32  MKHIHeader;
-  UINT32  Flag;
-} MBP_CMD_REQ_DATA;
+  UINT32      EnterRecovery;
+  BOOLEAN     Available;
+  UINT8       Reserved[3];
+} MBP_IFWI_DNX_REQUEST;
 
 typedef struct {
-  UINT32  MKHIHeader;
-  UINT8   Length;
-  UINT8   ItemsNum;
-  UINT8   Flags;
-  UINT8   Reserved;
-} MBP_CMD_RESP_DATA;
+  UINT32 MeasuredBoot   : 1;
+  UINT32 Reserved       : 31;
+} MBP_MEASURED_BOOT_DATA;
+
+typedef struct {
+  MBP_MEASURED_BOOT_DATA      MeasuredBootData;
+  BOOLEAN                     Available;
+  UINT8                       Reserved[3];
+} MBP_MEASURED_BOOT_SUPPORT;
 
 #pragma pack(pop)
 
-#endif
+#endif // _MBP_DATA_COMMON_H_
