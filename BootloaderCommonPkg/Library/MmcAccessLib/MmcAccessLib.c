@@ -291,6 +291,11 @@ EarlyMmcInitialize (
     goto Done;
   }
 
+  //
+  // Supplied 400KHz clock at init phase above. Record it.
+  //
+  Private->Slot.CurrentFreq = 400;
+
   Status = MmcReset (Private);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "MmcReset Fail Status = 0x%x\n", Status));
