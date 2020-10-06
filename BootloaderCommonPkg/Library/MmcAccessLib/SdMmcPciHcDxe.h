@@ -64,6 +64,7 @@ typedef struct {
   BOOLEAN                           Initialized;
   BOOLEAN                           SectorAddressing;
   SD_MMC_CARD_TYPE                  CardType;
+  UINT64                            CurrentFreq;
   UINT8                             CardData[sizeof (EMMC_CARD_DATA)];
 } SD_MMC_HC_SLOT;
 
