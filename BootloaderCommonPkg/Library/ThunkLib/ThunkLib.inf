@@ -1,0 +1,42 @@
+## @file
+#
+#  Copyright (c) 2019 - 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = ThunkLib
+  FILE_GUID                      = F3B030C8-CACA-4E83-BEB8-CAE6981DE960
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = ThunkLib
+
+[Sources]
+
+
+[Sources.IA32]
+  Ia32/DispatchExecute.c
+
+[Sources.X64]
+  X64/DispatchExecute.c
+  X64/Thunk64To32.nasm
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  PagingLib
+  PrintLib
+
+[Guids]
+  gEfiGraphicsInfoHobGuid
+  gLoaderMemoryMapInfoGuid
+  gLoaderSystemTableInfoGuid
+
+[Pcd]
