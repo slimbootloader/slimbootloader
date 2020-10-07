@@ -12,7 +12,6 @@
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/BlMemoryAllocationLib.h>
-#include <FspEas.h>
 
 #pragma pack(1)
 typedef union {
@@ -37,15 +36,15 @@ typedef union {
 
 
 /**
-  Assembly function to transition from long mode to compatibility mode to execute 32-bit code and then transit back to
-  long mode.
+  Wrapper for a thunk  to transition from long mode to compatibility mode to
+  execute 32-bit code and then transit back to long mode.
 
   @param[in] Function     The 32bit code entry to be executed.
-  @param[in] Param1       The first parameter to pass to 32bit code
-  @param[in] Param2       The second parameter to pass to 32bit code
-  @param[in] InternalGdtr The GDT and GDT descriptor used by this library
+  @param[in] Param1       The first parameter to pass to 32bit code.
+  @param[in] Param2       The second parameter to pass to 32bit code.
+  @param[in] ExeInMem     If thunk needs to be executed from memory copy.
 
-  @return status.
+  @return Status.         Status returned from the calling function.
 **/
 UINT32
 EFIAPI

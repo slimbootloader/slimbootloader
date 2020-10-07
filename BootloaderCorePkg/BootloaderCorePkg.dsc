@@ -119,7 +119,7 @@
   IoMmuLib|BootloaderCommonPkg/Library/IoMmuLib/IoMmuLib.inf
   MtrrLib|BootloaderCommonPkg/Library/MtrrLib/MtrrLib.inf
   StringSupportLib|BootloaderCommonPkg/Library/StringSupportLib/StringSupportLib.inf
-
+  ThunkLib|BootloaderCommonPkg/Library/ThunkLib/ThunkLib.inf
 
 !if $(ENABLE_SOURCE_DEBUG)
   DebugAgentLib|BootloaderCommonPkg/Library/DebugAgentLib/DebugAgentLib.inf

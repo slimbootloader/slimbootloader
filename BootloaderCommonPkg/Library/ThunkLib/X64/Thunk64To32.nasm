@@ -130,6 +130,13 @@ Compatible:
     btc     eax, 8
     wrmsr
 
+    ;
+    ; clear CR4 PAE
+    ;
+    mov     rax, cr4
+    btc     eax, 5
+    mov     cr4, rax
+
 ; Now we are in protected mode
     ;
     ; Call 32-bit function. Assume the function entry address and parameter value is less than 4G
@@ -146,7 +153,7 @@ ReturnBack:
     pop   rcx                  ; drop param2
 
     ;
-    ; restore CR4
+    ; restore CR4 PAE
     ;
     mov     rax, cr4
     bts     eax, 5

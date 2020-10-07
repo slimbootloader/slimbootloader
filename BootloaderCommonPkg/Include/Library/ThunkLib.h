@@ -1,17 +1,16 @@
 /** @file
-  Execute 32-bit code in Long Mode.
-  Provide a thunk function to transition from long mode to compatibility mode to execute 32-bit code and then transit
-  back to long mode.
+  Thunk to 32 bit mode for execution from Long Mode.
 
-  Copyright (c) 2014 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
+#ifndef _THUNK_LIB_H_
+#define _THUNK_LIB_H_
+
 #include <PiPei.h>
 #include <Library/BaseLib.h>
-#include <FspEas.h>
-
 
 /**
   Wrapper for a thunk  to transition from long mode to compatibility mode to execute 32-bit code and then transit back to
@@ -31,9 +30,6 @@ Execute32BitCode (
   IN UINT64      Param1,
   IN UINT64      Param2,
   IN BOOLEAN     ExeInMem
-  )
-{
-  // 32 bit mode should not call this interface.
-  return EFI_UNSUPPORTED;
-}
+  );
 
+#endif
