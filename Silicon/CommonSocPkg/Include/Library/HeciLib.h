@@ -82,6 +82,30 @@ HeciReceive (
   );
 
 /**
+  Heci Service API function wrapper to HeciReceive API
+
+  @param[in] HeciDev              The HECI device to be accessed.
+  @param[in] Blocking             Used to determine if the read is BLOCKING or NON_BLOCKING.
+  @param[out] MessageBody         Pointer to a buffer used to receive a message.
+  @param[in][out] Length          Pointer to the length of the buffer on input and the length
+                                  of the message on return. (in bytes)
+
+  @retval EFI_SUCCESS             One message packet read.
+  @retval EFI_DEVICE_ERROR        Failed to initialize HECI or zero-length message packet read
+  @retval EFI_TIMEOUT             HECI is not ready for communication
+  @retval EFI_BUFFER_TOO_SMALL    The caller's buffer was not large enough
+  @retval EFI_UNSUPPORTED         Current ME mode doesn't support this message through this HECI
+**/
+EFI_STATUS
+EFIAPI
+HeciServiceReceive (
+  IN      UINT8        HeciDev,
+  IN      UINT32       Blocking,
+  OUT     UINT32      *MessageBody,
+  IN OUT  UINT32      *Length
+  );
+
+/**
   Function sends one message (of any length) through the HECI circular buffer.
 
   @param[in] HeciDev              The HECI device to be accessed.
@@ -99,6 +123,30 @@ EFI_STATUS
 EFIAPI
 HeciSend (
   IN HECI_DEVICE  HeciDev,
+  IN UINT32      *Message,
+  IN UINT32       Length,
+  IN UINT8        HostAddress,
+  IN UINT8        MeAddress
+  );
+
+/**
+  Heci Service API function wrapper to HeciSend API
+
+  @param[in] HeciDev              The HECI device to be accessed.
+  @param[in] Message              Pointer to the message data to be sent.
+  @param[in] Length               Length of the message in bytes.
+  @param[in] HostAddress          The address of the Host processor.
+  @param[in] MeAddress            Address of the ME subsystem the message is being sent to.
+
+  @retval EFI_SUCCESS             One message packet sent.
+  @retval EFI_DEVICE_ERROR        Failed to initialize HECI
+  @retval EFI_TIMEOUT             HECI is not ready for communication
+  @retval EFI_UNSUPPORTED      Current ME mode doesn't support send this message through this HECI
+**/
+EFI_STATUS
+EFIAPI
+HeciServiceSend (
+  IN UINT8        HeciDev,
   IN UINT32      *Message,
   IN UINT32       Length,
   IN UINT8        HostAddress,
@@ -145,6 +193,20 @@ EFI_STATUS
 EFIAPI
 HeciResetInterface (
   IN  HECI_DEVICE             HeciDev
+  );
+
+/**
+  Heci Service API function wrapper to HeciResetInterface API
+
+  @param[in] HeciDev              The HECI device to be accessed.
+
+  @retval EFI_TIMEOUT             ME is not ready
+  @retval EFI_SUCCESS             Interface reset
+**/
+EFI_STATUS
+EFIAPI
+HeciServiceResetInterface (
+  IN  UINT8             HeciDev
   );
 
 /**
