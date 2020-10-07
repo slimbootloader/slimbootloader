@@ -18,10 +18,13 @@
 #include <MeBiosPayloadDataCommon.h>
 
 STATIC CONST HECI_SERVICE mHeciService = {
-  .Header.Signature  = HECI_SERVICE_SIGNATURE,
-  .Header.Version    = HECI_SERVICE_VERSION,
-  .SimpleHeciCommand = NULL,
-  .HeciUserCommand   = NULL,
+  .Header.Signature   = HECI_SERVICE_SIGNATURE,
+  .Header.Version     = HECI_SERVICE_VERSION,
+  .HeciSend           = HeciServiceSend,
+  .HeciReceive        = HeciServiceReceive,
+  .HeciResetInterface = HeciServiceResetInterface,
+  .SimpleHeciCommand  = NULL,
+  .HeciUserCommand    = NULL,
 };
 
 /**

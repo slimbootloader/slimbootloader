@@ -36,7 +36,6 @@
   MmcAccessLib
   PcdLib
   PartitionLib
-  HeciLib
   LitePeCoffLib
 
 [Guids]

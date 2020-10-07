@@ -67,6 +67,7 @@
 #include "GpioTables.h"
 #include <Library/PchSpiLib.h>
 #include <Register/RegsSpi.h>
+#include <Library/HeciLib.h>
 
 #define DEFAULT_GPIO_IRQ_ROUTE                      14
 
@@ -1081,6 +1082,8 @@ BoardInit (
     }
     break;
   case EndOfStages:
+    // Register Heci Service
+    HeciRegisterHeciService ();
     // Lock down SPI for all other payload entry except FWUpdate and OSloader
     // as this phase is too early for them to lock it here
     SpiBaseAddress = GetDeviceAddr (OsBootDeviceSpi, 0);
