@@ -30,7 +30,7 @@ def CloneRepo (clone_dir, driver_inf):
         print ('Done\n')
     else:
         print ('Update the repo ...')
-        cmd = 'git fetch origin master'
+        cmd = 'git fetch origin'
         ret = subprocess.call(cmd.split(' '), cwd=clone_dir)
         if ret:
             Fatal ('Failed to update repo in directory %s !' % clone_dir)
