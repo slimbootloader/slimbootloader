@@ -301,7 +301,6 @@ typedef enum {
   GpioPadLock           = 0x5   ///< Lock both Pad configuration and output control
 } GPIO_LOCK_CONFIG;
 
-#define B_GPIO_LOCK_CONFIG_PAD_CONF_LOCK_MASK  0x3  ///< Mask for GPIO_LOCK_CONFIG for Pad Configuration Lock
 #define B_GPIO_LOCK_CONFIG_OUTPUT_LOCK_MASK    0xC  ///< Mask for GPIO_LOCK_CONFIG for Pad Output Lock
 
 /**

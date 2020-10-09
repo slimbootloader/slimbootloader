@@ -15,8 +15,6 @@
 /*
  * PCR Extended Interface
  */
-#define MKHI_BOOTLOADER_PCR_EXTEND_CMD_REQ 0x10
-#define MKHI_BOOTLOADER_PCR_EXTEND_GRP_ID  0xF0
 #define MKHI_BOOTLOADER_PCR_LEN            32
 
 /*
@@ -120,9 +118,6 @@ typedef struct
   MKHI_BOOTLOADER_SEED_LIST        SeedList;
 }MKHI_BOOTLOADER_GET_SEED_LIST_EX_RESP_DATA;
 
-//
-// FW version messages
-//
 
 typedef struct {
     MKHI_MESSAGE_HEADER MKHIHeader;

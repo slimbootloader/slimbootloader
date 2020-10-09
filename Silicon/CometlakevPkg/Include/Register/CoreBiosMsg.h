@@ -12,16 +12,6 @@
 
 #pragma pack(1)
 
-//
-// Core messages to coordinate memory initialization and UMA allocation with ME
-// as well as to inform ME of the end of POST event
-//
-
-
-///
-/// Host Address of Fixed Address MEI Header -
-/// This is the logical address of the Host client of the message. This address
-/// is assigned when the host client registers itself with the Host MEI driver.
 
 /**
   Address 0 is statically allocated for MEI bus message protocol that assists in MEI bus
@@ -36,15 +26,7 @@
 /// of the message. This address is assigned during ME firmware initialization.
 ///
 #define HECI_HBM_MESSAGE_ADDR               0x00
-#define HECI_ASF_MESSAGE_ADDR               0x02
-#define HECI_ISH_SERVICE_MESSAGE_ADDR       0x03
-#define HECI_MKHI_MESSAGE_ADDR              0x07
-#define HECI_ICC_MESSAGE_ADDR               0x08
-#define HECI_HWA_MESSAGE_ADDR               0x0B
 
-//
-// MKHI_CBM_GROUP_ID = 0x00
-//
 
 ///
 /// Reset request message data
@@ -69,26 +51,6 @@ typedef struct {
   MKHI_MESSAGE_HEADER MkhiHeader;
 } CBM_RESET_ACK;
 
-//
-// Enumerations used in Core BIOS Messages
-//
-
-//
-// Reset Request Origin Codes.
-//
-#define CBM_RR_REQ_ORIGIN_BIOS_MEMORY_INIT 0x01
-#define CBM_RR_REQ_ORIGIN_BIOS_POST        0x02
-#define CBM_RR_REQ_ORIGIN_MEBX             0x03
-
-//
-// Reset Type Codes.
-//
-#define CBM_HRR_GLOBAL_RESET  0x01
-
-//
-// Reset Response Codes.
-//
-#define CBM_HRR_RES_REQ_NOT_ACCEPTED  0x01
 
 typedef enum {
   ICC_STATUS_SUCCESS                           = 0x0,
@@ -258,9 +220,6 @@ typedef union {
   ICC_GET_CLK_CAPABILITIES_RESPONSE Response;
 } ICC_GET_CLK_CAPABILITIES_BUFFER;
 
-///
-/// Get/Set Clock Settings
-///
 
 ///
 /// Used for the FLAGS parameter of Get/Set Clock Settings

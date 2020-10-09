@@ -50,7 +50,6 @@ static GPIO_INIT_CONFIG mGpioTableCmlS82Ddr4PreMem[] =
 };
 
 
-
 GPIO_INIT_CONFIG mGpioTableEMMC[] =
 {
   {GPIO_CNL_LP_GPP_F11, {GpioPadModeNative1, GpioHostOwnGpio, GpioDirNone,  GpioOutDefault, GpioIntDis, GpioHostDeepReset,  GpioTermNone}},//EMMC_CMD

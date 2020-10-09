@@ -11,27 +11,19 @@
 #include "PchHda.h"
 
 typedef UINT8 PCH_STEPPING;
-#define PCH_A0                0x00
-#define PCH_A1                0x01
 #define PCH_B0                0x10
-#define PCH_B1                0x11
-#define PCH_C0                0x20
-#define PCH_C1                0x21
 #define PCH_D0                0x30
-#define PCH_D1                0x31
 #define PCH_STEPPING_MAX      0xFF
 
 typedef UINT8 PCH_SERIES;
 #define PCH_H                   1
 #define PCH_LP                  2
-#define PCH_SERVER              0x80
 #define PCH_UNKNOWN_SERIES      0xFF
 
 typedef UINT8 PCH_GENERATION;
 #define CNL_PCH                 3
 #define CML_PCH                 4
 #define CDF_PCH                 0x80
-#define PCH_UNKNOWN_GENERATION  0xFF
 
 typedef enum {
   RstUnsupported  = 0,

@@ -10,7 +10,6 @@
   // up by the System BIOS during POST.  Note that the Size must be a word
   // in size to be fixed up correctly.
 
-
 #ifndef _PLATFORM_NVS_AREA_DEF_H_
 #define _PLATFORM_NVS_AREA_DEF_H_
 

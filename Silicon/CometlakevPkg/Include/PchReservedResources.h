@@ -31,28 +31,9 @@
   | 2 MB        | 0xFE600000  | 0xFE7FFFFF  | Temp address                  |
   +-------------------------------------------------------------------------+
 **/
-#define PCH_PRESERVED_BASE_ADDRESS      0xFC800000     ///< Pch preserved MMIO base address
-#define PCH_PRESERVED_MMIO_SIZE         0x02000000     ///< 28MB
-#define PCH_TRACE_HUB_SW_BASE_ADDRESS   0xFC800000     ///< TraceHub SW MMIO base address
-#define PCH_TRACE_HUB_SW_MMIO_SIZE      0x00800000     ///< 8MB
 #define PCH_PCR_BASE_ADDRESS            0xFD000000     ///< SBREG MMIO base address
-#define PCH_PCR_MMIO_SIZE               0x01000000     ///< 16MB
 #define PCH_PWRM_BASE_ADDRESS           0xFE000000     ///< PMC MBAR MMIO base address
-#define PCH_PWRM_MMIO_SIZE              0x00010000     ///< 64KB
-#define PCH_SPI_BASE_ADDRESS            0xFE010000     ///< SPI BAR0 MMIO base address
-#define PCH_SPI_MMIO_SIZE               0x00001000     ///< 4KB
 #define PCH_SERIAL_IO_BASE_ADDRESS      0xFE020000     ///< SerialIo MMIO base address
-#define PCH_SERIAL_IO_MMIO_SIZE         0x00016000     ///< 88KB
-#define PCH_ESPI_LGMR_BASE_ADDRESS      0xFE0B0000     ///< eSPI LGMR MMIO base address
-#define PCH_ESPI_LGMR_MMIO_SIZE         0x00010000     ///< 64KB
-#define PCH_ESPI_SEGMR_BASE_ADDRESS     0xFE0C0000     ///< Second eSPI GMR MMIO base address
-#define PCH_ESPI_SEGMR_MMIO_SIZE        0x00010000     ///< 64KB
-#define PCH_TRACE_HUB_MTB_BASE_ADDRESS  0xFE100000     ///< TraceHub MTB MMIO base address
-#define PCH_TRACE_HUB_MTB_MMIO_SIZE     0x00100000     ///< 1MB
 #define PCH_TRACE_HUB_FW_BASE_ADDRESS   0xFE200000     ///< TraceHub FW MMIO base address
-#define PCH_TRACE_HUB_FW_MMIO_SIZE      0x00200000     ///< 2MB
-#define PCH_TEMP_BASE_ADDRESS           0xFE600000     ///< preserved temp address for misc usage,
-#define PCH_TEMP_MMIO_SIZE              0x00200000     ///< 2MB
 
 #endif // _PCH_PRESERVED_RESOURCES_H_
-

@@ -27,11 +27,9 @@
 /// Defines for BUP_COMMON_GROUP_ID Command
 ///
 #define DRAM_INIT_DONE_CMD       0x01
-#define MBP_REQUEST_CMD          0x02
 #define ME_ENABLE_CMD            0x03
 #define HMRFPO_DISABLE_CMD       0x04
 #define GET_IMR_SIZE_CMD         0x0C
-#define MANUF_RESET_AND_HALT_CMD 0x0E
 ///
 /// Defines for BUP_ICC_GROUP_ID Command
 ///
@@ -41,25 +39,6 @@
 ///
 #define HSIO_CMD  0x1
 
-///
-/// Defines for BUP_PM_GROUP_ID Command
-///
-#define NPCR_NOTIFICATION_CMD  0x1
-
-///
-/// Common group definitions
-///
-
-///
-/// DRAM Init Done definitions
-///
-
-///
-/// Memory Init Status codes
-///
-#define BIOS_MSG_DID_SUCCESS              0
-#define BIOS_MSG_DID_NO_MEMORY            0x1
-#define BIOS_MSG_DID_INIT_ERROR           0x2
 
 typedef struct {
   UINT32  BiosImrsBaLow;
@@ -75,17 +54,6 @@ typedef struct {
    UINT8                        Reserved2;
 } DRAM_INIT_DONE_CMD_REQ;
 
-//
-// Response Flags Definitions
-//
-#define ME_OPTIMIZED_BOOT_FLAG BIT1
-
-///
-/// BIOS Reset Action Codes
-///
-#define DID_ACK_NON_PCR       0x1
-#define DID_ACK_PCR           0x2
-#define DID_ACK_GRST          0x3
 
 typedef struct {
   UINT32  AdrLow;
@@ -106,7 +74,6 @@ typedef union {
   DRAM_INIT_DONE_CMD_RESP  Response;
 } DRAM_INIT_DONE_CMD_BUFFER;
 
-#define MAX_MBP_SIZE                    0x1000
 
 typedef struct {
   MKHI_MESSAGE_HEADER MkhiHeader;
@@ -205,15 +172,6 @@ typedef union {
   ICC_CMD_RESP        Response;
 } ICC_CMD_BUFFER;
 
-///
-/// HSIO group defines
-///
-
-///
-/// BIOS HSIO request types
-///
-#define HSIO_CLOSE_INTERFACE_REQ    0x0
-#define HSIO_REPORT_VERSION_REQ     0x1
 
 typedef struct {
   MKHI_MESSAGE_HEADER   MkhiHeader;
@@ -292,4 +250,3 @@ typedef union {
 #pragma pack()
 
 #endif // _BUP_MSGS_H
-

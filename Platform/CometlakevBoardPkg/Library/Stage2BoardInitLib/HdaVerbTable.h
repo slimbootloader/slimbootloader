@@ -97,30 +97,6 @@ CONST HDAUDIO_VERB_TABLE CmlHdaVerbTableAlc711 = HDAUDIO_VERB_TABLE_INIT (
   0x10EC, 0x0711,
   0xFF, 0xFF,
 
-  //===================================================================================================
-  //
-  //                               Realtek Semiconductor Corp.
-  //
-  //===================================================================================================
-
-  //Realtek High Definition Audio Configuration - Version : 5.0.3.0
-  //Realtek HD Audio Codec : ALC711
-  //PCI PnP ID : PCI\VEN_8086&DEV_2668&SUBSYS_72708086
-  //HDA Codec PnP ID : HDAUDIO\FUNC_01&VEN_10EC&DEV_0711&SUBSYS_10EC11DE
-  //The number of verb command block : 15
-
-  //    NID 0x12 : 0x40000000
-  //    NID 0x13 : 0x411111F0
-  //    NID 0x14 : 0x411111F0
-  //    NID 0x17 : 0x411111F0
-  //    NID 0x18 : 0x411111F0
-  //    NID 0x19 : 0x02A11020
-  //    NID 0x1A : 0x411111F0
-  //    NID 0x1D : 0x4045062D
-  //    NID 0x1E : 0x411111F0
-  //    NID 0x1F : 0x411111F0
-  //    NID 0x21 : 0x02211010
-
 
   //===== HDA Codec Subsystem ID Verb-table =====
   //HDA Codec Subsystem ID  : 0x10EC11DE

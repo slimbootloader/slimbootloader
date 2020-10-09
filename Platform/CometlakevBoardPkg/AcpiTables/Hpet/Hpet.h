@@ -11,16 +11,10 @@
 #ifndef _HPET_H_
 #define _HPET_H_
 
-//
-// Statements that include other files
-//
 
 #include <IndustryStandard/Acpi30.h>
 #include <IndustryStandard/HighPrecisionEventTimerTable.h>
 
-//
-// HPET Definitions
-//
 
 #define EFI_ACPI_OEM_HPET_REVISION                      0x00000001
 
