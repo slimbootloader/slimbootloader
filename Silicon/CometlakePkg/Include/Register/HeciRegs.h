@@ -7,7 +7,6 @@
 #ifndef _HECI_REGS_H_
 #define _HECI_REGS_H_
 
-#define HECI_BUS                        ME_BUS
 #define HECI_DEV                        ME_DEVICE_NUMBER
 #define HECI_FUN                        HECI_FUNCTION_NUMBER
 #define HECI3_FUN                       HECI3_FUNCTION_NUMBER
@@ -19,7 +18,6 @@
 #define H_CSR     0x04
 #define ME_CB_RW  0x08
 #define ME_CSR_HA 0x0C
-#define D0I3C     0x800
 
 //
 // HPET Information
@@ -27,14 +25,8 @@
 //
 // HPET Registers will be used as DWORD index
 //
-#define HPET_CAPS_REG_LOW       0x00 / 4
-#define HPET_CAPS_REG_HIGH      0x04 / 4
 #define HPET_GEN_CONFIG_LOW     0x10 / 4
-#define HPET_GEN_CONFIG_HIGH    0x14 / 4
-#define HPET_INT_STATUS_LOW     0x20 / 4
-#define HPET_INT_STATUS_HIGH    0x24 / 4
 #define HPET_MAIN_COUNTER_LOW   0xF0 / 4
-#define HPET_MAIN_COUNTER_HIGH  0xF4 / 4
 
 #define HPET_START            0x01
 #define HPET_TICKS_PER_MICRO  24  ///< 41.6 ns tick so 24 ticks per microsecond ish
@@ -202,44 +194,28 @@ typedef union {
 //
 // ME Current State Values
 //
-#define ME_STATE_RESET        0x00
 #define ME_STATE_INIT         0x01
 #define ME_STATE_RECOVERY     0x02
 #define ME_STATE_NORMAL       0x05
 #define ME_STATE_DISABLE_WAIT 0x06
 #define ME_STATE_TRANSITION   0x07
-#define ME_STATE_INVALID_CPU  0x08
 
 //
 // ME Firmware FwInitComplete
 //
 #define ME_FIRMWARE_COMPLETED   0x01
-#define ME_FIRMWARE_INCOMPLETED 0x00
 
 //
 // ME Boot Options Present
 //
 #define ME_BOOT_OPTIONS_PRESENT     0x01
-#define ME_BOOT_OPTIONS_NOT_PRESENT 0x00
 
-//
-// ME Operation State Values
-//
-#define ME_OPERATION_STATE_PREBOOT  0x00
-#define ME_OPERATION_STATE_M0_UMA   0x01
-#define ME_OPERATION_STATE_M3       0x04
-#define ME_OPERATION_STATE_M0       0x05
-#define ME_OPERATION_STATE_BRINGUP  0x06
-#define ME_OPERATION_STATE_M0_ERROR 0x07
 
 //
 // ME Error Code Values
 //
 #define ME_ERROR_CODE_NO_ERROR      0x00
-#define ME_ERROR_CODE_UNKNOWN       0x01
-#define ME_ERROR_CODE_DISABLED      0x02
 #define ME_ERROR_CODE_IMAGE_FAILURE 0x03
-#define ME_ERROR_CODE_DEBUG_FAILURE 0x04
 
 //
 // Management Engine Current Operation Mode

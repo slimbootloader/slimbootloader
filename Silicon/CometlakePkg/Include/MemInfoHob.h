@@ -28,7 +28,6 @@ extern EFI_GUID gSiMemoryPlatformDataGuid;
 ///
 #define  WARM_BOOT        2
 
-#define R_MC_CHNL_RANK_PRESENT  0x7C
 #define   B_RANK0_PRS           BIT0
 #define   B_RANK1_PRS           BIT1
 #define   B_RANK2_PRS           BIT4

@@ -129,7 +129,6 @@ typedef enum {
 #define HIDE_AMT_DEVICE          HIDE_SOL
 #define HIDE_SPS_DEVICE          (HIDE_MEI3 | HIDE_AMT_DEVICE)
 #define HIDE_ALL_ME_DEVICE       (HIDE_MEI1 | HIDE_MEI2 | HIDE_MEI3 | HIDE_AMT_DEVICE)
-#define DEVICE_HIDE_MASK         0x00FF0000
 
 /**
   Abstract MEI message allowance in non MeNormalBiosPath definition
@@ -145,7 +144,6 @@ typedef enum {
   BIT15- All messages are allowed to be sent with this ME Bios boot path
 **/
 #define IMR_AND_DID_MSG_ALLOWANCE     BIT0
-#define EOP_MSG_ALLOWANCE             BIT1
 #define HMRFPO_DISABLE_MSG_ALLOWANCE  BIT2
 #define SET_ME_ENABLE_MSG_ALLOWANCE   BIT3
 #define GLOBAL_RST_MSG_ALLOWANCE      BIT4
@@ -154,7 +152,6 @@ typedef enum {
 #define MEI_BUS_MSG_ALLOWANCE         BIT7  // HECI_MEI_BUS_MESSAGE_ADDR
 #define DYN_CLIENT_MSG_ALLOWANCE      BIT8  // Messages for dynamic clients
 #define ALL_MSG_ALLOWANCE             BIT15
-#define MSG_ALLOWANCE_MASK            0x0000FFFF
 
 /**
   Bit 15:0 - MEI message allowance definitions
@@ -446,9 +443,6 @@ HeciGetMeMode (
   OUT UINT32                       *MeMode
   );
 
-//
-// Prototype for ME Policy from PEI and DXE phase
-//
 
 /**
   Read the ME policy to see if HECI timeouts are enabled.
@@ -484,4 +478,3 @@ MeHeciMessageCheckEnabled (
   );
 
 #endif // _HECI_INIT_LIB_H
-

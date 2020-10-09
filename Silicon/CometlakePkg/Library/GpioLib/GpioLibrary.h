@@ -27,16 +27,6 @@
 
 #include <GpioConfig.h>
 
-// BIT15-0  - pad number
-// BIT31-16 - group info
-// BIT23-16 - group index
-// BIT31-24 - chipset ID
-#define PAD_INFO_MASK          0x0000FFFF
-#define GROUP_INFO_POSITION    16
-#define GROUP_INFO_MASK        0xFFFF0000
-#define GROUP_INDEX_MASK       0x00FF0000
-#define UNIQUE_ID_MASK         0xFF000000
-#define UNIQUE_ID_POSITION     24
 
 #define GPIO_PAD_DEF(Group,Pad)               (UINT32)(((Group) << 16) + (Pad))
 #define GPIO_GROUP_DEF(Index,ChipsetId)       ((Index) | ((ChipsetId) << 8))

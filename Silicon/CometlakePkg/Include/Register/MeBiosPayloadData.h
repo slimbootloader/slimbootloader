@@ -9,9 +9,6 @@
 #define _MBP_DATA_PROTOCOL_H_
 #include <Register/CoreBiosMsg.h>
 
-///
-/// MBP Protocol for DXE phase
-///
 
 ///
 /// Revision 1:  Original version
@@ -20,8 +17,6 @@
 ///
 #define MBP_DATA_PROTOCOL_REVISION  3
 
-#define MBP_ITEM_FLAG_SENSITIVE     BIT0  ///< Item contains sensitive data.  Do not store in flash.
-#define MBP_ITEM_FLAG_RUNTIME       BIT1  ///< Item is generated at runtime.  Do not store in flash.
 
 #pragma pack(push, 1)
 

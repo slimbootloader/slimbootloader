@@ -11,15 +11,9 @@
 #ifndef _FACS_H_
 #define _FACS_H_
 
-//
-// Statements that include other files
-//
 
 #include <IndustryStandard/Acpi.h>
 
-//
-// FACS Definitions
-//
 
 #define EFI_ACPI_FIRMWARE_WAKING_VECTOR 0x00000000
 #define EFI_ACPI_GLOBAL_LOCK 0x00000000

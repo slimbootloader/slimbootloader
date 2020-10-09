@@ -43,4 +43,3 @@ OverflowCB (
   );
 
 #endif // _HECI_HELPER_H_
-

@@ -22,9 +22,7 @@ typedef UINT8          PCH_SBI_PID;
 //
 #define B_GPIO_PAD_MODE_MASK                            0xF
 #define N_GPIO_PAD_MODE_BIT_POS                         0
-#define B_GPIO_HOSTSW_OWN_MASK                          0x3
 #define N_GPIO_HOSTSW_OWN_BIT_POS                       0
-#define B_GPIO_DIRECTION_MASK                           0x1F
 #define B_GPIO_DIRECTION_DIR_MASK                       0x7
 #define N_GPIO_DIRECTION_DIR_BIT_POS                    0
 #define B_GPIO_DIRECTION_INV_MASK                       0x18
@@ -34,11 +32,7 @@ typedef UINT8          PCH_SBI_PID;
 #define N_GPIO_INT_CONFIG_INT_SOURCE_BIT_POS            0
 #define N_GPIO_INT_CONFIG_INT_TYPE_BIT_POS              5
 #define B_GPIO_RESET_CONFIG_RESET_MASK                  0x3F
-#define N_GPIO_RESET_CONFIG_OLD_RESET_TYPE              BIT1
-#define B_GPIO_RESET_CONFIG_OLD_RESET_MASK              0xF
 #define N_GPIO_RESET_CONFIG_RESET_BIT_POS               0
-#define B_GPIO_RESET_CONFIG_GPD_RESET_MASK              (BIT5 | BIT4)
-#define B_GPIO_RESET_CONFIG_GPP_RESET_MASK              (BIT3 | BIT2)
 #define N_GPIO_ELECTRICAL_CONFIG_TERMINATION_BIT_POS    0
 #define N_GPIO_OTHER_CONFIG_RXRAW_BIT_POS               0
 

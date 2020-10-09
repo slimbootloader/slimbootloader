@@ -99,9 +99,7 @@ Conventions:
 #define V_CNL_PCH_LP_GPIO_PCR_MISCCFG_GPE0_VGPIO     0x7
 #define V_CNL_PCH_LP_GPIO_PCR_MISCCFG_GPE0_SPI       0x3
 #define V_CNL_PCH_LP_GPIO_PCR_MISCCFG_GPE0_AZA       0xA
-#define V_CNL_PCH_LP_GPIO_PCR_MISCCFG_GPE0_CPU       0xB
 #define V_CNL_PCH_LP_GPIO_PCR_MISCCFG_GPE0_JTAG      0xE
-#define V_CNL_PCH_LP_GPIO_PCR_MISCCFG_GPE0_HVMOS     0xF
 
 //
 // GPIO Community 0 Private Configuration Registers
@@ -147,23 +145,15 @@ Conventions:
 
 //#define R_CNL_PCH_LP_GPIO_PCR_GPP_A_SMI_STS        0x0180  // Not supported setting for this group
 #define R_CNL_PCH_LP_GPIO_PCR_GPP_B_SMI_STS        0x0184
-//#define R_CNL_PCH_LP_GPIO_PCR_GPP_G_SMI_STS        0x0188  // Not supported setting for this group
-//#define R_CNL_PCH_LP_GPIO_PCR_SPI_SMI_STS          0x018C  // Not supported setting for this group
 
 //#define R_CNL_PCH_LP_GPIO_PCR_GPP_A_SMI_EN         0x01A0  // Not supported setting for this group
 #define R_CNL_PCH_LP_GPIO_PCR_GPP_B_SMI_EN         0x01A4
-//#define R_CNL_PCH_LP_GPIO_PCR_GPP_G_SMI_EN         0x01A8  // Not supported setting for this group
-//#define R_CNL_PCH_LP_GPIO_PCR_SPI_SMI_EN           0x01AC  // Not supported setting for this group
 
 //#define R_CNL_PCH_LP_GPIO_PCR_GPP_A_NMI_STS        0x01C0  // Not supported setting for this group
 #define R_CNL_PCH_LP_GPIO_PCR_GPP_B_NMI_STS        0x01C4
-//#define R_CNL_PCH_LP_GPIO_PCR_GPP_G_NMI_STS        0x01C8  // Not supported setting for this group
-//#define R_CNL_PCH_LP_GPIO_PCR_SPI_NMI_STS          0x01CC  // Not supported setting for this group
 
 //#define R_CNL_PCH_LP_GPIO_PCR_GPP_A_NMI_EN         0x01E0  // Not supported setting for this group
 #define R_CNL_PCH_LP_GPIO_PCR_GPP_B_NMI_EN         0x01E4
-//#define R_CNL_PCH_LP_GPIO_PCR_GPP_G_NMI_EN         0x01E8  // Not supported setting for this group
-//#define R_CNL_PCH_LP_GPIO_PCR_SPI_NMI_EN           0x01EC  // Not supported setting for this group
 
 #define R_CNL_PCH_LP_GPIO_PCR_GPP_A_PADCFG_OFFSET  0x600
 #define R_CNL_PCH_LP_GPIO_PCR_GPP_B_PADCFG_OFFSET  0x790
@@ -186,8 +176,6 @@ Conventions:
 #define R_CNL_PCH_LP_GPIO_PCR_GPP_H_PADCFGLOCKTX   0x94
 #define R_CNL_PCH_LP_GPIO_PCR_VGPIO_0_PADCFGLOCK   0x98
 #define R_CNL_PCH_LP_GPIO_PCR_VGPIO_0_PADCFGLOCKTX 0x9C
-#define R_CNL_PCH_LP_GPIO_PCR_VGPIO_1_PADCFGLOCK   0xA0
-#define R_CNL_PCH_LP_GPIO_PCR_VGPIO_1_PADCFGLOCKTX 0xA4
 
 #define R_CNL_PCH_LP_GPIO_PCR_GPP_D_HOSTSW_OWN     0xB0
 #define R_CNL_PCH_LP_GPIO_PCR_GPP_F_HOSTSW_OWN     0xB4
@@ -215,24 +203,12 @@ Conventions:
 #define R_CNL_PCH_LP_GPIO_PCR_VGPIO_GPI_GPE_EN     0x016C
 
 #define R_CNL_PCH_LP_GPIO_PCR_GPP_D_SMI_STS        0x0180
-//#define R_CNL_PCH_LP_GPIO_PCR_GPP_F_SMI_STS        0x0184  // Not supported setting for this group
-//#define R_CNL_PCH_LP_GPIO_PCR_GPP_H_SMI_STS        0x0188  // Not supported setting for this group
-//#define R_CNL_PCH_LP_GPIO_PCR_VGPIO_SMI_STS        0x018C  // Not supported setting for this group
 
 #define R_CNL_PCH_LP_GPIO_PCR_GPP_D_SMI_EN         0x01A0
-//#define R_CNL_PCH_LP_GPIO_PCR_GPP_F_SMI_EN         0x01A4  // Not supported setting for this group
-//#define R_CNL_PCH_LP_GPIO_PCR_GPP_H_SMI_EN         0x01A8  // Not supported setting for this group
-//#define R_CNL_PCH_LP_GPIO_PCR_VGPIO_SMI_EN         0x01AC  // Not supported setting for this group
 
 #define R_CNL_PCH_LP_GPIO_PCR_GPP_D_NMI_STS        0x01C0
-//#define R_CNL_PCH_LP_GPIO_PCR_GPP_F_NMI_STS        0x01C4  // Not supported setting for this group
-//#define R_CNL_PCH_LP_GPIO_PCR_GPP_H_NMI_STS        0x01C8  // Not supported setting for this group
-//#define R_CNL_PCH_LP_GPIO_PCR_VGPIO_NMI_STS        0x01CC  // Not supported setting for this group
 
 #define R_CNL_PCH_LP_GPIO_PCR_GPP_D_NMI_EN         0x01E0
-//#define R_CNL_PCH_LP_GPIO_PCR_GPP_F_NMI_EN         0x01E4  // Not supported setting for this group
-//#define R_CNL_PCH_LP_GPIO_PCR_GPP_H_NMI_EN         0x01E8  // Not supported setting for this group
-//#define R_CNL_PCH_LP_GPIO_PCR_VGPIO_NMI_EN         0x01EC  // Not supported setting for this group
 
 #define R_CNL_PCH_LP_GPIO_PCR_GPP_D_PADCFG_OFFSET  0x600
 #define R_CNL_PCH_LP_GPIO_PCR_GPP_F_PADCFG_OFFSET  0x790
@@ -255,11 +231,6 @@ Conventions:
 #define R_CNL_PCH_LP_GPIO_PCR_GPD_GPI_GPE_STS      0x0140
 #define R_CNL_PCH_LP_GPIO_PCR_GPD_GPI_GPE_EN       0x0160
 
-//#define R_CNL_PCH_LP_GPIO_PCR_GPD_SMI_STS        0x0180  // Not supported setting for this group
-//#define R_CNL_PCH_LP_GPIO_PCR_GPD_SMI_EN         0x01A0  // Not supported setting for this group
-
-//#define R_CNL_PCH_LP_GPIO_PCR_GPD_NMI_STS        0x01C0  // Not supported setting for this group
-//#define R_CNL_PCH_LP_GPIO_PCR_GPD_NMI_EN         0x01E0  // Not supported setting for this group
 
 #define R_CNL_PCH_LP_GPIO_PCR_GPD_PADCFG_OFFSET    0x600
 
@@ -278,28 +249,13 @@ Conventions:
 #define R_CNL_PCH_LP_GPIO_PCR_CPU_HOSTSW_OWN       0xB4
 
 #define R_CNL_PCH_LP_GPIO_PCR_AZA_GPI_IS           0x0100
-//#define R_CNL_PCH_LP_GPIO_PCR_CPU_GPI_IS           0x0104  // Not supported setting for this group
 
 #define R_CNL_PCH_LP_GPIO_PCR_AZA_GPI_IE           0x0120
-//#define R_CNL_PCH_LP_GPIO_PCR_CPU_GPI_IE           0x0124  // Not supported setting for this group
 
 #define R_CNL_PCH_LP_GPIO_PCR_AZA_GPI_GPE_STS      0x0140
-//#define R_CNL_PCH_LP_GPIO_PCR_CPU_GPI_GPE_STS      0x0144  // Not supported setting for this group
 
 #define R_CNL_PCH_LP_GPIO_PCR_AZA_GPI_GPE_EN       0x0160
-//#define R_CNL_PCH_LP_GPIO_PCR_CPU_GPI_GPE_EN       0x0164  // Not supported setting for this group
 
-//#define R_CNL_PCH_LP_GPIO_PCR_AZA_SMI_STS          0x0180  // Not supported setting for this group
-//#define R_CNL_PCH_LP_GPIO_PCR_CPU_SMI_STS          0x0184  // Not supported setting for this group
-
-//#define R_CNL_PCH_LP_GPIO_PCR_AZA_SMI_EN           0x01A0  // Not supported setting for this group
-//#define R_CNL_PCH_LP_GPIO_PCR_CPU_SMI_EN           0x01A4  // Not supported setting for this group
-
-//#define R_CNL_PCH_LP_GPIO_PCR_AZA_NMI_STS          0x01C0  // Not supported setting for this group
-//#define R_CNL_PCH_LP_GPIO_PCR_CPU_NMI_STS          0x01C4  // Not supported setting for this group
-
-//#define R_CNL_PCH_LP_GPIO_PCR_AZA_NMI_EN           0x01E0  // Not supported setting for this group
-//#define R_CNL_PCH_LP_GPIO_PCR_CPU_NMI_EN           0x01E4  // Not supported setting for this group
 
 #define R_CNL_PCH_LP_GPIO_PCR_AZA_PADCFG_OFFSET    0x600
 #define R_CNL_PCH_LP_GPIO_PCR_CPU_PADCFG_OFFSET    0x680
@@ -341,30 +297,21 @@ Conventions:
 //#define R_CNL_PCH_LP_GPIO_PCR_JTAG_GPI_GPE_STS     0x0148  // Not supported setting for this group
 #define R_CNL_PCH_LP_GPIO_PCR_HVMOS_GPI_GPE_STS    0x014C
 
-#define R_CNL_PCH_LP_GPIO_PCR_GPP_C_GPI_GPE_EN     0x0160
 #define R_CNL_PCH_LP_GPIO_PCR_GPP_E_GPI_GPE_EN     0x0164
 //#define R_CNL_PCH_LP_GPIO_PCR_JTAG_GPI_GPE_EN      0x0168  // Not supported setting for this group
 #define R_CNL_PCH_LP_GPIO_PCR_HVMOS_GPI_GPE_EN     0x016C
 
 #define R_CNL_PCH_LP_GPIO_PCR_GPP_C_SMI_STS        0x0180
 #define R_CNL_PCH_LP_GPIO_PCR_GPP_E_SMI_STS        0x0184
-//#define R_CNL_PCH_LP_GPIO_PCR_JTAG_SMI_STS         0x0188  // Not supported setting for this group
-//#define R_CNL_PCH_LP_GPIO_PCR_HVMOS_SMI_STS        0x018C  // Not supported setting for this group
 
 #define R_CNL_PCH_LP_GPIO_PCR_GPP_C_SMI_EN         0x01A0
 #define R_CNL_PCH_LP_GPIO_PCR_GPP_E_SMI_EN         0x01A4
-//#define R_CNL_PCH_LP_GPIO_PCR_JTAG_SMI_EN          0x01A8  // Not supported setting for this group
-//#define R_CNL_PCH_LP_GPIO_PCR_HVMOS_SMI_EN         0x01AC  // Not supported setting for this group
 
 #define R_CNL_PCH_LP_GPIO_PCR_GPP_C_NMI_STS        0x01C0
 #define R_CNL_PCH_LP_GPIO_PCR_GPP_E_NMI_STS        0x01C4
-//#define R_CNL_PCH_LP_GPIO_PCR_JTAG_NMI_STS         0x01C8  // Not supported setting for this group
-//#define R_CNL_PCH_LP_GPIO_PCR_HVMOS_NMI_STS        0x01CC  // Not supported setting for this group
 
 #define R_CNL_PCH_LP_GPIO_PCR_GPP_C_NMI_EN         0x01E0
 #define R_CNL_PCH_LP_GPIO_PCR_GPP_E_NMI_EN         0x01E4
-//#define R_CNL_PCH_LP_GPIO_PCR_JTAG_NMI_EN          0x01E8  // Not supported setting for this group
-//#define R_CNL_PCH_LP_GPIO_PCR_HVMOS_NMI_EN         0x01EC  // Not supported setting for this group
 
 #define R_CNL_PCH_LP_GPIO_PCR_GPP_C_PADCFG_OFFSET  0x600
 #define R_CNL_PCH_LP_GPIO_PCR_GPP_E_PADCFG_OFFSET  0x780
@@ -451,8 +398,6 @@ Conventions:
 #define R_CNL_PCH_H_GPIO_PCR_AZA_PADCFGLOCKTX      0x9C
 #define R_CNL_PCH_H_GPIO_PCR_VGPIO_0_PADCFGLOCK    0xA0
 #define R_CNL_PCH_H_GPIO_PCR_VGPIO_0_PADCFGLOCKTX  0xA4
-#define R_CNL_PCH_H_GPIO_PCR_VGPIO_1_PADCFGLOCK    0xA8
-#define R_CNL_PCH_H_GPIO_PCR_VGPIO_1_PADCFGLOCKTX  0xAC
 
 #define R_CNL_PCH_H_GPIO_PCR_GPP_C_HOSTSW_OWN      0xC0
 #define R_CNL_PCH_H_GPIO_PCR_GPP_D_HOSTSW_OWN      0xC4
@@ -487,26 +432,16 @@ Conventions:
 #define R_CNL_PCH_H_GPIO_PCR_GPP_C_SMI_STS         0x0180
 #define R_CNL_PCH_H_GPIO_PCR_GPP_D_SMI_STS         0x0184
 #define R_CNL_PCH_H_GPIO_PCR_GPP_G_SMI_STS         0x0188
-//#define R_CNL_PCH_H_GPIO_PCR_AZA_SMI_STS           0x018C  // Not supported setting for this group
-//#define R_CNL_PCH_H_GPIO_PCR_VGPIO_SMI_STS         0x0190  // Not supported setting for this group
 
 #define R_CNL_PCH_H_GPIO_PCR_GPP_C_SMI_EN          0x01A0
 #define R_CNL_PCH_H_GPIO_PCR_GPP_D_SMI_EN          0x01A4
 #define R_CNL_PCH_H_GPIO_PCR_GPP_G_SMI_EN          0x01A8
-//#define R_CNL_PCH_H_GPIO_PCR_AZA_SMI_EN            0x01AC  // Not supported setting for this group
-//#define R_CNL_PCH_H_GPIO_PCR_VGPIO_SMI_EN          0x01B0  // Not supported setting for this group
 
 #define R_CNL_PCH_H_GPIO_PCR_GPP_C_NMI_STS         0x01C0
 #define R_CNL_PCH_H_GPIO_PCR_GPP_D_NMI_STS         0x01C4
-//#define R_CNL_PCH_H_GPIO_PCR_GPP_G_NMI_STS         0x01C8  // Not supported setting for this group
-//#define R_CNL_PCH_H_GPIO_PCR_AZA_NMI_STS           0x01CC  // Not supported setting for this group
-//#define R_CNL_PCH_H_GPIO_PCR_VGPIO_NMI_STS         0x01D0  // Not supported setting for this group
 
 #define R_CNL_PCH_H_GPIO_PCR_GPP_C_NMI_EN          0x01E0
 #define R_CNL_PCH_H_GPIO_PCR_GPP_D_NMI_EN          0x01E4
-//#define R_CNL_PCH_H_GPIO_PCR_GPP_G_NMI_EN          0x01E8  // Not supported setting for this group
-//#define R_CNL_PCH_H_GPIO_PCR_AZA_NMI_EN            0x01EC  // Not supported setting for this group
-//#define R_CNL_PCH_H_GPIO_PCR_VGPIO_NMI_EN          0x01F0  // Not supported setting for this group
 
 #define R_CNL_PCH_H_GPIO_PCR_GPP_C_PADCFG_OFFSET   0x600
 #define R_CNL_PCH_H_GPIO_PCR_GPP_D_PADCFG_OFFSET   0x780
@@ -533,13 +468,6 @@ Conventions:
 
 #define R_CNL_PCH_H_GPIO_PCR_GPD_GPI_GPE_EN        0x0160
 
-//#define R_CNL_PCH_H_GPIO_PCR_GPD_SMI_STS         0x0180  // Not supported setting for this group
-
-//#define R_CNL_PCH_H_GPIO_PCR_GPD_SMI_EN          0x01A0  // Not supported setting for this group
-
-//#define R_CNL_PCH_H_GPIO_PCR_GPD_NMI_STS         0x01C0  // Not supported setting for this group
-
-//#define R_CNL_PCH_H_GPIO_PCR_GPD_NMI_EN          0x01E0  // Not supported setting for this group
 
 #define R_CNL_PCH_H_GPIO_PCR_GPD_PADCFG_OFFSET     0x600
 
@@ -573,49 +501,37 @@ Conventions:
 #define R_CNL_PCH_H_GPIO_PCR_GPP_H_GPI_IS          0x0104
 #define R_CNL_PCH_H_GPIO_PCR_GPP_E_GPI_IS          0x0108
 #define R_CNL_PCH_H_GPIO_PCR_GPP_F_GPI_IS          0x010C
-//#define R_CNL_PCH_H_GPIO_PCR_SPI_GPI_IS            0x0110  // Not supported setting for this group
 
 #define R_CNL_PCH_H_GPIO_PCR_GPP_K_GPI_IE          0x0120
 #define R_CNL_PCH_H_GPIO_PCR_GPP_H_GPI_IE          0x0124
 #define R_CNL_PCH_H_GPIO_PCR_GPP_E_GPI_IE          0x0128
 #define R_CNL_PCH_H_GPIO_PCR_GPP_F_GPI_IE          0x012C
-//#define R_CNL_PCH_H_GPIO_PCR_SPI_GPI_IE            0x0130  // Not supported setting for this group
 
 #define R_CNL_PCH_H_GPIO_PCR_GPP_K_GPI_GPE_STS     0x0140
 #define R_CNL_PCH_H_GPIO_PCR_GPP_H_GPI_GPE_STS     0x0144
 #define R_CNL_PCH_H_GPIO_PCR_GPP_E_GPI_GPE_STS     0x0148
 #define R_CNL_PCH_H_GPIO_PCR_GPP_F_GPI_GPE_STS     0x014C
-//#define R_CNL_PCH_H_GPIO_PCR_SPI_GPI_GPE_STS       0x0150  // Not supported setting for this group
 
 #define R_CNL_PCH_H_GPIO_PCR_GPP_K_GPI_GPE_EN      0x0160
 #define R_CNL_PCH_H_GPIO_PCR_GPP_H_GPI_GPE_EN      0x0164
 #define R_CNL_PCH_H_GPIO_PCR_GPP_E_GPI_GPE_EN      0x0168
 #define R_CNL_PCH_H_GPIO_PCR_GPP_F_GPI_GPE_EN      0x016C
-//#define R_CNL_PCH_H_GPIO_PCR_SPI_GPI_GPE_EN        0x0170  // Not supported setting for this group
 
 //#define R_CNL_PCH_H_GPIO_PCR_GPP_K_SMI_STS         0x0180  // Not supported setting for this group
 //#define R_CNL_PCH_H_GPIO_PCR_GPP_H_SMI_STS         0x0184  // Not supported setting for this group
 #define R_CNL_PCH_H_GPIO_PCR_GPP_E_SMI_STS         0x0188
-//#define R_CNL_PCH_H_GPIO_PCR_GPP_F_SMI_STS         0x018C  // Not supported setting for this group
-//#define R_CNL_PCH_H_GPIO_PCR_SPI_SMI_STS           0x0190  // Not supported setting for this group
 
 //#define R_CNL_PCH_H_GPIO_PCR_GPP_K_SMI_EN          0x01A0  // Not supported setting for this group
 //#define R_CNL_PCH_H_GPIO_PCR_GPP_H_SMI_EN          0x01A4  // Not supported setting for this group
 #define R_CNL_PCH_H_GPIO_PCR_GPP_E_SMI_EN          0x01A8
-//#define R_CNL_PCH_H_GPIO_PCR_GPP_F_SMI_EN          0x01AC  // Not supported setting for this group
-//#define R_CNL_PCH_H_GPIO_PCR_SPI_SMI_EN            0x01B0  // Not supported setting for this group
 
 //#define R_CNL_PCH_H_GPIO_PCR_GPP_K_NMI_STS         0x01C0  // Not supported setting for this group
 //#define R_CNL_PCH_H_GPIO_PCR_GPP_H_NMI_STS         0x01C4  // Not supported setting for this group
 #define R_CNL_PCH_H_GPIO_PCR_GPP_E_NMI_STS         0x01C8
-//#define R_CNL_PCH_H_GPIO_PCR_GPP_F_NMI_STS         0x01CC  // Not supported setting for this group
-//#define R_CNL_PCH_H_GPIO_PCR_SPI_NMI_STS           0x01D0  // Not supported setting for this group
 
 //#define R_CNL_PCH_H_GPIO_PCR_GPP_K_NMI_EN          0x01E0  // Not supported setting for this group
 //#define R_CNL_PCH_H_GPIO_PCR_GPP_H_NMI_EN          0x01E4  // Not supported setting for this group
 #define R_CNL_PCH_H_GPIO_PCR_GPP_E_NMI_EN          0x01E8
-//#define R_CNL_PCH_H_GPIO_PCR_GPP_F_NMI_EN          0x01EC  // Not supported setting for this group
-//#define R_CNL_PCH_H_GPIO_PCR_SPI_NMI_EN            0x01F0  // Not supported setting for this group
 
 #define R_CNL_PCH_H_GPIO_PCR_GPP_K_PADCFG_OFFSET   0x600
 #define R_CNL_PCH_H_GPIO_PCR_GPP_H_PADCFG_OFFSET   0x780
@@ -668,22 +584,18 @@ Conventions:
 //#define R_CNL_PCH_H_GPIO_PCR_CPU_SMI_STS           0x0180  // Not supported setting for this group
 //#define R_CNL_PCH_H_GPIO_PCR_JTAG_SMI_STS          0x0184  // Not supported setting for this group
 #define R_CNL_PCH_H_GPIO_PCR_GPP_I_SMI_STS         0x0188
-//#define R_CNL_PCH_H_GPIO_PCR_GPP_J_SMI_STS         0x018C  // Not supported setting for this group
 
 //#define R_CNL_PCH_H_GPIO_PCR_CPU_SMI_EN            0x01A0  // Not supported setting for this group
 //#define R_CNL_PCH_H_GPIO_PCR_JTAG_SMI_EN           0x01A4  // Not supported setting for this group
 #define R_CNL_PCH_H_GPIO_PCR_GPP_I_SMI_EN          0x01A8
-//#define R_CNL_PCH_H_GPIO_PCR_GPP_J_SMI_EN          0x01AC  // Not supported setting for this group
 
 //#define R_CNL_PCH_H_GPIO_PCR_CPU_NMI_STS           0x01C0  // Not supported setting for this group
 //#define R_CNL_PCH_H_GPIO_PCR_JTAG_NMI_STS          0x01C4  // Not supported setting for this group
 #define R_CNL_PCH_H_GPIO_PCR_GPP_I_NMI_STS         0x01C8
-//#define R_CNL_PCH_H_GPIO_PCR_GPP_J_NMI_STS         0x01CC  // Not supported setting for this group
 
 //#define R_CNL_PCH_H_GPIO_PCR_CPU_NMI_EN            0x01E0  // Not supported setting for this group
 //#define R_CNL_PCH_H_GPIO_PCR_JTAG_NMI_EN           0x01E4  // Not supported setting for this group
 #define R_CNL_PCH_H_GPIO_PCR_GPP_I_NMI_EN          0x01E8
-//#define R_CNL_PCH_H_GPIO_PCR_GPP_J_NMI_EN          0x01EC  // Not supported setting for this group
 
 #define R_CNL_PCH_H_GPIO_PCR_CPU_PADCFG_OFFSET     0x600
 #define R_CNL_PCH_H_GPIO_PCR_JTAG_PADCFG_OFFSET    0x6B0

@@ -32,4 +32,3 @@ typedef struct {
 
 #define CNL_LP_CHIPSET_ID   0x4
 #define CNL_H_CHIPSET_ID    0x3
-

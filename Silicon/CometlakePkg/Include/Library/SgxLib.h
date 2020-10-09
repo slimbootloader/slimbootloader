@@ -102,4 +102,3 @@ UpdateSgxNvs (
   );
 
 #endif // SGXLIB_H
-
