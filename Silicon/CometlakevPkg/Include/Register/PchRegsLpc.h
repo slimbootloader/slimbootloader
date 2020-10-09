@@ -18,8 +18,6 @@
 #define R_PCH_PCR_DMI_LPCIOD                      0x2770
 #define R_PCH_PCR_DMI_LPCIOE                      0x2774
 
-#define R_PCH_PMC_ACPI_BASE                       0x40
-#define B_PCH_PMC_ACPI_BASE_BAR                   0xFFFC
 
 #define PCH_PCR_BASE_ADDRESS                      0xFD000000
 #define PCH_PCR_ADDRESS(Pid, Offset)              (PCH_PCR_BASE_ADDRESS | ((UINT8)(Pid) << 16) | (UINT16)(Offset))
@@ -27,11 +25,9 @@
 #define B_LPC_CFG_IOE_ME1                         BIT11
 #define B_LPC_CFG_IOE_CBE                         BIT1
 #define B_LPC_CFG_IOE_CAE                         BIT0
-#define B_LPC_CFG_BC_TS                           BIT4            ///< Top Swap
 
 #define R_PCH_LPC_IOD                             0x80
 #define N_PCH_LPC_IOD_COMB                        4
-#define V_PCH_LPC_IOD_COMB_3E8                    7
 #define N_PCH_LPC_IOD_COMA                        0
 #define V_PCH_LPC_IOD_COMA_3F8                    0
 #define V_PCH_LPC_IOD_COMB_2F8                    1
@@ -41,6 +37,5 @@
 #define R_LPC_CFG_BC                              0xDC
 
 #define R_RTC_PCR_BUC                             0x3414
-#define B_RTC_PCR_BUC_TS                          BIT0                 ///< Top Swap
 
 #endif

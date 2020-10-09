@@ -48,31 +48,16 @@ typedef union {
 ///
 /// Defines for FWCAPS_GROUP Command
 ///
-#define FWCAPS_GET_RULE_CMD               0x02
-#define FWCAPS_SET_RULE_CMD               0x03
 ///
 /// Defines for HMRFPO_GROUP Command
 ///
-#define HMRFPO_ENABLE_CMD_ID              0x01
-#define HMRFPO_LOCK_CMD_ID                0x02
-#define HMRFPO_GET_STATUS_CMD_ID          0x03
 ///
 /// Defines for MCA_GROUP Command
 ///
-#define MCA_READ_FILE_CMD                 0x02
-#define MCA_SET_FILE_CMD                  0x03
-#define MCA_COMMIT_FILES_CMD              0x04
-#define MCA_CORE_BIOS_DONE_CMD            0x05
-#define MCA_ARB_SVN_COMMIT_CMD            0x1B
-#define MCA_ARB_SVN_GET_INFO_CMD          0x1C
 ///
 /// Defines for GEN_GROUP Command
 ///
-#define GEN_GET_FW_VERSION_CMD            0x02
 #define GEN_END_OF_POST_CMD               0x0C
-#define GEN_GET_ME_UNCFG_STATE_CMD        0x0E
-#define GEN_SET_ME_RESET_HALT_CMD         0x10
-#define GEN_FW_FEATURE_STATE_OVERRIDE_CMD 0x14
 
 
 //
@@ -96,26 +81,6 @@ typedef enum {
   MkhiStatusGeneralError    = 0xFF
 } MKHI_RESULT;
 
-
-//
-// MKHI_FWCAPS_GROUP_ID Definitions
-//
-
-//
-// Definitions for Firmware Capabilities Group Rule Id
-//
-#define FW_CAPS_RULE_ID                0x00
-#define ME_PLATFORM_STATUS_RULE_ID     0x06
-#define LOCAL_FW_UPDATE_RULE_ID        0x07
-#define USER_CAPS_RULE_ID              0x09
-#define PLATFORM_TYPE_RULE_ID          0x1D
-#define FW_FEATURE_STATE_RULE_ID       0x20
-#define OEM_TAG_RULE_ID                0x2B
-#define ACM_TPM_DATA_RULE_ID           0x2F
-#define UNCONFIG_ON_RTC_CLEAR_RULE_ID  0x30
-#define AMT_BIOS_SYNC_INFO_RULE_ID     0x30005
-
-#define RULE_DATA_LENGTH               0x04
 
 typedef union {
   UINT32  Data;
@@ -160,9 +125,6 @@ typedef union {
   SET_RULE_ACK        Response;
 } SET_RULE_BUFFER;
 
-///
-/// Get Firmware Capability
-///
 
 typedef union {
   UINT32  Data;
@@ -242,15 +204,9 @@ typedef union {
   } Fields;
 } PLATFORM_TYPE_RULE_DATA;
 
-///
-/// Set ME Disable
-///
 
 #define ME_DISABLE         0
 
-///
-/// Set ACM TPM
-///
 
 typedef union {
   UINT32 Data;
@@ -269,9 +225,6 @@ typedef enum {
   DisableState = 1   ///< [Unconfigure on RTC Clear] is disabled.
 } ME_UNCONFIG_ON_RTC_CLEAR_STATUS;
 
-//
-// MKHI_HMRFPO_GROUP_ID Definitions
-//
 
 ///
 /// HMRFPO ENABLE
@@ -281,13 +234,6 @@ typedef struct {
   UINT32              Reserved[2];
 } HMRFPO_ENABLE;
 
-///
-/// HMRFPO_ENABLE returned Status
-///
-#define HMRFPO_ENABLE_SUCCESS         0x00
-#define HMRFPO_ENABLE_LOCKED          0x01
-#define HMRFPO_NVAR_FAILURE           0x02
-#define HMRFPO_ENABLE_UNKNOWN_FAILURE 0x05
 
 typedef struct {
   MKHI_MESSAGE_HEADER MkhiHeader;
@@ -308,11 +254,6 @@ typedef struct {
   MKHI_MESSAGE_HEADER MkhiHeader;
 } HMRFPO_LOCK;
 
-///
-/// HMRFPO_LOCK_RESPONSE returned Status
-///
-#define HMRFPO_LOCK_SUCCESS 0x00
-#define HMRFPO_LOCK_FAILURE 0x01
 
 typedef struct {
   MKHI_MESSAGE_HEADER MkhiHeader;
@@ -333,12 +274,6 @@ typedef struct {
   MKHI_MESSAGE_HEADER MkhiHeader;
 } HMRFPO_GET_STATUS;
 
-///
-/// HMRFPO_GET_STATUS returned Status
-///
-#define HMRFPO_DISABLED         0x00
-#define HMRFPO_LOCKED           0x01
-#define HMRFPO_ENABLED          0x02
 
 typedef struct {
   MKHI_MESSAGE_HEADER MkhiHeader;
@@ -351,12 +286,8 @@ typedef union {
   HMRFPO_GET_STATUS_ACK      Response;
 } HMRFPO_GET_STATUS_BUFFER;
 
-//
-// MKHI_MCA_GROUP_ID Definitions
-//
 
 #define MCA_DAM_FILE_SIZE 1
-#define MCA_MAX_FILE_SIZE 4096
 
 ///
 /// Read File
@@ -467,9 +398,6 @@ typedef union {
   ARB_SVN_GET_INFO_ACK   Response;
 } ARB_SVN_GET_INFO_BUFFER;
 
-//
-// MKHI_GEN_GROUP_ID Definitions
-//
 
 ///
 /// Get FW Version
@@ -501,7 +429,6 @@ typedef struct {
 ///
 /// End of Post
 ///
-#define EOP_DISABLED    0
 #define EOP_SEND_IN_PEI 1
 #define EOP_SEND_IN_DXE 2
 
@@ -525,13 +452,6 @@ typedef struct {
   EOP_ACK_DATA        Data;
 } END_OF_POST_ACK;
 
-///
-/// Get ME Unconfiguration State
-///
-#define ME_UNCONFIG_IN_PROGRESS     0x01 ///< Unconfig without password is in progress
-#define ME_UNCONFIG_NOT_IN_PROGRESS 0x02 ///< Normal case, there is no unconfigure w/o password to be processed
-#define ME_UNCONFIG_FINISHED        0x03 ///< CSME finished processing unconfigure w/o password. Bios will perform a global reset
-#define ME_UNCONFIG_ERROR           0x80 ///< CSME encountered error while processing revert back to default. Specific error status defined starting at 0x81
 
 typedef struct {
   MKHI_MESSAGE_HEADER MkhiHeader;

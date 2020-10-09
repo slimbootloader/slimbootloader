@@ -10,16 +10,10 @@
 #ifndef _MCFG_H_
 #define _MCFG_H_
 
-//
-// Statements that include other files
-//
 
 #include <IndustryStandard/Acpi30.h>
 #include <IndustryStandard/MemoryMappedConfigurationSpaceAccessTable.h>
 
-//
-// MCFG Definitions
-//
 
 #define EFI_ACPI_OEM_MCFG_REVISION 0x00000001
 
@@ -28,9 +22,6 @@
 //
 #define EFI_ACPI_ALLOCATION_STRUCTURE_COUNT           1
 
-//
-// MCFG structure
-//
 
 //
 // Ensure proper structure formats

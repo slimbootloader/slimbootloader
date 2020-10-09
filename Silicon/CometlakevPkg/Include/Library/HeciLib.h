@@ -12,45 +12,16 @@
 #include <Library/BaseLib.h>
 #include <RegAccess.h>
 
-#define EOP_GROUP_ID 0xFF
-#define EOP_CMD_ID   0xC
-
-//
-// HECIMBAR register definition
-//
 
 #define H_CB_WW                         0x00
 #define H_CSR                           0x04
-#define SEC_CB_RW                       0x08
-#define SEC_CSR_HA                      0x0C
 
 #define BIOS_FIXED_HOST_ADDR        0
-#define PREBOOT_FIXED_SEC_ADDR      7
 #define BIOS_ASF_HOST_ADDR          1
 
 // PCI access functions for SEC access
-#define R_HECIMBAR0                     0x10
-#define R_HECIMBAR1                     0x14
 #define R_SEC_FW_STS0                   0x40
 
-//
-// Management Engine Current Operation Mode
-//
-#define SEC_OPERATION_MODE_NORMAL            0x00
-#define SEC_OPERATION_MODE_ALT_DISABLED      0x02
-#define SEC_OPERATION_MODE_SOFT_TEMP_DISABLE 0x03
-#define SEC_OPERATION_MODE_SECOVR_JMPR       0x04
-#define SEC_OPERATION_MODE_SECOVR_HECI_MSG   0x05
-
-//
-// Abstract SEC Mode Definitions
-//
-#define SEC_MODE_NORMAL        0x00
-
-#define SEC_DEBUG_MODE_ALT_DIS 0x02
-#define SEC_MODE_TEMP_DISABLED 0x03
-#define SEC_MODE_SECOVER       0x04
-#define SEC_MODE_FAILED        0x06
 
 #define HeciPciRead8(reg) PciRead8 (PCI_LIB_ADDRESS(mCseBus,mCseDevice,mHeciFunction,reg))
 #define HeciPciWrite8(reg, val)  PciWrite8 (PCI_LIB_ADDRESS(mCseBus,mCseDevice,mHeciFunction,reg), val)
@@ -65,15 +36,7 @@
 #define MKHI_BOOTLOADER_PCR_LEN               32
 
 #define MBP_APP_ID_KERNEL                     1
-#define MBP_APP_ID_NVM                        8
 #define MBP_ITEM_ID_FW_VER_NAME               1
-#define MBP_ITEM_ID_CURRENT_BOOT_MEDIA        1
-#define MBP_APP_ABL_SIG                       0x9
-#define MBP_ITEM_ID_IAFW_IBB_SIG              0x1
-#define MKHI_IFWI_UPD_SIG                     0x20
-#define MKHI_IFWI_UPD_SIG_CMD                 0x7
-#define SEND_CLEAR_SUB_COMMAND                0x0
-#define SEND_USR_CMD_SUB_COMMAND              0x1
 
 typedef struct {
   UINT32 Bus;

@@ -52,7 +52,6 @@ typedef struct {
   UINT32                                Enable   : 1;
 } PCH_LPC_GEN_IO_RANGE;
 
-#define PCH_LPC_GEN_IO_RANGE_MAX        4
 #define PCH_H_ESPI_GEN_IO_RANGE_MAX     5
 
 ///
