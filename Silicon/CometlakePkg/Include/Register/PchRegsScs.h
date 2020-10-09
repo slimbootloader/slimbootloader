@@ -41,17 +41,6 @@
 // SCS Devices proprietary PCI Config Space Registers
 //
 #define R_SCS_CFG_PCS                     0x84                          ///< PME Control Status
-#define B_SCS_CFG_PCS_PMESTS              BIT15                         ///< PME Status
-#define B_SCS_CFG_PCS_PMEEN               BIT8                          ///< PME Enable
-#define B_SCS_CFG_PCS_NSS                 BIT3                          ///< No Soft Reset
-#define B_SCS_CFG_PCS_PS                  (BIT1 | BIT0)                 ///< Power State
-#define B_SCS_CFG_PCS_PS_D3HOT            (BIT1 | BIT0)                 ///< Power State: D3Hot State
 #define R_SCS_CFG_PG_CONFIG               0xA2                          ///< PG Config
-#define B_SCS_CFG_PG_CONFIG_HAE           BIT5                          ///< HA Enable
-#define B_SCS_CFG_PG_CONFIG_SE            BIT3                          ///< Sleep Enable
-#define B_SCS_CFG_PG_CONFIG_PGE           BIT2                          ///< PG Enable
-#define B_SCS_CFG_PG_CONFIG_I3E           BIT1                          ///< I3 Enable
-#define B_SCS_CFG_PG_CONFIG_PMCRE         BIT0                          ///< PMC Request Enable
-#define V_SCS_CFG_BAR0_SIZE               0x1000                        ///< BAR0 size
 
 #endif

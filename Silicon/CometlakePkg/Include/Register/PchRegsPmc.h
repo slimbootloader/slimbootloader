@@ -8,11 +8,8 @@
 #ifndef _PCH_REGS_PMC_H_
 #define _PCH_REGS_PMC_H_
 
-#define PCI_DEVICE_NUMBER_PCH_PMC                31
-#define PCI_FUNCTION_NUMBER_PCH_PMC              2
 
 #define V_ACPI_IO_PM1_CNT_S0                     0
-#define V_ACPI_IO_PM1_CNT_S1                     BIT10
 #define V_ACPI_IO_PM1_CNT_S3                     (BIT12 | BIT10)
 #define V_ACPI_IO_PM1_CNT_S4                     (BIT12 | BIT11)
 #define V_ACPI_IO_PM1_CNT_S5                     (BIT12 | BIT11 | BIT10)
@@ -20,16 +17,11 @@
 #define R_ACPI_IO_PM1_STS                        0x00
 #define B_ACPI_IO_PM1_STS_WAK                    BIT15
 #define B_ACPI_IO_PM1_STS_PRBTNOR                BIT11
-#define R_ACPI_IO_PM1_EN_MASK                    0xFFFF0000
 #define B_ACPI_IO_PM1_EN_PWRBTN_EN               BIT24
 
 #define R_ACPI_IO_PM1_CNT                        0x04
 #define B_ACPI_IO_PM1_CNT_SLP_TYP                (BIT12 | BIT11 | BIT10)
 
-#define R_ACPI_IO_PM1_TMR                        0x08
-#define B_ACPI_IO_PM1_TMR_VAL                    0xFFFFFF
-
-#define V_ACPI_IO_PM1_TMR_MAX_VAL                0x1000000
 
 #define R_ACPI_IO_SMI_STS                        0x34
 #define B_ACPI_IO_SMI_STS_SMBUS                  BIT16

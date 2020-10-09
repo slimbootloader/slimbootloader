@@ -12,18 +12,12 @@
 #ifndef _MADT_H_
 #define _MADT_H_
 
-//
-// Statements that include other files
-//
 
 #include <IndustryStandard/Acpi10.h>
 #include <IndustryStandard/Acpi20.h>
 #include <IndustryStandard/Acpi30.h>
 #include "AcpiTablePlatform.h"
 
-//
-// MADT Definitions
-//
 
 #define EFI_ACPI_OEM_MADT_REVISION 0x00000001
 
@@ -31,13 +25,8 @@
 //
 // Multiple APIC Flags are defined in AcpiX.0.h
 //
-#define EFI_ACPI_1_0_MULTIPLE_APIC_FLAGS (EFI_ACPI_1_0_PCAT_COMPAT)
 #define EFI_ACPI_2_0_MULTIPLE_APIC_FLAGS (EFI_ACPI_2_0_PCAT_COMPAT)
 
-//
-// Define the number of each table type.
-// This is where the table layout is modified.
-//
 
 #define EFI_ACPI_PROCESSOR_LOCAL_APIC_COUNT           16
 #define EFI_ACPI_IO_APIC_COUNT                        1
@@ -49,9 +38,6 @@
 #define EFI_ACPI_PROCESSOR_LOCAL_SAPIC_COUNT          0
 #define EFI_ACPI_PLATFORM_INTERRUPT_SOURCES_COUNT     0
 
-//
-// MADT structure
-//
 
 //
 // Ensure proper structure formats

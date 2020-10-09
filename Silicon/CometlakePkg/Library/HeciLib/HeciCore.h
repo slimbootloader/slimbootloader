@@ -157,4 +157,3 @@ IshHeciSendAndReceive (
 #include <HeciInitLib.h>
 
 #endif // _HECI_CORE_H
-
