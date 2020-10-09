@@ -89,4 +89,23 @@ PeCoffGetPreferredBase (
   OUT UINT32                           *Base       OPTIONAL
   );
 
+/**
+  Extract and return the machine type from the PE/COFF image.
+
+  @param  Pe32Data                  The pointer to the PE/COFF image that is loaded in system memory.
+  @param  MachinePtr                The pointer to machine type to return.
+
+  @retval RETURN_SUCCESS            Machine was returned successfully.
+  @retval RETURN_UNSUPPORTED        Unsupported image format.
+  @retval RETURN_INVALID_PARAMETER  The Pe32Data pointer is NULL.
+
+**/
+RETURN_STATUS
+EFIAPI
+PeCoffLoaderGetMachine (
+  IN  VOID     *Pe32Data,
+  OUT UINT16   *MachinePtr      OPTIONAL
+  );
+
 #endif
+

@@ -13,6 +13,8 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/BlMemoryAllocationLib.h>
 
+typedef EFI_STATUS (EFIAPI *EXECUTE_64BIT_CODE) (UINT64 Param1, UINT64 Param2);
+
 #pragma pack(1)
 typedef union {
   struct {
@@ -117,6 +119,35 @@ Execute32BitCode (
   AsmWriteIdtr (&IdtrNul);
   Status = ExecuteCode (Function, Param1, Param2, &Gdtr);
   AsmWriteIdtr (&Idtr);
+
+  return Status;
+}
+
+
+/**
+  Call into funciton in X64 mode.
+
+  @param[in] Function     The 32bit code entry to be executed.
+  @param[in] Param1       The first parameter to pass to 32bit code.
+  @param[in] Param2       The second parameter to pass to 32bit code.
+  @param[in] ExeInMem     If thunk needs to be executed from memory copy.
+
+  @return EFI_STATUS.
+**/
+EFI_STATUS
+EFIAPI
+Execute64BitCode (
+  IN UINT64      Function,
+  IN UINT64      Param1,
+  IN UINT64      Param2,
+  IN BOOLEAN     ExeInMem
+  )
+{
+  EFI_STATUS            Status;
+  EXECUTE_64BIT_CODE    Func;
+
+  Func   = (EXECUTE_64BIT_CODE)(UINTN)Function;
+  Status = Func (Param1, Param2);
 
   return Status;
 }

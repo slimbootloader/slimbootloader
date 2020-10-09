@@ -149,6 +149,7 @@ NormalBootPath (
   UINT8                          *CmdLine;
   UINT32                          CmdLineLen;
   UINT32                          UefiSig;
+  UINT16                          PldMachine;
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
 
@@ -164,6 +165,7 @@ NormalBootPath (
   UefiSig  = 0;
   PldBase  = 0;
   PldEntry = NULL;
+  PldMachine = IS_X64 ? IMAGE_FILE_MACHINE_X64 : IMAGE_FILE_MACHINE_I386;
 
   Status  = EFI_SUCCESS;
   if (Dst[0] == 0x00005A4D) {
@@ -171,13 +173,16 @@ NormalBootPath (
     DEBUG ((DEBUG_INFO, "PE32 Format Payload\n"));
     Status = PeCoffRelocateImage ((UINT32)(UINTN)Dst);
     if (!EFI_ERROR(Status)) {
-      Status = PeCoffLoaderGetEntryPoint (Dst, (VOID *)&PldEntry);
+      Status = PeCoffLoaderGetMachine (Dst, &PldMachine);
+      if (!EFI_ERROR(Status)) {
+        Status = PeCoffLoaderGetEntryPoint (Dst, (VOID *)&PldEntry);
+      }
     }
   } else if (Dst[10] == EFI_FVH_SIGNATURE) {
     // It is a FV format
     DEBUG ((DEBUG_INFO, "FV Format Payload\n"));
     UefiSig = Dst[0];
-    Status  = LoadFvImage (Dst, Stage2Param->PayloadActualLength, (VOID **)&PldEntry);
+    Status  = LoadFvImage (Dst, Stage2Param->PayloadActualLength, (VOID **)&PldEntry, &PldMachine);
   } else if (IsElfImage (Dst)) {
     Status = LoadElfImage (Dst, (VOID *)&PldEntry);
   } else {
@@ -264,8 +269,26 @@ NormalBootPath (
 
   DEBUG ((DEBUG_INFO, "Payload entry: 0x%08X\n", PldEntry));
   if (PldEntry != NULL) {
+    if (IS_X64) {
+      if (PldMachine == IMAGE_FILE_MACHINE_I386) {
+        DEBUG ((DEBUG_INFO, "Thunk back to x86 mode\n"));
+      }
+    } else {
+      if (PldMachine == IMAGE_FILE_MACHINE_X64) {
+        DEBUG ((DEBUG_INFO, "Switch to x64 mode\n"));
+      }
+    }
     DEBUG ((DEBUG_INIT, "Jump to payload\n\n"));
-    PldEntry (PldHobList, (VOID *)PldBase);
+    if (PldMachine == IMAGE_FILE_MACHINE_X64) {
+      // Need to call in x64 long mode
+      Execute64BitCode ((UINT64)(UINTN)PldEntry, (UINT64)(UINTN)PldHobList,
+                        (UINT64)(UINTN)PldBase, FALSE);
+    } else {
+      // Need to call in x86 compatible mode
+      Execute32BitCode ((UINT64)(UINTN)PldEntry, (UINT64)(UINTN)PldHobList,
+                        (UINT64)(UINTN)PldBase, FALSE);
+    }
+
   }
 }
 

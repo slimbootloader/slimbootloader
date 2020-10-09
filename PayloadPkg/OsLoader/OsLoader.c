@@ -377,6 +377,7 @@ SetupBootImage (
   IMAGE_DATA                *BootFile;
   LINUX_IMAGE               *LinuxImage;
   UINT32                     Size;
+  UINT16                     Machine;
 
   //
   // Allocate a cmd line buffer and init it with config file or default value
@@ -432,7 +433,7 @@ SetupBootImage (
     }
   } else if ((LoadedImage->Flags & LOADED_IMAGE_FV) != 0) {
     DEBUG ((DEBUG_INFO, "Boot image is FV format\n"));
-    Status = LoadFvImage ((UINT32 *)BootFile->Addr, BootFile->Size, (VOID **)&EntryPoint);
+    Status = LoadFvImage ((UINT32 *)BootFile->Addr, BootFile->Size, (VOID **)&EntryPoint, &Machine);
     if (!EFI_ERROR (Status)) {
       // Reuse MultiBoot structure to store the FV entry point information
       MultiBoot->BootState.EntryPoint = (UINT32)(UINTN)EntryPoint;

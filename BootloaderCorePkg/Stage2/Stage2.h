@@ -38,6 +38,7 @@
 #include <Library/LiteFvLib.h>
 #include <Library/SortLib.h>
 #include <Library/StageLib.h>
+#include <Library/ThunkLib.h>
 #include <Library/ContainerLib.h>
 #include <Guid/BootLoaderServiceGuid.h>
 #include <Guid/BootLoaderVersionGuid.h>
