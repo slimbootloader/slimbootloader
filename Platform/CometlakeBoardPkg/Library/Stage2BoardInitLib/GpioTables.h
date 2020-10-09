@@ -7,8 +7,8 @@
 
 #include <Library/GpioLib.h>
 #include <Library/SiGpioLib.h>
-#include <GpioPinsCnlH.h>
-#include <GpioPinsCnlLp.h>
+#include <GpioPinsCmlH.h>
+#include <GpioPinsCmlLp.h>
 
 //
 // GPIO_PAD Fileds

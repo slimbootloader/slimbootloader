@@ -8,8 +8,8 @@
 
 #include <Uefi/UefiBaseType.h>
 #include <Library/DebugLib.h>
-#include <GpioPinsCnlLp.h>
-#include <GpioPinsCnlH.h>
+#include <GpioPinsCmlLp.h>
+#include <GpioPinsCmlH.h>
 #include "GpioLibrary.h"
 #include "GpioInitLib.h"
 

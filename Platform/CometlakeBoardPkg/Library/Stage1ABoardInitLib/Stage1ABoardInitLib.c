@@ -14,7 +14,7 @@
 #include <Library/FirmwareUpdateLib.h>
 #include <Library/DebugLib.h>
 #include <PlatformData.h>
-#include <GpioPinsCnlLp.h>
+#include <GpioPinsCmlLp.h>
 #include <RegAccess.h>
 #include <Register/CpuRegs.h>
 #include <FsptUpd.h>

@@ -5,8 +5,8 @@
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
-// PCH_CNL - Default
-Include("GpioAcpiDefinesCnl.h")
+// PCH_CML - Default
+Include("GpioAcpiDefinesCml.h")
 
 Scope(\_SB.PCI0) {
   //----------------------------

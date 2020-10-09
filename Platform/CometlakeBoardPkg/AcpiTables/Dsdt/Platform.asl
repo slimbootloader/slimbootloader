@@ -6,8 +6,8 @@
 
 **/
 
-#include "GpioPinsCnlH.h"
-#include "GpioPinsCnlLp.h"
+#include "GpioPinsCmlH.h"
+#include "GpioPinsCmlLp.h"
 
 
 #define TRAP_TYPE_DTS     0x02
