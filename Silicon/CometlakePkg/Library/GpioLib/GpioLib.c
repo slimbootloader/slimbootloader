@@ -8,8 +8,8 @@
 #include "GpioLibrary.h"
 #include "GpioInitLib.h"
 #include "GpioPrivateLib.h"
-#include <GpioPinsCnlLp.h>
-#include <GpioPinsCnlH.h>
+#include <GpioPinsCmlLp.h>
+#include <GpioPinsCmlH.h>
 
 /**
   This function gets Group to GPE0 configuration

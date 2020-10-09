@@ -10,8 +10,8 @@
 #include <Library/PchInfoLib.h>
 #include <Library/GpioLib.h>
 #include <Library/GpioNativeLib.h>
-#include <GpioPinsCnlLp.h>
-#include <GpioPinsCnlH.h>
+#include <GpioPinsCmlLp.h>
+#include <GpioPinsCmlH.h>
 #include <GpioConfig.h>
 #include "GpioLibrary.h"
 

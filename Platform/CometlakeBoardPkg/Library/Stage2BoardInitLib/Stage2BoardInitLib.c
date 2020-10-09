@@ -38,8 +38,8 @@
 #include <Library/BdatLib.h>
 #include <Library/VariableLib.h>
 #include <Guid/SmmInformationGuid.h>
-#include <GpioPinsCnlH.h>
-#include <GpioPinsCnlLp.h>
+#include <GpioPinsCmlH.h>
+#include <GpioPinsCmlLp.h>
 #include "HdaVerbTable.h"
 #include <Library/TpmLib.h>
 #include <Library/PchSerialIoLib.h>

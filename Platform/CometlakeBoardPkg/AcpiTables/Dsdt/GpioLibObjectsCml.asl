@@ -5,7 +5,7 @@
 
 **/
 #include "Register/PchRegsGpio.h"
-#include "Register/PchRegsGpioCnl.h"
+#include "Register/PchRegsGpioCml.h"
 
 //
 // CNL-PCH GPIO Community address

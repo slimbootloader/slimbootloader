@@ -15,8 +15,8 @@
 #define GPIO_CNL_LP_ACPI_HID  "INT34BB"
 #define GPIO_CNL_H_ACPI_HID   "INT3450"
 
-#include "GpioPinsCnlLp.h"
-#include "GpioPinsCnlH.h"
+#include "GpioPinsCmlLp.h"
+#include "GpioPinsCmlH.h"
 
 #define GPIO_CNL_LP_DRIVER_GPP_A_00 0
 #define GPIO_CNL_LP_DRIVER_GPP_A_01 1

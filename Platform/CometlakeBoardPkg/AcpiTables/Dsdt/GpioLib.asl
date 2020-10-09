@@ -5,7 +5,7 @@
 
 **/
 
-include("GpioLibObjectsCnl.asl")
+include("GpioLibObjectsCml.asl")
 
 //
 // Macro to retrieve data from GPIO information data structure (GpioLibObjects*.asl)

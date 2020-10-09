@@ -23,7 +23,7 @@
   EFI_SPECIFICATION_VERSION      = 0x00020000
 
 [sources.common]
-  Dsdt/PchSerialIoAcpiDefinesCnl.h
+  Dsdt/PchSerialIoAcpiDefinesCml.h
   AcpiTablePlatform.h
   Facs/Facs.h
   Mcfg/Mcfg.h

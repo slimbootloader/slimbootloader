@@ -26,7 +26,7 @@
   AcpiTablePlatform.h
   Dsdt/PlatformBoardId.h
   Madt/Madt.h
-  Dsdt/PchSerialIoAcpiDefinesCnl.h
+  Dsdt/PchSerialIoAcpiDefinesCmlv.h
   Hpet/Hpet.h
   Mcfg/Mcfg.h
   Facs/Facs.h

@@ -21,7 +21,7 @@ Include ("PchClockControl.asl")
 // Include GPIO macros and access library
 //
 Include("HsioDefine.asl")
-Include("GpioAcpiDefinesCnl.h")
+Include("GpioAcpiDefinesCml.h")
 Include("GpioLib.asl")
 Include("HsioLib.asl")
 

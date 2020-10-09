@@ -15,8 +15,8 @@
 //
 // Include PchSsrialIo ACPI macros
 //
-// PCH_CNL - Default
-Include("PchSerialIoAcpiDefinesCnl.h")
+// PCH_CML - Default
+Include("PchSerialIoAcpiDefinesCml.h")
 
 Scope(\_SB.PCI0) {
   //
