@@ -108,18 +108,14 @@ S3DebugCalculateCRC32 (
   UINT32                      CrcRegionIdx;
 
   CrcRegionIdx = *S3CrcRegionIdx;
-  if ( CrcRegionIdx >= (S3CrcTableSize / sizeof (S3_CRC_DATA)) ) {
+  if ( CrcRegionIdx >= DivU64x32 (S3CrcTableSize, sizeof (S3_CRC_DATA)) ) {
     DEBUG ((DEBUG_INFO, "S3CrcTable to over-flow! Returning\n"));
     return;
   }
 
   SubRegionBase = (UINT32)MemoryMapEntry->Base;
   SubRegionSize = S3_DEBUG_CRC32_REGION_SIZE;
-  if (MemoryMapEntry->Size % S3_DEBUG_CRC32_REGION_SIZE == 0) {
-    SubRegionCount = (UINT32) (MemoryMapEntry->Size / S3_DEBUG_CRC32_REGION_SIZE);
-  } else {
-    SubRegionCount = (UINT32) ((MemoryMapEntry->Size / S3_DEBUG_CRC32_REGION_SIZE) + 1);
-  }
+  SubRegionCount = (UINT32) DivU64x32 (MemoryMapEntry->Size + S3_DEBUG_CRC32_REGION_SIZE - 1, S3_DEBUG_CRC32_REGION_SIZE);
 
   for (SubRegionIndex = 0; SubRegionIndex < SubRegionCount; SubRegionIndex++) {
     S3CrcTable[CrcRegionIdx].RegionBase   = SubRegionBase;
