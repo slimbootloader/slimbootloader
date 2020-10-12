@@ -1,7 +1,7 @@
 ## @file
 # This file is used to create a database used by build tool
 #
-# Copyright (c) 2008 - 2019, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2008 - 2020, Intel Corporation. All rights reserved.<BR>
 # (C) Copyright 2016 Hewlett Packard Enterprise Development LP<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -19,8 +19,8 @@ from Common.Misc import *
 from types import *
 from Common.Expression import *
 from CommonDataClass.CommonClass import SkuInfoClass
-from Common.TargetTxtClassObject import TargetTxt
-from Common.ToolDefClassObject import ToolDef
+from Common.TargetTxtClassObject import TargetTxtDict
+from Common.ToolDefClassObject import ToolDefDict
 from .MetaDataTable import *
 from .MetaFileTable import *
 from .MetaFileParser import *
@@ -55,6 +55,7 @@ def _IsFieldValueAnArray (Value):
     return False
 
 PcdValueInitName = 'PcdValueInit'
+PcdValueCommonName = 'PcdValueCommon'
 
 PcdMainCHeader = '''
 /**
@@ -91,9 +92,6 @@ WindowsCFLAGS = 'CFLAGS = $(CFLAGS) /wd4200 /wd4034 /wd4101 '
 LinuxCFLAGS = 'BUILD_CFLAGS += -Wno-pointer-to-int-cast -Wno-unused-variable '
 PcdMakefileEnd = '''
 !INCLUDE $(BASE_TOOLS_PATH)\Source\C\Makefiles\ms.common
-
-LIBS = $(LIB_PATH)\Common.lib
-
 !INCLUDE $(BASE_TOOLS_PATH)\Source\C\Makefiles\ms.app
 '''
 
@@ -1771,7 +1769,7 @@ class DscBuildData(PlatformBuildClassObject):
         except:
             EdkLogger.error('Build', COMMAND_FAILURE, 'Can not execute command: %s' % Command)
         Result = Process.communicate()
-        return Process.returncode, Result[0].decode(), Result[1].decode()
+        return Process.returncode, Result[0].decode(errors='ignore'), Result[1].decode(errors='ignore')
 
     @staticmethod
     def IntToCString(Value, ValueSize):
@@ -2637,10 +2635,10 @@ class DscBuildData(PlatformBuildClassObject):
 
         MakeApp = PcdMakefileHeader
         if sys.platform == "win32":
-            MakeApp = MakeApp + 'APPFILE = %s\%s.exe\n' % (self.OutputPath, PcdValueInitName) + 'APPNAME = %s\n' % (PcdValueInitName) + 'OBJECTS = %s\%s.obj\n' % (self.OutputPath, PcdValueInitName) + 'INC = '
+            MakeApp = MakeApp + 'APPFILE = %s\%s.exe\n' % (self.OutputPath, PcdValueInitName) + 'APPNAME = %s\n' % (PcdValueInitName) + 'OBJECTS = %s\%s.obj %s.obj\n' % (self.OutputPath, PcdValueInitName, os.path.join(self.OutputPath, PcdValueCommonName)) + 'INC = '
         else:
             MakeApp = MakeApp + PcdGccMakefile
-            MakeApp = MakeApp + 'APPFILE = %s/%s\n' % (self.OutputPath, PcdValueInitName) + 'APPNAME = %s\n' % (PcdValueInitName) + 'OBJECTS = %s/%s.o\n' % (self.OutputPath, PcdValueInitName) + \
+            MakeApp = MakeApp + 'APPFILE = %s/%s\n' % (self.OutputPath, PcdValueInitName) + 'APPNAME = %s\n' % (PcdValueInitName) + 'OBJECTS = %s/%s.o %s.o\n' % (self.OutputPath, PcdValueInitName, os.path.join(self.OutputPath, PcdValueCommonName)) + \
                       'include $(MAKEROOT)/Makefiles/app.makefile\n' + 'INCLUDE +='
 
         IncSearchList = []
@@ -2667,6 +2665,22 @@ class DscBuildData(PlatformBuildClassObject):
             for pkg in PcdDependDEC:
                 if pkg in PlatformInc:
                     for inc in PlatformInc[pkg]:
+                        #
+                        # Get list of files in potential -I include path
+                        #
+                        FileList = os.listdir (str(inc))
+                        #
+                        # Skip -I include path if one of the include files required
+                        # by PcdValueInit.c are present in the include paths from
+                        # the DEC file.  PcdValueInit.c must use the standard include
+                        # files from the host compiler.
+                        #
+                        if 'stdio.h' in FileList:
+                          continue
+                        if 'stdlib.h' in FileList:
+                          continue
+                        if 'string.h' in FileList:
+                          continue
                         MakeApp += '-I'  + str(inc) + ' '
                         IncSearchList.append(inc)
         MakeApp = MakeApp + '\n'
@@ -2723,12 +2737,20 @@ class DscBuildData(PlatformBuildClassObject):
                     IncludeFileFullPaths.append(os.path.normpath(includefullpath))
                     break
         SearchPathList = []
-        SearchPathList.append(os.path.normpath(mws.join(GlobalData.gWorkspace, "BaseTools/Source/C/Include")))
-        SearchPathList.append(os.path.normpath(mws.join(GlobalData.gWorkspace, "BaseTools/Source/C/Common")))
+        SearchPathList.append(os.path.normpath(mws.join(GlobalData.gGlobalDefines["EDK_TOOLS_PATH"], "BaseTools/Source/C/Include")))
+        SearchPathList.append(os.path.normpath(mws.join(GlobalData.gGlobalDefines["EDK_TOOLS_PATH"], "BaseTools/Source/C/Common")))
         SearchPathList.extend(str(item) for item in IncSearchList)
         IncFileList = GetDependencyList(IncludeFileFullPaths, SearchPathList)
         for include_file in IncFileList:
             MakeApp += "$(OBJECTS) : %s\n" % include_file
+        if sys.platform == "win32":
+            PcdValueCommonPath = os.path.normpath(mws.join(GlobalData.gGlobalDefines["EDK_TOOLS_PATH"], "Source\C\Common\PcdValueCommon.c"))
+            MakeApp = MakeApp + '%s\PcdValueCommon.c : %s\n' % (self.OutputPath, PcdValueCommonPath)
+            MakeApp = MakeApp + '\tcopy /y %s $@\n' % (PcdValueCommonPath)
+        else:
+            PcdValueCommonPath = os.path.normpath(mws.join(GlobalData.gGlobalDefines["EDK_TOOLS_PATH"], "Source/C/Common/PcdValueCommon.c"))
+            MakeApp = MakeApp + '%s/PcdValueCommon.c : %s\n' % (self.OutputPath, PcdValueCommonPath)
+            MakeApp = MakeApp + '\tcp -f %s %s/PcdValueCommon.c\n' % (PcdValueCommonPath, self.OutputPath)
         MakeFileName = os.path.join(self.OutputPath, 'Makefile')
         MakeApp += "$(OBJECTS) : %s\n" % MakeFileName
         SaveFileOnChange(MakeFileName, MakeApp, False)
@@ -2752,6 +2774,7 @@ class DscBuildData(PlatformBuildClassObject):
             returncode, StdOut, StdErr = DscBuildData.ExecuteCommand (MakeCommand)
             Messages = StdErr
 
+        EdkLogger.verbose ('%s\n%s\n%s' % (MakeCommand, StdOut, StdErr))
         Messages = Messages.split('\n')
         MessageGroup = []
         if returncode != 0:
@@ -2761,16 +2784,21 @@ class DscBuildData(PlatformBuildClassObject):
             File.close()
             for Message in Messages:
                 if " error" in Message or "warning" in Message:
-                    FileInfo = Message.strip().split('(')
-                    if len (FileInfo) > 1:
-                        FileName = FileInfo [0]
-                        FileLine = FileInfo [1].split (')')[0]
-                    else:
-                        FileInfo = Message.strip().split(':')
-                        if len(FileInfo) < 2:
-                            continue
-                        FileName = FileInfo [0]
-                        FileLine = FileInfo [1]
+                    try:
+                        FileInfo = Message.strip().split('(')
+                        if len (FileInfo) > 1:
+                            FileName = FileInfo [0]
+                            FileLine = FileInfo [1].split (')')[0]
+                        else:
+                            FileInfo = Message.strip().split(':')
+                            if len(FileInfo) < 2:
+                                continue
+                            FileName = FileInfo [0]
+                            FileLine = FileInfo [1]
+                    except:
+                        continue
+                    if "PcdValueInit.c" not in FileName:
+                        continue
                     if FileLine.isdigit():
                         error_line = FileData[int (FileLine) - 1]
                         if r"//" in error_line:
@@ -2796,13 +2824,14 @@ class DscBuildData(PlatformBuildClassObject):
             if MessageGroup:
                 EdkLogger.error("build", PCD_STRUCTURE_PCD_ERROR, "\n".join(MessageGroup) )
             else:
-                EdkLogger.error('Build', COMMAND_FAILURE, 'Can not execute command: %s' % MakeCommand)
+                EdkLogger.error('Build', COMMAND_FAILURE, 'Can not execute command: %s\n%s\n%s' % (MakeCommand, StdOut, StdErr))
 
         if DscBuildData.NeedUpdateOutput(OutputValueFile, Dest_PcdValueInitExe, InputValueFile):
             Command = Dest_PcdValueInitExe + ' -i %s -o %s' % (InputValueFile, OutputValueFile)
             returncode, StdOut, StdErr = DscBuildData.ExecuteCommand (Command)
+            EdkLogger.verbose ('%s\n%s\n%s' % (Command, StdOut, StdErr))
             if returncode != 0:
-                EdkLogger.warn('Build', COMMAND_FAILURE, 'Can not collect output from command: %s' % Command)
+                EdkLogger.warn('Build', COMMAND_FAILURE, 'Can not collect output from command: %s\n%s\n' % (Command, StdOut, StdErr))
 
         File = open (OutputValueFile, 'r')
         FileBuffer = File.readlines()
@@ -3296,6 +3325,8 @@ class DscBuildData(PlatformBuildClassObject):
     @property
     def ToolChainFamily(self):
         self._ToolChainFamily = TAB_COMPILER_MSFT
+        TargetObj = TargetTxtDict()
+        TargetTxt = TargetObj.Target
         BuildConfigurationFile = os.path.normpath(os.path.join(GlobalData.gConfDirectory, "target.txt"))
         if os.path.isfile(BuildConfigurationFile) == True:
             ToolDefinitionFile = TargetTxt.TargetTxtDictionary[DataType.TAB_TAT_DEFINES_TOOL_CHAIN_CONF]
@@ -3303,7 +3334,8 @@ class DscBuildData(PlatformBuildClassObject):
                 ToolDefinitionFile = "tools_def.txt"
                 ToolDefinitionFile = os.path.normpath(mws.join(self.WorkspaceDir, 'Conf', ToolDefinitionFile))
             if os.path.isfile(ToolDefinitionFile) == True:
-                ToolDefinition = ToolDef.ToolsDefTxtDatabase
+                ToolDefObj = ToolDefDict((os.path.join(os.getenv("WORKSPACE"), "Conf")))
+                ToolDefinition = ToolDefObj.ToolDef.ToolsDefTxtDatabase
                 if TAB_TOD_DEFINES_FAMILY not in ToolDefinition \
                    or self._Toolchain not in ToolDefinition[TAB_TOD_DEFINES_FAMILY] \
                    or not ToolDefinition[TAB_TOD_DEFINES_FAMILY][self._Toolchain]:
