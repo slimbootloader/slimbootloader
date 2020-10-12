@@ -59,7 +59,7 @@ PrintPerformanceInfo (
   ShellPrint (L"------+------------+------------\n");
   for (Idx = 0; Idx < PerfData->Count; Idx++) {
     Tsc  = PerfData->TimeStamp[Idx] & 0x0000FFFFFFFFFFFFULL;
-    Id   = (PerfData->TimeStamp[Idx] >> 48) & 0xFFFF;
+    Id   = (RShiftU64 (PerfData->TimeStamp[Idx], 48)) & 0xFFFF;
     Time = (UINT32)DivU64x32 (Tsc, PerfData->Frequency);
     ShellPrint (L" %4x | %7d ms | %7d ms\n", Id, Time, Time - PrevTime);
     PrevTime = Time;
