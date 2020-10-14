@@ -292,9 +292,9 @@ ConfigureDirectIrqWakeEvent (
 
   // program Event Trigger Mapping
   d64 = (LShiftU64((UINT64)GpioRead(Community, EVMAP_0 + 4), 32)) | GpioRead(Community, EVMAP_0);
-  d64 |= LShiftU64((UINT64)Index / EVENT_MUX_SIZE, ((Index % EVENT_MUX_SIZE) << 2));
+  d64 |= LShiftU64((UINT64)(Index / EVENT_MUX_SIZE), ((Index % EVENT_MUX_SIZE) << 2));
   GpioWrite(Community, EVMAP_0, (UINT32)(d64 & 0xFFFFFFFF));
-  GpioWrite(Community, EVMAP_0 + 4, (UINT32)(d64 >> 32));
+  GpioWrite(Community, EVMAP_0 + 4, (UINT32)(RShiftU64 (d64, 32)));
 
   // program Event Trigger Output Enable
   d32 = GpioRead(Community, EVOUTEN_0);

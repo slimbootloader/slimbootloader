@@ -1121,7 +1121,7 @@ UpdateFspConfig (
     PciBase  = (UINT32)PcdGet64(PcdPciExpressBaseAddress);
     Stepping = MmioRead8 (PciBase + 8);
     Value64  = AsmReadMsr64 (MSR_IA32_PLATFORM_ID);
-    PlatformId = (Value64 >> 50) & 7;
+    PlatformId = RShiftU64 (Value64, 50) & 7;
     if (Stepping <= 0xB && PlatformId == 0) {
       FspsConfig->IpuEn   = 0;
     }
