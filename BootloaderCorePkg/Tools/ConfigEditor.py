@@ -882,6 +882,7 @@ class application(tkinter.Frame):
 
             widget = ttk.Combobox(parent, value=option_list, state="readonly")
             widget.bind("<<ComboboxSelected>>", self.combo_select_changed)
+            widget.unbind_class("TCombobox", "<MouseWheel>")
 
             if current is None:
                 print('WARNING: Value "%s" is an invalid option for "%s" !' %
