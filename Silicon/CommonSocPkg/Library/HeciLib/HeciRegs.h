@@ -77,6 +77,33 @@ typedef union {
 } HECI_FWS_REGISTER;
 
 ///
+/// HFSTS6, offset 6Ch
+///
+typedef union {
+  UINT32  ul;
+  struct {
+    UINT32 ForceBootPolicy    : 1;  ///< 0 - Force Boot Guard ACM Boot Policy
+    UINT32 CpuDebugDisabled   : 1;  ///< 1 - CPU Debug Disabled
+    UINT32 BspInitDisabled    : 1;  ///< 2 - BSP Initialization Disabled
+    UINT32 PBE                : 1;  ///< 3 - Protect BIOS Environment Policy
+    UINT32 Reserved           : 2;  ///< 5:4 - Reserved
+    UINT32 ENF                : 2;  ///< 7:6 - Error Enforcement Policy
+    UINT32 MeasuredBootPolicy : 1;  ///< 8 - Measured Boot Policy, 0 - Disabled; 1 - Enabled
+    UINT32 VerifiedBootPolicy : 1;  ///< 9 - Verified Boot Policy
+    UINT32 AcmSvn             : 4;  ///< 13:10 - Boot Guard ACM Security Version Number
+    UINT32 KvmSvn             : 4;  ///< 17:14 - Key Manifest Security Version Number
+    UINT32 BpmSvn             : 4;  ///< 21:18 - Boot Policy Manifest Security Version Number
+    UINT32 KmId               : 4;  ///< 25:22 - Key Manifest ID
+    UINT32 ExeStatus          : 1;  ///< 26 - BSP Boot Policy Manifest Execution Status
+    UINT32 Error              : 1;  ///< 27 - CPU encountered an unexpected error and is asking FW to start the enforcement logic.
+    UINT32 BootGuardDisable   : 1;  ///< 28 - Boot Guard Disable
+    UINT32 FpfDisable         : 1;  ///< 29 - Field Programmable Fuses (FPF) Disable
+    UINT32 FpfSocConfigLock   : 1;  ///< 30 - Field Programmable Fuses (FPF) SOC Configuration Lock
+    UINT32 TxtSupport         : 1;  ///< 31 - TXT Support
+  } r;
+} HECI_FW_STS6_REGISTER;
+
+///
 /// HFSTS2, offset 48h
 ///
 typedef union {
