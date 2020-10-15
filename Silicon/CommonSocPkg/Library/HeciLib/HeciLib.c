@@ -223,6 +223,49 @@ HeciGetFwCapsSkuMsg (
 }
 
 /**
+  Check for Manufacturing Mode
+
+  @param[out]  MeManuMode         Manufacturing mode/production mode.
+
+  @retval EFI_UNSUPPORTED         Current CSME mode doesn't support this function
+  @retval EFI_SUCCESS             Command succeeded
+
+**/
+EFI_STATUS
+EFIAPI
+HeciGetManufactureMode (
+  OUT UINT16 *MeManuMode
+  )
+{
+  UINTN                    HeciMmPciAddress;
+  HECI_FW_STS6_REGISTER    MeFirmwareStatus;
+
+  if (MeManuMode == NULL) {
+    return RETURN_INVALID_PARAMETER;
+  }
+
+  HeciMmPciAddress = MeGetHeciMmPciAddress (0, 0);
+  if (MmioRead16 (HeciMmPciAddress + PCI_VENDOR_ID_OFFSET) == 0xFFFF) {
+    return EFI_NOT_FOUND;
+  }
+
+  MeFirmwareStatus.ul = MmioRead32 (HeciMmPciAddress + R_ME_HFS_6);
+  DEBUG ((DEBUG_INFO, "HECI1 MeFirmwareStatus = %x \n",  MeFirmwareStatus.ul));
+
+  if (MeFirmwareStatus.r.FpfSocConfigLock == 0) {
+    // Platform is still in manufaturing.
+    // Field programmable fuses(FPF)fuses are NOT burned yet
+    *MeManuMode = 1;
+  } else {
+    // Platform is in production mode.
+    // Field programmable fuses(FPF)fuses are burned
+    *MeManuMode = 0;
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
   Register HECI service
 
   @retval EFI_SUCCESS             HECI service is registered successfully.

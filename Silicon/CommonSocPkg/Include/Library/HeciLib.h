@@ -237,6 +237,21 @@ HeciReadFwStatus (
   );
 
 /**
+  Check for Manufacturing Mode
+
+  @param[out]  ManfMode            Manufacturing mode/debug mode.
+
+  @retval EFI_UNSUPPORTED         Current CSME mode doesn't support this function
+  @retval EFI_SUCCESS             Command succeeded
+
+**/
+EFI_STATUS
+EFIAPI
+HeciGetManufactureMode (
+  OUT UINT16 *MeManuMode
+  );
+
+/**
   Send Get Firmware Version Request
 
   @param[out] MsgAck              Return FW version from CSE.
