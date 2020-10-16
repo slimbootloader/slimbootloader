@@ -427,10 +427,10 @@ class application(tkinter.Frame):
                              command=self.load_from_delta,
                              state='disabled')
         file_menu.add_command(label=self.menu_string[3],
-                             command=self.save_toDelta,
+                             command=self.save_to_delta,
                              state='disabled')
         file_menu.add_command(label=self.menu_string[4],
-                             command=self.save_full_toDelta,
+                             command=self.save_full_to_delta,
                              state='disabled')
         file_menu.add_command(label="About", command=self.about)
         menubar.add_cascade(label="File", menu=file_menu)
@@ -758,10 +758,10 @@ class application(tkinter.Frame):
         new_data = self.cfg_data_obj.generate_binary_array()
         self.cfg_data_obj.generate_delta_file_from_bin (path, self.org_cfg_data_bin, new_data, full)
 
-    def save_toDelta(self):
+    def save_to_delta(self):
         self.save_delta_file()
 
-    def save_full_toDelta(self):
+    def save_full_to_delta(self):
         self.save_delta_file(True)
 
     def save_to_bin(self):
