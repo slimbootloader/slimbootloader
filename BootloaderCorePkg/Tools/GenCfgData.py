@@ -1366,15 +1366,14 @@ class CGenCfgData:
             full_name = item['path']
             if 'PLATFORMID_CFG_DATA.PlatformId' == full_name:
                 def_platform_id = old_val
-
-            if new_val != old_val or (full and item['type'] != 'Reserved'):
+                platform_id     = new_val
+            elif item['type'] != 'Reserved' and ((new_val != old_val) or full):
                 val_str = self.reformat_value_str (item['value'], item['length'])
                 text = '%-40s | %s' % (full_name, val_str)
                 lines.append(text)
 
         if platform_id is None or def_platform_id == platform_id:
             platform_id = def_platform_id
-            # print("WARNING: 'PlatformId' configuration is same as default %d!" % platform_id)
 
         lines.insert(0, '%-40s | %s\n\n' %
                      ('PLATFORMID_CFG_DATA.PlatformId', '0x%04X' % platform_id))
