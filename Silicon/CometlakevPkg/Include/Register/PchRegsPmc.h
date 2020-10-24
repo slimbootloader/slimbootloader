@@ -69,7 +69,7 @@
 
 #define R_PMC_PWRM_CFG4                          0x18E8
 
-#define R_PMC_PWRM_GPIO_CFG                      0x120
+#define R_PMC_PWRM_GPIO_CFG                      0x1920
 #define B_PMC_PWRM_GPIO_CFG_GPE0_DW2             (BIT11 | BIT10 | BIT9 | BIT8)
 #define N_PMC_PWRM_GPIO_CFG_GPE0_DW2             8
 #define B_PMC_PWRM_GPIO_CFG_GPE0_DW1             (BIT7 | BIT6 | BIT5 | BIT4)
