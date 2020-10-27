@@ -21,4 +21,20 @@ GpioPadConfigTable (
   IN VOID               *Gpio_Conf_Data
   );
 
+
+/**
+  Configure the GPIO pins, available as part of platform specific GPIO CFG DATA.
+  If the pins are not part of GPIO CFG DATA, call GpioPadConfigTable() directly
+  with the appropriate arguments.
+
+  @retval EFI_SUCCESS                   The function completed successfully
+  @retval EFI_NOT_FOUND                 If Gpio Config Data cant be found
+**/
+EFI_STATUS
+EFIAPI
+ConfigureGpio (
+  VOID
+  );
+
+
 #endif /* __GPIO_LIB_H__ */
