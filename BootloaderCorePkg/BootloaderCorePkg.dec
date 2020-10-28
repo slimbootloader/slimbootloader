@@ -124,7 +124,7 @@
   gPlatformModuleTokenSpaceGuid.PcdTopSwapRegionSize      | 0x00000000 | UINT32 | 0x200000C0
   gPlatformModuleTokenSpaceGuid.PcdRedundantRegionSize    | 0x00000000 | UINT32 | 0x200000C1
 
-  gPlatformModuleTokenSpaceGuid.PcdVerifiedBootStage1B   | 0x0 | BOOLEAN | 0x200000D0
+  gPlatformModuleTokenSpaceGuid.PcdVerifiedBootStage1B    | FALSE      | BOOLEAN| 0x200000D0
 
   gPlatformModuleTokenSpaceGuid.PcdCpuMaxLogicalProcessorNumber | 16   | UINT32 | 0x200000E0
   gPlatformModuleTokenSpaceGuid.PcdMaxServiceNumber       | 8          | UINT32 | 0x200000E1
@@ -133,7 +133,11 @@
   gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesSize       |     0x1000 | UINT16 | 0x200000E3
 
   # Size of the Hash store allocated in bootloader
-  gPlatformModuleTokenSpaceGuid.PcdHashStoreSize       | 0x00000200 | UINT32 | 0x200000F1
+  gPlatformModuleTokenSpaceGuid.PcdHashStoreSize          | 0x00000200 | UINT32 | 0x200000F1
+
+  # Use this PCD for the potential code change related with boot performance
+  # NOTE: some features might be disabled when ENABLE_FAST_BOOT is set.
+  gPlatformModuleTokenSpaceGuid.PcdFastBootEnabled        |  FALSE     | BOOLEAN| 0x200000F2
 
 [PcdsFixedAtBuild, PcdsPatchableInModule]
   #

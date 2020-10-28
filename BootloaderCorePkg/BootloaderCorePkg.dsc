@@ -249,6 +249,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdIppHashLibSupportedMask    | $(IPP_HASH_LIB_SUPPORTED_MASK)
 
   gPlatformCommonLibTokenSpaceGuid.PcdCompSignHashAlg             | $(SIGN_HASH_TYPE)
+  gPlatformModuleTokenSpaceGuid.PcdFastBootEnabled                | $(ENABLE_FAST_BOOT)
 
 [PcdsPatchableInModule]
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel   | 0x8000004F

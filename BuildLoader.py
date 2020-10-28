@@ -215,6 +215,7 @@ class BaseBoard(object):
         self.ENABLE_MULTI_USB_BOOT_DEV = 0
         self.ENABLE_SBL_SETUP      = 0
         self.ENABLE_PAYLOD_MODULE  = 0
+        self.ENABLE_FAST_BOOT      = 0
 
         self.SUPPORT_ARI           = 0
         self.SUPPORT_SR_IOV        = 0
