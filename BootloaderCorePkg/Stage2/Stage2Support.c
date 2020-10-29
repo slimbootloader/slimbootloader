@@ -262,12 +262,6 @@ SplitMemroyMap (
     }
   }
 
-  MemoryMapInfo->Entry[NewIdx].Base = PcdGet64 (PcdPciExpressBaseAddress);
-  MemoryMapInfo->Entry[NewIdx].Size = SIZE_256MB;
-  MemoryMapInfo->Entry[NewIdx].Type = MEM_MAP_TYPE_RESERVED;
-  MemoryMapInfo->Entry[NewIdx].Flag = 0;
-  NewIdx++;
-
   MemoryMapInfo->Entry[NewIdx].Base = PcdGet32(PcdFlashBaseAddress);
   MemoryMapInfo->Entry[NewIdx].Size = PcdGet32(PcdFlashSize);
   MemoryMapInfo->Entry[NewIdx].Type = MEM_MAP_TYPE_RESERVED;
