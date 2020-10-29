@@ -327,7 +327,7 @@ PlatformIdInitialize (
       if (EFI_ERROR(Status)) {
         break;
       }
-      BomId = (BomId << 1) + ((GpioData & BIT1) >> 1);
+      BomId = (BomId << 1) + (GpioData & BIT0);
     }
 
     if (Idx == ARRAY_SIZE(mUpxGpioBomPad)) {
