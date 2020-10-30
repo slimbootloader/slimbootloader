@@ -61,13 +61,19 @@ typedef enum {
 } BUS_SCAN_TYPE;
 
 typedef struct {
-  UINT8           DowngradeIo32;
-  UINT8           DowngradeMem64;
-  UINT8           DowngradePMem64;
-  UINT8           Reserved;
-  UINT8           BusScanType;
-  UINT8           NumOfBus;
-  UINT8           BusScanItems[0];
+  UINT16            Io32            : 1;
+  UINT16            Mem64           : 1;
+  UINT16            PMem64          : 1;
+  UINT16            Bus0            : 1;
+  UINT16            Reserved        : 12;
+} PCI_RES_DOWNGRADE;
+
+typedef struct {
+  PCI_RES_DOWNGRADE Downgrade;
+  UINT16            Reserved;
+  UINT8             BusScanType;
+  UINT8             NumOfBus;
+  UINT8             BusScanItems[0];
 } PCI_ENUM_POLICY_INFO;
 
 //

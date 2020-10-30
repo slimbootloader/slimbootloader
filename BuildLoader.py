@@ -882,7 +882,14 @@ class Build(object):
                 raise Exception ('Diagnostic ACM base[FSP-T+CAR:0x%x] must be 4KB aligned!' % diagnosticacm_base)
 
         # Generate Pci Enum Policy Info
-        pci_enum_policy_list = ['DOWNGRADE_IO32', 'DOWNGRADE_MEM64', 'DOWNGRADE_PMEM64', 'BUS_SCAN_TYPE', 'BUS_SCAN_ITEMS']
+        pci_enum_policy_list = [
+            'DOWNGRADE_IO32',
+            'DOWNGRADE_MEM64',
+            'DOWNGRADE_PMEM64',
+            'DOWNGRADE_BUS0',
+            'BUS_SCAN_TYPE',
+            'BUS_SCAN_ITEMS'
+        ]
         pci_enum_policy_dict = {}
         for policy_list in pci_enum_policy_list:
             policy_name = '_PCI_ENUM_%s' % policy_list
