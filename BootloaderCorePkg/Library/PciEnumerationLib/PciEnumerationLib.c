@@ -1471,13 +1471,13 @@ PciScanRootBridges (
   // Root bridge decode space
   //
   RootBridgeDecodes = 0xFFFFFFFF;
-  if (EnumPolicy->DowngradeIo32 != 0) {
+  if (EnumPolicy->Downgrade.Io32 != 0) {
     RootBridgeDecodes &= (UINT32)~(EFI_BRIDGE_IO32_DECODE_SUPPORTED);
   }
-  if (EnumPolicy->DowngradeMem64 != 0) {
+  if (EnumPolicy->Downgrade.Mem64 != 0) {
     RootBridgeDecodes &= (UINT32)~(EFI_BRIDGE_MEM64_DECODE_SUPPORTED);
   }
-  if (EnumPolicy->DowngradePMem64 != 0) {
+  if (EnumPolicy->Downgrade.PMem64 != 0) {
     RootBridgeDecodes &= (UINT32)~(EFI_BRIDGE_PMEM64_DECODE_SUPPORTED);
   }
 
@@ -1492,6 +1492,11 @@ PciScanRootBridges (
     if (PciExpressRead16 (Address) != 0xFFFF) {
       Root = CreatePciIoDevice (NULL, NULL, (UINT8)Bus, 0, 0);
       Root->Decodes = RootBridgeDecodes;
+      if ((Bus == 0) && (EnumPolicy->Downgrade.Bus0 == 1)) {
+        Root->Decodes &= (UINT32)~(EFI_BRIDGE_IO32_DECODE_SUPPORTED);
+        Root->Decodes &= (UINT32)~(EFI_BRIDGE_MEM64_DECODE_SUPPORTED);
+        Root->Decodes &= (UINT32)~(EFI_BRIDGE_PMEM64_DECODE_SUPPORTED);
+      }
       Root->BusNumberRanges.BusBase  = (UINT8)Bus;
       Root->BusNumberRanges.BusLimit = BusLimit;
 
@@ -1654,7 +1659,7 @@ PciEnumeration (
   BaseAddress = PcdGet32 (PcdPciResourceIoBase);
   BaseAddress = PciProgramResources (RootBridge, PciBarTypeIo16, BaseAddress);
 
-  if ((EnumPolicy != NULL) && (EnumPolicy->DowngradeIo32 == 0)) {
+  if ((EnumPolicy != NULL) && (EnumPolicy->Downgrade.Io32 == 0)) {
     BaseAddress = ALIGN (BaseAddress, 0xFFFF);
     PciProgramResources (RootBridge, PciBarTypeIo32, BaseAddress);
   }
@@ -1665,12 +1670,12 @@ PciEnumeration (
   PciProgramResources(RootBridge, PciBarTypePMem32, BaseAddress);
 
   BaseAddress = PcdGet64 (PcdPciResourceMem64Base);
-  if ((EnumPolicy != NULL) && (EnumPolicy->DowngradeMem64 == 0)) {
+  if ((EnumPolicy != NULL) && (EnumPolicy->Downgrade.Mem64 == 0)) {
     ASSERT (BaseAddress > 0xFFFFFFFF);
     BaseAddress = PciProgramResources (RootBridge, PciBarTypeMem64, BaseAddress);
   }
 
-  if ((EnumPolicy != NULL) && (EnumPolicy->DowngradePMem64 == 0)) {
+  if ((EnumPolicy != NULL) && (EnumPolicy->Downgrade.PMem64 == 0)) {
     BaseAddress = MAX (BaseAddress, PcdGet64 (PcdPciResourceMem64Base));
     ASSERT (BaseAddress > 0xFFFFFFFF);
     BaseAddress = ALIGN (BaseAddress, 0xFFFFFFF);

@@ -93,21 +93,27 @@
   gPlatformModuleTokenSpaceGuid.PcdOsBootOptionNumber     | 0x00000008 | UINT32 | 0x200000A3
   gPlatformModuleTokenSpaceGuid.PcdServiceNumber          | 0x00000004 | UINT32 | 0x200000A4
 
+  # typedef struct {
+  #   UINT16            Io32      : 1;  // default:1
+  #   UINT16            Mem64     : 1;  // default:1
+  #   UINT16            PMem64    : 1;  // default:1
+  #   UINT16            Bus0      : 1;  // default:1, Downgrade all Io32/Mem64/PMem64 for all Bus-0 devices
+  #   UINT16            Reserved  : 12; // 0 initialized
+  # } PCI_RES_DOWNGRADE;
   #
   # typedef struct {
-  #   UINT8           DowngradeIo32;  // default: 1
-  #   UINT8           DowngradeMem64; // default: 1
-  #   UINT8           DowngradePMem64;// default: 1
-  #   UINT8           Reserved;
-  #   UINT8           BusScanType;    // default:0 (0: list, 1: range)
-  #   UINT8           NumOfBus;       // the number of BusScanItems
-  #   UINT8           BusScanItems[0];
+  #   PCI_RES_DOWNGRADE Downgrade;
+  #   UINT16            Reserved;
+  #   UINT8             BusScanType;    // default:0 (0: list, 1: range)
+  #   UINT8             NumOfBus;       // the number of BusScanItems
+  #   UINT8             BusScanItems[0];
   # } PCI_ENUM_POLICY_INFO;
   #
   # Update BoardConfig.py if necessary
   # self._PCI_ENUM_DOWNGRADE_IO32   = 0
   # self._PCI_ENUM_DOWNGRADE_MEM64  = 0
   # self._PCI_ENUM_DOWNGRADE_PMEM64 = 0
+  # self._PCI_ENUM_DOWNGRADE_BUS0   = 0
   # self._PCI_ENUM_BUS_SCAN_TYPE    = 1
   # self._PCI_ENUM_BUS_SCAN_ITEMS   = '0,0xff'
   gPlatformModuleTokenSpaceGuid.PcdPciEnumPolicyInfo      | {0x00}     | VOID*  | 0x200000A5

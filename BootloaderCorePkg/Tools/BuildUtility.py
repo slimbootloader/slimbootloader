@@ -179,22 +179,26 @@ class VariableRegionHeader(Structure):
 class PciEnumPolicyInfo(Structure):
     _pack_ = 1
     _fields_ = [
-        ('DowngradeIo32',   c_uint8),
-        ('DowngradeMem64',  c_uint8),
-        ('DowngradePMem64', c_uint8),
-        ('Reserved',        c_uint8),
-        ('BusScanType',     c_uint8), # 0: list, 1: range
-        ('NumOfBus',        c_uint8),
-        ('BusScanItems',    ARRAY(c_uint8, 0))
+        ('DowngradeIo32',           c_uint16, 1),
+        ('DowngradeMem64',          c_uint16, 1),
+        ('DowngradePMem64',         c_uint16, 1),
+        ('DowngradeBus0',           c_uint16, 1),
+        ('DowngradeReserved',       c_uint16, 12),
+        ('Reserved',                c_uint16),
+        ('BusScanType',             c_uint8), # 0: list, 1: range
+        ('NumOfBus',                c_uint8),
+        ('BusScanItems',            ARRAY(c_uint8, 0))
     ]
 
     def __init__(self):
-        self.DowngradeIo32    = 1
-        self.DowngradeMem64   = 1
-        self.DowngradePMem64  = 1
-        self.Reserved         = 0
-        self.BusScanType      = 0
-        self.NumOfBus         = 0
+        self.DowngradeIo32      = 1
+        self.DowngradeMem64     = 1
+        self.DowngradePMem64    = 1
+        self.DowngradeBus0      = 1
+        self.DowngradeReserved  = 0
+        self.Reserved           = 0
+        self.BusScanType        = 0
+        self.NumOfBus           = 0
 
 def get_visual_studio_info ():
 
@@ -1057,6 +1061,7 @@ def gen_pci_enum_policy_info (policy_dict):
         policy_info.DowngradeIo32   = policy_dict['DOWNGRADE_IO32']
         policy_info.DowngradeMem64  = policy_dict['DOWNGRADE_MEM64']
         policy_info.DowngradePMem64 = policy_dict['DOWNGRADE_PMEM64']
+        policy_info.DowngradeBus0   = policy_dict['DOWNGRADE_BUS0']
         policy_info.BusScanType     = policy_dict['BUS_SCAN_TYPE']
         bus_scan_items              = policy_dict['BUS_SCAN_ITEMS']
 
