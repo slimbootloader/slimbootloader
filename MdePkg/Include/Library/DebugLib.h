@@ -367,12 +367,7 @@ DebugPrintLevelEnabled (
 
 **/
 #if !defined(MDEPKG_NDEBUG)
-  #define DEBUG(Expression)        \
-    do {                           \
-      if (DebugPrintEnabled ()) {  \
-        _DEBUG (Expression);       \
-      }                            \
-    } while (FALSE)
+  #define DEBUG(Expression) DebugPrint Expression
 #else
   #define DEBUG(Expression)
 #endif

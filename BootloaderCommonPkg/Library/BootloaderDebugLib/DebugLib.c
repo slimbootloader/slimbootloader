@@ -57,6 +57,13 @@ DebugPrint (
   ASSERT (Format != NULL);
 
   //
+  // Check that debug print is enabled at all
+  //
+  if (!DebugPrintEnabled ()) {
+    return;
+  }
+
+  //
   // Check driver debug mask value and global mask
   //
   if ((ErrorLevel & GetDebugPrintErrorLevel ()) == 0) {
