@@ -415,7 +415,7 @@
 !endif
 
 !if $(UCODE_SIZE) > 0
-  Silicon/$(SILICON_PKG_NAME)/Microcode/Microcode.inf
+  $(MICROCODE_INF_FILE)
 !endif
 
 [BuildOptions.Common.EDKII]
