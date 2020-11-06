@@ -322,6 +322,7 @@ class Build(object):
         if self._board.ENABLE_SBL_SETUP:
             self._board.ENABLE_PAYLOD_MODULE = 1
 
+        self._board.MICROCODE_INF_FILE     = os.path.join('Silicon', self._board.SILICON_PKG_NAME, "Microcode", "Microcode.inf")
 
     def board_build_hook (self, phase):
         if getattr(self._board, "PlatformBuildHook", None):
