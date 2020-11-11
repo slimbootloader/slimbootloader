@@ -47,6 +47,7 @@ GetBootImageFromRawPartition (
   LOGICAL_BLOCK_DEVICE       LogicBlkDev;
   UINTN                      AlignedHeaderSize;
   UINTN                      AlignedImageSize;
+  UINTN                      AlignedHeaderBlkCnt;
   UINT32                     BlockSize;
   VOID                      *BlockData;
   EFI_LBA                    LbaAddr;
@@ -90,10 +91,15 @@ GetBootImageFromRawPartition (
     }
 
     DEBUG ((DEBUG_INFO, "Load image from SwPart (0x%x), LbaAddr(0x%llx)\n", SwPart, LbaAddr));
-    Status = GetLogicalPartitionInfo (SwPart, LoadedImage->HwPartHandle, &LogicBlkDev);
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_INFO, "Get logical partition error - %r\n", Status));
-      return Status;
+    if (SwPart != 0xFF) {
+      Status = GetLogicalPartitionInfo (SwPart, LoadedImage->HwPartHandle, &LogicBlkDev);
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_INFO, "Get logical partition error - %r\n", Status));
+        return Status;
+      }
+    } else {
+      DEBUG ((DEBUG_INFO, "SwPart is 255, LbaAddr will be treated as an absolute LBA\n"));
+      LogicBlkDev.StartBlock = 0;
     }
 
     Status = MediaGetMediaInfo (BootOption->HwPart, &BlockInfo);
@@ -107,20 +113,15 @@ GetBootImageFromRawPartition (
     // Make sure to round the Header size to be block aligned in bytes.
     //
     BlockSize = BlockInfo.BlockSize;
-    AlignedHeaderSize = ((sizeof (IAS_HEADER) % BlockSize) == 0) ? \
-                        sizeof (IAS_HEADER) : \
-                        ((sizeof (IAS_HEADER) / BlockSize) + 1) * BlockSize;
+    AlignedHeaderBlkCnt = (sizeof (IAS_HEADER) + (BlockSize - 1)) / BlockSize;
+    AlignedHeaderSize = AlignedHeaderBlkCnt * BlockSize;
 
     BlockData = AllocatePages (EFI_SIZE_TO_PAGES (AlignedHeaderSize));
     if (BlockData == NULL) {
       return EFI_OUT_OF_RESOURCES;
     }
 
-    if ( BootOption->DevType == OsBootDeviceMemory ) {
-      Address =  LogicBlkDev.StartBlock + LbaAddr;
-    } else {
-      Address =  LbaAddr;
-    }
+    Address =  LogicBlkDev.StartBlock + LbaAddr;
 
     Status = MediaReadBlocks (
                BootOption->HwPart,
@@ -182,12 +183,7 @@ GetBootImageFromRawPartition (
     //
     // Read the rest of the IAS image into the buffer
     //
-
-    if ( BootOption->DevType == OsBootDeviceMemory ) {
-      Address =  LogicBlkDev.StartBlock + LbaAddr + AlignedHeaderSize;
-    } else {
-      Address =  LbaAddr + AlignedHeaderSize;
-    }
+    Address =  LogicBlkDev.StartBlock + LbaAddr + AlignedHeaderBlkCnt;
 
     Status = MediaReadBlocks (
                BootOption->HwPart,
