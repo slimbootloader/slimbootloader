@@ -323,7 +323,22 @@ class Build(object):
             self._board.ENABLE_PAYLOD_MODULE = 1
 
         if not hasattr(self._board, 'MICROCODE_INF_FILE'):
-            self._board.MICROCODE_INF_FILE = os.path.join('Silicon', self._board.SILICON_PKG_NAME, "Microcode", "Microcode.inf")
+            self._board.MICROCODE_INF_FILE  = 'Silicon/%s/Microcode/Microcode.inf' % self._board.SILICON_PKG_NAME
+        if not hasattr(self._board, 'ACPI_TABLE_INF_FILE'):
+            self._board.ACPI_TABLE_INF_FILE = 'Platform/%s/AcpiTables/AcpiTables.inf' % self._board.BOARD_PKG_NAME
+
+        for stage in ['1A', '1B', '2']:
+            soc_inf = 'SOC_INIT_STAGE%s_LIB_INF_FILE' % stage
+            if not hasattr(self._board, soc_inf):
+                soc_init_lib = 'Silicon/%s/Library/Stage%sSocInitLib/Stage%sSocInitLib.inf' % (self._board.SILICON_PKG_NAME, stage, stage)
+                setattr(self._board, 'SOC_INIT_STAGE%s_LIB_INF_FILE' % stage, soc_init_lib)
+            brd_inf = 'BRD_INIT_STAGE%s_LIB_INF_FILE' % stage
+            if not hasattr(self._board, brd_inf):
+                brd_init_lib = 'Platform/%s/Library/Stage%sBoardInitLib/Stage%sBoardInitLib.inf' % (self._board.BOARD_PKG_NAME, stage, stage)
+                setattr(self._board, 'BRD_INIT_STAGE%s_LIB_INF_FILE' % stage, brd_init_lib)
+
+        if not hasattr(self._board, 'SOC_FWU_LIB_INF_FILE'):
+            self._board.SOC_FWU_LIB_INF_FILE = 'Silicon/%s/Library/FirmwareUpdateLib/FirmwareUpdateLib.inf' % self._board.SILICON_PKG_NAME
 
     def board_build_hook (self, phase):
         if getattr(self._board, "PlatformBuildHook", None):
