@@ -185,7 +185,7 @@ FV = OsLoader
   INF BootloaderCorePkg/Stage2/Stage2.inf
 
 !if $(HAVE_ACPI_TABLE)
-  INF RuleOverride = ACPITABLE Platform/$(BOARD_PKG_NAME)/AcpiTables/AcpiTables.inf
+  INF RuleOverride = ACPITABLE $(ACPI_TABLE_INF_FILE)
 !endif
 
 !if $(HAVE_VBT_BIN)
