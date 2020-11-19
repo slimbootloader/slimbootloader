@@ -34,6 +34,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
   Verify the firmware version to make sure it is no less than current firmware version.
 
   @param[in]  Stage1ABase   Pointer to stage 1A base.
+  @param[in]  IsFd          Does Stage1ABase point to Stage1A FD
+                            or SBL Stage1A FV ?
   @param[out] Version       Pointer to version of the firmware
 
   @retval  EFI_SUCCESS        The operation completed successfully.
@@ -42,6 +44,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 EFI_STATUS
 GetVersionfromFv (
   IN  UINT32              *Stage1ABase,
+  IN  BOOLEAN             IsFd,
   OUT BOOT_LOADER_VERSION **Version
   )
 {
@@ -53,7 +56,9 @@ GetVersionfromFv (
   //
   // Stage 1A FD has FSPT FV first, so move on to the next FV
   //
-  FvHeader = (EFI_FIRMWARE_VOLUME_HEADER *)((UINTN)FvHeader + (UINTN)FvHeader->FvLength);
+  if (IsFd) {
+    FvHeader = (EFI_FIRMWARE_VOLUME_HEADER *)((UINTN)FvHeader + (UINTN)FvHeader->FvLength);
+  }
 
   //
   // Get version info FFS from FV
@@ -96,7 +101,10 @@ VerifyFwVersion (
   BOOT_LOADER_VERSION   *CurrentBlVersion;
   BOOT_LOADER_VERSION   *CapsuleBlVersion;
   UINT8                 SvnStatus;
+  BOOLEAN               IsFd;
+  UINT32                Stage1ABaseFromCap;
   EFI_STATUS            Status;
+  UINT32                TopSwapRegionSize;
 
   //
   // Check SVN for CFGDATA update
@@ -137,7 +145,7 @@ VerifyFwVersion (
       return Status;
     }
 
-    Status = GetVersionfromFv (&CompBase, &CurrentBlVersion);
+    Status = GetVersionfromFv (&CompBase, TRUE, &CurrentBlVersion);
     if (EFI_ERROR (Status)) {
       DEBUG((DEBUG_ERROR, "GetVersionfromFv: %r\n", Status));
       return Status;
@@ -146,17 +154,39 @@ VerifyFwVersion (
     //
     // Get base address of Stage 1A in capsule Image
     //
+
+    // Initializaing IsFd to TRUE assuming platform specific handing
+    // is required.
+    IsFd = TRUE;
     if (FwPolicy.Fields.UpdatePartitionB == 0x1) {
       Status = PlatformGetStage1AOffset(ImageHdr, FALSE, &CompBase, &CompSize);
     } else if (FwPolicy.Fields.UpdatePartitionA == 0x1) {
       Status = PlatformGetStage1AOffset(ImageHdr, TRUE, &CompBase, &CompSize);
     }
     if (EFI_ERROR (Status)) {
-      DEBUG((DEBUG_ERROR, "PlatformGetStage1AOffset: %r\n", Status));
-      return Status;
+      // This check is introduced to handle platform specific implementation
+      // all platforms that DOES NOT require special handling will return
+      // EFI_UNSUPPORTED from PlatformGetStage1AOffset and getting stage1Abase
+      // will be handled in common way using the below implementation.
+      if (Status == EFI_UNSUPPORTED) {
+        IsFd = FALSE;
+        // Last 4 bytes of the BIOS region contain Stage 1A FV base.
+        CompBase = (UINT32)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER) + ImageHdr->UpdateImageSize - 4);
+        Stage1ABaseFromCap = (UINT32)(*(UINT32 *)(UINTN)CompBase);
+        CompBase = CompBase - (~Stage1ABaseFromCap + 1) + sizeof(UINT32);
+
+        // Calculate offset of Stage1A for backup partition
+        if (FwPolicy.Fields.UpdatePartitionA == 0x1) {
+          GetRegionInfo(&TopSwapRegionSize, NULL, NULL);
+          CompBase = CompBase - TopSwapRegionSize;
+        }
+      } else {
+        DEBUG((DEBUG_ERROR, "PlatformGetStage1AOffset: %r\n", Status));
+        return Status;
+      }
     }
 
-    Status = GetVersionfromFv (&CompBase, &CapsuleBlVersion);
+    Status = GetVersionfromFv (&CompBase, IsFd, &CapsuleBlVersion);
     if (EFI_ERROR (Status)) {
       DEBUG((DEBUG_ERROR, "GetVersionfromFv: %r\n", Status));
       return Status;
@@ -1092,10 +1122,15 @@ GetRegionInfo (
     return EFI_NOT_FOUND;
   }
 
-  *TopSwapRegionSize = GetRegionOffsetSize (FlashMap, FLASH_MAP_FLAGS_TOP_SWAP, NULL);
-  *RedundantRegionSize = GetRegionOffsetSize (FlashMap, FLASH_MAP_FLAGS_REDUNDANT_REGION, NULL);
-  *NonRedundantRegionSize = GetRegionOffsetSize (FlashMap, FLASH_MAP_FLAGS_NON_REDUNDANT_REGION, NULL);
-
+  if (TopSwapRegionSize != NULL) {
+    *TopSwapRegionSize = GetRegionOffsetSize(FlashMap, FLASH_MAP_FLAGS_TOP_SWAP, NULL);
+  }
+  if (RedundantRegionSize != NULL) {
+    *RedundantRegionSize = GetRegionOffsetSize (FlashMap, FLASH_MAP_FLAGS_REDUNDANT_REGION, NULL);
+  }
+  if (NonRedundantRegionSize != NULL) {
+    *NonRedundantRegionSize = GetRegionOffsetSize (FlashMap, FLASH_MAP_FLAGS_NON_REDUNDANT_REGION, NULL);
+  }
   return EFI_SUCCESS;
 }
 
