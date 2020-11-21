@@ -56,3 +56,4 @@
   gPlatformModuleTokenSpaceGuid.PcdAcpiGnvsAddress
   gPlatformModuleTokenSpaceGuid.PcdLoaderAcpiReclaimSize
   gPlatformCommonLibTokenSpaceGuid.PcdLowestSupportedFwVer
+  gPlatformModuleTokenSpaceGuid.PcdLegacyEfSegmentEnabled

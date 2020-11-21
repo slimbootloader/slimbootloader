@@ -310,6 +310,7 @@
   gPlatformModuleTokenSpaceGuid.PcdLinuxPayloadEnabled    | $(ENABLE_LINUX_PAYLOAD)
   gPlatformCommonLibTokenSpaceGuid.PcdContainerBootEnabled| $(ENABLE_CONTAINER_BOOT)
   gPayloadTokenSpaceGuid.PcdCsmeUpdateEnabled             | $(ENABLE_CSME_UPDATE)
+  gPlatformModuleTokenSpaceGuid.PcdLegacyEfSegmentEnabled | $(ENABLE_LEGACY_EF_SEG)
   gPlatformCommonLibTokenSpaceGuid.PcdEmmcHs400SupportEnabled | $(ENABLE_EMMC_HS400)
   gPlatformCommonLibTokenSpaceGuid.PcdPreOsCheckerEnabled | $(ENABLE_PRE_OS_CHECKER)
   gPlatformCommonLibTokenSpaceGuid.PcdDmaProtectionEnabled | $(ENABLE_DMA_PROTECTION)

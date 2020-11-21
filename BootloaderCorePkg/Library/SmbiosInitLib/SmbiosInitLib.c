@@ -186,7 +186,9 @@ FinalizeSmbios (
   //
   // Keep a copy in legacy F segment so that non-UEFI can locate it
   //
-  CopyMem ((VOID *)0xFFF60, SmbiosEntry, sizeof (SMBIOS_TABLE_ENTRY_POINT));
+  if (FeaturePcdGet (PcdLegacyEfSegmentEnabled)) {
+    CopyMem ((VOID *)0xFFF60, SmbiosEntry, sizeof (SMBIOS_TABLE_ENTRY_POINT));
+  }
 
   return Status;
 }

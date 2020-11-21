@@ -216,6 +216,7 @@ class BaseBoard(object):
         self.ENABLE_SBL_SETUP      = 0
         self.ENABLE_PAYLOD_MODULE  = 0
         self.ENABLE_FAST_BOOT      = 0
+        self.ENABLE_LEGACY_EF_SEG  = 1
 
         self.SUPPORT_ARI           = 0
         self.SUPPORT_SR_IOV        = 0

@@ -202,3 +202,4 @@
   gPlatformModuleTokenSpaceGuid.PcdAriSupport             | FALSE      | BOOLEAN | 0x20000211
   gPlatformModuleTokenSpaceGuid.PcdSrIovSupport           | FALSE      | BOOLEAN | 0x20000212
   gPlatformModuleTokenSpaceGuid.PcdEnableSetup            | FALSE      | BOOLEAN | 0x20000213
+  gPlatformModuleTokenSpaceGuid.PcdLegacyEfSegmentEnabled | TRUE       | BOOLEAN | 0x20000214
