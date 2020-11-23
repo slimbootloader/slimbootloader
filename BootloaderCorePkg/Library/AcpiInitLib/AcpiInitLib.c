@@ -676,11 +676,14 @@ AcpiInit (
   Rsdp->ExtendedChecksum = CalculateCheckSum8 ((UINT8 *)Rsdp, Rsdp->Length);
   *AcpiMemBase = (UINT32)(UINTN)Current;
 
+  Status = PcdSet32S (PcdAcpiTablesRsdp, (UINT32)(UINTN)Rsdp);
+
   //
   // Keep a copy at F segment so that non-UEFI OS will find ACPI tables
   //
-  Status = PcdSet32S (PcdAcpiTablesRsdp, (UINT32)(UINTN)Rsdp);
-  CopyMem ((VOID *)0xFFF80, Rsdp, sizeof (RsdpTmp));
+  if (FeaturePcdGet (PcdLegacyEfSegmentEnabled)) {
+    CopyMem ((VOID *)0xFFF80, Rsdp, sizeof (RsdpTmp));
+  }
 
   // Update ACPI update service so that payload can have opportunity to update ACPI tables
   PlatformService = (PLATFORM_SERVICE *) GetServiceBySignature (PLATFORM_SERVICE_SIGNATURE);
