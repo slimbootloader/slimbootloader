@@ -9,6 +9,7 @@ import os
 import re
 import sys
 import marshal
+from pathlib import Path
 
 sys.dont_write_bytecode = True
 
@@ -338,7 +339,6 @@ class application(tkinter.Frame):
         root = master
 
         self.debug = True
-        self.last_dir = '.'
         self.page_id = ''
         self.page_list = {}
         self.conf_list = {}
@@ -346,6 +346,14 @@ class application(tkinter.Frame):
         self.org_cfg_data_bin = None
         self.in_left  = state()
         self.in_right = state()
+
+        # Check if current directory contains a file with a .yaml extension
+        # if not default self.last_dir to a Platform directory where it is easier to locate *BoardPkg\CfgData\*Def.yaml files
+        self.last_dir = '.'
+        if not any(fname.endswith('.yaml') for fname in os.listdir('.')):
+            platform_path = Path(os.path.realpath(__file__)).parents[2].joinpath('Platform')
+            if  platform_path.exists():
+                self.last_dir = platform_path
 
         tkinter.Frame.__init__(self, master, borderwidth=2)
 
