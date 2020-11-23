@@ -135,7 +135,8 @@ typedef struct {
   UINT8         Pad2[4];
   UINT64        TbootAddr;
   UINT8         IstInfo[0x10];
-  UINT8         Pad3[16];
+  UINT64        AcpiRsdpAddr;
+  UINT8         Pad3[8];
   UINT8         Hd0Info[16];
   UINT8         Hd1Info[16];
   UINT8         SysDescTable[0x10];
