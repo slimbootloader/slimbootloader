@@ -1622,7 +1622,7 @@ NOOPT_VS2015x86_X64_DLINK_FLAGS    = /NOLOGO /NODEFAULTLIB /IGNORE:4001 /OPT:REF
 *_VS2017_IA32_ASM_PATH     = DEF(VS2017_BIN_IA32)\ml.exe
 
       *_VS2017_IA32_MAKE_FLAGS  = /nologo
-  DEBUG_VS2017_IA32_CC_FLAGS    = /nologo /arch:IA32 /c /WX /GS- /W4 /Gs32768 /D UNICODE /O1 /GL /FIAutoGen.h /EHs-c- /GR- /GF /Gy /Zi /Gw /Oy-
+  DEBUG_VS2017_IA32_CC_FLAGS    = /nologo /arch:IA32 /c /WX /GS- /W4 /Gs32768 /D UNICODE /O1 /GL /FIAutoGen.h /EHs-c- /GR- /GF /Gy /Zi /Gw
 RELEASE_VS2017_IA32_CC_FLAGS    = /nologo /arch:IA32 /c /WX /GS- /W4 /Gs32768 /D UNICODE /O1 /GL /FIAutoGen.h /EHs-c- /GR- /GF /Gw
 NOOPT_VS2017_IA32_CC_FLAGS      = /nologo /arch:IA32 /c /WX /GS- /W4 /Gs32768 /D UNICODE /FIAutoGen.h /EHs-c- /GR- /GF /Gy /Zi /Od
 
