@@ -14,7 +14,9 @@
 #include <Library/TimerLib.h>
 #include <Library/HeciLib.h>
 #include <Library/BootloaderCommonLib.h>
+#include <Library/BootloaderCoreLib.h>
 #include <IndustryStandard/Pci.h>
+#include <MeBiosPayloadDataCommon.h>
 #include "HeciRegs.h"
 
 /**
@@ -182,17 +184,36 @@ HeciGetFwCapsSkuMsg (
   EFI_STATUS                      Status;
   UINT32                          Length;
   GEN_GET_FW_CAPSKU              *MsgGenGetFwCapsSku;
-  GEN_GET_FW_CAPS_SKU_ACK        *MsgGenGetFwCapsSkuAck;
+  GEN_GET_FW_CAPS_SKU_ACK_DATA   *MsgGenGetFwCapsSkuAck;
+  ME_BIOS_PAYLOAD                *MbpDataHob;
+  UINT32                          MbpDataHobLen;
+  UINT8                          *DataPtr;
+  VOID                           *FspHobListPtr;
 
   if ((MsgGetFwCaps == NULL) || (MsgGetFwCapsAck == NULL) ) {
     return EFI_INVALID_PARAMETER;
   }
 
   MsgGenGetFwCapsSku    = (GEN_GET_FW_CAPSKU *)MsgGetFwCaps;
-  MsgGenGetFwCapsSkuAck = (GEN_GET_FW_CAPS_SKU_ACK *)MsgGetFwCapsAck;
+  MsgGenGetFwCapsSkuAck = (GEN_GET_FW_CAPS_SKU_ACK_DATA *)MsgGetFwCapsAck;
 
   //
-  // Allocate MsgGenGetFwVersion data structure
+  // Fill the FW capapbility data.
+  //
+  FspHobListPtr = GetFspHobListPtr();
+  if (FspHobListPtr != NULL) {
+    DataPtr = (UINT8 *)GetGuidHobData (FspHobListPtr, &MbpDataHobLen, &gMeBiosPayloadHobGuid);
+    if ((DataPtr != NULL) && (MbpDataHobLen > 0)) {
+      MbpDataHob = (ME_BIOS_PAYLOAD *)(DataPtr+4);
+      if( MbpDataHob->FwCapsSku.Available == 1 ) {
+        MsgGenGetFwCapsSkuAck->FWCap.Data = MbpDataHob->FwCapsSku.FwCapabilities.Data;
+        return EFI_SUCCESS;
+      }
+    }
+  }
+
+  //
+  // Allocate MsgGenGetFwVersion data structure.
   //
   MsgGenGetFwCapsSku->MkhiHeader.Data               = 0;
   MsgGenGetFwCapsSku->MkhiHeader.Fields.GroupId     = MKHI_FWCAPS_GROUP_ID;

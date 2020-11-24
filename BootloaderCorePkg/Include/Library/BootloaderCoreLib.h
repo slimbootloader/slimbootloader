@@ -238,6 +238,20 @@ GetLoaderGlobalDataPointer (
   );
 
 /**
+  Returns the pointer to the Fsp HOB list.
+
+  If the pointer to the Fsp HOB list is NULL, then ASSERT().
+
+  @return The pointer to the Fsp HOB list.
+
+**/
+VOID *
+EFIAPI
+GetFspHobListPtr (
+  VOID
+  );
+
+/**
   This function retrieves current boot mode.
 
   @retval    The current boot mode.
