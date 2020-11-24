@@ -159,6 +159,23 @@ typedef struct {
   UINT8                       Reserved[3];
 } MBP_MEASURED_BOOT_SUPPORT;
 
+///
+/// ME BIOS Payload structure containing insensitive data only
+///
+typedef struct {
+  MBP_FW_VERSION_NAME        FwVersionName;
+  MBP_FW_CAPS_SKU            FwCapsSku;
+  MBP_FW_FEATURES_STATE      FwFeaturesState;
+  MBP_PLAT_TYPE              FwPlatType;
+  MBP_HWA_REQ                HwaRequest;
+  MBP_ME_UNCONF_ON_RTC_STATE UnconfigOnRtcClearState;
+  MBP_ARB_SVN_STATE          ArbSvnState;
+  MBP_MPHY_DATA              MphyData;
+  MBP_IFWI_DNX_REQUEST       IfwiDnxRequest;
+  MBP_ICC_PROFILE            IccProfile;
+  MBP_MEASURED_BOOT_SUPPORT  MeasuredBootSupport;
+} ME_BIOS_PAYLOAD;
+
 #pragma pack(pop)
 
 #endif // _MBP_DATA_COMMON_H_
