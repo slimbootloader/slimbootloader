@@ -355,7 +355,7 @@ LoadLinuxFile (
     goto Done;
   }
 
-  FileBuffer = AllocatePool (FileSize);
+  FileBuffer = AllocatePages (EFI_SIZE_TO_PAGES(FileSize));
   if (FileBuffer == NULL) {
     Status = EFI_OUT_OF_RESOURCES;
     goto Done;
@@ -369,9 +369,10 @@ LoadLinuxFile (
     // Re-assign new memory
     ImageData->Addr = FileBuffer;
     ImageData->Size = (UINT32)FileSize;
+    ImageData->AllocType = ImageAllocateTypePage;
   } else {
     if (FileBuffer != NULL) {
-      FreePool (FileBuffer);
+      FreePages (FileBuffer, EFI_SIZE_TO_PAGES(FileSize));
     }
   }
 
