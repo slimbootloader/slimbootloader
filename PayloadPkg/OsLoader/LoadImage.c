@@ -14,9 +14,10 @@ typedef struct {
   LOADED_IMAGE           *LoadedImageList[LoadImageTypeMax];
 } LOADED_IMAGES_INFO;
 
-STATIC CONST CHAR16  *mConfigFileName[2] = {
+STATIC CONST CHAR16  *mConfigFileName[3] = {
   L"config.cfg",
-  L"boot/grub/grub.cfg"
+  L"boot/grub/grub.cfg",
+  L"EFI/BOOT/grub.cfg"
 };
 
 /**
@@ -421,7 +422,7 @@ GetTraditionalLinux (
 
   DEBUG ((DEBUG_INFO, "Try booting Linux from config file ...\n"));
 
-  for (Index = 0; Index < (UINTN)(FeaturePcdGet (PcdGrubBootCfgEnabled) ? 2 : 1); Index++) {
+  for (Index = 0; Index < (UINTN)(FeaturePcdGet (PcdGrubBootCfgEnabled) ? 3 : 1); Index++) {
     DEBUG ((DEBUG_INFO, "Checking %s\n",mConfigFileName[Index]));
     ConfigFile     = NULL;
     ConfigFileSize = 0;
