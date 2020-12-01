@@ -12,7 +12,6 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/SocInitLib.h>
 #include <Library/BoardInitLib.h>
-#include <Library/AcpiInitLib.h>
 #include <Library/DebugDataLib.h>
 #include <Library/AcpiInitLib.h>
 #include <Service/PlatformService.h>
@@ -24,45 +23,14 @@
 #include <Library/MpInitLib.h>
 #include <Library/FirmwareUpdateLib.h>
 #include <Guid/BootLoaderVersionGuid.h>
+#include "AcpiInitLibInternal.h"
 
-#define  ACPI_ALIGN()       (Current = (UINT8 *)ALIGN_POINTER (Current, 0x10))
-#define  ACPI_ALIGN_PAGE()  (Current = (UINT8 *)ALIGN_POINTER (Current, 0x1000))
+CONST EFI_ACPI_COMMON_HEADER *mAcpiTblTmpl[] = {
+  (EFI_ACPI_COMMON_HEADER *)&mBootGraphicsResourceTableTemplate
+};
 
-#define  EFI_ACPI_OEM_ID           {'O','E','M','I','D',' '}   // OEMID 6 bytes long
-#define  EFI_ACPI_OEM_TABLE_ID     SIGNATURE_64('O','E','M','T','A','B','L','E') // OEM table id 8 bytes long
-#define  EFI_ACPI_OEM_REVISION     0x00000005
-#define  EFI_ACPI_CREATOR_ID       SIGNATURE_32('C','R','E','A')
-#define  EFI_ACPI_CREATOR_REVISION 0x0100000D
 
-#define  ACPI_SKIP             0
-#define  ACPI_APPEND           1
-#define  ACPI_REPLACE          2
-
-extern  UINT32          WakeUpBuffer;
-extern  CHAR8           WakeUp;
-extern  UINT32          WakeUpSize;
-
-typedef struct {
-  UINT8   Type;
-  UINT8   Length;
-} EFI_ACPI_MADT_ENTRY_COMMON_HEADER;
-
-/**
-  Update Firmware Performance Data Table (FPDT).
-
-  @param[in]  Table         Pointer of ACPI FPDT Table.
-  @param[out] ExtraSize     Extra size the table needed.
-
-  @retval EFI_SUCCESS       Update ACPI FPDT table successfully.
-  @retval Others            Failed to update FPDT table.
- **/
-EFI_STATUS
-UpdateFpdt (
-  IN  UINT8                             *Table,
-  OUT UINT32                            *ExtraSize
-  );
-
-const EFI_ACPI_5_0_ROOT_SYSTEM_DESCRIPTION_POINTER RsdpTmp = {
+CONST EFI_ACPI_5_0_ROOT_SYSTEM_DESCRIPTION_POINTER RsdpTmp = {
   .Signature = EFI_ACPI_5_0_ROOT_SYSTEM_DESCRIPTION_POINTER_SIGNATURE,
   .Checksum    = 0,
   .OemId       = EFI_ACPI_OEM_ID,
@@ -72,7 +40,7 @@ const EFI_ACPI_5_0_ROOT_SYSTEM_DESCRIPTION_POINTER RsdpTmp = {
   .Reserved    = {0, 0, 0}
 };
 
-const EFI_ACPI_DESCRIPTION_HEADER XsdtTmp = {
+CONST EFI_ACPI_DESCRIPTION_HEADER XsdtTmp = {
   .Signature = EFI_ACPI_5_0_EXTENDED_SYSTEM_DESCRIPTION_TABLE_SIGNATURE,
   .Checksum    = 0,
   .Length   = 0,
@@ -523,6 +491,10 @@ AcpiInit (
   UINT32                    UpdateRdstXsdt;
   EFI_STATUS                Status;
   UINT32                    ExtraSize;
+  UINT32                    Round;
+  UINT32                    StartIdx;
+  UINT32                    EndIdx;
+  BOOLEAN                   Loop;
 
   Facs = NULL;
   Dsdt = NULL;
@@ -562,92 +534,110 @@ AcpiInit (
   TotalSize = sizeof (EFI_ACPI_DESCRIPTION_HEADER) + PcdGet32 (PcdAcpiTablesMaxEntry) * sizeof (UINT64);
   Current += TotalSize;
 
-  TblPtr  = (UINT8 *)(UINTN)PcdGet32 (PcdAcpiTablesAddress);
-  EndPtr  = TblPtr + ((* ((UINT32 *) (TblPtr - 8)) & 0xFFFFFF) - 28);
-  while (TblPtr < EndPtr) {
-    Previous = Current;
+  TblPtr   = (UINT8 *)(UINTN)PcdGet32 (PcdAcpiTablesAddress);
+  EndPtr   = TblPtr + ((* ((UINT32 *) (TblPtr - 8)) & 0xFFFFFF) - 28);
+  StartIdx = 0;
+  EndIdx   = ARRAY_SIZE (mAcpiTblTmpl);
 
-    Table = (EFI_ACPI_COMMON_HEADER *)TblPtr;
-    ACPI_ALIGN ();
-    CopyMem  (Current, Table, Table->Length);
+  // 1st round: Copy existing ACPI tables from flash to memory and update
+  // 2nd round: Create new ACPI tables from template and update
+  for (Round = 0; Round < 2; Round++) {
+    while (TRUE) {
+      Loop= (Round == 0) ? (TblPtr < EndPtr) : (StartIdx < EndIdx);
+      if (!Loop) {
+        break;
+      }
 
-    Status = PlatformUpdateAcpiTable (Current);
-    if (Status != EFI_SUCCESS) {
-      Current = Previous;
-      DEBUG ((DEBUG_WARN, "Not adding ACPI table \n"));
-      SectionLen = * (UINT32 *) (TblPtr - 4) & 0x00FFFFFF;
-      TblPtr = TblPtr + ((SectionLen + 3) & ~3);
-      continue;
-    }
+      Previous = Current;
+      if (Round == 0) {
+        Table = (EFI_ACPI_COMMON_HEADER *)TblPtr;
+      } else {
+        Table = (EFI_ACPI_COMMON_HEADER *)mAcpiTblTmpl[StartIdx];
+      }
+      ACPI_ALIGN ();
+      CopyMem  (Current, Table, Table->Length);
 
-    UpdateRdstXsdt = 1;
-    ExtraSize      = 0;
-
-    switch (Table->Signature) {
-    case EFI_ACPI_5_0_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE:
-      // FACP
-      Facp = (EFI_ACPI_5_0_FIXED_ACPI_DESCRIPTION_TABLE *)Current;
-      break;
-    case EFI_ACPI_5_0_FIRMWARE_ACPI_CONTROL_STRUCTURE_SIGNATURE:
-      // FACS
-      Facs = (EFI_ACPI_5_0_FIRMWARE_ACPI_CONTROL_STRUCTURE *)Current;
       UpdateRdstXsdt = 0;
-      break;
-    case EFI_ACPI_5_0_DIFFERENTIATED_SYSTEM_DESCRIPTION_TABLE_SIGNATURE:
-      // DSDT
-      Dsdt = (EFI_ACPI_DESCRIPTION_HEADER *)Current;
-      UpdateAcpiGnvs (Dsdt, PcdGet32 (PcdAcpiGnvsAddress));
-      UpdateRdstXsdt = 0;
-      break;
-    case EFI_ACPI_5_0_PCI_EXPRESS_MEMORY_MAPPED_CONFIGURATION_SPACE_BASE_ADDRESS_DESCRIPTION_TABLE_SIGNATURE:
-      // MCFG
-      Mcfg = (EFI_ACPI_MEMORY_MAPPED_CONFIGURATION_BASE_ADDRESS_TABLE *)Current;
-      Mcfg->Segment.BaseAddress = PcdGet64 (PcdPciExpressBaseAddress);
-      break;
-    case EFI_ACPI_5_0_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE:
-      // MADT
-      Status = UpdateMadt (Current);
-      if (Status != EFI_SUCCESS) {
-        return Status;
+      ExtraSize      = 0;
+      Status = PlatformUpdateAcpiTable (Current);
+      if (!EFI_ERROR(Status)) {
+        UpdateRdstXsdt = 1;
+        switch (Table->Signature) {
+        case EFI_ACPI_5_0_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE:
+          // FACP
+          Facp = (EFI_ACPI_5_0_FIXED_ACPI_DESCRIPTION_TABLE *)Current;
+          break;
+        case EFI_ACPI_5_0_FIRMWARE_ACPI_CONTROL_STRUCTURE_SIGNATURE:
+          // FACS
+          Facs = (EFI_ACPI_5_0_FIRMWARE_ACPI_CONTROL_STRUCTURE *)Current;
+          UpdateRdstXsdt = 0;
+          break;
+        case EFI_ACPI_5_0_DIFFERENTIATED_SYSTEM_DESCRIPTION_TABLE_SIGNATURE:
+          // DSDT
+          Dsdt = (EFI_ACPI_DESCRIPTION_HEADER *)Current;
+          UpdateAcpiGnvs (Dsdt, PcdGet32 (PcdAcpiGnvsAddress));
+          UpdateRdstXsdt = 0;
+          break;
+        case EFI_ACPI_5_0_PCI_EXPRESS_MEMORY_MAPPED_CONFIGURATION_SPACE_BASE_ADDRESS_DESCRIPTION_TABLE_SIGNATURE:
+          // MCFG
+          Mcfg = (EFI_ACPI_MEMORY_MAPPED_CONFIGURATION_BASE_ADDRESS_TABLE *)Current;
+          Mcfg->Segment.BaseAddress = PcdGet64 (PcdPciExpressBaseAddress);
+          break;
+        case EFI_ACPI_5_0_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE:
+          // MADT
+          Status = UpdateMadt (Current);
+          if (EFI_ERROR(Status)) {
+            // MADT is critical, if error occurs, abort.
+            return Status;
+          }
+          break;
+        case EFI_ACPI_5_0_FIRMWARE_PERFORMANCE_DATA_TABLE_SIGNATURE:
+          // FPDT
+          Status = UpdateFpdt (Current, &ExtraSize);
+          break;
+        case EFI_FIRMWARE_UPDATE_STATUS_TABLE_SIGNATURE:
+          // FWST
+          Status = UpdateFwst (Current);
+          break;
+        case EFI_ACPI_5_0_BOOT_GRAPHICS_RESOURCE_TABLE_SIGNATURE:
+          // BGRT
+          Status = UpdateBgrt (Current);
+          break;
+
+        default:
+          // Misc
+          break;
+        }
       }
-      break;
-    case EFI_ACPI_5_0_FIRMWARE_PERFORMANCE_DATA_TABLE_SIGNATURE:
-      // FPDT
-      Status = UpdateFpdt (Current, &ExtraSize);
-      if (Status != EFI_SUCCESS) {
-        return Status;
+
+      if (!EFI_ERROR(Status)) {
+        if (UpdateRdstXsdt == 1) {
+          RsdtEntry[XsdtIndex]   = (UINT32) (UINTN)Current;
+          XsdtEntry[XsdtIndex++] = (UINT64) (UINTN)Current;
+        }
+        ASSERT (XsdtIndex < PcdGet32 (PcdAcpiTablesMaxEntry));
+
+        if (Current != (UINT8 *)Facp) {
+          AcpiPlatformChecksum (
+            Current,
+            ((EFI_ACPI_COMMON_HEADER *)Current)->Length
+            );
+        }
+
+        TotalSize = ((EFI_ACPI_COMMON_HEADER *)Current)->Length + ExtraSize;
+        Current += TotalSize;
+      } else {
+        DEBUG ((DEBUG_WARN, "Not adding ACPI table \n"));
+        Current = Previous;
       }
-      break;
-    case EFI_FIRMWARE_UPDATE_STATUS_TABLE_SIGNATURE:
-      // FWST
-      Status = UpdateFwst (Current);
-      if (Status != EFI_SUCCESS) {
-        return Status;
+
+      if (Round == 0) {
+        SectionLen = * (UINT32 *) (TblPtr - 4) & 0x00FFFFFF;
+        TblPtr = TblPtr + ((SectionLen + 3) & ~3);
+      } else {
+        StartIdx++;
       }
-      break;
-    default:
-      // Misc
-      break;
     }
-
-    if (UpdateRdstXsdt == 1) {
-      RsdtEntry[XsdtIndex]   = (UINT32) (UINTN)Current;
-      XsdtEntry[XsdtIndex++] = (UINT64) (UINTN)Current;
-    }
-    ASSERT (XsdtIndex < PcdGet32 (PcdAcpiTablesMaxEntry));
-
-    if (Current != (UINT8 *)Facp) {
-      AcpiPlatformChecksum (
-        Current,
-        ((EFI_ACPI_COMMON_HEADER *)Current)->Length
-        );
-    }
-
-    SectionLen = * (UINT32 *) (TblPtr - 4) & 0x00FFFFFF;
-    TblPtr = TblPtr + ((SectionLen + 3) & ~3);
-
-    TotalSize = ((EFI_ACPI_COMMON_HEADER *)Current)->Length + ExtraSize;
-    Current += TotalSize;
   }
 
   if (Facp == NULL || Facs == NULL || Dsdt == NULL) {

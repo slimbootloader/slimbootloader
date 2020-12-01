@@ -72,6 +72,29 @@ typedef struct {
   EFI_GRAPHICS_OUTPUT_BLT_PIXEL BackgroundColor;
 } FRAME_BUFFER_CONSOLE;
 
+
+/**
+  Verify a BMP image header and determine its centralized display location
+  on screen.
+
+  @param  BmpImage      Pointer to BMP file
+  @param  OffX          Pointer to receive X offset for BMP display position.
+  @param  OffY          Pointer to receive Y offset for BMP display position.
+  @param  GfxInfoHob    Pointer to graphics info HOB.
+
+  @retval EFI_SUCCESS           GopBlt and GopBltSize are returned.
+  @retval EFI_UNSUPPORTED       BmpImage is not a valid *.BMP image
+**/
+EFI_STATUS
+EFIAPI
+GetBmpDisplayPos (
+  IN     VOID    *BmpImage,
+  OUT  UINT32    *OffX,          OPTIONAL
+  OUT  UINT32    *OffY,          OPTIONAL
+  IN   EFI_PEI_GRAPHICS_INFO_HOB *GfxInfoHob
+);
+
+
 /**
   Display a *.BMP graphics image to the frame buffer. If a NULL GopBlt buffer
   is passed in a GopBlt buffer will be allocated by this routine. If a GopBlt
@@ -90,6 +113,7 @@ typedef struct {
 
 **/
 EFI_STATUS
+EFIAPI
 DisplayBmpToFrameBuffer (
   IN     VOID      *BmpImage,
   IN OUT VOID      **GopBlt,
