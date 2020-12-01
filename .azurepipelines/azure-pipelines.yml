@@ -11,40 +11,164 @@ trigger:
 pr:
 - master
 
-pool:
-  vmImage: 'ubuntu-latest'
+
+jobs:
 
 
-steps:
-- task: UsePythonVersion@0
-  inputs:
-    versionSpec: '3.6.x'
-    architecture: 'x64'
-  displayName: Set Python version
+- job: QEMU
 
-- bash: |
-    sudo apt-get update
-    git config --global user.email "you@example.com"
-    git config --global user.name  "Your Name"
-  displayName: Update apt
+  pool:
+    vmImage: 'ubuntu-latest'
 
-- bash: |
-    HEAD_COMMIT=$(git rev-list --no-merges HEAD | head -1)
-    PATCHCHECK=$(python BaseTools/Scripts/PatchCheck.py master..$HEAD_COMMIT)
-    ERRORS=$(echo $PATCHCHECK | grep -c 'is not valid')
-    echo "$PATCHCHECK"
-    if [[ $ERRORS -gt 0 ]]; then exit 1; fi
-  displayName: Check patch format
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.6.x'
+      architecture: 'x64'
+    displayName: Set Python version
 
-- bash: |
-    sudo apt-get install -y nasm uuid-dev iasl qemu
-  displayName: Install required tools
+  - bash: |
+      git config --global user.email "you@example.com"
+      git config --global user.name  "Your Name"
+      sudo apt-get update
+    displayName: Update apt
 
-- script: |
-    python BuildLoader.py build qemu -k
-  displayName: 'Run QEMU build'
+  - bash: |
+      HEAD_COMMIT=$(git rev-list --no-merges HEAD | head -1)
+      PATCHCHECK=$(python BaseTools/Scripts/PatchCheck.py master..$HEAD_COMMIT)
+      ERRORS=$(echo $PATCHCHECK | grep -c 'is not valid')
+      echo "$PATCHCHECK"
+      if [[ $ERRORS -gt 0 ]]; then exit 1; fi
+    displayName: Check patch format
 
-- script: |
-    python Platform/QemuBoardPkg/Script/qemu_test.py
-  displayName: 'Run QEMU tests'
+  - bash: |
+      sudo apt-get install -y nasm uuid-dev iasl qemu
+    displayName: Install required tools
+
+  - script: |
+      python BuildLoader.py build qemu -k
+    displayName: 'Run QEMU build'
+
+  - script: |
+      python Platform/QemuBoardPkg/Script/qemu_test.py
+    displayName: 'Run QEMU tests'
+
+
+
+- job: Linux
+
+  strategy:
+    matrix:
+      QEMU_X64_RELEASE:
+        Build.Name:   "qemu"
+        Build.Arch:   "-a x64"
+        Build.Target: "-r"
+      APL_X64_DEBUG:
+        Build.Name:   "apl"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      # CFL_X64_RELEASE:
+      #   Build.Name:   "cfl"
+      #   Build.Arch:   "-a x64"
+      #   Build.Target: "-r"
+      # CML_X86_DEBUG:
+      #   Build.Name:   "cml"
+      #   Build.Arch:   ""
+      #   Build.Target: ""
+      # CMLV_X64_DEBUG:
+      #   Build.Name:   "cmlv"
+      #   Build.Arch:   "-a x64"
+      #   Build.Target: ""
+
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.6.x'
+      architecture: 'x64'
+    displayName: Set Python version
+
+  - bash: |
+      git config --global user.email "you@example.com"
+      git config --global user.name  "Your Name"
+      sudo apt-get update
+      sudo apt-get install -y nasm uuid-dev
+      wget --no-check-certificate http://archive.ubuntu.com/ubuntu/pool/universe/a/acpica-unix/acpica-tools_20180105-1_amd64.deb -P ~/asl/
+      sudo dpkg -i ~/asl/acpica-tools_20180105-1_amd64.deb
+    displayName: Install required tools
+
+  - script: |
+      python BuildLoader.py build $(Build.Name) $(Build.Arch) $(Build.Target) -k
+    displayName: 'Run $(Build.Name) build'
+
+
+- job: Windows
+
+  strategy:
+    matrix:
+      APL_X86_DEBUG:
+        Build.Name:   "apl"
+        Build.Arch:   ""
+        Build.Target: ""
+      APL_X64_RELEASE:
+        Build.Name:   "apl"
+        Build.Arch:   "-a x64"
+        Build.Target: "-r"
+      CFL_X86_RELEASE:
+        Build.Name:   "cfl"
+        Build.Arch:   ""
+        Build.Target: "-r"
+      CFL_X64_DEBUG:
+        Build.Name:   "cfl"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      CML_X86_DEBUG:
+        Build.Name:   "cml"
+        Build.Arch:   ""
+        Build.Target: ""
+      CML_X64_RELEASE:
+        Build.Name:   "cml"
+        Build.Arch:  "-a x64"
+        Build.Target: "-r"
+      CMLV_X86_RELEASE:
+        Build.Name:   "cmlv"
+        Build.Arch:   ""
+        Build.Target: "-r"
+      CMLV_X64_DEBUG:
+        Build.Name:   "cmlv"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+
+  pool:
+    vmImage: 'windows-latest'
+
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.6.x'
+      architecture: 'x64'
+    displayName: Set Python version
+
+  - powershell: |
+      [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+      Invoke-WebRequest -Uri https://www.nasm.us/pub/nasm/releasebuilds/2.14.02/win64/nasm-2.14.02-win64.zip -OutFile nasm.zip
+      Expand-Archive .\nasm.zip C:\
+      Invoke-WebRequest -Uri https://acpica.org/sites/acpica/files/iasl-win-20160831_0.zip -OutFile iasl.zip
+      Expand-Archive .\iasl.zip C:\iasl
+      echo "##vso[task.setvariable variable=nasm_prefix;]C:\nasm-2.14.02\"
+      echo "##vso[task.setvariable variable=iasl_prefix;]C:\iasl\"
+      echo "##vso[task.setvariable variable=openssl_path;]C:\Program Files\OpenSSL\bin\"
+    displayName: Windows EDK II Prerequisites
+
+  - script: |
+      git config --global user.email "you@example.com"
+      git config --global user.name  "Your Name"
+    displayName: Environment configuration
+
+  - script: |
+      python BuildLoader.py build $(Build.Name) $(Build.Arch) $(Build.Target) -k
+    displayName: 'Run $(Build.Name) build'
+
 
