@@ -1,0 +1,50 @@
+## @file
+# Azure Pipeline build file for Slim Bootloader
+#
+# Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+trigger:
+- master
+
+pr:
+- master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.6.x'
+    architecture: 'x64'
+  displayName: Set Python version
+
+- bash: |
+    sudo apt-get update
+    git config --global user.email "you@example.com"
+    git config --global user.name  "Your Name"
+  displayName: Update apt
+
+- bash: |
+    HEAD_COMMIT=$(git rev-list --no-merges HEAD | head -1)
+    PATCHCHECK=$(python BaseTools/Scripts/PatchCheck.py master..$HEAD_COMMIT)
+    ERRORS=$(echo $PATCHCHECK | grep -c 'is not valid')
+    echo "$PATCHCHECK"
+    if [[ $ERRORS -gt 0 ]]; then exit 1; fi
+  displayName: Check patch format
+
+- bash: |
+    sudo apt-get install -y nasm uuid-dev iasl qemu
+  displayName: Install required tools
+
+- script: |
+    python BuildLoader.py build qemu -k
+  displayName: 'Run QEMU build'
+
+- script: |
+    python Platform/QemuBoardPkg/Script/qemu_test.py
+  displayName: 'Run QEMU tests'
+

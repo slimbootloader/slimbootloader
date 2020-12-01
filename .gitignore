@@ -1,3 +1,5 @@
+.*/
+!.azurepipelines/
 *.log
 *.pyc
 VerInfo.txt
