@@ -25,8 +25,10 @@
   X64/S3Wake.nasm
 
 [Sources]
+  AcpiInitLibInternal.h
   AcpiInitLib.c
   AcpiFpdt.c
+  AcpiBgrt.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -57,3 +59,5 @@
   gPlatformModuleTokenSpaceGuid.PcdLoaderAcpiReclaimSize
   gPlatformCommonLibTokenSpaceGuid.PcdLowestSupportedFwVer
   gPlatformModuleTokenSpaceGuid.PcdLegacyEfSegmentEnabled
+  gPlatformModuleTokenSpaceGuid.PcdSplashLogoAddress
+  gPlatformModuleTokenSpaceGuid.PcdSplashEnabled
