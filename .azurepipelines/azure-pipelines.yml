@@ -37,6 +37,7 @@ jobs:
       git fetch origin $(System.PullRequest.TargetBranch):$(System.PullRequest.TargetBranch)
       python BaseTools/Scripts/PatchCheck.py $(System.PullRequest.TargetBranch)..$(System.PullRequest.SourceCommitId)
     displayName: Check patch format
+    condition: eq(variables['Build.Reason'], 'PullRequest')
 
   - bash: |
       sudo apt-get install -y nasm uuid-dev iasl qemu
