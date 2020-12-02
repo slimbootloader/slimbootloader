@@ -33,12 +33,9 @@ jobs:
       sudo apt-get update
     displayName: Update apt
 
-  - bash: |
-      HEAD_COMMIT=$(git rev-list --no-merges HEAD | head -1)
-      PATCHCHECK=$(python BaseTools/Scripts/PatchCheck.py master..$HEAD_COMMIT)
-      ERRORS=$(echo $PATCHCHECK | grep -c 'is not valid')
-      echo "$PATCHCHECK"
-      if [[ $ERRORS -gt 0 ]]; then exit 1; fi
+  - script: |
+      git fetch origin $(System.PullRequest.TargetBranch):$(System.PullRequest.TargetBranch)
+      python BaseTools/Scripts/PatchCheck.py $(System.PullRequest.TargetBranch)..$(System.PullRequest.SourceCommitId)
     displayName: Check patch format
 
   - bash: |
