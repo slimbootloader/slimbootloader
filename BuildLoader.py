@@ -63,7 +63,7 @@ def prep_env ():
     os.environ['PYTHON_COMMAND'] = '"' + sys.executable + '"'
     print_tool_version_info(os.environ['PYTHON_COMMAND'], version.strip())
 
-    sblsource = os.path.dirname(os.path.realpath(__file__))
+    sblsource = os.path.dirname(os.path.abspath(__file__))
     os.chdir(sblsource)
     if sys.platform == 'darwin':
         toolchain = 'XCODE5'
