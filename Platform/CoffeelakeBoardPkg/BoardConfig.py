@@ -67,7 +67,10 @@ class Board(BaseBoard):
             self.FIT_ENTRY_MAX_NUM  = 12
 
         self.STAGE1A_SIZE         = 0x00010000
-        self.STAGE1B_SIZE         = 0x000DB000
+        if self.FSPDEBUG_MODE == 1:
+            self.STAGE1B_SIZE     = 0x00100000
+        else:
+            self.STAGE1B_SIZE     = 0x000DB000
         self.STAGE2_SIZE          = 0x00080000
         if self.ENABLE_SOURCE_DEBUG:
             self.STAGE1B_SIZE += 0x4000
@@ -109,10 +112,12 @@ class Board(BaseBoard):
         self.TOP_SWAP_SIZE        = 0x020000
         self.REDUNDANT_SIZE  = self.UCODE_SIZE + self.STAGE2_SIZE + self.STAGE1B_SIZE + \
                                self.FWUPDATE_SIZE + self.CFGDATA_SIZE + self.KEYHASH_SIZE
-        self.NON_REDUNDANT_SIZE   = 0x3BF000
+
         self.NON_VOLATILE_SIZE    = 0x001000
-        self.SLIMBOOTLOADER_SIZE  = (self.TOP_SWAP_SIZE + self.REDUNDANT_SIZE) * 2 + \
-            self.NON_REDUNDANT_SIZE + self.NON_VOLATILE_SIZE
+        self.SLIMBOOTLOADER_SIZE  = 0x800000
+        self.NON_REDUNDANT_SIZE   = self.SLIMBOOTLOADER_SIZE - \
+                                    (self.TOP_SWAP_SIZE + self.REDUNDANT_SIZE) * 2 - \
+                                    self.NON_VOLATILE_SIZE
 
         self.PLD_HEAP_SIZE        = 0x04000000
         self.PLD_STACK_SIZE       = 0x00020000
