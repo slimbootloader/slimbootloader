@@ -200,7 +200,7 @@ GetBootDeviceInfo (
   }
 
   do {
-    ShellPrint (L"Enter FsType (FAT (0x%X), EXT2/3 (0x%X), Auto (0x%X), RAW (0x%X))\n",
+    ShellPrint (L"Enter FsType (FAT (0x%X), EXT2/3/4 (0x%X), Auto (0x%X), RAW (0x%X))\n",
                 EnumFileSystemTypeFat, EnumFileSystemTypeExt2, EnumFileSystemTypeAuto,
                 EnumFileSystemMax);
     ShellPrint (L"(default 0x%X) ", CurrOption->FsType);
