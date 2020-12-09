@@ -95,7 +95,7 @@
       help         : >
                      Enable or disable
       length       : 0x01
-      value        : 0x1
+      value        : 0x0
   - DdiPortBDdc  :
       name         : DDC of DDI port B
       type         : Combo
