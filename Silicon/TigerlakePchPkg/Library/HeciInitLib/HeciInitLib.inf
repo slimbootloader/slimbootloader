@@ -1,0 +1,48 @@
+## @file
+# Component Description File for Heci Init Lib Pei Module
+#
+# Copyright (c) 2014 - 2018, Intel Corporation. All rights reserved.<BR>
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+################################################################################
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = PeiDxeHeciInitLib
+  FILE_GUID                      = 28c7cd80-2e3e-4edd-abe7-40aa8510b5ca
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = HeciInitLib
+
+
+[LibraryClasses]
+  BaseMemoryLib
+  BaseLib
+  DebugLib
+  HobLib
+
+[Packages]
+  MdePkg/MdePkg.dec
+  IntelFsp2Pkg/IntelFsp2Pkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/TigerlakePchPkg/TigerlakePchPkg.dec
+
+[Guids]
+  gMeBiosPayloadHobGuid
+
+[Sources]
+  HeciCore.h
+  HeciRegs.h
+  HeciHpet.h
+  BupMsgs.h
+  MeBiosPayloadData.h
+  MeState.h
+  CoreBiosMsg.h
+  MeChipset.h
+  IshRegs.h
+  MkhiMsgs.h
+  HeciCore.c
+  HeciHpet.c
+  IshHeciCore.c
+  HeciPeiDxe.c
+  MbpData.c
