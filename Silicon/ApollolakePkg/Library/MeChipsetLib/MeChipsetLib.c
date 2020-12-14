@@ -274,7 +274,7 @@ PrepareCseForFirmwareUpdate (
   Request->MkhiHeader.Fields.Command = IFWI_PREPARE_FOR_UPDATE_CMD_ID;
   Request->ResetType = 1;
 
-  HeciSendLength = sizeof (HECI_REQ_IFWI_PREPARE_FOR_UPDATE) - 3;
+  HeciSendLength = sizeof (HECI_REQ_IFWI_PREPARE_FOR_UPDATE);
   HeciRecvLength = sizeof (HECI_RES_IFWI_PREPARE_FOR_UPDATE);
 
   Status = HeciSendwAck (
