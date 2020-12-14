@@ -92,8 +92,6 @@ def prep_env ():
             sys.exit(1)
         if 'NASM_PREFIX' not in os.environ:
             os.environ['NASM_PREFIX'] = "C:\\Nasm\\"
-        if 'OPENSSL_PATH' not in os.environ:
-            os.environ['OPENSSL_PATH'] = "C:\\Openssl\\"
         if 'IASL_PREFIX' not in os.environ:
             os.environ['IASL_PREFIX'] = "C:\\ASL\\"
     else:
