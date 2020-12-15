@@ -55,3 +55,4 @@
   gPlatformModuleTokenSpaceGuid.PcdPciResourceMem64Base
   gPlatformModuleTokenSpaceGuid.PcdAriSupport
   gPlatformModuleTokenSpaceGuid.PcdSrIovSupport
+  gPlatformModuleTokenSpaceGuid.PcdPciResAllocTableBase
