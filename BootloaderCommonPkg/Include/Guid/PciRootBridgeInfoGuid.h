@@ -51,4 +51,22 @@ typedef struct {
   PCI_ROOT_BRIDGE_ENTRY     Entry[0];
 } PCI_ROOT_BRIDGE_INFO_HOB;
 
+typedef struct {
+  UINT8                     BusBase;
+  UINT8                     BusLimit;
+  UINT16                    Reserved;
+  UINT32                    IoBase;
+  UINT32                    IoLimit;
+  UINT32                    Mmio32Base;
+  UINT32                    Mmio32Limit;
+  UINT64                    Mmio64Base;
+  UINT64                    Mmio64Limit;
+} PCI_RES_ALLOC_RANGE;
+
+typedef struct {
+  UINT8                     NumOfEntries;
+  UINT8                     Reserved[3];
+  PCI_RES_ALLOC_RANGE       ResourceRange[0];
+} PCI_RES_ALLOC_TABLE;
+
 #endif // __PCI_ROOT_BRIDGE_INFO_GUID_H__

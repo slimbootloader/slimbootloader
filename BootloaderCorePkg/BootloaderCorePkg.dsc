@@ -284,6 +284,8 @@
   gPlatformModuleTokenSpaceGuid.PcdFuncCpuInitHook   | 0x00000000
   gPlatformModuleTokenSpaceGuid.PcdFspsUpdPtr        | 0x00000000
 
+  gPlatformModuleTokenSpaceGuid.PcdPciResAllocTableBase    | 0x00000000
+
   gPlatformCommonLibTokenSpaceGuid.PcdSerialUseMmio        | 0
   gPlatformCommonLibTokenSpaceGuid.PcdSerialRegisterBase   | 0
   gPlatformCommonLibTokenSpaceGuid.PcdSerialBaudRate       | 0
