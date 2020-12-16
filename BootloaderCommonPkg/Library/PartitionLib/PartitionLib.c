@@ -485,7 +485,7 @@ GetLogicalPartitionInfo (
     return EFI_INVALID_PARAMETER;
   }
 
-  if (SwPart >= PartBlockDev->BlockDeviceCount) {
+  if ((SwPart >= PartBlockDev->BlockDeviceCount) || (SwPart >= PART_MAX_BLOCK_DEVICE)) {
     return EFI_INVALID_PARAMETER;
   }
 
