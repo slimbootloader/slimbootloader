@@ -322,7 +322,7 @@ PrintFspPerfData (
       RecordHeader = (EFI_ACPI_5_0_FPDT_PERFORMANCE_RECORD_HEADER *)(StartRecordEvent + DataSize);
       GetMeasurementInfo (RecordHeader, &Rec);
       Time = (UINT32)DivU64x32 (Rec.StartTimeStamp, 1000000);
-      DEBUG ((DEBUG_INFO | DEBUG_EVENT, " %4X | %7d ms | %-25a| %g\n", Rec.Identifier, Time, Rec.Token, Rec.ModuleGuid));
+      DEBUG ((DEBUG_INFO | DEBUG_EVENT, " %4X | %7d ms | %-25a| %g\n", Rec.Identifier, Time, Rec.Token, &Rec.ModuleGuid));
       DataSize += RecordHeader->Length;
     }
 
