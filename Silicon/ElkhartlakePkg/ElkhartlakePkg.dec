@@ -1,0 +1,21 @@
+#/** @file
+# Platform Package
+#
+#  Copyright (c) 2009 - 2015, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#**/
+
+[Defines]
+  DEC_SPECIFICATION              = 0x00010005
+  PACKAGE_NAME                   = ElkhartlakePkg
+  PACKAGE_GUID                   = A90D39BD-0936-45C8-85C1-F80644B955B8
+  PACKAGE_VERSION                = 0.1
+
+[Includes]
+  Include
+
+[Guids]
+  gSiMemoryPlatformDataGuid                = { 0x6210d62f, 0x418d, 0x4999, { 0xa2, 0x45, 0x22, 0x10, 0x0a, 0x5d, 0xea, 0x44 } }
+  gSchemaListGuid                          = { 0x3047c2ac, 0x5e8e, 0x4c55, {0xa1, 0xcb, 0xea, 0xad, 0x0a, 0x88, 0x86, 0x1b } }
+
