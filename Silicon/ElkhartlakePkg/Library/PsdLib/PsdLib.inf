@@ -1,0 +1,67 @@
+## @file
+#
+#  Copyright (c) 2018 - 2020 Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+#  Module Name:
+#
+#    PsdLib.inf
+#
+#  Abstract:
+#
+#    Component description file for Psd Library
+#
+#--*/
+
+[Defines]
+INF_VERSION                    = 0x00010005
+BASE_NAME                      = PsdLib
+FILE_GUID                      = 8b73a388-4de1-483f-9abb-809628634e71
+MODULE_TYPE                    = BASE
+VERSION_STRING                 = 1.0
+LIBRARY_CLASS                  = PsdLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF
+#
+
+[Sources]
+PsdLib.c
+
+[Packages]
+MdePkg/MdePkg.dec
+IntelFsp2Pkg/IntelFsp2Pkg.dec
+BootloaderCorePkg/BootloaderCorePkg.dec
+BootloaderCommonPkg/BootloaderCommonPkg.dec
+Silicon/ElkhartlakePkg/ElkhartlakePkg.dec
+Platform/ElkhartlakeBoardPkg/ElkhartlakeBoardPkg.dec
+Silicon/CommonSocPkg/CommonSocPkg.dec
+Platform/CommonBoardPkg/CommonBoardPkg.dec
+
+[LibraryClasses]
+BaseLib
+DebugLib
+BootloaderCoreLib
+DebugDataLib
+CryptoLib
+BootloaderCommonLib
+BootloaderLib
+HeciInitLib
+PciLib
+ConfigDataLib
+BootGuardLib
+
+[Guids]
+
+
+[Pcd]
+gPlatformModuleTokenSpaceGuid.PcdAcpiTablesAddress
+gPlatformModuleTokenSpaceGuid.PcdAcpiGnvsAddress
+gPlatformCommonLibTokenSpaceGuid.PcdPcdLibId
+gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
+gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
+gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled
+gPlatformCommonLibTokenSpaceGuid.PcdHeciLibId
