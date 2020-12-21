@@ -1,0 +1,233 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : SIL
+- SILICON_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ SILICON_CFG_DATA, 0x200, 0, 0 ] }
+  - InterruptRemappingSupport :
+      name         : InterruptRemappingSupport
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     InterruptRemappingSupport
+      length       : 0x01
+      value        : 0x1
+  - DisplayFusaConfigEnable :
+      name         : Fusa Display Configuration
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Fusa (Functional Safety) Enable Fusa Feature on Display, 0- Disable, 1- Enable
+      length       : 0x01
+      value        : 0x01
+  - GraphicFusaConfigEnable :
+      name         : Fusa Graphics Configuration
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Fusa (Functional Safety) Enable Fusa Feature on Graphics, 0- Disable, 1- Enable
+      length       : 0x01
+      value        : 0x01
+  - OpioFusaConfigEnable :
+      name         : Fusa Opio Configuration
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Fusa (Functional Safety) Enable Fusa Feature on Opio, 0- Disable, 1- Enable
+      length       : 0x01
+      value        : 0x01
+  - PsfFusaConfigEnable :
+      name         : Fusa Psf Configuration
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Fusa (Functional Safety) Enable Fusa Feature on Psf, 0- Disable, 1- Enable
+      length       : 0x01
+      value        : 0x1
+  - PchTsnEnable :
+      name         : Enable PCH TSN
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/disable TSN on the PCH.
+      length       : 0x01
+      value        : 0x0
+  - PchTsnLinkSpeed :
+      name         : TSN Link Speed
+      type         : Combo
+      option       : 0:24Mhz 2.5Gbps, 1:24Mhz 1Gbps, 2:38.4Mhz 2.5Gbps, 3:38.4Mhz 1Gbps
+      help         : >
+                     Set TSN Link Speed.
+      length       : 0x01
+      value        : 0x03
+  - PchTsnMultiVcEnable :
+      name         : Enable TSN Multi-VC
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/disable Multi Virtual Channels(VC) in TSN.
+      length       : 0x01
+      value        : 0x0
+  - Eist         :
+      name         : Enable or Disable Intel SpeedStep Technology
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable Intel SpeedStep Technology. 0- Disable; <b>1- Enable</b>
+      length       : 0x01
+      value        : 0x1
+  - Hwp          :
+      name         : Enable or Disable HWP
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable HWP(Hardware P states) Support. 0- Disable; <b>1- Enable;</b> 2-3:Reserved
+      length       : 0x01
+      value        : 0x01
+  - Cx           :
+      name         : Enable or Disable CPU power states (C-states)
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable CPU power states (C-states). 0- Disable; <b>1- Enable</b>
+      length       : 0x01
+      value        : 0x01
+  - EnableItbm   :
+      name         : Intel Turbo Boost Max Technology 3.0
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Intel Turbo Boost Max Technology 3.0. 0- Disabled; <b>1- Enabled</b>
+      length       : 0x01
+      value        : 0x00
+  - AcSplitLock  :
+      name         : AC Split Lock
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/Disable #AC check on split lock. <b>0- Disable</b>; 1- Enable.
+      length       : 0x1
+      value        : 0x0
+  - PsfTccEnable :
+      name         : PSF Tcc
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Psf Tcc (Time Coordinated Computing) Enable will decrease psf transaction latency by disable some psf power management features, 0- Disable, 1- Enable
+      length       : 0x01
+      value        : 0x0
+  - PchDmiAspmCtrl :
+      name         : Pch Dmi Aspm Ctrl
+      type         : Combo
+      option       : 0:Disabled, 1:L0s, 2:L1, 3:L0sL1, 4:Auto
+      help         : >
+                     ASPM configuration on the PCH side of the DMI/OPI Link. Default is <b>PchPcieAspmAutoConfig</b>
+      length       : 0x01
+      value        : 0x04
+  - PchLegacyIoLowLatency :
+      name         : PCH Legacy IO Low Latency Enable
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Set to enable low latency of legacy IO. <b>0- Disable</b>, 1- Enable
+      length       : 0x01
+      value        : 0x0
+  - PcieRpAspm   :
+      name         : PCIE RP Aspm
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     The ASPM configuration of the root port (see- PCH_PCIE_ASPM_CONTROL). Default is PchPcieAspmAutoConfig.
+      length       : 0x18
+      value        : { 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4}
+  - PcieRpL1Substates :
+      name         : PCIE RP L1 Substates
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     The L1 Substates configuration of the root port (see- PCH_PCIE_L1SUBSTATES_CONTROL). Default is PchPcieL1SubstatesL1_1_2.
+      length       : 0x18
+      value        : { 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1}
+  - PciePtm      :
+      name         : PCIe PTM enable/disable
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Enable/disable Precision Time Measurement for PCIE Root Ports.
+      length       : 0x18
+      value        : { 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 }
+  - RenderStandby :
+      name         : Enable/Disable IGFX RenderStandby
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable(Default)- Enable IGFX RenderStandby, Disable- Disable IGFX RenderStandby
+      length       : 0x01
+      value        : 0x1
+  - PmSupport    :
+      name         : Enable/Disable IGFX PmSupport
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable(Default)- Enable IGFX PmSupport, Disable- Disable IGFX PmSupport
+      length       : 0x01
+      value        : 0x1
+  - CpuPcieClockGating :
+      name         : CPU PCIe RootPort Clock Gating
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Describes whether the PCI Express Clock Gating for each root port is enabled by platform modules. 0- Disable; 1- Enable.
+      length       : 0x01
+      value        : 0x1
+  - CpuPcieRpAspm :
+      name         : PCIE RP Aspm
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     The ASPM configuration of the root port (see- CPU_PCIE_ASPM_CONTROL). Default is CpuPcieAspmAutoConfig.
+      length       : 0x4
+      value        : { 0x4, 0x4, 0x4, 0x4}
+  - CpuPcieRpL1Substates :
+      name         : PCIE RP L1 Substates
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     The L1 Substates configuration of the root port (see- CPU_PCIE_L1SUBSTATES_CONTROL). Default is CpuPcieL1SubstatesL1_1_2.
+      length       : 0x4
+      value        : { 0x0, 0x0, 0x0, 0x0}
+  - CpuPcieRpPtmEnabled :
+      name         : PTM for PCIE RP Mask
+      type         : EditNum, HEX, (0x00,0x00FFFFFF)
+      help         : >
+                     Enable/disable Precision Time Measurement for PCIE Root Ports. 0- disable, 1- enable. One bit for each port, bit0 for port1, bit1 for port2, and so on.
+      length       : 0x04
+      value        : { 0x01, 0x01, 0x01, 0x01 }
+  - CpuPcieRpVcEnabled :
+      name         : VC for PCIE RP Mask
+      type         : EditNum, HEX, (0x00,0x00FFFFFF)
+      help         : >
+                     Enable/disable Virtual Channel for PCIE Root Ports. 0- disable, 1- enable. One bit for each port, bit0 for port1, bit1 for port2, and so on.
+      length       : 0x04
+      value        : { 0x01, 0x01, 0x01, 0x01 }
+  - CpuPcieRpMultiVcEnabled :
+      name         : Multi-VC for PCIE RP Mask
+      type         : EditNum, HEX, (0x00,0x00FFFFFF)
+      help         : >
+                     Enable/disable Multiple Virtual Channel for PCIE Root Ports. 0- disable, 1- enable. One bit for each port, bit0 for port1, bit1 for port2, and so on.
+      length       : 0x04
+      value        : { 0x01, 0x01, 0x01, 0x01 }
+  - ConfigTdpLevel :
+      name         : Configuration for boot TDP selection
+      type         : EditNum, HEX, (0x00, 0xFF)
+      help         : >
+                     Configuration for boot TDP selection; <b>0- TDP Nominal</b>; 1- TDP Down; 2- TDP Up;0xFF - Deactivate
+      length       : 0x01
+      value        : 0x02
+  - Dummy        :
+      length       : 0x0
+      value        : 0x0
+

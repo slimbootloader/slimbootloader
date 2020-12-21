@@ -1,0 +1,49 @@
+## @file
+#
+#  Platform Configuration Delta File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+#
+
+PLATFORMID_CFG_DATA.PlatformId           | 0x000F
+PLAT_NAME_CFG_DATA.PlatformName          | 'TGLH_DDR'
+#GEN_CFG_DATA.PayloadId                   | 'UEFI'
+
+MEMORY_CFG_DATA.DqsMapCpu2DramMc0Ch1     | { 0, 1}
+MEMORY_CFG_DATA.DqsMapCpu2DramMc0Ch3     | { 0, 1}
+MEMORY_CFG_DATA.DqsMapCpu2DramMc1Ch0     | { 0, 1}
+MEMORY_CFG_DATA.DqsMapCpu2DramMc1Ch3     | { 0, 1}
+
+MEMORY_CFG_DATA.DqMapCpu2DramMc0Ch0      | {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+MEMORY_CFG_DATA.DqMapCpu2DramMc0Ch1      | {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+MEMORY_CFG_DATA.DqMapCpu2DramMc0Ch2      | {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+MEMORY_CFG_DATA.DqMapCpu2DramMc0Ch3      | {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+MEMORY_CFG_DATA.DqMapCpu2DramMc1Ch0      | {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+MEMORY_CFG_DATA.DqMapCpu2DramMc1Ch1      | {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+MEMORY_CFG_DATA.DqMapCpu2DramMc1Ch2      | {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+MEMORY_CFG_DATA.DqMapCpu2DramMc1Ch3      | {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+
+MEMORY_CFG_DATA.DqPinsInterleaved        | 1
+
+MEMORY_CFG_DATA.UserBd                   | 1
+
+MEMORY_CFG_DATA.RMT | 0
+
+MEMORY_CFG_DATA.PcieClkSrcUsage          | {0x14, 0x0, 0x42, 0x7, 0x43, 0x10, 0x8, 0x40, 0x70, 0x41, 0x5, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
+
+MEMORY_CFG_DATA.VtdDisable | 1
+
+BOOT_OPTION_CFG_DATA_5.HwPart_5 | 255
+
+#
+# To enable payload selection the below options need to be uncommented.
+#
+# This GPIO maps to the SW7G1 4-block DIP switch's 4th switch.
+# If the switch is OFF then OS Loader will be used, if ON UEFI PLD
+# will be used (default is OFF). Need to set the GPIO as Input.
+#
+GEN_CFG_DATA.PayloadId                   | 'AUTO'
+GPIO_CFG_DATA.GpioPinConfig0_GPP_F10.GPIODirection_GPP_F10 | 11

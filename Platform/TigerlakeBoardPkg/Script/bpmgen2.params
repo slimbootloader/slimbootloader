@@ -1,0 +1,133 @@
+# FILEHEADER
+FileID: _BPMDEF_
+FileVersion: 1
+ToolVersion: 6
+ToolDate: 20000101
+FileDate: 20191101
+//
+# BPM_DEF
+PlatformRules: None
+BpmStrutVersion: 0x22
+BpmRevision: 0
+BpmRevocation: 0
+AcmRevocation: 0
+NEMPages: 0x4
+IbbSetCount: 1
+CurrentIbbSet: 0
+//
+# IBB_SET
+IbbSetType: 0:ColdBoot
+IbbSetInclude: TRUE
+PBETValue: 0xF
+MCHBAR: 0x00000000FED10000
+VTD_BAR: 0x00000000FED90000
+DmaProtBase0: 0x0
+DmaProtLimit0: 0x0
+DmaProtBase1: 0x0
+DmaProtLimit1: 0x0
+IbbFlags: 0x3
+//  Bit0 : Enable DMA Protection;
+//  Bit1 : Issue TPM Start-up from Locality 3;
+//  Bit2 : Extend Authority Measurements into the Authority PCR;
+//  Bit3 : On error: Leave TPM Hierarchies enabled. Cap all PCRs;
+//  Bit4 : Top Swap Supported;
+DmaProtAutoCalc: FALSE
+IbbHashAlgID: 0x0B
+IbbEntry: 0xFFFFFFF0
+PostIbbHashAlgID: 0x10
+PostIBBHashSource: Calculate
+PostIbbHashFile:
+IbbSegSource: FIT
+IbbSegFile:
+IbbGuid: 4a4ca1c6-871c-45bb-8801-6910a7aa5807
+ObbHashAlgID: 0x10
+ObbFullFvHash: FALSE
+ObbHashSource: File
+ObbHashFile:
+//
+# TXT_ELEMENT
+TxtInclude: FALSE
+TxtFlags: 0x0
+// [4:0] = TXT execution profile
+//   00000b – Use Default based on HW
+//   00001b - Server Profile
+//   00010b - Client Profile
+// [6:5] = "Memory scrubbing" policy
+//   00b - Trust Verified BIOS
+//   01b - Trust Any BIOS
+//   10b - Trust No BIOS
+// [8:7] = Backup Policy
+//   00b - Default
+//   01b - Power Down
+//   10b - Unbreakable Shutdown
+// [31] = Reset AUX control (1=AUX Reset leaf will delete AUX Index)
+//MemoryDepletion Power Down
+AcpiBase: 0x400
+PwrmBase: 0xFE000000
+PdUseDefault: TRUE
+PdMinutes: 5
+PdSeconds: 0
+PttCmosOffset0: 0x7E
+PttCmosOffset1: 0x7F
+//TXTE Segments
+TxtSegSource: IBB
+TxtSegGuid: 4a4ca1c6-871c-45bb-8801-6910a7aa5807
+TxtSegHashAlgID: 0x10
+//
+# PLATFORM_CONFIG_ELEMENT
+PcdInclude: FALSE
+PdReqLocation: TPM
+//  Power down request location for CMOS
+CmosIndexRegister: 0x70
+CmosDataRegister: 0x71
+CmosIndexOffset: 125
+CmosBitFieldWidth: 3
+CmosBitFieldPosition: 0
+//
+# TPM1.2_LOCATION
+TpmIndexHandle: 0x50000004
+TpmByteOffset: 7
+TpmBitFieldWidth: 3
+TpmBitFieldPosition: 0
+//
+# TPM2.0_LOCATION
+TpmIndexHandle: 0x1C10104
+TpmByteOffset: 7
+TpmBitFieldWidth: 3
+TpmBitFieldPosition: 0
+//
+# PTT_LOCATION
+TpmIndexHandle: 0x1C10104
+TpmByteOffset: 7
+TpmBitFieldWidth: 3
+TpmBitFieldPosition: 0
+//
+# PLATFORM_MANUFACTURERS_ELEMENT
+PmdeInclude: FALSE
+PmdeFile:
+//
+# PLATFORM_FIRMWARE_RESILIENCY_ELEMENT
+PfrsInclude: FALSE
+PfrsControlFlags: 0x00000000
+PfrsCpldSmbusAddr: 0x0
+PfrsPchActiveOffset: 0x0
+PfrsPchRecoveryOffset: 0x0
+PfrsPchStagingOffset: 0x0
+PfrsBmcActiveOffset: 0x0
+PfrsBmcRecoveryOffset: 0x0
+PfrsBmcStagingOffset: 0x0
+//
+# BPM_SIGNATURE
+BpmSigSource: Internal
+BpmSigHashAlgID: 0x0B
+BpmSigKeyType: 0x01
+BpmSigScheme: 0x14
+BpmKeySizeBits: 2048
+BpmSigPubKey:
+BpmSigPrivKey:
+BpmSigBatch:
+BpmSigData:
+BpmSigDataType: BPM Body
+BpmSigXSig:
+//
+#EOF
