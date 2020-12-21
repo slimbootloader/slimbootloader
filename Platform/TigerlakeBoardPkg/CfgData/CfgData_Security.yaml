@@ -1,0 +1,25 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : PSD:SEC:"PSD"
+- $ACTION      :
+    page         : PSD
+- PSD_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ PSD_CFG_DATA, 0x800, 0, 0 ] }
+  - EnablePsd    :
+      name         : Platform Security Discovery (PSD)
+      type         : Combo
+      option       : 0:Disabled, 1:Enabled
+      help         : >
+                     Enable/Disable Platform Security Discovery (PSD)
+      length       : 0x04
+      value        : 0x1
+
