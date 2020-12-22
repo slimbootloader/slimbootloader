@@ -377,7 +377,15 @@ def compress (in_file, alg, svn=0, out_path = '', tool_dir = ''):
     if in_len > 0:
         if sig == "LZDM":
             shutil.copy(in_file, out_file)
-        else:
+            compress_data = get_file_data(out_file)
+        elif sig == "LZ4 ":
+            try:
+                import lz4.block
+                compress_data = lz4.block.compress(get_file_data(in_file), mode='high_compression')
+            except ImportError:
+                print("Could not import lz4, use 'python -m pip install lz4' to install it.")
+                exit(1)
+        elif sig == "LZMA":
             compress_tool = "%sCompress" % alg
             cmdline = [
                 os.path.join (tool_dir, compress_tool),
@@ -385,7 +393,7 @@ def compress (in_file, alg, svn=0, out_path = '', tool_dir = ''):
                 "-o", out_file,
                 in_file]
             run_process (cmdline, False, True)
-        compress_data = get_file_data(out_file)
+            compress_data = get_file_data(out_file)
     else:
         compress_data = bytearray()
 

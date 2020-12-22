@@ -44,6 +44,7 @@ jobs:
     displayName: Install required tools
 
   - script: |
+      python -m pip install lz4
       python BuildLoader.py build qemu -k
     displayName: 'Run QEMU build'
 
@@ -98,6 +99,7 @@ jobs:
     displayName: Install required tools
 
   - script: |
+      python -m pip install lz4
       python BuildLoader.py build $(Build.Name) $(Build.Arch) $(Build.Target) -k
     displayName: 'Run $(Build.Name) build'
 
@@ -166,6 +168,7 @@ jobs:
     displayName: Environment configuration
 
   - script: |
+      python -m pip install lz4
       python BuildLoader.py build $(Build.Name) $(Build.Arch) $(Build.Target) -k
     displayName: 'Run $(Build.Name) build'
 
