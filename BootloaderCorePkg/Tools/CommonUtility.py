@@ -340,13 +340,24 @@ def decompress (in_file, out_file, tool_dir = ''):
     fo.write(di[offset:offset + lz_hdr.compressed_len])
     fo.close()
 
-    compress_tool = "%sCompress" % alg
-    cmdline = [
-        os.path.join (tool_dir, compress_tool),
-        "-d",
-        "-o", out_file,
-        temp]
-    run_process (cmdline, False, True)
+    if alg == "Lz4":
+        try:
+            import lz4.block
+        except ImportError:
+            print("Could not import lz4, use 'python -m pip install lz4' to install it.")
+            exit(1)
+        decompress_data = lz4.block.decompress(get_file_data(temp))
+        with open(out_file, "wb") as lz4bin:
+            lz4bin.write(decompress_data)
+        lz4bin.close()
+    else:
+        compress_tool = "%sCompress" % alg
+        cmdline = [
+            os.path.join (tool_dir, compress_tool),
+            "-d",
+            "-o", out_file,
+            temp]
+        run_process (cmdline, False, True)
     os.remove(temp)
 
 def compress (in_file, alg, svn=0, out_path = '', tool_dir = ''):
@@ -377,7 +388,15 @@ def compress (in_file, alg, svn=0, out_path = '', tool_dir = ''):
     if in_len > 0:
         if sig == "LZDM":
             shutil.copy(in_file, out_file)
-        else:
+            compress_data = get_file_data(out_file)
+        elif sig == "LZ4 ":
+            try:
+                import lz4.block
+            except ImportError:
+                print("Could not import lz4, use 'python -m pip install lz4' to install it.")
+                exit(1)
+            compress_data = lz4.block.compress(get_file_data(in_file), mode='high_compression')
+        elif sig == "LZMA":
             compress_tool = "%sCompress" % alg
             cmdline = [
                 os.path.join (tool_dir, compress_tool),
@@ -385,7 +404,7 @@ def compress (in_file, alg, svn=0, out_path = '', tool_dir = ''):
                 "-o", out_file,
                 in_file]
             run_process (cmdline, False, True)
-        compress_data = get_file_data(out_file)
+            compress_data = get_file_data(out_file)
     else:
         compress_data = bytearray()
 
