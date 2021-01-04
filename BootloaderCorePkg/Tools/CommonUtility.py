@@ -340,18 +340,28 @@ def decompress (in_file, out_file, tool_dir = ''):
     fo.write(di[offset:offset + lz_hdr.compressed_len])
     fo.close()
 
+    compress_tool = "%sCompress" % alg
     if alg == "Lz4":
         try:
-            import lz4.block
-        except ImportError:
-            print("Could not import lz4, use 'python -m pip install lz4' to install it.")
-            exit(1)
-        decompress_data = lz4.block.decompress(get_file_data(temp))
-        with open(out_file, "wb") as lz4bin:
-            lz4bin.write(decompress_data)
-        lz4bin.close()
+            cmdline = [
+                os.path.join (tool_dir, compress_tool),
+                "-d",
+                "-o", out_file,
+                temp]
+            run_process (cmdline, False, True)
+        except:
+            print("Could not find/use CompressLz4 tool, trying with python lz4...")
+            try:
+                import lz4.block
+                if lz4.VERSION != '3.1.1':
+                    print("Recommended lz4 module version is '3.1.1', '%s' is currently installed." % lz4.VERSION)
+            except ImportError:
+                print("Could not import lz4, use 'python -m pip install lz4==3.1.1' to install it.")
+                exit(1)
+            decompress_data = lz4.block.decompress(get_file_data(temp))
+            with open(out_file, "wb") as lz4bin:
+                lz4bin.write(decompress_data)
     else:
-        compress_tool = "%sCompress" % alg
         cmdline = [
             os.path.join (tool_dir, compress_tool),
             "-d",
@@ -386,18 +396,30 @@ def compress (in_file, alg, svn=0, out_path = '', tool_dir = ''):
 
     in_len = os.path.getsize(in_file)
     if in_len > 0:
+        compress_tool = "%sCompress" % alg
         if sig == "LZDM":
             shutil.copy(in_file, out_file)
             compress_data = get_file_data(out_file)
         elif sig == "LZ4 ":
             try:
-                import lz4.block
-            except ImportError:
-                print("Could not import lz4, use 'python -m pip install lz4' to install it.")
-                exit(1)
-            compress_data = lz4.block.compress(get_file_data(in_file), mode='high_compression')
+                cmdline = [
+                    os.path.join (tool_dir, compress_tool),
+                    "-e",
+                    "-o", out_file,
+                    in_file]
+                run_process (cmdline, False, True)
+                compress_data = get_file_data(out_file)
+            except:
+                print("Could not find/use CompressLz4 tool, trying with python lz4...")
+                try:
+                    import lz4.block
+                    if lz4.VERSION != '3.1.1':
+                        print("Recommended lz4 module version is '3.1.1', '%s' is currently installed." % lz4.VERSION)
+                except ImportError:
+                    print("Could not import lz4, use 'python -m pip install lz4==3.1.1' to install it.")
+                    exit(1)
+                compress_data = lz4.block.compress(get_file_data(in_file), mode='high_compression')
         elif sig == "LZMA":
-            compress_tool = "%sCompress" % alg
             cmdline = [
                 os.path.join (tool_dir, compress_tool),
                 "-e",
