@@ -11,7 +11,7 @@ import os
 import sys
 import argparse
 import re
-import imp
+from   importlib.machinery import SourceFileLoader
 from   ctypes import *
 
 YML_LINE_HDR = "- !expand { GPIO_TMPL : [ "
@@ -569,7 +569,7 @@ def get_sbl_dws (inp_fmt, cfg_file, parts):
     if not pad_name.startswith('GPP_'):
         return '', 0x0, 0x0
 
-    gpio_cfg_file = imp.load_source('GenGpioDataConfig', cfg_file)
+    gpio_cfg_file = SourceFileLoader ('GenGpioDataConfig', cfg_file).load_module()
 
     if inp_fmt.endswith ('.h') or inp_fmt.endswith ('.csv'):
         get_sbl_dws_from_h_csv (parts, pad_name, sbl_dw0, sbl_dw1, gpio_cfg_file)
@@ -696,7 +696,7 @@ def parse_sbl_dws (inp_fmt, out_fmt, cfg_file, parts):
     if not pad_name.startswith('GPP_'):
         return '', ''
 
-    gpio_cfg_file = imp.load_source('GenGpioDataConfig', cfg_file)
+    gpio_cfg_file = SourceFileLoader ('GenGpioDataConfig', cfg_file).load_module()
 
     if out_fmt == 'h' or out_fmt == 'csv':
         out_line = get_h_csv_from_sbl_dws (sbl_dw0, sbl_dw1, gpio_cfg_file)
@@ -835,7 +835,7 @@ if __name__ == '__main__':
 
     args = ap.parse_args()
 
-    gpio_cfg_file = imp.load_source('GenGpioDataConfig', args.cfg_file)
+    gpio_cfg_file = SourceFileLoader ('GenGpioDataConfig', args.cfg_file).load_module()
     if (gpio_cfg_file.plat_name() == 'apl'):
         raise Exception ('Platform unsupported')
 

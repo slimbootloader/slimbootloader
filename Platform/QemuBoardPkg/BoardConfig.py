@@ -14,8 +14,8 @@ import sys
 
 sys.dont_write_bytecode = True
 sys.path.append (os.path.join('..', '..'))
-from BuildLoader import BaseBoard, STITCH_OPS, HASH_USAGE
-from BuildLoader import IPP_CRYPTO_OPTIMIZATION_MASK, IPP_CRYPTO_ALG_MASK, HASH_TYPE_VALUE
+from BuildLoader import BaseBoard, STITCH_OPS
+from BuildLoader import IPP_CRYPTO_OPTIMIZATION_MASK, IPP_CRYPTO_ALG_MASK, HASH_TYPE_VALUE, HASH_USAGE
 
 class Board(BaseBoard):
 

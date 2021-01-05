@@ -16,7 +16,6 @@ sys.dont_write_bytecode = True
 sys.path.append (tool_dir)
 
 import re
-import imp
 import errno
 import shutil
 import argparse
@@ -1389,9 +1388,8 @@ def main():
         get_board_config_file (os.path.join (search_dir, pkg), board_cfgs)
 
     for cfgfile in board_cfgs:
-        brdcfg = imp.load_source('BoardConfig', cfgfile)
+        brdcfg = load_source ('BoardConfig', cfgfile)
         board_names.append(brdcfg.Board().BOARD_NAME)
-
 
     ap = argparse.ArgumentParser()
     sp = ap.add_subparsers(help='command')
@@ -1399,7 +1397,7 @@ def main():
     def cmd_build(args):
         for index, name in enumerate(board_names):
             if args.board == name:
-                brdcfg = imp.load_source('BoardConfig', board_cfgs[index])
+                brdcfg = load_source('BoardConfig', board_cfgs[index])
                 board  = brdcfg.Board(
                                         BUILD_ARCH        = args.arch.upper(), \
                                         RELEASE_MODE      = args.release,     \

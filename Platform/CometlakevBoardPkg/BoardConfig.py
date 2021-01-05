@@ -17,6 +17,7 @@ import time
 sys.dont_write_bytecode = True
 sys.path.append (os.path.join('..', '..'))
 from BuildLoader import BaseBoard, STITCH_OPS, FLASH_REGION_TYPE
+from BuildLoader import HASH_USAGE
 
 class Board(BaseBoard):
     def __init__(self, *args, **kwargs):
