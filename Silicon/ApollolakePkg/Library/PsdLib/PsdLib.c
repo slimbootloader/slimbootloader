@@ -112,7 +112,6 @@ GetSecCapability (
   )
 {
   EFI_STATUS               Status;
-  GEN_GET_FW_CAPSKU        MsgGenGetFwCapsSku;
   GEN_GET_FW_CAPS_SKU_ACK  MsgGenGetFwCapsSkuAck;
   if(SecCapability == NULL) {
     DEBUG ((DEBUG_ERROR, "GetSecCapability Failed Status=0x%x\n",EFI_INVALID_PARAMETER));
@@ -120,7 +119,7 @@ GetSecCapability (
   }
 
 
-  Status = HeciGetFwCapsSkuMsg ( (UINT8 *)&MsgGenGetFwCapsSku, (UINT8 *)&MsgGenGetFwCapsSkuAck);
+  Status = HeciGetFwCapsSkuMsg ((UINT8 *)&MsgGenGetFwCapsSkuAck);
   if (EFI_ERROR(Status)) {
     return Status;
   }

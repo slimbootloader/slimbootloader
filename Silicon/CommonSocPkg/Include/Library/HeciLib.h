@@ -271,7 +271,6 @@ HeciGetFwVersionMsg (
 /**
   Send Get Firmware SKU Request
 
-  @param[in]  MsgGetFwCaps        Send  message for Get Firmware Capability SKU
   @param[out] MsgGetFwCapsAck     Return message for Get Firmware Capability SKU ACK
 
   @exception EFI_UNSUPPORTED      Current Sec mode doesn't support this function
@@ -283,7 +282,6 @@ HeciGetFwVersionMsg (
 EFI_STATUS
 EFIAPI
 HeciGetFwCapsSkuMsg (
-  IN  UINT8                      *MsgGetFwCaps,
   OUT UINT8                      *MsgGetFwCapsAck
   );
 

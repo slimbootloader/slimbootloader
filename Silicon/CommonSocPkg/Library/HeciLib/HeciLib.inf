@@ -35,6 +35,3 @@
   IoLib
   TimerLib
   MeChipsetLib
-
-[Guids]
-  gMeBiosPayloadHobGuid

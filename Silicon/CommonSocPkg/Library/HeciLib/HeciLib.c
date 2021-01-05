@@ -16,7 +16,6 @@
 #include <Library/BootloaderCommonLib.h>
 #include <Library/BootloaderCoreLib.h>
 #include <IndustryStandard/Pci.h>
-#include <MeBiosPayloadDataCommon.h>
 #include "HeciRegs.h"
 
 /**
@@ -165,7 +164,6 @@ HeciGetFwVersionMsg (
 /**
   Send Get Firmware SKU Request
 
-  @param[in]  MsgGetFwCaps        Send  message for Get Firmware Capability SKU
   @param[out] MsgGetFwCapsAck     Return message for Get Firmware Capability SKU ACK
 
   @exception EFI_UNSUPPORTED      Current Sec mode doesn't support this function
@@ -177,55 +175,34 @@ HeciGetFwVersionMsg (
 EFI_STATUS
 EFIAPI
 HeciGetFwCapsSkuMsg (
-  IN  UINT8                      *MsgGetFwCaps,
   OUT UINT8                      *MsgGetFwCapsAck
   )
 {
   EFI_STATUS                      Status;
   UINT32                          Length;
-  GEN_GET_FW_CAPSKU              *MsgGenGetFwCapsSku;
+  GEN_GET_FW_CAPSKU               MsgGenGetFwCapsSku;
   GEN_GET_FW_CAPS_SKU_ACK_DATA   *MsgGenGetFwCapsSkuAck;
-  ME_BIOS_PAYLOAD                *MbpDataHob;
-  UINT32                          MbpDataHobLen;
-  UINT8                          *DataPtr;
-  VOID                           *FspHobListPtr;
 
-  if ((MsgGetFwCaps == NULL) || (MsgGetFwCapsAck == NULL) ) {
+  if (MsgGetFwCapsAck == NULL) {
     return EFI_INVALID_PARAMETER;
   }
 
-  MsgGenGetFwCapsSku    = (GEN_GET_FW_CAPSKU *)MsgGetFwCaps;
   MsgGenGetFwCapsSkuAck = (GEN_GET_FW_CAPS_SKU_ACK_DATA *)MsgGetFwCapsAck;
-
-  //
-  // Fill the FW capapbility data.
-  //
-  FspHobListPtr = GetFspHobListPtr();
-  if (FspHobListPtr != NULL) {
-    DataPtr = (UINT8 *)GetGuidHobData (FspHobListPtr, &MbpDataHobLen, &gMeBiosPayloadHobGuid);
-    if ((DataPtr != NULL) && (MbpDataHobLen > 0)) {
-      MbpDataHob = (ME_BIOS_PAYLOAD *)(DataPtr+4);
-      if( MbpDataHob->FwCapsSku.Available == 1 ) {
-        MsgGenGetFwCapsSkuAck->FWCap.Data = MbpDataHob->FwCapsSku.FwCapabilities.Data;
-        return EFI_SUCCESS;
-      }
-    }
-  }
 
   //
   // Allocate MsgGenGetFwVersion data structure.
   //
-  MsgGenGetFwCapsSku->MkhiHeader.Data               = 0;
-  MsgGenGetFwCapsSku->MkhiHeader.Fields.GroupId     = MKHI_FWCAPS_GROUP_ID;
-  MsgGenGetFwCapsSku->MkhiHeader.Fields.Command     = FWCAPS_GET_RULE_CMD;
-  MsgGenGetFwCapsSku->MkhiHeader.Fields.IsResponse  = 0x0;
-  MsgGenGetFwCapsSku->Data.RuleId                   = 0x0;
+  MsgGenGetFwCapsSku.MkhiHeader.Data               = 0;
+  MsgGenGetFwCapsSku.MkhiHeader.Fields.GroupId     = MKHI_FWCAPS_GROUP_ID;
+  MsgGenGetFwCapsSku.MkhiHeader.Fields.Command     = FWCAPS_GET_RULE_CMD;
+  MsgGenGetFwCapsSku.MkhiHeader.Fields.IsResponse  = 0x0;
+  MsgGenGetFwCapsSku.Data.RuleId                   = 0x0;
 
   //
   // Send Get FW SKU Request to SEC
   //
   Length = sizeof (GEN_GET_FW_CAPSKU);
-  Status = HeciSend (HECI1_DEVICE, (UINT32 *)MsgGenGetFwCapsSku, Length,
+  Status = HeciSend (HECI1_DEVICE, (UINT32 *)&MsgGenGetFwCapsSku, Length,
                      BIOS_FIXED_HOST_ADDR, HECI_MKHI_MESSAGE_ADDR);
   if (EFI_ERROR(Status)) {
     DEBUG ((DEBUG_ERROR, "[HECI] HeciGetFwCapsSkuMsg failed on send - %r\n", Status));
