@@ -15,7 +15,7 @@ import sys
 sys.dont_write_bytecode = True
 sys.path.append (os.path.join('..', '..'))
 from BuildLoader import FLASH_MAP, BaseBoard, STITCH_OPS
-from BuildLoader import IPP_CRYPTO_OPTIMIZATION_MASK, IPP_CRYPTO_ALG_MASK
+from BuildLoader import IPP_CRYPTO_OPTIMIZATION_MASK, IPP_CRYPTO_ALG_MASK, HASH_USAGE
 
 #
 #    Temporary Memory Layout for APL

@@ -18,8 +18,9 @@ import subprocess
 import struct
 import hashlib
 import string
-from   functools import reduce
 from   ctypes import *
+from   functools import reduce
+from   importlib.machinery import SourceFileLoader
 from   SingleSign import *
 
 
@@ -183,6 +184,10 @@ def check_files_exist (base_name_list, dir = '', ext = ''):
         if not os.path.exists (os.path.join (dir, each + ext)):
             return False
     return True
+
+def load_source (name, filepath):
+    mod = SourceFileLoader (name, filepath).load_module()
+    return  mod
 
 def get_openssl_path ():
     if os.name == 'nt':
