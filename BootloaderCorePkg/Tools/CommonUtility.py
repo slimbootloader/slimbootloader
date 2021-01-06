@@ -206,6 +206,10 @@ def get_openssl_path ():
 
 def run_process (arg_list, print_cmd = False, capture_out = False):
     sys.stdout.flush()
+
+    if os.name == 'nt' and os.path.splitext(arg_list[0])[1] == '':
+        arg_list[0] += '.exe'
+
     if print_cmd:
         print (' '.join(arg_list))
 

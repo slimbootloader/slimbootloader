@@ -96,8 +96,10 @@ def generate_rsa_priv_keys (openssl_path, key_dir, key_size):
                         replace_all = 'yes'
 
                 print("Generating private key %s" % priv_key_name)
-                cmd = '%s genrsa -F4 -out %s %s' % (openssl_path, priv_key_name, key_sz)
-                run_process (cmd.split())
+                cmd = 'genrsa -F4 -out %s %s' % (priv_key_name, key_sz)
+                cmd = cmd.split()
+                cmd.insert(0, '%s' % (openssl_path))
+                run_process (cmd)
                 print('\n' * 3)
 
         # Generate test public keys
@@ -120,14 +122,18 @@ def generate_rsa_pub_keys (openssl_path, key_dir, key_size, replace_key):
                     continue
 
             print("Generating OS Private Key %s" % priv_key_name)
-            cmd = '%s genrsa -F4 -out %s %s' % (openssl_path, priv_key_name, key_size)
-            run_process (cmd.split())
+            cmd = 'genrsa -F4 -out %s %s' % (priv_key_name, key_size)
+            cmd = cmd.split()
+            cmd.insert(0, '%s' % (openssl_path))
+            run_process (cmd)
 
             # Extract public key from private key
             pub_key_name = '%s/%s_Pub_RSA%s.pem' % (key_dir, key_file_name, key_size)
             print("Generating OS Public Key %s" % pub_key_name)
-            cmd = '%s rsa -pubout -in %s -out %s' % (openssl_path, priv_key_name, pub_key_name)
-            run_process (cmd.split())
+            cmd = 'rsa -pubout -in %s -out %s' % (priv_key_name, pub_key_name)
+            cmd = cmd.split()
+            cmd.insert(0, '%s' % (openssl_path))
+            run_process (cmd)
     return
 
 def main():
