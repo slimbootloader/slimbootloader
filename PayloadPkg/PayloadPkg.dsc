@@ -58,7 +58,7 @@
   BootloaderLib | PayloadPkg/Library/PayloadLib/PayloadLib.inf
   PayloadEntryLib | PayloadPkg/Library/PayloadEntryLib/PayloadEntryLib.inf
   PlatformHookLib | PayloadPkg/Library/PlatformHookLib/PlatformHookLib.inf
-
+  PagingLib|BootloaderCommonPkg/Library/PagingLib/PagingLib.inf
 
 [PcdsPatchableInModule]
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel         | 0x8000004F
