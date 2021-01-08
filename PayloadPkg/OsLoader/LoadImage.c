@@ -804,7 +804,32 @@ LoadBootImages (
       Status = GetBootImageFromRawPartition (OsBootOption, LoadedImage);
     }
 
-    DEBUG ((DEBUG_INFO, "LoadBootImage ImageType-%d Image\n", Index));
+    if (EFI_ERROR (Status) && (Index == LoadImageTypeNormal)) {
+      //
+      // Launch Traditional Linux for debugging purpose only
+      //
+      if ((DebugCodeEnabled () || !FeaturePcdGet (PcdVerifiedBootEnabled)) && (FsHandle != NULL)) {
+        // Free loaded images previously, but keep LoadedImagesInfo structure
+        UnloadBootImages ((EFI_HANDLE)(UINTN)LoadedImagesInfo, TRUE);
+        LoadedImage = LoadedImagesInfo->LoadedImageList[LoadImageTypeNormal];
+        if (LoadedImage == NULL) {
+          LoadedImage = (LOADED_IMAGE *)AllocateZeroPool (sizeof (LOADED_IMAGE));
+          if (LoadedImage == NULL) {
+            return EFI_OUT_OF_RESOURCES;
+          }
+        }
+        LoadedImage->HwPartHandle   = HwPartHandle;
+        LoadedImage->LoadImageType  = LoadImageTypeNormal;
+        LoadedImagesInfo->LoadedImageList[LoadImageTypeNormal] = LoadedImage;
+        Status = GetTraditionalLinux (FsHandle, &LoadedImage->Image.Linux);
+        if (!EFI_ERROR (Status)) {
+          LoadedImage->Flags |= LOADED_IMAGE_LINUX;
+          DEBUG ((DEBUG_INFO, "LoadBootImage TraditionalLinux ImageType-%d Image\n", Index));
+        }
+      }
+    }
+
+    DEBUG ((DEBUG_INFO, "LoadBootImage ImageType-%d, flags=0x%x\n", Index, LoadedImage->Flags));
     LoadedImagesInfo->LoadedImageList[Index] = LoadedImage;
 
     if (EFI_ERROR (Status)) {
@@ -813,30 +838,7 @@ LoadBootImages (
     }
   }
 
-  //
-  // Launch Traditional Linux for debugging purpose only
-  //
-  if (DebugCodeEnabled () || !FeaturePcdGet (PcdVerifiedBootEnabled)) {
-    if (EFI_ERROR (Status) && (FsHandle != NULL)) {
-      // Free loaded images previously, but keep LoadedImagesInfo structure
-      UnloadBootImages ((EFI_HANDLE)(UINTN)LoadedImagesInfo, TRUE);
-      LoadedImage = LoadedImagesInfo->LoadedImageList[LoadImageTypeNormal];
-      if (LoadedImage == NULL) {
-        LoadedImage = (LOADED_IMAGE *)AllocateZeroPool (sizeof (LOADED_IMAGE));
-        if (LoadedImage == NULL) {
-          return EFI_OUT_OF_RESOURCES;
-        }
-      }
-      LoadedImage->HwPartHandle   = HwPartHandle;
-      LoadedImage->LoadImageType  = LoadImageTypeNormal;
-      LoadedImagesInfo->LoadedImageList[LoadImageTypeNormal] = LoadedImage;
-      Status = GetTraditionalLinux (FsHandle, &LoadedImage->Image.Linux);
-      if (!EFI_ERROR (Status)) {
-        LoadedImage->Flags |= LOADED_IMAGE_LINUX;
-        DEBUG ((DEBUG_INFO, "LoadBootImage TraditionalLinux ImageType-%d Image\n", Index));
-      }
-    }
-  }
+
 
   *LoadedImageHandle = (EFI_HANDLE)(UINTN)LoadedImagesInfo;
 
