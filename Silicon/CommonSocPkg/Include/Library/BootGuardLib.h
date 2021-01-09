@@ -56,6 +56,12 @@ typedef struct {
   - 1: Bypass TPM Event Log if Sx Resume Type is identified.
   **/
   BOOLEAN  ByPassTpmEventLog;
+  /**
+  This field indicates that the ACM's Tpm2Startup (State) command failed during S3 resume.
+  - 0: Successful Tpm2Startup (State)
+  - 1: Failure during Tpm2Startup (State). BIOS will need to perform a cold reset to handle the error.
+  **/
+  BOOLEAN  TpmStartupFailureOnS3;
 } BOOT_GUARD_INFO;
 
 /**

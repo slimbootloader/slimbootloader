@@ -538,6 +538,12 @@ TpmInitialize (
   if ((PlatformData != NULL) && (PlatformData->BtGuardInfo.MeasuredBoot == 1) &&
       (PlatformData->BtGuardInfo.DisconnectAllTpms == 0) &&
       ((PlatformData->BtGuardInfo.TpmType == dTpm20) || (PlatformData->BtGuardInfo.TpmType == Ptt))) {
+
+    //  As per PC Client spec, SRTM should perform a host platform reset
+    if (PlatformData->BtGuardInfo.TpmStartupFailureOnS3 == TRUE) {
+      ResetSystem(EfiResetCold);
+      CpuDeadLoop ();
+    }
     // Initialize TPM if it has not already been initialized by BootGuard component (i.e. ACM)
     Status = TpmInit(PlatformData->BtGuardInfo.BypassTpmInit, BootMode);
 

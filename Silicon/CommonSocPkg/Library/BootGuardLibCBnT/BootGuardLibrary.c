@@ -64,7 +64,7 @@ GetBootGuardInfo (
   UINT32                  MsrValue;
   UINT32                  MeFwSts4;
   UINT32                  BootGuardAcmStatus;
-  UINT32                  BootGuardBootStatus;
+  UINT64                  BootGuardBootStatus;
 
   ///
   /// Check if System Supports Boot Guard
@@ -75,8 +75,8 @@ GetBootGuardInfo (
     BootGuardAcmStatus  = *(UINT32 *) (UINTN) (TXT_PUBLIC_BASE + R_CPU_BOOT_GUARD_ACM_STATUS);
     DEBUG ((DEBUG_INFO, "Boot Guard ACM Status = %x\n", BootGuardAcmStatus));
 
-    BootGuardBootStatus  = *(UINT32 *) (UINTN) (TXT_PUBLIC_BASE + R_CPU_BOOT_GUARD_BOOTSTATUS);
-    DEBUG ((DEBUG_INFO, "Boot Guard Boot Status = %x\n", BootGuardBootStatus));
+    BootGuardBootStatus  = *(UINT64 *) (UINTN) (TXT_PUBLIC_BASE + R_CPU_BOOT_GUARD_BOOTSTATUS);
+    DEBUG ((DEBUG_INFO, "Boot Guard Boot Status = %llx\n", BootGuardBootStatus));
 
     ///
     /// Read ME FWS Registers
@@ -98,6 +98,13 @@ GetBootGuardInfo (
     BootGuardInfo->MeasuredBoot = FALSE;
     BootGuardInfo->VerifiedBoot = FALSE;
 
+    ///
+    /// Check Bit 46 in BootGuardBootStatus to handle Tpm2Startup(Restore) errors.
+    ///
+    if ((BootGuardBootStatus & B_CPU_BOOT_GUARD_BOOTSTATUS_S3_TPM_STARTUP_FAILED) != 0) {
+      BootGuardInfo->TpmStartupFailureOnS3 = TRUE;
+      DEBUG ((DEBUG_INFO, "ACM Tpm2Startup (State) failure detected during S3 flow.\n"));
+    }
     if ((MeFwSts4 & BIT10) != 0) {
       DEBUG ((DEBUG_INFO, "Sx Resume Type Identified - TPM Event Log not required for ACM Measurements\n"));
       BootGuardInfo->ByPassTpmEventLog = TRUE;
