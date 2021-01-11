@@ -201,6 +201,12 @@ def get_openssl_path ():
                     openssl_cfg = "C:\\Openssl\\openssl.cfg"
                     if os.path.exists(openssl_cfg):
                         os.environ['OPENSSL_CONF'] = openssl_cfg
+    else :
+        if 'OPENSSL_PATH' not in os.environ:
+            os.environ['OPENSSL_PATH'] = '/usr/bin'
+        if 'OPENSSL_CONF' not in os.environ:
+            openssl_cfg = '/usr/lib/ssl/openssl.cnf'
+            os.environ['OPENSSL_CONF'] = openssl_cfg
     openssl = os.path.join(os.environ.get ('OPENSSL_PATH', ''), 'openssl')
     return openssl
 
