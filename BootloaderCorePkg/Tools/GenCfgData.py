@@ -1,20 +1,26 @@
 ## @ GenCfgData.py
 #
-# Copyright (c) 2014 - 2019, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
 
 import os
-import re
 import sys
+import re
 import struct
 import marshal
-from   functools import reduce
-from   datetime import date
+import pprint
+import string
+import operator as op
+import ast
+import binascii
+from   datetime    import date
+from   collections import OrderedDict
+
+from CommonUtility import *
 
 # Generated file copyright header
-
 __copyright_tmp__ = """/** @file
 
   Platform Configuration %s File.
@@ -27,2065 +33,1930 @@ __copyright_tmp__ = """/** @file
 **/
 """
 
-def Bytes2Val (Bytes):
-    return reduce(lambda x,y: (x<<8)|y,  Bytes[::-1] )
-
-def Bytes2Str (Bytes):
-    return '{ %s }' % (', '.join('0x%02X' % i for i in Bytes))
-
-def Str2Bytes (Value, Blen):
-    Result = bytearray(Value[1:-1], 'utf-8')  # Excluding quotes
-    if len(Result) < Blen:
-        Result.extend(b'\x00' * (Blen - len(Result)))
-    return Result
-
-def Val2Bytes (Value, Blen):
-    return [(Value>>(i*8) & 0xff) for i in range(Blen)]
-
-def Array2Val (ValStr):
-    ValStr = ValStr.strip()
-    if ValStr.startswith('{'):
-        ValStr = ValStr[1:]
-    if ValStr.endswith('}'):
-        ValStr = ValStr[:-1]
-    if ValStr.startswith("'"):
-        ValStr = ValStr[1:]
-    if ValStr.endswith("'"):
-        ValStr = ValStr[:-1]
-    Value = 0
-    for Each in ValStr.split(',')[::-1]:
-        Each = Each.strip()
-        if Each.startswith('0x'):
-            Base = 16
-        else:
-            Base = 10
-        Value = (Value << 8) | int(Each, Base)
-    return Value
-
-def GetCopyrightHeader (FileType, AllowModify = False):
-    FileDescription = {
-        'bsf' : 'Boot Setting',
-        'dsc' : 'Definition',
+def get_copyright_header (file_type, allow_modify = False):
+    file_description = {
+        'yaml': 'Boot Setting',
         'dlt' : 'Delta',
         'inc' : 'C Binary Blob',
         'h'   : 'C Struct Header'
     }
-    if FileType in ['bsf', 'dsc', 'dlt']:
-        CommentChar = '#'
+    if file_type in ['yaml', 'dlt']:
+        comment_char = '#'
     else:
-        CommentChar = ''
-    Lines = __copyright_tmp__.split('\n')
+        comment_char = ''
+    lines = __copyright_tmp__.split('\n')
+    if allow_modify:
+      lines = [line for line in lines if 'Please do NOT modify' not in line]
+    copyright_hdr = '\n'.join('%s%s' % (comment_char, line) for line in lines)[:-1] + '\n'
+    return copyright_hdr % (file_description[file_type], date.today().year)
 
-    if AllowModify:
-      Lines = [Line for Line in Lines if 'Please do NOT modify' not in Line]
+def check_quote (text):
+    if (text[0] == "'" and text[-1] == "'") or (text[0] == '"' and text[-1] == '"'):
+        return True
+    return False
 
-    CopyrightHdr = '\n'.join('%s%s' % (CommentChar, Line) for Line in Lines)[:-1] + '\n'
+def strip_quote (text):
+    new_text = text.strip()
+    if check_quote (new_text):
+        return new_text[1:-1]
+    return text
 
-    return CopyrightHdr % (FileDescription[FileType], date.today().year)
+def strip_delimiter (text, delim):
+    new_text = text.strip()
+    if new_text:
+        if new_text[0] == delim[0] and new_text[-1] == delim[-1]:
+            return new_text[1:-1]
+    return text
+
+def bytes_to_bracket_str (bytes):
+    return '{ %s }' % (', '.join('0x%02x' % i for i in bytes))
+
+def array_str_to_value (val_str):
+    val_str = val_str.strip()
+    val_str = strip_delimiter (val_str, '{}')
+    val_str = strip_quote (val_str)
+    value = 0
+    for each in val_str.split(',')[::-1]:
+        each = each.strip()
+        value = (value << 8) | int(each, 0)
+    return value
+
+def write_lines (lines, file):
+    fo = open(file, "w")
+    fo.write (''.join ([x[0] for x in lines]))
+    fo.close ()
+
+def read_lines (file):
+    if not os.path.exists(file):
+        test_file = os.path.basename(file)
+        if os.path.exists(test_file):
+            file = test_file
+    fi = open (file, 'r')
+    lines = fi.readlines ()
+    fi.close ()
+    return lines
+
+def expand_file_value (path, value_str):
+    result = bytearray()
+    match  = re.match("\{\s*FILE:(.+)\}", value_str)
+    if match:
+        file_list = match.group(1).split(',')
+        for file in file_list:
+            file = file.strip()
+            bin_path = os.path.join(path, file)
+            result.extend(bytearray(open(bin_path, 'rb').read()))
+    return result
+
+class ExpressionEval(ast.NodeVisitor):
+    operators = {
+        ast.Add:    op.add,
+        ast.Sub:    op.sub,
+        ast.Mult:   op.mul,
+        ast.Div:    op.floordiv,
+        ast.Mod:    op.mod,
+        ast.Eq:     op.eq,
+        ast.NotEq:  op.ne,
+        ast.Gt:     op.gt,
+        ast.Lt:     op.lt,
+        ast.GtE:    op.ge,
+        ast.LtE:    op.le,
+        ast.BitXor: op.xor,
+        ast.BitAnd: op.and_,
+        ast.BitOr:  op.or_,
+        ast.Invert: op.invert,
+        ast.USub:   op.neg
+    }
 
 
-class CLogicalExpression:
     def __init__(self):
-        self.index    = 0
-        self.string   = ''
-        self.dictVariable = {}
-        self.parenthesisOpenSet   =  '('
-        self.parenthesisCloseSet  =  ')'
+        self._debug = False
+        self._expression = ''
+        self._namespace = {}
+        self._get_variable = None
 
-    def errExit(self, err = ''):
-        print ("ERROR: Express parsing for:")
-        print ("       %s" % self.string)
-        print ("       %s^" % (' ' * self.index))
-        if err:
-            print ("INFO : %s" % err)
-        raise Exception ("Logical expression parsing error!")
-
-    def getNonNumber (self, n1, n2):
-        if not n1.isdigit():
-            return n1
-        if not n2.isdigit():
-            return n2
-        return None
-
-    def getCurr(self, lens = 1):
-        try:
-            if lens == -1:
-                return self.string[self.index :]
-            else:
-                if self.index + lens > len(self.string):
-                    lens = len(self.string) - self.index
-                return self.string[self.index : self.index + lens]
-        except Exception:
-            return ''
-
-    def isLast(self):
-        return self.index == len(self.string)
-
-    def moveNext(self, len = 1):
-        self.index += len
-
-    def skipSpace(self):
-        while not self.isLast():
-            if self.getCurr() in ' \t':
-                self.moveNext()
-            else:
-                return
-
-    def getNumber(self, var):
-        var = var.strip()
-        if   re.match('^0x[a-fA-F0-9]+$', var):
-            value = int(var, 16)
-        elif re.match('^0b[01]+$', var):
-            value = int(var, 2)
-        elif re.match('^[+-]?\d+$', var):
-            value = int(var, 10)
+    def eval(self, expr, vars={}):
+        self._expression = expr
+        if type(vars) is dict:
+            self._namespace    = vars
+            self._get_variable = None
         else:
-            self.errExit("Invalid value '%s'" % var)
-        return value
+            self._namespace = {}
+            self._get_variable = vars
+        node = ast.parse(self._expression, mode='eval')
+        result = self.visit(node.body)
+        if self._debug:
+            print ('EVAL [ %s ] = %s' % (expr, str(result)))
+        return result
 
-    def getVariable(self, var):
-        value = self.dictVariable.get(var, None)
-        if value == None:
-            self.errExit("Unrecognized variable '%s'" % var)
-        return value
+    def visit_Name(self, node):
+        if self._get_variable is not None:
+            return self._get_variable(node.id)
+        else:
+            return self._namespace[node.id]
 
-    def parseValue(self):
-        self.skipSpace()
-        var = ''
-        while not self.isLast():
-            char = self.getCurr()
-            if re.match('^[\w.]', char):
-                var += char
-                self.moveNext()
-            else:
+    def visit_Num(self, node):
+        return node.n
+
+    def visit_NameConstant(self, node):
+        return node.value
+
+    def visit_BoolOp(self, node):
+        result = False
+        if isinstance(node.op, ast.And):
+            for value in node.values:
+                result = self.visit(value)
+                if not result:
+                    break
+        elif isinstance(node.op, ast.Or):
+            for value in node.values:
+                result = self.visit(value)
+                if result:
+                    break
+        return True if result else False
+
+    def visit_UnaryOp(self, node):
+        val = self.visit(node.operand)
+        return operators[type(node.op)](val)
+
+    def visit_BinOp(self, node):
+        lhs = self.visit(node.left)
+        rhs = self.visit(node.right)
+        return ExpressionEval.operators[type(node.op)](lhs, rhs)
+
+    def visit_Compare(self, node):
+        right = self.visit(node.left)
+        result = True
+        for operation, comp in zip(node.ops, node.comparators):
+            if not result:
                 break
+            left = right
+            right = self.visit(comp)
+            result = ExpressionEval.operators[type(operation)](left, right)
+        return result
 
-        if len(var):
-          if var[0].isdigit():
-              value = self.getNumber(var)
-          else:
-              value = self.getVariable(var)
+    def visit_Call(self, node):
+        if node.func.id in ['ternary']:
+            condition = self.visit (node.args[0])
+            val_true  = self.visit (node.args[1])
+            val_false = self.visit (node.args[2])
+            return val_true if condition else val_false
+        elif node.func.id in ['offset', 'length']:
+            if self._get_variable is not None:
+                return self._get_variable(node.args[0].s, node.func.id)
         else:
-          self.errExit('Invalid number or variable found !')
-
-        return int(value)
-
-    def parseSingleOp(self):
-        self.skipSpace()
-        char = self.getCurr()
-        if char == '~':
-            self.moveNext()
-            return ~self.parseBrace()
-        else:
-            return self.parseValue()
-
-    def parseBrace(self):
-        self.skipSpace()
-        char = self.getCurr()
-        parenthesisType = self.parenthesisOpenSet.find(char)
-        if parenthesisType >= 0:
-            self.moveNext()
-            value = self.parseExpr()
-            self.skipSpace()
-            if self.getCurr() != self.parenthesisCloseSet[parenthesisType]:
-                self.errExit ("No closing brace !")
-            self.moveNext()
-            if parenthesisType   == 1:  # [ : Get content
-                value = self.getContent(value)
-            elif parenthesisType == 2:  # { : To  address
-                value = self.toAddress(value)
-            elif parenthesisType == 3:  # < : To  offset
-                value = self.toOffset(value)
-            return value
-        else:
-            return self.parseSingleOp()
-
-    def parseMul(self):
-        values = [self.parseBrace()]
-        ops    = ['*']
-        while True:
-            self.skipSpace()
-            char = self.getCurr()
-            if char == '*':
-                self.moveNext()
-                values.append(self.parseBrace())
-                ops.append(char)
-            elif char == '/':
-                self.moveNext()
-                values.append(self.parseBrace())
-                ops.append(char)
-            else:
-                break
-        value  = 1
-        for idx, each in enumerate(values):
-            if ops[idx] == '*':
-                value  *= each
-            else:
-                value //= each
-        return value
-
-    def parseAndOr(self):
-        value  = self.parseMul()
-        op     = None
-        while True:
-            self.skipSpace()
-            char = self.getCurr()
-            if char == '&':
-                self.moveNext()
-                value &= self.parseMul()
-            elif char == '|':
-                div_index = self.index
-                self.moveNext()
-                value |= self.parseMul()
-            else:
-                break
-
-        return value
-
-    def parseAddMinus(self):
-        values = [self.parseAndOr()]
-        while True:
-            self.skipSpace()
-            char = self.getCurr()
-            if char == '+':
-                self.moveNext()
-                values.append(self.parseAndOr())
-            elif char == '-':
-                self.moveNext()
-                values.append(-1 * self.parseAndOr())
-            else:
-                break
-        return sum(values)
-
-    def parseExpr(self):
-        return self.parseAddMinus()
-
-    def evaluateExpress (self, Expr, VarDict = {}):
-        self.index        = 0
-        self.string       = Expr
-        self.dictVariable = VarDict
-        Result = self.parseExpr()
-        return Result
-
-class CGenCfgData:
-    def __init__(self):
-        self.Debug          = False
-        self.Error          = ''
-        self.ReleaseMode    = True
-
-        self._GlobalDataDef = """
-GlobalDataDef
-    SKUID = 0, "DEFAULT"
-EndGlobalData
-
-"""
-        self._BuidinOptionTxt = """
-List &EN_DIS
-    Selection 0x1 , "Enabled"
-    Selection 0x0 , "Disabled"
-EndList
-
-"""
-        self._StructType    = ['UINT8','UINT16','UINT32','UINT64']
-        self._BsfKeyList    = ['FIND','NAME','HELP','TYPE','PAGE', 'PAGES', 'BLOCK', 'OPTION','CONDITION','ORDER', 'MARKER', 'SUBT']
-        self._HdrKeyList    = ['HEADER','STRUCT', 'EMBED', 'COMMENT']
-        self._BuidinOption  = {'$EN_DIS' : 'EN_DIS'}
-
-        self._MacroDict   = {}
-        self._VarDict     = {}
-        self._PcdsDict    = {}
-        self._CfgBlkDict  = {}
-        self._CfgPageDict = {}
-        self._CfgOptsDict = {}
-        self._BsfTempDict = {}
-        self._CfgItemList = []
-        self._DscLines    = []
-        self._DscFile     = ''
-        self._CfgPageTree = {}
-
-        self._MapVer      = 0
-        self._MinCfgTagId = 0x100
-
-    def ParseMacros (self, MacroDefStr):
-        # ['-DABC=1', '-D', 'CFG_DEBUG=1', '-D', 'CFG_OUTDIR=Build']
-        self._MacroDict = {}
-        IsExpression = False
-        for Macro in MacroDefStr:
-            if Macro.startswith('-D'):
-                IsExpression = True
-                if len(Macro) > 2:
-                    Macro = Macro[2:]
-                else :
-                    continue
-            if IsExpression:
-                IsExpression = False
-                Match = re.match("(\w+)=(.+)", Macro)
-                if Match:
-                    self._MacroDict[Match.group(1)] = Match.group(2)
-                else:
-                    Match = re.match("(\w+)", Macro)
-                    if Match:
-                        self._MacroDict[Match.group(1)] = ''
-        if len(self._MacroDict) == 0:
-            Error = 1
-        else:
-            Error = 0
-            if self.Debug:
-                print ("INFO : Macro dictionary:")
-                for Each in self._MacroDict:
-                    print ("       $(%s) = [ %s ]" % (Each , self._MacroDict[Each]))
-        return Error
-
-    def EvaulateIfdef   (self, Macro):
-        Result = Macro in self._MacroDict
-        if self.Debug:
-            print ("INFO : Eval Ifdef [%s] : %s" % (Macro, Result))
-        return  Result
-
-    def ExpandMacros (self, Input, Preserve = False):
-        Line = Input
-        Match = re.findall("\$\(\w+\)", Input)
-        if Match:
-            for Each in Match:
-              Variable = Each[2:-1]
-              if Variable in self._MacroDict:
-                  Line = Line.replace(Each, self._MacroDict[Variable])
-              else:
-                  if self.Debug:
-                      print ("WARN : %s is not defined" % Each)
-                  if not Preserve:
-                      Line = Line.replace(Each, Each[2:-1])
-        return Line
-
-    def ExpandPcds (self, Input):
-        Line = Input
-        Match = re.findall("(\w+\.\w+)", Input)
-        if Match:
-            for PcdName in Match:
-              if PcdName in self._PcdsDict:
-                  Line = Line.replace(PcdName, self._PcdsDict[PcdName])
-              else:
-                  if self.Debug:
-                      print ("WARN : %s is not defined" % PcdName)
-        return Line
-
-    def EvaluateExpress (self, Expr):
-        ExpExpr = self.ExpandPcds(Expr)
-        ExpExpr = self.ExpandMacros(ExpExpr)
-        LogExpr = CLogicalExpression()
-        Result  = LogExpr.evaluateExpress (ExpExpr, self._VarDict)
-        if self.Debug:
-            print ("INFO : Eval Express [%s] : %s" % (Expr, Result))
-        return Result
-
-    def ValueToByteArray (self, ValueStr, Length):
-        Match = re.match("\{\s*FILE:(.+)\}", ValueStr)
-        if Match:
-          FileList = Match.group(1).split(',')
-          Result  = bytearray()
-          for File in FileList:
-            File = File.strip()
-            BinPath = os.path.join(os.path.dirname(self._DscFile), File)
-            Result.extend(bytearray(open(BinPath, 'rb').read()))
-        else:
-            try:
-                Result  = bytearray(self.ValueToList(ValueStr, Length))
-            except ValueError as e:
-                raise Exception ("Bytes in '%s' must be in range 0~255 !" % ValueStr)
-        if len(Result) < Length:
-            Result.extend(b'\x00' * (Length - len(Result)))
-        elif len(Result) > Length:
-            raise Exception ("Value '%s' is too big to fit into %d bytes !" % (ValueStr, Length))
-
-        return Result[:Length]
-
-    def ValueToList (self, ValueStr, Length):
-        if ValueStr[0] == '{':
-            Result = []
-            BinList = ValueStr[1:-1].split(',')
-            InBitField     = False
-            LastInBitField = False
-            Value          = 0
-            BitLen         = 0
-            for Element in BinList:
-                InBitField = False
-                Each = Element.strip()
-                if len(Each) == 0:
-                    pass
-                else:
-                    if Each[0] in ['"', "'"]:
-                        Result.extend(list(bytearray(Each[1:-1], 'utf-8')))
-                    elif ':' in Each:
-                        Match    = re.match("(.+):(\d+)b", Each)
-                        if Match is None:
-                            raise Exception("Invald value list format '%s' !" % Each)
-                        InBitField = True
-                        CurrentBitLen = int(Match.group(2))
-                        CurrentValue  = ((self.EvaluateExpress(Match.group(1)) & (1<<CurrentBitLen) - 1)) << BitLen
-                    else:
-                        Result.append(self.EvaluateExpress(Each.strip()))
-                if InBitField:
-                    Value  += CurrentValue
-                    BitLen += CurrentBitLen
-                if LastInBitField and ((not InBitField) or (Element == BinList[-1])):
-                    if BitLen % 8 != 0:
-                        raise Exception("Invald bit field length!")
-                    Result.extend(Val2Bytes(Value, BitLen // 8))
-                    Value  = 0
-                    BitLen = 0
-                LastInBitField = InBitField
-        elif ValueStr.startswith("'") and ValueStr.endswith("'"):
-            Result = Str2Bytes (ValueStr, Length)
-        elif ValueStr.startswith('"') and ValueStr.endswith('"'):
-            Result = Str2Bytes (ValueStr, Length)
-        else:
-            Result = Val2Bytes (self.EvaluateExpress(ValueStr), Length)
-        return Result
-
-    def FormatDeltaValue(self, ConfigDict):
-        ValStr = ConfigDict['value']
-        if ValStr[0] == "'":
-            # Remove padding \x00 in the value string
-            ValStr = "'%s'" % ValStr[1:-1].rstrip('\x00')
-
-        Struct = ConfigDict['struct']
-        if Struct in self._StructType:
-            # Format the array using its struct type
-            Unit   = int(Struct[4:]) // 8
-            Value  = Array2Val(ConfigDict['value'])
-            Loop   = ConfigDict['length'] // Unit
-            Values = []
-            for Each in range(Loop):
-                Values.append (Value & ((1 << (Unit * 8)) - 1))
-                Value = Value >> (Unit * 8)
-            ValStr = '{ ' + ', '.join ([('0x%%0%dX' % (Unit * 2)) % x for x in Values]) + ' }'
-
-        return ValStr
-
-    def FormatListValue(self, ConfigDict):
-        Struct = ConfigDict['struct']
-        if Struct not in self._StructType:
-            return
-
-        DataList = self.ValueToList(ConfigDict['value'], ConfigDict['length'])
-        Unit = int(Struct[4:]) // 8
-        if int(ConfigDict['length']) != Unit * len(DataList):
-            # Fallback to byte array
-            Unit = 1
-            if int(ConfigDict['length']) != len(DataList):
-                raise Exception("Array size is not proper for '%s' !" % ConfigDict['cname'])
-
-        ByteArray = []
-        for Value in DataList:
-            for Loop in range(Unit):
-                ByteArray.append("0x%02X" % (Value & 0xFF))
-                Value = Value >> 8
-        NewValue  = '{'  + ','.join(ByteArray) + '}'
-        ConfigDict['value'] = NewValue
-
-        return ""
-
-    def GetOrderNumber (self, Offset, Order, BitOff = 0):
-        if isinstance(Order, int):
-            if Order == -1:
-                Order = Offset << 16
-        else:
-            (Major, Minor) = Order.split('.')
-            Order = (int (Major, 16) << 16) + ((int (Minor, 16) & 0xFF) << 8)
-        return Order + (BitOff & 0xFF)
-
-    def SubtituteLine (self, Line, Args):
-        Args = Args.strip()
-        Vars = Args.split(':')
-        Line = self.ExpandMacros(Line, True)
-        for Idx in range(len(Vars)-1, 0, -1):
-            Line = Line.replace('$(%d)' % Idx, Vars[Idx].strip())
-        Remaining = re.findall ('\$\(\d+\)', Line)
-        if len(Remaining) > 0:
-            raise Exception ("ERROR: Unknown argument '%s' for template '%s' !" % (Remaining[0], Vars[0]))
-        return Line
-
-    def CfgDuplicationCheck (self, CfgDict, Name):
-        if not self.Debug:
-            return
-
-        if Name == 'Dummy':
-            return
-
-        if Name not in CfgDict:
-            CfgDict[Name] = 1
-        else:
-            print ("WARNING: Duplicated item found '%s' !" % ConfigDict['cname'])
-
-    def AddBsfChildPage (self, Child, Parent = 'root'):
-        def AddBsfChildPageRecursive (PageTree, Parent, Child):
-            Key = next(iter(PageTree))
-            if Parent == Key:
-                PageTree[Key].append({Child : []})
-                return True
-            else:
-                Result = False
-                for Each in PageTree[Key]:
-                    if AddBsfChildPageRecursive (Each, Parent, Child):
-                        Result = True
-                        break
-                return Result
-
-        return AddBsfChildPageRecursive (self._CfgPageTree, Parent, Child)
-
-    def ParseDscFile (self, DscFile):
-        self._DscLines    = []
-        self._CfgItemList = []
-        self._CfgPageDict = {}
-        self._CfgBlkDict  = {}
-        self._BsfTempDict = {}
-        self._CfgPageTree = {'root' : []}
-        self._DscFile     = DscFile
-
-        CfgDict = {}
-
-        SectionNameList = ["Defines".lower(), "PcdsFeatureFlag".lower(),
-                           "PcdsDynamicVpd.Tmp".lower(), "PcdsDynamicVpd.Upd".lower()]
-
-        IsDefSect       = False
-        IsPcdSect       = False
-        IsUpdSect       = False
-        IsTmpSect       = False
-
-        TemplateName    = ''
-
-        IfStack         = []
-        ElifStack       = []
-        Error           = 0
-        ConfigDict      = {}
-
-        DscFd        = open(DscFile, "r")
-        DscLines     = DscFd.readlines()
-        DscFd.close()
-
-        BsfRegExp    = re.compile("(%s):{(.+?)}(?:$|\s+)" % '|'.join(self._BsfKeyList))
-        HdrRegExp    = re.compile("(%s):{(.+?)}" % '|'.join(self._HdrKeyList))
-        CfgRegExp    = re.compile("^([_a-zA-Z0-9]+)\s*\|\s*(0x[0-9A-F]+|\*)\s*\|\s*(\d+|0x[0-9a-fA-F]+)\s*\|\s*(.+)")
-        TksRegExp    = re.compile("^(g[_a-zA-Z0-9]+\.)(.+)")
-        SkipLines = 0
-        while len(DscLines):
-            DscLine  = DscLines.pop(0).strip()
-            if SkipLines == 0:
-              self._DscLines.append (DscLine)
-            else:
-              SkipLines = SkipLines - 1
-            if len(DscLine) == 0:
-              continue
-
-            Handle   = False
-            Match    = re.match("^\[(.+)\]", DscLine)
-            if Match is not None:
-                IsDefSect = False
-                IsPcdSect = False
-                IsUpdSect = False
-                IsTmpSect = False
-                SectionName = Match.group(1).lower()
-                if  SectionName  == SectionNameList[0]:
-                    IsDefSect = True
-                if  SectionName  == SectionNameList[1]:
-                    IsPcdSect = True
-                elif SectionName == SectionNameList[2]:
-                    IsTmpSect = True
-                elif SectionName == SectionNameList[3]:
-                    ConfigDict = {
-                        'header'    : 'ON',
-                        'page'      : '',
-                        'name'      : '',
-                        'find'      : '',
-                        'struct'    : '',
-                        'embed'     : '',
-                        'marker'    : '',
-                        'option'    : '',
-                        'comment'   : '',
-                        'condition' : '',
-                        'order'     : -1,
-                        'subreg'    : []
-                    }
-                    IsUpdSect = True
-                    Offset    = 0
-            else:
-                if IsDefSect or IsPcdSect or IsUpdSect or IsTmpSect:
-                    Match = False if DscLine[0] != '!' else True
-                    if Match:
-                        Match = re.match("^!(else|endif|ifdef|ifndef|if|elseif|include)\s*(.+)?$", DscLine)
-                    Keyword   = Match.group(1) if Match else ''
-                    Remaining = Match.group(2) if Match else ''
-                    Remaining = '' if Remaining is None else Remaining.strip()
-
-                    if Keyword in ['if', 'elseif', 'ifdef', 'ifndef', 'include'] and not Remaining:
-                        raise Exception ("ERROR: Expression is expected after '!if' or !elseif' for line '%s'" % DscLine)
-
-                    if Keyword == 'else':
-                        if IfStack:
-                            IfStack[-1] = not IfStack[-1]
-                        else:
-                            raise Exception ("ERROR: No paired '!if' found for '!else' for line '%s'" % DscLine)
-                    elif Keyword == 'endif':
-                        if IfStack:
-                            IfStack.pop()
-                            Level = ElifStack.pop()
-                            if Level > 0:
-                                del IfStack[-Level:]
-                        else:
-                            raise Exception ("ERROR: No paired '!if' found for '!endif' for line '%s'" % DscLine)
-                    elif Keyword == 'ifdef' or Keyword == 'ifndef':
-                        Result = self.EvaulateIfdef (Remaining)
-                        if Keyword == 'ifndef':
-                            Result = not Result
-                        IfStack.append(Result)
-                        ElifStack.append(0)
-                    elif Keyword == 'if' or Keyword == 'elseif':
-                        Result = self.EvaluateExpress(Remaining)
-                        if Keyword == "if":
-                            ElifStack.append(0)
-                            IfStack.append(Result)
-                        else:   #elseif
-                            if IfStack:
-                                IfStack[-1] = not IfStack[-1]
-                                IfStack.append(Result)
-                                ElifStack[-1] = ElifStack[-1] + 1
-                            else:
-                                raise Exception ("ERROR: No paired '!if' found for '!elif' for line '%s'" % DscLine)
-                    else:
-                        if IfStack:
-                            Handle = reduce(lambda x,y: x and y, IfStack)
-                        else:
-                            Handle = True
-                        if Handle:
-                            if Keyword == 'include':
-                                Remaining = self.ExpandMacros(Remaining)
-                                # Relative to DSC filepath
-                                IncludeFilePath = os.path.join(os.path.dirname(DscFile), Remaining)
-                                if not os.path.exists(IncludeFilePath):
-                                    # Relative to repository to find dsc in common platform
-                                    IncludeFilePath = os.path.join(os.path.dirname (os.path.realpath(__file__)), "../..", Remaining)
-
-                                try:
-                                    IncludeDsc  = open(IncludeFilePath, "r")
-                                except:
-                                    raise Exception ("ERROR: Cannot open file '%s'." % IncludeFilePath)
-                                NewDscLines = IncludeDsc.readlines()
-                                IncludeDsc.close()
-                                DscLines = NewDscLines + DscLines
-                                del self._DscLines[-1]
-                            else:
-                                if DscLine.startswith('!'):
-                                    raise Exception ("ERROR: Unrecoginized directive for line '%s'" % DscLine)
-
-            if not Handle:
-                continue
-
-            if IsDefSect:
-                Match = re.match("^\s*(?:DEFINE\s+)*(\w+)\s*=\s*(.+)", DscLine)
-                if Match:
-                    self._MacroDict[Match.group(1)] = Match.group(2)
-                    if self.Debug:
-                        print ("INFO : DEFINE %s = [ %s ]" % (Match.group(1), Match.group(2)))
-
-            elif IsPcdSect:
-                Match = re.match("^\s*([\w\.]+)\s*\|\s*(\w+)", DscLine)
-                if Match:
-                    self._PcdsDict[Match.group(1)] = Match.group(2)
-                    if self.Debug:
-                        print ("INFO : PCD %s = [ %s ]" % (Match.group(1), Match.group(2)))
-
-            elif IsTmpSect:
-                # !BSF DEFT:{GPIO_TMPL:START}
-                Match = re.match("^\s*#\s+(!BSF)\s+DEFT:{(.+?):(START|END)}", DscLine)
-                if Match:
-                    if Match.group(3) == 'START' and not TemplateName:
-                        TemplateName = Match.group(2).strip()
-                        self._BsfTempDict[TemplateName] = []
-                    if Match.group(3) == 'END' and (TemplateName == Match.group(2).strip()) and TemplateName:
-                        TemplateName = ''
-                else:
-                    if TemplateName:
-                        Match = re.match("^!include\s*(.+)?$", DscLine)
-                        if Match:
-                            continue
-                        self._BsfTempDict[TemplateName].append(DscLine)
-
-            else:
-                Match = re.match("^\s*#\s+(!BSF|!HDR)\s+(.+)", DscLine)
-                if Match:
-                    Remaining = Match.group(2)
-                    if Match.group(1) == '!BSF':
-                        Result = BsfRegExp.findall (Remaining)
-                        if Result:
-                            for Each in Result:
-                                Key       = Each[0]
-                                Remaining = Each[1]
-
-                                if   Key   == 'BLOCK':
-                                    Match = re.match("NAME:\"(.+)\"\s*,\s*VER:\"(.+)\"\s*", Remaining)
-                                    if Match:
-                                        self._CfgBlkDict['name'] = Match.group(1)
-                                        self._CfgBlkDict['ver']  = Match.group(2)
-
-                                elif Key == 'SUBT':
-                                    #GPIO_TMPL:1:2:3
-                                    Remaining = Remaining.strip()
-                                    Match = re.match("(\w+)\s*:", Remaining)
-                                    if Match:
-                                        TemplateName = Match.group(1)
-                                        for Line in self._BsfTempDict[TemplateName][::-1]:
-                                            NewLine = self.SubtituteLine (Line, Remaining)
-                                            DscLines.insert(0, NewLine)
-                                            SkipLines += 1
-
-                                elif Key   == 'PAGES':
-                                    # !BSF PAGES:{HSW:"Haswell System Agent", LPT:"Lynx Point PCH"}
-                                    PageList = Remaining.split(',')
-                                    for Page in PageList:
-                                        Page  = Page.strip()
-                                        Match = re.match('(\w+):(\w*:)?\"(.+)\"', Page)
-                                        if Match:
-                                            PageName   = Match.group(1)
-                                            ParentName = Match.group(2)
-                                            if not ParentName or ParentName == ':' :
-                                                ParentName = 'root'
-                                            else:
-                                                ParentName = ParentName[:-1]
-                                            if not self.AddBsfChildPage (PageName, ParentName):
-                                                raise Exception("Cannot find parent page '%s'!" % ParentName)
-                                            self._CfgPageDict[PageName] = Match.group(3)
-                                        else:
-                                            raise Exception("Invalid page definitions '%s'!" % Page)
-
-                                elif Key in ['NAME', 'HELP', 'OPTION'] and Remaining.startswith('+'):
-                                    # Allow certain options to be extended to multiple lines
-                                    ConfigDict[Key.lower()] += Remaining[1:]
-
-                                else:
-                                    if Key == 'NAME':
-                                        Remaining = Remaining.strip()
-                                    elif Key == 'CONDITION':
-                                        Remaining = self.ExpandMacros(Remaining.strip())
-                                    ConfigDict[Key.lower()]  = Remaining
-                    else:
-                        Match = HdrRegExp.match(Remaining)
-                        if Match:
-                            Key = Match.group(1)
-                            Remaining = Match.group(2)
-                            if Key  == 'EMBED':
-                                Parts = Remaining.split(':')
-                                Names = Parts[0].split(',')
-                                DummyDict = ConfigDict.copy()
-                                if len(Names) > 1:
-                                    Remaining = Names[0] + ':' + ':'.join(Parts[1:])
-                                    DummyDict['struct'] = Names[1]
-                                else:
-                                    DummyDict['struct'] = Names[0]
-                                DummyDict['cname']   = 'Dummy'
-                                DummyDict['name']    = ''
-                                DummyDict['embed']   = Remaining
-                                DummyDict['offset']  = Offset
-                                DummyDict['length']  = 0
-                                DummyDict['value']   = '0'
-                                DummyDict['type']    = 'Reserved'
-                                DummyDict['help']    = ''
-                                DummyDict['subreg']  = []
-                                self._CfgItemList.append(DummyDict)
-                            else:
-                                ConfigDict[Key.lower()] = Remaining
-                # Check CFG line
-                #   gCfgData.VariableName   |    * | 0x01 | 0x1
-                Clear = False
-
-                Match = TksRegExp.match (DscLine)
-                if Match:
-                    DscLine = 'gCfgData.%s' % Match.group(2)
-
-                if DscLine.startswith('gCfgData.'):
-                    Match = CfgRegExp.match(DscLine[9:])
-                else:
-                    Match = None
-                if Match:
-                    ConfigDict['space']  = 'gCfgData'
-                    ConfigDict['cname']  = Match.group(1)
-                    if Match.group(2) != '*':
-                        Offset =  int (Match.group(2), 16)
-                    ConfigDict['offset'] = Offset
-                    ConfigDict['order']  = self.GetOrderNumber (ConfigDict['offset'], ConfigDict['order'])
-
-                    Value = Match.group(4).strip()
-                    if Match.group(3).startswith("0x"):
-                        Length  = int (Match.group(3), 16)
-                    else :
-                        Length  = int (Match.group(3))
-
-                    Offset += Length
-
-                    ConfigDict['length'] = Length
-                    Match = re.match("\$\((\w+)\)", Value)
-                    if Match:
-                        if Match.group(1) in self._MacroDict:
-                            Value = self._MacroDict[Match.group(1)]
-
-                    ConfigDict['value']  = Value
-                    if re.match("\{\s*FILE:(.+)\}", Value):
-                        # Expand embedded binary file
-                        ValArray = self.ValueToByteArray (ConfigDict['value'], ConfigDict['length'])
-                        NewValue = Bytes2Str(ValArray)
-                        self._DscLines[-1] = re.sub(r'(.*)(\{\s*FILE:.+\})' , r'\1 %s' % NewValue, self._DscLines[-1])
-                        ConfigDict['value']  = NewValue
-
-                    if ConfigDict['name']  == '':
-                        # Clear BSF specific items
-                        ConfigDict['bsfname'] = ''
-                        ConfigDict['help']   = ''
-                        ConfigDict['type']   = ''
-                        ConfigDict['option'] = ''
-
-                    self.CfgDuplicationCheck (CfgDict, ConfigDict['cname'])
-                    self._CfgItemList.append(ConfigDict.copy())
-                    Clear = True
-
-                else:
-                    # It could be a virtual item as below
-                    # !BSF FIELD:{SerialDebugPortAddress0:1}
-                    # or
-                    # @Bsf FIELD:{SerialDebugPortAddress0:1b}
-                    Match = re.match("^\s*#\s+(!BSF)\s+FIELD:{(.+)}", DscLine)
-                    if Match:
-                        BitFieldTxt = Match.group(2)
-                        Match = re.match("(.+):(\d+)b([BWDQ])?", BitFieldTxt)
-                        if not Match:
-                            raise Exception ("Incorrect bit field format '%s' !" % BitFieldTxt)
-                        UnitBitLen = 1
-                        SubCfgDict = ConfigDict.copy()
-                        SubCfgDict['cname']  = Match.group(1)
-                        SubCfgDict['bitlength'] = int (Match.group(2)) * UnitBitLen
-                        if SubCfgDict['bitlength'] > 0:
-                            LastItem =  self._CfgItemList[-1]
-                            if len(LastItem['subreg']) == 0:
-                                SubOffset  = 0
-                            else:
-                                SubOffset  = LastItem['subreg'][-1]['bitoffset'] + LastItem['subreg'][-1]['bitlength']
-                            if Match.group(3) == 'B':
-                                SubCfgDict['bitunit'] = 1
-                            elif Match.group(3) == 'W':
-                                SubCfgDict['bitunit'] = 2
-                            elif Match.group(3) == 'Q':
-                                SubCfgDict['bitunit'] = 8
-                            else:
-                                SubCfgDict['bitunit'] = 4
-                            SubCfgDict['bitoffset'] = SubOffset
-                            SubCfgDict['order'] = self.GetOrderNumber (SubCfgDict['offset'], SubCfgDict['order'], SubOffset)
-                            SubCfgDict['value'] = ''
-                            SubCfgDict['cname'] = '%s_%s' % (LastItem['cname'], Match.group(1))
-                            self.CfgDuplicationCheck (CfgDict, SubCfgDict['cname'])
-                            LastItem['subreg'].append (SubCfgDict.copy())
-                        Clear = True
-
-                if Clear:
-                    ConfigDict['name']      = ''
-                    ConfigDict['find']      = ''
-                    ConfigDict['struct']    = ''
-                    ConfigDict['embed']     = ''
-                    ConfigDict['marker']    = ''
-                    ConfigDict['comment']   = ''
-                    ConfigDict['order']     = -1
-                    ConfigDict['subreg']    = []
-                    ConfigDict['option']    = ''
-                    ConfigDict['condition'] = ''
-
-        return Error
-
-    def GetBsfBitFields (self, subitem, bytes):
-        start = subitem['bitoffset']
-        end   = start + subitem['bitlength']
-        bitsvalue = ''.join('{0:08b}'.format(i) for i in bytes[::-1])
-        bitsvalue = bitsvalue[::-1]
-        bitslen   = len(bitsvalue)
-        if start > bitslen or end > bitslen:
-            raise Exception ("Invalid bits offset [%d,%d] %d for %s" % (start, end, bitslen, subitem['name']))
-        return '0x%X' % (int(bitsvalue[start:end][::-1], 2))
-
-    def UpdateBsfBitFields (self, SubItem, NewValue, ValueArray):
-        Start = SubItem['bitoffset']
-        End   = Start + SubItem['bitlength']
-        Blen  = len (ValueArray)
-        BitsValue = ''.join('{0:08b}'.format(i) for i in ValueArray[::-1])
-        BitsValue = BitsValue[::-1]
-        BitsLen   = len(BitsValue)
-        if Start > BitsLen or End > BitsLen:
-            raise Exception ("Invalid bits offset [%d,%d] %d for %s" % (Start, End, BitsLen, SubItem['name']))
-        BitsValue = BitsValue[:Start] + '{0:0{1}b}'.format(NewValue, SubItem['bitlength'])[::-1] + BitsValue[End:]
-        ValueArray[:]  = bytearray.fromhex('{0:0{1}x}'.format(int(BitsValue[::-1], 2), Blen * 2))[::-1]
-
-    def CreateVarDict (self):
-        Error = 0
-        self._VarDict = {}
-        if len(self._CfgItemList) > 0:
-            Item = self._CfgItemList[-1]
-            self._VarDict['_LENGTH_'] = '%d' % (Item['offset'] + Item['length'])
-        for Item in self._CfgItemList:
-            Embed = Item['embed']
-            Match = re.match("^(\w+):(\w+):(START|END)", Embed)
-            if Match:
-                StructName = Match.group(1)
-                VarName = '_%s_%s_' % (Match.group(3), StructName)
-                if Match.group(3) == 'END':
-                    self._VarDict[VarName] = Item['offset'] + Item['length']
-                    self._VarDict['_LENGTH_%s_' % StructName] = \
-                        self._VarDict['_END_%s_' % StructName] - self._VarDict['_START_%s_' % StructName]
-                    if Match.group(2).startswith('TAG_'):
-                        if self._VarDict['_LENGTH_%s_' % StructName] % 4:
-                            raise Exception("Size of structure '%s' is %d, not DWORD aligned !" % (StructName, self._VarDict['_LENGTH_%s_' % StructName]))
-                        self._VarDict['_TAG_%s_' % StructName] = int (Match.group(2)[4:], 16) & 0xFFF
-                else:
-                    self._VarDict[VarName] = Item['offset']
-            if Item['marker']:
-                self._VarDict['_OFFSET_%s_' % Item['marker'].strip()] = Item['offset']
-        return Error
-
-    def UpdateBsfBitUnit (self, Item):
-        BitTotal  = 0
-        BitOffset = 0
-        StartIdx  = 0
-        Unit      = None
-        UnitDec   = {1:'BYTE', 2:'WORD', 4:'DWORD', 8:'QWORD'}
-        for Idx, SubItem in enumerate(Item['subreg']):
-            if Unit is None:
-                Unit  = SubItem['bitunit']
-            BitLength = SubItem['bitlength']
-            BitTotal  += BitLength
-            BitOffset += BitLength
-
-            if BitOffset > 64 or BitOffset > Unit * 8:
-                break
-
-            if BitOffset == Unit * 8:
-                for SubIdx in range (StartIdx, Idx + 1):
-                    Item['subreg'][SubIdx]['bitunit'] = Unit
-                BitOffset = 0
-                StartIdx  = Idx + 1
-                Unit      = None
-
-        if BitOffset > 0:
-            raise Exception ("Bit fields cannot fit into %s for '%s.%s' !" % (UnitDec[Unit], Item['cname'], SubItem['cname']))
-
-        ExpectedTotal = Item['length'] * 8
-        if Item['length'] * 8 != BitTotal:
-            raise Exception ("Bit fields total length (%d) does not match length (%d) of '%s' !" % (BitTotal, ExpectedTotal, Item['cname']))
-
-    def UpdateDefaultValue (self):
-        Error = 0
-        for Idx, Item in enumerate(self._CfgItemList):
-            if len(Item['subreg']) == 0:
-                Value = Item['value']
-                if (len(Value) > 0) and (Value[0] == '{' or Value[0] == "'" or Value[0] == '"'):
-                    # {XXX} or 'XXX' strings
-                    self.FormatListValue(self._CfgItemList[Idx])
-                else:
-                  Match = re.match("(0x[0-9a-fA-F]+|[0-9]+)", Value)
-                  if not Match:
-                    NumValue = self.EvaluateExpress (Value)
-                    Item['value'] = '0x%X' % NumValue
-            else:
-                ValArray = self.ValueToByteArray (Item['value'], Item['length'])
-                for SubItem in Item['subreg']:
-                    SubItem['value']   = self.GetBsfBitFields(SubItem, ValArray)
-                self.UpdateBsfBitUnit (Item)
-        return Error
+            raise ValueError("Unsupported function: " + repr(node))
+
+    def generic_visit(self, node):
+        raise ValueError("malformed node or string: " + repr(node))
+
+
+class CFG_YAML():
+    TEMPLATE = 'template'
+    CONFIGS  = 'configs'
+    VARIABLE = 'variable'
+
+    def __init__ (self):
+        self.log_line        = False
+        self.allow_template  = False
+        self.cfg_tree        = None
+        self.tmp_tree        = None
+        self.var_dict        = None
+        self.def_dict        = {}
+        self.yaml_path       = ''
+        self.lines           = []
+        self.full_lines      = []
+        self.index           = 0
+        self.re_expand  = re.compile (r'(.+:\s+|\s*\-\s*)!expand\s+\{\s*(\w+_TMPL)\s*:\s*\[(.+)]\s*\}')
+        self.re_include = re.compile (r'(.+:\s+|\s*\-\s*)!include\s+(.+)')
 
     @staticmethod
-    def ExpandIncludeFiles (FilePath, CurDir = ''):
-        if CurDir == '':
-            CurDir   = os.path.dirname(FilePath)
-            FilePath = os.path.basename(FilePath)
+    def count_indent (line):
+        return next((i for i, c in enumerate(line) if not c.isspace()), len(line))
 
-        InputFilePath = os.path.join(CurDir, FilePath)
-        File  = open(InputFilePath, "r")
-        Lines = File.readlines()
-        File.close()
+    @staticmethod
+    def substitue_args (text, arg_dict):
+        for arg in arg_dict:
+            text = text.replace ('$' + arg, arg_dict[arg])
+        return text
 
-        NewLines = []
-        for LineNum, Line in enumerate(Lines):
-            Match = re.match("^!include\s*(.+)?$", Line.strip())
-            if Match:
-                IncPath = Match.group(1)
-                TmpPath = os.path.join(CurDir, IncPath)
-                OrgPath = TmpPath
-                if not os.path.exists(TmpPath):
-                    CurDir = os.path.join(os.path.dirname (os.path.realpath(__file__)), "..", "..")
-                TmpPath = os.path.join(CurDir, IncPath)
-                if not os.path.exists(TmpPath):
-                    raise Exception ("ERROR: Cannot open include file '%s'." % OrgPath)
+    @staticmethod
+    def dprint (*args):
+        pass
+
+    def process_include (self, line, insert = True):
+        match = self.re_include.match (line)
+        if not match:
+            raise Exception ("Invalid !include format '%s' !" % line.strip())
+
+        prefix  = match.group(1)
+        include = match.group(2)
+        if prefix.strip() == '-':
+            prefix = ''
+            adjust = 0
+        else:
+            adjust = 2
+
+        include = strip_quote (include)
+        request = CFG_YAML.count_indent (line) + adjust
+
+        if self.log_line:
+            # remove the include line itself
+            del  self.full_lines[-1]
+
+        inc_path = os.path.join (self.yaml_path, include)
+        if not os.path.exists(inc_path):
+            # try relative path to project root
+            try_path = os.path.join(os.path.dirname (os.path.realpath(__file__)), "../..", include)
+            if os.path.exists(try_path):
+                inc_path = try_path
+            else:
+                raise Exception ("ERROR: Cannot open file '%s'." % inc_path)
+
+        lines = read_lines (inc_path)
+
+        current   = 0
+        same_line = False
+        for idx, each in enumerate (lines):
+            start = each.lstrip()
+            if start == '' or start[0] == '#':
+                continue
+
+            if start[0] == '>':
+                # append the content directly at the same line
+                same_line = True
+
+            start   = idx
+            current = CFG_YAML.count_indent (each)
+            break
+
+        lines = lines[start+1:] if same_line else lines[start:]
+        leading = ''
+        if same_line:
+            request = len(prefix)
+            leading = '>'
+
+        lines = [prefix + '%s\n' % leading] + [' ' * request + i[current:] for i in lines]
+        if insert:
+            self.lines = lines + self.lines
+
+        return lines
+
+    def process_expand (self, line):
+        match = self.re_expand.match(line)
+        if not match:
+            raise Exception ("Invalid !expand format '%s' !" % line.strip())
+        lines      = []
+        prefix     = match.group(1)
+        temp_name  = match.group(2)
+        args       = match.group(3)
+
+        if prefix.strip() == '-':
+            indent = 0
+        else:
+            indent = 2
+        lines      = self.process_expand_template (temp_name, prefix, args, indent)
+        self.lines = lines + self.lines
+
+
+    def process_expand_template (self, temp_name, prefix, args, indent = 2):
+        # expand text with arg substitution
+        if temp_name not in self.tmp_tree:
+            raise Exception ("Could not find template '%s' !" % temp_name)
+        parts = args.split(',')
+        parts = [i.strip() for i in parts]
+        num = len(parts)
+        arg_dict = dict(zip( ['(%d)' % (i + 1) for i in range(num)], parts))
+        str_data = self.tmp_tree[temp_name]
+        text = DefTemplate(str_data).safe_substitute(self.def_dict)
+        text = CFG_YAML.substitue_args (text, arg_dict)
+        target  = CFG_YAML.count_indent (prefix) + indent
+        current = CFG_YAML.count_indent (text)
+        padding = target * ' '
+        if indent == 0:
+            leading = []
+        else:
+            leading = [prefix + '\n']
+        text = leading + [(padding + i + '\n')[current:] for i in text.splitlines()]
+        return text
+
+
+    def load_file (self, yaml_file):
+        self.index  = 0
+        self.lines = read_lines (yaml_file)
+
+
+    def peek_line (self):
+        if len(self.lines) == 0:
+            return None
+        else:
+            return self.lines[0]
+
+
+    def put_line (self, line):
+        self.lines.insert (0, line)
+        if self.log_line:
+            del self.full_lines[-1]
+
+
+    def get_line (self):
+        if len(self.lines) == 0:
+            return None
+        else:
+            line = self.lines.pop(0)
+            if self.log_line:
+                self.full_lines.append (line.rstrip())
+            return line
+
+
+    def get_multiple_line (self, indent):
+        text   = ''
+        newind = indent + 1
+        while True:
+            line   = self.peek_line ()
+            if line is None:
+                break
+            sline = line.strip()
+            if sline != '':
+                newind = CFG_YAML.count_indent(line)
+                if newind <= indent:
+                    break
+            self.get_line ()
+            if sline != '':
+                text = text + line
+        return text
+
+
+    def traverse_cfg_tree (self, handler):
+        def _traverse_cfg_tree (root, level = 0):
+            # config structure
+            for key in root:
+                if type(root[key]) is OrderedDict:
+                    level += 1
+                    handler (key, root[key], level)
+                    _traverse_cfg_tree (root[key], level)
+                    level -= 1
+        _traverse_cfg_tree (self.cfg_tree)
+
+
+    def count (self):
+        def _count (name, cfgs, level):
+            num[0] += 1
+        num = [0]
+        self.traverse_cfg_tree (_count)
+        return  num[0]
+
+
+    def parse (self, parent_name = '', curr = None, level = 0):
+        child = None
+        last_indent = None
+        temp_chk = {}
+
+        while True:
+            line = self.get_line ()
+            if line is None:
+                break
+
+            curr_line = line.strip()
+            if curr_line == '' or curr_line[0] == '#':
+                continue
+
+            indent  = CFG_YAML.count_indent(line)
+            if last_indent is None:
+                last_indent = indent
+
+            if indent != last_indent:
+                # outside of current block,  put the line back to queue
+                self.put_line (' ' * indent + curr_line)
+
+            if curr_line.endswith (': >'):
+                # multiline marker
+                old_count = len(self.full_lines)
+                line = self.get_multiple_line (indent)
+                if self.log_line and not self.allow_template and '!include ' in line:
+                    # expand include in template
+                    new_lines = []
+                    lines = line.splitlines()
+                    for idx, each in enumerate(lines):
+                        if '!include ' in each:
+                            new_line = ''.join(self.process_include (each, False))
+                            new_lines.append(new_line)
+                        else:
+                            new_lines.append(each)
+                    self.full_lines = self.full_lines[:old_count] + new_lines
+                curr_line = curr_line  + line
+
+            if indent > last_indent:
+                # child nodes
+                if child is None:
+                    raise Exception ('Unexpected format at line: %s' % (curr_line))
+
+                level += 1
+                self.parse (key, child, level)
+                level -= 1
+
+                line = self.peek_line ()
+                if line is not None:
+                    curr_line = line.strip()
+                    indent  = CFG_YAML.count_indent(line)
+                    if indent >= last_indent:
+                        # consume the line
+                        self.get_line ()
                 else:
-                    NewLines.append (('# Included from file: %s\n' % IncPath, TmpPath, 0))
-                    NewLines.append (('# %s\n' % ('=' * 80), TmpPath, 0))
-                    NewLines.extend (CGenCfgData.ExpandIncludeFiles (IncPath, CurDir))
-            else:
-                NewLines.append ((Line, InputFilePath, LineNum))
+                    # end of file
+                    indent = -1
 
-        return NewLines
+            if curr is None:
+                curr = OrderedDict()
 
-    def OverrideDefaultValue (self, DltFile):
-        Error    = 0
-        DltLines = CGenCfgData.ExpandIncludeFiles (DltFile);
+            if indent < last_indent:
+                return curr
 
-        PlatformId  = None
-        for Line, FilePath, LineNum in DltLines:
-          Line = Line.strip()
-          if not Line or Line.startswith('#'):
-            continue
-          Match = re.match("\s*(\w+)\.(\w+)(\.\w+)?\s*\|\s*(.+)", Line)
-          if not Match:
-            raise Exception("Unrecognized line '%s' (File:'%s' Line:%d) !" % (Line, FilePath, LineNum + 1))
-
-          Found   = False
-          InScope = False
-          for Idx, Item in enumerate(self._CfgItemList):
-            if not InScope:
-              if not (Item['embed'].endswith(':START') and Item['embed'].startswith(Match.group(1))):
-                continue
-              InScope = True
-            if Item['cname'] == Match.group(2):
-              Found = True
-              break
-            if Item['embed'].endswith(':END') and Item['embed'].startswith(Match.group(1)):
-              break
-          Name = '%s.%s' % (Match.group(1),Match.group(2))
-          if not Found:
-              ErrItem = Match.group(2) if InScope else Match.group(1)
-              raise Exception("Invalid configuration '%s' in '%s' (File:'%s' Line:%d) !" %
-                    (ErrItem, Name, FilePath, LineNum + 1))
-
-          ValueStr = Match.group(4).strip()
-          if Match.group(3) is not None:
-              # This is a subregion item
-              BitField = Match.group(3)[1:]
-              Found = False
-              if len(Item['subreg']) > 0:
-                  for SubItem in Item['subreg']:
-                      if SubItem['cname'] == '%s_%s' % (Item['cname'], BitField):
-                          Found = True
-                          break
-              if not Found:
-                  raise Exception("Invalid configuration bit field '%s' in '%s.%s' (File:'%s' Line:%d) !" %
-                        (BitField, Name, BitField, FilePath, LineNum + 1))
-
-              try:
-                  Value = int(ValueStr, 16) if ValueStr.startswith('0x') else int(ValueStr, 10)
-              except:
-                  raise Exception("Invalid value '%s' for bit field '%s.%s' (File:'%s' Line:%d) !" %
-                        (ValueStr, Name, BitField, FilePath, LineNum + 1))
-
-              if Value >= 2 ** SubItem['bitlength']:
-                  raise Exception("Invalid configuration bit field value '%s' for '%s.%s' (File:'%s' Line:%d) !" %
-                        (Value, Name, BitField, FilePath, LineNum + 1))
-
-              ValArray = self.ValueToByteArray (Item['value'], Item['length'])
-              self.UpdateBsfBitFields (SubItem, Value, ValArray)
-
-              if Item['value'].startswith('{'):
-                  Item['value'] = '{' + ', '.join('0x%02X' % i for i in ValArray) + '}'
-              else:
-                  BitsValue = ''.join('{0:08b}'.format(i) for i in ValArray[::-1])
-                  Item['value'] = '0x%X' % (int(BitsValue, 2))
-          else:
-              if Item['value'].startswith('{') and  not ValueStr.startswith('{'):
-                  raise Exception("Data array required for '%s' (File:'%s' Line:%d) !" % (Name, FilePath, LineNum + 1))
-              Item['value'] = ValueStr
-
-          if Name == 'PLATFORMID_CFG_DATA.PlatformId':
-              PlatformId = ValueStr
-
-        if PlatformId is None:
-            raise Exception("PLATFORMID_CFG_DATA.PlatformId is missing in file '%s' !" % (DltFile))
-
-        return Error
-
-    def ProcessMultilines (self, String, MaxCharLength):
-        Multilines = ''
-        StringLength = len(String)
-        CurrentStringStart = 0
-        StringOffset = 0
-        BreakLineDict = []
-        if len(String) <= MaxCharLength:
-            while (StringOffset < StringLength):
-                if StringOffset >= 1:
-                    if String[StringOffset - 1] == '\\' and String[StringOffset] == 'n':
-                        BreakLineDict.append (StringOffset + 1)
-                StringOffset += 1
-            if BreakLineDict != []:
-                for Each in BreakLineDict:
-                    Multilines += "  %s\n" % String[CurrentStringStart:Each].lstrip()
-                    CurrentStringStart = Each
-                if StringLength - CurrentStringStart > 0:
-                    Multilines += "  %s\n" % String[CurrentStringStart:].lstrip()
-            else:
-                Multilines = "  %s\n" % String
-        else:
-            NewLineStart = 0
-            NewLineCount = 0
-            FoundSpaceChar = False
-            while (StringOffset < StringLength):
-                if StringOffset >= 1:
-                    if NewLineCount >= MaxCharLength - 1:
-                        if String[StringOffset] == ' ' and StringLength - StringOffset > 10:
-                            BreakLineDict.append (NewLineStart + NewLineCount)
-                            NewLineStart = NewLineStart + NewLineCount
-                            NewLineCount = 0
-                            FoundSpaceChar = True
-                        elif StringOffset == StringLength - 1 and FoundSpaceChar == False:
-                            BreakLineDict.append (0)
-                    if String[StringOffset - 1] == '\\' and String[StringOffset] == 'n':
-                        BreakLineDict.append (StringOffset + 1)
-                        NewLineStart = StringOffset + 1
-                        NewLineCount = 0
-                StringOffset += 1
-                NewLineCount += 1
-            if BreakLineDict != []:
-                BreakLineDict.sort ()
-                for Each in BreakLineDict:
-                    if Each > 0:
-                        Multilines += "  %s\n" % String[CurrentStringStart:Each].lstrip()
-                    CurrentStringStart = Each
-                if StringLength - CurrentStringStart > 0:
-                    Multilines += "  %s\n" % String[CurrentStringStart:].lstrip()
-        return Multilines
-
-    def CreateField (self, Item, Name, Length, Offset, Struct, BsfName, Help, Option, BitsLength = None):
-        PosName    = 28
-        PosComment = 30
-        NameLine=''
-        HelpLine=''
-        OptionLine=''
-
-        if Length == 0 and Name == 'Dummy':
-            return '\n'
-
-        IsArray = False
-        if Length in [1,2,4,8]:
-            Type = "UINT%d" % (Length * 8)
-        else:
-            IsArray = True
-            Type = "UINT8"
-
-        if Item and Item['value'].startswith('{'):
-            Type = "UINT8"
-            IsArray = True
-
-        if Struct != '':
-            Type = Struct
-            if Struct in ['UINT8','UINT16','UINT32','UINT64']:
-                IsArray = True
-                Unit = int(Type[4:]) // 8
-                Length = Length / Unit
-            else:
-                IsArray = False
-
-        if IsArray:
-            Name = Name + '[%d]' % Length
-
-        if len(Type) < PosName:
-            Space1 = PosName - len(Type)
-        else:
-            Space1 = 1
-
-        if BsfName != '':
-            NameLine=" %s\n" % BsfName
-        else:
-            NameLine="\n"
-
-        if Help != '':
-            HelpLine = self.ProcessMultilines (Help, 80)
-
-        if Option != '':
-            OptionLine = self.ProcessMultilines (Option, 80)
-
-        if Offset is None:
-            OffsetStr = '????'
-        else:
-            OffsetStr = '0x%04X' % Offset
-
-        if BitsLength is None:
-            BitsLength = ''
-        else:
-            BitsLength = ' : %d' % BitsLength
-
-        return "\n/** %s%s%s**/\n  %s%s%s%s;\n" % (NameLine, HelpLine, OptionLine, Type, ' ' * Space1, Name, BitsLength)
-
-    def SplitTextBody (self, TextBody):
-        Marker1 = '{ /* _COMMON_STRUCT_START_ */'
-        Marker2 = '; /* _COMMON_STRUCT_END_ */'
-        ComBody = []
-        TxtBody = []
-        IsCommon = False
-        for Line in TextBody:
-            if Line.strip().endswith(Marker1):
-                Line = Line.replace(Marker1[1:], '')
-                IsCommon = True
-            if Line.strip().endswith(Marker2):
-                Line = Line.replace(Marker2[1:], '')
-                if IsCommon:
-                    ComBody.append(Line)
-                    IsCommon = False
-                    continue
-            if IsCommon:
-                ComBody.append(Line)
-            else:
-                TxtBody.append(Line)
-        return ComBody, TxtBody
-
-    def GetStructArrayInfo (self, Input):
-        ArrayStr = Input.split('[')
-        Name     = ArrayStr[0]
-        if len(ArrayStr) > 1:
-            NumStr = ''.join(c for c in ArrayStr[-1] if c.isdigit())
-            NumStr = '1000' if len(NumStr) == 0 else NumStr
-            ArrayNum = int(NumStr)
-        else:
-            ArrayNum = 0
-        return Name, ArrayNum
-
-
-    def PostProcessBody (self, TextBody, IncludeEmbedOnly = True):
-        NewTextBody = []
-        OldTextBody = []
-        IncTextBody = []
-        StructBody  = []
-        IncludeLine = False
-        LineIsDef   = False
-        EmbedFound  = False
-        StructName  = ''
-        ArrayVarName   = ''
-        VariableName   = ''
-        Count          = 0
-        Level          = 0
-        BaseOffset     = 0
-        IsCommonStruct = False
-
-        EmbedStructRe  = re.compile("^/\*\sEMBED_STRUCT:([\w\[\]\*]+):([\w\[\]\*]+):(\w+):(START|END)([\s\d]+)\*/([\s\S]*)")
-        for Line in TextBody:
-            if Line.startswith('#define '):
-                IncTextBody.append(Line)
-                continue
-
-            if not Line.startswith ('/* EMBED_STRUCT:'):
-                Match = False
-            else:
-                Match = EmbedStructRe.match(Line)
-            if Match:
-                ArrayMarker = Match.group(5)
-                if Match.group(4) == 'END':
-                    Level -= 1
-                    if Level == 0:
-                        Line = Match.group(6)
-                else:   # 'START'
-                    Level += 1
-                    if Level == 1:
-                        Line = Match.group(6)
+            marker1 = curr_line[0]
+            marker2 = curr_line[-1]
+            start = 1 if marker1 == '-' else 0
+            pos = curr_line.find(': ')
+            if pos > 0:
+                child = None
+                key = curr_line[start:pos].strip()
+                if curr_line[pos + 2] == '>':
+                    curr[key] = curr_line[pos + 3:]
+                else:
+                    # XXXX: !include / !expand
+                    if '!include ' in curr_line:
+                        self.process_include (line)
+                    elif '!expand ' in curr_line:
+                        if self.allow_template and not self.log_line:
+                            self.process_expand (line)
                     else:
-                        EmbedFound  = True
-                    TagStr = Match.group(3)
-                    if TagStr.startswith('TAG_'):
+                        value_str = curr_line[pos + 2:].strip()
+                        curr[key] = value_str
+                        if self.log_line and value_str[0] == '{':
+                            # expand {FILE: xxxx} format in the log line
+                            if value_str[1:].rstrip().startswith('FILE:'):
+                                value_bytes = expand_file_value (self.yaml_path, value_str)
+                                value_str = bytes_to_bracket_str (value_bytes)
+                                self.full_lines[-1] = line[:indent] + curr_line[:pos + 2] + value_str
+
+            elif marker2 == ':':
+                child = OrderedDict()
+                key = curr_line[start:-1].strip()
+                if key == '$ACTION':
+                    # special virtual nodes, rename to ensure unique key
+                    key = '$ACTION_%04X' % self.index
+                    self.index += 1
+                if key in curr:
+                    if key not in temp_chk:
+                        # check for duplicated keys at same level
+                        temp_chk[key] = 1
+                    else:
+                        raise Exception ("Duplicated item '%s:%s' found !" % (parent_name, key))
+
+                curr[key] = child
+                if self.var_dict is None and key == CFG_YAML.VARIABLE:
+                    self.var_dict = child
+                if self.tmp_tree is None and key == CFG_YAML.TEMPLATE:
+                    self.tmp_tree = child
+                    if self.var_dict:
+                        for each in self.var_dict:
+                            txt = self.var_dict[each]
+                            if type(txt) is str:
+                                self.def_dict['(%s)' % each] = txt
+                if self.tmp_tree and key == CFG_YAML.CONFIGS:
+                    # apply template for the main configs
+                    self.allow_template = True
+            else:
+                child = None
+                # - !include cfg_opt.yaml
+                if '!include ' in curr_line:
+                    self.process_include (line)
+
+        return curr
+
+
+    def load_yaml (self, opt_file):
+        self.var_dict  = None
+        self.yaml_path = os.path.dirname (opt_file)
+        self.load_file (opt_file)
+        yaml_tree     = self.parse ()
+        self.tmp_tree = yaml_tree[CFG_YAML.TEMPLATE]
+        self.cfg_tree = yaml_tree[CFG_YAML.CONFIGS]
+        return self.cfg_tree
+
+
+    def expand_yaml (self, opt_file):
+        self.log_line = True
+        self.load_yaml (opt_file)
+        self.log_line = False
+        text = '\n'.join (self.full_lines)
+        self.full_lines = []
+        return text
+
+
+class DefTemplate(string.Template):
+    idpattern = '\([_A-Z][_A-Z0-9]*\)|[_A-Z][_A-Z0-9]*'
+
+
+class CGenCfgData:
+    STRUCT         = '$STRUCT'
+    bits_width     = {'b':1, 'B':8, 'W':16, 'D':32, 'Q':64}
+    builtin_option = {'$EN_DIS' : [('0', 'Disable'), ('1', 'Enable')]}
+    exclude_struct = ['GPIO_GPP_*', 'GPIO_CFG_DATA', 'GpioConfPad*',  'GpioPinConfig',
+                      'BOOT_OPTION*', 'PLATFORMID_CFG_DATA', '\w+_Half[01]']
+    include_tag    = ['GPIO_CFG_DATA']
+    keyword_set    = set(['name', 'type', 'option', 'help', 'length', 'value', 'order', 'struct', 'condition'])
+
+    def __init__(self):
+        self.initialize ()
+
+
+    def initialize (self):
+        self._cfg_tree  = {}
+        self._tmp_tree  = {}
+        self._cfg_list  = []
+        self._cfg_page  = {'root': {'title': '', 'child': []}}
+        self._cur_page  = ''
+        self._var_dict  = {}
+        self._def_dict  = {}
+        self._yaml_path = ''
+
+
+    @staticmethod
+    def deep_convert_dict (layer):
+        # convert OrderedDict to list + dict
+        new_list = layer
+        if isinstance(layer, OrderedDict):
+            new_list = list (layer.items())
+            for idx, pair in enumerate (new_list):
+                new_node = CGenCfgData.deep_convert_dict (pair[1])
+                new_list[idx] = dict({pair[0] : new_node})
+        return new_list
+
+
+    @staticmethod
+    def deep_convert_list (layer):
+        if isinstance(layer, list):
+            od = OrderedDict({})
+            for each in layer:
+                if isinstance(each, dict):
+                    key = next(iter(each))
+                    od[key] = CGenCfgData.deep_convert_list(each[key])
+            return od
+        else:
+            return layer
+
+
+    @staticmethod
+    def expand_include_files (file_path, cur_dir = ''):
+        if cur_dir == '':
+            cur_dir   = os.path.dirname(file_path)
+            file_path = os.path.basename(file_path)
+
+        input_file_path = os.path.join(cur_dir, file_path)
+        file  = open(input_file_path, "r")
+        lines = file.readlines()
+        file.close()
+
+        new_lines = []
+        for line_num, line in enumerate(lines):
+            match = re.match("^!include\s*(.+)?$", line.strip())
+            if match:
+                inc_path = match.group(1)
+                tmp_path = os.path.join(cur_dir, inc_path)
+                org_path = tmp_path
+                if not os.path.exists(tmp_path):
+                    cur_dir = os.path.join(os.path.dirname (os.path.realpath(__file__)), "..", "..")
+                tmp_path = os.path.join(cur_dir, inc_path)
+                if not os.path.exists(tmp_path):
+                    raise Exception ("ERROR: Cannot open include file '%s'." % org_path)
+                else:
+                    new_lines.append (('# Included from file: %s\n' % inc_path, tmp_path, 0))
+                    new_lines.append (('# %s\n' % ('=' * 80), tmp_path, 0))
+                    new_lines.extend (CGenCfgData.expand_include_files (inc_path, cur_dir))
+            else:
+                new_lines.append ((line, input_file_path, line_num))
+
+        return new_lines
+
+
+    @staticmethod
+    def format_struct_field_name (input, count = 0):
+        name = ''
+        cap  = True
+        if '_' in input:
+            input = input.lower()
+        for each in input:
+          if each == '_':
+              cap = True
+              continue
+          elif cap:
+              each = each.upper()
+              cap  = False
+          name = name + each
+
+        if count > 1:
+            name = '%s[%d]' % (name, count)
+
+        return name
+
+    def get_last_error (self):
+        return ''
+
+
+    def get_variable (self, var, attr = 'value'):
+        if var in self._var_dict:
+            var = self._var_dict[var]
+            return var
+
+        item = self.locate_cfg_item (var, False)
+        if item is None:
+            raise ValueError ("Cannot find variable '%s' !" % var)
+
+        if item:
+            if 'indx' in item:
+                item = self.get_item_by_index (item['indx'])
+            if attr == 'offset':
+                var  = item['offset']
+            elif attr == 'length':
+                var  = item['length']
+            elif attr == 'value':
+                var  = self.get_cfg_item_value (item)
+            else:
+                raise ValueError ("Unsupported variable attribute '%s' !" % attr)
+        return var
+
+
+    def eval (self, expr):
+        def _handler (pattern):
+            if pattern.group(1):
+                target = 1
+            else:
+                target = 2
+            result = self.get_variable(pattern.group(target))
+            if result is None:
+                raise ValueError('Unknown variable $(%s) !' % pattern.group(target))
+            return hex(result)
+
+        expr_eval = ExpressionEval ()
+        if '$' in expr:
+            # replace known variable first
+            expr = re.sub(r'\$\(([_a-zA-Z][\w\.]*)\)|\$([_a-zA-Z][\w\.]*)', _handler, expr)
+        return expr_eval.eval(expr, self.get_variable)
+
+
+    def get_cfg_list (self, page_id = None):
+        if page_id is None:
+            # return full list
+            return self._cfg_list
+        else:
+            # build a new list for items under a page ID
+            cfgs =  [i for i in self._cfg_list if i['cname'] and (i['page'] == page_id)]
+            return cfgs
+
+
+    def get_cfg_page (self):
+        return self._cfg_page
+
+    def get_cfg_item_length (self, item):
+        return item['length']
+
+    def get_cfg_item_value (self, item, array = False):
+        value_str = item['value']
+        length    = item['length']
+        return  self.get_value (value_str, length, array)
+
+
+    def format_value_to_str (self, value, bit_length, old_value = ''):
+        # value is always int
+        length    = (bit_length + 7) // 8
+        fmt = ''
+        if old_value.startswith ('0x'):
+            fmt = '0x'
+        elif old_value and (old_value[0] in ['"', "'", '{']):
+            fmt = old_value[0]
+        else:
+            fmt = ''
+
+        bvalue = value_to_bytearray (value, length)
+        if fmt in ['"', "'"]:
+            svalue = bvalue.rstrip(b'\x00').decode()
+            value_str = fmt + svalue + fmt
+        elif fmt == "{":
+            value_str = '{ ' + ', '.join(['0x%02x' % i for i in bvalue]) + ' }'
+        elif fmt == '0x':
+            hex_len = length * 2
+            if len(old_value) == hex_len + 2:
+                fstr = '0x%%0%dX' % hex_len
+            else:
+                fstr = '0x%X'
+            value_str = fstr % value
+        else:
+            if length <= 2:
+                value_str = '%d'   % value
+            elif length <= 8:
+                value_str = '0x%x' % value
+            else:
+                value_str = '{ ' + ', '.join(['0x%02x' % i for i in bvalue]) + ' }'
+        return value_str
+
+
+    def reformat_value_str (self, value_str, bit_length, old_value = None):
+        value = self.parse_value (value_str, bit_length, False)
+        if old_value is None:
+            old_value = value_str
+        new_value = self.format_value_to_str (value, bit_length, old_value)
+        return new_value
+
+
+    def get_value (self, value_str, bit_length, array = True):
+        value_str = value_str.strip()
+        if value_str[0] == "'" and value_str[-1] == "'" or \
+           value_str[0] == '"' and value_str[-1] == '"':
+            value_str = value_str[1:-1]
+            bvalue = bytearray (value_str.encode())
+            if len(bvalue) == 0:
+                bvalue = bytearray(b'\x00')
+            if array:
+                return  bvalue
+            else:
+                return  bytes_to_value (bvalue)
+        else:
+            if value_str[0] in '{' :
+                value_str = value_str[1:-1].strip()
+            value = 0
+            for each in value_str.split(',')[::-1]:
+                each = each.strip()
+                value = (value << 8) | int(each, 0)
+            if array:
+                length = (bit_length + 7) // 8
+                return value_to_bytearray (value, length)
+            else:
+                return value
+
+
+    def parse_value (self, value_str, bit_length, array = True):
+        length = (bit_length + 7) // 8
+        if check_quote(value_str):
+            value_str = bytes_to_bracket_str(value_str[1:-1].encode())
+        elif (',' in value_str) and (value_str[0] != '{'):
+            value_str = '{ %s }' % value_str
+        if value_str[0] == '{':
+            result = expand_file_value (self._yaml_path, value_str)
+            if len(result) == 0 :
+                bin_list = value_str[1:-1].split(',')
+                value            = 0
+                bit_len          = 0
+                unit_len         = 1
+                for idx, element in enumerate(bin_list):
+                    each = element.strip()
+                    if len(each) == 0:
+                        continue
+
+                    in_bit_field = False
+                    if each[0] in "'" + '"':
+                        each_value = bytearray(each[1:-1], 'utf-8')
+                    elif ':' in each:
+                        match    = re.match("^(.+):(\d+)([b|B|W|D|Q])$", each)
+                        if match is None:
+                            raise SystemExit("Exception: Invald value list format '%s' !" % each)
+                        if match.group(1) == '0' and match.group(2) == '0':
+                            unit_len = CGenCfgData.bits_width[match.group(3)] // 8
+                        cur_bit_len = int(match.group(2)) * CGenCfgData.bits_width[match.group(3)]
+                        value   += ((self.eval(match.group(1)) & (1<<cur_bit_len) - 1)) << bit_len
+                        bit_len += cur_bit_len
+                        each_value = bytearray()
+                        if idx + 1 < len(bin_list):
+                            in_bit_field = True
+                    else:
                         try:
-                            TagVal = int(TagStr[4:], 16)
+                            each_value = value_to_bytearray(self.eval(each.strip()), unit_len)
                         except:
-                            TagVal = -1
-                        if (TagVal >= 0) and (TagVal < self._MinCfgTagId):
-                            IsCommonStruct = True
+                            raise SystemExit("Exception: Value cannot fit into %s bytes !" % (each, unit_len))
 
-                    if Level == 1:
-                        if  IsCommonStruct:
-                            Suffix = ' /* _COMMON_STRUCT_START_ */'
-                        else:
-                            Suffix = ''
-                        StructBody = ['typedef struct {%s' % Suffix]
-                        StructName   = Match.group(1)
-                        StructType   = Match.group(2)
-                        VariableName = Match.group(3)
-                        MatchOffset = re.search('/\*\*\sOffset\s0x([a-fA-F0-9]+)', Line)
-                        if MatchOffset:
-                            Offset = int(MatchOffset.group(1), 16)
-                        else:
-                            Offset = None
-                        IncludeLine = True
-                        BaseOffset  = Offset
+                    if not in_bit_field:
+                        if bit_len > 0:
+                            if bit_len % 8 != 0:
+                                raise SystemExit("Exception: Invalid bit field alignment '%s' !" % value_str)
+                            result.extend(value_to_bytes(value, bit_len // 8))
+                        value   = 0
+                        bit_len = 0
 
-                        ModifiedStructType = StructType.rstrip()
-                        if ModifiedStructType.endswith(']'):
-                            Idx = ModifiedStructType.index('[')
-                            if ArrayMarker != ' ':
-                                # Auto array size
-                                OldTextBody.append('')
-                                ArrayVarName = VariableName
-                                if int(ArrayMarker) == 1000:
-                                    Count        = 1
-                                else:
-                                    Count        = int(ArrayMarker) + 1000
-                            else:
-                                if Count < 1000:
-                                    Count       += 1
+                    result.extend(each_value)
 
-                            VariableTemp = ArrayVarName + '[%d]' % (Count if Count < 1000 else Count - 1000)
-                            OldTextBody[-1] = self.CreateField (None, VariableTemp, 0, Offset, ModifiedStructType[:Idx], '', 'Structure Array', '')
-                        else:
-                            ArrayVarName = ''
-                            OldTextBody.append (self.CreateField (None, VariableName, 0, Offset, ModifiedStructType, '', '', ''))
-
-            if IncludeLine:
-                StructBody.append (Line)
-            else:
-                OldTextBody.append (Line)
-
-            if Match and Match.group(4) == 'END':
-                if Level == 0:
-                    if (StructType != Match.group(2)) or (VariableName != Match.group(3)):
-                        print ("Unmatched struct name '%s' and '%s' !"  % (StructName, Match.group(2)))
-                    else:
-                        if  IsCommonStruct:
-                            Suffix = ' /* _COMMON_STRUCT_END_ */'
-                        else:
-                            Suffix = ''
-                        Line = '} %s;%s\n\n\n' % (StructName, Suffix)
-                        StructBody.append (Line)
-                        if (Line not in NewTextBody) and (Line not in OldTextBody):
-                            NewTextBody.extend (StructBody)
-                    IncludeLine = False
-                    BaseOffset  = 0
-                IsCommonStruct = False
-
-        if not IncludeEmbedOnly:
-            NewTextBody.extend(OldTextBody)
-
-        if EmbedFound:
-            NewTextBody = self.PostProcessBody (NewTextBody, False)
-
-        NewTextBody = IncTextBody + NewTextBody
-        return NewTextBody
-
-    def WriteHeaderFile (self, TxtBody, FileName, Type = 'h'):
-        FileNameDef = os.path.basename(FileName).replace ('.', '_')
-        FileNameDef = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', FileNameDef)
-        FileNameDef = re.sub('([a-z0-9])([A-Z])', r'\1_\2', FileNameDef).upper()
-
-        Lines = []
-        Lines.append ("%s\n"   % GetCopyrightHeader(Type))
-        Lines.append ("#ifndef __%s__\n"   % FileNameDef)
-        Lines.append ("#define __%s__\n\n" % FileNameDef)
-        if Type == 'h':
-            Lines.append ("#pragma pack(1)\n\n")
-        Lines.extend (TxtBody)
-        if Type == 'h':
-            Lines.append ("#pragma pack()\n\n")
-        Lines.append ("#endif\n")
-
-        # Don't rewrite if the contents are the same
-        Create = True
-        if os.path.exists(FileName):
-            HdrFile  = open(FileName, "r")
-            OrgTxt   = HdrFile.read()
-            HdrFile.close()
-
-            NewTxt   = ''.join(Lines)
-            if OrgTxt == NewTxt:
-                Create = False
-
-        if Create:
-            HdrFile  = open(FileName, "w")
-            HdrFile.write (''.join(Lines))
-            HdrFile.close()
-
-    def CreateHeaderFile (self, HdrFileName, ComHdrFileName = ''):
-        CommentLine  = ''
-        LastStruct   = ''
-        NextOffset   = 0
-        SpaceIdx     = 0
-        Offset       = 0
-        FieldIdx     = 0
-        LastFieldIdx = 0
-        ResvOffset   = 0
-        ResvIdx      = 0
-        TxtBody      = []
-        LineBuffer   = []
-        CfgTags      = []
-        InRange      = True
-        LastVisible  = True
-
-        TxtBody.append("typedef struct {\n")
-        for Item in self._CfgItemList:
-            # Search for CFGDATA tags
-            Embed = Item["embed"].upper()
-            if Embed.endswith(':START'):
-                Match = re.match (r'(\w+)_CFG_DATA:TAG_([0-9A-F]+):START', Embed)
-                if Match:
-                    TagName = Match.group(1)
-                    TagId   = int(Match.group(2), 16)
-                    CfgTags.append ((TagId, TagName))
-
-            # Only process visible items
-            NextVisible = LastVisible
-
-            if LastVisible and (Item['header'] == 'OFF'):
-                NextVisible = False
-                ResvOffset  = Item['offset']
-            elif (not LastVisible) and Item['header'] == 'ON':
-                NextVisible = True
-                Name = "ReservedUpdSpace%d" % ResvIdx
-                ResvIdx = ResvIdx + 1
-                TxtBody.append(self.CreateField (Item, Name, Item["offset"] - ResvOffset, ResvOffset, '', '', '', ''))
-                FieldIdx += 1
-
-            if  Offset < Item["offset"]:
-                if LastVisible:
-                    Name = "UnusedUpdSpace%d" % SpaceIdx
-                    LineBuffer.append(self.CreateField (Item, Name, Item["offset"] - Offset, Offset, '', '', '', ''))
-                    FieldIdx += 1
-                SpaceIdx = SpaceIdx + 1
-                Offset   = Item["offset"]
-
-            LastVisible = NextVisible
-
-            Offset = Offset + Item["length"]
-            if LastVisible:
-                for Each in LineBuffer:
-                    TxtBody.append (Each)
-                LineBuffer = []
-                Comment = Item["comment"]
-                Embed = Item["embed"].upper()
-                if Embed.endswith(':START') or Embed.endswith(':END'):
-                    # EMBED_STRUCT: StructName : ItemName : VariableName : START|END
-                    Name, ArrayNum = self.GetStructArrayInfo (Item["struct"])
-                    Remaining = Item["embed"]
-                    if (LastFieldIdx + 1 == FieldIdx) and (LastStruct == Name):
-                        ArrayMarker  = ' '
-                    else:
-                        ArrayMarker  = '%d' % ArrayNum
-                    LastFieldIdx = FieldIdx
-                    LastStruct   = Name
-                    Marker = '/* EMBED_STRUCT:%s:%s%s*/ ' % (Name, Remaining, ArrayMarker)
-                    if Embed.endswith(':START') and Comment != '':
-                        Marker = '/* COMMENT:%s */ \n' % Item["comment"] + Marker
-                else:
-                    if Embed == '':
-                        Marker = ''
-                    else:
-                        self.Error = "Invalid embedded structure format '%s'!\n" % Item["embed"]
-                        return 4
-
-                # Generate bit fields for structure
-                if len(Item['subreg']) > 0 and Item["struct"]:
-                    StructType = Item["struct"]
-                    StructName, ArrayNum = self.GetStructArrayInfo (StructType)
-                    if (LastFieldIdx + 1 == FieldIdx) and (LastStruct == Item["struct"]):
-                        ArrayMarker = ' '
-                    else:
-                        ArrayMarker = '%d' % ArrayNum
-                    TxtBody.append('/* EMBED_STRUCT:%s:%s:%s:START%s*/\n' % (StructName, StructType, Item["cname"], ArrayMarker))
-                    for SubItem in Item['subreg']:
-                        Name = SubItem["cname"]
-                        if Name.startswith(Item["cname"]):
-                            Name = Name[len(Item["cname"]) + 1:]
-                        Line = self.CreateField (SubItem, Name, SubItem["bitunit"], SubItem["offset"], SubItem['struct'], SubItem['name'], SubItem['help'], SubItem['option'], SubItem['bitlength'])
-                        TxtBody.append(Line)
-                    TxtBody.append('/* EMBED_STRUCT:%s:%s:%s:END%s*/\n' % (StructName, StructType, Item["cname"], ArrayMarker))
-                    LastFieldIdx   = FieldIdx
-                    LastStruct     = Item["struct"]
-                    FieldIdx      += 1
-                else:
-                    FieldIdx += 1
-                    Line = Marker + self.CreateField (Item, Item["cname"], Item["length"], Item["offset"], Item['struct'], Item['name'], Item['help'], Item['option'])
-                    TxtBody.append(Line)
-
-        TxtBody.append("}\n\n")
-
-        # Handle the embedded data structure
-        TxtBody  = self.PostProcessBody (TxtBody)
-        ComBody, TxtBody = self.SplitTextBody (TxtBody)
-
-        # Prepare TAG defines
-        PltTagDefTxt = ['\n']
-        ComTagDefTxt = ['\n']
-        for TagId, TagName in sorted(CfgTags):
-            TagLine = '#define  %-30s  0x%03X\n' % ('CDATA_%s_TAG' % TagName, TagId)
-            if TagId < self._MinCfgTagId:
-                # TAG ID < 0x100, it is a generic TAG
-                ComTagDefTxt.append (TagLine)
-            else:
-                PltTagDefTxt.append (TagLine)
-        PltTagDefTxt.append ('\n\n')
-        ComTagDefTxt.append ('\n\n')
-
-        # Write file back
-        self.WriteHeaderFile (PltTagDefTxt + TxtBody, HdrFileName)
-        if ComHdrFileName:
-            self.WriteHeaderFile (ComTagDefTxt + ComBody, ComHdrFileName)
-
-        return 0
-
-    def UpdateConfigItemValue (self, Item, ValueStr):
-        IsArray  = True if Item['value'].startswith('{') else False
-        IsString = True if Item['value'].startswith("'") else False
-        Bytes = self.ValueToByteArray(ValueStr, Item['length'])
-        if IsString:
-            NewValue = "'%s'" % Bytes.decode("utf-8")
-        elif IsArray:
-            NewValue = Bytes2Str(Bytes)
+        elif check_quote (value_str):
+            result = bytearray(value_str[1:-1], 'utf-8')  # Excluding quotes
         else:
-            Fmt = '0x%X' if Item['value'].startswith('0x') else '%d'
-            NewValue = Fmt % Bytes2Val(Bytes)
-        Item['value'] = NewValue
+            result = value_to_bytearray (self.eval(value_str), length)
 
-    def LoadDefaultFromBinaryArray (self, BinDat):
-        BaseOff = 0
-        for Item in self._CfgItemList:
-            if Item['length'] == 0:
-                continue
-            if Item['find']:
-                Offset = BinDat.find (Item['find'].encode())
-                if Offset >= 0:
-                    BaseOff = Offset
-                else:
-                    raise Exception ('Could not find "%s" !' % Item['find'])
-            if Item['offset'] + Item['length'] > len(BinDat):
-                raise Exception ('Mismatching format between DSC and BIN files !')
-            ValStr = Bytes2Str(BinDat[BaseOff + Item['offset']:BaseOff + Item['offset']+Item['length']])
-            self.UpdateConfigItemValue (Item, ValStr)
+        if len(result) < length:
+            result.extend(b'\x00' * (length - len(result)))
+        elif len(result) > length:
+            raise SystemExit ("Exception: Value '%s' is too big to fit into %d bytes !" % (value_str, length))
 
-        self.UpdateDefaultValue()
-
-    def GenerateBinaryArray (self):
-        BinDat = bytearray()
-        Offset = 0
-        for Item in self._CfgItemList:
-            if Item['offset'] > Offset:
-                Gap = Item['offset'] - Offset
-                BinDat.extend(b'\x00' * Gap)
-            BinDat.extend(self.ValueToByteArray(Item['value'], Item['length']))
-            Offset = Item['offset'] + Item['length']
-        return BinDat
-
-    def GenerateBinary (self, BinFileName):
-        BinFile = open(BinFileName, "wb")
-        BinFile.write (self.GenerateBinaryArray ())
-        BinFile.close()
-        return 0
-
-    def GenerateDataIncFile (self, DatIncFileName, BinFile = None):
-        # Put a prefix GUID before CFGDATA so that it can be located later on
-        Prefix   = b'\xa7\xbd\x7f\x73\x20\x1e\x46\xd6\xbe\x8f\x64\x12\x05\x8d\x0a\xa8'
-        if BinFile:
-            Fin = open (BinFile, 'rb')
-            BinDat = Prefix + bytearray(Fin.read())
-            Fin.close()
+        if array:
+            return result
         else:
-            BinDat = Prefix + self.GenerateBinaryArray ()
+            return bytes_to_value(result)
 
-        FileName = os.path.basename(DatIncFileName).upper()
-        FileName = FileName.replace('.', '_')
+        return result
 
-        TxtLines = []
 
-        TxtLines.append ("UINT8  mConfigDataBlob[%d] = {\n" % len(BinDat))
-        Count = 0
-        Line  = ['  ']
-        for Each in BinDat:
-            Line.append('0x%02X, ' % Each)
-            Count = Count + 1
-            if (Count & 0x0F) == 0:
-                Line.append('\n')
-                TxtLines.append (''.join(Line))
-                Line  = ['  ']
-        if len(Line) > 1:
-            TxtLines.append (''.join(Line) + '\n')
+    def get_cfg_item_options (self, item):
+        tmp_list = []
+        if  item['type'] == "Combo":
+            if item['option'] in CGenCfgData.builtin_option:
+                for op_val, op_str in CGenCfgData.builtin_option[item['option']]:
+                    tmp_list.append((op_val, op_str))
+            else:
+                opt_list = item['option'].split(',')
+                for option in opt_list:
+                    option = option.strip()
+                    try:
+                        (op_val, op_str) = option.split(':')
+                    except:
+                        raise SystemExit ("Exception: Invalide option format '%s' !" % option)
+                    tmp_list.append((op_val, op_str))
+        return  tmp_list
 
-        TxtLines.append ("};\n\n")
 
-        self.WriteHeaderFile (TxtLines, DatIncFileName, 'inc')
+    def get_page_title(self, page_id, top = None):
+        if top is None:
+            top = self.get_cfg_page()['root']
+        for node in top['child']:
+            page_key = next(iter(node))
+            if page_id == page_key:
+                return node[page_key]['title']
+            else:
+                result = self.get_page_title (page_id, node[page_key])
+                if result is not None:
+                    return result
+        return None
 
-        return 0
 
-    def CheckCfgData (self):
-        # Check if CfgData contains any duplicated name
-        def  AddItem (Item, ChkList):
-            Name = Item['cname']
-            if Name in ChkList:
-                return Item
-            if Name not in ['Dummy', 'Reserved', 'CfgHeader', 'CondValue']:
-                ChkList.append(Name)
+    def print_pages(self, top=None, level=0):
+        if top is None:
+            top = self.get_cfg_page()['root']
+        for node in top['child']:
+            page_id = next(iter(node))
+            print('%s%s: %s' % ('  ' * level, page_id, node[page_id]['title']))
+            level += 1
+            self.print_pages(node[page_id], level)
+            level -= 1
+
+
+    def get_item_by_index (self, index):
+        return self._cfg_list[index]
+
+
+    def get_item_by_path (self, path):
+        node = self.locate_cfg_item (path)
+        if node:
+            return self.get_item_by_index (node['indx'])
+        else:
             return None
 
-        Duplicate = None
-        ChkList   = []
-        for  Item in self._CfgItemList:
-            Duplicate = AddItem (Item, ChkList)
-            if not Duplicate:
-                for SubItem in Item['subreg']:
-                    Duplicate = AddItem (SubItem, ChkList)
-                    if Duplicate:
-                        break
-            if Duplicate:
-                break
-        if Duplicate:
-            self.Error = "Duplicated CFGDATA '%s' found !\n" % Duplicate['cname']
-            return -1
+    def locate_cfg_path (self, item):
+        def _locate_cfg_path (root, level = 0):
+            # config structure
+            if item is root:
+                return path
+            for key in root:
+                if type(root[key]) is OrderedDict:
+                    level += 1
+                    path.append(key)
+                    ret = _locate_cfg_path (root[key], level)
+                    if ret:
+                        return ret
+                    path.pop()
+            return None
+        path = []
+        return _locate_cfg_path (self._cfg_tree)
+
+
+    def locate_cfg_item (self, path, allow_exp = True):
+        def _locate_cfg_item (root, path, level = 0):
+            if len(path) == level:
+                return root
+            next_root = root.get(path[level], None)
+            if next_root is None:
+                if allow_exp:
+                    raise Exception ('Not a valid CFG config option path: %s' % '.'.join(path[:level+1]))
+                else:
+                    return None
+            return _locate_cfg_item (next_root, path, level + 1)
+
+        path_nodes = path.split('.')
+        return _locate_cfg_item (self._cfg_tree, path_nodes)
+
+
+    def traverse_cfg_tree (self, handler, top = None):
+        def _traverse_cfg_tree (root, level = 0):
+            # config structure
+            for key in root:
+                if type(root[key]) is OrderedDict:
+                    level += 1
+                    handler (key, root[key], level)
+                    _traverse_cfg_tree (root[key], level)
+                    level -= 1
+
+        if top is None:
+            top = self._cfg_tree
+        _traverse_cfg_tree (top)
+
+
+    def print_cfgs(self, root = None, short = True, print_level = 256):
+        def _print_cfgs (name, cfgs, level):
+
+            if 'indx' in cfgs:
+                act_cfg = self.get_item_by_index (cfgs['indx'])
+            else:
+                offset = 0
+                length = 0
+                value  = ''
+                path=''
+                if CGenCfgData.STRUCT in cfgs:
+                    cfg = cfgs[CGenCfgData.STRUCT]
+                    offset = int(cfg['offset'])
+                    length = int(cfg['length'])
+                    if 'value' in cfg:
+                        value = cfg['value']
+                if length == 0:
+                    return
+                act_cfg = dict({'value' : value, 'offset' : offset, 'length' : length})
+            value   = act_cfg['value']
+            bit_len = act_cfg['length']
+            offset  = (act_cfg['offset'] + 7) // 8
+            if value != '':
+                try:
+                    value = self.reformat_value_str (act_cfg['value'], act_cfg['length'])
+                except:
+                    value = act_cfg['value']
+            length  = bit_len // 8
+            bit_len = '(%db)' % bit_len if bit_len % 8 else '' * 4
+            if level <= print_level:
+                if short and len(value) > 40:
+                    value = '%s ... %s' % (value[:20] , value[-20:])
+                print('%04X:%04X%-6s %s%s : %s' % (offset, length, bit_len, '  ' * level, name, value))
+
+        self.traverse_cfg_tree (_print_cfgs)
+
+
+    def build_var_dict (self):
+        def _build_var_dict (name, cfgs, level):
+            if level <= 2:
+                if CGenCfgData.STRUCT in cfgs:
+                    struct_info = cfgs[CGenCfgData.STRUCT]
+                    self._var_dict['_LENGTH_%s_' % name] = struct_info['length'] // 8
+                    self._var_dict['_OFFSET_%s_' % name] = struct_info['offset'] // 8
+
+        self._var_dict  = {}
+        self.traverse_cfg_tree (_build_var_dict)
+        self._var_dict['_LENGTH_'] = self._cfg_tree[CGenCfgData.STRUCT]['length'] // 8
         return 0
 
-    def PrintData (self):
-        for  Item in self._CfgItemList:
-            if not Item['length']:
+
+    def add_cfg_page(self, child, parent, title=''):
+        def _add_cfg_page(cfg_page, child, parent):
+            key = next(iter(cfg_page))
+            if parent == key:
+                cfg_page[key]['child'].append({child: {'title': title,
+                                                       'child': []}})
+                return True
+            else:
+                result = False
+                for each in cfg_page[key]['child']:
+                    if _add_cfg_page(each, child, parent):
+                        result = True
+                        break
+                return result
+
+        return _add_cfg_page(self._cfg_page, child, parent)
+
+
+    def set_cur_page(self, page_str):
+        if not page_str:
+            return
+
+        if ',' in page_str:
+            page_list = page_str.split(',')
+        else:
+            page_list = [page_str]
+        for page_str in page_list:
+            parts = page_str.split(':')
+            if len(parts) in [1, 3]:
+                page = parts[0].strip()
+                if len(parts) == 3:
+                    # it is a new page definition, add it into tree
+                    parent = parts[1] if parts[1] else 'root'
+                    parent = parent.strip()
+                    if parts[2][0] == '"' and parts[2][-1] == '"':
+                        parts[2] = parts[2][1:-1]
+
+                    if not self.add_cfg_page(page, parent, parts[2]):
+                        raise SystemExit("Error: Cannot find parent page '%s'!" % parent)
+            else:
+                raise SystemExit("Error: Invalid page format '%s' !" % page_str)
+            self._cur_page = page
+
+
+    def extend_variable (self, line):
+        # replace all variables
+        if line == '':
+            return line
+        loop = 2
+        while loop > 0:
+            line_after = DefTemplate(line).safe_substitute(self._def_dict)
+            if line == line_after:
+                break
+            loop -= 1
+            line = line_after
+        return line_after
+
+    def reformat_number_per_type (self, itype, value):
+        if check_quote(value) or value.startswith('{'):
+            return value
+        parts = itype.split(',')
+        if len(parts) > 3 and parts[0] == 'EditNum':
+            num_fmt = parts[1].strip()
+        else:
+            num_fmt = ''
+        if num_fmt == 'HEX' and not value.startswith('0x'):
+            value = '0x%X' % int(value, 10)
+        elif num_fmt == 'DEC' and value.startswith('0x'):
+            value = '%d' % int(value, 16)
+        return value
+
+    def add_cfg_item(self, name, item, offset, path):
+
+        self.set_cur_page (item.get('page', ''))
+
+        if name[0] == '$':
+            # skip all virtual node
+            return 0
+
+
+        if not set(item).issubset(CGenCfgData.keyword_set):
+            for each in list(item):
+                if each not in CGenCfgData.keyword_set:
+                    raise Exception ("Invalid attribute '%s' for '%s'!" % (each, '.'.join(path)))
+
+        length = item.get('length', 0)
+        if type(length) is str:
+            match = re.match("^(\d+)([b|B|W|D|Q])([B|W|D|Q]?)\s*$", length)
+            if match:
+                unit_len = CGenCfgData.bits_width[match.group(2)]
+                length = int(match.group(1), 10) * unit_len
+            else:
+                try:
+                    length = int(length, 0) * 8
+                except:
+                    raise Exception ("Invalid length field '%s' for '%s' !" % (length, '.'.join(path)))
+
+                if offset % 8 > 0:
+                    raise Exception ("Invalid alignment for field '%s' for '%s' !" % (name, '.'.join(path)))
+        else:
+            # define is length in bytes
+            length = length * 8
+
+        if not name.isidentifier():
+            raise Exception ("Invalid config name '%s' for '%s' !" % (name, '.'.join(path)))
+
+
+        itype = str(item.get('type', 'Reserved'))
+        value = str(item.get('value', ''))
+        if value:
+            if not (check_quote(value) or value.startswith('{')):
+                if ',' in value:
+                    value = '{ %s }' % value
+                else:
+                    value = self.reformat_number_per_type (itype, value)
+
+        help = str(item.get('help', ''))
+        if '\n' in help:
+            help = ' '.join ([i.strip() for i in help.splitlines()])
+
+        option = str(item.get('option', ''))
+        if '\n' in option:
+            option = ' '.join ([i.strip() for i in option.splitlines()])
+
+        # extend variables for value and condition
+        condition = str(item.get('condition', ''))
+        if condition:
+            condition = self.extend_variable (condition)
+        value     = self.extend_variable (value)
+
+        order = str(item.get('order', ''))
+        if order:
+            if '.' in order:
+                (major, minor) = order.split('.')
+                order = int (major, 16)
+            else:
+                order = int (order, 16)
+        else:
+            order = offset
+
+        cfg_item = dict()
+        cfg_item['length'] = length
+        cfg_item['offset'] = offset
+        cfg_item['value']  = value
+        cfg_item['type']   = itype
+        cfg_item['cname']  = str(name)
+        cfg_item['name']   = str(item.get('name', ''))
+        cfg_item['help']   = help
+        cfg_item['option'] = option
+        cfg_item['page']   = self._cur_page
+        cfg_item['order']  = order
+        cfg_item['path']   = '.'.join(path)
+        cfg_item['condition']  = condition
+        if 'struct' in item:
+            cfg_item['struct'] = item['struct']
+        self._cfg_list.append(cfg_item)
+
+        item['indx']       = len(self._cfg_list) - 1
+
+        # remove used info for reducing pkl size
+        item.pop('option', None)
+        item.pop('condition', None)
+        item.pop('help', None)
+        item.pop('name', None)
+        item.pop('page', None)
+
+        return length
+
+
+    def build_cfg_list (self, cfg_name ='', top = None, path = [], info = {'offset': 0}):
+        if top is None:
+            top = self._cfg_tree
+
+        start = info['offset']
+        is_leaf = True
+        for key in top:
+            path.append(key)
+            if type(top[key]) is OrderedDict:
+                is_leaf = False
+                self.build_cfg_list(key, top[key], path, info)
+            path.pop()
+
+        if is_leaf:
+            length = self.add_cfg_item(cfg_name, top, info['offset'], path)
+            info['offset'] += length
+        elif cfg_name == '' or (cfg_name and cfg_name[0] != '$'):
+            # check first element for struct
+            first = next(iter(top))
+            struct_str = CGenCfgData.STRUCT
+            if first != struct_str:
+                struct_node = OrderedDict({})
+                top[struct_str] = struct_node
+                top.move_to_end (struct_str, False)
+            else:
+                struct_node = top[struct_str]
+            struct_node['offset'] = start
+            struct_node['length'] = info['offset'] - start
+            if struct_node['length'] % 8 != 0:
+                raise SystemExit("Error: Bits length not aligned for %s !" % str(path))
+
+
+    def get_field_value (self, top = None):
+        def _get_field_value (name, cfgs, level):
+            if 'indx' in cfgs:
+                act_cfg = self.get_item_by_index (cfgs['indx'])
+                if act_cfg['length'] == 0:
+                    return
+                value = self.get_value (act_cfg['value'], act_cfg['length'], False)
+                set_bits_to_bytes (result, act_cfg['offset'] - struct_info['offset'], act_cfg['length'], value)
+
+        if top is None:
+            top = self._cfg_tree
+        struct_info = top[CGenCfgData.STRUCT]
+        result = bytearray ((struct_info['length'] + 7) // 8)
+        self.traverse_cfg_tree (_get_field_value, top)
+        return  result
+
+
+    def set_field_value (self, top, value_bytes, force = False):
+        def _set_field_value (name, cfgs, level):
+            if 'indx' not in cfgs:
+                return
+            act_cfg = self.get_item_by_index (cfgs['indx'])
+            if force or act_cfg['value'] == '':
+                value = get_bits_from_bytes (full_bytes, act_cfg['offset'] - struct_info['offset'], act_cfg['length'])
+                act_val = act_cfg['value']
+                if act_val == '':
+                    act_val = '%d' % value
+                act_val = self.reformat_number_per_type (act_cfg['type'], act_val)
+                act_cfg['value'] = self.format_value_to_str (value, act_cfg['length'], act_val)
+
+        if 'indx' in top:
+            # it is config option
+            value   = bytes_to_value (value_bytes)
+            act_cfg = self.get_item_by_index (top['indx'])
+            act_cfg['value'] = self.format_value_to_str (value, act_cfg['length'], act_cfg['value'])
+        else:
+            # it is structure
+            struct_info = top[CGenCfgData.STRUCT]
+            length = struct_info['length'] // 8
+            full_bytes = bytearray(value_bytes[:length])
+            if len(full_bytes) < length:
+                full_bytes.extend(bytearray(length - len(value_bytes)))
+            self.traverse_cfg_tree (_set_field_value, top)
+
+
+    def update_def_value (self):
+        def _update_def_value (name, cfgs, level):
+            if 'indx' in cfgs:
+                act_cfg = self.get_item_by_index (cfgs['indx'])
+                if act_cfg['value'] != '' and act_cfg['length'] > 0:
+                    try:
+                        act_cfg['value'] = self.reformat_value_str (act_cfg['value'], act_cfg['length'])
+                    except:
+                        raise Exception ("Invalid value expression '%s' for '%s' !" % (act_cfg['value'], act_cfg['path']))
+            else:
+                if CGenCfgData.STRUCT in cfgs and 'value' in cfgs[CGenCfgData.STRUCT]:
+                    curr = cfgs[CGenCfgData.STRUCT]
+                    value_bytes = value_to_bytearray (self.eval(curr['value']), (curr['length'] + 7) // 8)
+                    self.set_field_value (cfgs, value_bytes)
+
+        self.traverse_cfg_tree (_update_def_value, self._cfg_tree)
+
+
+    def evaluate_condition (self, item):
+        expr = item['condition']
+        result = self.parse_value (expr, 1, False)
+        return result
+
+
+    def load_default_from_bin (self, bin_data):
+        self.set_field_value(self._cfg_tree, bin_data, True)
+
+
+    def generate_binary_array (self):
+        return self.get_field_value()
+
+    def generate_binary (self, bin_file_name):
+        bin_file = open(bin_file_name, "wb")
+        bin_file.write (self.generate_binary_array ())
+        bin_file.close()
+        return 0
+
+    def write_delta_file (self, out_file, platform_id, out_lines):
+        dlt_fd = open (out_file, "w")
+        dlt_fd.write ("%s\n"   % get_copyright_header('dlt', True))
+        dlt_fd.write ('#\n')
+        dlt_fd.write ('# Delta configuration values for platform ID 0x%04X\n' % platform_id)
+        dlt_fd.write ('#\n\n')
+        for line in out_lines:
+            dlt_fd.write ('%s\n' % line)
+        dlt_fd.close()
+
+
+    def override_default_value(self, dlt_file):
+        error = 0
+        dlt_lines = CGenCfgData.expand_include_files(dlt_file)
+
+        platform_id = None
+        for line, file_path, line_num in dlt_lines:
+            line = line.strip()
+            if not line or line.startswith('#'):
                 continue
-            print ("%-10s @Offset:0x%04X  Len:%3d  Val:%s" % (Item['cname'], Item['offset'], Item['length'], Item['value']))
-            for  SubItem in Item['subreg']:
-                print ("  %-20s  BitOff:0x%04X  BitLen:%-3d  Val:%s" % (SubItem['cname'], SubItem['bitoffset'], SubItem['bitlength'], SubItem['value']))
+            match = re.match("\s*([\w\.]+)\s*\|\s*(.+)", line)
+            if not match:
+                raise Exception("Unrecognized line '%s' (File:'%s' Line:%d) !" %
+                                (line, file_path, line_num + 1))
 
-    def FormatArrayValue (self, Input, Length):
-        Dat = self.ValueToByteArray(Input, Length)
-        return ','.join('0x%02X' % Each for Each in Dat)
+            path      = match.group(1)
+            value_str = match.group(2)
+            top  = self.locate_cfg_item (path)
+            if not top:
+                raise Exception(
+                    "Invalid configuration '%s' (File:'%s' Line:%d) !" %
+                    (path, file_path, line_num + 1))
 
-    def GetItemOptionList (self, Item):
-        TmpList = []
-        if  Item['type'] == "Combo":
-            if not Item['option'] in self._BuidinOption:
-                OptList = Item['option'].split(',')
-                for Option in OptList:
-                    Option = Option.strip()
-                    try:
-                        (OpVal, OpStr) = Option.split(':')
-                    except:
-                        raise Exception("Invalide option format '%s' !" % Option)
-                    TmpList.append((OpVal, OpStr))
-        return  TmpList
-
-    def WriteBsfStruct  (self, BsfFd, Item):
-        if Item['type'] == "None":
-            Space = "gPlatformFspPkgTokenSpaceGuid"
-        else:
-            Space = Item['space']
-        Line = "    $%s_%s" % (Space, Item['cname'])
-        Match = re.match("\s*(\{.+\})\s*", Item['value'])
-        if Match:
-            DefaultValue = self.FormatArrayValue (Match.group(1).strip(), Item['length'])
-        else:
-            DefaultValue = Item['value'].strip()
-        if 'bitlength' in Item:
-            if Item['bitlength']:
-                BsfFd.write("    %s%s%4d bits     $_DEFAULT_ = %s\n" % (Line, ' ' * (64 - len(Line)), Item['bitlength'], DefaultValue))
-        else:
-            if Item['length']:
-                BsfFd.write("    %s%s%4d bytes    $_DEFAULT_ = %s\n" % (Line, ' ' * (64 - len(Line)), Item['length'], DefaultValue))
-
-        return self.GetItemOptionList (Item)
-
-    def GetBsfOption (self, OptionName):
-        if OptionName in self._CfgOptsDict:
-            return self._CfgOptsDict[OptionName]
-        else:
-            return OptionName
-
-    def WriteBsfOption  (self, BsfFd, Item):
-        PcdName   = Item['space'] + '_' + Item['cname']
-        WriteHelp = 0
-        BsfLines  = []
-        if Item['type'] == "Combo":
-            if Item['option'] in self._BuidinOption:
-                Options = self._BuidinOption[Item['option']]
+            if 'indx' in top:
+                act_cfg = self.get_item_by_index (top['indx'])
+                bit_len = act_cfg['length']
             else:
-                Options = self.GetBsfOption (PcdName)
-            BsfLines.append ('    %s $%s, "%s", &%s,\n' % (Item['type'], PcdName, Item['name'], Options))
-            WriteHelp = 1
-        elif Item['type'].startswith("EditNum"):
-            Match = re.match("EditNum\s*,\s*(HEX|DEC)\s*,\s*\((\d+|0x[0-9A-Fa-f]+)\s*,\s*(\d+|0x[0-9A-Fa-f]+)\)", Item['type'])
-            if Match:
-                BsfLines.append ('    EditNum $%s, "%s", %s,\n' % (PcdName, Item['name'], Match.group(1)))
-                WriteHelp = 2
-        elif Item['type'].startswith("EditText"):
-            BsfLines.append ('    %s $%s, "%s",\n' % (Item['type'], PcdName, Item['name']))
-            WriteHelp = 1
-        elif Item['type'] == "Table":
-            Columns = Item['option'].split(',')
-            if len(Columns) != 0:
-                BsfLines.append('    %s $%s "%s",' % (Item['type'], PcdName, Item['name']))
-                for Col in Columns:
-                    Fmt = Col.split(':')
-                    if len(Fmt) != 3:
-                        raise Exception("Column format '%s' is invalid !" % Fmt)
-                    try:
-                        Dtype = int(Fmt[1].strip())
-                    except:
-                        raise Exception("Column size '%s' is invalid !" % Fmt[1])
-                    BsfLines.append('\n        Column "%s", %d bytes, %s' % (Fmt[0].strip(), Dtype, Fmt[2].strip()))
-                BsfLines.append(',\n')
-                WriteHelp = 1
+                struct_info = top[CGenCfgData.STRUCT]
+                bit_len     = struct_info['length']
 
-        if WriteHelp  > 0:
-            HelpLines = Item['help'].split('\\n\\r')
-            FirstLine = True
-            for HelpLine in HelpLines:
-                if FirstLine:
-                    FirstLine = False
-                    BsfLines.append('        Help "%s"\n' % (HelpLine))
-                else:
-                    BsfLines.append('             "%s"\n' % (HelpLine))
-            if WriteHelp == 2:
-                BsfLines.append('             "Valid range: %s ~ %s"\n' % (Match.group(2), Match.group(3)))
+            value_bytes = self.parse_value (value_str, bit_len)
+            self.set_field_value (top, value_bytes, True)
 
-            if len(Item['condition']) > 4:
-                CondList = Item['condition'].split(',')
-                Idx = 0
-                for Cond in CondList:
-                    Cond = Cond.strip()
-                    if   Cond.startswith('#'):
-                        BsfLines.insert(Idx, Cond + '\n')
-                        Idx += 1
-                    elif Cond.startswith('@#'):
-                        BsfLines.append(Cond[1:] + '\n')
+            if path == 'PLATFORMID_CFG_DATA.PlatformId':
+                platform_id = value_str
 
-        for Line in BsfLines:
-            BsfFd.write (Line)
+        if platform_id is None:
+            raise Exception(
+                "PLATFORMID_CFG_DATA.PlatformId is missing in file '%s' !" %
+                (dlt_file))
 
-    def WriteBsfPages (self, PageTree, BsfFd):
-        BsfFd.write('\n')
-        Key = next(iter(PageTree))
-        for Page in PageTree[Key]:
-            PageName = next(iter(Page))
-            BsfFd.write('Page "%s"\n' % self._CfgPageDict[PageName])
-            if len(PageTree[Key]):
-                self.WriteBsfPages (Page, BsfFd)
+        return error
 
-            BsfItems = []
-            for Item in self._CfgItemList:
-                if Item['name'] != '':
-                    if Item['page'] != PageName:
-                        continue
-                    if len(Item['subreg']) > 0:
-                        for SubItem in Item['subreg']:
-                            if SubItem['name'] != '':
-                                BsfItems.append(SubItem)
-                    else:
-                        BsfItems.append(Item)
 
-            BsfItems.sort(key=lambda x: x['order'])
+    def generate_delta_file_from_bin (self, delta_file, old_data, new_data, full=False):
+        self.load_default_from_bin (new_data)
+        lines = []
+        tag_name = ''
+        level = 0
+        platform_id = None
+        def_platform_id = 0
 
-            for Item in BsfItems:
-                self.WriteBsfOption (BsfFd, Item)
-            BsfFd.write("EndPage\n\n")
+        for item in self._cfg_list:
+            old_val = get_bits_from_bytes (old_data, item['offset'],  item['length'])
+            new_val = get_bits_from_bytes (new_data, item['offset'],  item['length'])
 
-    def GenerateBsfFile (self, BsfFile):
+            full_name = item['path']
+            if 'PLATFORMID_CFG_DATA.PlatformId' == full_name:
+                def_platform_id = old_val
+                platform_id     = new_val
+            elif item['type'] != 'Reserved' and ((new_val != old_val) or full):
+                val_str = self.reformat_value_str (item['value'], item['length'])
+                text = '%-40s | %s' % (full_name, val_str)
+                lines.append(text)
 
-        if BsfFile == '':
-            self.Error = "BSF output file '%s' is invalid" % BsfFile
-            return 1
+        if platform_id is None or def_platform_id == platform_id:
+            platform_id = def_platform_id
 
-        Error = 0
-        OptionDict = {}
-        BsfFd      = open(BsfFile, "w")
-        BsfFd.write("%s\n" % GetCopyrightHeader('bsf'))
-        BsfFd.write("%s\n" % self._GlobalDataDef)
-        BsfFd.write("StructDef\n")
-        NextOffset = -1
-        for Item in self._CfgItemList:
-            if Item['find'] != '':
-                BsfFd.write('\n    Find "%s"\n' % Item['find'])
-                NextOffset = Item['offset'] + Item['length']
-            if Item['name'] != '':
-                if NextOffset != Item['offset']:
-                    BsfFd.write("        Skip %d bytes\n" % (Item['offset'] - NextOffset))
-                if len(Item['subreg']) > 0:
-                    NextOffset =  Item['offset']
-                    BitsOffset =  NextOffset * 8
-                    for SubItem in Item['subreg']:
-                        BitsOffset += SubItem['bitlength']
-                        if SubItem['name'] == '':
-                            if 'bitlength' in SubItem:
-                                BsfFd.write("        Skip %d bits\n" % (SubItem['bitlength']))
-                            else:
-                                BsfFd.write("        Skip %d bytes\n" % (SubItem['length']))
-                        else:
-                            Options = self.WriteBsfStruct(BsfFd, SubItem)
-                            if len(Options) > 0:
-                                OptionDict[SubItem['space']+'_'+SubItem['cname']] = Options
+        lines.insert(0, '%-40s | %s\n\n' %
+                     ('PLATFORMID_CFG_DATA.PlatformId', '0x%04X' % platform_id))
 
-                    NextBitsOffset = (Item['offset'] + Item['length']) * 8
-                    if NextBitsOffset > BitsOffset:
-                        BitsGap     = NextBitsOffset - BitsOffset
-                        BitsRemain  = BitsGap % 8
-                        if BitsRemain:
-                            BsfFd.write("        Skip %d bits\n" % BitsRemain)
-                            BitsGap -= BitsRemain
-                        BytesRemain = BitsGap // 8
-                        if BytesRemain:
-                            BsfFd.write("        Skip %d bytes\n" % BytesRemain)
-                    NextOffset = Item['offset'] + Item['length']
-                else:
-                    NextOffset = Item['offset'] + Item['length']
-                    Options = self.WriteBsfStruct(BsfFd, Item)
-                    if len(Options) > 0:
-                        OptionDict[Item['space']+'_'+Item['cname']] = Options
-        BsfFd.write("\nEndStruct\n\n")
+        self.write_delta_file (delta_file, platform_id, lines)
+        return 0
 
-        BsfFd.write("%s" % self._BuidinOptionTxt)
 
-        NameList   = []
-        OptionList = []
-        for Each in sorted(OptionDict):
-            if OptionDict[Each] not in OptionList:
-                NameList.append(Each)
-                OptionList.append (OptionDict[Each])
-                BsfFd.write("List &%s\n" % Each)
-                for Item in OptionDict[Each]:
-                    BsfFd.write('    Selection %s , "%s"\n' % (self.EvaluateExpress(Item[0]), Item[1]))
-                BsfFd.write("EndList\n\n")
-            else:
-                # Item has idential options as other item
-                # Try to reuse the previous options instead
-                Idx = OptionList.index (OptionDict[Each])
-                self._CfgOptsDict[Each] = NameList[Idx]
+    def generate_delta_file(self, delta_file, bin_file, bin_file2, full=False):
+        fd = open (bin_file, 'rb')
+        new_data = bytearray(fd.read())
+        fd.close()
 
-        BsfFd.write("BeginInfoBlock\n")
-        BsfFd.write('    PPVer       "%s"\n' % (self._CfgBlkDict['ver']))
-        BsfFd.write('    Description "%s"\n' % (self._CfgBlkDict['name']))
-        BsfFd.write("EndInfoBlock\n\n")
-
-        self.WriteBsfPages (self._CfgPageTree, BsfFd)
-
-        BsfFd.close()
-        return  Error
-
-    def WriteDeltaLine (self, OutLines, Name, ValStr, IsArray):
-        if IsArray:
-            Output = '%s | { %s }' % (Name, ValStr)
+        if bin_file2 == '':
+            old_data = self.generate_binary_array()
         else:
-            Output = '%s | 0x%X' % (Name, Array2Val(ValStr))
-        OutLines.append (Output)
+            old_data = new_data
+            fd = open (bin_file2, 'rb')
+            new_data = bytearray(fd.read())
+            fd.close()
 
-    def WriteDeltaFile (self, OutFile, PlatformId, OutLines):
-        DltFd = open (OutFile, "w")
-        DltFd.write ("%s\n"   % GetCopyrightHeader('dlt', True))
-        DltFd.write ('#\n')
-        DltFd.write ('# Delta configuration values for platform ID 0x%04X\n' % PlatformId)
-        DltFd.write ('#\n\n')
-        for Line in OutLines:
-            DltFd.write ('%s\n' % Line)
-        DltFd.close()
+        return self.generate_delta_file_from_bin (delta_file, old_data, new_data, full)
 
-    def GenerateDeltaFile(self, DeltaFile, BinFile, Full=False):
-        Fd = open (BinFile, 'rb')
-        NewData = bytearray(Fd.read())
-        Fd.close()
-        OldData = self.GenerateBinaryArray()
-        return self.GenerateDeltaFileFromBin (DeltaFile, OldData, NewData, Full)
 
-    def GenerateDeltaFileFromBin (self, DeltaFile, OldData, NewData, Full=False):
-        self.LoadDefaultFromBinaryArray (NewData)
-        Lines = []
-        TagName = ''
-        Level = 0
-        PlatformId = None
-        DefPlatformId = 0
+    def prepare_marshal (self, is_save):
+        if is_save:
+            # Ordered dict is not marshallable, convert to list
+            self._cfg_tree = CGenCfgData.deep_convert_dict (self._cfg_tree)
+        else:
+            # Revert it back
+            self._cfg_tree = CGenCfgData.deep_convert_list (self._cfg_tree)
 
-        for Item in self._CfgItemList:
-            if Level == 0 and Item['embed'].endswith(':START'):
-                TagName = Item['embed'].split(':')[0]
-                Level += 1
+    def generate_yml_file (self, in_file, out_file):
+        cfg_yaml = CFG_YAML()
+        text = cfg_yaml.expand_yaml (in_file)
+        yml_fd = open(out_file, "w")
+        yml_fd.write (text)
+        yml_fd.close ()
+        return 0
 
-            Start = Item['offset']
-            End = Start + Item['length']
-            FullName = '%s.%s' % (TagName, Item['cname'])
-            if 'PLATFORMID_CFG_DATA.PlatformId' == FullName:
-                DefPlatformId = Bytes2Val(OldData[Start:End])
 
-            if NewData[Start:End] != OldData[Start:End] or (
-                    Full and Item['name'] and (Item['cname'] != 'Dummy')):
-                if TagName == '':
+    def write_cfg_header_file (self, hdr_file_name, tag_mode, tag_dict, struct_list):
+        lines = []
+        lines.append ('\n\n')
+        tag_list = sorted(list(tag_dict.items()), key=lambda x: x[1])
+        for tagname, tagval in tag_list:
+            if (tag_mode == 0 and tagval >= 0x100) or (tag_mode == 1 and tagval < 0x100):
+                continue
+            lines.append ('#define    %-30s 0x%03X\n' % ('CDATA_%s_TAG' % tagname[:-9], tagval))
+        lines.append ('\n\n')
+
+        name_dict = {}
+        new_dict  = {}
+        for each in struct_list:
+            if (tag_mode == 0 and each['tag'] >= 0x100) or (tag_mode == 1 and each['tag'] < 0x100):
+                continue
+            new_dict[each['name']]  = (each['alias'], each['count'])
+            if each['alias'] not in name_dict:
+                name_dict[each['alias']] = 1
+                lines.extend(self.create_struct (each['alias'], each['node'], new_dict))
+
+
+        self.write_header_file (lines, hdr_file_name)
+
+
+    def write_header_file (self, txt_body, file_name, type = 'h'):
+        file_name_def = os.path.basename(file_name).replace ('.', '_')
+        file_name_def = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', file_name_def)
+        file_name_def = re.sub('([a-z0-9])([A-Z])', r'\1_\2', file_name_def).upper()
+
+        lines = []
+        lines.append ("%s\n"   % get_copyright_header(type))
+        lines.append ("#ifndef __%s__\n"   % file_name_def)
+        lines.append ("#define __%s__\n\n" % file_name_def)
+        if type == 'h':
+            lines.append ("#pragma pack(1)\n\n")
+        lines.extend (txt_body)
+        if type == 'h':
+            lines.append ("#pragma pack()\n\n")
+        lines.append ("#endif\n")
+
+        # Don't rewrite if the contents are the same
+        create = True
+        if os.path.exists(file_name):
+            hdr_file  = open(file_name, "r")
+            org_txt   = hdr_file.read()
+            hdr_file.close()
+
+            new_txt   = ''.join(lines)
+            if org_txt == new_txt:
+                create = False
+
+        if create:
+            hdr_file  = open(file_name, "w")
+            hdr_file.write (''.join(lines))
+            hdr_file.close()
+
+
+    def generate_data_inc_file (self, dat_inc_file_name, bin_file = None):
+        # Put a prefix GUID before CFGDATA so that it can be located later on
+        prefix   = b'\xa7\xbd\x7f\x73\x20\x1e\x46\xd6\xbe\x8f\x64\x12\x05\x8d\x0a\xa8'
+        if bin_file:
+            fin = open (bin_file, 'rb')
+            bin_dat = prefix + bytearray(fin.read())
+            fin.close()
+        else:
+            bin_dat = prefix + self.generate_binary_array ()
+
+        file_name = os.path.basename(dat_inc_file_name).upper()
+        file_name = file_name.replace('.', '_')
+
+        txt_lines = []
+
+        txt_lines.append ("UINT8  mConfigDataBlob[%d] = {\n" % len(bin_dat))
+        count = 0
+        line  = ['  ']
+        for each in bin_dat:
+            line.append('0x%02X, ' % each)
+            count = count + 1
+            if (count & 0x0F) == 0:
+                line.append('\n')
+                txt_lines.append (''.join(line))
+                line  = ['  ']
+        if len(line) > 1:
+            txt_lines.append (''.join(line) + '\n')
+
+        txt_lines.append ("};\n\n")
+
+        self.write_header_file (txt_lines, dat_inc_file_name, 'inc')
+
+        return 0
+
+
+    def get_struct_array_info (self, input):
+        parts = input.split(':')
+        if len(parts) > 1:
+           var   = parts[1]
+           input = parts[0]
+        else:
+           var = ''
+        array_str = input.split('[')
+        name     = array_str[0]
+        if len(array_str) > 1:
+            num_str = ''.join(c for c in array_str[-1] if c.isdigit())
+            num_str = '1000' if len(num_str) == 0 else num_str
+            array_num = int(num_str)
+        else:
+            array_num = 0
+        return name, array_num, var
+
+
+    def process_multilines (self, string, max_char_length):
+        multilines = ''
+        string_length = len(string)
+        current_string_start = 0
+        string_offset = 0
+        break_line_dict = []
+        if len(string) <= max_char_length:
+            while (string_offset < string_length):
+                if string_offset >= 1:
+                    if string[string_offset - 1] == '\\' and string[string_offset] == 'n':
+                        break_line_dict.append (string_offset + 1)
+                string_offset += 1
+            if break_line_dict != []:
+                for each in break_line_dict:
+                    multilines += "  %s\n" % string[current_string_start:each].lstrip()
+                    current_string_start = each
+                if string_length - current_string_start > 0:
+                    multilines += "  %s\n" % string[current_string_start:].lstrip()
+            else:
+                multilines = "  %s\n" % string
+        else:
+            new_line_start = 0
+            new_line_count = 0
+            found_space_char = False
+            while (string_offset < string_length):
+                if string_offset >= 1:
+                    if new_line_count >= max_char_length - 1:
+                        if string[string_offset] == ' ' and string_length - string_offset > 10:
+                            break_line_dict.append (new_line_start + new_line_count)
+                            new_line_start = new_line_start + new_line_count
+                            new_line_count = 0
+                            found_space_char = True
+                        elif string_offset == string_length - 1 and found_space_char == False:
+                            break_line_dict.append (0)
+                    if string[string_offset - 1] == '\\' and string[string_offset] == 'n':
+                        break_line_dict.append (string_offset + 1)
+                        new_line_start = string_offset + 1
+                        new_line_count = 0
+                string_offset += 1
+                new_line_count += 1
+            if break_line_dict != []:
+                break_line_dict.sort ()
+                for each in break_line_dict:
+                    if each > 0:
+                        multilines += "  %s\n" % string[current_string_start:each].lstrip()
+                    current_string_start = each
+                if string_length - current_string_start > 0:
+                    multilines += "  %s\n" % string[current_string_start:].lstrip()
+        return multilines
+
+
+    def create_field (self, item, name, length, offset, struct, bsf_name, help, option, bits_length = None):
+        pos_name    = 28
+        pos_comment = 30
+        name_line=''
+        help_line=''
+        option_line=''
+
+        if length == 0 and name == 'dummy':
+            return '\n'
+
+        if bits_length == 0:
+            return '\n'
+
+        is_array = False
+        if length in [1,2,4,8]:
+            type = "UINT%d" % (length * 8)
+        else:
+            is_array = True
+            type = "UINT8"
+
+        if item and item['value'].startswith('{'):
+            type = "UINT8"
+            is_array = True
+
+        if struct != '':
+            struct_base = struct.rstrip('*')
+            name = '*' * (len(struct) - len(struct_base)) + name
+            struct = struct_base
+            type  = struct
+            if struct in ['UINT8','UINT16','UINT32','UINT64']:
+                is_array = True
+                unit = int(type[4:]) // 8
+                length = length / unit
+            else:
+                is_array = False
+
+        if is_array:
+            name = name + '[%d]' % length
+
+        if len(type) < pos_name:
+            space1 = pos_name - len(type)
+        else:
+            space1 = 1
+
+        if bsf_name != '':
+            name_line=" %s\n" % bsf_name
+        else:
+            name_line="N/A\n"
+
+        if help != '':
+            help_line = self.process_multilines (help, 80)
+
+        if option != '':
+            option_line = self.process_multilines (option, 80)
+
+        if offset is None:
+            offset_str = '????'
+        else:
+            offset_str = '0x%04X' % offset
+
+        if bits_length is None:
+            bits_length = ''
+        else:
+            bits_length = ' : %d' % bits_length
+
+        #return "\n/** %s%s%s**/\n  %s%s%s%s;\n" % (name_line, help_line, option_line, type, ' ' * space1, name, bits_length)
+        return "\n  /* %s */\n  %s%s%s%s;\n" % (name_line.strip(), type, ' ' * space1, name, bits_length)
+
+
+    def create_struct (self, cname, top, struct_dict):
+        index = 0
+        last  = ''
+        lines = []
+        lines.append ('\ntypedef struct {\n')
+        for field in top:
+            if field[0] == '$':
+                continue
+
+            index += 1
+
+            t_item = top[field]
+            if 'indx' not in t_item:
+                if CGenCfgData.STRUCT not in top[field]:
                     continue
 
-                ValStr = self.FormatDeltaValue (Item)
-                if not Item['subreg']:
-                    Text = '%-40s | %s' % (FullName, ValStr)
-                    if 'PLATFORMID_CFG_DATA.PlatformId' == FullName:
-                        PlatformId = Array2Val(Item['value'])
-                    else:
-                        Lines.append(Text)
+                if struct_dict[field][1] == 0:
+                    continue
+
+                append  = True
+                struct_info = top[field][CGenCfgData.STRUCT]
+
+                if 'struct' in struct_info:
+                    struct, array_num, var = self.get_struct_array_info (struct_info['struct'])
+                    if array_num > 0:
+                        if last == struct:
+                            append  = False
+                            last = struct
+                        if var == '':
+                            var = field
+
+                        field  = CGenCfgData.format_struct_field_name (var, struct_dict[field][1])
                 else:
-                    if Full:
-                        Text = '## %-40s | %s' % (FullName, ValStr)
-                        Lines.append(Text)
+                    struct = struct_dict[field][0]
+                    field  = CGenCfgData.format_struct_field_name (field, struct_dict[field][1])
 
-                    OldArray = OldData[Start:End]
-                    NewArray = NewData[Start:End]
+                if append:
+                    line = self.create_field (None, field, 0, 0, struct, '', '', '')
+                    lines.append ('  %s' % line)
+                    last = struct
+                continue
 
-                    for SubItem in Item['subreg']:
-                        NewBitValue = self.GetBsfBitFields(SubItem, NewArray)
-                        OldBitValue = self.GetBsfBitFields(SubItem, OldArray)
-                        if OldBitValue != NewBitValue or (
-                                Full and Item['name'] and
-                            (Item['cname'] != 'Dummy')):
-                            if SubItem['cname'].startswith(Item['cname']):
-                                Offset = len(Item['cname']) + 1
-                                FieldName = '%s.%s' % (
-                                    FullName, SubItem['cname'][Offset:])
-                            ValStr = self.FormatDeltaValue (SubItem)
-                            Text = '%-40s | %s' % (FieldName, ValStr)
-                            Lines.append(Text)
+            item   = self.get_item_by_index (t_item['indx'])
+            if item['cname'] == 'CfgHeader' and index == 1  or (item['cname'] == 'CondValue' and index == 2):
+                continue
 
-            if Item['embed'].endswith(':END'):
-                EndTagName = Item['embed'].split(':')[0]
-                if EndTagName == TagName:
-                    Level -= 1
+            bit_length = None
+            length = (item['length'] + 7) // 8
+            match  = re.match("^(\d+)([b|B|W|D|Q])([B|W|D|Q]?)", t_item['length'])
+            if match and match.group(2) == 'b':
+                bit_length = int(match.group(1))
+                if match.group(3) != '':
+                    length = CGenCfgData.bits_width[match.group(3)] // 8
+                else:
+                    length = 4
+            offset = item['offset'] // 8
+            struct = item.get('struct', '')
+            name   = field
+            prompt = item['name']
+            help   = item['help']
+            option = item['option']
+            line = self.create_field (item, name, length, offset, struct, prompt, help, option, bit_length)
+            lines.append ('  %s' % line)
+            last = struct
 
-        if PlatformId is None or DefPlatformId == PlatformId:
-            PlatformId = DefPlatformId
-            print("WARNING: 'PlatformId' configuration is same as default %d!"
-                  % PlatformId)
+        lines.append ('\n} %s;\n\n' % cname)
 
-        Lines.insert(0, '%-40s | %s\n\n' %
-                     ('PLATFORMID_CFG_DATA.PlatformId', '0x%04X' % PlatformId))
+        return lines
 
-        self.WriteDeltaFile (DeltaFile, PlatformId, Lines)
+
+    def create_header_file (self, hdr_file_name, com_hdr_file_name = ''):
+        def _build_header_struct (name, cfgs, level):
+            if CGenCfgData.STRUCT in cfgs:
+                if 'CfgHeader' in cfgs:
+                    # collect CFGDATA TAG IDs
+                    cfghdr  = self.get_item_by_index (cfgs['CfgHeader']['indx'])
+                    tag_val = array_str_to_value(cfghdr['value']) >> 20
+                    tag_dict[name] = tag_val
+                    if level == 1:
+                        tag_curr[0] = tag_val
+                struct_dict[name] = (level, tag_curr[0], cfgs)
+
+        tag_curr      = [0]
+        tag_dict      = {}
+        struct_dict   = {}
+        self.traverse_cfg_tree (_build_header_struct)
+
+        if tag_curr[0] == 0:
+            hdr_mode = 2
+        else:
+            hdr_mode = 1
+
+        # filter out the items to be built for tags and structures
+        struct_list = []
+        for each in struct_dict:
+            match = False
+            for check in CGenCfgData.exclude_struct:
+                if re.match (check, each):
+                    match = True
+                    if each in tag_dict:
+                        if each not in CGenCfgData.include_tag:
+                            del tag_dict[each]
+                    break
+            if not match:
+                struct_list.append ({'name':each, 'alias':'', 'count' : 0, 'level':struct_dict[each][0],
+                                     'tag':struct_dict[each][1], 'node':struct_dict[each][2]})
+
+        # sort by level so that the bottom level struct will be build first to satisfy dependencies
+        struct_list = sorted(struct_list, key=lambda x: x['level'], reverse=True)
+
+        # Convert XXX_[0-9]+ to XXX as an array hint
+        for each in struct_list:
+            cfgs = each['node']
+            if 'struct' in cfgs['$STRUCT']:
+                each['alias'], array_num, var = self.get_struct_array_info (cfgs['$STRUCT']['struct'])
+            else:
+                match = re.match('(\w+)(_\d+)', each['name'])
+                if match:
+                    each['alias'] = match.group(1)
+                else:
+                    each['alias'] = each['name']
+
+        # count items for array build
+        for idx, each in enumerate(struct_list):
+            if idx > 0:
+                last_struct = struct_list[idx-1]['node']['$STRUCT']
+                curr_struct = each['node']['$STRUCT']
+                if struct_list[idx-1]['alias'] == each['alias'] and \
+                   curr_struct['length'] == last_struct['length'] and \
+                   curr_struct['offset'] == last_struct['offset'] + last_struct['length']:
+                   for idx2 in range (idx-1, -1, -1):
+                        if struct_list[idx2]['count'] > 0:
+                            struct_list[idx2]['count'] += 1
+                            break
+                   continue
+            each['count'] = 1
+
+        # generate common header
+        if com_hdr_file_name:
+            self.write_cfg_header_file (com_hdr_file_name, 0, tag_dict, struct_list)
+
+        # generate platform header
+        self.write_cfg_header_file (hdr_file_name, hdr_mode, tag_dict, struct_list)
 
         return 0
 
-    def GenerateDscFile (self, OutFile):
-        DscFd = open(OutFile, "w")
-        for Line in self._DscLines:
-          DscFd.write (Line + '\n')
-        DscFd.close ()
+
+    def load_yaml (self, cfg_file):
+        cfg_yaml = CFG_YAML()
+        self.initialize ()
+        self._cfg_tree  = cfg_yaml.load_yaml (cfg_file)
+        self._def_dict  = cfg_yaml.def_dict
+        self._yaml_path = os.path.dirname(cfg_file)
+        self.build_cfg_list()
+        self.build_var_dict()
+        self.update_def_value()
         return 0
 
-def Usage():
+
+def usage():
     print ('\n'.join([
-          "GenCfgData Version 0.01",
+          "GenCfgData Version 0.50",
           "Usage:",
-          "    GenCfgData  GENINC  BinFile             IncOutFile   [-D Macros]",
-          "    GenCfgData  GENPKL  DscFile             PklOutFile   [-D Macros]",
-          "    GenCfgData  GENINC  DscFile[;DltFile]   IncOutFile   [-D Macros]",
-          "    GenCfgData  GENBIN  DscFile[;DltFile]   BinOutFile   [-D Macros]",
-          "    GenCfgData  GENBSF  DscFile[;DltFile]   BsfOutFile   [-D Macros]",
-          "    GenCfgData  GENDLT  DscFile[;BinFile]   DltOutFile   [-D Macros]",
-          "    GenCfgData  GENDSC  DscFile             DscOutFile   [-D Macros]",
-          "    GenCfgData  GENHDR  DscFile[;DltFile]   HdrOutFile[;ComHdrOutFile]   [-D Macros]"
+          "    GenCfgData  GENINC  BinFile              IncOutFile",
+          "    GenCfgData  GENPKL  YamlFile             PklOutFile",
+          "    GenCfgData  GENBIN  YamlFile[;DltFile]   BinOutFile",
+          "    GenCfgData  GENDLT  YamlFile[;BinFile]   DltOutFile",
+          "    GenCfgData  GENYML  YamlFile             YamlOutFile",
+          "    GenCfgData  GENHDR  YamlFile             HdrOutFile"
           ]))
 
-def Main():
-    #
+
+def main():
     # Parse the options and args
-    #
     argc = len(sys.argv)
-    if argc < 4:
-        Usage()
+    if argc < 4 or argc > 5:
+        usage()
         return 1
 
-    GenCfgData = CGenCfgData()
-    Command   = sys.argv[1].upper()
-    OutFile   = sys.argv[3]
+    gen_cfg_data = CGenCfgData()
+    command   = sys.argv[1].upper()
+    out_file  = sys.argv[3]
 
-    if argc > 5 and GenCfgData.ParseMacros(sys.argv[4:]) != 0:
-        raise Exception ("ERROR: Macro parsing failed !")
-
-    FileList  = sys.argv[2].split(';')
-    if len(FileList) == 2:
-        DscFile   = FileList[0]
-        DltFile   = FileList[1]
-    elif len(FileList) == 1:
-        DscFile   = FileList[0]
-        DltFile   = ''
+    file_list  = sys.argv[2].split(';')
+    if len(file_list) >= 2:
+        yml_file   = file_list[0]
+        dlt_file   = file_list[1]
+    elif len(file_list) == 1:
+        yml_file   = file_list[0]
+        dlt_file   = ''
     else:
         raise Exception ("ERROR: Invalid parameter '%s' !" % sys.argv[2])
 
-    if Command == "GENDLT" and DscFile.endswith('.dlt'):
+    if command == "GENDLT" and yml_file.endswith('.dlt'):
         # It needs to expand an existing DLT file
-        DltFile = DscFile
-        Lines  = CGenCfgData.ExpandIncludeFiles (DltFile)
-        OutTxt = ''.join ([x[0] for x in Lines])
-        OutFile = open(OutFile, "w")
-        OutFile.write (OutTxt)
-        OutFile.close ()
-        return 0;
-
-    if not os.path.exists(DscFile):
-        raise Exception ("ERROR: Cannot open file '%s' !" % DscFile)
-
-    CfgBinFile  = ''
-    if DltFile:
-        if not os.path.exists(DltFile):
-            raise Exception ("ERROR: Cannot open file '%s' !" % DltFile)
-        if Command == "GENDLT":
-            CfgBinFile = DltFile
-            DltFile  = ''
-
-    BinFile = ''
-    if (DscFile.lower().endswith('.bin')) and (Command == "GENINC"):
-        # It is binary file
-        BinFile = DscFile
-        DscFile = ''
-
-    if BinFile:
-        if GenCfgData.GenerateDataIncFile(OutFile, BinFile) != 0:
-            raise Exception (GenCfgData.Error)
+        dlt_file = yml_file
+        lines  = gen_cfg_data.expand_include_files (dlt_file)
+        write_lines (lines, out_file)
         return 0
 
-    if DscFile.lower().endswith('.pkl'):
-        with open(DscFile, "rb") as PklFile:
-            GenCfgData.__dict__ = marshal.load(PklFile)
+    if command == "GENYML":
+        if not yml_file.lower().endswith('.yaml'):
+            raise Exception ('Only YAML file is supported !')
+        gen_cfg_data.generate_yml_file(yml_file, out_file)
+        return 0
+
+    bin_file = ''
+    if (yml_file.lower().endswith('.bin')) and (command == "GENINC"):
+        # It is binary file
+        bin_file = yml_file
+        yml_file = ''
+
+    if bin_file:
+        gen_cfg_data.generate_data_inc_file(out_file, bin_file)
+        return 0
+
+    cfg_bin_file  = ''
+    cfg_bin_file2 = ''
+    if dlt_file:
+        if command == "GENDLT":
+            cfg_bin_file = dlt_file
+            dlt_file  = ''
+            if len(file_list) >= 3:
+                cfg_bin_file2 = file_list[2]
+
+    if yml_file.lower().endswith('.pkl'):
+        with open(yml_file, "rb") as pkl_file:
+            gen_cfg_data.__dict__ = marshal.load(pkl_file)
+        gen_cfg_data.prepare_marshal (False)
     else:
-        if GenCfgData.ParseDscFile(DscFile) != 0:
-            raise Exception (GenCfgData.Error)
+        gen_cfg_data.load_yaml (yml_file)
+        if command == 'GENPKL':
+            gen_cfg_data.prepare_marshal (True)
+            with open(out_file, "wb") as pkl_file:
+                marshal.dump(gen_cfg_data.__dict__, pkl_file)
+            json_file = os.path.splitext(out_file)[0] + '.json'
+            fo = open (json_file, 'w')
+            path_list = []
+            cfgs = {'_cfg_page' : gen_cfg_data._cfg_page, '_cfg_list':gen_cfg_data._cfg_list, '_path_list' : path_list}
+            # optimize to reduce size
+            path = None
+            for each in cfgs['_cfg_list']:
+                new_path = each['path'][:-len(each['cname'])-1]
+                if path != new_path:
+                    path = new_path
+                    each['path'] = path
+                    path_list.append(path)
+                else:
+                    del each['path']
+                if each['order'] == each['offset']:
+                    del each['order']
+                del each['offset']
 
-        if GenCfgData.CheckCfgData() != 0:
-            raise Exception (GenCfgData.Error)
+                # value is just used to indicate display type
+                value = each['value']
+                if value.startswith ('0x'):
+                    hex_len = ((each['length'] + 7) // 8) * 2
+                    if len(value) == hex_len:
+                        value = 'x%d' % hex_len
+                    else:
+                        value = 'x'
+                    each['value'] = value
+                elif value and value[0] in ['"', "'", '{']:
+                    each['value'] = value[0]
+                else:
+                    del each['value']
 
-        if GenCfgData.CreateVarDict() != 0:
-            raise Exception (GenCfgData.Error)
-
-        if Command == 'GENPKL':
-            with open(OutFile, "wb") as PklFile:
-                marshal.dump(GenCfgData.__dict__, PklFile)
+            fo.write(repr(cfgs))
+            fo.close ()
             return 0
 
-    if DltFile and Command in ['GENHDR','GENBIN','GENINC','GENBSF']:
-        if GenCfgData.OverrideDefaultValue(DltFile) != 0:
-            raise Exception (GenCfgData.Error)
+    if dlt_file:
+        gen_cfg_data.override_default_value(dlt_file)
 
-    if GenCfgData.UpdateDefaultValue() != 0:
-        raise Exception (GenCfgData.Error)
+    if   command == "GENBIN":
+        if len(file_list) == 3:
+            old_data = gen_cfg_data.generate_binary_array()
+            fi   = open (file_list[2], 'rb')
+            new_data = bytearray (fi.read ())
+            fi.close ()
+            if len(new_data) != len(old_data):
+                raise Exception ("Binary file '%s' length does not match, ignored !" % file_list[2])
+            else:
+                gen_cfg_data.load_default_from_bin (new_data)
+                gen_cfg_data.override_default_value(dlt_file)
 
-    #GenCfgData.PrintData ()
+        gen_cfg_data.generate_binary(out_file)
 
-    if   sys.argv[1] == "GENBIN":
-        if GenCfgData.GenerateBinary(OutFile) != 0:
-            raise Exception (GenCfgData.Error)
+    elif command == "GENDLT":
+        gen_cfg_data.generate_delta_file (out_file, cfg_bin_file, cfg_bin_file2)
 
-    elif sys.argv[1] == "GENHDR":
-        OutFiles = OutFile.split(';')
-        BrdOutFile = OutFiles[0].strip()
-        if len(OutFiles) > 1:
-            ComOutFile = OutFiles[1].strip()
+    elif command == "GENHDR":
+        out_files = out_file.split(';')
+        brd_out_file = out_files[0].strip()
+        if len(out_files) > 1:
+            com_out_file = out_files[1].strip()
         else:
-            ComOutFile = ''
-        if GenCfgData.CreateHeaderFile(BrdOutFile, ComOutFile) != 0:
-            raise Exception (GenCfgData.Error)
+            com_out_file = ''
+        gen_cfg_data.create_header_file(brd_out_file, com_out_file)
 
-    elif sys.argv[1] == "GENBSF":
-        if GenCfgData.GenerateBsfFile(OutFile) != 0:
-            raise Exception (GenCfgData.Error)
+    elif command == "GENINC":
+        gen_cfg_data.generate_data_inc_file(out_file)
 
-    elif sys.argv[1] == "GENINC":
-        if GenCfgData.GenerateDataIncFile(OutFile) != 0:
-            raise Exception (GenCfgData.Error)
-
-    elif sys.argv[1] == "GENDLT":
-        if GenCfgData.GenerateDeltaFile(OutFile, CfgBinFile) != 0:
-            raise Exception (GenCfgData.Error)
-
-    elif sys.argv[1] == "GENDSC":
-        if GenCfgData.GenerateDscFile(OutFile) != 0:
-            raise Exception (GenCfgData.Error)
+    elif command == "DEBUG":
+        gen_cfg_data.print_cfgs()
 
     else:
-        raise Exception ("Unsuported command '%s' !" % Command)
+        raise Exception ("Unsuported command '%s' !" % command)
 
     return 0
 
+
 if __name__ == '__main__':
-    sys.exit(Main())
+    sys.exit(main())
+

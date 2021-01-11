@@ -127,58 +127,25 @@ AppendHashStore (
 {
   EFI_STATUS           Status;
   HASH_STORE_TABLE    *LdrKeyHashBlob;
-  HASH_STORE_TABLE    *OemKeyHashBlob;
-  HASH_STORE_TABLE    *OemKeyHashComp;
-  UINT32               OemKeyHashCompBase;
-  UINT32               OemKeyHashUsedLength;
-  INT32                KeyHashSize;
-  UINT8                AuthInfo[SIGNATURE_AND_KEY_SIZE_MAX];
-  SIGNATURE_HDR       *SignHdr;
-  PUB_KEY_HDR         *PubKeyHdr;
+  UINT8               *OemKeyHashBlob;
+  UINT32               OemKeyHashLen;
   HASH_ALG_TYPE        MbHashType;
 
-
-  Status = GetComponentInfo (FLASH_MAP_SIG_KEYHASH, &OemKeyHashCompBase, NULL);
-  if (EFI_ERROR(Status)) {
-    return EFI_NOT_FOUND;
-  }
-
-  // Check used length before copying to temporary memory
-  OemKeyHashComp = (HASH_STORE_TABLE *)(UINTN)OemKeyHashCompBase;
+  // Request to load at the end of current hash store in memory
   LdrKeyHashBlob = (HASH_STORE_TABLE *)(UINTN)LdrGlobal->HashStorePtr;
-  OemKeyHashUsedLength  = OemKeyHashComp->UsedLength;
-  if (OemKeyHashUsedLength > LdrKeyHashBlob->TotalLength - LdrKeyHashBlob->UsedLength) {
-    return EFI_OUT_OF_RESOURCES;
-  }
-  // Copy to temporary memory
-  OemKeyHashBlob = (HASH_STORE_TABLE *)((UINT8 *)LdrKeyHashBlob + LdrKeyHashBlob->UsedLength);
-  CopyMem (OemKeyHashBlob, (UINT8 *)OemKeyHashComp, OemKeyHashUsedLength);
+  OemKeyHashBlob = (UINT8 *)LdrKeyHashBlob + LdrKeyHashBlob->UsedLength;
+  OemKeyHashLen  = LdrKeyHashBlob->TotalLength - LdrKeyHashBlob->UsedLength;
 
-  // Check the header length
-  KeyHashSize = OemKeyHashUsedLength - OemKeyHashBlob->HeaderLength;
-  if (KeyHashSize <= 0) {
-    return EFI_UNSUPPORTED;
+  Status = LoadComponent ( CONTAINER_KEY_HASH_STORE_SIGNATURE,
+                           HASH_STORE_SIGNATURE,
+                           (VOID **)&OemKeyHashBlob, &OemKeyHashLen );
+  UnregisterContainer (CONTAINER_KEY_HASH_STORE_SIGNATURE);
+  if (EFI_ERROR(Status)) {
+    // Not really necessary, but keep buffer clean
+    ZeroMem (OemKeyHashBlob, OemKeyHashLen);
+    return Status;
   }
 
-  // Copy anthentication info to stack
-  if (!FeaturePcdGet (PcdVerifiedBootEnabled)) {
-    Status = EFI_SUCCESS;
-  } else {
-    CopyMem (AuthInfo, (UINT8 *)OemKeyHashComp + OemKeyHashUsedLength, sizeof(AuthInfo));
-    SignHdr   = (SIGNATURE_HDR *) AuthInfo;
-    PubKeyHdr = (PUB_KEY_HDR *)((UINT8 *)SignHdr + sizeof(SIGNATURE_HDR) + SignHdr->SigSize);
-    Status = DoRsaVerify ((UINT8 *)OemKeyHashBlob,
-                          OemKeyHashBlob->UsedLength,
-                          HASH_USAGE_PUBKEY_MASTER,
-                          SignHdr, PubKeyHdr,
-                          PcdGet8(PcdCompSignHashAlg),
-                          NULL,
-                          Stage1bParam->KeyHashManifestHash);
-  }
-  if (EFI_ERROR (Status)) {
-    Stage1bParam->KeyHashManifestHashValid = 0;
-    return EFI_SECURITY_VIOLATION;
-  }
 
   if (MEASURED_BOOT_ENABLED()) {
     //Convert Measured boot Hash Mask to HASH_ALG_TYPE (CryptoLib)
@@ -187,12 +154,12 @@ AppendHashStore (
     if (PcdGet8(PcdCompSignHashAlg) == MbHashType) {
       Stage1bParam->KeyHashManifestHashValid = 1;
     } else {
-    // Check validition of Stage1bParam->KeyHashManifestHash generated.
-    // Calcluate the digest to extend if measured boot hash alg doesn't match
+      // Check validition of Stage1bParam->KeyHashManifestHash generated.
+      // Calcluate the digest to extend if measured boot hash alg doesn't match
       Status = GetHashToExtend (COMP_TYPE_INVALID,
                                     MbHashType,
                                     (UINT8 *) OemKeyHashBlob,
-                                    OemKeyHashBlob->UsedLength,
+                                    OemKeyHashLen,
                                     Stage1bParam->KeyHashManifestHash);
       if (Status == EFI_SUCCESS) {
         Stage1bParam->KeyHashManifestHashValid = 1;
@@ -200,10 +167,7 @@ AppendHashStore (
     }
   }
 
-  // Append hash to the end and adjust used length
-  CopyMem ((UINT8 *)OemKeyHashBlob, (UINT8 *)OemKeyHashBlob + OemKeyHashBlob->HeaderLength, KeyHashSize);
-  LdrKeyHashBlob->UsedLength += KeyHashSize;
-
+  LdrKeyHashBlob->UsedLength += OemKeyHashLen;
   return EFI_SUCCESS;
 }
 
@@ -240,6 +204,26 @@ CreateConfigDatabase (
   // PcdCfgDatabaseSize: It is the size for both internal + external cfg data
   //
   if (PcdGet32 (PcdCfgDataSize) > 0) {
+    if (FeaturePcdGet (PcdEnableSetup)) {
+      // Load setup CFGDATA if exists
+      Status = LocateComponent (CONTAINER_SETUP_SIGNATURE,  CFG_DATA_SIGNATURE, \
+                                (VOID **)&CfgDataBase, &CfgDataLength);
+      if (!EFI_ERROR (Status)) {
+        if (((LOADER_COMPRESSED_HEADER *)(UINTN)CfgDataBase)->Signature == LZDM_SIGNATURE) {
+          ExtCfgAddPtr = (UINT8 *)(UINTN)CfgDataBase + sizeof(LOADER_COMPRESSED_HEADER);
+          CfgBlob      = (CDATA_BLOB *)ExtCfgAddPtr;
+          if ((CfgBlob->UsedLength < CfgDataLength) && (CalculateCheckSum16 ((UINT16 *)CfgBlob, CfgBlob->UsedLength) == 0)) {
+            CfgBlob->ExtraInfo.InternalDataOffset = 0;
+            Status = AddConfigData (ExtCfgAddPtr);
+            DEBUG ((DEBUG_INFO, "Append setup CFGDATA ... %r\n", Status));
+            if (!EFI_ERROR (Status)) {
+              return;
+            }
+          }
+        }
+      }
+    }
+
     CfgBlob = (CDATA_BLOB *)LdrGlobal->CfgDataPtr;
     ExtCfgAddPtr = (UINT8 *)CfgBlob + CfgBlob->UsedLength;
     Status = GetComponentInfo (FLASH_MAP_SIG_CFGDATA, &CfgDataBase, &CfgDataLength);
@@ -307,7 +291,7 @@ CreateConfigDatabase (
         CfgBlob       = (CDATA_BLOB *) IntCfgAddPtr;
         CfgDataLength = CfgBlob->UsedLength - CfgBlob->HeaderLength;
         CfgBlob       = (CDATA_BLOB *) LdrGlobal->CfgDataPtr;
-        CfgBlob->InternalDataOffset = (UINT16) ((CfgBlob->UsedLength - CfgDataLength) >> 2);
+        CfgBlob->ExtraInfo.InternalDataOffset = (UINT16) ((CfgBlob->UsedLength - CfgDataLength) >> 2);
       } else {
         DEBUG ((DEBUG_INFO, "Append Built-In CFG Data ... %r\n", Status));
       }

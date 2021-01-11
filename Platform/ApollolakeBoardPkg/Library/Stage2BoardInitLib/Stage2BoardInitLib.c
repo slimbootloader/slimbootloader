@@ -455,7 +455,12 @@ ResetSystemIocIpc (
   UINT32                    PciBar;
   UINT32                    Data32;
 
-  if (ResetType == EfiResetCold) {
+  if (ResetType == EfiResetWarm) {
+    //
+    // Flush the cache in case the changes are needed in next boot.
+    //
+    AsmWbinvd ();
+  } else if (ResetType == EfiResetCold) {
     IocUartData = (IOC_UART_CFG_DATA *)FindConfigDataByTag (CDATA_IOC_UART_TAG);
     if (IocUartData == NULL) {
       DEBUG ((DEBUG_WARN, "CDATA_IOC_UART_TAG Not Found\n"));
@@ -689,7 +694,20 @@ SetFrameBufferWriteCombining (
 {
   UINT32             MsrIdx;
   UINT32             MsrMax;
-  UINT32             Base;
+  UINT32             Data;
+  UINT32             GfxPciBase;
+  UINT64             Base64;
+
+  // Skip if GFX device does not exist
+  GfxPciBase = PCI_LIB_ADDRESS (0, 2, 0, 0);
+  if (PciRead16 (GfxPciBase) == 0xFFFF) {
+    return;
+  }
+
+  // Assume fixed 256MB prefetchable space
+  Data    = PciRead32 (GfxPciBase + PCI_BASE_ADDRESSREG_OFFSET + 12);
+  Base64  = LShiftU64 (Data, 32);
+  Base64 += (PciRead32 (GfxPciBase + PCI_BASE_ADDRESSREG_OFFSET + 8) & ~(SIZE_256MB - 1));
 
   // Enable Framebuffer as WC.
   MsrMax = EFI_MSR_CACHE_VARIABLE_MTRR_BASE +
@@ -705,8 +723,7 @@ SetFrameBufferWriteCombining (
     // Framebuffer belongs to PMEM32 in PCI resource allocation.
     // The 1st 256MB from PcdPciResourceMem32Base will be consumed by MEM32 resource.
     // And framebuffer should be allocated to the next 256MB aligned address.
-    Base = (PcdGet32 (PcdPciResourceMem32Base) + SIZE_256MB)  &  ~(SIZE_256MB - 1);
-    AsmWriteMsr64 (MsrIdx,     Base | CACHE_WRITECOMBINING);
+    AsmWriteMsr64 (MsrIdx,     Base64 | CACHE_WRITECOMBINING);
     AsmWriteMsr64 (MsrIdx + 1, 0xF00000000ULL + B_EFI_MSR_CACHE_MTRR_VALID + (UINT32)(~(SIZE_256MB - 1)));
   } else {
     DEBUG ((DEBUG_WARN, "Failed to find a free MTRR pair for framebuffer!\n"));
@@ -867,6 +884,31 @@ BuildVtdInfo (
 }
 
 /**
+  Apply SD card power if card is present.
+
+**/
+VOID
+SdcardPowerUp (
+  VOID
+  )
+{
+  UINT16  PlatformId;
+  UINT32  Data;
+
+  PlatformId = GetPlatformId ();
+  if ((PlatformId == PLATFORM_ID_LFH) || (PlatformId == PLATFORM_ID_OXH) || (PlatformId == PLATFORM_ID_JNH)) {
+    // Check if SD card is present using GPIO_177
+    Data = GpioRead ((SW_GPIO_177) >> 16, (SW_GPIO_177) & 0xFFFF) & BIT1;
+    if (Data == 0) {
+      // Card present, so turn on SD card power using GPIO_183
+      Data = GpioRead ((SW_GPIO_183) >> 16, (SW_GPIO_183) & 0xFFFF);
+      GpioWrite ((SW_GPIO_183) >> 16, (SW_GPIO_183) & 0xFFFF, Data & ~BIT0);
+      MmioOr32 (P2SB_MMIO_BASE_ADDRESS + 0xD60608, BIT5);
+    }
+  }
+}
+
+/**
   Board specific hook points.
 
   Implement board specific initialization during the boot flow.
@@ -913,12 +955,8 @@ BoardInit (
       Status = PcdSet32S (PcdSmramTsegSize, (UINT32)TsegSize);
     }
 
+    SdcardPowerUp();
     SaveOtgRole();
-    if (PcdGetBool (PcdFramebufferInitEnabled)) {
-      // Enable framebuffer as WC for performance
-      SetFrameBufferWriteCombining ();
-    }
-
     Status = PcdSet32S (PcdFuncCpuInitHook, (UINT32)(UINTN) PlatformCpuInit);
     break;
   case PostSiliconInit:
@@ -933,7 +971,7 @@ BoardInit (
     // Initialize Smbios Info for SmbiosInit
     //
     if (FeaturePcdGet (PcdSmbiosEnabled)) {
-	  InitializeSmbiosInfo ();
+      InitializeSmbiosInfo ();
     }
     // Enable DMA protection
     if (FeaturePcdGet (PcdDmaProtectionEnabled)) {
@@ -944,6 +982,9 @@ BoardInit (
     BuildOsConfigDataHob ();
     break;
   case PostPciEnumeration:
+    // Enable framebuffer as WC for performance
+    SetFrameBufferWriteCombining ();
+
     if (PcdGetBool (PcdSeedListEnabled)) {
       Status = GenerateSeeds ();
       if (EFI_ERROR (Status)) {
@@ -960,12 +1001,13 @@ BoardInit (
     }
     break;
   case EndOfStages:
-    RegisterHeciService();
+    HeciRegisterHeciService ();
     InitPlatformService ();
 
     if (GetPayloadId() != 0) {
       ProgramSecuritySetting ();
     }
+
     break;
   case ReadyToBoot:
     if (GetPayloadId() == 0) {
@@ -994,49 +1036,6 @@ BoardInit (
 }
 
 /**
-  Find the actual VBT image from the container.
-
-  In case of multiple VBT tables are packed into a single FFS, the PcdGraphicsVbtAddress could
-  point to the container address instead. This function checks this condition and locates the
-  actual VBT table address within the container.
-
-  @param[in] ImageId    Image ID for VBT binary to locate in the container
-
-  @retval               Actual VBT address found in the container. 0 if not found.
-
-**/
-UINT32
-LocateVbtByImageId (
-  IN  UINT32     ImageId
-)
-{
-  VBT_MB_HDR     *VbtMbHdr;
-  VBT_ENTRY_HDR  *VbtEntry;
-  UINT32          VbtAddr;
-  UINTN           Idx;
-
-  VbtMbHdr = (VBT_MB_HDR* )(UINTN)PcdGet32 (PcdGraphicsVbtAddress);
-  if ((VbtMbHdr == NULL) || (VbtMbHdr->Signature != MVBT_SIGNATURE)) {
-    return 0;
-  }
-
-  VbtAddr  = 0;
-  VbtEntry = (VBT_ENTRY_HDR *)&VbtMbHdr[1];
-  for (Idx = 0; Idx < VbtMbHdr->EntryNum; Idx++) {
-    if (VbtEntry->ImageId == ImageId) {
-      VbtAddr = (UINT32)(UINTN)VbtEntry->Data;
-      break;
-    }
-    VbtEntry = (VBT_ENTRY_HDR *)((UINT8 *)VbtEntry + VbtEntry->Length);
-  }
-
-  DEBUG ((DEBUG_INFO, "%a VBT ImageId 0x%08X\n",
-                      (VbtAddr == 0) ? "Cannot find" : "Select", ImageId));
-
-  return VbtAddr;
-}
-
-/**
   Update FSP-S UPD config data.
 
   @param  FspsUpdPtr    The pointer to the FSP-S UPD to be updated.
@@ -1062,8 +1061,6 @@ UpdateFspConfig (
   PCIE_RP_CFG_DATA       *PcieRpConfigData;
   DEV_EN_CFG_DATA        *DevEnCfgData;
   HDA_CFG_DATA           *HdaCfgData;
-  UINT32                  VbtAddress;
-  UINT32                  VbtImageId;
 
   FspsUpd    = (FSPS_UPD *)FspsUpdPtr;
   FspsConfig = &FspsUpd->FspsConfig;
@@ -1124,7 +1121,7 @@ UpdateFspConfig (
     PciBase  = (UINT32)PcdGet64(PcdPciExpressBaseAddress);
     Stepping = MmioRead8 (PciBase + 8);
     Value64  = AsmReadMsr64 (MSR_IA32_PLATFORM_ID);
-    PlatformId = (Value64 >> 50) & 7;
+    PlatformId = RShiftU64 (Value64, 50) & 7;
     if (Stepping <= 0xB && PlatformId == 0) {
       FspsConfig->IpuEn   = 0;
     }
@@ -1243,21 +1240,11 @@ UpdateFspConfig (
     HdaEndpointI2sCapture.VirtualBusId    = HdaCfgData->VirtualIdI2sCapture;
   }
 
-  VbtAddress = 0;
   if (PcdGetBool (PcdFramebufferInitEnabled)) {
-    // Locate VBT binary from VBT container
-    if (GetPlatformId () == PLATFORM_ID_UP2) {
-      VbtImageId = 2;
-    } else {
-      VbtImageId = 1;
-    }
-    VbtAddress = LocateVbtByImageId (VbtImageId);
-    if (VbtAddress != 0) {
-      (VOID) PcdSet32S (PcdGraphicsVbtAddress,  VbtAddress);
-    }
+    FspsConfig->GraphicsConfigPtr   = (UINT32)GetVbtAddress ();
+  } else {
+    FspsConfig->GraphicsConfigPtr = 0;
   }
-  FspsConfig->GraphicsConfigPtr = VbtAddress;
-
 
   FspsConfig->InitS3Cpu                   = 1;
 
@@ -1635,7 +1622,7 @@ UpdateLoaderPlatformInfo (
                                         ((PlatformData->BtGuardInfo.Bpm.Mb) << 1);
 
     // Get Manufacturing Mode from Heci
-    ReadHeciFwStatus(&HeciFwSts);
+    HeciReadFwStatus (&HeciFwSts);
     LoaderPlatformInfo->HwState |= (HeciFwSts & BIT4) >> 2;
   }
 }
@@ -1875,8 +1862,8 @@ PlatformUpdateAcpiTable (
     }
   }
 
-  if (FeaturePcdGet (PcdVtdEnabled)) {
-    if (Table->Signature == EFI_ACPI_VTD_DMAR_TABLE_SIGNATURE) {
+  if (Table->Signature == EFI_ACPI_VTD_DMAR_TABLE_SIGNATURE) {
+    if (FeaturePcdGet (PcdVtdEnabled)) {
       PlatformData  = (PLATFORM_DATA *)GetPlatformDataPtr ();
       if (PlatformData->RmrrUsbAddress != 0) {
         Dmar = (EFI_ACPI_DMAR_TABLE *)Table;
@@ -1884,6 +1871,8 @@ PlatformUpdateAcpiTable (
         Dmar->RmrrHeci.RmrLimitAddress = Dmar->RmrrHeci.RmrBaseAddress + VTD_RMRR_USB_LENGTH - 1;
       }
       UpdateDmarAcpi (Table);
+    } else {
+      Status = EFI_UNSUPPORTED;
     }
   }
 
@@ -1910,7 +1899,6 @@ PlatformUpdateAcpiTable (
       DEBUG ( (DEBUG_INFO, "Updated Psd Table in AcpiTable Entries\n") );
     }
   }
-  ASSERT_EFI_ERROR (Status);
 
   return Status;
 }
@@ -1968,7 +1956,7 @@ PlatformUpdateAcpiGnvs (
 
   PcieRpConfigData  = (PCIE_RP_CFG_DATA *)FindConfigDataByTag (CDATA_PCIE_RP_TAG);
   if (PcieRpConfigData != NULL) {
-    PowerResetData = (PCIE_RP_PIN_CTRL *) PcieRpConfigData->PcieRpPinCtrlData0;
+    PowerResetData = (PCIE_RP_PIN_CTRL *) &PcieRpConfigData->PcieRpPower0;
     for (Idx1 = 0; Idx1 < PCIE_MAX_ROOT_PORTS; Idx1++) {
       Idx2 = (UINT8)PowerResetData->PcieRpPower0.Wake;
       if (Idx2 >= sizeof(mPcieRpWakeGpeBit)) {

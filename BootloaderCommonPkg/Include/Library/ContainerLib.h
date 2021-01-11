@@ -28,9 +28,11 @@ typedef UINT8 AUTH_TYPE;
 #define AUTH_TYPE_SIG_RSA2048_PSS_SHA256     5
 #define AUTH_TYPE_SIG_RSA3072_PSS_SHA384     6
 
-#define CONTAINER_OEM_BASE_SIGNATURE  SIGNATURE_32 ('O', 'E', 'M',   0)
-#define CONTAINER_BOOT_SIGNATURE      SIGNATURE_32 ('B', 'O', 'O', 'T')
-#define CONTAINER_MONO_SIGN_SIGNATURE SIGNATURE_32 ('_', 'S', 'G', '_')
+#define CONTAINER_OEM_BASE_SIGNATURE        SIGNATURE_32 ('O', 'E', 'M',   0)
+#define CONTAINER_BOOT_SIGNATURE            SIGNATURE_32 ('B', 'O', 'O', 'T')
+#define CONTAINER_SETUP_SIGNATURE           SIGNATURE_32 ('S', 'E', 'T', 'P')
+#define CONTAINER_MONO_SIGN_SIGNATURE       SIGNATURE_32 ('_', 'S', 'G', '_')
+#define CONTAINER_KEY_HASH_STORE_SIGNATURE  SIGNATURE_32 ('K', 'E', 'Y', 'H')
 
 // Flags for CONTAINER_HDR
 #define CONTAINER_HDR_FLAG_MONO_SIGNING     BIT0
@@ -66,7 +68,8 @@ typedef struct {
 
 typedef struct {
   UINT32           Signature;
-  UINT16           Version;
+  UINT8            Version;
+  UINT8            Svn;
   UINT16           DataOffset;
   UINT32           DataSize;
   UINT8            AuthType;
@@ -183,6 +186,23 @@ LocateComponentEntry (
   IN OUT  COMPONENT_ENTRY       **ComponentEntryPtr
   );
 
+
+/**
+  This function returns the component entry info.
+
+  @param[in] ContainerEntry    Container entry pointer.
+  @param[in] ComponentName     Component name in container.
+
+  @retval         Container header size.
+
+**/
+COMPONENT_ENTRY  *
+EFIAPI
+LocateComponentEntryFromContainer (
+  IN  CONTAINER_HDR  *ContainerHdr,
+  IN  UINT32          ComponentName
+  );
+
 /**
   Get Next Component in a container.
 
@@ -233,6 +253,4 @@ EFI_STATUS
 UnregisterContainer (
   IN  UINT32   Signature
   );
-
-
 #endif

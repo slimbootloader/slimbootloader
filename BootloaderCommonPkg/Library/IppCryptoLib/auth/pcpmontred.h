@@ -1,9 +1,18 @@
-/** @file
-
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
-  SPDX-License-Identifier: BSD-2-Clause-Patent
-
-**/
+/*******************************************************************************
+* Copyright 2016-2020 Intel Corporation
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*******************************************************************************/
 
 /*
 //               Intel(R) Integrated Performance Primitives
@@ -37,8 +46,8 @@ __INLINE void cpMontRed_BNU_opt(BNU_CHUNK_T* pR,
 #if(_ADCOX_NI_ENABLING_==_FEATURE_ON_)
    cpMontRedAdx_BNU(pR, pProduct, pModulus, nsM, m0);
 #elif(_ADCOX_NI_ENABLING_==_FEATURE_TICKTOCK_)
-   IsFeatureEnabled(ADCOX_ENABLED)? cpMontRedAdx_BNU(pR, pProduct, pModulus, nsM, m0)
-                                  : cpMontRedAdc_BNU(pR, pProduct, pModulus, nsM, m0);
+   IsFeatureEnabled(ippCPUID_ADCOX)? cpMontRedAdx_BNU(pR, pProduct, pModulus, nsM, m0)
+                                   : cpMontRedAdc_BNU(pR, pProduct, pModulus, nsM, m0);
 #else
    cpMontRedAdc_BNU(pR, pProduct, pModulus, nsM, m0);
 #endif

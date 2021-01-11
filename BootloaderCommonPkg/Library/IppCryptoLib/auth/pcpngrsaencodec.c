@@ -1,9 +1,18 @@
-/** @file
-
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
-  SPDX-License-Identifier: BSD-2-Clause-Patent
-
-**/
+/*******************************************************************************
+* Copyright 2018-2020 Intel Corporation
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*******************************************************************************/
 
 /*
 //
@@ -38,7 +47,7 @@
 #endif
 
 /* get default method based on CPU's features */
-static gsMethod_RSA* getDefaultMethod_RSA(int modulusBitSize)
+static gsMethod_RSA* getDefaultMethod_RSA_public(int modulusBitSize)
 {
    gsMethod_RSA* m;
 
@@ -49,11 +58,11 @@ static gsMethod_RSA* getDefaultMethod_RSA(int modulusBitSize)
    #elif(_IPP>=_IPP_W7) && defined(_RSA_SSE2)
    m = gsMethod_RSA_sse2();
    #else
-   m = gsMethod_RSA_gpr();
+   m = gsMethod_RSA_gpr_public();
 #endif
 
    if( !(m->loModulusBisize <= modulusBitSize && modulusBitSize <= m->hiModulusBisize) )
-      m = gsMethod_RSA_gpr();
+      m = gsMethod_RSA_gpr_public();
    return m;
 }
 
@@ -89,7 +98,7 @@ IPPFUN(IppStatus, ippsRSA_GetBufferSizePublicKey,(int* pBufferSize, const IppsRS
       cpSize bitSizeN = RSA_PUB_KEY_BITSIZE_N(pKey);
       cpSize nsN = BITS_BNU_CHUNK(bitSizeN);
 
-      gsMethod_RSA* m = getDefaultMethod_RSA(bitSizeN);
+      gsMethod_RSA* m = getDefaultMethod_RSA_public(bitSizeN);
 
       cpSize bufferNum = ((nsN+1)*2)*2       /* (1)2 BN for RSA (enc)/sign schemes */
                         + 1;                 /* BNU_CHUNK_T alignment */
@@ -134,7 +143,7 @@ IPPFUN(IppStatus, ippsRSA_GetBufferSizePrivateKey,(int* pBufferSize, const IppsR
    {
       cpSize modulusBits = (RSA_PRV_KEY1_VALID_ID(pKey))? RSA_PRV_KEY_BITSIZE_N(pKey) :
                                                   IPP_MAX(RSA_PRV_KEY_BITSIZE_P(pKey), RSA_PRV_KEY_BITSIZE_Q(pKey));
-      gsMethod_RSA* m = getDefaultMethod_RSA(modulusBits);
+      gsMethod_RSA* m = getDefaultMethod_RSA_public(modulusBits);
 
       cpSize bitSizeN = (RSA_PRV_KEY1_VALID_ID(pKey))? modulusBits : modulusBits*2;
       cpSize nsN = BITS_BNU_CHUNK(bitSizeN);
@@ -165,7 +174,7 @@ void gsRSApub_cipher(IppsBigNumState* pY,
                const IppsRSAPublicKeyState* pKey,
                      BNU_CHUNK_T* pBuffer)
 {
-   gsMethod_RSA* m = getDefaultMethod_RSA(RSA_PRV_KEY_BITSIZE_N(pKey));
+   gsMethod_RSA* m = getDefaultMethod_RSA_public(RSA_PRV_KEY_BITSIZE_N(pKey));
 
    BNU_CHUNK_T* dataY = BN_NUMBER(pY);
 
@@ -246,7 +255,7 @@ void gsRSAprv_cipher(IppsBigNumState* pY,
                const IppsRSAPrivateKeyState* pKey,
                      BNU_CHUNK_T* pBuffer)
 {
-   gsMethod_RSA* m = getDefaultMethod_RSA(RSA_PRV_KEY_BITSIZE_N(pKey));
+   gsMethod_RSA* m = getDefaultMethod_RSA_public(RSA_PRV_KEY_BITSIZE_N(pKey));
 
    if (m->privateExpFun != NULL) {
       BNU_CHUNK_T* dataY = BN_NUMBER(pY);
@@ -285,7 +294,7 @@ void gsRSAprv_cipher_crt(IppsBigNumState* pY,
    COPY_BNU(dataXq, dataX, nsX);
    cpMod_BNU(dataXq, nsX, MOD_MODULUS(pMontQ), nsQ);
 
-   m = getDefaultMethod_RSA(bitSizeDQ);
+   m = getDefaultMethod_RSA_public(bitSizeDQ);
    if (m->privateExpFun != NULL) {
       m->privateExpFun(dataXq, dataXq, nsQ, RSA_PRV_KEY_DQ(pKey), BITS_BNU_CHUNK(bitSizeDQ), pMontQ, pBuffer);
    }
@@ -294,7 +303,7 @@ void gsRSAprv_cipher_crt(IppsBigNumState* pY,
    COPY_BNU(dataXp, dataX, nsX);
    cpMod_BNU(dataXp, nsX, MOD_MODULUS(pMontP), nsP);
 
-   m = getDefaultMethod_RSA(bitSizeDP);
+   m = getDefaultMethod_RSA_public(bitSizeDP);
    if (m->privateExpFun != NULL) {
       m->privateExpFun(dataXp, dataXp, nsP, RSA_PRV_KEY_DP(pKey), BITS_BNU_CHUNK(bitSizeDP), pMontP, pBuffer);
    }

@@ -485,7 +485,7 @@ GetLogicalPartitionInfo (
     return EFI_INVALID_PARAMETER;
   }
 
-  if (SwPart >= PartBlockDev->BlockDeviceCount) {
+  if ((SwPart >= PartBlockDev->BlockDeviceCount) || (SwPart >= PART_MAX_BLOCK_DEVICE)) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -522,6 +522,7 @@ FindPartitions (
   LOGICAL_BLOCK_DEVICE        *BlockDev;
   EFI_PARTITION_TABLE_HEADER  *Gpt;
   PART_BLOCK_DEVICE           *PartBlockDev;
+  OS_BOOT_MEDIUM_TYPE          CurrentMediaType;
 
   if (PartHandle == NULL) {
     return EFI_INVALID_PARAMETER;
@@ -531,6 +532,7 @@ FindPartitions (
   if (EFI_ERROR (Status)) {
     return Status;
   }
+
 
   PartBlockDev = (PART_BLOCK_DEVICE *) AllocateZeroPool (sizeof (PART_BLOCK_DEVICE));
   if (PartBlockDev == NULL) {
@@ -542,7 +544,9 @@ FindPartitions (
 
   CopyMem (&PartBlockDev->BlockInfo, &DevBlockInfo, sizeof (DEVICE_BLOCK_INFO));
 
-  if (DevBlockInfo.BlockSize == 1) {
+  CurrentMediaType = MediaGetInterfaceType();
+
+  if (CurrentMediaType == OsBootDeviceMemory || CurrentMediaType == OsBootDeviceSpi) {
     // It is memory mapped SPI block device.
     Status = FindSpiPartitions (PartBlockDev);
     if (!EFI_ERROR (Status)) {

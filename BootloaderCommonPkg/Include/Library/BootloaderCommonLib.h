@@ -46,7 +46,9 @@ typedef struct {
   UINT32        Signature;
   UINT32        CompressedSize;
   UINT32        Size;
-  UINT32        Reserved;
+  UINT16        Version;
+  UINT8         Svn;
+  UINT8         Attribute;
   UINT8         Data[];
 } LOADER_COMPRESSED_HEADER;
 
@@ -557,6 +559,29 @@ GetDeviceAddr (
   IN  UINT8          DeviceInstance
   );
 
+/**
+  Set device address in device table
+
+  If the device is PCI device, the device address format is 0x00BBDDFF, where
+  BB, DD and FF are PCI bus, device and function number.
+  If the device is MMIO device, the device address format is 0xMMxxxxxx, where
+  MM should be non-zero value, xxxxxx could be any value.
+
+  @param[in]  DeviceType         The device type, refer OS_BOOT_MEDIUM_TYPE.
+  @param[in]  DeviceInstance     The device instance number starting from 0.
+  @param[in]  DeviceAddr         The device address.
+
+  @retval     EFI_SUCCESS        If the given device type and instance are found and set.
+              EFI_NOT_FOUND      The given device type and instance are not found.
+
+**/
+EFI_STATUS
+EFIAPI
+SetDeviceAddr (
+  IN  UINT8          DeviceType,
+  IN  UINT8          DeviceInstance,
+  IN  UINT32         DeviceAddr
+  );
 
 /**
   This function retrieves container list pointer.
@@ -601,28 +626,4 @@ MatchHashInStore (
   IN       UINT8           *HashData
   );
 
-
-/**
-  Get hash to extend a firmware stage component
-  Hash calculation to extend would be in either of ways
-  Retrieve Hash from Component hash table or
-  Calculate Hash using source buf and length provided
-
-  @param[in]  ComponentType             Stage whose measurement need to be extended.
-  @param[in]  HashType                  Hash type required
-  @param[in]  Src                       Buffer Address
-  @param[in]  Length                    Data Len
-  @param[out] HashData                  Hash Data buf addr
-
-  @retval RETURN_SUCCESS      Operation completed successfully.
-  @retval Others              Unable to calcuate hash.
-**/
-RETURN_STATUS
-GetHashToExtend (
-  IN       UINT8            ComponentType,
-  IN       HASH_ALG_TYPE    HashType,
-  IN       UINT8           *Src,
-  IN       UINT32           Length,
-  OUT      UINT8           *HashData
-  );
 #endif

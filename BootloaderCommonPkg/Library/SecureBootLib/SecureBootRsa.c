@@ -34,6 +34,7 @@
 
 **/
 RETURN_STATUS
+EFIAPI
 DoRsaVerify (
   IN CONST UINT8           *Data,
   IN       UINT32           Length,

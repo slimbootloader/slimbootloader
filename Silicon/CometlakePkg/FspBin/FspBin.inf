@@ -1,0 +1,26 @@
+## @file
+#  File to describe FSP repo information
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+##
+
+
+[UserExtensions.SBL."CloneRepo"]
+  REPO    = https://github.com/intel/FSP.git
+  COMMIT  = 2263d48a006d8653df1fc742c3f7d5ffd6b75d68
+
+[UserExtensions.SBL."CopyList"]
+  CometLakeFspBinPkg/CometLakeS/FSP.fd                 : Silicon/CometlakePkg/FspBin/FspDbg.bin
+  CometLakeFspBinPkg/CometLakeS/FSP.fd                 : Silicon/CometlakePkg/FspBin/FspRel.bin
+  CometLakeFspBinPkg/CometLakeS/Fsp.bsf                : Silicon/CometlakePkg/FspBin/Fsp.bsf
+  CometLakeFspBinPkg/CometLakeS/Include/FspInfoHob.h   : Silicon/CometlakePkg/Include/FspInfoHob.h
+  CometLakeFspBinPkg/CometLakeS/Include/FspUpd.h       : Silicon/CometlakePkg/Include/FspUpd.h
+  CometLakeFspBinPkg/CometLakeS/Include/FsptUpd.h      : Silicon/CometlakePkg/Include/FsptUpd.h
+  CometLakeFspBinPkg/CometLakeS/Include/FspmUpd.h      : Silicon/CometlakePkg/Include/FspmUpd.h
+  CometLakeFspBinPkg/CometLakeS/Include/FspsUpd.h      : Silicon/CometlakePkg/Include/FspsUpd.h
+  CometLakeFspBinPkg/CometLakeS/SampleCode/Vbt/Vbt.bin : Platform/CometlakeBoardPkg/VbtBin/Vbt.dat
+  CometLakeFspBinPkg/CometLakeS/SampleCode/Vbt/Vbt.bsf : Platform/CometlakeBoardPkg/VbtBin/Vbt.bsf

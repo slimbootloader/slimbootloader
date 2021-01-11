@@ -18,8 +18,11 @@ import subprocess
 import struct
 import hashlib
 import string
-from   functools import reduce
 from   ctypes import *
+from   functools import reduce
+from   importlib.machinery import SourceFileLoader
+from   SingleSign import *
+
 
 # Key types  defined should match with cryptolib.h
 PUB_KEY_TYPE = {
@@ -100,7 +103,9 @@ class LZ_HEADER(Structure):
         ('signature',       ARRAY(c_char, 4)),
         ('compressed_len',  c_uint32),
         ('length',          c_uint32),
-        ('reserved',        c_uint32)
+        ('version',         c_uint16),
+        ('svn',             c_uint8),
+        ('attribute',       c_uint8)
     ]
     _compress_alg = {
         b'LZDM' : 'Dummy',
@@ -121,30 +126,39 @@ def print_bytes (data, indent=0, offset=0, show_ascii = False):
         print (str_fmt.format(indent * ' ', offset + idx, hex_str, ' ' + asc_str if show_ascii else ''))
 
 def get_bits_from_bytes (bytes, start, length):
-    value  = bytes_to_value (bytes)
-    bitlen = 8 * len(bytes)
-    fmt    = "{0:0%db}" % bitlen
-    start  = bitlen - start
-    if start < 0 or start < length:
-        raise Exception ('Invalid bit start and length !')
-    bval  = fmt.format(value)[start - length : start]
-    return int (bval, 2)
+    if length == 0:
+        return 0
+    byte_start = (start)  // 8
+    byte_end   = (start + length - 1) // 8
+    bit_start  = start & 7
+    mask = (1 << length) - 1
+    val = bytes_to_value (bytes[byte_start:byte_end + 1])
+    val = (val >> bit_start) & mask
+    return val
 
 def set_bits_to_bytes (bytes, start, length, bvalue):
-    value  = bytes_to_value (bytes)
-    bitlen = 8 * len(bytes)
-    fmt1   = "{0:0%db}" % bitlen
-    fmt2   = "{0:0%db}" % length
-    oldval = fmt1.format(value)[::-1]
-    update = fmt2.format(bvalue)[-length:][::-1]
-    newval = oldval[:start] + update + oldval[start + length:]
-    bytes[:] = value_to_bytes (int(newval[::-1], 2), len(bytes))
-
-def bytes_to_value (bytes):
-    return reduce(lambda x,y: (x<<8)|y,  bytes[::-1] )
+    if length == 0:
+        return
+    byte_start = (start)  // 8
+    byte_end   = (start + length - 1) // 8
+    bit_start  = start & 7
+    mask = (1 << length) - 1
+    val  = bytes_to_value (bytes[byte_start:byte_end + 1])
+    val &= ~(mask << bit_start)
+    val |= ((bvalue & mask) << bit_start)
+    bytes[byte_start:byte_end+1] = value_to_bytearray (val, byte_end + 1 - byte_start)
 
 def value_to_bytes (value, length):
-    return [(value>>(i*8) & 0xff) for i in range(length)]
+    return value.to_bytes(length, 'little')
+
+def bytes_to_value (bytes):
+    return int.from_bytes (bytes, 'little')
+
+def value_to_bytearray (value, length):
+    return bytearray(value_to_bytes(value, length))
+
+def value_to_bytearray (value, length):
+    return bytearray(value_to_bytes(value, length))
 
 def get_aligned_value (value, alignment = 4):
     if alignment != (1 << (alignment.bit_length() - 1)):
@@ -171,19 +185,30 @@ def check_files_exist (base_name_list, dir = '', ext = ''):
             return False
     return True
 
+def load_source (name, filepath):
+    mod = SourceFileLoader (name, filepath).load_module()
+    return  mod
+
 def get_openssl_path ():
     if os.name == 'nt':
         if 'OPENSSL_PATH' not in os.environ:
-            os.environ['OPENSSL_PATH'] = "C:\\Openssl\\"
-        if 'OPENSSL_CONF' not in os.environ:
-            openssl_cfg = "C:\\Openssl\\openssl.cfg"
-            if os.path.exists(openssl_cfg):
-                os.environ['OPENSSL_CONF'] = openssl_cfg
+            openssl_dir = "C:\\Openssl\\bin\\"
+            if os.path.exists (openssl_dir):
+                os.environ['OPENSSL_PATH'] = openssl_dir
+            else:
+                os.environ['OPENSSL_PATH'] = "C:\\Openssl\\"
+                if 'OPENSSL_CONF' not in os.environ:
+                    openssl_cfg = "C:\\Openssl\\openssl.cfg"
+                    if os.path.exists(openssl_cfg):
+                        os.environ['OPENSSL_CONF'] = openssl_cfg
     openssl = os.path.join(os.environ.get ('OPENSSL_PATH', ''), 'openssl')
     return openssl
 
 def run_process (arg_list, print_cmd = False, capture_out = False):
     sys.stdout.flush()
+    if os.name == 'nt' and os.path.splitext(arg_list[0])[1] == '' and \
+       os.path.exists (arg_list[0] + '.exe'):
+        arg_list[0] += '.exe'
     if print_cmd:
         print (' '.join(arg_list))
 
@@ -209,56 +234,25 @@ def run_process (arg_list, print_cmd = False, capture_out = False):
 
     return output
 
+# Adjust hash type algorithm based on Public key file
+def adjust_hash_type (pub_key_file):
+    key_type =  get_key_type (pub_key_file)
+    if key_type ==  'RSA2048':
+        hash_type = 'SHA2_256'
+    elif key_type ==  'RSA3072':
+        hash_type = 'SHA2_384'
+    else:
+        hash_type = None
+
+    return hash_type
+
 def rsa_sign_file (priv_key, pub_key, hash_type, sign_scheme, in_file, out_file, inc_dat = False, inc_key = False):
-
-    _hash_type_string = {
-        "SHA2_256"    : 'sha256',
-        "SHA2_384"    : 'sha384',
-        "SHA2_512"    : 'sha512',
-    }
-
-    _sign_scheme_string = {
-        "RSA_PKCS1"    : 'pkcs1',
-        "RSA_PSS"      : 'pss',
-    }
 
     bins = bytearray()
     if inc_dat:
         bins.extend(get_file_data(in_file))
 
-    # Temporary files to store hash generated
-    hash_file_tmp = out_file+'.hash.tmp'
-    hash_file     = out_file+'.hash'
-
-    # Generate hash using openssl dgst in hex format
-    cmdargs = [get_openssl_path(), 'dgst', '-'+'%s' % _hash_type_string[hash_type], '-out', '%s' % hash_file_tmp, '%s' % in_file]
-    run_process (cmdargs)
-
-    #sample hash data generated by dgst command
-    #SHA256()= 7658f28ae53f61b6dbaeac5ea13d0a169a3f325773bfa5c3cdfc2d0cad4a74d3
-
-    # Extract hash form dgst command output and convert to ascii
-    with open(hash_file_tmp, 'r') as fin:
-        hashdata = fin.read()
-    fin.close()
-
-    try:
-        hashdata = hashdata.rsplit('=', 1)[1].strip()
-    except:
-        raise Exception('Hash Data not found for signing!')
-
-    if len(hashdata) != (HASH_DIGEST_SIZE[hash_type] * 2):
-        raise Exception('Hash Data size do match with for hash type!')
-
-    hashdata_bytes = bytearray.fromhex(hashdata)
-    gen_file_from_object (hash_file, hashdata_bytes)
-
-    # sign using Openssl pkeyutl
-    cmdargs = [get_openssl_path(), 'pkeyutl', '-sign', '-in', '%s' % hash_file, '-inkey', '%s' % priv_key,
-               '-out', '%s' % out_file, '-pkeyopt', 'digest:%s' % _hash_type_string[hash_type],
-               '-pkeyopt', 'rsa_padding_mode:%s' % _sign_scheme_string[sign_scheme]]
-
-    run_process (cmdargs)
+    single_sign_file(priv_key, hash_type, sign_scheme, in_file, out_file)
 
     out_data = get_file_data(out_file)
 
@@ -277,8 +271,13 @@ def rsa_sign_file (priv_key, pub_key, hash_type, sign_scheme, in_file, out_file,
 
 def get_key_type (in_key):
 
-    # Check for public key in binary format.
-    key = bytearray(get_file_data(in_key))
+    # Check in_key is file or key Id
+    if not os.path.exists(in_key):
+        key = bytearray(gen_pub_key (in_key))
+    else:
+        # Check for public key in binary format.
+        key = bytearray(get_file_data(in_key))
+
     pub_key_hdr = PUB_KEY_HDR.from_buffer(key)
     if pub_key_hdr.Identifier != b'PUBK':
         pub_key = gen_pub_key (in_key)
@@ -286,6 +285,7 @@ def get_key_type (in_key):
 
     key_type = next((key for key, value in PUB_KEY_TYPE.items() if value == pub_key_hdr.KeyType))
     return '%s%d' % (key_type, (pub_key_hdr.KeySize - 4) * 8)
+
 
 def get_auth_hash_type (key_type, sign_scheme):
     if key_type == "RSA2048" and sign_scheme == "RSA_PKCS1":
@@ -306,50 +306,9 @@ def get_auth_hash_type (key_type, sign_scheme):
     return auth_type, hash_type
 
 def gen_pub_key (in_key, pub_key = None):
-    if not os.path.isfile(in_key):
-        raise Exception ("Invalid input key file '%s' !" % in_key)
-    # Expect key to be in PEM format
-    is_prv_key = False
-    cmdline = [get_openssl_path(), 'rsa', '-pubout', '-text', '-noout', '-in', '%s' % in_key]
-    # Check if it is public key or private key
-    text = get_file_data(in_key, 'r')
-    if '-BEGIN RSA PRIVATE KEY-' in text:
-        is_prv_key = True
-    elif '-BEGIN PUBLIC KEY-' in text:
-        cmdline.extend (['-pubin'])
-    else:
-        raise Exception('Unknown key format "%s" !' % in_key)
 
-    if pub_key:
-        cmdline.extend (['-out', '%s' % pub_key])
-        capture = False
-    else:
-        capture = True
+    keydata = single_sign_gen_pub_key (in_key, pub_key)
 
-    output = run_process (cmdline, capture_out = capture)
-    if not capture:
-        output = get_file_data(pub_key, 'r')
-    data     = output.replace('\r', '')
-    data     = data.replace('\n', '')
-    data     = data.replace('  ', '')
-
-    # Extract the modulus
-    if is_prv_key:
-        match = re.search('modulus(.*)publicExponent:\s+(\d+)\s+', data)
-    else:
-        match = re.search('Modulus(?:.*?):(.*)Exponent:\s+(\d+)\s+', data)
-    if not match:
-        raise Exception('Public key not found!')
-    modulus  = match.group(1).replace(':', '')
-    exponent = int(match.group(2))
-
-    mod = bytearray.fromhex(modulus)
-    # Remove the '00' from the front if the MSB is 1
-    if mod[0] == 0 and (mod[1] & 0x80):
-        mod = mod[1:]
-    exp = bytearray.fromhex('{:08x}'.format(exponent))
-
-    keydata   = mod + exp
     publickey = PUB_KEY_HDR()
     publickey.KeySize  = len(keydata)
     publickey.KeyType  = PUB_KEY_TYPE['RSA']
@@ -390,15 +349,36 @@ def decompress (in_file, out_file, tool_dir = ''):
     fo.close()
 
     compress_tool = "%sCompress" % alg
-    cmdline = [
-        os.path.join (tool_dir, compress_tool),
-        "-d",
-        "-o", out_file,
-        temp]
-    run_process (cmdline, False, True)
+    if alg == "Lz4":
+        try:
+            cmdline = [
+                os.path.join (tool_dir, compress_tool),
+                "-d",
+                "-o", out_file,
+                temp]
+            run_process (cmdline, False, True)
+        except:
+            print("Could not find/use CompressLz4 tool, trying with python lz4...")
+            try:
+                import lz4.block
+                if lz4.VERSION != '3.1.1':
+                    print("Recommended lz4 module version is '3.1.1', '%s' is currently installed." % lz4.VERSION)
+            except ImportError:
+                print("Could not import lz4, use 'python -m pip install lz4==3.1.1' to install it.")
+                exit(1)
+            decompress_data = lz4.block.decompress(get_file_data(temp))
+            with open(out_file, "wb") as lz4bin:
+                lz4bin.write(decompress_data)
+    else:
+        cmdline = [
+            os.path.join (tool_dir, compress_tool),
+            "-d",
+            "-o", out_file,
+            temp]
+        run_process (cmdline, False, True)
     os.remove(temp)
 
-def compress (in_file, alg, out_path = '', tool_dir = ''):
+def compress (in_file, alg, svn=0, out_path = '', tool_dir = ''):
     if not os.path.isfile(in_file):
         raise Exception ("Invalid input file '%s' !" % in_file)
 
@@ -421,20 +401,46 @@ def compress (in_file, alg, out_path = '', tool_dir = ''):
         sig = "LZDM"
     else:
         raise Exception ("Unsupported compression '%s' !" % alg)
-    if sig == "LZDM":
-        shutil.copy(in_file, out_file)
-    else:
-        compress_tool = "%sCompress" % alg
-        cmdline = [
-            os.path.join (tool_dir, compress_tool),
-            "-e",
-            "-o", out_file,
-            in_file]
-        run_process (cmdline, False, True)
 
-    compress_data = get_file_data(out_file)
+    in_len = os.path.getsize(in_file)
+    if in_len > 0:
+        compress_tool = "%sCompress" % alg
+        if sig == "LZDM":
+            shutil.copy(in_file, out_file)
+            compress_data = get_file_data(out_file)
+        elif sig == "LZ4 ":
+            try:
+                cmdline = [
+                    os.path.join (tool_dir, compress_tool),
+                    "-e",
+                    "-o", out_file,
+                    in_file]
+                run_process (cmdline, False, True)
+                compress_data = get_file_data(out_file)
+            except:
+                print("Could not find/use CompressLz4 tool, trying with python lz4...")
+                try:
+                    import lz4.block
+                    if lz4.VERSION != '3.1.1':
+                        print("Recommended lz4 module version is '3.1.1', '%s' is currently installed." % lz4.VERSION)
+                except ImportError:
+                    print("Could not import lz4, use 'python -m pip install lz4==3.1.1' to install it.")
+                    exit(1)
+                compress_data = lz4.block.compress(get_file_data(in_file), mode='high_compression')
+        elif sig == "LZMA":
+            cmdline = [
+                os.path.join (tool_dir, compress_tool),
+                "-e",
+                "-o", out_file,
+                in_file]
+            run_process (cmdline, False, True)
+            compress_data = get_file_data(out_file)
+    else:
+        compress_data = bytearray()
+
     lz_hdr = LZ_HEADER ()
     lz_hdr.signature = sig.encode()
+    lz_hdr.svn = svn
     lz_hdr.compressed_len = len(compress_data)
     lz_hdr.length = os.path.getsize(in_file)
     data = bytearray ()
@@ -443,4 +449,3 @@ def compress (in_file, alg, out_path = '', tool_dir = ''):
     gen_file_from_object (out_file, data)
 
     return out_file
-

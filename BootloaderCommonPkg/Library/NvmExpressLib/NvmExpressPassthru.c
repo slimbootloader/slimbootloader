@@ -619,7 +619,7 @@ NvmExpressPassThru (
 
   // Wait for completion queue to get filled in. 100ns unit by EFI spec
   //
-  TimeCount = (Packet->CommandTimeout) >> 7; //times = 128ns unit
+  TimeCount = RShiftU64 (Packet->CommandTimeout, 7); //times = 128ns unit
   Status = EFI_TIMEOUT;
   while ((TimeCount--) != 0 ) {
     if (Cq->Pt != Private->Pt[QueueId]) {

@@ -297,6 +297,8 @@ UpdateLinuxBootParams (
       Bp->ScreenInfo.LfbLinelength   = (UINT16) (GfxMode->PixelsPerScanLine * 4);
       Bp->ScreenInfo.LfbDepth        = 32;
       Bp->ScreenInfo.LfbBase         = (UINT32)(UINTN)GfxInfoHob->FrameBufferBase;
+      Bp->ScreenInfo.ExtLfbBase      = (UINT32)RShiftU64 (GfxInfoHob->FrameBufferBase, 32);
+      Bp->ScreenInfo.Capabilities   |= VIDEO_CAPABILITY_64BIT_BASE;
       Bp->ScreenInfo.LfbWidth        = (UINT16)GfxMode->HorizontalResolution;
       Bp->ScreenInfo.LfbHeight       = (UINT16)GfxMode->VerticalResolution;
       Bp->ScreenInfo.Pages           = 1;
@@ -327,15 +329,15 @@ UpdateLinuxBootParams (
   // To check the existence, simply search for "acpi_rsdp=" string since it's
   // case-sensitive with the immediate '=' trailing according to kernel spec.
   //
-  if (AsciiStrStr ((CHAR8 *)(UINTN)Bp->Hdr.CmdLinePtr,(CHAR8 *)ACPI_RSDP_CMDLINE_STR) == NULL) {
-    GuidHob = GetFirstGuidHob (&gLoaderSystemTableInfoGuid);
-    if (GuidHob != NULL) {
-      SystemTableInfo = (SYSTEM_TABLE_INFO *)GET_GUID_HOB_DATA (GuidHob);
-
+  GuidHob = GetFirstGuidHob (&gLoaderSystemTableInfoGuid);
+  if (GuidHob != NULL) {
+    SystemTableInfo = (SYSTEM_TABLE_INFO *)GET_GUID_HOB_DATA (GuidHob);
+    if (AsciiStrStr ((CHAR8 *)(UINTN)Bp->Hdr.CmdLinePtr, (CHAR8 *)ACPI_RSDP_CMDLINE_STR) == NULL) {
       AsciiSPrint (ParamValue, sizeof (ParamValue), " %a0x%lx", ACPI_RSDP_CMDLINE_STR, SystemTableInfo->AcpiTableBase);
       AsciiStrCatS ((CHAR8 *)(UINTN)Bp->Hdr.CmdLinePtr, CMDLINE_LENGTH_MAX, ParamValue);
       Bp->Hdr.CmdlineSize = (UINT32)AsciiStrLen ((CHAR8 *)(UINTN)Bp->Hdr.CmdLinePtr);
     }
+    Bp->AcpiRsdpAddr = SystemTableInfo->AcpiTableBase;
   }
 }
 

@@ -32,11 +32,10 @@ PciIovParseVfBar (
   IN UINTN          BarIndex
   )
 {
-  UINT32      Value;
-  UINT32      OriginalValue;
-  UINT32      Mask;
-  EFI_STATUS  Status;
-  PCI_ENUM_POLICY_INFO  *EnumPolicy;
+  UINT32                Value;
+  UINT32                OriginalValue;
+  UINT32                Mask;
+  EFI_STATUS            Status;
 
   //
   // Ensure it is called properly
@@ -68,7 +67,6 @@ PciIovParseVfBar (
     return Offset + 4;
   }
 
-  EnumPolicy = (PCI_ENUM_POLICY_INFO *)PcdGetPtr (PcdPciEnumPolicyInfo);
   PciIoDevice->VfPciBar[BarIndex].Offset = (UINT16) Offset;
   if ((Value & 0x01) != 0) {
     //
@@ -115,13 +113,13 @@ PciIovParseVfBar (
     //
     case 0x04:
       if ((Value & 0x08) != 0) {
-        if ((EnumPolicy != NULL) && (EnumPolicy->DowngradePMem64 == 0)) {
+        if ((PciIoDevice->Decodes & EFI_BRIDGE_PMEM64_DECODE_SUPPORTED) != 0) {
           PciIoDevice->VfPciBar[BarIndex].BarType = PciBarTypePMem64;
         } else {
           PciIoDevice->VfPciBar[BarIndex].BarType = PciBarTypePMem32;
         }
       } else {
-        if ((EnumPolicy != NULL) && (EnumPolicy->DowngradeMem64 == 0)) {
+        if ((PciIoDevice->Decodes & EFI_BRIDGE_MEM64_DECODE_SUPPORTED) != 0) {
           PciIoDevice->VfPciBar[BarIndex].BarType = PciBarTypeMem64;
         } else {
           PciIoDevice->VfPciBar[BarIndex].BarType = PciBarTypeMem32;
@@ -208,6 +206,8 @@ PciIovParseVfBar (
     PciIoDevice->VfPciBar[BarIndex].BarType     = PciBarTypeUnknown;
     PciIoDevice->VfPciBar[BarIndex].BaseAddress = 0;
     PciIoDevice->VfPciBar[BarIndex].Alignment   = 0;
+  } else {
+    PciIoDevice->VfPciBar[BarIndex].OrgBarType = PciIoDevice->VfPciBar[BarIndex].BarType;
   }
 
   //

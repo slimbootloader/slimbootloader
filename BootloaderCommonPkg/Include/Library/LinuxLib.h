@@ -25,6 +25,9 @@
 #define VIDEO_TYPE_EFI        0x70
 #define GET_POS_FROM_MASK(mask)   (mask & 0x0FF)?0:((mask & 0x0FF00)?8:((mask & 0x0FF0000)?16:24))
 
+#define VIDEO_CAPABILITY_SKIP_QUIRKS  (1 << 0)
+#define VIDEO_CAPABILITY_64BIT_BASE   (1 << 1)  /* Frame buffer base is 64-bit */
+
 #pragma pack(1)
 
 typedef struct {
@@ -122,7 +125,8 @@ typedef struct {
   UINT16    Pages;             /* 0x32 */
   UINT16    VesaAttributes;    /* 0x34 */
   UINT32    Capabilities;      /* 0x36 */
-  UINT8     Reserved[6];       /* 0x3a */
+  UINT32    ExtLfbBase;        /* 0x3a */
+  UINT8     Reserved[2];       /* 0x3e */
 } SCREEN_INFO;
 
 typedef struct {
@@ -131,7 +135,8 @@ typedef struct {
   UINT8         Pad2[4];
   UINT64        TbootAddr;
   UINT8         IstInfo[0x10];
-  UINT8         Pad3[16];
+  UINT64        AcpiRsdpAddr;
+  UINT8         Pad3[8];
   UINT8         Hd0Info[16];
   UINT8         Hd1Info[16];
   UINT8         SysDescTable[0x10];

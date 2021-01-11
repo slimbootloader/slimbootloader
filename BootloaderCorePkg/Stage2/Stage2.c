@@ -149,8 +149,7 @@ NormalBootPath (
   UINT8                          *CmdLine;
   UINT32                          CmdLineLen;
   UINT32                          UefiSig;
-  UINT8                           OrgVal;
-
+  UINT16                          PldMachine;
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
 
@@ -166,6 +165,7 @@ NormalBootPath (
   UefiSig  = 0;
   PldBase  = 0;
   PldEntry = NULL;
+  PldMachine = IS_X64 ? IMAGE_FILE_MACHINE_X64 : IMAGE_FILE_MACHINE_I386;
 
   Status  = EFI_SUCCESS;
   if (Dst[0] == 0x00005A4D) {
@@ -173,13 +173,16 @@ NormalBootPath (
     DEBUG ((DEBUG_INFO, "PE32 Format Payload\n"));
     Status = PeCoffRelocateImage ((UINT32)(UINTN)Dst);
     if (!EFI_ERROR(Status)) {
-      Status = PeCoffLoaderGetEntryPoint (Dst, (VOID *)&PldEntry);
+      Status = PeCoffLoaderGetMachine (Dst, &PldMachine);
+      if (!EFI_ERROR(Status)) {
+        Status = PeCoffLoaderGetEntryPoint (Dst, (VOID *)&PldEntry);
+      }
     }
   } else if (Dst[10] == EFI_FVH_SIGNATURE) {
     // It is a FV format
     DEBUG ((DEBUG_INFO, "FV Format Payload\n"));
     UefiSig = Dst[0];
-    Status  = LoadFvImage (Dst, Stage2Param->PayloadActualLength, (VOID **)&PldEntry);
+    Status  = LoadFvImage (Dst, Stage2Param->PayloadActualLength, (VOID **)&PldEntry, &PldMachine);
   } else if (IsElfImage (Dst)) {
     Status = LoadElfImage (Dst, (VOID *)&PldEntry);
   } else {
@@ -194,10 +197,19 @@ NormalBootPath (
         Status = LoadComponent (FLASH_MAP_SIG_EPAYLOAD, SIGNATURE_32 ('C', 'M', 'D', 'L'),
                                 (VOID **)&CmdLine, &CmdLineLen);
         if (!EFI_ERROR (Status)) {
-          OrgVal = CmdLine[CmdLineLen];
+          // Limit max command line length
+          if (CmdLineLen > CMDLINE_LENGTH_MAX - 1) {
+            CmdLineLen = CMDLINE_LENGTH_MAX - 1;
+          }
           CmdLine[CmdLineLen] = 0;
           DEBUG ((DEBUG_INFO, "Kernel command line: \n%a\n", CmdLine));
-          CmdLine[CmdLineLen] = OrgVal;
+        }
+
+        // Try to load InitRd if it exists. If loading fails, continue booting
+        Status = LoadComponent (FLASH_MAP_SIG_EPAYLOAD, SIGNATURE_32 ('I', 'N', 'R', 'D'),
+                                (VOID **)&InitRd, &InitRdLen);
+        if (!EFI_ERROR (Status)) {
+          DEBUG ((DEBUG_INFO, "InitRD is loaded at 0x%x:0x%x\n", InitRd, InitRdLen));
         }
         PldEntry = (PAYLOAD_ENTRY)(UINTN)LinuxBoot;
         Status   = LoadBzImage (Dst, InitRd, InitRdLen, CmdLine, CmdLineLen);
@@ -257,8 +269,26 @@ NormalBootPath (
 
   DEBUG ((DEBUG_INFO, "Payload entry: 0x%08X\n", PldEntry));
   if (PldEntry != NULL) {
+    if (IS_X64) {
+      if (PldMachine == IMAGE_FILE_MACHINE_I386) {
+        DEBUG ((DEBUG_INFO, "Thunk back to x86 mode\n"));
+      }
+    } else {
+      if (PldMachine == IMAGE_FILE_MACHINE_X64) {
+        DEBUG ((DEBUG_INFO, "Switch to x64 mode\n"));
+      }
+    }
     DEBUG ((DEBUG_INIT, "Jump to payload\n\n"));
-    PldEntry (PldHobList, (VOID *)PldBase);
+    if (PldMachine == IMAGE_FILE_MACHINE_X64) {
+      // Need to call in x64 long mode
+      Execute64BitCode ((UINT64)(UINTN)PldEntry, (UINT64)(UINTN)PldHobList,
+                        (UINT64)(UINTN)PldBase, FALSE);
+    } else {
+      // Need to call in x86 compatible mode
+      Execute32BitCode ((UINT64)(UINTN)PldEntry, (UINT64)(UINTN)PldHobList,
+                        (UINT64)(UINTN)PldBase, FALSE);
+    }
+
   }
 }
 
@@ -284,6 +314,9 @@ S3ResumePath (
     MpInit (EnumMpInitDone);
     AddMeasurePoint (0x31C0);
   }
+
+  // Call the board notification
+  BoardInit (EndOfStages);
 
   // Call board and FSP Notify ReadyToBoot
   BoardNotifyPhase (ReadyToBoot);
@@ -379,9 +412,8 @@ SecStartup (
   // Save NVS data
   NvsData = GetFspNvsDataBuffer (LdrGlobal->FspHobList, &MrcDataLen);
   if ((NvsData != NULL) && (MrcDataLen > 0)) {
-    DEBUG ((DEBUG_INFO, "Save MRC Training Data (0x%p 0x%06X) ... ", NvsData, MrcDataLen));
     SubStatus = SaveNvsData (NvsData, MrcDataLen);
-    DEBUG ((DEBUG_INFO, "%X\n", SubStatus));
+    DEBUG ((DEBUG_INFO, "Save MRC Training Data (0x%p 0x%06X) ... %r\n", NvsData, MrcDataLen, SubStatus));
   }
 
   DEBUG ((DEBUG_INIT, "Silicon Init\n"));

@@ -59,6 +59,7 @@ typedef struct {
   EFI_PEI_GRAPHICS_INFO_HOB     *GfxInfoHob;
   CHAR8                         *TextDisplayBuf;
   CHAR8                         *TextSwapBuf;
+  CHAR8                         *TextDrawBuf;
   UINTN                         OffX;
   UINTN                         OffY;
   UINTN                         Width;
@@ -70,6 +71,29 @@ typedef struct {
   EFI_GRAPHICS_OUTPUT_BLT_PIXEL ForegroundColor;
   EFI_GRAPHICS_OUTPUT_BLT_PIXEL BackgroundColor;
 } FRAME_BUFFER_CONSOLE;
+
+
+/**
+  Verify a BMP image header and determine its centralized display location
+  on screen.
+
+  @param  BmpImage      Pointer to BMP file
+  @param  OffX          Pointer to receive X offset for BMP display position.
+  @param  OffY          Pointer to receive Y offset for BMP display position.
+  @param  GfxInfoHob    Pointer to graphics info HOB.
+
+  @retval EFI_SUCCESS           GopBlt and GopBltSize are returned.
+  @retval EFI_UNSUPPORTED       BmpImage is not a valid *.BMP image
+**/
+EFI_STATUS
+EFIAPI
+GetBmpDisplayPos (
+  IN     VOID    *BmpImage,
+  OUT  UINT32    *OffX,          OPTIONAL
+  OUT  UINT32    *OffY,          OPTIONAL
+  IN   EFI_PEI_GRAPHICS_INFO_HOB *GfxInfoHob
+);
+
 
 /**
   Display a *.BMP graphics image to the frame buffer. If a NULL GopBlt buffer
@@ -89,6 +113,7 @@ typedef struct {
 
 **/
 EFI_STATUS
+EFIAPI
 DisplayBmpToFrameBuffer (
   IN     VOID      *BmpImage,
   IN OUT VOID      **GopBlt,
@@ -207,6 +232,31 @@ EFIAPI
 FrameBufferWrite (
   IN UINT8     *Buffer,
   IN UINTN      NumberOfBytes
+  );
+
+/**
+  Draw frame buffer from a given text buffer.
+  The text buffer needs to be compatible with format below:
+  Each text char takes 16 bits:
+    BIT   7:0  ASCII char
+    BIT  11:8  Foreground color
+    BIT 15:12  Background color
+
+  @param[in]  Row      Row number for the text buffer.
+  @param[in]  Col      Column number for the text buffer.
+  @param[in]  Buffer   The pointer to the text buffer.
+
+  @retval EFI_NOT_READY          Frame buffer console has not been initialized yet.
+  @retval EFI_INVALID_PARAMETER  Invalid parameters.
+  @retval EFI_SUCCESS            Text buffer was drawn successfully.
+
+**/
+EFI_STATUS
+EFIAPI
+DrawFrameBuffer (
+  IN UINT32     Row,
+  IN UINT32     Col,
+  IN UINT8     *Buffer
   );
 
 #endif

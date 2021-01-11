@@ -24,4 +24,11 @@
 
 #include "ConfigDataDynamic.h"
 
+#pragma pack(1)
+typedef struct {
+  PCIE_RP_PIN_CTRL_PWR        PcieRpPower0;
+  PCIE_RP_PIN_CTRL_RST        PcieRpReset0;
+} PCIE_RP_PIN_CTRL;
+#pragma pack()
+
 #endif

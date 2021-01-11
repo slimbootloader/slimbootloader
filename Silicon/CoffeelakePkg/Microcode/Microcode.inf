@@ -22,7 +22,7 @@
 
 [UserExtensions.SBL."CloneRepo"]
   REPO  = https://github.com/intel/Intel-Linux-Processor-Microcode-Data-Files.git
-  TAG   = microcode-20190514a
+  TAG   = microcode-20200616
 
 [UserExtensions.SBL."CopyList"]
   intel-ucode/06-8e-0c  : Silicon/CoffeelakePkg/Microcode/06-8e-0c.mcb

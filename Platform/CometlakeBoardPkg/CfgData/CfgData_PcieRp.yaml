@@ -1,0 +1,122 @@
+## @file
+
+#
+
+#  Slim Bootloader CFGDATA Option File.
+
+#
+
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+#
+
+##
+
+
+
+
+
+- $ACTION      :
+
+    page         : PLT
+
+- $ACTION      :
+
+    page         : PLT_PCIE_CONFIG:SIL:"PCIE Config"
+
+- $ACTION      :
+
+    page         : PLT_PCIE_RP_FEAT:PLT_PCIE_CONFIG:"PCIE RP Config"
+
+- $ACTION      :
+
+    page         : PLT_PCIE_CLK_FEAT:PLT_PCIE_CONFIG:"PCIE Clock Config"
+
+- PCIE_CFG_DATA :
+
+  - !expand { CFGHDR_TMPL : [ PCIE_CFG_DATA, 0x302, 0, 0 ] }
+
+  - !expand { PCIERP_PERPORT_TMPL : [ 0  ,  0x8000FFAA003C003C1003100326758404 ] }
+
+  - !expand { PCIERP_PERPORT_TMPL : [ 1  ,  0x8000FFAA003C003C1003100326758404 ] }
+
+  - !expand { PCIERP_PERPORT_TMPL : [ 2  ,  0x8000FFAA003C003C1003100326758404 ] }
+
+  - !expand { PCIERP_PERPORT_TMPL : [ 3  ,  0x8000FFAA003C003C1003100326758404 ] }
+
+  - !expand { PCIERP_PERPORT_TMPL : [ 4  ,  0x8000FFAA003C003C1003100326758404 ] }
+
+  - !expand { PCIERP_PERPORT_TMPL : [ 5  ,  0x8000FFAA003C003C1003100326758404 ] }
+
+  - !expand { PCIERP_PERPORT_TMPL : [ 6  ,  0x8000FFAA003C003C1003100326758404 ] }
+
+  - !expand { PCIERP_PERPORT_TMPL : [ 7  ,  0x8000FFAA003C003C1003100326758404 ] }
+
+  - !expand { PCIERP_PERPORT_TMPL : [ 8  ,  0x8000FFAA003C003C1003100326758404 ] }
+
+  - !expand { PCIERP_PERPORT_TMPL : [ 9  ,  0x8000FFAA003C003C1003100326758404 ] }
+
+  - !expand { PCIERP_PERPORT_TMPL : [ 10 ,  0x8000FFAA003C003C1003100326758404 ] }
+
+  - !expand { PCIERP_PERPORT_TMPL : [ 11 ,  0x8000FFAA003C003C1003100326758404 ] }
+
+  - !expand { PCIERP_PERPORT_TMPL : [ 12 ,  0x8000FFAA003C003C1003100326758404 ] }
+
+  - !expand { PCIERP_PERPORT_TMPL : [ 13 ,  0x8000FFAA003C003C1003100326758404 ] }
+
+  - !expand { PCIERP_PERPORT_TMPL : [ 14 ,  0x8000FFAA003C003C1003100326758404 ] }
+
+  - !expand { PCIERP_PERPORT_TMPL : [ 15 ,  0x8000FFAA003C003C1003100326758404 ] }
+
+  - !expand { PCIERP_PERPORT_TMPL : [ 16 ,  0x8000FFAA003C003C1003100326758404 ] }
+
+  - !expand { PCIERP_PERPORT_TMPL : [ 17 ,  0x8000FFAA003C003C1003100326758404 ] }
+
+  - !expand { PCIERP_PERPORT_TMPL : [ 18 ,  0x8000FFAA003C003C1003100326758404 ] }
+
+  - !expand { PCIERP_PERPORT_TMPL : [ 19 ,  0x8000FFAA003C003C1003100326758404 ] }
+
+  - !expand { PCIERP_PERPORT_TMPL : [ 20 ,  0x8000FFAA003C003C1003100326758404 ] }
+
+  - !expand { PCIERP_PERPORT_TMPL : [ 21 ,  0x8000FFAA003C003C1003100326758404 ] }
+
+  - !expand { PCIERP_PERPORT_TMPL : [ 22 ,  0x8000FFAA003C003C1003100326758404 ] }
+
+  - !expand { PCIERP_PERPORT_TMPL : [ 23 ,  0x8000FFAA003C003C1003100326758404 ] }
+
+  - !expand { PCIE_PER_CLK_TMPL : [ 0    ,  0x00008000 ] }
+
+  - !expand { PCIE_PER_CLK_TMPL : [ 1    ,  0x00008001 ] }
+
+  - !expand { PCIE_PER_CLK_TMPL : [ 2    ,  0x00008002 ] }
+
+  - !expand { PCIE_PER_CLK_TMPL : [ 3    ,  0x00008003 ] }
+
+  - !expand { PCIE_PER_CLK_TMPL : [ 4    ,  0x00008004 ] }
+
+  - !expand { PCIE_PER_CLK_TMPL : [ 5    ,  0x00008005 ] }
+
+  - !expand { PCIE_PER_CLK_TMPL : [ 6    ,  0x00008006 ] }
+
+  - !expand { PCIE_PER_CLK_TMPL : [ 7    ,  0x00008007 ] }
+
+  - !expand { PCIE_PER_CLK_TMPL : [ 8    ,  0x00008008 ] }
+
+  - !expand { PCIE_PER_CLK_TMPL : [ 9    ,  0x00008009 ] }
+
+  - !expand { PCIE_PER_CLK_TMPL : [ 10   ,  0x0000800A ] }
+
+  - !expand { PCIE_PER_CLK_TMPL : [ 11   ,  0x0000800B ] }
+
+  - !expand { PCIE_PER_CLK_TMPL : [ 12   ,  0x0000800C ] }
+
+  - !expand { PCIE_PER_CLK_TMPL : [ 13   ,  0x0000800D ] }
+
+  - !expand { PCIE_PER_CLK_TMPL : [ 14   ,  0x0000800E ] }
+
+  - !expand { PCIE_PER_CLK_TMPL : [ 15   ,  0x0000800F ] }
+
+
+

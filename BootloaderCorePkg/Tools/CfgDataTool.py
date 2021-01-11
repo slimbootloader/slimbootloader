@@ -13,19 +13,6 @@ from   CommonUtility import *
 
 CFGDATA_INT_GUID = b'\xD0\x6C\x6E\x01\x34\x48\x7E\x4C\xBC\xFE\x41\xDF\xB8\x8A\x6A\x6D'
 
-class CDATA_BLOB_HEADER(Structure):
-    ATTR_EXTERN = 1 << 0
-    ATTR_MERGED = 1 << 7
-    _pack_ = 1
-    _fields_ = [
-        ('Signature', ARRAY(c_char, 4)),
-        ('HeaderLength', c_uint8),
-        ('Attribute', c_uint8),
-        ('Reserved', ARRAY(c_char, 2)),
-        ('UsedLength', c_uint32),
-        ('TotalLength', c_uint32),
-    ]
-
 class CCfgData:
 
     DEBUG_FLAG_PARSE  = (1 << 0)
@@ -42,7 +29,8 @@ class CCfgData:
             ('Signature', ARRAY(c_char, 4)),
             ('HeaderLength', c_uint8),
             ('Attribute', c_uint8),
-            ('Reserved', ARRAY(c_char, 2)),
+            ('Svn', c_uint8),
+            ('Reserved', ARRAY(c_char, 1)),
             ('UsedLength', c_uint32),
             ('TotalLength', c_uint32),
         ]
@@ -758,10 +746,15 @@ def CmdSign(Args):
         raise Exception("Invalid config binary file '%s' !" % CfgDataFile)
     CfgBlobHeader.Attribute |= CCfgData.CDATA_BLOB_HEADER.ATTR_SIGNED
 
+    CfgBlobHeader.Svn = Args.svn
+
     TmpFile = Args.cfg_in_file + '.tmp'
     Fd      = open (TmpFile, 'wb')
     Fd.write (FileData)
     Fd.close ()
+
+    if Args.hash_alg == 'AUTO':
+        Args.hash_alg = adjust_hash_type(Args.cfg_pri_key)
 
     rsa_sign_file (Args.cfg_pri_key, None, Args.hash_alg, Args.sign_scheme, TmpFile, Args.cfg_out_file, True, True)
     if os.path.exists(TmpFile):
@@ -814,11 +807,11 @@ def CmdReplace(Args):
     CfgBins = bytearray(Fh.read())
     Fh.close()
 
-    CfgHdr = CDATA_BLOB_HEADER.from_buffer(CfgBins)
+    CfgHdr = CCfgData.CDATA_BLOB_HEADER.from_buffer(CfgBins)
     if CfgHdr.Signature != b'CFGD':
         raise Exception("Invalid CFGDATA image file '%s'" % CfgFile)
 
-    if not CfgHdr.Attribute & CDATA_BLOB_HEADER.ATTR_MERGED:
+    if not CfgHdr.Attribute & CCfgData.CDATA_BLOB_HEADER.ATTR_MERGED:
         raise Exception("CFGDATA image file '%s' is not merged yet!" % CfgFile)
 
     # Get flash image
@@ -920,9 +913,10 @@ def Main():
                             type=str,
                             help='Configuration binary file')
     SignParser.add_argument('-o', dest='cfg_out_file', type=str, help='Signed configuration output binary file name to be generated', required=True)
-    SignParser.add_argument('-k', dest='cfg_pri_key', type=str, help='Private key file (PEM format) used to sign configuration data', required=True)
-    SignParser.add_argument('-a', dest='hash_alg', type=str, choices=['SHA2_256', 'SHA2_384'], help='Hash Type for signing',  default = 'SHA2_256')
+    SignParser.add_argument('-k', dest='cfg_pri_key', type=str, help='Key Id or Private key file (PEM format) used to sign configuration data', required=True)
+    SignParser.add_argument('-a', dest='hash_alg', type=str, choices=['SHA2_256', 'SHA2_384', 'AUTO'], help='Hash Type for signing. For AUTO hash type will be choosen based on key length',  default = 'AUTO')
     SignParser.add_argument('-s', dest='sign_scheme', type=str, choices=['RSA_PKCS1', 'RSA_PSS'], help='Signing Scheme',   default = 'RSA_PSS')
+    SignParser.add_argument('-svn', dest='svn', type=int, help='Security version number for Config Data', default = 0)
     SignParser.set_defaults(func=CmdSign)
 
     ExtractParser = SubParser.add_parser('extract', help='extract a single config data to a file')

@@ -298,11 +298,6 @@ GetFirmwareUpdateInfo (
       return Status;
     }
 
-    if (ImageHdr->UpdateImageSize & 0xFFF) {
-      DEBUG ((DEBUG_INFO, "capsule payload size is not block aligned!"));
-      return EFI_UNSUPPORTED;
-    }
-
     if (ImageHdr->UpdateImageSize > CompSize) {
       DEBUG ((DEBUG_INFO, "capsule payload size is too big for the region on flash!"));
       return EFI_UNSUPPORTED;
@@ -530,6 +525,27 @@ EFIAPI
 SetFlashDescriptorLock (
   IN  CHAR8      *CmdDataBuf,
   IN  UINTN      CmdDataSize
+   )
+{
+  return EFI_UNSUPPORTED;
+}
+
+
+/**
+  Anti Rollback Svn Commit
+
+  @param[in]  CmdDataBuf    Pointer to command buffer.
+  @param[in]  CmdDataSize   size of command data.
+
+  @retval  EFI_SUCCESS      Svn commit successfully.
+  @retval  others           Error happening when updating.
+
+**/
+EFI_STATUS
+EFIAPI
+SetArbSvnCommit (
+   IN  CHAR8     *CmdDataBuf,
+   IN  UINTN     CmdDataSize
    )
 {
   return EFI_UNSUPPORTED;

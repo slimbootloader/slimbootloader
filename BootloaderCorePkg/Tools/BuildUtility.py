@@ -23,6 +23,7 @@ import zipfile
 import ntpath
 from   CommonUtility import *
 from   IfwiUtility   import FLASH_MAP, FLASH_MAP_DESC, FIT_ENTRY, UCODE_HEADER
+from SingleSign import MESSAGE_SBL_KEY_DIR
 
 sys.dont_write_bytecode = True
 sys.path.append (os.path.join(os.path.dirname(__file__), '..', '..', 'IntelFsp2Pkg', 'Tools'))
@@ -178,22 +179,26 @@ class VariableRegionHeader(Structure):
 class PciEnumPolicyInfo(Structure):
     _pack_ = 1
     _fields_ = [
-        ('DowngradeIo32',   c_uint8),
-        ('DowngradeMem64',  c_uint8),
-        ('DowngradePMem64', c_uint8),
-        ('Reserved',        c_uint8),
-        ('BusScanType',     c_uint8), # 0: list, 1: range
-        ('NumOfBus',        c_uint8),
-        ('BusScanItems',    ARRAY(c_uint8, 0))
+        ('DowngradeIo32',           c_uint16, 1),
+        ('DowngradeMem64',          c_uint16, 1),
+        ('DowngradePMem64',         c_uint16, 1),
+        ('DowngradeBus0',           c_uint16, 1),
+        ('DowngradeReserved',       c_uint16, 12),
+        ('Reserved',                c_uint16),
+        ('BusScanType',             c_uint8), # 0: list, 1: range
+        ('NumOfBus',                c_uint8),
+        ('BusScanItems',            ARRAY(c_uint8, 0))
     ]
 
     def __init__(self):
-        self.DowngradeIo32    = 1
-        self.DowngradeMem64   = 1
-        self.DowngradePMem64  = 1
-        self.Reserved         = 0
-        self.BusScanType      = 0
-        self.NumOfBus         = 0
+        self.DowngradeIo32      = 1
+        self.DowngradeMem64     = 1
+        self.DowngradePMem64    = 1
+        self.DowngradeBus0      = 1
+        self.DowngradeReserved  = 0
+        self.Reserved           = 0
+        self.BusScanType        = 0
+        self.NumOfBus           = 0
 
 def get_visual_studio_info ():
 
@@ -207,21 +212,25 @@ def get_visual_studio_info ():
     if os.path.exists (vswhere_path):
         cmd = [vswhere_path, '-all', '-property', 'installationPath']
         lines = run_process (cmd, capture_out = True)
-        vscommon_path = ''
+        vscommon_paths = []
         for each in lines.splitlines ():
             each = each.strip()
             if each and os.path.isdir(each):
-                vscommon_path = each
-        vcver_file = vscommon_path + '\\VC\\Auxiliary\\Build\\Microsoft.VCToolsVersion.default.txt'
-        if os.path.exists(vcver_file):
-            for vs_ver in ['2017']:
-                check_path = '\\Microsoft Visual Studio\\%s\\' % vs_ver
-                if check_path in vscommon_path:
-                    toolchain_ver    = get_file_data (vcver_file, 'r').strip()
-                    toolchain_prefix = 'VS%s_PREFIX' % (vs_ver)
-                    toolchain_path   = vscommon_path + '\\VC\\Tools\\MSVC\\%s\\' % toolchain_ver
-                    toolchain='VS%s' % (vs_ver)
-                    break
+                vscommon_paths.append(each)
+
+        for vs_ver in ['2019', '2017']:
+            for vscommon_path in vscommon_paths:
+                vcver_file = vscommon_path + '\\VC\\Auxiliary\\Build\\Microsoft.VCToolsVersion.default.txt'
+                if os.path.exists(vcver_file):
+                    check_path = '\\Microsoft Visual Studio\\%s\\' % vs_ver
+                    if check_path in vscommon_path:
+                        toolchain_ver    = get_file_data (vcver_file, 'r').strip()
+                        toolchain_prefix = 'VS%s_PREFIX' % (vs_ver)
+                        toolchain_path   = vscommon_path + '\\VC\\Tools\\MSVC\\%s\\' % toolchain_ver
+                        toolchain = 'VS%s' % (vs_ver)
+                        break
+            if toolchain:
+                break
 
     if toolchain == '':
         vs_ver_list = [
@@ -352,22 +361,9 @@ def get_payload_list (payloads):
 
     return pld_lst
 
-# Adjust hash type algorithm based on Public key file
-def adjust_hash_type (pub_key_file):
-    key_type =  get_key_type (pub_key_file)
-    if key_type ==  'RSA2048':
-        hash_type = 'SHA2_256'
-    elif key_type ==  'RSA3072':
-        hash_type = 'SHA2_384'
-    else:
-        hash_type = None
-
-    return hash_type
-
-
-def gen_pub_key_hash_store (signing_key, pub_key_hash_list, hash_alg, sign_scheme, pub_key_dir, out_file):
+def gen_pub_key_hash_store (signing_key, pub_key_hash_list, hash_alg, sign_scheme, svn, pub_key_dir, out_file):
     # Build key hash blob
-    key_hash_buf = bytearray (HashStoreTable())
+    key_hash_buf = bytearray ()
     idx = 0
     for usage, key_file in pub_key_hash_list:
         pub_key_file = os.path.dirname(out_file) + '/PUBKEY%02d.bin' % idx
@@ -380,15 +376,20 @@ def gen_pub_key_hash_store (signing_key, pub_key_hash_list, hash_alg, sign_schem
         key_hash_entry.DigestLen = len(hash_data)
         key_hash_buf.extend (bytearray(key_hash_entry) + hash_data)
         idx += 1
-    hash_store_table = HashStoreTable.from_buffer(key_hash_buf)
-    hash_store_table.UsedLength  = len(key_hash_buf)
-    hash_store_table.TotalLength = hash_store_table.UsedLength
-    gen_file_from_object (out_file, key_hash_buf)
 
-    # Sign the key hash
-    if signing_key:
-        rsa_sign_file (signing_key, None, hash_alg, sign_scheme, out_file, out_file + '.sig', True, True)
-        shutil.copy(out_file + '.sig', out_file)
+    key_store_bin_file = out_file + '.raw'
+    gen_file_from_object (key_store_bin_file, key_hash_buf)
+
+    key_store_cnt_file = os.path.basename(out_file)
+    key_store_bin_file = os.path.basename(key_store_bin_file)
+
+    key_type = get_key_type(signing_key)
+    sign_scheme = sign_scheme[sign_scheme.index("_")+1:]
+    auth_type   = key_type + '_' + sign_scheme +  '_' + hash_alg
+    hash_store  = [('KEYH', key_store_cnt_file, '', auth_type, signing_key, 0x10, 0, svn)]
+    hash_store.append ((HashStoreTable.HASH_STORE_SIGNATURE.decode(), key_store_bin_file, '', hash_alg, '', 0x10, 0, svn))
+    out_dir = os.path.dirname(out_file)
+    gen_container_bin ([hash_store], out_dir, out_dir, '', '')
 
 
 def gen_ias_file (rel_file_path, file_space, out_file):
@@ -436,12 +437,15 @@ def gen_flash_map_bin (flash_map_file, comp_list):
 def copy_expanded_file (src, dst):
     gen_cfg_data ("GENDLT", src, dst)
 
-def gen_config_file (fv_dir, brd_name, platform_id, pri_key, cfg_db_size, cfg_size, cfg_int, cfg_ext, sign_scheme, hash_type):
+def gen_config_file (fv_dir, brd_name, platform_id, pri_key, cfg_db_size, cfg_size, cfg_int, cfg_ext, sign_scheme, hash_type, svn):
     # Remove previous generated files
     for file in glob.glob(os.path.join(fv_dir, "CfgData*.*")):
             os.remove(file)
 
     CfgIntLen = len(cfg_int)
+
+    file_ext = 'yaml'
+    gen_cmd  = { 'yaml':'GENYML', 'dsc':'GENDSC' }
 
     # Generate CFG data
     brd_name_dir      = os.path.join(os.environ['PLT_SOURCE'], 'Platform', brd_name)
@@ -451,21 +455,21 @@ def gen_config_file (fv_dir, brd_name, platform_id, pri_key, cfg_db_size, cfg_si
     cfg_hdr_file      = os.path.join(brd_name_dir, 'Include', 'ConfigDataStruct.h')
     cfg_com_hdr_file  = os.path.join(comm_brd_dir, 'Include', 'ConfigDataCommonStruct.h')
     cfg_inc_file      = os.path.join(brd_name_dir, 'Include', 'ConfigDataBlob.h')
-    cfg_dsc_file      = os.path.join(brd_cfg_dir, 'CfgDataDef.dsc')
+    cfg_dsc_file      = os.path.join(brd_cfg_dir, 'CfgDataDef.' + file_ext)
     cfg_hdr_dyn_file  = os.path.join(brd_name_dir, 'Include', 'ConfigDataDynamic.h')
-    cfg_dsc_dyn_file  = os.path.join(brd_cfg_dir, 'CfgDataDynamic.dsc')
+    cfg_dsc_dyn_file  = os.path.join(brd_cfg_dir, 'CfgDataDynamic.' + file_ext)
     cfg_pkl_file      = os.path.join(fv_dir, "CfgDataDef.pkl")
     cfg_bin_file      = os.path.join(fv_dir, "CfgDataDef.bin")  #default core dsc file cfg data
     cfg_bin_int_file  = os.path.join(fv_dir, "CfgDataInt.bin")  #_INT_CFG_DATA_FILE settings
     cfg_bin_ext_file  = os.path.join(fv_dir, "CfgDataExt.bin")  #_EXT_CFG_DATA_FILE settings
-    cfg_comb_dsc_file = os.path.join(fv_dir, 'CfgDataDef.dsc')
+    cfg_comb_dsc_file = os.path.join(fv_dir, 'CfgDataDef.' + file_ext)
 
     # Generate parsed result into pickle file to improve performance
     if os.path.exists(cfg_dsc_dyn_file):
             gen_cfg_data ("GENHDR", cfg_dsc_dyn_file, cfg_hdr_dyn_file)
 
     gen_cfg_data ("GENPKL", cfg_dsc_file, cfg_pkl_file)
-    gen_cfg_data ("GENDSC", cfg_pkl_file, cfg_comb_dsc_file)
+    gen_cfg_data (gen_cmd[file_ext], cfg_dsc_file, cfg_comb_dsc_file)
     gen_cfg_data ("GENHDR", cfg_pkl_file, ';'.join([cfg_hdr_file, cfg_com_hdr_file]))
     gen_cfg_data ("GENBIN", cfg_pkl_file, cfg_bin_file)
 
@@ -519,7 +523,7 @@ def gen_config_file (fv_dir, brd_name, platform_id, pri_key, cfg_db_size, cfg_si
 
     cfg_final_file = os.path.join(fv_dir, "CFGDATA.bin")
     if pri_key:
-        cfg_data_tool ('sign', ['-k', pri_key, '-a', hash_type, '-s', sign_scheme, cfg_merged_bin_file], cfg_final_file)
+        cfg_data_tool ('sign', ['-k', pri_key, '-a', hash_type, '-s', sign_scheme, '-svn', str(svn), cfg_merged_bin_file], cfg_final_file)
     else:
         shutil.copy(cfg_merged_bin_file, cfg_final_file)
 
@@ -598,14 +602,15 @@ def gen_payload_bin (fv_dir, arch_dir, pld_list, pld_bin, priv_key, hash_alg, si
         return
 
     # E-payloads container format
+    svn = 0x0
     alignment = 0x10
     key_dir  = os.path.dirname (priv_key)
     key_type = get_key_type(priv_key)
     sign_scheme = sign_scheme[sign_scheme.index("_")+1:]
     auth_type = key_type + '_' + sign_scheme +  '_' + hash_alg
-    pld_list = [('EPLD', '%s' % epld_bin, '', auth_type, '%s' % os.path.basename(priv_key), alignment, 0)]
+    pld_list = [('EPLD', '%s' % epld_bin, '', auth_type, '%s' % os.path.basename(priv_key), alignment, 0, svn)]
     for pld in ext_list:
-        pld_list.append ((pld['name'], pld['file'], pld['algo'], hash_alg, '', 0, 0))
+        pld_list.append ((pld['name'], pld['file'], pld['algo'], hash_alg, '', 0, 0, svn))
     gen_container_bin ([pld_list], fv_dir, fv_dir, key_dir, '')
 
 def pub_key_valid (pubkey):
@@ -807,8 +812,8 @@ def check_for_python():
     ver_parts = version.split('.')
     # Require Python 3.6 or above
     if not (len(ver_parts) >= 2 and int(ver_parts[0]) >= 3 and int(ver_parts[1]) >= 6):
-        print('WARNING: Python version %s is unsupported, potential build issue might encounter !\n         '
-              'Please consider installing and using Python 3.6 or above to launch build script !\n') % version
+        raise SystemExit ('ERROR: Python version ' + version + ' is not supported any more !\n       ' +
+                          'Please install and use Python 3.6 or above to launch build script !\n')
 
     return version
 
@@ -819,6 +824,7 @@ def print_tool_version_info(cmd, version):
     except:
         pass
     print ('Using %s, Version %s' % (cmd, version))
+
 
 def check_for_openssl():
     '''
@@ -858,6 +864,14 @@ def check_for_git():
         sys.exit(1)
     print_tool_version_info(cmd, version)
     return version
+
+def check_for_slimbootkeydir():
+    if not os.path.exists(os.environ.get('SBL_KEY_DIR')):
+        print ("!!! ERROR: SBL_KEY_DIR is set to directory %s does not exist!!! \n"  % os.environ['SBL_KEY_DIR'])
+        print (MESSAGE_SBL_KEY_DIR)
+        sys.exit(1)
+    else:
+        print ("SBL_KEY_DIR is set to %s !!" % os.path.abspath(os.environ.get('SBL_KEY_DIR')))
 
 def copy_images_to_output (fv_dir, zip_file, img_list, rgn_name_list, out_list):
     zip_path_file = os.path.join (os.environ['WORKSPACE'], zip_file)
@@ -1047,6 +1061,7 @@ def gen_pci_enum_policy_info (policy_dict):
         policy_info.DowngradeIo32   = policy_dict['DOWNGRADE_IO32']
         policy_info.DowngradeMem64  = policy_dict['DOWNGRADE_MEM64']
         policy_info.DowngradePMem64 = policy_dict['DOWNGRADE_PMEM64']
+        policy_info.DowngradeBus0   = policy_dict['DOWNGRADE_BUS0']
         policy_info.BusScanType     = policy_dict['BUS_SCAN_TYPE']
         bus_scan_items              = policy_dict['BUS_SCAN_ITEMS']
 

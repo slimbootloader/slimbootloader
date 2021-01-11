@@ -12,10 +12,12 @@
 import os
 import sys
 import shutil
+import time
 
 sys.dont_write_bytecode = True
 sys.path.append (os.path.join('..', '..'))
 from BuildLoader import BaseBoard, STITCH_OPS, FLASH_REGION_TYPE
+from BuildLoader import HASH_USAGE
 
 class Board(BaseBoard):
     def __init__(self, *args, **kwargs):
@@ -24,9 +26,9 @@ class Board(BaseBoard):
 
         self.VERINFO_IMAGE_ID          = 'SB_CFL'
         self.VERINFO_PROJ_MAJOR_VER    = 1
-        self.VERINFO_PROJ_MINOR_VER    = 0
+        self.VERINFO_PROJ_MINOR_VER    = 1
         self.VERINFO_SVN               = 1
-        self.VERINFO_BUILD_DATE        = '05/24/2019'
+        self.VERINFO_BUILD_DATE        = time.strftime("%m/%d/%Y")
         self.LOWEST_SUPPORTED_FW_VER   = ((self.VERINFO_PROJ_MAJOR_VER << 8) + self.VERINFO_PROJ_MINOR_VER)
 
         self.BOARD_NAME           = 'cfl'
@@ -66,7 +68,10 @@ class Board(BaseBoard):
             self.FIT_ENTRY_MAX_NUM  = 12
 
         self.STAGE1A_SIZE         = 0x00010000
-        self.STAGE1B_SIZE         = 0x000DB000
+        if self.FSPDEBUG_MODE == 1:
+            self.STAGE1B_SIZE     = 0x00100000
+        else:
+            self.STAGE1B_SIZE     = 0x000DB000
         self.STAGE2_SIZE          = 0x00080000
         if self.ENABLE_SOURCE_DEBUG:
             self.STAGE1B_SIZE += 0x4000
@@ -75,11 +80,14 @@ class Board(BaseBoard):
         self.ENABLE_SMBIOS        = 1
 
         # Verify required minimum FSP version
-        self.MIN_FSP_REVISION     = 0x07006440
+        self.MIN_FSP_REVISION     = 0x07006550
         # Verify FSP image ID. Empty string means skipping verification
         self.FSP_IMAGE_ID         = '$CFLFSP$'
 
         self.STAGE1B_XIP          = 1
+
+        # Stack settings to run FspMemoryInit
+        self.FSP_M_STACK_TOP      = 0xFEF3FF00
 
         self.STAGE2_FD_BASE       = 0x01000000
         self.STAGE2_FD_SIZE       = 0x000E0000
@@ -105,10 +113,12 @@ class Board(BaseBoard):
         self.TOP_SWAP_SIZE        = 0x020000
         self.REDUNDANT_SIZE  = self.UCODE_SIZE + self.STAGE2_SIZE + self.STAGE1B_SIZE + \
                                self.FWUPDATE_SIZE + self.CFGDATA_SIZE + self.KEYHASH_SIZE
-        self.NON_REDUNDANT_SIZE   = 0x3BF000
+
         self.NON_VOLATILE_SIZE    = 0x001000
-        self.SLIMBOOTLOADER_SIZE  = (self.TOP_SWAP_SIZE + self.REDUNDANT_SIZE) * 2 + \
-            self.NON_REDUNDANT_SIZE + self.NON_VOLATILE_SIZE
+        self.SLIMBOOTLOADER_SIZE  = 0x800000
+        self.NON_REDUNDANT_SIZE   = self.SLIMBOOTLOADER_SIZE - \
+                                    (self.TOP_SWAP_SIZE + self.REDUNDANT_SIZE) * 2 - \
+                                    self.NON_VOLATILE_SIZE
 
         self.PLD_HEAP_SIZE        = 0x04000000
         self.PLD_STACK_SIZE       = 0x00020000
@@ -133,6 +143,14 @@ class Board(BaseBoard):
         self._CFGDATA_INT_FILE    = ['CfgDataInt_Cfls.dlt', 'CfgDataInt_Cflh.dlt', 'CfgDataInt_Whl.dlt']
         self._CFGDATA_EXT_FILE    = ['CfgDataExt_Upx.dlt']
 
+        # If mulitple VBT table support is required, list them as:
+        #   {VbtImageId1 : VbtFileName1, VbtImageId2 : VbtFileName2, ...}
+        # VbtImageId is ID to identify a VBT image. It is a UINT32 number to match
+        #   the ImageId field in the VBT container.
+        # VbtFileName is the VBT file name. It needs to be located under platform
+        #   VbtBin folder.
+        self._MULTI_VBT_FILE      = {1:'Vbt.dat', 2:'VbtCflH.dat', 3:'VbtCflS.dat'}
+
     def GetPlatformDsc (self):
         dsc = {}
         common_libs = [
@@ -151,7 +169,8 @@ class Board(BaseBoard):
             'BootGuardLib|Silicon/$(SILICON_PKG_NAME)/Library/BootGuardLib/BootGuardLib.inf',
             'SgxLib|Silicon/$(SILICON_PKG_NAME)/Library/SgxLib/SgxLib.inf',
             'PsdLib|Silicon/$(SILICON_PKG_NAME)/Library/PsdLib/PsdLib.inf',
-            'HeciLib|Silicon/$(SILICON_PKG_NAME)/Library/HeciLib/HeciLib.inf',
+            'HeciLib|Silicon/CommonSocPkg/Library/HeciLib/HeciLib.inf',
+            'MeChipsetLib|Silicon/CommonSocPkg/Library/MeChipsetLib/MeChipsetLib.inf',
             'ShellExtensionLib|Platform/$(BOARD_PKG_NAME)/Library/ShellExtensionLib/ShellExtensionLib.inf',
             'VtdPmrLib|Silicon/CommonSocPkg/Library/VtdPmrLib/VtdPmrLib.inf'
         ]
@@ -159,6 +178,33 @@ class Board(BaseBoard):
             common_libs.append ('MeFwUpdateLib|Silicon/$(SILICON_PKG_NAME)/Library/MeFwUpdateLib/MeFwUpdateLib.inf')
         dsc['LibraryClasses.%s' % self.BUILD_ARCH] = common_libs
         return dsc
+
+    def GetKeyHashList (self):
+        # Define a set of new key used for different purposes
+        # The key is either key id or public key PEM format or private key PEM format
+        pub_key_list = [
+          (
+            # Key for verifying Config data blob
+            HASH_USAGE['PUBKEY_CFG_DATA'],
+            'KEY_ID_CFGDATA' + '_' + self._RSA_SIGN_TYPE
+          ),
+          (
+            # Key for verifying firmware update
+            HASH_USAGE['PUBKEY_FWU'],
+            'KEY_ID_FIRMWAREUPDATE' + '_' + self._RSA_SIGN_TYPE
+          ),
+          (
+            # Key for verifying container header
+            HASH_USAGE['PUBKEY_CONT_DEF'],
+            'KEY_ID_CONTAINER' + '_' + self._RSA_SIGN_TYPE
+          ),
+          (
+            # key for veryfying OS image.
+            HASH_USAGE['PUBKEY_OS'],
+            'KEY_ID_OS1_PUBLIC' + '_' + self._RSA_SIGN_TYPE
+          ),
+        ]
+        return pub_key_list
 
     def GetImageLayout (self):
         img_list = []

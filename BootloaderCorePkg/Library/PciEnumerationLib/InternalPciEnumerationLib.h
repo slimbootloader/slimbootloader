@@ -11,6 +11,14 @@
 #include <IndustryStandard/Pci.h>
 #include <Guid/PciRootBridgeInfoGuid.h>
 
+#define EFI_BRIDGE_IO32_DECODE_SUPPORTED      0x0001
+#define EFI_BRIDGE_PMEM32_DECODE_SUPPORTED    0x0002
+#define EFI_BRIDGE_PMEM64_DECODE_SUPPORTED    0x0004
+#define EFI_BRIDGE_IO16_DECODE_SUPPORTED      0x0008
+#define EFI_BRIDGE_PMEM_MEM_COMBINE_SUPPORTED 0x0010
+#define EFI_BRIDGE_MEM64_DECODE_SUPPORTED     0x0020
+#define EFI_BRIDGE_MEM32_DECODE_SUPPORTED     0x0040
+
 //
 // The PCI Command register bits owned by PCI Bus driver.
 //
@@ -53,13 +61,19 @@ typedef enum {
 } BUS_SCAN_TYPE;
 
 typedef struct {
-  UINT8           DowngradeIo32;
-  UINT8           DowngradeMem64;
-  UINT8           DowngradePMem64;
-  UINT8           Reserved;
-  UINT8           BusScanType;
-  UINT8           NumOfBus;
-  UINT8           BusScanItems[0];
+  UINT16            Io32            : 1;
+  UINT16            Mem64           : 1;
+  UINT16            PMem64          : 1;
+  UINT16            Bus0            : 1;
+  UINT16            Reserved        : 12;
+} PCI_RES_DOWNGRADE;
+
+typedef struct {
+  PCI_RES_DOWNGRADE Downgrade;
+  UINT16            Reserved;
+  UINT8             BusScanType;
+  UINT8             NumOfBus;
+  UINT8             BusScanItems[0];
 } PCI_ENUM_POLICY_INFO;
 
 //
@@ -81,6 +95,11 @@ struct _PCI_BAR_RESOURCE {
   PCI_BAR                                  *PciBar;
 };
 
+typedef struct {
+  UINT8                                     BusBase;
+  UINT8                                     BusLimit;
+} PCI_BUS_NUM_RANGE;
+
 typedef struct _PCI_IO_DEVICE              PCI_IO_DEVICE;
 
 struct _PCI_IO_DEVICE {
@@ -100,6 +119,16 @@ struct _PCI_IO_DEVICE {
   // BAR for this PCI Device
   //
   PCI_BAR                                   PciBar[PCI_MAX_BAR];
+
+  //
+  // The resource decode the bridge supports
+  //
+  UINT32                                    Decodes;
+
+  //
+  // Bus number ranges for a PCI Root Bridge device
+  //
+  PCI_BUS_NUM_RANGE                         BusNumberRanges;
 
   //
   // ARI (Alternative Routing ID)

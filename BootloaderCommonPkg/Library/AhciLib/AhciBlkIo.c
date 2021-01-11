@@ -389,6 +389,13 @@ AhciInitialize (
   InitializeListHead (&AhciPrivateData->DeviceList);
 
   //
+  // Set RFis, CommandList, CommandTable to NULL as init
+  //
+  AhciPrivateData->AhciRegisters.AhciRFis         = NULL;
+  AhciPrivateData->AhciRegisters.AhciCmdList      = NULL;
+  AhciPrivateData->AhciRegisters.AhciCommandTable = NULL;
+
+  //
   // Enable AHCI controller
   //
   AhciPrivateData->AhciPciCfgAddr = (UINT32)AhciHcPciBase;

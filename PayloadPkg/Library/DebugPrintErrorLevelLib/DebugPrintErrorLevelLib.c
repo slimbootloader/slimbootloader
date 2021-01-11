@@ -45,12 +45,10 @@ SetDebugPrintErrorLevel (
   UINT32  ErrorLevel
   )
 {
-  EFI_STATUS Status;
-
   //
   // This library uinstance does not support setting the global debug print error
   // level mask.
   //
-  Status = PcdSet32S (PcdDebugPrintErrorLevel, ErrorLevel);
+  (VOID) PcdSet32S (PcdDebugPrintErrorLevel, ErrorLevel);
   return TRUE;
 }

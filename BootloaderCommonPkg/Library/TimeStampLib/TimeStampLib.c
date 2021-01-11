@@ -36,7 +36,7 @@ GetTimeStampFrequency (
 {
   UINT8  Ratio;
 
-  Ratio = (UINT8)(AsmReadMsr64 (0xCE) >> 8);
+  Ratio = (UINT8)((UINT32)AsmReadMsr64 (0xCE) >> 8);
   if (Ratio == 0) {
     // This might be QEMU case
     Ratio = 8;

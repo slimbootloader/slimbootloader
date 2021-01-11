@@ -327,7 +327,7 @@ PlatformIdInitialize (
       if (EFI_ERROR(Status)) {
         break;
       }
-      BomId = (BomId << 1) + ((GpioData & BIT1) >> 1);
+      BomId = (BomId << 1) + (GpioData & BIT0);
     }
 
     if (Idx == ARRAY_SIZE(mUpxGpioBomPad)) {
@@ -638,6 +638,9 @@ DEBUG_CODE_END();
       EarlyBootDeviceInit ();
     }
     PltDeviceTable = (PLT_DEVICE_TABLE *)AllocatePool (sizeof (PLT_DEVICE_TABLE) + sizeof (mPlatformDevices));
+    if (PltDeviceTable == NULL) {
+      return;
+    }
     PltDeviceTable->DeviceNumber = sizeof (mPlatformDevices) /sizeof (PLT_DEVICE);
     CopyMem (PltDeviceTable->Device, mPlatformDevices, sizeof (mPlatformDevices));
     SetDeviceTable (PltDeviceTable);

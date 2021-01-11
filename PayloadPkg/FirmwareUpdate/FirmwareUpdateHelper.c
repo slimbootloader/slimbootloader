@@ -16,6 +16,8 @@
 #include <Library/PayloadMemoryAllocationLib.h>
 #include <Library/FirmwareUpdateLib.h>
 #include <Library/ContainerLib.h>
+#include <Library/DecompressLib.h>
+#include <Library/ConfigDataLib.h>
 #include "FirmwareUpdateHelper.h"
 
 /**
@@ -413,6 +415,8 @@ UpdateContainerComp (
   CONTAINER_ENTRY   *ContainerEntryPtr;
   COMPONENT_ENTRY   *ComponentEntryPtr;
   CONTAINER_HDR     *ContainerHdr;
+  LOADER_COMPRESSED_HEADER *FlashCompLzHeader;
+  LOADER_COMPRESSED_HEADER *CapCompLzHeader;
 
   ComponentName = (UINT32)RShiftU64 (ImageHdr->UpdateHardwareInstance, 32);
   ContainerName = (UINT32)ImageHdr->UpdateHardwareInstance;
@@ -423,6 +427,10 @@ UpdateContainerComp (
     return Status;
   }
 
+  if ((ContainerEntryPtr == NULL) || (ComponentEntryPtr == NULL)) {
+    return EFI_NOT_FOUND;
+  }
+
   //
   // Update the component
   //
@@ -431,9 +439,222 @@ UpdateContainerComp (
   // Component base = Container base + data offset from container base + offset of component inside container
   //
   ComponentBase = ContainerEntryPtr->Base + ContainerHdr->DataOffset + ComponentEntryPtr->Offset;
+
+  // Check Svn for container component
+  FlashCompLzHeader = (LOADER_COMPRESSED_HEADER *) (UINTN) ComponentBase;
+  CapCompLzHeader   = (LOADER_COMPRESSED_HEADER *) ((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
+  if ((IS_COMPRESSED (FlashCompLzHeader) == FALSE) || (IS_COMPRESSED (CapCompLzHeader) == FALSE)) {
+    return EFI_UNSUPPORTED;
+  }
+
+  if (CapCompLzHeader->Svn < FlashCompLzHeader->Svn) {
+    DEBUG((DEBUG_INFO, "Container Component svn did not met!"));
+    return EFI_UNSUPPORTED;
+  }
+
   Status = UpdateSingleComponent (ComponentBase, ComponentEntryPtr->Size, ImageHdr);
 
   return Status;
+}
+
+/**
+  Perform container and component svn checks
+
+  This function will try to locate container and components in the flash map
+  and next from capsule. Container and components svn checks are performed.
+
+  @param[in]  ImageHdr       Pointer to fw mgmt capsule Image header
+  @param[out] SvnStatus      Svn compare status
+
+  @retval  EFI_SUCCESS      SVN check successful.
+  @retval  other            error occurred during firmware update
+**/
+EFI_STATUS
+CheckSblContainerSvn (
+  IN   EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
+  OUT  UINT8                         *SvnStatus
+  )
+{
+  CONTAINER_HDR             *FlashContainerHdr;
+  CONTAINER_ENTRY           *ContainerEntry;
+  LOADER_COMPRESSED_HEADER  *FlashLzHdr;
+  CONTAINER_HDR             *CapContainerAddr;
+  COMPONENT_ENTRY           *CapCompEntry;
+  LOADER_COMPRESSED_HEADER  *CapLzHdr;
+  UINT64                    FlashComponentName;
+  UINT8                     ContainerSvnCheck;
+  UINT8                     ComponentSvnCheck;
+  EFI_STATUS                Status;
+
+  Status = EFI_SUCCESS;
+  ContainerSvnCheck = 0;
+  ComponentSvnCheck = 0;
+
+  // Locate container entry info from flash
+  Status = LocateComponentEntry ((UINT32)ImageHdr->UpdateHardwareInstance, 0, &ContainerEntry, NULL);
+  if (EFI_ERROR (Status)) {
+    return EFI_NOT_FOUND;
+  }
+
+  // Locate container header currently in flash
+  FlashContainerHdr = (CONTAINER_HDR *)(UINTN)ContainerEntry->HeaderCache;
+
+  // Locate the container header info from capsule image.
+  CapContainerAddr   = (CONTAINER_HDR *)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
+
+  //Check capsule container SVN with container avaiable in flash
+  if (CapContainerAddr->Svn >= FlashContainerHdr->Svn) {
+    // Container SVN  met.
+    ContainerSvnCheck = 1;
+  } else {
+    DEBUG((DEBUG_INFO, "Container Svn check failed!!\n"));
+    // Container SVN not met.
+    ContainerSvnCheck = 0;
+    return EFI_UNSUPPORTED;
+  }
+
+  // Enumerate all components in container
+  FlashComponentName = 0;
+  do {
+    // Get next avaiable component in flash container
+    Status = GetNextAvailableComponent (FlashContainerHdr->Signature, (UINT32 *)&FlashComponentName);
+    if (EFI_ERROR (Status)) {
+      break;
+    }
+    DEBUG ((DEBUG_INFO, "Flash COMP:%a\n", &FlashComponentName));
+    // Locate flash component header and image info
+    Status = LocateComponent (FlashContainerHdr->Signature, (UINT32) FlashComponentName, (VOID **)&FlashLzHdr, NULL);
+    if (EFI_ERROR (Status)) {
+      break;
+    }
+
+    // Retrieve componenent address details from capsule container
+    CapCompEntry = NULL;
+    CapCompEntry = LocateComponentEntryFromContainer ((CONTAINER_HDR *) CapContainerAddr, (UINT32 ) FlashComponentName);
+    if (CapCompEntry != NULL) {
+      CapLzHdr = (LOADER_COMPRESSED_HEADER *)((UINT8 *)CapContainerAddr + CapContainerAddr->DataOffset + CapCompEntry->Offset);
+
+      if ((IS_COMPRESSED (CapLzHdr) == FALSE) || (IS_COMPRESSED (FlashLzHdr) == FALSE)) {
+        DEBUG ((DEBUG_INFO, "Component compressed header signature mismatch!!\n"));
+        return EFI_UNSUPPORTED;
+      }
+
+      //Check capsule component SVN with flash componenet svn
+      if (CapLzHdr->Svn >= FlashLzHdr->Svn) {
+        // Component SVN  met.
+        ComponentSvnCheck = 1;
+      } else {
+        // Component SVN not met. No need to check remaining components
+        ComponentSvnCheck = 0;
+        DEBUG((DEBUG_INFO, "Component Svn check failed for %a!!\n", &FlashComponentName));
+        break;
+      }
+    }
+  } while ((Status == EFI_SUCCESS));
+
+  // Check validatity of container and component svn checks
+  if ((ContainerSvnCheck == 1) && (ComponentSvnCheck == 1)){
+    *SvnStatus = 1;
+    Status = EFI_SUCCESS;
+  }
+
+  return Status;
+}
+
+/**
+  This function would check if update is for container Image.
+
+  @param[in]  Signature   Container signature
+
+  @retval  BOOLEAN        Container True/False
+
+**/
+BOOLEAN
+IsUpdateComponentForContainer (
+  IN  UINT32   Signature
+  )
+{
+  CONTAINER_ENTRY       *ContainerEntryPtr;
+  EFI_STATUS             Status;
+
+  ContainerEntryPtr = NULL;
+
+  Status = LocateComponentEntry (Signature, 0, &ContainerEntryPtr, NULL);
+  if (EFI_ERROR (Status)) {
+      return FALSE;
+  }
+
+  if (ContainerEntryPtr == NULL) {
+   return FALSE;
+  }
+
+   return TRUE;
+}
+
+/**
+  Perform Config data svn check
+
+  This function will perform svn checks for cfgdata in flash and
+  config data in capsule.
+
+  @param[in]  ImageHdr       Pointer to fw mgmt capsule Image header
+  @param[in]  FwPolicy       Firmware update policy
+  @param[out] SvnStatus      Svn compare status
+
+  @retval  EFI_SUCCESS      SVN check successful.
+  @retval  other            error occurred during firmware update
+**/
+EFI_STATUS
+CheckSblConfigDataSvn (
+  IN   EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
+  IN   FIRMWARE_UPDATE_POLICY         FwPolicy,
+  OUT  UINT8                         *SvnStatus
+  )
+{
+  CDATA_BLOB                *CfgBlobCapAddr;
+  CDATA_BLOB                *CfgBlobFlashDataPtr;
+  UINT32                     CfgBlobFlashAddr;
+  UINT32                     CfgBlobSize;
+  EFI_STATUS                 Status;
+
+  Status = EFI_INVALID_PARAMETER;
+
+  if ((ImageHdr == NULL) || (SvnStatus == NULL)) {
+    return Status;
+  }
+
+  //
+  // Get base address of CFGDATA from  firmware block to update
+  //
+
+  if (FwPolicy.Fields.UpdatePartitionB == 0x1) {
+    Status = GetComponentInfoByPartition(FLASH_MAP_SIG_CFGDATA, TRUE, (UINT32 *) &CfgBlobFlashAddr, &CfgBlobSize);
+  } else if (FwPolicy.Fields.UpdatePartitionA == 0x1) {
+    Status = GetComponentInfoByPartition(FLASH_MAP_SIG_CFGDATA, FALSE, (UINT32 *) &CfgBlobFlashAddr, &CfgBlobSize);
+  }
+
+  if (EFI_ERROR(Status)) {
+    DEBUG((DEBUG_ERROR, "Error in retrieving config data on flash: %r\n", Status));
+    return Status;
+  }
+
+  CfgBlobFlashDataPtr = (CDATA_BLOB *) (UINTN) CfgBlobFlashAddr;
+
+  // Locate config data blob header info from capsule image
+  CfgBlobCapAddr = (CDATA_BLOB *)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
+  if (CfgBlobCapAddr->Signature != CFG_DATA_SIGNATURE){
+    DEBUG((DEBUG_INFO, "Config data signature in capsule image does not match\n"));
+    return EFI_NOT_FOUND;
+  }
+
+  //Check SVN
+  if (CfgBlobCapAddr->ExtraInfo.Svn >= CfgBlobFlashDataPtr->ExtraInfo.Svn){
+    *SvnStatus = 1;
+  } else {
+    *SvnStatus = 0;
+  }
+
+  return EFI_SUCCESS;
 }
 
 /**
@@ -452,21 +673,38 @@ UpdateSblComponent (
   IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
   )
 {
-  EFI_STATUS    Status;
+  EFI_STATUS             Status;
   FLASH_MAP_ENTRY_DESC  *Entry;
+  UINT8                  SvnStatus;
 
   Status = EFI_NOT_FOUND;
-
-  DEBUG ((DEBUG_INFO, "UpdateSblComponent : %x \n", (UINT32)ImageHdr->UpdateHardwareInstance));
+  SvnStatus = 0;
 
   if ((UINT32)RShiftU64 (ImageHdr->UpdateHardwareInstance, 32)){
     //
-    // Upper 4 bytes are not null, this is a container update.
+    // Upper 4 bytes are not null, this is a container component update.
     //
     DEBUG ((DEBUG_INFO, "Container component update requested! \n"));
     Status = UpdateContainerComp (ImageHdr);
     return Status;
   }
+
+  //
+  // SBL component update, check if it is a container
+  //
+  if (IsUpdateComponentForContainer ((UINT32) ImageHdr->UpdateHardwareInstance)){
+
+    DEBUG((DEBUG_INFO, "Capsule update is for container region!!\n"));
+    // Check  security version for container and its components to update
+    Status = CheckSblContainerSvn (ImageHdr, &SvnStatus);
+    if (SvnStatus != 1) {
+      DEBUG((DEBUG_INFO, "Container Update Svn check failed!!\n"));
+      return Status;
+    }
+  } else {
+    DEBUG((DEBUG_INFO, "SBL component update for non-container region!\n"));
+  }
+
   //
   // This is a SBL component update, check if it is a redundant component
   //

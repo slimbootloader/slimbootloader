@@ -1,0 +1,157 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Template File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+PCIERP_TMPL: >
+  - $ACTION      :
+      page         : PLT_PCIE_RP_FEAT_$(1):PLT_PCIE_RP_FEAT:"PCIE RP $(1) Features"
+  - $ACTION      :
+      page         : PLT_PCIE_RP_FEAT_$(1)
+  - PcieRpFeatures$(1) :
+    - $STRUCT      :
+        name         : PCIE RP $(1) Config Data
+        struct       : PCIE_RP_FEAT[]
+        length       : 0x01
+        value        : $(2)
+    - En           :
+        name         : PCIE RP Enable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       ENABLE- Enable this PCIE RP. DISABLE- Disable this PCIE RP
+        order        : 0000.0000
+        length       : 1bB
+    - ClkReqSup    :
+        name         : PCIE RP Clk Req Support
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable CLKREQ# Support
+        condition    : $(COND_PCIE_RP_EN)
+        length       : 1bB
+    - ClkReqNum    :
+        name         : PCIE RP Clk Req Number
+        type         : EditNum, HEX, (0x00, 0xFF)
+        help         : >
+                       Configure Root Port CLKREQ Number if CLKREQ is supported
+        condition    : $(COND_PCIE_RP_CLK_REQ_SUP)
+        length       : 3bB
+    - Aspm         :
+        name         : PCIE RP Aspm
+        type         : EditNum, HEX, (0x00, 0xFF)
+        help         : >
+                       PCI Express Active State Power Management settings
+        condition    : $(COND_PCIE_RP_EN)
+        length       : 3bB
+
+
+PCIERP_CTRL_PIN_TMPL: >
+  - $ACTION      :
+      page         : PLT_PWR_$(1):PLT_PCIE_RP_CTRL_PIN_PWR:"PCIE RP $(1)"
+  - $ACTION      :
+      page         : PLT_PWR_$(1)
+  - PcieRpPower$(1) :
+    - $STRUCT      :
+        name         : PCIE RP $(1) Power
+        struct       : PCIE_RP_PIN_CTRL_PWR
+        marker       : Power
+        length       : 0x04
+        value        : $(2)
+    - Skip         :
+        name         : PCIE RP PIN CTRL Power Skip
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       ENABLE- Skip GPIO Power programming for this PCIE RP. DISABLE- Program GPIO Power for this PCIE RP.
+        order        : 0000.0000
+        length       : 1b
+    - Community    :
+        name         : Power Pad Community
+        type         : Combo
+        option       : 0xC2:SOUTH, 0xC7:WEST, 0xC4:NORTHWEST, 0xC0:SOUTHWEST, 0xC5:NORTH
+        help         : >
+                       Specify Pad Community
+        condition    : $(COND_PCIE_RP_PWR_PIN_SKIP)
+        length       : 8b
+    - PadNum       :
+        name         : Power Pad Number
+        type         : EditNum, DEC, (0,4095)
+        help         : >
+                       Specify Pad Number
+        condition    : $(COND_PCIE_RP_PWR_PIN_SKIP)
+        length       : 12b
+    - Drive        :
+        name         : Power Drive - Outport Value
+        type         : Combo
+        option       : 0x0:Disable, 0x1:Enable
+        help         : >
+                       Specify if should be driven or not
+        condition    : $(COND_PCIE_RP_PWR_PIN_SKIP)
+        length       : 1b
+    - Rsvd1        :
+        name         : Power Reserved
+        type         : Reserved
+        condition    : $(COND_PCIE_RP_PWR_PIN_SKIP)
+        length       : 7b
+    - Wake         :
+        name         : Wake Signal
+        type         : Combo
+        option       : 0x0:Disable, 0x1:PCIE_WAKE0, 0x2:PCIE_WAKE1, 0x3:PCIE_WAKE2, 0x4:PCIE_WAKE3
+        help         : >
+                       Specify the PCIE wake signal connected to this port
+        length       : 3b
+  - $ACTION      :
+      page         : PLT_RST_$(1):PLT_PCIE_RP_CTRL_PIN_RST:"PCIE RP $(1)"
+  - $ACTION      :
+      page         : PLT_RST_$(1)
+  - PcieRpReset$(1) :
+    - $STRUCT      :
+        name         : PCIE RP $(1) Reset
+        struct       : PCIE_RP_PIN_CTRL_RST
+        marker       : Reset
+        length       : 0x04
+        value        : $(3)
+    - Skip         :
+        name         : PCIE RP PIN CTRL Reset Skip
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       ENABLE- Skip GPIO Reset programming for this PCIE RP. DISABLE- Program GPIO Reset for this PCIE RP.
+        order        : 0000.0000
+        length       : 1b
+    - Community    :
+        name         : Reset Pad Community
+        type         : Combo
+        option       : 0xC2:SOUTH, 0xC7:WEST, 0xC4:NORTHWEST, 0xC0:SOUTHWEST, 0xC5:NORTH
+        help         : >
+                       Specify Pad Community
+        condition    : $(COND_PCIE_RP_RST_PIN_SKIP)
+        length       : 8b
+    - PadNum       :
+        name         : Reset Pad Number
+        type         : EditNum, DEC, (0,4095)
+        help         : >
+                       Specify Pad Number
+        condition    : $(COND_PCIE_RP_RST_PIN_SKIP)
+        length       : 12b
+    - Drive        :
+        name         : Reset Drive - Outport Value
+        type         : Combo
+        option       : 0x0:Disable, 0x1:Enable
+        help         : >
+                       Specify if should be driven or not
+        condition    : $(COND_PCIE_RP_RST_PIN_SKIP)
+        length       : 1b
+    - Rsvd1        :
+        condition    : $(COND_PCIE_RP_RST_PIN_SKIP)
+        name         : Reset Reserved
+        type         : Reserved
+        length       : 10b
+
+

@@ -1,0 +1,34 @@
+## @file
+# ITBT PCIE root port Library.
+#
+# All function in this library is available for PEI, DXE, and SMM,
+# But do not support UEFI RUNTIME environment call.
+#
+# Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+[Defines]
+INF_VERSION = 0x00010017
+BASE_NAME = ItbtPcieRpLib
+FILE_GUID = 4DDA7759-2F50-4EB7-A179-B0BA16D99179
+VERSION_STRING = 1.0
+MODULE_TYPE = BASE
+LIBRARY_CLASS = ItbtPcieRpLib
+
+[LibraryClasses]
+BaseLib
+IoLib
+DebugLib
+HobLib
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/TigerlakePkg/TigerlakePkg.dec
+
+[Sources]
+ItbtPcieRpLib.c

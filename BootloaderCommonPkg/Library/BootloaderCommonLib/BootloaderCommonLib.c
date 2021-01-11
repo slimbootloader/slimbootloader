@@ -678,6 +678,51 @@ GetDeviceAddr (
 }
 
 /**
+  Set device address in the device table
+
+  If the device is PCI device, the device address format is 0x00BBDDFF, where
+  BB, DD and FF are PCI bus, device and function number.
+  If the device is MMIO device, the device address format is 0xMMxxxxxx, where
+  MM should be non-zero value, xxxxxx could be any value.
+
+  @param[in]  DeviceType         The device type, refer OS_BOOT_MEDIUM_TYPE.
+  @param[in]  DeviceInstance     The device instance number starting from 0.
+  @param[in]  DeviceAddr         The device address.
+
+  @retval     EFI_SUCCESS        If the given device type and instance are found and set.
+              EFI_NOT_FOUND      The given device type and instance are not found.
+
+**/
+EFI_STATUS
+EFIAPI
+SetDeviceAddr (
+  IN  UINT8          DeviceType,
+  IN  UINT8          DeviceInstance,
+  IN  UINT32         DeviceAddr
+  )
+{
+  PLT_DEVICE_TABLE   *DeviceTable;
+  PLT_DEVICE         *Device;
+  UINT32             Index;
+
+  Device = NULL;
+  DeviceTable = (PLT_DEVICE_TABLE *)GetDeviceTable();
+  for (Index = 0; Index < DeviceTable->DeviceNumber; Index++) {
+    Device = &DeviceTable->Device[Index];
+    if ((Device->Type == DeviceType) && (Device->Instance == DeviceInstance)){
+      if (Device->Dev.DevAddr != DeviceAddr) {
+        DEBUG ((DEBUG_INFO, "Update device table: type (0x%x) instance (%x) from 0x%x to 0x%x\n", \
+               DeviceType, DeviceInstance, Device->Dev.DevAddr, DeviceAddr));
+        Device->Dev.DevAddr = DeviceAddr;
+      }
+      return EFI_SUCCESS;
+    }
+  }
+
+  return EFI_NOT_FOUND;
+}
+
+/**
   Match a given hash with the ones in hash store.
 
   @param[in]  Usatge      Hash usage.
@@ -724,74 +769,6 @@ MatchHashInStore (
       }
     }
     HashEntryPtr +=  sizeof(HASH_STORE_DATA) + HashEntryData->DigestLen;
-  }
-
-  return Status;
-}
-
-
-/**
-  Get hash to extend a firmware stage component
-  Hash calculation to extend would be in either of ways
-  Retrieve Hash from Component hash table or
-  Calculate Hash using source buf and length provided
-
-  @param[in] ComponentType             Stage whose measurement need to be extended.
-  @param[in] HashType                  Hash type required
-  @param[in] Src                       Buffer Address
-  @param[in] Length                    Data Len
-  @param[out] HashData                 Hash Data buf addr
-
-  @retval RETURN_SUCCESS      Operation completed successfully.
-  @retval Others              Unable to calcuate hash.
-**/
-RETURN_STATUS
-GetHashToExtend (
-  IN       UINT8            ComponentType,
-  IN       HASH_ALG_TYPE    HashType,
-  IN       UINT8           *Src,
-  IN       UINT32           Length,
-  OUT      UINT8           *HashData
-  )
-{
-  RETURN_STATUS        Status;
-  HASH_ALG_TYPE        CompHashAlg;
-  CONST UINT8         *Digest;
-  UINT8                DigestSize;
-
-  if (HashData == NULL) {
-    return RETURN_INVALID_PARAMETER;
-  }
-
-  if (HashType == HASH_TYPE_SHA256) {
-    DigestSize = SHA256_DIGEST_SIZE;
-  } else if (HashType == HASH_TYPE_SHA384) {
-    DigestSize = SHA384_DIGEST_SIZE;
-  }  else if (HashType == HASH_TYPE_SM3) {
-    DigestSize = SM3_DIGEST_SIZE;
-  } else {
-    return RETURN_INVALID_PARAMETER;
-  }
-
-  // Hash can be calcluated in one of the two ways
-  // Get componenet hash from hash store based on Componen Id and return if hash is valid
-  // Incase component hash is not avilable calculate hash from src buf and HashType provided.
-
-  // Get componenet hash from hash store based on Componen Id
-  if ((ComponentType >= COMP_TYPE_STAGE_1B) && (ComponentType < COMP_TYPE_INVALID)) {
-    Status = GetComponentHash (ComponentType, &Digest, &CompHashAlg);
-    if((Status == EFI_SUCCESS) && (CompHashAlg == HashType)) {
-      CopyMem (HashData, Digest, DigestSize);
-      return RETURN_SUCCESS;
-    }
-  }
-
-  // Calculate hash for a ComponentType if hash is not retrieved from GetComponentHash
-  if ((Src != NULL) && (Length > 0)) {
-    DEBUG ((DEBUG_INFO, "Calculate Hash for component Type 0x%x as its not available in Component hash table \n", ComponentType));
-    Status = CalculateHash ((UINT8 *)Src, Length, HashType, (UINT8 *) HashData);
-  } else{
-    return RETURN_INVALID_PARAMETER;
   }
 
   return Status;

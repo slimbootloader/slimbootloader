@@ -1,6 +1,6 @@
 /** @file
 
-Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -37,7 +37,7 @@ FindConfigHdrByPidMaskTag (
   UINT32               Offset;
 
   CdataBlob = (CDATA_BLOB *) GetConfigDataPtr ();
-  Offset    = IsInternal > 0 ? (CdataBlob->InternalDataOffset * 4) : CdataBlob->HeaderLength;
+  Offset    = IsInternal > 0 ? (CdataBlob->ExtraInfo.InternalDataOffset * 4) : CdataBlob->HeaderLength;
 
   while (Offset < CdataBlob->UsedLength) {
     CdataHdr = (CDATA_HEADER *) ((UINT8 *)CdataBlob + Offset);
@@ -183,7 +183,7 @@ AddConfigData (
     return EFI_OUT_OF_RESOURCES;
   }
 
-  if (LdrCfgBlob->InternalDataOffset == 0) {
+  if (LdrCfgBlob->ExtraInfo.InternalDataOffset == 0) {
     // Append new config data before internal config data is available.
     CopyMem ((UINT8 *)LdrCfgBlob + LdrCfgBlob->UsedLength,
              (UINT8 *)CfgAddBlob + CfgAddBlob->HeaderLength,
@@ -201,7 +201,7 @@ AddConfigData (
     CopyMem ((UINT8 *)LdrCfgBlob + LdrCfgBlob->HeaderLength,
              (UINT8 *)CfgAddBlob + CfgAddBlob->HeaderLength,
              CfgAddSize);
-    LdrCfgBlob->InternalDataOffset += (UINT16) (CfgAddSize >> 2);
+    LdrCfgBlob->ExtraInfo.InternalDataOffset += (UINT16) (CfgAddSize >> 2);
   }
   LdrCfgBlob->UsedLength += CfgAddSize;
 
@@ -209,25 +209,215 @@ AddConfigData (
 }
 
 /**
-  Get the source of the external configuration data to load.
+  Extract array entry ID from the item data.
 
-  @param[in] Index              Index of the source
+  @param[in] ArrayCfgHdr        Array CFGDATA header pointer.
+  @param[in] ItemData           Array item data pointer.
 
-  @retval PDR                   if external data is loaded from SPI Flash PDR region
-  @retval BIOS                  if external data is loaded from SPI Flash BIOS region
-  @retval NULL                  if external data is loaded from niether
+  @retval    The item ID.
 
 **/
-CHAR8 *
-GetCfgDataSource (
-  IN  UINT8       Index
+STATIC
+UINT32
+GetArrayItemId (
+  IN  ARRAY_CFG_HDR   *ArrayCfgHdr,
+  IN  UINT8           *ItemData
+)
+{
+  UINT32  Id;
+  UINT32  Offset;
+
+  Offset = ArrayCfgHdr->ItemIdBitOff >> 3;
+  Id     = *(UINT32 *)(ItemData + Offset);
+  Id   >>= (ArrayCfgHdr->ItemIdBitOff & 0x07);
+  Id    &= ((1 << ArrayCfgHdr->ItemIdBitLen) - 1);
+  return Id;
+}
+
+/**
+  Get a full CFGDATA set length.
+
+  @retval   Length of a full CFGDATA set.
+            0 indicates no CFGDATA exists.
+
+**/
+UINT32
+EFIAPI
+GetConfigDataSize (
+  VOID
+)
+{
+  UINT32               Start;
+  UINT32               Offset;
+  UINT32               CfgBlobHdrLen;
+  UINT32               PidMask;
+  UINT32               CondVal;
+  CDATA_BLOB          *LdrCfgBlob;
+  CDATA_HEADER        *CdataHdr;
+
+  LdrCfgBlob  = (CDATA_BLOB *) GetConfigDataPtr ();
+  if (LdrCfgBlob == NULL) {
+    return 0;
+  }
+
+  CfgBlobHdrLen = LdrCfgBlob->HeaderLength;
+  if (LdrCfgBlob->ExtraInfo.InternalDataOffset == 0) {
+    // No  internal CFGDATA
+    Start   = CfgBlobHdrLen;
+    PidMask = (1 << GetPlatformId ());
+  } else {
+    // Has internal CFGDATA
+    Start   = LdrCfgBlob->ExtraInfo.InternalDataOffset * 4;
+    PidMask = BIT0;
+  }
+  Offset = Start;
+  while (Offset < LdrCfgBlob->UsedLength) {
+    CdataHdr = (CDATA_HEADER *) ((UINT8 *)LdrCfgBlob + Offset);
+    CondVal  = CdataHdr->Condition[0].Value;
+    if ((CondVal != 0) && ((CondVal & PidMask) == 0)) {
+      break;
+    }
+    Offset += (CdataHdr->Length << 2);
+  }
+
+  return Offset - Start + CfgBlobHdrLen;
+}
+
+/**
+  Build a full set of CFGDATA for current platform.
+
+  @param[in] Buffer             Buffer pointer to store the full CFGDATA set.
+  @param[in] Length             Buffer length.
+
+  @retval EFI_BUFFER_TOO_SMALL  The buffer size is too small to store the CFGDATA.
+  @retval EFI_INVALID_PARAMETER The buffer pointer is NULL.
+  @retval EFI_NOT_FOUND         Could not find some CFGDATA tag.
+  @retval EFI_SUCCESS           The full set of CFGDATA was built successfully.
+
+**/
+EFI_STATUS
+EFIAPI
+BuildConfigData (
+  IN  UINT8      *Buffer,
+  IN  UINT32      BufLen
   )
 {
-  if (Index == 0) {
-    return "PDR";
-  } else if (Index == 1) {
-    return "BIOS";
-  } else {
-    return "NULL";
+  CDATA_BLOB          *LdrCfgBlob;
+  CDATA_BLOB          *CdataBlob;
+  CDATA_HEADER        *CdataHdr;
+  CDATA_HEADER        *CdataHdrCurr;
+  ARRAY_CFG_HDR       *ArrayHdr;
+  ARRAY_CFG_HDR       *ArrayHdrCurr;
+  UINT8               *Cdata;
+  UINT8               *CdataCurr;
+  UINT8               *Ptr;
+  UINT32               Index;
+  UINT32               Index2;
+  UINT32               Length;
+  UINT32               Offset;
+  UINT32               Offset1;
+  UINT32               Offset2;
+  UINT32               HdrLen;
+  UINT32               ItemId;
+  UINT32               BitMaskLen;
+  UINT32               GpioTableDataOffset;
+  UINT32               CfgBlobHdrLen;
+  PLATFORMID_CFG_DATA *PidCfg;
+
+  Length = GetConfigDataSize ();
+  if (Length > BufLen) {
+    return EFI_BUFFER_TOO_SMALL;
   }
+
+  CdataBlob     = (CDATA_BLOB *) Buffer;
+  LdrCfgBlob    = (CDATA_BLOB *) GetConfigDataPtr ();
+  CfgBlobHdrLen = LdrCfgBlob->HeaderLength;
+  if (LdrCfgBlob->ExtraInfo.InternalDataOffset == 0) {
+    // No internal CFGDATA
+    Offset = CfgBlobHdrLen;
+  } else {
+    // Has internal CFGDATA
+    Offset = LdrCfgBlob->ExtraInfo.InternalDataOffset * 4;
+  }
+
+  // Copy CFGDATA blob header first and then CfgData default
+  CopyMem (CdataBlob, LdrCfgBlob, CfgBlobHdrLen);
+  CopyMem ((UINT8 *)CdataBlob + CfgBlobHdrLen, (UINT8 *)LdrCfgBlob + Offset, Length - CfgBlobHdrLen);
+  CdataBlob->ExtraInfo.InternalDataOffset = 0;
+  CdataBlob->UsedLength  = Length;
+  CdataBlob->TotalLength = Length;
+
+  // Build each CFGDATA tag
+  Offset = CdataBlob->HeaderLength;
+  while (Offset < CdataBlob->UsedLength) {
+    CdataHdr = (CDATA_HEADER *) ((UINT8 *)CdataBlob + Offset);
+    CdataHdrCurr = FindConfigHdrByTag (CdataHdr->Tag);
+    if (CdataHdrCurr != NULL) {
+      // Set platform mask
+      if (CdataHdr->Tag == CDATA_PLATFORMID_TAG) {
+        CdataHdr->Condition[0].Value = 0xFFFFFFFF;
+      } else {
+        CdataHdr->Condition[0].Value = (1 << GetPlatformId ());
+      }
+
+      CdataCurr = ((UINT8 *)CdataHdrCurr + sizeof (CDATA_HEADER) + sizeof (CDATA_COND) * CdataHdrCurr->ConditionNum);
+      HdrLen = sizeof (CDATA_HEADER) + sizeof (CDATA_COND) * CdataHdr->ConditionNum;
+      Cdata  = (UINT8 *)CdataHdr + HdrLen;
+      if ((CdataHdr->Flags & CDATA_FLAG_TYPE_ARRAY) != 0) {
+        // Handle array item specially
+        ArrayHdr     = (ARRAY_CFG_HDR *)Cdata;
+        ArrayHdrCurr = (ARRAY_CFG_HDR *)CdataCurr;
+        BitMaskLen   = (CdataHdr->Length << 2) - HdrLen - OFFSET_OF(ARRAY_CFG_HDR, BaseTableBitMask) \
+                       - (ArrayHdr->ItemSize * ArrayHdr->ItemCount);
+
+        // Update BaseTableBitMask
+        CopyMem (ArrayHdr->BaseTableBitMask, ArrayHdrCurr->BaseTableBitMask, BitMaskLen);
+        ArrayHdr->BaseTableId = 0x80;
+
+        // Update skip bit accordingly in the entry based on BaseTableBitMask
+        GpioTableDataOffset = OFFSET_OF(ARRAY_CFG_HDR, BaseTableBitMask) + BitMaskLen;
+        for (Index2 = 0; Index2 < ArrayHdr->ItemCount; Index2++) {
+          if ((ArrayHdr->BaseTableBitMask[Index2 >> 3] & (1 << (Index2 & 7))) == 0) {
+            // Skip one entry
+            Offset2 = Index2 * ArrayHdr->ItemSize;
+            Ptr   = Cdata + GpioTableDataOffset + Offset2;
+            Index = ArrayHdr->ItemValidBitOff;
+            Ptr[Index >> 3] |= (1 << (Index & 7));
+          }
+        }
+
+        // Update extra entries
+        for (Index = 0; Index  < ArrayHdrCurr->ItemCount; Index++) {
+          Offset1 = Index * ArrayHdrCurr->ItemSize;
+          ItemId  = GetArrayItemId (ArrayHdrCurr, CdataCurr + GpioTableDataOffset + Offset1);
+          for (Index2 = 0; Index2 < ArrayHdr->ItemCount; Index2++) {
+            Offset2 = Index2 * ArrayHdr->ItemSize;
+            if (GetArrayItemId (ArrayHdr, Cdata + GpioTableDataOffset + Offset2) == ItemId) {
+              // Set item as valid in BaseTableBitMask
+              ArrayHdr->BaseTableBitMask[Index >> 3] |= (1 << (Index & 7));
+              CopyMem (Cdata + GpioTableDataOffset + Offset2, CdataCurr + GpioTableDataOffset + Offset1,  ArrayHdr->ItemSize);
+              break;
+            }
+          }
+        }
+      } else {
+        // Copy full CFGDATA tag data
+        CopyMem (Cdata, CdataCurr, (CdataHdr->Length << 2) - HdrLen);
+      }
+    } else {
+      // Set platform mask
+      if (CdataHdr->Tag == CDATA_PLATFORMID_TAG) {
+        PidCfg = (PLATFORMID_CFG_DATA *)((UINT8 *)CdataHdr + sizeof (CDATA_HEADER) + \
+                 sizeof (CDATA_COND) * CdataHdr->ConditionNum);
+        PidCfg->PlatformId = GetPlatformId ();
+        DEBUG ((DEBUG_INFO, "PID: %d\n", GetPlatformId ()));
+      } else {
+        return EFI_NOT_FOUND;
+      }
+    }
+
+    Offset += (CdataHdr->Length << 2);
+  }
+
+  return EFI_SUCCESS;
 }

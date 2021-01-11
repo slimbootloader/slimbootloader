@@ -79,6 +79,7 @@ IsBootGuardSupported (
 VOID
 EFIAPI
 GetBootGuardInfo (
+  IN  UINTN            HeciBaseAddress,
   OUT BOOT_GUARD_INFO *BootGuardInfo
   );
 

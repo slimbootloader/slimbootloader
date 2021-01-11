@@ -1,9 +1,18 @@
-/** @file
-
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
-  SPDX-License-Identifier: BSD-2-Clause-Patent
-
-**/
+/*******************************************************************************
+* Copyright 2002-2020 Intel Corporation
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*******************************************************************************/
 
 /*
 //
@@ -14,8 +23,10 @@
 //
 */
 
-#if !defined(_PC_TOOL_H)
-#define _PC_TOOL_H
+#if !defined(_CP_TOOL_H)
+#define _CP_TOOL_H
+
+#include "pcpmask_ct.h"
 
 #define _NEW_COPY16_
 #define _NEW_XOR16_
@@ -78,7 +89,7 @@ __INLINE void CopyBlock32(const void* pSrc, void* pDst)
 /*
 // padding data block
 */
-__INLINE void PaddBlock(Ipp8u paddingByte, void* pDst, cpSize numBytes)
+__INLINE void PadBlock(Ipp8u paddingByte, void* pDst, cpSize numBytes)
 {
 #ifdef _SLIMBOOT_OPT
    SetMem (pDst, numBytes, paddingByte);
@@ -184,33 +195,34 @@ __INLINE int EquBlock(const void* pSrc1, const void* pSrc2, int len)
    const Ipp8u* p1 = (const Ipp8u*)pSrc1;
    const Ipp8u* p2 = (const Ipp8u*)pSrc2;
    int k;
-   int isEqu;
-   for(k=0, isEqu=1; k<len && isEqu; k++)
-      isEqu = (p1[k] == p2[k]);
-   return isEqu;
+   int isNotEqu;
+   for(k=0, isNotEqu=0; k<len; k++)
+      isNotEqu |= (p1[k]^p2[k]);
+   return !isNotEqu;
 }
 
 
-/* addition functions for CTR mode of diffenent block ciphers */
-__INLINE void StdIncrement(Ipp8u* pCounter, int blkSize, int numSize)
+/* addition (incrementation) functions for CTR mode of diffenent block ciphers */
+/* constant execution time version */
+__INLINE void StdIncrement(Ipp8u* pCounter, int blkBitSize, int numSize)
 {
-   int maskPosition = (blkSize-numSize)/8;
-   Ipp8u mask = (Ipp8u)( 0xFF >> (blkSize-numSize)%8 );
+   int maskPosition = (blkBitSize -numSize)/8;
+   Ipp8u maskVal = (Ipp8u)( 0xFF >> (blkBitSize -numSize)%8 );
 
-   /* save crytical byte */
-   Ipp8u save  = (Ipp8u)( pCounter[maskPosition] & ~mask );
-
-   int len = BITS2WORD8_SIZE(blkSize);
+   int i;
    Ipp32u carry = 1;
-   for(; (len>maskPosition) && carry; len--) {
-      Ipp32u x = pCounter[len-1] + carry;
-      pCounter[len-1] = (Ipp8u)x;
-      carry = (x>>8) & 0xFF;
-   }
+   for(i=BITS2WORD8_SIZE(blkBitSize)-1; i>=0; i--) {
+      int d = maskPosition - i;
+      Ipp8u mask = (Ipp8u)(maskVal | cpIsMsb_ct((BNU_CHUNK_T)d));
 
-   /* update crytical byte */
-   pCounter[maskPosition] &= mask;
-   pCounter[maskPosition] |= save;
+      Ipp32u x = pCounter[i] + carry;
+      Ipp8u y = pCounter[i];
+      pCounter[i] = (Ipp8u)((y & ~mask) | (x & mask));
+
+      maskVal &= cpIsMsb_ct((BNU_CHUNK_T)d);
+
+      carry = (x>>8) & 0x1;
+   }
 }
 
 /* vb */
@@ -236,7 +248,6 @@ __INLINE void ompStdIncrement64( void* pInitCtrVal, void* pCurrCtrVal,
     }
     else
     {
-        /* gres: Ipp64u mask = ( Ipp64u )0xFFFFFFFFFFFFFFFF >> ( 64 - ctrNumBitSize ); */
         Ipp64u mask = CONST_64(0xFFFFFFFFFFFFFFFF) >> ( 64 - ctrNumBitSize );
         Ipp64u save = cntr & ( ~mask );
         Ipp64u bndr = ( Ipp64u )1 << ctrNumBitSize;
@@ -277,7 +288,7 @@ __INLINE void ompStdIncrement128( void* pInitCtrVal, void* pCurrCtrVal,
     Ipp64u hgh;
     Ipp64u flag;
     Ipp64u mask = CONST_64(0xFFFFFFFFFFFFFFFF);
-    Ipp64u save;
+    Ipp64u save = 0;
 
   #if( IPP_ENDIAN == IPP_LITTLE_ENDIAN )
     for( k = 0; k < 8; k++ )
@@ -362,7 +373,7 @@ __INLINE void ompStdIncrement128( void* pInitCtrVal, void* pCurrCtrVal,
   #endif
 }
 
-
+#if 0
 /* vb */
 __INLINE void ompStdIncrement192( void* pInitCtrVal, void* pCurrCtrVal,
                                 int ctrNumBitSize, int n )
@@ -486,8 +497,9 @@ __INLINE void ompStdIncrement192( void* pInitCtrVal, void* pCurrCtrVal,
     }
   #endif
 }
+#endif
 
-
+#if 0
 /* vb */
 __INLINE void ompStdIncrement256( void* pInitCtrVal, void* pCurrCtrVal,
                                  int ctrNumBitSize, int n )
@@ -657,5 +669,6 @@ __INLINE void ompStdIncrement256( void* pInitCtrVal, void* pCurrCtrVal,
     }
   #endif
 }
+#endif
 
 #endif /* _CP_TOOL_H */

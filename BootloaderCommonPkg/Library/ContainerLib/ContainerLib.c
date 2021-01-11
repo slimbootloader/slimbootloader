@@ -213,8 +213,8 @@ UnregisterContainer (
   @retval         Container header size.
 
 **/
-STATIC
 COMPONENT_ENTRY  *
+EFIAPI
 LocateComponentEntryFromContainer (
   IN  CONTAINER_HDR  *ContainerHdr,
   IN  UINT32          ComponentName
@@ -335,11 +335,11 @@ GetContainerKeyUsageBySig (
 {
   UINT8  Idx;
 
-  if (ContainerSig == CONTAINER_BOOT_SIGNATURE) {
+  if (ContainerSig == CONTAINER_KEY_HASH_STORE_SIGNATURE) {
+    return HASH_USAGE_PUBKEY_MASTER;
+  } else if (ContainerSig == CONTAINER_BOOT_SIGNATURE) {
     return HASH_USAGE_PUBKEY_OS;
-  }
-
-  if ((ContainerSig & 0x00FFFFFF) == CONTAINER_OEM_BASE_SIGNATURE) {
+  } else if ((ContainerSig & 0x00FFFFFF) == CONTAINER_OEM_BASE_SIGNATURE) {
     Idx = (ContainerSig >> 24) - '0';
     if (Idx < 8) {
       return HASH_USAGE_PUBKEY_OEM (Idx);
@@ -519,6 +519,8 @@ LocateComponentEntry (
   UINT32                    ContainerBase;
   UINT32                    ContainerSize;
 
+  CompEntry = NULL;
+
   // Search container header from cache
   ContainerEntry = GetContainerBySignature (ContainerSig);
   if (ContainerEntry == NULL) {
@@ -543,9 +545,11 @@ LocateComponentEntry (
 
   // Locate the component from the container header
   ContainerHdr = (CONTAINER_HDR *)(UINTN)ContainerEntry->HeaderCache;
-  CompEntry = LocateComponentEntryFromContainer (ContainerHdr, ComponentName);
-  if (CompEntry == NULL) {
-    return EFI_NOT_FOUND;
+  if (ComponentName != 0) {
+    CompEntry = LocateComponentEntryFromContainer (ContainerHdr, ComponentName);
+    if (CompEntry == NULL) {
+      return EFI_NOT_FOUND;
+    }
   }
 
   if (ContainerEntryPtr != NULL) {
@@ -601,26 +605,27 @@ GetNextAvailableComponent (
   }
 
   CurrEntry = (COMPONENT_ENTRY *)&ContainerHdr[1];
-  NextEntry = (COMPONENT_ENTRY *)((UINT8 *)(CurrEntry + 1) + CurrEntry->HashSize);
-  for (Index = 0; Index < (UINT32)(ContainerHdr->Count - 1); Index++) {
-    if ((CurrEntry->Attribute & COMPONENT_ENTRY_ATTR_RESERVED) == 0) {
-      if (*ComponentName == 0) {
-        *ComponentName = CurrEntry->Name;
-        Status = EFI_SUCCESS;
-        break;
-      } else if (*ComponentName == CurrEntry->Name) {
-        if ((NextEntry->Attribute & COMPONENT_ENTRY_ATTR_RESERVED) == 0) {
-          *ComponentName = NextEntry->Name;
-          Status = EFI_SUCCESS;
-          break;
-        } else {
-          NextEntry = (COMPONENT_ENTRY *)((UINT8 *)(NextEntry + 1) + NextEntry->HashSize);
-          continue;
+   if ((*ComponentName == 0) && ((CurrEntry->Attribute & COMPONENT_ENTRY_ATTR_RESERVED) == 0)){
+    *ComponentName = CurrEntry->Name;
+    Status = EFI_SUCCESS;
+  } else {
+    NextEntry = (COMPONENT_ENTRY *)((UINT8 *)(CurrEntry + 1) + CurrEntry->HashSize);
+    for (Index = 0; Index < (UINT32)(ContainerHdr->Count-1); Index++) {
+      if ((CurrEntry->Attribute & COMPONENT_ENTRY_ATTR_RESERVED) == 0) {
+        if (*ComponentName == CurrEntry->Name) {
+          if ((NextEntry->Attribute & COMPONENT_ENTRY_ATTR_RESERVED) == 0) {
+            *ComponentName = NextEntry->Name;
+            Status = EFI_SUCCESS;
+            break;
+          } else {
+            NextEntry = (COMPONENT_ENTRY *)((UINT8 *)(NextEntry + 1) + NextEntry->HashSize);
+            continue;
+          }
         }
       }
+      CurrEntry = NextEntry;
+      NextEntry = (COMPONENT_ENTRY *)((UINT8 *)(CurrEntry + 1) + CurrEntry->HashSize);
     }
-    CurrEntry = NextEntry;
-    NextEntry = (COMPONENT_ENTRY *)((UINT8 *)(CurrEntry + 1) + CurrEntry->HashSize);
   }
 
   return Status;
@@ -665,12 +670,16 @@ LocateComponent (
     return Status;
   }
 
-  ContainerHdr = (CONTAINER_HDR *)(UINTN)ContainerEntry->HeaderCache;
-  if (Buffer != NULL) {
-    *Buffer = (VOID *)(UINTN)(ContainerEntry->Base + ContainerHdr->DataOffset + CompEntry->Offset);
-  }
-  if (Length != NULL) {
-    *Length = CompEntry->Size;
+  if ((ContainerEntry != NULL) && (CompEntry != NULL)) {
+    ContainerHdr = (CONTAINER_HDR *)(UINTN)ContainerEntry->HeaderCache;
+    if (Buffer != NULL) {
+      *Buffer = (VOID *)(UINTN)(ContainerEntry->Base + ContainerHdr->DataOffset + CompEntry->Offset);
+    }
+    if (Length != NULL) {
+      *Length = CompEntry->Size;
+    }
+  } else {
+    Status = EFI_NOT_FOUND;
   }
 
   return Status;
@@ -759,6 +768,10 @@ LoadComponentWithCallback (
       return Status;
     }
 
+    if ((ContainerEntry == NULL) || (CompEntry == NULL)) {
+      return EFI_NOT_FOUND;
+    }
+
     if ((CompEntry->Attribute & COMPONENT_ENTRY_ATTR_RESERVED) != 0) {
       return EFI_UNSUPPORTED;
     }
@@ -785,9 +798,15 @@ LoadComponentWithCallback (
 
   if (IS_COMPRESSED (CompressHdr)) {
     SignedDataLen = sizeof (LOADER_COMPRESSED_HEADER) + CompressHdr->CompressedSize;
-    if (SignedDataLen <= CompLen) {
-      Status = DecompressGetInfo (CompressHdr->Signature, CompressHdr->Data,
-                                  CompressHdr->CompressedSize, &DstLen, &ScrLen);
+    if (CompressHdr->Size == 0) {
+      Status = EFI_SUCCESS;
+      DstLen = 0;
+      ScrLen = 0;
+    } else {
+      if (SignedDataLen <= CompLen) {
+        Status = DecompressGetInfo (CompressHdr->Signature, CompressHdr->Data,
+                                    CompressHdr->CompressedSize, &DstLen, &ScrLen);
+      }
     }
   }
   if (EFI_ERROR (Status)) {
@@ -852,6 +871,7 @@ LoadComponentWithCallback (
     } else {
       CompBase = ReqCompBase;
     }
+
     if (CompBase != NULL) {
       Status = Decompress (CompressHdr->Signature, CompressHdr->Data, CompressHdr->CompressedSize,
                            CompBase, ScrBuf);
@@ -864,7 +884,11 @@ LoadComponentWithCallback (
         }
       }
     } else {
-      Status = EFI_OUT_OF_RESOURCES;
+      if (CompressHdr->Size == 0) {
+        Status = EFI_BAD_BUFFER_SIZE;
+      } else {
+        Status = EFI_OUT_OF_RESOURCES;
+      }
     }
 
   } else {

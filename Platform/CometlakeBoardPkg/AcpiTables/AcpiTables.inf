@@ -1,0 +1,62 @@
+## @file
+# Component description file for PlatformAcpiTable module.
+#
+# Build acpi table data required by system boot.
+#  All .asi files tagged with "ToolCode="DUMMY"" in following file list are device description and are included
+#  by top level ASL file which will be dealed with by asl.exe application.
+#
+# Copyright (c)  1999  - 2020, Intel Corporation. All rights reserved
+#
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+#
+##
+
+[defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = AcpiTables
+  FILE_GUID                      = 7E374E25-8E01-4FEE-87F2-390C23C606CD
+  MODULE_TYPE                    = USER_DEFINED
+  VERSION_STRING                 = 1.0
+  EDK_RELEASE_VERSION            = 0x00020000
+  EFI_SPECIFICATION_VERSION      = 0x00020000
+
+[sources.common]
+  Dsdt/PchSerialIoAcpiDefinesCml.h
+  AcpiTablePlatform.h
+  Facs/Facs.h
+  Mcfg/Mcfg.h
+  Dsdt/PlatformBoardId.h
+  Madt/Madt.h
+  Hpet/Hpet.h
+  Dsdt/Dsdt.asl
+  Facs/Facs.act
+  Facp/Facp.aslc
+  Madt/Madt.act
+  Mcfg/Mcfg.act
+  Hpet/Hpet.act
+  Ecdt/Ecdt.act
+  Ssdt/SaSsdt.asl
+  Bdat/Bdat.aslc
+  Fwst/Fwst.aslc
+  Platform/CommonBoardPkg/AcpiTables/Tpm/Tpm2.aslc
+  Platform/CommonBoardPkg/AcpiTables/Fpdt/Fpdt.aslc
+  Ssdt/TpmSsdt.asl
+  Ssdt/Thermal.asl
+  CpuSsdt/Cpu0Cst.asl
+  CpuSsdt/Cpu0Ist.asl
+  CpuSsdt/Cpu0Psd.asl
+  CpuSsdt/Cpu0Tst.asl
+  CpuSsdt/ApCst.asl
+  CpuSsdt/ApIst.asl
+  CpuSsdt/ApPsd.asl
+  CpuSsdt/ApTst.asl
+  CpuSsdt/CpuSsdt.asl
+  Psd/Psd.aslc
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/CometlakePkg/CometlakePkg.dec

@@ -101,8 +101,9 @@ UpdateOsMemSize (
   }
 
   if ((MemLowerSize != 0) || (MemUpperSize != 0)) {
-    MbInfo->MemLower = (UINT32) (MemLowerSize / KB_ (1));
-    MbInfo->MemUpper = (UINT32) (MemUpperSize / KB_ (1));
+    // Convert to KB in size
+    MbInfo->MemLower = (UINT32) (RShiftU64 (MemLowerSize, 10));
+    MbInfo->MemUpper = (UINT32) (RShiftU64 (MemUpperSize, 10));
     MbInfo->Flags   |= MULTIBOOT_INFO_HAS_MEMORY;
   }
 

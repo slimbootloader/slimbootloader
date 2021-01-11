@@ -1,0 +1,19 @@
+#/** @file
+# Platform Package
+#
+# Copyright (c) 2020 Intel Corporation. All rights reserved.<BR>
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#**/
+
+[Defines]
+  DEC_SPECIFICATION              = 0x00010005
+  PACKAGE_NAME                   = TigerlakePchPkg
+  PACKAGE_GUID                   = D2BFA746-8564-4252-95B7-B90A90E1353C
+  PACKAGE_VERSION                = 0.1
+
+[Includes]
+  Include
+
+[Guids]
+  gMeBiosPayloadHobGuid      = { 0x992c52c8, 0xbc01, 0x4ecd, {0x20, 0xbf, 0xf9, 0x57, 0x16, 0x0e, 0x9e, 0xf7 } }
+

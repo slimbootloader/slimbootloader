@@ -366,6 +366,8 @@ class GitDiffCheck:
     skip_check_file_types = (
         '.patch',
         '.pem',
+        '.makefile',
+        '.lib'
         )
 
     def check_added_line(self, line):

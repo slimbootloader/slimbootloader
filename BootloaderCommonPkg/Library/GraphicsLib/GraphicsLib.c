@@ -113,30 +113,33 @@ BltGlyphToFrameBuffer (
   )
 {
   UINT8                            *GlyphBitmap;
-  CONST UINT8                      GlyphTableStart = 0x20;
   UINTN                            Width, Height;
   UINTN                            Row;
   UINTN                            Col;
+  UINTN                            Code;
+  UINTN                            Base;
   EFI_GRAPHICS_OUTPUT_BLT_PIXEL    GopBlt[GLYPH_WIDTH * GLYPH_HEIGHT];
 
   if (GfxInfoHob == NULL) {
     return EFI_INVALID_PARAMETER;
   }
 
-  if ((Glyph < 0) || (Glyph > 0x7f)) {
-    return EFI_INVALID_PARAMETER;
-  }
-
   Width = GLYPH_WIDTH;
   Height = GLYPH_HEIGHT;
 
-  // Render ASCII characters 0-0x1f as whitespace
-  if (Glyph < GlyphTableStart) {
-    Glyph = 0x20;
+  // Glyph table maps to ASCII characters, index the table with the character
+  Code = (UINTN)(Glyph & 0xFF);
+  Base = 0xAF;
+  if ((Code >= Base) && (Code <= 0xF2)) {
+    Code = (0x80 - 0x20) + (Code - Base);
+  } else if ((Code >= 0x20) && (Code <= 0x7F)) {
+    Code = Code - 0x20;
+  } else {
+    Code = 0;
   }
 
   // Glyph table maps to ASCII characters, index the table with the character
-  GlyphBitmap = gUsStdNarrowGlyphData[ (UINTN)Glyph - GlyphTableStart].GlyphCol1;
+  GlyphBitmap = gUsStdNarrowGlyphData[Code].GlyphCol1;
 
   for (Row = 0; Row < Height; Row++) {
     for (Col = 0; Col < Width; Col++) {
@@ -157,6 +160,7 @@ BltGlyphToFrameBuffer (
   @param[in] OffY                Desired Y offset of the console
 
   @retval EFI_SUCCESS            Success
+  @retval EFI_ALREADY_STARTED    Framebuffer has been initialized already
   @retval EFI_INVALID_PARAMETER  Could not fit entire console in frame buffer
 
 **/
@@ -173,6 +177,11 @@ InitFrameBufferConsole (
   FRAME_BUFFER_CONSOLE  *Console;
   BOOLEAN                ClearScreen;
 
+  Console = &mFbConsole;
+  if (Console->GfxInfoHob != NULL) {
+    return EFI_ALREADY_STARTED;
+  }
+
   if (GfxInfoHob == NULL) {
     return EFI_INVALID_PARAMETER;
   }
@@ -187,7 +196,6 @@ InitFrameBufferConsole (
   // so that the logo will stay on screen.
   ClearScreen = (mFbConsole.TextDisplayBuf != NULL) ? TRUE : FALSE;
 
-  Console = &mFbConsole;
   Console->GfxInfoHob  = GfxInfoHob;
   Console->OffX        = OffX;
   Console->OffY        = OffY;
@@ -203,6 +211,8 @@ InitFrameBufferConsole (
   ASSERT (Console->TextDisplayBuf != NULL);
   Console->TextSwapBuf = AllocateZeroPool (Console->Rows * Console->Cols);
   ASSERT (Console->TextSwapBuf != NULL);
+  Console->TextDrawBuf = AllocateZeroPool (Console->Rows * Console->Cols * 2);
+  ASSERT (Console->TextDrawBuf != NULL);
 
   if (ClearScreen) {
     // Clear screen using standard ANSI Escape Sequences 'ESC[2J'
@@ -382,3 +392,78 @@ FrameBufferWrite (
 
   return Pos;
 }
+
+/**
+  Draw frame buffer from a given text buffer.
+  The text buffer needs to be compatible with format below:
+  Each text char takes 16 bits:
+    BIT   7:0  ASCII char
+    BIT  11:8  Foreground color
+    BIT 15:12  Background color
+
+  @param[in]  Row      Row number for the text buffer.
+  @param[in]  Col      Column number for the text buffer.
+  @param[in]  Buffer   The pointer to the text buffer.
+
+  @retval EFI_NOT_READY          Frame buffer console has not been initialized yet.
+  @retval EFI_INVALID_PARAMETER  Invalid parameters.
+  @retval EFI_SUCCESS            Text buffer was drawn successfully.
+
+**/
+EFI_STATUS
+EFIAPI
+DrawFrameBuffer (
+  IN UINT32     Row,
+  IN UINT32     Col,
+  IN UINT8     *Buffer
+  )
+{
+  FRAME_BUFFER_CONSOLE *Console;
+  UINTN                 Pos;
+  UINT32                PosX;
+  UINT32                PosY;
+  UINT32                OffX;
+  UINT32                OffY;
+  UINT16                Value;
+  UINT16               *Ptr;
+
+  Console = &mFbConsole;
+  if (Console->GfxInfoHob == NULL) {
+    return EFI_NOT_READY;
+  }
+
+  if (Buffer == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (Col > Console->Cols) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (Row > Console->Rows) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  Pos  = 0;
+  OffX = ((UINT32)Console->Cols - Col) >> 1;
+  OffY = ((UINT32)Console->Rows - Row) >> 1;
+  for (PosY = 0; PosY < Row; PosY++) {
+    for (PosX = 0; PosX < Col; PosX++) {
+      Value = *(UINT16 *)(Buffer + Pos);
+      Ptr   = (UINT16 *)(Console->TextDrawBuf + Pos);
+      if (*Ptr != Value) {
+        *Ptr = Value;
+        BltGlyphToFrameBuffer (
+          Console->GfxInfoHob, Buffer[Pos],
+          mColors[(Value >>  8) & 0x0F],
+          mColors[(Value >> 12) & 0x0F],
+          Console->OffX + (PosX + OffX) * GLYPH_WIDTH,
+          Console->OffY + (PosY + OffY) * GLYPH_HEIGHT);
+      }
+      Pos += 2;
+    }
+  }
+
+  return EFI_SUCCESS;
+}
+

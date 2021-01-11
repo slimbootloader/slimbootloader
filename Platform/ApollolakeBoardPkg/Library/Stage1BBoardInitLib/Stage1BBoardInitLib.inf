@@ -52,6 +52,7 @@
   BootGuardLib
   HeciLib
   BoardSupportLib
+  BaseIpcLib
 
 [Guids]
   gEfiHeciMbpDataHobGuid
@@ -69,4 +70,3 @@
   gPlatformModuleTokenSpaceGuid.PcdCfgDataSize
   gPlatformModuleTokenSpaceGuid.PcdStage1BLoadBase
   gPlatformModuleTokenSpaceGuid.PcdCfgDataLoadSource
-  gPlatformCommonLibTokenSpaceGuid.PcdHeciLibId

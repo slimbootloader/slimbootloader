@@ -1,0 +1,354 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Template File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+DEV_EN_TMPL: >
+  - $ACTION      :
+      page         : CTRL0:DEV_EN_DIS:"Control 0"
+  - $ACTION      :
+      page         : CTRL0
+  - DevEnControl0 :
+    - $STRUCT      :
+        name         : DEV ENABLE/DISABLE CTRL 0
+        help         : >
+                       Device Enable/Disable Control 0
+        struct       : DEV_EN_CTRL_0
+        length       : 0x04
+        value        : $(1)
+    - I2C0Enable   :
+        name         : I2C Device 0
+        type         : Combo
+        option       : 0:Disabled, 1:PCI Mode, 2:ACPI Mode
+        help         : >
+                       Enable/Disable I2C Device 0. 0:Disabled, 1:PCI Mode(Default), 2:ACPI Mode.
+        length       : 2b
+    - I2C1Enable   :
+        name         : I2C Device 1
+        type         : Combo
+        option       : 0:Disabled, 1:PCI Mode, 2:ACPI Mode
+        help         : >
+                       Enable/Disable I2C Device 1. 0:Disabled, 1:PCI Mode(Default), 2:ACPI Mode.
+        length       : 2b
+    - I2C2Enable   :
+        name         : I2C Device 2
+        type         : Combo
+        option       : 0:Disabled, 1:PCI Mode, 2:ACPI Mode
+        help         : >
+                       Enable/Disable I2C Device 2. 0:Disabled, 1:PCI Mode(Default), 2:ACPI Mode.
+        length       : 2b
+    - I2C3Enable   :
+        name         : I2C Device 3
+        type         : Combo
+        option       : 0:Disabled, 1:PCI Mode, 2:ACPI Mode
+        help         : >
+                       Enable/Disable I2C Device 3. 0:Disabled, 1:PCI Mode(Default), 2:ACPI Mode.
+        length       : 2b
+    - I2C4Enable   :
+        name         : I2C Device 4
+        type         : Combo
+        option       : 0:Disabled, 1:PCI Mode, 2:ACPI Mode
+        help         : >
+                       Enable/Disable I2C Device 4. 0:Disabled, 1:PCI Mode(Default), 2:ACPI Mode.
+        length       : 2b
+    - I2C5Enable   :
+        name         : I2C Device 5
+        type         : Combo
+        option       : 0:Disabled, 1:PCI Mode, 2:ACPI Mode
+        help         : >
+                       Enable/Disable I2C Device 5. 0:Disabled, 1:PCI Mode(Default), 2:ACPI Mode.
+        length       : 2b
+    - I2C6Enable   :
+        name         : I2C Device 6
+        type         : Combo
+        option       : 0:Disabled, 1:PCI Mode, 2:ACPI Mode
+        help         : >
+                       Enable/Disable I2C Device 6. 0:Disabled, 1:PCI Mode(Default), 2:ACPI Mode.
+        length       : 2b
+    - I2C7Enable   :
+        name         : I2C Device 7
+        type         : Combo
+        option       : 0:Disabled, 1:PCI Mode, 2:ACPI Mode
+        help         : >
+                       Enable/Disable I2C Device 7. 0:Disabled, 1:PCI Mode(Default), 2:ACPI Mode.
+        length       : 2b
+    - Hsuart0Enable :
+        name         : UART Device 0
+        type         : Combo
+        option       : 0:Disabled, 1:PCI Mode, 2:ACPI Mode
+        help         : >
+                       Enable/Disable UART Device 0. 0:Disabled, 1:PCI Mode(Default), 2:ACPI Mode.
+        length       : 2b
+    - Hsuart1Enable :
+        name         : UART Device 1
+        type         : Combo
+        option       : 0:Disabled, 1:PCI Mode, 2:ACPI Mode
+        help         : >
+                       Enable/Disable UART Device 1. 0:Disabled, 1:PCI Mode(Default), 2:ACPI Mode.
+        length       : 2b
+    - Hsuart2Enable :
+        name         : UART Device 2
+        type         : Combo
+        option       : 0:Disabled, 1:PCI Mode, 2:ACPI Mode
+        help         : >
+                       Enable/Disable UART Device 2. 0:Disabled, 1:PCI Mode(Default), 2:ACPI Mode.
+        length       : 2b
+    - Hsuart3Enable :
+        name         : UART Device 3
+        type         : Combo
+        option       : 0:Disabled, 1:PCI Mode, 2:ACPI Mode
+        help         : >
+                       Enable/Disable UART Device 3. 0:Disabled, 1:PCI Mode(Default), 2:ACPI Mode.
+        length       : 2b
+    - Spi0Enable   :
+        name         : SPI UART Device 0
+        type         : Combo
+        option       : 0:Disabled, 1:PCI Mode, 2:ACPI Mode
+        help         : >
+                       Enable/Disable SPI Device 0. 0:Disabled, 1:PCI Mode(Default), 2:ACPI Mode.
+        length       : 2b
+    - Spi1Enable   :
+        name         : SPI UART Device 1
+        type         : Combo
+        option       : 0:Disabled, 1:PCI Mode, 2:ACPI Mode
+        help         : >
+                       Enable/Disable SPI Device 1. 0:Disabled, 1:PCI Mode(Default), 2:ACPI Mode.
+        length       : 2b
+    - Spi2Enable   :
+        name         : SPI UART Device 2
+        type         : Combo
+        option       : 0:Disabled, 1:PCI Mode, 2:ACPI Mode
+        help         : >
+                       Enable/Disable SPI Device 2. 0:Disabled, 1:PCI Mode(Default), 2:ACPI Mode.
+        length       : 2b
+    - Rsvd         :
+        name         : Reserved
+        type         : Reserved
+        help         : >
+                       Enable/Disable reserved
+        length       : 2b
+  - $ACTION      :
+      page         : CTRL1:DEV_EN_DIS:"Control 1"
+  - $ACTION      :
+      page         : CTRL1
+  - DevEnControl1 :
+    - $STRUCT      :
+        name         : DEV ENABLE/DISABLE CTRL 1
+        help         : >
+                       Device Enable/Disable Control 1
+        struct       : DEV_EN_CTRL_1
+        length       : 0x02
+        value        : $(2)
+    - IshEnable    :
+        name         : ISH Controller
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable ISH Controller. 0:Disable, 1:Enable(Default).
+        length       : 1bW
+    - SataEnable   :
+        name         : Chipset SATA
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enables or Disables the Chipset SATA Controller. The Chipset SATA controller supports the 2 black internal SATA ports (up to 3Gb/s supported per port). 0:Disable, 1:Enable(Default).
+        length       : 1bW
+    - SataPort0Enable :
+        name         : SATA Port 0
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable or Disable SATA Port 0.  0:Disable, 1:Enable(Default).
+        length       : 1bW
+    - SataPort1Enable :
+        name         : SATA Port 1
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable or Disable SATA Port 1.  0:Disable, 1:Enable(Default).
+        length       : 1bW
+    - SdcardEnable :
+        name         : SD Card Support (D27:F0)
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable SD Card Support. 0:Disable, 1:Enable(Default).
+        length       : 1bW
+    - eMMCEnable   :
+        name         : SeMMC Support (D28:F0)
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable eMMC Support. 0:Disable, 1:Enable(Default).
+        length       : 1bW
+    - UfsEnable    :
+        name         : UFS Support (D29:F0)
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable SDIO Support. 0:Disable, 1:Enable(Default).
+        length       : 1bW
+    - SdioEnable   :
+        name         : SDIO Support (D30:F0)
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable SDIO Support. 0:Disable, 1:Enable(Default).
+        length       : 1bW
+    - SmbusEnable  :
+        name         : Enable SMBus
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/disable SMBus controller. 0:Disable, 1:Enable(Default).
+        length       : 1bW
+    - IpuEnable    :
+        name         : IPU Enable/Disable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable IPU Device. 0:Disable, 1:Enable(Default).
+        length       : 1bW
+    - Ipc1Enable   :
+        name         : IPC1 Enable/Disable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable IPC1 Device. 0:Disable, 1:Enable(Default).
+        length       : 1bW
+    - Rsvd         :
+        name         : Reserved
+        type         : Reserved
+        help         : >
+                       Control 1 reserved
+        length       : 5bW
+  - $ACTION      :
+      page         : CTRL2:DEV_EN_DIS:"Control 2"
+  - $ACTION      :
+      page         : CTRL2
+  - DevEnControl2 :
+    - $STRUCT      :
+        name         : DEV ENABLE/DISABLE CTRL 2
+        help         : >
+                       Device Enable/Disable Control 2
+        struct       : DEV_EN_CTRL_2
+        length       : 0x02
+        value        : $(3)
+    - Usb20Port0Enable :
+        name         : Enable USB2 port 0
+        type         : Combo
+        option       : 0:Disable, 1:Enable
+        help         : >
+                       Enable/disable USB2 port 0. 0x01(Default).
+        length       : 1bW
+    - Usb20Port1Enable :
+        name         : Enable USB2 port 1
+        type         : Combo
+        option       : 0:Disable, 1:Enable
+        help         : >
+                       Enable/disable USB2 port 1. 0x01(Default).
+        length       : 1bW
+    - Usb20Port2Enable :
+        name         : Enable USB2 port 2
+        type         : Combo
+        option       : 0:Disable, 1:Enable
+        help         : >
+                       Enable/disable USB2 port 2. 0x01(Default).
+        length       : 1bW
+    - Usb20Port3Enable :
+        name         : Enable USB2 port 3
+        type         : Combo
+        option       : 0:Disable, 1:Enable
+        help         : >
+                       Enable/disable USB2 port 3. 0x01(Default).
+        length       : 1bW
+    - Usb20Port4Enable :
+        name         : Enable USB2 port 4
+        type         : Combo
+        option       : 0:Disable, 1:Enable
+        help         : >
+                       Enable/disable USB2 port 4. 0x01(Default).
+        length       : 1bW
+    - Usb20Port5Enable :
+        name         : Enable USB2 port 5
+        type         : Combo
+        option       : 0:Disable, 1:Enable
+        help         : >
+                       Enable/disable USB2 port 5. 0x01(Default).
+        length       : 1bW
+    - Usb20Port6Enable :
+        name         : Enable USB2 port 6
+        type         : Combo
+        option       : 0:Disable, 1:Enable
+        help         : >
+                       Enable/disable USB2 port 6. 0x01(Default).
+        length       : 1bW
+    - Usb20Port7Enable :
+        name         : Enable USB2 port 7
+        type         : Combo
+        option       : 0:Disable, 1:Enable
+        help         : >
+                       Enable/disable USB2 port 7. 0x01(Default).
+        length       : 1bW
+    - Usb30Port0Enable :
+        name         : Enable USB3 port 0
+        type         : Combo
+        option       : 0:Disable, 1:Enable
+        help         : >
+                       Enable/disable USB3 port 0. 0x01(Default).
+        length       : 1bW
+    - Usb30Port1Enable :
+        name         : Enable USB3 port 1
+        type         : Combo
+        option       : 0:Disable, 1:Enable
+        help         : >
+                       Enable/disable USB3 port 1. 0x01(Default).
+        length       : 1bW
+    - Usb30Port2Enable :
+        name         : Enable USB3 port 2
+        type         : Combo
+        option       : 0:Disable, 1:Enable
+        help         : >
+                       Enable/disable USB3 port 2. 0x01(Default).
+        length       : 1bW
+    - Usb30Port3Enable :
+        name         : Enable USB3 port 3
+        type         : Combo
+        option       : 0:Disable, 1:Enable
+        help         : >
+                       Enable/disable USB3 port 3. 0x01(Default).
+        length       : 1bW
+    - Usb30Port4Enable :
+        name         : Enable USB3 port 4
+        type         : Combo
+        option       : 0:Disable, 1:Enable
+        help         : >
+                       Enable/disable USB3 port 4. 0x01(Default).
+        length       : 1bW
+    - Usb30Port5Enable :
+        name         : Enable USB3 port 5
+        type         : Combo
+        option       : 0:Disable, 1:Enable
+        help         : >
+                       Enable/disable USB3 port 5. 0x01(Default).
+        length       : 1bW
+    - XdciEnable   :
+        name         : Enable XDCI
+        type         : Combo
+        option       : 0:Disabled, 1:PCI Mode, 2:ACPI Mode
+        help         : >
+                       Enable/disable XDCI. 0:Disabled, 1:PCI Mode(Default), 2:ACPI Mode.
+        length       : 2b
+    - Rsvd         :
+        name         : Reserved
+        type         : Reserved
+        help         : >
+                       Control 2 reserved
+        length       : 0b
+
+

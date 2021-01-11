@@ -167,6 +167,7 @@ FinalizeSmbios (
   Type127 = (SMBIOS_TABLE_TYPE127 *)(UINTN)(SmbiosEntry->TableAddress + SmbiosEntry->TableLength);
   Type127->Hdr.Type = SMBIOS_TYPE_END_OF_TABLE;
   Type127->Hdr.Length = sizeof (SMBIOS_STRUCTURE);
+  Type127->Hdr.Handle = SmbiosEntry->NumberOfSmbiosStructures++;
   mType127Ptr = (VOID *) Type127;
 
   SmbiosEntry->TableLength += sizeof (SMBIOS_STRUCTURE) + TYPE_TERMINATOR_SIZE;
@@ -185,7 +186,9 @@ FinalizeSmbios (
   //
   // Keep a copy in legacy F segment so that non-UEFI can locate it
   //
-  CopyMem ((VOID *)0xFFF60, SmbiosEntry, sizeof (SMBIOS_TABLE_ENTRY_POINT));
+  if (FeaturePcdGet (PcdLegacyEfSegmentEnabled)) {
+    CopyMem ((VOID *)0xFFF60, SmbiosEntry, sizeof (SMBIOS_TABLE_ENTRY_POINT));
+  }
 
   return Status;
 }
@@ -219,10 +222,11 @@ AppendSmbiosType (
     return EFI_DEVICE_ERROR;
   }
 
+  TypeHdr = (SMBIOS_STRUCTURE *) TypeData;
+
   //
   // Check if the type is already added during Smbios init
   //
-  TypeHdr = (SMBIOS_STRUCTURE *) TypeData;
   if (TypeHdr->Type == SMBIOS_TYPE_BIOS_INFORMATION   ||
       TypeHdr->Type == SMBIOS_TYPE_SYSTEM_INFORMATION ||
       TypeHdr->Type == SMBIOS_TYPE_BASEBOARD_INFORMATION) {
@@ -244,6 +248,13 @@ AppendSmbiosType (
   SmbiosEntry->TableLength -= ( ((SMBIOS_STRUCTURE *)mType127Ptr)->Length + TYPE_TERMINATOR_SIZE);
   CopyMem (mType127Ptr, TypeData, TypeLength);
   SmbiosEntry->TableLength += TypeLength;
+
+  //
+  // Not incrementing the NumberOfSmbiosStructures here,
+  // as FinalizeSmbios () will do it again. That can be
+  // counted towards the newly added type structure.
+  //
+  TypeHdr->Handle = SmbiosEntry->NumberOfSmbiosStructures;
 
   //
   // After appending, update with Typ127 and patch entry point
@@ -403,6 +414,12 @@ AddSmbiosType (
     *MaxLength = TypeLength;
   }
   SmbiosEntry->TableLength += TypeLength;
+
+  //
+  // According to SMBIOS spec, Handle field is used to
+  // get a particular smbios type structure.
+  //
+  TypePtr.Hdr->Handle = SmbiosEntry->NumberOfSmbiosStructures++;
 
   return TypeAddr;
 

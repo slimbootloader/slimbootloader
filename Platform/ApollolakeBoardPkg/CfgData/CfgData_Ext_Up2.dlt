@@ -14,6 +14,9 @@ PLATFORMID_CFG_DATA.PlatformId           | 0x000E
 
 
 PLAT_NAME_CFG_DATA.PlatformName          | 'UP2'
+
+GEN_CFG_DATA.VbtImageId                  | 2
+
 MEMORY_CFG_DATA.MemorySizeLimit          | 0
 MEMORY_CFG_DATA.RmtMode                  | 0
 MEMORY_CFG_DATA.RmtCheckRun              | 3

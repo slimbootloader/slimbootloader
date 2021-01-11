@@ -1,9 +1,18 @@
-/** @file
-
-  Copyright (c) 2018-2019, Intel Corporation. All rights reserved.<BR>
-  SPDX-License-Identifier: BSD-2-Clause-Patent
-
-**/
+/*******************************************************************************
+* Copyright 2002-2020 Intel Corporation
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*******************************************************************************/
 
 /*
 //
@@ -227,7 +236,12 @@ void sha224_hashOctString(Ipp8u* pMD, void* pHashVal)
 void sha256_msgRep(Ipp8u* pDst, Ipp64u lenLo, Ipp64u lenHi)
 {
    IPP_UNREFERENCED_PARAMETER(lenHi);
+#ifdef _SLIMBOOT_OPT
+   lenLo = ENDIANNESS64(LShiftU64 (lenLo, 3));
+#else
    lenLo = ENDIANNESS64(lenLo<<3);
+#endif
+
    ((Ipp64u*)(pDst))[0] = lenLo;
 }
 
@@ -544,10 +558,14 @@ static void cpFinalizeSHA256(DigestSHA256 pHash, const Ipp8u* inpBuffer, int inp
 
    /* padd message */
    buffer[inpLen++] = 0x80;
-   PaddBlock(0, buffer+inpLen, bufferLen-inpLen-MLR_SHA256);
+   PadBlock(0, buffer+inpLen, (cpSize)(bufferLen-inpLen-(int)MLR_SHA256));
 
    /* put processed message length in bits */
+#ifdef _SLIMBOOT_OPT
+   processedMsgLen = ENDIANNESS64(LShiftU64 (processedMsgLen, 3));
+#else
    processedMsgLen = ENDIANNESS64(processedMsgLen<<3);
+#endif
    ((Ipp64u*)(buffer+bufferLen))[-1] = processedMsgLen;
 
    /* copmplete hash computation */

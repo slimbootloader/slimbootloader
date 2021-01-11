@@ -1,9 +1,18 @@
-/** @file
-
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
-  SPDX-License-Identifier: BSD-2-Clause-Patent
-
-**/
+/*******************************************************************************
+* Copyright 2002-2020 Intel Corporation
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*******************************************************************************/
 
 /*
 //               Intel(R) Integrated Performance Primitives
@@ -18,9 +27,9 @@
 #include "pcpbn.h"
 #include "gsmodstuff.h"
 
-//gres: temporary excluded: #include <assert.h>
+//tbcd: temporary excluded: #include <assert.h>
 
-#define MONT_DEFAULT_POOL_LENGTH 4
+#define MONT_DEFAULT_POOL_LENGTH (6)
 
 /*
 // Montgomery spec structure
@@ -28,7 +37,7 @@
 struct _cpMontgomery
 {
    IppCtxId       idCtx;      /* Montgomery spec identifier             */
-   cpSize         maxLen;     /* maximum length of modulus being stored */
+   cpSize         maxLen;     /* Maximum length of modulus being stored */
    gsModEngine*   pEngine;    /* Modular arith engine structure         */
 };
 
@@ -50,9 +59,9 @@ struct _cpMontgomery
 // Pacp/unpack Montgomery context
 */
 #define cpPackMontCtx OWNAPI(cpPackMontCtx)
-void cpPackMontCtx(const IppsMontState* pCtx, Ipp8u* pBuffer);
+void    cpPackMontCtx(const IppsMontState* pCtx, Ipp8u* pBuffer);
 #define cpUnpackMontCtx OWNAPI(cpUnpackMontCtx)
-void cpUnpackMontCtx(const Ipp8u* pBuffer, IppsMontState* pCtx);
+void    cpUnpackMontCtx(const Ipp8u* pBuffer, IppsMontState* pCtx);
 
 
 /*
@@ -82,7 +91,7 @@ __INLINE cpSize cpMontMul_BNU_EX(BNU_CHUNK_T* pR,
    cpSize nsM = MOD_LEN( pModEngine );
    BNU_CHUNK_T* pDataR  = pR;
    BNU_CHUNK_T* pDataA  = gsModPoolAlloc(pModEngine, usedPoolLen);
-   //gres: temporary excluded: assert(NULL!=pDataA);
+   //tbcd: temporary excluded: assert(NULL!=pDataA);
 
    ZEXPAND_COPY_BNU(pDataA, nsM, pA, nsA);
    ZEXPAND_COPY_BNU(pDataR, nsM, pB, nsB);
@@ -196,7 +205,7 @@ __INLINE void cpMontDec_BN(IppsBigNumState* pRbn,
 // Montgomery exponentiation (binary) "fast" and "safe" versions
 */
 #define cpMontExpBin_BNU_sscm OWNAPI(cpMontExpBin_BNU_sscm)
-cpSize cpMontExpBin_BNU_sscm(BNU_CHUNK_T* pY,
+cpSize  cpMontExpBin_BNU_sscm(BNU_CHUNK_T* pY,
                        const BNU_CHUNK_T* pX, cpSize nsX,
                        const BNU_CHUNK_T* pE, cpSize nsE,
                              gsModEngine* pModEngine);

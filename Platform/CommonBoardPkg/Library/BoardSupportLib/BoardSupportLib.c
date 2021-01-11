@@ -152,7 +152,7 @@ PlatformNameInit (
   if (PlatNameConfigData != NULL) {
     SetPlatformName ((VOID *)&PlatNameConfigData->PlatformName);
   } else {
-    DEBUG ((DEBUG_INFO, "Platform Name config not found"));
+    DEBUG ((DEBUG_INFO, "Platform Name config not found\n"));
   }
 }
 
@@ -459,4 +459,78 @@ AcpiPatchPssTable (
   }
 
   return EFI_SUCCESS;
+}
+
+/**
+  Find the actual VBT image from the container.
+
+  In case of multiple VBT tables are packed into a single FFS, the PcdGraphicsVbtAddress could
+  point to the container address instead. This function checks this condition and locates the
+  actual VBT table address within the container.
+
+  @param[in] ImageId    Image ID for VBT binary to locate in the container
+
+  @retval               Actual VBT address found in the container. 0 if not found.
+
+**/
+UINT32
+LocateVbtByImageId (
+  IN  UINT32     ImageId
+)
+{
+  VBT_MB_HDR     *VbtMbHdr;
+  VBT_ENTRY_HDR  *VbtEntry;
+  UINT32          VbtAddr;
+  UINTN           Idx;
+
+  VbtMbHdr = (VBT_MB_HDR* )(UINTN)PcdGet32 (PcdGraphicsVbtAddress);
+  if ((VbtMbHdr == NULL) || (VbtMbHdr->Signature != MVBT_SIGNATURE)) {
+    return 0;
+  }
+
+  VbtAddr  = 0;
+  VbtEntry = (VBT_ENTRY_HDR *)&VbtMbHdr[1];
+  for (Idx = 0; Idx < VbtMbHdr->EntryNum; Idx++) {
+    if (VbtEntry->ImageId == ImageId) {
+      VbtAddr = (UINT32)(UINTN)VbtEntry->Data;
+      break;
+    }
+    VbtEntry = (VBT_ENTRY_HDR *)((UINT8 *)VbtEntry + VbtEntry->Length);
+  }
+
+  DEBUG ((DEBUG_INFO, "%a VBT ImageId 0x%08X\n",
+                      (VbtAddr == 0) ? "Cannot find" : "Select", ImageId));
+
+  return VbtAddr;
+}
+
+/**
+  Get VBT address.
+
+  This function gets VBT address, In case of multiple VBT
+  tables, this function will call LocateVbtByImageId, otherwise
+  returns PcdGraphicsVbtAddress.
+
+  @retval               Actual VBT address found in the container. 0 if not found.
+
+**/
+UINTN
+GetVbtAddress ()
+{
+  EFI_STATUS      Status;
+  UINT32            VbtAddress;
+  GEN_CFG_DATA      *GenericCfgData;
+
+  VbtAddress = 0;
+
+  GenericCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);
+  if (GenericCfgData != NULL) {
+    VbtAddress = LocateVbtByImageId (GenericCfgData->VbtImageId);
+    if (VbtAddress != 0) {
+      Status = PcdSet32S (PcdGraphicsVbtAddress, VbtAddress);
+      DEBUG ((DEBUG_VERBOSE, "Setting Graphic VBT address failed with Status %r\n", Status));
+    }
+  }
+
+  return PcdGet32(PcdGraphicsVbtAddress);
 }

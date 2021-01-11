@@ -21,6 +21,7 @@
 
 [Packages]
   MdePkg/MdePkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
   Silicon/CoffeelakePkg/CoffeelakePkg.dec
   BootloaderCorePkg/BootloaderCorePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
@@ -35,7 +36,6 @@
   MmcAccessLib
   PcdLib
   PartitionLib
-  HeciLib
   LitePeCoffLib
 
 [Guids]

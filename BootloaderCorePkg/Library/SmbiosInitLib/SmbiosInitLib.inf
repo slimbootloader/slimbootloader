@@ -42,6 +42,6 @@
   gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesSize
   gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsPtr
   gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsCnt
+  gPlatformModuleTokenSpaceGuid.PcdLegacyEfSegmentEnabled
 
-[Pcd]
 

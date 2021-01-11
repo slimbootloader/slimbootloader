@@ -12,52 +12,36 @@
 #include <Library/BlMemoryAllocationLib.h>
 #include <Guid/GraphicsInfoHob.h>
 
+
 /**
-  Display a *.BMP graphics image to the frame buffer. If a NULL GopBlt buffer
-  is passed in a GopBlt buffer will be allocated by this routine. If a GopBlt
-  buffer is passed in it will be used if it is big enough.
+  Verify a BMP image header and determine its centralized display location
+  on screen.
 
   @param  BmpImage      Pointer to BMP file
-  @param  GopBlt        Buffer for transferring BmpImage to the frame buffer.
-  @param  GopBltSize    Size of GopBlt in bytes.
+  @param  OffX          Pointer to receive X offset for BMP display position.
+  @param  OffY          Pointer to receive Y offset for BMP display position.
   @param  GfxInfoHob    Pointer to graphics info HOB.
 
   @retval EFI_SUCCESS           GopBlt and GopBltSize are returned.
   @retval EFI_UNSUPPORTED       BmpImage is not a valid *.BMP image
-  @retval EFI_BUFFER_TOO_SMALL  The passed in GopBlt buffer is not big enough.
-                                GopBltSize will contain the required size.
-  @retval EFI_OUT_OF_RESOURCES  No enough buffer to allocate.
-
 **/
 EFI_STATUS
-DisplayBmpToFrameBuffer (
-  IN     VOID      *BmpImage,
-  IN OUT VOID      **GopBlt,
-  IN OUT UINTN     *GopBltSize,
-  IN     EFI_PEI_GRAPHICS_INFO_HOB *GfxInfoHob
-  )
+EFIAPI
+GetBmpDisplayPos (
+  IN     VOID    *BmpImage,
+  OUT  UINT32    *OffX,          OPTIONAL
+  OUT  UINT32    *OffY,          OPTIONAL
+  IN   EFI_PEI_GRAPHICS_INFO_HOB *GfxInfoHob
+)
 {
   BMP_IMAGE_HEADER              *BmpHeader;
-  BMP_COLOR_MAP                 *BmpColorMap;
-  EFI_GRAPHICS_OUTPUT_BLT_PIXEL *BltBuffer;
-  EFI_GRAPHICS_OUTPUT_BLT_PIXEL *Blt;
-  BOOLEAN                       IsAllocated;
-  UINTN                         Index;
-  UINTN                         Height;
-  UINTN                         Width;
-  UINTN                         ImageIndex;
-  UINTN                         OffX;
-  UINTN                         OffY;
+  UINTN                         PosX;
+  UINTN                         PosY;
   UINTN                         PixelHeight;
   UINTN                         PixelWidth;
   UINT64                        BltBufferSize;
   UINT32                        DataSizePerLine;
   UINT32                        ColorMapNum;
-  UINT32                        FrameBufferOffset;
-  UINT32                        *FrameBufferPtr;
-  UINT8                         *Image;
-  UINT8                         *ImageHeader;
-  EFI_STATUS                    Status;
 
   BmpHeader = (BMP_IMAGE_HEADER *) BmpImage;
 
@@ -97,8 +81,6 @@ DisplayBmpToFrameBuffer (
   //
   // Calculate Color Map offset in the image.
   //
-  Image       = BmpImage;
-  BmpColorMap = (BMP_COLOR_MAP *) (Image + sizeof (BMP_IMAGE_HEADER));
   if (BmpHeader->ImageOffset < sizeof (BMP_IMAGE_HEADER)) {
     return EFI_INVALID_PARAMETER;
   }
@@ -129,26 +111,92 @@ DisplayBmpToFrameBuffer (
   //
   // Calculate graphics image data address in the image
   //
-  Image         = ((UINT8 *) BmpImage) + BmpHeader->ImageOffset;
-  ImageHeader   = Image;
-
   PixelWidth   = BmpHeader->PixelWidth;
   PixelHeight  = BmpHeader->PixelHeight;
 
   // Center the BMP image on the display
-  OffX = (GfxInfoHob->GraphicsMode.HorizontalResolution - PixelWidth) / 2;
-  OffY = (GfxInfoHob->GraphicsMode.VerticalResolution - PixelHeight) / 2;
+  PosX = (GfxInfoHob->GraphicsMode.HorizontalResolution - PixelWidth) / 2;
+  PosY = (GfxInfoHob->GraphicsMode.VerticalResolution - PixelHeight) / 2;
 
   // Check dimensions
-  if (((PixelHeight + OffY) > GfxInfoHob->GraphicsMode.VerticalResolution)
-      || ((PixelWidth + OffX) > GfxInfoHob->GraphicsMode.HorizontalResolution)) {
+  if (((PixelHeight + PosY) > GfxInfoHob->GraphicsMode.VerticalResolution)
+      || ((PixelWidth + PosX) > GfxInfoHob->GraphicsMode.HorizontalResolution)) {
     return EFI_INVALID_PARAMETER;
   }
+
+  if (OffX != NULL) {
+    *OffX = (UINT32)PosX;
+  }
+
+  if (OffY != NULL) {
+    *OffY = (UINT32)PosY;
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Display a *.BMP graphics image to the frame buffer. If a NULL GopBlt buffer
+  is passed in a GopBlt buffer will be allocated by this routine. If a GopBlt
+  buffer is passed in it will be used if it is big enough.
+
+  @param  BmpImage      Pointer to BMP file
+  @param  GopBlt        Buffer for transferring BmpImage to the frame buffer.
+  @param  GopBltSize    Size of GopBlt in bytes.
+  @param  GfxInfoHob    Pointer to graphics info HOB.
+
+  @retval EFI_SUCCESS           GopBlt and GopBltSize are returned.
+  @retval EFI_UNSUPPORTED       BmpImage is not a valid *.BMP image
+  @retval EFI_BUFFER_TOO_SMALL  The passed in GopBlt buffer is not big enough.
+                                GopBltSize will contain the required size.
+  @retval EFI_OUT_OF_RESOURCES  No enough buffer to allocate.
+
+**/
+EFI_STATUS
+EFIAPI
+DisplayBmpToFrameBuffer (
+  IN     VOID      *BmpImage,
+  IN OUT VOID      **GopBlt,
+  IN OUT UINTN     *GopBltSize,
+  IN     EFI_PEI_GRAPHICS_INFO_HOB *GfxInfoHob
+  )
+{
+  BMP_IMAGE_HEADER              *BmpHeader;
+  BMP_COLOR_MAP                 *BmpColorMap;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL *BltBuffer;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL *Blt;
+  BOOLEAN                       IsAllocated;
+  UINTN                         Index;
+  UINTN                         Height;
+  UINTN                         Width;
+  UINTN                         ImageIndex;
+  UINTN                         PixelHeight;
+  UINTN                         PixelWidth;
+  UINT32                        OffX;
+  UINT32                        OffY;
+  UINT64                        BltBufferSize;
+  UINT32                        FrameBufferOffset;
+  UINT32                        *FrameBufferPtr;
+  UINT8                         *Image;
+  UINT8                         *ImageHeader;
+  EFI_STATUS                    Status;
+
+  Status = GetBmpDisplayPos (BmpImage, &OffX, &OffY, GfxInfoHob);
+  if (EFI_ERROR(Status)) {
+    return EFI_UNSUPPORTED;
+  }
+
+  BmpHeader    = (BMP_IMAGE_HEADER *) BmpImage;
+  BmpColorMap  = (BMP_COLOR_MAP *) &BmpHeader[1];
+  PixelWidth   = BmpHeader->PixelWidth;
+  PixelHeight  = BmpHeader->PixelHeight;
+  Image        = ((UINT8 *) BmpImage) + BmpHeader->ImageOffset;
+  ImageHeader  = Image;
 
   //
   // Calculate the BltBuffer size needed for one line of splashing at a time.
   //
-  BltBufferSize = MultU64x32 ((UINT64) BmpHeader->PixelWidth, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+  BltBufferSize = MultU64x32 ((UINT64)PixelWidth, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
 
   IsAllocated   = FALSE;
   if (*GopBlt == NULL) {

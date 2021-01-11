@@ -289,6 +289,7 @@ GetSectionByType (
   @param[in]  FvBase                   Point to the boot firmware volume.
   @param[in]  FvLength                 The actural length of FV.
   @param[out] EntryPoint               The pointer to receive SecCore entry point.
+  @param[out] Machine                  The pointer to receive machine type.
 
   @retval RETURN_SUCCESS               The FV is loaded successfully.
   @retval Others                       Failed to load the FV.
@@ -298,7 +299,8 @@ EFIAPI
 LoadFvImage (
   IN  UINT32                            *FvBase,
   IN  UINT32                             FvLength,
-  OUT VOID                             **EntryPoint
+  OUT VOID                             **EntryPoint,
+  OUT UINT16                            *Machine   OPTIONAL
   )
 {
   EFI_STATUS                            Status;
@@ -340,7 +342,11 @@ LoadFvImage (
     SecCoreImageBase += Gap;
   }
 
-  Status = PeCoffLoaderGetEntryPoint ((VOID *)(UINTN)SecCoreImageBase, EntryPoint);
+  Status = PeCoffLoaderGetMachine ((VOID *)(UINTN)SecCoreImageBase, Machine);
+  if (EFI_ERROR(Status)) {
+    return Status;
+  }
 
+  Status = PeCoffLoaderGetEntryPoint ((VOID *)(UINTN)SecCoreImageBase, EntryPoint);
   return Status;
 }

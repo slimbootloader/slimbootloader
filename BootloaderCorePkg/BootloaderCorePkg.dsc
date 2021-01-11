@@ -119,7 +119,7 @@
   IoMmuLib|BootloaderCommonPkg/Library/IoMmuLib/IoMmuLib.inf
   MtrrLib|BootloaderCommonPkg/Library/MtrrLib/MtrrLib.inf
   StringSupportLib|BootloaderCommonPkg/Library/StringSupportLib/StringSupportLib.inf
-
+  ThunkLib|BootloaderCommonPkg/Library/ThunkLib/ThunkLib.inf
 
 !if $(ENABLE_SOURCE_DEBUG)
   DebugAgentLib|BootloaderCommonPkg/Library/DebugAgentLib/DebugAgentLib.inf
@@ -249,6 +249,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdIppHashLibSupportedMask    | $(IPP_HASH_LIB_SUPPORTED_MASK)
 
   gPlatformCommonLibTokenSpaceGuid.PcdCompSignHashAlg             | $(SIGN_HASH_TYPE)
+  gPlatformModuleTokenSpaceGuid.PcdFastBootEnabled                | $(ENABLE_FAST_BOOT)
 
 [PcdsPatchableInModule]
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel   | 0x8000004F
@@ -281,6 +282,15 @@
   gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsPtr  | 0x00000000
   gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsCnt  | 0x40
   gPlatformModuleTokenSpaceGuid.PcdFuncCpuInitHook   | 0x00000000
+  gPlatformModuleTokenSpaceGuid.PcdFspsUpdPtr        | 0x00000000
+
+  gPlatformModuleTokenSpaceGuid.PcdPciResAllocTableBase    | 0x00000000
+
+  gPlatformCommonLibTokenSpaceGuid.PcdSerialUseMmio        | 0
+  gPlatformCommonLibTokenSpaceGuid.PcdSerialRegisterBase   | 0
+  gPlatformCommonLibTokenSpaceGuid.PcdSerialBaudRate       | 0
+  gPlatformCommonLibTokenSpaceGuid.PcdSerialRegisterStride | 0
+  gPlatformCommonLibTokenSpaceGuid.PcdSerialClockRate      | 0
 
 [PcdsFeatureFlag]
   gPlatformCommonLibTokenSpaceGuid.PcdMinDecompression    | FALSE
@@ -302,12 +312,15 @@
   gPlatformModuleTokenSpaceGuid.PcdLinuxPayloadEnabled    | $(ENABLE_LINUX_PAYLOAD)
   gPlatformCommonLibTokenSpaceGuid.PcdContainerBootEnabled| $(ENABLE_CONTAINER_BOOT)
   gPayloadTokenSpaceGuid.PcdCsmeUpdateEnabled             | $(ENABLE_CSME_UPDATE)
+  gPlatformModuleTokenSpaceGuid.PcdLegacyEfSegmentEnabled | $(ENABLE_LEGACY_EF_SEG)
   gPlatformCommonLibTokenSpaceGuid.PcdEmmcHs400SupportEnabled | $(ENABLE_EMMC_HS400)
   gPlatformCommonLibTokenSpaceGuid.PcdPreOsCheckerEnabled | $(ENABLE_PRE_OS_CHECKER)
   gPlatformCommonLibTokenSpaceGuid.PcdDmaProtectionEnabled | $(ENABLE_DMA_PROTECTION)
   gPlatformCommonLibTokenSpaceGuid.PcdMultiUsbBootDeviceEnabled |  $(ENABLE_MULTI_USB_BOOT_DEV)
   gPlatformModuleTokenSpaceGuid.PcdAriSupport             | $(SUPPORT_ARI)
   gPlatformModuleTokenSpaceGuid.PcdSrIovSupport           | $(SUPPORT_SR_IOV)
+  gPlatformModuleTokenSpaceGuid.PcdEnableSetup            | $(ENABLE_SBL_SETUP)
+  gPayloadTokenSpaceGuid.PcdPayloadModuleEnabled          | $(ENABLE_PAYLOD_MODULE)
 
 !ifdef $(S3_DEBUG)
   gPlatformModuleTokenSpaceGuid.PcdS3DebugEnabled         | $(S3_DEBUG)
@@ -346,8 +359,8 @@
     <LibraryClasses>
       FspApiLib    | BootloaderCorePkg/Library/FspApiLib/FsptApiLib.inf
       BaseMemoryLib| MdePkg/Library/BaseMemoryLibRepStr/BaseMemoryLibRepStr.inf
-      SocInitLib   | Silicon/$(SILICON_PKG_NAME)/Library/Stage1ASocInitLib/Stage1ASocInitLib.inf
-      BoardInitLib | Platform/$(BOARD_PKG_NAME)/Library/Stage1ABoardInitLib/Stage1ABoardInitLib.inf
+      SocInitLib   | $(SOC_INIT_STAGE1A_LIB_INF_FILE)
+      BoardInitLib | $(BRD_INIT_STAGE1A_LIB_INF_FILE)
 !if $(SKIP_STAGE1A_SOURCE_DEBUG)
       DebugAgentLib| BootloaderCommonPkg/Library/DebugAgentLib/DebugAgentLibNull.inf
 !endif
@@ -357,15 +370,15 @@
     <LibraryClasses>
       FspApiLib    | BootloaderCorePkg/Library/FspApiLib/FspmApiLib.inf
       BaseMemoryLib| MdePkg/Library/BaseMemoryLibRepStr/BaseMemoryLibRepStr.inf
-      SocInitLib   | Silicon/$(SILICON_PKG_NAME)/Library/Stage1BSocInitLib/Stage1BSocInitLib.inf
-      BoardInitLib | Platform/$(BOARD_PKG_NAME)/Library/Stage1BBoardInitLib/Stage1BBoardInitLib.inf
+      SocInitLib   | $(SOC_INIT_STAGE1B_LIB_INF_FILE)
+      BoardInitLib | $(BRD_INIT_STAGE1B_LIB_INF_FILE)
   }
 
   BootloaderCorePkg/Stage2/Stage2.inf {
     <LibraryClasses>
       FspApiLib    | BootloaderCorePkg/Library/FspApiLib/FspsApiLib.inf
-      SocInitLib   | Silicon/$(SILICON_PKG_NAME)/Library/Stage2SocInitLib/Stage2SocInitLib.inf
-      BoardInitLib | Platform/$(BOARD_PKG_NAME)/Library/Stage2BoardInitLib/Stage2BoardInitLib.inf
+      SocInitLib   | $(SOC_INIT_STAGE2_LIB_INF_FILE)
+      BoardInitLib | $(BRD_INIT_STAGE2_LIB_INF_FILE)
   }
 
   PayloadPkg/OsLoader/OsLoader.inf {
@@ -376,6 +389,7 @@
       PayloadEntryLib     | PayloadPkg/Library/PayloadEntryLib/PayloadEntryLib.inf
       PayloadSupportLib   | PayloadPkg/Library/PayloadSupportLib/PayloadSupportLib.inf
       BootloaderLib       | PayloadPkg/Library/PayloadLib/PayloadLib.inf
+      PlatformHookLib     | PayloadPkg/Library/PlatformHookLib/PlatformHookLib.inf
       AbSupportLib        | PayloadPkg/Library/AbSupportLib/AbSupportLib.inf
       SblParameterLib     | PayloadPkg/Library/SblParameterLib/SblParameterLib.inf
       TrustyBootLib       | PayloadPkg/Library/TrustyBootLib/TrustyBootLib.inf
@@ -390,7 +404,8 @@
       PayloadEntryLib         | PayloadPkg/Library/PayloadEntryLib/PayloadEntryLib.inf
       PayloadSupportLib       | PayloadPkg/Library/PayloadSupportLib/PayloadSupportLib.inf
       BootloaderLib           | PayloadPkg/Library/PayloadLib/PayloadLib.inf
-      FirmwareUpdateLib       | Silicon/$(SILICON_PKG_NAME)/Library/FirmwareUpdateLib/FirmwareUpdateLib.inf
+      PlatformHookLib         | PayloadPkg/Library/PlatformHookLib/PlatformHookLib.inf
+      FirmwareUpdateLib       | $(SOC_FWU_LIB_INF_FILE)
   }
 !endif
 
@@ -399,11 +414,11 @@
 !endif
 
 !if $(HAVE_ACPI_TABLE)
-  Platform/$(BOARD_PKG_NAME)/AcpiTables/AcpiTables.inf
+  $(ACPI_TABLE_INF_FILE)
 !endif
 
 !if $(UCODE_SIZE) > 0
-  Silicon/$(SILICON_PKG_NAME)/Microcode/Microcode.inf
+  $(MICROCODE_INF_FILE)
 !endif
 
 [BuildOptions.Common.EDKII]

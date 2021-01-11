@@ -7,6 +7,7 @@
 
 #include <FspApiLibInternal.h>
 #include <Library/BoardInitLib.h>
+#include <Library/BlMemoryAllocationLib.h>
 
 
 /**
@@ -26,7 +27,7 @@ CallFspSiliconInit (
   VOID
   )
 {
-  UINT8                       FspsUpd[FixedPcdGet32 (PcdFSPSUpdSize)];
+  VOID                      *FspsUpdptr;
   UINT8                      *DefaultSiliconInitUpd;
   FSP_INFO_HEADER            *FspHeader;
   FSP_SILICON_INIT            FspSiliconInit;
@@ -36,13 +37,17 @@ CallFspSiliconInit (
 
   ASSERT (FspHeader->Signature == FSP_INFO_HEADER_SIGNATURE);
   ASSERT (FspHeader->ImageBase == PcdGet32 (PcdFSPSBase));
-
+  FspsUpdptr = AllocatePool (FspHeader->CfgRegionSize);
+  if (FspsUpdptr == NULL) {
+      return EFI_OUT_OF_RESOURCES;
+  }
+  (VOID) PcdSet32S (PcdFspsUpdPtr,(UINT32)(UINTN)FspsUpdptr);
   // Copy default UPD data
   DefaultSiliconInitUpd = (UINT8 *)(UINTN)(FspHeader->ImageBase + FspHeader->CfgRegionOffset);
-  CopyMem (&FspsUpd, DefaultSiliconInitUpd, FspHeader->CfgRegionSize);
+  CopyMem (FspsUpdptr, DefaultSiliconInitUpd, FspHeader->CfgRegionSize);
 
   /* Update architectural UPD fields */
-  UpdateFspConfig (FspsUpd);
+  UpdateFspConfig (FspsUpdptr);
 
   ASSERT (FspHeader->FspSiliconInitEntryOffset != 0);
   FspSiliconInit = (FSP_SILICON_INIT)(UINTN)(FspHeader->ImageBase + \
@@ -50,10 +55,10 @@ CallFspSiliconInit (
 
   DEBUG ((DEBUG_INFO, "Call FspSiliconInit ... \n"));
   if (IS_X64) {
-    Status = Execute32BitCode ((UINTN)FspSiliconInit, (UINTN)FspsUpd, (UINTN)0, FALSE);
+    Status = Execute32BitCode ((UINTN)FspSiliconInit,(UINTN) FspsUpdptr, (UINTN)0, FALSE);
     Status = (UINTN)LShiftU64 (Status & ((UINTN)MAX_INT32 + 1), 32) | (Status & MAX_INT32);
   } else {
-    Status = FspSiliconInit (&FspsUpd);
+    Status = FspSiliconInit (FspsUpdptr);
   }
   DEBUG ((DEBUG_INFO, "%r\n", Status));
 

@@ -46,6 +46,11 @@
 #include <ConfigDataStruct.h>
 #include <PlatformData.h>
 #include <Register/RegsSpi.h>
+#include <Library/TimerLib.h>
+#include <Library/SideBandLib.h>
+#include <Library/InternalIpcLib.h>
+#include "ScRegs/SscRegs.h"
+#include <MeBiosPayloadData.h>
 
 #define APL_FSP_STACK_TOP       0xFEF40000
 #define MRC_PARAMS_BYTE_OFFSET_MRC_VERSION 14
@@ -1418,28 +1423,26 @@ ProcessMbpData (
   VOID
   )
 {
-  LOADER_GLOBAL_DATA       *LdrGlobal;
   MBP_CMD_RESP_DATA        *MBPHeader;
   MBP_ITEM_HEADER          *MBPItem;
   MBP_CURRENT_BOOT_MEDIA   *MBPCurrentMedia;
-  MBP_VERSION              *MBPVersion;
+  MBP_FW_VERSION_NAME      *MBPVersion;
   PLATFORM_DATA            *PlatformData;
   CDATA_BLOB               *UserCfgData;
   EFI_STATUS               Status;
 
-  LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
-  MBPHeader = GetGuidHobData(LdrGlobal->FspHobList, NULL, &gEfiHeciMbpDataHobGuid);
+  MBPHeader = (MBP_CMD_RESP_DATA *)MeGetMeBiosPayloadHob ();
   if (MBPHeader == NULL) {
     DEBUG((DEBUG_ERROR, "CSE: MBP Data HOB not valid!\n"));
     return;
   }
 
-  MBPItem   = (MBP_ITEM_HEADER*)(MBPHeader + 1);
+  MBPItem      = (MBP_ITEM_HEADER *)(MBPHeader + 1);
   PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
 
   while ((UINT32*)MBPItem < (UINT32*)MBPHeader + MBPHeader->Length) {
-    if ((MBPItem->AppID == MBP_APP_ID_KERNEL) && (MBPItem->ItemID == MBP_ITEM_ID_FW_VER_NAME)) {
-      MBPVersion = (MBP_VERSION *)(MBPItem + 1);
+    if ((MBPItem->Fields.AppId == MBP_APP_ID_KERNEL) && (MBPItem->Fields.ItemId == MBP_ITEM_ID_FW_VER_NAME)) {
+      MBPVersion = (MBP_FW_VERSION_NAME *)(MBPItem + 1);
       DEBUG ((DEBUG_INIT, "CSE: FW %d.%d.%d.%d, VB: %d, MB: %d\n",
               MBPVersion->MajorVersion,
               MBPVersion->MinorVersion,
@@ -1448,11 +1451,11 @@ ProcessMbpData (
               PlatformData->BtGuardInfo.Bpm.Vb,
               PlatformData->BtGuardInfo.Bpm.Mb));
     }
-    if ((MBPItem->AppID == MBP_APP_ID_NVM) && (MBPItem->ItemID == MBP_ITEM_ID_CURRENT_BOOT_MEDIA)) {
+    if ((MBPItem->Fields.AppId == MBP_APP_ID_NVM) && (MBPItem->Fields.ItemId == MBP_ITEM_ID_CURRENT_BOOT_MEDIA)) {
       MBPCurrentMedia = (MBP_CURRENT_BOOT_MEDIA *)(MBPItem + 1);
       DEBUG((DEBUG_INFO, "CSE: boot dev #%d: %s\n", MBPCurrentMedia->PhysicalData, BootDeviceType[MBPCurrentMedia->PhysicalData]));
     }
-    if ((MBPItem->AppID == MBP_APP_ABL_SIG) && (MBPItem->ItemID == MBP_ITEM_ID_IAFW_IBB_SIG)) {
+    if ((MBPItem->Fields.AppId == MBP_APP_ABL_SIG) && (MBPItem->Fields.ItemId == MBP_ITEM_ID_IAFW_IBB_SIG)) {
       UserCfgData = (CDATA_BLOB *)(MBPItem + 1);
       DumpHex (2, 0, 128, (VOID *)UserCfgData);
       if (UserCfgData->Signature == CFG_DATA_SIGNATURE) {
@@ -1467,17 +1470,16 @@ ProcessMbpData (
       }
     }
 
-    MBPItem = (MBP_ITEM_HEADER*)((UINT32*)MBPItem + MBPItem->Length);
+    MBPItem = (MBP_ITEM_HEADER*)((UINT32*)MBPItem + MBPItem->Fields.Length);
 
     //
     // Prevent faulty items that could run this loop infinitely
     //
-    if (MBPItem->Length == 0)
+    if (MBPItem->Fields.Length == 0)
       break;
 
   }
 }
-
 
 /**
   Configure the GPIO output ports
@@ -1536,7 +1538,7 @@ PcieRpPwrRstInit (
     return;
   }
 
-  PowerResetData    = (PCIE_RP_PIN_CTRL *) PcieRpConfigData->PcieRpPinCtrlData0;
+  PowerResetData    = (PCIE_RP_PIN_CTRL *)&PcieRpConfigData->PcieRpReset0;
   for (Idx1 = 0; Idx1 < PCIE_MAX_ROOT_PORTS; Idx1++) {
     if (!PowerResetData->PcieRpReset0.Skip) {
       ConfigureGpioOutPad(PowerResetData->PcieRpReset0.Community, PowerResetData->PcieRpReset0.PadNum, PowerResetData->PcieRpReset0.Drive ^ 1, 0);
@@ -1699,6 +1701,110 @@ PlatformFeaturesInit (
   }
 }
 
+/**
+    USB3, PCie, SATA, eDP, DP, eMMC, SD and SDIO SSC
+    Partially implemented PeiHighSpeedSerialInterfaceSSCInit and PeiDDRSSCInit
+    to disable SSC in LCPLL_CTRL_1 and LJ1PLL_CTRL
+**/
+STATIC
+VOID
+EFIAPI
+SetSscDisable (
+  VOID
+  )
+{
+  EFI_STATUS                        Status;
+  LCPLL_CR_RW_CONTROL_1             LCPLL_CTRL_1;
+  LCPLL_CR_RW_CONTROL_2             LCPLL_CTRL_2;
+  UINT32                            BufferSize = 0;
+  SSC_IPC_BUFFER                    WBuf;
+
+  //
+  // static table for the SSC settings (corresponding with the SSC settings 0~-0.5%, 0.1% stepping)
+  // Modulation Freq = 32KHz
+  //
+  SSC_SETTING                     SSC_Select_Table[] = {{No_SSC, 0x12B, 0},
+                                                        {M01_SSC, 0x12B, 0x1062},
+                                                        {M02_SSC, 0x12B, 0x2BB0},
+                                                        {M03_SSC, 0x12B, 0x46FF},
+                                                        {M04_SSC, 0x12B, 0x624D},
+                                                        {M05_SSC, 0x12B, 0x7D9C}};
+
+  //
+  //static table for the clock bending settings (corresponding with the clock bending settings 1.3%, 0.6%, 0, -0.9%)
+  //
+  CLOCK_BENDING_SETTING           CLK_Bending_Table[] = {{Clk_Bending_13, 0xA00000, 0x7E},
+                                                         {Clk_Bending_06, 0xC00000, 0x7D},
+                                                         {No_Clk_Bending, 0x0, 0x7D},
+                                                         {Clk_Bending_M09, 0xDB6C20, 0x7B}};
+
+  DEBUG ((DEBUG_INFO, "SetSscDisable()\n"));
+  //
+  // default value of the 4 SSC setting registers
+  //
+  WBuf.LJ1PLL_CTRL_1.Data = 0x00;
+  WBuf.LJ1PLL_CTRL_2.Data = 0x0888812B;
+  WBuf.LJ1PLL_CTRL_3 = 0x7D000000;
+  WBuf.LJ1PLL_CTRL_5.Data = 0x7D000000;
+  BufferSize = sizeof (UINT32) * 4;
+
+  //
+  // Set default value of SSC
+  //
+  WBuf.LJ1PLL_CTRL_2.Fields.ssc_cyc_to_peak_m1 = SSC_Select_Table[SSC_DEFAULT_SETTING].Ssc_Cyc_To_Peak;
+  WBuf.LJ1PLL_CTRL_2.Fields.ssc_frac_step = SSC_Select_Table[SSC_DEFAULT_SETTING].Ffs_Frac_Step;
+  //
+  // Set default value of Clock bending
+  //
+  WBuf.LJ1PLL_CTRL_5.Fields.pll_ratio_frac = CLK_Bending_Table[CLK_BENDING_DEFAULT_SETTING].Pll_Ratio_Frac;
+  WBuf.LJ1PLL_CTRL_5.Fields.pll_ratio_int = CLK_Bending_Table[CLK_BENDING_DEFAULT_SETTING].Pll_Ratio_Int;
+
+  //
+  // send the IPC command for SSC
+  //
+  IpcSendCommandEx (IPC_CMD_ID_EMI_RFI_SUPPORT, IPC_SUBCMD_ID_SSC_APPLY_NOW, &WBuf, BufferSize);
+
+  //
+  // Delay for 1ms to avoid the SSC doesn't set correctly sometimes
+  //
+  MicroSecondDelay (1000);
+
+  //
+  // set the ssc_en to Disable!
+  //
+  WBuf.LJ1PLL_CTRL_1.Fields.ssc_en = SSC_DISABLE;
+  WBuf.LJ1PLL_CTRL_1.Fields.ssc_en_ovr = SSC_DISABLE;
+  Status = IpcSendCommandEx (IPC_CMD_ID_EMI_RFI_SUPPORT, IPC_SUBCMD_ID_SSC_APPLY_NOW, &WBuf, BufferSize);
+  if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "\nFailed to disable LJ1PLL_CTRL SSC \n\r"));
+  }
+
+  //
+  // Setting LCPLL_CTRL
+  //
+  LCPLL_CTRL_1.Data = SideBandRead32 (0x99, 0x9910);
+  LCPLL_CTRL_2.Data = SideBandRead32 (0x99, 0x9914);
+  DEBUG ((DEBUG_INFO, "LCPLL_CTRL_1 register: 0x%02X\n", LCPLL_CTRL_1.Data));
+  DEBUG ((DEBUG_INFO, "LCPLL_CTRL_2 register: 0x%02X\n", LCPLL_CTRL_2.Data));
+
+  // disable SSC
+  LCPLL_CTRL_1.Fields.ssc_en = SSC_DISABLE;
+  LCPLL_CTRL_1.Fields.ssc_en_ovr = SSC_DISABLE;
+  DEBUG ((DEBUG_INFO, "LCPLL_CTRL_1 write data: 0x%02X\n", LCPLL_CTRL_1.Data));
+  SideBandWrite32 (0x99, 0x9910, LCPLL_CTRL_1.Data);
+}
+
+/**
+    Control SSC enable function
+**/
+VOID
+SetPlatformSsc (
+  IN  BOOLEAN  Enable )
+{
+  if (!Enable) {
+    SetSscDisable();
+  }
+}
 
 /**
   Board specific hook points.
@@ -1715,8 +1821,6 @@ BoardInit (
   )
 {
   PLATFORM_DATA            *PlatformData;
-  HECI_INSTANCE            *HeciInstance;
-  EFI_STATUS                Status;
   PLT_DEVICE_TABLE         *PltDeviceTable;
 
   switch (InitPhase) {
@@ -1730,16 +1834,6 @@ BoardInit (
     SpiControllerInitialize ();
     break;
   case PostConfigInit:
-    HeciInstance  = AllocatePool (sizeof (HECI_INSTANCE));
-    ZeroMem (HeciInstance, sizeof (HECI_INSTANCE));
-    HeciInstance->Bus      = 0;
-    HeciInstance->Device   = 15;
-    HeciInstance->Function = 0;
-    Status = SetLibraryData (PcdGet8 (PcdHeciLibId), HeciInstance, sizeof (HECI_INSTANCE));
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_WARN, "HeciInstance not generated!\n"));
-    }
-
     if (GetPlatformId () == 0) {
       // Platform ID has not been initialzied yet
       PlatformIdInitialize ();
@@ -1752,6 +1846,8 @@ BoardInit (
     PcieRpPwrRstInit ();
     RtcInit ();
     PlatformFeaturesInit ();
+    SetPlatformSsc (TRUE);
+
     break;
   case PreMemoryInit:
     PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();

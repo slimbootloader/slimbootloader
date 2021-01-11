@@ -1,9 +1,23 @@
-/** @file
+/*******************************************************************************
+* Copyright 2017-2020 Intel Corporation
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*******************************************************************************/
 
-  Copyright (c) 2018-2019, Intel Corporation. All rights reserved.<BR>
-  SPDX-License-Identifier: BSD-2-Clause-Patent
-
-**/
+/*
+//               Intel(R) Integrated Performance Primitives
+//                   Cryptographic Primitives (ippcp)
+*/
 
 #ifndef __OWNCP_H__
 #define __OWNCP_H__
@@ -12,8 +26,12 @@
   #include "owndefs.h"
 #endif
 
-#ifndef __IPPCP_H__
-  #include "ippcp.h"
+#ifndef IPPCP_H__
+   #if defined _MERGED_BLD
+      #include "ippcp_cpuspc.h"
+   #endif
+
+   #include "ippcp.h"
 #endif
 
 /*
@@ -73,21 +91,29 @@ typedef int cpSize;
 
 /* WORD and DWORD manipulators */
 #define IPP_LODWORD(x)    ((Ipp32u)(x))
-#define IPP_HIDWORD(x)    ((Ipp32u)(((Ipp64u)(x) >>32) & 0xFFFFFFFF))
+#if defined(_SLIMBOOT_OPT)
+  #define IPP_HIDWORD(x)    ((Ipp32u)((RShiftU64(x, 32)) & 0xFFFFFFFF))
+#else
+  #define IPP_HIDWORD(x)    ((Ipp32u)(((Ipp64u)(x) >>32) & 0xFFFFFFFF))
+#endif
 
 #define IPP_MAKEHWORD(bLo,bHi) ((Ipp16u)(((Ipp8u)(bLo))  | ((Ipp16u)((Ipp8u)(bHi))) << 8))
 #define IPP_MAKEWORD(hLo,hHi)  ((Ipp32u)(((Ipp16u)(hLo)) | ((Ipp32u)((Ipp16u)(hHi))) << 16))
-#define IPP_MAKEDWORD(wLo,wHi) ((Ipp64u)(((Ipp32u)(wLo)) | ((Ipp64u)((Ipp32u)(wHi))) << 32))
+#if defined(_SLIMBOOT_OPT)
+  #define IPP_MAKEDWORD(wLo,wHi) ((Ipp64u)(((Ipp32u)(wLo)) | LShiftU64 (wHi, 32)))
+#else
+  #define IPP_MAKEDWORD(wLo,wHi) ((Ipp64u)(((Ipp32u)(wLo)) | ((Ipp64u)((Ipp32u)(wHi))) << 32))
+#endif
 
 /* extract byte */
 #define EBYTE(w,n) ((Ipp8u)((w) >> (8 * (n))))
 
 /* hexString <-> Ipp32u conversion */
 #define HSTRING_TO_U32(ptrByte)  \
-         (((ptrByte)[0]) <<24)   \
-        +(((ptrByte)[1]) <<16)   \
-        +(((ptrByte)[2]) <<8)    \
-        +((ptrByte)[3])
+         (Ipp32u)(((ptrByte)[0]) <<24)   \
+        +(Ipp32u)(((ptrByte)[1]) <<16)   \
+        +(Ipp32u)(((ptrByte)[2]) <<8)    \
+        +(Ipp32u)((ptrByte)[3])
 #define U32_TO_HSTRING(ptrByte, x)  \
    (ptrByte)[0] = (Ipp8u)((x)>>24); \
    (ptrByte)[1] = (Ipp8u)((x)>>16); \
@@ -150,7 +176,7 @@ typedef int cpSize;
   #else
   #  define ENDIANNESS(x) ((ROR32((x), 24) & 0x00ff00ff) | (ROR32((x), 8) & 0xff00ff00))
   #  define ENDIANNESS32(x) ENDIANNESS((x))
-  #  define ENDIANNESS64(x) MAKEDWORD(ENDIANNESS(IPP_HIDWORD((x))), ENDIANNESS(IPP_LODWORD((x))))
+  #  define ENDIANNESS64(x) IPP_MAKEDWORD(ENDIANNESS(IPP_HIDWORD((x))), ENDIANNESS(IPP_LODWORD((x))))
   #endif
 #endif
 
@@ -174,20 +200,12 @@ typedef int cpSize;
 #endif
 
 
-/* crypto NI */
-#define AES_NI_ENABLED        (ippCPUID_AES)
-#define CLMUL_NI_ENABLED      (ippCPUID_CLMUL)
-#define AES_CLMUL_NI_ENABLED  (ippCPUID_AES|ippCPUID_CLMUL)
-#define ADCOX_ENABLED         (ippCPUID_ADCOX)
-#define SHA_NI_ENABLED        (ippCPUID_SHA)
-#define RDRAND_NI_ENABLED     (ippCPUID_RDRAND)
-#define RDSEED_NI_ENABLED     (ippCPUID_RDSEED)
-
+/* test if library's feature is ON */
 int cpGetFeature( Ipp64u Feature );
 /* test CPU crypto features */
 __INLINE Ipp32u IsFeatureEnabled(Ipp64u niMmask)
 {
-   return cpGetFeature(niMmask);
+   return (Ipp32u)cpGetFeature(niMmask);
 }
 
 #define IPPCP_GET_NUM_THREADS() ( ippcpGetEnabledNumThreads() )
@@ -199,5 +217,26 @@ __INLINE Ipp32u IsFeatureEnabled(Ipp64u niMmask)
    cpSize i; \
    for(i=0; i<(len); i++) (dst)[i] = ((mask) & (src1)[i]) | (~(mask) & (src2)[i]); \
 }
+
+#if (_IPP > _IPP_PX || _IPP32E > _IPP32E_PX) && !defined(__INTEL_COMPILER)
+#if !defined( _M_X64 ) && defined ( _MSC_VER )
+__inline __m128i
+_mm_cvtsi64_si128(__int64 a)
+{
+  __m128i x;
+  x.m128i_i64[0] = a;
+  x.m128i_i64[1] = 0;
+  return x;
+}
+#endif
+
+#if !defined( __x86_64__ ) && defined(__GNUC__)
+extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+_mm_cvtsi64_si128 (long long __A)
+{
+  return _mm_set_epi64x (0, __A);
+}
+#endif
+#endif /* (_IPP > _IPP_PX || _IPP32E > _IPP32E_PX) && !defined(__INTEL_COMPILER) */
 
 #endif /* __OWNCP_H__ */

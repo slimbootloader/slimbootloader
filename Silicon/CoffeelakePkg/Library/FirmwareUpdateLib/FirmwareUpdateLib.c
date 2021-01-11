@@ -17,6 +17,7 @@
 #include <Library/MemoryAllocationLib.h>
 #include <Library/TimerLib.h>
 #include <Service/SpiFlashService.h>
+#include <Service/HeciService.h>
 #include <Library/FirmwareUpdateLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include <Library/PchSbiAccessLib.h>
@@ -130,6 +131,10 @@ InitCsmeUpdInputData (
   )
 {
   CSME_UPDATE_DRIVER_INPUT    *CsmeUpdDriverInput;
+  HECI_SERVICE                *HeciService;
+
+  HeciService = NULL;
+  HeciService = (HECI_SERVICE *)GetServiceBySignature (HECI_SERVICE_SIGNATURE);
 
   CsmeUpdDriverInput = (CSME_UPDATE_DRIVER_INPUT *)AllocateZeroPool (sizeof(CSME_UPDATE_DRIVER_INPUT));
 
@@ -142,9 +147,17 @@ InitCsmeUpdInputData (
     CsmeUpdDriverInput->CompareMem       = (VOID *)((UINTN)CompareMem);
     CsmeUpdDriverInput->Stall            = (VOID *)((UINTN)MicroSecondDelay);
     CsmeUpdDriverInput->PciRead          = (VOID *)((UINTN)PciReadBuffer);
-    CsmeUpdDriverInput->HeciReadMessage  = (VOID *)((UINTN)HeciReceive);
-    CsmeUpdDriverInput->HeciSendMessage  = (VOID *)((UINTN)HeciSend);
-    CsmeUpdDriverInput->HeciReset        = (VOID *)((UINTN)ResetHeciInterface);
+    if (HeciService != NULL) {
+      CsmeUpdDriverInput->HeciReadMessage  = (VOID *)((UINTN)HeciService->HeciReceive);
+      CsmeUpdDriverInput->HeciSendMessage  = (VOID *)((UINTN)HeciService->HeciSend);
+      CsmeUpdDriverInput->HeciReset        = (VOID *)((UINTN)HeciService->HeciResetInterface);
+    }
+
+    if ((CsmeUpdDriverInput->HeciReadMessage == NULL) ||
+        (CsmeUpdDriverInput->HeciSendMessage == NULL) ||
+        (CsmeUpdDriverInput->HeciReset == NULL)) {
+      return NULL;
+    }
   }
 
   return CsmeUpdDriverInput;
@@ -328,11 +341,6 @@ GetFirmwareUpdateInfo (
       return Status;
     }
 
-    if (ImageHdr->UpdateImageSize & 0xFFF) {
-      DEBUG ((DEBUG_INFO, "capsule payload size is not block aligned!"));
-      return EFI_UNSUPPORTED;
-    }
-
     if (ImageHdr->UpdateImageSize > CompSize) {
       DEBUG ((DEBUG_INFO, "capsule payload size is too big for the region on flash!"));
       return EFI_UNSUPPORTED;
@@ -501,6 +509,26 @@ SetFlashDescriptorLock (
   IN  CHAR8      *CmdDataBuf,
   IN  UINTN      CmdDataSize
   )
+{
+  return EFI_UNSUPPORTED;
+}
+
+/**
+  Anti Rollback Svn Commit
+
+  @param[in]  CmdDataBuf    Pointer to command buffer.
+  @param[in]  CmdDataSize   size of command data.
+
+  @retval  EFI_SUCCESS      Svn commit successfully.
+  @retval  others           Error happening when updating.
+
+**/
+EFI_STATUS
+EFIAPI
+SetArbSvnCommit (
+   IN  CHAR8     *CmdDataBuf,
+   IN  UINTN     CmdDataSize
+   )
 {
   return EFI_UNSUPPORTED;
 }

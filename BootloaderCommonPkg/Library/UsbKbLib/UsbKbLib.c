@@ -742,7 +742,7 @@ KeyboardPoll (
       }
 
       // Update LastKeycodeArray buffer in the UsbKeyboardDevice data structure.
-      CopyMem (OldKeyCodeBuffer, CurKeyCodeBuffer, sizeof(OldKeyCodeBuffer));
+      CopyMem (OldKeyCodeBuffer, CurKeyCodeBuffer, 8);
 
     } else {
       // No new data in key buffer

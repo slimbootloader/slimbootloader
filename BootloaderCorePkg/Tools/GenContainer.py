@@ -52,7 +52,8 @@ class CONTAINER_HDR (Structure):
     _pack_ = 1
     _fields_ = [
         ('signature',    ARRAY(c_char, 4)), # Identifies structure
-        ('version',      c_uint16),         # Header version
+        ('version',      c_uint8),          # Header version
+        ('svn',          c_uint8),          # Security version number
         ('data_offset',  c_uint16),         # Offset of payload (data) from header in byte
         ('data_size',    c_uint32),         # Size of payload (data) in byte
         ('auth_type',    c_uint8),          # Refer AUTH_TYPE_VALUE: 0 - "NONE"; 1- "SHA2_256";  2- "SHA2_384";  3- "RSA2048_PKCS1_SHA2_256"; 4 - RSA3072_PKCS1_SHA2_384;
@@ -304,6 +305,9 @@ class CONTAINER ():
         else:
             self.header.flags |= flags
 
+    def set_header_svn_info (self, svn):
+        self.header.svn = svn
+
     def set_header_auth_info (self, auth_type_str = None, priv_key = None):
         if priv_key is not None:
             self.header.priv_key   = priv_key
@@ -417,7 +421,7 @@ class CONTAINER ():
         is_mono_signing = True if layout[-1][0] == mono_sig else False
 
         # get the first entry in layout as CONTAINER_HDR
-        container_sig, container_file, image_type, auth_type, key_file, alignment, region_size = layout[0]
+        container_sig, container_file, image_type, auth_type, key_file, alignment, region_size, svn = layout[0]
 
         if alignment == 0:
             alignment = 0x1000
@@ -437,10 +441,11 @@ class CONTAINER ():
         # build header
         self.init_header (container_sig.encode(), alignment, image_type)
         self.set_header_auth_info (auth_type, key_path)
+        self.set_header_svn_info (svn)
 
         name_set = set()
         is_last_entry = False
-        for name, file, compress_alg, auth_type, key_file, alignment, region_size in layout[1:]:
+        for name, file, compress_alg, auth_type, key_file, alignment, region_size, svn in layout[1:]:
             if is_last_entry:
                 raise Exception ("'%s' must be the last entry in layout for monolithic signing!" % mono_sig)
             if compress_alg == '':
@@ -459,22 +464,25 @@ class CONTAINER ():
             component.auth_type = self.get_auth_type_val (auth_type)
             key_file = os.path.join (self.key_dir, key_file)
             if file:
-                if not os.path.isabs(file):
-                    in_file = os.path.join(self.inp_dir, file)
-                else:
+                if os.path.isabs(file):
                     in_file = file
+                else:
+                    for tst in [self.inp_dir, self.out_dir]:
+                        in_file = os.path.join(tst, file)
+                        if os.path.isfile(in_file):
+                            break
                 if not os.path.isfile(in_file):
-                    raise Exception ("Component file path '%s' is invalid !" % in_file)
+                    raise Exception ("Component file path '%s' is invalid !" % file)
             else:
                 in_file = os.path.join(self.out_dir, component.name.decode() + '.bin')
-                gen_file_with_size (in_file, 0x10)
+                gen_file_with_size (in_file, 0)
                 if component.name == mono_sig.encode():
                     component.attribute = COMPONENT_ENTRY._attr['RESERVED']
                     compress_alg        = 'Dummy'
                     is_last_entry       = True
 
             # compress the component
-            lz_file = compress (in_file, compress_alg, self.out_dir, self.tool_dir)
+            lz_file = compress (in_file, compress_alg, svn, self.out_dir, self.tool_dir)
             component.data = bytearray(get_file_data (lz_file))
 
             # calculate the component auth info
@@ -530,7 +538,7 @@ class CONTAINER ():
 
         return out_file
 
-    def replace (self, comp_name, comp_file, comp_alg, key_file, new_name):
+    def replace (self, comp_name, comp_file, comp_alg, key_file, svn, new_name):
         if self.header.flags & CONTAINER_HDR._flags['MONO_SIGNING']:
             raise Exception ("Counld not replace component for monolithically signed container!")
 
@@ -548,7 +556,7 @@ class CONTAINER ():
         auth_type_str = self.get_auth_type_str (component.auth_type)
         data, hash_data, auth_data = self.get_auth_data (comp_file, auth_type_str)
         if auth_data is None:
-            lz_file = compress (comp_file, comp_alg, self.out_dir, self.tool_dir)
+            lz_file = compress (comp_file, comp_alg, svn, self.out_dir, self.tool_dir)
             if auth_type_str.startswith ('RSA') and key_file == '':
                 raise Exception ("Signing key needs to be specified !")
             hash_data, auth_data = CONTAINER.calculate_auth_data (lz_file, auth_type_str, key_file, self.out_dir)
@@ -578,31 +586,32 @@ class CONTAINER ():
 
             # create header entry
             auth_type_str = self.get_auth_type_str (self.header.auth_type)
-            key_file = 'TestSigningPrivateKey.pem' if auth_type_str.startswith('RSA') else ''
+            key_file = 'KEY_ID_CONTAINER_RSA2048' if auth_type_str.startswith('RSA') else ''
             alignment = self.header.alignment
             image_type_str = CONTAINER.get_image_type_str(self.header.image_type)
             header = ['%s' % self.header.signature.decode(), file_name, image_type_str,  auth_type_str,  key_file]
-            layout = [(' Name', ' ImageFile', ' CompAlg', ' AuthType',  ' KeyFile', ' Alignment', ' Size')]
-            layout.append(tuple(["'%s'" % x for x in header] + ['0x%x' % alignment, '0']))
+            layout = [(' Name', ' ImageFile', ' CompAlg', ' AuthType',  ' KeyFile', ' Alignment', ' Size', 'svn')]
+            layout.append(tuple(["'%s'" % x for x in header] + ['0x%x' % alignment, '0', '0x%x' % self.header.svn]))
             # create component entry
             for component in self.header.comp_entry:
                 auth_type_str = self.get_auth_type_str (component.auth_type)
-                key_file      = 'TestSigningPrivateKey.pem' if auth_type_str.startswith('RSA') else ''
+                key_file      = 'KEY_ID_CONTAINER_COMP_RSA2048' if auth_type_str.startswith('RSA') else ''
                 lz_header = LZ_HEADER.from_buffer(component.data)
                 alg = LZ_HEADER._compress_alg[lz_header.signature]
+                svn = lz_header.svn
                 if component.attribute & COMPONENT_ENTRY._attr['RESERVED']:
                     comp_file = ''
                 else:
                     comp_file = component.name.decode() + '.bin'
                 comp = [component.name.decode(), comp_file, alg,  auth_type_str,  key_file]
-                layout.append(tuple(["'%s'" % x for x in comp] + ['0x%x' % (1 << component.alignment), '0x%x' % component.size]))
+                layout.append(tuple(["'%s'" % x for x in comp] + ['0x%x' % (1 << component.alignment), '0x%x' % component.size, '0x%x' % svn]))
 
             # write layout file
             layout_file = os.path.join(self.out_dir, self.header.signature.decode() + '.txt')
             fo = open (layout_file, 'w')
             fo.write ('# Container Layout File\n#\n')
             for idx, each in enumerate(layout):
-                line = ' %-6s, %-16s, %-10s, %-18s, %-30s, %-10s, %-10s' % each
+                line = ' %-6s, %-16s, %-10s, %-18s, %-30s, %-10s, %-10s, %-10s' % each
                 if idx == 0:
                     line = '#  %s\n' % line
                 else:
@@ -657,7 +666,7 @@ def adjust_auth_type (auth_type_str, key_path):
 
     return auth_type_str
 
-def gen_layout (comp_list, img_type, auth_type_str, out_file, key_dir, key_file):
+def gen_layout (comp_list, img_type, auth_type_str, svn, out_file, key_dir, key_file):
     hash_type = CONTAINER._auth_to_hashalg_str[auth_type_str] if auth_type_str else ''
     auth_type = auth_type_str
     key_path  = os.path.join(key_dir, key_file)
@@ -668,20 +677,26 @@ def gen_layout (comp_list, img_type, auth_type_str, out_file, key_dir, key_file)
     # prepare the layout from individual components from '-cl'
     if img_type not in CONTAINER_HDR._image_type.keys():
         raise Exception ("Invalid Container Type '%s' !" % img_type)
-    layout = "('BOOT', '%s', '%s', '%s' , '%s', 0x10, 0),\n" % (out_file, img_type, auth_type, key_file)
-    end_layout = "('_SG_', '', 'Dummy', '%s', '', 0, 0)," % (hash_type)
+    layout = "('BOOT', '%s', '%s', '%s' , '%s', 0x10, 0, %s),\n" % (out_file, img_type, auth_type, key_file, svn)
+    end_layout = "('_SG_', '', 'Dummy', '%s', '', 0, 0, %s)," % (hash_type, svn)
     for idx, each in enumerate(comp_list):
         parts = each.split(':')
         comp_name = parts[0]
         if len(comp_name) != 4:
             raise Exception ("Invalid component string format '%s' !" % each)
 
-        comp_file = ':'.join(parts[1:])
+        if (len(parts)) > 2:
+            comp_file = ':'.join(parts[1:2])
+            com_svn   = ':'.join(parts[2:])
+        else:
+            comp_file = ':'.join(parts[1:])
+            com_svn   = 0    # set to default  svn
+
         if comp_name == 'INRD':
             align = 0x1000
         else:
             align = 0
-        layout += "('%s', '%s', 'Dummy', 'NONE', '', %s, 0),\n" % (comp_name, comp_file, align)
+        layout += "('%s', '%s', 'Dummy', 'NONE', '', %s, 0, %s),\n" % (comp_name, comp_file, align, com_svn)
     layout += end_layout
     return layout
 
@@ -714,8 +729,8 @@ def create_container (args):
     else:
         # Using component list
         if not key_file:
-            key_file = 'TestSigningPrivateKey.pem'
-        layout = gen_layout (args.comp_list, args.img_type, args.auth, out_file, key_dir, key_file)
+            raise Exception ("key_path expects a key file path !")
+        layout = gen_layout (args.comp_list, args.img_type, args.auth, args.svn, out_file, key_dir, key_file)
     container_list = eval ('[[%s]]' % layout.replace('\\', '/'))
 
     comp_dir = os.path.abspath(args.comp_dir)
@@ -755,7 +770,7 @@ def replace_component (args):
     out_dir  = os.path.dirname(out_path)
     out_file = os.path.basename(out_path)
     container.set_dir_path (out_dir, '.', '.', tool_dir)
-    file = container.replace (args.comp_name, args.comp_file, args.compress, args.key_file, out_file)
+    file = container.replace (args.comp_name, args.comp_file, args.compress, args.key_file, args.svn, out_file)
     print ("Component '%s' was replaced successfully at:\n  %s" % (args.comp_name, file))
 
 def sign_component (args):
@@ -766,7 +781,7 @@ def sign_component (args):
     sign_file = os.path.abspath(args.out_file)
     out_dir   = os.path.dirname(sign_file)
 
-    lz_file = compress (args.comp_file, compress_alg, out_dir, args.tool_dir)
+    lz_file = compress (args.comp_file, compress_alg, args.svn, out_dir, args.tool_dir)
     data = bytearray(get_file_data (lz_file))
     hash_data, auth_data = CONTAINER.calculate_auth_data (lz_file, args.auth, args.key_file, out_dir)
 
@@ -793,15 +808,17 @@ def main():
     cmd_display = sub_parser.add_parser('create', help='create a container image')
     group = cmd_display.add_mutually_exclusive_group (required=True)
     # '-l' or '-cl', one of them is mandatory
-    group.add_argument('-l',  dest='layout',   type=str, help='Container layout intput file if no -cl')
+    group.add_argument('-l',  dest='layout',   type=str, help='Container layout input file if no -cl')
     group.add_argument('-cl', dest='comp_list',nargs='+', help='List of each component files, following XXXX:FileName format')
     cmd_display.add_argument('-t', dest='img_type',  type=str, default='CLASSIC', help='Container Image Type : [NORMAL, CLASSIC, MULTIBOOT]')
     cmd_display.add_argument('-o', dest='out_path',  type=str, default='.', help='Container output directory/file')
-    cmd_display.add_argument('-k', dest='key_path',  type=str, default='', help='Input key directory/file')
+    cmd_display.add_argument('-k', dest='key_path',  type=str, default='', help='Input key directory/file. Use key directoy path when container layout -l option is used \
+                                                                                 Use Key Id or key file path when component files with -cl option is specified')
     cmd_display.add_argument('-a',  dest='auth', choices=['SHA2_256', 'SHA2_384', 'RSA2048_PKCS1_SHA2_256',
                     'RSA3072_PKCS1_SHA2_384', 'RSA2048_PSS_SHA2_256', 'RSA3072_PSS_SHA2_384', 'NONE'], default='',  help='authentication algorithm')
     cmd_display.add_argument('-cd', dest='comp_dir', type=str, default='', help='Componet image input directory')
     cmd_display.add_argument('-td', dest='tool_dir', type=str, default='', help='Compression tool directory')
+    cmd_display.add_argument('-s', dest='svn', type=int, default=0, help='Security version number for Container header')
     cmd_display.set_defaults(func=create_container)
 
     # Command for extract
@@ -819,8 +836,9 @@ def main():
     cmd_display.add_argument('-n',  dest='comp_name',  type=str, required=True, help='Component name to replace')
     cmd_display.add_argument('-f',  dest='comp_file',  type=str, required=True, help='Component input file path')
     cmd_display.add_argument('-c',  dest='compress', choices=['lz4', 'lzma', 'dummy'], default='dummy', help='compression algorithm')
-    cmd_display.add_argument('-k',  dest='key_file',  type=str, default='', help='Private key file path to sign component')
+    cmd_display.add_argument('-k',  dest='key_file',  type=str, default='', help='Key Id or Private key file path to sign component')
     cmd_display.add_argument('-td', dest='tool_dir', type=str, default='', help='Compression tool directory')
+    cmd_display.add_argument('-s', dest='svn', type=int,  default=0, help='Security version number for Component')
     cmd_display.set_defaults(func=replace_component)
 
     # Command for sign
@@ -830,8 +848,9 @@ def main():
     cmd_display.add_argument('-c',  dest='compress', choices=['lz4', 'lzma', 'dummy'],  default='dummy', help='compression algorithm')
     cmd_display.add_argument('-a',  dest='auth', choices=['SHA2_256', 'SHA2_384', 'RSA2048_PKCS1_SHA2_256',
                 'RSA3072_PKCS1_SHA2_384', 'RSA2048_PSS_SHA2_256', 'RSA3072_PSS_SHA2_384', 'NONE'], default='NONE',  help='authentication algorithm')
-    cmd_display.add_argument('-k',  dest='key_file',  type=str, default='', help='Private key file path to sign component')
+    cmd_display.add_argument('-k',  dest='key_file',  type=str, default='', help='Key Id or Private key file path to sign component')
     cmd_display.add_argument('-td', dest='tool_dir', type=str, default='',  help='Compression tool directory')
+    cmd_display.add_argument('-s', dest='svn', type=int,  default=0, help='Security version number for Component')
     cmd_display.set_defaults(func=sign_component)
 
     # Parse arguments and run sub-command

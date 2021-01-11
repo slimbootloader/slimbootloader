@@ -14,7 +14,8 @@ import sys
 
 sys.dont_write_bytecode = True
 sys.path.append (os.path.join('..', '..'))
-from BuildLoader import BaseBoard, STITCH_OPS, HASH_USAGE
+from BuildLoader import BaseBoard, STITCH_OPS
+from BuildLoader import IPP_CRYPTO_OPTIMIZATION_MASK, IPP_CRYPTO_ALG_MASK, HASH_TYPE_VALUE, HASH_USAGE
 
 class Board(BaseBoard):
 
@@ -61,13 +62,25 @@ class Board(BaseBoard):
         self.ENABLE_CRYPTO_SHA_OPT    = 0
 
         self.ENABLE_SMBIOS            = 1
+        self.ENABLE_SBL_SETUP         = 0
 
         self.CPU_MAX_LOGICAL_PROCESSOR_NUMBER = 255
 
+        # RSA2048 or RSA3072
+        self._RSA_SIGN_TYPE          = 'RSA3072'
+        # 'SHA2_256' or 'SHA2_384'
+        self._SIGN_HASH              = 'SHA2_384'
+        # 0x01 for SHA2_256 or 0x02 for SHA2_384
+        self.SIGN_HASH_TYPE          = HASH_TYPE_VALUE[self._SIGN_HASH]
+        # 0x0010  for SM3_256 | 0x0008 for SHA2_512 | 0x0004 for SHA2_384 | 0x0002 for SHA2_256 | 0x0001 for SHA1
+        self.IPP_HASH_LIB_SUPPORTED_MASK   = IPP_CRYPTO_ALG_MASK[self._SIGN_HASH]
+
+        self._MASTER_PRIVATE_KEY    = 'KEY_ID_MASTER' + '_' + self._RSA_SIGN_TYPE
+        self._CFGDATA_PRIVATE_KEY   = 'KEY_ID_CFGDATA' + '_' + self._RSA_SIGN_TYPE
+        self._CONTAINER_PRIVATE_KEY = 'KEY_ID_CONTAINER' + '_' + self._RSA_SIGN_TYPE
+
         # To enable source debug, set 1 to self.ENABLE_SOURCE_DEBUG
         # self.ENABLE_SOURCE_DEBUG  = 1
-
-
 
         # For test purpose
         # self.SKIP_STAGE1A_SOURCE_DEBUG = 1
@@ -97,6 +110,7 @@ class Board(BaseBoard):
         self.VARIABLE_SIZE        = 0x00002000
         self.SBLRSVD_SIZE         = 0x00001000
         self.FWUPDATE_SIZE        = 0x00018000 if self.ENABLE_FWU else 0
+        self.SETUP_SIZE           = 0x00020000 if self.ENABLE_SBL_SETUP else 0
 
         self._REDUNDANT_LAYOUT    = 1
         if not self._REDUNDANT_LAYOUT:
@@ -125,9 +139,9 @@ class Board(BaseBoard):
         if not self.STAGE1B_XIP:
             # For Stage1B, it can be compressed if STAGE1B_XIP is 0
             # If so, STAGE1B_FD_BASE/STAGE1B_FD_SIZE need to be defined
-            self.STAGE1B_FD_SIZE    = 0x30000
+            self.STAGE1B_FD_SIZE      = 0x30000
             if self.NO_OPT_MODE:
-                self.STAGE1B_FD_SIZE += 0x2000
+                self.STAGE1B_FD_SIZE += 0xE000
             self.STAGE1B_FD_BASE    = FREE_TEMP_RAM_TOP - self.STAGE1B_FD_SIZE
 
         # For Stage2, it is always compressed.
@@ -136,7 +150,10 @@ class Board(BaseBoard):
         self.STAGE2_FD_SIZE       = 0x00060000
 
         if self.NO_OPT_MODE:
-            self.OS_LOADER_FD_SIZE   += 0x00010000
+            self.STAGE2_SIZE         += 0x2000
+            self.PAYLOAD_SIZE        += 0xA000
+            self.OS_LOADER_FD_SIZE   += 0x22000
+            self.FWUPDATE_SIZE       += 0x8000
             self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         self.STAGE1_STACK_SIZE    = 0x00002000
@@ -182,35 +199,72 @@ class Board(BaseBoard):
 
     def GetKeyHashList (self):
         # Define a set of new key used for different purposes
-        # The key is either public key PEM format or private key PEM format
+        # The key is either key id or public key PEM format or private key PEM format
         pub_key_list = [
           (
-            # Use a single test key
-            HASH_USAGE['PUBKEY_CFG_DATA'] | HASH_USAGE['PUBKEY_FWU'] | HASH_USAGE['PUBKEY_OS'] | HASH_USAGE['PUBKEY_CONT_DEF'],
-            'TestSigningPrivateKey.pem'
+            # Key for verifying Config data blob
+            HASH_USAGE['PUBKEY_CFG_DATA'],
+            'KEY_ID_CFGDATA' + '_' + self._RSA_SIGN_TYPE
+          ),
+          (
+            # Key for verifying firmware update
+            HASH_USAGE['PUBKEY_FWU'],
+            'KEY_ID_FIRMWAREUPDATE' + '_' + self._RSA_SIGN_TYPE
+          ),
+          (
+            # Key for verifying container header
+            HASH_USAGE['PUBKEY_CONT_DEF'],
+            'KEY_ID_CONTAINER' + '_' + self._RSA_SIGN_TYPE
+          ),
+          (
+            # key for veryfying OS image.
+            HASH_USAGE['PUBKEY_OS'],
+            'KEY_ID_OS1_PUBLIC' + '_' + self._RSA_SIGN_TYPE
           ),
         ]
         return pub_key_list
 
     def GetContainerList (self):
         container_list = []
+        container_list_auth_type = self._RSA_SIGN_TYPE + '_'+ self._SIGNING_SCHEME[4:] + '_' + self._SIGN_HASH
         container_list.append ([
-          # Name       | Image File |    CompressAlg  | AuthType             | Key File                      | Region Align | Region Size
-          # ============================================================================================================================================
-          ('IPFW',      'SIIPFW.bin',    '',           'RSA2048_PSS_SHA2_256',   'TestSigningPrivateKey.pem',    0,             0     ),   # Container Header
-          ('TST1',      '',              'Dummy',      '',                   '',                                 0,             0x2000),   # Component 1
-          ('TST2',      '',              'Lz4',        '',                   '',                                 0,             0x3000),   # Component 2
-          ('TST3',      '',              'Lz4',        'RSA2048_PSS_SHA2_256',   'TestSigningPrivateKey.pem',    0,             0x3000),   # Component 3
-          ('TST4',      '',              'Lzma',       'SHA2_256',           '',                                 0,             0x3000),   # Component 4
-          ('TST5',      '',              'Dummy',      'RSA2048_PSS_SHA2_256',   'TestSigningPrivateKey.pem',    0,             0x3000),   # Component 5
-          ('TST6',      '',              '',           '',                   '',                                 0,             0x1000),   # Component 6
+
+          # Name       | Image File |    CompressAlg          | AuthType                               | Key File                    | Region Align | Region Size |  Svn Info
+          # ==================================================================================================================================================================
+          ('IPFW',      'SIIPFW.bin',    '',             container_list_auth_type,   'KEY_ID_CONTAINER'+'_'+self._RSA_SIGN_TYPE,            0,              0,         0),   # Container Header
+          ('TST1',      '',              'Dummy',               '',                                        '',                              0,              0x2000,    0),   # Component 1
+          ('TST2',      '',              'Lz4',                 '',                                        '',                              0,              0x3000,    0),   # Component 2
+          ('TST3',      '',              'Lz4',          container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,       0,              0x3000,    0),   # Component 3
+          ('TST4',      '',              'Lzma',                   'SHA2_384',                               '',                            0,              0x3000,    0),   # Component 4
+          ('TST5',      '',              'Dummy',        container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,       0,              0x3000,    0),   # Component 5
+          ('TST6',      '',               '',                    '',                                    '',                                 0,              0x1000,    0),   # Component 6
         ])
+
+        if self.ENABLE_SBL_SETUP:
+            def_auth = container_list_auth_type
+            cont_key = 'KEY_ID_CONTAINER'+'_'+self._RSA_SIGN_TYPE
+            mpy_efi   = 'PayloadPkg/PayloadBins/MicroPython.efi'
+            if not os.path.isfile(mpy_efi):
+                raise Exception ("MicroPython.efi is required under 'PayloadPkg/PayloadBins', please build MicroPython payload module separately !")
+            mpy_path  = '../../../' + mpy_efi
+            sbl_setup = '../../../BootloaderCorePkg/Tools/SblSetup.py'
+            container_list.append ([
+              # Name       | Image File |    CompressAlg  | AuthType    | Key File  | Region Align | Region Size |  Svn Info
+              # ==================================================================================================================================================================
+              ('SETP',     'SETP.bin',       '',            def_auth,   cont_key,     0,              0,         0),   # Container Header
+              ('MPYM',       mpy_path,       'Lzma',      'SHA2_384',         '',     0,              0x12000,   0),   # Component 1
+              ('STPY',      sbl_setup,       'Lz4',       'SHA2_384',         '',     0,              0x06000,   0),   # Component 2
+              ('CFGJ',    'CfgDataDef.json', 'Lzma',      'SHA2_384',         '',     0,              0x06000,   0),   # Component 3
+              ('CFGD',          '',          'Dummy',             '',         '',     0,              0x01000,   0),   # Component 4
+          ])
+
         return container_list
 
     def GetImageLayout (self):
 
         compress = '' if self.STAGE1B_XIP else 'Lz4'
         fwu_mode = STITCH_OPS.MODE_FILE_PAD if self.ENABLE_FWU else STITCH_OPS.MODE_FILE_IGNOR
+        setup_mode = STITCH_OPS.MODE_FILE_PAD if self.ENABLE_SBL_SETUP else STITCH_OPS.MODE_FILE_IGNOR
 
         img_list = []
 
@@ -242,6 +296,7 @@ class Board(BaseBoard):
                     ('EPAYLOAD.bin' ,  ''        , self.EPAYLOAD_SIZE, STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
                     ('SIIPFW.bin'   ,  ''        , self.SIIPFW_SIZE,   STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
                     ('PTEST.bin'    ,  ''        , self.TEST_SIZE,     STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
+                    ('SETP.bin'     ,  ''        , self.SETUP_SIZE,    setup_mode,               STITCH_OPS.MODE_POS_TAIL),
                     ]
                 ),
                 ('REDUNDANT_A.bin', [

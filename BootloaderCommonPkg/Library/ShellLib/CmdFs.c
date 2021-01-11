@@ -16,9 +16,10 @@
 #include <Library/BootOptionLib.h>
 #include <Guid/DeviceTableHobGuid.h>
 
-STATIC  OS_BOOT_MEDIUM_TYPE mDeviceType   = OsBootDeviceMax;
-STATIC  EFI_HANDLE          mHwPartHandle = NULL;
-STATIC  EFI_HANDLE          mFsHandle     = NULL;
+STATIC  OS_BOOT_MEDIUM_TYPE mDeviceType     = OsBootDeviceMax;
+STATIC  UINT8               mDeviceInstance = 0;
+STATIC  EFI_HANDLE          mHwPartHandle   = NULL;
+STATIC  EFI_HANDLE          mFsHandle       = NULL;
 
 /**
   Show media information
@@ -60,6 +61,7 @@ PrintPlatformDevices (
   UINT16              Count;
   UINT16              Index;
   OS_BOOT_MEDIUM_TYPE DeviceType;
+  UINT8               DeviceInstance;
 
   Count = 0;
   DeviceTable = (PLT_DEVICE_TABLE *)GetDeviceTable ();
@@ -70,10 +72,18 @@ PrintPlatformDevices (
       if (DeviceType >= OsBootDeviceMax)
         continue;
 
-      ShellPrint (L"%d:%a ", DeviceType, GetBootDeviceNameString (DeviceType));
+      DeviceInstance = DeviceTable->Device[Index].Instance;
+      ShellPrint (L"  %d:%d %a", DeviceType, DeviceInstance, GetBootDeviceNameString (DeviceType));
+      if (DeviceTable->Device[Index].Dev.PciDev.IsMmioDevice != 0) {
+        ShellPrint (L"(MEM 0x%x)\n", DeviceTable->Device[Index].Dev.DevAddr);
+      } else {
+        ShellPrint (L"(PCI 0x%x:0x%x:0x%x)\n",
+          DeviceTable->Device[Index].Dev.PciDev.PciBusNumber,
+          DeviceTable->Device[Index].Dev.PciDev.PciDeviceNumber,
+          DeviceTable->Device[Index].Dev.PciDev.PciFunctionNumber);
+      }
     }
   }
-  ShellPrint (L"\n");
 }
 
 /**
@@ -105,6 +115,7 @@ CmdFsClose (
       MediaInitialize (0, DevDeinit);
     }
     mDeviceType = OsBootDeviceMax;
+    mDeviceInstance = 0;
   }
 
   return EFI_SUCCESS;
@@ -114,6 +125,7 @@ CmdFsClose (
   Initialize file system
 
   @param[in]  DeviceType      Platform Device Index
+  @param[in]  DeviceInstance  The device instance number starting from 0.
   @param[in]  HwPartNo        HW Partition Number
   @param[in]  SwPartNo        SW Partition Number
 
@@ -125,6 +137,7 @@ STATIC
 EFI_STATUS
 CmdFsInit (
   IN  OS_BOOT_MEDIUM_TYPE   DeviceType,
+  IN  UINT8                 DeviceInstance,
   IN  UINT32                HwPartNo,
   IN  UINT32                SwPartNo
   )
@@ -134,7 +147,7 @@ CmdFsInit (
   UINTN               BaseAddress;
 
   // Get device bar
-  BaseAddress = GetDeviceAddr (DeviceType, 0);
+  BaseAddress = GetDeviceAddr (DeviceType, DeviceInstance);
   if (BaseAddress == 0) {
     ShellPrint (L"Device no. %d (%a) is not in platform devices. <device no.> - ",
       DeviceType, GetBootDeviceNameString (DeviceType));
@@ -157,6 +170,7 @@ CmdFsInit (
   Status = MediaInitialize (BaseAddress, DevInitAll);
   ShellPrint (L"Media(%a) Init ", GetBootDeviceNameString (DeviceType));
   mDeviceType = DeviceType;
+  mDeviceInstance = DeviceInstance;
   if (!EFI_ERROR (Status)) {
     ShellPrint (L"Success!\n");
   } else {
@@ -240,21 +254,25 @@ CmdFsInfo (
   UINT32                SwPartNo;
   OS_FILE_SYSTEM_TYPE   FsType;
 
-  ShellPrint (L"Current Device: %a\n", (mDeviceType != OsBootDeviceMax) ?
+  ShellPrint (L"Current DeviceType: %a\n", (mDeviceType != OsBootDeviceMax) ?
     GetBootDeviceNameString (mDeviceType) : "Not Initialized");
 
+  ShellPrint (L"Current DeviceInstance: %d\n", mDeviceInstance);
+
+  ShellPrint (L"Current HwPart: ");
   Status = GetPartitionCurrentPartNo (mHwPartHandle, &HwPartNo);
   if (!EFI_ERROR (Status)) {
-    ShellPrint (L"Current HwPart: %d\n", HwPartNo);
+    ShellPrint (L"%d\n", HwPartNo);
   } else {
-    ShellPrint (L"Current HwPart: Not Initialized\n");
+    ShellPrint (L"Not Initialized\n");
   }
 
+  ShellPrint (L"Current SwPart: ");
   Status = GetFileSystemCurrentPartNo (mFsHandle, &SwPartNo);
   if (!EFI_ERROR (Status)) {
-    ShellPrint (L"Current SwPart: %d\n", SwPartNo);
+    ShellPrint (L"%d\n", SwPartNo);
   } else {
-    ShellPrint (L"Current SwPart: Not Initialized\n");
+    ShellPrint (L"Not Initialized\n");
   }
 
   FsType = GetFileSystemType (mFsHandle);
@@ -284,9 +302,12 @@ ShellCommandFsFunc (
 {
   EFI_STATUS          Status;
   OS_BOOT_MEDIUM_TYPE DeviceType;
+  UINT8               DeviceInstance;
   UINT32              HwPartNo;
   UINT32              SwPartNo;
   CHAR16             *SubCmd;
+  CHAR16             *String;
+  UINTN               Result;
 
   if (Argc < 2) {
     goto Usage;
@@ -294,10 +315,30 @@ ShellCommandFsFunc (
 
   SubCmd = Argv[1];
   if (StrCmp (SubCmd, L"init") == 0) {
-    DeviceType = (Argc < 3) ? 0 : (OS_BOOT_MEDIUM_TYPE)StrHexToUintn (Argv[2]);
+    if (Argc < 3) {
+      DeviceType = 0;
+      DeviceInstance = 0;
+    } else {
+      Status = StrHexToUintnS (Argv[2], &String, &Result);
+      if (EFI_ERROR (Status)) {
+        goto Usage;
+      }
+      DeviceType = (OS_BOOT_MEDIUM_TYPE)Result;
+
+      Result = 0;
+      if (String[0] == L':') {
+        String++;
+        Status = StrHexToUintnS (String, NULL, &Result);
+        if (EFI_ERROR (Status)) {
+          goto Usage;
+        }
+      }
+      DeviceInstance = (UINT8)Result;
+    }
+
     HwPartNo = (Argc < 4) ? 0 : (UINT32)StrHexToUintn (Argv[3]);
     SwPartNo = (Argc < 5) ? 0 : (UINT32)StrHexToUintn (Argv[4]);
-    Status = CmdFsInit (DeviceType, HwPartNo, SwPartNo);
+    Status = CmdFsInit (DeviceType, DeviceInstance, HwPartNo, SwPartNo);
   } else if (StrCmp (SubCmd, L"close") == 0) {
     Status = CmdFsClose ();
   } else if (StrCmp (SubCmd, L"ls") == 0) {
@@ -310,15 +351,15 @@ ShellCommandFsFunc (
   return Status;
 
 Usage:
-  ShellPrint (L"Usage: %s init [device no.] [hwpart no.] [swpart no.]\n", Argv[0]);
+  ShellPrint (L"Usage: %s init [DevType[:DevInstance]] [HwPart] [SwPart]\n", Argv[0]);
   ShellPrint (L"       %s close\n", Argv[0]);
   ShellPrint (L"       %s info\n", Argv[0]);
   ShellPrint (L"       %s ls [dir or file path]\n", Argv[0]);
 
-  ShellPrint (L"\n  - [device no.] ");
+  ShellPrint (L"\nDevType:DevInstance - Media type and instance number in the same media type\n");
   PrintPlatformDevices ();
-  ShellPrint (L"  - [hwpart no.] hw partition or port number\n");
-  ShellPrint (L"  - [swpart no.] logical partition index from mbr or gpt\n");
+  ShellPrint (L"HwPart - HW partition or port number\n");
+  ShellPrint (L"SwPart - Logical partition number from MBR or GPT\n");
 
   return EFI_ABORTED;
 }

@@ -58,6 +58,7 @@
 #include <Service/PlatformService.h>
 #include <IndustryStandard/Mbr.h>
 #include <Uefi/UefiGpt.h>
+#include <PayloadModule.h>
 #include "BlockIoTest.h"
 #include <ConfigDataCommonDefs.h>
 #include <Register/Intel/Msr/ArchitecturalMsr.h>
@@ -78,6 +79,7 @@
 #define LOADED_IMAGE_PE32        BIT3
 #define LOADED_IMAGE_FV          BIT4
 #define LOADED_IMAGE_CONTAINER   BIT5
+#define LOADED_IMAGE_COMPONENT   BIT6
 
 #define MAX_EXTRA_FILE_NUMBER    16
 
@@ -467,6 +469,49 @@ UINT32
 GetLinuxBootOption (
   CHAR8                    *CfgBuffer,
   LINUX_BOOT_CFG           *LinuxBootCfg
+  );
+
+/**
+  Initialize platform lcoal console.
+
+  @param[in]  ForceFbConsole   Force to enable framebuffer.
+
+  @retval  EFI_NOT_FOUND    No additional console was found.
+  @retval  EFI_SUCCESS      Console has been initialized successfully.
+  @retval  Others           There is error during console initialization.
+**/
+EFI_STATUS
+LocalConsoleInit (
+  IN  BOOLEAN   ForceFbConsole
+);
+
+/**
+  Get a function pointer from the function name.
+
+  @param[in]      FuncName    Function name
+
+  @retval   Function pointer for the given funciton name.
+  @retval   NULL   Failed to get the function address.
+
+**/
+VOID *
+EFIAPI
+GetProcAddress (
+  IN CHAR8     *FuncName
+  );
+
+/**
+  Initialize payload module serivce table and paramters.
+
+  @param[in]      PldModParam   Payload module parameter pointer
+  @param[in]      ModuleName    Payload module name
+
+**/
+VOID
+EFIAPI
+PayloadModuleInit (
+  IN  PLD_MOD_PARAM       *PldModParam,
+  IN  CHAR8               *ModuleName
   );
 
 #endif

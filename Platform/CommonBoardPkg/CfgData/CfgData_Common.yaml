@@ -1,0 +1,70 @@
+## @file
+#
+#  Slim Bootloader Platform CFGDATA Option File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : GEN
+- GEN_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ GEN_CFG_DATA, 0x010, 0, 0 ] }
+  - DebugPrintLevel :
+      name         : Debug Print Level
+      type         : EditNum, HEX, (0x00000000,0xFFFFFFFF)
+      help         : >
+                     Specify debug print level
+      length       : 0x04
+      value        : 0x8000004F
+  - PayloadId    :
+      name         : Payload ID
+      type         : EditText
+      help         : >
+                     Specify payload ID string. Empty will boot default payload. Otherwise, boot specified payload ID in multi-payload binary.
+      length       : 0x04
+      value        : ''
+  - OsCrashMemorySize :
+      name         : OS Crash Memory Size
+      type         : Combo
+      option       :  0:0MB, 1:4MB, 2:8MB, 3:16MB, 4:32MB, 5:64MB
+      help         : >
+                     Specify reserved memory size for OS to save OS crash data. The reserved memory address should be same across reset.
+      length       : 0x01
+      value        : 0
+  - EnableCrashMode :
+      name         : Enable Crash Mode
+      option       : $EN_DIS
+      help         : >
+                     Enable/Disable Crash Mode. Boot into Crash OS only when crash mode is enabled.
+      length       : 0x01
+      value        : 0
+  - RpmbKeyProvisioning :
+      name         : RpmbKeyProvisioning
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or disable Rpmb Key Provisioning
+      length       : 0x01
+      value        : 0
+  - VbtImageId   :
+      name         : Platform VBT table
+      type         : Combo
+      option       : 1:VBT Binary 1, 2:VBT Binary 2
+      help         : >
+                     Specify image ID for desired VBT binary
+      length       : 0x04
+      value        : 1
+  - $ACTION      :
+      page         : OS
+  - CurrentBoot  :
+      name         : Current Boot Option
+      option       :  16:AUTO, 0:0, 1:1, 2:2, 3:3, 4:4, 5:5, 6:6, 7:7, 8:8, 9:9, 10:10, 11:11, 10:10, 11:11, 12:12, 13:13, 14:14, 15:15
+      help         : >
+                     Set the current boot option. It indicates the boot option index (0-15) to be tried first on the boot flow.
+                     AUTO allows platform to set current boot option using platform specific policy.
+      length       : 0x01
+      value        : 0
+

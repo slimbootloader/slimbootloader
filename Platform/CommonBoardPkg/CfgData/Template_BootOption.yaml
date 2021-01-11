@@ -1,0 +1,98 @@
+## @file
+#
+#  Slim Bootloader Platform CFGDATA Template File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+BOOT_OPTION_TMPL: >
+  - $ACTION      :
+      page         : OS_$(1):OS:"Boot Option $(1)"
+  - $ACTION      :
+      page         : OS_$(1)
+  - BOOT_OPTION_CFG_DATA_$(1) :
+    - !expand { CFGHDR_TMPL : [ BOOT_OPTION_CFG_DATA_$(1), 0x05$(1), 0, 0 ] }
+    - ImageType_$(1) :
+        name         : Image Type
+        type         : Combo
+        option       : 0:Default, 1:Android, 2:ClearLinux, 3:Acrn, 4:Fastboot, 0xFE:Addendum, 0xFF:Not used
+        help         : >
+                       Specify boot image type.
+                       Specially 'Addendum' indicates this option is not a standalone boot option. Instead, it provides additional information for the previous boot option.
+                       'Not used' indicates this option will be ignored.
+        length       : 0x01
+        value        : $(2)
+    - BootFlags_$(1) :
+        name         : Boot Flags
+        type         : Combo
+        option       : 0:Normal, 1:A/B support, 2:Crash OS, 4:Trusty support, 5:Trusty and A/B support, 16:Mender support
+        help         : >
+                       Specify boot flags (options)
+        condition    : $BOOT_OPTION_CFG_DATA_$(1).ImageType_$(1) < 0xFE
+        length       : 0x01
+        value        : $(3)
+    - Reserved_$(1) :
+        length       : 0x01
+        value        : 0x5A
+    - BootDeviceType_$(1) :
+        name         : Boot Device type
+        type         : Combo
+        option       : 0:SATA, 1:SD, 2:EMMC, 3:UFS, 4:SPI, 5:USB, 6:NVME, 7:MEMORY
+        help         : >
+                       Specify boot device type
+        order        : 0000.0000
+        condition    : $BOOT_OPTION_CFG_DATA_$(1).ImageType_$(1) < 0xFE
+        length       : 0x01
+        value        : $(4)
+    - BootDeviceInstance_$(1) :
+        name         : Boot Device instance
+        type         : Combo
+        option       : 0:Device 0, 1:Device 1, 2:Device 2, 3:Device 3
+        help         : >
+                       Specify boot device instance when then are multiple instances
+        order        : 0000.0000
+        condition    : $BOOT_OPTION_CFG_DATA_$(1).ImageType_$(1) < 0xFE
+        length       : 0x01
+        value        : $(5)
+    - HwPart_$(1)  :
+        name         : Hardware Partition
+        type         : Combo
+        option       : 0:User Partition, 1:Boot Partition 1, 2:Boot Partition 2, 3:Boot Partition 3, 4:Boot Partition 4, 5:Boot Partition 5, 6:Boot Partition 6, 7:Boot Partition 7, 255:SATA Auto 255
+        help         : >
+                       Specify hardware partition number.
+                       If boot device type is SPI, the hardware partition refers to SPI flash region- 0-Descriptor, 1-BIOS, 2-ME, 3-GbE, 4-PDR Regions.
+                       If boot device type is SATA, the hardware partition refers to the SATA port number on the system; setting to 255 uses the first detected SATA device.
+                       If boot device type is USB, the hardware partition refers to the order in which the USB block devices are detected when multiple USB block devices are connected.
+        condition    : $BOOT_OPTION_CFG_DATA_$(1).ImageType_$(1) < 0xFE
+        length       : 0x01
+        value        : $(6)
+    - SwPart_$(1)  :
+        name         : Software Partition
+        type         : EditNum, DEC, (0,255)
+        help         : >
+                       Specify software partition number. A value of 255 indicates raw booting via the absolute LBA instead of a relative LBA
+                       (e.g. relative to a software partition's starting LBA).
+        condition    : $BOOT_OPTION_CFG_DATA_$(1).ImageType_$(1) < 0xFF
+        length       : 0x01
+        value        : $(7)
+    - FsType_$(1)  :
+        name         : File System Type
+        type         : Combo
+        option       : 0:FAT, 1:EXT2, 2:AUTO, 3:RAW
+        help         : >
+                       Image is loaded from file system instead of raw data
+        condition    : $BOOT_OPTION_CFG_DATA_$(1).ImageType_$(1) < 0xFE
+        length       : 0x01
+        value        : $(8)
+    - BootImage_$(1) :
+        name         : Normal OS info or LBA address
+        type         : EditText
+        help         : >
+                       Specify file name of normal OS or LBA address (16-byte max length).
+                       For LBA address, please use HEX prefix "#0x". EX- #0x12345678
+        condition    : $BOOT_OPTION_CFG_DATA_$(1).ImageType_$(1) < 0xFF
+        length       : 0x10
+        value        : $(9)

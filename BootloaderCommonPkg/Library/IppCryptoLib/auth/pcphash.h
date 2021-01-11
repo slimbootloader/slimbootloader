@@ -1,9 +1,18 @@
-/** @file
-
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
-  SPDX-License-Identifier: BSD-2-Clause-Patent
-
-**/
+/*******************************************************************************
+* Copyright 2014-2020 Intel Corporation
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*******************************************************************************/
 
 /*
 //
@@ -160,7 +169,6 @@ extern __ALIGN16 const Ipp64u SHA512_cnt[];
 extern __ALIGN16 const Ipp32u MD5_cnt[];
 extern __ALIGN16 const Ipp32u SM3_cnt[];
 
-
 /*  hash alg opt argument */
 extern const void* cpHashProcFuncOpt[];
 
@@ -193,16 +201,19 @@ __INLINE IppHashAlgId cpValidHashAlg(IppHashAlgId algID)
    return cpEnabledHashAlgID[algID];
 }
 
+/* common functions */
+#define cpComputeDigest OWNAPI(cpComputeDigest)
+void cpComputeDigest(Ipp8u* pHashTag, int hashTagLen, const IppsHashState* pCtx);
 
 /* processing functions */
 void UpdateSHA1  (void* pHash, const Ipp8u* mblk, int mlen, const void* pParam);
 #define UpdateSHA256 OWNAPI(UpdateSHA256)
 void UpdateSHA256(void* pHash, const Ipp8u* mblk, int mlen, const void* pParam);
-void UpdateSHA256V8(void* pHash, const Ipp8u* mblk, int mlen, const void* pParam);
-void UpdateSHA256Ni(void* pHash, const Ipp8u* mblk, int mlen, const void* pParam);
+void EFIAPI UpdateSHA256V8(void* pHash, const Ipp8u* mblk, int mlen, const void* pParam);
+void EFIAPI UpdateSHA256Ni(void* pHash, const Ipp8u* mblk, int mlen, const void* pParam);
 void UpdateSHA512(void* pHash, const Ipp8u* mblk, int mlen, const void* pParam);
-void UpdateSHA512W7 (void* uniHash, const Ipp8u* mblk, int mlen, const void* uniPraram);
-void UpdateSHA512G9 (void* uniHash, const Ipp8u* mblk, int mlen, const void* uniPraram);
+void EFIAPI UpdateSHA512W7 (void* uniHash, const Ipp8u* mblk, int mlen, const void* uniPraram);
+void EFIAPI UpdateSHA512G9 (void* uniHash, const Ipp8u* mblk, int mlen, const void* uniPraram);
 void UpdateMD5   (void* pHash, const Ipp8u* mblk, int mlen, const void* pParam);
 void UpdateSM3   (void* pHash, const Ipp8u* mblk, int mlen, const void* pParam);
 

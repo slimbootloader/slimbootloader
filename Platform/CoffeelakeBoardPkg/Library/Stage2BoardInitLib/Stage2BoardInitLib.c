@@ -67,6 +67,7 @@
 #include "GpioTables.h"
 #include <Library/PchSpiLib.h>
 #include <Register/RegsSpi.h>
+#include <Library/HeciLib.h>
 
 #define DEFAULT_GPIO_IRQ_ROUTE                      14
 
@@ -893,7 +894,7 @@ UpdatePayloadId (
     Status = GpioGetInputValue (PayloadSelGpioPad, &PayloadSelGpioData);
     if (!EFI_ERROR (Status)) {
       if (PayloadSelGpioData == 1) {
-        PayloadId = 0;
+        PayloadId = UEFI_PAYLOAD_ID_SIGNATURE;
       } else {
         if ((GenericCfgData != NULL) && (GenericCfgData->PayloadId == AUTO_PAYLOAD_ID_SIGNATURE)) {
           PayloadId = UEFI_PAYLOAD_ID_SIGNATURE;
@@ -1081,6 +1082,8 @@ BoardInit (
     }
     break;
   case EndOfStages:
+    // Register Heci Service
+    HeciRegisterHeciService ();
     // Lock down SPI for all other payload entry except FWUpdate and OSloader
     // as this phase is too early for them to lock it here
     SpiBaseAddress = GetDeviceAddr (OsBootDeviceSpi, 0);
@@ -1260,6 +1263,9 @@ UpdateFspConfig (
   FspsUpd->FspsConfig.TcoIrqSelect        = 9;
 
   HdaVerbTablePtr = (UINT32 *) AllocateZeroPool (6 * sizeof (UINT32));  // max 6 tables supported for now
+  if (HdaVerbTablePtr == NULL) {
+    return;
+  }
   HdaVerbTableNum = 0;
   HdaVerbTablePtr[HdaVerbTableNum++]   = (UINT32)(UINTN) &HdaVerbTableDisplayAudio;
   if (IsPchLp()) {
@@ -1270,7 +1276,11 @@ UpdateFspConfig (
   FspsUpd->FspsConfig.PchHdaVerbTablePtr      = (UINT32)(UINTN) HdaVerbTablePtr;
   FspsUpd->FspsConfig.PchHdaVerbTableEntryNum = HdaVerbTableNum;
 
-  FspsUpd->FspsConfig.GraphicsConfigPtr   = PcdGet32(PcdGraphicsVbtAddress);
+  if (PcdGetBool (PcdFramebufferInitEnabled)) {
+    FspsUpd->FspsConfig.GraphicsConfigPtr   = (UINT32)GetVbtAddress ();
+  } else {
+    FspsUpd->FspsConfig.GraphicsConfigPtr = 0;
+  }
 
   CopyMem (&FspsUpd->FspsConfig.PxRcConfig, mPxRcConfig, sizeof(mPxRcConfig));
 
