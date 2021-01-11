@@ -290,7 +290,7 @@ class Board(BaseBoard):
 
         if self.ENABLE_TSN_MAC_ADDRESS:
             container_list.append (
-              ('TMAC','TsnMacAddr.bin',     'Lz4',     container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,     0,   self.TMAC_SIZE,        0),   # TSN MAC Address
+              ('TMAC','',     'Lz4',     container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,     0,   self.TMAC_SIZE,        0),   # TSN MAC Address
             )
 
         return [container_list]
