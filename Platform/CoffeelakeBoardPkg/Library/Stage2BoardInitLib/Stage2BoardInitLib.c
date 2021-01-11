@@ -894,7 +894,7 @@ UpdatePayloadId (
     Status = GpioGetInputValue (PayloadSelGpioPad, &PayloadSelGpioData);
     if (!EFI_ERROR (Status)) {
       if (PayloadSelGpioData == 1) {
-        PayloadId = UEFI_PAYLOAD_ID_SIGNATURE;
+        PayloadId = 0;
       } else {
         if ((GenericCfgData != NULL) && (GenericCfgData->PayloadId == AUTO_PAYLOAD_ID_SIGNATURE)) {
           PayloadId = UEFI_PAYLOAD_ID_SIGNATURE;
