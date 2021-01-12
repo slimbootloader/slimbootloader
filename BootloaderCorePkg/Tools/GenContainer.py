@@ -8,7 +8,7 @@
 ##
 import sys
 import argparse
-
+import re
 sys.dont_write_bytecode = True
 from   ctypes import *
 from   CommonUtility import *
@@ -586,16 +586,24 @@ class CONTAINER ():
 
             # create header entry
             auth_type_str = self.get_auth_type_str (self.header.auth_type)
-            key_file = 'KEY_ID_CONTAINER_RSA2048' if auth_type_str.startswith('RSA') else ''
+            match = re.match('RSA(\d+)_', auth_type_str)
+            if match:
+                key_file = 'KEY_ID_CONTAINER_RSA%s' % match.group(1)
+            else:
+                key_file = ''
             alignment = self.header.alignment
             image_type_str = CONTAINER.get_image_type_str(self.header.image_type)
             header = ['%s' % self.header.signature.decode(), file_name, image_type_str,  auth_type_str,  key_file]
-            layout = [(' Name', ' ImageFile', ' CompAlg', ' AuthType',  ' KeyFile', ' Alignment', ' Size', 'svn')]
+            layout = [(' Name', ' ImageFile', ' CompAlg', ' AuthType',  ' KeyFile', ' Alignment', ' Size', 'Svn')]
             layout.append(tuple(["'%s'" % x for x in header] + ['0x%x' % alignment, '0', '0x%x' % self.header.svn]))
             # create component entry
             for component in self.header.comp_entry:
                 auth_type_str = self.get_auth_type_str (component.auth_type)
-                key_file      = 'KEY_ID_CONTAINER_COMP_RSA2048' if auth_type_str.startswith('RSA') else ''
+                match = re.match('RSA(\d+)_', auth_type_str)
+                if match:
+                    key_file = 'KEY_ID_CONTAINER_COMP_RSA%s' % match.group(1)
+                else:
+                    key_file = ''
                 lz_header = LZ_HEADER.from_buffer(component.data)
                 alg = LZ_HEADER._compress_alg[lz_header.signature]
                 svn = lz_header.svn
@@ -611,14 +619,14 @@ class CONTAINER ():
             fo = open (layout_file, 'w')
             fo.write ('# Container Layout File\n#\n')
             for idx, each in enumerate(layout):
-                line = ' %-6s, %-16s, %-10s, %-18s, %-30s, %-10s, %-10s, %-10s' % each
+                line = ' %-6s, %-16s, %-10s, %-24s, %-32s, %-10s, %-10s, %-10s' % each
                 if idx == 0:
                     line = '#  %s\n' % line
                 else:
                     line = '  (%s),\n' % line
                 fo.write (line)
                 if idx == 0:
-                    line = '# %s\n' % ('=' * 120)
+                    line = '# %s\n' % ('=' * 136)
                     fo.write (line)
             fo.close()
 

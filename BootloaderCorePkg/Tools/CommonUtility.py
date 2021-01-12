@@ -328,7 +328,7 @@ def decompress (in_file, out_file, tool_dir = ''):
 
     lz_hdr = LZ_HEADER.from_buffer (di)
     offset = sizeof (lz_hdr)
-    if lz_hdr.signature == b"LZDM":
+    if lz_hdr.signature == b"LZDM" or lz_hdr.compressed_len == 0:
         fo = open(out_file,'wb')
         fo.write(di[offset:offset + lz_hdr.compressed_len])
         fo.close()
@@ -341,6 +341,7 @@ def decompress (in_file, out_file, tool_dir = ''):
         alg = "Lz4"
     else:
         raise Exception ("Unsupported compression '%s' !" % lz_hdr.signature)
+
     fo = open(temp, 'wb')
     fo.write(di[offset:offset + lz_hdr.compressed_len])
     fo.close()
