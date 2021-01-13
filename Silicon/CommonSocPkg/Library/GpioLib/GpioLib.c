@@ -146,6 +146,7 @@ Error:
   @retval PadCfgRegValue      PADCFG_DWx value
 **/
 UINT32
+EFIAPI
 GpioReadPadCfgReg (
   IN GPIO_PAD             GpioPad,
   IN UINT8                DwReg
@@ -181,6 +182,7 @@ GpioReadPadCfgReg (
   @retval none
 **/
 VOID
+EFIAPI
 GpioWritePadCfgReg (
   IN GPIO_PAD             GpioPad,
   IN UINT8                DwReg,
@@ -742,6 +744,7 @@ GpioConfigFromPadCfgRegValue (
   @retval EFI_INVALID_PARAMETER         Invalid group or pad number
 **/
 EFI_STATUS
+EFIAPI
 GpioGetPadConfig (
   IN  GPIO_PAD               GpioPad,
   OUT GPIO_CONFIG            *GpioData
@@ -930,6 +933,7 @@ GpioPadCfgRegValueFromGpioConfig (
   @retval EFI_INVALID_PARAMETER   Invalid GpioPad
 **/
 EFI_STATUS
+EFIAPI
 GpioSetOutputValue (
   IN GPIO_PAD                  GpioPad,
   IN UINT32                    Value
@@ -968,6 +972,7 @@ GpioSetOutputValue (
   @retval EFI_INVALID_PARAMETER   Invalid GpioPad
 **/
 EFI_STATUS
+EFIAPI
 GpioGetOutputValue (
   IN GPIO_PAD                  GpioPad,
   OUT UINT32                   *OutputVal
@@ -1001,6 +1006,7 @@ GpioGetOutputValue (
   @retval EFI_INVALID_PARAMETER   Invalid GpioPad
 **/
 EFI_STATUS
+EFIAPI
 GpioGetInputValue (
   IN GPIO_PAD                  GpioPad,
   OUT UINT32                   *InputVal
@@ -1066,6 +1072,7 @@ GpioGetPadIoApicIrqNumber (
   @retval EFI_INVALID_PARAMETER   Invalid GpioPad
 **/
 EFI_STATUS
+EFIAPI
 GpioSetInputInversion (
   IN GPIO_PAD                  GpioPad,
   IN UINT32                    Value
@@ -1104,6 +1111,7 @@ GpioSetInputInversion (
   @retval EFI_INVALID_PARAMETER   Invalid GpioPad
 **/
 EFI_STATUS
+EFIAPI
 GpioGetInputInversion (
   IN  GPIO_PAD                 GpioPad,
   OUT UINT32                   *InvertState
@@ -1136,6 +1144,7 @@ GpioGetInputInversion (
   @retval EFI_INVALID_PARAMETER   Invalid GpioPad
 **/
 EFI_STATUS
+EFIAPI
 GpioSetPadInterruptConfig (
   IN GPIO_PAD                 GpioPad,
   IN GPIO_INT_CONFIG          Value
@@ -1237,6 +1246,7 @@ GpioSetPadInterruptConfig (
   @retval EFI_INVALID_PARAMETER   Invalid GpioPad
 **/
 EFI_STATUS
+EFIAPI
 GpioSetPadElectricalConfig (
   IN GPIO_PAD                  GpioPad,
   IN GPIO_ELECTRICAL_CONFIG    Value
@@ -1277,6 +1287,7 @@ GpioSetPadElectricalConfig (
   @retval EFI_INVALID_PARAMETER   Invalid GpioPad
 **/
 EFI_STATUS
+EFIAPI
 GpioSetPadResetConfig (
   IN GPIO_PAD                  GpioPad,
   IN GPIO_RESET_CONFIG         Value
@@ -1328,6 +1339,7 @@ GpioSetPadResetConfig (
   @retval EFI_INVALID_PARAMETER   Invalid GpioPad
 **/
 EFI_STATUS
+EFIAPI
 GpioGetPadResetConfig (
   IN GPIO_PAD                  GpioPad,
   IN GPIO_RESET_CONFIG         *Value
@@ -1588,6 +1600,7 @@ GpioGetPadCfgLockForGroupDw (
   @retval EFI_INVALID_PARAMETER   Invalid GpioPad
 **/
 EFI_STATUS
+EFIAPI
 GpioGetPadCfgLock (
   IN GPIO_PAD                   GpioPad,
   OUT UINT32                    *PadCfgLock
@@ -1727,6 +1740,7 @@ GpioUnlockPadCfgForGroupDw (
   @retval EFI_INVALID_PARAMETER   Invalid group or pad number
 **/
 EFI_STATUS
+EFIAPI
 GpioUnlockPadCfg (
   IN GPIO_PAD                   GpioPad
   )
@@ -1786,6 +1800,7 @@ GpioLockPadCfgForGroupDw (
   @retval EFI_INVALID_PARAMETER   Invalid group or pad number
 **/
 EFI_STATUS
+EFIAPI
 GpioLockPadCfg (
   IN GPIO_PAD                   GpioPad
   )
@@ -1982,6 +1997,7 @@ GpioGetGroupToGpeDwX (
   @retval EFI_INVALID_PARAMETER   Invalid group or pad number
 **/
 EFI_STATUS
+EFIAPI
 GpioGetGroupDwToGpeDwX (
   OUT GPIO_GROUP                *GroupToGpeDw0,
   OUT UINT32                    *GroupDwForGpeDw0,
@@ -2147,6 +2163,7 @@ GpioCheckFor2Tier (
   @retval EFI_INVALID_PARAMETER   Invalid GpioPad
 **/
 EFI_STATUS
+EFIAPI
 GpioClearGpiGpeSts (
   IN GPIO_PAD                  GpioPad
   )
@@ -2196,6 +2213,7 @@ GpioClearGpiGpeSts (
   @retval EFI_INVALID_PARAMETER   Invalid group or pad number
 **/
 EFI_STATUS
+EFIAPI
 GpioLockPads (
   VOID
   )
