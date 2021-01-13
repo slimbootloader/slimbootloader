@@ -464,14 +464,6 @@ typedef struct {
 //
 #define NO_REGISTER_FOR_PROPERTY 0xFFFF
 
-/*#define GPIO_PAD_DEF(Group,Pad)                (UINT32)(((Group) << 16) + (Pad))
-#define GPIO_GROUP_DEF(GroupIndex,ChipsetId)   ((GroupIndex) | ((ChipsetId) << 8))
-#define GPIO_GET_GROUP_INDEX(Group)            ((Group) & 0x1F)
-#define GPIO_GET_GROUP_FROM_PAD(GpioPad)       (((GpioPad) & 0x0F1F0000) >> 16)
-#define GPIO_GET_GROUP_INDEX_FROM_PAD(GpioPad) GPIO_GET_GROUP_INDEX (GPIO_GET_GROUP_FROM_PAD(GpioPad))
-#define GPIO_GET_PAD_NUMBER(GpioPad)           ((GpioPad) & 0x1FF)
-#define GPIO_GET_CHIPSET_ID(GpioPad)           (((GpioPad) >> 24) & 0xF)
-*/
 #define GPIO_GET_PAD_POSITION(PadNumber)       ((PadNumber) % 32)
 #define GPIO_GET_DW_NUM(PadNumber)             ((PadNumber) / 32u)
 
