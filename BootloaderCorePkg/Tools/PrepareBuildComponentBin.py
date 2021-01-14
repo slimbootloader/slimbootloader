@@ -236,7 +236,7 @@ def Main():
     sbl_dir          = sys.argv[1]
     silicon_pkg_name = sys.argv[2]
 
-    workspace_dir  = os.path.join(sbl_dir, '../Download')
+    workspace_dir  = os.path.join(sbl_dir, '../Download', silicon_pkg_name)
     fsp_repo_dir   = os.path.abspath (os.path.join(workspace_dir, 'IntelFsp'))
     qemu_repo_dir  = os.path.abspath (os.path.join(workspace_dir, 'QemuFsp'))
     ucode_repo_dir = os.path.abspath (os.path.join(workspace_dir, 'IntelUcode'))
