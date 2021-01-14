@@ -36,6 +36,7 @@
   BootParameters.c
   BlockIoTest.c
   KeyManagement.c
+  PreOsSupport.c
   PreOsChecker.c
   ModService.c
 

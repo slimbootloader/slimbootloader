@@ -64,6 +64,7 @@
 #include <Register/Intel/Msr/ArchitecturalMsr.h>
 #include "PreOsChecker.h"
 #include <Library/StringSupportLib.h>
+#include <PreOsHeader.h>
 
 
 #define MKHI_BOOTLOADER_SEED_LEN       64
@@ -322,7 +323,7 @@ GetFromConfigFile (
 
   @param[in]     BootOption        Current boot option
   @param[in,out] LoadedImage       Normal OS boot image
-  @param[in,out] LoadedTrustyImage Trusty OS image
+  @param[in,out] LoadedPreOsImage  Pre OS image
   @param[in,out] LoadedExtraImages Extra OS images
 
   @retval   RETURN_SUCCESS         If update OS parameter success
@@ -332,7 +333,7 @@ EFI_STATUS
 UpdateOsParameters (
   IN     OS_BOOT_OPTION      *BootOption,
   IN OUT LOADED_IMAGE        *LoadedImage,
-  IN OUT LOADED_IMAGE        *LoadedTrustyImage,
+  IN OUT LOADED_IMAGE        *LoadedPreOsImage,
   IN OUT LOADED_IMAGE        *LoadedExtraImages
   );
 
@@ -514,4 +515,30 @@ PayloadModuleInit (
   IN  CHAR8               *ModuleName
   );
 
+/**
+  Print the stack/HOB and heap usage information.
+
+**/
+VOID
+EFIAPI
+PrintStackHeapInfo (
+  VOID
+  );
+
+/**
+  Start preOS boot image
+
+  This function will call into preOS entry point with OS information as parameter.
+
+  @param[in]  LoadedPreOsImage  Loaded PreOS image information.
+  @param[in]  LoadedImage       Loaded OS image information.
+
+  @retval  RETURN_SUCCESS       boot image is return after boot
+  @retval  Others               There is error when checking boot image
+**/
+EFI_STATUS
+StartPreOsBooting (
+  IN LOADED_IMAGE            *LoadedPreOsImage,
+  IN LOADED_IMAGE            *LoadedImage
+  );
 #endif

@@ -214,7 +214,7 @@ DEBUG_CODE_END ();
 
   @param[in]     CurrentBootOption Current boot option
   @param[in,out] LoadedImage       Normal OS boot image
-  @param[in,out] LoadedTrustyImage Trusty OS image
+  @param[in,out] LoadedPreOsImage  Pre-OS image
   @param[in,out] LoadedExtraImages Extra OS images
 
   @retval   RETURN_SUCCESS         If update OS parameter success
@@ -224,7 +224,7 @@ EFI_STATUS
 UpdateOsParameters (
   IN     OS_BOOT_OPTION      *CurrentBootOption,
   IN OUT LOADED_IMAGE        *LoadedImage,
-  IN OUT LOADED_IMAGE        *LoadedTrustyImage,
+  IN OUT LOADED_IMAGE        *LoadedPreOsImage,
   IN OUT LOADED_IMAGE        *LoadedExtraImages
   )
 {
@@ -282,24 +282,21 @@ UpdateOsParameters (
   }
 
   //
-  // Update Trusty image if it is loaded.
+  // Update PreOS image if it is loaded.
   //
-  if ((CurrentBootOption->BootFlags & BOOT_FLAGS_TRUSTY) != 0) {
+  if (((CurrentBootOption->BootFlags & BOOT_FLAGS_PREOS) != 0) && (LoadedPreOsImage != NULL)) {
     LoadedImage->Image.MultiBoot.CmdBufferSize       = CMDLINE_LENGTH_MAX;
-    if (LoadedTrustyImage != NULL) {
-      LoadedTrustyImage->Image.MultiBoot.CmdBufferSize = CMDLINE_LENGTH_MAX;
-      Status = SetupTrustyBoot (&LoadedTrustyImage->Image.MultiBoot, &LoadedImage->Image.MultiBoot);
+    if ((CurrentBootOption->PreOsImageType & EnumPreOsTypeTrustyOs) != 0) {
+      LoadedPreOsImage->Image.MultiBoot.CmdBufferSize = CMDLINE_LENGTH_MAX;
+      Status = SetupTrustyBoot (&LoadedPreOsImage->Image.MultiBoot, &LoadedImage->Image.MultiBoot);
       if (EFI_ERROR (Status)) {
-        DEBUG ((DEBUG_ERROR, "ERROR Setting up Trusty Boot!\n"));
+        DEBUG ((DEBUG_ERROR, "ERROR Setting up preOS Boot!\n"));
         return Status;
       }
-    } else {
-      DEBUG ((DEBUG_ERROR, "ERROR Setting up Trusty Boot!\n"));
-      return Status;
     }
-    UpdateOsMemMap (LoadedTrustyImage);
-    DEBUG ((DEBUG_INFO, "\nDump trusty image info:\n"));
-    DisplayInfo (LoadedTrustyImage);
+    UpdateOsMemMap (LoadedPreOsImage);
+    DEBUG ((DEBUG_INFO, "\nDump PreOs image info:\n"));
+    DisplayInfo (LoadedPreOsImage);
   }
 
   if ((CurrentBootOption->BootFlags & BOOT_FLAGS_EXTRA) != 0) {
