@@ -10,7 +10,9 @@
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/GraphicsLib.h>
+#include <Library/BlMemoryAllocationLib.h>
 #include <Library/PcdLib.h>
+#include <IndustryStandard/Bmp.h>
 #include "AcpiInitLibInternal.h"
 
 
@@ -55,12 +57,16 @@ UpdateBgrt (
   IN  UINT8                           *Table
   )
 {
-  UINT32       BmpBase;
-  UINT32       OffX;
-  UINT32       OffY;
-  EFI_STATUS   Status;
+  UINT32                                      BmpBase;
+  UINT32                                      OffX;
+  UINT32                                      OffY;
+  EFI_STATUS                                  Status;
   EFI_ACPI_5_0_BOOT_GRAPHICS_RESOURCE_TABLE  *Bgrt;
   EFI_PEI_GRAPHICS_INFO_HOB                  *GfxInfoHob;
+  BMP_IMAGE_HEADER                           *BmpHdr;
+  BMP_IMAGE_HEADER                           *OrgBmpHdr;
+  UINT32                                      ImageLen;
+  UINT32                                      FileLen;
 
   if (PcdGet32 (PcdSplashLogoAddress) == 0) {
     return EFI_UNSUPPORTED;
@@ -78,8 +84,30 @@ UpdateBgrt (
     return EFI_UNSUPPORTED;
   }
 
+  OrgBmpHdr = (BMP_IMAGE_HEADER *)(UINTN)BmpBase;
   Bgrt = (EFI_ACPI_5_0_BOOT_GRAPHICS_RESOURCE_TABLE *)Table;
-  Bgrt->ImageAddress = (UINTN)BmpBase;
+  Bgrt->ImageAddress = (UINTN)OrgBmpHdr;
+  if (!((OrgBmpHdr->BitPerPixel == 24) || (OrgBmpHdr->BitPerPixel == 32))) {
+    // Need to convert the BMP image into 32bit BMP supported by BGRT
+    ImageLen = (UINT32)MultU64x32 (OrgBmpHdr->PixelWidth << 2,  OrgBmpHdr->PixelHeight);
+    FileLen  = sizeof(BMP_IMAGE_HEADER) + ImageLen;
+    BmpHdr = (BMP_IMAGE_HEADER *)AllocatePages (EFI_SIZE_TO_PAGES (FileLen));
+    if (BmpHdr != NULL) {
+      CopyMem (BmpHdr, OrgBmpHdr, sizeof(BMP_IMAGE_HEADER));
+      BmpHdr->Size = FileLen;
+      BmpHdr->ImageOffset = sizeof(BMP_IMAGE_HEADER);
+      BmpHdr->HeaderSize  = sizeof(BMP_IMAGE_HEADER) - OFFSET_OF(BMP_IMAGE_HEADER, HeaderSize);
+      BmpHdr->BitPerPixel = 32;
+      BmpHdr->CompressionType = 0;
+      BmpHdr->ImageSize = 0;
+      BmpHdr->NumberOfColors  = 0;
+      BmpHdr->ImportantColors = 0;
+      Status = DisplayBmpToFrameBuffer (OrgBmpHdr, &BmpHdr[1], ImageLen, GfxInfoHob);
+      if (!EFI_ERROR(Status)) {
+        Bgrt->ImageAddress = (UINTN)BmpHdr;
+      }
+    }
+  }
   Bgrt->ImageOffsetX = OffX;
   Bgrt->ImageOffsetY = OffY;
 

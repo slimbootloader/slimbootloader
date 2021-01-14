@@ -82,14 +82,9 @@ DisplaySplash (
   VOID
   )
 {
-  EFI_STATUS                          Status;
+  EFI_STATUS                           Status;
   VOID                                *SplashLogoBmp;
   EFI_PEI_GRAPHICS_INFO_HOB           *GfxInfoHob;
-  EFI_GRAPHICS_OUTPUT_BLT_PIXEL_UNION *GopBlt;
-  UINTN                               GopBltSize;
-
-  GopBlt = NULL;
-  GopBltSize = 0;
 
   // Get framebuffer info
   GfxInfoHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GetGuidHobData (NULL, NULL, &gEfiGraphicsInfoHobGuid);
@@ -98,10 +93,9 @@ DisplaySplash (
   }
 
   // Convert image from BMP format and write to frame buffer
-  GopBlt = NULL;
   SplashLogoBmp = (VOID *)(UINTN)PCD_GET32_WITH_ADJUST (PcdSplashLogoAddress);
   ASSERT (SplashLogoBmp != NULL);
-  Status = DisplayBmpToFrameBuffer (SplashLogoBmp, (VOID **)&GopBlt, &GopBltSize, GfxInfoHob);
+  Status = DisplayBmpToFrameBuffer (SplashLogoBmp, NULL, 0, GfxInfoHob);
 
   return Status;
 }

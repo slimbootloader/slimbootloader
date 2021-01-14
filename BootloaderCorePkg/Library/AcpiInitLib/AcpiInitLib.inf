@@ -43,6 +43,7 @@
   DebugDataLib
   MpInitLib
   TimeStampLib
+  MemoryAllocationLib
 
 [Guids]
   gEsrtSystemFirmwareGuid
