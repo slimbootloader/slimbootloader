@@ -170,7 +170,7 @@ GetBootDeviceInfo (
   }
 
   do {
-    ShellPrint (L"Enter BootFlags (MISC 0x1, CRASH_OS 0x2, TRUSTY 0x4, EXTRA 0x8, MENDER 0x10)\n");
+    ShellPrint (L"Enter BootFlags (MISC 0x1, CRASH_OS 0x2, PREOS 0x4, EXTRA 0x8, MENDER 0x10)\n");
     ShellPrint (L"(default 0x%X) ", CurrOption->BootFlags);
     Status = ShellReadUintn (Shell, Buffer, BufferSize, &IsHex);
     if (EFI_ERROR (Status)) {
@@ -181,7 +181,7 @@ GetBootDeviceInfo (
       break;
     }
     BootOption->BootFlags = (OS_FILE_SYSTEM_TYPE) ((IsHex) ? StrHexToUintn (Buffer) : StrDecimalToUintn (Buffer));
-    if (((UINT8)BootOption->BootFlags) <= ((UINT8)BOOT_FLAGS_MISC | BOOT_FLAGS_CRASH_OS | BOOT_FLAGS_TRUSTY | BOOT_FLAGS_EXTRA | BOOT_FLAGS_MENDER)) {
+    if (((UINT8)BootOption->BootFlags) <= ((UINT8)BOOT_FLAGS_MISC | BOOT_FLAGS_CRASH_OS | BOOT_FLAGS_PREOS | BOOT_FLAGS_EXTRA | BOOT_FLAGS_MENDER)) {
       break;
     }
     ShellPrint (L"Invalid value '%s', please re-enter\n", Buffer);

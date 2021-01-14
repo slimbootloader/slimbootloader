@@ -619,7 +619,7 @@ BeforeOSJump (
 /**
   Start boot image
 
-  This function will jump to kernel entry point.
+  This function will jump to image entry point.
 
   @param[in]  LoadedImage       Loaded boot image information.
 
@@ -933,11 +933,11 @@ SetupBootImages (
   )
 {
   LOADED_IMAGE        *LoadedImage;
-  LOADED_IMAGE        *LoadedTrustyImage;
+  LOADED_IMAGE        *LoadedPreOsImage;
   EFI_STATUS           Status;
 
   GetLoadedImageByType (LoadedImageHandle, LoadImageTypeNormal, &LoadedImage);
-  GetLoadedImageByType (LoadedImageHandle, LoadImageTypeTrusty, &LoadedTrustyImage);
+  GetLoadedImageByType (LoadedImageHandle, LoadImageTypePreOs, &LoadedPreOsImage);
 
   //
   // Normal type image is mandatory
@@ -951,9 +951,9 @@ SetupBootImages (
   if (EFI_ERROR (Status)) {
     return Status;
   }
-  if (LoadedTrustyImage != NULL) {
-    DEBUG ((DEBUG_INFO, "SetupBootImage ImageType-%d\n", LoadImageTypeTrusty));
-    Status = SetupBootImage (LoadedTrustyImage);
+  if (LoadedPreOsImage != NULL) {
+    DEBUG ((DEBUG_INFO, "SetupBootImage ImageType-%d\n", LoadImageTypePreOs));
+    Status = SetupBootImage (LoadedPreOsImage);
   }
 
   return Status;
@@ -979,7 +979,7 @@ UpdateBootParameters (
   )
 {
   LOADED_IMAGE        *LoadedImage;
-  LOADED_IMAGE        *LoadedTrustyImage;
+  LOADED_IMAGE        *LoadedPreOsImage;
   LOADED_IMAGE        *LoadedExtraImages;
   EFI_STATUS           Status;
 
@@ -988,9 +988,9 @@ UpdateBootParameters (
   if (EFI_ERROR (Status)) {
     return Status;
   }
-  Status = GetLoadedImageByType (LoadedImageHandle, LoadImageTypeTrusty, &LoadedTrustyImage);
+  Status = GetLoadedImageByType (LoadedImageHandle, LoadImageTypePreOs, &LoadedPreOsImage);
   Status = GetLoadedImageByType (LoadedImageHandle, LoadImageTypeExtra0, &LoadedExtraImages);
-  return UpdateOsParameters (OsBootOption, LoadedImage, LoadedTrustyImage, LoadedExtraImages);
+  return UpdateOsParameters (OsBootOption, LoadedImage, LoadedPreOsImage, LoadedExtraImages);
 }
 
 EFI_STATUS
@@ -1000,15 +1000,20 @@ StartBootImages (
   )
 {
   LOADED_IMAGE        *LoadedImage;
+  LOADED_IMAGE        *LoadedPreOsImage;
   EFI_STATUS           Status;
 
-  Status = GetLoadedImageByType (LoadedImageHandle, LoadImageTypeTrusty, &LoadedImage);
+  Status = GetLoadedImageByType (LoadedImageHandle, LoadImageTypeNormal, &LoadedImage);
   if (EFI_ERROR (Status)) {
-    Status = GetLoadedImageByType (LoadedImageHandle, LoadImageTypeNormal, &LoadedImage);
+    return Status;
   }
 
-  if (!EFI_ERROR (Status)) {
-    Status = StartBooting (LoadedImage);
+  Status = GetLoadedImageByType (LoadedImageHandle, LoadImageTypePreOs, &LoadedPreOsImage);
+  if (EFI_ERROR (Status)) {
+      Status = StartBooting (LoadedImage);
+  } else {
+    // PreOs found, need start PreOS
+    Status = StartPreOsBooting (LoadedPreOsImage, LoadedImage);
   }
 
   return Status;

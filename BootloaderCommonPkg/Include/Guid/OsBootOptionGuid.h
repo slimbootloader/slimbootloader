@@ -17,7 +17,7 @@
 
 #define BOOT_FLAGS_MISC            BIT0
 #define BOOT_FLAGS_CRASH_OS        BIT1
-#define BOOT_FLAGS_TRUSTY          BIT2
+#define BOOT_FLAGS_PREOS           BIT2
 #define BOOT_FLAGS_EXTRA           BIT3
 #define BOOT_FLAGS_MENDER          BIT4
 
@@ -26,7 +26,7 @@
 
 typedef enum {
   LoadImageTypeNormal              = 0x0,
-  LoadImageTypeTrusty,
+  LoadImageTypePreOs,
   LoadImageTypeMisc,
   LoadImageTypeExtra0,
   LoadImageTypeExtra1,
@@ -82,6 +82,12 @@ typedef enum  {
   EnumImageTypeMax
 } BOOT_IMAGE_TYPE;
 
+typedef enum  {
+  EnumPreOsTypeDefault     = 0x0,
+  EnumPreOsTypeTrustyOs,
+  EnumPreOsTypeMax
+} PREOS_IMAGE_TYPE;
+
 typedef struct {
   //
   // Indicate this entry is invalid or not
@@ -101,8 +107,39 @@ typedef struct {
   UINT32               LbaAddr;
 } LBA_IMAGE_LOCATION;
 
-
+///
+/// Only used to load image from firmware boot media (e.g. SPI flash)
+///
 typedef struct {
+  ///
+  /// Should be '!'
+  ///
+  UINT8                Indicate;
+  ///
+  /// The signature of the container
+  ///
+  UINT32               ContainerSig;
+  ///
+  /// should be '/'
+  ///
+  UINT8                BackSlash;
+  ///
+  /// The component name
+  ///
+  UINT32               ComponentName;
+  ///
+  /// Optional, should set to ':' if Parameter field exists.
+  ///
+  UINT8                Colon;
+  ///
+  /// The parameter to component image
+  /// Available only on Colon == ':'
+  ///
+  UINT32               Parameter;
+} CONTAINER_IMAGE;
+
+
+typedef union {
   ///
   /// Used for image from file system, Ascii file name
   /// If FileName[0] is zero, means this entry is invalid
@@ -112,6 +149,10 @@ typedef struct {
   /// Used for image from raw partition
   ///
   LBA_IMAGE_LOCATION   LbaImage;
+  ///
+  ///
+  ///
+  CONTAINER_IMAGE      ContainerImage;
 } BOOT_IMAGE;
 
 typedef struct {
@@ -119,7 +160,12 @@ typedef struct {
   ///
   /// Image type for Image[0]. Refer BOOT_IMAGE_TYPE
   ///
-  UINT8                ImageType;
+  UINT8                ImageType:5;
+
+  ///
+  /// Image type for Image[1]. Refer PREOS_IMAGE_TYPE
+  ///
+  UINT8                PreOsImageType:3;
 
   ///
   /// Zero means normal boot.
@@ -155,7 +201,7 @@ typedef struct {
   UINT8                FsType;
 
   // Image[0] is for normal boot OS
-  // Image[1] is for trusty OS
+  // Image[1] is for Pre OS
   // Image[2] is for misc image
   // Image[3-6] is for extra Images
   BOOT_IMAGE           Image[LoadImageTypeMax];

@@ -302,7 +302,7 @@ SeedStatusBasedOnImageType (
     return FALSE;
   }
   // First boot option should be the target OS.
-  TrustyFlag  = (OsBootOptionList->OsBootOption[0].BootFlags & BOOT_FLAGS_TRUSTY) >> 2;
+  TrustyFlag  = (OsBootOptionList->OsBootOption[0].BootFlags & BOOT_FLAGS_PREOS) >> 2;
   OsImageType = OsBootOptionList->OsBootOption[0].ImageType;
 
   switch (SeedType) {
