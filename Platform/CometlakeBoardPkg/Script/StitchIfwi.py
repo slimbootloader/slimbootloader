@@ -108,10 +108,7 @@ def gen_sign_oem_key_manifest(stitch_dir, stitch_cfg_file):
     oem_bin_input  = os.path.join (stitch_dir, 'Input', 'OemExtInputFile.bin')
     oem_bin_sign   = os.path.join (output_dir, 'OemExtInputFile.bin')
 
-    if os.name == 'nt':
-        openssl_path = get_openssl_path() + '.exe'
-    else:
-        openssl_path = get_openssl_path()
+    openssl_path = get_openssl_path()
 
     bpm_gen2dir = os.path.join (stitch_dir, 'bpmgen2')
     bpm_key_dir = os.path.join (bpm_gen2dir, 'keys')
