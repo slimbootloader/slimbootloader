@@ -106,10 +106,7 @@ def gen_sign_oem_key_manifest(meu_path, oem_bin_input, key_dir, key_sz, output_d
     oem_bin_sign   = oem_bin_output
     oem_priv_key = SIGNING_KEY['KEY_ID_PRIV_OEM_RSA' + key_sz]
 
-    if os.name == 'nt':
-        openssl_path = get_openssl_path() + '.exe'
-    else:
-        openssl_path = get_openssl_path()
+    openssl_path = get_openssl_path()
 
     if not os.path.exists(oem_bin_input):
 

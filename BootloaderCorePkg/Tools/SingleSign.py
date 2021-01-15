@@ -72,7 +72,11 @@ def get_openssl_path ():
                     openssl_cfg = "C:\\Openssl\\openssl.cfg"
                     if os.path.exists(openssl_cfg):
                         os.environ['OPENSSL_CONF'] = openssl_cfg
-    openssl = os.path.join(os.environ.get ('OPENSSL_PATH', ''), 'openssl')
+        openssl = os.path.join(os.environ.get ('OPENSSL_PATH', ''), 'openssl.exe')
+    else:
+        # Get openssl path for Linux cases
+        openssl = shutil.which('openssl')
+
     return openssl
 
 def run_process (arg_list, print_cmd = False, capture_out = False):
