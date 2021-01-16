@@ -24,6 +24,7 @@ import multiprocessing
 from   ctypes import *
 from   BuildUtility import *
 
+import glob
 
 def rebuild_basetools ():
     exe_list = 'GenFfs  GenFv  GenFw  GenSec  Lz4Compress  LzmaCompress'.split()
@@ -127,8 +128,8 @@ def get_board_config_file (check_dir, board_cfgs):
 
     board_pkgs = os.listdir(platform_dir)
     for pkg in board_pkgs:
-        cfgfile = os.path.join(platform_dir, pkg, 'BoardConfig.py')
-        if os.path.exists(cfgfile):
+        # Allow files starting with 'BoardConfig' only
+        for cfgfile in glob.glob(os.path.join(platform_dir, pkg, 'BoardConfig*.py')):
             board_cfgs.append(cfgfile)
 
 class BaseBoard(object):
@@ -1378,6 +1379,7 @@ def main():
     prep_env ()
     board_cfgs   = []
     board_names  = []
+    module_names = []
 
     # Find all boards
     search_dir = os.environ['SBL_SOURCE']
@@ -1387,9 +1389,12 @@ def main():
     for pkg in board_pkgs:
         get_board_config_file (os.path.join (search_dir, pkg), board_cfgs)
 
+    board_cfgs.sort()
     for cfgfile in board_cfgs:
-        brdcfg = load_source ('BoardConfig', cfgfile)
+        module_name = os.path.basename(os.path.dirname(cfgfile))[:-8] + os.path.basename(cfgfile)[:-3]
+        brdcfg = load_source(module_name, cfgfile)
         board_names.append(brdcfg.Board().BOARD_NAME)
+        module_names.append(brdcfg)
 
     ap = argparse.ArgumentParser()
     sp = ap.add_subparsers(help='command')
@@ -1397,7 +1402,7 @@ def main():
     def cmd_build(args):
         for index, name in enumerate(board_names):
             if args.board == name:
-                brdcfg = load_source('BoardConfig', board_cfgs[index])
+                brdcfg = module_names[index]
                 board  = brdcfg.Board(
                                         BUILD_ARCH        = args.arch.upper(), \
                                         RELEASE_MODE      = args.release,     \
