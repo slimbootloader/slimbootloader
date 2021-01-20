@@ -12,7 +12,7 @@
 #include <Library/BaseLib.h>
 #include <Library/PagingLib.h>
 
-typedef EFI_STATUS (EFIAPI *EXECUTE_32BIT_CODE) (UINT64 Param1, UINT64 Param2);
+typedef EFI_STATUS (EFIAPI *EXECUTE_32BIT_CODE) (UINT32 Param1, UINT32 Param2);
 
 /**
   Wrapper for a thunk  to transition from long mode to compatibility mode to execute 32-bit code and then transit back to
@@ -38,7 +38,7 @@ Execute32BitCode (
   EXECUTE_32BIT_CODE    Func;
 
   Func   = (EXECUTE_32BIT_CODE)(UINTN)Function;
-  Status = Func (Param1, Param2);
+  Status = Func ((UINT32)Param1, (UINT32)Param2);
 
   return Status;
 }
