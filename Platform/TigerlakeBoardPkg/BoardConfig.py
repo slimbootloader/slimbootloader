@@ -1,7 +1,7 @@
 ## @file
 # This file is used to provide board specific image information.
 #
-#  Copyright (c) 2018 - 2020, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2018 - 2021, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -199,7 +199,7 @@ class Board(BaseBoard):
         # Cfg data dlt files for nternal boards could also put into external cfg data if want to update cfg data for these platforms
         # for test purpose. Based on the platform id, relevant data is populated for each platform.
         self._CFGDATA_INT_FILE = []
-        self._CFGDATA_EXT_FILE = ['CfgData_Ext_Dummy.dlt', 'CfgData_Int_Tglu_Ddr4.dlt', 'CfgData_Int_Tglu_DdrLp4.dlt', 'CfgData_Int_Tglh_Ddr4.dlt']
+        self._CFGDATA_EXT_FILE = ['CfgData_Ext_Dummy.dlt', 'CfgData_Int_Tglu_Ddr4.dlt', 'CfgData_Int_Tglu_DdrLp4.dlt']
 
     def GetPlatformDsc (self):
         dsc = {}
