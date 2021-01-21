@@ -203,8 +203,8 @@ UpdateAcpiPsdTable (
     return  EFI_UNSUPPORTED;
   }
 
-  //00 - Secure boot is Disabled; 01 - Verified boot is enabled; 11 - Secure boot (verified + PcdVerifiedBootEnabled) enabled.
-  mPsdt->SecureBoot = (UINT8)(((PlatformData->BtGuardInfo.VerifiedBoot) << 1)| FeaturePcdGet (PcdVerifiedBootEnabled));
+  //000 - Secure boot is Disabled; 010 - Boot Guard Enabled; 100 - Bootloader Verified boot Enabled.
+  mPsdt->SecureBoot = (UINT8)(((PlatformData->BtGuardInfo.VerifiedBoot) << 1)| (FeaturePcdGet (PcdVerifiedBootEnabled)) << 2);
   //Measured boot enabled.
   mPsdt->MeasuredBoot = (UINT8)((PlatformData->BtGuardInfo.MeasuredBoot));
 
