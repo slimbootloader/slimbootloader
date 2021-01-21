@@ -373,6 +373,7 @@ CreateIdentityMappingPageTables (
   if (PageBuffer == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
+  ZeroMem (PageBuffer, EFI_PAGES_TO_SIZE (TotalPagesNum));
 
   Address   = 0;
   Attribute = IA32_PG_P | IA32_PG_RW;
