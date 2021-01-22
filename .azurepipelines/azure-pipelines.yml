@@ -77,6 +77,10 @@ jobs:
       #   Build.Name:   "cmlv"
       #   Build.Arch:   "-a x64"
       #   Build.Target: ""
+      # TGL_X86_DEBUG:
+      #   Build.Name:   "tgl"
+      #   Build.Arch:   ""
+      #   Build.Target: ""
 
   pool:
     vmImage: 'ubuntu-latest'
@@ -136,6 +140,14 @@ jobs:
         Build.Target: "-r"
       CMLV_X64_DEBUG:
         Build.Name:   "cmlv"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      TGL_X86_RELEASE:
+        Build.Name:   "tgl"
+        Build.Arch:   ""
+        Build.Target: "-r"
+      TGL_X64_DEBUG:
+        Build.Name:   "tgl"
         Build.Arch:   "-a x64"
         Build.Target: ""
 
