@@ -4,13 +4,12 @@
 
   https://01.org/sites/default/files/documentation/skl_opregion_rev0p5.pdf
 
-  Copyright (c) 2016 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 #ifndef _IGD_OPREGION_H_
 #define _IGD_OPREGION_H_
-
 
 /**
   OpRegion structures:

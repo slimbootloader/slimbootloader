@@ -1,7 +1,7 @@
 /** @file
 Header file for GOP Configuration Library
 
-  Copyright (c) 2015 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -1095,6 +1095,31 @@ typedef struct {
   } LaceAggressivenessProfile; ///< Defines the LACE Aggressiveness Profile
 } BLOCK44_ALS;
 
+
+/**
+  This defines the structure of Black Frame Insertion table entry.
+**/
+typedef struct {
+  /**
+  BFI Features\n
+  Bit[7-2]  : Reserved\n
+  Bit[1]    : Enable Brightness control in CUI\n
+  Bit[0]    : Enable BFI in driver
+  **/
+  UINT8         EnableBits;
+  UINT8         BrightnessNonBFI;   ///< Brightness percentage in non BFI mode
+} BFI;
+
+/**
+  This defines the structure of Block 45 (Black Frame insertion Support for LFP)
+**/
+typedef struct {
+  UINT8              BlockId;         ///< Defines the unique Block ID : 45
+  UINT16             BlockSize;       ///< Defines the size of Black frame insertion support block.
+  UINT8              SIZE_BFIStruc;   ///< Defines the size of 1 entry of black frame data.
+  BFI                BFI_Struct[16];  ///< Array defining the data of black frame insertion for all 16 panels.
+} BLOCK45_BFI_SUPPORT;
+
 /**
   This structure defines the chromaticity information for a single LFP panel.
 **/
@@ -1431,6 +1456,16 @@ typedef struct {
   MIPI_PWM_BACKLIGHT_DELAYS MipiPwmBackLightDelays[6];
   UINT8                     PmicI2cBusNo[6];
 } BLOCK52_MIPI_CONF;
+
+/**
+  This defines the structure of Block 53 (MIPI Sequence block) for panel initialisation.
+**/
+typedef struct {
+  UINT8      BlockId;         ///< Defines the unique Block ID: 53
+  UINT16     BlockSize;       ///< Defines the size of MIPI sequence Block
+  UINT8      Version;         ///< Defines the version of MIPI sequence.
+  UINT8*     MipiSequence;    ///< Pointer to the actual MIPI sequence structure.
+} BLOCK53_MIPI_SEQ;
 
 /**
   This defines the structure of a single RGB Palette entry block

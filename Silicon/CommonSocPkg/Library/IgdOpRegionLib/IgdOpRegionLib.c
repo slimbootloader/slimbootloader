@@ -6,12 +6,11 @@
 
   Acronyms:
     IGD:        Internal Graphics Device
-    NVS:        ACPI Non Volatile Storage
     OpRegion:   ACPI Operational Region
     VBT:        Video BIOS Table (OEM customizable data)
     IPU:        Image Processing Unit
 
-  Copyright (c) 2008 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -27,9 +26,8 @@
 #include <Library/MemoryAllocationLib.h>
 #include <Library/BootloaderCommonLib.h>
 
-#include "IgdOpRegionTgl.h"
+#include "IgdOpRegion.h"
 #include <IgdOpRegionDefines.h>
-#include <GlobalNvsAreaDef.h>
 #include "GopConfigLib.h"
 
 //
@@ -176,18 +174,20 @@ UpdateVbt (
 EFI_STATUS
 EFIAPI
 IgdOpRegionInit (
-  IN GOP_VBT_UPDATE_CALLBACK   GopVbtUpdateCallback
+  IN IGD_OP_PLATFORM_INFO    *IgdPlatformInfo
   )
 {
-  GLOBAL_NVS_AREA               *Gnvs;
   UINT16                        Data16;
   UINT16                        ExtendedVbtSize;
   EFI_STATUS                    Status;
   VBIOS_VBT_STRUCTURE           *VbtFileBuffer;
+  GOP_VBT_UPDATE_CALLBACK       VbtCallback;
+  UINT8                         TurboIMON;
 
   Status = EFI_ABORTED;
   VbtFileBuffer = NULL;
   ExtendedVbtSize = 0;
+  VbtCallback = NULL;
 
   GetVbt (&VbtFileBuffer);
   if (VbtFileBuffer == NULL) {
@@ -205,11 +205,8 @@ IgdOpRegionInit (
   }
   SetMem(mIgdOpRegion.OpRegion, sizeof(IGD_OPREGION_STRUCTURE) + ExtendedVbtSize, 0);
 
-  //
   // Update OpRegion address to Gnvs
-  //
-  Gnvs = (GLOBAL_NVS_AREA *)(UINTN)PcdGet32(PcdAcpiGnvsAddress);
-  Gnvs->SaNvs.IgdOpRegionAddress = (UINT32)(UINTN)(mIgdOpRegion.OpRegion);
+  Status = PcdSet32S (PcdIgdOpRegionAddress, (UINT32)(UINTN)(mIgdOpRegion.OpRegion));
 
   //
   // Initialize OpRegion Header
@@ -254,7 +251,8 @@ IgdOpRegionInit (
   //
   // Reporting to driver for VR IMON Calibration. Bits [5-1] values supported 14A to 31A.
   //
-  mIgdOpRegion.OpRegion->MBox3.PCFT = (Gnvs->SaNvs.GfxTurboIMON << 1) & 0x003E;
+  TurboIMON = (IgdPlatformInfo != NULL) ? IgdPlatformInfo->TurboIMON : 0x1F;
+  mIgdOpRegion.OpRegion->MBox3.PCFT = (TurboIMON << 1) & 0x003E;
 
   ///
   /// Set Initial current Brightness
@@ -289,7 +287,11 @@ IgdOpRegionInit (
     CopyMem (mIgdOpRegion.OpRegion->MBox4.RVBT, VbtFileBuffer, VbtFileBuffer->HeaderVbtSize);
   }
 
-  Status = UpdateVbt (ExtendedVbtSize > 0, GopVbtUpdateCallback);
+  VbtCallback = NULL;
+  if (IgdPlatformInfo != NULL) {
+    VbtCallback = IgdPlatformInfo->callback;
+  }
+  Status = UpdateVbt (ExtendedVbtSize > 0, VbtCallback);
 
   if (EFI_ERROR (Status)) {
     return Status;

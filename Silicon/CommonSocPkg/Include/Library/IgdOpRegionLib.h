@@ -11,7 +11,7 @@
     VBT:        Video BIOS Table (OEM customizable data)
     IPU:        Image Processing Unit
 
-  Copyright (c) 2008 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -286,6 +286,10 @@ VOID
   IN CHILD_STRUCT **ChildStructPtr
   );
 
+typedef struct {
+  UINT8                  TurboIMON;
+  GOP_VBT_UPDATE_CALLBACK callback;
+} IGD_OP_PLATFORM_INFO;
 
 /**
 
@@ -300,7 +304,7 @@ VOID
 EFI_STATUS
 EFIAPI
 IgdOpRegionInit (
-  IN GOP_VBT_UPDATE_CALLBACK   GopVbtUpdateCallback
+  IN IGD_OP_PLATFORM_INFO *PlatformInfo
   );
 
 #endif
