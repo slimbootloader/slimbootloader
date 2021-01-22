@@ -1,6 +1,6 @@
 #/*++
 #
-#  Copyright (c) 1999 - 2014, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 #
@@ -27,13 +27,15 @@
 #
 
 [Sources]
+  IgdOpRegion.h
+  GopConfigLib.h
   IgdOpRegionLib.c
 
 [Packages]
   MdePkg/MdePkg.dec
   BootloaderCorePkg/BootloaderCorePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
-  Silicon/ElkhartlakePkg/ElkhartlakePkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
 
 [LibraryClasses]
   BaseLib
@@ -44,5 +46,5 @@
   MemoryAllocationLib
 
 [Pcd]
-  gPlatformModuleTokenSpaceGuid.PcdAcpiGnvsAddress
   gPlatformModuleTokenSpaceGuid.PcdGraphicsVbtAddress
+  gPlatformModuleTokenSpaceGuid.PcdIgdOpRegionAddress

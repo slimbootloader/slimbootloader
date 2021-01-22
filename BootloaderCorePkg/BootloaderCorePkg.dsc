@@ -255,6 +255,7 @@
   gPlatformModuleTokenSpaceGuid.PcdAcpiTablesAddress | 0xFF000000
   gPlatformModuleTokenSpaceGuid.PcdAcpiGnvsAddress   | 0xFF000000
   gPlatformModuleTokenSpaceGuid.PcdGraphicsVbtAddress| 0xFF000000
+  gPlatformModuleTokenSpaceGuid.PcdIgdOpRegionAddress| 0xFF000000
   gPlatformModuleTokenSpaceGuid.PcdDeviceTreeBase    | 0xFF000000
   gPlatformCommonLibTokenSpaceGuid.PcdAcpiPmTimerBase   | $(ACPI_PM_TIMER_BASE)
   gPlatformModuleTokenSpaceGuid.PcdFSPSBase          | $(FSP_S_BASE)

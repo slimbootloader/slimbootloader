@@ -70,6 +70,7 @@
 
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdGraphicsVbtAddress
+  gPlatformModuleTokenSpaceGuid.PcdIgdOpRegionAddress
   gPlatformCommonLibTokenSpaceGuid.PcdCpuInitIpiDelayInMicroSeconds
   gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImageRegionType
   gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImage1RegionSize

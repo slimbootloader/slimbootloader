@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2008 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2008 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -981,6 +981,40 @@ TglULpDdr4GopVbtSpecificUpdate(
   ChildStructPtr[2]->DeviceClass = NO_DEVICE;
 }
 
+//Initialize Platform Igd OpRegion
+VOID
+EFIAPI
+IgdOpRegionPlatformInit (
+  VOID
+  )
+{
+  GLOBAL_NVS_AREA           *Gnvs;
+  IGD_OP_PLATFORM_INFO      IgdPlatformInfo;
+  EFI_STATUS                Status;
+
+  Gnvs = (GLOBAL_NVS_AREA *)(UINTN)PcdGet32 (PcdAcpiGnvsAddress);
+
+  IgdPlatformInfo.TurboIMON = Gnvs->SaNvs.GfxTurboIMON;
+
+  switch (GetPlatformId ()) {
+    case BoardIdTglUDdr4:
+      IgdPlatformInfo.callback = (GOP_VBT_UPDATE_CALLBACK)(UINTN)&TglUDdr4GopVbtSpecificUpdate;
+      break;
+    case BoardIdTglULp4Type4:
+      IgdPlatformInfo.callback = (GOP_VBT_UPDATE_CALLBACK)(UINTN)&TglULpDdr4GopVbtSpecificUpdate;
+      break;
+    default:
+      DEBUG((DEBUG_INFO, "Unsupported board Id %x .....\n", GetPlatformId ()));
+      IgdPlatformInfo.callback = NULL;
+      break;
+  }
+
+  Status = IgdOpRegionInit (&IgdPlatformInfo);
+  Gnvs->SaNvs.IgdOpRegionAddress = (UINT32)(UINTN)PcdGet32 (PcdIgdOpRegionAddress);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_WARN, "VBT not found %r\n", Status));
+  }
+}
 
 /**
   Do board specific init based on phase indication
@@ -1003,7 +1037,6 @@ BoardInit (
   SILICON_CFG_DATA          *SiCfgData;
   UINTN                     LpcBase;
   BL_SW_SMI_INFO            *BlSwSmiInfo;
-  GOP_VBT_UPDATE_CALLBACK   VbtCallback;
 
   switch (InitPhase) {
   case PreSiliconInit:
@@ -1086,25 +1119,7 @@ BoardInit (
 
     break;
   case PrePayloadLoading:
-    switch (GetPlatformId ()) {
-      case BoardIdTglUDdr4:
-        VbtCallback = (GOP_VBT_UPDATE_CALLBACK)(UINTN)&TglUDdr4GopVbtSpecificUpdate;
-        break;
-      case BoardIdTglULp4Type4:
-        VbtCallback = (GOP_VBT_UPDATE_CALLBACK)(UINTN)&TglULpDdr4GopVbtSpecificUpdate;
-        break;
-      default:
-        DEBUG((DEBUG_INFO, "Unsupported board Id %x .....\n", GetPlatformId ()));
-        VbtCallback = NULL;
-      break;
-    }
-    Status = IgdOpRegionInit (VbtCallback);
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_WARN, "VBT not found %r\n", Status));
-    }
-#if 0
-    RetrieveMBPData ();
-#endif
+    IgdOpRegionPlatformInit ();
 
     ///
     /// Initialize the HECI device (for test HeciInitLib only)

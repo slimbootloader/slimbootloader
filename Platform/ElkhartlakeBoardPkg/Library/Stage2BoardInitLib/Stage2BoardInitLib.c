@@ -705,6 +705,26 @@ UpdatePayloadId (
   }
 }
 
+//Initialize Platform Igd OpRegion
+VOID
+EFIAPI
+IgdOpRegionPlatformInit (
+  VOID
+  )
+{
+  GLOBAL_NVS_AREA           *Gnvs;
+  EFI_STATUS                Status;
+
+  Gnvs = (GLOBAL_NVS_AREA *)(UINTN)PcdGet32 (PcdAcpiGnvsAddress);
+
+  Status = IgdOpRegionInit (NULL);
+  Gnvs->SaNvs.IgdOpRegionAddress = (UINT32)(UINTN)PcdGet32 (PcdIgdOpRegionAddress);
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_WARN, "VBT not found %r\n", Status));
+  }
+}
+
 /**
   Do board specific init based on phase indication
 
@@ -771,19 +791,11 @@ BoardInit (
 
     break;
   case PrePayloadLoading:
-    Status = IgdOpRegionInit ();
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_WARN, "VBT not found %r\n", Status));
-    }
-      //
-      // Set SMMBASE_INFO dummy structure in TSEG before others
-      //
-      //
-      // Set REG_INFO struct in TSEG region except 'Val' for regs
-      //
-#if 0
-    RetrieveMBPData ();
-#endif
+    ///
+    /// Initialize the IGD OpRegion
+    ///
+    IgdOpRegionPlatformInit ();
+
     ///
     /// Initialize the HECI device
     ///
