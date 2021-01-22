@@ -405,11 +405,11 @@ CreateIdentityMappingPageTables (
     // PDP
     Entries *= (NumOfPml4Entries == 1 ? NumOfPdpEntries : 512);
     for (Idx = 0; Idx < Entries; Idx++) {
-      Page64[Idx] = (UINTN)Page64 + (Entries * sizeof (UINT64)) + (SIZE_4KB * Idx) + Attribute;
+      Page64[Idx] = (UINTN)Page64 + (SIZE_4KB * (Idx + 1)) + Attribute;
     }
+    Page64 = (UINT64 *)((UINTN)Page64 + SIZE_4KB);
 
     // PDE
-    Page64 = (UINT64 *)((UINTN)Page64 + Entries * sizeof(UINT64));
     Entries *= 512;
     for (Idx = 0; Idx < Entries; Idx++, Address += SIZE_2MB) {
       Page64[Idx] = Address + (Attribute | IA32_PG_PD);
@@ -417,13 +417,10 @@ CreateIdentityMappingPageTables (
   }
 
   Cr0 = AsmReadCr0 ();
-  if (Cr0 & BIT31) {
-    // Alreay in paging mode
-    AsmWriteCr3 ((UINTN)PageBuffer);
-  } else {
-    // Enable paging
-    AsmWriteCr4 (AsmReadCr4() | BIT4);
-    AsmWriteCr3 ((UINTN)PageBuffer);
+  // Set PAE
+  AsmWriteCr4 (AsmReadCr4() | BIT5);
+  AsmWriteCr3 ((UINTN)PageBuffer);
+  if ((Cr0 & BIT31) != BIT31) {
     AsmWriteCr0 (Cr0 | BIT31);
   }
 
