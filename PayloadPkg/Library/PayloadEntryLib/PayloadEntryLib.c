@@ -222,7 +222,7 @@ SecStartup (
 
     // Only create paging in X64 mode
     if (IS_X64 && (MaxResLimit > BASE_4GB)) {
-      Index = (UINT8)HighBitSet64 (MaxResLimit);
+      Index = (UINT8)HighBitSet64 (MaxResLimit - 1);
       CreateIdentityMappingPageTables (Index + 1);
     }
   }
