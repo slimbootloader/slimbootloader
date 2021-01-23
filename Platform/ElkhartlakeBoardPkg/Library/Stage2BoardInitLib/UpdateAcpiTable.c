@@ -434,6 +434,87 @@ PlatformUpdateAcpiTable (
   } else if (Table->Signature == EFI_BDAT_TABLE_SIGNATURE) {
     UpdateBdatAcpiTable (Table, LdrGlobal->FspHobList);
     DEBUG ((DEBUG_INFO, "Updated BDAT Table in AcpiTable Entries\n"));
+  }  else if (Table->Signature == EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE) {
+    DEBUG ( (DEBUG_INFO, "Updated FADT Table entries in AcpiTable\n") );
+    //
+    // Fix up all FACP Table values if configuration requires it.
+    // This code fixes up the following Table values:
+    // (1) C2/C3/CST Enable FACP values
+    // (2) RTC S4 Flag
+    //
+    {
+      EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE *FadtPointer;
+
+      FadtPointer = (EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE *) Table;
+
+      //
+      // PME WAKE supported, set PCI_EXP_WAK, BIT14 of Fixed feature flags.
+      //
+      FadtPointer->Flags |= (EFI_ACPI_6_0_PCI_EXP_WAK);
+      //
+      // The Flags field within the FADT (offset 112)
+      //   1) will have a new Low Power S0 Idle Capable ACPI flag (bit offset 21).
+      //
+      FadtPointer->Flags = (BIT21 | FadtPointer->Flags);
+
+
+      //
+      //Only passive docking available in Conected Standby mode. Clear Docking capability Bit
+      //
+      FadtPointer->Flags &= ~BIT9;
+      //
+      // set indicates the power button is handled as a control method device.
+      //
+      FadtPointer->Flags |= EFI_ACPI_2_0_PWR_BUTTON;
+
+      //
+      // 1. set header revision.
+      //
+      FadtPointer->Header.Revision = EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE_REVISION;
+
+      //
+      // 2. set all GAR register AccessSize to valid value.
+      //
+      ((EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE *)FadtPointer)->ResetReg.AccessSize    = EFI_ACPI_6_1_BYTE;
+      ((EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE *)FadtPointer)->XPm1aEvtBlk.AccessSize = EFI_ACPI_6_1_WORD;
+      ((EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE *)FadtPointer)->XPm1bEvtBlk.AccessSize = EFI_ACPI_6_1_WORD;
+      ((EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE *)FadtPointer)->XPm1aCntBlk.AccessSize = EFI_ACPI_6_1_WORD;
+      ((EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE *)FadtPointer)->XPm1bCntBlk.AccessSize = EFI_ACPI_6_1_WORD;
+      ((EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE *)FadtPointer)->XPm2CntBlk.AccessSize  = EFI_ACPI_6_1_BYTE;
+      ((EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE *)FadtPointer)->XPmTmrBlk.AccessSize   = EFI_ACPI_6_1_DWORD;
+      ((EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE *)FadtPointer)->XGpe0Blk.AccessSize    = EFI_ACPI_6_1_BYTE;
+      ((EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE *)FadtPointer)->XGpe1Blk.AccessSize    = EFI_ACPI_6_1_BYTE;
+
+      ((EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE *)FadtPointer)->SleepControlReg.AddressSpaceId    = 0x1;
+      ((EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE *)FadtPointer)->SleepControlReg.RegisterBitWidth  = 0x8;
+      ((EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE *)FadtPointer)->SleepControlReg.RegisterBitOffset = 0;
+      ((EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE *)FadtPointer)->SleepControlReg.AccessSize        = EFI_ACPI_6_1_DWORD;
+      ((EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE *)FadtPointer)->SleepControlReg.Address           = ACPI_BASE_ADDRESS + 4;
+
+      ((EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE *)FadtPointer)->SleepStatusReg.AddressSpaceId     = 0x1;
+      ((EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE *)FadtPointer)->SleepStatusReg.RegisterBitWidth   = 0x8;
+      ((EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE *)FadtPointer)->SleepStatusReg.RegisterBitOffset  = 0;
+      ((EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE *)FadtPointer)->SleepStatusReg.AccessSize         = EFI_ACPI_6_1_DWORD;
+      ((EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE *)FadtPointer)->SleepStatusReg.Address            = ACPI_BASE_ADDRESS;
+
+      //
+      // Set the S4BiosReq to 0 as we don't support it in the FACS for EHL.
+      //
+      FadtPointer->S4BiosReq = 0;
+/*
+      //
+      //BIOS should expose either 64 bits or 32 bits address, not both.
+      //
+      if (FadtPointer->XPm1aEvtBlk.Address != 0) {
+        FadtPointer->Pm1aEvtBlk = 0;
+        FadtPointer->Pm1aCntBlk = 0;
+      }
+
+      if (FadtPointer->XPm2CntBlk.Address != 0) {
+        FadtPointer->Pm2CntBlk = 0;
+      }*/
+    }
+
   } else if (Table->Signature == EFI_ACPI_6_1_LOW_POWER_IDLE_TABLE_STRUCTURE_SIGNATURE){
       UINT8                                  LpitStateEntries = 0;
       EFI_ACPI_6_1_GENERIC_ADDRESS_STRUCTURE SetResidencyCounter[2] = { ACPI_LPI_RES_SLP_S0_COUNTER, ACPI_LPI_RES_C10_COUNTER };

@@ -31,6 +31,7 @@
   Hpet/Hpet.aslc
   Platform/CommonBoardPkg/AcpiTables/Fpdt/Fpdt.aslc
   Ssdt/SaSsdt.asl
+  Lpit/Lpit.act
   SsdtRtd3/EhlCrbRtd3.asl
   Dmar/Dmar.aslc
   CpuSsdt/Cpu0Cst.asl

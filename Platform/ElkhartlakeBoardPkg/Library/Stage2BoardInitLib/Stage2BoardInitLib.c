@@ -935,7 +935,7 @@ FspUpdatePsePolicy (
   Fspscfg->PchPseLogOutputChannel = SiCfgData->PchPseLogOutputChannel;
   Fspscfg->PchPseLogOutputSize    = SiCfgData->PchPseLogOutputSize;
   Fspscfg->PchPseLogOutputOffset  = SiCfgData->PchPseLogOutputOffset;
-  Fspscfg->PchPseEcliteEnabled    = 1;
+  Fspscfg->PchPseEcliteEnabled    = 0;
   Fspscfg->PchPseOobEnabled       = 0;
   Fspscfg->PchCpuTempSensorEnable = 1;
   Fspscfg->PchPseWoLEnabled       = 0;

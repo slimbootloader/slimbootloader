@@ -18,7 +18,7 @@ Scope (\_SB)
     }
 
     Method (_STA,0) {
-      If (And(BATP, BIT0))
+/**      If (And(BATP, BIT0))
       {  // Battery is supported.
         If (And(\_SB.ECLT.BNUM, BIT0)) // Real Battery 1 present?
         {
@@ -27,6 +27,7 @@ Scope (\_SB)
           Return(0x000B)    // No.  Hide it.
         }
       }
+**/
       Return (0)
     }
 

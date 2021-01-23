@@ -21,6 +21,10 @@ Scope (\_SB)
     Name (ECLA, 0) // Until the EcLite driver is ready, the control methods cannot access the operation region
     Name (BNUM, 0) // Number Of Batteries Present
 
+    Method (_STA, 0x0, NotSerialized) {
+      Return(0x0)
+    }
+
     //
     // EC-Lite device should be loaded only after PSE device is available
     //

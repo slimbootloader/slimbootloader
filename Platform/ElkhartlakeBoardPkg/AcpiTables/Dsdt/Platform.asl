@@ -1,7 +1,7 @@
 /** @file
   ACPI DSDT table
 
-  Copyright (c) 2011 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2011 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 #include "Register/PmcRegs.h"
@@ -220,9 +220,9 @@ Method(_WAK,1,Serialized)
     //{
     //  If(LEqual(PWRS,ECLITE_DC_PRESENT)) // Check if current status is DC
     //  {
-        Store(ECLITE_AC_PRESENT,PWRS)
+    //    Store(ECLITE_AC_PRESENT,PWRS)
     //    // Perform needed ACPI Notifications.
-        PNOT()
+    //    PNOT()
     //  }
     //}
     //Else // AC Source not Present
