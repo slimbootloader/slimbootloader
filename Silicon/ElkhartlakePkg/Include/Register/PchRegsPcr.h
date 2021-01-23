@@ -45,11 +45,13 @@
 //CNL
 #define  PID_BROADCAST1                        0xFF // @todo CNL PCH, check CNL cspec
 #define  PID_BROADCAST2                        0xFE // @todo CNL PCH, check CNL cspec
+#define  PID_ICLK                              0xAD
 #define  PID_DMI                               0x88
 #define  PID_SPD                               0x83
 #define  PID_SPC                               0x82
 #define  PID_SPB                               0x81
 #define  PID_SPA                               0x80
+#define  PID_UFSX2                             0x50
 #define  PID_RTC_HOST                          0xC3
 #define  PID_GPIOCOM0                          0x6E
 #define  PID_GPIOCOM1                          0x6D
