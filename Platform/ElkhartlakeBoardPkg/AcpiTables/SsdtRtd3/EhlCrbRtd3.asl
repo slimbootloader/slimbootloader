@@ -53,6 +53,8 @@ External(PPI1)
 External(PPP1)
 External(PPR1)
 External(PSWP)
+External(PS1C)
+External(PS2C)
 External(RPNB)
 External(PSPE)
 External(PPSP)
@@ -95,6 +97,7 @@ External(\_SB.PC00.I2C0.TPD0._STA, MethodObj)
 External(\_SB.PC00.UA00.BTH0, DeviceObj)
 #define WWAN_PCIE_ROOT_PORT \_SB.PC00.RP04
 External(WWAN_PCIE_ROOT_PORT.PXSX, DeviceObj) // For WWAN
+External(\_SB.PC00.RP01.PXSX, DeviceObj)
 External(\_SB.PC00.RP09.PXSX, DeviceObj)
 External(\_SB.PC00.RP13.PXSX, DeviceObj)
 External(WWAN_PCIE_ROOT_PORT.LASX)
@@ -116,44 +119,9 @@ External(WWAN_PCIE_ROOT_PORT.LASX)
       Store(PSWP, WAKG)
       Name(WAKP, 0)             // must be defined due to compiler bug, will be removed when fixed https://bugs.acpica.org/show_bug.cgi?id=1432
       Name(SCLK, 0)
+      Store(PS1C, SCLK)
       Include("Rtd3Pcie.asl")
-    }
-  //}
-
-    ///
-    /// PCIe RP09 RTD3 - M.2 SSD RTD3
-    ///
-    Scope(\_SB.PC00.RP09) {
-      Name(RSTG, Package() {0, 0})
-      Store(SSDR, Index(RSTG, 0))
-      Store(SDRP, Index(RSTG, 1))
-      Name(PWRG, Package() {0, 0})
-      Store(SSDP, Index(PWRG, 0))
-      Store(SDPP, Index(PWRG, 1))
-      Name(WAKG, 0)              // must be defined due to compiler bug, will be removed when fixed https://bugs.acpica.org/show_bug.cgi?id=1432
-      Name(WAKP, 0)              // must be defined due to compiler bug, will be removed when fixed https://bugs.acpica.org/show_bug.cgi?id=1432
-      Name(SCLK, 3)
-      Include("Rtd3Pcie.asl")
-      Scope(\_SB.PC00.RP09.PXSX) {
-        Include("Rtd3PcieSsdStorage.asl")
-      }
-    }
-
-    ///
-    /// PCIe RP13 RTD3 - M.2 SSD RTD3
-    ///
-    Scope(\_SB.PC00.RP13) {
-      Name(RSTG, Package() {0, 0})
-      Store(SD2R, Index(RSTG, 0))
-      Store(SDR1, Index(RSTG, 1))
-      Name(PWRG, Package() {0, 0})
-      Store(SD2P, Index(PWRG, 0))
-      Store(SDP1, Index(PWRG, 1))
-      Name(WAKG, 0)             // must be defined due to compiler bug, will be removed when fixed https://bugs.acpica.org/show_bug.cgi?id=1432
-      Name(WAKP, 0)             // must be defined due to compiler bug, will be removed when fixed https://bugs.acpica.org/show_bug.cgi?id=1432
-      Name(SCLK, 0)
-      Include("Rtd3Pcie.asl")
-      Scope(\_SB.PC00.RP13.PXSX) {
+      Scope(\_SB.PC00.RP01.PXSX) {
         Include("Rtd3PcieSsdStorage.asl")
       }
     }
@@ -173,6 +141,7 @@ External(WWAN_PCIE_ROOT_PORT.LASX)
       Store(PSW2, WAKG)
       Name(WAKP, 0)             // must be defined due to compiler bug, will be removed when fixed https://bugs.acpica.org/show_bug.cgi?id=1432
       Name(SCLK, 1)
+      Store(PS2C, SCLK)
       Include("Rtd3Pcie.asl")
     }
   //}
