@@ -14,7 +14,7 @@ import time
 
 sys.dont_write_bytecode = True
 sys.path.append (os.path.join('..', '..'))
-from BuildLoader import BaseBoard, STITCH_OPS, FLASH_REGION_TYPE
+from BuildLoader import BaseBoard, STITCH_OPS, FLASH_REGION_TYPE, HASH_USAGE
 from BuildLoader import IPP_CRYPTO_OPTIMIZATION_MASK, IPP_CRYPTO_ALG_MASK, HASH_TYPE_VALUE
 
 class Board(BaseBoard):
