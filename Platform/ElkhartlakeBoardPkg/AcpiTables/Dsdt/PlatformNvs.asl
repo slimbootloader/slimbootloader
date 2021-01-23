@@ -7,7 +7,7 @@
 /** @file
   ACPI DSDT table
 
-  Copyright (c) 2011 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2011 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -635,13 +635,17 @@
   Offset(1046),   FPTT, 8,  // Offset(1046),  SPI SerialIo Devices Type of FingerPrint
   Offset(1047),   FPTM, 8,  // Offset(1047),  SPI SerialIo Devices Interrupt Mode for FingerPrint
   Offset(1048),   WTVX, 8,  // Offset(1048),  WITT test devices' version
-  Offset(1049),   WITX, 8,  // Offset(1049),  WITT test devices' connection point
-  Offset(1050),   GPTD, 8,  // Offset(1050),  GPIO test devices
-  Offset(1051),   GDBT, 16, // Offset(1051),  GPIO test devices' debounce value,
-  Offset(1053),   UTKX, 8,  // Offset(1053),  UTK test devices' connection point
-  Offset(1054),   SPTD, 8,  // Offset(1054),  SerialIo additional test devices
-  Offset(1055),   DMTX, 8,  // Offset(1055),  DMA Test Enable/Disable
-  Offset(1066),             // Offset(1056) : Offset(1065), Reserved bytes
+  Offset(1049),   SIOI, 8,  // Offset(1049),  WITT SIO I2C test devices' connection point
+  Offset(1050),   SIOS, 8,  // Offset(1050),  WITT SIO SPI test devices' connection point
+  Offset(1051),   SIOU, 8,  // Offset(1051),  SIO UART test devices' connection point
+  Offset(1052),   GPTD, 8,  // Offset(1052),  GPIO test devices
+  Offset(1053),   GDBT, 16, // Offset(1053),  GPIO test devices' debounce value,
+  Offset(1055),   SPTD, 8,  // Offset(1055),  SerialIo additional test devices
+  Offset(1056),   DMTX, 8,  // Offset(1056),  DMA Test Enable/Disable
+  Offset(1057),   PIOI, 8,  // Offset(1057),  WITT PSE I2C test devices' connection point
+  Offset(1058),   PIOS, 8,  // Offset(1058),  WITT PSE SPI test devices' connection point
+  Offset(1059),   PIOU, 8,  // Offset(1059),  PSE UART test devices' connection point
+  Offset(1066),             // Offset(1060) : Offset(1065), Reserved bytes
   Offset(1066),   ATLB, 32, // Offset(1066),  Buffer for runtime ACPI Table loading
   Offset(1070),   SDM0, 8,  // Offset(1070),  interrupt mode for controller0 devices
   Offset(1071),   SDM1, 8,  // Offset(1071),  interrupt mode for controller1 devices
@@ -1471,13 +1475,14 @@
   Offset(2155),   WTSP, 8,  // Offset(2155),  ThermalSamplingPeriodWrls
   Offset(2156),   ELPM, 32, // Offset(2156),  EcLowPowerModeGpioPin
   Offset(2160),   ELPS, 32, // Offset(2160),  EcSmiGpioPin
+  Offset(2164),   VBSG, 32, // Offset(2164),  Virtual Battery Switch Gpio Pin
   //
   // UCMC setup option, GPIO Pad
   //
-  Offset(2164),   UCMS, 8,  // Offset(2164),  Option to select UCSI/UCMC device
-  Offset(2165),   UCG1, 32, // Offset(2165),  Gpio for UCMC Port 1 Interrupt
-  Offset(2169),   UCG2, 32, // Offset(2169),  Gpio for UCMC Port 2 Interrupt
-  Offset(2199),             // Offset(2173) : Offset(2198), Reserved bytes
+  Offset(2168),   UCMS, 8,  // Offset(2168),  Option to select UCSI/UCMC device
+  Offset(2169),   UCG1, 32, // Offset(2169),  Gpio for UCMC Port 1 Interrupt
+  Offset(2173),   UCG2, 32, // Offset(2173),  Gpio for UCMC Port 2 Interrupt
+  Offset(2199),             // Offset(2177) : Offset(2198), Reserved bytes
   Offset(2199),   PCHE, 8,  // Offset(2199),  EnablePchFivrParticipant
   Offset(2205),             // Offset(2200) : Offset(2204), Reserved bytes
   Offset(2205),   UDGF, 8,  // Offset(2205),  Upstream Facing port or Downstream Facing port Global Flag from LPC EC
@@ -1552,62 +1557,112 @@
   Offset(2337),   SXI2, 8,  // Offset(2337),  SDEV xHCI Interface Number for device 2
   Offset(2338),   SXP1, 8,  // Offset(2338),  SDEV xHCI Root Port Number for device 1
   Offset(2339),   SXP2, 8,  // Offset(2339),  SDEV xHCI Root Port Number for device 2
-  Offset(2340),   SCS0, 8,  // Offset(2340),  SPI0 ChipSelect Device enabled
-  Offset(2341),   SCS1, 8,  // Offset(2341),  SPI1 ChipSelect Device enabled
-  Offset(2342),   SCS2, 8,  // Offset(2342),  SPI2 ChipSelect Device enabled
+  Offset(2340),   SCS0, 8,  // Offset(2340),  SPI0 ChipSelect 0 Device enabled
+  Offset(2341),   SCS1, 8,  // Offset(2341),  SPI0 ChipSelect 1 Device enabled
+  Offset(2342),   SCS2, 8,  // Offset(2342),  SPI1 ChipSelect 0 Device enabled
+  Offset(2343),   SCS3, 8,  // Offset(2343),  SPI1 ChipSelect 1 Device enabled
+  Offset(2344),   SCS4, 8,  // Offset(2344),  SPI2 ChipSelect 0 Device enabled
+  Offset(2345),   SCS5, 8,  // Offset(2345),  SPI2 ChipSelect 1 Device enabled
   //
   // Generic Buttons Device policies - Begin
   //
-  Offset(2343),   GHOM, 32, // Offset(2343),
-  Offset(2347),   GVUP, 32, // Offset(2347),
-  Offset(2351),   GVDN, 32, // Offset(2351),
+  Offset(2346),   GHOM, 32, // Offset(2346),
+  Offset(2350),   GVUP, 32, // Offset(2350),
+  Offset(2354),   GVDN, 32, // Offset(2354),
   //
   // Generic Buttons Device policies - End
   //
-  Offset(2355),   TSD0, 8,  // Offset(2355),
-  Offset(2356),   TSD1, 8,  // Offset(2356),
-  Offset(2357),   TSD2, 8,  // Offset(2357),
-  Offset(2358),   PUA0, 8,  // Offset(2358),  Enable RS485 mode for PSE UART 0
-  Offset(2359),   PUA1, 8,  // Offset(2359),  Enable RS485 mode for PSE UART 0
-  Offset(2360),   PUA2, 8,  // Offset(2360),  Enable RS485 mode for PSE UART 0
-  Offset(2361),   PUA3, 8,  // Offset(2361),  Enable RS485 mode for PSE UART 0
-  Offset(2362),   SSH6, 16, // Offset(2362),  SSCN-HIGH for I2C6
-  Offset(2364),   SSL6, 16, // Offset(2364),  SSCN-LOW  for I2C6
-  Offset(2366),   SSD6, 16, // Offset(2366),  SSCN-HOLD for I2C6
-  Offset(2368),   FMH6, 16, // Offset(2368),  FMCN-HIGH for I2C6
-  Offset(2370),   FML6, 16, // Offset(2370),  FMCN-LOW  for I2C6
-  Offset(2372),   FMD6, 16, // Offset(2372),  FMCN-HOLD for I2C6
-  Offset(2374),   FPH6, 16, // Offset(2374),  FPCN-HIGH for I2C6
-  Offset(2376),   FPL6, 16, // Offset(2376),  FPCN-LOW  for I2C6
-  Offset(2378),   FPD6, 16, // Offset(2378),  FPCN-HOLD for I2C6
-  Offset(2380),   HSH6, 16, // Offset(2380),  HSCN-HIGH for I2C6
-  Offset(2382),   HSL6, 16, // Offset(2382),  HSCN-LOW  for I2C6
-  Offset(2384),   HSD6, 16, // Offset(2384),  HSCN-HOLD for I2C6
-  Offset(2386),   SSH7, 16, // Offset(2386),  SSCN-HIGH for I2C7
-  Offset(2388),   SSL7, 16, // Offset(2388),  SSCN-LOW  for I2C7
-  Offset(2390),   SSD7, 16, // Offset(2390),  SSCN-HOLD for I2C7
-  Offset(2392),   FMH7, 16, // Offset(2392),  FMCN-HIGH for I2C7
-  Offset(2394),   FML7, 16, // Offset(2394),  FMCN-LOW  for I2C7
-  Offset(2396),   FMD7, 16, // Offset(2396),  FMCN-HOLD for I2C7
-  Offset(2398),   FPH7, 16, // Offset(2398),  FPCN-HIGH for I2C7
-  Offset(2400),   FPL7, 16, // Offset(2400),  FPCN-LOW  for I2C7
-  Offset(2402),   FPD7, 16, // Offset(2402),  FPCN-HOLD for I2C7
-  Offset(2404),   HSH7, 16, // Offset(2404),  HSCN-HIGH for I2C7
-  Offset(2406),   HSL7, 16, // Offset(2406),  HSCN-LOW  for I2C7
-  Offset(2408),   HSD7, 16, // Offset(2408),  HSCN-HOLD for I2C7
-  Offset(2410),   M0CC, 16, // Offset(2410),  M0D3 for I2C6
-  Offset(2412),   M1CC, 16, // Offset(2412),  M1D3 for I2C6
-  Offset(2414),   M0CD, 16, // Offset(2414),  M0D3 for I2C7
-  Offset(2416),   M1CD, 16, // Offset(2416),  M1D3 for I2C7
-  Offset(2418),   IC0S, 32, // Offset(2418),  I2C0 Speed - Standard mode/Fast mode/FastPlus mode/HighSpeed mode
-  Offset(2422),   IC1S, 32, // Offset(2422),  I2C1 Speed - Standard mode/Fast mode/FastPlus mode/HighSpeed mode
-  Offset(2426),   IC2S, 32, // Offset(2426),  I2C2 Speed - Standard mode/Fast mode/FastPlus mode/HighSpeed mode
-  Offset(2430),   IC3S, 32, // Offset(2430),  I2C3 Speed - Standard mode/Fast mode/FastPlus mode/HighSpeed mode
-  Offset(2434),   IC4S, 32, // Offset(2434),  I2C4 Speed - Standard mode/Fast mode/FastPlus mode/HighSpeed mode
-  Offset(2438),   IC5S, 32, // Offset(2438),  I2C5 Speed - Standard mode/Fast mode/FastPlus mode/HighSpeed mode
-  Offset(2442),   IC6S, 32, // Offset(2442),  I2C6 Speed - Standard mode/Fast mode/FastPlus mode/HighSpeed mode
-  Offset(2446),   IC7S, 32, // Offset(2446),  I2C7 Speed - Standard mode/Fast mode/FastPlus mode/HighSpeed mode
-  Offset(2450),   PS1C, 8,  // Offset(2450),  Pcie Slot 1 Clk Src
-  Offset(2451),   PS2C, 8,  // Offset(2451),  Pcie Slot 2 Clk Src
-  Offset(2452),   TBAS, 64, // Offset(2452),  PTCT Table Memory Address
+  Offset(2358),   TSD0, 8,  // Offset(2358),
+  Offset(2359),   TSD1, 8,  // Offset(2359),
+  Offset(2360),   TSD2, 8,  // Offset(2360),
+  Offset(2361),   PUA0, 8,  // Offset(2361),  Enable RS485 mode for PSE UART 0
+  Offset(2362),   PUA1, 8,  // Offset(2362),  Enable RS485 mode for PSE UART 0
+  Offset(2363),   PUA2, 8,  // Offset(2363),  Enable RS485 mode for PSE UART 0
+  Offset(2364),   PUA3, 8,  // Offset(2364),  Enable RS485 mode for PSE UART 0
+  Offset(2365),   PSC0, 8,  // Offset(2365),  PSE SPI0 ChipSelect0 Device enabled
+  Offset(2366),   PSC1, 8,  // Offset(2366),  PSE SPI1 ChipSelect0 Device enabled
+  Offset(2367),   PSC2, 8,  // Offset(2367),  PSE SPI2 ChipSelect0 Device enabled
+  Offset(2368),   PSC3, 8,  // Offset(2368),  PSE SPI3 ChipSelect0 Device enabled
+  Offset(2369),   PS00, 8,  // Offset(2369),  PSE SPI0 ChipSelect1 Device enabled
+  Offset(2370),   PS01, 8,  // Offset(2370),  PSE SPI1 ChipSelect1 Device enabled
+  Offset(2371),   PS02, 8,  // Offset(2371),  PSE SPI2 ChipSelect1 Device enabled
+  Offset(2372),   PS03, 8,  // Offset(2372),  PSE SPI3 ChipSelect1 Device enabled
+  Offset(2373),   SSH6, 16, // Offset(2373),  SSCN-HIGH for I2C6
+  Offset(2375),   SSL6, 16, // Offset(2375),  SSCN-LOW  for I2C6
+  Offset(2377),   SSD6, 16, // Offset(2377),  SSCN-HOLD for I2C6
+  Offset(2379),   FMH6, 16, // Offset(2379),  FMCN-HIGH for I2C6
+  Offset(2381),   FML6, 16, // Offset(2381),  FMCN-LOW  for I2C6
+  Offset(2383),   FMD6, 16, // Offset(2383),  FMCN-HOLD for I2C6
+  Offset(2385),   FPH6, 16, // Offset(2385),  FPCN-HIGH for I2C6
+  Offset(2387),   FPL6, 16, // Offset(2387),  FPCN-LOW  for I2C6
+  Offset(2389),   FPD6, 16, // Offset(2389),  FPCN-HOLD for I2C6
+  Offset(2391),   HSH6, 16, // Offset(2391),  HSCN-HIGH for I2C6
+  Offset(2393),   HSL6, 16, // Offset(2393),  HSCN-LOW  for I2C6
+  Offset(2395),   HSD6, 16, // Offset(2395),  HSCN-HOLD for I2C6
+  Offset(2397),   SSH7, 16, // Offset(2397),  SSCN-HIGH for I2C7
+  Offset(2399),   SSL7, 16, // Offset(2399),  SSCN-LOW  for I2C7
+  Offset(2401),   SSD7, 16, // Offset(2401),  SSCN-HOLD for I2C7
+  Offset(2403),   FMH7, 16, // Offset(2403),  FMCN-HIGH for I2C7
+  Offset(2405),   FML7, 16, // Offset(2405),  FMCN-LOW  for I2C7
+  Offset(2407),   FMD7, 16, // Offset(2407),  FMCN-HOLD for I2C7
+  Offset(2409),   FPH7, 16, // Offset(2409),  FPCN-HIGH for I2C7
+  Offset(2411),   FPL7, 16, // Offset(2411),  FPCN-LOW  for I2C7
+  Offset(2413),   FPD7, 16, // Offset(2413),  FPCN-HOLD for I2C7
+  Offset(2415),   HSH7, 16, // Offset(2415),  HSCN-HIGH for I2C7
+  Offset(2417),   HSL7, 16, // Offset(2417),  HSCN-LOW  for I2C7
+  Offset(2419),   HSD7, 16, // Offset(2419),  HSCN-HOLD for I2C7
+  Offset(2421),   M0CC, 16, // Offset(2421),  M0D3 for I2C6
+  Offset(2423),   M1CC, 16, // Offset(2423),  M1D3 for I2C6
+  Offset(2425),   M0CD, 16, // Offset(2425),  M0D3 for I2C7
+  Offset(2427),   M1CD, 16, // Offset(2427),  M1D3 for I2C7
+  Offset(2429),   IC0S, 32, // Offset(2429),  I2C0 Speed - Standard mode/Fast mode/FastPlus mode/HighSpeed mode
+  Offset(2433),   IC1S, 32, // Offset(2433),  I2C1 Speed - Standard mode/Fast mode/FastPlus mode/HighSpeed mode
+  Offset(2437),   IC2S, 32, // Offset(2437),  I2C2 Speed - Standard mode/Fast mode/FastPlus mode/HighSpeed mode
+  Offset(2441),   IC3S, 32, // Offset(2441),  I2C3 Speed - Standard mode/Fast mode/FastPlus mode/HighSpeed mode
+  Offset(2445),   IC4S, 32, // Offset(2445),  I2C4 Speed - Standard mode/Fast mode/FastPlus mode/HighSpeed mode
+  Offset(2449),   IC5S, 32, // Offset(2449),  I2C5 Speed - Standard mode/Fast mode/FastPlus mode/HighSpeed mode
+  Offset(2453),   IC6S, 32, // Offset(2453),  I2C6 Speed - Standard mode/Fast mode/FastPlus mode/HighSpeed mode
+  Offset(2457),   IC7S, 32, // Offset(2457),  I2C7 Speed - Standard mode/Fast mode/FastPlus mode/HighSpeed mode
+  Offset(2461),   PS1C, 8,  // Offset(2461),  Pcie Slot 1 Clk Src
+  Offset(2462),   PS2C, 8,  // Offset(2462),  Pcie Slot 2 Clk Src
+  Offset(2463),   TBAS, 64, // Offset(2463),  PTCT Table Memory Address
+  // Test Device for Serial IOs
+  Offset(2471),   SII0, 8,  // Offset(2471),  SIO I2C0 test devices' connection point
+  Offset(2472),   SII1, 8,  // Offset(2472),  SIO I2C1 test devices' connection point
+  Offset(2473),   SII2, 8,  // Offset(2473),  SIO I2C2 test devices' connection point
+  Offset(2474),   SII3, 8,  // Offset(2474),  SIO I2C3 test devices' connection point
+  Offset(2475),   SII4, 8,  // Offset(2475),  SIO I2C4 test devices' connection point
+  Offset(2476),   SII5, 8,  // Offset(2476),  SIO I2C5 test devices' connection point
+  Offset(2477),   SII6, 8,  // Offset(2477),  SIO I2C6 test devices' connection point
+  Offset(2478),   SII7, 8,  // Offset(2478),  SIO I2C7 test devices' connection point
+  Offset(2479),   SIS0, 8,  // Offset(2479),  SIO SPI0 test devices' connection point
+  Offset(2480),   SIS1, 8,  // Offset(2480),  SIO SPI1 test devices' connection point
+  Offset(2481),   SIS2, 8,  // Offset(2481),  SIO SPI2 test devices' connection point
+  Offset(2482),   SIU0, 8,  // Offset(2482),  SIO UART0 test devices' connection point
+  Offset(2483),   SIU1, 8,  // Offset(2483),  SIO UART1 test devices' connection point
+  Offset(2484),   SIU2, 8,  // Offset(2484),  SIO UART2 test devices' connection point
+  // Test Device for PSE IOs
+  Offset(2485),   PII0, 8,  // Offset(2485),  PSE I2C0 test devices' connection point
+  Offset(2486),   PII1, 8,  // Offset(2486),  PSE I2C1 test devices' connection point
+  Offset(2487),   PII2, 8,  // Offset(2487),  PSE I2C2 test devices' connection point
+  Offset(2488),   PII3, 8,  // Offset(2488),  PSE I2C3 test devices' connection point
+  Offset(2489),   PII4, 8,  // Offset(2489),  PSE I2C4 test devices' connection point
+  Offset(2490),   PII5, 8,  // Offset(2490),  PSE I2C5 test devices' connection point
+  Offset(2491),   PII6, 8,  // Offset(2491),  PSE I2C6 test devices' connection point
+  Offset(2492),   PII7, 8,  // Offset(2492),  PSE I2C7 test devices' connection point
+  Offset(2493),   PIS0, 8,  // Offset(2493),  PSE SPI0 test devices' connection point
+  Offset(2494),   PIS1, 8,  // Offset(2494),  PSE SPI1 test devices' connection point
+  Offset(2495),   PIS2, 8,  // Offset(2495),  PSE SPI2 test devices' connection point
+  Offset(2496),   PIS3, 8,  // Offset(2496),  PSE SPI3 test devices' connection point
+  Offset(2497),   PIU0, 8,  // Offset(2497),  PSE UART0 test devices' connection point
+  Offset(2498),   PIU1, 8,  // Offset(2498),  PSE UART1 test devices' connection point
+  Offset(2499),   PIU2, 8,  // Offset(2499),  PSE UART2 test devices' connection point
+  Offset(2500),   PIU3, 8,  // Offset(2500),  PSE UART3 test devices' connection point
+  Offset(2501),   PIU4, 8,  // Offset(2501),  PSE UART4 test devices' connection point
+  Offset(2502),   PIU5, 8,  // Offset(2502),  PSE UART5 test devices' connection point
+  //
+  // Eclite Device Enabe/Disable
+  //
+  Offset(2503),   ECLE, 8,  // Offset(2503),  PSE Eclite Service Enable/Disable
+  Offset(2504),   PWOL, 8,  // Offset(2504),  PSE WoL Service Enable/Disable
   }

@@ -1,11 +1,13 @@
 /**@file
 
 
- Copyright (c) 1999 - 2020, Intel Corporation. All rights reserved.<BR>
+ Copyright (c) 1999 - 2021, Intel Corporation. All rights reserved.<BR>
  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
-  OperationRegion(PXCS,PCI_Config,0x00,0xC80)
+  External(\_SB.PC00.PC2M, MethodObj)
+
+  OperationRegion(PXCS,SystemMemory,\_SB.PC00.PC2M(_ADR()),0xC80)
   Field(PXCS,AnyAcc, NoLock, Preserve)
   {
     Offset(0),
@@ -29,8 +31,8 @@
     HPEX, 1,      // 30,  Hot Plug SCI Enable
     PMEX, 1,      // 31,  Power Management SCI Enable
     Offset(R_PCH_PCIE_CFG_SPR),    // 0xE0, SPR - Scratch Pad Register
-    , 7,
-    NCB7, 1,                   // Non-Sticky Scratch Pad Bit (NSCB)[7]
+    , 1,
+    SCB1, 1,                   // Sticky Scratch Pad Bit (SCB)[1]
     Offset(R_PCH_PCIE_CFG_RPPGEN), // 0xE2, RPPGEN - Root Port Power Gating Enable
     , 2,
     L23E, 1,      // 2,   L23_Rdy Entry Request (L23ER)
@@ -53,7 +55,7 @@
   // are proprietary and OS drivers don't know about them.
   //
   Method (L23D, 0, Serialized) {
-    If(LNotEqual(NCB7,0x1)) {
+    If(LNotEqual(SCB1,0x1)) {
       Return()
     }
     /// Clear DLSULPPGE, then set L23_Rdy to Detect Transition  (L23R2DT)
@@ -69,7 +71,7 @@
       Sleep(16)
       Increment(Local0)
     }
-    Store(0,NCB7)
+    Store(0,SCB1)
 
     /// Once in Detect, wait up to 124 ms for Link Active (typically happens in under 70ms)
     /// Worst case per PCIe spec from Detect to Link Active is:
@@ -103,7 +105,7 @@
       Sleep(16)
       Increment(Local0)
     }
-    Store(1,NCB7)
+    Store(1,SCB1)
   }
 
   Name(LTRV, Package(){0,0,0,0})
