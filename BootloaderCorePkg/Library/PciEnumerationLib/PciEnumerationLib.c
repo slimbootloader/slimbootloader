@@ -26,17 +26,16 @@ STATIC PCI_RES_ALLOC_TABLE  *mResAllocTablePtr;
 //
 // Default PCI Resource Allocation Range
 //
-STATIC CONST PCI_RES_ALLOC_RANGE mDefaultResRange = {
+STATIC PCI_RES_ALLOC_RANGE mDefaultResRange = {
   .BusBase      = 0,
   .BusLimit     = 0xFF,
   .Reserved     = 0,
-  .IoBase       = FixedPcdGet32 (PcdPciResourceIoBase),
+  .IoBase       = 0x1000,
   .IoLimit      = 0xFFFF,
-  .Mmio32Base   = FixedPcdGet32 (PcdPciResourceMem32Base),
+  .Mmio32Base   = 0x80000000,
   .Mmio32Limit  = 0xFFFFFFFF,
-  .Mmio64Base   = FixedPcdGet64 (PcdPciResourceMem64Base),
-  .Mmio64Limit  = FixedPcdGet64 (PcdPciResourceMem64Base) +
-                  (FixedPcdGet64 (PcdPciResourceMem64Base) >> 1)
+  .Mmio64Base   = 0x400000000ULL,
+  .Mmio64Limit  = 0xFFFFFFFFFULL
 };
 
 /**
@@ -1763,6 +1762,12 @@ PciEnumeration (
   EFI_STATUS                  Status;
 
   SetAllocationPool (MemPool);
+
+  // Update PCI default resource ranges
+  mDefaultResRange.IoBase       = PcdGet32 (PcdPciResourceIoBase);
+  mDefaultResRange.Mmio32Base   = PcdGet32 (PcdPciResourceMem32Base);
+  mDefaultResRange.Mmio64Base   = PcdGet64 (PcdPciResourceMem64Base);
+  mDefaultResRange.Mmio64Limit  = PcdGet64 (PcdPciResourceMem64Base) + (PcdGet64 (PcdPciResourceMem64Base) >> 1);
 
   EnumPolicy = (PCI_ENUM_POLICY_INFO *)PcdGetPtr (PcdPciEnumPolicyInfo);
   RootBridgeCount = 0;
