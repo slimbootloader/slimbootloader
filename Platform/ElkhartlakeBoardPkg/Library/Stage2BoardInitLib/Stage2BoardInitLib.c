@@ -75,6 +75,7 @@
 #include <TccConfigSubRegion.h>
 #include <Library/MeExtMeasurementLib.h>
 #include <Library/GpioLib.h>
+#include <Register/RegsSpi.h>
 
 
 UINT8 mTccRtd3Support;
@@ -459,7 +460,22 @@ BuildOsConfigDataHob (
   return EFI_SUCCESS;
 }
 
+/**
+  Set SPI flash EISS and LE
+**/
+VOID
+ProgramSecuritySetting (
+  VOID
+  )
+{
+  UINTN            SpiBaseAddress;
 
+  SpiBaseAddress = GetDeviceAddr (OsBootDeviceSpi, 0);
+  SpiBaseAddress = TO_MM_PCI_ADDRESS (SpiBaseAddress);
+
+  // Set the BIOS Lock Enable and EISS bits
+  MmioOr8 (SpiBaseAddress + R_SPI_BCR, (UINT8) (B_SPI_BCR_BLE | B_SPI_BCR_EISS));
+}
 
 /**
   Add a Smbios type string into a buffer
@@ -788,6 +804,14 @@ BoardInit (
         mS3SaveReg.S3SaveHdr.TotalSize = sizeof(BL_PLD_COMM_HDR) + mS3SaveReg.S3SaveHdr.Count * sizeof(REG_INFO);
         AppendS3Info ((VOID *)&mS3SaveReg);
       }
+    }
+    if ((GetBootMode() != BOOT_ON_FLASH_UPDATE) && (GetPayloadId() != 0)) {
+      ProgramSecuritySetting ();
+    }
+    break;
+  case ReadyToBoot:
+    if ((GetBootMode() != BOOT_ON_FLASH_UPDATE) && (GetPayloadId() == 0)) {
+      ProgramSecuritySetting ();
     }
     break;
   case EndOfFirmware:
