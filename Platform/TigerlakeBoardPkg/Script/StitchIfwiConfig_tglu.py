@@ -59,8 +59,8 @@ def get_bpmgen2_params_change_list ():
       ('TxtInclude',            'FALSE'),
       ('PcdInclude',            'TRUE'),
       ('BpmSigScheme',          '0x16:RSAPSS'),
-      ('BpmSigPubKey',          r'Bpmgen2\keys\bpm_pubkey_3072.pem'),
-      ('BpmSigPrivKey',         r'Bpmgen2\keys\bpm_privkey_3072.pem'),
+      ('BpmSigPubKey',          r'BpmGen2/keys/bpm_pubkey_3072.pem'),
+      ('BpmSigPrivKey',         r'BpmGen2/keys/bpm_privkey_3072.pem'),
       ('BpmKeySizeBits',        '3072'),
       ('BpmSigHashAlgID',       '0x0C:SHA384'),
       ])
