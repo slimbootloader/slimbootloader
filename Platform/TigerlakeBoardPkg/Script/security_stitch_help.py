@@ -126,7 +126,7 @@ def update_btGuard_manifests(stitch_dir, stitch_cfg_file, btg_profile, tpm):
     output_dir  = os.path.join(stitch_dir, "Temp")
     sbl_file    = os.path.join (output_dir, 'SlimBootloader.bin')
     out_file    = os.path.join(output_dir, "BiosRegion.bin")
-    bpm_gen2dir = os.path.join (stitch_dir, 'bpmgen2')
+    bpm_gen2dir = os.path.join (stitch_dir, 'BpmGen2')
     bmpgen_params = os.path.join(output_dir, "bpmgen2.params")
     bpm_key_dir = os.path.join (bpm_gen2dir, 'keys')
     key_size    = '3072'
