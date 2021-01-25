@@ -25,6 +25,9 @@ GEN_CFG_DATA.PayloadId                   | 'UEFI'
 CAPSULE_INFO_CFG_DATA.DevType | 6
 FEATURES_CFG_DATA.Features.Tcc | 1
 
+SILICON_CFG_DATA.EnableTimedGpio0 | 1
+SILICON_CFG_DATA.EnableTimedGpio1 | 1
+
 #
 # To enable payload selection the below options need to uncommented.
 # This GPIO maps to pins 3/4 on 4-pin jumper J9J5 which is closest

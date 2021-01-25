@@ -220,6 +220,30 @@
                      Enable/disable Multiple Virtual Channel for PCIE Root Ports. 0- disable, 1- enable. One bit for each port, bit0 for port1, bit1 for port2, and so on.
       length       : 0x04
       value        : { 0x01, 0x01, 0x01, 0x01 }
+  - XdciEnable :
+      name         : xDCI controller
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/disable to xDCI controller. 0- Disable; 1- Enable.
+      length       : 0x01
+      value        : 0x1
+  - EnableTimedGpio0 :
+      name         : Timed GPIO 0
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/disable Timed GPIO0    0- Disable; 1- Enable.
+      length       : 0x01
+      value        : 0x0
+  - EnableTimedGpio1 :
+      name         : Timed GPIO 1
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/disable Timed GPIO1    0- Disable; 1- Enable.
+      length       : 0x01
+      value        : 0x0
   - ConfigTdpLevel :
       name         : Configuration for boot TDP selection
       type         : EditNum, HEX, (0x00, 0xFF)
@@ -228,6 +252,6 @@
       length       : 0x01
       value        : 0x02
   - Dummy        :
-      length       : 0x0
+      length       : 0x1
       value        : 0x0
 
