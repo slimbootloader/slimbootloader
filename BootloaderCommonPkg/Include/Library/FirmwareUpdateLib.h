@@ -495,6 +495,38 @@ UpdateCsme (
   );
 
 /**
+  Reads a range of PCI configuration registers into a caller supplied buffer.
+
+  Reads the range of PCI configuration registers specified by StartAddress and
+  Size into the buffer specified by Buffer. This function only allows the PCI
+  configuration registers from a single PCI function to be read. Size is
+  returned. When possible 32-bit PCI configuration read cycles are used to read
+  from StartAddress to StartAddress + Size. Due to alignment restrictions, 8-bit
+  and 16-bit PCI configuration read cycles may be used at the beginning and the
+  end of the range.
+
+  If StartAddress > 0x0FFFFFFF, then ASSERT().
+  If ((StartAddress & 0xFFF) + Size) > 0x1000, then ASSERT().
+  If Size > 0 and Buffer is NULL, then ASSERT().
+
+  @param  StartAddress  The starting address that encodes the PCI Bus, Device,
+                        Function and Register.
+  @param  Size          The size in bytes of the transfer.
+  @param  Buffer        The pointer to a buffer receiving the data read.
+
+  @return EFI_SUCCESS        if data is read into buffer
+  @return EFI_NOT_FOUND      if data is NOT read into buffer
+  @return EFI_INVALID_PARAMETER  Invalid parameter
+**/
+EFI_STATUS
+EFIAPI
+CsmePciReadBuffer (
+  IN      UINTN     StartAddress,
+  IN      UINTN     Size,
+  OUT     VOID      *Buffer
+  );
+
+/**
   Platform hook point to clear firmware update trigger.
 
   This function is responsible for clearing firmware update trigger.
