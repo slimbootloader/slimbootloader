@@ -12,7 +12,6 @@
 #include <Uefi/UefiBaseType.h>
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
-#include <Library/PciLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/TimerLib.h>
@@ -146,7 +145,7 @@ InitCsmeUpdInputData (
     CsmeUpdDriverInput->SetMem           = (VOID *)((UINTN)SetMem);
     CsmeUpdDriverInput->CompareMem       = (VOID *)((UINTN)CompareMem);
     CsmeUpdDriverInput->Stall            = (VOID *)((UINTN)MicroSecondDelay);
-    CsmeUpdDriverInput->PciRead          = (VOID *)((UINTN)PciReadBuffer);
+    CsmeUpdDriverInput->PciRead          = (VOID *)((UINTN)CsmePciReadBuffer);
     if (HeciService != NULL) {
       CsmeUpdDriverInput->HeciReadMessage  = (VOID *)((UINTN)HeciService->HeciReceive);
       CsmeUpdDriverInput->HeciSendMessage  = (VOID *)((UINTN)HeciService->HeciSend);
