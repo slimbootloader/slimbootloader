@@ -87,8 +87,6 @@
   gPlatformModuleTokenSpaceGuid.PcdVariableRegionBase     | 0x00000000 | UINT32 | 0x2000008E
   gPlatformModuleTokenSpaceGuid.PcdVariableRegionSize     | 0x00000000 | UINT32 | 0x2000008F
 
-  gPlatformModuleTokenSpaceGuid.PcdPciResourceIoBase      | 0x00000000 | UINT32 | 0x200000A0
-  gPlatformModuleTokenSpaceGuid.PcdPciResourceMem32Base   | 0x00000000 | UINT32 | 0x200000A1
   gPlatformModuleTokenSpaceGuid.PcdMemoryMapEntryNumber   | 0x00000020 | UINT32 | 0x200000A2
   gPlatformModuleTokenSpaceGuid.PcdOsBootOptionNumber     | 0x00000008 | UINT32 | 0x200000A3
   gPlatformModuleTokenSpaceGuid.PcdServiceNumber          | 0x00000004 | UINT32 | 0x200000A4
@@ -117,7 +115,6 @@
   # self._PCI_ENUM_BUS_SCAN_TYPE    = 1
   # self._PCI_ENUM_BUS_SCAN_ITEMS   = '0,0xff'
   gPlatformModuleTokenSpaceGuid.PcdPciEnumPolicyInfo      | {0x00}     | VOID*  | 0x200000A5
-  gPlatformModuleTokenSpaceGuid.PcdPciResourceMem64Base   | 0x0000000000000000  | UINT64     | 0x200000A6
 
   gPlatformModuleTokenSpaceGuid.PcdLoaderHobStackSize     | 0x00040000 | UINT32 | 0x200000B0
   gPlatformModuleTokenSpaceGuid.PcdEarlyLogBufferSize     | 0x00000400 | UINT32 | 0x200000B1
@@ -180,7 +177,11 @@
   gPlatformModuleTokenSpaceGuid.PcdFuncCpuInitHook        | 0x00000000 | UINT32 | 0x2000019A
   gPlatformModuleTokenSpaceGuid.PcdFspsUpdPtr             | 0x00000000 | UINT32 | 0x2000019B
 
-  gPlatformModuleTokenSpaceGuid.PcdPciResAllocTableBase   | 0x00000000 | UINT32 | 0x2000019C
+  gPlatformModuleTokenSpaceGuid.PcdPciResAllocTableBase   | 0x00000000 | UINT32 | 0x200001A0
+  gPlatformModuleTokenSpaceGuid.PcdPciResourceIoBase      | 0x00000000 | UINT32 | 0x200001A1
+  gPlatformModuleTokenSpaceGuid.PcdPciResourceMem32Base   | 0x00000000 | UINT32 | 0x200001A2
+  gPlatformModuleTokenSpaceGuid.PcdPciResourceMem64Base   | 0x0000000000000000  | UINT64     | 0x200001A3
+
 
 [PcdsFeatureFlag]
   # Determine if the Intel GFX device should be enabled or not in system
