@@ -1653,7 +1653,6 @@ UpdateFspConfig (
   FspsConfig->PortUsb30Enable[1] = 0x1;
   FspsConfig->PortUsb30Enable[2] = 0x1;
   FspsConfig->PortUsb30Enable[3] = 0x1;
-  FspsConfig->XdciEnable = 0x1;
 
   if (IsPchH ()) {
     FspsConfig->PortUsb20Enable[1] = 0x1;
@@ -1724,6 +1723,9 @@ UpdateFspConfig (
 
   if (SiCfgData != NULL) {
     FspsConfig->ConfigTdpLevel = SiCfgData->ConfigTdpLevel;
+    FspsConfig->EnableTimedGpio0 = SiCfgData->EnableTimedGpio0;
+    FspsConfig->EnableTimedGpio1 = SiCfgData->EnableTimedGpio1;
+    FspsConfig->XdciEnable       = SiCfgData->XdciEnable;
   }
   Status = TccModePostMemConfig (FspsUpd);
 
@@ -2652,6 +2654,9 @@ PlatformUpdateAcpiGnvs (
   PchNvs->SGIR = FspsConfig->GpioIrqRoute ;
   PchNvs->SWMC = GetPchHdaMaxSndwLinkNum();
   Length = GetPchMaxPciePortNum ();
+
+  PchNvs->EnableTimedGpio0 = FspsConfig->EnableTimedGpio0;
+  PchNvs->EnableTimedGpio1 = FspsConfig->EnableTimedGpio1;
 
   PchMaxPciePortNum = GetPchMaxPciePortNum ();
   for (Index = 0; Index < PchMaxPciePortNum; Index++) {
