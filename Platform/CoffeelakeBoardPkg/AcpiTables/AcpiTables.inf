@@ -42,7 +42,7 @@
   Fwst/Fwst.aslc
   Platform/CommonBoardPkg/AcpiTables/Tpm/Tpm2.aslc
   Platform/CommonBoardPkg/AcpiTables/Fpdt/Fpdt.aslc
-  Platform/CommonBoardPkg/AcpiTables/Tpm/TpmSsdt.asl
+  Ssdt/TpmSsdt.asl
   Ssdt/Thermal.asl
   CpuSsdt/Cpu0Cst.asl
   CpuSsdt/Cpu0Ist.asl
