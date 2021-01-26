@@ -1,7 +1,7 @@
 ## @file
 # Component description file for PlatformAcpiTable module.
 #
-#  Copyright (c) 1999 - 2020, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -22,13 +22,15 @@
   Dmar/Dmar.h
   Dsdt/GpioAcpiDefinesVer3.h
   Dsdt/PchSerialIoAcpiDefinesEhl.h
+  Hpet/Hpet.h
+  Fadt/Fadt6.1.h
   Dsdt/Dsdt.asl
   Facs/Facs.aslc
-  Fadt/Fadt.aslc
+  Fadt/Fadt6.1.act
   Fwst/Fwst.aslc
   Madt/Madt30.aslc
   Mcfg/Mcfg.aslc
-  Hpet/Hpet.aslc
+  Hpet/Hpet.act
   Platform/CommonBoardPkg/AcpiTables/Fpdt/Fpdt.aslc
   Ssdt/SaSsdt.asl
   SsdtRtd3/EhlCrbRtd3.asl

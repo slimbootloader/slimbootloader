@@ -1,7 +1,7 @@
 /**@file
   File contains platform specific ACPI defines for use in ACPI tables
 
-  Copyright (c) 1999 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -25,41 +25,6 @@
 
 #define ICH_IOAPIC_ID   0x02
 #define INT_MODEL       0x01
-#define PM_PROFILE      EFI_ACPI_4_0_PM_PROFILE_MOBILE
-#define SCI_INT_VECTOR  0x0009
-#define SMI_CMD_IO_PORT PM1a_CNT_BLK
-#define ACPI_ENABLE     0x1
-#define ACPI_DISABLE    0x0
-#define S4BIOS_REQ      0x00
-#define PSTATE_CNT      0x00
-#define PM1a_EVT_BLK    0x00001800
-#define PM1b_EVT_BLK    0x00000000
-#define PM1a_CNT_BLK    0x00001804
-#define PM1b_CNT_BLK    0x00000000
-#define PM2_CNT_BLK     0x00001850
-#define PM_TMR_BLK      0x00001808
-#define GPE0_BLK        0x00001860
-#define GPE1_BLK        0x00000000
-#define PM1_EVT_LEN     0x04
-#define PM1_CNT_LEN     0x02
-#define PM2_CNT_LEN     0x01
-#define PM_TM_LEN       0x04
-#define GPE0_BLK_LEN    0x20
-#define GPE1_BLK_LEN    0x00
-#define GPE1_BASE       0x00
-#define CST_CNT         0x00
-#define P_LVL2_LAT      0x0065
-#define P_LVL3_LAT      0x03E9
-#define FLUSH_SIZE      0x0000
-#define FLUSH_STRIDE    0x0000
-#define DUTY_OFFSET     0x01
-#define DUTY_WIDTH      0x03
-#define DAY_ALRM        0x0D
-#define MON_ALRM        0x00
-#define CENTURY         0x32
-#define FLAG            ( EFI_ACPI_4_0_WBINVD | EFI_ACPI_4_0_PROC_C1 | EFI_ACPI_4_0_SLP_BUTTON | EFI_ACPI_4_0_RESET_REG_SUP | EFI_ACPI_4_0_RTC_S4 | EFI_ACPI_4_0_USE_PLATFORM_CLOCK)
-#define IAPC_BOOT_ARCH  ( EFI_ACPI_4_0_VGA_NOT_PRESENT | EFI_ACPI_4_0_8042 | EFI_ACPI_4_0_LEGACY_DEVICES)
-#define RESERVED        0x00
 
 #define PLATFORM_MAX_BUS_NUM                    0xFF
 #define MAIN_COUNTER_MIN_PERIODIC_CLOCK_TICKS   0x80        //approx 1ms
