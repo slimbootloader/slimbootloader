@@ -42,7 +42,6 @@
 
 #define R_SPI_CFG_BAR0                      0x10
 
-
 // Flash Descriptpr Master section
 #define B_FLASH_FMBA                     0x0080    ///< Flash Master Base Address
 #define R_FLMSTR1_BIOS                     0x00   //Flash Master Host CPU/BIOS
