@@ -1,7 +1,7 @@
 ## @ BtgSign.py
 #  This is a python stitching script for Boot Guard BPM signing
 #
-# Copyright (c) 2020, Intel Corporation. All rights reserved. <BR>
+# Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved. <BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -82,10 +82,7 @@ def swap_ts_block(in_file, out_file, ts_size):
 
 def generate_keys(bpm_key_dir, key_sz):
 
-    if os.name == 'nt':
-        openssl_path = get_openssl_path() + '.exe'
-    else:
-        openssl_path = 'openssl'
+    openssl_path = get_openssl_path()
 
     os.mkdir(bpm_key_dir)
 
@@ -111,10 +108,7 @@ def gen_sign_oem_key_manifest(meu_path, oem_bin_input, key_dir, key_sz, output_d
     oem_bin_sign   = oem_bin_output
     oem_priv_key = SIGNING_KEY['KEY_ID_PRIV_OEM_RSA' + key_sz]
 
-    if os.name == 'nt':
-        openssl_path = get_openssl_path() + '.exe'
-    else:
-        openssl_path = '/usr/bin/openssl'
+    openssl_path = get_openssl_path()
 
     if not os.path.exists(oem_bin_input):
 
@@ -167,10 +161,7 @@ def gen_oem_key_hash(output_dir, oem_pub_key, oem_pub_key_hash_file, hash_type, 
 
     key_sz_bytes = int(key_size)//8
 
-    if os.name == 'nt':
-        openssl_path = get_openssl_path() + '.exe'
-    else:
-        openssl_path = 'openssl'
+    openssl_path = get_openssl_path()
 
     run_process ([openssl_path, 'rsa' , '-in', oem_pub_key,
             '-pubin', '-modulus', '-out', kmsigpubkeytxt_fh])
