@@ -1660,9 +1660,4 @@
   Offset(2500),   PIU3, 8,  // Offset(2500),  PSE UART3 test devices' connection point
   Offset(2501),   PIU4, 8,  // Offset(2501),  PSE UART4 test devices' connection point
   Offset(2502),   PIU5, 8,  // Offset(2502),  PSE UART5 test devices' connection point
-  //
-  // Eclite Device Enabe/Disable
-  //
-  Offset(2503),   ECLE, 8,  // Offset(2503),  PSE Eclite Service Enable/Disable
-  Offset(2504),   PWOL, 8,  // Offset(2504),  PSE WoL Service Enable/Disable
   }

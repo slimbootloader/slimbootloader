@@ -1,13 +1,14 @@
 /** @file
   ACPI EcLite Device Specific method implementation.
 
-  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
   External(\_SB.TPWR, DeviceObj)
   External(\_SB.BTY1, DeviceObj)
   External(\_SB.BTY2, DeviceObj)
+  External(\_SB.UBTC.UCEV, MethodObj)
 
   Method(_DSM, 0x4, Serialized, 0, {IntObj, BuffObj}, {BuffObj, IntObj, IntObj, PkgObj})
   {
@@ -32,6 +33,14 @@
           {
             Return(0) // Revision mismatch
           }
+        }
+        //
+        // Function  UCSI update [TCPM TASK]
+        //
+        Case (ECLITE_UCSI_UPDATE_EVENT)
+        {
+          \_SB.UBTC.UCEV()
+          Return(0)
         }
 
         //
@@ -122,16 +131,16 @@
 
         Case (ECLITE_PSRC_CHANGE_EVENT)
         {
-          //\_SB.ECLT.ECLC(ECLITE_READ_COMMAND, ECLITE_DEFAULT_UPDATE, ECLITE_PSRC_OFFSET, ECLITE_BYTES_COUNT_2)
-          //Store(\_SB.ECLT.ECLR(RefOf(\_SB.ECLT.PSRC)), Local0)
-          //If(LNotEqual(And(ToInteger(Local0),ECLITE_PSRC_BIT_MASK),ECLITE_DC_PRESENT))
-          //{
+          \_SB.ECLT.ECLC(ECLITE_READ_COMMAND, ECLITE_DEFAULT_UPDATE, ECLITE_PSRC_OFFSET, ECLITE_BYTES_COUNT_2)
+          Store(\_SB.ECLT.ECLR(RefOf(\_SB.ECLT.PSRC)), Local0)
+          If(LNotEqual(And(ToInteger(Local0),ECLITE_PSRC_BIT_MASK),ECLITE_DC_PRESENT))
+          {
             Store(ECLITE_AC_PRESENT,PWRS)
-          //}
-          //Else
-          //{
-          //  Store(ECLITE_DC_PRESENT,PWRS)
-          //}
+          }
+          Else
+          {
+            Store(ECLITE_DC_PRESENT,PWRS)
+          }
 
           // Perform needed ACPI Notifications.
           PNOT()
@@ -149,6 +158,11 @@
           {
             Notify(\_SB.TPWR, 0x82) // notify Power participant
           }
+          Return(0)
+        }
+        Case (ECLITE_CPU_TEMPERATURE_UPDATE)
+        {
+          Notify(\_TZ.TZ00,0x80)  // Notify Temprature update event to OS
           Return(0)
         }
 
