@@ -25,6 +25,7 @@
 
 #define PID_TO_MASK(x)          (1 << ((x) & 0x1F))
 
+#define CDATA_NO_TAG            0x000
 #define CDATA_PLATFORMID_TAG    0x0F0
 
 typedef struct {

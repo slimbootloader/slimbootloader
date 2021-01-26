@@ -11,6 +11,7 @@
 #include <Library/GpioSocLib.h>
 #include <Library/GpioPlatformLib.h>
 #include <GpioLibInternal.h>
+#include <Library/ConfigDataLib.h>
 
 //
 // GPIO_GROUP_DW_DATA structure is used by GpioConfigurePch function
@@ -618,7 +619,7 @@ PrintGpioConfigTable (
   This format of GpioTable is what the Gpio library expects.
 
   @param    GpioTable   Pointer to the GpioTable to be updated
-  @param    GpioCfg     Pointer to the cfg data
+  @param    GpioCfgHdr  Pointer to the cfg data header
   @param    Offset      Index of a particulr pin's DW0, DW1 in GpioCfg
 
   @retval   GpioTable   Pointer to fill the next gpio item
@@ -626,19 +627,22 @@ PrintGpioConfigTable (
 STATIC
 UINT8 *
 FillGpioTable (
-  IN  UINT8              *GpioTable,
-  IN  GPIO_CFG_HDR_INFO  *GpioCfgHdrInfo,
-  IN  UINT32              Offset
+  IN  UINT8          *GpioTable,
+  IN  ARRAY_CFG_HDR  *GpioCfgHdr,
+  IN  UINT32          Offset
 
 )
 {
   UINT32             *GpioItem;
   GPIO_PAD            GpioPad;
+  UINT8              *TableData;
+
+  TableData = ((UINT8 *)GpioCfgHdr) + GpioCfgHdr->HeaderSize;
 
   //
   // Get the DW and extract PadInfo
   //
-  GpioItem = (UINT32 *) (GpioCfgHdrInfo->TableData + Offset);
+  GpioItem = (UINT32 *) (TableData + Offset);
   GpioGetGpioPadFromCfgDw (GpioItem, &GpioPad);
 
   //
@@ -646,8 +650,8 @@ FillGpioTable (
   //
   CopyMem (GpioTable, (VOID *)&GpioPad, sizeof(GPIO_PAD));
   GpioTable += sizeof(GPIO_PAD);
-  CopyMem (GpioTable, GpioItem, GpioCfgHdrInfo->ItemSize);
-  GpioTable += GpioCfgHdrInfo->ItemSize;
+  CopyMem (GpioTable, GpioItem, GpioCfgHdr->ItemSize);
+  GpioTable += GpioCfgHdr->ItemSize;
 
   return GpioTable;
 }
@@ -658,71 +662,96 @@ FillGpioTable (
   If the pins are not part of GPIO CFG DATA, call GpioPadConfigTable() directly
   with the appropriate arguments.
 
+  @param    Tag         Tag ID of the Gpio Cfg data item
+  @param    Entries     Number of entries in Gpio Table
+  @param    DataBuffer  Pointer to the Gpio Table to be programmed
+
   @retval EFI_SUCCESS                   The function completed successfully
   @retval EFI_NOT_FOUND                 If Gpio Config Data cant be found
 **/
 EFI_STATUS
 EFIAPI
 ConfigureGpio (
-  VOID
+  IN  UINT16  Tag,
+  IN  UINT32  Entries,
+  IN  UINT8   *DataBuffer
   )
 {
-  GPIO_CFG_HDR_INFO       GpioCfgCurrHdrInfo;
-  GPIO_CFG_HDR_INFO       GpioCfgBaseHdrInfo;
-  GPIO_CFG_HDR_INFO      *GpioCfgHdrInfo;
-  UINT32                  GpioEntries;
-  UINT32                  Index;
-  UINT32                  Offset;
-  UINT8                  *GpioCfgDataBuffer;
-  UINT8                  *GpioTable;
-  EFI_STATUS              Status;
-
-  GpioEntries    = 0;
+  ARRAY_CFG_HDR  *GpioCfgCurrHdr;
+  ARRAY_CFG_HDR  *GpioCfgBaseHdr;
+  ARRAY_CFG_HDR  *GpioCfgHdr;
+  UINT32         GpioEntries;
+  UINT32         Index;
+  UINT32         Offset;
+  UINT8          *GpioCfgDataBuffer;
+  UINT8          *GpioTable;
 
   //
-  // Find the GPIO CFG HDR INFO
+  // Find either Tag to read CfgData or parse the GpioTable
   //
-  Status = GpioGetCfgHdrInfo (&GpioCfgCurrHdrInfo, 0xFF);
-  if (Status != EFI_SUCCESS) {
-    return Status;
+  if ((Tag == CDATA_NO_TAG) && (Entries == 0 || DataBuffer == NULL) ) {
+    DEBUG ((DEBUG_INFO, "Provide either Tag or Gpio Table info!\n"));
+    return EFI_UNSUPPORTED;
   }
 
   //
-  // Find the GPIO CFG HDR INFO based on Platform ID
+  // If no Tag provided, check for GpioTable info;
+  // If    Tag provided, GpioTable params are don't care
   //
-  if (GpioCfgCurrHdrInfo.BaseTableId < 16) {
-    Status = GpioGetCfgHdrInfo (&GpioCfgBaseHdrInfo, GpioCfgCurrHdrInfo.BaseTableId);
-    if (Status != EFI_SUCCESS) {
-      DEBUG ((DEBUG_ERROR, "Cannot find base GPIO table for platform ID %d\n", GpioCfgCurrHdrInfo.BaseTableId));
-      return Status;
+  if (Tag == CDATA_NO_TAG) {
+    GpioPadConfigTable (Entries, (VOID *)DataBuffer);
+    DEBUG ((DEBUG_INFO, "GpioInit(0x%p:%d) Done\n", DataBuffer, Entries));
+    return EFI_SUCCESS;
+  }
+
+  //
+  // Find the GPIO CFG HDR
+  //
+  GpioCfgCurrHdr = (ARRAY_CFG_HDR *)FindConfigDataByTag (Tag);
+  if (GpioCfgCurrHdr == NULL) {
+    return EFI_NOT_FOUND;
+  }
+
+  GpioEntries    = 0;
+  GpioCfgBaseHdr = NULL;
+
+  //
+  // Find the GPIO CFG Data based on Platform ID
+  // GpioTableData is the start of the GPIO entries
+  //
+  if (GpioCfgCurrHdr->BaseTableId < 16) {
+    GpioCfgBaseHdr = (ARRAY_CFG_HDR *)FindConfigDataByPidTag (GpioCfgCurrHdr->BaseTableId, Tag);
+    if (GpioCfgBaseHdr == NULL) {
+      DEBUG ((DEBUG_ERROR, "Cannot find base GPIO table for platform ID %d\n", GpioCfgCurrHdr->BaseTableId));
+      return EFI_NOT_FOUND;
     }
-    if (GpioCfgCurrHdrInfo.ItemSize != GpioCfgBaseHdrInfo.ItemSize) {
+    if (GpioCfgCurrHdr->ItemSize != GpioCfgBaseHdr->ItemSize) {
       DEBUG ((DEBUG_ERROR, "Inconsistent GPIO item size\n"));
-      return Status;
+      return EFI_LOAD_ERROR;
     }
-    GpioCfgHdrInfo = &GpioCfgBaseHdrInfo;
+    GpioCfgHdr = GpioCfgBaseHdr;
   } else {
-    GpioCfgHdrInfo = &GpioCfgCurrHdrInfo;
+    GpioCfgHdr = GpioCfgCurrHdr;
   }
 
   Offset     = 0;
   GpioTable  = (UINT8 *)AllocateTemporaryMemory (0);  //allocate new buffer
   GpioCfgDataBuffer = GpioTable;
 
-  for (Index = 0; Index  < GpioCfgHdrInfo->ItemCount; Index++) {
-    if (GpioCfgCurrHdrInfo.BaseTableBitMask[Index >> 3] & (1 << (Index & 7))) {
-      GpioTable = FillGpioTable (GpioTable, GpioCfgHdrInfo, Offset);
+  for (Index = 0; Index  < GpioCfgHdr->ItemCount; Index++) {
+    if (GpioCfgCurrHdr->BaseTableBitMask[Index >> 3] & (1 << (Index & 7))) {
+      GpioTable = FillGpioTable (GpioTable, GpioCfgHdr, Offset);
       GpioEntries++;
     }
-    Offset += GpioCfgHdrInfo->ItemSize;
+    Offset += GpioCfgHdr->ItemSize;
   }
 
   Offset = 0;
-  if (GpioCfgBaseHdrInfo.ItemCount != 0) {
-    for (Index = 0; Index  < GpioCfgCurrHdrInfo.ItemCount; Index++) {
-      GpioTable = FillGpioTable (GpioTable, &GpioCfgCurrHdrInfo, Offset);
+  if (GpioCfgBaseHdr != NULL) {
+    for (Index = 0; Index  < GpioCfgCurrHdr->ItemCount; Index++) {
+      GpioTable = FillGpioTable (GpioTable, GpioCfgCurrHdr, Offset);
       GpioEntries++;
-      Offset += GpioCfgCurrHdrInfo.ItemSize;
+      Offset += GpioCfgCurrHdr->ItemSize;
     }
   }
 

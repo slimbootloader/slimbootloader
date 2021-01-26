@@ -11,6 +11,7 @@
 #include <Library/PciLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/GpioSocLib.h>
 #include <Library/GpioLib.h>
 #include <Library/BoardInitLib.h>
 #include <Library/SerialPortLib.h>
@@ -786,12 +787,12 @@ DEBUG_CODE_END();
     switch (GetPlatformId ()) {
       case BoardIdTglHDdr4SODimm:
       case 0xF:
-        GpioPadConfigTable (sizeof (mGpioTablePreMemTglHDdr4) / sizeof (mGpioTablePreMemTglHDdr4[0]), mGpioTablePreMemTglHDdr4);
+        ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTablePreMemTglHDdr4) / sizeof (mGpioTablePreMemTglHDdr4[0]), (UINT8*)mGpioTablePreMemTglHDdr4);
         break;
       case BoardIdTglUDdr4:
       case BoardIdTglULp4Type4:
       default:
-        GpioPadConfigTable (sizeof (mGpioTablePreMemTglUDdr4) / sizeof (mGpioTablePreMemTglUDdr4[0]), mGpioTablePreMemTglUDdr4);
+        ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTablePreMemTglUDdr4) / sizeof (mGpioTablePreMemTglUDdr4[0]), (UINT8*)mGpioTablePreMemTglUDdr4);
         break;
     }
 

@@ -210,7 +210,6 @@ class Board(BaseBoard):
             'PchP2sbLib|Silicon/$(PCH_PKG_NAME)/Library/PchP2sbLib/PchP2sbLib.inf',
             'PchSbiAccessLib|Silicon/$(PCH_PKG_NAME)/Library/PchSbiAccessLib/PchSbiAccessLib.inf',
             'PlatformHookLib|Silicon/$(SILICON_PKG_NAME)/Library/PlatformHookLib/PlatformHookLib.inf',
-            'GpioLib|Silicon/$(PCH_PKG_NAME)/Library/GpioLib/GpioLib.inf',
             'PchSpiLib|Silicon/CommonSocPkg/Library/PchSpiLib/PchSpiLib.inf',
             'SpiFlashLib|Silicon/CommonSocPkg/Library/SpiFlashLib/SpiFlashLib.inf',
             'VtdLib|Silicon/$(SILICON_PKG_NAME)/Library/VTdLib/VTdLib.inf',
@@ -222,7 +221,9 @@ class Board(BaseBoard):
             'ItbtPcieRpLib|Silicon/$(SILICON_PKG_NAME)/Library/ItbtPcieRpLib/ItbtPcieRpLib.inf',
             'PsdLib|Silicon/$(SILICON_PKG_NAME)/Library/PsdLib/PsdLib.inf',
             'MeExtMeasurementLib|Silicon/$(PCH_PKG_NAME)/Library/MeExtMeasurementLib/MeExtMeasurementLib.inf',
-            'BasePchPciBdfLib|Silicon/$(PCH_PKG_NAME)/Library/BasePchPciBdfLib/BasePchPciBdfLib.inf'
+            'BasePchPciBdfLib|Silicon/$(PCH_PKG_NAME)/Library/BasePchPciBdfLib/BasePchPciBdfLib.inf',
+            'GpioLib|Silicon/CommonSocPkg/Library/GpioLib/GpioLib.inf',
+            'GpioPlatformLib|Silicon/$(PCH_PKG_NAME)/Library/GpioPlatformLib/GpioPlatformLib.inf',
         ]
 
         if self.BUILD_CSME_UPDATE_DRIVER:

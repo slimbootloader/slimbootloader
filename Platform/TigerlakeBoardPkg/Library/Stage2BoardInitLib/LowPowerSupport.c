@@ -6,7 +6,6 @@
 #include <Library/BaseLib.h>
 #include <Library/IoLib.h>
 #include <Library/PciLib.h>
-#include <Library/GpioNativeLib.h>
 #include <Register/PmcRegs.h>
 #include <Library/TimerLib.h>
 #include <Register/SaRegsIpu.h>

@@ -141,7 +141,7 @@ GpioPchSbiExecutionEx (
 UINT32
 EFIAPI
 GetPchPcrAddress (
-  IN     GPIO_PCH_SBI_PID                 Pid,
+  IN     GPIO_PCH_SBI_PID               Pid,
   IN     UINT32                         Offset
   );
 
@@ -299,23 +299,6 @@ EFIAPI
 GpioGetGpioPadFromCfgDw (
   IN  UINT32        *GpioItem,
   OUT GPIO_PAD      *GpioPad
-  );
-
-
-/**
-  This procedure will get GPIO CFG INFO based on BaseTable Id
-
-  @param[in]  BaseTableId         BaseTableId value; if 0xFF, get ByTag; else get ByPidTag
-  @param[out] CfgHdrInfo          Pointer to the GPIO_CFG_HDR_INFO struct
-
-  @retval Status                  EFI_SUCCESS, if executed successfully
-                                  EFI_NOT_FOUND, if failed to find the GPIO CFG DATA Tag
-**/
-EFI_STATUS
-EFIAPI
-GpioGetCfgHdrInfo (
-  OUT GPIO_CFG_HDR_INFO  *CfgHdrInfo,
-  IN  UINT8               BaseTableId
   );
 
 #endif // _GPIO_INFO_LIB_H_

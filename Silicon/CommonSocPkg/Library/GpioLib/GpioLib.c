@@ -474,6 +474,8 @@ GpioWriteReg (
       return Status;
     }
   }
+
+  return EFI_SUCCESS;
 }
 
 /**
