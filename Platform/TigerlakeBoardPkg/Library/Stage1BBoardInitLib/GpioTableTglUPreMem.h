@@ -9,7 +9,6 @@
 
 #include <GpioPinsVer2Lp.h>
 #include <Library/GpioLib.h>
-#include <Library/SiGpioLib.h>
 
 static GPIO_INIT_CONFIG mGpioTablePreMemTglUDdr4[] =
 {

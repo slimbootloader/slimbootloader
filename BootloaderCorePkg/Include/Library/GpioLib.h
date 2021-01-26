@@ -27,13 +27,19 @@ GpioPadConfigTable (
   If the pins are not part of GPIO CFG DATA, call GpioPadConfigTable() directly
   with the appropriate arguments.
 
+  @param    Tag         Tag ID of the Gpio Cfg data item
+  @param    Entries     Number of entries in Gpio Table
+  @param    DataBuffer  Pointer to the Gpio Table to be programmed
+
   @retval EFI_SUCCESS                   The function completed successfully
   @retval EFI_NOT_FOUND                 If Gpio Config Data cant be found
 **/
 EFI_STATUS
 EFIAPI
 ConfigureGpio (
-  VOID
+  IN  UINT16  Tag,
+  IN  UINT32  Entries,
+  IN  UINT8   *DataBuffer
   );
 
 

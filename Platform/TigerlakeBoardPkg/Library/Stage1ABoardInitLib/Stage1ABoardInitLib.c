@@ -14,8 +14,10 @@
 #include <PlatformData.h>
 #include <CpuRegs.h>
 #include <PchAccess.h>
-#include <Library/SiGpioLib.h>
+#include <Library/GpioLib.h>
+#include <GpioLibConfig.h>
 #include <GpioPinsVer2Lp.h>
+#include <Library/ConfigDataLib.h>
 
 #define UCODE_REGION_BASE   FixedPcdGet32(PcdUcodeBase)
 #define UCODE_REGION_SIZE   FixedPcdGet32(PcdUcodeSize)
@@ -120,7 +122,7 @@ BoardInit (
     EarlyPlatformDataCheck ();
     DebugPort = GetDebugPort ();
     if (DebugPort < PCH_MAX_SERIALIO_UART_CONTROLLERS) {
-      GpioConfigurePads (2, (GPIO_INIT_CONFIG *)mUartGpioTable + DebugPort * 2);
+      ConfigureGpio (CDATA_NO_TAG, 2, (UINT8 *)(mUartGpioTable + DebugPort * 2));
     }
 
     PlatformHookSerialPortInitialize ();

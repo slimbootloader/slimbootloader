@@ -12,7 +12,8 @@
 #include <Library/BlMemoryAllocationLib.h>
 #include <Library/DebugLib.h>
 #include <Library/GpioLib.h>
-#include <Library/SiGpioLib.h>
+#include <Library/GpioSocLib.h>
+#include <GpioLibConfig.h>
 #include <Library/SpiFlashLib.h>
 #include <Library/SocInitLib.h>
 #include <Library/BoardInitLib.h>
@@ -74,7 +75,6 @@
 #include "TccPtct.h"
 #include "FusaLib.h"
 #include <PlatformBoardId.h>
-#include <Library/GpioNativeLib.h>
 #include <Lpit.h>
 #include <LowPowerSupport.h>
 #include <TccConfigSubRegions.h>
@@ -391,176 +391,6 @@ GetCpuSku(
   }
 
   return CpuType;
-}
-
-/**
-  Print the output of the GPIO Config table that was read from CfgData.
-
-  @param[in] GpioPinNum     Number of GPIO entries in the table.
-  @param[in] GpioConfData   GPIO Config Data that was read from the Configuration region
-                            either from internal or external source.
-**/
-VOID
-PrintGpioConfigTable (
-  IN UINT32              GpioPinNum,
-  IN VOID                *GpioConfData
-)
-{
-  GPIO_INIT_CONFIG  *GpioInitConf;
-  UINT32            *PadDataPtr;
-  UINT32             Index;
-
-  GpioInitConf = (GPIO_INIT_CONFIG *)GpioConfData;
-  for (Index  = 0; Index < GpioPinNum; Index++) {
-    PadDataPtr = (UINT32 *)&GpioInitConf->GpioConfig;
-    DEBUG ((DEBUG_INFO, "GPIO PAD: 0x%08X   DATA: 0x%08X 0x%08X\n", GpioInitConf->GpioPad, PadDataPtr[0], PadDataPtr[1]));
-    GpioInitConf++;
-  }
-}
-
-/**
-  Retreive PadInfo embedded inside DW1 of GPIO CFG DATA.
-  Prepare a PadInfo DWORD first, add into the GpioTable,
-  followed by DW0 and DW1 directly from GPIO CFG DATA.
-  This format of GpioTable is what the Gpio library expects.
-
-  @param    GpioTable   Pointer to the GpioTable to be updated
-  @param    GpioCfg     Pointer to the cfg data
-  @param    Offset      Index of a particulr pin's DW0, DW1 in GpioCfg
-
-  @retval   GpioTable   Pointer to fill the next gpio item
-**/
-UINT8 *
-FillGpioTable (
-  IN  UINT8         *GpioTable,
-  IN  GPIO_CFG_HDR  *GpioCfg,
-  IN  UINT32        Offset,
-  IN  UINT8         ChipsetId
-
-)
-{
-  GPIO_CFG_DATA_DW1 *Dw1;
-  UINT32            *GpioItem;
-  GPIO_PAD_FIELD    GpioPad = { 0, 0, 0, 0 };
-
-  //
-  // Get the DW1 and extract PadInfo
-  //
-  GpioItem = (UINT32 *) (GpioCfg->GpioTableData + Offset);
-  Dw1 = (GPIO_CFG_DATA_DW1 *) (&GpioItem[1]);
-  GpioPad.PadNum    = (UINT16) Dw1->PadNum;
-  GpioPad.GrpIdx    = (UINT8)  Dw1->GrpIdx;
-  GpioPad.ChipsetId = ChipsetId;
-
-  //
-  // Remove PadInfo data from DW1
-  //
-  Dw1->PadNum = 0;
-  Dw1->GrpIdx = 0;
-
-  //
-  // Copy PadInfo(PinOffset), DW0, DW1
-  //
-  CopyMem (GpioTable, (VOID *)&GpioPad, sizeof(GPIO_PAD_FIELD));
-  GpioTable += sizeof(GPIO_PAD_FIELD);
-  CopyMem (GpioTable, GpioItem, GpioCfg->GpioItemSize);
-  GpioTable += GpioCfg->GpioItemSize;
-
-  return GpioTable;
-}
-
-/**
-  Initialize the GPIO Config table that was read from CfgData into GPIO PAD registers.
-
-  @param VOID
-
-**/
-VOID
-GpioInit (
-  VOID
-  )
-  {
-  GPIO_CFG_HDR       *GpioCfgCurrHdr;
-  GPIO_CFG_HDR       *GpioCfgBaseHdr;
-  GPIO_CFG_HDR       *GpioCfgHdr;
-  UINT32              GpioEntries;
-  UINT32              Index;
-  UINT32              Offset;
-  UINT8              *GpioCfgDataBuffer;
-  UINT8              *GpioTable;
-  UINT8              ChipsetId;
-
-  //Find the GPIO CFG HDR
-  GpioCfgCurrHdr = (GPIO_CFG_HDR *)FindConfigDataByTag (CDATA_GPIO_TAG);
-  if (GpioCfgCurrHdr == NULL) {
-    return;
-  }
-
-  GpioEntries    = 0;
-  GpioCfgBaseHdr = NULL;
-
-  //Find the GPIO CFG Data based on Platform ID. GpioTableData is the start of the GPIO entries
-  if (GpioCfgCurrHdr->GpioBaseTableId < 16) {
-    GpioCfgBaseHdr = (GPIO_CFG_HDR *)FindConfigDataByPidTag (GpioCfgCurrHdr->GpioBaseTableId, CDATA_GPIO_TAG);
-    if (GpioCfgBaseHdr == NULL) {
-      DEBUG ((DEBUG_ERROR, "Cannot find base GPIO table for platform ID %d\n", GpioCfgCurrHdr->GpioBaseTableId));
-      return;
-    }
-    if (GpioCfgCurrHdr->GpioItemSize != GpioCfgBaseHdr->GpioItemSize) {
-      DEBUG ((DEBUG_ERROR, "Inconsistent GPIO item size\n"));
-      return;
-    }
-    GpioCfgHdr = GpioCfgBaseHdr;
-  } else {
-    GpioCfgHdr = GpioCfgCurrHdr;
-  }
-
-  Offset     = 0;
-  GpioTable  = (UINT8 *)AllocateTemporaryMemory (0);  //allocate new buffer
-  if (GpioTable != NULL) {
-    GpioCfgDataBuffer = GpioTable;
-  } else {
-    DEBUG ((DEBUG_ERROR, "GpioTable is NULL, cannot continue\n"));
-    return;
-  }
-
-  if (IsPchH()) {
-    ChipsetId = GPIO_VER2_H_CHIPSET_ID;
-  } else if (IsPchLp()) {
-    ChipsetId = GPIO_VER2_LP_CHIPSET_ID;
-  } else {
-    DEBUG ((DEBUG_ERROR, "Unknown PCH, setting to default PCH LP\n"));
-    ChipsetId = GPIO_VER2_LP_CHIPSET_ID;
-  }
-
-  if ((GetPlatformId () == 0xF) && (IsPchH ())) {
-    GpioEntries = sizeof (mGpioTableTglHDdr4SODimm) / sizeof (mGpioTableTglHDdr4SODimm[0]);
-    GpioCfgDataBuffer = (UINT8*) mGpioTableTglHDdr4SODimm;
-  } else {
-    for (Index = 0; Index  < GpioCfgHdr->GpioItemCount; Index++) {
-      if (GpioCfgCurrHdr->GpioBaseTableBitMask[Index >> 3] & (1 << (Index & 7))) {
-        GpioTable = FillGpioTable (GpioTable, GpioCfgHdr, Offset, ChipsetId);
-        GpioEntries++;
-      }
-      Offset += GpioCfgHdr->GpioItemSize;
-    }
-
-    Offset = 0;
-    if (GpioCfgBaseHdr != NULL) {
-      for (Index = 0; Index  < GpioCfgCurrHdr->GpioItemCount; Index++) {
-        GpioTable = FillGpioTable (GpioTable, GpioCfgCurrHdr, Offset, ChipsetId);
-        GpioEntries++;
-        Offset += GpioCfgCurrHdr->GpioItemSize;
-      }
-    }
-  }
-
-  DEBUG_CODE_BEGIN ();
-  PrintGpioConfigTable (GpioEntries, GpioCfgDataBuffer);
-  DEBUG_CODE_END ();
-
-  // Initialize the GPIO pins
-  GpioConfigurePads (GpioEntries, (GPIO_INIT_CONFIG *) GpioCfgDataBuffer);
 }
 
 /**
@@ -1011,7 +841,12 @@ BoardInit (
     DEBUG ((DEBUG_INFO, "LPC DeviceId (0x%x)\n", PchGetLpcDid()));
 
     EnableLegacyRegions ();
-    GpioInit ();
+
+    if ((GetPlatformId () == 0xF) && (IsPchH ())) {
+      ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTableTglHDdr4SODimm) / sizeof (mGpioTableTglHDdr4SODimm[0]), (UINT8*) mGpioTableTglHDdr4SODimm);
+    } else {
+      ConfigureGpio (CDATA_GPIO_TAG, 0, NULL);
+    }
     if (GetBootMode() != BOOT_ON_FLASH_UPDATE) {
       UpdatePayloadId ();
     }
@@ -1023,12 +858,12 @@ BoardInit (
         switch (GetPlatformId ()) {
           case BoardIdTglHDdr4SODimm:
           case 0x0F:
-            GpioPadConfigTable (sizeof (mTglHTsnDeviceGpioTable) / sizeof (mTglHTsnDeviceGpioTable[0]), mTglHTsnDeviceGpioTable);
+            ConfigureGpio (CDATA_NO_TAG, sizeof (mTglHTsnDeviceGpioTable) / sizeof (mTglHTsnDeviceGpioTable[0]), (UINT8*)mTglHTsnDeviceGpioTable);
             break;
           default:
           case BoardIdTglUDdr4:
           case BoardIdTglULp4Type4:
-            GpioPadConfigTable (sizeof (mTglUTsnDeviceGpioTable) / sizeof (mTglUTsnDeviceGpioTable[0]), mTglUTsnDeviceGpioTable);
+            ConfigureGpio (CDATA_NO_TAG, sizeof (mTglUTsnDeviceGpioTable) / sizeof (mTglUTsnDeviceGpioTable[0]), (UINT8*)mTglUTsnDeviceGpioTable);
             break;
         }
       }
