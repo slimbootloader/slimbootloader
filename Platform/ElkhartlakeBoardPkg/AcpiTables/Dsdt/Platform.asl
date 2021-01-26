@@ -1,7 +1,7 @@
 /** @file
   ACPI DSDT table
 
-  Copyright (c) 2011 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2011 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 #include "Register/PmcRegs.h"
@@ -214,26 +214,26 @@ Method(_WAK,1,Serialized)
   If(LOr(LEqual(Arg0,3), LEqual(Arg0,4)))  // If S3 or S4 Resume
   {
 
-    //\_SB.ECLT.ECLC(ECLITE_READ_COMMAND, ECLITE_DEFAULT_UPDATE, ECLITE_PSRC_OFFSET, ECLITE_BYTES_COUNT_2)
-    //Store(\_SB.ECLT.ECLR(RefOf(\_SB.ECLT.PSRC)), Local0)
-    //If(LNotEqual(And(ToInteger(Local0),ECLITE_PSRC_BIT_MASK),ECLITE_DC_PRESENT)) // AC Source Present
-    //{
-    //  If(LEqual(PWRS,ECLITE_DC_PRESENT)) // Check if current status is DC
-    //  {
+      \_SB.ECLT.ECLC(ECLITE_READ_COMMAND, ECLITE_DEFAULT_UPDATE, ECLITE_PSRC_OFFSET, ECLITE_BYTES_COUNT_2)
+      Store(\_SB.ECLT.ECLR(RefOf(\_SB.ECLT.PSRC)), Local0)
+      If(LNotEqual(And(ToInteger(Local0),ECLITE_PSRC_BIT_MASK),ECLITE_DC_PRESENT)) // AC Source Present
+      {
+        If(LEqual(PWRS,ECLITE_DC_PRESENT)) // Check if current status is DC
+        {
         Store(ECLITE_AC_PRESENT,PWRS)
-    //    // Perform needed ACPI Notifications.
+          // Perform needed ACPI Notifications.
         PNOT()
-    //  }
-    //}
-    //Else // AC Source not Present
-    //{
-    //  If(LNotEqual(PWRS,ECLITE_DC_PRESENT)) // Check if  current status is AC
-    //  {
-    //    Store(ECLITE_DC_PRESENT,PWRS)
-    //    // Perform needed ACPI Notifications.
-    //    PNOT()
-    //  }
-    //}
+        }
+      }
+      Else // AC Source not Present
+      {
+        If(LNotEqual(PWRS,ECLITE_DC_PRESENT)) // Check if  current status is AC
+        {
+          Store(ECLITE_DC_PRESENT,PWRS)
+          // Perform needed ACPI Notifications.
+          PNOT()
+        }
+      }
 
    // For PCI Express Express Cards, it is possible a device was
     // either inserted or removed during an Sx State.  The problem

@@ -1,7 +1,7 @@
 /** @file
   ACPI Support for EcLite Mail Box Driver.
 
-  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -21,6 +21,9 @@ Scope (\_SB)
     Name (ECLA, 0) // Until the EcLite driver is ready, the control methods cannot access the operation region
     Name (BNUM, 0) // Number Of Batteries Present
 
+    Method (_STA, 0x0) {
+      Return(0x000F)
+    }
     //
     // EC-Lite device should be loaded only after PSE device is available
     //
@@ -161,13 +164,26 @@ Scope (\_SB)
       // UCSI
       //
       Offset (260),
-                // 260-321: Reserved
+      MGO1, 32, // 260: MessageOut1
+      MGO2, 32, // 264: MessageOut2
+      MGO3, 32, // 268: MessageOut3
+      MGO4, 32, // 272: MessageOut4
+      CTL1, 32, // 276: Control1
+      CTL2, 32, // 280: Control2
+      MGI1, 32, // 284: MessageIn1
+      MGI2, 32, // 288: MessageIn2
+      MGI3, 32, // 292: MessageIn3
+      MGI4, 32, // 296: MessageIn4
+      CCI,  32, // 300: CCI
+      UCRV, 16, // 304: UCSI Revision
+                // 306-320: Reserved
 
       //
       // USB Mode
       //
       Offset (322),
-                // 322-323: Reserved
+      USBM, 8,  // 322: Host/Device mode
+                // 323-323: Reserved
 
       //
       // Haptics
@@ -242,27 +258,32 @@ Scope (\_SB)
     //
     Method(ECLI)
     {
+      //
+      // Notify Firmware to start generating Host HECI Contifcations
+      //
+      \_SB.ECLT.ECLW( 1, RefOf(\_SB.ECLT.ENCG))
+      \_SB.ECLT.ECLC(ECLITE_WRITE_COMMAND, ECLITE_DEFAULT_UPDATE, ECLITE_ENCG_OFFSET, ECLITE_BYTES_COUNT_1)
       // Initialize the BNUM variable with total number if batteries present.
       //  1 = Real Battery 1 is present
       //  2 = Real Battery 2 is present
       //  3 = Real Battery 1 and 2 are present
-      //Store(0,BNUM)
-      //\_SB.ECLT.ECLC(ECLITE_READ_COMMAND, ECLITE_DEFAULT_UPDATE, ECLITE_B1ST_OFFSET, ECLITE_BYTES_COUNT_2)
-      //Or(BNUM, ShiftRight(And( \_SB.ECLT.ECLR( RefOf (\_SB.ECLT.B1ST)), 0x08),3),BNUM)
-      //\_SB.ECLT.ECLC(ECLITE_READ_COMMAND, ECLITE_DEFAULT_UPDATE, ECLITE_B2ST_OFFSET, ECLITE_BYTES_COUNT_2)
-      //Or(BNUM,ShiftRight(And(\_SB.ECLT.ECLR( RefOf (\_SB.ECLT.B2ST)),0x08),2),BNUM)
+      Store(0,BNUM)
+      \_SB.ECLT.ECLC(ECLITE_READ_COMMAND, ECLITE_DEFAULT_UPDATE, ECLITE_B1ST_OFFSET, ECLITE_BYTES_COUNT_2)
+      Or(BNUM, ShiftRight(And( \_SB.ECLT.ECLR( RefOf (\_SB.ECLT.B1ST)), 0x08),3),BNUM)
+      \_SB.ECLT.ECLC(ECLITE_READ_COMMAND, ECLITE_DEFAULT_UPDATE, ECLITE_B2ST_OFFSET, ECLITE_BYTES_COUNT_2)
+      Or(BNUM,ShiftRight(And(\_SB.ECLT.ECLR( RefOf (\_SB.ECLT.B2ST)),0x08),2),BNUM)
 
-      //\_SB.ECLT.ECLC(ECLITE_READ_COMMAND, ECLITE_DEFAULT_UPDATE, ECLITE_PSRC_OFFSET, ECLITE_BYTES_COUNT_2)
-      //Store(\_SB.ECLT.ECLR(RefOf(\_SB.ECLT.PSRC)), Local0)
+      \_SB.ECLT.ECLC(ECLITE_READ_COMMAND, ECLITE_DEFAULT_UPDATE, ECLITE_PSRC_OFFSET, ECLITE_BYTES_COUNT_2)
+      Store(\_SB.ECLT.ECLR(RefOf(\_SB.ECLT.PSRC)), Local0)
 
-      //If(LNotEqual(And(ToInteger(Local0),ECLITE_PSRC_BIT_MASK),ECLITE_DC_PRESENT))
-      //{
+      If(LNotEqual(And(ToInteger(Local0),ECLITE_PSRC_BIT_MASK),ECLITE_DC_PRESENT))
+      {
         Store(ECLITE_AC_PRESENT,PWRS)
-      //}
-      //Else
-      //{
-      //  Store(ECLITE_DC_PRESENT,PWRS)
-      //}
+      }
+      Else
+      {
+        Store(ECLITE_DC_PRESENT,PWRS)
+      }
 
       // Perform needed ACPI Notifications.
       PNOT()
