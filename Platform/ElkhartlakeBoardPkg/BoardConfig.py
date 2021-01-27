@@ -42,7 +42,8 @@ class Board(BaseBoard):
         self.FLASH_BASE_SIZE      = (self.FLASH_LAYOUT_START - self.FLASH_BASE_ADDRESS)
 
         self.HAVE_FIT_TABLE       = 1
-        self.HAVE_VBT_BIN         = 1
+        self.HAVE_FSP_BIN         = 0
+        self.HAVE_VBT_BIN         = 1 if self.HAVE_FSP_BIN != 0 else 0
         self.HAVE_VERIFIED_BOOT   = 1
         self.HAVE_MEASURED_BOOT   = 1
         self.HAVE_ACPI_TABLE      = 1
@@ -133,7 +134,7 @@ class Board(BaseBoard):
         self.PAYLOAD_EXE_BASE     = 0x00B00000
         self.PAYLOAD_SIZE         = 0x00020000
         self.EPAYLOAD_SIZE        = 0x00160000
-        self.UCODE_SIZE           = 0x00010000
+        self.UCODE_SIZE           = 0x00010000 if self.HAVE_FSP_BIN != 0 else 0
         self.MRCDATA_SIZE         = 0x00008000
         self.CFGDATA_SIZE         = 0x00004000
         self.KEYHASH_SIZE         = 0x00001000
@@ -322,6 +323,7 @@ class Board(BaseBoard):
 
         # output files need to have unique base name (excluding file extension)
         # output files ends with 'rom' extension will be copied over for final stitching
+        ucode_flag = 0 if self.HAVE_FSP_BIN else STITCH_OPS.MODE_FILE_IGNOR
         img_list.extend ([
                 ('NON_VOLATILE.bin', [
                     ('SBLRSVD.bin',    ''        , self.SBLRSVD_SIZE,  STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
@@ -339,7 +341,7 @@ class Board(BaseBoard):
                     ]
                 ),
                 ('REDUNDANT_A.bin', [
-                    ('UCODE.bin'    ,  ''        , self.UCODE_SIZE,    STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
+                    ('UCODE.bin'    ,  ''        , self.UCODE_SIZE,    STITCH_OPS.MODE_FILE_PAD | ucode_flag, STITCH_OPS.MODE_POS_TAIL),
                     ('STAGE2.fd'    ,  'Lz4'     , self.STAGE2_SIZE,   STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
                     ('FWUPDATE.bin' ,  'Lzma'    , self.FWUPDATE_SIZE, STITCH_OPS.MODE_FILE_PAD | fwu_flag,  STITCH_OPS.MODE_POS_TAIL),
                     ('CFGDATA.bin'  ,  ''        , self.CFGDATA_SIZE,  STITCH_OPS.MODE_FILE_PAD | cfg_flag, STITCH_OPS.MODE_POS_TAIL),
@@ -348,7 +350,7 @@ class Board(BaseBoard):
                     ]
                 ),
                 ('REDUNDANT_B.bin', [
-                    ('UCODE.bin'    ,  ''        , self.UCODE_SIZE,    STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
+                    ('UCODE.bin'    ,  ''        , self.UCODE_SIZE,    STITCH_OPS.MODE_FILE_PAD | ucode_flag, STITCH_OPS.MODE_POS_TAIL),
                     ('STAGE2.fd'    ,  'Lz4'     , self.STAGE2_SIZE,   STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
                     ('FWUPDATE.bin' ,  'Lzma'    , self.FWUPDATE_SIZE, STITCH_OPS.MODE_FILE_PAD | fwu_flag,  STITCH_OPS.MODE_POS_TAIL),
                     ('CFGDATA.bin'  ,  ''        , self.CFGDATA_SIZE,  STITCH_OPS.MODE_FILE_PAD | cfg_flag, STITCH_OPS.MODE_POS_TAIL),
