@@ -100,7 +100,7 @@ class Board(BaseBoard):
             self.STAGE1B_SIZE         = 0x000B0000
             self.STAGE2_SIZE          = 0x00070000
             self.STAGE2_FD_SIZE       = 0x000E0000
-            self.PAYLOAD_SIZE         = 0x00020000
+            self.PAYLOAD_SIZE         = 0x00024000
         else:
             self.STAGE1A_SIZE         = 0x00016000
             self.STAGE1B_SIZE         = 0x00180000
