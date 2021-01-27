@@ -1,7 +1,7 @@
 /** @file
   ACPI RTD3 SSDT table for PCIe
 
-  Copyright (c) 2011 - 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2011 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -43,7 +43,7 @@ External(WAKP)
 // WAKE enable on PCIe device.
 Name(WKEN, 0)
 
-Name(_S0W, 3)
+Name(_S0W, 4)
 
 Method(_DSW, 3)
 {
@@ -188,3 +188,6 @@ Method(_PR0) {
   Return(Package(){PXP})
 }
 
+Method(_PR3) {
+  Return(Package(){PXP})
+}

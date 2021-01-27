@@ -1,7 +1,7 @@
 ## @file
 # This file is used to provide board specific image information.
 #
-#  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 
@@ -252,34 +252,42 @@ class Board(BaseBoard):
           ('IPFW',      'SIIPFW.bin',          '',     container_list_auth_type,   'KEY_ID_CONTAINER'+'_'+self._RSA_SIGN_TYPE,    0,           0        ,      0),   # Container Header
         )
 
+        bins = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'Binaries')
+        CompFileTccTuning='TccTuning.bin' if os.path.exists(os.path.join(bins, 'TccTuning.bin')) else ''
+        CompFilePreOsChecker='PreOsChecker.bin' if os.path.exists(os.path.join(bins, 'PreOsChecker.bin')) else ''
+        CompFilePseFw='PseFw.bin' if os.path.exists(os.path.join(bins, 'PseFw.bin')) else ''
+        CompFilePseTsnIpConfig='PseTsnIpConfig.bin' if os.path.exists(os.path.join(bins, 'PseTsnIpConfig.bin')) else ''
+        CompFileTsnConfig='TsnConfig.bin' if os.path.exists(os.path.join(bins, 'TsnConfig.bin')) else ''
+        CompFileTsnMacAddr='TsnMacAddr.bin' if os.path.exists(os.path.join(bins, 'TsnMacAddr.bin')) else ''
+
         if self.ENABLE_TCC_TUNING:
             container_list.append (
-              ('TCCT','TccTuning.bin',      'Lz4',     container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0,   self.TCCT_SIZE,      0),   # TCC Tuning
+              ('TCCT',CompFileTccTuning,      'Lz4',     container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0,   self.TCCT_SIZE,      0),   # TCC Tuning
             )
 
         if self.ENABLE_PRE_OS_CHECKER:
             container_list.append (
-              ('POSC','PreOsChecker.bin',      '',     container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0,   self.POSC_SIZE,      0),   # Pre-OS Checker
+              ('POSC',CompFilePreOsChecker,      '',     container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0,   self.POSC_SIZE,      0),   # Pre-OS Checker
             )
 
         if self.ENABLE_PSEFW_LOADING:
             container_list.append (
-              ('PSEF','PseFw.bin',          'Lz4',     container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0,   self.PSEF_SIZE,      0),   # OSE FW
+              ('PSEF',CompFilePseFw,          'Lz4',     container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0,   self.PSEF_SIZE,      0),   # OSE FW
             )
 
         if self.ENABLE_PSE_TSN_IP_CONFIG:
             container_list.append (
-              ('TSIP','PseTsnIpConfig.bin', 'Lz4',     container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0,   self.TSIP_SIZE,      0),   # PSE TSN IP
+              ('TSIP',CompFilePseTsnIpConfig, 'Lz4',     container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0,   self.TSIP_SIZE,      0),   # PSE TSN IP
             )
 
         if self.ENABLE_TSN_CONFIG:
             container_list.append (
-              ('TSNC','TsnConfig.bin',      'Lz4',     container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0,   self.TSNC_SIZE,      0),   # TSN Config
+              ('TSNC',CompFileTsnConfig,      'Lz4',     container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0,   self.TSNC_SIZE,      0),   # TSN Config
             )
 
         if self.ENABLE_TSN_MAC_ADDRESS:
             container_list.append (
-              ('TMAC','TsnMacAddr.bin',     'Lz4',     container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0,   self.TMAC_SIZE,      0),   # TSN MAC Address
+              ('TMAC',CompFileTsnMacAddr,     'Lz4',     container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0,   self.TMAC_SIZE,      0),   # TSN MAC Address
             )
 
         return [container_list]

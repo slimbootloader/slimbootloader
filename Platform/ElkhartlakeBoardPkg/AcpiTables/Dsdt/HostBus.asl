@@ -5,7 +5,7 @@
   which will be used to dynamically produce all resources in the Host Bus.
   @note This ASL file needs to be included as part of platform ACPI DSDT table.
 
- Copyright (c) 1999 - 2020, Intel Corporation. All rights reserved.<BR>
+ Copyright (c) 1999 - 2021, Intel Corporation. All rights reserved.<BR>
  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -282,6 +282,26 @@ Method(GPCB,0,Serialized)
     ShiftLeft(\_SB.PC00.PXBR,26,PC_B)
   }
   Return(PC_B)
+}
+
+//
+// PCIe root port Pci Cfg space to MMIO address
+// Converts PCI device address from _ADR method to physical memory address
+// Arg0 - _ADR object of the device that will be accessed
+// _ADR returns Integer containing the address of the device
+// High word Device Number, Low word Function Number
+// (for example, device 3, function 2 is 0x00030002). To refer to all the functions on a device #, use a function number of FFFF).
+// Host Memory Space address:
+// Bus Number      [8 bits] [27:20]
+// Device Number   [5 bits] [19:15]
+// Function Number [3 bits] [14:12]
+// Register Number [10 bits][ 9:0 ]
+//
+Method (PC2M, 1, Serialized) {     // Convert _ADR to PCI MMIO address.
+  Store (\_SB.PC00.GPCB(), Local0) // MMIO Base address
+  Add (Local0, ShiftRight(And(Arg0, 0x001F0000), 1), Local0) // Device no [19:15]
+  Add (Local0, ShiftLeft(And(Arg0, 0x00000007), 12), Local0) // Function no [14:12]
+  Return (Local0)
 }
 
 //
