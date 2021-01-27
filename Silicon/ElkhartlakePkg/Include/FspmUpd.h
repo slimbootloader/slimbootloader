@@ -967,7 +967,7 @@ typedef struct {
   UINT8                       OcSupport;
 
 /** Offset 0x026F - Over clocking Lock
-  Over clocking Lock Enable/Disable; <b>0: Disable</b>; 1: Enable.
+  Over clocking Lock Enable/Disable; 0: Disable; <b>1: Enable</b>
   $EN_DIS
 **/
   UINT8                       OcLock;
@@ -2904,7 +2904,7 @@ typedef struct {
   Tcc (Time Coordinated Computing) Tuning Enabled
   $EN_DIS
 **/
-  UINT8                       TccTuningEnable;
+  UINT8                       TccTuningEnablePreMem;
 
 /** Offset 0x06BE
 **/
@@ -2923,12 +2923,12 @@ typedef struct {
 /** Offset 0x06C8 - Tcc BIOS Config File Base Address
   Tcc (Time Coordinated Computing) TCC BIOS Config File Base Address
 **/
-  UINT32                      TccStreamCfgBase;
+  UINT32                      TccStreamCfgBasePreMem;
 
 /** Offset 0x06CC - Tcc BIOS Config File Size
   Tcc (Time Coordinated Computing) TCC BIOS Config File Size
 **/
-  UINT32                      TccStreamCfgSize;
+  UINT32                      TccStreamCfgSizePreMem;
 
 /** Offset 0x06D0 - Force ME DID Init Status
   Test, 0: disable, 1: Success, 2: No Memory in Channels, 3: Memory Init Error, Set
