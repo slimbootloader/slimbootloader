@@ -252,42 +252,7 @@ PlatformGetStage1AOffset (
   OUT UINT32     *Size
   )
 {
-  EFI_STATUS                Status;
-  FLASH_MAP                 *FlashMap;
-
-  if ((Base == NULL) || (Size == NULL)) {
-    return EFI_INVALID_PARAMETER;
-  }
-
-  FlashMap = GetFlashMapPtr();
-  if (FlashMap == NULL) {
-    return EFI_NOT_FOUND;
-  }
-
-  //
-  // Get stage 1A base and size
-  //
-  Status = GetComponentInfoByPartition (FLASH_MAP_SIG_STAGE1A, IsBackupPartition, Base, Size);
-  if (IsBackupPartition && (Status == EFI_NOT_FOUND)) {
-    Status = GetComponentInfoByPartition (FLASH_MAP_SIG_STAGE1A, FALSE, Base, Size);
-  }
-  if (EFI_ERROR(Status)) {
-    DEBUG((DEBUG_ERROR, "Could not get component information from flash map \n"));
-    return Status;
-  }
-
-  //
-  // Convert base address to offset in the BIOS region
-  //
-  *Base = (UINT32)(FlashMap->RomSize - (0x100000000ULL - *Base));
-
-  //
-  // Calculate base address of the component in the capsule image
-  // Capsule image address + bios region offset + offset of the component
-  //
-  *Base  = (UINT32)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER) + *Base);
-
-  return EFI_SUCCESS;
+  return EFI_UNSUPPORTED;
 }
 
 /**
