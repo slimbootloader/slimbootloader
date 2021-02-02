@@ -62,4 +62,16 @@ TraverseMemoryResourceHob (
   IN  VOID                  *Param
   );
 
+/**
+  Dump FSP memory resource
+
+  @param  HobListPtr         A HOB list pointer.
+
+**/
+VOID
+EFIAPI
+DumpFspResourceHob (
+  IN  CONST VOID            *HobListPtr
+  );
+
 #endif

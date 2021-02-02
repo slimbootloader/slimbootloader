@@ -21,6 +21,7 @@
 #include <Library/ConfigDataLib.h>
 #include <Library/SpiFlashLib.h>
 #include <Library/VariableLib.h>
+#include <Library/FspSupportLib.h>
 #include <Library/BootloaderCoreLib.h>
 #include <Library/BoardSupportLib.h>
 #include <FspmUpd.h>
@@ -184,8 +185,9 @@ BoardInit (
   IN  BOARD_INIT_PHASE  InitPhase
 )
 {
-  EFI_STATUS            Status;
+  EFI_STATUS             Status;
   PLT_DEVICE_TABLE      *PltDeviceTable;
+  VOID                  *FspHob;
 
   switch (InitPhase) {
   case PreConfigInit:
@@ -205,8 +207,15 @@ BoardInit (
   case PostConfigInit:
     PlatformNameInit ();
     break;
-  case PreMemoryInit:
+
   case PostMemoryInit:
+    FspHob = GetFspHobListPtr ();
+    if (FspHob != NULL) {
+      DumpFspResourceHob (FspHob);
+    }
+    break;
+
+  case PreMemoryInit:
   case PreTempRamExit:
   case PostTempRamExit:
     break;
