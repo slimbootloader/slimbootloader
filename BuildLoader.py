@@ -903,6 +903,7 @@ class Build(object):
             'DOWNGRADE_MEM64',
             'DOWNGRADE_PMEM64',
             'DOWNGRADE_BUS0',
+            'FLAG_ALLOC_PMEM_FIRST',
             'BUS_SCAN_TYPE',
             'BUS_SCAN_ITEMS'
         ]
@@ -911,12 +912,12 @@ class Build(object):
             policy_name = '_PCI_ENUM_%s' % policy_list
             policy_value = None
             if not hasattr(self._board, policy_name):
-                if policy_list == 'BUS_SCAN_TYPE':
-                    policy_value = 0
-                elif policy_list == 'BUS_SCAN_ITEMS':
+                if policy_list == 'BUS_SCAN_ITEMS':
                     policy_value = '0'
-                else:
+                elif 'DOWNGRADE' in policy_list:
                     policy_value = 1
+                else:
+                    policy_value = 0
             else:
                 policy_value = getattr(self._board, policy_name)
             pci_enum_policy_dict[policy_list] = policy_value

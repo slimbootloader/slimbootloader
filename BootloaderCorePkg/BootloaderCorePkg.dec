@@ -100,8 +100,13 @@
   # } PCI_RES_DOWNGRADE;
   #
   # typedef struct {
+  #   UINT16            AllocPmemFirst  : 1;  // default:0 (Mem32->Pmem32->Mem64->Pmem64), 1 (Pmem64->Mem64->Pmem32->Mem32)
+  #   UINT16            Reserved        : 15; // 0 initialized
+  # } PCI_ENUM_FLAG;
+  #
+  # typedef struct {
   #   PCI_RES_DOWNGRADE Downgrade;
-  #   UINT16            Reserved;
+  #   PCI_ENUM_FLAG     Flag;
   #   UINT8             BusScanType;    // default:0 (0: list, 1: range)
   #   UINT8             NumOfBus;       // the number of BusScanItems
   #   UINT8             BusScanItems[0];
@@ -112,6 +117,7 @@
   # self._PCI_ENUM_DOWNGRADE_MEM64  = 0
   # self._PCI_ENUM_DOWNGRADE_PMEM64 = 0
   # self._PCI_ENUM_DOWNGRADE_BUS0   = 0
+  # self._PCI_ENUM_FLAG_ALLOC_PMEM_FIRST = 1
   # self._PCI_ENUM_BUS_SCAN_TYPE    = 1
   # self._PCI_ENUM_BUS_SCAN_ITEMS   = '0,0xff'
   gPlatformModuleTokenSpaceGuid.PcdPciEnumPolicyInfo      | {0x00}     | VOID*  | 0x200000A5

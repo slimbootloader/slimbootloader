@@ -69,8 +69,13 @@ typedef struct {
 } PCI_RES_DOWNGRADE;
 
 typedef struct {
+  UINT16            AllocPmemFirst  : 1;
+  UINT16            Reserved        : 15;
+} PCI_ENUM_FLAG;
+
+typedef struct {
   PCI_RES_DOWNGRADE Downgrade;
-  UINT16            Reserved;
+  PCI_ENUM_FLAG     Flag;
   UINT8             BusScanType;
   UINT8             NumOfBus;
   UINT8             BusScanItems[0];

@@ -184,7 +184,8 @@ class PciEnumPolicyInfo(Structure):
         ('DowngradePMem64',         c_uint16, 1),
         ('DowngradeBus0',           c_uint16, 1),
         ('DowngradeReserved',       c_uint16, 12),
-        ('Reserved',                c_uint16),
+        ('FlagAllocPmemFirst',      c_uint16, 1),
+        ('FlagReserved',            c_uint16, 15),
         ('BusScanType',             c_uint8), # 0: list, 1: range
         ('NumOfBus',                c_uint8),
         ('BusScanItems',            ARRAY(c_uint8, 0))
@@ -196,6 +197,8 @@ class PciEnumPolicyInfo(Structure):
         self.DowngradePMem64    = 1
         self.DowngradeBus0      = 1
         self.DowngradeReserved  = 0
+        self.FlagAllocPmemFirst = 0
+        self.FlagReserved       = 0
         self.Reserved           = 0
         self.BusScanType        = 0
         self.NumOfBus           = 0
@@ -1062,6 +1065,7 @@ def gen_pci_enum_policy_info (policy_dict):
         policy_info.DowngradeMem64  = policy_dict['DOWNGRADE_MEM64']
         policy_info.DowngradePMem64 = policy_dict['DOWNGRADE_PMEM64']
         policy_info.DowngradeBus0   = policy_dict['DOWNGRADE_BUS0']
+        policy_info.FlagAllocPmemFirst  = policy_dict['FLAG_ALLOC_PMEM_FIRST']
         policy_info.BusScanType     = policy_dict['BUS_SCAN_TYPE']
         bus_scan_items              = policy_dict['BUS_SCAN_ITEMS']
 
