@@ -1479,6 +1479,9 @@ PciProgramResources (
   CONST PCI_RES_ALLOC_RANGE *ResRange;
   UINT64                     Address;
   PCI_BAR_TYPE               BarType;
+  PCI_BAR_TYPE               BarTypeStart;
+  PCI_BAR_TYPE               BarTypeEnd;
+  INT8                       BarTypeStep;
   UINT64                     ResBase[3];
   UINT64                     ResLimit[3];
   UINT8                      Index;
@@ -1495,7 +1498,17 @@ PciProgramResources (
     ResBase[2]  = ResRange->Mmio64Base;
     ResLimit[2] = ResRange->Mmio64Limit;
 
-    for (BarType = PciBarTypeIo16; BarType <= PciBarTypePMem64; BarType++) {
+    if (EnumPolicy->Flag.AllocPmemFirst != 0) {
+      BarTypeStart = PciBarTypePMem64;
+      BarTypeEnd   = PciBarTypeIo16 - 1;
+      BarTypeStep  = -1;
+    } else {
+      BarTypeStart = PciBarTypeIo16;
+      BarTypeEnd   = PciBarTypePMem64 + 1;
+      BarTypeStep  = 1;
+    }
+
+    for (BarType = BarTypeStart; BarType != BarTypeEnd; BarType += BarTypeStep) {
       if (((BarType == PciBarTypeIo32) && (EnumPolicy->Downgrade.Io32 != 0)) ||
           ((BarType == PciBarTypeMem64) && (EnumPolicy->Downgrade.Mem64 != 0)) ||
           ((BarType == PciBarTypePMem64) && (EnumPolicy->Downgrade.PMem64 != 0))) {
