@@ -72,7 +72,7 @@ BoardNotifyPhase (
   Display graphical splash screen
 
   @retval EFI_SUCCESS     Splash screen was successfully displayed
-  @retval EFI_UNSUPPORTED Frame buffer access not supported
+  @retval EFI_NOT_FOUND   Frame buffer hob not found
   @retval EFI_UNSUPPORTED BmpImage is not a valid *.BMP image
 
 **/
@@ -89,7 +89,7 @@ DisplaySplash (
   // Get framebuffer info
   GfxInfoHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GetGuidHobData (NULL, NULL, &gEfiGraphicsInfoHobGuid);
   if (GfxInfoHob == NULL) {
-    return EFI_UNSUPPORTED;
+    return EFI_NOT_FOUND;
   }
 
   // Convert image from BMP format and write to frame buffer

@@ -98,7 +98,7 @@ BuildExtraInfoHob (
   Display graphical splash screen
 
   @retval EFI_SUCCESS     Splash screen was successfully displayed
-  @retval EFI_UNSUPPORTED Frame buffer access not supported
+  @retval EFI_NOT_FOUND   Frame buffer hob not found
   @retval EFI_UNSUPPORTED BmpImage is not a valid *.BMP image
 
 **/

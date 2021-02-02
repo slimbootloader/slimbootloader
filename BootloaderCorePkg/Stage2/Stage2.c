@@ -367,6 +367,7 @@ SecStartup (
   S3_DATA                        *S3Data;
   PLATFORM_SERVICE               *PlatformService;
   VOID                           *SmbiosEntry;
+  BOOLEAN                         SplashPostPci;
 
   // Initialize HOB
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
@@ -434,9 +435,13 @@ SecStartup (
   BuildBaseInfoHob (Stage2Param);
 
   // Display splash
+  SplashPostPci = FALSE;
   if (FixedPcdGetBool (PcdSplashEnabled)) {
-    DisplaySplash ();
+    Status = DisplaySplash ();
     AddMeasurePoint (0x3050);
+    if (Status == EFI_NOT_FOUND) {
+      SplashPostPci = TRUE;
+    }
   }
 
   // MP Init phase 1
@@ -476,8 +481,13 @@ SecStartup (
         AddMeasurePoint (0x30C0);
       }
     }
-
     ASSERT_EFI_ERROR (Status);
+
+    if (FixedPcdGetBool (PcdSplashEnabled)) {
+      if (SplashPostPci) {
+        DisplaySplash ();
+      }
+    }
   }
 
   // ACPI Initialization
