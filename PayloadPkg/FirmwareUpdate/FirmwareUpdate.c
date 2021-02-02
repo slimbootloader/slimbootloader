@@ -25,7 +25,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/ResetSystemLib.h>
 #include <Library/SecureBootLib.h>
 #include <Library/BootloaderCommonLib.h>
-#include <Library/LiteFvLib.h>
 #include <Library/FirmwareUpdateLib.h>
 #include <Guid/SystemResourceTable.h>
 #include "FirmwareUpdateHelper.h"
@@ -33,52 +32,97 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 /**
   Verify the firmware version to make sure it is no less than current firmware version.
 
-  @param[in]  Stage1ABase   Pointer to stage 1A base.
-  @param[in]  IsFd          Does Stage1ABase point to Stage1A FD
-                            or SBL Stage1A FV ?
-  @param[out] Version       Pointer to version of the firmware
+  @param[in] ImageHdr     Pointer to the fw mgmt capsule image header
+  @param[in] FwPolicy     Firmware update policy.
 
-  @retval  EFI_SUCCESS        The operation completed successfully.
-  @retval  others             There is error happening.
+  @retval  EFI_SUCCESS    The operation completed successfully.
+  @retval  others         There is error happening.
 **/
 EFI_STATUS
-GetVersionfromFv (
-  IN  UINT32              *Stage1ABase,
-  IN  BOOLEAN             IsFd,
-  OUT BOOT_LOADER_VERSION **Version
+VerifySblVersion (
+  IN  EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
+  IN  FIRMWARE_UPDATE_POLICY  FwPolicy
   )
 {
-  EFI_STATUS                  Status;
-  EFI_FFS_FILE_HEADER         *FfsFile;
-  EFI_FIRMWARE_VOLUME_HEADER  *FvHeader;
-
-  FvHeader = (EFI_FIRMWARE_VOLUME_HEADER *)(UINTN)(*Stage1ABase);
-  //
-  // Stage 1A FD has FSPT FV first, so move on to the next FV
-  //
-  if (IsFd) {
-    FvHeader = (EFI_FIRMWARE_VOLUME_HEADER *)((UINTN)FvHeader + (UINTN)FvHeader->FvLength);
-  }
+  UINT32                Stage1ABase;
+  UINT32                Stage1ASize;
+  UINT32                Stage1AFvBase;
+  BOOT_LOADER_VERSION   *CapsuleBlVersion;
+  BOOT_LOADER_VERSION   *CurrentBlVersion;
+  EFI_STATUS            Status;
 
   //
-  // Get version info FFS from FV
+  // SVN check for BIOS
   //
-  Status = GetFfsFileByName(FvHeader,&gBootLoaderVersionFileGuid,&FfsFile);
+  CapsuleBlVersion = NULL;
+  CurrentBlVersion = NULL;
+
+  //
+  // Get svn from existing system firmware
+  //
+  Status = GetSvn (0xFFFFFFFC, &CurrentBlVersion);
   if (EFI_ERROR (Status)) {
-    DEBUG((DEBUG_ERROR, "GetFfsFileByName: %r\n", Status));
+    DEBUG((DEBUG_ERROR, "Getting SBL version from existing firmware failed with status: %r\n", Status));
     return Status;
   }
 
   //
-  // Raw section in version info FFS has version information
+  // Get base address of Stage 1A in capsule Image
   //
-  Status = GetSectionByType(FfsFile, EFI_SECTION_RAW, 0, (VOID *)Version);
+  if (FwPolicy.Fields.UpdatePartitionB == 0x1) {
+    Status = PlatformGetStage1AOffset (ImageHdr, FALSE, &Stage1ABase, &Stage1ASize);
+  } else if (FwPolicy.Fields.UpdatePartitionA == 0x1) {
+    Status = PlatformGetStage1AOffset (ImageHdr, TRUE, &Stage1ABase, &Stage1ASize);
+  }
+
+  //
+  // If we can get Stage 1A base from platform code, try and get SBL version
+  //
+  if (Status == EFI_SUCCESS) {
+    Status = GetVersionfromFv (Stage1ABase, TRUE, &CapsuleBlVersion);
+    if (EFI_ERROR (Status)) {
+      DEBUG((DEBUG_ERROR, "Getting SBL version from capsule failed with status: %r\n", Status));
+      return Status;
+    }
+  } else if (EFI_ERROR(Status)) {
+    // This check is introduced to handle platform specific implementation
+    // all platforms that DOES NOT require special handling will return
+    // EFI_UNSUPPORTED from PlatformGetStage1AOffset and getting stage1Abase
+    // will be handled in common way using the below implementation.
+    if (Status == EFI_UNSUPPORTED) {
+      // Last 4 bytes of the BIOS region contain Stage 1A FV base.
+      Stage1AFvBase = (UINT32)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER) + ImageHdr->UpdateImageSize - 4);
+      Status = GetSvn (Stage1AFvBase, &CapsuleBlVersion);
+    } else {
+      DEBUG((DEBUG_ERROR, "Getting Stage 1A offset from capsule failed with status: %r\n", Status));
+      return Status;
+    }
+  }
+
+  //
+  // Update last update version to the version we are about to update
+  //
+  Status = UpdateStatus(ImageHdr->UpdateHardwareInstance, \
+                        (CapsuleBlVersion->ImageVersion.ProjMajorVersion << 8) | CapsuleBlVersion->ImageVersion.ProjMinorVersion, \
+                        0xFFFFFFFF);
   if (EFI_ERROR (Status)) {
-    DEBUG((DEBUG_ERROR, "GetSectionByType: %r\n", Status));
+    DEBUG((DEBUG_ERROR, "Updating status to reserved region failed: %r\n", Status));
     return Status;
   }
 
-  return EFI_SUCCESS;
+  //
+  // Check for Antirollback
+  //
+  if (CapsuleBlVersion->ImageVersion.SecureVerNum >= CurrentBlVersion->ImageVersion.SecureVerNum) {
+    DEBUG((DEBUG_INIT, " Updating Slim Bootloader from version %x to version %x \n", \
+           CurrentBlVersion->ImageVersion.SecureVerNum, CapsuleBlVersion->ImageVersion.SecureVerNum));
+    return EFI_SUCCESS;
+  }
+
+  DEBUG((DEBUG_ERROR, "Antirollback - Could not rollback to version %x from current version: %x\n", \
+         CapsuleBlVersion->ImageVersion.SecureVerNum, CurrentBlVersion->ImageVersion.SecureVerNum));
+
+  return EFI_INCOMPATIBLE_VERSION;
 }
 
 /**
@@ -96,15 +140,8 @@ VerifyFwVersion (
   IN  FIRMWARE_UPDATE_POLICY  FwPolicy
   )
 {
-  UINT32                CompBase;
-  UINT32                CompSize;
-  BOOT_LOADER_VERSION   *CurrentBlVersion;
-  BOOT_LOADER_VERSION   *CapsuleBlVersion;
   UINT8                 SvnStatus;
-  BOOLEAN               IsFd;
-  UINT32                Stage1ABaseFromCap;
   EFI_STATUS            Status;
-  UINT32                TopSwapRegionSize;
 
   //
   // Check SVN for CFGDATA update
@@ -122,100 +159,15 @@ VerifyFwVersion (
     } else {
       return EFI_SUCCESS;
     }
-  } else if ((UINT32)ImageHdr->UpdateHardwareInstance == FW_UPDATE_COMP_BIOS_REGION) {
-
-    //
-    // SVN check for BIOS
-    //
-    CurrentBlVersion = NULL;
-    CapsuleBlVersion = NULL;
-
-    //
-    // Get base address of Stage 1A from current firmware
-    //
-    Status = EFI_INVALID_PARAMETER;
-    if (FwPolicy.Fields.UpdatePartitionB == 0x1) {
-      Status = GetComponentInfoByPartition(FLASH_MAP_SIG_STAGE1A, FALSE, &CompBase, &CompSize);
-    } else if (FwPolicy.Fields.UpdatePartitionA == 0x1) {
-      Status = GetComponentInfoByPartition(FLASH_MAP_SIG_STAGE1A, TRUE, &CompBase, &CompSize);
-    }
-
-    if (EFI_ERROR(Status)) {
-      DEBUG((DEBUG_ERROR, "GetComponentInfoByPartition: %r\n", Status));
-      return Status;
-    }
-
-    Status = GetVersionfromFv (&CompBase, TRUE, &CurrentBlVersion);
-    if (EFI_ERROR (Status)) {
-      DEBUG((DEBUG_ERROR, "GetVersionfromFv: %r\n", Status));
-      return Status;
-    }
-
-    //
-    // Get base address of Stage 1A in capsule Image
-    //
-
-    // Initializaing IsFd to TRUE assuming platform specific handing
-    // is required.
-    IsFd = TRUE;
-    if (FwPolicy.Fields.UpdatePartitionB == 0x1) {
-      Status = PlatformGetStage1AOffset(ImageHdr, FALSE, &CompBase, &CompSize);
-    } else if (FwPolicy.Fields.UpdatePartitionA == 0x1) {
-      Status = PlatformGetStage1AOffset(ImageHdr, TRUE, &CompBase, &CompSize);
-    }
-    if (EFI_ERROR (Status)) {
-      // This check is introduced to handle platform specific implementation
-      // all platforms that DOES NOT require special handling will return
-      // EFI_UNSUPPORTED from PlatformGetStage1AOffset and getting stage1Abase
-      // will be handled in common way using the below implementation.
-      if (Status == EFI_UNSUPPORTED) {
-        IsFd = FALSE;
-        // Last 4 bytes of the BIOS region contain Stage 1A FV base.
-        CompBase = (UINT32)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER) + ImageHdr->UpdateImageSize - 4);
-        Stage1ABaseFromCap = (UINT32)(*(UINT32 *)(UINTN)CompBase);
-        CompBase = CompBase - (~Stage1ABaseFromCap + 1) + sizeof(UINT32);
-
-        // Calculate offset of Stage1A for backup partition
-        if (FwPolicy.Fields.UpdatePartitionA == 0x1) {
-          GetRegionInfo(&TopSwapRegionSize, NULL, NULL);
-          CompBase = CompBase - TopSwapRegionSize;
-        }
-      } else {
-        DEBUG((DEBUG_ERROR, "PlatformGetStage1AOffset: %r\n", Status));
-        return Status;
-      }
-    }
-
-    Status = GetVersionfromFv (&CompBase, IsFd, &CapsuleBlVersion);
-    if (EFI_ERROR (Status)) {
-      DEBUG((DEBUG_ERROR, "GetVersionfromFv: %r\n", Status));
-      return Status;
-    }
-
-    //
-    // Update last update version to the version we are about to update
-    //
-    Status = UpdateStatus(ImageHdr->UpdateHardwareInstance, \
-                          (CapsuleBlVersion->ImageVersion.ProjMajorVersion << 8) | CapsuleBlVersion->ImageVersion.ProjMinorVersion, \
-                          0xFFFFFFFF);
-    if (EFI_ERROR (Status)) {
-      DEBUG((DEBUG_ERROR, "Updating status to reserved region failed: %r\n", Status));
-      return Status;
-    }
-
-    if (CapsuleBlVersion->ImageVersion.SecureVerNum >= CurrentBlVersion->ImageVersion.SecureVerNum) {
-      return EFI_SUCCESS;
-    }
-
-    DEBUG((DEBUG_ERROR, "Antirollback - Could not rollback to version %x from current version: %x\n", \
-           CapsuleBlVersion->ImageVersion.SecureVerNum, CurrentBlVersion->ImageVersion.SecureVerNum));
-
-    return EFI_INCOMPATIBLE_VERSION;
   }
 
-   return EFI_SUCCESS;
-}
+  if ((UINT32)ImageHdr->UpdateHardwareInstance == FW_UPDATE_COMP_BIOS_REGION) {
+    Status = VerifySblVersion (ImageHdr, FwPolicy);
+    return Status;
+  }
 
+  return EFI_INVALID_PARAMETER;
+}
 
 /**
   Get state machine flag from flash.

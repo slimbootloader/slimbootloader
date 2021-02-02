@@ -15,7 +15,6 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/TimerLib.h>
-#include <Service/SpiFlashService.h>
 #include <Library/FirmwareUpdateLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include <Library/PchSbiAccessLib.h>
@@ -26,95 +25,8 @@
 #include <Library/IoLib.h>
 #include "SpiRegionAccess.h"
 
-
-SPI_FLASH_SERVICE   *mFwuSpiService = NULL;
-
 #define FWU_BOOT_MODE_OFFSET   0x40
 #define FWU_BOOT_MODE_VALUE    0x5A
-
-/**
-  This function initialized boot media.
-
-  It initializes SPI services and SPI Flash size information.
-
-**/
-VOID
-EFIAPI
-InitializeBootMedia(
-  VOID
-  )
-{
-  mFwuSpiService = (SPI_FLASH_SERVICE *)GetServiceBySignature (SPI_FLASH_SERVICE_SIGNATURE);
-  if (mFwuSpiService == NULL) {
-    return;
-  }
-
-  mFwuSpiService->SpiInit ();
-}
-
-/**
-  This function reads blocks from the SPI device.
-
-  @param[in]  Address             The block address in the FlashRegionAll to read from on the SPI.
-  @param[in]  ByteCount           Size of the Buffer in bytes.
-  @param[out] Buffer              Pointer to caller-allocated buffer containing the data received during the SPI cycle.
-
-  @retval EFI_SUCCESS             Read completes successfully.
-  @retval others                  Device error, the command aborts abnormally.
-
-**/
-EFI_STATUS
-EFIAPI
-BootMediaRead (
-  IN     UINT64   Address,
-  IN     UINT32   ByteCount,
-  OUT    UINT8    *Buffer
-  )
-{
-  return mFwuSpiService->SpiRead (FlashRegionBios, (UINT32)Address, ByteCount, Buffer);
-}
-
-/**
-  This function writes blocks from the SPI device.
-
-  @param[in]   Address            The block address in the FlashRegionAll to read from on the SPI.
-  @param[in]   ByteCount          Size of the Buffer in bytes.
-  @param[out]  Buffer             Pointer to the data to write.
-
-  @retval EFI_SUCCESS             Write completes successfully.
-  @retval others                  Device error, the command aborts abnormally.
-
-**/
-EFI_STATUS
-EFIAPI
-BootMediaWrite (
-  IN     UINT64   Address,
-  IN     UINT32   ByteCount,
-  OUT    UINT8    *Buffer
-  )
-{
-  return mFwuSpiService->SpiWrite (FlashRegionBios, (UINT32)Address, ByteCount, Buffer);
-}
-
-/**
-  This function erases blocks from the SPI device.
-
-  @param[in]  Address             The block address in the FlashRegionAll to read from on the SPI.
-  @param[in]  ByteCount           Size of the region to erase in bytes.
-
-  @retval EFI_SUCCESS             Erase completes successfully.
-  @retval others                  Device error, the command aborts abnormally.
-
-**/
-EFI_STATUS
-EFIAPI
-BootMediaErase (
-  IN     UINT64   Address,
-  IN     UINT32   ByteCount
-  )
-{
-  return mFwuSpiService->SpiErase (FlashRegionBios, (UINT32)Address, ByteCount);
-}
 
 /**
   Initializes input structure for csme update driver.
@@ -179,7 +91,6 @@ SetBootPartition (
   // Get Top swap register Bit0 in PCH Private Configuration Space.
   //
   P2sbBase   = MM_PCI_ADDRESS (0, PCI_DEVICE_NUMBER_PCH_LPC, 1, 0); // P2SB device base
-  DEBUG ((DEBUG_ERROR, "p2sbbase: %x\n", P2sbBase));
   P2sbIsHidden = FALSE;
 
   if (MmioRead16 (P2sbBase) == 0xFFFF) {
@@ -192,7 +103,6 @@ SetBootPartition (
   }
 
   P2sbBar    = MmioRead32 (P2sbBase + 0x10);
-  DEBUG ((DEBUG_ERROR, "P2sbBar: %x\n", P2sbBar));
   P2sbBar  &= 0xFFFFFFF0;
   ASSERT (P2sbBar != 0xFFFFFFF0);
 
@@ -507,16 +417,10 @@ SetFlashDescriptorLock (
   HeciGetSpiProtectionMode (&SpiProtectionMode);
 
   if (SpiProtectionMode == 0) {
-
-    if (mFwuSpiService == NULL) {
-      DEBUG((DEBUG_ERROR, "SPI flash service is not initialized!!"));
-      return EFI_NO_MEDIA;
-    }
-
     //
     // Read from the flash descriptor master access region
     //
-    Status = mFwuSpiService->SpiRead (FlashRegionDescriptor, (UINT32) B_FLASH_FMBA, sizeof(FlashDescMasterAccess), (UINT8 *) FlashDescMasterAccess);
+    Status = BootMediaReadByType (FlashRegionDescriptor, (UINT32) B_FLASH_FMBA, sizeof(FlashDescMasterAccess), (UINT8 *) FlashDescMasterAccess);
     if (EFI_ERROR (Status)) {
       DEBUG((DEBUG_ERROR, "SPI read failed 0x%x\n", Status));
       return Status;
@@ -547,7 +451,7 @@ SetFlashDescriptorLock (
     //
     // Write to flash descriptor master access region
     //
-    Status = mFwuSpiService->SpiWrite (FlashRegionDescriptor, (UINT32) B_FLASH_FMBA, sizeof(FlashDescMasterAccess), (UINT8 *) FlashDescMasterAccess);
+    Status = BootMediaReadByType (FlashRegionDescriptor, (UINT32) B_FLASH_FMBA, sizeof(FlashDescMasterAccess), (UINT8 *) FlashDescMasterAccess);
     if (EFI_ERROR (Status)) {
       DEBUG((DEBUG_ERROR, "SPI Lock write failed 0x%x\n", Status));
     }

@@ -13,6 +13,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Guid/FlashMapInfoGuid.h>
 #include <IndustryStandard/Acpi30.h>
 #include <Guid/SystemResourceTable.h>
+#include <Guid/BootLoaderVersionGuid.h>
+#include <Service/SpiFlashService.h>
 
 #define CMOS_ADDREG             0x70
 #define CMOS_DATAREG            0x71
@@ -284,6 +286,44 @@ PlatformEndFirmwareUpdate (
   );
 
 /**
+  Get SVN from existing firmware
+
+  This routine get SPI base address and read first four bytes
+  to get STAGE1A FV base address, using this base address
+  this routine can calculate the offset to the SVN structure.
+
+  @param[in]  Stage1AFvPointer    Pointer to Stage1A fv base.
+  @param[out] BlVersion           Pointer to SBL version struct.
+
+  @retval EFI_SUCCESS             Read SVN success
+  @retval EFI_INVALID_PARAMETER   Invalid parameter
+**/
+EFI_STATUS
+EFIAPI
+GetSvn (
+  IN  UINT32                Stage1AFvPointer,
+  OUT BOOT_LOADER_VERSION   **BlVersion
+  );
+
+/**
+  Verify the firmware version to make sure it is no less than current firmware version.
+
+  @param[in]  Stage1ABase   Stage 1A base address.
+  @param[in]  IsFd          Does Stage1ABase point to Stage1A FD
+                            or SBL Stage1A FV ?
+  @param[out] Version       Pointer to version of the firmware
+
+  @retval  EFI_SUCCESS        The operation completed successfully.
+  @retval  others             There is error happening.
+**/
+EFI_STATUS
+GetVersionfromFv (
+  IN  UINT32              Stage1ABase,
+  IN  BOOLEAN             IsFd,
+  OUT BOOT_LOADER_VERSION **Version
+  );
+
+/**
   Read the data from BootMedia.
 
   @param[in] Address          The boot media address to be read.
@@ -299,6 +339,27 @@ BootMediaRead (
   IN     UINT64                  Address,
   IN     UINT32                  ByteCount,
   OUT    UINT8                   *Buffer
+  );
+
+/**
+  This function reads blocks from the SPI device.
+
+  @param[in] FlashRegionType      The Flash Region type for flash cycle which is listed in the Descriptor.
+  @param[in]  Address             The block address in the FlashRegionAll to read from on the SPI.
+  @param[in]  ByteCount           Size of the Buffer in bytes.
+  @param[out] Buffer              Pointer to caller-allocated buffer containing the data received during the SPI cycle.
+
+  @retval EFI_SUCCESS             Read completes successfully.
+  @retval others                  Device error, the command aborts abnormally.
+
+**/
+EFI_STATUS
+EFIAPI
+BootMediaReadByType (
+  IN     FLASH_REGION_TYPE  FlashRegionType,
+  IN     UINT64             Address,
+  IN     UINT32             ByteCount,
+  OUT    UINT8              *Buffer
   );
 
 /**
@@ -355,6 +416,25 @@ VOID
 EFIAPI
 InitializeBootMedia (
   VOID
+  );
+
+/**
+  Get the SPI region base and size, based on the enum type
+
+  @param[in] FlashRegionType      The Flash Region type for for the base address which is listed in the Descriptor.
+  @param[out] BaseAddress         The Flash Linear Address for the Region 'n' Base
+  @param[out] RegionSize          The size for the Region 'n'
+
+  @retval EFI_SUCCESS             Read success
+  @retval EFI_INVALID_PARAMETER   Invalid region type given
+  @retval EFI_DEVICE_ERROR        The region is not used
+**/
+EFI_STATUS
+EFIAPI
+BootMediaGetRegion (
+  IN     FLASH_REGION_TYPE  FlashRegionType,
+  OUT    UINT32             *BaseAddress, OPTIONAL
+  OUT    UINT32             *RegionSize OPTIONAL
   );
 
 /**
