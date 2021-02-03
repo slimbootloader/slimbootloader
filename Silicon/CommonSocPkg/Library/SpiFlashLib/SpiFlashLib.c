@@ -627,6 +627,7 @@ SendSpiCmd (
   SpiBaseAddress = SpiInstance->PchSpiBase;
   ScSpiBar0      = AcquireSpiBar0 (SpiBaseAddress);
   BiosCtlSave    = 0;
+  SpiInstance->RegionPermission = MmioRead16 (ScSpiBar0 + R_SPI_FRAP);
 
   ///
   /// If it's write cycle, disable Prefetching, Caching and disable BIOS Write Protect
