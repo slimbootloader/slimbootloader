@@ -62,3 +62,4 @@
   gPlatformModuleTokenSpaceGuid.PcdLegacyEfSegmentEnabled
   gPlatformModuleTokenSpaceGuid.PcdSplashLogoAddress
   gPlatformModuleTokenSpaceGuid.PcdSplashEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdCpuX2ApicEnabled

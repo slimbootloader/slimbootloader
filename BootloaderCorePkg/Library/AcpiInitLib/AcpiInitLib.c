@@ -325,15 +325,16 @@ UpdateMadt (
   IN UINT8   *Current
   )
 {
-  EFI_ACPI_DESCRIPTION_HEADER                 *Table;
-  UINT8                                       *TempMadt;
-  UINT8                                       *MadtPtr;
-  UINT8                                       *MadtEnd;
-  EFI_ACPI_MADT_ENTRY_COMMON_HEADER           *EntryHeader;
-  EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC_STRUCTURE *LocalApic;
-  SYS_CPU_INFO                                *SysCpuInfo;
-  UINT32                                       Length;
-  UINT32                                       Index;
+  EFI_ACPI_DESCRIPTION_HEADER                   *Table;
+  UINT8                                         *TempMadt;
+  UINT8                                         *MadtPtr;
+  UINT8                                         *MadtEnd;
+  EFI_ACPI_MADT_ENTRY_COMMON_HEADER             *EntryHeader;
+  EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC_STRUCTURE   *LocalApic;
+  EFI_ACPI_5_0_PROCESSOR_LOCAL_X2APIC_STRUCTURE *LocalX2Apic;
+  SYS_CPU_INFO                                  *SysCpuInfo;
+  UINT32                                         Length;
+  UINT32                                         Index;
 
   //
   // Get the number of detected CPUs
@@ -365,18 +366,30 @@ UpdateMadt (
   //
   // Append Processor Local APIC info
   //
-  LocalApic = (EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC_STRUCTURE *)Current;
-  for (Index = 0; Index < SysCpuInfo->CpuCount; Index++) {
-    LocalApic[Index].Type             = EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC;
-    LocalApic[Index].Length           = sizeof (EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC_STRUCTURE);
-    //
-    // ProcessorId and ApicId has sizeof (UINT8).
-    //
-    LocalApic[Index].AcpiProcessorId  = (UINT8)Index + 1;
-    LocalApic[Index].ApicId           = (UINT8)SysCpuInfo->CpuInfo[Index].ApicId;
-    LocalApic[Index].Flags            = 1;
+  if (FeaturePcdGet (PcdCpuX2ApicEnabled)) {
+    LocalX2Apic = (EFI_ACPI_5_0_PROCESSOR_LOCAL_X2APIC_STRUCTURE *)Current;
+    Length = sizeof (EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC_STRUCTURE) * SysCpuInfo->CpuCount;
+    ZeroMem (LocalX2Apic, Length);
+    for (Index = 0; Index < SysCpuInfo->CpuCount; Index++) {
+      LocalX2Apic[Index].Type             = EFI_ACPI_5_0_PROCESSOR_LOCAL_X2APIC;
+      LocalX2Apic[Index].Length           = sizeof (EFI_ACPI_5_0_PROCESSOR_LOCAL_X2APIC_STRUCTURE);
+      LocalX2Apic[Index].AcpiProcessorUid = Index + 1;
+      LocalX2Apic[Index].X2ApicId         = SysCpuInfo->CpuInfo[Index].ApicId;
+      LocalX2Apic[Index].Flags            = 1;
+    }
+    Length = sizeof (EFI_ACPI_5_0_PROCESSOR_LOCAL_X2APIC_STRUCTURE) * SysCpuInfo->CpuCount;
+  } else {
+    LocalApic = (EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC_STRUCTURE *)Current;
+    Length = sizeof (EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC_STRUCTURE) * SysCpuInfo->CpuCount;
+    ZeroMem (LocalApic, Length);
+    for (Index = 0; Index < SysCpuInfo->CpuCount; Index++) {
+      LocalApic[Index].Type             = EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC;
+      LocalApic[Index].Length           = sizeof (EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC_STRUCTURE);
+      LocalApic[Index].AcpiProcessorId  = (UINT8)Index + 1;
+      LocalApic[Index].ApicId           = (UINT8)SysCpuInfo->CpuInfo[Index].ApicId;
+      LocalApic[Index].Flags            = 1;
+    }
   }
-  Length = sizeof (EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC_STRUCTURE) * SysCpuInfo->CpuCount;
   Current += Length;
 
   //

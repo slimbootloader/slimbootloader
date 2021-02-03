@@ -57,3 +57,4 @@
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegSize
   gPlatformModuleTokenSpaceGuid.PcdSmmRebaseMode
   gPlatformModuleTokenSpaceGuid.PcdFuncCpuInitHook
+  gPlatformCommonLibTokenSpaceGuid.PcdCpuX2ApicEnabled
