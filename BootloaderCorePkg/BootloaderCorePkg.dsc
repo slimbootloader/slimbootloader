@@ -69,7 +69,7 @@
   MemoryAllocationLib|BootloaderCorePkg/Library/MemoryAllocationLib/MemoryAllocationLib.inf
   MpInitLib|BootloaderCorePkg/Library/MpInitLib/MpInitLib.inf
   StageLib|BootloaderCorePkg/Library/StageLib/StageLib.inf
-  LocalApicLib|BootloaderCommonPkg/Library/BaseXApicLib/BaseXApicLib.inf
+  LocalApicLib|BootloaderCommonPkg/Library/BaseXApicX2ApicLib/BaseXApicX2ApicLib.inf
   SecureBootLib|BootloaderCommonPkg/Library/SecureBootLib/SecureBootLib.inf
   TpmLib|BootloaderCommonPkg/Library/TpmLib/TpmLib.inf
   BootloaderCommonLib|BootloaderCommonPkg/Library/BootloaderCommonLib/BootloaderCommonLib.inf
@@ -319,6 +319,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdPreOsCheckerEnabled | $(ENABLE_PRE_OS_CHECKER)
   gPlatformCommonLibTokenSpaceGuid.PcdDmaProtectionEnabled | $(ENABLE_DMA_PROTECTION)
   gPlatformCommonLibTokenSpaceGuid.PcdMultiUsbBootDeviceEnabled |  $(ENABLE_MULTI_USB_BOOT_DEV)
+  gPlatformCommonLibTokenSpaceGuid.PcdCpuX2ApicEnabled    | $(SUPPORT_X2APIC)
   gPlatformModuleTokenSpaceGuid.PcdAriSupport             | $(SUPPORT_ARI)
   gPlatformModuleTokenSpaceGuid.PcdSrIovSupport           | $(SUPPORT_SR_IOV)
   gPlatformModuleTokenSpaceGuid.PcdEnableSetup            | $(ENABLE_SBL_SETUP)

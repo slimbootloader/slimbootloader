@@ -187,6 +187,11 @@ ApFunc (
   // Enable more CPU featurs
   AsmEnableAvx ();
 
+  if (FeaturePcdGet (PcdCpuX2ApicEnabled)) {
+    // Enable X2APIC if desired
+    SetApicMode (LOCAL_APIC_MODE_X2APIC);
+  }
+
   //
   // CPU specific init
   //
@@ -245,6 +250,11 @@ BspInit (
 
   mMpDataStruct.SmmRebaseDoneCounter = 0;
 
+  if (FeaturePcdGet (PcdCpuX2ApicEnabled)) {
+    // Enable X2APIC if desired
+    SetApicMode (LOCAL_APIC_MODE_X2APIC);
+  }
+
   //
   // CPU specific init
   //
@@ -294,6 +304,12 @@ MpInit (
       Status = EFI_UNSUPPORTED;
     } else {
       DEBUG ((DEBUG_INIT, "MP Init%a\n", DebugCodeEnabled() ? " (Wakeup)" : ""));
+
+      if (FeaturePcdGet (PcdCpuX2ApicEnabled)) {
+        // Enable X2APIC if desired
+        SetApicMode (LOCAL_APIC_MODE_X2APIC);
+        DEBUG ((DEBUG_INFO, "APIC Mode: %d\n", GetApicMode ()));
+      }
 
       // Init structure for lock
       mMpDataStruct.SmmRebaseDoneCounter = 0;
