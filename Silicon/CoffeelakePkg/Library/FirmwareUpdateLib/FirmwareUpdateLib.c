@@ -21,6 +21,7 @@
 #include <Library/BootloaderCommonLib.h>
 #include <Library/PchSbiAccessLib.h>
 #include <Library/PchPcrLib.h>
+#include <Library/PciLib.h>
 #include <Library/HeciLib.h>
 #include <CsmeUpdateDriver.h>
 
@@ -145,7 +146,7 @@ InitCsmeUpdInputData (
     CsmeUpdDriverInput->SetMem           = (VOID *)((UINTN)SetMem);
     CsmeUpdDriverInput->CompareMem       = (VOID *)((UINTN)CompareMem);
     CsmeUpdDriverInput->Stall            = (VOID *)((UINTN)MicroSecondDelay);
-    CsmeUpdDriverInput->PciRead          = (VOID *)((UINTN)CsmePciReadBuffer);
+    CsmeUpdDriverInput->PciRead          = (VOID *)((UINTN)PciReadBuffer);
     if (HeciService != NULL) {
       CsmeUpdDriverInput->HeciReadMessage  = (VOID *)((UINTN)HeciService->HeciReceive);
       CsmeUpdDriverInput->HeciSendMessage  = (VOID *)((UINTN)HeciService->HeciSend);
