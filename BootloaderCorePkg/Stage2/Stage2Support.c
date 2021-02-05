@@ -326,23 +326,27 @@ BuildBaseInfoHob (
   }
 
   // Build graphic info hob
-  BlGfxHob = BuildGuidHob (&gEfiGraphicsInfoHobGuid, sizeof (EFI_PEI_GRAPHICS_INFO_HOB));
-  if (BlGfxHob != NULL) {
-    ZeroMem (BlGfxHob, sizeof (EFI_PEI_GRAPHICS_INFO_HOB));
+  BlGfxHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GetGuidHobData (NULL, &Length, &gEfiGraphicsInfoHobGuid);
+  if (BlGfxHob == NULL) {
     FspGfxHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GetGuidHobData (LdrGlobal->FspHobList, &Length,
                   &gEfiGraphicsInfoHobGuid);
     if (FspGfxHob != NULL) {
-      CopyMem (BlGfxHob, FspGfxHob, sizeof (EFI_PEI_GRAPHICS_INFO_HOB));
-      GfxMode = &BlGfxHob->GraphicsMode;
-      DEBUG ((DEBUG_INFO, "Graphics Info: %d x %d x 32 @ 0x%08X\n",GfxMode->HorizontalResolution,\
-        GfxMode->VerticalResolution, BlGfxHob->FrameBufferBase));
-      if ((GfxMode->PixelFormat != PixelRedGreenBlueReserved8BitPerColor) &&
-          (GfxMode->PixelFormat != PixelBlueGreenRedReserved8BitPerColor)) {
-        DEBUG ((DEBUG_ERROR, "Graphics PixelFormat NOT expected (0x%x)\n", GfxMode->PixelFormat));
+      BlGfxHob = BuildGuidHob (&gEfiGraphicsInfoHobGuid, sizeof (EFI_PEI_GRAPHICS_INFO_HOB));
+      if (BlGfxHob != NULL) {
+        CopyMem (BlGfxHob, FspGfxHob, sizeof (EFI_PEI_GRAPHICS_INFO_HOB));
+        GfxMode = &BlGfxHob->GraphicsMode;
+        DEBUG ((DEBUG_INFO, "Graphics Info: %d x %d x 32 @ 0x%08X\n",GfxMode->HorizontalResolution,\
+          GfxMode->VerticalResolution, BlGfxHob->FrameBufferBase));
+        if ((GfxMode->PixelFormat != PixelRedGreenBlueReserved8BitPerColor) &&
+            (GfxMode->PixelFormat != PixelBlueGreenRedReserved8BitPerColor)) {
+          DEBUG ((DEBUG_ERROR, "Graphics PixelFormat NOT expected (0x%x)\n", GfxMode->PixelFormat));
+        }
       }
     } else {
-      DEBUG ((DEBUG_INFO, "Failed to get Graphics Info HOB from FSP\n"));
+      DEBUG ((DEBUG_INFO, "Failed to get GFX HOB from FSP\n"));
     }
+  } else {
+    DEBUG ((DEBUG_INFO, "Use existing GFX HOB from bootloader\n"));
   }
 
   // Build graphic device info hob
