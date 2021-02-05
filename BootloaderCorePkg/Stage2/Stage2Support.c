@@ -47,6 +47,12 @@ BoardNotifyPhase (
   }
 
   if (FspPhaseMask != 0) {
+
+    if (FspPhaseMask & BIT1) {
+      // Sigal MP to stop
+      MpInit (EnumMpInitDone);
+    }
+
     if ((FspPhaseMask & mFspPhaseMask) == 0) {
       // Only call FSP notify once
       Status = CallFspNotifyPhase (FspPhase);
