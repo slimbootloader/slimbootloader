@@ -54,7 +54,7 @@ typedef struct {
   UINT32            Reserved;
   MP_BSP_SELECTORS  BspSelector;
   UINT32            StackStart;
-  UINT32            CProcedure;
+  UINT64            CProcedure;
   UINT32            SpinLock;
   UINT32            ApCounter;
   UINT32            ApStackSize;

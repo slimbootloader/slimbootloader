@@ -89,6 +89,7 @@
   gLoaderPlatformDataGuid
   gDeviceTableHobGuid
   gSmmInformationGuid
+  gLoaderMpCpuTaskInfoGuid
 
 [Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdMaxLibraryDataEntry
