@@ -293,6 +293,8 @@ MpInit (
     if (mMpInitPhase != EnumMpInitNull) {
       Status = EFI_UNSUPPORTED;
     } else {
+      DEBUG ((DEBUG_INIT, "MP Init%a\n", DebugCodeEnabled() ? " (Wakeup)" : ""));
+
       // Init structure for lock
       mMpDataStruct.SmmRebaseDoneCounter = 0;
       InitializeSpinLock (&mMpDataStruct.SpinLock);
@@ -393,6 +395,8 @@ MpInit (
     if (mMpInitPhase != EnumMpInitWakeup) {
       Status = EFI_UNSUPPORTED;
     } else {
+      DEBUG ((DEBUG_INFO, "MP Init (Run)\n"));
+
       //
       // Wait for task done
       //
@@ -442,9 +446,12 @@ MpInit (
   }
 
   if (Phase == EnumMpInitDone) {
-    if (mMpInitPhase != EnumMpInitRun) {
+    if (mMpInitPhase == EnumMpInitDone) {
+      Status = EFI_UNSUPPORTED;
+    } else if (mMpInitPhase != EnumMpInitRun) {
       Status = EFI_UNSUPPORTED;
     } else {
+      DEBUG ((DEBUG_INFO, "MP Init (Done)\n"));
       //
       // All APs should be in EnumCpuReady now
       //
@@ -465,7 +472,6 @@ MpInit (
   }
 
   return Status;
-
 }
 
 
