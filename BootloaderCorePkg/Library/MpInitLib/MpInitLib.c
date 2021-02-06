@@ -182,7 +182,7 @@ ApFunc (
 {
   BOOLEAN            WaitTask;
   CPU_TASK_PROC      ApRunTask;
-  volatile UINT32   *State;
+  volatile UINT8     *State;
 
   // Enable more CPU featurs
   AsmEnableAvx ();
@@ -347,7 +347,7 @@ MpInit (
       //
       // Patch the C Procedure variable
       //
-      ApDataPtr->CProcedure   = (UINT32)(UINTN)ApFunc;
+      ApDataPtr->CProcedure   = (UINT64)(UINTN)ApFunc;
 
       //
       // Patch the mMpDataStructure Pointer variable
@@ -524,7 +524,7 @@ EFIAPI
 MpRunTask (
   IN  UINT32         Index,
   IN  CPU_TASK_PROC  TaskProc,
-  IN  UINT32         Argument
+  IN  UINT64         Argument
   )
 {
   if ((Index >= mSysCpuTask.CpuCount) || (Index == 0)) {
@@ -535,8 +535,8 @@ MpRunTask (
     return EFI_NOT_READY;
   }
 
-  mSysCpuTask.CpuTask[Index].CProcedure = (UINT32)(UINTN)TaskProc;
-  mSysCpuTask.CpuTask[Index].Argument   = (UINT32)Argument;
+  mSysCpuTask.CpuTask[Index].CProcedure = (UINT64)(UINTN)TaskProc;
+  mSysCpuTask.CpuTask[Index].Argument   = Argument;
   mSysCpuTask.CpuTask[Index].State      = EnumCpuStart;
 
   return EFI_SUCCESS;
@@ -560,7 +560,7 @@ MpDumpTask (
   UINT32 Index;
 
   for (Index = 0; Index < mSysCpuTask.CpuCount; Index++) {
-    DEBUG ((DEBUG_INFO, "CPU%02X: %08X %08X %08X %08X\n",
+    DEBUG ((DEBUG_INFO, "CPU%02X: %02X %010lX %010lX %010lX\n",
             Index,
             mSysCpuTask.CpuTask[Index].State,
             mSysCpuTask.CpuTask[Index].CProcedure,

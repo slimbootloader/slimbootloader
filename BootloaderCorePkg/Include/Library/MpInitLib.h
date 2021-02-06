@@ -8,6 +8,8 @@
 #ifndef _MP_INIT_LIB_H_
 #define _MP_INIT_LIB_H_
 
+#include <Guid/MpCpuTaskInfoHob.h>
+
 typedef enum {
   EnumMpInitNull   = 0x00,
   EnumMpInitWakeup = 0x01,
@@ -15,13 +17,6 @@ typedef enum {
   EnumMpInitDone   = 0x04,
   EnumMpInitFull   = 0xFF
 } MP_INIT_PHASE;
-
-typedef enum {
-  EnumCpuBusy = 0,
-  EnumCpuReady,
-  EnumCpuStart,
-  EnumCpuEnd,
-} CPU_STATE;
 
 typedef struct {
   UINT32           ApicId;
@@ -32,19 +27,6 @@ typedef struct {
   CPU_INFO         CpuInfo[0];
 } SYS_CPU_INFO;
 
-typedef struct {
-  UINT32           State;
-  UINT32           CProcedure;
-  UINT32           Argument;
-  UINT32           Result;
-} CPU_TASK;
-
-typedef struct {
-  UINT32           CpuCount;
-  CPU_TASK         CpuTask[0];
-} SYS_CPU_TASK;
-
-typedef UINT32 (*CPU_TASK_PROC)          (UINT32 Arg);
 typedef VOID   (*PLATFORM_CPU_INIT_HOOK) (UINT32 CpuIndex);
 
 
@@ -114,7 +96,7 @@ EFIAPI
 MpRunTask (
   IN  UINT32         Index,
   IN  CPU_TASK_PROC  TaskProc,
-  IN  UINT32         Argument
+  IN  UINT64         Argument
   );
 
 

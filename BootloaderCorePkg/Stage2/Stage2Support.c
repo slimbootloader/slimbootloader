@@ -451,6 +451,7 @@ BuildExtraInfoHob (
   PLT_DEVICE_TABLE                 *DeviceTable;
   VOID                             *DeviceTableHob;
   LDR_SMM_INFO                     *SmmInfoHob;
+  SYS_CPU_TASK_HOB                 *SysCpuTaskHob;
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
   S3Data    = (S3_DATA *)LdrGlobal->S3DataPtr;
@@ -582,6 +583,15 @@ BuildExtraInfoHob (
     SysCpuInfo = MpGetInfo ();
     LoaderPlatformInfo->CpuCount = SysCpuInfo->CpuCount;
     PlatformUpdateHobInfo (&gLoaderPlatformInfoGuid, LoaderPlatformInfo);
+  }
+
+  // Build MP CPU task info Hob
+  if (GetPayloadId () == 0) {
+    Length        = sizeof (SYS_CPU_TASK_HOB);
+    SysCpuTaskHob = BuildGuidHob (&gLoaderMpCpuTaskInfoGuid, Length);
+    if (SysCpuTaskHob != NULL) {
+      SysCpuTaskHob->SysCpuTask = MpGetTask ();
+    }
   }
 
   return LdrGlobal->LdrHobList;
