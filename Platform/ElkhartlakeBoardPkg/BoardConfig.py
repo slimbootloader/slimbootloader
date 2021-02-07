@@ -42,7 +42,7 @@ class Board(BaseBoard):
         self.FLASH_BASE_SIZE      = (self.FLASH_LAYOUT_START - self.FLASH_BASE_ADDRESS)
 
         self.HAVE_FIT_TABLE       = 1
-        self.HAVE_FSP_BIN         = 0
+        self.HAVE_FSP_BIN         = 1
         self.HAVE_VBT_BIN         = 1 if self.HAVE_FSP_BIN != 0 else 0
         self.HAVE_VERIFIED_BOOT   = 1
         self.HAVE_MEASURED_BOOT   = 1
@@ -56,8 +56,11 @@ class Board(BaseBoard):
 
         self.ENABLE_TCC_TUNING = 1
         if self.ENABLE_TCC_TUNING:
+            self.TCCB_SIZE = 0x00001000
+            self.TCCC_SIZE = 0x00001000
+            self.TCCM_SIZE = 0x00004000
             self.TCCT_SIZE = 0x00003000
-            self.SIIPFW_SIZE += self.TCCT_SIZE
+            self.SIIPFW_SIZE += self.TCCC_SIZE + self.TCCB_SIZE + self.TCCM_SIZE + self.TCCT_SIZE
 
         self.ENABLE_PRE_OS_CHECKER = 1
         if self.ENABLE_PRE_OS_CHECKER:
@@ -197,6 +200,8 @@ class Board(BaseBoard):
             'VtdLib|Silicon/$(SILICON_PKG_NAME)/Library/VTdLib/VTdLib.inf',
             'ShellExtensionLib|Platform/$(BOARD_PKG_NAME)/Library/ShellExtensionLib/ShellExtensionLib.inf',
             'IgdOpRegionLib|Silicon/CommonSocPkg/Library/IgdOpRegionLib/IgdOpRegionLib.inf',
+            'TccLib|Platform/CommonBoardPkg/Library/TccLib/TccLib.inf',
+            'TccPlatformLib|Platform/$(BOARD_PKG_NAME)/Library/TccPlatformLib/TccPlatformLib.inf',
             'BootGuardLib|Silicon/CommonSocPkg/Library/BootGuardLibCBnT/BootGuardLibCBnT.inf',
             'BdatLib|Silicon/$(SILICON_PKG_NAME)/Library/BdatLib/BdatLib.inf',
             'PchSciLib|Silicon/$(SILICON_PKG_NAME)/Library/PchSciLib/PchSciLib.inf',
@@ -254,7 +259,10 @@ class Board(BaseBoard):
         )
 
         bins = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'Binaries')
-        CompFileTccTuning='TccTuning.bin' if os.path.exists(os.path.join(bins, 'TccTuning.bin')) else ''
+        CompFileTccBuffer='TccBuffer.bin' if os.path.exists(os.path.join(bins, 'TccBuffer.bin')) else ''
+        CompFileTccCacheCfg='TccCacheCfg.bin' if os.path.exists(os.path.join(bins, 'TccCacheCfg.bin')) else ''
+        CompFileTccPtcmBinary='TccPtcmBinary.bin' if os.path.exists(os.path.join(bins, 'TccPtcmBinary.bin')) else ''
+        CompFileTccStreamCfg='TccStreamCfg.bin' if os.path.exists(os.path.join(bins, 'TccStreamCfg.bin')) else ''
         CompFilePreOsChecker='PreOsChecker.bin' if os.path.exists(os.path.join(bins, 'PreOsChecker.bin')) else ''
         CompFilePseFw='PseFw.bin' if os.path.exists(os.path.join(bins, 'PseFw.bin')) else ''
         CompFilePseTsnIpConfig='PseTsnIpConfig.bin' if os.path.exists(os.path.join(bins, 'PseTsnIpConfig.bin')) else ''
@@ -263,7 +271,16 @@ class Board(BaseBoard):
 
         if self.ENABLE_TCC_TUNING:
             container_list.append (
-              ('TCCT',CompFileTccTuning,      'Lz4',     container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0,   self.TCCT_SIZE,      0),   # TCC Tuning
+              ('TCCB',CompFileTccBuffer,      'Lz4',     container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0,   self.TCCB_SIZE,      0),   # TCC Buffers
+            )
+            container_list.append (
+              ('TCCC',CompFileTccCacheCfg,    'Lz4',     container_list_auth_type,  'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,  0,   self.TCCC_SIZE,      0),   # TCC Cache Config
+            )
+            container_list.append (
+              ('TCCM',CompFileTccPtcmBinary,  'Lz4',     container_list_auth_type,  'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,  0,   self.TCCM_SIZE,      0),   # TCC PTCM
+            )
+            container_list.append (
+              ('TCCT',CompFileTccStreamCfg,   'Lz4',     container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0,   self.TCCT_SIZE,      0),   # TCC Tuning
             )
 
         if self.ENABLE_PRE_OS_CHECKER:

@@ -30,18 +30,8 @@ typedef enum {
  * TCC Buffer Configuration
  */
 
-
-#pragma pack()
-
 #define EFI_ACPI_PTCT_SIGNATURE           SIGNATURE_32('P', 'T', 'C', 'T')  // 'PTCT'
 
-typedef union {
-  struct {
-    UINT32  Low;
-    UINT32  High;
-  } Data32;
-  UINT64 Data;
-} UINT64_STRUCT;
 
 #define R_SA_MCHBAR_WRC_VC_ENABLE                  0x6F10
 #define B_SA_MCHBAR_WRC_VC_ENABLE_MASK             0x00040000
@@ -101,6 +91,14 @@ typedef union {
 #define TGL_MSR_GT_COS_WAY_MASK_1_1 0x000018B1
 #define TGL_MSR_GT_COS_WAY_MASK_2_2 0x000018B2
 #define TGL_MSR_GT_COS_WAY_MASK_3_3 0x000018B3
+
+typedef union {
+  struct {
+    UINT32  Low;
+    UINT32  High;
+  } Data32;
+  UINT64 Data;
+} UINT64_STRUCT;
 
 #pragma pack (push,1)
 

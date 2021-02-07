@@ -60,6 +60,7 @@
   HeciInitLib
   PsdLib
   MeExtMeasurementLib
+  TccLib
 
 [Guids]
   gOsConfigDataGuid

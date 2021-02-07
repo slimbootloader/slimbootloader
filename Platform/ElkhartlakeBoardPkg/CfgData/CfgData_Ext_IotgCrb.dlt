@@ -23,8 +23,8 @@ GEN_CFG_DATA.PayloadId | 'AUTO'
 GPIO_CFG_DATA.GpioPinConfig0_GPP_D13.GPIODirection_GPP_D13 | 0xB
 GPIO_CFG_DATA.GpioPinConfig1_GPP_D13.GPIOSkip_GPP_D13 | 0
 
-# Enable to test TCC mode & tuning
-# FEATURES_CFG_DATA.Features.Tcc    | 0x1
+# TCC mode config
+GEN_CFG_DATA.TccMode   | 0x1
 
 # Preserve ISI SPI Pins across ResetResume power-cycling
 GPIO_CFG_DATA.GpioPinConfig1_GPP_U04.GPIOSkip_GPP_U04 | 0x0

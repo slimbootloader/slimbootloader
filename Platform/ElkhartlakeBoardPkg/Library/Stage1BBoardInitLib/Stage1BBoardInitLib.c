@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -35,7 +35,9 @@
 #include <Library/PchSciLib.h>
 #include <Library/ContainerLib.h>
 #include <ConfigBlock.h>
-#include <TccConfigSubRegion.h>
+#include <ConfigDataCommonStruct.h>
+#include <Library/TccLib.h>
+#include <Library/TccPlatformLib.h>
 
 CONST PLT_DEVICE  mPlatformDevices[]= {
   {{0x00001700}, OsBootDeviceSata  , 0 },
@@ -139,80 +141,6 @@ GetBoardIdFromSmbus (
 }
 
 /**
-  Update FSP-M UPD config data for TCC mode and tuning
-
-  @param  FspmUpd            The pointer to the FSP-M UPD to be updated.
-
-  @retval None
-**/
-VOID
-TccModePreMemConfig (
-  FSPM_UPD  *FspmUpd
-)
-{
-  UINT32        *TccTuningBase;
-  UINT32        TccTuningSize;
-  EFI_STATUS    Status;
-  BIOS_SETTINGS *FspSettings;
-  PLAT_FEATURES *PlatformFeatures;
-  TCC_CONFIG_SUB_REGION *TccSubRegion;
-
-  DEBUG ((DEBUG_INFO, "TccModePreMemConfig () - Start\n"));
-
-  // Set default values for TCC mode
-  FspmUpd->FspmConfig.SaGv                  = 0;
-  FspmUpd->FspmConfig.DisPgCloseIdleTimeout = 1;
-  FspmUpd->FspmConfig.RaplLim1Ena           = 0;
-  FspmUpd->FspmConfig.RaplLim2Ena           = 0;
-  FspmUpd->FspmConfig.PowerDownMode         = 0;
-
-  // Load TCC tuning data from container
-  TccTuningBase = NULL;
-  TccTuningSize = 0;
-  Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'C', 'C', 'T'),
-                          (VOID **)&TccTuningBase, &TccTuningSize);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "TCC Tuning data not found! %r\n", Status));
-    return;
-  }
-
-  // Set/update values based on TCC Tuning binary
-  TccSubRegion = (TCC_CONFIG_SUB_REGION*) TccTuningBase;
-  FspSettings  = (BIOS_SETTINGS*) &TccSubRegion->Config.BiosConfig.BiosSettings;
-
-  if (AsciiStrCmp ((CHAR8*) TccTuningBase, "dummy\0") == 0) {
-    DEBUG ((DEBUG_INFO, "TCC Tuning data is dummy data, skipping...\n"));
-    return;
-  }
-
-  PlatformFeatures = &((PLATFORM_DATA *)GetPlatformDataPtr ())->PlatformFeatures;
-  if (PlatformFeatures == NULL) {
-    DEBUG ((DEBUG_ERROR, "PLATFORM_DATA not found!\n"));
-    return;
-  }
-  PlatformFeatures->TcctBase = TccTuningBase;
-  PlatformFeatures->TcctSize = TccTuningSize;
-
-  FspmUpd->FspmConfig.SaGv        = FspSettings->SaGv;
-  FspmUpd->FspmConfig.RaplLim1Ena = FspSettings->MemoryRapl;
-  FspmUpd->FspmConfig.RaplLim2Ena = FspSettings->MemoryRapl;
-
-  if (FspSettings->MemPm == 0) {
-    FspmUpd->FspmConfig.DisPgCloseIdleTimeout   = 1;
-    FspmUpd->FspmConfig.PowerDownMode = 0;
-  } else {
-    FspmUpd->FspmConfig.DisPgCloseIdleTimeout   = 0;
-    FspmUpd->FspmConfig.PowerDownMode = 1;
-  }
-
-  FspmUpd->FspmConfig.TccTuningEnablePreMem = 1;
-  FspmUpd->FspmConfig.TccStreamCfgBasePreMem = (UINT32)(UINTN)TccTuningBase;
-  FspmUpd->FspmConfig.TccStreamCfgSizePreMem = TccTuningSize;
-
-  DEBUG ((DEBUG_INFO, "TccModePreMemConfig () - End\n"));
-}
-
-/**
   Update FSP-M UPD config data
 
   @param  FspmUpdPtr            The pointer to the FSP-M UPD to be updated.
@@ -232,6 +160,8 @@ UpdateFspConfig (
   SECURITY_CFG_DATA             *SecCfgData;
   UINT32                        Index;
   UINT8                         DebugPort;
+  BIOS_SETTINGS                 *PolicyConfig;
+  TCC_BINARIES_BASE             *TccBinaries;
 
   FspmUpd                       = (FSPM_UPD *)FspmUpdPtr;
   FspmArchUpd                   = &FspmUpd->FspmArchUpd;
@@ -663,7 +593,8 @@ UpdateFspConfig (
   }
 
   if (TCC_FEATURE_ENABLED ()) {
-    TccModePreMemConfig (FspmUpd);
+    TccModePreMemConfig (PolicyConfig, TccBinaries);
+    TccSetFspmConfig (FspmUpd, PolicyConfig, TccBinaries);
   }
 }
 
@@ -765,9 +696,6 @@ PlatformFeaturesInit (
       } else {
         PlatformFeatures->DebugConsent = FeaturesCfgData->Features.DebugConsent;
       }
-      PlatformFeatures->TccMode   = FeaturesCfgData->Features.Tcc;
-      PlatformFeatures->TcctBase  = NULL;
-      PlatformFeatures->TcctSize  = 0;
     }
   }
 
@@ -906,8 +834,6 @@ BoardInit (
 {
   UINTN PmcBase;
   UINT16 BoardId;
-  UINT32 *Buffer;
-  PLAT_FEATURES     *PlatformFeatures;
   PLT_DEVICE_TABLE  *PltDeviceTable;
 
   PmcBase = MmPciBase (
@@ -960,20 +886,6 @@ DEBUG_CODE_END();
     GpioPadConfigTable (sizeof (mGpioTablePreMemEhl) / sizeof (mGpioTablePreMemEhl[0]), mGpioTablePreMemEhl);
     break;
   case PostMemoryInit:
-    //
-    // Copy TCC Tuning data into memory from CAR
-    //
-    PlatformFeatures = &((PLATFORM_DATA *)GetPlatformDataPtr ())->PlatformFeatures;
-    if ((TCC_FEATURE_ENABLED ()) && (PlatformFeatures->TcctBase != NULL)) {
-      PlatformFeatures = &((PLATFORM_DATA *)GetPlatformDataPtr ())->PlatformFeatures;
-      Buffer = (UINT32*) AllocatePool (PlatformFeatures->TcctSize);
-      if (Buffer != NULL) {
-        CopyMem (Buffer, PlatformFeatures->TcctBase, PlatformFeatures->TcctSize);
-        PlatformFeatures->TcctBase = Buffer;
-      } else {
-        DEBUG ((DEBUG_ERROR, "Cannot allocate memory for TCCT!\n"));
-      }
-    }
     //
     // Clear the DISB bit after completing DRAM Initialization Sequence
     //

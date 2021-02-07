@@ -57,6 +57,14 @@
                      Specify image ID for desired VBT binary
       length       : 0x04
       value        : 1
+  - TccMode      :
+      name         : TCC Enable
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/Disable TCC feature. 1:TCC Enabled, 0:TCC Disabled
+      length       : 0x04
+      value        : 0
   - $ACTION      :
       page         : OS
   - CurrentBoot  :

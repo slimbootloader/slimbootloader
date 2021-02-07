@@ -18,5 +18,9 @@
 #define  CDATA_CAPSULE_TAG              0x080
 
 #include "ConfigDataCommonStruct.h"
+#include <Library/ConfigDataLib.h>
+
+#define GEN_CDATA                       ((GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG))
+#define TCC_FEATURE_ENABLED()           (UINT32) (GEN_CDATA->TccMode)
 
 #endif

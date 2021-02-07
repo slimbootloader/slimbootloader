@@ -48,6 +48,7 @@
   BdatTable/BdatTable.aslc
   Platform/CommonBoardPkg/AcpiTables/Dsdt/AslInc.h
   PsdTable/PsdTable.aslc
+  Platform/CommonBoardPkg/AcpiTables/Ptct/Ptct.act
 
 [Binaries.IA32]
   BIN|Dsdt/NhltEhl.bin

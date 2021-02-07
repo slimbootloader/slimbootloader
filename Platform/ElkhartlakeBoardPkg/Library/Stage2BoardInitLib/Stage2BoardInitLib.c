@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -72,15 +72,10 @@
 #include <PchReservedResources.h>
 #include "BoardSaConfigPostMem.h"
 #include <Library/HeciInitLib.h>
-#include <TccConfigSubRegion.h>
+#include <Library/TccLib.h>
 #include <Library/MeExtMeasurementLib.h>
 #include <Library/GpioLib.h>
 #include <Register/RegsSpi.h>
-
-
-UINT8 mTccRtd3Support;
-UINT8 mTccLowPowerS0Idle;
-
 
 //
 // GPIO_PAD Fileds
@@ -831,104 +826,6 @@ BoardInit (
   default:
     break;
   }
-}
-
-/**
-  Update FSP-S UPD config data for TCC mode and tuning
-
-  @param  FspmUpd            The pointer to the FSP-S UPD to be updated.
-
-  @retval None
-**/
-VOID
-TccModePostMemConfig (
-  FSPS_UPD  *FspsUpd
-)
-{
-  UINT32      *TccTuningBase;
-  UINT32      TccTuningSize;
-  UINT32      Index;
-  UINT8       MaxPchPciePorts;
-  BIOS_SETTINGS *FspSettings;
-  PLAT_FEATURES *PlatformFeatures;
-  TCC_CONFIG_SUB_REGION *TccSubRegion;
-
-  DEBUG ((DEBUG_INFO, "TccModePostMemConfig () - Start\n"));
-
-  MaxPchPciePorts = GetPchMaxPciePortNum ();
-
-  // Set default values for TCC mode
-  FspsUpd->FspsConfig.Eist = 0;
-  FspsUpd->FspsConfig.Cx   = 0;
-  FspsUpd->FspsConfig.Hwp  = 0;
-  FspsUpd->FspsConfig.AcSplitLock = 1;
-
-  FspsUpd->FspsConfig.PsfTccEnable = 1;
-  FspsUpd->FspsConfig.PchDmiAspmCtrl = 0;
-  FspsUpd->FspsConfig.PchLegacyIoLowLatency = 1;
-  FspsUpd->FspsConfig.PchTsnGbeMultiVcEnable = 1;
-  FspsUpd->FspsConfig.PseTsnGbeMultiVcEnable[0] = 1;
-  FspsUpd->FspsConfig.PseTsnGbeMultiVcEnable[1] = 1;
-  FspsUpd->FspsConfig.PchPmPwrBtnOverridePeriod = 0;
-
-  for (Index = 0; Index < MaxPchPciePorts; Index++) {
-    FspsUpd->FspsConfig.PcieRpAspm[Index] = 0;
-    FspsUpd->FspsConfig.PcieRpL1Substates[Index] = 0;
-    FspsUpd->FspsConfig.PciePtm[Index] = 1;
-    if (IsRpMultiVC (Index) == 1) {
-      FspsUpd->FspsConfig.PcieRpMultiVcEnabled[Index] = 1;
-    }
-  }
-
-  FspsUpd->FspsConfig.RenderStandby = 0;
-  FspsUpd->FspsConfig.PmSupport = 0;
-
-  mTccRtd3Support    = 0;
-  mTccLowPowerS0Idle = 0;
-
-  // Load TCC tuning data from platform data
-  PlatformFeatures = &((PLATFORM_DATA *)GetPlatformDataPtr ())->PlatformFeatures;
-  if (PlatformFeatures == NULL) {
-    DEBUG ((DEBUG_ERROR, "PLATFORM_DATA not found!\n"));
-    return;
-  }
-
-  TccTuningBase = PlatformFeatures->TcctBase;
-  TccTuningSize = PlatformFeatures->TcctSize;
-
-  if (TccTuningBase == NULL) {
-    DEBUG ((DEBUG_INFO, "TCC Tuning data not present in platform data\n"));
-    return;
-  }
-
-  TccSubRegion = (TCC_CONFIG_SUB_REGION*) TccTuningBase;
-  FspSettings  = (BIOS_SETTINGS*) &TccSubRegion->Config.BiosConfig.BiosSettings;
-
-  FspsUpd->FspsConfig.Eist = FspSettings->Pstates;
-  FspsUpd->FspsConfig.Cx   = FspSettings->Cstates;
-  FspsUpd->FspsConfig.Hwp  = FspSettings->HwpEn;
-
-  FspsUpd->FspsConfig.PsfTccEnable = FspSettings->FabricPm;
-  FspsUpd->FspsConfig.PchDmiAspmCtrl = FspSettings->DmiAspm;
-  FspsUpd->FspsConfig.PchLegacyIoLowLatency = FspSettings->PchPwrClkGate;
-  FspsUpd->FspsConfig.PchPmPwrBtnOverridePeriod = FspSettings->Sstates;
-
-  for (Index = 0; Index < MaxPchPciePorts; Index++) {
-    FspsUpd->FspsConfig.PcieRpAspm[Index] = FspSettings->PcieAspm;
-    FspsUpd->FspsConfig.PcieRpL1Substates[Index] = FspSettings->PcieRpL1;
-  }
-
-  FspsUpd->FspsConfig.RenderStandby = FspSettings->GtRstRc6;
-  FspsUpd->FspsConfig.PmSupport = FspSettings->GtPm;
-
-  mTccRtd3Support    = FspSettings->Dstates;
-  mTccLowPowerS0Idle = FspSettings->Sstates;
-
-  FspsUpd->FspsConfig.TccTuningEnable = 1;
-  FspsUpd->FspsConfig.TccBiosCfgBase = (UINT32)(UINTN)TccTuningBase;
-  FspsUpd->FspsConfig.TccBiosCfgSize = TccTuningSize;
-
-  DEBUG ((DEBUG_INFO, "TccModePostMemConfig () - End\n"));
 }
 
 /**
@@ -1719,9 +1616,9 @@ UpdateFspConfig (
     }
   }
 
-  if (TCC_FEATURE_ENABLED ()) {
-    TccModePostMemConfig (FspsUpd);
-  }
+  //if (TCC_FEATURE_ENABLED ()) {
+    TccModePostMemConfig ();
+  //}
 
   if (GetBootMode () == BOOT_ON_FLASH_UPDATE) {
     Fspscfg->PchLockDownBiosInterface = FALSE;

@@ -846,9 +846,9 @@ PlatformUpdateAcpiGnvs (
     PlatformNvs->LowPowerS0Idle                 = 0;
   }
 
-  if (TCC_FEATURE_ENABLED ()) {
+  //if (TCC_FEATURE_ENABLED ()) {
     PlatformNvs->Rtd3Support                    = mTccRtd3Support;
     PlatformNvs->LowPowerS0Idle                 = mTccLowPowerS0Idle;
-  }
+  //}
 
 }

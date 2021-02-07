@@ -34,13 +34,6 @@
         help         : >
                        Enable/Disable MeasuredBoot feature. 1:MeasuredBoot Enabled (default), 0:MeasuredBoot Disabled
         length       : 1b
-    - Tcc          :
-        name         : TCC Enable
-        type         : Combo
-        option       : $EN_DIS
-        help         : >
-                       Enable/Disable TCC feature. 1:TCC Enabled, 0:TCC Disabled
-        length       : 1b
     - DebugConsent :
         name         : Platform Debug Consent
         type         : Combo
@@ -53,4 +46,4 @@
         type         : Reserved
         help         : >
                        reserved bits
-        length       : 26b
+        length       : 27b

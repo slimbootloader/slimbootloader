@@ -20,12 +20,9 @@ typedef struct {
 } STITCH_DATA;
 
 typedef struct {
-  UINT32  TccMode      : 1;
   UINT32  VtdEnable    : 1;
   UINT32  DebugConsent : 3;
-  UINT32  Rsvd         : 27;
-  UINT32  *TcctBase;
-  UINT32  TcctSize;
+  UINT32  Rsvd         : 28;
 } PLAT_FEATURES;
 
 typedef struct {
@@ -36,6 +33,5 @@ typedef struct {
 #define PLAT_DATA                         ((PLATFORM_DATA *)GetPlatformDataPtr ())
 #define PLAT_FEAT                         (PLAT_DATA->PlatformFeatures)
 #define DEBUG_CONSENT_FEATURE_ENABLED()   (UINT8) (PLAT_FEAT.DebugConsent)
-#define TCC_FEATURE_ENABLED()             (UINT8) (PLAT_FEAT.TccMode)
 
 #endif /* __PLATFORM_DATA_H__ */

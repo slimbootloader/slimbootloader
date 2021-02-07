@@ -1,0 +1,48 @@
+#/*++
+#
+#  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+#  Module Name:
+#
+#    TccLib.inf
+#
+#  Abstract:
+#
+#    Component description file for Tcc Library
+#
+#--*/
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = TccLib
+  FILE_GUID                      = 4F6878EA-FD51-48B2-9962-5CEFBBF6CEA2
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = TccLib
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC ARM
+#
+
+[Sources]
+  TccInfo.h
+  TccLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Platform/CommonBoardPkg/CommonBoardPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  IoLib
+  DebugLib
+  HobLib
+  MemoryAllocationLib
+  TccPlatformLib
+
+  [Guids]
+  gTccInfoHobGuid
