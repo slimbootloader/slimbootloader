@@ -447,11 +447,9 @@ PlatformUpdateAcpiTable (
           //
           // Read PWRM Base Address to fill in Residency counter Address Space
           //
-          SetResidencyCounter[0].Address = (UINT64)PCH_PWRM_BASE_ADDRESS + R_PMC_PWRM_SLP_S0_RESIDENCY_COUNTER;
+          SetResidencyCounter[0].Address = (UINT64)PCH_PWRM_BASE_ADDRESS + R_PMC_PWRM_BIOS_SCRATCHPAD_2;
           ResidencyCounterFrequency = 32678; //Counter runs at 100us granularity which implies 10KHz frequency (10000Hz)
-          if (IsPchLp ()) {
-            ResidencyCounterFrequency = 8197;  //Counter runs at 122us granularity which implies 10KHz frequency (8197Hz)
-          }
+
         (((ACPI_LOW_POWER_IDLE_TABLE *)Table)->LpiStates[LpitStateEntries - 1].ResidencyCounter) = SetResidencyCounter[0];
         (((ACPI_LOW_POWER_IDLE_TABLE *)Table)->LpiStates[LpitStateEntries - 1].ResidencyCounterFrequency) = ResidencyCounterFrequency;
       }

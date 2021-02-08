@@ -18,28 +18,28 @@
       help         : >
                      1-Core Ratio Limit- For XE part- LFM to 255, For overclocking part- LFM to Fused 1-Core Ratio Limit + OC Bins.This 1-Core Ratio Limit Must be greater than or equal to 2-Core Ratio Limit, 3-Core Ratio Limit, 4-Core Ratio Limit. Range is 0 to 83
       length       : 0x01
-      value        : 0x1E
+      value        : 0x13
   - TwoCoreRatioLimit :
       name         : 2-Core Ratio Limit
       type         : EditNum, HEX, (0x00, 0x53)
       help         : >
                      2-Core Ratio Limit- For XE part- LFM to 255, For overclocking part- LFM to Fused 2-Core Ratio Limit + OC Bins.This 2-Core Ratio Limit Must be Less than or equal to 1-Core Ratio Limit.Range is 0 to 83
       length       : 0x01
-      value        : 0x1E
+      value        : 0x13
   - ThreeCoreRatioLimit :
       name         : 3-Core Ratio Limit
       type         : EditNum, HEX, (0x00, 0x53)
       help         : >
                      3-Core Ratio Limit- For XE part- LFM to 255, For overclocking part- LFM to Fused 3-Core Ratio Limit + OC Bins.This 3-Core Ratio Limit Must be Less than or equal to 1-Core Ratio Limit.Range is 0 to 83
       length       : 0x01
-      value        : 0x1B
+      value        : 0x13
   - FourCoreRatioLimit :
       name         : 4-Core Ratio Limit
       type         : EditNum, HEX, (0x00, 0x53)
       help         : >
                      4-Core Ratio Limit- For XE part- LFM to 255, For overclocking part- LFM to Fused 4-Core Ratio Limit + OC Bins.This 4-Core Ratio Limit Must be Less than or equal to 1-Core Ratio Limit.Range is 0 to 83
       length       : 0x01
-      value        : 0x1B
+      value        : 0x13
   - Hwp          :
       name         : Enable or Disable HWP
       type         : Combo
@@ -713,28 +713,28 @@
       help         : >
                      5-Core Ratio Limit- For XE part- LFM to 255, For overclocking part- LFM to Fused 5-Core Ratio Limit + OC Bins.This 5-Core Ratio Limit Must be Less than or equal to 1-Core Ratio Limit.Range is 0 to 83
       length       : 0x01
-      value        : 0x1B
+      value        : 0x13
   - SixCoreRatioLimit :
       name         : 6-Core Ratio Limit
       type         : EditNum, HEX, (0x00, 0x53)
       help         : >
                      6-Core Ratio Limit- For XE part- LFM to 255, For overclocking part- LFM to Fused 6-Core Ratio Limit + OC Bins.This 6-Core Ratio Limit Must be Less than or equal to 1-Core Ratio Limit.Range is 0 to 83
       length       : 0x01
-      value        : 0x1B
+      value        : 0x13
   - SevenCoreRatioLimit :
       name         : 7-Core Ratio Limit
       type         : EditNum, HEX, (0x00, 0x53)
       help         : >
                      7-Core Ratio Limit- For XE part- LFM to 255, For overclocking part- LFM to Fused 7-Core Ratio Limit + OC Bins.This 7-Core Ratio Limit Must be Less than or equal to 1-Core Ratio Limit.Range is 0 to 83
       length       : 0x01
-      value        : 0x1B
+      value        : 0x13
   - EightCoreRatioLimit :
       name         : 8-Core Ratio Limit
       type         : EditNum, HEX, (0x00, 0x53)
       help         : >
                      8-Core Ratio Limit- For XE part- LFM to 255, For overclocking part- LFM to Fused 8-Core Ratio Limit + OC Bins.This 8-Core Ratio Limit Must be Less than or equal to 1-Core Ratio Limit.Range is 0 to 83
       length       : 0x01
-      value        : 0x1B
+      value        : 0x13
   - EnableItbm   :
       name         : Intel Turbo Boost Max Technology 3.0
       type         : Combo
@@ -742,7 +742,7 @@
       help         : >
                      Intel Turbo Boost Max Technology 3.0. 0- Disabled; <b>1- Enabled</b>
       length       : 0x01
-      value        : 0x0
+      value        : 0x01
   - EnableItbmDriver :
       name         : Intel Turbo Boost Max Technology 3.0 Driver
       type         : Combo
@@ -851,7 +851,7 @@
       help         : >
                      PCODE MMIO Mailbox- Imon slope correction. Specified in 1/100 increment values. Range is 0-200. 125 = 1.25. <b>0- Auto</b>.For all VR Indexes
       length       : 0x0A
-      value        : {0:0W, 0x00, 0x00, 0x00, 0x00, 0x00}
+      value        : {0:0W, 0x64, 0x00, 0x00, 0x00, 0x00}
   - ImoniOffset  :
       name         : Imon offset correction
       type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFF)
@@ -880,7 +880,7 @@
       help         : >
                      PCODE MMIO Mailbox- Thermal Design Current time window. Defined in milli seconds. Valid Values 1 - 1ms , 2 - 2ms , 3 - 3ms , 4 - 4ms , 5 - 5ms , 6 - 6ms , 7 - 7ms , 8 - 8ms , 10 - 10ms.For all VR Indexe
       length       : 0x05
-      value        : {0x00, 0x01, 0x01, 0x01, 0x01}
+      value        : {0x01, 0x01, 0x01, 0x01, 0x01}
   - TdcLock      :
       name         : Thermal Design Current Lock
       type         : EditNum, HEX, (0x00,0xFFFFFFFFFF)

@@ -671,7 +671,7 @@ PlatformUpdateAcpiGnvs (
 
   PlatformNvs->ApicEnable                       = 1;
   PlatformNvs->EcAvailable                      = 0;
-  PlatformNvs->LowPowerS0Idle                   = 0;
+  PlatformNvs->LowPowerS0Idle                   = 1;
 
   PlatformNvs->TenSecondPowerButtonEnable       = 8;
 
@@ -769,7 +769,10 @@ PlatformUpdateAcpiGnvs (
                                                             (mSystemConfiguration.PepPse                                                  << 29);  // Bit[29]  - En/Dis PSE
   DEBUG((DEBUG_INFO, "ACPI NVS, LowPowerS0IdleConstraint(Micro-pep constraints) = 0x%X \n", mPlatformNvsAreaProtocol.Area->LowPowerS0IdleConstraint )); //0x1F6FFBD
 **/
-  PlatformNvs->LowPowerS0IdleConstraint = 0x1F6FFBD;
+  PlatformNvs->LowPowerS0IdleConstraint = 0x11E2FFBC;
+  DEBUG((DEBUG_INFO, "ACPI NVS, LowPowerS0IdleConstraint(Micro-pep constraints) = 0x%X \n", PlatformNvs->LowPowerS0IdleConstraint ));
+  PlatformNvs->LowPowerS0IdleConstraint2 = 1;
+  DEBUG((DEBUG_INFO, "ACPI NVS, LowPowerS0IdleConstraint(Micro-pep constraints 2) = 0x%X \n", PlatformNvs->LowPowerS0IdleConstraint2 ));
 
   PlatformNvs->TsnEnabled                       = IsTsnPresent();
   PlatformNvs->PseTsn0Enabled                   = IsPseGbe0Enabled();
