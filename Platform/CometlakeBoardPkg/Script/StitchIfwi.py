@@ -16,8 +16,8 @@ import shutil
 import glob
 import shlex
 import subprocess # nosec
-import defusedxml.ElementTree as ET
-from   defusedxml import minidom
+import xml.etree.ElementTree as ET
+from   xml.dom import minidom
 from   ctypes  import *
 from   subprocess   import call #nosec
 from   StitchLoader import *
