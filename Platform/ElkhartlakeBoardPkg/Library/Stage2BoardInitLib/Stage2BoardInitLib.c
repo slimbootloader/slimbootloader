@@ -1441,7 +1441,11 @@ UpdateFspConfig (
     Fspscfg->PchFivrVccinAuxRetToHighCurModeVolTranTime  = 0x36;
     Fspscfg->PchFivrVccinAuxRetToLowCurModeVolTranTime   = 0x2B;
     Fspscfg->PchFivrVccinAuxOffToHighCurModeVolTranTime  = 0x0096;
-    Fspscfg->PchFivrDynPm                                = 0x00;
+    Fspscfg->PchFivrDynPm                                = 0x01;
+    Fspscfg->PchFivrExtVnnRailIccMaximum                 = 0xC8;
+    Fspscfg->PchFivrExtV1p05RailIccMaximum               = 0x64;
+    Fspscfg->PchFivrExtVnnRailSxIccMaximum               = 0xC8;
+    Fspscfg->PchFivrExtV1p05RailCtrlRampTmr              = 0x0;
 
     // PCH_PM_CONFIG
     Fspscfg->PchPmSlpS3MinAssert                         = SiCfgData->PchPmSlpS3MinAssert;
@@ -1453,6 +1457,12 @@ UpdateFspConfig (
     Fspscfg->PmcLpmS0ixSubStateEnableMask                = SiCfgData->PmcLpmS0ixSubStateEnableMask;
     Fspscfg->PmcV1p05PhyExtFetControlEn                  = 1;
     Fspscfg->PmcV1p05IsExtFetControlEn                   = 1;
+    Fspscfg->PmcModPhySusPgEnable = 0x1;
+    Fspscfg->PchPwrOptEnable = 0x1;
+    Fspscfg->PmcUsb2PhySusPgEnable      = 0x1;
+    Fspscfg->PmcCpuC10GatePinEnable     = 0x1;
+    Fspscfg->PchPmMeWakeSts             = 0x1;
+    Fspscfg->PchPmWolOvrWkSts           = 0x1;
 
     Fspscfg->SerialIoUartRxPinMuxPolicy[0]               = GPIO_VER3_MUXING_SERIALIO_UART0_RXD_GPP_F1;
     Fspscfg->SerialIoUartTxPinMuxPolicy[0]               = GPIO_VER3_MUXING_SERIALIO_UART0_TXD_GPP_F2;
@@ -1633,7 +1643,7 @@ UpdateFspConfig (
     CopyMem (Fspscfg->Psi3Enable,          PowerCfgData->Psi3Enable,            sizeof(PowerCfgData->Psi3Enable));
     CopyMem (Fspscfg->Psi4Enable,          PowerCfgData->Psi4Enable,            sizeof(PowerCfgData->Psi4Enable));
     CopyMem (Fspscfg->ImonSlope,           PowerCfgData->ImonSlope,             sizeof(PowerCfgData->ImonSlope));
-    CopyMem (Fspscfg->ImonSlope,           PowerCfgData->ImonSlope,             sizeof(PowerCfgData->ImonSlope));
+    CopyMem (Fspscfg->ImonOffset,          PowerCfgData->ImoniOffset,           sizeof(PowerCfgData->ImoniOffset));
     CopyMem (Fspscfg->IccMax,              PowerCfgData->IccMax,                sizeof(PowerCfgData->IccMax));
     //Removed due to fsp 2233
     //CopyMem (Fspscfg->VrVoltageLimit,      PowerCfgData->VrVoltageLimit,        sizeof(PowerCfgData->VrVoltageLimit));
@@ -1641,6 +1651,8 @@ UpdateFspConfig (
     CopyMem (Fspscfg->TdcTimeWindow,       PowerCfgData->TdcTimeWindow,         sizeof(PowerCfgData->TdcTimeWindow));
 
     Fspscfg->PsysPmax                      = PowerCfgData->PsysPmax;
+    Fspscfg->AcousticNoiseMitigation       = 0x1;
+    Fspscfg->FivrSpreadSpectrum            = 0xF;
 
     //CPU Power Management Custom Config
     Fspscfg->MaxRatio                      = PowerCfgData->MaxRatio;

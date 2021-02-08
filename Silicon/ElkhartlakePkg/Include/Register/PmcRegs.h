@@ -174,5 +174,6 @@
 
 #define R_PMC_PWRM_NST_PG_FDIS_1                            0x1E28
 
+#define R_PMC_PWRM_BIOS_SCRATCHPAD_2                        0x1098 ///< Aggregated SLPS0 Residency counter will be saved by PMC FW
 
 #endif

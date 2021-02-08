@@ -1522,28 +1522,28 @@
       help         : >
                      SLP_S3 Minimum Assertion Width Policy. Default is PchSlpS350ms.
       length       : 0x01
-      value        : 0x03
+      value        : 0x01
   - PchPmSlpS4MinAssert :
       name         : PCH Pm Slp S4 Min Assert
       type         : EditNum, HEX, (0x0,0xFF)
       help         : >
                      SLP_S4 Minimum Assertion Width Policy. Default is PchSlpS44s.
       length       : 0x01
-      value        : 0x01
+      value        : 0x0
   - PchPmSlpSusMinAssert :
       name         : PCH Pm Slp Sus Min Assert
       type         : EditNum, HEX, (0x0,0xFF)
       help         : >
                      SLP_SUS Minimum Assertion Width Policy. Default is PchSlpSus4s.
       length       : 0x01
-      value        : 0x04
+      value        : 0x01
   - PchPmSlpAMinAssert :
       name         : PCH Pm Slp A Min Assert
       type         : EditNum, HEX, (0x0,0xFF)
       help         : >
                      SLP_A Minimum Assertion Width Policy. Default is PchSlpA2s.
       length       : 0x01
-      value        : 0x04
+      value        : 0x01
   - PchPmPwrBtnOverridePeriod :
       name         : PCH Pm Pwr Btn Override Period
       type         : EditNum, HEX, (0x0,0xFF)
