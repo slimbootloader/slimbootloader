@@ -176,6 +176,7 @@ class Board(BaseBoard):
         self.PLD_HEAP_SIZE        = 0x04000000
         self.PLD_STACK_SIZE       = 0x00020000
         self.PLD_RSVD_MEM_SIZE    = 0x00500000
+        self.LOADER_RSVD_MEM_SIZE = 0x500000
 
         # _CFGDATA_INT_FILE - Internal cfg data is generally used for internal boards like MRBs, RVPs etc.
         # _CFGDATA_EXT_FILE - External cfg data is for the customer boards to populate new data on top of the internal defaults.
