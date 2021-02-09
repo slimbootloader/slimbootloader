@@ -29,7 +29,7 @@ External(\PF13)
 External(\PF14)
 External(\PF15)
 External(\_SB.CFGD, IntObj)
-//External(HGMD)
+External(HGMD)
 
 //
 // DTS externals
@@ -63,7 +63,7 @@ External(\_SB.PC00.GFX0.STAT)   // State Indicator
 
 External(\_SB.TPM.PTS, MethodObj)
 External(\_SB.PC00.PAUD.PUAM, MethodObj) //PUAM - PowerResource User Absent Mode
-External(\_SB.PC00.XHCI.DUAM, MethodObj)  //DUAM - Device User Absent Mode for XHCI controller
+//External(\_SB.PC00.XHCI.DUAM, MethodObj)  //DUAM - Device User Absent Mode for XHCI controller
 
 #define CONVERTIBLE_BUTTON   6
 #define DOCK_INDICATOR       7
@@ -71,14 +71,21 @@ External(\_SB.PC00.XHCI.DUAM, MethodObj)  //DUAM - Device User Absent Mode for X
 Name(ECUP, 1)  // EC State indicator: 1- Normal Mode 0- Low Power Mode
 Mutex(EHLD, 0) // EC Hold indicator: 0- No one accessing the EC Power State 1- Someone else is accessing the EC Power State
 
-//External(\_SB.PC00.GTSN.TADL, IntObj)
-//External(\_SB.PC00.GTSN.TADH, IntObj)
+External(\_SB.PC00.GTSN.TADL)
+External(\_SB.PC00.GTSN.TADH)
+External(\_SB.PC00.OTN0.TADL)
+External(\_SB.PC00.OTN0.TADH)
+External(\_SB.PC00.OTN1.TADL)
+External(\_SB.PC00.OTN1.TADH)
 External(TBTD, MethodObj)
 External(TBTF, MethodObj)
 External(MMRP, MethodObj)
 External(MMTB, MethodObj)
 External(TBFF, MethodObj)
 External(FFTB, MethodObj)
+include("DTbt.asl")
+// Comms Hub module support
+include("CommsHub.asl")
 
 // Create a Global MUTEX.
 
@@ -142,14 +149,7 @@ Method(P8XH,2,Serialized)
 OperationRegion(SPRT,SystemIO, 0xB2,2)
 Field (SPRT, ByteAcc, Lock, Preserve) {
   SSMP, 8
-}
 
-// Operational region for ACPI Control (SMI_EN) access
-//
-OperationRegion (SMIN, SystemIO, (ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN), 0x4)
-Field (SMIN, AnyAcc, NoLock, Preserve)
-{
-  SMIE, 32
 }
 
 // The _PIC Control Method is optional for ACPI design.  It allows the
@@ -214,6 +214,14 @@ Method(_WAK,1,Serialized)
   If(LOr(LEqual(Arg0,3), LEqual(Arg0,4)))  // If S3 or S4 Resume
   {
 
+      Xor(PB1E, 0x08, PB1E)
+      Xor(PB1E, 0x10, PB1E)
+    If(CondRefOf(\_SB.DTSE)){
+      If(LAnd(\_SB.DTSE, LGreater(TCNT, 1)))
+      {
+        TRAP(TRAP_TYPE_DTS, 20)
+      }
+    }
       \_SB.ECLT.ECLC(ECLITE_READ_COMMAND, ECLITE_DEFAULT_UPDATE, ECLITE_PSRC_OFFSET, ECLITE_BYTES_COUNT_2)
       Store(\_SB.ECLT.ECLR(RefOf(\_SB.ECLT.PSRC)), Local0)
       If(LNotEqual(And(ToInteger(Local0),ECLITE_PSRC_BIT_MASK),ECLITE_DC_PRESENT)) // AC Source Present
@@ -275,111 +283,7 @@ Method(_WAK,1,Serialized)
 
     If(LNotEqual(\_SB.PC00.RP07.VDID,0xFFFFFFFF))
     {
-      If(LEqual(\DSTS,0)) // UnDocked.
-      {
         Notify (\_SB.PC00.RP07,0)
-      }
-    }
-
-    If(LNotEqual(\_SB.PC00.RP08.VDID,0xFFFFFFFF))
-    {
-      If(LEqual(\DSTS,0)) // UnDocked.
-      {
-        Notify (\_SB.PC00.RP08,0)
-      }
-    }
-
-    If(LNotEqual(\_SB.PC00.RP09.VDID,0xFFFFFFFF))
-    {
-      Notify (\_SB.PC00.RP09,0)
-    }
-
-    If(LNotEqual(\_SB.PC00.RP10.VDID,0xFFFFFFFF))
-    {
-      Notify (\_SB.PC00.RP10,0)
-    }
-
-    If(LNotEqual(\_SB.PC00.RP11.VDID,0xFFFFFFFF))
-    {
-      Notify (\_SB.PC00.RP11,0)
-    }
-
-    If(LNotEqual(\_SB.PC00.RP12.VDID,0xFFFFFFFF))
-    {
-      Notify (\_SB.PC00.RP12,0)
-    }
-
-    If(LNotEqual(\_SB.PC00.RP13.VDID,0xFFFFFFFF))
-    {
-      Notify (\_SB.PC00.RP13,0)
-    }
-
-    If(LNotEqual(\_SB.PC00.RP14.VDID,0xFFFFFFFF))
-    {
-      Notify (\_SB.PC00.RP14,0)
-    }
-
-    If(LNotEqual(\_SB.PC00.RP15.VDID,0xFFFFFFFF))
-    {
-      Notify (\_SB.PC00.RP15,0)
-    }
-
-    If(LNotEqual(\_SB.PC00.RP16.VDID,0xFFFFFFFF))
-    {
-      Notify (\_SB.PC00.RP16,0)
-    }
-
-    If(LNotEqual(\_SB.PC00.RP17.VDID,0xFFFFFFFF))
-    {
-      Notify (\_SB.PC00.RP17,0)
-  }
-
-    If(LNotEqual(\_SB.PC00.RP18.VDID,0xFFFFFFFF))
-    {
-      Notify (\_SB.PC00.RP18,0)
-    }
-
-    If(LNotEqual(\_SB.PC00.RP19.VDID,0xFFFFFFFF))
-    {
-      Notify (\_SB.PC00.RP19,0)
-    }
-
-    If(LNotEqual(\_SB.PC00.RP20.VDID,0xFFFFFFFF))
-    {
-      Notify (\_SB.PC00.RP20,0)
-    }
-    If(LNotEqual(\_SB.PC00.RP21.VDID,0xFFFFFFFF))
-    {
-      Notify (\_SB.PC00.RP21,0)
-    }
-    If(LNotEqual(\_SB.PC00.RP22.VDID,0xFFFFFFFF))
-    {
-      Notify (\_SB.PC00.RP22,0)
-    }
-        If(LNotEqual(\_SB.PC00.RP23.VDID,0xFFFFFFFF))
-    {
-      Notify (\_SB.PC00.RP23,0)
-    }
-        If(LNotEqual(\_SB.PC00.RP24.VDID,0xFFFFFFFF))
-    {
-      Notify (\_SB.PC00.RP24,0)
-    }
-
-    If(LNotEqual(\_SB.PC00.RP21.VDID,0xFFFFFFFF))
-    {
-      Notify (\_SB.PC00.RP21,0)
-    }
-    If(LNotEqual(\_SB.PC00.RP22.VDID,0xFFFFFFFF))
-    {
-      Notify (\_SB.PC00.RP22,0)
-    }
-    If(LNotEqual(\_SB.PC00.RP23.VDID,0xFFFFFFFF))
-    {
-      Notify (\_SB.PC00.RP23,0)
-    }
-    If(LNotEqual(\_SB.PC00.RP24.VDID,0xFFFFFFFF))
-    {
-      Notify (\_SB.PC00.RP24,0)
     }
   }
 
@@ -388,6 +292,34 @@ Method(_WAK,1,Serialized)
   //}
   Return(Package(){0,0})
 }
+// Get Buffer:
+//    This method will take a buffer passed into the method and
+//    create then return a smaller buffer based on the pointer
+//    and size parameters passed in.
+//
+//  Arguments:
+//    Arg0: Pointer to start of new Buffer in passed in Buffer.
+//    Arg1: Size of Buffer to create.
+//    Arg2: Original Buffer
+//
+//  Return Value:
+//    Newly created buffer.
+Method(GETB,3,Serialized)
+{
+  Multiply(Arg0,8,Local0)     // Convert Index.
+  Multiply(Arg1,8,Local1)     // Convert Size.
+  CreateField(Arg2,Local0,Local1,TBF3)  // Create Buffer.
+  Return(TBF3)        // Return Buffer.
+}
+// Power Notification:
+//    Perform all needed OS notifications during a
+//    Power Switch.
+//
+//  Arguments:
+//    None
+//
+//  Return Value:
+//    None
 
 Method(PNOT,0,Serialized)
 {
@@ -437,9 +369,9 @@ Method(PNOT,0,Serialized)
     // Perform update to all Batteries in the System.
     Notify(\_SB.BAT1,0x81)       // Eval BAT1 _BST.
 
-    If (LEqual(CHGE,1)){
+    //If (LEqual(CHGE,1)){
       Notify(\_SB.CHRG,0x80)       // PPPC/PPDL reevaluation after AC/DC transtion has occurred.
-    }
+    //}
 
 } // end of Method(PNOT)
 
@@ -604,6 +536,33 @@ Method(P_CS,0,Serialized)
     //    * Audio DSP?
     //    * Any other devices dependent on User Absent mode for power controls
 }
+// SMI I/O Trap:
+//    Generate a Mutex protected SMI I/O Trap.
+//
+//  Arguments:
+//    Arg0: I/O Trap type.
+//               2 - For DTS
+//               4 - For BIOS Guard Tools
+//    Arg1: SMI I/O Trap Function to call.
+//
+//  Return Value:
+//    SMI I/O Trap Return value.
+//      0 = Success.  Non-zero = Failure.
+Method(TRAP,2,Serialized)
+{
+  Store(Arg1,SMIF)        // Store SMI Function.
+  If(LEqual(Arg0,TRAP_TYPE_DTS))  // Is DTS IO Trap?
+  {
+    Store(Arg1,\_SB.DTSF)      // Store the function number global NVS
+    Store(0,\_SB.TRPD)         // Generate IO Trap.
+    Return(\_SB.DTSF)          // Return status from SMI handler
+  }
+  If(LEqual(Arg0,TRAP_TYPE_BGD))  // Is BIOS Guard TOOLS IO Trap?
+  {
+    Store(0,\_SB.TRPF)         // Generate IO Trap
+  }
+  Return(SMIF)            // Return SMIF.  0 = Success.
+}
 
 // Note:  Only add the indicator device needed by the platform.
 
@@ -709,23 +668,6 @@ Scope (\)
     Store(0,\_SB.PC00.RP05.HPEX) // clear the hot plug SCI enable bit
     Store(0,\_SB.PC00.RP06.HPEX) // clear the hot plug SCI enable bit
     Store(0,\_SB.PC00.RP07.HPEX) // clear the hot plug SCI enable bit
-    Store(0,\_SB.PC00.RP08.HPEX) // clear the hot plug SCI enable bit
-    Store(0,\_SB.PC00.RP09.HPEX) // clear the hot plug SCI enable bit
-    Store(0,\_SB.PC00.RP10.HPEX) // clear the hot plug SCI enable bit
-    Store(0,\_SB.PC00.RP11.HPEX) // clear the hot plug SCI enable bit
-    Store(0,\_SB.PC00.RP12.HPEX) // clear the hot plug SCI enable bit
-    Store(0,\_SB.PC00.RP13.HPEX) // clear the hot plug SCI enable bit
-    Store(0,\_SB.PC00.RP14.HPEX) // clear the hot plug SCI enable bit
-    Store(0,\_SB.PC00.RP15.HPEX) // clear the hot plug SCI enable bit
-    Store(0,\_SB.PC00.RP16.HPEX) // clear the hot plug SCI enable bit
-    Store(0,\_SB.PC00.RP17.HPEX) // clear the hot plug SCI enable bit
-    Store(0,\_SB.PC00.RP18.HPEX) // clear the hot plug SCI enable bit
-    Store(0,\_SB.PC00.RP19.HPEX) // clear the hot plug SCI enable bit
-    Store(0,\_SB.PC00.RP20.HPEX) // clear the hot plug SCI enable bit
-    Store(0,\_SB.PC00.RP21.HPEX) // clear the hot plug SCI enable bit
-    Store(0,\_SB.PC00.RP22.HPEX) // clear the hot plug SCI enable bit
-    Store(0,\_SB.PC00.RP23.HPEX) // clear the hot plug SCI enable bit
-    Store(0,\_SB.PC00.RP24.HPEX) // clear the hot plug SCI enable bit
     Store(1,\_SB.PC00.RP01.HPSX) // clear the hot plug SCI status bit
     Store(1,\_SB.PC00.RP02.HPSX) // clear the hot plug SCI status bit
     Store(1,\_SB.PC00.RP03.HPSX) // clear the hot plug SCI status bit
@@ -733,23 +675,6 @@ Scope (\)
     Store(1,\_SB.PC00.RP05.HPSX) // clear the hot plug SCI status bit
     Store(1,\_SB.PC00.RP06.HPSX) // clear the hot plug SCI status bit
     Store(1,\_SB.PC00.RP07.HPSX) // clear the hot plug SCI status bit
-    Store(1,\_SB.PC00.RP08.HPSX) // clear the hot plug SCI status bit
-    Store(1,\_SB.PC00.RP09.HPSX) // clear the hot plug SCI status bit
-    Store(1,\_SB.PC00.RP10.HPSX) // clear the hot plug SCI status bit
-    Store(1,\_SB.PC00.RP11.HPSX) // clear the hot plug SCI status bit
-    Store(1,\_SB.PC00.RP12.HPSX) // clear the hot plug SCI status bit
-    Store(1,\_SB.PC00.RP13.HPSX) // clear the hot plug SCI status bit
-    Store(1,\_SB.PC00.RP14.HPSX) // clear the hot plug SCI status bit
-    Store(1,\_SB.PC00.RP15.HPSX) // clear the hot plug SCI status bit
-    Store(1,\_SB.PC00.RP16.HPSX) // clear the hot plug SCI status bit
-    Store(1,\_SB.PC00.RP17.HPSX) // clear the hot plug SCI status bit
-    Store(1,\_SB.PC00.RP18.HPSX) // clear the hot plug SCI status bit
-    Store(1,\_SB.PC00.RP19.HPSX) // clear the hot plug SCI status bit
-    Store(1,\_SB.PC00.RP20.HPSX) // clear the hot plug SCI status bit
-    Store(1,\_SB.PC00.RP21.HPSX) // clear the hot plug SCI status bit
-    Store(1,\_SB.PC00.RP22.HPSX) // clear the hot plug SCI status bit
-    Store(1,\_SB.PC00.RP23.HPSX) // clear the hot plug SCI status bit
-    Store(1,\_SB.PC00.RP24.HPSX) // clear the hot plug SCI status bit
   }
 
   Method(NPME,0,Serialized)
@@ -761,27 +686,6 @@ Scope (\)
     Store(0,\_SB.PC00.RP05.PMEX) // clear the PME SCI enable bit
     Store(0,\_SB.PC00.RP06.PMEX) // clear the PME SCI enable bit
     Store(0,\_SB.PC00.RP07.PMEX) // clear the PME SCI enable bit
-    Store(0,\_SB.PC00.RP08.PMEX) // clear the PME SCI enable bit
-    Store(0,\_SB.PC00.RP09.PMEX) // clear the PME SCI enable bit
-    Store(0,\_SB.PC00.RP10.PMEX) // clear the PME SCI enable bit
-    Store(0,\_SB.PC00.RP11.PMEX) // clear the PME SCI enable bit
-    Store(0,\_SB.PC00.RP12.PMEX) // clear the PME SCI enable bit
-    Store(0,\_SB.PC00.RP13.PMEX) // clear the PME SCI enable bit
-    Store(0,\_SB.PC00.RP14.PMEX) // clear the PME SCI enable bit
-    Store(0,\_SB.PC00.RP15.PMEX) // clear the PME SCI enable bit
-    Store(0,\_SB.PC00.RP16.PMEX) // clear the PME SCI enable bit
-    Store(0,\_SB.PC00.RP17.PMEX) // clear the PME SCI enable bit
-    Store(0,\_SB.PC00.RP18.PMEX) // clear the PME SCI enable bit
-    Store(0,\_SB.PC00.RP19.PMEX) // clear the PME SCI enable bit
-    Store(0,\_SB.PC00.RP20.PMEX) // clear the PME SCI enable bit
-    Store(0,\_SB.PC00.RP21.PMEX) // clear the PME SCI status bit
-    Store(0,\_SB.PC00.RP22.PMEX) // clear the PME SCI status bit
-    Store(0,\_SB.PC00.RP23.PMEX) // clear the PME SCI status bit
-    Store(0,\_SB.PC00.RP24.PMEX) // clear the PME SCI status bit
-    Store(0,\_SB.PC00.RP21.PMEX) // clear the PME SCI enable bit
-    Store(0,\_SB.PC00.RP22.PMEX) // clear the PME SCI enable bit
-    Store(0,\_SB.PC00.RP23.PMEX) // clear the PME SCI enable bit
-    Store(0,\_SB.PC00.RP24.PMEX) // clear the PME SCI enable bit
     Store(1,\_SB.PC00.RP01.PMSX) // clear the PME SCI status bit
     Store(1,\_SB.PC00.RP02.PMSX) // clear the PME SCI status bit
     Store(1,\_SB.PC00.RP03.PMSX) // clear the PME SCI status bit
@@ -789,23 +693,6 @@ Scope (\)
     Store(1,\_SB.PC00.RP05.PMSX) // clear the PME SCI status bit
     Store(1,\_SB.PC00.RP06.PMSX) // clear the PME SCI enable bit
     Store(1,\_SB.PC00.RP07.PMSX) // clear the PME SCI status bit
-    Store(1,\_SB.PC00.RP08.PMSX) // clear the PME SCI status bit
-    Store(1,\_SB.PC00.RP09.PMSX) // clear the PME SCI status bit
-    Store(1,\_SB.PC00.RP10.PMSX) // clear the PME SCI status bit
-    Store(1,\_SB.PC00.RP11.PMSX) // clear the PME SCI status bit
-    Store(1,\_SB.PC00.RP12.PMSX) // clear the PME SCI status bit
-    Store(1,\_SB.PC00.RP13.PMSX) // clear the PME SCI status bit
-    Store(1,\_SB.PC00.RP14.PMSX) // clear the PME SCI status bit
-    Store(1,\_SB.PC00.RP15.PMSX) // clear the PME SCI status bit
-    Store(1,\_SB.PC00.RP16.PMSX) // clear the PME SCI status bit
-    Store(1,\_SB.PC00.RP17.PMSX) // clear the PME SCI status bit
-    Store(1,\_SB.PC00.RP18.PMSX) // clear the PME SCI status bit
-    Store(1,\_SB.PC00.RP19.PMSX) // clear the PME SCI status bit
-    Store(1,\_SB.PC00.RP20.PMSX) // clear the PME SCI status bit
-    Store(1,\_SB.PC00.RP21.PMSX) // clear the PME SCI status bit
-    Store(1,\_SB.PC00.RP22.PMSX) // clear the PME SCI status bit
-    Store(1,\_SB.PC00.RP23.PMSX) // clear the PME SCI status bit
-    Store(1,\_SB.PC00.RP24.PMSX) // clear the PME SCI status bit
   }
   //
   // Global Name, returns current Interrupt controller mode;
@@ -906,15 +793,15 @@ Scope (\_SB)
         If(And(CAP0,0x04)) // Check _PR3 Support(BIT2)
         {
           Store(0x04, OSCO)
-          //If(LNotEqual(And(HGMD,0x0F),2)) // Check Hybrid graphics is not enabled in bios setup [HgModeMuxless]?
-          //{
-          //  If(LEqual(RTD3,0)) // Is RTD3 support disabled in Bios Setup?
-          //  {
+          If(LNotEqual(And(HGMD,0x0F),2)) // Check Hybrid graphics is not enabled in bios setup [HgModeMuxless]?
+          {
+            If(LEqual(RTD3,0)) // Is RTD3 support disabled in Bios Setup?
+            {
               // RTD3 is disabled via BIOS Setup.
-          //    And(CAP0, 0x3B, CAP0) // Clear _PR3 capability
-          //    Or(STS0, 0x10, STS0) // Indicate capability bit is cleared
-          //  }
-          //}
+              And(CAP0, 0x3B, CAP0) // Clear _PR3 capability
+              Or(STS0, 0x10, STS0) // Indicate capability bit is cleared
+            }
+          }
         }
       } Else{
         And(STS0,0xFFFFFF00,STS0)

@@ -186,6 +186,7 @@ DefinitionBlock (
   Include ("Video.asl")
   Include ("Gpe.asl")
   Include ("EcLite.asl")
+  Include ("EcLiteBat0Virt.asl")
   Include ("EcLiteBat1Real.asl")
   Include ("EcLitePowerState.asl")
   //Include ("PcieDock.asl")
@@ -201,6 +202,7 @@ DefinitionBlock (
   Include ("HdaDspModules.asl")
   Include ("HIDWakeDSM.asl")
   Include ("PinDriverLib.asl")
+  Include ("Pld.asl")
   Include ("Lid.asl")
   Include ("FwuWmi.asl")
 

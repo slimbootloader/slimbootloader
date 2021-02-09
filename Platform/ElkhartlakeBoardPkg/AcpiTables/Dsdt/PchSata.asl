@@ -33,12 +33,6 @@ Device (SAT0) {
     If(PCIC(Arg0)) {
       Return(PCID(Arg0,Arg1,Arg2,Arg3))
     }
-
-    // RST method to check if D3 on adapter is required.
-    //If(LEqual(Arg0, ToUUID("9CD9CDDD-8845-4AFD-8392-31C4EB87CABD"))) {
-    //  Return(D3AS(Arg1, Arg2, Arg3))
-    //}
-
     // If _DSM GUID doesn't match any of the GUIDs supported by reference code
     // check if platform code supports it by calling SATC method. If platform code supports
     // given GUID call SATD which contains _DSM implementation.
@@ -101,7 +95,4 @@ Device (SAT0) {
   {
     Name(_ADR,0x0005FFFF)
   }
-
-  //Include("RstRemapping.asl")
-  //Include("RstRaid.asl")
 }
