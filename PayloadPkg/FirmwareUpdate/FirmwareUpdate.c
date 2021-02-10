@@ -73,6 +73,8 @@ VerifySblVersion (
     Status = PlatformGetStage1AOffset (ImageHdr, FALSE, &Stage1ABase, &Stage1ASize);
   } else if (FwPolicy.Fields.UpdatePartitionA == 0x1) {
     Status = PlatformGetStage1AOffset (ImageHdr, TRUE, &Stage1ABase, &Stage1ASize);
+  } else {
+    Status = EFI_UNSUPPORTED;
   }
 
   //
@@ -93,6 +95,10 @@ VerifySblVersion (
       // Last 4 bytes of the BIOS region contain Stage 1A FV base.
       Stage1AFvBase = (UINT32)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER) + ImageHdr->UpdateImageSize - 4);
       Status = GetSvn (Stage1AFvBase, &CapsuleBlVersion);
+      if (EFI_ERROR (Status)) {
+        DEBUG((DEBUG_ERROR, "Getting SBL version from Stage1AFvBase failed with status: %r\n", Status));
+        return Status;
+      }
     } else {
       DEBUG((DEBUG_ERROR, "Getting Stage 1A offset from capsule failed with status: %r\n", Status));
       return Status;

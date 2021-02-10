@@ -1509,6 +1509,9 @@ PciProgramResources (
     }
 
     for (BarType = BarTypeStart; BarType != BarTypeEnd; BarType += BarTypeStep) {
+      if ((BarType < PciBarTypeIo16) || (BarType > PciBarTypePMem64)) {
+        break;
+      }
       if (((BarType == PciBarTypeIo32) && (EnumPolicy->Downgrade.Io32 != 0)) ||
           ((BarType == PciBarTypeMem64) && (EnumPolicy->Downgrade.Mem64 != 0)) ||
           ((BarType == PciBarTypePMem64) && (EnumPolicy->Downgrade.PMem64 != 0))) {
