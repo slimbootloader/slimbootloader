@@ -83,7 +83,7 @@ MpGetTask (
   Run a task function for a specific processor.
 
   @param[in]  Index       CPU index
-  @param[in]  TaskProc    Task function pointer
+  @param[in]  TaskFunc    Task function pointer
   @param[in]  Argument    Argument for the task function
 
   @retval EFI_INVALID_PARAMETER   Invalid Index parameter.
@@ -95,7 +95,7 @@ EFI_STATUS
 EFIAPI
 MpRunTask (
   IN  UINT32         Index,
-  IN  CPU_TASK_PROC  TaskProc,
+  IN  CPU_TASK_FUNC  TaskFunc,
   IN  UINT64         Argument
   );
 

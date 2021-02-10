@@ -22,7 +22,9 @@ typedef enum {
   EnumCpuEnd,
 } CPU_STATE;
 
-typedef UINT64 (*CPU_TASK_PROC)          (UINT64 Arg);
+typedef UINT64 (*CPU_TASK_FUNC)          (UINT64 Arg);
+
+#pragma pack(1)
 
 typedef struct {
   // Refer CPU_STATE
@@ -30,8 +32,8 @@ typedef struct {
 
   UINT8           Reserved[7];
 
-  // CPU task function CPU_TASK_PROC
-  UINT64          CProcedure;
+  // CPU task function CPU_TASK_FUNC
+  UINT64          TaskFunc;
 
   // Argument for the CPU task function
   UINT64          Argument;
@@ -48,5 +50,7 @@ typedef struct {
 typedef struct {
   SYS_CPU_TASK     *SysCpuTask;
 } SYS_CPU_TASK_HOB;
+
+#pragma pack()
 
 #endif
