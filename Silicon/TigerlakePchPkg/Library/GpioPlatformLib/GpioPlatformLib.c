@@ -192,6 +192,21 @@ PmcGetGpioGpe (
 
 
 /**
+  Return opcode supported for writing to GPIO lock unlock register
+
+  @retval UINT8   Lock Opcode
+**/
+UINT8
+EFIAPI
+GpioGetLockOpcode (
+  VOID
+  )
+{
+  return GpioLockUnlock;
+}
+
+
+/**
   This internal procedure will check if group is within DeepSleepWell.
 
   @param[in]  Group               GPIO Group

@@ -555,7 +555,7 @@ GpioWriteLockReg (
   Status = GpioPchSbiExecutionEx (
              GpioGroupInfo[GroupIndex].Community,
              RegOffset,
-             GpioLibGpioLockUnlock,
+             (GPIO_PCH_SBI_OPCODE) GpioGetLockOpcode (),
              FALSE,
              0x000F,
              0x0000,
