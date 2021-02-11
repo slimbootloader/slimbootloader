@@ -19,6 +19,7 @@ def get_check_lines ():
               "===== Intel Slim Bootloader STAGE1A =====",
               "===== Intel Slim Bootloader STAGE1B =====",
               "===== Intel Slim Bootloader STAGE2 ======",
+              "Detected 2 CPU threads",
               "Jump to payload",
               "Starting Kernel ...",
               "Linux version",
