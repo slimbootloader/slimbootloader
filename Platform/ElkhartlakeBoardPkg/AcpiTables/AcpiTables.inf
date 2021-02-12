@@ -37,9 +37,11 @@
   Lpit/Lpit.act
   Dmar/Dmar.aslc
   CpuSsdt/Cpu0Cst.asl
+  CpuSsdt/Cpu0Hwp.asl
   CpuSsdt/Cpu0Ist.asl
   CpuSsdt/Cpu0Psd.asl
   CpuSsdt/ApCst.asl
+  CpuSsdt/ApHwp.asl
   CpuSsdt/ApIst.asl
   CpuSsdt/ApPsd.asl
   CpuSsdt/CpuSsdt.asl
