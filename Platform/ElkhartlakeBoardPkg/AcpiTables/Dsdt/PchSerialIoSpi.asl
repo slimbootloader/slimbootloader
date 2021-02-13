@@ -2,7 +2,7 @@
 
   Serial IO SPI Controllers ACPI definitions
 
- Copyright (c) 2018 - 2019, Intel Corporation. All rights reserved.<BR>
+ Copyright (c) 2018 - 2021, Intel Corporation. All rights reserved.<BR>
  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -104,6 +104,7 @@ Scope(\_SB.PC00) {
     }
     If (LOr (LEqual (SPI2_MODE, SERIAL_IO_SPI_PCI), LEqual (SPI2_MODE, SERIAL_IO_SPI_DISABLED))) {
       Method (_ADR) {
+        if(LEqual (PCHS, PCHN)){ Return (0x00120000) }
          Return (SERIAL_IO_SPI2_ADR)
       }
     }

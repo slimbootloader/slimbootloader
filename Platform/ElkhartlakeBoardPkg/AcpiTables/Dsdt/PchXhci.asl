@@ -1,6 +1,6 @@
 /**@file
 
- Copyright (c) 2010 - 2020, Intel Corporation. All rights reserved.<BR>
+ Copyright (c) 2010 - 2021, Intel Corporation. All rights reserved.<BR>
  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -18,7 +18,7 @@ Scope(\_SB_.PC00) {
 
     Name(_ADR, 0x00140000)
     OperationRegion(XPRT, SystemMemory, 0xC00A0000, 0x100)
-    Field(XPRT,DWordAcc,NoLock,Preserve)
+    Field(XPRT,AnyAcc,NoLock,Preserve)
     {
       DVID, 16,
       Offset(0x10),
@@ -94,6 +94,7 @@ Scope(\_SB_.PC00) {
       } Else {
         Return (9)                    // PCH-N
       }
+      Return (0)
     }
 
     Method(_PS0,0,Serialized)

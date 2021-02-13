@@ -39,7 +39,10 @@
         //
         Case (ECLITE_UCSI_UPDATE_EVENT)
         {
+          If (CondRefOf(\_SB.UBTC.UCEV))
+          {
           \_SB.UBTC.UCEV()
+          }
           Return(0)
         }
 
@@ -53,7 +56,9 @@
 
           // Perform needed ACPI Notifications.
           If(LAnd(LEqual(DPTF,1), LEqual(PWRE,1))) {
+            If (CondRefOf (\_SB.TPWR)) {
             Notify(\_SB.TPWR, 0x81) // notify Power participant
+            }
           }
 
           PNOT()
@@ -67,7 +72,9 @@
 
           // Perform needed ACPI Notifications.
           If(LAnd(LEqual(DPTF,1), LEqual(PWRE,1))) {
+            If (CondRefOf (\_SB.TPWR)) {
             Notify(\_SB.TPWR, 0x81) // notify Power participant
+            }
           }
 
           PNOT()
@@ -78,7 +85,9 @@
         {
           If(LAnd(LEqual(DPTF,1), LEqual(PWRE,1)))
           {
+            If (CondRefOf (\_SB.TPWR)) {
             Notify(\_SB.TPWR, 0x86) // notify Power participant
+            }
           }
           PNOT()
           Return(0)
@@ -88,7 +97,9 @@
         {
           If(LAnd(LEqual(DPTF,1), LEqual(S1DE,1)))
           {
+            If (CondRefOf (\_SB.SEN1)) {
             Notify(\_SB.SEN1, 0x90) // notify Sensor participant
+            }
           }
           Return(0)
         }
@@ -97,7 +108,9 @@
         {
           If(LAnd(LEqual(DPTF,1), LEqual(S2DE,1)))
           {
+            If (CondRefOf (\_SB.SEN2)) {
             Notify(\_SB.SEN2, 0x90) // notify Sensor participant
+            }
           }
           Return(0)
         }
@@ -106,7 +119,9 @@
         {
           If(LAnd(LEqual(DPTF,1), LEqual(S3DE,1)))
           {
+            If (CondRefOf (\_SB.SEN3)) {
             Notify(\_SB.SEN3, 0x90) // notify Sensor participant
+            }
           }
           Return(0)
         }
@@ -115,7 +130,9 @@
         {
           If(LAnd(LEqual(DPTF,1), LEqual(S4DE,1)))
           {
+            If (CondRefOf (\_SB.SEN4)) {
             Notify(\_SB.SEN4, 0x90) // notify Sensor participant
+            }
           }
           Return(0)
         }
@@ -124,7 +141,9 @@
         {
           If(LAnd(LEqual(DPTF,1), LEqual(S5DE,1)))
           {
+            If (CondRefOf (\_SB.SEN5)) {
             Notify(\_SB.SEN5, 0x90) // notify Sensor participant
+            }
           }
           Return(0)
         }
@@ -147,7 +166,9 @@
 
           If(LAnd(LEqual(DPTF,1), LEqual(PWRE,1)))
           {
+            If (CondRefOf (\_SB.TPWR)) {
             Notify(\_SB.TPWR, 0x81) // notify Power participant
+            }
           }
           Return(0)
         }
@@ -156,13 +177,17 @@
         {
           If(LAnd(LEqual(DPTF,1), LEqual(PWRE,1)))
           {
+            If (CondRefOf (\_SB.TPWR)) {
             Notify(\_SB.TPWR, 0x82) // notify Power participant
+            }
           }
           Return(0)
         }
         Case (ECLITE_CPU_TEMPERATURE_UPDATE)
         {
+          If (CondRefOf (\_TZ.TZ00)) {
           Notify(\_TZ.TZ00,0x80)  // Notify Temprature update event to OS
+          }
           Return(0)
         }
 

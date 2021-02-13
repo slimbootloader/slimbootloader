@@ -1,7 +1,7 @@
 /** @file
   ACPI DSDT table
 
-  Copyright (c) 2011 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2011 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 #include "PlatformBoardId.h"
@@ -186,6 +186,7 @@ DefinitionBlock (
   Include ("Video.asl")
   Include ("Gpe.asl")
   Include ("EcLite.asl")
+  Include ("EcLiteBat0Virt.asl")
   Include ("EcLiteBat1Real.asl")
   Include ("EcLitePowerState.asl")
   //Include ("PcieDock.asl")
@@ -201,6 +202,7 @@ DefinitionBlock (
   Include ("HdaDspModules.asl")
   Include ("HIDWakeDSM.asl")
   Include ("PinDriverLib.asl")
+  Include ("Pld.asl")
   Include ("Lid.asl")
   Include ("FwuWmi.asl")
 

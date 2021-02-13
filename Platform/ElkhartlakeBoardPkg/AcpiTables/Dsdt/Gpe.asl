@@ -1,7 +1,7 @@
 /** @file
   ACPI DSDT table
 
-  Copyright (c) 2011 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2011 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -31,6 +31,7 @@
   External(\_GPE.ITBH, MethodObj) // Interrupt handler for Intel Turbo Boost Max Technology 3.0
   External(\_SB.PC00.TDM0)
   External(\_SB.PC00.TDM1)
+  External(\_SB.PC00.PSED)
   External(\_GPE.ITBT, MethodObj)
   External(\_SB.AWAC, DeviceObj)  // ACPI000E Wake Alarm Timer device
   External(\_SB.AWAC.WAST, IntObj)
@@ -51,6 +52,29 @@
   Scope(\_GPE)
   {
   //
+  // Home Button
+  //
+  Method(_L29, 0, Serialized) {
+    \_SB.HIDD.HHBE ()
+  }
+  // Volume Up Button
+  Method(_L2C, 0, Serialized) {
+    \_SB.HIDD.HVUE ()
+  }
+  //
+  // Volume Down Button
+  //
+  Method(_L48, 0, Serialized) {
+    \_SB.HIDD.HVDE ()
+  }
+  Method(_L73, 0 , serialized) {
+  }
+  Method(_L68, 0 , serialized) {
+    Notify(\_SB.PC00.PSED, 0x02)
+  }
+  Method(_L6B, 0 , serialized) {
+  }
+  //
   // This PME event (PCH's GPE 69h) is received on one or more of the PCI Express* ports or
   // an assert PMEGPE message received via DMI
   //
@@ -62,26 +86,9 @@
     \_SB.PC00.RP05.HPME()
     \_SB.PC00.RP06.HPME()
     \_SB.PC00.RP07.HPME()
-    \_SB.PC00.RP08.HPME()
-    \_SB.PC00.RP09.HPME()
-    \_SB.PC00.RP10.HPME()
-    \_SB.PC00.RP11.HPME()
-    \_SB.PC00.RP12.HPME()
-    \_SB.PC00.RP13.HPME()
-    \_SB.PC00.RP14.HPME()
-    \_SB.PC00.RP15.HPME()
-    \_SB.PC00.RP16.HPME()
-    \_SB.PC00.RP17.HPME()
-    \_SB.PC00.RP18.HPME()
-    \_SB.PC00.RP19.HPME()
-    \_SB.PC00.RP20.HPME()
-    \_SB.PC00.RP21.HPME()
-    \_SB.PC00.RP22.HPME()
-    \_SB.PC00.RP23.HPME()
-    \_SB.PC00.RP24.HPME()
   }
 
-/**
+
   // PCI Express Hot-Plug caused the wake event.
 
   Method(_L61)
@@ -125,9 +132,7 @@
 
         // Perform proper notification
         // to the OS.
-        If(LOr(LNotEqual(TBTS, 0x01),LOr(LNotEqual(RPS0,0x1),LNotEqual(RPS1,0x1)))) {
           Notify(\_SB.PC00.RP01,0)
-        }
       }
       Else
       {
@@ -152,9 +157,7 @@
           Store(0,\_SB.PC00.RP02.L0SE)
         }
 
-        If(LOr(LNotEqual(TBTS, 0x01),LOr(LNotEqual(RPS0,0x2),LNotEqual(RPS1,0x2)))) {
           Notify(\_SB.PC00.RP02,0)
-        }
       }
       Else
       {
@@ -176,9 +179,7 @@
           Store(0,\_SB.PC00.RP03.L0SE)
         }
 
-        If(LOr(LNotEqual(TBTS, 0x01),LOr(LNotEqual(RPS0,0x3),LNotEqual(RPS1,0x3)))) {
           Notify(\_SB.PC00.RP03,0)
-        }
       }
       Else
       {
@@ -200,9 +201,7 @@
           Store(0,\_SB.PC00.RP04.L0SE)
         }
 
-        If(LOr(LNotEqual(TBTS, 0x01),LOr(LNotEqual(RPS0,0x4),LNotEqual(RPS1,0x4)))) {
           Notify(\_SB.PC00.RP04,0)
-        }
       }
       Else
       {
@@ -224,9 +223,7 @@
           Store(0,\_SB.PC00.RP05.L0SE)
         }
 
-      If(LOr(LNotEqual(TBTS, 0x01),LOr(LNotEqual(RPS0,0x5),LNotEqual(RPS1,0x5)))) {
           Notify(\_SB.PC00.RP05,0)
-        }
       }
       Else
       {
@@ -248,9 +245,7 @@
           Store(0,\_SB.PC00.RP06.L0SE)
         }
 
-        If(LOr(LNotEqual(TBTS, 0x01),LOr(LNotEqual(RPS0,0x6),LNotEqual(RPS1,0x6)))) {
           Notify(\_SB.PC00.RP06,0)
-        }
       }
       Else
       {
@@ -274,9 +269,7 @@
 
         If(LEqual(PFLV,FlavorDesktop))
         {
-          If(LOr(LNotEqual(TBTS, 0x01),LOr(LNotEqual(RPS0,0x7),LNotEqual(RPS1,0x7)))) {
             Notify(\_SB.PC00.RP07,0)
-          }
         }
         Else
         {
@@ -285,9 +278,9 @@
 //@todo: Waiting for DOCK offect data
 //            If(LEqual(\_SB.PC00.LPCB.H_EC.ECRD(RefOf(\_SB.PC00.LPCB.H_EC.DOCK)), 0))
 //            { // If not docked then it's hot plug
-              If(LOr(LNotEqual(TBTS, 0x01),LOr(LNotEqual(RPS0,0x7),LNotEqual(RPS1,0x7)))) {
-              Notify(\_SB.PC00.RP07,0)
-            }
+              //If(LOr(LNotEqual(TBTS, 0x01),LOr(LNotEqual(RPS0,0x7),LNotEqual(RPS1,0x7)))) {
+              //Notify(\_SB.PC00.RP07,0)
+            //}
 //            }
           }
         }
@@ -298,430 +291,7 @@
       }
     }
 
-    // Check Root Port 8 for a Hot Plug Event if the Port is
-    // enabled.
-
-    If(LAnd(LNotEqual(\_SB.PC00.RP08.VDID,0xFFFFFFFF),\_SB.PC00.RP08.HPSX))
-    {
-      If(\_SB.PC00.RP08.PDCX)
-      {
-        Store(1,\_SB.PC00.RP08.PDCX)
-        Store(1,\_SB.PC00.RP08.HPSX)
-
-        If(LNot(\_SB.PC00.RP08.PDSX)) {
-          Store(0,\_SB.PC00.RP08.L0SE)
-        }
-
-        If(LEqual(PFLV,FlavorDesktop))
-        {
-          If(LOr(LNotEqual(TBTS, 0x01),LOr(LNotEqual(RPS0,0x8),LNotEqual(RPS1,0x8)))) {
-            Notify(\_SB.PC00.RP08,0)
-          }
-        }
-        Else
-        {
-          If (\ECON)
-          {
-//@todo: Waiting for DOCK offect data
-//            If(LEqual(\_SB.PC00.LPCB.H_EC.ECRD(RefOf(\_SB.PC00.LPCB.H_EC.DOCK)), 0))
-//            { // If not docked then it's hot plug
-              If(LOr(LNotEqual(TBTS, 0x01),LOr(LNotEqual(RPS0,0x8),LNotEqual(RPS1,0x8)))) {
-              Notify(\_SB.PC00.RP08,0)
-            }
-//            }
-          }
-        }
-      }
-      Else
-      {
-        Store(1,\_SB.PC00.RP08.HPSX)
-      }
-    }
-
-    // Check Root Port 9 for a Hot Plug Event if the Port is
-    // enabled.
-
-    If(LAnd(LNotEqual(\_SB.PC00.RP09.VDID,0xFFFFFFFF),\_SB.PC00.RP09.HPSX))
-    {
-      If(\_SB.PC00.RP09.PDCX)
-      {
-        Store(1,\_SB.PC00.RP09.PDCX)
-        Store(1,\_SB.PC00.RP09.HPSX)
-
-        If(LNot(\_SB.PC00.RP09.PDSX)) {
-          Store(0,\_SB.PC00.RP09.L0SE)
-        }
-
-        If(LOr(LNotEqual(TBTS, 0x01),LOr(LNotEqual(RPS0,0x9),LNotEqual(RPS1,0x9)))) {
-          Notify(\_SB.PC00.RP09,0)
-        }
-      }
-      Else
-      {
-        Store(1,\_SB.PC00.RP09.HPSX)
-      }
-    }
-
-    // Check Root Port 10 for a Hot Plug Event if the Port is
-    // enabled.
-
-    If(LAnd(LNotEqual(\_SB.PC00.RP10.VDID,0xFFFFFFFF),\_SB.PC00.RP10.HPSX))
-    {
-      If(\_SB.PC00.RP10.PDCX)
-      {
-        Store(1,\_SB.PC00.RP10.PDCX)
-        Store(1,\_SB.PC00.RP10.HPSX)
-
-        If(LNot(\_SB.PC00.RP10.PDSX)) {
-          Store(0,\_SB.PC00.RP10.L0SE)
-        }
-
-        If(LOr(LNotEqual(TBTS, 0x01),LOr(LNotEqual(RPS0,0xA),LNotEqual(RPS1,0xA)))) {
-          Notify(\_SB.PC00.RP10,0)
-        }
-      }
-      Else
-      {
-        Store(1,\_SB.PC00.RP10.HPSX)
-      }
-    }
-
-    // Check Root Port 11 for a Hot Plug Event if the Port is
-    // enabled.
-
-    If(LAnd(LNotEqual(\_SB.PC00.RP11.VDID,0xFFFFFFFF),\_SB.PC00.RP11.HPSX))
-    {
-      If(\_SB.PC00.RP11.PDCX)
-      {
-        Store(1,\_SB.PC00.RP11.PDCX)
-        Store(1,\_SB.PC00.RP11.HPSX)
-
-        If(LNot(\_SB.PC00.RP11.PDSX)) {
-          Store(0,\_SB.PC00.RP11.L0SE)
-        }
-
-        If(LOr(LNotEqual(TBTS, 0x01),LOr(LNotEqual(RPS0,0xB),LNotEqual(RPS1,0xB)))) {
-          Notify(\_SB.PC00.RP11,0)
-        }
-      }
-      Else
-      {
-        Store(1,\_SB.PC00.RP11.HPSX)
-      }
-    }
-
-    // Check Root Port 12 for a Hot Plug Event if the Port is
-    // enabled.
-
-    If(LAnd(LNotEqual(\_SB.PC00.RP12.VDID,0xFFFFFFFF),\_SB.PC00.RP12.HPSX))
-    {
-      If(\_SB.PC00.RP12.PDCX)
-      {
-        Store(1,\_SB.PC00.RP12.PDCX)
-        Store(1,\_SB.PC00.RP12.HPSX)
-
-        If(LNot(\_SB.PC00.RP12.PDSX)) {
-          Store(0,\_SB.PC00.RP12.L0SE)
-        }
-
-        If(LOr(LNotEqual(TBTS, 0x01),LOr(LNotEqual(RPS0,0xC),LNotEqual(RPS1,0xC)))) {
-          Notify(\_SB.PC00.RP12,0)
-        }
-      }
-      Else
-      {
-        Store(1,\_SB.PC00.RP12.HPSX)
-      }
-    }
-
-    // Check Root Port 13 for a Hot Plug Event if the Port is
-    // enabled.
-
-    If(LAnd(LNotEqual(\_SB.PC00.RP13.VDID,0xFFFFFFFF),\_SB.PC00.RP13.HPSX))
-    {
-      If(\_SB.PC00.RP13.PDCX)
-      {
-        Store(1,\_SB.PC00.RP13.PDCX)
-        Store(1,\_SB.PC00.RP13.HPSX)
-
-        If(LNot(\_SB.PC00.RP13.PDSX)) {
-          Store(0,\_SB.PC00.RP13.L0SE)
-        }
-
-        If(LOr(LNotEqual(TBTS, 0x01),LOr(LNotEqual(RPS0,0xD),LNotEqual(RPS1,0xD)))) {
-          Notify(\_SB.PC00.RP13,0)
-        }
-      }
-      Else
-      {
-        Store(1,\_SB.PC00.RP13.HPSX)
-      }
-    }
-
-    // Check Root Port 14 for a Hot Plug Event if the Port is
-    // enabled.
-
-    If(LAnd(LNotEqual(\_SB.PC00.RP14.VDID,0xFFFFFFFF),\_SB.PC00.RP14.HPSX))
-    {
-      If(\_SB.PC00.RP14.PDCX)
-      {
-        Store(1,\_SB.PC00.RP14.PDCX)
-        Store(1,\_SB.PC00.RP14.HPSX)
-
-        If(LNot(\_SB.PC00.RP14.PDSX)) {
-          Store(0,\_SB.PC00.RP14.L0SE)
-        }
-
-        If(LOr(LNotEqual(TBTS, 0x01),LOr(LNotEqual(RPS0,0xE),LNotEqual(RPS1,0xE)))) {
-          Notify(\_SB.PC00.RP14,0)
-        }
-      }
-      Else
-      {
-        Store(1,\_SB.PC00.RP14.HPSX)
-      }
-    }
-
-    // Check Root Port 15 for a Hot Plug Event if the Port is
-    // enabled.
-
-    If(LAnd(LNotEqual(\_SB.PC00.RP15.VDID,0xFFFFFFFF),\_SB.PC00.RP15.HPSX))
-    {
-      If(\_SB.PC00.RP15.PDCX)
-      {
-        Store(1,\_SB.PC00.RP15.PDCX)
-        Store(1,\_SB.PC00.RP15.HPSX)
-
-        If(LNot(\_SB.PC00.RP15.PDSX)) {
-          Store(0,\_SB.PC00.RP15.L0SE)
-        }
-
-        If(LOr(LNotEqual(TBTS, 0x01),LOr(LNotEqual(RPS0,0xF),LNotEqual(RPS1,0xF)))) {
-          Notify(\_SB.PC00.RP15,0)
-        }
-      }
-      Else
-      {
-        Store(1,\_SB.PC00.RP15.HPSX)
-      }
-    }
-
-    // Check Root Port 16 for a Hot Plug Event if the Port is
-    // enabled.
-
-    If(LAnd(LNotEqual(\_SB.PC00.RP16.VDID,0xFFFFFFFF),\_SB.PC00.RP16.HPSX))
-    {
-      If(\_SB.PC00.RP16.PDCX)
-      {
-        Store(1,\_SB.PC00.RP16.PDCX)
-        Store(1,\_SB.PC00.RP16.HPSX)
-
-        If(LNot(\_SB.PC00.RP16.PDSX)) {
-          Store(0,\_SB.PC00.RP16.L0SE)
-        }
-
-        If(LOr(LNotEqual(TBTS, 0x01),LOr(LNotEqual(RPS0,0x10),LNotEqual(RPS1,0x10)))) {
-          Notify(\_SB.PC00.RP16,0)
-        }
-      }
-      Else
-      {
-        Store(1,\_SB.PC00.RP16.HPSX)
-      }
-    }
-
-    // Check Root Port 17 for a Hot Plug Event if the Port is
-    // enabled.
-
-    If(LAnd(LNotEqual(\_SB.PC00.RP17.VDID,0xFFFFFFFF),\_SB.PC00.RP17.HPSX))
-    {
-      If(\_SB.PC00.RP17.PDCX)
-      {
-        Store(1,\_SB.PC00.RP17.PDCX)
-        Store(1,\_SB.PC00.RP17.HPSX)
-
-        If(LNot(\_SB.PC00.RP17.PDSX)) {
-          Store(0,\_SB.PC00.RP17.L0SE)
-        }
-
-        If(LOr(LNotEqual(TBTS, 0x01),LOr(LNotEqual(RPS0,0x11),LNotEqual(RPS1,0x11)))) {
-          Notify(\_SB.PC00.RP17,0)
-        }
-      }
-      Else
-      {
-        Store(1,\_SB.PC00.RP17.HPSX)
-      }
-    }
-
-    // Check Root Port 18 for a Hot Plug Event if the Port is
-    // enabled.
-
-    If(LAnd(LNotEqual(\_SB.PC00.RP18.VDID,0xFFFFFFFF),\_SB.PC00.RP18.HPSX))
-    {
-      If(\_SB.PC00.RP18.PDCX)
-      {
-        Store(1,\_SB.PC00.RP18.PDCX)
-        Store(1,\_SB.PC00.RP18.HPSX)
-
-        If(LNot(\_SB.PC00.RP18.PDSX)) {
-          Store(0,\_SB.PC00.RP18.L0SE)
-        }
-
-        If(LOr(LNotEqual(TBTS, 0x01),LOr(LNotEqual(RPS0,0x12),LNotEqual(RPS1,0x12)))) {
-          Notify(\_SB.PC00.RP18,0)
-        }
-      }
-      Else
-      {
-        Store(1,\_SB.PC00.RP18.HPSX)
-      }
-    }
-
-    // Check Root Port 19 for a Hot Plug Event if the Port is
-    // enabled.
-
-    If(LAnd(LNotEqual(\_SB.PC00.RP19.VDID,0xFFFFFFFF),\_SB.PC00.RP19.HPSX))
-    {
-      If(\_SB.PC00.RP19.PDCX)
-      {
-        Store(1,\_SB.PC00.RP19.PDCX)
-        Store(1,\_SB.PC00.RP19.HPSX)
-
-        If(LNot(\_SB.PC00.RP19.PDSX)) {
-          Store(0,\_SB.PC00.RP19.L0SE)
-        }
-
-        If(LOr(LNotEqual(TBTS, 0x01),LOr(LNotEqual(RPS0,0x13),LNotEqual(RPS1,0x13)))) {
-          Notify(\_SB.PC00.RP19,0)
-        }
-      }
-      Else
-      {
-        Store(1,\_SB.PC00.RP19.HPSX)
-      }
-    }
-
-    // Check Root Port 20 for a Hot Plug Event if the Port is
-    // enabled.
-
-    If(LAnd(LNotEqual(\_SB.PC00.RP20.VDID,0xFFFFFFFF),\_SB.PC00.RP20.HPSX))
-    {
-      If(\_SB.PC00.RP20.PDCX)
-      {
-        Store(1,\_SB.PC00.RP20.PDCX)
-        Store(1,\_SB.PC00.RP20.HPSX)
-
-        If(LNot(\_SB.PC00.RP20.PDSX)) {
-          Store(0,\_SB.PC00.RP20.L0SE)
-        }
-
-        If(LOr(LNotEqual(TBTS, 0x01),LOr(LNotEqual(RPS0,0x14),LNotEqual(RPS1,0x14)))) {
-          Notify(\_SB.PC00.RP20,0)
-        }
-      }
-      Else
-      {
-        Store(1,\_SB.PC00.RP20.HPSX)
-      }
-    }
-    // Check Root Port 21 for a Hot Plug Event if the Port is
-    // enabled.
-
-    If(LAnd(LNotEqual(\_SB.PC00.RP21.VDID,0xFFFFFFFF),\_SB.PC00.RP21.HPSX))
-    {
-      If(\_SB.PC00.RP21.PDCX)
-      {
-        Store(1,\_SB.PC00.RP21.PDCX)
-        Store(1,\_SB.PC00.RP21.HPSX)
-
-        If(LNot(\_SB.PC00.RP21.PDSX)) {
-          Store(0,\_SB.PC00.RP21.L0SE)
-        }
-
-        If(LOr(LNotEqual(TBTS, 0x01),LOr(LNotEqual(RPS0,0x15),LNotEqual(RPS1,0x15)))) {
-          Notify(\_SB.PC00.RP21,0)
-        }
-      }
-      Else
-      {
-        Store(1,\_SB.PC00.RP21.HPSX)
-      }
-    }
-
-    // Check Root Port 22 for a Hot Plug Event if the Port is
-    // enabled.
-
-    If(LAnd(LNotEqual(\_SB.PC00.RP22.VDID,0xFFFFFFFF),\_SB.PC00.RP22.HPSX))
-    {
-      If(\_SB.PC00.RP22.PDCX)
-      {
-        Store(1,\_SB.PC00.RP22.PDCX)
-        Store(1,\_SB.PC00.RP22.HPSX)
-
-        If(LNot(\_SB.PC00.RP22.PDSX)) {
-          Store(0,\_SB.PC00.RP22.L0SE)
-        }
-
-        If(LOr(LNotEqual(TBTS, 0x01),LOr(LNotEqual(RPS0,0x16),LNotEqual(RPS1,0x16)))) {
-          Notify(\_SB.PC00.RP22,0)
-        }
-      }
-      Else
-      {
-        Store(1,\_SB.PC00.RP22.HPSX)
-      }
-    }
-
-    // Check Root Port 23 for a Hot Plug Event if the Port is
-    // enabled.
-
-    If(LAnd(LNotEqual(\_SB.PC00.RP23.VDID,0xFFFFFFFF),\_SB.PC00.RP23.HPSX))
-    {
-      If(\_SB.PC00.RP23.PDCX)
-      {
-        Store(1,\_SB.PC00.RP23.PDCX)
-        Store(1,\_SB.PC00.RP23.HPSX)
-
-        If(LNot(\_SB.PC00.RP23.PDSX)) {
-          Store(0,\_SB.PC00.RP23.L0SE)
-        }
-
-        If(LOr(LNotEqual(TBTS, 0x01),LOr(LNotEqual(RPS0,0x17),LNotEqual(RPS1,0x17)))) {
-          Notify(\_SB.PC00.RP23,0)
-        }
-      }
-      Else
-      {
-        Store(1,\_SB.PC00.RP23.HPSX)
-      }
-    }
-
-    // Check Root Port 24 for a Hot Plug Event if the Port is
-    // enabled.
-
-    If(LAnd(LNotEqual(\_SB.PC00.RP24.VDID,0xFFFFFFFF),\_SB.PC00.RP24.HPSX))
-    {
-      If(\_SB.PC00.RP24.PDCX)
-      {
-        Store(1,\_SB.PC00.RP24.PDCX)
-        Store(1,\_SB.PC00.RP24.HPSX)
-
-        If(LNot(\_SB.PC00.RP24.PDSX)) {
-          Store(0,\_SB.PC00.RP24.L0SE)
-        }
-
-        If(LOr(LNotEqual(TBTS, 0x01),LOr(LNotEqual(RPS0,0x18),LNotEqual(RPS1,0x18)))) {
-          Notify(\_SB.PC00.RP24,0)
-        }
-      }
-      Else
-      {
-        Store(1,\_SB.PC00.RP24.HPSX)
-      }
-    }
   }
-**/
   //
   // Software GPE caused the event.
   //
@@ -789,6 +359,19 @@
     Return ()
   }
 
+  Method(_L42, 0, Serialized) // ACPI GPE GPPC_C_2
+  {
+    If(LNotEqual(VBSG,0)) {
+      Store (PCRR (PID_GPIOCOM4, 0x140), Local1)
+      And (Local1, 0x4, Local2)
+      If (LEqual (Local2, 0x4)) {
+        If (CondRefOf (\_SB.ADCS)) {
+          \_SB.ADCS(1)
+        }
+        PCRO (PID_GPIOCOM4, 0x140, 0x4)
+      }
+    }
+  }
   Method(_L6F, 0, Serialized) // 2-tier GPE event handler
   {
     //

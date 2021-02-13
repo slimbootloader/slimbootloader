@@ -1,7 +1,7 @@
 /** @file
   ACPI RTD3 SSDT table for SATA ports
 
-  Copyright (c) 2011 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2011 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -83,41 +83,7 @@ Method(SPON, 0) {
 }
 
 Method(SPOF, 0, Serialized) {
-  Add(\_SB.PC00.SAT0.MBR6, PBAR, Local0)
-  /// if S0Ix enabled
-  If(LEqual(S0ID, 1)) {
-    OperationRegion(PSTS, SystemMemory, Local0, 0x18)
-    Field(PSTS, DWordAcc, NoLock, Preserve)
-    {
-      Offset(0x0),
-      CMST, 1,  //PxCMD.ST
-      CSUD, 1,  //PxCMD.SUD
-      , 2,
-      CFRE, 1,  //PxCMD.FRE
-      Offset(0x10),
-      SDET, 4,  //PxSSTS.DET
-      Offset(0x14),
-      CDET, 4   //PxSCTL.DET
-    }
 
-    // WA for RST driver creating volume failed.
-    // In order to fix the error caused by reigster change during creating volume of RST driver, skip to disable phy in RAID mode.
-    If(LAnd(LEqual(\_SB.PC00.SAT0.SUBC, 0x06),LOr(LEqual(SDET, 1), LEqual(SDET, 3))))  { /// Execute offline flow only if Device detected and Phy not offline
-      ///- Clear ST (PxCMD.ST)
-      Store(0, CMST)                   // PBAR[0]
-      ///- Clear FRE
-      Store(0, CFRE)                   // PBAR[4]
-      ///- Clear SUD (PxCMD.SUD)
-      Store(0, CSUD)                   // PBAR[1]
-      ///- Set DET to 4 (PxSCTL.DET)
-      Store(4, CDET)                   // PBAR+0x14[3:0]
-      Sleep(16)
-      ///- Wait until PxSSTS.DET == 4
-      While(LNotEqual(SDET, 4)){
-        Sleep(16)
-      }
-    }
-  } // if S0Ix enabled
   // drive power pin "OFF"
   \PIN.OFF(PWRG)
   Store(Timer(), ^OFTM) /// Store time when Disk turned OFF(non-zero OFTM indicate minimum 50ms requirement does apply when _ON called next time)

@@ -6,7 +6,7 @@
   and return valid addresses for all display device encoders
   present in the system, etc.
 
-  Copyright (c) 1999 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 1999 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -20,6 +20,7 @@ External(\OSYS, IntObj)
 External(\CPSC, IntObj)
 External(\GUAM, MethodObj)
 External(\S0ID, IntObj)
+External(DSEN)
 
 //
 // Default Physical Location of Device
@@ -56,6 +57,27 @@ Name (DPLD, Package (0x1) {
               )
             } // Package
 ) //DPLD
+// Enable/Disable Output Switching.  In WIN2K/WINXP, _DOS = 0 will
+// get called during initialization to prepare for an ACPI Display
+// Switch Event.  During an ACPI Display Switch, the OS will call
+// _DOS = 2 immediately after a Notify=0x80 to temporarily disable
+// all Display Switching.  After ACPI Display Switching is complete,
+// the OS will call _DOS = 0 to re-enable ACPI Display Switching.
+Method(_DOS,1)
+{
+  //
+  // Store Display Switching and LCD brightness BIOS control bit
+  //
+  Store(And(Arg0,7),DSEN)
+
+  If(LEqual(And(Arg0,  0x3), 0))     // If _DOS[1:0]=0
+  {
+    If(CondRefOf(HDOS))
+    {
+      HDOS()
+    }
+  }
+}
 
 //
 // Enumerate the Display Environment.  This method will return
