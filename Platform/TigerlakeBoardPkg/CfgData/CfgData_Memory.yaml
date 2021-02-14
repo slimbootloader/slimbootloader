@@ -639,7 +639,7 @@
       help         : >
                      Select 'Host Debugger' if Trace Hub is used with host debugger tool or 'Target Debugger' if Trace Hub is used by target debugger software or 'Disable' trace hub functionality.
       length       : 0x01
-      value        : 0x00
+      value        : 0x0
   - PlatformDebugConsent :
       name         : Platform Debug Consent
       type         : Combo
@@ -647,7 +647,7 @@
       help         : >
                      To 'opt-in' for debug, please select 'Enabled' with the desired debug probe type. Enabling this BIOS option may alter the default value of other debug-related BIOS options.\Manual- Do not use Platform Debug Consent to override other debug-relevant policies, but the user must set each debug option manually, aimed at advanced users.\nNote- DCI OOB (aka BSSB) uses CCA probe;[DCI OOB+DbC] and [USB2 DbC] have the same setting.
       length       : 0x01
-      value        : 0x00
+      value        : 0x0
   - DciEn        :
       name         : DCI Enable
       type         : Combo
@@ -655,7 +655,7 @@
       help         : >
                      Determine if to enable DCI debug from host
       length       : 0x01
-      value        : 0x00
+      value        : 0x0
   - !expand { MEM_TMPL : [ Training ] }
   - RMT          :
       name         : Rank Margin Tool
@@ -705,27 +705,6 @@
                      Enables/Disable Early Command Training
       length       : 0x01
       value        : 0x01
-  - RaplLim1WindX :
-      name         : RAPL PL 1 WindowX
-      type         : EditNum, HEX, (0x01, 0x03)
-      help         : >
-                     Power PL 1 time window X value, (1/1024)*(1+(x/4))*(2^y) (0=Def)
-      length       : 0x01
-      value        : 0x0
-  - RaplLim1WindY :
-      name         : RAPL PL 1 WindowY
-      type         : EditNum, HEX, (0x01, 0x1F)
-      help         : >
-                     Power PL 1 time window Y value, (1/1024)*(1+(x/4))*(2^y) (0=Def)
-      length       : 0x01
-      value        : 0x0
-  - RaplLim1Pwr  :
-      name         : RAPL PL 1 Power
-      type         : EditNum, HEX, (0x0, 0x3FFF)
-      help         : >
-                     range[0;2^14-1]= [2047.875;0]in W, (224= Def)
-      length       : 0x02
-      value        : 0x0
   - UsbTcPortEnPreMem :
       name         : TCSS USB Port Enable
       type         : EditNum, HEX, (0x0,0x003F)
@@ -741,7 +720,14 @@
                      Total Memory Encryption enabling
       length       : 0x01
       value        : 0x00
+  - ConfigTdpLevel :
+      name         : Configuration for boot TDP selection
+      type         : EditNum, HEX, (0x00, 0xFF)
+      help         : >
+                     Configuration for boot TDP selection; <b>0- TDP Nominal</b>; 1- TDP Down; 2- TDP Up;0xFF - Deactivate
+      length       : 0x01
+      value        : 0x00
   - Dummy        :
-      length       : 0x02
+      length       : 0x01
       value        : 0x0
 

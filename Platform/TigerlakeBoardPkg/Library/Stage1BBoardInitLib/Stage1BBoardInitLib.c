@@ -334,9 +334,6 @@ UpdateFspConfig (
   Fspmcfg->RMC                  = MemCfgData->RMC;
   Fspmcfg->MEMTST               = MemCfgData->MEMTST;
   Fspmcfg->ECT                  = MemCfgData->ECT;
-//    Fspmcfg->RaplLim1WindX        = MemCfgData->RaplLim1WindX;
-//    Fspmcfg->RaplLim1WindY        = MemCfgData->RaplLim1WindY;
-//    Fspmcfg->RaplLim1Pwr          = MemCfgData->RaplLim1Pwr;
 
   CopyMem (Fspmcfg->DmiGen3RootPortPreset, MemCfgData->DmiGen3RootPortPreset, sizeof(MemCfgData->DmiGen3RootPortPreset));
   CopyMem (Fspmcfg->DmiGen3EndPointPreset, MemCfgData->DmiGen3EndPointPreset, sizeof(MemCfgData->DmiGen3EndPointPreset));
@@ -478,6 +475,8 @@ UpdateFspConfig (
   Fspmcfg->PchTraceHubMode      = MemCfgData->PchTraceHubMode;
   Fspmcfg->PlatformDebugConsent = MemCfgData->PlatformDebugConsent;
   Fspmcfg->DciEn                = MemCfgData->DciEn;
+
+  Fspmcfg->ConfigTdpLevel       = MemCfgData->ConfigTdpLevel;
 
   // ES2 A1 silicon need set this to 1
   Fspmcfg->McParity = MemCfgData->McParity;

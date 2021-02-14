@@ -244,14 +244,7 @@
                      Enable/disable Timed GPIO1    0- Disable; 1- Enable.
       length       : 0x01
       value        : 0x0
-  - ConfigTdpLevel :
-      name         : Configuration for boot TDP selection
-      type         : EditNum, HEX, (0x00, 0xFF)
-      help         : >
-                     Configuration for boot TDP selection; <b>0- TDP Nominal</b>; 1- TDP Down; 2- TDP Up;0xFF - Deactivate
-      length       : 0x01
-      value        : 0x02
   - Dummy        :
-      length       : 0x1
+      length       : 0x2
       value        : 0x0
 
