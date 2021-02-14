@@ -796,12 +796,6 @@ DEBUG_CODE_END();
         break;
     }
 
-    //
-    // Set WDT timeout value and start the timer.
-    //
-    IoWrite16 (TCO_BASE_ADDRESS+TCO_TMR_REGISTER,0x258);
-    MicroSecondDelay (0x64);
-    IoAnd16 (TCO_BASE_ADDRESS + TCO1_CNT_REGISTER,(UINT16)~BIT11);
     break;
   case PostMemoryInit:
     //
@@ -823,10 +817,6 @@ DEBUG_CODE_END();
     //
     MmioAnd32 (PmcBase + R_PCH_PMC_GEN_PMCON_A, 0);
 
-    //
-    // Disable WDT
-    //
-    IoAnd16 (TCO_BASE_ADDRESS + TCO1_CNT_REGISTER,BIT11);
     break;
   case PreTempRamExit:
     break;
