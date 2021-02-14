@@ -1572,7 +1572,6 @@ UpdateFspConfig (
   FspsConfig->ITbtPcieRootPortEn[3] = 0x1;
 
   if (SiCfgData != NULL) {
-    FspsConfig->ConfigTdpLevel = SiCfgData->ConfigTdpLevel;
     FspsConfig->EnableTimedGpio0 = SiCfgData->EnableTimedGpio0;
     FspsConfig->EnableTimedGpio1 = SiCfgData->EnableTimedGpio1;
     FspsConfig->XdciEnable       = SiCfgData->XdciEnable;

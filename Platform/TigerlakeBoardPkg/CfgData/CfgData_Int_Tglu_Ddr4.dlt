@@ -10,7 +10,6 @@
 
 PLATFORMID_CFG_DATA.PlatformId           | 0x0001
 PLAT_NAME_CFG_DATA.PlatformName          | 'TGLU_DDR'
-#GEN_CFG_DATA.PayloadId                   | 'UEFI'
 
 MEMORY_CFG_DATA.DqsMapCpu2DramMc0Ch1     | { 0, 1}
 MEMORY_CFG_DATA.DqsMapCpu2DramMc0Ch3     | { 0, 1}
