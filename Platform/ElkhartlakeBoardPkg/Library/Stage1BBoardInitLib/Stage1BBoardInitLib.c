@@ -581,6 +581,10 @@ UpdateFspConfig (
     Fspmcfg->PchHdaIDispLinkTmode       = GfxCfgData->PchHdaIDispLinkTmode;
     Fspmcfg->PchHdaIDispCodecDisconnect = GfxCfgData->PchHdaIDispCodecDisconnect;
 
+    if ((FeaturePcdGet (PcdPreOsCheckerEnabled) && PchIsSciSupported ()) && DebugCodeEnabled()) {
+      Fspmcfg->PchHdaEnable      = 0;
+      Fspmcfg->PchHdaDspEnable   = 0;
+    }
     switch (GfxCfgData->PchHdAudioLinkMode) {
       case HDAUDIO_LINK_MODE_HDA:
         DEBUG ((DEBUG_INFO, "HDA Policy: HD Audio Link Mode\n"));
@@ -596,16 +600,17 @@ UpdateFspConfig (
         for (Index = 0; Index < PCH_MAX_HDA_SSP_LINK_NUM; Index++) {
           Fspmcfg->PchHdaAudioLinkSspEnable[Index]      = 0;
         }
-        if (!FeaturePcdGet (PcdPreOsCheckerEnabled) && !PchIsSciSupported ()) {
+        if (PchIsSciSupported () == FALSE || !DebugCodeEnabled()) {
           Fspmcfg->PchHdaAudioLinkSspEnable[0]          = 1;
         }
         for (Index = 0; Index < PCH_MAX_HDA_DMIC_LINK_NUM; Index++) {
-          if (FeaturePcdGet (PcdPreOsCheckerEnabled) && PchIsSciSupported ()) {
+          if ((FeaturePcdGet (PcdPreOsCheckerEnabled) && PchIsSciSupported ()) && DebugCodeEnabled()) {
             Fspmcfg->PchHdaAudioLinkDmicEnable[Index]   = 0;
           }
         }
         // Override default policy setting (PeiPchPolicyLib) due to conflict between Hda and Ssp0 links
         Fspmcfg->PchHdaAudioLinkHdaEnable               = 0;
+        Fspmcfg->PchHdaAudioLinkSndwEnable[0]           = 0;
         break;
       case HDAUDIO_LINK_MODE_SNDW:
         DEBUG ((DEBUG_INFO, "HDA Policy: SoundWire Link Mode\n"));
@@ -748,26 +753,29 @@ PlatformFeaturesInit (
   LdrGlobal->LdrFeatures |= FeaturePcdGet (PcdMeasuredBootEnabled)?FEATURE_MEASURED_BOOT:0;
 
   // Disable feature by configuration data.
-  FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
-  if (FeaturesCfgData != NULL) {
-    if (FeaturesCfgData->Features.Acpi == 0) {
-      LdrGlobal->LdrFeatures &= ~FEATURE_ACPI;
-    }
 
-    if (FeaturesCfgData->Features.MeasuredBoot == 0) {
-      LdrGlobal->LdrFeatures &= ~FEATURE_MEASURED_BOOT;
-    }
-    // Update platform specific feature from configuration data.
-    PlatformFeatures           = &((PLATFORM_DATA *)GetPlatformDataPtr ())->PlatformFeatures;
-    if (PlatformFeatures != NULL) {
-      if (FeaturePcdGet (PcdPreOsCheckerEnabled) && PchIsSciSupported ()) {
-        PlatformFeatures->DebugConsent = 7;
-      } else {
-        PlatformFeatures->DebugConsent = FeaturesCfgData->Features.DebugConsent;
+  PlatformFeatures = &((PLATFORM_DATA *)GetPlatformDataPtr ())->PlatformFeatures;
+  FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
+
+  if (PlatformFeatures != NULL) {
+    //Default values
+    PlatformFeatures->DebugConsent = 0;
+    PlatformFeatures->TccMode      = 0;
+    PlatformFeatures->TcctBase     = NULL;
+    PlatformFeatures->TcctSize     = 0;
+
+    if (FeaturesCfgData != NULL){
+      if (FeaturesCfgData->Features.Acpi == 0) {
+        LdrGlobal->LdrFeatures &= ~FEATURE_ACPI;
       }
-      PlatformFeatures->TccMode   = FeaturesCfgData->Features.Tcc;
-      PlatformFeatures->TcctBase  = NULL;
-      PlatformFeatures->TcctSize  = 0;
+      if (FeaturesCfgData->Features.MeasuredBoot == 0) {
+        LdrGlobal->LdrFeatures &= ~FEATURE_MEASURED_BOOT;
+      }
+      PlatformFeatures->DebugConsent = FeaturesCfgData->Features.DebugConsent;  //User defined DebugConsent value
+      PlatformFeatures->TccMode      = FeaturesCfgData->Features.Tcc;
+    }
+    if (FeaturePcdGet (PcdPreOsCheckerEnabled) && PchIsSciSupported () && PlatformFeatures->DebugConsent != 0) {
+      PlatformFeatures->DebugConsent = 7;
     }
   }
 

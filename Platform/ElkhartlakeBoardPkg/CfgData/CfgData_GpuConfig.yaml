@@ -97,7 +97,7 @@
       help         : >
                      0- Disable, 1- Enable (Default) Azalia controller
       length       : 0x01
-      value        : 0x00
+      value        : 0x01
   - PchHdaDspEnable :
       name         : Enable HD Audio DSP
       type         : Combo
@@ -105,7 +105,7 @@
       help         : >
                      Enable/disable HD Audio DSP feature.
       length       : 0x01
-      value        : 0x00
+      value        : 0x01
   - PchHdaIDispLinkFrequency :
       name         : iDisp-Link Frequency
       type         : Combo
@@ -165,7 +165,7 @@
       help         : >
                      Enable/disable HD Audio SNDW#N link. Muxed with HDA.
       length       : 0x04
-      value        : {0x01, 0x00, 0x00, 0x00}
+      value        : {0x00, 0x00, 0x00, 0x00}
   - PchHdaAudioLinkSspEnable :
       name         : Enable HD Audio SSP0 Link
       type         : EditNum, HEX, (0x00, 0xFFFFFFFFFFFF)

@@ -210,6 +210,7 @@ class Board(BaseBoard):
         if self.BUILD_CSME_UPDATE_DRIVER:
             common_libs.append ('MeFwUpdateLib|Silicon/$(SILICON_PKG_NAME)/Library/MeFwUpdateLib/MeFwUpdateLib.inf')
         dsc['LibraryClasses.%s' % self.BUILD_ARCH] = common_libs
+
         return dsc
 
 

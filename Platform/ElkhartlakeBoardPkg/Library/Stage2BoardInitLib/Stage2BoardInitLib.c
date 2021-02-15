@@ -1275,8 +1275,8 @@ UpdateFspConfig (
 
     // PCH_PCIE_CONFIG
     Fspscfg->PchLegacyIoLowLatency                                           = SiCfgData->PchLegacyIoLowLatency;
-    Fspscfg->PchPostMasterClockGating                                            = SiCfgData->PchMasterClockGating2;
-    Fspscfg->PchPostMasterPowerGating                                            = SiCfgData->PchMasterPowerGating2;
+    Fspscfg->PchPostMasterClockGating                                        = SiCfgData->PchMasterClockGating2;
+    Fspscfg->PchPostMasterPowerGating                                        = SiCfgData->PchMasterPowerGating2;
     Fspscfg->TestPcieClockGating                                             = SiCfgData->TestPcieClockGating;
 
     MaxPcieRootPorts = GetPchMaxPciePortNum ();
@@ -1579,11 +1579,6 @@ UpdateFspConfig (
   if (FeaturePcdGet (PcdPreOsCheckerEnabled) && PchIsSciSupported ()) {
     Fspscfg->IsFusaSupported = 0x1;
     Fspscfg->IehMode = 0x1;
-    //
-    // PchPse*Enable UPDs should be set to to 0x2 for
-    // host ownership; set to 1 for PSE ownership.
-    //
-    Fspscfg->PchUnlockGpioPads   = 0x1;
   }
 
   // W/A for Yocto boot issue
@@ -1724,6 +1719,12 @@ UpdateFspConfig (
     Fspscfg->GraphicFusaConfigEnable       = 1;            // Fusa Graphics Configuration
     Fspscfg->OpioFusaConfigEnable          = 1;            // Fusa Opio Configuration
     Fspscfg->PsfFusaConfigEnable           = 1;            // Fusa Psf Configuration
+    if (!DebugCodeEnabled()) {
+      Fspscfg->SciPinMuxEnable                                  = 0x0;
+    }
+    else{
+      Fspscfg->SciPinMuxEnable                                  = 0x1;
+    }
 
     for (Index = 0; Index < MaxPcieRootPorts; Index++) {
       Fspscfg->PcieRpAspm[Index]           = 0;
