@@ -137,6 +137,14 @@ CpuInit (
   UINT32                  CpuIdx;
   PLATFORM_CPU_INIT_HOOK  PlatformCpuInitHook;
 
+  if (FeaturePcdGet (PcdCpuX2ApicEnabled)) {
+    // Enable X2APIC if desired
+    SetApicMode (LOCAL_APIC_MODE_X2APIC);
+    if (Index == 0) {
+      DEBUG ((DEBUG_INFO, "APIC Mode: %d\n", GetApicMode ()));
+    }
+  }
+
   ApicId = GetApicId();
   if (Index < PcdGet32 (PcdCpuMaxLogicalProcessorNumber)) {
     mSysCpuInfo.CpuInfo[Index].ApicId = ApicId;
@@ -186,11 +194,6 @@ ApFunc (
 
   // Enable more CPU featurs
   AsmEnableAvx ();
-
-  if (FeaturePcdGet (PcdCpuX2ApicEnabled)) {
-    // Enable X2APIC if desired
-    SetApicMode (LOCAL_APIC_MODE_X2APIC);
-  }
 
   //
   // CPU specific init
@@ -250,11 +253,6 @@ BspInit (
 
   mMpDataStruct.SmmRebaseDoneCounter = 0;
 
-  if (FeaturePcdGet (PcdCpuX2ApicEnabled)) {
-    // Enable X2APIC if desired
-    SetApicMode (LOCAL_APIC_MODE_X2APIC);
-  }
-
   //
   // CPU specific init
   //
@@ -304,12 +302,6 @@ MpInit (
       Status = EFI_UNSUPPORTED;
     } else {
       DEBUG ((DEBUG_INIT, "MP Init%a\n", DebugCodeEnabled() ? " (Wakeup)" : ""));
-
-      if (FeaturePcdGet (PcdCpuX2ApicEnabled)) {
-        // Enable X2APIC if desired
-        SetApicMode (LOCAL_APIC_MODE_X2APIC);
-        DEBUG ((DEBUG_INFO, "APIC Mode: %d\n", GetApicMode ()));
-      }
 
       // Init structure for lock
       mMpDataStruct.SmmRebaseDoneCounter = 0;
