@@ -368,7 +368,7 @@ UpdateMadt (
   //
   if (FeaturePcdGet (PcdCpuX2ApicEnabled)) {
     LocalX2Apic = (EFI_ACPI_5_0_PROCESSOR_LOCAL_X2APIC_STRUCTURE *)Current;
-    Length = sizeof (EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC_STRUCTURE) * SysCpuInfo->CpuCount;
+    Length = sizeof (EFI_ACPI_5_0_PROCESSOR_LOCAL_X2APIC_STRUCTURE) * SysCpuInfo->CpuCount;
     ZeroMem (LocalX2Apic, Length);
     for (Index = 0; Index < SysCpuInfo->CpuCount; Index++) {
       LocalX2Apic[Index].Type             = EFI_ACPI_5_0_PROCESSOR_LOCAL_X2APIC;
@@ -377,7 +377,6 @@ UpdateMadt (
       LocalX2Apic[Index].X2ApicId         = SysCpuInfo->CpuInfo[Index].ApicId;
       LocalX2Apic[Index].Flags            = 1;
     }
-    Length = sizeof (EFI_ACPI_5_0_PROCESSOR_LOCAL_X2APIC_STRUCTURE) * SysCpuInfo->CpuCount;
   } else {
     LocalApic = (EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC_STRUCTURE *)Current;
     Length = sizeof (EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC_STRUCTURE) * SysCpuInfo->CpuCount;
