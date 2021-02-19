@@ -697,6 +697,8 @@ SetFrameBufferWriteCombining (
   UINT32             Data;
   UINT32             GfxPciBase;
   UINT64             Base64;
+  UINT64             Mask64;
+  CPUID_VIR_PHY_ADDRESS_SIZE_EAX  VirPhyAddressSize;
 
   // Skip if GFX device does not exist
   GfxPciBase = PCI_LIB_ADDRESS (0, 2, 0, 0);
@@ -724,7 +726,9 @@ SetFrameBufferWriteCombining (
     // The 1st 256MB from PcdPciResourceMem32Base will be consumed by MEM32 resource.
     // And framebuffer should be allocated to the next 256MB aligned address.
     AsmWriteMsr64 (MsrIdx,     Base64 | CACHE_WRITECOMBINING);
-    AsmWriteMsr64 (MsrIdx + 1, 0xF00000000ULL + B_EFI_MSR_CACHE_MTRR_VALID + (UINT32)(~(SIZE_256MB - 1)));
+    AsmCpuid (CPUID_VIR_PHY_ADDRESS_SIZE, &VirPhyAddressSize.Uint32, NULL, NULL, NULL);
+    Mask64 = (LShiftU64 (1, VirPhyAddressSize.Bits.PhysicalAddressBits) - 1) & 0xFFFFFFFF00000000ULL;
+    AsmWriteMsr64 (MsrIdx + 1, Mask64 + B_EFI_MSR_CACHE_MTRR_VALID + (UINT32)(~(SIZE_256MB - 1)));
   } else {
     DEBUG ((DEBUG_WARN, "Failed to find a free MTRR pair for framebuffer!\n"));
   }
