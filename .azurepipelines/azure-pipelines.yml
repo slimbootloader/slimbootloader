@@ -97,8 +97,9 @@ jobs:
       git config --global user.name  "Your Name"
       sudo apt-get update
       sudo apt-get install -y nasm uuid-dev
-      wget --no-check-certificate http://archive.ubuntu.com/ubuntu/pool/universe/a/acpica-unix/acpica-tools_20200925-1_amd64.deb -P ~/asl/
-      sudo dpkg -i ~/asl/acpica-tools_20200925-1_amd64.deb
+
+      wget --no-check-certificate http://archive.ubuntu.com/ubuntu/pool/universe/a/acpica-unix/acpica-tools_20190509-1_amd64.deb -P ~/asl/
+      sudo dpkg -i ~/asl/acpica-tools_20190509-1_amd64.deb
     displayName: Install required tools
 
   - script: |
@@ -163,6 +164,18 @@ jobs:
 
   - powershell: |
       [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+      add-type @"
+      using System.Net;
+      using System.Security.Cryptography.X509Certificates;
+      public class TrustAllCertsPolicy : ICertificatePolicy {
+          public bool CheckValidationResult(
+              ServicePoint srvPoint, X509Certificate certificate,
+              WebRequest request, int certificateProblem) {
+              return true;
+          }
+      }
+      "@
+      [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
       Invoke-WebRequest -Uri https://www.nasm.us/pub/nasm/releasebuilds/2.14.02/win64/nasm-2.14.02-win64.zip -OutFile nasm.zip
       Expand-Archive .\nasm.zip C:\
       Invoke-WebRequest -Uri https://acpica.org/sites/acpica/files/iasl-win-20160831_0.zip -OutFile iasl.zip
