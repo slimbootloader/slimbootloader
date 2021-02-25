@@ -104,7 +104,7 @@ DisplaySendStatus (
 EFI_STATUS
 EFIAPI
 CsmePciReadBuffer (
-  IN      UINTN     StartAddress,
+  IN      UINT64    StartAddress,
   IN      UINTN     Size,
   OUT     VOID      *Buffer
   )
