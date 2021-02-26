@@ -136,6 +136,8 @@ class Board(BaseBoard):
         self.STAGE1B_LOAD_BASE    = 0xFEF10000
         self.STAGE1B_FD_BASE      = 0xFEF80000
         self.STAGE1B_FD_SIZE      = 0x0006B000
+        if self.ENABLE_SOURCE_DEBUG:
+            self.STAGE1B_FD_SIZE += 0x00001000
         if self.RELEASE_MODE == 0:
             self.STAGE1B_FD_SIZE += 0x00002000
             self.PAYLOAD_SIZE    += 0x00007000
