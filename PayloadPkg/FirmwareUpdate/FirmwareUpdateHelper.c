@@ -301,7 +301,14 @@ UpdateRegionBlock (
   // Read, compare, erase, write, read, compare
   //
   for (Count = 0; Count < Length; Count += BlockLen) {
-    Status = BootMediaRead (Address + Count, BlockLen, ReadBuffer);
+    //
+    // If updating region less than 4K bytes,
+    // adjust the block length to size remaining, i.e less than 4k
+    //
+    if (Count + BlockLen > Length) {
+      BlockLen = Length - Count;
+    }
+    Status = BootMediaRead(Address + Count, BlockLen, ReadBuffer);
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "BootMediaRead.  readaddr: 0x%llx, Status = 0x%x\n", Address + Count, Status));
       goto End;
@@ -314,9 +321,10 @@ UpdateRegionBlock (
 
     //
     // Erase the boot media
+    // Block length for erase is always 4K bytes
     //
     DEBUG ((DEBUG_INIT, "x"));
-    Status = BootMediaErase ((UINT32) (Address + Count),  BlockLen);
+    Status = BootMediaErase ((UINT32) (Address + Count),  SIZE_4KB);
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "ERROR: in BootMediaErase. Status = 0x%x\n", Status));
       goto End;
