@@ -49,6 +49,7 @@
 
 #define PPB_BAR_0                             0
 #define PPB_BAR_1                             1
+#define PPB_MAX_BAR                           2
 
 #define PCI_IO_DEVICE_FROM_LINK(a)       BASE_CR (a, PCI_IO_DEVICE, Link)
 #define PCI_BAR_RESOURCE_FROM_LINK(a)    BASE_CR (a, PCI_BAR_RESOURCE, Link)
@@ -124,6 +125,11 @@ struct _PCI_IO_DEVICE {
   // BAR for this PCI Device
   //
   PCI_BAR                                   PciBar[PCI_MAX_BAR];
+
+  //
+  // PPB Non-Apperture BAR for 0x10/0x14
+  //
+  PCI_BAR                                   PpbBar[PPB_MAX_BAR];
 
   //
   // The resource decode the bridge supports

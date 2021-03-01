@@ -626,6 +626,12 @@ GatherPpbInfo (
     PciParseBar (PciIoDevice, 0x14, PPB_BAR_1);
   }
 
+  //
+  // Copy PciBar to PpbBar to program BAR0/1 for PPBs. PciBar field is used to
+  // scope PPB Apperture resources later.
+  //
+  CopyMem (&(PciIoDevice->PpbBar[0]), &(PciIoDevice->PciBar[0]), sizeof(PCI_BAR) * PPB_MAX_BAR);
+
   return PciIoDevice;
 }
 
@@ -949,6 +955,13 @@ ProgramBar (
     PciBar = PciIoDevice->VfPciBar;
   } else {
     PciBar = PciIoDevice->PciBar;
+    //
+    // If it is a PPB device, ProgramBar() is used to
+    // program BAR0/1 of this PPB device.
+    //
+    if (IS_PCI_BRIDGE(&(PciIoDevice->Pci))) {
+      PciBar = PciIoDevice->PpbBar;
+    }
   }
 
   BarType = PciBar[BarIdx].OrgBarType;
@@ -1060,6 +1073,17 @@ ProgramResource (
   CurrentLink = Parent->ChildList.ForwardLink;
   while (CurrentLink != NULL && CurrentLink != &Parent->ChildList) {
     PciIoDevice = PCI_IO_DEVICE_FROM_LINK (CurrentLink);
+    if (IS_PCI_BRIDGE(&(PciIoDevice->Pci))) {
+      //
+      // Program BAR0/1 for a PPB device
+      //
+      for (Idx = 0; Idx < PPB_MAX_BAR; Idx++) {
+        if ((PciIoDevice->PpbBar[Idx].Length > 0) && (PciIoDevice->PpbBar[Idx].BarType == BarType)) {
+          PciIoDevice->PpbBar[Idx].BaseAddress += PciIoDevice->Parent->PciBar[BarType - 1].BaseAddress;
+          ProgramBar (PciIoDevice, Idx, FALSE);
+        }
+      }
+    }
     for (Idx = 0; Idx < PCI_MAX_BAR; Idx++) {
       if ((PciIoDevice->PciBar[Idx].Length > 0) && (PciIoDevice->PciBar[Idx].BarType == BarType)) {
         PciIoDevice->PciBar[Idx].BaseAddress += PciIoDevice->Parent->PciBar[BarType - 1].BaseAddress;
@@ -1108,9 +1132,9 @@ CalculateResource (
   PCI_IO_DEVICE             *PciIoDevice;
   UINT32                     Idx;
   PCI_BAR_RESOURCE           ParentRes;
-  PCI_BAR_RESOURCE           *PciBarRes;
-  UINT64                      Base;
-  UINT64                      Alignment;
+  PCI_BAR_RESOURCE          *PciBarRes;
+  UINT64                     Base;
+  UINT64                     Alignment;
 
   if ((BarType == PciBarTypeUnknown) || (BarType > PciBarTypePMem64)) {
     return;
@@ -1122,6 +1146,16 @@ CalculateResource (
   while (CurrentLink != NULL && CurrentLink != &Parent->ChildList) {
     PciIoDevice = PCI_IO_DEVICE_FROM_LINK (CurrentLink);
     if (PciIoDevice->ChildList.ForwardLink != &PciIoDevice->ChildList) {
+      //
+      // Scope for the BAR0/1 space for a PPB
+      //
+      for (Idx = 0; Idx < PPB_MAX_BAR; Idx++) {
+        if ((PciIoDevice->PpbBar[Idx].Length > 0) && (PciIoDevice->PpbBar[Idx].BarType == BarType)) {
+          PciBarRes = (PCI_BAR_RESOURCE *)PciAllocatePool (sizeof (PCI_BAR_RESOURCE));
+          PciBarRes->PciBar = &PciIoDevice->PpbBar[Idx];
+          PerformInsertionSortList (&ParentRes.Link, &PciBarRes->Link, ComparePciBarRes);
+        }
+      }
       CalculateResource (PciIoDevice, BarType);
     }
     for (Idx = 0; Idx < PCI_MAX_BAR; Idx++) {
@@ -1298,6 +1332,23 @@ DumpResourceBar (
       DEBUG ((DEBUG_INFO, "%aARI: CapOffset = 0x%X\n",
         Indent, PciIoDevice->AriCapabilityOffset));
     }
+  }
+  if (IS_PCI_BRIDGE(&(PciIoDevice->Pci))) {
+    //
+    // Dump BAR0/1 also for a PPB
+    //
+    DEBUG ((DEBUG_INFO, "%a  PPB BAR0/1\n", Indent));
+    for (Idx = 0; Idx < PPB_MAX_BAR; Idx++) {
+      if (PciIoDevice->PpbBar[Idx].Length == 0) {
+        continue;
+      }
+      DEBUG ((DEBUG_INFO, "%a  BAR[%d].TYP = %d\n", Indent,  Idx, PciIoDevice->PpbBar[Idx].BarType));
+      DEBUG ((DEBUG_INFO, "%a  BAR[%d].OFF = 0x%02X\n", Indent,  Idx, PciIoDevice->PpbBar[Idx].Offset));
+      DEBUG ((DEBUG_INFO, "%a  BAR[%d].BAS = %016lX", Indent,  Idx, PciIoDevice->PpbBar[Idx].BaseAddress));
+      DEBUG ((DEBUG_INFO, "  BAR[%d].LEN = %016lX",   Idx, PciIoDevice->PpbBar[Idx].Length));
+      DEBUG ((DEBUG_INFO, "  BAR[%d].ALN = %016lX\n", Idx, PciIoDevice->PpbBar[Idx].Alignment));
+    }
+    DEBUG ((DEBUG_INFO, "%a  PPB APPERTURE\n", Indent));
   }
   for (Idx = 0; Idx < PCI_MAX_BAR; Idx++) {
     if (PciIoDevice->PciBar[Idx].Length == 0) {
