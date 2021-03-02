@@ -417,4 +417,19 @@ EFI_STATUS
 HeciArbSvnCommitMsg (
   VOID
   );
+
+/**
+  This command is used to indicate to the FW to revoke a OEM key.
+  It should be executed when MBP data indicates that a key is pending for
+  revocation.
+
+  @retval EFI_SUCCESS             Command succeeded
+  @retval EFI_UNSUPPORTED         Current ME mode doesn't support this function
+  @retval EFI_DEVICE_ERROR        HECI Device error, command aborts abnormally
+**/
+EFI_STATUS
+EFIAPI
+HeciRevokeOemKey (
+   VOID
+   );
 #endif

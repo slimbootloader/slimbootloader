@@ -48,6 +48,11 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define FW_UPDATE_COMP_CSME_DRIVER SIGNATURE_32('C', 'S', 'M', 'D')
 #define FW_UPDATE_COMP_CMD_REQUEST SIGNATURE_32('C', 'M', 'D', 'I')
 
+#define FW_UPDATE_COMP_CSME_REGION_ORDER      1
+#define FW_UPDATE_COMP_CSME_DRIVER_ORDER      2
+#define FW_UPDATE_COMP_BIOS_REGION_ORDER      3
+#define FW_UPDATE_COMP_DEFAULT_ORDER          4
+
 
 #define FW_UPDATE_STATUS_SIGNATURE SIGNATURE_32 ('F', 'W', 'U', 'S')
 #define FW_UPDATE_STATUS_VERSION   0x1
@@ -655,4 +660,22 @@ SetArbSvnCommit (
    IN  CHAR8     *CmdDataBuf,
    IN  UINTN     CmdDataSize
    );
+
+/**
+  Oem Key Revocation
+
+  @param[in]  CmdDataBuf    Pointer to command buffer.
+  @param[in]  CmdDataSize   size of command data.
+
+  @retval  EFI_SUCCESS      Oem Key Revocation is successful.
+  @retval  others           Error happened while doing commit.
+
+**/
+EFI_STATUS
+EFIAPI
+SetOemKeyRevocation (
+   IN  CHAR8     *CmdDataBuf,
+   IN  UINTN     CmdDataSize
+   );
+
 #endif

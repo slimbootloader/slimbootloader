@@ -623,6 +623,36 @@ AuthenticateCapsule (
 }
 
 /**
+  Get Firmware update Image loading preference order.
+
+  This function will return image loading order based on hardware instance id.
+
+  @param[in] HardwareInstance    Firmware update component id.
+
+  @retval  ImageOrder        preference order for image loading.
+**/
+UINT32
+GetFwImageOrder (
+  IN  UINT64    HardwareInstance
+  )
+{
+  UINT32 ImageOrder;
+
+  if (HardwareInstance == FW_UPDATE_COMP_CSME_REGION) {
+    ImageOrder = FW_UPDATE_COMP_CSME_REGION_ORDER;
+  } else if (HardwareInstance == FW_UPDATE_COMP_CSME_DRIVER) {
+    ImageOrder = FW_UPDATE_COMP_CSME_DRIVER_ORDER;
+  } else if (HardwareInstance == FW_UPDATE_COMP_BIOS_REGION) {
+    ImageOrder = FW_UPDATE_COMP_BIOS_REGION_ORDER;
+  } else {
+    ImageOrder = FW_UPDATE_COMP_DEFAULT_ORDER;
+  }
+
+  return ImageOrder;
+}
+
+
+/**
   Process capsule image.
 
   This function will abstract firmware images from the capsule image. for each
@@ -645,11 +675,13 @@ ProcessCapsule (
   )
 {
   UINT8                         Count;
+  UINT8                         i;
   UINT8                         TotalPayloadCount;
   EFI_STATUS                    Status;
   UINT32                        FwUpdStatusOffset;
   FW_UPDATE_STATUS              FwUpdStatus;
   FW_UPDATE_COMP_STATUS         FwUpdCompStatus[MAX_FW_COMPONENTS];
+  FW_UPDATE_COMP_STATUS         FwUpdCompStatusTemp;
   FIRMWARE_UPDATE_HEADER        *FwUpdHeader;
   EFI_FW_MGMT_CAP_HEADER        *CapHeader;
   EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImgHeader;
@@ -757,6 +789,20 @@ ProcessCapsule (
     ImgHeader = (EFI_FW_MGMT_CAP_IMAGE_HEADER *)((UINTN)ImgHeader + ImgHeader->UpdateImageSize + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
     if ((UINTN)ImgHeader > ((UINTN)CapHeader + FwUpdHeader->ImageSize)) {
       return EFI_NOT_FOUND;
+    }
+  }
+
+  //
+  // Sort FwUpdCompStatus as per the Firmware update image loading order when multiple updates are in capsule update
+  // CSME - 1, CSMD - 2, BIOS - 3, remaining components as containers would be updated at last.
+  //
+  for (Count = 0; Count < CapHeader->PayloadItemCount; Count++) {
+    for (i = Count+1; i < CapHeader->PayloadItemCount; i++) {
+      if (GetFwImageOrder (FwUpdCompStatus[Count].HardwareInstance) > GetFwImageOrder (FwUpdCompStatus[i].HardwareInstance)) {
+           CopyMem((VOID *)&FwUpdCompStatusTemp, (VOID *)&FwUpdCompStatus[Count], sizeof(FW_UPDATE_COMP_STATUS));
+           CopyMem((VOID *)&FwUpdCompStatus[Count], (VOID *)&FwUpdCompStatus[i], sizeof(FW_UPDATE_COMP_STATUS));
+           CopyMem((VOID *)&FwUpdCompStatus[i], (VOID *)&FwUpdCompStatusTemp, sizeof(FW_UPDATE_COMP_STATUS));
+      }
     }
   }
 
@@ -900,7 +946,7 @@ ApplyFwImage (
       CsmeUpdateInData = InitCsmeUpdInputData();
       if (CsmeUpdateInData != NULL) {
         Status = UpdateCsme(CapImage, CapImageSize, CsmeUpdateInData, ImageHdr);
-        *ResetRequired = TRUE;
+        *ResetRequired = FALSE;
       }
     }
     break;
@@ -987,6 +1033,7 @@ InitFirmwareUpdate (
     //
     // If the component has pending or processing state
     //
+
     if (FwUpdCompStatus[Count].UpdatePending & (BIT0 | BIT1 | BIT2)) {
       if (FwUpdCompStatus[Count].UpdatePending == FW_UPDATE_IMAGE_UPDATE_PENDING) {
         //
