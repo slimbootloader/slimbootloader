@@ -220,9 +220,9 @@ External(WWAN_PCIE_ROOT_PORT.LASX)
       Name(SCLK, 0)
       Store(PS1C, SCLK)
       Include("Rtd3Pcie.asl")
-      Scope(\_SB.PC00.RP01.PXSX) {
-        Include("Rtd3PcieSsdStorage.asl")
-      }
+      //Scope(\_SB.PC00.RP01.PXSX) {
+        //Include("Rtd3PcieSsdStorage.asl")
+     //}
     }
 
   ///
