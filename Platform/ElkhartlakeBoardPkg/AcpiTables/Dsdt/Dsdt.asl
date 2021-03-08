@@ -192,7 +192,7 @@ DefinitionBlock (
   //Include ("PcieDock.asl")
   Include ("PchRpPxsxWrapper.asl")
   Include ("WifiDynamicSar.asl")
-  Include ("Pep.asl")
+  //Include ("Pep.asl")
   Include ("Psm.asl")
   Include ("Connectivity.asl")
   Include ("MipiCamSensors.asl")
