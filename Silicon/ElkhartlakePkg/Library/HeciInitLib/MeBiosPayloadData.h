@@ -50,7 +50,7 @@ typedef union {
 #define MBP_ITEM_ID(ApplicationId, ItemId) ((ApplicationId << 4) | ItemId)
 
 #define MBP_ITEM_ID_MEASURED_BOOT     MBP_ITEM_ID(MbpAppIdKernel, MbpItemIdMeasuredBoot)
-
+#define MBP_ITEM_ID_OEM_KEY_REVOKE    MBP_ITEM_ID(MbpAppIdKernel, MbpItemIdOemKeyRevoke)
 
 //
 // Enum for AppId
@@ -72,11 +72,14 @@ typedef enum {
   MbpItemIdUnconfigOnRtc              = 8,
   MbpItemIdShipState                  = 9,
   MbpItemIdFwArbSvn                   = 14,
-  MbpItemIdMeasuredBoot               = 15
+  MbpItemIdMeasuredBoot               = 15,
+  MbpItemIdOemKeyRevoke               = 16
 } MBP_KERNEL_ITEM_ID;
+
 typedef enum {
   MbpItemIdHwaMtu = 1
 } MBP_HWA_ITEM_ID;
+
 typedef enum {
   MbpItemIdMphyMbpData = 3
 } MBP_ICC_ITEM_ID;
@@ -143,18 +146,6 @@ typedef union {
 } HWA_DATA;
 
 typedef struct {
-  UINT32  PwrbtnMrst;
-  UINT32  MrstPltrst;
-  UINT32  PltrstCpurst;
-} MBP_PERF_DATA;
-
-typedef struct {
-  MBP_PERF_DATA MbpPerfData;
-  BOOLEAN       Available;
-  UINT8         Reserved[3];
-} PLAT_BOOT_PERF_DATA;
-
-typedef struct {
   HWA_DATA Data;
   BOOLEAN  Available;
   UINT8    Reserved[3];
@@ -170,6 +161,21 @@ typedef struct {
   BOOLEAN                     Available;
   UINT8                       Reserved[3];
 } MBP_ME_UNCONF_ON_RTC_STATE;
+typedef struct {
+  UINT32                      TimeStamp0;
+  UINT16                      TimeStamp1;
+  UINT16                      TimeStamp2;
+  UINT16                      TimeStamp3;
+  UINT16                      TimeStamp4;
+  UINT16                      TimeStamp5;
+  UINT16                      TimeStamp6;
+} MBP_PERF_DATA;
+
+typedef struct {
+  MBP_PERF_DATA               Data;
+  BOOLEAN                     Available;
+  UINT8                       Reserved[3];
+} MBP_PERF_DATA_EX;
 
 typedef struct {
   /*
@@ -191,8 +197,17 @@ typedef struct {
 } MBP_ARB_SVN_STATE;
 
 typedef struct {
-  UINT32 ChipsetInitVer[3];
+  UINT32  ChipsetInitVer[3];
+  BOOLEAN Available;
+  UINT8   Reserved[3];
 } MBP_MPHY_DATA;
+
+
+
+typedef struct {
+  UINT32  IsiCfgIdentifier;
+  BOOLEAN Available;
+} MBP_ISI_CONFIG_DATA;
 
 ///
 /// MBP IFWI DNX request structure containing IFWI Dnx request
@@ -215,6 +230,12 @@ typedef struct {
   UINT8                       Reserved[3];
 } MBP_MEASURED_BOOT_SUPPORT;
 
+typedef struct {
+  UINT32                      OemKeyDataRsrvd;
+  BOOLEAN                     Available;
+  UINT8                       Reserved[3];
+} MBP_OEM_KEY_REVOKE;
+
 ///
 /// ME BIOS Payload structure containing insensitive data only
 ///
@@ -224,13 +245,15 @@ typedef struct {
   MBP_FW_FEATURES_STATE      FwFeaturesState;
   MBP_PLAT_TYPE              FwPlatType;
   MBP_HWA_REQ                HwaRequest;
-  PLAT_BOOT_PERF_DATA        PlatBootPerfData;
   MBP_ME_UNCONF_ON_RTC_STATE UnconfigOnRtcClearState;
+  MBP_PERF_DATA_EX           PerfDataEx;
   MBP_ARB_SVN_STATE          ArbSvnState;
   MBP_MPHY_DATA              MphyData;
   MBP_IFWI_DNX_REQUEST       IfwiDnxRequest;
   MBP_ICC_PROFILE            IccProfile;
   MBP_MEASURED_BOOT_SUPPORT  MeasuredBootSupport;
+  MBP_ISI_CONFIG_DATA        IsiConfigData;
+  MBP_OEM_KEY_REVOKE         OemKeyRevoke;
 } ME_BIOS_PAYLOAD;
 
 

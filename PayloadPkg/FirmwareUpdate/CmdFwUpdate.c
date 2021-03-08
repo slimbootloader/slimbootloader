@@ -19,10 +19,14 @@
 
 #define FLASH_DESCRIPTOR_LOCK_STR     "FLASHDESCLOCK"
 #define ARB_SVN_COMMIT_STR            "ARBSVNCOMMIT"
+#define OEM_KEY_REVOCATION_STR        "OEMKEYREVOCATION"
+
 
 typedef UINT32 CMDI_TYPE;
 #define CMDI_TYPE_SPI_DESCRIPTOR_LOCK       BIT0
 #define CMDI_TYPE_ARB_SVN_COMMIT            BIT1
+#define CMDI_TYPE_OEM_KEY_REVOCATIION       BIT2
+
 
 /*
   Firmware update command handler
@@ -55,6 +59,9 @@ FwUpdateCmdHandler (
   } else if (AsciiStrnCmp (CmdBuf, ARB_SVN_COMMIT_STR, AsciiStrLen(ARB_SVN_COMMIT_STR)) == 0) {
       *CmdProcessed  =  CMDI_TYPE_ARB_SVN_COMMIT;
       Status = SetArbSvnCommit (CmdBuf, BufLen);
+  } else if (AsciiStrnCmp (CmdBuf, OEM_KEY_REVOCATION_STR, AsciiStrLen(OEM_KEY_REVOCATION_STR)) == 0) {
+      *CmdProcessed  =  CMDI_TYPE_OEM_KEY_REVOCATIION;
+      Status = SetOemKeyRevocation (CmdBuf, BufLen);
   }
 
   return Status;

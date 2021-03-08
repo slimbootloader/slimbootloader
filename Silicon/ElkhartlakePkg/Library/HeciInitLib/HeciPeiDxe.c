@@ -12,6 +12,7 @@
 #include <Library/HeciInitLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/BootloaderCoreLib.h>
 #include <PcieRegs.h>
 
 #include <Register/HeciRegs.h>
@@ -492,5 +493,114 @@ HeciArbSvnGetInfoMsg (
   }
 
   FreePool (ArbSvnGetInfo);
+  return Status;
+}
+
+/**
+  The command is used to get the information about OEM keys, such as
+  key hash, revocation status, validity.
+
+  @param[in, out] OemKeyStatus    Status of OEM keys
+
+  @retval EFI_SUCCESS             Command succeeded
+  @retval EFI_UNSUPPORTED         Current ME mode doesn't support this function
+  @retval EFI_DEVICE_ERROR        HECI Device error, command aborts abnormally
+**/
+EFI_STATUS
+HeciGetOemKeyStatus(
+  IN OUT  OEM_KEY_STATUS *OemKeyStatus
+  )
+{
+  EFI_STATUS               Status;
+  UINT32                   Length;
+  UINT32                   RecvLength;
+  OEM_KEY_STATUS_BUFFER    OemKeyStatusBuff;
+  UINT32                   MeMode;
+
+  Status = HeciGetMeMode (&MeMode);
+  if (EFI_ERROR (Status) || (MeMode != ME_MODE_NORMAL)) {
+    return EFI_UNSUPPORTED;
+  }
+
+  ZeroMem (&OemKeyStatusBuff, sizeof (OemKeyStatusBuff));
+  OemKeyStatusBuff.Request.MkhiHeader.Data           = 0;
+  OemKeyStatusBuff.Request.MkhiHeader.Fields.GroupId = MKHI_MCA_GROUP_ID;
+  OemKeyStatusBuff.Request.MkhiHeader.Fields.Command = MCA_GET_OEM_KEY_STATUS_CMD;
+  Length                                         = sizeof (OEM_KEY_STATUS_REQ);
+  RecvLength                                     = sizeof (OEM_KEY_STATUS_ACK);
+
+  Status = HeciSendwAck (
+                   HECI1_DEVICE,
+                   (UINT32 *) &OemKeyStatusBuff,
+                   Length,
+                   &RecvLength,
+                   BIOS_FIXED_HOST_ADDR,
+                   HECI_MCHI_MESSAGE_ADDR
+                   );
+
+  if (!EFI_ERROR (Status) &&
+      (OemKeyStatusBuff.Response.MkhiHeader.Fields.Command == MCA_GET_OEM_KEY_STATUS_CMD) &&
+      (OemKeyStatusBuff.Response.MkhiHeader.Fields.IsResponse == 1) &&
+      (OemKeyStatusBuff.Response.MkhiHeader.Fields.Result == 0)) {
+    CopyMem (OemKeyStatus, &OemKeyStatusBuff.Response.OemKeyStatus, sizeof(OEM_KEY_STATUS));
+  } else {
+    DEBUG ((DEBUG_ERROR, "HeciGetOemKeyStatus Result: %08x \n", OemKeyStatusBuff.Response.MkhiHeader.Fields.Result));
+    if (!EFI_ERROR (Status)) {
+      Status = EFI_DEVICE_ERROR;
+    }
+  }
+
+  return Status;
+}
+
+
+/**
+  This command is used to indicate to the FW to revoke a OEM key.
+  It should be executed when MBP data indicates that a key is pending for
+  revocation.
+
+  @retval EFI_SUCCESS             Command succeeded
+  @retval EFI_UNSUPPORTED         Current ME mode doesn't support this function
+  @retval EFI_DEVICE_ERROR        HECI Device error, command aborts abnormally
+**/
+EFI_STATUS
+HeciRevokeOemKey (
+  VOID
+  )
+{
+  EFI_STATUS               Status;
+  UINT32                   Length;
+  UINT32                   RecvLength;
+  OEM_KEY_REVOKE_BUFFER    OemKeyRevoke;
+  UINT32                   MeMode;
+
+  Status = HeciGetMeMode (&MeMode);
+  if (EFI_ERROR (Status) || (MeMode != ME_MODE_NORMAL)) {
+    return EFI_UNSUPPORTED;
+  }
+
+  ZeroMem (&OemKeyRevoke, sizeof (OEM_KEY_REVOKE_BUFFER));
+  OemKeyRevoke.Request.MkhiHeader.Data           = 0;
+  OemKeyRevoke.Request.MkhiHeader.Fields.GroupId = MKHI_MCA_GROUP_ID;
+  OemKeyRevoke.Request.MkhiHeader.Fields.Command = MCA_REVOKE_OEM_KEY_HASH_CMD;
+  Length                                         = sizeof (OEM_KEY_REVOKE);
+  RecvLength                                     = sizeof (OEM_KEY_REVOKE_ACK);
+
+  Status = HeciSendwAck (
+                   HECI1_DEVICE,
+                   (UINT32 *) &OemKeyRevoke,
+                   Length,
+                   &RecvLength,
+                   BIOS_FIXED_HOST_ADDR,
+                   HECI_MCHI_MESSAGE_ADDR
+                   );
+
+  if (OemKeyRevoke.Response.MkhiHeader.Fields.Result != MkhiStatusSuccess) {
+    DEBUG ((DEBUG_ERROR, "HeciRevokeOemKey Result: %08x \n", OemKeyRevoke.Response.MkhiHeader.Fields.Result));
+    if (!EFI_ERROR (Status)) {
+      Status = EFI_DEVICE_ERROR;
+    }
+  }
+
   return Status;
 }

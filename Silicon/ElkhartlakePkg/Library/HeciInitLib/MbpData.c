@@ -105,6 +105,10 @@ MbpDebugPrint (
     DEBUG ((DEBUG_INFO, " CurrCseArbSvn : 0x%x\n", MbpPtr->ArbSvnState.ArbSvnData.CurrCseArbSvn));
   }
 
+  if (MbpPtr->OemKeyRevoke.Available == TRUE) {
+    DEBUG ((DEBUG_INFO, "OemKeyRevocation Extension Available !! \n"));
+  }
+
   DEBUG ((DEBUG_INFO, "\n------------------------ MeBiosPayload Data End--------------\n"));
 }
 

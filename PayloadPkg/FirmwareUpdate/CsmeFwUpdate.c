@@ -281,7 +281,7 @@ StartCsmeUpdate (
   UINT32            Timer;
   UINT32            PreviousPercent;
 
-  AllowSameVersion  = FALSE;
+  AllowSameVersion  = TRUE;
   EnabledState      = FALSE;
   IsSameVersion     = FALSE;
   InProgress        = FALSE;

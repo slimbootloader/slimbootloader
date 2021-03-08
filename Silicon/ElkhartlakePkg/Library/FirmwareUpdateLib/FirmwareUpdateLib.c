@@ -20,6 +20,7 @@
 #include <Library/PchSbiAccessLib.h>
 #include <Library/PchPcrLib.h>
 #include <Library/HeciInitLib.h>
+#include <Library/PciLib.h>
 #include <CsmeUpdateDriver.h>
 #include "SpiRegionAccess.h"
 
@@ -485,6 +486,35 @@ SetArbSvnCommit (
     DEBUG((DEBUG_INFO, "ARB SVN commit failed -  0x%x\n", Status));
   } else {
     DEBUG((DEBUG_INFO, "ARB SVN commit SUCCESS \n"));
+  }
+
+  return Status;
+}
+
+/**
+  Oem Key Revocation
+
+  @param[in]  CmdDataBuf    Pointer to command buffer.
+  @param[in]  CmdDataSize   size of command data.
+
+  @retval  EFI_SUCCESS      Oem Key Revocation is successful.
+  @retval  others           Error happening when updating.
+
+**/
+EFI_STATUS
+EFIAPI
+SetOemKeyRevocation (
+   IN  CHAR8     *CmdDataBuf,
+   IN  UINTN     CmdDataSize
+   )
+{
+  EFI_STATUS Status;
+
+  Status = HeciRevokeOemKey ();
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "Oem Revoke Key failed -  0x%x\n", Status));
+  } else {
+    DEBUG((DEBUG_INFO, "Oem Revoke Key SUCCESS \n"));
   }
 
   return Status;
