@@ -808,7 +808,11 @@ TglULpDdr4GopVbtSpecificUpdate(
   ChildStructPtr[1]->DeviceClass = eDP_ONLY;
   ChildStructPtr[1]->DVOPort = DISPLAY_PORT_B;
   ChildStructPtr[1]->AUX_Channel = AUX_CHANNEL_B;
-  ChildStructPtr[2]->DeviceClass = NO_DEVICE;
+
+  ChildStructPtr[2]->DeviceClass = HDMI_DVI;
+  ChildStructPtr[2]->DVOPort = HDMI_B;
+  ChildStructPtr[2]->AUX_Channel = 0;
+  ChildStructPtr[2]->HdmiLevelShifterConfig.Bits.HdmiMaxDataRateBits = 1;
 }
 
 //Initialize Platform Igd OpRegion
