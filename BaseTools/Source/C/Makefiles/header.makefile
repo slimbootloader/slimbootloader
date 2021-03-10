@@ -38,12 +38,19 @@ endif
 CYGWIN:=$(findstring CYGWIN, $(shell uname -s))
 LINUX:=$(findstring Linux, $(shell uname -s))
 DARWIN:=$(findstring Darwin, $(shell uname -s))
-
+ifeq ($(CXX), llvm)
+BUILD_CC ?= $(CLANG_BIN)clang
+BUILD_CXX ?= $(CLANG_BIN)clang++
+BUILD_AS ?= $(CLANG_BIN)clang
+BUILD_AR ?= $(CLANG_BIN)llvm-ar
+BUILD_LD ?= $(CLANG_BIN)llvm-ld
+else
 BUILD_CC ?= gcc
 BUILD_CXX ?= g++
 BUILD_AS ?= gcc
 BUILD_AR ?= ar
 BUILD_LD ?= ld
+endif
 LINKER ?= $(BUILD_CC)
 ifeq ($(HOST_ARCH), IA32)
 ARCH_INCLUDE = -I $(MAKEROOT)/Include/Ia32/
@@ -61,7 +68,7 @@ else
 $(error Bad HOST_ARCH)
 endif
 
-INCLUDE = $(TOOL_INCLUDE) -I $(MAKEROOT) -I $(MAKEROOT)/Include/Common -I $(MAKEROOT)/Include/ -I $(MAKEROOT)/Include/IndustryStandard -I $(MAKEROOT)/Common/ -I .. -I . $(ARCH_INCLUDE) 
+INCLUDE = $(TOOL_INCLUDE) -I $(MAKEROOT) -I $(MAKEROOT)/Include/Common -I $(MAKEROOT)/Include/ -I $(MAKEROOT)/Include/IndustryStandard -I $(MAKEROOT)/Common/ -I .. -I . $(ARCH_INCLUDE)
 BUILD_CPPFLAGS = $(INCLUDE)
 
 # keep EXTRA_OPTFLAGS last
@@ -72,17 +79,28 @@ ifeq ($(DARWIN),Darwin)
 BUILD_CFLAGS = -MD -fshort-wchar -fno-strict-aliasing -Wall -Werror \
 -Wno-deprecated-declarations -Wno-self-assign -Wno-unused-result -nostdlib -g
 else
+ifeq ($(CXX), llvm)
+BUILD_CFLAGS = -MD -fshort-wchar -fno-strict-aliasing -fwrapv \
+-fno-delete-null-pointer-checks -Wall -Werror \
+-Wno-deprecated-declarations -Wno-self-assign \
+-Wno-unused-result -nostdlib -g
+else
 BUILD_CFLAGS = -MD -fshort-wchar -fno-strict-aliasing -fwrapv \
 -fno-delete-null-pointer-checks -Wall -Werror \
 -Wno-deprecated-declarations -Wno-stringop-truncation -Wno-restrict \
 -Wno-unused-result -nostdlib -g
 endif
+endif
+ifeq ($(CXX), llvm)
+BUILD_LFLAGS =
+BUILD_CXXFLAGS = -Wno-deprecated-register -Wno-unused-result
+else
 BUILD_LFLAGS =
 BUILD_CXXFLAGS = -Wno-unused-result
-
+endif
 ifeq ($(HOST_ARCH), IA32)
 #
-# Snow Leopard  is a 32-bit and 64-bit environment. uname -m returns i386, but gcc defaults 
+# Snow Leopard  is a 32-bit and 64-bit environment. uname -m returns i386, but gcc defaults
 #  to x86_64. So make sure tools match uname -m. You can manual have a 64-bit kernal on Snow Leopard
 #  so only do this is uname -m returns i386.
 #
@@ -96,7 +114,7 @@ endif
 # keep BUILD_OPTFLAGS last
 BUILD_CFLAGS   += $(BUILD_OPTFLAGS)
 BUILD_CXXFLAGS += $(BUILD_OPTFLAGS)
-  
+
 # keep EXTRA_LDFLAGS last
 BUILD_LFLAGS += $(EXTRA_LDFLAGS)
 
@@ -107,7 +125,7 @@ BUILD_LFLAGS += $(EXTRA_LDFLAGS)
 all:
 
 $(MAKEROOT)/libs:
-	mkdir $(MAKEROOT)/libs 
+	mkdir $(MAKEROOT)/libs
 
 $(MAKEROOT)/bin:
 	mkdir $(MAKEROOT)/bin

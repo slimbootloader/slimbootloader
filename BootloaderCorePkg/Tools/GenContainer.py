@@ -8,7 +8,7 @@
 ##
 import sys
 import argparse
-
+import re
 sys.dont_write_bytecode = True
 from   ctypes import *
 from   CommonUtility import *
@@ -475,7 +475,7 @@ class CONTAINER ():
                     raise Exception ("Component file path '%s' is invalid !" % file)
             else:
                 in_file = os.path.join(self.out_dir, component.name.decode() + '.bin')
-                gen_file_with_size (in_file, 0x10)
+                gen_file_with_size (in_file, 0)
                 if component.name == mono_sig.encode():
                     component.attribute = COMPONENT_ENTRY._attr['RESERVED']
                     compress_alg        = 'Dummy'
@@ -586,16 +586,24 @@ class CONTAINER ():
 
             # create header entry
             auth_type_str = self.get_auth_type_str (self.header.auth_type)
-            key_file = 'KEY_ID_CONTAINER_RSA2048' if auth_type_str.startswith('RSA') else ''
+            match = re.match('RSA(\d+)_', auth_type_str)
+            if match:
+                key_file = 'KEY_ID_CONTAINER_RSA%s' % match.group(1)
+            else:
+                key_file = ''
             alignment = self.header.alignment
             image_type_str = CONTAINER.get_image_type_str(self.header.image_type)
             header = ['%s' % self.header.signature.decode(), file_name, image_type_str,  auth_type_str,  key_file]
-            layout = [(' Name', ' ImageFile', ' CompAlg', ' AuthType',  ' KeyFile', ' Alignment', ' Size', 'svn')]
+            layout = [(' Name', ' ImageFile', ' CompAlg', ' AuthType',  ' KeyFile', ' Alignment', ' Size', 'Svn')]
             layout.append(tuple(["'%s'" % x for x in header] + ['0x%x' % alignment, '0', '0x%x' % self.header.svn]))
             # create component entry
             for component in self.header.comp_entry:
                 auth_type_str = self.get_auth_type_str (component.auth_type)
-                key_file      = 'KEY_ID_CONTAINER_COMP_RSA2048' if auth_type_str.startswith('RSA') else ''
+                match = re.match('RSA(\d+)_', auth_type_str)
+                if match:
+                    key_file = 'KEY_ID_CONTAINER_COMP_RSA%s' % match.group(1)
+                else:
+                    key_file = ''
                 lz_header = LZ_HEADER.from_buffer(component.data)
                 alg = LZ_HEADER._compress_alg[lz_header.signature]
                 svn = lz_header.svn
@@ -611,14 +619,14 @@ class CONTAINER ():
             fo = open (layout_file, 'w')
             fo.write ('# Container Layout File\n#\n')
             for idx, each in enumerate(layout):
-                line = ' %-6s, %-16s, %-10s, %-18s, %-30s, %-10s, %-10s, %-10s' % each
+                line = ' %-6s, %-16s, %-10s, %-24s, %-32s, %-10s, %-10s, %-10s' % each
                 if idx == 0:
                     line = '#  %s\n' % line
                 else:
                     line = '  (%s),\n' % line
                 fo.write (line)
                 if idx == 0:
-                    line = '# %s\n' % ('=' * 120)
+                    line = '# %s\n' % ('=' * 136)
                     fo.write (line)
             fo.close()
 
@@ -781,7 +789,7 @@ def sign_component (args):
     sign_file = os.path.abspath(args.out_file)
     out_dir   = os.path.dirname(sign_file)
 
-    lz_file = compress (args.comp_file, compress_alg, 0, out_dir, args.tool_dir)
+    lz_file = compress (args.comp_file, compress_alg, args.svn, out_dir, args.tool_dir)
     data = bytearray(get_file_data (lz_file))
     hash_data, auth_data = CONTAINER.calculate_auth_data (lz_file, args.auth, args.key_file, out_dir)
 
@@ -850,6 +858,7 @@ def main():
                 'RSA3072_PKCS1_SHA2_384', 'RSA2048_PSS_SHA2_256', 'RSA3072_PSS_SHA2_384', 'NONE'], default='NONE',  help='authentication algorithm')
     cmd_display.add_argument('-k',  dest='key_file',  type=str, default='', help='Key Id or Private key file path to sign component')
     cmd_display.add_argument('-td', dest='tool_dir', type=str, default='',  help='Compression tool directory')
+    cmd_display.add_argument('-s', dest='svn', type=int,  default=0, help='Security version number for Component')
     cmd_display.set_defaults(func=sign_component)
 
     # Parse arguments and run sub-command

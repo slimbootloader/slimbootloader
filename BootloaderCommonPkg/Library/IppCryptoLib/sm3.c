@@ -27,7 +27,9 @@
 
   @retval                  A pointer to SM3 digest value
 **/
-Ipp8u* Sm3 (const Ipp8u* pMsg, Ipp32u msgLen, Ipp8u* pMD)
+Ipp8u*
+EFIAPI
+Sm3 (const Ipp8u* pMsg, Ipp32u msgLen, Ipp8u* pMD)
 {
   if (FixedPcdGet8(PcdIppHashLibSupportedMask) & IPP_HASHLIB_SM3_256) {
     ippsHashMessage_rmf(pMsg, msgLen, pMD, ippsHashMethod_SM3 ());
@@ -51,6 +53,7 @@ Ipp8u* Sm3 (const Ipp8u* pMsg, Ipp32u msgLen, Ipp8u* pMD)
   @retval  RETURN_SECURITY_VIOLATION  All other errors.
 **/
 RETURN_STATUS
+EFIAPI
 Sm3Init (
   IN      HASH_CTX   *HashCtx,
   IN      Ipp32u      HashCtxSize
@@ -84,6 +87,7 @@ Sm3Init (
   @retval  RETURN_SECURITY_VIOLATION  All other errors.
 **/
 RETURN_STATUS
+EFIAPI
 Sm3Update (
   IN        HASH_CTX   *HashCtx,
   IN CONST  Ipp8u      *Msg,
@@ -113,6 +117,7 @@ Sm3Update (
   @retval  RETURN_SECURITY_VIOLATION  All other errors.
 **/
 RETURN_STATUS
+EFIAPI
 Sm3Final (
   IN       HASH_CTX   *HashCtx,
   OUT      Ipp8u      *Hash

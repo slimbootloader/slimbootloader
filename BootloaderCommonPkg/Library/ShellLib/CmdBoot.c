@@ -1,7 +1,7 @@
 /** @file
   Shell command `boot` to print or modify the OS boot option list.
 
-  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -169,6 +169,24 @@ GetBootDeviceInfo (
     BootOption->DevInstance = (UINT8)((IsHex) ? StrHexToUintn (Buffer) : StrDecimalToUintn (Buffer));
   }
 
+  do {
+    ShellPrint (L"Enter BootFlags (MISC 0x1, CRASH_OS 0x2, PREOS 0x4, EXTRA 0x8, MENDER 0x10)\n");
+    ShellPrint (L"(default 0x%X) ", CurrOption->BootFlags);
+    Status = ShellReadUintn (Shell, Buffer, BufferSize, &IsHex);
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
+    if (StrLen (Buffer) == 0) {
+      BootOption->BootFlags = CurrOption->BootFlags;
+      break;
+    }
+    BootOption->BootFlags = (OS_FILE_SYSTEM_TYPE) ((IsHex) ? StrHexToUintn (Buffer) : StrDecimalToUintn (Buffer));
+    if (((UINT8)BootOption->BootFlags) <= ((UINT8)BOOT_FLAGS_MISC | BOOT_FLAGS_CRASH_OS | BOOT_FLAGS_PREOS | BOOT_FLAGS_EXTRA | BOOT_FLAGS_MENDER)) {
+      break;
+    }
+    ShellPrint (L"Invalid value '%s', please re-enter\n", Buffer);
+  } while (1);
+
   ShellPrint (L"Enter HwPart (uint)\n");
   ShellPrint (L"(default 0x%X) ", CurrOption->HwPart);
   Status = ShellReadUintn (Shell, Buffer, BufferSize, &IsHex);
@@ -182,7 +200,7 @@ GetBootDeviceInfo (
   }
 
   do {
-    ShellPrint (L"Enter FsType (FAT (0x%X), EXT2/3 (0x%X), Auto (0x%X), RAW (0x%X)\n",
+    ShellPrint (L"Enter FsType (FAT (0x%X), EXT2/3/4 (0x%X), Auto (0x%X), RAW (0x%X))\n",
                 EnumFileSystemTypeFat, EnumFileSystemTypeExt2, EnumFileSystemTypeAuto,
                 EnumFileSystemMax);
     ShellPrint (L"(default 0x%X) ", CurrOption->FsType);
@@ -193,8 +211,9 @@ GetBootDeviceInfo (
     if (StrLen (Buffer) == 0) {
       BootOption->FsType = CurrOption->FsType;
       break;
-    } else if (((UINT8)BootOption->FsType) <= ((UINT8)EnumFileSystemMax)) {
-      BootOption->FsType = (OS_FILE_SYSTEM_TYPE) ((IsHex) ? StrHexToUintn (Buffer) : StrDecimalToUintn (Buffer));
+    }
+    BootOption->FsType = (OS_FILE_SYSTEM_TYPE) ((IsHex) ? StrHexToUintn (Buffer) : StrDecimalToUintn (Buffer));
+    if (((UINT8)BootOption->FsType) <= ((UINT8)EnumFileSystemMax)) {
       break;
     }
     ShellPrint (L"Invalid value '%s', please re-enter\n", Buffer);

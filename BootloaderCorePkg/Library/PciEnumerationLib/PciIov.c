@@ -206,6 +206,8 @@ PciIovParseVfBar (
     PciIoDevice->VfPciBar[BarIndex].BarType     = PciBarTypeUnknown;
     PciIoDevice->VfPciBar[BarIndex].BaseAddress = 0;
     PciIoDevice->VfPciBar[BarIndex].Alignment   = 0;
+  } else {
+    PciIoDevice->VfPciBar[BarIndex].OrgBarType = PciIoDevice->VfPciBar[BarIndex].BarType;
   }
 
   //

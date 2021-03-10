@@ -46,7 +46,7 @@
       value        : 0
   - SwPart       :
       name         : Software Partition
-      type         : EditNum, INT, (0,127)
+      type         : EditNum, DEC, (0,127)
       help         : >
                      Specify software partition number
       length       : 0x01

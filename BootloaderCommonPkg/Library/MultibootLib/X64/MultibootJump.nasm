@@ -12,18 +12,24 @@
 ;  This is the code that goes from payload to a Multiboot enabled OS.
 ;
 ;------------------------------------------------------------------------------
-
+DEFAULT  REL
 SECTION .text
 
 ;------------------------------------------------------------------------------
 ; VOID
 ; EFIAPI
-; JumpToMultibootOs (
-;   IA32_BOOT_STATE state
+; AsmJumpToMultibootOs (
+;   IA32_BOOT_STATE  *State
 ;   );
 ;------------------------------------------------------------------------------
-global ASM_PFX(JumpToMultibootOs)
-ASM_PFX(JumpToMultibootOs):
-    ; TBD: Need porting
-    jmp    $
+global ASM_PFX(AsmJumpToMultibootOs)
+ASM_PFX(AsmJumpToMultibootOs):
+BITS 32
+    mov    ecx, DWORD [esp + 4]
+    mov    eax, DWORD [ecx + 4]
+    mov    ebx, DWORD [ecx + 8]
+    mov    esi, DWORD [ecx + 12]
+    mov    edi, DWORD [ecx + 16]
+    cli
+    jmp    DWORD [ecx]
     ret

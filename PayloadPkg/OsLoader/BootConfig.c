@@ -29,14 +29,19 @@ ParseLinuxBootConfig (
   UINT32      Idx;
   UINT32      LineLen;
   UINT32      EntryNum;
-  BOOLEAN     FirstEntry;
+  BOOLEAN     FoundEntry;
+  BOOLEAN     IsKernel;
+  BOOLEAN     IsInitRd;
 
   MenuEntry = LinuxBootCfg->MenuEntry;
 
-  FirstEntry = TRUE;
+  FoundEntry = FALSE;
   EntryNum = 0;
   CurrLine = CfgBuffer;
+
   while ((CurrLine != NULL) && (EntryNum < MAX_BOOT_MENU_ENTRY)) {
+    IsKernel = FALSE;
+    IsInitRd = FALSE;
     NextLine = GetNextLine (CurrLine, &LineLen);
     EndLine  = CurrLine + LineLen;
     CurrLine = TrimLeft (CurrLine);
@@ -64,8 +69,8 @@ ParseLinuxBootConfig (
       }
     } else if (MatchKeyWord (CurrLine, "menuentry") > 0) {
       // Mark boot option name
-      if (FirstEntry) {
-        FirstEntry = FALSE;
+      if (!FoundEntry) {
+        FoundEntry = TRUE;
       } else {
         EntryNum++;
       }
@@ -86,7 +91,19 @@ ParseLinuxBootConfig (
       }
     } else if (MatchKeyWord (CurrLine, "linux") > 0) {
       CurrLine += 5;
+      IsKernel = TRUE;
+    } else if (MatchKeyWord (CurrLine, "linuxefi") > 0) {
+      CurrLine += 8;
+      IsKernel = TRUE;
+    } else if (MatchKeyWord (CurrLine, "initrd") > 0) {
+      CurrLine += 6;
+      IsInitRd = TRUE;
+    } else if (MatchKeyWord (CurrLine, "initrdefi") > 0) {
+      CurrLine += 9;
+      IsInitRd = TRUE;
+    }
 
+    if (IsKernel) {
       // Mark kernel path
       CurrLine  = TrimLeft (CurrLine);
       MenuEntry[EntryNum].Kernel.Pos = (UINT32)(CurrLine - CfgBuffer);
@@ -98,9 +115,9 @@ ParseLinuxBootConfig (
       MenuEntry[EntryNum].Command.Pos = (UINT32)(CurrLine - CfgBuffer);
       EndLine  = TrimRight (EndLine);
       MenuEntry[EntryNum].Command.Len = (UINT32)(EndLine - CfgBuffer - MenuEntry[EntryNum].Command.Pos + 1);
-    } else if (MatchKeyWord (CurrLine, "initrd") > 0) {
-      CurrLine += 6;
+    }
 
+    if (IsInitRd) {
       // Mark initrd path
       CurrLine = TrimLeft (CurrLine);
       MenuEntry[EntryNum].InitRd.Pos = (UINT32)(CurrLine - CfgBuffer);
@@ -112,6 +129,10 @@ ParseLinuxBootConfig (
   }
 
   // Make sure the settings are reasonable
+  if (FoundEntry) {
+    EntryNum += 1;
+  }
+
   LinuxBootCfg->EntryNum = EntryNum;
   if (LinuxBootCfg->Settings.Default >= (UINT32)EntryNum) {
     LinuxBootCfg->Settings.Default = 0;

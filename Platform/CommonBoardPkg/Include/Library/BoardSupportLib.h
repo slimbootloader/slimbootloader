@@ -127,4 +127,35 @@ AcpiPatchPssTable (
   IN      CONST PSS_PARAMS               *PssParams
   );
 
+/**
+  Find the actual VBT image from the container.
+
+  In case of multiple VBT tables are packed into a single FFS, the PcdGraphicsVbtAddress could
+  point to the container address instead. This function checks this condition and locates the
+  actual VBT table address within the container.
+
+  @param[in] ImageId    Image ID for VBT binary to locate in the container
+
+  @retval               Actual VBT address found in the container. 0 if not found.
+
+**/
+UINT32
+LocateVbtByImageId (
+  IN  UINT32     ImageId
+  );
+
+/**
+  Get VBT address.
+
+  This function gets VBT address, In case of multiple VBT
+  tables, this function will call LocateVbtByImageId, otherwise
+  returns PcdGraphicsVbtAddress.
+
+  @retval               Actual VBT address found in the container. 0 if not found.
+
+**/
+UINTN
+GetVbtAddress (
+  );
+
 #endif

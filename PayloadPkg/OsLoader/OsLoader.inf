@@ -36,7 +36,9 @@
   BootParameters.c
   BlockIoTest.c
   KeyManagement.c
+  PreOsSupport.c
   PreOsChecker.c
+  ModService.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -95,6 +97,7 @@
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel
   gPayloadTokenSpaceGuid.PcdPayloadHobList
   gPayloadTokenSpaceGuid.PcdPayloadStackSize
+  gPayloadTokenSpaceGuid.PcdPayloadModuleEnabled
   gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled

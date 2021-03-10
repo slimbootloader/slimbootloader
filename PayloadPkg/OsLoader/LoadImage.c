@@ -14,10 +14,64 @@ typedef struct {
   LOADED_IMAGE           *LoadedImageList[LoadImageTypeMax];
 } LOADED_IMAGES_INFO;
 
-STATIC CONST CHAR16  *mConfigFileName[2] = {
+STATIC CONST CHAR16  *mConfigFileName[3] = {
   L"config.cfg",
-  L"boot/grub/grub.cfg"
+  L"boot/grub/grub.cfg",
+  L"EFI/BOOT/grub.cfg"
 };
+
+/**
+  Get boot image from a IFWI container component
+
+  This function will load component from a container inside the IFWI
+  using the container signature and the component name from boot option.
+  After Boot image is loaded into memory, its information will be saved
+  to LoadedImage.
+
+  @param[in]      BootOption      Current boot option
+  @param[in, out] LoadedImage     Loaded Image information.
+
+  @retval  RETURN_SUCCESS     If a boot image was loaded successfully
+  @retval  Others             If a boot image was not loaded.
+**/
+EFI_STATUS
+GetBootImageFromIfwiContainer (
+  IN     OS_BOOT_OPTION      *BootOption,
+  IN OUT LOADED_IMAGE        *LoadedImage
+  )
+{
+  RETURN_STATUS              Status;
+  VOID                       *Buffer;
+  UINT32                     ImageSize;
+  CONTAINER_IMAGE           *Image;
+
+  Image = &BootOption->Image[LoadedImage->LoadImageType].ContainerImage;
+  if ((Image->Indicate != '!') || (Image->BackSlash != '/')) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  Buffer    = NULL;
+  ImageSize = 0;
+  Status = LoadComponent (Image->ContainerSig, Image->ComponentName, (VOID **)&Buffer, &ImageSize);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Load component (%x/%x) error - %r\n", Image->ContainerSig, Image->ComponentName, Status));
+    return Status;
+  }
+
+  LoadedImage->Flags |= LOADED_IMAGE_COMPONENT;
+  LoadedImage->ImageData.Addr = Buffer;
+  LoadedImage->ImageData.Size = ImageSize;
+  LoadedImage->ImageData.AllocType = ImageAllocateTypePage;
+
+  if ( *((UINT32 *) Buffer) == CONTAINER_BOOT_SIGNATURE ) {
+    LoadedImage->Flags      |= LOADED_IMAGE_CONTAINER;
+  } else if ( *((UINT32 *) Buffer) == IAS_MAGIC_PATTERN ) {
+    LoadedImage->Flags      |= LOADED_IMAGE_IAS;
+  }
+
+  DEBUG ((DEBUG_ERROR, "Loaded component (%x/%x) success.\n", Image->ContainerSig, Image->ComponentName));
+  return EFI_SUCCESS;
+}
 
 /**
   Get Boot image from raw partition
@@ -47,6 +101,7 @@ GetBootImageFromRawPartition (
   LOGICAL_BLOCK_DEVICE       LogicBlkDev;
   UINTN                      AlignedHeaderSize;
   UINTN                      AlignedImageSize;
+  UINTN                      AlignedHeaderBlkCnt;
   UINT32                     BlockSize;
   VOID                      *BlockData;
   EFI_LBA                    LbaAddr;
@@ -54,30 +109,35 @@ GetBootImageFromRawPartition (
   UINT64                     Address;
   CONTAINER_HDR             *ContainerHdr;
 
-  SwPart  = BootOption->Image[LoadedImage->LoadImageType].LbaImage.SwPart;
-  LbaAddr = BootOption->Image[LoadedImage->LoadImageType].LbaImage.LbaAddr;
+  SwPart   = BootOption->Image[LoadedImage->LoadImageType].LbaImage.SwPart;
+  LbaAddr  = BootOption->Image[LoadedImage->LoadImageType].LbaImage.LbaAddr;
 
   //
   // The image_B partition number, is image_A partition number + 1
   // They share same LBA offset address.
   //
   if ((BootOption->BootFlags & LOAD_IMAGE_FROM_BACKUP) != 0) {
-    if ((LoadedImage->LoadImageType == LoadImageTypeTrusty)
+    if ((LoadedImage->LoadImageType == BOOT_FLAGS_PREOS)
       || (LoadedImage->LoadImageType == LoadImageTypeNormal)) {
       SwPart++;
     }
   }
 
   DEBUG ((DEBUG_INFO, "Load image from SwPart (0x%x), LbaAddr(0x%llx)\n", SwPart, LbaAddr));
-  Status = GetLogicalPartitionInfo (SwPart, LoadedImage->HwPartHandle, &LogicBlkDev);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "Get logical partition error, Status = %r\n", Status));
-    return Status;
+  if (SwPart != 0xFF) {
+    Status = GetLogicalPartitionInfo (SwPart, LoadedImage->HwPartHandle, &LogicBlkDev);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_INFO, "Get logical partition error - %r\n", Status));
+      return Status;
+    }
+  } else {
+    DEBUG ((DEBUG_INFO, "SwPart is 255, LbaAddr will be treated as an absolute LBA\n"));
+    LogicBlkDev.StartBlock = 0;
   }
 
   Status = MediaGetMediaInfo (BootOption->HwPart, &BlockInfo);
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "GetMediaInfo Error %r\n", Status));
+    DEBUG ((DEBUG_INFO, "Get media info error - %r\n", Status));
     return Status;
   }
 
@@ -86,20 +146,15 @@ GetBootImageFromRawPartition (
   // Make sure to round the Header size to be block aligned in bytes.
   //
   BlockSize = BlockInfo.BlockSize;
-  AlignedHeaderSize = ((sizeof (IAS_HEADER) % BlockSize) == 0) ? \
-                      sizeof (IAS_HEADER) : \
-                      ((sizeof (IAS_HEADER) / BlockSize) + 1) * BlockSize;
+  AlignedHeaderBlkCnt = (sizeof (IAS_HEADER) + (BlockSize - 1)) / BlockSize;
+  AlignedHeaderSize = AlignedHeaderBlkCnt * BlockSize;
 
   BlockData = AllocatePages (EFI_SIZE_TO_PAGES (AlignedHeaderSize));
   if (BlockData == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
 
-  if ( BootOption->DevType == OsBootDeviceMemory ) {
-    Address =  LogicBlkDev.StartBlock + LbaAddr;
-  } else {
-    Address =  LbaAddr;
-  }
+  Address =  LogicBlkDev.StartBlock + LbaAddr;
 
   Status = MediaReadBlocks (
              BootOption->HwPart,
@@ -109,7 +164,7 @@ GetBootImageFromRawPartition (
              );
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "Read image error, Status = %r\n", Status));
+    DEBUG ((DEBUG_INFO, "Read image error - %r\n", Status));
     return Status;
   }
 
@@ -161,12 +216,7 @@ GetBootImageFromRawPartition (
   //
   // Read the rest of the IAS image into the buffer
   //
-
-  if ( BootOption->DevType == OsBootDeviceMemory ) {
-    Address =  LogicBlkDev.StartBlock + LbaAddr + AlignedHeaderSize;
-  } else {
-    Address =  LbaAddr + AlignedHeaderSize;
-  }
+  Address =  LogicBlkDev.StartBlock + LbaAddr + AlignedHeaderBlkCnt;
 
   Status = MediaReadBlocks (
              BootOption->HwPart,
@@ -176,7 +226,7 @@ GetBootImageFromRawPartition (
              );
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "Read rest of image error, Status = %r\n", Status));
+    DEBUG ((DEBUG_INFO, "Read rest of image error - %r\n", Status));
     FreePages (Buffer, EFI_SIZE_TO_PAGES (AlignedImageSize));
     return Status;
   }
@@ -337,7 +387,7 @@ LoadLinuxFile (
     goto Done;
   }
 
-  FileBuffer = AllocatePool (FileSize);
+  FileBuffer = AllocatePages (EFI_SIZE_TO_PAGES(FileSize));
   if (FileBuffer == NULL) {
     Status = EFI_OUT_OF_RESOURCES;
     goto Done;
@@ -351,9 +401,10 @@ LoadLinuxFile (
     // Re-assign new memory
     ImageData->Addr = FileBuffer;
     ImageData->Size = (UINT32)FileSize;
+    ImageData->AllocType = ImageAllocateTypePage;
   } else {
     if (FileBuffer != NULL) {
-      FreePool (FileBuffer);
+      FreePages (FileBuffer, EFI_SIZE_TO_PAGES(FileSize));
     }
   }
 
@@ -403,7 +454,7 @@ GetTraditionalLinux (
 
   DEBUG ((DEBUG_INFO, "Try booting Linux from config file ...\n"));
 
-  for (Index = 0; Index < (UINTN)(FeaturePcdGet (PcdGrubBootCfgEnabled) ? 2 : 1); Index++) {
+  for (Index = 0; Index < (UINTN)(FeaturePcdGet (PcdGrubBootCfgEnabled) ? 3 : 1); Index++) {
     DEBUG ((DEBUG_INFO, "Checking %s\n",mConfigFileName[Index]));
     ConfigFile     = NULL;
     ConfigFileSize = 0;
@@ -743,6 +794,7 @@ LoadBootImages (
   UINT8                      BootFlags;
   EFI_STATUS                 Status;
   UINT8                      Index;
+  CONTAINER_IMAGE           *ContainerImage;
 
   ASSERT (OsBootOption != NULL);
 
@@ -756,7 +808,7 @@ LoadBootImages (
   LoadedImagesInfo->Signature = LOADED_IMAGES_INFO_SIGNATURE;
 
   for (Index = 0; Index < LoadImageTypeMax; Index++) {
-    if ((Index == LoadImageTypeTrusty) && !(BootFlags & BOOT_FLAGS_TRUSTY)) {
+    if ((Index == LoadImageTypePreOs) && !(BootFlags & BOOT_FLAGS_PREOS)) {
       continue;
     }
     if (Index == LoadImageTypeMisc) {
@@ -778,7 +830,10 @@ LoadBootImages (
     //
     // Load Boot Image from FS or RAW partition
     //
-    if (FsHandle != NULL) {
+    ContainerImage = &BootImage[Index].ContainerImage;
+    if ((ContainerImage->Indicate == '!') && (ContainerImage->BackSlash == '/')) {
+      Status = GetBootImageFromIfwiContainer (OsBootOption, LoadedImage);
+    } else if (FsHandle != NULL) {
       Status = GetBootImageFromFs (FsHandle, OsBootOption, LoadedImage);
     } else {
       Status = GetBootImageFromRawPartition (OsBootOption, LoadedImage);

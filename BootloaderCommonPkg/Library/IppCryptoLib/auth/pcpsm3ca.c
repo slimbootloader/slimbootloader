@@ -85,7 +85,11 @@ static void sm3_hashOctString(Ipp8u* pMD, void* pHashVal)
 static void sm3_msgRep(Ipp8u* pDst, Ipp64u lenLo, Ipp64u lenHi)
 {
    IPP_UNREFERENCED_PARAMETER(lenHi);
+#ifdef _SLIMBOOT_OPT
+   lenLo = ENDIANNESS64(LShiftU64 (lenLo, 3));
+#else
    lenLo = ENDIANNESS64(lenLo<<3);
+#endif
    ((Ipp64u*)(pDst))[0] = lenLo;
 }
 
@@ -110,7 +114,11 @@ void cpFinalizeSM3(DigestSHA1 pHash, const Ipp8u* inpBuffer, int inpLen, Ipp64u 
    PadBlock(0, buffer+inpLen, (cpSize)(bufferLen-inpLen-(int)MLR_SM3));
 
    /* put processed message length in bits */
+#ifdef _SLIMBOOT_OPT
+   processedMsgLen = ENDIANNESS64(LShiftU64 (processedMsgLen, 3));
+#else
    processedMsgLen = ENDIANNESS64(processedMsgLen<<3);
+#endif
    ((Ipp64u*)(buffer+bufferLen))[-1] = processedMsgLen;
 
    /* copmplete hash computation */

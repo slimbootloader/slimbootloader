@@ -179,22 +179,29 @@ class VariableRegionHeader(Structure):
 class PciEnumPolicyInfo(Structure):
     _pack_ = 1
     _fields_ = [
-        ('DowngradeIo32',   c_uint8),
-        ('DowngradeMem64',  c_uint8),
-        ('DowngradePMem64', c_uint8),
-        ('Reserved',        c_uint8),
-        ('BusScanType',     c_uint8), # 0: list, 1: range
-        ('NumOfBus',        c_uint8),
-        ('BusScanItems',    ARRAY(c_uint8, 0))
+        ('DowngradeIo32',           c_uint16, 1),
+        ('DowngradeMem64',          c_uint16, 1),
+        ('DowngradePMem64',         c_uint16, 1),
+        ('DowngradeBus0',           c_uint16, 1),
+        ('DowngradeReserved',       c_uint16, 12),
+        ('FlagAllocPmemFirst',      c_uint16, 1),
+        ('FlagReserved',            c_uint16, 15),
+        ('BusScanType',             c_uint8), # 0: list, 1: range
+        ('NumOfBus',                c_uint8),
+        ('BusScanItems',            ARRAY(c_uint8, 0))
     ]
 
     def __init__(self):
-        self.DowngradeIo32    = 1
-        self.DowngradeMem64   = 1
-        self.DowngradePMem64  = 1
-        self.Reserved         = 0
-        self.BusScanType      = 0
-        self.NumOfBus         = 0
+        self.DowngradeIo32      = 1
+        self.DowngradeMem64     = 1
+        self.DowngradePMem64    = 1
+        self.DowngradeBus0      = 1
+        self.DowngradeReserved  = 0
+        self.FlagAllocPmemFirst = 0
+        self.FlagReserved       = 0
+        self.Reserved           = 0
+        self.BusScanType        = 0
+        self.NumOfBus           = 0
 
 def get_visual_studio_info ():
 
@@ -208,21 +215,25 @@ def get_visual_studio_info ():
     if os.path.exists (vswhere_path):
         cmd = [vswhere_path, '-all', '-property', 'installationPath']
         lines = run_process (cmd, capture_out = True)
-        vscommon_path = ''
+        vscommon_paths = []
         for each in lines.splitlines ():
             each = each.strip()
             if each and os.path.isdir(each):
-                vscommon_path = each
-        vcver_file = vscommon_path + '\\VC\\Auxiliary\\Build\\Microsoft.VCToolsVersion.default.txt'
-        if os.path.exists(vcver_file):
-            for vs_ver in ['2017']:
-                check_path = '\\Microsoft Visual Studio\\%s\\' % vs_ver
-                if check_path in vscommon_path:
-                    toolchain_ver    = get_file_data (vcver_file, 'r').strip()
-                    toolchain_prefix = 'VS%s_PREFIX' % (vs_ver)
-                    toolchain_path   = vscommon_path + '\\VC\\Tools\\MSVC\\%s\\' % toolchain_ver
-                    toolchain='VS%s' % (vs_ver)
-                    break
+                vscommon_paths.append(each)
+
+        for vs_ver in ['2019', '2017']:
+            for vscommon_path in vscommon_paths:
+                vcver_file = vscommon_path + '\\VC\\Auxiliary\\Build\\Microsoft.VCToolsVersion.default.txt'
+                if os.path.exists(vcver_file):
+                    check_path = '\\Microsoft Visual Studio\\%s\\' % vs_ver
+                    if check_path in vscommon_path:
+                        toolchain_ver    = get_file_data (vcver_file, 'r').strip()
+                        toolchain_prefix = 'VS%s_PREFIX' % (vs_ver)
+                        toolchain_path   = vscommon_path + '\\VC\\Tools\\MSVC\\%s\\' % toolchain_ver
+                        toolchain = 'VS%s' % (vs_ver)
+                        break
+            if toolchain:
+                break
 
     if toolchain == '':
         vs_ver_list = [
@@ -1053,6 +1064,8 @@ def gen_pci_enum_policy_info (policy_dict):
         policy_info.DowngradeIo32   = policy_dict['DOWNGRADE_IO32']
         policy_info.DowngradeMem64  = policy_dict['DOWNGRADE_MEM64']
         policy_info.DowngradePMem64 = policy_dict['DOWNGRADE_PMEM64']
+        policy_info.DowngradeBus0   = policy_dict['DOWNGRADE_BUS0']
+        policy_info.FlagAllocPmemFirst  = policy_dict['FLAG_ALLOC_PMEM_FIRST']
         policy_info.BusScanType     = policy_dict['BUS_SCAN_TYPE']
         bus_scan_items              = policy_dict['BUS_SCAN_ITEMS']
 

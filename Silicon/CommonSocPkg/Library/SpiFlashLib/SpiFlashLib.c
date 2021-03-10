@@ -627,6 +627,7 @@ SendSpiCmd (
   SpiBaseAddress = SpiInstance->PchSpiBase;
   ScSpiBar0      = AcquireSpiBar0 (SpiBaseAddress);
   BiosCtlSave    = 0;
+  SpiInstance->RegionPermission = MmioRead16 (ScSpiBar0 + R_SPI_FRAP);
 
   ///
   /// If it's write cycle, disable Prefetching, Caching and disable BIOS Write Protect
@@ -656,7 +657,7 @@ SendSpiCmd (
       if (FlashCycleType == FlashCycleRead) {
         PermissionBit = B_SPI_FRAP_BRRA_FLASHD;
       } else {
-        PermissionBit = B_SPI_FRAP_BRRA_FLASHD;
+        PermissionBit = B_SPI_FRAP_BRWA_FLASHD;
       }
       HardwareSpiAddr += (MmioRead32 (ScSpiBar0 + R_SPI_FREG0_FLASHD) &
                           B_SPI_FREG0_BASE_MASK) << N_SPI_FREG0_BASE;
@@ -667,7 +668,7 @@ SendSpiCmd (
       if (FlashCycleType == FlashCycleRead) {
         PermissionBit = B_SPI_FRAP_BRRA_BIOS;
       } else {
-        PermissionBit = B_SPI_FRAP_BRRA_BIOS;
+        PermissionBit = B_SPI_FRAP_BRWA_BIOS;
       }
       HardwareSpiAddr += (MmioRead32 (ScSpiBar0 + R_SPI_FREG1_BIOS) &
                           B_SPI_FREG1_BASE_MASK) << N_SPI_FREG1_BASE;

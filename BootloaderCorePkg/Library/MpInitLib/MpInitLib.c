@@ -137,6 +137,14 @@ CpuInit (
   UINT32                  CpuIdx;
   PLATFORM_CPU_INIT_HOOK  PlatformCpuInitHook;
 
+  if (FeaturePcdGet (PcdCpuX2ApicEnabled)) {
+    // Enable X2APIC if desired
+    SetApicMode (LOCAL_APIC_MODE_X2APIC);
+    if (Index == 0) {
+      DEBUG ((DEBUG_INFO, "APIC Mode: %d\n", GetApicMode ()));
+    }
+  }
+
   ApicId = GetApicId();
   if (Index < PcdGet32 (PcdCpuMaxLogicalProcessorNumber)) {
     mSysCpuInfo.CpuInfo[Index].ApicId = ApicId;
@@ -181,8 +189,8 @@ ApFunc (
   )
 {
   BOOLEAN            WaitTask;
-  CPU_TASK_PROC      ApRunTask;
-  volatile UINT32   *State;
+  CPU_TASK_FUNC      ApRunTask;
+  volatile UINT8     *State;
 
   // Enable more CPU featurs
   AsmEnableAvx ();
@@ -214,7 +222,7 @@ ApFunc (
 
     case EnumCpuStart:
       *State = EnumCpuBusy;
-      ApRunTask = (CPU_TASK_PROC)(UINTN)mSysCpuTask.CpuTask[Index].CProcedure;
+      ApRunTask = (CPU_TASK_FUNC)(UINTN)mSysCpuTask.CpuTask[Index].TaskFunc;
       if (ApRunTask != NULL) {
         mSysCpuTask.CpuTask[Index].Result = ApRunTask (mSysCpuTask.CpuTask[Index].Argument);
       }
@@ -293,6 +301,8 @@ MpInit (
     if (mMpInitPhase != EnumMpInitNull) {
       Status = EFI_UNSUPPORTED;
     } else {
+      DEBUG ((DEBUG_INIT, "MP Init%a\n", DebugCodeEnabled() ? " (Wakeup)" : ""));
+
       // Init structure for lock
       mMpDataStruct.SmmRebaseDoneCounter = 0;
       InitializeSpinLock (&mMpDataStruct.SpinLock);
@@ -393,6 +403,8 @@ MpInit (
     if (mMpInitPhase != EnumMpInitWakeup) {
       Status = EFI_UNSUPPORTED;
     } else {
+      DEBUG ((DEBUG_INFO, "MP Init (Run)\n"));
+
       //
       // Wait for task done
       //
@@ -442,9 +454,12 @@ MpInit (
   }
 
   if (Phase == EnumMpInitDone) {
-    if (mMpInitPhase != EnumMpInitRun) {
+    if (mMpInitPhase == EnumMpInitDone) {
+      Status = EFI_UNSUPPORTED;
+    } else if (mMpInitPhase != EnumMpInitRun) {
       Status = EFI_UNSUPPORTED;
     } else {
+      DEBUG ((DEBUG_INFO, "MP Init (Done)\n"));
       //
       // All APs should be in EnumCpuReady now
       //
@@ -465,7 +480,6 @@ MpInit (
   }
 
   return Status;
-
 }
 
 
@@ -505,7 +519,7 @@ MpGetTask (
   Run a task function for a specific processor.
 
   @param[in]  Index       CPU index
-  @param[in]  TaskProc    Task function pointer
+  @param[in]  TaskFunc    Task function pointer
   @param[in]  Argument    Argument for the task function
 
   @retval EFI_INVALID_PARAMETER   Invalid Index parameter.
@@ -517,8 +531,8 @@ EFI_STATUS
 EFIAPI
 MpRunTask (
   IN  UINT32         Index,
-  IN  CPU_TASK_PROC  TaskProc,
-  IN  UINT32         Argument
+  IN  CPU_TASK_FUNC  TaskFunc,
+  IN  UINT64         Argument
   )
 {
   if ((Index >= mSysCpuTask.CpuCount) || (Index == 0)) {
@@ -529,8 +543,8 @@ MpRunTask (
     return EFI_NOT_READY;
   }
 
-  mSysCpuTask.CpuTask[Index].CProcedure = (UINT32)(UINTN)TaskProc;
-  mSysCpuTask.CpuTask[Index].Argument   = (UINT32)Argument;
+  mSysCpuTask.CpuTask[Index].TaskFunc = (UINT64)(UINTN)TaskFunc;
+  mSysCpuTask.CpuTask[Index].Argument   = Argument;
   mSysCpuTask.CpuTask[Index].State      = EnumCpuStart;
 
   return EFI_SUCCESS;
@@ -554,10 +568,10 @@ MpDumpTask (
   UINT32 Index;
 
   for (Index = 0; Index < mSysCpuTask.CpuCount; Index++) {
-    DEBUG ((DEBUG_INFO, "CPU%02X: %08X %08X %08X %08X\n",
+    DEBUG ((DEBUG_INFO, "CPU%02X: %02X %010lX %010lX %010lX\n",
             Index,
             mSysCpuTask.CpuTask[Index].State,
-            mSysCpuTask.CpuTask[Index].CProcedure,
+            mSysCpuTask.CpuTask[Index].TaskFunc,
             mSysCpuTask.CpuTask[Index].Argument,
             mSysCpuTask.CpuTask[Index].Result));
   }

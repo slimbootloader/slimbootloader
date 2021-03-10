@@ -1,0 +1,29 @@
+## @file
+#
+#  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION = 0x00010017
+  BASE_NAME = PchSerialIoLib
+  FILE_GUID = 455CD363-0E78-46B7-8DD3-634003F1614F
+  VERSION_STRING = 1.0
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = PchSerialIoLib
+
+[LibraryClasses]
+  BaseLib
+  PciLib
+  PcdLib
+
+[Packages]
+  MdePkg/MdePkg.dec
+  Silicon/CometlakePkg/CometlakePkg.dec
+
+[Sources]
+  PchSerialIoLib.c
+
+[Pcd]
+  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress

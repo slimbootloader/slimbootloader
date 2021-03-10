@@ -30,6 +30,7 @@ typedef UINT8 AUTH_TYPE;
 
 #define CONTAINER_OEM_BASE_SIGNATURE        SIGNATURE_32 ('O', 'E', 'M',   0)
 #define CONTAINER_BOOT_SIGNATURE            SIGNATURE_32 ('B', 'O', 'O', 'T')
+#define CONTAINER_SETUP_SIGNATURE           SIGNATURE_32 ('S', 'E', 'T', 'P')
 #define CONTAINER_MONO_SIGN_SIGNATURE       SIGNATURE_32 ('_', 'S', 'G', '_')
 #define CONTAINER_KEY_HASH_STORE_SIGNATURE  SIGNATURE_32 ('K', 'E', 'Y', 'H')
 

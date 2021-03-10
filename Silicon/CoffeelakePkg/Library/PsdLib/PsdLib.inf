@@ -55,5 +55,4 @@ gPlatformCommonLibTokenSpaceGuid.PcdPcdLibId
 gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
 gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
 gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled
-gPlatformCommonLibTokenSpaceGuid.PcdHeciLibId
 

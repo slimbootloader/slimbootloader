@@ -10,7 +10,7 @@
 
 [UserExtensions.SBL."CloneRepo"]
   REPO    = https://github.com/intel/FSP.git
-  COMMIT  = 7222054e9b7fc2d021fc404f87b4719d99b4c8ec
+  COMMIT  = c80123384aa74ee0a0b011ad4e8a0afc533c8195
 
 [UserExtensions.SBL."CopyList"]
   ApolloLakeFspBinPkg/FspBin/Fsp.fd     : Silicon/ApollolakePkg/FspBin/FspDbg.bin
@@ -20,5 +20,5 @@
   ApolloLakeFspBinPkg/Include/FsptUpd.h : Silicon/ApollolakePkg/Include/FsptUpd.h
   ApolloLakeFspBinPkg/Include/FspmUpd.h : Silicon/ApollolakePkg/Include/FspmUpd.h
   ApolloLakeFspBinPkg/Include/FspsUpd.h : Silicon/ApollolakePkg/Include/FspsUpd.h
-  ApolloLakeFspBinPkg/Vbt/Vbt.bin       : Platform/ApollolakeBoardPkg/VbtBin/Vbt.dat
+  ApolloLakeFspBinPkg/Vbt/vbt.bin       : Platform/ApollolakeBoardPkg/VbtBin/Vbt.dat
   ApolloLakeFspBinPkg/Vbt/Vbt.bsf       : Platform/ApollolakeBoardPkg/VbtBin/Vbt.bsf

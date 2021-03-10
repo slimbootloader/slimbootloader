@@ -29,7 +29,9 @@
 
   @retval                  A pointer to SHA-384 digest value
 **/
-Ipp8u* Sha384 (const Ipp8u* pMsg, Ipp32u msgLen, Ipp8u* pMD)
+Ipp8u*
+EFIAPI
+Sha384 (const Ipp8u* pMsg, Ipp32u msgLen, Ipp8u* pMD)
 {
   if (FixedPcdGet8(PcdIppHashLibSupportedMask) & IPP_HASHLIB_SHA2_384) {
     ippsHashMessage_rmf(pMsg, msgLen, pMD, ippsHashMethod_SHA384 ());
@@ -52,6 +54,7 @@ Ipp8u* Sha384 (const Ipp8u* pMsg, Ipp32u msgLen, Ipp8u* pMD)
   @retval  RETURN_SECURITY_VIOLATION  All other errors.
 **/
 RETURN_STATUS
+EFIAPI
 Sha384Init (
   IN      HASH_CTX   *HashCtx,
   IN      Ipp32u      HashCtxSize
@@ -85,6 +88,7 @@ Sha384Init (
   @retval  RETURN_SECURITY_VIOLATION  All other errors.
 **/
 RETURN_STATUS
+EFIAPI
 Sha384Update (
   IN        HASH_CTX   *HashCtx,
   IN CONST  Ipp8u      *Msg,
@@ -114,6 +118,7 @@ Sha384Update (
   @retval  RETURN_SECURITY_VIOLATION  All other errors.
 **/
 RETURN_STATUS
+EFIAPI
 Sha384Final (
   IN       HASH_CTX   *HashCtx,
   OUT      Ipp8u      *Hash

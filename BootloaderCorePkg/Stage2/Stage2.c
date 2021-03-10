@@ -149,6 +149,7 @@ NormalBootPath (
   UINT8                          *CmdLine;
   UINT32                          CmdLineLen;
   UINT32                          UefiSig;
+  UINT16                          PldMachine;
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
 
@@ -164,6 +165,7 @@ NormalBootPath (
   UefiSig  = 0;
   PldBase  = 0;
   PldEntry = NULL;
+  PldMachine = IS_X64 ? IMAGE_FILE_MACHINE_X64 : IMAGE_FILE_MACHINE_I386;
 
   Status  = EFI_SUCCESS;
   if (Dst[0] == 0x00005A4D) {
@@ -171,13 +173,16 @@ NormalBootPath (
     DEBUG ((DEBUG_INFO, "PE32 Format Payload\n"));
     Status = PeCoffRelocateImage ((UINT32)(UINTN)Dst);
     if (!EFI_ERROR(Status)) {
-      Status = PeCoffLoaderGetEntryPoint (Dst, (VOID *)&PldEntry);
+      Status = PeCoffLoaderGetMachine (Dst, &PldMachine);
+      if (!EFI_ERROR(Status)) {
+        Status = PeCoffLoaderGetEntryPoint (Dst, (VOID *)&PldEntry);
+      }
     }
   } else if (Dst[10] == EFI_FVH_SIGNATURE) {
     // It is a FV format
     DEBUG ((DEBUG_INFO, "FV Format Payload\n"));
     UefiSig = Dst[0];
-    Status  = LoadFvImage (Dst, Stage2Param->PayloadActualLength, (VOID **)&PldEntry);
+    Status  = LoadFvImage (Dst, Stage2Param->PayloadActualLength, (VOID **)&PldEntry, &PldMachine);
   } else if (IsElfImage (Dst)) {
     Status = LoadElfImage (Dst, (VOID *)&PldEntry);
   } else {
@@ -222,12 +227,6 @@ NormalBootPath (
   AddMeasurePoint (0x31B0);
   ASSERT_EFI_ERROR (Status);
 
-  if (FixedPcdGetBool (PcdSmpEnabled)) {
-    DEBUG ((DEBUG_INIT, "MP Init%a\n", DebugCodeEnabled() ? " (Done)" : ""));
-    Status = MpInit (EnumMpInitDone);
-    AddMeasurePoint (0x31C0);
-  }
-
   BoardInit (EndOfStages);
 
   PayloadId = GetPayloadId ();
@@ -243,6 +242,14 @@ NormalBootPath (
     CallBoardNotify = FALSE;
   } else {
     CallBoardNotify = TRUE;
+  }
+
+  if (FixedPcdGetBool (PcdSmpEnabled)) {
+    // Only delay MpInitDone for OsLoader
+    if ((PayloadId != 0) || (GetBootMode() == BOOT_ON_FLASH_UPDATE)) {
+      Status = MpInit (EnumMpInitDone);
+      AddMeasurePoint (0x31C0);
+    }
   }
 
   if (CallBoardNotify) {
@@ -264,8 +271,26 @@ NormalBootPath (
 
   DEBUG ((DEBUG_INFO, "Payload entry: 0x%08X\n", PldEntry));
   if (PldEntry != NULL) {
+    if (IS_X64) {
+      if (PldMachine == IMAGE_FILE_MACHINE_I386) {
+        DEBUG ((DEBUG_INFO, "Thunk back to x86 mode\n"));
+      }
+    } else {
+      if (PldMachine == IMAGE_FILE_MACHINE_X64) {
+        DEBUG ((DEBUG_INFO, "Switch to x64 mode\n"));
+      }
+    }
     DEBUG ((DEBUG_INIT, "Jump to payload\n\n"));
-    PldEntry (PldHobList, (VOID *)PldBase);
+    if (PldMachine == IMAGE_FILE_MACHINE_X64) {
+      // Need to call in x64 long mode
+      Execute64BitCode ((UINT64)(UINTN)PldEntry, (UINT64)(UINTN)PldHobList,
+                        (UINT64)(UINTN)PldBase, FALSE);
+    } else {
+      // Need to call in x86 compatible mode
+      Execute32BitCode ((UINT64)(UINTN)PldEntry, (UINT64)(UINTN)PldHobList,
+                        (UINT64)(UINTN)PldBase, FALSE);
+    }
+
   }
 }
 
@@ -287,10 +312,12 @@ S3ResumePath (
   S3Data    = (S3_DATA *)LdrGlobal->S3DataPtr;
 
   if (FixedPcdGetBool (PcdSmpEnabled)) {
-    DEBUG ((DEBUG_INFO, "MP Init (Done)\n"));
     MpInit (EnumMpInitDone);
     AddMeasurePoint (0x31C0);
   }
+
+  // Call the board notification
+  BoardInit (EndOfStages);
 
   // Call board and FSP Notify ReadyToBoot
   BoardNotifyPhase (ReadyToBoot);
@@ -341,6 +368,7 @@ SecStartup (
   S3_DATA                        *S3Data;
   PLATFORM_SERVICE               *PlatformService;
   VOID                           *SmbiosEntry;
+  BOOLEAN                         SplashPostPci;
 
   // Initialize HOB
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
@@ -386,9 +414,8 @@ SecStartup (
   // Save NVS data
   NvsData = GetFspNvsDataBuffer (LdrGlobal->FspHobList, &MrcDataLen);
   if ((NvsData != NULL) && (MrcDataLen > 0)) {
-    DEBUG ((DEBUG_INFO, "Save MRC Training Data (0x%p 0x%06X) ... ", NvsData, MrcDataLen));
     SubStatus = SaveNvsData (NvsData, MrcDataLen);
-    DEBUG ((DEBUG_INFO, "%X\n", SubStatus));
+    DEBUG ((DEBUG_INFO, "Save MRC Training Data (0x%p 0x%06X) ... %r\n", NvsData, MrcDataLen, SubStatus));
   }
 
   DEBUG ((DEBUG_INIT, "Silicon Init\n"));
@@ -409,14 +436,17 @@ SecStartup (
   BuildBaseInfoHob (Stage2Param);
 
   // Display splash
+  SplashPostPci = FALSE;
   if (FixedPcdGetBool (PcdSplashEnabled)) {
-    DisplaySplash ();
+    Status = DisplaySplash ();
     AddMeasurePoint (0x3050);
+    if (Status == EFI_NOT_FOUND) {
+      SplashPostPci = TRUE;
+    }
   }
 
   // MP Init phase 1
   if (FixedPcdGetBool (PcdSmpEnabled)) {
-    DEBUG ((DEBUG_INFO, "MP Init (Wakeup)\n"));
     Status = MpInit (EnumMpInitWakeup);
   } else {
     DEBUG ((DEBUG_INIT, "BSP Init\n"));
@@ -426,7 +456,6 @@ SecStartup (
 
   // MP Init phase 2
   if (FixedPcdGetBool (PcdSmpEnabled) && !EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "MP Init (Run)\n"));
     Status = MpInit (EnumMpInitRun);
     AddMeasurePoint (0x3080);
   }
@@ -451,8 +480,13 @@ SecStartup (
         AddMeasurePoint (0x30C0);
       }
     }
-
     ASSERT_EFI_ERROR (Status);
+
+    if (FixedPcdGetBool (PcdSplashEnabled)) {
+      if (SplashPostPci) {
+        DisplaySplash ();
+      }
+    }
   }
 
   // ACPI Initialization

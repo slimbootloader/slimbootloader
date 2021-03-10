@@ -58,6 +58,13 @@ TempRamInitStack:
 
 Continue:
     ;
+    ; Read time stamp
+    ;
+    rdtsc
+    mov     esi, eax
+    mov     edi, edx
+
+    ;
     ; Get FSP-T base in EAX
     ;
     mov     eax, ADDR_OF(BuildPatchData)
@@ -133,6 +140,12 @@ jumpTo64BitAndLandHere:
     xor     rax, rax
     mov     eax, 0FFFFFFFCh
     mov     eax, dword [rax]
+
+    ;
+    ; EDI/ESI time stamp to RDI
+    ;
+    shl     rdi, 32
+    add     rdi, rsi
 
     ; Restore the BIST value to EAX register
     ;

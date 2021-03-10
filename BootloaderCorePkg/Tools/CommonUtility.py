@@ -18,8 +18,9 @@ import subprocess
 import struct
 import hashlib
 import string
-from   functools import reduce
 from   ctypes import *
+from   functools import reduce
+from   importlib.machinery import SourceFileLoader
 from   SingleSign import *
 
 
@@ -184,19 +185,34 @@ def check_files_exist (base_name_list, dir = '', ext = ''):
             return False
     return True
 
+def load_source (name, filepath):
+    mod = SourceFileLoader (name, filepath).load_module()
+    return  mod
+
 def get_openssl_path ():
     if os.name == 'nt':
         if 'OPENSSL_PATH' not in os.environ:
-            os.environ['OPENSSL_PATH'] = "C:\\Openssl\\"
-        if 'OPENSSL_CONF' not in os.environ:
-            openssl_cfg = "C:\\Openssl\\openssl.cfg"
-            if os.path.exists(openssl_cfg):
-                os.environ['OPENSSL_CONF'] = openssl_cfg
-    openssl = os.path.join(os.environ.get ('OPENSSL_PATH', ''), 'openssl')
+            openssl_dir = "C:\\Openssl\\bin\\"
+            if os.path.exists (openssl_dir):
+                os.environ['OPENSSL_PATH'] = openssl_dir
+            else:
+                os.environ['OPENSSL_PATH'] = "C:\\Openssl\\"
+                if 'OPENSSL_CONF' not in os.environ:
+                    openssl_cfg = "C:\\Openssl\\openssl.cfg"
+                    if os.path.exists(openssl_cfg):
+                        os.environ['OPENSSL_CONF'] = openssl_cfg
+        openssl = os.path.join(os.environ.get ('OPENSSL_PATH', ''), 'openssl.exe')
+    else:
+        # Get openssl path for Linux cases
+        openssl = shutil.which('openssl')
+
     return openssl
 
 def run_process (arg_list, print_cmd = False, capture_out = False):
     sys.stdout.flush()
+    if os.name == 'nt' and os.path.splitext(arg_list[0])[1] == '' and \
+       os.path.exists (arg_list[0] + '.exe'):
+        arg_list[0] += '.exe'
     if print_cmd:
         print (' '.join(arg_list))
 
@@ -319,7 +335,7 @@ def decompress (in_file, out_file, tool_dir = ''):
 
     lz_hdr = LZ_HEADER.from_buffer (di)
     offset = sizeof (lz_hdr)
-    if lz_hdr.signature == b"LZDM":
+    if lz_hdr.signature == b"LZDM" or lz_hdr.compressed_len == 0:
         fo = open(out_file,'wb')
         fo.write(di[offset:offset + lz_hdr.compressed_len])
         fo.close()
@@ -332,17 +348,39 @@ def decompress (in_file, out_file, tool_dir = ''):
         alg = "Lz4"
     else:
         raise Exception ("Unsupported compression '%s' !" % lz_hdr.signature)
+
     fo = open(temp, 'wb')
     fo.write(di[offset:offset + lz_hdr.compressed_len])
     fo.close()
 
     compress_tool = "%sCompress" % alg
-    cmdline = [
-        os.path.join (tool_dir, compress_tool),
-        "-d",
-        "-o", out_file,
-        temp]
-    run_process (cmdline, False, True)
+    if alg == "Lz4":
+        try:
+            cmdline = [
+                os.path.join (tool_dir, compress_tool),
+                "-d",
+                "-o", out_file,
+                temp]
+            run_process (cmdline, False, True)
+        except:
+            print("Could not find/use CompressLz4 tool, trying with python lz4...")
+            try:
+                import lz4.block
+                if lz4.VERSION != '3.1.1':
+                    print("Recommended lz4 module version is '3.1.1', '%s' is currently installed." % lz4.VERSION)
+            except ImportError:
+                print("Could not import lz4, use 'python -m pip install lz4==3.1.1' to install it.")
+                exit(1)
+            decompress_data = lz4.block.decompress(get_file_data(temp))
+            with open(out_file, "wb") as lz4bin:
+                lz4bin.write(decompress_data)
+    else:
+        cmdline = [
+            os.path.join (tool_dir, compress_tool),
+            "-d",
+            "-o", out_file,
+            temp]
+        run_process (cmdline, False, True)
     os.remove(temp)
 
 def compress (in_file, alg, svn=0, out_path = '', tool_dir = ''):
@@ -368,18 +406,43 @@ def compress (in_file, alg, svn=0, out_path = '', tool_dir = ''):
         sig = "LZDM"
     else:
         raise Exception ("Unsupported compression '%s' !" % alg)
-    if sig == "LZDM":
-        shutil.copy(in_file, out_file)
-    else:
-        compress_tool = "%sCompress" % alg
-        cmdline = [
-            os.path.join (tool_dir, compress_tool),
-            "-e",
-            "-o", out_file,
-            in_file]
-        run_process (cmdline, False, True)
 
-    compress_data = get_file_data(out_file)
+    in_len = os.path.getsize(in_file)
+    if in_len > 0:
+        compress_tool = "%sCompress" % alg
+        if sig == "LZDM":
+            shutil.copy(in_file, out_file)
+            compress_data = get_file_data(out_file)
+        elif sig == "LZ4 ":
+            try:
+                cmdline = [
+                    os.path.join (tool_dir, compress_tool),
+                    "-e",
+                    "-o", out_file,
+                    in_file]
+                run_process (cmdline, False, True)
+                compress_data = get_file_data(out_file)
+            except:
+                print("Could not find/use CompressLz4 tool, trying with python lz4...")
+                try:
+                    import lz4.block
+                    if lz4.VERSION != '3.1.1':
+                        print("Recommended lz4 module version is '3.1.1', '%s' is currently installed." % lz4.VERSION)
+                except ImportError:
+                    print("Could not import lz4, use 'python -m pip install lz4==3.1.1' to install it.")
+                    exit(1)
+                compress_data = lz4.block.compress(get_file_data(in_file), mode='high_compression')
+        elif sig == "LZMA":
+            cmdline = [
+                os.path.join (tool_dir, compress_tool),
+                "-e",
+                "-o", out_file,
+                in_file]
+            run_process (cmdline, False, True)
+            compress_data = get_file_data(out_file)
+    else:
+        compress_data = bytearray()
+
     lz_hdr = LZ_HEADER ()
     lz_hdr.signature = sig.encode()
     lz_hdr.svn = svn

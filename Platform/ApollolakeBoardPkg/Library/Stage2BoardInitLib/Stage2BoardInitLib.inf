@@ -74,7 +74,6 @@
   gPlatformModuleTokenSpaceGuid.PcdPciResourceMem32Base
   gPlatformModuleTokenSpaceGuid.PcdGraphicsVbtAddress
   gPlatformModuleTokenSpaceGuid.PcdVariableRegionSize
-  gPlatformCommonLibTokenSpaceGuid.PcdHeciLibId
   gPlatformModuleTokenSpaceGuid.PcdOsBootOptionNumber
   gPlatformModuleTokenSpaceGuid.PcdVtdEnabled
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress

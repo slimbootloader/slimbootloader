@@ -69,6 +69,8 @@
 #include <Guid/SmmInformationGuid.h>
 #include <Library/HdaLib.h>
 #include <Register/RegsSpi.h>
+#include <Register/Intel/Cpuid.h>
+#include <CseMsg.h>
 
 #define IOC_UART_PPR_CLK_N_DIV        0x64
 #define IOC_UART_PPR_CLK_M_DIV        0x40

@@ -697,6 +697,8 @@ SetFrameBufferWriteCombining (
   UINT32             Data;
   UINT32             GfxPciBase;
   UINT64             Base64;
+  UINT64             Mask64;
+  CPUID_VIR_PHY_ADDRESS_SIZE_EAX  VirPhyAddressSize;
 
   // Skip if GFX device does not exist
   GfxPciBase = PCI_LIB_ADDRESS (0, 2, 0, 0);
@@ -724,7 +726,9 @@ SetFrameBufferWriteCombining (
     // The 1st 256MB from PcdPciResourceMem32Base will be consumed by MEM32 resource.
     // And framebuffer should be allocated to the next 256MB aligned address.
     AsmWriteMsr64 (MsrIdx,     Base64 | CACHE_WRITECOMBINING);
-    AsmWriteMsr64 (MsrIdx + 1, 0xF00000000ULL + B_EFI_MSR_CACHE_MTRR_VALID + (UINT32)(~(SIZE_256MB - 1)));
+    AsmCpuid (CPUID_VIR_PHY_ADDRESS_SIZE, &VirPhyAddressSize.Uint32, NULL, NULL, NULL);
+    Mask64 = (LShiftU64 (1, VirPhyAddressSize.Bits.PhysicalAddressBits) - 1) & 0xFFFFFFFF00000000ULL;
+    AsmWriteMsr64 (MsrIdx + 1, Mask64 + B_EFI_MSR_CACHE_MTRR_VALID + (UINT32)(~(SIZE_256MB - 1)));
   } else {
     DEBUG ((DEBUG_WARN, "Failed to find a free MTRR pair for framebuffer!\n"));
   }
@@ -982,10 +986,9 @@ BoardInit (
     BuildOsConfigDataHob ();
     break;
   case PostPciEnumeration:
-    if (PcdGetBool (PcdFramebufferInitEnabled)) {
-      // Enable framebuffer as WC for performance
-      SetFrameBufferWriteCombining ();
-    }
+    // Enable framebuffer as WC for performance
+    SetFrameBufferWriteCombining ();
+
     if (PcdGetBool (PcdSeedListEnabled)) {
       Status = GenerateSeeds ();
       if (EFI_ERROR (Status)) {
@@ -1002,7 +1005,7 @@ BoardInit (
     }
     break;
   case EndOfStages:
-    RegisterHeciService();
+    HeciRegisterHeciService ();
     InitPlatformService ();
 
     if (GetPayloadId() != 0) {
@@ -1037,49 +1040,6 @@ BoardInit (
 }
 
 /**
-  Find the actual VBT image from the container.
-
-  In case of multiple VBT tables are packed into a single FFS, the PcdGraphicsVbtAddress could
-  point to the container address instead. This function checks this condition and locates the
-  actual VBT table address within the container.
-
-  @param[in] ImageId    Image ID for VBT binary to locate in the container
-
-  @retval               Actual VBT address found in the container. 0 if not found.
-
-**/
-UINT32
-LocateVbtByImageId (
-  IN  UINT32     ImageId
-)
-{
-  VBT_MB_HDR     *VbtMbHdr;
-  VBT_ENTRY_HDR  *VbtEntry;
-  UINT32          VbtAddr;
-  UINTN           Idx;
-
-  VbtMbHdr = (VBT_MB_HDR* )(UINTN)PcdGet32 (PcdGraphicsVbtAddress);
-  if ((VbtMbHdr == NULL) || (VbtMbHdr->Signature != MVBT_SIGNATURE)) {
-    return 0;
-  }
-
-  VbtAddr  = 0;
-  VbtEntry = (VBT_ENTRY_HDR *)&VbtMbHdr[1];
-  for (Idx = 0; Idx < VbtMbHdr->EntryNum; Idx++) {
-    if (VbtEntry->ImageId == ImageId) {
-      VbtAddr = (UINT32)(UINTN)VbtEntry->Data;
-      break;
-    }
-    VbtEntry = (VBT_ENTRY_HDR *)((UINT8 *)VbtEntry + VbtEntry->Length);
-  }
-
-  DEBUG ((DEBUG_INFO, "%a VBT ImageId 0x%08X\n",
-                      (VbtAddr == 0) ? "Cannot find" : "Select", ImageId));
-
-  return VbtAddr;
-}
-
-/**
   Update FSP-S UPD config data.
 
   @param  FspsUpdPtr    The pointer to the FSP-S UPD to be updated.
@@ -1105,8 +1065,6 @@ UpdateFspConfig (
   PCIE_RP_CFG_DATA       *PcieRpConfigData;
   DEV_EN_CFG_DATA        *DevEnCfgData;
   HDA_CFG_DATA           *HdaCfgData;
-  UINT32                  VbtAddress;
-  UINT32                  VbtImageId;
 
   FspsUpd    = (FSPS_UPD *)FspsUpdPtr;
   FspsConfig = &FspsUpd->FspsConfig;
@@ -1167,7 +1125,7 @@ UpdateFspConfig (
     PciBase  = (UINT32)PcdGet64(PcdPciExpressBaseAddress);
     Stepping = MmioRead8 (PciBase + 8);
     Value64  = AsmReadMsr64 (MSR_IA32_PLATFORM_ID);
-    PlatformId = (Value64 >> 50) & 7;
+    PlatformId = RShiftU64 (Value64, 50) & 7;
     if (Stepping <= 0xB && PlatformId == 0) {
       FspsConfig->IpuEn   = 0;
     }
@@ -1286,21 +1244,11 @@ UpdateFspConfig (
     HdaEndpointI2sCapture.VirtualBusId    = HdaCfgData->VirtualIdI2sCapture;
   }
 
-  VbtAddress = 0;
   if (PcdGetBool (PcdFramebufferInitEnabled)) {
-    // Locate VBT binary from VBT container
-    if (GetPlatformId () == PLATFORM_ID_UP2) {
-      VbtImageId = 2;
-    } else {
-      VbtImageId = 1;
-    }
-    VbtAddress = LocateVbtByImageId (VbtImageId);
-    if (VbtAddress != 0) {
-      (VOID) PcdSet32S (PcdGraphicsVbtAddress,  VbtAddress);
-    }
+    FspsConfig->GraphicsConfigPtr   = (UINT32)GetVbtAddress ();
+  } else {
+    FspsConfig->GraphicsConfigPtr = 0;
   }
-  FspsConfig->GraphicsConfigPtr = VbtAddress;
-
 
   FspsConfig->InitS3Cpu                   = 1;
 
@@ -1678,7 +1626,7 @@ UpdateLoaderPlatformInfo (
                                         ((PlatformData->BtGuardInfo.Bpm.Mb) << 1);
 
     // Get Manufacturing Mode from Heci
-    ReadHeciFwStatus(&HeciFwSts);
+    HeciReadFwStatus (&HeciFwSts);
     LoaderPlatformInfo->HwState |= (HeciFwSts & BIT4) >> 2;
   }
 }

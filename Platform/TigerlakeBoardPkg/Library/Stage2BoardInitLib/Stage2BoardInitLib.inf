@@ -1,0 +1,104 @@
+## @file
+#
+# Copyright (c) 2008 - 2020, Intel Corporation. All rights reserved.<BR>
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = IbblBoardInitLib
+  FILE_GUID                      = 382FF3D3-6872-4737-9CD3-7232AF2C6748
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = BoardInitLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF
+#
+
+[Sources]
+  TsnLib.h
+  CpuInit.h
+  GpioTableTglHTsn.h
+  GpioTableTglUTsn.h
+  Stage2BoardInitLib.c
+  TccPtct.h
+  TccLib.c
+  FusaLib.h
+  FusaLib.c
+  LowPowerSupport.c
+  LowPowerSupport.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  IntelFsp2Pkg/IntelFsp2Pkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Platform/TigerlakeBoardPkg/TigerlakeBoardPkg.dec
+  Platform/CommonBoardPkg/CommonBoardPkg.dec
+  Silicon/TigerlakePkg/TigerlakePkg.dec
+  Silicon/TigerlakePchPkg/TigerlakePchPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+
+[LibraryClasses]
+  SerialPortLib
+  BaseLib
+  DebugLib
+  SpiFlashLib
+  GpioLib
+  MemoryAllocationLib
+  PcdLib
+  PrintLib
+  ConfigDataLib
+  BootloaderCoreLib
+  VtdLib
+  DebugDataLib
+  IgdOpRegionLib
+  VariableLib
+  HeciInitLib
+  BdatLib
+  BoardSupportLib
+  ContainerLib
+  PsdLib
+  MeExtMeasurementLib
+  BasePchPciBdfLib
+
+[Guids]
+  gOsConfigDataGuid
+  gMeBiosPayloadHobGuid
+  gLoaderFspInfoGuid
+  gEfiGraphicsInfoHobGuid
+  gCpuInitDataHobGuid
+  gSiFusaInfoGuid
+  gTccInfoHobGuid
+
+[Pcd]
+  gPlatformModuleTokenSpaceGuid.PcdGraphicsVbtAddress
+  gPlatformModuleTokenSpaceGuid.PcdIgdOpRegionAddress
+  gPlatformCommonLibTokenSpaceGuid.PcdCpuInitIpiDelayInMicroSeconds
+  gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImageRegionType
+  gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImage1RegionSize
+  gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImage2RegionSize
+  gPlatformModuleTokenSpaceGuid.PcdIntelGfxEnabled
+  gPlatformModuleTokenSpaceGuid.PcdAcpiGnvsAddress
+  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
+  gPlatformModuleTokenSpaceGuid.PcdPciResourceMem32Base
+  gPlatformModuleTokenSpaceGuid.PcdServiceNumber
+  gPlatformModuleTokenSpaceGuid.PcdVtdEnabled
+  gPlatformModuleTokenSpaceGuid.PcdOsBootOptionNumber
+  gPlatformModuleTokenSpaceGuid.PcdMaxServiceNumber
+  gPlatformModuleTokenSpaceGuid.PcdPayloadReservedMemSize
+  gPlatformModuleTokenSpaceGuid.PcdFramebufferInitEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsPtr
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsCnt
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesBase
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled
+  gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase
+  gPlatformModuleTokenSpaceGuid.PcdSmmRebaseMode
+  gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled
+  gPlatformTigerLakeTokenSpaceGuid.PcdFusaEnabled
+  gPlatformModuleTokenSpaceGuid.PcdFspsUpdPtr

@@ -38,6 +38,7 @@
 #include <Library/LiteFvLib.h>
 #include <Library/SortLib.h>
 #include <Library/StageLib.h>
+#include <Library/ThunkLib.h>
 #include <Library/ContainerLib.h>
 #include <Guid/BootLoaderServiceGuid.h>
 #include <Guid/BootLoaderVersionGuid.h>
@@ -47,6 +48,7 @@
 #include <Guid/LoaderLibraryDataGuid.h>
 #include <Guid/GraphicsInfoHob.h>
 #include <Guid/SmmInformationGuid.h>
+#include <Guid/MpCpuTaskInfoHob.h>
 #include <Service/PlatformService.h>
 #include <Pi/PiBootMode.h>
 #include <FspEas.h>
@@ -97,7 +99,7 @@ BuildExtraInfoHob (
   Display graphical splash screen
 
   @retval EFI_SUCCESS     Splash screen was successfully displayed
-  @retval EFI_UNSUPPORTED Frame buffer access not supported
+  @retval EFI_NOT_FOUND   Frame buffer hob not found
   @retval EFI_UNSUPPORTED BmpImage is not a valid *.BMP image
 
 **/

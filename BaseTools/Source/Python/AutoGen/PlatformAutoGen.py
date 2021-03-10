@@ -2,6 +2,7 @@
 # Create makefile for MS nmake and GNU make
 #
 # Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020, ARM Limited. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 
@@ -106,8 +107,9 @@ class PlatformAutoGen(AutoGen):
         self.BuildDatabase = Workspace.BuildDatabase
         self.DscBuildDataObj = Workspace.Platform
 
-        # flag indicating if the makefile/C-code file has been created or not
-        self.IsMakeFileCreated  = False
+        # MakeFileName is used to get the Makefile name and as a flag
+        # indicating whether the file has been created.
+        self.MakeFileName = ""
 
         self._DynamicPcdList = None    # [(TokenCName1, TokenSpaceGuidCName1), (TokenCName2, TokenSpaceGuidCName2), ...]
         self._NonDynamicPcdList = None # [(TokenCName1, TokenSpaceGuidCName1), (TokenCName2, TokenSpaceGuidCName2), ...]
@@ -148,7 +150,7 @@ class PlatformAutoGen(AutoGen):
     #
     @cached_class_function
     def __hash__(self):
-        return hash((self.MetaFile, self.Arch))
+        return hash((self.MetaFile, self.Arch,self.ToolChain,self.BuildTarget))
     @cached_class_function
     def __repr__(self):
         return "%s [%s]" % (self.MetaFile, self.Arch)
@@ -191,16 +193,15 @@ class PlatformAutoGen(AutoGen):
         self.CreateLibModuelDirs()
 
     def CreateLibModuelDirs(self):
-        # no need to create makefile for the platform more than once
-        if self.IsMakeFileCreated:
+        # No need to create makefile for the platform more than once.
+        if self.MakeFileName:
             return
 
         # create library/module build dirs for platform
         Makefile = GenMake.PlatformMakefile(self)
         self.LibraryBuildDirectoryList = Makefile.GetLibraryBuildDirectoryList()
         self.ModuleBuildDirectoryList = Makefile.GetModuleBuildDirectoryList()
-
-        self.IsMakeFileCreated = True
+        self.MakeFileName = Makefile.getMakefileName()
 
     @property
     def AllPcdList(self):
@@ -865,7 +866,8 @@ class PlatformAutoGen(AutoGen):
                             Value += " " + self._BuildOptionWithToolDef(RetVal)[Tool][Attr]
                         else:
                             Value = self._BuildOptionWithToolDef(RetVal)[Tool][Attr]
-
+                            Def = '_'.join([self.BuildTarget, self.ToolChain, self.Arch, Tool, Attr])
+                            self.Workspace.ToolDef.ToolsDefTxtDictionary[Def] = Value
                 if Attr == "PATH":
                     # Don't put MAKE definition in the file
                     if Tool != "MAKE":

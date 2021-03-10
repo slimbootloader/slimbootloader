@@ -12,6 +12,7 @@
 #include <CpuRegs.h>
 #include <Library/DebugLib.h>
 #include <Library/PcdLib.h>
+#include <Register/Intel/Cpuid.h>
 
 typedef struct
 {
@@ -60,7 +61,7 @@ GetCpuMaxNbFrequency (
 {
   UINT64 MsrValue;
   MsrValue = AsmReadMsr64 (MSR_PLATFORM_INFO);
-  return (100 * ((MsrValue >> 8) & 0xff));
+  return (100 * (((UINT32)MsrValue >> 8) & 0xff));
 }
 
 /**
@@ -75,7 +76,7 @@ GetCpuNumCores (
 )
 {
   UINT32 Ebx;
-  AsmCpuidEx (CPUID_CORE_TOPOLOGY, 1, NULL, &Ebx, NULL, NULL); // BWG 3.1.8
+  AsmCpuidEx (CPUID_EXTENDED_TOPOLOGY, 1, NULL, &Ebx, NULL, NULL); // BWG 3.1.8
   return (Ebx & 0xffff);
 }
 
@@ -96,7 +97,7 @@ GetCpuUCodeRev (
   AsmWriteMsr64 (MSR_IA32_BIOS_SIGN_ID, 0LL);
   AsmCpuid (0, NULL, NULL, NULL, NULL);
   MsrValue = AsmReadMsr64 (MSR_IA32_BIOS_SIGN_ID);
-  UcodeRev = (MsrValue >> 32) & 0xffffffff;
+  UcodeRev = RShiftU64 (MsrValue, 32) & 0xffffffff;
 
   return UcodeRev;
 }
@@ -124,7 +125,7 @@ GetPchDeviceName (
   PciBase = (UINT32)PcdGet64(PcdPciExpressBaseAddress);
   Stepping = MmioRead8 (PciBase + 8);
   MsrValue = AsmReadMsr64 (MSR_IA32_PLATFORM_ID);
-  PlatformId = (MsrValue >> 50) & 7;
+  PlatformId = RShiftU64 (MsrValue, 50) & 7;
 
   //
   // Lookup silicon stepping in the dictionary
@@ -160,7 +161,7 @@ GetPchSteppingName (
   PciBase = (UINT32)PcdGet64(PcdPciExpressBaseAddress);
   Stepping = MmioRead8 (PciBase + 8);
   MsrValue = AsmReadMsr64 (0x17);
-  PlatformId = (MsrValue >> 50) & 7;
+  PlatformId = RShiftU64 (MsrValue, 50) & 7;
 
   //
   // Lookup silicon stepping in the dictionary

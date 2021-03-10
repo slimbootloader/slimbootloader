@@ -16,7 +16,6 @@ sys.dont_write_bytecode = True
 sys.path.append (tool_dir)
 
 import re
-import imp
 import errno
 import shutil
 import argparse
@@ -25,6 +24,7 @@ import multiprocessing
 from   ctypes import *
 from   BuildUtility import *
 
+import glob
 
 def rebuild_basetools ():
     exe_list = 'GenFfs  GenFv  GenFw  GenSec  Lz4Compress  LzmaCompress'.split()
@@ -63,7 +63,7 @@ def prep_env ():
     os.environ['PYTHON_COMMAND'] = '"' + sys.executable + '"'
     print_tool_version_info(os.environ['PYTHON_COMMAND'], version.strip())
 
-    sblsource = os.path.dirname(os.path.realpath(__file__))
+    sblsource = os.path.dirname(os.path.abspath(__file__))
     os.chdir(sblsource)
     if sys.platform == 'darwin':
         toolchain = 'XCODE5'
@@ -92,8 +92,6 @@ def prep_env ():
             sys.exit(1)
         if 'NASM_PREFIX' not in os.environ:
             os.environ['NASM_PREFIX'] = "C:\\Nasm\\"
-        if 'OPENSSL_PATH' not in os.environ:
-            os.environ['OPENSSL_PATH'] = "C:\\Openssl\\"
         if 'IASL_PREFIX' not in os.environ:
             os.environ['IASL_PREFIX'] = "C:\\ASL\\"
     else:
@@ -130,8 +128,8 @@ def get_board_config_file (check_dir, board_cfgs):
 
     board_pkgs = os.listdir(platform_dir)
     for pkg in board_pkgs:
-        cfgfile = os.path.join(platform_dir, pkg, 'BoardConfig.py')
-        if os.path.exists(cfgfile):
+        # Allow files starting with 'BoardConfig' only
+        for cfgfile in glob.glob(os.path.join(platform_dir, pkg, 'BoardConfig*.py')):
             board_cfgs.append(cfgfile)
 
 class BaseBoard(object):
@@ -213,9 +211,14 @@ class BaseBoard(object):
         self.ENABLE_EMMC_HS400     = 1
         self.ENABLE_DMA_PROTECTION = 0
         self.ENABLE_MULTI_USB_BOOT_DEV = 0
+        self.ENABLE_SBL_SETUP      = 0
+        self.ENABLE_PAYLOD_MODULE  = 0
+        self.ENABLE_FAST_BOOT      = 0
+        self.ENABLE_LEGACY_EF_SEG  = 1
 
         self.SUPPORT_ARI           = 0
         self.SUPPORT_SR_IOV        = 0
+        self.SUPPORT_X2APIC        = 0
 
         self.BUILD_CSME_UPDATE_DRIVER    = 0
 
@@ -252,7 +255,8 @@ class BaseBoard(object):
         self.FWUPDATE_LOAD_BASE    = 0
 
         # OS Loader FD/FV sizes
-        self.OS_LOADER_FD_SIZE     = 0x0004B000
+        self.OS_LOADER_FD_SIZE     = 0x0004E000
+
         self.OS_LOADER_FD_NUMBLK   = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         self.PLD_HEAP_SIZE         = 0x02000000
@@ -277,6 +281,7 @@ class BaseBoard(object):
 
         self._PAYLOAD_NAME         = ''
         self._FSP_PATH_NAME        = ''
+        self._EXTRA_INC_PATH       = []
 
         self._PLATFORM_ID          = None
         self._MULTI_VBT_FILE       = {}
@@ -312,6 +317,28 @@ class Build(object):
         self._pld_list                     = get_payload_list (board._PAYLOAD_NAME.split(';'))
         self._comp_list                    = []
         self._region_list                  = []
+
+        # enforce feature configs rules
+        if self._board.ENABLE_SBL_SETUP:
+            self._board.ENABLE_PAYLOD_MODULE = 1
+
+        if not hasattr(self._board, 'MICROCODE_INF_FILE'):
+            self._board.MICROCODE_INF_FILE  = 'Silicon/%s/Microcode/Microcode.inf' % self._board.SILICON_PKG_NAME
+        if not hasattr(self._board, 'ACPI_TABLE_INF_FILE'):
+            self._board.ACPI_TABLE_INF_FILE = 'Platform/%s/AcpiTables/AcpiTables.inf' % self._board.BOARD_PKG_NAME
+
+        for stage in ['1A', '1B', '2']:
+            soc_inf = 'SOC_INIT_STAGE%s_LIB_INF_FILE' % stage
+            if not hasattr(self._board, soc_inf):
+                soc_init_lib = 'Silicon/%s/Library/Stage%sSocInitLib/Stage%sSocInitLib.inf' % (self._board.SILICON_PKG_NAME, stage, stage)
+                setattr(self._board, 'SOC_INIT_STAGE%s_LIB_INF_FILE' % stage, soc_init_lib)
+            brd_inf = 'BRD_INIT_STAGE%s_LIB_INF_FILE' % stage
+            if not hasattr(self._board, brd_inf):
+                brd_init_lib = 'Platform/%s/Library/Stage%sBoardInitLib/Stage%sBoardInitLib.inf' % (self._board.BOARD_PKG_NAME, stage, stage)
+                setattr(self._board, 'BRD_INIT_STAGE%s_LIB_INF_FILE' % stage, brd_init_lib)
+
+        if not hasattr(self._board, 'SOC_FWU_LIB_INF_FILE'):
+            self._board.SOC_FWU_LIB_INF_FILE = 'Silicon/%s/Library/FirmwareUpdateLib/FirmwareUpdateLib.inf' % self._board.SILICON_PKG_NAME
 
     def board_build_hook (self, phase):
         if getattr(self._board, "PlatformBuildHook", None):
@@ -758,6 +785,14 @@ class Build(object):
 
         if getattr(self._board, "GetPlatformDsc", None):
             dsc_dict = self._board.GetPlatformDsc()
+
+            # add extra include searching path
+            if len(self._board._EXTRA_INC_PATH) > 0:
+                inc_dir = []
+                for each in self._board._EXTRA_INC_PATH:
+                    inc_dir.append(('-I$(WORKSPACE)/%s' % each).replace('/', os.sep))
+                dsc_dict['BuildOptions.Common.EDKII'] = ['*_*_*_CC_FLAGS = ' + ' '.join(inc_dir)]
+
             for sect in dsc_dict:
                 lines.append('\n# Platform specific sections\n')
                 lines.append('[%s]\n' % sect)
@@ -864,18 +899,26 @@ class Build(object):
                 raise Exception ('Diagnostic ACM base[FSP-T+CAR:0x%x] must be 4KB aligned!' % diagnosticacm_base)
 
         # Generate Pci Enum Policy Info
-        pci_enum_policy_list = ['DOWNGRADE_IO32', 'DOWNGRADE_MEM64', 'DOWNGRADE_PMEM64', 'BUS_SCAN_TYPE', 'BUS_SCAN_ITEMS']
+        pci_enum_policy_list = [
+            'DOWNGRADE_IO32',
+            'DOWNGRADE_MEM64',
+            'DOWNGRADE_PMEM64',
+            'DOWNGRADE_BUS0',
+            'FLAG_ALLOC_PMEM_FIRST',
+            'BUS_SCAN_TYPE',
+            'BUS_SCAN_ITEMS'
+        ]
         pci_enum_policy_dict = {}
         for policy_list in pci_enum_policy_list:
             policy_name = '_PCI_ENUM_%s' % policy_list
             policy_value = None
             if not hasattr(self._board, policy_name):
-                if policy_list == 'BUS_SCAN_TYPE':
-                    policy_value = 0
-                elif policy_list == 'BUS_SCAN_ITEMS':
+                if policy_list == 'BUS_SCAN_ITEMS':
                     policy_value = '0'
-                else:
+                elif 'DOWNGRADE' in policy_list:
                     policy_value = 1
+                else:
+                    policy_value = 0
             else:
                 policy_value = getattr(self._board, policy_name)
             pci_enum_policy_dict[policy_list] = policy_value
@@ -898,7 +941,7 @@ class Build(object):
         # Patch flashmap to indicate boot parititon
         fo = open(os.path.join(self._fv_dir, 'STAGE1A_B.fd'), 'r+b')
         bins = bytearray(fo.read())
-        fmapoff = (bytes_to_value(bins[-8:-4]) + len(bins)) & 0xFFFFFFFF
+        fmapoff = bytes_to_value(bins[-8:-4]) - bytes_to_value(bins[-4:]) + self._board.STAGE1A_FV_OFFSET
         fmaphdr = FLASH_MAP.from_buffer (bins, fmapoff)
         if fmaphdr.sig != FLASH_MAP.FLASH_MAP_SIGNATURE:
             raise Exception ('Failed to locate flash map in STAGE1A_B.fd !')
@@ -1072,18 +1115,24 @@ class Build(object):
             raise Exception  ('IPP_HASH_LIB_SUPPORTED_MASK is not set correctly!!')
 
         # check if FSP binary exists
-        fsp_dir  = os.path.join(plt_dir, 'Silicon', self._board.SILICON_PKG_NAME, "FspBin", self._board._FSP_PATH_NAME)
+        if self._board._FSP_PATH_NAME != '':
+            fsp_path_name = self._board._FSP_PATH_NAME
+        else:
+            fsp_path_name = os.path.join('Silicon', self._board.SILICON_PKG_NAME, "FspBin")
+
+        fsp_dir  = os.path.join(plt_dir,  fsp_path_name)
         work_dir = plt_dir
         if not os.path.exists(fsp_dir):
-            fsp_dir  = os.path.join(sbl_dir, 'Silicon', self._board.SILICON_PKG_NAME, "FspBin", self._board._FSP_PATH_NAME)
+            fsp_dir  = os.path.join(sbl_dir, fsp_path_name)
             work_dir = sbl_dir
         fsp_path = os.path.join(fsp_dir, self._fsp_basename + '.bin')
 
-        check_build_component_bin = os.path.join(tool_dir, 'PrepareBuildComponentBin.py')
-        if os.path.exists(check_build_component_bin):
-            ret = subprocess.call([sys.executable, check_build_component_bin, work_dir, self._board.SILICON_PKG_NAME, '/d' if self._board.FSPDEBUG_MODE else '/r'])
-            if ret:
-                raise Exception  ('Failed to prepare build component binaries !')
+        if self._board.HAVE_FSP_BIN:
+            check_build_component_bin = os.path.join(tool_dir, 'PrepareBuildComponentBin.py')
+            if os.path.exists(check_build_component_bin):
+                ret = subprocess.call([sys.executable, check_build_component_bin, work_dir, self._board.SILICON_PKG_NAME, '/d' if self._board.FSPDEBUG_MODE else '/r'])
+                if ret:
+                    raise Exception  ('Failed to prepare build component binaries !')
 
         # create FSP size and UPD size can be known
         fsp_list = ['FSP_T', 'FSP_M', 'FSP_S']
@@ -1096,16 +1145,17 @@ class Build(object):
         # generate size variables
         for each in fsp_list:
             fsp_bin  = os.path.join(self._fv_dir, "%s.bin" % each)
-            if self._board.FSP_IMAGE_ID:
+            if self._board.HAVE_FSP_BIN:
+                if self._board.FSP_IMAGE_ID:
                     imageid = get_fsp_image_id (fsp_bin)
                     if self._board.FSP_IMAGE_ID != imageid:
-                            raise Exception ('Expecting FSP ImageId: %s, but got %s !' % (self._board.FSP_IMAGE_ID, imageid))
-            revision = get_fsp_revision (fsp_bin)
-            if revision < self._board.MIN_FSP_REVISION:
+                        raise Exception ('Expecting FSP ImageId: %s, but got %s !' % (self._board.FSP_IMAGE_ID, imageid))
+                revision = get_fsp_revision (fsp_bin)
+                if revision < self._board.MIN_FSP_REVISION:
                     raise Exception ('Required minimum FSP revision is 0x%08X, but current revision is 0x%08X !' %
-                                (self._board.MIN_FSP_REVISION, revision))
+                                    (self._board.MIN_FSP_REVISION, revision))
             setattr(self._board, '%s_SIZE' % each, get_fsp_size(fsp_bin) if self._board.HAVE_FSP_BIN else 0)
-            setattr(self._board, '%s_UPD_SIZE' % each, get_fsp_upd_size(fsp_bin) if self._board.HAVE_FSP_BIN else 0)
+            setattr(self._board, '%s_UPD_SIZE' % each, get_fsp_upd_size(fsp_bin) if self._board.HAVE_FSP_BIN else 1)
 
         if self._board.BUILD_CSME_UPDATE_DRIVER:
             if os.name != 'nt':
@@ -1129,7 +1179,7 @@ class Build(object):
 
         # create hashstore file
         key_hash_list = []
-        mst_key = None
+        mst_key = self._board._MASTER_PRIVATE_KEY
         if self._board.HAVE_VERIFIED_BOOT:
             hash_store_size = sizeof(HashStoreTable) + (sizeof(HashStoreData) + HASH_DIGEST_SIZE[HASH_VAL_STRING[self._board.SIGN_HASH_TYPE]]) * HashStoreTable().HASH_STORE_MAX_IDX_NUM
             gen_file_with_size (os.path.join(self._fv_dir, 'HashStore.bin'), hash_store_size)
@@ -1142,7 +1192,6 @@ class Build(object):
             fo.close()
 
             # create key hash file
-            mst_key = self._board._MASTER_PRIVATE_KEY
             if getattr(self._board, "GetKeyHashList", None):
                 key_hash_list = self._board.GetKeyHashList ()
 
@@ -1332,6 +1381,7 @@ def main():
     prep_env ()
     board_cfgs   = []
     board_names  = []
+    module_names = []
 
     # Find all boards
     search_dir = os.environ['SBL_SOURCE']
@@ -1341,10 +1391,12 @@ def main():
     for pkg in board_pkgs:
         get_board_config_file (os.path.join (search_dir, pkg), board_cfgs)
 
+    board_cfgs.sort()
     for cfgfile in board_cfgs:
-        brdcfg = imp.load_source('BoardConfig', cfgfile)
+        module_name = os.path.basename(os.path.dirname(cfgfile))[:-8] + os.path.basename(cfgfile)[:-3]
+        brdcfg = load_source(module_name, cfgfile)
         board_names.append(brdcfg.Board().BOARD_NAME)
-
+        module_names.append(brdcfg)
 
     ap = argparse.ArgumentParser()
     sp = ap.add_subparsers(help='command')
@@ -1352,7 +1404,7 @@ def main():
     def cmd_build(args):
         for index, name in enumerate(board_names):
             if args.board == name:
-                brdcfg = imp.load_source('BoardConfig', board_cfgs[index])
+                brdcfg = module_names[index]
                 board  = brdcfg.Board(
                                         BUILD_ARCH        = args.arch.upper(), \
                                         RELEASE_MODE      = args.release,     \

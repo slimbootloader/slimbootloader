@@ -21,6 +21,23 @@
 
 UINT8   *mPoolPtr;
 
+STATIC PCI_RES_ALLOC_TABLE  *mResAllocTablePtr;
+
+//
+// Default PCI Resource Allocation Range
+//
+STATIC PCI_RES_ALLOC_RANGE mDefaultResRange = {
+  .BusBase      = 0,
+  .BusLimit     = 0xFF,
+  .Reserved     = 0,
+  .IoBase       = 0x1000,
+  .IoLimit      = 0xFFFF,
+  .Mmio32Base   = 0x80000000,
+  .Mmio32Limit  = 0xFFFFFFFF,
+  .Mmio64Base   = 0x400000000ULL,
+  .Mmio64Limit  = 0xFFFFFFFFFULL
+};
+
 /**
  Set the memory pool address to the global pointer -file scope.
 
@@ -609,6 +626,12 @@ GatherPpbInfo (
     PciParseBar (PciIoDevice, 0x14, PPB_BAR_1);
   }
 
+  //
+  // Copy PciBar to PpbBar to program BAR0/1 for PPBs. PciBar field is used to
+  // scope PPB Apperture resources later.
+  //
+  CopyMem (&(PciIoDevice->PpbBar[0]), &(PciIoDevice->PciBar[0]), sizeof(PCI_BAR) * PPB_MAX_BAR);
+
   return PciIoDevice;
 }
 
@@ -932,6 +955,13 @@ ProgramBar (
     PciBar = PciIoDevice->VfPciBar;
   } else {
     PciBar = PciIoDevice->PciBar;
+    //
+    // If it is a PPB device, ProgramBar() is used to
+    // program BAR0/1 of this PPB device.
+    //
+    if (IS_PCI_BRIDGE(&(PciIoDevice->Pci))) {
+      PciBar = PciIoDevice->PpbBar;
+    }
   }
 
   BarType = PciBar[BarIdx].OrgBarType;
@@ -1043,6 +1073,17 @@ ProgramResource (
   CurrentLink = Parent->ChildList.ForwardLink;
   while (CurrentLink != NULL && CurrentLink != &Parent->ChildList) {
     PciIoDevice = PCI_IO_DEVICE_FROM_LINK (CurrentLink);
+    if (IS_PCI_BRIDGE(&(PciIoDevice->Pci))) {
+      //
+      // Program BAR0/1 for a PPB device
+      //
+      for (Idx = 0; Idx < PPB_MAX_BAR; Idx++) {
+        if ((PciIoDevice->PpbBar[Idx].Length > 0) && (PciIoDevice->PpbBar[Idx].BarType == BarType)) {
+          PciIoDevice->PpbBar[Idx].BaseAddress += PciIoDevice->Parent->PciBar[BarType - 1].BaseAddress;
+          ProgramBar (PciIoDevice, Idx, FALSE);
+        }
+      }
+    }
     for (Idx = 0; Idx < PCI_MAX_BAR; Idx++) {
       if ((PciIoDevice->PciBar[Idx].Length > 0) && (PciIoDevice->PciBar[Idx].BarType == BarType)) {
         PciIoDevice->PciBar[Idx].BaseAddress += PciIoDevice->Parent->PciBar[BarType - 1].BaseAddress;
@@ -1091,9 +1132,9 @@ CalculateResource (
   PCI_IO_DEVICE             *PciIoDevice;
   UINT32                     Idx;
   PCI_BAR_RESOURCE           ParentRes;
-  PCI_BAR_RESOURCE           *PciBarRes;
-  UINT64                      Base;
-  UINT64                      Alignment;
+  PCI_BAR_RESOURCE          *PciBarRes;
+  UINT64                     Base;
+  UINT64                     Alignment;
 
   if ((BarType == PciBarTypeUnknown) || (BarType > PciBarTypePMem64)) {
     return;
@@ -1105,6 +1146,16 @@ CalculateResource (
   while (CurrentLink != NULL && CurrentLink != &Parent->ChildList) {
     PciIoDevice = PCI_IO_DEVICE_FROM_LINK (CurrentLink);
     if (PciIoDevice->ChildList.ForwardLink != &PciIoDevice->ChildList) {
+      //
+      // Scope for the BAR0/1 space for a PPB
+      //
+      for (Idx = 0; Idx < PPB_MAX_BAR; Idx++) {
+        if ((PciIoDevice->PpbBar[Idx].Length > 0) && (PciIoDevice->PpbBar[Idx].BarType == BarType)) {
+          PciBarRes = (PCI_BAR_RESOURCE *)PciAllocatePool (sizeof (PCI_BAR_RESOURCE));
+          PciBarRes->PciBar = &PciIoDevice->PpbBar[Idx];
+          PerformInsertionSortList (&ParentRes.Link, &PciBarRes->Link, ComparePciBarRes);
+        }
+      }
       CalculateResource (PciIoDevice, BarType);
     }
     for (Idx = 0; Idx < PCI_MAX_BAR; Idx++) {
@@ -1182,6 +1233,60 @@ EnablePciDevice (
   }
 }
 
+/**
+  Get a pointer of PCI resource allocation table
+
+  @param [out]  ResAllocTable   A table pointer for PCI resource allocation ranges
+
+ **/
+VOID
+GetPciResourceAllocTable (
+  OUT PCI_RES_ALLOC_TABLE       **ResAllocTable
+  )
+{
+  UINTN                          Length;
+
+  if (mResAllocTablePtr == NULL) {
+    mResAllocTablePtr = (PCI_RES_ALLOC_TABLE *)(UINTN)PcdGet32 (PcdPciResAllocTableBase);
+    if (mResAllocTablePtr == NULL) {
+      Length = sizeof (PCI_RES_ALLOC_TABLE) + sizeof (PCI_RES_ALLOC_RANGE);
+      mResAllocTablePtr = PciAllocatePool (Length);
+      CopyMem (&mResAllocTablePtr->ResourceRange[0], &mDefaultResRange, sizeof (PCI_RES_ALLOC_RANGE));
+      mResAllocTablePtr->NumOfEntries = 1;
+    }
+  }
+  *ResAllocTable = mResAllocTablePtr;
+}
+
+/**
+  Get the pointer of PCI resource allocation range for the specific RootBridge
+
+  @param [in] ResAllocTable   PCI Resource Allocation Table
+  @param [in] RootBridge      A specific RootBridge to get its resource allocation range
+
+  @retval PCI_RES_ALLOC_RANGE The resource range pointer of the specific RootBridge
+
+ **/
+CONST PCI_RES_ALLOC_RANGE *
+PciGetResAllocRange (
+  IN CONST  PCI_RES_ALLOC_TABLE *ResAllocTable,
+  IN        PCI_IO_DEVICE       *RootBridge
+  )
+{
+  UINT8   Index;
+
+  for (Index = 0; Index < ResAllocTable->NumOfEntries; Index++) {
+    if ((ResAllocTable->ResourceRange[Index].BusBase <= RootBridge->BusNumberRanges.BusBase) &&
+        (ResAllocTable->ResourceRange[Index].BusLimit >= RootBridge->BusNumberRanges.BusLimit)) {
+      return &ResAllocTable->ResourceRange[Index];
+    }
+  }
+
+  // Never reach here
+  ASSERT (FALSE);
+  return NULL;
+}
+
 #if DEBUG_PCI_ENUM
 /**
   Dumps the PCI BaseAddress, BarType, Offset,Length and Alignment for
@@ -1227,6 +1332,23 @@ DumpResourceBar (
       DEBUG ((DEBUG_INFO, "%aARI: CapOffset = 0x%X\n",
         Indent, PciIoDevice->AriCapabilityOffset));
     }
+  }
+  if (IS_PCI_BRIDGE(&(PciIoDevice->Pci))) {
+    //
+    // Dump BAR0/1 also for a PPB
+    //
+    DEBUG ((DEBUG_INFO, "%a  PPB BAR0/1\n", Indent));
+    for (Idx = 0; Idx < PPB_MAX_BAR; Idx++) {
+      if (PciIoDevice->PpbBar[Idx].Length == 0) {
+        continue;
+      }
+      DEBUG ((DEBUG_INFO, "%a  BAR[%d].TYP = %d\n", Indent,  Idx, PciIoDevice->PpbBar[Idx].BarType));
+      DEBUG ((DEBUG_INFO, "%a  BAR[%d].OFF = 0x%02X\n", Indent,  Idx, PciIoDevice->PpbBar[Idx].Offset));
+      DEBUG ((DEBUG_INFO, "%a  BAR[%d].BAS = %016lX", Indent,  Idx, PciIoDevice->PpbBar[Idx].BaseAddress));
+      DEBUG ((DEBUG_INFO, "  BAR[%d].LEN = %016lX",   Idx, PciIoDevice->PpbBar[Idx].Length));
+      DEBUG ((DEBUG_INFO, "  BAR[%d].ALN = %016lX\n", Idx, PciIoDevice->PpbBar[Idx].Alignment));
+    }
+    DEBUG ((DEBUG_INFO, "%a  PPB APPERTURE\n", Indent));
   }
   for (Idx = 0; Idx < PCI_MAX_BAR; Idx++) {
     if (PciIoDevice->PciBar[Idx].Length == 0) {
@@ -1286,7 +1408,7 @@ DumpDeivceTree (
  **/
 VOID
 DumpPciResources (
-  IN  PCI_IO_DEVICE     *RootBridge
+  IN  CONST PCI_IO_DEVICE   *RootBridge
   )
 {
   LIST_ENTRY                *CurrentLink;
@@ -1338,24 +1460,50 @@ DumpPciRootBridgeInfoHob (
     }
   }
 }
+
+/**
+  Dump PCI Resource Allocation Table
+
+**/
+VOID
+DumpPciResAllocTable (
+  VOID
+  )
+{
+  PCI_RES_ALLOC_TABLE   *ResAllocTable;
+  PCI_RES_ALLOC_RANGE   *ResRange;
+  UINT8   Index;
+
+  GetPciResourceAllocTable (&ResAllocTable);
+  ASSERT (ResAllocTable != NULL);
+
+  DEBUG ((DEBUG_INFO, "DumpPciResAllocTable: NumOfEntries %X\n", ResAllocTable->NumOfEntries));
+  for (Index = 0; Index < ResAllocTable->NumOfEntries; Index++) {
+    ResRange = &ResAllocTable->ResourceRange[Index];
+    DEBUG ((DEBUG_INFO, "Bus   : %X - %X\n", ResRange->BusBase, ResRange->BusLimit));
+    DEBUG ((DEBUG_INFO, " Io   : %X - %X\n", ResRange->IoBase, ResRange->IoLimit));
+    DEBUG ((DEBUG_INFO, " Mem32: %X - %X\n", ResRange->Mmio32Base, ResRange->Mmio32Limit));
+    DEBUG ((DEBUG_INFO, " Mem64: %llX - %llX\n", ResRange->Mmio64Base, ResRange->Mmio64Limit));
+  }
+}
 #endif
 
 /**
   Enable all Pci devices from scanned Pci Root Bridges
 
-  @param [in] RootBridge  A pointer which has Root Bridges in ChildList
+  @param [in] RootBridges A pointer which has Root Bridges in ChildList
 
  **/
 VOID
 PciEnableDevices (
-  IN  PCI_IO_DEVICE     *RootBridge
+  IN  CONST PCI_IO_DEVICE   *RootBridges
   )
 {
   LIST_ENTRY                *CurrentLink;
   PCI_IO_DEVICE             *Root;
 
-  CurrentLink = RootBridge->ChildList.ForwardLink;
-  while ((CurrentLink != NULL) && (CurrentLink != &RootBridge->ChildList)) {
+  CurrentLink = RootBridges->ChildList.ForwardLink;
+  while ((CurrentLink != NULL) && (CurrentLink != &RootBridges->ChildList)) {
     Root = PCI_IO_DEVICE_FROM_LINK (CurrentLink);
     EnablePciDevice (Root);
 
@@ -1364,61 +1512,94 @@ PciEnableDevices (
 }
 
 /**
-  Program Pci resources according to BAR type
+  Program Pci resources
 
-  @param [in] RootBridge    A pointer which has Root Bridges in ChildList
-  @param [in] BarType       Base address register type
-  @param [in] BaseAddress   The resource base address to be allocated
+  @param [in] EnumPolicy    PciEnum Policy with root bridge mask to be scanned
+  @param [in] RootBridges   A pointer which has Root Bridges in ChildList
 
-  @retval Address           Max address allocated for BarType
  **/
-UINT64
+VOID
 PciProgramResources (
-  IN  PCI_IO_DEVICE     *RootBridge,
-  IN  PCI_BAR_TYPE       BarType,
-  IN  UINT64             BaseAddress
-  )
+  IN CONST  PCI_ENUM_POLICY_INFO  *EnumPolicy,
+  IN CONST  PCI_RES_ALLOC_TABLE   *ResAllocTable,
+  IN CONST  PCI_IO_DEVICE         *RootBridges
+)
 {
   LIST_ENTRY                *CurrentLink;
   PCI_IO_DEVICE             *Root;
+  CONST PCI_RES_ALLOC_RANGE *ResRange;
   UINT64                     Address;
+  PCI_BAR_TYPE               BarType;
+  PCI_BAR_TYPE               BarTypeStart;
+  PCI_BAR_TYPE               BarTypeEnd;
+  INT8                       BarTypeStep;
+  UINT64                     ResBase[3];
+  UINT64                     ResLimit[3];
+  UINT8                      Index;
 
-  if ((BarType == PciBarTypeUnknown) || (BarType > PciBarTypePMem64)) {
-    return BaseAddress;
-  }
-
-  Address = BaseAddress;
-  CurrentLink = RootBridge->ChildList.ForwardLink;
-  while ((CurrentLink != NULL) && (CurrentLink != &RootBridge->ChildList)) {
+  CurrentLink = RootBridges->ChildList.ForwardLink;
+  while ((CurrentLink != NULL) && (CurrentLink != &RootBridges->ChildList)) {
     Root = PCI_IO_DEVICE_FROM_LINK (CurrentLink);
-    CalculateResource (Root, BarType);
-    Address = ALIGN(Address, Root->PciBar[BarType - 1].Alignment);
-    Root->PciBar[BarType - 1].BaseAddress = Address;
-    ProgramResource (Root, BarType);
 
-    // Base Address for next device
-    Address += Root->PciBar[BarType - 1].Length;
+    ResRange = PciGetResAllocRange (ResAllocTable, Root);
+    ResBase[0]  = ResRange->IoBase;
+    ResLimit[0] = ResRange->IoLimit;
+    ResBase[1]  = ResRange->Mmio32Base;
+    ResLimit[1] = ResRange->Mmio32Limit;
+    ResBase[2]  = ResRange->Mmio64Base;
+    ResLimit[2] = ResRange->Mmio64Limit;
+
+    if (EnumPolicy->Flag.AllocPmemFirst != 0) {
+      BarTypeStart = PciBarTypePMem64;
+      BarTypeEnd   = PciBarTypeIo16 - 1;
+      BarTypeStep  = -1;
+    } else {
+      BarTypeStart = PciBarTypeIo16;
+      BarTypeEnd   = PciBarTypePMem64 + 1;
+      BarTypeStep  = 1;
+    }
+
+    for (BarType = BarTypeStart; BarType != BarTypeEnd; BarType += BarTypeStep) {
+      if ((BarType < PciBarTypeIo16) || (BarType > PciBarTypePMem64)) {
+        break;
+      }
+      if (((BarType == PciBarTypeIo32) && (EnumPolicy->Downgrade.Io32 != 0)) ||
+          ((BarType == PciBarTypeMem64) && (EnumPolicy->Downgrade.Mem64 != 0)) ||
+          ((BarType == PciBarTypePMem64) && (EnumPolicy->Downgrade.PMem64 != 0))) {
+        continue;
+      }
+
+      Index = ((UINT8)BarType - 1) / 2;
+      if (BarType == PciBarTypeIo32) {
+        ResBase[Index] = ALIGN (ResBase[Index], 0xFFFF);
+      }
+
+      CalculateResource (Root, BarType);
+      Address = ResBase[Index];
+      Address = ALIGN (Address, Root->PciBar[BarType - 1].Alignment);
+      Root->PciBar[BarType - 1].BaseAddress = Address;
+      ProgramResource (Root, BarType);
+
+      ResBase[Index] += Root->PciBar[BarType - 1].Length;
+      ASSERT (ResBase[Index] <= ResLimit[Index]);
+    }
+
     CurrentLink = CurrentLink->ForwardLink;
   }
-
-  //
-  // Return max address allocated
-  //
-  return Address;
 }
 
 /**
  Scan Root Bridges depending on Pci Enumeration Policy
 
  @param [in]  EnumPolicy        PciEnum Policy with root bridge mask to be scanned
- @param [out] RootBridge        A pointer which has root bridges in ChildList
+ @param [out] RootBridges       A pointer which has root bridges in ChildList
  @param [out] RootBridgeCount   The number of detected Root Bridges
 
  **/
 EFI_STATUS
 PciScanRootBridges (
   IN CONST  PCI_ENUM_POLICY_INFO   *EnumPolicy,
-  OUT       PCI_IO_DEVICE         **RootBridge,
+  OUT       PCI_IO_DEVICE         **RootBridges,
   OUT       UINT8                  *RootBridgeCount
   )
 {
@@ -1434,7 +1615,7 @@ PciScanRootBridges (
   UINT8                             BusLimit;
   UINT32                            RootBridgeDecodes;
 
-  if ((EnumPolicy == NULL) || (RootBridge == NULL) || (RootBridgeCount == NULL)) {
+  if ((EnumPolicy == NULL) || (RootBridges == NULL) || (RootBridgeCount == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -1471,13 +1652,13 @@ PciScanRootBridges (
   // Root bridge decode space
   //
   RootBridgeDecodes = 0xFFFFFFFF;
-  if (EnumPolicy->DowngradeIo32 != 0) {
+  if (EnumPolicy->Downgrade.Io32 != 0) {
     RootBridgeDecodes &= (UINT32)~(EFI_BRIDGE_IO32_DECODE_SUPPORTED);
   }
-  if (EnumPolicy->DowngradeMem64 != 0) {
+  if (EnumPolicy->Downgrade.Mem64 != 0) {
     RootBridgeDecodes &= (UINT32)~(EFI_BRIDGE_MEM64_DECODE_SUPPORTED);
   }
-  if (EnumPolicy->DowngradePMem64 != 0) {
+  if (EnumPolicy->Downgrade.PMem64 != 0) {
     RootBridgeDecodes &= (UINT32)~(EFI_BRIDGE_PMEM64_DECODE_SUPPORTED);
   }
 
@@ -1492,6 +1673,11 @@ PciScanRootBridges (
     if (PciExpressRead16 (Address) != 0xFFFF) {
       Root = CreatePciIoDevice (NULL, NULL, (UINT8)Bus, 0, 0);
       Root->Decodes = RootBridgeDecodes;
+      if ((Bus == 0) && (EnumPolicy->Downgrade.Bus0 == 1)) {
+        Root->Decodes &= (UINT32)~(EFI_BRIDGE_IO32_DECODE_SUPPORTED);
+        Root->Decodes &= (UINT32)~(EFI_BRIDGE_MEM64_DECODE_SUPPORTED);
+        Root->Decodes &= (UINT32)~(EFI_BRIDGE_PMEM64_DECODE_SUPPORTED);
+      }
       Root->BusNumberRanges.BusBase  = (UINT8)Bus;
       Root->BusNumberRanges.BusLimit = BusLimit;
 
@@ -1511,7 +1697,7 @@ PciScanRootBridges (
       }
     }
   }
-  *RootBridge = Bridge;
+  *RootBridges = Bridge;
   *RootBridgeCount = Count;
 
   return EFI_SUCCESS;
@@ -1570,7 +1756,7 @@ FillPciRootBridgeInfo (
 /**
   Build PCI Root Bridge Info HOB
 
-  @param [in] RootBridge        A pointer of Root Bridges List
+  @param [in] RootBridges       A pointer of Root Bridges List
   @param [in] RootBridgeCount   The number of found root bridges
 
   @retval EFI_SUCCESS           Create HOBs successfully
@@ -1580,8 +1766,8 @@ FillPciRootBridgeInfo (
  **/
 EFI_STATUS
 BuildPciRootBridgeInfoHob (
-  IN  PCI_IO_DEVICE     *RootBridge,
-  IN  UINT8              RootBridgeCount
+  IN  CONST PCI_IO_DEVICE   *RootBridges,
+  IN        UINT8            RootBridgeCount
   )
 {
   EFI_STATUS                 Status;
@@ -1603,8 +1789,8 @@ BuildPciRootBridgeInfoHob (
   RootBridgeInfoHob->Revision = 1;
   RootBridgeInfoHob->Count    = 0;
 
-  CurrentLink = RootBridge->ChildList.ForwardLink;
-  while ((CurrentLink != NULL) && (CurrentLink != &RootBridge->ChildList)) {
+  CurrentLink = RootBridges->ChildList.ForwardLink;
+  while ((CurrentLink != NULL) && (CurrentLink != &RootBridges->ChildList)) {
     Root = PCI_IO_DEVICE_FROM_LINK (CurrentLink);
     Status = FillPciRootBridgeInfo (Root, RootBridgeInfoHob, RootBridgeCount);
     if (EFI_ERROR (Status)) {
@@ -1637,52 +1823,36 @@ PciEnumeration (
   )
 {
   CONST PCI_ENUM_POLICY_INFO  *EnumPolicy;
-  PCI_IO_DEVICE               *RootBridge;
-  UINT64                      BaseAddress;
+  PCI_RES_ALLOC_TABLE         *ResAllocTable;
+  PCI_IO_DEVICE               *RootBridges;
   UINT8                       RootBridgeCount;
   EFI_STATUS                  Status;
 
   SetAllocationPool (MemPool);
 
+  // Update PCI default resource ranges
+  mDefaultResRange.IoBase       = PcdGet32 (PcdPciResourceIoBase);
+  mDefaultResRange.Mmio32Base   = PcdGet32 (PcdPciResourceMem32Base);
+  mDefaultResRange.Mmio64Base   = PcdGet64 (PcdPciResourceMem64Base);
+  mDefaultResRange.Mmio64Limit  = PcdGet64 (PcdPciResourceMem64Base) + (PcdGet64 (PcdPciResourceMem64Base) >> 1);
+
   EnumPolicy = (PCI_ENUM_POLICY_INFO *)PcdGetPtr (PcdPciEnumPolicyInfo);
   RootBridgeCount = 0;
 
-  Status = PciScanRootBridges (EnumPolicy, &RootBridge, &RootBridgeCount);
+  Status = PciScanRootBridges (EnumPolicy, &RootBridges, &RootBridgeCount);
   ASSERT_EFI_ERROR (Status);
   ASSERT (RootBridgeCount > 0);
 
-  BaseAddress = PcdGet32 (PcdPciResourceIoBase);
-  BaseAddress = PciProgramResources (RootBridge, PciBarTypeIo16, BaseAddress);
+  GetPciResourceAllocTable (&ResAllocTable);
+  PciProgramResources (EnumPolicy, ResAllocTable, RootBridges);
 
-  if ((EnumPolicy != NULL) && (EnumPolicy->DowngradeIo32 == 0)) {
-    BaseAddress = ALIGN (BaseAddress, 0xFFFF);
-    PciProgramResources (RootBridge, PciBarTypeIo32, BaseAddress);
-  }
+  PciEnableDevices (RootBridges);
 
-  BaseAddress = PcdGet32 (PcdPciResourceMem32Base);
-  BaseAddress = PciProgramResources(RootBridge, PciBarTypeMem32, BaseAddress);
-  BaseAddress = ALIGN(BaseAddress, 0xFFFFFFF);
-  PciProgramResources(RootBridge, PciBarTypePMem32, BaseAddress);
-
-  BaseAddress = PcdGet64 (PcdPciResourceMem64Base);
-  if ((EnumPolicy != NULL) && (EnumPolicy->DowngradeMem64 == 0)) {
-    ASSERT (BaseAddress > 0xFFFFFFFF);
-    BaseAddress = PciProgramResources (RootBridge, PciBarTypeMem64, BaseAddress);
-  }
-
-  if ((EnumPolicy != NULL) && (EnumPolicy->DowngradePMem64 == 0)) {
-    BaseAddress = MAX (BaseAddress, PcdGet64 (PcdPciResourceMem64Base));
-    ASSERT (BaseAddress > 0xFFFFFFFF);
-    BaseAddress = ALIGN (BaseAddress, 0xFFFFFFF);
-    PciProgramResources (RootBridge, PciBarTypePMem64, BaseAddress);
-  }
-
-  PciEnableDevices (RootBridge);
-
-  BuildPciRootBridgeInfoHob (RootBridge, RootBridgeCount);
+  BuildPciRootBridgeInfoHob (RootBridges, RootBridgeCount);
 
 #if DEBUG_PCI_ENUM
-  DumpPciResources (RootBridge);
+  DumpPciResAllocTable ();
+  DumpPciResources (RootBridges);
   DumpPciRootBridgeInfoHob ();
   DEBUG ((DEBUG_INFO, "MEM Pool Used: 0x%08X\n", (UINT32)(UINTN)GetAllocationPool() - (UINT32)(UINTN)MemPool));
 #endif

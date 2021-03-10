@@ -18,6 +18,7 @@
 #include <Pi/PiBootMode.h>
 #include <IndustryStandard/Tpm2Acpi.h>
 #include <Library/SecureBootLib.h>
+#include <Library/ResetSystemLib.h>
 #include "Tpm2CommandLib.h"
 #include "Tpm2DeviceLib.h"
 #include "TpmLibInternal.h"
@@ -461,8 +462,9 @@ TpmInit(
       DEBUG ((DEBUG_INFO, "Attempting TPM_Startup with TPM_SU_STATE. \n"));
       Status = Tpm2Startup (TPM_SU_STATE);
       if (EFI_ERROR (Status)) {
-        DEBUG ((DEBUG_WARN, "TPM_Startup(TPM_SU_STATE) failed !!. Attempting TPM_Startup(TPM_SU_CLEAR).\n"));
-        Status = Tpm2Startup (TPM_SU_CLEAR);
+        //  As per PC Client spec, SRTM should perform a host platform reset.
+        ResetSystem(EfiResetCold);
+        CpuDeadLoop ();
       }
     } else {
       Status = Tpm2Startup (TPM_SU_CLEAR);

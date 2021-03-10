@@ -49,6 +49,7 @@
 
 #define PPB_BAR_0                             0
 #define PPB_BAR_1                             1
+#define PPB_MAX_BAR                           2
 
 #define PCI_IO_DEVICE_FROM_LINK(a)       BASE_CR (a, PCI_IO_DEVICE, Link)
 #define PCI_BAR_RESOURCE_FROM_LINK(a)    BASE_CR (a, PCI_BAR_RESOURCE, Link)
@@ -61,13 +62,24 @@ typedef enum {
 } BUS_SCAN_TYPE;
 
 typedef struct {
-  UINT8           DowngradeIo32;
-  UINT8           DowngradeMem64;
-  UINT8           DowngradePMem64;
-  UINT8           Reserved;
-  UINT8           BusScanType;
-  UINT8           NumOfBus;
-  UINT8           BusScanItems[0];
+  UINT16            Io32            : 1;
+  UINT16            Mem64           : 1;
+  UINT16            PMem64          : 1;
+  UINT16            Bus0            : 1;
+  UINT16            Reserved        : 12;
+} PCI_RES_DOWNGRADE;
+
+typedef struct {
+  UINT16            AllocPmemFirst  : 1;
+  UINT16            Reserved        : 15;
+} PCI_ENUM_FLAG;
+
+typedef struct {
+  PCI_RES_DOWNGRADE Downgrade;
+  PCI_ENUM_FLAG     Flag;
+  UINT8             BusScanType;
+  UINT8             NumOfBus;
+  UINT8             BusScanItems[0];
 } PCI_ENUM_POLICY_INFO;
 
 //
@@ -113,6 +125,11 @@ struct _PCI_IO_DEVICE {
   // BAR for this PCI Device
   //
   PCI_BAR                                   PciBar[PCI_MAX_BAR];
+
+  //
+  // PPB Non-Apperture BAR for 0x10/0x14
+  //
+  PCI_BAR                                   PpbBar[PPB_MAX_BAR];
 
   //
   // The resource decode the bridge supports

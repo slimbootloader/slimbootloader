@@ -1,0 +1,488 @@
+## @file
+
+#
+
+#  Slim Bootloader CFGDATA Template File.
+
+#
+
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+#
+
+##
+
+
+
+
+
+PCIERP_PERPORT_TMPL: >
+
+  - $ACTION      :
+
+      page         : PLT_PCIE_RP_$(1)_FEAT:PLT_PCIE_RP_FEAT:"RP $(1) Config"
+
+  - $ACTION      :
+
+      page         : PLT_PCIE_RP_$(1)_FEAT
+
+  - RpFeatures$(1) :
+
+    - $STRUCT      :
+
+        struct       : RP_FEATURES[]
+
+        name         : RP $(1) Features
+
+        type         : EditNum, HEX
+
+        help         : >
+
+                       GPIO $(1) Feature set
+
+        length       : 0x10
+
+        value        : $(2)
+
+    - Aspm         :
+
+        name         : PCIE RP Aspm
+
+        type         : Combo
+
+        option       : 0x0:ASPM Not Supported, 0x1:L0s supported, 0x2:L1 supported, 0x3:L0s & L1 supported, 0x4:AutoConfig
+
+        help         : >
+
+                       PCI Express Active State Power Management settings.
+
+        condition    : $PCIE_CFG_DATA.RpFeatures$(1).RpPresent == 1
+
+        length       : 4b
+
+    - PhySlotNum   :
+
+        name         : PCIE RP Physical Slot Number
+
+        type         : EditNum, HEX, (0x00, 0x18)
+
+        help         : >
+
+                       Indicates the slot number for the root port. Default is the value as root port index.
+
+        condition    : $PCIE_CFG_DATA.RpFeatures$(1).RpPresent == 1
+
+        length       : 6b
+
+    - Gen3EqPh3Method :
+
+        name         : PCIE RP Gen3 Equalization Phase Method
+
+        type         : Combo
+
+        option       : 0x0:DEPRECATED (hardware equalization), 0x1:hardware equalization, 0x4:Fixed equalization
+
+        help         : >
+
+                       PCIe Gen3 Eq Ph3 Method. 0- DEPRECATED, hardware equalization; 1- hardware equalization; 4- Fixed equalization, requires Coefficient settings per lane.
+
+        condition    : $PCIE_CFG_DATA.RpFeatures$(1).RpPresent == 1
+
+        length       : 4b
+
+    - L1SubStates  :
+
+        name         : PCIE RP L1 Substates
+
+        type         : Combo
+
+        option       : 0x0:L1SubStates_Disabled, 0x1:L1SubStatesL1_1, 0x2:L1SubStatesL1_1_2, 0x3:L1SubStatesMax
+
+        help         : >
+
+                       The L1 Substates configuration of the root port.
+
+        condition    : $PCIE_CFG_DATA.RpFeatures$(1).RpPresent == 1
+
+        length       : 2b
+
+    - Uptp         :
+
+        name         : PCIE RP Upstream Port Transmiter Preset
+
+        type         : EditNum, HEX, (0x0, 0xF)
+
+        help         : >
+
+                       Used during Gen3 Link Equalization. Used for all lanes.  Default is 5.
+
+        condition    : $PCIE_CFG_DATA.RpFeatures$(1).RpPresent == 1
+
+        length       : 4b
+
+    - Dptp         :
+
+        name         : PCIE RP Downstream Port Transmiter Preset
+
+        type         : EditNum, HEX, (0x0, 0xF)
+
+        help         : >
+
+                       Used during Gen3 Link Equalization. Used for all lanes.  Default is 7.
+
+        condition    : $PCIE_CFG_DATA.RpFeatures$(1).RpPresent == 1
+
+        length       : 4b
+
+    - EqPh3Cm      :
+
+        name         : PCIE Eq Ph3 Lane Param Cm (Coefficient C-1)
+
+        type         : EditNum, HEX, (0x0, 0xF)
+
+        help         : >
+
+                       PCIE_EQ_LANE_PARAM. Coefficient C-1.
+
+        condition    : $PCIE_CFG_DATA.RpFeatures$(1).RpPresent == 1
+
+        length       : 4b
+
+    - EqPh3Cp      :
+
+        name         : PCIE Eq Ph3 Lane Param Cp (Coefficient C+1)
+
+        type         : EditNum, HEX, (0x0, 0xF)
+
+        help         : >
+
+                       PCIE_EQ_LANE_PARAM. Coefficient C+1.
+
+        condition    : $PCIE_CFG_DATA.RpFeatures$(1).RpPresent == 1
+
+        length       : 4b
+
+    - MaxSnoopLat  :
+
+        name         : PCIE RP Ltr Max Snoop Latency
+
+        type         : EditNum, HEX, (0x00, 0xFFFF)
+
+        help         : >
+
+                       Latency Tolerance Reporting, Max Snoop Latency.
+
+        condition    : $PCIE_CFG_DATA.RpFeatures$(1).RpPresent == 1
+
+        length       : 16b
+
+    - MaxNoSnoopLat :
+
+        name         : PCIE RP Ltr Max No Snoop Latency
+
+        type         : EditNum, HEX, (0x00, 0xFFFF)
+
+        help         : >
+
+                       Latency Tolerance Reporting, Max Non-Snoop Latency.
+
+        condition    : $PCIE_CFG_DATA.RpFeatures$(1).RpPresent == 1
+
+        length       : 16b
+
+    - SnoopLatVal  :
+
+        name         : PCIE RP Snoop Latency Override Value
+
+        type         : EditNum, HEX, (0x00, 0xFFFF)
+
+        help         : >
+
+                       Latency Tolerance Reporting, Snoop Latency Override Value.
+
+        condition    : $PCIE_CFG_DATA.RpFeatures$(1).RpPresent == 1
+
+        length       : 16b
+
+    - NoSnoopLatVal :
+
+        name         : PCIE RP Non Snoop Latency Override Value
+
+        type         : EditNum, HEX, (0x00, 0xFFFF)
+
+        help         : >
+
+                       Latency Tolerance Reporting, Non-Snoop Latency Override Value.
+
+        condition    : $PCIE_CFG_DATA.RpFeatures$(1).RpPresent == 1
+
+        length       : 16b
+
+    - SnoopLatMode :
+
+        name         : PCIE RP Snoop Latency Override Mode
+
+        type         : EditNum, HEX, (0x1, 0x2)
+
+        help         : >
+
+                       Latency Tolerance Reporting, Snoop Latency Override Mode.
+
+        condition    : $PCIE_CFG_DATA.RpFeatures$(1).RpPresent == 1
+
+        length       : 2b
+
+    - NoSnoopLatMode :
+
+        name         : PCIE RP Non-Snoop Latency Override Mode
+
+        type         : EditNum, HEX, (0x1, 0x2)
+
+        help         : >
+
+                       Latency Tolerance Reporting, Non-Snoop Latency Override Mode.
+
+        condition    : $PCIE_CFG_DATA.RpFeatures$(1).RpPresent == 1
+
+        length       : 2b
+
+    - SnoopLatMul  :
+
+        name         : PCIE RP Snoop Latency Override Multiplier
+
+        type         : EditNum, HEX, (0x1, 0x2)
+
+        help         : >
+
+                       Latency Tolerance Reporting, Snoop Latency Override Multiplier.
+
+        condition    : $PCIE_CFG_DATA.RpFeatures$(1).RpPresent == 1
+
+        length       : 2b
+
+    - NoSnoopLatMul :
+
+        name         : PCIE RP Non-Snoop Latency Override Multiplier
+
+        type         : EditNum, HEX, (0x1, 0x2)
+
+        help         : >
+
+                       Latency Tolerance Reporting, Non-Snoop Latency Override Multiplier.
+
+        condition    : $PCIE_CFG_DATA.RpFeatures$(1).RpPresent == 1
+
+        length       : 2b
+
+    - PmSciEn      :
+
+        name         : Enable PCIE RP Pm Sci
+
+        type         : Combo
+
+        option       : $EN_DIS
+
+        help         : >
+
+                       Indicate whether the root port power manager SCI is enabled.
+
+        condition    : $PCIE_CFG_DATA.RpFeatures$(1).RpPresent == 1
+
+        length       : 1b
+
+    - AcsEn        :
+
+        name         : PCIE RP Access Control Services Extended Capability
+
+        type         : Combo
+
+        option       : $EN_DIS
+
+        help         : >
+
+                       Enable/Disable PCIE RP Access Control Services Extended Capability.
+
+        condition    : $PCIE_CFG_DATA.RpFeatures$(1).RpPresent == 1
+
+        length       : 1b
+
+    - MaxPld       :
+
+        name         : PCIE RP Max Payload
+
+        type         : Combo
+
+        option       : 0x0:MaxPayload128, 0x1:Maxpayload256
+
+        help         : >
+
+                       Max Payload Size supported, Default 128B.
+
+        condition    : $PCIE_CFG_DATA.RpFeatures$(1).RpPresent == 1
+
+        length       : 1b
+
+    - SlotImplemented :
+
+        name         : PCH PCIe root port connection type
+
+        type         : Combo
+
+        option       : $EN_DIS
+
+        help         : >
+
+                       0- built-in device, 1:slot
+
+        condition    : $PCIE_CFG_DATA.RpFeatures$(1).RpPresent == 1
+
+        length       : 1b
+
+    - CpmEn        :
+
+        name         : PCIE RP Clock Power Management
+
+        type         : Combo
+
+        option       : $EN_DIS
+
+        help         : >
+
+                       Enable/Disable PCIE RP Clock Power Management, even if disabled, CLKREQ# signal can still be controlled by L1 PM substates mechanism
+
+        condition    : $PCIE_CFG_DATA.RpFeatures$(1).RpPresent == 1
+
+        length       : 1b
+
+    - LtrEn        :
+
+        name         : PCIE RP Ltr Enable
+
+        type         : Combo
+
+        option       : $EN_DIS
+
+        help         : >
+
+                       Latency Tolerance Reporting Mechanism.
+
+        condition    : $PCIE_CFG_DATA.RpFeatures$(1).RpPresent == 1
+
+        length       : 1b
+
+    - ClkReqDetect :
+
+        name         : Enable PCIE RP Clk Req Detect
+
+        type         : Combo
+
+        option       : $EN_DIS
+
+        help         : >
+
+                       Probe CLKREQ# signal before enabling CLKREQ# based power management.
+
+        condition    : $PCIE_CFG_DATA.RpFeatures$(1).RpPresent == 1
+
+        length       : 1b
+
+    - AdvErrReport :
+
+        name         : PCIE RP Advanced Error Report
+
+        type         : Combo
+
+        option       : $EN_DIS
+
+        help         : >
+
+                       Indicate whether the Advanced Error Reporting is enabled.
+
+        condition    : $PCIE_CFG_DATA.RpFeatures$(1).RpPresent == 1
+
+        length       : 1b
+
+    - Reserved     :
+
+        name         : Reserved
+
+        type         : Reserved
+
+        length       : 15b
+
+    - RpPresent    :
+
+        name         : RP Present
+
+        type         : Reserved
+
+        length       : 1b
+
+
+
+
+
+PCIE_PER_CLK_TMPL: >
+
+  - $ACTION      :
+
+      page         : PLT_PCIE_CLK_FEAT_$(1):PLT_PCIE_CLK_FEAT:"Clock $(1) Config"
+
+  - $ACTION      :
+
+      page         : PLT_PCIE_CLK_FEAT_$(1)
+
+  - ClkFeatures$(1) :
+
+    - $STRUCT      :
+
+        name         : PCIE Clock$(1) Features
+
+        struct       : CLOCK_FEATURES[]
+
+        length       : 0x04
+
+        value        : $(2)
+
+    - ClkReq       :
+
+        name         : PCIE Clock Request Number
+
+        type         : EditNum, HEX, (0x00, 0xFF)
+
+        help         : >
+
+                       Configure PCIE Clock Request Number. 0xFF:Disable CLKREQ, Default 1:1 mapping with Clock numbers
+
+        length       : 8b
+
+    - ClkUsage     :
+
+        name         : PCIE Clock Usage
+
+        type         : EditNum, HEX, (0x00, 0xFF)
+
+        help         : >
+
+                       Configure PCIE Clock Usage, 0x0-0x17:PCIE_PCH, 0x40-0x43:PCIE_PEG, 0x70:LAN_CLOCK, 0x80:FREE_RUNNING, 0xFF:NOT_USED
+
+        length       : 8b
+
+    - Reserved     :
+
+        name         : Reserved
+
+        type         : Reserved
+
+        help         : >
+
+                       Reserved
+
+        length       : 16b
+
+
+
+
+

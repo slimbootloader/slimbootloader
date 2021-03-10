@@ -47,6 +47,12 @@ BoardNotifyPhase (
   }
 
   if (FspPhaseMask != 0) {
+
+    if (FspPhaseMask & BIT1) {
+      // Sigal MP to stop
+      MpInit (EnumMpInitDone);
+    }
+
     if ((FspPhaseMask & mFspPhaseMask) == 0) {
       // Only call FSP notify once
       Status = CallFspNotifyPhase (FspPhase);
@@ -72,7 +78,7 @@ BoardNotifyPhase (
   Display graphical splash screen
 
   @retval EFI_SUCCESS     Splash screen was successfully displayed
-  @retval EFI_UNSUPPORTED Frame buffer access not supported
+  @retval EFI_NOT_FOUND   Frame buffer hob not found
   @retval EFI_UNSUPPORTED BmpImage is not a valid *.BMP image
 
 **/
@@ -82,26 +88,20 @@ DisplaySplash (
   VOID
   )
 {
-  EFI_STATUS                          Status;
+  EFI_STATUS                           Status;
   VOID                                *SplashLogoBmp;
   EFI_PEI_GRAPHICS_INFO_HOB           *GfxInfoHob;
-  EFI_GRAPHICS_OUTPUT_BLT_PIXEL_UNION *GopBlt;
-  UINTN                               GopBltSize;
-
-  GopBlt = NULL;
-  GopBltSize = 0;
 
   // Get framebuffer info
   GfxInfoHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GetGuidHobData (NULL, NULL, &gEfiGraphicsInfoHobGuid);
   if (GfxInfoHob == NULL) {
-    return EFI_UNSUPPORTED;
+    return EFI_NOT_FOUND;
   }
 
   // Convert image from BMP format and write to frame buffer
-  GopBlt = NULL;
   SplashLogoBmp = (VOID *)(UINTN)PCD_GET32_WITH_ADJUST (PcdSplashLogoAddress);
   ASSERT (SplashLogoBmp != NULL);
-  Status = DisplayBmpToFrameBuffer (SplashLogoBmp, (VOID **)&GopBlt, &GopBltSize, GfxInfoHob);
+  Status = DisplayBmpToFrameBuffer (SplashLogoBmp, NULL, 0, GfxInfoHob);
 
   return Status;
 }
@@ -332,23 +332,27 @@ BuildBaseInfoHob (
   }
 
   // Build graphic info hob
-  BlGfxHob = BuildGuidHob (&gEfiGraphicsInfoHobGuid, sizeof (EFI_PEI_GRAPHICS_INFO_HOB));
-  if (BlGfxHob != NULL) {
-    ZeroMem (BlGfxHob, sizeof (EFI_PEI_GRAPHICS_INFO_HOB));
+  BlGfxHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GetGuidHobData (NULL, &Length, &gEfiGraphicsInfoHobGuid);
+  if (BlGfxHob == NULL) {
     FspGfxHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GetGuidHobData (LdrGlobal->FspHobList, &Length,
                   &gEfiGraphicsInfoHobGuid);
     if (FspGfxHob != NULL) {
-      CopyMem (BlGfxHob, FspGfxHob, sizeof (EFI_PEI_GRAPHICS_INFO_HOB));
-      GfxMode = &BlGfxHob->GraphicsMode;
-      DEBUG ((DEBUG_INFO, "Graphics Info: %d x %d x 32 @ 0x%08X\n",GfxMode->HorizontalResolution,\
-        GfxMode->VerticalResolution, BlGfxHob->FrameBufferBase));
-      if ((GfxMode->PixelFormat != PixelRedGreenBlueReserved8BitPerColor) &&
-          (GfxMode->PixelFormat != PixelBlueGreenRedReserved8BitPerColor)) {
-        DEBUG ((DEBUG_ERROR, "Graphics PixelFormat NOT expected (0x%x)\n", GfxMode->PixelFormat));
+      BlGfxHob = BuildGuidHob (&gEfiGraphicsInfoHobGuid, sizeof (EFI_PEI_GRAPHICS_INFO_HOB));
+      if (BlGfxHob != NULL) {
+        CopyMem (BlGfxHob, FspGfxHob, sizeof (EFI_PEI_GRAPHICS_INFO_HOB));
+        GfxMode = &BlGfxHob->GraphicsMode;
+        DEBUG ((DEBUG_INFO, "Graphics Info: %d x %d x 32 @ 0x%08X\n",GfxMode->HorizontalResolution,\
+          GfxMode->VerticalResolution, BlGfxHob->FrameBufferBase));
+        if ((GfxMode->PixelFormat != PixelRedGreenBlueReserved8BitPerColor) &&
+            (GfxMode->PixelFormat != PixelBlueGreenRedReserved8BitPerColor)) {
+          DEBUG ((DEBUG_ERROR, "Graphics PixelFormat NOT expected (0x%x)\n", GfxMode->PixelFormat));
+        }
       }
     } else {
-      DEBUG ((DEBUG_INFO, "Failed to get Graphics Info HOB from FSP\n"));
+      DEBUG ((DEBUG_INFO, "Failed to get GFX HOB from FSP\n"));
     }
+  } else {
+    DEBUG ((DEBUG_INFO, "Use existing GFX HOB from bootloader\n"));
   }
 
   // Build graphic device info hob
@@ -447,6 +451,7 @@ BuildExtraInfoHob (
   PLT_DEVICE_TABLE                 *DeviceTable;
   VOID                             *DeviceTableHob;
   LDR_SMM_INFO                     *SmmInfoHob;
+  SYS_CPU_TASK_HOB                 *SysCpuTaskHob;
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
   S3Data    = (S3_DATA *)LdrGlobal->S3DataPtr;
@@ -578,6 +583,15 @@ BuildExtraInfoHob (
     SysCpuInfo = MpGetInfo ();
     LoaderPlatformInfo->CpuCount = SysCpuInfo->CpuCount;
     PlatformUpdateHobInfo (&gLoaderPlatformInfoGuid, LoaderPlatformInfo);
+  }
+
+  // Build MP CPU task info Hob
+  if (GetPayloadId () == 0) {
+    Length        = sizeof (SYS_CPU_TASK_HOB);
+    SysCpuTaskHob = BuildGuidHob (&gLoaderMpCpuTaskInfoGuid, Length);
+    if (SysCpuTaskHob != NULL) {
+      SysCpuTaskHob->SysCpuTask = MpGetTask ();
+    }
   }
 
   return LdrGlobal->LdrHobList;

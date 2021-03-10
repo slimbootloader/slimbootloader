@@ -15,7 +15,7 @@ import sys
 sys.dont_write_bytecode = True
 sys.path.append (os.path.join('..', '..'))
 from BuildLoader import FLASH_MAP, BaseBoard, STITCH_OPS
-from BuildLoader import IPP_CRYPTO_OPTIMIZATION_MASK, IPP_CRYPTO_ALG_MASK
+from BuildLoader import IPP_CRYPTO_OPTIMIZATION_MASK, IPP_CRYPTO_ALG_MASK, HASH_USAGE
 
 #
 #    Temporary Memory Layout for APL
@@ -111,7 +111,7 @@ class Board(BaseBoard):
         self.FSP_IMAGE_ID         = '$APLFSP$'
 
         self.STAGE1A_SIZE         = 0x00008000
-        self.STAGE1B_SIZE         = 0x00035000
+        self.STAGE1B_SIZE         = 0x00036000
         if self.ENABLE_SOURCE_DEBUG:
             self.STAGE1B_SIZE += 0x2000
         self.STAGE2_SIZE          = 0x00032000
@@ -136,9 +136,11 @@ class Board(BaseBoard):
         self.STAGE1B_LOAD_BASE    = 0xFEF10000
         self.STAGE1B_FD_BASE      = 0xFEF80000
         self.STAGE1B_FD_SIZE      = 0x0006B000
+        if self.ENABLE_SOURCE_DEBUG:
+            self.STAGE1B_FD_SIZE += 0x00001000
         if self.RELEASE_MODE == 0:
             self.STAGE1B_FD_SIZE += 0x00002000
-            self.PAYLOAD_SIZE    += 0x00005000
+            self.PAYLOAD_SIZE    += 0x00007000
         # For Stage2, it is always compressed.
         # if STAGE2_LOAD_HIGH is 1, STAGE2_FD_BASE will be ignored
         self.STAGE2_FD_BASE       = 0x01000000
@@ -196,7 +198,8 @@ class Board(BaseBoard):
             'IgdOpRegionLib|Silicon/$(SILICON_PKG_NAME)/Library/IgdOpRegionLib/IgdOpRegionLib.inf',
             'IocIpcLib|Platform/$(BOARD_PKG_NAME)/Library/IocIpcLib/IocIpcLib.inf',
             'BootGuardLib|Silicon/$(SILICON_PKG_NAME)/Library/BootGuardLib20/BootGuardLib20.inf',
-            'HeciLib|Silicon/ApollolakePkg/Library/HeciLib/HeciLib.inf',
+            'HeciLib|Silicon/CommonSocPkg/Library/HeciLib/HeciLib.inf',
+            'MeChipsetLib|Silicon/ApollolakePkg/Library/MeChipsetLib/MeChipsetLib.inf',
             'PsdLib|Silicon/ApollolakePkg/Library/PsdLib/PsdLib.inf',
             'ShellExtensionLib|Platform/$(BOARD_PKG_NAME)/Library/ShellExtensionLib/ShellExtensionLib.inf',
             'BootMediaLib|Silicon/ApollolakePkg/Library/BootMediaLib/BootMediaLib.inf',

@@ -117,14 +117,6 @@ configs:
                        Specify platform test data string
         length       : 0x04
         value        : ''
-    - VbtImageId   :
-        name         : Platform VBT table
-        type         : Combo
-        option       : 1:800x600, 2:1024x768
-        help         : >
-                       Specify VBT image ID for desired graphics resolution
-        length       : 0x04
-        value        : 1
 
   - $ACTION      :
       page         : MEM

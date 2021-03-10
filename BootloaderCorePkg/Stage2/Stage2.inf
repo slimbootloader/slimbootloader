@@ -66,6 +66,7 @@
   LinuxLib
   SortLib
   StageLib
+  ThunkLib
 
 [Guids]
   gFspReservedMemoryResourceHobGuid
@@ -88,6 +89,7 @@
   gLoaderPlatformDataGuid
   gDeviceTableHobGuid
   gSmmInformationGuid
+  gLoaderMpCpuTaskInfoGuid
 
 [Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdMaxLibraryDataEntry

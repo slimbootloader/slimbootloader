@@ -18,7 +18,243 @@
 #include <Library/ContainerLib.h>
 #include <Library/DecompressLib.h>
 #include <Library/ConfigDataLib.h>
+#include <Library/LiteFvLib.h>
 #include "FirmwareUpdateHelper.h"
+#include <Service/SpiFlashService.h>
+
+SPI_FLASH_SERVICE   *mFwuSpiService = NULL;
+
+/**
+  This function initialized boot media.
+
+  It initializes SPI services and SPI Flash size information.
+
+**/
+VOID
+EFIAPI
+InitializeBootMedia(
+  VOID
+  )
+{
+  mFwuSpiService = (SPI_FLASH_SERVICE *)GetServiceBySignature (SPI_FLASH_SERVICE_SIGNATURE);
+  if (mFwuSpiService == NULL) {
+    return;
+  }
+
+  mFwuSpiService->SpiInit ();
+}
+
+/**
+  Get the SPI region base and size, based on the enum type
+
+  @param[in] FlashRegionType      The Flash Region type for for the base address which is listed in the Descriptor.
+  @param[out] BaseAddress         The Flash Linear Address for the Region 'n' Base
+  @param[out] RegionSize          The size for the Region 'n'
+
+  @retval EFI_SUCCESS             Read success
+  @retval EFI_INVALID_PARAMETER   Invalid region type given
+  @retval EFI_DEVICE_ERROR        The region is not used
+**/
+EFI_STATUS
+EFIAPI
+BootMediaGetRegion (
+  IN     FLASH_REGION_TYPE  FlashRegionType,
+  OUT    UINT32             *BaseAddress, OPTIONAL
+  OUT    UINT32             *RegionSize OPTIONAL
+  )
+{
+  return mFwuSpiService->SpiGetRegion (FlashRegionType, BaseAddress, RegionSize);
+}
+
+/**
+  This function reads blocks from the SPI device.
+
+  @param[in]  Address             The block address in the FlashRegionAll to read from on the SPI.
+  @param[in]  ByteCount           Size of the Buffer in bytes.
+  @param[out] Buffer              Pointer to caller-allocated buffer containing the data received during the SPI cycle.
+
+  @retval EFI_SUCCESS             Read completes successfully.
+  @retval others                  Device error, the command aborts abnormally.
+
+**/
+EFI_STATUS
+EFIAPI
+BootMediaRead (
+  IN     UINT64   Address,
+  IN     UINT32   ByteCount,
+  OUT    UINT8    *Buffer
+  )
+{
+  return mFwuSpiService->SpiRead (FlashRegionBios, (UINT32)Address, ByteCount, Buffer);
+}
+
+/**
+  This function reads blocks from the SPI device.
+
+  @param[in] FlashRegionType      The Flash Region type for flash cycle which is listed in the Descriptor.
+  @param[in]  Address             The block address in the FlashRegionAll to read from on the SPI.
+  @param[in]  ByteCount           Size of the Buffer in bytes.
+  @param[out] Buffer              Pointer to caller-allocated buffer containing the data received during the SPI cycle.
+
+  @retval EFI_SUCCESS             Read completes successfully.
+  @retval others                  Device error, the command aborts abnormally.
+
+**/
+EFI_STATUS
+EFIAPI
+BootMediaReadByType (
+  IN     FLASH_REGION_TYPE  FlashRegionType,
+  IN     UINT64             Address,
+  IN     UINT32             ByteCount,
+  OUT    UINT8              *Buffer
+  )
+{
+  return mFwuSpiService->SpiRead (FlashRegionType, (UINT32)Address, ByteCount, Buffer);
+}
+
+/**
+  This function writes blocks from the SPI device.
+
+  @param[in]   Address            The block address in the FlashRegionAll to read from on the SPI.
+  @param[in]   ByteCount          Size of the Buffer in bytes.
+  @param[out]  Buffer             Pointer to the data to write.
+
+  @retval EFI_SUCCESS             Write completes successfully.
+  @retval others                  Device error, the command aborts abnormally.
+
+**/
+EFI_STATUS
+EFIAPI
+BootMediaWrite (
+  IN     UINT64   Address,
+  IN     UINT32   ByteCount,
+  OUT    UINT8    *Buffer
+  )
+{
+  return mFwuSpiService->SpiWrite (FlashRegionBios, (UINT32)Address, ByteCount, Buffer);
+}
+
+/**
+  This function erases blocks from the SPI device.
+
+  @param[in]  Address             The block address in the FlashRegionAll to read from on the SPI.
+  @param[in]  ByteCount           Size of the region to erase in bytes.
+
+  @retval EFI_SUCCESS             Erase completes successfully.
+  @retval others                  Device error, the command aborts abnormally.
+
+**/
+EFI_STATUS
+EFIAPI
+BootMediaErase (
+  IN     UINT64   Address,
+  IN     UINT32   ByteCount
+  )
+{
+  return mFwuSpiService->SpiErase (FlashRegionBios, (UINT32)Address, ByteCount);
+}
+
+/**
+  Get SVN from existing firmware
+
+  This routine get SPI base address and read first four bytes
+  to get STAGE1A FV base address, using this base address
+  this routine can calculate the offset to the SVN structure.
+
+  @param[in]  Stage1AFvPointer    Pointer to Stage1A fv base.
+  @param[out] BlVersion           Pointer to SBL version struct.
+
+  @retval EFI_SUCCESS             Read SVN success
+  @retval EFI_INVALID_PARAMETER   Invalid parameter
+**/
+EFI_STATUS
+EFIAPI
+GetSvn (
+  IN  UINT32                Stage1AFvPointer,
+  OUT BOOT_LOADER_VERSION   **BlVersion
+  )
+{
+  UINT32                Stage1AFvBase;
+  UINT32                TopSwapRegionSize;
+  EFI_STATUS            Status;
+
+  //
+  // When updating BP1 - read version from backup partition
+  // When updatint BP0 - since top swap bit is set, we need
+  //                     to substract the top swap region size
+  //                     because when top swap bit is set
+  //                     address lines will be inverted and point
+  //                     to stage 1A from primary partition.
+  //
+  Status = GetRegionInfo (&TopSwapRegionSize, NULL, NULL);
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "Error getting top swap region size, failed with status: %r\n", Status));
+    return Status;
+  }
+  Stage1AFvPointer = Stage1AFvPointer - TopSwapRegionSize;
+
+  Stage1AFvBase = (UINT32)(*(UINT32 *)(UINTN)Stage1AFvPointer);
+  Stage1AFvBase = Stage1AFvPointer - (~Stage1AFvBase + 1) + sizeof(UINT32);
+
+  Status = GetVersionfromFv (Stage1AFvBase, FALSE, BlVersion);
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "Getting firmware version failed with status: %r\n", Status));
+    return Status;
+  }
+
+  return Status;
+}
+
+/**
+  Verify the firmware version to make sure it is no less than current firmware version.
+
+  @param[in]  Stage1ABase   Stage 1A base address.
+  @param[in]  IsFd          Does Stage1ABase point to Stage1A FD
+                            or SBL Stage1A FV ?
+  @param[out] Version       Pointer to version of the firmware
+
+  @retval  EFI_SUCCESS        The operation completed successfully.
+  @retval  others             There is error happening.
+**/
+EFI_STATUS
+GetVersionfromFv (
+  IN  UINT32              Stage1ABase,
+  IN  BOOLEAN             IsFd,
+  OUT BOOT_LOADER_VERSION **Version
+  )
+{
+  EFI_STATUS                  Status;
+  EFI_FFS_FILE_HEADER         *FfsFile;
+  EFI_FIRMWARE_VOLUME_HEADER  *FvHeader;
+
+  FvHeader = (EFI_FIRMWARE_VOLUME_HEADER *)(UINTN)Stage1ABase;
+  //
+  // Stage 1A FD has FSPT FV first, so move on to the next FV
+  //
+  if (IsFd) {
+    FvHeader = (EFI_FIRMWARE_VOLUME_HEADER *)((UINTN)FvHeader + (UINTN)FvHeader->FvLength);
+  }
+
+  //
+  // Get version info FFS from FV
+  //
+  Status = GetFfsFileByName (FvHeader, &gBootLoaderVersionFileGuid, &FfsFile);
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "GetFfsFileByName: %r\n", Status));
+    return Status;
+  }
+
+  //
+  // Raw section in version info FFS has version information
+  //
+  Status = GetSectionByType (FfsFile, EFI_SECTION_RAW, 0, (VOID *)Version);
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "GetSectionByType: %r\n", Status));
+    return Status;
+  }
+
+  return EFI_SUCCESS;
+}
 
 /**
   Update a region block.
@@ -65,7 +301,14 @@ UpdateRegionBlock (
   // Read, compare, erase, write, read, compare
   //
   for (Count = 0; Count < Length; Count += BlockLen) {
-    Status = BootMediaRead (Address + Count, BlockLen, ReadBuffer);
+    //
+    // If updating region less than 4K bytes,
+    // adjust the block length to size remaining, i.e less than 4k
+    //
+    if (Count + BlockLen > Length) {
+      BlockLen = Length - Count;
+    }
+    Status = BootMediaRead(Address + Count, BlockLen, ReadBuffer);
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "BootMediaRead.  readaddr: 0x%llx, Status = 0x%x\n", Address + Count, Status));
       goto End;
@@ -78,9 +321,10 @@ UpdateRegionBlock (
 
     //
     // Erase the boot media
+    // Block length for erase is always 4K bytes
     //
     DEBUG ((DEBUG_INIT, "x"));
-    Status = BootMediaErase ((UINT32) (Address + Count),  BlockLen);
+    Status = BootMediaErase ((UINT32) (Address + Count),  SIZE_4KB);
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "ERROR: in BootMediaErase. Status = 0x%x\n", Status));
       goto End;

@@ -7,17 +7,47 @@
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
-
+#include <Register/Intel/Cpuid.h>
+#include <Register/Intel/LocalApic.h>
+#include <Register/Intel/ArchitecturalMsr.h>
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Library/LocalApicLib.h>
 #include <Library/IoLib.h>
 #include <Library/TimerLib.h>
-#include <Library/LocalApic.h>
+
 
 //
 // Library internal functions
 //
+
+/**
+  Determine if the CPU supports the Local APIC Base Address MSR.
+
+  @retval TRUE  The CPU supports the Local APIC Base Address MSR.
+  @retval FALSE The CPU does not support the Local APIC Base Address MSR.
+
+**/
+BOOLEAN
+LocalApicBaseAddressMsrSupported (
+  VOID
+  )
+{
+  UINT32  RegEax;
+  UINTN   FamilyId;
+
+  AsmCpuid (1, &RegEax, NULL, NULL, NULL);
+  FamilyId = BitFieldRead32 (RegEax, 8, 11);
+  if (FamilyId == 0x04 || FamilyId == 0x05) {
+    //
+    // CPUs with a FamilyId of 0x04 or 0x05 do not support the
+    // Local APIC Base Address MSR
+    //
+    return FALSE;
+  }
+  return TRUE;
+}
+
 /**
   Retrieve the base address of local APIC.
 
@@ -30,12 +60,20 @@ GetLocalApicBaseAddress (
   VOID
   )
 {
-  MSR_IA32_APIC_BASE ApicBaseMsr;
+  MSR_IA32_APIC_BASE_REGISTER  ApicBaseMsr;
 
-  ApicBaseMsr.Uint64 = AsmReadMsr64 (MSR_IA32_APIC_BASE_ADDRESS);
+  if (!LocalApicBaseAddressMsrSupported ()) {
+    //
+    // If CPU does not support Local APIC Base Address MSR, then retrieve
+    // Local APIC Base Address from PCD
+    //
+    return PcdGet32 (PcdCpuLocalApicBaseAddress);
+  }
 
-  return (UINTN) (LShiftU64 ((UINT64) ApicBaseMsr.Bits.ApicBaseHigh, 32)) +
-         (((UINTN)ApicBaseMsr.Bits.ApicBaseLow) << 12);
+  ApicBaseMsr.Uint64 = AsmReadMsr64 (MSR_IA32_APIC_BASE);
+
+  return (UINTN)(LShiftU64 ((UINT64) ApicBaseMsr.Bits.ApicBaseHi, 32)) +
+           (((UINTN)ApicBaseMsr.Bits.ApicBase) << 12);
 }
 
 /**
@@ -52,16 +90,23 @@ SetLocalApicBaseAddress (
   IN UINTN                BaseAddress
   )
 {
-  MSR_IA32_APIC_BASE ApicBaseMsr;
+  MSR_IA32_APIC_BASE_REGISTER  ApicBaseMsr;
 
   ASSERT ((BaseAddress & (SIZE_4KB - 1)) == 0);
 
-  ApicBaseMsr.Uint64 = AsmReadMsr64 (MSR_IA32_APIC_BASE_ADDRESS);
+  if (!LocalApicBaseAddressMsrSupported ()) {
+    //
+    // Ignore set request if the CPU does not support APIC Base Address MSR
+    //
+    return;
+  }
 
-  ApicBaseMsr.Bits.ApicBaseLow  = (UINT32) (BaseAddress >> 12);
-  ApicBaseMsr.Bits.ApicBaseHigh = (UINT32) (RShiftU64 ((UINT64) BaseAddress, 32));
+  ApicBaseMsr.Uint64 = AsmReadMsr64 (MSR_IA32_APIC_BASE);
 
-  AsmWriteMsr64 (MSR_IA32_APIC_BASE_ADDRESS, ApicBaseMsr.Uint64);
+  ApicBaseMsr.Bits.ApicBase   = (UINT32) (BaseAddress >> 12);
+  ApicBaseMsr.Bits.ApicBaseHi = (UINT32) (RShiftU64((UINT64) BaseAddress, 32));
+
+  AsmWriteMsr64 (MSR_IA32_APIC_BASE, ApicBaseMsr.Uint64);
 }
 
 /**
@@ -192,16 +237,22 @@ GetApicMode (
   VOID
   )
 {
-  DEBUG_CODE ( {
-    MSR_IA32_APIC_BASE ApicBaseMsr;
+  DEBUG_CODE (
+    {
+      MSR_IA32_APIC_BASE_REGISTER  ApicBaseMsr;
 
-    ApicBaseMsr.Uint64 = AsmReadMsr64 (MSR_IA32_APIC_BASE_ADDRESS);
-    //
-    // Local APIC should have been enabled
-    //
-    ASSERT (ApicBaseMsr.Bits.En != 0);
-    ASSERT (ApicBaseMsr.Bits.Extd == 0);
-  }
+      //
+      // Check to see if the CPU supports the APIC Base Address MSR
+      //
+      if (LocalApicBaseAddressMsrSupported ()) {
+        ApicBaseMsr.Uint64 = AsmReadMsr64 (MSR_IA32_APIC_BASE);
+        //
+        // Local APIC should have been enabled
+        //
+        ASSERT (ApicBaseMsr.Bits.EN != 0);
+        ASSERT (ApicBaseMsr.Bits.EXTD == 0);
+      }
+    }
   );
   return LOCAL_APIC_MODE_XAPIC;
 }
@@ -255,12 +306,15 @@ GetInitialApicId (
 
   //
   // If CPUID Leaf B is supported,
+  // And CPUID.0BH:EBX[15:0] reports a non-zero value,
   // Then the initial 32-bit APIC ID = CPUID.0BH:EDX
   // Else the initial 8-bit APIC ID = CPUID.1:EBX[31:24]
   //
   if (MaxCpuIdIndex >= CPUID_EXTENDED_TOPOLOGY) {
-    AsmCpuidEx (CPUID_EXTENDED_TOPOLOGY, 0, NULL, NULL, NULL, &ApicId);
-    return ApicId;
+    AsmCpuidEx (CPUID_EXTENDED_TOPOLOGY, 0, NULL, &RegEbx, NULL, &ApicId);
+    if ((RegEbx & (BIT16 - 1)) != 0) {
+      return ApicId;
+    }
   }
 
   AsmCpuid (CPUID_VERSION_INFO, NULL, &RegEbx, NULL, NULL);
@@ -654,7 +708,6 @@ InitializeApicTimer (
   IN UINT8   Vector
   )
 {
-  LOCAL_APIC_SVR       Svr;
   LOCAL_APIC_DCR       Dcr;
   LOCAL_APIC_LVT_TIMER LvtTimer;
   UINT32               Divisor;
@@ -662,9 +715,7 @@ InitializeApicTimer (
   //
   // Ensure local APIC is in software-enabled state.
   //
-  Svr.Uint32 = ReadLocalApicReg (XAPIC_SPURIOUS_VECTOR_OFFSET);
-  Svr.Bits.SoftwareEnable = 1;
-  WriteLocalApicReg (XAPIC_SPURIOUS_VECTOR_OFFSET, Svr.Uint32);
+  InitializeLocalApicSoftwareEnable (TRUE);
 
   //
   // Program init-count register.
@@ -699,6 +750,8 @@ InitializeApicTimer (
 /**
   Get the state of the local APIC timer.
 
+  This function will ASSERT if the local APIC is not software enabled.
+
   @param DivideValue   Return the divide value for the DCR. It is one of 1,2,4,8,16,32,64,128.
   @param PeriodicMode  Return the timer mode. If TRUE, timer mode is peridoic. Othewise, timer mode is one-shot.
   @param Vector        Return the timer interrupt vector number.
@@ -714,6 +767,13 @@ GetApicTimerState (
   UINT32 Divisor;
   LOCAL_APIC_DCR Dcr;
   LOCAL_APIC_LVT_TIMER LvtTimer;
+
+  //
+  // Check the APIC Software Enable/Disable bit (bit 8) in Spurious-Interrupt
+  // Vector Register.
+  // This bit will be 1, if local APIC is software enabled.
+  //
+  ASSERT ((ReadLocalApicReg(XAPIC_SPURIOUS_VECTOR_OFFSET) & BIT8) != 0);
 
   if (DivideValue != NULL) {
     Dcr.Uint32 = ReadLocalApicReg (XAPIC_TIMER_DIVIDE_CONFIGURATION_OFFSET);
@@ -875,4 +935,286 @@ GetApicMsiValue (
     }
   }
   return MsiData.Uint64;
+}
+
+/**
+  Get Package ID/Core ID/Thread ID of a processor.
+
+  The algorithm assumes the target system has symmetry across physical
+  package  boundaries with respect to the number of logical processors
+  per package,  number of cores per package.
+
+  @param[in]  InitialApicId  Initial APIC ID of the target logical processor.
+  @param[out]  Package       Returns the processor package ID.
+  @param[out]  Core          Returns the processor core ID.
+  @param[out]  Thread        Returns the processor thread ID.
+**/
+VOID
+EFIAPI
+GetProcessorLocationByApicId (
+  IN  UINT32  InitialApicId,
+  OUT UINT32  *Package  OPTIONAL,
+  OUT UINT32  *Core    OPTIONAL,
+  OUT UINT32  *Thread  OPTIONAL
+  )
+{
+  BOOLEAN                             TopologyLeafSupported;
+  CPUID_VERSION_INFO_EBX              VersionInfoEbx;
+  CPUID_VERSION_INFO_EDX              VersionInfoEdx;
+  CPUID_CACHE_PARAMS_EAX              CacheParamsEax;
+  CPUID_EXTENDED_TOPOLOGY_EAX         ExtendedTopologyEax;
+  CPUID_EXTENDED_TOPOLOGY_EBX         ExtendedTopologyEbx;
+  CPUID_EXTENDED_TOPOLOGY_ECX         ExtendedTopologyEcx;
+  UINT32                              MaxStandardCpuIdIndex;
+  UINT32                              MaxExtendedCpuIdIndex;
+  UINT32                              SubIndex;
+  UINTN                               LevelType;
+  UINT32                              MaxLogicProcessorsPerPackage;
+  UINT32                              MaxCoresPerPackage;
+  UINTN                               ThreadBits;
+  UINTN                               CoreBits;
+
+  //
+  // Check if the processor is capable of supporting more than one logical processor.
+  //
+  AsmCpuid (CPUID_VERSION_INFO, NULL, NULL, NULL, &VersionInfoEdx.Uint32);
+  if (VersionInfoEdx.Bits.HTT == 0) {
+    if (Thread != NULL) {
+      *Thread = 0;
+    }
+    if (Core != NULL) {
+      *Core = 0;
+    }
+    if (Package != NULL) {
+      *Package = 0;
+    }
+    return;
+  }
+
+  //
+  // Assume three-level mapping of APIC ID: Package|Core|Thread.
+  //
+  ThreadBits = 0;
+  CoreBits = 0;
+
+  //
+  // Get max index of CPUID
+  //
+  AsmCpuid (CPUID_SIGNATURE, &MaxStandardCpuIdIndex, NULL, NULL, NULL);
+  AsmCpuid (CPUID_EXTENDED_FUNCTION, &MaxExtendedCpuIdIndex, NULL, NULL, NULL);
+
+  //
+  // If the extended topology enumeration leaf is available, it
+  // is the preferred mechanism for enumerating topology.
+  //
+  TopologyLeafSupported = FALSE;
+  if (MaxStandardCpuIdIndex >= CPUID_EXTENDED_TOPOLOGY) {
+    AsmCpuidEx(
+      CPUID_EXTENDED_TOPOLOGY,
+      0,
+      &ExtendedTopologyEax.Uint32,
+      &ExtendedTopologyEbx.Uint32,
+      &ExtendedTopologyEcx.Uint32,
+      NULL
+      );
+    //
+    // If CPUID.(EAX=0BH, ECX=0H):EBX returns zero and maximum input value for
+    // basic CPUID information is greater than 0BH, then CPUID.0BH leaf is not
+    // supported on that processor.
+    //
+    if (ExtendedTopologyEbx.Uint32 != 0) {
+      TopologyLeafSupported = TRUE;
+
+      //
+      // Sub-leaf index 0 (ECX= 0 as input) provides enumeration parameters to extract
+      // the SMT sub-field of x2APIC ID.
+      //
+      LevelType = ExtendedTopologyEcx.Bits.LevelType;
+      ASSERT (LevelType == CPUID_EXTENDED_TOPOLOGY_LEVEL_TYPE_SMT);
+      ThreadBits = ExtendedTopologyEax.Bits.ApicIdShift;
+
+      //
+      // Software must not assume any "level type" encoding
+      // value to be related to any sub-leaf index, except sub-leaf 0.
+      //
+      SubIndex = 1;
+      do {
+        AsmCpuidEx (
+          CPUID_EXTENDED_TOPOLOGY,
+          SubIndex,
+          &ExtendedTopologyEax.Uint32,
+          NULL,
+          &ExtendedTopologyEcx.Uint32,
+          NULL
+          );
+        LevelType = ExtendedTopologyEcx.Bits.LevelType;
+        if (LevelType == CPUID_EXTENDED_TOPOLOGY_LEVEL_TYPE_CORE) {
+          CoreBits = ExtendedTopologyEax.Bits.ApicIdShift - ThreadBits;
+          break;
+        }
+        SubIndex++;
+      } while (LevelType != CPUID_EXTENDED_TOPOLOGY_LEVEL_TYPE_INVALID);
+    }
+  }
+
+  if (!TopologyLeafSupported) {
+    //
+    // Get logical processor count
+    //
+    AsmCpuid (CPUID_VERSION_INFO, NULL, &VersionInfoEbx.Uint32, NULL, NULL);
+    MaxLogicProcessorsPerPackage = VersionInfoEbx.Bits.MaximumAddressableIdsForLogicalProcessors;
+
+    //
+    // Assume single-core processor
+    //
+    MaxCoresPerPackage = 1;
+
+    {
+      //
+      // Extract core count based on CACHE information
+      //
+      if (MaxStandardCpuIdIndex >= CPUID_CACHE_PARAMS) {
+        AsmCpuidEx (CPUID_CACHE_PARAMS, 0, &CacheParamsEax.Uint32, NULL, NULL, NULL);
+        if (CacheParamsEax.Uint32 != 0) {
+          MaxCoresPerPackage = CacheParamsEax.Bits.MaximumAddressableIdsForLogicalProcessors + 1;
+        }
+      }
+    }
+
+    ThreadBits = (UINTN)(HighBitSet32(MaxLogicProcessorsPerPackage / MaxCoresPerPackage - 1) + 1);
+    CoreBits = (UINTN)(HighBitSet32(MaxCoresPerPackage - 1) + 1);
+  }
+
+  if (Thread != NULL) {
+    *Thread = InitialApicId & ((1 << ThreadBits) - 1);
+  }
+  if (Core != NULL) {
+    *Core = (InitialApicId >> ThreadBits) & ((1 << CoreBits) - 1);
+  }
+  if (Package != NULL) {
+    *Package = (InitialApicId >> (ThreadBits + CoreBits));
+  }
+}
+
+/**
+  Get Package ID/Die ID/Tile ID/Module ID/Core ID/Thread ID of a processor.
+
+  The algorithm assumes the target system has symmetry across physical
+  package boundaries with respect to the number of threads per core, number of
+  cores per module, number of modules per tile, number of tiles per die, number
+  of dies per package.
+
+  @param[in]   InitialApicId Initial APIC ID of the target logical processor.
+  @param[out]  Package       Returns the processor package ID.
+  @param[out]  Die           Returns the processor die ID.
+  @param[out]  Tile          Returns the processor tile ID.
+  @param[out]  Module        Returns the processor module ID.
+  @param[out]  Core          Returns the processor core ID.
+  @param[out]  Thread        Returns the processor thread ID.
+**/
+VOID
+EFIAPI
+GetProcessorLocation2ByApicId (
+  IN  UINT32  InitialApicId,
+  OUT UINT32  *Package  OPTIONAL,
+  OUT UINT32  *Die      OPTIONAL,
+  OUT UINT32  *Tile     OPTIONAL,
+  OUT UINT32  *Module   OPTIONAL,
+  OUT UINT32  *Core     OPTIONAL,
+  OUT UINT32  *Thread   OPTIONAL
+  )
+{
+  CPUID_EXTENDED_TOPOLOGY_EAX         ExtendedTopologyEax;
+  CPUID_EXTENDED_TOPOLOGY_ECX         ExtendedTopologyEcx;
+  UINT32                              MaxStandardCpuIdIndex;
+  UINT32                              Index;
+  UINTN                               LevelType;
+  UINT32                              Bits[CPUID_V2_EXTENDED_TOPOLOGY_LEVEL_TYPE_DIE + 2];
+  UINT32                              *Location[CPUID_V2_EXTENDED_TOPOLOGY_LEVEL_TYPE_DIE + 2];
+
+  for (LevelType = 0; LevelType < ARRAY_SIZE (Bits); LevelType++) {
+    Bits[LevelType] = 0;
+  }
+
+  //
+  // Get max index of CPUID
+  //
+  AsmCpuid (CPUID_SIGNATURE, &MaxStandardCpuIdIndex, NULL, NULL, NULL);
+  if (MaxStandardCpuIdIndex < CPUID_V2_EXTENDED_TOPOLOGY) {
+    if (Die != NULL) {
+      *Die = 0;
+    }
+    if (Tile != NULL) {
+      *Tile = 0;
+    }
+    if (Module != NULL) {
+      *Module = 0;
+    }
+    GetProcessorLocationByApicId (InitialApicId, Package, Core, Thread);
+    return;
+  }
+
+  //
+  // If the V2 extended topology enumeration leaf is available, it
+  // is the preferred mechanism for enumerating topology.
+  //
+  for (Index = 0; ; Index++) {
+    AsmCpuidEx(
+      CPUID_V2_EXTENDED_TOPOLOGY,
+      Index,
+      &ExtendedTopologyEax.Uint32,
+      NULL,
+      &ExtendedTopologyEcx.Uint32,
+      NULL
+      );
+
+    LevelType = ExtendedTopologyEcx.Bits.LevelType;
+
+    //
+    // first level reported should be SMT.
+    //
+    ASSERT ((Index != 0) || (LevelType == CPUID_EXTENDED_TOPOLOGY_LEVEL_TYPE_SMT));
+    if (LevelType == CPUID_EXTENDED_TOPOLOGY_LEVEL_TYPE_INVALID) {
+      break;
+    }
+    ASSERT (LevelType < ARRAY_SIZE (Bits));
+    Bits[LevelType] = ExtendedTopologyEax.Bits.ApicIdShift;
+  }
+
+  for (LevelType = CPUID_EXTENDED_TOPOLOGY_LEVEL_TYPE_CORE; LevelType < ARRAY_SIZE (Bits); LevelType++) {
+    //
+    // If there are more levels between level-1 (low-level) and level-2 (high-level), the unknown levels will be ignored
+    // and treated as an extension of the last known level (i.e., level-1 in this case).
+    //
+    if (Bits[LevelType] == 0) {
+      Bits[LevelType] = Bits[LevelType - 1];
+    }
+  }
+
+  Location[CPUID_V2_EXTENDED_TOPOLOGY_LEVEL_TYPE_DIE + 1] = Package;
+  Location[CPUID_V2_EXTENDED_TOPOLOGY_LEVEL_TYPE_DIE    ] = Die;
+  Location[CPUID_V2_EXTENDED_TOPOLOGY_LEVEL_TYPE_TILE   ] = Tile;
+  Location[CPUID_V2_EXTENDED_TOPOLOGY_LEVEL_TYPE_MODULE ] = Module;
+  Location[CPUID_EXTENDED_TOPOLOGY_LEVEL_TYPE_CORE   ]    = Core;
+  Location[CPUID_EXTENDED_TOPOLOGY_LEVEL_TYPE_SMT    ]    = Thread;
+
+  Bits[CPUID_V2_EXTENDED_TOPOLOGY_LEVEL_TYPE_DIE + 1] = 32;
+
+  for ( LevelType = CPUID_EXTENDED_TOPOLOGY_LEVEL_TYPE_SMT
+      ; LevelType <= CPUID_V2_EXTENDED_TOPOLOGY_LEVEL_TYPE_DIE + 1
+      ; LevelType ++
+      ) {
+    if (Location[LevelType] != NULL) {
+      //
+      // Bits[i] holds the number of bits to shift right on x2APIC ID to get a unique
+      // topology ID of the next level type.
+      //
+      *Location[LevelType] = InitialApicId >> Bits[LevelType - 1];
+
+      //
+      // Bits[i] - Bits[i-1] holds the number of bits for the next ONE level type.
+      //
+      *Location[LevelType] &= (1 << (Bits[LevelType] - Bits[LevelType - 1])) - 1;
+    }
+  }
 }

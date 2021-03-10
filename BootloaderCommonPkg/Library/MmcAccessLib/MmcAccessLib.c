@@ -32,13 +32,17 @@ MmcGetHcPrivateData (
   Status = GetLibraryData (PcdGet8 (PcdEmmcBlockDeviceLibId), (VOID **)&PrivateData);
   if (Status == EFI_NOT_FOUND) {
     PrivateData = AllocatePool (sizeof (SD_MMC_HC_PRIVATE_DATA));
-    ZeroMem (PrivateData, sizeof (SD_MMC_HC_PRIVATE_DATA));
-    if (GetLoaderStage () == LOADER_STAGE_PAYLOAD) {
-      PrivateData->PrivateDataMemType = PayloadMemory;
+    if (PrivateData != NULL) {
+      ZeroMem (PrivateData, sizeof (SD_MMC_HC_PRIVATE_DATA));
+      if (GetLoaderStage () == LOADER_STAGE_PAYLOAD) {
+        PrivateData->PrivateDataMemType = PayloadMemory;
+      } else {
+        PrivateData->PrivateDataMemType = ReservedMemory;
+      }
+      Status = SetLibraryData (PcdGet8 (PcdEmmcBlockDeviceLibId), PrivateData, sizeof (SD_MMC_HC_PRIVATE_DATA));
     } else {
-      PrivateData->PrivateDataMemType = ReservedMemory;
+      Status = EFI_OUT_OF_RESOURCES;
     }
-    Status = SetLibraryData (PcdGet8 (PcdEmmcBlockDeviceLibId), PrivateData, sizeof (SD_MMC_HC_PRIVATE_DATA));
   }
 
   if (EFI_ERROR (Status)) {
@@ -286,6 +290,11 @@ EarlyMmcInitialize (
     DEBUG ((DEBUG_ERROR, "SdMmcHcInitHost Fail Status = 0x%x\n", Status));
     goto Done;
   }
+
+  //
+  // Supplied 400KHz clock at init phase above. Record it.
+  //
+  Private->Slot.CurrentFreq = 400;
 
   Status = MmcReset (Private);
   if (EFI_ERROR (Status)) {

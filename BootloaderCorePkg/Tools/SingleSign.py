@@ -63,12 +63,20 @@ MESSAGE_SBL_KEY_DIR = (
 def get_openssl_path ():
     if os.name == 'nt':
         if 'OPENSSL_PATH' not in os.environ:
-            os.environ['OPENSSL_PATH'] = "C:\\Openssl\\"
-        if 'OPENSSL_CONF' not in os.environ:
-            openssl_cfg = "C:\\Openssl\\openssl.cfg"
-            if os.path.exists(openssl_cfg):
-                os.environ['OPENSSL_CONF'] = openssl_cfg
-    openssl = os.path.join(os.environ.get ('OPENSSL_PATH', ''), 'openssl')
+            openssl_dir = "C:\\Openssl\\bin\\"
+            if os.path.exists (openssl_dir):
+                os.environ['OPENSSL_PATH'] = openssl_dir
+            else:
+                os.environ['OPENSSL_PATH'] = "C:\\Openssl\\"
+                if 'OPENSSL_CONF' not in os.environ:
+                    openssl_cfg = "C:\\Openssl\\openssl.cfg"
+                    if os.path.exists(openssl_cfg):
+                        os.environ['OPENSSL_CONF'] = openssl_cfg
+        openssl = os.path.join(os.environ.get ('OPENSSL_PATH', ''), 'openssl.exe')
+    else:
+        # Get openssl path for Linux cases
+        openssl = shutil.which('openssl')
+
     return openssl
 
 def run_process (arg_list, print_cmd = False, capture_out = False):

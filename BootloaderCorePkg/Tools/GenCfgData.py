@@ -1071,6 +1071,19 @@ class CGenCfgData:
             line = line_after
         return line_after
 
+    def reformat_number_per_type (self, itype, value):
+        if check_quote(value) or value.startswith('{'):
+            return value
+        parts = itype.split(',')
+        if len(parts) > 3 and parts[0] == 'EditNum':
+            num_fmt = parts[1].strip()
+        else:
+            num_fmt = ''
+        if num_fmt == 'HEX' and not value.startswith('0x'):
+            value = '0x%X' % int(value, 10)
+        elif num_fmt == 'DEC' and value.startswith('0x'):
+            value = '%d' % int(value, 16)
+        return value
 
     def add_cfg_item(self, name, item, offset, path):
 
@@ -1110,10 +1123,12 @@ class CGenCfgData:
 
         itype = str(item.get('type', 'Reserved'))
         value = str(item.get('value', ''))
-        if value and ((value[0] == "'" and  value[-1] == "'") or (value[0] == '"' and  value[-1] == '"')):
-            pass
-        elif (',' in value) and (not value.startswith('{')):
-            value = '{ %s }' % value
+        if value:
+            if not (check_quote(value) or value.startswith('{')):
+                if ',' in value:
+                    value = '{ %s }' % value
+                else:
+                    value = self.reformat_number_per_type (itype, value)
 
         help = str(item.get('help', ''))
         if '\n' in help:
@@ -1224,7 +1239,11 @@ class CGenCfgData:
             act_cfg = self.get_item_by_index (cfgs['indx'])
             if force or act_cfg['value'] == '':
                 value = get_bits_from_bytes (full_bytes, act_cfg['offset'] - struct_info['offset'], act_cfg['length'])
-                act_cfg['value'] = self.format_value_to_str (value, act_cfg['length'], act_cfg['value'])
+                act_val = act_cfg['value']
+                if act_val == '':
+                    act_val = '%d' % value
+                act_val = self.reformat_number_per_type (act_cfg['type'], act_val)
+                act_cfg['value'] = self.format_value_to_str (value, act_cfg['length'], act_val)
 
         if 'indx' in top:
             # it is config option
@@ -1347,15 +1366,14 @@ class CGenCfgData:
             full_name = item['path']
             if 'PLATFORMID_CFG_DATA.PlatformId' == full_name:
                 def_platform_id = old_val
-
-            if new_val != old_val:
+                platform_id     = new_val
+            elif item['type'] != 'Reserved' and ((new_val != old_val) or full):
                 val_str = self.reformat_value_str (item['value'], item['length'])
                 text = '%-40s | %s' % (full_name, val_str)
                 lines.append(text)
 
         if platform_id is None or def_platform_id == platform_id:
             platform_id = def_platform_id
-            # print("WARNING: 'PlatformId' configuration is same as default %d!" % platform_id)
 
         lines.insert(0, '%-40s | %s\n\n' %
                      ('PLATFORMID_CFG_DATA.PlatformId', '0x%04X' % platform_id))

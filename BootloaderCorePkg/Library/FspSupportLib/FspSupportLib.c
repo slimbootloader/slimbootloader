@@ -114,3 +114,38 @@ TraverseMemoryResourceHob (
     Hob.Raw = GET_NEXT_HOB (Hob);
   }
 }
+
+/**
+  Dump FSP memory resource
+
+  @param  HobListPtr         A HOB list pointer.
+
+**/
+VOID
+EFIAPI
+DumpFspResourceHob (
+  IN  CONST VOID            *HobListPtr
+  )
+{
+  EFI_PEI_HOB_POINTERS    Hob;
+
+  // Get the HOB list for processing
+  Hob.Raw = (VOID *)HobListPtr;
+
+  DEBUG ((DEBUG_INFO, "    FSP Resource HOB Range        Type       Owner\n"));
+  DEBUG ((DEBUG_INFO, "================================= ==== ====================================\n"));
+
+  // Collect memory ranges
+  while (!END_OF_HOB_LIST (Hob)) {
+    if (Hob.Header->HobType == EFI_HOB_TYPE_RESOURCE_DESCRIPTOR) {
+      DEBUG ((DEBUG_INFO, "%016lx-%016lx  %02x  %g\n",
+              Hob.ResourceDescriptor->PhysicalStart,
+              Hob.ResourceDescriptor->PhysicalStart + Hob.ResourceDescriptor->ResourceLength,
+              Hob.ResourceDescriptor->ResourceType,
+              &(Hob.ResourceDescriptor->Owner)
+              ));
+    }
+    Hob.Raw = GET_NEXT_HOB (Hob);
+  }
+  DEBUG ((DEBUG_INFO, "\n"));
+}

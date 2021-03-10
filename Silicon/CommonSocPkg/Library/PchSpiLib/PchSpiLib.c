@@ -57,7 +57,18 @@ DisableBiosWriteProtect (
   IN  UINTN         PchSpiBase
   )
 {
-  if ((MmioRead8 (PchSpiBase + R_SPI_BCR) & B_SPI_BCR_SMM_BWP) != 0) {
+  UINT8   BiosCtrl;
+
+  ///
+  /// By default BIT5 (EISS) is set which makes BIOS region not writable.
+  /// Clearing this BIT to be able to write to the BIOS region
+  ///
+  BiosCtrl = MmioRead8 (PchSpiBase + R_SPI_BCR);
+  if (((BiosCtrl & B_SPI_BCR_EISS) != 0) && ((BiosCtrl & B_SPI_BCR_BLE) == 0)) {
+    MmioAnd8(PchSpiBase + R_SPI_BCR, (UINT8)(~B_SPI_BCR_EISS));
+  }
+
+  if ((MmioRead8 (PchSpiBase + R_SPI_BCR) & B_SPI_BCR_EISS) != 0) {
     return EFI_ACCESS_DENIED;
   }
 
@@ -83,6 +94,13 @@ EnableBiosWriteProtect (
   IN  UINTN         PchSpiBase
   )
 {
+  UINT8   BiosCtrl;
+
+  // Set EISS bits
+  BiosCtrl = MmioRead8 (PchSpiBase + R_SPI_BCR);
+  if (((BiosCtrl & B_SPI_BCR_EISS) == 0) && ((BiosCtrl & B_SPI_BCR_BLE) == 0)) {
+    MmioOr8(PchSpiBase + R_SPI_BCR, (UINT8)(B_SPI_BCR_EISS));
+  }
   //
   // Disable the access to the BIOS space for write cycles
   //

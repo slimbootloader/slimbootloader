@@ -1,0 +1,1763 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : SIL
+- SILICON_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ SILICON_CFG_DATA, 0x200, 0, 0 ] }
+  - InterruptRemappingSupport :
+      name         : InterruptRemappingSupport
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     InterruptRemappingSupport
+      length       : 0x01
+      value        : 0x1
+  - Device4Enable :
+      name         : Enable Device 4
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/disable Device 4
+      length       : 0x01
+      value        : 0x00
+  - PeiGraphicsPeimInit :
+      name         : Enable/Disable PeiGraphicsPeimInit
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable- Enable PeiGraphicsPeimInit, Disable(Default)- Disable PeiGraphicsPeimInit
+      length       : 0x01
+      value        : 0x1
+  - LogoPtr      :
+      name         : Logo Pointer
+      type         : EditNum, HEX, (0x0,0xFFFFFFFF)
+      help         : >
+                     Points to PEI Display Logo Image
+      length       : 0x04
+      value        : 0x00000000
+  - LogoSize     :
+      name         : Logo Size
+      type         : EditNum, HEX, (0x0,0xFFFFFFFF)
+      help         : >
+                     Size of PEI Display Logo Image
+      length       : 0x04
+      value        : 0x00000000
+  - BltBufferAddress :
+      name         : Blt Buffer Address
+      type         : EditNum, HEX, (0x0,0xFFFFFFFF)
+      help         : >
+                     Address of Blt buffer
+      length       : 0x04
+      value        : 0x00000000
+  - BltBufferSize :
+      name         : Blt Buffer Size
+      type         : EditNum, HEX, (0x0,0xFFFFFFFF)
+      help         : >
+                     Size of Blt Buffer, is equal to PixelWidth * PixelHeight * 4 bytes (the size of EFI_GRAPHICS_OUTPUT_BLT_PIXEL)
+      length       : 0x04
+      value        : 0x00000000
+  - GraphicsConfigPtr :
+      name         : Graphics Configuration Ptr
+      type         : EditNum, HEX, (0x0,0xFFFFFFFF)
+      help         : >
+                     Points to VBT
+      length       : 0x04
+      value        : 0x00000000
+  - DdiPortAConfig :
+      name         : Enable or disable HPD of DDI port-A device
+      type         : Combo
+      option       : 0:Disabled, 1:eDP, 2:MIPI DSI
+      help         : >
+                     0=Disabled,1(Default)=eDP, 2=MIPI DSI
+      length       : 0x01
+      value        : 0x1
+  - DdiPortBHpd  :
+      name         : Enable or disable HPD of DDI port B
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     0=Disable, 1=Enable
+      length       : 0x01
+      value        : 0x1
+  - DdiPortCHpd  :
+      name         : Enable or disable HPD of DDI port C
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     0=Disable, 1=Enable
+      length       : 0x01
+      value        : 0x1
+  - DdiPortBDdc  :
+      name         : Enable or disable DDC of DDI port B
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     0=Disable, 1=Enable
+      length       : 0x01
+      value        : 0x1
+  - DdiPortCDdc  :
+      name         : Enable or disable DDC of DDI port C
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     0=Disable, 1=Enable
+      length       : 0x01
+      value        : 0x1
+  - VmdEnable    :
+      name         : Enable VMD controller
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/disable to VMD controller.
+      length       : 0x01
+      value        : 0x00
+  - VmdPortA     :
+      name         : Enable VMD portA Support
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/disable to VMD portA Support.
+      length       : 0x01
+      value        : 0x00
+  - VmdPortB     :
+      name         : Enable VMD portB Support
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/disable to VMD portB Support.
+      length       : 0x01
+      value        : 0x00
+  - VmdPortC     :
+      name         : Enable VMD portC Support
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/disable to VMD portC Support.
+      length       : 0x01
+      value        : 0x00
+  - VmdPortD     :
+      name         : Enable VMD portD Support
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/disable to VMD portD Support.
+      length       : 0x01
+      value        : 0x00
+  - VmdCfgBarSz  :
+      name         : VMD Config Bar size
+      type         : EditNum, DEC, (20,28)
+      help         : >
+                     Set The VMD Config Bar Size.
+      length       : 0x01
+      value        : 0x00
+  - VmdCfgBarAttr :
+      name         : VMD Config Bar Attributes
+      type         : Combo
+      option       : 0:VMD_32BIT_NONPREFETCH, 1:VMD_64BIT_NONPREFETCH, 2:VMD_64BIT_PREFETCH
+      help         : >
+                     0- VMD_32BIT_NONPREFETCH, 1- VMD_64BIT_NONPREFETCH, 2- VMD_64BIT_PREFETCH(Default)
+      length       : 0x01
+      value        : 0x00
+  - VmdMemBarSz1 :
+      name         : VMD Mem Bar1 size
+      type         : EditNum, DEC, (12,47)
+      help         : >
+                     Set The VMD Mem Bar1 Size.
+      length       : 0x01
+      value        : 0x00
+  - VmdMemBar1Attr :
+      name         : VMD Mem Bar1 Attributes
+      type         : Combo
+      option       : 0:VMD_32BIT_NONPREFETCH, 1:VMD_64BIT_NONPREFETCH, 2:VMD_64BIT_PREFETCH
+      help         : >
+                     0- VMD_32BIT_NONPREFETCH(Default), 1- VMD_64BIT_NONPREFETCH, 2- VMD_64BIT_PREFETCH
+      length       : 0x01
+      value        : 0x00
+  - VmdMemBarSz2 :
+      name         : VMD Mem Bar2 size
+      type         : EditNum, DEC, (12,47)
+      help         : >
+                     Set The VMD Mem Bar2 Size.
+      length       : 0x01
+      value        : 0x00
+  - VmdMemBar2Attr :
+      name         : VMD Mem Bar2 Attributes
+      type         : Combo
+      option       : 0:VMD_32BIT_NONPREFETCH, 1:VMD_64BIT_NONPREFETCH, 2:VMD_64BIT_PREFETCH
+      help         : >
+                     0- VMD_32BIT_NONPREFETCH, 1- VMD_64BIT_NONPREFETCH(Default), 2- VMD_64BIT_PREFETCH
+      length       : 0x01
+      value        : 0x00
+  - IomTypeCPortPadCfg :
+      name         : TypeC port GPIO setting
+      type         : EditNum, HEX, (0, 0xFFFFFFFF)
+      struct       : UINT32
+      help         : >
+                     GPIO Ping number for Type C Aux Oritation setting, use the GpioPad that is defined in GpioPinsXXXH.h and GpioPinsXXXLp.h as argument.(XXX is platform name, Ex- Icl = IceLake)
+      length       : 0x30
+      value        : {0:0D, 0x00000000,0x00000000, 0x06040000, 0x06040011, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000}
+  - CpuUsb3OverCurrentPin :
+      name         : CPU USB3 Port Over Current Pin
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Describe the specific over current pin number of USBC Port N.
+      length       : 0x08
+      value        : { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }
+  - UsbTcPortEn  :
+      name         : TCSS USB Port Enable
+      type         : EditNum, HEX, (0x0,0x003F)
+      help         : >
+                     Bits 0, 1, ... max Type C port control enables
+      length       : 0x01
+      value        : 0x00
+  - UsbOverride  :
+      name         : USB override in IOM
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     This policy will enable/disable USB Connect override in IOM
+      length       : 0x01
+      value        : 0x00
+  - TcssAuxOri   :
+      name         : TCSS Aux Orientation Override Enable
+      type         : EditNum, HEX, (0x0,0x0FFF)
+      help         : >
+                     Bits 0, 2, ... 10 control override enables, bits 1, 3, ... 11 control overrides
+      length       : 0x02
+      value        : 0x0000
+  - TcssHslOri   :
+      name         : TCSS HSL Orientation Override Enable
+      type         : EditNum, HEX, (0x0,0x0FFF)
+      help         : >
+                     Bits 0, 2, ... 10 control override enables, bits 1, 3, ... 11 control overrides
+      length       : 0x02
+      value        : 0x0000
+  - VccSt        :
+      name         : VCCST request for IOM
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     This policy will enable/disable VCCST and also decides if message would be replayed in S4/S5
+      length       : 0x01
+      value        : 0x00
+  - PmcPdEnable  :
+      name         : Enable/Disable PMC-PD Solution
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     This policy will enable/disable PMC-PD Solution vs EC-TCPC Solution
+      length       : 0x01
+      value        : 0x00
+  - D3HotEnable  :
+      name         : Enable D3 Hot in TCSS
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     This policy will enable/disable D3 hot support in IOM
+      length       : 0x01
+      value        : 0x00
+  - D3ColdEnable :
+      name         : Enable D3 Cold in TCSS
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     This policy will enable/disable D3 cold support in IOM
+      length       : 0x01
+      value        : 0x00
+  - SataEnable   :
+      name         : Enable SATA
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/disable SATA controller.
+      length       : 0x01
+      value        : 0x01
+  - SataMode     :
+      name         : SATA Mode
+      type         : Combo
+      option       : 0:AHCI, 1:RAID
+      help         : >
+                     Select SATA controller working mode.
+      length       : 0x01
+      value        : 0x00
+  - SataPortsEnable :
+      name         : Enable SATA ports
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFF)
+      help         : >
+                     Enable/disable SATA ports. One byte for each port, byte0 for port0, byte1 for port1, and so on.
+      length       : 0x08
+      value        : { 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+  - SataPortsHotPlug :
+      name         : Enable SATA Port HotPlug
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFF)
+      help         : >
+                     Enable SATA Port HotPlug.
+      length       : 0x08
+      value        : { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+  - SataPortsSpinUp :
+      name         : Enable SATA Port SpinUp
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFF)
+      help         : >
+                     Enable the COMRESET initialization Sequence to the device.
+      length       : 0x08
+      value        : { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+  - SataPortsExternal :
+      name         : Enable SATA Port External
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFF)
+      help         : >
+                     Enable SATA Port External.
+      length       : 0x08
+      value        : { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+  - SataPortsDevSlp :
+      name         : Enable SATA DEVSLP Feature
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFF)
+      help         : >
+                     Enable/disable SATA DEVSLP per port. 0 is disable, 1 is enable. One byte for each port, byte0 for port0, byte1 for port1, and so on.
+      length       : 0x08
+      value        : { 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+  - SataPortsEnableDitoConfig :
+      name         : Enable SATA Port Enable Dito Config
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFF)
+      help         : >
+                     Enable DEVSLP Idle Timeout settings (DmVal, DitoVal).
+      length       : 0x08
+      value        : { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+  - SataPortsDmVal :
+      name         : Enable SATA Port DmVal
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFF)
+      help         : >
+                     DITO multiplier. Default is 15.
+      length       : 0x08
+      value        : { 0x0F, 0x0F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+  - SataPortsDitoVal :
+      name         : Enable SATA Port DmVal
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT16
+      help         : >
+                     DEVSLP Idle Timeout (DITO), Default is 625.
+      length       : 0x10
+      value        : {0:0W,  0x10, 0x0F, 0x10, 0x0F, 0x00, 0x00, 0x00, 0x00}
+  - SataPortsZpOdd :
+      name         : Enable SATA Port ZpOdd
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFF)
+      help         : >
+                     Support zero power ODD.
+      length       : 0x08
+      value        : { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+  - SataPortsSolidStateDrive :
+      name         : Enable SATA Port Solid State Drive
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFF)
+      help         : >
+                     0- HDD; 1- SSD.
+      length       : 0x08
+      value        : { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+  - SataPwrOptEnable :
+      name         : PCH Sata Pwr Opt Enable
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     SATA Power Optimizer on PCH side.
+      length       : 0x01
+      value        : 0x01
+  - SataRstPcieEnable :
+      name         : PCH Sata Rst Pcie Storage Remap enable
+      type         : EditNum, HEX, (0x00,0xFFFFFF)
+      help         : >
+                     Enable Intel RST for PCIe Storage remapping.
+      length       : 0x03
+      value        : { 0x00, 0x00, 0x00 }
+  - SataRstPcieStoragePort :
+      name         : PCH Sata Rst Pcie Storage Port
+      type         : EditNum, HEX, (0x00,0xFFFFFF)
+      help         : >
+                     Intel RST for PCIe Storage remapping - PCIe Port Selection (1-based, 0 = autodetect).
+      length       : 0x03
+      value        : { 0x00, 0x00, 0x00 }
+  - SataRstPcieDeviceResetDelay :
+      name         : PCH Sata Rst Pcie Device Reset Delay
+      type         : EditNum, HEX, (0x00,0xFFFFFF)
+      help         : >
+                     PCIe Storage Device Reset Delay in milliseconds. Default value is 100ms
+      length       : 0x03
+      value        : { 100, 100, 100 }
+  - PortUsb20Enable :
+      name         : Enable USB2 ports
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Enable/disable per USB2 ports. One byte for each port, byte0 for port0, byte1 for port1, and so on.
+      length       : 0x10
+      value        : { 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01}
+  - USB20Otg     :
+      name         : Enable USB2 ports OTG
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Selectively Enable/Disable USB2 OTG Mode. One byte for each port, byte0 for port0, byte1 for port1, and so on.
+      length       : 0x10
+      value        : { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+  - Usb2OverCurrentPin :
+      name         : USB2 Port Over Current Pin
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Describe the specific over current pin number of USB 2.0 Port N.
+      length       : 0x10
+      value        : { 0x03, 0x03, 0xFF, 0x03, 0x03, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x05, 0x05, 0x06, 0x06, 0x07, 0x07 }
+  - Usb2PhyPetxiset :
+      name         : USB Per Port HS Preemphasis Bias
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     USB Per Port HS Preemphasis Bias. 000b-0mV, 001b-11.25mV, 010b-16.9mV, 011b-28.15mV, 100b-28.15mV, 101b-39.35mV, 110b-45mV, 111b-56.3mV. One byte for each port.
+      length       : 0x10
+      value        : {0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+  - Usb2PhyTxiset :
+      name         : USB Per Port HS Transmitter Bias
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     USB Per Port HS Transmitter Bias. 000b-0mV, 001b-11.25mV, 010b-16.9mV, 011b-28.15mV, 100b-28.15mV, 101b-39.35mV, 110b-45mV, 111b-56.3mV, One byte for each port.
+      length       : 0x10
+      value        : {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+  - Usb2PhyPredeemp :
+      name         : USB Per Port HS Transmitter Emphasis
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     USB Per Port HS Transmitter Emphasis. 00b - Emphasis OFF, 01b - De-emphasis ON, 10b - Pre-emphasis ON, 11b - Pre-emphasis & De-emphasis ON. One byte for each port.
+      length       : 0x10
+      value        : {0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x00, 0x00, 0x03, 0x03, 0x03, 0x03}
+  - Usb2PhyPehalfbit :
+      name         : USB Per Port Half Bit Pre-emphasis
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     USB Per Port Half Bit Pre-emphasis. 1b - half-bit pre-emphasis, 0b - full-bit pre-emphasis. One byte for each port.
+      length       : 0x10
+      value        : {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+  - PortUsb30Enable :
+      name         : Enable USB3 ports
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Enable/disable per USB3 ports. One byte for each port, byte0 for port0, byte1 for port1, and so on.
+      length       : 0x0A
+      value        : { 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01}
+  - Usb3OverCurrentPin :
+      name         : USB3 Port Over Current Pin
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Describe the specific over current pin number of USB 3.0 Port N.
+      length       : 0x0A
+      value        : { 0x03, 0x03, 0x03, 0x03, 0x02, 0x02, 0xFF, 0xFF, 0xFF, 0xFF }
+  - USB30Otg     :
+      name         : Enable USB3 ports OTG
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Selectively Enable/Disable USB3 OTG Mode. One byte for each port, byte0 for port0, byte1 for port1, and so on.
+      length       : 0xA
+      value        : { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+  - XdciEnable   :
+      name         : Enable xDCI controller
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/disable to xDCI controller.
+      length       : 0x01
+      value        : 0x00
+  - Enable8254ClockGating :
+      name         : Enable 8254 Static Clock Gating
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Set 8254CGE=1 is required for SLP_S0 support. However, set 8254CGE=1 in POST time might fail to boot legacy OS using 8254 timer. Make sure it is disabled to support legacy OS using 8254 timer. Also enable this while S0ix is enabled.
+      length       : 0x01
+      value        : 0x01
+  - Enable8254ClockGatingOnS3 :
+      name         : Enable 8254 Static Clock Gating On S3
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     This is only applicable when Enable8254ClockGating is disabled. FSP will do the 8254 CGE programming on S3 resume when Enable8254ClockGatingOnS3 is enabled. This avoids the SMI requirement for the programming.
+      length       : 0x01
+      value        : 0x01
+  - Usb3HsioTxDeEmphEnable :
+      name         : Enable the write to USB 3.0 TX Output -3.5dB De-Emphasis Adjustment
+      type         : EditNum, HEX, (0x00,0x01010101010101010101)
+      help         : >
+                     Enable the write to USB 3.0 TX Output -3.5dB De-Emphasis Adjustment. Each value in arrary can be between 0-1. One byte for each port.
+      length       : 0x0A
+      value        : {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+  - Usb3HsioTxDeEmph :
+      name         : USB 3.0 TX Output -3.5dB De-Emphasis Adjustment Setting
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     USB 3.0 TX Output -3.5dB De-Emphasis Adjustment Setting, HSIO_TX_DWORD5[21:16], <b>Default = 29h</b> (approximately -3.5dB De-Emphasis). One byte for each port.
+      length       : 0x0A
+      value        : {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+  - Usb3HsioTxDownscaleAmpEnable :
+      name         : Enable the write to USB 3.0 TX Output Downscale Amplitude Adjustment
+      type         : EditNum, HEX, (0x00,0x01010101010101010101)
+      help         : >
+                     Enable the write to USB 3.0 TX Output Downscale Amplitude Adjustment, Each value in arrary can be between 0-1. One byte for each port.
+      length       : 0x0A
+      value        : {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+  - Usb3HsioTxDownscaleAmp :
+      name         : USB 3.0 TX Output Downscale Amplitude Adjustment
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     USB 3.0 TX Output Downscale Amplitude Adjustment, HSIO_TX_DWORD8[21:16], <b>Default = 00h</b>. One byte for each port.
+      length       : 0x0A
+      value        : {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+  - PchLegacyIoLowLatency :
+      name         : PCH Legacy IO Low Latency Enable
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Set to enable low latency of legacy IO. <b>0- Disable</b>, 1- Enable
+      length       : 0x01
+      value        : 0x00
+  - PchMasterClockGating2 :
+      name         : PCH Master Clock Gating Control
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Provide a master control for clock gating for all PCH devices, 0- Disabled; 1- Default
+      length       : 0x01
+      value        : 0x01
+  - PchMasterPowerGating2 :
+      name         : PCH Master Power Gating Control
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Provide a master control for pwoer gating for all PCH devices, 0- Disabled; 1- Default
+      length       : 0x01
+      value        : 0x01
+  - PcieRpHotPlug :
+      name         : Enable PCIE RP HotPlug
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Indicate whether the root port is hot plug available.
+      length       : 0x18
+      value        : { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+  - PcieRpPmSci  :
+      name         : Enable PCIE RP Pm Sci
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Indicate whether the root port power manager SCI is enabled.
+      length       : 0x18
+      value        : { 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 }
+  - PcieRpClkReqDetect :
+      name         : Enable PCIE RP Clk Req Detect
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Probe CLKREQ# signal before enabling CLKREQ# based power management.
+      length       : 0x18
+      value        : { 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+  - PcieRpUnsupportedRequestReport :
+      name         : PCIE RP Unsupported Request Report
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Indicate whether the Unsupported Request Report is enabled.
+      length       : 0x18
+      value        : { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+  - PcieRpFatalErrorReport :
+      name         : PCIE RP Fatal Error Report
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Indicate whether the Fatal Error Report is enabled.
+      length       : 0x18
+      value        : { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+  - PcieRpNoFatalErrorReport :
+      name         : PCIE RP No Fatal Error Report
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Indicate whether the No Fatal Error Report is enabled.
+      length       : 0x18
+      value        : { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+  - PcieRpCorrectableErrorReport :
+      name         : PCIE RP Correctable Error Report
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Indicate whether the Correctable Error Report is enabled.
+      length       : 0x18
+      value        : { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+  - PcieRpSystemErrorOnFatalError :
+      name         : PCIE RP System Error On Fatal Error
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Indicate whether the System Error on Fatal Error is enabled.
+      length       : 0x18
+      value        : { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+  - PcieRpSystemErrorOnNonFatalError :
+      name         : PCIE RP System Error On Non Fatal Error
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Indicate whether the System Error on Non Fatal Error is enabled.
+      length       : 0x18
+      value        : { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+  - PcieRpSystemErrorOnCorrectableError :
+      name         : PCIE RP System Error On Correctable Error
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Indicate whether the System Error on Correctable Error is enabled.
+      length       : 0x18
+      value        : { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+  - PcieRpMaxPayload :
+      name         : PCIE RP Max Payload
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Max Payload Size supported, Default 128B, see enum PCH_PCIE_MAX_PAYLOAD.
+      length       : 0x18
+      value        : { 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 }
+  - PcieRpSlotImplemented :
+      name         : PCH PCIe root port connection type
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     0- built-in device, 1:slot
+      length       : 0x18
+      value        : { 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 }
+  - PcieRpAcsEnabled :
+      name         : PCIE RP Access Control Services Extended Capability
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Enable/Disable PCIE RP Access Control Services Extended Capability
+      length       : 0x18
+      value        : { 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 }
+  - PcieRpAdvancedErrorReporting :
+      name         : PCIE RP Advanced Error Report
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Indicate whether the Advanced Error Reporting is enabled.
+      length       : 0x18
+      value        : { 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 }
+  - PcieRpTransmitterHalfSwing :
+      name         : Enable PCIE RP Transmitter Half Swing
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Indicate whether the Transmitter Half Swing is enabled.
+      length       : 0x18
+      value        : { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+  - PcieRpPcieSpeed :
+      name         : PCIE RP Pcie Speed
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Determines each PCIE Port speed capability. 0- Auto; 1- Gen1; 2- Gen2; 3- Gen3 (see- PCH_PCIE_SPEED).
+      length       : 0x18
+      value        : { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+  - PcieRpPhysicalSlotNumber :
+      name         : PCIE RP Physical Slot Number
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Indicates the slot number for the root port. Default is the value as root port index.
+      length       : 0x18
+      value        : { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17 }
+  - PcieRpCompletionTimeout :
+      name         : PCIE RP Completion Timeout
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     The root port completion timeout(see- PCH_PCIE_COMPLETION_TIMEOUT). Default is PchPcieCompletionTO_Default.
+      length       : 0x18
+      value        : { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+  - PcieRpAspm   :
+      name         : PCIE RP Aspm
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     The ASPM configuration of the root port (see- PCH_PCIE_ASPM_CONTROL). Default is PchPcieAspmAutoConfig.
+      length       : 0x18
+      value        : { 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04 }
+  - PcieRpL1Substates :
+      name         : PCIE RP L1 Substates
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     The L1 Substates configuration of the root port (see- PCH_PCIE_L1SUBSTATES_CONTROL). Default is PchPcieL1SubstatesL1_1_2.
+      length       : 0x18
+      value        : { 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03 }
+  - PcieRpLtrEnable :
+      name         : PCIE RP Ltr Enable
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Latency Tolerance Reporting Mechanism.
+      length       : 0x18
+      value        : { 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 }
+  - PcieRpLtrConfigLock :
+      name         : PCIE RP Ltr Config Lock
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     0- Disable; 1- Enable.
+      length       : 0x18
+      value        : { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+  - PcieRpLtrMaxSnoopLatency :
+      name         : PCIE RP Ltr Max Snoop Latency
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT16
+      help         : >
+                     Latency Tolerance Reporting, Max Snoop Latency.
+      length       : 0x30
+      value        : {0:0W,  0x1003, 0x1003, 0x1003, 0x1003, 0x1003, 0x1003, 0x1003, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1003, 0x1003, 0x1003, 0x1003, 0x1003, 0x1003, 0x1003, 0x1003 }
+  - PcieRpLtrMaxNoSnoopLatency :
+      name         : PCIE RP Ltr Max No Snoop Latency
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT16
+      help         : >
+                     Latency Tolerance Reporting, Max Non-Snoop Latency.
+      length       : 0x30
+      value        : {0:0W,  0x1003, 0x1003, 0x1003, 0x1003, 0x1003, 0x1003, 0x1003, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1003, 0x1003, 0x1003, 0x1003, 0x1003, 0x1003, 0x1003, 0x1003 }
+  - PcieRpSnoopLatencyOverrideMode :
+      name         : PCIE RP Snoop Latency Override Mode
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Latency Tolerance Reporting, Snoop Latency Override Mode.
+      length       : 0x18
+      value        : { 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02 }
+  - PcieRpSnoopLatencyOverrideMultiplier :
+      name         : PCIE RP Snoop Latency Override Multiplier
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Latency Tolerance Reporting, Snoop Latency Override Multiplier.
+      length       : 0x18
+      value        : { 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02 }
+  - PcieRpSnoopLatencyOverrideValue :
+      name         : PCIE RP Snoop Latency Override Value
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT16
+      help         : >
+                     Latency Tolerance Reporting, Snoop Latency Override Value.
+      length       : 0x30
+      value        : {0:0W,  0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C }
+  - PcieRpNonSnoopLatencyOverrideMode :
+      name         : PCIE RP Non Snoop Latency Override Mode
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Latency Tolerance Reporting, Non-Snoop Latency Override Mode.
+      length       : 0x18
+      value        : { 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02 }
+  - PcieRpNonSnoopLatencyOverrideMultiplier :
+      name         : PCIE RP Non Snoop Latency Override Multiplier
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Latency Tolerance Reporting, Non-Snoop Latency Override Multiplier.
+      length       : 0x18
+      value        : { 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02 }
+  - PcieRpNonSnoopLatencyOverrideValue :
+      name         : PCIE RP Non Snoop Latency Override Value
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT16
+      help         : >
+                     Latency Tolerance Reporting, Non-Snoop Latency Override Value.
+      length       : 0x30
+      value        : {0:0W,  0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C, 0x003C }
+  - PcieRpTestForceLtrOverride :
+      name         : Force LTR Override
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Force LTR Override.
+      length       : 0x18
+      value        : { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+  - PcieRpDetectTimeoutMs :
+      name         : PCIE RP Detect Timeout Ms
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT16
+      help         : >
+                     The number of milliseconds within 0~65535 in reference code will wait for link to exit Detect state for enabled ports before assuming there is no device and potentially disabling the port.
+      length       : 0x30
+      value        : {0:0W,  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+  - PcieRpSlotPowerLimitScale :
+      name         : PCIE RP Slot Power Limit Scale
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Specifies scale used for slot power limit value. Leave as 0 to set to default.
+      length       : 0x18
+      value        : { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+  - PcieRpSlotPowerLimitValue :
+      name         : PCIE RP Slot Power Limit Value
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT16
+      help         : >
+                     Specifies upper limit on power supplie by slot. Leave as 0 to set to default.
+      length       : 0x30
+      value        : {0:0W,  0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000 }
+  - PcieRpEnableCpm :
+      name         : PCIE RP Clock Power Management
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Enable/Disable PCIE RP Clock Power Management, even if disabled, CLKREQ# signal can still be controlled by L1 PM substates mechanism
+      length       : 0x18
+      value        : { 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 }
+  - PciePtm      :
+      name         : PCIe PTM enable/disable
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Enable/disable Precision Time Measurement for PCIE Root Ports.
+      length       : 0x18
+      value        : { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 }
+  - TestPcieClockGating :
+      name         : PCI Express Clock Gating
+      type         : Combo
+      option       : 0:POR, 1:Force Enable, 2:Force Disable
+      help         : >
+                     Enable/Disable Clock Gating, 0- PLATFORM_POR, 1- FORCE_ENABLE, 2- FORCE_DISABLE.
+      length       : 0x01
+      value        : 0x00
+  - PchTsnEnable :
+      name         : Enable PCH TSN
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/disable TSN on the PCH.
+      length       : 0x01
+      value        : 0x01
+  - TsnLinkSpeed :
+      name         : TSN Link Speed
+      type         : Combo
+      option       : 0:24Mhz 2.5Gbps, 1:24Mhz 1Gbps, 2:38.4Mhz 2.5Gbps, 3:38.4Mhz 1Gbps
+      help         : >
+                     Set TSN Link Speed.
+      length       : 0x01
+      value        : 0x03
+  - PchPseLogOutputChannel :
+      name         : PCH PSE Log Output Channel
+      type         : EditNum, HEX, (0x0,0xFFFFFFFF)
+      help         : >
+                     Set PSE Log Output Channel. 0- internal memory; 1-6- UART channels; Other- shut down
+      length       : 0x04
+      value        : 0x00000003
+  - PchPseLogOutputSize :
+      name         : PCH PSE Log Output Size
+      type         : EditNum, HEX, (0x0,0xFFFF)
+      help         : >
+                     Set PSE Log Output Size
+      length       : 0x02
+      value        : 0x0000
+  - PchPseLogOutputOffset :
+      name         : PCH PSE Log Output Offset
+      type         : EditNum, HEX, (0x0,0xFFFF)
+      help         : >
+                     Set PSE Log Output Offset
+      length       : 0x02
+      value        : 0x0000
+  - PchPseI2sEnable :
+      name         : Enable PCH PSE I2S pins assigned
+      type         : EditNum, HEX, (0x0,0xFFFF)
+      help         : >
+                     Set if PSE I2S native pins and ownership are to be enabled by BIOS. 0- Disable/pins are not owned by PSE/host; 1- Pins are muxed to PSE IP, the IO is owned by PSE; 2- Pins are muxed to PSE IP, the IO is owned by host;
+      length       : 0x02
+      value        : { 0x00, 0x00 }
+  - PchPseI2sTxPinMux :
+      name         : PchPseI2sTxPinMux
+      type         : EditNum, HEX, (0x0,0xFFFFFFFFFFFFFFFF)
+      struct       : UINT32
+      help         : >
+                     Select PSE I2S Tx pin muxing. Refer to GPIO_*_MUXING_PSE_I2Sx_TXD* for possible values.
+      length       : 0x08
+      value        : {0:0D,  0x00000000, 0x00000000 }
+  - PchPseI2sRxPinMux :
+      name         : PchPseI2sRxPinMux
+      type         : EditNum, HEX, (0x0,0xFFFFFFFFFFFFFFFF)
+      struct       : UINT32
+      help         : >
+                     Select PSE I2S Rx pin muxing. Refer to GPIO_*_MUXING_PSE_I2Sx_RXD* for possible values.
+      length       : 0x08
+      value        : {0:0D,  0x00000000, 0x00000000 }
+  - PchPseI2sSfrmPinMux :
+      name         : PchPseI2sSfrmPinMux
+      type         : EditNum, HEX, (0x0,0xFFFFFFFFFFFFFFFF)
+      struct       : UINT32
+      help         : >
+                     Select PSE I2S Sfrm pin muxing. Refer to GPIO_*_MUXING_PSE_I2Sx_SFRM* for possible values.
+      length       : 0x08
+      value        : {0:0D,  0x00000000, 0x00000000 }
+  - PchPseI2sSclkPinMux :
+      name         : PchPseI2sSclkPinMux
+      type         : EditNum, HEX, (0x0,0xFFFFFFFFFFFFFFFF)
+      struct       : UINT32
+      help         : >
+                     Select PSE I2S Sclk pin muxing. Refer to GPIO_*_MUXING_PSE_I2Sx_SCLK* for possible values.
+      length       : 0x08
+      value        : {0:0D,  0x00000000, 0x00000000 }
+  - PchPsePwmEnable :
+      name         : Enable PCH PSE PWM pins assigned
+      type         : EditNum, HEX, (0x0,0xFF)
+      help         : >
+                     Set if PSE PWM native pins and ownership are to be enabled by BIOS. 0- Disable/pins are not owned by PSE/host; 1- Pins are muxed to PSE IP, the IO is owned by PSE; 2- Pins are muxed to PSE IP, the IO is owned by host;
+      length       : 0x01
+      value        : 0x01
+  - PchPsePwmPinEnable :
+      name         : PchPsePwmPinEnable
+      type         : EditNum, HEX, (0x0,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT8
+      help         : >
+                     Set PWM pin to PSE PWM native function. 0- Disable; 1- Enable.
+      length       : 0x10
+      value        : { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01}
+  - PchPsePwmPinMux :
+      name         : PchPsePwmPinMux
+      type         : EditNum, HEX, (0x0,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT32
+      help         : >
+                     Select PSE Pwm pin muxing start from PWM0 to PWM15. Refer to GPIO_*_MUXING_PSE_PWM* for possible values.
+      length       : 0x40
+      value        : {0:0D,  0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000}
+  - PchPseUartEnable :
+      name         : Enable PCH PSE UART pins assigned
+      type         : EditNum, HEX, (0x0,0xFFFFFFFFFFFF)
+      help         : >
+                     Set if PSE UART native pins and ownership are to be enabled by BIOS. 0- Disable/pins are not owned by PSE/host; 1- Pins are muxed to PSE IP, the IO is owned by PSE; 2- Pins are muxed to PSE IP, the IO is owned by host;
+      length       : 0x06
+      value        : { 0x00, 0x01, 0x01, 0x00, 0x00, 0x00 }
+  - PchPseHsuartEnable :
+      name         : Enable PCH PSE HSUART pins assigned
+      type         : EditNum, HEX, (0x0,0xFFFFFFFF)
+      help         : >
+                     Set if PSE HSUART native pins and ownership are to be enabled by BIOS. 0- Disable/pins are not owned by PSE/host; 1- Pins are muxed to PSE IP, the IO is owned by PSE; 2- Pins are muxed to PSE IP, the IO is owned by host;
+      length       : 0x04
+      value        : { 0x01, 0x00, 0x01, 0x00 }
+  - PchPseQepEnable :
+      name         : Enable PCH PSE QEP pins assigned
+      type         : EditNum, HEX, (0x0,0xFFFFFFFF)
+      help         : >
+                     Set if PSE QEP native pins and ownership are to be enabled by BIOS. 0- Disable/pins are not owned by PSE/host; 1- Pins are muxed to PSE IP, the IO is owned by PSE; 2- Pins are muxed to PSE IP, the IO is owned by host;
+      length       : 0x04
+      value        : { 0x00, 0x00, 0x00, 0x00 }
+  - PchPseDmaEnable :
+      name         : Enable PCH PSE DMA pins assigned
+      type         : EditNum, HEX, (0x0,0xFFFFFF)
+      help         : >
+                     Set if PSE DMA native pins and ownership are to be enabled by BIOS. 0- Disable/pins are not owned by PSE/host; 1- Pins are muxed to PSE IP, the IO is owned by PSE; 2- Pins are muxed to PSE IP, the IO is owned by host;
+      length       : 0x03
+      value        : { 0x01, 0x01, 0x01 }
+  - PchPseGbeEnable :
+      name         : Enable PCH PSE GBE pins assigned
+      type         : EditNum, HEX, (0x0,0xFFFF)
+      help         : >
+                     Set if PSE GBE native pins and ownership are to be enabled by BIOS. 0- Disable/pins are not owned by PSE/host; 1- Pins are muxed to PSE IP, the IO is owned by PSE; 2- Pins are muxed to PSE IP, the IO is owned by host;
+      length       : 0x02
+      value        : { 0x02, 0x02 }
+  - PchPseI2cEnable :
+      name         : Enable PCH PSE I2C pins assigned
+      type         : EditNum, HEX, (0x0,0xFFFFFFFFFFFFFFFF)
+      help         : >
+                     Set if PSE I2C native pins and ownership are to be enabled by BIOS. 0- Disable/pins are not owned by PSE/host; 1- Pins are muxed to PSE IP, the IO is owned by PSE; 2- Pins are muxed to PSE IP, the IO is owned by host;
+      length       : 0x08
+      value        : { 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00 }
+  - PchPseSpiEnable :
+      name         : Enable PCH PSE SPI pins assigned
+      type         : EditNum, HEX, (0x0,0xFFFFFFFF)
+      help         : >
+                     Set if PSE SPI native pins and ownership are to be enabled by BIOS. 0- Disable/pins are not owned by PSE/host; 1- Pins are muxed to PSE IP, the IO is owned by PSE; 2- Pins are muxed to PSE IP, the IO is owned by host;
+      length       : 0x04
+      value        : { 0x00, 0x00, 0x00, 0x00 }
+  - PchPseSpiCs0Enable :
+      name         : Enable PCH PSE SPI CS0 pins assigned
+      type         : EditNum, HEX, (0x0,0xFFFFFFFF)
+      help         : >
+                     Set if PSE SPI CS0 pins and ownership are to be enabled by BIOS. 0- Disable/pins are not owned by PSE/host; 1- Pins are muxed to PSE IP, the IO is owned by PSE; 2- Pins are muxed to PSE IP, the IO is owned by host;
+      length       : 0x04
+      value        : { 0x00, 0x00, 0x00, 0x00 }
+  - PchPseSpiCs1Enable :
+      name         : Enable PCH PSE SPI CS1 pins assigned
+      type         : EditNum, HEX, (0x0,0xFFFFFFFF)
+      help         : >
+                     Set if PSE SPI CS1 pins and ownership are to be enabled by BIOS. 0- Disable/pins are not owned by PSE/host; 1- Pins are muxed to PSE IP, the IO is owned by PSE; 2- Pins are muxed to PSE IP, the IO is owned by host;
+      length       : 0x04
+      value        : { 0x00, 0x00, 0x00, 0x00 }
+  - PchPseSpiMosiPinMux :
+      name         : PchPseSpiMosiPinMux
+      type         : EditNum, HEX, (0x0,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT32
+      help         : >
+                     Select PSE Spi Mosi pin muxing. Refer to GPIO_*_MUXING_PSE_SPIx_MOSI* for possible values.
+      length       : 0x10
+      value        : {0:0D,  0x00000000, 0x00000000, 0x00000000, 0x00000000 }
+  - PchPseSpiMisoPinMux :
+      name         : PchPseSpiMisoPinMux
+      type         : EditNum, HEX, (0x0,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT32
+      help         : >
+                     Select PSE Spi Miso pin muxing. Refer to GPIO_*_MUXING_PSE_SPIx_MISO* for possible values.
+      length       : 0x10
+      value        : {0:0D,  0x00000000, 0x00000000, 0x00000000, 0x00000000 }
+  - PchPseSpiClkPinMux :
+      name         : PchPseSpiClkPinMux
+      type         : EditNum, HEX, (0x0,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT32
+      help         : >
+                     Select PSE Spi Clk pin muxing. Refer to GPIO_*_MUXING_PSE_SPIx_SCLK* for possible values.
+      length       : 0x10
+      value        : {0:0D,  0x00000000, 0x00000000, 0x00000000, 0x00000000 }
+  - PchPseSpiCs0PinMux :
+      name         : PchPseSpiCs0PinMux
+      type         : EditNum, HEX, (0x0,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT32
+      help         : >
+                     Select PSE Spi Cs pin muxing. Refer to GPIO_*_MUXING_PSE_SPIx_Cs* for possible values.
+      length       : 0x10
+      value        : {0:0D,  0x00000000, 0x00000000, 0x00000000, 0x00000000 }
+  - PchPseSpiCs1PinMux :
+      name         : PchPseSpiCs1PinMux
+      type         : EditNum, HEX, (0x0,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT32
+      help         : >
+                     Select PSE Spi Cs pin muxing. Refer to GPIO_*_MUXING_PSE_SPIx_Cs* for possible values.
+      length       : 0x10
+      value        : {0:0D,  0x00000000, 0x00000000, 0x00000000, 0x00000000 }
+  - PchPseAdcEnable :
+      name         : Enable PCH PSE ADC pins assigned
+      type         : EditNum, HEX, (0x0,0xFF)
+      help         : >
+                     Set if PSE ADC native pins and ownership are to be enabled by BIOS. 0- Disable/pins are not owned by PSE/host; 1- Pins are muxed to PSE IP, the IO is owned by PSE; 2- Pins are muxed to PSE IP, the IO is owned by host;
+      length       : 0x01
+      value        : 0x00
+  - PchPseCanEnable :
+      name         : Enable PCH PSE CAN pins assigned
+      type         : EditNum, HEX, (0x0,0xFFFF)
+      help         : >
+                     Set if PSE CAN native pins and ownership are to be enabled by BIOS. 0- Disable/pins are not owned by PSE/host; 1- Pins are muxed to PSE IP, the IO is owned by PSE; 2- Pins are muxed to PSE IP, the IO is owned by host;
+      length       : 0x02
+      value        : { 0x00, 0x00 }
+  - PchPseI2sSbInterruptEnable :
+      name         : Enable PCH PSE I2S sideband interrupt
+      type         : EditNum, HEX, (0x0,0xFFFF)
+      help         : >
+                     Set if PSE I2S are to be set to sideband interrupt. 0- Disable; 1- Enable.
+      length       : 0x02
+      value        : { 0x00, 0x00 }
+  - PchPsePwmSbInterruptEnable :
+      name         : Enable PCH PSE PWM sideband interrupt
+      type         : EditNum, HEX, (0x0,0xFF)
+      help         : >
+                     Set if PSE PWM are to be set to sideband interrupt. 0- Disable; 1- Enable.
+      length       : 0x01
+      value        : 0x00
+  - PchPseUartSbInterruptEnable :
+      name         : Enable PCH PSE UART sideband interrupt
+      type         : EditNum, HEX, (0x0,0xFFFFFFFFFFFF)
+      help         : >
+                     Set if PSE UART are to be set to sideband interrupt. 0- Disable; 1- Enable.
+      length       : 0x06
+      value        : { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+  - PchPseQepSbInterruptEnable :
+      name         : Enable PCH PSE QEP sideband interrupt
+      type         : EditNum, HEX, (0x0,0xFFFFFFFF)
+      help         : >
+                     Set if PSE QEP are to be set to sideband interrupt. 0- Disable; 1- Enable.
+      length       : 0x04
+      value        : { 0x00, 0x00, 0x00, 0x00 }
+  - PchPseDmaSbInterruptEnable :
+      name         : Enable PCH PSE DMA sideband interrupt
+      type         : EditNum, HEX, (0x0,0xFFFFFF)
+      help         : >
+                     Set if PSE DMA are to be set to sideband interrupt. 0- Disable; 1- Enable.
+      length       : 0x03
+      value        : { 0x00, 0x01, 0x01}
+  - PchPseI2cSbInterruptEnable :
+      name         : Enable PCH PSE I2C sideband interrupt
+      type         : EditNum, HEX, (0x0,0xFFFFFFFFFFFFFFFF)
+      help         : >
+                     Set if PSE I2C are to be set to sideband interrupt. 0- Disable; 1- Enable.
+      length       : 0x08
+      value        : { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+  - PchPseSpiSbInterruptEnable :
+      name         : Enable PCH PSE SPI sideband interrupt
+      type         : EditNum, HEX, (0x0,0xFFFFFFFF)
+      help         : >
+                     Set if PSE SPI are to be set to sideband interrupt. 0- Disable; 1- Enable.
+      length       : 0x04
+      value        : { 0x00, 0x00, 0x00, 0x00 }
+  - PchPseAdcSbInterruptEnable :
+      name         : Enable PCH PSE ADC sideband interrupt
+      type         : EditNum, HEX, (0x0,0xFF)
+      help         : >
+                     Set if PSE ADC are to be set to sideband interrupt. 0- Disable; 1- Enable.
+      length       : 0x01
+      value        : 0x00
+  - PchPseLh2PseSbInterruptEnable :
+      name         : Enable PCH PSE LH2OSE sideband interrupt
+      type         : EditNum, HEX, (0x0,0xFF)
+      help         : >
+                     Set if PSE LH2OSE are to be set to sideband interrupt. 0- Disable; 1- Enable.
+      length       : 0x01
+      value        : 0x00
+  - PchPseCanSbInterruptEnable :
+      name         : Enable PCH PSE CAN sideband interrupt
+      type         : EditNum, HEX, (0x0,0xFFFF)
+      help         : >
+                     Set if PSE CAN are to be set to sideband interrupt. 0- Disable; 1- Enable.
+      length       : 0x02
+      value        : { 0x00, 0x00 }
+  - PchPseTimedGpioEnable :
+      name         : Enable PCH PSE Timed GPIO pins assigned
+      type         : EditNum, HEX, (0x0,0xFFFF)
+      help         : >
+                     Set if PSE Timed GPIO native pins and ownership are to be enabled by BIOS. 0- Disable/pins are not owned by PSE/host; 1- Pins are muxed to PSE IP, the IO is owned by PSE; 2- Pins are muxed to PSE IP, the IO is owned by host;
+      length       : 0x02
+      value        : { 0x01, 0x01 }
+  - PchPseTimedGpioPinAllocation :
+      name         : Enable PCH PSE Timed GPIO 20 pins allocation
+      type         : EditNum, HEX, (0x0,0xFFFF)
+      help         : >
+                     Allocate 20 pins for PCH PSE Timed GPIO. 0- Top 20 pins; 1- Mid 20 pins; 2- Lower 20 pins.
+      length       : 0x02
+      value        : { 0x00, 0x00 }
+  - PchPseTimedGpioPinEnable :
+      name         : Enable PCH PSE Timed GPIO Pin to PSE TGPIO native function
+      type         : EditNum, HEX, (0x0,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Set TGPIO pin to PSE TGPIO native function. 0- Disable; 1- Enable.
+      length       : 0x3C
+      value        : { 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+  - PchPseTgpio6PinMux :
+      name         : Pch Pse Tgpio6 Pin Mux
+      type         : EditNum, HEX, (0,0xFFFFFFFF)
+      help         : >
+                     Select PSE Timed Gpio pin muxing. Refer to GPIO_*_MUXING_PSE_TGPIO* for possible values.
+      length       : 0x04
+      value        : 0x00000000
+  - PchPseTgpio7PinMux :
+      name         : Pch Pse Tgpio7 Pin Mux
+      type         : EditNum, HEX, (0,0xFFFFFFFF)
+      help         : >
+                     Select PSE Timed Gpio pin muxing. Refer to GPIO_*_MUXING_PSE_TGPIO* for possible values.
+      length       : 0x04
+      value        : 0x00000000
+  - PchPseTgpio8PinMux :
+      name         : Pch Pse Tgpio8 Pin Mux
+      type         : EditNum, HEX, (0,0xFFFFFFFF)
+      help         : >
+                     Select PSE Timed Gpio pin muxing. Refer to GPIO_*_MUXING_PSE_TGPIO* for possible values.
+      length       : 0x04
+      value        : 0x00000000
+  - PchPseTgpio9PinMux :
+      name         : Pch Pse Tgpio9 Pin Mux
+      type         : EditNum, HEX, (0,0xFFFFFFFF)
+      help         : >
+                     Select PSE Timed Gpio pin muxing. Refer to GPIO_*_MUXING_PSE_TGPIO* for possible values.
+      length       : 0x04
+      value        : 0x00000000
+  - PchPseTgpio10PinMux :
+      name         : Pch Pse Tgpio10 Pin Mux
+      type         : EditNum, HEX, (0,0xFFFFFFFF)
+      help         : >
+                     Select PSE Timed Gpio pin muxing. Refer to GPIO_*_MUXING_PSE_TGPIO* for possible values.
+      length       : 0x04
+      value        : 0x00000000
+  - PchPseTgpio11PinMux :
+      name         : Pch Pse Tgpio11 Pin Mux
+      type         : EditNum, HEX, (0,0xFFFFFFFF)
+      help         : >
+                     Select PSE Timed Gpio pin muxing. Refer to GPIO_*_MUXING_PSE_TGPIO* for possible values.
+      length       : 0x04
+      value        : 0x00000000
+  - PchPseTgpio12PinMux :
+      name         : Pch Pse Tgpio12 Pin Mux
+      type         : EditNum, HEX, (0,0xFFFFFFFF)
+      help         : >
+                     Select PSE Timed Gpio pin muxing. Refer to GPIO_*_MUXING_PSE_TGPIO* for possible values.
+      length       : 0x04
+      value        : 0x00000000
+  - PchPseTgpio13PinMux :
+      name         : Pch Pse Tgpio13 Pin Mux
+      type         : EditNum, HEX, (0,0xFFFFFFFF)
+      help         : >
+                     Select PSE Timed Gpio pin muxing. Refer to GPIO_*_MUXING_PSE_TGPIO* for possible values.
+      length       : 0x04
+      value        : 0x00000000
+  - PchPseTgpio14PinMux :
+      name         : Pch Pse Tgpio14 Pin Mux
+      type         : EditNum, HEX, (0,0xFFFFFFFF)
+      help         : >
+                     Select PSE Timed Gpio pin muxing. Refer to GPIO_*_MUXING_PSE_TGPIO* for possible values.
+      length       : 0x04
+      value        : 0x00000000
+  - PchPseTgpio15PinMux :
+      name         : Pch Pse Tgpio15 Pin Mux
+      type         : EditNum, HEX, (0,0xFFFFFFFF)
+      help         : >
+                     Select PSE Timed Gpio pin muxing. Refer to GPIO_*_MUXING_PSE_TGPIO* for possible values.
+      length       : 0x04
+      value        : 0x00000000
+  - PchPseTgpio16PinMux :
+      name         : Pch Pse Tgpio16 Pin Mux
+      type         : EditNum, HEX, (0,0xFFFFFFFF)
+      help         : >
+                     Select PSE Timed Gpio pin muxing. Refer to GPIO_*_MUXING_PSE_TGPIO* for possible values.
+      length       : 0x04
+      value        : 0x00000000
+  - PchPseTgpio17PinMux :
+      name         : Pch Pse Tgpio17 Pin Mux
+      type         : EditNum, HEX, (0,0xFFFFFFFF)
+      help         : >
+                     Select PSE Timed Gpio pin muxing. Refer to GPIO_*_MUXING_PSE_TGPIO* for possible values.
+      length       : 0x04
+      value        : 0x00000000
+  - PchPseTgpio18PinMux :
+      name         : Pch Pse Tgpio18 Pin Mux
+      type         : EditNum, HEX, (0,0xFFFFFFFF)
+      help         : >
+                     Select PSE Timed Gpio pin muxing. Refer to GPIO_*_MUXING_PSE_TGPIO* for possible values.
+      length       : 0x04
+      value        : 0x00000000
+  - PchPseTgpio19PinMux :
+      name         : Pch Pse Tgpio19 Pin Mux
+      type         : EditNum, HEX, (0,0xFFFFFFFF)
+      help         : >
+                     Select PSE Timed Gpio pin muxing. Refer to GPIO_*_MUXING_PSE_TGPIO* for possible values.
+      length       : 0x04
+      value        : 0x00000000
+  - PchLockDownBiosLock :
+      name         : Enable LOCKDOWN BIOS LOCK
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable the BIOS Lock feature and set EISS bit (D31:F5:RegDCh[5]) for the BIOS region protection.
+      length       : 0x01
+      value        : 0x01
+  - DmiTS0TW     :
+      name         : Thermal Sensor 0 Target Width
+      type         : Combo
+      option       : 0:x1, 1:x2, 2:x4, 3:x8, 4:x16
+      help         : >
+                     Thermal Sensor 0 Target Width.
+      length       : 0x01
+      value        : 0x03
+  - DmiTS1TW     :
+      name         : Thermal Sensor 1 Target Width
+      type         : Combo
+      option       : 0:x1, 1:x2, 2:x4, 3:x8, 4:x16
+      help         : >
+                     Thermal Sensor 1 Target Width.
+      length       : 0x01
+      value        : 0x02
+  - DmiTS2TW     :
+      name         : Thermal Sensor 2 Target Width
+      type         : Combo
+      option       : 0:x1, 1:x2, 2:x4, 3:x8, 4:x16
+      help         : >
+                     Thermal Sensor 2 Target Width.
+      length       : 0x01
+      value        : 0x01
+  - PchMemoryPmsyncEnable :
+      name         : Memory Thermal Throttling
+      type         : EditNum, HEX, (0x00,0xFFFF)
+      help         : >
+                     Enable Memory Thermal Throttling.
+      length       : 0x02
+      value        : { 0x00, 0x00 }
+  - PchMemoryC0TransmitEnable :
+      name         : Enable Memory Thermal Throttling
+      type         : EditNum, HEX, (0x00,0xFFFF)
+      help         : >
+                     Enable Memory Thermal Throttling.
+      length       : 0x02
+      value        : { 0x00, 0x00 }
+  - PchMemoryPinSelection :
+      name         : Enable Memory Thermal Throttling
+      type         : EditNum, HEX, (0x00,0xFFFF)
+      help         : >
+                     Enable Memory Thermal Throttling.
+      length       : 0x02
+      value        : { 0x00, 0x00 }
+  - PchPwrOptEnable :
+      name         : Enable Power Optimizer
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable DMI Power Optimizer on PCH side.
+      length       : 0x01
+      value        : 0x01
+  - SerialIoDevMode :
+      name         : Enable SerialIo Device Mode
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     0:Disabled, 1:PCI Mode, 2:Acpi mode, 3:Hidden mode (Legacy UART mode) - Enable/disable SerialIo I2C0,I2C1,I2C2,I2C3,I2C4,I2C5,SPI0,SPI1,SPI2,UART0,UART1,UART2 device mode respectively. One byte for each controller, byte0 for I2C0, byte1 for I2C1, and so on.
+      length       : 0x0C
+      value        : {0x01, 0x01, 0x01, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x03}
+  - SerialIoSpiCsPolarity :
+      name         : SPI ChipSelect signal polarity
+      type         : EditNum, HEX, (0x00,0xFFFFFF)
+      help         : >
+                     Selects SPI ChipSelect signal polarity.
+      length       : 0x03
+      value        : { 0x01, 0x01, 0x00 }
+  - SerialIoUartHwFlowCtrl :
+      name         : Enables UART hardware flow control, CTS and RTS lines
+      type         : EditNum, HEX, (0x00,0xFFFFFF)
+      help         : >
+                     Enables UART hardware flow control, CTS and RTS linesh.
+      length       : 0x03
+      value        : { 0x01, 0x01, 0x00 }
+  - SerialIoUartRxPinMux :
+      name         : SerialIoUartRxPinMux
+      type         : EditNum, HEX, (0,0xFFFFFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT32
+      help         : >
+                     Select SerialIo Uart Rx pin muxing. Refer to GPIO_*_MUXING_SERIALIO_UARTx_RX* for possible values.
+      length       : 0x0C
+      value        : {0:0D,  0, 0, 0 }
+  - SerialIoUartTxPinMux :
+      name         : SerialIoUartTxPinMux
+      type         : EditNum, HEX, (0,0xFFFFFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT32
+      help         : >
+                     Select SerialIo Uart Tx pin muxing. Refer to GPIO_*_MUXING_SERIALIO_UARTx_TX* for possible values.
+      length       : 0x0C
+      value        : {0:0D,  0, 0, 0 }
+  - SerialIoUartRtsPinMux :
+      name         : SerialIoUartRtsPinMux
+      type         : EditNum, HEX, (0,0xFFFFFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT32
+      help         : >
+                     Select SerialIo Uart Rts pin muxing. Refer to GPIO_*_MUXING_SERIALIO_UARTx_RTS* for possible values.
+      length       : 0x0C
+      value        : {0:0D,  0, 0, 0 }
+  - SerialIoUartCtsPinMux :
+      name         : SerialIoUartCtsPinMux
+      type         : EditNum, HEX, (0,0xFFFFFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT32
+      help         : >
+                     Select SerialIo Uart Cts pin muxing. Refer to GPIO_*_MUXING_SERIALIO_UARTx_CTS* for possible values.
+      length       : 0x0C
+      value        : {0:0D,  0, 0, 0 }
+  - SerialIoUartMode :
+      name         : UARTn Device Mode
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFF)
+      help         : >
+                     Selects Uart operation mode. N represents controller index- Uart0, Uart1, ... Available modes- 0:SerialIoUartDisabled, 1:SerialIoUartPci, 2:SerialIoUartHidden, 3:SerialIoUartCom, 4:SerialIoUartSkipInit
+      length       : 0x07
+      value        : { 0x01, 0x01, 0x02, 0x01, 0x01, 0x01, 0x01 }
+  - SerialIoUartBaudRate :
+      name         : Default BaudRate for each Serial IO UART
+      type         : EditNum, HEX, (0x0,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT32
+      help         : >
+                     Set default BaudRate Supported from 0 - default to 6000000
+      length       : 0x1C
+      value        : {0:0D,  115200, 115200, 115200, 115200, 115200, 115200, 115200 }
+  - SerialIoUartParity :
+      name         : Default ParityType for each Serial IO UART
+      type         : EditNum, HEX, (0x0,0xFFFFFFFFFFFFFF)
+      help         : >
+                     Set default Parity. 0- DefaultParity, 1- NoParity, 2- EvenParity, 3- OddParity
+      length       : 0x07
+      value        : { 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 }
+  - SerialIoUartDataBits :
+      name         : Default DataBits for each Serial IO UART
+      type         : EditNum, HEX, (0x0,0xFFFFFFFFFFFFFF)
+      help         : >
+                     Set default word length. 0- Default, 5,6,7,8
+      length       : 0x07
+      value        : { 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08 }
+  - SerialIoUartStopBits :
+      name         : Default StopBits for each Serial IO UART
+      type         : EditNum, HEX, (0x0,0xFFFFFFFFFFFFFF)
+      help         : >
+                     Set default stop bits. 0- DefaultStopBits, 1- OneStopBit, 2- OneFiveStopBits, 3- TwoStopBits
+      length       : 0x07
+      value        : { 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 }
+  - SerialIoUartAutoFlow :
+      name         : Enables UART hardware flow control, CTS and RTS lines
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFF)
+      help         : >
+                     Enables UART hardware flow control, CTS and RTS lines.
+      length       : 0x07
+      value        : { 0x01, 0x01, 0x00, 0x01, 0x01, 0x00, 0x00 }
+  - SerialIoUartRxPinMuxPolicy :
+      name         : SerialIoUartRxPinMuxPolicy
+      type         : EditNum, HEX, (0,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT32
+      help         : >
+                     Select SerialIo Uart Rx pin muxing. Refer to GPIO_*_MUXING_SERIALIO_UARTx_RX* for possible values.
+      length       : 0x1C
+      value        : {0:0D, 0, 0, 0, 0, 0, 0, 0 }
+  - SerialIoUartTxPinMuxPolicy :
+      name         : SerialIoUartTxPinMuxPolicy
+      type         : EditNum, HEX, (0,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT32
+      help         : >
+                     Select SerialIo Uart Tx pin muxing. Refer to GPIO_*_MUXING_SERIALIO_UARTx_TX* for possible values.
+      length       : 0x1C
+      value        : {0:0D, 0, 0, 0, 0, 0, 0, 0 }
+  - SerialIoUartRtsPinMuxPolicy :
+      name         : SerialIoUartRtsPinMuxPolicy
+      type         : EditNum, HEX, (0,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT32
+      help         : >
+                     Select SerialIo Uart Rts pin muxing. Refer to GPIO_*_MUXING_SERIALIO_UARTx_RTS* for possible values.
+      length       : 0x1C
+      value        : {0:0D, 0, 0, 0, 0, 0, 0, 0 }
+  - SerialIoUartCtsPinMuxPolicy :
+      name         : SerialIoUartCtsPinMuxPolicy
+      type         : EditNum, HEX, (0,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT32
+      help         : >
+                     Select SerialIo Uart Cts pin muxing. Refer to GPIO_*_MUXING_SERIALIO_UARTx_CTS* for possible values.
+      length       : 0x1C
+      value        : {0:0D, 0, 0, 0, 0, 0, 0, 0 }
+  - SerialIoUartPowerGating :
+      name         : Power Gating mode for each Serial IO UART that works in COM mode
+      type         : EditNum, HEX, (0x0,0xFFFFFFFFFFFFFF)
+      help         : >
+                     Set Power Gating. 0- Disabled, 1- Enabled, 2- Auto
+      length       : 0x07
+      value        : { 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02 }
+  - SerialIoUartDmaEnable :
+      name         : Enable Dma for each Serial IO UART that supports it
+      type         : EditNum, HEX, (0x0,0xFFFFFFFFFFFFFF)
+      help         : >
+                     Set DMA/PIO mode. 0- Disabled, 1- Enabled
+      length       : 0x07
+      value        : { 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00 }
+  - SerialIoUartDbg2 :
+      name         : Serial IO UART DBG2 table
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFF)
+      help         : >
+                     Enable or disable Serial Io UART DBG2 table, default is Disable; <b>0- Disable;</b> 1- Enable.
+      length       : 0x07
+      value        : { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+  - SerialIoI2cMode :
+      name         : I2Cn Device Mode
+      type         : EditNum, HEX,  (0x00,0xFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Selects I2c operation mode. N represents controller index- I2c0, I2c1, ... Available modes- 0:SerialIoI2cDisabled, 1:SerialIoI2cPci, 2:SerialIoI2cHidden
+      length       : 0x08
+      value        : { 0x01, 0x00, 0x01, 0x01, 0x01, 0x00, 0x01, 0x01 }
+  - PchSerialIoI2cPadsTermination :
+      name         : PCH SerialIo I2C Pads Termination
+      type         : EditNum, HEX,  (0x00,0xFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     0x0- Hardware default, 0x1- None, 0x13- 1kOhm weak pull-up, 0x15- 5kOhm weak pull-up, 0x19- 20kOhm weak pull-up.
+      length       : 0x08
+      value        : { 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 }
+  - PchEspiLgmrEnable :
+      name         : Espi Lgmr Memory Range decode
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     This option enables or disables espi lgmr
+      length       : 0x01
+      value        : 0x00
+  - ThcPort0Assignment :
+      name         : Touch Host Controller Port 0 Assignment
+      type         : Combo
+      option       : 0x0:ThcAssignmentNone, 0x2:ThcPort1AssignmentThc0, 0x3:ThcAssignmentThc1
+      help         : >
+                     Assign THC Port 0
+      length       : 0x01
+      value        : 0x0
+  - ThcPort1Assignment :
+      name         : Touch Host Controller Port 1 Assignment
+      type         : Combo
+      option       : 0x0:ThcAssignmentNone, 0x2:ThcPort1AssignmentThc0, 0x3:ThcAssignmentThc1
+      help         : >
+                     Assign THC Port 1
+      length       : 0x01
+      value        : 0x2
+  - PchCnviRfResetPinMux :
+      name         : PchCnviRfResetPinMux
+      type         : EditNum, HEX, (0,0xFFFFFFFF)
+      help         : >
+                     Select CNVi RF Reset pin muxing. Refer to GPIO_*_MUXING_CNVI_RF_RESET_* for possible values.
+      length       : 0x04
+      value        : 0x0
+  - PchCnviModemClkreqPinMux :
+      name         : PchCnviModemClkreqPinMux
+      type         : EditNum, HEX, (0,0xFFFFFFFF)
+      help         : >
+                     Select CNVi Modem Clkreq pin muxing. Refer to GPIO_*_MUXING_CNVI_MODEM_CLKREQ_* for possible values.
+      length       : 0x04
+      value        : 0x0
+  - PchFivrExtV1p05RailVoltage :
+      name         : External V1P05 Voltage Value that will be used in S0i2/S0i3 states
+      type         : EditNum, HEX, (0x0,0x07FF)
+      help         : >
+                     Value is given in 2.5mV increments (0=0mV, 1=2.5mV, 2=5mV...)
+      length       : 0x2
+      value        : 0x1A4
+  - PchFivrExtV1p05RailIccMax :
+      name         : External V1P05 Icc Max Value
+      type         : EditNum, HEX, (0x0,0xC8)
+      help         : >
+                     Granularity of this setting is 1mA and maximal possible value is 200mA
+      length       : 0x1
+      value        : 0x64
+  - PchFivrExtVnnRailVoltage :
+      name         : External Vnn Voltage Value that will be used in S0ix/Sx states
+      type         : EditNum, HEX, (0x0,0x07FF)
+      help         : >
+                     Value is given in 2.5mV increments (0=0mV, 1=2.5mV, 2=5mV...)
+      length       : 0x2
+      value        : 0x1A4
+  - PchFivrExtVnnRailIccMax :
+      name         : External Vnn Icc Max Value that will be used in S0ix/Sx states
+      type         : EditNum, HEX, (0x0,0xC8)
+      help         : >
+                     Granularity of this setting is 1mA and maximal possible value is 200mA
+      length       : 0x1
+      value        : 0xC8
+  - PchFivrExtVnnRailSxVoltage :
+      name         : External Vnn Voltage Value that will be used in Sx states
+      type         : EditNum, HEX, (0x0,0x07FF)
+      help         : >
+                     Use only if Ext Vnn Rail config is different in Sx. Value is given in 2.5mV increments (0=0mV, 1=2.5mV, 2=5mV...)
+      length       : 0x2
+      value        : 0x1A4
+  - PchFivrExtVnnRailSxIccMax :
+      name         : External Vnn Icc Max Value that will be used in Sx states
+      type         : EditNum, HEX, (0x0,0xC8)
+      help         : >
+                     Use only if Ext Vnn Rail config is different in Sx. Granularity of this setting is 1mA and maximal possible value is 200mA
+      length       : 0x1
+      value        : 0xC8
+  - PchFivrVccinAuxOffToHighCurModeVolTranTime :
+      name         : Transition time in microseconds from Off (0V) to High Current Mode Voltage
+      type         : EditNum, HEX, (0x0,0x7FF)
+      help         : >
+                     This field has 1us resolution. When value is 0 Transition to 0V is disabled.
+      length       : 0x2
+      value        : 0x5A
+  - PchPmSlpS3MinAssert :
+      name         : PCH Pm Slp S3 Min Assert
+      type         : EditNum, HEX, (0x0,0xFF)
+      help         : >
+                     SLP_S3 Minimum Assertion Width Policy. Default is PchSlpS350ms.
+      length       : 0x01
+      value        : 0x01
+  - PchPmSlpS4MinAssert :
+      name         : PCH Pm Slp S4 Min Assert
+      type         : EditNum, HEX, (0x0,0xFF)
+      help         : >
+                     SLP_S4 Minimum Assertion Width Policy. Default is PchSlpS44s.
+      length       : 0x01
+      value        : 0x0
+  - PchPmSlpSusMinAssert :
+      name         : PCH Pm Slp Sus Min Assert
+      type         : EditNum, HEX, (0x0,0xFF)
+      help         : >
+                     SLP_SUS Minimum Assertion Width Policy. Default is PchSlpSus4s.
+      length       : 0x01
+      value        : 0x01
+  - PchPmSlpAMinAssert :
+      name         : PCH Pm Slp A Min Assert
+      type         : EditNum, HEX, (0x0,0xFF)
+      help         : >
+                     SLP_A Minimum Assertion Width Policy. Default is PchSlpA2s.
+      length       : 0x01
+      value        : 0x01
+  - PchPmPwrBtnOverridePeriod :
+      name         : PCH Pm Pwr Btn Override Period
+      type         : EditNum, HEX, (0x0,0xFF)
+      help         : >
+                     PCH power button override period. 000b-4s, 001b-6s, 010b-8s, 011b-10s, 100b-12s, 101b-14s.
+      length       : 0x01
+      value        : 0x03
+  - PchS0ixAutoDemotion :
+      name         : S0ix Auto-Demotion
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/Disable the Low Power Mode Auto-Demotion Host Control feature.
+      length       : 0x01
+      value        : 0x00
+  - PmcLpmS0ixSubStateEnableMask :
+      name         : Low Power Mode Enable/Disable config mask
+      type         : EditNum, HEX, (0x00,0xFF)
+      help         : >
+                     Configure if respective S0i2/3 sub-states are to be supported. Each bit corresponds to one sub-state (LPMx - BITx)- LPM0-s0i2.0, LPM1-s0i2.1, LPM2-s0i2.2, LPM3-s0i3.0, LPM4-s0i3.1, LPM5-s0i3.2, LPM6-s0i3.3, LPM7-s0i3.4.
+      length       : 0x01
+      value        : 0xFF
+  - AmtEnabled   :
+      name         : AMT Switch
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/Disable. 0- Disable, 1- enable, Enable or disable AMT functionality.
+      length       : 0x01
+      value        : 0x01
+  - FwProgress   :
+      name         : PET Progress
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/Disable. 0- Disable, 1- enable, Enable/Disable PET Events Progress to receive PET Events.
+      length       : 0x01
+      value        : 0x00
+  - ForcMebxSyncUp :
+      name         : KVM Switch
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/Disable. 0- Disable, 1- enable, KVM enable/disable state by Mebx
+      length       : 0x01
+      value        : 0x01
+  - MeUnconfigOnRtcClear :
+      name         : ME Unconfig on RTC clear
+      type         : Combo
+      option       : 0:Disable ME Unconfig On Rtc Clear, 1:Enable ME Unconfig On Rtc Clear, 2:Cmos is clear, 3:Reserved
+      help         : >
+                     0- Disable ME Unconfig On Rtc Clear. <b>1- Enable ME Unconfig On Rtc Clear</b>. 2- Cmos is clear, status unkonwn. 3- Reserved
+      length       : 0x01
+      value        : 0x02
+  - GpioIrqRoute :
+      name         : Select GPIO IRQ Route
+      type         : EditNum, HEX, (0x00,0x0F)
+      help         : >
+                     GPIO IRQ Select. The valid value is 14 or 15.
+      length       : 0x01
+      value        : 0x0E
+  - SciIrqSelect :
+      name         : Select SciIrqSelect
+      type         : EditNum, HEX, (0x00,0x17)
+      help         : >
+                     SCI IRQ Select. The valid value is 9, 10, 11, and 20, 21, 22, 23 for APIC only.
+      length       : 0x01
+      value        : 0x09
+  - TcoIrqEnable :
+      name         : Enable/Disable Tco IRQ
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/disable TCO IRQ
+      length       : 0x01
+      value        : 0x00
+  - TcoIrqSelect :
+      name         : Select TcoIrqSelect
+      type         : EditNum, HEX, (0x00,0x17)
+      help         : >
+                     TCO IRQ Select. The valid value is 9, 10, 11, 20, 21, 22, 23.
+      length       : 0x01
+      value        : 0x09
+  - AesEnable    :
+      name         : Enable/Disable AES
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable(Default)- Enable, Disable- Disable
+      length       : 0x01
+      value        : 0x1
+  - TxtEnable    :
+      name         : Enable/Disable TXT
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable- Enable, Disable(Default)- Disable
+      length       : 0x01
+      value        : 0x0
+  - PpinSupport  :
+      name         : View Protected Processor Inventory Number
+      type         : Combo
+      option       : 0:0, 1:1, 2:2
+      help         : >
+                     Disable (Default)- Disable, Enable- Enable, 2- Auto
+      length       : 0x01
+      value        : 0x0
+  - AcSplitLock  :
+      name         : AC Split Lock
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/Disable #AC check on split lock. <b>0- Disable</b>; 1- Enable.
+      length       : 0x1
+      value        : 0x1
+  - SgxSinitNvsData :
+      name         : SgxSinitNvsData
+      type         : EditNum, HEX, (0x0,0xFF)
+      help         : >
+                     SgxSinitNvsData
+      length       : 0x01
+      value        : 0x0
+  - ITbtForcePowerOnTimeoutInMs :
+      name         : ITBTForcePowerOn Timeout value
+      type         : EditNum, HEX, (0x00,0xFFFF)
+      help         : >
+                     ITBTForcePowerOn Timeout value in miliseconds. Range 0-1000
+      length       : 0x02
+      value        : 0x01F4
+  - ITbtConnectTopologyTimeoutInMs :
+      name         : ITbtConnectTopologyTimeout Timeout value
+      type         : EditNum, HEX, (0x00,0xFFFF)
+      help         : >
+                     ITbtConnectTopologyTimeout Timeout value in miliseconds. Range 0-10000
+      length       : 0x02
+      value        : 0x1388
+  - ITbtPcieRootPortEn :
+      name         : Enable/Disable ITBT Root Port
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFF)
+      help         : >
+                     Enable/Disable ITBT Root Port
+      length       : 0x06
+      value        : { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 }
+  - $ACTION      :
+      page         : SA2
+  - RenderStandby :
+      name         : Enable/Disable IGFX RenderStandby
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable(Default)- Enable IGFX RenderStandby, Disable- Disable IGFX RenderStandby
+      length       : 0x01
+      value        : 0x1
+  - PmSupport    :
+      name         : Enable/Disable IGFX PmSupport
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable(Default)- Enable IGFX PmSupport, Disable- Disable IGFX PmSupport
+      length       : 0x01
+      value        : 0x01
+  - PavpEnable   :
+      name         : Enable/Disable PavpEnable
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable(Default)- Enable PavpEnable, Disable- Disable PavpEnable
+      length       : 0x01
+      value        : 0x1
+  - CdClock      :
+      name         : CdClock Frequency selection
+      type         : Combo
+      option       : 0:168 Mhz, 1:307.2 Mhz, 2:312 Mhz, 3:552 Mhz, 4:556.8 Mhz, 5:648 Mhz, 6:652.8 Mhz
+      help         : >
+                     0=168 Mhz, 1=307.2 Mhz, 2=312 Mhz, 3=552 Mhz, 4=556.8 Mhz, 5=648 Mhz, 6(Default)= 652.8 Mhz
+      length       : 0x1
+      value        : 0xFF
+  - CdynmaxClampEnable :
+      name         : Enable/Disable CdynmaxClamp
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable- Enable CdynmaxClamp, Disable(Default)- Disable CdynmaxClamp
+      length       : 0x01
+      value        : 0x0
+  - GtFreqMax    :
+      name         : GT Frequency Limit
+      type         : Combo
+      option       : 0xFF:Auto(Default), 2:100 Mhz, 3:150 Mhz, 4:200 Mhz, 5:250 Mhz, 6:300 Mhz, 7:350 Mhz, 8:400 Mhz, 9:450 Mhz, 0xA:500 Mhz, 0xB:550 Mhz, 0xC:600 Mhz, 0xD:650 Mhz, 0xE:700 Mhz, 0xF:750 Mhz, 0x10:800 Mhz, 0x11:850 Mhz, 0x12:900 Mhz, 0x13:950 Mhz, 0x14:1000 Mhz, 0x15:1050 Mhz, 0x16:1100 Mhz, 0x17:1150 Mhz, 0x18:1200 Mhz
+      help         : >
+                     0xFF- Auto(Default), 2- 100 Mhz, 3- 150 Mhz, 4- 200 Mhz, 5- 250 Mhz, 6- 300 Mhz, 7- 350 Mhz, 8- 400 Mhz, 9- 450 Mhz, 0xA- 500 Mhz, 0xB- 550 Mhz, 0xC- 600 Mhz, 0xD- 650 Mhz, 0xE- 700 Mhz, 0xF- 750 Mhz, 0x10- 800 Mhz, 0x11- 850 Mhz, 0x12:900 Mhz, 0x13- 950 Mhz, 0x14- 1000 Mhz, 0x15- 1050 Mhz, 0x16- 1100 Mhz, 0x17- 1150 Mhz, 0x18- 1200 Mhz
+      length       : 0x1
+      value        : 0xFF
+  - DisableTurboGt :
+      name         : Disable Turbo GT
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     0=Disable- GT frequency is not limited, 1=Enable- Disables Turbo GT frequency
+      length       : 0x1
+      value        : 0x0
+  - SkipCdClockInit :
+      name         : Enable/Disable CdClock Init
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable- Skip Full CD clock initializaton, Disable(Default)- Initialize the full CD clock if not initialized by Gfx PEIM
+      length       : 0x01
+      value        : 0x0
+  - Dummy        :
+      name         : SaPostMemTestRsvd
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Reserved for SA Post-Mem Test
+      length       : 0x02
+      value        : 0x0

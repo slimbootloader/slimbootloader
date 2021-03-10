@@ -26,7 +26,7 @@
   BootloaderCommonPkg/BootloaderCommonPkg.dec
   BootloaderCorePkg/BootloaderCorePkg.dec
   Silicon/CoffeelakePkg/CoffeelakePkg.dec
-
+  Silicon/CommonSocPkg/CommonSocPkg.dec
 
 [Sources]
   BootGuardLibrary.c

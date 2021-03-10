@@ -13,6 +13,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Guid/FlashMapInfoGuid.h>
 #include <IndustryStandard/Acpi30.h>
 #include <Guid/SystemResourceTable.h>
+#include <Guid/BootLoaderVersionGuid.h>
+#include <Service/SpiFlashService.h>
 
 #define CMOS_ADDREG             0x70
 #define CMOS_DATAREG            0x71
@@ -45,6 +47,11 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define FW_UPDATE_COMP_CSME_REGION SIGNATURE_32('C', 'S', 'M', 'E')
 #define FW_UPDATE_COMP_CSME_DRIVER SIGNATURE_32('C', 'S', 'M', 'D')
 #define FW_UPDATE_COMP_CMD_REQUEST SIGNATURE_32('C', 'M', 'D', 'I')
+
+#define FW_UPDATE_COMP_CSME_REGION_ORDER      1
+#define FW_UPDATE_COMP_CSME_DRIVER_ORDER      2
+#define FW_UPDATE_COMP_BIOS_REGION_ORDER      3
+#define FW_UPDATE_COMP_DEFAULT_ORDER          4
 
 
 #define FW_UPDATE_STATUS_SIGNATURE SIGNATURE_32 ('F', 'W', 'U', 'S')
@@ -284,6 +291,44 @@ PlatformEndFirmwareUpdate (
   );
 
 /**
+  Get SVN from existing firmware
+
+  This routine get SPI base address and read first four bytes
+  to get STAGE1A FV base address, using this base address
+  this routine can calculate the offset to the SVN structure.
+
+  @param[in]  Stage1AFvPointer    Pointer to Stage1A fv base.
+  @param[out] BlVersion           Pointer to SBL version struct.
+
+  @retval EFI_SUCCESS             Read SVN success
+  @retval EFI_INVALID_PARAMETER   Invalid parameter
+**/
+EFI_STATUS
+EFIAPI
+GetSvn (
+  IN  UINT32                Stage1AFvPointer,
+  OUT BOOT_LOADER_VERSION   **BlVersion
+  );
+
+/**
+  Verify the firmware version to make sure it is no less than current firmware version.
+
+  @param[in]  Stage1ABase   Stage 1A base address.
+  @param[in]  IsFd          Does Stage1ABase point to Stage1A FD
+                            or SBL Stage1A FV ?
+  @param[out] Version       Pointer to version of the firmware
+
+  @retval  EFI_SUCCESS        The operation completed successfully.
+  @retval  others             There is error happening.
+**/
+EFI_STATUS
+GetVersionfromFv (
+  IN  UINT32              Stage1ABase,
+  IN  BOOLEAN             IsFd,
+  OUT BOOT_LOADER_VERSION **Version
+  );
+
+/**
   Read the data from BootMedia.
 
   @param[in] Address          The boot media address to be read.
@@ -299,6 +344,27 @@ BootMediaRead (
   IN     UINT64                  Address,
   IN     UINT32                  ByteCount,
   OUT    UINT8                   *Buffer
+  );
+
+/**
+  This function reads blocks from the SPI device.
+
+  @param[in] FlashRegionType      The Flash Region type for flash cycle which is listed in the Descriptor.
+  @param[in]  Address             The block address in the FlashRegionAll to read from on the SPI.
+  @param[in]  ByteCount           Size of the Buffer in bytes.
+  @param[out] Buffer              Pointer to caller-allocated buffer containing the data received during the SPI cycle.
+
+  @retval EFI_SUCCESS             Read completes successfully.
+  @retval others                  Device error, the command aborts abnormally.
+
+**/
+EFI_STATUS
+EFIAPI
+BootMediaReadByType (
+  IN     FLASH_REGION_TYPE  FlashRegionType,
+  IN     UINT64             Address,
+  IN     UINT32             ByteCount,
+  OUT    UINT8              *Buffer
   );
 
 /**
@@ -355,6 +421,25 @@ VOID
 EFIAPI
 InitializeBootMedia (
   VOID
+  );
+
+/**
+  Get the SPI region base and size, based on the enum type
+
+  @param[in] FlashRegionType      The Flash Region type for for the base address which is listed in the Descriptor.
+  @param[out] BaseAddress         The Flash Linear Address for the Region 'n' Base
+  @param[out] RegionSize          The size for the Region 'n'
+
+  @retval EFI_SUCCESS             Read success
+  @retval EFI_INVALID_PARAMETER   Invalid region type given
+  @retval EFI_DEVICE_ERROR        The region is not used
+**/
+EFI_STATUS
+EFIAPI
+BootMediaGetRegion (
+  IN     FLASH_REGION_TYPE  FlashRegionType,
+  OUT    UINT32             *BaseAddress, OPTIONAL
+  OUT    UINT32             *RegionSize OPTIONAL
   );
 
 /**
@@ -495,6 +580,38 @@ UpdateCsme (
   );
 
 /**
+  Reads a range of PCI configuration registers into a caller supplied buffer.
+
+  Reads the range of PCI configuration registers specified by StartAddress and
+  Size into the buffer specified by Buffer. This function only allows the PCI
+  configuration registers from a single PCI function to be read. Size is
+  returned. When possible 32-bit PCI configuration read cycles are used to read
+  from StartAddress to StartAddress + Size. Due to alignment restrictions, 8-bit
+  and 16-bit PCI configuration read cycles may be used at the beginning and the
+  end of the range.
+
+  If StartAddress > 0x0FFFFFFF, then ASSERT().
+  If ((StartAddress & 0xFFF) + Size) > 0x1000, then ASSERT().
+  If Size > 0 and Buffer is NULL, then ASSERT().
+
+  @param  StartAddress  The starting address that encodes the PCI Bus, Device,
+                        Function and Register.
+  @param  Size          The size in bytes of the transfer.
+  @param  Buffer        The pointer to a buffer receiving the data read.
+
+  @return EFI_SUCCESS        if data is read into buffer
+  @return EFI_NOT_FOUND      if data is NOT read into buffer
+  @return EFI_INVALID_PARAMETER  Invalid parameter
+**/
+EFI_STATUS
+EFIAPI
+CsmePciReadBuffer (
+  IN      UINT64    StartAddress,
+  IN      UINTN     Size,
+  OUT     VOID      *Buffer
+  );
+
+/**
   Platform hook point to clear firmware update trigger.
 
   This function is responsible for clearing firmware update trigger.
@@ -543,4 +660,22 @@ SetArbSvnCommit (
    IN  CHAR8     *CmdDataBuf,
    IN  UINTN     CmdDataSize
    );
+
+/**
+  Oem Key Revocation
+
+  @param[in]  CmdDataBuf    Pointer to command buffer.
+  @param[in]  CmdDataSize   size of command data.
+
+  @retval  EFI_SUCCESS      Oem Key Revocation is successful.
+  @retval  others           Error happened while doing commit.
+
+**/
+EFI_STATUS
+EFIAPI
+SetOemKeyRevocation (
+   IN  CHAR8     *CmdDataBuf,
+   IN  UINTN     CmdDataSize
+   );
+
 #endif

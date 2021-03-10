@@ -87,31 +87,40 @@
   gPlatformModuleTokenSpaceGuid.PcdVariableRegionBase     | 0x00000000 | UINT32 | 0x2000008E
   gPlatformModuleTokenSpaceGuid.PcdVariableRegionSize     | 0x00000000 | UINT32 | 0x2000008F
 
-  gPlatformModuleTokenSpaceGuid.PcdPciResourceIoBase      | 0x00000000 | UINT32 | 0x200000A0
-  gPlatformModuleTokenSpaceGuid.PcdPciResourceMem32Base   | 0x00000000 | UINT32 | 0x200000A1
   gPlatformModuleTokenSpaceGuid.PcdMemoryMapEntryNumber   | 0x00000020 | UINT32 | 0x200000A2
   gPlatformModuleTokenSpaceGuid.PcdOsBootOptionNumber     | 0x00000008 | UINT32 | 0x200000A3
   gPlatformModuleTokenSpaceGuid.PcdServiceNumber          | 0x00000004 | UINT32 | 0x200000A4
 
+  # typedef struct {
+  #   UINT16            Io32      : 1;  // default:1
+  #   UINT16            Mem64     : 1;  // default:1
+  #   UINT16            PMem64    : 1;  // default:1
+  #   UINT16            Bus0      : 1;  // default:1, Downgrade all Io32/Mem64/PMem64 for all Bus-0 devices
+  #   UINT16            Reserved  : 12; // 0 initialized
+  # } PCI_RES_DOWNGRADE;
   #
   # typedef struct {
-  #   UINT8           DowngradeIo32;  // default: 1
-  #   UINT8           DowngradeMem64; // default: 1
-  #   UINT8           DowngradePMem64;// default: 1
-  #   UINT8           Reserved;
-  #   UINT8           BusScanType;    // default:0 (0: list, 1: range)
-  #   UINT8           NumOfBus;       // the number of BusScanItems
-  #   UINT8           BusScanItems[0];
+  #   UINT16            AllocPmemFirst  : 1;  // default:0 (Mem32->Pmem32->Mem64->Pmem64), 1 (Pmem64->Mem64->Pmem32->Mem32)
+  #   UINT16            Reserved        : 15; // 0 initialized
+  # } PCI_ENUM_FLAG;
+  #
+  # typedef struct {
+  #   PCI_RES_DOWNGRADE Downgrade;
+  #   PCI_ENUM_FLAG     Flag;
+  #   UINT8             BusScanType;    // default:0 (0: list, 1: range)
+  #   UINT8             NumOfBus;       // the number of BusScanItems
+  #   UINT8             BusScanItems[0];
   # } PCI_ENUM_POLICY_INFO;
   #
   # Update BoardConfig.py if necessary
   # self._PCI_ENUM_DOWNGRADE_IO32   = 0
   # self._PCI_ENUM_DOWNGRADE_MEM64  = 0
   # self._PCI_ENUM_DOWNGRADE_PMEM64 = 0
+  # self._PCI_ENUM_DOWNGRADE_BUS0   = 0
+  # self._PCI_ENUM_FLAG_ALLOC_PMEM_FIRST = 1
   # self._PCI_ENUM_BUS_SCAN_TYPE    = 1
   # self._PCI_ENUM_BUS_SCAN_ITEMS   = '0,0xff'
   gPlatformModuleTokenSpaceGuid.PcdPciEnumPolicyInfo      | {0x00}     | VOID*  | 0x200000A5
-  gPlatformModuleTokenSpaceGuid.PcdPciResourceMem64Base   | 0x0000000000000000  | UINT64     | 0x200000A6
 
   gPlatformModuleTokenSpaceGuid.PcdLoaderHobStackSize     | 0x00040000 | UINT32 | 0x200000B0
   gPlatformModuleTokenSpaceGuid.PcdEarlyLogBufferSize     | 0x00000400 | UINT32 | 0x200000B1
@@ -124,7 +133,7 @@
   gPlatformModuleTokenSpaceGuid.PcdTopSwapRegionSize      | 0x00000000 | UINT32 | 0x200000C0
   gPlatformModuleTokenSpaceGuid.PcdRedundantRegionSize    | 0x00000000 | UINT32 | 0x200000C1
 
-  gPlatformModuleTokenSpaceGuid.PcdVerifiedBootStage1B   | 0x0 | BOOLEAN | 0x200000D0
+  gPlatformModuleTokenSpaceGuid.PcdVerifiedBootStage1B    | FALSE      | BOOLEAN| 0x200000D0
 
   gPlatformModuleTokenSpaceGuid.PcdCpuMaxLogicalProcessorNumber | 16   | UINT32 | 0x200000E0
   gPlatformModuleTokenSpaceGuid.PcdMaxServiceNumber       | 8          | UINT32 | 0x200000E1
@@ -133,7 +142,11 @@
   gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesSize       |     0x1000 | UINT16 | 0x200000E3
 
   # Size of the Hash store allocated in bootloader
-  gPlatformModuleTokenSpaceGuid.PcdHashStoreSize       | 0x00000200 | UINT32 | 0x200000F1
+  gPlatformModuleTokenSpaceGuid.PcdHashStoreSize          | 0x00000200 | UINT32 | 0x200000F1
+
+  # Use this PCD for the potential code change related with boot performance
+  # NOTE: some features might be disabled when ENABLE_FAST_BOOT is set.
+  gPlatformModuleTokenSpaceGuid.PcdFastBootEnabled        |  FALSE     | BOOLEAN| 0x200000F2
 
 [PcdsFixedAtBuild, PcdsPatchableInModule]
   #
@@ -152,6 +165,7 @@
   gPlatformModuleTokenSpaceGuid.PcdAcpiTablesAddress      | 0xFF000000 | UINT32 | 0x20000110
   gPlatformModuleTokenSpaceGuid.PcdAcpiGnvsAddress        | 0xFF000000 | UINT32 | 0x20000112
   gPlatformModuleTokenSpaceGuid.PcdGraphicsVbtAddress     | 0xFF000000 | UINT32 | 0x20000113
+  gPlatformModuleTokenSpaceGuid.PcdIgdOpRegionAddress     | 0xFF000000 | UINT32 | 0x20000114
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase          | 0xFF000000 | UINT32 | 0x20000120
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegSize          | 0x00000000 | UINT32 | 0x20000121
   gPlatformModuleTokenSpaceGuid.PcdHashStoreBase          | 0xFF000000 | UINT32 | 0x20000181
@@ -169,6 +183,13 @@
   gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsCnt       |     0x0000 | UINT16 | 0x20000199
   gPlatformModuleTokenSpaceGuid.PcdFuncCpuInitHook        | 0x00000000 | UINT32 | 0x2000019A
   gPlatformModuleTokenSpaceGuid.PcdFspsUpdPtr             | 0x00000000 | UINT32 | 0x2000019B
+
+  gPlatformModuleTokenSpaceGuid.PcdPciResAllocTableBase   | 0x00000000 | UINT32 | 0x200001A0
+  gPlatformModuleTokenSpaceGuid.PcdPciResourceIoBase      | 0x00000000 | UINT32 | 0x200001A1
+  gPlatformModuleTokenSpaceGuid.PcdPciResourceMem32Base   | 0x00000000 | UINT32 | 0x200001A2
+  gPlatformModuleTokenSpaceGuid.PcdPciResourceMem64Base   | 0x0000000000000000  | UINT64     | 0x200001A3
+
+
 [PcdsFeatureFlag]
   # Determine if the Intel GFX device should be enabled or not in system
   gPlatformModuleTokenSpaceGuid.PcdIntelGfxEnabled        | TRUE       | BOOLEAN | 0x20000200
@@ -190,3 +211,5 @@
   gPlatformModuleTokenSpaceGuid.PcdLinuxPayloadEnabled    | FALSE      | BOOLEAN | 0x20000210
   gPlatformModuleTokenSpaceGuid.PcdAriSupport             | FALSE      | BOOLEAN | 0x20000211
   gPlatformModuleTokenSpaceGuid.PcdSrIovSupport           | FALSE      | BOOLEAN | 0x20000212
+  gPlatformModuleTokenSpaceGuid.PcdEnableSetup            | FALSE      | BOOLEAN | 0x20000213
+  gPlatformModuleTokenSpaceGuid.PcdLegacyEfSegmentEnabled | TRUE       | BOOLEAN | 0x20000214

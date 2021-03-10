@@ -51,3 +51,4 @@
   CryptoLib
   BootloaderCommonLib
   BootloaderLib
+  ResetSystemLib

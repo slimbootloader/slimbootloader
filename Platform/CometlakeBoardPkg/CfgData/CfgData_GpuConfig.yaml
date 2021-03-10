@@ -1,0 +1,268 @@
+## @file
+
+#
+
+#  Slim Bootloader CFGDATA Option File.
+
+#
+
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+#
+
+##
+
+
+
+
+
+- $ACTION      :
+
+    page         : GPU_CFG:SIL:"Graphic & Display"
+
+- $ACTION      :
+
+    page         : GPU_CFG
+
+- GPU_CFG_DATA :
+
+  - !expand { CFGHDR_TMPL : [ GPU_CFG_DATA, 0x308, 0, 0 ] }
+
+  - IgdDvmt50PreAlloc :
+
+      name         : Internal Graphics Pre-allocated Memory
+
+      type         : Combo
+
+      option       : >
+
+                     0x00:0MB, 0x01:32MB, 0x02:64MB, 0x03:96MB, 0x04:128MB, 0x05:160MB, 0xF0:4MB, 0xF1:8MB, 0xF2:12MB, 0xF3:16MB, 0xF4:20MB,
+
+                     0xF5:24MB, 0xF6:28MB, 0xF7:32MB, 0xF8:36MB, 0xF9:40MB, 0xFA:44MB, 0xFB:48MB, 0xFC:52MB, 0xFD:56MB, 0xFE:60MB
+
+      help         : >
+
+                     Size of memory preallocated for internal graphics.
+
+      length       : 0x01
+
+      value        : 0x01
+
+  - ApertureSize :
+
+      name         : Aperture Size
+
+      type         : Combo
+
+      option       : 0:128 MB, 1:256 MB, 2:512 MB
+
+      help         : >
+
+                     Select the Aperture Size.
+
+      length       : 0x01
+
+      value        : 0x01
+
+  - InternalGfx  :
+
+      name         : Internal Graphics
+
+      type         : Combo
+
+      option       : 1:Enable, 0:Disable
+
+      help         : >
+
+                     Enable/disable internal graphics.
+
+      length       : 0x01
+
+      value        : 0x01
+
+  - PrimaryDisplay :
+
+      name         : Selection of the primary display device
+
+      type         : Combo
+
+      option       : 0:iGFX, 1:PEG, 2:PCIe Graphics on PCH, 3:AUTO, 4:Switchable Graphics
+
+      help         : >
+
+                     0=iGFX, 1=PEG, 2=PCIe Graphics on PCH, 3(Default)=AUTO, 4=Switchable Graphics
+
+      length       : 0x01
+
+      value        : 0x3
+
+  - GttSize      :
+
+      name         : Selection of iGFX GTT Memory size
+
+      type         : Combo
+
+      option       : 1:2MB, 2:4MB, 3:8MB
+
+      help         : >
+
+                     1=2MB, 2=4MB, 3=8MB
+
+      length       : 0x02
+
+      value        : 0x3
+
+  - DdiPortEdp   :
+
+      name         : eDP device
+
+      type         : Combo
+
+      option       : 1:Enable, 0:Disable
+
+      help         : >
+
+                     Enable or disable
+
+      length       : 0x01
+
+      value        : 0x1
+
+  - DdiPortBHpd  :
+
+      name         : HPD of DDI port B
+
+      type         : Combo
+
+      option       : 1:Enable, 0:Disable
+
+      help         : >
+
+                     Enable or disable
+
+      length       : 0x01
+
+      value        : 0x1
+
+  - DdiPortCHpd  :
+
+      name         : HPD of DDI port C
+
+      type         : Combo
+
+      option       : 1:Enable, 0:Disable
+
+      help         : >
+
+                     Enable or disable
+
+      length       : 0x01
+
+      value        : 0x1
+
+  - DdiPortDHpd  :
+
+      name         : HPD of DDI port D
+
+      type         : Combo
+
+      option       : 1:Enable, 0:Disable
+
+      help         : >
+
+                     Enable or disable
+
+      length       : 0x01
+
+      value        : 0x1
+
+  - DdiPortFHpd  :
+
+      name         : HPD of DDI port F
+
+      type         : Combo
+
+      option       : 1:Enable, 0:Disable
+
+      help         : >
+
+                     Enable or disable
+
+      length       : 0x01
+
+      value        : 0x1
+
+  - DdiPortBDdc  :
+
+      name         : DDC of DDI port B
+
+      type         : Combo
+
+      option       : 1:Enable, 0:Disable
+
+      help         : >
+
+                     Enable or disable
+
+      length       : 0x01
+
+      value        : 0x1
+
+  - DdiPortCDdc  :
+
+      name         : DDC of DDI port C
+
+      type         : Combo
+
+      option       : 1:Enable, 0:Disable
+
+      help         : >
+
+                     Enable or disable
+
+      length       : 0x01
+
+      value        : 0x1
+
+  - DdiPortDDdc  :
+
+      name         : DDC of DDI port D
+
+      type         : Combo
+
+      option       : 1:Enable, 0:Disable
+
+      help         : >
+
+                     Enable or disable
+
+      length       : 0x01
+
+      value        : 0x1
+
+  - DdiPortFDdc  :
+
+      name         : DDC of DDI port F
+
+      type         : Combo
+
+      option       : 1:Enable, 0:Disable
+
+      help         : >
+
+                     Enable or disable
+
+      length       : 0x01
+
+      value        : 0x0
+
+  - Dummy        :
+
+      length       : 0x01
+
+      value        : 0x0
+
+
+

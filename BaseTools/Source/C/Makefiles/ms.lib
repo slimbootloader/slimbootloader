@@ -15,11 +15,11 @@ $(LIBRARY) : $(OBJECTS)
 
 .PHONY:clean
 clean:
-	-del /f /q $(OBJECTS) *.pdb > nul
+	del /f /q $(OBJECTS) *.pdb > nul
 
 .PHONY:cleanall
 cleanall:
-	-del /f /q $(OBJECTS) $(LIBRARY) *.pdb > nul
+	del /f /q $(OBJECTS) $(LIBRARY) *.pdb > nul
 
 !INCLUDE ..\Makefiles\ms.rule
 

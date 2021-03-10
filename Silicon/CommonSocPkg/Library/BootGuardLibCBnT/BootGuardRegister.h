@@ -33,6 +33,7 @@
 #define TXT_PUBLIC_BASE                                               0xFED30000
 #define R_CPU_BOOT_GUARD_ERRORCODE                                    0x30
 #define R_CPU_BOOT_GUARD_BOOTSTATUS                                   0xA0
+#define B_CPU_BOOT_GUARD_BOOTSTATUS_S3_TPM_STARTUP_FAILED             BIT46
 
 #define R_CPU_BOOT_GUARD_ACM_STATUS                                   0x328
 #define MMIO_ACM_STATUS                                               (TXT_PUBLIC_BASE + R_CPU_BOOT_GUARD_ACM_STATUS)

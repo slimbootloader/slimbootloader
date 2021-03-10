@@ -37,8 +37,7 @@ MEMORY_CFG_DATA.FClkFrequency             | 0x01
 MEMORY_CFG_DATA.UserBd                    | 0x01
 MEMORY_CFG_DATA.DualDpc                   | 0x01
 
-GPU_CFG_DATA.DdiPortBDdc                  | 0x0
-GPU_CFG_DATA.DdiPortFDdc                  | 0x1
+GEN_CFG_DATA.VbtImageId                   | 3
 
 POWER_CFG_DATA.OneCoreRatioLimit          | 0x29
 POWER_CFG_DATA.TwoCoreRatioLimit          | 0x28

@@ -49,6 +49,14 @@
                      Enable or disable Rpmb Key Provisioning
       length       : 0x01
       value        : 0
+  - VbtImageId   :
+      name         : Platform VBT table
+      type         : Combo
+      option       : 1:VBT Binary 1, 2:VBT Binary 2
+      help         : >
+                     Specify image ID for desired VBT binary
+      length       : 0x04
+      value        : 1
   - $ACTION      :
       page         : OS
   - CurrentBoot  :

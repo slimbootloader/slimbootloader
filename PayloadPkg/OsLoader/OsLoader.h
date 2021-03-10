@@ -58,11 +58,13 @@
 #include <Service/PlatformService.h>
 #include <IndustryStandard/Mbr.h>
 #include <Uefi/UefiGpt.h>
+#include <PayloadModule.h>
 #include "BlockIoTest.h"
 #include <ConfigDataCommonDefs.h>
 #include <Register/Intel/Msr/ArchitecturalMsr.h>
 #include "PreOsChecker.h"
 #include <Library/StringSupportLib.h>
+#include <PreOsHeader.h>
 
 
 #define MKHI_BOOTLOADER_SEED_LEN       64
@@ -78,6 +80,7 @@
 #define LOADED_IMAGE_PE32        BIT3
 #define LOADED_IMAGE_FV          BIT4
 #define LOADED_IMAGE_CONTAINER   BIT5
+#define LOADED_IMAGE_COMPONENT   BIT6
 
 #define MAX_EXTRA_FILE_NUMBER    16
 
@@ -320,7 +323,7 @@ GetFromConfigFile (
 
   @param[in]     BootOption        Current boot option
   @param[in,out] LoadedImage       Normal OS boot image
-  @param[in,out] LoadedTrustyImage Trusty OS image
+  @param[in,out] LoadedPreOsImage  Pre OS image
   @param[in,out] LoadedExtraImages Extra OS images
 
   @retval   RETURN_SUCCESS         If update OS parameter success
@@ -330,7 +333,7 @@ EFI_STATUS
 UpdateOsParameters (
   IN     OS_BOOT_OPTION      *BootOption,
   IN OUT LOADED_IMAGE        *LoadedImage,
-  IN OUT LOADED_IMAGE        *LoadedTrustyImage,
+  IN OUT LOADED_IMAGE        *LoadedPreOsImage,
   IN OUT LOADED_IMAGE        *LoadedExtraImages
   );
 
@@ -469,4 +472,73 @@ GetLinuxBootOption (
   LINUX_BOOT_CFG           *LinuxBootCfg
   );
 
+/**
+  Initialize platform lcoal console.
+
+  @param[in]  ForceFbConsole   Force to enable framebuffer.
+
+  @retval  EFI_NOT_FOUND    No additional console was found.
+  @retval  EFI_SUCCESS      Console has been initialized successfully.
+  @retval  Others           There is error during console initialization.
+**/
+EFI_STATUS
+LocalConsoleInit (
+  IN  BOOLEAN   ForceFbConsole
+);
+
+/**
+  Get a function pointer from the function name.
+
+  @param[in]      FuncName    Function name
+
+  @retval   Function pointer for the given funciton name.
+  @retval   NULL   Failed to get the function address.
+
+**/
+VOID *
+EFIAPI
+GetProcAddress (
+  IN CHAR8     *FuncName
+  );
+
+/**
+  Initialize payload module serivce table and paramters.
+
+  @param[in]      PldModParam   Payload module parameter pointer
+  @param[in]      ModuleName    Payload module name
+
+**/
+VOID
+EFIAPI
+PayloadModuleInit (
+  IN  PLD_MOD_PARAM       *PldModParam,
+  IN  CHAR8               *ModuleName
+  );
+
+/**
+  Print the stack/HOB and heap usage information.
+
+**/
+VOID
+EFIAPI
+PrintStackHeapInfo (
+  VOID
+  );
+
+/**
+  Start preOS boot image
+
+  This function will call into preOS entry point with OS information as parameter.
+
+  @param[in]  LoadedPreOsImage  Loaded PreOS image information.
+  @param[in]  LoadedImage       Loaded OS image information.
+
+  @retval  RETURN_SUCCESS       boot image is return after boot
+  @retval  Others               There is error when checking boot image
+**/
+EFI_STATUS
+StartPreOsBooting (
+  IN LOADED_IMAGE            *LoadedPreOsImage,
+  IN LOADED_IMAGE            *LoadedImage
+  );
 #endif

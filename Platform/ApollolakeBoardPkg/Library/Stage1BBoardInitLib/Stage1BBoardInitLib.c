@@ -50,6 +50,7 @@
 #include <Library/SideBandLib.h>
 #include <Library/InternalIpcLib.h>
 #include "ScRegs/SscRegs.h"
+#include <MeBiosPayloadData.h>
 
 #define APL_FSP_STACK_TOP       0xFEF40000
 #define MRC_PARAMS_BYTE_OFFSET_MRC_VERSION 14
@@ -1422,28 +1423,26 @@ ProcessMbpData (
   VOID
   )
 {
-  LOADER_GLOBAL_DATA       *LdrGlobal;
   MBP_CMD_RESP_DATA        *MBPHeader;
   MBP_ITEM_HEADER          *MBPItem;
   MBP_CURRENT_BOOT_MEDIA   *MBPCurrentMedia;
-  MBP_VERSION              *MBPVersion;
+  MBP_FW_VERSION_NAME      *MBPVersion;
   PLATFORM_DATA            *PlatformData;
   CDATA_BLOB               *UserCfgData;
   EFI_STATUS               Status;
 
-  LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
-  MBPHeader = GetGuidHobData(LdrGlobal->FspHobList, NULL, &gEfiHeciMbpDataHobGuid);
+  MBPHeader = (MBP_CMD_RESP_DATA *)MeGetMeBiosPayloadHob ();
   if (MBPHeader == NULL) {
     DEBUG((DEBUG_ERROR, "CSE: MBP Data HOB not valid!\n"));
     return;
   }
 
-  MBPItem   = (MBP_ITEM_HEADER*)(MBPHeader + 1);
+  MBPItem      = (MBP_ITEM_HEADER *)(MBPHeader + 1);
   PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
 
   while ((UINT32*)MBPItem < (UINT32*)MBPHeader + MBPHeader->Length) {
-    if ((MBPItem->AppID == MBP_APP_ID_KERNEL) && (MBPItem->ItemID == MBP_ITEM_ID_FW_VER_NAME)) {
-      MBPVersion = (MBP_VERSION *)(MBPItem + 1);
+    if ((MBPItem->Fields.AppId == MBP_APP_ID_KERNEL) && (MBPItem->Fields.ItemId == MBP_ITEM_ID_FW_VER_NAME)) {
+      MBPVersion = (MBP_FW_VERSION_NAME *)(MBPItem + 1);
       DEBUG ((DEBUG_INIT, "CSE: FW %d.%d.%d.%d, VB: %d, MB: %d\n",
               MBPVersion->MajorVersion,
               MBPVersion->MinorVersion,
@@ -1452,11 +1451,11 @@ ProcessMbpData (
               PlatformData->BtGuardInfo.Bpm.Vb,
               PlatformData->BtGuardInfo.Bpm.Mb));
     }
-    if ((MBPItem->AppID == MBP_APP_ID_NVM) && (MBPItem->ItemID == MBP_ITEM_ID_CURRENT_BOOT_MEDIA)) {
+    if ((MBPItem->Fields.AppId == MBP_APP_ID_NVM) && (MBPItem->Fields.ItemId == MBP_ITEM_ID_CURRENT_BOOT_MEDIA)) {
       MBPCurrentMedia = (MBP_CURRENT_BOOT_MEDIA *)(MBPItem + 1);
       DEBUG((DEBUG_INFO, "CSE: boot dev #%d: %s\n", MBPCurrentMedia->PhysicalData, BootDeviceType[MBPCurrentMedia->PhysicalData]));
     }
-    if ((MBPItem->AppID == MBP_APP_ABL_SIG) && (MBPItem->ItemID == MBP_ITEM_ID_IAFW_IBB_SIG)) {
+    if ((MBPItem->Fields.AppId == MBP_APP_ABL_SIG) && (MBPItem->Fields.ItemId == MBP_ITEM_ID_IAFW_IBB_SIG)) {
       UserCfgData = (CDATA_BLOB *)(MBPItem + 1);
       DumpHex (2, 0, 128, (VOID *)UserCfgData);
       if (UserCfgData->Signature == CFG_DATA_SIGNATURE) {
@@ -1471,17 +1470,16 @@ ProcessMbpData (
       }
     }
 
-    MBPItem = (MBP_ITEM_HEADER*)((UINT32*)MBPItem + MBPItem->Length);
+    MBPItem = (MBP_ITEM_HEADER*)((UINT32*)MBPItem + MBPItem->Fields.Length);
 
     //
     // Prevent faulty items that could run this loop infinitely
     //
-    if (MBPItem->Length == 0)
+    if (MBPItem->Fields.Length == 0)
       break;
 
   }
 }
-
 
 /**
   Configure the GPIO output ports
@@ -1823,8 +1821,6 @@ BoardInit (
   )
 {
   PLATFORM_DATA            *PlatformData;
-  HECI_INSTANCE            *HeciInstance;
-  EFI_STATUS                Status;
   PLT_DEVICE_TABLE         *PltDeviceTable;
 
   switch (InitPhase) {
@@ -1838,16 +1834,6 @@ BoardInit (
     SpiControllerInitialize ();
     break;
   case PostConfigInit:
-    HeciInstance  = AllocatePool (sizeof (HECI_INSTANCE));
-    ZeroMem (HeciInstance, sizeof (HECI_INSTANCE));
-    HeciInstance->Bus      = 0;
-    HeciInstance->Device   = 15;
-    HeciInstance->Function = 0;
-    Status = SetLibraryData (PcdGet8 (PcdHeciLibId), HeciInstance, sizeof (HECI_INSTANCE));
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_WARN, "HeciInstance not generated!\n"));
-    }
-
     if (GetPlatformId () == 0) {
       // Platform ID has not been initialzied yet
       PlatformIdInitialize ();

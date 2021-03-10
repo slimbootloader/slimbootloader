@@ -169,10 +169,7 @@ UpdateFspConfig (
   CopyMem (&Fspmcfg->DqsMapCpu2DramCh0, MemCfgData->DqsMapCpu2DramCh0, sizeof(MemCfgData->DqsMapCpu2DramCh0));
   CopyMem (&Fspmcfg->DqsMapCpu2DramCh1, MemCfgData->DqsMapCpu2DramCh1, sizeof(MemCfgData->DqsMapCpu2DramCh1));
   Fspmcfg->DqPinsInterleaved      = MemCfgData->DqPinsInterleaved;
-  //
-  // Tseg 4MB is enough for both debug/release build with SBL
-  //
-  Fspmcfg->TsegSize               = 0x00400000;
+  Fspmcfg->TsegSize               = MemCfgData->TsegSize;
   Fspmcfg->MmioSize               = MemCfgData->MmioSize;
   Fspmcfg->RMT                    = MemCfgData->RMT;
   FspmcfgTest->BdatEnable         = MemCfgData->BdatEnable;
@@ -327,7 +324,7 @@ PlatformIdInitialize (
       if (EFI_ERROR(Status)) {
         break;
       }
-      BomId = (BomId << 1) + ((GpioData & BIT1) >> 1);
+      BomId = (BomId << 1) + (GpioData & BIT0);
     }
 
     if (Idx == ARRAY_SIZE(mUpxGpioBomPad)) {
@@ -638,6 +635,9 @@ DEBUG_CODE_END();
       EarlyBootDeviceInit ();
     }
     PltDeviceTable = (PLT_DEVICE_TABLE *)AllocatePool (sizeof (PLT_DEVICE_TABLE) + sizeof (mPlatformDevices));
+    if (PltDeviceTable == NULL) {
+      return;
+    }
     PltDeviceTable->DeviceNumber = sizeof (mPlatformDevices) /sizeof (PLT_DEVICE);
     CopyMem (PltDeviceTable->Device, mPlatformDevices, sizeof (mPlatformDevices));
     SetDeviceTable (PltDeviceTable);

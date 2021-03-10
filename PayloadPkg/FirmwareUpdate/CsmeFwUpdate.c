@@ -8,6 +8,7 @@
 #include <Base.h>
 #include <PiPei.h>
 #include <Uefi/UefiBaseType.h>
+#include <Library/PciLib.h>
 #include <Library/DebugLib.h>
 #include <Library/TimerLib.h>
 #include <Library/BaseMemoryLib.h>
@@ -77,6 +78,77 @@ DisplaySendStatus (
   );
 
 /**
+  Reads a range of PCI configuration registers into a caller supplied buffer.
+
+  Reads the range of PCI configuration registers specified by StartAddress and
+  Size into the buffer specified by Buffer. This function only allows the PCI
+  configuration registers from a single PCI function to be read. Size is
+  returned. When possible 32-bit PCI configuration read cycles are used to read
+  from StartAddress to StartAddress + Size. Due to alignment restrictions, 8-bit
+  and 16-bit PCI configuration read cycles may be used at the beginning and the
+  end of the range.
+
+  If StartAddress > 0x0FFFFFFF, then ASSERT().
+  If ((StartAddress & 0xFFF) + Size) > 0x1000, then ASSERT().
+  If Size > 0 and Buffer is NULL, then ASSERT().
+
+  @param  StartAddress  The starting address that encodes the PCI Bus, Device,
+                        Function and Register.
+  @param  Size          The size in bytes of the transfer.
+  @param  Buffer        The pointer to a buffer receiving the data read.
+
+  @return EFI_SUCCESS        if data is read into buffer
+  @return EFI_NOT_FOUND      if data is NOT read into buffer
+  @return EFI_INVALID_PARAMETER  Invalid parameter
+**/
+EFI_STATUS
+EFIAPI
+CsmePciReadBuffer (
+  IN      UINT64    StartAddress,
+  IN      UINTN     Size,
+  OUT     VOID      *Buffer
+  )
+{
+  UINT8   Bus;
+  UINT8   Device;
+  UINT8   Function;
+  UINT8   Register;
+  UINTN   ReadCount;
+
+  if ((Buffer == NULL) || (Size == 0)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  //
+  // A valid PCI address should contain 1's only in the low 28 bits.
+  //
+  if (((StartAddress) & (~0xfffffff)) != 0) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (((StartAddress & 0xFFF) + Size) > 0x1000) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  Bus = (UINT8)((StartAddress >> 24) & 0xFF);
+  Device = (UINT8)((StartAddress >> 16) & 0xFF);
+  Function = (UINT8)((StartAddress >> 8) & 0xFF);
+  Register = (UINT8)(StartAddress & 0xFF);
+
+  ReadCount = PciReadBuffer (
+                PCI_LIB_ADDRESS(Bus, Device, Function, Register),
+                Size * sizeof(UINT32),
+                Buffer
+                );
+
+  if (ReadCount != 0) {
+    return EFI_SUCCESS;
+  }
+
+  return EFI_NOT_FOUND;
+}
+
+/**
   Check if the update image has the same version as the flash image.
 
   @param[in]  buffer         Buffer of Update Image.
@@ -112,12 +184,26 @@ IsUpdateToSameVersion(
 
   *IsSameVersion = FALSE;
 
-  Status = UpdateApi->FwuPartitionVersionFromFlash(FPT_PARTITION_NAME_FTPR, &flashMajor, &flashMinor, &flashHotfix, &flashBuild);
+  Status = UpdateApi->FwuPartitionVersionFromFlash(
+                        FPT_PARTITION_NAME_FTPR,
+                        &flashMajor,
+                        &flashMinor,
+                        &flashHotfix,
+                        &flashBuild
+                        );
   if (Status != SUCCESS) {
     return Status;
   }
 
-  Status = UpdateApi->FwuPartitionVersionFromBuffer(Buffer, BufferLength, FPT_PARTITION_NAME_FTPR, &bufferMajor, &bufferMinor, &bufferHotfix, &bufferBuild);
+  Status = UpdateApi->FwuPartitionVersionFromBuffer(
+                        Buffer,
+                        BufferLength,
+                        FPT_PARTITION_NAME_FTPR,
+                        &bufferMajor,
+                        &bufferMinor,
+                        &bufferHotfix,
+                        &bufferBuild
+                        );
   if (Status != SUCCESS) {
     return Status;
   }
@@ -195,7 +281,7 @@ StartCsmeUpdate (
   UINT32            Timer;
   UINT32            PreviousPercent;
 
-  AllowSameVersion  = FALSE;
+  AllowSameVersion  = TRUE;
   EnabledState      = FALSE;
   IsSameVersion     = FALSE;
   InProgress        = FALSE;
@@ -227,7 +313,12 @@ StartCsmeUpdate (
   //
   // For full update, check if update to the same version
   //
-  UpdateStatus = IsUpdateToSameVersion(Buffer, (UINT32)BufferLength, UpdateApi, &IsSameVersion);
+  UpdateStatus = IsUpdateToSameVersion(
+                  Buffer,
+                  (UINT32)BufferLength,
+                  UpdateApi,
+                  &IsSameVersion
+                  );
   if (UpdateStatus != SUCCESS) {
     goto End;
   }

@@ -9,7 +9,6 @@
 import sys
 import os
 import re
-import imp
 import struct
 import argparse
 import zipfile
@@ -504,7 +503,7 @@ def main():
 
     args = ap.parse_args()
 
-    stitch_cfg_file = imp.load_source('StitchIfwiConfig', args.config_file)
+    stitch_cfg_file = load_source('StitchIfwiConfig', args.config_file)
     if args.stitch_dir == '':
         print ("Please specify stitch work directory")
         print ('%s' % stitch_cfg_file.extra_usage_txt)
