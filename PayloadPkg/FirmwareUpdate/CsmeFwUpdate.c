@@ -240,7 +240,7 @@ DisplaySendStatus (
   UINT32 value = bytesSentToFw * 100 / totalBytesToSendToFw;
 
   if (value != 100) {
-    DEBUG((DEBUG_ERROR, " Sending the update image to FW for verification:  [ %u%% ] \r \n", value));
+    DEBUG((DEBUG_ERROR, " Sending the update image to FW for verification:  [ %u%% ] \r", value));
   } else {
     DEBUG((DEBUG_ERROR, " Sending the update image to FW for verification:  [ COMPLETE ] \n"));
   }
