@@ -757,6 +757,19 @@ ClearFspHob (
 }
 
 /**
+  Set IA Untrust mode at the end.
+
+**/
+VOID
+EFIAPI
+EnterIaUnTrustMode (
+  VOID
+  )
+{
+  AsmMsrOr64 (EFI_MSR_POWER_MISC, B_EFI_MSR_POWER_MISC_ENABLE_IA_UNTRUSTED_MODE);
+}
+
+/**
   Set SPI flash EISS and LE and clear FSP HOBs.
 **/
 VOID
@@ -771,19 +784,9 @@ ProgramSecuritySetting (
 
   // Set the BIOS Lock Enable and EISS bits
   MmioOr8 (SpiBaseAddress + R_SPI_BCR, (UINT8) (B_SPI_BCR_BLE | B_SPI_BCR_EISS));
-}
 
-/**
-  Set IA Untrust mode at the end.
-
-**/
-VOID
-EFIAPI
-EnterIaUnTrustMode (
-  VOID
-  )
-{
-  AsmMsrOr64 (EFI_MSR_POWER_MISC, B_EFI_MSR_POWER_MISC_ENABLE_IA_UNTRUSTED_MODE);
+  // Enter untrust mode
+  EnterIaUnTrustMode ();
 }
 
 /**
