@@ -391,7 +391,12 @@ AutheticateContainerInternal (
       AuthData = (UINT8 *)ContainerHdr + ALIGN_UP(ContainerHdrSize, AUTH_DATA_ALIGN);
       if ((AuthType == AUTH_TYPE_NONE) && FeaturePcdGet (PcdVerifiedBootEnabled)) {
         Status = EFI_SECURITY_VIOLATION;
-      } else {
+      } else if ((ContainerHeader->Signature == CONTAINER_BOOT_SIGNATURE)
+                                                    && FeaturePcdGet (PcdVerifiedBootEnabled)
+                                                    && FeaturePcdGet (PcdOsVerifiedBootDisabled)) {
+          DEBUG((DEBUG_INFO, "NOTE: OS VERIFIED BOOT DISABLED!!\n"));
+          Status = EFI_SUCCESS;
+        } else {
         Status = AuthenticateComponent ((UINT8 *)ContainerHdr, ContainerHdrSize,
                                         AuthType, AuthData, NULL,
                                         GetContainerKeyUsageBySig (ContainerHeader->Signature));

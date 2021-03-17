@@ -186,6 +186,7 @@ class BaseBoard(object):
         self.HAVE_FIT_TABLE        = 0
         self.HAVE_VERIFIED_BOOT    = 0
         self.HAVE_MEASURED_BOOT    = 0
+        self.OS_VERIFIED_BOOT_DISABLED          = 0
         self.HAVE_FSP_BIN          = 1
         self.HAVE_ACPI_TABLE       = 1
         self.HAVE_PSD_TABLE        = 0
@@ -1406,14 +1407,15 @@ def main():
             if args.board == name:
                 brdcfg = module_names[index]
                 board  = brdcfg.Board(
-                                        BUILD_ARCH        = args.arch.upper(), \
-                                        RELEASE_MODE      = args.release,     \
-                                        NO_OPT_MODE       = args.noopt,       \
-                                        FSPDEBUG_MODE     = args.fspdebug,    \
-                                        USE_VERSION       = args.usever,      \
-                                        _PAYLOAD_NAME     = args.payload,     \
-                                        _FSP_PATH_NAME    = args.fsppath,     \
-                                        KEY_GEN           = args.keygen
+                                        BUILD_ARCH                     = args.arch.upper(), \
+                                        RELEASE_MODE                   = args.release,     \
+                                        NO_OPT_MODE                    = args.noopt,       \
+                                        FSPDEBUG_MODE                  = args.fspdebug,    \
+                                        USE_VERSION                    = args.usever,      \
+                                        _PAYLOAD_NAME                  = args.payload,     \
+                                        _FSP_PATH_NAME                 = args.fsppath,     \
+                                        KEY_GEN                        = args.keygen,      \
+                                        OS_VERIFIED_BOOT_DISABLED      = args.noosverify
                                         );
                 os.environ['PLT_SOURCE']  = os.path.abspath (os.path.join (os.path.dirname (board_cfgs[index]), '../..'))
                 Build(board).build()
@@ -1429,6 +1431,7 @@ def main():
     buildp.add_argument('-p',  '--payload' , dest='payload', type=str, help='Payload file name', default ='OsLoader.efi')
     buildp.add_argument('board', metavar='board', choices=board_names, help='Board Name (%s)' % ', '.join(board_names))
     buildp.add_argument('-k', '--keygen', action='store_true', help='Generate default keys for signing')
+    buildp.add_argument('-n', '--noosverify', action='store_true', help='Disable verified boot for os loading. Use for debug')
     buildp.set_defaults(func=cmd_build)
 
     def cmd_clean(args):

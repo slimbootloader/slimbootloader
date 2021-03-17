@@ -780,7 +780,8 @@ TpmExtendSecureBootPolicy (
   EFI_STATUS                 Status;
   UINT8                      Data;
 
-  Data = FeaturePcdGet (PcdVerifiedBootEnabled);
+  // Check PcdVerifiedBootEnabled and PcdOsVerifiedBootDisabled for secure boot policy
+  Data = FeaturePcdGet (PcdVerifiedBootEnabled) && !(FeaturePcdGet (PcdOsVerifiedBootDisabled));
 
   Status = TpmHashAndExtendPcrEventLog (7, &Data, sizeof (Data), EV_EFI_VARIABLE_DRIVER_CONFIG, sizeof ("SecureBootPolicy"), (UINT8*)"SecureBootPolicy");
 

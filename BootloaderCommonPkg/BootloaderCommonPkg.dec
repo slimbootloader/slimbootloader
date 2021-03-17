@@ -283,4 +283,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdMultiUsbBootDeviceEnabled   | FALSE  | BOOLEAN | 0x20000219
   # Control if X2APIC should be used or not
   gPlatformCommonLibTokenSpaceGuid.PcdCpuX2ApicEnabled            | FALSE  | BOOLEAN | 0x20000220
+  # This PCD will disable the verified boot for OS load with OSloader
+  gPlatformCommonLibTokenSpaceGuid.PcdOsVerifiedBootDisabled     | FALSE      | BOOLEAN | 0x20000221
+
 

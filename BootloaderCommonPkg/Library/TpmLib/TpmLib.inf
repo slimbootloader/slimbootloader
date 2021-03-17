@@ -44,6 +44,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdTpmLibId                  ## CONSUMES
   gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled       ## CONSUMES
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootHashMask      ## CONSUMES
+  gPlatformCommonLibTokenSpaceGuid.PcdOsVerifiedBootDisabled    ## CONSUMES
 
 [LibraryClasses]
   BaseLib
