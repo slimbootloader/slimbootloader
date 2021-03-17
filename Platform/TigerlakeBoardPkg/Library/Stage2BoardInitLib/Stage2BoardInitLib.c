@@ -805,10 +805,10 @@ TglULpDdr4GopVbtSpecificUpdate(
   IN CHILD_STRUCT **ChildStructPtr
   )
 {
-  ChildStructPtr[1]->DeviceClass = eDP_ONLY;
-  ChildStructPtr[1]->DVOPort = DISPLAY_PORT_B;
-  ChildStructPtr[1]->AUX_Channel = AUX_CHANNEL_B;
-  ChildStructPtr[2]->DeviceClass = NO_DEVICE;
+  ChildStructPtr[2]->DeviceClass  = DISPLAY_PORT_HDMI_DVI_COMPATIBLE;
+  ChildStructPtr[2]->DVOPort      = DISPLAY_PORT_B;
+  ChildStructPtr[2]->AUX_Channel  = AUX_CHANNEL_B;
+  ChildStructPtr[2]->DDCBus       = 0x2;
 }
 
 //Initialize Platform Igd OpRegion
