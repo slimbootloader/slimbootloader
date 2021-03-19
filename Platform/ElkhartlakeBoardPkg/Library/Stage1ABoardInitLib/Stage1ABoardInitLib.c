@@ -42,7 +42,7 @@ FSPT_UPD TempRamInitParams = {
   .FsptConfig = {
     .PcdSerialIoUartDebugEnable = 1,
     .PcdSerialIoUartNumber      = FixedPcdGet32 (PcdDebugPortNumber),
-    .PcdSerialIoUartMode        = 2,
+    .PcdSerialIoUartMode        = 4,
     .PcdSerialIoUartBaudRate    = 115200,
     .PcdPciExpressBaseAddress   = FixedPcdGet32 (PcdPciMmcfgBase),
     .PcdPciExpressRegionLength  = 0x10000000,
@@ -54,7 +54,7 @@ FSPT_UPD TempRamInitParams = {
     .PcdSerialIoUartTxPinMux    = 0,
     .PcdSerialIoUartRtsPinMux   = 0,
     .PcdSerialIoUartCtsPinMux   = 0,
-    .PcdLpcUartDebugEnable      = 1,
+    .PcdLpcUartDebugEnable      = 0,
   },
   .UpdTerminator = 0x55AA,
 };
