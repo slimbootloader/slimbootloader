@@ -1,7 +1,7 @@
 /** @file
   Serial I/O Port library functions with no library constructor/destructor
 
-  Copyright (c) 2013 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2013 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -21,51 +21,42 @@
 #include <IndustryStandard/Pci22.h>
 #include <Register/PchDmiRegs.h>
 
-#define SOC_STRIDE_SIZE         0x01  //0x1: 8bit uart; 0x4: 32bit uart (BIOS)
 
 #define V_FSP_LPSS_UART_PPR_CLK_N_DIV   32767
 #define V_FSP_LPSS_UART_PPR_CLK_M_DIV   602
 
+#define R_PCH_SERIAL_IO_32BIT_UART_CTR       0xFC //Component Type Register contains identification code
+#define UART_COMPONENT_IDENTIFICATION_CODE   0x44570110
+
+#define R_LPSS_IO_MEM_PCP_8BIT            0x80
 #define R_LPSS_IO_MEM_PCP                 0x200        ///< Private Clock Parameters
 #define B_LPSS_IO_MEM_PCP_CLK_UPDATE      (1<<31)      ///< Clock Divider Update
 #define B_LPSS_IO_MEM_PCP_N_VAL           0x7FFF0000   ///< N value for the M over N divider
 #define B_LPSS_IO_MEM_PCP_M_VAL           0x0000FFFE   ///< M value for the M over N divider
 #define B_LPSS_IO_MEM_PCP_CLK_EN          1            ///< Clock Enable
-#define  V_LPSS_IO_PPR_CLK_N_DIV          32767
-#define  V_LPSS_IO_PPR_CLK_M_DIV          602
+#define V_LPSS_IO_PPR_CLK_N_DIV           32767
+#define V_LPSS_IO_PPR_CLK_M_DIV           602
 
 #define R_LPSS_IO_MEM_RESETS              0x204        ///< Software Reset
 #define B_LPSS_IO_MEM_HC_RESET_REL        0x03         ///< LPSS IO Host Controller Reset Release
 #define B_LPSS_IO_MEM_iDMA_RESET_REL      0x04         ///< iDMA Reset Release
 
-#define GetPciUartBase          GetSerialPortBase
-
 CONST UINT32
-gUartMmPciOffset[] = {
+mUartMmPciOffset[] = {
   MM_PCI_OFFSET (0, PCI_DEVICE_NUMBER_PCH_SERIAL_IO_UART0, PCI_FUNCTION_NUMBER_PCH_SERIAL_IO_UART0),
   MM_PCI_OFFSET (0, PCI_DEVICE_NUMBER_PCH_SERIAL_IO_UART1, PCI_FUNCTION_NUMBER_PCH_SERIAL_IO_UART1),
   MM_PCI_OFFSET (0, PCI_DEVICE_NUMBER_PCH_SERIAL_IO_UART2, PCI_FUNCTION_NUMBER_PCH_SERIAL_IO_UART2),
 };
 
 /**
-  Return the PCI base of the UART device used for debug message output.
+  Get serial port register base address.
+
+  @retval  The serial port register base address.
+
 **/
 UINT32
-GetPciUartPciBase (
-  VOID
-  )
-{
-  UINT8   DebugPort;
-
-  DebugPort = GetDebugPort ();
-  return gUartMmPciOffset[DebugPort] + (UINT32)(UINTN)PcdGet64(PcdPciExpressBaseAddress);
-}
-
-/**
-  Return the IO or MMIO base of the serial port used for debug message output.
-**/
-UINT32
-GetPciUartBase (
+EFIAPI
+GetSerialPortBase (
   VOID
   )
 {
@@ -82,7 +73,7 @@ GetPciUartBase (
     }
   }
 
-  PciAddress = gUartMmPciOffset[DebugPort] + (UINTN)PcdGet64(PcdPciExpressBaseAddress);
+  PciAddress = mUartMmPciOffset[DebugPort] + (UINTN)PcdGet64(PcdPciExpressBaseAddress);
   Cmd16 = MmioRead16 (PciAddress + PCI_VENDOR_ID_OFFSET);
   if (Cmd16 == 0xFFFF) {
     //
@@ -93,20 +84,30 @@ GetPciUartBase (
     if (MmioRead32 (PciAddress + PCI_COMMAND_OFFSET) & EFI_PCI_COMMAND_MEMORY_SPACE) {
       return MmioRead32 (PciAddress + PCI_BASE_ADDRESSREG_OFFSET) & 0xFFFFFFF0;
     } else {
-        return 0;
+      return 0;
     }
   }
 }
 
 /**
-  Return the stride side of the serial port used for debug message output.
+  Get serial port stride register size.
+
+  @retval  The serial port register stride size.
+
 **/
 UINT8
+EFIAPI
 GetSerialPortStrideSize (
   VOID
-)
+  )
 {
-  return SOC_STRIDE_SIZE;
+  if (GetDebugPort () >= PCH_MAX_SERIALIO_UART_CONTROLLERS) {
+    // ISA UART, 0x2F8 or 0x3F8 I/O port
+    return 1;
+  } else {
+    // PCH UART
+    return 4;
+  }
 }
 
 /**
@@ -157,16 +158,18 @@ PlatformHookSerialPortInitialize (
   VOID
   )
 {
-  UINTN   PciAddress;
-  UINT32  BarAddress;
-  UINT8   DebugPort;
+  UINTN             PciAddress;
+  UINT32            BarAddress;
+  UINT8             DebugPort;
+  UINT32            Data32;
+  UINT16            RegOffset;
 
-  DebugPort = GetDebugPort ();
-  if (DebugPort >= PCH_MAX_SERIALIO_UART_CONTROLLERS) {
-    LegacySerialPortInitialize ();
-    } else {
+  DebugPort  = GetDebugPort ();
+
+  if (DebugPort < PCH_MAX_SERIALIO_UART_CONTROLLERS) {
+
     BarAddress = LPSS_UART_TEMP_BASE_ADDRESS (DebugPort);
-    PciAddress = GetPciUartPciBase ();
+    PciAddress = mUartMmPciOffset[DebugPort] + (UINTN)PcdGet64(PcdPciExpressBaseAddress);
     MmioWrite32 (PciAddress + R_SERIAL_IO_CFG_BAR0_LOW,  BarAddress);
     MmioWrite32 (PciAddress + R_SERIAL_IO_CFG_BAR0_HIGH, 0x0);
     MmioWrite32 (PciAddress + R_SERIAL_IO_CFG_BAR1_LOW,  BarAddress + 0x1000);
@@ -174,15 +177,26 @@ PlatformHookSerialPortInitialize (
     MmioWrite32 (PciAddress + PCI_COMMAND_OFFSET, EFI_PCI_COMMAND_BUS_MASTER | EFI_PCI_COMMAND_MEMORY_SPACE);
     MmioOr32    (PciAddress + R_SERIAL_IO_CFG_D0I3MAXDEVPG, BIT18 | BIT17 | BIT16);
 
-    // get controller out of reset
-    MmioOr32 (BarAddress + R_SERIAL_IO_MEM_PPR_RESETS,
-      B_SERIAL_IO_MEM_PPR_RESETS_FUNC | B_SERIAL_IO_MEM_PPR_RESETS_APB | B_SERIAL_IO_MEM_PPR_RESETS_IDMA);
+    //
+    // Bring UART out of reset
+    //
+    MmioWrite32 (BarAddress + R_SERIAL_IO_MEM_PPR_RESETS, B_SERIAL_IO_MEM_PPR_RESETS_IDMA | B_SERIAL_IO_MEM_PPR_RESETS_APB | B_SERIAL_IO_MEM_PPR_RESETS_FUNC);
+    MmioRead32 (BarAddress + R_SERIAL_IO_MEM_PPR_RESETS);
 
-    // Program clock dividers for UARTs
-    MmioWrite32 (BarAddress + R_SERIAL_IO_MEM_PPR_CLK,
-        (B_SERIAL_IO_MEM_PPR_CLK_UPDATE | (V_SERIAL_IO_MEM_PPR_CLK_N_DIV << 16) |
-         (V_SERIAL_IO_MEM_PPR_CLK_M_DIV << 1) | B_SERIAL_IO_MEM_PPR_CLK_EN )
-        );
+    //
+    // Set clock
+    //
+    if (MmioRead32 ((UINTN) (BarAddress + R_PCH_SERIAL_IO_32BIT_UART_CTR)) != UART_COMPONENT_IDENTIFICATION_CODE) {
+      RegOffset = R_LPSS_IO_MEM_PCP_8BIT;
+    } else {
+      RegOffset = R_LPSS_IO_MEM_PCP;
+    }
+    Data32 = (V_FSP_LPSS_UART_PPR_CLK_N_DIV << 16) | (V_FSP_LPSS_UART_PPR_CLK_M_DIV << 1) | B_LPSS_IO_MEM_PCP_CLK_EN;
+    MmioWrite32 (BarAddress + RegOffset, Data32);
+    MmioWrite32 (BarAddress + RegOffset, Data32 | B_LPSS_IO_MEM_PCP_CLK_UPDATE);
+    MmioRead32  (BarAddress + RegOffset);
+  } else {
+    LegacySerialPortInitialize ();
   }
 
   return RETURN_SUCCESS;

@@ -1325,7 +1325,7 @@
       help         : >
                      Selects Uart operation mode. N represents controller index- Uart0, Uart1, ... Available modes- 0:SerialIoUartDisabled, 1:SerialIoUartPci, 2:SerialIoUartHidden, 3:SerialIoUartCom, 4:SerialIoUartSkipInit
       length       : 0x07
-      value        : { 0x01, 0x01, 0x02, 0x01, 0x01, 0x01, 0x01 }
+      value        : { 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 }
   - SerialIoUartBaudRate :
       name         : Default BaudRate for each Serial IO UART
       type         : EditNum, HEX, (0x0,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)

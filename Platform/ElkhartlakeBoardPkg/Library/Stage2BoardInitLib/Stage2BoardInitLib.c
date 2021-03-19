@@ -1082,6 +1082,7 @@ UpdateFspConfig (
   UINT8       MaxSataPorts;
   UINT8       MaxUsb2Ports;
   UINT8       MaxUsb3Ports;
+  UINT8       DebugPort;
   UINT32      Index;
   UINT32      BaseAddress;
   UINT32      TotalSize;
@@ -1128,10 +1129,6 @@ UpdateFspConfig (
   // Ufs
   Fspscfg->UfsEnable[0]        = 0;
   Fspscfg->UfsEnable[1]        = 0;
-
-  if ( GetDebugPort () < PCH_MAX_SERIALIO_UART_CONTROLLERS) {
-    Fspscfg->SerialIoDebugUartNumber = GetDebugPort ();
-  }
 
   Fspscfg->DevIntConfigPtr     = (UINT32)(UINTN)mPchDevIntConfig;
   Fspscfg->NumOfDevIntConfig   = sizeof (mPchDevIntConfig) / sizeof (SI_PCH_DEVICE_INTERRUPT_CONFIG);
@@ -1415,6 +1412,12 @@ UpdateFspConfig (
       Fspscfg->SerialIoUartPowerGating[Index]     = SiCfgData->SerialIoUartPowerGating[Index];
       Fspscfg->SerialIoUartDmaEnable[Index]       = SiCfgData->SerialIoUartDmaEnable[Index];
       Fspscfg->SerialIoUartDbg2[Index]            = SiCfgData->SerialIoUartDbg2[Index];
+    }
+    DebugPort = GetDebugPort();
+    if (DebugPort < PCH_MAX_SERIALIO_UART_CONTROLLERS) {
+      Fspscfg->SerialIoDebugUartNumber = DebugPort;
+      // Skip FSP-S to reinitialize current UART port
+      Fspscfg->SerialIoUartMode[DebugPort] = 0x4;
     }
 
     // PCH I2C_CONFIG
