@@ -1,7 +1,7 @@
 ## @ security_stitch_help.py
 #  This is a python stitching script for security helper funtions amd xml updates
 #
-# Copyright (c) 2020, Intel Corporation. All rights reserved. <BR>
+# Copyright (c) 2020-21, Intel Corporation. All rights reserved. <BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -102,7 +102,7 @@ def update_btGuard_xml(btg_profile, stitch_dir, tree):
 
 
 def gen_bpmgen2_params (stitch_cfg_file, InFile, OutFile):
-    InFileptr = open(InFile, 'r')
+    InFileptr = open(InFile, 'r', encoding='utf8')
     lines = InFileptr.readlines()
     InFileptr.close()
 
