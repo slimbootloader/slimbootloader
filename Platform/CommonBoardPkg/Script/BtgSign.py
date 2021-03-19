@@ -1,7 +1,7 @@
 ## @ BtgSign.py
 #  This is a python stitching script for Boot Guard BPM signing
 #
-# Copyright (c) 2020, Intel Corporation. All rights reserved. <BR>
+# Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved. <BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -81,7 +81,9 @@ def swap_ts_block(in_file, out_file, ts_size):
 
 
 def generate_keys(bpm_key_dir, key_sz):
+
     openssl_path = get_openssl_path()
+
     os.mkdir(bpm_key_dir)
 
     oem_priv_key = SIGNING_KEY['KEY_ID_PRIV_OEM_RSA' + key_sz]
@@ -146,7 +148,7 @@ def gen_sign_oem_key_manifest(meu_path, oem_bin_input, key_dir, key_sz, output_d
 
         #Resign Oem Binary using Meu tool
         run_process ([meu_path, '-resign', '-f', oem_bin_input, '-o', oem_bin_sign,
-            '-key',  os.path.join (bpm_key_dir, oem_priv_key),
+            '-key',  os.path.join (key_dir, oem_priv_key),
             '-cfg', os.path.join(output_dir, 'meu_config.xml'),
         '-stp', openssl_path])
 
@@ -159,7 +161,9 @@ def gen_oem_key_hash(output_dir, oem_pub_key, oem_pub_key_hash_file, hash_type, 
 
     key_sz_bytes = int(key_size)//8
 
-    run_process ([get_openssl_path(), 'rsa' , '-in', oem_pub_key,
+    openssl_path = get_openssl_path()
+
+    run_process ([openssl_path, 'rsa' , '-in', oem_pub_key,
             '-pubin', '-modulus', '-out', kmsigpubkeytxt_fh])
     shutil.copy(kmsigpubkeytxt_fh, kmsigpubkeytxtfile)
 
@@ -173,7 +177,7 @@ def gen_oem_key_hash(output_dir, oem_pub_key, oem_pub_key_hash_file, hash_type, 
     # public exponent (i.e. 65537) is concatenated for OEM key hash calculation.
     line=open(kmsigpubkeytxtfile,"r").readline()[8:8+key_sz_bytes*2]
     open(kmsigpubkeybinfile,"ab").write(bytearray.fromhex('01000100'))
-    run_process ([get_openssl_path(), 'dgst', '-'+hash_type, '-binary',
+    run_process ([openssl_path, 'dgst', '-'+hash_type, '-binary',
         '-out', oem_pub_key_hash_file, 'Temp/kmsigpubkey.bin'])
 
 
@@ -186,6 +190,10 @@ def bpm_sign_binary(infile, out_file, output_dir, bpm_gen2dir, key_dir, bpmgen2_
     oem_pub_key  = SIGNING_KEY['KEY_ID_PUB_OEM_RSA'  + key_sz]
     bpm_priv_key = SIGNING_KEY['KEY_ID_PRIV_BPM_RSA' + key_sz]
     bpm_pub_key  = SIGNING_KEY['KEY_ID_PUB_BPM_RSA'  + key_sz]
+    if os.name == 'nt':
+        bpmgen2_tool = os.path.join (bpm_gen2dir, 'bpmgen2.exe')
+    else:
+        bpmgen2_tool = os.path.join (bpm_gen2dir, 'bpmgen2')
 
     print (key_dir)
     if not os.path.exists(key_dir):
@@ -193,7 +201,7 @@ def bpm_sign_binary(infile, out_file, output_dir, bpm_gen2dir, key_dir, bpmgen2_
         generate_keys (key_dir, key_sz)
 
     print("Generating Btg KeyManifest.bin....")
-    run_process ([os.path.join (bpm_gen2dir, 'bpmgen2'),
+    run_process ([bpmgen2_tool,
         'KMGEN',
         '-KEY',        os.path.join (key_dir, bpm_pub_key), 'BPM',
         '-KM',         os.path.join (output_dir, 'KeyManifest.bin'),
@@ -206,7 +214,7 @@ def bpm_sign_binary(infile, out_file, output_dir, bpm_gen2dir, key_dir, bpmgen2_
         '-d:2'])
 
     print("Generating Btg Boot Policy Manifest (BPM).bin....")
-    run_process ([os.path.join (bpm_gen2dir, 'bpmgen2'),
+    run_process ([bpmgen2_tool,
         'GEN',
         os.path.join (output_dir, 'sbl_sec_temp.bin'),
         bpmgen2_params,
@@ -261,8 +269,8 @@ def main():
     sub_parser = parser.add_subparsers(help='command')
 
     ap = sub_parser.add_parser('sign', help='Btg sign a slimboot binary')
-    ap.add_argument('-i',  dest='in_file',  type=str, required=True, help='Input file path')
-    ap.add_argument('-o',  dest='out_file',  type=str, required=True, help='Signed output image path')
+    ap.add_argument('-i',  dest='in_file',  type=str, required=True, help='Input bios file path')
+    ap.add_argument('-o',  dest='out_file',  type=str, required=True, help='Signed bios output image path')
     ap.add_argument('-wd', dest='work_dir', type=str, required=True, help='Work directory')
     ap.add_argument('-td', dest='tool_dir', type=str, required=True, help='Tool directory')
     ap.add_argument('-kd', dest='keys_dir', type=str, required=True, help='Keys directory')
@@ -276,7 +284,7 @@ def main():
     ap = sub_parser.add_parser('Oem_Key_Manifest', help='Generation of Oem Key Manifest or for signing existing manifest')
     ap.add_argument('-i',  dest='oem_input_manifest',  type=str, default='', help='Manifest to be signed')
     ap.add_argument('-o',  dest='oem_out_manifest',  type=str, required=True, help='Signed output manifest')
-    ap.add_argument('-wd', dest='work_dir', type=str, required=True, help='Work directory')
+    ap.add_argument('-wd', dest='work_dir', type=str, required=True, help='Work directory where output gets generated')
     ap.add_argument('-td', dest='meu_tool_dir', type=str, required=True, help='Meu Tool directory')
     ap.add_argument('-kd', dest='keys_dir', type=str, required=True, help='Keys directory')
     ap.add_argument('-kz', dest='key_size', type=str, default='3072', help='Key size')
