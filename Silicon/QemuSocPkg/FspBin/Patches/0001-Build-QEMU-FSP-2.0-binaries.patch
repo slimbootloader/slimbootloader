@@ -1,4 +1,4 @@
-From 634b056f93d51b6357353072822ddc597044c3bb Mon Sep 17 00:00:00 2001
+From 3908ec6175efd972a5b9389baf89a981e31dd316 Mon Sep 17 00:00:00 2001
 From: Aiden Park <aiden.park@intel.com>
 Date: Wed, 11 Dec 2019 10:00:41 -0800
 Subject: [PATCH] Build QEMU FSP 2.0 binaries
@@ -35,7 +35,7 @@ Signed-off-by: Maurice Ma <maurice.ma@intel.com>
  .../Library/PlatformSecLib/Ia32/Ia32Nasm.inc  | 169 ++++
  .../PlatformSecLib/Ia32/PlatformNasm.inc      | 143 ++++
  .../PlatformSecLib/Ia32/SecCoreNasm.inc       |  61 ++
- .../Library/PlatformSecLib/Ia32/SecEntry.nasm | 722 ++++++++++++++++
+ .../Library/PlatformSecLib/Ia32/SecEntry.nasm | 730 ++++++++++++++++
  .../Library/PlatformSecLib/PlatformSecLib.c   |  85 ++
  .../Library/PlatformSecLib/PlatformSecLib.h   |  48 ++
  .../PlatformSecLib/Vtf0PlatformSecMLib.inf    |  61 ++
@@ -47,7 +47,7 @@ Signed-off-by: Maurice Ma <maurice.ma@intel.com>
  QemuFspPkg/QemuVideo/QemuVideo.c              | 780 ++++++++++++++++++
  QemuFspPkg/QemuVideo/QemuVideo.h              | 116 +++
  QemuFspPkg/QemuVideo/QemuVideo.inf            |  56 ++
- 41 files changed, 5978 insertions(+), 5 deletions(-)
+ 41 files changed, 5986 insertions(+), 5 deletions(-)
  create mode 100644 BuildFsp.py
  create mode 100644 QemuFspPkg/BuildFv.cmd
  create mode 100644 QemuFspPkg/FspDescription/FspDescription.inf
@@ -3502,10 +3502,10 @@ index 0000000000..5651e377e6
 +AP_SIPI_SWITCH_BSP          EQU   003h
 diff --git a/QemuFspPkg/Library/PlatformSecLib/Ia32/SecEntry.nasm b/QemuFspPkg/Library/PlatformSecLib/Ia32/SecEntry.nasm
 new file mode 100644
-index 0000000000..5bab2130b7
+index 0000000000..b564667425
 --- /dev/null
 +++ b/QemuFspPkg/Library/PlatformSecLib/Ia32/SecEntry.nasm
-@@ -0,0 +1,722 @@
+@@ -0,0 +1,730 @@
 +;; @file
 +; This is the code that initializes CAR mode for QEMU.
 +;
@@ -3998,10 +3998,14 @@ index 0000000000..5bab2130b7
 +  ;   Enable No-Eviction Mode Setup State by setting
 +  ;   NO_EVICT_MODE  MSR 2E0h bit [0] = '1'.
 +  ;
++
++  ;   Skip MSR setting for QEMU to allow running with KVM
++%if 0
 +  mov     ecx, NO_EVICT_MODE
 +  rdmsr
 +  or      eax, 1
 +  wrmsr
++%endif
 +
 +  ;
 +  ;   One location in each 64-byte cache line of the DataStack region
@@ -4034,10 +4038,14 @@ index 0000000000..5bab2130b7
 +  ;   Enable No-Eviction Mode Run State by setting
 +  ;   NO_EVICT_MODE MSR 2E0h bit [1] = '1'.
 +  ;
++
++  ;   Skip MSR setting for QEMU to allow running with KVM
++%if 0
 +  mov     ecx, NO_EVICT_MODE
 +  rdmsr
 +  or      eax, 2
 +  wrmsr
++%endif
 +
 +  ;
 +  ; Finished with cache configuration
