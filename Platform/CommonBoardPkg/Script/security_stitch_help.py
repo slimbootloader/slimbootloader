@@ -95,7 +95,7 @@ def update_btGuard_xml(btg_profile, stitch_dir, tree):
         node.attrib['value'] = '0x1'
 
         node = tree.find('./PlatformProtection/PlatformIntegrity/OemExtInputFile')
-        node.attrib['value'] = '$SourceDir\OemExtInputFile.bin'
+        node.attrib['value'] = os.path.join(output_dir, "OemExtInputFile.bin")
 
     node = tree.find('./PlatformProtection/BootGuardConfiguration/BtGuardProfileConfig')
     node.attrib['value'] = btg_profile_values[btguardprofile]
