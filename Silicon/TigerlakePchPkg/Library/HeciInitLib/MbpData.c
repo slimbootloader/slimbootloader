@@ -103,7 +103,10 @@ MbpDebugPrint (
     DEBUG ((DEBUG_INFO, " Flags         : 0x%x\n", MbpPtr->ArbSvnState.ArbSvnData.Flags));
     DEBUG ((DEBUG_INFO, " MinCseArbSvn  : 0x%x\n", MbpPtr->ArbSvnState.ArbSvnData.MinCseArbSvn));
     DEBUG ((DEBUG_INFO, " CurrCseArbSvn : 0x%x\n", MbpPtr->ArbSvnState.ArbSvnData.CurrCseArbSvn));
-    DEBUG ((DEBUG_INFO, " Reserved      : 0x%x\n", MbpPtr->ArbSvnState.ArbSvnData.Reserved));
+  }
+
+  if (MbpPtr->OemKeyRevoke.Available == TRUE) {
+    DEBUG ((DEBUG_INFO, "OemKeyRevocation Extension Available !! \n"));
   }
 
   DEBUG ((DEBUG_INFO, "\n------------------------ MeBiosPayload Data End--------------\n"));
