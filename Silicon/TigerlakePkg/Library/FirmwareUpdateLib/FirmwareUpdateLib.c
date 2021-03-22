@@ -509,6 +509,12 @@ SetOemKeyRevocation (
    IN  UINTN     CmdDataSize
    )
 {
-  return EFI_UNSUPPORTED;
-}
+  EFI_STATUS Status;
 
+  Status = HeciRevokeOemKey ();
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "Oem Revoke Key status -  %r\n", Status));
+  }
+
+  return Status;
+}
