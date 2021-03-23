@@ -9,6 +9,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Library/ConsoleOutLib.h>
+#include <Register/Intel/ArchitecturalMsr.h>
 
 /**
   Convert the MTRR memory type to a readable str
@@ -67,6 +68,7 @@ PrintMtrr (
   UINT64      Mask;
   UINT64      Range;
   UINT64      Limit;
+  MSR_IA32_MTRRCAP_REGISTER MtrrCap;
 
   if (Str != NULL) {
     CONSOLE_PRINT_CONDITION (ConsoleOut, (DEBUG_INFO, "%a\n", Str));
@@ -85,7 +87,8 @@ PrintMtrr (
 
   // Dump Variable MTRR registers
   CONSOLE_PRINT_CONDITION (ConsoleOut, (DEBUG_INFO, "Variable MTRRs\n"));
-  for (Index = 0; Index < 10; Index++) {
+  MtrrCap.Uint64 = AsmReadMsr64 (MSR_IA32_MTRRCAP);
+  for (Index = 0; Index < MtrrCap.Bits.VCNT; Index++) {
     BaseMsr = 0x200 + (Index * 2);
     MaskMsr = BaseMsr + 1;
 
