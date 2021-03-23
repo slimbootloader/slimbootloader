@@ -36,6 +36,8 @@
 #include <Library/ContainerLib.h>
 #include <ConfigBlock.h>
 #include <TccConfigSubRegion.h>
+#include <Register/RtcRegs.h>
+#include <Register/PmcRegs.h>
 
 CONST PLT_DEVICE  mPlatformDevices[]= {
   {{0x00001700}, OsBootDeviceSata  , 0 },
@@ -728,6 +730,95 @@ IsFirmwareUpdate ()
 }
 
 /**
+  Read RTC content through its registers.
+
+  @param  Address  Address offset of RTC.
+
+  @return The data of UINT8 type read from RTC.
+**/
+UINT8
+RtcRead (
+  IN  UINT8 Address
+  )
+{
+  IoWrite8 (R_RTC_IO_INDEX, (UINT8) (Address | (UINT8) (IoRead8 (R_RTC_IO_INDEX) & 0x80)));
+  return IoRead8 (R_RTC_IO_TARGET);
+}
+
+/**
+  Write RTC through its registers.
+
+  @param  Address  Address offset of RTC.
+  @param  Data     The content you want to write into RTC.
+
+**/
+VOID
+RtcWrite (
+  IN  UINT8   Address,
+  IN  UINT8   Data
+  )
+{
+  IoWrite8 (R_RTC_IO_INDEX, (UINT8) (Address | (UINT8) (IoRead8 (R_RTC_IO_INDEX) & 0x80)));
+  IoWrite8 (R_RTC_IO_TARGET, Data);
+}
+
+/**
+  Initialize RTC.
+
+  @retval    None.
+
+**/
+VOID
+RtcInit (
+  VOID
+  )
+{
+  UINT32  Bar;
+  UINT8   PmConf1;
+  UINT8   Data8;
+
+  Bar     = MmioRead32 (MM_PCI_ADDRESS (0, PCI_DEVICE_NUMBER_PCH_PMC, PCI_FUNCTION_NUMBER_PCH_PMC, R_PMC_CFG_BASE)) & ~0x0F;
+  PmConf1 = MmioRead8 (Bar + R_PMC_PWRM_GEN_PMCON_B);
+
+  if ((PmConf1 & B_PMC_PWRM_GEN_PMCON_B_RTC_PWR_STS) != 0) {
+    DEBUG ((DEBUG_INFO, "Initialize RTC with default values\n"));
+    RtcWrite (R_RTC_IO_REGA, 0x66);
+
+    Data8 = RtcRead (R_RTC_IO_REGB);
+    Data8 &= ~(BIT2);
+    Data8 |= (BIT7 | BIT1);
+    RtcWrite (R_RTC_IO_REGB, Data8);
+
+    RtcWrite (R_RTC_IO_REGA, 0x26);
+
+    Data8 = RtcRead (R_RTC_IO_REGB);
+    Data8 &= ~(BIT7);
+    RtcWrite (R_RTC_IO_REGB, Data8);
+
+    RtcWrite (0x0F, 0x00);
+
+    RtcWrite (R_RTC_IO_REGD, 0x00);
+    RtcRead (R_RTC_IO_REGD);
+
+    RtcWrite (R_RTC_HOURSALARM, 0x00);
+    RtcWrite (R_RTC_MINUTESALARM, 0x00);
+    RtcWrite (R_RTC_SECONDSALARM, 0x00);
+
+    // 11/11/2011 11:11:11
+    RtcWrite (RTC_SECONDS, 0x11);
+    RtcWrite (RTC_MINUTES, 0x11);
+    RtcWrite (RTC_HOURS, 0x11);
+    RtcWrite (RTC_DAY_OF_MONTH, 0x11);
+    RtcWrite (RTC_MONTH, 0x11);
+    RtcWrite (RTC_YEAR, 0x11);
+    RtcWrite (B_RTC_CENTURY, 0x20);
+
+    PmConf1 &= ~(B_PMC_PWRM_GEN_PMCON_B_RTC_PWR_STS);
+    MmioWrite8 (Bar + R_PMC_PWRM_GEN_PMCON_B, PmConf1);
+  }
+}
+
+/**
     Read the Platform Features from the config data
 **/
 VOID
@@ -948,6 +1039,7 @@ DEBUG_CODE_END();
     break;
   case PostConfigInit:
     PlatformNameInit ();
+    RtcInit();
     PlatformFeaturesInit ();
     break;
   case PreMemoryInit:
