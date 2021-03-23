@@ -234,6 +234,7 @@ UpdateFspConfig (
   SECURITY_CFG_DATA             *SecCfgData;
   UINT32                        Index;
   UINT8                         DebugPort;
+  FEATURES_CFG_DATA             *FeaturesCfgData;
 
   FspmUpd                       = (FSPM_UPD *)FspmUpdPtr;
   FspmArchUpd                   = &FspmUpd->FspmArchUpd;
@@ -301,6 +302,7 @@ UpdateFspConfig (
     }
     CopyMem (&Fspmcfg->DmiGen3RxCtlePeaking, MemCfgData->DmiGen3RxCtlePeaking, sizeof(MemCfgData->DmiGen3RxCtlePeaking));
 
+    FeaturesCfgData               = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
     // SA:TCSS_PEI_PREMEM_CONFIG
     Fspmcfg->UsbTcPortEnPreMem          = MemCfgData->UsbTcPortEnPreMem;
     Fspmcfg->PcieMultipleSegmentEnabled = MemCfgData->PcieMultipleSegmentEnabled;
@@ -310,6 +312,12 @@ UpdateFspConfig (
     Fspmcfg->TcssItbtPcie3En            = MemCfgData->TcssItbtPcie3En;
     Fspmcfg->TcssXhciEn                 = MemCfgData->TcssXhciEn;
     Fspmcfg->TcssXdciEn                 = MemCfgData->TcssXdciEn;
+    if (FeaturesCfgData != NULL) {
+      if (FeaturesCfgData->Features.LowPowerIdle != 0){
+        DEBUG ((DEBUG_INFO, "FeaturesCfgData->Features.LowPowerIdle = 0x%x\n",FeaturesCfgData->Features.LowPowerIdle));
+        Fspmcfg->TcssXdciEn             = 0;
+      }
+    }
     Fspmcfg->TcssDma0En                 = MemCfgData->TcssDma0En;
     Fspmcfg->TcssDma1En                 = MemCfgData->TcssDma1En;
 

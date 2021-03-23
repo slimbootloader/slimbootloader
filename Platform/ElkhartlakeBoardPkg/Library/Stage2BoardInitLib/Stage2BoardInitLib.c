@@ -1102,6 +1102,7 @@ UpdateFspConfig (
   SECURITY_CFG_DATA  *SecCfgData;
   SILICON_CFG_DATA   *SiCfgData;
   POWER_CFG_DATA     *PowerCfgData;
+  FEATURES_CFG_DATA  *FeaturesCfgData;
   UINT8              SaDisplayConfigTable[17] = { 0 };
 
   FspsUpd    = (FSPS_UPD *)FspsUpdPtr;
@@ -1202,6 +1203,13 @@ UpdateFspConfig (
   if (SiCfgData != NULL) {
     // Xdci
     Fspscfg->XdciEnable          = SiCfgData->XdciEnable;
+    FeaturesCfgData               = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
+    if (FeaturesCfgData != NULL) {
+      if (FeaturesCfgData->Features.LowPowerIdle != 0){
+        DEBUG ((DEBUG_INFO, "FeaturesCfgData->Features.LowPowerIdle = 0x%x\n",FeaturesCfgData->Features.LowPowerIdle));
+        Fspscfg->XdciEnable          = 0;
+      }
+    }
 
     //CPU Config Data
     Fspscfg->AesEnable                   = SiCfgData->AesEnable;
@@ -1395,7 +1403,7 @@ UpdateFspConfig (
     Fspscfg->PchEspiLgmrEnable          = SiCfgData->PchEspiLgmrEnable;
 
     // PCH SPI_CONFIG
-    Fspscfg->SerialIoSpiMode[1]         = 2;
+    Fspscfg->SerialIoSpiMode[1]         = 0;
 
     Fspscfg->SerialIoSpiCsPolarity[0]   = 1;
     Fspscfg->SerialIoSpiCsPolarity[1]   = 1;
@@ -1516,8 +1524,8 @@ UpdateFspConfig (
     Fspscfg->PchTsnGbeSgmiiEnable    = 1;
 
     // PSE_TSN_CONFIG
-    Fspscfg->PseTsnGbeSgmiiEnable[0] = 1;
-    Fspscfg->PseTsnGbeSgmiiEnable[1] = 1;
+    Fspscfg->PseTsnGbeSgmiiEnable[0] = 0;
+    Fspscfg->PseTsnGbeSgmiiEnable[1] = 0;
     Fspscfg->PseTsnGbePhyInterfaceType[0]    = 1;
     Fspscfg->PseTsnGbePhyInterfaceType[1]    = 1;
 
@@ -1586,7 +1594,7 @@ UpdateFspConfig (
     // PchPse*Enable UPDs should be set to to 0x2 for
     // host ownership; set to 1 for PSE ownership.
     //
-    Fspscfg->PchUnlockGpioPads   = 0x1;
+    Fspscfg->PchUnlockGpioPads   = 0x0;
   }
 
   // W/A for Yocto boot issue
