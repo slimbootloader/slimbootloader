@@ -179,6 +179,34 @@ Scope (\_SB.PC00) {
     Name(_ADR,0x001F0004)
     Method(_DSM,4,serialized){if(PCIC(Arg0)) { return(PCID(Arg0,Arg1,Arg2,Arg3)) }; Return(Buffer() {0})}
   }
+
+  //
+  // SPI Bridge - Device 31, Function 5
+  //
+  Device(SPIF) {
+    Name(_ADR, 0x001F0005)
+
+    // It is expected for bootloader to check and clear SPI Synchronous SMI Status bit prior to S0ix entry,
+    // as this status bit might cause SPI driver unable to turn off clock source properly.
+    // This method will check if Synchronous SMI Status bit is on, then reenable Write Protect Disable bit
+    // and clear Synchronous SMI Status bit.
+    Method(SPIS)
+    {
+      If (LEqual (SYNS, 0x1)) {
+        store(0, WPDL)
+        store(1, SYNS)
+      }
+    }
+
+    OperationRegion(SPIC, PCI_Config, 0x00, 0x100)
+    Field(SPIC, AnyAcc, NoLock, Preserve)
+    {
+      Offset(R_LPC_CFG_BC), // 0xDC
+      WPDL,   1,
+      ,       7,
+      SYNS,   1,
+    }
+  }
 }
 Include("Pcr.asl")
 Include("Pmc.asl")

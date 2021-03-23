@@ -6,6 +6,7 @@
 **/
 
 External(\_SB.PC00.DPOF)
+External(\_SB.PC00.SPIF.SPIS)
 
 If(LOr(LEqual(S0ID, 1),LGreaterEqual(OSYS, 2015))){
   Scope(\_SB.PC00.GFX0) {
@@ -870,6 +871,7 @@ Scope(\_SB)
           If(LEqual(S0ID, 1)) { //S0ID: >=1: CS 0: non-CS
             // call method specific to CS platforms when the system is in a
             // standby state with very limited SW activities
+            \_SB.PC00.SPIF.SPIS() - Clear SPI Synchronous SMI Status bit
             \GUAM(1) // 0x01 - Power State Standby (CS Resiliency Entry)
           }
         }
