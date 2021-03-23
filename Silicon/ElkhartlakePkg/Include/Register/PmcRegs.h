@@ -46,6 +46,7 @@
 #define R_PMC_PWRM_TIMED_GPIO_CONTROL_0                     0x1210
 #define R_PMC_PWRM_TIMED_GPIO_CONTROL_1                     0x1310
 
+#define R_PMC_CFG_BASE                           0x10
 
 //
 // ACPI and legacy I/O register offsets from ACPIBASE
