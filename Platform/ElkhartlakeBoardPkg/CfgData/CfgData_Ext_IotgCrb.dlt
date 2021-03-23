@@ -25,6 +25,7 @@ GPIO_CFG_DATA.GpioPinConfig1_GPP_D13.GPIOSkip_GPP_D13 | 0
 
 # Enable to test TCC mode & tuning
 # FEATURES_CFG_DATA.Features.Tcc    | 0x1
+FEATURES_CFG_DATA.Features.LowPowerIdle      | 0x1
 
 # Preserve ISI SPI Pins across ResetResume power-cycling
 GPIO_CFG_DATA.GpioPinConfig1_GPP_U04.GPIOSkip_GPP_U04 | 0x0

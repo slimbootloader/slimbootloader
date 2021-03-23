@@ -671,7 +671,7 @@ PlatformUpdateAcpiGnvs (
 
   PlatformNvs->ApicEnable                       = 1;
   PlatformNvs->EcAvailable                      = 0;
-  PlatformNvs->LowPowerS0Idle                   = 0;
+  PlatformNvs->LowPowerS0Idle                   = 1;
 
   PlatformNvs->TenSecondPowerButtonEnable       = 8;
 

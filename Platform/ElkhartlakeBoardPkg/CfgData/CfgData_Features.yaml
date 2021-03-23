@@ -18,7 +18,7 @@
     - $STRUCT      :
         name         : PlatformFeatures
         struct       : FEATURES_DATA
-        length       : 0x04
+        length       : 0x05
         value        : 0x00000003
     - Acpi         :
         name         : ACPI Enable
@@ -48,9 +48,16 @@
         help         : >
                        To 'opt-in' for debug, please select 'Enabled' with the desired debug probe type. Enabling this BIOS option may alter the default value of other debug-related BIOS options.\Manual- Do not use Platform Debug Consent to override other debug-relevant policies, but the user must set each debug option manually, aimed at advanced users.\nNote- DCI OOB (aka BSSB) uses CCA probe;[DCI OOB+DbC] and [USB2 DbC] have the same setting.
         length       : 3b
+    - LowPowerIdle   :
+        name         : Low Power Idle Enable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable Low Power Idle feature. 1:Low Power Idle Enabled, 0:Low Power Idle Disabled
+        length       : 1b
     - Rsvd         :
         name         : Reserved
         type         : Reserved
         help         : >
                        reserved bits
-        length       : 26b
+        length       : 25b
