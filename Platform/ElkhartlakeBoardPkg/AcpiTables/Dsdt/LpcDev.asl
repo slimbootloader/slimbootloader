@@ -7,7 +7,6 @@
 
 #include <Register/PmcRegs.h>
 
-External(\SDBG, MethodObj)
 
 Device(HPET)  // High Performance Event Timer
 {
@@ -39,6 +38,27 @@ Device(HPET)  // High Performance Event Timer
     }
 
     Return(BUF0)
+  }
+
+  OperationRegion(ETDI,SystemMemory,0xFED00000,0x1FF)
+  Field(ETDI, AnyAcc, NoLock, Preserve)
+  {
+    Offset(0),
+    GEID, 64,
+    Offset(0x10),
+    GECF, 64,
+    Offset(0x20),
+    GEST, 64,
+    Offset(0xF0),
+    MAIN, 64,
+    Offset(0x100),
+    TCN0, 8,
+    Offset(0x108),
+    TCM0, 8,
+    Offset(0x120),
+    TCN1, 8,
+    Offset(0x128),
+    TCM1, 8,
   }
 }
 
