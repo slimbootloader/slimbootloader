@@ -160,7 +160,6 @@ CallApFunc:
 
 BITS 64
 LongModeStart:
-    pop            rax
 
     ; Call C Function
     mov            eax, dword [esi + CProcedureLocation]
