@@ -203,12 +203,28 @@ class PciEnumPolicyInfo(Structure):
         self.BusScanType        = 0
         self.NumOfBus           = 0
 
-def get_visual_studio_info ():
+def get_visual_studio_info (preference = ''):
 
     toolchain        = ''
     toolchain_prefix = ''
     toolchain_path   = ''
     toolchain_ver    = ''
+    vs_ver_list      = ['2019', '2017']
+    vs_ver_list_old  = ['2015', '2013']
+
+    if preference:
+        preference = preference.strip().lower()
+        if not preference.startswith('vs'):
+            raise Exception ("Invalid toolchain type '%s' !" % preference)
+        vs_str = preference[2:]
+        if vs_str in vs_ver_list:
+            vs_ver_list     = [vs_str]
+            vs_ver_list_old = []
+        elif vs_str in vs_ver_list_old:
+            vs_ver_list     = []
+            vs_ver_list_old = [vs_str]
+        else:
+            raise Exception ("Unsupported toolchain version '%s' !" % preference)
 
     # check new Visual Studio Community version first
     vswhere_path = "%s/Microsoft Visual Studio/Installer/vswhere.exe" % os.environ['ProgramFiles(x86)']
@@ -221,7 +237,7 @@ def get_visual_studio_info ():
             if each and os.path.isdir(each):
                 vscommon_paths.append(each)
 
-        for vs_ver in ['2019', '2017']:
+        for vs_ver in vs_ver_list:
             for vscommon_path in vscommon_paths:
                 vcver_file = vscommon_path + '\\VC\\Auxiliary\\Build\\Microsoft.VCToolsVersion.default.txt'
                 if os.path.exists(vcver_file):
@@ -236,11 +252,12 @@ def get_visual_studio_info ():
                 break
 
     if toolchain == '':
-        vs_ver_list = [
-            ('2015', 'VS140COMNTOOLS'),
-            ('2013', 'VS120COMNTOOLS')
-        ]
-        for vs_ver, vs_tool in vs_ver_list:
+        vs_ver_dict = {
+            '2015': 'VS140COMNTOOLS',
+            '2013': 'VS120COMNTOOLS'
+        }
+        for vs_ver in vs_ver_list_old:
+            vs_tool = vs_ver_dict[vs_ver]
             if vs_tool in os.environ:
                 toolchain        ='VS%s%s' % (vs_ver, 'x86')
                 toolchain_prefix = 'VS%s_PREFIX' % (vs_ver)
