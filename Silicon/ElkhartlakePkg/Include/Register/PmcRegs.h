@@ -59,6 +59,7 @@
 #define B_ACPI_IO_PM1_STS_GBL                    BIT5
 #define B_ACPI_IO_PM1_STS_TMROF                  BIT0
 #define B_ACPI_IO_PM1_EN_PWRBTN_EN               BIT24
+#define B_ACPI_IO_PM1_EN_RTC_EN                  BIT26
 
 #define B_ACPI_IO_PM1_EN_PWRBTN                  BIT8
 
