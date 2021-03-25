@@ -57,7 +57,7 @@ def create_conf (workspace, sbl_source):
                 os.path.join(sbl_source, 'BaseTools/Conf/%s.template' % name),
                 os.path.join(workspace, 'Conf/%s.txt' % name))
 
-def prep_env ():
+def prep_env (toolchain_preferred = ''):
     # check python version first
     version = check_for_python ()
     os.environ['PYTHON_COMMAND'] = '"' + sys.executable + '"'
@@ -84,7 +84,7 @@ def prep_env ():
         os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.join(sblsource, 'BaseTools\\BinWrappers\\WindowsLike')
         os.environ['PYTHONPATH'] = os.path.join(sblsource, 'BaseTools', 'Source', 'Python')
 
-        toolchain, toolchain_prefix, toolchain_path, toolchain_ver = get_visual_studio_info ()
+        toolchain, toolchain_prefix, toolchain_path, toolchain_ver = get_visual_studio_info (toolchain_preferred)
         if toolchain:
             os.environ[toolchain_prefix] = toolchain_path
         else:
@@ -1378,13 +1378,13 @@ class Build(object):
 
 
 def main():
-    prep_env ()
+
     board_cfgs   = []
     board_names  = []
     module_names = []
 
     # Find all boards
-    search_dir = os.environ['SBL_SOURCE']
+    search_dir = os.path.dirname(os.path.abspath(__file__))
     if 'PLT_SOURCE' in os.environ:
         search_dir = os.path.abspath(os.path.join(search_dir, os.path.pardir))
     board_pkgs = os.listdir (search_dir)
@@ -1429,6 +1429,7 @@ def main():
     buildp.add_argument('-p',  '--payload' , dest='payload', type=str, help='Payload file name', default ='OsLoader.efi')
     buildp.add_argument('board', metavar='board', choices=board_names, help='Board Name (%s)' % ', '.join(board_names))
     buildp.add_argument('-k', '--keygen', action='store_true', help='Generate default keys for signing')
+    buildp.add_argument('-t', '--toolchain', dest='toolchain', type=str, default='', help='Perferred toolchain name')
     buildp.set_defaults(func=cmd_build)
 
     def cmd_clean(args):
@@ -1496,6 +1497,7 @@ def main():
     build_dscp.add_argument('-a',  '--arch', choices=['ia32', 'x64'], help='Specify the ARCH for build. Default is to build IA32 image.', default ='ia32')
     build_dscp.add_argument('-d',  '--define', action='append', help='Specify macros to be passed into DSC build')
     build_dscp.add_argument('-p',  '--dsc', type=str, required=True, help='Specify a DSC file path to build')
+    build_dscp.add_argument('-t',  '--toolchain', dest='toolchain', type=str, default='', help='Perferred toolchain name')
     build_dscp.set_defaults(func=cmd_build_dsc)
 
     args = ap.parse_args()
@@ -1503,6 +1505,12 @@ def main():
         # No arguments or subcommands were given.
         ap.print_help()
         ap.exit()
+
+    if hasattr(args, 'toolchain'):
+        toolchain_preferred = args.toolchain
+    else:
+        toolchain_preferred = ''
+    prep_env (toolchain_preferred)
 
     args.func(args)
 
