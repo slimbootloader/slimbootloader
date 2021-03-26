@@ -26,6 +26,7 @@ extern EFI_GUID gLoaderPlatformInfoGuid;
 #define        FEATURE_MMC_FORCE_TUNING         BIT3
 #define        FEATURE_VERIFIED_BOOT            BIT4
 #define        FEATURE_PRE_OS_CHECKER_BOOT      BIT5
+#define        FEATURE_TCC_RUN_RTCM             BIT6
 
 //
 //Definition for LOADER_PLATFORM_INFO.HwState

@@ -14,6 +14,7 @@
 #include <Guid/LoaderPlatformDataGuid.h>
 #include <Guid/DeviceTableHobGuid.h>
 #include <Guid/KeyHashGuid.h>
+#include <Guid/LoaderPlatformInfoGuid.h>
 #include <Library/BaseLib.h>
 #include <Library/CryptoLib.h>
 
@@ -53,15 +54,6 @@ typedef struct {
 } LOADER_COMPRESSED_HEADER;
 
 #pragma pack()
-
-//
-// Enabled features that might come from configuration data.
-//
-#define        FEATURE_ACPI                     BIT0
-#define        FEATURE_MEASURED_BOOT            BIT1
-#define        FEATURE_MMC_TUNING               BIT2
-#define        FEATURE_MMC_FORCE_TUNING         BIT3
-#define        FEATURE_VERIFIED_BOOT            BIT4
 
 #define MM_PCI_ADDRESS( Bus, Device, Function, Register ) \
   ( (UINTN)PcdGet64(PcdPciExpressBaseAddress) + \

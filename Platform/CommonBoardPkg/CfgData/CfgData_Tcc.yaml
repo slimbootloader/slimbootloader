@@ -1,0 +1,52 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : TCC:PLT:"TCC Features"
+- $ACTION      :
+    page         : TCC
+- TCC_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ TCC_CFG_DATA, 0x320, 0, 0 ] }
+  - TccEnable      :
+      name         : TCC Enable
+      type         : Combo
+      option       : 0:Disabled, 1:Enabled
+      help         : >
+                     Enable/Disable TCC feature. 1:TCC Enabled, 0:TCC Disabled
+      length       : 0x1
+      value        : 0x1
+  - TccTuning      :
+      name         : TCC DSO tuning Enable
+      type         : Combo
+      option       : 0:Disabled, 1:Enabled
+      help         : >
+                     Enable/Disable TCC Data Stream Optimizer(DSO) Tuning. 1:DSO Enabled, 0:DSO Disabled
+      length       : 0x1
+      value        : 0x1
+  - TccSoftSram    :
+      name         : TCC Software SRAM Enable
+      type         : Combo
+      option       : 0:Disabled, 1:Enabled
+      help         : >
+                     Enable/Disable TSoftware SRAM. 1:Enabled, 0: Disabled
+                     Enable will allocate part of LLC as SSRAM for TCC feature.
+      length       : 0x1
+      value        : 0x1
+  - TccRunRtcm     :
+      name         : Load and Run RTCM
+      type         : Combo
+      option       : 0:Disabled, 1:Enabled
+      help         : >
+                     Enable/Disable RTCM running from SBL. 1:Enabled, 0: Disabled
+                     Enable will make slim bootloader osloader payload to load and run TCC RTCM.
+                     This option doesn't have impact for UEFI payload (RTCM will not be loaded and run from SBL).
+      length       : 0x1
+      value        : 0x1
+

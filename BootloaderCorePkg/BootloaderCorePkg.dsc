@@ -308,6 +308,7 @@
   gPlatformModuleTokenSpaceGuid.PcdSplashEnabled          | $(ENABLE_SPLASH)
   gPlatformModuleTokenSpaceGuid.PcdFramebufferInitEnabled | $(ENABLE_FRAMEBUFFER_INIT)
   gPlatformModuleTokenSpaceGuid.PcdVtdEnabled             | $(ENABLE_VTD)
+  gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled          | $(ENABLE_TCC)
   gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled         | $(HAVE_PSD_TABLE)
   gPayloadTokenSpaceGuid.PcdGrubBootCfgEnabled            | $(ENABLE_GRUB_CONFIG)
   gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled          | $(ENABLE_SMBIOS)

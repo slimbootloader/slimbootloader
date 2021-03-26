@@ -1265,6 +1265,15 @@ PayloadMain (
   AddMeasurePoint (0x4020);
 
   //
+  // Load and run RTCM
+  //
+  if (FeaturePcdGet (PcdTccEnabled)) {
+    if ((LoaderPlatformInfo != NULL) && (LoaderPlatformInfo->LdrFeatures & FEATURE_TCC_RUN_RTCM)){
+      LoadAndRunRtcm();
+    }
+  }
+
+  //
   // Load PreOsChecker
   //
   if (LoaderPlatformInfo != NULL) {

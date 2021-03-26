@@ -541,4 +541,18 @@ StartPreOsBooting (
   IN LOADED_IMAGE            *LoadedPreOsImage,
   IN LOADED_IMAGE            *LoadedImage
   );
+
+/**
+  Load and Run RTCM.
+
+  This function will load and run RTCM.
+
+  @retval  EFI_NOT_FOUND    RTCM binary file was not found.
+  @retval  EFI_LOAD_ERROR   RTCM binary file loading failed
+  @retval  EFI_SUCCESS      RTCM load and run successfully.
+**/
+EFI_STATUS
+LoadAndRunRtcm (
+  IN  VOID
+  );
 #endif
