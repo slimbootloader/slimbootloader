@@ -431,6 +431,7 @@ MpInit (
       }
 
       mSysCpuInfo.CpuCount = CpuCount;
+      mSysCpuTask.CpuCount = CpuCount;
       SortSysCpu (&mSysCpuInfo);
 
       for (Index = 0; Index < CpuCount; Index++) {
