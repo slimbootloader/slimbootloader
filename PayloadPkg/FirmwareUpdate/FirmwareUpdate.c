@@ -49,6 +49,7 @@ VerifySblVersion (
   UINT32                Stage1AFvBase;
   BOOT_LOADER_VERSION   *CapsuleBlVersion;
   BOOT_LOADER_VERSION   *CurrentBlVersion;
+  VOID                  *GuidHob;
   EFI_STATUS            Status;
 
   //
@@ -58,13 +59,14 @@ VerifySblVersion (
   CurrentBlVersion = NULL;
 
   //
-  // Get svn from existing system firmware
+  // Get SBL version from current system firmware
   //
-  Status = GetSvn (0xFFFFFFFC, &CurrentBlVersion);
-  if (EFI_ERROR (Status)) {
-    DEBUG((DEBUG_ERROR, "Getting SBL version from existing firmware failed with status: %r\n", Status));
-    return Status;
+  GuidHob = GetNextGuidHob (&gBootLoaderVersionGuid, GetHobListPtr());
+  if (GuidHob == NULL) {
+    DEBUG((DEBUG_ERROR, "Failed to get current firmware version\n"));
+    return EFI_NOT_FOUND;
   }
+  CurrentBlVersion = (BOOT_LOADER_VERSION *)GET_GUID_HOB_DATA (GuidHob);
 
   //
   // Get base address of Stage 1A in capsule Image
