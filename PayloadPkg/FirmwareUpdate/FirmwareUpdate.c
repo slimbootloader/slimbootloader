@@ -1,7 +1,7 @@
 /** @file
 This driver is to update firmware in boot media.
 
-Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -51,6 +51,7 @@ VerifySblVersion (
   BOOT_LOADER_VERSION   *CurrentBlVersion;
   VOID                  *GuidHob;
   EFI_STATUS            Status;
+  EXT_BOOT_LOADER_VERSION  *ExtBlVersion;
 
   //
   // SVN check for BIOS
@@ -66,7 +67,8 @@ VerifySblVersion (
     DEBUG((DEBUG_ERROR, "Failed to get current firmware version\n"));
     return EFI_NOT_FOUND;
   }
-  CurrentBlVersion = (BOOT_LOADER_VERSION *)GET_GUID_HOB_DATA (GuidHob);
+  ExtBlVersion = (EXT_BOOT_LOADER_VERSION *)GET_GUID_HOB_DATA (GuidHob);
+  CurrentBlVersion = &ExtBlVersion->Version;
 
   //
   // Get base address of Stage 1A in capsule Image
