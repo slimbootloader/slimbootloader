@@ -60,3 +60,4 @@
   gPlatformModuleTokenSpaceGuid.PcdAcpiEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
   gPlatformModuleTokenSpaceGuid.PcdFastBootEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled

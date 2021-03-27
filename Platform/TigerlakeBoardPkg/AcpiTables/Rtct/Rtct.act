@@ -1,0 +1,58 @@
+/** @file
+
+  Copyright (c) 2020 - 2021 Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+**/
+
+//
+// Statements that include other files
+//
+
+#include "Rtct.h"
+
+//
+// Rtct Acpi Description Table
+//
+
+EFI_ACPI_TCC_RTCT_TABLE Rtct = {
+  {
+    EFI_ACPI_RTCT_SIGNATURE,
+    sizeof (EFI_ACPI_TCC_RTCT_TABLE),
+    EFI_ACPI_RTCT_TABLE_REVISION,
+    //
+    // Checksum will be updated at runtime
+    //
+    0x00,
+    {EFI_ACPI_RTCT_OEM_ID},
+    EFI_ACPI_RTCT_OEM_TABLE_ID,
+    EFI_ACPI_RTCT_OEM_REVISION,
+    EFI_ACPI_RTCT_CREATOR_ID,
+   EFI_ACPI_RTCT_CREATOR_REVISION
+  },
+  //
+  // Reserved
+  //
+  0x0000000000000000
+};
+
+#ifdef __GNUC__
+VOID*
+ReferenceAcpiTable (
+ VOID
+ )
+
+{
+ //
+ // Reference the table being generated to prevent the optimizer from removing the
+ // data structure from the exeutable
+ //
+ return (VOID*)&Rtct;
+}
+#else
+VOID
+main (
+  VOID
+  )
+{
+}
+#endif

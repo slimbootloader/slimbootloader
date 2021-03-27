@@ -58,7 +58,7 @@
   BdatTable/BdatTable.aslc
   Platform/CommonBoardPkg/AcpiTables/Dsdt/AslInc.h
   PsdTable/PsdTable.aslc
-  Ptct/Ptct.act
+  Rtct/Rtct.act
 
 [Packages]
   MdePkg/MdePkg.dec

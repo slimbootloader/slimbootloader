@@ -58,94 +58,80 @@ GetBoardId (
 
   @param  FspmUpd            The pointer to the FSP-M UPD to be updated.
 
-  @retval EFI_NOT_FOUND   Features Data not found
-                                                Platform features not found
-                 EFI_LOAD_ERROR  Tcc Buffer sub-region not found
-                 EFI_SUCCESS        Successfully loaded buffer sub-region
+  @retval EFI_NOT_FOUND      TCC Features Data not found or disabled.
+  @retval EFI_LOAD_ERROR     Tcc Buffer sub-region not found
+  @retval EFI_SUCCESS        Successfully loaded buffer sub-region
 **/
 EFI_STATUS
 TccModePreMemConfig (
   FSPM_UPD  *FspmUpd
 )
 {
-  UINT32        *TccBufferBase;
-  UINT32        TccBufferSize;
-  UINT32        *TccTuningBase;
-  UINT32        TccTuningSize;
- EFI_STATUS    Status;
-  PLAT_FEATURES           *PlatformFeatures;
-  FEATURES_CFG_DATA       *FeaturesCfgData;
-  BIOS_SETTINGS                         *PolicyConfig;
-  TCC_STREAM_CONFIGURATION              *StreamConfig;
+  UINT32                    *TccCacheBase;
+  UINT32                    TccCacheSize;
+  UINT32                    *TccStreamBase;
+  UINT32                    TccStreamSize;
+  EFI_STATUS                Status;
+  TCC_CFG_DATA              *TccCfgData;
+  BIOS_SETTINGS             *PolicyConfig;
+  TCC_STREAM_CONFIGURATION  *StreamConfig;
 
-  Status = EFI_SUCCESS;
-  FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
-  if ((FeaturesCfgData != NULL)  && (!FeaturesCfgData->Features.Tcc)) {
+  TccCfgData = (TCC_CFG_DATA *) FindConfigDataByTag(CDATA_TCC_TAG);
+  if ((TccCfgData == NULL) || ((TccCfgData->TccEnable == 0) && (TccCfgData->TccTuning == 0))) {
     return EFI_NOT_FOUND;
   }
-  DEBUG ((DEBUG_INFO, "TccModePreMemConfig () - Start\n"));
 
   // TCC related memory settings
-  DEBUG ((DEBUG_INFO, "Tcc is enabled\n"));
-  FspmUpd->FspmConfig.SaGv                       = 0;    // System Agent Geyserville - SAGV dynamically adjusts the system agent
-                                               // voltage and clock frequencies depending on power and performance requirements
-  FspmUpd->FspmConfig.DisPgCloseIdleTimeout      = 1;    // controls Page Close Idle Timeout
-  FspmUpd->FspmConfig.PowerDownMode              = 0;    // controls command bus tristating during idle periods
-  FspmUpd->FspmConfig.WrcFeatureEnable           = 1;
-  FspmUpd->FspmConfig.HyperThreading             = 0;
-  FspmUpd->FspmConfig.GtClosEnable               = 1;
-  FspmUpd->FspmConfig.BiosGuard                  = 0x0;
+  DEBUG ((DEBUG_INFO, "Tcc is enabled, Setting memory config.\n"));
+  FspmUpd->FspmConfig.SaGv                   = 0;    // System Agent Geyserville - SAGV dynamically adjusts the system agent
+                                                     // voltage and clock frequencies depending on power and performance requirements
+  FspmUpd->FspmConfig.DisPgCloseIdleTimeout  = 1;    // controls Page Close Idle Timeout
+  FspmUpd->FspmConfig.PowerDownMode          = 0;    // controls command bus tristating during idle periods
+  FspmUpd->FspmConfig.WrcFeatureEnable       = 1;
+  FspmUpd->FspmConfig.HyperThreading         = 0;
+  FspmUpd->FspmConfig.GtClosEnable           = 1;
+  FspmUpd->FspmConfig.BiosGuard              = 0x0;
 
-  FspmUpd->FspmConfig.TccTuningEnable = 1;
+  //FspmUpd->FspmConfig.SoftwareSramEnPreMem   = (UINT8)TccCfgData->TccSoftSram;
+  //FspmUpd->FspmConfig.DsoTuningEnPreMem      = (UINT8)TccCfgData->TccTuning;
 
-  // Load TCC tuning data from container
-  TccTuningBase = NULL;
-  TccTuningSize = 0;
+  // Load TCC stream config from container
+  TccStreamBase = NULL;
+  TccStreamSize = 0;
   Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'C', 'C', 'T'),
-                          (VOID **)&TccTuningBase, &TccTuningSize);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "TCC Tuning not found! %r\n", Status));
+                          (VOID **)&TccStreamBase, &TccStreamSize);
+  if (EFI_ERROR (Status) || (TccStreamSize < sizeof(TCC_STREAM_CONFIGURATION))) {
+    DEBUG ((DEBUG_INFO, "Load TCC Stream %r, size = 0x%x\n", Status, TccStreamSize));
   } else {
-    PlatformFeatures = &((PLATFORM_DATA *)GetPlatformDataPtr ())->PlatformFeatures;
-    if (PlatformFeatures != NULL) {
-      PlatformFeatures->TcctBase = TccTuningBase;
-      PlatformFeatures->TcctSize = TccTuningSize;
-    }
-    StreamConfig   = (TCC_STREAM_CONFIGURATION *) TccTuningBase;
-    PolicyConfig = (BIOS_SETTINGS *) &StreamConfig->Info.Format1.BiosSettings;
+    //FspmUpd->FspmConfig.TccStreamCfgBasePreMem = (UINT32)(UINTN)TccStreamBase;
+    //FspmUpd->FspmConfig.TccStreamCfgSizePreMem = TccStreamSize;
+    DEBUG ((DEBUG_INFO, "Load TCC stream @0x%p, size = 0x%x\n", TccStreamBase, TccStreamSize));
 
-    FspmUpd->FspmConfig.SaGv                = PolicyConfig->SaGv;
-    FspmUpd->FspmConfig.HyperThreading      = PolicyConfig->HyperThreading;
-    if (PolicyConfig->MemPm == 0) {
-      FspmUpd->FspmConfig.PowerDownMode         = 0;
-     FspmUpd->FspmConfig.DisPgCloseIdleTimeout  = 1;
-    } else {
-      FspmUpd->FspmConfig.PowerDownMode         = 1;
-      FspmUpd->FspmConfig.DisPgCloseIdleTimeout = 0;
-    }
+    if (TccCfgData->TccTuning != 0) {
+      StreamConfig = (TCC_STREAM_CONFIGURATION *) TccStreamBase;
+      PolicyConfig = (BIOS_SETTINGS *) &StreamConfig->BiosSettings;
 
-    FspmUpd->FspmConfig.TccStreamCfgBase = (UINT32) (UINTN)TccTuningBase;
-    FspmUpd->FspmConfig.TccStreamCfgSize = TccTuningSize;
+      FspmUpd->FspmConfig.SaGv                   = PolicyConfig->SaGv;
+      FspmUpd->FspmConfig.HyperThreading         = PolicyConfig->HyperThreading;
+      FspmUpd->FspmConfig.PowerDownMode          = PolicyConfig->MemPowerDown;
+      FspmUpd->FspmConfig.DisPgCloseIdleTimeout  = PolicyConfig->DisPgCloseIdle;
+      DEBUG ((DEBUG_INFO, "Dump TCC DSO BIOS settings:\n"));
+      DumpHex (2, 0, sizeof(BIOS_SETTINGS), PolicyConfig);
+    }
   }
 
-  // Load Tcc buffers data from container
-  TccBufferBase = NULL;
-  TccBufferSize = 0;
-  Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'C', 'C', 'B'),
-                                (VOID **)&TccBufferBase, &TccBufferSize);
+  // Load Tcc Cache config from container
+  TccCacheBase = NULL;
+  TccCacheSize = 0;
+  Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'C', 'C', 'C'),
+                                (VOID **)&TccCacheBase, &TccCacheSize);
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "TCC  Buffer not found! %r\n", Status));
+    DEBUG ((DEBUG_INFO, "TCC Cache config not found! %r\n", Status));
   } else {
-    PlatformFeatures = &((PLATFORM_DATA *)GetPlatformDataPtr ())->PlatformFeatures;
-    if (PlatformFeatures != NULL) {
-      PlatformFeatures->TccBufferBase = TccBufferBase;
-      PlatformFeatures->TccBufferSize = TccBufferSize;
-    }
-    // Assign the Tcc buffer to FSP M UPDs
-    FspmUpd->FspmConfig.TccBufferCfgBase = (UINT32)(UINTN)TccBufferBase;
-    FspmUpd->FspmConfig.TccBufferCfgSize = TccBufferSize;
+    //FspmUpd->FspmConfig.TccCacheCfgBasePreMem = (UINT32)(UINTN)TccCacheBase;
+    //FspmUpd->FspmConfig.TccCacheCfgSizePreMem = TccCacheSize;
+    DEBUG ((DEBUG_INFO, "Load TCC cache @0x%p, size = 0x%x\n", TccCacheBase, TccCacheSize));
   }
-  DEBUG ((DEBUG_INFO, "TccModePreMemConfig () - End\n"));
 
   return Status;
 }
@@ -173,7 +159,7 @@ UpdateFspConfig (
   UINT32                   SpdData[3];
   UINT16                   BoardId;
   UINT8                    SaDisplayConfigTable[16] = { 0 };
-  FEATURES_CFG_DATA       *FeaturesCfgData;
+  TCC_CFG_DATA            *TccCfgData;
   SILICON_CFG_DATA        *SiCfgData;
   PLATFORM_DATA           *PlatformData;
   UINT8                   DebugPort;
@@ -181,7 +167,6 @@ UpdateFspConfig (
   FspmUpd     = (FSPM_UPD *)FspmUpdPtr;
   FspmArchUpd = &FspmUpd->FspmArchUpd;
   Fspmcfg     = &FspmUpd->FspmConfig;
-  FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
 
   BoardId = GetPlatformId();
 
@@ -228,8 +213,10 @@ UpdateFspConfig (
   PlatformData->PlatformFeatures.VtdEnable = (!MemCfgData->VtdDisable) & FeaturePcdGet (PcdVtdEnabled);
 
   // Need enable VTD if TCC is enalbed.
-  if (FeaturesCfgData != NULL) {
-    if (FeaturesCfgData->Features.Tcc) {
+  if (FeaturePcdGet (PcdTccEnabled)) {
+    TccCfgData = (TCC_CFG_DATA *)FindConfigDataByTag (CDATA_TCC_TAG);
+    if ((TccCfgData != NULL) && (TccCfgData->TccEnable == 1)) {
+      DEBUG ((DEBUG_INFO, "Enable VTd since TCC is enabled\n"));
       PlatformData->PlatformFeatures.VtdEnable = 1;
     }
   }
@@ -457,9 +444,10 @@ UpdateFspConfig (
     Fspmcfg->VtdBaseAddress[6] = 0xfed87000;
   }
 
-  // Tcc enabling
-  TccModePreMemConfig (FspmUpd);
-
+  // Update TCC related UPDs if TCC is enabled
+  if (FeaturePcdGet (PcdTccEnabled)) {
+    TccModePreMemConfig (FspmUpd);
+  }
   Fspmcfg->BootFrequency = 0x2;
 
   // will hang using default upds
@@ -557,7 +545,7 @@ PlatformFeaturesInit (
   FEATURES_CFG_DATA           *FeaturesCfgData;
   LOADER_GLOBAL_DATA          *LdrGlobal;
   PLATFORM_DATA               *PlatformData;
-  PLAT_FEATURES               *PlatformFeatures;
+  TCC_CFG_DATA                 *TccCfgData;
   UINTN                        HeciBaseAddress;
 
   // Set common features
@@ -565,6 +553,11 @@ PlatformFeaturesInit (
   LdrGlobal->LdrFeatures |= FeaturePcdGet (PcdAcpiEnabled)?FEATURE_ACPI:0;
   LdrGlobal->LdrFeatures |= FeaturePcdGet (PcdVerifiedBootEnabled)?FEATURE_VERIFIED_BOOT:0;
   LdrGlobal->LdrFeatures |= FeaturePcdGet (PcdMeasuredBootEnabled)?FEATURE_MEASURED_BOOT:0;
+
+  TccCfgData = (TCC_CFG_DATA *) FindConfigDataByTag(CDATA_TCC_TAG);
+  if ((TccCfgData != NULL) && (TccCfgData->TccRunRtcm != 0)) {
+    LdrGlobal->LdrFeatures |= FEATURE_TCC_RUN_RTCM;
+  }
 
   // Disable feature by configuration data.
   FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
@@ -575,13 +568,6 @@ PlatformFeaturesInit (
 
     if (FeaturesCfgData->Features.MeasuredBoot == 0) {
       LdrGlobal->LdrFeatures &= ~FEATURE_MEASURED_BOOT;
-    }
-     // Update platform specific feature from configuration data.
-    PlatformFeatures           = &((PLATFORM_DATA *)GetPlatformDataPtr ())->PlatformFeatures;
-    if (PlatformFeatures != NULL) {
-       PlatformFeatures->TccMode   = FeaturesCfgData->Features.Tcc;
-       PlatformFeatures->TccBufferBase  = NULL;
-       PlatformFeatures->TccBufferSize  = 0;
     }
   } else {
     DEBUG ((DEBUG_INFO, "FEATURES CFG DATA NOT FOUND!\n"));
@@ -731,8 +717,6 @@ BoardInit (
   UINTN                 PmcBase;
   PLT_DEVICE_TABLE      *PltDeviceTable;
   UINT8                 BoardId;
-  PLAT_FEATURES         *PlatformFeatures;
-   UINT32 *Buffer;
 
   PmcBase = MM_PCI_ADDRESS (0, PCI_DEVICE_NUMBER_PCH_PMC, PCI_FUNCTION_NUMBER_PCH_PMC, 0);
 
@@ -797,20 +781,6 @@ DEBUG_CODE_END();
 
     break;
   case PostMemoryInit:
-    //
-    // Copy TCC buffers data into memory from CAR
-    //
-    PlatformFeatures = &((PLATFORM_DATA *)GetPlatformDataPtr ())->PlatformFeatures;
-    if ((PlatformFeatures->TccMode) && (PlatformFeatures->TccBufferBase != NULL)) {
-      Buffer = (UINT32*) AllocatePool (PlatformFeatures->TccBufferSize);
-      if (Buffer != NULL) {
-        CopyMem (Buffer, PlatformFeatures->TccBufferBase, PlatformFeatures->TccBufferSize);
-        PlatformFeatures->TccBufferBase = Buffer;
-      } else {
-        DEBUG ((DEBUG_ERROR, "Cannot allocate memory for TCC Buffers!\n"));
-      }
-    }
-
     //
     // Clear the DISB bit after completing DRAM Initialization Sequence
     //

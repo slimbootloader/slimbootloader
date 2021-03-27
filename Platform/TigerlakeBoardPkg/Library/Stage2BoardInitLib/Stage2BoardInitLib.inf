@@ -25,7 +25,7 @@
   GpioTableTglHTsn.h
   GpioTableTglUTsn.h
   Stage2BoardInitLib.c
-  TccPtct.h
+  TccRtctHob.h
   TccLib.c
   FusaLib.h
   FusaLib.c
@@ -73,7 +73,7 @@
   gEfiGraphicsInfoHobGuid
   gCpuInitDataHobGuid
   gSiFusaInfoGuid
-  gTccInfoHobGuid
+  gTccRtctHobGuid
 
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdGraphicsVbtAddress
@@ -102,3 +102,4 @@
   gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled
   gPlatformTigerLakeTokenSpaceGuid.PcdFusaEnabled
   gPlatformModuleTokenSpaceGuid.PcdFspsUpdPtr
+  gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled

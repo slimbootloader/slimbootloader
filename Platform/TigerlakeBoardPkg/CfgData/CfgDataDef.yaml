@@ -211,7 +211,7 @@ configs:
 
 
   - !include Platform/CommonBoardPkg/CfgData/CfgData_Platform.yaml
-
+  - !include Platform/CommonBoardPkg/CfgData/CfgData_Tcc.yaml
 
   - !include CfgData_Memory.yaml
 
