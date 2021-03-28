@@ -64,3 +64,4 @@
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegSize
   gPlatformModuleTokenSpaceGuid.PcdStage1BXip
   gPlatformModuleTokenSpaceGuid.PcdEnableSetup
+  gPlatformModuleTokenSpaceGuid.PcdAcpiTableTemplatePtr

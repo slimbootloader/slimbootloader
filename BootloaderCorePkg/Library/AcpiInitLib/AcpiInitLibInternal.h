@@ -18,6 +18,7 @@
 #include <Library/BootloaderCoreLib.h>
 #include <IndustryStandard/Acpi.h>
 
+#define  MAX_ACPI_TEMPLATE_NUM  16
 
 #define  ACPI_ALIGN()       (Current = (UINT8 *)ALIGN_POINTER (Current, 0x10))
 #define  ACPI_ALIGN_PAGE()  (Current = (UINT8 *)ALIGN_POINTER (Current, 0x1000))
