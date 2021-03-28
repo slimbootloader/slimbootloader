@@ -25,13 +25,13 @@
 #include <Guid/BootLoaderVersionGuid.h>
 #include "AcpiInitLibInternal.h"
 
+STATIC
 CONST EFI_ACPI_COMMON_HEADER *mAcpiTblTmpl[] = {
   (EFI_ACPI_COMMON_HEADER *)&mBootGraphicsResourceTableTemplate
 };
 
-
 CONST EFI_ACPI_5_0_ROOT_SYSTEM_DESCRIPTION_POINTER RsdpTmp = {
-  .Signature = EFI_ACPI_5_0_ROOT_SYSTEM_DESCRIPTION_POINTER_SIGNATURE,
+  .Signature   = EFI_ACPI_5_0_ROOT_SYSTEM_DESCRIPTION_POINTER_SIGNATURE,
   .Checksum    = 0,
   .OemId       = EFI_ACPI_OEM_ID,
   .Revision    = EFI_ACPI_5_0_ROOT_SYSTEM_DESCRIPTION_POINTER_REVISION,
@@ -507,6 +507,8 @@ AcpiInit (
   UINT32                    StartIdx;
   UINT32                    EndIdx;
   BOOLEAN                   Loop;
+  UINT64                    Signature;
+  CONST EFI_ACPI_COMMON_HEADER  **AcpiTblTmpl;
 
   Facs = NULL;
   Dsdt = NULL;
@@ -546,16 +548,28 @@ AcpiInit (
   TotalSize = sizeof (EFI_ACPI_DESCRIPTION_HEADER) + PcdGet32 (PcdAcpiTablesMaxEntry) * sizeof (UINT64);
   Current += TotalSize;
 
-  TblPtr   = (UINT8 *)(UINTN)PcdGet32 (PcdAcpiTablesAddress);
-  EndPtr   = TblPtr + ((* ((UINT32 *) (TblPtr - 8)) & 0xFFFFFF) - 28);
-  StartIdx = 0;
-  EndIdx   = ARRAY_SIZE (mAcpiTblTmpl);
-
   // 1st round: Copy existing ACPI tables from flash to memory and update
-  // 2nd round: Create new ACPI tables from template and update
-  for (Round = 0; Round < 2; Round++) {
+  // 2nd round: Create new common ACPI tables from template and update
+  // 3rd round: Create platform ACPI tables from template and update
+  for (Round = 0; Round < 3; Round++) {
+    if (Round == 0) {
+      TblPtr   = (UINT8 *)(UINTN)PcdGet32 (PcdAcpiTablesAddress);
+      EndPtr   = TblPtr + ((* ((UINT32 *) (TblPtr - 8)) & 0xFFFFFF) - 28);
+    } else if (Round == 1) {
+      StartIdx    = 0;
+      EndIdx      = ARRAY_SIZE (mAcpiTblTmpl);
+      AcpiTblTmpl = &mAcpiTblTmpl[0];
+    } else if (Round == 2) {
+      StartIdx    = 0;
+      EndIdx      = MAX_ACPI_TEMPLATE_NUM;
+      AcpiTblTmpl = (CONST EFI_ACPI_COMMON_HEADER **)(UINTN)PcdGet32 (PcdAcpiTableTemplatePtr);
+      if (AcpiTblTmpl == NULL) {
+        continue;
+      }
+    }
+
     while (TRUE) {
-      Loop= (Round == 0) ? (TblPtr < EndPtr) : (StartIdx < EndIdx);
+      Loop = (Round == 0) ? (TblPtr < EndPtr) : (StartIdx < EndIdx);
       if (!Loop) {
         break;
       }
@@ -564,8 +578,12 @@ AcpiInit (
       if (Round == 0) {
         Table = (EFI_ACPI_COMMON_HEADER *)TblPtr;
       } else {
-        Table = (EFI_ACPI_COMMON_HEADER *)mAcpiTblTmpl[StartIdx];
+        Table = (EFI_ACPI_COMMON_HEADER *)AcpiTblTmpl[StartIdx];
       }
+      if (Table == NULL) {
+        break;
+      }
+
       ACPI_ALIGN ();
       CopyMem  (Current, Table, Table->Length);
 
@@ -624,6 +642,8 @@ AcpiInit (
 
       if (!EFI_ERROR(Status)) {
         if (UpdateRdstXsdt == 1) {
+          Signature = Table->Signature;
+          DEBUG ((DEBUG_INFO, "Publish ACPI table: %a\n", &Signature));
           RsdtEntry[XsdtIndex]   = (UINT32) (UINTN)Current;
           XsdtEntry[XsdtIndex++] = (UINT64) (UINTN)Current;
         }

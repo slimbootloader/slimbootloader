@@ -5,61 +5,29 @@
 
 **/
 
-#include <PiPei.h>
-#include <Library/BaseLib.h>
-#include <Library/PciLib.h>
-#include <Library/BaseMemoryLib.h>
-#include <Library/DebugLib.h>
-#include <Library/IoLib.h>
-#include <Library/GpioLib.h>
-#include <Library/SiGpioLib.h>
-#include <Library/SpiFlashLib.h>
-#include <Library/SocInitLib.h>
-#include <Library/BoardInitLib.h>
-#include <Library/ConfigDataLib.h>
-#include <Library/SerialPortLib.h>
-#include <Library/VariableLib.h>
-#include <Library/BootloaderCoreLib.h>
-#include <Library/BlMemoryAllocationLib.h>
-#include <Library/FspSupportLib.h>
-#include <Library/BoardSupportLib.h>
-#include <Library/ContainerLib.h>
-#include <Guid/GraphicsInfoHob.h>
-#include <Guid/SystemTableInfoGuid.h>
-#include <Guid/SerialPortInfoGuid.h>
-#include <Guid/SmmInformationGuid.h>
-#include <FspsUpd.h>
-#include <BlCommon.h>
-#include <GlobalNvsArea.h>
-#include <PlatformBase.h>
-#include <ConfigDataDefs.h>
-#include "GpioTbl.h"
+#include <Stage2BoardInitLibInternal.h>
 
-#define GRAPHICS_DATA_SIG    SIGNATURE_32 ('Q', 'G', 'F', 'X')
+STATIC
+CONST EFI_ACPI_TEST_TABLE  mAcpiTestTableTemplate = {
+  {
+    SIGNATURE_32('T', 'E', 'S', 'T'),
+    sizeof (EFI_ACPI_TEST_TABLE),
+    1,     // Revision
+    0x00,  // Checksum will be updated at runtime
+    EFI_ACPI_OEM_ID,                 // OEM ID is a 6 bytes long field
+    EFI_ACPI_OEM_TABLE_ID,           // OEM Table ID(8 bytes long)
+    EFI_ACPI_OEM_REVISION,           // OEM Revision
+    EFI_ACPI_CREATOR_ID,             // Creator ID
+    EFI_ACPI_CREATOR_REVISION        // Creator Revision
+  },
+  0
+};
 
-typedef struct {
-  UINT32     Signature;
-  UINT32     ResX;
-  UINT32     ResY;
-} GRAPHICS_DATA;
-
-UINT8
-EFIAPI
-GetSerialPortStrideSize (
-  VOID
-);
-
-UINT32
-EFIAPI
-GetSerialPortBase (
-  VOID
-  );
-
-VOID
-EFIAPI
-EnableLegacyRegions (
-  VOID
-);
+STATIC
+CONST EFI_ACPI_COMMON_HEADER *mPlatformAcpiTblTmpl[] = {
+  (EFI_ACPI_COMMON_HEADER *)&mAcpiTestTableTemplate,
+  NULL
+};
 
 /**
   Test variable services.
@@ -233,6 +201,8 @@ BoardInit (
     if (!EFI_ERROR(Status)) {
       DumpHex (2, 0, Length > 16 ? 16 : Length, Buffer);
     }
+    // Prepare platform ACPI tempate
+    Status = PcdSet32S (PcdAcpiTableTemplatePtr, (UINT32)(UINTN)mPlatformAcpiTblTmpl);
     break;
 
   case PostPciEnumeration:

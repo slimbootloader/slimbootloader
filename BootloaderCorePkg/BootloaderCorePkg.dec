@@ -183,6 +183,7 @@
   gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsCnt       |     0x0000 | UINT16 | 0x20000199
   gPlatformModuleTokenSpaceGuid.PcdFuncCpuInitHook        | 0x00000000 | UINT32 | 0x2000019A
   gPlatformModuleTokenSpaceGuid.PcdFspsUpdPtr             | 0x00000000 | UINT32 | 0x2000019B
+  gPlatformModuleTokenSpaceGuid.PcdAcpiTableTemplatePtr   | 0x00000000 | UINT32 | 0x2000019C
 
   gPlatformModuleTokenSpaceGuid.PcdPciResAllocTableBase   | 0x00000000 | UINT32 | 0x200001A0
   gPlatformModuleTokenSpaceGuid.PcdPciResourceIoBase      | 0x00000000 | UINT32 | 0x200001A1
