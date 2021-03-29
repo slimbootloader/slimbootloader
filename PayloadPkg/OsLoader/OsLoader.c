@@ -679,7 +679,7 @@ StartBooting (
       if (OsBootOptionList == NULL) {
         return EFI_NOT_FOUND;
       }
-      CurrIdx = GetCurrentBootOption (OsBootOptionList, mCurrentBoot);
+      CurrIdx = mCurrentBoot;
       PathPtr = (CHAR8 *)OsBootOptionList->OsBootOption[CurrIdx].Image[0].FileName;
       ModCmdLineBuf[0] = 0;
       ZeroMem (&PldModParam, sizeof(PLD_MOD_PARAM));
@@ -1282,8 +1282,9 @@ PayloadMain (
 
     // Load and run Image in order from OsImageList
     BootIdx = 0;
-    CurrIdx = GetCurrentBootOption (OsBootOptionList, mCurrentBoot);
+    CurrIdx = GetCurrentBootOption (OsBootOptionList, 0);
     while  (BootIdx < OsBootOptionList->OsBootOptionCount) {
+      mCurrentBoot = CurrIdx;
       DEBUG ((DEBUG_INFO, "\n======== Try Booting with Boot Option %d ========\n", CurrIdx));
 
       // Get current boot option and try boot
