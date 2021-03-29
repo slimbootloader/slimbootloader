@@ -638,6 +638,7 @@ StartBooting (
   UINT32                     CurrIdx;
   CHAR8                     *PathPtr;
   CHAR8                      ModCmdLineBuf[16];
+  PRE_OS_ENTRYPOINT          EntryPoint;
 
   DEBUG_CODE_BEGIN();
   PrintStackHeapInfo ();
@@ -645,7 +646,12 @@ StartBooting (
 
   Status = EFI_SUCCESS;
 
-  if ((LoadedImage->Flags & LOADED_IMAGE_LINUX) != 0) {
+  if ((LoadedImage->Flags & LOADED_IMAGE_RUN_EXTRA) != 0) {
+    DEBUG ((DEBUG_INIT, "Call PRE-OS image entry point...\n"));
+    MultiBoot  = &LoadedImage->Image.MultiBoot;
+    EntryPoint = (PRE_OS_ENTRYPOINT)(UINTN)MultiBoot->BootState.EntryPoint;
+    EntryPoint((VOID *)(UINTN)PcdGet32(PcdPayloadHobList));
+  } else if ((LoadedImage->Flags & LOADED_IMAGE_LINUX) != 0) {
     if (FeaturePcdGet (PcdPreOsCheckerEnabled) && IsPreOsCheckerLoaded ()) {
       BeforeOSJump ("Starting Pre-OS Checker ...");
       StartPreOsChecker ((VOID *)GetLinuxBootParams (), LoadedImage->Flags);
@@ -934,7 +940,25 @@ SetupBootImages (
 {
   LOADED_IMAGE        *LoadedImage;
   LOADED_IMAGE        *LoadedPreOsImage;
+  LOADED_IMAGE        *LoadedExtraImage;
   EFI_STATUS           Status;
+  UINT8                Type;
+
+  //
+  // Check if extra images exist and need setup
+  //
+  for (Type = LoadImageTypeExtra0; Type < LoadImageTypeMax; Type++) {
+    Status = GetLoadedImageByType (LoadedImageHandle, Type, &LoadedExtraImage);
+    if (EFI_ERROR (Status)) {
+      break;
+    }
+    if ((LoadedExtraImage != NULL) && ((LoadedExtraImage->Flags & LOADED_IMAGE_RUN_EXTRA) != 0)) {
+      Status = SetupBootImage (LoadedExtraImage);
+      if (EFI_ERROR (Status)) {
+        return Status;
+      }
+    }
+  }
 
   GetLoadedImageByType (LoadedImageHandle, LoadImageTypeNormal, &LoadedImage);
   GetLoadedImageByType (LoadedImageHandle, LoadImageTypePreOs, &LoadedPreOsImage);
@@ -1001,7 +1025,25 @@ StartBootImages (
 {
   LOADED_IMAGE        *LoadedImage;
   LOADED_IMAGE        *LoadedPreOsImage;
+  LOADED_IMAGE        *LoadedExtraImage;
   EFI_STATUS           Status;
+  UINT8                Type;
+
+  //
+  // Check if extra images exist and need start before OS image.
+  //
+  for (Type = LoadImageTypeExtra0; Type < LoadImageTypeMax; Type++) {
+    Status = GetLoadedImageByType (LoadedImageHandle, Type, &LoadedExtraImage);
+    if (EFI_ERROR (Status)) {
+      break;
+    }
+    if ((LoadedExtraImage != NULL) && ((LoadedExtraImage->Flags & LOADED_IMAGE_RUN_EXTRA) != 0)) {
+      Status = StartBooting (LoadedExtraImage);
+      if (EFI_ERROR (Status)) {
+        return Status;
+      }
+    }
+  }
 
   Status = GetLoadedImageByType (LoadedImageHandle, LoadImageTypeNormal, &LoadedImage);
   if (EFI_ERROR (Status)) {
