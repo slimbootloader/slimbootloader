@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -300,14 +300,10 @@ UpdateOsParameters (
   }
 
   if ((CurrentBootOption->BootFlags & BOOT_FLAGS_EXTRA) != 0) {
-    //
-    // TODO:
-    // Extra image is loaded in LoadedExtraImages
-    // update OS boot parameter here.
-    //
-    DEBUG ((DEBUG_ERROR, "Warning: Extra image parameters are not handled yet.\n"));
-    if (LoadedExtraImages == NULL) {
-      DEBUG ((DEBUG_ERROR, "Warning: Extra image not loaded.\n"));
+    if ((LoadedExtraImages != NULL) && ((LoadedExtraImages->Flags & LOADED_IMAGE_RUN_EXTRA) != 0)) {
+      DEBUG ((DEBUG_INFO, "Extra image is loaded and will run before OS.\n"));
+    } else {
+      DEBUG ((DEBUG_ERROR, "Warning: Extra image not loaded, or need pass it to OS in boot parameter.\n"));
     }
   }
 

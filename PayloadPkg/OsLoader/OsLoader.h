@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -74,6 +74,7 @@
 #define EOF                      "<eof>"
 #define GPT_PART_ENTRIES_MAX     4
 
+// For LOADED_IMAGE Flags
 #define LOADED_IMAGE_IAS         BIT0
 #define LOADED_IMAGE_MULTIBOOT   BIT1
 #define LOADED_IMAGE_LINUX       BIT2
@@ -81,6 +82,7 @@
 #define LOADED_IMAGE_FV          BIT4
 #define LOADED_IMAGE_CONTAINER   BIT5
 #define LOADED_IMAGE_COMPONENT   BIT6
+#define LOADED_IMAGE_RUN_EXTRA   BIT7
 
 #define MAX_EXTRA_FILE_NUMBER    16
 

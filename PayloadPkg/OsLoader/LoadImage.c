@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -62,6 +62,20 @@ GetBootImageFromIfwiContainer (
   LoadedImage->ImageData.Addr = Buffer;
   LoadedImage->ImageData.Size = ImageSize;
   LoadedImage->ImageData.AllocType = ImageAllocateTypePage;
+
+  if ((Image->ContainerSig == SIGNATURE_32 ('I', 'P', 'F', 'W')) && (Image->ComponentName == SIGNATURE_32 ('T', 'C', 'C', 'R'))) {
+    //
+    // TCC RTCM image need runtime memory
+    //
+    LoadedImage->ImageData.Addr = AllocateRuntimePages(EFI_SIZE_TO_PAGES(ImageSize));
+    if (LoadedImage->ImageData.Addr == NULL)
+    {
+      return EFI_OUT_OF_RESOURCES;
+    }
+    CopyMem(LoadedImage->ImageData.Addr, Buffer, ImageSize);
+    FreePages (Buffer, EFI_SIZE_TO_PAGES (ImageSize));
+    LoadedImage->Flags |= LOADED_IMAGE_RUN_EXTRA;
+  }
 
   if ( *((UINT32 *) Buffer) == CONTAINER_BOOT_SIGNATURE ) {
     LoadedImage->Flags      |= LOADED_IMAGE_CONTAINER;
