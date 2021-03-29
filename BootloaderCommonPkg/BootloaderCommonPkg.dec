@@ -1,7 +1,7 @@
 ## @file
 # Provides bootloader driver related package definitions.
 #
-# Copyright (c) 2016 - 2019, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2016 - 2021, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -49,6 +49,7 @@
   gEfiVariableIndexTableGuid                    = { 0x8cfdb8c8, 0xd6b2, 0x40f3, { 0x8e, 0x97, 0x02, 0x30, 0x7c, 0xc9, 0x8b, 0x7c } }
   gEdkiiWorkingBlockSignatureGuid               = { 0x9e58292b, 0x7c68, 0x497d, { 0xa0, 0xce, 0x65,  0x0, 0xfd, 0x9f, 0x1b, 0x95 } }
   gEdkiiFpdtExtendedFirmwarePerformanceGuid     = { 0x3b387bfd, 0x7abc, 0x4cf2, { 0xa0, 0xca, 0xb6, 0xa1, 0x6c, 0x1b, 0x1b, 0x25 } }
+  gTccRtctHobGuid                               = { 0x6bddb43d, 0x1782, 0x4d9c, { 0xb6, 0x80, 0xe3, 0xde, 0x45, 0xe0, 0x37, 0x4a } }
 
 [PcdsFixedAtBuild]
   gPlatformCommonLibTokenSpaceGuid.PcdMaxLibraryDataEntry    |          8 | UINT32 | 0x20000100
@@ -283,4 +284,4 @@
   gPlatformCommonLibTokenSpaceGuid.PcdMultiUsbBootDeviceEnabled   | FALSE  | BOOLEAN | 0x20000219
   # Control if X2APIC should be used or not
   gPlatformCommonLibTokenSpaceGuid.PcdCpuX2ApicEnabled            | FALSE  | BOOLEAN | 0x20000220
-
+  gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled                  | FALSE  | BOOLEAN | 0x20000221
