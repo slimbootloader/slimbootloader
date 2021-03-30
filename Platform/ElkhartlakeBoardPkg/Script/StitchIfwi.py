@@ -167,6 +167,21 @@ def get_para_list (plt_para):
         para_lst.update( {items[0] : None if (item_cnt == 1) else items[1].strip()})
     return para_lst
 
+def softstrap_write (path,offset,val,act):
+    with open(path, "r+b") as fh:
+        #read from offset
+        fh.seek(offset)
+        data = fh.read(1)
+        if act == 0:
+            data_int = int.from_bytes(data, "big") & val
+        else:
+            data_int = int.from_bytes(data, "big") | val
+        #write to the specific offset
+        fh.seek(offset)
+        fh.write(bytes([data_int]))
+    fh.close()
+
+
 def main():
     hexstr = lambda x: int(x, 16)
     ap = argparse.ArgumentParser()
@@ -223,12 +238,20 @@ def main():
 
     ifwi_file_name = 'sbl_ifwi_%s.bin' % (args.platform)
     shutil.copy(generated_ifwi_file, ifwi_file_name)
-    with open(ifwi_file_name, "r+b") as fh:
-        fh.seek(0xc18) #FUSA SOFTSTRAP due to CSME 2041 update
-        fh.write(b'\x01')
-        if args.option == 'tsn':
-            fh.seek(0x1ce) #FIA/LOSL11
-            fh.write(b'\x00')
+    list_val = [1,0,2,4,16] #List of values to override
+    softstrap_write(ifwi_file_name,0xc18,list_val[0],1) #FUSA SOFTSTRAP due to CSME 2041 update
+    ###################################################################################
+    # Offset | Start Bit | Strap Size | Value | Comment                             |
+    # 0x1ce    0x0          0x4         0x0     FIA/LOSL11
+    # 0xc1c    0x1          0x1         0x1     pmc_smip/RSVD_2A_DIS_STRAP_PSEGBe0
+    # 0xc1c    0x2          0x1         0x1     pmc_smip/RSVD_2A_DIS_STRAP_PSEGBe1
+    # 0x1d5    0x4          0x4         0x1     MGBE/mgbe_soc_specific
+    ###################################################################################
+    if args.option == 'tsn':
+        softstrap_write(ifwi_file_name,0x1ce,list_val[1],0)
+        softstrap_write(ifwi_file_name,0xc1c,list_val[2],1)
+        softstrap_write(ifwi_file_name,0xc1c,list_val[3],1)
+        softstrap_write(ifwi_file_name,0x1d5,list_val[4],1)
 
     print ("\nIFWI Stitching completed successfully !")
     print ("Boot Guard Profile: %s" % args.btg_profile.upper())
