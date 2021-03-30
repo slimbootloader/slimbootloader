@@ -29,7 +29,9 @@ MEMORY_CFG_DATA.DqMapCpu2DramMc1Ch3      | {4,  3,  5,  2,  6,  7,  0,  1, 15, 1
 MEMORY_CFG_DATA.DmaControlGuarantee | 1
 
 CAPSULE_INFO_CFG_DATA.DevType | 6
-FEATURES_CFG_DATA.Features.Tcc | 1
+TCC_CFG_DATA.TccEnable   | 1
+TCC_CFG_DATA.TccTuning   | 1
+TCC_CFG_DATA.TccSoftSram | 1
 
 SILICON_CFG_DATA.EnableTimedGpio0 | 1
 SILICON_CFG_DATA.EnableTimedGpio1 | 1

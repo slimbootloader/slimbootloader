@@ -72,15 +72,17 @@
 #include <CpuRegs.h>
 #include <Library/MeExtMeasurementLib.h>
 #include "PsdLib.h"
-#include "TccPtct.h"
 #include "FusaLib.h"
 #include <PlatformBoardId.h>
 #include <Lpit.h>
 #include <LowPowerSupport.h>
 #include <TccConfigSubRegions.h>
+#include <Library/LocalApicLib.h>
+#include <Library/TccLib.h>
 
-UINT8 mTccRtd3Support;
-UINT8 mTccLowPowerS0Idle;
+BOOLEAN mTccDsoTuning      = FALSE;
+UINT8   mTccRtd3Support    = 0;
+UINT8   mTccLowPowerS0Idle = 0;
 
 //
 // The EC implements an embedded controller interface at ports 0x60/0x64 and a ACPI compliant
@@ -295,6 +297,18 @@ STATIC S3_SAVE_REG mS3SaveReg = {
   { { REG_TYPE_IO, WIDE32, { 0, 0}, (ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN), 0x00000000 } }
 };
 
+CONST EFI_ACPI_DESCRIPTION_HEADER  mAcpiTccRtctTableTemplate = {
+  EFI_ACPI_RTCT_SIGNATURE,
+  sizeof (EFI_ACPI_DESCRIPTION_HEADER)
+  // Other fields will be updated in runtime
+};
+
+STATIC
+CONST EFI_ACPI_COMMON_HEADER *mPlatformAcpiTables[] = {
+  (EFI_ACPI_COMMON_HEADER *)&mAcpiTccRtctTableTemplate,
+  NULL
+};
+
 UINT8
 GetSerialPortStrideSize (
   VOID
@@ -309,8 +323,6 @@ VOID
 EnableLegacyRegions (
   VOID
 );
-
-
 
 /**
 Return Cpu stepping type
@@ -907,6 +919,9 @@ BoardInit (
     if (!EFI_ERROR(Status)) {
       VariableConstructor (RgnBase, RgnSize);
     }
+
+    // Prepare platform ACPI tables
+    Status = PcdSet32S (PcdAcpiTableTemplatePtr, (UINT32)(UINTN)mPlatformAcpiTables);
     break;
   case PostSiliconInit:
     if (GetBootMode () == BOOT_ON_S3_RESUME) {
@@ -1117,124 +1132,123 @@ TccModePostMemConfig (
 {
   UINT32                                    *TccCacheconfigBase;
   UINT32                                     TccCacheconfigSize;
-  UINT32                                    *TccPtcmBase;
-  UINT32                                     TccPtcmSize;
+  UINT32                                    *TccCrlBase;
+  UINT32                                     TccCrlSize;
+  UINT32                                    *TccStreamBase;
+  UINT32                                     TccStreamSize;
   EFI_STATUS                                 Status;
-  PLAT_FEATURES                             *PlatformFeatures;
   UINT8                                      Index;
   UINT8                                      MaxPchPcieRootPorts;
   UINT8                                      MaxCpuPciePorts;
   BIOS_SETTINGS                             *PolicyConfig;
-  UINT32                                    *TccTuningBase;
-  UINT32                                     TccTuningSize;
   TCC_STREAM_CONFIGURATION                  *StreamConfig;
+  TCC_CFG_DATA                              *TccCfgData;
 
-  Status = EFI_SUCCESS;
-
-  PlatformFeatures = &((PLATFORM_DATA *)GetPlatformDataPtr ())->PlatformFeatures;
-  if ((PlatformFeatures == NULL) || (!PlatformFeatures->TccMode)) {
+  TccCfgData = (TCC_CFG_DATA *) FindConfigDataByTag(CDATA_TCC_TAG);
+  if ((TccCfgData == NULL) || ((TccCfgData->TccEnable == 0) && (TccCfgData->TccTuning == 0))) {
     return EFI_NOT_FOUND;
   }
 
-  DEBUG ((DEBUG_INFO, "TccModePostMemConfig () - Start\n"));
+  DEBUG ((DEBUG_INFO, "Set TCC silicon:\n"));
 
   // TCC related Silicon settings
-  FspsUpd->FspsConfig.Eist                      = 0;            // Intel Speed Step->EnableGv
-  FspsUpd->FspsConfig.Hwp                       = 0;            // Intel Speed Shift
-  FspsUpd->FspsConfig.Cx                        = 0;            // Intel C-states
-  FspsUpd->FspsConfig.PsfTccEnable              = 1;            // Enable will decrease psf transaction latency by disabling some psf power management features
-  FspsUpd->FspsConfig.PchDmiAspmCtrl            = 0;            // ASPM configuration on the PCH side of the DMI/OPI Link
+  FspsUpd->FspsConfig.Eist                      = 0;        // Intel Speed Step->EnableGv
+  FspsUpd->FspsConfig.Hwp                       = 0;        // Intel Speed Shift
+  FspsUpd->FspsConfig.Cx                        = 0;        // Intel C-states
+  FspsUpd->FspsConfig.PsfTccEnable              = 1;        // Enable will decrease psf transaction latency by disabling some psf power management features
+  FspsUpd->FspsConfig.PchDmiAspmCtrl            = 0;        // ASPM configuration on the PCH side of the DMI/OPI Link
   FspsUpd->FspsConfig.PchLegacyIoLowLatency     = 1;
+  FspsUpd->FspsConfig.RenderStandby             = 0;        // IGFX RenderStandby
+  FspsUpd->FspsConfig.CpuPcieClockGating        = 0;        // Describes whether PCI Express Clock Gating for each root port is enabled by platform modules
   FspsUpd->FspsConfig.PchTsnMultiVcEnable       = 1;
   FspsUpd->FspsConfig.OpioRecenter              = 0;
 
   MaxPchPcieRootPorts = GetPchMaxPciePortNum ();
   for (Index = 0; Index < MaxPchPcieRootPorts; Index++) {
-    FspsUpd->FspsConfig.PcieRpAspm[Index]           = 0 ;       // The Pcie ASPM configuration of the root port
-    FspsUpd->FspsConfig.PcieRpL1Substates[Index]    = 0;        // The Pcie L1 Substates configuration of the root port
+    FspsUpd->FspsConfig.PcieRpAspm[Index]           = 0 ;   // The Pcie ASPM configuration of the root port
+    FspsUpd->FspsConfig.PcieRpL1Substates[Index]    = 0;    // The Pcie L1 Substates configuration of the root port
     FspsUpd->FspsConfig.PciePtm[Index]              = 1;
   }
 
-  FspsUpd->FspsConfig.RenderStandby             = 0;     // IGFX RenderStandby
-  FspsUpd->FspsConfig.CpuPcieClockGating        = 0;     // Describes whether PCI Express Clock Gating for each root port is enabled by platform modules
   MaxCpuPciePorts = GetMaxCpuPciePortNum();
   for (Index = 0; Index < MaxCpuPciePorts; Index++) {
-    FspsUpd->FspsConfig.CpuPcieRpAspm[Index]           = 0;        // Cpu Aspm
-    FspsUpd->FspsConfig.CpuPcieRpL1Substates[Index]    = 0;        // Cpu L1 substates
+    FspsUpd->FspsConfig.CpuPcieRpAspm[Index]           = 0; // Cpu Aspm
+    FspsUpd->FspsConfig.CpuPcieRpL1Substates[Index]    = 0; // Cpu L1 substates
     FspsUpd->FspsConfig.CpuPcieRpPtmEnabled[Index]     = 1;
     FspsUpd->FspsConfig.CpuPcieRpVcEnabled[Index]      = 1;
     FspsUpd->FspsConfig.CpuPcieRpMultiVcEnabled[Index] = 1;
   }
 
-  mTccRtd3Support    = 0;
-  mTccLowPowerS0Idle = 0;
+  //FspsUpd->FspsConfig.SoftwareSramEn  = (UINT8)TccCfgData->TccSoftSram;
+  //FspsUpd->FspsConfig.DsoTuningEn     = (UINT8)TccCfgData->TccTuning;
+  //FspsUpd->FspsConfig.IfuEnable       = 0;
 
-  // Load TCC tuning data from platform data
-  PlatformFeatures = &((PLATFORM_DATA *)GetPlatformDataPtr ())->PlatformFeatures;
-  if (PlatformFeatures != NULL) {
-    TccTuningBase = PlatformFeatures->TcctBase;
-    TccTuningSize = PlatformFeatures->TcctSize;
-  }
-  FspsUpd->FspsConfig.TccTuningEnable  = 1;
-
-  if (TccTuningBase == NULL) {
-    DEBUG ((DEBUG_INFO, "TCC Tuning data not present in platform data\n"));
-    Status = EFI_LOAD_ERROR;
+  // Load TCC stream config from container
+  TccStreamBase = NULL;
+  TccStreamSize = 0;
+  Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'C', 'C', 'T'),
+                          (VOID **)&TccStreamBase, &TccStreamSize);
+  if (EFI_ERROR (Status) || (TccStreamSize < sizeof (TCC_STREAM_CONFIGURATION))) {
+    DEBUG ((DEBUG_INFO, "Load TCC Stream %r, size = 0x%x\n", Status, TccStreamSize));
   } else {
-    StreamConfig   = (TCC_STREAM_CONFIGURATION *) TccTuningBase;
-    PolicyConfig = (BIOS_SETTINGS *) &StreamConfig->Info.Format1.BiosSettings;
+    FspsUpd->FspsConfig.TccStreamCfgBase = (UINT32)(UINTN)TccStreamBase;
+    FspsUpd->FspsConfig.TccStreamCfgSize = TccStreamSize;
+    DEBUG ((DEBUG_INFO, "Load tcc stream @0x%p, size = 0x%x\n", TccStreamBase, TccStreamSize));
 
-    FspsUpd->FspsConfig.Eist        = PolicyConfig->Pstates;
-    FspsUpd->FspsConfig.Hwp         = PolicyConfig->HwpEn;
-    FspsUpd->FspsConfig.Cx          = PolicyConfig->Cstates;
-    FspsUpd->FspsConfig.TurboMode   = PolicyConfig->Turbo;
-    FspsUpd->FspsConfig.PsfTccEnable          = PolicyConfig->FabricPm;
-    FspsUpd->FspsConfig.PchDmiAspmCtrl        = PolicyConfig->DmiAspm;
-    FspsUpd->FspsConfig.PchLegacyIoLowLatency = PolicyConfig->PchPwrClkGate;
-    for (Index = 0; Index < MaxPchPcieRootPorts; Index++) {
-      FspsUpd->FspsConfig.PcieRpAspm[Index]        = PolicyConfig->PcieAspm;
-      FspsUpd->FspsConfig.PcieRpL1Substates[Index] = PolicyConfig->PcieRpL1;
+    // Update UPD from stream
+    if (TccCfgData->TccTuning != 0) {
+      StreamConfig   = (TCC_STREAM_CONFIGURATION *) TccStreamBase;
+      PolicyConfig = (BIOS_SETTINGS *) &StreamConfig->BiosSettings;
+      FspsUpd->FspsConfig.Eist                       = PolicyConfig->Pstates;
+      FspsUpd->FspsConfig.Hwp                        = PolicyConfig->HwpEn;
+      FspsUpd->FspsConfig.Cx                         = PolicyConfig->Cstates;
+      FspsUpd->FspsConfig.TurboMode                  = PolicyConfig->Turbo;
+      FspsUpd->FspsConfig.PsfTccEnable               = PolicyConfig->FabricPm;
+      FspsUpd->FspsConfig.PchDmiAspmCtrl             = PolicyConfig->DmiAspm;
+      FspsUpd->FspsConfig.PchLegacyIoLowLatency      = PolicyConfig->PchPwrClkGate;
+      for (Index = 0; Index < MaxPchPcieRootPorts; Index++) {
+        FspsUpd->FspsConfig.PcieRpAspm[Index]        = PolicyConfig->PchPcieAspm;
+        FspsUpd->FspsConfig.PcieRpL1Substates[Index] = PolicyConfig->PchPcieRpL1;
+      }
+      FspsUpd->FspsConfig.RenderStandby              = PolicyConfig->GtRstRc6;
+      FspsUpd->FspsConfig.CpuPcieClockGating         = PolicyConfig->PcieClkGate;
+
+      for (Index = 0; Index < MaxCpuPciePorts; Index++) {
+         FspsUpd->FspsConfig.CpuPcieRpAspm[Index]        = PolicyConfig->CpuPcieAspm;
+         FspsUpd->FspsConfig.CpuPcieRpL1Substates[Index] = PolicyConfig->CpuPcieRpL1;
+      }
+      mTccRtd3Support    = PolicyConfig->Dstates;
+      mTccLowPowerS0Idle = PolicyConfig->Sstates;
+      mTccDsoTuning      = TRUE;
     }
-    FspsUpd->FspsConfig.RenderStandby      = PolicyConfig->GtRstRc6;
-    FspsUpd->FspsConfig.CpuPcieClockGating = PolicyConfig->PcieClkGate;
-
-    for (Index = 0; Index < MaxCpuPciePorts; Index++) {
-       FspsUpd->FspsConfig.CpuPcieRpAspm[Index]        = PolicyConfig->PcieAspm;
-       FspsUpd->FspsConfig.CpuPcieRpL1Substates[Index] = PolicyConfig->PcieRpL1;
-    }
-
-    mTccRtd3Support    = PolicyConfig->Dstates;
-    mTccLowPowerS0Idle = PolicyConfig->Sstates;
-
-    FspsUpd->FspsConfig.TccStreamCfgBase = (UINT32)(UINTN)TccTuningBase;
-    FspsUpd->FspsConfig.TccStreamCfgSize = TccTuningSize;
   }
 
-  // Load Tcc cache config binary from container
+  // Load TCC cache config binary from container
   TccCacheconfigBase = NULL;
   TccCacheconfigSize = 0;
   Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'C', 'C', 'C'),
                                 (VOID **)&TccCacheconfigBase, &TccCacheconfigSize);
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "TCC  Cache config not found! %r\n", Status));
+    DEBUG ((DEBUG_INFO, "TCC Cache config not found! %r\n", Status));
   } else {
-      FspsUpd->FspsConfig.TccCacheCfgBase = (UINT32)(UINTN)TccCacheconfigBase;
-      FspsUpd->FspsConfig.TccCacheCfgSize = TccCacheconfigSize;
+    FspsUpd->FspsConfig.TccCacheCfgBase = (UINT32)(UINTN)TccCacheconfigBase;
+    FspsUpd->FspsConfig.TccCacheCfgSize = TccCacheconfigSize;
+    DEBUG ((DEBUG_INFO, "Load tcc cache @0x%p, size = 0x%x\n", TccCacheconfigBase, TccCacheconfigSize));
   }
 
-  // Load Tcc PTCM binary from container
-  TccPtcmBase = NULL;
-  TccPtcmSize = 0;
+  // Load TCC CRL binary from container
+  TccCrlBase = NULL;
+  TccCrlSize = 0;
   Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'C', 'C', 'M'),
-                                (VOID **)&TccPtcmBase, &TccPtcmSize);
-    if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "TCC PTCM not found! %r\n", Status));
+                                (VOID **)&TccCrlBase, &TccCrlSize);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "TCC CRL not found! %r\n", Status));
   } else {
-      FspsUpd->FspsConfig.TccPtcmBinBase = (UINT32)(UINTN)TccPtcmBase;
-      FspsUpd->FspsConfig.TccPtcmBinSize = TccPtcmSize;
-    }
+    //FspsUpd->FspsConfig.TccCrlBinBase = (UINT32)(UINTN)TccCrlBase;
+    //FspsUpd->FspsConfig.TccCrlBinSize = TccCrlSize;
+    DEBUG ((DEBUG_INFO, "Load tcc crl @0x%p, size = 0x%x\n", TccCrlBase, TccCrlSize));
+  }
 
-  DEBUG ((DEBUG_INFO, "TccModePostMemConfig () - End\n"));
   return Status;
 }
 
@@ -1303,10 +1317,6 @@ UpdateFspConfig (
     DEBUG ((DEBUG_INFO, "PchH is detected\n"));
     FspsConfig->DevIntConfigPtr   = (UINT32)(UINTN)mPchHDevIntConfig;
     FspsConfig->NumOfDevIntConfig = sizeof (mPchHDevIntConfig) / sizeof (SI_PCH_DEVICE_INTERRUPT_CONFIG);
-    //
-    // W/A for older TGL-H SKUs, need to disable Turbo
-    //
-    FspsConfig->TurboMode = 0;
   } else {
     DEBUG ((DEBUG_ERROR, "Unsupported PCH.\n"));
   }
@@ -1576,7 +1586,10 @@ UpdateFspConfig (
     FspsConfig->EnableTimedGpio1 = SiCfgData->EnableTimedGpio1;
     FspsConfig->XdciEnable       = SiCfgData->XdciEnable;
   }
-  Status = TccModePostMemConfig (FspsUpd);
+
+  if (FeaturePcdGet (PcdTccEnabled)) {
+    Status = TccModePostMemConfig (FspsUpd);
+  }
 
   if (GetBootMode() == BOOT_ON_FLASH_UPDATE) {
     FspsUpd->FspsConfig.SiSkipBiosDoneWhenFwUpdate = TRUE;
@@ -2075,7 +2088,7 @@ PlatformUpdateAcpiTable (
   EFI_STATUS                   Status;
   LOADER_GLOBAL_DATA          *LdrGlobal;
   PLATFORM_DATA               *PlatformData;
-  FEATURES_CFG_DATA           *FeaturesCfgData;
+  TCC_CFG_DATA                *TccCfgData;
   SILICON_CFG_DATA            *SiCfgData;
   MEMORY_CFG_DATA             *MemCfgData;
   UINTN                       DmarTableFlags;
@@ -2135,16 +2148,18 @@ PlatformUpdateAcpiTable (
     if (GetBootMode() != BOOT_ON_FLASH_UPDATE) {
       AcpiPatchPss (Table, GlobalNvs);
     }
-  } else if (Table->Signature == EFI_ACPI_PTCT_SIGNATURE) {
-    FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
-    if ((FeaturesCfgData != NULL) && (FeaturesCfgData->Features.Tcc)) {
-      Status = UpdateAcpiPtctTable(Table);
-      if(!EFI_ERROR(Status)) {
-        DEBUG ( (DEBUG_INFO, "Updated Ptct Table entries in AcpiTable status: %r\n", Status) );
+  } else if (Table->Signature == SIGNATURE_32 ('R', 'T', 'C', 'T')) {
+    DEBUG ((DEBUG_INFO, "Find RTCT table\n"));
+
+    if (FeaturePcdGet (PcdTccEnabled)) {
+      TccCfgData = (TCC_CFG_DATA *) FindConfigDataByTag(CDATA_TCC_TAG);
+      if ((TccCfgData != NULL) && (TccCfgData->TccEnable != 0)) {
+        Status = UpdateAcpiRtctTable(Table);
+        DEBUG ( (DEBUG_INFO, "Updated ACPI RTCT Table : %r\n", Status) );
+        return Status;
       }
-    } else {
-      return EFI_UNSUPPORTED;
     }
+    return EFI_UNSUPPORTED;
   } else if (Table->Signature == EFI_BDAT_TABLE_SIGNATURE) {
     UpdateBdatAcpiTable (Table, LdrGlobal->FspHobList);
     DEBUG ((DEBUG_INFO, "Updated BDAT Table in AcpiTable Entries\n"));
@@ -2471,15 +2486,13 @@ PlatformUpdateAcpiGnvs (
   SYS_CPU_INFO            *SysCpuInfo;
   SILICON_CFG_DATA        *SiCfgData;
   EFI_CPUID_REGISTER      CpuidRegs;
-  FEATURES_CFG_DATA           *FeaturesCfgData;
-  UINT8                    Index;
-  UINT8                    Length;
-  UINT8                    PchMaxPciePortNum;
-  GPIO_GROUP               GroupToGpeDwX[3];
-  UINT32                   GroupDw[3];
-  FSPS_UPD                 *FspsUpd;
-  FSP_S_CONFIG             *FspsConfig;
-  PLAT_FEATURES                             *PlatformFeatures;
+  UINT8                   Index;
+  UINT8                   Length;
+  UINT8                   PchMaxPciePortNum;
+  GPIO_GROUP              GroupToGpeDwX[3];
+  UINT32                  GroupDw[3];
+  FSPS_UPD                *FspsUpd;
+  FSP_S_CONFIG            *FspsConfig;
 
   FspsUpd     = (FSPS_UPD *)(UINTN)PcdGet32 (PcdFspsUpdPtr);
   FspsConfig  = &FspsUpd->FspsConfig;
@@ -2491,8 +2504,6 @@ PlatformUpdateAcpiGnvs (
   CpuNvs      = (CPU_NVS_AREA *) &GlobalNvs->CpuNvs;
   SaNvs       = (SYSTEM_AGENT_NVS_AREA *) &GlobalNvs->SaNvs;
   ZeroMem (GlobalNvs, sizeof (GLOBAL_NVS_AREA));
-
-  FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
 
   PlatformNvs->Ps2MouseEnable               = 0x0;
   PlatformNvs->Ps2KbMsEnable                = 0x0;
@@ -2566,21 +2577,6 @@ PlatformUpdateAcpiGnvs (
   SysCpuInfo = MpGetInfo ();
   if ( SysCpuInfo != NULL ) {
     PlatformNvs->ThreadCount      = (UINT8)SysCpuInfo->CpuCount;
-  }
-
-  //  Following settings are related to TCC . But all of these are also generic features that can be changed regardless of TCC feature.
-    //TCC mode enabling
-  if (FeaturesCfgData != NULL) {
-    if (FeaturesCfgData->Features.Tcc) {
-    PlatformNvs->Rtd3Support      = 0;    // ACPI D3Cold Support
-    PlatformNvs->LowPowerS0Idle   = 0;   // Low Power S0 Idle Capability
-    }
-  }
-
-  PlatformFeatures = &((PLATFORM_DATA *)GetPlatformDataPtr ())->PlatformFeatures;
-  if ((PlatformFeatures != NULL) && (PlatformFeatures->TcctBase != NULL)) {
-    PlatformNvs->Rtd3Support                 = mTccRtd3Support;
-    PlatformNvs->LowPowerS0Idle              = mTccLowPowerS0Idle;
   }
 
   // TSN
@@ -2690,4 +2686,11 @@ PlatformUpdateAcpiGnvs (
   PlatformNvs->PpmFlags           = CpuNvs->PpmFlags;
 
   SocUpdateAcpiGnvs ((VOID *)GnvsIn);
+
+  // If TCC is enabled, use the TCC policy from subregion
+  if (mTccDsoTuning) {
+    PlatformNvs->Rtd3Support     = mTccRtd3Support;
+    PlatformNvs->LowPowerS0Idle  = mTccLowPowerS0Idle;
+  }
+
 }

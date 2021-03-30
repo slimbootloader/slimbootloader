@@ -1,6 +1,6 @@
 ## @file
 #
-# Copyright (c) 2008 - 2020, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2008 - 2021, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -25,8 +25,6 @@
   GpioTableTglHTsn.h
   GpioTableTglUTsn.h
   Stage2BoardInitLib.c
-  TccPtct.h
-  TccLib.c
   FusaLib.h
   FusaLib.c
   LowPowerSupport.c
@@ -65,6 +63,7 @@
   PsdLib
   MeExtMeasurementLib
   BasePchPciBdfLib
+  TccLib
 
 [Guids]
   gOsConfigDataGuid
@@ -73,7 +72,6 @@
   gEfiGraphicsInfoHobGuid
   gCpuInitDataHobGuid
   gSiFusaInfoGuid
-  gTccInfoHobGuid
 
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdGraphicsVbtAddress
@@ -102,3 +100,5 @@
   gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled
   gPlatformTigerLakeTokenSpaceGuid.PcdFusaEnabled
   gPlatformModuleTokenSpaceGuid.PcdFspsUpdPtr
+  gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled
+  gPlatformModuleTokenSpaceGuid.PcdAcpiTableTemplatePtr

@@ -143,20 +143,20 @@ class Board(BaseBoard):
         self.VARIABLE_SIZE        = 0x00002000
         self.SBLRSVD_SIZE         = 0x00001000
         self.FWUPDATE_SIZE        = 0x00020000 if self.ENABLE_FWU else 0
-        self.OS_LOADER_FD_SIZE    = 0x0004D000
+        self.OS_LOADER_FD_SIZE    = 0x0004F000
         self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         self.TOP_SWAP_SIZE        = 0x080000
         self.REDUNDANT_SIZE       = 0x360000
 
         self.SIIPFW_SIZE = 0x1000
-        self.ENABLE_TCC_TUNING = 1
-        if self.ENABLE_TCC_TUNING:
-            self.TCCB_SIZE = 0x00001000
-            self.TCCC_SIZE = 0x00001000
-            self.TCCM_SIZE = 0x00004000
-            self.TCCT_SIZE = 0x00003000
-            self.SIIPFW_SIZE += self.TCCC_SIZE + self.TCCB_SIZE + self.TCCM_SIZE + self.TCCT_SIZE
+        self.ENABLE_TCC  = 1
+        if self.ENABLE_TCC:
+            self.TCC_RTCM_SIZE   = 0x00010000
+            self.TCC_CCFG_SIZE   = 0x00001000
+            self.TCC_CRL_SIZE    = 0x00008000
+            self.TCC_STREAM_SIZE = 0x00005000
+            self.SIIPFW_SIZE += self.TCC_RTCM_SIZE + self.TCC_CCFG_SIZE + self.TCC_CRL_SIZE + self.TCC_STREAM_SIZE
 
         self.ENABLE_TSN_MAC_ADDRESS = 1
         if self.ENABLE_TSN_MAC_ADDRESS:
@@ -210,6 +210,7 @@ class Board(BaseBoard):
             'PchP2sbLib|Silicon/$(PCH_PKG_NAME)/Library/PchP2sbLib/PchP2sbLib.inf',
             'PchSbiAccessLib|Silicon/$(PCH_PKG_NAME)/Library/PchSbiAccessLib/PchSbiAccessLib.inf',
             'PlatformHookLib|Silicon/$(SILICON_PKG_NAME)/Library/PlatformHookLib/PlatformHookLib.inf',
+            'TccLib|Silicon/CommonSocPkg/Library/TccLib/TccLib.inf',
             'PchSpiLib|Silicon/CommonSocPkg/Library/PchSpiLib/PchSpiLib.inf',
             'SpiFlashLib|Silicon/CommonSocPkg/Library/SpiFlashLib/SpiFlashLib.inf',
             'VtdLib|Silicon/$(SILICON_PKG_NAME)/Library/VTdLib/VTdLib.inf',
@@ -275,18 +276,18 @@ class Board(BaseBoard):
           ('IPFW',      'SIIPFW.bin',          '',     container_list_auth_type,   'KEY_ID_CONTAINER'+'_'+self._RSA_SIGN_TYPE,        0,          0     ,        0),   # Container Header
         )
 
-        if self.ENABLE_TCC_TUNING:
+        if self.ENABLE_TCC:
             container_list.append (
-              ('TCCB','',      'Lz4',     container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,    0,   self.TCCB_SIZE,        0),   # TCC Buffers
+              ('TCCR',  '',    'Lz4',   container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,    0,   self.TCC_RTCM_SIZE,  0),   # TCC RTCM
             )
             container_list.append (
-               ('TCCC','',    'Lz4',     container_list_auth_type,  'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,    0,   self.TCCC_SIZE,        0),   # TCC Cache Config
+              ('TCCC', '',     'Lz4',   container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,    0,   self.TCC_CCFG_SIZE,  0),   # TCC Cache Config
             )
             container_list.append (
-               ('TCCM','',  'Lz4',     container_list_auth_type,  'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,    0,   self.TCCM_SIZE,        0),   # TCC PTCM
+              ('TCCM', '',    'Lz4',   container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,    0,   self.TCC_CRL_SIZE,   0),   # TCC CRL
             )
             container_list.append (
-              ('TCCT','',      'Lz4',     container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0,   self.TCCT_SIZE,      0),   # TCC Tuning
+              ('TCCT',  '',   'Lz4',   container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,    0,   self.TCC_STREAM_SIZE,0),   # TCC Stream Config
             )
 
         if self.ENABLE_TSN_MAC_ADDRESS:
