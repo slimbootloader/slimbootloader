@@ -33,6 +33,7 @@
   Hpet/Hpet.act
   Platform/CommonBoardPkg/AcpiTables/Fpdt/Fpdt.aslc
   Ssdt/SaSsdt.asl
+  Ssdt/Thermal.asl
   SsdtRtd3/EhlCrbRtd3.asl
   Lpit/Lpit.act
   Dmar/Dmar.aslc
