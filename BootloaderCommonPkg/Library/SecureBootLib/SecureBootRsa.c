@@ -23,13 +23,13 @@
   @param[in]  Signature       Signature header for singanture data.
   @param[in]  PubKeyHdr       Public key header for key data
   @param[in]  PubKeyHashAlg   Hash Alg for PubKeyHash.
-  @param[in]  PubKeyHash      Public key hash value when ComponentType is not used.
+  @param[in]  PubKeyHash      Public key hash value when hash component usage is 0.
   @param[out] OutHash         Calculated data hash value.
 
 
   @retval RETURN_SUCCESS             RSA verification succeeded.
-  @retval RETURN_NOT_FOUND           Hash data for ComponentType is not found.
-  @retval RETURN_UNSUPPORTED         Hash component type is not supported.
+  @retval RETURN_NOT_FOUND           Hash data for hash component usage is not found.
+  @retval RETURN_UNSUPPORTED         Hash alg type is not supported.
   @retval RETURN_SECURITY_VIOLATION  PubKey or Signature verification failed.
 
 **/

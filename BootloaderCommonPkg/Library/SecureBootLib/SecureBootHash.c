@@ -138,15 +138,15 @@ CalculateHash  (
 
   @param[in]  Data           Data buffer pointer.
   @param[in]  Length         Data buffer size.
-  @param[in]  Usage          Hash usage.
-  @param[in]  ComponentType  Component type.
-  @param[in,out]  Hash       On input,  expected hash value when ComponentType is not used.
+  @param[in]  Usage          Hash component usage.
+  @param[in]  HashAlg        Specify hash algorithm.
+  @param[in,out]  Hash       On input,  expected hash value when hash component usage is 0.
                              On output, calculated hash value when verification succeeds.
 
   @retval RETURN_SUCCESS             Hash verification succeeded.
   @retval RETURN_INVALID_PARAMETER   Hash parameter is not valid.
-  @retval RETURN_NOT_FOUND           Hash data for ComponentType is not found.
-  @retval RETURN_UNSUPPORTED         Hash component type is not supported.
+  @retval RETURN_NOT_FOUND           Hash data for hash component usage is not found.
+  @retval RETURN_UNSUPPORTED         HashAlg not supported.
   @retval RETURN_SECURITY_VIOLATION  Hash verification failed.
 
 **/
