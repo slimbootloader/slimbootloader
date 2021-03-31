@@ -22,7 +22,12 @@
 extern "C" {
 #endif
 
-#if defined( _WIN32 ) || defined ( _WIN64 )
+#if defined(__clang__)
+  #define __STDCALL   __attribute__((stdcall))
+  #define __CDECL     __attribute__((cdecl))
+  #define __INT64     long long
+  #define __UINT64    unsigned long long
+#elif defined( _WIN32 ) || defined ( _WIN64 )
   #define __STDCALL  __stdcall
   #define __CDECL    __cdecl
   #define __INT64    __int64
@@ -30,9 +35,10 @@ extern "C" {
 #else
   #define __STDCALL
   #define __CDECL
-  #define __INT64    long long
+  #define __INT64     long long
   #define __UINT64    unsigned long long
 #endif
+
 
 #define IPP_PI    ( 3.14159265358979323846 )  /* ANSI C does not support M_PI */
 #define IPP_2PI   ( 6.28318530717958647692 )  /* 2*pi                         */
