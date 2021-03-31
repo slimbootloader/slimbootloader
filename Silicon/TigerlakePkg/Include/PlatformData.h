@@ -20,13 +20,8 @@ typedef struct {
 } STITCH_DATA;
 
 typedef struct {
-  UINT32  TccMode      : 1;
   UINT32  VtdEnable    : 1;
-  UINT32  Rsvd         : 30;
-  UINT32  *TccBufferBase;
-  UINT32  TccBufferSize;
-  UINT32  *TcctBase;
-  UINT32  TcctSize;
+  UINT32  Rsvd         : 31;
 } PLAT_FEATURES;
 
 typedef struct {

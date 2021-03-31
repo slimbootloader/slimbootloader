@@ -23,7 +23,9 @@ MEMORY_CFG_DATA.SpdDataSel130            | 1
 GEN_CFG_DATA.PayloadId                   | 'UEFI'
 
 CAPSULE_INFO_CFG_DATA.DevType | 6
-FEATURES_CFG_DATA.Features.Tcc | 1
+TCC_CFG_DATA.TccEnable   | 1
+TCC_CFG_DATA.TccTuning   | 1
+TCC_CFG_DATA.TccSoftSram | 1
 
 SILICON_CFG_DATA.EnableTimedGpio0 | 1
 SILICON_CFG_DATA.EnableTimedGpio1 | 1
