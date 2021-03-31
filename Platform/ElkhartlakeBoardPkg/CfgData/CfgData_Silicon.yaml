@@ -905,7 +905,7 @@
       help         : >
                      Set if PSE UART native pins and ownership are to be enabled by BIOS. 0- Disable/pins are not owned by PSE/host; 1- Pins are muxed to PSE IP, the IO is owned by PSE; 2- Pins are muxed to PSE IP, the IO is owned by host;
       length       : 0x06
-      value        : { 0x00, 0x01, 0x01, 0x00, 0x00, 0x00 }
+      value        : { 0x02, 0x02, 0x01, 0x00, 0x00, 0x00 }
   - PchPseHsuartEnable :
       name         : Enable PCH PSE HSUART pins assigned
       type         : EditNum, HEX, (0x0,0xFFFFFFFF)
@@ -940,14 +940,14 @@
       help         : >
                      Set if PSE I2C native pins and ownership are to be enabled by BIOS. 0- Disable/pins are not owned by PSE/host; 1- Pins are muxed to PSE IP, the IO is owned by PSE; 2- Pins are muxed to PSE IP, the IO is owned by host;
       length       : 0x08
-      value        : { 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00 }
+      value        : { 0x02, 0x02, 0x01, 0x00, 0x00, 0x00, 0x02, 0x01 }
   - PchPseSpiEnable :
       name         : Enable PCH PSE SPI pins assigned
       type         : EditNum, HEX, (0x0,0xFFFFFFFF)
       help         : >
                      Set if PSE SPI native pins and ownership are to be enabled by BIOS. 0- Disable/pins are not owned by PSE/host; 1- Pins are muxed to PSE IP, the IO is owned by PSE; 2- Pins are muxed to PSE IP, the IO is owned by host;
       length       : 0x04
-      value        : { 0x00, 0x00, 0x00, 0x00 }
+      value        : { 0x02, 0x00, 0x00, 0x00 }
   - PchPseSpiCs0Enable :
       name         : Enable PCH PSE SPI CS0 pins assigned
       type         : EditNum, HEX, (0x0,0xFFFFFFFF)
