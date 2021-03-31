@@ -34,3 +34,6 @@ PCIE_RP_CFG_DATA.PcieRpFeatures3.En      | 0x1
 PCIE_RP_CFG_DATA.PcieRpFeatures5.En      | 0x1
 PCIE_RP_CFG_DATA.PcieRpFeatures2.ClkReqNum | 0x0
 PCIE_RP_CFG_DATA.PcieRpFeatures4.ClkReqNum | 0x2
+
+GPIO_CFG_DATA.GPIO_213_Half1.DefValue    | 1
+GPIO_CFG_DATA.GPIO_213_Half1.Direction   | 2
