@@ -169,6 +169,8 @@ int VerifyRsaPssSignature (CONST PUB_KEY_HDR *PubKeyHdr, CONST SIGNATURE_HDR *Si
   Ipp8u *bn_buf_ptr;
   const IppsHashMethod  *pHashMethod = NULL;
 
+  scratch_buf = NULL;
+
   signature_verified = 0;
 
   rsa_n = (Ipp8u *) PubKeyHdr->KeyData;
@@ -248,10 +250,10 @@ int VerifyRsaPssSignature (CONST PUB_KEY_HDR *PubKeyHdr, CONST SIGNATURE_HDR *Si
   }
 
   if ((SignatureHdr->HashAlg == HASH_TYPE_SHA256)
-          && (FixedPcdGet8(PcdIppHashLibSupportedMask) & IPP_HASHLIB_SHA2_256)){
+          && ((FixedPcdGet8(PcdIppHashLibSupportedMask) & IPP_HASHLIB_SHA2_256) != 0)){
     pHashMethod = ippsHashMethod_SHA256();
   } else if ((SignatureHdr->HashAlg == HASH_TYPE_SHA384)
-          && (FixedPcdGet8(PcdIppHashLibSupportedMask) & IPP_HASHLIB_SHA2_384)){
+          && ((FixedPcdGet8(PcdIppHashLibSupportedMask) & IPP_HASHLIB_SHA2_384) != 0)){
      pHashMethod = ippsHashMethod_SHA384();
   }
 
@@ -262,7 +264,7 @@ int VerifyRsaPssSignature (CONST PUB_KEY_HDR *PubKeyHdr, CONST SIGNATURE_HDR *Si
   }
 
   Done:
-    if (scratch_buf) {
+    if (scratch_buf != NULL) {
       FreeTemporaryMemory (scratch_buf);
     }
     if (bn_buf) {

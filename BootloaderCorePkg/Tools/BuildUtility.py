@@ -203,6 +203,22 @@ class PciEnumPolicyInfo(Structure):
         self.BusScanType        = 0
         self.NumOfBus           = 0
 
+
+def get_clang_info ():
+    if os.name == 'posix':
+        toolchain_path   = ''
+    else:
+        # On windows, still need visual studio to provide nmake build utility
+        toolchain, toolchain_prefix, toolchain_path, toolchain_ver = get_visual_studio_info ()
+        os.environ['CLANG_HOST_BIN'] =  os.path.join(toolchain_path, "bin\\Hostx64\\x64\\n")
+        toolchain_path   = 'C:\\Program Files\\LLVM\\bin\\'
+    toolchain        = 'CLANGPDB'
+    toolchain_prefix = 'CLANG_BIN'
+    clang_path = os.path.join(toolchain_path, 'clang')
+    clang_ver  = run_process ([clang_path, '-dumpversion'], capture_out = True)
+    toolchain_ver = clang_ver.strip()
+    return (toolchain, toolchain_prefix, toolchain_path, toolchain_ver)
+
 def get_visual_studio_info (preference = ''):
 
     toolchain        = ''

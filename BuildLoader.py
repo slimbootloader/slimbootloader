@@ -72,23 +72,32 @@ def prep_env (toolchain_preferred = ''):
         clang_ver = clang_ver.strip()
         toolchain_ver = clang_ver
     elif os.name == 'posix':
-        toolchain = 'GCC49'
-        gcc_ver = run_process (['gcc', '-dumpversion'], capture_out = True)
-        gcc_ver = gcc_ver.strip()
-        if int(gcc_ver.split('.')[0]) > 4:
-            toolchain = 'GCC5'
-        os.environ['PATH'] = os.environ['PATH'] + ':' + os.path.join(sblsource, 'BaseTools/BinWrappers/PosixLike')
-        toolchain_ver = gcc_ver
+        if toolchain_preferred.startswith('clang'):
+            os.environ['PATH'] = os.environ['PATH'] + ':' + os.path.join(sblsource, 'BaseTools/BinWrappers/PosixLike')
+            toolchain, toolchain_prefix, toolchain_path, toolchain_ver = get_clang_info ()
+        else:
+            toolchain = 'GCC49'
+            gcc_ver = run_process (['gcc', '-dumpversion'], capture_out = True)
+            gcc_ver = gcc_ver.strip()
+            if int(gcc_ver.split('.')[0]) > 4:
+                toolchain = 'GCC5'
+            os.environ['PATH'] = os.environ['PATH'] + ':' + os.path.join(sblsource, 'BaseTools/BinWrappers/PosixLike')
+            toolchain_ver = gcc_ver
     elif os.name == 'nt':
         os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.join(sblsource, 'BaseTools\\Bin\\Win32')
         os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.join(sblsource, 'BaseTools\\BinWrappers\\WindowsLike')
         os.environ['PYTHONPATH'] = os.path.join(sblsource, 'BaseTools', 'Source', 'Python')
-
-        toolchain, toolchain_prefix, toolchain_path, toolchain_ver = get_visual_studio_info (toolchain_preferred)
+        if toolchain_preferred.startswith('clang'):
+            toolchain, toolchain_prefix, toolchain_path, toolchain_ver = get_clang_info ()
+            if not toolchain:
+                print("Could not find supported CLANG version !")
+        else:
+            toolchain, toolchain_prefix, toolchain_path, toolchain_ver = get_visual_studio_info (toolchain_preferred)
+            if not toolchain:
+                print("Could not find supported Visual Studio version !")
         if toolchain:
             os.environ[toolchain_prefix] = toolchain_path
         else:
-            print("Could not find supported Visual Studio version !")
             sys.exit(1)
         if 'NASM_PREFIX' not in os.environ:
             os.environ['NASM_PREFIX'] = "C:\\Nasm\\"
