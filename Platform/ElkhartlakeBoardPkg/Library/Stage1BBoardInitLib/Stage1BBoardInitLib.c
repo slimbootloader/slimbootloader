@@ -559,9 +559,10 @@ UpdateFspConfig (
         break;
 
       case ProbeTypeManual:
-        Fspmcfg->DciModphyPg              = FALSE;
-        Fspmcfg->CpuTraceHubMode          = 0x1;
-        Fspmcfg->PchTraceHubMode          = 0x1;
+        Fspmcfg->DciModphyPg              = 0x1;
+        Fspmcfg->DciDbcMode               = 0x0;
+        Fspmcfg->CpuTraceHubMode          = 0x0;
+        Fspmcfg->PchTraceHubMode          = 0x0;
         break;
 
       default:
@@ -859,11 +860,7 @@ PlatformFeaturesInit (
     // Update platform specific feature from configuration data.
     PlatformFeatures           = &((PLATFORM_DATA *)GetPlatformDataPtr ())->PlatformFeatures;
     if (PlatformFeatures != NULL) {
-      if (FeaturePcdGet (PcdPreOsCheckerEnabled) && PchIsSciSupported ()) {
-        PlatformFeatures->DebugConsent = 7;
-      } else {
         PlatformFeatures->DebugConsent = FeaturesCfgData->Features.DebugConsent;
-      }
       PlatformFeatures->TccMode   = FeaturesCfgData->Features.Tcc;
       PlatformFeatures->TcctBase  = NULL;
       PlatformFeatures->TcctSize  = 0;
