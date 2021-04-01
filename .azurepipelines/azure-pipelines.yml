@@ -81,6 +81,10 @@ jobs:
         Build.Name:   "tgl"
         Build.Arch:   ""
         Build.Target: ""
+      EHL_X86_DEBUG:
+        Build.Name:   "ehl"
+        Build.Arch:   ""
+        Build.Target: ""
 
   pool:
     vmImage: 'ubuntu-20.04'
@@ -149,6 +153,14 @@ jobs:
         Build.Target: "-r"
       TGL_X64_DEBUG:
         Build.Name:   "tgl"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      EHL_X86_RELEASE:
+        Build.Name:   "ehl"
+        Build.Arch:   ""
+        Build.Target: "-r"
+      EHL_X64_DEBUG:
+        Build.Name:   "ehl"
         Build.Arch:   "-a x64"
         Build.Target: ""
 
