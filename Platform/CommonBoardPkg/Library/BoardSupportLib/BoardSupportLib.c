@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -18,8 +18,8 @@
 #include <Library/SpiFlashLib.h>
 #include <Library/CryptoLib.h>
 
-#define  IMAGE_TYPE_ADDENDUM  0xFE
-#define  IMAGE_TYPE_NOT_USED  0xFF
+#define  IMAGE_TYPE_ADDENDUM  0x1E
+#define  IMAGE_TYPE_NOT_USED  0x1F
 
 #define NATIVE_PSTATE_LATENCY         10
 #define PSTATE_BM_LATENCY             10
@@ -62,7 +62,6 @@ FillBootOptionListFromCfgData (
   OS_BOOT_OPTION             *BootOption;
   OS_BOOT_OPTION             *BootOptionCfgData;
   UINT8                       PrevBootOptionIndex;
-  UINT8                       UpdateFlag;
   UINTN                       ImageIdx;
   UINT32                      Idx;
   UINT64                      Lba;
@@ -82,43 +81,43 @@ FillBootOptionListFromCfgData (
       continue;
     }
 
-    UpdateFlag = 0;
     if (BootOptionCfgData->ImageType == IMAGE_TYPE_ADDENDUM) {
       // This entry is an addendum for previous boot option entry
-      if (ImageIdx < ARRAY_SIZE(BootOption->Image)) {
-        UpdateFlag = 2;
-        BootOption = &OsBootOptionList->OsBootOption[PrevBootOptionIndex];
+      BootOption = &OsBootOptionList->OsBootOption[PrevBootOptionIndex];
+      if (BootOptionCfgData->PreOsImageType < MAX_EXTRA_IMAGE_NUM) {
+        // extra image addendum
+        ImageIdx = LoadImageTypeExtra0 + BootOptionCfgData->PreOsImageType;
+      } else {
+        //  PreOS addendum
+        ImageIdx = LoadImageTypePreOs;
       }
     } else {
       // CFGDATA has short structure to save size on flash
       // Need to translate the short format to OS_BOOT_OPTION format
-      UpdateFlag = 1;
       ImageIdx   = 0;
       BootOption = &OsBootOptionList->OsBootOption[OsBootOptionList->OsBootOptionCount];
       CopyMem (BootOption, BootOptionCfgData, OFFSET_OF (OS_BOOT_OPTION, Image[0]));
     }
 
-    if (UpdateFlag > 0) {
-      StrPtr = (CHAR8 *)BootOptionCfgData->Image[0].FileName;
-      // Use either LBA or filename. '#' indicates it is LBA string.
-      if ((StrPtr[0] == '#') && (AsciiStrHexToUint64S (StrPtr + 1, NULL, &Lba) == RETURN_SUCCESS)) {
-        BootOption->Image[ImageIdx].LbaImage.Valid   = 1;
-        BootOption->Image[ImageIdx].LbaImage.SwPart  = BootOptionCfgData->SwPart;
-        // LBA should be defined as 64bit.
-        // Will remove the typecast when the structure is fixed.
-        BootOption->Image[ImageIdx].LbaImage.LbaAddr = (UINT32)Lba;
-      } else {
-        CopyMem (BootOption->Image[ImageIdx].FileName, BootOptionCfgData->Image[0].FileName,
-                 sizeof (BootOption->Image[ImageIdx].FileName));
+    StrPtr = (CHAR8 *)BootOptionCfgData->Image[0].FileName;
+    // Use either LBA or filename. '#' indicates it is LBA string.
+    if ((StrPtr[0] == '#') && (AsciiStrHexToUint64S (StrPtr + 1, NULL, &Lba) == RETURN_SUCCESS)) {
+      BootOption->Image[ImageIdx].LbaImage.Valid   = 1;
+      BootOption->Image[ImageIdx].LbaImage.SwPart  = BootOptionCfgData->SwPart;
+      // LBA should be defined as 64bit.
+      // Will remove the typecast when the structure is fixed.
+      BootOption->Image[ImageIdx].LbaImage.LbaAddr = (UINT32)Lba;
+    } else {
+      CopyMem (BootOption->Image[ImageIdx].FileName, BootOptionCfgData->Image[0].FileName,
+               sizeof (BootOption->Image[ImageIdx].FileName));
+    }
+
+    if (BootOptionCfgData->ImageType != IMAGE_TYPE_ADDENDUM) {
+      PrevBootOptionIndex = OsBootOptionList->OsBootOptionCount;
+      OsBootOptionList->OsBootOptionCount++;
+      if (OsBootOptionList->OsBootOptionCount >= PcdGet32 (PcdOsBootOptionNumber)) {
+        break;
       }
-      if (UpdateFlag == 1) {
-        PrevBootOptionIndex = OsBootOptionList->OsBootOptionCount;
-        OsBootOptionList->OsBootOptionCount++;
-        if (OsBootOptionList->OsBootOptionCount >= PcdGet32 (PcdOsBootOptionNumber)) {
-          break;
-        }
-      }
-      ImageIdx += 1;
     }
   }
 

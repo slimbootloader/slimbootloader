@@ -822,14 +822,15 @@ LoadBootImages (
   LoadedImagesInfo->Signature = LOADED_IMAGES_INFO_SIGNATURE;
 
   for (Index = 0; Index < LoadImageTypeMax; Index++) {
-    if ((Index == LoadImageTypePreOs) && !(BootFlags & BOOT_FLAGS_PREOS)) {
+    if ((Index == LoadImageTypePreOs) && ((BootFlags & BOOT_FLAGS_PREOS) == 0)) {
       continue;
     }
     if (Index == LoadImageTypeMisc) {
       continue;
     }
-    if ((Index >= LoadImageTypeExtra0) && !(BootFlags & BOOT_FLAGS_EXTRA)) {
-      if (!BootImage[Index].LbaImage.Valid) {
+
+    if (Index >= LoadImageTypeExtra0) {
+      if (((BootFlags & BOOT_FLAGS_EXTRA) == 0) || (BootImage[Index].LbaImage.Valid == 0)) {
         continue;
       }
     }
@@ -853,7 +854,7 @@ LoadBootImages (
       Status = GetBootImageFromRawPartition (OsBootOption, LoadedImage);
     }
 
-    DEBUG ((DEBUG_INFO, "LoadBootImage ImageType-%d Image\n", Index));
+    DEBUG ((DEBUG_INFO, "LoadBootImage ImageType-%d %r\n", Index, Status));
     LoadedImagesInfo->LoadedImageList[Index] = LoadedImage;
 
     if (EFI_ERROR (Status)) {
