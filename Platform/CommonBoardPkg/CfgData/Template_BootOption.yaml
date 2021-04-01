@@ -2,7 +2,7 @@
 #
 #  Slim Bootloader Platform CFGDATA Template File.
 #
-#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -18,10 +18,12 @@ BOOT_OPTION_TMPL: >
     - ImageType_$(1) :
         name         : Image Type
         type         : Combo
-        option       : 0:Default, 1:Android, 2:ClearLinux, 3:Acrn, 4:Fastboot, 0xFE:Addendum, 0xFF:Not used
+        option       : 0:Default, 1:Android, 2:ClearLinux, 3:Acrn, 4:Fastboot, 0x1E:Extra image, 0x9E:PreOS image, 0xFF:Not used
         help         : >
                        Specify boot image type.
-                       Specially 'Addendum' indicates this option is not a standalone boot option. Instead, it provides additional information for the previous boot option.
+                       Extra and PreOS image type indicates this option is not a standalone boot option. Instead, it provides additional information for the previous boot option.
+                       Extra image means load and run extra image before normal OS image. The extra image will return to SBL and SBL will continue run normal OS.
+                       PreOs image means load and run PreOS image before normal OS image. SBL prepares normal OS info and passes to PreOS so the PreOs will not return to SBL.
                        'Not used' indicates this option will be ignored.
         length       : 0x01
         value        : $(2)
