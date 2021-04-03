@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -179,6 +179,16 @@ JumpToLongMode (
   IN  UINT64                Context1,  OPTIONAL
   IN  UINT64                Context2,  OPTIONAL
   IN  UINT64                NewStack
+  );
+
+/**
+  Load page table for long mode.
+
+**/
+VOID
+EFIAPI
+LoadPageTableForLongMode (
+  VOID
   );
 
 /**
