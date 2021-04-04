@@ -659,7 +659,7 @@ AcpiInit (
         TotalSize = ((EFI_ACPI_COMMON_HEADER *)Current)->Length + ExtraSize;
         Current += TotalSize;
       } else {
-        DEBUG ((DEBUG_WARN, "Not adding ACPI table \n"));
+        DEBUG ((DEBUG_INFO, "Not adding ACPI table \n"));
         Current = Previous;
       }
 
