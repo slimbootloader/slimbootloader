@@ -736,9 +736,19 @@ LoadComponentWithCallback (
   BOOLEAN                   IsInFlash;
   COMPONENT_CALLBACK_INFO   CbInfo;
   UINT32                    ComponentId;
+  UINT64                    ContainerIdBuf;
+  UINT64                    ComponentIdBuf;
 
   ComponentId = ContainerSig;
   CompLoc = 0;
+
+  ComponentIdBuf = ComponentName;
+  if (ContainerSig < COMP_TYPE_INVALID) {
+    ContainerIdBuf = FLASH_MAP_SIG_HEADER;
+  } else {
+    ContainerIdBuf = ContainerSig;
+  }
+  DEBUG ((DEBUG_INFO, "Loading Component %4a:%4a\n", (CHAR8 *)&ContainerIdBuf, (CHAR8 *)&ComponentIdBuf));
 
   if (ContainerSig < COMP_TYPE_INVALID) {
     // Check if it is component type
