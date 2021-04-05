@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2016 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2016 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -68,11 +68,11 @@ PreparePayload (
   UINT32                         Dst;
   UINT32                         DstLen;
   VOID                          *DstAdr;
-  BOOLEAN                        IsNormalPld;
   UINT32                         PayloadId;
   UINT32                         ContainerSig;
   UINT32                         ComponentName;
   UINT8                          BootMode;
+  UINT64                         SignatureBuf;
 
   BootMode = GetBootMode();
   //
@@ -83,13 +83,11 @@ PreparePayload (
   }
   // Load payload to PcdPayloadLoadBase.
   PayloadId   = GetPayloadId ();
-  DEBUG ((DEBUG_INFO, "Loading Payload ID 0x%08X\n", PayloadId));
-  IsNormalPld = (PayloadId == 0) ? TRUE : FALSE;
   if (BootMode == BOOT_ON_FLASH_UPDATE) {
     ContainerSig  = COMP_TYPE_PAYLOAD_FWU;
     ComponentName = FLASH_MAP_SIG_FWUPDATE;
   } else {
-    if (IsNormalPld) {
+    if (PayloadId == 0) {
       ContainerSig  = COMP_TYPE_PAYLOAD;
       ComponentName = FLASH_MAP_SIG_PAYLOAD;
     } else {
@@ -97,6 +95,8 @@ PreparePayload (
       ComponentName = PayloadId;
     }
   }
+  SignatureBuf = ComponentName;
+  DEBUG ((DEBUG_INFO, "Loading Payload ID %4a\n", (CHAR8 *)&SignatureBuf));
 
   Dst = PcdGet32 (PcdPayloadExeBase);
   if (FixedPcdGetBool (PcdPayloadLoadHigh)) {
