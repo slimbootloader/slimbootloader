@@ -62,26 +62,33 @@ ASM_PFX(AsmExecute64BitCode):
     retf                                ; topmost 2 dwords hold the address
 
 LongModeStart:
-BITS 64
+    DB      0x67
     mov     eax, [ebp + 8]              ; function address
+    DB      0x67
     mov     ecx, [ebp + 16]             ; arg1
+    DB      0x67
     mov     edx, [ebp + 24]             ; arg2
     mov     ebp, esp                    ; save esp
-    add     rsp, -0x20                  ; add rsp, -20h
-    and     rsp, -0x10                  ; align to 16
-    call    rax                         ; call rbx
-    mov     rbx, rax                    ; convert status to 32bit
-    shr     rbx, 32
+    DB      0x48
+    add     esp, -0x20                  ; add rsp, -20h
+    DB      0x48
+    and     esp, -0x10                  ; align to 16
+    call    eax                         ; call rbx
+    DB      0x48
+    mov     ebx, eax                    ; convert status to 32bit
+    DB      0x48
+    shr     ebx, 32
     or      ebx, eax
-    mov     rax, 0x10                   ; load compatible mode code selector
-    shl     rax, 32
+    mov     eax, 0x10                   ; load compatible mode code selector
+    DB      0x48
+    shl     eax, 32
     mov     edx, Compatible             ; assume address < 4G
-    or      rax, rdx
-    push    rax
+    DB      0x48
+    or      eax, edx
+    push    eax
     retf
 
 Compatible:
-BITS 32
     ; Reload DS/ES/SS to make sure they are correct referred to current GDT
     mov     ax, 0x18                    ; load compatible mode data selector
     mov     ds, ax
@@ -117,4 +124,3 @@ BITS 32
     pop     ebx
     pop     ebp
     ret
-
