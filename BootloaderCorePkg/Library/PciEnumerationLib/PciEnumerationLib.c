@@ -1224,9 +1224,13 @@ EnablePciDevice (
   CurrentLink = Parent->ChildList.ForwardLink;
   while (CurrentLink != NULL && CurrentLink != &Parent->ChildList) {
     PciIoDevice = PCI_IO_DEVICE_FROM_LINK (CurrentLink);
-    PciExpressOr16 (PciIoDevice->Address + PCI_COMMAND_OFFSET, \
-                    EFI_PCI_COMMAND_IO_SPACE | EFI_PCI_COMMAND_MEMORY_SPACE | EFI_PCI_COMMAND_BUS_MASTER);
+    PciExpressOr16 (PciIoDevice->Address + PCI_COMMAND_OFFSET,
+                    EFI_PCI_COMMAND_IO_SPACE | EFI_PCI_COMMAND_MEMORY_SPACE);
     if (PciIoDevice->ChildList.ForwardLink != &PciIoDevice->ChildList) {
+      if (IS_PCI_BRIDGE (&(PciIoDevice->Pci))) {
+        PciExpressOr16 (PciIoDevice->Address + PCI_COMMAND_OFFSET,
+                        EFI_PCI_COMMAND_BUS_MASTER);
+      }
       EnablePciDevice (PciIoDevice);
     }
     CurrentLink = CurrentLink->ForwardLink;
