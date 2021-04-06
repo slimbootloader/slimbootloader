@@ -39,3 +39,7 @@ License
 -------
 Slim Bootloader is released under the terms of the BSD-2-Clause Plus Patent License.
 Please see the `LICENSE` file for the full terms of the license.
+
+Slim Bootloader may include other Open Source Software licensed pursuant to license agreement(s) 
+identified in the applicable source code file(s) and/or file header(s). 
+
