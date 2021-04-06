@@ -46,7 +46,7 @@ SecStartup (
   g_FwuCbCtxt.HeciSendMessage  = DriverParams->CsmeUpdDriverInFunc->HeciSendMessage;
   g_FwuCbCtxt.HeciReset        = DriverParams->CsmeUpdDriverInFunc->HeciReset;
 
-  CsmeAllocateZeroPool = (CSME_ALLOCATE_ZERO_POOL_CB)((UINT32)DriverParams->CsmeUpdDriverInFunc->AllocateZeroPool);
+  CsmeAllocateZeroPool = (CSME_ALLOCATE_ZERO_POOL_CB)((UINTN)DriverParams->CsmeUpdDriverInFunc->AllocateZeroPool);
 
   //
   // Allocate memory for output structure
