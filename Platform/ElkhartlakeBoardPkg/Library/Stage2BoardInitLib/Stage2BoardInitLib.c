@@ -974,7 +974,7 @@ FspUpdatePsePolicy (
   Fspscfg->PchPseEcliteEnabled    = 1;
   Fspscfg->PchPseOobEnabled       = 0;
   Fspscfg->PchCpuTempSensorEnable = 1;
-  Fspscfg->PchPseWoLEnabled       = 0;
+  Fspscfg->PchPseWoLEnabled       = 1;
 
   //Fspscfg->PseJtagEnabled       = 0;
   //Fspscfg->PseJtagPinMux        = 0;
