@@ -1355,7 +1355,7 @@
       help         : >
                      Enables/Disable Ibecc
       length       : 0x01
-      value        : 0x00
+      value        : 0x01
   - IbeccParity  :
       name         : IbeccParity
       type         : Combo
@@ -1371,7 +1371,7 @@
       help         : >
                      In-Band ECC Operation Mode
       length       : 0x01
-      value        : 0x00
+      value        : 0x02
   - IbeccProtectedRegionEnable :
       name         : IbeccProtectedRegionEnable
       type         : Combo

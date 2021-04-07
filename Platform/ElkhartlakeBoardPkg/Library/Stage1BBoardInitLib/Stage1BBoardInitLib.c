@@ -517,9 +517,6 @@ UpdateFspConfig (
       Fspmcfg->IbeccProtectedRegionBase[Index]   = MemCfgData->IbeccProtectedRegionBase[Index];
       Fspmcfg->IbeccProtectedRegionMask[Index]   = MemCfgData->IbeccProtectedRegionMask[Index];
     }
-    if (!PchIsSciSupported ()) {
-      Fspmcfg->Ibecc                    = 1;
-    }
 
     // SA:CPU_TRACE_HUB_CONFIG, PCH_TRACE_HUB_CONFIG
     Fspmcfg->CpuTraceHubMemReg0Size      = TraceBuffer8M;
