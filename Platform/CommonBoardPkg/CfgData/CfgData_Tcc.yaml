@@ -9,36 +9,38 @@
 
 
 - $ACTION      :
-    page         : TCC:PLT:"TCC Features"
+    page         : TCC:PLT:"Intel(R) Time Coordinated Computing (Intel(R) TCC)"
 - $ACTION      :
     page         : TCC
 - TCC_CFG_DATA :
   - !expand { CFGHDR_TMPL : [ TCC_CFG_DATA, 0x320, 0, 0 ] }
   - TccEnable      :
-      name         : TCC Enable
+      name         : Intel(R) TCC Mode
       type         : Combo
       option       : 0:Disabled, 1:Enabled
       help         : >
-                     Enable/Disable TCC feature. 1:TCC Enabled, 0:TCC Disabled
+                     Enable/Disable Intel(R) Time Coordinated Computing Mode.
+                     When enabled, this will modify system settings to improve real-time performance.
       length       : 0x1
-      value        : 0x1
+      value        : 0x0
   - TccTuning      :
-      name         : TCC DSO tuning Enable
+      name         : Data Streams Optimizer
       type         : Combo
       option       : 0:Disabled, 1:Enabled
       help         : >
-                     Enable/Disable TCC Data Stream Optimizer(DSO) Tuning. 1:DSO Enabled, 0:DSO Disabled
+                     Enable/Disable Data Streams Optimizer (DSO).
+                     Enable will utilize DSO Subregion to tune system. DSO settings supersede Intel(R) TCC Mode settings that overlap between the two.
       length       : 0x1
-      value        : 0x1
+      value        : 0x0
   - TccSoftSram    :
-      name         : TCC Software SRAM Enable
+      name         : Software SRAM
       type         : Combo
       option       : 0:Disabled, 1:Enabled
       help         : >
-                     Enable/Disable TSoftware SRAM. 1:Enabled, 0: Disabled
-                     Enable will allocate part of LLC as SSRAM for TCC feature.
+                     Enable/Disable Software SRAM.
+                     Enable will allocate 1 way of LLC; if Cache Configuration subregion is available, it will allocate based on the subregion.
       length       : 0x1
-      value        : 0x1
+      value        : 0x0
   - Dummy        :
       length       : 0x1
       value        : 0x0
