@@ -20,9 +20,10 @@ typedef enum {
   EnumCpuReady,
   EnumCpuStart,
   EnumCpuEnd,
+  EnumCpuReturn,
 } CPU_STATE;
 
-typedef UINT64 (*CPU_TASK_FUNC)          (UINT64 Arg);
+typedef UINT64 (EFIAPI *CPU_TASK_FUNC)          (UINT64 Arg);
 
 #pragma pack(1)
 
@@ -43,12 +44,12 @@ typedef struct {
 } CPU_TASK;
 
 typedef struct {
-  UINT32           CpuCount;
-  CPU_TASK         CpuTask[0];
+  UINT32          CpuCount;
+  CPU_TASK        CpuTask[0];
 } SYS_CPU_TASK;
 
 typedef struct {
-  SYS_CPU_TASK     *SysCpuTask;
+  EFI_PHYSICAL_ADDRESS  SysCpuTask;
 } SYS_CPU_TASK_HOB;
 
 #pragma pack()

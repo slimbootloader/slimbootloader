@@ -1038,7 +1038,8 @@ StartBootImages (
       break;
     }
     if ((LoadedExtraImage != NULL) && ((LoadedExtraImage->Flags & LOADED_IMAGE_RUN_EXTRA) != 0)) {
-      Status = StartBooting (LoadedExtraImage);
+      // For now, only RTCM will be supported.
+      Status = CallExtraModule (PLD_EXTRA_MOD_RTCM, LoadedExtraImage);
       if (EFI_ERROR (Status)) {
         return Status;
       }
@@ -1052,7 +1053,7 @@ StartBootImages (
 
   Status = GetLoadedImageByType (LoadedImageHandle, LoadImageTypePreOs, &LoadedPreOsImage);
   if (EFI_ERROR (Status)) {
-      Status = StartBooting (LoadedImage);
+    Status = StartBooting (LoadedImage);
   } else {
     // PreOs found, need start PreOS
     Status = StartPreOsBooting (LoadedPreOsImage, LoadedImage);

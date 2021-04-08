@@ -65,11 +65,10 @@ GetBootImageFromIfwiContainer (
 
   if ((Image->ContainerSig == SIGNATURE_32 ('I', 'P', 'F', 'W')) && (Image->ComponentName == SIGNATURE_32 ('T', 'C', 'C', 'R'))) {
     //
-    // TCC RTCM image need runtime memory
+    // TCC RTCM image need reserved memory
     //
-    LoadedImage->ImageData.Addr = AllocateRuntimePages(EFI_SIZE_TO_PAGES(ImageSize));
-    if (LoadedImage->ImageData.Addr == NULL)
-    {
+    LoadedImage->ImageData.Addr = AllocateReservedPages (EFI_SIZE_TO_PAGES(ImageSize));
+    if (LoadedImage->ImageData.Addr == NULL) {
       return EFI_OUT_OF_RESOURCES;
     }
     CopyMem(LoadedImage->ImageData.Addr, Buffer, ImageSize);

@@ -39,6 +39,7 @@
   PreOsSupport.c
   PreOsChecker.c
   ModService.c
+  ExtraModSupport.c
 
 [Packages]
   MdePkg/MdePkg.dec
