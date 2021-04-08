@@ -1093,8 +1093,8 @@ FspUpdatePcieRpPolicy (
     FspsUpd->FspsConfig.PcieRpSlotImplemented[Index] = 0x1;
     FspsUpd->FspsConfig.PcieRpCompletionTimeout[Index] = 0x0;
     FspsUpd->FspsConfig.PcieRpAcsEnabled[Index] = 0x1;
-    FspsUpd->FspsConfig.PcieRpAspm[Index] = 0x2;
-    FspsUpd->FspsConfig.PcieRpL1Substates[Index] = 0x0;
+    FspsUpd->FspsConfig.PcieRpAspm[Index] = 0x4;
+    FspsUpd->FspsConfig.PcieRpL1Substates[Index] = 0x2;
     FspsUpd->FspsConfig.PcieRpLtrEnable[Index] = 0x1;
     FspsUpd->FspsConfig.PcieRpLtrConfigLock[Index] = 0x0;
     FspsUpd->FspsConfig.PcieRpEnableCpm[Index] = 0x1;
@@ -1274,6 +1274,7 @@ UpdateFspConfig (
   FSPS_UPD            *FspsUpd;
   SECURITY_CFG_DATA   *SecCfgData;
   SILICON_CFG_DATA    *SiCfgData;
+  FEATURES_CFG_DATA   *FeaturesCfgData;
   FSP_S_CONFIG        *FspsConfig;
   UINT8               Index;
   UINT8               PrIndex;
@@ -1289,6 +1290,8 @@ UpdateFspConfig (
 
   FspsUpd    = (FSPS_UPD *)FspsUpdPtr;
   FspsConfig = &FspsUpd->FspsConfig;
+
+  FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
 
   SecCfgData = (SECURITY_CFG_DATA *)FindConfigDataByTag (CDATA_SECURITY_TAG);
   if (SecCfgData != NULL) {
@@ -1484,7 +1487,14 @@ UpdateFspConfig (
       FspsUpd->FspsConfig.CpuPcieRpPtmEnabled[Index]     = SiCfgData->CpuPcieRpPtmEnabled[Index] ;
       FspsUpd->FspsConfig.CpuPcieRpVcEnabled[Index]      = SiCfgData->CpuPcieRpVcEnabled[Index] ;
       FspsUpd->FspsConfig.CpuPcieRpMultiVcEnabled[Index] = SiCfgData->CpuPcieRpMultiVcEnabled[Index];
+      FspsUpd->FspsConfig.CpuPcieRpLtrEnable[Index]      = 1;
+      FspsUpd->FspsConfig.CpuPcieRpLtrMaxSnoopLatency[Index]      = 0x1003;
+      FspsUpd->FspsConfig.CpuPcieRpLtrMaxNoSnoopLatency[Index]      = 0x1003;
+      FspsUpd->FspsConfig.CpuPcieRpPmSci[Index]          = 1;
+      FspsUpd->FspsConfig.CpuPcieRpMaxPayload[Index] = 0x1;
     }
+    FspsUpd->FspsConfig.CpuPcieRpFunctionSwap = 0x1;
+    FspsUpd->FspsConfig.CpuPcieSetSecuredRegisterLock = 0x1;
 
     // TSN feature support
     TsnMacAddrBase      = NULL;
@@ -1575,12 +1585,6 @@ UpdateFspConfig (
 
   FspsConfig->SkipMpInit = 0;
 
-  FspsConfig->UsbTcPortEn = 0xf;
-  FspsConfig->ITbtPcieRootPortEn[0] = 0x1;
-  FspsConfig->ITbtPcieRootPortEn[1] = 0x1;
-  FspsConfig->ITbtPcieRootPortEn[2] = 0x1;
-  FspsConfig->ITbtPcieRootPortEn[3] = 0x1;
-
   if (SiCfgData != NULL) {
     FspsConfig->EnableTimedGpio0 = SiCfgData->EnableTimedGpio0;
     FspsConfig->EnableTimedGpio1 = SiCfgData->EnableTimedGpio1;
@@ -1602,6 +1606,47 @@ UpdateFspConfig (
     FspsUpd->FspsConfig.PchSbAccessUnlock        = FALSE;
     FspsUpd->FspsConfig.RtcBiosInterfaceLock = TRUE;
   }
+
+  if (FeaturesCfgData->Features.LowPowerS0Idle == 1)
+  {
+    FspsConfig->C1e = 1;
+    FspsConfig->Cx = 1;
+    FspsConfig->PkgCStateLimit = 8;
+    FspsConfig->CstateLatencyControl1Irtl = 0x0;
+    FspsConfig->CstateLatencyControl2Irtl = 0x0;
+    FspsConfig->CstateLatencyControl3Irtl = 0x0;
+    FspsConfig->CstateLatencyControl4Irtl = 0x0;
+    FspsConfig->CstateLatencyControl5Irtl = 0x0;
+    FspsConfig->AcousticNoiseMitigation = 0;
+    FspsConfig->PmSupport = 1;
+    FspsConfig->RenderStandby = 1;
+    FspsConfig->SataPwrOptEnable = 1;
+    FspsConfig->SataPortsDevSlp[0]=1;
+    FspsConfig->SataPortsDevSlp[1]=1;
+    FspsConfig->SataPortsHotPlug[0]=0;
+    FspsConfig->SataPortsHotPlug[1]=0;
+    FspsConfig->SataPortsExternal[0]=0;
+    FspsConfig->SataPortsExternal[1]=0;
+    FspsConfig->Enable8254ClockGating=1;
+    FspsConfig->PchFivrDynPm=1;
+    FspsConfig->D3HotEnable=0;
+    FspsConfig->D3ColdEnable=1;
+    FspsConfig->PchLanEnable=0;
+    FspsConfig->PchTsnEnable=0;
+    FspsConfig->XdciEnable=0;
+    FspsConfig->SerialIoUartMode[2] = 1;                 // Change for UARTHidden Mode to PCI mode
+  }
+
+  // PCH SERIAL_UART_CONFIG
+    for (Index = 0; Index < GetPchMaxSerialIoUartControllersNum (); Index++) {
+      FspsConfig->SerialIoUartParity[Index]          = 1;
+      FspsConfig->SerialIoUartDataBits[Index]        = 0x8;
+      FspsConfig->SerialIoUartStopBits[Index]        = 1;
+      FspsConfig->SerialIoUartAutoFlow[Index]        = 1;
+      FspsConfig->SerialIoUartPowerGating[Index]     = 2;
+      FspsConfig->SerialIoUartDmaEnable[Index]       = 1;
+      FspsConfig->SerialIoUartDbg2[Index]            = 0;
+    }
 }
 
 /**
@@ -2090,9 +2135,11 @@ PlatformUpdateAcpiTable (
   PLATFORM_DATA               *PlatformData;
   TCC_CFG_DATA                *TccCfgData;
   SILICON_CFG_DATA            *SiCfgData;
+  FEATURES_CFG_DATA           *FeaturesCfgData;
   MEMORY_CFG_DATA             *MemCfgData;
   UINTN                       DmarTableFlags;
 
+  FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
   GlobalNvs  = (GLOBAL_NVS_AREA *)(UINTN) PcdGet32 (PcdAcpiGnvsAddress);
 
@@ -2182,6 +2229,16 @@ PlatformUpdateAcpiTable (
           }
         (((ACPI_LOW_POWER_IDLE_TABLE *)Table)->LpiStates[LpitStateEntries - 1].ResidencyCounter) = SetResidencyCounter[0];
         (((ACPI_LOW_POWER_IDLE_TABLE *)Table)->LpiStates[LpitStateEntries - 1].ResidencyCounterFrequency) = ResidencyCounterFrequency;
+      }
+    }
+    else if (Table->Signature == EFI_ACPI_5_0_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE) {
+      if (FeaturesCfgData->Features.LowPowerS0Idle == 1) {
+        EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE  *FadtTable;
+        DEBUG ((DEBUG_INFO, "Update FADT ACPI table\n"));
+        FadtTable = (EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE*) Table;
+        FadtTable->Flags |= (EFI_ACPI_6_1_PCI_EXP_WAK);
+        FadtTable->Flags |= (EFI_ACPI_6_1_LOW_POWER_S0_IDLE_CAPABLE);
+        FadtTable->Flags |= (EFI_ACPI_6_1_PWR_BUTTON);
       }
     }
 
@@ -2485,6 +2542,7 @@ PlatformUpdateAcpiGnvs (
   SYSTEM_AGENT_NVS_AREA   *SaNvs;
   SYS_CPU_INFO            *SysCpuInfo;
   SILICON_CFG_DATA        *SiCfgData;
+  FEATURES_CFG_DATA       *FeaturesCfgData;
   EFI_CPUID_REGISTER      CpuidRegs;
   UINT8                   Index;
   UINT8                   Length;
@@ -2493,6 +2551,8 @@ PlatformUpdateAcpiGnvs (
   UINT32                  GroupDw[3];
   FSPS_UPD                *FspsUpd;
   FSP_S_CONFIG            *FspsConfig;
+
+  FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
 
   FspsUpd     = (FSPS_UPD *)(UINTN)PcdGet32 (PcdFspsUpdPtr);
   FspsConfig  = &FspsUpd->FspsConfig;
@@ -2596,7 +2656,7 @@ PlatformUpdateAcpiGnvs (
   PlatformNvs->EcAvailable = 1;
   PlatformNvs->Ps2MouseEnable = 1;
   PlatformNvs->UsbTypeCSupport = 1;
-  PlatformNvs->EcLowPowerMode               = 0;
+  PlatformNvs->EcLowPowerMode               = 1;
 
   if (IsPchLp ()) {
     PlatformNvs->EcSmiGpioPin                 = GPIO_VER2_LP_GPP_E7;
@@ -2617,7 +2677,10 @@ PlatformUpdateAcpiGnvs (
   PlatformNvs->CriticalThermalTripPoint     = 110;
   PlatformNvs->EnableSaDevice               = 1;
   PlatformNvs->EnableDigitalThermalSensor   = 0;
-  PlatformNvs->LowPowerS0Idle               = 0;
+  PlatformNvs->LowPowerS0Idle               = (UINT8) (FeaturesCfgData->Features.LowPowerS0Idle);
+  PlatformNvs->Rtd3Support                  = 1;
+  PlatformNvs->TenSecondPowerButtonEnable   = 0x9;
+  PlatformNvs->HidEventFilterEnable         = 0x01;
   // Bit[1:0] - Storage (0:None, 1:Adapter D0/F1, 2:Raid, 3:Adapter D3)
   // Bit[2]   - En/Dis UART0
   // Bit[3]   - En/Dis UART1
@@ -2625,32 +2688,232 @@ PlatformUpdateAcpiGnvs (
   // Bit[5]   - En/Dis I2C0
   // Bit[6]   - En/Dis I2C1
   // Bit[7]   - En/Dis XHCI
-  // Bit[8]   - En/Dis HD Audio (includes ADSP)
-  // Bit[9]   - En/Dis GFX
-  // Bit[10]  - En/Dis CPU
-  // Bit[11]  - En/Dis EMMC
-  // Bit[12]  - En/Dis SDXC
-  // Bit[13]  - En/Dis I2C2
-  // Bit[14]  - En/Dis I2C3
-  // Bit[15]  - En/Dis I2C4
-  // Bit[16]  - En/Dis I2C5
-  // Bit[17]  - En/Dis UART2
-  // Bit[18]  - En/Dis SPI0
-  // Bit[19]  - En/Dis SPI1
-  // Bit[20]   -En/Dis SPI2
-  // Bit[21]  - En/Dis IPU0
-  // Bit[22]  - En/Dis CSME
-  // Bit[23]  - En/Dis LAN(GBE)
-  // Bit[24]  - En/Dis PEG0
-  // Bit[25]  - En/Dis THC0
-  // Bit[26]  - En/Dis THC1
-  // Bit[27]  - En/Dis IDA
-  // Bit[28]  - En/Dis I2C6
-  // Bit[29]   -En/Dis TCSS
-  // Bit[30]  - En/Dis GNA0
-  // Bit[31]  - En/Dis VMD
+  // Bit[9:8] - En/Dis HD Audio (includes ADSP)
+  // Bit[10]  - En/Dis GFX
+  // Bit[11]  - En/Dis CPU
+  // Bit[12]  - En/Dis EMMC
+  // Bit[13]  - En/Dis SDXC
+  // Bit[14]  - En/Dis I2C2
+  // Bit[15]  - En/Dis I2C3
+  // Bit[16]  - En/Dis I2C4
+  // Bit[17]  - En/Dis I2C5
+  // Bit[18]  - En/Dis UART2
+  // Bit[19]  - En/Dis SPI0
+  // Bit[20]  - En/Dis SPI1
+  // Bit[21]  - En/Dis SPI2
+  // Bit[22]  - En/Dis IPU0
+  // Bit[23]  - En/Dis CSME
+  // Bit[24]  - En/Dis LAN(GBE)
+  // Bit[25]  - En/Dis PEG NVMe/AHCI
+  // Bit[26]  - En/Dis THC0
+  // Bit[27]  - En/Dis THC1
+  // Bit[28]  - En/Dis IDA
+  // Bit[29]  - En/Dis I2C6
+  // Bit[30]  - En/Dis TCSS IPs
+  // Bit[31]  - En/Dis GNA0
+  // Bit[32]  - En/Dis VMD
+  // Bit[33]  - En/Dis DG PEG0
+  // Bit[34]  - En/Dis HECI3
+  // Bit[35]  - En/Dis DG PEG1
+  // Bit[36]  - En/Dis PEP Constraint Override
+  // Bit[38:37] - PCIe RP03 (0: No Constraints or 1: D0/F1 or 3:D3)
+  // Bit[40:39] - PCIe RP05 (0: No Constraints or 1: D0/F1 or 3:D3)
+  // Bit[42:41] - PCIe RP09 (0: No Constraints or 1: D0/F1 or 3:D3)
+  // Bit[44:43] - PEG0 (0: No Constraints or 1: D0/F1 or 3:D3)
+  // Bit[46:45] - PEG1 (0: No Constraints or 1: D0/F1 or 3:D3)
+  // Bit[48:47] - PEG2 (0: No Constraints or 1: D0/F1 or 3:D3)
+  // Bit[50:49] - PEG3 (0: No Constraints or 1: D0/F1 or 3:D3)
+  // Bit[52:51] - PCIe RP01 (0: No Constraints or 1: D0/F1 or 3:D3)
+  // Bit[54:53] - PCIe RP08 (0: No Constraints or 1: D0/F1 or 3:D3)
+  // Bit[56:55] - PCIe RP17 (0: No Constraints or 1: D0/F1 or 3:D3)
+  // Bit[58:57] - PCIe RP21 (0: No Constraints or 1: D0/F1 or 3:D3)
   PlatformNvs->LowPowerS0IdleConstraint = GetLowPowerS0IdleConstraint();
-  PlatformNvs->MipiCamCvfSupport=0;
+  PlatformNvs->MipiCamCvfSupport        = 0;
+  PlatformNvs->Dg1VramSRGpio            = GPIO_VER2_LP_GPP_F20;
+  PlatformNvs->Dg1VramSRGpioPolarity    = 0;
+  PlatformNvs->CriticalThermalTripPoint = 119;
+  PlatformNvs->Revision                 = 1;
+  PlatformNvs->PlatformId               = 1;
+
+  AsmCpuid(1, &CpuidRegs.RegEax, 0, 0, 0);
+  PlatformNvs->PlatformCpuId            = (CpuidRegs.RegEax & 0x0FFFFF);
+  PlatformNvs->PlatformFlavor            = 1;
+  PlatformNvs->Rtd3P0dl            = 0x64;
+  PlatformNvs->CSNotifyEC    = 1;
+  PlatformNvs->Rtd3AudioDelay    = 0xC8;
+  PlatformNvs->Rtd3SensorHub    = 0x44;
+  PlatformNvs->Rtd3TouchPanelDelay    = 0x44;
+  PlatformNvs->Rtd3TouchPadDelay    = 0x44;
+  PlatformNvs->VRRampUpDelay    = 0x10;
+  PlatformNvs->Rtd3Config0    = 0x8;
+  PlatformNvs->Ps2KbMsEnable                = 0x1;
+  PlatformNvs->SSH0 = 0x264;
+  PlatformNvs->SSL0 = 0x2C2;
+  PlatformNvs->SSD0 = 0x1E;
+  PlatformNvs->FMH0 = 0x6E;
+  PlatformNvs->FML0 = 0xCF;
+  PlatformNvs->FMD0 = 0x1E;
+  PlatformNvs->FPH0 = 0x2B;
+  PlatformNvs->FPL0 = 0x4C;
+  PlatformNvs->FPD0 = 0x1E;
+  PlatformNvs->HSH0 = 0xB;
+  PlatformNvs->HSL0 = 0x16;
+  PlatformNvs->HSD0 = 0x5;
+  PlatformNvs->SSH1 = 0x264;
+  PlatformNvs->SSL1 = 0x2C2;
+  PlatformNvs->SSD1 = 0x1E;
+  PlatformNvs->FMH1 = 0x6E;
+  PlatformNvs->FML1 = 0xCF;
+  PlatformNvs->FMD1 = 0x1E;
+  PlatformNvs->FPH1 = 0x2B;
+  PlatformNvs->FPL1 = 0x4C;
+  PlatformNvs->FPD1 = 0x1E;
+  PlatformNvs->HSH1 = 0xB;
+  PlatformNvs->HSL1 = 0x16;
+  PlatformNvs->HSD1 = 0x5;
+  PlatformNvs->SSH2 = 0x264;
+  PlatformNvs->SSL2 = 0x2C2;
+  PlatformNvs->SSD2 = 0x1E;
+  PlatformNvs->FMH2 = 0x6E;
+  PlatformNvs->FML2 = 0xCF;
+  PlatformNvs->FMD2 = 0x1E;
+  PlatformNvs->FPH2 = 0x2B;
+  PlatformNvs->FPL2 = 0x4C;
+  PlatformNvs->FPD2 = 0x1E;
+  PlatformNvs->HSH2 = 0xB;
+  PlatformNvs->HSL2 = 0x16;
+  PlatformNvs->HSD2 = 0x5;
+  PlatformNvs->SSH3 = 0x264;
+  PlatformNvs->SSL3 = 0x2C2;
+  PlatformNvs->SSD3 = 0x1E;
+  PlatformNvs->FMH3 = 0x6E;
+  PlatformNvs->FML3 = 0xCF;
+  PlatformNvs->FMD3 = 0x1E;
+  PlatformNvs->FPH3 = 0x2B;
+  PlatformNvs->FPL3 = 0x4C;
+  PlatformNvs->FPD3 = 0x1E;
+  PlatformNvs->HSH3 = 0xB;
+  PlatformNvs->HSL3 = 0x16;
+  PlatformNvs->HSD3 = 0x5;
+  PlatformNvs->SSH4 = 0x264;
+  PlatformNvs->SSL4 = 0x2C2;
+  PlatformNvs->SSD4 = 0x1E;
+  PlatformNvs->FMH4 = 0x6E;
+  PlatformNvs->FML4 = 0xCF;
+  PlatformNvs->FMD4 = 0x1E;
+  PlatformNvs->FPH4 = 0x2B;
+  PlatformNvs->FPL4 = 0x4C;
+  PlatformNvs->FPD4 = 0x1E;
+  PlatformNvs->HSH4 = 0xB;
+  PlatformNvs->HSL4 = 0x16;
+  PlatformNvs->HSD4 = 0x5;
+  PlatformNvs->SSH5 = 0x2C2;
+  PlatformNvs->SSL5 = 0x264;
+  PlatformNvs->SSD5 = 0x1E;
+  PlatformNvs->FMH5 = 0x6E;
+  PlatformNvs->FML5 = 0xCF;
+  PlatformNvs->FMD5 = 0x1E;
+  PlatformNvs->FPH5 = 0x2B;
+  PlatformNvs->FPL5 = 0x4C;
+  PlatformNvs->FPD5 = 0x1E;
+  PlatformNvs->HSH5 = 0xB;
+  PlatformNvs->HSL5 = 0x16;
+  PlatformNvs->HSD5 = 0x5;
+  PlatformNvs->M0C0 = 0xC8;
+  PlatformNvs->M1C0 = 0x7D0;
+  PlatformNvs->M0C1 = 0xC8;
+  PlatformNvs->M1C1 = 0x7D0;
+  PlatformNvs->M0C2 = 0xC8;
+  PlatformNvs->M1C2 = 0x7D0;
+  PlatformNvs->M0C3 = 0xC8;
+  PlatformNvs->M1C3 = 0x7D0;
+  PlatformNvs->M0C4 = 0xC8;
+  PlatformNvs->M1C4 = 0x7D0;
+  PlatformNvs->M0C5 = 0xC8;
+  PlatformNvs->M1C5 = 0x7D0;
+  PlatformNvs->M0C6 = 0xC8;
+  PlatformNvs->M1C6 = 0x7D0;
+  PlatformNvs->M0C7 = 0xC8;
+  PlatformNvs->M1C7 = 0x7D0;
+  PlatformNvs->M0C8 = 0xC8;
+  PlatformNvs->M1C8 = 0x7D0;
+  PlatformNvs->M0C9 = 0xC8;
+  PlatformNvs->M1C9 = 0xC8;
+  PlatformNvs->M0CA = 0xC8;
+  PlatformNvs->M1CA = 0xC8;
+  PlatformNvs->M0CB = 0xC8;
+  PlatformNvs->M1CB = 0xC8;
+  PlatformNvs->PL1LimitCSValue = 0x1194;
+  PlatformNvs->EnableInt3400Device = 0x1;
+  PlatformNvs->PsmSplcDomainType1 = 0x9;
+  PlatformNvs->PsmSplcPowerLimit1 = 0xFA0;
+  PlatformNvs->PsmSplcTimeWindow1 = 0x7530;
+  PlatformNvs->PsmDplcDomainType1 = 0x9;
+  PlatformNvs->PsmDplcDomainPreference1 = 0x9;
+  PlatformNvs->PsmDplcDefaultPowerLimit1 = 0xB0;
+  PlatformNvs->PsmDplcDefaultTimeWindow1 = 0x7530;
+  PlatformNvs->PsmDplcMinimumPowerLimit1 = 0x4B0;
+  PlatformNvs->PsmDplcMaximumPowerLimit1 = 0x4B0;
+  PlatformNvs->PsmDplcMaximumTimeWindow1 = 0x3E8;
+  PlatformNvs->SDS9 = 0x1;
+  PlatformNvs->TPLS = 0x1;
+  PlatformNvs->HebcValue = 0x233F3;
+  PlatformNvs->PcdBatteryPresent = 0x3;
+  PlatformNvs->PcdRealBattery1Control = 0x1;
+  PlatformNvs->PcdRealBattery2Control = 0x2;
+  PlatformNvs->PcdConvertableDockSupport = 0x1;
+  PlatformNvs->PcdEcHotKeyF3Support = 0x1;
+  PlatformNvs->PcdEcHotKeyF4Support = 0x1;
+  PlatformNvs->PcdEcHotKeyF5Support = 0x1;
+  PlatformNvs->PcdEcHotKeyF6Support = 0x1;
+  PlatformNvs->PcdEcHotKeyF7Support = 0x1;
+  PlatformNvs->PcdEcHotKeyF8Support = 0x1;
+  PlatformNvs->PcdVirtualButtonVolumeUpSupport = 0x1;
+  PlatformNvs->PcdVirtualButtonVolumeDownSupport = 0x1;
+  PlatformNvs->PcdVirtualButtonHomeButtonSupport = 0x1;
+  PlatformNvs->PcdVirtualButtonRotationLockSupport = 0x1;
+  PlatformNvs->PcdSlateModeSwitchSupport = 0x1;
+  PlatformNvs->PcdAcDcAutoSwitchSupport = 0x1;
+  PlatformNvs->PcdPmPowerButtonGpioPin = 0x9050003;
+  PlatformNvs->PcdAcpiEnableAllButtonSupport = 0x1;
+  PlatformNvs->PcdAcpiHidDriverButtonSupport = 0x1;
+  PlatformNvs->UCMS = 0x1;
+  PlatformNvs->WwanPerstGpio = 0x9000011;
+  PlatformNvs->PcieSlot1WakeGpio = 0x90C0005;
+  PlatformNvs->PcieSlot1RpNumber = 0x5;
+  PlatformNvs->PcieSlot2WakeGpio = 0x90C0004;
+  PlatformNvs->PcieSlot2RpNumber = 0x8;
+  PlatformNvs->WwanFullCardPowerOffGpio = 0x90B000B;
+  PlatformNvs->WwanFullCardPowerOffGpioPolarity = 0x1;
+  PlatformNvs->WwanBbrstGpio = 0x90B000A;
+  PlatformNvs->WwanWakeGpio = 0x90B0009;
+  PlatformNvs->TouchpanelPowerEnableGpio = 0x907000E;
+  PlatformNvs->TouchpanelPowerRstGpio = 0x90E0006;
+  PlatformNvs->Touchpanel1IrqGpio = 0x90C0012;
+  PlatformNvs->Touchpanel1PowerEnableGpio = 0x90C0007;
+  PlatformNvs->Touchpanel1PowerRstGpio = 0x90C0011;
+  PlatformNvs->TouchpanelIrqGpioPolarity = 0x1;
+  PlatformNvs->TouchpanelPowerEnableGpioPolarity = 0x1;
+  PlatformNvs->TouchpanelPowerRstGpioPolarity = 0x1;
+  PlatformNvs->Touchpanel1IrqGpioPolarity = 0x1;
+  PlatformNvs->Touchpanel1PowerEnableGpioPolarity = 0x1;
+  PlatformNvs->Touchpanel1PowerRstGpioPolarity = 0x1;
+  PlatformNvs->PcieSlot1PowerEnableGpio = 0x902000E;
+  PlatformNvs->PcieSlot1RstGpio = 0x090B000D;
+  PlatformNvs->PcieSlot2PowerEnableGpio = 0x90C0009;
+  PlatformNvs->PcieSlot2PowerEnableGpioPolarity = 0x1;
+  PlatformNvs->PcieSlot2RstGpio = 0x90C000A;
+  PlatformNvs->SataPortPowerEnableGpio = 0x9000004;
+  PlatformNvs->SataPortPowerEnableGpioPolarity = 0x1;
+  PlatformNvs->PchM2SsdPowerEnableGpio = 0x9000010;
+  PlatformNvs->PchM2SsdPowerEnableGpioPolarity = 0x1;
+  PlatformNvs->PchM2SsdRstGpio = 0x9070000;
+  PlatformNvs->M2Ssd2PowerEnableGpio = 0x9080010;
+  PlatformNvs->M2Ssd2PowerEnableGpioPolarity = 0x1;
+  PlatformNvs->M2Ssd2RstGpio = 0x902000B;
+  PlatformNvs->SdevXhciRootPortNumber2 = 0x1;
+  PlatformNvs->DeepestUSBSleepWakeCapability = 0x4;
+
 
   // System Agent
   SaNvs->Mmio64Base               = 0;
@@ -2681,6 +2944,34 @@ PlatformUpdateAcpiGnvs (
   SaNvs->EdpValid = 0;
   SaNvs->MaxPegPortNumber = GetMaxCpuPciePortNum ();
   SaNvs->CpuPcieRtd3 = 1;
+
+
+  SaNvs->DelayAfterPwrEn = 0x12C;
+  SaNvs->DelayAfterHoldReset = 0x64;
+  SaNvs->Peg0LtrEnable = 1;
+  SaNvs->Peg0ObffEnable = 1;
+  SaNvs->Peg1LtrEnable = 1;
+  SaNvs->Peg1ObffEnable = 1;
+  SaNvs->Peg2LtrEnable = 1;
+  SaNvs->Peg2ObffEnable = 1;
+  SaNvs->Peg3LtrEnable = 1;
+  SaNvs->Peg3ObffEnable = 1;
+  SaNvs->PegLtrMaxSnoopLatency = 0x846;
+  SaNvs->PegLtrMaxNoSnoopLatency = 0x846;
+  SaNvs->HgMode = 0x03;
+  SaNvs->LtrEnable[0] = 1;
+  SaNvs->LtrEnable[1] = 1;
+  SaNvs->LtrEnable[2] = 1;
+  SaNvs->LtrEnable[3] = 1;
+  SaNvs->PcieLtrMaxSnoopLatency[0] = 0x8C8;
+  SaNvs->PcieLtrMaxSnoopLatency[1] = 0x8C8;
+  SaNvs->PcieLtrMaxSnoopLatency[2] = 0x8C8;
+  SaNvs->PcieLtrMaxSnoopLatency[3] = 0x8C8;
+  SaNvs->PcieLtrMaxNoSnoopLatency[0] = 0x8C8;
+  SaNvs->PcieLtrMaxNoSnoopLatency[1] = 0x8C8;
+  SaNvs->PcieLtrMaxNoSnoopLatency[2] = 0x8C8;
+  SaNvs->PcieLtrMaxNoSnoopLatency[3] = 0x8C8;
+  SaNvs->SlotSelection = 1;
 
   UpdateCpuNvs (CpuNvs);
   PlatformNvs->PpmFlags           = CpuNvs->PpmFlags;

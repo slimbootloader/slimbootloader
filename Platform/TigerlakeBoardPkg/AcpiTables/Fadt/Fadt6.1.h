@@ -11,9 +11,9 @@
 
 
 #include <IndustryStandard/Acpi61.h>
-
-#include "Register/PmcRegs.h"
 #include "AcpiTablePlatform.h"
+#include "Register/PmcRegs.h"
+
 //
 // FADT Definitions
 //
@@ -21,6 +21,10 @@
 #define EFI_ACPI_OEM_FADT_REVISION  0x00000000
 #endif
 
+//
+// For ACPI 1.0 support
+//
+#define EFI_ACPI_INT_MODEL            0x00
 /*
 1 Desktop
 2 Mobile
@@ -124,6 +128,7 @@
 // Information
 //
 #define EFI_ACPI_GPE0_BLK_ADDRESS_SPACE_ID      EFI_ACPI_6_1_SYSTEM_IO
+#define EFI_ACPI_GPE0_BLK_BIT_WIDTH             0x100
 #define EFI_ACPI_GPE0_BLK_BIT_OFFSET            0x00
 #define EFI_ACPI_GPE0_BLK_ADDRESS               0x00001860
 
@@ -143,37 +148,36 @@
 #define EFI_ACPI_RESET_REG_BIT_WIDTH            0x08
 #define EFI_ACPI_RESET_REG_BIT_OFFSET           0x00
 #define EFI_ACPI_RESET_REG_ADDRESS              0x0000000000000CF9
-#define EFI_ACPI_RESET_VALUE                    0x0E
+#define EFI_ACPI_RESET_VALUE                    0x06
 
 //
 // Number of bytes decoded by PM1 event blocks (a and b)
 //
-#define EFI_ACPI_PM1_EVT_LEN 0x04
+#define EFI_ACPI_PM1_EVT_LEN ((EFI_ACPI_PM1A_EVT_BLK_BIT_WIDTH + EFI_ACPI_PM1B_EVT_BLK_BIT_WIDTH) / 8)
 
 //
 // Number of bytes decoded by PM1 control blocks (a and b)
 //
-#define EFI_ACPI_PM1_CNT_LEN 0x02
+#define EFI_ACPI_PM1_CNT_LEN ((EFI_ACPI_PM1A_CNT_BLK_BIT_WIDTH + EFI_ACPI_PM1B_CNT_BLK_BIT_WIDTH) / 8)
 
 //
 // Number of bytes decoded by PM2 control block
 //
-#define EFI_ACPI_PM2_CNT_LEN 0x01
+#define EFI_ACPI_PM2_CNT_LEN (EFI_ACPI_PM2_CNT_BLK_BIT_WIDTH / 8)
 
 //
 // Number of bytes decoded by PM timer block
 //
-#define EFI_ACPI_PM_TMR_LEN 0x04
+#define EFI_ACPI_PM_TMR_LEN (EFI_ACPI_PM_TMR_BLK_BIT_WIDTH / 8)
 
 //
 // Number of bytes decoded by GPE0 block
 //
-#define EFI_ACPI_GPE0_BLK_LEN 0x20
+#define EFI_ACPI_GPE0_BLK_LEN (EFI_ACPI_GPE0_BLK_BIT_WIDTH / 8)
 
 //
 // Number of bytes decoded by GPE1 block
 //
-#define EFI_ACPI_GPE1_BLK_LEN 0x00
-
+#define EFI_ACPI_GPE1_BLK_LEN (EFI_ACPI_GPE1_BLK_BIT_WIDTH / 8)
 
 #endif

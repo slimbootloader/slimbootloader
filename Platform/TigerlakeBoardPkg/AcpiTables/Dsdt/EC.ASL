@@ -957,12 +957,10 @@ Device(H_EC)  // Hitachi Embedded Controller
   }
   Method(_Q76)    // Any event on USBTypeC.
   {
-    ADBG("_Q76")
     UCEV()
   }
   Method(_Q79)    // Any event on USBTypeC.
   {
-    ADBG("_Q79")
     UCEV()
   }
 // Display Hotkey Control Function

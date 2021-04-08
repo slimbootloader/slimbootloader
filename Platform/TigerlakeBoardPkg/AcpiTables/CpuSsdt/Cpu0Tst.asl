@@ -190,7 +190,7 @@ DefinitionBlock(
 
     //
     // Get _TSD
-    // Arg0 = CPU Index
+    // Arg0 = CPU Domain ID
     //
     Method(GTSD, 1)
     {

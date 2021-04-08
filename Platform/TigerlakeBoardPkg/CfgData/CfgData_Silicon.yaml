@@ -191,14 +191,14 @@
       help         : >
                      The ASPM configuration of the root port (see- CPU_PCIE_ASPM_CONTROL). Default is CpuPcieAspmAutoConfig.
       length       : 0x4
-      value        : { 0x4, 0x4, 0x4, 0x4}
+      value        : { 0x2, 0x2, 0x2, 0x2}
   - CpuPcieRpL1Substates :
       name         : PCIE RP L1 Substates
       type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
       help         : >
                      The L1 Substates configuration of the root port (see- CPU_PCIE_L1SUBSTATES_CONTROL). Default is CpuPcieL1SubstatesL1_1_2.
       length       : 0x4
-      value        : { 0x0, 0x0, 0x0, 0x0}
+      value        : { 0x2, 0x2, 0x2, 0x2}
   - CpuPcieRpPtmEnabled :
       name         : PTM for PCIE RP Mask
       type         : EditNum, HEX, (0x00,0x00FFFFFF)
@@ -219,7 +219,7 @@
       help         : >
                      Enable/disable Multiple Virtual Channel for PCIE Root Ports. 0- disable, 1- enable. One bit for each port, bit0 for port1, bit1 for port2, and so on.
       length       : 0x04
-      value        : { 0x01, 0x01, 0x01, 0x01 }
+      value        : { 0x00, 0x00, 0x00, 0x00 }
   - XdciEnable :
       name         : xDCI controller
       type         : Combo

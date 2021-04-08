@@ -40,6 +40,8 @@ External(\_SB.DTSF)
 External(\_SB.DTSE)
 External(\_SB.PDTS)
 External(\_SB.PKGA)
+External(\_SB.TRPD)
+External(\_SB.TRPF)
 External(\_SB.DSAE)
 
 //
@@ -85,6 +87,11 @@ External(\_SB.PC00.LPCB.H_EC.BAT2, DeviceObj)
 
 #define CONVERTIBLE_BUTTON   6
 #define DOCK_INDICATOR       7
+
+
+External (PDIW)
+#define DynamicSwitchEnable   1
+External(\_SB.PC00.DPFC, MethodObj)
 
 Name(ECUP, 1)  // EC State indicator: 1- Normal Mode 0- Low Power Mode
 Mutex(EHLD, 0) // EC Hold indicator: 0- No one accessing the EC Power State 1- Someone else is accessing the EC Power State
@@ -206,57 +213,11 @@ Method(P8XH,2,Serialized)
 
 
 //
-// Writes debug output to serial port
-//
-Method(ADBG,1,Serialized)
-{
-#if 0
-  OperationRegion (U3F8, SystemIO, 0x3F8, 0x10)
-  Field (U3F8, ByteAcc, Lock, Preserve) {
-    TXBF, 8,     // TX Buffer; DLL
-    DLM, 8,      // Also IER
-    FCR, 8,
-    LCR, 8,
-  }
-
-  // Init UART
-  Store(0x83, LCR) // Enable DLL, DLM
-  Store(0x01, TXBF) // Set divisor=1, which means baud rate 115200
-  Store(0x00, DLM)
-  Store(0xE1, FCR) // Enable FIFO, 64 bytes
-  Store(0x03, LCR) // 8 bits, 1 stop bit, no parity
-  Store(0x00, DLM) // Disable Interrupts
-
-  //Local3=buffer, Local4=size, Local5=iterator
-  ToHexString (Arg0, Local3) // convert argument to Hexadecimal String in case it isn't a string already. If it is, nothing happens.
-  Store(Sizeof(Local3), Local4)
-
-  Store(0, Local5)
-  While (LLess(Local5, Local4)) {
-    Mid(Local3,Local5,1,TXBF) //Store() doesn't work. Mid() does. Not sure what's the difference
-    Stall(100)
-    Increment(Local5)
-  }
-  Stall(100);Store(0xD, TXBF)
-  Stall(100);Store(0xA, TXBF)
-#endif
-}
-
-
-//
 // Define SW SMI port as an ACPI Operating Region to use for generate SW SMI.
 //
 OperationRegion(SPRT,SystemIO, 0xB2,2)
 Field (SPRT, ByteAcc, Lock, Preserve) {
   SSMP, 8
-}
-
-// Operational region for ACPI Control (SMI_EN) access
-//
-OperationRegion (SMIN, SystemIO, (ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN), 0x4)
-Field (SMIN, AnyAcc, NoLock, Preserve)
-{
-  SMIE, 32
 }
 
 // The _PIC Control Method is optional for ACPI design.  It allows the
@@ -283,8 +244,6 @@ Method(_PTS,1)
   D8XH(0,Arg0)    // Output Sleep State to Port 80h, Byte 0.
   D8XH(1,0)       // output byte 1 = 0, sleep entry
 
-  ADBG(Concatenate("_PTS=",ToHexString(Arg0)))
-
   // If code is executed, Wake from RI# via Serial Modem will be
   // enabled.  If code is not executed, COM Port Debugging throughout
   // all Sx states will be enabled.
@@ -301,7 +260,6 @@ Method(_PTS,1)
       }
     }
     Store(CPWE, CWEF)  // save GPE0_EN_127_96_CPU_WAKE_EN value to NVS
-    ADBG(Concatenate("_PTS S3 CWEF=", CWEF))
   }
 
 
@@ -360,8 +318,6 @@ Method(PBCL ,0)
 Method(_WAK,1,Serialized)
 {
   D8XH(1,0xAB)    // Beginning of _WAK.
-
-  ADBG("_WAK")
 
   If(NEXP)
   {
@@ -714,6 +670,27 @@ Method(_WAK,1,Serialized)
     {
       \_SB.NVDR.RSTP ()
     }
+
+    //
+    // Proactive Check DPIn Dynamic Switch Supportivity when S3 resume
+    // Send V_IOM_BIOS_DPIN_SWITCH_CMD to IOM if the feature is supported
+    // Report Function 20 if Dynamic Switch is Enabled by user (PDIW)
+    //
+    If (LAnd (LAnd (PDIW, DynamicSwitchEnable), CondRefOf (PDIW))) {
+      Name (OPTS, Buffer (4){0,0,0,0})
+      CreateByteField (OPTS, 0x00, CMST) // Command Status field
+                                         //         Success - 0
+                                         //         Fail    - 1
+      CreateByteField (OPTS, 0x01, RTB1) // Return Buffer 1
+
+      //Send V_IOM_BIOS_DPIN_SWITCH_CMD
+      Store (\_SB.PC00.DPFC (), OPTS)
+
+    }
+    Else
+    {
+    }
+
   }
 
   Return(Package(){0,0})
@@ -888,8 +865,8 @@ Method(PNOT,0,Serialized)
 //
 // Memory window to the CTDP registers starting at MCHBAR+5000h.
 //
-  OperationRegion (MBAR, SystemMemory, Add(\_SB.PC00.GMHB(),0x5000), 0x1000)
-  Field (MBAR, ByteAcc, NoLock, Preserve)
+  OperationRegion (CPWR, SystemMemory, Add(\_SB.PC00.GMHB(),0x5000), 0x1000)
+  Field (CPWR, ByteAcc, NoLock, Preserve)
   {
     Offset (0x938), // PACKAGE_POWER_SKU_UNIT (MCHBAR+0x5938)
     PWRU,  4,       // Power Units [3:0] unit value is calculated by 1 W / Power(2,PWR_UNIT). The default value of 0011b corresponds to 1/8 W.
@@ -1517,7 +1494,8 @@ Scope (\_SB)
 } // End of Scope(\_SB)
 
 // Power Meter module support
-include("PowerMeter.asl")
+include("PowerMeterTglU.asl")
+
 
 
 

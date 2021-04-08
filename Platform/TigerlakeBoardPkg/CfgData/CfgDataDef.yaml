@@ -370,7 +370,7 @@ configs:
         help         : >
                        0:None, 1:Adapter D0/F1, 2:Raid, 3:Adapter D3
         length       : 0x01
-        value        : 0x0
+        value        : 0x3
     - PepUart      :
         name         : Enable/disable Low Power constraints Uart
         type         : Combo

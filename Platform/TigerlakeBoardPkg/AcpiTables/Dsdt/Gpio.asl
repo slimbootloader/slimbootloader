@@ -4,9 +4,8 @@
   Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
-#ifdef PCH_TGL
+
 Include("GpioAcpiDefinesVer2.h")
-#endif
 
 Scope(\_SB) {
   //----------------------------
@@ -20,13 +19,11 @@ Scope(\_SB) {
         Return("PNP0C02")
       }
       // Return HID based on PCH Product
-#ifdef PCH_TGL
       If(LEqual(PCHS, PCHH)){
         Return(GPIO_VER2_H_ACPI_HID)
       } Else {
         Return(GPIO_VER2_LP_ACPI_HID)
       }
-#endif
     }
 
     Name (LINK,"\\_SB.GPI0")
@@ -82,7 +79,7 @@ Scope(\_SB) {
 
     Method (_STA, 0x0, NotSerialized) {
       If(LEqual(GPHD, 1)) { // Hide GPIO ACPI device
-        Return(0x3)
+        Return(0xB)
       }
       Return(0xF)
     }

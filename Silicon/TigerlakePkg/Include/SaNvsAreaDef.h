@@ -197,6 +197,24 @@ typedef struct {
   UINT8    DpmemSupport;                            ///< Offset 407     Dynamic PMem Support <0: Disabled, 1:Enabled>
   UINT64   PmemStartingAddress;                     ///< Offset 408     Private Pmem Starting address
   UINT64   PmemRangeLength;                         ///< Offset 416     Private Pmem Range Length
+  UINT8    Pcie3EpCapOffset;                        ///< Offset 424     PCIe3 Endpoint Capability Structure Offset
+  UINT8    Pcie0SrcClkNo;                           ///< Offset 425     PCIe0 RTD3 Device Source Clock Number
+  UINT8    Pcie1SrcClkNo;                           ///< Offset 426     PCIe1 RTD3 Device Source Clock Number
+  UINT8    Pcie2SrcClkNo;                           ///< Offset 427     PCIe2 RTD3 Device Source Clock Number
+  UINT8    Pcie3SrcClkNo;                           ///< Offset 428     PCIe2 RTD3 Device Source Clock Number
+  UINT8    Pcie0SecBusNum;                          ///< Offset 429     PCIe0 Secondary Bus Number (PCIe0 Endpoint Bus Number)
+  UINT8    Pcie1SecBusNum;                          ///< Offset 430     PCIe1 Secondary Bus Number (PCIe0 Endpoint Bus Number)
+  UINT8    Pcie2SecBusNum;                          ///< Offset 431     PCIe2 Secondary Bus Number (PCIe0 Endpoint Bus Number)
+  UINT8    Pcie3SecBusNum;                          ///< Offset 432     PCIe2 Secondary Bus Number (PCIe0 Endpoint Bus Number)
+  UINT8    Pcie1EpCapOffset;                        ///< Offset 433     PCIe1 Endpoint Capability Structure Offset
+  UINT8    Pcie2EpCapOffset;                        ///< Offset 434     PCIe2 Endpoint Capability Structure Offset
+  UINT8    IsBridgeDeviceBehindPeg1;                ///< Offset 435     Is bridge device behind PEG1
+  UINT8    IsBridgeDeviceBehindPeg2;                ///< Offset 436     Is bridge device behind PEG2
+  UINT8    IsBridgeDeviceBehindPeg3;                ///< Offset 437     Is bridge device behind PEG3
+  UINT8    HgSlot;                                  ///< Offset 438     Slot selection between PCH/PEG
+  UINT8    DPinDynamicSwitch;                       ///< Offset 439     DPin Dynamic Switch
+  UINT16   DPinDynamicSwitchDelay0;                 ///< Offset 440     DPin Dynamic Switch delay 0, unit is ms
+  UINT16   DPinDynamicSwitchDelay1;                 ///< Offset 442     DPin Dynamic Switch delay 1, unit is ms
 } SYSTEM_AGENT_NVS_AREA;
 
 #pragma pack(pop)

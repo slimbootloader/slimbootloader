@@ -160,6 +160,7 @@ UpdateFspConfig (
   UINT16                   BoardId;
   UINT8                    SaDisplayConfigTable[16] = { 0 };
   TCC_CFG_DATA            *TccCfgData;
+  FEATURES_CFG_DATA       *FeaturesCfgData;
   SILICON_CFG_DATA        *SiCfgData;
   PLATFORM_DATA           *PlatformData;
   UINT8                   DebugPort;
@@ -167,6 +168,7 @@ UpdateFspConfig (
   FspmUpd     = (FSPM_UPD *)FspmUpdPtr;
   FspmArchUpd = &FspmUpd->FspmArchUpd;
   Fspmcfg     = &FspmUpd->FspmConfig;
+  FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
 
   BoardId = GetPlatformId();
 
@@ -477,6 +479,24 @@ UpdateFspConfig (
   if (PcdGetBool(PcdFastBootEnabled)) {
     Fspmcfg->CpuPcieRpEnableMask           = 0;
   }
+
+  if (FeaturesCfgData->Features.LowPowerS0Idle == 1)
+  {
+    Fspmcfg->TcssXdciEn=0;
+    Fspmcfg->TcssXhciEn=0;
+    Fspmcfg->TcssDma0En=0;
+    Fspmcfg->TcssDma1En=0;
+    Fspmcfg->TcssItbtPcie0En=0;
+    Fspmcfg->TcssItbtPcie1En=0;
+    Fspmcfg->TcssItbtPcie2En=0;
+    Fspmcfg->TcssItbtPcie3En=0;
+    Fspmcfg->DmiAspmCtrl            = 2;// ASPM configuration on the CPU side of the DMI/OPI Link
+  }
+
+  /*Fspmcfg->PlatformDebugConsent=2;    // Enable DCI and DAM for CCA
+  Fspmcfg->DciEn=1;
+  Fspmcfg->PchTraceHubMode=2;
+  Fspmcfg->CpuTraceHubMode=2;*/
 }
 
 /**

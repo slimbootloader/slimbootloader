@@ -10,7 +10,11 @@
 External(\_SB.PC00.IMMC, MethodObj)
 External(\_SB.PC00.IMMD, MethodObj)
 
-
+External (PCON)
+External (PDIW)
+External (PDI0)
+External (PDI1)
+#define DynamicSwitchEnable   1
 #ifdef ITBT_SUPPORT  //FixedPcdGetBool(PcdITbtEnable) == 1
 #include <Register/IomRegs.h>
 #endif
@@ -36,32 +40,6 @@ Method (_DSM, 4, Serialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj}) {
     // Return:
     // Success for simple notification, Opregion update for some routines and a Package for AKSV
     //
-    If (Lor(LEqual(Arg2,18),LEqual(Arg2,19))) {
-      CreateDwordField(Arg3, 0x0, DDIN)
-      CreateDwordField(Arg3, 0x4, BUF1)
-      //
-      // OPTS is return buffer from IOM mailbox -
-      // Byte[0] is Status field.
-      // BYTE[1] is HDP Count.
-      //
-      Name(OPTS, Buffer(4){0,0,0,0})
-      CreateByteField(OPTS, 0x00, CMST) // Command Status field
-                                        //         Success - 0
-                                        //         Fail    - 1
-      CreateByteField(OPTS, 0x01, RTB1) // Return Buffer 1
-
-      //
-      // Gfx Empty Dongle Buffer is data for return DSM fun#
-      // with below buffer format
-      // Byte[0-3] is Data field.
-      // Byte[4] is Status field.
-      //
-      Name(GEDB, Buffer(5){0,0,0,0,0})
-      CreateDwordField(GEDB, 0x00, GEDF) // Gfx Empty Dongle Data Field
-      CreateByteField(GEDB, 0x04, GESF)  // Gfx Empty Dongle Status Field
-                                         //         Success - 0
-                                         //         Fail    - None 0
-    }
 
     //
     // Switch by function index
@@ -78,7 +56,29 @@ Method (_DSM, 4, Serialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj}) {
         If (LEqual(Arg1, 1)) { // test Arg1 for Revision ID: 1
           Store("iGfx Supported Functions Bitmap ", Debug)
 
-          Return(0xDE7FF)
+
+          //
+          // Report DPIn Dynamic Switch Supportivity
+          //
+          // DpIn Dynamic Switch Feature
+          // PCON Bit[8:7] - dGfx is valided and detected
+          // Bits[8] - External Gfx Adapter Field valid
+          //   0 = External Gfx Adapter field is Not valid
+          //   1 = External Gfx Adapter field is valid
+          // Bits[7] - External Gfx Adapter
+          //   0 = No External Gfx Adapter
+          //   1 = External Gfx Adapter Detected and Available
+          //
+          If (LEqual (And (PCON, Or (BIT7, BIT8)), Or (BIT7, BIT8))) {
+            //
+            // Report Function 20 if Dynamic Switch is Enabled by user (PDIW)
+            //
+            If (LAnd (LAnd (PDIW, DynamicSwitchEnable), CondRefOf (PDIW))) {
+              Return (0x11E7FF)
+            }
+          }
+
+          Return (0x1E7FF)
         }
       }
 
@@ -398,40 +398,51 @@ Method (_DSM, 4, Serialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj}) {
 
 #ifdef ITBT_SUPPORT // FixedPcdGetBool(PcdITbtEnable) == 1
       //
-      // Function Index: 18
-      // Get total HPD counter for specified DDI from IOM
-      // Arg3 Package = {DDi# getHPDCount(ddi), 0}
-      // Return: Package {Status, 0}
-      //         Status : 0 Success
-      //                : 1 fail
-      //
-      Case(18) {
-        // DDI is TBT port number "1 based"
-        Store(\_SB.PC00.IMMC(V_IOM_BIOS_MBX_GET_HPD_COUNT, 1000, DDIN, 0, 0), OPTS)
-        // Copying IOM command status to DSM return buffer.0 - Success, else - fail
-        Store(CMST, GESF)
-        // Copying HPD count from IOM buffer to DSM return buffer
-        Store(RTB1, GEDF)
-        Return(GEDB)
-      }
-
-      //
-      // Function Index: 19
-      // Decreament HPD Count
-      // Arg3 Package = {DDi#  getHPDCount(ddi), N}
+      // Function Index: 20
+      // Indicate driver is ready to switch to dGfx
+      // Arg3 Package = 0
       // Return: Package {Status, Conut}
       //         Status : 0 Success
       //                : 1 fail
       //
-      Case(19) {
-        // DDI is TBT port number "1 based"
-        // BUF1 is Total No. of HPDs that had happened on specified TBT Port
-        Store(\_SB.PC00.IMMC(V_IOM_BIOS_MBX_DEC_HPD_COUNT, 1000, DDIN, 0, BUF1), OPTS)
+      Case (20) {
+        //
+        // OPTS is return buffer from IOM mailbox
+        // Byte[0] is Status field.
+        // BYTE[1] is HDP Count.
+        //
+        Name (OPTS, Buffer (4){0,0,0,0})
+        CreateByteField (OPTS, 0x00, CMST) // Command Status field
+                                           //         Success - 0
+                                           //         Fail    - 1
+        CreateByteField (OPTS, 0x01, RTB1) // Return Buffer 1
+
+        //
+        // Gfx Empty Dongle Buffer is data for return DSM fun#
+        // with below buffer format
+        // Byte[0-3] is Data field.
+        // Byte[4] is Status field.
+        //
+        Name (GEDB, Buffer (10){0,0,0,0,0,0,0,0,0,0})
+        CreateDwordField (GEDB, 0x00, GEDF) // Gfx Empty Dongle Data Field
+        CreateByteField (GEDB, 0x04, GESF) // Gfx Empty Dongle Status Field
+                                           //         Success - 0
+                                           //         Fail    - None 0
+
+
+
+        // Delay before sending command to IOM, ACPI BIOS consumes this value and proceed delay when _DSM is invoked.
+        Sleep (PDI0)
+
+        // PDI1: Delay before IOM de-assert HPD, ACPI BIOS passes this value to IOM associated with the command.
+        Store (\_SB.PC00.IMMC (V_IOM_BIOS_DPIN_SWITCH_CMD, PDI1, 0, 0, 0), OPTS)
+
         // Copying IOM command status to DSM return buffer.0 - Success, else - fail
-        Store(CMST, GESF)
+        Store (CMST, GESF)
         // Copying Return Buffer 1st from IOM buffer to DSM return buffer
-        Store(RTB1, GEDF)
-        Return(GEDB)
+        Store (RTB1, GEDF)
+
+        Return (GEDB)
       }
 #endif
     } // End of switch(Arg2)

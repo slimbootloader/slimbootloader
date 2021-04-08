@@ -52,12 +52,17 @@
   CpuSsdt/ApTst.asl
   CpuSsdt/ApPsd.asl
   CpuSsdt/CpuSsdt.asl
+  CpuSsdt/Ctdp.asl
+  CpuSsdt/Cpu0Hwp.asl
+  CpuSsdt/ApHwp.asl
   Platform/CommonBoardPkg/AcpiTables/Fpdt/Fpdt.aslc
   Platform/CommonBoardPkg/AcpiTables/Tpm/Tpm2.aslc
   Platform/CommonBoardPkg/AcpiTables/Tpm/TpmSsdt.asl
   BdatTable/BdatTable.aslc
   Platform/CommonBoardPkg/AcpiTables/Dsdt/AslInc.h
   PsdTable/PsdTable.aslc
+  SsdtRtd3/TglURvpRtd3.asl
+  Lpit/Lpit.act
 
 [Packages]
   MdePkg/MdePkg.dec

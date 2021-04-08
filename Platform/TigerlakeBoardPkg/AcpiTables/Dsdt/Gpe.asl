@@ -29,6 +29,7 @@
   External(\_GPE.P1L6, MethodObj)
   External(\_GPE.P2L6, MethodObj)
   External(\_GPE.P3L6, MethodObj)
+  External(CPRT)
   External(SGGP)
   External(P1GP)
   External(P2GP)
@@ -53,11 +54,7 @@
   External(\_SB.PC01.TRP1.HPEV, MethodObj)
   External(\_SB.PC01.TRP2.HPEV, MethodObj)
   External(\_SB.PC01.TRP3.HPEV, MethodObj)
-  External(\_SB.HWPI, IntObj) // HWP Interrupt Status
   External(\_SB.DTSI, IntObj) // DTS Interrupt Status
-  External(\_SB.ITBI, IntObj) // Intel Turbo Boost Max Technology 3.0 (ITBM) Interrupt Status
-  External(\_GPE.HLVT, MethodObj) // Interrupt handler for HWP
-  External(\_GPE.ITBH, MethodObj) // Interrupt handler for Intel Turbo Boost Max Technology 3.0
   External(\_SB.PC00.TDM0)
   External(\_SB.PC00.TDM1)
   External(\_GPE.ITBT, MethodObj)
@@ -819,30 +816,6 @@ Scope(\_GPE)
         }
       }
     }
-    ///
-    /// Handle HWP SCI event
-    ///
-    If (LEqual(\_SB.HWPI, 1)) {
-      If (CondRefOf(\_GPE.HLVT)) {
-        \_GPE.HLVT()
-      }
-      ///
-      /// Clear HWP interrupt status
-      ///
-      Store(0,\_SB.HWPI)
-    }
-    ///
-    /// Handle Intel Turbo Boost Max Technology 3.0 SCI event
-    ///
-    If (LEqual(\_SB.ITBI, 1)) {
-      If (CondRefOf(\_GPE.ITBH)) {
-        \_GPE.ITBH()
-      }
-      ///
-      /// Clear interrupt status
-      ///
-      Store(0,\_SB.ITBI)
-    }
   }
 
   // IGD OpRegion SCI event (see IGD OpRegion/Software SCI BIOS SPEC).
@@ -917,6 +890,44 @@ Scope(\_GPE)
     If (CondRefOf(\_GPE.AL6F))
     {
        \_GPE.AL6F()        // call handler from RTD3 table
+    }
+
+    //
+    // handle events from CPU PCIE RTD3 support
+    //
+    If(LEqual(CPRT,1)) {  // if CPU PCIE RTD3 enabled
+
+      If(LEqual(SGGP,1))      // if PEG0 GPIO support is enabled
+      {
+        If (CondRefOf(\_GPE.P0L6))
+        {
+          \_GPE.P0L6()        // call handler from RTD3 table
+        }
+      }
+
+      If(LEqual(P1GP,1)) // if PEG1 GPIO support is enabled
+      {
+        If (CondRefOf(\_GPE.P1L6))
+        {
+          \_GPE.P1L6()        // call handler from RTD3 table
+        }
+      }
+
+      If(LEqual(P2GP,1)) // if PEG2 GPIO support is enabled
+      {
+        If (CondRefOf(\_GPE.P2L6))
+        {
+          \_GPE.P2L6()        // call handler from RTD3 table
+        }
+      }
+
+      If(LEqual(P3GP,1)) // if PEG3 GPIO support is enabled
+      {
+        If (CondRefOf(\_GPE.P3L6))
+        {
+          \_GPE.P3L6()        // call handler from RTD3 table
+        }
+      }
     }
   }
 

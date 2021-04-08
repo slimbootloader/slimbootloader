@@ -373,6 +373,42 @@ Scope (\_SB.PC00) {
     Name(_ADR,0x001F0004)
     Method(_DSM,4,serialized){if(PCIC(Arg0)) { return(PCID(Arg0,Arg1,Arg2,Arg3)) }; Return(Buffer() {0})}
   }
+
+  //
+  // SPI Flash Controller - Device 31, Function 5
+  //
+  Device(SPI) {
+    Name(_ADR, 0x001F0005)
+        Method(_STA, 0) {
+    If (LEqual (VDID, 0xFFFFFFFF)) {
+      Return(0)
+    }
+   Return(0x0F)
+  }
+
+   Method(SWPD)
+  {
+   if(WPDB)
+   {
+     Store (0, WPDB)
+   }
+   if(SYNC)
+   {
+     Store (1, SYNC)
+        }
+  }
+
+  OperationRegion(SPIX,SystemMemory,\_SB.PC00.PC2M(_ADR),0xFF)
+  Field(SPIX, AnyAcc, NoLock, Preserve)
+  {
+    Offset(0),
+    VDID, 32,
+        Offset(0xDC),
+    WPDB, 1,
+        ,     7,
+        SYNC, 1,
+  }
+ }
 }
 Include("Pcr.asl")
 Include("Pmc.asl")
@@ -459,7 +495,7 @@ Scope(\_SB_.PC00) {
         Store (1, HBCS)
       }
       If(LAnd(CondRefOf(VMR1),CondRefOf(VMDE))) {
-        If(LAnd(LEqual(VMDE,1),LEqual(And(VMR1,0x01),0x01))) {
+        If(LAnd(LEqual(VMDE,1),LNotEqual(And(VMR1,0x01),0))) {
           Store (1, PRMV)
         }
       }
@@ -505,7 +541,7 @@ Scope(\_SB_.PC00) {
         Store (1, HBCS)
       }
       If(LAnd(CondRefOf(VMR1),CondRefOf(VMDE))) {
-        If(LAnd(LEqual(VMDE,1),LEqual(And(VMR1,0x02),0x01))) {
+        If(LAnd(LEqual(VMDE,1),LNotEqual(And(VMR1,0x02),0))) {
           Store (1, PRMV)
         }
       }
@@ -551,7 +587,7 @@ Scope(\_SB_.PC00) {
         Store (1, HBCS)
       }
       If(LAnd(CondRefOf(VMR1),CondRefOf(VMDE))) {
-        If(LAnd(LEqual(VMDE,1),LEqual(And(VMR1,0x04),0x01))) {
+        If(LAnd(LEqual(VMDE,1),LNotEqual(And(VMR1,0x04),0))) {
           Store (1, PRMV)
         }
       }
@@ -597,7 +633,7 @@ Scope(\_SB_.PC00) {
         Store (1, HBCS)
       }
       If(LAnd(CondRefOf(VMR1),CondRefOf(VMDE))) {
-        If(LAnd(LEqual(VMDE,1),LEqual(And(VMR1,0x08),0x01))) {
+        If(LAnd(LEqual(VMDE,1),LNotEqual(And(VMR1,0x08),0))) {
           Store (1, PRMV)
         }
       }
@@ -643,7 +679,7 @@ Scope(\_SB_.PC00) {
         Store (1, HBCS)
       }
       If(LAnd(CondRefOf(VMR1),CondRefOf(VMDE))) {
-        If(LAnd(LEqual(VMDE,1),LEqual(And(VMR1,0x10),0x01))) {
+        If(LAnd(LEqual(VMDE,1),LNotEqual(And(VMR1,0x10),0))) {
           Store (1, PRMV)
         }
       }
@@ -689,7 +725,7 @@ Scope(\_SB_.PC00) {
         Store (1, HBCS)
       }
       If(LAnd(CondRefOf(VMR1),CondRefOf(VMDE))) {
-        If(LAnd(LEqual(VMDE,1),LEqual(And(VMR1,0x20),0x01))) {
+        If(LAnd(LEqual(VMDE,1),LNotEqual(And(VMR1,0x20),0))) {
           Store (1, PRMV)
         }
       }
@@ -735,7 +771,7 @@ Scope(\_SB_.PC00) {
         Store (1, HBCS)
       }
       If(LAnd(CondRefOf(VMR1),CondRefOf(VMDE))) {
-        If(LAnd(LEqual(VMDE,1),LEqual(And(VMR1,0x40),0x01))) {
+        If(LAnd(LEqual(VMDE,1),LNotEqual(And(VMR1,0x40),0))) {
           Store (1, PRMV)
         }
       }
@@ -781,7 +817,7 @@ Scope(\_SB_.PC00) {
         Store (1, HBCS)
       }
       If(LAnd(CondRefOf(VMR1),CondRefOf(VMDE))) {
-        If(LAnd(LEqual(VMDE,1),LEqual(And(VMR1,0x80),0x01))) {
+        If(LAnd(LEqual(VMDE,1),LNotEqual(And(VMR1,0x80),0))) {
           Store (1, PRMV)
         }
       }
@@ -827,7 +863,7 @@ Scope(\_SB_.PC00) {
         Store (1, HBCS)
       }
       If(LAnd(CondRefOf(VMR2),CondRefOf(VMDE))) {
-        If(LAnd(LEqual(VMDE,1),LEqual(And(VMR2,0x01),0x01))) {
+        If(LAnd(LEqual(VMDE,1),LNotEqual(And(VMR2,0x01),0))) {
           Store (1, PRMV)
         }
       }
@@ -873,7 +909,7 @@ Scope(\_SB_.PC00) {
         Store (1, HBCS)
       }
       If(LAnd(CondRefOf(VMR2),CondRefOf(VMDE))) {
-        If(LAnd(LEqual(VMDE,1),LEqual(And(VMR2,0x02),0x01))) {
+        If(LAnd(LEqual(VMDE,1),LNotEqual(And(VMR2,0x02),0))) {
           Store (1, PRMV)
         }
       }
@@ -919,7 +955,7 @@ Scope(\_SB_.PC00) {
         Store (1, HBCS)
       }
       If(LAnd(CondRefOf(VMR2),CondRefOf(VMDE))) {
-        If(LAnd(LEqual(VMDE,1),LEqual(And(VMR2,0x04),0x01))) {
+        If(LAnd(LEqual(VMDE,1),LNotEqual(And(VMR2,0x04),0))) {
           Store (1, PRMV)
         }
       }
@@ -965,7 +1001,7 @@ Scope(\_SB_.PC00) {
         Store (1, HBCS)
       }
       If(LAnd(CondRefOf(VMR2),CondRefOf(VMDE))) {
-        If(LAnd(LEqual(VMDE,1),LEqual(And(VMR2,0x08),0x01))) {
+        If(LAnd(LEqual(VMDE,1),LNotEqual(And(VMR2,0x08),0))) {
           Store (1, PRMV)
         }
       }
@@ -1011,7 +1047,7 @@ Scope(\_SB_.PC00) {
         Store (1, HBCS)
       }
       If(LAnd(CondRefOf(VMR2),CondRefOf(VMDE))) {
-        If(LAnd(LEqual(VMDE,1),LEqual(And(VMR2,0x10),0x01))) {
+        If(LAnd(LEqual(VMDE,1),LNotEqual(And(VMR2,0x10),0))) {
           Store (1, PRMV)
         }
       }
@@ -1057,7 +1093,7 @@ Scope(\_SB_.PC00) {
         Store (1, HBCS)
       }
       If(LAnd(CondRefOf(VMR2),CondRefOf(VMDE))) {
-        If(LAnd(LEqual(VMDE,1),LEqual(And(VMR2,0x20),0x01))) {
+        If(LAnd(LEqual(VMDE,1),LNotEqual(And(VMR2,0x20),0))) {
           Store (1, PRMV)
         }
       }
@@ -1103,7 +1139,7 @@ Scope(\_SB_.PC00) {
         Store (1, HBCS)
       }
       If(LAnd(CondRefOf(VMR2),CondRefOf(VMDE))) {
-        If(LAnd(LEqual(VMDE,1),LEqual(And(VMR2,0x40),0x01))) {
+        If(LAnd(LEqual(VMDE,1),LNotEqual(And(VMR2,0x40),0))) {
           Store (1, PRMV)
         }
       }
@@ -1149,7 +1185,7 @@ Scope(\_SB_.PC00) {
         Store (1, HBCS)
       }
       If(LAnd(CondRefOf(VMR2),CondRefOf(VMDE))) {
-        If(LAnd(LEqual(VMDE,1),LEqual(And(VMR2,0x80),0x01))) {
+        If(LAnd(LEqual(VMDE,1),LNotEqual(And(VMR2,0x80),0))) {
           Store (1, PRMV)
         }
       }
@@ -1195,7 +1231,7 @@ Scope(\_SB_.PC00) {
         Store (1, HBCS)
       }
       If(LAnd(CondRefOf(VMR3),CondRefOf(VMDE))) {
-        If(LAnd(LEqual(VMDE,1),LEqual(And(VMR3,0x01),0x01))) {
+        If(LAnd(LEqual(VMDE,1),LNotEqual(And(VMR3,0x01),0))) {
           Store (1, PRMV)
         }
       }
@@ -1241,7 +1277,7 @@ Scope(\_SB_.PC00) {
         Store (1, HBCS)
       }
       If(LAnd(CondRefOf(VMR3),CondRefOf(VMDE))) {
-        If(LAnd(LEqual(VMDE,1),LEqual(And(VMR3,0x02),0x01))) {
+        If(LAnd(LEqual(VMDE,1),LNotEqual(And(VMR3,0x02),0))) {
           Store (1, PRMV)
         }
       }
@@ -1287,7 +1323,7 @@ Scope(\_SB_.PC00) {
         Store (1, HBCS)
       }
       If(LAnd(CondRefOf(VMR3),CondRefOf(VMDE))) {
-        If(LAnd(LEqual(VMDE,1),LEqual(And(VMR3,0x04),0x01))) {
+        If(LAnd(LEqual(VMDE,1),LNotEqual(And(VMR3,0x04),0))) {
           Store (1, PRMV)
         }
       }
@@ -1333,7 +1369,7 @@ Scope(\_SB_.PC00) {
         Store (1, HBCS)
       }
       If(LAnd(CondRefOf(VMR3),CondRefOf(VMDE))) {
-        If(LAnd(LEqual(VMDE,1),LEqual(And(VMR3,0x08),0x01))) {
+        If(LAnd(LEqual(VMDE,1),LNotEqual(And(VMR3,0x08),0))) {
           Store (1, PRMV)
         }
       }
@@ -1379,7 +1415,7 @@ Scope(\_SB_.PC00) {
         Store (1, HBCS)
       }
       If(LAnd(CondRefOf(VMR3),CondRefOf(VMDE))) {
-        If(LAnd(LEqual(VMDE,1),LEqual(And(VMR3,0x10),0x01))) {
+        If(LAnd(LEqual(VMDE,1),LNotEqual(And(VMR3,0x10),0))) {
           Store (1, PRMV)
         }
       }
@@ -1425,7 +1461,7 @@ Scope(\_SB_.PC00) {
         Store (1, HBCS)
       }
       If(LAnd(CondRefOf(VMR3),CondRefOf(VMDE))) {
-        If(LAnd(LEqual(VMDE,1),LEqual(And(VMR3,0x20),0x01))) {
+        If(LAnd(LEqual(VMDE,1),LNotEqual(And(VMR3,0x20),0))) {
           Store (1, PRMV)
         }
       }
@@ -1471,7 +1507,7 @@ Scope(\_SB_.PC00) {
         Store (1, HBCS)
       }
       If(LAnd(CondRefOf(VMR3),CondRefOf(VMDE))) {
-        If(LAnd(LEqual(VMDE,1),LEqual(And(VMR3,0x40),0x01))) {
+        If(LAnd(LEqual(VMDE,1),LNotEqual(And(VMR3,0x40),0))) {
           Store (1, PRMV)
         }
       }
@@ -1517,7 +1553,7 @@ Scope(\_SB_.PC00) {
         Store (1, HBCS)
       }
       If(LAnd(CondRefOf(VMR3),CondRefOf(VMDE))) {
-        If(LAnd(LEqual(VMDE,1),LEqual(And(VMR3,0x80),0x01))) {
+        If(LAnd(LEqual(VMDE,1),LNotEqual(And(VMR3,0x80),0))) {
           Store (1, PRMV)
         }
       }
@@ -1554,16 +1590,10 @@ Include ("Gpio.asl")
 //
 Include ("PchSerialIo.asl")
 
-
 //
 // Integrated Sensor Hub definition
 //
 Include ("PchIsh.asl")
-
-//
-// Touch Host Controllers definition
-//
-Include ("Thc.asl")
 
 //
 // MEI 1 definition

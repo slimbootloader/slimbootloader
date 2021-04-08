@@ -42,8 +42,6 @@ Scope(HDAS)
       // Arg3 - Depends on Function Index - See below for details.
       // Return - Depends on Function Index - See below for details.
 
-      ADBG("UAOL _DSM")
-
       // Verify UUID
       If (LEqual(Arg0, ToUUID ("2E60AEFC-1BA8-467A-B8CC-5727B98CECB7"))) {
         Switch(ToInteger(Arg2)) {

@@ -8,6 +8,8 @@
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
+External(\HGMD)
+External(\HGST)
 External(\_SB.PC00, DeviceObj)
 External(\_SB.PC00.GFX0, DeviceObj)
 External(\_SB.PC00.IPU0, DeviceObj)
@@ -15,26 +17,18 @@ External(\_SB.PC00.B0D3, DeviceObj)
 External(\_SB.PC00.PCIC, MethodObj)
 External(\_SB.PC00.PCID, MethodObj)
 ///
+/// CPU PCIe Root Port
+///
+include("CpuPcieRp.asl")
+include("PegCommon.asl")
+If(LAnd((LEqual(HGMD,2)), (LEqual(HGST,1)))) {
+  include("PegRtd3.asl")
+}
+
+///
 /// I.G.D
 ///
 Scope (\_SB.PC00.GFX0)
 {
   include("Igfx.asl")
 } // end I.G.D
-
-///
-/// IPU Device
-///
-include("Ipu.asl")
-
-Scope (\_SB.PC00)
-{
-  If (LNotEqual(VMDE,0)) {
-    //
-    // VMD Device
-    //
-    Device(VMD0) {
-      Name(_ADR, 0x000E0000)
-    }
-  }
-}

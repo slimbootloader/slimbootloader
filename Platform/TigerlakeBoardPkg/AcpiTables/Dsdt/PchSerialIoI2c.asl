@@ -43,7 +43,7 @@ Scope(\_SB.PC00) {
     If(LEqual(I2C0_MODE, SERIAL_IO_I2C_HIDDEN)) {
       Name (_HID, "PNP0C02")
       Method (_CRS) { Return (I2CH (I2C0_PCIE_BASE)) }
-      Name (_STA, 0x3)
+      Name (_STA, 0xB)
     }
     If(LEqual(I2C0_MODE, SERIAL_IO_I2C_PCI)) {
       Method (_DSM,4,Serialized){if(PCIC(Arg0)) { Return(PCID(Arg0,Arg1,Arg2,Arg3)) }; Return (Buffer(){0})}
@@ -61,7 +61,7 @@ Scope(\_SB.PC00) {
     If (LEqual(I2C1_MODE, SERIAL_IO_I2C_HIDDEN)) {
       Name (_HID, "PNP0C02")
       Method (_CRS) { Return (I2CH (I2C1_PCIE_BASE)) }
-      Name (_STA, 0x3)
+      Name (_STA, 0xB)
     }
     If (LEqual(I2C1_MODE, SERIAL_IO_I2C_PCI)) {
       Method (_DSM,4,Serialized){if(PCIC(Arg0)) { Return(PCID(Arg0,Arg1,Arg2,Arg3)) }; Return (Buffer(){0})}
@@ -79,7 +79,7 @@ Scope(\_SB.PC00) {
     If (LEqual (I2C2_MODE, SERIAL_IO_I2C_HIDDEN)) {
       Name (_HID, "PNP0C02")
       Method (_CRS) { Return (I2CH (I2C2_PCIE_BASE)) }
-      Name(_STA, 0x3)
+      Name(_STA, 0xB)
     }
     If (LEqual (I2C2_MODE, SERIAL_IO_I2C_PCI)) {
       Method (_DSM,4,Serialized){if(PCIC(Arg0)) { Return(PCID(Arg0,Arg1,Arg2,Arg3)) }; Return(Buffer(){0})}
@@ -99,7 +99,7 @@ Scope(\_SB.PC00) {
     If (LEqual (I2C3_MODE, SERIAL_IO_I2C_HIDDEN)) {
       Name (_HID, "PNP0C02")
       Method (_CRS) { Return (I2CH (I2C3_PCIE_BASE)) }
-      Name(_STA, 0x3)
+      Name(_STA, 0xB)
     }
     If (LEqual (I2C3_MODE, SERIAL_IO_I2C_PCI)) {
       Method (_DSM,4,Serialized){if(PCIC(Arg0)) { Return(PCID(Arg0,Arg1,Arg2,Arg3)) }; Return(Buffer(){0})}
@@ -119,7 +119,7 @@ Scope(\_SB.PC00) {
     If (LEqual (I2C4_MODE, SERIAL_IO_I2C_HIDDEN)) {
       Name (_HID, "PNP0C02")
       Method (_CRS) { Return (I2CH (I2C4_PCIE_BASE)) }
-      Name(_STA, 0x3)
+      Name(_STA, 0xB)
     }
     If (LEqual (I2C4_MODE, SERIAL_IO_I2C_PCI)) {
       Method (_DSM,4,Serialized){if(PCIC(Arg0)) { Return(PCID(Arg0,Arg1,Arg2,Arg3)) }; Return(Buffer(){0})}
@@ -139,7 +139,7 @@ Scope(\_SB.PC00) {
     If (LEqual (I2C5_MODE, SERIAL_IO_I2C_HIDDEN)) {
       Name (_HID, "PNP0C02")
       Method (_CRS) { Return (I2CH (I2C5_PCIE_BASE)) }
-      Name(_STA, 0x3)
+      Name(_STA, 0xB)
     }
     If (LEqual (I2C5_MODE, SERIAL_IO_I2C_PCI)) {
       Method (_DSM,4,Serialized){if(PCIC(Arg0)) { Return(PCID(Arg0,Arg1,Arg2,Arg3)) }; Return(Buffer(){0})}
@@ -160,7 +160,7 @@ Scope(\_SB.PC00) {
     If (LEqual (I2C6_MODE, SERIAL_IO_I2C_HIDDEN)) {
       Name (_HID, "PNP0C02")
       Method (_CRS) { Return (I2CH (I2C6_PCIE_BASE)) }
-      Name(_STA, 0x3)
+      Name(_STA, 0xB)
     }
     If (LEqual (I2C6_MODE, SERIAL_IO_I2C_PCI)) {
       Method (_DSM,4,Serialized){if(PCIC(Arg0)) { Return(PCID(Arg0,Arg1,Arg2,Arg3)) }; Return(Buffer(){0})}
@@ -180,7 +180,7 @@ Scope(\_SB.PC00) {
     If (LEqual (I2C7_MODE, SERIAL_IO_I2C_HIDDEN)) {
       Name (_HID, "PNP0C02")
       Method (_CRS) { Return (I2CH (I2C7_PCIE_BASE)) }
-      Name(_STA, 0x3)
+      Name(_STA, 0xB)
     }
     If (LEqual (I2C7_MODE, SERIAL_IO_I2C_PCI)) {
       Method (_DSM,4,Serialized){if(PCIC(Arg0)) { Return(PCID(Arg0,Arg1,Arg2,Arg3)) }; Return(Buffer(){0})}

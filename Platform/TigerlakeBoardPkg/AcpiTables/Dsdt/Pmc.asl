@@ -8,6 +8,18 @@
 #include <PchLimits.h>
 
 Scope(\) {
+
+  Name (TMOV, 10) // Timeout Value, default = 10ms.
+  //
+  // Timeout Value Adjust Method
+  // Arg0: Timeout Customize Value
+  //
+  Method(TMVA, 1, Serialized) {
+    Store(10, TMOV) // Setting default value first to avoid the TMOV have been changed before.
+    If(LGreater(Arg0, 10)) {
+      Store(Arg0, TMOV) // Set customize Timeout Value if customize TMOV greater then 10ms.
+    }
+  }
   //
   // IPC Methods
   //
@@ -43,7 +55,6 @@ Scope(\) {
 
     if (LGreater(Arg2, 16))    // (CmdSize > 16)
     {
-      ADBG("CmdSize>16 Error") // PCH:InternalOnly
       Store(1, Index(RPKG, 0)) // Store Errorcode of Command Size Exceeds to Status
       Return(RPKG)
     }
@@ -67,14 +78,14 @@ Scope(\) {
 
     ///
     /// Read the IPC_STS to get BUSY or Error status
-    /// Break on 10ms timeout or error
+    /// Break on 10ms/Customize timeout or error
     ///
     Store(0, Local0)
     While(1) {
       If(LOr(LNot(IBSY),LEqual(IERR, 1))){
         Break
       }
-      If(Lgreater(Local0, 10)) { // 10 ms timeout
+      If(Lgreater(Local0, TMOV)) { // Default Timeout Value Set to 10ms.
         Store(3, Index(RPKG, 0)) // Store Errorcode of Timeout Occured to Status
         Return(RPKG)
       }
@@ -141,11 +152,6 @@ Scope(\) {
     // WBUF3 - PCIe root port CLKREQ mapping state mask. Each bit represents the
     //         target state of the PCIe root port CLKREQ mapping.
     //
-    ADBG("Calling IPCS method with command V_PMC_PWRM_IPC_SRC_CLK_PORT_MAPPING_CMD")
-    ADBG(Concatenate("Local0 =", Local0))
-    ADBG(Concatenate("Local1 =", Local1))
-    ADBG(Concatenate("Local2 =", Local2))
-    ADBG(Concatenate("Local3 =", Local3))
     IPCS(V_PMC_PWRM_IPC_SRC_CLK_PORT_MAPPING_CMD, 0, 16, Local0, Local1, Local2, Local3)
   }
 
@@ -155,7 +161,18 @@ Scope(\) {
   // Arg1: Enable(1)/Disable(0) Clock
   //
   Method (SPCO, 2, Serialized) {
-    ADBG("Calling SPCO method to configure PCIe ClkReq Override")
+    Store(10, TMOV) // Setting Timeout Default Value
+    MCUI(Arg0, Arg1)
+  }
+
+  //
+  // Configure PCIe ClkReq and IPC1 Command Timeout Override
+  // Arg0: Clock number
+  // Arg1: Enable(1)/Disable(0) Clock
+  // Arg2: Timeout Value Override (<=10ms: Keep default setting, >10ms: Using customize timeout value)
+  //
+  Method (SPCX, 3, Serialized) {
+    TMVA(Arg2)
     MCUI(Arg0, Arg1)
   }
 
@@ -165,7 +182,6 @@ Scope(\) {
   // Arg1: UnMask(1)/Mask(0) Clock
   //
   Method (HBCM, 2, Serialized) {
-    ADBG("mask/unmask Hybrid Partner CLKREQ")
     Name(HPRI, 0) // Hybrid Partner root port index
     Store(Arg0, HPRI)
     If(LLess (HPRI, PCH_MAX_PCIE_ROOT_PORTS)) {
@@ -176,11 +192,6 @@ Scope(\) {
       Store(0, Local0)
       Store(0, Local1)
     }
-
-    ADBG("Calling IPCS method for Hybrid Partner with command V_PMC_PWRM_IPC_SRC_CLK_PORT_MAPPING_CMD")
-    ADBG(Concatenate("Port number of Hybrid Partner =", HPRI))
-    ADBG(Concatenate("Local0 of Hybrid Partner =", Local0))
-    ADBG(Concatenate("Local1 of Hybrid Partner =", Local1))
     IPCS(V_PMC_PWRM_IPC_SRC_CLK_PORT_MAPPING_CMD, 0, 16, 0, 0, Local0, Local1)
   }
 
@@ -392,11 +403,9 @@ Scope(\) {
   //
   Method(CFAE, 1, NotSerialized) {
     If(DerefOf(Index(Arg0, 0))) {
-      ADBG("CPPM Forced Alignment Disable")
       Store(0, CPPM)
       Return(Buffer() {0})
     } Else {
-      ADBG("CPPM Forced Alignment Enable")
       Store(1, CPPM)
       Return(Buffer() {0})
     }
@@ -410,7 +419,8 @@ Scope(\) {
   // @retval 1 MODPHY power gating is supported
   //
   Method (IMPS) {
-    If (LEqual (PCHS, PCH_S)) {
+
+    If (LOr (LEqual (PCHS, PCHH), LEqual (PCHS, PCH_S))) {
       Return(0)
     } Else {
       Return(1)

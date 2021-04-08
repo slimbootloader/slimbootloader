@@ -35,7 +35,6 @@ Scope(\_SB_.PC00) {
     // XHCI controller _DSM method
     //
     Method(_DSM,4,serialized){
-      ADBG("XHCI _DSM")
 
       If(PCIC(Arg0)) { return(PCID(Arg0,Arg1,Arg2,Arg3)) }
 
@@ -110,7 +109,6 @@ Scope(\_SB_.PC00) {
 
     Method(_PS0,0,Serialized)
     {
-      ADBG("XHCI D0")
 
       If(LEqual(^DVID,0xFFFF))
       {
@@ -128,7 +126,6 @@ Scope(\_SB_.PC00) {
 
     Method(_PS3,0,Serialized)
     {
-      ADBG("XHCI D3")
 
       If(LEqual(^DVID,0xFFFF))
       {
@@ -169,7 +166,6 @@ Scope(\_SB_.PC00) {
       // PS0 Method for xHCI Root Hub
       Method(_PS0,0,Serialized)
       {
-        ADBG("XHCI RHUB PS0")
         If(LEqual(\_SB.PC00.XHCI.DVID,0xFFFF))
         {
           Return()
@@ -179,7 +175,6 @@ Scope(\_SB_.PC00) {
         //
         If(CondRefOf(\_SB.PC00.XHCI.RHUB.PS0X))
         {
-          ADBG("XHCI CSD0")
           \_SB.CSD0(MODPHY_SPD_GATING_XHCI)
           \_SB.PC00.XHCI.RHUB.PS0X()
         }
@@ -188,7 +183,6 @@ Scope(\_SB_.PC00) {
       // PS2 Method for xHCI Root Hub
       Method(_PS2,0,Serialized)
       {
-        ADBG("XHCI RHUB PS2")
         If(LEqual(\_SB.PC00.XHCI.DVID,0xFFFF))
         {
           Return()
@@ -199,7 +193,6 @@ Scope(\_SB_.PC00) {
         If(CondRefOf(\_SB.PC00.XHCI.RHUB.PS2X))
         {
           \_SB.PC00.XHCI.RHUB.PS2X()
-          ADBG("XHCI CSD3")
           \_SB.CSD3(MODPHY_SPD_GATING_XHCI)
         }
       }
@@ -207,7 +200,6 @@ Scope(\_SB_.PC00) {
       // PS3 Method for xHCI Root Hub
       Method(_PS3,0,Serialized)
       {
-        ADBG("XHCI RHUB PS3")
         If(LEqual(\_SB.PC00.XHCI.DVID,0xFFFF))
         {
           Return()
@@ -218,7 +210,6 @@ Scope(\_SB_.PC00) {
         If(CondRefOf(\_SB.PC00.XHCI.RHUB.PS3X))
         {
           \_SB.PC00.XHCI.RHUB.PS3X()
-          ADBG("XHCI CSD3")
           \_SB.CSD3(MODPHY_SPD_GATING_XHCI)
         }
       }

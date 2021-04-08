@@ -142,7 +142,7 @@ Scope(\_SB) {
   //
   Device (URSC) {
     Name (_HID, EISAID("PNP0C02"))
-    Name (_STA, 0x3)
+    Name (_STA, 0xB)
     Name (_UID, 5)
     //
     //  Allocates remaining memory for Hidden/Com UART devices
@@ -349,7 +349,7 @@ Scope(\_SB) {
           }
           Return (0xF)
         }
-        Return (0x3)
+        Return (0xB)
       }
       If (LEqual (UART0_MODE, SERIAL_IO_UART_COM)) {
         Method (_PSC) { Return (UPSC (UART0_PCIE_BASE)) }
@@ -372,7 +372,7 @@ Scope(\_SB) {
           }
           Return (0xF)
         }
-        Return (0x3)
+        Return (0xB)
       }
       If (LEqual (UART1_MODE, SERIAL_IO_UART_COM)) {
         Method (_PSC) { Return (UPSC (UART1_PCIE_BASE)) }
@@ -395,7 +395,7 @@ Scope(\_SB) {
           }
           Return (0xF)
         }
-        Return (0x3)
+        Return (0xB)
       }
       If (LEqual (UART2_MODE, SERIAL_IO_UART_COM)) {
         Method (_PSC) { Return (UPSC (UART2_PCIE_BASE)) }
@@ -418,7 +418,7 @@ Scope(\_SB) {
           }
           Return (0xF)
         }
-        Return (0x3)
+        Return (0xB)
       }
       If (LEqual (UART3_MODE, SERIAL_IO_UART_COM)) {
         Method (_PSC) { UPSC (UART3_PCIE_BASE) }
@@ -441,7 +441,7 @@ Scope(\_SB) {
           }
           Return (0xF)
         }
-        Return (0x3)
+        Return (0xB)
       }
       If (LEqual (UART4_MODE, SERIAL_IO_UART_COM)) {
         Method (_PSC) { UPSC (UART4_PCIE_BASE) }
@@ -464,7 +464,7 @@ Scope(\_SB) {
           }
           Return (0xF)
         }
-        Return (0x3)
+        Return (0xB)
       }
       If (LEqual (UART5_MODE, SERIAL_IO_UART_COM)) {
         Method (_PSC) { UPSC (UART5_PCIE_BASE) }
@@ -487,7 +487,7 @@ Scope(\_SB) {
           }
           Return (0xF)
         }
-        Return (0x3)
+        Return (0xB)
       }
       If (LEqual (UART6_MODE, SERIAL_IO_UART_COM)) {
         Method (_PSC) { UPSC (UART6_PCIE_BASE) }
