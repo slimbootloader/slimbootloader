@@ -45,6 +45,7 @@
 #include <Library/UsbKbLib.h>
 #include <Library/ElfLib.h>
 #include <Library/LinuxLib.h>
+#include <Library/ThunkLib.h>
 #include <Library/ContainerLib.h>
 #include <Library/DebugLogBufferLib.h>
 #include <Guid/SeedInfoHobGuid.h>
@@ -88,6 +89,8 @@
 
 #define MAX_BOOT_MENU_ENTRY      8
 #define MAX_STR_SLICE_LEN        16
+
+#define PLD_EXTRA_MOD_RTCM       SIGNATURE_32('R', 'T', 'C', 'M')
 
 typedef struct {
   UINT32       Pos;
@@ -543,4 +546,25 @@ StartPreOsBooting (
   IN LOADED_IMAGE            *LoadedPreOsImage,
   IN LOADED_IMAGE            *LoadedImage
   );
+
+
+/**
+  Call into an extra image entrypoint.
+
+  Detect and call into the image entrypoint. If required, handle thunk call
+  as well.
+
+  @param[in]  ModSignature      Module signature.
+  @param[in]  LoadedImage       Loaded Image information, expected to be PE32 format.
+
+  @retval  EFI_SUCCESS          Image returns successfully
+  @retval  Others               There is error during the module call.
+
+**/
+EFI_STATUS
+CallExtraModule (
+  IN   UINT32           ModSignature,
+  IN   LOADED_IMAGE    *LoadedImage
+  );
+
 #endif

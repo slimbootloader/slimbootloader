@@ -39,6 +39,7 @@
   BaseMemoryLib | MdePkg/Library/BaseMemoryLibSse2/BaseMemoryLibSse2.inf
   IoLib | MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
   PrintLib | MdePkg/Library/BasePrintLib/BasePrintLib.inf
+  SynchronizationLib|MdePkg/Library/BaseSynchronizationLib/BaseSynchronizationLib.inf
   HobLib | BootloaderCommonPkg/Library/HobLib/HobLib.inf
   DebugLogBufferLib | BootloaderCommonPkg/Library/DebugLogBufferLib/DebugLogBufferLib.inf
   SerialPortLib | BootloaderCommonPkg/Library/SerialPortLib/SerialPortLib.inf
@@ -59,6 +60,10 @@
   PayloadEntryLib | PayloadPkg/Library/PayloadEntryLib/PayloadEntryLib.inf
   PlatformHookLib | PayloadPkg/Library/PlatformHookLib/PlatformHookLib.inf
   PagingLib|BootloaderCommonPkg/Library/PagingLib/PagingLib.inf
+  ThunkLib|BootloaderCommonPkg/Library/ThunkLib/ThunkLib.inf
+  LitePeCoffLib|BootloaderCommonPkg/Library/LitePeCoffLib/LitePeCoffLib.inf
+  DebugAgentLib|BootloaderCommonPkg/Library/DebugAgentLib/DebugAgentLibNull.inf
+  TimerLib|BootloaderCommonPkg/Library/AcpiTimerLib/AcpiTimerLib.inf
 
 [PcdsPatchableInModule]
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel         | 0x8000004F
@@ -85,10 +90,8 @@
   gPayloadTokenSpaceGuid.PcdPayloadHeapSize                | 0x02000000
   gPayloadTokenSpaceGuid.PcdPayloadStackSize               | 0x00010000
 
-
 [Components]
   PayloadPkg/HelloWorld/HelloWorld.inf
-
 
 [BuildOptions.Common.EDKII]
   # Enable link-time optimization when building with GCC49

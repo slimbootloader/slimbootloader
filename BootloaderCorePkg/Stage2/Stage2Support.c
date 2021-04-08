@@ -589,8 +589,9 @@ BuildExtraInfoHob (
   if (GetPayloadId () == 0) {
     Length        = sizeof (SYS_CPU_TASK_HOB);
     SysCpuTaskHob = BuildGuidHob (&gLoaderMpCpuTaskInfoGuid, Length);
+
     if (SysCpuTaskHob != NULL) {
-      SysCpuTaskHob->SysCpuTask = MpGetTask ();
+      SysCpuTaskHob->SysCpuTask = (UINTN) MpGetTask();
     }
   }
 
