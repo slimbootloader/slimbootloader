@@ -148,12 +148,12 @@ class Board(BaseBoard):
         self.FWUPDATE_SIZE        = 0x0001A000 if self.ENABLE_FWU else 0
 
         self.TOP_SWAP_SIZE        = 0x080000
-        self.REDUNDANT_SIZE       = self.UCODE_SIZE + self.STAGE2_SIZE + \
-            self.STAGE1B_SIZE + self.FWUPDATE_SIZE + self.CFGDATA_SIZE  + self.KEYHASH_SIZE
-        self.NON_REDUNDANT_SIZE   = 0x4BA000 + self.SIIPFW_SIZE
+        self.REDUNDANT_SIZE       = 0x360000
         self.NON_VOLATILE_SIZE    = 0x001000
-        self.SLIMBOOTLOADER_SIZE  = (self.TOP_SWAP_SIZE + self.REDUNDANT_SIZE) * 2 + \
-            self.NON_REDUNDANT_SIZE + self.NON_VOLATILE_SIZE
+        self.SLIMBOOTLOADER_SIZE  = 0xD00000
+        self.NON_REDUNDANT_SIZE   = self.SLIMBOOTLOADER_SIZE - \
+                                    (self.TOP_SWAP_SIZE + self.REDUNDANT_SIZE) * 2 - \
+                                    self.NON_VOLATILE_SIZE
 
         # TBD: ACM/KM/BPM Size, as of Sep 2017
         #      ACM size is fixed 100KB, KM size is fixed 0x400, BPM size is fixed 0x600
