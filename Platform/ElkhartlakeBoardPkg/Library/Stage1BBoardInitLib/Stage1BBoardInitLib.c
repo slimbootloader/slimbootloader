@@ -504,9 +504,6 @@ UpdateFspConfig (
     Fspmcfg->SkipExtGfxScan             = MemCfgData->SkipExtGfxScan;
     Fspmcfg->WdtDisableAndLock          = MemCfgData->WdtDisableAndLock;
 
-    // Debug Config
-    Fspmcfg->DciUsb3TypecUfpDbg         = MemCfgData->DciUsb3TypecUfpDbg;
-
     //IBECC Config
     Fspmcfg->Ibecc                      = MemCfgData->Ibecc;
     Fspmcfg->IbeccParity                = MemCfgData->IbeccParity;
@@ -518,20 +515,21 @@ UpdateFspConfig (
       Fspmcfg->IbeccProtectedRegionMask[Index]   = MemCfgData->IbeccProtectedRegionMask[Index];
     }
 
-    // SA:CPU_TRACE_HUB_CONFIG, PCH_TRACE_HUB_CONFIG
-    Fspmcfg->CpuTraceHubMemReg0Size      = TraceBuffer8M;
-    Fspmcfg->CpuTraceHubMemReg1Size      = TraceBuffer8M;
-    Fspmcfg->PchTraceHubMemReg0Size      = TraceBuffer8M;
-    Fspmcfg->PchTraceHubMemReg1Size      = TraceBuffer8M;
+    // Debug Config
+    Fspmcfg->DciEn                        = 1;
+    Fspmcfg->DciModphyPg                  = 0;
+    Fspmcfg->DciDbcMode                   = DciDbcNoChange; // 4
+    Fspmcfg->CpuTraceHubMode              = TraceHubModeHostDebugger; // 2
+    Fspmcfg->PchTraceHubMode              = TraceHubModeHostDebugger; // 2
+    Fspmcfg->DciUsb3TypecUfpDbg           = 2;
+    Fspmcfg->DebugInterfaceLockEnable     = TRUE;
+    Fspmcfg->PlatformDebugConsent         = MemCfgData->PlatformDebugConsent;
+    Fspmcfg->CpuTraceHubMemReg0Size       = MemCfgData->CpuTraceHubMemReg0Size;
+    Fspmcfg->CpuTraceHubMemReg1Size       = MemCfgData->CpuTraceHubMemReg1Size;
+    Fspmcfg->PchTraceHubMemReg0Size       = MemCfgData->PchTraceHubMemReg0Size;
+    Fspmcfg->PchTraceHubMemReg1Size       = MemCfgData->PchTraceHubMemReg1Size;
 
-    Fspmcfg->DciEn             = 1;
-    Fspmcfg->DciModphyPg       = 0;
-    Fspmcfg->DciDbcMode        = DciDbcNoChange; // 4
-    Fspmcfg->CpuTraceHubMode   = TraceHubModeHostDebugger; // 2
-    Fspmcfg->PchTraceHubMode   = TraceHubModeHostDebugger; // 2
-    Fspmcfg->PlatformDebugConsent = DEBUG_CONSENT_FEATURE_ENABLED (); // ProbTypeDsiabled
-
-    switch (DEBUG_CONSENT_FEATURE_ENABLED()) {
+    switch (MemCfgData->PlatformDebugConsent) {
       case ProbeTypeDisabled:
         Fspmcfg->DciEn                    = FALSE;
         Fspmcfg->CpuTraceHubMode          = TraceHubModeDisabled;
@@ -556,15 +554,31 @@ UpdateFspConfig (
         break;
 
       case ProbeTypeManual:
-        Fspmcfg->DciModphyPg              = 0x1;
-        Fspmcfg->DciDbcMode               = 0x0;
-        Fspmcfg->CpuTraceHubMode          = 0x0;
-        Fspmcfg->PchTraceHubMode          = 0x0;
+        Fspmcfg->DciEn                    = MemCfgData->DciEn;
+        Fspmcfg->DciModphyPg              = MemCfgData->DciModphyPg;
+        Fspmcfg->DciUsb3TypecUfpDbg       = MemCfgData->DciUsb3TypecUfpDbg;
+        Fspmcfg->DciDbcMode               = MemCfgData->DciDbcMode;
+        Fspmcfg->CpuTraceHubMode          = MemCfgData->CpuTraceHubMode;
+        Fspmcfg->PchTraceHubMode          = MemCfgData->PchTraceHubMode;
+        Fspmcfg->DebugInterfaceEnable     = 0x0;
         break;
 
       default:
         break;
-     }
+    }
+
+      DEBUG ((DEBUG_INFO, "PlatformDebugConsent = %x\n",   Fspmcfg->PlatformDebugConsent));
+      DEBUG ((DEBUG_INFO, "DciEn = %x\n",                  Fspmcfg->DciEn));
+      DEBUG ((DEBUG_INFO, "DciModphyPg = %x\n",            Fspmcfg->DciModphyPg));
+      DEBUG ((DEBUG_INFO, "DciUsb3TypecUfpDbg = %x\n",     Fspmcfg->DciUsb3TypecUfpDbg));
+      DEBUG ((DEBUG_INFO, "DciDbcMode = %x\n",             Fspmcfg->DciDbcMode));
+      DEBUG ((DEBUG_INFO, "DebugInterfaceEnable = %x\n",   Fspmcfg->DebugInterfaceEnable));
+      DEBUG ((DEBUG_INFO, "CpuTraceHubMode = %x\n",        Fspmcfg->CpuTraceHubMode));
+      DEBUG ((DEBUG_INFO, "CpuTraceHubMemReg0Size = %x\n", Fspmcfg->CpuTraceHubMemReg0Size));
+      DEBUG ((DEBUG_INFO, "CpuTraceHubMemReg1Size = %x\n", Fspmcfg->CpuTraceHubMemReg1Size));
+      DEBUG ((DEBUG_INFO, "PchTraceHubMode = %x\n",        Fspmcfg->PchTraceHubMode));
+      DEBUG ((DEBUG_INFO, "PchTraceHubMemReg0Size = %x\n", Fspmcfg->PchTraceHubMemReg0Size));
+      DEBUG ((DEBUG_INFO, "PchTraceHubMemReg1Size = %x\n", Fspmcfg->PchTraceHubMemReg1Size));
   }
 
   // IGD config data
@@ -663,8 +677,6 @@ UpdateFspConfig (
 
     Fspmcfg->DisableTeIgd         = 0x01;
     Fspmcfg->HeciCommunication2   = 0x01;
-
-    Fspmcfg->DebugInterfaceLockEnable = TRUE;
 
   } else {
     DEBUG ((DEBUG_INFO, "Failed to find GFX CFG!\n"));
@@ -857,7 +869,6 @@ PlatformFeaturesInit (
     // Update platform specific feature from configuration data.
     PlatformFeatures           = &((PLATFORM_DATA *)GetPlatformDataPtr ())->PlatformFeatures;
     if (PlatformFeatures != NULL) {
-        PlatformFeatures->DebugConsent = FeaturesCfgData->Features.DebugConsent;
       PlatformFeatures->TccMode   = FeaturesCfgData->Features.Tcc;
       PlatformFeatures->TcctBase  = NULL;
       PlatformFeatures->TcctSize  = 0;
