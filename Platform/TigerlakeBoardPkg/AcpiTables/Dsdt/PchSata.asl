@@ -9,9 +9,11 @@
 // Platform hooks for SATA _DSM method.
 // SATC - check if platform code supports given _DSM GUID
 // SATD - execute _DSM method
+// SPPR - sata port present status - contains bitmask of SATA ports that are present on the system
 //
 External(\_SB.PC00.SAT0.SATC, MethodObj)
 External(\_SB.PC00.SAT0.SATD, MethodObj)
+Include("RstRaid.asl")
 
 // PCH SATA Controller
 Device (SAT0) {
@@ -101,7 +103,4 @@ Device (SAT0) {
   {
     Name(_ADR,0x0005FFFF)
   }
-
-  Include("RstRemapping.asl")
-  Include("RstRaid.asl")
 }

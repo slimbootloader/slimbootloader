@@ -334,4 +334,5 @@
   Offset(719),    ICKP, 16, // Offset(719),   Iclk PID number
   Offset(721),    PCNV, 16, // Offset(721),   CNVi sideband port id
   Offset(723),    HBSL, 32, // Offset(723),
+  Offset(727),    SPPR, 8,  // Offset(727),   Holds information from SATA PCS register about SATA ports which recieved COMINIT from connected devices.
   }

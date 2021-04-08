@@ -3,7 +3,7 @@
   Copyright (c) 1999 - 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
-#include "Register/PchPcieRpRegs.h"
+
   External(\_SB.PC00.PC2M, MethodObj)
 
   OperationRegion(PXCS,SystemMemory,\_SB.PC00.PC2M(_ADR()),0xC80)

@@ -34,10 +34,18 @@
         help         : >
                        Enable/Disable MeasuredBoot feature. 1:MeasuredBoot Enabled (default), 0:MeasuredBoot Disabled
         length       : 1b
+    - LowPowerS0Idle   :
+        name         : Low Power S0 Idle Enable (S0ix)
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable Low Power Idle feature. 1:Low Power S0 Idle Enabled, 0:Low Power S0 Idle Disabled
+        length       : 1b
     - Rsvd         :
         name         : Reserved
         type         : Reserved
         help         : >
                        reserved bits
-        length       : 30b
+        length       : 29b
+
 

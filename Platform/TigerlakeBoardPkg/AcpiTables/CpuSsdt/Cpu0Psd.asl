@@ -31,7 +31,7 @@ DefinitionBlock (
   {
     //
     // Get _PSD
-    // Arg0 = CPU Index
+    // Arg0 = CPU Domain ID
     //
     Method(GPSD, 1)
     {
@@ -55,7 +55,7 @@ DefinitionBlock (
         }
       })
 
-      If (And(\_SB.CFGD, PPM_TURBO_BOOST_MAX)) // Intel Turbo Boost Max 3.0
+      If (LAnd(And(\_SB.CFGD, PPM_TURBO_BOOST_MAX), And(\_SB.CFGD, PPM_HWP)))
       {
         Store (Arg0, Index(DerefOf(Index(HPSD, 0)),2)) // Domain
         Store (1, Index(DerefOf(Index(HPSD, 0)),4)) // Number of processors belonging to the domain.

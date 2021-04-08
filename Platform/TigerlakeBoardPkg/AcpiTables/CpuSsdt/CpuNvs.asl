@@ -71,7 +71,7 @@
   Offset(85),               // Offset(85) : Offset(84), Reserved bytes
   Offset(85),     LMPS, 8,  // Offset(85),    Max ratio of the slowest core.
   Offset(86),     ITBM, 8,  // Offset(86),    Enable/Disable Intel Turbo Boost Max Technology 3.0.
-  Offset(87),     ITBD, 8,  // Offset(87),    Enable/Disable Intel Turbo Boost Max Technology 3.0 Driver.
+  Offset(87),     ITBD, 8,  // Offset(87),    @Deprecated: Intel Turbo Boost Max Technology 3.0 Driver doesn't support for TGL.
   Offset(88),     ITBI, 8,  // Offset(88),    Intel Turbo Boost Max Technology 3.0 interrupt status.
   Offset(89),     ITBS, 8,  // Offset(89),    SMI to resume periodic SMM for Intel Turbo Boost Max Technology 3.0.
   Offset(90),     OBIN, 8,  // Offset(90),    Indicates bins of Oc support. MSR 194h FLEX_RATIO Bits (19:17)

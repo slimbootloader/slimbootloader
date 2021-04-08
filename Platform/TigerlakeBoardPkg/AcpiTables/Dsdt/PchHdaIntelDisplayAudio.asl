@@ -22,4 +22,5 @@ Scope(HDAS)
   Device(IDA) {
     Name(_ADR, 0x10000000)
   } // END Device(IDA)
+
 } // END Scope(HDAS)

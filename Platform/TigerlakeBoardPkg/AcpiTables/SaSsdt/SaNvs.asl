@@ -200,4 +200,22 @@
   Offset(407),    DPMS, 8,  // Offset(407),   Dynamic PMem Support <0: Disabled, 1:Enabled>
   Offset(408),    PMSA, 64, // Offset(408),   Private Pmem Starting address
   Offset(416),    PMRL, 64, // Offset(416),   Private Pmem Range Length
+  Offset(424),    EEC3, 8,  // Offset(424),   PCIe3 Endpoint Capability Structure Offset
+  Offset(425),    P0SC, 8,  // Offset(425),   PCIe0 RTD3 Device Source Clock Number
+  Offset(426),    P1SC, 8,  // Offset(426),   PCIe1 RTD3 Device Source Clock Number
+  Offset(427),    P2SC, 8,  // Offset(427),   PCIe2 RTD3 Device Source Clock Number
+  Offset(428),    P3SC, 8,  // Offset(428),   PCIe2 RTD3 Device Source Clock Number
+  Offset(429),    SBN0, 8,  // Offset(429),   PCIe0 Secondary Bus Number (PCIe0 Endpoint Bus Number)
+  Offset(430),    SBN1, 8,  // Offset(430),   PCIe1 Secondary Bus Number (PCIe0 Endpoint Bus Number)
+  Offset(431),    SBN2, 8,  // Offset(431),   PCIe2 Secondary Bus Number (PCIe0 Endpoint Bus Number)
+  Offset(432),    SBN3, 8,  // Offset(432),   PCIe2 Secondary Bus Number (PCIe0 Endpoint Bus Number)
+  Offset(433),    EEC1, 8,  // Offset(433),   PCIe1 Endpoint Capability Structure Offset
+  Offset(434),    EEC2, 8,  // Offset(434),   PCIe2 Endpoint Capability Structure Offset
+  Offset(435),    PBR1, 8,  // Offset(435),   Is bridge device behind PEG1
+  Offset(436),    PBR2, 8,  // Offset(436),   Is bridge device behind PEG2
+  Offset(437),    PBR3, 8,  // Offset(437),   Is bridge device behind PEG3
+  Offset(438),    HGST, 8,  // Offset(438),   Slot selection between PCH/PEG
+  Offset(439),    PDIW, 8,  // Offset(439),   DPin Dynamic Switch
+  Offset(440),    PDI0, 16, // Offset(440),   DPin Dynamic Switch delay 0, unit is ms
+  Offset(442),    PDI1, 16, // Offset(442),   DPin Dynamic Switch delay 1, unit is ms
   }

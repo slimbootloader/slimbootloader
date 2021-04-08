@@ -23,7 +23,7 @@ EFI_ACPI_2_0_MULTIPLE_APIC_DESCRIPTION_TABLE Madt = {
     {
       EFI_ACPI_2_0_MULTIPLE_SAPIC_DESCRIPTION_TABLE_SIGNATURE,
       sizeof (EFI_ACPI_2_0_MULTIPLE_APIC_DESCRIPTION_TABLE),
-      EFI_ACPI_5_1_MULTIPLE_APIC_DESCRIPTION_TABLE_REVISION,
+      EFI_ACPI_6_1_MULTIPLE_APIC_DESCRIPTION_TABLE_REVISION,
 
       //
       // Checksum will be updated at runtime
@@ -61,56 +61,56 @@ EFI_ACPI_2_0_MULTIPLE_APIC_DESCRIPTION_TABLE Madt = {
       EFI_ACPI_2_0_PROCESSOR_LOCAL_APIC,                        // Type
       sizeof (EFI_ACPI_2_0_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
       0x01,                                                     // Processor ID
-      0x00,                                                     // Local APIC ID
+      0xFF,                                                     // Local APIC ID
       0x00000000                                                // Flags - Disabled (until initialized by platform driver)
     },
     {
       EFI_ACPI_2_0_PROCESSOR_LOCAL_APIC,                        // Type
       sizeof (EFI_ACPI_2_0_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
       0x02,                                                     // Processor ID
-      0x02,                                                     // Local APIC ID
+      0xFF,                                                     // Local APIC ID
       0x00000000                                                // Flags - Disabled (until initialized by platform driver)
     },
     {
       EFI_ACPI_2_0_PROCESSOR_LOCAL_APIC,                        // Type
       sizeof (EFI_ACPI_2_0_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
       0x03,                                                     // Processor ID
-      0x04,                                                     // Local APIC ID
+      0xFF,                                                     // Local APIC ID
       0x00000000                                                // Flags - Disabled (until initialized by platform driver)
     },
     {
       EFI_ACPI_2_0_PROCESSOR_LOCAL_APIC,                        // Type
       sizeof (EFI_ACPI_2_0_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
       0x04,                                                     // Processor ID
-      0x06,                                                     // Local APIC ID
+      0xFF,                                                     // Local APIC ID
       0x00000000                                                // Flags - Disabled (until initialized by platform driver)
     },
     {
       EFI_ACPI_2_0_PROCESSOR_LOCAL_APIC,                        // Type
       sizeof (EFI_ACPI_2_0_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
       0x05,                                                     // Processor ID
-      0x01,                                                     // Local APIC ID
+      0xFF,                                                     // Local APIC ID
       0x00000000                                                // Flags - Disabled (until initialized by platform driver)
     },
     {
       EFI_ACPI_2_0_PROCESSOR_LOCAL_APIC,                        // Type
       sizeof (EFI_ACPI_2_0_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
       0x06,                                                     // Processor ID
-      0x03,                                                     // Local APIC ID
+      0xFF,                                                     // Local APIC ID
       0x00000000                                                // Flags - Disabled (until initialized by platform driver)
     },
     {
       EFI_ACPI_2_0_PROCESSOR_LOCAL_APIC,                        // Type
       sizeof (EFI_ACPI_2_0_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
       0x07,                                                     // Processor ID
-      0x05,                                                     // Local APIC ID
+      0xFF,                                                     // Local APIC ID
       0x00000000                                                // Flags - Disabled (until initialized by platform driver)
     },
     {
       EFI_ACPI_2_0_PROCESSOR_LOCAL_APIC,                        // Type
       sizeof (EFI_ACPI_2_0_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
       0x08,                                                     // Processor ID
-      0x07,                                                     // Local APIC ID
+      0xFF,                                                     // Local APIC ID
       0x00000000                                                // Flags - Disabled (until initialized by platform driver)
     },
     {

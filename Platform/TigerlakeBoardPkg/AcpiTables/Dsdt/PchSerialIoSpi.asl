@@ -43,7 +43,7 @@ Scope(\_SB.PC00) {
     If(LEqual(SPI0_MODE, SERIAL_IO_SPI_HIDDEN)) {
       Name (_HID, "PNP0C02")
       Method (_CRS) { Return (SPIH (SPI0_PCIE_BASE)) }
-      Name (_STA, 0x3)
+      Name (_STA, 0xB)
     }
     If(LEqual(SPI0_MODE, SERIAL_IO_SPI_PCI)) {
       Method (_DSM,4,Serialized){if(PCIC(Arg0)) { Return(PCID(Arg0,Arg1,Arg2,Arg3)) }; Return (Buffer(){0})}
@@ -61,7 +61,7 @@ Scope(\_SB.PC00) {
     If (LEqual(SPI1_MODE, SERIAL_IO_SPI_HIDDEN)) {
       Name (_HID, "PNP0C02")
       Method (_CRS) { Return (SPIH (SPI1_PCIE_BASE)) }
-      Name (_STA, 0x3)
+      Name (_STA, 0xB)
     }
     If (LEqual(SPI1_MODE, SERIAL_IO_SPI_PCI)) {
       Method (_DSM,4,Serialized){if(PCIC(Arg0)) { Return(PCID(Arg0,Arg1,Arg2,Arg3)) }; Return (Buffer(){0})}
@@ -79,7 +79,7 @@ Scope(\_SB.PC00) {
     If (LEqual (SPI2_MODE, SERIAL_IO_SPI_HIDDEN)) {
       Name (_HID, "PNP0C02")
       Method (_CRS) { Return (SPIH (SPI2_PCIE_BASE)) }
-      Name(_STA, 0x3)
+      Name(_STA, 0xB)
     }
     If (LEqual (SPI2_MODE, SERIAL_IO_SPI_PCI)) {
       Method (_DSM,4,Serialized){if(PCIC(Arg0)) { Return(PCID(Arg0,Arg1,Arg2,Arg3)) }; Return(Buffer(){0})}
@@ -88,14 +88,7 @@ Scope(\_SB.PC00) {
     }
     If (LOr (LEqual (SPI2_MODE, SERIAL_IO_SPI_PCI), LEqual (SPI2_MODE, SERIAL_IO_SPI_DISABLED))) {
       Method (_ADR) {
-#ifdef PCH_TGL
-
-#else
-#ifdef PCH_ICL
-        if(LEqual (PCHS, PCHN)){ Return (SERIAL_IO_PCH_N_SPI2_ADR) }
-#endif
-#endif
-         Return (SERIAL_IO_SPI2_ADR)
+        Return (SERIAL_IO_SPI2_ADR)
       }
     }
   }
@@ -107,7 +100,7 @@ Scope(\_SB.PC00) {
     If (LEqual (SPI3_MODE, SERIAL_IO_SPI_HIDDEN)) {
       Name (_HID, "PNP0C02")
       Method (_CRS) { Return (SPIH (SPI3_PCIE_BASE)) }
-      Name(_STA, 0x3)
+      Name(_STA, 0xB)
     }
     If (LEqual (SPI3_MODE, SERIAL_IO_SPI_PCI)) {
       Method (_DSM,4,Serialized){if(PCIC(Arg0)) { Return(PCID(Arg0,Arg1,Arg2,Arg3)) }; Return(Buffer(){0})}
@@ -127,7 +120,7 @@ Scope(\_SB.PC00) {
     If (LEqual (SPI4_MODE, SERIAL_IO_SPI_HIDDEN)) {
       Name (_HID, "PNP0C02")
       Method (_CRS) { Return (SPIH (SPI4_PCIE_BASE)) }
-      Name(_STA, 0x3)
+      Name(_STA, 0xB)
     }
     If (LEqual (SPI4_MODE, SERIAL_IO_SPI_PCI)) {
       Method (_DSM,4,Serialized){if(PCIC(Arg0)) { Return(PCID(Arg0,Arg1,Arg2,Arg3)) }; Return(Buffer(){0})}
@@ -147,7 +140,7 @@ Scope(\_SB.PC00) {
     If (LEqual (SPI5_MODE, SERIAL_IO_SPI_HIDDEN)) {
       Name (_HID, "PNP0C02")
       Method (_CRS) { Return (SPIH (SPI5_PCIE_BASE)) }
-      Name(_STA, 0x3)
+      Name(_STA, 0xB)
     }
     If (LEqual (SPI5_MODE, SERIAL_IO_SPI_PCI)) {
       Method (_DSM,4,Serialized){if(PCIC(Arg0)) { Return(PCID(Arg0,Arg1,Arg2,Arg3)) }; Return(Buffer(){0})}
@@ -167,7 +160,7 @@ Scope(\_SB.PC00) {
     If (LEqual (SPI6_MODE, SERIAL_IO_SPI_HIDDEN)) {
       Name (_HID, "PNP0C02")
       Method (_CRS) { Return (SPIH (SPI6_PCIE_BASE)) }
-      Name(_STA, 0x3)
+      Name(_STA, 0xB)
     }
     If (LEqual (SPI6_MODE, SERIAL_IO_SPI_PCI)) {
       Method (_DSM,4,Serialized){if(PCIC(Arg0)) { Return(PCID(Arg0,Arg1,Arg2,Arg3)) }; Return(Buffer(){0})}

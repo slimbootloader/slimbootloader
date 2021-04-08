@@ -148,6 +148,22 @@ DefinitionBlock (
     }
 
     //
+    // Create I2C Bus Resource descriptor for _CRS usage
+    // Arg0 - I2C bus address of the connection (Slave Address)
+    // Returns buffer with 'I2cSerialBus' resource descriptor
+    //
+    Method (VIIC, 1, Serialized) {
+      Name (VIC0, ResourceTemplate () {
+          I2cSerialBus (0, ControllerInitiated, 400000,
+              AddressingMode7Bit, "\\_SB.PC00.XHCI.RHUB.HS04.VI2C",
+              0x00, ResourceConsumer, VDEV,)
+      })
+      CreateWordField (VIC0, VDEV._ADR, DADR)
+      Store (Arg0, DADR)
+      Return (VIC0)
+    }
+
+    //
     // Create Interrupt Resource descriptor for _CRS usage
     // Arg0 - GPIO Pad used as Interrupt source
     // Arg1 - Edge (1) or Level (0) interrupt triggering
@@ -177,10 +193,11 @@ DefinitionBlock (
   Include ("Video.asl")
   Include ("FwuWmi.asl")
   Include ("Gpe.asl")
-
+  Include ("Pep.asl")
+  Include ("Connectivity.asl")
   Include ("PchRpPxsxWrapper.asl")
   Include ("SerialIoDevices.asl")
-
+  Include ("SerialIoTimingParametersEmbedded.asl")
   Include ("HidPlatformEventDev.asl")
   Include ("HIDWakeDSM.asl")
   Include ("PinDriverLib.asl")
@@ -197,10 +214,15 @@ DefinitionBlock (
     }
   }
 
-  If (LAnd(LNotEqual(PSW2, 0), LEqual(RPN2, 0x08))) {
+  If (LOr(LAnd(LNotEqual(PSW2, 0), LEqual(RPN2, 0x08)) ,LAnd(LNotEqual(WLWK, 0), LEqual(WLRP, 0x08)))) {
     Scope(\_SB.PC00.RP08) {
       Method (PPRW, 0) {
-        Return (GPRW (GGPE (PSW2), 4))
+        If (LAnd(LNotEqual(PSW2, 0), LEqual(RPN2, 0x08))) {
+          Return (GPRW (GGPE (PSW2), 4))
+        }
+        If (LAnd(LNotEqual(WLWK, 0), LEqual(WLRP, 0x08))) {
+          Return (GPRW (GGPE (WLWK), 4))
+        }
       }
     }
   }
@@ -215,6 +237,14 @@ DefinitionBlock (
 
   If (LAnd(LNotEqual(WWKP, 0), LEqual(WWRP, 0x04))) {
     Scope(\_SB.PC00.RP04) {
+      Method (PPRW, 0) {
+        Return (GPRW (GGPE (WWKP), 4))
+      }
+    }
+  }
+
+  If (LAnd(LNotEqual(WWKP, 0), LEqual(WWRP, 0x09))) {
+    Scope(\_SB.PC00.RP09) {
       Method (PPRW, 0) {
         Return (GPRW (GGPE (WWKP), 4))
       }

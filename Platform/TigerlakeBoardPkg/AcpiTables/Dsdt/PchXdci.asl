@@ -45,8 +45,6 @@ Scope(\_SB.PC00)
     Method(_DSM,4,Serialized)
     {
       If(PCIC(Arg0)) { Return(PCID(Arg0,Arg1,Arg2,Arg3)) }
-
-      ADBG("XDCI DSM")
       If(LEqual(Arg0, ToUUID("732b85d5-b7a7-4a1b-9ba0-4bbd00ffd511"))){
         If(Lequal(Arg1, 1)){
           //
@@ -81,7 +79,6 @@ Scope(\_SB.PC00)
             Store(Arg1, Local2)
 
             If(LEqual(Local1, 0)){
-              ADBG("PMU D0")
               // Clear PMU PME
               // 0x10F81C BIT3: USB3 PME
               // 0x10F81C BIT4: USB2 PME
@@ -107,31 +104,14 @@ Scope(\_SB.PC00)
                 }
                 Increment(Local0)
               }
-              If(LNotEqual(U2CP, 0)){
-                // Show warning message
-                ADBG("U2 not in D0")
-              }
-              If(LNotEqual(U3CP, 0)){
-                // Show warning message
-                ADBG("U3 not in D0")
-              }
               Return(0)
             }
 
             If(LEqual(Local1, 3)){
-              ADBG("PMU D3")
               // PMU should be in D0 at this point
               // 0x10f810 Bit 11:10 - current power state of USB3 core
               // 0x10f810 Bit 9:8   - current power state of USB2 core
               // both should be clear
-              If(LNotEqual(U2CP, 0)){
-                // Show warning message
-                ADBG("U2 not in D0")
-              }
-              If(LNotEqual(U3CP, 0)){
-                // Show warning message
-                ADBG("U3 not in D0")
-              }
               // Set PMU to D3 by writing 3 to 0x10f818 bit 1:0
               Store(3, PUPS)
               // Wait 200ms for PMU to enter D3
@@ -147,14 +127,6 @@ Scope(\_SB.PC00)
                 }
                 Increment(Local0)
               }
-              If(LNotEqual(U2CP, 3)){
-                // Show warning message
-                ADBG("U2 not in D3")
-              }
-              If(LNotEqual(U3CP, 3)){
-                // Show warning message
-                ADBG("U3 not in D3")
-              }
               // Set/Clear PMU PME
               // 0x10F81C BIT3: USB3 PME
               // 0x10F81C BIT4: USB2 PME
@@ -167,7 +139,6 @@ Scope(\_SB.PC00)
           Switch(ToInteger(Arg2)) {
             Case(0){
               // Function 0: return Bit map to indicate Function 0,1,4,5,7,8,9 supported
-              ADBG("XDCI Fn0")
               Return(Buffer(){0xB3, 0x03})
             }
             Case(1){
@@ -175,7 +146,6 @@ Scope(\_SB.PC00)
               // This method is called by the USB function stack to set the power state of the PMU.
               //   Bit 0 as 1: to indicate Platform support for Attach/detach notify
               //   Bit 1 as 0:HW based charging indication
-              ADBG("XDCI Fn1")
               Return(0x1)
             }
             Case(4){
@@ -183,11 +153,8 @@ Scope(\_SB.PC00)
               // Arg3: A package consisting of 1 ULONG value
               //   0x00 PMU should enter the D0 power state.
               //   0x03 PMU should enter the D3 power state.
-
-              ADBG("XDCI Fn4")
               // Local 1 is power state D0 or D3
               Store(DerefOf(Index(Arg3,0)), Local1)
-              ADBG(Local1)
 
               // Set PMU to Dx state and clear PMU PME
               SPPS(Local1, 0)
@@ -200,14 +167,10 @@ Scope(\_SB.PC00)
               // If device is attached, notify XDCI with 0x80
               // If device is detached, notify XDCI with 0x81
 
-              ADBG("XDCI Fn5")
-
               If(CondRefOf(\_SB.PC00.LPCB.H_EC.XDAT)){
                 If(LEqual(\_SB.PC00.LPCB.H_EC.XDAT(), 1)){
-                  ADBG("USB Attach")
                   Notify(\_SB.PC00.XDCI,0x80)
                 }Else{
-                  ADBG("USB Detach")
                   Notify(\_SB.PC00.XDCI,0x81)
                 }
               }
@@ -219,8 +182,6 @@ Scope(\_SB.PC00)
               // Return:
               //   0: PMU is in D0 state
               //   3: PMU is in D3 state
-
-              ADBG("XDCI Fn7")
 
               OperationRegion(XD22, SystemMemory, XDBA(), 0x110000)
               Field(XD22, WordAcc, NoLock, Preserve)
@@ -239,7 +200,6 @@ Scope(\_SB.PC00)
               //   0: Group ID 0 is reserved
               //   Other value: A UCHAR value indicating that the controller shares connectors with one or more other controllers.
               //
-              ADBG("XDCI Fn8")
               Return(1) // Both CPU and PCH are sharing connectors.
             }
             Case(9){
@@ -249,7 +209,6 @@ Scope(\_SB.PC00)
               // Return:
               //   None
               //
-              ADBG("XDCI Fn9")
               OperationRegion(XGCT, SystemMemory, XDBA(), 0x110000)
               Field(XGCT, WordAcc, NoLock, Preserve)
               {
@@ -258,7 +217,6 @@ Scope(\_SB.PC00)
               }
               And(PPDS, 0xFFF80000, Local1)  // Keep Bit19 - Bit31
               ShiftRight(Local1, 19, Local1)
-              ADBG(Concatenate("PCH XDCI: Func9 Return Val = ", ToHexString(Local1)))
               return(Local1)
             }
           }
