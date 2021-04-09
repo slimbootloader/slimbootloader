@@ -129,6 +129,7 @@
   gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled
   gPlatformModuleTokenSpaceGuid.PcdLinuxPayloadEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootHashMask
+  gPlatformModuleTokenSpaceGuid.PcdSmmRebaseMode
 
 [Depex]
   TRUE

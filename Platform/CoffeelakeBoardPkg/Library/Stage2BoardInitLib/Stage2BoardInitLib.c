@@ -989,9 +989,6 @@ BoardInit (
     }
     break;
   case PostSiliconInit:
-    if (GetBootMode () == BOOT_ON_S3_RESUME) {
-      Status = PcdSet8S (PcdSmmRebaseMode, SMM_REBASE_ENABLE_ON_S3_RESUME_ONLY);
-    }
     // Set TSEG base/size PCD
     TsegBase = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + TSEG) & ~0xF;
     TsegSize = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + BGSM) & ~0xF;

@@ -176,6 +176,8 @@
   gPlatformModuleTokenSpaceGuid.PcdVerInfoBase            | 0xFF000000 | UINT32 | 0x20000190
   gPlatformModuleTokenSpaceGuid.PcdCfgDataLoadSource      | 0x00000002 | UINT32 | 0x20000194
   gPlatformModuleTokenSpaceGuid.PcdPayloadReservedMemSize | 0x00004000 | UINT32 | 0x20000195
+
+  # 0: Disable  1: Enable  2: Auto (disable for UEFI payload, enable for others)
   gPlatformModuleTokenSpaceGuid.PcdSmmRebaseMode          | 0x00000000 | UINT8  | 0x20000196
 
   gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesBase       | 0x00000000 | UINT32 | 0x20000197
