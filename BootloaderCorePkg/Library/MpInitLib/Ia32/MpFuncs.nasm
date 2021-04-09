@@ -1,6 +1,6 @@
 ;------------------------------------------------------------------------------
 ;
-; Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+; Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
 ; SPDX-License-Identifier: BSD-2-Clause-Patent
 ;
 ; Module Name:
@@ -74,6 +74,21 @@ BITS 32
 SmmRebase:
     mov         edi,  0x3fef8     ; SMBASE offset
     mov         [edi], eax        ; change to new  SMBASE
+
+    mov         eax, dword [esi + SmrrMaskLocation]
+    cmp         eax, 0
+    jz          SkipSmrrProg
+
+    xchg        eax, ebx
+    mov         eax, dword [esi + SmrrBaseLocation]
+    xor         edx, edx
+    mov         ecx, 0x1f2        ; MSR_IA32_SMRR_PHYSBASE
+    wrmsr
+    inc         ecx
+    xchg        eax, ebx
+    wrmsr
+
+SkipSmrrProg:
     rsm
     jmp         $
 
@@ -206,6 +221,13 @@ dd      0
 
 Cr3Location                   equ        BufferStartLocation + 40h
 dd      0
+
+SmrrBaseLocation              equ        BufferStartLocation + 44h
+dd      0
+
+SmrrMaskLocation              equ        BufferStartLocation + 48h
+dd      0
+
 
 MpDataAreaEnd:
 
