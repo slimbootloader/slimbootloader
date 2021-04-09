@@ -1881,7 +1881,19 @@ UpdateOsBootMediumInfo (
   OUT  OS_BOOT_OPTION_LIST  *OsBootOptionList
 )
 {
+  OS_BOOT_OPTION             *BootOption;
+  UINT32                      Idx;
+
   FillBootOptionListFromCfgData (OsBootOptionList);
+  // Disable PreOS checker since the SKU doesn't support it
+  if (!PchIsSciSupported ()) {
+    for (Idx = 0; Idx < OsBootOptionList->OsBootOptionCount; Idx++) {
+      BootOption = &(OsBootOptionList->OsBootOption[Idx]);
+      if ((BootOption->BootFlags & BOOT_FLAGS_PREOS) != 0) {
+        BootOption->BootFlags &= ~BOOT_FLAGS_PREOS;
+      }
+    }
+  }
 }
 
 /**
