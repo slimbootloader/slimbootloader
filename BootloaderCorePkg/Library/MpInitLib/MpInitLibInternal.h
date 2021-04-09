@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -23,6 +23,7 @@
 #include <Library/ExtraBaseLib.h>
 #include <Library/BootloaderCoreLib.h>
 #include <Library/S3SaveRestoreLib.h>
+#include <Register/Intel/ArchitecturalMsr.h>
 
 #define   AP_BUFFER_ADDRESS        0x38000
 #define   AP_BUFFER_SIZE           0x8000
@@ -60,6 +61,8 @@ typedef struct {
   UINT32            ApStackSize;
   UINT32            MpDataStruct;
   UINT32            Cr3;
+  UINT32            SmrrBase;
+  UINT32            SmrrMask;
 } AP_DATA_STRUCT;
 
 typedef struct {

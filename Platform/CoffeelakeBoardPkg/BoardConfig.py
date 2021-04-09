@@ -54,6 +54,7 @@ class Board(BaseBoard):
         self.ENABLE_GRUB_CONFIG   = 1
         self.ENABLE_CSME_UPDATE   = 0
         self.ENABLE_DMA_PROTECTION    = 0
+        self.ENABLE_SMM_REBASE        = 0
         self.DEBUG_PORT_NUMBER    = 0xFF
 
         # CSME update library is required to enable this option and will be available as part of CSME kit

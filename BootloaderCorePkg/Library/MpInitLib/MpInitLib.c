@@ -1,7 +1,7 @@
 /** @file
   MP init library implementation.
 
-  Copyright (c) 2015 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2015 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -293,6 +293,10 @@ MpInit (
   UINT32                    CpuCount;
   UINT32                    Index;
   EFI_PHYSICAL_ADDRESS      ApStackTop;
+  MSR_IA32_MTRRCAP_REGISTER MtrrCap;
+  UINT32                    SmrrBase;
+  UINT32                    SmrrSize;
+  MSR_IA32_MTRR_PHYSMASK_REGISTER SmrrMask;
 
   Status   = EFI_SUCCESS;
   ApBuffer = (UINT8 *)AP_BUFFER_ADDRESS;
@@ -334,6 +338,24 @@ MpInit (
       AsmReadGdtr ((IA32_DESCRIPTOR *)&ApDataPtr->Gdtr);
       AsmReadIdtr ((IA32_DESCRIPTOR *)&ApDataPtr->Idtr);
       ApDataPtr->Cr3 = (UINT32)AsmReadCr3 ();
+
+      // Fill SMRR base and size
+      SmrrBase = PcdGet32 (PcdSmramTsegBase);
+      SmrrSize = PcdGet32 (PcdSmramTsegSize);
+      if (SmrrSize > 0) {
+        if ((SmrrSize < SIZE_4KB) ||  (SmrrSize != GetPowerOfTwo32 (SmrrSize)) || ((SmrrBase & ~(SmrrSize - 1)) != SmrrBase)) {
+          DEBUG ((DEBUG_INFO, "Invalid SMRR base or size\n"));
+        } else {
+          MtrrCap.Uint64 = AsmReadMsr64 (MSR_IA32_MTRRCAP);
+          if (MtrrCap.Bits.SMRR == 1) {
+            SmrrMask.Uint64 = (UINT32)(~(SmrrSize - 1));
+            SmrrMask.Bits.V = 1;
+            ApDataPtr->SmrrBase = SmrrBase;
+            ApDataPtr->SmrrMask = (UINT32)SmrrMask.Uint64;
+            DEBUG ((DEBUG_INFO, "SMRR Base: 0x%08x  Mask: 0x%08x\n", ApDataPtr->SmrrBase, ApDataPtr->SmrrMask));
+          }
+        }
+      }
 
       //
       // Patch the Segment/Offset for the far Jump into PMODE code

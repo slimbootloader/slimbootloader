@@ -80,6 +80,7 @@ class Board(BaseBoard):
         self.ENABLE_FRAMEBUFFER_INIT  = 1
         self.ENABLE_GRUB_CONFIG       = 1
         self.ENABLE_DMA_PROTECTION    = 0
+        self.ENABLE_SMM_REBASE        = 0
 
         # G9 for 384 | W7 Opt for SHA384| Ni  Opt for SHA256| V8 Opt for SHA256
         self.ENABLE_CRYPTO_SHA_OPT    = IPP_CRYPTO_OPTIMIZATION_MASK['SHA256_NI']

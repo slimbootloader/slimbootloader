@@ -966,6 +966,8 @@ BoardInit (
   UINT32          AddressPort;
   UINTN           SpiBar0;
   UINT32          Length;
+  UINT32          TsegBase;
+  UINT32          TsegSize;
   BL_SW_SMI_INFO            *BlSwSmiInfo;
   VTD_INFO                  *VtdInfo;
   EFI_PEI_GRAPHICS_INFO_HOB *FspGfxHob;
@@ -990,7 +992,12 @@ BoardInit (
     if (GetBootMode () == BOOT_ON_S3_RESUME) {
       Status = PcdSet8S (PcdSmmRebaseMode, SMM_REBASE_ENABLE_ON_S3_RESUME_ONLY);
     }
-    Status = PcdSet32S (PcdSmramTsegBase, MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + TSEG) & ~0xF);
+    // Set TSEG base/size PCD
+    TsegBase = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + TSEG) & ~0xF;
+    TsegSize = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + BGSM) & ~0xF;
+    TsegSize -= TsegBase;
+    (VOID) PcdSet32S (PcdSmramTsegBase, TsegBase);
+    (VOID) PcdSet32S (PcdSmramTsegSize, (UINT32)TsegSize);
 
     //
     // Reinitialize PCI bus master and memory space for Graphics device
@@ -1874,9 +1881,8 @@ UpdateSmmInfo (
   if (LdrSmmInfo == NULL) {
     return;
   }
-  LdrSmmInfo->SmmBase = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + TSEG) & ~0xF;
-  LdrSmmInfo->SmmSize = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + BGSM) & ~0xF;
-  LdrSmmInfo->SmmSize -= LdrSmmInfo->SmmBase;
+  LdrSmmInfo->SmmBase = PcdGet32 (PcdSmramTsegBase);
+  LdrSmmInfo->SmmSize = PcdGet32 (PcdSmramTsegSize);
   LdrSmmInfo->Flags = SMM_FLAGS_4KB_COMMUNICATION;
   DEBUG ((DEBUG_INFO, "SmmRamBase = 0x%x, SmmRamSize = 0x%x\n", LdrSmmInfo->SmmBase, LdrSmmInfo->SmmSize));
 
