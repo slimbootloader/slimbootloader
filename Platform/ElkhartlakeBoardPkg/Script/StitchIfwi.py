@@ -238,7 +238,7 @@ def main():
 
     ifwi_file_name = 'sbl_ifwi_%s.bin' % (args.platform)
     shutil.copy(generated_ifwi_file, ifwi_file_name)
-    list_val = [1,0,2,4,16] #List of values to override
+    list_val = [1,0,2,4,16,249,15] #List of values to override
     softstrap_write(ifwi_file_name,0xc18,list_val[0],1) #FUSA SOFTSTRAP due to CSME 2041 update
     ###################################################################################
     # Offset | Start Bit | Strap Size | Value | Comment                             |
@@ -246,12 +246,16 @@ def main():
     # 0xc1c    0x1          0x1         0x1     pmc_smip/RSVD_2A_DIS_STRAP_PSEGBe0
     # 0xc1c    0x2          0x1         0x1     pmc_smip/RSVD_2A_DIS_STRAP_PSEGBe1
     # 0x1d5    0x4          0x4         0x1     MGBE/mgbe_soc_specific
+    # 0x183    0x1          0x2         0x0     DMI/OPD_LVO
+    # 0x1cc    0x4          0x4         0x0     FIA/LOSL8
     ###################################################################################
+    softstrap_write(ifwi_file_name,0xc1c,list_val[2],1)
+    softstrap_write(ifwi_file_name,0xc1c,list_val[3],1)
+    softstrap_write(ifwi_file_name,0x183,list_val[5],0)
     if args.option == 'tsn':
         softstrap_write(ifwi_file_name,0x1ce,list_val[1],0)
-        softstrap_write(ifwi_file_name,0xc1c,list_val[2],1)
-        softstrap_write(ifwi_file_name,0xc1c,list_val[3],1)
         softstrap_write(ifwi_file_name,0x1d5,list_val[4],1)
+        softstrap_write(ifwi_file_name,0x1cc,list_val[6],0)
 
     print ("\nIFWI Stitching completed successfully !")
     print ("Boot Guard Profile: %s" % args.btg_profile.upper())
