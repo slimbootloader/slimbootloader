@@ -1456,7 +1456,7 @@ UpdateFspConfig (
     Fspscfg->PchFivrExtVnnRailIccMaximum                 = 0xC8;
     Fspscfg->PchFivrExtV1p05RailIccMaximum               = 0x64;
     Fspscfg->PchFivrExtVnnRailSxIccMaximum               = 0xC8;
-    Fspscfg->PchFivrExtV1p05RailCtrlRampTmr              = 0x0;
+    Fspscfg->PchFivrExtV1p05RailCtrlRampTmr              = 0x1;
 
     // PCH_PM_CONFIG
     Fspscfg->PchPmSlpS3MinAssert                         = SiCfgData->PchPmSlpS3MinAssert;

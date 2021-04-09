@@ -880,7 +880,7 @@
       help         : >
                      PCODE MMIO Mailbox- Thermal Design Current time window. Defined in milli seconds. Valid Values 1 - 1ms , 2 - 2ms , 3 - 3ms , 4 - 4ms , 5 - 5ms , 6 - 6ms , 7 - 7ms , 8 - 8ms , 10 - 10ms.For all VR Indexe
       length       : 0x05
-      value        : {0x01, 0x01, 0x01, 0x01, 0x01}
+      value        : {0x00, 0x00, 0x00, 0x00, 0x01}
   - TdcLock      :
       name         : Thermal Design Current Lock
       type         : EditNum, HEX, (0x00,0xFFFFFFFFFF)
