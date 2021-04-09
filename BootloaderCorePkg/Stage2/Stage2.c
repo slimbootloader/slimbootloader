@@ -369,6 +369,7 @@ SecStartup (
   PLATFORM_SERVICE               *PlatformService;
   VOID                           *SmbiosEntry;
   BOOLEAN                         SplashPostPci;
+  UINT8                           SmmRebaseMode;
 
   // Initialize HOB
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
@@ -443,6 +444,16 @@ SecStartup (
     if (Status == EFI_NOT_FOUND) {
       SplashPostPci = TRUE;
     }
+  }
+
+  // Skip SMM rebase if booting UEFI payload when AUTO mode is used
+  if (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_AUTO) {
+    if (GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE) {
+      SmmRebaseMode = SMM_REBASE_DISABLE;
+    } else {
+      SmmRebaseMode = SMM_REBASE_ENABLE;
+    }
+    (VOID) PcdSet8S (PcdSmmRebaseMode, SmmRebaseMode);
   }
 
   // MP Init phase 1

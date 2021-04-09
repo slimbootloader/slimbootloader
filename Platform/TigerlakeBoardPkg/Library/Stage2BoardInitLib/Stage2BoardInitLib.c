@@ -924,9 +924,6 @@ BoardInit (
     Status = PcdSet32S (PcdAcpiTableTemplatePtr, (UINT32)(UINTN)mPlatformAcpiTables);
     break;
   case PostSiliconInit:
-    if (GetBootMode () == BOOT_ON_S3_RESUME) {
-      Status = PcdSet8S (PcdSmmRebaseMode, SMM_REBASE_ENABLE_ON_S3_RESUME_ONLY);
-    }
     Status = PcdSet32S (PcdSmramTsegBase, MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + R_SA_TSEGMB) & ~0xF);
     if (PcdGetBool (PcdFramebufferInitEnabled)) {
       LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();

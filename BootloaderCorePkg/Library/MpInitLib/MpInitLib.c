@@ -150,17 +150,16 @@ CpuInit (
     mSysCpuInfo.CpuInfo[Index].ApicId = ApicId;
   }
 
-  if (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE_ON_S3_RESUME_ONLY) {
-    if ((GetBootMode() == BOOT_ON_S3_RESUME) && (mSmmBaseInfo != NULL)) {
-      SmmBaseInfo = mSmmBaseInfo;
-      for (CpuIdx = 0; CpuIdx < SmmBaseInfo->SmmBaseHdr.Count; CpuIdx++) {
-        if (ApicId == SmmBaseInfo->SmmBase[CpuIdx].ApicId) {
-          SmmRebase (Index, ApicId, SmmBaseInfo->SmmBase[CpuIdx].SmmBase);
-          break;
-        }
+  if ((GetBootMode() == BOOT_ON_S3_RESUME) && (mSmmBaseInfo != NULL)) {
+    // Perform SMM rebasing on S3 if payload provides SMM base info
+    SmmBaseInfo = mSmmBaseInfo;
+    for (CpuIdx = 0; CpuIdx < SmmBaseInfo->SmmBaseHdr.Count; CpuIdx++) {
+      if (ApicId == SmmBaseInfo->SmmBase[CpuIdx].ApicId) {
+        SmmRebase (Index, ApicId, SmmBaseInfo->SmmBase[CpuIdx].SmmBase);
+        break;
       }
-      ASSERT (CpuIdx < SmmBaseInfo->SmmBaseHdr.Count);
     }
+    ASSERT (CpuIdx < SmmBaseInfo->SmmBaseHdr.Count);
   } else if (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE) {
     SmmRebase (Index, ApicId, 0);
   }
