@@ -25,7 +25,8 @@ typedef struct {
   UINT8              CoreMinorVersion;
   UINT8              CoreMajorVersion;
   UINT8              SecureVerNum;
-  UINT8              Reserved : 5;
+  UINT8              Reserved : 4;
+  UINT8              ImageArch: 1;
   UINT8              BldDebug : 1;
   UINT8              FspDebug : 1;
   UINT8              Dirty    : 1;
