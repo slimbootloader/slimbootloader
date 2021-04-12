@@ -554,6 +554,12 @@ SecStartup (
   BoardInit (PrePayloadLoading);
   AddMeasurePoint (0x30E0);
 
+  // Trigger SMI to enable SMRR valid bit if required
+  if (SmmRebaseMode == SMM_REBASE_ENABLE) {
+    SendSmiIpiAllExcludingSelf ();
+    SendSmiIpi (GetApicId());
+  }
+
   // Continue boot flow
   if (ACPI_ENABLED() && (BootMode == BOOT_ON_S3_RESUME)) {
     S3ResumePath (Stage2Param);

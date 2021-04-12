@@ -39,6 +39,7 @@
 #include <Library/SortLib.h>
 #include <Library/StageLib.h>
 #include <Library/ThunkLib.h>
+#include <Library/LocalApicLib.h>
 #include <Library/ContainerLib.h>
 #include <Guid/BootLoaderServiceGuid.h>
 #include <Guid/BootLoaderVersionGuid.h>

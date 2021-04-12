@@ -336,3 +336,20 @@ ASM_PFX(AsmMtrrSynchUpExit):
 
     ret
 
+BITS 16
+global ASM_PFX(mDefaultSmiHandlerStart)
+global ASM_PFX(mDefaultSmiHandlerRet)
+global ASM_PFX(mDefaultSmiHandlerEnd)
+ASM_PFX(mDefaultSmiHandlerStart):
+    ; Enable valid bit in SMRR mask
+    mov ecx, 01f3h
+    rdmsr
+    cmp eax, 0
+    jz  ASM_PFX(mDefaultSmiHandlerRet)
+    or  eax, (1<<11)
+    wrmsr
+ASM_PFX(mDefaultSmiHandlerRet):
+    rsm
+ASM_PFX(mDefaultSmiHandlerEnd):
+    nop
+
