@@ -15,6 +15,10 @@ STATIC UINT8                             *mBackupBuffer;
 STATIC UINT32                             mMpInitPhase = EnumMpInitNull;
 STATIC SMMBASE_INFO                      *mSmmBaseInfo = NULL;
 
+extern UINT8                             *mDefaultSmiHandlerStart;
+extern UINT8                             *mDefaultSmiHandlerRet;
+extern UINT8                             *mDefaultSmiHandlerEnd;
+
 /**
   The function is called by PerformQuickSort to sort CPU_INFO by ApicId.
 
@@ -101,10 +105,22 @@ SmmRebase (
   IN UINT32  SmmBase
 )
 {
+  MSR_IA32_MTRRCAP_REGISTER MtrrCap;
+  UINT8                    *SmmEntry;
+  UINT8                    *DefEntry;
+
   if (SmmBase == 0) {
-    SmmBase = PcdGet32 (PcdSmramTsegBase) + PcdGet32 (PcdSmramTsegSize) - (SMM_BASE_MIN_SIZE + Index * SMM_BASE_GAP);
-    // Write 'RSM' at new SMM handler entry
-    *(UINT32 *)(UINTN)(SmmBase + 0x8000) = RSM_SIG;
+    SmmBase  = PcdGet32 (PcdSmramTsegBase) + PcdGet32 (PcdSmramTsegSize) - (SMM_BASE_MIN_SIZE + Index * SMM_BASE_GAP);
+    SmmEntry = (UINT8 *)(UINTN)SmmBase + 0x8000;
+    // Write default handler at new SMM handler entry
+    MtrrCap.Uint64 = AsmReadMsr64 (MSR_IA32_MTRRCAP);
+    if (MtrrCap.Bits.SMRR == 0) {
+      // No SMRR support, fill "RSM" at the entry instead.
+      DefEntry = (UINT8 *)&mDefaultSmiHandlerRet;
+    } else {
+      DefEntry = (UINT8 *)&mDefaultSmiHandlerStart;
+    }
+    CopyMem (SmmEntry, DefEntry, (UINT8 *)&mDefaultSmiHandlerEnd - DefEntry);
   }
 
   AsmWriteCr2 (SmmBase);
@@ -347,9 +363,10 @@ MpInit (
         } else {
           MtrrCap.Uint64 = AsmReadMsr64 (MSR_IA32_MTRRCAP);
           if (MtrrCap.Bits.SMRR == 1) {
+            // Don't enable SMRR valid yet, it will be done at end of stage2
             SmrrMask.Uint64 = (UINT32)(~(SmrrSize - 1));
-            SmrrMask.Bits.V = 1;
-            ApDataPtr->SmrrBase = SmrrBase;
+            SmrrMask.Bits.V = 0;
+            ApDataPtr->SmrrBase = SmrrBase | MSR_IA32_VMX_BASIC_REGISTER_MEMORY_TYPE_WRITE_BACK;
             ApDataPtr->SmrrMask = (UINT32)SmrrMask.Uint64;
             DEBUG ((DEBUG_INFO, "SMRR Base: 0x%08x  Mask: 0x%08x\n", ApDataPtr->SmrrBase, ApDataPtr->SmrrMask));
           }
