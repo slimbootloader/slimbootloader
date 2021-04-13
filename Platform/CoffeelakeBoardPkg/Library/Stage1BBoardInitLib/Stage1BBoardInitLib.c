@@ -506,49 +506,52 @@ GetPlatformPowerState (
   // Clear PWRBTNOR_STS
   //
   if (IoRead16 (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS) & B_ACPI_IO_PM1_STS_PRBTNOR) {
-    IoWrite16 (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS, B_ACPI_IO_PM1_STS_PRBTNOR);
+    IoWrite16 (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS, B_ACPI_IO_PM1_STS_PRBTNOR | B_ACPI_IO_PM1_STS_PRBTN);
   }
 
   //
   // If Global Reset Status, Power Failure. Host Reset Status bits are set, return S5 State
   //
-  if ((PmconA & (B_PMC_PWRM_GEN_PMCON_A_GBL_RST_STS | B_PMC_PWRM_GEN_PMCON_A_PWR_FLR | B_PMC_PWRM_GEN_PMCON_A_HOST_RST_STS)) != 0) {
-    return BOOT_WITH_FULL_CONFIGURATION;
-  }
-
   BootMode = BOOT_WITH_FULL_CONFIGURATION;
-  if (IoRead16 (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS) & B_ACPI_IO_PM1_STS_WAK) {
-    switch (IoRead16 (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_CNT) & B_ACPI_IO_PM1_CNT_SLP_TYP) {
-      case V_ACPI_IO_PM1_CNT_S3:
-        BootMode = BOOT_ON_S3_RESUME;
-        break;
-      case V_ACPI_IO_PM1_CNT_S4:
-        BootMode = BOOT_ON_S4_RESUME;
-        break;
-      case V_ACPI_IO_PM1_CNT_S5:
-        BootMode = BOOT_ON_S5_RESUME;
-        break;
-      default:
-        BootMode = BOOT_WITH_FULL_CONFIGURATION;
-        break;
+  if ((PmconA & (B_PMC_PWRM_GEN_PMCON_A_GBL_RST_STS | B_PMC_PWRM_GEN_PMCON_A_PWR_FLR | B_PMC_PWRM_GEN_PMCON_A_HOST_RST_STS)) == 0) {
+    if (IoRead16 (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS) & B_ACPI_IO_PM1_STS_WAK) {
+      switch (IoRead16 (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_CNT) & B_ACPI_IO_PM1_CNT_SLP_TYP) {
+        case V_ACPI_IO_PM1_CNT_S3:
+          BootMode = BOOT_ON_S3_RESUME;
+          break;
+        case V_ACPI_IO_PM1_CNT_S4:
+          BootMode = BOOT_ON_S4_RESUME;
+          break;
+        case V_ACPI_IO_PM1_CNT_S5:
+          BootMode = BOOT_ON_S5_RESUME;
+          break;
+        default:
+          BootMode = BOOT_WITH_FULL_CONFIGURATION;
+          break;
+      }
+    }
+
+    ///
+    /// Clear Wake Status
+    /// Also clear the PWRBTN_EN, it causes SMI# otherwise (SCI_EN is 0)
+    ///
+    IoAndThenOr32 (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS, (UINT32)~B_ACPI_IO_PM1_EN_PWRBTN_EN, B_ACPI_IO_PM1_STS_WAK);
+
+    IoAnd32 (ACPI_BASE_ADDRESS + R_ACPI_IO_GPE0_EN_127_96, (UINT32)~B_ACPI_IO_GPE0_STS_127_96_PME_B0);
+
+    if ((MmioRead8 (PCH_PWRM_BASE_ADDRESS + R_PMC_PWRM_GEN_PMCON_B) & B_PMC_PWRM_GEN_PMCON_B_RTC_PWR_STS) != 0) {
+      BootMode = BOOT_WITH_FULL_CONFIGURATION;
+
+      ///
+      /// Clear Sleep Type
+      ///
+      IoAndThenOr16 (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_CNT, (UINT16) ~B_ACPI_IO_PM1_CNT_SLP_TYP, V_ACPI_IO_PM1_CNT_S0);
     }
   }
 
-  ///
-  /// Clear Wake Status
-  /// Also clear the PWRBTN_EN, it causes SMI# otherwise (SCI_EN is 0)
-  ///
-  IoAndThenOr32 (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS, (UINT32)~B_ACPI_IO_PM1_EN_PWRBTN_EN, B_ACPI_IO_PM1_STS_WAK);
-
-  IoAnd32 (ACPI_BASE_ADDRESS + R_ACPI_IO_GPE0_EN_127_96, (UINT32)~B_ACPI_IO_GPE0_STS_127_96_PME_B0);
-
-  if ((MmioRead8 (PCH_PWRM_BASE_ADDRESS + R_PMC_PWRM_GEN_PMCON_B) & B_PMC_PWRM_GEN_PMCON_B_RTC_PWR_STS) != 0) {
-    BootMode = BOOT_WITH_FULL_CONFIGURATION;
-
-    ///
-    /// Clear Sleep Type
-    ///
-    IoAndThenOr16 (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_CNT, (UINT16) ~B_ACPI_IO_PM1_CNT_SLP_TYP, V_ACPI_IO_PM1_CNT_S0);
+  if ((BootMode == BOOT_WITH_FULL_CONFIGURATION) || (BootMode == V_ACPI_IO_PM1_CNT_S5)) {
+    // Clear power button status to prevent false power button event detection later on
+    IoWrite16 (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS,  B_ACPI_IO_PM1_STS_PRBTN);
   }
 
   return BootMode;
