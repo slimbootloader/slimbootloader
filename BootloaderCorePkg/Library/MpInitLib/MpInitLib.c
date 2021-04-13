@@ -175,7 +175,6 @@ CpuInit (
         break;
       }
     }
-    ASSERT (CpuIdx < SmmBaseInfo->SmmBaseHdr.Count);
   } else if (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE) {
     SmmRebase (Index, ApicId, 0);
   }
@@ -275,7 +274,7 @@ BspInit (
   DEBUG ((DEBUG_INFO, " BSP APIC ID: %d\n", mSysCpuInfo.CpuInfo[0].ApicId));
 
 
-  if (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE) {
+  if ((PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE) || (mMpDataStruct.SmmRebaseDoneCounter > 0)) {
     // Check SMM rebase result
     if (mMpDataStruct.SmmRebaseDoneCounter != 1) {
       CpuHalt ("CPU SMM rebase failed!\n");
@@ -476,7 +475,7 @@ MpInit (
         DEBUG ((DEBUG_INFO, " CPU %2d APIC ID: %d\n", Index, mSysCpuInfo.CpuInfo[Index].ApicId));
       }
 
-      if (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE) {
+      if ((PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE) || (mMpDataStruct.SmmRebaseDoneCounter > 0)) {
         // Check SMM rebase result
         if (mMpDataStruct.SmmRebaseDoneCounter != CpuCount) {
           CpuHalt ("CPU SMM rebase failed!\n");
