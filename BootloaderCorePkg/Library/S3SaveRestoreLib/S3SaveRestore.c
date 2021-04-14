@@ -61,6 +61,7 @@ TriggerPayloadSwSmi (
   designated for S3 save/restore purpose.
 
   @param    DataPtr               Address of the structure to be copied to TSEG
+  @param    IsHdrOnly             Reserve TotalSize, but populate only Header info
 
   @retval   EFI_OUT_OF_RESOURCES  If SmmSize is exceeding 4KiB
   @retval   EFI_OUT_OF_RESOURCES  If appeding new struct exceeds SmmSize
@@ -70,13 +71,15 @@ TriggerPayloadSwSmi (
 EFI_STATUS
 EFIAPI
 AppendS3Info (
-  IN  VOID    *DataPtr
+  IN  VOID     *DataPtr,
+  IN  BOOLEAN   IsHdrOnly
   )
 {
   LDR_SMM_INFO      LdrSmmInfo;
   UINT8             *SmmBase;
   UINT32            SmmSize;
   BL_PLD_COMM_HDR   *CommHdr;
+  BL_PLD_COMM_HDR   *DataHdr;
 
   PlatformUpdateHobInfo (&gSmmInformationGuid, &LdrSmmInfo);
   SmmBase = (UINT8 *)(UINTN)LdrSmmInfo.SmmBase;
@@ -87,15 +90,27 @@ AppendS3Info (
   }
 
   CommHdr = (BL_PLD_COMM_HDR *) SmmBase;
+  DataHdr = (BL_PLD_COMM_HDR *) DataPtr;
+
   while ( ((UINT8 *)CommHdr < SmmBase + SmmSize) &&
           CommHdr->Signature == BL_PLD_COMM_SIG) {
     CommHdr = (BL_PLD_COMM_HDR *) ((UINT8 *)CommHdr + CommHdr->TotalSize);
   }
 
-  if ( (UINT8 *)CommHdr + ((BL_PLD_COMM_HDR*)DataPtr)->TotalSize > SmmBase + SmmSize ) {
+  if ( (UINT8 *)CommHdr + DataHdr->TotalSize > SmmBase + SmmSize ) {
     return EFI_OUT_OF_RESOURCES;
   }
-  CopyMem ((VOID *)CommHdr, DataPtr, ((BL_PLD_COMM_HDR*)DataPtr)->TotalSize);
+
+  //
+  // For some IDs, we are only copying the header and rest of TotalSize
+  // is placeholder for payload to fill in. So, do a ZeroMem on data (TotalSize - sizeof(header)).
+  //
+  if (IsHdrOnly) {
+    CopyMem ((VOID *)CommHdr, DataPtr, sizeof(BL_PLD_COMM_HDR));
+    ZeroMem ((UINT8 *)CommHdr + sizeof(BL_PLD_COMM_HDR), DataHdr->TotalSize - sizeof(BL_PLD_COMM_HDR));
+  } else {
+    CopyMem ((VOID *)CommHdr, DataPtr, DataHdr->TotalSize);
+  }
 
   return EFI_SUCCESS;
 }

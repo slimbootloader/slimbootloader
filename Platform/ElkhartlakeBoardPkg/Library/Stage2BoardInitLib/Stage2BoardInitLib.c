@@ -809,9 +809,9 @@ BoardInit (
       if (GetBootMode() != BOOT_ON_S3_RESUME) {
         mSmmBaseInfo.SmmBaseHdr.Count     = (UINT8) MpGetInfo()->CpuCount;
         mSmmBaseInfo.SmmBaseHdr.TotalSize = sizeof(BL_PLD_COMM_HDR) + mSmmBaseInfo.SmmBaseHdr.Count * sizeof(CPU_SMMBASE);
-        Status = AppendS3Info ((VOID *)&mSmmBaseInfo);
+        Status = AppendS3Info ((VOID *)&mSmmBaseInfo, TRUE);
         mS3SaveReg.S3SaveHdr.TotalSize = sizeof(BL_PLD_COMM_HDR) + mS3SaveReg.S3SaveHdr.Count * sizeof(REG_INFO);
-        AppendS3Info ((VOID *)&mS3SaveReg);
+        AppendS3Info ((VOID *)&mS3SaveReg, FALSE);
       }
     }
     if ((GetBootMode() != BOOT_ON_FLASH_UPDATE) && (GetPayloadId() != 0)) {
