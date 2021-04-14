@@ -61,6 +61,8 @@ class Board(BaseBoard):
         self.ENABLE_FRAMEBUFFER_INIT    = 1
         self.ENABLE_FAST_BOOT     = 0
         self.HAVE_FUSA            = 1
+        # 0: Disable  1: Enable  2: Auto (disable for UEFI payload, enable for others)
+        self.ENABLE_SMM_REBASE     = 2
 
         if self.HAVE_FIT_TABLE:
             self.FIT_ENTRY_MAX_NUM  = 10
