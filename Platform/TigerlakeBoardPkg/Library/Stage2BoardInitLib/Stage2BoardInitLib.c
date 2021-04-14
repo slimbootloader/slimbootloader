@@ -874,6 +874,8 @@ BoardInit (
   UINT32                    RgnBase;
   UINT32                    RgnSize;
   UINT32                    Length;
+  UINT32                    TsegBase;
+  UINT32                    TsegSize;
   EFI_PEI_GRAPHICS_INFO_HOB *FspGfxHob;
   LOADER_GLOBAL_DATA        *LdrGlobal;
   SILICON_CFG_DATA          *SiCfgData;
@@ -924,7 +926,13 @@ BoardInit (
     Status = PcdSet32S (PcdAcpiTableTemplatePtr, (UINT32)(UINTN)mPlatformAcpiTables);
     break;
   case PostSiliconInit:
-    Status = PcdSet32S (PcdSmramTsegBase, MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + R_SA_TSEGMB) & ~0xF);
+    // Set TSEG base/size PCD
+    TsegBase = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + R_SA_TSEGMB) & ~0xF;
+    TsegSize = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + R_SA_BGSM) & ~0xF;
+    TsegSize -= TsegBase;
+    (VOID) PcdSet32S (PcdSmramTsegBase, TsegBase);
+    (VOID) PcdSet32S (PcdSmramTsegSize, (UINT32)TsegSize);
+
     if (PcdGetBool (PcdFramebufferInitEnabled)) {
       LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
       FspGfxHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GetGuidHobData (LdrGlobal->FspHobList, &Length, &gEfiGraphicsInfoHobGuid);
@@ -1849,9 +1857,8 @@ UpdateSmmInfo (
   if (LdrSmmInfo == NULL) {
     return;
   }
-  LdrSmmInfo->SmmBase = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + R_SA_TSEGMB) & ~0xF;
-  LdrSmmInfo->SmmSize = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + R_SA_BGSM) & ~0xF;
-  LdrSmmInfo->SmmSize -= LdrSmmInfo->SmmBase;
+  LdrSmmInfo->SmmBase = PcdGet32 (PcdSmramTsegBase);
+  LdrSmmInfo->SmmSize = PcdGet32 (PcdSmramTsegSize);
   LdrSmmInfo->Flags = SMM_FLAGS_4KB_COMMUNICATION;
   DEBUG ((DEBUG_INFO, "SmmRamBase = 0x%x, SmmRamSize = 0x%x\n", LdrSmmInfo->SmmBase, LdrSmmInfo->SmmSize));
 
