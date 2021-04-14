@@ -735,7 +735,7 @@ Ext2fsOpen (
 #ifndef LIBSA_NO_FS_SYMLINK
   INODE32 ParentInumber;
   INT32 Nlinks;
-  CHAR8 NameBuf[MAXPATHLEN + 1];
+  CHAR8 NameBuf[MAX_FILE_PATH_LEN+1];
   CHAR8 *Buf;
 
   Nlinks = 0;
@@ -871,20 +871,20 @@ Ext2fsOpen (
       //
       // XXX should handle LARGEFILE
       //
-      INT32 LinkLength;
-      INT32 Len;
+      UINTN LinkLength;
+      UINTN Len;
 
       LinkLength = Fp->DiskInode.Ext2DInodeSize;
 
       Len = AsciiStrLen (Cp);
 
-      if (LinkLength + Len > MAXPATHLEN ||
+      if (LinkLength + Len > MAX_FILE_PATH_LEN ||
           ++Nlinks > MAXSYMLINKS) {
         Status = RETURN_LOAD_ERROR;
         goto out;
       }
 
-      memmove (&NameBuf[LinkLength], Cp, Len + 1);
+      CopyMem (&NameBuf[LinkLength], Cp, Len + 1);
 
       if (LinkLength < EXT2_MAXSYMLINKLEN) {
         CopyMem (NameBuf, Fp->DiskInode.Ext2DInodeBlocks, LinkLength);
