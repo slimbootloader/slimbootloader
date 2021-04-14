@@ -116,6 +116,7 @@ TriggerPayloadSwSmi (
   designated for S3 save/restore purpose.
 
   @param    DataPtr               Address of the structure to be copied to TSEG
+  @param    IsHdrOnly             Reserve TotalSize, but populate only Header info
 
   @retval   EFI_OUT_OF_RESOURCES  If SmmSize is exceeding 4KiB
   @retval   EFI_OUT_OF_RESOURCES  If appeding new struct exceeds SmmSize
@@ -125,7 +126,8 @@ TriggerPayloadSwSmi (
 EFI_STATUS
 EFIAPI
 AppendS3Info (
-  IN  VOID    *DataPtr
+  IN  VOID     *DataPtr,
+  IN  BOOLEAN   IsHdrOnly
   );
 
 
