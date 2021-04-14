@@ -447,7 +447,8 @@ SecStartup (
   }
 
   // Skip SMM rebase if booting UEFI payload when AUTO mode is used
-  if (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_AUTO) {
+  SmmRebaseMode = PcdGet8 (PcdSmmRebaseMode);
+  if (SmmRebaseMode == SMM_REBASE_AUTO) {
     if (GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE) {
       SmmRebaseMode = SMM_REBASE_DISABLE;
     } else {
