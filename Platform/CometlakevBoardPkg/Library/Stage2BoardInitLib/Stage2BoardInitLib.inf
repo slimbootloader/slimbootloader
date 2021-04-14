@@ -76,6 +76,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase
+  gPlatformModuleTokenSpaceGuid.PcdSmramTsegSize
   gPlatformModuleTokenSpaceGuid.PcdSmmRebaseMode
   gPlatformModuleTokenSpaceGuid.PcdFramebufferInitEnabled
   gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled

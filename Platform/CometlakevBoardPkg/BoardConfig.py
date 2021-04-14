@@ -54,6 +54,9 @@ class Board(BaseBoard):
         self.ENABLE_GRUB_CONFIG       = 1
         self.ENABLE_CSME_UPDATE   = 0
 
+        # 0: Disable  1: Enable  2: Auto (disable for UEFI payload, enable for others)
+        self.ENABLE_SMM_REBASE    = 2
+
         # CSME update library is required to enable this option and will be available as part of CSME kit
         self.BUILD_CSME_UPDATE_DRIVER   = 0
 
