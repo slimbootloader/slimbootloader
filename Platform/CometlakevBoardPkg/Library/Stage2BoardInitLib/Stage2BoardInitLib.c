@@ -1024,6 +1024,8 @@ BoardInit (
   UINT32          AddressPort;
   UINTN           SpiBar0;
   UINT32          Length;
+  UINT32          TsegBase;
+  UINT32          TsegSize;
   UINT32          PayloadSelGpioData;
   UINT32          PayloadSelGpioPad;
   UINT32          PayloadId;
@@ -1082,7 +1084,12 @@ BoardInit (
     }
     break;
   case PostSiliconInit:
-    Status = PcdSet32S (PcdSmramTsegBase, MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + TSEG) & ~0xF);
+    // Set TSEG base/size PCD
+    TsegBase = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + TSEG) & ~0xF;
+    TsegSize = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + BGSM) & ~0xF;
+    TsegSize -= TsegBase;
+    (VOID) PcdSet32S (PcdSmramTsegBase, TsegBase);
+    (VOID) PcdSet32S (PcdSmramTsegSize, (UINT32)TsegSize);
 
     //
     // Reinitialize PCI bus master and memory space for Graphics device
@@ -2055,9 +2062,8 @@ UpdateSmmInfo (
     PCI_FUNCTION_NUMBER_PCH_PMC,
     0);
 
-  LdrSmmInfo->SmmBase = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + TSEG) & ~0xF;
-  LdrSmmInfo->SmmSize = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + BGSM) & ~0xF;
-  LdrSmmInfo->SmmSize -= LdrSmmInfo->SmmBase;
+  LdrSmmInfo->SmmBase = PcdGet32 (PcdSmramTsegBase);
+  LdrSmmInfo->SmmSize = PcdGet32 (PcdSmramTsegSize);
   LdrSmmInfo->Flags = SMM_FLAGS_4KB_COMMUNICATION;
   DEBUG ((DEBUG_INFO, "SmmRamBase = 0x%x, SmmRamSize = 0x%x\n", LdrSmmInfo->SmmBase, LdrSmmInfo->SmmSize));
 
