@@ -1399,6 +1399,7 @@
   - IbeccErrorInj :
       name         : IbeccErrorInj Note- Modification accepts the disclaimer shown in the Help text
       type         : Combo
+      option       : $EN_DIS
       help         : >
                      Disclaimer- Warning- This must NOT be enabled for production!!! Enabling Error Injection allows attackers who have access to the Host Operating System to inject IBECC errors that can cause unintended # memory corruption and enable the leak of security data in the BIOS stolen memory regions.
       length       : 0x01

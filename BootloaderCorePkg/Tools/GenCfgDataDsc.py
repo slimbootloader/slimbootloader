@@ -1655,7 +1655,7 @@ EndList
                     try:
                         (OpVal, OpStr) = Option.split(':')
                     except:
-                        raise Exception("Invalide option format '%s' !" % Option)
+                        raise Exception("Invalid option format '%s' !" % Option)
                     TmpList.append((OpVal, OpStr))
         return  TmpList
 

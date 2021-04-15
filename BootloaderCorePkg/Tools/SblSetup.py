@@ -1851,7 +1851,7 @@ def get_cfg_item_options (item):
             try:
                 (op_val, op_str) = option.split(':')
             except:
-                raise SystemExit ("Exception: Invalide option format '%s' !" % option)
+                raise SystemExit ("Exception: Invalid option format '%s' !" % option)
             tmp_list.append((op_val, op_str))
     return  tmp_list
 
