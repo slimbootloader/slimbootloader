@@ -302,12 +302,19 @@ NvmeInitialize (
   if (NvmeInitMode == DevDeinit) {
     if (mNvmeCtrlPrivate != NULL) {
       NvmeDeInitialize (mNvmeCtrlPrivate);
+      // Disable Bus Master
+      MmioAnd16 (mNvmeCtrlPrivate->PciBaseAddr + PCI_COMMAND_OFFSET,
+                 (UINT16)~(EFI_PCI_COMMAND_IO_SPACE | EFI_PCI_COMMAND_MEMORY_SPACE | EFI_PCI_COMMAND_BUS_MASTER));
       mNvmeCtrlPrivate = NULL;
     }
     return EFI_SUCCESS;
   }
 
   DEBUG ((DEBUG_INFO, "NvmExpressDriverBindingStart: start\n"));
+
+  // Enable Bus Master
+  MmioOr16 (NvmeHcPciBase + PCI_COMMAND_OFFSET,
+            (UINT16)(EFI_PCI_COMMAND_IO_SPACE | EFI_PCI_COMMAND_MEMORY_SPACE | EFI_PCI_COMMAND_BUS_MASTER));
 
   Private          = NULL;
 
@@ -345,6 +352,7 @@ NvmeInitialize (
   Private->BufferPciAddr             = (UINT8 *)(UINTN)MappedAddr;
   Private->Signature                 = NVME_CONTROLLER_PRIVATE_DATA_SIGNATURE;
   Private->NvmeHCBase                = MmioRead32 (NvmeHcPciBase + PCI_BASE_ADDRESSREG_OFFSET) & 0xFFFFF000;
+  Private->PciBaseAddr               = NvmeHcPciBase;
   Private->Passthru.Mode             = &Private->PassThruMode;
   Private->Passthru.PassThru         = NvmExpressPassThru;
   Private->Passthru.GetNextNamespace = NvmExpressGetNextNamespace;
@@ -375,6 +383,9 @@ Exit:
       FreePool (Private->ControllerData);
     }
   }
+
+  MmioAnd16 (NvmeHcPciBase + PCI_COMMAND_OFFSET,
+            (UINT16)~(EFI_PCI_COMMAND_IO_SPACE | EFI_PCI_COMMAND_MEMORY_SPACE | EFI_PCI_COMMAND_BUS_MASTER));
 
   DEBUG ((DEBUG_INFO, "NvmExpressDriverBindingStart: end with %r\n", Status));
 
