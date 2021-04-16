@@ -149,6 +149,45 @@ GpioInit (
 }
 
 /**
+  Update current boot Payload ID.
+
+**/
+VOID
+UpdatePayloadId (
+  VOID
+  )
+{
+  UINT8                BootDev;
+  GEN_CFG_DATA        *GenericCfgData;
+
+  GenericCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);
+  if (GenericCfgData != NULL) {
+    if (GenericCfgData->PayloadId == AUTO_PAYLOAD_ID_SIGNATURE) {
+      // Use QEMU 3rd bootorder to select the payload
+      // Add QEMU command line parameter:
+      //   default           : enable OsLoader
+      //   '-boot order=??a' : enable EFI payload
+      //   '-boot order=??c' : enable LINUX payload
+      // Here ?? is the normal boot devices.
+      IoWrite8 (0x70, 0x38);
+      BootDev = IoRead8 (0x71) >> 4;
+      if (BootDev == 1) {
+        // Boot UEFI payload
+        SetPayloadId (UEFI_PAYLOAD_ID_SIGNATURE);
+      } else if (BootDev == 2) {
+        // Boot LINUX payload
+        SetPayloadId (LINX_PAYLOAD_ID_SIGNATURE);
+      } else {
+        // Boot OsLoader
+        SetPayloadId (0);
+      }
+    } else {
+      SetPayloadId (GenericCfgData->PayloadId);
+    }
+  }
+}
+
+/**
   Board specific hook point.
 
   Implement board specific initialization during the boot flow.
@@ -163,11 +202,9 @@ BoardInit (
 )
 {
   EFI_STATUS           Status;
-  GEN_CFG_DATA        *GenericCfgData;
   LOADER_GLOBAL_DATA  *LdrGlobal;
   UINT32               TsegBase;
   UINT64               TsegSize;
-  UINT8                BootDev;
   VOID                *Buffer;
   UINT32               Length;
 
@@ -203,33 +240,8 @@ BoardInit (
     }
     // Prepare platform ACPI tempate
     Status = PcdSet32S (PcdAcpiTableTemplatePtr, (UINT32)(UINTN)mPlatformAcpiTblTmpl);
-    break;
-
-  case PostPciEnumeration:
-    GenericCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);
-    if (GenericCfgData != NULL) {
-      if (GenericCfgData->PayloadId == AUTO_PAYLOAD_ID_SIGNATURE) {
-        // Use QEMU 3rd bootorder to select the payload
-        // Add QEMU command line parameter:
-        //   default           : enable OsLoader
-        //   '-boot order=??a' : enable EFI payload
-        //   '-boot order=??c' : enable LINUX payload
-        // Here ?? is the normal boot devices.
-        IoWrite8 (0x70, 0x38);
-        BootDev = IoRead8 (0x71) >> 4;
-        if (BootDev == 1) {
-          // Boot UEFI payload
-          SetPayloadId (UEFI_PAYLOAD_ID_SIGNATURE);
-        } else if (BootDev == 2) {
-          // Boot LINUX payload
-          SetPayloadId (LINX_PAYLOAD_ID_SIGNATURE);
-        } else {
-          // Boot OsLoader
-          SetPayloadId (0);
-        }
-      } else {
-        SetPayloadId (GenericCfgData->PayloadId);
-      }
+    if (GetBootMode() != BOOT_ON_FLASH_UPDATE) {
+      UpdatePayloadId ();
     }
     break;
 
