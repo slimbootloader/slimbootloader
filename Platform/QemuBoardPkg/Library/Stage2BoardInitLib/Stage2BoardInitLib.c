@@ -207,6 +207,7 @@ BoardInit (
   UINT64               TsegSize;
   VOID                *Buffer;
   UINT32               Length;
+  UINT32               PmBase;
 
   switch (InitPhase) {
   case PreSiliconInit:
@@ -242,6 +243,27 @@ BoardInit (
     Status = PcdSet32S (PcdAcpiTableTemplatePtr, (UINT32)(UINTN)mPlatformAcpiTblTmpl);
     if (GetBootMode() != BOOT_ON_FLASH_UPDATE) {
       UpdatePayloadId ();
+    }
+    break;
+
+  case PostSiliconInit:
+    // Open TSEG so that MpInit can do SMM rebasing if required
+    PciAnd8 (PCI_LIB_ADDRESS(0, 0, 0, MCH_ESMRAMC), (UINT8)~MCH_ESMRAMC_T_EN);
+    PciAndThenOr8 (PCI_LIB_ADDRESS(0, 0, 0, MCH_SMRAM), (UINT8)~MCH_SMRAM_D_CLOSE, MCH_SMRAM_D_OPEN);
+    break;
+
+  case PrePayloadLoading:
+    // Hide TSEG
+    PciOr8 (PCI_LIB_ADDRESS(0, 0, 0, MCH_ESMRAMC), MCH_ESMRAMC_T_EN);
+    // Close TSEG
+    PciAndThenOr8 (PCI_LIB_ADDRESS(0, 0, 0, MCH_SMRAM), (UINT8)~MCH_SMRAM_D_OPEN, MCH_SMRAM_D_CLOSE);
+    if (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE) {
+      PciOr8 (PCI_LIB_ADDRESS(0, 0, 0, MCH_SMRAM), MCH_SMRAM_D_LCK);
+      // Lock down SMI_EN register
+      PmBase = PciRead32 (POWER_MGMT_REGISTER_Q35 (ICH9_PMBASE)) & ICH9_PMBASE_MASK;
+      IoWrite32 (PmBase + ICH9_PMBASE_OFS_SMI_EN, 0);
+      // Prevent software from undoing the above (until platform reset).
+      PciOr16 (POWER_MGMT_REGISTER_Q35 (ICH9_GEN_PMCON_1),  ICH9_GEN_PMCON_1_SMI_LOCK);
     }
     break;
 
@@ -430,7 +452,6 @@ UpdateSmmInfo (
     SmmInfoHob->SmmBase = PcdGet32 (PcdSmramTsegBase);
     SmmInfoHob->SmmSize = TsegSize;
     SmmInfoHob->Flags   = 0;
-    DEBUG ((DEBUG_INFO, "SmmRamBase = 0x%x, SmmRamSize = 0x%x\n", SmmInfoHob->SmmBase, SmmInfoHob->SmmSize));
   }
 }
 

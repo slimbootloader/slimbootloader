@@ -1,4 +1,4 @@
-From 3908ec6175efd972a5b9389baf89a981e31dd316 Mon Sep 17 00:00:00 2001
+From 994d737942cd29459a21ea475cbf833f42065e00 Mon Sep 17 00:00:00 2001
 From: Aiden Park <aiden.park@intel.com>
 Date: Wed, 11 Dec 2019 10:00:41 -0800
 Subject: [PATCH] Build QEMU FSP 2.0 binaries
@@ -16,7 +16,7 @@ Signed-off-by: Maurice Ma <maurice.ma@intel.com>
  QemuFspPkg/FspDescription/FspDescription.txt  |   2 +
  QemuFspPkg/FspHeader/FspHeader.aslc           |  90 ++
  QemuFspPkg/FspHeader/FspHeader.inf            |  49 ++
- QemuFspPkg/FspmInit/FspmInit.c                | 722 ++++++++++++++++
+ QemuFspPkg/FspmInit/FspmInit.c                | 795 ++++++++++++++++++
  QemuFspPkg/FspmInit/FspmInit.h                |  77 ++
  QemuFspPkg/FspmInit/FspmInit.inf              |  67 ++
  QemuFspPkg/FspsInit/FspsInit.c                | 234 ++++++
@@ -29,7 +29,7 @@ Signed-off-by: Maurice Ma <maurice.ma@intel.com>
  QemuFspPkg/Include/FspsUpd.h                  | 101 +++
  QemuFspPkg/Include/FsptUpd.h                  | 101 +++
  QemuFspPkg/Include/OvmfPlatforms.h            |  45 +
- QemuFspPkg/Include/Q35MchIch9.h               | 112 +++
+ QemuFspPkg/Include/Q35MchIch9.h               | 113 +++
  QemuFspPkg/Include/X58Ich10.h                 |  51 ++
  .../Library/PlatformSecLib/Ia32/Chipset.inc   | 121 +++
  .../Library/PlatformSecLib/Ia32/Ia32Nasm.inc  | 169 ++++
@@ -43,11 +43,11 @@ Signed-off-by: Maurice Ma <maurice.ma@intel.com>
  .../PlatformSecLib/Vtf0PlatformSecTLib.inf    |  67 ++
  QemuFspPkg/QemuFspPkg.dec                     |  51 ++
  QemuFspPkg/QemuFspPkg.dsc                     | 436 ++++++++++
- QemuFspPkg/QemuFspPkg.fdf                     | 278 +++++++
- QemuFspPkg/QemuVideo/QemuVideo.c              | 780 ++++++++++++++++++
+ QemuFspPkg/QemuFspPkg.fdf                     | 278 ++++++
+ QemuFspPkg/QemuVideo/QemuVideo.c              | 780 +++++++++++++++++
  QemuFspPkg/QemuVideo/QemuVideo.h              | 116 +++
  QemuFspPkg/QemuVideo/QemuVideo.inf            |  56 ++
- 41 files changed, 5986 insertions(+), 5 deletions(-)
+ 41 files changed, 6060 insertions(+), 5 deletions(-)
  create mode 100644 BuildFsp.py
  create mode 100644 QemuFspPkg/BuildFv.cmd
  create mode 100644 QemuFspPkg/FspDescription/FspDescription.inf
@@ -993,10 +993,10 @@ index 0000000000..d5ffe3d433
 +  gIntelFsp2PkgTokenSpaceGuid.PcdFspMaxPatchEntry
 diff --git a/QemuFspPkg/FspmInit/FspmInit.c b/QemuFspPkg/FspmInit/FspmInit.c
 new file mode 100644
-index 0000000000..b335167058
+index 0000000000..cf43b7637b
 --- /dev/null
 +++ b/QemuFspPkg/FspmInit/FspmInit.c
-@@ -0,0 +1,722 @@
+@@ -0,0 +1,795 @@
 +/** @file
 +  FSP-M component implementation.
 +
@@ -1573,6 +1573,7 @@ index 0000000000..b335167058
 +  } else {
 +    TsegMbytes = ExtendedTsegMbytes;
 +  }
++
 +  return (UINT32)TsegMbytes << 20;
 +}
 +
@@ -1602,6 +1603,11 @@ index 0000000000..b335167058
 +  UINT64                          HighMemLen;
 +  UINT32                          TsegSize;
 +  UINT32                          TsegBase;
++  UINT8                           EsmramcVal;
++  UINT8                           Q35TsegMbytes;
++  UINT8                           RegMask8;
++  UINT32                          TopOfLowRam;
++  UINT32                          TopOfLowRamMb;
 +
 +  DEBUG ((DEBUG_INFO, "FspmInitPoint() - Begin\n"));
 +
@@ -1633,9 +1639,76 @@ index 0000000000..b335167058
 +
 +  LowMemLen  = GetSystemMemorySizeBelow4Gb();
 +  HighMemLen = GetSystemMemorySizeAbove4Gb();
-+
 +  TsegSize   = InitializeSmramTsegSize ();
 +  TsegBase   = LowMemLen - TsegSize;
++
++  //
++  // Confirm if QEMU supports SMRAM.
++  //
++  // With no support for it, the ESMRAMC (Extended System Management RAM
++  // Control) register reads as zero. If there is support, the cache-enable
++  // bits are hard-coded as 1 by QEMU.
++  //
++  EsmramcVal = PciRead8 (DRAMC_REGISTER_Q35 (MCH_ESMRAMC));
++  RegMask8 = MCH_ESMRAMC_SM_CACHE | MCH_ESMRAMC_SM_L1 | MCH_ESMRAMC_SM_L2;
++
++  TopOfLowRam = LowMemLen;
++  ASSERT ((TopOfLowRam & (SIZE_1MB - 1)) == 0);
++  TopOfLowRamMb = TopOfLowRam >> 20;
++
++  //
++  // Some of the following registers are no-ops for QEMU at the moment, but it
++  // is recommended to set them correctly, since the ESMRAMC that we ultimately
++  // care about is in the same set of registers.
++  //
++  // First, we disable the integrated VGA, and set both the GTT Graphics Memory
++  // Size and the Graphics Mode Select memory pre-allocation fields to zero.
++  // This takes just one write to the Graphics Control Register.
++  //
++  PciWrite16 (DRAMC_REGISTER_Q35 (MCH_GGC), MCH_GGC_IVD);
++
++  //
++  // Set Top of Low Usable DRAM.
++  //
++  PciWrite16 (DRAMC_REGISTER_Q35 (MCH_TOLUD),
++    (UINT16)(TopOfLowRamMb << MCH_TOLUD_MB_SHIFT));
++
++  //
++  // Given the zero graphics memory sizes configured above, set the
++  // graphics-related stolen memory bases to the same as TOLUD.
++  //
++  PciWrite32 (DRAMC_REGISTER_Q35 (MCH_GBSM),
++    TopOfLowRamMb << MCH_GBSM_MB_SHIFT);
++  PciWrite32 (DRAMC_REGISTER_Q35 (MCH_BGSM),
++    TopOfLowRamMb << MCH_BGSM_MB_SHIFT);
++
++  //
++  // Set TSEG Memory Base.
++  //
++  PciWrite32 (DRAMC_REGISTER_Q35 (MCH_TSEGMB),
++    (TopOfLowRamMb << MCH_TSEGMB_MB_SHIFT) - TsegSize);
++
++  Q35TsegMbytes = (UINT8)(TsegSize >> MCH_TSEGMB_MB_SHIFT);
++
++  //
++  // Set TSEG size, and disable TSEG visibility outside of SMM. Note that the
++  // T_EN bit has inverse meaning; when T_EN is set, then TSEG visibility is
++  // *restricted* to SMM.
++  //
++  EsmramcVal &= ~(UINT32)MCH_ESMRAMC_TSEG_MASK;
++  EsmramcVal |= Q35TsegMbytes == 8 ? MCH_ESMRAMC_TSEG_8MB :
++                Q35TsegMbytes == 2 ? MCH_ESMRAMC_TSEG_2MB :
++                Q35TsegMbytes == 1 ? MCH_ESMRAMC_TSEG_1MB :
++                MCH_ESMRAMC_TSEG_EXT;
++  EsmramcVal |= MCH_ESMRAMC_T_EN;
++  PciWrite8 (DRAMC_REGISTER_Q35 (MCH_ESMRAMC), EsmramcVal);
++
++  //
++  // TSEG should be closed (see above), but unlocked, initially. Set G_SMRAME
++  // (Global SMRAM Enable) too, as both D_LCK and T_EN depend on it.
++  //
++  PciAndThenOr8 (DRAMC_REGISTER_Q35 (MCH_SMRAM),
++    (UINT8)((~(UINT32)MCH_SMRAM_D_LCK) & 0xff), MCH_SMRAM_G_SMRAME);
 +
 +  PeiMemSize = PcdGet32(PcdFspReservedMemoryLength);
 +  ASSERT (LowMemLen > PeiMemSize + TsegSize);
@@ -2809,10 +2882,10 @@ index 0000000000..251a22b2f2
 +#endif
 diff --git a/QemuFspPkg/Include/Q35MchIch9.h b/QemuFspPkg/Include/Q35MchIch9.h
 new file mode 100644
-index 0000000000..09201f52f0
+index 0000000000..f559740fee
 --- /dev/null
 +++ b/QemuFspPkg/Include/Q35MchIch9.h
-@@ -0,0 +1,112 @@
+@@ -0,0 +1,113 @@
 +/** @file
 +  Various register numbers and value bits based on the following publications:
 +  - Intel(R) datasheet 316966-002
@@ -2873,6 +2946,7 @@ index 0000000000..09201f52f0
 +#define MCH_ESMRAMC_TSEG_2MB    BIT1
 +#define MCH_ESMRAMC_TSEG_1MB    0
 +#define MCH_ESMRAMC_TSEG_MASK   (BIT2 | BIT1)
++#define MCH_ESMRAMC_TSEG_EXT    MCH_ESMRAMC_TSEG_MASK
 +#define MCH_ESMRAMC_T_EN        BIT0
 +
 +#define MCH_GBSM              0xA4

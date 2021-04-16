@@ -7,7 +7,6 @@
 
 #include "Stage2.h"
 
-
 /**
   Callback function to add performance measure point during component loading.
 
@@ -557,6 +556,7 @@ SecStartup (
 
   // Trigger SMI to enable SMRR valid bit if required
   if (SmmRebaseMode == SMM_REBASE_ENABLE) {
+    DEBUG ((DEBUG_INFO, "Enable SMRR\n"));
     SendSmiIpiAllExcludingSelf ();
     SendSmiIpi (GetApicId());
   }

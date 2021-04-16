@@ -36,6 +36,7 @@
 #include <GlobalNvsArea.h>
 #include <PlatformBase.h>
 #include <ConfigDataDefs.h>
+#include "RegAccess.h"
 #include "GpioTbl.h"
 
 #pragma pack (1)

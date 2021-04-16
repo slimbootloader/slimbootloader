@@ -344,6 +344,7 @@ MpInit (
       //
       CopyMem (ApBuffer, mAddressMap.RendezvousFunnelAddress, mAddressMap.CodeSize);
       ApDataPtr = (AP_DATA_STRUCT *) (ApBuffer + mAddressMap.CodeSize);
+      ZeroMem (ApDataPtr, sizeof(AP_DATA_STRUCT));
 
       //
       // Patch the GDTR, IDTR and the Segment Selector variables
@@ -479,6 +480,8 @@ MpInit (
         // Check SMM rebase result
         if (mMpDataStruct.SmmRebaseDoneCounter != CpuCount) {
           CpuHalt ("CPU SMM rebase failed!\n");
+        } else {
+          DEBUG ((DEBUG_INFO, "SMM rebase done on %d CPUs\n", mMpDataStruct.SmmRebaseDoneCounter));
         }
       }
 
@@ -486,7 +489,6 @@ MpInit (
       // Restore AP buffer (needed for S3)
       //
       CopyMem (ApBuffer, mBackupBuffer, AP_BUFFER_SIZE);
-
       mMpInitPhase = EnumMpInitRun;
     }
   }
