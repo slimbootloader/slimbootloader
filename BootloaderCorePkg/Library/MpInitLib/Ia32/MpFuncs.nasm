@@ -30,7 +30,6 @@ ASM_PFX(RendezvousFunnelProc):
 RendezvousFunnelProcStart:
 ; At this point CS = 0x(vv00) and ip= 0x0.
 BITS 16
-
   mov eax, cr2
   or  eax, eax
 
@@ -72,9 +71,14 @@ FLAT32_JUMP:
 
 BITS 32
 SmmRebase:
-    mov         edi,  0x3fef8     ; SMBASE offset
+    mov         edi,  0x3fefc     ; SMBASE revision
+    mov         cl, byte [edi]
+    mov         edi,  0x3fef8     ; Assume EM64T
+    cmp         cl, 0x64
+    jnz         SmmEm64t
+    mov         edi,  0x3ff00     ; AMD64
+SmmEm64t:
     mov         [edi], eax        ; change to new  SMBASE
-
     mov         eax, dword [esi + SmrrMaskLocation]
     cmp         eax, 0
     jz          SkipSmrrProg
@@ -228,7 +232,6 @@ dd      0
 SmrrMaskLocation              equ        BufferStartLocation + 48h
 dd      0
 
-
 MpDataAreaEnd:
 
 %if (MpDataAreaEnd - RendezvousFunnelProcStart) > 0x8000   ;AP_BUFFER_SIZE
@@ -342,14 +345,14 @@ global ASM_PFX(mDefaultSmiHandlerRet)
 global ASM_PFX(mDefaultSmiHandlerEnd)
 ASM_PFX(mDefaultSmiHandlerStart):
     ; Enable valid bit in SMRR mask
-    mov ecx, 01f3h
+    mov  ecx, 01f3h
     rdmsr
-    cmp eax, 0
-    jz  ASM_PFX(mDefaultSmiHandlerRet)
-    or  eax, (1<<11)
+    cmp  eax, 0
+    jz   ASM_PFX(mDefaultSmiHandlerRet)
+    bts  eax, 11
+    jc   ASM_PFX(mDefaultSmiHandlerRet)
     wrmsr
 ASM_PFX(mDefaultSmiHandlerRet):
     rsm
 ASM_PFX(mDefaultSmiHandlerEnd):
     nop
-

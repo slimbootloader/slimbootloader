@@ -60,7 +60,9 @@ class Board(BaseBoard):
         self.ENABLE_GRUB_CONFIG       = 1
         self.ENABLE_LINUX_PAYLOAD     = 1
         self.ENABLE_CRYPTO_SHA_OPT    = 0
-        self.ENABLE_SMM_REBASE        = 0
+
+        # 0: Disable  1: Enable  2: Auto (disable for UEFI payload, enable for others)
+        self.ENABLE_SMM_REBASE        = 2
 
         self.ENABLE_SMBIOS            = 1
         self.ENABLE_SBL_SETUP         = 0
