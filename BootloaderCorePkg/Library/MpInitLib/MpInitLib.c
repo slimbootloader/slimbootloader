@@ -7,7 +7,7 @@
 **/
 #include <MpInitLibInternal.h>
 
-STATIC MP_ASSEMBLY_ADDRESS_MAP            mAddressMap;
+STATIC UINT32                             mStubCodeSize;
 STATIC ALL_CPU_INFO                       mSysCpuInfo;
 STATIC volatile ALL_CPU_TASK              mSysCpuTask;
 STATIC volatile MP_DATA_EXCHANGE_STRUCT   mMpDataStruct;
@@ -18,6 +18,10 @@ STATIC SMMBASE_INFO                      *mSmmBaseInfo = NULL;
 extern UINT8                             *mDefaultSmiHandlerStart;
 extern UINT8                             *mDefaultSmiHandlerRet;
 extern UINT8                             *mDefaultSmiHandlerEnd;
+
+extern VOID                               RendezvousFunnelProcStart(VOID);
+extern VOID                               RendezvousFunnelProcEnd(VOID);
+
 
 /**
   The function is called by PerformQuickSort to sort CPU_INFO by ApicId.
@@ -301,7 +305,6 @@ MpInit (
   UINT8                    *ApBuffer;
   EFI_STATUS                Status;
   UINT32                    TimeOutCounter;
-  UINT32                   *Ptr;
   AP_DATA_STRUCT           *ApDataPtr;
   volatile UINT32          *ApCounter;
   UINT32                    CpuCount;
@@ -330,8 +333,6 @@ MpInit (
       //
       ApStackTop = (EFI_PHYSICAL_ADDRESS) (UINTN)AllocatePages ( \
                    EFI_SIZE_TO_PAGES (PcdGet32 (PcdCpuMaxLogicalProcessorNumber) * AP_STACK_SIZE));
-      ZeroMem (&mAddressMap, sizeof (mAddressMap));
-      AsmGetAddressMap (&mAddressMap);
 
       //
       // Allocate backup Buffer for MP waking up
@@ -342,9 +343,11 @@ MpInit (
       //
       // Copy the Rendezvous routine to the memory buffer @ < 1 MB
       //
-      CopyMem (ApBuffer, mAddressMap.RendezvousFunnelAddress, mAddressMap.CodeSize);
-      ApDataPtr = (AP_DATA_STRUCT *) (ApBuffer + mAddressMap.CodeSize);
+      mStubCodeSize = (UINT32)((UINT8 *)RendezvousFunnelProcEnd - (UINT8 *)RendezvousFunnelProcStart);
+      CopyMem (ApBuffer, (UINT8 *)RendezvousFunnelProcStart, mStubCodeSize);
+      ApDataPtr = (AP_DATA_STRUCT *) (ApBuffer + mStubCodeSize);
       ZeroMem (ApDataPtr, sizeof(AP_DATA_STRUCT));
+      ApDataPtr->CpuArch = IS_X64;
 
       //
       // Patch the GDTR, IDTR and the Segment Selector variables
@@ -372,12 +375,6 @@ MpInit (
           }
         }
       }
-
-      //
-      // Patch the Segment/Offset for the far Jump into PMODE code
-      //
-      Ptr  = (UINT32 *)(ApBuffer + mAddressMap.ProtModeJmpPatchOffset + 3);
-      *Ptr = (UINT32)(UINTN)ApBuffer + mAddressMap.ProtModeStartOffset;
 
       //
       // Patch the BufferStart variable with the address of the buffer
@@ -446,7 +443,7 @@ MpInit (
       //
       // Wait for task done
       //
-      ApDataPtr = (AP_DATA_STRUCT *) (ApBuffer + mAddressMap.CodeSize);
+      ApDataPtr = (AP_DATA_STRUCT *) (ApBuffer + mStubCodeSize);
       ApCounter = (volatile UINT32 *)&ApDataPtr->ApCounter;
       TimeOutCounter = 0;
       while (TimeOutCounter < AP_TASK_TIMEOUT_CNT) {
@@ -456,6 +453,7 @@ MpInit (
         MicroSecondDelay (AP_TASK_TIMEOUT_UNIT);
         TimeOutCounter++ ;
       }
+
 
       CpuCount = (*ApCounter) + 1;
       DEBUG ((DEBUG_INFO, "Detected %d CPU threads\n", CpuCount));
