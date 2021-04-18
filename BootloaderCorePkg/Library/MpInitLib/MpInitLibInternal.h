@@ -61,17 +61,10 @@ typedef struct {
   UINT32            ApStackSize;
   UINT32            MpDataStruct;
   UINT32            Cr3;
+  UINT32            CpuArch;
   UINT32            SmrrBase;
   UINT32            SmrrMask;
 } AP_DATA_STRUCT;
-
-typedef struct {
-  UINT8             *RendezvousFunnelAddress;
-  UINT32            CodeSize;
-  UINT32            MpDataSize;
-  UINT32            ProtModeStartOffset;
-  UINT32            ProtModeJmpPatchOffset;
-} MP_ASSEMBLY_ADDRESS_MAP;
 
 typedef struct {
   UINT32            ApDoneCounter;
@@ -89,19 +82,6 @@ typedef struct {
   UINT32           CpuCount;
   CPU_TASK         CpuTask[FixedPcdGet32 (PcdCpuMaxLogicalProcessorNumber)];
 } ALL_CPU_TASK;
-
-
-/**
-  Assembly function to get the address map of MP.
-
-  @param [out] AddressMap Pointer where the mapping info
-                          is loaded.
- **/
-VOID
-EFIAPI
-AsmGetAddressMap (
-  OUT MP_ASSEMBLY_ADDRESS_MAP    *AddressMap
-  );
 
 /**
   Assembly function to get the BSP.
