@@ -93,6 +93,7 @@ struct _NVME_CONTROLLER_PRIVATE_DATA {
   UINT32                              Signature;
   UINT32                              NvmeHCBase;
   UINT64                              PciAttributes;
+  UINTN                               PciBaseAddr;
   EFI_NVM_EXPRESS_PASS_THRU_MODE      PassThruMode;
   EFI_NVM_EXPRESS_PASS_THRU_PROTOCOL  Passthru;
 
