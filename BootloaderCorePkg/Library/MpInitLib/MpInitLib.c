@@ -343,8 +343,8 @@ MpInit (
       //
       // Copy the Rendezvous routine to the memory buffer @ < 1 MB
       //
-      mStubCodeSize = (UINT32)((UINT8 *)RendezvousFunnelProcEnd - (UINT8 *)RendezvousFunnelProcStart);
-      CopyMem (ApBuffer, (UINT8 *)RendezvousFunnelProcStart, mStubCodeSize);
+      mStubCodeSize = (UINT32)((UINT8 *)(UINTN)RendezvousFunnelProcEnd - (UINT8 *)(UINTN)RendezvousFunnelProcStart);
+      CopyMem (ApBuffer, (UINT8 *)(UINTN)RendezvousFunnelProcStart, mStubCodeSize);
       ApDataPtr = (AP_DATA_STRUCT *) (ApBuffer + mStubCodeSize);
       ZeroMem (ApDataPtr, sizeof(AP_DATA_STRUCT));
       ApDataPtr->CpuArch = IS_X64;
