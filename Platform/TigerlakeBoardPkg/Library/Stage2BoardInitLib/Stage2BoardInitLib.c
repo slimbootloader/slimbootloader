@@ -1296,8 +1296,6 @@ UpdateFspConfig (
   FspsUpd    = (FSPS_UPD *)FspsUpdPtr;
   FspsConfig = &FspsUpd->FspsConfig;
 
-  FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
-
   SecCfgData = (SECURITY_CFG_DATA *)FindConfigDataByTag (CDATA_SECURITY_TAG);
   if (SecCfgData != NULL) {
     DEBUG ((DEBUG_INFO, "Load Security Cfg Data\n"));
@@ -1612,8 +1610,8 @@ UpdateFspConfig (
     FspsUpd->FspsConfig.RtcBiosInterfaceLock = TRUE;
   }
 
-  if (FeaturesCfgData->Features.LowPowerS0Idle == 1)
-  {
+  FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
+  if ((FeaturesCfgData != NULL) && (FeaturesCfgData->Features.LowPowerS0Idle == 1)) {
     FspsConfig->C1e = 1;
     FspsConfig->Cx = 1;
     FspsConfig->PkgCStateLimit = 8;
@@ -2143,7 +2141,6 @@ PlatformUpdateAcpiTable (
   MEMORY_CFG_DATA             *MemCfgData;
   UINTN                       DmarTableFlags;
 
-  FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
   GlobalNvs  = (GLOBAL_NVS_AREA *)(UINTN) PcdGet32 (PcdAcpiGnvsAddress);
 
@@ -2236,7 +2233,8 @@ PlatformUpdateAcpiTable (
       }
     }
     else if (Table->Signature == EFI_ACPI_5_0_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE) {
-      if (FeaturesCfgData->Features.LowPowerS0Idle == 1) {
+      FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
+      if ((FeaturesCfgData != NULL) && (FeaturesCfgData->Features.LowPowerS0Idle == 1)) {
         EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE  *FadtTable;
         DEBUG ((DEBUG_INFO, "Update FADT ACPI table\n"));
         FadtTable = (EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE*) Table;
@@ -2556,8 +2554,6 @@ PlatformUpdateAcpiGnvs (
   FSPS_UPD                *FspsUpd;
   FSP_S_CONFIG            *FspsConfig;
 
-  FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
-
   FspsUpd     = (FSPS_UPD *)(UINTN)PcdGet32 (PcdFspsUpdPtr);
   FspsConfig  = &FspsUpd->FspsConfig;
 
@@ -2681,10 +2677,13 @@ PlatformUpdateAcpiGnvs (
   PlatformNvs->CriticalThermalTripPoint     = 110;
   PlatformNvs->EnableSaDevice               = 1;
   PlatformNvs->EnableDigitalThermalSensor   = 0;
-  PlatformNvs->LowPowerS0Idle               = (UINT8) (FeaturesCfgData->Features.LowPowerS0Idle);
   PlatformNvs->Rtd3Support                  = 1;
   PlatformNvs->TenSecondPowerButtonEnable   = 0x9;
   PlatformNvs->HidEventFilterEnable         = 0x01;
+  FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
+  if (FeaturesCfgData != NULL) {
+    PlatformNvs->LowPowerS0Idle               = (UINT8) (FeaturesCfgData->Features.LowPowerS0Idle);
+  }
   // Bit[1:0] - Storage (0:None, 1:Adapter D0/F1, 2:Raid, 3:Adapter D3)
   // Bit[2]   - En/Dis UART0
   // Bit[3]   - En/Dis UART1
