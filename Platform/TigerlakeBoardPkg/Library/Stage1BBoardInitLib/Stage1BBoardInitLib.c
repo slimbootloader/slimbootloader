@@ -168,7 +168,6 @@ UpdateFspConfig (
   FspmUpd     = (FSPM_UPD *)FspmUpdPtr;
   FspmArchUpd = &FspmUpd->FspmArchUpd;
   Fspmcfg     = &FspmUpd->FspmConfig;
-  FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
 
   BoardId = GetPlatformId();
 
@@ -480,8 +479,8 @@ UpdateFspConfig (
     Fspmcfg->CpuPcieRpEnableMask           = 0;
   }
 
-  if (FeaturesCfgData->Features.LowPowerS0Idle == 1)
-  {
+  FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
+  if ((FeaturesCfgData != NULL) && (FeaturesCfgData->Features.LowPowerS0Idle == 1)) {
     Fspmcfg->TcssXdciEn=0;
     Fspmcfg->TcssXhciEn=0;
     Fspmcfg->TcssDma0En=0;
