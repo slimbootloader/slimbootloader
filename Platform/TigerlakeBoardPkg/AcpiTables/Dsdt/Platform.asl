@@ -220,6 +220,14 @@ Field (SPRT, ByteAcc, Lock, Preserve) {
   SSMP, 8
 }
 
+// Operational region for ACPI Control (SMI_EN) access
+//
+OperationRegion (SMIN, SystemIO, (ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN), 0x4)
+Field (SMIN, AnyAcc, NoLock, Preserve)
+{
+  SMIE, 32
+}
+
 // The _PIC Control Method is optional for ACPI design.  It allows the
 // OS to inform the ASL code which interrupt controller is being used,
 // the 8259 or APIC.  The reference code in this document will address
