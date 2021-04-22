@@ -696,6 +696,7 @@ PlatformUpdateAcpiGnvs (
   PlatformNvs->PcieSlot1RstGpio                 = GPIO_VER3_GPD11;
   PlatformNvs->PcieSlot1RstGpioPolarity         = 0;
   PlatformNvs->PcieSlot1RpNumber                = 1;
+  PlatformNvs->PcieSlot1ClkSrc                  = 0;
   //
   // PCH PCIe x1 Slot 2 GPIO pin configuration
   //

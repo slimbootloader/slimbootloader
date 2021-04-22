@@ -8,6 +8,9 @@
 External(\_SB.PC00.DPOF)
 External(\_SB.PC00.SPIF.SPIS)
 External(\_SB.PC00.LPCB.HPET.TCN1)
+External(\_SB.PSD0, MethodObj)
+External(\_SB.PSD3, MethodObj)
+External(SPCO,MethodObj)
 
 If(LOr(LEqual(S0ID, 1),LGreaterEqual(OSYS, 2015))){
   Scope(\_SB.PC00.GFX0) {
@@ -91,6 +94,36 @@ If(LOr(LEqual(S0ID, 1),LGreaterEqual(OSYS, 2015))){
   Scope(\_SB.PR03) { Name(_DEP, Package(){\_SB.PEPD}) }
 }
 
+Method(PCID,1){
+  Name(RSTG, Package() {0, 0})
+  Name(PWRG, Package() {0, 0})
+  Store(0x0B08000B, Index(RSTG, 0))
+  Store(0, Index(RSTG, 1))
+  Store(0, Index(PWRG, 0))
+  Store(0, Index(PWRG, 1))
+  If(LEqual(Arg0, 0x1)){
+    If (LEqual (\_SB.PC00.RP01.VDID, 0xFFFFFFFF)) {
+      Return()
+    }
+    \_SB.PSD0(1)
+    \PIN.ON(PWRG)
+    Sleep(PEP0)
+    SPCO(0, 1)
+    \PIN.OFF(RSTG)
+    \_SB.PC00.RP01.L23D()
+  }
+  ElseIf(LEqual(Arg0, 0x0)){
+    If (LEqual (\_SB.PC00.RP01.VDID, 0xFFFFFFFF)) {
+      Return()
+    }
+    \_SB.PC00.RP01.DL23()
+    \PIN.ON(RSTG)
+    \_SB.PSD3(1)
+    SPCO(0, 0)
+    \PIN.OFF(PWRG)
+    \_SB.SHPO(0x0B100002, 0)
+  }
+}
 Scope(\_SB)
 {
   Device (PEPD)
@@ -874,6 +907,7 @@ Scope(\_SB)
             // standby state with very limited SW activities
             \_SB.PC00.SPIF.SPIS() // Clear SPI Synchronous SMI Status bit
             Store(0x0000000000000000, \_SB.PC00.LPCB.HPET.TCN1)
+            PCID(0)
             \GUAM(1) // 0x01 - Power State Standby (CS Resiliency Entry)
           }
         }
@@ -884,6 +918,7 @@ Scope(\_SB)
           If(LEqual(S0ID, 1)) { //S0ID: >=1: CS 0: non-CS
             // call method specific to CS platforms when the system is in a
             // standby state with very limited SW activities
+            PCID(1)
             \GUAM(0) // 0x00 - Power State On (CS Resiliency Exit)
           }
         }
