@@ -2,7 +2,7 @@
 ## @ BuildUtility.py
 # Build bootloader main script
 #
-# Copyright (c) 2016 - 2020, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2016 - 2021, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -24,11 +24,24 @@ import ntpath
 from   CommonUtility import *
 from   IfwiUtility   import FLASH_MAP, FLASH_MAP_DESC, FIT_ENTRY, UCODE_HEADER
 from SingleSign import MESSAGE_SBL_KEY_DIR
+from distutils.version import LooseVersion
 
 sys.dont_write_bytecode = True
 sys.path.append (os.path.join(os.path.dirname(__file__), '..', '..', 'IntelFsp2Pkg', 'Tools'))
 from   SplitFspBin  import RebaseFspBin, FirmwareDevice, EFI_SECTION_TYPE, FSP_INFORMATION_HEADER, PeTeImage
 from   GenContainer import gen_container_bin
+
+# Mimimum Toolchain Requirement
+build_toolchains = {
+    'python'    : '3.6.0',
+    'nasm'      : '2.12.02',
+    'iasl'      : '20160422',
+    'openssl'   : '1.1.0g',
+    'git'       : '2.20.0',
+    'vs'        : '2015',
+    'gcc'       : '7.3',
+    'clang'     : '9.0.0'
+}
 
 AUTO_GEN_DSC_HDR = """#
 #  DO NOT EDIT
@@ -204,6 +217,28 @@ class PciEnumPolicyInfo(Structure):
         self.BusScanType        = 0
         self.NumOfBus           = 0
 
+def is_valid_tool_version(cmd, current_version):
+    try:
+        name_str = ntpath.basename(cmd).split('.')[0]
+        name = re.sub(r'\d+', '', name_str)
+        minimum_version = build_toolchains[name]
+        valid = LooseVersion(current_version) >= LooseVersion(minimum_version)
+    except:
+        print('Unexpected exception while checking %s tool version' % cmd)
+        return False
+    print_tool_version_info(cmd, current_version, minimum_version, valid)
+    return valid
+
+def get_gcc_info ():
+    toolchain = 'GCC5'
+    cmd = 'gcc'
+    try:
+        ver = subprocess.check_output([cmd, '-dumpfullversion']).decode().strip()
+    except:
+        ver = ''
+        pass
+    valid = is_valid_tool_version(cmd, ver)
+    return (toolchain if valid else None, None, None, ver)
 
 def get_clang_info ():
     if os.name == 'posix':
@@ -215,10 +250,15 @@ def get_clang_info ():
         toolchain_path   = 'C:\\Program Files\\LLVM\\bin\\'
     toolchain        = 'CLANGPDB'
     toolchain_prefix = 'CLANG_BIN'
-    clang_path = os.path.join(toolchain_path, 'clang')
-    clang_ver  = run_process ([clang_path, '-dumpversion'], capture_out = True)
-    toolchain_ver = clang_ver.strip()
-    return (toolchain, toolchain_prefix, toolchain_path, toolchain_ver)
+    cmd = os.path.join(toolchain_path, 'clang')
+    try:
+        ver_str = subprocess.check_output([cmd, '--version']).decode().strip()
+        ver = re.search(r'version\s*([\d.]+)', ver_str).group(1)
+    except:
+        ver = ''
+        pass
+    valid = is_valid_tool_version(cmd, ver)
+    return (toolchain if valid else None, toolchain_prefix, toolchain_path, ver)
 
 def get_visual_studio_info (preference = ''):
 
@@ -232,7 +272,8 @@ def get_visual_studio_info (preference = ''):
     if preference:
         preference = preference.strip().lower()
         if not preference.startswith('vs'):
-            raise Exception ("Invalid toolchain type '%s' !" % preference)
+            print("Invalid vistual studio toolchain type '%s' !" % preference)
+            return (None,None,None,None)
         vs_str = preference[2:]
         if vs_str in vs_ver_list:
             vs_ver_list     = [vs_str]
@@ -241,7 +282,8 @@ def get_visual_studio_info (preference = ''):
             vs_ver_list     = []
             vs_ver_list_old = [vs_str]
         else:
-            raise Exception ("Unsupported toolchain version '%s' !" % preference)
+            print("Unsupported toolchain version '%s' !" % preference)
+            return (None,None,None,None)
 
     # check new Visual Studio Community version first
     vswhere_path = "%s/Microsoft Visual Studio/Installer/vswhere.exe" % os.environ['ProgramFiles(x86)']
@@ -287,8 +329,8 @@ def get_visual_studio_info (preference = ''):
                         toolchain_ver = part[len(vs_node):]
                 break
 
-    return (toolchain, toolchain_prefix, toolchain_path, toolchain_ver)
-
+    valid = is_valid_tool_version('vs', vs_ver)
+    return (toolchain if valid else None, toolchain_prefix, toolchain_path, toolchain_ver)
 
 def split_fsp(path, out_dir):
     run_process ([
@@ -846,24 +888,22 @@ def check_for_python():
     '''
     Verify Python executable is at required version
     '''
-    cmd = [sys.executable, '-c', 'import sys; import platform; print(platform.python_version())']
-    version = run_process (cmd, capture_out = True).strip()
-    ver_parts = version.split('.')
-    # Require Python 3.6 or above
-    if not (len(ver_parts) >= 2 and int(ver_parts[0]) >= 3 and int(ver_parts[1]) >= 6):
-        raise SystemExit ('ERROR: Python version ' + version + ' is not supported any more !\n       ' +
-                          'Please install and use Python 3.6 or above to launch build script !\n')
+    os.environ['PYTHON_COMMAND'] = sys.executable
+    cmd = os.environ['PYTHON_COMMAND']
+    try:
+        ver = subprocess.check_output([cmd, '--version']).decode().strip().split()[-1]
+    except:
+        ver = ''
+        pass
+    return is_valid_tool_version(cmd, ver)
 
-    return version
-
-def print_tool_version_info(cmd, version):
+def print_tool_version_info(cmd, version, version_min = '0', okay = True):
     try:
         if os.name == 'posix':
             cmd = subprocess.check_output(['which', cmd], stderr=subprocess.STDOUT).decode().strip()
     except:
         pass
-    print ('Using %s, Version %s' % (cmd, version))
-
+    print ('- %s: Version %s (>= %s) [%s]' % (cmd, version, version_min, 'PASS' if okay else 'FAIL'))
 
 def check_for_openssl():
     '''
@@ -871,25 +911,46 @@ def check_for_openssl():
     '''
     cmd = get_openssl_path ()
     try:
-        version = subprocess.check_output([cmd, 'version']).decode().strip()
+        ver = subprocess.check_output([cmd, 'version']).decode().strip().split()[1]
     except:
         print('ERROR: OpenSSL not available. Please set OPENSSL_PATH.')
-        sys.exit(1)
-    print_tool_version_info(cmd, version)
-    return version
+        ver = ''
+        pass
+    return is_valid_tool_version(cmd, ver)
 
 def check_for_nasm():
     '''
     Verify NASM executable is available
     '''
+    if os.name == 'nt' and 'NASM_PREFIX' not in os.environ:
+        os.environ['NASM_PREFIX'] = "C:\\Nasm\\"
+
     cmd = os.path.join(os.environ.get('NASM_PREFIX', ''), 'nasm')
     try:
-        version = subprocess.check_output([cmd, '-v']).decode().strip()
+        ver_str = subprocess.check_output([cmd, '-v']).decode().strip()
+        ver = re.search(r'version\s*([\d.]+)', ver_str).group(1)
     except:
         print('ERROR: NASM not available. Please set NASM_PREFIX.')
-        sys.exit(1)
-    print_tool_version_info(cmd, version)
-    return version
+        ver = ''
+        pass
+    return is_valid_tool_version(cmd, ver)
+
+def check_for_iasl():
+    '''
+    Verify iasl executable is available
+    '''
+    if os.name == 'nt' and 'IASL_PREFIX' not in os.environ:
+        os.environ['IASL_PREFIX'] = "C:\\ASL\\"
+
+    cmd = os.path.join(os.environ.get('IASL_PREFIX', ''), 'iasl')
+    try:
+        ver_str = subprocess.check_output([cmd, '-v']).decode().strip()
+        ver = re.search(r'version\s*([\d.]+)', ver_str).group(1)
+    except:
+        print('ERROR: iasl not available. Please set IASL_PREFIX.')
+        ver = ''
+        pass
+    return is_valid_tool_version(cmd, ver)
 
 def check_for_git():
     '''
@@ -897,12 +958,48 @@ def check_for_git():
     '''
     cmd = 'git'
     try:
-        version = subprocess.check_output([cmd, '--version']).decode().strip()
+        ver_str = subprocess.check_output([cmd, '--version']).decode().strip()
+        ver = re.search(r'version\s*([\d.]+)', ver_str).group(1)
     except:
         print('ERROR: Git not found. Please install Git or check if Git is in the PATH environment variable.')
-        sys.exit(1)
-    print_tool_version_info(cmd, version)
-    return version
+        ver = ''
+        pass
+    return is_valid_tool_version(cmd, ver)
+
+def check_for_toolchain(toolchain_preferred):
+    toolchain = None
+    if toolchain_preferred.startswith('clang'):
+        toolchain, toolchain_prefix, toolchain_path, toolchain_ver = get_clang_info ()
+    elif sys.platform == 'darwin':
+        toolchain, toolchain_prefix, toolchain_path, toolchain_ver = get_clang_info ()
+        toolchain, toolchain_prefix, toolchain_path = 'XCODE5', None, None
+    elif os.name == 'posix':
+        toolchain, toolchain_prefix, toolchain_path, toolchain_ver = get_gcc_info ()
+    elif os.name == 'nt':
+        toolchain, toolchain_prefix, toolchain_path, toolchain_ver = get_visual_studio_info (toolchain_preferred)
+
+    if not toolchain:
+        return False
+
+    os.environ['TOOL_CHAIN'] = toolchain
+    if toolchain_prefix:
+        os.environ[toolchain_prefix] = toolchain_path
+    return True
+
+def verify_toolchains(toolchain_preferred):
+    print('Checking Toolchain Versions...')
+
+    valid  = check_for_python()
+    valid &= check_for_openssl()
+    valid &= check_for_nasm()
+    valid &= check_for_iasl()
+    valid &= check_for_git()
+    valid &= check_for_toolchain(toolchain_preferred)
+
+    if valid != True:
+        print('...Failed! Please check toolchain versions!')
+        sys.exit(-1)
+    print('...Done!\n')
 
 def check_for_slimbootkeydir():
     if not os.path.exists(os.environ.get('SBL_KEY_DIR')):

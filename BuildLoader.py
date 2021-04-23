@@ -2,7 +2,7 @@
 ## @ BuildLoader.py
 # Build bootloader main script
 #
-# Copyright (c) 2016 - 2020, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2016 - 2021, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 
 ##
@@ -58,74 +58,31 @@ def create_conf (workspace, sbl_source):
                 os.path.join(workspace, 'Conf/%s.txt' % name))
 
 def prep_env (toolchain_preferred = ''):
-    # check python version first
-    version = check_for_python ()
-    os.environ['PYTHON_COMMAND'] = '"' + sys.executable + '"'
-    print_tool_version_info(os.environ['PYTHON_COMMAND'], version.strip())
-
-    sblsource = os.path.dirname(os.path.abspath(__file__))
+    sblsource = os.environ['SBL_SOURCE']
     os.chdir(sblsource)
-    if sys.platform == 'darwin':
-        toolchain = 'XCODE5'
-        os.environ['PATH'] = os.environ['PATH'] + ':' + os.path.join(sblsource, 'BaseTools/BinWrappers/PosixLike')
-        clang_ver = run_process (['clang', '-dumpversion'], capture_out = True)
-        clang_ver = clang_ver.strip()
-        toolchain_ver = clang_ver
-    elif os.name == 'posix':
-        if toolchain_preferred.startswith('clang'):
-            os.environ['PATH'] = os.environ['PATH'] + ':' + os.path.join(sblsource, 'BaseTools/BinWrappers/PosixLike')
-            toolchain, toolchain_prefix, toolchain_path, toolchain_ver = get_clang_info ()
-        else:
-            toolchain = 'GCC49'
-            gcc_ver = run_process (['gcc', '-dumpversion'], capture_out = True)
-            gcc_ver = gcc_ver.strip()
-            if int(gcc_ver.split('.')[0]) > 4:
-                toolchain = 'GCC5'
-            os.environ['PATH'] = os.environ['PATH'] + ':' + os.path.join(sblsource, 'BaseTools/BinWrappers/PosixLike')
-            toolchain_ver = gcc_ver
-    elif os.name == 'nt':
-        os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.join(sblsource, 'BaseTools\\Bin\\Win32')
-        os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.join(sblsource, 'BaseTools\\BinWrappers\\WindowsLike')
-        os.environ['PYTHONPATH'] = os.path.join(sblsource, 'BaseTools', 'Source', 'Python')
-        if toolchain_preferred.startswith('clang'):
-            toolchain, toolchain_prefix, toolchain_path, toolchain_ver = get_clang_info ()
-            if not toolchain:
-                print("Could not find supported CLANG version !")
-        else:
-            toolchain, toolchain_prefix, toolchain_path, toolchain_ver = get_visual_studio_info (toolchain_preferred)
-            if not toolchain:
-                print("Could not find supported Visual Studio version !")
-        if toolchain:
-            os.environ[toolchain_prefix] = toolchain_path
-        else:
-            sys.exit(1)
-        if 'NASM_PREFIX' not in os.environ:
-            os.environ['NASM_PREFIX'] = "C:\\Nasm\\"
-        if 'IASL_PREFIX' not in os.environ:
-            os.environ['IASL_PREFIX'] = "C:\\ASL\\"
-    else:
-        print("Unsupported operating system !")
-        sys.exit(1)
 
-    if 'SBL_KEY_DIR' not in os.environ:
-        os.environ['SBL_KEY_DIR'] = "../SblKeys/"
-
-    print_tool_version_info(toolchain, toolchain_ver)
-
-    check_for_openssl()
-    check_for_nasm()
-    check_for_git()
+    # Verify toolchains first
+    verify_toolchains(toolchain_preferred)
 
     # Update Environment vars
-    os.environ['SBL_SOURCE']     = sblsource
+    if os.name == 'nt':
+        os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.join(sblsource, 'BaseTools', 'Bin', 'Win32')
+        os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.join(sblsource, 'BaseTools', 'BinWrappers', 'WindowsLike')
+        os.environ['PYTHONPATH'] = os.path.join(sblsource, 'BaseTools', 'Source', 'Python')
+    else:
+        os.environ['PATH'] = os.environ['PATH'] + ':' + os.path.join(sblsource, 'BaseTools', 'BinWrappers', 'PosixLike')
+
     os.environ['EDK_TOOLS_PATH'] = os.path.join(sblsource, 'BaseTools')
     os.environ['BASE_TOOLS_PATH'] = os.path.join(sblsource, 'BaseTools')
-    if 'WORKSPACE' not in os.environ:
-        os.environ['WORKSPACE'] = sblsource
-    os.environ['CONF_PATH']     = os.path.join(os.environ['WORKSPACE'], 'Conf')
-    os.environ['TOOL_CHAIN']    = toolchain
+    os.environ['CONF_PATH'] = os.path.join(os.environ['WORKSPACE'], 'Conf')
+
+    if 'SBL_KEY_DIR' not in os.environ:
+        os.environ['SBL_KEY_DIR'] = os.path.join(sblsource, '..', 'SblKeys')
 
     create_conf (os.environ['WORKSPACE'], sblsource)
+
+    # Check if BaseTools has been compiled
+    rebuild_basetools ()
 
 def get_board_config_file (check_dir, board_cfgs):
     platform_dir = os.path.join (check_dir, 'Platform')
@@ -1086,9 +1043,6 @@ class Build(object):
 
 
     def pre_build(self):
-        # Check if BaseTools has been compiled
-        rebuild_basetools ()
-
         # Update search path
         sbl_dir = os.environ['SBL_SOURCE']
         plt_dir = os.environ['PLT_SOURCE']
@@ -1389,12 +1343,17 @@ class Build(object):
 
 def main():
 
+    # Set SBL_SOURCE and WORKSPACE Environment variable at first
+    os.environ['SBL_SOURCE'] = os.path.dirname(os.path.abspath(__file__))
+    if 'WORKSPACE' not in os.environ:
+        os.environ['WORKSPACE'] = os.environ['SBL_SOURCE']
+
     board_cfgs   = []
     board_names  = []
     module_names = []
 
     # Find all boards
-    search_dir = os.path.dirname(os.path.abspath(__file__))
+    search_dir = os.environ['SBL_SOURCE']
     if 'PLT_SOURCE' in os.environ:
         search_dir = os.path.abspath(os.path.join(search_dir, os.path.pardir))
     board_pkgs = os.listdir (search_dir)
@@ -1412,6 +1371,8 @@ def main():
     sp = ap.add_subparsers(help='command')
 
     def cmd_build(args):
+        prep_env (args.toolchain)
+
         for index, name in enumerate(board_names):
             if args.board == name:
                 brdcfg = module_names[index]
@@ -1482,8 +1443,7 @@ def main():
     cleanp.set_defaults(func=cmd_clean)
 
     def cmd_build_dsc(args):
-        # Check if BaseTools has been compiled
-        rebuild_basetools ()
+        prep_env (args.toolchain)
 
         # Build a specified DSC file
         def_list = []
@@ -1516,14 +1476,7 @@ def main():
         ap.print_help()
         ap.exit()
 
-    if hasattr(args, 'toolchain'):
-        toolchain_preferred = args.toolchain
-    else:
-        toolchain_preferred = ''
-    prep_env (toolchain_preferred)
-
     args.func(args)
 
 if __name__ == '__main__':
     main()
-
