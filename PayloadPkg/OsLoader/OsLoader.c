@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -63,6 +63,7 @@ UpdateLoadedImage (
   MULTIBOOT_IMAGE            *MultiBoot;
   COMMON_IMAGE               *CommonImage;
   PLATFORM_SERVICE           *PlatformService;
+  CHAR8                      *TypeStr;
 
   PlatformService = NULL;
   Status = EFI_SUCCESS;
@@ -74,21 +75,29 @@ UpdateLoadedImage (
     CopyMem (&CommonImage->BootFile, &File[0], sizeof (IMAGE_DATA));
     if (IsMultiboot (File[0].Addr)) {
       LoadedImage->Flags |= LOADED_IMAGE_MULTIBOOT;
-      DEBUG ((DEBUG_INFO, "One multiboot file in boot image file .... \n"));
+      TypeStr = "Multiboot";
     } else if (IsTePe32Image (File[0].Addr, NULL) && \
                (* (UINT32 *)File[0].Addr == EFI_IMAGE_DOS_SIGNATURE)) {
       // Add extra check to ensure it is a PE32 image generated from payload build.
       // Please note vmlinuxz is also following PE32 format, but it should
       // be handled as Linux image boot path
-      LoadedImage->Flags |= LOADED_IMAGE_PE32;
-      DEBUG ((DEBUG_INFO, "One PE32 file in boot image file .... \n"));
+      LoadedImage->Flags |= LOADED_IMAGE_PE;
+      TypeStr = "PE";
     } else if (IsValidFvHeader ((VOID *)File[0].Addr))  {
       LoadedImage->Flags |= LOADED_IMAGE_FV;
-      DEBUG ((DEBUG_INFO, "One FV file in boot iamge file .... \n"));
-    } else {
+      TypeStr = "FV";
+    } else if (IsBzImage((VOID *)File[0].Addr)) {
       LoadedImage->Flags |= LOADED_IMAGE_LINUX;
-      DEBUG ((DEBUG_INFO, "One file in boot image file, take it as bzImage .... \n"));
+      TypeStr = "Kernel";
+    } else if (IsElfImage ((VOID *)File[0].Addr))  {
+      LoadedImage->Flags |= LOADED_IMAGE_ELF;
+      TypeStr = "ELF";
+    } else {
+      DEBUG ((DEBUG_INFO, "Unknown file type !\n"));
+      return EFI_UNSUPPORTED;
     }
+
+    DEBUG ((DEBUG_INFO, "One %a file in boot image file .... \n", TypeStr));
     return EFI_SUCCESS;
   }
 
@@ -421,7 +430,7 @@ SetupBootImage (
   } else if (IsMultiboot (BootFile->Addr)) {
     DEBUG ((DEBUG_INFO, "Boot image is Multiboot format...\n"));
     Status = SetupMultibootImage (MultiBoot);
-  } else if ((LoadedImage->Flags & LOADED_IMAGE_PE32) != 0) {
+  } else if ((LoadedImage->Flags & LOADED_IMAGE_PE) != 0) {
     DEBUG ((DEBUG_INFO, "Boot image is PE32 format\n"));
     Status = PeCoffRelocateImage ((UINT32)(UINTN)BootFile->Addr);
     if (!EFI_ERROR (Status)) {
@@ -660,8 +669,13 @@ StartBooting (
       LinuxBoot ((VOID *)(UINTN)PcdGet32 (PcdPayloadHobList), NULL);
     }
     Status = EFI_DEVICE_ERROR;
+  } else if ((LoadedImage->Flags & LOADED_IMAGE_ELF) != 0) {
+    BeforeOSJump ("Starting ELF ...");
+    MultiBoot  = &LoadedImage->Image.MultiBoot;
+    EntryPoint = (PRE_OS_ENTRYPOINT)(UINTN)MultiBoot->BootState.EntryPoint;
+    EntryPoint((VOID *)(UINTN)PcdGet32(PcdPayloadHobList));
   } else if ((LoadedImage->Flags & LOADED_IMAGE_MULTIBOOT) != 0) {
-    DEBUG ((DEBUG_INIT, "Jumping into ELF or Multiboot image entry point...\n"));
+    DEBUG ((DEBUG_INIT, "Jumping Multiboot image entry point...\n"));
     MultiBoot = &LoadedImage->Image.MultiBoot;
     if (MultiBoot->BootState.EntryPoint == 0) {
       DEBUG ((DEBUG_ERROR, "EntryPoint is not found\n"));
@@ -676,7 +690,7 @@ StartBooting (
     }
     Status = EFI_DEVICE_ERROR;
 
-  } else if ((LoadedImage->Flags & (LOADED_IMAGE_PE32 | LOADED_IMAGE_FV)) != 0) {
+  } else if ((LoadedImage->Flags & (LOADED_IMAGE_PE | LOADED_IMAGE_FV)) != 0) {
     MultiBoot = &LoadedImage->Image.MultiBoot;
     BeforeOSJump ("Jumping into FV/PE32 ...");
 

@@ -5,8 +5,8 @@
 
 **/
 
-#ifndef __LINUX_LOADER_H__
-#define __LINUX_LOADER_H__
+#ifndef __OS_LOADER_H__
+#define __OS_LOADER_H__
 
 #include <Library/LiteFvLib.h>
 #include <Library/PartitionLib.h>
@@ -79,11 +79,12 @@
 #define LOADED_IMAGE_IAS         BIT0
 #define LOADED_IMAGE_MULTIBOOT   BIT1
 #define LOADED_IMAGE_LINUX       BIT2
-#define LOADED_IMAGE_PE32        BIT3
+#define LOADED_IMAGE_PE          BIT3
 #define LOADED_IMAGE_FV          BIT4
 #define LOADED_IMAGE_CONTAINER   BIT5
 #define LOADED_IMAGE_COMPONENT   BIT6
 #define LOADED_IMAGE_RUN_EXTRA   BIT7
+#define LOADED_IMAGE_ELF         BIT8
 
 #define MAX_EXTRA_FILE_NUMBER    16
 
@@ -137,9 +138,9 @@ typedef union {
 } LOADED_IMAGE_TYPE;
 
 typedef struct {
-  UINT8                   Flags;
+  UINT16                  Flags;
   UINT8                   LoadImageType;
-  UINT16                  Reserved;
+  UINT8                   Reserved;
   IMAGE_DATA              ImageData;
   EFI_HANDLE              HwPartHandle;
   LOADED_IMAGE_TYPE       Image;

@@ -53,7 +53,7 @@ EFI_STATUS
 EFIAPI
 StartPreOsChecker (
   IN  VOID   *OsBootParam,
-  IN  UINT8  ImageFlags
+  IN  UINT16  ImageFlags
   );
 
 #endif /* __PRE_OS_CHECKER_H__ */
