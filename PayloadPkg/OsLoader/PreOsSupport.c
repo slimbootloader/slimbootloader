@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2019 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -59,7 +59,7 @@ GetNormalOsInfo (
     PreOsParams->OsBootState.Esi     = BootState->Esi;
     PreOsParams->OsBootState.Edi     = BootState->Edi;
     PreOsParams->OsBootState.Eip     = BootState->EntryPoint;
-  } else if ((LoadedImage->Flags & LOADED_IMAGE_PE32) != 0) {
+  } else if ((LoadedImage->Flags & LOADED_IMAGE_PE) != 0) {
     BootState = &LoadedImage->Image.MultiBoot.BootState;
     PreOsParams->OsBootState.Eip     = BootState->EntryPoint;
   } else {

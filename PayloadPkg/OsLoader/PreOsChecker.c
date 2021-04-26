@@ -122,7 +122,7 @@ EFI_STATUS
 EFIAPI
 StartPreOsChecker (
   IN  VOID   *BootParam,
-  IN  UINT8  ImageFlags
+  IN  UINT16  ImageFlags
   )
 {
   PRE_OS_PAYLOAD_PARAM       PreOsParams;
