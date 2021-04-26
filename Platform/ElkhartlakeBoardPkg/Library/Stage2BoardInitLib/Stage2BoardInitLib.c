@@ -1393,6 +1393,11 @@ UpdateFspConfig (
       Fspscfg->PchMemoryPinSelection[Index]     = 0;
     }
 
+    // PCH SERIAL SPI_CONFIG
+    for (Index = 0; Index < PCH_MAX_SERIALIO_SPI_CONTROLLERS; Index++) {
+      Fspscfg->SerialIoSpiMode[Index] = SiCfgData->SerialIoSpiMode[Index];
+    }
+
     // PCH_DMI_CONFIG
     Fspscfg->PchPwrOptEnable            = SiCfgData->PchPwrOptEnable;
 
@@ -1514,6 +1519,9 @@ UpdateFspConfig (
     }
     Fspscfg->TsnConfigBase       = (UINT32)(UINTN)TsnConfigBase;
     Fspscfg->TsnConfigSize       = TsnConfigSize;
+
+    Fspscfg->EnableTimedGpio0   = (UINT8)SiCfgData->EnableTimedGpio0;
+    Fspscfg->EnableTimedGpio1   = (UINT8)SiCfgData->EnableTimedGpio1;
 
     // PCH_TSN_CONFIG
     Fspscfg->PchTsnEnable         = SiCfgData->PchTsnEnable;

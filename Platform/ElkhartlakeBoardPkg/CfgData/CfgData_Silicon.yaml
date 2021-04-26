@@ -1273,6 +1273,13 @@
                      0:Disabled, 1:PCI Mode, 2:Acpi mode, 3:Hidden mode (Legacy UART mode) - Enable/disable SerialIo I2C0,I2C1,I2C2,I2C3,I2C4,I2C5,SPI0,SPI1,SPI2,UART0,UART1,UART2 device mode respectively. One byte for each controller, byte0 for I2C0, byte1 for I2C1, and so on.
       length       : 0x0C
       value        : {0x01, 0x01, 0x01, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x03}
+  - SerialIoSpiMode :
+      name         : SPIn Device Mode
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Selects SPI operation mode. N represents controller index: SPI0, SPI1, ... Available modes: 0:SerialIoSpiDisabled, 1:SerialIoSpiPci, 2:SerialIoSpiHidden
+      length       : 0x07
+      value        : {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
   - SerialIoSpiCsPolarity :
       name         : SPI ChipSelect signal polarity
       type         : EditNum, HEX, (0x00,0xFFFFFF)
@@ -1687,8 +1694,6 @@
                      Enable/Disable ITBT Root Port
       length       : 0x06
       value        : { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 }
-  - $ACTION      :
-      page         : SA2
   - RenderStandby :
       name         : Enable/Disable IGFX RenderStandby
       type         : Combo
@@ -1753,11 +1758,27 @@
                      Enable- Skip Full CD clock initializaton, Disable(Default)- Initialize the full CD clock if not initialized by Gfx PEIM
       length       : 0x01
       value        : 0x0
+  - EnableTimedGpio0 :
+      name         : Timed GPIO 0
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     When FALSE, it disables Timed GPIO 0.
+      length       : 1b
+      value        : 0x0
+  - EnableTimedGpio1 :
+      name         : Timed GPIO 1
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     When FALSE, it disables Timed GPIO 1.
+      length       : 1b
+      value        : 0x0
   - Dummy        :
       name         : SaPostMemTestRsvd
       type         : Combo
       option       : $EN_DIS
       help         : >
                      Reserved for SA Post-Mem Test
-      length       : 0x02
+      length       : 22b
       value        : 0x0

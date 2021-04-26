@@ -33,6 +33,7 @@
 //
 // SerialIo limits
 //
+#define PCH_MAX_SERIALIO_SPI_CONTROLLERS     3
 #define PCH_MAX_SERIALIO_UART_CONTROLLERS    3
 
 
