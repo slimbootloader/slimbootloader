@@ -233,7 +233,7 @@ PchLpcGenIoRangeSet (
 
   LpcEspiGenIoRangeMax = PCH_LPC_GEN_IO_RANGE_MAX;
   EspiPcbc = PciRead32 ((UINTN)(LpcBase + R_PCH_ESPI_PCBC));
-  if (IsPchH () && ((EspiPcbc & B_PCH_ESPI_PCBC_ESPI_EN) != 0)) {
+  if ((EspiPcbc & B_PCH_ESPI_PCBC_ESPI_EN) != 0) {
     LpcEspiGenIoRangeMax = PCH_H_ESPI_GEN_IO_RANGE_MAX;
   }
 
@@ -364,7 +364,7 @@ PchLpcGenIoRangeGet (
     LpcGenIoRangeList->Range[Index].Enable   = Data32 & B_PCH_LPC_GENX_DEC_EN;
   }
   EspiPcbc = PciRead32 ((UINTN)(LpcBase + R_PCH_ESPI_PCBC));
-  if (IsPchH () && ((EspiPcbc & B_PCH_ESPI_PCBC_ESPI_EN) != 0)) {
+  if ((EspiPcbc & B_PCH_ESPI_PCBC_ESPI_EN) != 0) {
     Data32 = PciRead32 ((UINTN)(LpcBase + R_PCH_ESPI_CS1GIR1));
     LpcGenIoRangeList->Range[PCH_LPC_GEN_IO_RANGE_MAX].BaseAddr = Data32 & B_PCH_LPC_GENX_DEC_IOBAR;
     LpcGenIoRangeList->Range[PCH_LPC_GEN_IO_RANGE_MAX].Length   = ((Data32 & B_PCH_LPC_GENX_DEC_IODRA) >> 16) + 4;
@@ -482,7 +482,7 @@ PchEspiMemRange2Set (
   // PCH eSPI Enable Pin Strap check
   //
   EspiPcbc = PciRead32 (LpcBase + R_PCH_ESPI_PCBC);
-  if (IsPchH () && ((EspiPcbc & B_PCH_ESPI_PCBC_ESPI_EN) != 0)) {
+  if ((EspiPcbc & B_PCH_ESPI_PCBC_ESPI_EN) != 0) {
     return EFI_UNSUPPORTED;
   }
 
