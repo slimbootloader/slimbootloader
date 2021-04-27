@@ -91,6 +91,7 @@
   gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesBase
   gPlatformModuleTokenSpaceGuid.PcdSmmRebaseMode
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase
+  gPlatformModuleTokenSpaceGuid.PcdSmramTsegSize
   gPlatformCommonLibTokenSpaceGuid.PcdPreOsCheckerEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
   gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled

@@ -50,6 +50,8 @@ class Board(BaseBoard):
         self.HAVE_PSD_TABLE       = 1
         self.ENABLE_VTD           = 1
         self.ENABLE_SPLASH        = 1
+        # 0: Disable  1: Enable  2: Auto (disable for UEFI payload, enable for others)
+        self.ENABLE_SMM_REBASE    = 2
         self.ENABLE_FRAMEBUFFER_INIT = 1
 
         self.SIIPFW_SIZE = 0x1000
