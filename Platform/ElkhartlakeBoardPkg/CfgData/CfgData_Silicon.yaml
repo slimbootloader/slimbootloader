@@ -1488,6 +1488,98 @@
                      Granularity of this setting is 1mA and maximal possible value is 200mA
       length       : 0x1
       value        : 0x64
+  - PchFivrExtV1p05RailSupportedVoltageStates :
+      name         : Minimum Rentention Voltage
+      type         : EditNum, HEX, (0x0,0x0F)
+      help         : >
+                     Mask to enable the platform configuration of external V1p05 VR rail. External V1P05 Rail Supported Configuration
+      length       : 0x1
+      value        : 0x2
+  - PchFivrExtVnnRailSxEnabledStates :
+      name         : Override External Vnn Rail setting in Sx states
+      type         : EditNum, HEX, (0x0,0x1F)
+      help         : >
+                     Mask to enable the usage of external Vnn VR rail in Sx states. Use only if Ext Vnn Rail config is different in Sx. Enable External Vnn Rail in Sx: BIT0-1:Reserved, BIT2:S3, BIT3:S4, BIT5:S5
+      length       : 0x1
+      value        : 0x1C
+  - PchFivrExtV1p05RailIccMaximum :
+      name         : External V1P05 Icc Max Value
+      type         : EditNum, HEX, (0x0,0x1F4)
+      help         : >
+                     Granularity of this setting is 1mA and maximal possible value is 500mA
+      length       : 0x2
+      value        : 0x64
+  - PchFivrExtVnnRailIccMaximum :
+      name         : External Vnn Icc Max Value that will be used in S0ix/Sx states
+      type         : EditNum, HEX, (0x0,0x1F4)
+      help         : >
+                     Granularity of this setting is 1mA and maximal possible value is 500mA
+      length       : 0x2
+      value        : 0xC8
+  - PchFivrExtVnnRailSxIccMaximum :
+      name         : External Vnn Icc Max Value that will be used in Sx states
+      type         : EditNum, HEX, (0x0,0x1F4)
+      help         : >
+                     Use only if Ext Vnn Rail config is different in Sx. Granularity of this setting is 1mA and maximal possible value is 500mA
+      length       : 0x2
+      value        : 0xC8
+  - PchFivrVccinAuxRetToLowCurModeVolTranTime :
+      name         : Transition time in microseconds from Retention Mode Voltage to Low Current Mode Voltage
+      type         : EditNum, HEX, (0x0,0xFF)
+      help         : >
+                     This field has 1us resolution. When value is 0 PCH will not transition VCCIN_AUX to retention mode voltage
+      length       : 0x1
+      value        : 0x2B
+  - PchFivrVccinAuxRetToHighCurModeVolTranTime :
+      name         : Transition time in microseconds from Retention Mode Voltage to High Current Mode Voltage
+      type         : EditNum, HEX, (0x0,0xFF)
+      help         : >
+                     This field has 1us resolution. When value is 0 PCH will not transition VCCIN_AUX to retention mode voltage
+      length       : 0x1
+      value        : 0x36
+  - PchFivrVccinAuxLowToHighCurModeVolTranTime :
+      name         : Transition time in microseconds from Low Current Mode Voltage to High Current Mode Voltage
+      type         : EditNum, HEX, (0x0,0xFF)
+      help         : >
+                     This field has 1us resolution. When value is 0 PCH will not transition VCCIN_AUX to low current mode voltage
+      length       : 0x1
+      value        : 0x0C
+  - PchFivrDynPm :
+      name         : FIVR Dynamic Power Management
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/Disable FIVR Dynamic Power Management
+      length       : 0x1
+      value        : 0x01
+  - PchFivrExtV1p05RailCtrlRampTmr :
+      name         : External V1P05 Control Ramp Timer value
+      type         : EditNum, HEX, (0x0,0xFF)
+      help         : >
+                     Hold off time to be used when changing the v1p05_ctrl for external bypass value in us
+      length       : 0x1
+      value        : 0x01
+  - PchFivrExtV1p05RailEnabledStates :
+      name         : Mask to enable the usage of external V1p05 VR rail in specific S0ix or Sx states
+      type         : EditNum, HEX, (0x0,0xFF)
+      help         : >
+                     Enable External V1P05 Rail in: BIT0:S0i1/S0i2, BIT1:S0i3, BIT2:S3, BIT3:S4, BIT5:S5
+      length       : 0x1
+      value        : 0x1E
+  - PchFivrExtVnnRailEnabledStates :
+      name         : Mask to enable the usage of external Vnn VR rail in specific S0ix or Sx states
+      type         : EditNum, HEX, (0x0,0xFF)
+      help         : >
+                     Enable External Vnn Rail in: BIT0:S0i1/S0i2, BIT1:S0i3, BIT2:S3, BIT3:S4, BIT5:S5
+      length       : 0x1
+      value        : 0x1E
+  - PchFivrExtVnnRailSupportedVoltageStates :
+      name         : Mask to enable the platform configuration of external Vnn VR rail
+      type         : EditNum, HEX, (0x0,0xFF)
+      help         : >
+                     External Vnn Rail Supported Configuration
+      length       : 0x1
+      value        : 0x0E
   - PchFivrExtVnnRailVoltage :
       name         : External Vnn Voltage Value that will be used in S0ix/Sx states
       type         : EditNum, HEX, (0x0,0x07FF)
@@ -1522,7 +1614,7 @@
       help         : >
                      This field has 1us resolution. When value is 0 Transition to 0V is disabled.
       length       : 0x2
-      value        : 0x5A
+      value        : 0x96
   - PchPmSlpS3MinAssert :
       name         : PCH Pm Slp S3 Min Assert
       type         : EditNum, HEX, (0x0,0xFF)

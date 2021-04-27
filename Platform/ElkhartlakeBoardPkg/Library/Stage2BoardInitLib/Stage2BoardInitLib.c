@@ -1457,15 +1457,37 @@ UpdateFspConfig (
     Fspscfg->PchFivrExtVnnRailSxVoltage                  = SiCfgData->PchFivrExtVnnRailSxVoltage;
     Fspscfg->PchFivrExtVnnRailSxIccMax                   = SiCfgData->PchFivrExtVnnRailSxIccMax;
     Fspscfg->SdCardGpioCmdPadTermination                 = 0x1F;
-    Fspscfg->PchFivrVccinAuxLowToHighCurModeVolTranTime  = 0x0C;
-    Fspscfg->PchFivrVccinAuxRetToHighCurModeVolTranTime  = 0x36;
-    Fspscfg->PchFivrVccinAuxRetToLowCurModeVolTranTime   = 0x2B;
-    Fspscfg->PchFivrVccinAuxOffToHighCurModeVolTranTime  = 0x0096;
-    Fspscfg->PchFivrDynPm                                = 0x01;
-    Fspscfg->PchFivrExtVnnRailIccMaximum                 = 0xC8;
-    Fspscfg->PchFivrExtV1p05RailIccMaximum               = 0x64;
-    Fspscfg->PchFivrExtVnnRailSxIccMaximum               = 0xC8;
-    Fspscfg->PchFivrExtV1p05RailCtrlRampTmr              = 0x1;
+    Fspscfg->PchFivrVccinAuxLowToHighCurModeVolTranTime  = SiCfgData->PchFivrVccinAuxLowToHighCurModeVolTranTime;//0x0C;
+    Fspscfg->PchFivrVccinAuxRetToHighCurModeVolTranTime  = SiCfgData->PchFivrVccinAuxRetToHighCurModeVolTranTime;//0x36;
+    Fspscfg->PchFivrVccinAuxRetToLowCurModeVolTranTime   = SiCfgData->PchFivrVccinAuxRetToLowCurModeVolTranTime;//0x2B;
+    Fspscfg->PchFivrVccinAuxOffToHighCurModeVolTranTime  = SiCfgData->PchFivrVccinAuxOffToHighCurModeVolTranTime;//0x0096;
+    Fspscfg->PchFivrDynPm                                = SiCfgData->PchFivrDynPm;//0x01;
+    Fspscfg->PchFivrExtVnnRailIccMaximum                 = SiCfgData->PchFivrExtVnnRailIccMaximum;//0xC8;
+    Fspscfg->PchFivrExtV1p05RailIccMaximum               = SiCfgData->PchFivrExtV1p05RailIccMaximum;//0x64;
+    Fspscfg->PchFivrExtVnnRailSxIccMaximum               = SiCfgData->PchFivrExtVnnRailSxIccMaximum;//0xC8;
+    Fspscfg->PchFivrExtV1p05RailCtrlRampTmr              = SiCfgData->PchFivrExtV1p05RailCtrlRampTmr;//0x1;
+    Fspscfg->PchFivrExtV1p05RailEnabledStates            = SiCfgData->PchFivrExtV1p05RailEnabledStates;//0x1E;
+    Fspscfg->PchFivrExtV1p05RailSupportedVoltageStates   = SiCfgData->PchFivrExtV1p05RailSupportedVoltageStates;//0x02;
+    Fspscfg->PchFivrExtVnnRailEnabledStates              = SiCfgData->PchFivrExtVnnRailEnabledStates;//0x1E;
+    Fspscfg->PchFivrExtVnnRailSupportedVoltageStates     = SiCfgData->PchFivrExtVnnRailSupportedVoltageStates;//0x0E;
+    Fspscfg->PchFivrExtVnnRailSxEnabledStates            = SiCfgData->PchFivrExtVnnRailSxEnabledStates;//0x1C;
+
+    DEBUG ((DEBUG_INFO, "------------------------------------------PCH_FIVR_CONFIG----------------------------------------\n"));
+    DEBUG ((DEBUG_INFO, "SiCfgData->PchFivrVccinAuxLowToHighCurModeVolTranTime: 0x%x\n",SiCfgData->PchFivrVccinAuxLowToHighCurModeVolTranTime));
+    DEBUG ((DEBUG_INFO, "SiCfgData->PchFivrVccinAuxRetToHighCurModeVolTranTime: 0x%x\n",SiCfgData->PchFivrVccinAuxRetToHighCurModeVolTranTime));
+    DEBUG ((DEBUG_INFO, "SiCfgData->PchFivrVccinAuxRetToLowCurModeVolTranTime: 0x%x\n",SiCfgData->PchFivrVccinAuxRetToLowCurModeVolTranTime));
+    DEBUG ((DEBUG_INFO, "SiCfgData->PchFivrVccinAuxOffToHighCurModeVolTranTime: 0x%x\n",SiCfgData->PchFivrVccinAuxOffToHighCurModeVolTranTime));
+    DEBUG ((DEBUG_INFO, "SiCfgData->PchFivrDynPm: 0x%x\n",SiCfgData->PchFivrDynPm));
+    DEBUG ((DEBUG_INFO, "SiCfgData->PchFivrExtVnnRailIccMaximum: 0x%x\n",SiCfgData->PchFivrExtVnnRailIccMaximum));
+    DEBUG ((DEBUG_INFO, "SiCfgData->PchFivrExtV1p05RailIccMaximum: 0x%x\n",SiCfgData->PchFivrExtV1p05RailIccMaximum));
+    DEBUG ((DEBUG_INFO, "SiCfgData->PchFivrExtVnnRailSxIccMaximum: 0x%x\n",SiCfgData->PchFivrExtVnnRailSxIccMaximum));
+    DEBUG ((DEBUG_INFO, "SiCfgData->PchFivrExtV1p05RailCtrlRampTmr: 0x%x\n",SiCfgData->PchFivrExtV1p05RailCtrlRampTmr));
+    DEBUG ((DEBUG_INFO, "SiCfgData->PchFivrExtV1p05RailEnabledStates: 0x%x\n",SiCfgData->PchFivrExtV1p05RailEnabledStates));
+    DEBUG ((DEBUG_INFO, "SiCfgData->PchFivrExtV1p05RailSupportedVoltageStates: 0x%x\n",SiCfgData->PchFivrExtV1p05RailSupportedVoltageStates));
+    DEBUG ((DEBUG_INFO, "SiCfgData->PchFivrExtVnnRailEnabledStates: 0x%x\n",SiCfgData->PchFivrExtVnnRailEnabledStates));
+    DEBUG ((DEBUG_INFO, "SiCfgData->PchFivrExtVnnRailSupportedVoltageStates: 0x%x\n",SiCfgData->PchFivrExtVnnRailSupportedVoltageStates));
+    DEBUG ((DEBUG_INFO, "SiCfgData->PchFivrExtVnnRailSxEnabledStates: 0x%x\n",SiCfgData->PchFivrExtVnnRailSxEnabledStates));
+    DEBUG ((DEBUG_INFO, "------------------------------------------------END-----------------------------------------------------\n"));
 
     // PCH_PM_CONFIG
     Fspscfg->PchPmSlpS3MinAssert                         = SiCfgData->PchPmSlpS3MinAssert;
@@ -1742,7 +1764,6 @@ UpdateFspConfig (
     Fspscfg->EnableItbm                    = 0;            // Intel Turbo Boost Max Technology 3.0
     Fspscfg->AcSplitLock                   = 0;            // AC check on split locks
     Fspscfg->RenderStandby                 = 0;            // IGFX RenderStandby
-    Fspscfg->PmSupport                     = 0;            // IGFX PmSupport
     Fspscfg->DisplayFusaConfigEnable       = 1;            // Fusa Display Configuration
     Fspscfg->GraphicFusaConfigEnable       = 1;            // Fusa Graphics Configuration
     Fspscfg->OpioFusaConfigEnable          = 1;            // Fusa Opio Configuration
@@ -1767,12 +1788,6 @@ UpdateFspConfig (
     DEBUG ((DEBUG_INFO, "Firmware update mode, unlock Bios setting\n"));
   }
 
-    //Pch Fivr Config
-    Fspscfg->PchFivrExtV1p05RailEnabledStates                 = 0x1E;
-    Fspscfg->PchFivrExtV1p05RailSupportedVoltageStates        = 0x02;
-    Fspscfg->PchFivrExtVnnRailEnabledStates                   = 0x1E;
-    Fspscfg->PchFivrExtVnnRailSupportedVoltageStates          = 0x0E;
-    Fspscfg->PchFivrExtVnnRailSxEnabledStates                 = 0x1C;
 }
 
 
