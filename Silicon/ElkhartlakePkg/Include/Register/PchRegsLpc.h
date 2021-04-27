@@ -52,5 +52,20 @@ typedef UINT8 PCH_STEPPING;
 
 #define R_LPC_CFG_BC                              0xDC            ///< Bios Control
 
+#define R_PCH_LPC_IOD                             0x80
+#define R_PCH_LPC_IOE                             0x82
+#define R_PCH_LPC_GEN1_DEC                        0x84
+#define B_PCH_LPC_GENX_DEC_IODRA                  0x00FC0000
+#define B_PCH_LPC_GENX_DEC_IOBAR                  0x0000FFFC
+#define B_PCH_LPC_GENX_DEC_EN                     0x00000001
+#define R_PCH_ESPI_CS1GIR1                        0xA4
+
+//
+// APM Registers
+//
+
+#define R_PCH_ESPI_PCBC                           0xDC            ///< Peripheral Channel BIOS Control
+#define B_PCH_ESPI_PCBC_ESPI_EN                   BIT2            ///< eSPI Enable Pin Strap
+
 
 #endif
