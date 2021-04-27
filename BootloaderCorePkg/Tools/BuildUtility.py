@@ -217,7 +217,7 @@ class PciEnumPolicyInfo(Structure):
         self.BusScanType        = 0
         self.NumOfBus           = 0
 
-def is_valid_tool_version(cmd, current_version):
+def is_valid_tool_version(cmd, current_version, optional=False):
     try:
         name_str = ntpath.basename(cmd).split('.')[0]
         name = re.sub(r'\d+', '', name_str)
@@ -226,8 +226,16 @@ def is_valid_tool_version(cmd, current_version):
     except:
         print('Unexpected exception while checking %s tool version' % cmd)
         return False
-    print_tool_version_info(cmd, current_version, minimum_version, valid)
-    return valid
+
+    try:
+        if os.name == 'posix':
+            cmd = subprocess.check_output(['which', cmd], stderr=subprocess.STDOUT).decode().strip()
+    except:
+        pass
+
+    print ('- %s: Version %s (>= %s) [%s]' % (cmd, current_version, minimum_version, \
+           'PASS' if valid else 'RECOMMEND' if optional else 'FAIL'))
+    return valid | optional
 
 def get_gcc_info ():
     toolchain = 'GCC5'
@@ -897,14 +905,6 @@ def check_for_python():
         pass
     return is_valid_tool_version(cmd, ver)
 
-def print_tool_version_info(cmd, version, version_min = '0', okay = True):
-    try:
-        if os.name == 'posix':
-            cmd = subprocess.check_output(['which', cmd], stderr=subprocess.STDOUT).decode().strip()
-    except:
-        pass
-    print ('- %s: Version %s (>= %s) [%s]' % (cmd, version, version_min, 'PASS' if okay else 'FAIL'))
-
 def check_for_openssl():
     '''
     Verify OpenSSL executable is available
@@ -964,7 +964,7 @@ def check_for_git():
         print('ERROR: Git not found. Please install Git or check if Git is in the PATH environment variable.')
         ver = ''
         pass
-    return is_valid_tool_version(cmd, ver)
+    return is_valid_tool_version(cmd, ver, True)
 
 def check_for_toolchain(toolchain_preferred):
     toolchain = None
