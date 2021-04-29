@@ -95,6 +95,8 @@
 
 #define MAXSYMLINKS 1
 
+#define MAXPATHLEN 260
+
 #undef  EXT2FS_DEBUG
 
 #undef  LIBSA_FS_SINGLECOMPONENT

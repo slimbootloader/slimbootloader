@@ -735,7 +735,7 @@ Ext2fsOpen (
 #ifndef LIBSA_NO_FS_SYMLINK
   INODE32 ParentInumber;
   INT32 Nlinks;
-  CHAR8 NameBuf[MAX_FILE_PATH_LEN+1];
+  CHAR8 NameBuf[MAXPATHLEN+1];
   CHAR8 *Buf;
 
   Nlinks = 0;
@@ -878,8 +878,8 @@ Ext2fsOpen (
 
       Len = AsciiStrLen (Cp);
 
-      if (LinkLength + Len > MAX_FILE_PATH_LEN ||
-          ++Nlinks > MAXSYMLINKS) {
+      if (((LinkLength + Len) > MAXPATHLEN) ||
+          ((++Nlinks) > MAXSYMLINKS)) {
         Status = RETURN_LOAD_ERROR;
         goto out;
       }
