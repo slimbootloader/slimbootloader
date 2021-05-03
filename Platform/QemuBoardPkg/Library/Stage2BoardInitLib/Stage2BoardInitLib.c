@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -211,13 +211,19 @@ BoardInit (
 
   switch (InitPhase) {
   case PreSiliconInit:
+    if (GetPlatformId () == PLATFORM_ID_QSP_SIMICS) {
+        // Update PCI Memory 32 base address for QSP
+        Status = PcdSet32S (PcdPciResourceMem32Base, 0xF0000000);
+    }
     GpioInit ();
-    SpiConstructor ();
     EnableLegacyRegions ();
-    VariableConstructor (PcdGet32 (PcdVariableRegionBase), PcdGet32 (PcdVariableRegionSize));
     if (!FeaturePcdGet (PcdStage1BXip)) {
-      Status = TestVariableService ();
-      ASSERT_EFI_ERROR (Status);
+      if (GetPlatformId () != PLATFORM_ID_QSP_SIMICS) {
+        SpiConstructor ();
+        VariableConstructor (PcdGet32 (PcdVariableRegionBase), PcdGet32 (PcdVariableRegionSize));
+        Status = TestVariableService ();
+        ASSERT_EFI_ERROR (Status);
+      }
     }
     // Get TSEG info from FSP HOB
     // It will be consumed in MpInit if SMM rebase is enabled
@@ -295,6 +301,7 @@ UpdateFspConfig (
 
   if (PcdGetBool (PcdFramebufferInitEnabled)) {
     FspsConfig->GraphicsConfigPtr = (UINT32)GetVbtAddress ();
+    FspsConfig->PciTempResourceBase = PcdGet32 (PcdPciResourceMem32Base);
   } else {
     FspsConfig->GraphicsConfigPtr = 0;
   }
