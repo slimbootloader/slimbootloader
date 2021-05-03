@@ -1,7 +1,7 @@
 ## @file
 # This file is used to provide board specific image information.
 #
-#  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -28,9 +28,9 @@ class Board(BaseBoard):
 
         self.VERINFO_IMAGE_ID          = 'SB_QEMU '
         self.VERINFO_PROJ_MAJOR_VER    = 1
-        self.VERINFO_PROJ_MINOR_VER    = 0
+        self.VERINFO_PROJ_MINOR_VER    = 1
         self.VERINFO_SVN               = 1
-        self.VERINFO_BUILD_DATE        = '09/25/2017'
+        self.VERINFO_BUILD_DATE        = '05/03/2021'
 
         self.BOARD_NAME           = 'qemu'
         self.BOARD_PKG_NAME       = 'QemuBoardPkg'
@@ -169,7 +169,7 @@ class Board(BaseBoard):
         #self._PLATFORM_ID         = 1
 
         self._CFGDATA_INT_FILE    = []
-        self._CFGDATA_EXT_FILE    = ['CfgDataExt_Brd1.dlt', 'CfgDataExt_Brd31.dlt']
+        self._CFGDATA_EXT_FILE    = ['CfgDataExt_Brd1.dlt', 'CfgDataExt_Brd31.dlt', 'CfgDataExt_QSP.dlt']
 
         # If mulitple VBT table support is required, list them as:
         #   {VbtImageId1 : VbtFileName1, VbtImageId2 : VbtFileName2, ...}
