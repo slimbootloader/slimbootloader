@@ -212,8 +212,8 @@ BoardInit (
   switch (InitPhase) {
   case PreSiliconInit:
     if (GetPlatformId () == PLATFORM_ID_QSP_SIMICS) {
-        // Update PCI Memory 32 base address for QSP
-        Status = PcdSet32S (PcdPciResourceMem32Base, 0xF0000000);
+      // Update PCI Memory 32 base address for QSP
+      Status = PcdSet32S (PcdPciResourceMem32Base, 0xF0000000);
     }
     GpioInit ();
     EnableLegacyRegions ();
@@ -405,6 +405,31 @@ UpdateOsBootMediumInfo (
   }
 }
 
+/**
+ Find the correct graphics PCI device number
+
+ @retval   GFX PCI device number
+ */
+UINT8
+GetGraphicsDeviceNumber (
+  VOID
+)
+{
+  UINT8            Dev;
+
+  if (GetPlatformId () == PLATFORM_ID_QSP_SIMICS) {
+    Dev = 15;
+  } else {
+    Dev = 1;
+  }
+
+  if (PciRead16 (PCI_LIB_ADDRESS(0, Dev, 0, 2)) != 0x1111) {
+    Dev = 0xff;
+    DEBUG ((DEBUG_INFO, "Could not find GFX device !\n"));
+  }
+
+  return Dev;
+}
 
 /**
  Update the frame buffer info by reading the PCI address
@@ -417,12 +442,16 @@ UpdateFrameBufferInfo (
 )
 {
   GRAPHICS_DATA   *GfxPtr;
+  UINT8            Dev;
 
   GfxPtr = (GRAPHICS_DATA *)(UINTN)PcdGet32(PcdGraphicsVbtAddress);
-  GfxInfo->FrameBufferBase = (UINT64)PciRead32 (PCI_LIB_ADDRESS(0, 1, 0, 0x10)) & 0xFFFFFFF0;
-  if (GfxPtr->Signature == GRAPHICS_DATA_SIG) {
-    GfxInfo->GraphicsMode.HorizontalResolution = GfxPtr->ResX;
-    GfxInfo->GraphicsMode.VerticalResolution   = GfxPtr->ResY;
+  Dev = GetGraphicsDeviceNumber ();
+  if (Dev < 32) {
+    GfxInfo->FrameBufferBase = (UINT64)PciRead32 (PCI_LIB_ADDRESS(0, Dev, 0, 0x10)) & 0xFFFFFFF0;
+    if (GfxPtr->Signature == GRAPHICS_DATA_SIG) {
+      GfxInfo->GraphicsMode.HorizontalResolution = GfxPtr->ResX;
+      GfxInfo->GraphicsMode.VerticalResolution   = GfxPtr->ResY;
+    }
   }
 }
 
@@ -436,9 +465,14 @@ UpdateFrameBufferDeviceInfo (
   OUT  EFI_PEI_GRAPHICS_DEVICE_INFO_HOB   *GfxDeviceInfo
   )
 {
-  GfxDeviceInfo->BarIndex = 0;
-  GfxDeviceInfo->VendorId = PciRead16 (PCI_LIB_ADDRESS (0, 1, 0, 0));
-  GfxDeviceInfo->DeviceId = PciRead16 (PCI_LIB_ADDRESS (0, 1, 0, 2));
+  UINT8            Dev;
+
+  Dev = GetGraphicsDeviceNumber ();
+  if (Dev < 32) {
+    GfxDeviceInfo->BarIndex = 0;
+    GfxDeviceInfo->VendorId = PciRead16 (PCI_LIB_ADDRESS (0, Dev, 0, 0));
+    GfxDeviceInfo->DeviceId = PciRead16 (PCI_LIB_ADDRESS (0, Dev, 0, 2));
+  }
 }
 
 /**
@@ -527,12 +561,16 @@ PlatformUpdateAcpiGnvs (
   SetMem (Gnvs, sizeof(EFI_GLOBAL_NVS_AREA), 0);
 
   Gnvs->PciWindow32.Base    = PcdGet32(PcdPciResourceMem32Base);
-  Gnvs->PciWindow32.End     = PcdGet64(PcdPciExpressBaseAddress) - 1;
+  if (GetPlatformId () == PLATFORM_ID_QSP_SIMICS) {
+    Gnvs->PciWindow32.End   = IO_APIC_BASE_ADDRESS - 1;
+  } else {
+    Gnvs->PciWindow32.End   = PcdGet64(PcdPciExpressBaseAddress) - 1;
+  }
   Gnvs->PciWindow32.Length  = Gnvs->PciWindow32.End - Gnvs->PciWindow32.Base + 1;
 
-  Gnvs->PciWindow64.Base    = 0;
-  Gnvs->PciWindow64.End     = 0;
-  Gnvs->PciWindow64.Length  = 0;
+  Gnvs->PciWindow64.Base    = 0x0800000000;
+  Gnvs->PciWindow64.End     = 0x0fffffffff;
+  Gnvs->PciWindow64.Length  = Gnvs->PciWindow64.Base - Gnvs->PciWindow64.End + 1;
 
   SocUpdateAcpiGnvs ((VOID *)Gnvs);
 }
