@@ -1768,6 +1768,7 @@ UpdateFspConfig (
     Fspscfg->GraphicFusaConfigEnable       = 1;            // Fusa Graphics Configuration
     Fspscfg->OpioFusaConfigEnable          = 1;            // Fusa Opio Configuration
     Fspscfg->PsfFusaConfigEnable           = 1;            // Fusa Psf Configuration
+    Fspscfg->DisableProcHotOut             = 0;            // Fusa Prochot output enable
 
     for (Index = 0; Index < MaxPcieRootPorts; Index++) {
       Fspscfg->PcieRpAspm[Index]           = 0;
