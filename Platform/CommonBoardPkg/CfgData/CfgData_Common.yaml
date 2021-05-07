@@ -61,7 +61,8 @@
       page         : OS
   - CurrentBoot  :
       name         : Current Boot Option
-      option       :  16:AUTO, 0:0, 1:1, 2:2, 3:3, 4:4, 5:5, 6:6, 7:7, 8:8, 9:9, 10:10, 11:11, 10:10, 11:11, 12:12, 13:13, 14:14, 15:15
+      type         : Combo
+      option       : 16:AUTO, 0:0, 1:1, 2:2, 3:3, 4:4, 5:5, 6:6, 7:7, 8:8, 9:9, 10:10, 11:11, 10:10, 11:11, 12:12, 13:13, 14:14, 15:15
       help         : >
                      Set the current boot option. It indicates the boot option index (0-15) to be tried first on the boot flow.
                      AUTO allows platform to set current boot option using platform specific policy.
