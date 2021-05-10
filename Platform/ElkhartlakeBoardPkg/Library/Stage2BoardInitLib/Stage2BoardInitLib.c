@@ -751,6 +751,7 @@ BoardInit (
     if (GetBootMode() != BOOT_ON_FLASH_UPDATE) {
       UpdatePayloadId ();
     }
+    GpioLockPads();
     break;
   case PostSiliconInit:
     // Set TSEG base/size PCD
