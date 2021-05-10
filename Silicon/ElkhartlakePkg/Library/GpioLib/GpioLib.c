@@ -531,6 +531,64 @@ GpioUnlockPadCfgForGroupDw (
            DwNum,
            ~PadsToUnlock,
            0
+  );
+}
+
+/**
+  This procedure will set PadCfgLock for selected pads within one group
+
+  @param[in]  Group               GPIO group
+  @param[in]  DwNum               PadCfgLock register number for current group.
+                                  For group which has less then 32 pads per group DwNum must be 0.
+  @param[in]  PadsToLock          Bitmask for pads which are going to be locked
+                                  Bit position - PadNumber
+                                  Bit value - 0: DoNotLock, 1: Lock
+
+  @retval EFI_SUCCESS             The function completed successfully
+  @retval EFI_INVALID_PARAMETER   Invalid group or DwNum parameter number
+**/
+EFI_STATUS
+GpioLockPadCfgForGroupDw (
+  IN GPIO_GROUP                   Group,
+  IN UINT32                       DwNum,
+  IN UINT32                       PadsToLock
+  )
+{
+  if (!GpioIsGroupAndDwNumValid (Group, DwNum)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  return GpioWriteLockReg (
+           GpioPadConfigLockRegister,
+           Group,
+           DwNum,
+           ~0u,
+           PadsToLock
+           );
+}
+/**
+  This procedure will set PadCfgLock for selected pad
+
+  @param[in] GpioPad              GPIO pad
+
+  @retval EFI_SUCCESS             The function completed successfully
+  @retval EFI_INVALID_PARAMETER   Invalid group or pad number
+**/
+EFI_STATUS
+GpioLockPadCfg (
+  IN GPIO_PAD                   GpioPad
+  )
+{
+  GPIO_GROUP   Group;
+  UINT32       PadNumber;
+
+  Group = GpioGetGroupFromGpioPad (GpioPad);
+  PadNumber = GpioGetPadNumberFromGpioPad (GpioPad);
+
+  return GpioLockPadCfgForGroupDw (
+           Group,
+           GPIO_GET_DW_NUM (PadNumber),
+           1 << GPIO_GET_PAD_POSITION (PadNumber)
            );
 }
 
@@ -565,6 +623,64 @@ GpioUnlockPadCfgTxForGroupDw (
            DwNum,
            ~PadsToUnlockTx,
            0
+           );
+}
+
+/**
+  This procedure will set PadCfgLockTx for selected pads within one group
+
+  @param[in]  Group               GPIO group
+  @param[in]  DwNum               PadCfgLock register number for current group.
+                                  For group which has less then 32 pads per group DwNum must be 0.
+  @param[in]  PadsToLockTx        Bitmask for pads which are going to be locked,
+                                  Bit position - PadNumber
+                                  Bit value - 0: DoNotLockTx, 1: LockTx
+
+  @retval EFI_SUCCESS             The function completed successfully
+  @retval EFI_INVALID_PARAMETER   Invalid group or DwNum parameter number
+**/
+EFI_STATUS
+GpioLockPadCfgTxForGroupDw (
+  IN GPIO_GROUP                   Group,
+  IN UINT32                       DwNum,
+  IN UINT32                       PadsToLockTx
+  )
+{
+  if (!GpioIsGroupAndDwNumValid (Group, DwNum)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  return GpioWriteLockReg (
+           GpioPadLockOutputRegister,
+           Group,
+           DwNum,
+           ~0u,
+           PadsToLockTx
+           );
+}
+/**
+  This procedure will set PadCfgLockTx for selected pad
+
+  @param[in] GpioPad              GPIO pad
+
+  @retval EFI_SUCCESS             The function completed successfully
+  @retval EFI_INVALID_PARAMETER   Invalid group or pad number
+**/
+EFI_STATUS
+GpioLockPadCfgTx (
+  IN GPIO_PAD                   GpioPad
+  )
+{
+  GPIO_GROUP   Group;
+  UINT32       PadNumber;
+
+  Group = GpioGetGroupFromGpioPad (GpioPad);
+  PadNumber = GpioGetPadNumberFromGpioPad (GpioPad);
+
+  return GpioLockPadCfgTxForGroupDw (
+           Group,
+           GPIO_GET_DW_NUM (PadNumber),
+           1 << GPIO_GET_PAD_POSITION (PadNumber)
            );
 }
 
@@ -655,5 +771,61 @@ GpioGetGroupDwToGpeDwX (
   *GroupToGpeDw2 = GroupToGpeDwX[2];
   *GroupDwForGpeDw2 = GroupDwForGpeDwX[2];
 
+  return EFI_SUCCESS;
+}
+/**
+  This procedure is used to lock all GPIO pads except the ones
+  which were requested during their configuration to be left unlocked.
+  This function must be called before BIOS_DONE - before POSTBOOT_SAI is enabled.
+    FSP - call this function from wrapper before transition to FSP-S
+    UEFI/EDK - call this function before EndOfPei event
+
+  @retval EFI_SUCCESS             The function completed successfully
+  @retval EFI_INVALID_PARAMETER   Invalid group or pad number
+**/
+EFI_STATUS
+GpioLockPads (
+  VOID
+  )
+{
+  UINT32         DwNum;
+  GPIO_GROUP     Group;
+  GPIO_GROUP     GroupMin;
+  GPIO_GROUP     GroupMax;
+  UINT32         UnlockedPads;
+  UINT32         OverrideCfgPads;
+  UINT32         OverrideTxPads;
+  EFI_STATUS     Status;
+
+  GroupMin = GpioGetLowestGroup ();
+  GroupMax = GpioGetHighestGroup ();
+
+  for (Group = GroupMin; Group <= GroupMax; Group++) {
+    for (DwNum = 0; DwNum <= GPIO_GET_DW_NUM (GpioGetPadPerGroup (Group)); DwNum++) {
+      OverrideCfgPads = 0;
+      OverrideTxPads = 0;
+      Status = GpioUnlockOverride (Group, DwNum, &OverrideCfgPads, &OverrideTxPads);
+      if (EFI_ERROR (Status)) {
+        ASSERT (FALSE);
+        return Status;
+      }
+
+      UnlockedPads = GpioGetGroupDwUnlockPadConfigMask (GpioGetGroupIndexFromGroup (Group), DwNum);
+
+      Status = GpioLockPadCfgForGroupDw (Group, DwNum, (UINT32)~(UnlockedPads | OverrideCfgPads));
+      if (EFI_ERROR (Status)) {
+        ASSERT (FALSE);
+        return Status;
+      }
+
+      UnlockedPads = GpioGetGroupDwUnlockOutputMask (GpioGetGroupIndexFromGroup (Group), DwNum);
+
+      Status = GpioLockPadCfgTxForGroupDw (Group, DwNum, (UINT32)~(UnlockedPads | OverrideTxPads));
+      if (EFI_ERROR (Status)) {
+        ASSERT (FALSE);
+        return Status;
+      }
+    }
+  }
   return EFI_SUCCESS;
 }

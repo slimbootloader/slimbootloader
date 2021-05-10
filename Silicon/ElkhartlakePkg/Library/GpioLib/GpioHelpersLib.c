@@ -25,6 +25,8 @@ typedef struct {
   //
   UINT32  OutputState;
 } GPIO_UNLOCK_HOB_DATA;
+GLOBAL_REMOVE_IF_UNREFERENCED GPIO_UNLOCK_HOB_DATA *mGpioUnlockData = NULL;
+GLOBAL_REMOVE_IF_UNREFERENCED UINT32 mGpioUnlockDataRecords = 0;
 
 /**
   This procedure will get index of GPIO Unlock HOB structure for selected GroupIndex and DwNum.
@@ -126,6 +128,29 @@ GpioGetUnlockData (
   return HobDataLength;
 }
 
+
+/**
+  This procedure will get pointer to GPIO Unlock data structure.
+
+  @param[out] GpioUnlockData          pointer to GPIO Unlock data structure
+
+  @retval Length                      number of GPIO unlock data records
+**/
+STATIC
+UINT32
+GpioLocateUnlockData (
+  GPIO_UNLOCK_HOB_DATA  **GpioUnlockData
+  )
+{
+  if (mGpioUnlockData == NULL) {
+    *GpioUnlockData = NULL;
+    return 0;
+  }
+
+  *GpioUnlockData = (GPIO_UNLOCK_HOB_DATA *) mGpioUnlockData;
+  return mGpioUnlockDataRecords;
+}
+
 /**
   This procedure stores GPIO group data about pads which PadConfig needs to be unlocked.
 
@@ -213,3 +238,102 @@ GpioStoreGroupDwUnlockOutputData (
   return EFI_SUCCESS;
 }
 
+/**
+  This procedure will get GPIO group data with pads, which PadConfig is supposed to be left unlock
+
+  @param[in]  GroupIndex          GPIO group index
+  @param[in]  DwNum               DWORD index for a group.
+                                  For group which has less then 32 pads per group DwNum must be 0.
+  @retval     UnlockedPads        DWORD bitmask for pads which are going to be left unlocked
+                                  Bit position - PadNumber
+                                  Bit value - 0: to be locked, 1: Leave unlocked
+**/
+UINT32
+GpioGetGroupDwUnlockPadConfigMask (
+  IN UINT32                       GroupIndex,
+  IN UINT32                       DwNum
+  )
+{
+  GPIO_UNLOCK_HOB_DATA *GpioUnlockData;
+  UINT32               Length;
+  UINT32               Index;
+
+  Length = GpioLocateUnlockData (&GpioUnlockData);
+  if (Length == 0) {
+    return 0;
+  }
+
+  Index = GpioUnlockDataIndex (GroupIndex, DwNum);
+  if (Index >= Length) {
+    return 0;
+  }
+
+  return GpioUnlockData[Index].PadConfig;
+}
+
+/**
+  This procedure will get GPIO group data with pads, which Output is supposed to be left unlock
+
+  @param[in]  GroupIndex          GPIO group index
+  @param[in]  DwNum               DWORD index for a group.
+                                  For group which has less then 32 pads per group DwNum must be 0.
+  @retval     UnlockedPads        DWORD bitmask for pads which are going to be left unlocked
+                                  Bit position - PadNumber
+                                  Bit value - 0: to be locked, 1: Leave unlocked
+**/
+UINT32
+GpioGetGroupDwUnlockOutputMask (
+  IN UINT32                       GroupIndex,
+  IN UINT32                       DwNum
+  )
+{
+  GPIO_UNLOCK_HOB_DATA *GpioUnlockData;
+  UINT32               Length;
+  UINT32               Index;
+
+  Length = GpioLocateUnlockData (&GpioUnlockData);
+  if (Length == 0) {
+    return 0;
+  }
+
+  Index = GpioUnlockDataIndex (GroupIndex, DwNum);
+  if (Index >= Length) {
+    return 0;
+  }
+
+  return GpioUnlockData[Index].OutputState;
+}
+
+/**
+  This function is to be used In GpioLockPads() to override a lock request by SOC code.
+
+  @param[in]  Group               GPIO group
+  @param[in]  DwNum               Register number for current group (parameter applicable in accessing whole register).
+                                  For group which has less then 32 pads per group DwNum must be 0.
+  @param[out] *UnlockCfgPad       DWORD bitmask for pads which are going to be left unlocked
+                                  Bit position - PadNumber
+                                  Bit value - 0: to be locked, 1: Leave unlocked
+  @param[out] *UnlockTxPad        DWORD bitmask for pads which are going to be left unlocked
+                                  Bit position - PadNumber
+                                  Bit value - 0: to be locked, 1: Leave unlocked
+
+  @retval EFI_SUCCESS             The function completed successfully
+  @retval EFI_INVALID_PARAMETER   Invalid input parameter
+**/
+EFI_STATUS
+GpioUnlockOverride (
+  IN  GPIO_GROUP  Group,
+  IN  UINT32      DwNum,
+  OUT UINT32      *UnlockCfgPad,
+  OUT UINT32      *UnlockTxPad
+  )
+{
+
+  if ((UnlockCfgPad == NULL) || (UnlockTxPad == NULL)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  *UnlockCfgPad = 0;
+  *UnlockTxPad = 0;
+  return EFI_SUCCESS;
+}
