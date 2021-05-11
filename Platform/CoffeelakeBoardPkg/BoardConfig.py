@@ -40,6 +40,11 @@ class Board(BaseBoard):
         self.PCI_MEM32_BASE       = 0x9F000000
         self.ACPI_PM_TIMER_BASE   = 0x1808
 
+        self._PCI_ENUM_DOWNGRADE_PMEM64 = 1
+        self._PCI_ENUM_DOWNGRADE_MEM64  = 1
+        self._PCI_ENUM_DOWNGRADE_BUS0   = 1
+        self.PCI_MEM64_BASE             = 0x4000000000
+
         self.FLASH_BASE_ADDRESS   = 0xFE000000
         self.FLASH_BASE_SIZE      = (self.FLASH_LAYOUT_START - self.FLASH_BASE_ADDRESS)
 

@@ -1842,7 +1842,8 @@ UpdateFrameBufferInfo (
 )
 {
   if (PcdGetBool (PcdIntelGfxEnabled)) {
-    GfxInfo->FrameBufferBase = PciRead32 (PCI_LIB_ADDRESS(0, 2, 0, 0x18)) & 0xFFFFFF00;
+    GfxInfo->FrameBufferBase  = LShiftU64 (PciRead32 (PCI_LIB_ADDRESS(0, 2, 0, 0x1C)), 32);
+    GfxInfo->FrameBufferBase += (PciRead32 (PCI_LIB_ADDRESS(0, 2, 0, 0x18)) & 0xFFFFFF00);
   }
 }
 
@@ -2329,6 +2330,8 @@ PlatformUpdateAcpiGnvs (
 
   SaNvs->Mmio32Base   = PcdGet32(PcdPciResourceMem32Base);
   SaNvs->Mmio32Length = ACPI_MMIO_BASE_ADDRESS - SaNvs->Mmio32Base;
+  SaNvs->Mmio64Base   = PcdGet64(PcdPciResourceMem64Base);
+  SaNvs->Mmio64Length = SaNvs->Mmio64Base;
 
   SaNvs->AlsEnable                    = 0;
   SaNvs->IgdState                     = 1;
