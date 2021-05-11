@@ -89,3 +89,4 @@
   gPlatformCommonLibTokenSpaceGuid.PcdDmaProtectionEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdDmaBufferAlignment
   gPlatformCommonLibTokenSpaceGuid.PcdDmaBufferSize
+  gPlatformModuleTokenSpaceGuid.PcdPciResourceMem64Base
