@@ -602,6 +602,7 @@ UpdateFspConfig (
     Fspmcfg->PchHdaIDispLinkFrequency   = GfxCfgData->PchHdaIDispLinkFrequency;
     Fspmcfg->PchHdaIDispLinkTmode       = GfxCfgData->PchHdaIDispLinkTmode;
     Fspmcfg->PchHdaIDispCodecDisconnect = GfxCfgData->PchHdaIDispCodecDisconnect;
+    Fspmcfg->PchHdaDspUaaCompliance     = GfxCfgData->PchHdaDspUaaCompliance;
 
     switch (GfxCfgData->PchHdAudioLinkMode) {
       case HDAUDIO_LINK_MODE_HDA:
