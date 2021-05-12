@@ -188,6 +188,13 @@
                      Enable/disable HDA SDI lanes.
       length       : 0x02
       value        : { 0x00, 0x00}
+  - PchHdaDspUaaCompliance :
+      name         : Universal Audio Architecture compliance for DSP enabled system
+      type         : Combo
+      help         : >
+                     0: Not-UAA Compliant (Intel SST driver supported only), 1: UAA Compliant (HDA Inbox driver or SST driver supported
+      length       : 0x01
+      value        : 0x0
   - Dummy        :
-      length       : 0x04
+      length       : 0x03
       value        : 0x0
