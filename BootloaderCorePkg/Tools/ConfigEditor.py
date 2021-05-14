@@ -509,7 +509,8 @@ class application(tkinter.Frame):
             result = self.evaluate_condition(item)
             if result == 2:
                 # Gray
-                widget.configure(state='disabled')
+                if not isinstance(widget, custom_table):
+                    widget.configure(state='disabled')
             elif result == 0:
                 # Hide
                 visible = False
@@ -517,7 +518,9 @@ class application(tkinter.Frame):
             else:
                 # Show
                 widget.grid()
-                widget.configure(state='normal')
+                if not isinstance(widget, custom_table):
+                    widget.configure(state='normal')
+
 
         return visible
 
