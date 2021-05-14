@@ -769,6 +769,8 @@ class CGenCfgData:
 
     def get_value (self, value_str, bit_length, array = True):
         value_str = value_str.strip()
+        if len(value_str) == 0:
+            return 0
         if value_str[0] == "'" and value_str[-1] == "'" or \
            value_str[0] == '"' and value_str[-1] == '"':
             value_str = value_str[1:-1]
