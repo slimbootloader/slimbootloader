@@ -366,7 +366,12 @@ SdMmcInitialize (
   }
 
   SdMmcHcBase = MmioRead32 (SdMmcHcPciBase + PCI_BASE_ADDRESSREG_OFFSET) & 0xFFFFF000;
-  Private->SdMmcHcBase = SdMmcHcBase;
+  if (SdMmcHcBase != 0) {
+    // Ensure PCI decoding is on
+    MmioOr8 (SdMmcHcPciBase + PCI_COMMAND_OFFSET, EFI_PCI_COMMAND_MEMORY_SPACE | EFI_PCI_COMMAND_BUS_MASTER);
+  }
+  Private->SdMmcHcPciBase = SdMmcHcPciBase;
+  Private->SdMmcHcBase    = SdMmcHcBase;
   if (Private->Signature == SD_MMC_HC_PRIVATE_SIGNATURE) {
     if (Private->Slot.CardType != CardType) {
       ZeroMem (Private, sizeof(SD_MMC_HC_PRIVATE_DATA));
@@ -465,6 +470,8 @@ MmcInitialize (
     // Handle Deinit if required.
     Private = MmcGetHcPrivateData ();
     if (Private != NULL) {
+      // Disable controller
+      MmioAnd8 (Private->SdMmcHcPciBase + PCI_COMMAND_OFFSET,  (UINT8)(~(EFI_PCI_COMMAND_MEMORY_SPACE | EFI_PCI_COMMAND_BUS_MASTER)));
       ZeroMem (Private, sizeof(SD_MMC_HC_PRIVATE_DATA));
     }
     return EFI_SUCCESS;
