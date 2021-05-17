@@ -501,6 +501,11 @@ def main():
                     type=str, required=True,
                     help='specify the platform specific stitch config file')
 
+    ap.add_argument('-op',
+                     dest='outpath',
+                     default = '',
+                     help = "Specify path to write output IFIW and signed bin files")
+
     args = ap.parse_args()
 
     stitch_cfg_file = load_source('StitchIfwiConfig', args.config_file)
@@ -539,10 +544,13 @@ def main():
         raise Exception ('Stitching process failed !')
     os.chdir(curr_dir)
 
-    generated_ifwi_file = os.path.join(stitch_dir, 'Temp', 'Ifwi.bin')
-
-    ifwi_file_name = 'sbl_ifwi_%s.bin' % (args.platform)
+    generated_ifwi_file = os.path.join(work_dir, 'Temp', 'Ifwi.bin')
+    ifwi_file_name = os.path.join(args.outpath,'sbl_ifwi_%s.bin' % (args.platform))
     shutil.copy(generated_ifwi_file, ifwi_file_name)
+
+    generated_signed_sbl =  os.path.join(work_dir, 'Temp', 'SlimBootloader.bin')
+    sbl_file_name = os.path.join(args.outpath,'SlimBootloader_%s.bin' % (args.platform))
+    shutil.copy(generated_signed_sbl, sbl_file_name)
 
     print ("\nIFWI Stitching completed successfully !")
     print ("Boot Guard Profile: %s" % args.btg_profile.upper())
