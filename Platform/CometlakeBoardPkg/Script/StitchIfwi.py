@@ -435,6 +435,7 @@ def main():
     ap.add_argument('-r', dest='remove', action = "store_true", default = False, help = "delete temporary files after stitch")
     ap.add_argument('-t', dest='tpm', default = 'ptt', choices=['ptt', 'dtpm', 'none'], help='specify TPM type')
     ap.add_argument('-fusa', dest='fusa', action = "store_true", default = False, help = "Patch IFWI to generate Fusa ifwi")
+    ap.add_argument('-op', dest='outpath', default = '', help = "Specify path to write output IFIW and signed bin files")
     args = ap.parse_args()
 
     stitch_cfg_file = load_source('StitchIfwiConfig', args.config_file)
@@ -460,8 +461,12 @@ def main():
     os.chdir(curr_dir)
 
     generated_ifwi_file = os.path.join(work_dir, 'Temp', 'Ifwi.bin')
-    ifwi_file_name = 'sbl_ifwi_%s.bin' % (args.platform)
+    ifwi_file_name = os.path.join(args.outpath,'sbl_ifwi_%s.bin' % (args.platform))
     shutil.copy(generated_ifwi_file, ifwi_file_name)
+
+    generated_signed_sbl =  os.path.join(work_dir, 'Temp', 'SlimBootloader.bin')
+    sbl_file_name = os.path.join(args.outpath,'SlimBootloader_%s.bin' % (args.platform))
+    shutil.copy(generated_signed_sbl, sbl_file_name)
 
     if args.fusa:
         print ("patch IFWI to generate Fusa ifwi")

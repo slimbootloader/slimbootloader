@@ -195,6 +195,7 @@ def main():
     ap.add_argument('-t', dest='tpm', default = 'ptt', choices=['ptt', 'dtpm', 'none'], help='specify TPM type')
     ap.add_argument('-k', dest='key_dir', type=str, required=True, help='specify the path to Sbl Keys directory')
     ap.add_argument('-o', dest='option', default = '', help = "Platform specific stitch option. Format: '-o option1;option2;...' For each option its format is 'parameter:data'. Try -o help for more information")
+    ap.add_argument('-op', dest='outpath', default = '', help = "Specify path to write output IFIW and signed bin files")
 
     args = ap.parse_args()
 
@@ -235,9 +236,13 @@ def main():
     os.chdir(curr_dir)
 
     generated_ifwi_file = os.path.join(work_dir, 'Temp', 'Ifwi.bin')
-
-    ifwi_file_name = 'sbl_ifwi_%s.bin' % (args.platform)
+    ifwi_file_name = os.path.join(args.outpath,'sbl_ifwi_%s.bin' % (args.platform))
     shutil.copy(generated_ifwi_file, ifwi_file_name)
+
+    generated_signed_sbl =  os.path.join(work_dir, 'Temp', 'SlimBootloader.bin')
+    sbl_file_name = os.path.join(args.outpath,'SlimBootloader_%s.bin' % (args.platform))
+    shutil.copy(generated_signed_sbl, sbl_file_name)
+
     list_val = [1,0,2,4,16,249,15] #List of values to override
     softstrap_write(ifwi_file_name,0xc18,list_val[0],1) #FUSA SOFTSTRAP due to CSME 2041 update
     ###################################################################################
