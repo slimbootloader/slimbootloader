@@ -33,6 +33,7 @@
 [Packages]
   MdePkg/MdePkg.dec
   BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
   Silicon/CometlakePkg/CometlakePkg.dec
 
 [LibraryClasses]

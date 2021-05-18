@@ -146,7 +146,7 @@ class Board(BaseBoard):
             'PlatformHookLib|Silicon/$(SILICON_PKG_NAME)/Library/PlatformHookLib/PlatformHookLib.inf',
             'SpiFlashLib|Silicon/CommonSocPkg/Library/SpiFlashLib/SpiFlashLib.inf',
             'PchSpiLib|Silicon/CommonSocPkg/Library/PchSpiLib/PchSpiLib.inf',
-            'PchSbiAccessLib|Silicon/$(SILICON_PKG_NAME)/Library/PchSbiAccessLib/PchSbiAccessLib.inf',
+            'PchSbiAccessLib|Silicon/CommonSocPkg/Library/PchSbiAccessLib/PchSbiAccessLib.inf',
             'PchInfoLib|Silicon/$(SILICON_PKG_NAME)/Library/PchInfoLib/PchInfoLib.inf',
             'PchP2sbLib|Silicon/$(SILICON_PKG_NAME)/Library/PchP2sbLib/PchP2sbLib.inf',
             'PchSerialIoLib|Silicon/$(SILICON_PKG_NAME)/Library/PchSerialIoLib/PchSerialIoLib.inf',

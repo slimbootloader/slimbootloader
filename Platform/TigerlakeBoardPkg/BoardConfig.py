@@ -210,7 +210,7 @@ class Board(BaseBoard):
             'PchInfoLib|Silicon/$(PCH_PKG_NAME)/Library/PchInfoLib/PchInfoLib.inf',
             'PchPcrLib|Silicon/$(PCH_PKG_NAME)/Library/PchPcrLib/PchPcrLib.inf',
             'PchP2sbLib|Silicon/$(PCH_PKG_NAME)/Library/PchP2sbLib/PchP2sbLib.inf',
-            'PchSbiAccessLib|Silicon/$(PCH_PKG_NAME)/Library/PchSbiAccessLib/PchSbiAccessLib.inf',
+            'PchSbiAccessLib|Silicon/CommonSocPkg/Library/PchSbiAccessLib/PchSbiAccessLib.inf',
             'PlatformHookLib|Silicon/$(SILICON_PKG_NAME)/Library/PlatformHookLib/PlatformHookLib.inf',
             'TccLib|Silicon/CommonSocPkg/Library/TccLib/TccLib.inf',
             'PchSpiLib|Silicon/CommonSocPkg/Library/PchSpiLib/PchSpiLib.inf',
