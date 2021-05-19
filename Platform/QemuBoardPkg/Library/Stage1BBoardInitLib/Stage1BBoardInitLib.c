@@ -36,6 +36,7 @@ CONST PLT_DEVICE  mPlatformDevices[]= {
   {{0x00000300}, OsBootDeviceSd    , 0 },
   {{0x00000300}, OsBootDeviceNvme  , 0 },
   {{0x00000400}, OsBootDeviceUsb   , 0 },
+  {{0x00000300}, OsBootDeviceUsb   , 1 }, // usb-storage with qemu-xhci or nec-usb-xhci
   {{0x01000000}, OsBootDeviceMemory, 0 }
 };
 
