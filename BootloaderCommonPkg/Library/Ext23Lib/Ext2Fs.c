@@ -577,6 +577,88 @@ SearchDirectory (
 }
 
 /**
+  Validate EXT2 Superblock
+
+  @param[in]      FsHandle      EXT file system handle.
+  @param[in]      File          File for which super block needs to be read.
+  @param[out]     RExt2Fs       EXT2FS meta data to retreive.
+
+  @retval 0 if superblock validation is success
+  @retval other if error.
+**/
+RETURN_STATUS
+EFIAPI
+Ext2SbValidate (
+  IN CONST EFI_HANDLE  FsHandle,
+  IN CONST OPEN_FILE   *File     OPTIONAL,
+  OUT      EXT2FS      *RExt2Fs  OPTIONAL
+  )
+{
+  PEI_EXT_PRIVATE_DATA *PrivateData;
+  UINT8 *Buffer;
+  EXT2FS *Ext2Fs;
+  UINT32 BufSize;
+  RETURN_STATUS Rc;
+  UINT32 SbOffset;
+
+  Rc = 0;
+  Buffer = NULL;
+
+  if (FsHandle == NULL) {
+    Rc = RETURN_INVALID_PARAMETER;
+    goto Exit;
+  }
+
+  PrivateData = (PEI_EXT_PRIVATE_DATA *)FsHandle;
+
+  Buffer = AllocatePool ((PrivateData->BlockSize > SBSIZE) ? PrivateData->BlockSize : SBSIZE);
+  if (Buffer == NULL) {
+    Rc = EFI_OUT_OF_RESOURCES;
+    goto Exit;
+  }
+
+  if (File == NULL) {
+    Rc = BDevStrategy (PrivateData, F_READ,
+                       SBOFF / PrivateData->BlockSize, PrivateData->BlockSize, Buffer, &BufSize);
+  } else {
+    Rc = DEV_STRATEGY (File->DevPtr) (PrivateData, F_READ,
+                                      SBOFF / PrivateData->BlockSize, PrivateData->BlockSize,
+                                      Buffer, &BufSize);
+  }
+
+  if (Rc != 0) {
+    goto Exit;
+  }
+
+  SbOffset = (SBOFF < PrivateData->BlockSize) ? SBOFF : 0;
+  Ext2Fs = (EXT2FS *)(&Buffer[SbOffset]);
+  if (Ext2Fs->Ext2FsMagic != E2FS_MAGIC) {
+    Rc = EFI_UNSUPPORTED;
+    goto Exit;
+  }
+
+  if (Ext2Fs->Ext2FsRev > E2FS_REV1 ||
+      (Ext2Fs->Ext2FsRev == E2FS_REV1 &&
+       (Ext2Fs->Ext2FsFirstInode != EXT2_FIRSTINO ||
+        (Ext2Fs->Ext2FsInodeSize != 128 && Ext2Fs->Ext2FsInodeSize != 256) ||
+        Ext2Fs->Ext2FsFeaturesIncompat & ~EXT2F_INCOMPAT_SUPP))) {
+    Rc = EFI_UNSUPPORTED;
+    goto Exit;
+  }
+
+  if (RExt2Fs != NULL) {
+    E2FS_SBLOAD ((VOID *)Ext2Fs, RExt2Fs);
+  }
+
+Exit:
+  if (Buffer != NULL) {
+    FreePool (Buffer);
+  }
+
+  return Rc;
+}
+
+/**
   Read Superblock of the file.
 
   @param[in]      File          File for which super block needs to be read.
@@ -593,43 +675,17 @@ ReadSBlock (
   )
 {
   PEI_EXT_PRIVATE_DATA *PrivateData;
-  UINT8 *Buffer;
-  EXT2FS Ext2Fs;
-  UINT32 BufSize;
   RETURN_STATUS Rc;
-  UINT32 SbOffset;
 
   Rc = 0;
-  Buffer = NULL;
 
   PrivateData = (PEI_EXT_PRIVATE_DATA*) File->FileDevData;
 
-  Buffer = AllocatePool ((PrivateData->BlockSize > SBSIZE) ? PrivateData->BlockSize : SBSIZE);
-  if (Buffer == NULL) {
-    Rc = EFI_OUT_OF_RESOURCES;
+  Rc = Ext2SbValidate ((EFI_HANDLE)PrivateData, File, &FileSystem->Ext2Fs);
+  if (RETURN_ERROR (Rc)) {
     goto Exit;
   }
 
-  Rc = DEV_STRATEGY (File->DevPtr) (File->FileDevData, F_READ,
-                                    SBOFF / PrivateData->BlockSize, PrivateData->BlockSize, Buffer, &BufSize);
-  if (Rc != 0) {
-    goto Exit;
-  }
-  SbOffset = (SBOFF < PrivateData->BlockSize) ? SBOFF : 0;
-  E2FS_SBLOAD ((VOID *)(&Buffer[SbOffset]), &Ext2Fs);
-  if (Ext2Fs.Ext2FsMagic != E2FS_MAGIC) {
-    Rc = EFI_INVALID_PARAMETER;
-    goto Exit;
-  }
-  if (Ext2Fs.Ext2FsRev > E2FS_REV1 ||
-      (Ext2Fs.Ext2FsRev == E2FS_REV1 &&
-       (Ext2Fs.Ext2FsFirstInode != EXT2_FIRSTINO ||
-        (Ext2Fs.Ext2FsInodeSize != 128 && Ext2Fs.Ext2FsInodeSize != 256) ||
-        Ext2Fs.Ext2FsFeaturesIncompat & ~EXT2F_INCOMPAT_SUPP))) {
-    Rc = EFI_UNSUPPORTED;
-    goto Exit;
-  }
-  E2FS_SBLOAD ((VOID *)&Ext2Fs, &FileSystem->Ext2Fs);
   //
   // compute in-memory m_ext2fs values
   //
@@ -643,19 +699,15 @@ ReadSBlock (
   FileSystem->Ext2FsQuadBlockOffset   = FileSystem->Ext2FsBlockSize - 1;
   FileSystem->Ext2FsBlockOffset       = (UINT32)~FileSystem->Ext2FsQuadBlockOffset;
   FileSystem->Ext2FsGDSize            = 32;
-  if (Ext2Fs.Ext2FsFeaturesIncompat & EXT2F_INCOMPAT_64BIT) {
+  if (FileSystem->Ext2Fs.Ext2FsFeaturesIncompat & EXT2F_INCOMPAT_64BIT) {
     FileSystem->Ext2FsGDSize          = FileSystem->Ext2Fs.Ext2FsGDSize;
   }
   FileSystem->Ext2FsNumGrpDesBlock    =
     HOWMANY (FileSystem->Ext2FsNumCylinder, FileSystem->Ext2FsBlockSize / FileSystem->Ext2FsGDSize);
-  FileSystem->Ext2FsInodesPerBlock    = FileSystem->Ext2FsBlockSize / Ext2Fs.Ext2FsInodeSize;
+  FileSystem->Ext2FsInodesPerBlock    = FileSystem->Ext2FsBlockSize / FileSystem->Ext2Fs.Ext2FsInodeSize;
   FileSystem->Ext2FsInodesTablePerGrp = FileSystem->Ext2Fs.Ext2FsINodesPerGroup / FileSystem->Ext2FsInodesPerBlock;
 
 Exit:
-  if (Buffer != NULL) {
-    FreePool (Buffer);
-  }
-
   return Rc;
 }
 

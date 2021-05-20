@@ -1,7 +1,7 @@
 /** @file
   ExtLib APIs
 
-Copyright (c) 2006 - 2020, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2006 - 2021, Intel Corporation. All rights reserved.<BR>
 
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
@@ -32,6 +32,8 @@ ExtInitFileSystem (
 {
   PEI_EXT_PRIVATE_DATA      *PrivateData;
   PART_BLOCK_DEVICE         *PartBlockDev;
+  EFI_STATUS                Status;
+
   // Valid parameters
   PartBlockDev = (PART_BLOCK_DEVICE *)PartHandle;
   if ((FsHandle == NULL) || (PartBlockDev == NULL) || \
@@ -54,11 +56,24 @@ ExtInitFileSystem (
   PrivateData->LastBlock     = PartBlockDev->BlockDevice[SwPart].LastBlock;
   PrivateData->BlockSize     = PartBlockDev->BlockInfo.BlockSize;
 
+  // validate Ext2 superblock
+  Status = Ext2SbValidate ((EFI_HANDLE)PrivateData, NULL, NULL);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_VERBOSE, "No valid EXT superblock on StartBlock %d Part %d\n", PrivateData->StartBlock, SwPart));
+    goto Error;
+  }
+
   DEBUG ((DEBUG_INFO, "Detected EXT on StartBlock %d Part %d\n", PrivateData->StartBlock, SwPart));
 
   *FsHandle = (EFI_HANDLE)PrivateData;
 
   return EFI_SUCCESS;
+
+Error:
+  if (PrivateData != NULL) {
+    FreePool (PrivateData);
+  }
+  return Status;
 }
 
 /**
