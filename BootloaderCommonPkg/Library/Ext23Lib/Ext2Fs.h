@@ -452,6 +452,24 @@ BDevStrategy (
 #define    DEV_STRATEGY(d)    BDevStrategy
 
 /**
+  Validate EXT2 Superblock
+
+  @param[in]      FsHandle      EXT file system handle.
+  @param[in]      File          File for which super block needs to be read.
+  @param[out]     RExt2Fs       EXT2FS meta data to retreive.
+
+  @retval 0 if superblock validation is success
+  @retval other if error.
+**/
+RETURN_STATUS
+EFIAPI
+Ext2SbValidate (
+  IN CONST EFI_HANDLE  FsHandle,
+  IN CONST OPEN_FILE   *File     OPTIONAL,
+  OUT      EXT2FS      *RExt2Fs  OPTIONAL
+  );
+
+/**
   Open struct file.
 
   @param[in]      Path          Path to locate the file
