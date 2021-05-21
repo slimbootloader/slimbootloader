@@ -10,6 +10,7 @@
 #define __ELF_LIB_H__
 
 #include <Uefi/UefiBaseType.h>
+#include <IndustryStandard/PeImage.h>
 
 /**
   Check if the image is a bootable ELF image.
@@ -40,9 +41,28 @@ IsElfImage (
   @retval EFI_SUCCESS             ELF binary is loaded successfully.
 **/
 EFI_STATUS
+EFIAPI
 LoadElfImage (
   IN  CONST VOID                  *ImageBase,
   OUT       VOID                 **EntryPoint
+  );
+
+/**
+  Extract and return the machine type from ELF image.
+
+  @param[in]  ImageBase           Memory address of an image.
+  @param[out] MachinePtr          The pointer to machine type to return.
+
+  @retval EFI_SUCCESS             Machine was returned successfully.
+  @retval EFI_UNSUPPORTED         Unsupported image format.
+  @retval EFI_INVALID_PARAMETER   The ImageBase pointer is NULL.
+
+**/
+EFI_STATUS
+EFIAPI
+GetElfMachine (
+  IN  VOID                        *ImageBase,
+  OUT UINT16                      *MachinePtr      OPTIONAL
   );
 
 #endif /* __ELF_LIB_H__ */
