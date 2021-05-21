@@ -183,7 +183,10 @@ NormalBootPath (
     UefiSig = Dst[0];
     Status  = LoadFvImage (Dst, Stage2Param->PayloadActualLength, (VOID **)&PldEntry, &PldMachine);
   } else if (IsElfImage (Dst)) {
-    Status = LoadElfImage (Dst, (VOID *)&PldEntry);
+    Status = GetElfMachine (Dst, &PldMachine);
+    if (!EFI_ERROR(Status)) {
+      Status = LoadElfImage (Dst, (VOID *)&PldEntry);
+    }
   } else {
     if (FeaturePcdGet (PcdLinuxPayloadEnabled)) {
       if (IsBzImage (Dst)) {

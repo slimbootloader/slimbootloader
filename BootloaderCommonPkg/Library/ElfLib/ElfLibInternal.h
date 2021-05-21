@@ -12,6 +12,7 @@
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Library/BaseMemoryLib.h>
+#include <IndustryStandard/PeImage.h>
 #include "ElfCommon.h"
 #include "Elf32.h"
 #include "Elf64.h"
