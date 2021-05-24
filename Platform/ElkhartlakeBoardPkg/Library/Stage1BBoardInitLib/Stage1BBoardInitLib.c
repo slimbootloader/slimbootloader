@@ -38,6 +38,8 @@
 #include <TccConfigSubRegion.h>
 #include <Register/RtcRegs.h>
 #include <Register/PmcRegs.h>
+#include <GpioLibConfig.h>
+#include <Library/GpioLib.h>
 
 CONST PLT_DEVICE  mPlatformDevices[]= {
   {{0x00001700}, OsBootDeviceSata  , 0 },
@@ -1065,8 +1067,7 @@ DEBUG_CODE_END();
     // prior to starting DRAM Initialization Sequence.
     //
     MmioOr32 (PmcBase + R_PMC_PWRM_GEN_PMCON_A, B_PMC_PWRM_GEN_PMCON_A_DISB);
-
-    GpioPadConfigTable (sizeof (mGpioTablePreMemEhl) / sizeof (mGpioTablePreMemEhl[0]), mGpioTablePreMemEhl);
+    ConfigureGpio (CDATA_NO_TAG, ARRAY_SIZE(mGpioTablePreMemEhl), (UINT8*)mGpioTablePreMemEhl);
     break;
   case PostMemoryInit:
     //

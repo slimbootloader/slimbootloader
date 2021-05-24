@@ -8,7 +8,7 @@
 #ifndef _GPIO_PRIVATE_LIB_H_
 #define _GPIO_PRIVATE_LIB_H_
 
-#include <Library/GpioConfig.h>
+#include <GpioLibConfig.h>
 #include <Library/PchPcrLib.h>
 
 //

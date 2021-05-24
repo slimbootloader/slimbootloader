@@ -8,7 +8,7 @@
 #ifndef _GPIO_NATIVE_LIB_H_
 #define _GPIO_NATIVE_LIB_H_
 
-#include <Library/GpioConfig.h>
+#include <GpioLibConfig.h>
 
 /**
   This procedure will get number of pads for certain GPIO group

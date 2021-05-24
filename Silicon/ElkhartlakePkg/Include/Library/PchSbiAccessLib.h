@@ -7,6 +7,7 @@
 #ifndef _PCH_SBI_ACCESS_LIB_H_
 #define _PCH_SBI_ACCESS_LIB_H_
 
+#include <Library/PchPcrLib.h>
 /**
   PCH SBI Register structure
 **/

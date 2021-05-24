@@ -10,14 +10,13 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/BootloaderCoreLib.h>
 #include <Library/DebugLib.h>
-#include <Library/GpioLib.h>
+#include <GpioLibConfig.h>
 #include <Library/GpioNativeLib.h>
 #include <Library/HobLib.h>
 #include <Library/IoLib.h>
 #include <Library/MpInitLib.h>
 #include <Library/PchInfoLib.h>
 #include <Library/PciLib.h>
-#include <Library/SiGpioLib.h>
 #include <Library/SocInitLib.h>
 #include <CpuDataStruct.h>
 #include <CpuInitDataHob.h>
@@ -32,6 +31,7 @@
 #include <Register/PseRegs.h>
 #include <Register/SaRegsHostBridge.h>
 #include <Library/PchSciLib.h>
+#include <Library/GpioSocLib.h>
 
 #define XTAL_FREQ_24MHZ      0
 #define XTAL_FREQ_38P4MHZ    1
