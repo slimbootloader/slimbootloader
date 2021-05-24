@@ -8,8 +8,7 @@
 #define _ELKHARTLAKE_PREMEM_GPIO_TABLE_H_
 
 #include <Register/GpioPinsVer3.h>
-#include <Library/GpioLib.h>
-#include <Library/SiGpioLib.h>
+#include <GpioLibConfig.h>
 
 GLOBAL_REMOVE_IF_UNREFERENCED GPIO_INIT_CONFIG mGpioTablePreMemEhl[] =
 {

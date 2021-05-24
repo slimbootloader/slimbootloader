@@ -7,7 +7,7 @@
 #ifndef _GPIO_HELPERS_LIB_H_
 #define _GPIO_HELPERS_LIB_H_
 
-#include <Library/GpioConfig.h>
+#include <GpioLibConfig.h>
 
 /**
   This procedure stores GPIO pad unlock information
