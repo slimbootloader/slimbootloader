@@ -80,7 +80,7 @@ Conventions:
 #define N_GPIO_PCR_RX_NMI_ROUTE         17
 
 //GPIO Pad Mode
-#define B_GPIO_PCR_PAD_MODE             (BIT13 | BIT12 | BIT11 | BIT10)
+#define B_GPIO_PCR_PAD_MODE             (BIT12 | BIT11 | BIT10)
 #define N_GPIO_PCR_PAD_MODE             10
 
 //GPIO RX Disable

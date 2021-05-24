@@ -74,8 +74,10 @@
 #include <Library/HeciInitLib.h>
 #include <TccConfigSubRegion.h>
 #include <Library/MeExtMeasurementLib.h>
-#include <Library/GpioLib.h>
+#include <GpioLibConfig.h>
 #include <Register/RegsSpi.h>
+#include <Library/GpioSocLib.h>
+#include <Library/GpioLib.h>
 
 
 UINT8 mTccRtd3Support;
@@ -311,92 +313,9 @@ FillGpioTable (
 
 /**
   Initialize the GPIO Config table that was read from CfgData into GPIO PAD registers.
+  Create OS config data support HOB.
 
   @param VOID
-
-**/
-VOID
-GpioInit (
-  VOID
-)
-{
-  GPIO_CFG_HDR       *GpioCfgCurrHdr;
-  GPIO_CFG_HDR       *GpioCfgBaseHdr;
-  GPIO_CFG_HDR       *GpioCfgHdr;
-  UINT32              GpioEntries;
-  UINT32              Index;
-  UINT32              Offset;
-  UINT8              *GpioCfgDataBuffer;
-  UINT8              *GpioTable;
-  UINT8              ChipsetId;
-
-  ChipsetId = GPIO_VER3_CHIPSET_ID;
-
-  //Find the GPIO CFG HDR
-  GpioCfgCurrHdr = (GPIO_CFG_HDR *)FindConfigDataByTag (CDATA_GPIO_TAG);
-  if (GpioCfgCurrHdr == NULL) {
-    return;
-  }
-
-  GpioEntries    = 0;
-  GpioCfgBaseHdr = NULL;
-
-  //Find the GPIO CFG Data based on Platform ID. GpioTableData is the start of the GPIO entries
-  if (GpioCfgCurrHdr->GpioBaseTableId < 16) {
-    GpioCfgBaseHdr = (GPIO_CFG_HDR *)FindConfigDataByPidTag (GpioCfgCurrHdr->GpioBaseTableId, CDATA_GPIO_TAG);
-    if (GpioCfgBaseHdr == NULL) {
-      DEBUG ((DEBUG_ERROR, "Cannot find base GPIO table for platform ID %d\n", GpioCfgCurrHdr->GpioBaseTableId));
-      return;
-    }
-    if (GpioCfgCurrHdr->GpioItemSize != GpioCfgBaseHdr->GpioItemSize) {
-      DEBUG ((DEBUG_ERROR, "Inconsistent GPIO item size\n"));
-      return;
-    }
-    GpioCfgHdr = GpioCfgBaseHdr;
-  } else {
-    GpioCfgHdr = GpioCfgCurrHdr;
-  }
-
-  Offset     = 0;
-  GpioTable  = (UINT8 *)AllocateTemporaryMemory (0);  //allocate new buffer
-  if (GpioTable != NULL) {
-    GpioCfgDataBuffer = GpioTable;
-  } else {
-    DEBUG ((DEBUG_ERROR, "GpioTable is NULL, cannot continue\n"));
-    return;
-  }
-
-  for (Index = 0; Index  < GpioCfgHdr->GpioItemCount; Index++) {
-    if (GpioCfgCurrHdr->GpioBaseTableBitMask[Index >> 3] & (1 << (Index & 7))) {
-      GpioTable = FillGpioTable (GpioTable, GpioCfgHdr, Offset, ChipsetId);
-      GpioEntries++;
-    }
-    Offset += GpioCfgHdr->GpioItemSize;
-  }
-
-  Offset = 0;
-  if (GpioCfgBaseHdr != NULL) {
-    for (Index = 0; Index  < GpioCfgCurrHdr->GpioItemCount; Index++) {
-      GpioTable = FillGpioTable (GpioTable, GpioCfgCurrHdr, Offset, ChipsetId);
-      GpioEntries++;
-      Offset += GpioCfgCurrHdr->GpioItemSize;
-    }
-  }
-
-  DEBUG_CODE_BEGIN ();
-  PrintGpioConfigTable (GpioEntries, GpioCfgDataBuffer);
-  DEBUG_CODE_END ();
-
-  // Initialize the GPIO pins
-  GpioConfigurePads (GpioEntries, (GPIO_INIT_CONFIG *) GpioCfgDataBuffer);
-  if (FeaturePcdGet (PcdPreOsCheckerEnabled) && PchIsSciSupported ()) {
-    DEBUG ((DEBUG_INFO, "GpioPadConfigTable for Fusa\n"));
-    GpioPadConfigTable (sizeof (mGpioTablePreMemEhlFusa) / sizeof (mGpioTablePreMemEhlFusa[0]), mGpioTablePreMemEhlFusa);
-  }
-}
-
-/**
-  Create OS config data support HOB.
 
   @retval EFI_SUCCESS           OS config data HOB built
   @retval EFI_NOT_FOUND         Loader Global data not found
@@ -746,7 +665,11 @@ BoardInit (
   switch (InitPhase) {
   case PreSiliconInit:
     EnableLegacyRegions ();
-    GpioInit ();
+    ConfigureGpio (CDATA_GPIO_TAG, 0, NULL);
+    if (FeaturePcdGet (PcdPreOsCheckerEnabled) && PchIsSciSupported ()) {
+      DEBUG ((DEBUG_INFO, "GpioPadConfigTable for Fusa\n"));
+      ConfigureGpio (CDATA_NO_TAG, ARRAY_SIZE(mGpioTablePreMemEhlFusa), (UINT8*)mGpioTablePreMemEhlFusa);
+    }
     SpiConstructor ();
     if (GetBootMode() != BOOT_ON_FLASH_UPDATE) {
       UpdatePayloadId ();
