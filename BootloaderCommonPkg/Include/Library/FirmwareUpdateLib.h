@@ -1,7 +1,7 @@
 /** @file
 The header file for firmware update library.
 
-Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -590,9 +590,13 @@ UpdateCsme (
   and 16-bit PCI configuration read cycles may be used at the beginning and the
   end of the range.
 
-  If StartAddress > 0x0FFFFFFF, then ASSERT().
-  If ((StartAddress & 0xFFF) + Size) > 0x1000, then ASSERT().
-  If Size > 0 and Buffer is NULL, then ASSERT().
+  StartAddress is in EFI_PCI_ROOT_BRIDGE_IO_PROTOCOL_PCI_ADDRESS format.
+  - when register offset is  < 0x100, it is :    bbddffrr
+  - when register offset is >= 0x100, it is : rrrbbddff00
+
+  If StartAddress is not aligned with format defined, then ASSERT().
+  If the range to be read exceeds a single PCI function, then ASSERT().
+  If Buffer is NULL or Size == 0, then ASSERT().
 
   @param  StartAddress  The starting address that encodes the PCI Bus, Device,
                         Function and Register.
