@@ -283,7 +283,7 @@ LoadCapsuleImage (
   // Find capsule using the name provided in configuration data
   //
   if (CapsuleInfo->FileName[0] != 0) {
-    AsciiStrToUnicodeStrS ((CONST CHAR8 *)(&CapsuleInfo->FileName), FileName, MAX_FILE_LEN);
+    AsciiStrToUnicodeStrS ((CONST CHAR8 *)&CapsuleInfo->FileName[0], FileName, MAX_FILE_LEN);
 
     Status = OpenFile (FsHandle, FileName, &FileHandle);
     if (EFI_ERROR(Status)) {
