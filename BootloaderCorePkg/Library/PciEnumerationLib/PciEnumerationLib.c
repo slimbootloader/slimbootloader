@@ -1838,7 +1838,7 @@ PciEnumeration (
   mDefaultResRange.IoBase       = PcdGet32 (PcdPciResourceIoBase);
   mDefaultResRange.Mmio32Base   = PcdGet32 (PcdPciResourceMem32Base);
   mDefaultResRange.Mmio64Base   = PcdGet64 (PcdPciResourceMem64Base);
-  mDefaultResRange.Mmio64Limit  = PcdGet64 (PcdPciResourceMem64Base) + (PcdGet64 (PcdPciResourceMem64Base) >> 1);
+  mDefaultResRange.Mmio64Limit  = PcdGet64 (PcdPciResourceMem64Base) + (RShiftU64 (PcdGet64 (PcdPciResourceMem64Base), 1));
 
   EnumPolicy = (PCI_ENUM_POLICY_INFO *)PcdGetPtr (PcdPciEnumPolicyInfo);
   RootBridgeCount = 0;

@@ -101,6 +101,8 @@ class Board(BaseBoard):
         self.STAGE1B_XIP          = 0
 
         self.STAGE1A_SIZE         = 0x00010000
+        if self.NO_OPT_MODE:
+            self.STAGE1A_SIZE    += 0x1000
         self.STAGE1B_SIZE         = 0x00030000
         self.STAGE2_SIZE          = 0x00018000
 
@@ -123,6 +125,8 @@ class Board(BaseBoard):
             self.NON_REDUNDANT_SIZE = 0x400000
         else:
             self.TOP_SWAP_SIZE      = 0x010000
+            if self.NO_OPT_MODE:
+                self.TOP_SWAP_SIZE  = 0x020000
             self.REDUNDANT_SIZE     = 0x080000
             self.NON_VOLATILE_SIZE  = 0x001000
             self.NON_REDUNDANT_SIZE = 0x2DF000
@@ -153,9 +157,12 @@ class Board(BaseBoard):
         self.STAGE2_FD_SIZE       = 0x00060000
 
         if self.NO_OPT_MODE:
-            self.STAGE2_SIZE         += 0x2000
+            if self.FSPDEBUG_MODE == 1:
+                self.STAGE2_SIZE     += 0x8000
+            else:
+                self.STAGE2_SIZE     += 0x2000
             self.PAYLOAD_SIZE        += 0xA000
-            self.OS_LOADER_FD_SIZE   += 0x22000
+            self.OS_LOADER_FD_SIZE   += 0x23000
             self.FWUPDATE_SIZE       += 0x8000
             self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
