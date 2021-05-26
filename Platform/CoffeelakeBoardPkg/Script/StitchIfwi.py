@@ -544,11 +544,11 @@ def main():
         raise Exception ('Stitching process failed !')
     os.chdir(curr_dir)
 
-    generated_ifwi_file = os.path.join(work_dir, 'Temp', 'Ifwi.bin')
+    generated_ifwi_file = os.path.join(stitch_dir, 'Temp', 'Ifwi.bin')
     ifwi_file_name = os.path.join(args.outpath,'sbl_ifwi_%s.bin' % (args.platform))
     shutil.copy(generated_ifwi_file, ifwi_file_name)
 
-    generated_signed_sbl =  os.path.join(work_dir, 'Temp', 'SlimBootloader.bin')
+    generated_signed_sbl =  os.path.join(stitch_dir, 'Temp', 'SlimBootloader.bin')
     sbl_file_name = os.path.join(args.outpath,'SlimBootloader_%s.bin' % (args.platform))
     shutil.copy(generated_signed_sbl, sbl_file_name)
 
