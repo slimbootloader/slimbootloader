@@ -759,13 +759,16 @@ DEBUG_CODE_END();
     } else {
       DEBUG ((DEBUG_ERROR, "Out of resource for PltDeviceTable\n"));
     }
-    GetBoardId (&BoardId);
-    if (BoardId == BoardIdTglHDdr4SODimm) {
-      // SBL CFG Data PlatformId is limited to max of 0x1F, TGL-H DDR4 board is 0x21
-      // need to W/A by setting the value lower
-      BoardId = 0xF;
+
+    if (GetPlatformId() == 0) {
+      // If PlatformId is not initialized yet, set the PlatformId based on detected BoardId.
+      GetBoardId (&BoardId);
+      if (BoardId == BoardIdTglHDdr4SODimm) {
+        // TGL-H DDR4 board is 0x21, map to PlatformId 0xF since PlatformId is limited to max of 0x1F
+        BoardId = 0xF;
+      }
+      SetPlatformId (BoardId);
     }
-    SetPlatformId (BoardId);
     SpiControllerInitialize ();
     break;
   case PostConfigInit:
