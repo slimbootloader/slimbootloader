@@ -11,6 +11,7 @@
 #include <Library/BootloaderCoreLib.h>
 #include <Library/SerialPortLib.h>
 #include <Library/PlatformHookLib.h>
+#include <Library/DebugPrintErrorLevelLib.h>
 #include <PlatformData.h>
 #include <CpuRegs.h>
 #include <PchAccess.h>
@@ -40,8 +41,9 @@ FSPT_UPD TempRamInitParams = {
   },
   .FsptConfig = {
     .PcdSerialIoUartDebugEnable = 1,
-    .PcdSerialIoUartNumber      = 2,
-    .PcdSerialIoUartMode        = 1,//SerialIoUartPci
+    .PcdSerialIoUartNumber      = FixedPcdGet32 (PcdDebugPortNumber) < PCH_MAX_SERIALIO_UART_CONTROLLERS ? \
+                                    FixedPcdGet32 (PcdDebugPortNumber) : 2,
+    .PcdSerialIoUartMode        = 4, // SerialIoUartSkipInit, let SBL init UART
     .PcdSerialIoUartBaudRate    = 115200,
     .PcdPciExpressBaseAddress   = FixedPcdGet32 (PcdPciMmcfgBase),
     .PcdPciExpressRegionLength  = 0x20000000,
@@ -54,9 +56,6 @@ FSPT_UPD TempRamInitParams = {
     .PcdSerialIoUartRtsPinMux   = 0,
     .PcdSerialIoUartCtsPinMux   = 0,
     .PcdLpcUartDebugEnable      = 1,
-    //.PcdDebugInterfaceFlags     = FixedPcdGet32 (PcdDebugInterfaceFlags)& 0xFF,
-    //.PcdSerialDebugLevel        = 3,    // Load Error Warnings and Info
-    //.PcdIsaSerialUartBase       = 0,    // 0x3F8
   },
   .UpdTerminator = 0x55AA,
 };
@@ -115,10 +114,17 @@ BoardInit (
   UINT32                    AdjLen;
   UINT64                    MskLen;
   UINT8                     DebugPort;
+  UINT32                    PrintLevel;
 
   switch (InitPhase) {
   case PostTempRamInit:
     DisableWatchDogTimer ();
+
+    // UART is not fully initialized yet,
+    // So disable all debug print for now
+    PrintLevel = GetDebugPrintErrorLevel ();
+    SetDebugPrintErrorLevel (0);
+
     EarlyPlatformDataCheck ();
     DebugPort = GetDebugPort ();
     if (DebugPort < PCH_MAX_SERIALIO_UART_CONTROLLERS) {
@@ -127,6 +133,8 @@ BoardInit (
 
     PlatformHookSerialPortInitialize ();
     SerialPortInitialize ();
+    SetDebugPrintErrorLevel (PrintLevel);
+
     // Enlarge the code cache region to cover full flash for non-BootGuard case only
     if ((AsmReadMsr64(MSR_BOOT_GUARD_SACM_INFO) & B_BOOT_GUARD_SACM_INFO_NEM_ENABLED) == 0) {
       // WHL FSP-T does not allow to enable full flash code cache due to cache size restriction.
