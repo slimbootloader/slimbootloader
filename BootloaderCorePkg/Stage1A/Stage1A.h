@@ -29,6 +29,7 @@
 #include <Library/DebugAgentLib.h>
 #include <Library/ContainerLib.h>
 #include <Library/StageLib.h>
+#include <Library/DebugPrintErrorLevelLib.h>
 #include <Guid/FspHeaderFile.h>
 #include <Guid/FlashMapInfoGuid.h>
 #include <Guid/LoaderPlatformDataGuid.h>

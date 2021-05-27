@@ -368,6 +368,9 @@ SecStartup2 (
   BoardInit (PostTempRamInit);
   AddMeasurePoint (0x1040);
 
+  // Set DebugPrintErrorLevel to default PCD.
+  SetDebugPrintErrorLevel (PcdGet32 (PcdDebugPrintErrorLevel));
+
   if (DebugCodeEnabled()) {
     DEBUG ((DEBUG_INFO, "\n============= %a STAGE1A =============\n",mBootloaderName));
   } else {
@@ -460,7 +463,7 @@ SecStartup (
   LdrGlobal->MemPoolStart          = StackTop;
   LdrGlobal->MemPoolCurrTop        = LdrGlobal->MemPoolEnd;
   LdrGlobal->MemPoolCurrBottom     = LdrGlobal->MemPoolStart;
-  LdrGlobal->DebugPrintErrorLevel  = PcdGet32 (PcdDebugPrintErrorLevel);
+  LdrGlobal->DebugPrintErrorLevel  = 0;
   LdrGlobal->PerfData.PerfIndex    = 2;
   LdrGlobal->PerfData.FreqKhz      = GetTimeStampFrequency ();
   LdrGlobal->PerfData.TimeStamp[0] = Stage1aAsmParam->TimeStamp | 0x1000000000000000ULL;
