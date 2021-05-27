@@ -42,7 +42,7 @@ class Board(BaseBoard):
         self.FLASH_BASE_SIZE      = (self.FLASH_LAYOUT_START - self.FLASH_BASE_ADDRESS)
 
         self.HAVE_FIT_TABLE       = 1
-        self.HAVE_FSP_BIN         = 0
+        self.HAVE_FSP_BIN         = 1
         self.HAVE_VBT_BIN         = 1 if self.HAVE_FSP_BIN != 0 else 0
         self.HAVE_VERIFIED_BOOT   = 1
         self.HAVE_MEASURED_BOOT   = 1
