@@ -1,0 +1,24 @@
+## @file
+#
+#  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+##
+
+[Defines]
+  INF_VERSION          = 0x00010005
+  BASE_NAME            = Microcode
+  FILE_GUID            = 197DB236-F856-4924-90F8-CDF12FB875F3
+  MODULE_TYPE          = USER_DEFINED
+  VERSION_STRING       = 1.0
+
+[Sources]
+  m0190661_00000011.mcb
+
+[UserExtensions.SBL."CloneRepo"]
+  REPO  = https://github.com/tianocore/edk2-non-osi.git
+  COMMIT= 2e8dd46782451e8ae7181417a5c30d1804302b43
+
+[UserExtensions.SBL."CopyList"]
+  Silicon/Intel/ElkhartlakeSiliconBinPkg/Microcode/m0190661_00000011.mcb  : Silicon/ElkhartlakePkg/Microcode/m0190661_00000011.mcb
