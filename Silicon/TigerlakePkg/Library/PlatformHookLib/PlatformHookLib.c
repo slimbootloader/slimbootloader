@@ -179,6 +179,7 @@ PlatformHookSerialPortInitialize (
     // Bring UART out of reset
     //
     MmioWrite32 (BarAddress + R_SERIAL_IO_MEM_PPR_RESETS, B_SERIAL_IO_MEM_PPR_RESETS_IDMA | B_SERIAL_IO_MEM_PPR_RESETS_APB | B_SERIAL_IO_MEM_PPR_RESETS_FUNC);
+    MmioRead32 (BarAddress + R_SERIAL_IO_MEM_PPR_RESETS);
 
     //
     // Set clock
