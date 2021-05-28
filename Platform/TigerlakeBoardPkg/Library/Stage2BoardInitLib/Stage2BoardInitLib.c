@@ -894,6 +894,7 @@ BoardInit (
     } else {
       ConfigureGpio (CDATA_GPIO_TAG, 0, NULL);
     }
+
     if (GetBootMode() != BOOT_ON_FLASH_UPDATE) {
       UpdatePayloadId ();
     }
@@ -1308,8 +1309,9 @@ UpdateFspConfig (
 
   DebugPort = GetDebugPort ();
   if (DebugPort < PCH_MAX_SERIALIO_UART_CONTROLLERS) {
+    // Inform FSP to skip debug UART init
     FspsConfig->SerialIoDebugUartNumber = DebugPort;
-    FspsConfig->SerialIoUartMode[DebugPort]     = 0x1;
+    FspsConfig->SerialIoUartMode[DebugPort] = 0x4;
   }
 
   //

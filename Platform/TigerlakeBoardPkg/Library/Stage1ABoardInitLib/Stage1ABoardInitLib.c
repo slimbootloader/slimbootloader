@@ -114,16 +114,10 @@ BoardInit (
   UINT32                    AdjLen;
   UINT64                    MskLen;
   UINT8                     DebugPort;
-  UINT32                    PrintLevel;
 
   switch (InitPhase) {
   case PostTempRamInit:
     DisableWatchDogTimer ();
-
-    // UART is not fully initialized yet,
-    // So disable all debug print for now
-    PrintLevel = GetDebugPrintErrorLevel ();
-    SetDebugPrintErrorLevel (0);
 
     EarlyPlatformDataCheck ();
     DebugPort = GetDebugPort ();
@@ -133,7 +127,6 @@ BoardInit (
 
     PlatformHookSerialPortInitialize ();
     SerialPortInitialize ();
-    SetDebugPrintErrorLevel (PrintLevel);
 
     // Enlarge the code cache region to cover full flash for non-BootGuard case only
     if ((AsmReadMsr64(MSR_BOOT_GUARD_SACM_INFO) & B_BOOT_GUARD_SACM_INFO_NEM_ENABLED) == 0) {
