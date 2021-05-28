@@ -1759,6 +1759,7 @@ UpdateFspConfig (
   }
 
   if (FeaturePcdGet (PcdPreOsCheckerEnabled) && PchIsSciSupported ()) {
+    DEBUG ((DEBUG_INFO, "Applying Fusa FSP UPD settings.........\n"));
     Fspscfg->Eist                          = 0;            // Intel Speed Step->EnableGv
     Fspscfg->Hwp                           = 0;            // Intel Speed Shift
     Fspscfg->Cx                            = 0;            // Intel C-states
@@ -1770,11 +1771,13 @@ UpdateFspConfig (
     Fspscfg->OpioFusaConfigEnable          = 1;            // Fusa Opio Configuration
     Fspscfg->PsfFusaConfigEnable           = 1;            // Fusa Psf Configuration
     Fspscfg->DisableProcHotOut             = 0;            // Fusa Prochot output enable
+    Fspscfg->BiProcHot                     = 0;            // Fusa Bi-direction Prochot diable
 
     for (Index = 0; Index < MaxPcieRootPorts; Index++) {
       Fspscfg->PcieRpAspm[Index]           = 0;
       Fspscfg->PcieRpL1Substates[Index]    = 0;
     }
+    DEBUG ((DEBUG_INFO, "Fusa FSP UPD settings updated.........Done\n"));
   }
 
   if (TCC_FEATURE_ENABLED ()) {
