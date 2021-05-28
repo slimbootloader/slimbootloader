@@ -915,6 +915,33 @@ class Build(object):
         fmaphdr.attributes |=  fmaphdr.FLASH_MAP_ATTRIBUTES['BACKUP_REGION']
         fo.seek(fmapoff)
         fo.write(fmaphdr)
+
+        # Patch microcode base in FSP-T UPD
+        if self._board.HAVE_FSP_BIN and self._board.TOP_SWAP_SIZE > 0:
+            fspt_bin = os.path.join(self._fv_dir, 'FSP_T.bin')
+            upd_sig  = get_fsp_upd_signature (fspt_bin)
+            upd_off  = bins.find (upd_sig, self._board.STAGE1A_FV_OFFSET)
+            if upd_off < 0:
+                raise Exception ('Could not find FSP-T UPD signatures in STAGE1A_B.fd !')
+            if bins.find (upd_sig, upd_off + 1) > 0:
+                raise Exception ('Found multiple FSP-T UPD signatures in STAGE1A_B.fd !')
+            ucode_upd_off = upd_off + 0x20
+            ucode_base = bytes_to_value (bins[ucode_upd_off + 0 : ucode_upd_off + 4])
+            if ucode_base == 1:
+                # APL/QEMU FSP-T UPD has revision 1 format
+                ucode_upd_off = upd_off + 0x24
+                ucode_base = bytes_to_value (bins[ucode_upd_off + 0 : ucode_upd_off + 4])
+            ucode_size = bytes_to_value (bins[ucode_upd_off + 4 : ucode_upd_off + 8])
+            if ucode_size > 0 and ucode_base > 0:
+                if ucode_base != self._board.UCODE_BASE:
+                    raise Exception ('Incorrect microcode region base in FSP-T UPD parameter !')
+                if ucode_base < 0x100000000 - self._board.TOP_SWAP_SIZE * 2:
+                    # Microcode is located outside of top swap region, patch it
+                    ucode_base -= self._board.REDUNDANT_SIZE
+                    print ('Patching UCODE base in FSP-T UPD parameter to 0x%08X for STAGE1A_B.fd' % ucode_base)
+                    fo.seek (ucode_upd_off)
+                    fo.write (value_to_bytes (ucode_base, 4))
+
         fo.close()
 
         # Stage 1B_B will be created during rebasing

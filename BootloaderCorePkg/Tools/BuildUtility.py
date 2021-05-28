@@ -401,6 +401,10 @@ def get_fsp_upd_size (path):
     di = open(path,'rb').read()[0xBC:0xC0]
     return ((struct.unpack('I', di)[0] + 0x10) & 0xFFFFFFF0)
 
+def get_fsp_upd_signature (path):
+    bins = open(path,'rb').read()
+    off  = bytes_to_value (bins[0xB8:0xBC])
+    return bins[off:off+8]
 
 def get_fsp_revision (path):
     di = open(path,'rb').read()[0xA0:0xA4]
