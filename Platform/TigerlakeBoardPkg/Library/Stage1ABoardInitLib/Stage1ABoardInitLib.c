@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2008 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2008 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -46,7 +46,7 @@ FSPT_UPD TempRamInitParams = {
     .PcdSerialIoUartMode        = 4, // SerialIoUartSkipInit, let SBL init UART
     .PcdSerialIoUartBaudRate    = 115200,
     .PcdPciExpressBaseAddress   = FixedPcdGet32 (PcdPciMmcfgBase),
-    .PcdPciExpressRegionLength  = 0x20000000,
+    .PcdPciExpressRegionLength  = 0x10000000,
     .PcdSerialIoUartParity      = 1, // NoParity
     .PcdSerialIoUartDataBits    = 8,
     .PcdSerialIoUartStopBits    = 1,
@@ -70,7 +70,7 @@ CONST GPIO_INIT_CONFIG mUartGpioTable[] = {
 };
 
 /**
-  Stitching process might pass some specific plafform data to be
+  Stitching process might pass some specific platform data to be
   consumed pretty early. This will be used to guide the platform initialization
   even before CFGDATA is available.
 

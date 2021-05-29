@@ -322,7 +322,7 @@ GetSerialPortBase (
 VOID
 EnableLegacyRegions (
   VOID
-);
+  );
 
 /**
 Return Cpu stepping type
@@ -681,7 +681,7 @@ ClearSmi (
   //
   // Clear the status before setting smi enable
   //
-  SmiSts = IoRead32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN + 4));
+  SmiSts = IoRead32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_STS));
   Pm1Sts = IoRead16 ((UINTN)(ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS));
 
   SmiSts |=
@@ -706,7 +706,7 @@ ClearSmi (
       B_ACPI_IO_PM1_STS_TMROF
       );
 
-  IoWrite32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN + 4), SmiSts);
+  IoWrite32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_STS), SmiSts);
   IoWrite16 ((UINTN) (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS), (UINT16) Pm1Sts);
 }
 
@@ -888,13 +888,7 @@ BoardInit (
     DEBUG ((DEBUG_INFO, "LPC DeviceId (0x%x)\n", PchGetLpcDid()));
 
     EnableLegacyRegions ();
-
-    if ((GetPlatformId () == 0xF) && (IsPchH ())) {
-      ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTableTglHDdr4SODimm) / sizeof (mGpioTableTglHDdr4SODimm[0]), (UINT8*) mGpioTableTglHDdr4SODimm);
-    } else {
-      ConfigureGpio (CDATA_GPIO_TAG, 0, NULL);
-    }
-
+    ConfigureGpio (CDATA_GPIO_TAG, 0, NULL);
     if (GetBootMode() != BOOT_ON_FLASH_UPDATE) {
       UpdatePayloadId ();
     }
@@ -1640,9 +1634,8 @@ UpdateFspConfig (
     FspsConfig->PchTsnEnable=0;
     FspsConfig->XdciEnable=0;
     FspsConfig->SerialIoUartMode[2] = 1;                 // Change for UARTHidden Mode to PCI mode
-  }
 
-  // PCH SERIAL_UART_CONFIG
+    // PCH SERIAL_UART_CONFIG
     for (Index = 0; Index < GetPchMaxSerialIoUartControllersNum (); Index++) {
       FspsConfig->SerialIoUartParity[Index]          = 1;
       FspsConfig->SerialIoUartDataBits[Index]        = 0x8;
@@ -1652,6 +1645,7 @@ UpdateFspConfig (
       FspsConfig->SerialIoUartDmaEnable[Index]       = 1;
       FspsConfig->SerialIoUartDbg2[Index]            = 0;
     }
+  }
 }
 
 /**
