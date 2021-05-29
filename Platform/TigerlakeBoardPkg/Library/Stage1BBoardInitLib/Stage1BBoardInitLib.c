@@ -37,6 +37,7 @@
 #include "BoardSaConfigPreMem.h"
 #include <PlatformBoardId.h>
 #include <TccConfigSubRegions.h>
+#include <Library/ResetSystemLib.h>
 
 CONST PLT_DEVICE  mPlatformDevices[]= {
   {{0x00001700}, OsBootDeviceSata  , 0 },
@@ -625,6 +626,12 @@ TpmInitialize (
   if((PlatformData != NULL) && PlatformData->BtGuardInfo.MeasuredBoot &&
     (!PlatformData->BtGuardInfo.DisconnectAllTpms) &&
     ((PlatformData->BtGuardInfo.TpmType == dTpm20) || (PlatformData->BtGuardInfo.TpmType == Ptt))){
+
+    //  As per PC Client spec, SRTM should perform a host platform reset
+    if (PlatformData->BtGuardInfo.TpmStartupFailureOnS3) {
+      ResetSystem(EfiResetCold);
+      CpuDeadLoop ();
+    }
 
     // Initialize TPM if it has not already been initialized by BootGuard component (i.e. ACM)
     Status = TpmInit(PlatformData->BtGuardInfo.BypassTpmInit, BootMode);
