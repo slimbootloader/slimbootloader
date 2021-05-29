@@ -20,7 +20,6 @@ MEMORY_CFG_DATA.SpdDataSel100            | 1
 MEMORY_CFG_DATA.SpdDataSel110            | 1
 MEMORY_CFG_DATA.SpdDataSel120            | 1
 MEMORY_CFG_DATA.SpdDataSel130            | 1
-GEN_CFG_DATA.PayloadId                   | 'UEFI'
 
 CAPSULE_INFO_CFG_DATA.DevType | 6
 TCC_CFG_DATA.TccEnable   | 1
@@ -31,9 +30,12 @@ SILICON_CFG_DATA.EnableTimedGpio0 | 1
 SILICON_CFG_DATA.EnableTimedGpio1 | 1
 
 #
-# To enable payload selection the below options need to uncommented.
-# This GPIO maps to pins 3/4 on 4-pin jumper J9J5 which is closest
-# to the coin cell battery on the board.
+# By default use Osloader Payload
+#
+# Uncomments below line to change the default payload, set to 'UEFI' for UEFI payload.
+# Set to 'AUTO' to enable payload selection using GPIO.
+# This GPIO maps to pins 3/4 on 4-pin jumper J9J5 which is closest to the coin
+# cell battery on the UP3 RVP board.
 #
 # When 3/4 is stuffed the value will read 0 for UEFI Payload.
 # When 3/4 is un-stuffed the value will read 1 for OS Loader.
