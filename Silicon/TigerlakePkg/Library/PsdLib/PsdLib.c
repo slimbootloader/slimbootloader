@@ -210,7 +210,6 @@ UpdateAcpiPsdTable (
 
   //0 - No HWRoT; 1 - ROM based RoT; 2 - TXE; 3 - CSE; 4 - ACM; 5 - TXT
   mPsdt->HwrotType                      = PSD_HROT_ACM;
-  DumpHex (2, 0, sizeof(EFI_ACPI_PSD_TABLE), (VOID *)Table);
   DEBUG( (DEBUG_VERBOSE, "UpdateAcpiPsdTable() end\n") );
 
   return  EFI_SUCCESS;
