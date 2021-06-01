@@ -41,8 +41,11 @@
                      Enable will allocate 1 way of LLC; if Cache Configuration subregion is available, it will allocate based on the subregion.
       length       : 0x1
       value        : 0x0
-  - Dummy        :
+  - TccErrorLog      :
+      name         : Error Log
+      type         : Combo
+      option       : 0:Disabled, 1:Enabled
+      help         : >
+                     Enable or Disable Error Log. Enable will record errors related to Intel(R) TCC and save them to memory.
       length       : 0x1
       value        : 0x0
-
-
