@@ -109,7 +109,6 @@
   gPlatformCommonLibTokenSpaceGuid.PcdFrameBufferMaxConsoleHeight
   gPayloadTokenSpaceGuid.PcdGrubBootCfgEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdContainerBootEnabled
-  gPlatformCommonLibTokenSpaceGuid.PcdPreOsCheckerEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootHashMask
 
 [Depex]

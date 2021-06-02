@@ -31,6 +31,8 @@
 #include <Register/PseRegs.h>
 #include <Register/SaRegsHostBridge.h>
 #include <Library/PchSciLib.h>
+#include <Library/ConfigDataLib.h>
+#include <ConfigDataDefs.h>
 #include <Library/GpioSocLib.h>
 
 #define XTAL_FREQ_24MHZ      0
@@ -491,12 +493,16 @@ PlatformUpdateAcpiGnvs (
   UINTN                   PseCanPciMmBase;
   UINTN_STRUCT            MchBarBase;
   EFI_STATUS              Status;
+  FEATURES_CFG_DATA       *FeaturesCfgData;
+  BOOLEAN                 PchSciSupported;
 
+  PchSciSupported         = PchIsSciSupported ();
   GlobalNvs               = (GLOBAL_NVS_AREA *) GnvsIn;
   PlatformNvs             = (PLATFORM_NVS_AREA *) &GlobalNvs->PlatformNvs;
   PchNvs                  = (PCH_NVS_AREA *) &GlobalNvs->PchNvs;
   CpuNvs                  = (CPU_NVS_AREA *) &GlobalNvs->CpuNvs;
   SaNvs                   = (SYSTEM_AGENT_NVS_AREA *) &GlobalNvs->SaNvs;
+  FeaturesCfgData         = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
   ZeroMem (GlobalNvs, sizeof (GLOBAL_NVS_AREA));
 
   //
@@ -671,8 +677,13 @@ PlatformUpdateAcpiGnvs (
 
   PlatformNvs->ApicEnable                       = 1;
   PlatformNvs->EcAvailable                      = 0;
-  PlatformNvs->LowPowerS0Idle                   = 1;
-
+  PlatformNvs->LowPowerS0Idle                   = 0;
+  if (FeaturesCfgData != NULL) {
+    if (FeaturesCfgData->Features.LowPowerIdle != 0 && PchSciSupported != 1){
+      PlatformNvs->LowPowerS0Idle                   = 1;
+    }
+  }
+  DEBUG((DEBUG_INFO, "PlatformNvs->LowPowerS0Idle = 0x%x\n ", PlatformNvs->LowPowerS0Idle));
   PlatformNvs->TenSecondPowerButtonEnable       = 8;
 
   //
@@ -845,7 +856,7 @@ PlatformUpdateAcpiGnvs (
   PlatformNvs->PpmFlags                         = CpuNvs->PpmFlags;
   SocUpdateAcpiGnvs ((VOID *)GnvsIn);
 
-  if (FeaturePcdGet (PcdPreOsCheckerEnabled) && PchIsSciSupported ()) {
+  if (PchSciSupported) {
     PlatformNvs->Rtd3Support                    = 0;
     PlatformNvs->LowPowerS0Idle                 = 0;
   }

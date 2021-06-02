@@ -216,6 +216,8 @@ SI_PCH_DEVICE_INTERRUPT_CONFIG mPchDevIntConfig[] = {
   {16, 7, SiPchIntB, PchPIRQB}  // THC #1
 };
 
+STATIC UINT8 mPchSciSupported = 0xFF;
+
 UINT8
 GetSerialPortStrideSize (
   VOID
@@ -662,11 +664,15 @@ BoardInit (
   UINT32                      TsegBase;
   UINT32                      TsegSize;
 
+  if (mPchSciSupported == 0xFF){
+    mPchSciSupported = PchIsSciSupported();
+  }
+
   switch (InitPhase) {
   case PreSiliconInit:
     EnableLegacyRegions ();
     ConfigureGpio (CDATA_GPIO_TAG, 0, NULL);
-    if (FeaturePcdGet (PcdPreOsCheckerEnabled) && PchIsSciSupported ()) {
+    if (mPchSciSupported) {
       DEBUG ((DEBUG_INFO, "GpioPadConfigTable for Fusa\n"));
       ConfigureGpio (CDATA_NO_TAG, ARRAY_SIZE(mGpioTablePreMemEhlFusa), (UINT8*)mGpioTablePreMemEhlFusa);
     }
@@ -707,7 +713,7 @@ BoardInit (
   case PostPciEnumeration:
     // Set pre-OS checker features flag
     LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
-    if (FeaturePcdGet (PcdPreOsCheckerEnabled) && PchIsSciSupported ()) {
+    if (mPchSciSupported) {
       if (!SciBootSuccess ()) {
         DEBUG ((DEBUG_WARN, "SCI device has boot issue\n"));
       }
@@ -1130,8 +1136,7 @@ UpdateFspConfig (
     Fspscfg->XdciEnable          = SiCfgData->XdciEnable;
     FeaturesCfgData               = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
     if (FeaturesCfgData != NULL) {
-      if (FeaturesCfgData->Features.LowPowerIdle != 0){
-        DEBUG ((DEBUG_INFO, "FeaturesCfgData->Features.LowPowerIdle = 0x%x\n",FeaturesCfgData->Features.LowPowerIdle));
+      if (FeaturesCfgData->Features.LowPowerIdle != 0 && mPchSciSupported != 1){
         Fspscfg->XdciEnable          = 0;
       }
     }
@@ -1542,7 +1547,7 @@ UpdateFspConfig (
     ASSERT (SiCfgData != NULL);
   } //end of SiCfgData
 
-  if (FeaturePcdGet (PcdPreOsCheckerEnabled) && PchIsSciSupported ()) {
+  if (mPchSciSupported) {
     Fspscfg->IsFusaSupported = 0x1;
     Fspscfg->IehMode = 0x1;
     //
@@ -1678,7 +1683,7 @@ UpdateFspConfig (
     Fspscfg->CstateLatencyControl5Irtl     = PowerCfgData->CstateLatencyControl5Irtl;
   }
 
-  if (FeaturePcdGet (PcdPreOsCheckerEnabled) && PchIsSciSupported ()) {
+  if (mPchSciSupported) {
     DEBUG ((DEBUG_INFO, "Applying Fusa FSP UPD settings.........\n"));
     Fspscfg->Eist                          = 0;            // Intel Speed Step->EnableGv
     Fspscfg->Hwp                           = 0;            // Intel Speed Shift
@@ -1841,7 +1846,7 @@ UpdateOsBootMediumInfo (
 
   FillBootOptionListFromCfgData (OsBootOptionList);
   // Disable PreOS checker since the SKU doesn't support it
-  if (!PchIsSciSupported ()) {
+  if (mPchSciSupported) {
     for (Idx = 0; Idx < OsBootOptionList->OsBootOptionCount; Idx++) {
       BootOption = &(OsBootOptionList->OsBootOption[Idx]);
       if ((BootOption->BootFlags & BOOT_FLAGS_PREOS) != 0) {
