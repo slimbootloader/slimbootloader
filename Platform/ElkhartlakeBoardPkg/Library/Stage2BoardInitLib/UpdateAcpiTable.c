@@ -28,6 +28,7 @@
 #include "ConfigDataStruct.h"
 #include <Lpit.h>
 #include <Register/PmcRegs.h>
+#include <Library/PchSciLib.h>
 
 #define NHLT_ACPI_TABLE_SIGNATURE  SIGNATURE_32 ('N', 'H', 'L', 'T')
 
@@ -374,9 +375,12 @@ PlatformUpdateAcpiTable (
   EFI_STATUS                   Status;
   PLATFORM_DATA               *PlatformData;
   LOADER_GLOBAL_DATA          *LdrGlobal;
+  FEATURES_CFG_DATA             *FeaturesCfgData;
+
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
   GlobalNvs  = (GLOBAL_NVS_AREA *)(UINTN) PcdGet32 (PcdAcpiGnvsAddress);
+  FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
 
   Table = (EFI_ACPI_DESCRIPTION_HEADER *) Current;
   Ptr  = (UINT8 *)Table;
@@ -434,7 +438,24 @@ PlatformUpdateAcpiTable (
   } else if (Table->Signature == EFI_BDAT_TABLE_SIGNATURE) {
     UpdateBdatAcpiTable (Table, LdrGlobal->FspHobList);
     DEBUG ((DEBUG_INFO, "Updated BDAT Table in AcpiTable Entries\n"));
-  } else if (Table->Signature == EFI_ACPI_6_1_LOW_POWER_IDLE_TABLE_STRUCTURE_SIGNATURE){
+  } else if (Table->Signature == EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE) {
+    DEBUG ( (DEBUG_INFO, "Updated FADT Table entries in AcpiTable\n") );
+    {
+      EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE *FadtPointer;
+
+      FadtPointer = (EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE *) Table;
+      //
+      // The Flags field within the FADT (offset 112)
+      //   1) will have a new Low Power S0 Idle Capable ACPI flag (bit offset 21).
+      //
+      if (FeaturesCfgData != NULL) {
+        if (FeaturesCfgData->Features.LowPowerIdle != 0 && PchIsSciSupported() != 1){
+          DEBUG ( (DEBUG_INFO, "Enabled Low Power S0 Idle Capable ACPI flag\n") );
+          FadtPointer->Flags = (BIT21 | FadtPointer->Flags);
+        }
+      }
+    }
+  }else if (Table->Signature == EFI_ACPI_6_1_LOW_POWER_IDLE_TABLE_STRUCTURE_SIGNATURE){
       UINT8                                  LpitStateEntries = 0;
       EFI_ACPI_6_1_GENERIC_ADDRESS_STRUCTURE SetResidencyCounter[2] = { ACPI_LPI_RES_SLP_S0_COUNTER, ACPI_LPI_RES_C10_COUNTER };
       UINT64                                 ResidencyCounterFrequency = 0;

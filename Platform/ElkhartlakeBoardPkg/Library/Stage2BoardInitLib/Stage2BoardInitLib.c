@@ -666,7 +666,7 @@ BoardInit (
   case PreSiliconInit:
     EnableLegacyRegions ();
     ConfigureGpio (CDATA_GPIO_TAG, 0, NULL);
-    if (FeaturePcdGet (PcdPreOsCheckerEnabled) && PchIsSciSupported ()) {
+    if (PchIsSciSupported ()) {
       DEBUG ((DEBUG_INFO, "GpioPadConfigTable for Fusa\n"));
       ConfigureGpio (CDATA_NO_TAG, ARRAY_SIZE(mGpioTablePreMemEhlFusa), (UINT8*)mGpioTablePreMemEhlFusa);
     }
@@ -707,7 +707,7 @@ BoardInit (
   case PostPciEnumeration:
     // Set pre-OS checker features flag
     LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
-    if (FeaturePcdGet (PcdPreOsCheckerEnabled) && PchIsSciSupported ()) {
+    if (PchIsSciSupported ()) {
       if (!SciBootSuccess ()) {
         DEBUG ((DEBUG_WARN, "SCI device has boot issue\n"));
       }
@@ -1130,8 +1130,7 @@ UpdateFspConfig (
     Fspscfg->XdciEnable          = SiCfgData->XdciEnable;
     FeaturesCfgData               = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
     if (FeaturesCfgData != NULL) {
-      if (FeaturesCfgData->Features.LowPowerIdle != 0){
-        DEBUG ((DEBUG_INFO, "FeaturesCfgData->Features.LowPowerIdle = 0x%x\n",FeaturesCfgData->Features.LowPowerIdle));
+      if (FeaturesCfgData->Features.LowPowerIdle != 0 && PchIsSciSupported() != 1){
         Fspscfg->XdciEnable          = 0;
       }
     }
@@ -1542,7 +1541,7 @@ UpdateFspConfig (
     ASSERT (SiCfgData != NULL);
   } //end of SiCfgData
 
-  if (FeaturePcdGet (PcdPreOsCheckerEnabled) && PchIsSciSupported ()) {
+  if (PchIsSciSupported ()) {
     Fspscfg->IsFusaSupported = 0x1;
     Fspscfg->IehMode = 0x1;
     //
@@ -1678,7 +1677,7 @@ UpdateFspConfig (
     Fspscfg->CstateLatencyControl5Irtl     = PowerCfgData->CstateLatencyControl5Irtl;
   }
 
-  if (FeaturePcdGet (PcdPreOsCheckerEnabled) && PchIsSciSupported ()) {
+  if (PchIsSciSupported ()) {
     DEBUG ((DEBUG_INFO, "Applying Fusa FSP UPD settings.........\n"));
     Fspscfg->Eist                          = 0;            // Intel Speed Step->EnableGv
     Fspscfg->Hwp                           = 0;            // Intel Speed Shift

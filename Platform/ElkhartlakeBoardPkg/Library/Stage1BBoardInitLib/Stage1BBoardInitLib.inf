@@ -57,4 +57,3 @@
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
   gPlatformModuleTokenSpaceGuid.PcdAcpiEnabled
   gPlatformModuleTokenSpaceGuid.PcdVtdEnabled
-  gPlatformCommonLibTokenSpaceGuid.PcdPreOsCheckerEnabled

@@ -272,16 +272,14 @@
   gPlatformCommonLibTokenSpaceGuid.PcdSourceDebugEnabled      | FALSE      | BOOLEAN | 0x20000212
   gPlatformCommonLibTokenSpaceGuid.PcdContainerBootEnabled    | FALSE      | BOOLEAN | 0x20000213
   gPlatformCommonLibTokenSpaceGuid.PcdEmmcHs400SupportEnabled | TRUE       | BOOLEAN | 0x20000214
-  # Determine if the Pre-OS checker should be executed or not.
-  gPlatformCommonLibTokenSpaceGuid.PcdPreOsCheckerEnabled     | FALSE      | BOOLEAN | 0x20000215
   # This PCD will force to initialize SerialPort regardless of its initialized state
-  gPlatformCommonLibTokenSpaceGuid.PcdForceToInitSerialPort   | FALSE      | BOOLEAN | 0x20000216
+  gPlatformCommonLibTokenSpaceGuid.PcdForceToInitSerialPort   | FALSE      | BOOLEAN | 0x20000215
   # This PCD will enable very basic debug Shell so that it can work in early stage such as 1A/1B/2.
-  gPlatformCommonLibTokenSpaceGuid.PcdMiniShellEnabled        | FALSE      | BOOLEAN | 0x20000217
+  gPlatformCommonLibTokenSpaceGuid.PcdMiniShellEnabled        | FALSE      | BOOLEAN | 0x20000216
   # This PCD will enable DMA protection
-  gPlatformCommonLibTokenSpaceGuid.PcdDmaProtectionEnabled    | FALSE      | BOOLEAN | 0x20000218
+  gPlatformCommonLibTokenSpaceGuid.PcdDmaProtectionEnabled    | FALSE      | BOOLEAN | 0x20000217
   # This PCD will enable multiple USB mass storage boot device support
-  gPlatformCommonLibTokenSpaceGuid.PcdMultiUsbBootDeviceEnabled   | FALSE  | BOOLEAN | 0x20000219
+  gPlatformCommonLibTokenSpaceGuid.PcdMultiUsbBootDeviceEnabled   | FALSE  | BOOLEAN | 0x20000218
   # Control if X2APIC should be used or not
-  gPlatformCommonLibTokenSpaceGuid.PcdCpuX2ApicEnabled            | FALSE  | BOOLEAN | 0x20000220
-  gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled                  | FALSE  | BOOLEAN | 0x20000221
+  gPlatformCommonLibTokenSpaceGuid.PcdCpuX2ApicEnabled            | FALSE  | BOOLEAN | 0x20000219
+  gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled                  | FALSE  | BOOLEAN | 0x20000220
