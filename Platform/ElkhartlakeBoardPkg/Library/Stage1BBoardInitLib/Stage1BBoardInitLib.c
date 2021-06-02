@@ -236,10 +236,12 @@ UpdateFspConfig (
   UINT32                        Index;
   UINT8                         DebugPort;
   FEATURES_CFG_DATA             *FeaturesCfgData;
+  BOOLEAN                       PchSciSupported;
 
   FspmUpd                       = (FSPM_UPD *)FspmUpdPtr;
   FspmArchUpd                   = &FspmUpd->FspmArchUpd;
   Fspmcfg                       = &FspmUpd->FspmConfig;
+  PchSciSupported               = PchIsSciSupported ();
 
   DebugPort = GetDebugPort ();
   if (DebugPort < PCH_MAX_SERIALIO_UART_CONTROLLERS) {
@@ -314,8 +316,7 @@ UpdateFspConfig (
     Fspmcfg->TcssXhciEn                 = MemCfgData->TcssXhciEn;
     Fspmcfg->TcssXdciEn                 = MemCfgData->TcssXdciEn;
     if (FeaturesCfgData != NULL) {
-      if (FeaturesCfgData->Features.LowPowerIdle != 0){
-        DEBUG ((DEBUG_INFO, "FeaturesCfgData->Features.LowPowerIdle = 0x%x\n",FeaturesCfgData->Features.LowPowerIdle));
+      if (FeaturesCfgData->Features.LowPowerIdle != 0 && PchSciSupported != 1){
         Fspmcfg->TcssXdciEn             = 0;
       }
     }
@@ -620,11 +621,11 @@ UpdateFspConfig (
         for (Index = 0; Index < PCH_MAX_HDA_SSP_LINK_NUM; Index++) {
           Fspmcfg->PchHdaAudioLinkSspEnable[Index]      = 0;
         }
-        if (!FeaturePcdGet (PcdPreOsCheckerEnabled) && !PchIsSciSupported ()) {
+        if (PchSciSupported != 1) {
           Fspmcfg->PchHdaAudioLinkSspEnable[0]          = 1;
         }
         for (Index = 0; Index < PCH_MAX_HDA_DMIC_LINK_NUM; Index++) {
-          if (FeaturePcdGet (PcdPreOsCheckerEnabled) && PchIsSciSupported ()) {
+          if (PchSciSupported) {
             Fspmcfg->PchHdaAudioLinkDmicEnable[Index]   = 0;
           }
         }
