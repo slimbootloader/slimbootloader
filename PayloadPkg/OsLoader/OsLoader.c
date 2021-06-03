@@ -661,13 +661,8 @@ StartBooting (
     EntryPoint = (PRE_OS_ENTRYPOINT)(UINTN)MultiBoot->BootState.EntryPoint;
     EntryPoint((VOID *)(UINTN)PcdGet32(PcdPayloadHobList));
   } else if ((LoadedImage->Flags & LOADED_IMAGE_LINUX) != 0) {
-    if (FeaturePcdGet (PcdPreOsCheckerEnabled) && IsPreOsCheckerLoaded ()) {
-      BeforeOSJump ("Starting Pre-OS Checker ...");
-      StartPreOsChecker ((VOID *)GetLinuxBootParams (), LoadedImage->Flags);
-    } else {
-      BeforeOSJump ("Starting Kernel ...");
-      LinuxBoot ((VOID *)(UINTN)PcdGet32 (PcdPayloadHobList), NULL);
-    }
+    BeforeOSJump ("Starting Kernel ...");
+    LinuxBoot ((VOID *)(UINTN)PcdGet32 (PcdPayloadHobList), NULL);
     Status = EFI_DEVICE_ERROR;
   } else if ((LoadedImage->Flags & LOADED_IMAGE_ELF) != 0) {
     BeforeOSJump ("Starting ELF ...");
@@ -681,13 +676,9 @@ StartBooting (
       DEBUG ((DEBUG_ERROR, "EntryPoint is not found\n"));
       return RETURN_INVALID_PARAMETER;
     }
-    if (FeaturePcdGet (PcdPreOsCheckerEnabled) && IsPreOsCheckerLoaded ()) {
-      BeforeOSJump ("Starting Pre-OS Checker ...");
-      StartPreOsChecker ((VOID *)&MultiBoot->BootState, LoadedImage->Flags);
-    } else {
-      BeforeOSJump ("Starting MB Kernel ...");
-      JumpToMultibootOs((IA32_BOOT_STATE*)&MultiBoot->BootState);
-    }
+
+    BeforeOSJump ("Starting MB Kernel ...");
+    JumpToMultibootOs((IA32_BOOT_STATE*)&MultiBoot->BootState);
     Status = EFI_DEVICE_ERROR;
 
   } else if ((LoadedImage->Flags & (LOADED_IMAGE_PE | LOADED_IMAGE_FV)) != 0) {
@@ -1280,7 +1271,6 @@ PayloadMain (
   )
 {
   OS_BOOT_OPTION_LIST   *OsBootOptionList;
-  LOADER_PLATFORM_INFO  *LoaderPlatformInfo;
   OS_BOOT_OPTION         OsBootOption;
   BOOLEAN                BootShell;
   UINTN                  ShellTimeout;
@@ -1288,7 +1278,6 @@ PayloadMain (
   UINT8                  BootIdx;
 
   mEntryStack = Param;
-  LoaderPlatformInfo = (LOADER_PLATFORM_INFO *)GetLoaderPlatformInfoPtr();
 
   DEBUG ((DEBUG_INFO, "\n\n====================Os Loader====================\n\n"));
   AddMeasurePoint (0x4010);
@@ -1320,15 +1309,6 @@ PayloadMain (
     RunShell (ShellTimeout);
   }
   AddMeasurePoint (0x4020);
-
-  //
-  // Load PreOsChecker
-  //
-  if (LoaderPlatformInfo != NULL) {
-    if (FeaturePcdGet (PcdPreOsCheckerEnabled) && (LoaderPlatformInfo->LdrFeatures & FEATURE_PRE_OS_CHECKER_BOOT)) {
-      LoadPreOsChecker ();
-    }
-  }
 
   while (OsBootOptionList != NULL) {
 
