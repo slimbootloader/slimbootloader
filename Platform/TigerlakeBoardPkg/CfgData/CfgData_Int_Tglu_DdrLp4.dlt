@@ -23,15 +23,14 @@ MEMORY_CFG_DATA.SpdDataSel130            | 1
 
 
 #
-# By default use Osloader Payload
+# By default use Osloader Payload, set to "UEFI" to select UEFI payload.
 #
-# Uncomments below line to change the default payload, set to 'UEFI' for UEFI payload.
-# Set to 'AUTO' to enable payload selection using GPIO.
+# Here set to 'AUTO' to enable payload selection using GPIO.
 # This GPIO maps to pins 3/4 on 4-pin jumper J9J5 which is closest to the coin
 # cell battery on the UP3 RVP board.
 #
 # When 3/4 is stuffed the value will read 0 for UEFI Payload.
 # When 3/4 is un-stuffed the value will read 1 for OS Loader.
 #
-#GEN_CFG_DATA.PayloadId                   | 'AUTO'
+GEN_CFG_DATA.PayloadId                   | 'AUTO'
 GPIO_CFG_DATA.GpioPinConfig0_GPP_B15.GPIODirection_GPP_B15 | 0xB
