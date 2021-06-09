@@ -25,7 +25,6 @@
 #
 
 [Sources]
-  PreOsChecker.h
   BlockIoTest.h
   OsLoader.h
   OsLoader.c
@@ -37,7 +36,6 @@
   BlockIoTest.c
   KeyManagement.c
   PreOsSupport.c
-  PreOsChecker.c
   ModService.c
   ExtraModSupport.c
 
