@@ -92,9 +92,11 @@ TccModePreMemConfig (
   FspmUpd->FspmConfig.HyperThreading         = 0;
   FspmUpd->FspmConfig.GtClosEnable           = 1;
   FspmUpd->FspmConfig.BiosGuard              = 0x0;
+  FspmUpd->FspmConfig.VmxEnable              = 1;    // RTCM need enable VMX
 
-  //FspmUpd->FspmConfig.SoftwareSramEnPreMem   = (UINT8)TccCfgData->TccSoftSram;
-  //FspmUpd->FspmConfig.DsoTuningEnPreMem      = (UINT8)TccCfgData->TccTuning;
+  FspmUpd->FspmConfig.SoftwareSramEnPreMem   = TccCfgData->TccSoftSram;
+  FspmUpd->FspmConfig.DsoTuningEnPreMem      = TccCfgData->TccTuning;
+  FspmUpd->FspmConfig.TccErrorLogEnPreMem    = TccCfgData->TccErrorLog;
 
   // Load TCC stream config from container
   TccStreamBase = NULL;
@@ -104,8 +106,8 @@ TccModePreMemConfig (
   if (EFI_ERROR (Status) || (TccStreamSize < sizeof(TCC_STREAM_CONFIGURATION))) {
     DEBUG ((DEBUG_INFO, "Load TCC Stream %r, size = 0x%x\n", Status, TccStreamSize));
   } else {
-    //FspmUpd->FspmConfig.TccStreamCfgBasePreMem = (UINT32)(UINTN)TccStreamBase;
-    //FspmUpd->FspmConfig.TccStreamCfgSizePreMem = TccStreamSize;
+    FspmUpd->FspmConfig.TccStreamCfgBasePreMem = (UINT32)(UINTN)TccStreamBase;
+    FspmUpd->FspmConfig.TccStreamCfgSizePreMem = TccStreamSize;
     DEBUG ((DEBUG_INFO, "Load TCC stream @0x%p, size = 0x%x\n", TccStreamBase, TccStreamSize));
 
     if (TccCfgData->TccTuning != 0) {
@@ -129,8 +131,8 @@ TccModePreMemConfig (
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "TCC Cache config not found! %r\n", Status));
   } else {
-    //FspmUpd->FspmConfig.TccCacheCfgBasePreMem = (UINT32)(UINTN)TccCacheBase;
-    //FspmUpd->FspmConfig.TccCacheCfgSizePreMem = TccCacheSize;
+    FspmUpd->FspmConfig.TccCacheCfgBasePreMem = (UINT32)(UINTN)TccCacheBase;
+    FspmUpd->FspmConfig.TccCacheCfgSizePreMem = TccCacheSize;
     DEBUG ((DEBUG_INFO, "Load TCC cache @0x%p, size = 0x%x\n", TccCacheBase, TccCacheSize));
   }
 

@@ -1179,9 +1179,10 @@ TccModePostMemConfig (
     FspsUpd->FspsConfig.CpuPcieRpMultiVcEnabled[Index] = 1;
   }
 
-  //FspsUpd->FspsConfig.SoftwareSramEn  = (UINT8)TccCfgData->TccSoftSram;
-  //FspsUpd->FspsConfig.DsoTuningEn     = (UINT8)TccCfgData->TccTuning;
-  //FspsUpd->FspsConfig.IfuEnable       = 0;
+  FspsUpd->FspsConfig.SoftwareSramEn  = TccCfgData->TccSoftSram;
+  FspsUpd->FspsConfig.DsoTuningEn     = TccCfgData->TccTuning;
+  FspsUpd->FspsConfig.TccErrorLogEn   = TccCfgData->TccErrorLog;
+  FspsUpd->FspsConfig.IfuEnable       = 0;
 
   // Load TCC stream config from container
   TccStreamBase = NULL;
@@ -1244,8 +1245,8 @@ TccModePostMemConfig (
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "TCC CRL not found! %r\n", Status));
   } else {
-    //FspsUpd->FspsConfig.TccCrlBinBase = (UINT32)(UINTN)TccCrlBase;
-    //FspsUpd->FspsConfig.TccCrlBinSize = TccCrlSize;
+    FspsUpd->FspsConfig.TccCrlBinBase = (UINT32)(UINTN)TccCrlBase;
+    FspsUpd->FspsConfig.TccCrlBinSize = TccCrlSize;
     DEBUG ((DEBUG_INFO, "Load tcc crl @0x%p, size = 0x%x\n", TccCrlBase, TccCrlSize));
   }
 
@@ -1488,20 +1489,19 @@ UpdateFspConfig (
       FspsUpd->FspsConfig.CpuPcieRpMultiVcEnabled[Index] = SiCfgData->CpuPcieRpMultiVcEnabled[Index];
       FspsUpd->FspsConfig.CpuPcieRpLtrEnable[Index]      = 1;
       FspsUpd->FspsConfig.CpuPcieRpLtrMaxSnoopLatency[Index]      = 0x1003;
-      FspsUpd->FspsConfig.CpuPcieRpLtrMaxNoSnoopLatency[Index]      = 0x1003;
+      FspsUpd->FspsConfig.CpuPcieRpLtrMaxNoSnoopLatency[Index]    = 0x1003;
       FspsUpd->FspsConfig.CpuPcieRpPmSci[Index]          = 1;
-      FspsUpd->FspsConfig.CpuPcieRpMaxPayload[Index] = 0x1;
+      FspsUpd->FspsConfig.CpuPcieRpMaxPayload[Index]     = 0x1;
     }
-    FspsUpd->FspsConfig.CpuPcieRpFunctionSwap = 0x1;
-    FspsUpd->FspsConfig.CpuPcieSetSecuredRegisterLock = 0x1;
+    FspsUpd->FspsConfig.CpuPcieRpFunctionSwap            = 0x1;
+    FspsUpd->FspsConfig.CpuPcieSetSecuredRegisterLock    = 0x1;
 
     // TSN feature support
     TsnMacAddrBase      = NULL;
     TsnMacAddrSize      = 0;
 
-    FspsConfig->PchTsnEnable       = SiCfgData->PchTsnEnable;
-    FspsConfig->PchTsnLinkSpeed[0] = SiCfgData->PchTsnLinkSpeed;
-    FspsConfig->PchTsnLinkSpeed[1] = SiCfgData->PchTsnLinkSpeed;
+    FspsConfig->PchTsnEnable    = SiCfgData->PchTsnEnable;
+    FspsConfig->PchTsnLinkSpeed = SiCfgData->PchTsnLinkSpeed;
 
     if(SiCfgData->PchTsnEnable == 1) {
       FspsConfig->PchTsnMultiVcEnable = SiCfgData->PchTsnMultiVcEnable;
@@ -1583,6 +1583,12 @@ UpdateFspConfig (
   FspsConfig->IomTypeCPortPadCfg[3] = 0x0;
 
   FspsConfig->SkipMpInit = 0;
+
+  FspsConfig->UsbTcPortEn = 0xf;
+  FspsConfig->ITbtPcieRootPortEn[0] = 0x1;
+  FspsConfig->ITbtPcieRootPortEn[1] = 0x1;
+  FspsConfig->ITbtPcieRootPortEn[2] = 0x1;
+  FspsConfig->ITbtPcieRootPortEn[3] = 0x1;
 
   if (SiCfgData != NULL) {
     FspsConfig->EnableTimedGpio0 = SiCfgData->EnableTimedGpio0;
