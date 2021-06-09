@@ -63,7 +63,7 @@
   - PchTsnLinkSpeed :
       name         : TSN Link Speed
       type         : Combo
-      option       : 0:24Mhz 2.5Gbps, 1:24Mhz 1Gbps, 2:38.4Mhz 2.5Gbps, 3:38.4Mhz 1Gbps
+      option       :   0: Reserved, 1: Reserved, 2: 38.4Mhz 2.5Gbps, 3: 38.4Mhz 1Gbps
       help         : >
                      Set TSN Link Speed.
       length       : 0x01

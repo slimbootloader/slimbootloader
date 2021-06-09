@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2019 - 2021, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 #
@@ -14,13 +14,13 @@
   VERSION_STRING       = 1.0
 
 [Sources]
- m_80_806c1_0000006e.mcb
+ m_80_806c1_0000007e.mcb
 
 [UserExtensions.SBL."CloneRepo"]
   REPO  = https://github.com/tianocore/edk2-non-osi.git
-  COMMIT= 659382a8038dccb802e642800b5efa2ac24c67ed
+  COMMIT= 9c509e9b00cc8f68a0c2293436d0572d3e4a40ce
 
 [UserExtensions.SBL."CopyList"]
-  Silicon/Intel/TigerlakeSiliconBinPkg/Microcode/m_80_806c1_0000006e.mcb  : Silicon/TigerlakePkg/Microcode/m_80_806c1_0000006e.mcb
+  Silicon/Intel/TigerlakeSiliconBinPkg/Microcode/m_80_806c1_0000007e.mcb  : Silicon/TigerlakePkg/Microcode/m_80_806c1_0000007e.mcb
 
 
