@@ -282,6 +282,7 @@
   gPlatformModuleTokenSpaceGuid.PcdFuncCpuInitHook   | 0x00000000
   gPlatformModuleTokenSpaceGuid.PcdFspsUpdPtr        | 0x00000000
   gPlatformModuleTokenSpaceGuid.PcdAcpiTableTemplatePtr | 0
+  gPlatformModuleTokenSpaceGuid.PcdPciEnumHookProc   | 0x00000000
 
   gPlatformModuleTokenSpaceGuid.PcdPciResAllocTableBase    | 0x00000000
 
