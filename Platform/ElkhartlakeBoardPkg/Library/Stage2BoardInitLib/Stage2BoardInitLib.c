@@ -785,12 +785,9 @@ BoardInit (
     // Set pre-OS checker features flag
     LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
     if (FeaturePcdGet (PcdPreOsCheckerEnabled) && PchIsSciSupported ()) {
-      LdrGlobal->LdrFeatures |= FEATURE_PRE_OS_CHECKER_BOOT;
       if (!SciBootSuccess ()) {
         DEBUG ((DEBUG_WARN, "SCI device has boot issue\n"));
       }
-    } else {
-      LdrGlobal->LdrFeatures &= (~FEATURE_PRE_OS_CHECKER_BOOT);
     }
     ClearSmbusStatus ();
 
