@@ -56,3 +56,4 @@
   gPlatformModuleTokenSpaceGuid.PcdAriSupport
   gPlatformModuleTokenSpaceGuid.PcdSrIovSupport
   gPlatformModuleTokenSpaceGuid.PcdPciResAllocTableBase
+  gPlatformModuleTokenSpaceGuid.PcdPciEnumHookProc

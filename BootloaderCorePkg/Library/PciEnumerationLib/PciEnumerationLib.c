@@ -13,6 +13,7 @@
 #include <Library/SortLib.h>
 #include <Library/HobLib.h>
 #include <InternalPciEnumerationLib.h>
+#include <Library/PciEnumerationLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include "PciAri.h"
 #include "PciIov.h"
@@ -802,6 +803,7 @@ PciScanBus (
   UINT16                            Register;
   UINT16                            TempReservedBusNum;
   PCI_IO_DEVICE                     *PciDevice;
+  PLATFORM_PCI_ENUM_HOOK_PROC       PlatformPciEnumHookProc;
 
   SecondBus       = 0;
   Register        = 0;
@@ -860,6 +862,14 @@ PciScanBus (
         Register  = PciGetMaxBusNumber (Bridge);
         Address   = PCI_EXPRESS_LIB_ADDRESS (StartBusNumber, Device, Func, PCI_BRIDGE_SUBORDINATE_BUS_REGISTER_OFFSET);
         PciExpressWrite8 (Address, (UINT8)Register);
+
+        //
+        // Nofify EfiPciBeforeChildBusEnumeration
+        //
+        PlatformPciEnumHookProc = (PLATFORM_PCI_ENUM_HOOK_PROC)(UINTN)PcdGet32 (PcdPciEnumHookProc);
+        if (PlatformPciEnumHookProc != NULL) {
+          PlatformPciEnumHookProc (StartBusNumber, Device, Func, EfiPciBeforeChildBusEnumeration);
+        }
 
         Status = PciScanBus (
                    PciDevice,
