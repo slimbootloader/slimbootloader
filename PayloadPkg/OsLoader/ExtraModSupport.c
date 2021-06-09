@@ -38,7 +38,7 @@ CallExtraModule (
   PLD_EXTRA_MOD_ARGS   ModArgs;
   VOID                *ExtraImageBase;
 
-  ExtraImageBase = LoadedImage->ImageData.Addr;
+  ExtraImageBase = LoadedImage->Image.Common.BootFile.Addr;
 
   // Prepare memory for extra modules
   ZeroMem (&ModArgs, sizeof(ModArgs));

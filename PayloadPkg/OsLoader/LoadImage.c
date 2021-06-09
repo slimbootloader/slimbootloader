@@ -63,19 +63,6 @@ GetBootImageFromIfwiContainer (
   LoadedImage->ImageData.Size = ImageSize;
   LoadedImage->ImageData.AllocType = ImageAllocateTypePage;
 
-  if ((Image->ContainerSig == SIGNATURE_32 ('I', 'P', 'F', 'W')) && (Image->ComponentName == SIGNATURE_32 ('T', 'C', 'C', 'R'))) {
-    //
-    // TCC RTCM image need reserved memory
-    //
-    LoadedImage->ImageData.Addr = AllocateReservedPages (EFI_SIZE_TO_PAGES(ImageSize));
-    if (LoadedImage->ImageData.Addr == NULL) {
-      return EFI_OUT_OF_RESOURCES;
-    }
-    CopyMem(LoadedImage->ImageData.Addr, Buffer, ImageSize);
-    FreePages (Buffer, EFI_SIZE_TO_PAGES (ImageSize));
-    LoadedImage->Flags |= LOADED_IMAGE_RUN_EXTRA;
-  }
-
   if ( *((UINT32 *) Buffer) == CONTAINER_BOOT_SIGNATURE ) {
     LoadedImage->Flags      |= LOADED_IMAGE_CONTAINER;
   } else if ( *((UINT32 *) Buffer) == IAS_MAGIC_PATTERN ) {
@@ -312,7 +299,16 @@ GetBootImageFromFs (
     goto Done;
   }
 
-  Image = AllocatePages (EFI_SIZE_TO_PAGES (ImageSize));
+  if (LoadedImage->LoadImageType == LoadImageTypeExtra0) {
+     //
+     // Currently extra image is used only by RTCM which need allocate reserved memory.
+     // Need revise this logic if there is other use case late.
+     //
+     Image = AllocateReservedPages (EFI_SIZE_TO_PAGES(ImageSize));
+     LoadedImage->Flags |= LOADED_IMAGE_RUN_EXTRA;
+  } else {
+    Image = AllocatePages (EFI_SIZE_TO_PAGES (ImageSize));
+  }
   if (Image == NULL) {
     Status = EFI_OUT_OF_RESOURCES;
     goto Done;
@@ -857,6 +853,12 @@ LoadBootImages (
     LoadedImagesInfo->LoadedImageList[Index] = LoadedImage;
 
     if (EFI_ERROR (Status)) {
+      if (Index >= LoadImageTypeExtra0) {
+        // Continue boot if load extra image failed.
+        Status = EFI_SUCCESS;
+        continue;
+      }
+
       // UnloadBootImages () will free all unnecessary Memory
       break;
     }
