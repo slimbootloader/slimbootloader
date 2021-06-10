@@ -2,7 +2,7 @@
 #
 #  Slim Bootloader CFGDATA Option File.
 #
-#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -11,8 +11,8 @@
 - $ACTION      :
     page         : OS
 - !expand { BOOT_OPTION_TMPL : [ 0 ,   0    ,  16 ,    5   ,   0   ,    0  ,     1 ,     1 , '/boot/sbl_os' ] }
-- !expand { BOOT_OPTION_TMPL : [ 1 ,   0    ,  16 ,    6   ,   0   ,    0  ,     1 ,     1 , '/boot/sbl_os' ] }
-- !expand { BOOT_OPTION_TMPL : [ 2 ,   0    ,  16 ,    6   ,   1   ,    0  ,     1 ,     1 , '/boot/sbl_os' ] }
-- !expand { BOOT_OPTION_TMPL : [ 3 ,   0    ,  16 ,    6   ,   2   ,    0  ,     1 ,     1 , '/boot/sbl_os' ] }
-- !expand { BOOT_OPTION_TMPL : [ 4 ,   0    ,  16 ,    0   ,   0   ,    1  ,     1 ,     1 , '/boot/sbl_os' ] }
-- !expand { BOOT_OPTION_TMPL : [ 5 ,   0    ,  16 ,    0   ,   0   ,    0  ,     1 ,     1 , '/boot/sbl_os' ] }
+- !expand { BOOT_OPTION_TMPL : [ 1 , 0x1F   ,  16 ,    5   ,   0   ,    0  ,     1 ,     1 , '/boot/sbl_rtcm' ] }
+- !expand { BOOT_OPTION_TMPL : [ 2 ,   0    ,  16 ,    6   ,   0   ,    0  ,     1 ,     1 , '/boot/sbl_os' ] }
+- !expand { BOOT_OPTION_TMPL : [ 3 , 0x1F   ,  16 ,    6   ,   0   ,    0  ,     1 ,     1 , '/boot/sbl_rtcm' ] }
+- !expand { BOOT_OPTION_TMPL : [ 4 ,   0    ,  16 ,    0   ,   0   ,    0  ,     1 ,     1 , '/boot/sbl_os' ] }
+- !expand { BOOT_OPTION_TMPL : [ 5 , 0x1F   ,  16 ,    0   ,   0   ,    0  ,     1 ,     1 , '/boot/sbl_rtcm' ] }

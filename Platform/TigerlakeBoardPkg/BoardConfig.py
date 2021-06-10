@@ -152,13 +152,12 @@ class Board(BaseBoard):
         self.REDUNDANT_SIZE       = 0x360000
 
         self.SIIPFW_SIZE = 0x1000
-        self.ENABLE_TCC  = 1
+        self.ENABLE_TCC  = 0
         if self.ENABLE_TCC:
-            self.TCC_RTCM_SIZE   = 0x00010000
             self.TCC_CCFG_SIZE   = 0x00001000
             self.TCC_CRL_SIZE    = 0x00008000
             self.TCC_STREAM_SIZE = 0x00005000
-            self.SIIPFW_SIZE += self.TCC_RTCM_SIZE + self.TCC_CCFG_SIZE + self.TCC_CRL_SIZE + self.TCC_STREAM_SIZE
+            self.SIIPFW_SIZE += self.TCC_CCFG_SIZE + self.TCC_CRL_SIZE + self.TCC_STREAM_SIZE
 
         self.ENABLE_TSN_MAC_ADDRESS = 1
         if self.ENABLE_TSN_MAC_ADDRESS:
@@ -195,13 +194,34 @@ class Board(BaseBoard):
         self.LOADER_RSVD_MEM_SIZE = 0x500000
 
         self.CFG_DATABASE_SIZE    = self.CFGDATA_SIZE
+        self._generated_cfg_file_prefix = 'Autogen_'
 
         # _CFGDATA_INT_FILE - Internal cfg data is generally used for internal boards like MRBs, RVPs etc.
         # _CFGDATA_EXT_FILE - External cfg data is for the customer boards to populate new data on top of the internal defaults.
-        # Cfg data dlt files for nternal boards could also put into external cfg data if want to update cfg data for these platforms
+        # Cfg data dlt files for internal boards could also put into external cfg data if want to update cfg data for these platforms
         # for test purpose. Based on the platform id, relevant data is populated for each platform.
         self._CFGDATA_INT_FILE = []
-        self._CFGDATA_EXT_FILE = ['CfgData_Ext_Dummy.dlt', 'CfgData_Int_Tglu_Ddr4.dlt', 'CfgData_Int_Tglu_DdrLp4.dlt']
+        self._CFGDATA_EXT_FILE = [self._generated_cfg_file_prefix + 'CfgData_Int_Tglu_Ddr4.dlt', self._generated_cfg_file_prefix  + 'CfgData_Int_Tglu_DdrLp4.dlt']
+
+    def PlatformBuildHook (self, build, phase):
+        if phase == 'pre-build:before':
+            # create build folder if not exist
+            if not os.path.exists(build._fv_dir):
+                os.makedirs(build._fv_dir)
+
+            # Generate the dlt files based on feature
+            brd_cfg_src_dir = os.path.join(os.environ['PLT_SOURCE'], 'Platform', self.BOARD_PKG_NAME, 'CfgData')
+            for dlt_file in self._CFGDATA_EXT_FILE:
+                cfg_dlt_file  = os.path.join(brd_cfg_src_dir, dlt_file[len (self._generated_cfg_file_prefix):])
+                lines         = open (cfg_dlt_file).read()
+
+                # Enable TCC in dlt file
+                if self.ENABLE_TCC:
+                    lines += open (os.path.join(brd_cfg_src_dir, 'CfgData_Tcc_Feature.dlt')).read()
+
+                # Write to generated final dlt file
+                output_cfg_dlt_file = os.path.join(build._fv_dir, dlt_file)
+                open(output_cfg_dlt_file, 'w').write(lines)
 
     def GetPlatformDsc (self):
         dsc = {}
@@ -279,9 +299,6 @@ class Board(BaseBoard):
         )
 
         if self.ENABLE_TCC:
-            container_list.append (
-              ('TCCR',  '',    'Lz4',   container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,    0,   self.TCC_RTCM_SIZE,  0),   # TCC RTCM
-            )
             container_list.append (
               ('TCCC', '',     'Lz4',   container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,    0,   self.TCC_CCFG_SIZE,  0),   # TCC Cache Config
             )
