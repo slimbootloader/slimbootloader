@@ -114,7 +114,7 @@ class Board(BaseBoard):
 
         self.STAGE1A_SIZE         = 0x00028000
         self.STAGE1B_SIZE         = 0x00120000
-        self.STAGE2_SIZE          = 0x00088000
+        self.STAGE2_SIZE          = 0x00089000
 
         self.ENABLE_FWU           = 1
         self.ENABLE_CSME_UPDATE   = 1

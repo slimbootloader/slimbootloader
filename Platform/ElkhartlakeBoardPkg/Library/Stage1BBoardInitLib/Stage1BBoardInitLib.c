@@ -209,7 +209,6 @@ TccModePreMemConfig (
     FspmUpd->FspmConfig.PowerDownMode = 1;
   }
 
-  FspmUpd->FspmConfig.TccTuningEnablePreMem = 1;
   FspmUpd->FspmConfig.TccStreamCfgBasePreMem = (UINT32)(UINTN)TccTuningBase;
   FspmUpd->FspmConfig.TccStreamCfgSizePreMem = TccTuningSize;
 
