@@ -1005,13 +1005,16 @@ BoardInit (
     //
     // Enable decoding of I/O locations 62h and 66h to LPC
     //
-    LpcBase = MM_PCI_ADDRESS (0, PCI_DEVICE_NUMBER_PCH_LPC, 0, 0);
-    MmioOr16 (LpcBase + R_LPC_CFG_IOE, B_LPC_CFG_IOE_ME1);
+    SiCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
+    if ( (SiCfgData != NULL) && (SiCfgData->EcEnable == 1)){
+      LpcBase = MM_PCI_ADDRESS (0, PCI_DEVICE_NUMBER_PCH_LPC, 0, 0);
+      MmioOr16 (LpcBase + R_LPC_CFG_IOE, B_LPC_CFG_IOE_ME1);
 
-    //
-    // Enable EC's ACPI mode to control power to motherboard during Sleep (S3)
-    //
-    IoWrite16 (EC_C_PORT, EC_C_ACPI_ENABLE);
+      //
+      // Enable EC's ACPI mode to control power to motherboard during Sleep (S3)
+      //
+      IoWrite16 (EC_C_PORT, EC_C_ACPI_ENABLE);
+    }
 
     break;
 
@@ -2150,7 +2153,12 @@ PlatformUpdateAcpiTable (
   Ptr  = (UINT8 *)Table;
   End  = (UINT8 *)Table + Table->Length;
 
-  if (Table->Signature == EFI_ACPI_5_0_DIFFERENTIATED_SYSTEM_DESCRIPTION_TABLE_SIGNATURE) {
+  if (Table->Signature == EFI_ACPI_5_0_EMBEDDED_CONTROLLER_BOOT_RESOURCES_TABLE_SIGNATURE) {
+    SiCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
+    if ((SiCfgData == NULL) || (SiCfgData->EcEnable == 0)) {
+      return EFI_UNSUPPORTED;
+    }
+  } else if (Table->Signature == EFI_ACPI_5_0_DIFFERENTIATED_SYSTEM_DESCRIPTION_TABLE_SIGNATURE) {
     for (; Ptr < End; Ptr++) {
       if (*(Ptr-1) != AML_NAME_OP)
         continue;
@@ -2655,17 +2663,23 @@ PlatformUpdateAcpiGnvs (
   PlatformNvs->NativePCIESupport = 1;
   PlatformNvs->PciDelayOptimizationEcr = 0;
   PlatformNvs->ApicEnable = 1;
-  PlatformNvs->EcAvailable = 1;
   PlatformNvs->Ps2MouseEnable = 1;
   PlatformNvs->UsbTypeCSupport = 1;
-  PlatformNvs->EcLowPowerMode               = 1;
 
-  if (IsPchLp ()) {
-    PlatformNvs->EcSmiGpioPin                 = GPIO_VER2_LP_GPP_E7;
-    PlatformNvs->EcLowPowerModeGpioPin        = GPIO_VER2_LP_GPP_E8;
-  } else if (IsPchH ()) {
-    PlatformNvs->EcSmiGpioPin                 = GPIO_VER2_H_GPP_E3;
-    PlatformNvs->EcLowPowerModeGpioPin        = GPIO_VER2_H_GPP_B23;
+  if ( (SiCfgData != NULL) && (SiCfgData->EcEnable == 1)){
+    PlatformNvs->EcAvailable                  = 1;
+    PlatformNvs->EcLowPowerMode               = 1;
+    PlatformNvs->EcSmiGpioPin                 = 0;
+    PlatformNvs->EcLowPowerModeGpioPin        = 0;
+
+    if (IsPchLp ()) {
+      PlatformNvs->EcSmiGpioPin                 = GPIO_VER2_LP_GPP_E7;
+      PlatformNvs->EcLowPowerModeGpioPin        = GPIO_VER2_LP_GPP_E8;
+    } else if (IsPchH ()) {
+      PlatformNvs->EcSmiGpioPin                 = GPIO_VER2_H_GPP_E3;
+      PlatformNvs->EcLowPowerModeGpioPin        = GPIO_VER2_H_GPP_B23;
+    }
+
   }
 
   PlatformNvs->Ac1TripPoint                 = 55;
@@ -2867,12 +2881,18 @@ PlatformUpdateAcpiGnvs (
   PlatformNvs->PcdRealBattery1Control = 0x1;
   PlatformNvs->PcdRealBattery2Control = 0x2;
   PlatformNvs->PcdConvertableDockSupport = 0x1;
-  PlatformNvs->PcdEcHotKeyF3Support = 0x1;
-  PlatformNvs->PcdEcHotKeyF4Support = 0x1;
-  PlatformNvs->PcdEcHotKeyF5Support = 0x1;
-  PlatformNvs->PcdEcHotKeyF6Support = 0x1;
-  PlatformNvs->PcdEcHotKeyF7Support = 0x1;
-  PlatformNvs->PcdEcHotKeyF8Support = 0x1;
+
+  if ((SiCfgData != NULL) && (SiCfgData->EcEnable == 1)) {
+    PlatformNvs->PcdEcHotKeyF3Support = 0x1;
+    PlatformNvs->PcdEcHotKeyF4Support = 0x1;
+    PlatformNvs->PcdEcHotKeyF5Support = 0x1;
+    PlatformNvs->PcdEcHotKeyF6Support = 0x1;
+    PlatformNvs->PcdEcHotKeyF7Support = 0x1;
+    PlatformNvs->PcdEcHotKeyF8Support = 0x1;
+    PlatformNvs->PcdAcpiEnableAllButtonSupport = 0x1;
+    PlatformNvs->PcdAcpiHidDriverButtonSupport = 0x1;
+  }
+
   PlatformNvs->PcdVirtualButtonVolumeUpSupport = 0x1;
   PlatformNvs->PcdVirtualButtonVolumeDownSupport = 0x1;
   PlatformNvs->PcdVirtualButtonHomeButtonSupport = 0x1;
@@ -2880,8 +2900,6 @@ PlatformUpdateAcpiGnvs (
   PlatformNvs->PcdSlateModeSwitchSupport = 0x1;
   PlatformNvs->PcdAcDcAutoSwitchSupport = 0x1;
   PlatformNvs->PcdPmPowerButtonGpioPin = 0x9050003;
-  PlatformNvs->PcdAcpiEnableAllButtonSupport = 0x1;
-  PlatformNvs->PcdAcpiHidDriverButtonSupport = 0x1;
   PlatformNvs->UCMS = 0x1;
   PlatformNvs->WwanPerstGpio = 0x9000011;
   PlatformNvs->PcieSlot1WakeGpio = 0x90C0005;
