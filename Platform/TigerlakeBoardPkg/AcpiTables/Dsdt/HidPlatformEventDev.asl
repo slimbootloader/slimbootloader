@@ -126,7 +126,7 @@ Scope(\_SB)
       }
     }
 
-//#if FixedPcdGetBool(PcdEcEnable) == 1
+
     //
     // HID Button Load Method - called by Platform to say HID driver is capable of receiving 5-button array notifies.
     // Input: None
@@ -135,6 +135,11 @@ Scope(\_SB)
     //
     Method(BTNL,0,Serialized) // HID Button Enable/Disable Method
     {
+      // Skip if EC is not available
+      If (LEqual(ECON, 0)) {
+        Return ()
+      }
+
       //
       // Clear PBST so that we can hide the default power button.
       //

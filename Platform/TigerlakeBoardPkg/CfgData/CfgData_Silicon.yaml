@@ -244,7 +244,15 @@
                      Enable/disable Timed GPIO1    0- Disable; 1- Enable.
       length       : 0x01
       value        : 0x0
+  - EcEnable     :
+      name         : Enable EC Device
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/disable EC
+      length       : 0x01
+      value        : 0x01
   - Dummy        :
-      length       : 0x2
+      length       : 0x1
       value        : 0x0
 

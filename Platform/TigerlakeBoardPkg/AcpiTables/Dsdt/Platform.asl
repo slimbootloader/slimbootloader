@@ -654,20 +654,21 @@ Method(_WAK,1,Serialized)
       \_SB.TCWK(Arg0)
     }
   }
-//#if FixedPcdGetBool(PcdEcEnable) == 1
-  If(LOr(LEqual(Arg0,3), LEqual(Arg0,4)))  // If S3 or S4 Resume
-  {
-    //
-    // If Using Control Method Power Button, notify PWRD device with 0x2
-    //
-    If(LEqual(\_SB.PWRB.PBST, 0x1)) {
-      If(PBSS) { //Power Button woke the system
-        Notify(\_SB.PWRB, 0x02) // Send release notification to Power Button device 0x02
-        Store(1, PBSS)
+
+  If (LEqual(ECON,1)) {
+    If(LOr(LEqual(Arg0,3), LEqual(Arg0,4)))  // If S3 or S4 Resume
+    {
+      //
+      // If Using Control Method Power Button, notify PWRD device with 0x2
+      //
+      If(LEqual(\_SB.PWRB.PBST, 0x1)) {
+        If(PBSS) { //Power Button woke the system
+          Notify(\_SB.PWRB, 0x02) // Send release notification to Power Button device 0x02
+          Store(1, PBSS)
+        }
       }
     }
   }
-//#endif
 
   If(LEqual(Arg0,3))
   {
