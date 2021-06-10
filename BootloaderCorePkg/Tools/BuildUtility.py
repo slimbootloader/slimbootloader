@@ -624,6 +624,8 @@ def gen_config_file (fv_dir, brd_name, platform_id, pri_key, cfg_db_size, cfg_si
         src_dlt_file = os.path.join (brd_cfg_dir, dlt_file)
         if not os.path.exists(src_dlt_file):
             src_dlt_file = os.path.join (fv_dir, dlt_file)
+        if not os.path.exists(src_dlt_file):
+            raise Exception ('dlt file %s could not be found!' % (os.path.join (brd_cfg_dir, dlt_file)))
         copy_expanded_file (src_dlt_file, os.path.join (fv_dir, dlt_file))
 
     # generate CfgDataStitch script
