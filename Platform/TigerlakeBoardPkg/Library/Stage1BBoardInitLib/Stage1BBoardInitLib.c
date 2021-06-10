@@ -739,6 +739,7 @@ BoardInit (
   UINTN                 PmcBase;
   PLT_DEVICE_TABLE      *PltDeviceTable;
   UINT8                 BoardId;
+  SILICON_CFG_DATA      *SiCfgData;
 
   PmcBase = MM_PCI_ADDRESS (0, PCI_DEVICE_NUMBER_PCH_PMC, PCI_FUNCTION_NUMBER_PCH_PMC, 0);
 
@@ -769,18 +770,24 @@ DEBUG_CODE_END();
       DEBUG ((DEBUG_ERROR, "Out of resource for PltDeviceTable\n"));
     }
 
-    if (GetPlatformId() == 0) {
-      // If PlatformId is not initialized yet, set the PlatformId based on detected BoardId.
-      GetBoardId (&BoardId);
-      if (BoardId == BoardIdTglHDdr4SODimm) {
-        // TGL-H DDR4 board is 0x21, map to PlatformId 0xF since PlatformId is limited to max of 0x1F
-        BoardId = 0xF;
-      }
-      SetPlatformId (BoardId);
-    }
     SpiControllerInitialize ();
     break;
   case PostConfigInit:
+    if (GetPlatformId() == 0) {
+      // If PlatformId is not initialized yet, set the PlatformId based on detected BoardId.
+      // If EC is disabled, set to DDR4 board and skip board detection.
+      SiCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
+      if ((SiCfgData == NULL) || (SiCfgData->EcEnable == 0)){
+        BoardId = BoardIdTglUDdr4;
+      } else {
+        GetBoardId (&BoardId);
+        if (BoardId == BoardIdTglHDdr4SODimm) {
+          // TGL-H DDR4 board is 0x21, map to PlatformId 0xF since PlatformId is limited to max of 0x1F
+          BoardId = 0xF;
+        }
+      }
+      SetPlatformId (BoardId);
+    }
     PlatformNameInit ();
     SetBootMode (IsFirmwareUpdate() ? BOOT_ON_FLASH_UPDATE : GetPlatformPowerState());
     PlatformFeaturesInit ();
