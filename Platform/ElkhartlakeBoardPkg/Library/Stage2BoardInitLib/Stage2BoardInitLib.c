@@ -1556,9 +1556,6 @@ UpdateFspConfig (
     Fspscfg->PseTsnGbePhyInterfaceType[0]    = 1;
     Fspscfg->PseTsnGbePhyInterfaceType[1]    = 1;
 
-    Fspscfg->EnableTimedGpio0     = 0;
-    Fspscfg->EnableTimedGpio1     = 0;
-
     // AMT_ME_CONFIG
     Fspscfg->AmtEnabled           = SiCfgData->AmtEnabled;
     Fspscfg->FwProgress           = SiCfgData->FwProgress;
