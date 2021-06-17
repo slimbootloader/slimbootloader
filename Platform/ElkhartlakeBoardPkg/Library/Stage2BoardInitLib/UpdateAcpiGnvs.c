@@ -529,6 +529,7 @@ PlatformUpdateAcpiGnvs (
   EFI_STATUS              Status;
   FEATURES_CFG_DATA       *FeaturesCfgData;
   BOOLEAN                 PchSciSupported;
+  SILICON_CFG_DATA        *SiCfgData;
 
   PchSciSupported         = PchIsSciSupported ();
   GlobalNvs               = (GLOBAL_NVS_AREA *) GnvsIn;
@@ -538,6 +539,7 @@ PlatformUpdateAcpiGnvs (
   SaNvs                   = (SYSTEM_AGENT_NVS_AREA *) &GlobalNvs->SaNvs;
   FeaturesCfgData         = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
   ZeroMem (GlobalNvs, sizeof (GLOBAL_NVS_AREA));
+  SiCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
 
   //
   // Update ASL PCIE port address according to root port device and function
@@ -675,6 +677,10 @@ PlatformUpdateAcpiGnvs (
   DEBUG((DEBUG_INFO, "PseCanPciMmBase1 = 0x%x\n ", PseCanPciMmBase));
   if (PseCanPciMmBase != 0xFFFF) {
     PchNvs->PseCan1Enabled                        = 1;
+  }
+  if (SiCfgData != NULL) {
+      PchNvs->EnableTimedGpio0 = (UINT8)SiCfgData->EnableTimedGpio0;
+      PchNvs->EnableTimedGpio1 = (UINT8)SiCfgData->EnableTimedGpio1;
   }
 
   // Update Platform
