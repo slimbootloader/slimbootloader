@@ -121,8 +121,8 @@ class BaseBoard(object):
 
         self.VERINFO_IMAGE_ID       = 'SB_???? '
         self.VERINFO_PROJ_ID        = 1
-        self.VERINFO_CORE_MAJOR_VER = 0
-        self.VERINFO_CORE_MINOR_VER = 5
+        self.VERINFO_CORE_MAJOR_VER = 1
+        self.VERINFO_CORE_MINOR_VER = 0
 
         self.VERINFO_PROJ_MAJOR_VER = 0
         self.VERINFO_PROJ_MINOR_VER = 1
