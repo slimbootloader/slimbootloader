@@ -87,17 +87,20 @@ def get_component_replace_list():
 def check_parameter(para_list):
     print (para_list)
     para_supported = {
-        'sata'   : {},
-        'tsn'    : {},
-        'dnx'    : {},
-        'pt'    : {},
+        'sata'     : {},
+        'tsn'      : {},
+        'dnx'      : {},
+        'pt'       : {},
+        'isi_conf' : {},
         }
 
     para_help = \
         """
-        'sata'   -- Enable sata direct port, by default disabled.
-        'tsn'    -- Enable TSN, by disable tsn port is disabled
-        'dnx'    -- Enable DNX capsule binary build for IFWI updating via DNX
+        'sata'      -- Enable sata direct port, by default disabled.
+        'tsn'       -- Enable TSN, by disable tsn port is disabled
+        'dnx'       -- Enable DNX capsule binary build for IFWI updating via DNX
+        'pt'        -- Enable Proof Test configuration
+        'isi_conf'  -- Enable ISI FW configuration file
         """
     for para in para_list:
         if para == '':
@@ -142,7 +145,6 @@ def get_xml_change_list (platform, plt_params_list, stitch_dir):
       #('./PlatformProtection/PlatformIntegrity/OemPublicKeyHash',                  'F8 F0 E3 69 15 81 76 99 0A 54 9E D4 C3 6D 1A 86 39 D8 87 3D EF F7 ED 2D E3 4C B4 1B CC B3 04 76 CE 0A A0 63 BC 5B 7A AC FF D9 50 9E 96 40 C6 99'),
       #('./PlatformProtection/PlatformIntegrity/OemExtInputFile',                   '$SourceDir\OemExtInputFile.bin'),
       ('./PlatformProtection/BootGuardConfiguration/BtGuardKeyManifestId',         '0x1'),
-      ('./PlatformProtection/FuSaConfiguration/FuSaPrfTestComponents',             '0x80003FB0'),
       ('./PlatformProtection/TpmOverSpiBusConfiguration/SpiOverTpmBusEnable',      '$Yes'),
       #('./Debug/IntelTraceHubTechnology/RomTraceFiltering',                        '$SourceDir\RomTraceFiltering.bin'),
       ('./PlatformProtection/BootGuardConfiguration/BtGuardCpuDebugEnable',        'Disabled'),
@@ -194,7 +196,14 @@ def get_xml_change_list (platform, plt_params_list, stitch_dir):
         print ("Applying changes to enable PT")
         xml_change_list.append ([
             ('./FlashLayout/SubPartitions/GbstSubPartitionData/InputFile',               '$SourceDir\Pt.bin'),
-            ('./PlatformProtection/FuSaConfiguration/FuSaPrfTestComponents',             '0x80003EB0'),
+            ('./PlatformProtection/FuSaConfiguration/FuSaPrfTestComponents',             '0x800036B0'),
+            ])
+        plt_params_list.update({'isi_conf':None})
+
+    if 'isi_conf' in plt_params_list:
+        print ("Applying changes to enable ISI configuration")
+        xml_change_list.append ([
+            ('./FlashLayout/SubPartitions/IsifSubPartitionData/ISIConfFile',             '$SourceDir\IsiConfFile.bin'),
             ])
 
     if 'dnx' in plt_params_list:
