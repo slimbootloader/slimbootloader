@@ -899,6 +899,26 @@ PlatformFeaturesInit (
 }
 
 /**
+  Detect board and configure PlatformID.
+
+  @retval  none
+**/
+VOID
+PlatformIdInitialize (
+  IN  VOID
+  )
+{
+  UINT16 PlatformId;
+  UINT16 BoardId;
+
+  PlatformId = GetPlatformId();
+  if (PlatformId == 0){
+    GetBoardIdFromSmbus (&BoardId);
+    SetPlatformId (BoardId);
+  }
+}
+
+/**
   Initialize TPM.
 **/
 VOID
@@ -1015,7 +1035,6 @@ BoardInit (
 )
 {
   UINTN PmcBase;
-  UINT16 BoardId;
   UINT32 *Buffer;
   PLAT_FEATURES     *PlatformFeatures;
   PLT_DEVICE_TABLE  *PltDeviceTable;
@@ -1052,11 +1071,10 @@ DEBUG_CODE_END();
       DEBUG ((DEBUG_ERROR, "Out of resource for PltDeviceTable\n"));
     }
     SpiControllerInitialize ();
-    GetBoardIdFromSmbus (&BoardId);
-    SetPlatformId (BoardId);
     SetBootMode (IsFirmwareUpdate () ? BOOT_ON_FLASH_UPDATE : GetPlatformPowerState ());
     break;
   case PostConfigInit:
+    PlatformIdInitialize();
     PlatformNameInit ();
     RtcInit();
     PlatformFeaturesInit ();
