@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -20,7 +20,7 @@
 #include <CpuDataStruct.h>
 #include <CpuPowerMgmt.h>
 #include <GlobalNvsAreaDef.h>
-#include <PlatformData.h>
+#include <Library/TccLib.h>
 #include <PowerMgmtNvsStruct.h>
 #include <Register/CpuRegs.h>
 #include <Library/PsdLib.h>
@@ -373,7 +373,7 @@ PlatformUpdateAcpiTable (
   UINT32                       Base;
   UINT16                       Size;
   EFI_STATUS                   Status;
-  PLATFORM_DATA               *PlatformData;
+  TCC_CFG_DATA                *TccCfgData;
   LOADER_GLOBAL_DATA          *LdrGlobal;
   FEATURES_CFG_DATA           *FeaturesCfgData;
   EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE *FadtPointer;
@@ -435,6 +435,18 @@ PlatformUpdateAcpiTable (
     if (GetBootMode () != BOOT_ON_FLASH_UPDATE) {
       AcpiPatchPss (Table, GlobalNvs);
     }
+  } else if (Table->Signature == SIGNATURE_32 ('R', 'T', 'C', 'T')) {
+    DEBUG ((DEBUG_INFO, "Find RTCT table\n"));
+
+    if (FeaturePcdGet (PcdTccEnabled)) {
+      TccCfgData = (TCC_CFG_DATA *) FindConfigDataByTag(CDATA_TCC_TAG);
+      if ((TccCfgData != NULL) && (TccCfgData->TccEnable != 0)) {
+        Status = UpdateAcpiRtctTable(Table);
+        DEBUG ( (DEBUG_INFO, "Updated ACPI RTCT Table : %r\n", Status) );
+        return Status;
+      }
+    }
+    return EFI_UNSUPPORTED;
   } else if (Table->Signature == EFI_BDAT_TABLE_SIGNATURE) {
     UpdateBdatAcpiTable (Table, LdrGlobal->FspHobList);
     DEBUG ((DEBUG_INFO, "Updated BDAT Table in AcpiTable Entries\n"));
@@ -472,12 +484,8 @@ PlatformUpdateAcpiTable (
       }
     } else if (Table->Signature == EFI_ACPI_VTD_DMAR_TABLE_SIGNATURE) {
     if (FeaturePcdGet (PcdVtdEnabled)) {
-      PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
-      if (PlatformData != NULL) {
-      //if (PlatformData->PlatformFeatures.VtdEnable == 1) {
-        DEBUG ((DEBUG_INFO, "Updated DMAR Table in AcpiTable Entries\n"));
-        UpdateDmarAcpi (Table);
-      }
+      DEBUG ((DEBUG_INFO, "Updated DMAR Table in AcpiTable Entries\n"));
+      UpdateDmarAcpi (Table);
     }
   } else if ((Table->Signature == EFI_ACPI_5_0_TRUSTED_COMPUTING_PLATFORM_2_TABLE_SIGNATURE) ||
         (Table->OemTableId == ACPI_SSDT_TPM2_DEVICE_OEM_TABLE_ID)) {

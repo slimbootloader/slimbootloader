@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -35,7 +35,7 @@
 #include <Library/PchSciLib.h>
 #include <Library/ContainerLib.h>
 #include <ConfigBlock.h>
-#include <TccConfigSubRegion.h>
+#include <TccConfigSubRegions.h>
 #include <Register/RtcRegs.h>
 #include <Register/PmcRegs.h>
 #include <GpioLibConfig.h>
@@ -147,72 +147,96 @@ GetBoardIdFromSmbus (
 
   @param  FspmUpd            The pointer to the FSP-M UPD to be updated.
 
-  @retval None
+  @retval EFI_NOT_FOUND      TCC Features Data not found or disabled.
+  @retval EFI_LOAD_ERROR     Tcc Buffer sub-region not found
+  @retval EFI_SUCCESS        Successfully loaded buffer sub-region
 **/
-VOID
+EFI_STATUS
 TccModePreMemConfig (
   FSPM_UPD  *FspmUpd
 )
 {
-  UINT32        *TccTuningBase;
-  UINT32        TccTuningSize;
-  EFI_STATUS    Status;
-  BIOS_SETTINGS *FspSettings;
-  PLAT_FEATURES *PlatformFeatures;
-  TCC_CONFIG_SUB_REGION *TccSubRegion;
+  UINT32                    *TccCacheBase;
+  UINT32                    TccCacheSize;
+  UINT32                    *TccStreamBase;
+  UINT32                    TccStreamSize;
+  EFI_STATUS                Status;
+  TCC_CFG_DATA              *TccCfgData;
+  BIOS_SETTINGS             *PolicyConfig;
+  TCC_STREAM_CONFIGURATION  *StreamConfig;
 
-  DEBUG ((DEBUG_INFO, "TccModePreMemConfig () - Start\n"));
+  TccCfgData = (TCC_CFG_DATA *) FindConfigDataByTag(CDATA_TCC_TAG);
+  if ((TccCfgData == NULL) || ((TccCfgData->TccEnable == 0) && (TccCfgData->TccTuning == 0))) {
+    return EFI_NOT_FOUND;
+  }
 
-  // Set default values for TCC mode
-  FspmUpd->FspmConfig.SaGv                  = 0;
-  FspmUpd->FspmConfig.DisPgCloseIdleTimeout = 1;
-  FspmUpd->FspmConfig.RaplLim1Ena           = 0;
-  FspmUpd->FspmConfig.RaplLim2Ena           = 0;
-  FspmUpd->FspmConfig.PowerDownMode         = 0;
+  // TCC related memory settings
+  DEBUG ((DEBUG_INFO, "Tcc is enabled, Setting memory config.\n"));
+  FspmUpd->FspmConfig.TccModeEnablePreMem    = 1;
 
-  // Load TCC tuning data from container
-  TccTuningBase = NULL;
-  TccTuningSize = 0;
+  FspmUpd->FspmConfig.SaGv                   = 0;    // System Agent Geyserville - SAGV dynamically adjusts the system agent
+  FspmUpd->FspmConfig.DisPgCloseIdleTimeout  = 1;    // controls Page Close Idle Timeout
+  FspmUpd->FspmConfig.PowerDownMode          = 0;    // controls command bus tristating during idle periods
+  FspmUpd->FspmConfig.HyperThreading         = 0;
+  FspmUpd->FspmConfig.VmxEnable              = 1;    // RTCM need enable VMX
+  FspmUpd->FspmConfig.RaplLim1Ena            = 0;
+  FspmUpd->FspmConfig.RaplLim2Ena            = 0;
+
+  FspmUpd->FspmConfig.SoftwareSramEnPreMem   = TccCfgData->TccSoftSram;
+  FspmUpd->FspmConfig.DsoTuningEnPreMem      = TccCfgData->TccTuning;
+  FspmUpd->FspmConfig.TccErrorLogEnPreMem    = TccCfgData->TccErrorLog;
+
+  // Load TCC stream config from container
+  TccStreamBase = NULL;
+  TccStreamSize = 0;
   Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'C', 'C', 'T'),
-                          (VOID **)&TccTuningBase, &TccTuningSize);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "TCC Tuning data not found! %r\n", Status));
-    return;
-  }
-
-  // Set/update values based on TCC Tuning binary
-  TccSubRegion = (TCC_CONFIG_SUB_REGION*) TccTuningBase;
-  FspSettings  = (BIOS_SETTINGS*) &TccSubRegion->Config.BiosConfig.BiosSettings;
-
-  if (AsciiStrCmp ((CHAR8*) TccTuningBase, "dummy\0") == 0) {
-    DEBUG ((DEBUG_INFO, "TCC Tuning data is dummy data, skipping...\n"));
-    return;
-  }
-
-  PlatformFeatures = &((PLATFORM_DATA *)GetPlatformDataPtr ())->PlatformFeatures;
-  if (PlatformFeatures == NULL) {
-    DEBUG ((DEBUG_ERROR, "PLATFORM_DATA not found!\n"));
-    return;
-  }
-  PlatformFeatures->TcctBase = TccTuningBase;
-  PlatformFeatures->TcctSize = TccTuningSize;
-
-  FspmUpd->FspmConfig.SaGv        = FspSettings->SaGv;
-  FspmUpd->FspmConfig.RaplLim1Ena = FspSettings->MemoryRapl;
-  FspmUpd->FspmConfig.RaplLim2Ena = FspSettings->MemoryRapl;
-
-  if (FspSettings->MemPm == 0) {
-    FspmUpd->FspmConfig.DisPgCloseIdleTimeout   = 1;
-    FspmUpd->FspmConfig.PowerDownMode = 0;
+                          (VOID **)&TccStreamBase, &TccStreamSize);
+  if (EFI_ERROR (Status) || (TccStreamSize < sizeof(TCC_STREAM_CONFIGURATION))) {
+    DEBUG ((DEBUG_INFO, "Load TCC Stream %r, size = 0x%x\n", Status, TccStreamSize));
   } else {
-    FspmUpd->FspmConfig.DisPgCloseIdleTimeout   = 0;
-    FspmUpd->FspmConfig.PowerDownMode = 1;
+    FspmUpd->FspmConfig.TccStreamCfgBasePreMem = (UINT32)(UINTN)TccStreamBase;
+    FspmUpd->FspmConfig.TccStreamCfgSizePreMem = TccStreamSize;
+    DEBUG ((DEBUG_INFO, "Load TCC stream @0x%p, size = 0x%x\n", TccStreamBase, TccStreamSize));
+
+    if (TccCfgData->TccTuning != 0) {
+      StreamConfig = (TCC_STREAM_CONFIGURATION *) TccStreamBase;
+      PolicyConfig = (BIOS_SETTINGS *) &StreamConfig->BiosSettings;
+
+      FspmUpd->FspmConfig.SaGv                   = PolicyConfig->SaGv;
+      FspmUpd->FspmConfig.RaplLim1Ena            = PolicyConfig->MemoryRapl;
+      FspmUpd->FspmConfig.RaplLim2Ena            = PolicyConfig->MemoryRapl;
+      FspmUpd->FspmConfig.PowerDownMode          = PolicyConfig->MemPowerDown;
+      FspmUpd->FspmConfig.DisPgCloseIdleTimeout  = PolicyConfig->DisPgCloseIdle;
+      DEBUG ((DEBUG_INFO, "Dump TCC DSO BIOS settings:\n"));
+      DumpHex (2, 0, sizeof(BIOS_SETTINGS), PolicyConfig);
+    }
   }
 
-  FspmUpd->FspmConfig.TccStreamCfgBasePreMem = (UINT32)(UINTN)TccTuningBase;
-  FspmUpd->FspmConfig.TccStreamCfgSizePreMem = TccTuningSize;
+  // Print configured TCC stream settings
+  DEBUG ((DEBUG_INFO, "TCC Stage 1B parameters configuration details:\n"));
+  DEBUG ((DEBUG_INFO, "SaGv                  = %x\n", FspmUpd->FspmConfig.SaGv                   ));
+  DEBUG ((DEBUG_INFO, "RaplLim1Ena           = %x\n", FspmUpd->FspmConfig.RaplLim1Ena            ));
+  DEBUG ((DEBUG_INFO, "RaplLim2Ena           = %x\n", FspmUpd->FspmConfig.RaplLim2Ena            ));
+  DEBUG ((DEBUG_INFO, "PowerDownMode         = %x\n", FspmUpd->FspmConfig.PowerDownMode          ));
+  DEBUG ((DEBUG_INFO, "DisPgCloseIdleTimeout = %x\n", FspmUpd->FspmConfig.DisPgCloseIdleTimeout  ));
+  DEBUG ((DEBUG_INFO, "SoftwareSramEnPreMem  = %x\n", FspmUpd->FspmConfig.SoftwareSramEnPreMem   ));
+  DEBUG ((DEBUG_INFO, "DsoTuningEnPreMem     = %x\n", FspmUpd->FspmConfig.DsoTuningEnPreMem      ));
+  DEBUG ((DEBUG_INFO, "TccErrorLogEnPreMem   = %x\n", FspmUpd->FspmConfig.TccErrorLogEnPreMem    ));
 
-  DEBUG ((DEBUG_INFO, "TccModePreMemConfig () - End\n"));
+  // Load Tcc Cache config from container
+  TccCacheBase = NULL;
+  TccCacheSize = 0;
+  Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'C', 'C', 'C'),
+                                (VOID **)&TccCacheBase, &TccCacheSize);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "TCC Cache config not found! %r\n", Status));
+  } else {
+    FspmUpd->FspmConfig.TccCacheCfgBasePreMem = (UINT32)(UINTN)TccCacheBase;
+    FspmUpd->FspmConfig.TccCacheCfgSizePreMem = TccCacheSize;
+    DEBUG ((DEBUG_INFO, "Load TCC cache @0x%p, size = 0x%x\n", TccCacheBase, TccCacheSize));
+  }
+
+  return Status;
 }
 
 /**
@@ -237,6 +261,7 @@ UpdateFspConfig (
   UINT8                         DebugPort;
   FEATURES_CFG_DATA             *FeaturesCfgData;
   BOOLEAN                       PchSciSupported;
+  TCC_CFG_DATA                  *TccCfgData;
 
   FspmUpd                       = (FSPM_UPD *)FspmUpdPtr;
   FspmArchUpd                   = &FspmUpd->FspmArchUpd;
@@ -494,6 +519,13 @@ UpdateFspConfig (
 
     //Vtd Config
     Fspmcfg->VtdDisable                 = !FeaturePcdGet (PcdVtdEnabled);
+    if (FeaturePcdGet (PcdTccEnabled)) {
+    TccCfgData = (TCC_CFG_DATA *)FindConfigDataByTag (CDATA_TCC_TAG);
+    if ((TccCfgData != NULL) && (TccCfgData->TccEnable == 1)) {
+      DEBUG ((DEBUG_INFO, "Enable VTd since TCC is enabled\n"));
+      Fspmcfg->VtdDisable = 0;
+      }
+    }
     if (Fspmcfg->VtdDisable == 0) {
       Fspmcfg->VtdIgdEnable             = 1;
       Fspmcfg->VtdIopEnable             = 1;
@@ -685,7 +717,7 @@ UpdateFspConfig (
     DEBUG ((DEBUG_INFO, "Failed to find GFX CFG!\n"));
   }
 
-  if (TCC_FEATURE_ENABLED ()) {
+  if (FeaturePcdGet (PcdTccEnabled)) {
     TccModePreMemConfig (FspmUpd);
   }
 }
@@ -850,7 +882,6 @@ PlatformFeaturesInit (
   FEATURES_CFG_DATA           *FeaturesCfgData;
   LOADER_GLOBAL_DATA          *LdrGlobal;
   PLATFORM_DATA               *PlatformData;
-  PLAT_FEATURES               *PlatformFeatures;
   UINTN                        HeciBaseAddress;
 
   // Set common features
@@ -868,13 +899,6 @@ PlatformFeaturesInit (
 
     if (FeaturesCfgData->Features.MeasuredBoot == 0) {
       LdrGlobal->LdrFeatures &= ~FEATURE_MEASURED_BOOT;
-    }
-    // Update platform specific feature from configuration data.
-    PlatformFeatures           = &((PLATFORM_DATA *)GetPlatformDataPtr ())->PlatformFeatures;
-    if (PlatformFeatures != NULL) {
-      PlatformFeatures->TccMode   = FeaturesCfgData->Features.Tcc;
-      PlatformFeatures->TcctBase  = NULL;
-      PlatformFeatures->TcctSize  = 0;
     }
   }
 
@@ -1035,8 +1059,6 @@ BoardInit (
 )
 {
   UINTN PmcBase;
-  UINT32 *Buffer;
-  PLAT_FEATURES     *PlatformFeatures;
   PLT_DEVICE_TABLE  *PltDeviceTable;
 
   PmcBase = MmPciBase (
@@ -1088,20 +1110,6 @@ DEBUG_CODE_END();
     ConfigureGpio (CDATA_NO_TAG, ARRAY_SIZE(mGpioTablePreMemEhl), (UINT8*)mGpioTablePreMemEhl);
     break;
   case PostMemoryInit:
-    //
-    // Copy TCC Tuning data into memory from CAR
-    //
-    PlatformFeatures = &((PLATFORM_DATA *)GetPlatformDataPtr ())->PlatformFeatures;
-    if ((TCC_FEATURE_ENABLED ()) && (PlatformFeatures->TcctBase != NULL)) {
-      PlatformFeatures = &((PLATFORM_DATA *)GetPlatformDataPtr ())->PlatformFeatures;
-      Buffer = (UINT32*) AllocatePool (PlatformFeatures->TcctSize);
-      if (Buffer != NULL) {
-        CopyMem (Buffer, PlatformFeatures->TcctBase, PlatformFeatures->TcctSize);
-        PlatformFeatures->TcctBase = Buffer;
-      } else {
-        DEBUG ((DEBUG_ERROR, "Cannot allocate memory for TCCT!\n"));
-      }
-    }
     //
     // Clear the DISB bit after completing DRAM Initialization Sequence
     //

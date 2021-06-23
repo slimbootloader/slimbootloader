@@ -56,10 +56,12 @@ class Board(BaseBoard):
 
         self.SIIPFW_SIZE = 0x1000
 
-        self.ENABLE_TCC_TUNING = 1
-        if self.ENABLE_TCC_TUNING:
-            self.TCCT_SIZE = 0x00003000
-            self.SIIPFW_SIZE += self.TCCT_SIZE
+        self.ENABLE_TCC  = 0
+        if self.ENABLE_TCC:
+            self.TCC_CCFG_SIZE   = 0x00001000
+            self.TCC_CRL_SIZE    = 0x00008000
+            self.TCC_STREAM_SIZE = 0x00005000
+            self.SIIPFW_SIZE += self.TCC_CCFG_SIZE + self.TCC_CRL_SIZE + self.TCC_STREAM_SIZE
 
         self.ENABLE_PRE_OS_CHECKER = 1
         if self.ENABLE_PRE_OS_CHECKER:
@@ -114,7 +116,7 @@ class Board(BaseBoard):
 
         self.STAGE1A_SIZE         = 0x00028000
         self.STAGE1B_SIZE         = 0x00120000
-        self.STAGE2_SIZE          = 0x00089000
+        self.STAGE2_SIZE          = 0x00091000
 
         self.ENABLE_FWU           = 1
         self.ENABLE_CSME_UPDATE   = 1
@@ -182,10 +184,32 @@ class Board(BaseBoard):
 
         # _CFGDATA_INT_FILE - Internal cfg data is generally used for internal boards like MRBs, RVPs etc.
         # _CFGDATA_EXT_FILE - External cfg data is for the customer boards to populate new data on top of the internal defaults.
-        # Cfg data dlt files for nternal boards could also put into external cfg data if want to update cfg data for these platforms
+        # Cfg data dlt files for internal boards could also put into external cfg data if want to update cfg data for these platforms
         # for test purpose. Based on the platform id, relevant data is populated for each platform.
+        self._generated_cfg_file_prefix = 'Autogen_'
         self._CFGDATA_INT_FILE = []
-        self._CFGDATA_EXT_FILE = ['CfgData_Int_IotgRvp1.dlt', 'CfgData_Ext_IotgCrb.dlt']
+        self._CFGDATA_EXT_FILE = [self._generated_cfg_file_prefix + 'CfgData_Int_IotgRvp1.dlt', self._generated_cfg_file_prefix + 'CfgData_Ext_IotgCrb.dlt']
+
+    def PlatformBuildHook (self, build, phase):
+        if phase == 'pre-build:before':
+            # create build folder if not exist
+            if not os.path.exists(build._fv_dir):
+                os.makedirs(build._fv_dir)
+
+            # Generate the dlt files based on feature
+            brd_cfg_src_dir = os.path.join(os.environ['PLT_SOURCE'], 'Platform', self.BOARD_PKG_NAME, 'CfgData')
+            for dlt_file in self._CFGDATA_EXT_FILE:
+                cfg_dlt_file  = os.path.join(brd_cfg_src_dir, dlt_file[len (self._generated_cfg_file_prefix):])
+                lines         = open (cfg_dlt_file).read()
+
+                # Enable TCC in dlt file
+                if self.ENABLE_TCC:
+                    lines += open (os.path.join(brd_cfg_src_dir, 'CfgData_Tcc_Feature.dlt')).read()
+
+                # Write to generated final dlt file
+                output_cfg_dlt_file = os.path.join(build._fv_dir, dlt_file)
+                open(output_cfg_dlt_file, 'w').write(lines)
+
     def GetPlatformDsc (self):
         dsc = {}
         # These libraries will be added into the DSC files
@@ -194,6 +218,7 @@ class Board(BaseBoard):
             'PchInfoLib|Silicon/$(SILICON_PKG_NAME)/Library/PchInfoLib/PchInfoLib.inf',
             'PchSbiAccessLib|Silicon/CommonSocPkg/Library/PchSbiAccessLib/PchSbiAccessLib.inf',
             'PlatformHookLib|Silicon/$(SILICON_PKG_NAME)/Library/PlatformHookLib/PlatformHookLib.inf',
+            'TccLib|Silicon/CommonSocPkg/Library/TccLib/TccLib.inf',
             'GpioLib|Silicon/CommonSocPkg/Library/GpioLib/GpioLib.inf',
             'GpioPlatformLib|Silicon/$(SILICON_PKG_NAME)/Library/GpioPlatformLib/GpioPlatformLib.inf',
             'PchSpiLib|Silicon/CommonSocPkg/Library/PchSpiLib/PchSpiLib.inf',
@@ -258,16 +283,22 @@ class Board(BaseBoard):
         )
 
         bins = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'Binaries')
-        CompFileTccTuning='TccTuning.bin' if os.path.exists(os.path.join(bins, 'TccTuning.bin')) else ''
+
         CompFilePreOsChecker='PreOsChecker.bin' if os.path.exists(os.path.join(bins, 'PreOsChecker.bin')) else ''
         CompFilePseFw='PseFw.bin' if os.path.exists(os.path.join(bins, 'PseFw.bin')) else ''
         CompFilePseTsnIpConfig='PseTsnIpConfig.bin' if os.path.exists(os.path.join(bins, 'PseTsnIpConfig.bin')) else ''
         CompFileTsnConfig='TsnConfig.bin' if os.path.exists(os.path.join(bins, 'TsnConfig.bin')) else ''
         CompFileTsnMacAddr='TsnMacAddr.bin' if os.path.exists(os.path.join(bins, 'TsnMacAddr.bin')) else ''
 
-        if self.ENABLE_TCC_TUNING:
+        if self.ENABLE_TCC:
             container_list.append (
-              ('TCCT',CompFileTccTuning,      'Lz4',     container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0,   self.TCCT_SIZE,      0),   # TCC Tuning
+              ('TCCC', '',     'Lz4',   container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,    0,   self.TCC_CCFG_SIZE,  0),   # TCC Cache Config
+            )
+            container_list.append (
+              ('TCCM', '',    'Lz4',   container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,    0,   self.TCC_CRL_SIZE,   0),   # TCC CRL
+            )
+            container_list.append (
+              ('TCCT',  '',   'Lz4',   container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,    0,   self.TCC_STREAM_SIZE,0),   # TCC Stream Config
             )
 
         if self.ENABLE_PRE_OS_CHECKER:
