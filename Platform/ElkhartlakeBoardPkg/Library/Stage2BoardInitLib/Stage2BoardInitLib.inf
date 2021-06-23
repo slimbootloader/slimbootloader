@@ -60,6 +60,7 @@
   HeciInitLib
   PsdLib
   MeExtMeasurementLib
+  TccLib
 
 [Guids]
   gOsConfigDataGuid
@@ -98,3 +99,5 @@
   gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsCnt
   gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesBase
   gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled
+  gPlatformModuleTokenSpaceGuid.PcdAcpiTableTemplatePtr

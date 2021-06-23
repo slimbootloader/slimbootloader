@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -34,13 +34,12 @@
 #include <Library/ConfigDataLib.h>
 #include <ConfigDataDefs.h>
 #include <Library/GpioSocLib.h>
+#include <TccConfigSubRegions.h>
 
 #define XTAL_FREQ_24MHZ      0
 #define XTAL_FREQ_38P4MHZ    1
 
 extern FVID_TABLE  *mFvidPointer;
-extern UINT8 mTccRtd3Support;
-extern UINT8 mTccLowPowerS0Idle;
 
 typedef union {
   struct {
@@ -861,9 +860,10 @@ PlatformUpdateAcpiGnvs (
     PlatformNvs->LowPowerS0Idle                 = 0;
   }
 
-  if (TCC_FEATURE_ENABLED ()) {
-    PlatformNvs->Rtd3Support                    = mTccRtd3Support;
-    PlatformNvs->LowPowerS0Idle                 = mTccLowPowerS0Idle;
+  // If TCC is enabled, use the TCC policy from subregion
+  if (mTccDsoTuning) {
+    PlatformNvs->Rtd3Support     = mTccRtd3Support;
+    PlatformNvs->LowPowerS0Idle  = mTccLowPowerS0Idle;
   }
 
 }

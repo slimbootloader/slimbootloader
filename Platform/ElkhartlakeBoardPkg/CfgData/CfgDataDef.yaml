@@ -2,7 +2,7 @@
 #
 #  Slim Bootloader CFGDATA Default File.
 #
-#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -210,6 +210,9 @@ configs:
 
 
   - !include Platform/CommonBoardPkg/CfgData/CfgData_Platform.yaml
+
+
+  - !include Platform/CommonBoardPkg/CfgData/CfgData_Tcc.yaml
 
 
   - !include CfgData_Memory.yaml
