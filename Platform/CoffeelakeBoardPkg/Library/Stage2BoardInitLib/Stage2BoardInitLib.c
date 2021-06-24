@@ -865,45 +865,31 @@ UpdatePayloadId (
   )
 {
   EFI_STATUS      Status;
-  GEN_CFG_DATA    *GenericCfgData;
-  SILICON_CFG_DATA  *SiliconCfgData;
-  UINT32          PayloadSelGpioData;
-  UINT32          PayloadSelGpioPad;
+  GEN_CFG_DATA    *GenCfgData;
   UINT32          PayloadId;
+  UINT8           GpioChipsetId;
+  UINT32          PayloadSelGpioData;
+  UINT32          PayloadSelGpioPin;
 
-  PayloadId = GetPayloadId ();
-  GenericCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);
-  if (GenericCfgData != NULL) {
-    if (GenericCfgData->PayloadId == AUTO_PAYLOAD_ID_SIGNATURE) {
-      PayloadId = 0;
-    } else {
-      PayloadId = GenericCfgData->PayloadId;
-    }
+  GenCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);
+  if (GenCfgData == NULL) {
+    ASSERT (FALSE);
+    return;
   }
 
-  //
+  if (GenCfgData->PayloadId != AUTO_PAYLOAD_ID_SIGNATURE || !GenCfgData->PayloadSelGpio.Enable) {
+    SetPayloadId (GenCfgData->PayloadId);
+    return;
+  }
+
   // Switch payloads based on configured GPIO pin
-  //
-  SiliconCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
-  if ((SiliconCfgData != NULL) && (SiliconCfgData->PayloadSelGpio.Enable != 0)){
-    if (IsPchLp() == TRUE) {
-      PayloadSelGpioPad = GPIO_CFG_PIN_TO_PAD(SiliconCfgData->PayloadSelGpio) | (GPIO_CNL_LP_CHIPSET_ID << 24);
-    } else {
-      PayloadSelGpioPad = GPIO_CFG_PIN_TO_PAD(SiliconCfgData->PayloadSelGpio) | (GPIO_CNL_H_CHIPSET_ID << 24);
-    }
-    Status = GpioGetInputValue (PayloadSelGpioPad, &PayloadSelGpioData);
-    if (!EFI_ERROR (Status)) {
-      if (PayloadSelGpioData == 1) {
-        PayloadId = 0;
-      } else {
-        if ((GenericCfgData != NULL) && (GenericCfgData->PayloadId == AUTO_PAYLOAD_ID_SIGNATURE)) {
-          PayloadId = UEFI_PAYLOAD_ID_SIGNATURE;
-        }
-      }
-      DEBUG ((DEBUG_INFO, "Set PayloadId to 0x%08X based on GPIO config\n", PayloadId));
-    }
-  }
-
+  GpioChipsetId = IsPchLp() ? GPIO_CNL_LP_CHIPSET_ID : GPIO_CNL_H_CHIPSET_ID;
+  PayloadSelGpioPin = (GenCfgData->PayloadSelGpio.PinNum) | (GpioChipsetId << 24);
+  DEBUG ((DEBUG_INFO, "GPIO Payload pin 0x%X\n", PayloadSelGpioPin));
+  Status = GpioGetInputValue (PayloadSelGpioPin, &PayloadSelGpioData);
+  ASSERT (Status == RETURN_SUCCESS);
+  PayloadId = PayloadSelGpioData ? 0 : UEFI_PAYLOAD_ID_SIGNATURE;
+  DEBUG ((DEBUG_INFO, "Set PayloadId to 0x%X based on GPIO config\n", PayloadId));
   SetPayloadId (PayloadId);
 }
 
