@@ -18,10 +18,13 @@ MEMORY_CFG_DATA.SpdAddressTable   | { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
 MEMORY_CFG_DATA.MemorySpdPtr00    | {FILE: Spd_Lpddr4_8G.bin}
 MEMORY_CFG_DATA.MemorySpdPtr10    | {FILE: Spd_Lpddr4_8G.bin}
 
-# GPIO for payload selection pin J2E1 pins 2-4
-GEN_CFG_DATA.PayloadId | 'AUTO'
-GPIO_CFG_DATA.GpioPinConfig0_GPP_D13.GPIODirection_GPP_D13 | 0xB
-GPIO_CFG_DATA.GpioPinConfig1_GPP_D13.GPIOSkip_GPP_D13 | 0
+GEN_CFG_DATA.PayloadId                                      | 'AUTO'
+# GPIO for payload selection pin J2E1 pins 2-4 (GPP_D13)
+GEN_CFG_DATA.PayloadSelGpio.Enable                          | 0x1
+GEN_CFG_DATA.PayloadSelGpio.PinNum                          | 0x5000D
+
+GPIO_CFG_DATA.GpioPinConfig0_GPP_D13.GPIODirection_GPP_D13  | 0xB
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D13.GPIOSkip_GPP_D13       | 0
 
 # Enable to test TCC mode & tuning
 # FEATURES_CFG_DATA.Features.Tcc    | 0x1

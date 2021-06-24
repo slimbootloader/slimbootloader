@@ -591,39 +591,30 @@ UpdatePayloadId (
   )
 {
   EFI_STATUS      Status;
-  UINT32          PayloadSelGpioData;
-  UINT32          PayloadSelGpioPad;
   GEN_CFG_DATA    *GenCfgData;
+  UINT32          PayloadId;
+  UINT32          PayloadSelGpioData;
+  UINT32          PayloadSelGpioPin;
 
   GenCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);
   if (GenCfgData == NULL) {
     ASSERT (FALSE);
     return;
   }
-  SetPayloadId (GenCfgData->PayloadId);
 
-  if (GetPayloadId () != AUTO_PAYLOAD_ID_SIGNATURE) {
+  if (GenCfgData->PayloadId != AUTO_PAYLOAD_ID_SIGNATURE || !GenCfgData->PayloadSelGpio.Enable) {
+    SetPayloadId (GenCfgData->PayloadId);
     return;
   }
 
-  //
   // Switch payloads based on configured GPIO pin
-  //
-  if (GetPlatformId () == 0x5) {
-    PayloadSelGpioPad = GPIO_VER3_GPP_D13;
-    Status = GpioGetInputValue (PayloadSelGpioPad, &PayloadSelGpioData);
-    if (!EFI_ERROR (Status)) {
-      if (PayloadSelGpioData == 1) {
-        SetPayloadId (0);
-        DEBUG ((DEBUG_INFO, "Update PayloadId to OS Loader\n"));
-      } else {
-        SetPayloadId (UEFI_PAYLOAD_ID_SIGNATURE);
-        DEBUG ((DEBUG_INFO, "Update PayloadId to UEFI\n"));
-      }
-    }
-  } else {
-    DEBUG ((DEBUG_INFO, "AUTO PayloadId is not supported on this platform.\n"));
-  }
+  PayloadSelGpioPin = (GenCfgData->PayloadSelGpio.PinNum) | (GPIO_VER3_CHIPSET_ID << 24);
+  DEBUG ((DEBUG_INFO, "GPIO Payload pin 0x%X\n", PayloadSelGpioPin));
+  Status = GpioGetInputValue (PayloadSelGpioPin, &PayloadSelGpioData);
+  ASSERT (Status == RETURN_SUCCESS);
+  PayloadId = PayloadSelGpioData ? 0 : UEFI_PAYLOAD_ID_SIGNATURE;
+  DEBUG ((DEBUG_INFO, "Set PayloadId to 0x%X based on GPIO config\n", PayloadId));
+  SetPayloadId (PayloadId);
 }
 
 //Initialize Platform Igd OpRegion
