@@ -30,6 +30,7 @@
 
 [LibraryClasses]
   SerialPortLib
+  DebugPortLib
   DebugLogBufferLib
   ConsoleOutLib
   BaseMemoryLib

@@ -131,6 +131,7 @@
   BoardSupportLib|Platform/CommonBoardPkg/Library/BoardSupportLib/BoardSupportLib.inf
   PagingLib|BootloaderCommonPkg/Library/PagingLib/PagingLib.inf
   TimerLib|BootloaderCommonPkg/Library/AcpiTimerLib/AcpiTimerLib.inf
+  DebugPortLib|BootloaderCommonPkg/Library/DebugPortLib/DebugPortLibNull.inf
 
 ################################################################################
 #
@@ -146,9 +147,9 @@
   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask            | 0x27
 !endif
 
-  # Limit DEBUG output device to be serial port (BIT1) and log buffer (BIT0) for stages.
+  # Exclude platform console devices BIT7 as debug output for SBL stage 1 and 2.
   # Once in payload, more debug devices can be enabled, such as frame buffer.
-  gPlatformCommonLibTokenSpaceGuid.PcdDebugOutputDeviceMask  | $(DEBUG_OUTPUT_DEVICE_MASK) & 3
+  gPlatformCommonLibTokenSpaceGuid.PcdDebugOutputDeviceMask  | $(DEBUG_OUTPUT_DEVICE_MASK) & 0xFFFFFF7F
 
   gPlatformCommonLibTokenSpaceGuid.PcdDebugPortNumber      | $(DEBUG_PORT_NUMBER)
 
@@ -247,6 +248,7 @@
 
   gPlatformCommonLibTokenSpaceGuid.PcdCompSignHashAlg             | $(SIGN_HASH_TYPE)
   gPlatformModuleTokenSpaceGuid.PcdFastBootEnabled                | $(ENABLE_FAST_BOOT)
+
 
 [PcdsPatchableInModule]
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel   | 0x8000004F

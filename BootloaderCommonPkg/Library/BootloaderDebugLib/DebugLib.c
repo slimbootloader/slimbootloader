@@ -12,6 +12,7 @@
 #include <Library/PcdLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/SerialPortLib.h>
+#include <Library/DebugPortLib.h>
 #include <Library/DebugLogBufferLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include <Library/DebugPrintErrorLevelLib.h>
@@ -92,6 +93,10 @@ DebugPrint (
 
   if (OutputToSerial) {
     SerialPortWrite ((UINT8 *)Buffer, Length);
+  }
+
+  if (PcdGet32 (PcdDebugOutputDeviceMask) & DEBUG_OUTPUT_DEVICE_DEBUG_PORT) {
+    DebugPortWrite ((UINT8 *)Buffer, Length);
   }
 }
 
