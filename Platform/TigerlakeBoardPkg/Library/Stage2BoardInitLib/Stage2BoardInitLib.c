@@ -721,7 +721,9 @@ UpdatePayloadId (
 {
   EFI_STATUS      Status;
   UINT32          PayloadSelGpioData;
-  UINT32          PayloadSelGpioPad;
+  UINT32          PayloadSelGpioPin;
+  UINT8           GpioChipsetId;
+  UINT32          PayloadId;
   GEN_CFG_DATA    *GenCfgData;
   UINT8           Magic;
   UINT8           BootTarget;
@@ -770,27 +772,25 @@ UpdatePayloadId (
   }
 
   if (IsPchLp ()) {
-    PayloadSelGpioPad = GPIO_VER2_LP_GPP_B15;
+    GpioChipsetId = GPIO_VER2_LP_CHIPSET_ID;
   } else if (IsPchH ()) {
-    PayloadSelGpioPad = GPIO_VER2_H_GPP_F10;
+    GpioChipsetId = GPIO_VER2_H_CHIPSET_ID;
   } else {
     DEBUG ((DEBUG_ERROR, "Unsupported PCH for AUTO.\n"));
     return;
   }
 
-  //
   // Switch payloads based on configured GPIO pin
-  //
-  Status = GpioGetInputValue (PayloadSelGpioPad, &PayloadSelGpioData);
-  if (!EFI_ERROR (Status)) {
-    if (PayloadSelGpioData == 1) {
-      SetPayloadId (0);
-      DEBUG ((DEBUG_INFO, "Update PayloadId to OS Loader\n"));
-    } else {
-      SetPayloadId (UEFI_PAYLOAD_ID_SIGNATURE);
-      DEBUG ((DEBUG_INFO, "Update PayloadId to UEFI\n"));
-    }
-  }
+  if (!GenCfgData->PayloadSelGpio.Enable)
+    return;
+
+  PayloadSelGpioPin = (GenCfgData->PayloadSelGpio.PinNum) | (GpioChipsetId << 24);
+  DEBUG ((DEBUG_INFO, "GPIO Payload pin 0x%X\n", PayloadSelGpioPin));
+  Status = GpioGetInputValue (PayloadSelGpioPin, &PayloadSelGpioData);
+  ASSERT (Status == RETURN_SUCCESS);
+  PayloadId = PayloadSelGpioData ? 0 : UEFI_PAYLOAD_ID_SIGNATURE;
+  DEBUG ((DEBUG_INFO, "Set PayloadId to 0x%X based on GPIO config\n", PayloadId));
+  SetPayloadId (PayloadId);
 }
 
 //

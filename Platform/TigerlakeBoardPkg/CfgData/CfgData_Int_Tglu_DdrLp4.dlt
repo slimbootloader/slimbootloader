@@ -32,5 +32,9 @@ MEMORY_CFG_DATA.SpdDataSel130            | 1
 # When 3/4 is stuffed the value will read 0 for UEFI Payload.
 # When 3/4 is un-stuffed the value will read 1 for OS Loader.
 #
-GEN_CFG_DATA.PayloadId                   | 'AUTO'
+GEN_CFG_DATA.PayloadId                      | 'AUTO'
+GEN_CFG_DATA.PayloadSelGpio.Enable          | 0x1
+# LP_GPP_B15
+GEN_CFG_DATA.PayloadSelGpio.PinNum          | 0xF
+
 GPIO_CFG_DATA.GpioPinConfig0_GPP_B15.GPIODirection_GPP_B15 | 0xB
