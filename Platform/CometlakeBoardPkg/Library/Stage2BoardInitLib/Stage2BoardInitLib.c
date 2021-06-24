@@ -1002,6 +1002,43 @@ GpioInit (
   return GpioConfigurePads (GpioEntries, (GPIO_INIT_CONFIG *) GpioCfgDataBuffer);
 }
 
+/**
+  Update current boot Payload ID.
+
+**/
+VOID
+UpdatePayloadId (
+  VOID
+  )
+{
+  EFI_STATUS      Status;
+  GEN_CFG_DATA    *GenCfgData;
+  UINT32          PayloadId;
+  UINT8           GpioChipsetId;
+  UINT32          PayloadSelGpioData;
+  UINT32          PayloadSelGpioPin;
+
+  GenCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);
+  if (GenCfgData == NULL) {
+    ASSERT (FALSE);
+    return;
+  }
+
+  if (GenCfgData->PayloadId != AUTO_PAYLOAD_ID_SIGNATURE || !GenCfgData->PayloadSelGpio.Enable) {
+    SetPayloadId (GenCfgData->PayloadId);
+    return;
+  }
+
+  // Switch payloads based on configured GPIO pin
+  GpioChipsetId = IsPchLp() ? GPIO_CNL_LP_CHIPSET_ID : GPIO_CNL_H_CHIPSET_ID;
+  PayloadSelGpioPin = (GenCfgData->PayloadSelGpio.PinNum) | (GpioChipsetId << 24);
+  DEBUG ((DEBUG_INFO, "GPIO Payload pin 0x%X\n", PayloadSelGpioPin));
+  Status = GpioGetInputValue (PayloadSelGpioPin, &PayloadSelGpioData);
+  ASSERT (Status == RETURN_SUCCESS);
+  PayloadId = PayloadSelGpioData ? 0 : UEFI_PAYLOAD_ID_SIGNATURE;
+  DEBUG ((DEBUG_INFO, "Set PayloadId to 0x%X based on GPIO config\n", PayloadId));
+  SetPayloadId (PayloadId);
+}
 
 /**
   Initialize Board specific things in Stage2 Phase
@@ -1015,7 +1052,6 @@ BoardInit (
   IN  BOARD_INIT_PHASE    InitPhase
 )
 {
-  GEN_CFG_DATA    *GenericCfgData;
   SILICON_CFG_DATA  *SiliconCfgData;
   EFI_STATUS      Status;
   UINT32          RgnBase;
@@ -1029,9 +1065,6 @@ BoardInit (
   UINT32          Length;
   UINT32          TsegBase;
   UINT32          TsegSize;
-  UINT32          PayloadSelGpioData;
-  UINT32          PayloadSelGpioPad;
-  UINT32          PayloadId;
   EFI_PEI_GRAPHICS_INFO_HOB *FspGfxHob;
   LOADER_GLOBAL_DATA        *LdrGlobal;
 
@@ -1041,45 +1074,11 @@ BoardInit (
     GpioInit ();
     SpiConstructor ();
 
-    PayloadId = GetPayloadId ();
-    GenericCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);
-    if (GenericCfgData != NULL) {
-      if (GenericCfgData->PayloadId == AUTO_PAYLOAD_ID_SIGNATURE) {
-        PayloadId = 0;
-      } else {
-        PayloadId = GenericCfgData->PayloadId;
-      }
-    }
-
-    //
-    // Switch payloads based on configured GPIO pin
-    //
-    SiliconCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
-    if ((SiliconCfgData != NULL) && (SiliconCfgData->PayloadSelGpio.Enable != 0)){
-      if (IsPchLp() == TRUE) {
-        PayloadSelGpioPad = GPIO_CFG_PIN_TO_PAD(SiliconCfgData->PayloadSelGpio) | (GPIO_CNL_LP_CHIPSET_ID << 24);
-      } else {
-        PayloadSelGpioPad = GPIO_CFG_PIN_TO_PAD(SiliconCfgData->PayloadSelGpio) | (GPIO_CNL_H_CHIPSET_ID << 24);
-      }
-      Status = GpioGetInputValue (PayloadSelGpioPad, &PayloadSelGpioData);
-      if (!EFI_ERROR (Status)) {
-        if (PayloadSelGpioData == 0) {
-          PayloadId = 0;
-        } else {
-          if ((GenericCfgData != NULL) && (GenericCfgData->PayloadId == AUTO_PAYLOAD_ID_SIGNATURE)) {
-            PayloadId = UEFI_PAYLOAD_ID_SIGNATURE;
-          }
-        }
-        DEBUG ((DEBUG_INFO, "Set PayloadId to 0x%08X based on GPIO config\n", PayloadId));
-      }
-    }
-    mSiliconCfgData = SiliconCfgData;
-
-    SetPayloadId (PayloadId);
-
-    if (GetLoaderGlobalDataPointer ()->BootMode != BOOT_ON_FLASH_UPDATE) {
+    if (GetBootMode() != BOOT_ON_FLASH_UPDATE) {
+      UpdatePayloadId ();
       UpdateBlRsvdRegion ();
     }
+
     Status = GetComponentInfo (FLASH_MAP_SIG_VARIABLE, &RgnBase, &RgnSize);
     if (!EFI_ERROR(Status)) {
       VariableConstructor (RgnBase, RgnSize);
