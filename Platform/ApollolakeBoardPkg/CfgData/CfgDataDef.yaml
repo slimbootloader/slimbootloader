@@ -93,39 +93,6 @@ configs:
         length       : 0x03
         value        : 0
 
-  - $ACTION      :
-      page         : PSEL:PLT:"Payload Selection GPIO"
-  - $ACTION      :
-      page         : PSEL
-  - PLATFORM_CFG_DATA :
-    - !expand { CFGHDR_TMPL : [ PLATFORM_CFG_DATA, 0x280, 0, 0 ] }
-    - PayloadSelGpio :
-      - $STRUCT      :
-          name         : GPIO pin for switching payload
-          struct       : PAYLOAD_SEL_GPIO_PIN
-          length       : 0x04
-          value        : 0x000000c5
-      - PadInfo      :
-          name         : Pin Number
-          type         : Combo
-          option       : !include CfgData_GpioPinOption.yaml
-          condition    : ($PLATFORM_CFG_DATA.PayloadSelGpio.Enable > 0)
-          help         : >
-                         Specify GPIO Pin Number
-          length       : 24b
-      - Rsvd1        :
-          name         : Reserved
-          type         : Reserved
-          length       : 7b
-      - Enable       :
-          name         : Payload Selection Pin Enable
-          type         : Combo
-          option       : $EN_DIS
-          help         : >
-                         Enable/Disable this pin for payload selection.
-          order        : 0000.0000
-          length       : 1b
-
 
   - !include CfgData_Memory.yaml
 

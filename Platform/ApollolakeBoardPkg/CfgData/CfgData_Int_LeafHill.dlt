@@ -15,5 +15,5 @@ PLAT_NAME_CFG_DATA.PlatformName          | 'LeafHill'
 
 GEN_CFG_DATA.PayloadId                   | 'AUTO'
 
-PLATFORM_CFG_DATA.PayloadSelGpio.Enable    | 0x1
-PLATFORM_CFG_DATA.PayloadSelGpio.PadInfo   | 0x168C5
+GEN_CFG_DATA.PayloadSelGpio.Enable       | 0x1
+GEN_CFG_DATA.PayloadSelGpio.PinNum       | 0x168C5

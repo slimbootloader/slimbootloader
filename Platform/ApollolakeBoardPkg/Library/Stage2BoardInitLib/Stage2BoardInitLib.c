@@ -820,37 +820,33 @@ UpdatePayloadId (
   VOID
   )
 {
-  GEN_CFG_DATA       *GenericCfgData;
-  PLATFORM_CFG_DATA  *PlatCfgData;
-  UINT32              PayloadId;
-  UINT32              GpioLevel;
+  EFI_STATUS      Status;
+  GEN_CFG_DATA    *GenCfgData;
+  UINT32          PayloadId;
+  UINT32          PayloadSelGpioData;
 
   if (GetBootMode() == BOOT_ON_FLASH_UPDATE) {
     return;
   }
 
-  PayloadId = 0;
-  GenericCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);
-  if ((GenericCfgData != NULL) && (GenericCfgData->PayloadId != AUTO_PAYLOAD_ID_SIGNATURE)) {
-    // If PayloadId is not AUTO, use it directly
-    PayloadId = GenericCfgData->PayloadId;
-  } else {
-    // If PayloadId is AUTO and GPIO PayloadId selection is enabled,
-    // adjust the PayloadId accordingly per GPIO level (0:UEFI  1:OsLoader).
-    GpioLevel = 1;
-    PlatCfgData = (PLATFORM_CFG_DATA *)FindConfigDataByTag (CDATA_PLATFORM_TAG);
-    if ((PlatCfgData != NULL) && (PlatCfgData->PayloadSelGpio.Enable != 0)) {
-      // The default GPIOSet to Pull Up 20K
-      GpioGetInputValue (PlatCfgData->PayloadSelGpio.PadInfo, 0x0C, &GpioLevel);
-      if (GpioLevel != 0) {
-        PayloadId = 0;
-      } else {
-        PayloadId = UEFI_PAYLOAD_ID_SIGNATURE;
-      }
-      DEBUG ((DEBUG_INFO, "Set PayloadId to 0x%08X based on GPIO config\n", PayloadId));
-    }
+  GenCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);
+  if (GenCfgData == NULL) {
+    ASSERT (FALSE);
+    return;
   }
 
+  if (GenCfgData->PayloadId != AUTO_PAYLOAD_ID_SIGNATURE || !GenCfgData->PayloadSelGpio.Enable) {
+    SetPayloadId (GenCfgData->PayloadId);
+    DEBUG ((DEBUG_INFO, "PayloadId = 0x%X\n", GenCfgData->PayloadId));
+    return;
+  }
+
+  // Switch payloads based on configured GPIO pin
+  // The default GPIOSet to Pull Up 20K
+  Status = GpioGetInputValue (GenCfgData->PayloadSelGpio.PinNum, 0x0C, &PayloadSelGpioData);
+  ASSERT (Status == RETURN_SUCCESS);
+  PayloadId = PayloadSelGpioData ? 0 : UEFI_PAYLOAD_ID_SIGNATURE;
+  DEBUG ((DEBUG_INFO, "Set PayloadId to 0x%X based on GPIO config\n", PayloadId));
   SetPayloadId (PayloadId);
 }
 
