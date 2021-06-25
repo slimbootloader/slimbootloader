@@ -1846,7 +1846,7 @@ UpdateOsBootMediumInfo (
 
   FillBootOptionListFromCfgData (OsBootOptionList);
   // Disable PreOS checker since the SKU doesn't support it
-  if (mPchSciSupported) {
+  if (!mPchSciSupported) {
     for (Idx = 0; Idx < OsBootOptionList->OsBootOptionCount; Idx++) {
       BootOption = &(OsBootOptionList->OsBootOption[Idx]);
       if ((BootOption->BootFlags & BOOT_FLAGS_PREOS) != 0) {
