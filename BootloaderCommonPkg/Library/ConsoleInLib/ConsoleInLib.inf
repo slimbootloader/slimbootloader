@@ -26,6 +26,7 @@
   BaseLib
   SerialPortLib
   UsbKbLib
+  DebugPortLib
 
 [Guids]
 

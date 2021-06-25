@@ -79,6 +79,7 @@
 typedef enum {
   ConsoleOutSerialPort  = BIT0,
   ConsoleOutFrameBuffer = BIT1,
+  ConsoleOutDebugPort   = BIT2,
   ConsoleOutAll         = 0xFFFFFFFF,
 } CONSOLE_OUT_DEVICE_TYPE;
 

@@ -6,8 +6,13 @@
 **/
 
 #include <PiPei.h>
-#include <Library/GpioDebugPortLib.h>
-#include <Library/MailboxDebugPortLib.h>
+#include <Library/IoLib.h>
+
+#define  MAILBOX_CTRL_TXDV      BIT0
+#define  MAILBOX_CTRL_RXDA      BIT1
+#define  MAILBOX_CTRL_TOGGLE    BIT7
+#define  MAILBOX_DATA_TX_SHIFT  8
+#define  MAILBOX_DATA_RX_SHIFT  16
 
 /**
   Write data from buffer to debug port.
@@ -24,13 +29,31 @@
 **/
 UINTN
 EFIAPI
-DebugPortWrite (
+MailboxDebugPortWrite (
   IN UINT8    *Buffer,
   IN UINTN    NumberOfBytes
   )
 {
-  //GpioDebugPortWrite    (Buffer, NumberOfBytes);
-  MailboxDebugPortWrite (Buffer, NumberOfBytes);
+  UINT32  Data;
+
+  if (NULL == Buffer) {
+    return 0;
+  }
+
+  if (PcdGet32 (PcdMailboxDebugPortMmioBase) == 0) {
+    return 0;
+  }
+
+  while (NumberOfBytes--) {
+    // Wait for the serail port to be ready.
+    do {
+      Data = MmioRead32 (PcdGet32 (PcdMailboxDebugPortMmioBase));
+    } while ((Data & MAILBOX_CTRL_TXDV) != 0);
+
+    Data = ((Data ^ MAILBOX_CTRL_TOGGLE) & ~(0xFF << MAILBOX_DATA_TX_SHIFT)) | MAILBOX_CTRL_TXDV | (*Buffer++ << MAILBOX_DATA_TX_SHIFT);
+    MmioWrite32 (PcdGet32 (PcdMailboxDebugPortMmioBase), Data);
+  }
+
   return NumberOfBytes;
 }
 
@@ -45,12 +68,35 @@ DebugPortWrite (
 **/
 UINTN
 EFIAPI
-DebugPortRead (
+MailboxDebugPortRead (
   OUT UINT8 *Buffer,
   IN UINTN  NumberOfBytes
   )
 {
-  return MailboxDebugPortRead (Buffer, NumberOfBytes);
+  UINT32  Data;
+
+  if (NULL == Buffer) {
+    return 0;
+  }
+
+  if (PcdGet32 (PcdMailboxDebugPortMmioBase) == 0) {
+    return 0;
+  }
+
+  while (NumberOfBytes--) {
+    //
+    // Wait for the serial port to be ready.
+    //
+    do {
+      Data = MmioRead32 (PcdGet32 (PcdMailboxDebugPortMmioBase));
+    } while ((Data & MAILBOX_CTRL_RXDA) == 0);
+
+    *Buffer++ = (UINT8)(Data >> MAILBOX_DATA_RX_SHIFT);
+    Data = Data & ~MAILBOX_CTRL_RXDA;
+    MmioWrite32 (PcdGet32 (PcdMailboxDebugPortMmioBase), Data);
+  }
+
+  return NumberOfBytes;
 }
 
 /**
@@ -65,9 +111,20 @@ DebugPortRead (
 **/
 BOOLEAN
 EFIAPI
-DebugPortPoll (
+MailboxDebugPortPoll (
   VOID
   )
 {
-  return MailboxDebugPortPoll ();
+  UINT32  Data32;
+
+  if (PcdGet32 (PcdMailboxDebugPortMmioBase) == 0) {
+    return FALSE;
+  }
+
+  Data32 = MmioRead32 (PcdGet32 (PcdMailboxDebugPortMmioBase));
+  if ((Data32 & MAILBOX_CTRL_RXDA) != 0) {
+    return TRUE;
+  }
+
+  return FALSE;
 }

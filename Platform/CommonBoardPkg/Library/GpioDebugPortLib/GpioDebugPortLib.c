@@ -86,11 +86,14 @@ GpioDebugPortWrite (
   IN UINTN      NumberOfBytes
   )
 {
-  while (NumberOfBytes > 0) {
-    GpioDebugPortWriteByte (*Buffer);
-    Buffer++;
-    NumberOfBytes--;
+  if (PcdGet32 (PcdGpioDebugPortMmioBase) != 0) {
+    while (NumberOfBytes > 0) {
+      GpioDebugPortWriteByte (*Buffer);
+      Buffer++;
+      NumberOfBytes--;
+    }
+  } else {
+    NumberOfBytes = 0;
   }
-
   return NumberOfBytes;
 }

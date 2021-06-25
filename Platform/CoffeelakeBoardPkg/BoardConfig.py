@@ -66,7 +66,7 @@ class Board(BaseBoard):
         # BIT1: Serial port
         # BIT2: Platform debug port
         # BIT7: Platform console devices
-        self.DEBUG_OUTPUT_DEVICE_MASK = 0x03
+        self.DEBUG_OUTPUT_DEVICE_MASK = 0x07
 
         # CSME update library is required to enable this option and will be available as part of CSME kit
         self.BUILD_CSME_UPDATE_DRIVER   = 0
@@ -192,6 +192,7 @@ class Board(BaseBoard):
             common_libs.append ('MeFwUpdateLib|Silicon/$(SILICON_PKG_NAME)/Library/MeFwUpdateLib/MeFwUpdateLib.inf')
         if debug_port_enable:
             common_libs.append ('GpioDebugPortLib|Platform/CommonBoardPkg/Library/GpioDebugPortLib/GpioDebugPortLib.inf')
+            common_libs.append ('MailboxDebugPortLib|Platform/CommonBoardPkg/Library/MailboxDebugPortLib/MailboxDebugPortLib.inf')
             common_libs.append ('DebugPortLib|Platform/$(BOARD_PKG_NAME)/Library/DebugPortLib/DebugPortLib.inf')
         dsc['LibraryClasses.%s' % self.BUILD_ARCH]   = common_libs
 
@@ -204,12 +205,18 @@ class Board(BaseBoard):
             #   - Get GPIO community ID. It is community 1 for H12.
             #   - Look up PID_GPIOCOM1 in file PchRegsPcr.h for PortId. It is 0x6D.
             #    IOSF_MMIO = 0xFD000000 + (PortId<<16) + GpioOffset
-            gpio_pad   = 0x0407000C
-            iosf_mmio  = 0xFD6D09D0
+            gpio_pad     = 0x0407000C
+            iosf_mmio    = 0xFD6D09D0
             fixed_pcds = [
-                'gCommonBoardTokenSpaceGuid.PcdGpioDebugPortPinPad   | 0x%08X' % gpio_pad,
-                'gCommonBoardTokenSpaceGuid.PcdGpioDebugPortMmioBase | 0x%08X' % iosf_mmio,
+                'gCommonBoardTokenSpaceGuid.PcdGpioDebugPortPinPad      | 0x%08X' % gpio_pad,
+                'gCommonBoardTokenSpaceGuid.PcdGpioDebugPortMmioBase    | 0x%08X' % iosf_mmio
             ]
+
+            mailbox_mmio = 0xFD6E0120
+            fixed_pcds.append (
+                'gCommonBoardTokenSpaceGuid.PcdMailboxDebugPortMmioBase | 0x%08X' % mailbox_mmio,
+            )
+
         if len(fixed_pcds) > 0:
             dsc['PcdsFixedAtBuild.%s' % self.BUILD_ARCH] = fixed_pcds
 
