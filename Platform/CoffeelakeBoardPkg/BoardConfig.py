@@ -62,6 +62,12 @@ class Board(BaseBoard):
         self.ENABLE_SMM_REBASE        = 2
         self.DEBUG_PORT_NUMBER    = 0xFF
 
+        # BIT0: Log buffer
+        # BIT1: Serial port
+        # BIT2: Platform debug port
+        # BIT7: Platform console devices
+        self.DEBUG_OUTPUT_DEVICE_MASK = 0x03
+
         # CSME update library is required to enable this option and will be available as part of CSME kit
         self.BUILD_CSME_UPDATE_DRIVER   = 0
 
@@ -158,6 +164,8 @@ class Board(BaseBoard):
         self._MULTI_VBT_FILE      = {1:'Vbt.dat', 2:'VbtCflH.dat', 3:'VbtCflS.dat'}
 
     def GetPlatformDsc (self):
+        debug_port_enable = True if (self.DEBUG_OUTPUT_DEVICE_MASK & 0x04) else  False
+
         dsc = {}
         common_libs = [
             'LoaderLib|Platform/CommonBoardPkg/Library/LoaderLib/LoaderLib.inf',
@@ -182,7 +190,29 @@ class Board(BaseBoard):
         ]
         if self.BUILD_CSME_UPDATE_DRIVER:
             common_libs.append ('MeFwUpdateLib|Silicon/$(SILICON_PKG_NAME)/Library/MeFwUpdateLib/MeFwUpdateLib.inf')
-        dsc['LibraryClasses.%s' % self.BUILD_ARCH] = common_libs
+        if debug_port_enable:
+            common_libs.append ('GpioDebugPortLib|Platform/CommonBoardPkg/Library/GpioDebugPortLib/GpioDebugPortLib.inf')
+            common_libs.append ('DebugPortLib|Platform/$(BOARD_PKG_NAME)/Library/DebugPortLib/DebugPortLib.inf')
+        dsc['LibraryClasses.%s' % self.BUILD_ARCH]   = common_libs
+
+        fixed_pcds = []
+        if debug_port_enable:
+            # Use GPIO_CNL_LP_GPP_H12 pin for example
+            # - Refer to GpioPinsCnlLp.h file to look up its GPIO pad value
+            # - Calculate the IOSF SB access address for GPIO DW0 register
+            #   - Get GPIO DW0 offset from SOC EDS datasheet. It is 0x9D0 for H12.
+            #   - Get GPIO community ID. It is community 1 for H12.
+            #   - Look up PID_GPIOCOM1 in file PchRegsPcr.h for PortId. It is 0x6D.
+            #    IOSF_MMIO = 0xFD000000 + (PortId<<16) + GpioOffset
+            gpio_pad   = 0x0407000C
+            iosf_mmio  = 0xFD6D09D0
+            fixed_pcds = [
+                'gCommonBoardTokenSpaceGuid.PcdGpioDebugPortPinPad   | 0x%08X' % gpio_pad,
+                'gCommonBoardTokenSpaceGuid.PcdGpioDebugPortMmioBase | 0x%08X' % iosf_mmio,
+            ]
+        if len(fixed_pcds) > 0:
+            dsc['PcdsFixedAtBuild.%s' % self.BUILD_ARCH] = fixed_pcds
+
         return dsc
 
     def GetKeyHashList (self):
