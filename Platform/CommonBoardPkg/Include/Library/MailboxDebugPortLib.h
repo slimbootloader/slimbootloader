@@ -6,8 +6,8 @@
 **/
 
 #include <PiPei.h>
-#include <Library/GpioDebugPortLib.h>
-#include <Library/MailboxDebugPortLib.h>
+
+#ifndef __MAILBOX_DEBUG_PORT_LIB_H__
 
 /**
   Write data from buffer to debug port.
@@ -24,15 +24,10 @@
 **/
 UINTN
 EFIAPI
-DebugPortWrite (
+MailboxDebugPortWrite (
   IN UINT8    *Buffer,
   IN UINTN    NumberOfBytes
-  )
-{
-  //GpioDebugPortWrite    (Buffer, NumberOfBytes);
-  MailboxDebugPortWrite (Buffer, NumberOfBytes);
-  return NumberOfBytes;
-}
+  );
 
 /**
   Reads data from a debug port into a buffer.
@@ -45,13 +40,10 @@ DebugPortWrite (
 **/
 UINTN
 EFIAPI
-DebugPortRead (
+MailboxDebugPortRead (
   OUT UINT8 *Buffer,
   IN UINTN  NumberOfBytes
-  )
-{
-  return MailboxDebugPortRead (Buffer, NumberOfBytes);
-}
+  );
 
 /**
   Polls a debug port to see if there is any data waiting to be read.
@@ -65,9 +57,8 @@ DebugPortRead (
 **/
 BOOLEAN
 EFIAPI
-DebugPortPoll (
+MailboxDebugPortPoll (
   VOID
-  )
-{
-  return MailboxDebugPortPoll ();
-}
+  );
+
+#endif

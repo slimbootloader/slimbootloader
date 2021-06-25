@@ -18,7 +18,8 @@
   gCommonBoardTokenSpaceGuid  = { 0x3a22489e, 0x5443, 0x4135, { 0xad, 0x93, 0x23, 0x7f, 0x20, 0xbc, 0x88, 0x3b } }
 
 [PcdsFixedAtBuild]
-  gCommonBoardTokenSpaceGuid.PcdGpioDebugPortMmioBase    | 0xFF000000 | UINT32 | 0x20000800
+  gCommonBoardTokenSpaceGuid.PcdGpioDebugPortMmioBase    | 0x00000000 | UINT32 | 0x20000800
   gCommonBoardTokenSpaceGuid.PcdGpioDebugPortMmioMask    | 0x00000001 | UINT32 | 0x20000801
   gCommonBoardTokenSpaceGuid.PcdGpioDebugPortBaudRate    |      19200 | UINT32 | 0x20000802
   gCommonBoardTokenSpaceGuid.PcdGpioDebugPortPinPad      | 0x00000000 | UINT32 | 0x20000803
+  gCommonBoardTokenSpaceGuid.PcdMailboxDebugPortMmioBase | 0x00000000 | UINT32 | 0x20000810

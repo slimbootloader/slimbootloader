@@ -10,6 +10,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/UsbKbLib.h>
 #include <Library/SerialPortLib.h>
 #include <Library/ConsoleInLib.h>
+#include <Library/DebugPortLib.h>
 
 /**
   Poll a console to see if there is any data waiting to be read.
@@ -35,6 +36,12 @@ ConsolePoll (
 
   if ((PcdGet32 (PcdConsoleInDeviceMask) & ConsoleInUsbKeyboard) != 0) {
     if (KeyboardPoll ()) {
+      return TRUE;
+    }
+  }
+
+  if ((PcdGet32 (PcdConsoleInDeviceMask) & ConsoleInDebugPort) != 0) {
+    if (DebugPortPoll ()) {
       return TRUE;
     }
   }
@@ -77,6 +84,14 @@ ConsoleRead (
     if ((PcdGet32 (PcdConsoleInDeviceMask) & ConsoleInUsbKeyboard) != 0) {
       if (KeyboardPoll () && (Count < NumberOfBytes)) {
         ReadCount = KeyboardRead (Buffer, 1);
+        Buffer += ReadCount;
+        Count  += ReadCount;
+      }
+    }
+
+    if ((PcdGet32 (PcdConsoleInDeviceMask) & ConsoleInDebugPort) != 0) {
+      if (DebugPortPoll () && (Count < NumberOfBytes)) {
+        ReadCount = DebugPortRead (Buffer, 1);
         Buffer += ReadCount;
         Count  += ReadCount;
       }
