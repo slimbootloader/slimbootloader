@@ -57,4 +57,5 @@
   gPlatformCommonLibTokenSpaceGuid.PcdDebugPortNumber
   gPlatformCommonLibTokenSpaceGuid.PcdDebugOutputDeviceMask
   gCommonBoardTokenSpaceGuid.PcdGpioDebugPortPinPad
+  gCommonBoardTokenSpaceGuid.PcdGpioDebugPortMmioBase
 
