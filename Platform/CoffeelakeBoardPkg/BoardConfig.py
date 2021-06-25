@@ -66,7 +66,19 @@ class Board(BaseBoard):
         # BIT1: Serial port
         # BIT2: Platform debug port
         # BIT7: Platform console devices
-        self.DEBUG_OUTPUT_DEVICE_MASK = 0x07
+        self.DEBUG_OUTPUT_DEVICE_MASK = 0x03
+
+        # Input consoles
+        #   BIT0: Serial port
+        #   BIT1: USB Keyboard
+        #   BIT2: Platform debug port
+        self.CONSOLE_IN_DEVICE_MASK   = 0x00000001
+
+        # Output consoles
+        #   BIT0: Serial port
+        #   BIT1: Framebuffer
+        #   BIT2: Platform debug port
+        self.CONSOLE_OUT_DEVICE_MASK  = 0x00000001
 
         # CSME update library is required to enable this option and will be available as part of CSME kit
         self.BUILD_CSME_UPDATE_DRIVER   = 0
@@ -164,7 +176,9 @@ class Board(BaseBoard):
         self._MULTI_VBT_FILE      = {1:'Vbt.dat', 2:'VbtCflH.dat', 3:'VbtCflS.dat'}
 
     def GetPlatformDsc (self):
-        debug_port_enable = True if (self.DEBUG_OUTPUT_DEVICE_MASK & 0x04) else  False
+        debug_port_enable = False
+        if (self.CONSOLE_OUT_DEVICE_MASK & 0x04) or (self.CONSOLE_IN_DEVICE_MASK & 0x04) or (self.DEBUG_OUTPUT_DEVICE_MASK & 0x04):
+            debug_port_enable = True
 
         dsc = {}
         common_libs = [
@@ -199,20 +213,27 @@ class Board(BaseBoard):
         fixed_pcds = []
         if debug_port_enable:
             # Use GPIO_CNL_LP_GPP_H12 pin for example
-            # - Refer to GpioPinsCnlLp.h file to look up its GPIO pad value
-            # - Calculate the IOSF SB access address for GPIO DW0 register
+            # Refer to GpioPinsCnlLp.h file to look up its GPIO pad value.
+            # The GPIO pad value is 0x0407000C.
+            gpio_pad     = 0 # 0x0407000C for GPIO_CNL_LP_GPP_H12
+
+            # IOSF SB access address for the GPIO DW0 register (DWORD)
+            # Calculate the IOSF SB access address for GPIO DW0 register
             #   - Get GPIO DW0 offset from SOC EDS datasheet. It is 0x9D0 for H12.
             #   - Get GPIO community ID. It is community 1 for H12.
             #   - Look up PID_GPIOCOM1 in file PchRegsPcr.h for PortId. It is 0x6D.
             #    IOSF_MMIO = 0xFD000000 + (PortId<<16) + GpioOffset
-            gpio_pad     = 0x0407000C
-            iosf_mmio    = 0xFD6D09D0
+            # If set to 0, gpio debug port will be disabled.
+            iosf_mmio    = 0 # 0xFD6D09D0 for GPIO_CNL_LP_GPP_H12
             fixed_pcds = [
                 'gCommonBoardTokenSpaceGuid.PcdGpioDebugPortPinPad      | 0x%08X' % gpio_pad,
                 'gCommonBoardTokenSpaceGuid.PcdGpioDebugPortMmioBase    | 0x%08X' % iosf_mmio
             ]
 
-            mailbox_mmio = 0xFD6E0120
+            # Mailbox debug port, use GPI Interrupt Enable register as example
+            # IOSF SB access address for the mailbox register (DWORD)
+            # If set to 0, mailbox debug port will be disabled
+            mailbox_mmio = 0 # 0xFD6E0120
             fixed_pcds.append (
                 'gCommonBoardTokenSpaceGuid.PcdMailboxDebugPortMmioBase | 0x%08X' % mailbox_mmio,
             )

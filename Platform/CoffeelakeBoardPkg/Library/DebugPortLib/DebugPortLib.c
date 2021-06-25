@@ -29,7 +29,7 @@ DebugPortWrite (
   IN UINTN    NumberOfBytes
   )
 {
-  //GpioDebugPortWrite    (Buffer, NumberOfBytes);
+  GpioDebugPortWrite    (Buffer, NumberOfBytes);
   MailboxDebugPortWrite (Buffer, NumberOfBytes);
   return NumberOfBytes;
 }

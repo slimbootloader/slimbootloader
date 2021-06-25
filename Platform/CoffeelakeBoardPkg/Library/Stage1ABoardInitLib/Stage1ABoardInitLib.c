@@ -265,7 +265,9 @@ BoardInit (
     }
 
     if ((PcdGet32 (PcdDebugOutputDeviceMask) & DEBUG_OUTPUT_DEVICE_DEBUG_PORT) != 0) {
-      GpioConfigurePads (1, (GPIO_INIT_CONFIG *)mGpioDebugPortPinTable);
+      if (PcdGet32 (PcdGpioDebugPortMmioBase)  != 0) {
+        GpioConfigurePads (1, (GPIO_INIT_CONFIG *)mGpioDebugPortPinTable);
+      }
     }
 
     PlatformHookSerialPortInitialize ();
