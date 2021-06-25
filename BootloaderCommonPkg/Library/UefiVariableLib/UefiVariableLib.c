@@ -517,7 +517,7 @@ GetVariableStore (
       //
       BackUpOffset = 0;
 
-      FtwWorkingHeader = (UEFI_FAULT_TOLERANT_WORKING_BLOCK_HEADER *) (NvStorageBase + (NvStorageSize / 2) - FTW_WORKING_SIZE);
+      FtwWorkingHeader = (UEFI_FAULT_TOLERANT_WORKING_BLOCK_HEADER *) (UINTN)(NvStorageBase + (NvStorageSize / 2) - FTW_WORKING_SIZE);
       FtwWorkingSize   = FTW_WORKING_SIZE;
       SpareAreaAddress = (EFI_PHYSICAL_ADDRESS) (NvStorageBase + (NvStorageSize / 2));
       SpareAreaLength  = NvStorageSize / 2;
@@ -1015,7 +1015,7 @@ UefiGetVariable (
   //
   GetComponentInfo (FLASH_MAP_SIG_UEFIVARIABLE, &NvStorageBase, &NvStorageSize);
   ASSERT (NvStorageBase != 0);
-  FwVolHeader = (EFI_FIRMWARE_VOLUME_HEADER *) NvStorageBase;
+  FwVolHeader = (EFI_FIRMWARE_VOLUME_HEADER *) (UINTN) NvStorageBase;
   if ((FwVolHeader->Signature != EFI_FVH_SIGNATURE) || (!CompareGuid (&gEfiSystemNvDataFvGuid, &FwVolHeader->FileSystemGuid))) {
     DEBUG ((DEBUG_INFO, "Invalid NV area!\n"));
     return EFI_DEVICE_ERROR;
