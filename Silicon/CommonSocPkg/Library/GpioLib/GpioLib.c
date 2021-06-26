@@ -7,10 +7,11 @@
 **/
 
 #include <Uefi/UefiBaseType.h>
-#include <GpioLibConfig.h>
-#include <Library/GpioSocLib.h>
-#include <Library/GpioPlatformLib.h>
-#include <GpioLibInternal.h>
+#include <GpioConfig.h>
+#include <Library/GpioLib.h>
+#include <Library/GpioSiLib.h>
+#include <Library/PchSbiAccessLib.h>
+#include "GpioLibInternal.h"
 
 /**
   This procedure will check if GpioPad is owned by host.
@@ -552,7 +553,7 @@ GpioWriteLockReg (
 
   NewLockVal = (OldLockVal & LockRegAndMask) | LockRegOrMask;
 
-  Status = GpioPchSbiExecutionEx (
+  Status = PchSbiExecutionEx (
              GpioGroupInfo[GroupIndex].Community,
              RegOffset,
              (GPIO_PCH_SBI_OPCODE) GpioGetLockOpcode (),
@@ -568,7 +569,7 @@ GpioWriteLockReg (
 }
 
 /**
-  This internal procedure will calculate GPIO_RESET_CONFIG value  (new type)
+  This procedure will calculate GPIO_RESET_CONFIG value  (new type)
   based on provided PadRstCfg for a specific GPIO Pad.
 
   @param[in]  GpioPad               GPIO Pad
@@ -577,6 +578,7 @@ GpioWriteLockReg (
   @retval GpioResetConfig           GPIO Reset configuration (new type)
 **/
 GPIO_RESET_CONFIG
+EFIAPI
 GpioResetConfigFromPadRstCfg (
   IN  GPIO_PAD           GpioPad,
   IN  UINT32             PadRstCfg
@@ -607,7 +609,7 @@ GpioResetConfigFromPadRstCfg (
 }
 
 /**
-  This internal procedure will calculate PadRstCfg register value based
+  This procedure will calculate PadRstCfg register value based
   on provided GPIO Reset configuration for a certain pad.
 
   @param[in]  GpioPad                   GPIO Pad
@@ -618,6 +620,7 @@ GpioResetConfigFromPadRstCfg (
   @retval EFI_INVALID_PARAMETER         Invalid configuration
 **/
 EFI_STATUS
+EFIAPI
 GpioPadRstCfgFromResetConfig (
   IN  GPIO_PAD           GpioPad,
   IN  GPIO_RESET_CONFIG  GpioResetConfig,
@@ -850,6 +853,7 @@ GpioGetPadConfig (
   @retval Status
 **/
 EFI_STATUS
+EFIAPI
 GpioPadCfgRegValueFromGpioConfig (
   IN  GPIO_PAD           GpioPad,
   IN  CONST GPIO_CONFIG  *GpioConfig,
@@ -1041,6 +1045,7 @@ GpioGetInputValue (
   @retval EFI_INVALID_PARAMETER   Invalid GpioPad
 **/
 EFI_STATUS
+EFIAPI
 GpioGetPadIoApicIrqNumber (
   IN GPIO_PAD                  GpioPad,
   OUT UINT32                   *IrqNum
@@ -1387,6 +1392,7 @@ GpioGetPadResetConfig (
   @retval EFI_INVALID_PARAMETER   Invalid group or DwNum parameter number
 **/
 EFI_STATUS
+EFIAPI
 GpioGetHostSwOwnershipForGroupDw (
   IN  GPIO_GROUP                  Group,
   IN  UINT32                      DwNum,
@@ -1419,6 +1425,7 @@ GpioGetHostSwOwnershipForGroupDw (
   @retval EFI_INVALID_PARAMETER   Invalid group or DwNum parameter number
 **/
 EFI_STATUS
+EFIAPI
 GpioSetHostSwOwnershipForGroupDw (
   IN GPIO_GROUP                   Group,
   IN UINT32                       DwNum,
@@ -1449,6 +1456,7 @@ GpioSetHostSwOwnershipForGroupDw (
   @retval EFI_INVALID_PARAMETER   Invalid GpioPad
 **/
 EFI_STATUS
+EFIAPI
 GpioGetHostSwOwnershipForPad (
   IN GPIO_PAD                 GpioPad,
   OUT UINT32                  *PadHostSwOwn
@@ -1486,6 +1494,7 @@ GpioGetHostSwOwnershipForPad (
   @retval EFI_INVALID_PARAMETER   Invalid GpioPad
 **/
 EFI_STATUS
+EFIAPI
 GpioSetHostSwOwnershipForPad (
   IN GPIO_PAD                  GpioPad,
   IN UINT32                    PadHostSwOwn
@@ -1518,6 +1527,7 @@ GpioSetHostSwOwnershipForPad (
   @retval EFI_INVALID_PARAMETER   Invalid group or pad number
 **/
 EFI_STATUS
+EFIAPI
 GpioGetPadOwnership (
   IN  GPIO_PAD                GpioPad,
   OUT GPIO_PAD_OWN            *PadOwnVal
@@ -1573,6 +1583,7 @@ GpioGetPadOwnership (
   @retval EFI_INVALID_PARAMETER   Invalid group or DwNum parameter number
 **/
 EFI_STATUS
+EFIAPI
 GpioGetPadCfgLockForGroupDw (
   IN  GPIO_GROUP                  Group,
   IN  UINT32                      DwNum,
@@ -1643,6 +1654,7 @@ GpioGetPadCfgLock (
   @retval EFI_INVALID_PARAMETER   Invalid group or DwNum parameter number
 **/
 EFI_STATUS
+EFIAPI
 GpioGetPadCfgLockTxForGroupDw (
   IN  GPIO_GROUP                  Group,
   IN  UINT32                      DwNum,
@@ -1672,6 +1684,7 @@ GpioGetPadCfgLockTxForGroupDw (
   @retval EFI_INVALID_PARAMETER   Invalid GpioPad
 **/
 EFI_STATUS
+EFIAPI
 GpioGetPadCfgLockTx (
   IN GPIO_PAD                   GpioPad,
   OUT UINT32                    *PadCfgLockTx
@@ -1713,6 +1726,7 @@ GpioGetPadCfgLockTx (
   @retval EFI_INVALID_PARAMETER   Invalid group or pad number
 **/
 EFI_STATUS
+EFIAPI
 GpioUnlockPadCfgForGroupDw (
   IN GPIO_GROUP                Group,
   IN UINT32                    DwNum,
@@ -1774,6 +1788,7 @@ GpioUnlockPadCfg (
   @retval EFI_INVALID_PARAMETER   Invalid group or DwNum parameter number
 **/
 EFI_STATUS
+EFIAPI
 GpioLockPadCfgForGroupDw (
   IN GPIO_GROUP                   Group,
   IN UINT32                       DwNum,
@@ -1835,6 +1850,7 @@ GpioLockPadCfg (
   @retval EFI_INVALID_PARAMETER   Invalid group or pad number
 **/
 EFI_STATUS
+EFIAPI
 GpioUnlockPadCfgTxForGroupDw (
   IN GPIO_GROUP                Group,
   IN UINT32                    DwNum,
@@ -1864,6 +1880,7 @@ GpioUnlockPadCfgTxForGroupDw (
   @retval EFI_INVALID_PARAMETER   Invalid group or pad number
 **/
 EFI_STATUS
+EFIAPI
 GpioUnlockPadCfgTx (
   IN GPIO_PAD                   GpioPad
   )
@@ -1895,6 +1912,7 @@ GpioUnlockPadCfgTx (
   @retval EFI_INVALID_PARAMETER   Invalid group or DwNum parameter number
 **/
 EFI_STATUS
+EFIAPI
 GpioLockPadCfgTxForGroupDw (
   IN GPIO_GROUP                   Group,
   IN UINT32                       DwNum,
@@ -1923,6 +1941,7 @@ GpioLockPadCfgTxForGroupDw (
   @retval EFI_INVALID_PARAMETER   Invalid group or pad number
 **/
 EFI_STATUS
+EFIAPI
 GpioLockPadCfgTx (
   IN GPIO_PAD                   GpioPad
   )
@@ -1954,6 +1973,7 @@ GpioLockPadCfgTx (
   @retval EFI_INVALID_PARAMETER   Invalid group or pad number
 **/
 EFI_STATUS
+EFIAPI
 GpioGetGroupToGpeDwX (
   IN GPIO_GROUP               *GroupToGpeDw0,
   IN GPIO_GROUP               *GroupToGpeDw1,
@@ -2075,6 +2095,7 @@ GpioGetGroupDwToGpeDwX (
   @retval EFI_INVALID_PARAMETER   Invalid GpioPad
 **/
 EFI_STATUS
+EFIAPI
 GpioGetGpeNumber (
   IN  GPIO_PAD                  GpioPad,
   OUT UINT32                    *GpeNumber
@@ -2136,6 +2157,7 @@ GpioGetGpeNumber (
   @retval     Data                0 means 1-tier, 1 means 2-tier
 **/
 BOOLEAN
+EFIAPI
 GpioCheckFor2Tier (
   IN GPIO_PAD                  GpioPad
   )

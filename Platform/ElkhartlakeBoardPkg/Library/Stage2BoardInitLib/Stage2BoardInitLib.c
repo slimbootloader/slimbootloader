@@ -75,9 +75,8 @@
 #include <TccConfigSubRegions.h>
 #include <Library/TccLib.h>
 #include <Library/MeExtMeasurementLib.h>
-#include <GpioLibConfig.h>
+#include <GpioConfig.h>
 #include <Register/RegsSpi.h>
-#include <Library/GpioSocLib.h>
 #include <Library/GpioLib.h>
 
 BOOLEAN mTccDsoTuning      = FALSE;
@@ -685,7 +684,7 @@ BoardInit (
     EnableLegacyRegions ();
     ConfigureGpio (CDATA_GPIO_TAG, 0, NULL);
     if (mPchSciSupported) {
-      DEBUG ((DEBUG_INFO, "GpioPadConfigTable for Fusa\n"));
+      DEBUG ((DEBUG_INFO, "ConfigureGpio for Fusa\n"));
       ConfigureGpio (CDATA_NO_TAG, ARRAY_SIZE(mGpioTablePreMemEhlFusa), (UINT8*)mGpioTablePreMemEhlFusa);
     }
     SpiConstructor ();

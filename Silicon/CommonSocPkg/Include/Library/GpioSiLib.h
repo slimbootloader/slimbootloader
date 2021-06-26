@@ -9,7 +9,7 @@
 #define _GPIO_INFO_LIB_H_
 
 #include <Uefi/UefiBaseType.h>
-#include <GpioLibConfig.h>
+#include <GpioConfig.h>
 
 /**
   This function gets Group to GPE0 configuration
@@ -106,39 +106,6 @@ UINT32
 EFIAPI
 GpioGetComSbiPortIds (
   OUT GPIO_PCH_SBI_PID    **GpioComSbiIds
-  );
-
-
-/**
-  Wrapper to full function for executing PCH SBI message
-
-  @param[in] Pid                        Port ID of the SBI message
-  @param[in] Offset                     Offset of the SBI message
-  @param[in] Opcode                     Opcode
-  @param[in] Posted                     Posted message
-  @param[in] Fbe                        First byte enable
-  @param[in] Bar                        Bar
-  @param[in] Fid                        Function ID
-  @param[in, out] Data32                Read/Write data
-  @param[out] Response                  Response
-
-  @retval EFI_SUCCESS                   Successfully completed.
-  @retval EFI_DEVICE_ERROR              Transaction fail
-  @retval EFI_INVALID_PARAMETER         Invalid parameter
-  @retval EFI_TIMEOUT                   Timeout while waiting for response
-**/
-EFI_STATUS
-EFIAPI
-GpioPchSbiExecutionEx (
-  IN     GPIO_PCH_SBI_PID               Pid,
-  IN     UINT64                         Offset,
-  IN     GPIO_PCH_SBI_OPCODE            Opcode,
-  IN     BOOLEAN                        Posted,
-  IN     UINT16                         Fbe,
-  IN     UINT16                         Bar,
-  IN     UINT16                         Fid,
-  IN OUT UINT32                         *Data32,
-  OUT    UINT8                          *Response
   );
 
 

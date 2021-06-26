@@ -8,10 +8,11 @@
 
 #include <Uefi/UefiBaseType.h>
 #include <Library/DebugLib.h>
-#include <Library/GpioSocLib.h>
-#include <Library/GpioPlatformLib.h>
-#include <GpioLibInternal.h>
+#include <Library/GpioLib.h>
+#include <Library/GpioSiLib.h>
 #include <Library/ConfigDataLib.h>
+#include <Library/BlMemoryAllocationLib.h>
+#include "GpioLibInternal.h"
 
 //
 // GPIO_GROUP_DW_DATA structure is used by GpioConfigurePch function
@@ -548,9 +549,10 @@ GpioClearAllGpioInterrupts (
   @retval EFI_INVALID_PARAMETER         Invalid group or pad number
 **/
 EFI_STATUS
+EFIAPI
 GpioConfigurePads (
   IN UINT32                    NumberOfItems,
-  IN GPIO_INIT_CONFIG          *GpioInitTableAddress
+  IN VOID                     *GpioInitTableAddress
   )
 {
   EFI_STATUS   Status;
@@ -558,31 +560,6 @@ GpioConfigurePads (
   GpioClearAllGpioInterrupts ();
   return Status;
 }
-
-/**
-  This procedure will initialize multiple GPIO pins. Use GPIO_INIT_CONFIG structure.
-  Structure contains fields that can be used to configure each pad.
-  Pad not configured using GPIO_INIT_CONFIG will be left with hardware default values.
-  Separate fields could be set to hardware default if it does not matter, except
-  GpioPad and PadMode.
-  Some GpioPads are configured and switched to native mode by RC, those include:
-  SerialIo pins, ISH pins, ClkReq Pins
-
-  @param[in] NumberofItem               Number of GPIO pads to be updated
-  @param[in] GpioInitTableAddress       GPIO initialization table
-
-  @retval EFI_SUCCESS                   The function completed successfully
-  @retval EFI_INVALID_PARAMETER         Invalid group or pad number
-**/
-VOID
-GpioPadConfigTable (
-  IN UINT32                    NumberOfItems,
-  IN VOID                     *GpioInitTableAddress
-  )
-{
-  GpioConfigurePads (NumberOfItems, (GPIO_INIT_CONFIG *)GpioInitTableAddress);
-}
-
 
 /**
   Print the output of the GPIO Config table that was read from CfgData.
@@ -659,7 +636,7 @@ FillGpioTable (
 
 /**
   Configure the GPIO pins, available as part of platform specific GPIO CFG DATA.
-  If the pins are not part of GPIO CFG DATA, call GpioPadConfigTable() directly
+  If the pins are not part of GPIO CFG DATA, call GpioConfigurePads() directly
   with the appropriate arguments.
 
   @param    Tag         Tag ID of the Gpio Cfg data item
@@ -699,7 +676,7 @@ ConfigureGpio (
   // If    Tag provided, GpioTable params are don't care
   //
   if (Tag == CDATA_NO_TAG) {
-    GpioPadConfigTable (Entries, (VOID *)DataBuffer);
+    GpioConfigurePads (Entries, (GPIO_INIT_CONFIG *)DataBuffer);
     DEBUG ((DEBUG_INFO, "GpioInit(0x%p:%d) Done\n", DataBuffer, Entries));
     return EFI_SUCCESS;
   }
@@ -759,7 +736,7 @@ ConfigureGpio (
   PrintGpioConfigTable (GpioEntries, GpioCfgDataBuffer);
   DEBUG_CODE_END ();
 
-  GpioPadConfigTable (GpioEntries, (VOID *)GpioCfgDataBuffer);
+  GpioConfigurePads (GpioEntries, (GPIO_INIT_CONFIG *)GpioCfgDataBuffer);
 
   DEBUG ((DEBUG_INFO, "GpioInit(0x%p:%d) Done\n", GpioCfgDataBuffer, GpioEntries));
   return EFI_SUCCESS;

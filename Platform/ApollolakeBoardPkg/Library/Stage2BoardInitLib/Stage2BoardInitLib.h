@@ -12,7 +12,6 @@
 #include <Library/PciLib.h>
 #include <Library/PcdLib.h>
 #include <Library/GpioLib.h>
-#include <Library/SiGpioLib.h>
 #include <Library/ConfigDataLib.h>
 #include <Library/SocInitLib.h>
 #include <Library/BoardInitLib.h>
@@ -71,6 +70,7 @@
 #include <Register/RegsSpi.h>
 #include <Register/Intel/Cpuid.h>
 #include <CseMsg.h>
+#include <Library/GpioLibApl.h>
 
 #define IOC_UART_PPR_CLK_N_DIV        0x64
 #define IOC_UART_PPR_CLK_M_DIV        0x40

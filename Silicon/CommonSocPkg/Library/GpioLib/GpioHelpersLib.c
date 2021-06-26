@@ -6,12 +6,12 @@
 
 **/
 
-#include <Library/GpioSocLib.h>
+#include <Library/GpioLib.h>
 #include <Library/DebugLib.h>
-#include <Library/GpioPlatformLib.h>
-#include <GpioLibConfig.h>
+#include <Library/GpioSiLib.h>
+#include <GpioConfig.h>
 #include <Library/MemoryAllocationLib.h>
-#include <GpioLibInternal.h>
+#include "GpioLibInternal.h"
 
 //
 //  GPIO Lock HOB
@@ -206,6 +206,7 @@ GpioStoreUnlockData (
   @retval Status
 **/
 EFI_STATUS
+EFIAPI
 GpioStoreGroupDwUnlockPadConfigData (
   IN UINT32                       GroupIndex,
   IN UINT32                       DwNum,
@@ -249,6 +250,7 @@ GpioStoreGroupDwUnlockPadConfigData (
   @retval Status
 **/
 EFI_STATUS
+EFIAPI
 GpioStoreGroupDwUnlockOutputData (
   IN UINT32                       GroupIndex,
   IN UINT32                       DwNum,
@@ -291,6 +293,7 @@ GpioStoreGroupDwUnlockOutputData (
                                   Bit value - 0: to be locked, 1: Leave unlocked
 **/
 UINT32
+EFIAPI
 GpioGetGroupDwUnlockPadConfigMask (
   IN UINT32                       GroupIndex,
   IN UINT32                       DwNum
@@ -324,6 +327,7 @@ GpioGetGroupDwUnlockPadConfigMask (
                                   Bit value - 0: to be locked, 1: Leave unlocked
 **/
 UINT32
+EFIAPI
 GpioGetGroupDwUnlockOutputMask (
   IN UINT32                       GroupIndex,
   IN UINT32                       DwNum
@@ -356,6 +360,7 @@ GpioGetGroupDwUnlockOutputMask (
           FALSE                   Incorrect pin
 **/
 BOOLEAN
+EFIAPI
 GpioIsCorrectPadForThisChipset (
   IN  GPIO_PAD        GpioPad
   )
@@ -375,6 +380,7 @@ GpioIsCorrectPadForThisChipset (
                               If illegal group number then return 0
 **/
 UINT32
+EFIAPI
 GpioGetPadPerGroup (
   IN GPIO_GROUP      Group
   )
@@ -403,6 +409,7 @@ GpioGetPadPerGroup (
   @retval Value               Group number
 **/
 UINT32
+EFIAPI
 GpioGetNumberOfGroups (
   VOID
   )
@@ -420,6 +427,7 @@ GpioGetNumberOfGroups (
   @retval Value               Lowest Group
 **/
 GPIO_GROUP
+EFIAPI
 GpioGetLowestGroup (
   VOID
   )
@@ -435,6 +443,7 @@ GpioGetLowestGroup (
   @retval Value               Highest Group
 **/
 GPIO_GROUP
+EFIAPI
 GpioGetHighestGroup (
   VOID
   )
@@ -460,6 +469,7 @@ GpioGetHighestGroup (
   @retval EFI_INVALID_PARAMETER   Invalid input parameter
 **/
 EFI_STATUS
+EFIAPI
 GpioUnlockOverride (
   IN  GPIO_GROUP  Group,
   IN  UINT32      DwNum,

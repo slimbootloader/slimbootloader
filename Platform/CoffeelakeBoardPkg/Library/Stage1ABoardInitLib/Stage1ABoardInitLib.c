@@ -9,7 +9,7 @@
 #include <Library/BoardInitLib.h>
 #include <Library/BootloaderCoreLib.h>
 #include <Library/SerialPortLib.h>
-#include <Library/SiGpioLib.h>
+#include <Library/GpioLib.h>
 #include <Library/PlatformHookLib.h>
 #include <Library/FirmwareUpdateLib.h>
 #include <Library/DebugLib.h>

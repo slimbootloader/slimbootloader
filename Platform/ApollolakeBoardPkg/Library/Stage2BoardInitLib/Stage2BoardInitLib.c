@@ -841,7 +841,7 @@ UpdatePayloadId (
     PlatCfgData = (PLATFORM_CFG_DATA *)FindConfigDataByTag (CDATA_PLATFORM_TAG);
     if ((PlatCfgData != NULL) && (PlatCfgData->PayloadSelGpio.Enable != 0)) {
       // The default GPIOSet to Pull Up 20K
-      GpioGetInputValue (PlatCfgData->PayloadSelGpio.PadInfo, 0x0C, &GpioLevel);
+      GpioGetInputValueWithTerm (PlatCfgData->PayloadSelGpio.PadInfo, 0x0C, &GpioLevel);
       if (GpioLevel != 0) {
         PayloadId = 0;
       } else {

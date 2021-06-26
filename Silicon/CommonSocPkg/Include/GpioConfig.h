@@ -1,13 +1,13 @@
 /** @file
   Header file for GpioConfig structure used by GPIO library.
 
-  Copyright (c) 2014 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
-@par Specification Reference:
 **/
-#ifndef _GPIO_CONFIG_H_
-#define _GPIO_CONFIG_H_
+
+#ifndef _GPIO_LIB_CONFIG_H_
+#define _GPIO_LIB_CONFIG_H_
 
 #pragma pack(push, 1)
 
@@ -16,6 +16,13 @@
 ///
 typedef UINT32 GPIO_PAD;
 
+///
+/// GpioPad with additional native function information.
+/// This type is used to represent signal muxing alternatives. Platform will provide such value to
+/// identify muxing selection for given signal on a specific SOC.
+/// Please refer to the board layout
+///
+typedef UINT32 GPIO_NATIVE_PAD;
 
 ///
 /// For any GpioGroup usage in code use GPIO_GROUP type
@@ -88,7 +95,6 @@ typedef struct {
   UINT32 RsvdBits          : 10;    ///< Reserved bits for future extension
 } GPIO_CONFIG;
 
-
 typedef enum {
   GpioHardwareDefault        = 0x0    ///< Leave setting unmodified
 } GPIO_HARDWARE_DEFAULT;
@@ -109,7 +115,10 @@ typedef enum {
   GpioPadModeNative2  = 0x5,
   GpioPadModeNative3  = 0x7,
   GpioPadModeNative4  = 0x9,
-  GpioPadModeNative5  = 0xB
+  GpioPadModeNative5  = 0xB,
+  GpioPadModeNative6  = 0xD,
+  GpioPadModeNative7  = 0xF,
+  GpioPadModeNative8  = 0x11
 } GPIO_PAD_MODE;
 
 /**
@@ -203,6 +212,17 @@ typedef enum {
 **/
 typedef enum {
   GpioResetDefault   = 0x00,        ///< Leave value of pad reset unmodified
+  ///
+  /// Deprecated settings. Maintained only for compatibility.
+  ///
+  GpioResetPwrGood   = 0x09,        ///< GPP: RSMRST; GPD: DSW_PWROK; (PadRstCfg = 00b = "Powergood")
+  GpioResetDeep      = 0x0B,        ///< Deep GPIO Reset (PadRstCfg = 01b = "Deep GPIO Reset")
+  GpioResetNormal    = 0x0D,        ///< GPIO Reset (PadRstCfg = 10b = "GPIO Reset" )
+  GpioResetResume    = 0x0F,        ///< GPP: Reserved; GPD: RSMRST; (PadRstCfg = 11b = "Resume Reset" )
+
+  ///
+  /// New GPIO reset configuration options
+  ///
   /**
   Resume Reset (RSMRST)
     GPP: PadRstCfg = 00b = "Powergood"
@@ -270,7 +290,9 @@ typedef enum {
   Please check EDS to determine which native functionality
   can control pads termination
   **/
-  GpioTermNative           = 0x1F
+  GpioTermNative     = 0x1F,
+  GpioNoTolerance1v8 = (0x1 << 5),   ///< Disable 1.8V pad tolerance
+  GpioTolerance1v8   = (0x3 << 5)    ///< Enable 1.8V pad tolerance
 } GPIO_ELECTRICAL_CONFIG;
 
 #define B_GPIO_ELECTRICAL_CONFIG_TERMINATION_MASK    0x1F   ///< Mask for GPIO_ELECTRICAL_CONFIG for termination value
@@ -302,6 +324,7 @@ typedef enum {
   GpioPadLock           = 0x5   ///< Lock both Pad configuration and output control
 } GPIO_LOCK_CONFIG;
 
+#define B_GPIO_LOCK_CONFIG_PAD_CONF_LOCK_MASK  0x3  ///< Mask for GPIO_LOCK_CONFIG for Pad Configuration Lock
 #define B_GPIO_LOCK_CONFIG_OUTPUT_LOCK_MASK    0xC  ///< Mask for GPIO_LOCK_CONFIG for Pad Output Lock
 
 /**
@@ -320,6 +343,167 @@ typedef enum {
 
 #define B_GPIO_OTHER_CONFIG_RXRAW_MASK           0x3   ///< Mask for GPIO_OTHER_CONFIG for RxRaw1 setting
 
+typedef UINT8    GPIO_PCH_SBI_PID;
+
+/**
+  PCH SBI opcode definitions
+**/
+typedef enum {
+  GpioMemoryRead             = 0x0,
+  GpioMemoryWrite            = 0x1,
+  GpioPciConfigRead          = 0x4,
+  GpioPciConfigWrite         = 0x5,
+  GpioPrivateControlRead     = 0x6,
+  GpioPrivateControlWrite    = 0x7,
+  GpioLibGpioLockUnlock      = 0x13
+} GPIO_PCH_SBI_OPCODE;
+
+typedef struct {
+  GPIO_PAD           GpioPad;
+  GPIO_CONFIG        GpioConfig;
+} GPIO_INIT_CONFIG;
+
+//
+// Structure for native pin data
+//
+typedef struct {
+  GPIO_PAD       Pad;
+  GPIO_PAD_MODE  Mode;
+} GPIO_PAD_NATIVE_FUNCTION;
+
+//
+// Below defines are based on GPIO_CONFIG structure fields
+//
+#define B_GPIO_PAD_MODE_MASK                            0xF
+#define N_GPIO_PAD_MODE_BIT_POS                         0
+#define B_GPIO_HOSTSW_OWN_MASK                          0x3
+#define N_GPIO_HOSTSW_OWN_BIT_POS                       0
+#define B_GPIO_DIRECTION_MASK                           0x1F
+#define B_GPIO_DIRECTION_DIR_MASK                       0x7
+#define N_GPIO_DIRECTION_DIR_BIT_POS                    0
+#define B_GPIO_DIRECTION_INV_MASK                       0x18
+#define N_GPIO_DIRECTION_INV_BIT_POS                    3
+#define B_GPIO_OUTPUT_MASK                              0x3
+#define N_GPIO_OUTPUT_BIT_POS                           0
+#define N_GPIO_INT_CONFIG_INT_SOURCE_BIT_POS            0
+#define N_GPIO_INT_CONFIG_INT_TYPE_BIT_POS              5
+#define B_GPIO_RESET_CONFIG_RESET_MASK                  0x3F
+#define N_GPIO_RESET_CONFIG_OLD_RESET_TYPE              BIT1
+#define B_GPIO_RESET_CONFIG_OLD_RESET_MASK              0xF
+#define N_GPIO_RESET_CONFIG_RESET_BIT_POS               0
+#define B_GPIO_RESET_CONFIG_GPD_RESET_MASK              (BIT5 | BIT4)
+#define B_GPIO_RESET_CONFIG_GPP_RESET_MASK              (BIT3 | BIT2)
+#define N_GPIO_ELECTRICAL_CONFIG_TERMINATION_BIT_POS    0
+#define N_GPIO_OTHER_CONFIG_RXRAW_BIT_POS               0
+
+//#define GPIO_PCR_PADCFG               0x10
+#define GPIO_PCR_PADCFG                 GpioGetPcrPadCfgOffset()
+
+#define B_GPIO_PCR_RST_CONF             (BIT31 | BIT30)
+#define N_GPIO_PCR_RST_CONF             30
+#define V_GPIO_PCR_RST_CONF_POW_GOOD    0x00
+#define V_GPIO_PCR_RST_CONF_DEEP_RST    0x01
+#define V_GPIO_PCR_RST_CONF_GPIO_RST    0x02
+#define V_GPIO_PCR_RST_CONF_RESUME_RST  0x03
+#define B_GPIO_PCR_RX_RAW1              BIT28
+#define N_GPIO_PCR_RX_RAW1              28
+#define B_GPIO_PCR_RX_LVL_EDG           (BIT26 | BIT25)
+#define N_GPIO_PCR_RX_LVL_EDG           25
+#define B_GPIO_PCR_RXINV                BIT23
+#define N_GPIO_PCR_RXINV                23
+#define B_GPIO_PCR_RX_APIC_ROUTE        BIT20
+#define B_GPIO_PCR_RX_SCI_ROUTE         BIT19
+#define B_GPIO_PCR_RX_SMI_ROUTE         BIT18
+#define B_GPIO_PCR_RX_NMI_ROUTE         BIT17
+#define N_GPIO_PCR_RX_NMI_ROUTE         17
+#define B_GPIO_PCR_TERM                 (BIT13 | BIT12 | BIT11 | BIT10)
+#define N_GPIO_PCR_TERM                 10
+#define B_GPIO_PCR_PAD_MODE             (BIT12 | BIT11 | BIT10)
+#define N_GPIO_PCR_PAD_MODE             10
+#define B_GPIO_PCR_RXDIS                BIT9
+#define B_GPIO_PCR_TXDIS                BIT8
+#define N_GPIO_PCR_TXDIS                8
+#define B_GPIO_PCR_INTSEL               0x7F
+#define N_GPIO_PCR_INTSEL               0
+#define B_GPIO_PCR_RX_STATE             BIT1
+#define N_GPIO_PCR_RX_STATE             1
+#define B_GPIO_PCR_TX_STATE             BIT0
+#define N_GPIO_PCR_TX_STATE             0
+
+///
+/// Groups mapped to 2-tier General Purpose Event will all be under
+/// one master GPE_111 (0x6F)
+///
+#define PCH_GPIO_2_TIER_MASTER_GPE_NUMBER  0x6F
+
+//
+// Structure for storing information about registers offset, community,
+// maximal pad number for available groups
+//
+typedef struct {
+  GPIO_PCH_SBI_PID Community;
+  UINT16       PadOwnOffset;
+  UINT16       HostOwnOffset;
+  UINT16       GpiIsOffset;
+  UINT16       GpiIeOffset;
+  UINT16       GpiGpeStsOffset;
+  UINT16       GpiGpeEnOffset;
+  UINT16       SmiStsOffset;
+  UINT16       SmiEnOffset;
+  UINT16       NmiStsOffset;
+  UINT16       NmiEnOffset;
+  UINT16       PadCfgLockOffset;
+  UINT16       PadCfgLockTxOffset;
+  UINT16       PadCfgOffset;
+  UINT16       PadPerGroup;
+} GPIO_GROUP_INFO;
+
+//
+// If in GPIO_GROUP_INFO structure certain register doesn't exist
+// it will have value equal to NO_REGISTER_FOR_PROPERTY
+//
+#define NO_REGISTER_FOR_PROPERTY 0xFFFF
+
+#define GPIO_GET_PAD_POSITION(PadNumber)       ((PadNumber) % 32)
+#define GPIO_GET_DW_NUM(PadNumber)             ((PadNumber) / 32u)
+
+//
+// Structure which stores information needed to map GPIO Group
+// to 1-Tier GPE. Configuration is needed both in PMC and GPIO IP.
+// Because GPE_DWx can handle only 32 pins only single double word can
+// be mapped at a time. Each DW for a group has different configuration in PMC and GPIO
+//
+typedef struct {
+  GPIO_GROUP  Group;
+  UINT8       GroupDw;
+  UINT8       PmcGpeDwxVal;
+  UINT8       GpioGpeDwxVal;
+} GPIO_GROUP_TO_GPE_MAPPING;
+
+///
+/// Possible values of Pad Ownership
+/// If Pad is not under Host ownership then GPIO registers
+/// are not accessible by host (e.g. BIOS) and reading them
+/// will return 0xFFs.
+///
+typedef enum {
+  GpioPadOwnHost = 0x0,
+  GpioPadOwnCsme = 0x1,
+  GpioPadOwnIsh  = 0x2,
+} GPIO_PAD_OWN;
+
+//
+// Access necessary info from GPIO CFG DATA
+//
+typedef struct {
+  UINT8       BaseTableId;
+  UINT16      ItemSize;
+  UINT16      ItemCount;
+  UINT8      *BaseTableBitMask;
+  UINT8      *TableData;
+} GPIO_CFG_HDR_INFO;
+
 #pragma pack(pop)
 
-#endif //_GPIO_CONFIG_H_
+#endif //_GPIO_LIB_CONFIG_H_
+

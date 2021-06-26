@@ -26,10 +26,12 @@
   MdePkg/MdePkg.dec
   BootloaderCorePkg/BootloaderCorePkg.dec
   Silicon/QemuSocPkg/QemuSocPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
 
 [LibraryClasses]
   BaseLib
   IoLib
+  DebugLib
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress

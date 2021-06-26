@@ -246,7 +246,7 @@ class Board(BaseBoard):
             'MeExtMeasurementLib|Silicon/$(PCH_PKG_NAME)/Library/MeExtMeasurementLib/MeExtMeasurementLib.inf',
             'BasePchPciBdfLib|Silicon/$(PCH_PKG_NAME)/Library/BasePchPciBdfLib/BasePchPciBdfLib.inf',
             'GpioLib|Silicon/CommonSocPkg/Library/GpioLib/GpioLib.inf',
-            'GpioPlatformLib|Silicon/$(PCH_PKG_NAME)/Library/GpioPlatformLib/GpioPlatformLib.inf',
+            'GpioSiLib|Silicon/$(PCH_PKG_NAME)/Library/GpioSiLib/GpioSiLib.inf',
         ]
 
         if self.BUILD_CSME_UPDATE_DRIVER:

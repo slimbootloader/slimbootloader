@@ -145,7 +145,7 @@ GpioInit (
 
   DEBUG ((DEBUG_INFO, "Programming %d GPIO entries\n", GpioEntries));
 
-  GpioPadConfigTable (GpioEntries, GpioCfgDataBuffer);
+  GpioConfigurePads (GpioEntries, (GPIO_INIT_CONFIG *) GpioCfgDataBuffer);
 }
 
 /**

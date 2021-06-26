@@ -34,7 +34,8 @@
   BaseLib
   IoLib
   MemoryAllocationLib
-  GpioPlatformLib
+  GpioSiLib
+  PchSbiAccessLib
 
 [Pcd]
 

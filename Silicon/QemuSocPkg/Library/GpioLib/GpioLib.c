@@ -8,13 +8,14 @@
 #include <PiPei.h>
 #include <Library/DebugLib.h>
 #include <Library/GpioLib.h>
-#include <Library/SiGpioLib.h>
+#include <GpioConfig.h>
 
-VOID
-GpioPadConfigTable (
-  IN UINT32              GpioPinNum,
-  IN VOID*               GpioConfData
-)
+EFI_STATUS
+EFIAPI
+GpioConfigurePads (
+  IN UINT32                    GpioPinNum,
+  IN VOID                     *GpioConfData
+  )
 /*++
 
 Routine Description:
@@ -28,14 +29,18 @@ Arguments:
 
 --*/
 {
-  GPIO_INIT_CONFIG  *GpioInitConf;
-  UINT32             Index;
+  UINT32   *Pad0;
+  UINT32   *Pad1;
+  UINT32    Index;
 
-  GpioInitConf = (GPIO_INIT_CONFIG *)GpioConfData;
+  Pad0 = (UINT32 *)GpioConfData;
   for (Index  = 0; Index < GpioPinNum; Index++) {
-    DEBUG ((DEBUG_INFO, "GPIO GPP_A%02d DATA: 0x%08X 0x%08X\n", GpioInitConf->GpioPad1 & 0x0F, GpioInitConf->GpioPad0, GpioInitConf->GpioPad1));
-    GpioInitConf++;
+    Pad1 = Pad0 + 1;
+    DEBUG ((DEBUG_INFO, "GPIO GPP_A%02d DATA: 0x%08X 0x%08X\n", (*Pad1) & 0x0F, *Pad0, *Pad1));
+    Pad0 = Pad1 + 1;
   }
+
+  return EFI_SUCCESS;
 }
 
 

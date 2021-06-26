@@ -6,101 +6,26 @@
 
 **/
 
-#ifndef _GPIO_LIB_INTERNAL_H_
-#define _GPIO_LIB_INTERNAL_H_
+#ifndef _GPIO_LIB_INT_H_
+#define _GPIO_LIB_INT_H_
 
 #include <Base.h>
 #include <Uefi/UefiBaseType.h>
-#include <Library/IoLib.h>
-#include <Library/DebugLib.h>
-#include <Library/BaseMemoryLib.h>
-#include <Library/GpioPlatformLib.h>
-#include <Library/BlMemoryAllocationLib.h>
-
-#define GPIO_NAME_LENGTH_MAX  32
-
-//
-// Number of PADCFG_DW registers
-//
-#define GPIO_PADCFG_DW_REG_NUMBER  4
+#include <GpioConfig.h>
 
 /**
-  This internal procedure will calculate GPIO_RESET_CONFIG value  (new type)
-  based on provided PadRstCfg for a specific GPIO Pad.
+  This procedure is used to clear GPE STS for a specified GpioPad
 
-  @param[in]  GpioPad               GPIO Pad
-  @param[in]  PadRstCfg             GPIO PadRstCfg value
+  @param[in]  GpioPad             GPIO pad
 
-  @retval GpioResetConfig           GPIO Reset configuration (new type)
-**/
-GPIO_RESET_CONFIG
-GpioResetConfigFromPadRstCfg (
-  IN  GPIO_PAD           GpioPad,
-  IN  UINT32             PadRstCfg
-  );
-
-/**
-  This internal procedure will calculate PadRstCfg register value based
-  on provided GPIO Reset configuration for a certain pad.
-
-  @param[in]  GpioPad                   GPIO Pad
-  @param[in]  GpioResetConfig           GPIO Reset configuration
-  @param[out] PadRstCfg                 GPIO PadRstCfg value
-
-  @retval EFI_SUCCESS                   The function completed successfully
-  @retval EFI_INVALID_PARAMETER         Invalid configuration
+  @retval EFI_SUCCESS             The function completed successfully
+  @retval EFI_INVALID_PARAMETER   Invalid GpioPad
 **/
 EFI_STATUS
-GpioPadRstCfgFromResetConfig (
-  IN  GPIO_PAD           GpioPad,
-  IN  GPIO_RESET_CONFIG  GpioResetConfig,
-  OUT UINT32             *PadRstCfg
+EFIAPI
+GpioClearGpiGpeSts (
+  IN GPIO_PAD                  GpioPad
   );
-
-/**
-  This procedure will calculate PADCFG register value based on GpioConfig data
-
-  @param[in]  GpioPad                   GPIO Pad
-  @param[in]  GpioConfig                GPIO Configuration data
-  @param[out] PadCfgDwReg               PADCFG DWx register value
-  @param[out] PadCfgDwRegMask           Mask with PADCFG DWx register bits to be modified
-
-  @retval Status
-**/
-EFI_STATUS
-GpioPadCfgRegValueFromGpioConfig (
-  IN  GPIO_PAD           GpioPad,
-  IN  CONST GPIO_CONFIG  *GpioConfig,
-  OUT UINT32             *PadCfgDwReg,
-  OUT UINT32             *PadCfgDwRegMask
-  );
-
-/**
-  This procedure will initialize multiple GPIO pins. Use GPIO_INIT_CONFIG structure.
-  Structure contains fields that can be used to configure each pad.
-  Pad not configured using GPIO_INIT_CONFIG will be left with hardware default values.
-  Separate fields could be set to hardware default if it does not matter, except
-  GpioPad and PadMode.
-  Function will work in most efficient way if pads which belong to the same group are
-  placed in adjacent records of the table.
-  Although function can enable pads for Native mode, such programming is done
-  by reference code when enabling related silicon feature.
-
-  @param[in] NumberofItem               Number of GPIO pads to be updated
-  @param[in] GpioInitTableAddress       GPIO initialization table
-
-  @retval EFI_SUCCESS                   The function completed successfully
-  @retval EFI_INVALID_PARAMETER         Invalid group or pad number
-**/
-EFI_STATUS
-GpioConfigurePads (
-  IN UINT32                    NumberOfItems,
-  IN GPIO_INIT_CONFIG          *GpioInitTableAddress
-  );
-
-//
-// Functions for setting/getting multiple GpioPad settings
-//
 
 /**
   This procedure is used to check GPIO inputs belongs to 2 tier or 1 tier architecture
@@ -110,6 +35,7 @@ GpioConfigurePads (
   @retval     Data                0 means 1-tier, 1 means 2-tier
 **/
 BOOLEAN
+EFIAPI
 GpioCheckFor2Tier (
   IN GPIO_PAD                  GpioPad
   );
@@ -138,6 +64,7 @@ GpioCheckFor2Tier (
   @retval EFI_INVALID_PARAMETER   Invalid GpioPad
 **/
 EFI_STATUS
+EFIAPI
 GpioGetGpeNumber (
   IN GPIO_PAD                   GpioPad,
   OUT UINT32                    *GpeNumber
@@ -157,10 +84,44 @@ GpioGetGpeNumber (
   @retval EFI_INVALID_PARAMETER   Invalid group or pad number
 **/
 EFI_STATUS
+EFIAPI
 GpioGetGroupToGpeDwX (
   IN GPIO_GROUP               *GroupToGpeDw0,
   IN GPIO_GROUP               *GroupToGpeDw1,
   IN GPIO_GROUP               *GroupToGpeDw2
+  );
+
+/**
+  This procedure will check state of Pad Config Lock for selected pad
+
+  @param[in]  GpioPad             GPIO pad
+  @param[out] PadCfgLock          PadCfgLock for selected pad
+                                  0: NotLocked, 1: Locked
+
+  @retval EFI_SUCCESS             The function completed successfully
+  @retval EFI_INVALID_PARAMETER   Invalid GpioPad
+**/
+EFI_STATUS
+EFIAPI
+GpioGetPadCfgLock (
+  IN GPIO_PAD                   GpioPad,
+  OUT UINT32                    *PadCfgLock
+  );
+
+
+/**
+  This procedure will clear PadCfgLock for selected pad.
+  Unlocking a pad will cause an SMI (if enabled)
+
+  @param[in] GpioPad              GPIO pad
+
+  @retval EFI_SUCCESS             The function completed successfully
+  @retval EFI_INVALID_PARAMETER   Invalid GpioPad
+**/
+EFI_STATUS
+EFIAPI
+GpioUnlockPadCfg (
+  IN GPIO_PAD                   GpioPad
   );
 
 /**
@@ -173,6 +134,7 @@ GpioGetGroupToGpeDwX (
   @retval EFI_INVALID_PARAMETER   Invalid GpioPad
 **/
 EFI_STATUS
+EFIAPI
 GpioUnlockPadCfgTx (
   IN GPIO_PAD                   GpioPad
   );
@@ -191,23 +153,11 @@ GpioUnlockPadCfgTx (
   @retval EFI_INVALID_PARAMETER   Invalid group or DwNum parameter number
 **/
 EFI_STATUS
+EFIAPI
 GpioLockPadCfgTxForGroupDw (
   IN GPIO_GROUP                   Group,
   IN UINT32                       DwNum,
   IN UINT32                       PadsToLockTx
-  );
-
-/**
-  This procedure will set PadCfgLockTx for selected pad
-
-  @param[in] GpioPad              GPIO pad
-
-  @retval EFI_SUCCESS             The function completed successfully
-  @retval EFI_INVALID_PARAMETER   Invalid GpioPad
-**/
-EFI_STATUS
-GpioLockPadCfgTx (
-  IN GPIO_PAD                   GpioPad
   );
 
 /**
@@ -224,98 +174,11 @@ GpioLockPadCfgTx (
   @retval EFI_INVALID_PARAMETER   Invalid group or DwNum parameter number
 **/
 EFI_STATUS
+EFIAPI
 GpioLockPadCfgForGroupDw (
   IN GPIO_GROUP                   Group,
   IN UINT32                       DwNum,
   IN UINT32                       PadsToLock
-  );
-
-/**
-  This procedure will clear PadCfgLockTx for selected pads within one group.
-  Unlocking a pad will cause an SMI (if enabled)
-
-  @param[in]  Group               GPIO group
-  @param[in]  DwNum               PadCfgLockTx register number for current group.
-                                  For group which has less then 32 pads per group DwNum must be 0.
-  @param[in]  PadsToUnlockTx      Bitmask for pads which are going to be unlocked,
-                                  Bit position - PadNumber
-                                  Bit value - 0: DoNotUnLockTx, 1: LockTx
-
-  @retval EFI_SUCCESS             The function completed successfully
-  @retval EFI_INVALID_PARAMETER   Invalid group or pad number
-**/
-EFI_STATUS
-GpioUnlockPadCfgTxForGroupDw (
-  IN GPIO_GROUP                Group,
-  IN UINT32                    DwNum,
-  IN UINT32                    PadsToUnlockTx
-  );
-
-///
-/// Possible values of Pad Ownership
-/// If Pad is not under Host ownership then GPIO registers
-/// are not accessible by host (e.g. BIOS) and reading them
-/// will return 0xFFs.
-///
-typedef enum {
-  GpioPadOwnHost = 0x0,
-  GpioPadOwnCsme = 0x1,
-  GpioPadOwnIsh  = 0x2,
-} GPIO_PAD_OWN;
-
-/**
-  This procedure will get Gpio Pad Ownership
-
-  @param[in] GpioPad              GPIO pad
-  @param[out] PadOwnVal           Value of Pad Ownership
-
-  @retval EFI_SUCCESS             The function completed successfully
-  @retval EFI_INVALID_PARAMETER   Invalid GpioPad
-**/
-EFI_STATUS
-GpioGetPadOwnership (
-  IN  GPIO_PAD                GpioPad,
-  OUT GPIO_PAD_OWN            *PadOwnVal
-  );
-
-/**
-  This procedure will check state of Pad Config Lock for pads within one group
-
-  @param[in]  Group               GPIO group
-  @param[in]  DwNum               PadCfgLock register number for current group.
-                                  For group which has less then 32 pads per group DwNum must be 0.
-  @param[out] PadCfgLockRegVal    Value of PadCfgLock register
-                                  Bit position - PadNumber
-                                  Bit value - 0: NotLocked, 1: Locked
-
-  @retval EFI_SUCCESS             The function completed successfully
-  @retval EFI_INVALID_PARAMETER   Invalid group or DwNum parameter number
-**/
-EFI_STATUS
-GpioGetPadCfgLockForGroupDw (
-  IN  GPIO_GROUP                  Group,
-  IN  UINT32                      DwNum,
-  OUT UINT32                      *PadCfgLockRegVal
-  );
-
-/**
-  This procedure will check state of Pad Config Tx Lock for pads within one group
-
-  @param[in]  Group               GPIO group
-  @param[in]  DwNum               PadCfgLockTx register number for current group.
-                                  For group which has less then 32 pads per group DwNum must be 0.
-  @param[out] PadCfgLockTxRegVal  Value of PadCfgLockTx register
-                                  Bit position - PadNumber
-                                  Bit value - 0: NotLockedTx, 1: LockedTx
-
-  @retval EFI_SUCCESS             The function completed successfully
-  @retval EFI_INVALID_PARAMETER   Invalid group or DwNum parameter number
-**/
-EFI_STATUS
-GpioGetPadCfgLockTxForGroupDw (
-  IN  GPIO_GROUP                  Group,
-  IN  UINT32                      DwNum,
-  OUT UINT32                      *PadCfgLockTxRegVal
   );
 
 /**
@@ -329,35 +192,11 @@ GpioGetPadCfgLockTxForGroupDw (
   @retval EFI_INVALID_PARAMETER   Invalid GpioPad
 **/
 EFI_STATUS
+EFIAPI
 GpioGetPadCfgLockTx (
   IN GPIO_PAD                   GpioPad,
   OUT UINT32                    *PadCfgLockTx
   );
-
-/**
-  This procedure will clear PadCfgLock for selected pads within one group.
-  Unlocking a pad will cause an SMI (if enabled)
-
-  @param[in]  Group               GPIO group
-  @param[in]  DwNum               PadCfgLock register number for current group.
-                                  For group which has less then 32 pads per group DwNum must be 0.
-  @param[in]  PadsToUnlock        Bitmask for pads which are going to be unlocked,
-                                  Bit position - PadNumber
-                                  Bit value - 0: DoNotUnlock, 1: Unlock
-
-  @retval EFI_SUCCESS             The function completed successfully
-  @retval EFI_INVALID_PARAMETER   Invalid group or pad number
-**/
-EFI_STATUS
-GpioUnlockPadCfgForGroupDw (
-  IN GPIO_GROUP                Group,
-  IN UINT32                    DwNum,
-  IN UINT32                    PadsToUnlock
-  );
-
-//
-// Functions for setting/getting single GpioPad properties
-//
 
 /**
   This procedure will get GPIO IOxAPIC interrupt number
@@ -369,6 +208,7 @@ GpioUnlockPadCfgForGroupDw (
   @retval EFI_INVALID_PARAMETER   Invalid GpioPad
 **/
 EFI_STATUS
+EFIAPI
 GpioGetPadIoApicIrqNumber (
   IN GPIO_PAD                  GpioPad,
   OUT UINT32                   *IrqNum
@@ -388,6 +228,7 @@ GpioGetPadIoApicIrqNumber (
   @retval EFI_INVALID_PARAMETER   Invalid group or DwNum parameter number
 **/
 EFI_STATUS
+EFIAPI
 GpioGetHostSwOwnershipForGroupDw (
   IN  GPIO_GROUP                  Group,
   IN  UINT32                      DwNum,
@@ -408,6 +249,7 @@ GpioGetHostSwOwnershipForGroupDw (
   @retval EFI_INVALID_PARAMETER   Invalid group or DwNum parameter number
 **/
 EFI_STATUS
+EFIAPI
 GpioSetHostSwOwnershipForGroupDw (
   IN GPIO_GROUP                   Group,
   IN UINT32                       DwNum,
@@ -425,6 +267,7 @@ GpioSetHostSwOwnershipForGroupDw (
   @retval EFI_INVALID_PARAMETER   Invalid GpioPad
 **/
 EFI_STATUS
+EFIAPI
 GpioGetHostSwOwnershipForPad (
   IN GPIO_PAD                 GpioPad,
   OUT UINT32                  *PadHostSwOwn
@@ -441,11 +284,11 @@ GpioGetHostSwOwnershipForPad (
   @retval EFI_INVALID_PARAMETER   Invalid GpioPad
 **/
 EFI_STATUS
+EFIAPI
 GpioSetHostSwOwnershipForPad (
   IN GPIO_PAD                  GpioPad,
   IN UINT32                    PadHostSwOwn
   );
-
 
 /**
   This procedure will get number of pads for certain GPIO group
@@ -456,6 +299,7 @@ GpioSetHostSwOwnershipForPad (
                               If illegal group number then return 0
 **/
 UINT32
+EFIAPI
 GpioGetPadPerGroup (
   IN GPIO_GROUP        Group
   );
@@ -469,6 +313,7 @@ GpioGetPadPerGroup (
   @retval Value               Lowest Group
 **/
 GPIO_GROUP
+EFIAPI
 GpioGetLowestGroup (
   VOID
   );
@@ -482,23 +327,10 @@ GpioGetLowestGroup (
   @retval Value               Highest Group
 **/
 GPIO_GROUP
+EFIAPI
 GpioGetHighestGroup (
   VOID
   );
-
-
-/**
-  This procedure will get number of groups
-
-  @param[in] none
-
-  @retval Value               Group number
-**/
-UINT32
-GpioGetNumberOfGroups (
-  VOID
-  );
-
 
 /**
   This procedure will get GPIO group data with pads, which PadConfig is supposed to be left unlock
@@ -511,6 +343,7 @@ GpioGetNumberOfGroups (
                                   Bit value - 0: to be locked, 1: Leave unlocked
 **/
 UINT32
+EFIAPI
 GpioGetGroupDwUnlockPadConfigMask (
   IN UINT32                       GroupIndex,
   IN UINT32                       DwNum
@@ -528,11 +361,11 @@ GpioGetGroupDwUnlockPadConfigMask (
                                   Bit value - 0: to be locked, 1: Leave unlocked
 **/
 UINT32
+EFIAPI
 GpioGetGroupDwUnlockOutputMask (
   IN UINT32                       GroupIndex,
   IN UINT32                       DwNum
   );
-
 
 /**
   This procedure stores GPIO group data about pads which PadConfig needs to be unlocked.
@@ -547,6 +380,7 @@ GpioGetGroupDwUnlockOutputMask (
   @retval Status
 **/
 EFI_STATUS
+EFIAPI
 GpioStoreGroupDwUnlockPadConfigData (
   IN UINT32                       GroupIndex,
   IN UINT32                       DwNum,
@@ -566,6 +400,7 @@ GpioStoreGroupDwUnlockPadConfigData (
   @retval Status
 **/
 EFI_STATUS
+EFIAPI
 GpioStoreGroupDwUnlockOutputData (
   IN UINT32                       GroupIndex,
   IN UINT32                       DwNum,
@@ -588,6 +423,7 @@ GpioStoreGroupDwUnlockOutputData (
   @retval EFI_INVALID_PARAMETER   Invalid input parameter
 **/
 EFI_STATUS
+EFIAPI
 GpioUnlockOverride (
   IN  GPIO_GROUP  Group,
   IN  UINT32      DwNum,
@@ -595,18 +431,34 @@ GpioUnlockOverride (
   OUT UINT32      *UnlockTxPad
   );
 
+
 /**
-  This procedure is used to check if GpioPad is valid for certain chipset
+  This procedure will set PadCfgLock for selected pad
 
-  @param[in]  GpioPad             GPIO pad
+  @param[in] GpioPad              GPIO pad
 
-  @retval TRUE                    This pin is valid on this chipset
-          FALSE                   Incorrect pin
+  @retval EFI_SUCCESS             The function completed successfully
+  @retval EFI_INVALID_PARAMETER   Invalid GpioPad
 **/
-BOOLEAN
-GpioIsCorrectPadForThisChipset (
-  IN  GPIO_PAD        GpioPad
+EFI_STATUS
+EFIAPI
+GpioLockPadCfg (
+  IN GPIO_PAD                   GpioPad
   );
 
-#endif // _GPIO_LIB_INTERNAL_H_
 
+/**
+  This procedure will set PadCfgLockTx for selected pad
+
+  @param[in] GpioPad              GPIO pad
+
+  @retval EFI_SUCCESS             The function completed successfully
+  @retval EFI_INVALID_PARAMETER   Invalid GpioPad
+**/
+EFI_STATUS
+EFIAPI
+GpioLockPadCfgTx (
+  IN GPIO_PAD                   GpioPad
+  );
+
+#endif // _GPIO_LIB_INT_H_

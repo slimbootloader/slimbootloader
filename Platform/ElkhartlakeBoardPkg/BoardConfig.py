@@ -220,7 +220,7 @@ class Board(BaseBoard):
             'PlatformHookLib|Silicon/$(SILICON_PKG_NAME)/Library/PlatformHookLib/PlatformHookLib.inf',
             'TccLib|Silicon/CommonSocPkg/Library/TccLib/TccLib.inf',
             'GpioLib|Silicon/CommonSocPkg/Library/GpioLib/GpioLib.inf',
-            'GpioPlatformLib|Silicon/$(SILICON_PKG_NAME)/Library/GpioPlatformLib/GpioPlatformLib.inf',
+            'GpioSiLib|Silicon/$(SILICON_PKG_NAME)/Library/GpioSiLib/GpioSiLib.inf',
             'PchSpiLib|Silicon/CommonSocPkg/Library/PchSpiLib/PchSpiLib.inf',
             'SpiFlashLib|Silicon/CommonSocPkg/Library/SpiFlashLib/SpiFlashLib.inf',
             'VtdLib|Silicon/$(SILICON_PKG_NAME)/Library/VTdLib/VTdLib.inf',
