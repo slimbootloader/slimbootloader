@@ -15,7 +15,6 @@
 #include <Library/DebugLib.h>
 #include <Library/IoLib.h>
 #include <Library/GpioLib.h>
-#include <Library/SiGpioLib.h>
 #include <Library/SpiFlashLib.h>
 #include <Library/SocInitLib.h>
 #include <Library/BoardInitLib.h>

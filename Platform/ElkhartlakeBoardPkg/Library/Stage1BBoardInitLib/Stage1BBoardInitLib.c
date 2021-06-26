@@ -38,7 +38,7 @@
 #include <TccConfigSubRegions.h>
 #include <Register/RtcRegs.h>
 #include <Register/PmcRegs.h>
-#include <GpioLibConfig.h>
+#include <GpioConfig.h>
 #include <Library/GpioLib.h>
 
 CONST PLT_DEVICE  mPlatformDevices[]= {

@@ -9,7 +9,7 @@
 #define _ELKHARTLAKE_GPIO_TABLE_H_
 
 #include <Register/GpioPinsVer3.h>
-#include <GpioLibConfig.h>
+#include <GpioConfig.h>
 
 #ifndef ARG_UNUSED
 #if defined(__GNUC__)

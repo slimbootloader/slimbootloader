@@ -10,16 +10,13 @@
 #include <Library/DebugLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
-//#include <Library/SiGpioLib.h>
-#include <Library/GpioNativeLib.h>
-//#include <GpioLibConfig.h>
 #include <Library/PchSbiAccessLib.h>
-#include <Library/GpioHelpersLib.h>
 #include <Register/GpioRegs.h>
 #include <Register/GpioRegsVer3.h>
 #include <Register/GpioPinsVer3.h>
 #include <Register/PmcRegs.h>
 #include <Register/PmcRegsVer3.h>
+#include <GpioConfig.h>
 
 GLOBAL_REMOVE_IF_UNREFERENCED PCH_SBI_PID mGpioComSbiIds[] =
 {
@@ -124,6 +121,7 @@ typedef union {
   @param[out] GpeDw2Value       GPIO Group to GPE_DW2 assignment
 **/
 VOID
+EFIAPI
 PmcGetGpioGpe (
   OUT UINT32    *GpeDw0Value,
   OUT UINT32    *GpeDw1Value,
@@ -162,6 +160,7 @@ GpioGetLockOpcode (
                                   FALSE: This is not DSW Group
 **/
 BOOLEAN
+EFIAPI
 GpioIsDswGroup (
   IN  GPIO_GROUP         Group
   )
@@ -182,6 +181,7 @@ GpioIsDswGroup (
 
 **/
 CONST GPIO_GROUP_INFO*
+EFIAPI
 GpioGetGroupInfoTable (
   OUT UINT32              *GpioGroupInfoTableLength
   )
@@ -194,6 +194,7 @@ GpioGetGroupInfoTable (
   Get GPIO Chipset ID specific to PCH generation and series
 **/
 UINT32
+EFIAPI
 GpioGetThisChipsetId (
   VOID
   )
@@ -208,6 +209,7 @@ GpioGetThisChipsetId (
   @param[out] GpioGroupToGpeMappingLength  GPIO Group to GPE mapping table length
 **/
 VOID
+EFIAPI
 GpioGetGroupToGpeMapping (
   OUT GPIO_GROUP_TO_GPE_MAPPING  **GpioGroupToGpeMapping,
   OUT UINT32                     *GpioGroupToGpeMappingLength
@@ -215,68 +217,6 @@ GpioGetGroupToGpeMapping (
 {
     *GpioGroupToGpeMapping = mPchA0GpioGroupToGpeMapping;
     *GpioGroupToGpeMappingLength = ARRAY_SIZE (mPchA0GpioGroupToGpeMapping);
-}
-
-/**
-  This function provides GPIO Community PortIDs
-
-  @param[out] NativePinsTable                Table with GPIO COMMx SBI PortIDs
-
-  @retval     Number of communities
-
-UINT32
-EFIAPI
-GpioGetComSbiPortIds (
-  OUT GPIO_PCH_SBI_PID    **GpioComSbiIds
-  )
-{
-  *GpioComSbiIds = mGpioComSbiIds;
-  return ARRAY_SIZE (mGpioComSbiIds);
-}**/
-
-/**
-  Wrapper to full function for executing PCH SBI message
-
-  @param[in] Pid                        Port ID of the SBI message
-  @param[in] Offset                     Offset of the SBI message
-  @param[in] Opcode                     Opcode
-  @param[in] Posted                     Posted message
-  @param[in] Fbe                        First byte enable
-  @param[in] Bar                        Bar
-  @param[in] Fid                        Function ID
-  @param[in, out] Data32                Read/Write data
-  @param[out] Response                  Response
-
-  @retval EFI_SUCCESS                   Successfully completed.
-  @retval EFI_DEVICE_ERROR              Transaction fail
-  @retval EFI_INVALID_PARAMETER         Invalid parameter
-  @retval EFI_TIMEOUT                   Timeout while waiting for response
-**/
-EFI_STATUS
-EFIAPI
-GpioPchSbiExecutionEx (
-  IN     PCH_SBI_PID               Pid,
-  IN     UINT64                         Offset,
-  IN     PCH_SBI_OPCODE            Opcode,
-  IN     BOOLEAN                        Posted,
-  IN     UINT16                         Fbe,
-  IN     UINT16                         Bar,
-  IN     UINT16                         Fid,
-  IN OUT UINT32                         *Data32,
-  OUT    UINT8                          *Response
-  )
-{
-  return  PchSbiExecutionEx (
-            Pid,
-            Offset,
-            Opcode,
-            Posted,
-            Fbe,
-            Bar,
-            Fid,
-            Data32,
-            Response
-            );
 }
 
 /**
@@ -374,6 +314,7 @@ GpioGetGpioPadFromGroupIndexAndPadNumber (
   @retval GpioGroup            Gpio Group
 **/
 GPIO_GROUP
+EFIAPI
 GpioGetGroupFromGroupIndex (
   IN UINT32        GroupIndex
   )
@@ -389,6 +330,7 @@ GpioGetGroupFromGroupIndex (
   @retval Value               Group Index
 **/
 UINT32
+EFIAPI
 GpioGetGroupIndexFromGroup (
   IN GPIO_GROUP        GpioGroup
   )
@@ -404,6 +346,7 @@ GpioGetGroupIndexFromGroup (
   @retval Value               Group number
 **/
 GPIO_GROUP
+EFIAPI
 GpioGetGroupFromGpioPad (
   IN GPIO_PAD         GpioPad
   )
@@ -419,6 +362,7 @@ GpioGetGroupFromGpioPad (
   @retval Value               Group Index
 **/
 UINT32
+EFIAPI
 GpioGetGroupIndexFromGpioPad (
   IN GPIO_PAD        GpioPad
   )
@@ -434,6 +378,7 @@ GpioGetGroupIndexFromGpioPad (
   @retval Value               Pad Number
 **/
 UINT32
+EFIAPI
 GpioGetPadNumberFromGpioPad (
   IN GPIO_PAD        GpioPad
   )

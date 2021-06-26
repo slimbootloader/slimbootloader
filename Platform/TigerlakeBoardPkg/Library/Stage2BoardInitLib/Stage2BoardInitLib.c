@@ -12,8 +12,8 @@
 #include <Library/BlMemoryAllocationLib.h>
 #include <Library/DebugLib.h>
 #include <Library/GpioLib.h>
-#include <Library/GpioSocLib.h>
-#include <GpioLibConfig.h>
+#include <Library/GpioSiLib.h>
+#include <GpioConfig.h>
 #include <Library/SpiFlashLib.h>
 #include <Library/SocInitLib.h>
 #include <Library/BoardInitLib.h>

@@ -5,11 +5,13 @@
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
-#include "GpioLibrary.h"
+//#include "GpioLibrary.h"
 #include "GpioInitLib.h"
-#include "GpioPrivateLib.h"
+//#include "GpioPrivateLib.h"
 #include <GpioPinsCmlvLp.h>
 #include <GpioPinsCmlvH.h>
+#include <Library/GpioLib.h>
+#include <Library/GpioSiLib.h>
 
 /**
   This function gets Group to GPE0 configuration
@@ -19,6 +21,7 @@
   @param[out] GpeDw2Value       GPIO Group to GPE_DW2 assignment
 **/
 VOID
+EFIAPI
 PmcGetGpioGpe (
   OUT UINT32    *GpeDw0Value,
   OUT UINT32    *GpeDw1Value,
@@ -50,6 +53,7 @@ PmcGetGpioGpe (
   @retval EFI_INVALID_PARAMETER   Invalid group or pad number
 **/
 EFI_STATUS
+EFIAPI
 GpioGetGroupDwToGpeDwX (
   OUT GPIO_GROUP                *GroupToGpeDw0,
   OUT UINT32                    *GroupDwForGpeDw0,
@@ -112,6 +116,7 @@ GpioGetGroupDwToGpeDwX (
   @retval EFI_INVALID_PARAMETER   Invalid group or pad number
 **/
 EFI_STATUS
+EFIAPI
 GpioGetPadOwnership (
   IN  GPIO_PAD                GpioPad,
   OUT GPIO_PAD_OWN            *PadOwnVal
@@ -163,6 +168,7 @@ GpioGetPadOwnership (
   @retval GpioResetConfig           GPIO Reset configuration (new type)
 **/
 GPIO_RESET_CONFIG
+EFIAPI
 GpioResetConfigFromPadRstCfg (
   IN  GPIO_PAD           GpioPad,
   IN  UINT32             PadRstCfg
@@ -275,6 +281,7 @@ GpioConfigFromPadCfgRegValue (
   @retval EFI_INVALID_PARAMETER         Invalid group or pad number
 **/
 EFI_STATUS
+EFIAPI
 GpioGetPadConfig (
   IN  GPIO_PAD               GpioPad,
   OUT GPIO_CONFIG            *GpioData
@@ -378,6 +385,7 @@ GpioGetPadConfig (
   @retval EFI_INVALID_PARAMETER   Invalid GpioPad
 **/
 EFI_STATUS
+EFIAPI
 GpioGetInputValue (
   IN GPIO_PAD       GpioPad,
   OUT UINT32        *InputVal

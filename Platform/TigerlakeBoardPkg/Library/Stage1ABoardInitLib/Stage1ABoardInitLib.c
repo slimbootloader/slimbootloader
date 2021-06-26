@@ -16,7 +16,7 @@
 #include <CpuRegs.h>
 #include <PchAccess.h>
 #include <Library/GpioLib.h>
-#include <GpioLibConfig.h>
+#include <GpioConfig.h>
 #include <GpioPinsVer2Lp.h>
 #include <Library/ConfigDataLib.h>
 

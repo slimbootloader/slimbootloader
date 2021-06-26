@@ -45,8 +45,8 @@
 #include <Library/PchSerialIoLib.h>
 #include <Library/SgxLib.h>
 #include <PlatformBase.h>
-#include <Library/SiGpioLib.h>
-#include <Library/GpioNativeLib.h>
+#include <Library/GpioLib.h>
+#include <Library/GpioSiLib.h>
 #include <RegAccess.h>
 #include <CpuPowerMgmt.h>
 #include <PowerMgmtNvsStruct.h>

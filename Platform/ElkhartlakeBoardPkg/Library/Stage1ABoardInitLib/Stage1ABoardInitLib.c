@@ -18,7 +18,7 @@
 #include <PlatformData.h>
 #include <Register/PchRegsP2sb.h>
 #include <CpuRegs.h>
-#include <GpioLibConfig.h>
+#include <GpioConfig.h>
 #include <Library/GpioLib.h>
 #include <Library/ConfigDataLib.h>
 

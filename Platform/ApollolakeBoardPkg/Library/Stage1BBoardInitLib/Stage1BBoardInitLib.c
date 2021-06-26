@@ -51,6 +51,7 @@
 #include <Library/InternalIpcLib.h>
 #include "ScRegs/SscRegs.h"
 #include <MeBiosPayloadData.h>
+#include <Library/GpioLibApl.h>
 
 #define APL_FSP_STACK_TOP       0xFEF40000
 #define MRC_PARAMS_BYTE_OFFSET_MRC_VERSION 14
@@ -809,7 +810,7 @@ EarlyBootDeviceInit (
 
 
   /* Configure EMMC GPIO Pad */
-  GpioPadConfigTable (ARRAY_SIZE(mGpioInitTblEMMC), (BXT_GPIO_PAD_INIT *)mGpioInitTblEMMC);
+  GpioConfigurePads (ARRAY_SIZE(mGpioInitTblEMMC), (GPIO_INIT_CONFIG *) (UINTN) mGpioInitTblEMMC);
   DEBUG ((DEBUG_INFO, "Early GpioInit for EMMC\n"));
 
   MmioWrite32 (EmmcHcPciBase + PCI_BASE_ADDRESSREG_OFFSET, Base);
@@ -1394,7 +1395,7 @@ EarlyPcieLinkUp (
   UINT8               ClkReqNum;
 
   if (GetPlatformId () == PLATFORM_ID_GPMRB) {
-    GpioPadConfigTable (ARRAY_SIZE (mGpioInitWifiTbl), (BXT_GPIO_PAD_INIT *)mGpioInitWifiTbl);
+    GpioConfigurePads (ARRAY_SIZE (mGpioInitWifiTbl), (GPIO_INIT_CONFIG *) (UINTN) mGpioInitWifiTbl);
 
     // WiFi module specific
     PortIndex = 5;
@@ -1855,7 +1856,7 @@ BoardInit (
       FetchPostRBPData (& (PlatformData->BtGuardInfo));
       DEBUG ((DEBUG_INFO, "BootPolicy : 0x%08X\n", PlatformData->BtGuardInfo.Bpm));
     }
-    GpioPadConfigTable (sizeof (mGpioInitTbl) / sizeof (mGpioInitTbl[0]), (BXT_GPIO_PAD_INIT *)mGpioInitTbl);
+    GpioConfigurePads (sizeof (mGpioInitTbl) / sizeof (mGpioInitTbl[0]), (GPIO_INIT_CONFIG *) (UINTN) mGpioInitTbl);
     EarlyPcieLinkUp ();
     break;
   case PostMemoryInit:

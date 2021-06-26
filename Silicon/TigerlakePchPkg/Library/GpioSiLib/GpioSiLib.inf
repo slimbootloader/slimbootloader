@@ -7,11 +7,11 @@
 
 [Defines]
   INF_VERSION                    = 0x00010005
-  BASE_NAME                      = GpioPlatformLib
-  FILE_GUID                      = 303753EE-75D6-4EF4-A21B-626C9D877D9F
+  BASE_NAME                      = GpioSiLib
+  FILE_GUID                      = E2A7C749-62AC-49F4-B4FA-26189C164E05
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
-  LIBRARY_CLASS                  = GpioPlatformLib
+  LIBRARY_CLASS                  = GpioSiLib
 
 #
 # The following information is for reference only and not required by the build tools.
@@ -20,19 +20,18 @@
 #
 
 [Sources]
-  GpioPlatformLib.c
+  GpioSiLib.c
 
 [Packages]
   MdePkg/MdePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
-  Silicon/ElkhartlakePkg/ElkhartlakePkg.dec
+  Silicon/TigerlakePchPkg/TigerlakePchPkg.dec
   Silicon/CommonSocPkg/CommonSocPkg.dec
 
 [LibraryClasses]
   BaseLib
   IoLib
   PciLib
-  PchSbiAccessLib
   PchInfoLib
   ConfigDataLib
 

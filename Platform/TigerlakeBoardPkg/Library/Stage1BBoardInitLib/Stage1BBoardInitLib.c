@@ -11,7 +11,6 @@
 #include <Library/PciLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
-#include <Library/GpioSocLib.h>
 #include <Library/GpioLib.h>
 #include <Library/BoardInitLib.h>
 #include <Library/SerialPortLib.h>
