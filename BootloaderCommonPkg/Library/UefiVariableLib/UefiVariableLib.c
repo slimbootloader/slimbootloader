@@ -2,7 +2,7 @@
   Implement ReadOnly Variable Services required by PEIM and install
   PEI ReadOnly Varaiable2 PPI. These services operates the non volatile storage space.
 
-Copyright (c) 2006 - 2019, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2006 - 2021, Intel Corporation. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -692,6 +692,10 @@ GetVariableHeader (
       // Variable header pointed by Variable is inconsecutive,
       //
       LibStatus = GetLibraryData (PcdGet8 (PcdUefiVariableLibId), (VOID **)&VarStoreLibData);
+      if (LibStatus == EFI_NOT_FOUND) {
+        return FALSE;
+      }
+
       if (VarStoreLibData->StoreLibVarHdrSet == FALSE) {
         *VariableHeader = &VarStoreLibData->VariableHdr;
         PartialHeaderSize = (UINTN) TargetAddress - (UINTN) Variable;
