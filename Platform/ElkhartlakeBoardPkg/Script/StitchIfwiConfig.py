@@ -92,6 +92,7 @@ def check_parameter(para_list):
         'dnx'      : {},
         'pt'       : {},
         'isi_conf' : {},
+        'debug'    : {},
         }
 
     para_help = \
@@ -101,6 +102,7 @@ def check_parameter(para_list):
         'dnx'       -- Enable DNX capsule binary build for IFWI updating via DNX
         'pt'        -- Enable Proof Test configuration
         'isi_conf'  -- Enable ISI FW configuration file
+        'debug'     -- Enable DAM and DCI configuration
         """
     for para in para_list:
         if para == '':
@@ -220,6 +222,18 @@ def get_xml_change_list (platform, plt_params_list, stitch_dir):
             ('./Dnx/DnxConfiguration/SigningKey', '$SourceDir/../BpmGen2/keys/oem_privkey_3072.pem'),
             ('./BuildSettings/BuildResults/MeuToolPath', meu_path),
             ('./BuildSettings/BuildResults/SigningToolPath', openssl_path)
+            ])
+
+    if 'debug' in plt_params_list:
+        print ("Applying changes to enable DAM and DCI")
+        xml_change_list.append ([
+            ('./Debug/DelayedAuthenticationModeConfiguration/DelayedAuthMode',                    'Yes'),
+            ('./PlatformProtection/BootGuardConfiguration/BtGuardCpuDebugEnable',                 'Enabled'),
+            ('./Debug/DirectConnectInterfaceConfiguration/DciEnable',                             'Yes'),
+            ('./Debug/DirectConnectInterfaceConfiguration/Usb1DciOobEnable',                      'Yes'),
+            ('./Debug/DirectConnectInterfaceConfiguration/Usb2DciOobEnable',                      'Yes'),
+            ('./Debug/DirectConnectInterfaceConfiguration/Usb3DciOobEnable',                      'Yes'),
+            ('./Debug/DirectConnectInterfaceConfiguration/Usb4DciOobEnable',                      'Yes'),
             ])
     return xml_change_list
 
