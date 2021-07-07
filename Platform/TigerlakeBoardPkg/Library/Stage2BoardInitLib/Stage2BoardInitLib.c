@@ -1588,15 +1588,12 @@ UpdateFspConfig (
   FspsConfig->SkipMpInit = 0;
 
   FspsConfig->UsbTcPortEn = 0xf;
-  FspsConfig->ITbtPcieRootPortEn[0] = 0x1;
-  FspsConfig->ITbtPcieRootPortEn[1] = 0x1;
-  FspsConfig->ITbtPcieRootPortEn[2] = 0x1;
-  FspsConfig->ITbtPcieRootPortEn[3] = 0x1;
 
   if (SiCfgData != NULL) {
     FspsConfig->EnableTimedGpio0 = SiCfgData->EnableTimedGpio0;
     FspsConfig->EnableTimedGpio1 = SiCfgData->EnableTimedGpio1;
     FspsConfig->XdciEnable       = SiCfgData->XdciEnable;
+    CopyMem (FspsConfig->ITbtPcieRootPortEn, SiCfgData->ITbtPcieRootPortEn, sizeof(SiCfgData->ITbtPcieRootPortEn));
   }
 
   if (FeaturePcdGet (PcdTccEnabled)) {

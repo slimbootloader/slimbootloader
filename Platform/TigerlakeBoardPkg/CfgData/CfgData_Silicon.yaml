@@ -169,6 +169,13 @@
                      Enable(Default)- Enable IGFX RenderStandby, Disable- Disable IGFX RenderStandby
       length       : 0x01
       value        : 0x1
+  - ITbtPcieRootPortEn :
+      name         : Enable/Disable ITBT Root Port
+      type         : EditNum, HEX, (0x00,0xFFFFFFFF)
+      help         : >
+                     Enable/Disable ITBT Root Port
+      length       : 0x04
+      value        : { 0x1, 0x1, 0x1, 0x1 }
   - PmSupport    :
       name         : Enable/Disable IGFX PmSupport
       type         : Combo
