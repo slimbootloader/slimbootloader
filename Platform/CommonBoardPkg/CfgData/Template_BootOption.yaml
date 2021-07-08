@@ -14,7 +14,7 @@ BOOT_OPTION_TMPL: >
   - $ACTION      :
       page         : OS_$(1)
   - BOOT_OPTION_CFG_DATA_$(1) :
-    - !expand { CFGHDR_TMPL : [ BOOT_OPTION_CFG_DATA_$(1), 0x05$(1), 0, 0 ] }
+    - !expand { CFGHDR_TMPL : [ BOOT_OPTION_CFG_DATA_$(1), (0x050 + $(1)), 0, 0 ] }
     - ImageType_$(1) :
         name         : Image Type
         type         : Combo
