@@ -560,6 +560,11 @@ AuthenticateCapsule (
   FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
 
   Header = (FIRMWARE_UPDATE_HEADER *)FwImage;
+  if (FwSize < sizeof (FIRMWARE_UPDATE_HEADER)) {
+    DEBUG ((DEBUG_ERROR, "Invalid capsule: file is too small. file size=%d\n", FwSize));
+    return EFI_INVALID_PARAMETER;
+  }
+
   if (!CompareGuid (&Header->FileGuid, &gFirmwareUpdateImageFileGuid)) {
     DEBUG ((DEBUG_ERROR, "Invalid capsule: Image file guid is not expected. guid=%g\n", &Header->FileGuid));
     return EFI_INVALID_PARAMETER;
