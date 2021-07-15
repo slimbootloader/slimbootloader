@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -136,6 +136,7 @@ FindS3Info (
   UINT32            SmmSize;
   BOOLEAN           FoundInfo = FALSE;
   BL_PLD_COMM_HDR   *CommHdr;
+  SMMBASE_INFO      *SmmBaseInfo;
 
   PlatformUpdateHobInfo (&gSmmInformationGuid, &LdrSmmInfo);
   SmmBase = (UINT8 *)(UINTN)LdrSmmInfo.SmmBase;
@@ -151,6 +152,13 @@ FindS3Info (
           CommHdr->Signature == BL_PLD_COMM_SIG) {
     if (CommHdr->Id == Id) {
       FoundInfo = TRUE;
+      if (Id == SMMBASE_INFO_COMM_ID) {
+        SmmBaseInfo = (SMMBASE_INFO *) CommHdr;
+        if ((SmmBaseInfo->SmmBase[0].SmmBase == 0) && (SmmBaseInfo->SmmBase[0].ApicId == 0)){
+          // It means SMM rebase info is not really filled.
+          FoundInfo = FALSE;
+        }
+      }
       break;
     }
     CommHdr = (BL_PLD_COMM_HDR *) ((UINT8 *)CommHdr + CommHdr->TotalSize);
