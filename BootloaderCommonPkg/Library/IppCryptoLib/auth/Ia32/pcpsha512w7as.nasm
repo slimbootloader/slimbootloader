@@ -250,7 +250,7 @@ ASM_PFX(UpdateSHA512W7):
 %define  sSize         5                   ; size of save area (oword)
 %define  dSize         8                   ; size of digest (oword)
 %define  wSize        80                   ; W values queue (qword)
-%define  stackSize    sSize*oSize+dSize*oSize+wSize*qSize
+%define  stackSize    sSize*oSize+dSize*oSize+wSize*qSize+4
 
 %define  sOffset      0                           ; save area
 %define  dOffset      sOffset+sSize*oSize ; digest offset
