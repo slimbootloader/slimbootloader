@@ -564,10 +564,12 @@ def get_sbl_dws (inp_fmt, cfg_file, parts):
     sbl_dw0 = SBL_DW0 ()
     sbl_dw1 = SBL_DW1 ()
 
-    pad_name = normalize_pad_name (parts[0])
-    pad_name = pad_name[-7:]
-    if not pad_name.startswith('GPP_'):
+    if not 'GPP_' in parts[0]:
         return '', 0x0, 0x0
+    splitdata = parts[0].split('_')
+    pin_number = splitdata[len(splitdata)-1]
+    pin_number = normalize_pad_name (pin_number)
+    pad_name = 'GPP_' + pin_number
 
     gpio_cfg_file = SourceFileLoader ('GenGpioDataConfig', cfg_file).load_module()
 
