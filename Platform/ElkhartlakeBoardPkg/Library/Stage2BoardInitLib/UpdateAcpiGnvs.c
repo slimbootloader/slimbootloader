@@ -38,6 +38,8 @@
 
 #define XTAL_FREQ_24MHZ      0
 #define XTAL_FREQ_38P4MHZ    1
+#define PMECTRLSTATUS_OFFSET 0x84
+#define POWERSTATE           (BIT0 | BIT1)
 
 extern FVID_TABLE  *mFvidPointer;
 
@@ -48,6 +50,25 @@ typedef union {
   } Data32;
   UINTN Data;
 } UINTN_STRUCT;
+
+/**
+  Check and update TSN controller device status
+
+  @param[in]  GbeBase          GBE PCI config space address
+**/
+VOID
+CheckGbeStatus (
+  UINTN GbeBase
+  )
+{
+  UINT16 PmeCtrlStatus;
+  //Check device status
+  PmeCtrlStatus = PciRead16 (GbeBase + PMECTRLSTATUS_OFFSET);
+  if ((PmeCtrlStatus & POWERSTATE) != POWERSTATE) {
+    PciWrite16 ((GbeBase + PMECTRLSTATUS_OFFSET), (PmeCtrlStatus & ~POWERSTATE));
+    DEBUG ((DEBUG_INFO, "GbeBase:0x%x -> PMECTRLSTATUS:0x%x\n", GbeBase, PmeCtrlStatus));
+  }
+}
 
 /**
   Check whether TSN controller is enabled in the platform.
@@ -75,6 +96,10 @@ IsTsnPresent (
   DEBUG ((DEBUG_INFO, "TSN Device: Device Id: 0x%4X, Vendor Id: 0x%4X\n", DeviceId, VendorId));
   if ((DeviceId == 0xFFFF) || (VendorId == 0xFFFF)) {
     return FALSE;
+  }
+  else{
+    //Check device status
+    CheckGbeStatus (PchTsnBase);
   }
   return TRUE;
 }
@@ -105,6 +130,10 @@ IsPseGbe0Enabled (
   if ((DeviceId == 0xFFFF) || (VendorId == 0xFFFF)) {
     return FALSE;
   }
+  else{
+     //Check device status
+     CheckGbeStatus (PchPseGbeBase);
+  }
   return TRUE;
 }
 
@@ -126,13 +155,17 @@ IsPseGbe1Enabled (
   DeviceId      = 0;
   VendorId      = 0;
 
-  PchPseGbeBase    = PCI_LIB_ADDRESS (0, 29, 1, 0);
+  PchPseGbeBase    = PCI_LIB_ADDRESS (0, 29, 2, 0);
   DeviceId         = PciRead16 (PchPseGbeBase + PCI_DEVICE_ID_OFFSET);
   VendorId         = PciRead16 (PchPseGbeBase + PCI_VENDOR_ID_OFFSET);
 
   DEBUG ((DEBUG_INFO, "Pse Gbe 1 Device: Device Id: 0x%4X, Vendor Id: 0x%4X\n", DeviceId, VendorId));
   if ((DeviceId == 0xFFFF) || (VendorId == 0xFFFF)) {
     return FALSE;
+  }
+  else{
+    //Check device status
+    CheckGbeStatus (PchPseGbeBase);
   }
   return TRUE;
 }
