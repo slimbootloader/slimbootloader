@@ -30,7 +30,7 @@
   - RegisterName:
     Full register name.
 
-  Copyright (c) 1999 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 1999 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -54,6 +54,7 @@
 // ACPI and legacy I/O register offsets from ACPIBASE
 //
 #define R_ACPI_IO_PM1_STS                        0x00
+#define B_ACPI_IO_PM1_STS_RTC_EN                 BIT26
 #define B_ACPI_IO_PM1_STS_WAK                    BIT15
 #define B_ACPI_IO_PM1_STS_PRBTNOR                BIT11
 #define B_ACPI_IO_PM1_STS_RTC                    BIT10
@@ -64,6 +65,7 @@
 #define B_ACPI_IO_PM1_EN_PWRBTN                  BIT8
 
 #define R_ACPI_IO_PM1_CNT                        0x04
+#define B_ACPI_IO_PM1_CNT_SCI_EN                 BIT0
 #define B_ACPI_IO_PM1_CNT_SLP_TYP                (BIT12 | BIT11 | BIT10)
 #define V_ACPI_IO_PM1_CNT_S0                     0
 #define V_ACPI_IO_PM1_CNT_S3                     (BIT12 | BIT10)
