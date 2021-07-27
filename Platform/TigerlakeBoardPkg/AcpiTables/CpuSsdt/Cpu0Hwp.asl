@@ -21,6 +21,7 @@ External(\_SB.PR00, DeviceObj)
 External(\TCNT, FieldUnitObj)
 External(\_SB.HWPV, IntObj)
 External(\_SB.PR00.CPC2, PkgObj)
+External(\_SB.PR00.CPOC, PkgObj)
 External(\_SB.CFGD, IntObj)
 External(\_SB.LMPS, IntObj)
 External(\_SB.ITBM, IntObj)
@@ -41,34 +42,6 @@ External(\_SB.HWPE, IntObj)
 //
 Scope(\_SB.PR00)
 {
-  Name(CPOC, Package()
-  {
-    21, // Number of entries
-    02, // Revision
-    //
-    // Describe processor capabilities
-    //
-    255, // HighestPerformance fix ratio in integer for OC (255) or ITBM disable with Turbo Boost Max 3.0 supported
-    ResourceTemplate() {Register(FFixedHW, 8, 8, 0xCE, 4)},  // Nominal Performance - Maximum Non Turbo Ratio
-    ResourceTemplate() {Register(FFixedHW, 8, 16, 0x771, 4)},//Lowest nonlinear Performance
-    ResourceTemplate() {Register(FFixedHW, 8, 24, 0x771, 4)}, // LowestPerformance
-    ResourceTemplate() {Register(FFixedHW, 8, 8, 0x0771, 4)}, // Guaranteed Performance
-    ResourceTemplate() {Register(FFixedHW, 8, 16, 0x0774, 4)}, // Desired PerformanceRegister
-    ResourceTemplate() {Register(FFixedHW, 8, 0, 0x774, 4)}, // Minimum PerformanceRegister
-    ResourceTemplate() {Register(FFixedHW, 8, 8, 0x774, 4)}, // Maximum PerformanceRegister
-    ResourceTemplate() {Register(SystemMemory, 0, 0, 0, 0)}, // Performance ReductionToleranceRegister (Null)
-    ResourceTemplate() {Register(SystemMemory, 0, 0, 0, 0)}, // Time window  register(Null)
-    ResourceTemplate() {Register(SystemMemory, 0, 0, 0, 0)}, // Counter wrap around time(Null)
-    ResourceTemplate() {Register(FFixedHW, 64, 0, 0xE7, 4)}, // Reference counter register (PPERF)
-    ResourceTemplate() {Register(FFixedHW, 64, 0, 0xE8, 4)}, // Delivered counter register (APERF)
-    ResourceTemplate() {Register(FFixedHW, 2, 1, 0x777, 4)}, // Performance limited register
-    ResourceTemplate() {Register(FFixedHW, 1, 0, 0x770, 4)}, // Enable register
-    1, // Autonomous selection enable register (Exclusively autonomous)
-    ResourceTemplate() {Register(FFixedHW, 10, 32, 0x774, 4)}, // Autonomous activity window register
-    ResourceTemplate() {Register(FFixedHW, 8, 24, 0x774, 4)}, // Autonomous energy performance preference register
-    0 // Reference performance (not supported)
-  })
-
   Method(_CPC,0)
   {
     //
