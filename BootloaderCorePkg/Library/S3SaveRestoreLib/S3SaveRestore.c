@@ -16,28 +16,111 @@
 #include <Guid/SmmInformationGuid.h>
 #include <Base.h>
 
-typedef UINT32 (*REG_READ)  (UINTN);
-typedef VOID   (*REG_WRITE) (UINTN, UINT32);
-
-#define NUM_TYPE    2
-#define NUM_WIDTH   3
 #define REG_APM_CNT   0xB2
 
-const REG_WRITE  mRegWrite[NUM_TYPE][NUM_WIDTH] = {
-  { (REG_WRITE) MmioWrite8, (REG_WRITE) MmioWrite16, (REG_WRITE) MmioWrite32 },
-  { (REG_WRITE) IoWrite8, (REG_WRITE) IoWrite16, (REG_WRITE) IoWrite32 }
-};
+/**
+  Read register
 
-const REG_READ mRegRead[NUM_TYPE][NUM_WIDTH] = {
-  { (REG_READ) MmioRead8, (REG_READ) MmioRead16, (REG_READ) MmioRead32 },
-  { (REG_READ) IoRead8, (REG_READ) IoRead16, (REG_READ) IoRead32 }
-};
+  Reads a register with register type in Type and length in Width
 
-const UINT8 mWidthToIdx[NUM_WIDTH][2] = {
-  { 0, WIDE8  },
-  { 1, WIDE16 },
-  { 2, WIDE32 }
-};
+  @param[in]      Type          type of register
+  @param[in]      Width         width of register
+  @param[in]      Addr          register address
+  @param[in,out]  Val           register value
+
+  @retval         EFI_SUCCESS   read done
+  @retval         EFI_INVALID_PARAMETER   Invalid Type and Width
+
+**/
+static
+EFI_STATUS
+RegRead (
+  IN      UINT8   Type,
+  IN      UINT8   Width,
+  IN      UINTN   Addr,
+  IN OUT  UINT32 *Val
+  )
+{
+  if (Val == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (Type == REG_TYPE_MMIO) {
+    if (Width == WIDE8) {
+      *Val = MmioRead8 (Addr);
+    } else if (Width == WIDE16) {
+      *Val = MmioRead16 (Addr);
+    } else if (Width == WIDE32) {
+      *Val = MmioRead32 (Addr);
+    } else {
+      return EFI_INVALID_PARAMETER;
+    }
+  } else if (Type == REG_TYPE_IO) {
+    if (Width == WIDE8) {
+      *Val = IoRead8 (Addr);
+    } else if (Width == WIDE16) {
+      *Val = IoRead16 (Addr);
+    } else if (Width == WIDE32) {
+      *Val = IoRead32 (Addr);
+    } else {
+      return EFI_INVALID_PARAMETER;
+    }
+  } else {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Write register
+
+  Writes a register with register type in Type and length in Width
+
+  @param[in]  Type         type of register
+  @param[in]  Width        width of register
+  @param[in]  Addr         register address
+  @param[in]  Val          value to write
+
+  @retval     EFI_SUCCESS  write done
+  @retval     EFI_INVALID_PARAMETER   Invalid Type and Width
+
+**/
+static
+EFI_STATUS
+RegWrite (
+  IN  UINT8   Type,
+  IN  UINT8   Width,
+  IN  UINTN   Addr,
+  IN  UINT32  Val
+  )
+{
+  if (Type == REG_TYPE_MMIO) {
+    if (Width == WIDE8) {
+      (void)MmioWrite8 (Addr, (UINT8)Val);
+    } else if (Width == WIDE16) {
+      (void)MmioWrite16 (Addr, (UINT16)Val);
+    } else if (Width == WIDE32) {
+      (void)MmioWrite32 (Addr, Val);
+    } else {
+      return EFI_INVALID_PARAMETER;
+    }
+  } else if (Type == REG_TYPE_IO) {
+    if (Width == WIDE8) {
+      (void)IoWrite8 (Addr, (UINT8)Val);
+    } else if (Width == WIDE16) {
+      (void)IoWrite16 (Addr, (UINT16)Val);
+    } else if (Width == WIDE32) {
+      (void)IoWrite32 (Addr, Val);
+    } else {
+      return EFI_INVALID_PARAMETER;
+    }
+  } else {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  return EFI_SUCCESS;
+}
 
 /**
   Trigger payload software SMI
@@ -197,7 +280,7 @@ RestoreS3RegInfo (
   UINT32    Data32;
   UINT8     Type;
   UINT8     Width;
-  UINT8     Idx;
+  EFI_STATUS Status;
 
   if (S3SaveReg == NULL || S3SaveReg->S3SaveHdr.Id != S3_SAVE_REG_COMM_ID) {
     return EFI_INVALID_PARAMETER;
@@ -207,17 +290,15 @@ RestoreS3RegInfo (
     if (S3SaveReg->RegInfo[Index].Addr != 0x00) {
       Type = S3SaveReg->RegInfo[Index].Type;
       Width = S3SaveReg->RegInfo[Index].Width;
-      for (Idx = 0; Idx < NUM_WIDTH; Idx++) {
-        if (mWidthToIdx[Idx][1] == Width) {
-          Width = Idx;
-          break;
-        }
+
+      Status = RegWrite (Type, Width, S3SaveReg->RegInfo[Index].Addr, S3SaveReg->RegInfo[Index].Val);
+      if (EFI_ERROR (Status)) {
+        return Status;
       }
-      if (Type >= NUM_TYPE || Width >= NUM_WIDTH) {
-        return EFI_INVALID_PARAMETER;
+      Status = RegRead (Type, Width, S3SaveReg->RegInfo[Index].Addr, &Data32);
+      if (EFI_ERROR (Status)) {
+        return Status;
       }
-      mRegWrite[Type][Width] (S3SaveReg->RegInfo[Index].Addr, S3SaveReg->RegInfo[Index].Val);
-      Data32 = mRegRead[Type][Width] (S3SaveReg->RegInfo[Index].Addr);
       DEBUG ((DEBUG_INFO, "Value after restore reg @ 0x%08X=0x%08X\n", S3SaveReg->RegInfo[Index].Addr, Data32));
     }
   }

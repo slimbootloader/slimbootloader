@@ -1,7 +1,7 @@
 /** @file
   Macros that simplify accessing PCH devices's PCI registers.
 
-  Copyright (c) 1999 - 2016, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 1999 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 #ifndef _PCH_ACCESS_H_
@@ -65,6 +65,7 @@
 //#include "Register/PchRegsFia.h"
 #include "Register/PmcRegs.h"
 #include "Register/PchRegsSpi.h"
-#include <Register/PchRegsSerialIoTgl.h>
+#include "Register/PchRegsSerialIoTgl.h"
+#include "Register/RtcRegs.h"
 
 #endif
