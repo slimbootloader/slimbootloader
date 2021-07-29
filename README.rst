@@ -45,6 +45,14 @@ TGL_Win_VS2019                |_unknown|    |tgl_w32r|    |tgl_w64d|    |_unknow
 TGL_Lin_GCC5                  |tgl_l32d|    |_unknown|    |_unknown|    |_unknown|
 ============================= ============= ============= ============= =============
 
+Platform Release Info
+---------------------
+
+============================= ============= ==========================================
+ Platform                     Version       Stable Release
+============================= ============= ==========================================
+Elkhart Lake                  | PR1       | |474666bc6f2104edfcc7d6f1db6e6ad403c805c3|
+
 Getting Started
 ---------------
 Documentation for compiling, using, and extending Slim Bootloader can be found
