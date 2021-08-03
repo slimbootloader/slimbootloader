@@ -372,7 +372,7 @@ def replace_components (ifwi_src_path, stitch_cfg_file):
     for flash_path, file_path, comp_alg, pri_key in replace_list:
         replace_component (ifwi_src_path, flash_path, file_path, comp_alg, pri_key)
 
-def stitch (stitch_dir, stitch_cfg_file, sbl_file, btg_profile, platform_data, platform, tpm, full_rdundant = True):
+def stitch (stitch_dir, stitch_cfg_file, sbl_file, btg_profile, platform_data, platform, tpm, optype, full_rdundant = True):
 
     temp_dir = os.path.abspath(os.path.join (stitch_dir, 'Temp'))
     if os.path.exists(temp_dir):
@@ -403,9 +403,10 @@ def stitch (stitch_dir, stitch_cfg_file, sbl_file, btg_profile, platform_data, p
 
     gen_xml_file(stitch_dir, stitch_cfg_file, btg_profile, platform, tpm)
 
-    print ("Run fit tool to generate ifwi.........")
-    run_process (['./Fit/fit', '-b', '-o', 'Temp/Ifwi.bin', '-f', os.path.join (temp_dir, 'updated.xml'),
-        '-s', temp_dir, '-w', temp_dir, '-d', temp_dir])
+    if optype == "ifwi":
+        print ("Run fit tool to generate ifwi.........")
+        run_process (['./Fit/fit', '-b', '-o', 'Temp/Ifwi.bin', '-f', os.path.join (temp_dir, 'updated.xml'),
+            '-s', temp_dir, '-w', temp_dir, '-d', temp_dir])
     return 0
 #    cmd = './fit -b -o Ifwi.bin -f Platform.xml'
 #    run_cmd (cmd, os.path.join(stitch_dir, cfg_var['fitinput']))
@@ -506,6 +507,13 @@ def main():
                      default = '',
                      help = "Specify path to write output IFIW and signed bin files")
 
+    ap.add_argument('-o',
+                    '--optype',
+                    dest='optype',
+                    default = 'ifwi',
+                    choices=['ifwi', 'signedbin', 'none'],
+                    help='Output type')
+
     args = ap.parse_args()
 
     stitch_cfg_file = load_source('StitchIfwiConfig', args.config_file)
@@ -540,21 +548,26 @@ def main():
 
     stitch_dir = os.path.abspath (args.stitch_dir)
     os.chdir(stitch_dir)
-    if stitch (stitch_dir, stitch_cfg_file, sbl_file, args.btg_profile, args.plat_data, args.platform, args.tpm):
+    if stitch (stitch_dir, stitch_cfg_file, sbl_file, args.btg_profile, args.plat_data, args.platform, args.tpm, args.optype):
         raise Exception ('Stitching process failed !')
     os.chdir(curr_dir)
 
-    generated_ifwi_file = os.path.join(stitch_dir, 'Temp', 'Ifwi.bin')
-    ifwi_file_name = os.path.join(args.outpath,'sbl_ifwi_%s.bin' % (args.platform))
-    shutil.copy(generated_ifwi_file, ifwi_file_name)
+    if args.optype == 'ifwi' or args.optype == 'signedbin':
+        generated_signed_sbl =  os.path.join(stitch_dir, 'Temp', 'SlimBootloader.bin')
+        sbl_file_name = os.path.join(args.outpath,'SlimBootloader_%s.bin' % (args.platform))
+        shutil.copy(generated_signed_sbl, sbl_file_name)
 
-    generated_signed_sbl =  os.path.join(stitch_dir, 'Temp', 'SlimBootloader.bin')
-    sbl_file_name = os.path.join(args.outpath,'SlimBootloader_%s.bin' % (args.platform))
-    shutil.copy(generated_signed_sbl, sbl_file_name)
+        print ("\nSigned  bin successful %s\n" % sbl_file_name )
 
-    print ("\nIFWI Stitching completed successfully !")
-    print ("Boot Guard Profile: %s" % args.btg_profile.upper())
-    print ("IFWI image: %s\n" % ifwi_file_name)
+    if args.optype == 'ifwi':
+        generated_ifwi_file = os.path.join(stitch_dir, 'Temp', 'Ifwi.bin')
+        ifwi_file_name = os.path.join(args.outpath,'sbl_ifwi_%s.bin' % (args.platform))
+        shutil.copy(generated_ifwi_file, ifwi_file_name)
+
+        print ("\nIFWI Stitching completed successfully !")
+        print ("Boot Guard Profile: %s" % args.btg_profile.upper())
+        print ("IFWI image: %s\n" % ifwi_file_name)
+
 
     return 0
 
