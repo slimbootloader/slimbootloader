@@ -66,7 +66,7 @@ stitching ingredients listed in step 2 below, please contact your Intel represen
 """
 
 def gen_bpmgen2_params (stitch_cfg_file, InFile, OutFile):
-    InFileptr = open(InFile, 'r')
+    InFileptr = open(InFile, 'r', encoding='utf8')
     lines = InFileptr.readlines()
     InFileptr.close()
 
