@@ -213,6 +213,8 @@ typedef struct {
   UINT8             PlatformName[PLATFORM_NAME_SIZE];
   UINT32            LdrFeatures;
   BL_PERF_DATA      PerfData;
+  UINT32            CarBase;
+  UINT32            CarSize;
 } LOADER_GLOBAL_DATA;
 
 /**
@@ -490,6 +492,23 @@ UINT32
 EFIAPI
 GetUsableMemoryTop (
   VOID
+  );
+
+/**
+ This function retrieves TempRam Base and Size reported from FSP-T.
+
+  @param[out] Base          Base address of TempRam
+  @param[out] Size          Size of TempRam
+
+  @retval EFI_SUCCESS       Retrieved TempRam Base and Size
+  @retval EFI_UNSUPPORTED   No valid info exists
+
+**/
+EFI_STATUS
+EFIAPI
+GetTempRamInfo (
+  OUT UINT32  *Base,
+  OUT UINT32  *Size
   );
 
 #endif

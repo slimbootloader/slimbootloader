@@ -655,6 +655,11 @@ ContinueFunc (
   AddMeasurePoint (0x2060);
   ASSERT_EFI_ERROR (Status);
 
+  LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
+  ASSERT (LdrGlobal != NULL);
+  LdrGlobal->CarBase = 0;
+  LdrGlobal->CarSize = 0;
+
   BoardInit (PostTempRamExit);
   AddMeasurePoint (0x2070);
 
@@ -685,7 +690,6 @@ ContinueFunc (
     }
   }
 
-  LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
   DEBUG ((DEBUG_INFO, "Memory FSP @ 0x%08X\n", LdrGlobal->StackTop));
   DEBUG ((DEBUG_INFO, "Memory TOP @ 0x%08X\n", LdrGlobal->MemPoolStart));
 
