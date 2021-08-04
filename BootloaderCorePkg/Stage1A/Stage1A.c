@@ -472,6 +472,9 @@ SecStartup (
   // Any platform (board init lib) can update these according to
   // the config data passed in or these defaults remain
   LdrGlobal->LdrFeatures           = FEATURE_MEASURED_BOOT | FEATURE_ACPI;
+  // TempRam Base and Size
+  LdrGlobal->CarBase               = Stage1aAsmParam->CarBase;
+  LdrGlobal->CarSize               = Stage1aAsmParam->CarTop - LdrGlobal->CarBase;
 
   LoadGdt (&GdtTable, (IA32_DESCRIPTOR *)&mGdt);
   LoadIdt (&IdtTable, (UINT32)(UINTN)LdrGlobal);
