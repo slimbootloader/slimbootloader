@@ -519,7 +519,7 @@ GetVariableStore (
 
       FtwWorkingHeader = (UEFI_FAULT_TOLERANT_WORKING_BLOCK_HEADER *) (UINTN)(NvStorageBase + (NvStorageSize / 2) - FTW_WORKING_SIZE);
       FtwWorkingSize   = FTW_WORKING_SIZE;
-      SpareAreaAddress = (EFI_PHYSICAL_ADDRESS) (NvStorageBase + (NvStorageSize / 2));
+      SpareAreaAddress = (EFI_PHYSICAL_ADDRESS) (UINTN) (NvStorageBase + (NvStorageSize / 2));
       SpareAreaLength  = NvStorageSize / 2;
 
       LibStatus = GetLibraryData (PcdGet8 (PcdUefiVariableLibId), (VOID **)&VarStoreLibData);
@@ -891,7 +891,7 @@ FindVariableEx (
       //
       if ((IndexTable != NULL) && !StopRecord) {
         Offset = (UINTN) Variable - (UINTN) LastVariable;
-        if ((Offset > 0x0FFFF) || (IndexTable->Length == sizeof (IndexTable->Index) / sizeof (IndexTable->Index[0]))) {
+        if ((Offset > 0x0FFFF) || (IndexTable->Length >= sizeof (IndexTable->Index) / sizeof (IndexTable->Index[0]))) {
           //
           // Stop to record if the distance of two neighbouring VAR_ADDED variable is larger than the allowable scope(UINT16),
           // or the record buffer is full.
