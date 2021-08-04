@@ -511,4 +511,50 @@ GetTempRamInfo (
   OUT UINT32  *Size
   );
 
+/**
+  This function retrieves the address of S3Data.
+
+  @retval    S3Data pointer address.
+
+**/
+VOID *
+EFIAPI
+GetS3DataPtr (
+  VOID
+  );
+
+/**
+  This function sets features configuration.
+
+  @param Features   The features the platform supports.
+
+**/
+VOID
+EFIAPI
+SetFeatureCfg (
+  IN  UINT32  Features
+  );
+
+/**
+  This function clears FSP Hob Data and pointer.
+
+**/
+VOID
+EFIAPI
+ClearFspHob (
+  VOID
+  );
+
+/**
+  This function retrieves the Version Information pointer.
+
+  @retval    Version Information pointer address.
+
+**/
+VOID *
+EFIAPI
+GetVerInfoPtr (
+  VOID
+  );
+
 #endif
