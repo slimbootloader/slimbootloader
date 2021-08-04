@@ -444,3 +444,72 @@ GetTempRamInfo (
 
   return EFI_SUCCESS;
 }
+
+/**
+  This function retrieves the address of S3Data.
+
+  @retval    S3Data pointer address.
+
+**/
+VOID *
+EFIAPI
+GetS3DataPtr (
+  VOID
+  )
+{
+  return GetLoaderGlobalDataPointer()->S3DataPtr;
+}
+
+/**
+  This function sets features configuration.
+
+  @param Features   The features the platform supports.
+
+**/
+VOID
+EFIAPI
+SetFeatureCfg (
+  IN  UINT32  Features
+  )
+{
+  GetLoaderGlobalDataPointer()->LdrFeatures = Features;
+}
+
+/**
+  This function clears FSP Hob Data and pointer.
+
+**/
+VOID
+EFIAPI
+ClearFspHob (
+  VOID
+  )
+{
+  VOID                        *FspHobList;
+  EFI_HOB_HANDOFF_INFO_TABLE  *HandOffHob;
+  UINT32                       Length;
+
+  FspHobList = GetLoaderGlobalDataPointer()->FspHobList;
+  if (FspHobList != NULL) {
+    HandOffHob = (EFI_HOB_HANDOFF_INFO_TABLE *) FspHobList;
+    Length     = (UINT32)((UINTN)HandOffHob->EfiEndOfHobList - (UINTN)HandOffHob);
+    ZeroMem (HandOffHob, Length);
+
+    GetLoaderGlobalDataPointer()->FspHobList = NULL;
+  }
+}
+
+/**
+  This function retrieves the Version Information pointer.
+
+  @retval    Version Information pointer address.
+
+**/
+VOID *
+EFIAPI
+GetVerInfoPtr (
+  VOID
+  )
+{
+  return GetLoaderGlobalDataPointer()->VerInfoPtr;
+}
