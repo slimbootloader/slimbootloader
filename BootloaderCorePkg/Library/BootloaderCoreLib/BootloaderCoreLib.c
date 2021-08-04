@@ -407,3 +407,40 @@ GetUsableMemoryTop (
 {
   return GetLoaderGlobalDataPointer()->MemUsableTop;
 }
+
+/**
+ This function retrieves TempRam Base and Size reported from FSP-T.
+
+  @param[out] Base          Base address of TempRam
+  @param[out] Size          Size of TempRam
+
+  @retval EFI_SUCCESS       Retrieved TempRam Base and Size
+  @retval EFI_UNSUPPORTED   No valid info exists
+
+**/
+EFI_STATUS
+EFIAPI
+GetTempRamInfo (
+  OUT UINT32  *Base,
+  OUT UINT32  *Size
+  )
+{
+  UINT32  CarBase;
+  UINT32  CarSize;
+
+  CarBase = GetLoaderGlobalDataPointer()->CarBase;
+  CarSize = GetLoaderGlobalDataPointer()->CarSize;
+
+  if ((CarBase == 0) || (CarSize == 0)) {
+    return EFI_UNSUPPORTED;
+  }
+
+  if (Base != NULL) {
+    *Base = CarBase;
+  }
+  if (Size != NULL) {
+    *Size = CarSize;
+  }
+
+  return EFI_SUCCESS;
+}
