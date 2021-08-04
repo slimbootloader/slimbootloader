@@ -62,7 +62,7 @@ def main():
 
     # run QEMU boot with timeout
     output = []
-    lines = run_qemu(bios_img, os_dir, timeout = 8)
+    lines = run_qemu(bios_img, os_dir, timeout = 10)
     output.extend(lines)
 
     # check test result
