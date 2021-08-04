@@ -1315,12 +1315,15 @@ PrintMrcInfo (
   VOID
   )
 {
-  LOADER_GLOBAL_DATA       *LdrGlobal;
+  VOID                     *FspHobList;
   UINT8                    *MrcParamsData;
   UINT32                    MrcVersion;
 
-  LdrGlobal     = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
-  MrcParamsData = GetGuidHobData (LdrGlobal->FspHobList, NULL, &gFspNonVolatileStorageHobGuid);
+  MrcParamsData = NULL;
+  FspHobList = GetFspHobListPtr ();
+  if (FspHobList != NULL) {
+    MrcParamsData = GetGuidHobData (FspHobList, NULL, &gFspNonVolatileStorageHobGuid);
+  }
   if (MrcParamsData == NULL) {
     DEBUG((DEBUG_ERROR, "MRC: MRC Save Restore Params HOB not valid!\n"));
     return;
@@ -1650,30 +1653,30 @@ PlatformFeaturesInit (
   )
 {
   FEATURES_CFG_DATA           *FeaturesCfgData;
-  LOADER_GLOBAL_DATA          *LdrGlobal;
   PLAT_FEATURES               *PlatformFeatures;
   DYNAMIC_CFG_DATA            *DynamicCfgData;
   PLATFORM_DATA               *PlatformData;
+  UINT32                       LdrFeatures;
 
   // Set common features
-  LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
-  LdrGlobal->LdrFeatures |= FeaturePcdGet (PcdAcpiEnabled)?FEATURE_ACPI:0;
-  LdrGlobal->LdrFeatures |= FeaturePcdGet (PcdVerifiedBootEnabled)?FEATURE_VERIFIED_BOOT:0;
-  LdrGlobal->LdrFeatures |= FeaturePcdGet (PcdMeasuredBootEnabled)?FEATURE_MEASURED_BOOT:0;
+  LdrFeatures  = GetFeatureCfg ();
+  LdrFeatures |= FeaturePcdGet (PcdAcpiEnabled)?FEATURE_ACPI:0;
+  LdrFeatures |= FeaturePcdGet (PcdVerifiedBootEnabled)?FEATURE_VERIFIED_BOOT:0;
+  LdrFeatures |= FeaturePcdGet (PcdMeasuredBootEnabled)?FEATURE_MEASURED_BOOT:0;
 
   // Update feature by configuration data.
   FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
   if (FeaturesCfgData != NULL) {
     if (FeaturesCfgData->Features.Acpi == 0) {
-      LdrGlobal->LdrFeatures &= ~FEATURE_ACPI;
+      LdrFeatures &= ~FEATURE_ACPI;
     }
 
     if (FeaturesCfgData->Features.MeasuredBoot == 0) {
-      LdrGlobal->LdrFeatures &= ~FEATURE_MEASURED_BOOT;
+      LdrFeatures &= ~FEATURE_MEASURED_BOOT;
     }
 
     if (FeaturesCfgData->Features.eMMCTuning != 0) {
-      LdrGlobal->LdrFeatures |= FEATURE_MMC_TUNING;
+      LdrFeatures |= FEATURE_MMC_TUNING;
     }
 
     // Update platform specific feature from configuration data.
@@ -1688,18 +1691,20 @@ PlatformFeaturesInit (
   PlatformData  = (PLATFORM_DATA *)GetPlatformDataPtr ();
   if (PlatformData != NULL) {
     if (PlatformData->BtGuardInfo.Bpm.Mb == 0) {
-      LdrGlobal->LdrFeatures &= ~FEATURE_MEASURED_BOOT;
+      LdrFeatures &= ~FEATURE_MEASURED_BOOT;
     }
     if (PlatformData->BtGuardInfo.Bpm.Vb == 0) {
-      LdrGlobal->LdrFeatures &= ~FEATURE_VERIFIED_BOOT;
+      LdrFeatures &= ~FEATURE_VERIFIED_BOOT;
     }
   }
 
   // Update features by dynamic configuration data
   DynamicCfgData = (DYNAMIC_CFG_DATA *) FindConfigDataByTag (CDATA_DYNAMIC_TAG);
   if ((DynamicCfgData != NULL) && (DynamicCfgData->EmmcTuningEnforcement != 0)) {
-    LdrGlobal->LdrFeatures |= FEATURE_MMC_FORCE_TUNING;
+    LdrFeatures |= FEATURE_MMC_FORCE_TUNING;
   }
+
+  SetFeatureCfg (LdrFeatures);
 }
 
 /**

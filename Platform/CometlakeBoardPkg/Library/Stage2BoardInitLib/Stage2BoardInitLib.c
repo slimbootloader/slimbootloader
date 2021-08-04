@@ -670,30 +670,6 @@ UpdateBlRsvdRegion ()
 }
 
 /**
-  Clear FSP HOB data
-
-**/
-VOID
-ClearFspHob (
-  VOID
-  )
-{
-  LOADER_GLOBAL_DATA          *LdrGlobal;
-  EFI_HOB_HANDOFF_INFO_TABLE  *HandOffHob;
-  UINT32                      Length;
-
-  LdrGlobal  = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
-  if (LdrGlobal->FspHobList == NULL) {
-    return;
-  }
-
-  HandOffHob = (EFI_HOB_HANDOFF_INFO_TABLE  *) LdrGlobal->FspHobList;
-  Length     = (UINT32) ((UINTN) HandOffHob->EfiEndOfHobList - (UINTN)HandOffHob);
-  ZeroMem (HandOffHob, Length);
-  LdrGlobal->FspHobList = NULL;
-}
-
-/**
   Add a Smbios type string into a buffer
 
 **/
@@ -746,7 +722,7 @@ InitializeSmbiosInfo (
   Index         = 0;
   PlatformId    = GetPlatformId ();
   TempSmbiosStrTbl  = (SMBIOS_TYPE_STRINGS *) AllocateTemporaryMemory (0);
-  VerInfoTbl    = GetLoaderGlobalDataPointer()->VerInfoPtr;
+  VerInfoTbl    = GetVerInfoPtr ();
 
   //
   // SMBIOS_TYPE_BIOS_INFORMATION
@@ -1033,7 +1009,7 @@ BoardInit (
   UINT32          PayloadSelGpioPad;
   UINT32          PayloadId;
   EFI_PEI_GRAPHICS_INFO_HOB *FspGfxHob;
-  LOADER_GLOBAL_DATA        *LdrGlobal;
+  VOID                      *FspHobList;
 
   switch (InitPhase) {
   case PreSiliconInit:
@@ -1077,7 +1053,7 @@ BoardInit (
 
     SetPayloadId (PayloadId);
 
-    if (GetLoaderGlobalDataPointer ()->BootMode != BOOT_ON_FLASH_UPDATE) {
+    if (GetBootMode () != BOOT_ON_FLASH_UPDATE) {
       UpdateBlRsvdRegion ();
     }
     Status = GetComponentInfo (FLASH_MAP_SIG_VARIABLE, &RgnBase, &RgnSize);
@@ -1098,9 +1074,12 @@ BoardInit (
     // Reinitialize the BAR for Graphics device
     //
     if (PcdGetBool (PcdFramebufferInitEnabled)) {
-      LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
-      FspGfxHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GetGuidHobData (LdrGlobal->FspHobList, &Length,
-                    &gEfiGraphicsInfoHobGuid);
+      FspGfxHob = NULL;
+      FspHobList = GetFspHobListPtr ();
+      if (FspHobList != NULL) {
+        FspGfxHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GetGuidHobData (FspHobList, &Length,
+                      &gEfiGraphicsInfoHobGuid);
+      }
       if (FspGfxHob != NULL) {
         PciAnd8 (PCI_LIB_ADDRESS(SA_IGD_BUS, SA_IGD_DEV, SA_IGD_FUN_0, PCI_COMMAND_OFFSET), \
                    (UINT8)(~EFI_PCI_COMMAND_BUS_MASTER));
@@ -2226,10 +2205,8 @@ PlatformUpdateAcpiTable (
   GLOBAL_NVS_AREA             *GlobalNvs;
   UINT32                       Base;
   UINT16                       Size;
-  LOADER_GLOBAL_DATA          *LdrGlobal;
   EFI_STATUS                   Status;
-
-  LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
+  VOID                        *FspHobList;
 
   GlobalNvs  = (GLOBAL_NVS_AREA *)(UINTN) PcdGet32 (PcdAcpiGnvsAddress);
 
@@ -2293,15 +2270,18 @@ PlatformUpdateAcpiTable (
   }
 
   if (Table->Signature == EFI_BDAT_TABLE_SIGNATURE) {
-    UpdateBdatAcpiTable (Table, LdrGlobal->FspHobList);
-    DEBUG ( (DEBUG_INFO, "Updated BDAT Table in AcpiTable Entries\n") );
+    FspHobList = GetFspHobListPtr ();
+    if (FspHobList != NULL) {
+      UpdateBdatAcpiTable (Table, FspHobList);
+      DEBUG ( (DEBUG_INFO, "Updated BDAT Table in AcpiTable Entries\n") );
+    }
   }
 
   if (FeaturePcdGet (PcdMeasuredBootEnabled)){
     if ((Table->Signature == EFI_ACPI_5_0_TRUSTED_COMPUTING_PLATFORM_2_TABLE_SIGNATURE) ||
           (Table->OemTableId == ACPI_SSDT_TPM2_DEVICE_OEM_TABLE_ID)) {
 
-      if (LdrGlobal->LdrFeatures & FEATURE_MEASURED_BOOT) {
+      if ((GetFeatureCfg () & FEATURE_MEASURED_BOOT) != 0) {
         Status = UpdateTpm2AcpiTable(Table);
         if (EFI_ERROR (Status)) {
           DEBUG ((DEBUG_ERROR, "UpdateTpm2AcpiTable fails! - %r\n", Status));
@@ -2344,9 +2324,7 @@ UpdateCpuNvs (
 {
   EFI_HOB_GUID_TYPE                     *GuidHob;
   CPU_INIT_DATA_HOB                     *CpuInitDataHob;
-  LOADER_GLOBAL_DATA                    *LdrGlobal;
-
-  LdrGlobal   = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
+  VOID                                  *FspHobList;
 
   if (CpuNvs == NULL) {
     DEBUG ((DEBUG_ERROR, "Invalid Cpu Nvs pointer!!!\n"));
@@ -2356,7 +2334,11 @@ UpdateCpuNvs (
   ///
   /// Get CPU Init Data Hob
   ///
-  GuidHob = GetNextGuidHob (&gCpuInitDataHobGuid, LdrGlobal->FspHobList);
+  GuidHob = NULL;
+  FspHobList = GetFspHobListPtr ();
+  if (FspHobList != NULL) {
+    GuidHob = GetNextGuidHob (&gCpuInitDataHobGuid, FspHobList);
+  }
   if (GuidHob == NULL) {
     DEBUG ((DEBUG_ERROR, "CPU Data HOB not available\n"));
     return;

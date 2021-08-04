@@ -79,18 +79,21 @@ IsWarmReset (
   VOID
   )
 {
-  LOADER_GLOBAL_DATA    *LdrGlobal;
+  VOID                  *FspHobList;
   MEMORY_PLATFORM_DATA  *MemPlatformData;
   UINT8                 ResetType;
   BOOLEAN               IsWarmReset;
 
   IsWarmReset     = FALSE;
-  LdrGlobal       = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
-  MemPlatformData = GetGuidHobData (
-                      LdrGlobal->FspHobList,
-                      NULL,
-                      &gSiMemoryPlatformDataGuid
-                      );
+  MemPlatformData = NULL;
+  FspHobList = GetFspHobListPtr ();
+  if (FspHobList != NULL) {
+    MemPlatformData = GetGuidHobData (
+                        FspHobList,
+                        NULL,
+                        &gSiMemoryPlatformDataGuid
+                        );
+  }
   if (MemPlatformData != NULL) {
     if (MemPlatformData->BootMode == 1) {
       IsWarmReset = TRUE;

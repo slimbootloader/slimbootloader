@@ -564,25 +564,25 @@ PlatformFeaturesInit (
   )
 {
   FEATURES_CFG_DATA           *FeaturesCfgData;
-  LOADER_GLOBAL_DATA          *LdrGlobal;
   PLATFORM_DATA               *PlatformData;
   UINTN                        HeciBaseAddress;
+  UINT32                       LdrFeatures;
 
   // Set common features
-  LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
-  LdrGlobal->LdrFeatures |= FeaturePcdGet (PcdAcpiEnabled)?FEATURE_ACPI:0;
-  LdrGlobal->LdrFeatures |= FeaturePcdGet (PcdVerifiedBootEnabled)?FEATURE_VERIFIED_BOOT:0;
-  LdrGlobal->LdrFeatures |= FeaturePcdGet (PcdMeasuredBootEnabled)?FEATURE_MEASURED_BOOT:0;
+  LdrFeatures  = GetFeatureCfg ();
+  LdrFeatures |= FeaturePcdGet (PcdAcpiEnabled)?FEATURE_ACPI:0;
+  LdrFeatures |= FeaturePcdGet (PcdVerifiedBootEnabled)?FEATURE_VERIFIED_BOOT:0;
+  LdrFeatures |= FeaturePcdGet (PcdMeasuredBootEnabled)?FEATURE_MEASURED_BOOT:0;
 
   // Disable feature by configuration data.
   FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
   if (FeaturesCfgData != NULL) {
     if (FeaturesCfgData->Features.Acpi == 0) {
-      LdrGlobal->LdrFeatures &= ~FEATURE_ACPI;
+      LdrFeatures &= ~FEATURE_ACPI;
     }
 
     if (FeaturesCfgData->Features.MeasuredBoot == 0) {
-      LdrGlobal->LdrFeatures &= ~FEATURE_MEASURED_BOOT;
+      LdrFeatures &= ~FEATURE_MEASURED_BOOT;
     }
   } else {
     DEBUG ((DEBUG_INFO, "FEATURES CFG DATA NOT FOUND!\n"));
@@ -600,12 +600,14 @@ PlatformFeaturesInit (
     GetBootGuardInfo (HeciBaseAddress, &PlatformData->BtGuardInfo);
     DEBUG ((DEBUG_INFO, "GetPlatformDataPtr is copied 0x%08X \n", PlatformData));
     if (!PlatformData->BtGuardInfo.MeasuredBoot) {
-      LdrGlobal->LdrFeatures &= ~FEATURE_MEASURED_BOOT;
+      LdrFeatures &= ~FEATURE_MEASURED_BOOT;
     }
     if (!PlatformData->BtGuardInfo.VerifiedBoot) {
-      LdrGlobal->LdrFeatures &= ~FEATURE_VERIFIED_BOOT;
+      LdrFeatures &= ~FEATURE_VERIFIED_BOOT;
     }
   }
+
+  SetFeatureCfg (LdrFeatures);
 }
 
 /**
@@ -619,7 +621,7 @@ TpmInitialize (
   EFI_STATUS                   Status;
   UINT8                        BootMode;
   PLATFORM_DATA               *PlatformData;
-  LOADER_GLOBAL_DATA          *LdrGlobal;
+  UINT32                       Features;
 
   BootMode     = GetBootMode();
   PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
@@ -647,8 +649,9 @@ TpmInitialize (
   } else {
     DisableTpm();
 
-    LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
-    LdrGlobal->LdrFeatures &= ~FEATURE_MEASURED_BOOT;
+    Features  = GetFeatureCfg ();
+    Features &= (UINT32)(~FEATURE_MEASURED_BOOT);
+    SetFeatureCfg (Features);
   }
 }
 

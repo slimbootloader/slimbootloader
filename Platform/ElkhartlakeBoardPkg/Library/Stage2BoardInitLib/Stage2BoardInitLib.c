@@ -460,7 +460,7 @@ InitializeSmbiosInfo (
 
   Index         = 0;
   TempSmbiosStrTbl  = (SMBIOS_TYPE_STRINGS *) AllocateTemporaryMemory (0);
-  VerInfoTbl    = GetLoaderGlobalDataPointer()->VerInfoPtr;
+  VerInfoTbl    = GetVerInfoPtr ();
 
   //
   // SMBIOS_TYPE_BIOS_INFORMATION
@@ -671,7 +671,7 @@ BoardInit (
   EFI_STATUS                  Status;
   UINT32                      Length;
   EFI_PEI_GRAPHICS_INFO_HOB   *FspGfxHob;
-  LOADER_GLOBAL_DATA          *LdrGlobal;
+  VOID                        *FspHobList;
   UINT32                      TsegBase;
   UINT32                      TsegSize;
 
@@ -704,8 +704,11 @@ BoardInit (
     (VOID) PcdSet32S (PcdSmramTsegSize, (UINT32)TsegSize);
 
     if (PcdGetBool (PcdFramebufferInitEnabled)) {
-      LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
-      FspGfxHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GetGuidHobData (LdrGlobal->FspHobList, &Length, &gEfiGraphicsInfoHobGuid);
+      FspGfxHob = NULL;
+      FspHobList = GetFspHobListPtr ();
+      if (FspHobList != NULL) {
+        FspGfxHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GetGuidHobData (FspHobList, &Length, &gEfiGraphicsInfoHobGuid);
+      }
       if (FspGfxHob != NULL) {
         PciWrite8 (PCI_LIB_ADDRESS(SA_IGD_BUS, SA_IGD_DEV, SA_IGD_FUN_0, PCI_COMMAND_OFFSET), \
                    EFI_PCI_COMMAND_MEMORY_SPACE | EFI_PCI_COMMAND_BUS_MASTER);
@@ -725,7 +728,6 @@ BoardInit (
     break;
   case PostPciEnumeration:
     // Set pre-OS checker features flag
-    LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
     if (mPchSciSupported) {
       if (!SciBootSuccess ()) {
         DEBUG ((DEBUG_WARN, "SCI device has boot issue\n"));

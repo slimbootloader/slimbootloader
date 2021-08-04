@@ -153,7 +153,7 @@ InitializeSmbiosInfo (
   Index         = 0;
   PlatformId    = GetPlatformId ();
   TempSmbiosStrTbl  = (SMBIOS_TYPE_STRINGS *) AllocateTemporaryMemory (0);
-  VerInfoTbl    = GetLoaderGlobalDataPointer()->VerInfoPtr;
+  VerInfoTbl    = GetVerInfoPtr ();
 
   //
   // SMBIOS_TYPE_BIOS_INFORMATION
@@ -735,28 +735,6 @@ SetFrameBufferWriteCombining (
 }
 
 /**
-  Clear FSP HOB data
-
-**/
-VOID
-ClearFspHob (
-  VOID
-  )
-{
-  LOADER_GLOBAL_DATA          *LdrGlobal;
-  EFI_HOB_HANDOFF_INFO_TABLE  *HandOffHob;
-  UINT32                      Length;
-
-  LdrGlobal  = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
-  HandOffHob = (EFI_HOB_HANDOFF_INFO_TABLE  *) LdrGlobal->FspHobList;
-  if (HandOffHob != NULL) {
-    Length     = (UINT32)((UINTN)HandOffHob->EfiEndOfHobList - (UINTN)HandOffHob);
-    ZeroMem (HandOffHob, Length);
-    LdrGlobal->FspHobList = NULL;
-  }
-}
-
-/**
   Set IA Untrust mode at the end.
 
 **/
@@ -933,7 +911,7 @@ BoardInit (
   UINT32              VarBase;
   UINT32              VarSize;
   UINT32              TcoCnt;
-  LOADER_GLOBAL_DATA *LdrGlobal;
+  VOID               *FspHobList;
   UINT32              TsegBase;
   UINT64              TsegSize;
   VTD_INFO           *VtdInfo;
@@ -951,12 +929,15 @@ BoardInit (
 
     // Get TSEG info from FSP HOB
     // It will be consumed in MpInit if SMM rebase is enabled
-    LdrGlobal  = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
-    TsegBase = (UINT32)GetFspReservedMemoryFromGuid (
-                       LdrGlobal->FspHobList,
-                       &TsegSize,
-                       &gReservedMemoryResourceHobTsegGuid
-                       );
+    TsegBase = 0;
+    FspHobList = GetFspHobListPtr ();
+    if (FspHobList != NULL) {
+      TsegBase = (UINT32)GetFspReservedMemoryFromGuid (
+                        FspHobList,
+                        &TsegSize,
+                        &gReservedMemoryResourceHobTsegGuid
+                        );
+    }
     if (TsegBase != 0) {
       Status = PcdSet32S (PcdSmramTsegBase, TsegBase);
       Status = PcdSet32S (PcdSmramTsegSize, (UINT32)TsegSize);
@@ -1357,9 +1338,15 @@ SaveNvsData (
   UINT8                           Data8;
   UINT8                           BitMap;
   FLASH_MAP                      *FlashMapPtr;
+  VOID                           *FspHobList;
 
-  VariableMrcData = GetGuidHobData (((LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ())->FspHobList,
-                                          &VarLength, &gFspVariableNvDataHobGuid);
+  VariableMrcData = NULL;
+  FspHobList = GetFspHobListPtr ();
+  if (FspHobList != NULL) {
+    VariableMrcData = GetGuidHobData (FspHobList,
+                                      &VarLength,
+                                      &gFspVariableNvDataHobGuid);
+  }
   if (VariableMrcData == NULL || (Buffer == NULL) || (Length < sizeof (MrcParamHdr->Crc))) {
     return EFI_NOT_FOUND;
   }

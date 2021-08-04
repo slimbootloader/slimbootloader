@@ -109,14 +109,14 @@ MeGetMeBiosPayloadHob (
   )
 {
   UINT32                    Length;
-  LOADER_GLOBAL_DATA       *LdrGlobal;
   VOID                     *MbpHeader;
+  VOID                     *FspHobList;
 
   MbpHeader  = NULL;
   Length     = 0;
-  LdrGlobal  = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
-  if (LdrGlobal != NULL) {
-    MbpHeader = GetGuidHobData (LdrGlobal->FspHobList, &Length, &gEfiHeciMbpDataHobGuid);
+  FspHobList = GetFspHobListPtr ();
+  if (FspHobList != NULL) {
+    MbpHeader  = GetGuidHobData (FspHobList, &Length, &gEfiHeciMbpDataHobGuid);
   }
   if ((MbpHeader == NULL) || (Length == 0)){
     DEBUG ((DEBUG_ERROR, "MBP Data Hob not Found!\n"));

@@ -469,7 +469,6 @@ PlatformFeaturesInit (
   )
 {
   FEATURES_CFG_DATA           *FeaturesCfgData;
-  LOADER_GLOBAL_DATA          *LdrGlobal;
   UINT32                       Features;
   PLATFORM_DATA               *PlatformData;
   UINTN                        HeciBaseAddress;
@@ -516,10 +515,8 @@ PlatformFeaturesInit (
     DEBUG ((DEBUG_INFO, "FEATURES CFG DATA NOT FOUND!\n"));
   }
 
-  LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
-  LdrGlobal->LdrFeatures = Features;
-
-  DEBUG ((DEBUG_INFO, "PlatformFeaturesInit: LdrGlobal->LdrFeatures 0x%x\n",LdrGlobal->LdrFeatures));
+  SetFeatureCfg (Features);
+  DEBUG ((DEBUG_INFO, "PlatformFeaturesInit: Features 0x%x\n", GetFeatureCfg ()));
 }
 
 /**
@@ -533,7 +530,7 @@ TpmInitialize (
   EFI_STATUS                   Status;
   UINT8                        BootMode;
   PLATFORM_DATA               *PlatformData;
-  LOADER_GLOBAL_DATA          *LdrGlobal;
+  UINT32                       Features;
 
   PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
 
@@ -562,8 +559,9 @@ TpmInitialize (
   } else {
     DisableTpm();
 
-    LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
-    LdrGlobal->LdrFeatures &= ~FEATURE_MEASURED_BOOT;
+    Features  = GetFeatureCfg ();
+    Features &= (UINT32)(~FEATURE_MEASURED_BOOT);
+    SetFeatureCfg (Features);
   }
 
 }

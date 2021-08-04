@@ -292,7 +292,7 @@ UpdateCpuNvs (
   EFI_HOB_GUID_TYPE                     *GuidHob;
   CPU_INIT_DATA_HOB                     *CpuInitDataHob;
   CPU_CONFIG_DATA                       *CpuConfigData;
-  LOADER_GLOBAL_DATA                    *LdrGlobal;
+  VOID                                  *FspHobList;
   UINT16                                C6Latency = 0;
   UINT16                                C7Latency = 0;
   UINT16                                C8Latency = 0;
@@ -303,8 +303,6 @@ UpdateCpuNvs (
   UINT8                                 MaxRefTemp;
   UINT8                                 Index;
 
-  LdrGlobal   = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
-
   if (CpuNvs == NULL) {
     DEBUG ((DEBUG_ERROR, "Invalid Cpu Nvs pointer!!!\n"));
     return;
@@ -313,7 +311,11 @@ UpdateCpuNvs (
   ///
   /// Get CPU Init Data Hob
   ///
-  GuidHob = GetNextGuidHob (&gCpuInitDataHobGuid, LdrGlobal->FspHobList);
+  GuidHob = NULL;
+  FspHobList = GetFspHobListPtr ();
+  if (FspHobList != NULL) {
+    GuidHob = GetNextGuidHob (&gCpuInitDataHobGuid, FspHobList);
+  }
   if (GuidHob == NULL) {
     DEBUG ((DEBUG_ERROR, "CPU Data HOB not available\n"));
     return;

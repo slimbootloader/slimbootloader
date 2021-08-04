@@ -471,28 +471,6 @@ BuildOsConfigDataHob (
 }
 
 /**
-  Clear FSP HOB data
-
-**/
-VOID
-ClearFspHob (
-  VOID
-  )
-{
-  LOADER_GLOBAL_DATA          *LdrGlobal;
-  EFI_HOB_HANDOFF_INFO_TABLE  *HandOffHob;
-  UINTN                       Length;
-
-  LdrGlobal  = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
-  HandOffHob = (EFI_HOB_HANDOFF_INFO_TABLE  *) LdrGlobal->FspHobList;
-  if (HandOffHob != NULL) {
-    Length     = (UINT8 *) (UINTN) HandOffHob->EfiEndOfHobList - (UINT8 *)HandOffHob;
-    ZeroMem (HandOffHob, Length);
-    LdrGlobal->FspHobList = NULL;
-  }
-}
-
-/**
   Set SPI flash EISS and LE
 **/
 VOID
@@ -563,7 +541,7 @@ InitializeSmbiosInfo (
 
   Index         = 0;
   TempSmbiosStrTbl  = (SMBIOS_TYPE_STRINGS *) AllocateTemporaryMemory (0);
-  VerInfoTbl    = GetLoaderGlobalDataPointer()->VerInfoPtr;
+  VerInfoTbl    = GetVerInfoPtr ();
 
   //
   // SMBIOS_TYPE_BIOS_INFORMATION
@@ -876,7 +854,7 @@ BoardInit (
   UINT32                    TsegBase;
   UINT32                    TsegSize;
   EFI_PEI_GRAPHICS_INFO_HOB *FspGfxHob;
-  LOADER_GLOBAL_DATA        *LdrGlobal;
+  VOID                      *FspHobList;
   SILICON_CFG_DATA          *SiCfgData;
   UINTN                     LpcBase;
   BL_SW_SMI_INFO            *BlSwSmiInfo;
@@ -928,8 +906,11 @@ BoardInit (
     (VOID) PcdSet32S (PcdSmramTsegSize, (UINT32)TsegSize);
 
     if (PcdGetBool (PcdFramebufferInitEnabled)) {
-      LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
-      FspGfxHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GetGuidHobData (LdrGlobal->FspHobList, &Length, &gEfiGraphicsInfoHobGuid);
+      FspGfxHob = NULL;
+      FspHobList = GetFspHobListPtr ();
+      if (FspHobList != NULL) {
+        FspGfxHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GetGuidHobData (FspHobList, &Length, &gEfiGraphicsInfoHobGuid);
+      }
       if (FspGfxHob != NULL) {
         DEBUG ((DEBUG_INFO, "FspGfxHob->FrameBufferBase = 0x%lx\n", FspGfxHob->FrameBufferBase));
         PciWrite8 (PCI_LIB_ADDRESS(SA_IGD_BUS, SA_IGD_DEV, SA_IGD_FUN_0, PCI_COMMAND_OFFSET), \
@@ -2137,15 +2118,14 @@ PlatformUpdateAcpiTable (
   UINT32                       Base;
   UINT16                       Size;
   EFI_STATUS                   Status;
-  LOADER_GLOBAL_DATA          *LdrGlobal;
   PLATFORM_DATA               *PlatformData;
   TCC_CFG_DATA                *TccCfgData;
   SILICON_CFG_DATA            *SiCfgData;
   FEATURES_CFG_DATA           *FeaturesCfgData;
   MEMORY_CFG_DATA             *MemCfgData;
   UINTN                       DmarTableFlags;
+  VOID                        *FspHobList;
 
-  LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
   GlobalNvs  = (GLOBAL_NVS_AREA *)(UINTN) PcdGet32 (PcdAcpiGnvsAddress);
 
   Table = (EFI_ACPI_DESCRIPTION_HEADER *) Current;
@@ -2218,9 +2198,12 @@ PlatformUpdateAcpiTable (
     }
     return EFI_UNSUPPORTED;
   } else if (Table->Signature == EFI_BDAT_TABLE_SIGNATURE) {
-    UpdateBdatAcpiTable (Table, LdrGlobal->FspHobList);
-    DEBUG ((DEBUG_INFO, "Updated BDAT Table in AcpiTable Entries\n"));
-  } else if (Table->Signature == EFI_ACPI_6_1_LOW_POWER_IDLE_TABLE_STRUCTURE_SIGNATURE){
+    FspHobList = GetFspHobListPtr ();
+    if (FspHobList != NULL) {
+      UpdateBdatAcpiTable (Table, FspHobList);
+      DEBUG ((DEBUG_INFO, "Updated BDAT Table in AcpiTable Entries\n"));
+    }
+  } else if (Table->Signature == EFI_ACPI_6_1_LOW_POWER_IDLE_TABLE_STRUCTURE_SIGNATURE) {
       UINT8                                  LpitStateEntries = 0;
       EFI_ACPI_6_1_GENERIC_ADDRESS_STRUCTURE SetResidencyCounter[3] = { ACPI_LPI_RES_SLP_S0_COUNTER, ACPI_LPI_RES_C10_COUNTER, ACPI_LPI_RES_PS_ON_COUNTER };
       UINT64                                 ResidencyCounterFrequency = 0;
@@ -2317,7 +2300,7 @@ UpdateCpuNvs (
   EFI_HOB_GUID_TYPE                     *GuidHob;
   CPU_INIT_DATA_HOB                     *CpuInitDataHob;
   CPU_CONFIG_DATA                       *CpuConfigData;
-  LOADER_GLOBAL_DATA                    *LdrGlobal;
+  VOID                                  *FspHobList;
   UINT16                     C6Latency = 0;
   UINT16                     C7Latency = 0;
   UINT16                     C8Latency = 0;
@@ -2328,7 +2311,6 @@ UpdateCpuNvs (
   UINT8                      MaxRefTemp;
   UINT8                      Index;
 
-  LdrGlobal   = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
   if (CpuNvs == NULL) {
     DEBUG ((DEBUG_ERROR, "Invalid Cpu Nvs pointer!!!\n"));
     return;
@@ -2337,7 +2319,11 @@ UpdateCpuNvs (
   ///
   /// Get CPU Init Data Hob
   ///
-  GuidHob = GetNextGuidHob (&gCpuInitDataHobGuid, LdrGlobal->FspHobList);
+  GuidHob = NULL;
+  FspHobList = GetFspHobListPtr ();
+  if (FspHobList != NULL) {
+    GuidHob = GetNextGuidHob (&gCpuInitDataHobGuid, FspHobList);
+  }
   if (GuidHob == NULL) {
     DEBUG ((DEBUG_ERROR, "CPU Data HOB not available\n"));
     return;
