@@ -374,11 +374,10 @@ PlatformUpdateAcpiTable (
   UINT16                       Size;
   EFI_STATUS                   Status;
   TCC_CFG_DATA                *TccCfgData;
-  LOADER_GLOBAL_DATA          *LdrGlobal;
+  VOID                        *FspHobList;
   FEATURES_CFG_DATA           *FeaturesCfgData;
   EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE *FadtPointer;
 
-  LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
   GlobalNvs  = (GLOBAL_NVS_AREA *)(UINTN) PcdGet32 (PcdAcpiGnvsAddress);
   FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
 
@@ -448,8 +447,11 @@ PlatformUpdateAcpiTable (
     }
     return EFI_UNSUPPORTED;
   } else if (Table->Signature == EFI_BDAT_TABLE_SIGNATURE) {
-    UpdateBdatAcpiTable (Table, LdrGlobal->FspHobList);
-    DEBUG ((DEBUG_INFO, "Updated BDAT Table in AcpiTable Entries\n"));
+    FspHobList = GetFspHobListPtr ();
+    if (FspHobList != NULL) {
+      UpdateBdatAcpiTable (Table, FspHobList);
+      DEBUG ((DEBUG_INFO, "Updated BDAT Table in AcpiTable Entries\n"));
+    }
   } else if (Table->Signature == EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE) {
     DEBUG ( (DEBUG_INFO, "Updated FADT Table entries in AcpiTable\n") );
     FadtPointer = (EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE *) Table;

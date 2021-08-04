@@ -1336,7 +1336,7 @@ HeciGetFwVersionMsg (
   UINT32                    Length;
   GET_FW_VER                MsgGenGetFwCapsSku;
   GET_FW_VER_ACK            *MsgGenGetFwVersionAckData;
-  LOADER_GLOBAL_DATA        *LdrGlobal;
+  VOID                      *FspHobList;
   ME_BIOS_PAYLOAD           *MbpDataHob;
   UINT32                    MbpDataHobLen;
   UINT8                     *DataPtr;
@@ -1351,10 +1351,10 @@ HeciGetFwVersionMsg (
   //
   // Get Mbp Data HOB
   //
-  LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
+  FspHobList = GetFspHobListPtr ();
 
-  if ( LdrGlobal != NULL ) {
-    DataPtr = (UINT8 *)GetGuidHobData (LdrGlobal->FspHobList, &MbpDataHobLen, &gMeBiosPayloadHobGuid);
+  if ( FspHobList != NULL ) {
+    DataPtr = (UINT8 *)GetGuidHobData (FspHobList, &MbpDataHobLen, &gMeBiosPayloadHobGuid);
     if ((DataPtr != NULL) && (MbpDataHobLen > 0)) {
       MbpDataHob = (ME_BIOS_PAYLOAD *)(DataPtr+4);
       //DumpHex(16, 0, MbpDataHobLen, DataPtr);
@@ -1435,10 +1435,10 @@ HeciGetFwCapsSkuMsg (
   UINT32                    Length;
   GET_FW_CAPSKU             *MsgGenGetFwCapsSku;
   GET_FW_CAPS_SKU_ACK_DATA  *MsgGenGetFwCapsSkuAck;
-  LOADER_GLOBAL_DATA        *LdrGlobal;
+  VOID                      *FspHobList;
   ME_BIOS_PAYLOAD           *MbpDataHob;
   UINT32                    MbpDataHobLen;
-  UINT8                      *DataPtr;
+  UINT8                     *DataPtr;
 
 
   MbpDataHob = NULL;
@@ -1449,9 +1449,9 @@ HeciGetFwCapsSkuMsg (
   MsgGenGetFwCapsSku = (GET_FW_CAPSKU *)MsgGetFwCaps;
   MsgGenGetFwCapsSkuAck = (GET_FW_CAPS_SKU_ACK_DATA *)MsgGetFwCapsAck;
 
-  LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
-  if ( LdrGlobal != NULL ) {
-    DataPtr = (UINT8 *)GetGuidHobData (LdrGlobal->FspHobList, &MbpDataHobLen, &gMeBiosPayloadHobGuid);
+  FspHobList = GetFspHobListPtr ();
+  if ( FspHobList != NULL ) {
+    DataPtr = (UINT8 *)GetGuidHobData (FspHobList, &MbpDataHobLen, &gMeBiosPayloadHobGuid);
     if ((DataPtr != NULL) && (MbpDataHobLen > 0)) {
       MbpDataHob = (ME_BIOS_PAYLOAD *)(DataPtr+4);
       //DumpHex(16, 0, sizeof(MBP_ITEM_HEADER), DataPtr);
