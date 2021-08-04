@@ -238,21 +238,21 @@ MeMeasuredBootInit (
   VOID
   )
 {
-  LOADER_GLOBAL_DATA    *LdrGlobal;
+  VOID                  *FspHobList;
   BOOLEAN               CsmeMbState;
   ME_BIOS_PAYLOAD       *MbpDataHob;
   UINT8                 *DataPtr;
   UINT32                MbpDataHobLen;
   EFI_STATUS            Status;
 
-  LdrGlobal = (LOADER_GLOBAL_DATA *) GetLoaderGlobalDataPointer ();
-  if ( LdrGlobal == NULL ) {
+  FspHobList = GetFspHobListPtr ();
+  if ( FspHobList == NULL ) {
     return EFI_NOT_FOUND;
   }
 
   Status = EFI_UNSUPPORTED;
 
-  DataPtr = GetGuidHobData (LdrGlobal->FspHobList, &MbpDataHobLen, &gMeBiosPayloadHobGuid);
+  DataPtr = GetGuidHobData (FspHobList, &MbpDataHobLen, &gMeBiosPayloadHobGuid);
   if ((DataPtr != NULL) && (MbpDataHobLen > 0)) {
     MbpDataHob = (ME_BIOS_PAYLOAD *) (DataPtr+4);
     //

@@ -65,21 +65,21 @@ FindFspFusaInfoHob (
   VOID
   )
 {
-  FUSA_INFO_HOB               *FspFusaInfo;
+  FUSA_INFO_HOB                 *FspFusaInfo;
   EFI_HOB_GUID_TYPE             *GuidHob;
-  LOADER_GLOBAL_DATA            *LdrGlobal;
+  VOID                          *FspHobList;
   UINT32                         CheckIndex;
   UINT32                         TestIndex;
 
   GuidHob = NULL;
   FspFusaInfo = NULL;
-  LdrGlobal = (LOADER_GLOBAL_DATA *) GetLoaderGlobalDataPointer ();
-  if ( LdrGlobal == NULL ) {
-    return EFI_NOT_FOUND;
-  }
+
   // Find Fusa Info Hob from FSP
-  GuidHob = GetNextGuidHob (&gSiFusaInfoGuid, LdrGlobal->FspHobList);
-  if(GuidHob == NULL) {
+  FspHobList = GetFspHobListPtr ();
+  if (FspHobList != NULL) {
+    GuidHob = GetNextGuidHob (&gSiFusaInfoGuid, FspHobList);
+  }
+  if (GuidHob == NULL) {
     return EFI_NOT_FOUND;
   }
   FspFusaInfo = GET_GUID_HOB_DATA (GuidHob);

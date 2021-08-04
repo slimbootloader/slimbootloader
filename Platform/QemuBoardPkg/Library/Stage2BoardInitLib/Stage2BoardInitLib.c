@@ -202,12 +202,12 @@ BoardInit (
 )
 {
   EFI_STATUS           Status;
-  LOADER_GLOBAL_DATA  *LdrGlobal;
   UINT32               TsegBase;
   UINT64               TsegSize;
   VOID                *Buffer;
   UINT32               Length;
   UINT32               PmBase;
+  VOID                *FspHobList;
 
   switch (InitPhase) {
   case PreSiliconInit:
@@ -227,12 +227,15 @@ BoardInit (
     }
     // Get TSEG info from FSP HOB
     // It will be consumed in MpInit if SMM rebase is enabled
-    LdrGlobal  = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
-    TsegBase = (UINT32)GetFspReservedMemoryFromGuid (
-                       LdrGlobal->FspHobList,
-                       &TsegSize,
-                       &gReservedMemoryResourceHobTsegGuid
-                       );
+    TsegBase = 0;
+    FspHobList = GetFspHobListPtr ();
+    if (FspHobList != NULL) {
+      TsegBase = (UINT32)GetFspReservedMemoryFromGuid (
+                        FspHobList,
+                        &TsegSize,
+                        &gReservedMemoryResourceHobTsegGuid
+                        );
+    }
     if (TsegBase != 0) {
       Status = PcdSet32S (PcdSmramTsegBase, TsegBase);
       Status = PcdSet32S (PcdSmramTsegSize, (UINT32)TsegSize);

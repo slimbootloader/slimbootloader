@@ -1724,17 +1724,14 @@ HeciMBP (
     VOID
   )
 {
-  LOADER_GLOBAL_DATA       *LdrGlobal;
   MBP_CMD_RESP_DATA        *MBPHeader;
+  VOID                     *FspHobList;
 
-  LdrGlobal = NULL;
   MBPHeader = NULL;
-
-  LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
-  if (LdrGlobal != NULL) {
-    MBPHeader = GetGuidHobData(LdrGlobal->FspHobList, NULL, &gEfiHeciMbpDataHobGuid);
+  FspHobList = GetFspHobListPtr ();
+  if (FspHobList != NULL) {
+    MBPHeader = GetGuidHobData (FspHobList, NULL, &gEfiHeciMbpDataHobGuid);
   }
-
   if (MBPHeader == NULL) {
     DEBUG ((DEBUG_ERROR, "HeciMBP MBPHeader not Found \n"));
   }

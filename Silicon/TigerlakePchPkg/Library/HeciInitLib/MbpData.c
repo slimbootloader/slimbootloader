@@ -125,16 +125,16 @@ RetrieveMBPData (
   )
 {
   ME_BIOS_PAYLOAD       *MbpBiosPayload;
-  LOADER_GLOBAL_DATA    *LdrGlobal;
+  VOID                  *FspHobList;
   UINT8                 *DataPtr;
   UINT32                MbpDataHobLen;
 
-  LdrGlobal = (LOADER_GLOBAL_DATA *) GetLoaderGlobalDataPointer ();
-  if ( LdrGlobal == NULL ) {
+  FspHobList = GetFspHobListPtr ();
+  if ( FspHobList == NULL ) {
     return EFI_NOT_FOUND;
   }
 
-  DataPtr = GetGuidHobData (LdrGlobal->FspHobList, &MbpDataHobLen, &gMeBiosPayloadHobGuid);
+  DataPtr = GetGuidHobData (FspHobList, &MbpDataHobLen, &gMeBiosPayloadHobGuid);
   if ((DataPtr != NULL) && (MbpDataHobLen > 0)) {
     MbpBiosPayload = (ME_BIOS_PAYLOAD *) (DataPtr+4);
     // Get  address for ME_BIOS_PAYLOAD_HOB.ME_BIOS_PAYLOAD
