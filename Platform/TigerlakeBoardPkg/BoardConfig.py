@@ -159,8 +159,9 @@ class Board(BaseBoard):
             self.TCC_STREAM_SIZE = 0x00005000
             self.SIIPFW_SIZE += self.TCC_CCFG_SIZE + self.TCC_CRL_SIZE + self.TCC_STREAM_SIZE
 
-        self.ENABLE_TSN_MAC_ADDRESS = 1
-        if self.ENABLE_TSN_MAC_ADDRESS:
+        # to enable TSN, set 1 to self.ENABLE_TSN
+        self.ENABLE_TSN = 0
+        if self.ENABLE_TSN:
             self.TMAC_SIZE = 0x00001000
             self.SIIPFW_SIZE += self.TMAC_SIZE
 
@@ -226,6 +227,10 @@ class Board(BaseBoard):
                 # Enable TCC in dlt file
                 if self.ENABLE_TCC:
                     lines += open (os.path.join(brd_cfg_src_dir, 'CfgData_Tcc_Feature.dlt')).read()
+
+                # Enable TSN in dlt file
+                if self.ENABLE_TSN:
+                    lines += open (os.path.join(brd_cfg_src_dir, 'CfgData_Tsn_Feature.dlt')).read()
 
                 # Write to generated final dlt file
                 output_cfg_dlt_file = os.path.join(build._fv_dir, dlt_file)
@@ -317,9 +322,9 @@ class Board(BaseBoard):
               ('TCCT',  '',   'Lz4',   container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,    0,   self.TCC_STREAM_SIZE,0),   # TCC Stream Config
             )
 
-        if self.ENABLE_TSN_MAC_ADDRESS:
+        if self.ENABLE_TSN:
             container_list.append (
-              ('TMAC','',     'Lz4',     container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,     0,   self.TMAC_SIZE,        0),   # TSN MAC Address
+              ('TMAC',  '',   'Lz4',     container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,     0,   self.TMAC_SIZE,        0),   # TSN MAC Address
             )
 
         return [container_list]
