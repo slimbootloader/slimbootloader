@@ -1418,14 +1418,6 @@ UpdateFspConfig (
   // Enable IEH
   FspsConfig->IehMode = 0x1;
 
-  // PTM configuration
-  for (Index = 0; Index < GetPchMaxPciePortNum(); Index++) {
-    FspsConfig->PciePtm[Index] = 0x1;
-  }
-  for (Index = 0; Index < 4; Index++) {
-    FspsConfig->CpuPcieRpPtmEnabled[Index] = 0x1;
-    FspsConfig->PtmEnabled[Index] = 0x1;
-  }
   FspsConfig->SerialIoSpiMode[1] = 0x1;
   for (Index = 0; Index < GetPchMaxSerialIoSpiControllersNum (); Index++) {
     for (CsIndex = 0; CsIndex < PCH_MAX_SERIALIO_SPI_CHIP_SELECTS; CsIndex++) {
@@ -1604,6 +1596,7 @@ UpdateFspConfig (
     FspsConfig->EnableTimedGpio1 = SiCfgData->EnableTimedGpio1;
     FspsConfig->XdciEnable       = SiCfgData->XdciEnable;
     CopyMem (FspsConfig->ITbtPcieRootPortEn, SiCfgData->ITbtPcieRootPortEn, sizeof(SiCfgData->ITbtPcieRootPortEn));
+    CopyMem (FspsConfig->PtmEnabled, SiCfgData->TcssPcieRootPortPtmEn, sizeof(SiCfgData->TcssPcieRootPortPtmEn));
   }
 
   if (FeaturePcdGet (PcdTccEnabled)) {
