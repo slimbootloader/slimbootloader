@@ -176,6 +176,13 @@
                      Enable/Disable ITBT Root Port
       length       : 0x04
       value        : { 0x1, 0x1, 0x1, 0x1 }
+  - TcssPcieRootPortPtmEn :
+      name         : Enable/Disable PTM for TCSS PCIe Root Port
+      type         : EditNum, HEX, (0x00,0xFFFFFFFF)
+      help         : >
+                     Enable/Disable Precision Time Measurement (PTM) for TCSS PCIe Root Ports
+      length       : 0x04
+      value        : { 0x0, 0x0, 0x0, 0x0 }
   - PmSupport    :
       name         : Enable/Disable IGFX PmSupport
       type         : Combo
