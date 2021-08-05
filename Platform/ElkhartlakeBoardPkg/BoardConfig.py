@@ -289,13 +289,14 @@ class Board(BaseBoard):
         CompFilePseTsnIpConfig='PseTsnIpConfig.bin' if os.path.exists(os.path.join(bins, 'PseTsnIpConfig.bin')) else ''
         CompFileTsnConfig='TsnConfig.bin' if os.path.exists(os.path.join(bins, 'TsnConfig.bin')) else ''
         CompFileTsnMacAddr='TsnMacAddr.bin' if os.path.exists(os.path.join(bins, 'TsnMacAddr.bin')) else ''
+        CompFileCrlFw='crl.bin' if os.path.exists(os.path.join(bins, 'crl.bin')) else ''
 
         if self.ENABLE_TCC:
             container_list.append (
               ('TCCC', '',     'Lz4',   container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,    0,   self.TCC_CCFG_SIZE,  0),   # TCC Cache Config
             )
             container_list.append (
-              ('TCCM', '',    'Lz4',   container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,    0,   self.TCC_CRL_SIZE,   0),   # TCC CRL
+              ('TCCM', CompFileCrlFw,    'Lz4',   container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,    0,   self.TCC_CRL_SIZE,   0),   # TCC CRL
             )
             container_list.append (
               ('TCCT',  '',   'Lz4',   container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,    0,   self.TCC_STREAM_SIZE,0),   # TCC Stream Config
