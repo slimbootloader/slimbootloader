@@ -56,7 +56,11 @@ class Board(BaseBoard):
 
         self.SIIPFW_SIZE = 0x1000
 
-        self.ENABLE_TCC  = 0
+        self.ENABLE_TCC         = 0
+        # TSN manual configuration- If enabled, user will be able to have more refined control over TSN configuration via
+        # PseTsnIpConfig, TsnConfig and TsnMacAddr binaries
+        self.ENABLE_TSN         = 0
+
         if self.ENABLE_TCC:
             self.TCC_CCFG_SIZE   = 0x00001000
             self.TCC_CRL_SIZE    = 0x00008000
@@ -73,20 +77,11 @@ class Board(BaseBoard):
             self.PSEF_SIZE = 0x00020000
             self.SIIPFW_SIZE += self.PSEF_SIZE
 
-        self.ENABLE_PSE_TSN_IP_CONFIG = 1
-        if self.ENABLE_PSE_TSN_IP_CONFIG:
-            self.TSIP_SIZE = 0x00001000
-            self.SIIPFW_SIZE += self.TSIP_SIZE
-
-        self.ENABLE_TSN_CONFIG = 1
-        if self.ENABLE_TSN_CONFIG:
-            self.TSNC_SIZE = 0x00001000
-            self.SIIPFW_SIZE += self.TSNC_SIZE
-
-        self.ENABLE_TSN_MAC_ADDRESS = 1
-        if self.ENABLE_TSN_MAC_ADDRESS:
-            self.TMAC_SIZE = 0x00001000
-            self.SIIPFW_SIZE += self.TMAC_SIZE
+        if self.ENABLE_TSN:
+            self.TSNC_SIZE      = 0x00001000
+            self.TMAC_SIZE      = 0x00001000
+            self.PSE_TSIP_SIZE  = 0x00001000 if self.ENABLE_PSEFW_LOADING == 1 else 0
+            self.SIIPFW_SIZE += self.TSNC_SIZE + self.TMAC_SIZE + self.PSE_TSIP_SIZE
 
         if self.HAVE_FIT_TABLE:
             self.FIT_ENTRY_MAX_NUM  = 10
@@ -312,20 +307,17 @@ class Board(BaseBoard):
               ('PSEF',CompFilePseFw,          'Lz4',     container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0,   self.PSEF_SIZE,      0),   # OSE FW
             )
 
-        if self.ENABLE_PSE_TSN_IP_CONFIG:
-            container_list.append (
-              ('TSIP',CompFilePseTsnIpConfig, 'Lz4',     container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0,   self.TSIP_SIZE,      0),   # PSE TSN IP
-            )
-
-        if self.ENABLE_TSN_CONFIG:
+        if self.ENABLE_TSN:
             container_list.append (
               ('TSNC',CompFileTsnConfig,      'Lz4',     container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0,   self.TSNC_SIZE,      0),   # TSN Config
             )
-
-        if self.ENABLE_TSN_MAC_ADDRESS:
             container_list.append (
               ('TMAC',CompFileTsnMacAddr,     'Lz4',     container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0,   self.TMAC_SIZE,      0),   # TSN MAC Address
             )
+            if self.ENABLE_PSEFW_LOADING:
+                container_list.append (
+                  ('TSIP',CompFilePseTsnIpConfig, 'Lz4',     container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0,   self.PSE_TSIP_SIZE,      0),   # PSE TSN IP
+                )
 
         return [container_list]
 
