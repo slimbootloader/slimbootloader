@@ -191,6 +191,7 @@
   - PchHdaDspUaaCompliance :
       name         : Universal Audio Architecture compliance for DSP enabled system
       type         : Combo
+      option       : $EN_DIS
       help         : >
                      0: Not-UAA Compliant (Intel SST driver supported only), 1: UAA Compliant (HDA Inbox driver or SST driver supported
       length       : 0x01

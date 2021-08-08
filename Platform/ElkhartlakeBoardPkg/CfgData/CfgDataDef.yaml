@@ -230,7 +230,7 @@ configs:
     - EnableSgx    :
         name         : Software Guard eXtensions (SGX)
         type         : Combo
-        option       : 0:Disabled, 1:Enabled
+        option       : 0:Disabled, 1:Enabled, 2:Software Control
         help         : >
                        Enable/Disable Software Guard eXtensions (SGX).
         length       : 0x01

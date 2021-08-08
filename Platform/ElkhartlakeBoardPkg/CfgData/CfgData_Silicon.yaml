@@ -1813,7 +1813,7 @@
   - CdClock      :
       name         : CdClock Frequency selection
       type         : Combo
-      option       : 0:168 Mhz, 1:307.2 Mhz, 2:312 Mhz, 3:552 Mhz, 4:556.8 Mhz, 5:648 Mhz, 6:652.8 Mhz
+      option       : 0:168 Mhz, 1:307.2 Mhz, 2:312 Mhz, 3:552 Mhz, 4:556.8 Mhz, 5:648 Mhz, 6:652.8 Mhz, 0xFF:Auto
       help         : >
                      0=168 Mhz, 1=307.2 Mhz, 2=312 Mhz, 3=552 Mhz, 4=556.8 Mhz, 5=648 Mhz, 6(Default)= 652.8 Mhz
       length       : 0x1
