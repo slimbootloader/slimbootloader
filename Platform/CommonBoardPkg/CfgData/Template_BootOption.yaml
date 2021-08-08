@@ -30,7 +30,7 @@ BOOT_OPTION_TMPL: >
     - BootFlags_$(1) :
         name         : Boot Flags
         type         : Combo
-        option       : 0:Normal, 4:PreOS support, 8:Extra image support, 12:PreOS and extra image support, 16:Mender support
+        option       : 0:Normal, 4:PreOS support, 8:Extra image support, 12:PreOS and extra image support, 16:Mender support, 20:PreOS and mender support
         help         : >
                        Specify boot flags (options)
                        When extra image or PreOS image is selected, need config them in next boot option with proper image type.

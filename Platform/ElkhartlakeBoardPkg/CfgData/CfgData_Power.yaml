@@ -1029,13 +1029,6 @@
                      VR specific mailbox commands. <b>00b - no VR specific command sent.</b>  01b - A VR mailbox command specifically for the MPS IMPV8 VR will be sent. 10b - VR specific command sent for PS4 exit issue. 11b - Reserved.
       length       : 0x01
       value        : 0x00
-  - Reserved2    :
-      name         : Reserved
-      type         : NULL
-      help         : >
-                     Reserved
-      length       : 0x01
-      value        : 0x01
   - SkipMpInit   :
       name         : Skip Multi-Processor Initialization
       type         : Combo
@@ -1143,10 +1136,5 @@
       length       : 0x8
       value        : {0x00}
   - Dummy        :
-      name         : Memory Thermal Management
-      type         : Combo
-      option       : 0:Disabled, 1:Enabled
-      help         : >
-                     Enable Memory Thermal Management
-      length       : 0x0
-      value        : 0x0
+      length       : 0x1
+      value        : 0x1
