@@ -9,7 +9,6 @@
 
 extern BOOLEAN mTccDsoTuning;
 extern UINT8   mTccRtd3Support;
-extern UINT8   mTccLowPowerS0Idle;
 
 ///
 /// TCC BIOS Configuration

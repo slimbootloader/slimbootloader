@@ -29,6 +29,7 @@
 #include <Lpit.h>
 #include <Register/PmcRegs.h>
 #include <Library/PchSciLib.h>
+#include <PlatformData.h>
 
 #define NHLT_ACPI_TABLE_SIGNATURE  SIGNATURE_32 ('N', 'H', 'L', 'T')
 
@@ -375,11 +376,9 @@ PlatformUpdateAcpiTable (
   EFI_STATUS                   Status;
   TCC_CFG_DATA                *TccCfgData;
   VOID                        *FspHobList;
-  FEATURES_CFG_DATA           *FeaturesCfgData;
   EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE *FadtPointer;
 
   GlobalNvs  = (GLOBAL_NVS_AREA *)(UINTN) PcdGet32 (PcdAcpiGnvsAddress);
-  FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
 
   Table = (EFI_ACPI_DESCRIPTION_HEADER *) Current;
   Ptr  = (UINT8 *)Table;
@@ -438,7 +437,7 @@ PlatformUpdateAcpiTable (
     DEBUG ((DEBUG_INFO, "Find RTCT table\n"));
 
     if (FeaturePcdGet (PcdTccEnabled)) {
-      TccCfgData = (TCC_CFG_DATA *) FindConfigDataByTag(CDATA_TCC_TAG);
+      TccCfgData = (TCC_CFG_DATA *) FindConfigDataByTag (CDATA_TCC_TAG);
       if ((TccCfgData != NULL) && (TccCfgData->TccEnable != 0)) {
         Status = UpdateAcpiRtctTable(Table);
         DEBUG ( (DEBUG_INFO, "Updated ACPI RTCT Table : %r\n", Status) );
@@ -459,11 +458,9 @@ PlatformUpdateAcpiTable (
     // The Flags field within the FADT (offset 112)
     //   1) will have a new Low Power S0 Idle Capable ACPI flag (bit offset 21).
     //
-    if (FeaturesCfgData != NULL) {
-      if (FeaturesCfgData->Features.LowPowerIdle != 0 && PchIsSciSupported() != 1){
-        DEBUG ( (DEBUG_INFO, "Enabled Low Power S0 Idle Capable ACPI flag\n") );
-        FadtPointer->Flags = (EFI_ACPI_6_1_LOW_POWER_S0_IDLE_CAPABLE | FadtPointer->Flags);
-      }
+    if (S0IX_STATUS()) {
+      DEBUG ( (DEBUG_INFO, "Enabled S0ix ACPI flag\n") );
+      FadtPointer->Flags = (EFI_ACPI_6_1_LOW_POWER_S0_IDLE_CAPABLE | FadtPointer->Flags);
     }
   } else if (Table->Signature == EFI_ACPI_6_1_LOW_POWER_IDLE_TABLE_STRUCTURE_SIGNATURE){
       UINT8                                  LpitStateEntries = 0;

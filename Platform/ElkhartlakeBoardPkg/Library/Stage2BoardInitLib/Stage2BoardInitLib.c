@@ -81,7 +81,6 @@
 
 BOOLEAN mTccDsoTuning      = FALSE;
 UINT8   mTccRtd3Support    = 0;
-UINT8   mTccLowPowerS0Idle = 0;
 
 //
 // GPIO_PAD Fileds
@@ -807,7 +806,7 @@ TccModePostMemConfig (
   TCC_STREAM_CONFIGURATION                  *StreamConfig;
   TCC_CFG_DATA                              *TccCfgData;
 
-  TccCfgData = (TCC_CFG_DATA *) FindConfigDataByTag(CDATA_TCC_TAG);
+  TccCfgData = (TCC_CFG_DATA *) FindConfigDataByTag (CDATA_TCC_TAG);
   if ((TccCfgData == NULL) || ((TccCfgData->TccEnable == 0) && (TccCfgData->TccTuning == 0))) {
     return EFI_NOT_FOUND;
   }
@@ -876,10 +875,10 @@ TccModePostMemConfig (
         FspsUpd->FspsConfig.PcieRpAspm[Index]        = PolicyConfig->PchPcieAspm;
         FspsUpd->FspsConfig.PcieRpL1Substates[Index] = PolicyConfig->PchPcieRpL1;
       }
-
-      mTccRtd3Support    = PolicyConfig->Dstates;
-      mTccLowPowerS0Idle = PolicyConfig->Sstates;
       mTccDsoTuning      = TRUE;
+      if (mPchSciSupported != 0) {
+        mTccRtd3Support                = PolicyConfig->Dstates;
+      }
     }
   }
 
@@ -899,7 +898,6 @@ TccModePostMemConfig (
   DEBUG ((DEBUG_INFO, "PcieRpAspm            = %x\n", FspsUpd->FspsConfig.PcieRpAspm[0]          ));
   DEBUG ((DEBUG_INFO, "PcieRpL1Substates     = %x\n", FspsUpd->FspsConfig.PcieRpL1Substates[0]   ));
   DEBUG ((DEBUG_INFO, "Rtd3Support           = %x\n", mTccRtd3Support                            ));
-  DEBUG ((DEBUG_INFO, "LowPowerS0Idle        = %x\n", mTccLowPowerS0Idle                         ));
 
   // Load TCC cache config binary from container
   TccCacheconfigBase = NULL;
@@ -1098,10 +1096,8 @@ UpdateFspConfig (
   FLASH_REGION_TYPE  RegionType;
   FSPS_UPD           *FspsUpd;
   FSP_S_CONFIG       *Fspscfg;
-  SECURITY_CFG_DATA  *SecCfgData;
   SILICON_CFG_DATA   *SiCfgData;
   POWER_CFG_DATA     *PowerCfgData;
-  FEATURES_CFG_DATA  *FeaturesCfgData;
   UINT8              SaDisplayConfigTable[17] = { 0 };
 
   FspsUpd    = (FSPS_UPD *)FspsUpdPtr;
@@ -1109,15 +1105,6 @@ UpdateFspConfig (
   SiCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
   if (SiCfgData == NULL) {
     DEBUG ((DEBUG_INFO, "Failed to find Silicon CFG!\n"));
-  }
-  SecCfgData = (SECURITY_CFG_DATA *)FindConfigDataByTag (CDATA_SECURITY_TAG);
-  if (SecCfgData != NULL) {
-    DEBUG ((DEBUG_INFO, "Load Security Cfg Data\n"));
-    // Configure Sgx SPD Data (Removed due to fsp 2233)
-    //Fspscfg->SgxEpoch0         = SecCfgData->SgxEpoch0;
-    //Fspscfg->SgxEpoch1         = SecCfgData->SgxEpoch1;
-  } else {
-    DEBUG ((DEBUG_INFO, "Failed to find security CFG!\n"));
   }
 
   // eMMC, SdCard
@@ -1201,13 +1188,7 @@ UpdateFspConfig (
 
   if (SiCfgData != NULL) {
     // Xdci
-    Fspscfg->XdciEnable          = SiCfgData->XdciEnable;
-    FeaturesCfgData               = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
-    if (FeaturesCfgData != NULL) {
-      if (FeaturesCfgData->Features.LowPowerIdle != 0 && mPchSciSupported != 1){
-        Fspscfg->XdciEnable          = 0;
-      }
-    }
+    Fspscfg->XdciEnable = SiCfgData->XdciEnable;
 
     //CPU Config Data
     Fspscfg->AesEnable                   = SiCfgData->AesEnable;
@@ -1782,7 +1763,10 @@ UpdateFspConfig (
     Fspscfg->EnableTcoTimer           = TRUE;
     DEBUG ((DEBUG_INFO, "Firmware update mode, unlock Bios setting\n"));
   }
-
+  if (S0IX_STATUS() == 1) {
+    // configure s0ix related FSP-S config
+    Fspscfg->XdciEnable = 0;
+  }
 }
 
 
