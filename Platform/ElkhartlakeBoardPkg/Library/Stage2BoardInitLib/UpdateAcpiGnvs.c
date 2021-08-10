@@ -537,9 +537,7 @@ PlatformUpdateAcpiGnvs (
   PchNvs                  = (PCH_NVS_AREA *) &GlobalNvs->PchNvs;
   CpuNvs                  = (CPU_NVS_AREA *) &GlobalNvs->CpuNvs;
   SaNvs                   = (SYSTEM_AGENT_NVS_AREA *) &GlobalNvs->SaNvs;
-  FeaturesCfgData         = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
   ZeroMem (GlobalNvs, sizeof (GLOBAL_NVS_AREA));
-  SiCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
 
   //
   // Update ASL PCIE port address according to root port device and function
@@ -678,6 +676,7 @@ PlatformUpdateAcpiGnvs (
   if (PseCanPciMmBase != 0xFFFF) {
     PchNvs->PseCan1Enabled                        = 1;
   }
+  SiCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
   if (SiCfgData != NULL) {
       PchNvs->EnableTimedGpio0 = (UINT8)SiCfgData->EnableTimedGpio0;
       PchNvs->EnableTimedGpio1 = (UINT8)SiCfgData->EnableTimedGpio1;
@@ -704,7 +703,6 @@ PlatformUpdateAcpiGnvs (
 
   PlatformNvs->PlatformFlavor                   = 1;
 
-  PlatformNvs->Rtd3Support                      = 1;
   PlatformNvs->Rtd3P0dl                         = 0x64;
   PlatformNvs->Rtd3AudioDelay                   = 0xC8;
   PlatformNvs->Rtd3SensorHub                    = 0x44;
@@ -717,14 +715,10 @@ PlatformUpdateAcpiGnvs (
 
   PlatformNvs->ApicEnable                       = 1;
   PlatformNvs->EcAvailable                      = 0;
-  PlatformNvs->LowPowerS0Idle                   = 0;
+  FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag (CDATA_FEATURES_TAG);
   if (FeaturesCfgData != NULL) {
-    if (FeaturesCfgData->Features.LowPowerIdle != 0 && PchSciSupported != 1){
-      PlatformNvs->LowPowerS0Idle                   = 1;
-    }
     PlatformNvs->NewGpioSchemeEnable = (UINT8) FeaturesCfgData->Features.NewGpioSchemeEnable;
   }
-  DEBUG((DEBUG_INFO, "PlatformNvs->LowPowerS0Idle = 0x%x\n ", PlatformNvs->LowPowerS0Idle));
   DEBUG((DEBUG_INFO, "PlatformNvs->NewGpioSchemeEnable = 0x%x\n ", PlatformNvs->NewGpioSchemeEnable));
   PlatformNvs->TenSecondPowerButtonEnable       = 8;
 
@@ -898,15 +892,12 @@ PlatformUpdateAcpiGnvs (
   PlatformNvs->PpmFlags                         = CpuNvs->PpmFlags;
   SocUpdateAcpiGnvs ((VOID *)GnvsIn);
 
-  if (PchSciSupported) {
-    PlatformNvs->Rtd3Support                    = 0;
-    PlatformNvs->LowPowerS0Idle                 = 0;
-  }
-
+  PlatformNvs->Rtd3Support = PchSciSupported? 0 : 1;
   // If TCC is enabled, use the TCC policy from subregion
   if (mTccDsoTuning) {
     PlatformNvs->Rtd3Support     = mTccRtd3Support;
-    PlatformNvs->LowPowerS0Idle  = mTccLowPowerS0Idle;
   }
 
+  PlatformNvs->LowPowerS0Idle = S0IX_STATUS();
+  DEBUG((DEBUG_INFO, "PlatformNvs->S0ix = 0x%x\n ", PlatformNvs->LowPowerS0Idle));
 }

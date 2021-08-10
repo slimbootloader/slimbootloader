@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2018 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -22,7 +22,8 @@ typedef struct {
 typedef struct {
   UINT32  VtdEnable    : 1;
   UINT32  DebugConsent : 3;
-  UINT32  Rsvd         : 28;
+  UINT32  S0ixEnable   : 1;
+  UINT32  Rsvd         : 27;
 } PLAT_FEATURES;
 
 typedef struct {
@@ -33,5 +34,6 @@ typedef struct {
 #define PLAT_DATA                         ((PLATFORM_DATA *)GetPlatformDataPtr ())
 #define PLAT_FEAT                         (PLAT_DATA->PlatformFeatures)
 #define DEBUG_CONSENT_FEATURE_ENABLED()   (UINT8) (PLAT_FEAT.DebugConsent)
+#define S0IX_STATUS()                     (BOOLEAN) (PLAT_FEAT.S0ixEnable)
 
 #endif /* __PLATFORM_DATA_H__ */

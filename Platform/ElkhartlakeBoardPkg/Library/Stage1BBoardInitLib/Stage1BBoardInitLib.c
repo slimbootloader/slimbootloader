@@ -207,6 +207,7 @@ TccModePreMemConfig (
       FspmUpd->FspmConfig.RaplLim2Ena            = PolicyConfig->MemoryRapl;
       FspmUpd->FspmConfig.PowerDownMode          = PolicyConfig->MemPowerDown;
       FspmUpd->FspmConfig.DisPgCloseIdleTimeout  = PolicyConfig->DisPgCloseIdle;
+      PLAT_FEAT.S0ixEnable                       = PolicyConfig->Sstates;
       DEBUG ((DEBUG_INFO, "Dump TCC DSO BIOS settings:\n"));
       DumpHex (2, 0, sizeof(BIOS_SETTINGS), PolicyConfig);
     }
@@ -222,6 +223,7 @@ TccModePreMemConfig (
   DEBUG ((DEBUG_INFO, "SoftwareSramEnPreMem  = %x\n", FspmUpd->FspmConfig.SoftwareSramEnPreMem   ));
   DEBUG ((DEBUG_INFO, "DsoTuningEnPreMem     = %x\n", FspmUpd->FspmConfig.DsoTuningEnPreMem      ));
   DEBUG ((DEBUG_INFO, "TccErrorLogEnPreMem   = %x\n", FspmUpd->FspmConfig.TccErrorLogEnPreMem    ));
+  DEBUG ((DEBUG_INFO, "Tcc s0ix support      = %x\n", S0IX_STATUS()                              ));
 
   // Load Tcc Cache config from container
   TccCacheBase = NULL;
@@ -237,6 +239,36 @@ TccModePreMemConfig (
   }
 
   return Status;
+}
+
+/**
+  Update S0ix flag
+**/
+VOID
+UpdateS0ixStatus (
+  VOID
+)
+{
+  FEATURES_CFG_DATA             *FeaturesCfgData;
+  BOOLEAN                       PchSciSupported;
+
+  FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag (CDATA_FEATURES_TAG);
+  if (FeaturesCfgData == NULL) {
+    DEBUG ((DEBUG_INFO, "Failed to find Cfg Config Data! S0ix setting failed.\n"));
+    return;
+  }
+  PchSciSupported               = PchIsSciSupported ();
+
+  // EHL S0ix condition depends on:
+  // - user turn on via config data
+  // - not FUSA sku
+  // - TCC config turns it on
+  if (PchSciSupported == 1 || FeaturesCfgData->Features.S0ix == 0 || S0IX_STATUS() == 0) {
+    PLAT_FEAT.S0ixEnable = 0;
+  } else {
+    PLAT_FEAT.S0ixEnable = 1;
+  }
+  DEBUG ((DEBUG_INFO, "S0ix Status = %x\n", S0IX_STATUS()));
 }
 
 /**
@@ -259,7 +291,6 @@ UpdateFspConfig (
   SECURITY_CFG_DATA             *SecCfgData;
   UINT32                        Index;
   UINT8                         DebugPort;
-  FEATURES_CFG_DATA             *FeaturesCfgData;
   BOOLEAN                       PchSciSupported;
   TCC_CFG_DATA                  *TccCfgData;
 
@@ -330,7 +361,6 @@ UpdateFspConfig (
     }
     CopyMem (&Fspmcfg->DmiGen3RxCtlePeaking, MemCfgData->DmiGen3RxCtlePeaking, sizeof(MemCfgData->DmiGen3RxCtlePeaking));
 
-    FeaturesCfgData               = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
     // SA:TCSS_PEI_PREMEM_CONFIG
     Fspmcfg->UsbTcPortEnPreMem          = MemCfgData->UsbTcPortEnPreMem;
     Fspmcfg->PcieMultipleSegmentEnabled = MemCfgData->PcieMultipleSegmentEnabled;
@@ -340,11 +370,6 @@ UpdateFspConfig (
     Fspmcfg->TcssItbtPcie3En            = MemCfgData->TcssItbtPcie3En;
     Fspmcfg->TcssXhciEn                 = MemCfgData->TcssXhciEn;
     Fspmcfg->TcssXdciEn                 = MemCfgData->TcssXdciEn;
-    if (FeaturesCfgData != NULL) {
-      if (FeaturesCfgData->Features.LowPowerIdle != 0 && PchSciSupported != 1){
-        Fspmcfg->TcssXdciEn             = 0;
-      }
-    }
     Fspmcfg->TcssDma0En                 = MemCfgData->TcssDma0En;
     Fspmcfg->TcssDma1En                 = MemCfgData->TcssDma1En;
 
@@ -717,8 +742,18 @@ UpdateFspConfig (
     DEBUG ((DEBUG_INFO, "Failed to find GFX CFG!\n"));
   }
 
+  // Enable s0ix by default
+  PLAT_FEAT.S0ixEnable = 1;
+
   if (FeaturePcdGet (PcdTccEnabled)) {
     TccModePreMemConfig (FspmUpd);
+  }
+
+  UpdateS0ixStatus ();
+
+  if (S0IX_STATUS() == 1) {
+    // configure FSP-M upd for s0ix
+    Fspmcfg->TcssXdciEn = 0;
   }
 }
 
