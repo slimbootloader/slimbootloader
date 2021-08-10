@@ -2,7 +2,7 @@
 #
 #  Slim Bootloader CFGDATA Option File.
 #
-#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -34,12 +34,12 @@
         help         : >
                        Enable/Disable MeasuredBoot feature. 1:MeasuredBoot Enabled (default), 0:MeasuredBoot Disabled
         length       : 1b
-    - LowPowerS0Idle   :
-        name         : Low Power S0 Idle Enable (S0ix)
+    - S0ix         :
+        name         : S0ix (Low Power S0 Idle) Enable
         type         : Combo
         option       : $EN_DIS
         help         : >
-                       Enable/Disable Low Power Idle feature. 1:Low Power S0 Idle Enabled, 0:Low Power S0 Idle Disabled
+                       Enable/Disable S0ix feature. 1:S0ix Enabled, 0:S0ix Disabled
         length       : 1b
     - FusaEnable   :
         name         : Fusa Enable

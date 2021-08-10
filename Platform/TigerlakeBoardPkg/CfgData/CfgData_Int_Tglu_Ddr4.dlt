@@ -11,6 +11,9 @@
 PLATFORMID_CFG_DATA.PlatformId                              | 0x0001
 PLAT_NAME_CFG_DATA.PlatformName                             | 'TGLU_DDR'
 
+# Enable S0ix by default
+FEATURES_CFG_DATA.Features.S0ix                             | 0x1
+
 MEMORY_CFG_DATA.DqsMapCpu2DramMc0Ch1                        | {0, 1}
 MEMORY_CFG_DATA.DqsMapCpu2DramMc0Ch3                        | {0, 1}
 MEMORY_CFG_DATA.DqsMapCpu2DramMc1Ch0                        | {0, 1}
