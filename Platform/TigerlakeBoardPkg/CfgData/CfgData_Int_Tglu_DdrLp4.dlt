@@ -11,6 +11,10 @@
 # DDRLP4 board
 PLATFORMID_CFG_DATA.PlatformId                              | 0x0003
 PLAT_NAME_CFG_DATA.PlatformName                             | 'TGLU_LP4'
+
+# Enable S0ix by default
+FEATURES_CFG_DATA.Features.S0ix                             | 0x1
+
 MEMORY_CFG_DATA.SpdAddressTable                             | {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 MEMORY_CFG_DATA.SpdDataSel000                               | 1
 MEMORY_CFG_DATA.SpdDataSel010                               | 1

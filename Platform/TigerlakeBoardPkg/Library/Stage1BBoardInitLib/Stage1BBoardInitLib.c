@@ -117,6 +117,7 @@ TccModePreMemConfig (
       FspmUpd->FspmConfig.HyperThreading         = PolicyConfig->HyperThreading;
       FspmUpd->FspmConfig.PowerDownMode          = PolicyConfig->MemPowerDown;
       FspmUpd->FspmConfig.DisPgCloseIdleTimeout  = PolicyConfig->DisPgCloseIdle;
+      PLAT_FEAT.S0ixEnable                       = PolicyConfig->Sstates;
       DEBUG ((DEBUG_INFO, "Dump TCC DSO BIOS settings:\n"));
       DumpHex (2, 0, sizeof(BIOS_SETTINGS), PolicyConfig);
     }
@@ -447,10 +448,6 @@ UpdateFspConfig (
     Fspmcfg->VtdBaseAddress[6] = 0xfed87000;
   }
 
-  // Update TCC related UPDs if TCC is enabled
-  if (FeaturePcdGet (PcdTccEnabled)) {
-    TccModePreMemConfig (FspmUpd);
-  }
   Fspmcfg->BootFrequency = 0x2;
 
   // will hang using default upds
@@ -486,23 +483,29 @@ UpdateFspConfig (
     Fspmcfg->CpuPcieRpEnableMask           = 0;
   }
 
-  FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
-  if ((FeaturesCfgData != NULL) && (FeaturesCfgData->Features.LowPowerS0Idle == 1)) {
-    Fspmcfg->TcssXdciEn=0;
-    Fspmcfg->TcssXhciEn=0;
-    Fspmcfg->TcssDma0En=0;
-    Fspmcfg->TcssDma1En=0;
-    Fspmcfg->TcssItbtPcie0En=0;
-    Fspmcfg->TcssItbtPcie1En=0;
-    Fspmcfg->TcssItbtPcie2En=0;
-    Fspmcfg->TcssItbtPcie3En=0;
-    Fspmcfg->DmiAspmCtrl            = 2;// ASPM configuration on the CPU side of the DMI/OPI Link
+  // s0ix update
+  FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag (CDATA_FEATURES_TAG);
+  if (FeaturesCfgData != NULL) {
+    PLAT_FEAT.S0ixEnable = FeaturesCfgData->Features.S0ix;
   }
 
-  /*Fspmcfg->PlatformDebugConsent=2;    // Enable DCI and DAM for CCA
-  Fspmcfg->DciEn=1;
-  Fspmcfg->PchTraceHubMode=2;
-  Fspmcfg->CpuTraceHubMode=2;*/
+    // Update TCC related UPDs if TCC is enabled
+  if (FeaturePcdGet (PcdTccEnabled)) {
+    TccModePreMemConfig (FspmUpd);
+  }
+
+  if (S0IX_STATUS() == 1) {
+    // configure s0ix related FSP-M UPDs
+    Fspmcfg->TcssXdciEn       = 0;
+    Fspmcfg->TcssXhciEn       = 0;
+    Fspmcfg->TcssDma0En       = 0;
+    Fspmcfg->TcssDma1En       = 0;
+    Fspmcfg->TcssItbtPcie0En  = 0;
+    Fspmcfg->TcssItbtPcie1En  = 0;
+    Fspmcfg->TcssItbtPcie2En  = 0;
+    Fspmcfg->TcssItbtPcie3En  = 0;
+    Fspmcfg->DmiAspmCtrl      = 2;// ASPM configuration on the CPU side of the DMI/OPI Link
+  }
 }
 
 /**

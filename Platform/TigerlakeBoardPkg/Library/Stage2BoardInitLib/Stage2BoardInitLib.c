@@ -84,7 +84,6 @@
 
 BOOLEAN mTccDsoTuning      = FALSE;
 UINT8   mTccRtd3Support    = 0;
-UINT8   mTccLowPowerS0Idle = 0;
 
 //
 // The EC implements an embedded controller interface at ports 0x60/0x64 and a ACPI compliant
@@ -1219,7 +1218,6 @@ TccModePostMemConfig (
          FspsUpd->FspsConfig.CpuPcieRpL1Substates[Index] = PolicyConfig->CpuPcieRpL1;
       }
       mTccRtd3Support    = PolicyConfig->Dstates;
-      mTccLowPowerS0Idle = PolicyConfig->Sstates;
       mTccDsoTuning      = TRUE;
     }
   }
@@ -1275,7 +1273,6 @@ UpdateFspConfig (
   FSPS_UPD            *FspsUpd;
   SECURITY_CFG_DATA   *SecCfgData;
   SILICON_CFG_DATA    *SiCfgData;
-  FEATURES_CFG_DATA   *FeaturesCfgData;
   FSP_S_CONFIG        *FspsConfig;
   UINT8               Index;
   UINT8               PrIndex;
@@ -1622,8 +1619,7 @@ UpdateFspConfig (
     FspsUpd->FspsConfig.RtcBiosInterfaceLock = TRUE;
   }
 
-  FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
-  if ((FeaturesCfgData != NULL) && (FeaturesCfgData->Features.LowPowerS0Idle == 1)) {
+  if (S0IX_STATUS() == 1) {
     FspsConfig->C1e = 1;
     FspsConfig->Cx = 1;
     FspsConfig->PkgCStateLimit = 8;
@@ -2148,7 +2144,6 @@ PlatformUpdateAcpiTable (
   PLATFORM_DATA               *PlatformData;
   TCC_CFG_DATA                *TccCfgData;
   SILICON_CFG_DATA            *SiCfgData;
-  FEATURES_CFG_DATA           *FeaturesCfgData;
   MEMORY_CFG_DATA             *MemCfgData;
   UINTN                       DmarTableFlags;
   VOID                        *FspHobList;
@@ -2250,9 +2245,9 @@ PlatformUpdateAcpiTable (
         (((ACPI_LOW_POWER_IDLE_TABLE *)Table)->LpiStates[LpitStateEntries - 1].ResidencyCounter) = SetResidencyCounter[0];
         (((ACPI_LOW_POWER_IDLE_TABLE *)Table)->LpiStates[LpitStateEntries - 1].ResidencyCounterFrequency) = ResidencyCounterFrequency;
       }
-    } else if (Table->Signature == EFI_ACPI_5_0_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE) {
-      FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
-      if ((FeaturesCfgData != NULL) && (FeaturesCfgData->Features.LowPowerS0Idle == 1)) {
+    }
+    else if (Table->Signature == EFI_ACPI_5_0_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE) {
+      if (S0IX_STATUS() == 1) {
         EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE  *FadtTable;
         DEBUG ((DEBUG_INFO, "Update FADT ACPI table\n"));
         FadtTable = (EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE*) Table;
@@ -2565,7 +2560,6 @@ PlatformUpdateAcpiGnvs (
   SYSTEM_AGENT_NVS_AREA   *SaNvs;
   SYS_CPU_INFO            *SysCpuInfo;
   SILICON_CFG_DATA        *SiCfgData;
-  FEATURES_CFG_DATA       *FeaturesCfgData;
   EFI_CPUID_REGISTER      CpuidRegs;
   UINT8                   Index;
   UINT8                   Length;
@@ -2707,10 +2701,8 @@ PlatformUpdateAcpiGnvs (
   PlatformNvs->Rtd3Support                  = 1;
   PlatformNvs->TenSecondPowerButtonEnable   = 0x9;
   PlatformNvs->HidEventFilterEnable         = 0x01;
-  FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
-  if (FeaturesCfgData != NULL) {
-    PlatformNvs->LowPowerS0Idle               = (UINT8) (FeaturesCfgData->Features.LowPowerS0Idle);
-  }
+  PlatformNvs->LowPowerS0Idle               = S0IX_STATUS();
+
   // Bit[1:0] - Storage (0:None, 1:Adapter D0/F1, 2:Raid, 3:Adapter D3)
   // Bit[2]   - En/Dis UART0
   // Bit[3]   - En/Dis UART1
@@ -3015,7 +3007,5 @@ PlatformUpdateAcpiGnvs (
   // If TCC is enabled, use the TCC policy from subregion
   if (mTccDsoTuning) {
     PlatformNvs->Rtd3Support     = mTccRtd3Support;
-    PlatformNvs->LowPowerS0Idle  = mTccLowPowerS0Idle;
   }
-
 }
