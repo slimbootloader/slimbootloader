@@ -62,9 +62,9 @@ CheckGbeStatus (
   )
 {
   UINT16 PmeCtrlStatus;
-  //Check device status
   PmeCtrlStatus = PciRead16 (GbeBase + PMECTRLSTATUS_OFFSET);
-  if ((PmeCtrlStatus & POWERSTATE) != POWERSTATE) {
+  //Check device status if not D0 then update it to D0
+  if ((PmeCtrlStatus & POWERSTATE) != 0x0) {
     PciWrite16 ((GbeBase + PMECTRLSTATUS_OFFSET), (PmeCtrlStatus & ~POWERSTATE));
     DEBUG ((DEBUG_INFO, "GbeBase:0x%x -> PMECTRLSTATUS:0x%x\n", GbeBase, PmeCtrlStatus));
   }
