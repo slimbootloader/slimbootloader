@@ -9,18 +9,17 @@
 #
 
 # DDRLP4 board
-PLATFORMID_CFG_DATA.PlatformId           | 0x0003
-PLAT_NAME_CFG_DATA.PlatformName          | 'TGLU_LP4'
-MEMORY_CFG_DATA.SpdAddressTable          | { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
-MEMORY_CFG_DATA.SpdDataSel000            | 1
-MEMORY_CFG_DATA.SpdDataSel010            | 1
-MEMORY_CFG_DATA.SpdDataSel020            | 1
-MEMORY_CFG_DATA.SpdDataSel030            | 1
-MEMORY_CFG_DATA.SpdDataSel100            | 1
-MEMORY_CFG_DATA.SpdDataSel110            | 1
-MEMORY_CFG_DATA.SpdDataSel120            | 1
-MEMORY_CFG_DATA.SpdDataSel130            | 1
-
+PLATFORMID_CFG_DATA.PlatformId                              | 0x0003
+PLAT_NAME_CFG_DATA.PlatformName                             | 'TGLU_LP4'
+MEMORY_CFG_DATA.SpdAddressTable                             | {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+MEMORY_CFG_DATA.SpdDataSel000                               | 1
+MEMORY_CFG_DATA.SpdDataSel010                               | 1
+MEMORY_CFG_DATA.SpdDataSel020                               | 1
+MEMORY_CFG_DATA.SpdDataSel030                               | 1
+MEMORY_CFG_DATA.SpdDataSel100                               | 1
+MEMORY_CFG_DATA.SpdDataSel110                               | 1
+MEMORY_CFG_DATA.SpdDataSel120                               | 1
+MEMORY_CFG_DATA.SpdDataSel130                               | 1
 
 #
 # By default use Osloader Payload, set to "UEFI" to select UEFI payload.
@@ -32,5 +31,5 @@ MEMORY_CFG_DATA.SpdDataSel130            | 1
 # When 3/4 is stuffed the value will read 0 for UEFI Payload.
 # When 3/4 is un-stuffed the value will read 1 for OS Loader.
 #
-GEN_CFG_DATA.PayloadId                   | 'AUTO'
-GPIO_CFG_DATA.GpioPinConfig0_GPP_B15.GPIODirection_GPP_B15 | 0xB
+GEN_CFG_DATA.PayloadId                                      | 'AUTO'
+GPIO_CFG_DATA.GpioPinConfig0_GPP_B15.GPIODirection_GPP_B15  | 0xB

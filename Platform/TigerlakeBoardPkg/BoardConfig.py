@@ -202,7 +202,15 @@ class Board(BaseBoard):
         # Cfg data dlt files for internal boards could also put into external cfg data if want to update cfg data for these platforms
         # for test purpose. Based on the platform id, relevant data is populated for each platform.
         self._CFGDATA_INT_FILE = []
-        self._CFGDATA_EXT_FILE = [self._generated_cfg_file_prefix + 'CfgData_Int_Tglu_Ddr4.dlt', self._generated_cfg_file_prefix  + 'CfgData_Int_Tglu_DdrLp4.dlt']
+        self._CFGDATA_EXT_FILE = [self._generated_cfg_file_prefix + 'CfgData_Int_Tglu_Ddr4.dlt', self._generated_cfg_file_prefix  + 'CfgData_Int_Tglu_DdrLp4.dlt', self._generated_cfg_file_prefix  + 'CfgData_Int_Tglh_Ddr4.dlt']
+
+        # If mulitple VBT table support is required, list them as:
+        #   {VbtImageId1 : VbtFileName1, VbtImageId2 : VbtFileName2, ...}
+        # VbtImageId is ID to identify a VBT image. It is a UINT32 number to match
+        #   the ImageId field in the VBT container.
+        # VbtFileName is the VBT file name. It needs to be located under platform
+        #   VbtBin folder.
+        self._MULTI_VBT_FILE      = {1:'Vbt.dat', 2:'Vbt_tglH_Hdmi.dat'}
 
     def PlatformBuildHook (self, build, phase):
         if phase == 'pre-build:before':

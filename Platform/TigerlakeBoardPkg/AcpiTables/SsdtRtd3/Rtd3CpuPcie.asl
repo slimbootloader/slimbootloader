@@ -116,6 +116,15 @@ PowerResource(PXP, 0, 0) {
     // Trigger L2/L3 ready exit flow in rootport - transition link to Detect
     //
     L23D()
+
+    //
+    // Notify RTD3 Exit to EC
+    //
+    If(LNotEqual(D2BA, 0)) {
+      If(\ECON) {
+        \_SB.PC00.LPCB.H_EC.ECMD (0x3B)
+      }
+    }
   }
 
   Method(_OFF) {
@@ -137,6 +146,14 @@ PowerResource(PXP, 0, 0) {
       }
     }
 
+    //
+    // Notify RTD3 Entry to EC
+    //
+    If(LNotEqual(D2BA, 0)) {
+      If(\ECON) {
+        \_SB.PC00.LPCB.H_EC.ECMD (0x3A)
+      }
+    }
     //
     // Trigger L2/L3 ready entry flow in rootport
     //
