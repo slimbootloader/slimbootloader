@@ -79,32 +79,32 @@ def get_component_replace_list():
       ('IFWI/BIOS/TS1/ACM0',      'Input/acm.bin',        'dummy',    '',                            ''),
     ]
 
-    if os.path.exists('IPFW/PreOsChecker.bin'):
+    if os.path.exists('IPFW/PreOsChecker.bin') and os.path.exists('IFWI/BIOS/NRD/IPFW/POSC'):
         print ("PreOsChecker.bin found")
         replace_list.append (
             ('IFWI/BIOS/NRD/IPFW/POSC', 'IPFW/PreOsChecker.bin', 'dummy', 'KEY_ID_CONTAINER_COMP_RSA3072', 0), # Pre-OS Checker
         )
-    if os.path.exists('IPFW/PseFw.bin'):
+    if os.path.exists('IPFW/PseFw.bin') and os.path.exists('IFWI/BIOS/NRD/IPFW/PSEF'):
         print ("PseFw.bin found")
         replace_list.append (
             ('IFWI/BIOS/NRD/IPFW/PSEF', 'IPFW/PseFw.bin',          'lz4',     'KEY_ID_CONTAINER_COMP_RSA3072', 0),   # OSE FW
         )
-    if os.path.exists('IPFW/PseTsnIpConfig.bin'):
+    if os.path.exists('IPFW/PseTsnIpConfig.bin') and os.path.exists('IFWI/BIOS/NRD/IPFW/TSIP'):
         print ("PseTsnIpConfig.bin found")
         replace_list.append (
             ('IFWI/BIOS/NRD/IPFW/TSIP', 'IPFW/PseTsnIpConfig.bin', 'lz4',     'KEY_ID_CONTAINER_COMP_RSA3072', 0),   # PSE TSN IP
         )
-    if os.path.exists('IPFW/TsnConfig.bin'):
+    if os.path.exists('IPFW/TsnConfig.bin') and os.path.exists('IFWI/BIOS/NRD/IPFW/TSNC'):
         print ("TsnConfig.bin found")
         replace_list.append (
             ('IFWI/BIOS/NRD/IPFW/TSNC', 'IPFW/TsnConfig.bin',      'lz4',     'KEY_ID_CONTAINER_COMP_RSA3072', 0),   # TSN Config
         )
-    if os.path.exists('IPFW/TsnMacAddr.bin'):
+    if os.path.exists('IPFW/TsnMacAddr.bin') and os.path.exists('IFWI/BIOS/NRD/IPFW/TMAC'):
         print ("TsnMacAddr.bin found")
         replace_list.append (
             ('IFWI/BIOS/NRD/IPFW/TMAC', 'IPFW/TsnMacAddr.bin',     'lz4',     'KEY_ID_CONTAINER_COMP_RSA3072', 0),   # TSN MAC Address
         )
-    if os.path.exists('IPFW/crl.bin'):
+    if os.path.exists('IPFW/crl.bin') and os.path.exists('IFWI/BIOS/NRD/IPFW/TCCM'):
         print ("crl.bin found")
         replace_list.append (
             ('IFWI/BIOS/NRD/IPFW/TCCM', 'IPFW/crl.bin',         'lz4',     'KEY_ID_CONTAINER_COMP_RSA3072', 0),   # TCC CRL binary
