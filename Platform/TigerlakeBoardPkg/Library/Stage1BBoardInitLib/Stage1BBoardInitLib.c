@@ -364,8 +364,8 @@ UpdateFspConfig (
   }
 
   // Value from EDKII bios, refine these settings later.
-  FspmArchUpd->StackBase = 0xFEF3FF00;
-  FspmArchUpd->StackSize = 0x40000;
+  FspmArchUpd->StackBase = 0xFEF4FF00;
+  FspmArchUpd->StackSize = 0x50000;
   Fspmcfg->TcssXdciEn = 0x1;
 
   // Following UPDs are related to TCC . But all of these are also generic features that can be changed regardless of TCC feature.
