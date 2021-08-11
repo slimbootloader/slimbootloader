@@ -104,9 +104,9 @@ def replace_component (ifwi_src_path, flash_path, file_path, comp_alg, pri_key, 
     IFWI_PARSER.replace_component (ifwi_bin, comp_bin, flash_path)
     gen_file_from_object (ifwi_src_path, ifwi_bin)
 
-def replace_components (ifwi_src_path, stitch_cfg_file):
+def replace_components (ifwi_src_path, stitch_cfg_file, plt_params_list):
     print ("Replacing components.......")
-    replace_list = stitch_cfg_file.get_component_replace_list ()
+    replace_list = stitch_cfg_file.get_component_replace_list (plt_params_list)
     for flash_path, file_path, comp_alg, pri_key, svn in replace_list:
         replace_component (ifwi_src_path, flash_path, file_path, comp_alg, pri_key, svn)
 
@@ -139,7 +139,7 @@ def stitch (stitch_dir, stitch_cfg_file, sbl_file, btg_profile, plt_params_list,
         fd.close()
 
     print("Replace components in both partitions....")
-    replace_components (os.path.join(temp_dir, "SlimBootloader.bin"), stitch_cfg_file)
+    replace_components (os.path.join(temp_dir, "SlimBootloader.bin"), stitch_cfg_file, plt_params_list)
 
     # Generate xml
     gen_xml_file(stitch_dir, stitch_cfg_file, btg_profile, plt_params_list, platform, tpm)
