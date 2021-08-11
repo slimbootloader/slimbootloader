@@ -14,13 +14,14 @@
   VERSION_STRING       = 1.0
 
 [Sources]
- m_80_806c1_0000007e.mcb
+  m_80_806c1_0000007e.mcb
+  m_c2_806d1_0000003c.mcb
 
 [UserExtensions.SBL."CloneRepo"]
-  REPO  = https://github.com/tianocore/edk2-non-osi.git
-  COMMIT= 9c509e9b00cc8f68a0c2293436d0572d3e4a40ce
+  REPO   = https://github.com/slimbootloader/firmwareblob.git
+  COMMIT = 05f2a18443a138ebd829fa0450de20946b84dddc
 
 [UserExtensions.SBL."CopyList"]
-  Silicon/Intel/TigerlakeSiliconBinPkg/Microcode/m_80_806c1_0000007e.mcb  : Silicon/TigerlakePkg/Microcode/m_80_806c1_0000007e.mcb
-
+  Microcode/TigerLake/m_80_806c1_0000007e.pdb  : Silicon/TigerlakePkg/Microcode/m_80_806c1_0000007e.mcb
+  Microcode/TigerLake/m_c2_806d1_0000003c.pdb  : Silicon/TigerlakePkg/Microcode/m_c2_806d1_0000003c.mcb
 

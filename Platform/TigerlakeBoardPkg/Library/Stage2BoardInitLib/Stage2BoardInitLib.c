@@ -718,6 +718,9 @@ ClearSmi (
 
   IoWrite32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_STS), SmiSts);
   IoWrite16 ((UINTN) (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS), (UINT16) Pm1Sts);
+
+  // Clear GPE0 STS in case some bits are set
+  IoOr32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_GPE0_STS_127_96), 0);
 }
 
 /**
@@ -733,8 +736,6 @@ UpdatePayloadId (
   UINT32          PayloadSelGpioData;
   UINT32          PayloadSelGpioPad;
   GEN_CFG_DATA    *GenCfgData;
-  UINT8           Magic;
-  UINT8           BootTarget;
 
   GenCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);
   if (GenCfgData == NULL) {
@@ -744,38 +745,6 @@ UpdatePayloadId (
   SetPayloadId (GenCfgData->PayloadId);
 
   if (GetPayloadId () != AUTO_PAYLOAD_ID_SIGNATURE) {
-    return;
-  }
-
-  //
-  // Use CMOS offset 0x20 (use as magic check) and 0x21 (payloadId) for payload detection.
-  //
-  // Read Magic value
-  IoWrite8 (0x74, 0x20);
-  Magic = IoRead8 (0x75);
-  DEBUG ((DEBUG_INFO, "CMOS boot Magic [0x%x]\n", Magic));
-
-  if (Magic == 0x5A) {
-    // Read payload target
-    IoWrite8 (0x74, 0x21);
-    BootTarget  = IoRead8 (0x75);
-    DEBUG ((DEBUG_INFO, "CMOS boot target [0x%x]\n", BootTarget));
-
-    switch (BootTarget) {
-      case 0:
-        SetPayloadId (0);
-        break;
-      case 1:
-        SetPayloadId (UEFI_PAYLOAD_ID_SIGNATURE);
-        break;
-      case 2:
-        SetPayloadId (LINX_PAYLOAD_ID_SIGNATURE);
-        break;
-      default:
-       SetPayloadId (0);
-       break;
-    }
-
     return;
   }
 
@@ -801,6 +770,22 @@ UpdatePayloadId (
       DEBUG ((DEBUG_INFO, "Update PayloadId to UEFI\n"));
     }
   }
+}
+
+//
+//  GOP VBT update for TGL H DDR4
+//
+VOID
+EFIAPI
+TglHDdr4GopVbtSpecificUpdate (
+  IN CHILD_STRUCT **ChildStructPtr
+)
+{
+  // Enabling DP++ on DDI-B (EFP1)
+  ChildStructPtr[2]->DeviceClass  = DISPLAY_PORT_HDMI_DVI_COMPATIBLE;
+  ChildStructPtr[2]->DVOPort      = DISPLAY_PORT_B;
+  ChildStructPtr[2]->AUX_Channel  = AUX_CHANNEL_B;
+  ChildStructPtr[2]->DDCBus       = 0x2;
 }
 
 //
@@ -849,6 +834,10 @@ IgdOpRegionPlatformInit (
   IgdPlatformInfo.TurboIMON = Gnvs->SaNvs.GfxTurboIMON;
 
   switch (GetPlatformId ()) {
+    case BoardIdTglHDdr4SODimm:
+    case 0x0F:
+      IgdPlatformInfo.callback = (GOP_VBT_UPDATE_CALLBACK)(UINTN)&TglHDdr4GopVbtSpecificUpdate;
+      break;
     case BoardIdTglUDdr4:
       IgdPlatformInfo.callback = (GOP_VBT_UPDATE_CALLBACK)(UINTN)&TglUDdr4GopVbtSpecificUpdate;
       break;
@@ -1404,7 +1393,8 @@ UpdateFspConfig (
   }
 
   if (PcdGetBool (PcdFramebufferInitEnabled)) {
-    FspsConfig->GraphicsConfigPtr = PcdGet32 (PcdGraphicsVbtAddress);
+    //FspsConfig->GraphicsConfigPtr = PcdGet32 (PcdGraphicsVbtAddress);
+    FspsConfig->GraphicsConfigPtr = GetVbtAddress();
     FspsConfig->PeiGraphicsPeimInit = 1;
   } else {
     FspsConfig->GraphicsConfigPtr = 0;
@@ -1548,10 +1538,20 @@ UpdateFspConfig (
     FspsConfig->CpuUsb3OverCurrentPin[1] = 0x1;
     FspsConfig->CpuUsb3OverCurrentPin[2] = 0x2;
     FspsConfig->CpuUsb3OverCurrentPin[3] = 0x3;
-    FspsConfig->Usb2OverCurrentPin[1] = 0x3;
+    if ((SiCfgData != NULL) && (SiCfgData->PchTsnEnable)) {
+      FspsConfig->Usb2OverCurrentPin[1] = 0xff;
+      FspsConfig->Usb2OverCurrentPin[4] = 0xff;
+      FspsConfig->Usb3OverCurrentPin[1] = 0xff;
+      FspsConfig->Usb3OverCurrentPin[4] = 0xff;
+    } else {
+      FspsConfig->Usb2OverCurrentPin[1] = 0x3;
+      FspsConfig->Usb2OverCurrentPin[4] = 0x2;
+      FspsConfig->Usb3OverCurrentPin[1] = 0x3;
+      FspsConfig->Usb3OverCurrentPin[4] = 0x2;
+    }
+    FspsConfig->Usb2OverCurrentPin[0] = 0x0;
     FspsConfig->Usb2OverCurrentPin[2] = 0x0;
     FspsConfig->Usb2OverCurrentPin[3] = 0x1;
-    FspsConfig->Usb2OverCurrentPin[4] = 0x2;
     FspsConfig->Usb2OverCurrentPin[5] = 0xff;
     FspsConfig->Usb2OverCurrentPin[6] = 0xff;
     FspsConfig->Usb2OverCurrentPin[7] = 0x8;
@@ -1561,7 +1561,6 @@ UpdateFspConfig (
     FspsConfig->Usb2OverCurrentPin[11] = 0x4;
     FspsConfig->Usb2OverCurrentPin[12] = 0x4;
     FspsConfig->Usb2OverCurrentPin[13] = 0xff;
-    FspsConfig->Usb3OverCurrentPin[1] = 0x3;
     FspsConfig->Usb3OverCurrentPin[2] = 0x0;
     FspsConfig->Usb3OverCurrentPin[3] = 0x1;
     FspsConfig->Usb3OverCurrentPin[5] = 0xff;
@@ -2228,7 +2227,7 @@ PlatformUpdateAcpiTable (
   } else if (Table->Signature == EFI_BDAT_TABLE_SIGNATURE) {
     UpdateBdatAcpiTable (Table, LdrGlobal->FspHobList);
     DEBUG ((DEBUG_INFO, "Updated BDAT Table in AcpiTable Entries\n"));
-  }else if (Table->Signature == EFI_ACPI_6_1_LOW_POWER_IDLE_TABLE_STRUCTURE_SIGNATURE){
+  } else if (Table->Signature == EFI_ACPI_6_1_LOW_POWER_IDLE_TABLE_STRUCTURE_SIGNATURE){
       UINT8                                  LpitStateEntries = 0;
       EFI_ACPI_6_1_GENERIC_ADDRESS_STRUCTURE SetResidencyCounter[3] = { ACPI_LPI_RES_SLP_S0_COUNTER, ACPI_LPI_RES_C10_COUNTER, ACPI_LPI_RES_PS_ON_COUNTER };
       UINT64                                 ResidencyCounterFrequency = 0;
@@ -2248,8 +2247,7 @@ PlatformUpdateAcpiTable (
         (((ACPI_LOW_POWER_IDLE_TABLE *)Table)->LpiStates[LpitStateEntries - 1].ResidencyCounter) = SetResidencyCounter[0];
         (((ACPI_LOW_POWER_IDLE_TABLE *)Table)->LpiStates[LpitStateEntries - 1].ResidencyCounterFrequency) = ResidencyCounterFrequency;
       }
-    }
-    else if (Table->Signature == EFI_ACPI_5_0_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE) {
+    } else if (Table->Signature == EFI_ACPI_5_0_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE) {
       FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
       if ((FeaturesCfgData != NULL) && (FeaturesCfgData->Features.LowPowerS0Idle == 1)) {
         EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE  *FadtTable;

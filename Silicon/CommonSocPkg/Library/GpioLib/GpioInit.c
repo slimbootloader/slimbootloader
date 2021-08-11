@@ -283,7 +283,7 @@ GpioConfigurePch (
       // Check if legal pin number
       //
       if (PadNumber >= GpioGroupInfo[GroupIndex].PadPerGroup) {
-        DEBUG ((DEBUG_ERROR, "GPIO ERROR: Pin number (%d) exceeds possible range for group %d\n", PadNumber, GroupIndex));
+        DEBUG ((DEBUG_ERROR, "GPIO ERROR: Pin number (%d) exceeds possible range for group %d (max %d)\n", PadNumber, GroupIndex, GpioGroupInfo[GroupIndex].PadPerGroup));
         return EFI_INVALID_PARAMETER;
       }
 
