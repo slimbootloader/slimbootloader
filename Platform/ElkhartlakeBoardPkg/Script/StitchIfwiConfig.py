@@ -72,7 +72,7 @@ def get_platform_sku():
     }
     return platform_sku
 
-def get_component_replace_list():
+def get_component_replace_list(plt_params_list):
     replace_list = [
        #    Path                   file name              compress    Key                           SVN
       ('IFWI/BIOS/TS0/ACM0',      'Input/acm.bin',        'dummy',    '',                            ''),
@@ -89,21 +89,22 @@ def get_component_replace_list():
         replace_list.append (
             ('IFWI/BIOS/NRD/IPFW/PSEF', 'IPFW/PseFw.bin',          'lz4',     'KEY_ID_CONTAINER_COMP_RSA3072', 0),   # OSE FW
         )
-    if os.path.exists('IPFW/PseTsnIpConfig.bin'):
-        print ("PseTsnIpConfig.bin found")
-        replace_list.append (
-            ('IFWI/BIOS/NRD/IPFW/TSIP', 'IPFW/PseTsnIpConfig.bin', 'lz4',     'KEY_ID_CONTAINER_COMP_RSA3072', 0),   # PSE TSN IP
-        )
-    if os.path.exists('IPFW/TsnConfig.bin'):
-        print ("TsnConfig.bin found")
-        replace_list.append (
-            ('IFWI/BIOS/NRD/IPFW/TSNC', 'IPFW/TsnConfig.bin',      'lz4',     'KEY_ID_CONTAINER_COMP_RSA3072', 0),   # TSN Config
-        )
-    if os.path.exists('IPFW/TsnMacAddr.bin'):
-        print ("TsnMacAddr.bin found")
-        replace_list.append (
-            ('IFWI/BIOS/NRD/IPFW/TMAC', 'IPFW/TsnMacAddr.bin',     'lz4',     'KEY_ID_CONTAINER_COMP_RSA3072', 0),   # TSN MAC Address
-        )
+    if 'tsn' in plt_params_list:
+        if os.path.exists('IPFW/PseTsnIpConfig.bin'):
+            print ("PseTsnIpConfig.bin found")
+            replace_list.append (
+                ('IFWI/BIOS/NRD/IPFW/TSIP', 'IPFW/PseTsnIpConfig.bin', 'lz4',     'KEY_ID_CONTAINER_COMP_RSA3072', 0),   # PSE TSN IP
+            )
+        if os.path.exists('IPFW/TsnConfig.bin'):
+            print ("TsnConfig.bin found")
+            replace_list.append (
+                ('IFWI/BIOS/NRD/IPFW/TSNC', 'IPFW/TsnConfig.bin',      'lz4',     'KEY_ID_CONTAINER_COMP_RSA3072', 0),   # TSN Config
+            )
+        if os.path.exists('IPFW/TsnMacAddr.bin'):
+            print ("TsnMacAddr.bin found")
+            replace_list.append (
+                ('IFWI/BIOS/NRD/IPFW/TMAC', 'IPFW/TsnMacAddr.bin',     'lz4',     'KEY_ID_CONTAINER_COMP_RSA3072', 0),   # TSN MAC Address
+            )
     if os.path.exists('IPFW/crl.bin'):
         print ("crl.bin found")
         replace_list.append (
