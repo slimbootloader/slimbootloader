@@ -50,6 +50,7 @@
 #include <Library/IgdOpRegionLib.h>
 #include <ConfigDataCommonStruct.h>
 #include <Library/PciExpressLib.h>
+#include "HdaVerbTable.h"
 #include <Library/TpmLib.h>
 #include <PlatformData.h>
 #include <CpuDataStruct.h>
@@ -1271,7 +1272,8 @@ UpdateFspConfig (
   TSN_MAC_ADDR_SUB_REGION *TsnSubRegion;
   UINT8                MaxPcieRootPorts;
   UINT8               DebugPort;
-
+  UINT32              *HdaVerbTablePtr;
+  UINT8                HdaVerbTableNum;
   FspsUpd    = (FSPS_UPD *)FspsUpdPtr;
   FspsConfig = &FspsUpd->FspsConfig;
 
@@ -1372,7 +1374,17 @@ UpdateFspConfig (
     DEBUG (((BiosProtected) ? DEBUG_INFO : DEBUG_WARN, "BIOS SPI region will %a protected\n", (BiosProtected) ? "be" : "NOT BE"));
     DEBUG (((IasProtected)  ? DEBUG_INFO : DEBUG_WARN, "IAS  SPI region will %a protected\n", (IasProtected)  ? "be" : "NOT BE"));
   }
-
+  SiCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
+  if ((SiCfgData != NULL) && SiCfgData->PchHdaEnable == 1) {
+    HdaVerbTablePtr = (UINT32 *) AllocateZeroPool (4 * sizeof (UINT32));
+    HdaVerbTableNum = 0;
+    HdaVerbTablePtr[HdaVerbTableNum++]   = (UINT32)(UINTN) &HdaVerbTableDisplayAudio;
+    HdaVerbTablePtr[HdaVerbTableNum++]   = (UINT32)(UINTN) &TglHdaVerbTableAlc711;
+    HdaVerbTablePtr[HdaVerbTableNum++]   = (UINT32)(UINTN) &TglHdaVerbTableAlc701;
+    HdaVerbTablePtr[HdaVerbTableNum++]   = (UINT32)(UINTN) &TglHdaVerbTableAlc274;
+    FspsUpd->FspsConfig.PchHdaVerbTablePtr      = (UINT32)(UINTN) HdaVerbTablePtr;
+    FspsUpd->FspsConfig.PchHdaVerbTableEntryNum = HdaVerbTableNum;
+  }
   if (PcdGetBool (PcdFramebufferInitEnabled)) {
     FspsConfig->GraphicsConfigPtr = (UINT32) GetVbtAddress();
     FspsConfig->PeiGraphicsPeimInit = 1;
