@@ -266,7 +266,23 @@
                      Enable/disable EC
       length       : 0x01
       value        : 0x01
+  - PchHdaEnable :
+      name         : Enable Intel HD Audio (Azalia)
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     0- Disable, 1- Enable (Default) Azalia controller
+      length       : 0x01
+      value        : 0x01
+  - PchHdaDspEnable :
+      name         : Enable HD Audio DSP
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/disable HD Audio DSP feature.
+      length       : 0x01
+      value        : 0x00
   - Dummy        :
-      length       : 0x1
+      length       : 0x3
       value        : 0x0
 
