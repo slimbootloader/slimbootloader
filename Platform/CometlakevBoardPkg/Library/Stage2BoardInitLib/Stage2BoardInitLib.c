@@ -1121,6 +1121,7 @@ BoardInit (
       DEBUG ((DEBUG_WARN, "VBT not found %r\n", Status));
     }
     if (GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE && GetBootMode() != BOOT_ON_S3_RESUME) {
+      ClearS3SaveRegion ();
       //
       // Set SMMBASE_INFO dummy strucutre in TSEG before others
       //

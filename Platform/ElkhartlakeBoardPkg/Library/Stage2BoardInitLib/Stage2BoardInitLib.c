@@ -756,6 +756,7 @@ BoardInit (
     ClearSmi ();
     if (GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE) {
       if (GetBootMode() != BOOT_ON_S3_RESUME) {
+        ClearS3SaveRegion ();
         mSmmBaseInfo.SmmBaseHdr.Count     = (UINT8) MpGetInfo()->CpuCount;
         mSmmBaseInfo.SmmBaseHdr.TotalSize = sizeof(BL_PLD_COMM_HDR) + mSmmBaseInfo.SmmBaseHdr.Count * sizeof(CPU_SMMBASE);
         Status = AppendS3Info ((VOID *)&mSmmBaseInfo, TRUE);

@@ -112,6 +112,17 @@ TriggerPayloadSwSmi (
 );
 
 /**
+  This function clears TSEG area designated for S3
+  save/restore purpose.
+
+**/
+VOID
+EFIAPI
+ClearS3SaveRegion (
+  VOID
+);
+
+/**
   This function appends information in TSEG area
   designated for S3 save/restore purpose.
 
