@@ -140,6 +140,27 @@ TriggerPayloadSwSmi (
 }
 
 /**
+  This function clears TSEG area designated for S3
+  save/restore purpose.
+
+**/
+VOID
+EFIAPI
+ClearS3SaveRegion (
+  VOID
+)
+{
+  LDR_SMM_INFO      LdrSmmInfo;
+  UINT8             *SmmBase;
+
+  PlatformUpdateHobInfo (&gSmmInformationGuid, &LdrSmmInfo);
+  SmmBase = (UINT8 *)(UINTN)LdrSmmInfo.SmmBase;
+  if (LdrSmmInfo.Flags & SMM_FLAGS_4KB_COMMUNICATION) {
+    ZeroMem (SmmBase, SIZE_4KB);
+  }
+}
+
+/**
   This function appends information in TSEG area
   designated for S3 save/restore purpose.
 

@@ -966,6 +966,7 @@ BoardInit (
     ClearSmi ();
     if (GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE) {
       if (GetBootMode() != BOOT_ON_S3_RESUME) {
+        ClearS3SaveRegion ();
         //
         // Set SMMBASE_INFO dummy strucutre in TSEG before others
         //
