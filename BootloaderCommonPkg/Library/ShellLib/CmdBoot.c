@@ -260,28 +260,39 @@ GetBootFileInfo (
   IN OUT CHAR16              *Buffer,
   IN     UINTN               BufferSize,
   OUT    OS_BOOT_OPTION      *BootOption,
-  IN     OS_BOOT_OPTION      *CurrOption
+  IN     OS_BOOT_OPTION      *CurrOption,
+  IN     UINT8               LoadImageType
   )
 {
   EFI_STATUS                 Status;
   UINTN                      Length;
 
   do {
-    ShellPrint (L"Enter file path string (max length of %d)\n",
-                sizeof (BootOption->Image[0].FileName) - 1
-                );
-    ShellPrint (L"(default '%a') ", CurrOption->Image[0].FileName);
+    if (LoadImageType == LoadImageTypeNormal){
+      ShellPrint (L"Enter file path string (max length of %d)\n",
+                  sizeof (BootOption->Image[LoadImageType].FileName) - 1
+                  );
+    } else if (LoadImageType == LoadImageTypePreOs){
+        ShellPrint (L"Enter Pre-OS file path string (max length of %d)\n",
+                    sizeof (BootOption->Image[LoadImageType].FileName) - 1
+                    );
+    } else if (LoadImageType == LoadImageTypeExtra0){
+        ShellPrint (L"Enter Extra Image file path string (max length of %d)\n",
+                    sizeof (BootOption->Image[LoadImageType].FileName) - 1
+                    );
+    }
+    ShellPrint (L"(default '%a') ", CurrOption->Image[LoadImageType].FileName);
     Status = ShellReadLine (Shell, Buffer, BufferSize);
     if (EFI_ERROR (Status)) {
       return Status;
     }
     Length = StrLen (Buffer);
     if (Length == 0) {
-      CopyMem (BootOption->Image[0].FileName, CurrOption->Image[0].FileName, sizeof (CurrOption->Image[0].FileName));
+      CopyMem (BootOption->Image[LoadImageType].FileName, CurrOption->Image[LoadImageType].FileName, sizeof (CurrOption->Image[LoadImageType].FileName));
       break;
     }
-    if (Length < sizeof (BootOption->Image[0].FileName)) {
-      UnicodeStrToAsciiStrS (Buffer, (CHAR8 *)BootOption->Image[0].FileName, sizeof (BootOption->Image[0].FileName));
+    if (Length < sizeof (BootOption->Image[LoadImageType].FileName)) {
+      UnicodeStrToAsciiStrS (Buffer, (CHAR8 *)BootOption->Image[LoadImageType].FileName, sizeof (BootOption->Image[LoadImageType].FileName));
       break;
     }
     ShellPrint (L"Invalid, too long: '%s' len=%d, please re-enter\n", Buffer, Length);
@@ -554,9 +565,21 @@ ShellCommandBootFunc (
     }
 
     if (BootOption.FsType != EnumFileSystemMax) {
-      Status = GetBootFileInfo (Shell, Buffer, sizeof (Buffer), &BootOption, CurrOption);
+      Status = GetBootFileInfo (Shell, Buffer, sizeof (Buffer), &BootOption, CurrOption, LoadImageTypeNormal);
       if (EFI_ERROR (Status)) {
         goto ExitBootCmd;
+      }
+      if ((CurrOption->BootFlags & BOOT_FLAGS_PREOS) != 0){
+        Status = GetBootFileInfo (Shell, Buffer, sizeof (Buffer), &BootOption, CurrOption, LoadImageTypePreOs);
+        if (EFI_ERROR (Status)) {
+          goto ExitBootCmd;
+        }
+      }
+      if ((CurrOption->BootFlags & BOOT_FLAGS_EXTRA) != 0){
+        Status = GetBootFileInfo (Shell, Buffer, sizeof (Buffer), &BootOption, CurrOption, LoadImageTypeExtra0);
+        if (EFI_ERROR (Status)) {
+          goto ExitBootCmd;
+        }
       }
     } else {
       Status = GetBootLbaInfo (Shell, Buffer, sizeof (Buffer), &BootOption, CurrOption);
