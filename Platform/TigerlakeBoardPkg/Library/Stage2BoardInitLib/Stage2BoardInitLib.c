@@ -80,6 +80,7 @@
 #include <TccConfigSubRegions.h>
 #include <Library/LocalApicLib.h>
 #include <Library/TccLib.h>
+#include "Dts.h"
 
 BOOLEAN mTccDsoTuning      = FALSE;
 UINT8   mTccRtd3Support    = 0;
@@ -865,6 +866,10 @@ BoardInit (
     DEBUG ((DEBUG_INFO, "PCH gen (0x%x), series (0x%x), stepping (0x%x)\n", PchGeneration(), PchSeries(), PchStepping()));
     DEBUG ((DEBUG_INFO, "LPC DeviceId (0x%x)\n", PchGetLpcDid()));
 
+    if (FeaturePcdGet (PcdSmbiosEnabled) && FeaturePcdGet (PcdEnableDts)) {
+      ReadPchDts ();
+    }
+
     EnableLegacyRegions ();
     ConfigureGpio (CDATA_GPIO_TAG, 0, NULL);
     if (GetBootMode() != BOOT_ON_FLASH_UPDATE) {
@@ -931,6 +936,9 @@ BoardInit (
     //
     if (FeaturePcdGet (PcdSmbiosEnabled)) {
       InitializeSmbiosInfo ();
+      if (FeaturePcdGet (PcdEnableDts)) {
+        ReadCpuDts ();
+      }
     }
     break;
   case PostPciEnumeration:
@@ -950,6 +958,9 @@ BoardInit (
 
     break;
   case PrePayloadLoading:
+    if (FeaturePcdGet (PcdSmbiosEnabled) && FeaturePcdGet (PcdEnableDts)) {
+      AppendSmbiosBootDts ();
+    }
     IgdOpRegionPlatformInit ();
 
     ///

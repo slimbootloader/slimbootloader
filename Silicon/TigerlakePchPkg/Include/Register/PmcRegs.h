@@ -176,6 +176,8 @@
 #define R_PMC_PWRM_MODPHY_PM_CFG5                           0x10D0
 #define R_PMC_PWRM_MODPHY_PM_CFG6                           0x10D4
 
+#define R_PMC_PWRM_THERMAL_TSS0                             0x1560                      ///< Temperature Sensor Control and Status
+#define B_PMC_PWRM_THERMAL_TSS0_TSR_MASK                    0x1FF
 
 #define R_PMC_PWRM_WADT_AC                                  0x1800
 

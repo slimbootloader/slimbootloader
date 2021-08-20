@@ -59,6 +59,8 @@ class Board(BaseBoard):
         self.SKIP_STAGE1A_SOURCE_DEBUG  = 0
         self.ENABLE_SPLASH        = 1
         self.ENABLE_FRAMEBUFFER_INIT    = 1
+        # 1: To read ambient temperature at boot time 0: Disable the feature
+        self.ENABLE_DTS           = 1
         self.ENABLE_FAST_BOOT     = 0
         self.HAVE_FUSA            = 1
         # 0: Disable  1: Enable  2: Auto (disable for UEFI payload, enable for others)
