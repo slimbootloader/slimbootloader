@@ -9,7 +9,7 @@
   - Definitions beginning with "S_" are register sizes
   - Definitions beginning with "N_" are the bit position
 
-  Copyright (c) 2004 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2004 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 #ifndef _CPU_REGS_H_
@@ -29,8 +29,8 @@
 #define B_BOOT_GUARD_SACM_INFO_NEM_ENABLED                            BIT0
 
 
-#define V_MSR_TEMPERATURE_TARGET_TCC_ACTIVATION_OFFSET_MASK           0x3F
-
+#define MSR_IA32_THERM_STATUS                                         0x0000019C
+#define B_IA32_THERM_STATUS_VALID                                     BIT31
 
 #define MSR_TEMPERATURE_TARGET                                        0x000001A2
 #define V_MSR_TEMPERATURE_TARGET_TCC_ACTIVATION_OFFSET_MASK           0x3F

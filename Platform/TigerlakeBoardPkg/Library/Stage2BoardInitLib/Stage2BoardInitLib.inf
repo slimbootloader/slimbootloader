@@ -29,6 +29,8 @@
   FusaLib.c
   LowPowerSupport.c
   LowPowerSupport.h
+  Dts.h
+  Dts.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -64,6 +66,7 @@
   MeExtMeasurementLib
   BasePchPciBdfLib
   TccLib
+  SmbiosInitLib
 
 [Guids]
   gOsConfigDataGuid
@@ -103,3 +106,4 @@
   gPlatformModuleTokenSpaceGuid.PcdFspsUpdPtr
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled
   gPlatformModuleTokenSpaceGuid.PcdAcpiTableTemplatePtr
+  gPlatformModuleTokenSpaceGuid.PcdEnableDts

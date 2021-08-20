@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -246,15 +246,9 @@ AppendSmbiosType (
   // Find current Type127 and replace it with new Type Data
   //
   SmbiosEntry->TableLength -= ( ((SMBIOS_STRUCTURE *)mType127Ptr)->Length + TYPE_TERMINATOR_SIZE);
+  TypeHdr->Handle = ((SMBIOS_STRUCTURE *)mType127Ptr)->Handle;
   CopyMem (mType127Ptr, TypeData, TypeLength);
   SmbiosEntry->TableLength += TypeLength;
-
-  //
-  // Not incrementing the NumberOfSmbiosStructures here,
-  // as FinalizeSmbios () will do it again. That can be
-  // counted towards the newly added type structure.
-  //
-  TypeHdr->Handle = SmbiosEntry->NumberOfSmbiosStructures;
 
   //
   // After appending, update with Typ127 and patch entry point
