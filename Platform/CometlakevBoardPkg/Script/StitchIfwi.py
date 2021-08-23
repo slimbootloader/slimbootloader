@@ -31,6 +31,34 @@ btg_profile_values = [\
                     "Boot Guard Profile 4 - FVE",\
                     "Boot Guard Profile 5 - FVME"]
 
+def is_wine_installed ():
+    return True if shutil.which("wine") != None else False
+
+def get_path_wrapper (path):
+    if os.name == 'posix' and is_wine_installed ():
+        cmd = ['winepath', '-w', path]
+        return run_process (cmd, capture_out=True).strip()
+    else:
+        return path
+
+def run_process_wrapper (cmds):
+    if os.name == 'posix':
+        if is_wine_installed ():
+            cmds = ["wine"] + cmds
+        else:
+            print ("\n")
+            print ("ERROR: Please install 'wine'.")
+            print ("       To stitch CMLV IFWI in Linux, 'wine' is required")
+            print ("\n")
+            raise Exception ()
+    run_process (cmds)
+
+def get_openssl_path_wrapper (stitch_dir):
+    if os.name == 'posix' and is_wine_installed ():
+        return get_path_wrapper (os.path.join (stitch_dir, 'OpenSSL/openssl.exe'))
+    else:
+        return get_openssl_path ()
+
 def gen_bpmgen2_params (stitch_cfg_file, InFile, OutFile):
     InFileptr = open(InFile, 'r',encoding='iso-8859-15')
     lines = InFileptr.readlines()
@@ -84,7 +112,7 @@ def gen_oem_key_hash(stitch_dir):
     kmsigpubkeybinfile  = os.path.join(output_dir, "kmsigpubkey.bin")
 
     with open(kmsigpubkeytxtfile, "w") as kmsigpubkeytxt_fh:
-        run_process ([get_openssl_path(), 'rsa' , '-in', 'bpmgen2/keys/oem_pubkey_2048.pem',
+        run_process ([get_openssl_path(), 'rsa' , '-in', 'BpmGen2/keys/oem_pubkey_2048.pem',
             '-pubin', '-modulus', '-out', 'Temp/kmsigpubkeytxt_fh'])
     shutil.copy(os.path.join(output_dir, "kmsigpubkeytxt_fh"), kmsigpubkeytxtfile)
 
@@ -108,9 +136,9 @@ def gen_sign_oem_key_manifest(stitch_dir, stitch_cfg_file):
     oem_bin_input  = os.path.join (stitch_dir, 'Input', 'OemExtInputFile.bin')
     oem_bin_sign   = os.path.join (output_dir, 'OemExtInputFile.bin')
 
-    openssl_path = get_openssl_path()
+    openssl_path = get_openssl_path_wrapper (stitch_dir)
 
-    bpm_gen2dir = os.path.join (stitch_dir, 'bpmgen2')
+    bpm_gen2dir = os.path.join (stitch_dir, 'BpmGen2')
     bpm_key_dir = os.path.join (bpm_gen2dir, 'keys')
 
     if not os.path.exists(oem_bin_input):
@@ -118,10 +146,12 @@ def gen_sign_oem_key_manifest(stitch_dir, stitch_cfg_file):
         print("Generate and sigm OemKeyManifest binary....")
 
         #create an dummy meu_config.xml
-        run_process ([meu_path, '-gen', 'meu_config', '-save', os.path.join(output_dir, 'meu_config.xml')])
+        run_process_wrapper ([get_path_wrapper (meu_path), '-gen', 'meu_config',
+            '-save', get_path_wrapper (os.path.join(output_dir, 'meu_config.xml'))])
 
         #Generate default OEMKeyManifest config xml
-        run_process ([meu_path, '-gen', 'OEMKeyManifest', '-save', os.path.join(output_dir, 'oemkeymanifest_sample_config.xml')])
+        run_process_wrapper ([get_path_wrapper (meu_path), '-gen', 'OEMKeyManifest',
+            '-save', get_path_wrapper (os.path.join(output_dir, 'oemkeymanifest_sample_config.xml'))])
 
         #Update OEMKeyManifest config xml for sample/test params
         tree = ET.parse(os.path.join(output_dir, 'oemkeymanifest_sample_config.xml'))
@@ -137,34 +167,38 @@ def gen_sign_oem_key_manifest(stitch_dir, stitch_cfg_file):
         #Generate signed OEMKeyManifest binary
         #meu.exe -f decomp_km1.xml -o OemExtInputFile.bin -key oem_privkey_2048.pem -stp C:\Openssl\openssl.exe
 
-        run_process ([meu_path, '-f', os.path.join(output_dir, 'oemkeymanifest_sample_config.xml'), '-o', oem_bin_sign,
-            '-key',  os.path.join (bpm_key_dir, 'oem_privkey_2048.pem'),
-            '-cfg', os.path.join(output_dir, 'meu_config.xml'),
+        run_process_wrapper ([get_path_wrapper (meu_path),
+            '-f', get_path_wrapper (os.path.join(output_dir, 'oemkeymanifest_sample_config.xml')),
+            '-o', get_path_wrapper (oem_bin_sign),
+            '-key',  get_path_wrapper (os.path.join (bpm_key_dir, 'oem_privkey_2048.pem')),
+            '-cfg', get_path_wrapper (os.path.join(output_dir, 'meu_config.xml')),
             '-stp', openssl_path])
-
     else:
         # OemKeyManifest binary re signing
         print("Resign Oem key manifest binary....")
 
         #create an dummy meu_config
-        run_process ([meu_path, '-gen', 'meu_config', '-save', os.path.join(output_dir, 'meu_config.xml')])
+        run_process_wrapper ([get_path_wrapper (meu_path), '-gen', 'meu_config',
+            '-save', get_path_wrapper (os.path.join(output_dir, 'meu_config.xml'))])
 
         #Resign Oem Binary using Meu tool
-        run_process ([meu_path, '-resign', '-f', oem_bin_input, '-o', oem_bin_sign,
-            '-key',  os.path.join (bpm_key_dir, 'oem_privkey_2048.pem'),
-            '-cfg', os.path.join(output_dir, 'meu_config.xml'),
-        '-stp', openssl_path])
+        run_process_wrapper ([get_path_wrapper (meu_path), '-resign',
+            '-f', get_path_wrapper (oem_bin_input),
+            '-o', get_path_wrapper (oem_bin_sign),
+            '-key', get_path_wrapper (os.path.join (bpm_key_dir, 'oem_privkey_2048.pem')),
+            '-cfg', get_path_wrapper (os.path.join(output_dir, 'meu_config.xml')),
+            '-stp', openssl_path])
 
 
 def sign_binary(infile, stitch_dir, stitch_cfg_file):
-    openssl_path = get_openssl_path()
+    openssl_path = get_openssl_path ()
 
     output_dir = os.path.join(stitch_dir, "Temp")
     shutil.copy(infile, os.path.join(output_dir,"sbl_sec_temp.bin"))
 
     print("Generating new keys....")
 
-    bpm_gen2dir = os.path.join (stitch_dir, 'bpmgen2')
+    bpm_gen2dir = os.path.join (stitch_dir, 'BpmGen2')
     bpm_key_dir = os.path.join (bpm_gen2dir, 'keys')
     if not os.path.exists(bpm_key_dir):
         os.mkdir(bpm_key_dir)
@@ -185,25 +219,25 @@ def sign_binary(infile, stitch_dir, stitch_cfg_file):
     gen_bpmgen2_params(stitch_cfg_file, os.path.join(bpm_gen2dir, "sbl_bpmgen2.params"), os.path.join(output_dir, "sbl_bpmgen2.params"))
 
     print("Generating Btg KeyManifest.bin....")
-    run_process ([os.path.join (bpm_gen2dir, 'bpmgen2'),
+    run_process_wrapper ([get_path_wrapper (os.path.join (bpm_gen2dir, 'BpmGen2.exe')),
         'KMGEN',
-        '-KEY',        os.path.join (bpm_key_dir, 'bpm_pubkey_2048.pem'), 'BPM',
-        '-KM',         os.path.join (output_dir,  'KeyManifest.bin'),
-        '-SIGNKEY',    os.path.join (bpm_key_dir, 'oem_privkey_2048.pem'),
-        '-SIGNPUBKEY', os.path.join (bpm_key_dir, 'oem_pubkey_2048.pem'),
+        '-KEY',        get_path_wrapper (os.path.join (bpm_key_dir, 'bpm_pubkey_2048.pem')), 'BPM',
+        '-KM',         get_path_wrapper (os.path.join (output_dir,  'KeyManifest.bin')),
+        '-SIGNKEY',    get_path_wrapper (os.path.join (bpm_key_dir, 'oem_privkey_2048.pem')),
+        '-SIGNPUBKEY', get_path_wrapper (os.path.join (bpm_key_dir, 'oem_pubkey_2048.pem')),
         '-KMID',       '0x01',
         '-KMKHASH',    'SHA256',
         '-SVN',        '0',
         '-d:2'])
 
     print("Generating Btg Boot Policy Manifest (BPM).bin....")
-    run_process ([os.path.join (bpm_gen2dir, 'bpmgen2'),
+    run_process_wrapper ([get_path_wrapper (os.path.join (bpm_gen2dir, 'BpmGen2.exe')),
         'GEN',
-        os.path.join (output_dir, 'sbl_sec_temp.bin'),
-        os.path.join (output_dir, 'sbl_bpmgen2.params'),
-        '-BPM',        os.path.join (output_dir, 'BpmManifest.bin'),
-        '-U',          os.path.join (output_dir, 'sbl_sec.bin'),
-        '-KM',         os.path.join (output_dir, 'KeyManifest.bin'),
+        get_path_wrapper (os.path.join (output_dir, 'sbl_sec_temp.bin')),
+        get_path_wrapper (os.path.join (output_dir, 'sbl_bpmgen2.params')),
+        '-BPM',        get_path_wrapper (os.path.join (output_dir, 'BpmManifest.bin')),
+        '-U',          get_path_wrapper (os.path.join (output_dir, 'sbl_sec.bin')),
+        '-KM',         get_path_wrapper (os.path.join (output_dir, 'KeyManifest.bin')),
         '-d:2'])
 
 def update_tpm_type(tpm_type, tree):
@@ -318,9 +352,11 @@ def gen_xml_file(stitch_dir, stitch_cfg_file, btg_profile, spi_quad, platform, t
     fit_tool     = os.path.join (stitch_dir, 'Fit', 'fit')
     new_xml_file = os.path.join (stitch_dir, 'Temp', 'new.xml')
     updated_xml_file = os.path.join (stitch_dir, 'Temp', 'updated.xml')
+
     sku = stitch_cfg_file.get_platform_sku().get(platform)
-    cmd = [fit_tool, '-sku', sku, '-save', new_xml_file, '-w', os.path.join (stitch_dir, 'Temp')]
-    run_process (cmd)
+    run_process_wrapper ([get_path_wrapper (fit_tool), '-sku', sku,
+        '-save', get_path_wrapper (new_xml_file),
+        '-w', get_path_wrapper (os.path.join (stitch_dir, 'Temp'))])
 
     tree = ET.parse(new_xml_file)
 
@@ -418,8 +454,9 @@ def stitch (stitch_dir, stitch_cfg_file, stitch_zip, btg_profile, spi_quad_mode,
     gen_xml_file(stitch_dir, stitch_cfg_file, btg_profile, spi_quad_mode, platform, tpm)
 
     print ("Run fit tool to generate ifwi.........")
-    run_process (['./Fit/fit', '-b', '-o', 'Temp/Ifwi.bin', '-f', os.path.join (temp_dir, 'updated.xml'),
-        '-s', temp_dir, '-w', temp_dir, '-d', temp_dir])
+    run_process_wrapper ([get_path_wrapper ('./Fit/fit'), '-b', '-o', get_path_wrapper ('Temp/Ifwi.bin'),
+        '-f', get_path_wrapper (os.path.join (temp_dir, 'updated.xml')),
+        '-s', get_path_wrapper (temp_dir), '-w', get_path_wrapper (temp_dir), '-d', get_path_wrapper (temp_dir)])
     return 0
 
 def main():
