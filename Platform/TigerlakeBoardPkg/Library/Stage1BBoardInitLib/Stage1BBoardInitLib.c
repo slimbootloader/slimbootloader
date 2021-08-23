@@ -454,8 +454,10 @@ UpdateFspConfig (
   Fspmcfg->BootFrequency = 0x2;
 
   // will hang using default upds
-  Fspmcfg->PchHdaEnable = SiCfgData->PchHdaEnable;
-  Fspmcfg->PchHdaDspEnable = SiCfgData->PchHdaDspEnable;
+  if (SiCfgData != NULL) {
+    Fspmcfg->PchHdaEnable = SiCfgData->PchHdaEnable;
+    Fspmcfg->PchHdaDspEnable = SiCfgData->PchHdaDspEnable;
+  }
   Fspmcfg->PchHdaAudioLinkDmicClkAPinMux[0] = 0x29460c06;
   Fspmcfg->PchHdaAudioLinkDmicClkAPinMux[1] = 0x29460e04;
   Fspmcfg->PchHdaAudioLinkDmicClkBPinMux[0] = 0x29461402;
