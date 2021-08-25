@@ -457,6 +457,8 @@ UpdateFspConfig (
   if (SiCfgData != NULL) {
     Fspmcfg->PchHdaEnable = SiCfgData->PchHdaEnable;
     Fspmcfg->PchHdaDspEnable = SiCfgData->PchHdaDspEnable;
+    Fspmcfg->PchHdaAudioLinkDmicEnable[0] = SiCfgData->PchHdaAudioLinkDmicEnable[0];
+    Fspmcfg->PchHdaAudioLinkDmicEnable[1] = SiCfgData->PchHdaAudioLinkDmicEnable[1];
   }
   Fspmcfg->PchHdaAudioLinkDmicClkAPinMux[0] = 0x29460c06;
   Fspmcfg->PchHdaAudioLinkDmicClkAPinMux[1] = 0x29460e04;
