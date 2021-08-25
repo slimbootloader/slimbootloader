@@ -282,7 +282,14 @@
                      Enable/disable HD Audio DSP feature.
       length       : 0x01
       value        : 0x00
+  - PchHdaAudioLinkDmicEnable :
+      name         : Enable HD Audio DMIC_N
+      type         : EditNum, HEX, (0x00,0xFFFF)
+      help         : >
+                     Enable/disable HD Audio DMIC_N.
+      length       : 0x02
+      value        : { 0x00, 0x00 }
   - Dummy        :
-      length       : 0x3
+      length       : 0x1
       value        : 0x0
 
