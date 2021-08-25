@@ -85,6 +85,7 @@ def update_btGuard_xml(btg_profile, stitch_dir, tree):
             oemkeyhash = ""
             for b in hash:
                 oemkeyhash = oemkeyhash + "%02X " % b
+            oemkeyhash = oemkeyhash[:-1]
         print("oemkeyhash:")
         print(oemkeyhash)
 
