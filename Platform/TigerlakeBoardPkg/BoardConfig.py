@@ -170,9 +170,19 @@ class Board(BaseBoard):
         Redundant_Components_Size = self.UCODE_SIZE + self.STAGE2_SIZE + self.STAGE1B_SIZE + self.FWUPDATE_SIZE + self.CFGDATA_SIZE + self.KEYHASH_SIZE
         if Redundant_Components_Size > self.REDUNDANT_SIZE:
             raise Exception ('Redundant region size 0x%x is smaller than required components size 0x%x!' % (self.REDUNDANT_SIZE, Redundant_Components_Size))
-        self.NON_REDUNDANT_SIZE   = 0x2B2000 + self.SIIPFW_SIZE
         self.NON_VOLATILE_SIZE    = 0x001000
-        self.SLIMBOOTLOADER_SIZE  = (self.TOP_SWAP_SIZE + self.REDUNDANT_SIZE) * 2 + self.NON_REDUNDANT_SIZE + self.NON_VOLATILE_SIZE
+        # For firmware update, please keep SLIMBOOTLOADER_SIZE unchanged!
+        # The info can be found in the 'RomSize' of Outputs/tgl/FlashMap.txt
+        # Max size for 16MB IFWI: 0xAD8000
+        # Default value in UEFI BIOS (32MB IFWI): 0xC00000
+        self.SLIMBOOTLOADER_SIZE  = 0xAD0000
+        self.NON_REDUNDANT_SIZE   = self.SLIMBOOTLOADER_SIZE - \
+                                    (self.TOP_SWAP_SIZE + self.REDUNDANT_SIZE) * 2 - \
+                                    self.NON_VOLATILE_SIZE
+        Non_Redundant_Components_Size = self.PAYLOAD_SIZE + self.EPAYLOAD_SIZE + self.MRCDATA_SIZE + \
+                                        self.UEFI_VARIABLE_SIZE + self.VARIABLE_SIZE + self.SIIPFW_SIZE
+        if self.NON_REDUNDANT_SIZE < Non_Redundant_Components_Size:
+            raise Exception ('Non redundant region size 0x%x is smaller than required components size 0x%x!' % (self.NON_REDUNDANT_SIZE, Non_Redundant_Components_Size))
 
         self.PLD_HEAP_SIZE        = 0x04000000
         self.PLD_STACK_SIZE       = 0x00020000
