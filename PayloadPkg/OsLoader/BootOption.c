@@ -1,12 +1,35 @@
 /** @file
 
-  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
 #include "OsLoader.h"
+/**
+  Print Pre-OS or/and extra images.
 
+  @param[in] BootOption     the boot options
+  @param[in] Flags          the boot flags
+  @param[in] ImageType      the image types
+
+**/
+VOID
+PrintExtraImages (
+OS_BOOT_OPTION *BootOption,
+UINT8 Flags,
+LOAD_IMAGE_TYPE ImageType
+)
+{
+  if ((BootOption->BootFlags & Flags) != 0){
+    if (BootOption->Image[ImageType].LbaImage.Valid == 1) {
+      DEBUG ((DEBUG_INFO, " [%x|0x%x]", ImageType, BootOption->Image[ImageType].LbaImage.SwPart,
+      BootOption->Image[ImageType].LbaImage.LbaAddr));
+    } else if (BootOption->Image[ImageType].FileName[0] != '\0') {
+      DEBUG ((DEBUG_INFO, " [%a]", BootOption->Image[ImageType].FileName));
+    }
+  }
+}
 
 /**
   Print the OS boot option list.
@@ -28,7 +51,7 @@ PrintBootOptions (
   for (Index = 0; Index < OsBootOptionList->OsBootOptionCount; Index++) {
     BootOption = &OsBootOptionList->OsBootOption[Index];
     if (BootOption->FsType < EnumFileSystemMax) {
-      DEBUG ((DEBUG_INFO, "%3x|%7x| %5a | %4x | %3x | %4x | %4a | %4x | %a\n", \
+      DEBUG ((DEBUG_INFO, "%3x|%7x| %5a | %4x | %3x | %4x | %4a | %4x | %a", \
                  Index, \
                  BootOption->ImageType, \
                  GetBootDeviceNameString(BootOption->DevType), \
@@ -40,7 +63,7 @@ PrintBootOptions (
                  BootOption->Image[0].FileName \
                  ));
     } else {
-      DEBUG ((DEBUG_INFO, "%3x|%7x| %5a | %4x | %3x | %4x | %4a | %4x | 0x%x\n", \
+      DEBUG ((DEBUG_INFO, "%3x|%7x| %5a | %4x | %3x | %4x | %4a | %4x | 0x%x", \
                  Index, \
                  BootOption->ImageType, \
                  GetBootDeviceNameString(BootOption->DevType), \
@@ -52,9 +75,16 @@ PrintBootOptions (
                  BootOption->Image[0].LbaImage.LbaAddr \
                  ));
     }
-  }
+    //Print Pre-OS image filename
+    PrintExtraImages (BootOption,BOOT_FLAGS_PREOS,LoadImageTypePreOs);
+    //Print extra image filename
+    PrintExtraImages (BootOption,BOOT_FLAGS_EXTRA,LoadImageTypeExtra0);
 
-  DEBUG ((DEBUG_INFO, "\n"));
+    if (Index == OsBootOptionList->CurrentBoot) {
+      DEBUG ((DEBUG_INFO," *Current"));
+    }
+    DEBUG ((DEBUG_INFO, "\n"));
+  }
 }
 
 

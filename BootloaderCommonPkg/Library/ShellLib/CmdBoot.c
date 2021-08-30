@@ -1,7 +1,7 @@
 /** @file
   Shell command `boot` to print or modify the OS boot option list.
 
-  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -359,6 +359,31 @@ GetBootLbaInfo (
 }
 
 /**
+  Print Pre-OS or/and extra images.
+
+  @param[in] BootOption     the boot options
+  @param[in] Flags          the boot flags
+  @param[in] ImageType      the image types
+
+**/
+VOID
+PrintExtraImage (
+OS_BOOT_OPTION *BootOption,
+UINT8 Flags,
+LOAD_IMAGE_TYPE ImageType
+)
+{
+  if ((BootOption->BootFlags & Flags) != 0){
+    if (BootOption->Image[ImageType].LbaImage.Valid == 1) {
+      ShellPrint (L" [%x|0x%x]", ImageType, BootOption->Image[ImageType].LbaImage.SwPart,
+      BootOption->Image[ImageType].LbaImage.LbaAddr);
+    } else if (BootOption->Image[ImageType].FileName[0] != '\0') {
+      ShellPrint (L" [%a]", BootOption->Image[ImageType].FileName);
+    }
+  }
+}
+
+/**
   Print the OS boot option list.
 
   @param[in]  OsBootOptionList    the OS boot option list
@@ -370,7 +395,6 @@ PrintBootOption (
   )
 {
   UINT32                     Index;
-  UINT32                     ExtraIndex;
   OS_BOOT_OPTION             *BootOption;
 
   ShellPrint (L"Boot options (in HEX):\n\n");
@@ -403,23 +427,16 @@ PrintBootOption (
                  BootOption->Image[0].LbaImage.LbaAddr \
                  );
     }
-
-    for (ExtraIndex = 1; ExtraIndex < LoadImageTypeMax; ExtraIndex++) {
-      if (BootOption->Image[ExtraIndex].LbaImage.Valid == 1) {
-        ShellPrint (L" [%x|0x%x]", BootOption->Image[ExtraIndex].LbaImage.SwPart, \
-          BootOption->Image[ExtraIndex].LbaImage.LbaAddr);
-      } else if (BootOption->Image[ExtraIndex].FileName[0] != '\0') {
-        ShellPrint (L" [%a]", BootOption->Image[ExtraIndex].FileName);
-      }
-    }
+    //Print Pre-OS image filename
+    PrintExtraImage (BootOption,BOOT_FLAGS_PREOS,LoadImageTypePreOs);
+    //Print extra image filename
+    PrintExtraImage (BootOption,BOOT_FLAGS_EXTRA,LoadImageTypeExtra0);
 
     if (Index == OsBootOptionList->CurrentBoot) {
       ShellPrint (L" *Current");
     }
     ShellPrint (L"\n");
   }
-
-  ShellPrint (L"\n");
 }
 
 /**
