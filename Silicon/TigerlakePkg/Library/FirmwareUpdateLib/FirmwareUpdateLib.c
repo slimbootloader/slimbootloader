@@ -1,7 +1,7 @@
 /** @file
   This file contains the implementation of FirmwareUpdateLib library.
 
-  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -286,6 +286,13 @@ GetFirmwareUpdateInfo (
     DEBUG ((DEBUG_INFO, "RedundantRegion    Offset/Size = 0x%08X/0x%X\n", RedundantRegionOffset, RedundantRegionSize));
     DEBUG ((DEBUG_INFO, "NonRedundantRegion Offset/Size = 0x%08X/0x%X\n", NonRedundantRegionOffset,
             NonRedundantRegionSize));
+
+    if (FlashMap->RomSize != ImageHdr->UpdateImageSize) {
+      DEBUG ((DEBUG_ERROR, "Rom size (SLIMBOOTLOADER_SIZE) mismatches!\n"));
+      DEBUG ((DEBUG_ERROR, "  Current running SBL = 0x%08X Capsule = 0x%08X\n",
+              FlashMap->RomSize, ImageHdr->UpdateImageSize));
+      return EFI_ABORTED;
+    }
 
     //
     // Top Swap region
