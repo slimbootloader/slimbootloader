@@ -252,6 +252,7 @@ GetBootDeviceInfo (
   @param[in]      CurrOption   the current boot entry value
 
   @retval EFI_SUCCESS
+  @retval EFI_NO_MAPPING       LoadImageType is not a valid Image index value
 
 **/
 EFI_STATUS
@@ -266,6 +267,11 @@ GetBootFileInfo (
 {
   EFI_STATUS                 Status;
   UINTN                      Length;
+
+  if (LoadImageType >= LoadImageTypeMax) {
+    ShellPrint (L"Invalid LoadImageType '0x%X'\n", LoadImageType);
+    return EFI_NO_MAPPING;
+  }
 
   do {
     if (LoadImageType == LoadImageTypeNormal){
