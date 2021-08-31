@@ -78,25 +78,24 @@ def update_btGuard_xml(btg_profile, stitch_dir, tree):
        print ("Boot Guard is NOT enabled.....")
        btguardprofile = 0
 
-    if btguardprofile != 0:
-        # Convert OEM key hash into hexadecimal for Fit tool consumption
-        with open(kmsigpubkeyhashfile,"rb") as kmsigpubkeyhash_fh:
-            hash = bytearray (kmsigpubkeyhash_fh.read())
-            oemkeyhash = ""
-            for b in hash:
-                oemkeyhash = oemkeyhash + "%02X " % b
-            oemkeyhash = oemkeyhash[:-1]
-        print("oemkeyhash:")
-        print(oemkeyhash)
+    # Convert OEM key hash into hexadecimal for Fit tool consumption
+    with open(kmsigpubkeyhashfile,"rb") as kmsigpubkeyhash_fh:
+        hash = bytearray (kmsigpubkeyhash_fh.read())
+        oemkeyhash = ""
+        for b in hash:
+            oemkeyhash = oemkeyhash + "%02X " % b
+        oemkeyhash = oemkeyhash[:-1]
+    print("oemkeyhash:")
+    print(oemkeyhash)
 
-        node = tree.find('./PlatformProtection/PlatformIntegrity/OemPublicKeyHash')
-        node.attrib['value'] = oemkeyhash
+    node = tree.find('./PlatformProtection/PlatformIntegrity/OemPublicKeyHash')
+    node.attrib['value'] = oemkeyhash
 
-        node = tree.find('./PlatformProtection/BootGuardConfiguration/BtGuardKeyManifestId')
-        node.attrib['value'] = '0x1'
+    node = tree.find('./PlatformProtection/BootGuardConfiguration/BtGuardKeyManifestId')
+    node.attrib['value'] = '0x1'
 
-        node = tree.find('./PlatformProtection/PlatformIntegrity/OemExtInputFile')
-        node.attrib['value'] = os.path.join(output_dir, "OemExtInputFile.bin")
+    node = tree.find('./PlatformProtection/PlatformIntegrity/OemExtInputFile')
+    node.attrib['value'] = os.path.join(output_dir, "OemExtInputFile.bin")
 
     node = tree.find('./PlatformProtection/BootGuardConfiguration/BtGuardProfileConfig')
     node.attrib['value'] = btg_profile_values[btguardprofile]
