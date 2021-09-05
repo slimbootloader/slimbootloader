@@ -64,3 +64,4 @@
   BootloaderCorePkg/BootloaderCorePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
   Silicon/CoffeelakePkg/CoffeelakePkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec

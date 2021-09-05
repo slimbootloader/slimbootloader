@@ -1,6 +1,7 @@
 /** @file
 
-  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+
+  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -51,8 +52,8 @@ GetCrc16 (
 @brief
   Generate the header data for the BDAT structure
 
-  @param[in]  SchemaCount   The number of schemas in the BDAT structure
-  @param[out] Bdat          A pointer to a pre-allocated memory area for the BDAT
+  @param[in]  SchemaCount : The number of schemas in the BDAT structure
+  @param[out] Bdat        : A pointer to a pre-allocated memory area for the BDAT
                             structure. BDAT header data will be written to this address
 
   @retval EFI_SUCCESS:              BDAT header generated successfully
@@ -152,9 +153,11 @@ UpdateBdatAcpiTable (
 
       Schema[SchemaListIndex] = NULL;
       if (Guid != NULL) {
+        DEBUG ((DEBUG_INFO, "Checking GUID: "));
         for (Index = 0, Check = 0; Index < sizeof (EFI_GUID); Index++) {
           Check |= ((UINT8 *) Guid) [Index];
         }
+        DEBUG ((DEBUG_INFO, "%d\n", (UINT32) Check));
         DEBUG ((DEBUG_INFO, "GUID = %g\n", Guid));
         if (Check != 0) {
           Schema[SchemaListIndex] = (EFI_HOB_GUID_TYPE *)GetNextGuidHob (Guid, HobList);
@@ -197,7 +200,6 @@ UpdateBdatAcpiTable (
     }
     ZeroMem (Buffer, BufferSize);
     DEBUG ((DEBUG_INFO, "Buffer = 0x%X\n", (UINT32) (UINTN) Buffer));
-
     ///
     /// Copy the BDAT structure into the memory specified for the ACPI table.
     ///
@@ -221,7 +223,6 @@ UpdateBdatAcpiTable (
         DEBUG ((DEBUG_INFO, "NextBlock = 0x%X\n", NextBlock));
       }
     }
-
     ///
     /// Initialize the Size and CRC of the BDAT structure.
     /// Ensure that the CRC calculation is the last field initialized.

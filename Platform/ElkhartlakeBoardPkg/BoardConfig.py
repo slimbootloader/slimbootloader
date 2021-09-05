@@ -222,7 +222,7 @@ class Board(BaseBoard):
             'ShellExtensionLib|Platform/$(BOARD_PKG_NAME)/Library/ShellExtensionLib/ShellExtensionLib.inf',
             'IgdOpRegionLib|Silicon/CommonSocPkg/Library/IgdOpRegionLib/IgdOpRegionLib.inf',
             'BootGuardLib|Silicon/CommonSocPkg/Library/BootGuardLibCBnT/BootGuardLibCBnT.inf',
-            'BdatLib|Silicon/$(SILICON_PKG_NAME)/Library/BdatLib/BdatLib.inf',
+            'BdatLib|Silicon/CommonSocPkg/Library/BdatLib/BdatLib.inf',
             'PchSciLib|Silicon/$(SILICON_PKG_NAME)/Library/PchSciLib/PchSciLib.inf',
             'SmbusLib|Silicon/CommonSocPkg/Library/SmbusLib/SmbusLib.inf',
             'PsdLib|Silicon/$(SILICON_PKG_NAME)/Library/PsdLib/PsdLib.inf',
