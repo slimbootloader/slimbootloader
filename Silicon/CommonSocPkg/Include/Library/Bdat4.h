@@ -1,12 +1,16 @@
 /** @file
   Definition of BDAT data structures that are applicible for all schemas
 
-  Copyright (c) 2019 Intel Corporation. All rights reserved.<BR>
+
+  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 #ifndef BDAT4_H_
 #define BDAT4_H_
+
+#include <Uefi/UefiBaseType.h>
+
 
 #pragma pack(push, 1)
 
@@ -48,8 +52,7 @@ typedef struct {
   BDAT_SCHEMA_LIST_STRUCTURE  Schemas;
 } BDAT_STRUCTURE;
 
-//
-//
+
 #define MAX_SCHEMA_LIST_LENGTH (10)
 
 //

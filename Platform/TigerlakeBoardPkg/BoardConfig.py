@@ -255,7 +255,7 @@ class Board(BaseBoard):
             'IgdOpRegionLib|Silicon/CommonSocPkg/Library/IgdOpRegionLib/IgdOpRegionLib.inf',
             'HeciInitLib|Silicon/$(PCH_PKG_NAME)/Library/HeciInitLib/HeciInitLib.inf',
             'BootGuardLib|Silicon/CommonSocPkg/Library/BootGuardLibCBnT/BootGuardLibCBnT.inf',
-            'BdatLib|Silicon/$(SILICON_PKG_NAME)/Library/BdatLib/BdatLib.inf',
+            'BdatLib|Silicon/CommonSocPkg/Library/BdatLib/BdatLib.inf',
             'ItbtPcieRpLib|Silicon/$(SILICON_PKG_NAME)/Library/ItbtPcieRpLib/ItbtPcieRpLib.inf',
             'PsdLib|Silicon/$(SILICON_PKG_NAME)/Library/PsdLib/PsdLib.inf',
             'MeExtMeasurementLib|Silicon/$(PCH_PKG_NAME)/Library/MeExtMeasurementLib/MeExtMeasurementLib.inf',
