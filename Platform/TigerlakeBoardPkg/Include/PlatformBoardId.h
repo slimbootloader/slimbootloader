@@ -20,6 +20,8 @@ Defines Platform BoardIds
 // TigerLake Board Id 0x03
 #define BoardIdTglULp4Type4               0x03
 
+// TigerLake Board Id 0x04
+#define BoardIdTglUpxi11                  0x04
 
 // TigerLake Board Id 0x0A
 #define BomIdTglUDdr4Main                 0x00

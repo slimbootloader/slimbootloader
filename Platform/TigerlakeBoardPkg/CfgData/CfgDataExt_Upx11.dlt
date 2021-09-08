@@ -1,0 +1,34 @@
+## @file
+#
+#  Platform Configuration Delta File.
+#
+#  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+#
+
+PLATFORMID_CFG_DATA.PlatformId                              | 0x0004
+PLAT_NAME_CFG_DATA.PlatformName                             | 'UPXi11'
+
+MEMORY_CFG_DATA.DqsMapCpu2DramMc0Ch1                        | {0, 1}
+MEMORY_CFG_DATA.DqsMapCpu2DramMc0Ch3                        | {0, 1}
+MEMORY_CFG_DATA.DqsMapCpu2DramMc1Ch0                        | {0, 1}
+MEMORY_CFG_DATA.DqsMapCpu2DramMc1Ch3                        | {0, 1}
+
+MEMORY_CFG_DATA.DqMapCpu2DramMc0Ch0                         | {13, 12, 14, 15, 11,  8,  9, 10, 2,  3,  1,  0,  7,  4,  5,  6}
+MEMORY_CFG_DATA.DqMapCpu2DramMc0Ch1                         | {11, 12, 13, 10, 14,  8, 15,  9, 2,  3,  1,  0,  6,  5,  7,  4}
+MEMORY_CFG_DATA.DqMapCpu2DramMc0Ch2                         | {15, 14, 12, 13, 11, 10,  8,  9, 0,  1,  2,  3,  4,  7,  6,  5}
+MEMORY_CFG_DATA.DqMapCpu2DramMc0Ch3                         | {12, 13, 11, 10,  9, 15,  8, 14, 2,  3,  0,  1,  5,  4,  7,  6}
+MEMORY_CFG_DATA.DqMapCpu2DramMc1Ch0                         | {15, 14, 13, 12, 10,  8,  9, 11, 0,  1,  2,  3,  7,  4,  5,  6}
+MEMORY_CFG_DATA.DqMapCpu2DramMc1Ch1                         | {15, 14, 11, 10, 13, 12,  8,  9, 1,  7,  0,  6,  3,  5,  2,  4}
+MEMORY_CFG_DATA.DqMapCpu2DramMc1Ch2                         | {15, 14, 13, 12,  9, 10, 11,  8, 0,  1,  7,  6,  3,  2,  5,  4}
+MEMORY_CFG_DATA.DqMapCpu2DramMc1Ch3                         | {4,  3,  5,  2,  6,  7,  0,  1, 15, 14, 10, 11, 12,  9,  8, 13}
+
+MEMORY_CFG_DATA.DmaControlGuarantee                         | 1
+
+SILICON_CFG_DATA.EcEnable                                   | 0
+FEATURES_CFG_DATA.Features.FusaEnable                       | 0
+
+GEN_CFG_DATA.PayloadId                                      | 0
+
