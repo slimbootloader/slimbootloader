@@ -858,6 +858,7 @@ BoardInit (
   EFI_PEI_GRAPHICS_INFO_HOB *FspGfxHob;
   VOID                      *FspHobList;
   SILICON_CFG_DATA          *SiCfgData;
+  FEATURES_CFG_DATA         *FeaturesCfgData;
   UINTN                     LpcBase;
   BL_SW_SMI_INFO            *BlSwSmiInfo;
 
@@ -929,7 +930,10 @@ BoardInit (
     }
     BuildOsConfigDataHob ();
     if (FeaturePcdGet (PcdFusaEnabled)) {
-      FusaKeyOffProcessing();
+      FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
+      if ((FeaturesCfgData != NULL) && (FeaturesCfgData->Features.FusaEnable == 1)) {
+          FusaKeyOffProcessing();
+      }
     }
     //
     // Initialize Smbios Info for SmbiosInit
