@@ -204,7 +204,7 @@ class Board(BaseBoard):
         # Cfg data dlt files for internal boards could also put into external cfg data if want to update cfg data for these platforms
         # for test purpose. Based on the platform id, relevant data is populated for each platform.
         self._CFGDATA_INT_FILE = []
-        self._CFGDATA_EXT_FILE = [self._generated_cfg_file_prefix + 'CfgData_Int_Tglu_Ddr4.dlt', self._generated_cfg_file_prefix  + 'CfgData_Int_Tglu_DdrLp4.dlt', self._generated_cfg_file_prefix  + 'CfgData_Int_Tglh_Ddr4.dlt']
+        self._CFGDATA_EXT_FILE = [self._generated_cfg_file_prefix + 'CfgData_Int_Tglu_Ddr4.dlt', self._generated_cfg_file_prefix  + 'CfgData_Int_Tglu_DdrLp4.dlt', self._generated_cfg_file_prefix  + 'CfgData_Int_Tglh_Ddr4.dlt', self._generated_cfg_file_prefix + 'CfgDataExt_Upx11.dlt']
 
         # If mulitple VBT table support is required, list them as:
         #   {VbtImageId1 : VbtFileName1, VbtImageId2 : VbtFileName2, ...}
