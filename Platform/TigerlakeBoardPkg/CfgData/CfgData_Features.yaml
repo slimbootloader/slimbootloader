@@ -19,7 +19,7 @@
         name         : PlatformFeatures
         struct       : FEATURES_DATA
         length       : 0x04
-        value        : 0x00000003
+        value        : 0x0000000B
     - Acpi         :
         name         : ACPI Enable
         type         : Combo
@@ -41,11 +41,18 @@
         help         : >
                        Enable/Disable Low Power Idle feature. 1:Low Power S0 Idle Enabled, 0:Low Power S0 Idle Disabled
         length       : 1b
+    - FusaEnable   :
+        name         : Fusa Enable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Fusa Enabled feature. 1:Enabled (default), 0:Disabled
+        length       : 1b
     - Rsvd         :
         name         : Reserved
         type         : Reserved
         help         : >
                        reserved bits
-        length       : 29b
+        length       : 28b
 
 
