@@ -1,8 +1,36 @@
 /**@file
  VER3 GPIO ASL header
 
- Copyright (c) 2018 - 2019, Intel Corporation. All rights reserved.<BR>
- SPDX-License-Identifier: BSD-2-Clause-Patent
+@copyright
+  INTEL CONFIDENTIAL
+  Copyright 2018 - 2021 Intel Corporation.
+
+  The source code contained or described herein and all documents related to the
+  source code ("Material") are owned by Intel Corporation or its suppliers or
+  licensors. Title to the Material remains with Intel Corporation or its suppliers
+  and licensors. The Material may contain trade secrets and proprietary and
+  confidential information of Intel Corporation and its suppliers and licensors,
+  and is protected by worldwide copyright and trade secret laws and treaty
+  provisions. No part of the Material may be used, copied, reproduced, modified,
+  published, uploaded, posted, transmitted, distributed, or disclosed in any way
+  without Intel's prior express written permission.
+
+  No license under any patent, copyright, trade secret or other intellectual
+  property right is granted to or conferred upon you by disclosure or delivery
+  of the Materials, either expressly, by implication, inducement, estoppel or
+  otherwise. Any license under such intellectual property rights must be
+  express and approved by Intel in writing.
+
+  Unless otherwise agreed by Intel in writing, you may not remove or alter
+  this notice or any other notice embedded in Materials by Intel or
+  Intel's suppliers or licensors in any way.
+
+  This file contains an 'Intel Peripheral Driver' and is uniquely identified as
+  "Intel Reference Module" and is licensed for Intel CPUs and chipsets under
+  the terms of your license agreement with Intel or your vendor. This file may
+  be modified by the user, subject to additional terms of the license agreement.
+
+@par Specification Reference:
 **/
 
 //
@@ -15,58 +43,50 @@
 
 #define GPIO_VER3_ACPI_HID "INTC1020"
 
-//
-// VER3-PCH-LP
-//
-#define GPIO_VER3_DRIVER_GPP_B0  0
-#define GPIO_VER3_DRIVER_GPP_B1  1
-#define GPIO_VER3_DRIVER_GPP_B2  2
-#define GPIO_VER3_DRIVER_GPP_B3  3
-#define GPIO_VER3_DRIVER_GPP_B4  4
-#define GPIO_VER3_DRIVER_GPP_B5  5
-#define GPIO_VER3_DRIVER_GPP_B6  6
-#define GPIO_VER3_DRIVER_GPP_B7  7
-#define GPIO_VER3_DRIVER_GPP_B8  8
-#define GPIO_VER3_DRIVER_GPP_B9  9
-#define GPIO_VER3_DRIVER_GPP_B10 10
-#define GPIO_VER3_DRIVER_GPP_B11 11
-#define GPIO_VER3_DRIVER_GPP_B12 12
-#define GPIO_VER3_DRIVER_GPP_B13 13
-#define GPIO_VER3_DRIVER_GPP_B14 14
-#define GPIO_VER3_DRIVER_GPP_B15 15
-#define GPIO_VER3_DRIVER_GPP_B16 16
-#define GPIO_VER3_DRIVER_GPP_B17 17
-#define GPIO_VER3_DRIVER_GPP_B18 18
-#define GPIO_VER3_DRIVER_GPP_B19 19
-#define GPIO_VER3_DRIVER_GPP_B20 20
-#define GPIO_VER3_DRIVER_GPP_B21 21
-#define GPIO_VER3_DRIVER_GPP_B22 22
-#define GPIO_VER3_DRIVER_GPP_B23 23
+#define GPIO_VER3_PCH_GPIO_COM0_HW_BANK_PINS                      32
 
-#define GPIO_VER3_DRIVER_GPP_T1  33
-#define GPIO_VER3_DRIVER_GPP_T10 42
-#define GPIO_VER3_DRIVER_GPP_T11 43
-#define GPIO_VER3_DRIVER_GPP_T12 44
-#define GPIO_VER3_DRIVER_GPP_T13 45
-#define GPIO_VER3_DRIVER_GPP_T14 46
-#define GPIO_VER3_DRIVER_GPP_T15 47
+/* For Old GPIO FrameWork GPIO Base pin number statrs based on Max Bank pins */
+#define GPIO_VER3_PCH_GPIO_COM0_GPP_B0_OGFW_PIN_BASE_INDEX         0   //(GpioAcpiPinNumber = 0 * 32 + 0)
+#define GPIO_VER3_PCH_GPIO_COM0_GPP_T0_OGFW_PIN_BASE_INDEX        32   //(GpioAcpiPinNumber = 1 * 32 + 0)
+#define GPIO_VER3_PCH_GPIO_COM0_GPP_G0_OGFW_PIN_BASE_INDEX        64   //(GpioAcpiPinNumber = 2 * 32 + 0)
+#define GPIO_VER3_PCH_GPIO_COM1_GPP_V0_OGFW_PIN_BASE_INDEX        96   //(GpioAcpiPinNumber = 3 * 32 + 0)
+#define GPIO_VER3_PCH_GPIO_COM1_GPP_H0_OGFW_PIN_BASE_INDEX       128   //(GpioAcpiPinNumber = 4 * 32 + 0)
+#define GPIO_VER3_PCH_GPIO_COM1_GPP_D0_OGFW_PIN_BASE_INDEX       160   //(GpioAcpiPinNumber = 5 * 32 + 0)
+#define GPIO_VER3_PCH_GPIO_COM1_GPP_U0_OGFW_PIN_BASE_INDEX       192   //(GpioAcpiPinNumber = 6 * 32 + 0)
+#define GPIO_VER3_PCH_GPIO_COM1_GPP_VGPIO0_OGFW_PIN_BASE_INDEX   224   //(GpioAcpiPinNumber = 7 * 32 + 0)
+#define GPIO_VER3_PCH_GPIO_COM3_GPP_S0_OGFW_PIN_BASE_INDEX       256   //(GpioAcpiPinNumber = 8 * 32 + 0)
+#define GPIO_VER3_PCH_GPIO_COM3_GPP_A0_OGFW_PIN_BASE_INDEX       288   //(GpioAcpiPinNumber = 9 * 32 + 0)
+#define GPIO_VER3_PCH_GPIO_COM3_GPP_VGPIO3_OGFW_PIN_BASE_INDEX   320   //(GpioAcpiPinNumber = 10 * 32 + 0)
+#define GPIO_VER3_PCH_GPIO_COM4_GPP_C0_OGFW_PIN_BASE_INDEX       352   //(GpioAcpiPinNumber = 11 * 32 + 0)
+#define GPIO_VER3_PCH_GPIO_COM4_GPP_F0_OGFW_PIN_BASE_INDEX       384   //(GpioAcpiPinNumber = 12 * 32 + 0)
+#define GPIO_VER3_PCH_GPIO_COM4_GPP_E0_OGFW_PIN_BASE_INDEX       416   //(GpioAcpiPinNumber = 13 * 32 + 0)
+#define GPIO_VER3_PCH_GPIO_COM5_GPP_R0_OGFW_PIN_BASE_INDEX       448   //(GpioAcpiPinNumber = 14 * 32 + 0)
 
-#define GPIO_VER3_DRIVER_GPP_G1  65
-#define GPIO_VER3_DRIVER_GPP_G2  66
-#define GPIO_VER3_DRIVER_GPP_G10 74
-#define GPIO_VER3_DRIVER_GPP_G11 75
-#define GPIO_VER3_DRIVER_GPP_G12 76
-#define GPIO_VER3_DRIVER_GPP_G13 77
-#define GPIO_VER3_DRIVER_GPP_G14 78
-#define GPIO_VER3_DRIVER_GPP_G15 79
-#define GPIO_VER3_DRIVER_GPP_G16 80
-#define GPIO_VER3_DRIVER_GPP_G17 81
-#define GPIO_VER3_DRIVER_GPP_G18 82
-#define GPIO_VER3_DRIVER_GPP_G19 83
-#define GPIO_VER3_DRIVER_GPP_G20 84
-#define GPIO_VER3_DRIVER_GPP_G21 85
-#define GPIO_VER3_DRIVER_GPP_G22 86
-#define GPIO_VER3_DRIVER_GPP_G23 87
+/* For New GPIO FrameWork GPIO Base pin number statrs based on no of actual Pins used per group */
+// COM0
+#define GPIO_VER3_PCH_GPIO_COM0_GPP_B0_NGFW_PIN_BASE_INDEX         0   // 0
+#define GPIO_VER3_PCH_GPIO_COM0_GPP_T0_NGFW_PIN_BASE_INDEX        24   // B0_BASE_INDEX + GPIO_VER3_PCH_GPIO_GPP_B_PAD_MAX
+#define GPIO_VER3_PCH_GPIO_COM0_GPP_G0_NGFW_PIN_BASE_INDEX        40   // T0_BASE_INDEX + GPIO_VER3_PCH_GPIO_GPP_T_PAD_MAX
 
+// COM1
+#define GPIO_VER3_PCH_GPIO_COM1_GPP_V0_NGFW_PIN_BASE_INDEX         0   // 0
+#define GPIO_VER3_PCH_GPIO_COM1_GPP_H0_NGFW_PIN_BASE_INDEX        16   // V0_BASE_INDEX + GPIO_VER3_PCH_GPIO_GPP_V_PAD_MAX
+#define GPIO_VER3_PCH_GPIO_COM1_GPP_D0_NGFW_PIN_BASE_INDEX        40   // H0_BASE_INDEX + GPIO_VER3_PCH_GPIO_GPP_H_PAD_MAX
+#define GPIO_VER3_PCH_GPIO_COM1_GPP_GSPI2_NGFW_PIN_BASE_INDEX     60   // D0_BASE_INDEX + GPIO_VER3_PCH_GPIO_GPP_D_PAD_MAX
+#define GPIO_VER3_PCH_GPIO_COM1_GPP_U0_NGFW_PIN_BASE_INDEX        61   // GSPI2_BASE_INDEX + 1
+#define GPIO_VER3_PCH_GPIO_COM1_GPP_GSPI3_NGFW_PIN_BASE_INDEX     81   // U0_BASE_INDEX + GPIO_VER3_PCH_GPIO_GPP_U_PAD_MAX
+#define GPIO_VER3_PCH_GPIO_COM1_GPP_VGPIO_NGFW_PIN_BASE_INDEX     85   // GSPI3_BASE_INDEX + 4
+
+// COM3
+#define GPIO_VER3_PCH_GPIO_COM3_GPP_S0_NGFW_PIN_BASE_INDEX        17
+#define GPIO_VER3_PCH_GPIO_COM3_GPP_A0_NGFW_PIN_BASE_INDEX        19
+
+// COM4
+#define GPIO_VER3_PCH_GPIO_COM4_GPP_C0_NGFW_PIN_BASE_INDEX         0
+#define GPIO_VER3_PCH_GPIO_COM4_GPP_F0_NGFW_PIN_BASE_INDEX        24
+#define GPIO_VER3_PCH_GPIO_COM4_GPP_E0_BGFW_PIN_BASE_INDEX        54
+
+// COM5
+#define GPIO_VER3_PCH_GPIO_COM5_GPP_R0_NGFW_PIN_BASE_INDEX         0
 
 #endif // _GPIO_ACPI_DEFINES_VER3_

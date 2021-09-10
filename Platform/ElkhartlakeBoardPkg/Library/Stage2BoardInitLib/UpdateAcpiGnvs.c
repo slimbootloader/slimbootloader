@@ -722,8 +722,10 @@ PlatformUpdateAcpiGnvs (
     if (FeaturesCfgData->Features.LowPowerIdle != 0 && PchSciSupported != 1){
       PlatformNvs->LowPowerS0Idle                   = 1;
     }
+    PlatformNvs->NewGpioSchemeEnable = (UINT8) FeaturesCfgData->Features.NewGpioSchemeEnable;
   }
   DEBUG((DEBUG_INFO, "PlatformNvs->LowPowerS0Idle = 0x%x\n ", PlatformNvs->LowPowerS0Idle));
+  DEBUG((DEBUG_INFO, "PlatformNvs->NewGpioSchemeEnable = 0x%x\n ", PlatformNvs->NewGpioSchemeEnable));
   PlatformNvs->TenSecondPowerButtonEnable       = 8;
 
   //

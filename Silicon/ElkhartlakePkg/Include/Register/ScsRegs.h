@@ -49,4 +49,5 @@
 #define R_SCS_PCR_5820                    0x5820
 #define R_SCS_PCR_5C20                    0x5C20
 #define R_SCS_PCR_1078                    0x1078
+#define R_SCS_PCR_1C20                    0x1C20
 #endif

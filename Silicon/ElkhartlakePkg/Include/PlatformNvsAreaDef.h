@@ -1446,6 +1446,11 @@ typedef struct {
   //
   UINT8    EcliteServiceEnable;                     ///< Offset 2503    PSE Eclite Service Enable/Disable
   UINT8    PseWolServiceEnable;                     ///< Offset 2504    PSE WoL Service Enable/Disable
+  UINT8    PseDashBoardSmiAddress;                  ///< Offset 2505    PSE Dashboard update IoTrap Address
+  UINT8    PseDashBoardUpdateValue;                 ///< Offset 2506    PSE Dashboard update IoTrap Value
+  UINT8    WifiAntGainEnale;                        ///< Offset 2507    Wifi Ant Gain Enable
+  UINT8    NewGpioSchemeEnable;                     ///< Offset 2508    New GPIO Scheme Enable/Disable
+  UINT8    ArtTscLinkFlag;                          ///< Offset 2509    ART traceability to TSC
 } PLATFORM_NVS_AREA;
 
 #pragma pack(pop)
