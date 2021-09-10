@@ -125,6 +125,7 @@ CHAR8 *mBoardIdIndex[] = {
   "TigerLake U DDR4 SODIMM RVP",           // 0x01
   "TigerLake U LPDDR4/4x T4 RVP",          // 0x03
   "TigerLake H DDR4 SODIMM RVP",           // 0x21 or 0xF
+  "Up Xtreme i11 DDR4 SODIMM",             // 0x04
 };
 
 //
@@ -605,6 +606,9 @@ InitializeSmbiosInfo (
     case 0xF:
       BrdIdx = 3;
       break;
+    case BoardIdTglUpxi11:
+      BrdIdx = 4;
+      break;
     default:
       BrdIdx = 0;
       break;
@@ -819,6 +823,7 @@ IgdOpRegionPlatformInit (
       IgdPlatformInfo.callback = (GOP_VBT_UPDATE_CALLBACK)(UINTN)&TglHDdr4GopVbtSpecificUpdate;
       break;
     case BoardIdTglUDdr4:
+    case BoardIdTglUpxi11:
       IgdPlatformInfo.callback = (GOP_VBT_UPDATE_CALLBACK)(UINTN)&TglUDdr4GopVbtSpecificUpdate;
       break;
     case BoardIdTglULp4Type4:
