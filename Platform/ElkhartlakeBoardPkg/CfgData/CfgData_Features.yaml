@@ -48,9 +48,16 @@
         help         : >
                        Enable/Disable Low Power Idle feature. 1:Low Power Idle Enabled, 0:Low Power Idle Disabled
         length       : 1b
+    - NewGpioSchemeEnable   :
+        name         : New GPIO Scheme Enable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable New GPIO Scheme. 1:New GPIO Scheme Enabled, 0:New GPIO Scheme Disabled
+        length       : 1b
     - Rsvd         :
         name         : Reserved
         type         : Reserved
         help         : >
                        reserved bits
-        length       : 26b
+        length       : 25b

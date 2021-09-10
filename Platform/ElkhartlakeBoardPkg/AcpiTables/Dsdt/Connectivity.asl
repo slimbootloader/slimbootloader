@@ -5,6 +5,8 @@
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
+External(\NGPS, IntObj)
+Include ("AcpiResourcesOffsets.h")
 Scope(\_SB)
 {
   //
@@ -62,20 +64,40 @@ Scope(\_SB.PC00.UA00)
         GpioIo(Exclusive, PullDefault, 0, 0, IoRestrictionOutputOnly, "\\_SB.GPI0",,,KIL1 ) {0}
         GpioInt (Edge, ActiveLow, ExclusiveAndWake, PullDefault, 0x0000, "\\_SB.GPI0", 0x00, ResourceConsumer, INT1) { 0 }
       })
+      If(LEqual(\NGPS,1)) {
+        CreateWordField (SBFG, Add(INT1, ACPI_GPIO_CONN_DESC_OFFSET_NAME), IOF1)
+        CreateField (SBFG, Multiply (Add (IOF1, INT1), 8), 72, ICS1)
+        CreateWordField (SBFG, Add(KIL1, ACPI_GPIO_CONN_DESC_OFFSET_NAME), KOF1)
+        CreateField (SBFG, Multiply (Add (KOF1, KIL1), 8), 72, KCS1)
+      }
       CreateWordField(SBFG,INT1._PIN,INT3)
       CreateWordField(SBFG,KIL1._PIN,KIL3)
       Store(GNUM(GBTI),INT3)
       Store(GNUM(GBTK),KIL3)
+      If(LEqual(\NGPS,1)) {
+        Concatenate ("\\_SB.GPI", ToDecimalString(GCOM(GBTI)), ICS1)
+        Concatenate ("\\_SB.GPI", ToDecimalString(GCOM(GBTK)), KCS1)
+      }
 
       Name(SBFI, ResourceTemplate (){
         UARTSerialBus(115200,,,0xc0,,,FlowControlHardware,32,32,"\\_SB.PC00.UA00" )
         GpioIo(Exclusive, PullDefault, 0, 0, IoRestrictionOutputOnly, "\\_SB.GPI0",,,KIL2 ) {0}
         Interrupt(ResourceConsumer, Edge, ActiveLow, ExclusiveAndWake,,,INT2 ) {0}
       })
+      If(LEqual(\NGPS,1)) {
+        CreateWordField (SBFI, Add(INT2, ACPI_GPIO_CONN_DESC_OFFSET_NAME), IOF2)
+        CreateField (SBFI, Multiply (Add (IOF2, INT2), 8), 72, ICS2)
+        CreateWordField (SBFI, Add(KIL2, ACPI_GPIO_CONN_DESC_OFFSET_NAME), KOF2)
+        CreateField (SBFI, Multiply (Add (KOF2, KIL2), 8), 72, KCS2)
+      }
       CreateDWordField(SBFI,INT2._INT,INT4)
       CreateWordField(SBFI,KIL2._PIN,KIL4)
       Store(INUM(GBTI),INT4)
       Store(GNUM(GBTK),KIL4)
+      If(LEqual(\NGPS,1)) {
+        Concatenate ("\\_SB.GPI", ToDecimalString(GCOM(GBTI)), ICS2)
+        Concatenate ("\\_SB.GPI", ToDecimalString(GCOM(GBTK)), KCS2)
+      }
 
       If(LEqual(SDM9,0)) {
         Return (SBFG)

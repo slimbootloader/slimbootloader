@@ -1,6 +1,6 @@
 /**@file
 
- Copyright (c) 2013 - 2019, Intel Corporation. All rights reserved.<BR>
+ Copyright (c) 2013 - 2021, Intel Corporation. All rights reserved.<BR>
  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -70,13 +70,14 @@ Scope(\_SB)
   //
   // Arg1 possible values for internal GINF function
   //
-  #define GPIO_COM_FIELD               0
+  #define GPIO_COM_PID                 0
   #define GPIO_PAD_NUM_FIELD           1
   #define GPIO_PADCFG_REG_FIELD        2
   #define GPIO_HOSTOWN_REG_FIELD       3
   #define GPIO_PADOWN_REG_FIELD        4
   #define GPIO_GPE_STS_REG_FIELD       5
   #define GPIO_DRIVER_PIN_BASE_NUMBER  6
+  #define GPIO_COM_INDEX               7
 
   //
   // Get GPIO group information
@@ -88,9 +89,11 @@ Scope(\_SB)
     // Arg0 - GPIO Group index
     // Arg1 - GPIO field type
     //
-    //If(LEqual(PCHS, PCHL)) { // PCH-LP
+    If(LEqual(\NGPS,1)) {
+      Return (PCH_GPIO_GET_FIELD(Arg0,Arg1,GPNG))
+    } Else {
       Return (PCH_GPIO_GET_FIELD(Arg0,Arg1,GPCL))
-    //}
+    }
   }
 
   //
@@ -115,7 +118,7 @@ Scope(\_SB)
     // Arg1 - GPIO register type, must match what is used by GINF method
     //
     //Local0 = GpioCommunityAddress
-    Store( Add(GINF(Arg0,GPIO_COM_FIELD), SBRG), Local0)
+    Store( Add(GINF(Arg0,GPIO_COM_PID), SBRG), Local0)
 
     //Local1 = Register Offset
     Store(GINF(Arg0,Arg1), Local1)
@@ -124,7 +127,19 @@ Scope(\_SB)
   }
 
   //
-  // Get GPIO absolute number for selected GpioPad
+  // Get GPIO Community Index for selected GpioPad
+  //
+  Method(GCOM, 0x1, NotSerialized)
+  {
+    //
+    // Arg0 - GpioPad
+    //
+    // Local0 - Gpio group index for GpioPad
+    Store (GGRP(Arg0), Local0)
+    Return (GINF(Local0,GPIO_COM_INDEX))
+  }
+  //
+  // Get GPIO Index in it's community for selected GpioPad
   //
   Method(GNUM, 0x1, NotSerialized)
   {

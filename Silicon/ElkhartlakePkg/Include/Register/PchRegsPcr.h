@@ -59,6 +59,7 @@
 #define  PID_GPIOCOM3                          0x6B
 #define  PID_GPIOCOM4                          0x6A
 #define  PID_GPIOCOM5                          0x69
+#define  PID_EMMC                              0x51
 
 typedef  UINT8                            PCH_SBI_PID;
 
