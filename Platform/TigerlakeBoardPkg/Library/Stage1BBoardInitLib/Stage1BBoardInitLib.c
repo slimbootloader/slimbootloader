@@ -409,6 +409,7 @@ UpdateFspConfig (
     CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mTglHDdr4RowDisplayDdiConfig, sizeof(mTglHDdr4RowDisplayDdiConfig));
     break;
   case BoardIdTglUDdr4:
+  case BoardIdTglUpxi11:
     CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mTglUDdr4RowDisplayDdiConfig, sizeof(mTglUDdr4RowDisplayDdiConfig));
     break;
   case BoardIdTglULp4Type4:
