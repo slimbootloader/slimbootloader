@@ -1,10 +1,12 @@
 /**@file
   ACPI DSDT table for SCS Controllers
 
- Copyright (c) 2014 - 2020, Intel Corporation. All rights reserved.<BR>
+ Copyright (c) 2014 - 2021, Intel Corporation. All rights reserved.<BR>
  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
+External(\NGPS, IntObj)
 
+Include ("AcpiResourcesOffsets.h")
 #include <Register/ScsRegs.h>
 #include <IndustryStandard/Pci.h>
 
@@ -23,7 +25,10 @@ Scope(\_SB.PC00) {
     OperationRegion(SCSR, PCI_Config, 0x00, 0x100)
     Field(SCSR, DWordAcc, NoLock, Preserve) {
       Offset(R_SCS_CFG_PCS),         // 0x84, PMCSR - Power Management Control and Status
-      PSTA,32
+      PSTA,32,
+      Offset(R_SCS_CFG_PG_CONFIG),   // 0xA2, Device PG config
+          , 2,
+      PGEN, 1         // [BIT2] PGE - PG Enable
     }
     Method (_STA, 0, Serialized) {
       If (LEqual (\UF0E, 0)) {
@@ -41,6 +46,7 @@ Scope(\_SB.PC00) {
     }
 
     Method(_PS0, 0, Serialized) {
+      Store(0, PGEN) // Disable PG
       And(PSTA, 0xFFFFFFFC, PSTA) // Set BIT[1:0] = 00b - Power State D0
       Store(PSTA, TEMP) // Read Back PMCSR
       //
@@ -73,6 +79,7 @@ Scope(\_SB.PC00) {
       If (LEqual (PCHS, PCHL)) {
         \_SB.CSD3 (MODPHY_SPD_GATING_UFS0)
       }
+      Store(1, PGEN) // Enable PG
     }
 
     Device (CARD) {
@@ -92,7 +99,10 @@ Scope(\_SB.PC00) {
     OperationRegion(SCSR, PCI_Config, 0x00, 0x100)
     Field(SCSR, DWordAcc, NoLock, Preserve) {
       Offset(R_SCS_CFG_PCS),         // 0x84, PMCSR - Power Management Control and Status
-      PSTA,32
+      PSTA,32,
+      Offset(R_SCS_CFG_PG_CONFIG),   // 0xA2, Device PG config
+          , 2,
+      PGEN, 1         // [BIT2] PGE - PG Enable
     }
     Method (_STA, 0, Serialized) {
       If (LEqual (\UF1E, 0)) {
@@ -110,6 +120,7 @@ Scope(\_SB.PC00) {
     }
 
     Method(_PS0, 0, Serialized) {
+      Store(0, PGEN) // Disable PG
       And(PSTA, 0xFFFFFFFC, PSTA) // Set BIT[1:0] = 00b - Power State D0
       Store(PSTA, TEMP) // Read Back PMCSR
       //
@@ -142,6 +153,7 @@ Scope(\_SB.PC00) {
       If (LEqual (PCHS, PCHL)) {
         \_SB.CSD3 (MODPHY_SPD_GATING_UFS1)
       }
+      Store(1, PGEN) // Enable PG
     }
 
     Device (CARD) {
@@ -170,6 +182,8 @@ Scope(\_SB.PC00) {
       Store(0, PGEN) // Disable PG
 // @todo: revise for CNL PMC
 
+      PCAO (PID_EMMC, R_SCS_PCR_1C20, 0xFFF8FFFF, 0x00000000)
+      PCAO (PID_EMMC, R_SCS_PCR_4820, 0xFFFFF8FF, 0x00000000)
       And(PSTA, 0xFFFFFFFC, PSTA) // Set BIT[1:0] = 00b - Power State D0
       Store(PSTA, TEMP) // Read Back PMCSR
     }
@@ -297,10 +311,24 @@ Scope(\_SB.PC00) {
       //Wake from SD card events while host controller in D3
       Name (SBFI, ResourceTemplate () {
           GpioInt (Edge, ActiveBoth, SharedAndWake, PullNone, 10000, "\\_SB.GPI0", 0x00, ResourceConsumer, INTG) {0} // SD CARD DETECT GpioInt
+          GpioIo (Shared, PullDefault, 0, 0, IoRestrictionInputOnly, "\\_SB.GPI0",,, GPIO) {0} // SD CARD DETECT GpioIo
       })
-
+      If(LEqual(\NGPS,1)) {
+        CreateWordField (SBFI, Add(INTG, ACPI_GPIO_CONN_DESC_OFFSET_NAME), INOF)
+        CreateField (SBFI, Multiply (Add (INOF, INTG), 8), 72, IPCS)
+        CreateWordField (SBFI, Add(GPIO, ACPI_GPIO_CONN_DESC_OFFSET_NAME), GPOF)
+        CreateField (SBFI, Multiply (Add (GPOF, GPIO), 8), 72, GPCS)
+      }
       CreateWordField (SBFI, INTG._PIN, SDIP)
+      CreateWordField (SBFI, GPIO._PIN, SDGP)
         Store (GNUM(GPIO_VER3_VGPIO39), SDIP)
+      If(LEqual(\NGPS,1)) {
+        Concatenate ("\\_SB.GPI", ToDecimalString(GCOM(GPIO_VER3_VGPIO39)), IPCS)
+      }
+      Store (GNUM(GPIO_VER3_VGPIO39), SDGP)
+      If(LEqual(\NGPS,1)) {
+        Concatenate ("\\_SB.GPI", ToDecimalString(GCOM(GPIO_VER3_VGPIO39)), GPCS)
+      }
       Return (SBFI)
     }
 
