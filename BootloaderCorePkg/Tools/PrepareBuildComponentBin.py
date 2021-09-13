@@ -21,6 +21,13 @@ def CloneRepo (clone_dir, driver_inf):
     if repo == '' or commit == '':
         Fatal ('Failed to find repo and commit information!')
 
+    base_dir = os.path.basename(clone_dir)
+    if base_dir == '$AUTO':
+        repo_dir = os.path.basename(repo)
+        if repo_dir.lower().endswith('.git'):
+            repo_dir = repo_dir[:-4]
+        clone_dir = os.path.join (os.path.dirname(clone_dir), repo_dir)
+
     if not os.path.exists(clone_dir + '/.git'):
         print ('Cloning the repo ... %s' % repo)
         cmd = 'git clone %s %s' % (repo, clone_dir)
@@ -43,6 +50,7 @@ def CloneRepo (clone_dir, driver_inf):
     if ret:
         Fatal ('Failed to check out specified version !')
     print ('Done\n')
+    return clone_dir
 
 
 def CheckFileListExist (copy_list, sbl_dir):
@@ -121,7 +129,7 @@ def GetRepoAndCommit (driver_inf):
 
     return repo, commit
 
-def CopyBins (driver_dir, sbl_dir, driver_inf):
+def CopyBins (repo_dir, sbl_dir, driver_inf):
     if not os.path.exists(driver_inf):
         return
 
@@ -133,9 +141,9 @@ def CopyBins (driver_dir, sbl_dir, driver_inf):
     if CheckFileListExist(copy_list, sbl_dir):
         return
 
-    CloneRepo (driver_dir, driver_inf)
+    repo_dir = CloneRepo (repo_dir, driver_inf)
 
-    CopyFileList (copy_list, driver_dir, sbl_dir)
+    CopyFileList (copy_list, repo_dir, sbl_dir)
 
 def BuildFspBins (fsp_dir, sbl_dir, fsp_inf, silicon_pkg_name, flag):
     sys.stdout.flush()
@@ -218,7 +226,9 @@ def Main():
     workspace_dir  = os.path.join(sbl_dir, '../Download', silicon_pkg_name)
     fsp_repo_dir   = os.path.abspath (os.path.join(workspace_dir, 'IntelFsp'))
     qemu_repo_dir  = os.path.abspath (os.path.join(workspace_dir, 'QemuFsp'))
-    ucode_repo_dir = os.path.abspath (os.path.join(workspace_dir, 'IntelUcode'))
+
+    # Leave the final path node as '$AUTO' to allow to determine the repo dir automatically.
+    ucode_repo_dir = os.path.abspath (os.path.join(workspace_dir, '$AUTO'))
 
     fsp_inf = os.path.join(sbl_dir, 'Silicon', silicon_pkg_name, 'FspBin', 'FspBin.inf')
     if silicon_pkg_name == 'QemuSocPkg':
