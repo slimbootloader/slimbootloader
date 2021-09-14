@@ -1305,6 +1305,9 @@ UpdateFspConfig (
     // Inform FSP to skip debug UART init
     FspsConfig->SerialIoDebugUartNumber = DebugPort;
     FspsConfig->SerialIoUartMode[DebugPort] = 0x4;
+    if (S0IX_STATUS() == 1) {
+      FspsConfig->SerialIoUartMode[DebugPort] = 1;    // Force UART to PCI mode to enable OS to have full control
+    }
   }
 
   //
@@ -1632,20 +1635,19 @@ UpdateFspConfig (
     FspsConfig->PmSupport = 1;
     FspsConfig->RenderStandby = 1;
     FspsConfig->SataPwrOptEnable = 1;
-    FspsConfig->SataPortsDevSlp[0]=1;
-    FspsConfig->SataPortsDevSlp[1]=1;
-    FspsConfig->SataPortsHotPlug[0]=0;
-    FspsConfig->SataPortsHotPlug[1]=0;
-    FspsConfig->SataPortsExternal[0]=0;
-    FspsConfig->SataPortsExternal[1]=0;
-    FspsConfig->Enable8254ClockGating=1;
-    FspsConfig->PchFivrDynPm=1;
-    FspsConfig->D3HotEnable=0;
-    FspsConfig->D3ColdEnable=1;
-    FspsConfig->PchLanEnable=0;
-    FspsConfig->PchTsnEnable=0;
-    FspsConfig->XdciEnable=0;
-    FspsConfig->SerialIoUartMode[2] = 1;                 // Change for UARTHidden Mode to PCI mode
+    FspsConfig->SataPortsDevSlp[0] = 1;
+    FspsConfig->SataPortsDevSlp[1] = 1;
+    FspsConfig->SataPortsHotPlug[0] = 0;
+    FspsConfig->SataPortsHotPlug[1] = 0;
+    FspsConfig->SataPortsExternal[0] = 0;
+    FspsConfig->SataPortsExternal[1] = 0;
+    FspsConfig->Enable8254ClockGating = 1;
+    FspsConfig->PchFivrDynPm = 1;
+    FspsConfig->D3HotEnable = 0;
+    FspsConfig->D3ColdEnable = 1;
+    FspsConfig->PchLanEnable = 0;
+    FspsConfig->PchTsnEnable = 0;
+    FspsConfig->XdciEnable = 0;
 
     // PCH SERIAL_UART_CONFIG
     for (Index = 0; Index < GetPchMaxSerialIoUartControllersNum (); Index++) {

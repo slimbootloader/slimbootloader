@@ -7,6 +7,8 @@
 #
 ##
 
+variable:
+  COND_S0IX_DIS  : ($FEATURES_CFG_DATA.Features.S0ix == 0)
 
 template:
   CFGHDR_TMPL: >
