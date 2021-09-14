@@ -2,7 +2,7 @@
 #
 #  Slim Bootloader CFGDATA Option File.
 #
-#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -56,6 +56,7 @@
       name         : Enable PCH TSN
       type         : Combo
       option       : $EN_DIS
+      condition    : $(COND_S0IX_DIS)
       help         : >
                      Enable/disable TSN on the PCH.
       length       : 0x01
@@ -96,6 +97,7 @@
       name         : Enable or Disable CPU power states (C-states)
       type         : Combo
       option       : $EN_DIS
+      condition    : $(COND_S0IX_DIS)
       help         : >
                      Enable or Disable CPU power states (C-states). 0- Disable; <b>1- Enable</b>
       length       : 0x01
@@ -165,6 +167,7 @@
       name         : Enable/Disable IGFX RenderStandby
       type         : Combo
       option       : $EN_DIS
+      condition    : $(COND_S0IX_DIS)
       help         : >
                      Enable(Default)- Enable IGFX RenderStandby, Disable- Disable IGFX RenderStandby
       length       : 0x01
@@ -187,6 +190,7 @@
       name         : Enable/Disable IGFX PmSupport
       type         : Combo
       option       : $EN_DIS
+      condition    : $(COND_S0IX_DIS)
       help         : >
                      Enable(Default)- Enable IGFX PmSupport, Disable- Disable IGFX PmSupport
       length       : 0x01
@@ -238,6 +242,7 @@
       name         : xDCI controller
       type         : Combo
       option       : $EN_DIS
+      condition    : $(COND_S0IX_DIS)
       help         : >
                      Enable/disable to xDCI controller. 0- Disable; 1- Enable.
       length       : 0x01

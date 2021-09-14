@@ -2,7 +2,7 @@
 #
 #  Slim Bootloader CFGDATA Option File.
 #
-#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -462,6 +462,7 @@
       name         : Enable xDCI controller
       type         : Combo
       option       : $EN_DIS
+      condition    : $(COND_S0IX_DIS)
       help         : >
                      Enable/disable to xDCI controller.
       length       : 0x01

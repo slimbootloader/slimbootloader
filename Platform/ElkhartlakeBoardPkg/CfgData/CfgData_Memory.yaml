@@ -2,7 +2,7 @@
 #
 #  Slim Bootloader CFGDATA Option File.
 #
-#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -261,6 +261,7 @@
   - TcssXdciEn   :
       name         : TCSS USB DEVICE (xDCI) Enable}
       option       : $EN_DIS
+      condition    : $(COND_S0IX_DIS)
       help         : >
                      Set TCSS XDCI. 0:Disabled  1:Enabled - xHCI must be enabled if xDCI is enabled
       length       : 0x01
