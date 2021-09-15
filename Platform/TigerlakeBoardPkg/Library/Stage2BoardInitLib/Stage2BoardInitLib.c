@@ -1522,16 +1522,17 @@ UpdateFspConfig (
       FspsConfig->PchTsn1MacAddressHigh      = TsnSubRegion->Config.Port[1].MacAddr.U32MacAddr[1];
       FspsConfig->PchTsn1MacAddressLow       = TsnSubRegion->Config.Port[1].MacAddr.U32MacAddr[0];
     }
+    for (Index = 0; Index < (sizeof (FspsConfig->PortUsb20Enable) / sizeof (FspsConfig->PortUsb20Enable[0])); Index++) {
+      FspsConfig->PortUsb20Enable[Index] = ((*((UINT32*) (&SiCfgData->PortUsb20Enable))) >> Index) & 0x1;
+    }
   }
 
-  FspsConfig->PortUsb20Enable[1] = 0x0;
   FspsConfig->PortUsb30Enable[0] = 0x1;
   FspsConfig->PortUsb30Enable[1] = 0x1;
   FspsConfig->PortUsb30Enable[2] = 0x1;
   FspsConfig->PortUsb30Enable[3] = 0x1;
 
   if (IsPchH ()) {
-    FspsConfig->PortUsb20Enable[1] = 0x1;
     FspsConfig->PortUsb30Enable[4] = 0x1;
     FspsConfig->PortUsb30Enable[5] = 0x1;
     FspsConfig->PortUsb30Enable[6] = 0x1;

@@ -294,7 +294,26 @@
                      Enable/disable HD Audio DMIC_N.
       length       : 0x02
       value        : { 0x00, 0x00 }
+  - PortUsb20Enable :
+    - $STRUCT      :
+        name         : Enable USB2 Ports
+        length       : 0x02
+    - !expand { USB_PORT_TMPL : [ 2, 0 ] }
+    - !expand { USB_PORT_TMPL : [ 2, 1 ] }
+    - !expand { USB_PORT_TMPL : [ 2, 2 ] }
+    - !expand { USB_PORT_TMPL : [ 2, 3 ] }
+    - !expand { USB_PORT_TMPL : [ 2, 4 ] }
+    - !expand { USB_PORT_TMPL : [ 2, 5 ] }
+    - !expand { USB_PORT_TMPL : [ 2, 6 ] }
+    - !expand { USB_PORT_TMPL : [ 2, 7 ] }
+    - !expand { USB_PORT_TMPL : [ 2, 8 ] }
+    - !expand { USB_PORT_TMPL : [ 2, 9 ] }
+    - !expand { USB_PORT_TMPL : [ 2, 10 ] }
+    - !expand { USB_PORT_TMPL : [ 2, 11 ] }
+    - !expand { USB_PORT_TMPL : [ 2, 12 ] }
+    - !expand { USB_PORT_TMPL : [ 2, 13 ] }
+    - !expand { USB_PORT_TMPL : [ 2, 14 ] }
+    - !expand { USB_PORT_TMPL : [ 2, 15 ] }
   - Dummy        :
-      length       : 0x1
+      length       : 0x3
       value        : 0x0
-

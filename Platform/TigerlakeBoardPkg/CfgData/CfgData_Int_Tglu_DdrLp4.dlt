@@ -25,6 +25,8 @@ MEMORY_CFG_DATA.SpdDataSel110                               | 1
 MEMORY_CFG_DATA.SpdDataSel120                               | 1
 MEMORY_CFG_DATA.SpdDataSel130                               | 1
 
+SILICON_CFG_DATA.PortUsb20Enable.Usb2Port1                  | 0
+
 #
 # By default use Osloader Payload, set to "UEFI" to select UEFI payload.
 #
