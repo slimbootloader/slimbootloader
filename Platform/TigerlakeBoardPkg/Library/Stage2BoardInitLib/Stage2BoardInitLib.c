@@ -1393,13 +1393,17 @@ UpdateFspConfig (
   SiCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
   if ((SiCfgData != NULL) && SiCfgData->PchHdaEnable == 1) {
     HdaVerbTablePtr = (UINT32 *) AllocateZeroPool (4 * sizeof (UINT32));
-    HdaVerbTableNum = 0;
-    HdaVerbTablePtr[HdaVerbTableNum++]   = (UINT32)(UINTN) &HdaVerbTableDisplayAudio;
-    HdaVerbTablePtr[HdaVerbTableNum++]   = (UINT32)(UINTN) &TglHdaVerbTableAlc711;
-    HdaVerbTablePtr[HdaVerbTableNum++]   = (UINT32)(UINTN) &TglHdaVerbTableAlc701;
-    HdaVerbTablePtr[HdaVerbTableNum++]   = (UINT32)(UINTN) &TglHdaVerbTableAlc274;
-    FspsUpd->FspsConfig.PchHdaVerbTablePtr      = (UINT32)(UINTN) HdaVerbTablePtr;
-    FspsUpd->FspsConfig.PchHdaVerbTableEntryNum = HdaVerbTableNum;
+    if (HdaVerbTablePtr != NULL) {
+      HdaVerbTableNum = 0;
+      HdaVerbTablePtr[HdaVerbTableNum++]   = (UINT32)(UINTN) &HdaVerbTableDisplayAudio;
+      HdaVerbTablePtr[HdaVerbTableNum++]   = (UINT32)(UINTN) &TglHdaVerbTableAlc711;
+      HdaVerbTablePtr[HdaVerbTableNum++]   = (UINT32)(UINTN) &TglHdaVerbTableAlc701;
+      HdaVerbTablePtr[HdaVerbTableNum++]   = (UINT32)(UINTN) &TglHdaVerbTableAlc274;
+      FspsUpd->FspsConfig.PchHdaVerbTablePtr      = (UINT32)(UINTN) HdaVerbTablePtr;
+      FspsUpd->FspsConfig.PchHdaVerbTableEntryNum = HdaVerbTableNum;
+    } else {
+      DEBUG ((DEBUG_ERROR, "UpdateFspConfig Error: Could not allocate Memory for HdaVerbTable\n"));
+    }
   }
   if (PcdGetBool (PcdFramebufferInitEnabled)) {
     FspsConfig->GraphicsConfigPtr = (UINT32) GetVbtAddress();

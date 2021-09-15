@@ -1325,11 +1325,15 @@ UpdateFspConfig (
   FspsUpd->FspsConfig.TcoIrqSelect        = 9;
 
   HdaVerbTablePtr = (UINT32 *) AllocateZeroPool (2 * sizeof (UINT32));
-  HdaVerbTableNum = 0;
-  HdaVerbTablePtr[HdaVerbTableNum++]   = (UINT32)(UINTN) &HdaVerbTableDisplayAudio;
-  HdaVerbTablePtr[HdaVerbTableNum++]   = (UINT32)(UINTN) &CmlHdaVerbTableAlc711;
-  FspsUpd->FspsConfig.PchHdaVerbTablePtr      = (UINT32)(UINTN) HdaVerbTablePtr;
-  FspsUpd->FspsConfig.PchHdaVerbTableEntryNum = HdaVerbTableNum;
+  if (HdaVerbTablePtr != NULL) {
+    HdaVerbTableNum = 0;
+    HdaVerbTablePtr[HdaVerbTableNum++]   = (UINT32)(UINTN) &HdaVerbTableDisplayAudio;
+    HdaVerbTablePtr[HdaVerbTableNum++]   = (UINT32)(UINTN) &CmlHdaVerbTableAlc711;
+    FspsUpd->FspsConfig.PchHdaVerbTablePtr      = (UINT32)(UINTN) HdaVerbTablePtr;
+    FspsUpd->FspsConfig.PchHdaVerbTableEntryNum = HdaVerbTableNum;
+  } else {
+    DEBUG ((DEBUG_ERROR, "UpdateFspConfig Error: Could not allocate Memory for HdaVerbTable\n"));
+  }
 
   FspsUpd->FspsConfig.GraphicsConfigPtr   = PcdGet32(PcdGraphicsVbtAddress);
 
