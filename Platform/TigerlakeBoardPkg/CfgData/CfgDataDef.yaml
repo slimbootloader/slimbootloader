@@ -176,7 +176,15 @@ template:
     - $ACTION      :
         page         : MEM_$(1)
 
-
+  USB_PORT_TMPL: >
+    - Usb$(1)Port$(2) :
+        name : Enable USB$(1) port $(2)
+        type : Combo
+        option : $EN_DIS
+        help : >
+               Enable/disable USB$(1) port $(2).
+        length : 1b
+        value : 1
 
   - !include Platform/CommonBoardPkg/CfgData/Template_BootOption.yaml
 

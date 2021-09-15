@@ -30,6 +30,8 @@ MEMORY_CFG_DATA.DqMapCpu2DramMc1Ch3                         | {4,  3,  5,  2,  6
 
 MEMORY_CFG_DATA.DmaControlGuarantee                         | 1
 
+SILICON_CFG_DATA.PortUsb20Enable.Usb2Port1                  | 0
+
 #
 # By default use Osloader Payload, set to "UEFI" to select UEFI payload.
 #
