@@ -10,6 +10,8 @@
 #include <Library/DebugLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Register/PchRegsPcr.h>
+#include <PchReservedResources.h>
 #include <Library/PchSbiAccessLib.h>
 #include <Register/GpioRegs.h>
 #include <Register/GpioRegsVer3.h>
