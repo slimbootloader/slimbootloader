@@ -206,7 +206,7 @@ class Board(BaseBoard):
 
         self.LOADER_RSVD_MEM_SIZE = 0x500000
 
-        self.CFG_DATABASE_SIZE    = self.CFGDATA_SIZE
+        self.CFG_DATABASE_SIZE    = self.CFGDATA_SIZE + 0x1000
         self._generated_cfg_file_prefix = 'Autogen_'
 
         # _CFGDATA_INT_FILE - Internal cfg data is generally used for internal boards like MRBs, RVPs etc.
