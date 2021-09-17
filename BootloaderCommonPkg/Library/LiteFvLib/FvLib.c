@@ -58,6 +58,7 @@ GetFirstFfsFileInFv (
     FvExHeader  = (EFI_FIRMWARE_VOLUME_EXT_HEADER *)(((UINT8 *)FvHeader) + FvHeader->ExtHeaderOffset);
     CurrentFile = (EFI_FFS_FILE_HEADER *)(((UINT8 *)FvExHeader) + FvExHeader->ExtHeaderSize);
   }
+  CurrentFile = (EFI_FFS_FILE_HEADER *) ALIGN_POINTER (CurrentFile, 8);
   return CurrentFile;
 }
 
