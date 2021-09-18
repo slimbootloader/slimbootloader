@@ -82,6 +82,22 @@
 #include <Library/TccLib.h>
 #include "Dts.h"
 
+// GPIO group table to convert from alphabet group index to pad group ID
+CONST UINT8 mPchGpioGroup[2][26] = {
+  { // PCH-LP
+    /*A     B     C     D     E     F     G     H     I     J     K     L     M      */
+    0x02, 0x00, 0x0B, 0x08, 0x0E, 0x0C, 0xFF, 0x07, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+    /*N     O     P     Q     R     S     T     U     V     W     X     Y     Z(GPD) */
+    0xFF, 0xFF, 0xFF, 0xFF, 0x03, 0x06, 0x01, 0x09, 0xFF, 0xFF, 0xFF, 0xFF, 0x05
+  },
+  { // PCH-H
+    /*A     B     C     D     E     F     G     H     I     J     K     L     M      */
+    0x00, 0x02, 0x05, 0x04, 0x0A, 0x0B, 0x07, 0x0D, 0x10, 0x0E, 0x0F, 0xFF, 0xFF,
+    /*N     O     P     Q     R     S     T     U     V     W     X     Y     Z(GPD) */
+    0xFF, 0xFF, 0xFF, 0xFF, 0x01, 0x06, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x09,
+  }
+};
+
 BOOLEAN mTccDsoTuning      = FALSE;
 UINT8   mTccRtd3Support    = 0;
 
@@ -707,6 +723,44 @@ ClearSmi (
 }
 
 /**
+  Convert GPIO group and pin number into GPIO pad.
+
+  @param[in]  Group         Alphabet based GPIO group index.
+  @param[in]  Pin           GPIO pin number.
+
+  @retval                   GPIO pad
+**/
+UINT32
+GpioGroupPinToPad (
+  IN UINT32     Group,
+  IN UINT32     Pin
+  )
+{
+  UINT8    GroupId;
+  UINT32   GpioPad;
+  UINT32   Index;
+
+  if ((Group >= sizeof(mPchGpioGroup[0])) || (Pin >= 24)) {
+    return 0;
+  }
+
+  if (IsPchLp ()) {
+    Index   = 0;
+    GpioPad = GPIO_VER2_LP_GPP_B0;
+  } else {
+    Index   = 1;
+    GpioPad = GPIO_VER2_H_GPP_A0;
+  }
+  GroupId  = mPchGpioGroup[Index][Group];
+  if (GroupId == 0xFF) {
+    return 0;
+  }
+
+  GpioPad += ((GroupId << 16) + Pin);
+  return GpioPad;
+}
+
+/**
   Update current boot Payload ID.
 
 **/
@@ -715,42 +769,41 @@ UpdatePayloadId (
   VOID
   )
 {
-  EFI_STATUS      Status;
-  UINT32          PayloadSelGpioData;
-  UINT32          PayloadSelGpioPad;
-  GEN_CFG_DATA    *GenCfgData;
+  EFI_STATUS         Status;
+  UINT32             PayloadSelGpioData;
+  UINT32             PayloadSelGpioPad;
+  GEN_CFG_DATA      *GenCfgData;
+  PLATFORM_CFG_DATA *PlatCfgData;
 
   GenCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);
   if (GenCfgData == NULL) {
-    ASSERT (FALSE);
     return;
   }
   SetPayloadId (GenCfgData->PayloadId);
-
   if (GetPayloadId () != AUTO_PAYLOAD_ID_SIGNATURE) {
     return;
   }
 
-  if (IsPchLp ()) {
-    PayloadSelGpioPad = GPIO_VER2_LP_GPP_B15;
-  } else if (IsPchH ()) {
-    PayloadSelGpioPad = GPIO_VER2_H_GPP_F10;
-  } else {
-    DEBUG ((DEBUG_ERROR, "Unsupported PCH for AUTO.\n"));
-    return;
-  }
-
-  //
-  // Switch payloads based on configured GPIO pin
-  //
-  Status = GpioGetInputValue (PayloadSelGpioPad, &PayloadSelGpioData);
-  if (!EFI_ERROR (Status)) {
-    if (PayloadSelGpioData == 1) {
-      SetPayloadId (0);
-      DEBUG ((DEBUG_INFO, "Update PayloadId to OS Loader\n"));
+  PlatCfgData = (PLATFORM_CFG_DATA *)FindConfigDataByTag (CDATA_PLATFORM_TAG);
+  if ((PlatCfgData != NULL) && (PlatCfgData->PayloadSelGpio.Enable != 0)) {
+    PayloadSelGpioPad = GpioGroupPinToPad (PlatCfgData->PayloadSelGpio.PinGroup,  PlatCfgData->PayloadSelGpio.PinNumber);
+    if (PayloadSelGpioPad == 0) {
+      Status = EFI_ABORTED;
     } else {
-      SetPayloadId (UEFI_PAYLOAD_ID_SIGNATURE);
-      DEBUG ((DEBUG_INFO, "Update PayloadId to UEFI\n"));
+      // Switch payloads based on configured GPIO pin
+      Status = GpioGetInputValue (PayloadSelGpioPad, &PayloadSelGpioData);
+    }
+
+    if (!EFI_ERROR (Status)) {
+      if (PayloadSelGpioData == 1) {
+        SetPayloadId (0);
+        DEBUG ((DEBUG_INFO, "Update PayloadId to OS Loader\n"));
+      } else {
+        SetPayloadId (UEFI_PAYLOAD_ID_SIGNATURE);
+        DEBUG ((DEBUG_INFO, "Update PayloadId to UEFI\n"));
+      }
+    } else {
+      DEBUG ((DEBUG_ERROR, "Invalid GPIO pin for Payload Select\n"));
     }
   }
 }

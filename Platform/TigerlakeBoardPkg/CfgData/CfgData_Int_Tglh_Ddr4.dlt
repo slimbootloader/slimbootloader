@@ -2,7 +2,7 @@
 #
 #  Platform Configuration Delta File.
 #
-#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -41,6 +41,13 @@ SILICON_CFG_DATA.PchLegacyIoLowLatency                      | 1
 GEN_CFG_DATA.VbtImageId                                     | 2
 
 BOOT_OPTION_CFG_DATA_5.HwPart_5                             | 255
+
+
+# PCH H :  GPIO_VER2_H_GPP_F10
+PLATFORM_CFG_DATA.PayloadSelGpio.Enable                     | 1
+PLATFORM_CFG_DATA.PayloadSelGpio.PinGroup                   | 5
+PLATFORM_CFG_DATA.PayloadSelGpio.PinNumber                  | 10
+
 
 # GPIO Group GPP_A: TGL-H has 15. 15-23 should be skipped.
 GPIO_CFG_DATA.GpioPinConfig0_GPP_A00                        | 0x0350A383

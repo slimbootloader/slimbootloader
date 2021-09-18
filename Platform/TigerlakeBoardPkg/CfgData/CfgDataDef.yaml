@@ -476,6 +476,54 @@ configs:
         length       : 0x01
         value        : 0x0
 
+
+  - $ACTION      :
+      page         : PIDSEL:PLT:"Payload Selection GPIO"
+  - PLATFORM_CFG_DATA :
+    - !expand { CFGHDR_TMPL : [ PLATFORM_CFG_DATA, 0x280, 0, 0 ] }
+    - PayloadSelGpio :
+      - $STRUCT      :
+          name         : GPIO pin for switching payload
+          struct       : PAYLOAD_SEL_GPIO_PIN
+          length       : 0x02
+      - PinGroup     :
+          name         : Pin Group
+          type         : Combo
+          option       : >
+                         0x00:GPP_A, 0x01:GPP_B, 0x02:GPP_C, 0x03:GPP_D, 0x04:GPP_E, 0x05:GPP_F, 0x06:GPP_G, 0x07:GPP_H,
+                         0x08:GPP_I, 0x09:GPP_J, 0x0A:GPP_K, 0x11:GPP_R, 0x12:GPP_S, 0x13:GPP_T, 0x14:GPP_U,
+                         0x19:GPD
+          condition    : ($PLATFORM_CFG_DATA.PayloadSelGpio.Enable > 0)
+          help         : >
+                         Specify GPIO Group Number
+          length       : 7bW
+          value        : 0
+      - Enable       :
+          name         : Payload Selection Pin Enable
+          type         : Combo
+          option       : $EN_DIS
+          help         : >
+                         Enable/Disable this pin for payload selection between OsLoader and UEFI.
+          order        : 0000.0000
+          length       : 1bW
+          value        : 0
+      - PinNumber    :
+          name         : Pin Number
+          type         : Combo
+          option       : >
+                         0:0, 1:1, 2:2, 3:3, 4:4, 5:5, 6:6, 7:7, 8:8, 9:9,
+                         10:10, 11:11, 12:12, 13:13, 14:14, 15:15, 16:16, 17:17,
+                         18:18, 19:19, 20:20, 21:21, 22:22, 23:23
+          length       : 8bW
+          value        : 0
+          condition    : ($PLATFORM_CFG_DATA.PayloadSelGpio.Enable > 0)
+          help         : >
+                         Specify GPIO Pin Number
+    - Dummy        :
+        length       : 0x02
+        value        : 0x0
+
+
   - !include CfgData_Features.yaml
 
 
