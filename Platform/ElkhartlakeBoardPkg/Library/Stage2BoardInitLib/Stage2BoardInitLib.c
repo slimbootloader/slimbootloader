@@ -600,10 +600,11 @@ UpdatePayloadId (
   VOID
   )
 {
-  EFI_STATUS      Status;
-  UINT32          PayloadSelGpioData;
-  UINT32          PayloadSelGpioPad;
-  GEN_CFG_DATA    *GenCfgData;
+  EFI_STATUS        Status;
+  UINT32            PayloadSelGpioData;
+  UINT32            PayloadSelGpioPad;
+  GEN_CFG_DATA      *GenCfgData;
+  PLATFORM_CFG_DATA *PlatCfgData;
 
   GenCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);
   if (GenCfgData == NULL) {
@@ -616,11 +617,12 @@ UpdatePayloadId (
     return;
   }
 
-  //
   // Switch payloads based on configured GPIO pin
-  //
-  if (GetPlatformId () == 0x5) {
-    PayloadSelGpioPad = GPIO_VER3_GPP_D13;
+  PlatCfgData = (PLATFORM_CFG_DATA *)FindConfigDataByTag (CDATA_PLATFORM_TAG);
+  if ((PlatCfgData != NULL) && (PlatCfgData->PayloadSelGpio.Enable != 0)) {
+    // Calculate the GPIO pad
+    PayloadSelGpioPad = GPIO_VER3_GPP_B0 + (PlatCfgData->PayloadSelGpio.PinGroup << 16) + PlatCfgData->PayloadSelGpio.PinNumber;
+    // Switch payloads based on configured GPIO pin
     Status = GpioGetInputValue (PayloadSelGpioPad, &PayloadSelGpioData);
     if (!EFI_ERROR (Status)) {
       if (PayloadSelGpioData == 1) {
@@ -630,9 +632,9 @@ UpdatePayloadId (
         SetPayloadId (UEFI_PAYLOAD_ID_SIGNATURE);
         DEBUG ((DEBUG_INFO, "Update PayloadId to UEFI\n"));
       }
+    } else {
+      DEBUG ((DEBUG_ERROR, "Invalid GPIO pin for Payload Select\n"));
     }
-  } else {
-    DEBUG ((DEBUG_INFO, "AUTO PayloadId is not supported on this platform.\n"));
   }
 }
 
