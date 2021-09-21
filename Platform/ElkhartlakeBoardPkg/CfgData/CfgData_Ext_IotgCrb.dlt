@@ -20,6 +20,12 @@ MEMORY_CFG_DATA.MemorySpdPtr10    | {FILE: Spd_Lpddr4_8G.bin}
 
 # GPIO for payload selection pin J2E1 pins 2-4
 GEN_CFG_DATA.PayloadId | 'AUTO'
+
+# GPIO_VER3_H_GPP_D13 for payload selection pin
+PLATFORM_CFG_DATA.PayloadSelGpio.Enable                     | 1
+PLATFORM_CFG_DATA.PayloadSelGpio.PinGroup                   | 5
+PLATFORM_CFG_DATA.PayloadSelGpio.PinNumber                  | 13
+
 GPIO_CFG_DATA.GpioPinConfig0_GPP_D13.GPIODirection_GPP_D13 | 0xB
 GPIO_CFG_DATA.GpioPinConfig1_GPP_D13.GPIOSkip_GPP_D13 | 0
 

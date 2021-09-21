@@ -39,6 +39,7 @@
 /// require GpioPad as argument. Encoding used here
 /// has all information required by library functions
 ///
+#define GPIO_VER3_GPP_B0                  0x0B000000
 #define GPIO_VER3_GPP_B1                  0x0B000001
 #define GPIO_VER3_GPP_B2                  0x0B000002
 #define GPIO_VER3_GPP_B14                 0x0B00000E
