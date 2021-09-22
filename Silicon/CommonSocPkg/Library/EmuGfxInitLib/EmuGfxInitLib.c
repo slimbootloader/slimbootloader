@@ -75,7 +75,7 @@ BochsRead (
     IoWrite16 (VBE_DISPI_IOPORT_INDEX, Reg);
     return IoRead16 (VBE_DISPI_IOPORT_DATA);
   } else {
-    return MmioRead16  (Private->Bar2 + 0x500 + (Reg << 1));
+    return MmioRead16 (Private->Bar2 + 0x500 + (Reg << 1));
   }
 }
 

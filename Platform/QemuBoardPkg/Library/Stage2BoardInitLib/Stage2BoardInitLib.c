@@ -29,6 +29,13 @@ CONST EFI_ACPI_COMMON_HEADER *mPlatformAcpiTblTmpl[] = {
   NULL
 };
 
+STATIC
+CONST DISPLAY_TIMING_INFO mDefaultTiming = {
+  40000, 60,
+  800,   40, 128, 88, 1,
+  600,   1,  4,   23, 1
+};
+
 /**
   Test variable services.
 
@@ -188,6 +195,71 @@ UpdatePayloadId (
 }
 
 /**
+  Initialize graphics for QEMU.
+
+  @retval   EFI_SUCCESS            Graphics was initialized successfully.
+            EFI_OUT_OF_RESOURCES   No enough memory to build HOB.
+
+**/
+EFI_STATUS
+EmuGraphicsInit (
+  VOID
+  )
+{
+  EFI_STATUS                          Status;
+  UINT32                              DevPciBase;
+  GRAPHICS_INIT_POLICY                GfxPolicy;
+  EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE   GopMode;
+  EFI_PEI_GRAPHICS_INFO_HOB          *GfxInfoHob;
+  GRAPHICS_DATA                      *QemuVbt;
+
+  GfxInfoHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GetGuidHobData (GetFspHobListPtr(), NULL, &gEfiGraphicsInfoHobGuid);
+  if (GfxInfoHob != NULL) {
+    // If FSP initialized GFX, skip.
+    return EFI_SUCCESS;
+  }
+
+  DEBUG ((DEBUG_INFO, "Native Emu GFX init\n"));
+
+  ZeroMem (&GfxPolicy, sizeof(GfxPolicy));
+  GfxPolicy.PciTempResourceBase  = PcdGet32 (PcdPciResourceMem32Base);
+  CopyMem (&GfxPolicy.DisaplayTimingInfo, &mDefaultTiming, sizeof(DISPLAY_TIMING_INFO));
+
+  QemuVbt = (GRAPHICS_DATA *)(UINTN)PcdGet32(PcdGraphicsVbtAddress);
+  if ((QemuVbt != NULL) && (QemuVbt->Signature == GRAPHICS_DATA_SIG)) {
+    GfxPolicy.DisaplayTimingInfo.Hdisp = QemuVbt->ResX;
+    GfxPolicy.DisaplayTimingInfo.Vdisp = QemuVbt->ResY;
+  }
+
+  DevPciBase = GetDeviceAddr (OsBootDeviceGraphics, 0);
+  Status = GraphicsInit (DevPciBase, &GfxPolicy);
+  if (!EFI_ERROR (Status)) {
+    Status = GetGraphicOutputModeInfo (&GopMode);
+    if (!EFI_ERROR (Status)) {
+      GfxInfoHob = (EFI_PEI_GRAPHICS_INFO_HOB *)BuildGuidHob (
+                  &gEfiGraphicsInfoHobGuid,
+                  sizeof (EFI_PEI_GRAPHICS_INFO_HOB));
+      if (GfxInfoHob != NULL) {
+        GfxInfoHob->GraphicsMode.Version              = GopMode.Info->Version;
+        GfxInfoHob->GraphicsMode.HorizontalResolution = GopMode.Info->HorizontalResolution;
+        GfxInfoHob->GraphicsMode.VerticalResolution   = GopMode.Info->VerticalResolution;
+        GfxInfoHob->GraphicsMode.PixelFormat          = GopMode.Info->PixelFormat;
+        GfxInfoHob->GraphicsMode.PixelInformation     = GopMode.Info->PixelInformation;
+        GfxInfoHob->GraphicsMode.PixelsPerScanLine    = GopMode.Info->PixelsPerScanLine;
+        GfxInfoHob->FrameBufferBase                   = GopMode.FrameBufferBase;
+        GfxInfoHob->FrameBufferSize                   = (UINT32)GopMode.FrameBufferSize;
+      } else {
+        Status = EFI_OUT_OF_RESOURCES;
+      }
+    }
+  }
+
+  return Status;
+}
+
+
+
+/**
   Board specific hook point.
 
   Implement board specific initialization during the boot flow.
@@ -201,13 +273,13 @@ BoardInit (
   IN  BOARD_INIT_PHASE    InitPhase
 )
 {
-  EFI_STATUS           Status;
-  UINT32               TsegBase;
-  UINT64               TsegSize;
-  VOID                *Buffer;
-  UINT32               Length;
-  UINT32               PmBase;
-  VOID                *FspHobList;
+  EFI_STATUS            Status;
+  UINT32                TsegBase;
+  UINT64                TsegSize;
+  VOID                 *Buffer;
+  UINT32                Length;
+  UINT32                PmBase;
+  VOID                 *FspHobList;
 
   switch (InitPhase) {
   case PreSiliconInit:
@@ -259,6 +331,9 @@ BoardInit (
     // Open TSEG so that MpInit can do SMM rebasing if required
     PciAnd8 (PCI_LIB_ADDRESS(0, 0, 0, MCH_ESMRAMC), (UINT8)~MCH_ESMRAMC_T_EN);
     PciAndThenOr8 (PCI_LIB_ADDRESS(0, 0, 0, MCH_SMRAM), (UINT8)~MCH_SMRAM_D_CLOSE, MCH_SMRAM_D_OPEN);
+    if (PcdGetBool (PcdFramebufferInitEnabled)) {
+      EmuGraphicsInit ();
+    }
     break;
 
   case PrePayloadLoading:
@@ -297,7 +372,6 @@ UpdateFspConfig (
 {
   FSPS_UPD           *FspsUpd;
   FSP_S_CONFIG       *FspsConfig;
-  SILICON_CFG_DATA   *SilCfgData;
 
   FspsUpd    = (FSPS_UPD *)FspUpdRgnPtr;
   FspsConfig = &FspsUpd->FspsConfig;
@@ -307,11 +381,6 @@ UpdateFspConfig (
     FspsConfig->PciTempResourceBase = PcdGet32 (PcdPciResourceMem32Base);
   } else {
     FspsConfig->GraphicsConfigPtr = 0;
-  }
-
-  SilCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
-  if (SilCfgData == NULL) {
-    return;
   }
 }
 

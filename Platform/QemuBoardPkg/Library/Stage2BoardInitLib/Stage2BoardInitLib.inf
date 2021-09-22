@@ -42,6 +42,7 @@
   SpiFlashLib
   VariableLib
   BoardSupportLib
+  GraphicsInitLib
 
 [Guids]
   gReservedMemoryResourceHobTsegGuid
