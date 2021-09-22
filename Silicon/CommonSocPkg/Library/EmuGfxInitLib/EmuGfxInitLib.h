@@ -45,12 +45,6 @@ typedef struct {
 } GRAPHICS_CONFIG;
 
 typedef struct {
-  UINT32     Signature;
-  UINT32     ResX;
-  UINT32     ResY;
-} GRAPHICS_DATA;
-
-typedef struct {
   UINT64                                 Signature;
   UINT32                                 Bar2;
 } QEMU_VIDEO_PRIVATE_DATA;

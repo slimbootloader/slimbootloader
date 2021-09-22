@@ -26,6 +26,8 @@
 #include <Library/FspSupportLib.h>
 #include <Library/BoardSupportLib.h>
 #include <Library/ContainerLib.h>
+#include <Library/GraphicsInitLib.h>
+#include <Library/HobLib.h>
 #include <Guid/GraphicsInfoHob.h>
 #include <Guid/SystemTableInfoGuid.h>
 #include <Guid/SerialPortInfoGuid.h>
