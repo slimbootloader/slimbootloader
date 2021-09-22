@@ -1,7 +1,7 @@
 /** @file
   This file defines the hob structure for the OS boot configuration.
 
-  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -63,6 +63,7 @@ typedef enum {
   OsBootDeviceUsb,
   OsBootDeviceNvme,
   OsBootDeviceMemory,
+  OsBootDeviceGraphics,
   OsBootDeviceMax
 } OS_BOOT_MEDIUM_TYPE;
 
