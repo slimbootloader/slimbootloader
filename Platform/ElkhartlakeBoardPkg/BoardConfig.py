@@ -23,8 +23,10 @@ class Board(BaseBoard):
         super(Board, self).__init__(*args, **kwargs)
 
         self.VERINFO_IMAGE_ID     = 'SB_EHLK '
-        self.VERINFO_PROJ_MAJOR_VER = 2
-        self.VERINFO_PROJ_MINOR_VER = 0
+        # VERINFO_PROJ_MAJOR_VER: 1 PV Quality release
+        # VERINFO_PROJ_MINOR_VER: 0: PV  1: MR1  2: MR2 etc.
+        self.VERINFO_PROJ_MAJOR_VER = 1
+        self.VERINFO_PROJ_MINOR_VER = 2
         self.VERINFO_SVN          = 1
         self.VERINFO_BUILD_DATE   = time.strftime("%m/%d/%Y")
         self.LOWEST_SUPPORTED_FW_VER = ((self.VERINFO_PROJ_MAJOR_VER << 8) + self.VERINFO_PROJ_MINOR_VER)
