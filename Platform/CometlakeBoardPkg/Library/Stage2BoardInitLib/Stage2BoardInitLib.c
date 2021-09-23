@@ -1010,6 +1010,7 @@ BoardInit (
   UINT32          PayloadId;
   EFI_PEI_GRAPHICS_INFO_HOB *FspGfxHob;
   VOID                      *FspHobList;
+  BL_SW_SMI_INFO            *BlSwSmiInfo;
 
   switch (InitPhase) {
   case PreSiliconInit:
@@ -1116,6 +1117,19 @@ BoardInit (
   case PrePciEnumeration:
     break;
   case PostPciEnumeration:
+    if (GetBootMode() == BOOT_ON_S3_RESUME) {
+      ClearSmi ();
+      RestoreS3RegInfo (FindS3Info (S3_SAVE_REG_COMM_ID));
+
+      //
+      // If payload registered a software SMI handler for bootloader to restore
+      // SMRR base and mask in S3 resume path, trigger sw smi
+      //
+      BlSwSmiInfo = FindS3Info (BL_SW_SMI_COMM_ID);
+      if (BlSwSmiInfo != NULL) {
+        TriggerPayloadSwSmi (BlSwSmiInfo->BlSwSmiHandlerInput);
+      }
+    }
     break;
   case PrePayloadLoading:
     Status = IgdOpRegionInit ();
@@ -1166,13 +1180,7 @@ BoardInit (
     }
     break;
   case ReadyToBoot:
-    //
-    // Clear Smi and restore S3 regs on S3 resume
-    //
     ClearSmi ();
-    if ((GetBootMode() == BOOT_ON_S3_RESUME) && (GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE)) {
-      RestoreS3RegInfo (FindS3Info (S3_SAVE_REG_COMM_ID));
-    }
 
     //
     // Do necessary locks, and clean up before jumping tp OS
