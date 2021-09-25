@@ -1,6 +1,6 @@
 ## @ GenCfgData.py
 #
-# Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -563,7 +563,7 @@ class CGenCfgData:
     exclude_struct = ['GPIO_GPP_*', 'GPIO_CFG_DATA', 'GpioConfPad*',  'GpioPinConfig',
                       'BOOT_OPTION*', 'PLATFORMID_CFG_DATA', '\w+_Half[01]']
     include_tag    = ['GPIO_CFG_DATA']
-    keyword_set    = set(['name', 'type', 'option', 'help', 'length', 'value', 'order', 'struct', 'condition'])
+    keyword_set    = set(['name', 'type', 'option', 'help', 'length', 'value', 'order', 'struct', 'condition', 'altpage'])
 
     def __init__(self):
         self.initialize ()
@@ -709,7 +709,8 @@ class CGenCfgData:
             return self._cfg_list
         else:
             # build a new list for items under a page ID
-            cfgs =  [i for i in self._cfg_list if i['cname'] and (i['page'] == page_id)]
+            cfgs =  [i for i in self._cfg_list if i['cname'] and ((i['page'] == page_id)
+                     or (('altpage' in i) and (i['altpage'] == page_id)))]
             return cfgs
 
 
@@ -1169,6 +1170,9 @@ class CGenCfgData:
         cfg_item['order']  = order
         cfg_item['path']   = '.'.join(path)
         cfg_item['condition']  = condition
+        altpage = item.get('altpage', '')
+        if altpage:
+            cfg_item['altpage'] = str(altpage)
         if 'struct' in item:
             cfg_item['struct'] = item['struct']
         self._cfg_list.append(cfg_item)
