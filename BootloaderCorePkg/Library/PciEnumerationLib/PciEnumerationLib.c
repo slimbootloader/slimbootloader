@@ -1594,8 +1594,10 @@ PciProgramResources (
       Root->PciBar[BarType - 1].BaseAddress = Address;
       ProgramResource (Root, BarType);
 
-      ResBase[Index] += Root->PciBar[BarType - 1].Length;
-      ASSERT (ResBase[Index] <= ResLimit[Index]);
+      if (Root->PciBar[BarType - 1].Length > 0) {
+        ResBase[Index] += Root->PciBar[BarType - 1].Length;
+        ASSERT (ResBase[Index] <= ResLimit[Index]);
+      }
     }
 
     CurrentLink = CurrentLink->ForwardLink;
