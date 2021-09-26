@@ -1,4 +1,4 @@
-From 994d737942cd29459a21ea475cbf833f42065e00 Mon Sep 17 00:00:00 2001
+From 31a5d2970b4b181817db1be2370597f2ef898307 Mon Sep 17 00:00:00 2001
 From: Aiden Park <aiden.park@intel.com>
 Date: Wed, 11 Dec 2019 10:00:41 -0800
 Subject: [PATCH] Build QEMU FSP 2.0 binaries
@@ -127,7 +127,7 @@ index 1f4a45004f..49a0ccee7b 100644
      message = ""
 diff --git a/BuildFsp.py b/BuildFsp.py
 new file mode 100644
-index 0000000000..cf46ef7643
+index 0000000000..de5bcd1446
 --- /dev/null
 +++ b/BuildFsp.py
 @@ -0,0 +1,394 @@
@@ -216,7 +216,7 @@ index 0000000000..cf46ef7643
 +                vscommon_path = each
 +        vcver_file = vscommon_path + '\\VC\\Auxiliary\\Build\\Microsoft.VCToolsVersion.default.txt'
 +        if os.path.exists(vcver_file):
-+            for vs_ver in ['2017']:
++            for vs_ver in ['2019', '2017']:
 +                check_path = '\\Microsoft Visual Studio\\%s\\' % vs_ver
 +                if check_path in vscommon_path:
 +                    toolchain_ver    = get_file_data (vcver_file, 'r').strip()
@@ -6418,5 +6418,5 @@ index 0000000000..4c6bc6a0f1
 +  TRUE
 +
 -- 
-2.19.1.windows.1
+2.31.1.windows.1
 
