@@ -36,6 +36,11 @@ CONST DISPLAY_TIMING_INFO mDefaultTiming = {
   600,   1,  4,   23, 1
 };
 
+UINT8
+GetGraphicsDeviceNumber (
+  VOID
+);
+
 /**
   Test variable services.
 
@@ -231,7 +236,7 @@ EmuGraphicsInit (
     GfxPolicy.DisaplayTimingInfo.Vdisp = QemuVbt->ResY;
   }
 
-  DevPciBase = GetDeviceAddr (OsBootDeviceGraphics, 0);
+  DevPciBase = ((UINT32) GetGraphicsDeviceNumber ()) << 8;
   Status = GraphicsInit (DevPciBase, &GfxPolicy);
   if (!EFI_ERROR (Status)) {
     Status = GetGraphicOutputModeInfo (&GopMode);

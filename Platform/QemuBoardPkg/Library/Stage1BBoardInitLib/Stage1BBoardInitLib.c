@@ -36,7 +36,6 @@ CONST PLT_DEVICE  mPlatformDevices[]= {
   {{0x00000300}, OsBootDeviceSd    , 0 },
   {{0x00000300}, OsBootDeviceNvme  , 0 },
   {{0x00000400}, OsBootDeviceUsb   , 0 },
-  {{0x00000100}, OsBootDeviceGraphics, 0 },
   {{0x01000000}, OsBootDeviceMemory, 0 }
 };
 
