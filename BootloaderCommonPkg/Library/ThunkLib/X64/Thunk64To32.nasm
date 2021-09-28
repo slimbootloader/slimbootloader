@@ -1,5 +1,5 @@
 ;
-; Copyright (c) 2016 - 2018, Intel Corporation. All rights reserved.<BR>
+; Copyright (c) 2016 - 2021, Intel Corporation. All rights reserved.<BR>
 ; SPDX-License-Identifier: BSD-2-Clause-Patent
 ;
 ;
@@ -152,6 +152,16 @@ ReturnBack:
     pop   rcx                  ; drop param1
     pop   rcx                  ; drop param2
 
+    ;
+    ; Ensure paging is always disabled
+    ;
+    mov     rax, cr0
+    bt      rax, 31
+    jnc     ReloadPagingTbl
+    btc     rax, 31
+    mov     cr0, rax
+
+ReloadPagingTbl:
     ;
     ; restore CR4 PAE
     ;
