@@ -78,6 +78,7 @@
 #include <GpioConfig.h>
 #include <Register/RegsSpi.h>
 #include <Library/GpioLib.h>
+#include <Library/PlatformHookLib.h>
 
 BOOLEAN mTccDsoTuning      = FALSE;
 UINT8   mTccRtd3Support    = 0;
@@ -228,16 +229,6 @@ CONST EFI_ACPI_COMMON_HEADER *mPlatformAcpiTables[] = {
   NULL
 };
 
-UINT8
-GetSerialPortStrideSize (
-  VOID
-);
-
-UINT32
-GetSerialPortBase (
-  VOID
-  );
-
 VOID
 EnableLegacyRegions (
   VOID
@@ -268,7 +259,7 @@ PrintGpioConfigTable (
   GpioInitConf = (GPIO_INIT_CONFIG *)GpioConfData;
   for (Index  = 0; Index < GpioPinNum; Index++) {
     PadDataPtr = (UINT32 *)&GpioInitConf->GpioConfig;
-    DEBUG ((DEBUG_INFO, "GPIO PAD: 0x%08X   DATA: 0x%08X 0x%08X\n", GpioInitConf->GpioPad, PadDataPtr[0], PadDataPtr[1]));
+    DEBUG ((DEBUG_VERBOSE, "GPIO PAD: 0x%08X   DATA: 0x%08X 0x%08X\n", GpioInitConf->GpioPad, PadDataPtr[0], PadDataPtr[1]));
     GpioInitConf++;
   }
 }
@@ -1532,13 +1523,24 @@ UpdateFspConfig (
     // PCH_TSN_CONFIG
     Fspscfg->PchTsnEnable         = SiCfgData->PchTsnEnable;
     Fspscfg->PchTsnGbeLinkSpeed   = SiCfgData->TsnLinkSpeed;
-    Fspscfg->PchTsnGbeSgmiiEnable    = 1;
+    Fspscfg->PchTsnGbeSgmiiEnable = (UINT8)SiCfgData->PchTsnGbeSgmiiEnable;
 
     // PSE_TSN_CONFIG
-    Fspscfg->PseTsnGbeSgmiiEnable[0] = 0;
-    Fspscfg->PseTsnGbeSgmiiEnable[1] = 0;
-    Fspscfg->PseTsnGbePhyInterfaceType[0]    = 1;
-    Fspscfg->PseTsnGbePhyInterfaceType[1]    = 1;
+    Fspscfg->PseTsnGbeSgmiiEnable[0]         = (UINT8)SiCfgData->PseTsnGbe0SgmiiEnable;
+    Fspscfg->PseTsnGbeSgmiiEnable[1]         = (UINT8)SiCfgData->PseTsnGbe1SgmiiEnable;
+    Fspscfg->PseTsnGbePhyInterfaceType[0]    = (UINT8)SiCfgData->PseTsnGbe0PhyInterfaceType;
+    Fspscfg->PseTsnGbePhyInterfaceType[1]    = (UINT8)SiCfgData->PseTsnGbe1PhyInterfaceType;
+    DEBUG ((DEBUG_INFO, "------------------------------------------PCH and PSE TSN CONFIG----------------------------------------\n"));
+    DEBUG ((DEBUG_INFO, "Fspscfg->TsnConfigBase: 0x%x\n",Fspscfg->TsnConfigBase));
+    DEBUG ((DEBUG_INFO, "Fspscfg->TsnConfigSize: 0x%x\n",Fspscfg->TsnConfigSize));
+    DEBUG ((DEBUG_INFO, "Fspscfg->PchTsnEnable: 0x%x\n",Fspscfg->PchTsnEnable));
+    DEBUG ((DEBUG_INFO, "Fspscfg->PchTsnGbeLinkSpeed: 0x%x\n",Fspscfg->PchTsnGbeLinkSpeed));
+    DEBUG ((DEBUG_INFO, "Fspscfg->PchTsnGbeSgmiiEnable: 0x%x\n",Fspscfg->PchTsnGbeSgmiiEnable));
+    DEBUG ((DEBUG_INFO, "Fspscfg->PseTsnGbeSgmiiEnable[0]: 0x%x\n",Fspscfg->PseTsnGbeSgmiiEnable[0]));
+    DEBUG ((DEBUG_INFO, "Fspscfg->PseTsnGbeSgmiiEnable[1]: 0x%x\n",Fspscfg->PseTsnGbeSgmiiEnable[1]));
+    DEBUG ((DEBUG_INFO, "Fspscfg->PseTsnGbePhyInterfaceType[0]: 0x%x\n",Fspscfg->PseTsnGbePhyInterfaceType[0]));
+    DEBUG ((DEBUG_INFO, "Fspscfg->PseTsnGbePhyInterfaceType[1]: 0x%x\n",Fspscfg->PseTsnGbePhyInterfaceType[1]));
+    DEBUG ((DEBUG_INFO, "------------------------------------------------END-----------------------------------------------------\n"));
 
     // AMT_ME_CONFIG
     Fspscfg->AmtEnabled           = SiCfgData->AmtEnabled;
@@ -1604,9 +1606,6 @@ UpdateFspConfig (
     //
     Fspscfg->PchUnlockGpioPads   = 0x0;
   }
-
-  // W/A for Yocto boot issue
-  Fspscfg->AcSplitLock = 0x0;
 
   PowerCfgData = (POWER_CFG_DATA *) FindConfigDataByTag (CDATA_POWER_TAG);
   if (PowerCfgData == NULL) {
@@ -1870,7 +1869,7 @@ UpdateSerialPortInfo (
   IN  SERIAL_PORT_INFO  *SerialPortInfo
 )
 {
-  SerialPortInfo->BaseAddr = GetSerialPortBase ();
+  SerialPortInfo->BaseAddr = (UINT32) GetSerialPortBase ();
   SerialPortInfo->RegWidth = GetSerialPortStrideSize ();
   if (GetDebugPort () >= PCH_MAX_SERIALIO_UART_CONTROLLERS) {
     // IO Type

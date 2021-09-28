@@ -1758,7 +1758,7 @@
       help         : >
                      Enable/Disable #AC check on split lock. <b>0- Disable</b>; 1- Enable.
       length       : 0x1
-      value        : 0x1
+      value        : 0x0
   - SgxSinitNvsData :
       name         : SgxSinitNvsData
       type         : EditNum, HEX, (0x0,0xFF)
@@ -1867,11 +1867,49 @@
                      When FALSE, it disables Timed GPIO 1.
       length       : 1b
       value        : 0x0
+  - PchTsnGbeSgmiiEnable :
+      name         : PCH TSN SGMII Support
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/disable PCH TSN SGMII support 0=Disable 1=Enable
+      length       : 1b
+      value        : 0x1
+  - PseTsnGbe0SgmiiEnable :
+      name         : PSE TSN 0 SGMII Support
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/disable PSE TSN 0 SGMII support 0=Disable 1=Enable
+      length       : 1b
+      value        : 0x00
+  - PseTsnGbe1SgmiiEnable :
+      name         : PSE TSN 1 SGMII Support
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/disable PSE TSN 1 SGMII support 0=Disable 1=Enable
+      length       : 1b
+      value        : 0x00
+  - PseTsnGbe0PhyInterfaceType :
+      name         : PSE TSN 0 Phy Interface Type
+      type         : EditNum, HEX, (0x00,0x3)
+      help         : >
+                     Set PSE TSN 0 Phy Interface Type 0: Not Connected, 1: RGMII, 2: SGMII, 3:SGMII+
+      length       : 2b
+      value        : 0x01
+  - PseTsnGbe1PhyInterfaceType :
+      name         : PSE TSN 1 Phy Interface Type
+      type         : EditNum, HEX, (0x00,0x3)
+      help         : >
+                     Set PSE TSN 1 Phy Interface Type 0: Not Connected, 1: RGMII, 2: SGMII, 3:SGMII+
+      length       : 2b
+      value        : 0x01
   - Dummy        :
       name         : SaPostMemTestRsvd
       type         : Combo
       option       : $EN_DIS
       help         : >
                      Reserved for SA Post-Mem Test
-      length       : 22b
+      length       : 15b
       value        : 0x0
