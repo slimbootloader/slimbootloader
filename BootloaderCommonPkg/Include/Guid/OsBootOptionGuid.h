@@ -54,6 +54,7 @@ typedef enum {
   Reserved      = BIT6 | BIT7
 } RESET_CAUSE;
 
+// Define OS boot media devices
 typedef enum {
   OsBootDeviceSata,
   OsBootDeviceSd,
@@ -65,6 +66,13 @@ typedef enum {
   OsBootDeviceMemory,
   OsBootDeviceMax
 } OS_BOOT_MEDIUM_TYPE;
+
+// Define other platform devices as an extention to OS_BOOT_MEDIUM_TYPE
+typedef enum {
+  PlatformDeviceMin = OsBootDeviceMax,
+  PlatformDeviceGraphics,
+  PlatformDeviceMax
+} PLATFORM_DEVICE_TYPE;
 
 typedef enum  {
   EnumFileSystemTypeFat,
