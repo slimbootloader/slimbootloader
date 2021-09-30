@@ -11,16 +11,16 @@
 
 [UserExtensions.SBL."CloneRepo"]
   REPO    = https://github.com/intel/FSP.git
-  COMMIT  = 4a31a4d972eaeb9aa41fef3b121df97f8f2a4e61
+  COMMIT  = 91a6117b66fca4c465d8480cc17408ad588290cd
 
 [UserExtensions.SBL."CopyList"]
   TigerLakeFspBinPkg/TGL_IOT/Fsp.fd                    : Silicon/TigerlakePkg/FspBin/FspDbg.bin
   TigerLakeFspBinPkg/TGL_IOT/Fsp.fd                    : Silicon/TigerlakePkg/FspBin/FspRel.bin
   TigerLakeFspBinPkg/TGL_IOT/Fsp.bsf                   : Silicon/TigerlakePkg/FspBin/Fsp.bsf
-  TigerLakeFspBinPkg/TGL_IOT/Include/FspUpd.h          : Silicon/TigerlakePkg/FspBin/FspUpd.h
-  TigerLakeFspBinPkg/TGL_IOT/Include/FsptUpd.h         : Silicon/TigerlakePkg/FspBin/FsptUpd.h
-  TigerLakeFspBinPkg/TGL_IOT/Include/FspmUpd.h         : Silicon/TigerlakePkg/FspBin/FspmUpd.h
-  TigerLakeFspBinPkg/TGL_IOT/Include/FspsUpd.h         : Silicon/TigerlakePkg/FspBin/FspsUpd.h
+  TigerLakeFspBinPkg/TGL_IOT/Include/FspUpd.h          : Silicon/TigerlakePkg/Include/FspUpd.h
+  TigerLakeFspBinPkg/TGL_IOT/Include/FsptUpd.h         : Silicon/TigerlakePkg/Include/FsptUpd.h
+  TigerLakeFspBinPkg/TGL_IOT/Include/FspmUpd.h         : Silicon/TigerlakePkg/Include/FspmUpd.h
+  TigerLakeFspBinPkg/TGL_IOT/Include/FspsUpd.h         : Silicon/TigerlakePkg/Include/FspsUpd.h
   TigerLakeFspBinPkg/TGL_IOT/Include/MemInfoHob.h      : Silicon/TigerlakePkg/Include/MemInfoHob.h
   TigerLakeFspBinPkg/TGL_IOT/SampleCode/Vbt/Vbt.bin    : Platform/TigerlakeBoardPkg/VbtBin/Vbt.dat
   TigerLakeFspBinPkg/TGL_IOT/SampleCode/Vbt/Vbt.json   : Platform/TigerlakeBoardPkg/VbtBin/Vbt.json
