@@ -51,6 +51,12 @@
   gEdkiiFpdtExtendedFirmwarePerformanceGuid     = { 0x3b387bfd, 0x7abc, 0x4cf2, { 0xa0, 0xca, 0xb6, 0xa1, 0x6c, 0x1b, 0x1b, 0x25 } }
   gTccRtctHobGuid                               = { 0x6bddb43d, 0x1782, 0x4d9c, { 0xb6, 0x80, 0xe3, 0xde, 0x45, 0xe0, 0x37, 0x4a } }
 
+  #
+  # GUID defined in UniversalPayload
+  #
+  ## Include/UniversalPayload/PciRootBridges.h
+  gUniversalPayloadPciRootBridgeInfoGuid = { 0xec4ebacb, 0x2638, 0x416e, { 0xbe, 0x80, 0xe5, 0xfa, 0x4b, 0x51, 0x19, 0x01 }}
+
 [PcdsFixedAtBuild]
   gPlatformCommonLibTokenSpaceGuid.PcdMaxLibraryDataEntry    |          8 | UINT32 | 0x20000100
   gPlatformCommonLibTokenSpaceGuid.PcdPcdLibId               |          0 |  UINT8 | 0x20000101
@@ -252,6 +258,7 @@
   #     BIT0    - Print Slim Bootloader boot performance.<BR>
   #     BIT1    - Print FSP HOB boot performance data.<BR>
   gPlatformCommonLibTokenSpaceGuid.PcdBootPerformanceMask | 0x00000001 | UINT32 | 0x00010092
+
 
 [PcdsDynamic]
   ## This PCD indicates the PCR bank to be enabled/supported by Slim Bootloader for measured boot
