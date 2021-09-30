@@ -50,6 +50,8 @@
 #include <Guid/GraphicsInfoHob.h>
 #include <Guid/SmmInformationGuid.h>
 #include <Guid/MpCpuTaskInfoHob.h>
+#include <Guid/PciRootBridgeInfoGuid.h>
+#include <UniversalPayload/PciRootBridges.h>
 #include <Service/PlatformService.h>
 #include <Pi/PiBootMode.h>
 #include <FspEas.h>
@@ -60,6 +62,8 @@
 #include <Library/ElfLib.h>
 #include <Library/SmbiosInitLib.h>
 #include <VerInfo.h>
+
+
 
 #define UIMAGE_FIT_MAGIC               (0x56190527)
 

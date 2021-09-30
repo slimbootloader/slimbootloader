@@ -92,6 +92,7 @@
   gDeviceTableHobGuid
   gSmmInformationGuid
   gLoaderMpCpuTaskInfoGuid
+  gUniversalPayloadPciRootBridgeInfoGuid
 
 [Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdMaxLibraryDataEntry
