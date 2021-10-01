@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017-2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017-2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -275,6 +275,8 @@ ClearSmi (
 {
   UINT32                SmiEn;
   UINT32                SmiSts;
+  UINT32                Pm1Sts;
+  UINT16                Pm1Cnt;
 
   SmiEn = IoRead32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN));
   if (((SmiEn & B_ACPI_IO_SMI_EN_GBL_SMI) !=0) && ((SmiEn & B_ACPI_IO_SMI_EN_EOS) !=0)) {
@@ -284,18 +286,46 @@ ClearSmi (
   //
   // Clear the status before setting smi enable
   //
-  SmiSts = IoRead32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN + 4));
+  SmiSts = IoRead32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_STS));
+  Pm1Sts = IoRead32 ((UINTN)(ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS));
+  Pm1Cnt = IoRead16 ((UINTN)(ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_CNT));
+
+  // Clear RTC alarm and corresponding Pm1Sts only if wake-up source is RTC SMI#
+  if (((Pm1Sts & B_ACPI_IO_PM1_STS_RTC_EN) != 0) &&
+      ((Pm1Sts & B_ACPI_IO_PM1_STS_RTC) != 0) &&
+      ((Pm1Cnt & B_ACPI_IO_PM1_CNT_SCI_EN) == 0)) {
+    IoWrite8 (R_RTC_IO_INDEX, R_RTC_IO_REGC);
+    IoRead8 (R_RTC_IO_TARGET); /* RTC alarm is cleared upon read */
+    Pm1Sts |= B_ACPI_IO_PM1_STS_RTC;
+  }
+
   SmiSts |=
     (
       B_ACPI_IO_SMI_STS_SMBUS |
       B_ACPI_IO_SMI_STS_PERIODIC |
       B_ACPI_IO_SMI_STS_TCO |
+      B_ACPI_IO_SMI_STS_MCSMI |
       B_ACPI_IO_SMI_STS_SWSMI_TMR |
       B_ACPI_IO_SMI_STS_APM |
       B_ACPI_IO_SMI_STS_ON_SLP_EN |
       B_ACPI_IO_SMI_STS_BIOS
     );
-  IoWrite32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN + 4), SmiSts);
+
+  Pm1Sts |=
+    (
+      B_ACPI_IO_PM1_STS_WAK |
+      B_ACPI_IO_PM1_STS_PRBTNOR |
+      B_ACPI_IO_PM1_STS_PWRBTN |
+      B_ACPI_IO_PM1_STS_GBL |
+      B_ACPI_IO_PM1_STS_TMROF
+      );
+
+  IoWrite32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_STS), SmiSts);
+  IoWrite16 ((UINTN) (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS), (UINT16) Pm1Sts);
+
+  // Clear GPE0 STS in case some bits are set
+  IoOr32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_GPE0_STS_127_96), 0);
+
 }
 
 
@@ -1136,6 +1166,7 @@ BoardInit (
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_WARN, "VBT not found %r\n", Status));
     }
+    ClearSmi ();
     if (GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE && GetBootMode() != BOOT_ON_S3_RESUME) {
       ClearS3SaveRegion ();
       //
