@@ -148,7 +148,10 @@ NormalBootPath (
   UINT8                          *CmdLine;
   UINT32                          CmdLineLen;
   UINT32                          UefiSig;
+  UINT32                          HobSize;
   UINT16                          PldMachine;
+  LOADED_PAYLOAD_INFO             PayloadInfo;
+  UNIVERSAL_PAYLOAD_EXTRA_DATA   *PldImgInfo;
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
 
@@ -182,10 +185,25 @@ NormalBootPath (
     DEBUG ((DEBUG_INFO, "FV Format Payload\n"));
     UefiSig = Dst[0];
     Status  = LoadFvImage (Dst, Stage2Param->PayloadActualLength, (VOID **)&PldEntry, &PldMachine);
-  } else if (IsElfImage (Dst)) {
-    Status = GetElfMachine (Dst, &PldMachine);
+  } else if (IsElfFormat ((CONST UINT8 *)Dst)) {
+    DEBUG ((DEBUG_INFO, "ELF Format Payload\n"));
+    // Assume Universal Payload first
+    ZeroMem (&PayloadInfo, sizeof(PayloadInfo));
+    Status = LoadElfPayload (Dst, &PayloadInfo);
     if (!EFI_ERROR(Status)) {
-      Status = LoadElfImage (Dst, (VOID *)&PldEntry);
+      if (PayloadInfo.Info.Identifier == UNIVERSAL_PAYLOAD_IDENTIFIER) {
+        DEBUG ((DEBUG_INFO, "Universal Payload %a v%08X\n", PayloadInfo.Info.ImageId, PayloadInfo.Info.Revision));
+        HobSize    = sizeof (UNIVERSAL_PAYLOAD_EXTRA_DATA) + sizeof(UNIVERSAL_PAYLOAD_EXTRA_DATA_ENTRY) * PayloadInfo.ImageCount;
+        PldImgInfo = (UNIVERSAL_PAYLOAD_EXTRA_DATA *)BuildGuidHob (&gUniversalPayloadExtraDataGuid, HobSize);
+        if (PldImgInfo != NULL) {
+          ZeroMem (PldImgInfo, HobSize);
+          PldImgInfo->Header.Revision = 0;
+          PldImgInfo->Count = PayloadInfo.ImageCount;
+          CopyMem (&PldImgInfo->Entry[0], &PayloadInfo.LoadedImage, sizeof(UNIVERSAL_PAYLOAD_EXTRA_DATA_ENTRY) * PayloadInfo.ImageCount);
+        }
+      }
+      PldMachine = (UINT16)PayloadInfo.Machine;
+      PldEntry   = (PAYLOAD_ENTRY)PayloadInfo.EntryPoint;
     }
   } else {
     if (FeaturePcdGet (PcdLinuxPayloadEnabled)) {

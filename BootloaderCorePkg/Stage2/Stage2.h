@@ -52,6 +52,9 @@
 #include <Guid/MpCpuTaskInfoHob.h>
 #include <Guid/PciRootBridgeInfoGuid.h>
 #include <UniversalPayload/PciRootBridges.h>
+#include <UniversalPayload/AcpiTable.h>
+#include <UniversalPayload/SmbiosTable.h>
+#include <UniversalPayload/SerialPortInfo.h>
 #include <Service/PlatformService.h>
 #include <Pi/PiBootMode.h>
 #include <FspEas.h>
@@ -61,6 +64,7 @@
 #include <Library/DebugAgentLib.h>
 #include <Library/ElfLib.h>
 #include <Library/SmbiosInitLib.h>
+#include <Library/UniversalPayloadLib.h>
 #include <VerInfo.h>
 
 

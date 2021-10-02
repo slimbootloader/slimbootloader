@@ -89,7 +89,7 @@ UpdateLoadedImage (
     } else if (IsBzImage((VOID *)File[0].Addr)) {
       LoadedImage->Flags |= LOADED_IMAGE_LINUX;
       TypeStr = "Kernel";
-    } else if (IsElfImage ((VOID *)File[0].Addr))  {
+    } else if (IsElfFormat ((VOID *)File[0].Addr))  {
       LoadedImage->Flags |= LOADED_IMAGE_ELF;
       TypeStr = "ELF";
     } else {
@@ -379,12 +379,13 @@ SetupBootImage (
   )
 {
   EFI_STATUS                 Status;
-  UINT32                    *EntryPoint;
+  UINTN                      EntryPoint;
   UINT8                     *NewCmdBuffer;
   MULTIBOOT_IMAGE           *MultiBoot;
   IMAGE_DATA                *CmdFile;
   IMAGE_DATA                *BootFile;
   LINUX_IMAGE               *LinuxImage;
+  LOADED_PAYLOAD_INFO        PayloadInfo;
   UINT32                     Size;
   UINT16                     Machine;
 
@@ -417,10 +418,13 @@ SetupBootImage (
   BootFile = &LoadedImage->Image.Common.BootFile;
 
   MultiBoot = &LoadedImage->Image.MultiBoot;
-  if (IsElfImage (BootFile->Addr)) {
+    if (IsElfFormat ((CONST UINT8 *)BootFile->Addr)) {
     DEBUG ((DEBUG_INFO, "Boot image is ELF format...\n"));
-    Status = LoadElfImage (BootFile->Addr, (VOID *)&EntryPoint);
+    EntryPoint = 0;
+    ZeroMem (&PayloadInfo, sizeof(PayloadInfo));
+    Status = LoadElfPayload (BootFile->Addr, &PayloadInfo);
     if (!EFI_ERROR (Status)) {
+      EntryPoint = PayloadInfo.EntryPoint;
       if (IsMultiboot (BootFile->Addr)) {
         DEBUG ((DEBUG_INFO, "and Image is Multiboot format\n"));
         SetupMultibootInfo (MultiBoot);
