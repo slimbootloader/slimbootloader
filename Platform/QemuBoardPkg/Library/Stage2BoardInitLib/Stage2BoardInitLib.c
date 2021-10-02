@@ -441,7 +441,7 @@ UpdateOsBootMediumInfo (
 
   FillBootOptionListFromCfgData (OsBootOptionList);
 
-  if (OsBootOptionList->CurrentBoot == MAX_BOOT_OPTION_CFGDATA_ENTRY) {
+  if (OsBootOptionList->CurrentBoot == MAX_BOOT_OPTION_ENTRY - 1) {
     //
     // Read boot order, it is passed in by QEMU command
     //   QEMU boot order (a=1 c=2 d=3 n=4 at CMOS 0x3D)
