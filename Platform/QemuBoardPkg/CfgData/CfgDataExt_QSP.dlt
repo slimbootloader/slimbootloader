@@ -16,6 +16,6 @@ PLATFORMID_CFG_DATA.PlatformId | 2
 PLAT_NAME_CFG_DATA.PlatformName            | 'QSP'
 
 GEN_CFG_DATA.PayloadId                     | 'AUTO'
-GEN_CFG_DATA.CurrentBoot                   | 16
+GEN_CFG_DATA.CurrentBoot                   | 31
 
 !include CfgDataExt_Inc.dlt

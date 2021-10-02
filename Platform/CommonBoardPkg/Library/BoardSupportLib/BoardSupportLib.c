@@ -124,7 +124,7 @@ FillBootOptionListFromCfgData (
   GenCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);
   if (GenCfgData != NULL) {
     OsBootOptionList->CurrentBoot = GenCfgData->CurrentBoot;
-    if (OsBootOptionList->CurrentBoot != MAX_BOOT_OPTION_CFGDATA_ENTRY) {
+    if (OsBootOptionList->CurrentBoot != MAX_BOOT_OPTION_ENTRY - 1) {
       if (OsBootOptionList->CurrentBoot >= OsBootOptionList->OsBootOptionCount) {
         OsBootOptionList->CurrentBoot = 0;
       }

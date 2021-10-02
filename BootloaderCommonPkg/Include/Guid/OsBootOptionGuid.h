@@ -14,6 +14,7 @@
 
 #define MAX_FILE_PATH_LEN          16
 #define MAX_EXTRA_IMAGE_NUM        4
+#define MAX_BOOT_OPTION_ENTRY      32
 
 #define BOOT_FLAGS_MISC            BIT0
 #define BOOT_FLAGS_CRASH_OS        BIT1
