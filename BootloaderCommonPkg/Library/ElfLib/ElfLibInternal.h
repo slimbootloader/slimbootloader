@@ -1,52 +1,86 @@
 /** @file
+  ELF library
 
-  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-#ifndef _ELF_LIB_INTERNAL_H_
-#define _ELF_LIB_INTERNAL_H_
+#ifndef _EFI_LIB_INTERNAL_H_
+#define _EFI_LIB_INTERNAL_H_
 
-#include <Uefi/UefiBaseType.h>
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Library/BaseMemoryLib.h>
-#include <IndustryStandard/PeImage.h>
+#include <Library/ElfLib.h>
 #include "ElfCommon.h"
 #include "Elf32.h"
 #include "Elf64.h"
 
-#if defined (MDE_CPU_IA32)
 
-typedef Elf32_Shdr      Elf_Shdr;
-typedef Elf32_Ehdr      Elf_Ehdr;
-typedef Elf32_Rel       Elf_Rel;
-typedef Elf32_Sym       Elf_Sym;
-typedef Elf32_Phdr      Elf_Phdr;
-typedef Elf32_Dyn       Elf_Dyn;
-#define ELFCLASS        ELFCLASS32
-#define ELF_R_TYPE(r)   ELF32_R_TYPE(r)
-#define ELF_R_SYM(r)    ELF32_R_SYM(r)
-#define ELF_EM          EM_386
+Elf32_Shdr *
+GetElf32SectionByIndex (
+  IN  UINT8                 *ImageBase,
+  IN  UINT32                Index
+  );
 
-#elif defined (MDE_CPU_X64)
+Elf64_Shdr *
+GetElf64SectionByIndex (
+  IN  UINT8                 *ImageBase,
+  IN  UINT32                Index
+  );
 
-typedef Elf64_Shdr      Elf_Shdr;
-typedef Elf64_Ehdr      Elf_Ehdr;
-typedef Elf64_Rel       Elf_Rel;
-typedef Elf64_Rela      Elf_Rela;
-typedef Elf64_Sym       Elf_Sym;
-typedef Elf64_Phdr      Elf_Phdr;
-typedef Elf64_Dyn       Elf_Dyn;
+Elf32_Phdr *
+GetElf32SegmentByIndex (
+  IN  UINT8                 *ImageBase,
+  IN  UINT32                Index
+  );
 
-#define ELFCLASS        ELFCLASS64
-#define ELF_R_TYPE(r)   ELF64_R_TYPE(r)
-#define ELF_R_SYM(r)    ELF64_R_SYM(r)
-#define ELF_EM          EM_X86_64
+Elf64_Phdr *
+GetElf64SegmentByIndex (
+  IN  UINT8                 *ImageBase,
+  IN  UINT32                Index
+  );
 
-#else
-#error Unknown Processor Type
+/**
+  Load ELF image which has 32-bit architecture
+
+  @param[in]  ElfCt               ELF image context pointer.
+
+  @retval EFI_SUCCESS         ELF binary is loaded successfully.
+  @retval Others              Loading ELF binary fails.
+
+**/
+EFI_STATUS
+LoadElf32Image (
+  IN    ELF_IMAGE_CONTEXT    *ElfCt
+  );
+
+/**
+  Load ELF image which has 64-bit architecture
+
+  @param[in]  ImageBase       Memory address of an image.
+  @param[out] EntryPoint      The entry point of loaded ELF image.
+
+  @retval EFI_SUCCESS         ELF binary is loaded successfully.
+  @retval Others              Loading ELF binary fails.
+
+**/
+EFI_STATUS
+LoadElf64Image (
+  IN    ELF_IMAGE_CONTEXT    *ElfCt
+  );
+
+
+EFI_STATUS
+RelocateElf32Sections  (
+  IN    ELF_IMAGE_CONTEXT      *ElfCt
+  );
+
+
+EFI_STATUS
+RelocateElf64Sections  (
+  IN    ELF_IMAGE_CONTEXT      *ElfCt
+  );
+
 #endif
-
-#endif // _ELF_LIB_INTERNAL_H_

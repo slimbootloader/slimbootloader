@@ -44,6 +44,7 @@
 #include <Library/UsbInitLib.h>
 #include <Library/UsbKbLib.h>
 #include <Library/ElfLib.h>
+#include <Library/UniversalPayloadLib.h>
 #include <Library/LinuxLib.h>
 #include <Library/ThunkLib.h>
 #include <Library/ContainerLib.h>

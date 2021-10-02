@@ -69,6 +69,7 @@
   StageLib
   ThunkLib
   LocalApicLib
+  UniversalPayloadLib
 
 [Guids]
   gFspReservedMemoryResourceHobGuid
@@ -93,6 +94,10 @@
   gSmmInformationGuid
   gLoaderMpCpuTaskInfoGuid
   gUniversalPayloadPciRootBridgeInfoGuid
+  gUniversalPayloadAcpiTableGuid
+  gUniversalPayloadSmbiosTableGuid
+  gUniversalPayloadSerialPortInfoGuid
+  gUniversalPayloadExtraDataGuid
 
 [Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdMaxLibraryDataEntry
@@ -133,6 +138,7 @@
   gPlatformModuleTokenSpaceGuid.PcdLinuxPayloadEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootHashMask
   gPlatformModuleTokenSpaceGuid.PcdSmmRebaseMode
+  gPlatformModuleTokenSpaceGuid.PcdAcpiTablesRsdp
 
 [Depex]
   TRUE

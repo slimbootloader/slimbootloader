@@ -11,7 +11,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #ifndef UNIVERSAL_PAYLOAD_SMBIOS_TABLE_H_
 #define UNIVERSAL_PAYLOAD_SMBIOS_TABLE_H_
 
-#include <Uefi.h>
 #include <UniversalPayload/UniversalPayload.h>
 
 #pragma pack (1)
