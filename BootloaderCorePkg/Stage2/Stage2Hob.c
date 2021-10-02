@@ -335,6 +335,149 @@ BuildBaseInfoHob (
   return LdrGlobal->LdrHobList;
 }
 
+/**
+  Carve out a bootloader reserved, AcpiNvs, AcpiRecalim and payload reserved memory range
+  from the system memory map.
+
+  @param MemoryMapInfo     Array of MemoryMapInfo structure containing memory map entry.
+
+  @retval EFI_SUCCESS           Memory ranges have been splitted successfully.
+  @retval EFI_UNSUPPORTED       Required memory range size is not page aligned.
+  @retval EFI_OUT_OF_RESOURCES  The system memory map top entry is too small.
+  @retval EFI_ABORTED           No memory range has been splitted.
+
+**/
+EFI_STATUS
+BuildUpldMemroyHobs (
+  IN   MEMORY_MAP_INFO         *MemoryMapInfo
+  )
+{
+  UINTN                        Idx;
+  MEMORY_MAP_ENTRY             *MapEntry;
+  EFI_RESOURCE_ATTRIBUTE_TYPE  Attribue;
+  EFI_RESOURCE_TYPE            ResourceType;
+
+  Attribue = EFI_RESOURCE_ATTRIBUTE_PRESENT |
+             EFI_RESOURCE_ATTRIBUTE_INITIALIZED |
+             EFI_RESOURCE_ATTRIBUTE_TESTED |
+             EFI_RESOURCE_ATTRIBUTE_UNCACHEABLE |
+             EFI_RESOURCE_ATTRIBUTE_WRITE_COMBINEABLE |
+             EFI_RESOURCE_ATTRIBUTE_WRITE_THROUGH_CACHEABLE |
+             EFI_RESOURCE_ATTRIBUTE_WRITE_BACK_CACHEABLE;
+
+  for (Idx = 0; Idx < MemoryMapInfo->Count; Idx++) {
+    MapEntry     = &MemoryMapInfo->Entry[Idx];
+    ResourceType = EFI_RESOURCE_SYSTEM_MEMORY;
+    switch (MapEntry->Type) {
+    case MEM_MAP_TYPE_ACPI_RECLAIM:
+      BuildMemoryAllocationHob (MapEntry->Base, MapEntry->Size, EfiACPIReclaimMemory);
+      break;
+    case MEM_MAP_TYPE_ACPI_NVS:
+      BuildMemoryAllocationHob (MapEntry->Base, MapEntry->Size, EfiACPIMemoryNVS);
+      break;
+    case MEM_MAP_TYPE_RESERVED:
+      ResourceType = EFI_RESOURCE_MEMORY_RESERVED;
+      break;
+    default:
+      break;
+    }
+    BuildResourceDescriptorHob (ResourceType, Attribue, MapEntry->Base, MapEntry->Size);
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Build PCI Root Bridge HOBs required by Universal Payload
+
+**/
+VOID
+EFIAPI
+BuildUpldPciRootBridgeHob (
+  VOID
+)
+{
+  UNIVERSAL_PAYLOAD_PCI_ROOT_BRIDGES  *UpldRootBridges;
+  PCI_ROOT_BRIDGE_INFO_HOB            *RootBridgeInfoHob;
+  UINT8                                Count;
+  UINT8                                Index;
+  UINT8                                BarType;
+  UINT32                               Length;
+
+  RootBridgeInfoHob = (PCI_ROOT_BRIDGE_INFO_HOB *) GetGuidHobData (NULL, NULL,  &gLoaderPciRootBridgeInfoGuid);
+  if (RootBridgeInfoHob != NULL) {
+
+    Count  = RootBridgeInfoHob->Count;
+    Length = sizeof (UNIVERSAL_PAYLOAD_PCI_ROOT_BRIDGES) + sizeof (UNIVERSAL_PAYLOAD_PCI_ROOT_BRIDGE) * Count;
+    UpldRootBridges = (UNIVERSAL_PAYLOAD_PCI_ROOT_BRIDGES *)BuildGuidHob (&gUniversalPayloadPciRootBridgeInfoGuid, Length);
+    if (UpldRootBridges != NULL) {
+      ZeroMem (UpldRootBridges, Length);
+      UpldRootBridges->Header.Revision  = UNIVERSAL_PAYLOAD_PCI_ROOT_BRIDGES_REVISION;
+      UpldRootBridges->Header.Length    = (UINT16)Length;
+      UpldRootBridges->ResourceAssigned = TRUE;
+      UpldRootBridges->Count = Count;
+      for (Index = 0; Index < Count; Index ++) {
+        UpldRootBridges->RootBridge[Index].HID = EISA_PNP_ID(0x0A03);
+        UpldRootBridges->RootBridge[Index].UID = Index;
+        UpldRootBridges->RootBridge[Index].Segment   = 0;
+        UpldRootBridges->RootBridge[Index].Supports  = EFI_PCI_ATTRIBUTE_IDE_PRIMARY_IO |
+                                                       EFI_PCI_ATTRIBUTE_IDE_SECONDARY_IO |
+                                                       EFI_PCI_ATTRIBUTE_ISA_IO_16 |
+                                                       EFI_PCI_ATTRIBUTE_ISA_MOTHERBOARD_IO |
+                                                       EFI_PCI_ATTRIBUTE_VGA_MEMORY |
+                                                       EFI_PCI_ATTRIBUTE_VGA_IO_16 |
+                                                       EFI_PCI_ATTRIBUTE_VGA_PALETTE_IO_16;
+        UpldRootBridges->RootBridge[Index].Attributes = UpldRootBridges->RootBridge[Index].Supports;
+        UpldRootBridges->RootBridge[Index].AllocationAttributes = EFI_PCI_HOST_BRIDGE_COMBINE_MEM_PMEM |
+                                                                  EFI_PCI_HOST_BRIDGE_MEM64_DECODE;
+
+        UpldRootBridges->RootBridge[Index].Bus.Base  = RootBridgeInfoHob->Entry[Index].BusBase;
+        UpldRootBridges->RootBridge[Index].Bus.Limit = RootBridgeInfoHob->Entry[Index].BusLimit;
+
+        BarType = PciBarTypeIo16 - 1;
+        if (RootBridgeInfoHob->Entry[Index].Resource[BarType].ResLength > 0) {
+          UpldRootBridges->RootBridge[Index].Io.Base  = RootBridgeInfoHob->Entry[Index].Resource[BarType].ResBase;
+          UpldRootBridges->RootBridge[Index].Io.Limit = RootBridgeInfoHob->Entry[Index].Resource[BarType].ResBase + RootBridgeInfoHob->Entry[Index].Resource[BarType].ResLength - 1;
+        } else {
+          UpldRootBridges->RootBridge[Index].Io.Base = MAX_UINT16;
+        }
+
+        BarType = PciBarTypeMem32 - 1;
+        if (RootBridgeInfoHob->Entry[Index].Resource[BarType].ResLength > 0) {
+          UpldRootBridges->RootBridge[Index].Mem.Base  = RootBridgeInfoHob->Entry[Index].Resource[BarType].ResBase;
+          UpldRootBridges->RootBridge[Index].Mem.Limit = RootBridgeInfoHob->Entry[Index].Resource[BarType].ResBase + RootBridgeInfoHob->Entry[Index].Resource[BarType].ResLength - 1;
+        } else {
+          UpldRootBridges->RootBridge[Index].Mem.Base = MAX_UINT32;
+        }
+
+        BarType = PciBarTypeMem64 - 1;
+        if (RootBridgeInfoHob->Entry[Index].Resource[BarType].ResLength > 0) {
+          UpldRootBridges->RootBridge[Index].MemAbove4G.Base  = RootBridgeInfoHob->Entry[Index].Resource[BarType].ResBase;
+          UpldRootBridges->RootBridge[Index].MemAbove4G.Limit = RootBridgeInfoHob->Entry[Index].Resource[BarType].ResBase + RootBridgeInfoHob->Entry[Index].Resource[BarType].ResLength - 1;
+        } else {
+          UpldRootBridges->RootBridge[Index].MemAbove4G.Base = MAX_UINT64;
+        }
+
+        BarType = PciBarTypePMem32 - 1;
+        if (RootBridgeInfoHob->Entry[Index].Resource[BarType].ResLength > 0) {
+          UpldRootBridges->RootBridge[Index].PMem.Base  = RootBridgeInfoHob->Entry[Index].Resource[BarType].ResBase;
+          UpldRootBridges->RootBridge[Index].PMem.Limit = RootBridgeInfoHob->Entry[Index].Resource[BarType].ResBase + RootBridgeInfoHob->Entry[Index].Resource[BarType].ResLength - 1;
+        } else {
+          UpldRootBridges->RootBridge[Index].PMem.Base = MAX_UINT32;
+        }
+
+        BarType = PciBarTypePMem64 - 1;
+        if (RootBridgeInfoHob->Entry[Index].Resource[BarType].ResLength > 0) {
+          UpldRootBridges->RootBridge[Index].PMemAbove4G.Base  = RootBridgeInfoHob->Entry[Index].Resource[BarType].ResBase;
+          UpldRootBridges->RootBridge[Index].PMemAbove4G.Limit = RootBridgeInfoHob->Entry[Index].Resource[BarType].ResBase + RootBridgeInfoHob->Entry[Index].Resource[BarType].ResLength - 1;
+        } else {
+          UpldRootBridges->RootBridge[Index].PMemAbove4G.Base = MAX_UINT64;
+        }
+
+      }
+    }
+  }
+}
 
 /**
   Build HOBs required by Universal Payload
@@ -346,89 +489,66 @@ BuildUniversalPayloadHob (
   VOID
 )
 {
-  UINT32                               Length;
-  UNIVERSAL_PAYLOAD_PCI_ROOT_BRIDGES  *UpldRootBridges;
-  PCI_ROOT_BRIDGE_INFO_HOB            *RootBridgeInfoHob;
-  UINT8                                Count;
-  UINT8                                Index;
-  UINT8                                BarType;
+  SERIAL_PORT_INFO                    *SerialPortInfo;
+  MEMORY_MAP_INFO                     *MemoryMapInfo;
+  UNIVERSAL_PAYLOAD_SERIAL_PORT_INFO  *PldSerialPortInfo;
+  UNIVERSAL_PAYLOAD_ACPI_TABLE        *AcpiHob;
+  UNIVERSAL_PAYLOAD_SMBIOS_TABLE      *SmbiosHob;
+  UINT32                               RegEax;
+  UINT8                                PhysicalAddressBits;
 
-  RootBridgeInfoHob = (PCI_ROOT_BRIDGE_INFO_HOB *) GetGuidHobData (NULL, NULL,  &gLoaderPciRootBridgeInfoGuid);
-  if (RootBridgeInfoHob == NULL) {
-    return;
+  // Memory resource hob
+  MemoryMapInfo = (MEMORY_MAP_INFO *) GetGuidHobData (NULL, NULL, &gLoaderMemoryMapInfoGuid);
+  if (MemoryMapInfo != NULL) {
+    BuildUpldMemroyHobs (MemoryMapInfo);
   }
 
-  Count  = RootBridgeInfoHob->Count;
-  Length = sizeof (UNIVERSAL_PAYLOAD_PCI_ROOT_BRIDGES) + sizeof (UNIVERSAL_PAYLOAD_PCI_ROOT_BRIDGE) * Count;
-  UpldRootBridges = (UNIVERSAL_PAYLOAD_PCI_ROOT_BRIDGES *)BuildGuidHob (&gUniversalPayloadPciRootBridgeInfoGuid, Length);
-  if (UpldRootBridges != NULL) {
-    ZeroMem (UpldRootBridges, Length);
-    UpldRootBridges->Header.Revision  = UNIVERSAL_PAYLOAD_PCI_ROOT_BRIDGES_REVISION;
-    UpldRootBridges->Header.Length    = (UINT16)Length;
-    UpldRootBridges->ResourceAssigned = TRUE;
-    UpldRootBridges->Count = Count;
-    for (Index = 0; Index < Count; Index ++) {
-      UpldRootBridges->RootBridge[Index].HID = EISA_PNP_ID(0x0A03);
-      UpldRootBridges->RootBridge[Index].UID = Index;
-      UpldRootBridges->RootBridge[Index].Segment   = 0;
-      UpldRootBridges->RootBridge[Index].Supports  = EFI_PCI_ATTRIBUTE_IDE_PRIMARY_IO |
-                                                     EFI_PCI_ATTRIBUTE_IDE_SECONDARY_IO |
-                                                     EFI_PCI_ATTRIBUTE_ISA_IO_16 |
-                                                     EFI_PCI_ATTRIBUTE_ISA_MOTHERBOARD_IO |
-                                                     EFI_PCI_ATTRIBUTE_VGA_MEMORY |
-                                                     EFI_PCI_ATTRIBUTE_VGA_IO_16 |
-                                                     EFI_PCI_ATTRIBUTE_VGA_PALETTE_IO_16;
-      UpldRootBridges->RootBridge[Index].Attributes = UpldRootBridges->RootBridge[Index].Supports;
-      UpldRootBridges->RootBridge[Index].AllocationAttributes = EFI_PCI_HOST_BRIDGE_COMBINE_MEM_PMEM |
-                                                                EFI_PCI_HOST_BRIDGE_MEM64_DECODE;
+  // ACPI table HOB
+  AcpiHob = BuildGuidHob (&gUniversalPayloadAcpiTableGuid, sizeof (UNIVERSAL_PAYLOAD_ACPI_TABLE));
+  if (AcpiHob != NULL) {
+    ZeroMem (AcpiHob, sizeof (UNIVERSAL_PAYLOAD_ACPI_TABLE));
+    AcpiHob->Header.Revision = UNIVERSAL_PAYLOAD_ACPI_TABLE_REVISION;
+    AcpiHob->Header.Length   = sizeof (UNIVERSAL_PAYLOAD_ACPI_TABLE);
+    AcpiHob->Rsdp            = PcdGet32 (PcdAcpiTablesRsdp);
+  }
 
-      UpldRootBridges->RootBridge[Index].Bus.Base  = RootBridgeInfoHob->Entry[Index].BusBase;
-      UpldRootBridges->RootBridge[Index].Bus.Limit = RootBridgeInfoHob->Entry[Index].BusLimit;
+  // SMBIOS table HOB
+  SmbiosHob = BuildGuidHob (&gUniversalPayloadSmbiosTableGuid, sizeof (UNIVERSAL_PAYLOAD_SMBIOS_TABLE));
+  if (SmbiosHob != NULL) {
+    ZeroMem (SmbiosHob, sizeof (UNIVERSAL_PAYLOAD_SMBIOS_TABLE));
+    SmbiosHob->Header.Revision  = UNIVERSAL_PAYLOAD_SMBIOS_TABLE_REVISION;
+    SmbiosHob->Header.Length    = sizeof (UNIVERSAL_PAYLOAD_SMBIOS_TABLE);
+    SmbiosHob->SmBiosEntryPoint = PcdGet32 (PcdSmbiosTablesBase);
+  }
 
-      BarType = PciBarTypeIo16 - 1;
-      if (RootBridgeInfoHob->Entry[Index].Resource[BarType].ResLength > 0) {
-        UpldRootBridges->RootBridge[Index].Io.Base  = RootBridgeInfoHob->Entry[Index].Resource[BarType].ResBase;
-        UpldRootBridges->RootBridge[Index].Io.Limit = RootBridgeInfoHob->Entry[Index].Resource[BarType].ResBase + RootBridgeInfoHob->Entry[Index].Resource[BarType].ResLength - 1;
-      } else {
-        UpldRootBridges->RootBridge[Index].Io.Base = MAX_UINT16;
-      }
-
-      BarType = PciBarTypeMem32 - 1;
-      if (RootBridgeInfoHob->Entry[Index].Resource[BarType].ResLength > 0) {
-        UpldRootBridges->RootBridge[Index].Mem.Base  = RootBridgeInfoHob->Entry[Index].Resource[BarType].ResBase;
-        UpldRootBridges->RootBridge[Index].Mem.Limit = RootBridgeInfoHob->Entry[Index].Resource[BarType].ResBase + RootBridgeInfoHob->Entry[Index].Resource[BarType].ResLength - 1;
-      } else {
-        UpldRootBridges->RootBridge[Index].Mem.Base = MAX_UINT32;
-      }
-
-      BarType = PciBarTypeMem64 - 1;
-      if (RootBridgeInfoHob->Entry[Index].Resource[BarType].ResLength > 0) {
-        UpldRootBridges->RootBridge[Index].MemAbove4G.Base  = RootBridgeInfoHob->Entry[Index].Resource[BarType].ResBase;
-        UpldRootBridges->RootBridge[Index].MemAbove4G.Limit = RootBridgeInfoHob->Entry[Index].Resource[BarType].ResBase + RootBridgeInfoHob->Entry[Index].Resource[BarType].ResLength - 1;
-      } else {
-        UpldRootBridges->RootBridge[Index].MemAbove4G.Base = MAX_UINT64;
-      }
-
-      BarType = PciBarTypePMem32 - 1;
-      if (RootBridgeInfoHob->Entry[Index].Resource[BarType].ResLength > 0) {
-        UpldRootBridges->RootBridge[Index].PMem.Base  = RootBridgeInfoHob->Entry[Index].Resource[BarType].ResBase;
-        UpldRootBridges->RootBridge[Index].PMem.Limit = RootBridgeInfoHob->Entry[Index].Resource[BarType].ResBase + RootBridgeInfoHob->Entry[Index].Resource[BarType].ResLength - 1;
-      } else {
-        UpldRootBridges->RootBridge[Index].PMem.Base = MAX_UINT32;
-      }
-
-      BarType = PciBarTypePMem64 - 1;
-      if (RootBridgeInfoHob->Entry[Index].Resource[BarType].ResLength > 0) {
-        UpldRootBridges->RootBridge[Index].PMemAbove4G.Base  = RootBridgeInfoHob->Entry[Index].Resource[BarType].ResBase;
-        UpldRootBridges->RootBridge[Index].PMemAbove4G.Limit = RootBridgeInfoHob->Entry[Index].Resource[BarType].ResBase + RootBridgeInfoHob->Entry[Index].Resource[BarType].ResLength - 1;
-      } else {
-        UpldRootBridges->RootBridge[Index].PMemAbove4G.Base = MAX_UINT64;
-      }
-
+  // Update serial port hob
+  SerialPortInfo = (SERIAL_PORT_INFO *)GetGuidHobData (NULL, NULL, &gLoaderSerialPortInfoGuid);
+  if (SerialPortInfo != NULL) {
+    PldSerialPortInfo = BuildGuidHob (&gUniversalPayloadSerialPortInfoGuid, sizeof (UNIVERSAL_PAYLOAD_SERIAL_PORT_INFO));
+    if (PldSerialPortInfo != NULL) {
+      ZeroMem (PldSerialPortInfo, sizeof (UNIVERSAL_PAYLOAD_SERIAL_PORT_INFO));
+      PldSerialPortInfo->Header.Revision = UNIVERSAL_PAYLOAD_SERIAL_PORT_INFO_REVISION;
+      PldSerialPortInfo->Header.Length   = sizeof (UNIVERSAL_PAYLOAD_SERIAL_PORT_INFO);
+      PldSerialPortInfo->UseMmio         = (SerialPortInfo->Type == 2) ? TRUE : FALSE;
+      PldSerialPortInfo->RegisterBase    = SerialPortInfo->BaseAddr;
+      PldSerialPortInfo->BaudRate        = SerialPortInfo->Baud;
+      PldSerialPortInfo->RegisterStride  = (UINT8) SerialPortInfo->RegWidth;
     }
   }
-}
 
+  // Build CPU memory space and IO space hob
+  AsmCpuid (0x80000000, &RegEax, NULL, NULL, NULL);
+  if (RegEax >= 0x80000008) {
+    AsmCpuid (0x80000008, &RegEax, NULL, NULL, NULL);
+    PhysicalAddressBits = (UINT8) RegEax;
+  } else {
+    PhysicalAddressBits  = 36;
+  }
+  BuildCpuHob (PhysicalAddressBits, 16);
+
+  // Build PCI root bridge hob
+  BuildUpldPciRootBridgeHob ();
+}
 
 
 /**
