@@ -1,0 +1,6 @@
+Fsp.bsf
+FspDbg.bin
+FspRel.bin
+Fsp*.h
+*.mcb
+ElkhartlakePkg/Include/MemInfoHob.h
