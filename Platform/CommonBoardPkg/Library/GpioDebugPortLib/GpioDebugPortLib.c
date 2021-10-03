@@ -48,7 +48,7 @@ GpioDebugPortWriteByte (
   UINT64  Ts1;
 
   Baud = PcdGet32 (PcdGpioDebugPortBaudRate);
-  Freq = GetTimeStampFrequency ();
+  Freq = GetTimeStampAccurateFrequency ();
 
   // Prepare 10 bits, 1 start bit, 8 data bits, 1 stop bits
   Word = (Value << 1) | BIT9;
@@ -56,7 +56,7 @@ GpioDebugPortWriteByte (
   for (Idx = 0; Idx < 10; Idx++) {
     SetGpioTxPin (Word & (1 << Idx));
     // Wait for 1 bit calculated by current baud rate
-    Ts1 = Ts0 + DivU64x32 (MultU64x32(Freq, (Idx + 1) * 1000), Baud);
+    Ts1 = Ts0 + DivU64x32 (MultU64x32(Freq, Idx + 1), Baud);
     while (ReadTimeStamp () < Ts1) {
       CpuPause ();
     }
