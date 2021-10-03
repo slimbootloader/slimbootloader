@@ -1,0 +1,5 @@
+VerInfo.txt
+*/VbtBin/
+!QemuBoardPkg/VbtBin/
+!CoffeelakeBoardPkg/VbtBin/
+!ApollolakeBoardPkg/VbtBin/Vbt_*.*
