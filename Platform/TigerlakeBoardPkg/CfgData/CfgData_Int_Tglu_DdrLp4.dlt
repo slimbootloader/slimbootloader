@@ -44,3 +44,4 @@ PLATFORM_CFG_DATA.PayloadSelGpio.PinNumber                  | 15
 #
 GEN_CFG_DATA.PayloadId                                      | 'AUTO'
 GPIO_CFG_DATA.GpioPinConfig0_GPP_B15.GPIODirection_GPP_B15  | 0xB
+SILICON_CFG_DATA.PchHdaEnable                               | 0x00

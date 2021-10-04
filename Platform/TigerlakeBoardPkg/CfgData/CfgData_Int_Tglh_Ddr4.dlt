@@ -568,3 +568,4 @@ GPIO_CFG_DATA.GpioPinConfig1_GPD11.GPIOSkip_GPD11           | 1           # TGL-
 #
 GEN_CFG_DATA.PayloadId                                      | 'AUTO'
 GPIO_CFG_DATA.GpioPinConfig0_GPP_F10.GPIODirection_GPP_F10  | 11
+SILICON_CFG_DATA.PchHdaEnable                               | 0x00
