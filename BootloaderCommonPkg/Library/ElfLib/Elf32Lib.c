@@ -86,6 +86,9 @@ RelocateElf32Sections  (
     CurPtr  = CurPtr + Elf32Hdr->e_shentsize;
     if ((Rel32Shdr->sh_type == SHT_REL) || (Rel32Shdr->sh_type == SHT_RELA)) {
       Sec32Shdr = GetElf32SectionByIndex (ElfCt->FileBase, Rel32Shdr->sh_info);
+      if (Sec32Shdr == NULL) {
+        continue;
+      }
       if (!IsTextShdr(Sec32Shdr) && !IsDataShdr(Sec32Shdr)) {
         continue;
       }
