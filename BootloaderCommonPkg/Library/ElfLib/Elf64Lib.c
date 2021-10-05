@@ -87,6 +87,9 @@ RelocateElf64Sections  (
     CurPtr  = CurPtr + Elf64Hdr->e_shentsize;
     if ((Rel64Shdr->sh_type == SHT_REL) || (Rel64Shdr->sh_type == SHT_RELA)) {
       Sec64Shdr = GetElf64SectionByIndex (ElfCt->FileBase, Rel64Shdr->sh_info);
+      if (Sec64Shdr == NULL) {
+        continue;
+      }
       if (!IsTextShdr(Sec64Shdr) && !IsDataShdr(Sec64Shdr)) {
         continue;
       }
