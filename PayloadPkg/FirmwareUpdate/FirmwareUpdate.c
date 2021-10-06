@@ -1066,11 +1066,13 @@ InitFirmwareUpdate (
       Status = FindImage(FwUpdCompStatus[Count].HardwareInstance, CapsuleImage, CapsuleSize, &ImgHdr);
       if (!EFI_ERROR (Status)) {
         //
-        // Start firmware udpate for the component
+        // Start firmware udpate for the component, exclude CSME driver (CSMD)
         //
-        Status = ApplyFwImage(CapsuleImage, CapsuleSize, ImgHdr, &ResetRequired);
-        if (EFI_ERROR (Status)) {
-          DEBUG((DEBUG_ERROR, "ApplyFwImage failed with Status = %r\n", Status));
+        if ((UINT32)ImgHdr->UpdateHardwareInstance != FW_UPDATE_COMP_CSME_DRIVER) {
+          Status = ApplyFwImage(CapsuleImage, CapsuleSize, ImgHdr, &ResetRequired);
+          if (EFI_ERROR (Status)) {
+            DEBUG((DEBUG_ERROR, "ApplyFwImage failed with Status = %r\n", Status));
+          }
         }
       } else {
         DEBUG((DEBUG_ERROR, "FindImage failed with Status = %r\n", Status));
