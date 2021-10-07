@@ -1423,21 +1423,20 @@ UpdateFspConfig (
       if (RegionType < FlashRegionMax) {
         if (RegionType != FlashRegionBios) {
           Status = GetComponentInfo (FLASH_MAP_SIG_SPI_IAS1, &SpiIasBase, NULL);
-          if (EFI_ERROR (Status)) {
-            return;
-          }
-          SpiIasBase &= 0xFFFF;
-          Status = SpiGetRegionAddress (RegionType, &BaseAddress, &TotalSize);
           if (!EFI_ERROR (Status)) {
-            if ((PcdGet32 (PcdSpiIasImage1RegionSize) + PcdGet32 (PcdSpiIasImage2RegionSize)) <= TotalSize) {
-              IasProtected = TRUE;
-              FspsConfig->PchWriteProtectionEnable[PrIndex] = TRUE;
-              FspsConfig->PchReadProtectionEnable[PrIndex]  = FALSE;
-              FspsConfig->PchProtectedRangeBase[PrIndex]    = (UINT16) ((BaseAddress + SpiIasBase) >> 12);
-              FspsConfig->PchProtectedRangeLimit[PrIndex]   = (UINT16) ((BaseAddress + SpiIasBase +
-                                                          PcdGet32 (PcdSpiIasImage1RegionSize) +
-                                                          PcdGet32 (PcdSpiIasImage2RegionSize) - 1) >> 12);
-              PrIndex++;
+            SpiIasBase &= 0xFFFF;
+            Status = SpiGetRegionAddress (RegionType, &BaseAddress, &TotalSize);
+            if (!EFI_ERROR (Status)) {
+              if ((PcdGet32 (PcdSpiIasImage1RegionSize) + PcdGet32 (PcdSpiIasImage2RegionSize)) <= TotalSize) {
+                IasProtected = TRUE;
+                FspsConfig->PchWriteProtectionEnable[PrIndex] = TRUE;
+                FspsConfig->PchReadProtectionEnable[PrIndex]  = FALSE;
+                FspsConfig->PchProtectedRangeBase[PrIndex]    = (UINT16) ((BaseAddress + SpiIasBase) >> 12);
+                FspsConfig->PchProtectedRangeLimit[PrIndex]   = (UINT16) ((BaseAddress + SpiIasBase +
+                                                            PcdGet32 (PcdSpiIasImage1RegionSize) +
+                                                            PcdGet32 (PcdSpiIasImage2RegionSize) - 1) >> 12);
+                PrIndex++;
+              }
             }
           }
         } else {
