@@ -57,12 +57,9 @@ def create_conf (workspace, sbl_source):
                 os.path.join(sbl_source, 'BaseTools/Conf/%s.template' % name),
                 os.path.join(workspace, 'Conf/%s.txt' % name))
 
-def prep_env (toolchain_preferred = ''):
+def prep_env ():
     sblsource = os.environ['SBL_SOURCE']
     os.chdir(sblsource)
-
-    # Verify toolchains first
-    verify_toolchains(toolchain_preferred)
 
     # Update Environment vars
     if os.name == 'nt':
@@ -80,9 +77,6 @@ def prep_env (toolchain_preferred = ''):
         os.environ['SBL_KEY_DIR'] = os.path.join(sblsource, '..', 'SblKeys')
 
     create_conf (os.environ['WORKSPACE'], sblsource)
-
-    # Check if BaseTools has been compiled
-    rebuild_basetools ()
 
 def get_board_config_file (check_dir, board_cfgs):
     platform_dir = os.path.join (check_dir, 'Platform')
@@ -246,6 +240,7 @@ class BaseBoard(object):
         self.TOP_SWAP_SIZE         = 0
         self.REDUNDANT_SIZE        = 0
 
+        self._TOOL_CHAIN           = ''
         self._PAYLOAD_NAME         = ''
         self._FSP_PATH_NAME        = ''
         self._EXTRA_INC_PATH       = []
@@ -271,14 +266,12 @@ class BaseBoard(object):
 class Build(object):
 
     def __init__(self, board):
-        self._toolchain                    = os.environ['TOOL_CHAIN']
         self._workspace                    = os.environ['WORKSPACE']
         self._board                        = board
         self._image                        = "SlimBootloader.bin"
         self._arch                         = board.BUILD_ARCH
         self._target                       = 'RELEASE' if board.RELEASE_MODE  else 'NOOPT' if board.NO_OPT_MODE else 'DEBUG'
         self._fsp_basename                 = 'FspDbg'  if board.FSPDEBUG_MODE else 'FspRel'
-        self._fv_dir                       = os.path.join(self._workspace, 'Build', 'BootloaderCorePkg', '%s_%s' % (self._target, self._toolchain), 'FV')
         self._key_dir                      = self._board._KEY_DIR
         self._img_list                     = board.GetImageLayout()
         self._pld_list                     = get_payload_list (board._PAYLOAD_NAME.split(';'))
@@ -1251,8 +1244,24 @@ class Build(object):
         x = subprocess.call([sys.executable, 'Build.py', self._arch.lower()],  cwd=vtf_dir)
         if x: raise Exception ('Failed to build reset vector !')
 
+    def early_build_init(self):
+        toolchain_dict = None
+        if getattr(self._board, "GetPlatformToolchainVersions", None):
+            toolchain_dict = self._board.GetPlatformToolchainVersions()
+
+        # Verify toolchains first
+        verify_toolchains(self._board._TOOL_CHAIN, toolchain_dict)
+        self._toolchain = os.environ['TOOL_CHAIN']
+        self._fv_dir = os.path.join(self._workspace, 'Build', 'BootloaderCorePkg', '%s_%s' % (self._target, self._toolchain), 'FV')
+
+        # Check if BaseTools has been compiled
+        rebuild_basetools ()
+
     def build(self):
         print("Build [%s] ..." % self._board.BOARD_NAME)
+
+        # Run early build init
+        self.early_build_init()
 
         # Run pre-build
         self.board_build_hook ('pre-build:before')
@@ -1398,7 +1407,7 @@ def main():
     sp = ap.add_subparsers(help='command')
 
     def cmd_build(args):
-        prep_env (args.toolchain)
+        prep_env ()
 
         for index, name in enumerate(board_names):
             if args.board == name:
@@ -1409,6 +1418,7 @@ def main():
                                         NO_OPT_MODE       = args.noopt,       \
                                         FSPDEBUG_MODE     = args.fspdebug,    \
                                         USE_VERSION       = args.usever,      \
+                                        _TOOL_CHAIN       = args.toolchain,   \
                                         _PAYLOAD_NAME     = args.payload,     \
                                         _FSP_PATH_NAME    = args.fsppath,     \
                                         KEY_GEN           = args.keygen
@@ -1470,7 +1480,13 @@ def main():
     cleanp.set_defaults(func=cmd_clean)
 
     def cmd_build_dsc(args):
-        prep_env (args.toolchain)
+        prep_env ()
+
+        # Verify toolchains first
+        verify_toolchains(args.toolchain)
+
+        # Check if BaseTools has been compiled
+        rebuild_basetools ()
 
         # Build a specified DSC file
         def_list = []
