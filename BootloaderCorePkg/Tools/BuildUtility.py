@@ -995,8 +995,11 @@ def check_for_toolchain(toolchain_preferred):
         os.environ[toolchain_prefix] = toolchain_path
     return True
 
-def verify_toolchains(toolchain_preferred):
+def verify_toolchains(toolchain_preferred, toolchain_dict = None):
     print('Checking Toolchain Versions...')
+
+    if toolchain_dict:
+        build_toolchains.update(toolchain_dict)
 
     valid  = check_for_python()
     valid &= check_for_openssl()

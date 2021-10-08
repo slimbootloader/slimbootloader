@@ -186,6 +186,12 @@ class Board(BaseBoard):
         #   VbtBin folder.
         self._MULTI_VBT_FILE      = {1:'Vbt800x600.dat', 2:'Vbt1024x768.dat'}
 
+    def GetPlatformToolchainVersions(self):
+        version_dict = {
+            'iasl'      : '20160318',
+        }
+        return version_dict
+
     def PlatformBuildHook (self, build, phase):
         if phase == 'post-build:before':
           # Create PTEST.bin
