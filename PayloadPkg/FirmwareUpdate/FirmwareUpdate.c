@@ -22,7 +22,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/PayloadMemoryAllocationLib.h>
 #include <Guid/MemoryMapInfoGuid.h>
 #include <Guid/LoaderPlatformInfoGuid.h>
-#include <Library/ResetSystemLib.h>
 #include <Library/SecureBootLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include <Library/FirmwareUpdateLib.h>
@@ -357,9 +356,7 @@ EnforceFwUpdatePolicy (
   }
 
   if (ResetRequired) {
-    DEBUG((DEBUG_ERROR, "Reset required to proceed with the firmware update.\n"));
-    ResetSystem (EfiResetCold);
-    CpuDeadLoop ();
+    Reboot (EfiResetCold);
   }
 
   return EFI_SUCCESS;
@@ -406,9 +403,7 @@ AfterUpdateEnforceFwUpdatePolicy (
   }
 
   if (FwPolicy.Fields.Reboot == 1) {
-    DEBUG((DEBUG_ERROR, "Reset required to proceed with the firmware update.\n"));
-    ResetSystem (EfiResetWarm);
-    CpuDeadLoop ();
+    Reboot (EfiResetWarm);
   }
 
   //
@@ -922,10 +917,13 @@ ApplyFwImage (
   OUT BOOLEAN                         *ResetRequired
   )
 {
-  EFI_STATUS      Status;
-  UINT32          Signature;
-  VOID            *CsmeUpdateInData;
-  BOOT_PARTITION  Partition;
+  EFI_STATUS              Status;
+  UINT32                  Signature;
+  BOOT_PARTITION          Partition;
+  VOID                    *CsmeUpdateInData;
+  FIRMWARE_UPDATE_HEADER  *CapHdr;
+
+  CapHdr = (FIRMWARE_UPDATE_HEADER *)CapImage;
 
   Status = EFI_SUCCESS;
   *ResetRequired = FALSE;
@@ -938,7 +936,12 @@ ApplyFwImage (
 
   switch (Signature) {
   case FW_UPDATE_COMP_BIOS_REGION:
-    Status = UpdateSystemFirmware(ImageHdr);
+    if ((CapHdr->CapsuleFlags & CAPSULE_FLAG_FORCE_BIOS_UPDATE) != 0) {
+      Status = UpdateFullBiosRegion (ImageHdr);
+      *ResetRequired = TRUE;
+    } else {
+      Status = UpdateSystemFirmware (ImageHdr);
+    }
     break;
   case FW_UPDATE_COMP_CSME_REGION:
     Status = EFI_UNSUPPORTED;
@@ -949,8 +952,7 @@ ApplyFwImage (
       Partition = (BOOT_PARTITION)GetCurrentBootPartition ();
       if (Partition == BackupPartition) {
         SetBootPartition (PrimaryPartition);
-        ResetSystem (EfiResetCold);
-        CpuDeadLoop ();
+        Reboot (EfiResetCold);
       }
       CsmeUpdateInData = InitCsmeUpdInputData();
       if (CsmeUpdateInData != NULL) {
@@ -992,6 +994,7 @@ InitFirmwareUpdate (
   BOOLEAN                     ResetRequired;
   FW_UPDATE_COMP_STATUS       FwUpdCompStatus[MAX_FW_COMPONENTS];
   EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImgHdr;
+  FIRMWARE_UPDATE_HEADER        *CapHdr;
 
   ImgHdr = NULL;
   FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
@@ -1032,6 +1035,29 @@ InitFirmwareUpdate (
                           MAX_FW_COMPONENTS * sizeof(FW_UPDATE_COMP_STATUS), (UINT8 *)&FwUpdCompStatus);
   if (EFI_ERROR (Status)) {
     DEBUG((DEBUG_ERROR, "BootMediaRead. offset: 0x%llx, Status = 0x%x\n", (FwUpdStatusOffset + sizeof(FW_UPDATE_STATUS)), Status));
+    return Status;
+  }
+
+  //
+  // Handle full BIOS region update separately.
+  // It needs to consider cases that the user updates firmware from SBL FW to UEFI FW.
+  // SBL FWU state machine and status stored in flash should not be updated in a successful
+  // update since the new FW might have used this region for other purpose.
+  //
+  CapHdr = (FIRMWARE_UPDATE_HEADER *)CapsuleImage;
+  if ((CapHdr->CapsuleFlags & CAPSULE_FLAG_FORCE_BIOS_UPDATE) != 0) {
+    // Only expect a single BIOS component update.
+    Status = FindImage (FwUpdCompStatus[0].HardwareInstance, CapsuleImage, CapsuleSize, &ImgHdr);
+    if (!EFI_ERROR (Status)) {
+      Status = ApplyFwImage(CapsuleImage, CapsuleSize, ImgHdr, &ResetRequired);
+    }
+    DEBUG ((DEBUG_INFO, "Full BIOS region update status: %r\n", Status));
+    if (EFI_ERROR (Status)) {
+      // Clear state machine anyway to prevent FWU loop.
+      SetStateMachineFlag (FW_UPDATE_SM_DONE);
+    }
+    // Always reboot since full BIOS was updated
+    Reboot (EfiResetCold);
     return Status;
   }
 
@@ -1091,8 +1117,7 @@ InitFirmwareUpdate (
       // Reset system if required
       //
       if (ResetRequired == TRUE) {
-        ResetSystem (EfiResetCold);
-        CpuDeadLoop ();
+        Reboot (EfiResetCold);
       }
     }
   }
@@ -1254,7 +1279,5 @@ PayloadMain (
     DEBUG((DEBUG_ERROR, "EndFirmwareUpdate, Status = 0x%x\n", Status));
   }
 
-  DEBUG((DEBUG_ERROR, "Reset required to proceed with the firmware update.\n"));
-  ResetSystem (EfiResetCold);
-  CpuDeadLoop ();
+  Reboot (EfiResetCold);
 }

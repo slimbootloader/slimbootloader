@@ -1,7 +1,7 @@
 /** @file
   Internal functions to update firmware in boot media.
 
-  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -457,6 +457,48 @@ UpdateBootPartition (
     WrittenSize += UpdateRegion->UpdateSize;
   }
 
+  return Status;
+}
+
+/**
+  Perform full BIOS region update.
+
+  @param[in] ImageHdr       Pointer to fw mgmt capsule Image header
+
+  @retval  EFI_SUCCESS      Update successful.
+  @retval  other            error occurred during firmware update
+**/
+EFI_STATUS
+UpdateFullBiosRegion (
+  IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
+  )
+{
+  EFI_STATUS               Status;
+  UINT32                   BiosRgnBase;
+  UINT32                   BiosRgnSize;
+  FIRMWARE_UPDATE_REGION   UpdateRegion;
+
+  DEBUG((DEBUG_INFO, "Update full BIOS region\n"));
+  Status = BootMediaGetRegion (FlashRegionBios, &BiosRgnBase, &BiosRgnSize);
+  if (!EFI_ERROR (Status)) {
+    if (ImageHdr->UpdateImageSize > BiosRgnSize) {
+      DEBUG((DEBUG_ERROR, "BIOS image in capsule is bigger than BIOS region on flash\n"));
+      Status = EFI_UNSUPPORTED;
+    }
+  }
+  if (ALIGN_DOWN(ImageHdr->UpdateImageSize, SIZE_4KB) != ImageHdr->UpdateImageSize) {
+    DEBUG((DEBUG_ERROR, "BIOS image size in capsule is not 4KB aligned\n"));
+    Status = EFI_UNSUPPORTED;
+  }
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  ZeroMem (&UpdateRegion, sizeof(UpdateRegion));
+  UpdateRegion.ToUpdateAddress = BiosRgnSize - ImageHdr->UpdateImageSize;
+  UpdateRegion.UpdateSize      = ImageHdr->UpdateImageSize;
+  UpdateRegion.SourceAddress   = (UINT8 *)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
+  Status = UpdateBootRegion (&UpdateRegion, 0, UpdateRegion.UpdateSize);
   return Status;
 }
 
@@ -966,4 +1008,20 @@ UpdateSblComponent (
   }
 
   return Status;
+}
+
+/**
+  Reboot platform.
+
+  @param[in]  ResetType   Cold, Warm or Shutdown
+
+**/
+VOID
+Reboot (
+  IN  EFI_RESET_TYPE        ResetType
+  )
+{
+  DEBUG ((DEBUG_INFO, "Reset required to proceed with the firmware update.\n\n"));
+  ResetSystem (ResetType);
+  CpuDeadLoop ();
 }

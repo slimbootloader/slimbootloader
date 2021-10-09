@@ -71,6 +71,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define CREATOR_REV_INTEL           0x20090903
 #define ACPI_FWST_OEM_REV           0x00001000
 
+#define CAPSULE_FLAG_FORCE_BIOS_UPDATE    BIT31
+
 typedef enum {
   TopSwapSet,
   TopSwapClear
@@ -156,7 +158,7 @@ typedef struct {
   UINT32                      Version;
   EFI_GUID                    UpdateImageTypeId;
   UINT8                       UpdateImageIndex;
-  UINT8                       reserved_bytes[3];
+  UINT8                       ReservedBytes[3];
   UINT32                      UpdateImageSize;
   UINT32                      UpdateVendorCodeSize;
   UINT64                      UpdateHardwareInstance;
