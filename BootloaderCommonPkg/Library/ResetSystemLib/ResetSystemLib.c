@@ -1,7 +1,7 @@
 /** @file
   Reset System Library
 
-  Copyright (c) 2006 - 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2006 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -51,6 +51,8 @@ ResetWarm (
   VOID
   )
 {
+  // In case of memory persistency across warm reset, need to flush the cache.
+  AsmWbinvd ();
   IoWrite8 ((UINTN) R_RST_CNT, V_RST_CNT_HARDSTARTSTATE);
   IoWrite8 ((UINTN) R_RST_CNT, V_RST_CNT_HARDRESET);
 }
