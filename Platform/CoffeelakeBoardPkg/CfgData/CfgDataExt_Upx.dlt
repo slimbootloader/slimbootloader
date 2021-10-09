@@ -458,7 +458,3 @@ GPIO_CFG_DATA.GpioPinConfig0_GPP_E22 | 0x0350A381
 GPIO_CFG_DATA.GpioPinConfig1_GPP_E22 | 0x04162001
 GPIO_CFG_DATA.GpioPinConfig0_GPP_E23 | 0x0350A281
 GPIO_CFG_DATA.GpioPinConfig1_GPP_E23 | 0x04172001
-
-MEMORY_CFG_DATA.PchTraceHubMode          | 0x2
-MEMORY_CFG_DATA.PlatformDebugConsent     | 0x1
-SILICON_CFG_DATA.DebugInterfaceEnable    | 0x1
