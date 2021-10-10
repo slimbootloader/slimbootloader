@@ -36,7 +36,8 @@ def main():
     # run test cases
     test_cases = [
       ('firmware_update.py',  [tst_img, fwu_dir]),
-      ('linux_boot.py'     ,  [tst_img, img_dir])
+      ('linux_boot.py'     ,  [tst_img, img_dir]),
+      ('uefi_upld_boot.py' ,  [tst_img, img_dir]),
     ]
 
     for test_file, test_args in test_cases:

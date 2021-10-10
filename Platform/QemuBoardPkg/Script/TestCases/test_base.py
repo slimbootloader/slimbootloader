@@ -16,6 +16,17 @@ import zipfile
 import urllib.request
 from   threading import Timer
 
+def get_tool_dir (sbl_dir):
+    if os.name == 'nt':
+        return os.path.join(sbl_dir, 'BaseTools', 'Bin', 'Win32')
+    else:
+        return os.path.join(sbl_dir, 'BaseTools', 'BinWrappers', 'PosixLike')
+
+def get_file_data (file, mode = 'rb'):
+    return open(file, mode).read()
+
+def gen_file_from_object (file, object, mode='b'):
+    open (file, 'w' + mode).write(object)
 
 def unzip_file (zip_file, tgt_dir):
     with zipfile.ZipFile(zip_file, 'r') as zip_ref:
@@ -33,7 +44,7 @@ def create_dirs (dirs):
             os.mkdir (dir_name)
 
 
-def run_qemu (bios_img, fwu_path, fwu_mode=False, timeout=0):
+def run_qemu (bios_img, fwu_path, fwu_mode=False, boot_order='', timeout=0):
     if os.name == 'nt':
         path = r"C:\Program Files\qemu\qemu-system-x86_64"
     else:
@@ -43,7 +54,7 @@ def run_qemu (bios_img, fwu_path, fwu_mode=False, timeout=0):
         "-cpu", "max", "-serial", "mon:stdio",
         "-m", "256M", "-drive",
         "id=mydrive,if=none,format=raw,file=fat:rw:%s" % fwu_path, "-device",
-        "ide-hd,drive=mydrive", "-boot", "order=d%s" % ('an' if fwu_mode else ''),
+        "ide-hd,drive=mydrive", "-boot", "order=d%s" % ('an' if fwu_mode else boot_order),
         "-no-reboot", "-drive", "file=%s,if=pflash,format=raw" % bios_img
     ]
 
