@@ -283,7 +283,7 @@ def main():
         output.extend(lines)
 
     # Try final normal boot
-    lines = run_qemu(bios_img, fwu_dir, True if fwu_mode != 0 else False, 3)
+    lines = run_qemu(bios_img, fwu_dir, True if fwu_mode != 0 else False, timeout = 3)
     output.extend(lines)
 
     # check test result
