@@ -1,6 +1,6 @@
 ## @ ifwi_utility.py
 #
-# copyright (c) 2019, intel corporation. all rights reserved.<BR>
+# copyright (c) 2019 - 2021, intel corporation. all rights reserved.<BR>
 # SPDX-license-identifier: BSD-2-clause-patent
 #
 ##
@@ -673,22 +673,29 @@ class IFWI_PARSER:
 
     @staticmethod
     def parse_bios_region (img_data, base_off = 0):
-        offset = bytes_to_value(img_data[-8:-4]) - (0x100000000 - len(img_data))
-        if offset <0 or offset >= len(img_data) - 0x10:
+        rgn_size = len(img_data)
+        offset = bytes_to_value(img_data[-8:-4]) - (0x100000000 - rgn_size)
+        if offset < 0 or offset >= rgn_size - sizeof(FLASH_MAP_DESC):
             return None
 
         fla_map_off = offset
-        if bytes_to_value(img_data[fla_map_off:fla_map_off+4]) != 0x504d4c46:
+        mst_desc    = FLASH_MAP_DESC.from_buffer (img_data, fla_map_off)
+        if mst_desc.sig != FLASH_MAP.FLASH_MAP_SIGNATURE:
             return None
 
-        bios_comp  = COMPONENT('BIOS', COMPONENT.COMP_TYPE['RGN'], base_off, len(img_data))
+        sbl_size   = mst_desc.size
+        sbl_off    = rgn_size - sbl_size
+        if sbl_off < 0:
+            return None
+
+        bios_comp  = COMPONENT('BIOS', COMPONENT.COMP_TYPE['RGN'], base_off, rgn_size)
         curr_part  = -1
         fla_map_str = FLASH_MAP.from_buffer (img_data, fla_map_off)
         entry_num  = (fla_map_str.length - sizeof(FLASH_MAP)) // sizeof(FLASH_MAP_DESC)
         for idx in range (entry_num):
             idx   = entry_num - 1 - idx
             desc  = FLASH_MAP_DESC.from_buffer (img_data, fla_map_off + sizeof(FLASH_MAP) + idx * sizeof(FLASH_MAP_DESC))
-            file_comp = COMPONENT(desc.sig.decode(), COMPONENT.COMP_TYPE['FILE'], desc.offset + base_off, desc.size)
+            file_comp = COMPONENT(desc.sig.decode(), COMPONENT.COMP_TYPE['FILE'], desc.offset + sbl_off + base_off, desc.size)
             if curr_part != desc.flags & 0x4F:
                 curr_part = desc.flags & 0x4F
                 part_comp = COMPONENT('%s' % (FLASH_MAP.FLASH_MAP_REGION[curr_part]), COMPONENT.COMP_TYPE['PART'], desc.offset + base_off, desc.size)
