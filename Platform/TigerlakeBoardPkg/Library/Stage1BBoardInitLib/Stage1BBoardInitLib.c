@@ -305,6 +305,17 @@ UpdateFspConfig (
   Fspmcfg->EnhancedInterleave   = MemCfgData->EnhancedInterleave;
   Fspmcfg->RankInterleave       = MemCfgData->RankInterleave;
   Fspmcfg->RhPrevention         = MemCfgData->RhPrevention;
+
+    switch (GetPlatformId ()) {
+    case BoardIdTglHDdr4SODimm:
+    case 0xF:
+      Fspmcfg->PrmrrSize          = 0x100000;
+      Fspmcfg->MmioSizeAdjustment = 0x308;
+      break;
+    default:
+      break;
+  }
+
   if(MemCfgData->RhPrevention == 1) {
     Fspmcfg->RhSolution         = MemCfgData->RhSolution;
   }
