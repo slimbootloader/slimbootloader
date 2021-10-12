@@ -116,6 +116,10 @@ typedef struct {
   ///            If the value is set to 0x00000000, then this API is not available in this component.
   ///
   UINT32  FspMultiPhaseSiInitEntryOffset;
+  ///
+  /// Byte 0x4C: Offset for the FSPV API
+  ///
+  UINT32  FspValidationInitEntryOffset;
 } FSP_INFO_HEADER;
 
 ///

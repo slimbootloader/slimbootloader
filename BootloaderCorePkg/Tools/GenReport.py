@@ -117,7 +117,9 @@ class FSP_INFORMATION_HEADER(Structure):
         ('NotifyPhaseEntryOffset', c_uint32),
         ('FspMemoryInitEntryOffset', c_uint32),
         ('TempRamExitEntryOffset', c_uint32),
-        ('FspSiliconInitEntryOffset', c_uint32)
+        ('FspSiliconInitEntryOffset', c_uint32),
+        ('FspMultiPhaseSiInitEntryOffset', c_uint32),
+        ('FspValidationInitEntryOffset', c_uint32)
     ]
 
 

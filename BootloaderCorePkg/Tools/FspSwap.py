@@ -119,10 +119,11 @@ def swap_fsp (args):
         print ('\nRebasing FSP ...')
         fsp_tool_dir = os.path.realpath (os.path.join (script_dir, '../../IntelFsp2Pkg/Tools'))
         cmd = ['python', os.path.join(fsp_tool_dir, 'SplitFspBin.py'), 'rebase', '-f', args.fsp_bin,
-               '-c', 't', 'm', 's', '-b',
+               '-c', 't', 'm', 's', 'v', '-b',
                '0x%08x' % fsp['t']['base'],
                '0x%08x' % fsp['m']['base'],
                '0x%08x' % fsp['s']['base'],
+               '0x%08x' % fsp['v']['base'],
                '-n', fsp_rebase_name,
                '-o', args.out_dir
               ]

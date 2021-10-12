@@ -482,4 +482,23 @@ EFI_STATUS
   IN FSP_MULTI_PHASE_PARAMS     *MultiPhaseSiInitParamPtr
 );
 
+/**
+  This FSP API is called as a payload.
+  FspValidationInit APIs provide an alternate method to inject validation capabilities.
+
+  @param[in] FspvUpdDataPtr     Pointer to the FSPV_UPD data structure.
+                                If NULL, FSP will use the default parameters.
+
+  @retval EFI_SUCCESS                 FSP execution environment was initialized successfully.
+  @retval EFI_INVALID_PARAMETER       Input parameters are invalid.
+  @retval EFI_UNSUPPORTED             The FSP calling conditions were not met.
+  @retval EFI_DEVICE_ERROR            FSP initialization failed.
+  @retval FSP_STATUS_RESET_REQUIREDx  A reset is required. These status codes will not be returned during S3.
+**/
+typedef
+EFI_STATUS
+(EFIAPI *FSP_VALIDATION_INIT) (
+  IN  VOID    *FspvUpdDataPtr
+  );
+
 #endif

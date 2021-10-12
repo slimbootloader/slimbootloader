@@ -26,11 +26,14 @@
   gPlatformModuleTokenSpaceGuid.PcdFSPMBase               | 0x00000000 | UINT32 | 0x20000003
   gPlatformModuleTokenSpaceGuid.PcdFSPMUpdSize            | 0x00000000 | UINT32 | 0x20000004
   gPlatformModuleTokenSpaceGuid.PcdFSPMSize               | 0x00000000 | UINT32 | 0x20000005
+  gPlatformModuleTokenSpaceGuid.PcdFSPVBase               | 0x00000000 | UINT32 | 0x20000006
+  gPlatformModuleTokenSpaceGuid.PcdFSPVUpdSize            | 0x00000000 | UINT32 | 0x20000007
+  gPlatformModuleTokenSpaceGuid.PcdFSPVSize               | 0x00000000 | UINT32 | 0x20000008
  #gPlatformModuleTokenSpaceGuid.PcdFSPSBase
-  gPlatformModuleTokenSpaceGuid.PcdFSPSSize               | 0x00000000 | UINT32 | 0x20000007
-  gPlatformModuleTokenSpaceGuid.PcdFSPSUpdSize            | 0x00000000 | UINT32 | 0x20000008
+  gPlatformModuleTokenSpaceGuid.PcdFSPSSize               | 0x00000000 | UINT32 | 0x20000009
+  gPlatformModuleTokenSpaceGuid.PcdFSPSUpdSize            | 0x00000000 | UINT32 | 0x2000000A
 
-  gPlatformModuleTokenSpaceGuid.PcdPciMmcfgBase           | 0x00000000 | UINT32 | 0x20000009
+  gPlatformModuleTokenSpaceGuid.PcdPciMmcfgBase           | 0x00000000 | UINT32 | 0x2000000B
   gPlatformModuleTokenSpaceGuid.PcdFlashBaseAddress       | 0x00000000 | UINT32 | 0x20000010
   gPlatformModuleTokenSpaceGuid.PcdFlashSize              | 0x00000000 | UINT32 | 0x20000011
   gPlatformModuleTokenSpaceGuid.PcdFlashBlockSize         | 0x00001000 | UINT32 | 0x20000012
