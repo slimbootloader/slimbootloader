@@ -546,13 +546,10 @@ AuthenticateCapsule (
   )
 {
   EFI_STATUS                Status;
+
   FIRMWARE_UPDATE_HEADER    *Header;
   PUB_KEY_HDR               *PubKeyHdr;
   SIGNATURE_HDR             *SignatureHdr;
-  FW_UPDATE_STATUS          FwUpdStatus;
-  UINT32                    FwUpdStatusOffset;
-
-  FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
 
   Header = (FIRMWARE_UPDATE_HEADER *)FwImage;
   if (FwSize < sizeof (FIRMWARE_UPDATE_HEADER)) {
@@ -583,46 +580,12 @@ AuthenticateCapsule (
 
   PubKeyHdr       = (PUB_KEY_HDR *) (FwImage + Header->PubKeyOffset);
   SignatureHdr    = (SIGNATURE_HDR *) (FwImage + Header->SignatureOffset);
-
-  //
-  // Copy fw update status structure to memory
-  //
-  Status = BootMediaRead (FwUpdStatusOffset, sizeof(FW_UPDATE_STATUS), (UINT8 *)&FwUpdStatus);
-  if (EFI_ERROR (Status)) {
-    DEBUG((DEBUG_ERROR, "BootMediaRead failed with status: %r\n", Status));
-    return Status;
-  }
-
-  //
-  // If capsule signature in flash does not match with capsule signature,
-  // it indicates that capsule image is modified in between firmware update.
-  //
-  if (*(UINT32 *)(FwUpdStatus.CapsuleSig) != 0xFFFFFFFF) {
-    if (CompareMem(&FwUpdStatus.CapsuleSig, SignatureHdr, FW_UPDATE_SIG_LENGTH) != 0) {
-      return EFI_COMPROMISED_DATA;
-    }
-  }
-
   Status = DoRsaVerify (FwImage, Header->SignatureOffset, HASH_USAGE_PUBKEY_FWU, SignatureHdr, PubKeyHdr, PcdGet8(PcdCompSignHashAlg), NULL, NULL);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Image verification failed, %r!\n", Status));
     return EFI_SECURITY_VIOLATION;
   }
 
-  //
-  // If this is first time processing the capsule, save the capsule signature in flash until
-  // the end of firmware update
-  //
-  if (*(UINT32 *)(FwUpdStatus.CapsuleSig) != 0xFFFFFFFF) {
-
-    CopyMem((VOID *)&FwUpdStatus.CapsuleSig, (VOID *)SignatureHdr, FW_UPDATE_SIG_LENGTH);
-
-    Status = BootMediaWrite (FwUpdStatusOffset, sizeof(FW_UPDATE_STATUS), (UINT8 *)&FwUpdStatus);
-    if (EFI_ERROR (Status)) {
-      DEBUG((DEBUG_ERROR, "BootMediaWrite failed with status %r\n", Status));
-      return Status;
-    }
-  }
   return EFI_SUCCESS;
 }
 
@@ -689,6 +652,8 @@ ProcessCapsule (
   FIRMWARE_UPDATE_HEADER        *FwUpdHeader;
   EFI_FW_MGMT_CAP_HEADER        *CapHeader;
   EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImgHeader;
+  SIGNATURE_HDR                 *SignatureHdr;
+  UINT32                        SigLen;
 
   FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
 
@@ -728,6 +693,8 @@ ProcessCapsule (
   // set SM to capsule processing stage, this will reset back to
   // init at the end of firmware update
   //
+  SignatureHdr = (SIGNATURE_HDR *) (FwImage + ((FIRMWARE_UPDATE_HEADER *)FwImage)->SignatureOffset);
+  SigLen       = MIN (SignatureHdr->SigSize, sizeof(FwUpdStatus.CapsuleSig));
   if (FwUpdStatus.StateMachine == FW_UPDATE_SM_INIT) {
     //
     // Initialize reserved region structure
@@ -735,6 +702,11 @@ ProcessCapsule (
     FwUpdStatus.Signature = FW_UPDATE_STATUS_SIGNATURE;
     FwUpdStatus.Version = FW_UPDATE_STATUS_VERSION;
     FwUpdStatus.Length = sizeof(FW_UPDATE_STATUS);
+
+    //
+    // Save the current capsule signature into flash
+    //
+    CopyMem (FwUpdStatus.CapsuleSig, SignatureHdr->Signature, SigLen);
 
     Status = BootMediaWrite(FwUpdStatusOffset, sizeof(FW_UPDATE_STATUS), (UINT8 *)&FwUpdStatus);
     if (EFI_ERROR(Status)) {
@@ -751,6 +723,15 @@ ProcessCapsule (
     //
     ClearFwUpdateTrigger();
   } else {
+
+    //
+    // If capsule signature in flash does not match with capsule signature,
+    // it indicates that capsule image is modified in between firmware update.
+    //
+    if (CompareMem (FwUpdStatus.CapsuleSig, SignatureHdr->Signature, SigLen) != 0) {
+      return EFI_COMPROMISED_DATA;
+    }
+
     return EFI_SUCCESS;
   }
 
@@ -1006,35 +987,46 @@ InitFirmwareUpdate (
   Status = GetCapsuleImage (&CapsuleImage, &CapsuleSize);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "GetCapsuleImage failed with status = %r\n", Status));
-    return Status;
   }
-  DEBUG ((DEBUG_INFO, "CapsuleImage: 0x%p, CapsuleSize: 0x%X\n", CapsuleImage, CapsuleSize));
 
   //
   // 2. Authenticate capsule image.
   //
-  Status = AuthenticateCapsule (CapsuleImage, CapsuleSize);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "AuthenticateCapsule, Status = 0x%x\n", Status));
-    return Status;
+  if (!EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "CapsuleImage: 0x%p, CapsuleSize: 0x%X\n", CapsuleImage, CapsuleSize));
+    Status = AuthenticateCapsule (CapsuleImage, CapsuleSize);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "AuthenticateCapsule, Status = 0x%x\n", Status));
+    }
   }
 
   //
   // 3. Process capsule image.
   //
-  Status = ProcessCapsule (CapsuleImage, CapsuleSize);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "ProcessCapsule, Status = 0x%x\n", Status));
-    return Status;
+  if (!EFI_ERROR (Status)) {
+    Status = ProcessCapsule (CapsuleImage, CapsuleSize);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "ProcessCapsule, Status = 0x%x\n", Status));
+    }
   }
 
   //
   // Read the component structure in the reserved region
   //
-  Status = BootMediaRead ((FwUpdStatusOffset + sizeof(FW_UPDATE_STATUS)), \
-                          MAX_FW_COMPONENTS * sizeof(FW_UPDATE_COMP_STATUS), (UINT8 *)&FwUpdCompStatus);
+  if (!EFI_ERROR (Status)) {
+    Status = BootMediaRead ((FwUpdStatusOffset + sizeof(FW_UPDATE_STATUS)), \
+                            MAX_FW_COMPONENTS * sizeof(FW_UPDATE_COMP_STATUS), (UINT8 *)&FwUpdCompStatus);
+    if (EFI_ERROR (Status)) {
+      DEBUG((DEBUG_ERROR, "BootMediaRead. offset: 0x%llx, Status = 0x%x\n", (FwUpdStatusOffset + sizeof(FW_UPDATE_STATUS)), Status));
+    }
+  }
+
   if (EFI_ERROR (Status)) {
-    DEBUG((DEBUG_ERROR, "BootMediaRead. offset: 0x%llx, Status = 0x%x\n", (FwUpdStatusOffset + sizeof(FW_UPDATE_STATUS)), Status));
+    //
+    // Error condition
+    // Clear state machine anyway to prevent FWU loop.
+    //
+    SetStateMachineFlag (FW_UPDATE_SM_DONE);
     return Status;
   }
 
