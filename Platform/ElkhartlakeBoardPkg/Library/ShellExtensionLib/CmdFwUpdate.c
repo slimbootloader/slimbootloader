@@ -75,6 +75,7 @@ ShellCommandFwUpdateFunc (
   //
   PlatformService = (PLATFORM_SERVICE *) GetServiceBySignature (PLATFORM_SERVICE_SIGNATURE);
   if (PlatformService != NULL && PlatformService->ResetSystem != NULL) {
+    AsmWbinvd ();
     PlatformService->ResetSystem(EfiResetWarm);
   }
 
