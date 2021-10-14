@@ -66,6 +66,9 @@ class Board(BaseBoard):
         # 0: Disable  1: Enable  2: Auto (disable for UEFI payload, enable for others)
         self.ENABLE_SMM_REBASE     = 2
 
+        # Allow boot through GRUB config
+        self.ENABLE_GRUB_CONFIG   = 1
+
         if self.HAVE_FIT_TABLE:
             self.FIT_ENTRY_MAX_NUM  = 10
 
@@ -184,7 +187,7 @@ class Board(BaseBoard):
         if self.NON_REDUNDANT_SIZE < Non_Redundant_Components_Size:
             raise Exception ('Non redundant region size 0x%x is smaller than required components size 0x%x!' % (self.NON_REDUNDANT_SIZE, Non_Redundant_Components_Size))
 
-        self.PLD_HEAP_SIZE        = 0x04000000
+        self.PLD_HEAP_SIZE        = 0x08000000
         self.PLD_STACK_SIZE       = 0x00020000
         self.PLD_RSVD_MEM_SIZE    = 0x00500000
 

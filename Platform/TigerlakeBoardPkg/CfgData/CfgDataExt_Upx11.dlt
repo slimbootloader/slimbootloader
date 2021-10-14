@@ -31,6 +31,7 @@ MEMORY_CFG_DATA.PcieClkSrcUsage                             | { 0x80, 0x80, 0x80
 
 SILICON_CFG_DATA.PcieRpAspm                                 | { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4}
 SILICON_CFG_DATA.PcieRpL1Substates                          | { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x2, 0x2, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1}
+
 SILICON_CFG_DATA.EcEnable                                   | 0
 
 # UPX i11 USB2 port 8 does not respond to USB command, so disable it
@@ -39,6 +40,11 @@ SILICON_CFG_DATA.PortUsb20Enable.Usb2Port8                  | 0
 FEATURES_CFG_DATA.Features.FusaEnable                       | 0
 
 GEN_CFG_DATA.PayloadId                                      | 0
+
+# BOOT_OPTION_CFG_DATA_0 is USB boot
+# Allow to boot from USB partition 0 and FAT filesystem by default
+BOOT_OPTION_CFG_DATA_0.SwPart_0                             | 0
+BOOT_OPTION_CFG_DATA_0.FsType_0                             | 0
 
 GPIO_CFG_DATA.GpioPinConfig0_GPP_A00        | 0x0550A381
 GPIO_CFG_DATA.GpioPinConfig1_GPP_A00        | 0x02002001
