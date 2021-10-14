@@ -759,12 +759,12 @@ BoardInit (
   IN  BOARD_INIT_PHASE  InitPhase
 )
 {
-  UINTN                 PmcBase;
+  UINTN                 PmcMmioBase;
   PLT_DEVICE_TABLE      *PltDeviceTable;
   UINT8                 BoardId;
   SILICON_CFG_DATA      *SiCfgData;
 
-  PmcBase = MM_PCI_ADDRESS (0, PCI_DEVICE_NUMBER_PCH_PMC, PCI_FUNCTION_NUMBER_PCH_PMC, 0);
+  PmcMmioBase = PCH_PWRM_BASE_ADDRESS;
 
   switch (InitPhase) {
   case PreConfigInit:
@@ -820,8 +820,7 @@ DEBUG_CODE_END();
     // Set the DISB bit in PCH (DRAM Initialization Scratchpad Bit)
     // prior to starting DRAM Initialization Sequence.
     //
-    MmioOr32 (PmcBase + R_PCH_PMC_GEN_PMCON_A, B_PCH_PMC_GEN_PMCON_A_DISB);
-
+    MmioOr32 (PmcMmioBase + R_PMC_PWRM_GEN_PMCON_A, B_PCH_PMC_GEN_PMCON_A_DISB);
     switch (GetPlatformId ()) {
       case BoardIdTglHDdr4SODimm:
       case 0xF:
@@ -833,14 +832,12 @@ DEBUG_CODE_END();
         ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTablePreMemTglUDdr4) / sizeof (mGpioTablePreMemTglUDdr4[0]), (UINT8*)mGpioTablePreMemTglUDdr4);
         break;
     }
-
     break;
   case PostMemoryInit:
     //
     // Clear the DISB bit after completing DRAM Initialization Sequence
     //
-    MmioAnd32 (PmcBase + R_PCH_PMC_GEN_PMCON_A, 0);
-
+    MmioAnd32 (PmcMmioBase + R_PMC_PWRM_GEN_PMCON_A, (UINT32)~B_PCH_PMC_GEN_PMCON_A_DISB);
     break;
   case PreTempRamExit:
     break;
