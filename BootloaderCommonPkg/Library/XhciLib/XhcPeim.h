@@ -1,7 +1,7 @@
 /** @file
 Private Header file for Usb Host Controller PEIM
 
-Copyright (c) 2014 - 2016, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2014 - 2021, Intel Corporation. All rights reserved.<BR>
 
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
@@ -21,6 +21,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/IoLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/IoMmuLib.h>
+#include <Library/TimeStampLib.h>
 
 typedef struct _PEI_XHC_DEV PEI_XHC_DEV;
 typedef struct _USB_DEV_CONTEXT USB_DEV_CONTEXT;
