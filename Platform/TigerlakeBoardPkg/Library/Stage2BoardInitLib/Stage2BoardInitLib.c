@@ -1363,9 +1363,8 @@ UpdateFspConfig (
     // Inform FSP to skip debug UART init
     FspsConfig->SerialIoDebugUartNumber = DebugPort;
     FspsConfig->SerialIoUartMode[DebugPort] = 0x4;
-    if (S0IX_STATUS() == 1) {
-      FspsConfig->SerialIoUartMode[DebugPort] = 1;    // Force UART to PCI mode to enable OS to have full control
-    }
+  } else if (S0IX_STATUS() == 1) {  // legacy UART
+    FspsConfig->SerialIoUartMode[2] = 1;  // Force UART to PCI mode to enable OS to have full control
   }
 
   //
@@ -1713,10 +1712,6 @@ UpdateFspConfig (
 
     // PCH SERIAL_UART_CONFIG
     for (Index = 0; Index < GetPchMaxSerialIoUartControllersNum (); Index++) {
-      FspsConfig->SerialIoUartParity[Index]          = 1;
-      FspsConfig->SerialIoUartDataBits[Index]        = 0x8;
-      FspsConfig->SerialIoUartStopBits[Index]        = 1;
-      FspsConfig->SerialIoUartAutoFlow[Index]        = 1;
       FspsConfig->SerialIoUartPowerGating[Index]     = 2;
       FspsConfig->SerialIoUartDmaEnable[Index]       = 1;
       FspsConfig->SerialIoUartDbg2[Index]            = 0;

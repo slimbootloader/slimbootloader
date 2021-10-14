@@ -97,6 +97,12 @@ TccModePreMemConfig (
   FspmUpd->FspmConfig.DsoTuningEnPreMem      = TccCfgData->TccTuning;
   FspmUpd->FspmConfig.TccErrorLogEnPreMem    = TccCfgData->TccErrorLog;
 
+  // S0ix is disabled if TCC is enabled.
+  if (PLAT_FEAT.S0ixEnable == 1) {
+    PLAT_FEAT.S0ixEnable = 0;
+    DEBUG ((DEBUG_INFO, "S0ix is turned off when TCC is enabled\n"));
+  }
+
   // Load TCC stream config from container
   TccStreamBase = NULL;
   TccStreamSize = 0;
@@ -118,6 +124,9 @@ TccModePreMemConfig (
       FspmUpd->FspmConfig.PowerDownMode          = PolicyConfig->MemPowerDown;
       FspmUpd->FspmConfig.DisPgCloseIdleTimeout  = PolicyConfig->DisPgCloseIdle;
       PLAT_FEAT.S0ixEnable                       = PolicyConfig->Sstates;
+      if (PLAT_FEAT.S0ixEnable == 1) {
+        DEBUG ((DEBUG_INFO, "S0ix is forced turning on by TCC DSO\n"));
+      }
       DEBUG ((DEBUG_INFO, "Dump TCC DSO BIOS settings:\n"));
       DumpHex (2, 0, sizeof(BIOS_SETTINGS), PolicyConfig);
     }
@@ -503,9 +512,15 @@ UpdateFspConfig (
   FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag (CDATA_FEATURES_TAG);
   if (FeaturesCfgData != NULL) {
     PLAT_FEAT.S0ixEnable = FeaturesCfgData->Features.S0ix;
+
+    // S0ix is disabled if TSN is enabled.
+    if ((PLAT_FEAT.S0ixEnable == 1) && (SiCfgData != NULL) && (SiCfgData->PchTsnEnable == 1)) {
+      PLAT_FEAT.S0ixEnable = 0;
+      DEBUG ((DEBUG_INFO, "S0ix is turned off when TSN is enabled\n"));
+    }
   }
 
-    // Update TCC related UPDs if TCC is enabled
+  // Update TCC related UPDs if TCC is enabled
   if (FeaturePcdGet (PcdTccEnabled)) {
     TccModePreMemConfig (FspmUpd);
   }

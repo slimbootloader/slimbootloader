@@ -8,6 +8,8 @@
 ##
 #
 
+FEATURES_CFG_DATA.Features.S0ix   | 0
+
 # Enable TCC config data
 TCC_CFG_DATA.TccEnable   | 1
 TCC_CFG_DATA.TccTuning   | 1
