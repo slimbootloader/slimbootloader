@@ -8,6 +8,8 @@
 ##
 #
 
+FEATURES_CFG_DATA.Features.S0ix   | 0
+
 SILICON_CFG_DATA.PchTsnEnable     | 1
 
 SILICON_CFG_DATA.PchTsnLinkSpeed  | 3
