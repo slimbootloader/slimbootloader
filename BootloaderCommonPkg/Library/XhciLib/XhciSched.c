@@ -785,11 +785,10 @@ XhcPeiExecTransfer (
   )
 {
   EFI_STATUS    Status;
-  UINTN         Index;
-  UINT64        Loop;
   UINT8         SlotId;
   UINT8         Dci;
   BOOLEAN       Finished;
+  UINT64        EndTimeStamp;
 
   if (CmdTransfer) {
     SlotId = 0;
@@ -803,14 +802,17 @@ XhcPeiExecTransfer (
   }
 
   Status = EFI_SUCCESS;
-  Loop   = Timeout * XHC_1_MILLISECOND;
-  if (Timeout == 0) {
-    Loop = 0xFFFFFFFF;
-  }
 
   XhcPeiRingDoorBell (Xhc, SlotId, Dci);
 
-  for (Index = 0; Index < Loop; Index++) {
+  if (Timeout == 0) {
+    EndTimeStamp = MAX_UINT64;
+  } else {
+    EndTimeStamp = ReadTimeStamp() + MicroSecondToTimeStampTick (Timeout * XHC_1_MILLISECOND);
+  }
+
+  Finished = FALSE;
+  while (ReadTimeStamp() < EndTimeStamp) {
     Finished = XhcPeiCheckUrbResult (Xhc, Urb);
     if (Finished) {
       break;
@@ -818,7 +820,7 @@ XhcPeiExecTransfer (
     MicroSecondDelay (XHC_1_MICROSECOND);
   }
 
-  if (Index == Loop) {
+  if (!Finished) {
     Urb->Result = EFI_USB_ERR_TIMEOUT;
     Status      = EFI_TIMEOUT;
   } else if (Urb->Result != EFI_USB_NOERROR) {
