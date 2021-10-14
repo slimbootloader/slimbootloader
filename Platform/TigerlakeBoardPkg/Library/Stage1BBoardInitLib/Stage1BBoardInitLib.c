@@ -306,7 +306,10 @@ UpdateFspConfig (
   Fspmcfg->RankInterleave       = MemCfgData->RankInterleave;
   Fspmcfg->RhPrevention         = MemCfgData->RhPrevention;
 
-    switch (GetPlatformId ()) {
+  // Skip CPU replacement check for embedded design to always enable fast boot
+  Fspmcfg->SkipCpuReplacementCheck = 1;
+
+  switch (GetPlatformId ()) {
     case BoardIdTglHDdr4SODimm:
     case 0xF:
       Fspmcfg->PrmrrSize          = 0x100000;
@@ -326,7 +329,7 @@ UpdateFspConfig (
   Fspmcfg->ChHashEnable         = MemCfgData->ChHashEnable;
   Fspmcfg->ChHashInterleaveBit  = MemCfgData->ChHashInterleaveBit;
   Fspmcfg->ChHashMask           = MemCfgData->ChHashMask;
-//    Fspmcfg->CkeRankMapping       = MemCfgData->CkeRankMapping;
+
   Fspmcfg->RemapEnable          = MemCfgData->RemapEnable;
   Fspmcfg->ScramblerSupport     = MemCfgData->ScramblerSupport;
 
