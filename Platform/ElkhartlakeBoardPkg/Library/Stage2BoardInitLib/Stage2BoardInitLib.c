@@ -1605,9 +1605,6 @@ UpdateFspConfig (
     Fspscfg->PchUnlockGpioPads   = 0x0;
   }
 
-  // W/A for Yocto boot issue
-  Fspscfg->AcSplitLock = 0x0;
-
   PowerCfgData = (POWER_CFG_DATA *) FindConfigDataByTag (CDATA_POWER_TAG);
   if (PowerCfgData == NULL) {
     DEBUG ((DEBUG_ERROR, "Missing power Cfg Data!\n"));
