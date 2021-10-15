@@ -107,3 +107,4 @@
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled
   gPlatformModuleTokenSpaceGuid.PcdAcpiTableTemplatePtr
   gPlatformModuleTokenSpaceGuid.PcdEnableDts
+  gPlatformModuleTokenSpaceGuid.PcdPciResourceMem64Base
