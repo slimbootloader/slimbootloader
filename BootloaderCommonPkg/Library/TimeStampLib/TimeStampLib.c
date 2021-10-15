@@ -35,15 +35,15 @@ GetTimeStampFrequency (
   VOID
   )
 {
-  UINT8  Ratio;
+  UINT32  Ratio;
 
-  Ratio = (UINT8)((UINT32)AsmReadMsr64 (0xCE) >> 8);
+  Ratio = ((UINT32)AsmReadMsr64 (0xCE) >> 8) & 0xFF;
   if (Ratio == 0) {
     // This might be QEMU case
     Ratio = 8;
   }
   // Ratio * 100000
-  return (UINT32)(Ratio * 100000);
+  return (Ratio * 100000);
 }
 
 /**
