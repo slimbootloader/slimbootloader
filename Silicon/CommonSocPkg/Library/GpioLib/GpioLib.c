@@ -38,7 +38,7 @@ GpioIsPadHostOwned (
   if (PadOwnVal != GpioPadOwnHost) {
     GroupIndex = GpioGetGroupIndexFromGpioPad (GpioPad);
     PadNumber = GpioGetPadNumberFromGpioPad (GpioPad);
-    DEBUG ((DEBUG_ERROR, "GPIO ERROR: Gpio pad not owned by host (Group=%d, Pad=%d)!\n", GroupIndex, PadNumber));
+    DEBUG ((GPIO_DEBUG_ERROR, "GPIO ERROR: Gpio pad not owned by host (Group=%d, Pad=%d)!\n", GroupIndex, PadNumber));
     return FALSE;
   }
 
@@ -68,7 +68,7 @@ GpioIsPadValid (
   UINT32                 GroupIndex;
 
   if (!GpioIsCorrectPadForThisChipset (GpioPad)) {
-    DEBUG ((DEBUG_ERROR, "GPIO ERROR: Incorrect GpioPad (0x%08x) used on this chipset!\n", GpioPad));
+    DEBUG ((GPIO_DEBUG_ERROR, "GPIO ERROR: Incorrect GpioPad (0x%08x) used on this chipset!\n", GpioPad));
     goto Error;
   }
 
@@ -80,7 +80,7 @@ GpioIsPadValid (
   GroupIndex = GpioGetGroupIndexFromGpioPad (GpioPad);
   PadNumber = GpioGetPadNumberFromGpioPad (GpioPad);
   if (PadNumber >= GpioGroupInfo[GroupIndex].PadPerGroup) {
-    DEBUG ((DEBUG_ERROR, "GPIO ERROR: Pin number (%d) exceeds possible range for this group\n", PadNumber));
+    DEBUG ((GPIO_DEBUG_ERROR, "GPIO ERROR: Pin number (%d) exceeds possible range for this group\n", PadNumber));
     goto Error;
   }
 
@@ -120,7 +120,7 @@ GpioIsGroupAndDwNumValid (
   GroupIndex = GpioGetGroupIndexFromGroup (Group);
 
   if ((Group < GpioGetLowestGroup ()) || (Group > GpioGetHighestGroup ()) || (GroupIndex >= GpioGroupInfoLength)) {
-    DEBUG ((DEBUG_ERROR, "GPIO ERROR: Group argument (%d) is not within range of possible groups for this PCH\n", GroupIndex));
+    DEBUG ((GPIO_DEBUG_ERROR, "GPIO ERROR: Group argument (%d) is not within range of possible groups for this PCH\n", GroupIndex));
     goto Error;
   }
 
@@ -241,7 +241,7 @@ GpioWritePadCfgReg (
     PadCfgAndMask,
     PadCfgOrMask
     );
-  DEBUG((DEBUG_INFO, "GPIO Address: 0x%08x, PadCfgAndMask = 0x%08x, PadCfgOrMask = 0x%08x\n", GetPchPcrAddress(GpioGroupInfo[GroupIndex].Community, PadCfgReg), PadCfgAndMask, PadCfgOrMask));
+  DEBUG((GPIO_DEBUG_INFO, "GPIO Address: 0x%08x, PadCfgAndMask = 0x%08x, PadCfgOrMask = 0x%08x\n", GetPchPcrAddress(GpioGroupInfo[GroupIndex].Community, PadCfgReg), PadCfgAndMask, PadCfgOrMask));
   if (PadCfgLock) {
     GpioLockPadCfg (GpioPad);
   }
@@ -652,7 +652,7 @@ GpioPadRstCfgFromResetConfig (
       if (GpioIsDswGroup (Group)) {
         *PadRstCfg = V_GPIO_PCR_RST_CONF_POW_GOOD;
       } else {
-        DEBUG ((DEBUG_ERROR, "GPIO ERROR: Only GPD group pads can use GpioDswReset (Group=%d, Pad=%d)!\n", GpioGetGroupIndexFromGpioPad (GpioPad), GpioGetPadNumberFromGpioPad (GpioPad)));
+        DEBUG ((GPIO_DEBUG_ERROR, "GPIO ERROR: Only GPD group pads can use GpioDswReset (Group=%d, Pad=%d)!\n", GpioGetGroupIndexFromGpioPad (GpioPad), GpioGetPadNumberFromGpioPad (GpioPad)));
         goto Error;
       }
       break;
@@ -1233,7 +1233,7 @@ GpioSetPadInterruptConfig (
         //
         return EFI_SUCCESS;
       } else {
-        DEBUG ((DEBUG_ERROR, "GPIO ERROR: Group %d has no pads supporting NMI\n", GpioGetGroupIndexFromGpioPad (GpioPad)));
+        DEBUG ((GPIO_DEBUG_ERROR, "GPIO ERROR: Group %d has no pads supporting NMI\n", GpioGetGroupIndexFromGpioPad (GpioPad)));
       }
     }
     ASSERT_EFI_ERROR (Status);
@@ -2167,7 +2167,7 @@ GpioCheckFor2Tier (
 
   Status = GpioGetGpeNumber (GpioPad, &Data32);
   if (EFI_ERROR (Status)) {
-    DEBUG (( DEBUG_ERROR, "GpioCheckFor2Tier: Failed to get GPE number. Status: %r\n", Status ));
+    DEBUG (( GPIO_DEBUG_ERROR, "GpioCheckFor2Tier: Failed to get GPE number. Status: %r\n", Status ));
     return FALSE;
   }
 
