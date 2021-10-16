@@ -169,7 +169,7 @@ GpioUnlockPadsForAGroup (
     // Check if legal pin number
     //
     if (PadNumber >= GpioGroupInfo[GroupIndex].PadPerGroup) {
-      DEBUG ((DEBUG_ERROR, "GPIO ERROR: Pin number (%d) exceeds possible range for group %d\n", PadNumber, GroupIndex));
+      DEBUG ((GPIO_DEBUG_ERROR, "GPIO ERROR: Pin number (%d) exceeds possible range for group %d\n", PadNumber, GroupIndex));
       return EFI_INVALID_PARAMETER;
     }
 
@@ -245,7 +245,7 @@ GpioConfigurePch (
 
     DEBUG_CODE_BEGIN();
     if (!GpioIsCorrectPadForThisChipset (GpioData->GpioPad)) {
-      DEBUG ((DEBUG_ERROR, "GPIO ERROR: Incorrect GpioPad (0x%08x) used on this chipset!\n", GpioData->GpioPad));
+      DEBUG ((GPIO_DEBUG_ERROR, "GPIO ERROR: Incorrect GpioPad (0x%08x) used on this chipset!\n", GpioData->GpioPad));
       ASSERT (FALSE);
       return EFI_UNSUPPORTED;
     }
@@ -283,7 +283,7 @@ GpioConfigurePch (
       // Check if legal pin number
       //
       if (PadNumber >= GpioGroupInfo[GroupIndex].PadPerGroup) {
-        DEBUG ((DEBUG_ERROR, "GPIO ERROR: Pin number (%d) exceeds possible range for group %d\n", PadNumber, GroupIndex));
+        DEBUG ((GPIO_DEBUG_ERROR, "GPIO ERROR: Pin number (%d) exceeds possible range for group %d\n", PadNumber, GroupIndex));
         return EFI_INVALID_PARAMETER;
       }
 
@@ -293,9 +293,9 @@ GpioConfigurePch (
       GpioGetPadOwnership (GpioData->GpioPad, &PadOwnVal);
 
       if (PadOwnVal != GpioPadOwnHost) {
-        DEBUG ((DEBUG_ERROR, "GPIO ERROR: Accessing pad not owned by host (Group=%d, Pad=%d)!\n", GroupIndex, PadNumber));
-        DEBUG ((DEBUG_ERROR, "** Please make sure the GPIO usage in sync between CSME and BIOS configuration. \n"));
-        DEBUG ((DEBUG_ERROR, "** All the GPIO occupied by CSME should not do any configuration by BIOS.\n"));
+        DEBUG ((GPIO_DEBUG_ERROR, "GPIO ERROR: Accessing pad not owned by host (Group=%d, Pad=%d)!\n", GroupIndex, PadNumber));
+        DEBUG ((GPIO_DEBUG_ERROR, "** Please make sure the GPIO usage in sync between CSME and BIOS configuration. \n"));
+        DEBUG ((GPIO_DEBUG_ERROR, "** All the GPIO occupied by CSME should not do any configuration by BIOS.\n"));
         Index++;
         continue;
       }
@@ -305,7 +305,7 @@ GpioConfigurePch (
       //
       if (((GpioData->GpioConfig.InterruptConfig & GpioIntSci) == GpioIntSci) &&
           ((GpioData->GpioConfig.LockConfig & B_GPIO_LOCK_CONFIG_PAD_CONF_LOCK_MASK) != GpioPadConfigUnlock)){
-        DEBUG ((DEBUG_ERROR, "GPIO ERROR: Gpio pad for SCI is not unlocked (Group=%d, Pad=%d)!\n", GroupIndex, PadNumber));
+        DEBUG ((GPIO_DEBUG_ERROR, "GPIO ERROR: Gpio pad for SCI is not unlocked (Group=%d, Pad=%d)!\n", GroupIndex, PadNumber));
         ASSERT (FALSE);
         return EFI_INVALID_PARAMETER;
       }
@@ -401,7 +401,7 @@ GpioConfigurePch (
           GroupDwData[DwNum].GpiNmiEnReg
           );
       } else if (GroupDwData[DwNum].GpiNmiEnReg != 0x0) {
-        DEBUG ((DEBUG_ERROR, "GPIO ERROR: Group %d has no pads supporting NMI\n", GroupIndex));
+        DEBUG ((GPIO_DEBUG_ERROR, "GPIO ERROR: Group %d has no pads supporting NMI\n", GroupIndex));
         ASSERT_EFI_ERROR (EFI_UNSUPPORTED);
       }
 
@@ -415,7 +415,7 @@ GpioConfigurePch (
           GroupDwData[DwNum].GpiSmiEnReg
           );
       } else if (GroupDwData[DwNum].GpiSmiEnReg != 0x0) {
-        DEBUG ((DEBUG_ERROR, "GPIO ERROR: Group %d has no pads supporting SMI\n", GroupIndex));
+        DEBUG ((GPIO_DEBUG_ERROR, "GPIO ERROR: Group %d has no pads supporting SMI\n", GroupIndex));
         ASSERT_EFI_ERROR (EFI_UNSUPPORTED);
       }
 
@@ -583,7 +583,7 @@ PrintGpioConfigTable (
   GpioInitConf = (GPIO_INIT_CONFIG *)GpioConfData;
   for (Index  = 0; Index < GpioPinNum; Index++) {
     PadDataPtr = (UINT32 *)&GpioInitConf->GpioConfig;
-    DEBUG ((DEBUG_INFO, "GPIO PAD: 0x%08X   DATA: 0x%08X 0x%08X\n", GpioInitConf->GpioPad, PadDataPtr[0], PadDataPtr[1]));
+    DEBUG ((GPIO_DEBUG_INFO, "GPIO PAD: 0x%08X   DATA: 0x%08X 0x%08X\n", GpioInitConf->GpioPad, PadDataPtr[0], PadDataPtr[1]));
     GpioInitConf++;
   }
 }
@@ -667,7 +667,7 @@ ConfigureGpio (
   // Find either Tag to read CfgData or parse the GpioTable
   //
   if ((Tag == CDATA_NO_TAG) && (Entries == 0 || DataBuffer == NULL) ) {
-    DEBUG ((DEBUG_INFO, "Provide either Tag or Gpio Table info!\n"));
+    DEBUG ((GPIO_DEBUG_INFO, "Provide either Tag or Gpio Table info!\n"));
     return EFI_UNSUPPORTED;
   }
 
@@ -677,7 +677,7 @@ ConfigureGpio (
   //
   if (Tag == CDATA_NO_TAG) {
     GpioConfigurePads (Entries, (GPIO_INIT_CONFIG *)DataBuffer);
-    DEBUG ((DEBUG_INFO, "GpioInit(0x%p:%d) Done\n", DataBuffer, Entries));
+    DEBUG ((GPIO_DEBUG_INFO, "GpioInit(0x%p:%d) Done\n", DataBuffer, Entries));
     return EFI_SUCCESS;
   }
 
@@ -699,11 +699,11 @@ ConfigureGpio (
   if (GpioCfgCurrHdr->BaseTableId < 16) {
     GpioCfgBaseHdr = (ARRAY_CFG_HDR *)FindConfigDataByPidTag (GpioCfgCurrHdr->BaseTableId, Tag);
     if (GpioCfgBaseHdr == NULL) {
-      DEBUG ((DEBUG_ERROR, "Cannot find base GPIO table for platform ID %d\n", GpioCfgCurrHdr->BaseTableId));
+      DEBUG ((GPIO_DEBUG_ERROR, "Cannot find base GPIO table for platform ID %d\n", GpioCfgCurrHdr->BaseTableId));
       return EFI_NOT_FOUND;
     }
     if (GpioCfgCurrHdr->ItemSize != GpioCfgBaseHdr->ItemSize) {
-      DEBUG ((DEBUG_ERROR, "Inconsistent GPIO item size\n"));
+      DEBUG ((GPIO_DEBUG_ERROR, "Inconsistent GPIO item size\n"));
       return EFI_LOAD_ERROR;
     }
     GpioCfgHdr = GpioCfgBaseHdr;
@@ -738,6 +738,6 @@ ConfigureGpio (
 
   GpioConfigurePads (GpioEntries, (GPIO_INIT_CONFIG *)GpioCfgDataBuffer);
 
-  DEBUG ((DEBUG_INFO, "GpioInit(0x%p:%d) Done\n", GpioCfgDataBuffer, GpioEntries));
+  DEBUG ((GPIO_DEBUG_INFO, "GpioInit(0x%p:%d) Done\n", GpioCfgDataBuffer, GpioEntries));
   return EFI_SUCCESS;
 }

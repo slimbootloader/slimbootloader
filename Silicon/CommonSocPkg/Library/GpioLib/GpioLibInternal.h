@@ -1,7 +1,7 @@
 /** @file
   The platform GPIO library header.
 
-  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -12,6 +12,9 @@
 #include <Base.h>
 #include <Uefi/UefiBaseType.h>
 #include <GpioConfig.h>
+
+#define  GPIO_DEBUG_INFO     DEBUG_VERBOSE
+#define  GPIO_DEBUG_ERROR    DEBUG_VERBOSE
 
 /**
   This procedure is used to clear GPE STS for a specified GpioPad
