@@ -466,6 +466,8 @@ GatherDeviceInfo (
   UINTN                           BarIndex;
   PCI_IO_DEVICE                   *PciIoDevice;
   UINT16                          Value;
+  BOOLEAN                         Downgrade;
+  CONST PCI_ENUM_POLICY_INFO     *EnumPolicy;
 
   PciIoDevice = CreatePciIoDevice (
                   Bridge,
@@ -486,6 +488,22 @@ GatherDeviceInfo (
   //
   if (PciIoDevice->Parent != NULL) {
     PciIoDevice->Decodes = PciIoDevice->Parent->Decodes;
+    Downgrade = FALSE;
+    if (Bus == 0) {
+      EnumPolicy = (PCI_ENUM_POLICY_INFO *)PcdGetPtr (PcdPciEnumPolicyInfo);
+      if (EnumPolicy->Downgrade.Bus0 == 1) {
+        Downgrade = TRUE;
+      } else if (EnumPolicy->Downgrade.Bus0 == 2) {
+        if (!(IS_PCI_DISPLAY(&PciIoDevice->Pci))) {
+          Downgrade = TRUE;
+        }
+      }
+      if (Downgrade) {
+        PciIoDevice->Decodes &= (UINT32)~(EFI_BRIDGE_IO32_DECODE_SUPPORTED);
+        PciIoDevice->Decodes &= (UINT32)~(EFI_BRIDGE_MEM64_DECODE_SUPPORTED);
+        PciIoDevice->Decodes &= (UINT32)~(EFI_BRIDGE_PMEM64_DECODE_SUPPORTED);
+      }
+    }
   }
 
   //
@@ -1592,12 +1610,12 @@ PciProgramResources (
       Address = ResBase[Index];
       Address = ALIGN (Address, Root->PciBar[BarType - 1].Alignment);
       Root->PciBar[BarType - 1].BaseAddress = Address;
-      ProgramResource (Root, BarType);
-
       if (Root->PciBar[BarType - 1].Length > 0) {
         ResBase[Index] += Root->PciBar[BarType - 1].Length;
         ASSERT (ResBase[Index] <= ResLimit[Index]);
       }
+
+      ProgramResource (Root, BarType);
     }
 
     CurrentLink = CurrentLink->ForwardLink;
@@ -1689,11 +1707,6 @@ PciScanRootBridges (
     if (PciExpressRead16 (Address) != 0xFFFF) {
       Root = CreatePciIoDevice (NULL, NULL, (UINT8)Bus, 0, 0);
       Root->Decodes = RootBridgeDecodes;
-      if ((Bus == 0) && (EnumPolicy->Downgrade.Bus0 == 1)) {
-        Root->Decodes &= (UINT32)~(EFI_BRIDGE_IO32_DECODE_SUPPORTED);
-        Root->Decodes &= (UINT32)~(EFI_BRIDGE_MEM64_DECODE_SUPPORTED);
-        Root->Decodes &= (UINT32)~(EFI_BRIDGE_PMEM64_DECODE_SUPPORTED);
-      }
       Root->BusNumberRanges.BusBase  = (UINT8)Bus;
       Root->BusNumberRanges.BusLimit = BusLimit;
 
