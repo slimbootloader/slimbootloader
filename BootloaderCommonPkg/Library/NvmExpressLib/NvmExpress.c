@@ -417,8 +417,8 @@ NvmeGetMediaInfo (
   OUT DEVICE_BLOCK_INFO              *DevBlockInfo
   )
 {
-  DevBlockInfo->BlockNum = 512;
-  DevBlockInfo->BlockSize = 512;
+  DevBlockInfo->BlockNum  = mMultiNvmeDrive[0]->Media.LastBlock + 1;
+  DevBlockInfo->BlockSize = mMultiNvmeDrive[0]->Media.BlockSize;
   return EFI_SUCCESS;
 }
 
