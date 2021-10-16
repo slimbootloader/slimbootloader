@@ -863,7 +863,7 @@ InitBootFileSystem (
   if ((DevType != OsBootDeviceSpi) && (DevType != OsBootDeviceMemory) && (FsType < EnumFileSystemMax)) {
     Status = InitFileSystem (SwPart, FsType, HwPartHandle, FsHandle);
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_INFO, "No partitions found, Status = %r\n", Status));
+      DEBUG ((DEBUG_INFO, "No file system found, Status = %r\n", Status));
       return Status;
     }
   } else {
