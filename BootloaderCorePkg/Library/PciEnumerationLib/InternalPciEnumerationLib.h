@@ -65,8 +65,12 @@ typedef struct {
   UINT16            Io32            : 1;
   UINT16            Mem64           : 1;
   UINT16            PMem64          : 1;
-  UINT16            Bus0            : 1;
-  UINT16            Reserved        : 12;
+  // 0: Do not downgrade PCI devices on bus 0
+  // 1: Downgrade all PCI devices on bus 0
+  // 2: Downgrade all PCI devices on bus 0 but GFX
+  // 3: Reserved
+  UINT16            Bus0            : 2;
+  UINT16            Reserved        : 11;
 } PCI_RES_DOWNGRADE;
 
 typedef struct {

@@ -196,8 +196,12 @@ class PciEnumPolicyInfo(Structure):
         ('DowngradeIo32',           c_uint16, 1),
         ('DowngradeMem64',          c_uint16, 1),
         ('DowngradePMem64',         c_uint16, 1),
-        ('DowngradeBus0',           c_uint16, 1),
-        ('DowngradeReserved',       c_uint16, 12),
+        # 0: Do not downgrade PCI devices on bus 0
+        # 1: Downgrade all PCI devices on bus 0
+        # 2: Downgrade all PCI devices on bus 0 but GFX
+        # 3: Reserved
+        ('DowngradeBus0',           c_uint16, 2),
+        ('DowngradeReserved',       c_uint16, 11),
         ('FlagAllocPmemFirst',      c_uint16, 1),
         ('FlagReserved',            c_uint16, 15),
         ('BusScanType',             c_uint8), # 0: list, 1: range
