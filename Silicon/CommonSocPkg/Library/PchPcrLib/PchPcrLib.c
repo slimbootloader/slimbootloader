@@ -1,20 +1,41 @@
 /** @file
-  Header file for PchPcrLib.
 
-  Copyright (c) 2018 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
-#ifndef _PCH_PCR_LIB_H_
-#define _PCH_PCR_LIB_H_
 
-#include <RegAccess.h>
+#include <Base.h>
+#include <Uefi/UefiBaseType.h>
+#include <Library/IoLib.h>
+#include <Library/DebugLib.h>
+#include <Library/BaseLib.h>
+#include <Library/PchPcrLib.h>
+#include <Library/GpioSiLib.h>
 
 /**
-  Definition for PCR address
-  The PCR address is used to the PCR MMIO programming
+  Checks if the offset is valid for a given memory access width
+
+  @param[in]  Offset  Offset of a register
+  @param[in]  Size    Size of memory access in bytes
+
+  @retval FALSE  Offset is not valid for a given memory access
+  @retval TRUE   Offset is valid
 **/
-#define PCH_PCR_ADDRESS(Pid, Offset)    (PCH_PCR_BASE_ADDRESS | ((UINT8)(Pid) << 16) | (UINT16)(Offset))
+STATIC
+BOOLEAN
+PchIsPcrOffsetValid (
+  IN UINT32  Offset,
+  IN UINTN   Size
+  )
+{
+  if (((Offset & (Size - 1)) != 0) || (Offset > 0xFFFF)) {
+    DEBUG ((DEBUG_ERROR, "PCR offset error. Invalid Offset: %x Size: %x", Offset, Size));
+    return FALSE;
+  } else {
+    return TRUE;
+  }
+}
 
 /**
   Read PCR register.
@@ -30,7 +51,11 @@ UINT32
 PchPcrRead32 (
   IN  PCH_SBI_PID                       Pid,
   IN  UINT32                            Offset
-  );
+  )
+{
+  ASSERT (PchIsPcrOffsetValid (Offset, 4));
+  return MmioRead32 (GetPchPcrAddress (Pid, Offset));
+}
 
 /**
   Read PCR register.
@@ -46,7 +71,11 @@ UINT16
 PchPcrRead16 (
   IN  PCH_SBI_PID                       Pid,
   IN  UINT32                            Offset
-  );
+  )
+{
+  ASSERT (PchIsPcrOffsetValid (Offset, 2));
+  return MmioRead16 (GetPchPcrAddress (Pid, Offset));
+}
 
 /**
   Read PCR register.
@@ -56,13 +85,16 @@ PchPcrRead16 (
   @param[in]  Pid      Port ID
   @param[in]  Offset   Register offset of this Port ID
 
-  @retval UINT8        PCR regsiter value
+  @retval UINT8        PCR register value
 **/
 UINT8
 PchPcrRead8 (
   IN  PCH_SBI_PID                       Pid,
   IN  UINT32                            Offset
-  );
+  )
+{
+  return MmioRead8 (GetPchPcrAddress (Pid, Offset));
+}
 
 /**
   Write PCR register.
@@ -79,8 +111,16 @@ UINT32
 PchPcrWrite32 (
   IN  PCH_SBI_PID                       Pid,
   IN  UINT32                            Offset,
-  IN  UINT32                            InData
-  );
+  IN  UINT32                            Data
+  )
+{
+  ASSERT (PchIsPcrOffsetValid (Offset, 4));
+
+  MmioWrite32 (GetPchPcrAddress (Pid, Offset), Data);
+
+  return Data;
+
+}
 
 /**
   Write PCR register.
@@ -97,8 +137,15 @@ UINT16
 PchPcrWrite16 (
   IN  PCH_SBI_PID                       Pid,
   IN  UINT32                            Offset,
-  IN  UINT16                            InData
-  );
+  IN  UINT16                            Data
+  )
+{
+  ASSERT (PchIsPcrOffsetValid (Offset, 2));
+
+  MmioWrite16 (GetPchPcrAddress (Pid, Offset), Data);
+
+  return Data;
+}
 
 /**
   Write PCR register.
@@ -115,8 +162,14 @@ UINT8
 PchPcrWrite8 (
   IN  PCH_SBI_PID                       Pid,
   IN  UINT32                            Offset,
-  IN  UINT8                             InData
-  );
+  IN  UINT8                             Data
+  )
+{
+
+  MmioWrite8 (GetPchPcrAddress (Pid, Offset), Data);
+
+  return Data;
+}
 
 /**
   Write PCR register.
@@ -137,7 +190,35 @@ PchPcrAndThenOr32 (
   IN  UINT32                            Offset,
   IN  UINT32                            AndData,
   IN  UINT32                            OrData
-  );
+  )
+{
+  return PchPcrWrite32 (Pid, Offset, (PchPcrRead32 (Pid, Offset) & AndData) | OrData);
+}
+
+/**
+  Write PCR register and read back.
+  The read back ensures the PCR cycle is completed before next operation.
+  It programs PCR register and size in 4bytes.
+  The Offset should not exceed 0xFFFF and must be aligned with size.
+
+  @param[in]  Pid      Port ID
+  @param[in]  Offset   Register offset of Port ID.
+  @param[in]  AndData  AND Data. Must be the same size as Size parameter.
+  @param[in]  OrData   OR Data. Must be the same size as Size parameter.
+
+  @retval  UINT32      Value read back from the register
+**/
+UINT32
+PchPcrAndThenOr32WithReadback (
+  IN  PCH_SBI_PID                       Pid,
+  IN  UINT32                            Offset,
+  IN  UINT32                            AndData,
+  IN  UINT32                            OrData
+  )
+{
+  PchPcrWrite32 (Pid, Offset, (PchPcrRead32 (Pid, Offset) & AndData) | OrData);
+  return PchPcrRead32 (Pid, Offset);
+}
 
 /**
   Write PCR register.
@@ -158,7 +239,10 @@ PchPcrAndThenOr16 (
   IN  UINT32                            Offset,
   IN  UINT16                            AndData,
   IN  UINT16                            OrData
-  );
+  )
+{
+  return PchPcrWrite16 (Pid, Offset, (PchPcrRead16 (Pid, Offset) & AndData) | OrData);
+}
 
 /**
   Write PCR register.
@@ -179,6 +263,7 @@ PchPcrAndThenOr8 (
   IN  UINT32                            Offset,
   IN  UINT8                             AndData,
   IN  UINT8                             OrData
-  );
-
-#endif // _PCH_PCR_LIB_H_
+  )
+{
+  return PchPcrWrite8 (Pid, Offset, (PchPcrRead8 (Pid, Offset) & AndData) | OrData);
+}

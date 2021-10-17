@@ -1,17 +1,17 @@
 ## @file
 #
-# Copyright (c) 2008 - 2015, Intel Corporation. All rights reserved.<BR>
-# SPDX-License-Identifier: BSD-2-Clause-Patent
+#  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
 
 [Defines]
   INF_VERSION                    = 0x00010005
-  BASE_NAME                      = PchInfoLib
-  FILE_GUID                      = C4692975-C783-4C2C-8416-088CE7F7E86C
+  BASE_NAME                      = PchPcrLib
+  FILE_GUID                      = 14A9E8F9-95C5-4000-80BC-44423CE483A0
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
-  LIBRARY_CLASS                  = PchInfoLib
+  LIBRARY_CLASS                  = PchPcrLib
 
 #
 # The following information is for reference only and not required by the build tools.
@@ -20,16 +20,18 @@
 #
 
 [Sources]
-  PchInfoLib.c
+  PchPcrLib.c
 
 [Packages]
   MdePkg/MdePkg.dec
   BootloaderCorePkg/BootloaderCorePkg.dec
-  Silicon/TigerlakePchPkg/TigerlakePchPkg.dec
   Silicon/CommonSocPkg/CommonSocPkg.dec
 
 [LibraryClasses]
   BaseLib
-  PcdLib
   IoLib
-  PciLib
+  DebugLib
+  PchInfoLib
+  GpioSiLib
+
+[Pcd]

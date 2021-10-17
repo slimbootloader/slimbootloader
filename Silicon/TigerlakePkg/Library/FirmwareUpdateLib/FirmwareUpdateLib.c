@@ -20,6 +20,7 @@
 #include <Library/PchSbiAccessLib.h>
 #include <Library/PchPcrLib.h>
 #include <Library/HeciInitLib.h>
+#include <PchAccess.h>
 #include <CsmeUpdateDriver.h>
 #include <PlatformBase.h>
 #include <Library/IoLib.h>

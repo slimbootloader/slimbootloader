@@ -21,6 +21,7 @@
 #include <Library/PchPcrLib.h>
 #include <Library/HeciInitLib.h>
 #include <Library/PciLib.h>
+#include <PchAccess.h>
 #include <CsmeUpdateDriver.h>
 #include "SpiRegionAccess.h"
 
