@@ -405,6 +405,11 @@ SecStartup (
   // Deallocate temporary memory used by previous stage
   FreeTemporaryMemory (NULL);
 
+  if (IS_X64) {
+    // Build full physical space 1:1 mapping page table
+    CreateIdentityMappingPageTables (0);
+  }
+
   // Init all services
   InitializeService ();
 
