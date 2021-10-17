@@ -253,7 +253,7 @@ class Board(BaseBoard):
         dsc['LibraryClasses.%s' % self.BUILD_ARCH] = [
             'LoaderLib|Platform/CommonBoardPkg/Library/LoaderLib/LoaderLib.inf',
             'PchInfoLib|Silicon/$(PCH_PKG_NAME)/Library/PchInfoLib/PchInfoLib.inf',
-            'PchPcrLib|Silicon/$(PCH_PKG_NAME)/Library/PchPcrLib/PchPcrLib.inf',
+            'PchPcrLib|Silicon/CommonSocPkg/Library/PchPcrLib/PchPcrLib.inf',
             'PchP2sbLib|Silicon/$(PCH_PKG_NAME)/Library/PchP2sbLib/PchP2sbLib.inf',
             'PchSbiAccessLib|Silicon/CommonSocPkg/Library/PchSbiAccessLib/PchSbiAccessLib.inf',
             'PlatformHookLib|Silicon/$(SILICON_PKG_NAME)/Library/PlatformHookLib/PlatformHookLib.inf',

@@ -1,20 +1,14 @@
 /** @file
   Header file for PchPcrLib.
 
-  Copyright (c) 2018 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 #ifndef _PCH_PCR_LIB_H_
 #define _PCH_PCR_LIB_H_
 
-#include <RegAccess.h>
-
-/**
-  Definition for PCR address
-  The PCR address is used to the PCR MMIO programming
-**/
-#define PCH_PCR_ADDRESS(Pid, Offset)    (PCH_PCR_BASE_ADDRESS | ((UINT8)(Pid) << 16) | (UINT16)(Offset))
+typedef UINT8          PCH_SBI_PID;
 
 /**
   Read PCR register.
@@ -56,7 +50,7 @@ PchPcrRead16 (
   @param[in]  Pid      Port ID
   @param[in]  Offset   Register offset of this Port ID
 
-  @retval UINT8        PCR regsiter value
+  @retval UINT8        PCR register value
 **/
 UINT8
 PchPcrRead8 (
@@ -133,6 +127,27 @@ PchPcrWrite8 (
 **/
 UINT32
 PchPcrAndThenOr32 (
+  IN  PCH_SBI_PID                       Pid,
+  IN  UINT32                            Offset,
+  IN  UINT32                            AndData,
+  IN  UINT32                            OrData
+  );
+
+/**
+  Write PCR register and read back.
+  The read back ensures the PCR cycle is completed before next operation.
+  It programs PCR register and size in 4bytes.
+  The Offset should not exceed 0xFFFF and must be aligned with size.
+
+  @param[in]  Pid      Port ID
+  @param[in]  Offset   Register offset of Port ID.
+  @param[in]  AndData  AND Data. Must be the same size as Size parameter.
+  @param[in]  OrData   OR Data. Must be the same size as Size parameter.
+
+  @retval  UINT32      Value read back from the register
+**/
+UINT32
+PchPcrAndThenOr32WithReadback (
   IN  PCH_SBI_PID                       Pid,
   IN  UINT32                            Offset,
   IN  UINT32                            AndData,

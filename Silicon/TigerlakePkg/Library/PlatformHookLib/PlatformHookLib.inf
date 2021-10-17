@@ -29,6 +29,7 @@
   IntelFsp2Pkg/IntelFsp2Pkg.dec
   Silicon/TigerlakePchPkg/TigerlakePchPkg.dec
   Silicon/TigerlakePkg/TigerlakePkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
 
 [LibraryClasses]
   BaseLib
