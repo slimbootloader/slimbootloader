@@ -3,7 +3,7 @@
   NVM Express specification.
 
   (C) Copyright 2014 Hewlett-Packard Development Company, L.P.<BR>
-  Copyright (c) 2013 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2013 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -250,7 +250,7 @@ NvmeCreatePrpList (
              Mapping
              );
   if (EFI_ERROR(Status) || (*PrpListHost == NULL)) {
-    DEBUG ((DEBUG_ERROR, "NvmeCreatePrpList: create PrpList failure!\n"));
+    DEBUG ((DEBUG_VERBOSE, "NvmeCreatePrpList: create PrpList failure!\n"));
     goto EXIT;
   }
 
@@ -467,7 +467,7 @@ NvmExpressPassThru (
   //
   ASSERT (Sq->Psdt == 0);
   if (Sq->Psdt != 0) {
-    DEBUG ((DEBUG_ERROR, "NvmExpressPassThru: doesn't support SGL mechanism\n"));
+    DEBUG ((DEBUG_VERBOSE, "NvmExpressPassThru: doesn't support SGL mechanism\n"));
     return EFI_UNSUPPORTED;
   }
 
