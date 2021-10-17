@@ -494,7 +494,6 @@ BuildUniversalPayloadHob (
   UNIVERSAL_PAYLOAD_SERIAL_PORT_INFO  *PldSerialPortInfo;
   UNIVERSAL_PAYLOAD_ACPI_TABLE        *AcpiHob;
   UNIVERSAL_PAYLOAD_SMBIOS_TABLE      *SmbiosHob;
-  UINT32                               RegEax;
   UINT8                                PhysicalAddressBits;
 
   // Memory resource hob
@@ -537,13 +536,7 @@ BuildUniversalPayloadHob (
   }
 
   // Build CPU memory space and IO space hob
-  AsmCpuid (0x80000000, &RegEax, NULL, NULL, NULL);
-  if (RegEax >= 0x80000008) {
-    AsmCpuid (0x80000008, &RegEax, NULL, NULL, NULL);
-    PhysicalAddressBits = (UINT8) RegEax;
-  } else {
-    PhysicalAddressBits  = 36;
-  }
+  PhysicalAddressBits = GetPhysicalAddressBits ();
   BuildCpuHob (PhysicalAddressBits, 16);
 
   // Build PCI root bridge hob

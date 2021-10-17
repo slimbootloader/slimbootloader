@@ -15,7 +15,7 @@
 #define IS_PD_SET     (((Address & 0xFFF) & IA32_PG_PD) == IA32_PG_PD)
 #define PD_SET_ADDR   (Address & ~(0xFFFF))
 #define PD_UNSET_ADDR (Address & ~(0xFFF))
-#define MIN_ADDR_BITS 32
+#define MIN_ADDR_BITS 36
 
 /**
   The function will check if 5-level paging is needed
@@ -71,8 +71,8 @@ IsPage1GSupport (
   @return Physical address bits.
 
 **/
-STATIC
 UINT8
+EFIAPI
 GetPhysicalAddressBits (
   VOID
   )
@@ -297,6 +297,8 @@ Create4GbPageTables (
   @param[in] RequestedAddressBits   If RequestedAddressBits is in valid range
                                     (MIN_ADDR_BITS < RequestedAddressBits < PhysicalAddressBits),
                                     paging table will cover the requested physical address range only.
+                                    When RequestedAddressBits is 0, it will build the address range
+                                    that the CPU can support.
 
   @retval    EFI_SUCCESS            Page table was created successfully.
   @retval    EFI_OUT_OF_RESOURCES   Failed to allocate page buffer
@@ -324,6 +326,10 @@ CreateIdentityMappingPageTables (
   UINTN             Cr0;
 
   PhysicalAddressBits = GetPhysicalAddressBits ();
+  if (RequestedAddressBits == 0) {
+    RequestedAddressBits = PhysicalAddressBits;
+  }
+
   Page1GSupport       = IsPage1GSupport ();
   Page5LevelSupport   = Is5LevelPagingNeeded ();
   DEBUG ((DEBUG_INFO, "RequestedAddressBits=%u PhysicalAddressBits=%u 5LevelPaging=%u 1GPage=%u\n",
