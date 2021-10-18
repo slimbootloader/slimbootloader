@@ -29,7 +29,7 @@ GetSerialPortStrideSize (
   @retval  The serial port register base address.
 
 **/
-UINT32
+UINT64
 EFIAPI
 GetSerialPortBase (
   VOID

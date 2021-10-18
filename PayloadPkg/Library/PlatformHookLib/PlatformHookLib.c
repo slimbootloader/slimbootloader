@@ -34,13 +34,13 @@ GetSerialPortStrideSize (
   @retval  The serial port register base address.
 
 **/
-UINT32
+UINT64
 EFIAPI
 GetSerialPortBase (
   VOID
   )
 {
-  return (UINT32) PcdGet64 (PcdSerialRegisterBase);
+  return PcdGet64 (PcdSerialRegisterBase);
 }
 
 /**

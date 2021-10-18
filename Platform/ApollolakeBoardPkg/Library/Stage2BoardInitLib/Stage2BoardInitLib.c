@@ -1498,7 +1498,7 @@ UpdateSerialPortInfo (
   )
 {
   SerialPortInfo->Type     = 2;
-  SerialPortInfo->BaseAddr = GetSerialPortBase();
+  SerialPortInfo->BaseAddr = (UINT32) GetSerialPortBase();
   SerialPortInfo->RegWidth = GetSerialPortStrideSize();
 
   DEBUG ((DEBUG_INFO, "SerialPortInfo Type=%d BaseAddr=0x%08X RegWidth=%d\n",

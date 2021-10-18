@@ -37,7 +37,7 @@ GetSerialPortStrideSize (
   @retval  The serial port register base address.
 
 **/
-UINT32
+UINT64
 EFIAPI
 GetSerialPortBase (
   VOID
@@ -45,6 +45,7 @@ GetSerialPortBase (
 {
   UINTN   PciUartMmBase;
   UINT16  Cmd16;
+  UINT64  MmioBase;
 
   PciUartMmBase = MM_PCI_ADDRESS (
                     DEFAULT_PCI_BUS_NUMBER_SC,
@@ -60,7 +61,9 @@ GetSerialPortBase (
     return LPSS_UART_TEMP_BASE_ADDRESS + (2 * LPSS_UART_TMP_BAR_DELTA);
   } else {
     if (MmioRead8 (PciUartMmBase + R_LPSS_IO_STSCMD) & 0x02) {
-      return MmioRead32 (PciUartMmBase + R_LPSS_IO_BAR) & 0xFFFFFFF0;
+      MmioBase  = LShiftU64 (MmioRead32 (PciUartMmBase + PCI_BASE_ADDRESSREG_OFFSET + 4), 32);
+      MmioBase += (MmioRead32 (PciUartMmBase + PCI_BASE_ADDRESSREG_OFFSET) & 0xFFFFFFF0);
+      return MmioBase;
     } else {
       return 0;
     }
