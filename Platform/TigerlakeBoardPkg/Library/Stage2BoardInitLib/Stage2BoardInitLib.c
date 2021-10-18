@@ -968,10 +968,12 @@ BoardInit (
       }
       if (FspGfxHob != NULL) {
         DEBUG ((DEBUG_INFO, "FspGfxHob->FrameBufferBase = 0x%lx\n", FspGfxHob->FrameBufferBase));
-        PciWrite8 (PCI_LIB_ADDRESS(SA_IGD_BUS, SA_IGD_DEV, SA_IGD_FUN_0, PCI_COMMAND_OFFSET), \
-                   EFI_PCI_COMMAND_MEMORY_SPACE | EFI_PCI_COMMAND_BUS_MASTER);
+        PciWrite32 (PCI_LIB_ADDRESS(SA_IGD_BUS, SA_IGD_DEV, SA_IGD_FUN_0, 0x1C), \
+                   (UINT32)RShiftU64 (FspGfxHob->FrameBufferBase, 32));
         PciWrite32 (PCI_LIB_ADDRESS(SA_IGD_BUS, SA_IGD_DEV, SA_IGD_FUN_0, 0x18), \
                    (UINT32)FspGfxHob->FrameBufferBase);
+        PciWrite8 (PCI_LIB_ADDRESS(SA_IGD_BUS, SA_IGD_DEV, SA_IGD_FUN_0, PCI_COMMAND_OFFSET), \
+                   EFI_PCI_COMMAND_MEMORY_SPACE | EFI_PCI_COMMAND_BUS_MASTER);
       } else {
         DEBUG ((DEBUG_ERROR, "FspGfxHob is not available\n"));
       }
@@ -1878,8 +1880,12 @@ UpdateFrameBufferInfo (
   OUT  EFI_PEI_GRAPHICS_INFO_HOB   *GfxInfo
 )
 {
+  UINT64  GfxBar;
+
   if (PcdGetBool (PcdIntelGfxEnabled)) {
-    GfxInfo->FrameBufferBase = PciRead32 (PCI_LIB_ADDRESS (SA_IGD_BUS, SA_IGD_DEV, SA_IGD_FUN_0, 0x18)) & 0xFFFFFF00;
+    GfxBar  = LShiftU64 (PciRead32 (PCI_LIB_ADDRESS (SA_IGD_BUS, SA_IGD_DEV, SA_IGD_FUN_0, 0x1C)), 32);
+    GfxBar += (PciRead32 (PCI_LIB_ADDRESS (SA_IGD_BUS, SA_IGD_DEV, SA_IGD_FUN_0, 0x18)) & 0xFFFFFF00);
+    GfxInfo->FrameBufferBase = (PHYSICAL_ADDRESS) GfxBar;
   }
 }
 

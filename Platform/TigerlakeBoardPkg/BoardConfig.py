@@ -42,6 +42,15 @@ class Board(BaseBoard):
         self.PCI_MEM32_BASE       = 0x80000000
         self.PCI_MEM64_BASE       = 0x1000000000
 
+        if self.BUILD_ARCH == 'X64':
+            # Assign Mem64/PMem64 PCI resources except for Bus0
+            self._PCI_ENUM_DOWNGRADE_MEM64  = 0
+            self._PCI_ENUM_DOWNGRADE_PMEM64 = 0
+            # Downgrade all devices on bus 0 but iGFX
+            self._PCI_ENUM_DOWNGRADE_BUS0   = 2
+            self.SUPPORT_ARI          = 1
+            self.SUPPORT_SR_IOV       = 1
+
         self.ACPI_PM_TIMER_BASE   = 0x1808
         self.LOADER_ACPI_RECLAIM_MEM_SIZE = 0x000090000
 
