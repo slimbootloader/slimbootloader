@@ -28,6 +28,7 @@
 #include <Library/ContainerLib.h>
 #include <Library/GraphicsInitLib.h>
 #include <Library/HobLib.h>
+#include <Library/PlatformHookLib.h>
 #include <Guid/GraphicsInfoHob.h>
 #include <Guid/SystemTableInfoGuid.h>
 #include <Guid/SerialPortInfoGuid.h>
@@ -63,30 +64,6 @@ typedef struct {
 #define  EFI_ACPI_OEM_REVISION     0x00000001
 #define  EFI_ACPI_CREATOR_ID       SIGNATURE_32('C','R','E','A')
 #define  EFI_ACPI_CREATOR_REVISION 0x01000001
-
-/**
-  Get serial port stride register size.
-
-  @retval  The serial port register stride size.
-
-**/
-UINT8
-EFIAPI
-GetSerialPortStrideSize (
-  VOID
-);
-
-/**
-  Get serial port register base address.
-
-  @retval  The serial port register base address.
-
-**/
-UINT32
-EFIAPI
-GetSerialPortBase (
-  VOID
-  );
 
 /**
   Enable legacy region decoding.

@@ -78,6 +78,7 @@
 #include <GpioConfig.h>
 #include <Register/RegsSpi.h>
 #include <Library/GpioLib.h>
+#include <Library/PlatformHookLib.h>
 
 BOOLEAN mTccDsoTuning      = FALSE;
 UINT8   mTccRtd3Support    = 0;
@@ -227,16 +228,6 @@ CONST EFI_ACPI_COMMON_HEADER *mPlatformAcpiTables[] = {
   (EFI_ACPI_COMMON_HEADER *)&mAcpiTccRtctTableTemplate,
   NULL
 };
-
-UINT8
-GetSerialPortStrideSize (
-  VOID
-);
-
-UINT32
-GetSerialPortBase (
-  VOID
-  );
 
 VOID
 EnableLegacyRegions (
@@ -1867,7 +1858,7 @@ UpdateSerialPortInfo (
   IN  SERIAL_PORT_INFO  *SerialPortInfo
 )
 {
-  SerialPortInfo->BaseAddr = GetSerialPortBase ();
+  SerialPortInfo->BaseAddr = (UINT32) GetSerialPortBase ();
   SerialPortInfo->RegWidth = GetSerialPortStrideSize ();
   if (GetDebugPort () >= PCH_MAX_SERIALIO_UART_CONTROLLERS) {
     // IO Type

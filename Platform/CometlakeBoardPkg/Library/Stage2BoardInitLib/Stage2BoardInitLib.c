@@ -57,6 +57,7 @@
 #include <Guid/GraphicsInfoHob.h>
 #include <Library/PciCf8Lib.h>
 #include <Library/BoardSupportLib.h>
+#include <Library/PlatformHookLib.h>
 #include <PlatformData.h>
 #include <PsdLib.h>
 #include <Library/SmbiosInitLib.h>
@@ -247,16 +248,6 @@ STATIC S3_SAVE_REG mS3SaveReg = {
   { BL_PLD_COMM_SIG, S3_SAVE_REG_COMM_ID, 1, 0 },
   { { REG_TYPE_IO, WIDE32, { 0, 0}, (ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN), 0x00000000 } }
 };
-
-UINT8
-GetSerialPortStrideSize (
-  VOID
-);
-
-UINT32
-GetSerialPortBase (
-  VOID
-  );
 
 VOID
 EnableLegacyRegions (
@@ -2052,7 +2043,7 @@ UpdateSerialPortInfo (
   IN  SERIAL_PORT_INFO  *SerialPortInfo
 )
 {
-  SerialPortInfo->BaseAddr = GetSerialPortBase();
+  SerialPortInfo->BaseAddr = (UINT32) GetSerialPortBase();
   SerialPortInfo->RegWidth = GetSerialPortStrideSize();
   if (SerialPortInfo->BaseAddr < 0x10000) {
     // IO Type

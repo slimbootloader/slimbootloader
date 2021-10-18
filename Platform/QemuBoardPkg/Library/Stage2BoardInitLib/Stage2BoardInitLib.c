@@ -422,7 +422,7 @@ UpdateSerialPortInfo (
 )
 {
   SerialPortInfo->Type     = 1;
-  SerialPortInfo->BaseAddr = GetSerialPortBase();
+  SerialPortInfo->BaseAddr = (UINT32) GetSerialPortBase();
   SerialPortInfo->RegWidth = GetSerialPortStrideSize();
 }
 

@@ -81,6 +81,7 @@
 #include <Library/LocalApicLib.h>
 #include <Library/TccLib.h>
 #include "Dts.h"
+#include <Library/PlatformHookLib.h>
 
 // GPIO group table to convert from alphabet group index to pad group ID
 CONST UINT8 mPchGpioGroup[2][26] = {
@@ -326,16 +327,6 @@ CONST EFI_ACPI_COMMON_HEADER *mPlatformAcpiTables[] = {
   (EFI_ACPI_COMMON_HEADER *)&mAcpiTccRtctTableTemplate,
   NULL
 };
-
-UINT8
-GetSerialPortStrideSize (
-  VOID
-);
-
-UINT32
-GetSerialPortBase (
-  VOID
-  );
 
 VOID
 EnableLegacyRegions (
@@ -1968,7 +1959,7 @@ UpdateSerialPortInfo (
   IN  SERIAL_PORT_INFO  *SerialPortInfo
 )
 {
-  SerialPortInfo->BaseAddr = GetSerialPortBase();
+  SerialPortInfo->BaseAddr = (UINT32) GetSerialPortBase();
   SerialPortInfo->RegWidth = GetSerialPortStrideSize();
   if (GetDebugPort () >= PCH_MAX_SERIALIO_UART_CONTROLLERS) {
     // IO Type

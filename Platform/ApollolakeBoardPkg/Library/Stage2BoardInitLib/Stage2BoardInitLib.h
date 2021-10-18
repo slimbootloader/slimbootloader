@@ -71,6 +71,7 @@
 #include <Register/Intel/Cpuid.h>
 #include <CseMsg.h>
 #include <Library/GpioLibApl.h>
+#include <Library/PlatformHookLib.h>
 
 #define IOC_UART_PPR_CLK_N_DIV        0x64
 #define IOC_UART_PPR_CLK_M_DIV        0x40
@@ -118,23 +119,5 @@ UpdateSeedListInfo (
 **/
 EFI_STATUS
 GenerateSeeds (
-  VOID
-  );
-
-/**
-  Get the serial port stride size.
-
-**/
-UINT8
-GetSerialPortStrideSize (
-  VOID
-  );
-
-/**
-  Get the physical serial port base address.
-
-**/
-UINT32
-GetSerialPortBase (
   VOID
   );
