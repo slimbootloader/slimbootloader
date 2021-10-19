@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -151,6 +151,20 @@ SMBIOS_TABLE_TYPE2    mBaseBoardInfo = {
   BaseBoardTypeMotherBoard,                     // BoardType
   0,                                            // NumberOfContainedObjectHandles
   { 0 }                                         // ContainedObjectHandles
+};
+
+SMBIOS_TABLE_TYPE19  mMemArrayMappedAddr = {
+  {                                             // Hdr
+    SMBIOS_TYPE_MEMORY_ARRAY_MAPPED_ADDRESS,    ///< Hdr.Type
+    sizeof (SMBIOS_TABLE_TYPE19),               ///< Hdr.Length
+    0                                           ///< Hdr.Handle
+  },
+  0xFFFFFFFF,                                   // StartingAddress
+  0xFFFFFFFF,                                   // EndingAddress
+  SMBIOS_HANDLE_PI_RESERVED,                    // MemoryArrayHandle
+  1,                                            // PartitionWidth
+  0,                                            // ExtendedStartingAddress
+  0                                             // ExtendedEndingAddress
 };
 
 #endif /* __SMBIOS_TABLES_H__ */

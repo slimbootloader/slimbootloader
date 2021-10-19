@@ -5,6 +5,7 @@
 
 **/
 
+#include <PiPei.h>
 #include <IndustryStandard/SmBios.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/DebugLib.h>
@@ -14,6 +15,7 @@
 #include <Library/SmbiosInitLib.h>
 #include <Library/PcdLib.h>
 #include <Library/BootloaderCommonLib.h>
+#include <Library/FspSupportLib.h>
 #include "SmbiosTables.h"
 
 VOID      *mType127Ptr            =   NULL;
@@ -46,7 +48,7 @@ CONST SMBIOS_TYPE_STRINGS  mDefaultSmbiosStrings[] = {
   {  SMBIOS_TYPE_BASEBOARD_INFORMATION ,   3,  SMBIOS_STRING_UNKNOWN_VERSION  },  // Version
   {  SMBIOS_TYPE_BASEBOARD_INFORMATION ,   4,  SMBIOS_STRING_UNKNOWN          },  // Serial Number
   // Type 127 - End of strings
-  {   SMBIOS_TYPE_END_OF_TABLE,            0,  ""                             }
+  {  SMBIOS_TYPE_END_OF_TABLE,             0,  ""                             }
 };
 
 /**
@@ -254,7 +256,6 @@ AppendSmbiosType (
   // After appending, update with Typ127 and patch entry point
   //
   Status = FinalizeSmbios (TypeLength);
-
   return Status;
 }
 
@@ -323,6 +324,33 @@ AddSmbiosString (
   return Destination;
 }
 
+
+/**
+  Get system memory size from FSP HOB.
+
+  @retval   Total system memory size
+
+**/
+UINT64
+GetSystemMemorySize (
+  VOID
+  )
+{
+  UINT32                        Tolm;
+  UINT64                        Tohm;
+  VOID                         *FspHob;
+
+  // Build memory array mapped address information.
+  FspHob = GetFspHobListPtr ();
+  if (FspHob != NULL) {
+    GetSystemTopOfMemeory (FspHob, &Tohm);
+  } else {
+    Tohm = SIZE_4GB;
+  }
+  Tolm = GetUsableMemoryTop ();
+  return Tolm + (Tohm - SIZE_4GB);
+}
+
 /**
   Add a particular Smbios type to the Smbios allocated region.
   Different from AppenSmbiosType which can be called at a later stage
@@ -373,14 +401,23 @@ AddSmbiosType (
     HdrInfo = (VOID *)&mBaseBoardInfo;
     NumStr = 6;
     break;
-  default:
-    return TypeAddr;
+  case SMBIOS_TYPE_MEMORY_ARRAY_MAPPED_ADDRESS:
+    HdrLen  = sizeof (SMBIOS_TABLE_TYPE19);
+    mMemArrayMappedAddr.ExtendedEndingAddress = GetSystemMemorySize () - 1;
+    HdrInfo = (VOID *)&mMemArrayMappedAddr;
+    NumStr  = 0;
+    break;
   }
 
   //
   // Check for overflow before adding the Type
   //
-  TypeLength = HdrLen + (SMBIOS_STRING_MAX_LENGTH + 1) * NumStr + sizeof (CHAR8);
+  if (NumStr > 0) {
+    TypeLength = HdrLen + (SMBIOS_STRING_MAX_LENGTH + 1) * NumStr + sizeof (CHAR8);
+  } else {
+    TypeLength = HdrLen + 2 * sizeof (CHAR8);
+  }
+
   Status = CheckSmbiosOverflow (TypeLength);
   if (EFI_ERROR(Status)) {
     DEBUG ((DEBUG_INFO, "Not enough memory to add Type[%d]\n", Type));
@@ -393,10 +430,16 @@ AddSmbiosType (
   //
   CopyMem (TypePtr.Raw, HdrInfo, HdrLen);
   StringPtr = (CHAR8 *) (TypePtr.Raw + HdrLen);
-  for (StrIdx = 1; StrIdx <= NumStr; ++StrIdx) {
-    StringPtr = AddSmbiosString (StringPtr, GetSmbiosString (Type, StrIdx));
+  if (NumStr > 0) {
+    for (StrIdx = 1; StrIdx <= NumStr; ++StrIdx) {
+      StringPtr = AddSmbiosString (StringPtr, GetSmbiosString (Type, StrIdx));
+    }
+  } else {
+    // Add string terminator
+    *StringPtr++ = 0;
   }
-  TypeAddr = StringPtr + sizeof(CHAR8);       // last string is terminated with a 0000
+  *StringPtr++ = 0;
+  TypeAddr = StringPtr;       // last string is terminated with a 0000
 
   //
   // Update TypeLength, header length, Max Length
@@ -451,10 +494,9 @@ InitSmbiosStringPtr (
   Length = sizeof (mDefaultSmbiosStrings);
   if(Length <= (PcdGet16(PcdSmbiosStringsCnt) * sizeof (SMBIOS_TYPE_STRINGS))) {
     CopyMem (SmbiosStringsPtr, mDefaultSmbiosStrings, Length);
-  }
-  else {
-     DEBUG ((DEBUG_INFO, "SmbiosStringsPtr Not Sufficient 0x%x", Length));
-     ASSERT_EFI_ERROR(EFI_OUT_OF_RESOURCES);
+  } else {
+    DEBUG ((DEBUG_INFO, "SmbiosStringsPtr Not Sufficient 0x%x", Length));
+    ASSERT_EFI_ERROR(EFI_OUT_OF_RESOURCES);
   }
   //
   // Initialize SMBIOS String Ptr, Update Length
@@ -493,7 +535,7 @@ SmbiosInit (
   *((UINT32 *)&(SmbiosEntryPoint->AnchorString))              = SIGNATURE_32('_', 'S', 'M', '_');
   SmbiosEntryPoint->EntryPointLength                          = sizeof (SMBIOS_TABLE_ENTRY_POINT);
   SmbiosEntryPoint->MajorVersion                              = 2;
-  SmbiosEntryPoint->MinorVersion                              = 5;
+  SmbiosEntryPoint->MinorVersion                              = 7;
   SmbiosEntryPoint->TableLength                               = 0;
   *((UINT32 *)&(SmbiosEntryPoint->IntermediateAnchorString))  = SIGNATURE_32('_', 'D', 'M', 'I');
   SmbiosEntryPoint->IntermediateAnchorString[4]               = '_';
@@ -506,7 +548,8 @@ SmbiosInit (
   TypeAddr = (VOID *)(UINTN)SmbiosEntryPoint->TableAddress;
   TypeAddr = AddSmbiosType (SMBIOS_TYPE_BIOS_INFORMATION,      TypeAddr, &MaxLength);
   TypeAddr = AddSmbiosType (SMBIOS_TYPE_SYSTEM_INFORMATION,    TypeAddr, &MaxLength);
-  TypeAddr = AddSmbiosType (SMBIOS_TYPE_BASEBOARD_INFORMATION, TypeAddr, &MaxLength);
+  TypeAddr = AddSmbiosType (SMBIOS_TYPE_BASEBOARD_INFORMATION,       TypeAddr, &MaxLength);
+  TypeAddr = AddSmbiosType (SMBIOS_TYPE_MEMORY_ARRAY_MAPPED_ADDRESS, TypeAddr, &MaxLength);
 
   //
   // Add Type 0x7F, and patch the entry point structure
