@@ -15,6 +15,7 @@ import string
 import operator as op
 import ast
 import binascii
+import fnmatch
 from   datetime    import date
 from   collections import OrderedDict
 
@@ -881,6 +882,26 @@ class CGenCfgData:
         return  tmp_list
 
 
+    def find_page_path (self, page_id):
+        def find_page (page_id, top):
+            for node in top['child']:
+                page_key = next(iter(node))
+                path[-1] = page_key
+                if page_id == page_key:
+                    return True
+                else:
+                    path.append ('')
+                    result = find_page (page_id, node[page_key])
+                    if result is not None:
+                        return result
+                    path.pop()
+
+        # path contains a page id list from top level to leaf
+        path = ['']
+        find_page (page_id, self.get_cfg_page()['root'])
+        return path
+
+
     def get_page_title(self, page_id, top = None):
         if top is None:
             top = self.get_cfg_page()['root']
@@ -1001,6 +1022,36 @@ class CGenCfgData:
                 print('%04X:%04X%-6s %s%s : %s' % (offset, length, bit_len, '  ' * level, name, value))
 
         self.traverse_cfg_tree (_print_cfgs)
+
+
+    def find_item_by_name (self, find_name, key = 0):
+        def _find_cfgs (name, cfgs, level):
+            if 'indx' in cfgs:
+                act_cfg = self.get_item_by_index (cfgs['indx'])
+                cfg_name = act_cfg['name'].lower()
+                if cfg_name:
+                    if wildcard:
+                        found = fnmatch.fnmatch(cfg_name, find_name)
+                    else:
+                        found = find_name in cfg_name
+                    if found:
+                        if instance[0] == key:
+                            result.append (act_cfg)
+                        instance[0] += 1
+
+        result    = []
+        instance  = [0]
+        find_name = find_name.lower()
+        if '*' in find_name or '?' in find_name:
+            wildcard = True
+        else:
+            wildcard = False
+
+        self.traverse_cfg_tree (_find_cfgs)
+        if len(result) == 0:
+            return None
+        else:
+            return result[0]
 
 
     def build_var_dict (self):
