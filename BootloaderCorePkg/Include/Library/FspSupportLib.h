@@ -47,6 +47,22 @@ GetFspReservedMemoryFromGuid (
   );
 
 /**
+  This function retrieves a top of low and high memory address.
+
+  @param  HobListPtr    A HOB list pointer.
+  @param  TopOfHighMem  A pointer to receive the top of high memory.
+
+  @retval              Top of low memory.
+
+**/
+UINT32
+EFIAPI
+GetSystemTopOfMemeory (
+  CONST VOID     *HobListPtr,
+  UINT64         *TopOfHighMem  OPTIONAL
+  );
+
+/**
   This function traverses each memory resource hob type and calls the handler.
 
   @param  HobListPtr         A HOB list pointer.

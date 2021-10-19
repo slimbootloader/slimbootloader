@@ -5,6 +5,7 @@
 
 **/
 
+#include <PiPei.h>
 #include <IndustryStandard/SmBios.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/DebugLib.h>
@@ -14,6 +15,7 @@
 #include <Library/SmbiosInitLib.h>
 #include <Library/PcdLib.h>
 #include <Library/BootloaderCommonLib.h>
+#include <Library/FspSupportLib.h>
 #include "SmbiosTables.h"
 
 VOID      *mType127Ptr            =   NULL;
@@ -254,7 +256,6 @@ AppendSmbiosType (
   // After appending, update with Typ127 and patch entry point
   //
   Status = FinalizeSmbios (TypeLength);
-
   return Status;
 }
 
@@ -451,16 +452,55 @@ InitSmbiosStringPtr (
   Length = sizeof (mDefaultSmbiosStrings);
   if(Length <= (PcdGet16(PcdSmbiosStringsCnt) * sizeof (SMBIOS_TYPE_STRINGS))) {
     CopyMem (SmbiosStringsPtr, mDefaultSmbiosStrings, Length);
-  }
-  else {
-     DEBUG ((DEBUG_INFO, "SmbiosStringsPtr Not Sufficient 0x%x", Length));
-     ASSERT_EFI_ERROR(EFI_OUT_OF_RESOURCES);
+  } else {
+    DEBUG ((DEBUG_INFO, "SmbiosStringsPtr Not Sufficient 0x%x", Length));
+    ASSERT_EFI_ERROR(EFI_OUT_OF_RESOURCES);
   }
   //
   // Initialize SMBIOS String Ptr, Update Length
   //
   Status = PcdSet32S (PcdSmbiosStringsPtr, (UINT32)(UINTN)SmbiosStringsPtr);
   ASSERT_EFI_ERROR (Status);
+}
+
+/**
+  This function is called to build some common Smbios types dynamically.
+
+  @retval      EFI_SUCCESS    SMBIOS type was added successfully.
+               Others         Failed to add SMBIOS type.
+**/
+STATIC
+EFI_STATUS
+BuildCommonSmbiosType (
+  VOID
+  )
+{
+  EFI_STATUS                    Status;
+  SMBIOS_TABLE_TYPE19           SmbiosType19;
+  UINT32                        Tolm;
+  UINT64                        Tohm;
+  VOID                         *FspHob;
+
+  // Build memory array mapped address information.
+  FspHob = GetFspHobListPtr ();
+  if (FspHob != NULL) {
+    GetSystemTopOfMemeory (FspHob, &Tohm);
+  } else {
+    Tohm = SIZE_4GB;
+  }
+  Tolm   = GetUsableMemoryTop ();
+  SmbiosType19.Hdr.Type                          = SMBIOS_TYPE_MEMORY_ARRAY_MAPPED_ADDRESS;
+  SmbiosType19.Hdr.Length                        = sizeof(SMBIOS_TABLE_TYPE19);
+  SmbiosType19.Hdr.Handle                        = 0;
+  SmbiosType19.StartingAddress                   = 0xFFFFFFFF;
+  SmbiosType19.EndingAddress                     = 0xFFFFFFFF;
+  SmbiosType19.MemoryArrayHandle                 = SMBIOS_HANDLE_PI_RESERVED;
+  SmbiosType19.PartitionWidth                    = 1;
+  SmbiosType19.ExtendedStartingAddress           = 0x0;
+  SmbiosType19.ExtendedEndingAddress             = Tolm + (Tohm - SIZE_4GB);
+  Status = AppendSmbiosType (&SmbiosType19, sizeof(SmbiosType19));
+
+  return Status;
 }
 
 /**
@@ -512,6 +552,10 @@ SmbiosInit (
   // Add Type 0x7F, and patch the entry point structure
   //
   Status = FinalizeSmbios (MaxLength);
+
+  if (!EFI_ERROR(Status)) {
+    Status = BuildCommonSmbiosType ();
+  }
 
   return Status;
 }
