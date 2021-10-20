@@ -592,13 +592,13 @@ ShellCommandBootFunc (
       if (EFI_ERROR (Status)) {
         goto ExitBootCmd;
       }
-      if ((CurrOption->BootFlags & BOOT_FLAGS_PREOS) != 0){
+      if ((BootOption.BootFlags & BOOT_FLAGS_PREOS) != 0){
         Status = GetBootFileInfo (Shell, Buffer, sizeof (Buffer), &BootOption, CurrOption, LoadImageTypePreOs);
         if (EFI_ERROR (Status)) {
           goto ExitBootCmd;
         }
       }
-      if ((CurrOption->BootFlags & BOOT_FLAGS_EXTRA) != 0){
+      if ((BootOption.BootFlags & BOOT_FLAGS_EXTRA) != 0){
         Status = GetBootFileInfo (Shell, Buffer, sizeof (Buffer), &BootOption, CurrOption, LoadImageTypeExtra0);
         if (EFI_ERROR (Status)) {
           goto ExitBootCmd;
