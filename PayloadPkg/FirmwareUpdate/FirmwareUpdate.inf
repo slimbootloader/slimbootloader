@@ -65,7 +65,6 @@
   gPayloadTokenSpaceGuid.PcdPayloadHobList
   gPlatformCommonLibTokenSpaceGuid.PcdAcpiPmTimerBase
   gPayloadTokenSpaceGuid.PcdFwUpdStatusBase
-  gPayloadTokenSpaceGuid.PcdRsvdRegionBase
   gPlatformCommonLibTokenSpaceGuid.PcdLowestSupportedFwVer
   gPayloadTokenSpaceGuid.PcdCsmeUpdateEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdCompSignHashAlg

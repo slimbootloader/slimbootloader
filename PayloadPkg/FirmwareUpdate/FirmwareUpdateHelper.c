@@ -430,7 +430,8 @@ UpdateBootPartition (
 {
   EFI_STATUS                     Status;
   UINT32                         Index;
-  FIRMWARE_UPDATE_REGION         *UpdateRegion;
+  FIRMWARE_UPDATE_REGION        *UpdateRegion;
+  FIRMWARE_UPDATE_REGION         TempRegion;
   UINT32                         TotalUpdateSize;
   UINT32                         WrittenSize;
 
@@ -448,13 +449,15 @@ UpdateBootPartition (
 
   WrittenSize = 0;
   for (Index = 0; Index < UpdatePartition->RegionCount; Index++) {
-    UpdateRegion = &UpdatePartition->FwRegion[Index];
-    Status = UpdateBootRegion (UpdateRegion, WrittenSize, TotalUpdateSize);
+    // Adjust the offset to be relative to BIOS region start
+    CopyMem (&TempRegion, &UpdatePartition->FwRegion[Index], sizeof(FIRMWARE_UPDATE_REGION));
+    TempRegion.ToUpdateAddress += GetRomImageOffsetInBiosRegion ();
+    Status = UpdateBootRegion (&TempRegion, WrittenSize, TotalUpdateSize);
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "UpdateBootRegion failed! Status = 0x%x\n", Status));
       return Status;
     }
-    WrittenSize += UpdateRegion->UpdateSize;
+    WrittenSize += TempRegion.UpdateSize;
   }
 
   return Status;

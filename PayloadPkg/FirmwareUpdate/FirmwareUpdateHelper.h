@@ -230,4 +230,14 @@ Reboot (
   IN  EFI_RESET_TYPE        ResetType
   );
 
+/**
+  Retrieve the SBL rom image offset within BIOS region.
+
+  @retval  The SBL rom image offset within BIOS region
+**/
+UINT32
+GetRomImageOffsetInBiosRegion (
+  VOID
+  );
+
 #endif
