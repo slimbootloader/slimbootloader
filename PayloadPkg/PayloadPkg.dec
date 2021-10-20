@@ -38,7 +38,6 @@
 
 [PcdsPatchableInModule]
   gPayloadTokenSpaceGuid.PcdFwUpdStatusBase   | 0x00000000 | UINT32 | 0x10001005
-  gPayloadTokenSpaceGuid.PcdRsvdRegionBase    | 0x00000000 | UINT32 | 0x10001006
 
 [PcdsFeatureFlag]
   gPayloadTokenSpaceGuid.PcdGrubBootCfgEnabled   | FALSE    | BOOLEAN | 0x2001000

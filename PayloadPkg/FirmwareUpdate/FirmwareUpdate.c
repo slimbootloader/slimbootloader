@@ -28,6 +28,21 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Guid/SystemResourceTable.h>
 #include "FirmwareUpdateHelper.h"
 
+UINT32   mSblImageBiosRgnOffset;
+
+/**
+  Retrieve the SBL rom image offset within BIOS region.
+
+  @retval  The SBL rom image offset within BIOS region
+**/
+UINT32
+GetRomImageOffsetInBiosRegion (
+  VOID
+  )
+{
+  return mSblImageBiosRgnOffset;
+}
+
 /**
   Verify the firmware version to make sure it is no less than current firmware version.
 
@@ -1210,6 +1225,7 @@ PayloadMain (
   UINT32        RsvdSize;
   FLASH_MAP     *FlashMap;
   EFI_STATUS    Status;
+  UINT32        BiosRgnSize;
 
   DEBUG ((DEBUG_INFO, "Starting Firmware Update\n"));
   //
@@ -1223,7 +1239,7 @@ PayloadMain (
   FlashMap = GetFlashMapPtr();
   if (FlashMap == NULL) {
     DEBUG((DEBUG_ERROR, "Could not get flash map\n"));
-    return;
+    goto EndOfFwu;
   }
 
   //
@@ -1232,21 +1248,34 @@ PayloadMain (
   Status = GetComponentInfoByPartition (FLASH_MAP_SIG_BLRESERVED, FALSE, &RsvdBase, &RsvdSize);
   if (EFI_ERROR (Status)) {
     DEBUG((DEBUG_ERROR, "Could not get component information for bootloader reserved region\n"));
-    return;
+    goto EndOfFwu;
   }
 
   //
-  // Set PCD for Firmware Update status structure base
+  // Get SBL rom image start offset in BIOS region
+  // Specially, if SBL rom image occupies the whole BIOS region, this offset is 0
   //
-  Status = PcdSet32S (PcdFwUpdStatusBase, (FlashMap->RomSize - (~RsvdBase + 1)));
+  mSblImageBiosRgnOffset = 0;
+  Status = BootMediaGetRegion (FlashRegionBios, NULL, &BiosRgnSize);
+  if (!EFI_ERROR (Status)) {
+    DEBUG((DEBUG_INFO, "BIOS Region Size: 0x%08X\n", BiosRgnSize));
+    DEBUG((DEBUG_INFO, "SBL  ROM    Size: 0x%08X\n", FlashMap->RomSize));
+    if (BiosRgnSize < FlashMap->RomSize) {
+      Status = EFI_ABORTED;
+    } else {
+      mSblImageBiosRgnOffset = BiosRgnSize - FlashMap->RomSize;
+    }
+  }
   if (EFI_ERROR (Status)) {
-    return;
+    DEBUG((DEBUG_ERROR, "Could not fit image into BIOS region\n"));
+    goto EndOfFwu;
   }
 
-  Status = PcdSet32S (PcdRsvdRegionBase, RsvdBase);
-  if (EFI_ERROR (Status)) {
-    return;
-  }
+
+  //
+  // Set PCD for Firmware Update status structure offset within BIOS region
+  //
+  (VOID) PcdSet32S (PcdFwUpdStatusBase, mSblImageBiosRgnOffset + (FlashMap->RomSize - (~RsvdBase + 1)));
 
   //
   // Perform firmware update
@@ -1263,6 +1292,7 @@ PayloadMain (
     }
   }
 
+EndOfFwu:
   //
   // Terminate firmware update
   //
