@@ -74,7 +74,12 @@ class Board(BaseBoard):
             self.POSC_SIZE = 0x00028000
             self.SIIPFW_SIZE += self.POSC_SIZE
 
-        self.ENABLE_PSEFW_LOADING = 1
+        bins = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'Binaries')
+        if os.path.exists(os.path.join(bins, 'PseFw.bin')):
+            self.ENABLE_PSEFW_LOADING = 1
+        else:
+            self.ENABLE_PSEFW_LOADING = 0
+
         if self.ENABLE_PSEFW_LOADING:
             self.PSEF_SIZE = 0x00020000
             self.SIIPFW_SIZE += self.PSEF_SIZE
