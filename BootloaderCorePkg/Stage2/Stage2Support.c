@@ -136,10 +136,12 @@ PrintStackHeapInfo (
 
   DEBUG ((
            DEBUG_INFO,
-           "Stage2 heap: 0x%X (0x%X used, 0x%X free)\n",
+           "Stage2 heap: 0x%X (0x%X used, 0x%X free, 0x%x max used)\n",
            LdrGlobal->MemPoolEnd - LdrGlobal->MemPoolStart,
-           LdrGlobal->MemPoolEnd - LdrGlobal->MemPoolCurrTop,
-           LdrGlobal->MemPoolCurrTop - LdrGlobal->MemPoolStart
+           (LdrGlobal->MemPoolEnd - LdrGlobal->MemPoolCurrTop) +
+           (LdrGlobal->MemPoolCurrBottom - LdrGlobal->MemPoolStart),
+           LdrGlobal->MemPoolCurrTop - LdrGlobal->MemPoolCurrBottom,
+           LdrGlobal->MemPoolMaxUsed
            ));
 }
 

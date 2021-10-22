@@ -463,6 +463,7 @@ SecStartup (
   LdrGlobal->MemPoolStart          = StackTop;
   LdrGlobal->MemPoolCurrTop        = LdrGlobal->MemPoolEnd;
   LdrGlobal->MemPoolCurrBottom     = LdrGlobal->MemPoolStart;
+  LdrGlobal->MemPoolMaxUsed        = 0;
   LdrGlobal->DebugPrintErrorLevel  = 0;
   LdrGlobal->PerfData.PerfIndex    = 2;
   LdrGlobal->PerfData.FreqKhz      = GetTimeStampFrequency ();
