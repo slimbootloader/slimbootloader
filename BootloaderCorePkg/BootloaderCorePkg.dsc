@@ -223,8 +223,9 @@
   gPlatformModuleTokenSpaceGuid.PcdCfgDataLoadSource      | $(CFGDATA_REGION_TYPE)
   gPlatformModuleTokenSpaceGuid.PcdCfgDatabaseSize        | $(CFG_DATABASE_SIZE)
 
-  gPlatformModuleTokenSpaceGuid.PcdHashStoreSize             | $(HASH_STORE_SIZE)
+  gPlatformModuleTokenSpaceGuid.PcdHashStoreSize          | $(HASH_STORE_SIZE)
 
+  gPlatformModuleTokenSpaceGuid.PcdAcpiProcessorIdBase    | $(ACPI_PROCESSOR_ID_BASE)
   gPlatformModuleTokenSpaceGuid.PcdCpuMaxLogicalProcessorNumber | $(CPU_MAX_LOGICAL_PROCESSOR_NUMBER)
 
   gPlatformCommonLibTokenSpaceGuid.PcdConsoleInDeviceMask  | $(CONSOLE_IN_DEVICE_MASK)

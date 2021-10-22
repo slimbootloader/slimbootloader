@@ -373,7 +373,7 @@ UpdateMadt (
     for (Index = 0; Index < SysCpuInfo->CpuCount; Index++) {
       LocalX2Apic[Index].Type             = EFI_ACPI_5_0_PROCESSOR_LOCAL_X2APIC;
       LocalX2Apic[Index].Length           = sizeof (EFI_ACPI_5_0_PROCESSOR_LOCAL_X2APIC_STRUCTURE);
-      LocalX2Apic[Index].AcpiProcessorUid = Index + 1;
+      LocalX2Apic[Index].AcpiProcessorUid = Index + PcdGet32 (PcdAcpiProcessorIdBase);
       LocalX2Apic[Index].X2ApicId         = SysCpuInfo->CpuInfo[Index].ApicId;
       LocalX2Apic[Index].Flags            = 1;
     }
@@ -384,7 +384,7 @@ UpdateMadt (
     for (Index = 0; Index < SysCpuInfo->CpuCount; Index++) {
       LocalApic[Index].Type             = EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC;
       LocalApic[Index].Length           = sizeof (EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC_STRUCTURE);
-      LocalApic[Index].AcpiProcessorId  = (UINT8)Index + 1;
+      LocalApic[Index].AcpiProcessorId  = (UINT8)(Index + PcdGet32 (PcdAcpiProcessorIdBase));
       LocalApic[Index].ApicId           = (UINT8)SysCpuInfo->CpuInfo[Index].ApicId;
       LocalApic[Index].Flags            = 1;
     }
@@ -643,7 +643,7 @@ AcpiInit (
       if (!EFI_ERROR(Status)) {
         if (UpdateRdstXsdt == 1) {
           Signature = Table->Signature;
-          DEBUG ((DEBUG_INFO, "Publish ACPI table: %a\n", &Signature));
+          DEBUG ((DEBUG_INFO, "Publish ACPI table: %a @ 0x%08X\n", &Signature, (UINT32)(UINTN)Current));
           RsdtEntry[XsdtIndex]   = (UINT32) (UINTN)Current;
           XsdtEntry[XsdtIndex++] = (UINT64) (UINTN)Current;
         }

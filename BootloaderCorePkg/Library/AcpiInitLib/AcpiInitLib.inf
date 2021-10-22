@@ -64,3 +64,4 @@
   gPlatformModuleTokenSpaceGuid.PcdSplashEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdCpuX2ApicEnabled
   gPlatformModuleTokenSpaceGuid.PcdAcpiTableTemplatePtr
+  gPlatformModuleTokenSpaceGuid.PcdAcpiProcessorIdBase

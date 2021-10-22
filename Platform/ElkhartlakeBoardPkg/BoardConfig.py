@@ -39,6 +39,7 @@ class Board(BaseBoard):
         self.PCI_IO_BASE          = 0x00002000
         self.PCI_MEM32_BASE       = 0x80000000
         self.ACPI_PM_TIMER_BASE   = 0x1808
+        self.ACPI_PROCESSOR_ID_BASE = 0
 
         self.FLASH_BASE_ADDRESS   = 0xFF000000
         self.FLASH_BASE_SIZE      = (self.FLASH_LAYOUT_START - self.FLASH_BASE_ADDRESS)

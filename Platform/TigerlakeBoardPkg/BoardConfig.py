@@ -51,7 +51,8 @@ class Board(BaseBoard):
             self.SUPPORT_ARI          = 1
             self.SUPPORT_SR_IOV       = 1
 
-        self.ACPI_PM_TIMER_BASE   = 0x1808
+        self.ACPI_PROCESSOR_ID_BASE = 0
+        self.ACPI_PM_TIMER_BASE     = 0x1808
         self.LOADER_ACPI_RECLAIM_MEM_SIZE = 0x000090000
 
         self.FLASH_BASE_ADDRESS   = 0xFF000000
