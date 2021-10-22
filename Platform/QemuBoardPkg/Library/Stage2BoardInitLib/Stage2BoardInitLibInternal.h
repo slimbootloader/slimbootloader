@@ -29,6 +29,8 @@
 #include <Library/GraphicsInitLib.h>
 #include <Library/HobLib.h>
 #include <Library/PlatformHookLib.h>
+#include <Library/SmbiosInitLib.h>
+#include <Library/PrintLib.h>
 #include <Guid/GraphicsInfoHob.h>
 #include <Guid/SystemTableInfoGuid.h>
 #include <Guid/SerialPortInfoGuid.h>
