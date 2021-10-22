@@ -81,23 +81,22 @@ CompareMemoryMap (
   @param MemoryMapInfo     Array of MemoryMapInfo structure containing memory map entry.
 
   @retval EFI_SUCCESS           Memory ranges have been splitted successfully.
+  @retval EFI_NOT_FOUND         Could not find proper entry to split.
   @retval EFI_UNSUPPORTED       Required memory range size is not page aligned.
   @retval EFI_OUT_OF_RESOURCES  The system memory map top entry is too small.
-  @retval EFI_ABORTED           No memory range has been splitted.
-
+  @retval EFI_ABORTED           Insufficant memory map entry number.
 **/
 EFI_STATUS
 SplitMemroyMap (
   IN OUT  MEMORY_MAP_INFO      *MemoryMapInfo
   )
 {
-  UINTN            Idx;
+  UINT32           Idx;
   UINT32           NewIdx;
-  UINTN            Loop;
+  UINT32           Loop;
   UINT8            Flag;
   UINT8            Type;
   UINT32           Adjust;
-  MEMORY_MAP_ENTRY     TempMemoryMap;
   LOADER_GLOBAL_DATA  *LdrGlobal;
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
@@ -156,18 +155,77 @@ SplitMemroyMap (
     }
   }
 
-  MemoryMapInfo->Entry[NewIdx].Base = PcdGet32(PcdFlashBaseAddress);
-  MemoryMapInfo->Entry[NewIdx].Size = PcdGet32(PcdFlashSize);
-  MemoryMapInfo->Entry[NewIdx].Type = MEM_MAP_TYPE_RESERVED;
-  MemoryMapInfo->Entry[NewIdx].Flag = 0;
-  NewIdx++;
-
-  if (NewIdx <= MemoryMapInfo->Count) {
-    return EFI_ABORTED;
+  // Add a flash map entry
+  if (NewIdx < PcdGet32 (PcdMemoryMapEntryNumber)) {
+    MemoryMapInfo->Entry[NewIdx].Base = PcdGet32(PcdFlashBaseAddress);
+    MemoryMapInfo->Entry[NewIdx].Size = PcdGet32(PcdFlashSize);
+    MemoryMapInfo->Entry[NewIdx].Type = MEM_MAP_TYPE_RESERVED;
+    MemoryMapInfo->Entry[NewIdx].Flag = 0;
+    NewIdx++;
   }
   MemoryMapInfo->Count = NewIdx;
 
+  // Always keep one free entry
+  if (NewIdx >= PcdGet32 (PcdMemoryMapEntryNumber)) {
+    return EFI_ABORTED;
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Sort memory map in order and check the gap in between.
+
+  @param MemoryMapInfo     Array of MemoryMapInfo structure containing memory map entry.
+
+  @retval EFI_SUCCESS           Memory ranges have been splitted successfully.
+  @retval EFI_UNSUPPORTED       Required memory range size is not page aligned.
+  @retval EFI_OUT_OF_RESOURCES  The system memory map top entry is too small.
+  @retval EFI_ABORTED           No memory range has been splitted.
+
+**/
+EFI_STATUS
+SortMemroyMap (
+  IN OUT  MEMORY_MAP_INFO      *MemoryMapInfo
+  )
+{
+  UINT32               Idx;
+  UINT32               NewIdx;
+  MEMORY_MAP_ENTRY     TempMemoryMap;
+  UINT64               Current;
+  UINT32               Tolum;
+
+  NewIdx = MemoryMapInfo->Count;
   PerformQuickSort (MemoryMapInfo->Entry, NewIdx, sizeof (MEMORY_MAP_ENTRY), CompareMemoryMap, &TempMemoryMap);
+
+  // Verify if there is any gap for memory map entries below top of low memory
+  Current = 0;
+  Tolum   = (UINT32)GetMemoryInfo (EnumMemInfoTolum);
+  for (Idx = 0; Idx < MemoryMapInfo->Count; Idx++) {
+    if (MemoryMapInfo->Entry[Idx].Base >= Tolum) {
+      break;
+    }
+    if ((Current < MemoryMapInfo->Entry[Idx].Base) && (NewIdx < PcdGet32 (PcdMemoryMapEntryNumber))) {
+      DEBUG ((DEBUG_INFO, "Found a gap in memory map: %08X - %08X\n", Current,  (UINT32)MemoryMapInfo->Entry[Idx].Base - 1));
+      MemoryMapInfo->Entry[NewIdx].Base = Current;
+      MemoryMapInfo->Entry[NewIdx].Size = MemoryMapInfo->Entry[Idx].Base - Current;
+      MemoryMapInfo->Entry[NewIdx].Type = MEM_MAP_TYPE_RESERVED;
+      MemoryMapInfo->Entry[NewIdx].Flag = 0;
+      NewIdx++;
+    }
+    Current = MemoryMapInfo->Entry[Idx].Base + MemoryMapInfo->Entry[Idx].Size;
+  }
+
+  // Check if it has enough space to cover all memory map
+  if (NewIdx >= PcdGet32 (PcdMemoryMapEntryNumber)) {
+    return EFI_ABORTED;
+  }
+
+  // New entry were added, need to sort again
+  if (NewIdx != MemoryMapInfo->Count) {
+    MemoryMapInfo->Count = NewIdx;
+    PerformQuickSort (MemoryMapInfo->Entry, NewIdx, sizeof (MEMORY_MAP_ENTRY), CompareMemoryMap, &TempMemoryMap);
+  }
 
   return EFI_SUCCESS;
 }
@@ -293,6 +351,9 @@ BuildBaseInfoHob (
     MemoryMapInfo->Revision = 1;
     TraverseMemoryResourceHob (LdrGlobal->FspHobList, MemResHobCallback, MemoryMapInfo);
     Status = SplitMemroyMap (MemoryMapInfo);
+    if (!EFI_ERROR (Status)) {
+      Status = SortMemroyMap (MemoryMapInfo);
+    }
     PrintMemoryMap (MemoryMapInfo);
     if (EFI_ERROR (Status)) {
       CpuHaltWithStatus ("Memory map failure !", Status);
