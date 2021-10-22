@@ -446,6 +446,7 @@ SecStartup2 (
   LdrGlobal->MemPoolStart      = MemPoolStart;
   LdrGlobal->MemPoolCurrTop    = MemPoolCurrTop;
   LdrGlobal->MemPoolCurrBottom = MemPoolStart;
+  LdrGlobal->MemPoolMaxUsed    = 0;
   LdrGlobal->MemUsableTop      = (UINT32)(FspReservedMemBase + FspReservedMemSize);
 
   if (FeaturePcdGet (PcdDmaProtectionEnabled)) {
@@ -644,9 +645,11 @@ ContinueFunc (
            ));
   DEBUG ((
            DEBUG_INFO,
-           "Stage1 heap: 0x%X (0x%X used)\n",
+           "Stage1 heap: 0x%X (0x%X used, 0x%x max used)\n",
            PcdGet32 (PcdStage1DataSize),
-           OldLdrGlobal->MemPoolEnd - OldLdrGlobal->MemPoolCurrTop
+           (OldLdrGlobal->MemPoolEnd - OldLdrGlobal->MemPoolCurrTop) +
+           (OldLdrGlobal->MemPoolCurrBottom - OldLdrGlobal->MemPoolStart),
+           OldLdrGlobal->MemPoolMaxUsed
            ));
   DEBUG_CODE_END ();
 

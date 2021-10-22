@@ -215,6 +215,7 @@ typedef struct {
   BL_PERF_DATA      PerfData;
   UINT32            CarBase;
   UINT32            CarSize;
+  UINT32            MemPoolMaxUsed;
 } LOADER_GLOBAL_DATA;
 
 /**

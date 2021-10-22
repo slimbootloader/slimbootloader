@@ -27,8 +27,14 @@ InternalUpdateMemPoolTop (
   )
 {
   LOADER_GLOBAL_DATA  *LdrGlobal;
+  UINT32               PoolUsed;
 
   LdrGlobal = GetLoaderGlobalDataPointer();
+  PoolUsed = (LdrGlobal->MemPoolEnd - Top) +
+              (LdrGlobal->MemPoolCurrBottom - LdrGlobal->MemPoolStart);
+  if (LdrGlobal->MemPoolMaxUsed < PoolUsed) {
+    LdrGlobal->MemPoolMaxUsed = PoolUsed;
+  }
   ASSERT (Top >= LdrGlobal->MemPoolCurrBottom);
   LdrGlobal->MemPoolCurrTop = Top;
 }
@@ -44,8 +50,14 @@ InternalUpdateMemPoolBottom (
   )
 {
   LOADER_GLOBAL_DATA  *LdrGlobal;
+  UINT32               PoolUsed;
 
   LdrGlobal = GetLoaderGlobalDataPointer();
+  PoolUsed = (LdrGlobal->MemPoolEnd - LdrGlobal->MemPoolCurrTop) +
+              (Bottom - LdrGlobal->MemPoolStart);
+  if (LdrGlobal->MemPoolMaxUsed < PoolUsed) {
+    LdrGlobal->MemPoolMaxUsed = PoolUsed;
+  }
   ASSERT (LdrGlobal->MemPoolCurrTop >= Bottom);
   LdrGlobal->MemPoolCurrBottom = Bottom;
 }
