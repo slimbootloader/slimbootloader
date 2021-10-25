@@ -37,6 +37,7 @@
 #include <PlatformBoardId.h>
 #include <TccConfigSubRegions.h>
 #include <Library/ResetSystemLib.h>
+#include <Library/WatchDogTimerLib.h>
 
 CONST PLT_DEVICE  mPlatformDevices[]= {
   {{0x00001700}, OsBootDeviceSata  , 0 },
@@ -103,19 +104,26 @@ TccModePreMemConfig (
     DEBUG ((DEBUG_INFO, "S0ix is turned off when TCC is enabled\n"));
   }
 
-  // Load TCC stream config from container
-  TccStreamBase = NULL;
-  TccStreamSize = 0;
-  Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'C', 'C', 'T'),
-                          (VOID **)&TccStreamBase, &TccStreamSize);
-  if (EFI_ERROR (Status) || (TccStreamSize < sizeof(TCC_STREAM_CONFIGURATION))) {
-    DEBUG ((DEBUG_INFO, "Load TCC Stream %r, size = 0x%x\n", Status, TccStreamSize));
-  } else {
-    FspmUpd->FspmConfig.TccStreamCfgBasePreMem = (UINT32)(UINTN)TccStreamBase;
-    FspmUpd->FspmConfig.TccStreamCfgSizePreMem = TccStreamSize;
-    DEBUG ((DEBUG_INFO, "Load TCC stream @0x%p, size = 0x%x\n", TccStreamBase, TccStreamSize));
+  if (IsWdtFlagsSet(WDT_FLAG_TCC_DSO) && IsWdtTimeout()) {
+    DEBUG ((DEBUG_INFO, "Incorrect TCC tuning parameters. Platform rebooted with default values.\n"));
+    WdtClearFlags (WDT_FLAG_TCC_DSO);
+    FspmUpd->FspmConfig.TccStreamCfgStatusPreMem = 1;
+  } else if (TccCfgData->TccTuning != 0) {
+    // Setup Watch dog timer
+    WdtReloadAndStart (WDT_TIMEOUT_TCC_DSO, WDT_FLAG_TCC_DSO);
 
-    if (TccCfgData->TccTuning != 0) {
+    // Load TCC stream config from container
+    TccStreamBase = NULL;
+    TccStreamSize = 0;
+    Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'C', 'C', 'T'),
+                          (VOID **)&TccStreamBase, &TccStreamSize);
+    if (EFI_ERROR (Status) || (TccStreamSize < sizeof(TCC_STREAM_CONFIGURATION))) {
+      DEBUG ((DEBUG_INFO, "Load TCC Stream %r, size = 0x%x\n", Status, TccStreamSize));
+    } else {
+      FspmUpd->FspmConfig.TccStreamCfgBasePreMem = (UINT32)(UINTN)TccStreamBase;
+      FspmUpd->FspmConfig.TccStreamCfgSizePreMem = TccStreamSize;
+      DEBUG ((DEBUG_INFO, "Load TCC stream @0x%p, size = 0x%x\n", TccStreamBase, TccStreamSize));
+
       StreamConfig = (TCC_STREAM_CONFIGURATION *) TccStreamBase;
       PolicyConfig = (BIOS_SETTINGS *) &StreamConfig->BiosSettings;
 
