@@ -287,6 +287,7 @@ class Board(BaseBoard):
             'BasePchPciBdfLib|Silicon/$(PCH_PKG_NAME)/Library/BasePchPciBdfLib/BasePchPciBdfLib.inf',
             'GpioLib|Silicon/CommonSocPkg/Library/GpioLib/GpioLib.inf',
             'GpioSiLib|Silicon/$(PCH_PKG_NAME)/Library/GpioSiLib/GpioSiLib.inf',
+            'WatchDogTimerLib|Silicon/CommonSocPkg/Library/WatchDogTimerLib/WatchDogTimerLib.inf',
         ]
 
         if self.BUILD_CSME_UPDATE_DRIVER:

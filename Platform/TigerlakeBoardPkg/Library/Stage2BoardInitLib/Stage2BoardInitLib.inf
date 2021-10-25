@@ -67,6 +67,7 @@
   BasePchPciBdfLib
   TccLib
   SmbiosInitLib
+  WatchDogTimerLib
 
 [Guids]
   gOsConfigDataGuid
