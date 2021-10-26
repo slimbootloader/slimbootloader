@@ -12,6 +12,7 @@
 #include <Library/IoLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/UsbBusLib.h>
 #include <Library/UsbInitLib.h>
 #include <UsbBotPeim.h>
 #include <BlockDevice.h>
@@ -99,6 +100,8 @@ InitializeUsb (
   UINTN             Index;
   UINT32            UsbIoCount;
   PEI_USB_IO_PPI  **UsbIoArray;
+  PEI_BOT_DEVICE   *PeiBotDev;
+  CONST CHAR16     *NameStr;
 
   if (DevInitPhase == DevDeinit) {
     DeinitUsbDevices ();
@@ -119,7 +122,6 @@ InitializeUsb (
     Status = UsbFindBlockDevice (UsbIoArray[Index], UsbBlkCallback);
     if (!FeaturePcdGet(PcdMultiUsbBootDeviceEnabled)) {
       if (!EFI_ERROR (Status) && (mUsbBlkCount > 0)) {
-        DEBUG ((DEBUG_INFO, "Use the 1st mass storage device\n"));
         break;
       }
     }
@@ -127,6 +129,14 @@ InitializeUsb (
 
   if (mUsbBlkCount > 0) {
     DEBUG ((DEBUG_INFO, "Found %d mass storage devices\n", mUsbBlkCount));
+    for (Index = 0; Index < mUsbBlkCount; Index++) {
+      PeiBotDev = PEI_BOT_DEVICE_FROM_THIS (mUsbBlkArray[Index]);
+      NameStr   = GetUsbDeviceNameString (PeiBotDev->UsbIoPpi);
+      if (NameStr == NULL) {
+        NameStr = L"N/A";
+      }
+      DEBUG ((DEBUG_INFO, "  %2d: %s\n", Index, NameStr));
+    }
   }
 
   if (mUsbBlkCount > 0) {

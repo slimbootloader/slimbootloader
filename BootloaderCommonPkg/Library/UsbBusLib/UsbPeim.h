@@ -34,7 +34,10 @@
 #define MAX_ENDPOINT              16
 
 #define PEI_USB_DEVICE_SIGNATURE  SIGNATURE_32 ('U', 's', 'b', 'D')
-typedef struct {
+
+typedef struct _PEI_USB_DEVICE  PEI_USB_DEVICE;
+
+struct _PEI_USB_DEVICE {
   UINTN                         Signature;
   PEI_USB_IO_PPI                UsbIoPpi;
   EFI_PEI_PPI_DESCRIPTOR        UsbIoPpiList;
@@ -44,9 +47,11 @@ typedef struct {
   UINT8                         DeviceSpeed;
   UINT8                         IsHub;
   UINT8                         DownStreamPortNo;
+  UINT8                         Port;
   UINTN                         AllocateAddress;
   PEI_USB_HOST_CONTROLLER_PPI   *UsbHcPpi;
   PEI_USB2_HOST_CONTROLLER_PPI  *Usb2HcPpi;
+  CHAR16                        ProductName[128];
   UINT8                         ConfigurationData[1024];
   EFI_USB_CONFIG_DESCRIPTOR     *ConfigDesc;
   EFI_USB_INTERFACE_DESCRIPTOR  *InterfaceDesc;
@@ -55,7 +60,8 @@ typedef struct {
   EFI_USB_ENDPOINT_DESCRIPTOR   *EndpointDescList[MAX_INTERFACE][MAX_ENDPOINT];
   EFI_USB2_HC_TRANSACTION_TRANSLATOR Translator;
   UINT8                          Tier;
-} PEI_USB_DEVICE;
+  PEI_USB_IO_PPI                *Parent;
+};
 
 #define PEI_USB_DEVICE_FROM_THIS(a) CR (a, PEI_USB_DEVICE, UsbIoPpi, PEI_USB_DEVICE_SIGNATURE)
 

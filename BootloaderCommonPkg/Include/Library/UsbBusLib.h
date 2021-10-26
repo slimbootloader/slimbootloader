@@ -30,4 +30,19 @@ UsbEnumBus (
   USB_IO_CALLBACK                        UsbIoCb
   );
 
+/**
+  Retrieve the concatenated manufacturer and product string for a given USB device.
+
+  @param[in]  UsbIo for a USB device.
+
+  @retval     The constant manufacturer and product string.
+              NULL if UsbIo is not valid.
+**/
+CONST
+CHAR16 *
+EFIAPI
+GetUsbDeviceNameString (
+  IN PEI_USB_IO_PPI  *UsbIo
+  );
+
 #endif
