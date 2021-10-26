@@ -723,7 +723,7 @@ XhcPeiControlTransfer (
         // Don't support multi-TT feature for super speed hub now.
         //
         MTT = 0;
-        DEBUG ((DEBUG_ERROR, "XHCI: Don't support multi-TT feature for Hub now. (force to disable MTT)\n"));
+        DEBUG ((DEBUG_INFO, "XHCI: Don't support multi-TT feature for Hub now. (force to disable MTT)\n"));
       } else {
         MTT = 0;
       }

@@ -511,7 +511,7 @@ PrintStackHeapInfo (
     StackBot = DetectUsedStackBottom (StackTop, PcdGet32 (PcdPayloadStackSize));
     DEBUG ((
              DEBUG_INFO,
-             "Payload stack: 0x%X (0x%X used)\n\n",
+             "Payload stack: 0x%X (0x%X used)\n",
              PcdGet32 (PcdPayloadStackSize),
              StackTop - StackBot
              ));
