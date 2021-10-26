@@ -68,4 +68,17 @@ typedef struct {
 #define  TSEG                                       0xB8
 #define  BGSM                                       0xB4
 
+//  This Register contains the size of physical memory.
+#define R_SA_TOM         (0xa0)
+#define B_SA_TOM_MASK    (0x7ffff00000ULL)
+
+//  This 64 bit register defines the Top of Upper Usable DRAM.
+#define R_SA_TOUUD       (0xa8)
+#define B_SA_TOUUD_MASK  (0x7ffff00000ULL)
+
+
+//  This register contains the Top of low memory address.
+#define R_SA_TOLUD       (0xbc)
+#define B_SA_TOLUD_MASK  (0xfff00000)
+
 #endif

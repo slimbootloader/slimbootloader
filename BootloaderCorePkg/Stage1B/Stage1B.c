@@ -590,6 +590,7 @@ SecStartup2 (
   // Print memory top info
   DEBUG ((DEBUG_INFO, "Memory Tolum @ 0x%llx\n", GetMemoryInfo (EnumMemInfoTolum)));
   DEBUG ((DEBUG_INFO, "Memory Touum @ 0x%llx\n", GetMemoryInfo (EnumMemInfoTouum)));
+  DEBUG ((DEBUG_INFO, "Memory Tom   @ 0x%llx\n", GetMemoryInfo (EnumMemInfoTom)));
 
   // Switch to memory-based stack and continue execution at ContinueFunc
   StackTop  = LdrGlobal->StackTop - (sizeof (STAGE2_PARAM) + sizeof (STAGE1B_PARAM) + 0x40);

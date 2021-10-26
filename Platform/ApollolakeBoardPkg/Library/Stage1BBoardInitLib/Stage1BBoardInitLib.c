@@ -34,6 +34,7 @@
 #include <Library/HeciLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include <Library/BoardSupportLib.h>
+#include <Library/SocInitLib.h>
 #include <FspmUpd.h>
 #include <GpioDefines.h>
 #include <PlatformBase.h>
@@ -959,6 +960,7 @@ LoadExternalConfigData (
   Get the reset reason from the PMC registers.
 **/
 VOID
+EFIAPI
 UpdateResetReason (
   VOID
   )
@@ -1865,6 +1867,7 @@ BoardInit (
     EarlyPcieLinkUp ();
     break;
   case PostMemoryInit:
+    UpdateMemoryInfo ();
     break;
   case PreTempRamExit:
     break;

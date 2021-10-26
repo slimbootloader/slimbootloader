@@ -9,7 +9,7 @@
 #include <Library/IoLib.h>
 #include <Library/PciLib.h>
 #include <RegAccess.h>
-
+#include <Library/BootloaderCoreLib.h>
 
 /**
   Enables the execution by writing to the MSR.
@@ -17,6 +17,18 @@
 VOID
 EFIAPI
 EnableCodeExecution (
+  VOID
+)
+{
+}
+
+/**
+ Update memory map related info using SOC registers.
+
+ **/
+VOID
+EFIAPI
+UpdateMemoryInfo (
   VOID
 )
 {

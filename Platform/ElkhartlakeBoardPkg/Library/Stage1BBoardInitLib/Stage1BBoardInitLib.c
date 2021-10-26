@@ -21,6 +21,7 @@
 #include <IndustryStandard/Pci30.h>
 #include <Library/BootloaderCoreLib.h>
 #include <Library/BoardSupportLib.h>
+#include <Library/SocInitLib.h>
 #include <PchAccess.h>
 #include <RegAccess.h>
 #include <Library/CryptoLib.h>
@@ -1151,6 +1152,7 @@ DEBUG_CODE_END();
     // Clear the DISB bit after completing DRAM Initialization Sequence
     //
     MmioAnd32 (PmcBase + R_PMC_PWRM_GEN_PMCON_A, 0);
+    UpdateMemoryInfo ();
     break;
   case PreTempRamExit:
     break;
