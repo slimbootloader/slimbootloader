@@ -25,6 +25,7 @@
 #include <Library/BootloaderCoreLib.h>
 #include <Library/BoardSupportLib.h>
 #include <Library/PciCf8Lib.h>
+#include <Library/SocInitLib.h>
 #include <FspmUpd.h>
 #include <BlCommon.h>
 #include <PlatformBase.h>
@@ -226,6 +227,7 @@ BoardInit (
     if (FspHob != NULL) {
       DumpFspResourceHob (FspHob);
     }
+    UpdateMemoryInfo ();
     break;
 
   case PreMemoryInit:

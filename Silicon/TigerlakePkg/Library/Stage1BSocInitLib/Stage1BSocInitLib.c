@@ -162,5 +162,8 @@ UpdateMemoryInfo (
   Touum  = PciRead32 (PCI_LIB_ADDRESS(SA_MC_BUS, SA_MC_DEV, SA_MC_FUN, R_SA_TOUUD));
   Touum += LShiftU64 (PciRead32 (PCI_LIB_ADDRESS(SA_MC_BUS, SA_MC_DEV, SA_MC_FUN, R_SA_TOUUD + 4)), 32);
   Touum &= B_SA_TOUUD_MASK;
+  if (Touum < SIZE_4GB) {
+    Touum = SIZE_4GB;
+  }
   SetMemoryInfo (EnumMemInfoTouum,  Touum);
 }

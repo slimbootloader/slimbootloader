@@ -25,6 +25,7 @@
 [Packages]
   MdePkg/MdePkg.dec
   BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
   Silicon/ApollolakePkg/ApollolakePkg.dec
 
 [LibraryClasses]

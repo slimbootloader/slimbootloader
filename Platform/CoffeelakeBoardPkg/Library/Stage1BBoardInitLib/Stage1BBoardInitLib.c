@@ -653,6 +653,7 @@ DEBUG_CODE_END();
     GpioInit (PlatformId);
   case PostMemoryInit:
     DEBUG ((DEBUG_INFO, "PostMemoryInit called\n"));
+    UpdateMemoryInfo ();
     break;
   case PreTempRamExit:
     break;
