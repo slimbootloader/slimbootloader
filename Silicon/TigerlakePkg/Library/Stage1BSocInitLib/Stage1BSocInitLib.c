@@ -13,6 +13,7 @@
 #include <Library/DebugLib.h>
 #include <Library/BoardInitLib.h>
 #include <MemInfoHob.h>
+#include <CpuRegsAccess.h>
 
 #define  TCO_STS_2ND_TIMEOUT      BIT1
 
@@ -131,4 +132,35 @@ UpdateResetReason (
     ResetReason |= ResetWarm;
   }
   SetResetReason (ResetReason);
+}
+
+/**
+ Update memory map related info using SOC registers.
+
+ **/
+VOID
+EFIAPI
+UpdateMemoryInfo (
+  VOID
+)
+{
+  UINT32  Tolum;
+  UINT64  Touum;
+  UINT64  Tom;
+
+  // Update system memory info using SOC specific registers
+
+  Tom  = PciRead32 (PCI_LIB_ADDRESS(SA_MC_BUS, SA_MC_DEV, SA_MC_FUN, R_SA_TOM));
+  Tom += LShiftU64 (PciRead32 (PCI_LIB_ADDRESS(SA_MC_BUS, SA_MC_DEV, SA_MC_FUN, R_SA_TOM + 4)), 32);
+  Tom &= B_SA_TOM_MASK;
+  SetMemoryInfo (EnumMemInfoTom,  Tom);
+
+  Tolum  = PciRead32 (PCI_LIB_ADDRESS(SA_MC_BUS, SA_MC_DEV, SA_MC_FUN, R_SA_TOLUD));
+  Tolum &= B_SA_TOLUD_MASK;
+  SetMemoryInfo (EnumMemInfoTolum,  Tolum);
+
+  Touum  = PciRead32 (PCI_LIB_ADDRESS(SA_MC_BUS, SA_MC_DEV, SA_MC_FUN, R_SA_TOUUD));
+  Touum += LShiftU64 (PciRead32 (PCI_LIB_ADDRESS(SA_MC_BUS, SA_MC_DEV, SA_MC_FUN, R_SA_TOUUD + 4)), 32);
+  Touum &= B_SA_TOUUD_MASK;
+  SetMemoryInfo (EnumMemInfoTouum,  Touum);
 }

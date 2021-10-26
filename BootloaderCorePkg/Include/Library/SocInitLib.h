@@ -64,6 +64,7 @@ UpdateResetReason (
 
  **/
 VOID
+EFIAPI
 UpdateMemoryInfo (
   VOID
 );

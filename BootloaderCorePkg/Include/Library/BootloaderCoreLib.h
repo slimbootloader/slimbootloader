@@ -494,6 +494,8 @@ GetDmaBufferPtr (
 /**
   This function retrieves system memory info the given type.
 
+  @param[in] MemInfoType   Memory info type to retrieve.
+
   @retval    Value of the required memory info type.
              It returns 0 if the required type is invalid.
 
@@ -507,8 +509,11 @@ GetMemoryInfo (
 /**
   This function sets system memory info for the given type.
 
+  @param[in] MemInfoType   Memory info type to retrieve.
+  @param[in] Value         The value to set.
+
 **/
-UINT64
+VOID
 EFIAPI
 SetMemoryInfo (
   IN  MEM_INFO_TYPE   MemInfoType,
