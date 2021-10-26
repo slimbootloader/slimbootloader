@@ -125,6 +125,14 @@ typedef struct {
   UINT8         BootPartition;
 } S3_DATA;
 
+typedef enum {
+  EnumMemInfoTom,     // Total system memory size
+  EnumMemInfoTolum,   // Top of low usable memory
+  EnumMemInfoTouum,   // Top of upper usable memory
+  EnumMemInfoTodplm,  // Top of DMA protected low memory
+  EnumMemInfoMax
+} MEM_INFO_TYPE;
+
 #pragma pack()
 
 //
@@ -189,11 +197,11 @@ typedef struct {
   UINT32            MemPoolStart;
   UINT32            MemPoolCurrTop;
   UINT32            MemPoolCurrBottom;
-  UINT32            MemUsableTop;
   UINT32            PayloadId;
   UINT32            DebugPrintErrorLevel;
   UINT8             DebugPortIdx;
   UINT8             Padding[3];
+  UINT64            MemoryInfo[EnumMemInfoMax];
   VOID             *FspHobList;
   VOID             *LdrHobList;
   VOID             *FlashMapPtr;
@@ -484,15 +492,27 @@ GetDmaBufferPtr (
   );
 
 /**
-  This function retrieves usable memory top.
+  This function retrieves system memory info the given type.
 
-  @retval    Usable memory top.
+  @retval    Value of the required memory info type.
+             It returns 0 if the required type is invalid.
 
 **/
-UINT32
+UINT64
 EFIAPI
-GetUsableMemoryTop (
-  VOID
+GetMemoryInfo (
+  IN  MEM_INFO_TYPE   MemInfoType
+  );
+
+/**
+  This function sets system memory info for the given type.
+
+**/
+UINT64
+EFIAPI
+SetMemoryInfo (
+  IN  MEM_INFO_TYPE   MemInfoType,
+  IN  UINT64          Value
   );
 
 /**

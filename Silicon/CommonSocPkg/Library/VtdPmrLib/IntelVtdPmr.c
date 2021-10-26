@@ -452,7 +452,7 @@ SetDmaProtection (
   EFI_STATUS    Status;
 
   if (Enable) {
-    MemTop   = GetUsableMemoryTop ();
+    MemTop   = (UINT32) GetMemoryInfo (EnumMemInfoTodplm);
     MemTop   = ALIGN_UP (MemTop, PcdGet32 (PcdDmaBufferAlignment));
     DmaStart = (UINT32)(UINTN)GetDmaBufferPtr ();
     DmaEnd   = DmaStart + ALIGN_UP (PcdGet32 (PcdDmaBufferSize), PcdGet32 (PcdDmaBufferAlignment));

@@ -59,4 +59,13 @@ UpdateResetReason (
   VOID
   );
 
+/**
+ Update memory map related info using SOC registers.
+
+ **/
+VOID
+UpdateMemoryInfo (
+  VOID
+);
+
 #endif
