@@ -324,33 +324,6 @@ AddSmbiosString (
   return Destination;
 }
 
-
-/**
-  Get system memory size from FSP HOB.
-
-  @retval   Total system memory size
-
-**/
-UINT64
-GetSystemMemorySize (
-  VOID
-  )
-{
-  UINT32                        Tolm;
-  UINT64                        Tohm;
-  VOID                         *FspHob;
-
-  // Build memory array mapped address information.
-  FspHob = GetFspHobListPtr ();
-  if (FspHob != NULL) {
-    GetSystemTopOfMemeory (FspHob, &Tohm);
-  } else {
-    Tohm = SIZE_4GB;
-  }
-  Tolm = GetUsableMemoryTop ();
-  return Tolm + (Tohm - SIZE_4GB);
-}
-
 /**
   Add a particular Smbios type to the Smbios allocated region.
   Different from AppenSmbiosType which can be called at a later stage
@@ -403,7 +376,7 @@ AddSmbiosType (
     break;
   case SMBIOS_TYPE_MEMORY_ARRAY_MAPPED_ADDRESS:
     HdrLen  = sizeof (SMBIOS_TABLE_TYPE19);
-    mMemArrayMappedAddr.ExtendedEndingAddress = GetSystemMemorySize () - 1;
+    mMemArrayMappedAddr.ExtendedEndingAddress = GetMemoryInfo (EnumMemInfoTom) - 1;
     HdrInfo = (VOID *)&mMemArrayMappedAddr;
     NumStr  = 0;
     break;

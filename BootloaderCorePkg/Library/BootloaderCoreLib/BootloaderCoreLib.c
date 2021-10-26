@@ -394,18 +394,45 @@ GetDmaBufferPtr (
 }
 
 /**
-  This function retrieves usable memory top.
+  This function retrieves system memory info for the given type.
 
-  @retval    Usable memory top.
+  @retval    Value of the required memory info type.
+             It returns 0 if the required type is invalid.
 
 **/
-UINT32
+UINT64
 EFIAPI
-GetUsableMemoryTop (
-  VOID
+GetMemoryInfo (
+  IN  MEM_INFO_TYPE   MemInfoType
   )
 {
-  return GetLoaderGlobalDataPointer()->MemUsableTop;
+  LOADER_GLOBAL_DATA  *LdrGlobal;
+
+  LdrGlobal = GetLoaderGlobalDataPointer();
+  if ((LdrGlobal != NULL) && (MemInfoType < EnumMemInfoMax)) {
+    return LdrGlobal->MemoryInfo[MemInfoType];
+  } else {
+    return 0;
+  }
+}
+
+/**
+  This function sets system memory info for the given type.
+
+**/
+UINT64
+EFIAPI
+SetMemoryInfo (
+  IN  MEM_INFO_TYPE   MemInfoType,
+  IN  UINT64          Value
+  )
+{
+  LOADER_GLOBAL_DATA  *LdrGlobal;
+
+  LdrGlobal = GetLoaderGlobalDataPointer();
+  if ((LdrGlobal != NULL) && (MemInfoType < EnumMemInfoMax)) {
+    LdrGlobal->MemoryInfo[MemInfoType] = Value;
+  }
 }
 
 /**
