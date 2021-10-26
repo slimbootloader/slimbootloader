@@ -38,6 +38,8 @@
 #include <TccConfigSubRegions.h>
 #include <Library/ResetSystemLib.h>
 #include <Library/WatchDogTimerLib.h>
+#include <Library/SocInitLib.h>
+
 
 CONST PLT_DEVICE  mPlatformDevices[]= {
   {{0x00001700}, OsBootDeviceSata  , 0 },
@@ -864,6 +866,7 @@ DEBUG_CODE_END();
     // Clear the DISB bit after completing DRAM Initialization Sequence
     //
     MmioAnd32 (PmcMmioBase + R_PMC_PWRM_GEN_PMCON_A, (UINT32)~B_PCH_PMC_GEN_PMCON_A_DISB);
+    UpdateMemoryInfo ();
     break;
   case PreTempRamExit:
     break;

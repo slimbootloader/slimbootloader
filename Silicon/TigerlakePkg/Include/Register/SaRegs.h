@@ -70,4 +70,5 @@
 ///  This register must be 1MB aligned when reclaim is enabled.
 ///
 #define R_SA_MC_CAPID0_A_OFFSET    0xE4
+
 #endif
