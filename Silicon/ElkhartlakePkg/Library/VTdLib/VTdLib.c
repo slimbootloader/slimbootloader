@@ -443,8 +443,8 @@ DmarTableUpdate (
   DEBUG ((DEBUG_INFO, "RMRR Base  address IGD %016lX\n", DmarTable->RmrrIgd.RmrrHeader.ReservedMemoryRegionBaseAddress));
   DEBUG ((DEBUG_INFO, "RMRR Limit address IGD %016lX\n", DmarTable->RmrrIgd.RmrrHeader.ReservedMemoryRegionLimitAddress));
 
-  DmarTable->RmrrUsb.RmrrHeader.ReservedMemoryRegionBaseAddress   = 0x3E2E0000;
-  DmarTable->RmrrUsb.RmrrHeader.ReservedMemoryRegionLimitAddress  = 0x3E2FFFFF;
+  DmarTable->RmrrUsb.RmrrHeader.ReservedMemoryRegionBaseAddress   = 0;
+  DmarTable->RmrrUsb.RmrrHeader.ReservedMemoryRegionLimitAddress  = 0;
 
   ///
   /// Convert to 4KB alignment.
