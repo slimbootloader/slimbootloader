@@ -353,6 +353,9 @@ AddSmbiosType (
   UINT8                         NumStr;
 
   SmbiosEntry = (SMBIOS_TABLE_ENTRY_POINT *)(UINTN)PcdGet32 (PcdSmbiosTablesBase);
+  HdrInfo = NULL;
+  HdrLen = 0;
+  NumStr = 0;
 
   //
   // Prepare type info
@@ -380,6 +383,15 @@ AddSmbiosType (
     HdrInfo = (VOID *)&mMemArrayMappedAddr;
     NumStr  = 0;
     break;
+  default:
+    break;
+  }
+
+  //
+  // If HdrInfo is NULL, return a valid start address
+  //
+  if (HdrInfo == NULL) {
+    return TypeAddr;
   }
 
   //
