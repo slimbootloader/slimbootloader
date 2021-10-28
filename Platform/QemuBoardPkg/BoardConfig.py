@@ -278,6 +278,12 @@ class Board(BaseBoard):
 
         return container_list
 
+    def GetOutputImages (self):
+        # define extra images that will be copied to output folder
+        img_list = ['CfgDataStitch.py',
+                    'CfgDataDef.yaml']
+        return img_list
+
     def GetImageLayout (self):
 
         compress = '' if self.STAGE1B_XIP else 'Lz4'

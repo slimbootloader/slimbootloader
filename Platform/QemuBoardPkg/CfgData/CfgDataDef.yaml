@@ -43,11 +43,17 @@ template:
       - GPIORxState  :
           name         : GPIORxState
           type         : Reserved
-          length       : 1b
+          length       : 7b
+      - GPIOPADMode:
+          name         : PadMode
+          type         : EditNum, HEX, (0x00,0xFF)
+          help         : >
+                         GPIO PAD Mode.
+          length       : 8b
       - Reserved     :
           name         : Reserved
           type         : Reserved
-          length       : 28b
+          length       : 14b
       - GPIODirection :
           name         : Direction
           type         : Combo
@@ -68,10 +74,21 @@ template:
           name         : GPIO Pin ID
           type         : Reserved
           length       : 16b
+      - GPIOElectricalCfg :
+          name         : GPIO ElectricalCfg
+          type         : Combo
+          option       : 0x0:TermDefault, 0x1:TermNone, 0x5:TermNone, 0x9:TermWpd20K, 0x13:TermWpu1K, 0x17:TermWpu2K, 0x15:TermWpu5K, 0x19:TermWpu20K, 0x1B:TermWpu1K2K, 0x1F:TermNative, 0x20:NoTolerance1v8, 0x60:Tolerance1v8
+          help         : >
+                         GPIO Electrical Configuration. Set GPIO termination and Pad Tolerance.(applicable only for some pads):-
+                         - TermDefault = Leave termination setting unmodified, - TermNone = None, - TermWpd5K = 5kOhm weak pull-down, - TermWpd20K = 20kOhm weak pull-down,
+                         - TermWpu1K = 1kOhm weak pull-up, - TermWpu2K = 2kOhm weak pull-up, - TermWpu5K = 5kOhm weak pull-up, - TermWpu20K = 20kOhm weak pull-up, - TermWpu1K2K = 1kOhm & 2kOhm weak pull-up,
+                         - TermNative = Native function. This setting is applicable only to some native modes,
+                         - NoTolerance1v8 = Disable 1.8V pad tolerance, Tolerance1v8 = Enable 1.8V pad tolerance
+          length       : 9b
       - Reserved     :
           name         : Reserved
           type         : Reserved
-          length       : 15b
+          length       : 6b
       - GPIOSkip     :
           name         : GPIO Skip
           type         : Combo
