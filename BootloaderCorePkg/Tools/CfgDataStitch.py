@@ -72,9 +72,6 @@ def cfgdata_stitch(ifwi_file, ifwi_out_file, cfg_dir, key_file, script_dir, tool
     if key_file == '':
         raise Exception("Key file is not specified!!")
 
-    if os.name == 'nt' and 'OPENSSL_PATH' not in os.environ:
-        os.environ['OPENSSL_PATH'] = "C:\\Openssl\\"
-
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
