@@ -22,6 +22,9 @@ def get_tool_dir (sbl_dir):
     else:
         return os.path.join(sbl_dir, 'BaseTools', 'BinWrappers', 'PosixLike')
 
+def get_key_dir (sbl_dir):
+    return os.path.realpath (os.path.join(sbl_dir, '..', 'SblKeys'))
+
 def get_file_data (file, mode = 'rb'):
     return open(file, mode).read()
 
@@ -60,6 +63,17 @@ def run_qemu (bios_img, fwu_path, fwu_mode=False, boot_order='', timeout=0):
 
     lines = run_process (cmd_list, timeout)
     return lines
+
+
+def run_command (arg_list):
+    sys.stdout.flush()
+    try:
+        result = subprocess.call (arg_list)
+    except Exception as ex:
+        result = 1
+    if result:
+        print ('Error in running process:\n  %s' % ' '.join(arg_list))
+    return result
 
 
 def run_process (cmd, timeout = 0):
