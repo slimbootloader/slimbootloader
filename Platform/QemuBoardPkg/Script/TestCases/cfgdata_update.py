@@ -18,18 +18,17 @@ def get_check_lines ():
               "===== Intel Slim Bootloader STAGE1A =====",
               "===== Intel Slim Bootloader STAGE1B =====",
               "===== Intel Slim Bootloader STAGE2 ======",
-              "Universal Payload UEFI",
+              "GPIO GPP_A07 DATA: 0xC0000700 0x00000017",
+              "GPIO GPP_A04 DATA: 0x80000101 0x00050014",
               "Jump to payload",
-              "[Bds]Booting UEFI Shell",
-              "any other key to continue.",
             ]
     return lines
 
 def usage():
-    print("usage:\n  python %s bios_image os_image_dir\n" % sys.argv[0])
+    print("usage:\n  python %s bios_image out_dir\n" % sys.argv[0])
     print("   bios_image :  QEMU Slim Bootloader firmware image.")
     print("                 This image can be generated through the normal Slim Bootloader build process.")
-    print("      out_dir :  Directory for output.")
+    print("      out_dir :  Output directory.")
     print("")
 
 
@@ -43,45 +42,58 @@ def main():
         return -2
 
     bios_img = sys.argv[1]
-    img_dir  = sys.argv[2]
+    bios_dir = os.path.dirname (bios_img)
+    tmp_dir  = os.path.join(os.path.dirname (sys.argv[2]), 'temp')
+    sbl_dir  = os.getcwd()
+    key_dir  = get_key_dir (sbl_dir)
 
-    print("Universal UEFI payload boot test for Slim BootLoader")
+    print("CFGDATA update test for Slim BootLoader")
+    if os.path.exists(tmp_dir):
+        shutil.rmtree (tmp_dir)
+    create_dirs  ([tmp_dir])
 
-    tmp_dir = os.path.dirname(os_dir) + '/temp'
-    create_dirs ([tmp_dir, os_dir])
+    # copy files to temp dir
+    src_files = ['CfgDataStitch.py', 'CfgDataDef.yaml']
+    for file in src_files:
+        shutil.copyfile (os.path.join(bios_dir, file), os.path.join(tmp_dir, file))
 
-    # download and unzip UEFI payload image
-    local_file = tmp_dir + '/UefiUpld.zip'
-    download_url (
-        'https://github.com/slimbootloader/slimbootloader/files/7317829/UefiUpld.zip',
-        local_file
-    )
-    unzip_file (local_file, tmp_dir)
+    # run cfg stitch tool to generate delta files and bin files
+    cfg_stitch = os.path.join(bios_dir, src_files[0])
+    cmds = [sys.executable, cfg_stitch, '-i', bios_img,
+            '-k', key_dir + '/ConfigTestKey_Priv_RSA3072.pem',
+            '-t', get_tool_dir (sbl_dir),
+            '-s', sbl_dir + '/BootloaderCorePkg/Tools',
+            '-c', tmp_dir,
+            '-o', tmp_dir + '/SlimBootloader.bin']
+    res = run_command (cmds)
+    if res:
+        return res
 
-    # Create new EPAYLOAD and replace it in SlimBootloader.bin
-    layout = ',\n'.join ([
-                 "( 'EPLD', 'EPAYLOAD.bin'  , 'NORMAL'  , 'RSA3072_PSS_SHA2_384'  , 'KEY_ID_CONTAINER_RSA3072'      , 0x10      , 0         , 0x0       )",
-                 "( 'UEFI', 'UefiUpld.elf'  , 'Lzma'    , 'SHA2_384'              , ''                              , 0x10      , 0         , 0x0       )"
-               ])
-    gen_file_from_object (tmp_dir + '/epld.txt', layout, '')
-    sbl_dir = os.getcwd()
-    os.environ['SBL_KEY_DIR'] = os.path.join (sbl_dir, '..', 'SblKeys')
-    os.chdir (tmp_dir)
-    cmds = [sys.executable, sbl_dir + '/BootloaderCorePkg/Tools/GenContainer.py', 'create',  '-l', 'epld.txt', '-td', get_tool_dir(sbl_dir)]
-    run_process (cmds)
-    cmds = [sys.executable, sbl_dir + '/BootloaderCorePkg/Tools/IfwiUtility.py', 'replace',  '-i', os.path.join(sbl_dir, bios_img), '-f', 'EPAYLOAD.bin', '-p', 'IFWI/BIOS/NRD/EPLD']
-    run_process (cmds)
-    os.chdir (sbl_dir)
+    # Modify delta files to change GPIO config
+    fd   = open (tmp_dir + '/CfgDataExt_Brd1.dlt', 'r')
+    dlt_lines = fd.readlines ()
+    fd.close ()
+    dlt_lines.append ('GPIO_CFG_DATA.GpioConfPad0_GPP_A4 | 0x80000101\n')
+    dlt_lines.append ('GPIO_CFG_DATA.GpioConfPad1_GPP_A4.GPIOElectricalCfg | 5\n')
+    dlt_lines.append ('GPIO_CFG_DATA.GpioConfPad1_GPP_A6.GPIOSkip | 1\n')
+    fd   = open (tmp_dir + '/CfgDataExt_Brd1.dlt', 'w')
+    fd.write (''.join(dlt_lines))
+    fd.close ()
+
+    # run cfg stitch tool again to generate new slimbootloader.bin
+    res = run_command (cmds)
+    if res:
+        return res
 
     # run QEMU boot with timeout
+    bios_img = os.path.join (tmp_dir, 'SlimBootloader.bin')
     output = []
-    lines = run_qemu(bios_img, os_dir, boot_order = 'ba', timeout = 8)
+    lines = run_qemu(bios_img, bios_dir, boot_order = '', timeout = 2)
     output.extend(lines)
 
     # check test result
     ret = check_result (output, get_check_lines())
-
-    print ('UEFI Universal Payload boot test %s !\n' % ('PASSED' if ret == 0 else 'FAILED'))
+    print ('\nCFGDATA update test %s !\n' % ('PASSED' if ret == 0 else 'FAILED'))
 
     return ret
 
