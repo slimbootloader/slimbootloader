@@ -466,6 +466,13 @@ BoardInit (
     }
     break;
 
+  case PostPciEnumeration:
+    Status = SetFrameBufferWriteCombining (0, MAX_UINT32);
+    if (EFI_ERROR(Status)) {
+      DEBUG ((DEBUG_INFO, "Failed to set GFX framebuffer as WC\n"));
+    }
+    break;
+
   case PrePayloadLoading:
     // Hide TSEG
     PciOr8 (PCI_LIB_ADDRESS(0, 0, 0, MCH_ESMRAMC), MCH_ESMRAMC_T_EN);
@@ -675,6 +682,8 @@ UpdateFrameBufferDeviceInfo (
     GfxDeviceInfo->VendorId = PciRead16 (PCI_LIB_ADDRESS (0, Dev, 0, 0));
     GfxDeviceInfo->DeviceId = PciRead16 (PCI_LIB_ADDRESS (0, Dev, 0, 2));
   }
+
+  SetDeviceAddr (PlatformDeviceGraphics, 0, (0 << 16) | (Dev << 8) | 0);
 }
 
 /**

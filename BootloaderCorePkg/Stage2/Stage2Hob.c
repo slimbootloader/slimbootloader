@@ -604,6 +604,31 @@ BuildUniversalPayloadHob (
   BuildUpldPciRootBridgeHob ();
 }
 
+/**
+  Update graphics hobs.
+
+**/
+VOID
+UpdateGraphicsHob (
+  VOID
+  )
+{
+  EFI_PEI_GRAPHICS_INFO_HOB        *GfxInfoHob;
+  EFI_PEI_GRAPHICS_DEVICE_INFO_HOB *GfxDeviceInfoHob;
+
+  // Update graphic info HOB
+  GfxInfoHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GetGuidHobData (NULL, NULL, &gEfiGraphicsInfoHobGuid);
+  if (GfxInfoHob != NULL) {
+    PlatformUpdateHobInfo (&gEfiGraphicsInfoHobGuid, GfxInfoHob);
+  }
+
+  // Update graphic device info HOB
+  GfxDeviceInfoHob = (EFI_PEI_GRAPHICS_DEVICE_INFO_HOB *)GetGuidHobData (NULL, NULL, &gEfiGraphicsDeviceInfoHobGuid);
+  if (GfxDeviceInfoHob != NULL) {
+    PlatformUpdateHobInfo (&gEfiGraphicsDeviceInfoHobGuid, GfxDeviceInfoHob);
+  }
+
+}
 
 /**
   Build and update HOBs.
@@ -628,8 +653,6 @@ BuildExtraInfoHob (
   SYS_CPU_INFO                     *SysCpuInfo;
   PERFORMANCE_INFO                 *PerformanceInfo;
   OS_BOOT_OPTION_LIST              *OsBootOptionInfo;
-  EFI_PEI_GRAPHICS_INFO_HOB        *GfxInfoHob;
-  EFI_PEI_GRAPHICS_DEVICE_INFO_HOB *GfxDeviceInfoHob;
   LOADER_PLATFORM_INFO             *LoaderPlatformInfo;
   LOADER_PLATFORM_DATA             *LoaderPlatformData;
   LOADER_LIBRARY_DATA              *LoaderLibData;
@@ -656,18 +679,6 @@ BuildExtraInfoHob (
     LoaderLibData->Count = (UINT16)PcdGet32 (PcdMaxLibraryDataEntry);
     LoaderLibData->Flags = 0;
     LoaderLibData->Data  = LdrGlobal->LibDataPtr;
-  }
-
-  // Update graphic info HOB
-  GfxInfoHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GetGuidHobData (NULL, NULL, &gEfiGraphicsInfoHobGuid);
-  if (GfxInfoHob != NULL) {
-    PlatformUpdateHobInfo (&gEfiGraphicsInfoHobGuid, GfxInfoHob);
-  }
-
-  // Update graphic device info HOB
-  GfxDeviceInfoHob = (EFI_PEI_GRAPHICS_DEVICE_INFO_HOB *)GetGuidHobData (NULL, NULL, &gEfiGraphicsDeviceInfoHobGuid);
-  if (GfxDeviceInfoHob != NULL) {
-    PlatformUpdateHobInfo (&gEfiGraphicsDeviceInfoHobGuid, GfxDeviceInfoHob);
   }
 
   // Update serial port hob

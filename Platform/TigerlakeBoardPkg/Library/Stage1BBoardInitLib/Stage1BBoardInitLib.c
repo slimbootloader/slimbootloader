@@ -49,7 +49,8 @@ CONST PLT_DEVICE  mPlatformDevices[]= {
   {{0x01000000}, OsBootDeviceMemory, 0 },
   {{0x00010000}, OsBootDeviceNvme  , 0 },
   {{0x00020000}, OsBootDeviceNvme  , 1 },
-  {{0x00050000}, OsBootDeviceNvme  , 2 }
+  {{0x00050000}, OsBootDeviceNvme  , 2 },
+  {{0x00000200}, PlatformDeviceGraphics, 0},
 };
 
 VOID

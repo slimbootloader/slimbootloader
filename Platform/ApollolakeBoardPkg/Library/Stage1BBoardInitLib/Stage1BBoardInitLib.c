@@ -64,7 +64,8 @@ CONST PLT_DEVICE  mPlatformDevices[]= {
   {{0x00001D00}, OsBootDeviceUfs   , 0 },
   {{0x00000D02}, OsBootDeviceSpi   , 0 },
   {{0x00001500}, OsBootDeviceUsb   , 0 },
-  {{0x01000000}, OsBootDeviceMemory, 0 }
+  {{0x01000000}, OsBootDeviceMemory, 0 },
+  {{0x00000200}, PlatformDeviceGraphics, 0},
 };
 
 CONST CHAR16 *BootDeviceType[] = { L"eMMC", L"UFS", L"SPI" };
