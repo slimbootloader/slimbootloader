@@ -161,7 +161,7 @@ PlatformNameInit (
 
 /**
   Load the configuration data blob from SPI flash into destination buffer.
-  It supports the sources:  BIOS for external Cfgdata.
+  It supports the sources: PDR, BIOS for external Cfgdata.
 
   @param[in]    Dst        Destination address to load configuration data blob.
   @param[in]    Src        Source address to load configuration data blob.

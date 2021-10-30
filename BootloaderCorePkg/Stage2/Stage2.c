@@ -507,7 +507,7 @@ SecStartup (
     DEBUG ((DEBUG_INIT, "PCI Enum\n"));
     Status = PciEnumeration (MemPool);
     AddMeasurePoint (0x30A0);
-
+    UpdateGraphicsHob ();
     BoardInit (PostPciEnumeration);
     AddMeasurePoint (0x30B0);
 

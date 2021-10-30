@@ -681,60 +681,6 @@ RestoreOtgRole (
 }
 
 /**
-  Set framebuffer range as WC using MTRR to improve performance.
-
-  The BSP MTRR needs to be programmed before FspSiliconInit() API so that
-  all APs' MTRRs will be syned up during FspSiliconInit() call.
-
-**/
-VOID
-SetFrameBufferWriteCombining (
-  VOID
-)
-{
-  UINT32             MsrIdx;
-  UINT32             MsrMax;
-  UINT32             Data;
-  UINT32             GfxPciBase;
-  UINT64             Base64;
-  UINT64             Mask64;
-  CPUID_VIR_PHY_ADDRESS_SIZE_EAX  VirPhyAddressSize;
-
-  // Skip if GFX device does not exist
-  GfxPciBase = PCI_LIB_ADDRESS (0, 2, 0, 0);
-  if (PciRead16 (GfxPciBase) == 0xFFFF) {
-    return;
-  }
-
-  // Assume fixed 256MB prefetchable space
-  Data    = PciRead32 (GfxPciBase + PCI_BASE_ADDRESSREG_OFFSET + 12);
-  Base64  = LShiftU64 (Data, 32);
-  Base64 += (PciRead32 (GfxPciBase + PCI_BASE_ADDRESSREG_OFFSET + 8) & ~(SIZE_256MB - 1));
-
-  // Enable Framebuffer as WC.
-  MsrMax = EFI_MSR_CACHE_VARIABLE_MTRR_BASE +
-           (2 * (UINT32)(AsmReadMsr64(EFI_MSR_IA32_MTRR_CAP) & B_EFI_MSR_IA32_MTRR_CAP_VARIABLE_SUPPORT));
-  for (MsrIdx = EFI_MSR_CACHE_VARIABLE_MTRR_BASE; MsrIdx < MsrMax; MsrIdx += 2) {
-    // Try to find a free MTRR pair
-    if ((AsmReadMsr64(MsrIdx + 1) & B_EFI_MSR_CACHE_MTRR_VALID) == 0) {
-      break;
-    }
-  }
-
-  if (MsrIdx < MsrMax) {
-    // Framebuffer belongs to PMEM32 in PCI resource allocation.
-    // The 1st 256MB from PcdPciResourceMem32Base will be consumed by MEM32 resource.
-    // And framebuffer should be allocated to the next 256MB aligned address.
-    AsmWriteMsr64 (MsrIdx,     Base64 | CACHE_WRITECOMBINING);
-    AsmCpuid (CPUID_VIR_PHY_ADDRESS_SIZE, &VirPhyAddressSize.Uint32, NULL, NULL, NULL);
-    Mask64 = (LShiftU64 (1, VirPhyAddressSize.Bits.PhysicalAddressBits) - 1) & 0xFFFFFFFF00000000ULL;
-    AsmWriteMsr64 (MsrIdx + 1, Mask64 + B_EFI_MSR_CACHE_MTRR_VALID + (UINT32)(~(SIZE_256MB - 1)));
-  } else {
-    DEBUG ((DEBUG_WARN, "Failed to find a free MTRR pair for framebuffer!\n"));
-  }
-}
-
-/**
   Set IA Untrust mode at the end.
 
 **/
@@ -971,8 +917,10 @@ BoardInit (
     break;
   case PostPciEnumeration:
     // Enable framebuffer as WC for performance
-    SetFrameBufferWriteCombining ();
-
+    Status = SetFrameBufferWriteCombining (0, MAX_UINT32);
+    if (EFI_ERROR(Status)) {
+      DEBUG ((DEBUG_INFO, "Failed to set GFX framebuffer as WC\n"));
+    }
     if (PcdGetBool (PcdSeedListEnabled)) {
       Status = GenerateSeeds ();
       if (EFI_ERROR (Status)) {

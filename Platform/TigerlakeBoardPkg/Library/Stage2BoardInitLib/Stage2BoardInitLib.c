@@ -1000,6 +1000,10 @@ BoardInit (
     }
     break;
   case PostPciEnumeration:
+    Status = SetFrameBufferWriteCombining (0, MAX_UINT32);
+    if (EFI_ERROR(Status)) {
+      DEBUG ((DEBUG_INFO, "Failed to set GFX framebuffer as WC\n"));
+    }
     if (GetBootMode() == BOOT_ON_S3_RESUME) {
       ClearSmi ();
       RestoreS3RegInfo (FindS3Info (S3_SAVE_REG_COMM_ID));

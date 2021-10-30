@@ -166,4 +166,13 @@ BoardNotifyPhase (
   IN BOARD_INIT_PHASE   Phase
   );
 
+/**
+  Update graphics hobs.
+
+**/
+VOID
+UpdateGraphicsHob (
+  VOID
+  );
+
 #endif
