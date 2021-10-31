@@ -610,25 +610,21 @@ FillGpioTable (
 
 )
 {
-  UINT32             *GpioItem;
-  GPIO_PAD            GpioPad;
-  UINT8              *TableData;
+  GPIO_PAD           *GpioPad;
+  UINT8              *GpioData;
+  UINT8              *GpioCfg;
 
-  TableData = ((UINT8 *)GpioCfgHdr) + GpioCfgHdr->HeaderSize;
+  GpioData  = ((UINT8 *)GpioCfgHdr) + GpioCfgHdr->HeaderSize + Offset;
+  GpioCfg   = GpioTable + sizeof(GPIO_PAD);
+  GpioPad   = (GPIO_PAD *) GpioTable;
+  CopyMem (GpioCfg, GpioData, GpioCfgHdr->ItemSize);
 
   //
   // Get the DW and extract PadInfo
   //
-  GpioItem = (UINT32 *) (TableData + Offset);
-  GpioGetGpioPadFromCfgDw (GpioItem, &GpioPad);
+  GpioGetGpioPadFromCfgDw ((UINT32 *)GpioCfg, GpioPad);
 
-  //
-  // Copy PadInfo(PinOffset), DW0, DW1
-  //
-  CopyMem (GpioTable, (VOID *)&GpioPad, sizeof(GPIO_PAD));
-  GpioTable += sizeof(GPIO_PAD);
-  CopyMem (GpioTable, GpioItem, GpioCfgHdr->ItemSize);
-  GpioTable += GpioCfgHdr->ItemSize;
+  GpioTable += (sizeof(GPIO_PAD) + GpioCfgHdr->ItemSize);
 
   return GpioTable;
 }
