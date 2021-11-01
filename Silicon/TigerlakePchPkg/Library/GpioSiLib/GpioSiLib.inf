@@ -25,6 +25,7 @@
 [Packages]
   MdePkg/MdePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
   Silicon/TigerlakePchPkg/TigerlakePchPkg.dec
   Silicon/CommonSocPkg/CommonSocPkg.dec
 

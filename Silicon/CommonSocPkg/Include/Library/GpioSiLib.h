@@ -280,4 +280,18 @@ GpioGetGpioPadFromCfgDw (
   OUT GPIO_PAD      *GpioPad
   );
 
+/**
+  Convert GPIO group and pin number into GPIO pad.
+
+  @param[in]  Group         Alphabet based GPIO group index.
+  @param[in]  Pin           GPIO pin number.
+
+  @retval                   GPIO pad, 0 indicates invalid pad.
+**/
+UINT32
+GpioGroupPinToPad (
+  IN UINT32     Group,
+  IN UINT32     Pin
+  );
+
 #endif // _GPIO_INFO_LIB_H_

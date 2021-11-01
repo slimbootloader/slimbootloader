@@ -84,21 +84,7 @@
 #include "Dts.h"
 #include <Library/PlatformHookLib.h>
 
-// GPIO group table to convert from alphabet group index to pad group ID
-CONST UINT8 mPchGpioGroup[2][26] = {
-  { // PCH-LP
-    /*A     B     C     D     E     F     G     H     I     J     K     L     M      */
-    0x02, 0x00, 0x0B, 0x08, 0x0E, 0x0C, 0xFF, 0x07, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-    /*N     O     P     Q     R     S     T     U     V     W     X     Y     Z(GPD) */
-    0xFF, 0xFF, 0xFF, 0xFF, 0x03, 0x06, 0x01, 0x09, 0xFF, 0xFF, 0xFF, 0xFF, 0x05
-  },
-  { // PCH-H
-    /*A     B     C     D     E     F     G     H     I     J     K     L     M      */
-    0x00, 0x02, 0x05, 0x04, 0x0A, 0x0B, 0x07, 0x0D, 0x10, 0x0E, 0x0F, 0xFF, 0xFF,
-    /*N     O     P     Q     R     S     T     U     V     W     X     Y     Z(GPD) */
-    0xFF, 0xFF, 0xFF, 0xFF, 0x01, 0x06, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x09,
-  }
-};
+
 
 BOOLEAN mTccDsoTuning      = FALSE;
 UINT8   mTccRtd3Support    = 0;
@@ -712,44 +698,6 @@ ClearSmi (
 
   // Clear GPE0 STS in case some bits are set
   IoOr32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_GPE0_STS_127_96), 0);
-}
-
-/**
-  Convert GPIO group and pin number into GPIO pad.
-
-  @param[in]  Group         Alphabet based GPIO group index.
-  @param[in]  Pin           GPIO pin number.
-
-  @retval                   GPIO pad
-**/
-UINT32
-GpioGroupPinToPad (
-  IN UINT32     Group,
-  IN UINT32     Pin
-  )
-{
-  UINT8    GroupId;
-  UINT32   GpioPad;
-  UINT32   Index;
-
-  if ((Group >= sizeof(mPchGpioGroup[0])) || (Pin >= 24)) {
-    return 0;
-  }
-
-  if (IsPchLp ()) {
-    Index   = 0;
-    GpioPad = GPIO_VER2_LP_GPP_B0;
-  } else {
-    Index   = 1;
-    GpioPad = GPIO_VER2_H_GPP_A0;
-  }
-  GroupId  = mPchGpioGroup[Index][Group];
-  if (GroupId == 0xFF) {
-    return 0;
-  }
-
-  GpioPad += ((GroupId << 16) + Pin);
-  return GpioPad;
 }
 
 /**
