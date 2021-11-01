@@ -5,8 +5,8 @@ Header file for GOP Configuration Library
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
-#ifndef _GOP_CONFIG_LIB_H_
-#define _GOP_CONFIG_LIB_H_
+#ifndef _GOP_CONFIG_H_
+#define _GOP_CONFIG_H_
 
 #pragma pack(1)
 
@@ -64,6 +64,14 @@ typedef struct {
   UINT16  BDB_Header_Size;    ///< Defines the size of VBT Bios data block header.
   UINT16  BDB_Size;           ///< Defines the size of Bios data block.
 } VBT_BIOS_DATA_HEADER;
+
+/**
+  This structure defines the common block header
+**/
+typedef struct {
+  UINT8   BlockId;            ///< Defines Block ID
+  UINT16  BlockSize;          ///< Defines the size of the block.
+} VBT_BLOCK_COMMON_HEADER;
 
 /**
   This structure defines the BMP Signon Message and Copyright Message Structure
