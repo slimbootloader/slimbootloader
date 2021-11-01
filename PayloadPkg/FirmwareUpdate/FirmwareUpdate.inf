@@ -49,6 +49,7 @@
   ConfigDataLib
   ContainerLib
   StringSupportLib
+  BootOptionLib
 
 [Guids]
   gLoaderMemoryMapInfoGuid

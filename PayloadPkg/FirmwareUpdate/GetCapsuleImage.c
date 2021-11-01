@@ -20,6 +20,7 @@
 #include <Library/CryptoLib.h>
 #include <Library/FirmwareUpdateLib.h>
 #include <Library/ConfigDataLib.h>
+#include <Library/BootOptionLib.h>
 #include <ConfigDataCommonStruct.h>
 
 /**
@@ -401,6 +402,15 @@ GetCapsuleImage (
   if (CapsuleInfo == NULL) {
     DEBUG((DEBUG_ERROR, " CapsuleInfo not found \n"));
     return EFI_NOT_FOUND;
+  }
+
+  DEBUG ((DEBUG_INFO, "Read capsule image from %a DevInstance (%4x) HwPart (%4x) SwPart (%4x) FS (%4a)",
+    GetBootDeviceNameString(CapsuleInfo->DevType), CapsuleInfo->DevInstance, CapsuleInfo->HwPart,
+    CapsuleInfo->SwPart, GetFsTypeString (CapsuleInfo->FsType)));
+  if (CapsuleInfo->FsType < EnumFileSystemMax) {
+    DEBUG ((DEBUG_INFO, " file name: %a\n", CapsuleInfo->FileName));
+  } else {
+    DEBUG ((DEBUG_INFO, " LBA offset: 0x%x \n", CapsuleInfo->LbaAddr));
   }
 
   Status = LoadCapsuleImage (CapsuleInfo, CapsuleImage, CapsuleImageSize);
