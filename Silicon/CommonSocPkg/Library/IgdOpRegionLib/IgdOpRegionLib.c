@@ -16,8 +16,6 @@
 **/
 
 #include <PiPei.h>
-
-#include <Library/IgdOpRegionLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/PciLib.h>
 #include <Library/HobLib.h>
@@ -25,15 +23,14 @@
 #include <Library/PcdLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/BootloaderCommonLib.h>
-
+#include <Library/IgdOpRegionLib.h>
+#include <GopConfig.h>
 #include "IgdOpRegion.h"
 #include <IgdOpRegionDefines.h>
-#include "GopConfigLib.h"
 
 //
 // Global variables
 //
-
 IGD_OPREGION_PROTOCOL mIgdOpRegion;
 
 /**

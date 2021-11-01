@@ -28,7 +28,6 @@
 
 [Sources]
   IgdOpRegion.h
-  GopConfigLib.h
   IgdOpRegionLib.c
 
 [Packages]
