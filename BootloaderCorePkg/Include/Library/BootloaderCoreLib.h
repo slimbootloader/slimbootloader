@@ -188,6 +188,7 @@ typedef struct {
   UINT32            Signature;
   UINT16            PlatformId;
   UINT16            PlatformBomId;
+  UINT32            SocSku;
   UINT8             BootMode;
   UINT8             LoaderStage;
   UINT8             CurrentBootPartition;
@@ -370,6 +371,29 @@ GetPlatformBomId (
   VOID
   );
 
+/**
+  This function sets current SOC SKU info.
+
+  @param Sku    The value of current SOC SKU.
+
+**/
+VOID
+EFIAPI
+SetSocSku (
+  IN UINT32 Sku
+  );
+
+/**
+  This function retrieves current SOC SKU info.
+
+  @retval    The current SOC SKU.
+
+**/
+UINT32
+EFIAPI
+GetSocSku (
+  VOID
+  );
 
 /**
   This function sets current debug port index.

@@ -283,6 +283,35 @@ GetPlatformBomId (
   return GetLoaderGlobalDataPointer()->PlatformBomId;
 }
 
+/**
+  This function sets current SOC SKU info.
+
+  @param Sku    The value of current SOC SKU.
+
+**/
+VOID
+EFIAPI
+SetSocSku (
+  IN UINT32 Sku
+  )
+{
+  GetLoaderGlobalDataPointer()->SocSku = Sku;
+}
+
+/**
+  This function retrieves current SOC SKU info.
+
+  @retval    The current SOC SKU.
+
+**/
+UINT32
+EFIAPI
+GetSocSku (
+  VOID
+  )
+{
+  return GetLoaderGlobalDataPointer()->SocSku;
+}
 
 /**
   This function sets current debug port index.
