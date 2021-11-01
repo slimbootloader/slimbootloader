@@ -14,6 +14,7 @@
 #include <Library/PciLib.h>
 #include <Library/GpioSiLib.h>
 #include <Library/BootloaderCommonLib.h>
+#include <Library/BootloaderCoreLib.h>
 #include <Library/PchPcrLib.h>
 #include <Library/PchSbiAccessLib.h>
 #include <Library/PchInfoLib.h>
@@ -164,6 +165,23 @@ typedef struct {
   UINT32    GrpIdx      :5;
   UINT32    Rsvd2       :3;
 } GPIO_CFG_DATA_DW1;
+
+
+// GPIO group table to convert from alphabet group index to pad group ID
+CONST UINT8 mPchGpioGroup[2][26] = {
+  { // PCH-LP
+    /*A     B     C     D     E     F     G     H     I     J     K     L     M      */
+    0x02, 0x00, 0x0B, 0x08, 0x0E, 0x0C, 0xFF, 0x07, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+    /*N     O     P     Q     R     S     T     U     V     W     X     Y     Z(GPD) */
+    0xFF, 0xFF, 0xFF, 0xFF, 0x03, 0x06, 0x01, 0x09, 0xFF, 0xFF, 0xFF, 0xFF, 0x05
+  },
+  { // PCH-H
+    /*A     B     C     D     E     F     G     H     I     J     K     L     M      */
+    0x00, 0x02, 0x05, 0x04, 0x0A, 0x0B, 0x07, 0x0D, 0x10, 0x0E, 0x0F, 0xFF, 0xFF,
+    /*N     O     P     Q     R     S     T     U     V     W     X     Y     Z(GPD) */
+    0xFF, 0xFF, 0xFF, 0xFF, 0x01, 0x06, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x09,
+  }
+};
 
 /**
   This function gets Group to GPE0 configuration
@@ -511,6 +529,49 @@ GpioGetChipsetIdFromGpioPad (
 }
 
 /**
+  Convert GPIO group and pin number into GPIO pad.
+
+  @param[in]  Group         Alphabet based GPIO group index.
+  @param[in]  Pin           GPIO pin number.
+
+  @retval                   GPIO pad, 0 indicates invalid pad.
+**/
+UINT32
+GpioGroupPinToPad (
+  IN UINT32     Group,
+  IN UINT32     Pin
+  )
+{
+  UINT8    GroupId;
+  UINT32   GpioPad;
+  UINT32   Index;
+  UINT8    PchSku;
+
+  if ((Group >= sizeof(mPchGpioGroup[0])) || (Pin >= 24)) {
+    return 0;
+  }
+
+  PchSku = GetSocSku () & 0xFF;
+  if (PchSku == PCH_LP) {
+    Index   = 0;
+    GpioPad = GPIO_VER2_LP_GPP_B0;
+  } else if (PchSku == PCH_H) {
+    Index   = 1;
+    GpioPad = GPIO_VER2_H_GPP_A0;
+  } else {
+    return 0;
+  }
+
+  GroupId  = mPchGpioGroup[Index][Group];
+  if (GroupId == 0xFF) {
+    return 0;
+  }
+
+  GpioPad += ((GroupId << 16) + Pin);
+  return GpioPad;
+}
+
+/**
   This procedure will get Gpio Pad from Cfg Dword
 
   @param[in]  GpioItem         Pointer to the Gpio Cfg Data Item
@@ -525,11 +586,29 @@ GpioGetGpioPadFromCfgDw (
 {
   GPIO_CFG_DATA_DW1    *Dw1;
   PAD_INFO              PadInfo;
+  UINT8                 GrpIdx;
+  UINT8                 NewGrpIdx;
+  UINT8                 PchSku;
 
   Dw1 = (GPIO_CFG_DATA_DW1 *) (&GpioItem[1]);
 
+  NewGrpIdx = 0xFF;
+  PchSku = GetSocSku () & 0xFF;
+  GrpIdx = (UINT8) Dw1->GrpIdx;
+  if (GrpIdx < sizeof(mPchGpioGroup[0])) {
+    if (PchSku == PCH_LP) {
+      NewGrpIdx = mPchGpioGroup[0][GrpIdx];
+    } else if (PchSku == PCH_H) {
+      NewGrpIdx = mPchGpioGroup[1][GrpIdx];
+    }
+  }
+  if (NewGrpIdx == 0xFF) {
+    DEBUG ((DEBUG_INFO, "Invalid GPIO GrpIdx for SOC SKU %02X !", GrpIdx, PchSku));
+  }
+
+  PadInfo.Pad = 0;
+  PadInfo.PadField.GrpIdx    = NewGrpIdx;
   PadInfo.PadField.PadNum    = (UINT16) Dw1->PadNum;
-  PadInfo.PadField.GrpIdx    = (UINT8)  Dw1->GrpIdx;
   PadInfo.PadField.ChipsetId = GpioGetThisChipsetId ();
   *GpioPad = PadInfo.Pad;
 

@@ -17,6 +17,7 @@
 #include <Library/PlatformHookLib.h>
 #include <Library/ConfigDataLib.h>
 #include <Library/SpiFlashLib.h>
+#include <Library/PchInfoLib.h>
 #include <FspmUpd.h>
 #include <Library/DebugLib.h>
 #include <IndustryStandard/Pci30.h>
@@ -811,6 +812,8 @@ DEBUG_CODE_BEGIN();
       DEBUG ((DEBUG_INFO, "[Boot Guard] Boot Guard is Enabled Successfully.\n", Data));
     }
 DEBUG_CODE_END();
+
+    SetSocSku (PchSeries ());
 
     PltDeviceTable = (PLT_DEVICE_TABLE *)AllocatePool (sizeof (PLT_DEVICE_TABLE) + sizeof (mPlatformDevices));
     if (PltDeviceTable != NULL) {
