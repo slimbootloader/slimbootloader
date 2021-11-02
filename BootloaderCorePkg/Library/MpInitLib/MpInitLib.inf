@@ -47,6 +47,7 @@
   SynchronizationLib
   SortLib
   ExtraBaseLib
+  MtrrLib
 
 [Guids]
 

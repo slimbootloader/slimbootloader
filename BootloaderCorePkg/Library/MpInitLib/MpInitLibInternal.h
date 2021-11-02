@@ -20,6 +20,7 @@
 #include <Library/MemoryAllocationLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include <Library/MpInitLib.h>
+#include <Library/MtrrLib.h>
 #include <Library/ExtraBaseLib.h>
 #include <Library/BootloaderCoreLib.h>
 #include <Library/S3SaveRestoreLib.h>
