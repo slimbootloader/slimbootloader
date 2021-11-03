@@ -23,6 +23,7 @@
 #include <Library/MpInitLib.h>
 #include <Library/FirmwareUpdateLib.h>
 #include <Guid/BootLoaderVersionGuid.h>
+#include <BootloaderCoreGlobal.h>
 #include "AcpiInitLibInternal.h"
 
 STATIC
@@ -185,7 +186,6 @@ AcpiTableUpdate (
   UINT32                            Size;
   UINT32                            EntryNum;
   EFI_STATUS                        Status;
-  LOADER_GLOBAL_DATA               *LdrGlobal;
   S3_DATA                          *S3Data;
   UINT32                            AcpiMax;
 
@@ -199,9 +199,7 @@ AcpiTableUpdate (
   RsdtEntry = (UINT32 *) ((UINT8 *)Rsdt + sizeof (EFI_ACPI_DESCRIPTION_HEADER));
   XsdtEntry = (UINT64 *) ((UINT8 *)Xsdt + sizeof (EFI_ACPI_DESCRIPTION_HEADER));
   EntryNum  = (Rsdt->Length - sizeof (EFI_ACPI_DESCRIPTION_HEADER)) / sizeof (UINT32);
-
-  LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
-  S3Data    = (S3_DATA *)LdrGlobal->S3DataPtr;
+  S3Data    = (S3_DATA *) GetS3DataPtr();
   Current   = (UINT8 *)(UINTN)S3Data->AcpiTop;
   AcpiMax   = S3Data->AcpiBase + PcdGet32 (PcdLoaderAcpiReclaimSize);
 

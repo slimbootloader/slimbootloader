@@ -11,6 +11,20 @@
 #include <Guid/OsBootOptionGuid.h>
 #include <Library/FirmwareUpdateLib.h>
 
+#define  MVBT_SIGNATURE               SIGNATURE_32 ('$', 'M', 'V', 'B')
+
+typedef struct {
+  UINT32        Signature;
+  UINT8         EntryNum;
+  UINT8         Reserved[3];
+} VBT_MB_HDR;
+
+typedef struct {
+  UINT32        ImageId;
+  UINT32        Length;
+  UINT8         Data[];
+} VBT_ENTRY_HDR;
+
 /**
   A function pointer to get relative power number in mW
 
