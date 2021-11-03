@@ -152,10 +152,12 @@ CpuInit (
   IN UINT32               Index
   )
 {
-  SMMBASE_INFO            *SmmBaseInfo;
+  CPU_SMMBASE            *CpuSmmBase;
   UINT32                  ApicId;
   UINT32                  CpuIdx;
+  UINT32                  CpuCount;
   PLATFORM_CPU_INIT_HOOK  PlatformCpuInitHook;
+  PLD_TO_BL_SMM_INFO      *PldToBlSmmInfo;
 
   if (FeaturePcdGet (PcdCpuX2ApicEnabled)) {
     // Enable X2APIC if desired
@@ -170,12 +172,27 @@ CpuInit (
     mSysCpuInfo.CpuInfo[Index].ApicId = ApicId;
   }
 
+  CpuCount = 0;
   if ((GetBootMode() == BOOT_ON_S3_RESUME) && (mSmmBaseInfo != NULL)) {
     // Perform SMM rebasing on S3 if payload provides SMM base info
-    SmmBaseInfo = mSmmBaseInfo;
-    for (CpuIdx = 0; CpuIdx < SmmBaseInfo->SmmBaseHdr.Count; CpuIdx++) {
-      if (ApicId == SmmBaseInfo->SmmBase[CpuIdx].ApicId) {
-        SmmRebase (Index, ApicId, SmmBaseInfo->SmmBase[CpuIdx].SmmBase);
+    if ((PcdGet8(PcdBuildSmmHobs) & BIT1) != 0) {
+      PldToBlSmmInfo = (PLD_TO_BL_SMM_INFO *) mSmmBaseInfo;
+      if (CompareGuid(&PldToBlSmmInfo->Header.Name, &gPldS3CommunicationGuid)) {
+        CpuSmmBase = PldToBlSmmInfo->S3Info.SmmBase;
+        CpuCount   = PldToBlSmmInfo->S3Info.CpuCount;
+      }
+    }
+
+    if ((PcdGet8(PcdBuildSmmHobs) & BIT0) != 0) {
+      if ((mSmmBaseInfo->SmmBaseHdr.Signature == BL_PLD_COMM_SIG) && (CpuCount == 0)) {
+        CpuSmmBase = mSmmBaseInfo->SmmBase;
+        CpuCount   = mSmmBaseInfo->SmmBaseHdr.Count;
+      }
+    }
+
+    for (CpuIdx = 0; CpuIdx < CpuCount; CpuIdx++) {
+      if (ApicId == CpuSmmBase[CpuIdx].ApicId) {
+        SmmRebase (Index, ApicId, CpuSmmBase[CpuIdx].SmmBase);
         break;
       }
     }

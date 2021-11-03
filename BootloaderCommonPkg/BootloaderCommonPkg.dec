@@ -149,6 +149,15 @@
   #     0x0002    - RSA_PSS.<BR>
   gPlatformCommonLibTokenSpaceGuid.PcdCompSignSchemeSupportedMask      |        0x03| UINT8 | 0x20000704
 
+  ## This PCD indicates which SMM HOBs to build
+  #     BIT0    - If it set it would support SMM variable related HOBs using old format.<BR>
+  #               Old HOB format refer these file headers: SmmInformationGuid.h, LoaderPlatformInfoGuid.h
+  #               FlashMapInfoGuid.h, DeviceTableHobGuid.h
+  #     BIT1    - If it set it would support SMM variable related HOBs using new format.<BR>
+  #               New HOB format refer these file headers: SmmS3CommunicationInfoGuid.h, SpiFlashInfoGuid.h
+  #               SmmRegisterInfoGuid.h and NvVariableInfoGuid.h
+  gPlatformCommonLibTokenSpaceGuid.PcdBuildSmmHobs                     |        0x03| UINT8 | 0x20000705
+
 [PcdsFixedAtBuild, PcdsPatchableInModule]
   # For patchable PCDs, try to set the default as none-zero
   # It is to prevent it from being put into BSS section, thus cause patching issue

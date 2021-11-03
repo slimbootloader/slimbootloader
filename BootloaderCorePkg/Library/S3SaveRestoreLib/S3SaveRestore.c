@@ -15,6 +15,8 @@
 #include <Library/BoardInitLib.h>
 #include <Guid/SmmInformationGuid.h>
 #include <Base.h>
+#include <Guid/SmmS3CommunicationInfoGuid.h>
+#include <Library/BootloaderCommonLib.h>
 
 #define REG_APM_CNT   0xB2
 
@@ -136,7 +138,21 @@ TriggerPayloadSwSmi (
   IN UINT8  SwSmiNumber
 )
 {
-  IoWrite8(REG_APM_CNT, SwSmiNumber);
+  PLD_TO_BL_SMM_INFO *PldToBlSmmInfo;
+
+  if ((PcdGet8(PcdBuildSmmHobs) & BIT1) != 0) {
+    PldToBlSmmInfo = FindS3Info (BL_SW_SMI_COMM_ID);
+    if ((PldToBlSmmInfo != NULL) && CompareGuid(&PldToBlSmmInfo->Header.Name, &gPldS3CommunicationGuid)) {
+      DEBUG((DEBUG_INFO, "TriggerPayloadSwSmi: 0x%x\n", PldToBlSmmInfo->S3Info.SwSmiTriggerValue));
+      IoWrite8(REG_APM_CNT, PldToBlSmmInfo->S3Info.SwSmiTriggerValue);
+      return;
+    }
+  }
+
+  if ((PcdGet8(PcdBuildSmmHobs) & BIT0) != 0) {
+    DEBUG((DEBUG_INFO, "TriggerPayloadSwSmi -: 0x%x\n", SwSmiNumber));
+    IoWrite8(REG_APM_CNT, SwSmiNumber);
+  }
 }
 
 /**
@@ -235,44 +251,49 @@ FindS3Info (
   IN  UINT8   Id
   )
 {
-  LDR_SMM_INFO      LdrSmmInfo;
-  UINT8             *SmmBase;
-  UINT32            SmmSize;
-  BOOLEAN           FoundInfo = FALSE;
-  BL_PLD_COMM_HDR   *CommHdr;
-  SMMBASE_INFO      *SmmBaseInfo;
+  LDR_SMM_INFO         LdrSmmInfo;
+  UINT8                *SmmBase;
+  UINT32               SmmSize;
+  BL_PLD_COMM_HDR      *CommHdr;
+  SMMBASE_INFO         *SmmBaseInfo;
+  PLD_TO_BL_SMM_INFO   *PldToBlSmmInfo;
 
   PlatformUpdateHobInfo (&gSmmInformationGuid, &LdrSmmInfo);
-  SmmBase = (UINT8 *)(UINTN)LdrSmmInfo.SmmBase;
-  if (LdrSmmInfo.Flags & SMM_FLAGS_4KB_COMMUNICATION) {
-    SmmSize = SIZE_4KB;
-  } else {
-    DEBUG((DEBUG_INFO, "Invalid Communication area size\n"));
-    return NULL;
-  }
-
-  CommHdr = (BL_PLD_COMM_HDR *) SmmBase;
-  while ( ((UINT8 *)CommHdr < SmmBase + SmmSize) &&
-          CommHdr->Signature == BL_PLD_COMM_SIG) {
-    if (CommHdr->Id == Id) {
-      FoundInfo = TRUE;
-      if (Id == SMMBASE_INFO_COMM_ID) {
-        SmmBaseInfo = (SMMBASE_INFO *) CommHdr;
-        if ((SmmBaseInfo->SmmBase[0].SmmBase == 0) && (SmmBaseInfo->SmmBase[0].ApicId == 0)){
-          // It means SMM rebase info is not really filled.
-          FoundInfo = FALSE;
-        }
-      }
-      break;
+  if ((PcdGet8(PcdBuildSmmHobs) & BIT1) != 0) {
+    PldToBlSmmInfo = (PLD_TO_BL_SMM_INFO *) (UINTN)LdrSmmInfo.SmmBase;
+    if (CompareGuid(&PldToBlSmmInfo->Header.Name, &gPldS3CommunicationGuid)) {
+      return PldToBlSmmInfo;
     }
-    CommHdr = (BL_PLD_COMM_HDR *) ((UINT8 *)CommHdr + CommHdr->TotalSize);
   }
 
-  if (!FoundInfo) {
-    return NULL;
+  if ((PcdGet8(PcdBuildSmmHobs) & BIT0) != 0) {
+    SmmBase = (UINT8 *)(UINTN)LdrSmmInfo.SmmBase;
+    if (LdrSmmInfo.Flags & SMM_FLAGS_4KB_COMMUNICATION) {
+      SmmSize = SIZE_4KB;
+    } else {
+      DEBUG((DEBUG_INFO, "Invalid Communication area size\n"));
+      return NULL;
+    }
+
+    CommHdr = (BL_PLD_COMM_HDR *) SmmBase;
+    while ( ((UINT8 *)CommHdr < SmmBase + SmmSize) &&
+          CommHdr->Signature == BL_PLD_COMM_SIG) {
+      if (CommHdr->Id == Id) {
+        if (Id == SMMBASE_INFO_COMM_ID) {
+          SmmBaseInfo = (SMMBASE_INFO *) CommHdr;
+          if ((SmmBaseInfo->SmmBase[0].SmmBase == 0) && (SmmBaseInfo->SmmBase[0].ApicId == 0)){
+            // It means SMM rebase info is not really filled.
+            return NULL;
+          }
+        }
+        return (VOID *) CommHdr;
+      }
+      CommHdr = (BL_PLD_COMM_HDR *) ((UINT8 *)CommHdr + CommHdr->TotalSize);
+    }
   }
 
-  return (VOID *) CommHdr;
+  DEBUG((DEBUG_ERROR, "FindS3Info: not found ID:0x%x\n", Id));
+  return NULL;
 }
 
 

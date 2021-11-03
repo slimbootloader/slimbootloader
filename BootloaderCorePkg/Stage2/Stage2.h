@@ -66,7 +66,11 @@
 #include <Library/SmbiosInitLib.h>
 #include <Library/UniversalPayloadLib.h>
 #include <VerInfo.h>
-
+#include <Guid/SmramMemoryReserve.h>
+#include <Guid/SmmRegisterInfoGuid.h>
+#include <Guid/SpiFlashInfoGuid.h>
+#include <Guid/NvVariableInfoGuid.h>
+#include <Guid/SmmS3CommunicationInfoGuid.h>
 
 
 #define UIMAGE_FIT_MAGIC               (0x56190527)

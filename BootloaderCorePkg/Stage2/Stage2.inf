@@ -98,6 +98,11 @@
   gUniversalPayloadSmbiosTableGuid
   gUniversalPayloadSerialPortInfoGuid
   gUniversalPayloadExtraDataGuid
+  gPldSmmRegisterInfoGuid
+  gEfiSmmSmramMemoryGuid
+  gSpiFlashInfoGuid
+  gNvVariableInfoGuid
+  gPldS3CommunicationGuid
 
 [Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdMaxLibraryDataEntry
@@ -139,6 +144,6 @@
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootHashMask
   gPlatformModuleTokenSpaceGuid.PcdSmmRebaseMode
   gPlatformModuleTokenSpaceGuid.PcdAcpiTablesRsdp
-
+  gPlatformCommonLibTokenSpaceGuid.PcdBuildSmmHobs
 [Depex]
   TRUE
