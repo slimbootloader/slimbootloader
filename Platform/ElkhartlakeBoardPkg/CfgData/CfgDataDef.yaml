@@ -140,10 +140,16 @@ template:
                          - OutputStateUnlock = Leave Pad output control unlocked, PadUnlock = Leave both Pad configuration and output control unlocked
           condition    : $GPIO_CFG_DATA.GpioPinConfig1_$(1)$(2).GPIOSkip_$(1)$(2) == 0
           length       : 4b
+      - RxRaw_$(1)$(2) :
+          name         : RxRaw
+          type         : Combo
+          option       : 0x0:Default, 0x1:NoOverride, 0x3:RxDrive 1 internally
+          help         : > This bit determines if the selected pad state is being overridden to '1'.
+          length       : 2b
       - Reserved1_$(1)$(2) :
           name         : Reserved1
           type         : Reserved
-          length       : 3b
+          length       : 1b
       - PadNum_$(1)$(2)  :
           name         : PadNum
           type         : Reserved
