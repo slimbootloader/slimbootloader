@@ -12,7 +12,7 @@
 #include <Library/MemoryAllocationLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
-#include <Library/BootloaderCoreLib.h>
+#include <BootloaderCoreGlobal.h>
 
 #define   POOL_MIN_ALIGNMENT    0x10
 

@@ -9,10 +9,10 @@
 #include <Library/DebugLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLogBufferLib.h>
-#include <Library/BootloaderCoreLib.h>
 #include <Library/SecureBootLib.h>
 #include <Library/HobLib.h>
 #include <Library/PcdLib.h>
+#include <BootloaderCoreGlobal.h>
 
 /**
   Returns the pointer to the Flash Map.

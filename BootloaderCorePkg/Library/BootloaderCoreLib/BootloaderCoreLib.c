@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2016 - 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2016 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -10,8 +10,8 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/HobLib.h>
-#include <Library/BootloaderCoreLib.h>
 #include <Guid/FlashMapInfoGuid.h>
+#include <BootloaderCoreGlobal.h>
 
 /**
   This function retrieves current boot mode.
@@ -344,6 +344,37 @@ GetDebugPort (
   return GetLoaderGlobalDataPointer()->DebugPortIdx;
 }
 
+
+/**
+  Returns the debug print error level mask for the current module.
+
+  @return  Debug print error level mask for the current module.
+
+**/
+UINT32
+EFIAPI
+GetDebugErrorLevel (
+  VOID
+  )
+{
+  return ((LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer())->DebugPrintErrorLevel;
+}
+
+
+/**
+  Sets the global debug print error level mask fpr the entire platform.
+
+  @param   ErrorLevel     Global debug print error level.
+
+**/
+VOID
+EFIAPI
+SetDebugErrorLevel (
+  UINT32  ErrorLevel
+  )
+{
+  ((LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer())->DebugPrintErrorLevel = ErrorLevel;
+}
 
 /**
   This function sets current platform BOM id.

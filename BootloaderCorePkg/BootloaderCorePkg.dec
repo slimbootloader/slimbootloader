@@ -15,6 +15,9 @@
 [Includes]
   Include
 
+[Includes.Common.Private]
+  IncludePrivate
+
 [Guids]
   gPlatformModuleTokenSpaceGuid            = { 0x69d13bf0, 0xaf91, 0x4d96, { 0xaa, 0x9f, 0x21, 0x84, 0xc5, 0xce, 0x3b, 0xc0 } }
 

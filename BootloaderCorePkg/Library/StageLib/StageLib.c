@@ -9,9 +9,9 @@
 #include <Library/DebugLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/BlMemoryAllocationLib.h>
-#include <Library/BootloaderCoreLib.h>
 #include <Library/CpuExceptionLib.h>
 #include <Library/PagingLib.h>
+#include <BootloaderCoreGlobal.h>
 
 /**
   Load IDT table for current processor.
