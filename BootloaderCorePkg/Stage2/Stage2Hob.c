@@ -606,6 +606,166 @@ BuildUniversalPayloadHob (
 
 
 /**
+  Build SMM variable related HOBs for Universal Payload
+
+**/
+VOID
+BuildSmmVariableHobs (
+  VOID
+)
+{
+  EFI_STATUS                           Status;
+  LDR_SMM_INFO                         *SmmInfoHob;
+  UINT32                               Length;
+  PLD_SMM_REGISTERS                    *SmmRegisterHob;
+  PLD_GENERIC_REGISTER                 *Reg;
+  EFI_SMRAM_HOB_DESCRIPTOR_BLOCK       *SmmMemoryHob;
+  SPI_FLASH_INFO                       *SpiFlashInfoHob;
+  LOADER_PLATFORM_INFO                 *PlatformInfo;
+  NV_VARIABLE_INFO                     *NvVariableHob;
+  UINT32                               Base;
+  PLD_S3_COMMUNICATION                 *S3CommunicationHob;
+
+  SmmInfoHob   = NULL;
+  PlatformInfo = NULL;
+  if ((PcdGet8(PcdBuildSmmHobs) & BIT0) != 0) {
+    SmmInfoHob   = (LDR_SMM_INFO *)GetGuidHobData (NULL, NULL, &gSmmInformationGuid);
+    PlatformInfo = (LOADER_PLATFORM_INFO *) GetGuidHobData (NULL, NULL, &gLoaderPlatformInfoGuid);
+  }
+
+  // Build SMM register HOB for universal payload
+  Length = sizeof (PLD_SMM_REGISTERS) + 5 * sizeof (PLD_GENERIC_REGISTER);
+  SmmRegisterHob = BuildGuidHob (&gPldSmmRegisterInfoGuid, Length);
+  if (SmmRegisterHob != NULL) {
+    ZeroMem (SmmRegisterHob, Length);
+    PlatformUpdateHobInfo (&gPldSmmRegisterInfoGuid, SmmRegisterHob);
+    if (((PcdGet8(PcdBuildSmmHobs) & BIT0) != 0) && (SmmInfoHob != NULL)) {
+      // Initialize the HOB using other HOBs
+      SmmRegisterHob->Revision = 0;
+      SmmRegisterHob->Count    = 5;
+      Reg = &SmmRegisterHob->Registers[0];
+      Reg->Id                        = REGISTER_ID_SMI_GBL_EN;
+      Reg->Value                     = 1;
+      Reg->Address.AddressSpaceId    = (SmmInfoHob->SmiCtrlReg.RegType == REG_TYPE_IO)?EFI_ACPI_3_0_SYSTEM_IO:EFI_ACPI_3_0_SYSTEM_MEMORY;
+      Reg->Address.RegisterBitWidth  = 1;
+      Reg->Address.RegisterBitOffset = SmmInfoHob->SmiCtrlReg.SmiGblPos;
+      Reg->Address.AccessSize        = EFI_ACPI_3_0_DWORD;
+      Reg->Address.Address           = SmmInfoHob->SmiCtrlReg.Address;
+
+      Reg++;
+      Reg->Id                        = REGISTER_ID_SMI_GBL_EN_LOCK;
+      Reg->Value                     = 1;
+      Reg->Address.AddressSpaceId    = (SmmInfoHob->SmiLockReg.RegType == REG_TYPE_IO)?EFI_ACPI_3_0_SYSTEM_IO:EFI_ACPI_3_0_SYSTEM_MEMORY;
+      Reg->Address.RegisterBitWidth  = 1;
+      Reg->Address.RegisterBitOffset = SmmInfoHob->SmiLockReg.SmiLockPos;
+      Reg->Address.AccessSize        = EFI_ACPI_3_0_DWORD;
+      Reg->Address.Address           = SmmInfoHob->SmiLockReg.Address;
+
+      Reg++;
+      Reg->Id                        = REGISTER_ID_SMI_EOS;
+      Reg->Value                     = 1;
+      Reg->Address.AddressSpaceId    = (SmmInfoHob->SmiCtrlReg.RegType == REG_TYPE_IO)?EFI_ACPI_3_0_SYSTEM_IO:EFI_ACPI_3_0_SYSTEM_MEMORY;
+      Reg->Address.RegisterBitWidth  = 1;
+      Reg->Address.RegisterBitOffset = SmmInfoHob->SmiCtrlReg.SmiEosPos ;
+      Reg->Address.AccessSize        = EFI_ACPI_3_0_DWORD;
+      Reg->Address.Address           = SmmInfoHob->SmiCtrlReg.Address;
+
+      Reg++;
+      Reg->Id                        = REGISTER_ID_SMI_APM_EN;
+      Reg->Value                     = 1;
+      Reg->Address.AddressSpaceId    = (SmmInfoHob->SmiCtrlReg.RegType == REG_TYPE_IO)?EFI_ACPI_3_0_SYSTEM_IO:EFI_ACPI_3_0_SYSTEM_MEMORY;
+      Reg->Address.RegisterBitWidth  = 1;
+      Reg->Address.RegisterBitOffset = SmmInfoHob->SmiCtrlReg.SmiApmPos;
+      Reg->Address.AccessSize        = EFI_ACPI_3_0_DWORD;
+      Reg->Address.Address           = SmmInfoHob->SmiCtrlReg.Address;
+
+      Reg++;
+      Reg->Id                        = REGISTER_ID_SMI_APM_STS;
+      Reg->Value                     = 1;
+      Reg->Address.AddressSpaceId    = (SmmInfoHob->SmiStsReg.RegType == REG_TYPE_IO)?EFI_ACPI_3_0_SYSTEM_IO:EFI_ACPI_3_0_SYSTEM_MEMORY;
+      Reg->Address.RegisterBitWidth  = 1;
+      Reg->Address.RegisterBitOffset = SmmInfoHob->SmiStsReg.SmiApmPos;
+      Reg->Address.AccessSize        = EFI_ACPI_3_0_DWORD;
+      Reg->Address.Address           = SmmInfoHob->SmiStsReg.Address;
+    }
+  }
+
+  // SMM memory HOB
+  Length = sizeof (EFI_SMRAM_HOB_DESCRIPTOR_BLOCK) + sizeof (EFI_SMRAM_DESCRIPTOR);
+  SmmMemoryHob = BuildGuidHob (&gEfiSmmSmramMemoryGuid, Length);
+  if (SmmMemoryHob != NULL) {
+    ZeroMem (SmmMemoryHob, Length);
+    PlatformUpdateHobInfo (&gEfiSmmSmramMemoryGuid, SmmMemoryHob);
+    if (((PcdGet8(PcdBuildSmmHobs) & BIT0) != 0) && (SmmInfoHob != NULL)) {
+      // Initialize the HOB using other HOBs
+      SmmMemoryHob->NumberOfSmmReservedRegions  = 1;
+      if ((SmmInfoHob->Flags & SMM_FLAGS_4KB_COMMUNICATION) != 0){
+        SmmMemoryHob->NumberOfSmmReservedRegions  += 1;
+        SmmMemoryHob->Descriptor[0].CpuStart      = SmmInfoHob->SmmBase;
+        SmmMemoryHob->Descriptor[0].PhysicalStart = SmmInfoHob->SmmBase;
+        SmmMemoryHob->Descriptor[0].PhysicalSize  = SIZE_4KB;
+        SmmMemoryHob->Descriptor[0].RegionState   = EFI_ALLOCATED;
+        SmmMemoryHob->Descriptor[1].CpuStart      = SmmInfoHob->SmmBase + SIZE_4KB;
+        SmmMemoryHob->Descriptor[1].PhysicalStart = SmmInfoHob->SmmBase + SIZE_4KB;
+        SmmMemoryHob->Descriptor[1].PhysicalSize  = SmmInfoHob->SmmSize - SIZE_4KB;
+        SmmMemoryHob->Descriptor[1].RegionState   = 0;
+      } else {
+        SmmMemoryHob->Descriptor[0].CpuStart      = SmmInfoHob->SmmBase;
+        SmmMemoryHob->Descriptor[0].PhysicalStart = SmmInfoHob->SmmBase;
+        SmmMemoryHob->Descriptor[0].PhysicalSize  = SmmInfoHob->SmmSize;
+        SmmMemoryHob->Descriptor[0].RegionState   = 0;
+      }
+    }
+  }
+
+  // SPI Flash HOB
+  SpiFlashInfoHob = BuildGuidHob (&gSpiFlashInfoGuid, sizeof (SPI_FLASH_INFO));
+  if (SpiFlashInfoHob != NULL) {
+    ZeroMem (SpiFlashInfoHob,  sizeof (SPI_FLASH_INFO));
+    PlatformUpdateHobInfo (&gSpiFlashInfoGuid, SpiFlashInfoHob);
+    if (((PcdGet8(PcdBuildSmmHobs) & BIT0) != 0) && (PlatformInfo != NULL)) {
+      // Initialize the HOB using other HOBs
+      SpiFlashInfoHob->Revision                     = 0;
+      SpiFlashInfoHob->Flags                        = PlatformInfo->Flags;
+      SpiFlashInfoHob->SpiAddress.AddressSpaceId    = SPACE_ID_PCI_CONFIGURATION;
+      SpiFlashInfoHob->SpiAddress.RegisterBitWidth  = 32;
+      SpiFlashInfoHob->SpiAddress.RegisterBitOffset = 0;
+      SpiFlashInfoHob->SpiAddress.AccessSize        = REGISTER_BIT_WIDTH_DWORD;
+      SpiFlashInfoHob->SpiAddress.Address           = TO_MM_PCI_ADDRESS (GetDeviceAddr (4, 0));
+    }
+  }
+
+  // SPI NV variable HOB
+  NvVariableHob = BuildGuidHob (&gNvVariableInfoGuid, sizeof (NV_VARIABLE_INFO));
+  if (NvVariableHob != NULL) {
+    ZeroMem (NvVariableHob,  sizeof (NV_VARIABLE_INFO));
+    Status = GetComponentInfo (FLASH_MAP_SIG_UEFIVARIABLE, &Base, &Length);
+    if (!EFI_ERROR (Status)) {
+      NvVariableHob->Revision           = 0;
+      NvVariableHob->VariableStoreBase  = Base;
+      NvVariableHob->VariableStoreSize  = Length;
+    }
+  }
+
+  // S3 communication HOB
+  S3CommunicationHob = BuildGuidHob (&gPldS3CommunicationGuid, sizeof (PLD_S3_COMMUNICATION));
+  if (S3CommunicationHob != NULL) {
+    ZeroMem (S3CommunicationHob,  sizeof (PLD_S3_COMMUNICATION));
+    PlatformUpdateHobInfo (&gPldS3CommunicationGuid, S3CommunicationHob);
+    if (((PcdGet8(PcdBuildSmmHobs) & BIT0) != 0) && (SmmInfoHob != NULL)) {
+      // Initialize the HOB using other HOBs
+      if ((SmmInfoHob->Flags & SMM_FLAGS_4KB_COMMUNICATION) != 0){
+        S3CommunicationHob->CommBuffer.PhysicalStart = SmmInfoHob->SmmBase;
+        S3CommunicationHob->CommBuffer.CpuStart      = SmmInfoHob->SmmBase;
+        S3CommunicationHob->CommBuffer.PhysicalSize  = SIZE_4KB;
+        S3CommunicationHob->PldAcpiS3Enable          = FALSE;
+      }
+    }
+  }
+}
+
+
+/**
   Build and update HOBs.
 
   Before jumping to payload, more information is available, so update some HOBs
@@ -791,5 +951,8 @@ BuildExtraInfoHob (
 
   BuildUniversalPayloadHob ();
 
+  if ((PcdGet8(PcdBuildSmmHobs) & BIT1) != 0) {
+    BuildSmmVariableHobs ();
+  }
   return LdrGlobal->LdrHobList;
 }
