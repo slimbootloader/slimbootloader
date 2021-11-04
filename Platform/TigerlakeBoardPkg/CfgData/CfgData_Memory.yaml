@@ -375,27 +375,11 @@
   - SaGv         :
       name         : SA GV
       type         : Combo
-      option       : 0:Disabled, 1:FixedLow, 2:FixedMid, 3:FixedHigh, 4:Enabled
+      option       : 0:Disabled, 1:FixedPoint0, 2:FixedPoint1, 3:FixedPoint2, 4:FixedPoint3, 5:Enabled
       help         : >
-                     System Agent dynamic frequency support and when enabled memory will be training at two different frequencies. Only effects ULX/ULT CPUs. 0=Disabled, 1=FixedLow, 2=FixedHigh, and 3=Enabled.
+                     System Agent dynamic frequency support and when enabled memory will be training at different frequencies. 0:Disabled, 1:FixedPoint0, 2:FixedPoint1, 3:FixedPoint2, 4:FixedPoint3, 5:Enabled
       length       : 0x01
       value        : 0x00
-  - FreqSaGvLow  :
-      name         : Low Frequency
-      type         : Combo
-      option       : 1067:1067, 1333:1333, 1600:1600, 1867:1867, 2133:2133, 2400:2400, 2667:2667, 2933:2933, 0:Auto
-      help         : >
-                     SAGV Low Frequency Selections in Mhz. Options are 1067, 1333, 1600, 1867, 2133, 2400, 2667, 2933 and 0 for Auto.
-      length       : 0x02
-      value        : 0
-  - FreqSaGvMid  :
-      name         : Mid Frequency
-      type         : Combo
-      option       : 1067:1067, 1333:1333, 1600:1600, 1867:1867, 2133:2133, 2400:2400, 2667:2667, 2933:2933, 0:Auto
-      help         : >
-                     SAGV Mid Frequency Selections in Mhz. Options are 1067, 1333, 1600, 1867, 2133, 2400, 2667, 2933 and 0 for Auto.
-      length       : 0x02
-      value        : 0
   - DisPgCloseIdleTimeout :
       name         : Page Close Idle Timeout
       type         : Combo
