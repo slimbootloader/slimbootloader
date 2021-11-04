@@ -2062,7 +2062,7 @@ def rebuild_cfgs (cfg_win, pages, page_id):
                 tabel1.show()
                 rc.adjust (0, rc.h + 1, 0, 0)
 
-        elif itype == 'Reserved':
+        elif itype in ['Reserved', 'Constant']:
             pass
 
         else:
