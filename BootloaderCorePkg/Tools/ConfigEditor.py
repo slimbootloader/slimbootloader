@@ -1014,7 +1014,7 @@ class application(tkinter.Frame):
             widget = custom_table(parent, col_hdr, bins)
 
         else:
-            if itype and itype not in ["Reserved"]:
+            if itype and itype not in ["Reserved", "Constant"]:
                 print ("WARNING: Type '%s' is invalid for '%s' !" % (itype, item['path']))
 
         if widget:
