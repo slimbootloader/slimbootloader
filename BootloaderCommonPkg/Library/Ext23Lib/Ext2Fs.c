@@ -646,6 +646,11 @@ Ext2SbValidate (
     goto Exit;
   }
 
+  if (Ext2Fs->Ext2FsRev == E2FS_REV0) {
+    Ext2Fs->Ext2FsFirstInode = 11;
+    Ext2Fs->Ext2FsInodeSize  = 128;
+  }
+
   if (RExt2Fs != NULL) {
     E2FS_SBLOAD ((VOID *)Ext2Fs, RExt2Fs);
   }
