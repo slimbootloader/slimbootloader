@@ -90,6 +90,7 @@ SetFrameBufferWriteCombining (
 
     // Detect logic bar index
     BarIndex = 0;
+    Found = FALSE;
     for (Offset = 0x10, BarIndex = 0; Offset <= 0x24 && BarIndex < PCI_MAX_BAR; BarIndex++) {
       if (BarIndex == GfxDevHob->BarIndex) {
         Found = TRUE;
