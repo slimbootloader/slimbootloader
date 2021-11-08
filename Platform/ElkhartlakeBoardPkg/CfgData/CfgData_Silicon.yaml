@@ -1758,7 +1758,7 @@
       help         : >
                      Enable/Disable #AC check on split lock. <b>0- Disable</b>; 1- Enable.
       length       : 0x1
-      value        : 0x1
+      value        : 0x0
   - SgxSinitNvsData :
       name         : SgxSinitNvsData
       type         : EditNum, HEX, (0x0,0xFF)
