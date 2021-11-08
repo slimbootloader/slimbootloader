@@ -498,6 +498,18 @@ SecStartup (
   }
   ASSERT_EFI_ERROR (Status);
 
+  //
+  // Allocate SMBIOS tables' memory, set Base and call Smbios init
+  //
+  if (FixedPcdGetBool (PcdSmbiosEnabled)) {
+    SmbiosEntry = AllocateZeroPool (PcdGet16(PcdSmbiosTablesSize));
+    Status = PcdSet32S (PcdSmbiosTablesBase, (UINT32)(UINTN)SmbiosEntry);
+    Status = SmbiosInit ();
+    if (EFI_ERROR(Status)) {
+      DEBUG ((DEBUG_INFO, "SMBIOS init Status = %r\n", Status));
+    }
+  }
+
   // PCI Enumeration
   BoardInit (PrePciEnumeration);
   AddMeasurePoint (0x3090);
@@ -560,18 +572,6 @@ SecStartup (
     }
   }
 
-  //
-  // Allocate SMBIOS tables' memory, set Base and call Smbios init
-  //
-  if (FixedPcdGetBool (PcdSmbiosEnabled)) {
-    SmbiosEntry = AllocateZeroPool (PcdGet16(PcdSmbiosTablesSize));
-    Status = PcdSet32S (PcdSmbiosTablesBase, (UINT32)(UINTN)SmbiosEntry);
-    Status = SmbiosInit ();
-    if (EFI_ERROR(Status)) {
-      DEBUG ((DEBUG_INFO, "SMBIOS init Status = %r\n", Status));
-    }
-  }
-
   PlatformService = (PLATFORM_SERVICE *) GetServiceBySignature (PLATFORM_SERVICE_SIGNATURE);
   if (PlatformService != NULL) {
     PlatformService->ResetSystem = ResetSystem;
@@ -585,6 +585,11 @@ SecStartup (
     DEBUG ((DEBUG_INFO, "Enable SMRR\n"));
     SendSmiIpiAllExcludingSelf ();
     SendSmiIpi (GetApicId());
+  }
+
+  // Finalize Smbios (add Type127 and cheksum)
+  if (FixedPcdGetBool (PcdSmbiosEnabled)) {
+    FinalizeSmbios ();
   }
 
   // Continue boot flow
