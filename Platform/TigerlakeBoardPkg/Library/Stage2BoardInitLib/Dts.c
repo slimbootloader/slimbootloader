@@ -169,40 +169,11 @@ AppendSmbiosBootDts (
 {
   EFI_STATUS        Status;
   UINT16            Index;
-  UINT16            Cnt;
-  VOID              *TypeAddr;
-  UINT16            Length;
-  CHAR8             *StringPtr;
 
-  // allocate enough memory for type 28 and its string (only one string)
-  Length = sizeof (SMBIOS_TABLE_TYPE28) + SMBIOS_STRING_MAX_LENGTH + sizeof (CHAR8);
-  TypeAddr = AllocatePool (Length);
-  if (TypeAddr == NULL) {
-    DEBUG ((DEBUG_ERROR, "Unable to allocate memory\n"));
-    return EFI_OUT_OF_RESOURCES;
+  for (Index = 0; Index < ARRAY_SIZE (mDtsInfo); Index++) {
+    Status = AddSmbiosType (&mDtsInfo[Index]);
+    Status = AddSmbiosString (SMBIOS_TYPE_TEMPERATURE_PROBE, mDtsSite[Index]);
   }
 
-  Cnt = sizeof (mDtsInfo) / sizeof (mDtsInfo[0]);
-  for (Index = 0; Index < Cnt; Index++) {
-    // copy type 28 structure
-    CopyMem (TypeAddr, &mDtsInfo[Index], sizeof (SMBIOS_TABLE_TYPE28));
-
-    // add 1st string: Description
-    StringPtr = (CHAR8 *)TypeAddr + sizeof (SMBIOS_TABLE_TYPE28);
-    CopyMem (StringPtr, mDtsSite[Index], AsciiStrSize (mDtsSite[Index]));
-    StringPtr += AsciiStrSize (mDtsSite[Index]); // smbios string terminates with null
-
-
-    // additional null for last string
-    *StringPtr = 0;
-
-    // calculate total length
-    Length = (UINT16)(StringPtr - (CHAR8 *)TypeAddr + 1);
-
-    Status = AppendSmbiosType (TypeAddr, Length);
-    if (EFI_ERROR (Status)) {
-      return Status;
-    }
-  }
-  return EFI_SUCCESS;
+  return Status;
 }

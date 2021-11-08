@@ -18,12 +18,10 @@
 #include <Library/FspSupportLib.h>
 #include "SmbiosTables.h"
 
-VOID      *mType127Ptr            =   NULL;
-
 #define SMBIOS_STRING_UNKNOWN              "Unknown"
 #define SMBIOS_STRING_UNKNOWN_VERSION      "XXXX.XXX.XXX.XXX"
 #define SMBIOS_STRING_VENDOR               "Intel Corporation"
-#define SMBIOS_STRING_PLATFORM             "Client Platform"
+#define SMBIOS_STRING_PLATFORM             "Intel Platform"
 
 //
 // Add more platform specific strings
@@ -47,6 +45,8 @@ CONST SMBIOS_TYPE_STRINGS  mDefaultSmbiosStrings[] = {
   {  SMBIOS_TYPE_BASEBOARD_INFORMATION ,   2,  SMBIOS_STRING_UNKNOWN          },  // Product Name
   {  SMBIOS_TYPE_BASEBOARD_INFORMATION ,   3,  SMBIOS_STRING_UNKNOWN_VERSION  },  // Version
   {  SMBIOS_TYPE_BASEBOARD_INFORMATION ,   4,  SMBIOS_STRING_UNKNOWN          },  // Serial Number
+  {  SMBIOS_TYPE_BASEBOARD_INFORMATION ,   5,  SMBIOS_STRING_UNKNOWN          },  // AssetTag
+  {  SMBIOS_TYPE_BASEBOARD_INFORMATION ,   6,  SMBIOS_STRING_UNKNOWN          },  // LocationInChassis
   // Type 127 - End of strings
   {  SMBIOS_TYPE_END_OF_TABLE,             0,  ""                             }
 };
@@ -65,14 +65,22 @@ CONST SMBIOS_TYPE_STRINGS  mDefaultSmbiosStrings[] = {
 EFI_STATUS
 EFIAPI
 CheckSmbiosOverflow (
-  IN  UINT16    NewLength
+  IN  UINT16    HdrLen,
+  IN  UINT8     NumStr
   )
 {
-  SMBIOS_TABLE_ENTRY_POINT      *SmbiosEntry;
+  SMBIOS_TABLE_ENTRY_POINT     *SmbiosEntry;
+  UINT16                        NewLength;
 
   SmbiosEntry = (SMBIOS_TABLE_ENTRY_POINT *)(UINTN)PcdGet32 (PcdSmbiosTablesBase);
   if (SmbiosEntry == NULL) {
     return EFI_DEVICE_ERROR;
+  }
+
+  if (NumStr > 0) {
+    NewLength = HdrLen + (SMBIOS_STRING_MAX_LENGTH + 1) * NumStr + sizeof (CHAR8);
+  } else {
+    NewLength = HdrLen + 2 * sizeof (CHAR8);
   }
 
   if ( (UINT32)(SmbiosEntry->EntryPointLength + sizeof (UINT8) + SmbiosEntry->TableLength + NewLength) > (UINT32)PcdGet16(PcdSmbiosTablesSize) ) {
@@ -83,7 +91,7 @@ CheckSmbiosOverflow (
 }
 
 /**
-  Return the pointer to the Smbios table spcified by 'Type'
+  Return the pointer to the last Smbios table spcified by 'Type'
 
   @param[in]  Type    Smbios type requested
 
@@ -98,21 +106,23 @@ FindSmbiosType (
   )
 {
   SMBIOS_STRUCTURE              *TypeHdr;
+  SMBIOS_STRUCTURE              *LastTypeHdr;
   SMBIOS_TABLE_ENTRY_POINT      *SmbiosEntry;
   UINT8                         *StringPtr;
+  UINT32                         CurLimit;
 
+  LastTypeHdr = NULL;
   SmbiosEntry = (SMBIOS_TABLE_ENTRY_POINT *)(UINTN)PcdGet32 (PcdSmbiosTablesBase);
   if (SmbiosEntry == NULL) {
     return NULL;
   }
 
-  TypeHdr = (SMBIOS_STRUCTURE *)(UINTN)SmbiosEntry->TableAddress;
-  for (; TypeHdr->Type != SMBIOS_TYPE_END_OF_TABLE;) {
-    if ( (UINT32)(UINTN)TypeHdr > (PcdGet32 (PcdSmbiosTablesBase) + (UINT32)PcdGet16 (PcdSmbiosTablesSize)) ) {
-      return NULL;
-    }
+  TypeHdr  = (SMBIOS_STRUCTURE *) (UINTN) SmbiosEntry->TableAddress;
+  CurLimit = (UINT32) (UINTN) ((UINT8 *) SmbiosEntry + SmbiosEntry->EntryPointLength + sizeof (UINT8) + SmbiosEntry->TableLength);
+
+  while ( (UINT32)(UINTN)TypeHdr < CurLimit ) {
     if (TypeHdr->Type == Type) {
-      return TypeHdr;
+      LastTypeHdr = TypeHdr;
     }
     //
     // Go to the end of strings to find next Type header
@@ -124,11 +134,11 @@ FindSmbiosType (
     TypeHdr = (SMBIOS_STRUCTURE *)(StringPtr + TYPE_TERMINATOR_SIZE);
   }
 
-  return NULL;
+  return LastTypeHdr;
 }
 
 /**
-  After adding new Smbios Types, we need to do the following:
+  After adding and appending all Smbios Types, we need to do the following:
     1. Check for the table overflow
     2. Add Type 127
     3. Adjust the TotalLength in entry point struct
@@ -143,7 +153,7 @@ FindSmbiosType (
 **/
 EFI_STATUS
 FinalizeSmbios (
-  IN  UINT16    NewMaxStructSize
+  VOID
   )
 {
   SMBIOS_TABLE_TYPE127          *Type127;
@@ -158,7 +168,7 @@ FinalizeSmbios (
   //
   // Check for overflows before adding Type127
   //
-  Status = CheckSmbiosOverflow (sizeof (SMBIOS_STRUCTURE) + TYPE_TERMINATOR_SIZE);
+  Status = CheckSmbiosOverflow (sizeof (SMBIOS_STRUCTURE), 0);
   if (EFI_ERROR(Status)) {
     return Status;
   }
@@ -170,16 +180,11 @@ FinalizeSmbios (
   Type127->Hdr.Type = SMBIOS_TYPE_END_OF_TABLE;
   Type127->Hdr.Length = sizeof (SMBIOS_STRUCTURE);
   Type127->Hdr.Handle = SmbiosEntry->NumberOfSmbiosStructures++;
-  mType127Ptr = (VOID *) Type127;
-
-  SmbiosEntry->TableLength += sizeof (SMBIOS_STRUCTURE) + TYPE_TERMINATOR_SIZE;
 
   //
   // Patch entry point struct with new data
   //
-  if (NewMaxStructSize > SmbiosEntry->MaxStructureSize) {
-    SmbiosEntry->MaxStructureSize = NewMaxStructSize;
-  }
+  SmbiosEntry->TableLength                 += sizeof (SMBIOS_STRUCTURE) + TYPE_TERMINATOR_SIZE;
   SmbiosEntry->IntermediateChecksum         = 0;
   SmbiosEntry->EntryPointStructureChecksum  = 0;
   SmbiosEntry->IntermediateChecksum         = CalculateCheckSum8 ((UINT8 *)SmbiosEntry + 0x10, sizeof (SMBIOS_TABLE_ENTRY_POINT) - 0x10);
@@ -196,67 +201,35 @@ FinalizeSmbios (
 }
 
 /**
-  Append an Smbios Type to an existing set of types
-  Different from AddSmbiosType, which gets called during initial Smbios setup
+  Calculate number of strings in a type.
 
-  @param[in]  TypeData    pointer to the Type Data including strings
-  @param[in]  TypeLength  Size of type data including strings and end terminator (0000)
+  @param[in]  Type      Get the num of strings for a Type
 
-  @retval                         EFI_DEVICE_ERROR          , if Smbios Entry is NULL
-                                  EFI_ALREADY_STARTED       , is type is already present
-                                  Overflow status for adding
-                                  this type or Type 127     , otherwise
-
+  @retval               Number of strings for a Type, if given via PCd structure
+                                            assume 0, otherwise
 **/
-EFI_STATUS
-EFIAPI
-AppendSmbiosType (
-  IN  VOID      *TypeData,
-  IN  UINT16    TypeLength
-  )
+UINT8
+CalculateNumStrInType (
+  IN  UINT8   Type
+)
 {
-  SMBIOS_TABLE_ENTRY_POINT    *SmbiosEntry;
-  EFI_STATUS                  Status;
-  SMBIOS_STRUCTURE            *TypeHdr;
+  UINT8                   Idx;
+  UINT8                   Count;
+  SMBIOS_TYPE_STRINGS    *SmbiosStringsPtr;
 
-  SmbiosEntry = (SMBIOS_TABLE_ENTRY_POINT *)(UINTN)PcdGet32 (PcdSmbiosTablesBase);
-  if (SmbiosEntry == NULL || mType127Ptr == NULL || TypeLength > SMBIOS_TABLE_MAX_LENGTH) {
-    return EFI_DEVICE_ERROR;
+  Idx   = 0;
+  Count = 0;
+  SmbiosStringsPtr = (SMBIOS_TYPE_STRINGS *) (UINTN) PcdGet32 (PcdSmbiosStringsPtr);
+
+  if (SmbiosStringsPtr != NULL) {
+    for (Idx = 0; SmbiosStringsPtr[Idx].Type != SMBIOS_TYPE_END_OF_TABLE; Idx++) {
+      if (SmbiosStringsPtr[Idx].Type == Type && SmbiosStringsPtr[Idx].Idx != 0) {
+        Count++;
+      }
+    }
   }
 
-  TypeHdr = (SMBIOS_STRUCTURE *) TypeData;
-
-  //
-  // Check if the type is already added during Smbios init
-  //
-  if (TypeHdr->Type == SMBIOS_TYPE_BIOS_INFORMATION   ||
-      TypeHdr->Type == SMBIOS_TYPE_SYSTEM_INFORMATION ||
-      TypeHdr->Type == SMBIOS_TYPE_BASEBOARD_INFORMATION) {
-    DEBUG ((DEBUG_INFO, "Type already present, returning\n"));
-    return EFI_ALREADY_STARTED;
-  }
-
-  //
-  // Check for overflows before adding new type
-  //
-  Status = CheckSmbiosOverflow (TypeLength);
-  if (EFI_ERROR(Status)) {
-    return Status;
-  }
-
-  //
-  // Find current Type127 and replace it with new Type Data
-  //
-  SmbiosEntry->TableLength -= ( ((SMBIOS_STRUCTURE *)mType127Ptr)->Length + TYPE_TERMINATOR_SIZE);
-  TypeHdr->Handle = ((SMBIOS_STRUCTURE *)mType127Ptr)->Handle;
-  CopyMem (mType127Ptr, TypeData, TypeLength);
-  SmbiosEntry->TableLength += TypeLength;
-
-  //
-  // After appending, update with Typ127 and patch entry point
-  //
-  Status = FinalizeSmbios (TypeLength);
-  return Status;
+  return Count;
 }
 
 /**
@@ -277,14 +250,22 @@ GetSmbiosString (
   )
 {
   SMBIOS_TYPE_STRINGS       *SmbiosStrings;
+  UINT16                    SmbiosStringsCnt;
   UINT16                    Index;
 
-  SmbiosStrings = (SMBIOS_TYPE_STRINGS *)(UINTN)PcdGet32 (PcdSmbiosStringsPtr);
-  if (SmbiosStrings == NULL) {
+  SmbiosStrings     = (SMBIOS_TYPE_STRINGS *)(UINTN)PcdGet32 (PcdSmbiosStringsPtr);
+  SmbiosStringsCnt  = PcdGet16 (PcdSmbiosStringsCnt);
+
+  if ((SmbiosStrings == NULL) || (SmbiosStringsCnt == 0)) {
+    //
+    // Even if platform doesnt provide the strings,
+    // Stage2 has init the Pcd with the default strings array.
+    // It is likely impossible to reach here! But added to be safe.
+    //
     return "Unknown";
   }
 
-  for (Index = 0; Index < PcdGet16 (PcdSmbiosStringsCnt); ++Index) {
+  for (Index = 0; Index < SmbiosStringsCnt; Index++) {
     if (SmbiosStrings[Index].Type == SMBIOS_TYPE_END_OF_TABLE) {
       return "Unknown";
     }
@@ -309,7 +290,7 @@ GetSmbiosString (
 
 **/
 CHAR8 *
-AddSmbiosString (
+CopySmbiosString (
   IN  CHAR8   *Destination,
   IN  CHAR8   *Source
   )
@@ -318,135 +299,183 @@ AddSmbiosString (
     return Destination;
   }
 
-  CopyMem ((CHAR8 *)Destination, Source, AsciiStrSize (Source));
+  CopyMem ((CHAR8 *)Destination, Source, AsciiStrLen (Source));
   Destination += AsciiStrSize (Source); // every string terminates with a 00
 
   return Destination;
 }
 
 /**
-  Add a particular Smbios type to the Smbios allocated region.
-  Different from AppenSmbiosType which can be called at a later stage
+  Append a string to an Smbios type header
 
-  @param[in]  Type        Type Id being added
-  @param[in]  TypeAddr    Address where the type is begin added
+  @param[in]  Type      Type to which a string is appended
+  @param[in]  String    String literal to be appended
 
-  @retval                 Address where the next type will be added
+  @retval               EFI_SUCCESS, if string is appended successfully
+                        EFI_ERROR,    otherwise
 
 **/
-VOID *
+EFI_STATUS
 EFIAPI
-AddSmbiosType (
-  IN  UINT8       Type,
-  IN  VOID        *TypeAddr,
-  IN  UINT16      *MaxLength
+AddSmbiosString (
+  IN  UINT8     Type,
+  IN  CHAR8    *String
   )
 {
-  EFI_STATUS                    Status;
-  SMBIOS_TABLE_ENTRY_POINT      *SmbiosEntry;
-  SMBIOS_STRUCTURE_POINTER      TypePtr;
+  SMBIOS_TABLE_ENTRY_POINT     *SmbiosEntry;
+  SMBIOS_STRUCTURE             *TypeHdr;
+  CHAR8                        *StringPtr;
+  UINTN                         StrLen;
   UINT16                        TypeLength;
-  VOID                          *HdrInfo;
-  UINT8                         HdrLen;
-  CHAR8*                        StringPtr;
+  EFI_STATUS                    Status;
+  BOOLEAN                       StrPresent;
+
+  SmbiosEntry = (SMBIOS_TABLE_ENTRY_POINT *) (UINTN) PcdGet32 (PcdSmbiosTablesBase);
+  StrPresent  = FALSE;
+
+  //
+  // Find the header to append a string
+  //
+  TypeHdr = (SMBIOS_STRUCTURE *) FindSmbiosType (Type);
+  if (TypeHdr == NULL) {
+    return EFI_DEVICE_ERROR;
+  }
+
+  //
+  // Check for potential overflow if string is added
+  //
+  Status = CheckSmbiosOverflow (0, 1);
+  if (EFI_ERROR(Status)) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  //
+  // Add 'Unknown' if empty string
+  //
+  if (*String == '\0') {
+    String = "Unknown";
+  }
+
+  StringPtr = (CHAR8 *) ((UINT8 *) TypeHdr + TypeHdr->Length);
+  // Find end of an existing string
+  while ( !(StringPtr[0] == 0 && StringPtr[1] == 0) ) {
+    StrPresent = TRUE;
+    StringPtr++;
+  }
+  if (StrPresent == TRUE) {
+    *StringPtr++ = 0; // Leave a 00 between strings
+  }
+  StringPtr = CopySmbiosString (StringPtr, String);
+  *StringPtr++ = 0; // add another 00 to the string
+
+  //
+  // Update TypeLength, TableLength(in entry point), Max Length
+  //
+  StrLen = AsciiStrLen (String);
+  if (StrPresent == TRUE) {
+    SmbiosEntry->TableLength += (UINT16) (StrLen + 1);
+  } else {
+    SmbiosEntry->TableLength += (UINT16) StrLen;
+  }
+  TypeLength = (UINT16)((UINTN)(StringPtr) - (UINTN)TypeHdr);
+  if (TypeLength > SmbiosEntry->MaxStructureSize) {
+    SmbiosEntry->MaxStructureSize = TypeLength;
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Add a particular Smbios type to the Smbios allocated region.
+
+  @param[in]  HdrInfo     Address of the type being added
+
+  @retval                 EFI_SUCCESS, if Type added successfully,
+                          EFI_ERROR,   otherwise
+
+**/
+EFI_STATUS
+EFIAPI
+AddSmbiosType (
+  IN  VOID   *HdrInfo
+  )
+{
+  SMBIOS_TABLE_ENTRY_POINT     *SmbiosEntry;
+  UINT16                        TypeLength;
+  CHAR8                        *StringPtr;
   UINT8                         StrIdx;
   UINT8                         NumStr;
+  EFI_STATUS                    Status;
+  SMBIOS_STRUCTURE             *TypeHdr;
+  UINT16                        HdrLen;
 
-  SmbiosEntry = (SMBIOS_TABLE_ENTRY_POINT *)(UINTN)PcdGet32 (PcdSmbiosTablesBase);
-  HdrInfo = NULL;
-  HdrLen = 0;
-  NumStr = 0;
+  SmbiosEntry = (SMBIOS_TABLE_ENTRY_POINT *) (UINTN) PcdGet32 (PcdSmbiosTablesBase);
+  NumStr      = 0;
+  TypeHdr     = (SMBIOS_STRUCTURE *) HdrInfo;
 
-  //
-  // Prepare type info
-  //
-  TypePtr.Raw = (UINT8 *) TypeAddr;
-  switch (Type) {
-  case SMBIOS_TYPE_BIOS_INFORMATION:
-    HdrLen = sizeof (SMBIOS_TABLE_TYPE0);
-    HdrInfo = (VOID *)&mBiosInfo;
-    NumStr = 3;
-    break;
-  case SMBIOS_TYPE_SYSTEM_INFORMATION:
-    HdrLen = sizeof (SMBIOS_TABLE_TYPE1);
-    HdrInfo = (VOID *)&mSystemInfo;
-    NumStr = 6;
-    break;
-  case SMBIOS_TYPE_BASEBOARD_INFORMATION:
-    HdrLen = sizeof (SMBIOS_TABLE_TYPE2);
-    HdrInfo = (VOID *)&mBaseBoardInfo;
-    NumStr = 6;
-    break;
-  case SMBIOS_TYPE_MEMORY_ARRAY_MAPPED_ADDRESS:
-    HdrLen  = sizeof (SMBIOS_TABLE_TYPE19);
-    mMemArrayMappedAddr.ExtendedEndingAddress = GetMemoryInfo (EnumMemInfoTom) - 1;
-    HdrInfo = (VOID *)&mMemArrayMappedAddr;
-    NumStr  = 0;
-    break;
-  default:
-    break;
+  if (TypeHdr == NULL) {
+    return EFI_DEVICE_ERROR;
+  } else {
+    HdrLen = TypeHdr->Length;
+    if (HdrLen == 0) {
+      return EFI_DEVICE_ERROR;
+    }
   }
 
-  //
-  // If HdrInfo is NULL, return a valid start address
-  //
-  if (HdrInfo == NULL) {
-    return TypeAddr;
-  }
+  NumStr = CalculateNumStrInType (TypeHdr->Type);
 
   //
   // Check for overflow before adding the Type
   //
   if (NumStr > 0) {
-    TypeLength = HdrLen + (SMBIOS_STRING_MAX_LENGTH + 1) * NumStr + sizeof (CHAR8);
+    Status = CheckSmbiosOverflow (HdrLen, NumStr);
   } else {
-    TypeLength = HdrLen + 2 * sizeof (CHAR8);
+    Status = CheckSmbiosOverflow (HdrLen, 0);
   }
-
-  Status = CheckSmbiosOverflow (TypeLength);
   if (EFI_ERROR(Status)) {
-    DEBUG ((DEBUG_INFO, "Not enough memory to add Type[%d]\n", Type));
-    return TypeAddr;
+    return Status;
+  }
+
+  if (FindSmbiosType (TypeHdr->Type) != NULL) {
+    // A Previous instance of same type is already existing.
+    // Dont add those strings here. Expect new ones to be added
+    // via AddSmbiosString ()
+    NumStr = 0;
   }
 
   //
-  // Copy header info into memory allocated
-  // and add strings for this type
+  // Copy header, init string ptr, add strings
   //
-  CopyMem (TypePtr.Raw, HdrInfo, HdrLen);
-  StringPtr = (CHAR8 *) (TypePtr.Raw + HdrLen);
+  TypeHdr = (VOID *) (UINTN) (SmbiosEntry->TableAddress + SmbiosEntry->TableLength);
+  CopyMem (TypeHdr, HdrInfo, HdrLen);
+  StringPtr = (CHAR8 *) ((UINT8 *) TypeHdr + HdrLen);
   if (NumStr > 0) {
     for (StrIdx = 1; StrIdx <= NumStr; ++StrIdx) {
-      StringPtr = AddSmbiosString (StringPtr, GetSmbiosString (Type, StrIdx));
+      StringPtr = CopySmbiosString (StringPtr, GetSmbiosString (TypeHdr->Type, StrIdx));
     }
   } else {
-    // Add string terminator
-    *StringPtr++ = 0;
+    *StringPtr++ = 0; // Add string terminator
   }
-  *StringPtr++ = 0;
-  TypeAddr = StringPtr;       // last string is terminated with a 0000
+  *StringPtr++ = 0; // Add string terminator
 
   //
-  // Update TypeLength, header length, Max Length
-  // and TableLength(in entry point)
+  // Update TypeLength, TableLength(in entry point), Max Length
   //
-  TypeLength = (UINT16)((UINTN)(TypeAddr) - (UINTN)TypePtr.Raw);
-  TypePtr.Hdr->Length = HdrLen;
-  if (TypeLength > *MaxLength) {
-    *MaxLength = TypeLength;
-  }
+  TypeLength = (UINT16)((UINTN)(StringPtr) - (UINTN)TypeHdr);
   SmbiosEntry->TableLength += TypeLength;
+  if (TypeLength > SmbiosEntry->MaxStructureSize) {
+    SmbiosEntry->MaxStructureSize = TypeLength;
+  }
 
   //
   // According to SMBIOS spec, Handle field is used to
   // get a particular smbios type structure.
   //
-  TypePtr.Hdr->Handle = SmbiosEntry->NumberOfSmbiosStructures++;
+  TypeHdr->Length = (UINT8) HdrLen;
+  TypeHdr->Handle = SmbiosEntry->NumberOfSmbiosStructures++;
 
-  return TypeAddr;
-
+  return Status;
 }
-
 
 /**
   This function is called to initialize the SmbiosStringsPtr.
@@ -504,8 +533,6 @@ SmbiosInit (
   )
 {
   SMBIOS_TABLE_ENTRY_POINT      *SmbiosEntryPoint;
-  VOID                          *TypeAddr;
-  UINT16                        MaxLength = 0;
   EFI_STATUS                    Status;
 
   //
@@ -521,25 +548,26 @@ SmbiosInit (
   SmbiosEntryPoint->EntryPointLength                          = sizeof (SMBIOS_TABLE_ENTRY_POINT);
   SmbiosEntryPoint->MajorVersion                              = 2;
   SmbiosEntryPoint->MinorVersion                              = 7;
-  SmbiosEntryPoint->TableLength                               = 0;
+  SmbiosEntryPoint->MaxStructureSize                          = 0;
   *((UINT32 *)&(SmbiosEntryPoint->IntermediateAnchorString))  = SIGNATURE_32('_', 'D', 'M', 'I');
   SmbiosEntryPoint->IntermediateAnchorString[4]               = '_';
+  SmbiosEntryPoint->TableLength                               = 0;
   SmbiosEntryPoint->TableAddress                              = (UINT32)(UINTN)SmbiosEntryPoint + sizeof (SMBIOS_TABLE_ENTRY_POINT) + sizeof (UINT8);
+  SmbiosEntryPoint->NumberOfSmbiosStructures                  = 0;
+
+  //
+  // Patch common Type headers if necessary
+  //
+  mMemArrayMappedAddr.ExtendedEndingAddress = GetMemoryInfo (EnumMemInfoTom) - 1;
 
   //
   // Add common SMBIOS Types' information.
   // Types start at 16 byte boundary
   //
-  TypeAddr = (VOID *)(UINTN)SmbiosEntryPoint->TableAddress;
-  TypeAddr = AddSmbiosType (SMBIOS_TYPE_BIOS_INFORMATION,      TypeAddr, &MaxLength);
-  TypeAddr = AddSmbiosType (SMBIOS_TYPE_SYSTEM_INFORMATION,    TypeAddr, &MaxLength);
-  TypeAddr = AddSmbiosType (SMBIOS_TYPE_BASEBOARD_INFORMATION,       TypeAddr, &MaxLength);
-  TypeAddr = AddSmbiosType (SMBIOS_TYPE_MEMORY_ARRAY_MAPPED_ADDRESS, TypeAddr, &MaxLength);
-
-  //
-  // Add Type 0x7F, and patch the entry point structure
-  //
-  Status = FinalizeSmbios (MaxLength);
+  Status = AddSmbiosType (&mBiosInfo);
+  Status = AddSmbiosType (&mSystemInfo);
+  Status = AddSmbiosType (&mBaseBoardInfo);
+  Status = AddSmbiosType (&mMemArrayMappedAddr);
 
   return Status;
 }
