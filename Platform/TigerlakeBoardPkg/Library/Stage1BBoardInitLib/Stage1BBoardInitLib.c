@@ -176,7 +176,6 @@ UpdateFspConfig (
   FSPM_UPD                 *FspmUpd;
   FSPM_ARCH_UPD            *FspmArchUpd;
   FSP_M_CONFIG             *Fspmcfg;
-  SECURITY_CFG_DATA        *SecCfgData;
   MEMORY_CFG_DATA          *MemCfgData;
   GRAPHICS_CFG_DATA        *GfxCfgData;
   UINT8                    Index;
@@ -195,14 +194,16 @@ UpdateFspConfig (
 
   BoardId = GetPlatformId();
 
-  SecCfgData = (SECURITY_CFG_DATA *)FindConfigDataByTag (CDATA_SECURITY_TAG);
-  if (SecCfgData != NULL) {
-    DEBUG ((DEBUG_INFO, "Load Security Cfg Data\n"));
-    // Configure Sgx SPD Data
-    Fspmcfg->EnableSgx = SecCfgData->EnableSgx;
-    Fspmcfg->PrmrrSize = SecCfgData->PrmrrSize;
-  } else {
-    DEBUG ((DEBUG_INFO, "Failed to find security CFG!\n"));
+  // SGX is not supported on this platform
+  Fspmcfg->EnableSgx = 0;
+  switch (GetPlatformId ()) {
+    case BoardIdTglHDdr4SODimm:
+    case 0xF:
+      Fspmcfg->PrmrrSize          = 0x100000;
+      Fspmcfg->MmioSizeAdjustment = 0x308;
+      break;
+    default:
+      break;
   }
 
   DebugPort = GetDebugPort ();
@@ -329,16 +330,6 @@ UpdateFspConfig (
 
   // Skip CPU replacement check for embedded design to always enable fast boot
   Fspmcfg->SkipCpuReplacementCheck = 1;
-
-  switch (GetPlatformId ()) {
-    case BoardIdTglHDdr4SODimm:
-    case 0xF:
-      Fspmcfg->PrmrrSize          = 0x100000;
-      Fspmcfg->MmioSizeAdjustment = 0x308;
-      break;
-    default:
-      break;
-  }
 
   if(MemCfgData->RhPrevention == 1) {
     Fspmcfg->RhSolution         = MemCfgData->RhSolution;
