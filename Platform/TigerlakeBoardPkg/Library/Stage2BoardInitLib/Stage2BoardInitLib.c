@@ -1287,7 +1287,6 @@ UpdateFspConfig (
   EFI_STATUS          Status;
   FLASH_REGION_TYPE   RegionType;
   FSPS_UPD            *FspsUpd;
-  SECURITY_CFG_DATA   *SecCfgData;
   SILICON_CFG_DATA    *SiCfgData;
   FSP_S_CONFIG        *FspsConfig;
   UINT8               Index;
@@ -1306,15 +1305,9 @@ UpdateFspConfig (
   FspsUpd    = (FSPS_UPD *)FspsUpdPtr;
   FspsConfig = &FspsUpd->FspsConfig;
 
-  SecCfgData = (SECURITY_CFG_DATA *)FindConfigDataByTag (CDATA_SECURITY_TAG);
-  if (SecCfgData != NULL) {
-    DEBUG ((DEBUG_INFO, "Load Security Cfg Data\n"));
-    // Configure Sgx SPD Data
-    FspsConfig->SgxEpoch0           = SecCfgData->SgxEpoch0;
-    FspsConfig->SgxEpoch1           = SecCfgData->SgxEpoch1;
-  } else {
-    DEBUG ((DEBUG_INFO, "Failed to find security CFG!\n"));
-  }
+  // SGX is not supported on this platform. Do not change these two lines.
+  FspsConfig->SgxEpoch0           = 0x553DFD8D5FA48F27;
+  FspsConfig->SgxEpoch1           = 0xD76767B9BE4BFDC1;
 
   DebugPort = GetDebugPort ();
   if (DebugPort < PCH_MAX_SERIALIO_UART_CONTROLLERS) {
