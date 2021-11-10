@@ -31,9 +31,15 @@ typedef union {
 /// Defines for GroupID
 ///
 #define MKHI_CBM_GROUP_ID     0x00
+#define MKHI_FWCAPS_GROUP_ID  0x03
 #define MKHI_HMRFPO_GROUP_ID  0x05
 #define MKHI_MCA_GROUP_ID     0x0A
 #define MKHI_GEN_GROUP_ID     0xFF
+
+///
+/// Defines for FWCAPS_GROUP Command
+///
+#define FWCAPS_GET_RULE_CMD   0x02
 
 #define IAFW_DNX_REQ_CLEAR    0x02
 
@@ -203,9 +209,12 @@ typedef struct {
   UINT32        RuleID;
   UINT8         RuleDataLen;
   MEFWCAPS_SKU  FWCap;
-  UINT8         Reseved[3];
 } GET_FW_CAPS_SKU_ACK_DATA;
 
+typedef struct {
+  MKHI_MESSAGE_HEADER       MKHIHeader;
+  GET_FW_CAPS_SKU_ACK_DATA  Data;
+} GET_FW_CAPS_SKU_ACK;
 
 ///
 /// Get/Set Local FW Update
