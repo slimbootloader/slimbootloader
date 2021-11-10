@@ -284,7 +284,7 @@ class GitDiffCheck:
                 self.state = PRE_PATCH
                 self.filename = line[13:].split(' ', 1)[0]
                 self.is_newfile = False
-                self.force_crlf = not self.filename.endswith('.sh')
+                self.force_lf = True
             elif len(line.rstrip()) != 0:
                 self.format_error("didn't find diff command")
             self.line_num += 1
@@ -383,8 +383,8 @@ class GitDiffCheck:
 
         stripped = line.rstrip()
 
-        if self.force_crlf and eol != '\r\n':
-            self.added_line_error('Line ending (%s) is not CRLF' % repr(eol),
+        if self.force_lf and eol != '\n':
+            self.added_line_error('Line ending (%s) is not LF' % repr(eol),
                                   line)
         if '\t' in line:
             self.added_line_error('Tab character used', line)
