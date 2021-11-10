@@ -62,11 +62,11 @@ EFI_ACPI_3_0_MULTIPLE_APIC_DESCRIPTION_TABLE  Madt = {
 
     //
     // MADT specific fields
-    //  
+    //
     LOCAL_APIC_BASE_ADDRESS,               // **Local APIC Address
     EFI_ACPI_4_0_MULTIPLE_APIC_FLAGS       // **Flags
   },
-  
+
   //
   // Processor Local APIC Structure
   // Correct processor order, Primary threads first then Hyper threads
@@ -158,10 +158,10 @@ EFI_ACPI_3_0_MULTIPLE_APIC_DESCRIPTION_TABLE  Madt = {
     0x00000002, // Global System Interrupt - IRQ2
     0x0000,     // Flags - Conforms to specifications of the bus
     },
-  
+
   //
   // ISO (SCI Active High) Interrupt Source Override Structure
-  // 
+  //
     {
     EFI_ACPI_3_0_INTERRUPT_SOURCE_OVERRIDE, // Type  0x02
     sizeof (EFI_ACPI_3_0_INTERRUPT_SOURCE_OVERRIDE_STRUCTURE),  // Length
@@ -171,7 +171,7 @@ EFI_ACPI_3_0_MULTIPLE_APIC_DESCRIPTION_TABLE  Madt = {
     0x000F,     // Flags - Level-tiggered, Active Low
     }
   },
-  
+
   //
   // Non-Maskable Interrupt (NMIs) Source Structure: Sample
   //

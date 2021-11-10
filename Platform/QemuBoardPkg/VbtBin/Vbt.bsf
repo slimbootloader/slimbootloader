@@ -3052,7 +3052,7 @@ List    &GPIO_Pin_List
   Selection       0x00,       "N/A"
   Selection       0x01,       "Integrated HDMI-B DDC GPIO Pins"
   Selection       0x02,       "Integrated HDMI-C DDC GPIO Pins"
-EndList    
+EndList
 
 List    &GMBus_Speed_List
   Selection       0x01,       "50 KHz"
@@ -3248,7 +3248,7 @@ List    &Colour_Format_Video_Mode_List
   Selection       0x2,        "RGB666"
   Selection       0x3,        "RGB 666(Loosely Packed Format)"
   Selection       0x4,        "RGB888"
-EndList  
+EndList
 
 List    &Panel_Rotation_List
   Selection       0x0,        "0 degree"
@@ -3655,7 +3655,7 @@ Page      "Windows Graphics driver Configuration"
 
     Combo     $BIA_Aggress_Level, "\t\tDPST Aggressiveness Level (Mobile only)", &Pwr_Pref_List,
     Help      "This feature defines the Intel® Display Power Saving Technology aggressiveness level if and only if "
-              "the feature Intel® Display Power Saving Technology is enabled."   
+              "the feature Intel® Display Power Saving Technology is enabled."
               "\r\n\r\nThe following are the definitions for each level:"
               "\r\n1 - Maximum Quality - shall use no DPST "
               "\r\n2 - Provides  the user the maximum brightness for their embedded Local Flat Panel (LFP)while DPST is in use"
@@ -9956,7 +9956,7 @@ Page      "Integrated Display Configuration"
 
         Combo     $Int_EFP1_OnBoard_Voltage_swing, "\tVoltage Swing Level:", &DP_eDP_Link_VSwing_List,
         Help      "This feature allows for the selection of voltage swing level for the OnBoard redriver DP link.\r\n"
-                  "Swing-0 (0.4 V)\n" 
+                  "Swing-0 (0.4 V)\n"
                   "Swing-1 (0.6 V)\n"
                   "Swing-2 (0.8 V)\n"
         ; "Swing-3 (1.2 V)"
@@ -9974,7 +9974,7 @@ Page      "Integrated Display Configuration"
 
         Combo     $Int_EFP1_Dock_Voltage_swing, "\tVoltage Swing Level:", &DP_eDP_Link_VSwing_List,
         Help      "This feature allows for the selection of voltage swing level for the Dock redriver DP link.\r\n"
-                  "Swing-0 (0.4 V)\n" 
+                  "Swing-0 (0.4 V)\n"
                   "Swing-1 (0.6 V)\n"
                   "Swing-2 (0.8 V)\n"
         ; "Swing-3 (1.2 V)"
@@ -10089,7 +10089,7 @@ Page      "Integrated Display Configuration"
 
         Combo     $Int_EFP2_OnBoard_Voltage_swing, "\tVoltage Swing Level:", &DP_eDP_Link_VSwing_List,
         Help      "This feature allows for the selection of voltage swing level for the OnBoard redriver DP link.\n"
-                  "Swing-0 (0.4 V)\n" 
+                  "Swing-0 (0.4 V)\n"
                   "Swing-1 (0.6 V)\n"
                   "Swing-2 (0.8 V)\n"
         ; "Swing-3 (1.2 V)"
@@ -10107,7 +10107,7 @@ Page      "Integrated Display Configuration"
 
         Combo     $Int_EFP2_Dock_Voltage_swing, "\tVoltage Swing Level:", &DP_eDP_Link_VSwing_List,
         Help      "This feature allows for the selection of voltage swing level for the Dock redriver DP link."
-                  "Swing-0 (0.4 V)\n" 
+                  "Swing-0 (0.4 V)\n"
                   "Swing-1 (0.6 V)\n"
                   "Swing-2 (0.8 V)\n"
         ; "Swing-3 (1.2 V)"
