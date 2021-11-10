@@ -36,6 +36,11 @@ typedef union {
 #define MKHI_MCA_GROUP_ID     0x0A
 #define MKHI_GEN_GROUP_ID     0xFF
 
+///
+/// Defines for FWCAPS_GROUP Command
+///
+#define FWCAPS_GET_RULE_CMD               0x02
+
 #define IAFW_DNX_REQ_CLEAR    0x02
 
 ///
@@ -209,8 +214,12 @@ typedef struct {
   UINT32        RuleID;
   UINT8         RuleDataLen;
   MEFWCAPS_SKU  FWCap;
-  UINT8         Reseved[3];
 } GET_FW_CAPS_SKU_ACK_DATA;
+
+typedef struct {
+  MKHI_MESSAGE_HEADER       MKHIHeader;
+  GET_FW_CAPS_SKU_ACK_DATA  Data;
+} GET_FW_CAPS_SKU_ACK;
 
 ///
 /// Get/Set Local FW Update
@@ -459,7 +468,6 @@ typedef union {
   ARB_SVN_GET_INFO       Request;
   ARB_SVN_GET_INFO_ACK   Response;
 } ARB_SVN_GET_INFO_BUFFER;
-
 
 ///
 /// OEM Key Revocation

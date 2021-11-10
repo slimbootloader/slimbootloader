@@ -1468,8 +1468,8 @@ HeciGetFwCapsSkuMsg (
   // Allocate MsgGenGetFwVersion data structure
   //
   MsgGenGetFwCapsSku->MkhiHeader.Data               = 0;
-  MsgGenGetFwCapsSku->MkhiHeader.Fields.GroupId     = 0x03;
-  MsgGenGetFwCapsSku->MkhiHeader.Fields.Command     = 0x02;
+  MsgGenGetFwCapsSku->MkhiHeader.Fields.GroupId     = MKHI_FWCAPS_GROUP_ID;
+  MsgGenGetFwCapsSku->MkhiHeader.Fields.Command     = FWCAPS_GET_RULE_CMD;
   MsgGenGetFwCapsSku->MkhiHeader.Fields.IsResponse  = 0x0;
   MsgGenGetFwCapsSku->Data.RuleId                   = 0x0;
   Length = sizeof (GET_FW_CAPSKU);
@@ -1488,28 +1488,24 @@ HeciGetFwCapsSkuMsg (
       BIOS_FIXED_HOST_ADDR,
       0x7
       );
+  if (!EFI_ERROR (Status)) {
+    Length = sizeof (GET_FW_CAPS_SKU_ACK);
+    Status = HeciReceive (
+        HECI1_DEVICE,
+        BLOCKING,
+        (UINT32 *)MsgGenGetFwCapsSkuAck,
+        &Length
+        );
+  }
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "FWCAPS:Send Error from Heci=%d \n", Status));
+    DEBUG ((DEBUG_INFO, "FWCAPS: Received Error from Heci: %r\n", Status));
     return Status;
   }
 
-  DEBUG ((DEBUG_INFO, "FWCAPS: EHL Though HECI\n"));
-  Length = sizeof (GET_FW_CAPS_SKU_ACK_DATA);
-  Status = HeciReceive (
-      HECI1_DEVICE,
-      BLOCKING,
-      (UINT32 *)MsgGenGetFwCapsSkuAck,
-      &Length
-      );
-
-
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "FWCAPS: Received Error from Heci=%d \n", Status));
-    return Status;
-  }
   return EFI_SUCCESS;
 }
+
 
 /**
   Check for Spi Protection Mode

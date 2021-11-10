@@ -118,7 +118,7 @@ GetSecCapability (
 {
   EFI_STATUS                 Status;
   GET_FW_CAPSKU              MsgGenGetFwCapsSku;
-  GET_FW_CAPS_SKU_ACK_DATA   MsgGenGetFwCapsSkuAck;
+  GET_FW_CAPS_SKU_ACK        MsgGenGetFwCapsSkuAck;
 
   if(SecCapability == NULL) {
     DEBUG ((DEBUG_ERROR, "GetSecCapability Failed Status=0x%x\n",EFI_INVALID_PARAMETER));
@@ -129,7 +129,7 @@ GetSecCapability (
   if (EFI_ERROR(Status)) {
     return Status;
   }
-  *SecCapability = MsgGenGetFwCapsSkuAck.FWCap.Data;
+  *SecCapability = MsgGenGetFwCapsSkuAck.Data.FWCap.Data;
   return EFI_SUCCESS;
 }
 

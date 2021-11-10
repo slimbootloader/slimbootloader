@@ -367,12 +367,23 @@ class GitDiffCheck:
         '.patch',
         '.pem',
         '.makefile',
-        '.lib'
+        '.lib',
+        '.txt',
+        '.ini',
+        '.app',
+        '.common',
+        '.template',
+        '.rule',
+        'Makefile',
+        'GNUmakefile',
         )
+
 
     def check_added_line(self, line):
         f_name, f_ext = os.path.splitext(self.filename)
         if f_ext in self.skip_check_file_types:
+            return
+        if f_ext == '' and (os.path.basename(f_name) in self.skip_check_file_types):
             return
 
         eol = ''
@@ -388,6 +399,7 @@ class GitDiffCheck:
                                   line)
         if '\t' in line:
             self.added_line_error('Tab character used', line)
+
         if len(stripped) < len(line):
             self.added_line_error('Trailing whitespace found', line)
 
