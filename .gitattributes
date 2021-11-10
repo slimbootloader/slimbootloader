@@ -1,0 +1,19 @@
+# When this file is changed run
+#  git add --renormalize .
+# to determine whether any files need more work.
+
+# Most files in the repository are plain text. We want them to have
+# native line endings (CRLF on Windows, LF on Linux & MacOS)
+* text=auto
+
+# These files are always binary, so we don't need to rely on Git to
+# guess.
+*.dat binary
+*.bin binary
+*.bmp binary
+*.jpg binary
+
+# This file currently always needs to keep a mixture of line endings
+# since the files that are being patched have a mixture of line
+# endings. This means it must be treated as binary.
+Silicon/QemuSocPkg/FspBin/Patches/0001-Build-QEMU-FSP-2.0-binaries.patch binary
