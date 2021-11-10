@@ -808,11 +808,10 @@ FindBootPartitions (
   EFI_STATUS                Status;
   UINT8                     HwPart;
 
-  DEBUG ((DEBUG_INFO, "Try to find boot partition\n"));
-
   ASSERT (OsBootOption != NULL);
 
   HwPart = OsBootOption->HwPart;
+  DEBUG ((DEBUG_INFO, "Try to find boot partition for HW part %d\n", HwPart));
 
   Status = FindPartitions (HwPart, HwPartHandle);
   if (EFI_ERROR (Status)) {
@@ -1087,10 +1086,16 @@ BootOsImage (
   IN  OS_BOOT_OPTION         *OsBootOption
   )
 {
-  EFI_STATUS        Status;
-  EFI_HANDLE        HwPartHandle;
-  EFI_HANDLE        FsHandle;
-  EFI_HANDLE        LoadedImageHandle;
+  EFI_STATUS           Status;
+  EFI_HANDLE           HwPartHandle;
+  EFI_HANDLE           FsHandle;
+  EFI_HANDLE           LoadedImageHandle;
+  DEVICE_BLOCK_INFO    DevBlkInfo;
+  UINT8                OldHwPart;
+  UINT8                HwPart;
+  UINT8                StartPart;
+  UINT8                EndPart;
+  OS_BOOT_MEDIUM_TYPE  MediaType;
 
   HwPartHandle      = NULL;
   FsHandle          = NULL;
@@ -1106,33 +1111,94 @@ BootOsImage (
     goto Exit;
   }
 
-  //
-  // Find Boot Partition
-  //
-  Status = FindBootPartitions (OsBootOption, &HwPartHandle);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "Failed to Find Boot Partitions - HwPart %d\n", OsBootOption->HwPart));
-    goto Exit;
-  }
 
   //
-  // Init File System
+  // For USB devices, try to boot from each of them until a success or
+  // reaching the end of the list. This is because it is hard to have fixed
+  // order on the USB devices if multiple devices exist in system.
   //
-  Status = InitBootFileSystem (OsBootOption, HwPartHandle, &FsHandle);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "Failed to Initialize Boot File System - SwPart %d\n", OsBootOption->SwPart));
-    goto Exit;
+  MediaType = MediaGetInterfaceType ();
+  OldHwPart = OsBootOption->HwPart;
+  if ((MediaType == OsBootDeviceUsb) && (OldHwPart == 0xFF)) {
+    StartPart = 0;
+    EndPart   = 0x10;
+  } else {
+    StartPart = OldHwPart;
+    EndPart   = OldHwPart;
   }
 
-  //
-  // Load Boot Image
-  //
-  Status = LoadBootImages (OsBootOption, HwPartHandle, FsHandle, &LoadedImageHandle);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "Failed to Load Boot Image\n"));
-    goto Exit;
+  for (HwPart = StartPart; HwPart <= EndPart; HwPart++) {
+
+    OsBootOption->HwPart = HwPart;
+
+    //
+    // Check if it is a valid HW part using MediaGetMediaInfo
+    //
+    Status = MediaGetMediaInfo (HwPart, &DevBlkInfo);
+    if (EFI_ERROR (Status)) {
+      break;
+    }
+
+    DEBUG ((DEBUG_INFO, "Try HwPart %d\n", HwPart));
+
+    //
+    // Find Boot Partition
+    //
+    Status = FindBootPartitions (OsBootOption, &HwPartHandle);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_INFO, "Failed to Find Boot Partitions - HwPart %d\n", OsBootOption->HwPart));
+    }
+
+    //
+    // Init File System
+    //
+    if (!EFI_ERROR (Status)) {
+      Status = InitBootFileSystem (OsBootOption, HwPartHandle, &FsHandle);
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_INFO, "Failed to Initialize Boot File System - SwPart %d\n", OsBootOption->SwPart));
+      }
+    }
+
+    //
+    // Load Boot Image
+    //
+    if (!EFI_ERROR (Status)) {
+      Status = LoadBootImages (OsBootOption, HwPartHandle, FsHandle, &LoadedImageHandle);
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_INFO, "Failed to Load Boot Image\n"));
+      }
+    }
+
+    //
+    // Error handling
+    //
+    if (EFI_ERROR (Status)) {
+      if (LoadedImageHandle != NULL) {
+        UnloadBootImages (LoadedImageHandle, FALSE);
+        LoadedImageHandle = NULL;
+      }
+
+      if (FsHandle != NULL) {
+        CloseFileSystem (FsHandle);
+        FsHandle = NULL;
+      }
+
+      if (HwPartHandle != NULL) {
+        ClosePartitions (HwPartHandle);
+        HwPartHandle = NULL;
+      }
+    } else {
+      break;
+    }
+
   }
+
   AddMeasurePoint (0x4070);
+  OsBootOption->HwPart = OldHwPart;
+
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
 
   //
   // Parse Boot Image
