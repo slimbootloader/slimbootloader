@@ -140,7 +140,7 @@ class Board(BaseBoard):
         self.PAYLOAD_LOAD_HIGH    = 1
         self.PAYLOAD_EXE_BASE     = 0x00B00000
         self.PAYLOAD_SIZE         = 0x00020000
-        self.EPAYLOAD_SIZE        = 0x00160000
+        self.EPAYLOAD_SIZE        = 0x00162000
         self.UCODE_SIZE           = 0x00010000 if self.HAVE_FSP_BIN != 0 else 0
         self.MRCDATA_SIZE         = 0x00008000
         self.CFGDATA_SIZE         = 0x00004000
