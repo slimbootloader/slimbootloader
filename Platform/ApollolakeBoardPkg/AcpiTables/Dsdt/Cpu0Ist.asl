@@ -41,7 +41,7 @@
       // by the initialization code.)
       //
       Return(Package()        // SMM Mode
-      {                
+      {
         ResourceTemplate(){Register(FfixedHW, 0, 0, 0)},
         ResourceTemplate(){Register(FfixedHW, 0, 0, 0)}
       })

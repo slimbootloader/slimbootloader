@@ -72,13 +72,13 @@ EFI_ACPI_5_0_FIXED_ACPI_DESCRIPTION_TABLE FACP = {
   0,                // XDsdt
   //
   // X_PM1a Event Register Block
-  //  
+  //
   {EFI_ACPI_5_0_SYSTEM_IO,
   0x20,
   0x00,
   EFI_ACPI_3_0_DWORD,
   PM1a_EVT_BLK},
-  
+
   //
   // X_PM1b Event Register Block
   //

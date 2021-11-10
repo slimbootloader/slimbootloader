@@ -62,7 +62,7 @@ static void MtSync_StopWriting(CMtSync *p)
     p->csWasEntered = False;
   }
   Semaphore_Release1(&p->freeSemaphore);
- 
+
   Event_Wait(&p->wasStopped);
 
   while (myNumBlocks++ != p->numProcessedBlocks)
@@ -112,12 +112,12 @@ static SRes MtSync_Create2(CMtSync *p, THREAD_FUNC_TYPE startAddress, void *obj,
   RINOK_THREAD(AutoResetEvent_CreateNotSignaled(&p->canStart));
   RINOK_THREAD(AutoResetEvent_CreateNotSignaled(&p->wasStarted));
   RINOK_THREAD(AutoResetEvent_CreateNotSignaled(&p->wasStopped));
-  
+
   RINOK_THREAD(Semaphore_Create(&p->freeSemaphore, numBlocks, numBlocks));
   RINOK_THREAD(Semaphore_Create(&p->filledSemaphore, 0, numBlocks));
 
   p->needStart = True;
-  
+
   RINOK_THREAD(Thread_Create(&p->thread, startAddress, obj));
   p->wasCreated = True;
   return SZ_OK;
@@ -320,9 +320,9 @@ static void BtGetMatches(CMatchFinderMt *p, UInt32 *distances)
   UInt32 numProcessed = 0;
   UInt32 curPos = 2;
   UInt32 limit = kMtBtBlockSize - (p->matchMaxLen * 2);
-  
+
   distances[1] = p->hashNumAvail;
-  
+
   while (curPos < limit)
   {
     if (p->hashBufPos == p->hashBufPosLimit)
@@ -352,7 +352,7 @@ static void BtGetMatches(CMatchFinderMt *p, UInt32 *distances)
         if (size2 < size)
           size = size2;
       }
-      
+
       #ifndef MFMT_GM_INLINE
       while (curPos < limit && size-- != 0)
       {
@@ -386,7 +386,7 @@ static void BtGetMatches(CMatchFinderMt *p, UInt32 *distances)
       p->cyclicBufferPos = cyclicBufferPos;
     }
   }
-  
+
   distances[0] = curPos;
 }
 
@@ -398,7 +398,7 @@ static void BtFillBlock(CMatchFinderMt *p, UInt32 globalBlockIndex)
     CriticalSection_Enter(&sync->cs);
     sync->csWasEntered = True;
   }
-  
+
   BtGetMatches(p, p->btBuf + (globalBlockIndex & kMtBtNumBlocksMask) * kMtBtBlockSize);
 
   if (p->pos > kMtMaxValForNormalize - kMtBtBlockSize)
@@ -504,7 +504,7 @@ SRes MatchFinderMt_Create(CMatchFinderMt *p, UInt32 historySize, UInt32 keepAddB
 static void MatchFinderMt_Init(CMatchFinderMt *p)
 {
   CMatchFinder *mf = p->MatchFinder;
-  
+
   p->btBufPos =
   p->btBufPosLimit = 0;
   p->hashBufPos =
@@ -513,7 +513,7 @@ static void MatchFinderMt_Init(CMatchFinderMt *p)
   /* Init without data reading. We don't want to read data in this thread */
   MatchFinder_Init_3(mf, False);
   MatchFinder_Init_LowHash(mf);
-  
+
   p->pointerToCurPos = Inline_MatchFinder_GetPointerToCurrentPos(mf);
   p->btNumAvailBytes = 0;
   p->lzPos = p->historySize + 1;
@@ -577,7 +577,7 @@ static UInt32 * MixMatches2(CMatchFinderMt *p, UInt32 matchMinPos, UInt32 *dista
   const Byte *cur = p->pointerToCurPos;
   UInt32 lzPos = p->lzPos;
   MT_HASH2_CALC
-      
+
   curMatch2 = hash[h2];
   hash[h2] = lzPos;
 
@@ -587,7 +587,7 @@ static UInt32 * MixMatches2(CMatchFinderMt *p, UInt32 matchMinPos, UInt32 *dista
       *distances++ = 2;
       *distances++ = lzPos - curMatch2 - 1;
     }
-  
+
   return distances;
 }
 
@@ -601,7 +601,7 @@ static UInt32 * MixMatches3(CMatchFinderMt *p, UInt32 matchMinPos, UInt32 *dista
 
   curMatch2 = hash[                h2];
   curMatch3 = (hash + kFix3HashSize)[h3];
-  
+
   hash[                h2] = lzPos;
   (hash + kFix3HashSize)[h3] = lzPos;
 
@@ -616,13 +616,13 @@ static UInt32 * MixMatches3(CMatchFinderMt *p, UInt32 matchMinPos, UInt32 *dista
     distances[0] = 2;
     distances += 2;
   }
-  
+
   if (curMatch3 >= matchMinPos && cur[(ptrdiff_t)curMatch3 - lzPos] == cur[0])
   {
     *distances++ = 3;
     *distances++ = lzPos - curMatch3 - 1;
   }
-  
+
   return distances;
 }
 
@@ -634,11 +634,11 @@ static UInt32 *MixMatches4(CMatchFinderMt *p, UInt32 matchMinPos, UInt32 *distan
   const Byte *cur = p->pointerToCurPos;
   UInt32 lzPos = p->lzPos;
   MT_HASH4_CALC
-      
+
   curMatch2 = hash[                h2];
   curMatch3 = (hash + kFix3HashSize)[h3];
   curMatch4 = (hash + kFix4HashSize)[h4];
-  
+
   hash[                h2] = lzPos;
   (hash + kFix3HashSize)[h3] = lzPos;
   (hash + kFix4HashSize)[h4] = lzPos;
@@ -654,7 +654,7 @@ static UInt32 *MixMatches4(CMatchFinderMt *p, UInt32 matchMinPos, UInt32 *distan
     distances[0] = 2;
     distances += 2;
   }
-  
+
   if (curMatch3 >= matchMinPos && cur[(ptrdiff_t)curMatch3 - lzPos] == cur[0])
   {
     distances[1] = lzPos - curMatch3 - 1;
@@ -676,7 +676,7 @@ static UInt32 *MixMatches4(CMatchFinderMt *p, UInt32 matchMinPos, UInt32 *distan
       *distances++ = 4;
       *distances++ = lzPos - curMatch4 - 1;
     }
-  
+
   return distances;
 }
 */
@@ -789,7 +789,7 @@ void MatchFinderMt_CreateVTable(CMatchFinderMt *p, IMatchFinder *vTable)
   vTable->GetNumAvailableBytes = (Mf_GetNumAvailableBytes_Func)MatchFinderMt_GetNumAvailableBytes;
   vTable->GetPointerToCurrentPos = (Mf_GetPointerToCurrentPos_Func)MatchFinderMt_GetPointerToCurrentPos;
   vTable->GetMatches = (Mf_GetMatches_Func)MatchFinderMt_GetMatches;
-  
+
   switch (p->MatchFinder->numHashBytes)
   {
     case 2:

@@ -23,7 +23,7 @@ DefinitionBlock (
   External(\_PR.CPU3, DeviceObj)
   External(\_PR.CPU0._PPC, IntObj)
 #endif
- 
+
 Scope(\)
 {
 
