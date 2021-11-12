@@ -1,0 +1,61 @@
+## @file
+#
+#  Slim Bootloader Payload Selection CFGDATA File.
+#
+#  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+- $ACTION         :
+  page              : PLDSEL:GEN:"GPIO Payload Selection"
+- $ACTION         :
+  page              : PLDSEL
+- PLDSEL_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ PLDSEL_CFG_DATA, 0x011, 0, 0 ] }
+  - PldSelGpio      :
+    - $STRUCT         :
+      name            : GPIO pin for switching payload
+      struct          : PAYLOAD_SEL_GPIO_PIN
+      help            : >
+                        Specify GPIO PIN number to read and switch payloads
+      length          : 0x04
+    - PadGroup        :
+      name            : Pad Group
+      type            : Combo
+      option          : !include CfgData_GpioPadGroups.yaml
+      help            : >
+                        Specify GPIO Pad Group
+      condition       : $(COND_PLD_SEL_EN)
+      length          : 8bD
+      value           : 0
+    - PinNumber       :
+      name            : Pin Number
+      type            : EditNum, DEC, (0,23)
+      help            : >
+                        Specify GPIO Pin Number (0-23) on the selected Group
+      condition       : $(COND_PLD_SEL_EN)
+      length          : 8bD
+      value           : 0
+    - Enable          :
+      name            : Enable GPIO Payload Selection when PayloadId is 'AUTO'
+      type            : Combo
+      option          : $EN_DIS
+      help            : >
+                        Enable GPIO Payload Selection when PayloadId is 'AUTO'
+      length          : 1bD
+      value           : 0
+    - PinPolarity     :
+      name            : Pin Polarity
+      type            : Combo
+      option          : 0:Active High, 1:Active Low
+      help            : >
+                        GPIO Pin Polarity to trigger Payload switching
+      condition       : $(COND_PLD_SEL_EN)
+      length          : 1bD
+      value           : 0
+    - Rsvd1           :
+      name            : Reserved
+      type            : Reserved
+      length          : 14bD
+      value           : 0
