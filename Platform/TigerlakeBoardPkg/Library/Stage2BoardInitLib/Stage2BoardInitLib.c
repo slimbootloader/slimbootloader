@@ -713,7 +713,7 @@ UpdatePayloadId (
   UINT32             PayloadSelGpioData;
   UINT32             PayloadSelGpioPad;
   GEN_CFG_DATA      *GenCfgData;
-  PLATFORM_CFG_DATA *PlatCfgData;
+  PLDSEL_CFG_DATA   *PldSelCfgData;
 
   GenCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);
   if (GenCfgData == NULL) {
@@ -724,9 +724,9 @@ UpdatePayloadId (
     return;
   }
 
-  PlatCfgData = (PLATFORM_CFG_DATA *)FindConfigDataByTag (CDATA_PLATFORM_TAG);
-  if ((PlatCfgData != NULL) && (PlatCfgData->PayloadSelGpio.Enable != 0)) {
-    PayloadSelGpioPad = GpioGroupPinToPad (PlatCfgData->PayloadSelGpio.PinGroup,  PlatCfgData->PayloadSelGpio.PinNumber);
+  PldSelCfgData = (PLDSEL_CFG_DATA *)FindConfigDataByTag (CDATA_PLDSEL_TAG);
+  if ((PldSelCfgData != NULL) && (PldSelCfgData->PldSelGpio.Enable != 0)) {
+    PayloadSelGpioPad = GpioGroupPinToPad (PldSelCfgData->PldSelGpio.PadGroup,  PldSelCfgData->PldSelGpio.PinNumber);
     if (PayloadSelGpioPad == 0) {
       Status = EFI_ABORTED;
     } else {
@@ -735,12 +735,12 @@ UpdatePayloadId (
     }
 
     if (!EFI_ERROR (Status)) {
-      if (PayloadSelGpioData == 1) {
-        SetPayloadId (0);
-        DEBUG ((DEBUG_INFO, "Update PayloadId to OS Loader\n"));
-      } else {
+      if (PayloadSelGpioData != PldSelCfgData->PldSelGpio.PinPolarity) {
         SetPayloadId (UEFI_PAYLOAD_ID_SIGNATURE);
         DEBUG ((DEBUG_INFO, "Update PayloadId to UEFI\n"));
+      } else {
+        SetPayloadId (0);
+        DEBUG ((DEBUG_INFO, "Update PayloadId to OS Loader\n"));
       }
     } else {
       DEBUG ((DEBUG_ERROR, "Invalid GPIO pin for Payload Select\n"));

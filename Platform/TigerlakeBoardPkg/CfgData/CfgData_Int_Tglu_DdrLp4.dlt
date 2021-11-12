@@ -28,9 +28,9 @@ MEMORY_CFG_DATA.SpdDataSel130                               | 1
 SILICON_CFG_DATA.PortUsb20Enable.Usb2Port1                  | 0
 
 # PCH LP :  GPIO_VER2_LP_GPP_B15
-PLATFORM_CFG_DATA.PayloadSelGpio.Enable                     | 1
-PLATFORM_CFG_DATA.PayloadSelGpio.PinGroup                   | 1
-PLATFORM_CFG_DATA.PayloadSelGpio.PinNumber                  | 15
+PLDSEL_CFG_DATA.PldSelGpio.Enable                           | 1
+PLDSEL_CFG_DATA.PldSelGpio.PadGroup                         | 1
+PLDSEL_CFG_DATA.PldSelGpio.PinNumber                        | 15
 
 #
 # By default use Osloader Payload, set to "UEFI" to select UEFI payload.
