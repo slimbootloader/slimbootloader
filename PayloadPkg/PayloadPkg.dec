@@ -43,3 +43,6 @@
   gPayloadTokenSpaceGuid.PcdGrubBootCfgEnabled   | FALSE    | BOOLEAN | 0x2001000
   gPayloadTokenSpaceGuid.PcdCsmeUpdateEnabled    | FALSE    | BOOLEAN | 0x2001002
   gPayloadTokenSpaceGuid.PcdPayloadModuleEnabled | FALSE    | BOOLEAN | 0x2001003
+
+[PcdsFixedAtBuild]
+  gPayloadTokenSpaceGuid.PcdRtcmRsvdSize      | 0x00000000 | UINT32 | 0x30001000

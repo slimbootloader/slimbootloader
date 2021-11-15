@@ -8,7 +8,7 @@
 #include "OsLoader.h"
 
 #define  RTCM_HEAP_SIZE       0x10000
-#define  RTCM_RSVD_SIZE       0xFF000
+#define  RTCM_RSVD_SIZE       FixedPcdGet32 (PcdRtcmRsvdSize)
 #define  MOD_DEF_HEAP_SIZE    0x10000
 #define  MOD_DEF_RSVD_SIZE    0x04000
 

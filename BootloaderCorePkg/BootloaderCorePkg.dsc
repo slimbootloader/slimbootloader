@@ -252,6 +252,8 @@
   gPlatformCommonLibTokenSpaceGuid.PcdCompSignHashAlg             | $(SIGN_HASH_TYPE)
   gPlatformModuleTokenSpaceGuid.PcdFastBootEnabled                | $(ENABLE_FAST_BOOT)
 
+  gPayloadTokenSpaceGuid.PcdRtcmRsvdSize                        | $(RTCM_RSVD_SIZE)
+
 
 [PcdsPatchableInModule]
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel   | 0x8000004F

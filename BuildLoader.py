@@ -260,6 +260,8 @@ class BaseBoard(object):
         self.KEYH_SVN              = 0
         self.CFGDATA_SVN           = 0
 
+        self.RTCM_RSVD_SIZE        = 0xFF000
+
         for key, value in list(kwargs.items()):
             setattr(self, '%s' % key, value)
 

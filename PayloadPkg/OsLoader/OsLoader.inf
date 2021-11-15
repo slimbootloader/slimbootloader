@@ -110,6 +110,7 @@
   gPayloadTokenSpaceGuid.PcdGrubBootCfgEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdContainerBootEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootHashMask
+  gPayloadTokenSpaceGuid.PcdRtcmRsvdSize
 
 [Depex]
   TRUE
