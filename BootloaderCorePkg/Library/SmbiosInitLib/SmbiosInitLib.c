@@ -15,13 +15,25 @@
 #include <Library/SmbiosInitLib.h>
 #include <Library/PcdLib.h>
 #include <Library/BootloaderCommonLib.h>
-#include <Library/FspSupportLib.h>
+#include <Library/TimeStampLib.h>
+#include <Library/MpInitLib.h>
 #include "SmbiosTables.h"
 
-#define SMBIOS_STRING_UNKNOWN              "Unknown"
-#define SMBIOS_STRING_UNKNOWN_VERSION      "XXXX.XXX.XXX.XXX"
-#define SMBIOS_STRING_VENDOR               "Intel Corporation"
-#define SMBIOS_STRING_PLATFORM             "Intel Platform"
+
+GLOBAL_REMOVE_IF_UNREFERENCED PROCESSOR_FAMILY_FIELD mProcessorFamilyField[] = {
+  { "Core(TM) i9",  ProcessorFamilyIntelCoreI9 },
+  { "Core(TM) i7",  ProcessorFamilyIntelCoreI7 },
+  { "Core(TM) i5",  ProcessorFamilyIntelCoreI5 },
+  { "Core(TM) i3",  ProcessorFamilyIntelCoreI3 },
+  { "Core(TM) m3",  ProcessorFamilyIntelCorem3 },
+  { "Core(TM) m5",  ProcessorFamilyIntelCorem5 },
+  { "Core(TM) m7",  ProcessorFamilyIntelCorem7 },
+  { "Core(TM) M",   ProcessorFamilyIntelCoreM },
+  { "Pentium(R)",   ProcessorFamilyPentium },
+  { "Celeron(R)",   ProcessorFamilyCeleron },
+  { "Atom(TM)",     ProcessorFamilyIntelAtom },
+  { "Xeon(R)",      ProcessorFamilyIntelXeon },
+};
 
 //
 // Add more platform specific strings
@@ -240,7 +252,7 @@ CalculateNumStrInType (
   @param[in]  StringId  String Num
 
   @retval               CHAR8 * to the string, if found
-                        "Unknown"            , otherwise
+                        SMBIOS_STRING_UNKNOWN            , otherwise
 
 **/
 CHAR8 *
@@ -252,32 +264,53 @@ GetSmbiosString (
   SMBIOS_TYPE_STRINGS       *SmbiosStrings;
   UINT16                    SmbiosStringsCnt;
   UINT16                    Index;
+  UINTN                     Loop;
+  UINTN                     LoopCnt;
+  CHAR8                     *String;
 
   SmbiosStrings     = (SMBIOS_TYPE_STRINGS *)(UINTN)PcdGet32 (PcdSmbiosStringsPtr);
   SmbiosStringsCnt  = PcdGet16 (PcdSmbiosStringsCnt);
-
   if ((SmbiosStrings == NULL) || (SmbiosStringsCnt == 0)) {
     //
     // Even if platform doesnt provide the strings,
     // Stage2 has init the Pcd with the default strings array.
     // It is likely impossible to reach here! But added to be safe.
     //
-    return "Unknown";
+    return SMBIOS_STRING_UNKNOWN;
   }
 
-  for (Index = 0; Index < SmbiosStringsCnt; Index++) {
-    if (SmbiosStrings[Index].Type == SMBIOS_TYPE_END_OF_TABLE) {
-      return "Unknown";
+  // Try to find in platform string table first,
+  // then try to find in default string table
+  String  = NULL;
+  LoopCnt = (SmbiosStrings == mDefaultSmbiosStrings) ? 1 : 2;
+  for (Loop = 0; Loop < LoopCnt; Loop++) {
+    if (Loop == 1) {
+      SmbiosStrings    = (SMBIOS_TYPE_STRINGS *)mDefaultSmbiosStrings;
+      SmbiosStringsCnt = ARRAY_SIZE (mDefaultSmbiosStrings);
     }
-    if (Type == SmbiosStrings[Index].Type && StringId == SmbiosStrings[Index].Idx) {
-      if (SmbiosStrings[Index].String != NULL && AsciiStrLen (SmbiosStrings[Index].String) != 0) {
-        return SmbiosStrings[Index].String;
+
+    for (Index = 0; Index < SmbiosStringsCnt; Index++) {
+      if (SmbiosStrings[Index].Type == SMBIOS_TYPE_END_OF_TABLE) {
+        break;
       }
+      if (Type == SmbiosStrings[Index].Type && StringId == SmbiosStrings[Index].Idx) {
+        if (SmbiosStrings[Index].String != NULL && AsciiStrLen (SmbiosStrings[Index].String) != 0) {
+          String = SmbiosStrings[Index].String;
+        }
+        break;
+      }
+    }
+
+    if (String != NULL) {
       break;
     }
   }
 
-  return "Unknown";
+  if (String == NULL) {
+    String = SMBIOS_STRING_UNKNOWN;
+  }
+
+  return String;
 }
 
 /**
@@ -353,7 +386,7 @@ AddSmbiosString (
   // Add 'Unknown' if empty string
   //
   if (*String == '\0') {
-    String = "Unknown";
+    String = SMBIOS_STRING_UNKNOWN;
   }
 
   StringPtr = (CHAR8 *) ((UINT8 *) TypeHdr + TypeHdr->Length);
@@ -520,6 +553,146 @@ InitSmbiosStringPtr (
 }
 
 /**
+  This function builds required processor info SMBIOS type.
+**/
+EFI_STATUS
+BuildProcessorInfo (
+  VOID
+  )
+{
+  SMBIOS_TABLE_TYPE4              SmbiosRecord;
+  UINT32                          Eax01;
+  UINT32                          Ebx01;
+  UINT32                          Ecx01;
+  UINT32                          Edx01;
+  PROCESSOR_ID_DATA               ProcessorId;
+  UINT32                          ProcessorVoltage;
+  UINTN                           NumberOfThreads;
+  UINTN                           NumberOfCores;
+  EFI_STATUS                      Status;
+  SYS_CPU_INFO                   *SysCpuInfo;
+  UINTN                           Idx;
+  UINTN                           BufIdx;
+  CHAR8                           CpuBrandBuf[64];
+  BOOLEAN                         HyperThreadEnable;
+  UINT16                          Family;
+  UINT16                          BclkFrequency;
+
+  for (Idx = 0, BufIdx = 0; Idx < 3; Idx++) {
+    AsmCpuid (
+              (UINT32)(CPUID_BRAND_STRING1 + Idx),
+              (UINT32 *)&CpuBrandBuf[BufIdx],
+              (UINT32 *)&CpuBrandBuf[BufIdx+4],
+              (UINT32 *)&CpuBrandBuf[BufIdx+8],
+              (UINT32 *)&CpuBrandBuf[BufIdx+12]
+             );
+    BufIdx += 16;
+  }
+  if (CpuBrandBuf[0] == 0) {
+    AsciiStrCpyS (CpuBrandBuf, sizeof(CpuBrandBuf), BRAND_STRING_UNSUPPORTED);
+  }
+  CpuBrandBuf[48] = 0;
+
+  Family = ProcessorFamilyIntelCoreM;
+  for (Idx = 0; Idx < ARRAY_SIZE(mProcessorFamilyField); Idx++) {
+    if (AsciiStrStr (CpuBrandBuf, mProcessorFamilyField[Idx].String) != NULL) {
+      Family = mProcessorFamilyField[Idx].Family;
+      break;
+    }
+  }
+
+  ZeroMem (&SmbiosRecord, sizeof(SmbiosRecord));
+  SmbiosRecord.Hdr.Type   = SMBIOS_TYPE_PROCESSOR_INFORMATION;
+  SmbiosRecord.Hdr.Length = sizeof (SMBIOS_TABLE_TYPE4);
+
+  // Fill string index
+  SmbiosRecord.Socket = SMBIOS_STRING_INDEX_1;
+  SmbiosRecord.ProcessorManufacture = SMBIOS_STRING_INDEX_2;
+  SmbiosRecord.ProcessorVersion = SMBIOS_STRING_INDEX_3;
+  SmbiosRecord.SerialNumber = SMBIOS_STRING_INDEX_4;
+  SmbiosRecord.AssetTag = SMBIOS_STRING_INDEX_5;
+  SmbiosRecord.PartNumber = SMBIOS_STRING_INDEX_6;
+
+  // Processor Type, Family, ID
+  BclkFrequency = 100;
+  SmbiosRecord.ProcessorType = EfiCentralProcessor;
+  SmbiosRecord.ProcessorFamily = (Family > 0xFD) ? 0xFE : (UINT8)Family;
+  SmbiosRecord.ExternalClock   = BclkFrequency;
+  ZeroMem (&ProcessorId, sizeof(ProcessorId));
+  AsmCpuid(CPUID_VERSION_INFO, &Eax01, &Ebx01, &Ecx01, &Edx01);
+  ProcessorId.Signature = *(PROCESSOR_SIGNATURE *)&Eax01;
+  ProcessorId.FeatureFlags = *(PROCESSOR_FEATURE_FLAGS *)&Edx01;
+  CopyMem (&SmbiosRecord.ProcessorId, &ProcessorId, sizeof(PROCESSOR_ID_DATA));
+
+  // Processor Voltage
+  ProcessorVoltage = (BIT7 | 9);
+  SmbiosRecord.Voltage = *((PROCESSOR_VOLTAGE *)&ProcessorVoltage);
+
+  // Status, assume all good
+  SmbiosRecord.Status = 0x41;
+
+  // Processor Upgrade
+  SmbiosRecord.ProcessorUpgrade = 0x08;
+
+  // Processor Family 2
+  SmbiosRecord.ProcessorFamily2 = Family;
+
+  // Processor speed in MHz
+  SmbiosRecord.CurrentSpeed = (UINT16) DivU64x32 (GetTimeStampFrequency () + 999, 1000);
+  SmbiosRecord.MaxSpeed = SmbiosRecord.CurrentSpeed;
+
+  HyperThreadEnable = FALSE;
+  SysCpuInfo = MpGetInfo ();
+  NumberOfThreads = SysCpuInfo->CpuCount;
+  for (Idx = 0; Idx < NumberOfThreads; Idx++) {
+    if ((SysCpuInfo->CpuInfo[Idx].ApicId & BIT0) != 0) {
+      HyperThreadEnable = TRUE;
+      break;
+    }
+  }
+  NumberOfCores = HyperThreadEnable ? NumberOfThreads >> 1 : NumberOfThreads;
+
+  SmbiosRecord.CoreCount  = (NumberOfCores > 255) ? 0xFF : (UINT8)NumberOfCores;
+  SmbiosRecord.CoreCount2 = (UINT16)NumberOfCores;
+  SmbiosRecord.EnabledCoreCount  = (NumberOfCores > 255) ? 0xFF : (UINT8)NumberOfCores;
+  SmbiosRecord.EnabledCoreCount2 = (UINT16)NumberOfCores;
+  SmbiosRecord.ThreadCount  = (NumberOfThreads > 255) ? 0xFF : (UINT8)NumberOfThreads;
+  SmbiosRecord.ThreadCount2 = (UINT16)NumberOfThreads;
+  // Unknown
+  SmbiosRecord.ProcessorCharacteristics = 0x2;
+
+  //
+  // Updating Cache Handle Information
+  //
+  SmbiosRecord.L1CacheHandle  = 0xFFFF;
+  SmbiosRecord.L2CacheHandle  = 0xFFFF;
+  SmbiosRecord.L3CacheHandle  = 0xFFFF;
+
+  // Add SMBIOS type
+  Status = AddSmbiosType (&SmbiosRecord);
+
+  //
+  // SMBIOS_TYPE_PROCESSOR_INFORMATION
+  // Socket
+  AddSmbiosString (SMBIOS_TYPE_PROCESSOR_INFORMATION, "Socket0");
+  // ProcessorManufacturer
+  AddSmbiosString (SMBIOS_TYPE_PROCESSOR_INFORMATION, "Intel");
+  // ProcessorVersion
+  AddSmbiosString (SMBIOS_TYPE_PROCESSOR_INFORMATION, CpuBrandBuf);
+  // SerialNumber
+  AddSmbiosString (SMBIOS_TYPE_PROCESSOR_INFORMATION,
+                  GetSmbiosString (SMBIOS_TYPE_PROCESSOR_INFORMATION, SMBIOS_STRING_INDEX_4));
+  // AssetTag
+  AddSmbiosString (SMBIOS_TYPE_PROCESSOR_INFORMATION,
+                  GetSmbiosString (SMBIOS_TYPE_PROCESSOR_INFORMATION, SMBIOS_STRING_INDEX_5));
+  // PartNumber
+  AddSmbiosString (SMBIOS_TYPE_PROCESSOR_INFORMATION,
+                  GetSmbiosString (SMBIOS_TYPE_PROCESSOR_INFORMATION, SMBIOS_STRING_INDEX_6));
+
+  return Status;
+}
+
+/**
   This function is called to initialize the SMBIOS tables.
 
   @retval       EFI_DEVICE_ERROR, if Smbios Entry is NULL
@@ -546,8 +719,8 @@ SmbiosInit (
 
   *((UINT32 *)&(SmbiosEntryPoint->AnchorString))              = SIGNATURE_32('_', 'S', 'M', '_');
   SmbiosEntryPoint->EntryPointLength                          = sizeof (SMBIOS_TABLE_ENTRY_POINT);
-  SmbiosEntryPoint->MajorVersion                              = 2;
-  SmbiosEntryPoint->MinorVersion                              = 7;
+  SmbiosEntryPoint->MajorVersion                              = 3;
+  SmbiosEntryPoint->MinorVersion                              = 3;
   SmbiosEntryPoint->MaxStructureSize                          = 0;
   *((UINT32 *)&(SmbiosEntryPoint->IntermediateAnchorString))  = SIGNATURE_32('_', 'D', 'M', 'I');
   SmbiosEntryPoint->IntermediateAnchorString[4]               = '_';
@@ -564,10 +737,14 @@ SmbiosInit (
   // Add common SMBIOS Types' information.
   // Types start at 16 byte boundary
   //
-  Status = AddSmbiosType (&mBiosInfo);
-  Status = AddSmbiosType (&mSystemInfo);
-  Status = AddSmbiosType (&mBaseBoardInfo);
-  Status = AddSmbiosType (&mMemArrayMappedAddr);
+  Status  = AddSmbiosType (&mBiosInfo);
+  Status |= AddSmbiosType (&mSystemInfo);
+  Status |= AddSmbiosType (&mBaseBoardInfo);
+  Status |= BuildProcessorInfo ();
+  Status |= AddSmbiosType (&mMemArrayMappedAddr);
+  if (Status != EFI_SUCCESS) {
+    Status = EFI_DEVICE_ERROR;
+  }
 
   return Status;
 }
