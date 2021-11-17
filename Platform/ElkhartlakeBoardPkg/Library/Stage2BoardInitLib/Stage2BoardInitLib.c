@@ -1523,13 +1523,24 @@ UpdateFspConfig (
     // PCH_TSN_CONFIG
     Fspscfg->PchTsnEnable         = SiCfgData->PchTsnEnable;
     Fspscfg->PchTsnGbeLinkSpeed   = SiCfgData->TsnLinkSpeed;
-    Fspscfg->PchTsnGbeSgmiiEnable    = 1;
+    Fspscfg->PchTsnGbeSgmiiEnable = (UINT8)SiCfgData->PchTsnGbeSgmiiEnable;
 
     // PSE_TSN_CONFIG
-    Fspscfg->PseTsnGbeSgmiiEnable[0] = 0;
-    Fspscfg->PseTsnGbeSgmiiEnable[1] = 0;
-    Fspscfg->PseTsnGbePhyInterfaceType[0]    = 1;
-    Fspscfg->PseTsnGbePhyInterfaceType[1]    = 1;
+    Fspscfg->PseTsnGbeSgmiiEnable[0]         = (UINT8)SiCfgData->PseTsnGbe0SgmiiEnable;
+    Fspscfg->PseTsnGbeSgmiiEnable[1]         = (UINT8)SiCfgData->PseTsnGbe1SgmiiEnable;
+    Fspscfg->PseTsnGbePhyInterfaceType[0]    = (UINT8)SiCfgData->PseTsnGbe0PhyInterfaceType;
+    Fspscfg->PseTsnGbePhyInterfaceType[1]    = (UINT8)SiCfgData->PseTsnGbe1PhyInterfaceType;
+    DEBUG ((DEBUG_VERBOSE, "------------------------------------------PCH and PSE TSN CONFIG----------------------------------------\n"));
+    DEBUG ((DEBUG_VERBOSE, "Fspscfg->TsnConfigBase: 0x%x\n",Fspscfg->TsnConfigBase));
+    DEBUG ((DEBUG_VERBOSE, "Fspscfg->TsnConfigSize: 0x%x\n",Fspscfg->TsnConfigSize));
+    DEBUG ((DEBUG_VERBOSE, "Fspscfg->PchTsnEnable: 0x%x\n",Fspscfg->PchTsnEnable));
+    DEBUG ((DEBUG_VERBOSE, "Fspscfg->PchTsnGbeLinkSpeed: 0x%x\n",Fspscfg->PchTsnGbeLinkSpeed));
+    DEBUG ((DEBUG_VERBOSE, "Fspscfg->PchTsnGbeSgmiiEnable: 0x%x\n",Fspscfg->PchTsnGbeSgmiiEnable));
+    DEBUG ((DEBUG_VERBOSE, "Fspscfg->PseTsnGbeSgmiiEnable[0]: 0x%x\n",Fspscfg->PseTsnGbeSgmiiEnable[0]));
+    DEBUG ((DEBUG_VERBOSE, "Fspscfg->PseTsnGbeSgmiiEnable[1]: 0x%x\n",Fspscfg->PseTsnGbeSgmiiEnable[1]));
+    DEBUG ((DEBUG_VERBOSE, "Fspscfg->PseTsnGbePhyInterfaceType[0]: 0x%x\n",Fspscfg->PseTsnGbePhyInterfaceType[0]));
+    DEBUG ((DEBUG_VERBOSE, "Fspscfg->PseTsnGbePhyInterfaceType[1]: 0x%x\n",Fspscfg->PseTsnGbePhyInterfaceType[1]));
+    DEBUG ((DEBUG_VERBOSE, "------------------------------------------------END-----------------------------------------------------\n"));
 
     // AMT_ME_CONFIG
     Fspscfg->AmtEnabled           = SiCfgData->AmtEnabled;
