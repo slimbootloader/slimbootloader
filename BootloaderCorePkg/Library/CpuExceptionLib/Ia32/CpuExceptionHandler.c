@@ -39,6 +39,8 @@ CommonExceptionHandler (
   }
 
   DEBUG ((DEBUG_ERROR, "Exception #%d from 0x%04X:0x%08X !!!\n", ExceptionType, Ptr[1], Ptr[0]));
+  DumpHex(0, Ptr[0] - 32, 64, (UINT8 *)(Ptr[0] - 32));
+
   CpuHalt (NULL);
 }
 
