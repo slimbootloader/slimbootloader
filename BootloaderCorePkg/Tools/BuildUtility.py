@@ -36,7 +36,7 @@ build_toolchains = {
     'python'    : '3.6.0',
     'nasm'      : '2.12.02',
     'iasl'      : '20160422',
-    'openssl'   : '1.1.0g',
+    'openssl'   : '1.0.2k',
     'git'       : '2.20.0',
     'vs'        : '2015',
     'gcc'       : '7.3',
