@@ -95,14 +95,20 @@ CheckStackRangeDone:
         bts     ebx, 0               ; Set BIT0 in Status
 
 CheckStatusDone:
+        ;
         ; Setup HOB
-        push    ebx                  ; Status
+        ; This structure has to match the layout of STAGE1A_ASM_PARAM
+        ;
+        push    $0                   ; Status[63:32]
+        push    ebx                  ; Status[31:0]
         push    edi                  ; TimeStamp[0] [63:32]
         push    esi                  ; TimeStamp[0] [31:0]
         push    edx                  ; CarTop
         push    ecx                  ; CarBase
+        push    $0                   ; Keep the stack 16-byte aligned
 
-        push    esp
+        lea     ecx, [esp + 4]
+        push    ecx
         call    ASM_PFX(SecStartup)  ; Jump to C code
         jmp     $
 

@@ -82,7 +82,10 @@ CheckStackRangeDone:
         bts     rbx, 0               ; Set BIT0 in Status
 
 CheckStatusDone:
+        ;
         ; Setup HOB
+        ; This structure has to match the layout of STAGE1A_ASM_PARAM
+        ;
         push    rbx                  ; Status
         push    rdi                  ; TimeStamp[0] [63:0]
         shl     rdx, 32              ; Move CarTop to high 32bit
