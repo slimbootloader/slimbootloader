@@ -360,7 +360,6 @@ Scope(\_SB) {
     Name(_HID, EISAID("PNP0A08")) // Indicates PCI Express/PCI-X Mode2 host hierarchy
     Name(_CID, EISAID("PNP0A03")) // To support legacy OS that doesn't understand the new HID
     Name(_SEG, 0)
-    Name(_ADR, 0x00000000)
     Method(^BN00, 0){ return(0x0000) }  // Returns default Bus number for Peer PCI busses. Name can be overriden with control method placed directly under Device scope
     Method(_BBN, 0){ return(BN00()) } // Bus number, optional for the Root PCI Bus
     Name(_UID, 0x0000)  // Unique Bus ID, optional

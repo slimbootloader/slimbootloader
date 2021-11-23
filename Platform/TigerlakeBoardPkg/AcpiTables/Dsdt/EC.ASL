@@ -568,7 +568,7 @@ Device(H_EC)  // Hitachi Embedded Controller
 
     // Save the current Power State for later.
     Store(PWRS,Local0)
-
+    Store(Local0,Local0)
     // Initialize the Power State.
     //  BNUM = 0 = Virtual Power State
     //  BNUM > 0 = Real Power State
@@ -766,41 +766,6 @@ Device(H_EC)  // Hitachi Embedded Controller
 //    If (LEqual(ECRD(RefOf(DOCK)), 0)) {
     //P8XH(0,0x40)
     Return()
-//    }
-
-    Sleep(1000) // Delay 1 second for hot docking stability
-    Store(DKSM, \SSMP)
-    Store(1, \DSTS)
-    Sleep(1000) // Delay 1 second for hot docking stability
-    //Notify(\_SB.PC00.DOCK, 0x00)
-
-    If (LAnd(LGreaterEqual(OSYS, 2015), \_SB.HIDD.BTLD)) { //Win10 and Button Driver loaded. For HID event filter driver
-      Or(PB1E, 0x10, PB1E)   // Set Dock status
-      UPBT(DOCK_INDICATOR, One)
-      Notify(\_SB.HIDD, 0xCA)    // Notify HID Event Filter driver that the system is now in Dock mode.
-      If (LEqual(\CEDS,1)) {
-        If (LEqual(ECRD(RefOf(DOCO)), 1)) {
-          Or(PB1E, 0x08, PB1E) // Set Laptop status
-          UPBT(CONVERTIBLE_BUTTON, One)
-          Notify(\_SB.HIDD, 0xCD)  // Notify HID Event Filter driver that the system is now in Laptop mode.
-        } Else {
-          And(PB1E, Not(0x08), PB1E) // Clear Laptop Status
-          UPBT(CONVERTIBLE_BUTTON, Zero)
-          Notify(\_SB.HIDD, 0xCC)        // Notify HID Event driver that the system is now in Slate mode.
-        }
-      }
-    } Else {
-      If (IGDS)
-      {
-        \_SB.PC00.GFX0.GDCK(1)
-      }
-      If (LEqual(\CEDS,1)) {
-        If (CondRefOf(\_SB.PC00.GFX0.IUEH)) {
-          \_SB.PC00.GFX0.IUEH(6)
-          \_SB.PC00.GFX0.IUEH(7)
-        }
-      }
-    }
 
   }
 
@@ -811,32 +776,6 @@ Device(H_EC)  // Hitachi Embedded Controller
 //P8XH(0,0x41)
     Return()
 //    }
-
-    Store(0, \DSTS)
-    Sleep(1000) // Delay 1 second for hot un-docking stability
-    //Notify(\_SB.PC00.DOCK, 0x01)
-
-    If (LAnd(LGreaterEqual(OSYS, 2015), \_SB.HIDD.BTLD)) { //Win10 and Button Driver loaded. For HID event filter driver
-      And(PB1E, Not(0x10), PB1E)   // Clear Dock Status
-      UPBT(DOCK_INDICATOR, Zero)
-      Notify(\_SB.HIDD, 0xCB)          // Notify HID Event Filter driver that the system is now in Undock mode.
-      If (LEqual(\CEDS,1)) {
-        And(PB1E, Not(0x08), PB1E) // Clear Laptop Status
-        UPBT(CONVERTIBLE_BUTTON, Zero)
-        Notify(\_SB.HIDD, 0xCC)        // Notify HID Event Filter driver that the system is now in Slate mode.
-      }
-    } Else {
-      If (IGDS)
-      {
-        \_SB.PC00.GFX0.GDCK(0)
-      }
-      If (LEqual(\CEDS,1)) {
-        If (CondRefOf(\_SB.PC00.GFX0.IUEH)) {
-          \_SB.PC00.GFX0.IUEH(6)
-          \_SB.PC00.GFX0.IUEH(7)
-        }
-      }
-    }
 
   }
 

@@ -60,7 +60,7 @@ Scope(\_SB)
     // Arg0 - Clock number (0:IMGCLKOUT_0, etc)
     // Arg1 - Desired state (0:Disable, 1:Enable)
     //
-    Switch(Arg0)
+    Switch(ToInteger(Arg0))
     {
       Case (0)
       {
@@ -124,7 +124,7 @@ Scope(\_SB)
     // Arg0 - Clock number (0:IMGCLKOUT_0, etc)
     // Arg1 - Clock frequency (0:24MHz, 1:19.2MHz)
     //
-    Switch(Arg0)
+    Switch(ToInteger(Arg0))
     {
       Case (0)
       {

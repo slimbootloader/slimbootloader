@@ -111,6 +111,7 @@ Scope(\_SB.PC00) {
       }
       Store(0x3, PMEC) // Set BIT[1:0] = 11b - Power State D3
       Store(PMEC,Local3) // perform a read to avoid ordering and noncoherency problems
+      Store(Local3,Local3)
     }
     If (LAnd(Arg1, Arg2)) { //SERIAL_IO_BAR_RESET only if device is placed in D3
       Field(ICB1, AnyAcc, NoLock, Preserve) {

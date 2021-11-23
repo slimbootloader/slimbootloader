@@ -412,43 +412,6 @@ Scope (\_SB.PR00)
       }
     }
 
-    //
-    // Operation region for Smi port access
-    //
-    OperationRegion (SMIP, SystemIO, 0xB2, 1)
-    Field (SMIP, ByteAcc, NoLock, Preserve)
-    {
-      IOB2, 8
-    }
-
-    //
-    // On systems that have Intel Turbo Boost Max Technology 3.0,
-    // if the user policy has enabled HwP, and if OC is supported
-    // read platform wide _OSC object capabilities bit 12.
-    // If Platform wide _OSC bit 12 is set on input, the OS can support
-    // the notifications (0x85) for frequency re-read.
-    //
-    If (LAnd(LAnd(And(\_SB.CFGD, PPM_TURBO_BOOST_MAX), And(\_SB.CFGD, PPM_HWP)), LNotEqual(\_SB.OBIN, 0))) {
-
-      If (And(\_SB.OSCP,0x1000)) { // Platform wide _OSC bit [12] = 1
-
-        //
-        // The Si (through p-Code) will support new HwP interrupt status bit defined in IA32_HWP_STATUS Bit [3]
-        // which would indicate changes to the HwP highest capabilities.
-        // If the processor device _OSC bit [14] = 1, the OS supports native handling of interrupts.
-        // If the processor device _OSC bit [14] = 0, and if platform wide _OSC bit [12] = 1,
-        // then BIOS has to notify the OS of the changes through periodic SMM.
-        //
-        If (Not(And(PF00, 0x4000))) {  // Processor _OSC Bit [14] not equal to 1
-          //
-          // Trigger SMI to resume the periodic SMM for detecting change in max core ratio.
-          //
-          Store (ITBS, IOB2)
-        }
-
-      } // end of \_SB.OSCP [12] = 1 check
-
-    }
     Return ()
 
   } // end of Method (GCAP, 1)

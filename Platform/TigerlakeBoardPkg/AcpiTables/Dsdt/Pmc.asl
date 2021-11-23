@@ -200,7 +200,7 @@ Scope(\) {
   // Arg0: Clock index
   //
   Method(CTRP, 1) {
-    Switch(Arg0) {
+    Switch(ToInteger(Arg0)) {
       Case(0) {Return(CR00)}
       Case(1) {Return(CR01)}
       Case(2) {Return(CR02)}

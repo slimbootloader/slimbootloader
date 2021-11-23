@@ -19,7 +19,6 @@ External(\_SB.PC00.PEG3.PEGP.PNVM, MethodObj)
 External(\_SB.PC00.LPCB.H_EC.ECNT, MethodObj)
 External(\_SB.PC00.SPI.SWPD, MethodObj)
 External(\_SB.PC00.LPCB.HPET, DeviceObj)
-External(\_SB.PC00.LPCB.HPET.TEN1, IntObj)
 
 External(THCE) // TCSS XHCI Device Enable
 External(TDCE) // TCSS XDCI Device Enable

@@ -56,7 +56,7 @@ Scope(\_SB)
     // Arg1 - Desired state (0:Disable, 1:Enable)
     //
     If(LEqual(PCHS, PCHL)) {
-      Switch(Arg0) {
+      Switch(ToInteger(Arg0)) {
         Case (0) {
           Store(CLL0, Local0)
           Store(Or(And(Local0, Not(B_ICLK_PCR_REQUEST)), ShiftLeft(Arg1, 1)), CLL0)
@@ -83,7 +83,7 @@ Scope(\_SB)
         }
       }
     } Else {
-      Switch(Arg0) {
+      Switch(ToInteger(Arg0)) {
         Case (0) {
           Store(CLH0, Local0)
           Store(Or(And(Local0, Not(B_ICLK_PCR_REQUEST)), ShiftLeft(Arg1, 1)), CLH0)
@@ -106,7 +106,7 @@ Scope(\_SB)
     // Arg1 - Clock frequency (0:24MHz, 1:19.2MHz)
     //
     If(LEqual(PCHS, PCHL)) {
-      Switch(Arg0) {
+      Switch(ToInteger(Arg0)) {
         Case (0) {
           Store(CLL0, Local0)
           Store(Or(And(Local0, Not(B_ICLK_PCR_FREQUENCY)), Arg1), CLL0)
@@ -133,7 +133,7 @@ Scope(\_SB)
         }
       }
     } Else {
-      Switch(Arg0) {
+      Switch(ToInteger(Arg0)) {
         Case (0) {
           Store(CLH0, Local0)
           Store(Or(And(Local0, Not(B_ICLK_PCR_FREQUENCY)), Arg1), CLH0)
