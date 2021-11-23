@@ -175,9 +175,9 @@ DefinitionBlock (
       // Update APIC Interrupt descriptor
       CreateDWordField (INTR, INTI._INT, NUMI) // Interrupt Number
       Store (INUM(Arg0), NUMI)
-      CreateByteField (INTR, INTI._HE, LEVI) // Level or Edge
+      CreateBitField (INTR, INTI._HE, LEVI) // Level or Edge
       Store (Arg1, LEVI)
-      CreateByteField (INTR, INTI._LL, ACTI) // Active High or Low
+      CreateBitField (INTR, INTI._LL, ACTI) // Active High or Low
       Store (Arg2, ACTI)
 
       Return (INTR)
@@ -223,6 +223,7 @@ DefinitionBlock (
         If (LAnd(LNotEqual(WLWK, 0), LEqual(WLRP, 0x08))) {
           Return (GPRW (GGPE (WLWK), 4))
         }
+        Return (GPRW (GGPE (PSW2), 4))
       }
     }
   }

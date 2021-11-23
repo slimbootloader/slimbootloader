@@ -125,7 +125,7 @@ Scope (\_SB.PC00) {
     } ElseIf (LEqual (PCHS, PCH_H)) {
       Store (GPIO_VER2_H_VGPIO0, Local0)
     } Else {
-      Return (0)
+      Return ()
     }
 #else
     If (LEqual (PCHS, PCHL)) {

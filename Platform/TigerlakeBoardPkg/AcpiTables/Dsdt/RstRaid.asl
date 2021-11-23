@@ -18,7 +18,7 @@
 // Arg2 - Package of arguments : PkgObj
 //
 Method(D3AS, 3, Serialized,,, {IntObj, IntObj, PkgObj}) {
-  Switch(Arg1) {
+  Switch(ToInteger(Arg1)) {
     Case(0) {
       // This method supports function index 0 and 1
       Return(Buffer() {0x3})

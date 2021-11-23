@@ -153,7 +153,6 @@ Scope(\_SB) {
     //  @retval               Resource buffer with memory ranges
     //
     Method (UARB, 2, Serialized) {
-      Store (ResourceTemplate() { }, Local0)
       If (LOr (LEqual (Arg0, SERIAL_IO_UART_HIDDEN), LEqual (Arg0, SERIAL_IO_UART_COM))) {
         OperationRegion (UACF, SystemMemory, Arg1, Add (R_SERIAL_IO_CFG_BAR0_LOW, 16))
         Field (UACF, AnyAcc, NoLock, Preserve) {
@@ -170,16 +169,14 @@ Scope(\_SB) {
         Store (And (BAR0, 0xFFFFFFFFFFFFF000), Local1)
         Store (Add (Local1, 8), ADR1)                // Add 8 bytes to the address offset. First 8 bytes are allocated by the UAHx _CRS
         Store (And (BAR1, 0xFFFFFFFFFFFFF000), ADR2) // BAR1 (PCI CFG SPACE) Address
-
         ConcatenateResTemplate (BUF1, BUF2, Local0)
+        Return (Local0)
       }
-      Return (Local0)
+      Return (Buffer(){0x79, 0x00})
     }
 
     Method (_CRS, 0x0, Serialized) {
-      Store(ResourceTemplate() { }, Local0)
-      ConcatenateResTemplate (Local0, UARB (UART0_MODE, UART0_PCIE_BASE), Local1)
-      Store (Local1, Local0)
+      Store (UARB (UART0_MODE, UART0_PCIE_BASE), Local0)
       ConcatenateResTemplate(Local0, UARB (UART1_MODE, UART1_PCIE_BASE), Local1)
       Store(Local1, Local0)
       ConcatenateResTemplate(Local0, UARB (UART2_MODE, UART2_PCIE_BASE), Local1)
@@ -290,6 +287,7 @@ Scope(\_SB) {
       Store (0x0, PPRR)  // Place In reset state
       Store (0x3, PMEC)
       Store (PMEC, Local0) // perform a read to avoid ordering and noncoherency problems
+      Store (Local0, Local0)
     }
     //UART_PG_OFF - no action
   }
@@ -313,6 +311,7 @@ Scope(\_SB) {
       }
       Store (0x0, PMEC)
       Store (PMEC, Local0) // perform a read to avoid ordering and noncoherency problems
+      Store (Local0, Local0)
       OperationRegion (UAB0, SystemMemory,  And (BAR0, 0xFFFFFFFFFFFFF000), Add (R_SERIAL_IO_MEM_PPR_RESETS_8BIT, 1))
       Field (UAB0, ByteAcc, NoLock, Preserve) {
         Offset (R_SERIAL_IO_MEM_PPR_RESETS_8BIT),
@@ -421,7 +420,7 @@ Scope(\_SB) {
         Return (0xB)
       }
       If (LEqual (UART3_MODE, SERIAL_IO_UART_COM)) {
-        Method (_PSC) { UPSC (UART3_PCIE_BASE) }
+        Method (_PSC) { Return (UPSC (UART3_PCIE_BASE)) }
         Method (_PS3) { UPS3 (UART3_PG, UART3_PCIE_BASE) }
         Method (_PS0) { UPS0 (UART3_PG, UART3_PCIE_BASE) }
       }
@@ -444,7 +443,7 @@ Scope(\_SB) {
         Return (0xB)
       }
       If (LEqual (UART4_MODE, SERIAL_IO_UART_COM)) {
-        Method (_PSC) { UPSC (UART4_PCIE_BASE) }
+        Method (_PSC) { Return (UPSC (UART4_PCIE_BASE)) }
         Method (_PS3) { UPS3 (UART4_PG, UART4_PCIE_BASE) }
         Method (_PS0) { UPS0 (UART4_PG, UART4_PCIE_BASE) }
       }
@@ -467,7 +466,7 @@ Scope(\_SB) {
         Return (0xB)
       }
       If (LEqual (UART5_MODE, SERIAL_IO_UART_COM)) {
-        Method (_PSC) { UPSC (UART5_PCIE_BASE) }
+        Method (_PSC) { Return (UPSC (UART5_PCIE_BASE)) }
         Method (_PS3) { UPS3 (UART5_PG, UART5_PCIE_BASE) }
         Method (_PS0) { UPS0 (UART5_PG, UART5_PCIE_BASE) }
       }
@@ -490,7 +489,7 @@ Scope(\_SB) {
         Return (0xB)
       }
       If (LEqual (UART6_MODE, SERIAL_IO_UART_COM)) {
-        Method (_PSC) { UPSC (UART6_PCIE_BASE) }
+        Method (_PSC) { Return (UPSC (UART6_PCIE_BASE)) }
         Method (_PS3) { UPS3 (UART6_PG, UART6_PCIE_BASE) }
         Method (_PS0) { UPS0 (UART6_PG, UART6_PCIE_BASE) }
       }

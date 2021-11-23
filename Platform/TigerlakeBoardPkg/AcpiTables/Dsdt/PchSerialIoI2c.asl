@@ -41,7 +41,6 @@ Scope(\_SB.PC00) {
 //-------------------------------------------
   Device (I2C0) {
     If(LEqual(I2C0_MODE, SERIAL_IO_I2C_HIDDEN)) {
-      Name (_HID, "PNP0C02")
       Method (_CRS) { Return (I2CH (I2C0_PCIE_BASE)) }
       Name (_STA, 0xB)
     }
@@ -59,7 +58,6 @@ Scope(\_SB.PC00) {
 //------------------------------------------
   Device (I2C1) {
     If (LEqual(I2C1_MODE, SERIAL_IO_I2C_HIDDEN)) {
-      Name (_HID, "PNP0C02")
       Method (_CRS) { Return (I2CH (I2C1_PCIE_BASE)) }
       Name (_STA, 0xB)
     }
@@ -77,7 +75,6 @@ Scope(\_SB.PC00) {
 //------------------------------------------
   Device (I2C2) {
     If (LEqual (I2C2_MODE, SERIAL_IO_I2C_HIDDEN)) {
-      Name (_HID, "PNP0C02")
       Method (_CRS) { Return (I2CH (I2C2_PCIE_BASE)) }
       Name(_STA, 0xB)
     }
@@ -97,7 +94,6 @@ Scope(\_SB.PC00) {
 //------------------------------------------
   Device (I2C3) {
     If (LEqual (I2C3_MODE, SERIAL_IO_I2C_HIDDEN)) {
-      Name (_HID, "PNP0C02")
       Method (_CRS) { Return (I2CH (I2C3_PCIE_BASE)) }
       Name(_STA, 0xB)
     }
@@ -117,7 +113,6 @@ Scope(\_SB.PC00) {
 //------------------------------------------
   Device (I2C4) {
     If (LEqual (I2C4_MODE, SERIAL_IO_I2C_HIDDEN)) {
-      Name (_HID, "PNP0C02")
       Method (_CRS) { Return (I2CH (I2C4_PCIE_BASE)) }
       Name(_STA, 0xB)
     }
@@ -137,7 +132,6 @@ Scope(\_SB.PC00) {
 //------------------------------------------
   Device (I2C5) {
     If (LEqual (I2C5_MODE, SERIAL_IO_I2C_HIDDEN)) {
-      Name (_HID, "PNP0C02")
       Method (_CRS) { Return (I2CH (I2C5_PCIE_BASE)) }
       Name(_STA, 0xB)
     }
@@ -158,7 +152,6 @@ Scope(\_SB.PC00) {
 //------------------------------------------
   Device (I2C6) {
     If (LEqual (I2C6_MODE, SERIAL_IO_I2C_HIDDEN)) {
-      Name (_HID, "PNP0C02")
       Method (_CRS) { Return (I2CH (I2C6_PCIE_BASE)) }
       Name(_STA, 0xB)
     }
@@ -178,7 +171,6 @@ Scope(\_SB.PC00) {
 //------------------------------------------
   Device (I2C7) {
     If (LEqual (I2C7_MODE, SERIAL_IO_I2C_HIDDEN)) {
-      Name (_HID, "PNP0C02")
       Method (_CRS) { Return (I2CH (I2C7_PCIE_BASE)) }
       Name(_STA, 0xB)
     }

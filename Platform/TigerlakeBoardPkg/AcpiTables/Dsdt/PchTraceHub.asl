@@ -6,7 +6,7 @@
 **/
 
 #include <PchReservedResources.h>
-External(PTHM, IntObj)
+External(PTHM, FieldUnitObj)
 #define R_TRACE_HUB_MEM_MTB_SCRPD2     0xE8
 
 Scope (\_SB.PC00)

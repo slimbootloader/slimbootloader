@@ -6,7 +6,7 @@
 **/
 
 #include <PchReservedResources.h>
-External(PTHM, IntObj)
+External(PTHM, FieldUnitObj)
 External(\_SB.PC00.PTHT.THEN, MethodObj, IntObj)
 External(\_SB.PTHH.THEN, MethodObj, IntObj)
 

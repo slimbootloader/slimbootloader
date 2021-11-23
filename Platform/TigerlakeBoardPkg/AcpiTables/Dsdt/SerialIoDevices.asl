@@ -124,13 +124,13 @@ Scope(\_SB.PC00) {
   Method (SPIM, 3, Serialized) {
     Switch (ToInteger(Arg0)) {
       Case(SERIAL_IO_SPI1) { Name (IIC7 , ResourceTemplate () { SPISerialBus(0,PolarityLow,FourWireMode,8,ControllerInitiated,10000000,ClockPolarityLow,ClockPhaseFirst,"\\_SB.PC00.SPI1",,,DEV7) })
-        CreateWordField (IIC7, DEV7._PHA, DPH7)
+        CreateByteField (IIC7, DEV7._PHA, DPH7)
         CreateDWordField(IIC7,DEV7._SPE,DSP7)
         Store (Arg1, DPH7)
         Store (Arg2, DSP7)
         Return (IIC7) }
       Case(SERIAL_IO_SPI2) { Name (IIC8 , ResourceTemplate () { SPISerialBus(0,PolarityLow,FourWireMode,8,ControllerInitiated,10000000,ClockPolarityLow,ClockPhaseFirst,"\\_SB.PC00.SPI2",,,DEV8) })
-        CreateWordField (IIC8, DEV8._PHA, DPH8)
+        CreateByteField (IIC8, DEV8._PHA, DPH8)
         CreateDWordField(IIC8,DEV8._SPE,DSP8)
         Store (Arg1, DPH8)
         Store (Arg2, DSP8)
