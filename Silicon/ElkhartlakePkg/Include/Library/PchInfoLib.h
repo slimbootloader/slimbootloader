@@ -534,5 +534,13 @@ UINT8
 GetPchMaxPseTimedGpioControllersNum (
   VOID
   );
+/**
+  Get Pch Maximum PSE PWM number
 
+  @retval Pch Maximum PSE PWM number
+**/
+UINT8
+GetPchMaxPsePWMNum (
+  VOID
+);
 #endif // _PCH_INFO_LIB_H_
