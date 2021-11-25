@@ -69,6 +69,12 @@ def cfgdata_stitch(ifwi_file, ifwi_out_file, cfg_dir, key_file, script_dir, tool
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
+    if cfg_dir == "":
+        dlt_dir = out_dir
+        cfg_dir = '.'
+    else:
+        dlt_dir = cfg_dir
+
     cfg_ext = 'yaml'
     # CfgDataDef needs to be under cfgdata_dir
     if not os.path.exists(os.path.join(cfg_dir ,'CfgDataDef.' + cfg_ext)):
@@ -88,7 +94,7 @@ def cfgdata_stitch(ifwi_file, ifwi_out_file, cfg_dir, key_file, script_dir, tool
         raise Exception("Cannot find file '%s' !" % result)
 
     chk_files = [
-        (out_dir, [file[1] for file in dlt_files]),
+        (dlt_dir, [file[1] for file in dlt_files]),
         (out_dir, ['CfgDataInt.bin'])
     ]
 
@@ -104,7 +110,7 @@ def cfgdata_stitch(ifwi_file, ifwi_out_file, cfg_dir, key_file, script_dir, tool
 
         for pid, dlt_name in dlt_files:
           bin_name = os.path.splitext(dlt_name)[0] + '.bin'
-          dlt_path = os.path.join(out_dir, dlt_name)
+          dlt_path = os.path.join(dlt_dir, dlt_name)
           bin_path = os.path.join(out_dir, bin_name)
           run_cmd([sys.executable, os.path.join(script_dir, 'GenCfgData.py'), 'GENDLT',
                  os.path.join(cfg_dir, 'CfgDataDef.%s;%s' % (cfg_ext, bin_path)), dlt_path])
@@ -116,7 +122,7 @@ def cfgdata_stitch(ifwi_file, ifwi_out_file, cfg_dir, key_file, script_dir, tool
         bin_file = os.path.join(out_dir, bin_file)
         run_cmd([sys.executable, os.path.join(script_dir, 'GenCfgData.py'), 'GENBIN',
                  os.path.join(cfg_dir, 'CfgDataDef.%s;') % cfg_ext + os.path.join(
-                     out_dir, dlt), bin_file])
+                     dlt_dir, dlt), bin_file])
         bin_files.append(bin_file)
 
     # merge the CFGDATA
@@ -166,7 +172,7 @@ def main():
                     '--cfgdata-dir',
                     dest='cfgdata_dir',
                     type=str,
-                    default='.',
+                    default='',
                     help='CFGDATA directory path')
     ap.add_argument('-k',
                     '--key-file',
