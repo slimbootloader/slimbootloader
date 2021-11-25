@@ -620,3 +620,15 @@ GetPchMaxPseTimedGpioControllersNum (
 {
   return 2;
 }
+/**
+  Get Pch Maximum PSE PWM number
+
+  @retval Pch Maximum PSE PWM number
+**/
+UINT8
+GetPchMaxPsePWMNum (
+  VOID
+)
+{
+  return 16;
+}

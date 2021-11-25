@@ -973,6 +973,9 @@ FspUpdatePsePolicy (
     Fspscfg->PchPseI2sEnable[Index]              = SiCfgData->PchPseI2sEnable[Index];
     Fspscfg->PchPseI2sSbInterruptEnable[Index]   = SiCfgData->PchPseI2sSbInterruptEnable[Index];
   }
+  for (Index = 0; Index < GetPchMaxPsePWMNum (); Index++){
+    Fspscfg->PchPsePwmPinEnable[Index] = SiCfgData->PchPsePwmPinEnable[Index];
+  }
   Fspscfg->PchPseI2sTxPinMux[0]            = GPIO_VER3_MUXING_PSE_I2S0_TXD_GPP_E16;
   Fspscfg->PchPseI2sRxPinMux[0]            = GPIO_VER3_MUXING_PSE_I2S0_RXD_GPP_E15;
   Fspscfg->PchPseI2sSfrmPinMux[0]          = GPIO_VER3_MUXING_PSE_I2S0_SFRM_GPP_E21;
@@ -980,7 +983,6 @@ FspUpdatePsePolicy (
 
   Fspscfg->PchPsePwmEnable            = SiCfgData->PchPsePwmEnable;
   Fspscfg->PchPsePwmSbInterruptEnable = SiCfgData->PchPsePwmSbInterruptEnable;
-  Fspscfg->PchPsePwmPinEnable[15]     = 0x1;
 
   Fspscfg->PchPsePwmPinMux[8]         = GPIO_VER3_MUXING_PSE_PWM_08_GPP_E4;
   Fspscfg->PchPsePwmPinMux[9]         = GPIO_VER3_MUXING_PSE_PWM_09_GPP_E5;
