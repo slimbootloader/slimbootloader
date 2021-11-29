@@ -11,7 +11,7 @@
 
 [UserExtensions.SBL."CloneRepo"]
   REPO    = https://github.com/intel/FSP.git
-  COMMIT  = 86ba5c21544bba714586356c6d0caa6f46a4e8e4
+  COMMIT  = ccf7f35c13770174078a0492e0d95bb0afa806cb
 
 [UserExtensions.SBL."CopyList"]
   ElkhartLakeFspBinPkg/FspBin/FSPRel.bin               : Silicon/ElkhartlakePkg/FspBin/FspDbg.bin
