@@ -450,7 +450,7 @@ SetFlashDescriptorLock (
     //
     // Write to flash descriptor master access region
     //
-    Status = BootMediaReadByType (FlashRegionDescriptor, (UINT32) B_FLASH_FMBA, sizeof(FlashDescMasterAccess), (UINT8 *) FlashDescMasterAccess);
+    Status = BootMediaWriteByType (FlashRegionDescriptor, (UINT32) B_FLASH_FMBA, sizeof(FlashDescMasterAccess), (UINT8 *) FlashDescMasterAccess);
     if (EFI_ERROR (Status)) {
       DEBUG((DEBUG_ERROR, "SPI Lock write failed 0x%x\n", Status));
     }
