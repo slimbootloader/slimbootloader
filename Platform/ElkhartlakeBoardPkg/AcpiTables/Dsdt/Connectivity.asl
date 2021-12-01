@@ -5,7 +5,6 @@
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
-External(\NGPS, IntObj)
 Include ("AcpiResourcesOffsets.h")
 Scope(\_SB)
 {

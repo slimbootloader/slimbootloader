@@ -1,107 +1,91 @@
 /** @file
   ACPI DSDT table
 
-  Copyright (c) 2011 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2011 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 Scope(\_SB)
 {
-  Processor(PR00,   // Unique name for Processor 0.
-    0,              // Unique ID for Processor 0.
-    0x1810,         // P_BLK address = ACPIBASE + 10h.
-    6)              // P_BLK length = 6 bytes.
-  {}
+  Device(PR00){               // Unique name for Processor 0.
+    Name(_HID,"ACPI0007")
+    Name(_UID,0)              // Unique ID for Processor 0.
+  }
 
-  Processor(PR01,   // Unique name for Processor 1.
-    1,              // Unique ID for Processor 1.
-    0x1810,         // P_BLK address = ACPIBASE + 10h.
-    6)              // P_BLK length = 6 bytes.
-  {}
+  Device(PR01){               // Unique name for Processor 1.
+    Name(_HID,"ACPI0007")
+    Name(_UID,1)              // Unique ID for Processor 1.
+  }
 
-  Processor(PR02,   // Unique name for Processor 2.
-    2,              // Unique ID for Processor 2.
-    0x1810,         // P_BLK address = ACPIBASE + 10h.
-    6)              // P_BLK length = 6 bytes.
-  {}
+  Device(PR02){               // Unique name for Processor 2.
+    Name(_HID,"ACPI0007")
+    Name(_UID,2)              // Unique ID for Processor 2.
+  }
 
-  Processor(PR03,   // Unique name for Processor 3.
-    3,              // Unique ID for Processor 3.
-    0x1810,         // P_BLK address = ACPIBASE + 10h.
-    6)              // P_BLK length = 6 bytes.
-  {}
+  Device(PR03){               // Unique name for Processor 3.
+    Name(_HID,"ACPI0007")
+    Name(_UID,3)              // Unique ID for Processor 3.
+  }
 
-  Processor(PR04,   // Unique name for Processor 4.
-    4,              // Unique ID for Processor 4.
-    0x1810,         // P_BLK address = ACPIBASE + 10h.
-    6)              // P_BLK length = 6 bytes.
-  {}
+  Device(PR04){              // Unique name for Processor 4.
+    Name(_HID,"ACPI0007")
+    Name(_UID,4)             // Unique ID for Processor 4.
+  }
 
-  Processor(PR05,   // Unique name for Processor 5.
-    5,              // Unique ID for Processor 5.
-    0x1810,         // P_BLK address = ACPIBASE + 10h.
-    6)              // P_BLK length = 6 bytes.
-  {}
+  Device(PR05){              // Unique name for Processor 5.
+    Name(_HID,"ACPI0007")
+    Name(_UID,5)             // Unique ID for Processor 5.
+  }
 
-  Processor(PR06,   // Unique name for Processor 6.
-    6,              // Unique ID for Processor 6.
-    0x1810,         // P_BLK address = ACPIBASE + 10h.
-    6)              // P_BLK length = 6 bytes.
-  {}
+  Device(PR06){              // Unique name for Processor 6.
+    Name(_HID,"ACPI0007")
+    Name(_UID,6)             // Unique ID for Processor 6.
+  }
 
-  Processor(PR07,   // Unique name for Processor 7.
-    7,              // Unique ID for Processor 7.
-    0x1810,         // P_BLK address = ACPIBASE + 10h.
-    6)              // P_BLK length = 6 bytes.
-  {}
+  Device(PR07){              // Unique name for Processor 7.
+    Name(_HID,"ACPI0007")
+    Name(_UID,7)             // Unique ID for Processor 7.
+  }
 
-  Processor(PR08,   // Unique name for Processor 8.
-    8,              // Unique ID for Processor 8.
-    0x1810,         // P_BLK address = ACPIBASE + 10h.
-    6)              // P_BLK length = 6 bytes.
-  {}
+  Device(PR08){              // Unique name for Processor 8.
+    Name(_HID,"ACPI0007")
+    Name(_UID,8)             // Unique ID for Processor 8.
+  }
 
-  Processor(PR09,   // Unique name for Processor 9.
-    9,              // Unique ID for Processor 9.
-    0x1810,         // P_BLK address = ACPIBASE + 10h.
-    6)              // P_BLK length = 6 bytes.
-  {}
+  Device(PR09){              // Unique name for Processor 9.
+    Name(_HID,"ACPI0007")
+    Name(_UID,9)             // Unique ID for Processor 9.
+  }
 
-  Processor(PR10,   // Unique name for Processor 10.
-    10,             // Unique ID for Processor 10.
-    0x1810,         // P_BLK address = ACPIBASE + 10h.
-    6)              // P_BLK length = 6 bytes.
-  {}
+  Device(PR10){              // Unique name for Processor 10.
+    Name(_HID,"ACPI0007")
+    Name(_UID,10)             // Unique ID for Processor 10.
+  }
 
-  Processor(PR11,   // Unique name for Processor 11.
-    11,             // Unique ID for Processor 11.
-    0x1810,         // P_BLK address = ACPIBASE + 10h.
-    6)              // P_BLK length = 6 bytes.
-  {}
+  Device(PR11){              // Unique name for Processor 11.
+    Name(_HID,"ACPI0007")
+    Name(_UID,11)             // Unique ID for Processor 11.
+  }
 
-  Processor(PR12,   // Unique name for Processor 12.
-    12,             // Unique ID for Processor 12.
-    0x1810,         // P_BLK address = ACPIBASE + 10h.
-    6)              // P_BLK length = 6 bytes.
-  {}
+  Device(PR12){              // Unique name for Processor 12.
+    Name(_HID,"ACPI0007")
+    Name(_UID,12)             // Unique ID for Processor 12.
+  }
 
-  Processor(PR13,   // Unique name for Processor 13.
-    13,             // Unique ID for Processor 13.
-    0x1810,         // P_BLK address = ACPIBASE + 10h.
-    6)              // P_BLK length = 6 bytes.
-  {}
+  Device(PR13){              // Unique name for Processor 13.
+    Name(_HID,"ACPI0007")
+    Name(_UID,13)             // Unique ID for Processor 13.
+  }
 
-  Processor(PR14,   // Unique name for Processor 14.
-    14,             // Unique ID for Processor 14.
-    0x1810,         // P_BLK address = ACPIBASE + 10h.
-    6)              // P_BLK length = 6 bytes.
-  {}
+  Device(PR14){              // Unique name for Processor 14.
+    Name(_HID,"ACPI0007")
+    Name(_UID,14)             // Unique ID for Processor 14.
+  }
 
-  Processor(PR15,   // Unique name for Processor 15.
-    15,             // Unique ID for Processor 15.
-    0x1810,         // P_BLK address = ACPIBASE + 10h.
-    6)              // P_BLK length = 6 bytes.
-  {}
+  Device(PR15){              // Unique name for Processor 15.
+    Name(_HID,"ACPI0007")
+    Name(_UID,15)             // Unique ID for Processor 15.
+  }
 } // End Scope(\_SB)
 
 //

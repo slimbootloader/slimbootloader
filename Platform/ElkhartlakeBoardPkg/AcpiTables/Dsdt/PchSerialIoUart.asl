@@ -2,7 +2,7 @@
 
   Serial IO UART Controllers ACPI definitions
 
-  Copyright (c) 2018 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -109,7 +109,7 @@ Scope(\_SB) {
     //  @retval               Resource buffer with memory ranges
     //
     Method (UARB, 2, Serialized) {
-      Store (ResourceTemplate() { }, Local0)
+      Store (Zero, Local0)
       If (LOr (LEqual (Arg0, SERIAL_IO_UART_HIDDEN), LEqual (Arg0, SERIAL_IO_UART_COM))) {
         OperationRegion (UACF, SystemMemory, Arg1, Add (R_SERIAL_IO_CFG_BAR0_LOW, 16))
         Field (UACF, AnyAcc, NoLock, Preserve) {
@@ -133,7 +133,7 @@ Scope(\_SB) {
     }
 
     Method (_CRS, 0x0, Serialized) {
-      Store(ResourceTemplate() { }, Local0)
+      Store(Zero, Local0)
       ConcatenateResTemplate (Local0, UARB (UART0_MODE, UART0_PCIE_BASE), Local1)
       Store (Local1, Local0)
       ConcatenateResTemplate(Local0, UARB (UART1_MODE, UART1_PCIE_BASE), Local1)
@@ -244,7 +244,7 @@ Scope(\_SB) {
       }
       Store (0x0, PPRR)  // Place In reset state
       Store (0x3, PMEC)
-      Store (PMEC, Local0) // perform a read to avoid ordering and noncoherency problems
+      //Store (PMEC, Local0) // perform a read to avoid ordering and noncoherency problems
     }
     //UART_PG_OFF - no action
   }
@@ -267,7 +267,7 @@ Scope(\_SB) {
         PMEC, 8
       }
       Store (0x0, PMEC)
-      Store (PMEC, Local0) // perform a read to avoid ordering and noncoherency problems
+      //Store (PMEC, Local0) // perform a read to avoid ordering and noncoherency problems
       OperationRegion (UAB0, SystemMemory,  And (BAR0, 0xFFFFFFFFFFFFF000), Add (R_SERIAL_IO_MEM_PPR_RESETS_8BIT, 1))
       Field (UAB0, ByteAcc, NoLock, Preserve) {
         Offset (R_SERIAL_IO_MEM_PPR_RESETS_8BIT),

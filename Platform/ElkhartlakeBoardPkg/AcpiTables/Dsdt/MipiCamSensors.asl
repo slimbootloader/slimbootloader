@@ -233,12 +233,11 @@ Scope(\_SB.PC00) {
 
   Device (DSC0) { // Control Logic Device 0 when Discrete is selected
     Name(_ADR, Zero)
-    Name(_HID, "INT3472")
     Name(_CID, "INT3472")
     Name(_DDN, "PMIC-CRDG")
     Name(_UID, 0)
     Method(_CRS, 0x0, NotSerialized) {
-      Store (ResourceTemplate() {}, Local0)
+      Store (Zero, Local0)
       // Create GPIO resource template using as parameters data provided in the BIOS setup
       If (LGreater (C0GP, 0)) {
         Store (PINR(C0P0, C0G0), Local1)
@@ -321,7 +320,7 @@ Scope(\_SB.PC00) {
         Return (Buffer() {0x00})
       }
       If(LEqual(PCHS, PCHL)) { // PCH-LP
-        Include ("IpuImgClkDsm.asl")
+        //Include ("IpuImgClkDsm.asl")
       }
       Return (Buffer() {0})
     }
@@ -329,12 +328,11 @@ Scope(\_SB.PC00) {
 
   Device (DSC1) { // Control Logic Device 1 when Discrete is selected
     Name(_ADR, Zero)
-    Name(_HID, "INT3472")
     Name(_CID, "INT3472")
     Name(_DDN, "PMIC-CRDG")
     Name(_UID, 1)
     Method(_CRS, 0x0, NotSerialized) {
-      Store (ResourceTemplate() {}, Local0)
+      Store (Zero, Local0)
       // Create GPIO resource template using as parameters data provided in the BIOS setup
       If (LGreater (C1GP, 0)) {
         Store (PINR(C1P0, C1G0), Local1)
@@ -415,7 +413,7 @@ Scope(\_SB.PC00) {
         If (LEqual (Arg2, 5)) { Return (GPPI(C1F3, Add(Multiply(32, C1G3), C1P3), C1I3, C1A3)) }
       }
       If(LEqual(PCHS, PCHL)) { // PCH-LP
-        Include ("IpuImgClkDsm.asl")
+        //Include ("IpuImgClkDsm.asl")
       }
       Return (Buffer() {0})
     }
@@ -423,12 +421,11 @@ Scope(\_SB.PC00) {
 
   Device (DSC2) { // Control Logic Device 2 when Discrete is selected
     Name(_ADR, Zero)
-    Name(_HID, "INT3472")
     Name(_CID, "INT3472")
     Name(_DDN, "PMIC-CRDG")
     Name(_UID, 2)
     Method(_CRS, 0x0, NotSerialized) {
-      Store (ResourceTemplate() {}, Local0)
+      Store (Zero, Local0)
       // Create GPIO resource template using as parameters data provided in the BIOS setup
       If (LGreater (C2GP, 0)) {
         Store (PINR(C2P0, C2G0), Local1)
@@ -510,7 +507,7 @@ Scope(\_SB.PC00) {
         If (LEqual (Arg2, 5)) { Return (GPPI(C2F3, Add(Multiply(32, C2G3), C2P3), C2I3, C2A3)) }
       }
       If(LEqual(PCHS, PCHL)) { // PCH-LP
-        Include ("IpuImgClkDsm.asl")
+        //Include ("IpuImgClkDsm.asl")
       }
       Return (Buffer() {0})
     }
@@ -518,12 +515,11 @@ Scope(\_SB.PC00) {
 
   Device (DSC3) { // Control Logic Device 3 when Discrete is selected
     Name(_ADR, Zero)
-    Name(_HID, "INT3472")
     Name(_CID, "INT3472")
     Name(_DDN, "PMIC-CRDG")
     Name(_UID, 3)
     Method(_CRS, 0x0, NotSerialized) {
-      Store (ResourceTemplate() {}, Local0)
+      Store (Zero, Local0)
       // Create GPIO resource template using as parameters data provided in the BIOS setup
       If (LGreater (C3GP, 0)) {
         Store (PINR(C3P0, C3G0), Local1)
@@ -605,7 +601,7 @@ Scope(\_SB.PC00) {
         If (LEqual (Arg2, 5)) { Return (GPPI(C3F3, Add(Multiply(32, C3G3), C3P3), C3I3, C3A3)) }
       }
       If(LEqual(PCHS, PCHL)) { // PCH-LP
-        Include ("IpuImgClkDsm.asl")
+        //Include ("IpuImgClkDsm.asl")
       }
       Return (Buffer() {0})
     }
@@ -613,12 +609,11 @@ Scope(\_SB.PC00) {
 
   Device (DSC4) { // Control Logic Device 4 when Discrete is selected
     Name(_ADR, Zero)
-    Name(_HID, "INT3472")
     Name(_CID, "INT3472")
     Name(_DDN, "PMIC-CRDG")
     Name(_UID, 4)
     Method(_CRS, 0x0, NotSerialized) {
-      Store (ResourceTemplate() {}, Local0)
+      Store (Zero, Local0)
       // Create GPIO resource template using as parameters data provided in the BIOS setup
       If (LGreater (C4GP, 0)) {
         Store (PINR(C4P0, C4G0), Local1)
@@ -700,7 +695,7 @@ Scope(\_SB.PC00) {
         If (LEqual (Arg2, 5)) { Return (GPPI(C4F3, Add(Multiply(32, C4G3), C4P3), C4I3, C4A3)) }
       }
       If(LEqual(PCHS, PCHL)) { // PCH-LP
-        Include ("IpuImgClkDsm.asl")
+        //Include ("IpuImgClkDsm.asl")
       }
       Return (Buffer() {0})
     }
@@ -708,12 +703,11 @@ Scope(\_SB.PC00) {
 
   Device (DSC5) { // Control Logic Device 5 when Discrete is selected
     Name(_ADR, Zero)
-    Name(_HID, "INT3472")
     Name(_CID, "INT3472")
     Name(_DDN, "PMIC-CRDG")
     Name(_UID, 5)
     Method(_CRS, 0x0, NotSerialized) {
-      Store (ResourceTemplate() {}, Local0)
+      Store (Zero, Local0)
       // Create GPIO resource template using as parameters data provided in the BIOS setup
       If (LGreater (C5GP, 0)) {
         Store (PINR(C5P0, C5G0), Local1)
@@ -795,7 +789,7 @@ Scope(\_SB.PC00) {
         If (LEqual (Arg2, 5)) { Return (GPPI(C5F3, Add(Multiply(32, C5G3), C5P3), C5I3, C5A3)) }
       }
       If(LEqual(PCHS, PCHL)) { // PCH-LP
-        Include ("IpuImgClkDsm.asl")
+        //Include ("IpuImgClkDsm.asl")
       }
       Return (Buffer() {0})
     }
@@ -815,11 +809,10 @@ Scope(\_SB.PC00) {
       Return (Package() {\_SB.PC00})
     }
     Name (_UID, 0)
-    Name (_HID, "INT3472")
     Name (_CID, "INT3472")
     Name (_DDN, "PMIC-CRDG")
     Method (_CRS, 0x0, NotSerialized) {
-      Store (ResourceTemplate() {}, Local0)
+      Store (Zero, Local0)
       // Create I2C Bus resource template using as parameters data provided in the BIOS setup
       ConcatenateResTemplate(Local0, IICB(C0IA, C0IB), Local2)
       Store(Local2, Local0)
@@ -925,12 +918,11 @@ Scope(\_SB.PC00) {
       }
       Return (Package() {\_SB.PC00})
     }
-    Name (_HID, "INT3472")
     Name (_CID, "INT3472")
     Name (_DDN, "PMIC-CRDG")
     Name (_UID, 1)
     Method (_CRS, 0x0, NotSerialized) {
-      Store (ResourceTemplate() {}, Local0)
+      Store (Zero, Local0)
       // Create I2C Bus resource template using as parameters data provided in the BIOS setup
       ConcatenateResTemplate(Local0, IICB(C1IA, C1IB), Local2)
       Store(Local2, Local0)
@@ -1036,12 +1028,11 @@ Scope(\_SB.PC00) {
       }
       Return (Package() {\_SB.PC00})
     }
-    Name (_HID, "INT3472")
     Name (_CID, "INT3472")
     Name (_DDN, "PMIC-CRDG")
     Name (_UID, 2)
     Method (_CRS, 0x0, NotSerialized) {
-      Store (ResourceTemplate() {}, Local0)
+      Store (Zero, Local0)
       // Create I2C Bus resource template using as parameters data provided in the BIOS setup
       ConcatenateResTemplate(Local0, IICB(C2IA, C2IB), Local2)
       Store(Local2, Local0)
@@ -1147,12 +1138,11 @@ Scope(\_SB.PC00) {
       }
       Return (Package() {\_SB.PC00})
     }
-    Name (_HID, "INT3472")
     Name (_CID, "INT3472")
     Name (_DDN, "PMIC-CRDG")
     Name (_UID, 3)
     Method (_CRS, 0x0, NotSerialized) {
-      Store (ResourceTemplate() {}, Local0)
+      Store (Zero, Local0)
       // Create I2C Bus resource template using as parameters data provided in the BIOS setup
       ConcatenateResTemplate(Local0, IICB(C3IA, C3IB), Local2)
       Store(Local2, Local0)
@@ -1258,12 +1248,11 @@ Scope(\_SB.PC00) {
       }
       Return (Package() {\_SB.PC00})
     }
-    Name (_HID, "INT3472")
     Name (_CID, "INT3472")
     Name (_DDN, "PMIC-CRDG")
     Name (_UID, 4)
     Method (_CRS, 0x0, NotSerialized) {
-      Store (ResourceTemplate() {}, Local0)
+      Store (Zero, Local0)
       // Create I2C Bus resource template using as parameters data provided in the BIOS setup
       ConcatenateResTemplate(Local0, IICB(C4IA, C4IB), Local2)
       Store(Local2, Local0)
@@ -1369,12 +1358,11 @@ Scope(\_SB.PC00) {
       }
       Return (Package() {\_SB.PC00})
     }
-    Name (_HID, "INT3472")
     Name (_CID, "INT3472")
     Name (_DDN, "PMIC-CRDG")
     Name (_UID, 5)
     Method (_CRS, 0x0, NotSerialized) {
-      Store (ResourceTemplate() {}, Local0)
+      Store (Zero, Local0)
       // Create I2C Bus resource template using as parameters data provided in the BIOS setup
       ConcatenateResTemplate(Local0, IICB(C5IA, C5IB), Local2)
       Store(Local2, Local0)
@@ -1478,9 +1466,7 @@ Scope(\_SB.PC00) {
       Else { Return (Package() {\_SB.PC00}) }
     }
     Name (_UID, 0)  // _UID: Unique ID - Link Index
-    Method (_HID, 0, NotSerialized) { // _HID: Hardware ID
-      Return (HCID(0))
-    }
+
     Method (_CID, 0, NotSerialized) { // _CID: Compatible ID
       Return (HCID(0))
     }
@@ -1521,7 +1507,7 @@ Scope(\_SB.PC00) {
 
     Method (_CRS, 0, NotSerialized)  // _CRS: Current Resource Settings
     {
-      Store(ResourceTemplate() { }, Local0)  // empty resource buffer
+      Store(Zero, Local0)  // empty resource buffer
       // Create I2C Bus resource template using as parameters data provided in the BIOS setup
       If (LGreater (L0DI, 0)) {
         Store (IICB(L0A0, L0BS), Local1)
@@ -1821,9 +1807,7 @@ Scope(\_SB.PC00) {
       Else { Return (Package() {\_SB.PC00}) }
     }
     Name (_UID, 1)  // _UID: Unique ID - Link Index
-    Method (_HID, 0, NotSerialized) { // _HID: Hardware ID
-      Return (HCID(1))
-    }
+
     Method (_CID, 0, NotSerialized) { // _CID: Compatible ID
       Return (HCID(1))
     }
@@ -1864,7 +1848,7 @@ Scope(\_SB.PC00) {
 
     Method (_CRS, 0, NotSerialized)  // _CRS: Current Resource Settings
     {
-      Store(ResourceTemplate() { }, Local0)  // empty resource buffer
+      Store(Zero, Local0)  // empty resource buffer
       // Create I2C Bus resource template using as parameters data provided in the BIOS setup
       If (LGreater (L1DI, 0)) {
         Store (IICB(L1A0, L1BS), Local1)
@@ -2166,9 +2150,7 @@ Scope(\_SB.PC00) {
       Else { Return (Package() {\_SB.PC00}) }
     }
     Name (_UID, 2)  // _UID: Unique ID - Link Index
-    Method (_HID, 0, NotSerialized) { // _HID: Hardware ID
-      Return (HCID(2))
-    }
+
     Method (_CID, 0, NotSerialized) { // _CID: Compatible ID
       Return (HCID(2))
     }
@@ -2209,7 +2191,7 @@ Scope(\_SB.PC00) {
 
     Method (_CRS, 0, NotSerialized)  // _CRS: Current Resource Settings
     {
-      Store(ResourceTemplate() { }, Local0)  // empty resource buffer
+      Store(Zero, Local0)  // empty resource buffer
       // Create I2C Bus resource template using as parameters data provided in the BIOS setup
       If (LGreater (L2DI, 0)) {
         Store (IICB(L2A0, L2BS), Local1)
@@ -2510,9 +2492,7 @@ Scope(\_SB.PC00) {
       Else { Return (Package() {\_SB.PC00}) }
     }
     Name (_UID, 3)  // _UID: Unique ID - Link Index
-    Method (_HID, 0, NotSerialized) { // _HID: Hardware ID
-      Return (HCID(3))
-    }
+
     Method (_CID, 0, NotSerialized) { // _CID: Compatible ID
       Return (HCID(3))
     }
@@ -2553,7 +2533,7 @@ Scope(\_SB.PC00) {
 
     Method (_CRS, 0, NotSerialized)  // _CRS: Current Resource Settings
     {
-      Store(ResourceTemplate() { }, Local0)  // empty resource buffer
+      Store(Zero, Local0)  // empty resource buffer
       // Create I2C Bus resource template using as parameters data provided in the BIOS setup
       If (LGreater (L3DI, 0)) {
         Store (IICB(L3A0, L3BS), Local1)
@@ -2854,9 +2834,7 @@ Scope(\_SB.PC00) {
       Else { Return (Package() {\_SB.PC00}) }
     }
     Name (_UID, 4)  // _UID: Unique ID - Link Index
-    Method (_HID, 0, NotSerialized) { // _HID: Hardware ID
-      Return (HCID(4))
-    }
+
     Method (_CID, 0, NotSerialized) { // _CID: Compatible ID
       Return (HCID(4))
     }
@@ -2897,7 +2875,7 @@ Scope(\_SB.PC00) {
 
     Method (_CRS, 0, NotSerialized)  // _CRS: Current Resource Settings
     {
-      Store(ResourceTemplate() { }, Local0)  // empty resource buffer
+      Store(Zero, Local0)  // empty resource buffer
       // Create I2C Bus resource template using as parameters data provided in the BIOS setup
       If (LGreater (L4DI, 0)) {
         Store (IICB(L4A0, L4BS), Local1)
@@ -3198,9 +3176,7 @@ Scope(\_SB.PC00) {
       Else { Return (Package() {\_SB.PC00}) }
     }
     Name (_UID, 5)  // _UID: Unique ID - Link Index
-    Method (_HID, 0, NotSerialized) { // _HID: Hardware ID
-      Return (HCID(5))
-    }
+
     Method (_CID, 0, NotSerialized) { // _CID: Compatible ID
       Return (HCID(5))
     }
@@ -3241,7 +3217,7 @@ Scope(\_SB.PC00) {
 
     Method (_CRS, 0, NotSerialized)  // _CRS: Current Resource Settings
     {
-      Store(ResourceTemplate() { }, Local0)  // empty resource buffer
+      Store(Zero, Local0)  // empty resource buffer
       // Create I2C Bus resource template using as parameters data provided in the BIOS setup
       If (LGreater (L5DI, 0)) {
         Store (IICB(L5A0, L5BS), Local1)
@@ -3535,7 +3511,6 @@ Scope(\_SB.PC00) {
 Scope(\_SB.PC00.I2C2) {
   Device(CAM0) { //IMX135-CRDG2
     Name(_ADR, Zero)
-    Name(_HID, "INT3471")
     Name(_CID, "INT3471")
     Name(_DDN, "IMX135-CRDG2")
     Name(_UID, "0")
@@ -3670,7 +3645,6 @@ Scope(\_SB.PC00.I2C2) {
 Scope(\_SB.PC00.I2C4) {
   Device(CAM1) {     //OV2740-CRDG2
     Name(_ADR, Zero)
-    Name(_HID, "INT3474")
     Name(_CID, "INT3474")
     Name(_DDN, "OV2740-CRDG2")
     Name(_UID, "0")
@@ -3779,7 +3753,6 @@ Scope(\_SB.PC00.I2C4) {
 Scope(\_SB.PC00.I2C2) {
   Device(PMIC) {
     Name(_ADR, Zero)
-    Name(_HID, "INT3472")
     Name(_CID, "INT3472")
     Name(_DDN, "PMIC-CRDG2")
     Name(_UID, "0")

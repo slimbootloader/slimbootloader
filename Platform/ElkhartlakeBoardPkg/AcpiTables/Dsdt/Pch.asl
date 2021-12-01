@@ -116,7 +116,7 @@ Scope (\_SB) {
     Name(_HID,EISAID("PNP0C02"))
     Name(_UID,"IoTraps")
     Method(_CRS, 0x0, Serialized) {
-      Store(ResourceTemplate() { }, Local0)
+      Store(Zero, Local0)
       Name(BUF0,ResourceTemplate(){ Io(Decode16,0x0,0x0,0x1,0xFF,TAG0) })
       Name(BUF1,ResourceTemplate(){ Io(Decode16,0x0,0x0,0x1,0xFF,TAG1) })
       Name(BUF2,ResourceTemplate(){ Io(Decode16,0x0,0x0,0x1,0xFF,TAG2) })

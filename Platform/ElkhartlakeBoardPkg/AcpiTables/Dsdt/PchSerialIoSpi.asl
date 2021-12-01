@@ -41,7 +41,6 @@ Scope(\_SB.PC00) {
 //-------------------------------------------
   Device (SPI0) {
     If(LEqual(SPI0_MODE, SERIAL_IO_SPI_HIDDEN)) {
-      Name (_HID, "PNP0C02")
       Method (_CRS) { Return (SPIH (SPI0_PCIE_BASE)) }
       Name (_STA, 0x3)
     }
@@ -59,7 +58,6 @@ Scope(\_SB.PC00) {
 //------------------------------------------
   Device (SPI1) {
     If (LEqual(SPI1_MODE, SERIAL_IO_SPI_HIDDEN)) {
-      Name (_HID, "PNP0C02")
       Method (_CRS) { Return (SPIH (SPI1_PCIE_BASE)) }
       Name (_STA, 0x3)
       Method (_INI, 0, Serialized) {
@@ -93,7 +91,6 @@ Scope(\_SB.PC00) {
 //------------------------------------------
   Device (SPI2) {
     If (LEqual (SPI2_MODE, SERIAL_IO_SPI_HIDDEN)) {
-      Name (_HID, "PNP0C02")
       Method (_CRS) { Return (SPIH (SPI2_PCIE_BASE)) }
       Name(_STA, 0x3)
     }

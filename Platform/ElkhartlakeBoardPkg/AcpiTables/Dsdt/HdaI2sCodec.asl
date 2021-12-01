@@ -1,7 +1,7 @@
 /**@file
  I2S Audio Codec ACPI
 
-  Copyright (c) 2017 Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -89,4 +89,10 @@ Device (HDAC)
   Method (_DIS, 0x0, NotSerialized) {
     Store (1, CDIS) // Set Disabled bit
   }
+  Name(_PRS, ResourceTemplate(){
+    StartDependentFn(0, 0) {
+    IRQNoFlags(){12}
+    }
+    EndDependentFn()
+  })
 }  // Device (HDAC)

@@ -1,7 +1,7 @@
 /**@file
  Trace Hub debug library for ASL code.
 
- Copyright (c) 2015 - 2019, Intel Corporation. All rights reserved.<BR>
+ Copyright (c) 2015 - 2021, Intel Corporation. All rights reserved.<BR>
  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -19,8 +19,8 @@
 
 Scope(\){
   // Check if Trace Hub is enabled
+  OperationRegion (THBA, SystemMemory, PCH_TRACE_HUB_FW_BASE_ADDRESS, 0x10)
   Method (THEN, 0, Serialized) {
-    OperationRegion (THBA, SystemMemory, PCH_TRACE_HUB_FW_BASE_ADDRESS, 0x10)
     Field (THBA, DWordAcc, NoLock, Preserve) {
       Offset (0x00),
       DO00, 32,

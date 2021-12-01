@@ -1,7 +1,7 @@
 /**@file
   ACPI DSDT table for PSE
 
- Copyright (c) 2019 Intel Corporation. All rights reserved.<BR>
+ Copyright (c) 2019 - 2021 Intel Corporation. All rights reserved.<BR>
  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -64,7 +64,6 @@ Scope(\_SB.PC00) {
   //-------------------------------------------
   Device(DMA0) {
     Name (_ADR, 0x001D0003) // Device 29, Function 3
-    Name (_HID, "80864BB4")
     Name (_UID, Zero)
     Method (_STA, 0, NotSerialized)
     {
@@ -77,7 +76,6 @@ Scope(\_SB.PC00) {
   //-------------------------------------------
   Device(DMA1) {
     Name (_ADR, 0x001D0004) // Device 29, Function 4
-    Name (_HID, "80864BB5")
     Name (_UID, Zero)
     Name (RBUF, ResourceTemplate ()
     {
@@ -106,7 +104,6 @@ Scope(\_SB.PC00) {
   //-------------------------------------------
   Device(DMA2) {
     Name (_ADR, 0x001D0005) // Device 29, Function 5
-    Name (_HID, "80864BB6")
     Name (_UID, Zero)
     Name (RBUF, ResourceTemplate ()
     {
@@ -365,16 +362,13 @@ Scope(\_SB.PC00) {
         Return (0xF)
       }
     }
-    Method(_DSD, 0) {
-      Return(
-          Package () {
+    Name(_DSD, Package () {
             ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
             Package () {
                 Package () {"bosch,mram-cfg", Package () {0x0, 0x80, 0x40, 0x40, 0, 0x40, 0x10, 0x10}}
             }
-          }
-        )
-    }
+      }
+    )
   } // Device(CAN0)
 
   //-------------------------------------------
@@ -396,16 +390,13 @@ Scope(\_SB.PC00) {
         Return (0xF)
       }
     }
-    Method(_DSD, 0) {
-      Return(
-          Package () {
-            ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
-            Package () {
-                Package () {"bosch,mram-cfg", Package () {0x0, 0x80, 0x40, 0x40, 0, 0x40, 0x10, 0x10}}
-            }
-          }
-        )
+    Name(_DSD, Package () {
+      ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+      Package () {
+          Package () {"bosch,mram-cfg", Package () {0x0, 0x80, 0x40, 0x40, 0, 0x40, 0x10, 0x10}}
+      }
     }
+)
   } // Device(CAN1)
 
   //-------------------------------------------
@@ -464,19 +455,13 @@ Scope(\_SB.PC00) {
       })
       Return(RBUF)
     }
-    Method(_DSD, 0) {
-      If(LNotEqual(PUA0, 0)) {
-        Return(
-          Package () {
-            ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
-            Package () {
-                Package () {"snps,rs485-interface-en", 1},
-                Package () {"snps,de-active-high", 1},
-            }
-          }
-        )
+    Name (_DSD, Package () {
+      ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+      Package () {
+        Package () {"snps,rs485-interface-en", 1},
+        Package () {"snps,de-active-high", 1},
       }
-    }
+    })
   } // Device(OUA0)
 
   //-------------------------------------------
@@ -493,19 +478,13 @@ Scope(\_SB.PC00) {
       })
       Return(RBUF)
     }
-    Method(_DSD, 0) {
-      If(LNotEqual(PUA1, 0)) {
-        Return(
-          Package () {
-            ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
-            Package () {
-                Package () {"snps,rs485-interface-en", 1},
-                Package () {"snps,de-active-high", 1},
-            }
-          }
-        )
+    Name (_DSD, Package () {
+      ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+      Package () {
+        Package () {"snps,rs485-interface-en", 1},
+        Package () {"snps,de-active-high", 1},
       }
-    }
+    })
   } // Device(OUA1)
 
   //-------------------------------------------
@@ -522,19 +501,13 @@ Scope(\_SB.PC00) {
       })
       Return(RBUF)
     }
-    Method(_DSD, 0) {
-      If(LNotEqual(PUA2, 0)) {
-        Return(
-          Package () {
-            ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
-            Package () {
-                Package () {"snps,rs485-interface-en", 1},
-                Package () {"snps,de-active-high", 1},
-            }
-          }
-        )
+    Name (_DSD, Package () {
+      ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+      Package () {
+        Package () {"snps,rs485-interface-en", 1},
+        Package () {"snps,de-active-high", 1},
       }
-    }
+    })
   } // Device(OUA2)
 
   //-------------------------------------------
@@ -551,19 +524,13 @@ Scope(\_SB.PC00) {
       })
       Return(RBUF)
     }
-    Method(_DSD, 0) {
-      If(LNotEqual(PUA3, 0)) {
-        Return(
-          Package () {
-            ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
-            Package () {
-                Package () {"snps,rs485-interface-en", 1},
-                Package () {"snps,de-active-high", 1},
-            }
-          }
-        )
+    Name (_DSD, Package () {
+      ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+      Package () {
+        Package () {"snps,rs485-interface-en", 1},
+        Package () {"snps,de-active-high", 1},
       }
-    }
+    })
   } // Device(OUA3)
 
   //-------------------------------------------
