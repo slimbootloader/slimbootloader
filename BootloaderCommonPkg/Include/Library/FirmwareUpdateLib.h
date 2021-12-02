@@ -387,6 +387,28 @@ BootMediaWrite (
   OUT    UINT8                   *Buffer
   );
 
+
+/**
+  This function writes blocks to the SPI device based on flash region type.
+
+  @param[in] FlashRegionType      The Flash Region type for flash cycle which is listed in the Descriptor.
+  @param[in]  Address             The block address in the FlashRegionAll to read from on the SPI.
+  @param[in]  ByteCount           Size of the Buffer in bytes.
+  @param[out] Buffer              Pointer to caller-allocated buffer containing the data received during the SPI cycle.
+
+  @retval EFI_SUCCESS             Write completes successfully.
+  @retval others                  Device error, the command aborts abnormally.
+
+**/
+EFI_STATUS
+EFIAPI
+BootMediaWriteByType (
+  IN     FLASH_REGION_TYPE  FlashRegionType,
+  IN     UINT64             Address,
+  IN     UINT32             ByteCount,
+  OUT    UINT8              *Buffer
+  );
+
 /**
   Erase the data on the BootMedia.
 
