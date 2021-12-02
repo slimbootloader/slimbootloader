@@ -95,6 +95,47 @@ typedef union {
 #define SMBUS_IO_EXPANDER_INPUT_PORT1_CMD   0x1
 
 /**
+  Returns the BoardId ID of the platform from UP2 6000 GPIO pins.
+
+  @param[in]  BoardId           BoardId ID as determined through the GPIO Pins.
+**/
+VOID
+EFIAPI
+GetBoardIdFromUP2 (
+  OUT UINT16          *BoardId
+  )
+{
+  EFI_STATUS        Status;
+  UINT32            GpioData;
+  UINT32            GpioGroup;
+  UINT32            GpioPad;
+  UINT32            UP2BoardID;
+
+  GpioGroup = (GPIO_VER3_GROUP_GPP_U << 16);
+  // Calculate the GPPC_U_4 pad
+  GpioPad = GpioGroup + 0x4; //GPPC_U_4
+  Status = GpioGetInputValue (GpioPad, &GpioData);
+  UP2BoardID &= GpioData;
+  DEBUG ((DEBUG_ERROR, "GPPC_U_4 : 0x%x\n", GpioData));
+  // Calculate the GPPC_U_5 pad
+  GpioPad = GpioGroup + 0x5; //GPPC_U_5
+  Status = GpioGetInputValue (GpioPad, &GpioData);
+  UP2BoardID &= (GpioData << 1);
+  DEBUG ((DEBUG_ERROR, "GPPC_U_5 : 0x%x\n", GpioData));
+  // Calculate the GPPC_U_6 pad
+  GpioPad = GpioGroup + 0x6; //GPPC_U_6
+  Status = GpioGetInputValue (GpioPad, &GpioData);
+  UP2BoardID &= (GpioData << 2);
+  DEBUG ((DEBUG_ERROR, "GPPC_U_6 : 0x%x\n", GpioData));
+  DEBUG ((DEBUG_ERROR, "UP2BoardID : 0x%x\n", UP2BoardID));
+  if (UP2BoardID == 0x0){
+    *BoardId = BoardIdEhlUp6000;
+  }
+  else{
+    *BoardId = BoardIdEhlLp4xType4Rvp1;
+  }
+}
+/**
   Returns the BoardId ID of the platform from Smbus I/O port expander PCA9555PW.
 
   @param[in]  BoardId           BoardId ID as determined through the Smbus.
@@ -139,7 +180,7 @@ GetBoardIdFromSmbus (
     DEBUG ((DEBUG_INFO, "Fields.SpdPresent from Smbus Io expander is %x\n", (BOOLEAN) (SmbusInputPort0Info.InputPort0Fields.SpdPresent)));
   } else {
     DEBUG ((DEBUG_ERROR, "Failed to get Board ID from Smbus Io expander\n"));
-    *BoardId = BoardIdEhlLp4xType3Crb;
+    GetBoardIdFromUP2 (BoardId);
   }
 }
 

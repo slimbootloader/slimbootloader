@@ -191,7 +191,7 @@ class Board(BaseBoard):
         # for test purpose. Based on the platform id, relevant data is populated for each platform.
         self._generated_cfg_file_prefix = 'Autogen_'
         self._CFGDATA_INT_FILE = []
-        self._CFGDATA_EXT_FILE = [self._generated_cfg_file_prefix + 'CfgData_Int_IotgRvp1.dlt', self._generated_cfg_file_prefix + 'CfgData_Ext_IotgCrb.dlt']
+        self._CFGDATA_EXT_FILE = [self._generated_cfg_file_prefix + 'CfgData_Int_IotgRvp1.dlt', self._generated_cfg_file_prefix + 'CfgData_Ext_IotgCrb.dlt', self._generated_cfg_file_prefix + 'CfgData_Ext_Up6000.dlt']
 
     def PlatformBuildHook (self, build, phase):
         if phase == 'pre-build:before':
