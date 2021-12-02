@@ -98,11 +98,23 @@ FspApiSuccess:
     mov     ebp, ecx
     mov     esp, edx
 
+    ;
+    ; Save time stamp to stack
+    ;
+    push    esi
+    push    edi
+
     ; Create page tables
     ;   ECX: Page base
     mov     eax, ADDR_OF(BuildPatchData)
     add     ecx, dword [eax + 0x00]
     OneTimeCall  PreparePagingTable
+
+    ;
+    ; Restore time stamp from stack
+    ;
+    pop     edi
+    pop     esi
 
     ;
     ; Set CR3 now that the paging structures are available
