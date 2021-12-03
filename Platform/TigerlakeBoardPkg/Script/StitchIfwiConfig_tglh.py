@@ -1,6 +1,6 @@
 #  This is an IFWI stitch config script for Slim Bootloader
 #
-# Copyright (c) 2020, Intel Corporation. All rights reserved. <BR>
+# Copyright (c) 2021, Intel Corporation. All rights reserved. <BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -89,7 +89,8 @@ def check_parameter(para_list):
         'dbg'     : {},
         'tsn'     : {},
         '32MB'   : {},
-        'spi'    : {'25MHz', '50MHz'}
+        'spi'    : {'25MHz', '50MHz'},
+        'cfg3'   : {}
         }
 
     para_help = \
@@ -103,6 +104,7 @@ def check_parameter(para_list):
                    is locked (See FW Bring-up Guide for setting details)."
         '32MB' -- Stitch image set to 32MB, by default use 16MB.
         'spi'  -- Set SPI frequency to be 25MHz, 50MHz
+        'cfg3' -- Stitch image to boot on Config 3 TGL-H RVP board.
         """
     for para in para_list:
         if para == '':
@@ -229,6 +231,14 @@ def get_xml_change_list (platform, plt_params_list):
         print ("Applying changes to enable TSN")
         xml_change_list.append ([
             ('./NetworkingConnectivity/TimeSensitiveNetworkingConfiguration/TsnEnabled', 'TSN 1 and TSN 2 Enabled'),
+            ])
+    if 'cfg3' in plt_params_list:
+        print ("Applying changes to boot on config 3 board")
+        xml_change_list.append ([
+            ('./InternalPchBuses/DmiConfiguration/DmiLaneReversal', 'Yes'),
+            ('./FlexIO/PciePortConfiguration/PCIeContoller3Config', '4x1'),
+            ('./FlexIO/SataPcieComboPortConfiguration/SataPCIeComboPort1', 'PCIe'),
+            ('./FlexIO/Usb2PortConfiguration/USB2Prt11ConTypeSel', 'Express Card / M.2 S2'),
             ])
     else:
         xml_change_list.append ([
