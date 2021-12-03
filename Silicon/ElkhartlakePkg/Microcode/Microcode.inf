@@ -14,11 +14,11 @@
   VERSION_STRING       = 1.0
 
 [Sources]
-  m0190661_00000014.mcb
+  m0190661_00000015.mcb
 
 [UserExtensions.SBL."CloneRepo"]
   REPO  = https://github.com/tianocore/edk2-non-osi.git
-  COMMIT= e95198f65ad70cad812f7a118b7a65629c1bffd4
+  COMMIT= 3aad93ea6ac0d601d779be7ff4a2d61798cf9056
 
 [UserExtensions.SBL."CopyList"]
-  Silicon/Intel/ElkhartlakeSiliconBinPkg/Microcode/m0190661_00000014.mcb  : Silicon/ElkhartlakePkg/Microcode/m0190661_00000014.mcb
+  Silicon/Intel/ElkhartlakeSiliconBinPkg/Microcode/m0190661_00000015.mcb  : Silicon/ElkhartlakePkg/Microcode/m0190661_00000015.mcb
