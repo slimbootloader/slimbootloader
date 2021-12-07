@@ -259,7 +259,7 @@ def single_sign_gen_pub_key (in_key, pub_key_file = None):
     cmdline = [get_openssl_path(), 'rsa', '-pubout', '-text', '-noout', '-in', '%s' % in_key]
     # Check if it is public key or private key
     text = open(in_key, 'r').read()
-    if '-BEGIN RSA PRIVATE KEY-' in text:
+    if '-BEGIN RSA PRIVATE KEY-' in text or '-BEGIN PRIVATE KEY-' in text:
         is_prv_key = True
     elif '-BEGIN PUBLIC KEY-' in text:
         cmdline.extend (['-pubin'])
