@@ -1,0 +1,38 @@
+## @file
+#
+#  Platform Configuration Delta File.
+#
+#  Copyright (c) 2019 - 2021, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+#
+# Delta configuration values for platform ID 0x0005
+#
+
+PLATFORMID_CFG_DATA.PlatformId    | 6
+PLAT_NAME_CFG_DATA.PlatformName   | 'UP6000'
+
+MEMORY_CFG_DATA.SpdAddressTable   | { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+MEMORY_CFG_DATA.MemorySpdPtr00    | {FILE: Spd_Lpddr4_8G.bin}
+MEMORY_CFG_DATA.MemorySpdPtr10    | {FILE: Spd_Lpddr4_8G.bin}
+MEMORY_CFG_DATA.PcieClkSrcUsage   | { 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }
+
+# Default boot with OsLoader
+GEN_CFG_DATA.PayloadId | 0
+FEATURES_CFG_DATA.Features.NewGpioSchemeEnable      | 0x0
+# Disable S0ix by default. For EHL, only S0i2.0 is supported
+FEATURES_CFG_DATA.Features.S0ix     | 0x0
+
+# Preserve ISI SPI Pins across ResetResume power-cycling
+GPIO_CFG_DATA.GpioPinConfig1_GPP_U04.GPIOSkip_GPP_U04 | 0x0
+GPIO_CFG_DATA.GpioPinConfig0_GPP_U04.GPIODirection_GPP_U04 | 0xB
+GPIO_CFG_DATA.GpioPinConfig1_GPP_U05.GPIOSkip_GPP_U05 | 0x0
+GPIO_CFG_DATA.GpioPinConfig0_GPP_U05.GPIODirection_GPP_U05 | 0xB
+GPIO_CFG_DATA.GpioPinConfig1_GPP_U06.GPIOSkip_GPP_U06 | 0x0
+GPIO_CFG_DATA.GpioPinConfig0_GPP_U06.GPIODirection_GPP_U06 | 0xB
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B02.GPIOLockConfig_GPP_B02 | 0x3
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E02.GPIOLockConfig_GPP_E02 | 0x3
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F04.GPIOLockConfig_GPP_F04 | 0x3
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F20.GPIOLockConfig_GPP_F20 | 0x3

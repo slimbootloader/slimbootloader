@@ -95,12 +95,18 @@ typedef union {
 #define SMBUS_IO_EXPANDER_INPUT_PORT1_CMD   0x1
 
 /**
+  Returns the BoardId ID of the platform from UP2 6000 GPIO pins.
+
+  @param[in]  BoardId           BoardId ID as determined through the GPIO Pins.
+**/
+VOID
+EFIAPI
+
+/**
   Returns the BoardId ID of the platform from Smbus I/O port expander PCA9555PW.
 
   @param[in]  BoardId           BoardId ID as determined through the Smbus.
 **/
-VOID
-EFIAPI
 GetBoardIdFromSmbus (
   OUT UINT16          *BoardId
   )
