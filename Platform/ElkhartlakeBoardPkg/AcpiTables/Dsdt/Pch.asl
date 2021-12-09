@@ -115,8 +115,7 @@ Scope (\_SB) {
     //
     Name(_HID,EISAID("PNP0C02"))
     Name(_UID,"IoTraps")
-    Method(_CRS, 0x0, Serialized) {
-      Store(ResourceTemplate() { }, Local0)
+    Method(_CRS) {
       Name(BUF0,ResourceTemplate(){ Io(Decode16,0x0,0x0,0x1,0xFF,TAG0) })
       Name(BUF1,ResourceTemplate(){ Io(Decode16,0x0,0x0,0x1,0xFF,TAG1) })
       Name(BUF2,ResourceTemplate(){ Io(Decode16,0x0,0x0,0x1,0xFF,TAG2) })
@@ -125,16 +124,56 @@ Scope (\_SB) {
       CreateWordField(BUF1,TAG1._MIN,AMI1);CreateWordField(BUF1,TAG1._MAX,AMA1)
       CreateWordField(BUF2,TAG2._MIN,AMI2);CreateWordField(BUF2,TAG2._MAX,AMA2)
       CreateWordField(BUF3,TAG3._MIN,AMI3);CreateWordField(BUF3,TAG3._MAX,AMA3)
-      Store(ITA0,AMI0);Store(ITA0,AMA0)
-      Store(ITA1,AMI1);Store(ITA1,AMA1)
-      Store(ITA2,AMI2);Store(ITA2,AMA2)
-      Store(ITA3,AMI3);Store(ITA3,AMA3)
+
+      Store(0, Local2)
+      //
       // Win7 can't store result of ConcatenateResTemplate directly into one of its input parameters
-      if(LEqual(ITS0,1)) { ConcatenateResTemplate(Local0, BUF0, Local1); Store(Local1, Local0) }
-      if(LEqual(ITS1,1)) { ConcatenateResTemplate(Local0, BUF1, Local1); Store(Local1, Local0) }
-      if(LEqual(ITS2,1)) { ConcatenateResTemplate(Local0, BUF2, Local1); Store(Local1, Local0) }
-      if(LEqual(ITS3,1)) { ConcatenateResTemplate(Local0, BUF3, Local1); Store(Local1, Local0) }
-      return (Local0)
+      // When ITS0, ITS1, ITS2 and ITS3 is 1. Update BUF0, BUF1, BUF2 and BUF3 then store to Local0
+      //
+      If(LEqual(ITS0,1)) {
+        Store(ITA0,AMI0)
+        Store(ITA0,AMA0)
+        Store(BUF0, Local0)
+        Store(1, Local2)
+      }
+      If(LEqual(ITS1,1)) {
+        Store(ITA1,AMI1)
+        Store(ITA1,AMA1)
+        If (LEqual (Local2,1)){
+          ConcatenateResTemplate(BUF1, Local0, Local1)
+          Store(Local1, Local0)
+        } Else {
+          Store(BUF1, Local0)
+          Store(1, Local2)
+        }
+      }
+      If(LEqual(ITS2,1)) {
+        Store(ITA2,AMI2)
+        Store(ITA2,AMA2)
+        If (LEqual(Local2, 1)){
+          ConcatenateResTemplate(BUF2, Local0, Local1)
+          Store(Local1, Local0)
+        } Else {
+          Store(BUF2, Local0)
+          Store(1, Local2)
+        }
+      }
+      If(LEqual(ITS3,1)) {
+        Store(ITA3,AMI3)
+        Store(ITA3,AMA3)
+        If(LEqual(Local2, 1)){
+          ConcatenateResTemplate(BUF3, Local0, Local1)
+          Store(Local1, Local0)
+        } Else {
+          Store(BUF3, Local0)
+          Store(1, Local2)
+        }
+      }
+      If(LEqual(Local2, 1)){
+        Return(Local0)
+      } Else {
+        Return(Buffer(){0x79, 0x00})
+      }
     }
   }
 

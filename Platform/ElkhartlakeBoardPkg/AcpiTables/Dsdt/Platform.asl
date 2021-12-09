@@ -614,7 +614,7 @@ Scope(\_SB.PC00)
 
     // Check for a specific OS which supports _OSI.
 
-    If(CondRefOf(\_OSI,Local0))
+    If(CondRefOf(\_OSI))
     {
       If(\_OSI("Windows 2001")) // Windows XP
       {
