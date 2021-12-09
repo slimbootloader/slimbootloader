@@ -516,8 +516,6 @@ DefinitionBlock (
     // of all components within the package
     ThermalZone(TZ00)
     {
-      // Temporary variable for holding the current temperature reading
-      Name(PTMP,3000)
       Name (_DEP, Package() {\_SB.ECLT})
 
       // Notifies ASL Code the current cooling mode.
@@ -617,11 +615,8 @@ DefinitionBlock (
         Store(\_SB.ECLT.ECLR( RefOf (\_SB.ECLT.CTHT)), Local0)
 
         Add(2732, Multiply(Local0, 10), Local0)
-        Store(Local0, PTMP)
         Return(Local0)
 
-        // Return a static value if no source is available.
-        Return(3000)
       }
 
       // Return the Processor(s) used for Passive Cooling.

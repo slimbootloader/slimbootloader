@@ -3,7 +3,7 @@
   This file contains Get BIOS Data and Callback functions for
   the Integrated Graphics Device (IGD) OpRegion/DSM mechanism
 
- Copyright (c) 2014 - 2019, Intel Corporation. All rights reserved.<BR>
+ Copyright (c) 2014 - 2021, Intel Corporation. All rights reserved.<BR>
  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -15,6 +15,11 @@
 // Arg2: Integer Function Index (1 = Return Supported Functions)
 // Arg3: Additional Inputs/Package Parameters Bits [31:0] input as {Byte0, Byte1, Byte2, Byte3} to BIOS which is passed as 32 bit DWORD by Driver
 //
+Name (KSVP, Package()
+{
+   0x80000000,
+   0x8000
+})
 Method (_DSM, 4, Serialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj}) {
 
   If (LEqual(Arg0, ToUUID ("3E5B41C6-EB1D-4260-9D15-C71FBADAE414"))) {
@@ -350,11 +355,6 @@ Method (_DSM, 4, Serialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj}) {
         if (LEqual(Arg1, 1)) { // test Arg1 for Revision ID: 1
 
           Store("GetAKSV ", Debug)
-          Name (KSVP, Package()
-          {
-             0x80000000,
-             0x8000
-          })
           Store(KSV0, Index(KSVP,0)) // First four bytes of AKSV
           Store(KSV1, Index(KSVP,1)) // Fifth byte of AKSV
           Return(KSVP) // Success

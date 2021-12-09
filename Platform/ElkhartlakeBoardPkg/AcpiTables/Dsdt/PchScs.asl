@@ -4,7 +4,6 @@
  Copyright (c) 2014 - 2021, Intel Corporation. All rights reserved.<BR>
  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
-External(\NGPS, IntObj)
 
 Include ("AcpiResourcesOffsets.h")
 #include <Register/ScsRegs.h>
