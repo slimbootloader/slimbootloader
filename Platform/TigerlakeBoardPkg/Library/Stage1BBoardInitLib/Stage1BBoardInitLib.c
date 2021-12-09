@@ -108,13 +108,15 @@ TccModePreMemConfig (
     DEBUG ((DEBUG_INFO, "S0ix is turned off when TCC is enabled\n"));
   }
 
-  if (IsWdtFlagsSet(WDT_FLAG_TCC_DSO) && IsWdtTimeout()) {
-    DEBUG ((DEBUG_INFO, "Incorrect TCC tuning parameters. Platform rebooted with default values.\n"));
-    WdtClearFlags (WDT_FLAG_TCC_DSO);
+  if (IsWdtFlagsSet(WDT_FLAG_TCC_BAD_DSO) ||
+      (IsWdtFlagsSet(WDT_FLAG_TCC_DSO_IN_PROGRESS) && IsWdtTimeout())) {
+    DEBUG ((DEBUG_ERROR, "Incorrect TCC tuning parameters. Platform rebooted with default values.\n"));
+    WdtClearScratchpad (WDT_FLAG_TCC_DSO_IN_PROGRESS);
+    WdtSetScratchpad (WDT_FLAG_TCC_BAD_DSO);
     FspmUpd->FspmConfig.TccStreamCfgStatusPreMem = 1;
   } else if (TccCfgData->TccTuning != 0) {
     // Setup Watch dog timer
-    WdtReloadAndStart (WDT_TIMEOUT_TCC_DSO, WDT_FLAG_TCC_DSO);
+    WdtReloadAndStart (WDT_TIMEOUT_TCC_DSO, WDT_FLAG_TCC_DSO_IN_PROGRESS);
 
     // Load TCC stream config from container
     TccStreamBase = NULL;
