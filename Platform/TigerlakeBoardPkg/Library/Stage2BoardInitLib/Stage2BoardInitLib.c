@@ -902,8 +902,8 @@ BoardInit (
     Status = PcdSet32S (PcdAcpiTableTemplatePtr, (UINT32)(UINTN)mPlatformAcpiTables);
     break;
   case PostSiliconInit:
-    if (IsWdtFlagsSet(WDT_FLAG_TCC_DSO)) {
-      WdtDisable (WDT_FLAG_TCC_DSO);
+    if (IsWdtFlagsSet(WDT_FLAG_TCC_DSO_IN_PROGRESS)) {
+      WdtDisable (WDT_FLAG_TCC_DSO_IN_PROGRESS);
     }
     // Set TSEG base/size PCD
     TsegBase = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + R_SA_TSEGMB) & ~0xF;
@@ -1024,6 +1024,9 @@ BoardInit (
   case ReadyToBoot:
     if ((GetBootMode() != BOOT_ON_FLASH_UPDATE) && (GetPayloadId() == 0)) {
       ProgramSecuritySetting ();
+    } else if (GetBootMode() == BOOT_ON_FLASH_UPDATE) {
+      /* clear bad DSO mark (if have), so next boot is a fresh restart */
+      WdtClearScratchpad (WDT_FLAG_TCC_BAD_DSO);
     }
 
     break;
@@ -1190,7 +1193,7 @@ TccModePostMemConfig (
   FspsUpd->FspsConfig.TccErrorLogEn   = TccCfgData->TccErrorLog;
   FspsUpd->FspsConfig.IfuEnable       = 0;
 
-  if (!IsWdtFlagsSet(WDT_FLAG_TCC_DSO)) {
+  if (!IsWdtFlagsSet(WDT_FLAG_TCC_DSO_IN_PROGRESS)) {
     //
     // If FSPM doesn't enable TCC DSO timer, FSPS should also skip TCC DSO.
     //
@@ -1198,7 +1201,7 @@ TccModePostMemConfig (
     FspsUpd->FspsConfig.TccStreamCfgStatus = 1;
   } else if (TccCfgData->TccTuning != 0) {
     // Reload Watch dog timer
-    WdtReloadAndStart (WDT_TIMEOUT_TCC_DSO, WDT_FLAG_TCC_DSO);
+    WdtReloadAndStart (WDT_TIMEOUT_TCC_DSO, WDT_FLAG_TCC_DSO_IN_PROGRESS);
 
     // Load TCC stream config from container
     TccStreamBase = NULL;

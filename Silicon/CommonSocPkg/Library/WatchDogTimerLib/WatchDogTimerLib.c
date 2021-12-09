@@ -22,6 +22,7 @@
 #define B_ACPI_IO_OC_WDT_CTL_ICCSURV                  BIT13
 #define B_ACPI_IO_OC_WDT_CTL_LCK                      BIT12
 #define B_ACPI_IO_OC_WDT_CTL_TOV_MASK                 0x3FF
+#define B_ACPI_IO_OC_WDT_CTL_SCRATCHPAD_MASK          0xFF0000
 
 
 /**
@@ -62,7 +63,8 @@ WdtReloadAndStart (
   }
 
   Readback = IoRead32 (WdtGetAddress ());
-  Readback |= (B_ACPI_IO_OC_WDT_CTL_EN | B_ACPI_IO_OC_WDT_CTL_ICCSURV | (Flags & WDT_FLAG_MASK));
+  Readback |= (B_ACPI_IO_OC_WDT_CTL_EN | B_ACPI_IO_OC_WDT_CTL_ICCSURV |
+               (Flags & B_ACPI_IO_OC_WDT_CTL_SCRATCHPAD_MASK));
 
   Readback &= ~(B_ACPI_IO_OC_WDT_CTL_TOV_MASK);
   Readback |= ((TimeoutValue - 1) & B_ACPI_IO_OC_WDT_CTL_TOV_MASK);
@@ -88,7 +90,7 @@ WdtDisable (
   UINT32  Readback;
 
   Readback  = IoRead32 (WdtGetAddress ());
-  Readback &= ~(B_ACPI_IO_OC_WDT_CTL_EN | (Flags & WDT_FLAG_MASK));
+  Readback &= ~(B_ACPI_IO_OC_WDT_CTL_EN | (Flags & B_ACPI_IO_OC_WDT_CTL_SCRATCHPAD_MASK));
 
   // Clear the status bits
   Readback |= (B_ACPI_IO_OC_WDT_CTL_ICCSURV_STS | B_ACPI_IO_OC_WDT_CTL_NO_ICCSURV_STS);
@@ -98,21 +100,46 @@ WdtDisable (
 
 
 /**
-  Clear WDT timer flags.
+  Clear WDT flags in scratchpad
 
-  @param[in] Flags             The timer flags that would be cleared.
+  @param[in] Flags             The scratchpad flags that would be cleared.
 
 **/
 VOID
 EFIAPI
-WdtClearFlags (
+WdtClearScratchpad (
   IN  UINT32  Flags
   )
 {
   UINT32  Readback;
 
   Readback  = IoRead32 (WdtGetAddress ());
-  Readback &= ~(Flags & WDT_FLAG_MASK);
+  /* only clear flags in scratchpad */
+  Readback &= ~(Flags & B_ACPI_IO_OC_WDT_CTL_SCRATCHPAD_MASK);
+  /* exclude status fields */
+  Readback &= ~(B_ACPI_IO_OC_WDT_CTL_ICCSURV_STS | B_ACPI_IO_OC_WDT_CTL_NO_ICCSURV_STS);
+  IoWrite32 (WdtGetAddress (), Readback);
+}
+
+/**
+  Set WDT flags in scratchpad
+
+  @param[in] Flags             The scratchpad flags that would be set.
+
+**/
+VOID
+EFIAPI
+WdtSetScratchpad (
+  IN  UINT32  Flags
+  )
+{
+  UINT32  Readback;
+
+  Readback  = IoRead32 (WdtGetAddress ());
+  /* only set flags in scratchpad */
+  Readback |= (Flags & B_ACPI_IO_OC_WDT_CTL_SCRATCHPAD_MASK);
+  /* exclude status fields */
+  Readback &= ~(B_ACPI_IO_OC_WDT_CTL_ICCSURV_STS | B_ACPI_IO_OC_WDT_CTL_NO_ICCSURV_STS);
   IoWrite32 (WdtGetAddress (), Readback);
 }
 
@@ -160,7 +187,7 @@ IsWdtFlagsSet (
 
   Readback = IoRead32 (WdtGetAddress ());
 
-  if ((Readback & (Flags & WDT_FLAG_MASK)) != 0) {
+  if ((Readback & Flags) != 0) {
     return TRUE;
   } else {
     return FALSE;

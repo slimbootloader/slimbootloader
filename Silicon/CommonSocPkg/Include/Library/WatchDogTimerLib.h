@@ -8,9 +8,9 @@
 #ifndef WATCH_DOG_TIMBER_LIB_H_
 #define WATCH_DOG_TIMBER_LIB_H_
 
-#define  WDT_TIMEOUT_TCC_DSO   200          // 200 seconds
-#define  WDT_FLAG_TCC_DSO      BIT17
-#define  WDT_FLAG_MASK         BIT17
+#define  WDT_TIMEOUT_TCC_DSO           200    // 200 seconds
+#define  WDT_FLAG_TCC_DSO_IN_PROGRESS  BIT17
+#define  WDT_FLAG_TCC_BAD_DSO          BIT18
 
 
 /**
@@ -44,14 +44,26 @@ WdtDisable (
 
 
 /**
-  Clear WDT timer flags.
+  Clear WDT flags in scratchpad
 
-  @param[in] Flags             The timer flags that would be cleared.
+  @param[in] Flags             The scratchpad flags that would be cleared.
 
 **/
 VOID
 EFIAPI
-WdtClearFlags (
+WdtClearScratchpad (
+  IN  UINT32  Flags
+  );
+
+/**
+  Set WDT flags in scratchpad
+
+  @param[in] Flags             The scratchpad flags that would be set.
+
+**/
+VOID
+EFIAPI
+WdtSetScratchpad (
   IN  UINT32  Flags
   );
 
