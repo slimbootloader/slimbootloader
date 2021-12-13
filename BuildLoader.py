@@ -1199,6 +1199,8 @@ class Build(object):
         ver_info_name = 'VerInfo'
         ver_bin_file = os.path.join(self._fv_dir, ver_info_name + '.bin')
         ver_txt_file = os.path.join(os.environ['PLT_SOURCE'], 'Platform', self._board.BOARD_PKG_NAME, ver_info_name + '.txt')
+        if hasattr(self._board, 'BOARD_PKG_NAME_OVERRIDE'):
+            ver_txt_file = os.path.join(os.environ['PLT_SOURCE'], 'Platform', self._board.BOARD_PKG_NAME_OVERRIDE, ver_info_name + '.txt')
 
         keys = ['VERINFO_IMAGE_ID', 'VERINFO_BUILD_DATE', 'VERINFO_PROJ_MINOR_VER',
                 'VERINFO_PROJ_MAJOR_VER', 'VERINFO_CORE_MINOR_VER', 'VERINFO_CORE_MAJOR_VER',
@@ -1215,7 +1217,10 @@ class Build(object):
 
         # create VBT file
         if self._board.HAVE_VBT_BIN:
-            gen_vbt_file (self._board.BOARD_PKG_NAME, self._board._MULTI_VBT_FILE, os.path.join(self._fv_dir, 'Vbt.bin'))
+            if hasattr(self._board, 'BOARD_PKG_NAME_OVERRIDE'):
+                gen_vbt_file (self._board.BOARD_PKG_NAME_OVERRIDE, self._board._MULTI_VBT_FILE, os.path.join(self._fv_dir, 'Vbt.bin'))
+            else:
+                gen_vbt_file (self._board.BOARD_PKG_NAME, self._board._MULTI_VBT_FILE, os.path.join(self._fv_dir, 'Vbt.bin'))
 
         # create platform include dsc file
         platform_dsc_path = os.path.join(sbl_dir, 'BootloaderCorePkg', 'Platform.dsc')
@@ -1237,7 +1242,8 @@ class Build(object):
         if self._board.CFGDATA_SIZE > 0:
             svn = self._board.CFGDATA_SVN
             # create config data files
-            gen_config_file (self._fv_dir, self._board.BOARD_PKG_NAME, self._board._PLATFORM_ID,
+            board_override_name = getattr(self._board, 'BOARD_PKG_NAME_OVERRIDE', '')
+            gen_config_file (self._fv_dir, board_override_name, self._board.BOARD_PKG_NAME, self._board._PLATFORM_ID,
                              self._board._CFGDATA_PRIVATE_KEY, self._board.CFG_DATABASE_SIZE, self._board.CFGDATA_SIZE,
                              self._board._CFGDATA_INT_FILE, self._board._CFGDATA_EXT_FILE,
                              self._board._SIGNING_SCHEME, HASH_VAL_STRING[self._board.SIGN_HASH_TYPE], svn)
