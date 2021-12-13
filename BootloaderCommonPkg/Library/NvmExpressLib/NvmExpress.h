@@ -32,11 +32,6 @@
 typedef struct _NVME_CONTROLLER_PRIVATE_DATA NVME_CONTROLLER_PRIVATE_DATA;
 typedef struct _NVME_DEVICE_PRIVATE_DATA     NVME_DEVICE_PRIVATE_DATA;
 typedef struct _NVME_BLKIO2_SUBTASK          NVME_BLKIO2_SUBTASK;
-typedef
-VOID
-(EFIAPI *ASYNC_IO_CALL_BACK) (
-  IN NVME_BLKIO2_SUBTASK         *SubtaskPtr
-  );
 
 #include <Protocol/NvmExpressPassthru.h>
 #include "NvmExpressBlockIo.h"
@@ -242,7 +237,7 @@ struct _NVME_BLKIO2_SUBTASK {
 
   BOOLEAN                                  IsLast;
   UINT32                                   NamespaceId;
-  ASYNC_IO_CALL_BACK                                Event;
+  EFI_EVENT                                Event;
   EFI_NVM_EXPRESS_PASS_THRU_COMMAND_PACKET *CommandPacket;
   //
   // The BlockIo2 request this subtask belongs to
@@ -272,7 +267,7 @@ typedef struct {
   VOID                                     *PrpListHost;
   VOID                                     *MapData;
   VOID                                     *MapMeta;
-  ASYNC_IO_CALL_BACK                       CallerEvent;
+  EFI_EVENT                                CallerEvent;
 } NVME_PASS_THRU_ASYNC_REQ;
 
 #define NVME_PASS_THRU_ASYNC_REQ_FROM_THIS(a) \
@@ -319,7 +314,7 @@ NvmExpressPassThru (
   IN     EFI_NVM_EXPRESS_PASS_THRU_PROTOCOL          *This,
   IN     UINT32                                      NamespaceId,
   IN OUT EFI_NVM_EXPRESS_PASS_THRU_COMMAND_PACKET    *Packet,
-  IN     ASYNC_IO_CALL_BACK                          *Event OPTIONAL
+  IN     EFI_EVENT                                   Event OPTIONAL
   );
 
 /**
