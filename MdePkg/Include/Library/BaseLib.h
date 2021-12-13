@@ -2,8 +2,11 @@
   Provides string functions, linked list functions, math functions, synchronization
   functions, file path functions, and CPU architecture-specific functions.
 
-Copyright (c) 2006 - 2019, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2006 - 2021, Intel Corporation. All rights reserved.<BR>
 Portions copyright (c) 2008 - 2009, Apple Inc. All rights reserved.<BR>
+Copyright (c) Microsoft Corporation.<BR>
+Portions Copyright (c) 2020, Hewlett Packard Enterprise Development LP. All rights reserved.<BR>
+
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -124,6 +127,30 @@ typedef struct {
 
 #endif  // defined (MDE_CPU_AARCH64)
 
+#if defined (MDE_CPU_RISCV64)
+///
+/// The RISC-V architecture context buffer used by SetJump() and LongJump().
+///
+typedef struct {
+  UINT64                            RA;
+  UINT64                            S0;
+  UINT64                            S1;
+  UINT64                            S2;
+  UINT64                            S3;
+  UINT64                            S4;
+  UINT64                            S5;
+  UINT64                            S6;
+  UINT64                            S7;
+  UINT64                            S8;
+  UINT64                            S9;
+  UINT64                            S10;
+  UINT64                            S11;
+  UINT64                            SP;
+} BASE_LIBRARY_JUMP_BUFFER;
+
+#define BASE_LIBRARY_JUMP_BUFFER_ALIGNMENT 8
+
+#endif // defined (MDE_CPU_RISCV64)
 
 //
 // String Services
@@ -189,7 +216,6 @@ StrnSizeS (
 
   If Destination is not aligned on a 16-bit boundary, then ASSERT().
   If Source is not aligned on a 16-bit boundary, then ASSERT().
-  If an error would be returned, then the function will also ASSERT().
 
   If an error is returned, then the Destination is unmodified.
 
@@ -225,7 +251,6 @@ StrCpyS (
 
   If Length > 0 and Destination is not aligned on a 16-bit boundary, then ASSERT().
   If Length > 0 and Source is not aligned on a 16-bit boundary, then ASSERT().
-  If an error would be returned, then the function will also ASSERT().
 
   If an error is returned, then the Destination is unmodified.
 
@@ -263,7 +288,6 @@ StrnCpyS (
 
   If Destination is not aligned on a 16-bit boundary, then ASSERT().
   If Source is not aligned on a 16-bit boundary, then ASSERT().
-  If an error would be returned, then the function will also ASSERT().
 
   If an error is returned, then the Destination is unmodified.
 
@@ -303,7 +327,6 @@ StrCatS (
 
   If Destination is not aligned on a 16-bit boundary, then ASSERT().
   If Source is not aligned on a 16-bit boundary, then ASSERT().
-  If an error would be returned, then the function will also ASSERT().
 
   If an error is returned, then the Destination is unmodified.
 
@@ -350,12 +373,7 @@ StrnCatS (
   be ignored. Then, the function stops at the first character that is a not a
   valid decimal character or a Null-terminator, whichever one comes first.
 
-  If String is NULL, then ASSERT().
-  If Data is NULL, then ASSERT().
   If String is not aligned in a 16-bit boundary, then ASSERT().
-  If PcdMaximumUnicodeStringLength is not zero, and String contains more than
-  PcdMaximumUnicodeStringLength Unicode characters, not including the
-  Null-terminator, then ASSERT().
 
   If String has no valid decimal digits in the above format, then 0 is stored
   at the location pointed to by Data.
@@ -406,12 +424,7 @@ StrDecimalToUintnS (
   be ignored. Then, the function stops at the first character that is a not a
   valid decimal character or a Null-terminator, whichever one comes first.
 
-  If String is NULL, then ASSERT().
-  If Data is NULL, then ASSERT().
   If String is not aligned in a 16-bit boundary, then ASSERT().
-  If PcdMaximumUnicodeStringLength is not zero, and String contains more than
-  PcdMaximumUnicodeStringLength Unicode characters, not including the
-  Null-terminator, then ASSERT().
 
   If String has no valid decimal digits in the above format, then 0 is stored
   at the location pointed to by Data.
@@ -467,12 +480,7 @@ StrDecimalToUint64S (
   the first character that is a not a valid hexadecimal character or NULL,
   whichever one comes first.
 
-  If String is NULL, then ASSERT().
-  If Data is NULL, then ASSERT().
   If String is not aligned in a 16-bit boundary, then ASSERT().
-  If PcdMaximumUnicodeStringLength is not zero, and String contains more than
-  PcdMaximumUnicodeStringLength Unicode characters, not including the
-  Null-terminator, then ASSERT().
 
   If String has no valid hexadecimal digits in the above format, then 0 is
   stored at the location pointed to by Data.
@@ -528,12 +536,7 @@ StrHexToUintnS (
   the first character that is a not a valid hexadecimal character or NULL,
   whichever one comes first.
 
-  If String is NULL, then ASSERT().
-  If Data is NULL, then ASSERT().
   If String is not aligned in a 16-bit boundary, then ASSERT().
-  If PcdMaximumUnicodeStringLength is not zero, and String contains more than
-  PcdMaximumUnicodeStringLength Unicode characters, not including the
-  Null-terminator, then ASSERT().
 
   If String has no valid hexadecimal digits in the above format, then 0 is
   stored at the location pointed to by Data.
@@ -622,8 +625,6 @@ AsciiStrnSizeS (
 
   This function is similar as strcpy_s defined in C11.
 
-  If an error would be returned, then the function will also ASSERT().
-
   If an error is returned, then the Destination is unmodified.
 
   @param  Destination              A pointer to a Null-terminated Ascii string.
@@ -655,8 +656,6 @@ AsciiStrCpyS (
   Source, then Destination[Length] is always set to null.
 
   This function is similar as strncpy_s defined in C11.
-
-  If an error would be returned, then the function will also ASSERT().
 
   If an error is returned, then the Destination is unmodified.
 
@@ -691,8 +690,6 @@ AsciiStrnCpyS (
   null char) to the end of the string pointed to by Destination.
 
   This function is similar as strcat_s defined in C11.
-
-  If an error would be returned, then the function will also ASSERT().
 
   If an error is returned, then the Destination is unmodified.
 
@@ -729,8 +726,6 @@ AsciiStrCatS (
   set to null.
 
   This function is similar as strncat_s defined in C11.
-
-  If an error would be returned, then the function will also ASSERT().
 
   If an error is returned, then the Destination is unmodified.
 
@@ -776,12 +771,6 @@ AsciiStrnCatS (
   [decimal digits]. The running zero in the beginning of [decimal digits] will
   be ignored. Then, the function stops at the first character that is a not a
   valid decimal character or a Null-terminator, whichever one comes first.
-
-  If String is NULL, then ASSERT().
-  If Data is NULL, then ASSERT().
-  If PcdMaximumAsciiStringLength is not zero, and String contains more than
-  PcdMaximumAsciiStringLength Ascii characters, not including the
-  Null-terminator, then ASSERT().
 
   If String has no valid decimal digits in the above format, then 0 is stored
   at the location pointed to by Data.
@@ -831,12 +820,6 @@ AsciiStrDecimalToUintnS (
   [decimal digits]. The running zero in the beginning of [decimal digits] will
   be ignored. Then, the function stops at the first character that is a not a
   valid decimal character or a Null-terminator, whichever one comes first.
-
-  If String is NULL, then ASSERT().
-  If Data is NULL, then ASSERT().
-  If PcdMaximumAsciiStringLength is not zero, and String contains more than
-  PcdMaximumAsciiStringLength Ascii characters, not including the
-  Null-terminator, then ASSERT().
 
   If String has no valid decimal digits in the above format, then 0 is stored
   at the location pointed to by Data.
@@ -891,12 +874,6 @@ AsciiStrDecimalToUint64S (
   character that is a not a valid hexadecimal character or Null-terminator,
   whichever on comes first.
 
-  If String is NULL, then ASSERT().
-  If Data is NULL, then ASSERT().
-  If PcdMaximumAsciiStringLength is not zero, and String contains more than
-  PcdMaximumAsciiStringLength Ascii characters, not including the
-  Null-terminator, then ASSERT().
-
   If String has no valid hexadecimal digits in the above format, then 0 is
   stored at the location pointed to by Data.
   If the number represented by String exceeds the range defined by UINTN, then
@@ -950,12 +927,6 @@ AsciiStrHexToUintnS (
   character that is a not a valid hexadecimal character or Null-terminator,
   whichever on comes first.
 
-  If String is NULL, then ASSERT().
-  If Data is NULL, then ASSERT().
-  If PcdMaximumAsciiStringLength is not zero, and String contains more than
-  PcdMaximumAsciiStringLength Ascii characters, not including the
-  Null-terminator, then ASSERT().
-
   If String has no valid hexadecimal digits in the above format, then 0 is
   stored at the location pointed to by Data.
   If the number represented by String exceeds the range defined by UINT64, then
@@ -990,82 +961,6 @@ AsciiStrHexToUint64S (
   OUT       UINT64             *Data
   );
 
-
-#ifndef DISABLE_NEW_DEPRECATED_INTERFACES
-
-/**
-  [ATTENTION] This function is deprecated for security reason.
-
-  Copies one Null-terminated Unicode string to another Null-terminated Unicode
-  string and returns the new Unicode string.
-
-  This function copies the contents of the Unicode string Source to the Unicode
-  string Destination, and returns Destination. If Source and Destination
-  overlap, then the results are undefined.
-
-  If Destination is NULL, then ASSERT().
-  If Destination is not aligned on a 16-bit boundary, then ASSERT().
-  If Source is NULL, then ASSERT().
-  If Source is not aligned on a 16-bit boundary, then ASSERT().
-  If Source and Destination overlap, then ASSERT().
-  If PcdMaximumUnicodeStringLength is not zero, and Source contains more than
-  PcdMaximumUnicodeStringLength Unicode characters not including the
-  Null-terminator, then ASSERT().
-
-  @param  Destination The pointer to a Null-terminated Unicode string.
-  @param  Source      The pointer to a Null-terminated Unicode string.
-
-  @return Destination.
-
-**/
-CHAR16 *
-EFIAPI
-StrCpy (
-  OUT     CHAR16                    *Destination,
-  IN      CONST CHAR16              *Source
-  );
-
-
-/**
-  [ATTENTION] This function is deprecated for security reason.
-
-  Copies up to a specified length from one Null-terminated Unicode string to
-  another Null-terminated Unicode string and returns the new Unicode string.
-
-  This function copies the contents of the Unicode string Source to the Unicode
-  string Destination, and returns Destination. At most, Length Unicode
-  characters are copied from Source to Destination. If Length is 0, then
-  Destination is returned unmodified. If Length is greater that the number of
-  Unicode characters in Source, then Destination is padded with Null Unicode
-  characters. If Source and Destination overlap, then the results are
-  undefined.
-
-  If Length > 0 and Destination is NULL, then ASSERT().
-  If Length > 0 and Destination is not aligned on a 16-bit boundary, then ASSERT().
-  If Length > 0 and Source is NULL, then ASSERT().
-  If Length > 0 and Source is not aligned on a 16-bit boundary, then ASSERT().
-  If Source and Destination overlap, then ASSERT().
-  If PcdMaximumUnicodeStringLength is not zero, and Length is greater than
-  PcdMaximumUnicodeStringLength, then ASSERT().
-  If PcdMaximumUnicodeStringLength is not zero, and Source contains more than
-  PcdMaximumUnicodeStringLength Unicode characters, not including the Null-terminator,
-  then ASSERT().
-
-  @param  Destination The pointer to a Null-terminated Unicode string.
-  @param  Source      The pointer to a Null-terminated Unicode string.
-  @param  Length      The maximum number of Unicode characters to copy.
-
-  @return Destination.
-
-**/
-CHAR16 *
-EFIAPI
-StrnCpy (
-  OUT     CHAR16                    *Destination,
-  IN      CONST CHAR16              *Source,
-  IN      UINTN                     Length
-  );
-#endif // !defined (DISABLE_NEW_DEPRECATED_INTERFACES)
 
 /**
   Returns the length of a Null-terminated Unicode string.
@@ -1192,99 +1087,6 @@ StrnCmp (
   IN      UINTN                     Length
   );
 
-
-#ifndef DISABLE_NEW_DEPRECATED_INTERFACES
-
-/**
-  [ATTENTION] This function is deprecated for security reason.
-
-  Concatenates one Null-terminated Unicode string to another Null-terminated
-  Unicode string, and returns the concatenated Unicode string.
-
-  This function concatenates two Null-terminated Unicode strings. The contents
-  of Null-terminated Unicode string Source are concatenated to the end of
-  Null-terminated Unicode string Destination. The Null-terminated concatenated
-  Unicode String is returned. If Source and Destination overlap, then the
-  results are undefined.
-
-  If Destination is NULL, then ASSERT().
-  If Destination is not aligned on a 16-bit boundary, then ASSERT().
-  If Source is NULL, then ASSERT().
-  If Source is not aligned on a 16-bit boundary, then ASSERT().
-  If Source and Destination overlap, then ASSERT().
-  If PcdMaximumUnicodeStringLength is not zero, and Destination contains more
-  than PcdMaximumUnicodeStringLength Unicode characters, not including the
-  Null-terminator, then ASSERT().
-  If PcdMaximumUnicodeStringLength is not zero, and Source contains more than
-  PcdMaximumUnicodeStringLength Unicode characters, not including the
-  Null-terminator, then ASSERT().
-  If PcdMaximumUnicodeStringLength is not zero, and concatenating Destination
-  and Source results in a Unicode string with more than
-  PcdMaximumUnicodeStringLength Unicode characters, not including the
-  Null-terminator, then ASSERT().
-
-  @param  Destination The pointer to a Null-terminated Unicode string.
-  @param  Source      The pointer to a Null-terminated Unicode string.
-
-  @return Destination.
-
-**/
-CHAR16 *
-EFIAPI
-StrCat (
-  IN OUT  CHAR16                    *Destination,
-  IN      CONST CHAR16              *Source
-  );
-
-
-/**
-  [ATTENTION] This function is deprecated for security reason.
-
-  Concatenates up to a specified length one Null-terminated Unicode to the end
-  of another Null-terminated Unicode string, and returns the concatenated
-  Unicode string.
-
-  This function concatenates two Null-terminated Unicode strings. The contents
-  of Null-terminated Unicode string Source are concatenated to the end of
-  Null-terminated Unicode string Destination, and Destination is returned. At
-  most, Length Unicode characters are concatenated from Source to the end of
-  Destination, and Destination is always Null-terminated. If Length is 0, then
-  Destination is returned unmodified. If Source and Destination overlap, then
-  the results are undefined.
-
-  If Destination is NULL, then ASSERT().
-  If Length > 0 and Destination is not aligned on a 16-bit boundary, then ASSERT().
-  If Length > 0 and Source is NULL, then ASSERT().
-  If Length > 0 and Source is not aligned on a 16-bit boundary, then ASSERT().
-  If Source and Destination overlap, then ASSERT().
-  If PcdMaximumUnicodeStringLength is not zero, and Length is greater than
-  PcdMaximumUnicodeStringLength, then ASSERT().
-  If PcdMaximumUnicodeStringLength is not zero, and Destination contains more
-  than PcdMaximumUnicodeStringLength Unicode characters, not including the
-  Null-terminator, then ASSERT().
-  If PcdMaximumUnicodeStringLength is not zero, and Source contains more than
-  PcdMaximumUnicodeStringLength Unicode characters, not including the
-  Null-terminator, then ASSERT().
-  If PcdMaximumUnicodeStringLength is not zero, and concatenating Destination
-  and Source results in a Unicode string with more than PcdMaximumUnicodeStringLength
-  Unicode characters, not including the Null-terminator, then ASSERT().
-
-  @param  Destination The pointer to a Null-terminated Unicode string.
-  @param  Source      The pointer to a Null-terminated Unicode string.
-  @param  Length      The maximum number of Unicode characters to concatenate from
-                      Source.
-
-  @return Destination.
-
-**/
-CHAR16 *
-EFIAPI
-StrnCat (
-  IN OUT  CHAR16                    *Destination,
-  IN      CONST CHAR16              *Source,
-  IN      UINTN                     Length
-  );
-#endif // !defined (DISABLE_NEW_DEPRECATED_INTERFACES)
 
 /**
   Returns the first occurrence of a Null-terminated Unicode sub-string
@@ -1506,15 +1308,7 @@ StrHexToUint64 (
   "::" can be used to compress one or more groups of X when X contains only 0.
   The "::" can only appear once in the String.
 
-  If String is NULL, then ASSERT().
-
-  If Address is NULL, then ASSERT().
-
   If String is not aligned in a 16-bit boundary, then ASSERT().
-
-  If PcdMaximumUnicodeStringLength is not zero, and String contains more than
-  PcdMaximumUnicodeStringLength Unicode characters, not including the
-  Null-terminator, then ASSERT().
 
   If EndPointer is not NULL and Address is translated from String, a pointer
   to the character that stopped the scan is stored at the location pointed to
@@ -1567,15 +1361,7 @@ StrToIpv6Address (
   When /P is in the String, the function stops at the first character that is not
   a valid decimal digit character after P is converted.
 
-  If String is NULL, then ASSERT().
-
-  If Address is NULL, then ASSERT().
-
   If String is not aligned in a 16-bit boundary, then ASSERT().
-
-  If PcdMaximumUnicodeStringLength is not zero, and String contains more than
-  PcdMaximumUnicodeStringLength Unicode characters, not including the
-  Null-terminator, then ASSERT().
 
   If EndPointer is not NULL and Address is translated from String, a pointer
   to the character that stopped the scan is stored at the location pointed to
@@ -1640,8 +1426,6 @@ StrToIpv4Address (
                   oo          Data4[48:55]
                   pp          Data4[56:63]
 
-  If String is NULL, then ASSERT().
-  If Guid is NULL, then ASSERT().
   If String is not aligned in a 16-bit boundary, then ASSERT().
 
   @param  String                   Pointer to a Null-terminated Unicode string.
@@ -1676,17 +1460,6 @@ StrToGuid (
 
   If String is not aligned in a 16-bit boundary, then ASSERT().
 
-  If String is NULL, then ASSERT().
-
-  If Buffer is NULL, then ASSERT().
-
-  If Length is not multiple of 2, then ASSERT().
-
-  If PcdMaximumUnicodeStringLength is not zero and Length is greater than
-  PcdMaximumUnicodeStringLength, then ASSERT().
-
-  If MaxBufferSize is less than (Length / 2), then ASSERT().
-
   @param  String                   Pointer to a Null-terminated Unicode string.
   @param  Length                   The number of Unicode characters to decode.
   @param  Buffer                   Pointer to the converted bytes array.
@@ -1713,51 +1486,6 @@ StrHexToBytes (
   IN  UINTN              MaxBufferSize
   );
 
-#ifndef DISABLE_NEW_DEPRECATED_INTERFACES
-
-/**
-  [ATTENTION] This function is deprecated for security reason.
-
-  Convert a Null-terminated Unicode string to a Null-terminated
-  ASCII string and returns the ASCII string.
-
-  This function converts the content of the Unicode string Source
-  to the ASCII string Destination by copying the lower 8 bits of
-  each Unicode character. It returns Destination.
-
-  The caller is responsible to make sure Destination points to a buffer with size
-  equal or greater than ((StrLen (Source) + 1) * sizeof (CHAR8)) in bytes.
-
-  If any Unicode characters in Source contain non-zero value in
-  the upper 8 bits, then ASSERT().
-
-  If Destination is NULL, then ASSERT().
-  If Source is NULL, then ASSERT().
-  If Source is not aligned on a 16-bit boundary, then ASSERT().
-  If Source and Destination overlap, then ASSERT().
-
-  If PcdMaximumUnicodeStringLength is not zero, and Source contains
-  more than PcdMaximumUnicodeStringLength Unicode characters not including
-  the Null-terminator, then ASSERT().
-
-  If PcdMaximumAsciiStringLength is not zero, and Source contains more
-  than PcdMaximumAsciiStringLength Unicode characters not including the
-  Null-terminator, then ASSERT().
-
-  @param  Source        The pointer to a Null-terminated Unicode string.
-  @param  Destination   The pointer to a Null-terminated ASCII string.
-
-  @return Destination.
-
-**/
-CHAR8 *
-EFIAPI
-UnicodeStrToAsciiStr (
-  IN      CONST CHAR16              *Source,
-  OUT     CHAR8                     *Destination
-  );
-
-#endif // !defined (DISABLE_NEW_DEPRECATED_INTERFACES)
 
 /**
   Convert a Null-terminated Unicode string to a Null-terminated
@@ -1777,7 +1505,6 @@ UnicodeStrToAsciiStr (
   the upper 8 bits, then ASSERT().
 
   If Source is not aligned on a 16-bit boundary, then ASSERT().
-  If an error would be returned, then the function will also ASSERT().
 
   If an error is returned, then the Destination is unmodified.
 
@@ -1824,7 +1551,6 @@ UnicodeStrToAsciiStrS (
   If any Unicode characters in Source contain non-zero value in the upper 8
   bits, then ASSERT().
   If Source is not aligned on a 16-bit boundary, then ASSERT().
-  If an error would be returned, then the function will also ASSERT().
 
   If an error is returned, then the Destination is unmodified.
 
@@ -1862,76 +1588,6 @@ UnicodeStrnToAsciiStrS (
   OUT     UINTN                     *DestinationLength
   );
 
-#ifndef DISABLE_NEW_DEPRECATED_INTERFACES
-
-/**
-  [ATTENTION] This function is deprecated for security reason.
-
-  Copies one Null-terminated ASCII string to another Null-terminated ASCII
-  string and returns the new ASCII string.
-
-  This function copies the contents of the ASCII string Source to the ASCII
-  string Destination, and returns Destination. If Source and Destination
-  overlap, then the results are undefined.
-
-  If Destination is NULL, then ASSERT().
-  If Source is NULL, then ASSERT().
-  If Source and Destination overlap, then ASSERT().
-  If PcdMaximumAsciiStringLength is not zero and Source contains more than
-  PcdMaximumAsciiStringLength ASCII characters not including the Null-terminator,
-  then ASSERT().
-
-  @param  Destination The pointer to a Null-terminated ASCII string.
-  @param  Source      The pointer to a Null-terminated ASCII string.
-
-  @return Destination
-
-**/
-CHAR8 *
-EFIAPI
-AsciiStrCpy (
-  OUT     CHAR8                     *Destination,
-  IN      CONST CHAR8               *Source
-  );
-
-
-/**
-  [ATTENTION] This function is deprecated for security reason.
-
-  Copies up to a specified length one Null-terminated ASCII string to another
-  Null-terminated ASCII string and returns the new ASCII string.
-
-  This function copies the contents of the ASCII string Source to the ASCII
-  string Destination, and returns Destination. At most, Length ASCII characters
-  are copied from Source to Destination. If Length is 0, then Destination is
-  returned unmodified. If Length is greater that the number of ASCII characters
-  in Source, then Destination is padded with Null ASCII characters. If Source
-  and Destination overlap, then the results are undefined.
-
-  If Destination is NULL, then ASSERT().
-  If Source is NULL, then ASSERT().
-  If Source and Destination overlap, then ASSERT().
-  If PcdMaximumAsciiStringLength is not zero, and Length is greater than
-  PcdMaximumAsciiStringLength, then ASSERT().
-  If PcdMaximumAsciiStringLength is not zero, and Source contains more than
-  PcdMaximumAsciiStringLength ASCII characters, not including the Null-terminator,
-  then ASSERT().
-
-  @param  Destination The pointer to a Null-terminated ASCII string.
-  @param  Source      The pointer to a Null-terminated ASCII string.
-  @param  Length      The maximum number of ASCII characters to copy.
-
-  @return Destination
-
-**/
-CHAR8 *
-EFIAPI
-AsciiStrnCpy (
-  OUT     CHAR8                     *Destination,
-  IN      CONST CHAR8               *Source,
-  IN      UINTN                     Length
-  );
-#endif // !defined (DISABLE_NEW_DEPRECATED_INTERFACES)
 
 /**
   Returns the length of a Null-terminated ASCII string.
@@ -2090,92 +1746,6 @@ AsciiStrnCmp (
   IN      UINTN                     Length
   );
 
-
-#ifndef DISABLE_NEW_DEPRECATED_INTERFACES
-
-/**
-  [ATTENTION] This function is deprecated for security reason.
-
-  Concatenates one Null-terminated ASCII string to another Null-terminated
-  ASCII string, and returns the concatenated ASCII string.
-
-  This function concatenates two Null-terminated ASCII strings. The contents of
-  Null-terminated ASCII string Source are concatenated to the end of Null-
-  terminated ASCII string Destination. The Null-terminated concatenated ASCII
-  String is returned.
-
-  If Destination is NULL, then ASSERT().
-  If Source is NULL, then ASSERT().
-  If PcdMaximumAsciiStringLength is not zero and Destination contains more than
-  PcdMaximumAsciiStringLength ASCII characters not including the Null-terminator,
-  then ASSERT().
-  If PcdMaximumAsciiStringLength is not zero and Source contains more than
-  PcdMaximumAsciiStringLength ASCII characters not including the Null-terminator,
-  then ASSERT().
-  If PcdMaximumAsciiStringLength is not zero and concatenating Destination and
-  Source results in a ASCII string with more than PcdMaximumAsciiStringLength
-  ASCII characters, then ASSERT().
-
-  @param  Destination The pointer to a Null-terminated ASCII string.
-  @param  Source      The pointer to a Null-terminated ASCII string.
-
-  @return Destination
-
-**/
-CHAR8 *
-EFIAPI
-AsciiStrCat (
-  IN OUT CHAR8    *Destination,
-  IN CONST CHAR8  *Source
-  );
-
-
-/**
-  [ATTENTION] This function is deprecated for security reason.
-
-  Concatenates up to a specified length one Null-terminated ASCII string to
-  the end of another Null-terminated ASCII string, and returns the
-  concatenated ASCII string.
-
-  This function concatenates two Null-terminated ASCII strings. The contents
-  of Null-terminated ASCII string Source are concatenated to the end of Null-
-  terminated ASCII string Destination, and Destination is returned. At most,
-  Length ASCII characters are concatenated from Source to the end of
-  Destination, and Destination is always Null-terminated. If Length is 0, then
-  Destination is returned unmodified. If Source and Destination overlap, then
-  the results are undefined.
-
-  If Length > 0 and Destination is NULL, then ASSERT().
-  If Length > 0 and Source is NULL, then ASSERT().
-  If Source and Destination overlap, then ASSERT().
-  If PcdMaximumAsciiStringLength is not zero, and Length is greater than
-  PcdMaximumAsciiStringLength, then ASSERT().
-  If PcdMaximumAsciiStringLength is not zero, and Destination contains more than
-  PcdMaximumAsciiStringLength ASCII characters, not including the Null-terminator,
-  then ASSERT().
-  If PcdMaximumAsciiStringLength is not zero, and Source contains more than
-  PcdMaximumAsciiStringLength ASCII characters, not including the Null-terminator,
-  then ASSERT().
-  If PcdMaximumAsciiStringLength is not zero, and concatenating Destination and
-  Source results in a ASCII string with more than PcdMaximumAsciiStringLength
-  ASCII characters, not including the Null-terminator, then ASSERT().
-
-  @param  Destination The pointer to a Null-terminated ASCII string.
-  @param  Source      The pointer to a Null-terminated ASCII string.
-  @param  Length      The maximum number of ASCII characters to concatenate from
-                      Source.
-
-  @return Destination
-
-**/
-CHAR8 *
-EFIAPI
-AsciiStrnCat (
-  IN OUT  CHAR8                     *Destination,
-  IN      CONST CHAR8               *Source,
-  IN      UINTN                     Length
-  );
-#endif // !defined (DISABLE_NEW_DEPRECATED_INTERFACES)
 
 /**
   Returns the first occurrence of a Null-terminated ASCII sub-string
@@ -2388,10 +1958,6 @@ AsciiStrHexToUint64 (
   "::" can be used to compress one or more groups of X when X contains only 0.
   The "::" can only appear once in the String.
 
-  If String is NULL, then ASSERT().
-
-  If Address is NULL, then ASSERT().
-
   If EndPointer is not NULL and Address is translated from String, a pointer
   to the character that stopped the scan is stored at the location pointed to
   by EndPointer.
@@ -2442,10 +2008,6 @@ AsciiStrToIpv6Address (
 
   When /P is in the String, the function stops at the first character that is not
   a valid decimal digit character after P is converted.
-
-  If String is NULL, then ASSERT().
-
-  If Address is NULL, then ASSERT().
 
   If EndPointer is not NULL and Address is translated from String, a pointer
   to the character that stopped the scan is stored at the location pointed to
@@ -2508,9 +2070,6 @@ AsciiStrToIpv4Address (
                   oo          Data4[48:55]
                   pp          Data4[56:63]
 
-  If String is NULL, then ASSERT().
-  If Guid is NULL, then ASSERT().
-
   @param  String                   Pointer to a Null-terminated ASCII string.
   @param  Guid                     Pointer to the converted GUID.
 
@@ -2541,17 +2100,6 @@ AsciiStrToGuid (
   decoding stops after Length of characters and outputs Buffer containing
   (Length / 2) bytes.
 
-  If String is NULL, then ASSERT().
-
-  If Buffer is NULL, then ASSERT().
-
-  If Length is not multiple of 2, then ASSERT().
-
-  If PcdMaximumAsciiStringLength is not zero and Length is greater than
-  PcdMaximumAsciiStringLength, then ASSERT().
-
-  If MaxBufferSize is less than (Length / 2), then ASSERT().
-
   @param  String                   Pointer to a Null-terminated ASCII string.
   @param  Length                   The number of ASCII characters to decode.
   @param  Buffer                   Pointer to the converted bytes array.
@@ -2578,45 +2126,6 @@ AsciiStrHexToBytes (
   IN  UINTN              MaxBufferSize
   );
 
-#ifndef DISABLE_NEW_DEPRECATED_INTERFACES
-
-/**
-  [ATTENTION] This function is deprecated for security reason.
-
-  Convert one Null-terminated ASCII string to a Null-terminated
-  Unicode string and returns the Unicode string.
-
-  This function converts the contents of the ASCII string Source to the Unicode
-  string Destination, and returns Destination.  The function terminates the
-  Unicode string Destination by appending a Null-terminator character at the end.
-  The caller is responsible to make sure Destination points to a buffer with size
-  equal or greater than ((AsciiStrLen (Source) + 1) * sizeof (CHAR16)) in bytes.
-
-  If Destination is NULL, then ASSERT().
-  If Destination is not aligned on a 16-bit boundary, then ASSERT().
-  If Source is NULL, then ASSERT().
-  If Source and Destination overlap, then ASSERT().
-  If PcdMaximumAsciiStringLength is not zero, and Source contains more than
-  PcdMaximumAsciiStringLength ASCII characters not including the Null-terminator,
-  then ASSERT().
-  If PcdMaximumUnicodeStringLength is not zero, and Source contains more than
-  PcdMaximumUnicodeStringLength ASCII characters not including the
-  Null-terminator, then ASSERT().
-
-  @param  Source        The pointer to a Null-terminated ASCII string.
-  @param  Destination   The pointer to a Null-terminated Unicode string.
-
-  @return Destination.
-
-**/
-CHAR16 *
-EFIAPI
-AsciiStrToUnicodeStr (
-  IN      CONST CHAR8               *Source,
-  OUT     CHAR16                    *Destination
-  );
-
-#endif // !defined (DISABLE_NEW_DEPRECATED_INTERFACES)
 
 /**
   Convert one Null-terminated ASCII string to a Null-terminated
@@ -2632,7 +2141,6 @@ AsciiStrToUnicodeStr (
   equal or greater than ((AsciiStrLen (Source) + 1) * sizeof (CHAR16)) in bytes.
 
   If Destination is not aligned on a 16-bit boundary, then ASSERT().
-  If an error would be returned, then the function will also ASSERT().
 
   If an error is returned, then the Destination is unmodified.
 
@@ -2678,7 +2186,6 @@ AsciiStrToUnicodeStrS (
   ((MIN(AsciiStrLen(Source), Length) + 1) * sizeof (CHAR8)) in bytes.
 
   If Destination is not aligned on a 16-bit boundary, then ASSERT().
-  If an error would be returned, then the function will also ASSERT().
 
   If an error is returned, then Destination and DestinationLength are
   unmodified.
@@ -2972,6 +2479,32 @@ PathCleanUpDirectories(
 **/
 #define INITIALIZE_LIST_HEAD_VARIABLE(ListHead)  {&(ListHead), &(ListHead)}
 
+/**
+  Iterates over each node in a doubly linked list using each node's forward link.
+
+  @param  Entry     A pointer to a list node used as a loop cursor during iteration
+  @param  ListHead  The head node of the doubly linked list
+
+**/
+#define BASE_LIST_FOR_EACH(Entry, ListHead)    \
+  for(Entry = (ListHead)->ForwardLink; Entry != (ListHead); Entry = Entry->ForwardLink)
+
+/**
+  Iterates over each node in a doubly linked list using each node's forward link
+  with safety against node removal.
+
+  This macro uses NextEntry to temporarily store the next list node so the node
+  pointed to by Entry may be deleted in the current loop iteration step and
+  iteration can continue from the node pointed to by NextEntry.
+
+  @param  Entry     A pointer to a list node used as a loop cursor during iteration
+  @param  NextEntry A pointer to a list node used to temporarily store the next node
+  @param  ListHead  The head node of the doubly linked list
+
+**/
+#define BASE_LIST_FOR_EACH_SAFE(Entry, NextEntry, ListHead)            \
+  for(Entry = (ListHead)->ForwardLink, NextEntry = Entry->ForwardLink;\
+      Entry != (ListHead); Entry = NextEntry, NextEntry = Entry->ForwardLink)
 
 /**
   Checks whether FirstEntry and SecondEntry are part of the same doubly-linked
@@ -3323,6 +2856,55 @@ RemoveEntryList (
 //
 // Math Services
 //
+/**
+  Prototype for comparison function for any two element types.
+
+  @param[in] Buffer1                  The pointer to first buffer.
+  @param[in] Buffer2                  The pointer to second buffer.
+
+  @retval 0                           Buffer1 equal to Buffer2.
+  @return <0                          Buffer1 is less than Buffer2.
+  @return >0                          Buffer1 is greater than Buffer2.
+**/
+typedef
+INTN
+(EFIAPI *BASE_SORT_COMPARE)(
+  IN CONST VOID                 *Buffer1,
+  IN CONST VOID                 *Buffer2
+  );
+
+/**
+  This function is identical to perform QuickSort,
+  except that is uses the pre-allocated buffer so the in place sorting does not need to
+  allocate and free buffers constantly.
+
+  Each element must be equal sized.
+
+  if BufferToSort is NULL, then ASSERT.
+  if CompareFunction is NULL, then ASSERT.
+  if BufferOneElement is NULL, then ASSERT.
+  if ElementSize is < 1, then ASSERT.
+
+  if Count is < 2 then perform no action.
+
+  @param[in, out] BufferToSort   on call a Buffer of (possibly sorted) elements
+                                 on return a buffer of sorted elements
+  @param[in] Count               the number of elements in the buffer to sort
+  @param[in] ElementSize         Size of an element in bytes
+  @param[in] CompareFunction     The function to call to perform the comparison
+                                 of any 2 elements
+  @param[out] BufferOneElement   Caller provided buffer whose size equals to ElementSize.
+                                 It's used by QuickSort() for swapping in sorting.
+**/
+VOID
+EFIAPI
+QuickSort (
+  IN OUT VOID                           *BufferToSort,
+  IN CONST UINTN                        Count,
+  IN CONST UINTN                        ElementSize,
+  IN       BASE_SORT_COMPARE            CompareFunction,
+  OUT VOID                              *BufferOneElement
+  );
 
 /**
   Shifts a 64-bit integer left between 0 and 63 bits. The low bits are filled
@@ -5280,6 +4862,91 @@ SpeculationBarrier (
   VOID
   );
 
+#if defined (MDE_CPU_X64)
+//
+// The page size for the PVALIDATE instruction
+//
+typedef enum {
+  PvalidatePageSize4K = 0,
+  PvalidatePageSize2MB,
+} PVALIDATE_PAGE_SIZE;
+
+//
+// PVALIDATE Return Code.
+//
+#define PVALIDATE_RET_SUCCESS         0
+#define PVALIDATE_RET_FAIL_INPUT      1
+#define PVALIDATE_RET_SIZE_MISMATCH   6
+
+//
+// The PVALIDATE instruction did not make any changes to the RMP entry.
+//
+#define PVALIDATE_RET_NO_RMPUPDATE    255
+
+/**
+ Execute a PVALIDATE instruction to validate or to rescinds validation of a guest
+ page's RMP entry.
+
+ The instruction is available only when CPUID Fn8000_001F_EAX[SNP]=1.
+
+ The function is available on X64.
+
+ @param[in]    PageSize         The page size to use.
+ @param[in]    Validate         If TRUE, validate the guest virtual address
+                                otherwise invalidate the guest virtual address.
+ @param[in]    Address          The guest virtual address.
+
+ @retval PVALIDATE_RET_SUCCESS        The PVALIDATE instruction succeeded, and
+                                      updated the RMP entry.
+ @retval PVALIDATE_RET_NO_RMPUPDATE   The PVALIDATE instruction succeeded, but
+                                      did not update the RMP entry.
+ @return                              Failure code from the PVALIDATE
+                                      instruction.
+**/
+UINT32
+EFIAPI
+AsmPvalidate (
+  IN   PVALIDATE_PAGE_SIZE     PageSize,
+  IN   BOOLEAN                 Validate,
+  IN   PHYSICAL_ADDRESS        Address
+  );
+
+//
+// RDX settings for RMPADJUST
+//
+#define RMPADJUST_VMPL_MAX               3
+#define RMPADJUST_VMPL_MASK              0xFF
+#define RMPADJUST_VMPL_SHIFT             0
+#define RMPADJUST_PERMISSION_MASK_MASK   0xFF
+#define RMPADJUST_PERMISSION_MASK_SHIFT  8
+#define RMPADJUST_VMSA_PAGE_BIT          BIT16
+
+/**
+  Adjusts the permissions of an SEV-SNP guest page.
+
+  Executes a RMPADJUST instruction with the register state specified by Rax,
+  Rcx, and Rdx. Returns Eax. This function is only available on X64.
+
+  The instruction is available only when CPUID Fn8000_001F_EAX[SNP]=1.
+
+  @param[in]  Rax   The value to load into RAX before executing the RMPADJUST
+                    instruction.
+  @param[in]  Rcx   The value to load into RCX before executing the RMPADJUST
+                    instruction.
+  @param[in]  Rdx   The value to load into RDX before executing the RMPADJUST
+                    instruction.
+
+  @return     Eax
+**/
+UINT32
+EFIAPI
+AsmRmpAdjust (
+  IN      UINT64                     Rax,
+  IN      UINT64                     Rcx,
+  IN      UINT64                     Rdx
+  );
+#endif
+
 
 #if defined (MDE_CPU_IA32) || defined (MDE_CPU_X64)
 ///
@@ -5387,10 +5054,19 @@ typedef union {
     UINT32  OSXMMEXCPT:1;   ///< Operating System Support for
                             ///< Unmasked SIMD Floating Point
                             ///< Exceptions.
-    UINT32  Reserved_2:1;   ///< Reserved.
+    UINT32  UMIP:1;         ///< User-Mode Instruction Prevention.
     UINT32  LA57:1;         ///< Linear Address 57bit.
-    UINT32  VMXE:1;         ///< VMX Enable
-    UINT32  Reserved_1:18;  ///< Reserved.
+    UINT32  VMXE:1;         ///< VMX Enable.
+    UINT32  SMXE:1;         ///< SMX Enable.
+    UINT32  Reserved_3:1;   ///< Reserved.
+    UINT32  FSGSBASE:1;     ///< FSGSBASE Enable.
+    UINT32  PCIDE:1;        ///< PCID Enable.
+    UINT32  OSXSAVE:1;      ///< XSAVE and Processor Extended States Enable.
+    UINT32  Reserved_4:1;   ///< Reserved.
+    UINT32  SMEP:1;         ///< SMEP Enable.
+    UINT32  SMAP:1;         ///< SMAP Enable.
+    UINT32  PKE:1;          ///< Protection-Key Enable.
+    UINT32  Reserved_5:9;   ///< Reserved.
   } Bits;
   UINTN     UintN;
 } IA32_CR4;
@@ -7879,6 +7555,60 @@ EFIAPI
 AsmLfence (
   VOID
   );
+
+/**
+  Executes a XGETBV instruction
+
+  Executes a XGETBV instruction. This function is only available on IA-32 and
+  x64.
+
+  @param[in] Index        Extended control register index
+
+  @return                 The current value of the extended control register
+**/
+UINT64
+EFIAPI
+AsmXGetBv (
+  IN UINT32  Index
+  );
+
+/**
+  Executes a XSETBV instruction to write a 64-bit value to a Extended Control
+  Register(XCR), and returns the value.
+
+  Writes the 64-bit value specified by Value to the XCR specified by Index. The
+  64-bit value written to the XCR is returned. No parameter checking is
+  performed on Index or Value, and some of these may cause CPU exceptions. The
+  caller must either guarantee that Index and Value are valid, or the caller
+  must establish proper exception handlers. This function is only available on
+  IA-32 and x64.
+
+  @param  Index The 32-bit XCR index to write.
+  @param  Value The 64-bit value to write to the XCR.
+
+  @return Value
+
+**/
+UINT64
+EFIAPI
+AsmXSetBv (
+  IN UINT32  Index,
+  IN UINT64  Value
+  );
+
+/**
+  Executes a VMGEXIT instruction (VMMCALL with a REP prefix)
+
+  Executes a VMGEXIT instruction. This function is only available on IA-32 and
+  x64.
+
+**/
+VOID
+EFIAPI
+AsmVmgExit (
+  VOID
+  );
+
 
 /**
   Patch the immediate operand of an IA32 or X64 instruction such that the byte,

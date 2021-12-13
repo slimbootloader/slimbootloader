@@ -2,8 +2,9 @@
   Provides services to access PCI Configuration Space using the MMIO PCI Express window.
 
   This library is identical to the PCI Library, except the access method for performing PCI
-  configuration cycles must be through the 256 MB PCI Express MMIO window whose base address
-  is defined by PcdPciExpressBaseAddress.
+  configuration cycles must be through the PCI Express MMIO window whose base address
+  is defined by PcdPciExpressBaseAddress and size defined by PcdPciExpressBaseSize.
+
 
 Copyright (c) 2006 - 2018, Intel Corporation. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -997,7 +998,7 @@ PciExpressBitFieldAndThenOr32 (
   Size into the buffer specified by Buffer. This function only allows the PCI
   configuration registers from a single PCI function to be read. Size is
   returned. When possible 32-bit PCI configuration read cycles are used to read
-  from StartAdress to StartAddress + Size. Due to alignment restrictions, 8-bit
+  from StartAddress to StartAddress + Size. Due to alignment restrictions, 8-bit
   and 16-bit PCI configuration read cycles may be used at the beginning and the
   end of the range.
 
@@ -1029,7 +1030,7 @@ PciExpressReadBuffer (
   Size from the buffer specified by Buffer. This function only allows the PCI
   configuration registers from a single PCI function to be written. Size is
   returned. When possible 32-bit PCI configuration write cycles are used to
-  write from StartAdress to StartAddress + Size. Due to alignment restrictions,
+  write from StartAddress to StartAddress + Size. Due to alignment restrictions,
   8-bit and 16-bit PCI configuration write cycles may be used at the beginning
   and the end of the range.
 

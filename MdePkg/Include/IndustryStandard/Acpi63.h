@@ -2,7 +2,7 @@
   ACPI 6.3 definitions from the ACPI Specification Revision 6.3 Jan, 2019.
 
   Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
-  Copyright (c) 2019, ARM Ltd. All rights reserved.<BR>
+  Copyright (c) 2019 - 2020, ARM Ltd. All rights reserved.<BR>
 
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
@@ -1040,9 +1040,9 @@ typedef struct {
 ///
 /// Memory Aggregator Device Type
 ///
-#define EFI_ACPI_6_3_PMMT_MEMORY_AGGREGATOR_DEVICE_TYPE_SOCKET            0x1
-#define EFI_ACPI_6_3_PMMT_MEMORY_AGGREGATOR_DEVICE_TYPE_MEMORY_CONTROLLER 0x2
-#define EFI_ACPI_6_3_PMMT_MEMORY_AGGREGATOR_DEVICE_TYPE_DIMM              0x3
+#define EFI_ACPI_6_3_PMMT_MEMORY_AGGREGATOR_DEVICE_TYPE_SOCKET            0x0
+#define EFI_ACPI_6_3_PMMT_MEMORY_AGGREGATOR_DEVICE_TYPE_MEMORY_CONTROLLER 0x1
+#define EFI_ACPI_6_3_PMMT_MEMORY_AGGREGATOR_DEVICE_TYPE_DIMM              0x2
 
 ///
 /// Socket Memory Aggregator Device Structure.
@@ -2879,6 +2879,11 @@ typedef struct {
 /// "MSDM" MS Data Management Table
 ///
 #define EFI_ACPI_6_3_DATA_MANAGEMENT_TABLE_SIGNATURE  SIGNATURE_32('M', 'S', 'D', 'M')
+
+///
+/// "PCCT" Platform Communications Channel Table
+///
+#define EFI_ACPI_6_3_PLATFORM_COMMUNICATIONS_CHANNEL_TABLE_SIGNATURE  SIGNATURE_32('P', 'C', 'C', 'T')
 
 ///
 /// "SDEI" Software Delegated Exceptions Interface Table

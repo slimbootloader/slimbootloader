@@ -4,9 +4,9 @@
 # It also provides the definitions(including PPIs/PROTOCOLs/GUIDs) of
 # EFI1.10/UEFI2.7/PI1.7 and some Industry Standards.
 #
-# Copyright (c) 2007 - 2019, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2007 - 2021, Intel Corporation. All rights reserved.<BR>
 # Portions copyright (c) 2008 - 2009, Apple Inc. All rights reserved.<BR>
-# (C) Copyright 2016 Hewlett Packard Enterprise Development LP<BR>
+# (C) Copyright 2016 - 2021 Hewlett Packard Enterprise Development LP<BR>
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -244,6 +244,21 @@
   ##  @libraryclass  Module entry point library for standalone MM drivers.
   StandaloneMmDriverEntryPoint|Include/Library/StandaloneMmDriverEntryPoint.h
 
+  ##  @libraryclass  This library provides an interface to request non-MMRAM pages to be mapped
+  #                  or unblocked from inside MM environment.
+  #
+  MmUnblockMemoryLib|Include/Library/MmUnblockMemoryLib.h
+
+  ##  @libraryclass  This library provides interfances to filter and trace port IO/MMIO/MSR access.
+  #
+  #
+  RegisterFilterLib|Include/Library/RegisterFilterLib.h
+
+[LibraryClasses.IA32, LibraryClasses.X64, LibraryClasses.AARCH64]
+  ##  @libraryclass  Provides services to generate random number.
+  #
+  RngLib|Include/Library/RngLib.h
+
 [LibraryClasses.IA32, LibraryClasses.X64]
   ##  @libraryclass  Abstracts both S/W SMI generation and detection.
   ##
@@ -264,10 +279,6 @@
   ##  @libraryclass  Provides services to enable/disable periodic SMI handlers.
   #
   SmmPeriodicSmiLib|Include/Library/SmmPeriodicSmiLib.h
-
-  ##  @libraryclass  Provides services to generate random number.
-  #
-  RngLib|Include/Library/RngLib.h
 
   ##  @libraryclass  Provides services to log the SMI handler registration.
   SmiHandlerProfileLib|Include/Library/SmiHandlerProfileLib.h
@@ -430,6 +441,15 @@
   gEfiEventNotificationTypeDmarGuid  = { 0x667DD791, 0xC6B3, 0x4c27, { 0x8A, 0x6B, 0x0F, 0x8E, 0x72, 0x2D, 0xEB, 0x41 }}
 
   ## Include/Guid/Cper.h
+  gEfiEventNotificationTypeSeaGuid   = { 0x9A78788A, 0xBBE8, 0x11E4, { 0x80, 0x9E, 0x67, 0x61, 0x1E, 0x5D, 0x46, 0xB0 }}
+
+  ## Include/Guid/Cper.h
+  gEfiEventNotificationTypeSeiGuid   = { 0x5C284C81, 0xB0AE, 0x4E87, { 0xA3, 0x22, 0xB0, 0x4C, 0x85, 0x62, 0x43, 0x23 }}
+
+  ## Include/Guid/Cper.h
+  gEfiEventNotificationTypePeiGuid   = { 0x09A9D5AC, 0x5204, 0x4214, { 0x96, 0xE5, 0x94, 0x99, 0x2E, 0x75, 0x2B, 0xCD }}
+
+  ## Include/Guid/Cper.h
   gEfiProcessorGenericErrorSectionGuid  = { 0x9876ccad, 0x47b4, 0x4bdb, { 0xb6, 0x5e, 0x16, 0xf1, 0x93, 0xc4, 0xf3, 0xdb }}
 
   ## Include/Guid/Cper.h
@@ -574,9 +594,6 @@
   # GUIDs defined in UEFI2.5
   #
 
-  ## Include/Guid/PropertiesTable.h
-  gEfiPropertiesTableGuid        = { 0x880aaca3, 0x4adc, 0x4a04, {0x90, 0x79, 0xb7, 0x47, 0x34, 0x8, 0x25, 0xe5 }}
-
   ## Include/Guid/SystemResourceTable.h
   gEfiSystemResourceTableGuid    = { 0xb122a263, 0x3661, 0x4f68, {0x99, 0x29, 0x78, 0xf8, 0xb0, 0xd6, 0x21, 0x80 }}
 
@@ -640,6 +657,25 @@
   #
   ## Include/Guid/Btt.h
   gEfiBttAbstractionGuid         = { 0x18633bfc, 0x1735, 0x4217, { 0x8a, 0xc9, 0x17, 0x23, 0x92, 0x82, 0xd3, 0xf8 }}
+
+  # GUIDs defined in UEFI2.8
+  #
+  ## Include/Guid/JsonCapsule.h
+  gEfiJsonConfigDataTableGuid      = { 0x87367f87, 0x1119, 0x41ce, { 0xaa, 0xec, 0x8b, 0xe0, 0x11, 0x1f, 0x55, 0x8a }}
+  gEfiJsonCapsuleDataTableGuid     = { 0x35e7a725, 0x8dd2, 0x4cac, { 0x80, 0x11, 0x33, 0xcd, 0xa8, 0x10, 0x90, 0x56 }}
+  gEfiJsonCapsuleResultTableGuid   = { 0xdbc461c3, 0xb3de, 0x422a, { 0xb9, 0xb4, 0x98, 0x86, 0xfd, 0x49, 0xa1, 0xe5 }}
+  gEfiJsonCapsuleIdGuid            = { 0x67d6f4cd, 0xd6b8, 0x4573, { 0xbf, 0x4a, 0xde, 0x5e, 0x25, 0x2d, 0x61, 0xae }}
+
+  ## Include/Guid/HiiPlatformSetupFormset.h
+  gEfiHiiRestStyleFormsetGuid      = { 0x790217bd, 0xbecf, 0x485b, { 0x91, 0x70, 0x5f, 0xf7, 0x11, 0x31, 0x8b, 0x27 }}
+
+  # GUIDs defined in UEFI2.8a
+  #
+  ## Include/Guid/RtPropertiesTable.h
+  gEfiRtPropertiesTableGuid      = { 0xeb66918a, 0x7eef, 0x402a, { 0x84, 0x2e, 0x93, 0x1d, 0x21, 0xc3, 0x8a, 0xe9 }}
+
+  ## Include/Protocol/SerilaIo.h
+  gEfiSerialTerminalDeviceTypeGuid = { 0x6AD9A60F, 0x5815, 0x4C7C, { 0x8A, 0x10, 0x50, 0x53, 0xD2, 0xBF, 0x7A, 0x1B }}
 
   #
   # GUID defined in PI1.0
@@ -768,6 +804,11 @@
   # GUID indicates the tiano custom compress/decompress algorithm.
   #
   gTianoCustomDecompressGuid     = { 0xA31280AD, 0x481E, 0x41B6, { 0x95, 0xE8, 0x12, 0x7F, 0x4C, 0x98, 0x47, 0x79 }}
+
+  #
+  # GUID used to provide initrd to linux via LoadFile2 protocol
+  #
+  gLinuxEfiInitrdMediaGuid       = {0x5568e427, 0x68fc, 0x4f3d, {0xac, 0x74, 0xca, 0x55, 0x52, 0x31, 0xcc, 0x68}}
 
 [Guids.IA32, Guids.X64]
   ## Include/Guid/Cper.h
@@ -934,12 +975,21 @@
   ## Include/Ppi/MmControl.h
   gEfiPeiMmControlPpiGuid         =  { 0x61c68702, 0x4d7e, 0x4f43, { 0x8d, 0xef, 0xa7, 0x43, 0x5, 0xce, 0x74, 0xc5 }}
 
+  ## Include/Ppi/MmConfiguration.h
+  gEfiPeiMmConfigurationPpi       =  { 0xc109319, 0xc149, 0x450e, { 0xa3, 0xe3, 0xb9, 0xba, 0xdd, 0x9d, 0xc3, 0xa4 } }
+
+  ## Include/Ppi/MmCommunication.h
+  gEfiPeiMmCommunicationPpiGuid   =  { 0xae933e1c, 0xcc47, 0x4e38, { 0x8f, 0xe, 0xe2, 0xf6, 0x1d, 0x26, 0x5, 0xdf } }
+
   #
   # PPIs defined in PI 1.7.
   #
 
   ## Include/Ppi/PeiCoreFvLocation.h
   gEfiPeiCoreFvLocationPpiGuid   = { 0x52888eae, 0x5b10, 0x47d0, { 0xa8, 0x7f, 0xb8, 0x22, 0xab, 0xa0, 0xca, 0xf4 }}
+
+  ## Include/Ppi/DelayedDispatch.h
+  gEfiPeiDelayedDispatchPpiGuid  = { 0x869c711d, 0x649c, 0x44fe, { 0x8b, 0x9e, 0x2c, 0xbb, 0x29, 0x11, 0xc3, 0xe6 }}
 
 [Protocols]
   ## Include/Protocol/Pcd.h
@@ -1275,6 +1325,13 @@
 
   ## Include/Protocol/SpiSmmNorFlash.h
   gEfiSpiSmmNorFlashProtocolGuid         = { 0xaab18f19, 0xfe14, 0x4666, { 0x86, 0x04, 0x87, 0xff, 0x6d, 0x66, 0x2c, 0x9a }}
+
+  #
+  # Protocols defined in PI 1.7.
+  #
+
+  ## Include/Protocol/MmCommunication2.h
+  gEfiMmCommunication2ProtocolGuid  = { 0x378daedc, 0xf06b, 0x4446, { 0x83, 0x14, 0x40, 0xab, 0x93, 0x3c, 0x87, 0xa3 }}
 
   #
   # Protocols defined in UEFI2.1/UEFI2.0/EFI1.1
@@ -1801,6 +1858,19 @@
   gEfiNvdimmLabelProtocolGuid               = { 0xd40b6b80, 0x97d5, 0x4282, { 0xbb, 0x1d, 0x22, 0x3a, 0x16, 0x91, 0x80, 0x58 }}
 
   #
+  # Protocols defined in UEFI2.8
+  #
+  ## Include/Protocol/RestEx.h
+  gEfiRestExProtocolGuid               = { 0x55648b91, 0xe7d, 0x40a3, { 0xa9, 0xb3, 0xa8, 0x15, 0xd7, 0xea, 0xdf, 0x97 }}
+  gEfiRestExServiceBindingProtocolGuid = { 0x456bbe01, 0x99d0, 0x45ea, { 0xbb, 0x5f, 0x16, 0xd8, 0x4b, 0xed, 0xc5, 0x59 }}
+
+  ## Include/Protocol/RestJsonStructure.h
+  gEfiRestJsonStructureProtocolGuid  = { 0xa9a048f6, 0x48a0, 0x4714, {0xb7, 0xda, 0xa9, 0xad,0x87, 0xd4, 0xda, 0xc9 }}
+
+  ## Include/Protocol/RedfishDiscover.h
+  gEfiRedfishDiscoverProtocolGuid      = { 0x5db12509, 0x4550, 0x4347, { 0x96, 0xb3, 0x73, 0xc0, 0xff, 0x6e, 0x86, 0x9f }}
+
+  #
   # Protocols defined in Shell2.0
   #
   ## Include/Protocol/Shell.h
@@ -2194,10 +2264,6 @@
   # @ValidList  0x80000001 | 8, 16, 32
   gEfiMdePkgTokenSpaceGuid.PcdPort80DataWidth|8|UINT8|0x0000002d
 
-  ## This value is used to configure X86 Processor FSB clock.
-  # @Prompt FSB Clock.
-  gEfiMdePkgTokenSpaceGuid.PcdFSBClock|200000000|UINT32|0x0000000c
-
   ## The maximum printable number of characters. UefLib functions: AsciiPrint(), AsciiErrorPrint(),
   #  PrintXY(), AsciiPrintXY(), Print(), ErrorPrint() base on this PCD value to print characters.
   # @Prompt Maximum Printable Number of Characters.
@@ -2225,6 +2291,22 @@
   ## This value is used to set the base address of PCI express hierarchy.
   # @Prompt PCI Express Base Address.
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress|0xE0000000|UINT64|0x0000000a
+
+  ## This value is used to set the base address of PCI MMIO window that provides I/O access.
+  # @Prompt PCI I/O Memory Map Window Base Address.
+  gEfiMdePkgTokenSpaceGuid.PcdPciIoTranslation|0x0|UINT64|0x00000040
+
+  ## This value is used for the 32-bit PCI memory map I/O base address translation.
+  # @Prompt 32-bit PCI Memory Map I/O Base Address translation.
+  gEfiMdePkgTokenSpaceGuid.PcdPciMmio32Translation|0x0|UINT64|0x00000041
+
+  ## This value is used for the 64-bit PCI memory map I/O base address translation.
+  # @Prompt 64-bit PCI Memory Map I/O Base Address translation.
+  gEfiMdePkgTokenSpaceGuid.PcdPciMmio64Translation|0x0|UINT64|0x00000042
+
+  ## This value is used to set the size of PCI express hierarchy. The default is 256 MB.
+  # @Prompt PCI Express Base Size.
+  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseSize|0x10000000|UINT64|0x0000000f
 
   ## Default current ISO 639-2 language: English & French.
   # @Prompt Default Value of LangCodes Variable.
@@ -2296,6 +2378,10 @@
   #  The value of 0xFFFF then firmware will wait for user input before booting.
   # @Prompt Boot Timeout (s)
   gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut|0xffff|UINT16|0x0000002c
+
+  ## This value is used to configure X86 Processor FSB clock.
+  # @Prompt FSB Clock.
+  gEfiMdePkgTokenSpaceGuid.PcdFSBClock|200000000|UINT32|0x0000000c
 
 [UserExtensions.TianoCore."ExtraFiles"]
   MdePkgExtra.uni

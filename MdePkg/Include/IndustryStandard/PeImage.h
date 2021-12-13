@@ -9,6 +9,8 @@
 
 Copyright (c) 2006 - 2018, Intel Corporation. All rights reserved.<BR>
 Portions copyright (c) 2008 - 2009, Apple Inc. All rights reserved.<BR>
+Portions Copyright (c) 2016 - 2020, Hewlett Packard Enterprise Development LP. All rights reserved.<BR>
+
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -34,6 +36,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define IMAGE_FILE_MACHINE_X64             0x8664
 #define IMAGE_FILE_MACHINE_ARMTHUMB_MIXED  0x01c2
 #define IMAGE_FILE_MACHINE_ARM64           0xAA64
+#define IMAGE_FILE_MACHINE_RISCV32         0x5032
+#define IMAGE_FILE_MACHINE_RISCV64         0x5064
+#define IMAGE_FILE_MACHINE_RISCV128        0x5128
 
 //
 // EXE file formats
@@ -92,7 +97,7 @@ typedef struct {
 //
 #define EFI_IMAGE_FILE_RELOCS_STRIPPED      BIT0     ///< 0x0001  Relocation info stripped from file.
 #define EFI_IMAGE_FILE_EXECUTABLE_IMAGE     BIT1     ///< 0x0002  File is executable  (i.e. no unresolved externel references).
-#define EFI_IMAGE_FILE_LINE_NUMS_STRIPPED   BIT2     ///< 0x0004  Line nunbers stripped from file.
+#define EFI_IMAGE_FILE_LINE_NUMS_STRIPPED   BIT2     ///< 0x0004  Line numbers stripped from file.
 #define EFI_IMAGE_FILE_LOCAL_SYMS_STRIPPED  BIT3     ///< 0x0008  Local symbols stripped from file.
 #define EFI_IMAGE_FILE_BYTES_REVERSED_LO    BIT7     ///< 0x0080  Bytes of machine word are reversed.
 #define EFI_IMAGE_FILE_32BIT_MACHINE        BIT8     ///< 0x0100  32 bit word machine.
@@ -492,6 +497,13 @@ typedef struct {
 #define EFI_IMAGE_REL_BASED_IA64_IMM64      9
 #define EFI_IMAGE_REL_BASED_MIPS_JMPADDR16  9
 #define EFI_IMAGE_REL_BASED_DIR64           10
+
+///
+/// Relocation types of RISC-V processor.
+///
+#define EFI_IMAGE_REL_BASED_RISCV_HI20      5
+#define EFI_IMAGE_REL_BASED_RISCV_LOW12I    7
+#define EFI_IMAGE_REL_BASED_RISCV_LOW12S    8
 
 ///
 /// Line number format.

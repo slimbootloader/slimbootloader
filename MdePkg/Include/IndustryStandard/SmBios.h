@@ -1,7 +1,7 @@
 /** @file
   Industry Standard Definitions of SMBIOS Table Specification v3.3.0.
 
-Copyright (c) 2006 - 2019, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2006 - 2021, Intel Corporation. All rights reserved.<BR>
 (C) Copyright 2015-2017 Hewlett Packard Enterprise Development LP<BR>
 (C) Copyright 2015 - 2019 Hewlett Packard Enterprise Development LP<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -810,7 +810,10 @@ typedef enum {
   ProcessorUpgradeSocketLGA2066   = 0x39,
   ProcessorUpgradeSocketBGA1392   = 0x3A,
   ProcessorUpgradeSocketBGA1510   = 0x3B,
-  ProcessorUpgradeSocketBGA1528   = 0x3C
+  ProcessorUpgradeSocketBGA1528   = 0x3C,
+  ProcessorUpgradeSocketLGA4189   = 0x3D,
+  ProcessorUpgradeSocketLGA1200   = 0x3E,
+  ProcessorUpgradeSocketLGA4677   = 0x3F
 } PROCESSOR_UPGRADE;
 
 ///
@@ -862,17 +865,31 @@ typedef struct {
 } PROCESSOR_FEATURE_FLAGS;
 
 typedef struct {
-  UINT32  ProcessorReserved1             :1;
-  UINT32  ProcessorUnknown               :1;
-  UINT32  Processor64BitCapble           :1;
-  UINT32  ProcessorMultiCore             :1;
-  UINT32  ProcessorHardwareThread        :1;
-  UINT32  ProcessorExecuteProtection     :1;
-  UINT32  ProcessorEnhancedVirtulization :1;
-  UINT32  ProcessorPowerPerformanceCtrl  :1;
-  UINT32  Processor128bitCapble          :1;
-  UINT32  ProcessorReserved2             :7;
+  UINT16  ProcessorReserved1              :1;
+  UINT16  ProcessorUnknown                :1;
+  UINT16  Processor64BitCapable           :1;
+  UINT16  ProcessorMultiCore              :1;
+  UINT16  ProcessorHardwareThread         :1;
+  UINT16  ProcessorExecuteProtection      :1;
+  UINT16  ProcessorEnhancedVirtualization :1;
+  UINT16  ProcessorPowerPerformanceCtrl   :1;
+  UINT16  Processor128BitCapable          :1;
+  UINT16  ProcessorArm64SocId             :1;
+  UINT16  ProcessorReserved2              :6;
 } PROCESSOR_CHARACTERISTIC_FLAGS;
+
+///
+/// Processor Information - Status
+///
+typedef union {
+  struct {
+    UINT8 CpuStatus       :3; ///< Indicates the status of the processor.
+    UINT8 Reserved1       :3; ///< Reserved for future use. Must be set to zero.
+    UINT8 SocketPopulated :1; ///< Indicates if the processor socket is populated or not.
+    UINT8 Reserved2       :1; ///< Reserved for future use. Must be set to zero.
+  } Bits;
+  UINT8 Data;
+} PROCESSOR_STATUS_DATA;
 
 typedef struct {
   PROCESSOR_SIGNATURE     Signature;
@@ -893,7 +910,7 @@ typedef struct {
   SMBIOS_TABLE_STRING   Socket;
   UINT8                 ProcessorType;          ///< The enumeration value from PROCESSOR_TYPE_DATA.
   UINT8                 ProcessorFamily;        ///< The enumeration value from PROCESSOR_FAMILY_DATA.
-  SMBIOS_TABLE_STRING   ProcessorManufacture;
+  SMBIOS_TABLE_STRING   ProcessorManufacturer;
   PROCESSOR_ID_DATA     ProcessorId;
   SMBIOS_TABLE_STRING   ProcessorVersion;
   PROCESSOR_VOLTAGE     Voltage;
@@ -1379,7 +1396,10 @@ typedef struct {
   UINT8  HotPlugDevicesSupported :1;
   UINT8  SmbusSignalSupported    :1;
   UINT8  BifurcationSupported    :1;
-  UINT8  Reserved                :4;  ///< Set to 0.
+  UINT8  AsyncSurpriseRemoval    :1;
+  UINT8  FlexbusSlotCxl10Capable :1;
+  UINT8  FlexbusSlotCxl20Capable :1;
+  UINT8  Reserved                :1;  ///< Set to 0.
 } MISC_SLOT_CHARACTERISTICS2;
 
 ///
@@ -1421,6 +1441,12 @@ typedef struct {
   UINT8                       DataBusWidth;
   UINT8                       PeerGroupingCount;
   MISC_SLOT_PEER_GROUP        PeerGroups[1];
+  //
+  // Add for smbios 3.4
+  //
+  UINT8                       SlotInformation;
+  UINT8                       SlotPhysicalWidth;
+  UINT16                      SlotPitch;
 } SMBIOS_TABLE_TYPE9;
 
 ///
@@ -1614,7 +1640,7 @@ typedef enum {
   MemoryArrayLocationPc98C24AddonCard      = 0xA1,
   MemoryArrayLocationPc98EAddonCard        = 0xA2,
   MemoryArrayLocationPc98LocalBusAddonCard = 0xA3,
-  MemoryArrayLocationCXLFlexbus10AddonCard = 0xA4
+  MemoryArrayLocationCXLAddonCard          = 0xA4
 } MEMORY_ARRAY_LOCATION;
 
 ///
@@ -1718,7 +1744,9 @@ typedef enum {
   MemoryTypeLpddr4                         = 0x1E,
   MemoryTypeLogicalNonVolatileDevice       = 0x1F,
   MemoryTypeHBM                            = 0x20,
-  MemoryTypeHBM2                           = 0x21
+  MemoryTypeHBM2                           = 0x21,
+  MemoryTypeDdr5                           = 0x22,
+  MemoryTypeLpddr5                         = 0x23
 } MEMORY_DEVICE_TYPE;
 
 ///
@@ -1747,17 +1775,18 @@ typedef struct {
 /// Memory Device - Memory Technology
 ///
 typedef enum {
-  MemoryTechnologyOther                     = 0x01,
-  MemoryTechnologyUnknown                   = 0x02,
-  MemoryTechnologyDram                      = 0x03,
-  MemoryTechnologyNvdimmN                   = 0x04,
-  MemoryTechnologyNvdimmF                   = 0x05,
-  MemoryTechnologyNvdimmP                   = 0x06,
+  MemoryTechnologyOther                          = 0x01,
+  MemoryTechnologyUnknown                        = 0x02,
+  MemoryTechnologyDram                           = 0x03,
+  MemoryTechnologyNvdimmN                        = 0x04,
+  MemoryTechnologyNvdimmF                        = 0x05,
+  MemoryTechnologyNvdimmP                        = 0x06,
   //
   // This definition is updated to represent Intel
-  // Optane DC Presistent Memory in SMBIOS spec 3.3.0
+  // Optane DC Persistent Memory in SMBIOS spec 3.4.0
   //
-  MemoryTechnologyIntelPersistentMemory     = 0x07
+  MemoryTechnologyIntelOptanePersistentMemory    = 0x07
+
 } MEMORY_DEVICE_TECHNOLOGY;
 
 ///
@@ -1834,7 +1863,7 @@ typedef struct {
   //
   UINT8                                     MemoryTechnology;   ///< The enumeration value from MEMORY_DEVICE_TECHNOLOGY
   MEMORY_DEVICE_OPERATING_MODE_CAPABILITY   MemoryOperatingModeCapability;
-  SMBIOS_TABLE_STRING                       FirwareVersion;
+  SMBIOS_TABLE_STRING                       FirmwareVersion;
   UINT16                                    ModuleManufacturerID;
   UINT16                                    ModuleProductID;
   UINT16                                    MemorySubsystemControllerManufacturerID;
@@ -1843,6 +1872,11 @@ typedef struct {
   UINT64                                    VolatileSize;
   UINT64                                    CacheSize;
   UINT64                                    LogicalSize;
+  //
+  // Add for smbios 3.3.0
+  //
+  UINT32                                    ExtendedSpeed;
+  UINT32                                    ExtendedConfiguredMemorySpeed;
 } SMBIOS_TABLE_TYPE17;
 
 ///
@@ -2497,6 +2531,15 @@ typedef struct {
   UINT8                             BusNum;
   UINT8                             DevFuncNum;
 } SMBIOS_TABLE_TYPE41;
+
+///
+///  Management Controller Host Interface - Protocol Record Data Format.
+///
+typedef struct {
+  UINT8                        ProtocolType;
+  UINT8                        ProtocolTypeDataLen;
+  UINT8                        ProtocolTypeData[1];
+} MC_HOST_INTERFACE_PROTOCOL_RECORD;
 
 ///
 /// Management Controller Host Interface - Interface Types.
