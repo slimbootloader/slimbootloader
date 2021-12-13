@@ -17,6 +17,11 @@
     0xBB25CF6F, 0xF1D4, 0x11D2, {0x9A, 0x0C, 0x00, 0x90, 0x27, 0x3F, 0xC1, 0xFD } \
   }
 
+#define EFI_SERIAL_TERMINAL_DEVICE_TYPE_GUID \
+  { \
+    0X6AD9A60F, 0X5815, 0X4C7C, { 0X8A, 0X10, 0X50, 0X53, 0XD2, 0XBF, 0X7A, 0X1B } \
+  }
+
 ///
 /// Protocol GUID defined in EFI1.1.
 ///
@@ -263,6 +268,7 @@ typedef struct {
 } EFI_SERIAL_IO_MODE;
 
 #define EFI_SERIAL_IO_PROTOCOL_REVISION    0x00010000
+#define EFI_SERIAL_IO_PROTOCOL_REVISION1p1 0x00010001
 #define SERIAL_IO_INTERFACE_REVISION  EFI_SERIAL_IO_PROTOCOL_REVISION
 
 ///
@@ -287,8 +293,17 @@ struct _EFI_SERIAL_IO_PROTOCOL {
   /// Pointer to SERIAL_IO_MODE data.
   ///
   EFI_SERIAL_IO_MODE          *Mode;
+  ///
+  /// Pointer to a GUID identifying the device connected to the serial port.
+  /// This field is NULL when the protocol is installed by the serial port
+  /// driver and may be populated by a platform driver for a serial port
+  /// with a known device attached. The field will remain NULL if there is
+  /// no platform serial device identification information available.
+  ///
+  CONST EFI_GUID              *DeviceTypeGuid; // Revision 1.1
 };
 
 extern EFI_GUID gEfiSerialIoProtocolGuid;
+extern EFI_GUID gEfiSerialTerminalDeviceTypeGuid;
 
 #endif

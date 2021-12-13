@@ -2,6 +2,7 @@
   ACPI 6.2 definitions from the ACPI Specification Revision 6.2 May, 2017.
 
   Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020, ARM Ltd. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -1077,9 +1078,9 @@ typedef struct {
 ///
 /// Memory Aggregator Device Type
 ///
-#define EFI_ACPI_6_2_PMMT_MEMORY_AGGREGATOR_DEVICE_TYPE_SOCKET            0x1
-#define EFI_ACPI_6_2_PMMT_MEMORY_AGGREGATOR_DEVICE_TYPE_MEMORY_CONTROLLER 0x2
-#define EFI_ACPI_6_2_PMMT_MEMORY_AGGREGATOR_DEVICE_TYPE_DIMM              0x3
+#define EFI_ACPI_6_2_PMMT_MEMORY_AGGREGATOR_DEVICE_TYPE_SOCKET            0x0
+#define EFI_ACPI_6_2_PMMT_MEMORY_AGGREGATOR_DEVICE_TYPE_MEMORY_CONTROLLER 0x1
+#define EFI_ACPI_6_2_PMMT_MEMORY_AGGREGATOR_DEVICE_TYPE_DIMM              0x2
 
 ///
 /// Socket Memory Aggregator Device Structure.
@@ -1281,7 +1282,7 @@ typedef struct {
   ///
   UINT64                                          ExitBootServicesEntry;
   ///
-  /// Timer value logged at the point just prior towhen the OS loader gaining
+  /// Timer value logged at the point just prior to when the OS loader gaining
   /// control back from calls the ExitBootServices function for UEFI compatible firmware.
   /// For non-UEFI compatible boots, this field must be zero.
   ///
@@ -1650,13 +1651,13 @@ typedef struct {
 #define EFI_ACPI_6_2_SECURE_DEVICES_TABLE_REVISION      0x01
 
 ///
-/// Secure Devcice types
+/// Secure Device types
 ///
 #define EFI_ACPI_6_2_SDEV_TYPE_PCIE_ENDPOINT_DEVICE     0x01
 #define EFI_ACPI_6_2_SDEV_TYPE_ACPI_NAMESPACE_DEVICE    0x00
 
 ///
-/// Secure Devcice flags
+/// Secure Device flags
 ///
 #define EFI_ACPI_6_2_SDEV_FLAG_ALLOW_HANDOFF            BIT0
 
@@ -2880,6 +2881,11 @@ typedef struct {
 #define EFI_ACPI_6_2_DATA_MANAGEMENT_TABLE_SIGNATURE  SIGNATURE_32('M', 'S', 'D', 'M')
 
 ///
+/// "PCCT" Platform Communications Channel Table
+///
+#define EFI_ACPI_6_2_PLATFORM_COMMUNICATIONS_CHANNEL_TABLE_SIGNATURE  SIGNATURE_32('P', 'C', 'C', 'T')
+
+///
 /// "SDEI" Software Delegated Exceptions Interface Table
 ///
 #define EFI_ACPI_6_2_SOFTWARE_DELEGATED_EXCEPTIONS_INTERFACE_TABLE_SIGNATURE  SIGNATURE_32('S', 'D', 'E', 'I')
@@ -2890,7 +2896,7 @@ typedef struct {
 #define EFI_ACPI_6_2_SOFTWARE_LICENSING_TABLE_SIGNATURE  SIGNATURE_32('S', 'L', 'I', 'C')
 
 ///
-/// "SPCR" Serial Port Concole Redirection Table
+/// "SPCR" Serial Port Console Redirection Table
 ///
 #define EFI_ACPI_6_2_SERIAL_PORT_CONSOLE_REDIRECTION_TABLE_SIGNATURE  SIGNATURE_32('S', 'P', 'C', 'R')
 

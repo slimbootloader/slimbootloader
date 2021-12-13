@@ -6,7 +6,7 @@
   environment. There are a set of base libraries in the Mde Package that can
   be used to implement base modules.
 
-Copyright (c) 2006 - 2018, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2006 - 2021, Intel Corporation. All rights reserved.<BR>
 Portions copyright (c) 2008 - 2009, Apple Inc. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
@@ -33,7 +33,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 //  if the /OPT:REF linker option is used. We defined a macro as this is a
 //  a non standard extension
 //
-#if defined(_MSC_EXTENSIONS) && _MSC_VER < 1800 && !defined (MDE_CPU_EBC)
+#if defined(_MSC_VER) && _MSC_VER < 1800 && !defined (MDE_CPU_EBC)
   ///
   /// Remove global variable from the linked image if there are no references to
   /// it after all compiler and linker optimizations have been performed.
@@ -195,7 +195,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 ///
 #define ASM_PFX(name) _CONCATENATE (__USER_LABEL_PREFIX__, name)
 
-#if __APPLE__
+#ifdef __APPLE__
   //
   // Apple extension that is used by the linker to optimize code size
   // with assembly functions. Put at the end of your .S files
@@ -623,7 +623,7 @@ typedef char* VA_LIST;
 
 #elif defined(__GNUC__) || defined(__clang__)
 
-#if defined(MDE_CPU_X64) && !defined(NO_MSABI_VA_FUNCS) && !defined(__clang__)
+#if defined(MDE_CPU_X64) && !defined(NO_MSABI_VA_FUNCS)
 //
 // X64 only. Use MS ABI version of GCC built-in macros for variable argument lists.
 //
@@ -781,10 +781,8 @@ typedef UINTN  *BASE_LIST;
   @return  Offset, in bytes, of field.
 
 **/
-#ifdef __GNUC__
-#if __GNUC__ >= 4
+#if (defined(__GNUC__) && __GNUC__ >= 4) || defined(__clang__)
 #define OFFSET_OF(TYPE, Field) ((UINTN) __builtin_offsetof(TYPE, Field))
-#endif
 #endif
 
 #ifndef OFFSET_OF
@@ -801,7 +799,7 @@ typedef UINTN  *BASE_LIST;
 **/
 #ifdef MDE_CPU_EBC
   #define STATIC_ASSERT(Expression, Message)
-#elif _MSC_EXTENSIONS
+#elif defined(_MSC_EXTENSIONS)
   #define STATIC_ASSERT static_assert
 #else
   #define STATIC_ASSERT _Static_assert
@@ -823,6 +821,8 @@ STATIC_ASSERT (sizeof (INT64)   == 8, "sizeof (INT64) does not meet UEFI Specifi
 STATIC_ASSERT (sizeof (UINT64)  == 8, "sizeof (UINT64) does not meet UEFI Specification Data Type requirements");
 STATIC_ASSERT (sizeof (CHAR8)   == 1, "sizeof (CHAR8) does not meet UEFI Specification Data Type requirements");
 STATIC_ASSERT (sizeof (CHAR16)  == 2, "sizeof (CHAR16) does not meet UEFI Specification Data Type requirements");
+STATIC_ASSERT (sizeof (L'A')    == 2, "sizeof (L'A') does not meet UEFI Specification Data Type requirements");
+STATIC_ASSERT (sizeof (L"A")    == 4, "sizeof (L\"A\") does not meet UEFI Specification Data Type requirements");
 
 //
 // The following three enum types are used to verify that the compiler
@@ -1275,7 +1275,6 @@ typedef UINTN RETURN_STATUS;
   **/
   #define RETURN_ADDRESS(L)     ((L == 0) ? _ReturnAddress() : (VOID *) 0)
 #elif defined (__GNUC__) || defined (__clang__)
-  void * __builtin_return_address (unsigned int level);
   /**
     Get the return address of the calling function.
 

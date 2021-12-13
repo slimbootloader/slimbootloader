@@ -8,7 +8,7 @@
   of size reduction when compiler optimization is disabled. If MDEPKG_NDEBUG is
   defined, then debug and assert related macros wrapped by it are the NULL implementations.
 
-Copyright (c) 2006 - 2019, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2006 - 2020, Intel Corporation. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -70,6 +70,41 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define EFI_D_EVENT     DEBUG_EVENT
 #define EFI_D_VERBOSE   DEBUG_VERBOSE
 #define EFI_D_ERROR     DEBUG_ERROR
+
+//
+// Source file line number.
+// Default is use the to compiler provided __LINE__ macro value. The __LINE__
+// mapping can be overriden by predefining DEBUG_LINE_NUMBER
+//
+// Defining DEBUG_LINE_NUMBER to a fixed value is useful when comparing builds
+// across source code formatting changes that may add/remove lines in a source
+// file.
+//
+#ifdef DEBUG_LINE_NUMBER
+#else
+#define DEBUG_LINE_NUMBER  __LINE__
+#endif
+
+/**
+  Macro that converts a Boolean expression to a Null-terminated ASCII string.
+
+  The default is to use the C pre-processor stringizing operator '#' to add
+  quotes around the C expression. If DEBUG_EXPRESSION_STRING_VALUE is defined
+  then the C expression is converted to the fixed string value.
+
+  Defining DEBUG_EXPRESSION_STRING_VALUE to a fixed value is useful when
+  comparing builds across source code formatting changes that may make
+  changes to spaces or parenthesis in a Boolean expression.
+
+  @param  Expression  Boolean expression.
+
+**/
+
+#ifdef DEBUG_EXPRESSION_STRING_VALUE
+#define DEBUG_EXPRESSION_STRING(Expression)  DEBUG_EXPRESSION_STRING_VALUE
+#else
+#define DEBUG_EXPRESSION_STRING(Expression)  #Expression
+#endif
 
 /**
   Prints a debug message to the debug output device if the specified error level is enabled.

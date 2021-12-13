@@ -14,6 +14,8 @@
 #ifndef _UEFI_NVM_EXPRESS_PASS_THRU_H_
 #define _UEFI_NVM_EXPRESS_PASS_THRU_H_
 
+#include <Protocol/DevicePath.h>
+
 #define EFI_NVM_EXPRESS_PASS_THRU_PROTOCOL_GUID \
   { \
     0x52c78312, 0x8edc, 0x4233, { 0x98, 0xf2, 0x1a, 0x1a, 0xa5, 0xe3, 0x88, 0xa5 } \
@@ -152,7 +154,7 @@ EFI_STATUS
   IN     EFI_NVM_EXPRESS_PASS_THRU_PROTOCOL          *This,
   IN     UINT32                                      NamespaceId,
   IN OUT EFI_NVM_EXPRESS_PASS_THRU_COMMAND_PACKET    *Packet,
-  IN     ASYNC_IO_CALL_BACK                          *Event OPTIONAL
+  IN     EFI_EVENT                                   Event OPTIONAL
   );
 
 /**
@@ -195,6 +197,76 @@ EFI_STATUS
   IN OUT UINT32                                      *NamespaceId
   );
 
+/**
+  Used to allocate and build a device path node for an NVM Express namespace on an NVM Express controller.
+
+  The EFI_NVM_EXPRESS_PASS_THRU_PROTOCOL.BuildDevicePath() function allocates and builds a single device
+  path node for the NVM Express namespace specified by NamespaceId.
+
+  If the NamespaceId is not valid, then EFI_NOT_FOUND is returned.
+
+  If DevicePath is NULL, then EFI_INVALID_PARAMETER is returned.
+
+  If there are not enough resources to allocate the device path node, then EFI_OUT_OF_RESOURCES is returned.
+
+  Otherwise, DevicePath is allocated with the boot service AllocatePool(), the contents of DevicePath are
+  initialized to describe the NVM Express namespace specified by NamespaceId, and EFI_SUCCESS is returned.
+
+  @param[in]     This                A pointer to the EFI_NVM_EXPRESS_PASS_THRU_PROTOCOL instance.
+  @param[in]     NamespaceId         The NVM Express namespace ID  for which a device path node is to be
+                                     allocated and built. Caller must set the NamespaceId to zero if the
+                                     device path node will contain a valid UUID.
+  @param[out]    DevicePath          A pointer to a single device path node that describes the NVM Express
+                                     namespace specified by NamespaceId. This function is responsible for
+                                     allocating the buffer DevicePath with the boot service AllocatePool().
+                                     It is the caller's responsibility to free DevicePath when the caller
+                                     is finished with DevicePath.
+  @retval EFI_SUCCESS                The device path node that describes the NVM Express namespace specified
+                                     by NamespaceId was allocated and returned in DevicePath.
+  @retval EFI_NOT_FOUND              The NamespaceId is not valid.
+  @retval EFI_INVALID_PARAMETER      DevicePath is NULL.
+  @retval EFI_OUT_OF_RESOURCES       There are not enough resources to allocate the DevicePath node.
+
+**/
+typedef
+EFI_STATUS
+(EFIAPI *EFI_NVM_EXPRESS_PASS_THRU_BUILD_DEVICE_PATH)(
+  IN     EFI_NVM_EXPRESS_PASS_THRU_PROTOCOL          *This,
+  IN     UINT32                                      NamespaceId,
+  OUT    EFI_DEVICE_PATH_PROTOCOL                    **DevicePath
+  );
+
+/**
+  Used to translate a device path node to a namespace ID.
+
+  The EFI_NVM_EXPRESS_PASS_THRU_PROTOCOL.GetNamespace() function determines the namespace ID associated with the
+  namespace described by DevicePath.
+
+  If DevicePath is a device path node type that the NVM Express Pass Thru driver supports, then the NVM Express
+  Pass Thru driver will attempt to translate the contents DevicePath into a namespace ID.
+
+  If this translation is successful, then that namespace ID is returned in NamespaceId, and EFI_SUCCESS is returned
+
+  @param[in]  This                A pointer to the EFI_NVM_EXPRESS_PASS_THRU_PROTOCOL instance.
+  @param[in]  DevicePath          A pointer to the device path node that describes an NVM Express namespace on
+                                  the NVM Express controller.
+  @param[out] NamespaceId         The NVM Express namespace ID contained in the device path node.
+
+  @retval EFI_SUCCESS             DevicePath was successfully translated to NamespaceId.
+  @retval EFI_INVALID_PARAMETER   If DevicePath or NamespaceId are NULL, then EFI_INVALID_PARAMETER is returned.
+  @retval EFI_UNSUPPORTED         If DevicePath is not a device path node type that the NVM Express Pass Thru driver
+                                  supports, then EFI_UNSUPPORTED is returned.
+  @retval EFI_NOT_FOUND           If DevicePath is a device path node type that the NVM Express Pass Thru driver
+                                  supports, but there is not a valid translation from DevicePath to a namespace ID,
+                                  then EFI_NOT_FOUND is returned.
+**/
+typedef
+EFI_STATUS
+(EFIAPI *EFI_NVM_EXPRESS_PASS_THRU_GET_NAMESPACE)(
+  IN     EFI_NVM_EXPRESS_PASS_THRU_PROTOCOL          *This,
+  IN     EFI_DEVICE_PATH_PROTOCOL                    *DevicePath,
+     OUT UINT32                                      *NamespaceId
+  );
 
 //
 // Protocol Interface Structure
@@ -203,6 +275,8 @@ struct _EFI_NVM_EXPRESS_PASS_THRU_PROTOCOL {
   EFI_NVM_EXPRESS_PASS_THRU_MODE                     *Mode;
   EFI_NVM_EXPRESS_PASS_THRU_PASSTHRU                 PassThru;
   EFI_NVM_EXPRESS_PASS_THRU_GET_NEXT_NAMESPACE       GetNextNamespace;
+  EFI_NVM_EXPRESS_PASS_THRU_BUILD_DEVICE_PATH        BuildDevicePath;
+  EFI_NVM_EXPRESS_PASS_THRU_GET_NAMESPACE            GetNamespace;
 };
 
 extern EFI_GUID gEfiNvmExpressPassThruProtocolGuid;

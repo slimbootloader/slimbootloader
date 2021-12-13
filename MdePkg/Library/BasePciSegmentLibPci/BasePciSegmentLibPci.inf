@@ -14,6 +14,7 @@
 [Defines]
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = BasePciSegmentLibPci
+  MODULE_UNI_FILE                = BasePciSegmentLibPci.uni
   FILE_GUID                      = AABF95D6-F40C-405F-8360-6A59794B8040
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
