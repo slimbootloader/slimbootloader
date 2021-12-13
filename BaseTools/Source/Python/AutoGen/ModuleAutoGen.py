@@ -254,7 +254,6 @@ class ModuleAutoGen(AutoGen):
         self.AutoGenDepSet = set()
         self.ReferenceModules = []
         self.ConstPcd                  = {}
-        self.Makefile         = None
         self.FileDependCache  = {}
 
     def __init_platform_info__(self):
@@ -1032,7 +1031,7 @@ class ModuleAutoGen(AutoGen):
     @cached_property
     def ModulePcdList(self):
         # apply PCD settings from platform
-        RetVal = self.PlatformInfo.ApplyPcdSetting(self.Module, self.Module.Pcds)
+        RetVal = self.PlatformInfo.ApplyPcdSetting(self, self.Module.Pcds)
 
         return RetVal
     @cached_property
@@ -1063,7 +1062,7 @@ class ModuleAutoGen(AutoGen):
                     continue
                 Pcds.add(Key)
                 PcdsInLibrary[Key] = copy.copy(Library.Pcds[Key])
-            RetVal.extend(self.PlatformInfo.ApplyPcdSetting(self.Module, PcdsInLibrary, Library=Library))
+            RetVal.extend(self.PlatformInfo.ApplyPcdSetting(self, PcdsInLibrary, Library=Library))
         return RetVal
 
     ## Get the GUID value mapping
@@ -1822,9 +1821,6 @@ class ModuleAutoGen(AutoGen):
             for LibraryAutoGen in self.LibraryAutoGenList:
                 LibraryAutoGen.CreateCodeFile()
 
-        # CanSkip uses timestamps to determine build skipping
-        if self.CanSkip():
-            return
         self.LibraryAutoGenList
         AutoGenList = []
         IgoredAutoGenList = []

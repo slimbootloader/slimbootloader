@@ -1,8 +1,8 @@
 ## @file
 # Create makefile for MS nmake and GNU make
 #
-# Copyright (c) 2007 - 2020, Intel Corporation. All rights reserved.<BR>
-# Copyright (c) 2020, ARM Limited. All rights reserved.<BR>
+# Copyright (c) 2007 - 2021, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2020 - 2021, Arm Limited. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 
@@ -177,11 +177,11 @@ class BuildFile(object):
 
         MakePath = AutoGenObject.BuildOption.get('MAKE', {}).get('PATH')
         if not MakePath:
-            self._FileType = ""
-        elif "nmake" in MakePath:
+            MakePath = AutoGenObject.ToolDefinition.get('MAKE', {}).get('PATH')
+        if "nmake" in MakePath:
             self._FileType = NMAKE_FILETYPE
         else:
-            self._FileType = "gmake"
+            self._FileType = GMAKE_FILETYPE
 
         if sys.platform == "win32":
             self._Platform = WIN32_PLATFORM
@@ -519,13 +519,15 @@ cleanlib:
         # tools definitions
         ToolsDef = []
         IncPrefix = self._INC_FLAG_[MyAgo.ToolChainFamily]
-        for Tool in MyAgo.BuildOption:
-            for Attr in MyAgo.BuildOption[Tool]:
+        for Tool in sorted(list(MyAgo.BuildOption)):
+            Appended = False
+            for Attr in sorted(list(MyAgo.BuildOption[Tool])):
                 Value = MyAgo.BuildOption[Tool][Attr]
                 if Attr == "FAMILY":
                     continue
                 elif Attr == "PATH":
                     ToolsDef.append("%s = %s" % (Tool, Value))
+                    Appended = True
                 else:
                     # Don't generate MAKE_FLAGS in makefile. It's put in environment variable.
                     if Tool == "MAKE":
@@ -542,7 +544,9 @@ cleanlib:
                                 Value = ' '.join(ValueList)
 
                     ToolsDef.append("%s_%s = %s" % (Tool, Attr, Value))
-            ToolsDef.append("")
+                    Appended = True
+            if Appended:
+                ToolsDef.append("")
 
         # generate the Response file and Response flag
         RespDict = self.CommandExceedLimit()
@@ -576,7 +580,7 @@ cleanlib:
             EdkLogger.error("build", AUTOGEN_ERROR, "Nothing to build",
                             ExtraData="[%s]" % str(MyAgo))
 
-        self.ProcessBuildTargetList()
+        self.ProcessBuildTargetList(MyAgo.OutputDir, ToolsDef)
         self.ParserGenerateFfsCmd()
 
         # Generate macros used to represent input files
@@ -786,8 +790,10 @@ cleanlib:
 
     def ReplaceMacro(self, str):
         for Macro in self.MacroList:
-            if self._AutoGenObject.Macros[Macro] and self._AutoGenObject.Macros[Macro] in str:
-                str = str.replace(self._AutoGenObject.Macros[Macro], '$(' + Macro + ')')
+            if self._AutoGenObject.Macros[Macro] and os.path.normcase(self._AutoGenObject.Macros[Macro]) in os.path.normcase(str):
+                replace_dir = str[os.path.normcase(str).index(os.path.normcase(self._AutoGenObject.Macros[Macro])): os.path.normcase(str).index(
+                    os.path.normcase(self._AutoGenObject.Macros[Macro])) + len(self._AutoGenObject.Macros[Macro])]
+                str = str.replace(replace_dir, '$(' + Macro + ')')
         return str
 
     def CommandExceedLimit(self):
@@ -901,7 +907,7 @@ cleanlib:
                                     BuildTargets[Target].Commands[i] = SingleCommand.replace('$(INC)', '').replace(FlagDict[Flag]['Macro'], RespMacro)
         return RespDict
 
-    def ProcessBuildTargetList(self):
+    def ProcessBuildTargetList(self, RespFile, ToolsDef):
         #
         # Search dependency file list for each source file
         #
@@ -1002,6 +1008,7 @@ cleanlib:
                     self.ObjTargetDict[T.Target.SubDir] = set()
                 self.ObjTargetDict[T.Target.SubDir].add(NewFile)
         for Type in self._AutoGenObject.Targets:
+            resp_file_number = 0
             for T in self._AutoGenObject.Targets[Type]:
                 # Generate related macros if needed
                 if T.GenFileListMacro and T.FileListMacro not in self.FileListMacros:
@@ -1043,7 +1050,10 @@ cleanlib:
                         Deps.append("$(%s)" % T.ListFileMacro)
 
                 if self._AutoGenObject.BuildRuleFamily == TAB_COMPILER_MSFT and Type == TAB_C_CODE_FILE:
-                    T, CmdTarget, CmdTargetDict, CmdCppDict = self.ParserCCodeFile(T, Type, CmdSumDict, CmdTargetDict, CmdCppDict, DependencyDict)
+                    T, CmdTarget, CmdTargetDict, CmdCppDict = self.ParserCCodeFile(T, Type, CmdSumDict, CmdTargetDict,
+                                                                                   CmdCppDict, DependencyDict, RespFile,
+                                                                                   ToolsDef, resp_file_number)
+                    resp_file_number += 1
                     TargetDict = {"target": self.PlaceMacro(T.Target.Path, self.Macros), "cmd": "\n\t".join(T.Commands),"deps": CCodeDeps}
                     CmdLine = self._BUILD_TARGET_TEMPLATE.Replace(TargetDict).rstrip().replace('\t$(OBJLIST', '$(OBJLIST')
                     if T.Commands:
@@ -1060,7 +1070,9 @@ cleanlib:
                         AnnexeTargetDict = {"target": self.PlaceMacro(i.Path, self.Macros), "cmd": "", "deps": self.PlaceMacro(T.Target.Path, self.Macros)}
                         self.BuildTargetList.append(self._BUILD_TARGET_TEMPLATE.Replace(AnnexeTargetDict))
 
-    def ParserCCodeFile(self, T, Type, CmdSumDict, CmdTargetDict, CmdCppDict, DependencyDict):
+    def ParserCCodeFile(self, T, Type, CmdSumDict, CmdTargetDict, CmdCppDict, DependencyDict, RespFile, ToolsDef,
+                            resp_file_number):
+        SaveFilePath = os.path.join(RespFile, "cc_resp_%s.txt" % resp_file_number)
         if not CmdSumDict:
             for item in self._AutoGenObject.Targets[Type]:
                 CmdSumDict[item.Target.SubDir] = item.Target.BaseName
@@ -1087,17 +1099,36 @@ cleanlib:
                         if Temp.startswith('/Fo'):
                             CmdSign = '%s%s' % (Temp.rsplit(TAB_SLASH, 1)[0], TAB_SLASH)
                             break
-                    else: continue
-                    if CmdSign not in list(CmdTargetDict.keys()):
-                        CmdTargetDict[CmdSign] = Item.replace(Temp, CmdSign)
                     else:
-                        CmdTargetDict[CmdSign] = "%s %s" % (CmdTargetDict[CmdSign], SingleCommandList[-1])
+                        continue
+                    if CmdSign not in list(CmdTargetDict.keys()):
+                        cmd = Item.replace(Temp, CmdSign)
+                        if SingleCommandList[-1] in cmd:
+                            CmdTargetDict[CmdSign] = [cmd.replace(SingleCommandList[-1], "").rstrip(), SingleCommandList[-1]]
+                    else:
+                        # CmdTargetDict[CmdSign] = "%s %s" % (CmdTargetDict[CmdSign], SingleCommandList[-1])
+                        CmdTargetDict[CmdSign].append(SingleCommandList[-1])
                     Index = CommandList.index(Item)
                     CommandList.pop(Index)
                     if SingleCommandList[-1].endswith("%s%s.c" % (TAB_SLASH, CmdSumDict[CmdSign[3:].rsplit(TAB_SLASH, 1)[0]])):
                         Cpplist = CmdCppDict[T.Target.SubDir]
                         Cpplist.insert(0, '$(OBJLIST_%d): ' % list(self.ObjTargetDict.keys()).index(T.Target.SubDir))
-                        T.Commands[Index] = '%s\n\t%s' % (' \\\n\t'.join(Cpplist), CmdTargetDict[CmdSign])
+                        source_files = CmdTargetDict[CmdSign][1:]
+                        source_files.insert(0, " ")
+                        if len(source_files)>2:
+                            SaveFileOnChange(SaveFilePath, " ".join(source_files), False)
+                            T.Commands[Index] = '%s\n\t%s $(cc_resp_%s)' % (
+                            ' \\\n\t'.join(Cpplist), CmdTargetDict[CmdSign][0], resp_file_number)
+                            ToolsDef.append("cc_resp_%s = @%s" % (resp_file_number, SaveFilePath))
+
+                        elif len(source_files)<=2 and len(" ".join(CmdTargetDict[CmdSign][:2]))>GlobalData.gCommandMaxLength:
+                            SaveFileOnChange(SaveFilePath, " ".join(source_files), False)
+                            T.Commands[Index] = '%s\n\t%s $(cc_resp_%s)' % (
+                                ' \\\n\t'.join(Cpplist), CmdTargetDict[CmdSign][0], resp_file_number)
+                            ToolsDef.append("cc_resp_%s = @%s" % (resp_file_number, SaveFilePath))
+
+                        else:
+                            T.Commands[Index] = '%s\n\t%s' % (' \\\n\t'.join(Cpplist), " ".join(CmdTargetDict[CmdSign]))
                     else:
                         T.Commands.pop(Index)
         return T, CmdSumDict, CmdTargetDict, CmdCppDict
