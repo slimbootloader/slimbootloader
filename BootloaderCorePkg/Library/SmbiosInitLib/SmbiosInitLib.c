@@ -607,7 +607,7 @@ BuildProcessorInfo (
 
   // Fill string index
   SmbiosRecord.Socket = SMBIOS_STRING_INDEX_1;
-  SmbiosRecord.ProcessorManufacture = SMBIOS_STRING_INDEX_2;
+  SmbiosRecord.ProcessorManufacturer = SMBIOS_STRING_INDEX_2;
   SmbiosRecord.ProcessorVersion = SMBIOS_STRING_INDEX_3;
   SmbiosRecord.SerialNumber = SMBIOS_STRING_INDEX_4;
   SmbiosRecord.AssetTag = SMBIOS_STRING_INDEX_5;

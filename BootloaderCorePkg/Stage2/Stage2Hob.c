@@ -25,7 +25,6 @@
 #define EFI_PCI_HOST_BRIDGE_COMBINE_MEM_PMEM          1
 #define EFI_PCI_HOST_BRIDGE_MEM64_DECODE              2
 
-#define PNP_EISA_ID_CONST         0x41D0
 #define EISA_ID(_Name, _Num)      ((UINT32)((_Name) | (_Num) << 16))
 #define EISA_PNP_ID(_PNPId)       (EISA_ID(PNP_EISA_ID_CONST, (_PNPId)))
 
