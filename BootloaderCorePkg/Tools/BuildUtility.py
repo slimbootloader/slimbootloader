@@ -532,7 +532,7 @@ def gen_flash_map_bin (flash_map_file, comp_list):
 def copy_expanded_file (src, dst):
     gen_cfg_data ("GENDLT", src, dst)
 
-def gen_config_file (fv_dir, brd_name, platform_id, pri_key, cfg_db_size, cfg_size, cfg_int, cfg_ext, sign_scheme, hash_type, svn):
+def gen_config_file (fv_dir, brd_name_override, brd_name, platform_id, pri_key, cfg_db_size, cfg_size, cfg_int, cfg_ext, sign_scheme, hash_type, svn):
     # Remove previous generated files
     for file in glob.glob(os.path.join(fv_dir, "CfgData*.*")):
             os.remove(file)
@@ -544,6 +544,8 @@ def gen_config_file (fv_dir, brd_name, platform_id, pri_key, cfg_db_size, cfg_si
 
     # Generate CFG data
     brd_name_dir      = os.path.join(os.environ['PLT_SOURCE'], 'Platform', brd_name)
+    if not os.path.exists(brd_name_dir):
+        brd_name_dir      = os.path.join(os.environ['SBL_SOURCE'], 'Platform', brd_name)
     comm_brd_dir      = os.path.join(os.environ['SBL_SOURCE'], 'Platform', 'CommonBoardPkg')
     brd_cfg_dir       = os.path.join(brd_name_dir, 'CfgData')
     com_brd_cfg_dir   = os.path.join(comm_brd_dir, 'CfgData')
@@ -558,6 +560,8 @@ def gen_config_file (fv_dir, brd_name, platform_id, pri_key, cfg_db_size, cfg_si
     cfg_bin_int_file  = os.path.join(fv_dir, "CfgDataInt.bin")  #_INT_CFG_DATA_FILE settings
     cfg_bin_ext_file  = os.path.join(fv_dir, "CfgDataExt.bin")  #_EXT_CFG_DATA_FILE settings
     cfg_comb_dsc_file = os.path.join(fv_dir, 'CfgDataDef.' + file_ext)
+    if brd_name_override != '':
+        brd_cfg2_dir  = os.path.join(os.environ['PLT_SOURCE'], 'Platform', brd_name_override, 'CfgData')
 
     # Generate parsed result into pickle file to improve performance
     if os.path.exists(cfg_dsc_dyn_file):
@@ -578,7 +582,13 @@ def gen_config_file (fv_dir, brd_name, platform_id, pri_key, cfg_db_size, cfg_si
 
         cfg_bin_list = []
         for dlt_file in cfg_file_list:
-            cfg_dlt_file  = os.path.join(brd_cfg_dir, dlt_file)
+            cfg_dlt_file = ''
+            if brd_name_override != '':
+                cfg_dlt_file = os.path.join(brd_cfg2_dir, dlt_file)
+
+            if cfg_dlt_file == '' or not os.path.exists(cfg_dlt_file):
+                cfg_dlt_file = os.path.join(brd_cfg_dir, dlt_file)
+
             if not os.path.exists(cfg_dlt_file):
                 test_file = os.path.join(fv_dir, dlt_file)
                 if os.path.exists(test_file):
@@ -625,7 +635,11 @@ def gen_config_file (fv_dir, brd_name, platform_id, pri_key, cfg_db_size, cfg_si
     # copy delta files
     dlt_list  = cfg_int[1:] + cfg_ext
     for dlt_file in dlt_list:
-        src_dlt_file = os.path.join (brd_cfg_dir, dlt_file)
+        src_dlt_file = ''
+        if brd_name_override != '':
+            src_dlt_file = os.path.join(brd_cfg2_dir, dlt_file)
+        if src_dlt_file == '' or not os.path.exists(src_dlt_file):
+            src_dlt_file = os.path.join (brd_cfg_dir, dlt_file)
         if not os.path.exists(src_dlt_file):
             src_dlt_file = os.path.join (fv_dir, dlt_file)
         if not os.path.exists(src_dlt_file):
