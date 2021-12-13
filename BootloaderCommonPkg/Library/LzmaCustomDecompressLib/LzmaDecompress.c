@@ -1,23 +1,24 @@
 /** @file
   LZMA Decompress interfaces
 
-  Copyright (c) 2009 - 2010, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2009 - 2018, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
 #include "LzmaDecompressLibInternal.h"
-#include "Sdk/C/Types.h"
+#include "Sdk/C/7zTypes.h"
 #include "Sdk/C/7zVersion.h"
 #include "Sdk/C/LzmaDec.h"
 
 #define SCRATCH_BUFFER_REQUEST_SIZE SIZE_64KB
 
-typedef struct {
+typedef struct
+{
   ISzAlloc Functions;
   VOID     *Buffer;
   UINTN    BufferSize;
-} ISZ_ALLOC_WITH_DATA;
+} ISzAllocWithData;
 
 /**
   Allocation routine used by LZMA decompression.
@@ -29,18 +30,18 @@ typedef struct {
 **/
 VOID *
 SzAlloc (
-  VOID *P,
+  CONST ISzAlloc *P,
   size_t Size
   )
 {
   VOID *Addr;
-  ISZ_ALLOC_WITH_DATA *Private;
+  ISzAllocWithData *Private;
 
-  Private = (ISZ_ALLOC_WITH_DATA *) P;
+  Private = (ISzAllocWithData*) P;
 
   if (Private->BufferSize >= Size) {
     Addr = Private->Buffer;
-    Private->Buffer = (VOID *) ((UINT8 *)Addr + Size);
+    Private->Buffer = (VOID*) ((UINT8*)Addr + Size);
     Private->BufferSize -= Size;
     return Addr;
   } else {
@@ -57,7 +58,7 @@ SzAlloc (
 **/
 VOID
 SzFree (
-  VOID *P,
+  CONST ISzAlloc *P,
   VOID *Address
   )
 {
@@ -78,7 +79,7 @@ SzFree (
   @return The size of the uncompressed buffer.
 **/
 UINT64
-GetDecodedSizeOfBuf (
+GetDecodedSizeOfBuf(
   UINT8 *EncodedData
   )
 {
@@ -87,9 +88,8 @@ GetDecodedSizeOfBuf (
 
   /* Parse header */
   DecodedSize = 0;
-  for (Index = LZMA_PROPS_SIZE + 7; Index >= LZMA_PROPS_SIZE; Index--) {
-    DecodedSize = LShiftU64 (DecodedSize, 8) + EncodedData[Index];
-  }
+  for (Index = LZMA_PROPS_SIZE + 7; Index >= LZMA_PROPS_SIZE; Index--)
+    DecodedSize = LShiftU64(DecodedSize, 8) + EncodedData[Index];
 
   return DecodedSize;
 }
@@ -127,6 +127,10 @@ GetDecodedSizeOfBuf (
                           in DestinationSize and the size of the scratch
                           buffer was returned in ScratchSize.
 
+  @retval RETURN_UNSUPPORTED  DestinationSize cannot be output because the
+                              uncompressed buffer size (in bytes) does not fit
+                              in a UINT32. Output parameters have not been
+                              modified.
 **/
 RETURN_STATUS
 EFIAPI
@@ -139,9 +143,12 @@ LzmaUefiDecompressGetInfo (
 {
   UInt64  DecodedSize;
 
-  ASSERT (SourceSize >= LZMA_HEADER_SIZE);
+  ASSERT(SourceSize >= LZMA_HEADER_SIZE);
 
-  DecodedSize = GetDecodedSizeOfBuf ((UINT8 *)Source);
+  DecodedSize = GetDecodedSizeOfBuf((UINT8*)Source);
+  if (DecodedSize > MAX_UINT32) {
+    return RETURN_UNSUPPORTED;
+  }
 
   *DestinationSize = (UINT32)DecodedSize;
   *ScratchSize = SCRATCH_BUFFER_REQUEST_SIZE;
@@ -183,27 +190,27 @@ LzmaUefiDecompress (
   ELzmaStatus       Status;
   SizeT             DecodedBufSize;
   SizeT             EncodedDataSize;
-  ISZ_ALLOC_WITH_DATA  AllocFuncs;
+  ISzAllocWithData  AllocFuncs;
 
   AllocFuncs.Functions.Alloc  = SzAlloc;
   AllocFuncs.Functions.Free   = SzFree;
   AllocFuncs.Buffer           = Scratch;
   AllocFuncs.BufferSize       = SCRATCH_BUFFER_REQUEST_SIZE;
 
-  DecodedBufSize = (SizeT)GetDecodedSizeOfBuf ((UINT8 *)Source);
+  DecodedBufSize = (SizeT)GetDecodedSizeOfBuf((UINT8*)Source);
   EncodedDataSize = (SizeT) (SourceSize - LZMA_HEADER_SIZE);
 
-  LzmaResult = LzmaDecode (
-                 Destination,
-                 &DecodedBufSize,
-                 (Byte *) ((UINT8 *)Source + LZMA_HEADER_SIZE),
-                 &EncodedDataSize,
-                 Source,
-                 LZMA_PROPS_SIZE,
-                 LZMA_FINISH_END,
-                 &Status,
-                 & (AllocFuncs.Functions)
-                 );
+  LzmaResult = LzmaDecode(
+    Destination,
+    &DecodedBufSize,
+    (Byte*)((UINT8*)Source + LZMA_HEADER_SIZE),
+    &EncodedDataSize,
+    Source,
+    LZMA_PROPS_SIZE,
+    LZMA_FINISH_END,
+    &Status,
+    &(AllocFuncs.Functions)
+    );
 
   if (LzmaResult == SZ_OK) {
     return RETURN_SUCCESS;
