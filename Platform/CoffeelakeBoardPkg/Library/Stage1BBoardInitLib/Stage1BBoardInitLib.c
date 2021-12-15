@@ -651,6 +651,7 @@ DEBUG_CODE_END();
     break;
   case PreMemoryInit:
     GpioInit (PlatformId);
+    break;
   case PostMemoryInit:
     DEBUG ((DEBUG_INFO, "PostMemoryInit called\n"));
     UpdateMemoryInfo ();

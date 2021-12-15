@@ -734,6 +734,7 @@ DEBUG_CODE_END();
     break;
   case PreMemoryInit:
     GpioConfigurePads (sizeof (mGpioTableCmlS82Ddr4PreMem) / sizeof (GPIO_INIT_CONFIG), mGpioTableCmlS82Ddr4PreMem );
+    break;
   case PostMemoryInit:
     DEBUG ((DEBUG_INFO, "PostMemoryInit called\n"));
     UpdateMemoryInfo ();
