@@ -1024,9 +1024,6 @@ BoardInit (
   case ReadyToBoot:
     if ((GetBootMode() != BOOT_ON_FLASH_UPDATE) && (GetPayloadId() == 0)) {
       ProgramSecuritySetting ();
-    } else if (GetBootMode() == BOOT_ON_FLASH_UPDATE) {
-      /* clear bad DSO mark (if have), so next boot is a fresh restart */
-      WdtClearScratchpad (WDT_FLAG_TCC_BAD_DSO);
     }
 
     break;
@@ -3026,3 +3023,4 @@ PlatformUpdateAcpiGnvs (
     PlatformNvs->Rtd3Support     = mTccRtd3Support;
   }
 }
+
