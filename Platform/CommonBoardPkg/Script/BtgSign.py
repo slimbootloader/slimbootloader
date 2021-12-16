@@ -21,7 +21,8 @@ import xml.etree.ElementTree as ET
 from   xml.dom import minidom
 from   ctypes  import *
 from   subprocess   import call
-from   StitchLoader import *
+from   CommonUtility import *
+from   IfwiUtility   import *
 
 SIGNING_KEY = {
     # Key Id                                | Key File Name |
