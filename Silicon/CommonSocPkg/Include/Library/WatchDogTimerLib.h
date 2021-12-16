@@ -10,7 +10,6 @@
 
 #define  WDT_TIMEOUT_TCC_DSO           200    // 200 seconds
 #define  WDT_FLAG_TCC_DSO_IN_PROGRESS  BIT17
-#define  WDT_FLAG_TCC_BAD_DSO          BIT18
 
 
 /**
