@@ -512,7 +512,15 @@ FindFitEntryData (
   UINT32                         Index;
 
   FitTableOffset = *(UINT64 *)(UINTN)(BASE_4GB - 0x40);
+  // Fit table is located in Top Swap region.
+  // Adding check to validate Fit entry location
+  if ((FitTableOffset < (BASE_4GB - PcdGet32 (PcdTopSwapRegionSize)))  ||  (FitTableOffset >  BASE_4GB)) {
+    DEBUG ((DEBUG_INFO, "FitTableOffset 0x%x is not valid \n", FitTableOffset));
+    return NULL;
+  }
+
   FitEntry = (FIRMWARE_INTERFACE_TABLE_ENTRY *)(UINTN)FitTableOffset;
+
   if (FitEntry != NULL) {
     if (FitEntry[0].Address != *(UINT64 *)"_FIT_   ") {
       return NULL;
