@@ -25,7 +25,7 @@ class Board(BaseBoard):
 
         self.VERINFO_IMAGE_ID       = 'SBL_TGL'
         self.VERINFO_PROJ_MAJOR_VER = 1
-        self.VERINFO_PROJ_MINOR_VER = 3
+        self.VERINFO_PROJ_MINOR_VER = 4
         self.VERINFO_SVN            = 1
         self.VERINFO_BUILD_DATE     = time.strftime("%m/%d/%Y")
 
@@ -237,7 +237,7 @@ class Board(BaseBoard):
         #   the ImageId field in the VBT container.
         # VbtFileName is the VBT file name. It needs to be located under platform
         #   VbtBin folder.
-        self._MULTI_VBT_FILE      = {1:'Vbt.dat', 2:'Vbt_tglH_Hdmi.dat'}
+        #self._MULTI_VBT_FILE      = {1:'Vbt.dat', 2:'Vbt2.dat'}
 
     def PlatformBuildHook (self, build, phase):
         if phase == 'pre-build:before':

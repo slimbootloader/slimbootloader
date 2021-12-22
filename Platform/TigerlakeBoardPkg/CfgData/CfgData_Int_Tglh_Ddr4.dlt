@@ -38,8 +38,6 @@ MEMORY_CFG_DATA.VtdDisable                                  | 1
 SILICON_CFG_DATA.PchDmiAspmCtrl                             | 2
 SILICON_CFG_DATA.PchLegacyIoLowLatency                      | 1
 
-GEN_CFG_DATA.VbtImageId                                     | 2
-
 BOOT_OPTION_CFG_DATA_5.HwPart_5                             | 255
 
 
