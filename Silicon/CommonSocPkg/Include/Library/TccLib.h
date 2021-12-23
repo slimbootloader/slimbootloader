@@ -28,4 +28,31 @@ UpdateAcpiRtctTable (
   IN EFI_ACPI_DESCRIPTION_HEADER *RtctTable
   );
 
+/**
+  Check if the TCC DSO is a bad binary by checking its signature.
+
+  @retval TRUE     TCC DSO was marked as a bad binary
+  @retval FALSE    TCC DSO was not found or not marked as a bad binary
+
+ */
+BOOLEAN
+EFIAPI
+IsMarkedBadDso (
+  VOID
+  );
+
+/**
+  Mark TCC DSO as a bad binary by changing its signature to 0.
+
+  @retval EFI_SUCCESS
+  @retval EFI_NOT_FOUND          Unable to find IPFW/TCCT
+  @retval Others                 Errors during SPI operations
+
+ */
+EFI_STATUS
+EFIAPI
+InvalidateBadDso (
+  VOID
+  );
+
 #endif
