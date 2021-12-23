@@ -48,6 +48,7 @@
   BootGuardLib
   BoardSupportLib
   WatchDogTimerLib
+  TccLib
 
 [Guids]
 

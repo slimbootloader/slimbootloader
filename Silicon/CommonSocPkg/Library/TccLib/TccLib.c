@@ -13,6 +13,8 @@
 #include <Library/BootloaderCommonLib.h>
 #include <Library/BootloaderCoreLib.h>
 #include <Library/TccLib.h>
+#include <Library/SpiFlashLib.h>
+#include <Library/ContainerLib.h>
 #include "TccRtctHob.h"
 
 
@@ -82,3 +84,79 @@ UpdateAcpiRtctTable (
   return EFI_SUCCESS;
 }
 
+/**
+  Check if the TCC DSO is a bad binary by checking its signature.
+
+  @retval TRUE     TCC DSO was marked as a bad binary
+  @retval FALSE    TCC DSO was not found or not marked as a bad binary
+
+ */
+BOOLEAN
+EFIAPI
+IsMarkedBadDso (
+  VOID
+  )
+{
+  EFI_STATUS               Status;
+  UINT32                   Length;
+  LOADER_COMPRESSED_HEADER *Hdr;
+
+  Status = LocateComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'C', 'C', 'T'), (VOID *)&Hdr, &Length);
+  if (EFI_ERROR (Status) || (Length < sizeof(LOADER_COMPRESSED_HEADER))) {
+    return FALSE;
+  }
+
+  if (Hdr->Signature == 0) {
+    DEBUG ((DEBUG_INFO, "BAD DSO(TCCT) detected!\n"));
+    return TRUE;
+  } else {
+    return FALSE;
+  }
+}
+
+/**
+  Mark TCC DSO as a bad binary by changing its signature to 0.
+
+  @retval EFI_SUCCESS
+  @retval EFI_NOT_FOUND          Unable to find IPFW/TCCT
+  @retval Others                 Errors during SPI operations
+
+ */
+EFI_STATUS
+EFIAPI
+InvalidateBadDso (
+  VOID
+  )
+{
+  EFI_STATUS       Status;
+  UINT32           Address;
+  UINT32           BaseAddress;
+  UINT32           RegionSize;
+  CONTAINER_ENTRY  *ContainerEntry;
+  COMPONENT_ENTRY  *CompEntry;
+  CONTAINER_HDR    *ContainerHdr;
+  UINT32           Signature;
+
+  Status = LocateComponentEntry (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'C', 'C', 'T'), &ContainerEntry, &CompEntry);
+  if (EFI_ERROR (Status) || (ContainerEntry == NULL) || (CompEntry == NULL)) {
+    return EFI_NOT_FOUND;
+  }
+
+  Status = SpiGetRegionAddress (FlashRegionBios, NULL, &RegionSize);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+  BaseAddress = ((UINT32)(~RegionSize) + 1);
+
+  ContainerHdr = (CONTAINER_HDR *)(UINTN)ContainerEntry->HeaderCache;
+  Address = ContainerEntry->Base + ContainerHdr->DataOffset + CompEntry->Offset;
+  Address -= BaseAddress;
+
+  // Update 'Signature' field to 0 to mark bad DSO
+  Signature = 0;
+  Status = SpiFlashWrite (FlashRegionBios, Address, sizeof(Signature), (VOID *)&Signature);
+  if (!EFI_ERROR(Status)) {
+    DEBUG ((DEBUG_INFO, "Mark BAD DSO(TCCT) successfully\n"));
+  }
+  return Status;
+}

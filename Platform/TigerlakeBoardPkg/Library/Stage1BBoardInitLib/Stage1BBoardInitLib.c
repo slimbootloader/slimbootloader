@@ -40,7 +40,7 @@
 #include <Library/ResetSystemLib.h>
 #include <Library/WatchDogTimerLib.h>
 #include <Library/SocInitLib.h>
-
+#include <Library/TccLib.h>
 
 CONST PLT_DEVICE  mPlatformDevices[]= {
   {{0x00001700}, OsBootDeviceSata  , 0 },
@@ -57,117 +57,6 @@ VOID
 GetBoardId (
   OUT UINT8 *BoardId
 );
-
-
-/**
-  Check if the BAD DSO mark exists or not
-  BAD DSO mark is defined as
-    LOADER_COMPRESSED_HEADER of the component in flash
-    Its Signature' and 'Size' fields are 0 (zero).
-    Other fields are subject to change
-
-  @retval TRUE  DSO was marked as BAD DSO
-  @retval FALSE No BAD DSO mark found
-
- */
-BOOLEAN
-EFIAPI
-IsMarkedBadDso (
-  VOID
-)
-{
-  EFI_STATUS               Status;
-  UINT32                   Length;
-  LOADER_COMPRESSED_HEADER *Hdr;
-  LOADER_COMPRESSED_HEADER BadDsoMark = {0};
-
-  DEBUG ((DEBUG_INFO, "Check BAD DSO mark\n"));
-
-  Status = LocateComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'),
-                            SIGNATURE_32 ('T', 'C', 'C', 'T'),
-                            (VOID *)&Hdr, &Length);
-  if (EFI_ERROR (Status) || (Length < sizeof(LOADER_COMPRESSED_HEADER))) {
-    return FALSE;
-  }
-
-  if ((Hdr->Signature == BadDsoMark.Signature) && (Hdr->Size == BadDsoMark.Size)) {
-    DEBUG ((DEBUG_INFO, "BAD DSO(TCCT) detected!\n"));
-    return TRUE;
-  } else {
-    return FALSE;
-  }
-}
-
-/**
-  Invalidate BAD DSO
-
-  @retval EFI_SUCCESS
-  @retval EFI_NOT_FOUND          Unable to find IPFW/TCCT
-  @retval EFI_OUT_OF_RESOURCES   Bios region is too small
-  @retval Others                 Errors during SPI operations
-
- */
-EFI_STATUS
-EFIAPI
-InvalidateBadDso (
-  VOID
-)
-{
-  EFI_STATUS  Status;
-  UINT32      Address;
-  UINT32      Length;
-  UINT32      BaseAddress;
-  UINT32      RegionSize;
-  CONTAINER_ENTRY  *ContainerEntry;
-  COMPONENT_ENTRY  *CompEntry;
-  CONTAINER_HDR    *ContainerHdr;
-  // BAD DSO mark: The 'Signature' and 'Size' fields are zero(0)
-  // Other fields are subject to change
-  LOADER_COMPRESSED_HEADER BadDsoMark = {0};
-
-  DEBUG ((DEBUG_INFO, "Invalidate BAD DSO region\n"));
-
-  Status = LocateComponentEntry (SIGNATURE_32 ('I', 'P', 'F', 'W'),
-                                 SIGNATURE_32 ('T', 'C', 'C', 'T'),
-                                 &ContainerEntry, &CompEntry);
-  if (EFI_ERROR (Status) || (ContainerEntry == NULL) || (CompEntry == NULL)) {
-    return EFI_NOT_FOUND;
-  }
-
-  /* a region should have 4KB as min erase size */
-  Length = SIZE_4KB;
-  if (CompEntry->Size < Length) {
-    return EFI_OUT_OF_RESOURCES;
-  }
-
-  ContainerHdr = (CONTAINER_HDR *)(UINTN)ContainerEntry->HeaderCache;
-  Address = ContainerEntry->Base + ContainerHdr->DataOffset + CompEntry->Offset;
-
-  /* Svn is kept for anti-rollback control */
-  BadDsoMark.Svn = ((LOADER_COMPRESSED_HEADER *)(UINTN)Address)->Svn;
-
-  Status = SpiGetRegionAddress (FlashRegionBios, &BaseAddress, &RegionSize);
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  BaseAddress = ((UINT32)(~RegionSize) + 1);
-
-  Address -= BaseAddress;
-  if ((Address + Length) > RegionSize) {
-    return EFI_OUT_OF_RESOURCES;
-  }
-
-  Status = SpiFlashErase (FlashRegionBios, Address, Length);
-  if (!EFI_ERROR(Status)) {
-    Status = SpiFlashWrite (FlashRegionBios, Address, sizeof(BadDsoMark), (VOID *)&BadDsoMark);
-    if (!EFI_ERROR(Status)) {
-      DEBUG ((DEBUG_INFO, "Mark BAD DSO(TCCT) successfully\n"));
-    }
-  }
-
-  return Status;
-}
 
 /**
   Update FSP-M UPD config data for TCC mode and tuning

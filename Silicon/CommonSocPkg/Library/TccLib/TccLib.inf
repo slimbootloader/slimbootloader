@@ -34,6 +34,8 @@
   DebugLib
   HobLib
   BootloaderCoreLib
+  SpiFlashLib
+  ContainerLib
 
 [Guids]
   gTccRtctHobGuid
