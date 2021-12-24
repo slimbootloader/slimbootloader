@@ -755,11 +755,10 @@ UpdateContainerComp (
   ComponentBase = ContainerEntryPtr->Base + ContainerHdr->DataOffset + ComponentEntryPtr->Offset;
 
   // Current implementation only supports compressed header.
-  // Exception: empty Signature and Size, which is a mark for previously detected bad region, e.g., TCCT
+  // Exception: Signature is zero as a mark for previously detected bad region, e.g., TCCT
   FlashCompLzHeader = (LOADER_COMPRESSED_HEADER *) (UINTN) ComponentBase;
   CapCompLzHeader   = (LOADER_COMPRESSED_HEADER *) ((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
-  if (((IS_COMPRESSED (FlashCompLzHeader) == FALSE) &&
-      ((FlashCompLzHeader->Signature != 0) || (FlashCompLzHeader->Size != 0))) ||
+  if (((IS_COMPRESSED (FlashCompLzHeader) == FALSE) && (FlashCompLzHeader->Signature != 0)) ||
       (IS_COMPRESSED (CapCompLzHeader) == FALSE)) {
     return EFI_UNSUPPORTED;
   }
