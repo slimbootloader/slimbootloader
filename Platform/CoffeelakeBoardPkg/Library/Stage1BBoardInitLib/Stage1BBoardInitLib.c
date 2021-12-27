@@ -546,7 +546,7 @@ GetPlatformPowerState (
     }
   }
 
-  if ((BootMode == BOOT_WITH_FULL_CONFIGURATION) || (BootMode == V_ACPI_IO_PM1_CNT_S5)) {
+  if ((BootMode == BOOT_WITH_FULL_CONFIGURATION) || (BootMode == BOOT_ON_S5_RESUME)) {
     // Clear power button status to prevent false power button event detection later on
     IoWrite16 (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS,  B_ACPI_IO_PM1_STS_PRBTN);
   }
