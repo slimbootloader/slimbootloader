@@ -741,19 +741,21 @@
     Notify(\_SB.PCI0.RP21, 0x02)   // device wake, Slot 1 is using Pcie Root Port #21 to #24
   }
   Name(PRES, 1) // keep last PCH PwrBtn status, 0=press, 1=release
-  Method(_L6F) // 2-tier GPE event handler
-  {
-    //
-    // handle events from RTD3 support
-    //
-    If(LEqual(RTD3,1)) // if RTD3 enabled
-    {
-      If (CondRefOf(\_GPE.AL6F))
-      {
-        \_GPE.AL6F()        // call handler from RTD3 table
-      }
-    }
-  }
+  // Since RTD3 table is not added yet, comment it out for _L6F block to avoid SCI interrupt storm.
+  // When RTD3 is implemented, the below ASL code can be uncommented to handle the event.
+  // Method(_L6F) // 2-tier GPE event handler
+  // {
+  //   //
+  //   // handle events from RTD3 support
+  //   //
+  //   If(LEqual(RTD3,1)) // if RTD3 enabled
+  //   {
+  //     If (CondRefOf(\_GPE.AL6F))
+  //     {
+  //       \_GPE.AL6F()        // call handler from RTD3 table
+  //     }
+  //   }
+  // }
 
   Method (_L26){
     If(LAnd(LNotEqual(WLGP, 0x00), LEqual(WLRP, 0x03))){
