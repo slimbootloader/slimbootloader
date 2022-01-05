@@ -38,6 +38,7 @@
   PrintLib
   BaseLib
   DebugPrintErrorLevelLib
+  BootloaderCommonLib
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdDebugClearMemoryValue          ## CONSUMES
