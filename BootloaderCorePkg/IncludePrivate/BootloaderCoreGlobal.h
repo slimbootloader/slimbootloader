@@ -158,6 +158,7 @@ typedef struct {
   UINT32            Signature;
   UINT16            PlatformId;
   UINT16            PlatformBomId;
+  UINT32            SocSku;
   UINT8             BootMode;
   UINT8             LoaderStage;
   UINT8             CurrentBootPartition;
@@ -167,11 +168,11 @@ typedef struct {
   UINT32            MemPoolStart;
   UINT32            MemPoolCurrTop;
   UINT32            MemPoolCurrBottom;
-  UINT32            MemUsableTop;
   UINT32            PayloadId;
   UINT32            DebugPrintErrorLevel;
   UINT8             DebugPortIdx;
   UINT8             Padding[3];
+  UINT64            MemoryInfo[EnumMemInfoMax];
   VOID             *FspHobList;
   VOID             *LdrHobList;
   VOID             *FlashMapPtr;
@@ -194,8 +195,6 @@ typedef struct {
   UINT32            CarBase;
   UINT32            CarSize;
   UINT32            MemPoolMaxUsed;
-  UINT64            MemoryInfo[EnumMemInfoMax];
-  UINT32            SocSku;
 } LOADER_GLOBAL_DATA;
 
 /**
