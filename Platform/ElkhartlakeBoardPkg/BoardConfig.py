@@ -145,7 +145,7 @@ class Board(BaseBoard):
         self.MRCDATA_SIZE         = 0x00008000
         self.CFGDATA_SIZE         = 0x00004000
         self.KEYHASH_SIZE         = 0x00001000
-        self.CFG_DATABASE_SIZE    = self.CFGDATA_SIZE
+        self.CFG_DATABASE_SIZE    = self.CFGDATA_SIZE + 0x1000
         self.VARIABLE_SIZE        = 0x00002000
         if len(self._PAYLOAD_NAME.split(';')) > 1:
             self.UEFI_VARIABLE_SIZE = 0x00040000
