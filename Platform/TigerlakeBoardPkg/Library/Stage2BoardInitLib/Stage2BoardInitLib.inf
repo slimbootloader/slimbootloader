@@ -70,6 +70,7 @@
   TccLib
   SmbiosInitLib
   WatchDogTimerLib
+  PciePm
 
 [Guids]
   gOsConfigDataGuid
@@ -110,4 +111,5 @@
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled
   gPlatformModuleTokenSpaceGuid.PcdAcpiTableTemplatePtr
   gPlatformModuleTokenSpaceGuid.PcdEnableDts
+  gPlatformModuleTokenSpaceGuid.PcdEnablePciePm
   gPlatformModuleTokenSpaceGuid.PcdPciResourceMem64Base

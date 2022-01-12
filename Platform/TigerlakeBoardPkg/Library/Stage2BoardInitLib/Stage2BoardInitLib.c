@@ -83,6 +83,8 @@
 #include <Library/WatchDogTimerLib.h>
 #include "Dts.h"
 #include "SerialIo.h"
+#include <Library/PciePm.h>
+#include <Library/PlatformInfo.h>
 #include <Library/PlatformHookLib.h>
 
 
@@ -949,6 +951,9 @@ BoardInit (
     }
     break;
   case PostPciEnumeration:
+    if (FeaturePcdGet (PcdEnablePciePm)) {
+      PciePmConfig ();
+    }
     Status = SetFrameBufferWriteCombining (0, MAX_UINT32);
     if (EFI_ERROR(Status)) {
       DEBUG ((DEBUG_INFO, "Failed to set GFX framebuffer as WC\n"));
@@ -1661,6 +1666,10 @@ UpdateFspConfig (
       FspsConfig->SerialIoUartDmaEnable[Index]       = 1;
       FspsConfig->SerialIoUartDbg2[Index]            = 0;
     }
+  }
+
+  if (FeaturePcdGet (PcdEnablePciePm)) {
+    StoreRpConfig (FspsConfig);
   }
 }
 
