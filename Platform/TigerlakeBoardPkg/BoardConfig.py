@@ -1,7 +1,7 @@
 ## @file
 # This file is used to provide board specific image information.
 #
-#  Copyright (c) 2018 - 2021, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2018 - 2022, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -73,6 +73,7 @@ class Board(BaseBoard):
         self.ENABLE_FRAMEBUFFER_INIT    = 1
         # 1: To read ambient temperature at boot time 0: Disable the feature
         self.ENABLE_DTS           = 1
+        self.ENABLE_PCIE_PM       = 1
         self.ENABLE_FAST_BOOT     = 0
         self.HAVE_FUSA            = 1
         # 0: Disable  1: Enable  2: Auto (disable for UEFI payload, enable for others)
@@ -292,6 +293,17 @@ class Board(BaseBoard):
 
         if self.BUILD_CSME_UPDATE_DRIVER:
             dsc['LibraryClasses.%s' % self.BUILD_ARCH].append ('MeFwUpdateLib|Silicon/$(PCH_PKG_NAME)/Library/MeFwUpdateLib/MeFwUpdateLib.inf')
+
+        if self.ENABLE_PCIE_PM:
+            lib = [
+                'PciePm|Silicon/$(PCH_PKG_NAME)/Library/PciePm/PciePm.inf',
+                'PciExpressHelpersLib|Silicon/$(PCH_PKG_NAME)/Library/PciExpressHelpersLibrary/PciExpressHelpersLibrary.inf',
+                'BasePcieHelperLib|Silicon/$(PCH_PKG_NAME)/Library/BasePcieHelperLib/BasePcieHelperLib.inf',
+                'PcieClientRpLib|Silicon/$(PCH_PKG_NAME)/Library/PcieClientRpLib/PcieClientRpLib.inf'
+            ]
+            dsc['LibraryClasses.%s' % self.BUILD_ARCH].extend (lib)
+        else:
+            dsc['LibraryClasses.%s' % self.BUILD_ARCH].append ('PciePm|Silicon/CommonSocPkg/Library/PciePmNull/PciePmNull.inf')
 
         dsc['PcdsFeatureFlag.%s' % self.BUILD_ARCH] = [
             'gPlatformTigerLakeTokenSpaceGuid.PcdFusaEnabled | $(HAVE_FUSA)'

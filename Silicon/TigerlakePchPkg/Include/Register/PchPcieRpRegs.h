@@ -17,7 +17,6 @@
   - [ComponentName]:
     This field indicates the component name that the register belongs to (e.g. PCH, SA etc.)
     Register name without ComponentName applies to all components.
-    Register that is specific to -H denoted by "_PCH_H_" in component name.
     Register that is specific to -LP denoted by "_PCH_LP_" in component name.
   - SubsystemName:
     This field indicates the subsystem name of the component that the register belongs to
@@ -30,70 +29,69 @@
   - RegisterName:
     Full register name.
 
-  Copyright (c) 1999 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 #ifndef _PCH_REGS_PCIE_RP_H_
 #define _PCH_REGS_PCIE_RP_H_
 
+#define R_PCH_PCIE_CFG_CLIST                          0x40
+#define R_PCH_PCIE_CFG_LCAP                           (R_PCH_PCIE_CFG_CLIST + R_PCIE_LCAP_OFFSET)
+#define N_PCH_PCIE_CFG_LCAP_PN                        24
+#define R_PCH_PCIE_CFG_LCTL                           (R_PCH_PCIE_CFG_CLIST + R_PCIE_LCTL_OFFSET)
+#define R_PCH_PCIE_CFG_LSTS                           (R_PCH_PCIE_CFG_CLIST + R_PCIE_LSTS_OFFSET)
+#define R_PCH_PCIE_CFG_SLCAP                          (R_PCH_PCIE_CFG_CLIST + R_PCIE_SLCAP_OFFSET)
+#define R_PCH_PCIE_CFG_SLSTS                          (R_PCH_PCIE_CFG_CLIST + R_PCIE_SLSTS_OFFSET)
+
+#define R_PCH_PCIE_CFG_MPC2                           0xD4
+#define B_PCH_PCIE_CFG_MPC2_EOIFD                     BIT1
 
 #define R_PCH_PCIE_CFG_MPC                            0xD8
+#define S_PCH_PCIE_CFG_MPC                            4
+#define B_PCH_PCIE_CFG_MPC_PMCE                       BIT31
+#define B_PCH_PCIE_CFG_MPC_HPME                       BIT1
+#define N_PCH_PCIE_CFG_MPC_HPME                       1
+
 #define R_PCH_PCIE_CFG_SMSCS                          0xDC
+#define S_PCH_PCIE_CFG_SMSCS                          4
+#define B_PCH_PCIE_CFG_SMSCS_PMCS                     BIT31
+#define N_PCH_PCIE_CFG_SMSCS_LERSMIS                  5
+#define N_PCH_PCIE_CFG_SMSCS_HPLAS                    4
+#define N_PCH_PCIE_CFG_SMSCS_HPPDM                    1
+
 #define R_PCH_PCIE_CFG_SPR                            0xE0
 #define R_PCH_PCIE_CFG_RPPGEN                         0xE2
 
+//CES.RE, CES.BT, CES.BD
 
-//
-//PCI Express Extended Capability Registers
-//
-
-#ifndef PCH_ICL
-#define R_PCH_PCIE_CFG_EX_ACSECH                      0x140 ///< ACS Extended Capability Header
-#else
-#define R_PCH_PCIE_CFG_EX_ACSECH                      0x220 ///< ACS Extended Capability Header
-#endif
-
-
-#ifndef PCH_ICL
-#define R_PCH_PCIE_CFG_EX_SPEECH                      0x220 ///< Secondary PCI Express Extended Capability Header
-#else
 #define R_PCH_PCIE_CFG_EX_SPEECH                      0xA30 ///< Secondary PCI Express Extended Capability Header
-#endif
+#define R_PCH_PCIE_CFG_EX_LCTL3                       (R_PCH_PCIE_CFG_EX_SPEECH + R_PCIE_EX_LCTL3_OFFSET)
 
-#ifndef PCH_ICL
-#define R_PCH_PCIE_CFG_EX_DPCECH                      0x250 ///< Downstream Port Containment
-#else
-#define R_PCH_PCIE_CFG_EX_DPCECH                      0xA00 ///< Downstream Port Containment
-#endif
+#define R_PCH_PCIE_CFG_LTROVR                         0x400
+#define B_PCH_PCIE_CFG_LTROVR_LTRNSROVR               BIT31 ///< LTR Non-Snoop Requirement Bit Override
+#define B_PCH_PCIE_CFG_LTROVR_LTRSROVR                BIT15 ///< LTR Snoop Requirement Bit Override
 
+#define R_PCH_PCIE_CFG_LTROVR2                        0x404
+#define B_PCH_PCIE_CFG_LTROVR2_FORCE_OVERRIDE         BIT3 ///< LTR Force Override Enable
+#define B_PCH_PCIE_CFG_LTROVR2_LOCK                   BIT2 ///< LTR Override Lock
+#define B_PCH_PCIE_CFG_LTROVR2_LTRNSOVREN             BIT1 ///< LTR Non-Snoop Override Enable
+#define B_PCH_PCIE_CFG_LTROVR2_LTRSOVREN              BIT0 ///< LTR Snoop Override Enable
 
 #define R_PCH_PCIE_CFG_PCIEPMECTL                     0x420
+#define B_PCH_PCIE_CFG_PCIEPMECTL_DLSULPPGE           BIT30
+#define B_PCH_PCIE_CFG_PCIEPMECTL_L1LE                BIT17
+#define B_PCH_PCIE_CFG_PCIEPMECTL_L1FSOE              BIT0
 
-
+#define R_PCH_PCIE_CFG_EQCFG1                         0x450
+#define S_PCH_PCIE_CFG_EQCFG1                         4
+#define N_PCH_PCIE_CFG_EQCFG1_LERSMIE                 21
 
 //
 // PCIE PCRs (PID:SPA SPB SPC SPD SPE SPF)
 //
 #define R_SPX_PCR_PCD                         0                       ///< Port configuration and disable
 #define B_SPX_PCR_PCD_RP1FN                   (BIT2 | BIT1 | BIT0)    ///< Port 1 Function Number
-#define B_SPX_PCR_PCD_RP1CH                   BIT3                    ///< Port 1 config hide
-#define B_SPX_PCR_PCD_RP2FN                   (BIT6 | BIT5 | BIT4)    ///< Port 2 Function Number
-#define B_SPX_PCR_PCD_RP2CH                   BIT7                    ///< Port 2 config hide
-#define B_SPX_PCR_PCD_RP3FN                   (BIT10 | BIT9 | BIT8)   ///< Port 3 Function Number
-#define B_SPX_PCR_PCD_RP3CH                   BIT11                   ///< Port 3 config hide
-#define B_SPX_PCR_PCD_RP4FN                   (BIT14 | BIT13 | BIT12) ///< Port 4 Function Number
-#define B_SPX_PCR_PCD_RP4CH                   BIT15                   ///< Port 4 config hide
 #define S_SPX_PCR_PCD_RP_FIELD                4                       ///< 4 bits for each RP FN
-#define B_SPX_PCR_PCD_P1D                     BIT16                   ///< Port 1 disable
-#define B_SPX_PCR_PCD_P2D                     BIT17                   ///< Port 2 disable
-#define B_SPX_PCR_PCD_P3D                     BIT18                   ///< Port 3 disable
-#define B_SPX_PCR_PCD_P4D                     BIT19                   ///< Port 4 disable
-#define B_SPX_PCR_PCD_SRL                     BIT31                   ///< Secured Register Lock
 
 
-#define R_PCH_PCIE_CFG_MPC                            0xD8
-#define R_PCH_PCIE_CFG_SPR                            0xE0
-#define R_PCH_PCIE_CFG_RPPGEN                         0xE2
-#define R_PCH_PCIE_CFG_PCIEPMECTL                     0x420
-#define R_PCH_PCIE_CFG_SMSCS                          0xDC
 #endif
