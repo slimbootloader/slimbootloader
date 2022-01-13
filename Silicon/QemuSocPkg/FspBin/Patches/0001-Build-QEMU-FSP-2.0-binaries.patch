@@ -1,4 +1,4 @@
-From 31a5d2970b4b181817db1be2370597f2ef898307 Mon Sep 17 00:00:00 2001
+From c8546b2fdc73eb435ce9db96917d845af56edf17 Mon Sep 17 00:00:00 2001
 From: Aiden Park <aiden.park@intel.com>
 Date: Wed, 11 Dec 2019 10:00:41 -0800
 Subject: [PATCH] Build QEMU FSP 2.0 binaries
@@ -16,10 +16,10 @@ Signed-off-by: Maurice Ma <maurice.ma@intel.com>
  QemuFspPkg/FspDescription/FspDescription.txt  |   2 +
  QemuFspPkg/FspHeader/FspHeader.aslc           |  90 ++
  QemuFspPkg/FspHeader/FspHeader.inf            |  49 ++
- QemuFspPkg/FspmInit/FspmInit.c                | 795 ++++++++++++++++++
+ QemuFspPkg/FspmInit/FspmInit.c                | 802 ++++++++++++++++++
  QemuFspPkg/FspmInit/FspmInit.h                |  77 ++
  QemuFspPkg/FspmInit/FspmInit.inf              |  67 ++
- QemuFspPkg/FspsInit/FspsInit.c                | 234 ++++++
+ QemuFspPkg/FspsInit/FspsInit.c                | 234 +++++
  QemuFspPkg/FspsInit/FspsInit.h                | 124 +++
  QemuFspPkg/FspsInit/FspsInit.inf              |  55 ++
  QemuFspPkg/Include/BootLoaderPlatformData.h   |  33 +
@@ -47,7 +47,7 @@ Signed-off-by: Maurice Ma <maurice.ma@intel.com>
  QemuFspPkg/QemuVideo/QemuVideo.c              | 780 +++++++++++++++++
  QemuFspPkg/QemuVideo/QemuVideo.h              | 116 +++
  QemuFspPkg/QemuVideo/QemuVideo.inf            |  56 ++
- 41 files changed, 6060 insertions(+), 5 deletions(-)
+ 41 files changed, 6067 insertions(+), 5 deletions(-)
  create mode 100644 BuildFsp.py
  create mode 100644 QemuFspPkg/BuildFv.cmd
  create mode 100644 QemuFspPkg/FspDescription/FspDescription.inf
@@ -127,7 +127,7 @@ index 1f4a45004f..49a0ccee7b 100644
      message = ""
 diff --git a/BuildFsp.py b/BuildFsp.py
 new file mode 100644
-index 0000000000..de5bcd1446
+index 0000000000..c1475be22a
 --- /dev/null
 +++ b/BuildFsp.py
 @@ -0,0 +1,394 @@
@@ -402,14 +402,14 @@ index 0000000000..de5bcd1446
 +    cmd = 'python %s/IntelFsp2Pkg/Tools/GenCfgOpt.py HEADER %s/%s.dsc Build/%s/%s_%s/FV %s/Include/BootLoaderPlatformData.h' % (
 +          workspace, pkgname, pkgname, pkgname, target, toolchain, pkgname)
 +    ret = subprocess.call(cmd.split(' '))
-+    if ret:
++    if ret and (ret != 256):
 +        Fatal('Failed to generate UPD header file !')
 +
 +    print('Generate BSF File ...')
 +    cmd = 'python %s/IntelFsp2Pkg/Tools/GenCfgOpt.py GENBSF %s/%s.dsc Build/%s/%s_%s/FV %s/QemuFsp.bsf' % (
 +          workspace, pkgname, pkgname, pkgname, target, toolchain, fvdir)
 +    ret = subprocess.call(cmd.split(' '))
-+    if ret:
++    if ret and (ret != 256):
 +        Fatal('Failed to generate UPD BSF file !')
 +
 +    for fliename in ['FspUpd.h', 'FsptUpd.h', 'FspmUpd.h', 'FspsUpd.h']:
@@ -993,10 +993,10 @@ index 0000000000..d5ffe3d433
 +  gIntelFsp2PkgTokenSpaceGuid.PcdFspMaxPatchEntry
 diff --git a/QemuFspPkg/FspmInit/FspmInit.c b/QemuFspPkg/FspmInit/FspmInit.c
 new file mode 100644
-index 0000000000..cf43b7637b
+index 0000000000..9420bba30d
 --- /dev/null
 +++ b/QemuFspPkg/FspmInit/FspmInit.c
-@@ -0,0 +1,795 @@
+@@ -0,0 +1,802 @@
 +/** @file
 +  FSP-M component implementation.
 +
@@ -1507,27 +1507,17 @@ index 0000000000..cf43b7637b
 +/**
 +  Platform  chipset initialization
 +
++  @param  HostBridgeDevId   The DID for PCI host bridge.
++
 +  @retval EFI_UNSUPPORTED        Unsupported chipset.
 +  @retval EFI_SUCCESS            Platform has been initialized successfully.
 +
 +**/
 +EFI_STATUS
 +PlatformInit (
-+  VOID
++  IN UINT16      HostBridgeDevId
 +)
 +{
-+  UINT16      HostBridgeDevId;
-+
-+  //
-+  // Query Host Bridge DID
-+  //
-+  HostBridgeDevId = PciCf8Read16 (OVMF_HOSTBRIDGE_DID);
-+  if ((HostBridgeDevId != INTEL_Q35_MCH_DEVICE_ID) && (HostBridgeDevId != INTEL_X58_MCH_DEVICE_ID)) {
-+    DEBUG ((DEBUG_ERROR, "Unknown Host Bridge Device ID: 0x%04x\n", HostBridgeDevId));
-+    ASSERT (FALSE);
-+    return EFI_UNSUPPORTED;
-+  }
-+
 +  PciExBarInitialization (HostBridgeDevId);
 +
 +  MiscInitialization (HostBridgeDevId);
@@ -1608,13 +1598,26 @@ index 0000000000..cf43b7637b
 +  UINT8                           RegMask8;
 +  UINT32                          TopOfLowRam;
 +  UINT32                          TopOfLowRamMb;
++  UINT16                          HostBridgeDevId;
 +
 +  DEBUG ((DEBUG_INFO, "FspmInitPoint() - Begin\n"));
++
++
++
++  //
++  // Query Host Bridge DID
++  //
++  HostBridgeDevId = PciCf8Read16 (OVMF_HOSTBRIDGE_DID);
++  if ((HostBridgeDevId != INTEL_Q35_MCH_DEVICE_ID) && (HostBridgeDevId != INTEL_X58_MCH_DEVICE_ID)) {
++    DEBUG ((DEBUG_ERROR, "Unknown Host Bridge Device ID: 0x%04x\n", HostBridgeDevId));
++    ASSERT (FALSE);
++    return EFI_UNSUPPORTED;
++  }
 +
 +  //
 +  // QEMU init
 +  //
-+  Status = PlatformInit ();
++  Status = PlatformInit (HostBridgeDevId);
 +
 +  //
 +  // Get the Boot Mode
@@ -1639,7 +1642,11 @@ index 0000000000..cf43b7637b
 +
 +  LowMemLen  = GetSystemMemorySizeBelow4Gb();
 +  HighMemLen = GetSystemMemorySizeAbove4Gb();
-+  TsegSize   = InitializeSmramTsegSize ();
++  if (HostBridgeDevId == INTEL_X58_MCH_DEVICE_ID) {
++    TsegSize = SIZE_8MB;
++  } else {
++    TsegSize = InitializeSmramTsegSize ();
++  }
 +  TsegBase   = LowMemLen - TsegSize;
 +
 +  //
@@ -6418,5 +6425,5 @@ index 0000000000..4c6bc6a0f1
 +  TRUE
 +
 -- 
-2.31.1.windows.1
+2.30.2.windows.1
 
