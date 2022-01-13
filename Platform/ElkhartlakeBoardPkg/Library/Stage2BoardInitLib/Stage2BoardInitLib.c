@@ -963,7 +963,6 @@ FspUpdatePsePolicy (
   Fspscfg->PchPseLogOutputOffset  = SiCfgData->PchPseLogOutputOffset;
   Fspscfg->PchPseEcliteEnabled    = 1;
   Fspscfg->PchPseOobEnabled       = 0;
-  Fspscfg->PchCpuTempSensorEnable = 1;
   Fspscfg->PchPseWoLEnabled       = 1;
 
   //Fspscfg->PseJtagEnabled       = 0;
