@@ -168,7 +168,6 @@ typedef struct {
   UINT32            MemPoolStart;
   UINT32            MemPoolCurrTop;
   UINT32            MemPoolCurrBottom;
-  UINT32            MemUsableTop;
   UINT32            PayloadId;
   UINT32            DebugPrintErrorLevel;
   UINT8             DebugPortIdx;
