@@ -36,7 +36,16 @@ def CloneRepo (clone_dir, driver_inf):
             Fatal ('Failed to clone repo to directory %s !' % clone_dir)
         print ('Done\n')
     else:
-        print ('Update the repo ...')
+        # If the repository already exists, then try to check out the correct
+        # revision without going to the network
+        print ('Attempting to check out specified version ... %s' % commit)
+        cmd = 'git checkout %s' % commit
+        ret = subprocess.call(cmd.split(' '), cwd=clone_dir)
+        if ret == 0:
+            print ('Done\n')
+            return clone_dir
+
+        print ('Specified version not available. Update the repo ...')
         cmd = 'git fetch origin'
         ret = subprocess.call(cmd.split(' '), cwd=clone_dir)
         if ret:
