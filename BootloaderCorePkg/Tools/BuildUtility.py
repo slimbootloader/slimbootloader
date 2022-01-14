@@ -245,7 +245,8 @@ def get_gcc_info ():
     toolchain = 'GCC5'
     cmd = 'gcc'
     try:
-        ver = subprocess.check_output([cmd, '-dumpfullversion']).decode().strip()
+        prefix = os.environ.get(toolchain + '_BIN')
+        ver = subprocess.check_output([(prefix if prefix else '') + cmd, '-dumpfullversion']).decode().strip()
     except:
         ver = ''
         pass
