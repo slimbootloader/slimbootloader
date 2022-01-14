@@ -2,7 +2,7 @@
 ## @ BuildLoader.py
 # Build bootloader main script
 #
-# Copyright (c) 2016 - 2021, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2016 - 2022, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 
 ##
@@ -1340,10 +1340,13 @@ class Build(object):
                 os.path.join(self._fv_dir, "UCODE.bin"))
 
         # generate payload
+        board_package_name = self._board.BOARD_PKG_NAME
+        if hasattr(self._board, 'BOARD_PKG_NAME_OVERRIDE'):
+            board_package_name = self._board.BOARD_PKG_NAME_OVERRIDE
         gen_payload_bin (self._fv_dir, self._arch, self._pld_list,
                          os.path.join(self._fv_dir, "PAYLOAD.bin"),
                          self._board._CONTAINER_PRIVATE_KEY, HASH_VAL_STRING[self._board.SIGN_HASH_TYPE],
-                         self._board._SIGNING_SCHEME, self._board.BOARD_PKG_NAME)
+                         self._board._SIGNING_SCHEME, board_package_name)
 
         # create firmware update key
         if self._board.ENABLE_FWU:
