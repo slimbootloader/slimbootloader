@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2008 - 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2008 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -82,6 +82,7 @@
 #include <Library/TccLib.h>
 #include <Library/WatchDogTimerLib.h>
 #include "Dts.h"
+#include "SerialIo.h"
 #include <Library/PlatformHookLib.h>
 
 
@@ -1125,7 +1126,7 @@ FspUpdatePcieRpPolicy (
 /**
   Update FSP-S UPD config data for TCC mode and tuning
 
-  @param  FspmUpd            The pointer to the FSP-S UPD to be updated.
+  @param  FspsUpd            The pointer to the FSP-S UPD to be updated.
 
   @retval EFI_NOT_FOUND                 Platform Features or Tcc mode not found
           EFI_ERROR                     Error trying to load sub-region
@@ -1299,7 +1300,6 @@ UpdateFspConfig (
   UINT32              VarSize;
   TSN_MAC_ADDR_SUB_REGION *TsnSubRegion;
   UINT8                MaxPcieRootPorts;
-  UINT8               DebugPort;
   UINT32              *HdaVerbTablePtr;
   UINT8                HdaVerbTableNum;
   FspsUpd    = (FSPS_UPD *)FspsUpdPtr;
@@ -1309,14 +1309,8 @@ UpdateFspConfig (
   FspsConfig->SgxEpoch0           = 0x553DFD8D5FA48F27;
   FspsConfig->SgxEpoch1           = 0xD76767B9BE4BFDC1;
 
-  DebugPort = GetDebugPort ();
-  if (DebugPort < PCH_MAX_SERIALIO_UART_CONTROLLERS) {
-    // Inform FSP to skip debug UART init
-    FspsConfig->SerialIoDebugUartNumber = DebugPort;
-    FspsConfig->SerialIoUartMode[DebugPort] = 0x4;
-  } else if (S0IX_STATUS() == 1) {  // legacy UART
-    FspsConfig->SerialIoUartMode[2] = 1;  // Force UART to PCI mode to enable OS to have full control
-  }
+  // Update serial io
+  SerialIoPostMemConfig (FspsConfig);
 
   //
   // Update device interrupt table

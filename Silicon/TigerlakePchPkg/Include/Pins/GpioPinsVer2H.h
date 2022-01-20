@@ -1,7 +1,7 @@
 /** @file
   GPIO pins for TGL-PCH-H,
 
-  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 #ifndef _GPIO_PINS_VER2_H_H_
@@ -48,6 +48,13 @@
 /// require GpioPad as argument. Encoding used here
 /// has all information required by library functions
 ///
+#define GPIO_VER2_H_SPI0_IO_2                0x08000000
+#define GPIO_VER2_H_SPI0_IO_3                0x08000001
+#define GPIO_VER2_H_SPI0_MOSI_IO_0           0x08000002
+#define GPIO_VER2_H_SPI0_MISO_IO_1           0x08000003
+#define GPIO_VER2_H_SPI0_TPM_CSB             0x08000004
+#define GPIO_VER2_H_SPI0_FLASH_0_CSB         0x08000005
+#define GPIO_VER2_H_SPI0_FLASH_1_CSB         0x08000006
 #define GPIO_VER2_H_SPI0_CLK                 0x08000007
 #define GPIO_VER2_H_GPP_A0                   0x08000008
 #define GPIO_VER2_H_GPP_A1                   0x08000009
@@ -475,5 +482,11 @@
 //
 #define GPIO_VER2_H_MUXING_SERIALIO_UART0_RXD_GPP_C8         0x18050208
 #define GPIO_VER2_H_MUXING_SERIALIO_UART0_RXD_GPP_J3         0x280E0203
+#define GPIO_VER2_H_MUXING_SERIALIO_UART0_TXD_GPP_C9         0x18051209
+#define GPIO_VER2_H_MUXING_SERIALIO_UART0_TXD_GPP_J4         0x280E1204
+#define GPIO_VER2_H_MUXING_SERIALIO_UART0_RTS_GPP_C10        0x1805220A
+#define GPIO_VER2_H_MUXING_SERIALIO_UART0_RTS_GPP_J2         0x280E2202
+#define GPIO_VER2_H_MUXING_SERIALIO_UART0_CTS_GPP_C11        0x1805320B
+#define GPIO_VER2_H_MUXING_SERIALIO_UART0_CTS_GPP_J5         0x280E3205
 
 #endif // _GPIO_PINS_VER2_H_H_
