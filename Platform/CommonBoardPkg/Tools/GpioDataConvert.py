@@ -20,7 +20,7 @@ DLT_CFG0_HDR = DLT_CFGx_HDR + "0_"
 DLT_CFG1_HDR = DLT_CFGx_HDR + "1_"
 H_STRUCT_HDR = "static GPIO_INIT_CONFIG mGpioTable[] = {\n"
 H_STRUCT_FTR = "\n};"
-CSV_FILE_HDR = "GpioPad, PadMode, HostSoftPadOwn, Direction, OutputState, InterruptConfig, PowerConfig, ElectricalConfig, LockConfig, OtherSettings\n"
+CSV_FILE_HDR = "# GpioPad, PadMode, HostSoftPadOwn, Direction, OutputState, InterruptConfig, PowerConfig, ElectricalConfig, LockConfig, OtherSettings\n"
 PAD_NAME_HDR = "GPIO_XXX_XX_"
 
 
@@ -70,6 +70,8 @@ GPIO_PAD_MODE = {
     'GpioPadModeNative4'    : 0x9,
     'GpioPadModeNative5'    : 0xB,
     'GpioPadModeNative6'    : 0xD,
+    'GpioPadModeNative7'    : 0xF,
+    'GpioPadModeNative8'    : 0x11,
 }
 
 GPIO_HOSTSW_OWN = {
@@ -368,7 +370,12 @@ def validate_args (inp_fmt, out_fmt):
             raise Exception ("Invalid .h format")
     elif inp_fmt.endswith ('.csv'):
         for line in lines:
-            if len (line.split(',')) != 8 and len (line.split(',')) != 9:
+            if line.startswith('#'):
+                continue
+            parts = line.strip().split(',')
+            while not parts[-1]:
+                del(parts[-1])
+            if not len(parts) in [9, 10]:
                 raise Exception ("Not enough csv data!")
     elif inp_fmt.endswith ('.txt'):
        for line in lines:
@@ -402,8 +409,13 @@ def get_parts_from_inp (inp_fmt, line, next_line):
         parts = line.split(':')
     elif inp_fmt.endswith ('.yaml'):
         if line.lstrip().startswith (YML_LINE_HDR):
+            line = line.lstrip()[len(YML_LINE_HDR):]
             line = line.replace(' ', '').rstrip(' ] }\n')
             parts = line.split(',')
+            if len(parts) == 4:
+                # Convert to standard 3 elements:
+                # GROUP, PIN, DWORD0, DWORD1 ==> GROUP_PIN, DWORD0, DWORD1
+                parts = [''.join(parts[0:2]), parts[2], parts[3]]
     elif inp_fmt.endswith ('dlt'):
         if line.startswith (DLT_CFG0_HDR):
             line = line.replace(' ', '').rstrip('\n')
@@ -414,6 +426,7 @@ def get_parts_from_inp (inp_fmt, line, next_line):
         parts = []
 
     return parts
+
 # Calculate 1's complement for an int of size num_bits
 def ones_complement (num, num_bits):
     return ((1 << num_bits) - 1) ^ (num)
@@ -652,7 +665,7 @@ def get_txt_from_sbl_dws (sbl_dw0, sbl_dw1, pad_name, gpio_cfg_file):
     eds_dw0.Dw0 |=  get_field_from_sbl_dw (sbl_dw0.Dw0Tmpl.OutputState,     SBL_DW0_OUT_STATE_MASK,                         0,  'GPIOTXSTATE', 0)
     eds_dw0.Dw0 |=  get_field_from_sbl_dw (sbl_dw0.Dw0Tmpl.PadMode,         SBL_DW0_PMODE_MASK,                             0,  'PMODE',       0)
     if (gpio_cfg_file.rxraw_override_cfg()):
-        eds_dw0.Dw0 |= get_field_from_sbl_dw (sbl_dw1.Dw1.OtherSettings,    SBL_DW1_OTHER_RXRAW_MASK,                       0,  'RXRAW1',      0)
+        eds_dw0.Dw0 |= get_field_from_sbl_dw (sbl_dw1.Dw1Tmpl.OtherSettings,    SBL_DW1_OTHER_RXRAW_MASK,                       0,  'RXRAW1',      0)
     eds_dw1.Dw1 |=  get_field_from_sbl_dw (sbl_dw1.Dw1Tmpl.ElectricalConfig,SBL_DW1_ELEC_CFG_MASK,                          0,  'TERM',        1)
 
     padnum      = int (pad_name[5:7])
@@ -718,11 +731,19 @@ def parse_sbl_dws (inp_fmt, out_fmt, cfg_file, parts):
 #
 
 # Convert and populate the global dictionaries
-def convert_from_inp_to_out (inp_fmt, cfg_file, out_fmt, parts):
+def convert_from_inp_to_out (gpio_tmp_fmt, inp_fmt, cfg_file, out_fmt, parts):
     if inp_fmt.endswith ('.h') or inp_fmt.endswith ('.csv') or inp_fmt.endswith ('.txt'):
         pad_name, dw0, dw1 = get_sbl_dws (inp_fmt, cfg_file, parts)
         if pad_name != '':
             if out_fmt == 'yaml':
+                if gpio_tmp_fmt == 'new':
+                    idx = len(pad_name)
+                    while idx > 0:
+                        if not pad_name[idx-1].isdigit():
+                            break
+                        idx = idx - 1
+                    if idx > 0:
+                        pad_name = '%s, %s' % (pad_name[:idx], pad_name[idx:])
                 sbl_yml_line = YML_LINE_HDR + pad_name + ", 0x%08X" % dw0 + ", 0x%08X" % dw1 + " ] }"
                 yml_dict[pad_name] = sbl_yml_line
             else:
@@ -768,7 +789,7 @@ def gpio_convert (args):
                 parts = get_parts_from_inp (args.inp_fmt, line, '')
             if len(parts) == 0:
                 continue
-            convert_from_inp_to_out (args.inp_fmt, args.cfg_file, args.out_fmt, parts)
+            convert_from_inp_to_out (args.gpio_tmp_fmt, args.inp_fmt, args.cfg_file, args.out_fmt, parts)
 
     # Copy the final data to ouput
     sbl_data = ""
@@ -816,7 +837,7 @@ if __name__ == '__main__':
                         dest='inp_fmt',
                         type=str,
                         required=True,
-                        help='Input data file, either [yaml, dlt] or [h , csv, txt]')
+                        help='Input data file, must have [yaml, dlt] or [h , csv, txt] file extension')
     ap.add_argument(  '-cf',
                         dest='cfg_file',
                         type=str,
@@ -833,6 +854,13 @@ if __name__ == '__main__':
                         default='.',
                         type=str,
                         help='Output directory/file')
+    ap.add_argument(  '-t',
+                        dest='gpio_tmp_fmt',
+                        choices=['old', 'new'],
+                        default='old',
+                        type=str,
+                        help='Determine the GPIO template format. For new platforms, please use new format.')
+
     ap.set_defaults(func=gpio_convert)
 
     args = ap.parse_args()
