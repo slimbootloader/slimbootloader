@@ -1,0 +1,65 @@
+## @file
+#
+#  Copyright (c) 2020-2021, Intel Corporation. All rights reserved.<BR>
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution.  The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php
+#
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+##
+
+[Defines]
+INF_VERSION                    = 0x00010005
+BASE_NAME                      = PsdLib
+FILE_GUID                      = 8b73a388-4de1-483f-9abb-809628634e71
+MODULE_TYPE                    = BASE
+VERSION_STRING                 = 1.0
+LIBRARY_CLASS                  = PsdLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF
+#
+
+[Sources]
+PsdLib.c
+
+[Packages]
+MdePkg/MdePkg.dec
+IntelFsp2Pkg/IntelFsp2Pkg.dec
+BootloaderCorePkg/BootloaderCorePkg.dec
+BootloaderCommonPkg/BootloaderCommonPkg.dec
+Silicon/AlderlakePkg/AlderlakePkg.dec
+Platform/AlderlakeBoardPkg/AlderlakeBoardPkg.dec
+Silicon/CommonSocPkg/CommonSocPkg.dec
+Platform/CommonBoardPkg/CommonBoardPkg.dec
+
+
+[LibraryClasses]
+BaseLib
+DebugLib
+BootloaderCoreLib
+DebugDataLib
+CryptoLib
+BootloaderCommonLib
+BootloaderLib
+HeciLib
+ConfigDataLib
+BootGuardLib
+PciLib
+
+[Guids]
+  gMeBiosPayloadHobGuid
+
+[Pcd]
+gPlatformModuleTokenSpaceGuid.PcdAcpiTablesAddress
+gPlatformModuleTokenSpaceGuid.PcdAcpiGnvsAddress
+gPlatformCommonLibTokenSpaceGuid.PcdPcdLibId
+gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
+gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
+gPlatformCommonLibTokenSpaceGuid.PcdHeciLibId
+gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled

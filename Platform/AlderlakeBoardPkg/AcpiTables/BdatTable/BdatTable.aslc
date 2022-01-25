@@ -1,0 +1,49 @@
+/** @file
+  Structure definition for the ACPI BDAT Table
+
+  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+//
+// Statements that include other files
+//
+#include <IndustryStandard/Acpi50.h>
+#include "AcpiTablePlatform.h"
+#include <Library/BdatLib.h>
+#include <Library/Bdat4.h>
+
+// BDAT Table Template
+EFI_BDAT_ACPI_DESCRIPTION_TABLE BdatTable = {
+  {
+    EFI_BDAT_TABLE_SIGNATURE,                 // Signature
+    sizeof(EFI_BDAT_ACPI_DESCRIPTION_TABLE),  // Length
+    0x1,                                      // 1 byte for Revision
+    0x0,                                      // to make sum of entire table == 0
+    { EFI_ACPI_OEM_ID },                      // OEMID is a 6 bytes long field
+    EFI_ACPI_OEM_TABLE_ID,                    // OEM table identification(8 bytes long)
+    EFI_ACPI_OEM_REVISION,                    // OEM revision
+    EFI_ACPI_CREATOR_ID,                      // ASL compiler vendor ID
+    EFI_ACPI_CREATOR_REVISION,                // ASL compiler revision number
+  },
+  {
+    0,                                        // System Memory Address Space ID
+    0,
+    0,
+    0,
+    EFI_BDAT_ACPI_POINTER,
+  },
+};
+
+VOID*
+ReferenceAcpiTable (
+          VOID
+            )
+{
+  //
+  // Reference the table being generated to prevent the optimizer from
+  // removing the data structure from the executable
+  //
+  return (VOID*)&BdatTable;
+}

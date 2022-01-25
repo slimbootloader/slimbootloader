@@ -1,0 +1,35 @@
+## @file
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = PchSpiLib
+  FILE_GUID                      = BDEF4FAF-EF45-4475-9FFE-C551FC65B3A3
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = PchSpiLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF
+#
+
+[Sources]
+  PchSpiLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/AlderlakePkg/AlderlakePkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  IoLib
+
+[Pcd]

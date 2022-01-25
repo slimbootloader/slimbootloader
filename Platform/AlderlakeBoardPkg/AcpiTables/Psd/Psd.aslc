@@ -1,0 +1,80 @@
+/** @file
+  Structure definition for the ACPI Platform Security Discovery Table
+
+  Copyright (c) 2020-2021, Intel Corporation. All rights reserved.<BR>
+  This program and the accompanying materials
+  are licensed and made available under the terms and conditions of the BSD License
+  which accompanies this distribution.  The full text of the license may be found at
+http://opensource.org/licenses/bsd-license.php.
+
+THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+
+ **/
+
+//
+// Statements that include other files
+//
+#include "AcpiTablePlatform.h"
+#include <PsdLib.h>
+
+//PSD Table
+EFI_ACPI_PSD_TABLE PsdTable = {
+  {
+    EFI_ACPI_PSD_SIGNATURE,
+    sizeof (EFI_ACPI_PSD_TABLE),
+    EFI_ACPI_PSD_TABLE_REVISION,        // 1 byte for Revision
+    0,                                  // to make sum of entire table == 0
+    {PSDS_EFI_ACPI_OEM_ID},             // OEMID is a 6 bytes long field
+    PSDS_EFI_ACPI_OEM_TABLE_ID,         // OEM table identification(8 bytes long)
+    PSDS_EFI_ACPI_OEM_REVISION,         // OEM revision
+    PSDS_EFI_ACPI_CREATOR_ID,           // ASL compiler vendor ID
+    PSDS_EFI_ACPI_CREATOR_REVISION,     // ASL compiler revision number
+  },
+  {
+    0x0,   //PsdVersionMinor
+    0x0,   //PsdVersionMajor
+  },
+  0x0,  //CsmeSecCapabilities
+  0x0,  //SgxCapabilities
+  {    //FW version info
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+  },
+  { //FW Vendor
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+  },
+  0x0, //EOM Status
+  0x0, //Secure boot Status
+  0x0, //Measured Boot Status
+  0x0, //Hwrot Type
+};
+
+VOID*
+ReferenceAcpiTable (
+          VOID
+            )
+{
+  //
+  // Reference the table being generated to prevent the optimizer from
+  // removing the data structure from the executable
+  //
+  return (VOID*)&PsdTable;
+}

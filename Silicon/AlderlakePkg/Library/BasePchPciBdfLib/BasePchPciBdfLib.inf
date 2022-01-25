@@ -1,0 +1,32 @@
+/** @file
+
+  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+[Defines]
+INF_VERSION = 0x00010017
+BASE_NAME = PchPciBdfLib
+FILE_GUID = A36363FC-2951-4DCF-AC81-16F4ED3FDA47
+VERSION_STRING = 1.0
+MODULE_TYPE = BASE
+LIBRARY_CLASS = PchPciBdfLib
+
+[LibraryClasses]
+BaseLib
+IoLib
+DebugLib
+#PciSegmentLib
+PchInfoLib
+#PchPcieRpLib
+
+[Packages]
+MdePkg/MdePkg.dec
+BootloaderCorePkg/BootloaderCorePkg.dec
+Silicon/AlderlakePkg/AlderlakePkg.dec
+
+[Sources]
+PchPciBdfLib.c
+
+[Pcd]

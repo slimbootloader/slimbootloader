@@ -1,0 +1,20 @@
+### @file
+#
+#  Copyright (c) 2017-2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+###
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = MeFwUpdateLib
+  FILE_GUID                      = 946C899C-BE23-48CF-B75F-9F6F4212037F
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = MeFwUpdateLib
+
+[Binaries]
+  LIB|MeFwUpdateLib.lib
+
+[LibraryClasses]
+

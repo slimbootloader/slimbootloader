@@ -1,0 +1,217 @@
+/** @file
+
+  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+**/
+
+//
+// Statements that include other files
+//
+
+#include "Fadt6.3.h"
+
+//
+// Fixed ACPI Description Table
+// Please modify all values in Fadt.h only.
+//
+
+EFI_ACPI_6_3_FIXED_ACPI_DESCRIPTION_TABLE Fadt = {
+  {
+    EFI_ACPI_6_3_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE,
+    sizeof (EFI_ACPI_6_3_FIXED_ACPI_DESCRIPTION_TABLE),
+    EFI_ACPI_6_3_FIXED_ACPI_DESCRIPTION_TABLE_REVISION,
+
+    //
+    // Checksum will be updated at runtime
+    //
+    0x00,
+
+    { EFI_ACPI_OEM_ID },        // OEMID is a 6 bytes long field
+    EFI_ACPI_OEM_TABLE_ID,      // OEM table identification(8 bytes long)
+    EFI_ACPI_OEM_REVISION,      // OEM revision number
+    EFI_ACPI_CREATOR_ID,        // ASL compiler vendor ID
+    EFI_ACPI_CREATOR_REVISION   // ASL compiler revision number
+  },
+
+  //
+  // These addresses will be updated at runtime
+  //
+  0x00000000,
+  0x00000000,
+
+  EFI_ACPI_RESERVED_BYTE,
+  EFI_ACPI_PREFERRED_PM_PROFILE,
+  EFI_ACPI_SCI_INT,
+  EFI_ACPI_SMI_CMD,
+  EFI_ACPI_ACPI_ENABLE,
+  EFI_ACPI_ACPI_DISABLE,
+  EFI_ACPI_S4_BIOS_REQ,
+  EFI_ACPI_PSTATE_CNT,
+  EFI_ACPI_PM1A_EVT_BLK_ADDRESS,
+  EFI_ACPI_PM1B_EVT_BLK_ADDRESS,
+  EFI_ACPI_PM1A_CNT_BLK_ADDRESS,
+  EFI_ACPI_PM1B_CNT_BLK_ADDRESS,
+  EFI_ACPI_PM2_CNT_BLK_ADDRESS,
+  EFI_ACPI_PM_TMR_BLK_ADDRESS,
+  EFI_ACPI_GPE0_BLK_ADDRESS,
+  EFI_ACPI_GPE1_BLK_ADDRESS,
+  EFI_ACPI_PM1_EVT_LEN,
+  EFI_ACPI_PM1_CNT_LEN,
+  EFI_ACPI_PM2_CNT_LEN,
+  EFI_ACPI_PM_TMR_LEN,
+  EFI_ACPI_GPE0_BLK_LEN,
+  EFI_ACPI_GPE1_BLK_LEN,
+  EFI_ACPI_GPE1_BASE,
+
+  //
+  // Latest OS have C-State capability and CST_CNT SMI doesn't need to be defined.
+  // CST_CNT SMI is not handled in BIOS and it can be removed safely.
+  //
+  EFI_ACPI_CST_CNT,
+  EFI_ACPI_P_LVL2_LAT,
+  EFI_ACPI_P_LVL3_LAT,
+  EFI_ACPI_FLUSH_SIZE,
+  EFI_ACPI_FLUSH_STRIDE,
+  EFI_ACPI_DUTY_OFFSET,
+  EFI_ACPI_DUTY_WIDTH,
+  EFI_ACPI_DAY_ALRM,
+  EFI_ACPI_MON_ALRM,
+  EFI_ACPI_CENTURY,
+  EFI_ACPI_IAPC_BOOT_ARCH,
+  EFI_ACPI_RESERVED_BYTE,
+  EFI_ACPI_FIXED_FEATURE_FLAGS,
+
+  //
+  // Reset Register Block
+  //
+  {
+    EFI_ACPI_RESET_REG_ADDRESS_SPACE_ID,
+    EFI_ACPI_RESET_REG_BIT_WIDTH,
+    EFI_ACPI_RESET_REG_BIT_OFFSET,
+    EFI_ACPI_6_3_BYTE,
+    EFI_ACPI_RESET_REG_ADDRESS
+  },
+  EFI_ACPI_RESET_VALUE,
+  0,  // ArmBootArch
+  EFI_ACPI_6_3_FIXED_ACPI_DESCRIPTION_TABLE_MINOR_REVISION,
+
+  //
+  // These addresses will be updated at runtime
+  //
+  0x0000000000000000, // X_FIRMWARE_CTRL
+  0x0000000000000000, // X_DSDT
+
+  {
+    //
+    // X_PM1a Event Register Block
+    //
+    EFI_ACPI_PM1A_EVT_BLK_ADDRESS_SPACE_ID,
+    EFI_ACPI_PM1A_EVT_BLK_BIT_WIDTH,
+    EFI_ACPI_PM1A_EVT_BLK_BIT_OFFSET,
+    EFI_ACPI_6_3_WORD,
+    EFI_ACPI_PM1A_EVT_BLK_ADDRESS
+  },
+  {
+    //
+    // X_PM1b Event Register Block
+    //
+    EFI_ACPI_PM1B_EVT_BLK_ADDRESS_SPACE_ID,
+    EFI_ACPI_PM1B_EVT_BLK_BIT_WIDTH,
+    EFI_ACPI_PM1B_EVT_BLK_BIT_OFFSET,
+    EFI_ACPI_6_3_WORD,
+    EFI_ACPI_PM1B_EVT_BLK_ADDRESS
+  },
+  {
+    //
+    // X_PM1a Control Register Block
+    //
+    EFI_ACPI_PM1A_CNT_BLK_ADDRESS_SPACE_ID,
+    EFI_ACPI_PM1A_CNT_BLK_BIT_WIDTH,
+    EFI_ACPI_PM1A_CNT_BLK_BIT_OFFSET,
+    EFI_ACPI_6_3_WORD,
+    EFI_ACPI_PM1A_CNT_BLK_ADDRESS
+  },
+  {
+    //
+    // X_PM1b Control Register Block
+    //
+    EFI_ACPI_PM1B_CNT_BLK_ADDRESS_SPACE_ID,
+    EFI_ACPI_PM1B_CNT_BLK_BIT_WIDTH,
+    EFI_ACPI_PM1B_CNT_BLK_BIT_OFFSET,
+    EFI_ACPI_6_3_WORD,
+    EFI_ACPI_PM1B_CNT_BLK_ADDRESS
+  },
+  {
+    //
+    // X_PM2 Control Register Block
+    //
+    EFI_ACPI_PM2_CNT_BLK_ADDRESS_SPACE_ID,
+    EFI_ACPI_PM2_CNT_BLK_BIT_WIDTH,
+    EFI_ACPI_PM2_CNT_BLK_BIT_OFFSET,
+    EFI_ACPI_6_3_BYTE,
+    EFI_ACPI_PM2_CNT_BLK_ADDRESS
+  },
+  {
+    //
+    // X_PM Timer Control Register Block
+    //
+    EFI_ACPI_PM_TMR_BLK_ADDRESS_SPACE_ID,
+    EFI_ACPI_PM_TMR_BLK_BIT_WIDTH,
+    EFI_ACPI_PM_TMR_BLK_BIT_OFFSET,
+    EFI_ACPI_6_3_DWORD,
+    EFI_ACPI_PM_TMR_BLK_ADDRESS
+  },
+  {
+    //
+    // X_General Purpose Event 0 Register Block
+    //
+    EFI_ACPI_GPE0_BLK_ADDRESS_SPACE_ID,
+    0x0,
+    EFI_ACPI_GPE0_BLK_BIT_OFFSET,
+    EFI_ACPI_6_3_BYTE,
+    EFI_ACPI_GPE0_BLK_ADDRESS
+  },
+  {
+    //
+    // X_General Purpose Event 1 Register Block
+    //
+    EFI_ACPI_GPE1_BLK_ADDRESS_SPACE_ID,
+    EFI_ACPI_GPE1_BLK_BIT_WIDTH,
+    EFI_ACPI_GPE1_BLK_BIT_OFFSET,
+    EFI_ACPI_6_3_BYTE,
+    EFI_ACPI_GPE1_BLK_ADDRESS
+  },
+  //
+  // Sleep Control Register Block
+  //
+  {
+    EFI_ACPI_SLP_CNT_BLK_ADDRESS_SPACE_ID,
+    EFI_ACPI_SLP_CNT_BLK_BIT_WIDTH,
+    EFI_ACPI_SLP_CNT_BLK_BIT_OFFSET,
+    EFI_ACPI_6_3_DWORD,
+    EFI_ACPI_SLP_CNT_BLK_ADDRESS
+  },
+  //
+  // Sleep Status Register Block
+  //
+  {
+    EFI_ACPI_SLP_STS_BLK_ADDRESS_SPACE_ID,
+    EFI_ACPI_SLP_STS_BLK_BIT_WIDTH,
+    EFI_ACPI_SLP_STS_BLK_BIT_OFFSET,
+    EFI_ACPI_6_3_DWORD,
+    EFI_ACPI_SLP_STS_BLK_ADDRESS
+  },
+  0        // HypervisorVendorIdentity
+};
+
+VOID*
+ReferenceAcpiTable (
+  VOID
+  )
+{
+  //
+  // Reference the table being generated to prevent the optimizer from
+  // removing the data structure from the executable
+  //
+  return (VOID*)&Fadt;
+}

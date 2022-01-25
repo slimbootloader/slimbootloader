@@ -1,0 +1,41 @@
+## @file
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = MeChipsetLib
+  FILE_GUID                      = 1659ea82-7298-4be7-bc68-8db3d0d2b3b0
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = MeChipsetLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  MeChipsetLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/AlderlakePkg/AlderlakePkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec     # For FspHobList
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  IoLib
+  PciLib
+
+[Guids]
+  gMeBiosPayloadHobGuid
+
+[Pcd]
+  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress

@@ -1,0 +1,24 @@
+## @file
+#
+#  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  DEC_SPECIFICATION              = 0x00010005
+  PACKAGE_NAME                   = AlderlakePkg
+  PACKAGE_GUID                   = A48C2DAA-06B4-40EC-BC74-DFD078A23A98
+  PACKAGE_VERSION                = 0.1
+
+[Includes]
+  Include
+
+[Guids]
+  gFspVariableNvDataHobGuid        = { 0xa034147d, 0x690c, 0x4154, {0x8d, 0xe6, 0xc0, 0x44, 0x64, 0x1d, 0xe9, 0x42}}
+  gSchemaListGuid                  = { 0x3047c2ac, 0x5e8e, 0x4c55, {0xa1, 0xcb, 0xea, 0xad, 0x0a, 0x88, 0x86, 0x1b}}
+  gPlatformAlderLakeTokenSpaceGuid = { 0xfec38282, 0xab42, 0x4aba, {0x8c, 0x25, 0xa4, 0x4e, 0x46, 0x23, 0xf7, 0x6e}}
+
+[PcdsFixedAtBuild]
+  gPlatformAlderLakeTokenSpaceGuid.PcdAdlLpSupport    | FALSE      | BOOLEAN | 0x30000100
+  gPlatformAlderLakeTokenSpaceGuid.PcdAdlNSupport     | FALSE      | BOOLEAN | 0x30000101
