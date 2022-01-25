@@ -1,0 +1,63 @@
+## @file
+#
+#  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = Stage1ABoardInitLib
+  FILE_GUID                      = 78232E4A-E195-4996-9C7A-9D1199F1B948
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = BoardInitLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF
+#
+
+[Sources]
+  Stage1ABoardInitLib.c
+
+[Sources.IA32]
+  Ia32/Stage1AEarlyBoardInit.nasm
+
+[Packages]
+  MdePkg/MdePkg.dec
+  IntelFsp2Pkg/IntelFsp2Pkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/AlderlakePkg/AlderlakePkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+  Platform/CommonBoardPkg/CommonBoardPkg.dec
+  Platform/AlderlakeBoardPkg/AlderlakeBoardPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  SocInitLib
+  PlatformHookLib
+  SerialPortLib
+  LoaderLib
+  GpioLib
+  ConfigDataLib
+  PchInfoLib
+
+[Guids]
+
+[Pcd]
+  gPlatformModuleTokenSpaceGuid.PcdPciMmcfgBase
+  gPlatformModuleTokenSpaceGuid.PcdUcodeBase
+  gPlatformModuleTokenSpaceGuid.PcdUcodeSize
+  gPlatformModuleTokenSpaceGuid.PcdFlashBaseAddress
+  gPlatformModuleTokenSpaceGuid.PcdFlashSize
+  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
+  gPlatformModuleTokenSpaceGuid.PcdTopSwapRegionSize
+  gPlatformModuleTokenSpaceGuid.PcdRedundantRegionSize
+  gPlatformModuleTokenSpaceGuid.PcdStage1BSize
+  gPlatformCommonLibTokenSpaceGuid.PcdDebugPortNumber
+
+[FixedPcd]
+  gPlatformAlderLakeTokenSpaceGuid.PcdAdlLpSupport

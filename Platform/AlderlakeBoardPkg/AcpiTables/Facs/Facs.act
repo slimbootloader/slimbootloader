@@ -1,0 +1,83 @@
+/** @file
+
+  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+#include "Facs.h"
+
+//
+// Firmware ACPI Control Structure
+// Please modify all values in Facs.h only.
+//
+
+EFI_ACPI_5_0_FIRMWARE_ACPI_CONTROL_STRUCTURE Facs = {
+  EFI_ACPI_5_0_FIRMWARE_ACPI_CONTROL_STRUCTURE_SIGNATURE,
+  sizeof (EFI_ACPI_5_0_FIRMWARE_ACPI_CONTROL_STRUCTURE),
+
+  //
+  // Hardware Signature will be updated at runtime
+  //
+  0x00000000,                                  //HardwareSignature
+  EFI_ACPI_FIRMWARE_WAKING_VECTOR,             //FirmwareWakingVector
+  EFI_ACPI_GLOBAL_LOCK,                        //GlobalLock
+  EFI_ACPI_FIRMWARE_CONTROL_STRUCTURE_FLAGS,   //Flags
+  EFI_ACPI_X_FIRMWARE_WAKING_VECTOR,           //XFirmwareWakingVector
+  EFI_ACPI_5_0_FIRMWARE_ACPI_CONTROL_STRUCTURE_VERSION,
+  {
+    EFI_ACPI_RESERVED_BYTE,     //Reserved0[3]
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE
+  },
+  EFI_ACPI_RESERVED_DWORD, //EFI_ACPI_5_0_OSPM_64BIT_WAKE_F
+  {
+    EFI_ACPI_RESERVED_BYTE,     //Reserved1[24]
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE
+  }
+};
+
+#ifdef __GNUC__
+VOID*
+ReferenceAcpiTable (
+ VOID
+ )
+
+{
+ //
+ // Reference the table being generated to prevent the optimizer from removing the
+ // data structure from the exeutable
+ //
+ return (VOID*)&Facs;
+}
+#else
+VOID
+main (
+ VOID
+ )
+
+{
+}
+#endif

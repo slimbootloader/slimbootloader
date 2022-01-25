@@ -1,0 +1,569 @@
+/** @file
+  This file contains a structure definition for the ACPI 2.0 Multiple APIC
+  Description Table (MADT).  Any changes to the MADT table require updating the
+  respective structure count in Madt.h and then adding the structure to the
+  MADT defined in this file.
+
+  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+//
+// Statements that include other files
+//
+
+#include "Madt.h"
+
+//
+// Multiple APIC Description Table
+//
+
+EFI_ACPI_6_3_MULTIPLE_APIC_DESCRIPTION_TABLE Madt = {
+  {
+    {
+      EFI_ACPI_6_3_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE,
+      sizeof (EFI_ACPI_6_3_MULTIPLE_APIC_DESCRIPTION_TABLE),
+      EFI_ACPI_6_3_MULTIPLE_APIC_DESCRIPTION_TABLE_REVISION,
+
+      //
+      // Checksum will be updated at runtime
+      //
+      0x00,
+
+      { EFI_ACPI_OEM_ID },        // OEMID is a 6 bytes long field
+      EFI_ACPI_OEM_TABLE_ID,      // OEM table identification(8 bytes long)
+      EFI_ACPI_OEM_MADT_REVISION, // OEM revision number
+      EFI_ACPI_CREATOR_ID,        // ASL compiler vendor ID
+      EFI_ACPI_CREATOR_REVISION   // ASL compiler revision number
+    },
+
+    //
+    // MADT specific fields
+    //
+    LOCAL_APIC_BASE_ADDRESS,
+    EFI_ACPI_6_3_MULTIPLE_APIC_FLAGS
+  },
+
+  //
+  // Sample Processor Local APIC Structure
+  //
+  //EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC,                          // Type
+  //sizeof (EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC_STRUCTURE),       // Length
+  //0x00                                                        // Processor ID
+  //0x00                                                        // Local APIC ID
+  //0x00000000,                                                 // Flags - Disabled (until initialized by platform driver)
+  {
+    {
+      EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC,                        // Type
+      sizeof (EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
+      0x01,                                                     // Processor ID
+      0xFF,                                                     // Local APIC ID
+      0x00000000                                                // Flags - Disabled (until initialized by platform driver)
+    },
+    {
+      EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC,                        // Type
+      sizeof (EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
+      0x02,                                                     // Processor ID
+      0xFF,                                                     // Local APIC ID
+      0x00000000                                                // Flags - Disabled (until initialized by platform driver)
+    },
+    {
+      EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC,                        // Type
+      sizeof (EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
+      0x03,                                                     // Processor ID
+      0xFF,                                                     // Local APIC ID
+      0x00000000                                                // Flags - Disabled (until initialized by platform driver)
+    },
+    {
+      EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC,                        // Type
+      sizeof (EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
+      0x04,                                                     // Processor ID
+      0xFF,                                                     // Local APIC ID
+      0x00000000                                                // Flags - Disabled (until initialized by platform driver)
+    },
+    {
+      EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC,                        // Type
+      sizeof (EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
+      0x05,                                                     // Processor ID
+      0xFF,                                                     // Local APIC ID
+      0x00000000                                                // Flags - Disabled (until initialized by platform driver)
+    },
+    {
+      EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC,                        // Type
+      sizeof (EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
+      0x06,                                                     // Processor ID
+      0xFF,                                                     // Local APIC ID
+      0x00000000                                                // Flags - Disabled (until initialized by platform driver)
+    },
+    {
+      EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC,                        // Type
+      sizeof (EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
+      0x07,                                                     // Processor ID
+      0xFF,                                                     // Local APIC ID
+      0x00000000                                                // Flags - Disabled (until initialized by platform driver)
+    },
+    {
+      EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC,                        // Type
+      sizeof (EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
+      0x08,                                                     // Processor ID
+      0xFF,                                                     // Local APIC ID
+      0x00000000                                                // Flags - Disabled (until initialized by platform driver)
+    },
+    {
+      EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC,                        // Type
+      sizeof (EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
+      0x09,                                                     // Processor ID
+      0xFF,                                                     // Local APIC ID
+      0x00000000                                                // Flags - Disabled (until initialized by platform driver)
+    },
+    {
+      EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC,                        // Type
+      sizeof (EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
+      0x0A,                                                     // Processor ID
+      0xFF,                                                     // Local APIC ID
+      0x00000000                                                // Flags - Disabled (until initialized by platform driver)
+    },
+    {
+      EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC,                        // Type
+      sizeof (EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
+      0x0B,                                                     // Processor ID
+      0xFF,                                                     // Local APIC ID
+      0x00000000                                                // Flags - Disabled (until initialized by platform driver)
+    },
+    {
+      EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC,                        // Type
+      sizeof (EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
+      0x0C,                                                     // Processor ID
+      0xFF,                                                     // Local APIC ID
+      0x00000000                                                // Flags - Disabled (until initialized by platform driver)
+    },
+    {
+      EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC,                        // Type
+      sizeof (EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
+      0x0D,                                                     // Processor ID
+      0xFF,                                                     // Local APIC ID
+      0x00000000                                                // Flags - Disabled (until initialized by platform driver)
+    },
+    {
+      EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC,                        // Type
+      sizeof (EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
+      0x0E,                                                     // Processor ID
+      0xFF,                                                     // Local APIC ID
+      0x00000000                                                // Flags - Disabled (until initialized by platform driver)
+    },
+    {
+      EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC,                        // Type
+      sizeof (EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
+      0x0F,                                                     // Processor ID
+      0xFF,                                                     // Local APIC ID
+      0x00000000                                                // Flags - Disabled (until initialized by platform driver)
+    },
+    {
+      EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC,                        // Type
+      sizeof (EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
+      0x10,                                                     // Processor ID
+      0xFF,                                                     // Local APIC ID
+      0x00000000                                                // Flags - Disabled (until initialized by platform driver)
+    },
+    {
+      EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC,                        // Type
+      sizeof (EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
+      0x11,                                                     // Processor ID
+      0xFF,                                                     // Local APIC ID
+      0x00000000                                                // Flags - Disabled (until initialized by platform driver)
+    },
+    {
+      EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC,                        // Type
+      sizeof (EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
+      0x12,                                                     // Processor ID
+      0xFF,                                                     // Local APIC ID
+      0x00000000                                                // Flags - Disabled (until initialized by platform driver)
+    },
+    {
+      EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC,                        // Type
+      sizeof (EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
+      0x13,                                                     // Processor ID
+      0xFF,                                                     // Local APIC ID
+      0x00000000                                                // Flags - Disabled (until initialized by platform driver)
+    },
+    {
+      EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC,                        // Type
+      sizeof (EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
+      0x14,                                                     // Processor ID
+      0xFF,                                                     // Local APIC ID
+      0x00000000                                                // Flags - Disabled (until initialized by platform driver)
+    },
+    {
+      EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC,                        // Type
+      sizeof (EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
+      0x15,                                                     // Processor ID
+      0xFF,                                                     // Local APIC ID
+      0x00000000                                                // Flags - Disabled (until initialized by platform driver)
+    },
+    {
+      EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC,                        // Type
+      sizeof (EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
+      0x16,                                                     // Processor ID
+      0xFF,                                                     // Local APIC ID
+      0x00000000                                                // Flags - Disabled (until initialized by platform driver)
+    },
+    {
+      EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC,                        // Type
+      sizeof (EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
+      0x17,                                                     // Processor ID
+      0xFF,                                                     // Local APIC ID
+      0x00000000                                                // Flags - Disabled (until initialized by platform driver)
+    },
+    {
+      EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC,                        // Type
+      sizeof (EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
+      0x18,                                                     // Processor ID
+      0xFF,                                                     // Local APIC ID
+      0x00000000                                                // Flags - Disabled (until initialized by platform driver)
+    },
+    {
+      EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC,                        // Type
+      sizeof (EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
+      0x19,                                                     // Processor ID
+      0xFF,                                                     // Local APIC ID
+      0x00000000                                                // Flags - Disabled (until initialized by platform driver)
+    },
+    {
+      EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC,                        // Type
+      sizeof (EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
+      0x1A,                                                     // Processor ID
+      0xFF,                                                     // Local APIC ID
+      0x00000000                                                // Flags - Disabled (until initialized by platform driver)
+    },
+    {
+      EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC,                        // Type
+      sizeof (EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
+      0x1B,                                                     // Processor ID
+      0xFF,                                                     // Local APIC ID
+      0x00000000                                                // Flags - Disabled (until initialized by platform driver)
+    },
+    {
+      EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC,                        // Type
+      sizeof (EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
+      0x1C,                                                     // Processor ID
+      0xFF,                                                     // Local APIC ID
+      0x00000000                                                // Flags - Disabled (until initialized by platform driver)
+    },
+    {
+      EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC,                        // Type
+      sizeof (EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
+      0x1D,                                                     // Processor ID
+      0xFF,                                                     // Local APIC ID
+      0x00000000                                                // Flags - Disabled (until initialized by platform driver)
+    },
+    {
+      EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC,                        // Type
+      sizeof (EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
+      0x1E,                                                     // Processor ID
+      0xFF,                                                     // Local APIC ID
+      0x00000000                                                // Flags - Disabled (until initialized by platform driver)
+    },
+    {
+      EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC,                        // Type
+      sizeof (EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
+      0x1F,                                                     // Processor ID
+      0xFF,                                                     // Local APIC ID
+      0x00000000                                                // Flags - Disabled (until initialized by platform driver)
+    },
+    {
+      EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC,                        // Type
+      sizeof (EFI_ACPI_6_3_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
+      0x20,                                                     // Processor ID
+      0xFF,                                                     // Local APIC ID
+      0x00000000                                                // Flags - Disabled (until initialized by platform driver)
+    }
+  },
+
+  //
+  // Sample IO APIC Structure
+  //
+  //EFI_ACPI_6_3_IO_APIC,                                      // Type
+  //sizeof (EFI_ACPI_6_3_IO_APIC_STRUCTURE),                   // Length
+  //0x00,                                                      // IO APIC ID
+  //EFI_ACPI_RESERVED_BYTE,                                    // Reserved
+  //0x00000000,                                                // IO APIC Address (physical)
+  //0x00000000,                                                // Global System Interrupt Base
+  {
+    {
+      //
+      // I/O SAPIC (ICH)
+      //
+      EFI_ACPI_6_3_IO_APIC,                                    // Type
+      sizeof (EFI_ACPI_6_3_IO_APIC_STRUCTURE),                 // Length
+      ICH_IOAPIC_ID,                                           // IO APIC ID
+      EFI_ACPI_RESERVED_BYTE,                                  // Reserved
+      IO_APIC_BASE_ADDRESS,                        // IO APIC Address (physical)
+      0x18 * 0                                                 // Global System Interrupt Base
+    }
+  },
+  //
+  // Sample Interrupt Source Override Structure
+  //
+  //EFI_ACPI_6_3_INTERRUPT_SOURCE_OVERRIDE,                    // Type
+  //sizeof (EFI_ACPI_6_3_INTERRUPT_SOURCE_OVERRIDE_STRUCTURE), // Length
+  //0x00,                                                      // Bus
+  //0x00,                                                      // Source
+  //0x00000000,                                                // Global System Interrupt
+  //0x0000,                                                    // Flags
+  {
+    {
+      //
+      // IRQ0=>IRQ2 Interrupt Source Override Structure
+      //
+      EFI_ACPI_6_3_INTERRUPT_SOURCE_OVERRIDE,                   // Type
+      sizeof (EFI_ACPI_6_3_INTERRUPT_SOURCE_OVERRIDE_STRUCTURE),// Length
+      0x00,                                                     // Bus - ISA
+      0x00,                                                     // Source - IRQ0
+      0x00000002,                                               // Global System Interrupt - IRQ2
+      0x0000                                                    // Flags - Conforms to specifications of the bus
+    },
+    {
+      //
+      // ISO (SCI Active High) Interrupt Source Override Structure
+      //
+      EFI_ACPI_6_3_INTERRUPT_SOURCE_OVERRIDE,                   // Type
+      sizeof (EFI_ACPI_6_3_INTERRUPT_SOURCE_OVERRIDE_STRUCTURE),// Length
+      0x00,                                                     // Bus - ISA
+      0x09,                                                     // Source - IRQ9
+      0x00000009,                                               // Global System Interrupt - IRQ9
+      0x000D                                                    // Flags - Level-tiggered, Active High
+    }
+  },
+  //
+  // Sample Non-Maskable Interrupt Source Structure
+  //
+  //EFI_ACPI_6_3_NON_MASKABLE_INTERRUPT_SOURCE,                     // Type
+  //sizeof (EFI_ACPI_6_3_NON_MASKABLE_INTERRUPT_SOURCE_STRUCTURE),  // Length
+  //0x0000,                                                         // Flags
+  //0x00000000,                                                     // Global System Interrupt
+
+  //
+  // Sample Local APIC NMI Structure
+  //
+  //EFI_ACPI_6_3_LOCAL_APIC_NMI,                                // Type
+  //sizeof (EFI_ACPI_6_3_LOCAL_APIC_NMI_STRUCTURE),             // Length
+  //0x00,                                                       // ACPI Processor ID
+  //0x0000,                                                     // Flags
+  //0x00,                                                       // Local APIC LINT#
+
+  {
+    {
+      EFI_ACPI_6_3_LOCAL_APIC_NMI,                              // Type
+      sizeof (EFI_ACPI_6_3_LOCAL_APIC_NMI_STRUCTURE),           // Length
+      0x01,                                                     // ACPI Processor ID
+      0x0005,                                                   // Flags - Edge-tiggered, Active High
+      0x01                                                      // Local APIC LINT#
+    },
+    {
+      EFI_ACPI_6_3_LOCAL_APIC_NMI,                              // Type
+      sizeof (EFI_ACPI_6_3_LOCAL_APIC_NMI_STRUCTURE),           // Length
+      0x02,                                                     // ACPI Processor ID
+      0x0005,                                                   // Flags - Edge-tiggered, Active High
+      0x01                                                      // Local APIC LINT#
+    },
+    {
+      EFI_ACPI_6_3_LOCAL_APIC_NMI,                              // Type
+      sizeof (EFI_ACPI_6_3_LOCAL_APIC_NMI_STRUCTURE),           // Length
+      0x03,                                                     // ACPI Processor ID
+      0x0005,                                                   // Flags - Edge-tiggered, Active High
+      0x01                                                      // Local APIC LINT#
+    },
+    {
+      EFI_ACPI_6_3_LOCAL_APIC_NMI,                              // Type
+      sizeof (EFI_ACPI_6_3_LOCAL_APIC_NMI_STRUCTURE),           // Length
+      0x04,                                                     // ACPI Processor ID
+      0x0005,                                                   // Flags - Edge-tiggered, Active High
+      0x01                                                      // Local APIC LINT#
+    },
+    {
+      EFI_ACPI_6_3_LOCAL_APIC_NMI,                              // Type
+      sizeof (EFI_ACPI_6_3_LOCAL_APIC_NMI_STRUCTURE),           // Length
+      0x05,                                                     // ACPI Processor ID
+      0x0005,                                                   // Flags - Edge-tiggered, Active High
+      0x01                                                      // Local APIC LINT#
+    },
+    {
+      EFI_ACPI_6_3_LOCAL_APIC_NMI,                              // Type
+      sizeof (EFI_ACPI_6_3_LOCAL_APIC_NMI_STRUCTURE),           // Length
+      0x06,                                                     // ACPI Processor ID
+      0x0005,                                                   // Flags - Edge-tiggered, Active High
+      0x01                                                      // Local APIC LINT#
+    },
+    {
+      EFI_ACPI_6_3_LOCAL_APIC_NMI,                              // Type
+      sizeof (EFI_ACPI_6_3_LOCAL_APIC_NMI_STRUCTURE),           // Length
+      0x07,                                                     // ACPI Processor ID
+      0x0005,                                                   // Flags - Edge-tiggered, Active High
+      0x01                                                      // Local APIC LINT#
+    },
+    {
+      EFI_ACPI_6_3_LOCAL_APIC_NMI,                              // Type
+      sizeof (EFI_ACPI_6_3_LOCAL_APIC_NMI_STRUCTURE),           // Length
+      0x08,                                                     // ACPI Processor ID
+      0x0005,                                                   // Flags - Edge-tiggered, Active High
+      0x01                                                      // Local APIC LINT#
+    },
+    {
+      EFI_ACPI_6_3_LOCAL_APIC_NMI,                              // Type
+      sizeof (EFI_ACPI_6_3_LOCAL_APIC_NMI_STRUCTURE),           // Length
+      0x09,                                                     // ACPI Processor ID
+      0x0005,                                                   // Flags - Edge-tiggered, Active High
+      0x01                                                      // Local APIC LINT#
+    },
+    {
+      EFI_ACPI_6_3_LOCAL_APIC_NMI,                              // Type
+      sizeof (EFI_ACPI_6_3_LOCAL_APIC_NMI_STRUCTURE),           // Length
+      0x0A,                                                     // ACPI Processor ID
+      0x0005,                                                   // Flags - Edge-tiggered, Active High
+      0x01                                                      // Local APIC LINT#
+    },
+    {
+      EFI_ACPI_6_3_LOCAL_APIC_NMI,                              // Type
+      sizeof (EFI_ACPI_6_3_LOCAL_APIC_NMI_STRUCTURE),           // Length
+      0x0B,                                                     // ACPI Processor ID
+      0x0005,                                                   // Flags - Edge-tiggered, Active High
+      0x01                                                      // Local APIC LINT#
+    },
+    {
+      EFI_ACPI_6_3_LOCAL_APIC_NMI,                              // Type
+      sizeof (EFI_ACPI_6_3_LOCAL_APIC_NMI_STRUCTURE),           // Length
+      0x0C,                                                     // ACPI Processor ID
+      0x0005,                                                   // Flags - Edge-tiggered, Active High
+      0x01                                                      // Local APIC LINT#
+    },
+    {
+      EFI_ACPI_6_3_LOCAL_APIC_NMI,                              // Type
+      sizeof (EFI_ACPI_6_3_LOCAL_APIC_NMI_STRUCTURE),           // Length
+      0x0D,                                                     // ACPI Processor ID
+      0x0005,                                                   // Flags - Edge-tiggered, Active High
+      0x01                                                      // Local APIC LINT#
+    },
+    {
+      EFI_ACPI_6_3_LOCAL_APIC_NMI,                              // Type
+      sizeof (EFI_ACPI_6_3_LOCAL_APIC_NMI_STRUCTURE),           // Length
+      0x0E,                                                     // ACPI Processor ID
+      0x0005,                                                   // Flags - Edge-tiggered, Active High
+      0x01                                                      // Local APIC LINT#
+    },
+    {
+      EFI_ACPI_6_3_LOCAL_APIC_NMI,                              // Type
+      sizeof (EFI_ACPI_6_3_LOCAL_APIC_NMI_STRUCTURE),           // Length
+      0x0F,                                                     // ACPI Processor ID
+      0x0005,                                                   // Flags - Edge-tiggered, Active High
+      0x01                                                      // Local APIC LINT#
+    },
+    {
+      EFI_ACPI_6_3_LOCAL_APIC_NMI,                              // Type
+      sizeof (EFI_ACPI_6_3_LOCAL_APIC_NMI_STRUCTURE),           // Length
+      0x10,                                                     // ACPI Processor ID
+      0x0005,                                                   // Flags - Edge-tiggered, Active High
+      0x01                                                      // Local APIC LINT#
+    },
+    {
+      EFI_ACPI_6_3_LOCAL_APIC_NMI,                              // Type
+      sizeof (EFI_ACPI_6_3_LOCAL_APIC_NMI_STRUCTURE),           // Length
+      0x11,                                                     // ACPI Processor ID
+      0x0005,                                                   // Flags - Edge-tiggered, Active High
+      0x01                                                      // Local APIC LINT#
+    },
+    {
+      EFI_ACPI_6_3_LOCAL_APIC_NMI,                              // Type
+      sizeof (EFI_ACPI_6_3_LOCAL_APIC_NMI_STRUCTURE),           // Length
+      0x12,                                                     // ACPI Processor ID
+      0x0005,                                                   // Flags - Edge-tiggered, Active High
+      0x01                                                      // Local APIC LINT#
+    },
+    {
+      EFI_ACPI_6_3_LOCAL_APIC_NMI,                              // Type
+      sizeof (EFI_ACPI_6_3_LOCAL_APIC_NMI_STRUCTURE),           // Length
+      0x13,                                                     // ACPI Processor ID
+      0x0005,                                                   // Flags - Edge-tiggered, Active High
+      0x01                                                      // Local APIC LINT#
+    },
+    {
+      EFI_ACPI_6_3_LOCAL_APIC_NMI,                              // Type
+      sizeof (EFI_ACPI_6_3_LOCAL_APIC_NMI_STRUCTURE),           // Length
+      0x14,                                                     // ACPI Processor ID
+      0x0005,                                                   // Flags - Edge-tiggered, Active High
+      0x01                                                      // Local APIC LINT#
+    },
+    {
+      EFI_ACPI_6_3_LOCAL_APIC_NMI,                              // Type
+      sizeof (EFI_ACPI_6_3_LOCAL_APIC_NMI_STRUCTURE),           // Length
+      0x15,                                                     // ACPI Processor ID
+      0x0005,                                                   // Flags - Edge-tiggered, Active High
+      0x01                                                      // Local APIC LINT#
+    },
+    {
+      EFI_ACPI_6_3_LOCAL_APIC_NMI,                              // Type
+      sizeof (EFI_ACPI_6_3_LOCAL_APIC_NMI_STRUCTURE),           // Length
+      0x16,                                                     // ACPI Processor ID
+      0x0005,                                                   // Flags - Edge-tiggered, Active High
+      0x01                                                      // Local APIC LINT#
+    },
+    {
+      EFI_ACPI_6_3_LOCAL_APIC_NMI,                              // Type
+      sizeof (EFI_ACPI_6_3_LOCAL_APIC_NMI_STRUCTURE),           // Length
+      0x17,                                                     // ACPI Processor ID
+      0x0005,                                                   // Flags - Edge-tiggered, Active High
+      0x01                                                      // Local APIC LINT#
+    },
+    {
+      EFI_ACPI_6_3_LOCAL_APIC_NMI,                              // Type
+      sizeof (EFI_ACPI_6_3_LOCAL_APIC_NMI_STRUCTURE),           // Length
+      0x00,                                                     // ACPI Processor ID
+      0x0005,                                                   // Flags - Edge-tiggered, Active High
+      0x01                                                      // Local APIC LINT#
+    }
+  }
+
+  //
+  // Sample Local APIC Address Override Structure
+  //
+  //EFI_ACPI_6_3_LOCAL_APIC_ADDRESS_OVERRIDE,                     // Type
+  //sizeof (EFI_ACPI_6_3_LOCAL_APIC_ADDRESS_OVERRIDE_STRUCTURE),  // Length
+  //EFI_ACPI_RESERVED_WORD,                                       // Reserved
+  //0x0000000000000000,                                           // Local APIC Address
+
+  //
+  // Sample Platform Interrupt Sources Structure
+  //
+  //EFI_ACPI_6_3_PLATFORM_INTERRUPT_SOURCES,                      // Type
+  //sizeof (EFI_ACPI_6_3_PLATFORM_INTERRUPT_SOURCES_STRUCTURE),   // Length
+  //0x0000,                                                       // Flags
+  //0x00,                                                         // Interrupt Type
+  //0x00,                                                         // Processor ID
+  //0x00,                                                         // Processor EID
+  //0x00,                                                         // IO SAPIC Vector
+  //0x00000000,                                                   // Global System Interrupt
+  //EFI_ACPI_RESERVED_DWORD,                                      // Reserved
+
+};
+
+#ifdef __GNUC__
+VOID*
+ReferenceAcpiTable (
+ VOID
+ )
+
+{
+ //
+ // Reference the table being generated to prevent the optimizer from removing the
+ // data structure from the executable
+ //
+ return (VOID*)&Madt;
+}
+#else
+VOID
+main (
+  VOID
+  )
+{
+}
+#endif

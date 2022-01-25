@@ -1,0 +1,102 @@
+/** @file
+  This file contains a structure definition for the ACPI Embedded Controller Boot
+  Resources Table (ECDT).  The contents of this file should only be modified
+  for bug fixes, no porting is required.
+
+  Copyright (c) 2018 - 2019, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+//
+// Statements that include other files
+//
+#include <Acpi/Ecdt.h>
+
+//
+// Embedded Controller Boot Resources Table Structure
+//
+#pragma pack(1)
+typedef struct {
+  EFI_ACPI_5_0_EMBEDDED_CONTROLLER_BOOT_RESOURCES_TABLE ActionTable;
+  //
+  // ASCII, null terminated, string that contains a fully qualified
+  // reference to the namespace object that is this embedded controller device.
+  //
+  CHAR8                                                 Ec_Id[40];
+} EFI_ACPI_EMBEDDED_CONTROLLER_BOOT_RESOURCES_ENTIRE_TABLE;
+#pragma pack()
+
+EFI_ACPI_EMBEDDED_CONTROLLER_BOOT_RESOURCES_ENTIRE_TABLE Ecdt = {
+  {
+    {
+      EFI_ACPI_5_0_EMBEDDED_CONTROLLER_BOOT_RESOURCES_TABLE_SIGNATURE,
+      sizeof (EFI_ACPI_5_0_EMBEDDED_CONTROLLER_BOOT_RESOURCES_TABLE) + 40,
+      EFI_ACPI_5_0_EMBEDDED_CONTROLLER_BOOT_RESOURCES_TABLE_REVISION,
+
+      //
+      // Checksum will be updated at runtime
+      //
+      0x00,
+
+      //
+      // It is expected that these values will be updated at runtime
+      //
+      { ' ', ' ', ' ', ' ', ' ', ' ' },
+
+      0,
+      EFI_ACPI_OEM_ECDT_REVISION,
+      0,
+      0
+    },
+
+    //
+    // EC_CONTROL Register Block
+    //
+    {
+      EFI_ACPI_5_0_SYSTEM_IO,
+      8,
+      0,
+      EFI_ACPI_RESERVED_BYTE,
+      0x66
+    },
+
+    //
+    // EC_DATA Register Block
+    //
+    {
+      EFI_ACPI_5_0_SYSTEM_IO,
+      8,
+      0,
+      EFI_ACPI_RESERVED_BYTE,
+      0x62
+    },
+
+    1, // UID
+    0x6E // GPE_BIT
+  },
+  "\\_SB.PC00.LPCB.H_EC" //EC_ID
+};
+
+#ifdef __GNUC__
+VOID*
+ReferenceAcpiTable (
+ VOID
+ )
+
+{
+ //
+ // Reference the table being generated to prevent the optimizer from removing the
+ // data structure from the exeutable
+ //
+ return (VOID*)&Ecdt;
+}
+#else
+VOID
+main (
+ VOID
+ )
+
+{
+}
+#endif

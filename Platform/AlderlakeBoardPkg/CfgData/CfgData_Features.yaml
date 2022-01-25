@@ -1,0 +1,49 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : FEATURES:PLT:"Features"
+- $ACTION      :
+    page         : FEATURES
+- FEATURES_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ FEATURES_CFG_DATA, 0x310, 0, 0 ] }
+  - Features     :
+    - $STRUCT      :
+        name         : PlatformFeatures
+        struct       : FEATURES_DATA
+        length       : 0x04
+        value        : 0x00000003
+    - Acpi         :
+        name         : ACPI Enable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable ACPI feature. 1:ACPI Enabled (default), 0:ACPI Disabled
+        length       : 1b
+    - MeasuredBoot :
+        name         : MeasuredBoot Enable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable MeasuredBoot feature. 1:MeasuredBoot Enabled (default), 0:MeasuredBoot Disabled
+        length       : 1b
+    - S0ix           :
+        name         : S0ix (Low Power Idle) Enable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable S0ix feature. 1:S0ix Enabled, 0:S0ix Disabled
+        length       : 1b
+    - Rsvd         :
+        name         : Reserved
+        type         : Reserved
+        help         : >
+                       reserved bits
+        length       : 29b

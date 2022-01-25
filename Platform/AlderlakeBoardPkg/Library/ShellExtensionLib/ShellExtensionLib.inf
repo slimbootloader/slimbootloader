@@ -1,0 +1,47 @@
+## @file
+#
+#  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution.  The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php
+#
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = ShellExtensionLib
+  FILE_GUID                      = DC4BA78D-E955-4f24-8622-D5E787403644
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = ShellExtensionLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32
+#
+
+[Sources]
+  ShellExtension.c
+  CmdPappend.c
+  CmdFwUpdate.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  PayloadPkg/PayloadPkg.dec
+  Platform/CommonBoardPkg/CommonBoardPkg.dec
+  Platform/AlderlakeBoardPkg/AlderlakeBoardPkg.dec
+  Silicon/AlderlakePkg/AlderlakePkg.dec
+
+[LibraryClasses]
+  BaseMemoryLib
+
+[Pcd]
+
+[Guids]
+

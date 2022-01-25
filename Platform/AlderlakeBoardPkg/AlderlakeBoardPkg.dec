@@ -1,0 +1,22 @@
+#/** @file
+# Platform Package
+#
+# This package provides platform specific modules.
+# Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+
+[Defines]
+  DEC_SPECIFICATION              = 0x00010005
+  PACKAGE_NAME                   = AlderlakeBoardPkg
+  PACKAGE_GUID                   = 6DEF602D-7CC2-4ED8-8FD0-BD823BACA6C2
+  PACKAGE_VERSION                = 0.1
+
+[Includes]
+  Include
+
+[Guids]
+ gCpuInitDataHobGuid        = { 0x266e31cc, 0x13c5, 0x4807, { 0xb9, 0xdc, 0x39, 0xa6, 0xba, 0x88, 0xff, 0x1a } }
+  gTccRtctHobGuid           = { 0x6bddb43d, 0x1782, 0x4d9c, { 0xb6, 0x80, 0xe3, 0xde, 0x45, 0xe0, 0x37, 0x4a } }
+
+[PcdsFixedAtBuild]

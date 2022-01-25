@@ -1,0 +1,114 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Default File.
+#
+#  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+variable:
+  COND_S0IX_DIS  : ($FEATURES_CFG_DATA.Features.S0ix == 0)
+  COND_PLD_SEL_EN: ($PLDSEL_CFG_DATA.PldSelGpio.Enable == 1)
+template:
+
+  - !include Template_CfgData.yaml
+
+configs:
+  - $ACTION      :
+      page         : PLT::"Platform", MEM::"Memory Settings", SIL::"Silicon Settings", GEN::"General Settings", GIO::"Gpio Settings", GFX::"Graphics Settings", OS::"OS Boot Options", SEC::"Security Settings"
+  - Signature    :
+      length       : 0x04
+      value        : {'CFGD'}
+  - HeaderLength :
+      length       : 0x01
+      value        : 0x10
+  - Reserved     :
+      length       : 0x03
+      value        : {0,0,0}
+  - UsedLength   :
+      length       : 0x04
+      value        : _LENGTH_
+  - TotalLength  :
+      length       : 0x04
+      value        : 0x2000
+
+  - !include CfgData_Features.yaml
+
+  - !include CfgData_Gpio.yaml
+
+  - !include Platform/CommonBoardPkg/CfgData/CfgData_Platform.yaml
+
+  - !include Platform/CommonBoardPkg/CfgData/CfgData_Common.yaml
+
+  - !include Platform/CommonBoardPkg/CfgData/CfgData_Tcc.yaml
+
+  - !include Platform/CommonBoardPkg/CfgData/CfgData_PayloadSelection.yaml
+
+  - !include CfgData_BootOption.yaml
+
+  - !include CfgData_Memory.yaml
+
+  - !include CfgData_MemSpd.yaml
+
+  - !include CfgData_Dynamic.yaml
+
+  - !include CfgData_Silicon.yaml
+
+  - !include CfgData_Power.yaml
+
+  - !include CfgData_Security.yaml
+
+  - !include CfgData_PepConstraints.yaml
+
+  - $ACTION      :
+      page         : GFX
+  - GRAPHICS_CFG_DATA :
+    - !expand { CFGHDR_TMPL : [ GRAPHICS_CFG_DATA, 0x300, 0, 0 ] }
+    - IgdDvmt50PreAlloc :
+        name         : Internal Graphics Pre-allocated Memory
+        type         : Combo
+        option       : >
+                       0x00:0MB, 0x01:32MB, 0x02:64MB, 0x03:96MB, 0x04:128MB, 0x05:160MB, 0xF0:4MB, 0xF1:8MB, 0xF2:12MB, 0xF3:16MB, 0xF4:20MB,
+                       0xF5:24MB, 0xF6:28MB, 0xF7:32MB, 0xF8:36MB, 0xF9:40MB, 0xFA:44MB, 0xFB:48MB, 0xFC:52MB, 0xFD:56MB, 0xFE:60MB
+        help         : >
+                       Size of memory preallocated for internal graphics.
+        length       : 0x01
+        value        : 0xFE
+    - ApertureSize :
+        name         : Aperture Size
+        type         : Combo
+        option       : 0:128 MB, 1:256 MB, 2:512 MB
+        help         : >
+                       Select the Aperture Size.
+        length       : 0x01
+        value        : 0x1
+    - InternalGfx  :
+        name         : Internal Graphics
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/disable internal graphics.
+        length       : 0x01
+        value        : 0x01
+    - PrimaryDisplay :
+        name         : Selection of the primary display device
+        type         : Combo
+        option       : 0:iGFX, 1:PEG, 2:PCIe Graphics on PCH, 3:AUTO, 4:Switchable Graphics
+        help         : >
+                       0=iGFX, 1=PEG, 2=PCIe Graphics on PCH, 3(Default)=AUTO, 4=Switchable Graphics
+        length       : 0x01
+        value        : 0x3
+    - GttSize      :
+        name         : Selection of iGFX GTT Memory size
+        type         : Combo
+        option       : 1:2MB, 2:4MB, 3:8MB
+        help         : >
+                       1=2MB, 2=4MB, 3=8MB
+        length       : 0x02
+        value        : 0x3
+    - Dummy        :
+        length       : 0x02
+        value        : 0x0
+
+  - !include CfgData_CapsuleInformation.yaml

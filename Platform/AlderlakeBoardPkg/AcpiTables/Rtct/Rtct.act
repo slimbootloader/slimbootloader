@@ -1,0 +1,62 @@
+/** @file
+  This file contains a structure definition for the TCC PTCT table.
+  Any changes to the number of entries in the table require
+  updating the structure count in Ptct.h and then adding the structure to the
+  PTCT defined in this file.  The table layout is defined in Ptct.h.
+
+  Copyright (c) 2020 Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+**/
+
+//
+// Statements that include other files
+//
+
+#include "Rtct.h"
+
+//
+// Rtct Acpi Description Table
+//
+
+EFI_ACPI_TCC_RTCT_TABLE Rtct = {
+  {
+    EFI_ACPI_RTCT_SIGNATURE,
+    sizeof (EFI_ACPI_TCC_RTCT_TABLE),
+    EFI_ACPI_RTCT_TABLE_REVISION,
+    //
+    // Checksum will be updated at runtime
+    //
+    0x00,
+    {EFI_ACPI_RTCT_OEM_ID},
+    EFI_ACPI_RTCT_OEM_TABLE_ID,
+    EFI_ACPI_RTCT_OEM_REVISION,
+    EFI_ACPI_RTCT_CREATOR_ID,
+   EFI_ACPI_RTCT_CREATOR_REVISION
+  },
+  //
+  // Reserved
+  //
+  0x0000000000000000
+};
+
+#ifdef __GNUC__
+VOID*
+ReferenceAcpiTable (
+ VOID
+ )
+
+{
+ //
+ // Reference the table being generated to prevent the optimizer from removing the
+ // data structure from the exeutable
+ //
+ return (VOID*)&Rtct;
+}
+#else
+VOID
+main (
+  VOID
+  )
+{
+}
+#endif

@@ -1,0 +1,1076 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : PWR
+- POWER_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ POWER_CFG_DATA, 0x610, 0, 0 ] }
+  - Hwp          :
+      name         : Enable or Disable HWP
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable HWP(Hardware P states) Support. 0- Disable; <b>1- Enable;</b> 2-3:Reserved
+      length       : 0x01
+      value        : 0x01
+  - HdcControl   :
+      name         : Hardware Duty Cycle Control
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Hardware Duty Cycle Control configuration. 0- Disabled; <b>1- Enabled</b> 2-3:Reserved
+      length       : 0x01
+      value        : 0x01
+  - PowerLimit1Time :
+      name         : Package Long duration turbo mode time
+      type         : EditNum, HEX, (0x00, 0x80)
+      help         : >
+                     Package Long duration turbo mode time window in seconds. Valid values(Unit in seconds) 0 to 8 , 10 , 12 ,14 , 16 , 20 , 24 , 28 , 32 , 40 , 48 , 56 , 64 , 80 , 96 , 112 , 128
+      length       : 0x01
+      value        : 0x00
+  - PowerLimit2  :
+      name         : Short Duration Turbo Mode
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable short duration Turbo Mode. </b>0 - Disable; <b>1- Enable</b>
+      length       : 0x01
+      value        : 0x1
+  - TurboPowerLimitLock :
+      name         : Turbo settings Lock
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Lock all Turbo settings Enable/Disable; <b>0- Disable , </b> 1- Enable
+      length       : 0x01
+      value        : 0x00
+  - PowerLimit3Time :
+      name         : Package PL3 time window
+      type         : EditNum, HEX, (0x00, 0xFF)
+      help         : >
+                     Package PL3 time window range for this policy from 0 to 64ms
+      length       : 0x01
+      value        : 0x00
+  - PowerLimit3DutyCycle :
+      name         : Package PL3 Duty Cycle
+      type         : EditNum, HEX, (0x00, 0x64)
+      help         : >
+                     Package PL3 Duty Cycle; Valid Range is 0 to 100
+      length       : 0x01
+      value        : 0x00
+  - PowerLimit3Lock :
+      name         : Package PL3 Lock
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Package PL3 Lock Enable/Disable; <b>0- Disable ; <b> 1- Enable
+      length       : 0x01
+      value        : 0x00
+  - PowerLimit4Lock :
+      name         : Package PL4 Lock
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Package PL4 Lock Enable/Disable; <b>0- Disable ; <b>1- Enable
+      length       : 0x01
+      value        : 0x00
+  - TccActivationOffset :
+      name         : TCC Activation Offset
+      type         : EditNum, HEX, (0x00, 0xFF)
+      help         : >
+                     TCC Activation Offset. Offset from factory set TCC activation temperature at which the Thermal Control Circuit must be activated. TCC will be activated at TCC Activation Temperature, in volts.For SKL Y SKU, the recommended default for this policy is  <b>10</b>, For all other SKUs the recommended default are <b>0</b>
+      length       : 0x01
+      value        : 0x00
+  - TccOffsetClamp :
+      name         : Tcc Offset Clamp Enable/Disable
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Tcc Offset Clamp for Runtime Average Temperature Limit (RATL) allows CPU to throttle below P1.For SKL Y SKU, the recommended default for this policy is <b>1- Enabled</b>, For all other SKUs the recommended default are  <b>0- Disabled</b>.
+      length       : 0x01
+      value        : 0x00
+  - TccOffsetLock :
+      name         : Tcc Offset Lock
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Tcc Offset Lock for Runtime Average Temperature Limit (RATL) to lock temperature target; <b>0- Disabled</b>; 1- Enabled.
+      length       : 0x01
+      value        : 0x01
+  - TurboMode    :
+      name         : Turbo Mode
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/Disable Turbo mode. 0- disable, 1- enable
+      length       : 0x01
+      value        : 0x01
+  - NumberOfEntries :
+      name         : Custom Ratio State Entries
+      type         : EditNum, HEX, (0x00, 0x28)
+      help         : >
+                     The number of custom ratio state entries, ranges from 0 to 40 for a valid custom ratio table.Sets the number of custom P-states. At least 2 states must be present
+      length       : 0x01
+      value        : 0x00
+  - Custom1PowerLimit1Time :
+      name         : Custom Short term Power Limit time window
+      type         : EditNum, HEX, (0x00, 0x80)
+      help         : >
+                     Short term Power Limit time window value for custom CTDP level 1. Valid Range 0 to 128
+      length       : 0x01
+      value        : 0x00
+  - Custom1TurboActivationRatio :
+      name         : Custom Turbo Activation Ratio
+      type         : EditNum, HEX, (0x00, 0xFF)
+      help         : >
+                     Turbo Activation Ratio for custom cTDP level 1. Valid Range 0 to 255
+      length       : 0x01
+      value        : 0x00
+  - Custom1ConfigTdpControl :
+      name         : Custom Config Tdp Control
+      type         : EditNum, HEX, (0x00, 0x2)
+      help         : >
+                     Config Tdp Control (0/1/2) value for custom cTDP level 1. Valid Range is 0 to 2
+      length       : 0x01
+      value        : 0x00
+  - Custom2PowerLimit1Time :
+      name         : Custom Short term Power Limit time window
+      type         : EditNum, HEX, (0x00, 0x80)
+      help         : >
+                     Short term Power Limit time window value for custom CTDP level 2. Valid Range 0 to 128
+      length       : 0x01
+      value        : 0x00
+  - Custom2TurboActivationRatio :
+      name         : Custom Turbo Activation Ratio
+      type         : EditNum, HEX, (0x00, 0xFF)
+      help         : >
+                     Turbo Activation Ratio for custom cTDP level 2. Valid Range 0 to 255
+      length       : 0x01
+      value        : 0x00
+  - Custom2ConfigTdpControl :
+      name         : Custom Config Tdp Control
+      type         : EditNum, HEX, (0x00, 0x2)
+      help         : >
+                     Config Tdp Control (0/1/2) value for custom cTDP level 1. Valid Range is 0 to 2
+      length       : 0x01
+      value        : 0x00
+  - Custom3PowerLimit1Time :
+      name         : Custom Short term Power Limit time window
+      type         : EditNum, HEX, (0x00, 0x80)
+      help         : >
+                     Short term Power Limit time window value for custom CTDP level 3. Valid Range 0 to 128
+      length       : 0x01
+      value        : 0x00
+  - Custom3TurboActivationRatio :
+      name         : Custom Turbo Activation Ratio
+      type         : EditNum, HEX, (0x00, 0xFF)
+      help         : >
+                     Turbo Activation Ratio for custom cTDP level 3. Valid Range 0 to 255
+      length       : 0x01
+      value        : 0x00
+  - Custom3ConfigTdpControl :
+      name         : Custom Config Tdp Control
+      type         : EditNum, HEX, (0x00, 0x2)
+      help         : >
+                     Config Tdp Control (0/1/2) value for custom cTDP level 1. Valid Range is 0 to 2
+      length       : 0x01
+      value        : 0x00
+  - ConfigTdpLock :
+      name         : ConfigTdp mode settings Lock
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Lock the ConfigTdp mode settings from runtime changes; <b>0- Disable</b>; 1- Enable
+      length       : 0x01
+      value        : 0x00
+  - ConfigTdpBios :
+      name         : Load Configurable TDP SSDT
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Configure whether to load Configurable TDP SSDT; <b>0- Disable</b>; 1- Enable.
+      length       : 0x01
+      value        : 0x00
+  - PsysPowerLimit1 :
+      name         : PL1 Enable value
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     PL1 Enable value to limit average platform power. <b>0- Disable</b>; 1- Enable.
+      length       : 0x01
+      value        : 0x00
+  - PsysPowerLimit1Time :
+      name         : PL1 timewindow
+      type         : EditNum, HEX, (0x00, 0x80)
+      help         : >
+                     PL1 timewindow in seconds.Valid values(Unit in seconds) 0 to 8 , 10 , 12 ,14 , 16 , 20 , 24 , 28 , 32 , 40 , 48 , 56 , 64 , 80 , 96 , 112 , 128
+      length       : 0x01
+      value        : 0x00
+  - PsysPowerLimit2 :
+      name         : PL2 Enable Value
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     PL2 Enable activates the PL2 value to limit average platform power.<b>0- Disable</b>; 1- Enable.
+      length       : 0x01
+      value        : 0x00
+  - MlcStreamerPrefetcher :
+      name         : Enable or Disable MLC Streamer Prefetcher
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable MLC Streamer Prefetcher; 0- Disable; <b>1- Enable</b>.
+      length       : 0x01
+      value        : 0x01
+  - MlcSpatialPrefetcher :
+      name         : Enable or Disable MLC Spatial Prefetcher
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable MLC Spatial Prefetcher; 0- Disable; <b>1- Enable</b>
+      length       : 0x01
+      value        : 0x01
+  - MonitorMwaitEnable :
+      name         : Enable or Disable Monitor /MWAIT instructions
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable Monitor /MWAIT instructions; 0- Disable; <b>1- Enable</b>.
+      length       : 0x01
+      value        : 0x01
+  - MachineCheckEnable :
+      name         : Enable or Disable initialization of machine check registers
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable initialization of machine check registers; 0- Disable; <b>1- Enable</b>.
+      length       : 0x01
+      value        : 0x01
+  - IsFusaSupported :
+      name         : Check if FUSA is supported
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Check if FUSA is supported; 0- Disable; <b>1- Enable</b>.
+      length       : 0x01
+      value        : 0x01
+  - ApIdleManner :
+      name         : AP Idle Manner of waiting for SIPI
+      type         : Combo
+      help         : >
+                     AP Idle Manner of waiting for SIPI; 1- HALT loop; <b>2- MWAIT loop</b>; 3- RUN loop.
+      option       : 1:HALT loop, 2:MWAIT loop, 3:RUN loop
+      length       : 0x01
+      value        : 0x02
+  - ProcessorTraceOutputScheme :
+      name         : Control on Processor Trace output scheme
+      type         : Combo
+      option       : 0:Single Range Output, 1:ToPA Output
+      help         : >
+                     Control on Processor Trace output scheme; <b>0- Single Range Output</b>; 1- ToPA Output.
+      length       : 0x01
+      value        : 0x00
+  - ProcessorTraceEnable :
+      name         : Enable or Disable Processor Trace feature
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable Processor Trace feature; <b>0- Disable</b>; 1- Enable.
+      length       : 0x01
+      value        : 0x00
+  - VoltageOptimization :
+      name         : Enable or Disable Voltage Optimization feature
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable Voltage Optimization feature 0- Disable; <b>1- Enable</b>
+      length       : 0x01
+      value        : 0x01
+  - Eist         :
+      name         : Enable or Disable Intel SpeedStep Technology
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable Intel SpeedStep Technology. 0- Disable; <b>1- Enable</b>
+      length       : 0x01
+      value        : 0x1
+  - EnergyEfficientPState :
+      name         : Enable or Disable Energy Efficient P-state
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable Energy Efficient P-state will be applied in Turbo mode. Disable; <b>1- Enable</b>
+      length       : 0x01
+      value        : 0x01
+  - EnergyEfficientTurbo :
+      name         : Enable or Disable Energy Efficient Turbo
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable Energy Efficient Turbo, will be applied in Turbo mode. Disable; <b>1- Enable</b>
+      length       : 0x01
+      value        : 0x00
+  - TStates      :
+      name         : Enable or Disable T states
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable T states; <b>0- Disable</b>; 1- Enable.
+      length       : 0x01
+      value        : 0x00
+  - BiProcHot    :
+      name         : Enable or Disable Bi-Directional PROCHOT#
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable Bi-Directional PROCHOT#; 0- Disable; <b>1- Enable</b>
+      length       : 0x01
+      value        : 0x01
+  - DisableProcHotOut :
+      name         : Enable or Disable PROCHOT# signal being driven externally
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable PROCHOT# signal being driven externally; 0- Disable; <b>1- Enable</b>.
+      length       : 0x01
+      value        : 0x01
+  - ProcHotResponse :
+      name         : Enable or Disable PROCHOT# Response
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable PROCHOT# Response; <b>0- Disable</b>; 1- Enable.
+      length       : 0x01
+      value        : 0x01
+  - DisableVrThermalAlert :
+      name         : Enable or Disable VR Thermal Alert
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable VR Thermal Alert; <b>0- Disable</b>; 1- Enable.
+      length       : 0x01
+      value        : 0x00
+  - EnableAllThermalFunctions :
+      name         : Enable or Disable Thermal Reporting
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable Thermal Reporting through ACPI tables; 0- Disable; <b>1- Enable</b>.
+      length       : 0x01
+      value        : 0x01
+  - ThermalMonitor :
+      name         : Enable or Disable Thermal Monitor
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable Thermal Monitor; 0- Disable; <b>1- Enable</b>
+      length       : 0x01
+      value        : 0x01
+  - Cx           :
+      name         : Enable or Disable CPU power states (C-states)
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable CPU power states (C-states). 0- Disable; <b>1- Enable</b>
+      length       : 0x01
+      value        : 0x01
+  - PmgCstCfgCtrlLock :
+      name         : Configure C-State Configuration Lock
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Configure C-State Configuration Lock; 0- Disable; <b>1- Enable</b>.
+      length       : 0x01
+      value        : 0x01
+  - C1e          :
+      name         : Enable or Disable Enhanced C-states
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable Enhanced C-states. 0- Disable; <b>1- Enable</b>
+      length       : 0x01
+      value        : 0x01
+  - PkgCStateDemotion :
+      name         : Enable or Disable Package Cstate Demotion
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable Package Cstate Demotion. 0- Disable; <b>1- Enable</b>
+      length       : 0x01
+      value        : 0x01
+  - PkgCStateUnDemotion :
+      name         : Enable or Disable Package Cstate UnDemotion
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable Package Cstate UnDemotion. 0- Disable; <b>1- Enable</b>
+      length       : 0x01
+      value        : 0x01
+  - CStatePreWake :
+      name         : Enable or Disable CState-Pre wake
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable CState-Pre wake. 0- Disable; <b>1- Enable</b>
+      length       : 0x01
+      value        : 0x01
+  - TimedMwait   :
+      name         : Enable or Disable TimedMwait Support.
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable TimedMwait Support. <b>0- Disable</b>; 1- Enable
+      length       : 0x01
+      value        : 0x00
+  - CstCfgCtrIoMwaitRedirection :
+      name         : Enable or Disable IO to MWAIT redirection
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable IO to MWAIT redirection; <b>0- Disable</b>; 1- Enable.
+      length       : 0x01
+      value        : 0x00
+  - PkgCStateLimit :
+      name         : Set the Max Pkg Cstate
+      type         : EditNum, HEX, (0x00, 0xFF)
+      help         : >
+                     Set the Max Pkg Cstate. Default set to Auto which limits the Max Pkg Cstate to deep C-state. Valid values 0 - C0/C1 , 1 - C2 , 2 - C3 , 3 - C6 , 4 - C7 , 5 - C7S , 6 - C8 , 7 - C9 , 8 - C10 , 254 - CPU Default , 255 - Auto
+      length       : 0x01
+      value        : 0xFF
+  - CstateLatencyControl0TimeUnit :
+      name         : TimeUnit for C-State Latency Control0
+      type         : EditNum, HEX, (0x00, 0x5)
+      help         : >
+                     TimeUnit for C-State Latency Control0; Valid values 0 - 1ns , 1 - 32ns , 2 - 1024ns , 3 - 32768ns , 4 - 1048576ns , 5 - 33554432ns
+      length       : 0x01
+      value        : 0x02
+  - CstateLatencyControl1TimeUnit :
+      name         : TimeUnit for C-State Latency Control1
+      type         : EditNum, HEX, (0x00, 0x5)
+      help         : >
+                     TimeUnit for C-State Latency Control1;Valid values 0 - 1ns , 1 - 32ns , 2 - 1024ns , 3 - 32768ns , 4 - 1048576ns , 5 - 33554432ns
+      length       : 0x01
+      value        : 0x02
+  - CstateLatencyControl2TimeUnit :
+      name         : TimeUnit for C-State Latency Control2
+      type         : EditNum, HEX, (0x00, 0x5)
+      help         : >
+                     TimeUnit for C-State Latency Control2;Valid values 0 - 1ns , 1 - 32ns , 2 - 1024ns , 3 - 32768ns , 4 - 1048576ns , 5 - 33554432ns
+      length       : 0x01
+      value        : 0x02
+  - CstateLatencyControl3TimeUnit :
+      name         : TimeUnit for C-State Latency Control3
+      type         : EditNum, HEX, (0x00, 0x5)
+      help         : >
+                     TimeUnit for C-State Latency Control3;Valid values 0 - 1ns , 1 - 32ns , 2 - 1024ns , 3 - 32768ns , 4 - 1048576ns , 5 - 33554432ns
+      length       : 0x01
+      value        : 0x02
+  - CstateLatencyControl4TimeUnit :
+      name         : TimeUnit for C-State Latency Control4
+      type         : EditNum, HEX, (0x00, 0x5)
+      help         : >
+                     Time - 1ns , 1 - 32ns , 2 - 1024ns , 3 - 32768ns , 4 - 1048576ns , 5 - 33554432ns
+      length       : 0x01
+      value        : 0x02
+  - CstateLatencyControl5TimeUnit :
+      name         : TimeUnit for C-State Latency Control5
+      type         : EditNum, HEX, (0x00, 0x5)
+      help         : >
+                     TimeUnit for C-State Latency Control5;Valid values 0 - 1ns , 1 - 32ns , 2 - 1024ns , 3 - 32768ns , 4 - 1048576ns , 5 - 33554432ns
+      length       : 0x01
+      value        : 0x02
+  - ProcHotLock  :
+      name         : Lock prochot configuration
+      type         : Combo
+      help         : >
+                     Lock prochot configuration Enable/Disable; <b>0- Disable</b>; 1- Enable
+      option       : $EN_DIS
+      length       : 0x01
+      value        : 0x01
+  - ConfigTdpLevel :
+      name         : Configuration for boot TDP selection
+      type         : EditNum, HEX, (0x00, 0xFF)
+      help         : >
+                     Configuration for boot TDP selection; <b>0- TDP Nominal</b>; 1- TDP Down; 2- TDP Up;0xFF - Deactivate
+      length       : 0x01
+      value        : 0x0
+  - MaxRatio     :
+      name         : Max P-State Ratio
+      type         : EditNum, HEX, (0x00, 0x7F)
+      help         : >
+                     Max P-State Ratio, Valid Range 0 to 0x7F
+      length       : 0x01
+      value        : 0x08
+  - StateRatio   :
+      name         : P-state ratios for custom P-state table
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT8
+      help         : >
+                     P-state ratios for custom P-state table. NumberOfEntries has valid range between 0 to 40. For no. of P-States supported(NumberOfEntries) , StateRatio[NumberOfEntries] are configurable. Valid Range of each entry is 0 to 0x7F
+      length       : 0x28
+      value        : {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0}
+  - StateRatioMax16 :
+      name         : P-state ratios for max 16 version of custom P-state table
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT8
+      help         : >
+                     P-state ratios for max 16 version of custom P-state table. This table is used for OS versions limited to a max of 16 P-States. If the first entry of this table is 0, or if Number of Entries is 16 or less, then this table will be ignored, and up to the top 16 values of the StateRatio table will be used instead. Valid Range of each entry is 0 to 0x7F
+      length       : 0x10
+      value        : {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0}
+  - PsysPmax     :
+      name         : Platform Power Pmax
+      type         : EditNum, HEX, (0x00, 0x400)
+      help         : >
+                     PCODE MMIO Mailbox- Platform Power Pmax. <b>0 - Auto</b> Specified in 1/8 Watt increments. Range 0-1024 Watts. Value of 800 = 100W
+      length       : 0x02
+      value        : 0xAC
+  - CstateLatencyControl1Irtl :
+      name         : Interrupt Response Time Limit of C-State LatencyContol1
+      type         : EditNum, HEX, (0x00, 0x3FF)
+      help         : >
+                     Interrupt Response Time Limit of C-State LatencyContol1.Range of value 0 to 0x3FF
+      length       : 0x02
+      value        : 0x00
+  - CstateLatencyControl2Irtl :
+      name         : Interrupt Response Time Limit of C-State LatencyContol2
+      type         : EditNum, HEX, (0x00, 0x3FF)
+      help         : >
+                     Interrupt Response Time Limit of C-State LatencyContol2.Range of value 0 to 0x3FF
+      length       : 0x02
+      value        : 0x00
+  - CstateLatencyControl3Irtl :
+      name         : Interrupt Response Time Limit of C-State LatencyContol3
+      type         : EditNum, HEX, (0x00, 0x3FF)
+      help         : >
+                     Interrupt Response Time Limit of C-State LatencyContol3.Range of value 0 to 0x3FF
+      length       : 0x02
+      value        : 0x00
+  - CstateLatencyControl4Irtl :
+      name         : Interrupt Response Time Limit of C-State LatencyContol4
+      type         : EditNum, HEX, (0x00, 0x3FF)
+      help         : >
+                     Interrupt Response Time Limit of C-State LatencyContol4.Range of value 0 to 0x3FF
+      length       : 0x02
+      value        : 0x00
+  - CstateLatencyControl5Irtl :
+      name         : Interrupt Response Time Limit of C-State LatencyContol5
+      type         : EditNum, HEX, (0x00, 0x3FF)
+      help         : >
+                     Interrupt Response Time Limit of C-State LatencyContol5.Range of value 0 to 0x3FF
+      length       : 0x02
+      value        : 0x00
+  - PowerLimit1  :
+      name         : Package Long duration turbo mode power limit
+      type         : EditNum, HEX, (0x00, 0x3E7F83)
+      help         : >
+                     Package Long duration turbo mode power limit. Units are based on POWER_MGMT_CONFIG.CustomPowerUnit. Valid Range 0 to 4095875 in Step size of 125
+      length       : 0x04
+      value        : 0x0
+  - PowerLimit2Power :
+      name         : Package Short duration turbo mode power limit
+      type         : EditNum, HEX, (0x00, 0x3E7F83)
+      help         : >
+                     Package Short duration turbo mode power limit. Units are based on POWER_MGMT_CONFIG.CustomPowerUnit.Valid Range 0 to 4095875 in Step size of 125
+      length       : 0x04
+      value        : 0x0
+  - PowerLimit3  :
+      name         : Package PL3 power limit
+      type         : EditNum, HEX, (0x00, 0x3E7F83)
+      help         : >
+                     Package PL3 power limit. Units are based on POWER_MGMT_CONFIG.CustomPowerUnit.Valid Range 0 to 4095875 in Step size of 125
+      length       : 0x04
+      value        : 0x0
+  - PowerLimit4  :
+      name         : Package PL4 power limit
+      type         : EditNum, HEX, (0x00, 0x3E7F83)
+      help         : >
+                     Package PL4 power limit. Units are based on POWER_MGMT_CONFIG.CustomPowerUnit.Valid Range 0 to 4095875 in Step size of 125
+      length       : 0x04
+      value        : 0x0
+  - TccOffsetTimeWindowForRatl :
+      name         : Tcc Offset Time Window for RATL
+      type         : EditNum, HEX, (0x00, 0xFFFFFFFF)
+      length       : 0x04
+      value        : 0x00
+  - Custom1PowerLimit1 :
+      name         : Short term Power Limit value for custom cTDP level 1
+      type         : EditNum, HEX, (0x00, 0x3E7F83)
+      help         : >
+                     Short term Power Limit value for custom cTDP level 1. Units are based on POWER_MGMT_CONFIG.CustomPowerUnit.Valid Range 0 to 4095875 in Step size of 125
+      length       : 0x04
+      value        : 0x00
+  - Custom1PowerLimit2 :
+      name         : Long term Power Limit value for custom cTDP level 1
+      type         : EditNum, HEX, (0x00, 0x3E7F83)
+      help         : >
+                     Long term Power Limit value for custom cTDP level 1. Units are based on POWER_MGMT_CONFIG.CustomPowerUnit.Valid Range 0 to 4095875 in Step size of 125
+      length       : 0x04
+      value        : 0x00
+  - Custom2PowerLimit1 :
+      name         : Short term Power Limit value for custom cTDP level 2
+      type         : EditNum, HEX, (0x00, 0x3E7F83)
+      help         : >
+                     Short term Power Limit value for custom cTDP level 2. Units are based on POWER_MGMT_CONFIG.CustomPowerUnit.Valid Range 0 to 4095875 in Step size of 125
+      length       : 0x04
+      value        : 0x00
+  - Custom2PowerLimit2 :
+      name         : Long term Power Limit value for custom cTDP level 2
+      type         : EditNum, HEX, (0x00, 0x3E7F83)
+      help         : >
+                     Long term Power Limit value for custom cTDP level 2. Units are based on POWER_MGMT_CONFIG.CustomPowerUnit.Valid Range 0 to 4095875 in Step size of 125
+      length       : 0x04
+      value        : 0x00
+  - Custom3PowerLimit1 :
+      name         : Short term Power Limit value for custom cTDP level 3
+      type         : EditNum, HEX, (0x00, 0x3E7F83)
+      help         : >
+                     Short term Power Limit value for custom cTDP level 3. Units are based on POWER_MGMT_CONFIG.CustomPowerUnit.Valid Range 0 to 4095875 in Step size of 125
+      length       : 0x04
+      value        : 0x00
+  - Custom3PowerLimit2 :
+      name         : Long term Power Limit value for custom cTDP level 3
+      type         : EditNum, HEX, (0x00, 0x3E7F83)
+      help         : >
+                     Long term Power Limit value for custom cTDP level 3. Units are based on POWER_MGMT_CONFIG.CustomPowerUnit.Valid Range 0 to 4095875 in Step size of 125
+      length       : 0x04
+      value        : 0x00
+  - PsysPowerLimit1Power :
+      name         : Platform PL1 power
+      type         : EditNum, HEX, (0x00, 0x3E7F83)
+      help         : >
+                     Platform PL1 power. Units are based on POWER_MGMT_CONFIG.CustomPowerUnit.Valid Range 0 to 4095875 in Step size of 125
+      length       : 0x04
+      value        : 0x00
+  - PsysPowerLimit2Power :
+      name         : Platform PL2 power
+      type         : EditNum, HEX, (0x00, 0x3E7F83)
+      help         : >
+                     Platform PL2 power. Units are based on POWER_MGMT_CONFIG.CustomPowerUnit.Valid Range 0 to 4095875 in Step size of 125
+      length       : 0x04
+      value        : 0x00
+  - RaceToHalt   :
+      name         : Race To Halt
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/Disable Race To Halt feature. RTH will dynamically increase CPU frequency in order to enter pkg C-State faster to reduce overall power. (RTH is controlled through MSR 1FC bit 20)Disable; <b>1- Enable</b>
+      length       : 0x01
+      value        : 0x01
+  - ThreeStrikeCounterDisable :
+      name         : Set Three Strike Counter Disable
+      type         : Combo
+      option       : 0:False, 1:True
+      help         : >
+                     False (default)- Three Strike counter will be incremented and True- Prevents Three Strike counter from incrementing; <b>0- False</b>; 1- True.
+      length       : 0x01
+      value        : 0x00
+  - HwpInterruptControl :
+      name         : Set HW P-State Interrupts Enabled for for MISC_PWR_MGMT
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Set HW P-State Interrupts Enabled for for MISC_PWR_MGMT; <b>0- Disable</b>; 1- Enable.
+      length       : 0x01
+      value        : 0x01
+  - EnableItbm   :
+      name         : Intel Turbo Boost Max Technology 3.0
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Intel Turbo Boost Max Technology 3.0. 0- Disabled; <b>1- Enabled</b>
+      length       : 0x01
+      value        : 0x01
+  - C1StateAutoDemotion :
+      name         : Enable or Disable C1 Cstate Demotion
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable C1 Cstate Demotion. Disable; <b>1- Enable</b>
+      length       : 0x01
+      value        : 0x01
+  - C1StateUnDemotion :
+      name         : Enable or Disable C1 Cstate UnDemotion
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable C1 Cstate UnDemotion. Disable; <b>1- Enable</b>
+      length       : 0x01
+      value        : 0x01
+  - MinRingRatioLimit :
+      name         : Minimum Ring ratio limit override
+      type         : EditNum, HEX, (0x00, 0x53)
+      help         : >
+                     Minimum Ring ratio limit override. <b>0- Hardware defaults.</b> Range- 0 - Max turbo ratio limit
+      length       : 0x01
+      value        : 0x00
+  - MaxRingRatioLimit :
+      name         : Maximum Ring ratio limit override
+      type         : EditNum, HEX, (0x00, 0x53)
+      help         : >
+                     Maximum Ring ratio limit override. <b>0- Hardware defaults.</b> Range- 0 - Max turbo ratio limit
+      length       : 0x01
+      value        : 0x00
+  - EnablePerCorePState :
+      name         : Enable or Disable Per Core P State OS control
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable Per Core P State OS control. 0- Disable; <b>1- Enable</b>
+      length       : 0x01
+      value        : 0x01
+  - EnableHwpAutoPerCorePstate :
+      name         : Enable or Disable HwP Autonomous Per Core P State OS control
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable HwP Autonomous Per Core P State OS control. 0- Disable; <b>1- Enable</b>
+      length       : 0x01
+      value        : 0x01
+  - EnableHwpAutoEppGrouping :
+      name         : Enable or Disable HwP Autonomous EPP Grouping
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable HwP Autonomous EPP Grouping. 0- Disable; <b>1- Enable</b>
+      length       : 0x01
+      value        : 0x01
+  - EnableEpbPeciOverride :
+      name         : Enable or Disable EPB override over PECI
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable EPB override over PECI. <b>0- Disable;</b> 1- Enable
+      length       : 0x01
+      value        : 0x00
+  - EnableFastMsrHwpReq :
+      name         : Enable or Disable Fast MSR for IA32_HWP_REQUEST
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable Fast MSR for IA32_HWP_REQUEST. 0- Disable;<b> 1- Enable</b>
+      length       : 0x01
+      value        : 0x0
+  - ReservedCpuPostMemTest :
+      name         : ReservedCpuPostMemTest
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Reserved for CPU Post-Mem Test
+      length       : 0x11
+      value        : {0x00}
+  - Psi3Enable   :
+      name         : Power State 3 enable/disable
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFF)
+      option       : $EN_DIS
+      help         : >
+                     PCODE MMIO Mailbox- Power State 3 enable/disable; 0- Disable; <b>1- Enable</b>. For all VR Indexes
+      length       : 0x05
+      value        : {0x01, 0x01, 0x01, 0x01, 0x01}
+  - Psi4Enable   :
+      name         : Power State 4 enable/disable
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFF)
+      help         : >
+                     PCODE MMIO Mailbox- Power State 4 enable/disable; 0- Disable; <b>1- Enable</b>.For all VR Indexes
+      length       : 0x05
+      value        : {0x01, 0x01, 0x01, 0x01, 0x01}
+  - ImonSlope    :
+      name         : Imon slope correction
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT16
+      help         : >
+                     PCODE MMIO Mailbox- Imon slope correction. Specified in 1/100 increment values. Range is 0-200. 125 = 1.25. <b>0- Auto</b>.For all VR Indexes
+      length       : 0x0A
+      value        : {0:0W, 0x00, 0x00, 0x00, 0x00, 0x00}
+  - ImoniOffset  :
+      name         : Imon offset correction
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT16
+      help         : >
+                     PCODE MMIO Mailbox- Imon offset correction. Value is a 2's complement signed integer. Units 1/1000, Range 0-63999. For an offset = 12.580, use 12580. <b>0- Auto</b>
+      length       : 0x0A
+      value        : {0:0W, 0x0, 0x0, 0x0, 0x0, 0x0}
+  - VrConfigEnable :
+      name         : Enable/Disable BIOS configuration of VR
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFF)
+      help         : >
+                     Enable/Disable BIOS configuration of VR; <b>0- Disable</b>; 1- Enable.For all VR Indexes
+      length       : 0x05
+      value        : {0x01, 0x01, 0x01, 0x01, 0x01}
+  - TdcEnable    :
+      name         : Thermal Design Current enable/disable
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFF)
+      help         : >
+                     PCODE MMIO Mailbox- Thermal Design Current enable/disable; <b>0- Disable</b>; 1- Enable.For all VR Indexes
+      length       : 0x05
+      value        : {0x00, 0x00, 0x00, 0x00, 0x00}
+  - TdcTimeWindow :
+      name         : Thermal Design Current time window
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFF)
+      help         : >
+                     PCODE MMIO Mailbox- Thermal Design Current time window. Defined in milli seconds. Valid Values 1 - 1ms , 2 - 2ms , 3 - 3ms , 4 - 4ms , 5 - 5ms , 6 - 6ms , 7 - 7ms , 8 - 8ms , 10 - 10ms.For all VR Indexe
+      length       : 0x05
+      value        : {0x01, 0x01, 0x01, 0x01, 0x01}
+  - TdcLock      :
+      name         : Thermal Design Current Lock
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFF)
+      help         : >
+                     PCODE MMIO Mailbox- Thermal Design Current Lock; <b>0- Disable</b>; 1- Enable.For all VR Indexes
+      length       : 0x05
+      value        : {0x00, 0x00, 0x00, 0x00, 0x00}
+  - PsysSlope    :
+      name         : Platform Psys slope correction
+      type         : EditNum, HEX, (0x00,0xC8)
+      help         : >
+                     PCODE MMIO Mailbox- Platform Psys slope correction. <b>0 - Auto</b> Specified in 1/100 increment values. Range is 0-200. 125 = 1.25
+      length       : 0x01
+      value        : 0x00
+  - PsysOffset   :
+      name         : Platform Psys offset correction
+      type         : EditNum, HEX, (0x00,0xFF)
+      help         : >
+                     PCODE MMIO Mailbox- Platform Psys offset correction. <b>0 - Auto</b> Units 1/4, Range 0-255. Value of 100 = 100/4 = 25 offset
+      length       : 0x01
+      value        : 0x00
+  - AcousticNoiseMitigation :
+      name         : Acoustic Noise Mitigation feature
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable Acoustic Noise Mitigation feature. <b>0- Disabled</b>; 1- Enabled
+      length       : 0x01
+      value        : 0x00
+  - FastPkgCRampDisableIa :
+      name         : Disable Fast Slew Rate for Deep Package C States for VR IA domain
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Disable Fast Slew Rate for Deep Package C States based on Acoustic Noise Mitigation feature enabled. <b>0- False</b>; 1- True
+      length       : 0x01
+      value        : 0x00
+  - SlowSlewRateForIa :
+      name         : Slew Rate configuration for Deep Package C States for VR IA domain
+      type         : Combo
+      option       : 0:Fast/2, 1:Fast/4, 2:Fast/8, 3:Fast/16
+      help         : >
+                     Slew Rate configuration for Deep Package C States for VR IA domain based on Acoustic Noise Mitigation feature enabled. <b>0- Fast/2</b>; 1- Fast/4; 2- Fast/8; 3- Fast/16
+      length       : 0x01
+      value        : 0x00
+  - SlowSlewRateForGt :
+      name         : Slew Rate configuration for Deep Package C States for VR GT domain
+      type         : Combo
+      option       : 0:Fast/2, 1:Fast/4, 2:Fast/8, 3:Fast/16
+      help         : >
+                     Slew Rate configuration for Deep Package C States for VR GT domain based on Acoustic Noise Mitigation feature enabled. <b>0- Fast/2</b>; 1- Fast/4; 2- Fast/8; 3- Fast/16
+      length       : 0x01
+      value        : 0x00
+  - SlowSlewRateForSa :
+      name         : Slew Rate configuration for Deep Package C States for VR SA domain
+      type         : Combo
+      option       : 0:Fast/2, 1:Fast/4, 2:Fast/8, 3:Fast/16
+      help         : >
+                     Slew Rate configuration for Deep Package C States for VR SA domain based on Acoustic Noise Mitigation feature enabled. <b>0- Fast/2</b>; 1- Fast/4; 2- Fast/8; 3- Fast/16
+      length       : 0x01
+      value        : 0x00
+  - TdcCurrentLimit :
+      name         : Thermal Design Current current limit
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT16
+      help         : >
+                     PCODE MMIO Mailbox- Thermal Design Current current limit. Specified in 1/8A units. Range is 0-4095. 1000 = 125A. <b>0- Auto</b>. For all VR Indexes
+      length       : 0xA
+      value        : {0:0W, 0x0 , 0x0, 0x0 , 0x0 , 0x0}
+  - AcLoadline   :
+      name         : AcLoadline}TYPE:{EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT16
+      help         : >
+                     PCODE MMIO Mailbox- AcLoadline in 1/100 mOhms (ie. 1250 = 12.50 mOhm); Range is 0-6249. <b>Intel Recommended Defaults vary by domain and SKU.
+      length       : 0xA
+      value        : {0:0W, 0x00 , 0x00, 0x00 , 0x00 , 0x00}
+  - DcLoadline   :
+      name         : DcLoadline
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT16
+      help         : >
+                     PCODE MMIO Mailbox- DcLoadline in 1/100 mOhms (ie. 1250 = 12.50 mOhm); Range is 0-6249.<b>Intel Recommended Defaults vary by domain and SKU.</b>
+      length       : 0xA
+      value        : {0:0W, 0x00 , 0x00, 0x00 , 0x00 , 0x00}
+  - Psi1Threshold :
+      name         : Power State 1 Threshold current
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT16
+      help         : >
+                     PCODE MMIO Mailbox- Power State 1 current cuttof in 1/4 Amp increments. Range is 0-128A.
+      length       : 0xA
+      value        : {0:0W,  0x50, 0x50, 0x50, 0x50, 0x50 }
+  - Psi2Threshold :
+      name         : Power State 2 Threshold current
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT16
+      help         : >
+                     PCODE MMIO Mailbox- Power State 2 current cuttof in 1/4 Amp increments. Range is 0-128A.
+      length       : 0xA
+      value        : {0:0W,  0x14, 0x14, 0x14, 0x14, 0x14 }
+  - Psi3Threshold :
+      name         : Power State 3 Threshold current
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT16
+      help         : >
+                     PCODE MMIO Mailbox- Power State 3 current cuttof in 1/4 Amp increments. Range is 0-128A.
+      length       : 0xA
+      value        : {0:0W,  0x4, 0x4, 0x4, 0x4, 0x4 }
+  - IccMax       :
+      name         : Icc Max limit
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT16
+      help         : >
+                     PCODE MMIO Mailbox- VR Icc Max limit. 0-255A in 1/4 A units. 400 = 100A
+      length       : 0xA
+      value        : {0:0W, 0x00 , 0x00, 0x00 , 0x00 , 0x00}
+  - VrVoltageLimit :
+      name         : VR Voltage Limit
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFF)
+      struct       : UINT16
+      help         : >
+                     PCODE MMIO Mailbox- VR Voltage Limit. Range is 0-7999mV.
+      length       : 0xA
+      value        : {0:0W, 0x0 , 0x0, 0x0 , 0x0 , 0x0}
+  - FastPkgCRampDisableGt :
+      name         : Disable Fast Slew Rate for Deep Package C States for VR GT domain
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Disable Fast Slew Rate for Deep Package C States based on Acoustic Noise Mitigation feature enabled. <b>0- False</b>; 1- True
+      length       : 0x01
+      value        : 0x00
+  - FastPkgCRampDisableSa :
+      name         : Disable Fast Slew Rate for Deep Package C States for VR SA domain
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Disable Fast Slew Rate for Deep Package C States based on Acoustic Noise Mitigation feature enabled. <b>0- False</b>; 1- True
+      length       : 0x01
+      value        : 0x00
+  - SendVrMbxCmd :
+      name         : Enable VR specific mailbox command
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     VR specific mailbox commands. <b>00b - no VR specific command sent.</b>  01b - A VR mailbox command specifically for the MPS IMPV8 VR will be sent. 10b - VR specific command sent for PS4 exit issue. 11b - Reserved.
+      length       : 0x01
+      value        : 0x00
+  - SkipMpInit   :
+      name         : Skip Multi-Processor Initialization
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     When this is skipped, boot loader must initialize processors before SilicionInit API. </b>0- Initialize; <b>1- Skip
+      length       : 0x01
+      value        : 0x00
+  - FivrRfiFrequency :
+      name         : FIVR RFI Frequency
+      type         : EditNum, HEX, (0x0,0xFFFF)
+      help         : >
+                     PCODE MMIO Mailbox- Set the desired RFI frequency, in increments of 100KHz. <b>0- Auto</b>. Range varies based on XTAL clock- 0-1918 (Up to 191.8HMz) for 24MHz clock; 0-1535 (Up to 153.5MHz) for 19MHz clock.
+      length       : 0x02
+      value        : 0x00
+  - FivrSpreadSpectrum :
+      name         : FIVR RFI Spread Spectrum
+      type         : EditNum, HEX, (0x0,0xFF)
+      help         : >
+                     PCODE MMIO Mailbox- FIVR RFI Spread Spectrum, in 0.1% increments. <b>0- 0%</b>; Range- 0.0% to 10.0% (0-100).
+      length       : 0x01
+      value        : 0x08
+  - FastPkgCRampDisableFivr :
+      name         : Disable Fast Slew Rate for Deep Package C States for VR FIVR domain
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Disable Fast Slew Rate for Deep Package C States based on Acoustic Noise Mitigation feature enabled. <b>0- False</b>; 1- True
+      length       : 0x01
+      value        : 0x00
+  - SlowSlewRateForFivr :
+      name         : Slew Rate configuration for Deep Package C States for VR FIVR domain
+      type         : Combo
+      option       : 0:Fast/2, 1:Fast/4, 2:Fast/8, 3:Fast/16
+      help         : >
+                     Slew Rate configuration for Deep Package C States for VR FIVR domain based on Acoustic Noise Mitigation feature enabled. <b>0- Fast/2</b>; 1- Fast/4; 2- Fast/8; 3- Fast/16
+      length       : 0x01
+      value        : 0x00
+  - CpuBistData  :
+      name         : CpuBistData
+      type         : EditNum, HEX, (0x0,0xFFFFFFFF)
+      help         : >
+                     Pointer CPU BIST Data
+      length       : 0x4
+      value        : 0
+  - CpuMpPpi     :
+      name         : CpuMpPpi
+      type         : EditNum, HEX, (0x0,0xFFFFFFFF)
+      help         : >
+                     Pointer for CpuMpPpi
+      length       : 0x4
+      value        : 0
+  - CpuMpHob     :
+      name         : CpuMpHob
+      type         : EditNum, HEX, (0x0,0xFFFFFFFF)
+      help         : >
+                     Pointer for CpuMpHob. This is optional data buffer for CpuMpPpi usage.
+      length       : 0x4
+      value        : 0
+  - CpuPostMemRsvd :
+      length       : 0x10
+      value        : {0x00}
+  - EnableMinVoltageOverride :
+      name         : Enable or Disable Minimum Voltage Override
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or disable Minimum Voltage overrides ; <b>0- Disable</b>; 1- Enable.
+      length       : 0x01
+      value        : 0x0
+  - MinVoltageRuntime :
+      name         : Min Voltage for Runtime
+      type         : EditNum, HEX, (0x00,0x7CF)
+      help         : >
+                     PCODE MMIO Mailbox- Minimum voltage for runtime. Valid if EnableMinVoltageOverride = 1. Range 0 to 1999mV. <b> 0- 0mV </b>
+      length       : 0x02
+      value        : 0x00
+  - ProcessorTraceMemBase :
+      name         : Base of memory region allocated for Processor Trace
+      type         : EditNum, HEX, (0x00, 0xFFFFFFFFFFFFFFFF)
+      help         : >
+                     Base address of memory region allocated for Processor Trace. Processor Trace requires 2^N alignment and size in bytes per thread, from 4KB to 128MB. <b>0- Disable</b>
+      length       : 0x08
+      value        : 0x0000000000000000
+  - ProcessorTraceMemLength :
+      name         : Memory region allocation for Processor Trace
+      type         : EditNum, HEX, (0x00, 0xFFFFFFFF)
+      help         : >
+                     Length in bytes of memory region allocated for Processor Trace. Processor Trace requires 2^N alignment and size in bytes per thread, from 4KB to 128MB. <b>0- Disable</b>
+      length       : 0x04
+      value        : 0x00000000
+  - MinVoltageC8 :
+      name         : Min Voltage for C8
+      type         : EditNum, HEX, (0x00,0x7CF)
+      help         : >
+                     PCODE MMIO Mailbox- Minimum voltage for C8. Valid if EnableMinVoltageOverride = 1. Range 0 to 1999mV. <b> 0- 0mV </b>
+      length       : 0x02
+      value        : 0x00
+  - ReservedCpuPostMemProduction :
+      name         : ReservedCpuPostMemProduction
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Reserved for CPU Post-Mem Production
+      length       : 0x8
+      value        : {0x00}
+  - Dummy        :
+      length       : 0x2
+      value        : 0x0
