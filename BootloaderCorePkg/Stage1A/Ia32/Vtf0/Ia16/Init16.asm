@@ -35,7 +35,5 @@ EarlyInit16:
     ;
     ; ESP -  Initial value of the EAX register (BIST: Built-in Self Test)
     ;
-    movd     mm0, eax
-
     OneTimeCallRet EarlyInit16
 
