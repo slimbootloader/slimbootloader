@@ -2,7 +2,7 @@
 #
 #  Platform Configuration Delta File.
 #
-#  Copyright (c) 2019 - 2021, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2019 - 2022, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -11,8 +11,8 @@
 PLATFORMID_CFG_DATA.PlatformId                              | 0x0001
 PLAT_NAME_CFG_DATA.PlatformName                             | 'TGLU_DDR'
 
-# Enable S0ix by default
-FEATURES_CFG_DATA.Features.S0ix                             | 0x1
+# Disable S0ix by default
+FEATURES_CFG_DATA.Features.S0ix                             | 0x0
 
 MEMORY_CFG_DATA.DqsMapCpu2DramMc0Ch1                        | {0, 1}
 MEMORY_CFG_DATA.DqsMapCpu2DramMc0Ch3                        | {0, 1}
