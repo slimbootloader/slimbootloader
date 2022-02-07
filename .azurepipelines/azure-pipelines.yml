@@ -92,7 +92,7 @@ jobs:
   steps:
   - task: UsePythonVersion@0
     inputs:
-      versionSpec: '3.6.x'
+      versionSpec: '3.8.x'
       architecture: 'x64'
     displayName: Set Python version
 
@@ -165,12 +165,12 @@ jobs:
         Build.Target: ""
 
   pool:
-    vmImage: 'windows-latest'
+    vmImage: 'windows-2019'
 
   steps:
   - task: UsePythonVersion@0
     inputs:
-      versionSpec: '3.6.x'
+      versionSpec: '3.8.x'
       architecture: 'x64'
     displayName: Set Python version
 
@@ -203,7 +203,7 @@ jobs:
     displayName: Environment configuration
 
   - script: |
-      python BuildLoader.py build $(Build.Name) $(Build.Arch) $(Build.Target) -k
+      python BuildLoader.py build $(Build.Name) $(Build.Arch) $(Build.Target) -t vs2019 -k
     displayName: 'Run $(Build.Name) build'
 
 
