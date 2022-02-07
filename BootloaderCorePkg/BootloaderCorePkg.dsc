@@ -54,7 +54,7 @@
   ExtraBaseLib|BootloaderCommonPkg/Library/ExtraBaseLib/ExtraBaseLib.inf
   ModuleEntryLib|BootloaderCommonPkg/Library/ModuleEntryLib/ModuleEntryLib.inf
   LzmaDecompressLib|BootloaderCommonPkg/Library/LzmaCustomDecompressLib/LzmaCustomDecompressLib.inf
-  Lz4DecompressLib|BootloaderCommonPkg/Library/Lz4DecompressLib/Lz4DecompressLib.inf
+  Lz4CompressLib|BootloaderCommonPkg/Library/Lz4CompressLib/Lz4CompressLib.inf
   DecompressLib|BootloaderCommonPkg/Library/DecompressLib/DecompressLib.inf
   RleCompressLib|BootloaderCommonPkg/Library/RleCompressLib/RleCompressLib.inf
   FspSupportLib|BootloaderCorePkg/Library/FspSupportLib/FspSupportLib.inf

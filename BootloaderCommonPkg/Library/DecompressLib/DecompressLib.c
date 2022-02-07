@@ -7,7 +7,7 @@
 **/
 
 #include <Library/LzmaDecompressLib.h>
-#include <Library/Lz4DecompressLib.h>
+#include <Library/Lz4CompressLib.h>
 #include <Library/DecompressLib.h>
 
 /**

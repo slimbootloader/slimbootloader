@@ -1,20 +1,40 @@
-/** @file
-  LZ4 Decompress Library internal header file declares LZ4 decompress interfaces.
+/*
+   LZ4 - Fast LZ compression algorithm
+   Copyright (C) 2011-present, Yann Collet.
+   Copyright (c) 2021 - 2022, Intel Corporation. All rights reserved.<BR>
 
-  Copyright (c) 2009 - 2017, Intel Corporation. All rights reserved.<BR>
-  SPDX-License-Identifier: BSD-2-Clause-Patent
+   BSD 2-Clause License (http://www.opensource.org/licenses/bsd-license.php)
 
-**/
+   Redistribution and use in source and binary forms, with or without
+   modification, are permitted provided that the following conditions are
+   met:
 
-#ifndef __LZ4_DECOMPRESSLIB_H__
-#define __LZ4_DECOMPRESSLIB_H__
+       * Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+       * Redistributions in binary form must reproduce the above
+   copyright notice, this list of conditions and the following disclaimer
+   in the documentation and/or other materials provided with the
+   distribution.
 
-#include <PiPei.h>
-#include <Library/BaseLib.h>
-#include <Library/BaseMemoryLib.h>
-#include <Library/DebugLib.h>
+   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+   OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+   LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#define  LZ4_SIGNATURE    SIGNATURE_32 ('L', 'Z', '4', ' ')
+   You can contact the author at :
+    - LZ4 homepage : http://www.lz4.org
+    - LZ4 source repository : https://github.com/lz4/lz4
+
+*/
+
+#include "Lz4.h"
 
 /**
   Given a LZ4 compressed source buffer, this function retrieves the size of
@@ -50,10 +70,21 @@ RETURN_STATUS
 EFIAPI
 Lz4DecompressGetInfo (
   IN  CONST VOID  *Source,
-  IN  UINT32      SourceSize,
+  IN  UINT32       SourceSize,
   OUT UINT32      *DestinationSize,
   OUT UINT32      *ScratchSize
-  );
+  )
+{
+  if (DestinationSize) {
+    *DestinationSize = * (UINT32 *)Source;
+  }
+
+  if (ScratchSize) {
+    *ScratchSize = 0;
+  }
+
+  return RETURN_SUCCESS;
+}
 
 /**
   Decompresses a Lzma compressed source buffer.
@@ -84,7 +115,18 @@ Lz4Decompress (
   IN UINTN       SourceSize,
   IN OUT VOID    *Destination,
   IN OUT VOID    *Scratch
-  );
+  )
+{
+  UINT32       DecompressedSize;
+  UINT32       Size;
 
-#endif
-
+  DecompressedSize  = * (UINT32 *)Source;
+  Source = (VOID *) ((CHAR8 *)Source + sizeof (UINT32));
+  SourceSize -= sizeof (UINT32);
+  Size = (UINT32)LZ4_decompress_safe (Source, Destination, (INT32)SourceSize, DecompressedSize);
+  if ((UINT32)Size == DecompressedSize) {
+    return RETURN_SUCCESS;
+  } else {
+    return RETURN_INVALID_PARAMETER;
+  }
+}
