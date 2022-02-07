@@ -37,7 +37,7 @@
   BaseLib
   DebugLib
   BaseMemoryLib
-  Lz4DecompressLib
+  Lz4CompressLib
   LzmaDecompressLib
 
 [Pcd]
