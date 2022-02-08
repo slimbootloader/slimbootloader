@@ -22,6 +22,7 @@ H_STRUCT_HDR = "static GPIO_INIT_CONFIG mGpioTable[] = {\n"
 H_STRUCT_FTR = "\n};"
 CSV_FILE_HDR = "# GpioPad, PadMode, HostSoftPadOwn, Direction, OutputState, InterruptConfig, PowerConfig, ElectricalConfig, LockConfig, OtherSettings\n"
 PAD_NAME_HDR = "GPIO_XXX_XX_"
+V_PCH_SERIES = 'TBD'
 
 
 # This tool's input/output can be one of the following formats:
@@ -275,9 +276,16 @@ class SBL_DW1 (Union):
 # Misc global begin
 #
 
-# GROUP info for PCH_H (superset of PCH_LP)
-# Only cover 'A' to 'K' for PCH_H, 'A' to 'H' for PCH_LP
-GRP_INFO_CFL_WHL = {
+# GROUP info for GPIO PADS
+#
+# If vir_to_phy_grp = False, SBL's config has A->0, B->1 etc. mapping.
+# And GpioSiLib.c or GpioInitLib.c corresponding libraries will map this
+# virtual group #s to real physical group #s (if they are not same).
+#
+# If vir_to_phy_grp = True, SBL's config has A->G1, B->G2 etc. physical
+# mapping directly, so the GpioLib library uses this directly.
+#
+grp_info_sbl = {
     # Grp     Index
     'GPP_A' : [ 0x0],
     'GPP_B' : [ 0x1],
@@ -290,6 +298,21 @@ GRP_INFO_CFL_WHL = {
     'GPP_I' : [ 0x8],
     'GPP_J' : [ 0x9],
     'GPP_K' : [ 0xA],
+    'GPP_L' : [ 0xB],
+    'GPP_M' : [ 0xC],
+    'GPP_N' : [ 0xD],
+    'GPP_O' : [ 0xE],
+    'GPP_P' : [ 0xF],
+    'GPP_Q' : [ 0x10],
+    'GPP_R' : [ 0x11],
+    'GPP_S' : [ 0x12],
+    'GPP_T' : [ 0x13],
+    'GPP_U' : [ 0x14],
+    'GPP_V' : [ 0x15],
+    'GPP_W' : [ 0x16],
+    'GPP_X' : [ 0x17],
+    'GPP_Y' : [ 0x18],
+    'GPP_Z' : [ 0x19],
 }
 
 # global dicts
@@ -524,7 +547,10 @@ def get_sbl_dws_from_h_csv (parts, pad_name, sbl_dw0, sbl_dw1, gpio_cfg_file):
             sbl_dw1.Dw1Tmpl.OtherSettings  = GPIO_OTHER_CONFIG[parts[9]]
 
     sbl_dw1.Dw1Tmpl.PadNum          = int (pad_name[5:7])
-    sbl_dw1.Dw1Tmpl.GrpIdx          = gpio_cfg_file.get_grp_info()[pad_name[0:5]][0]
+    if gpio_cfg_file.vir_to_phy_grp() == True:
+        sbl_dw1.Dw1Tmpl.GrpIdx      = gpio_cfg_file.get_grp_info(V_PCH_SERIES)[pad_name[0:5]][0]
+    else:
+        sbl_dw1.Dw1Tmpl.GrpIdx      = grp_info_sbl[pad_name[0:5]][0]
 
 # Map the reset (power) cfg from eds dw to sbl dw
 def get_reset_cfg_from_eds (eDw0):
@@ -570,7 +596,10 @@ def get_sbl_dws_from_txt (parts, pad_name, sbl_dw0, sbl_dw1, gpio_cfg_file):
     if (gpio_cfg_file.rxraw_override_cfg()):
         sbl_dw1.Dw1Tmpl.OtherSettings=  get_field_from_eds_dw (eds_dw0.Dw0, 'RXRAW1',       0, 0)
     sbl_dw1.Dw1Tmpl.PadNum          =   int (pad_name[5:7])
-    sbl_dw1.Dw1Tmpl.GrpIdx          =   gpio_cfg_file.get_grp_info()[pad_name[0:5]][0]
+    if gpio_cfg_file.vir_to_phy_grp() == True:
+        sbl_dw1.Dw1Tmpl.GrpIdx      = gpio_cfg_file.get_grp_info(V_PCH_SERIES)[pad_name[0:5]][0]
+    else:
+        sbl_dw1.Dw1Tmpl.GrpIdx      = grp_info_sbl[pad_name[0:5]][0]
 
 # Calucalte the SBL Config Dws from '.h' or '.csv' or '.txt' data
 def get_sbl_dws (inp_fmt, cfg_file, parts):
@@ -830,7 +859,9 @@ def gpio_convert (args):
 #
 
 # Main
-if __name__ == '__main__':
+def main ():
+
+    global V_PCH_SERIES
 
     ap = argparse.ArgumentParser()
     ap.add_argument(  '-if',
@@ -860,6 +891,12 @@ if __name__ == '__main__':
                         default='old',
                         type=str,
                         help='Determine the GPIO template format. For new platforms, please use new format.')
+    ap.add_argument(  '-p',
+                        dest='pch_series',
+                        choices=['def', 'h', 'lp', 's', 'p'],
+                        default='def',
+                        type=str,
+                        help='PCH series to get the correct group info')
 
     ap.set_defaults(func=gpio_convert)
 
@@ -869,6 +906,9 @@ if __name__ == '__main__':
     if (gpio_cfg_file.plat_name() == 'apl'):
         raise Exception ('Platform unsupported')
 
+    V_PCH_SERIES = args.pch_series
+
     args.func(args)
 
-    sys.exit(0)
+if __name__ == '__main__':
+    sys.exit(main())
