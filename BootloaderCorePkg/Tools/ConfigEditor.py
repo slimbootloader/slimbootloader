@@ -624,6 +624,7 @@ class application(tkinter.Frame):
     def combo_select_changed(self, event):
         self.update_config_data_from_widget(event.widget, None)
         self.update_widgets_visibility_on_page()
+        self.update_page_scroll_bar(False)
 
     def edit_num_finished(self, event):
         widget = event.widget
@@ -653,12 +654,12 @@ class application(tkinter.Frame):
 
         self.update_widgets_visibility_on_page()
 
-    def update_page_scroll_bar(self):
+    def update_page_scroll_bar(self, toTop=True):
         # Update scrollbar
         self.frame_right.update()
         self.conf_canvas.config(scrollregion=self.conf_canvas.bbox("all"))
-        self.conf_canvas.yview_moveto (0)
-
+        if toTop:
+            self.conf_canvas.yview_moveto (0)
 
     def on_config_page_select_change(self, event):
         self.update_config_data_on_page()
