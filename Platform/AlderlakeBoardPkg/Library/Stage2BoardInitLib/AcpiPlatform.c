@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -907,6 +907,9 @@ PlatformUpdateAcpiGnvs (
   PchNvs->PchUsb2PortCount = (UINT8) GetPchUsb2MaxPhysicalPortNum ();
   PchNvs->PchUsb3PortCount = (UINT8) GetPchXhciMaxUsb3PortNum ();
 
+  PchNvs->ClkreqIpcCmdSupported = 1;
+  PchNvs->HybridStorageCpuRpLocation = 0xFF;
+
   //Platform NVS Init
   PlatformNvs->ApicEnable                   = 1;
   PlatformNvs->PlatformId = (UINT8) GetPlatformId ();
@@ -1053,6 +1056,49 @@ PlatformUpdateAcpiGnvs (
     PlatformNvs->PcieSlot1PowerEnableGpio = GPIO_VER4_S_GPP_E1;
     PlatformNvs->PcieSlot2RpNumber = 5;
     break;
+  case PLATFORM_ID_ADL_P_DDR5_RVP:
+    PlatformNvs->PcieSlot1WakeGpio = 0;
+    PlatformNvs->PcieSlot1PowerEnableGpio = GPIO_VER2_LP_GPP_A22;
+    PlatformNvs->PcieSlot1PowerEnableGpioPolarity = 0;
+    PlatformNvs->PcieSlot1RstGpio = GPIO_VER2_LP_GPP_F10;
+    PlatformNvs->PcieSlot1RpNumber = 8;
+    PlatformNvs->PcieSlot2WakeGpio = 0;
+    PlatformNvs->PcieSlot2PowerEnableGpio = 0;
+    PlatformNvs->PcieSlot2PowerEnableGpioPolarity = 0;
+    PlatformNvs->PcieSlot2RstGpio = 0;
+    PlatformNvs->PcieSlot2RpNumber = 0;
+    PlatformNvs->PcieSlot3WakeGpio = 0;
+    PlatformNvs->PcieSlot3PowerEnableGpio = 0;
+    PlatformNvs->PcieSlot3PowerEnableGpioPolarity = 0;
+    PlatformNvs->PcieSlot3RstGpio = 0;
+    PlatformNvs->PcieSlot3RpNumber = 0;
+    PlatformNvs->M2Ssd2PowerEnableGpio = GPIO_VER2_LP_GPP_D14;
+    PlatformNvs->M2Ssd2RstGpio = GPIO_VER2_LP_GPP_F20;
+    PlatformNvs->M2Ssd3PowerEnableGpio = GPIO_VER2_LP_GPP_C2;
+    PlatformNvs->PchM2SsdPowerEnableGpio = GPIO_VER2_LP_GPP_D16;
+    PlatformNvs->PchM2SsdRstGpio = GPIO_VER2_LP_GPP_H0;
+    PlatformNvs->PchM2Ssd2PowerEnableGpio = 0;
+    PlatformNvs->PchM2Ssd2PowerEnableGpioPolarity = 0;
+    PlatformNvs->PchM2Ssd2RstGpio = 0;
+    PlatformNvs->PchM2Ssd3PowerEnableGpio = 0;
+    PlatformNvs->PchM2Ssd3PowerEnableGpioPolarity = 0;
+    PlatformNvs->PchM2Ssd3RstGpio = 0;
+    PlatformNvs->SataPortPowerEnableGpio = 0;
+    PlatformNvs->SataPortPowerEnableGpioPolarity = 0;
+    PlatformNvs->PegSlot1PwrEnableGpioNo = 0;
+    PlatformNvs->PegSlot1PwrEnableGpioPolarity = 0;
+    PlatformNvs->PegSlot1RstGpioNo = 0;
+    PlatformNvs->PegSlot1WakeGpioPin = GPIO_VER2_LP_GPP_A20;
+    PlatformNvs->PegSlot1RootPort = 0;
+    PlatformNvs->PegSlot2PwrEnableGpioNo = 0;
+    PlatformNvs->PegSlot2PwrEnableGpioPolarity = 0;
+    PlatformNvs->PegSlot2RstGpioNo = 0;
+    PlatformNvs->PegSlot2RstGpioPolarity = 0;
+    PlatformNvs->PegSlot2WakeGpioPin = 0;
+    PlatformNvs->PegSlot2RootPort = 0;
+    PlatformNvs->WlanWakeGpio = GPIO_VER2_LP_GPP_D13;
+    PlatformNvs->WlanRootPortNumber = 5;
+    PlatformNvs->PL1LimitCSValue = 0x1194;
 
   default:
     DEBUG ((DEBUG_ERROR, "Could not find PlatformNvs settings for PlatformId 0x%X!\n", GetPlatformId ()));
@@ -1072,6 +1118,11 @@ PlatformUpdateAcpiGnvs (
   PlatformNvs->Rtd3Config0 = 0x0;
   PlatformNvs->Rtd3Config1 = 0x0;
   PlatformNvs->StorageRtd3Support = 0x1;
+
+  PlatformNvs->Rp08D3ColdDisable = 0x0;
+  PlatformNvs->Rp08D3ColdSupport = 0x0;
+  PlatformNvs->Rp08WakeReworkDone = 0x0;
+
   //CPU NVS Init
   UpdateCpuNvs (CpuNvs);
 
