@@ -5,7 +5,7 @@
   MCFG defined in this file.  The table layout is defined in Mcfg.h and the
   table contents are defined in the MemoryMappedConfigurationSpaceAccessTable.h.
 
-  Copyright (c) 2005 - 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2005 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -54,7 +54,7 @@ EFI_ACPI_MEMORY_MAPPED_CONFIGURATION_SPACE_ACCESS_DESCRIPTION_TABLE Madt = {
       0x0000000000000000,    // BaseAddress, will be updated by AcpiPlatform
       0x0000,                // PciSegmentGroupNumber
       0x00,                  // StartBusNumber
-      0x00,                  // EndBusNumber, will be updated by AcpiPlatform
+      0xFF,                  // EndBusNumber, will be updated by AcpiPlatform
       0x00000000             // Reserved
     }
   }
