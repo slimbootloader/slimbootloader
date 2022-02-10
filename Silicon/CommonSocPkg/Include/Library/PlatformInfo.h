@@ -29,5 +29,4 @@ UINT8
 GetMaxCpuPciePortNum (
   VOID
 );
-
 #endif // _PLATFORM_INFO_H_

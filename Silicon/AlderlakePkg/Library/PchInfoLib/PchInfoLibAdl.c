@@ -1,7 +1,7 @@
 /** @file
   Pch information library for ADL.
 
-  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -19,7 +19,18 @@
 #include "PchInfoLibPrivate.h"
 #include <PchPcieRpInfo.h>
 #include <PchHda.h>
+#include <Register/PchPcieRpRegs.h>
+#include <Library/PchPcrLib.h>
 
+CONST PCH_PCIE_CONTROLLER_INFO mPchPcieControllerInfo[] = {
+  { PCI_DEVICE_NUMBER_PCH_PCIE_ROOT_PORT_1, PID_SPA,  0 },
+  { PCI_DEVICE_NUMBER_PCH_PCIE_ROOT_PORT_5, PID_SPB,  4 },
+  { PCI_DEVICE_NUMBER_PCH_PCIE_ROOT_PORT_9, PID_SPC,  8 },
+  { PCI_DEVICE_NUMBER_PCH_PCIE_ROOT_PORT_13, PID_SPD, 12 }, // PCH-S only
+  { PCI_DEVICE_NUMBER_PCH_PCIE_ROOT_PORT_17, PID_SPE, 16 }, // PCH-S only
+  { PCI_DEVICE_NUMBER_PCH_PCIE_ROOT_PORT_21, PID_SPF, 20 }, // PCH-S only
+  { PCI_DEVICE_NUMBER_PCH_PCIE_ROOT_PORT_25, PID_SPG, 24 }  // PCH-S only, Not in PCH EDS
+};
 
 PCH_SERIES
 PchSeriesFromLpcDid (
@@ -1313,3 +1324,43 @@ MaxSataPortNum (
   return 0;
 }
 
+/**
+  Get Pch Pcie Root Port Device and Function Number by Root Port physical Number
+
+  @param[in]  RpNumber              Root port physical number. (0-based)
+  @param[out] RpDev                 Return corresponding root port device number.
+  @param[out] RpFun                 Return corresponding root port function number.
+
+  @retval     EFI_SUCCESS           Root port device and function is retrieved
+  @retval     EFI_INVALID_PARAMETER RpNumber is invalid
+**/
+EFI_STATUS
+EFIAPI
+GetPchPcieRpDevFun (
+  IN  UINTN   RpNumber,
+  OUT UINTN   *RpDev,
+  OUT UINTN   *RpFun
+  )
+{
+  UINTN       Index;
+  UINTN       FuncIndex;
+  UINT32      PciePcd;
+
+  if (RpNumber >= GetPchMaxPciePortNum ()) {
+    DEBUG ((DEBUG_ERROR, "GetPchPcieRpDevFun invalid RpNumber %x", RpNumber));
+    ASSERT (FALSE);
+    return EFI_INVALID_PARAMETER;
+  }
+
+  Index = RpNumber / PCH_PCIE_CONTROLLER_PORTS;
+  FuncIndex = RpNumber - mPchPcieControllerInfo[Index].RpNumBase;
+  *RpDev = mPchPcieControllerInfo[Index].DevNum;
+  if (IsPchS ()) {
+    PciePcd = PchPcrRead32 (mPchPcieControllerInfo[Index].Pid, R_SPX_SIP16_PCR_PCD);
+   } else {
+    PciePcd = PchPcrRead32 (mPchPcieControllerInfo[Index].Pid, R_SPX_PCR_PCD);
+  }
+  *RpFun = (PciePcd >> (FuncIndex * S_SPX_PCR_PCD_RP_FIELD)) & B_SPX_PCR_PCD_RP1FN;
+
+  return EFI_SUCCESS;
+}

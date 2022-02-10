@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -35,6 +35,7 @@
 #include <PlatformData.h>
 #include <Library/ContainerLib.h>
 #include "TsnSubRegion.h"
+#include <Library/PciePm.h>
 
 #define CPU_PCIE_DT_HALO_MAX_ROOT_PORT     3
 #define CPU_PCIE_ULT_ULX_MAX_ROOT_PORT     3
@@ -1017,6 +1018,9 @@ UpdateFspConfig (
 
   if (IsPchS () && FeaturePcdGet (PcdTccEnabled)) {
     Status = TccModePostMemConfig (FspsUpd);
+  }
+  if (FeaturePcdGet (PcdEnablePciePm)) {
+    StoreRpConfig (FspsConfig);
   }
 }
 
