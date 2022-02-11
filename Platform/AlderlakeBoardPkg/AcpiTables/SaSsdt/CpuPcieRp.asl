@@ -1,7 +1,7 @@
 /** @file
   This file contains the CPU PCIe Root Port configuration
 
-  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -161,7 +161,7 @@ Scope (\_SB.PC00.PEG2) {
     If (LNotEqual(\PPA2,0)) {
       Return (\PPA2)
     } Else {
-      Return (0x00010001)
+      Return (0x00060002)
     }
   }
 

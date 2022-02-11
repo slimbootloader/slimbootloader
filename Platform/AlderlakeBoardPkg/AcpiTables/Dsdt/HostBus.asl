@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -750,7 +750,7 @@ Scope(\_SB.PC00)
   //
   Device(PEG2) {
     Method (_ADR, 0) {
-      Store (0x00010001, local0) // Initialize the Address with hardcoded value
+      Store (0x00060002, local0) // Initialize the Address with hardcoded value
       If (CondRefOf (\_SB.PC00.PEG2.CPRA)) {
         Store (\_SB.PC00.PEG2.CPRA (), local0)
       }

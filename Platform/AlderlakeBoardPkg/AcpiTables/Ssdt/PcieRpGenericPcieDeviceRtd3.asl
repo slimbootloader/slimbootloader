@@ -1,7 +1,7 @@
 /**@file
   PCIe Root Port Generic PCIE Device Rtd3 file.
 
-  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -57,7 +57,7 @@
   {
 
     If (CondRefOf (RD3C)) {
-      If (LEqual (RD3C, 0x02)) {
+      If (LEqual (RD3C, 0x01)) {
         Return (0x4)
       }
     }
@@ -268,7 +268,7 @@
     // Check if D3 Cold is supported for PCIE RP.
     //
     If (CondRefOf (RD3C)) {
-      If (LNotEqual (RD3C, 0x02)) {
+      If (LNotEqual (RD3C, 0)) {
         Return (0)
       }
     }

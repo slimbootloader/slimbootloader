@@ -1,7 +1,7 @@
 /**@file
   ACPI RTD3 Hook SSDT Library for Generic Pcie Rp with End Point as M.2 SSD/Storage Device.
 
-  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -19,7 +19,7 @@
   {
 
     If (CondRefOf (^^RD3C)) {
-      If (LEqual (^^RD3C, 0x02)) {
+      If (LEqual (^^RD3C, 0x01)) {
         Return (0x4)
       }
     }
