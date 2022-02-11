@@ -553,6 +553,19 @@ UpdateFspConfig (
   if (IsPchP ()) {
     Fspmcfg->DdiPortAConfig = 0x1;
     Fspmcfg->WdtDisableAndLock = 0x1;
+    Fspmcfg->CpuDmiHwEqGen4CoeffListCm[1] = 0xe;
+    Fspmcfg->CpuDmiHwEqGen4CoeffListCm[2] = 0xa;
+    Fspmcfg->CpuDmiHwEqGen4CoeffListCp[1] = 0x7;
+    Fspmcfg->CpuDmiHwEqGen4CoeffListCp[2] = 0x6;
+    Fspmcfg->PchDmiHwEqGen3CoeffListCm[0] = 0x0;
+    Fspmcfg->PchDmiHwEqGen3CoeffListCm[1] = 0x0;
+    Fspmcfg->PchDmiHwEqGen3CoeffListCm[2] = 0x0;
+    Fspmcfg->PchDmiHwEqGen3CoeffListCm[3] = 0x0;
+    Fspmcfg->PchDmiHwEqGen3CoeffListCp[0] = 0x0;
+    Fspmcfg->PchDmiHwEqGen3CoeffListCp[1] = 0x0;
+    Fspmcfg->PchDmiHwEqGen3CoeffListCp[2] = 0x0;
+    Fspmcfg->PchDmiHwEqGen3CoeffListCp[3] = 0x0;
+    Fspmcfg->FirstDimmBitMask = 0x0;
     switch (GetPlatformId ()) {
       case PLATFORM_ID_ADL_P_LP4_RVP:
         Fspmcfg->DdiPortBHpd = 0x1;
@@ -576,10 +589,6 @@ UpdateFspConfig (
       case PLATFORM_ID_ADL_P_TEST_DDR5_RVP:
         Fspmcfg->DdiPortBHpd = 0x1;
         Fspmcfg->DmiHweq = 0x2;
-        Fspmcfg->CpuDmiHwEqGen4CoeffListCm[1] = 0xe;
-        Fspmcfg->CpuDmiHwEqGen4CoeffListCm[2] = 0xa;
-        Fspmcfg->CpuDmiHwEqGen4CoeffListCp[1] = 0x7;
-        Fspmcfg->CpuDmiHwEqGen4CoeffListCp[2] = 0x6;
         Fspmcfg->PcieClkReqGpioMux[9] = 0x796e9000;
         break;
       default:
