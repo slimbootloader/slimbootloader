@@ -1,10 +1,16 @@
 /** @file
   Private header for PCH Info Lib.
 
-  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
+
+typedef struct {
+  UINT8 DevNum;
+  UINT8 Pid;
+  UINT8 RpNumBase;
+} PCH_PCIE_CONTROLLER_INFO;
 
 /**
   Structure for PCH SKU string mapping

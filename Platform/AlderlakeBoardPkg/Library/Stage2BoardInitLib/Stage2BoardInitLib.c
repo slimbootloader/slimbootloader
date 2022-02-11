@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -11,6 +11,8 @@
 #include "Stage2BoardInitLib.h"
 #include "GpioTableAdlPtestPostMem.h"
 #include "GpioTableAdlSTsn.h"
+#include <Library/PciePm.h>
+#include <Library/PlatformInfo.h>
 
 GLOBAL_REMOVE_IF_UNREFERENCED UINT8    mBigCoreCount;
 GLOBAL_REMOVE_IF_UNREFERENCED UINT8    mSmallCoreCount;
@@ -311,6 +313,9 @@ BoardInit (
     }
     break;
   case PostPciEnumeration:
+    if (FeaturePcdGet (PcdEnablePciePm)) {
+      PciePmConfig ();
+    }
     Status = SetFrameBufferWriteCombining (0, MAX_UINT32);
     if (EFI_ERROR(Status)) {
       DEBUG ((DEBUG_INFO, "Failed to set GFX framebuffer as WC\n"));

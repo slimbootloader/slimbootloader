@@ -30,7 +30,7 @@
   - RegisterName:
     Full register name.
 
-  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -69,6 +69,21 @@
 #define R_PCH_PCIE_CFG_G4L0SCTL                       0x310
 
 
+#define R_PCH_PCIE_CFG_LTROVR                         0x400
+#define B_PCH_PCIE_CFG_LTROVR_LTRNSROVR               BIT31 ///< LTR Non-Snoop Requirement Bit Override
+#define B_PCH_PCIE_CFG_LTROVR_LTRSROVR                BIT15 ///< LTR Snoop Requirement Bit Override
+#define R_PCH_PCIE_CFG_LTROVR2                        0x404
+#define B_PCH_PCIE_CFG_LTROVR2_FORCE_OVERRIDE         BIT3 ///< LTR Force Override Enable
+#define B_PCH_PCIE_CFG_LTROVR2_LOCK                   BIT2 ///< LTR Override Lock
+#define B_PCH_PCIE_CFG_LTROVR2_LTRNSOVREN             BIT1 ///< LTR Non-Snoop Override Enable
+#define B_PCH_PCIE_CFG_LTROVR2_LTRSOVREN              BIT0 ///< LTR Snoop Override Enable
+#define R_PCH_PCIE_CFG_TNPT                           0x418 ///< Thermal and Power Throttling
+#define B_PCH_PCIE_CFG_TNPT_DRXLTE                    BIT1
+#define B_PCH_PCIE_CFG_TNPT_DTXLTE                    BIT0
+#define R_PCH_PCIE_CFG_PCIEPMECTL                     0x420
+#define B_PCH_PCIE_CFG_PCIEPMECTL_DLSULPPGE           BIT30
+#define B_PCH_PCIE_CFG_PCIEPMECTL_L1LE                BIT17
+#define B_PCH_PCIE_CFG_PCIEPMECTL_L1FSOE              BIT0
 #define B_PCH_PCIE_CFG_PCIEPMECTL3_PMREQCPGEXH        BIT0
 #define B_PCH_PCIE_CFG_PCIEPMECTL3_PMREQCPGEXH_OFFSET 0
 
@@ -128,6 +143,7 @@
 #define S_SPX_PCR_PCD_RP_FIELD                4                       ///< 4 bits for each RP FN
 
 
+#define R_SPX_SIP16_PCR_PCD                   0x3E00                  ///< Port configuration and disable
 //
 // ICC PCR (PID: ICC)
 //

@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -11,6 +11,7 @@
 #include <Library/PchInfoLib.h>
 #include <Register/PchRegs.h>
 #include <Register/PchBdfAssignment.h>
+#include <Library/PchPcieRpLib.h>
 #include <Library/PchPciBdfLib.h>
 
 /**
@@ -1451,6 +1452,55 @@ PchPcieRpDevNumber (
       ASSERT (FALSE);
       return 0xFF;
   }
+}
+
+/**
+  Get PCH PCIe controller PCIe Function Number
+  Note:
+  For Client PCH generations Function Number can be various
+  depending on "Root Port Function Swapping". For such cases
+  Function Number  MUST be obtain from proper register.
+  For Server PCHs we have no "Root Port Function Swapping"
+  and we can return fixed Function Number.
+  To address this difference in this, PCH generation independent,
+  library we should call specific function in PchPcieRpLib.
+
+  @param[in]  RpIndex       Root port physical number. (0-based)
+
+  @retval PCH PCIe controller PCIe Function Number
+**/
+UINT8
+PchPcieRpFuncNumber (
+  IN  UINTN   RpIndex
+  )
+{
+  UINTN   Device;
+  UINTN   Function;
+
+  GetPchPcieRpDevFun (RpIndex, &Device, &Function);
+
+  return (UINT8)Function;
+}
+
+/**
+  Get PCH PCIe controller address that can be passed to the PCI Segment Library functions.
+
+  @param[in]  RpIndex       PCH PCIe Root Port physical number. (0-based)
+
+  @retval PCH PCIe controller address in PCI Segment Library representation
+**/
+UINT64
+PchPcieRpPciCfgBase (
+  IN  UINT32   RpIndex
+  )
+{
+  return PCI_SEGMENT_LIB_ADDRESS (
+          DEFAULT_PCI_SEGMENT_NUMBER_PCH,
+          DEFAULT_PCI_BUS_NUMBER_PCH,
+          PchPcieRpDevNumber (RpIndex),
+          PchPcieRpFuncNumber (RpIndex),
+          0
+          );
 }
 
 /**

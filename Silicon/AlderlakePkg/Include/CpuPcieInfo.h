@@ -1,7 +1,7 @@
 /** @file
   Header file for LowPowerSupport.
 
-  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -19,8 +19,10 @@ PCIe controller configuration.
 //
 #define SA_PEG_BUS_NUM     0x00
 #define SA_PEG_DEV_NUM     0x01
+#define SA_PEG0_DEV_NUM    SA_PEG_DEV_NUM
 #define SA_PEG0_FUN_NUM    0x00
 #define SA_PEG1_DEV_NUM    SA_PEG_DEV_NUM
+#define SA_PEG3_DEV_NUM    0x06
 
 
 #define DMI_GEN1              1
