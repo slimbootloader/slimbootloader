@@ -479,13 +479,13 @@ def main():
     if args.work_dir == '':
         print ("Please specify stitch work directory")
         print ('%s' % stitch_cfg_file.extra_usage_txt)
-        return 0
+        return 1
     if args.platform == '' or args.platform not in stitch_cfg_file.get_platform_sku():
         print ("Please specify platform from the list: %s" % stitch_cfg_file.get_platform_sku().keys())
-        return 0
+        return 1
     if args.btg_profile in ["vm","fvme"] and args.tpm == "none":
         print ("ERROR: Choose appropriate Tpm type for BootGuard profile 3 and 5")
-        return 0
+        return 1
 
     print ("Executing stitch.......")
     curr_dir = os.getcwd()
