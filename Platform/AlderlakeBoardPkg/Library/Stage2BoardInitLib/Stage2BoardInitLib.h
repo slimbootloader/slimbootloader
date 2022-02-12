@@ -235,31 +235,6 @@ GetCpuStepping(
   );
 
 /**
-  Return CPU Sku
-
-  @param[in]  UINT32             CpuFamilyModel
-  @param[in]  UINT16             CpuDid
-
-  @retval     UINT8              CPU Sku
-**/
-UINT8
-GetCpuSkuInfo (
-  IN UINT32 CpuFamilyModel,
-  IN UINT16 CpuDid
-  );
-
-/**
-  Return CPU Sku
-
-  @retval UINT8              CPU Sku
-**/
-UINT8
-EFIAPI
-GetCpuSku (
-  VOID
-  );
-
-/**
   Return CPU Family ID
 
   @retval CPU_FAMILY              CPU Family ID
