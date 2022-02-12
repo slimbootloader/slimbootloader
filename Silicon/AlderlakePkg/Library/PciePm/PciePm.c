@@ -14,6 +14,7 @@
 #include <Library/PchPciBdfLib.h>
 #include <Library/PchPcieRpConfig.h>
 #include <Library/PciExpressHelpersLib.h>
+#include <Library/CpuPcieHsPhyInitLib.h>
 #include <Library/PchInfoLib.h>
 #include <PcieRegs.h>
 #include <PchAccess.h>
