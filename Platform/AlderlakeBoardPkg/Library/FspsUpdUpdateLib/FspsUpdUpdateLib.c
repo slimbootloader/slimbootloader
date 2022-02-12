@@ -873,7 +873,6 @@ UpdateFspConfig (
     CopyMem (FspsConfig->TdcEnable,           PowerCfgData->TdcEnable,             sizeof(PowerCfgData->TdcEnable));
     CopyMem (FspsConfig->TdcTimeWindow,       PowerCfgData->TdcTimeWindow,         sizeof(PowerCfgData->TdcTimeWindow));
 
-    FspsConfig->PsysPmax                      = PowerCfgData->PsysPmax;
     FspsConfig->AcousticNoiseMitigation       = 0x0;
     FspsConfig->FivrSpreadSpectrum            = 0x8;
 
@@ -986,6 +985,7 @@ UpdateFspConfig (
     FspsConfig->ITbtPcieRootPortEn[3] = 0x1;
     FspsConfig->SaPcieItbtRpSnoopLatencyOverrideValue[2] = 0xc8;
     FspsConfig->TdcTimeWindow[0] = 0x3e8;
+    FspsConfig->TdcTimeWindow[1] = 0x3e8;
     FspsConfig->TdcTimeWindow[1] = 0x1;
     FspsConfig->PchLockDownBiosLock = 0x1;
     FspsConfig->UfsEnable[0] = 0x0;
@@ -996,7 +996,6 @@ UpdateFspConfig (
     FspsConfig->PortResetMessageEnable[2] = 0x1;
     FspsConfig->PortResetMessageEnable[4] = 0x1;
     FspsConfig->PkgCStateLimit = 0xff;
-    FspsConfig->TimedMwait = 1;
     FspsConfig->CstCfgCtrIoMwaitRedirection = 0;
     FspsConfig->PmcLpmS0ixSubStateEnableMask = 0x9;
     FspsConfig->VbtSize           = 0x2200;
@@ -1006,6 +1005,9 @@ UpdateFspConfig (
     FspsConfig->CpuPcieRpGen4Dptp[2] = 0x9;
     FspsConfig->PchPmPwrBtnOverridePeriod = 0x3;
     FspsConfig->PsOnEnable = 0x0;
+    FspsConfig->IomStayInTCColdSeconds = 0x0;
+    FspsConfig->IomBeforeEnteringTCColdSeconds = 0x0;
+    FspsConfig->Irms[0] = 0x1;
 
     switch (GetPlatformId ()) {
       case PLATFORM_ID_ADL_P_DDR5_RVP:
