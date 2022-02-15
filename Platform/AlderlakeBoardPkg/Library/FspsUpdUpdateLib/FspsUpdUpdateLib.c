@@ -628,6 +628,12 @@ UpdateFspConfig (
     FspsConfig->EnableTimedGpio1 = SiCfgData->EnableTimedGpio1;
     FspsConfig->PchPmSlpAMinAssert = SiCfgData->PchPmSlpAMinAssert;
 
+    // When fast boot is enabled, program SLP_A_MIN_ASST_WDTH to 0
+    // to reduce boottime.
+    if (PcdGetBool (PcdFastBootEnabled)) {
+      FspsConfig->PchPmSlpAMinAssert = 1;
+    }
+
     // TSN feature support
     if (IsPchS ()) {
       FspsConfig->PchTsnEnable = SiCfgData->PchTsnEnable;
