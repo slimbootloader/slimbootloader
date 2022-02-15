@@ -11,7 +11,7 @@
 //
 // PCIe limits
 //
-#define PCH_MAX_PCIE_ROOT_PORTS             24
+#define PCH_MAX_PCIE_ROOT_PORTS             28
 
 
 //

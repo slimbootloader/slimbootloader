@@ -736,8 +736,8 @@ PlatformUpdateAcpiGnvs (
       PchNvs->RpAddress[RpNum] = Data32;
       DEBUG ((DEBUG_INFO, "RpAddress[%d] = 0x%08X\n", RpNum, PchNvs->RpAddress[RpNum]));
     }
-
-    // Need to match with FSP-S UPD
+  }
+  for (Index = 0; Index < Length; Index++) {
     PchNvs->LtrEnable[Index]                = FspsConfig->PcieRpLtrEnable[Index];
     PchNvs->PcieLtrMaxSnoopLatency[Index]   = FspsConfig->PcieRpLtrMaxSnoopLatency[Index];
     PchNvs->PcieLtrMaxNoSnoopLatency[Index] = FspsConfig->PcieRpLtrMaxNoSnoopLatency[Index];
