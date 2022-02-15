@@ -87,6 +87,7 @@
 #include <Include/TccConfigSubRegions.h>
 #include <Library/PchPciBdfLib.h>
 #include <Library/PchPcrLib.h>
+#include <Library/PchPcieRpLib.h>
 #include <Register/PchRegsPcr.h>
 #include <Library/WatchDogTimerLib.h>
 #include <LowPowerSupport.h>

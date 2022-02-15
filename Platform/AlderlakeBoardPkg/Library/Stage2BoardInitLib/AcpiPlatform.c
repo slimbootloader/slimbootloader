@@ -20,16 +20,6 @@
 #define MWAIT_CD_1                   0x50
 #define MWAIT_CD_2                   0x60
 
-CONST PCH_PCIE_CONTROLLER_INFO mPchPcieControllerInfo[] = {
-  { PCI_DEVICE_NUMBER_PCH_PCIE_ROOT_PORT_1, PID_SPA,  0 },
-  { PCI_DEVICE_NUMBER_PCH_PCIE_ROOT_PORT_5, PID_SPB,  4 },
-  { PCI_DEVICE_NUMBER_PCH_PCIE_ROOT_PORT_9, PID_SPC,  8 },
-  { PCI_DEVICE_NUMBER_PCH_PCIE_ROOT_PORT_13, PID_SPD, 12 }, // PCH-S only
-  { PCI_DEVICE_NUMBER_PCH_PCIE_ROOT_PORT_17, PID_SPE, 16 }, // PCH-S only
-  { PCI_DEVICE_NUMBER_PCH_PCIE_ROOT_PORT_21, PID_SPF, 20 }, // PCH-S only
-  { PCI_DEVICE_NUMBER_PCH_PCIE_ROOT_PORT_25, PID_SPG, 24 }  // PCH-S only, Not in PCH EDS
-};
-
 CONST PCH_SERIAL_IO_CONFIG_INFO mPchSSerialIoSPIMode[PCH_MAX_SERIALIO_SPI_CONTROLLERS] = {
   {0,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_SPI0},
   {1,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_SPI1},
@@ -713,8 +703,8 @@ PlatformUpdateAcpiGnvs (
   UINT8                    Index;
   UINT8                    Length;
   UINT8                    RpNum;
-  UINT8                    RpDev;
-  UINT8                    RpFun;
+  UINTN                    RpDev;
+  UINTN                    RpFun;
   UINT8                    FuncIndex;
   UINT32                   Data32;
   GPIO_GROUP               GroupToGpeDwX[3];
@@ -722,6 +712,7 @@ PlatformUpdateAcpiGnvs (
   CPUID_EXTENDED_TIME_STAMP_COUNTER_EDX  Edx;
   CPUID_PROCESSOR_FREQUENCY_EBX          Ebx;
   PLATFORM_DATA           *PlatformData;
+  EFI_STATUS              Status;
 
   GlobalNvs = (GLOBAL_NVS_AREA *)GnvsIn;
   ZeroMem (GlobalNvs, sizeof (GLOBAL_NVS_AREA));
@@ -740,15 +731,12 @@ PlatformUpdateAcpiGnvs (
 
   Length = GetPchMaxPciePortNum ();
   for (RpNum = 0; RpNum < Length; RpNum++) {
-    Index     = RpNum / PCH_PCIE_CONTROLLER_PORTS;
-    FuncIndex = RpNum - mPchPcieControllerInfo[Index].RpNumBase;
-    RpDev     = mPchPcieControllerInfo[Index].DevNum;
-    Data32    = MmioRead32 (PCH_PCR_ADDRESS (mPchPcieControllerInfo[Index].Pid, R_SPX_PCR_PCD));
-    RpFun     = (Data32 >> (FuncIndex * S_SPX_PCR_PCD_RP_FIELD)) & B_SPX_PCR_PCD_RP1FN;
-
-    Data32 = ((UINT8) RpDev << 16) | (UINT8) RpFun;
-    PchNvs->RpAddress[RpNum] = Data32;
-    DEBUG ((DEBUG_INFO, "RpAddress[%d] = 0x%08X\n", RpNum, PchNvs->RpAddress[RpNum]));
+    Status = GetPchPcieRpDevFun (RpNum, &RpDev, &RpFun);
+    if (!EFI_ERROR (Status)) {
+      Data32 = ((UINT8) RpDev << 16) | (UINT8) RpFun;
+      PchNvs->RpAddress[RpNum] = Data32;
+      DEBUG ((DEBUG_INFO, "RpAddress[%d] = 0x%08X\n", RpNum, PchNvs->RpAddress[RpNum]));
+    }
 
     // Need to match with FSP-S UPD
     PchNvs->LtrEnable[Index]                = FspsConfig->PcieRpLtrEnable[Index];
