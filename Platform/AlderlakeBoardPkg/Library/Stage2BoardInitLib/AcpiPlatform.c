@@ -705,7 +705,6 @@ PlatformUpdateAcpiGnvs (
   UINT8                    RpNum;
   UINTN                    RpDev;
   UINTN                    RpFun;
-  UINT8                    FuncIndex;
   UINT32                   Data32;
   GPIO_GROUP               GroupToGpeDwX[3];
   UINT32                   GroupDw[3];
