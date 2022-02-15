@@ -174,38 +174,6 @@ GetMaxLinkSpeed (
 }
 
 /**
-  Get max payload size supported by device.
-
-  @param[in] Sbdf   device's segment:bus:device:function coordinates
-
-  @retval    Max payload size, encoded in the same way as in register (0=128b, 1=256b, etc)
-**/
-STATIC
-UINT8
-GetMps (
-  SBDF Sbdf
-  )
-{
-  return (PciSegmentRead16 (SbdfToBase (Sbdf) + Sbdf.PcieCap + R_PCIE_DCAP_OFFSET) & B_PCIE_DCAP_MPS);
-}
-
-/**
-  Sets Maximum Payload Size to be used by device
-
-  @param[in] Sbdf   device's segment:bus:device:function coordinates
-  @param[in] Mps    Max payload size, encoded in the same way as in register (0=128b, 1=256b, etc)
-**/
-STATIC
-VOID
-SetMps (
-  SBDF  Sbdf,
-  UINT8  Mps
-  )
-{
-  PciSegmentAndThenOr16 (SbdfToBase (Sbdf) + Sbdf.PcieCap + R_PCIE_DCTL_OFFSET, (UINT16) ~B_PCIE_DCTL_MPS, Mps << N_PCIE_DCTL_MPS);
-}
-
-/**
   Enables LTR feature in given device
 
   @param[in] Sbdf            device's segment:bus:device:function coordinates
