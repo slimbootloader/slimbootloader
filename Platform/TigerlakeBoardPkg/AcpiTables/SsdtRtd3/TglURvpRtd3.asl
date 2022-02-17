@@ -75,6 +75,8 @@ External(SDP1)
 External(SD2R)
 External(SDR1)
 External(TPLS)
+External(TPLT)
+External(TPDT)
 External(SLTS)
 External(VMDE)
 //External(DGOP)
@@ -459,26 +461,30 @@ If (LNotEqual(GBES,0)) {
         }
       }
 
-      Scope(TPD0){
-        Name (TD_P, Package(){\_SB.PC00.I2C0.PXTC})               // TD_P - Touch Device Power Package
+      If (LGreater (TPDT, Zero)) {
+        Scope(TPD0){
+          Name (TD_P, Package(){\_SB.PC00.I2C0.PXTC})               // TD_P - Touch Device Power Package
 
-        Alias(IC0D, TD_D)                                         // TD_D - Touch Device power on delay
-        Alias(\_SB.PC00.I2C0.ONTM, TD_C)                     // TD_C - Touch Device I2C controller power on timestamp
-
-        Method(_PS0) { PS0X() }
-        Method(_PS3) { PS3X() }
-      }// End Of Scope(TPD0)
-
-      If (TPLS == TCH_PNL_BUS_SPEED_400K) {  // If touch panel's bus speed is 400Khz?
-        Scope(TPL1){
-          Name (TD_P, Package(){\_SB.PC00.I2C0.PTPL})               // TD_P - Touch Device Power Package
-
-          Alias(IC1D, TD_D)                                         // TD_D - Touch Device power on delay
-          Alias(\_SB.PC00.I2C0.ONTM, TD_C)                          // TD_C - Touch Device I2C controller power on timestamp
+          Alias(IC0D, TD_D)                                         // TD_D - Touch Device power on delay
+          Alias(\_SB.PC00.I2C0.ONTM, TD_C)                     // TD_C - Touch Device I2C controller power on timestamp
 
           Method(_PS0) { PS0X() }
           Method(_PS3) { PS3X() }
-        }// End Of Scope(TPL1)
+        }// End Of Scope(TPD0)
+      }
+
+      If (TPLS == TCH_PNL_BUS_SPEED_400K) {  // If touch panel's bus speed is 400Khz?
+        If (LGreater (TPLT, Zero)) {
+          Scope(TPL1){
+            Name (TD_P, Package(){\_SB.PC00.I2C0.PTPL})               // TD_P - Touch Device Power Package
+
+            Alias(IC1D, TD_D)                                         // TD_D - Touch Device power on delay
+            Alias(\_SB.PC00.I2C0.ONTM, TD_C)                          // TD_C - Touch Device I2C controller power on timestamp
+
+            Method(_PS0) { PS0X() }
+            Method(_PS3) { PS3X() }
+          }// End Of Scope(TPL1)
+        }
       }
     }//  Scope(\_SB.PC00.I2C0)
 //
@@ -543,15 +549,17 @@ If (LNotEqual(GBES,0)) {
         Store(Zero , ONTM)  ///- Clear ONTM
       }
 
-      Scope(TPL1){
-        Name (TD_P, Package(){\_SB.PC00.I2C1.PXTC})               // TD_P - Touch Device Power Package
+      If (LGreater (TPLT, Zero)) {
+        Scope(TPL1){
+          Name (TD_P, Package(){\_SB.PC00.I2C1.PXTC})               // TD_P - Touch Device Power Package
 
-        Alias(IC1D, TD_D)                                         // TD_D - Touch Device power on delay
-        Alias(\_SB.PC00.I2C1.ONTM, TD_C)                          // TD_C - Touch Device I2C controller power on timestamp
+          Alias(IC1D, TD_D)                                         // TD_D - Touch Device power on delay
+          Alias(\_SB.PC00.I2C1.ONTM, TD_C)                          // TD_C - Touch Device I2C controller power on timestamp
 
-        Method(_PS0) { PS0X() }
-        Method(_PS3) { PS3X() }
-      }// End Of Scope(TPL1)
+          Method(_PS0) { PS0X() }
+          Method(_PS3) { PS3X() }
+        }// End Of Scope(TPL1)
+      }
 
     }//  Scope(\_SB.PC00.I2C1)
 
@@ -615,15 +623,17 @@ If (LNotEqual(GBES,0)) {
         Store(Zero , ONTM)  ///- Clear ONTM
       }
 
-      Scope(TPL1){
-        Name (TD_P, Package(){\_SB.PC00.I2C2.PXTC})               // TD_P - Touch Device Power Package
+      If (LGreater (TPLT, Zero)) {
+        Scope(TPL1){
+          Name (TD_P, Package(){\_SB.PC00.I2C2.PXTC})               // TD_P - Touch Device Power Package
 
-        Alias(IC1D, TD_D)                                         // TD_D - Touch Device power on delay
-        Alias(\_SB.PC00.I2C2.ONTM, TD_C)                          // TD_C - Touch Device I2C controller power on timestamp
+          Alias(IC1D, TD_D)                                         // TD_D - Touch Device power on delay
+          Alias(\_SB.PC00.I2C2.ONTM, TD_C)                          // TD_C - Touch Device I2C controller power on timestamp
 
-        Method(_PS0) { PS0X() }
-        Method(_PS3) { PS3X() }
-      }// End Of Scope(TPL1)
+          Method(_PS0) { PS0X() }
+          Method(_PS3) { PS3X() }
+        }// End Of Scope(TPL1)
+      }
 
     }//  Scope(\_SB.PC00.I2C2)
 
