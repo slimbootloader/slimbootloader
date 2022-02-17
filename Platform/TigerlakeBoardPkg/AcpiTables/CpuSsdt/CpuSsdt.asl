@@ -320,7 +320,7 @@ Scope (\_SB.PR00)
         //
         Or(SDTL, 0x02, SDTL)
         OperationRegion(CST0,SystemMemory,DeRefOf(Index(SSDT,7)),DeRefOf(Index(SSDT,8)))
-        Load(CST0, HC0)  // Dynamically load the CPU0CST SSDT
+        // Load(CST0, HC0)  // Dynamically load the CPU0CST SSDT
       }
     }
 
@@ -349,7 +349,7 @@ Scope (\_SB.PR00)
         //
         Or(SDTL, 0x08, SDTL)
         OperationRegion(IST0,SystemMemory,DeRefOf(Index(SSDT,1)),DeRefOf(Index(SSDT,2)))
-        Load(IST0, HI0)  // Dynamically load the CPU1IST SSDT
+        // Load(IST0, HI0)  // Dynamically load the CPU1IST SSDT
       }
     }
 
