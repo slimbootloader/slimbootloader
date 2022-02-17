@@ -734,6 +734,30 @@ UpdateFspConfig (
   FspsConfig->SerialIoSpiDelayRxClk[1] = 0x0;
   FspsConfig->SerialIoSpiDelayRxClk[2] = 0x0;
   FspsConfig->SerialIoSpiDelayRxClk[3] = 0x0;
+  FspsConfig->AtomTurboRatioLimitRatio[0] = 0x50;
+  FspsConfig->AtomTurboRatioLimitRatio[1] = 0x50;
+  FspsConfig->AtomTurboRatioLimitRatio[2] = 0x50;
+  FspsConfig->AtomTurboRatioLimitRatio[3] = 0x50;
+  FspsConfig->AtomTurboRatioLimitRatio[4] = 0x50;
+  FspsConfig->AtomTurboRatioLimitRatio[5] = 0x50;
+  FspsConfig->AtomTurboRatioLimitRatio[6] = 0x50;
+  FspsConfig->AtomTurboRatioLimitRatio[7] = 0x50;
+  FspsConfig->TurboRatioLimitNumCore[0] = 0x1;
+  FspsConfig->TurboRatioLimitNumCore[1] = 0x2;
+  FspsConfig->TurboRatioLimitNumCore[2] = 0x3;
+  FspsConfig->TurboRatioLimitNumCore[3] = 0x4;
+  FspsConfig->TurboRatioLimitNumCore[4] = 0x5;
+  FspsConfig->TurboRatioLimitNumCore[5] = 0x6;
+  FspsConfig->TurboRatioLimitNumCore[6] = 0x7;
+  FspsConfig->TurboRatioLimitNumCore[7] = 0x8;
+  FspsConfig->AtomTurboRatioLimitNumCore[0] = 0x1;
+  FspsConfig->AtomTurboRatioLimitNumCore[1] = 0x2;
+  FspsConfig->AtomTurboRatioLimitNumCore[2] = 0x3;
+  FspsConfig->AtomTurboRatioLimitNumCore[3] = 0x4;
+  FspsConfig->AtomTurboRatioLimitNumCore[4] = 0x5;
+  FspsConfig->AtomTurboRatioLimitNumCore[5] = 0x6;
+  FspsConfig->AtomTurboRatioLimitNumCore[6] = 0x7;
+  FspsConfig->AtomTurboRatioLimitNumCore[7] = 0x8;
 
   if (IsPchS ()) {
     FspsConfig->TurboRatioLimitRatio[0] = 0x32;
@@ -744,30 +768,6 @@ UpdateFspConfig (
     FspsConfig->TurboRatioLimitRatio[5] = 0x2f;
     FspsConfig->TurboRatioLimitRatio[6] = 0x2e;
     FspsConfig->TurboRatioLimitRatio[7] = 0x2e;
-    FspsConfig->TurboRatioLimitNumCore[0] = 0x1;
-    FspsConfig->TurboRatioLimitNumCore[1] = 0x2;
-    FspsConfig->TurboRatioLimitNumCore[2] = 0x3;
-    FspsConfig->TurboRatioLimitNumCore[3] = 0x4;
-    FspsConfig->TurboRatioLimitNumCore[4] = 0x5;
-    FspsConfig->TurboRatioLimitNumCore[5] = 0x6;
-    FspsConfig->TurboRatioLimitNumCore[6] = 0x7;
-    FspsConfig->TurboRatioLimitNumCore[7] = 0x8;
-    FspsConfig->AtomTurboRatioLimitRatio[0] = 0x50;
-    FspsConfig->AtomTurboRatioLimitRatio[1] = 0x50;
-    FspsConfig->AtomTurboRatioLimitRatio[2] = 0x50;
-    FspsConfig->AtomTurboRatioLimitRatio[3] = 0x50;
-    FspsConfig->AtomTurboRatioLimitRatio[4] = 0x50;
-    FspsConfig->AtomTurboRatioLimitRatio[5] = 0x50;
-    FspsConfig->AtomTurboRatioLimitRatio[6] = 0x50;
-    FspsConfig->AtomTurboRatioLimitRatio[7] = 0x50;
-    FspsConfig->AtomTurboRatioLimitNumCore[0] = 0x1;
-    FspsConfig->AtomTurboRatioLimitNumCore[1] = 0x2;
-    FspsConfig->AtomTurboRatioLimitNumCore[2] = 0x3;
-    FspsConfig->AtomTurboRatioLimitNumCore[3] = 0x4;
-    FspsConfig->AtomTurboRatioLimitNumCore[4] = 0x5;
-    FspsConfig->AtomTurboRatioLimitNumCore[5] = 0x6;
-    FspsConfig->AtomTurboRatioLimitNumCore[6] = 0x7;
-    FspsConfig->AtomTurboRatioLimitNumCore[7] = 0x8;
   }
 
   FspsConfig->VccInAuxImonIccImax = 0x0;
@@ -992,10 +992,9 @@ UpdateFspConfig (
     FspsConfig->SaPcieItbtRpSnoopLatencyOverrideValue[2] = 0xc8;
     FspsConfig->TdcTimeWindow[0] = 0x3e8;
     FspsConfig->TdcTimeWindow[1] = 0x3e8;
-    FspsConfig->TdcTimeWindow[1] = 0x1;
     FspsConfig->PchLockDownBiosLock = 0x1;
     FspsConfig->UfsEnable[0] = 0x0;
-    FspsConfig->UfsEnable[1] = 0x1;
+    FspsConfig->UfsEnable[1] = 0x0;
     FspsConfig->IehMode = 0x0;
     FspsConfig->PortResetMessageEnable[0] = 0x1;
     FspsConfig->PortResetMessageEnable[1] = 0x1;
@@ -1014,6 +1013,14 @@ UpdateFspConfig (
     FspsConfig->IomStayInTCColdSeconds = 0x0;
     FspsConfig->IomBeforeEnteringTCColdSeconds = 0x0;
     FspsConfig->Irms[0] = 0x1;
+    FspsConfig->TurboRatioLimitRatio[0] = 0x30;
+    FspsConfig->TurboRatioLimitRatio[1] = 0x30;
+    FspsConfig->TurboRatioLimitRatio[2] = 0x2d;
+    FspsConfig->TurboRatioLimitRatio[3] = 0x2d;
+    FspsConfig->TurboRatioLimitRatio[4] = 0x2a;
+    FspsConfig->TurboRatioLimitRatio[5] = 0x2a;
+    FspsConfig->TurboRatioLimitRatio[6] = 0x2a;
+    FspsConfig->TurboRatioLimitRatio[7] = 0x2a;
 
     switch (GetPlatformId ()) {
       case PLATFORM_ID_ADL_P_DDR5_RVP:
