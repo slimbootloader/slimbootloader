@@ -77,30 +77,108 @@ Device (SAT0) {
   Device(PRT0)
   {
     Name(_ADR,0x0000FFFF)
+    //
+    // Check if drive is connected to the port.
+    //
+    // @retval 1  Drive is connected to the port
+    // @retval 0  Drive is not connected to the port
+    //
+    Method(PRES) {
+      If(And(SPPR, 0x1)) {
+        Return(1)
+      } Else {
+        Return(0)
+      }
+    }
   }
 
   Device(PRT1)
   {
     Name(_ADR,0x0001FFFF)
+    //
+    // Check if drive is connected to the port.
+    //
+    // @retval 1  Drive is connected to the port
+    // @retval 0  Drive is not connected to the port
+    //
+    Method(PRES) {
+      If(And(SPPR, 0x2)) {
+        Return(1)
+      } Else {
+        Return(0)
+      }
+    }
   }
 
   Device(PRT2)
   {
     Name(_ADR,0x0002FFFF)
+    //
+    // Check if drive is connected to the port.
+    //
+    // @retval 1  Drive is connected to the port
+    // @retval 0  Drive is not connected to the port
+    //
+    Method(PRES) {
+      If(And(SPPR, 0x4)) {
+        Return(1)
+      } Else {
+        Return(0)
+      }
+    }
   }
 
   Device(PRT3)
   {
     Name(_ADR,0x0003FFFF)
+    //
+    // Check if drive is connected to the port.
+    //
+    // @retval 1  Drive is connected to the port
+    // @retval 0  Drive is not connected to the port
+    //
+    Method(PRES) {
+      If(And(SPPR, 0x8)) {
+        Return(1)
+      } Else {
+        Return(0)
+      }
+    }
   }
 
   Device(PRT4)
   {
     Name(_ADR,0x0004FFFF)
+    //
+    // Check if drive is connected to the port.
+    //
+    // @retval 1  Drive is connected to the port
+    // @retval 0  Drive is not connected to the port
+    //
+    Method(PRES) {
+      If(And(SPPR, 0x10)) {
+        Return(1)
+      } Else {
+        Return(0)
+      }
+    }
   }
 
   Device(PRT5)
   {
     Name(_ADR,0x0005FFFF)
+    //
+    // Check if drive is connected to the port.
+    //
+    // @retval 1  Drive is connected to the port
+    // @retval 0  Drive is not connected to the port
+    //
+    Method(PRES) {
+      If(And(SPPR, 0x20)) {
+        Return(1)
+      } Else {
+        Return(0)
+      }
+    }
   }
 }
