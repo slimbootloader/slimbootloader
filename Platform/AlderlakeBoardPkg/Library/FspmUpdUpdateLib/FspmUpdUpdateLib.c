@@ -129,6 +129,7 @@ TccModePreMemConfig (
 
     // Let FSP know that an error has occured in DSO loading
     FspmUpd->FspmConfig.TccStreamCfgStatusPreMem = 1;
+    InvalidateBadDso ();
   } else if (TccCfgData->TccTuning != 0) {
     // Setup Watch dog timer
     WdtReloadAndStart (WDT_TIMEOUT_TCC_DSO, WDT_FLAG_TCC_DSO_IN_PROGRESS);
@@ -160,6 +161,9 @@ TccModePreMemConfig (
           FspmUpd->FspmConfig.SaGv                  = PolicyConfig->SaGv;
           FspmUpd->FspmConfig.DisPgCloseIdleTimeout = PolicyConfig->DisPgCloseIdle;
           FspmUpd->FspmConfig.PowerDownMode         = PolicyConfig->MemPowerDown;
+
+          DEBUG ((DEBUG_INFO, "Dump TCC DSO BIOS settings:\n"));
+          DumpHex (2, 0, sizeof(BIOS_SETTINGS), PolicyConfig);
         }
       }
     }
