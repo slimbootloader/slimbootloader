@@ -45,6 +45,8 @@
   BoardSupportLib
   SmbusLib
   PchSciLib
+  WatchDogTimerLib
+  TccLib
 
 [Guids]
 

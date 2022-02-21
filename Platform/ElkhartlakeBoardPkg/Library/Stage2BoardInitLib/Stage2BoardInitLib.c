@@ -74,6 +74,7 @@
 #include <Library/HeciInitLib.h>
 #include <TccConfigSubRegions.h>
 #include <Library/TccLib.h>
+#include <Library/WatchDogTimerLib.h>
 #include <Library/MeExtMeasurementLib.h>
 #include <GpioConfig.h>
 #include <Register/RegsSpi.h>
@@ -700,6 +701,9 @@ BoardInit (
     Status = PcdSet32S (PcdAcpiTableTemplatePtr, (UINT32)(UINTN)mPlatformAcpiTables);
     break;
   case PostSiliconInit:
+    if (IsWdtFlagsSet(WDT_FLAG_TCC_DSO_IN_PROGRESS)) {
+      WdtDisable (WDT_FLAG_TCC_DSO_IN_PROGRESS);
+    }
     // Set TSEG base/size PCD
     TsegBase = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + TSEG) & ~0xF;
     TsegSize = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + BGSM) & ~0xF;
@@ -850,21 +854,29 @@ TccModePostMemConfig (
   FspsUpd->FspsConfig.DsoTuningEn     = TccCfgData->TccTuning;
   FspsUpd->FspsConfig.TccErrorLogEn   = TccCfgData->TccErrorLog;
   FspsUpd->FspsConfig.IfuEnable       = 0;
+  if (!IsWdtFlagsSet(WDT_FLAG_TCC_DSO_IN_PROGRESS)) {
+    //
+    // If FSPM doesn't enable TCC DSO timer, FSPS should also skip TCC DSO.
+    //
+    DEBUG ((DEBUG_INFO, "DSO Tuning skipped.\n"));
+    FspsUpd->FspsConfig.TccStreamCfgStatus = 1;
+  } else if (TccCfgData->TccTuning != 0) {
+    // Reload Watch dog timer
+    WdtReloadAndStart (WDT_TIMEOUT_TCC_DSO, WDT_FLAG_TCC_DSO_IN_PROGRESS);
 
-// Load TCC stream config from container
-  TccStreamBase = NULL;
-  TccStreamSize = 0;
-  Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'C', 'C', 'T'),
-                          (VOID **)&TccStreamBase, &TccStreamSize);
-  if (EFI_ERROR (Status) || (TccStreamSize < sizeof (TCC_STREAM_CONFIGURATION))) {
-    DEBUG ((DEBUG_INFO, "Load TCC Stream %r, size = 0x%x\n", Status, TccStreamSize));
-  } else {
-    FspsUpd->FspsConfig.TccStreamCfgBase = (UINT32)(UINTN)TccStreamBase;
-    FspsUpd->FspsConfig.TccStreamCfgSize = TccStreamSize;
-    DEBUG ((DEBUG_INFO, "Load tcc stream @0x%p, size = 0x%x\n", TccStreamBase, TccStreamSize));
+    // Load TCC stream config from container
+    TccStreamBase = NULL;
+    TccStreamSize = 0;
+    Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'C', 'C', 'T'),
+                            (VOID **)&TccStreamBase, &TccStreamSize);
+    if (EFI_ERROR (Status) || (TccStreamSize < sizeof (TCC_STREAM_CONFIGURATION))) {
+      DEBUG ((DEBUG_INFO, "Load TCC Stream %r, size = 0x%x\n", Status, TccStreamSize));
+    } else {
+      FspsUpd->FspsConfig.TccStreamCfgBase = (UINT32)(UINTN)TccStreamBase;
+      FspsUpd->FspsConfig.TccStreamCfgSize = TccStreamSize;
+      DEBUG ((DEBUG_INFO, "Load tcc stream @0x%p, size = 0x%x\n", TccStreamBase, TccStreamSize));
 
-    // Update UPD from stream
-    if (TccCfgData->TccTuning != 0) {
+      //Update UPD from stream
       StreamConfig   = (TCC_STREAM_CONFIGURATION *) TccStreamBase;
       PolicyConfig = (BIOS_SETTINGS *) &StreamConfig->BiosSettings;
       FspsUpd->FspsConfig.Eist                       = PolicyConfig->Pstates;
