@@ -61,6 +61,7 @@
   PsdLib
   MeExtMeasurementLib
   TccLib
+  WatchDogTimerLib
 
 [Guids]
   gOsConfigDataGuid

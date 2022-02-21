@@ -33,3 +33,6 @@ BOOT_OPTION_CFG_DATA_2.ImageType_2 | 0x1E        #USB
 #BOOT_OPTION_CFG_DATA_11.ImageType_11 | 0x1E     #NVME
 #BOOT_OPTION_CFG_DATA_14.ImageType_14 | 0x1E     #UFS1
 #BOOT_OPTION_CFG_DATA_17.ImageType_17 | 0x1E     #UFS2
+
+#Enable Wdt
+MEMORY_CFG_DATA.WdtDisableAndLock | 0
