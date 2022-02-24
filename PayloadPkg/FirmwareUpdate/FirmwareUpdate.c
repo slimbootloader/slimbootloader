@@ -26,6 +26,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/BootloaderCommonLib.h>
 #include <Library/FirmwareUpdateLib.h>
 #include <Guid/SystemResourceTable.h>
+#include <Library/GraphicsLib.h>
+#include <Library/ConsoleOutLib.h>
+#include <Guid/OsBootOptionGuid.h>
 #include "FirmwareUpdateHelper.h"
 
 UINT32   mSblImageBiosRgnOffset;
@@ -1206,6 +1209,47 @@ EndFirmwareUpdate (
 }
 
 /**
+  Initialize platform console.
+
+  @retval  EFI_NOT_FOUND    No additional console was found.
+  @retval  EFI_SUCCESS      Console has been initialized successfully.
+  @retval  Others           There is error during console initialization.
+**/
+EFI_STATUS
+InitConsole (
+  VOID
+)
+{
+  EFI_STATUS                Status;
+  UINT32                    Height;
+  UINT32                    Width;
+  UINT32                    OffX;
+  UINT32                    OffY;
+  EFI_PEI_GRAPHICS_INFO_HOB *GfxInfoHob;
+
+  Status = EFI_NOT_FOUND;
+
+  if (PcdGet32 (PcdConsoleOutDeviceMask) & ConsoleOutFrameBuffer) {
+    GfxInfoHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GetGuidHobData (NULL, NULL, &gEfiGraphicsInfoHobGuid);
+    if (GfxInfoHob != NULL) {
+      Width  = GfxInfoHob->GraphicsMode.HorizontalResolution;
+      Height = GfxInfoHob->GraphicsMode.VerticalResolution;
+      if ((PcdGet32 (PcdFrameBufferMaxConsoleWidth) > 0) && (Width > PcdGet32 (PcdFrameBufferMaxConsoleWidth))) {
+        Width = PcdGet32 (PcdFrameBufferMaxConsoleWidth);
+      }
+      if ((PcdGet32 (PcdFrameBufferMaxConsoleHeight) > 0) && (Height > PcdGet32 (PcdFrameBufferMaxConsoleHeight))) {
+        Height = PcdGet32 (PcdFrameBufferMaxConsoleHeight);
+      }
+      OffX = (GfxInfoHob->GraphicsMode.HorizontalResolution - Width) / 2;
+      OffY = (GfxInfoHob->GraphicsMode.VerticalResolution - Height) / 2;
+      Status = InitFrameBufferConsole (GfxInfoHob, Width, Height, OffX, OffY);
+    }
+  }
+
+  return Status;
+}
+
+/**
   Payload main entry.
 
   This function will continue Payload execution with a new memory based stack.
@@ -1227,7 +1271,12 @@ PayloadMain (
   EFI_STATUS    Status;
   UINT32        BiosRgnSize;
 
-  DEBUG ((DEBUG_INFO, "Starting Firmware Update\n"));
+  //
+  // Prepare Console Print
+  //
+  InitConsole ();
+  ConsolePrint ("Starting Firmware Update\n");
+
   //
   // Initialize boot media to look for the capsule image
   //
@@ -1239,6 +1288,7 @@ PayloadMain (
   FlashMap = GetFlashMapPtr();
   if (FlashMap == NULL) {
     DEBUG((DEBUG_ERROR, "Could not get flash map\n"));
+    Status = EFI_NO_MAPPING;
     goto EndOfFwu;
   }
 
@@ -1248,6 +1298,7 @@ PayloadMain (
   Status = GetComponentInfoByPartition (FLASH_MAP_SIG_BLRESERVED, FALSE, &RsvdBase, &RsvdSize);
   if (EFI_ERROR (Status)) {
     DEBUG((DEBUG_ERROR, "Could not get component information for bootloader reserved region\n"));
+    Status = EFI_NO_MAPPING;
     goto EndOfFwu;
   }
 
@@ -1296,10 +1347,8 @@ EndOfFwu:
   //
   // Terminate firmware update
   //
-  Status = EndFirmwareUpdate ();
-  if (EFI_ERROR (Status)) {
-    DEBUG((DEBUG_ERROR, "EndFirmwareUpdate, Status = 0x%x\n", Status));
-  }
+  ConsolePrint ("Exiting Firmware Update (Status: %r)\n", Status);
+  EndFirmwareUpdate ();
 
   Reboot (EfiResetCold);
 }
