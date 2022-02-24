@@ -1,7 +1,7 @@
 /** @file
   PCH preserved MMIO resource definitions.
 
-  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -52,7 +52,7 @@
 #define PCH_TRACE_HUB_MTB_MMIO_SIZE     0x00100000     ///< 1MB
 #define PCH_TRACE_HUB_FW_BASE_ADDRESS   0xFE200000     ///< TraceHub FW MMIO base address
 
-#define PCH_PCR_BASE_ADDRESS            (IsPchS () ? 0xE0000000 : (IsPchP () ? 0xFD000000 : 0))     ///< SBREG MMIO base address
+#define PCH_PCR_BASE_ADDRESS            (IsPchS () ? 0xE0000000 : (IsPchLp () ? 0xFD000000 : 0))     ///< SBREG MMIO base address
 #if FixedPcdGetBool(PcdAdlLpSupport) == 0
 #endif
 

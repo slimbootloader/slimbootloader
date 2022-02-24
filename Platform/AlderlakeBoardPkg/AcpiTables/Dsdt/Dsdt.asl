@@ -1,7 +1,7 @@
 /** @file
   ACPI DSDT table
 
-  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -267,7 +267,9 @@ DefinitionBlock (
   Include ("HdaDspModules.asl")
   Include ("HidPlatformEventDev.asl")
   Include ("HidDynamicSarDsm.asl")
+#if FixedPcdGetBool(PcdAdlNSupport) == 0
   Include ("HIDWakeDSM.asl")
+#endif
   Include ("PinDriverLib.asl")
   Include ("FwuWmi.asl")
 
@@ -468,6 +470,7 @@ DefinitionBlock (
     }
   }
 
+#if FixedPcdGetBool(PcdAdlNSupport) == 0
   //
   // Enable SCI wake for LID SWITCH
   //
@@ -478,6 +481,7 @@ DefinitionBlock (
       }
     }
   }
+#endif
 
   Name(\_S0, Package(4){0x0,0x0,0,0}) // mandatory System state
   if(SS1) { Name(\_S1, Package(4){0x1,0x0,0,0})}

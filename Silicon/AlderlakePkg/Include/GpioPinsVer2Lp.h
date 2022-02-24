@@ -1,7 +1,7 @@
 /**@file
-  GPIO pins for TGL-PCH-LP,
+  GPIO pins for ADL-PCH-LP,
 
-  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -31,7 +31,13 @@
 #define GPIO_VER2_LP_GROUP_GPP_C    0x090B
 #define GPIO_VER2_LP_GROUP_GPP_F    0x090C
 #define GPIO_VER2_LP_GROUP_GPP_E    0x090E
-
+/*
+  Following group is used only for PCH_N
+  Other GPIO Group Defines are same keeping
+  Macro in sync with earlier PCH in case there
+  is usage outside IP Block
+*/
+#define GPIO_VER2_LP_GROUP_GPP_I     0x0909
 
 ///
 /// TGL LP GPIO pins
@@ -52,18 +58,30 @@
 #define GPIO_VER2_LP_GPP_A2                  0x09020002
 #define GPIO_VER2_LP_GPP_A6                  0x09020006
 #define GPIO_VER2_LP_GPP_A7                  0x09020007
+#define GPIO_VER2_LP_GPP_A8                  0x09020008
 #define GPIO_VER2_LP_GPP_A11                 0x0902000B
 #define GPIO_VER2_LP_GPP_A13                 0x0902000D
 #define GPIO_VER2_LP_GPP_A14                 0x0902000E
 #define GPIO_VER2_LP_GPP_A15                 0x0902000F
+#define GPIO_VER2_LP_GPP_A17                 0x09020011
 #define GPIO_VER2_LP_GPP_A19                 0x09020013
 #define GPIO_VER2_LP_GPP_A20                 0x09020014
 #define GPIO_VER2_LP_GPP_A21                 0x09020015
 #define GPIO_VER2_LP_GPP_A22                 0x09020016
 
+#define GPIO_VER2_LP_GPP_R0                  0x09030000
+#define GPIO_VER2_LP_GPP_R1                  0x09030001
+#define GPIO_VER2_LP_GPP_R2                  0x09030002
+#define GPIO_VER2_LP_GPP_R3                  0x09030003
+#define GPIO_VER2_LP_GPP_R4                  0x09030004
+#define GPIO_VER2_LP_GPP_R5                  0x09030005
+#define GPIO_VER2_LP_GPP_R6                  0x09030006
+#define GPIO_VER2_LP_GPP_R7                  0x09030007
 
+#define GPIO_VER2_LP_GPD2                    0x09050002
 #define GPIO_VER2_LP_GPD7                    0x09050007
 
+#define GPIO_VER2_LP_GPP_S5                  0x09060005
 
 #define GPIO_VER2_LP_GPP_H0                  0x09070000
 #define GPIO_VER2_LP_GPP_H1                  0x09070001
@@ -73,6 +91,8 @@
 #define GPIO_VER2_LP_GPP_H10                 0x0907000A
 #define GPIO_VER2_LP_GPP_H11                 0x0907000B
 #define GPIO_VER2_LP_GPP_H17                 0x09070011
+#define GPIO_VER2_LP_GPP_H19                 0x09070013
+#define GPIO_VER2_LP_GPP_H23                 0x09070017
 
 #define GPIO_VER2_LP_GPP_D1                  0x09080001
 #define GPIO_VER2_LP_GPP_D13                 0x0908000D
@@ -95,8 +115,11 @@
 #define GPIO_VER2_LP_GPP_F7                  0x090C0007
 #define GPIO_VER2_LP_GPP_F9                  0x090C0009
 #define GPIO_VER2_LP_GPP_F10                 0x090C000A
+#define GPIO_VER2_LP_GPP_F11                 0x090C000B
+#define GPIO_VER2_LP_GPP_F13                 0x090C000D
 #define GPIO_VER2_LP_GPP_F14                 0x090C000E
 #define GPIO_VER2_LP_GPP_F15                 0x090C000F
+#define GPIO_VER2_LP_GPP_F16                 0x090C0010
 #define GPIO_VER2_LP_GPP_F17                 0x090C0011
 #define GPIO_VER2_LP_GPP_F18                 0x090C0012
 #define GPIO_VER2_LP_GPP_F20                 0x090C0014
@@ -114,6 +137,9 @@
 #define GPIO_VER2_LP_GPP_E7                  0x090E0007
 #define GPIO_VER2_LP_GPP_E15                 0x090E000F
 #define GPIO_VER2_LP_GPP_E16                 0x090E0010
+#define GPIO_VER2_LP_GPP_E20                 0x090E0014
+#define GPIO_VER2_LP_GPP_E21                 0x090E0015
+#define GPIO_VER2_LP_GPP_E22                 0x090E0016
 #define GPIO_VER2_LP_GPP_E23                 0x090E0017
 
 
@@ -124,5 +150,6 @@
 #define GPIO_VER2_LP_MUXING_DMIC0_DATA_GPP_S3                0x29460403
 #define GPIO_VER2_LP_MUXING_DMIC1_DATA_GPP_S7                0x29460607
 
+#define GPIO_VER2_LP_GPD11                   0x0905000B
 
 #endif // _GPIO_PINS_VER2_LP_H_

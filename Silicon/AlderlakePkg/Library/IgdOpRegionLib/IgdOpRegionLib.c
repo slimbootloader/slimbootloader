@@ -11,7 +11,7 @@
     VBT:        Video BIOS Table (OEM customizable data)
     IPU:        Image Processing Unit
 
-  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -249,6 +249,14 @@ UpdateVbt (
     case PLATFORM_ID_ADL_P_LP4_RVP:
     case PLATFORM_ID_ADL_P_LP5_RVP:
       DEBUG((DEBUG_INFO, "UpdateVbt: BoardIdAdlPLp4/5Rvp .....\n"));
+      GopVbtSpecificUpdate = (GOP_VBT_SPECIFIC_UPDATE)(UINTN)&AdlGopVbtSpecificUpdateNull;
+      break;
+    case PLATFORM_ID_ADL_N_DDR5_CRB:
+      DEBUG((DEBUG_INFO, "UpdateVbt: BoardIdAdlNDdr5 .....\n"));
+      GopVbtSpecificUpdate = (GOP_VBT_SPECIFIC_UPDATE)(UINTN)&AdlGopVbtSpecificUpdateNull;
+      break;
+    case PLATFORM_ID_ADL_N_LPDDR5_RVP:
+      DEBUG((DEBUG_INFO, "UpdateVbt: BoardIdAdlNLpddr5 .....\n"));
       GopVbtSpecificUpdate = (GOP_VBT_SPECIFIC_UPDATE)(UINTN)&AdlGopVbtSpecificUpdateNull;
       break;
     default:

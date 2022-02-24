@@ -901,10 +901,14 @@ PlatformUpdateAcpiGnvs (
   PlatformNvs->ApicEnable                   = 1;
   PlatformNvs->PlatformId = (UINT8) GetPlatformId ();
   PlatformNvs->PowerState                   = 1;
-  PlatformNvs->EcAvailable                  = 1;
-  PlatformNvs->EcLowPowerMode               = 0;
-  PlatformNvs->EcSmiGpioPin                 = GPIO_VER4_S_GPP_B4;
-  PlatformNvs->EcLowPowerModeGpioPin        = 0;
+  if ((SiCfgData != NULL) && (SiCfgData->EcAvailable)) {
+    PlatformNvs->EcAvailable            = SiCfgData->EcAvailable;
+    if (PlatformNvs->EcAvailable == 1) {
+      PlatformNvs->EcLowPowerMode         = 0;
+      PlatformNvs->EcSmiGpioPin           = GPIO_VER4_S_GPP_B4;
+      PlatformNvs->EcLowPowerModeGpioPin  = 0;
+    }
+  }
 
   SysCpuInfo = MpGetInfo ();
   DEBUG ((DEBUG_INFO, "Num CPUs  = 0x%X\n",(UINT8)SysCpuInfo->CpuCount));

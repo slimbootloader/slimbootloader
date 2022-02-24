@@ -1,7 +1,7 @@
 /** @file
   Register names for Ver2 GPIO
 
-  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -31,6 +31,12 @@
 #define GPIO_VER2_PCH_LP_GPIO_JTAG_PAD_MAX     10
 #define GPIO_VER2_PCH_LP_GPIO_CPU_PAD_MAX      15
 #define GPIO_VER2_PCH_LP_GPIO_VGPIO_3_PAD_MAX  91
+/*
+  Following group is used only for PCH_N
+  Other GPIO Group Defines are same
+  hence change in naming convention only for GPP_I
+*/
+#define GPIO_VER2_PCH_N_GPIO_GPP_I_PAD_MAX     20
 
 
 //
@@ -53,6 +59,15 @@
 #define V_GPIO_VER2_PCH_LP_GPIO_PCR_MISCCFG_GPE0_GPP_C     0xB
 #define V_GPIO_VER2_PCH_LP_GPIO_PCR_MISCCFG_GPE0_GPP_E     0xC
 
+/*
+  Following group is used only for PCH_N
+  Other GPIO Group Defines are same
+  Hence change in naming convention only for
+  V_GPIO_VER2_PCH_N_GPIO_PCR_MISCCFG_GPE0_GPP_X
+*/
+#define V_GPIO_VER2_PCH_N_GPIO_PCR_MISCCFG_GPE0_GPP_I     0x6
+#define V_GPIO_VER2_PCH_N_GPIO_PCR_MISCCFG_GPE0_GPP_H     0x7
+#define V_GPIO_VER2_PCH_N_GPIO_PCR_MISCCFG_GPE0_GPP_D     0x8
 
 //
 // GPIO Community 0 Private Configuration Registers
@@ -171,6 +186,93 @@
 #define R_GPIO_VER2_PCH_LP_GPIO_PCR_GPP_D_PADCFG_OFFSET  0x900
 #define R_GPIO_VER2_PCH_LP_GPIO_PCR_GPP_U_PADCFG_OFFSET  0xA50
 #define R_GPIO_VER2_PCH_LP_GPIO_PCR_VGPIO_PADCFG_OFFSET  0xBD0
+
+//
+// GPIO Community 1 Private Configuration Registers for PCH-N see description
+//
+/**
+  Following GPIO Macros are only for ADP-N PCH.
+  Since addition of GPP_I group caused shift in offsets of GPP_H and GPP_D
+  All other groups are same as previous PCH generations which are ADP-LP/P/M.
+**/
+
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_S_PAD_OWN         0x20
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_I_PAD_OWN         0x24
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_H_PAD_OWN         0x30
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_D_PAD_OWN         0x3C
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_VGPIO_PAD_OWN         0x48
+
+
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_S_PADCFGLOCK      0x80
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_S_PADCFGLOCKTX    0x84
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_I_PADCFGLOCK      0x88
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_I_PADCFGLOCKTX    0x8C
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_H_PADCFGLOCK      0x90
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_H_PADCFGLOCKTX    0x94
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_D_PADCFGLOCK      0x98
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_D_PADCFGLOCKTX    0x9C
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_VGPIO_PADCFGLOCK      0xA0
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_VGPIO_PADCFGLOCKTX    0xA4
+
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_S_HOSTSW_OWN      0xB0
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_I_HOSTSW_OWN      0xB4
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_H_HOSTSW_OWN      0xB8
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_D_HOSTSW_OWN      0xBC
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_VGPIO_HOSTSW_OWN      0xC0
+
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_S_GPI_IS          0x0100
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_I_GPI_IS          0x0104
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_H_GPI_IS          0x0108
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_D_GPI_IS          0x010C
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_VGPIO_GPI_IS          0x0110
+
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_S_GPI_IE          0x0120
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_I_GPI_IE          0x0124
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_H_GPI_IE          0x0128
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_D_GPI_IE          0x012C
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_VGPIO_GPI_IE          0x0130
+
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_S_GPI_GPE_STS     0x0140
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_I_GPI_GPE_STS     0x0144
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_H_GPI_GPE_STS     0x0148
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_D_GPI_GPE_STS     0x014C
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_VGPIO_GPI_GPE_STS     0x0150
+
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_S_GPI_GPE_EN      0x0160
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_I_GPI_GPE_EN      0x0164
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_H_GPI_GPE_EN      0x0168
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_D_GPI_GPE_EN      0x016C
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_VGPIO_GPI_GPE_EN      0x0170
+
+//#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_S_SMI_STS         0x0180 // Not supported setting for this group
+//#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_I_SMI_STS         0x0184 // Not supported setting for this group
+//#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_H_SMI_STS         0x0188 // Not supported setting for this group
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_D_SMI_STS         0x018C
+//#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_VGPIO_SMI_STS     0x0190 // Not supported setting for this group
+
+//#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_S_SMI_EN          0x01A0 // Not supported setting for this group
+//#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_I_SMI_EN          0x01A4 // Not supported setting for this group
+//#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_H_SMI_EN          0x01A8 // Not supported setting for this group
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_D_SMI_EN          0x01AC
+//#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_VGPIO_SMI_EN      0x01B0 // Not supported setting for this group
+
+//#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_S_NMI_STS         0x01C0 // Not supported setting for this group
+//#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_I_NMI_STS         0x01C4 // Not supported setting for this group
+//#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_H_NMI_STS         0x01C8 // Not supported setting for this group
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_D_NMI_STS         0x01CC
+//#define R_GPIO_VER2_PCH_N_GPIO_PCR_VGPIO_NMI_STS         0x01D0 // Not supported setting for this group
+
+//#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_S_NMI_EN          0x01E0 // Not supported setting for this group
+//#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_I_NMI_EN          0x01E4 // Not supported setting for this group
+//#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_H_NMI_EN          0x01E8 // Not supported setting for this group
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_D_NMI_EN          0x01EC
+//#define R_GPIO_VER2_PCH_N_GPIO_PCR_VGPIO_NMI_EN          0x01F0 // Not supported setting for this group
+
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_S_PADCFG_OFFSET     0x700
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_I_PADCFG_OFFSET     0x780
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_H_PADCFG_OFFSET     0x8C0
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_D_PADCFG_OFFSET     0xA40
+#define R_GPIO_VER2_PCH_N_GPIO_PCR_VGPIO_PADCFG_OFFSET     0xB90
 
 //
 // GPIO Community 2 Private Configuration Registers

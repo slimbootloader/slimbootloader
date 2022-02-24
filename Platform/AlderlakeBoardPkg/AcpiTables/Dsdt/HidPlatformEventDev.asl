@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -137,11 +137,13 @@ Scope(\_SB)
       //
       // Clear PBST so that we can hide the default power button.
       //
+#if FixedPcdGetBool(PcdAdlNSupport) == 0
       If (CondRefOf(\_SB.PWRB.PBST))
       {
         Store(0, \_SB.PWRB.PBST)
         Notify(\_SB.PWRB, 1) // Device check
       }
+#endif
       Store(One, \_SB.HIDD.BTLD)
 
       If(LEqual(\AEAB,1)) {
@@ -172,8 +174,10 @@ Scope(\_SB)
         //
         Store(0, BTS1)
       }
+#if FixedPcdGetBool(PcdAdlNSupport) == 0
       \_SB.PC00.LPCB.H_EC.ECWT(BTS1, RefOf(\_SB.PC00.LPCB.H_EC.BTEN)) //Button Enable/Disable field in ACPI name space
       \_SB.PC00.LPCB.H_EC.ECMD(0x38) //Enable/Disable SCIs from buttons
+#endif
     }
 
     //
@@ -193,8 +197,10 @@ Scope(\_SB)
     {
       If(LEqual(\AEAB,1)) {
         Store(Or(And(Arg0, 0x1E),0x01), BTS1) //Mask off PB Enable/Disable
+#if FixedPcdGetBool(PcdAdlNSupport) == 0
         \_SB.PC00.LPCB.H_EC.ECWT(BTS1, RefOf(\_SB.PC00.LPCB.H_EC.BTEN)) //Button Enable/Disable field in ACPI name space
         \_SB.PC00.LPCB.H_EC.ECMD(0x38) //Enable/Disable SCIs from buttons
+#endif
       }
     }
 
@@ -213,7 +219,9 @@ Scope(\_SB)
     Method(BTNS,0,Serialized)
     {
       If(LEqual(\AEAB,1)) {
+#if FixedPcdGetBool(PcdAdlNSupport) == 0
         Store(\_SB.PC00.LPCB.H_EC.ECRD(RefOf(\_SB.PC00.LPCB.H_EC.BTEN)), BTS1) //Button Enable/Disable field in ACPI name space
+#endif
       }
       Return(BTS1)
     }
@@ -404,7 +412,11 @@ Scope(\_SB)
             //
             Case (8)
             {
+#if FixedPcdGetBool(PcdAdlNSupport) == 0
               Return(\_SB.PC00.LPCB.H_EC.VGBS())
+#else
+              Return(0)
+#endif
             }
             //
             // Function 9 H2BC. Button implemented state.
