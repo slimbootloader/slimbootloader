@@ -414,6 +414,7 @@
   PayloadPkg/FirmwareUpdate/FirmwareUpdate.inf {
     <PcdsFixedAtBuild>
       gPlatformCommonLibTokenSpaceGuid.PcdDebugOutputDeviceMask  | $(DEBUG_OUTPUT_DEVICE_MASK)
+      gPlatformCommonLibTokenSpaceGuid.PcdConsoleOutDeviceMask   | ($(CONSOLE_OUT_DEVICE_MASK) + 0x02)
     <LibraryClasses>
       MemoryAllocationLib     | BootloaderCommonPkg/Library/FullMemoryAllocationLib/FullMemoryAllocationLib.inf
       PayloadEntryLib         | PayloadPkg/Library/PayloadEntryLib/PayloadEntryLib.inf

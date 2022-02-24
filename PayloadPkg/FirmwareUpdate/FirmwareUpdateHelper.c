@@ -19,6 +19,8 @@
 #include <Library/DecompressLib.h>
 #include <Library/ConfigDataLib.h>
 #include <Library/LiteFvLib.h>
+#include <Library/ConsoleOutLib.h>
+#include <Library/TimerLib.h>
 #include "FirmwareUpdateHelper.h"
 #include <Service/SpiFlashService.h>
 
@@ -425,16 +427,16 @@ UpdateBootRegion (
         UpdateBlockSize = SIZE_64KB;
       }
     }
-    DEBUG ((DEBUG_INIT, "Updating 0x%08llx, Size:0x%05x\n", UpdateAddress, UpdateBlockSize));
+    ConsolePrint ("Updating 0x%08llx, Size:0x%06x\n", UpdateAddress, UpdateBlockSize);
     Status = UpdateRegionBlock (UpdateAddress, Buffer, UpdateBlockSize);
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "\nFailed! Address=0x%08llx, Status = %r\n", UpdateAddress, Status));
+      ConsolePrint ("\nFailed at address 0x%08llx, status: %r\n", UpdateAddress, Status);
       return Status;
     }
     UpdateAddress += UpdateBlockSize;
     Buffer        += UpdateBlockSize;
     UpdatedSize   += UpdateBlockSize;
-    DEBUG ((DEBUG_INIT, "\nFinished   %3d%%\n", (WrittenSize + UpdatedSize) * 100 / TotalSize));
+    ConsolePrint ("\nFinished   %3d%%\n", (WrittenSize + UpdatedSize) * 100 / TotalSize);
   }
 
   return EFI_SUCCESS;
@@ -1052,7 +1054,8 @@ Reboot (
   IN  EFI_RESET_TYPE        ResetType
   )
 {
-  DEBUG ((DEBUG_INFO, "Reset required to proceed with the firmware update.\n\n"));
+  ConsolePrint("Reset required to proceed.\n\n");
+  MicroSecondDelay (3000000);
   ResetSystem (ResetType);
   CpuDeadLoop ();
 }
