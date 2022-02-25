@@ -10,7 +10,7 @@
     VBT:        Video BIOS Table (OEM customizable data)
     IPU:        Image Processing Unit
 
-  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -107,6 +107,44 @@ UpdateVbtChecksum(
 }
 
 /**
+  Locate a VBT block within VBT bianry by its block ID.
+
+  @param[in] VbtBuf     VBT binary buffer pointer.
+  @param[in] BlockId    A VBT block ID to locate.
+
+  @retval    NULL       Not found.
+             Others     The pointer to the block header.
+**/
+UINT8 *
+EFIAPI
+LocateVbtBlockById (
+  IN  UINT8     *VbtBuf,
+  IN  UINT8      BlockId
+  )
+{
+  VBT_HEADER               *VbtHdr;
+  VBT_BIOS_DATA_HEADER     *BiosDataHdr;
+  VBT_BLOCK_COMMON_HEADER  *BlkHdr;
+  UINT32                    Offset;
+
+  if ((VbtBuf != NULL) && (*(UINT32 *)VbtBuf == VBT_SIGNATURE)) {
+    VbtHdr = (VBT_HEADER *)VbtBuf;
+    Offset = VbtHdr->Bios_Data_Offset;
+    BiosDataHdr = (VBT_BIOS_DATA_HEADER *)(VbtBuf + Offset);
+    Offset = Offset + BiosDataHdr->BDB_Header_Size;
+    while (Offset < BiosDataHdr->BDB_Size) {
+      BlkHdr = (VBT_BLOCK_COMMON_HEADER *)(VbtBuf + Offset);
+      if (BlkHdr->BlockId == BlockId) {
+        return (UINT8 *)BlkHdr;
+      }
+      Offset += (BlkHdr->BlockSize + sizeof(VBT_BLOCK_COMMON_HEADER));
+    }
+  }
+
+  return NULL;
+}
+
+/**
   Update VBT data in Igd Op Region.
 
   @param[in] IsExtendedVbt          Is an extended VBT being used
@@ -122,6 +160,7 @@ UpdateVbt (
   )
 {
   VBT_TABLE_DATA                    *VbtPtr;
+  VBT_GENERAL2_INFO                 *VbtGen2Info;
   CHILD_STRUCT                      *ChildStructPtr[ChildStruct_MAX];
   UINTN                             Index;
 
@@ -138,19 +177,19 @@ UpdateVbt (
   if (VbtPtr != NULL) {
     DEBUG ((DEBUG_INFO, "VBT data found '%.20a'\n", VbtPtr->VbtHeader.Product_String));
     DEBUG((DEBUG_INFO, "Updating GOP VBT fields using GOP Configuration Lib.\n"));
+    VbtGen2Info = (VBT_GENERAL2_INFO *) LocateVbtBlockById ((UINT8 *)VbtPtr, VBT_BLK_ID_GENERAL2_INFO);
+    if (VbtGen2Info != NULL) {
+      for (Index = 0; Index < ChildStruct_MAX; Index++) {
+        ChildStructPtr[Index] = (CHILD_STRUCT *)(((UINT8 *)VbtGen2Info->Child_Struct) + Index * VbtGen2Info->SizeChild_Struct);
+      }
 
-    ChildStructPtr[0] = &(VbtPtr->VbtGen2Info.Child_Struct[0]);
-    for (Index = 0; Index < (ChildStruct_MAX - 1); Index++) {
-      ChildStructPtr[Index + 1] = (CHILD_STRUCT *)(((UINT8 *)ChildStructPtr[Index]) + VbtPtr->VbtGen2Info.SizeChild_Struct);
+      if (GopVbtUpdateCallback != NULL) {
+        GopVbtUpdateCallback (ChildStructPtr);
+      }
+
+      DEBUG((DEBUG_INFO, "VBT Updated.\n"));
+      UpdateVbtChecksum (VbtPtr);
     }
-
-    if (GopVbtUpdateCallback != NULL) {
-      GopVbtUpdateCallback (ChildStructPtr);
-    }
-
-    DEBUG((DEBUG_INFO, "VBT Updated.\n"));
-    UpdateVbtChecksum (VbtPtr);
-
     return EFI_SUCCESS;
   } else {
     DEBUG ((DEBUG_INFO, "Intel VBT not found\n"));
