@@ -1,7 +1,7 @@
 /** @file
   ACPI DSDT table
 
-  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -103,7 +103,7 @@ Scope(\_GPE)
     // events.
 
     // Check for Virtual Lid Event.
-
+#if FixedPcdGetBool(PcdAdlNSupport) == 0
     If(LNotEqual(LIDS,\_SB.PC00.LPCB.H_EC.ECRD(RefOf(\_SB.PC00.LPCB.H_EC.LSTE))))
     {
       Store(\_SB.PC00.LPCB.H_EC.ECRD(RefOf(\_SB.PC00.LPCB.H_EC.LSTE)),LIDS)
@@ -138,6 +138,7 @@ Scope(\_GPE)
       // Make it an attended wake event, no matter what.
       Notify(\_SB.PWRB,0x02)
     }
+#endif
     Return ()
   }
 

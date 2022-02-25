@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -57,7 +57,6 @@ GetCpuStepping(
   AsmCpuid (CPUID_VERSION_INFO, &Eax.Uint32, NULL, NULL, NULL);
   return ((CPU_STEPPING) (Eax.Uint32 & CPUID_FULL_STEPPING));
 }
-
 
 /**
   Update FSP-M UPD config data for TCC mode and tuning
@@ -210,7 +209,7 @@ UpdateFspConfig (
   UINT8            SaDisplayConfigTable[16] = { 0 };
   UINT8            Index;
   UINT8            DebugPort;
-  UINT32           SpdData[7];
+  UINT32           SpdData[9];
 
   FspmUpd = (FSPM_UPD *)FspmUpdPtr;
   Fspmcfg = &FspmUpd->FspmConfig;
@@ -246,6 +245,8 @@ UpdateFspConfig (
   SpdData[4] = (UINT32)(UINTN) (((MEM_SPD3_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD3_TAG))->MemorySpdPtr3);
   SpdData[5] = (UINT32)(UINTN) (((MEM_SPD4_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD4_TAG))->MemorySpdPtr4);
   SpdData[6] = (UINT32)(UINTN) (((MEM_SPD5_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD5_TAG))->MemorySpdPtr5);
+  SpdData[7] = (UINT32)(UINTN) (((MEM_SPD6_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD6_TAG))->MemorySpdPtr6);
+  SpdData[8] = (UINT32)(UINTN) (((MEM_SPD7_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD7_TAG))->MemorySpdPtr7);
   Fspmcfg->MemorySpdPtr000  = SpdData[MemCfgData->SpdDataSel000];
   Fspmcfg->MemorySpdPtr001  = SpdData[MemCfgData->SpdDataSel001];
   Fspmcfg->MemorySpdPtr010  = SpdData[MemCfgData->SpdDataSel010];
@@ -522,6 +523,10 @@ UpdateFspConfig (
     // DP + DP
     CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mTestSDdr5RowDisplayDdiConfig3, sizeof(mTestSDdr5RowDisplayDdiConfig3));
     break;
+  case PLATFORM_ID_ADL_N_LPDDR5_RVP:
+    // DP + DP
+    CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mAdlNLpddr5RowDisplayDdiConfig, sizeof(mAdlNLpddr5RowDisplayDdiConfig));
+    break;
   default:
     DEBUG((DEBUG_INFO, "DDI Init: Unsupported board Id %x .....\n", PlatformId));
     break;
@@ -554,7 +559,7 @@ UpdateFspConfig (
 #endif
   }
 
-  if (IsPchP ()) {
+  if (IsPchLp ()) {
     Fspmcfg->DdiPortAConfig = 0x1;
     Fspmcfg->WdtDisableAndLock = 0x1;
     Fspmcfg->CpuDmiHwEqGen4CoeffListCm[1] = 0xe;
@@ -595,6 +600,27 @@ UpdateFspConfig (
         Fspmcfg->DmiHweq = 0x2;
         Fspmcfg->PcieClkReqGpioMux[9] = 0x796e9000;
         break;
+      case PLATFORM_ID_ADL_N_DDR5_CRB:
+        Fspmcfg->CpuPcieRpEnableMask = 0x0;
+        Fspmcfg->DdiPortAConfig = 0x1;
+        Fspmcfg->DdiPortBHpd = 0x1;
+        Fspmcfg->DdiPort1Hpd = 0x1;
+        Fspmcfg->DdiPort2Hpd = 0x1;
+        Fspmcfg->DdiPortBDdc = 0x1;
+        Fspmcfg->DdiPort1Ddc = 0x1;
+        Fspmcfg->DdiPort2Ddc = 0x1;
+        Fspmcfg->DmiHweq = 0x2;
+        Fspmcfg->Lp5CccConfig = 0xff;
+        Fspmcfg->SkipCpuReplacementCheck = 0x0;
+        break;
+      case PLATFORM_ID_ADL_N_LPDDR5_RVP:
+        Fspmcfg->DdiPortBHpd = 0x1;
+        Fspmcfg->DdiPortBDdc = 0x1;
+        Fspmcfg->DmiHweq = 0x2;
+        Fspmcfg->Lp5CccConfig = 0xff;
+        Fspmcfg->FirstDimmBitMask = 0x0;
+        Fspmcfg->SkipCpuReplacementCheck = 0x0;
+        break;
       default:
         DEBUG ((DEBUG_INFO, "Unknown board for FSP-M UPD settings.\n"));
         break;
@@ -608,12 +634,10 @@ UpdateFspConfig (
   Fspmcfg->Lfsr1Mask      = 0xb;
   Fspmcfg->RefreshPanicWm = 0x8;
   Fspmcfg->RefreshHpWm    = 0x7;
-
   // Tcc enabling
   if (IsPchS () && FeaturePcdGet (PcdTccEnabled)) {
     TccModePreMemConfig (FspmUpd);
   }
-
   // S0ix is disabled if TSN is enabled.
   FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag (CDATA_FEATURES_TAG);
   SiCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);

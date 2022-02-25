@@ -557,7 +557,7 @@ IsPchLp (
   VOID
   )
 {
-  return (PchSeries () == PCH_LP || PchSeries () == PCH_P || PchSeries () == PCH_M);
+  return (PchSeries () == PCH_LP || PchSeries () == PCH_P || PchSeries () == PCH_M || PchSeries () == PCH_N);
 }
 
 /**
