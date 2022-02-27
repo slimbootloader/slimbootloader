@@ -868,6 +868,7 @@ class Build(object):
             'DOWNGRADE_PMEM64',
             'DOWNGRADE_BUS0',
             'FLAG_ALLOC_PMEM_FIRST',
+            'FLAG_ALLOC_ROM_BAR',
             'BUS_SCAN_TYPE',
             'BUS_SCAN_ITEMS'
         ]

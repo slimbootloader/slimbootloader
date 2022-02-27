@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -75,7 +75,8 @@ typedef struct {
 
 typedef struct {
   UINT16            AllocPmemFirst  : 1;
-  UINT16            Reserved        : 15;
+  UINT16            FlagAllocRomBar : 1;
+  UINT16            Reserved        : 14;
 } PCI_ENUM_FLAG;
 
 typedef struct {
