@@ -2,7 +2,7 @@
 ## @ BuildUtility.py
 # Build bootloader main script
 #
-# Copyright (c) 2016 - 2021, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2016 - 2022, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -203,7 +203,8 @@ class PciEnumPolicyInfo(Structure):
         ('DowngradeBus0',           c_uint16, 2),
         ('DowngradeReserved',       c_uint16, 11),
         ('FlagAllocPmemFirst',      c_uint16, 1),
-        ('FlagReserved',            c_uint16, 15),
+        ('FlagAllocRomBar',         c_uint16, 1),
+        ('FlagReserved',            c_uint16, 14),
         ('BusScanType',             c_uint8), # 0: list, 1: range
         ('NumOfBus',                c_uint8),
         ('BusScanItems',            ARRAY(c_uint8, 0))
@@ -216,6 +217,7 @@ class PciEnumPolicyInfo(Structure):
         self.DowngradeBus0      = 1
         self.DowngradeReserved  = 0
         self.FlagAllocPmemFirst = 0
+        self.FlagAllocRomBar    = 0
         self.FlagReserved       = 0
         self.Reserved           = 0
         self.BusScanType        = 0
@@ -1230,6 +1232,7 @@ def gen_pci_enum_policy_info (policy_dict):
         policy_info.DowngradePMem64 = policy_dict['DOWNGRADE_PMEM64']
         policy_info.DowngradeBus0   = policy_dict['DOWNGRADE_BUS0']
         policy_info.FlagAllocPmemFirst  = policy_dict['FLAG_ALLOC_PMEM_FIRST']
+        policy_info.FlagAllocRomBar = policy_dict['FLAG_ALLOC_ROM_BAR']
         policy_info.BusScanType     = policy_dict['BUS_SCAN_TYPE']
         bus_scan_items              = policy_dict['BUS_SCAN_ITEMS']
 

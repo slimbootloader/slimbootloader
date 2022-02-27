@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -32,14 +32,22 @@ BarExisted (
   )
 {
   UINT32              OriginalValue;
+  UINT32              AllOne;
+  UINT32              Mask;
   volatile UINT32     Value;
 
   //
   // Preserve the original value
   //
   OriginalValue = PciExpressRead32 (PciIoDevice->Address + Offset);
-  PciExpressWrite32 (PciIoDevice->Address + Offset, 0xFFFFFFFF);
-  Value = PciExpressRead32 (PciIoDevice->Address + Offset);
+  AllOne = 0xFFFFFFFF;
+  Mask   = 0xFFFFFFFF;
+  if (Offset == PCI_EXPANSION_ROM_BASE) {
+    AllOne &=  ~BIT0;
+    Mask   &= ~0x7FF;
+  }
+  PciExpressWrite32 (PciIoDevice->Address + Offset, AllOne);
+  Value = PciExpressRead32 (PciIoDevice->Address + Offset) & Mask;
   PciExpressWrite32 (PciIoDevice->Address + Offset, OriginalValue);
 
   if (BarLengthValue != NULL) {

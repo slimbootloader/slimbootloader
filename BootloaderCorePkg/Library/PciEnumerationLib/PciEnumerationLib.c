@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -216,7 +216,11 @@ PciParseBar (
 
   } else {
 
-    Mask  = 0xfffffff0;
+    if (Offset == PCI_EXPANSION_ROM_BASE) {
+      Mask  = 0xfffff800;
+    } else {
+      Mask  = 0xfffffff0;
+    }
 
     PciIoDevice->PciBar[BarIndex].BaseAddress = OriginalValue & Mask;
 
@@ -486,11 +490,11 @@ GatherDeviceInfo (
   //
   // Inherit parent decode capability
   //
+  EnumPolicy = (PCI_ENUM_POLICY_INFO *)PcdGetPtr (PcdPciEnumPolicyInfo);
   if (PciIoDevice->Parent != NULL) {
     PciIoDevice->Decodes = PciIoDevice->Parent->Decodes;
     Downgrade = FALSE;
     if (Bus == 0) {
-      EnumPolicy = (PCI_ENUM_POLICY_INFO *)PcdGetPtr (PcdPciEnumPolicyInfo);
       if (EnumPolicy->Downgrade.Bus0 == 1) {
         Downgrade = TRUE;
       } else if (EnumPolicy->Downgrade.Bus0 == 2) {
@@ -511,6 +515,20 @@ GatherDeviceInfo (
   //
   for (Offset = 0x10, BarIndex = 0; Offset <= 0x24 && BarIndex < PCI_MAX_BAR; BarIndex++) {
     Offset = PciParseBar (PciIoDevice, Offset, BarIndex);
+  }
+
+  //
+  // Find a available PCI bar slot for PCI expansion ROM
+  //
+  if (EnumPolicy->Flag.FlagAllocRomBar == 1) {
+    BarIndex = PCI_MAX_BAR - 1;
+    while (BarIndex > 0) {
+      if (PciIoDevice->PciBar[BarIndex].BarType == PciBarTypeUnknown) {
+        PciParseBar (PciIoDevice, PCI_EXPANSION_ROM_BASE, BarIndex);
+        break;
+      }
+      BarIndex--;
+    }
   }
 
   //
