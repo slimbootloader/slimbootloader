@@ -163,6 +163,12 @@ ShellCommandPciFunc (
             }
             ShellPrint (L"\n\n");
           }
+
+          if ((Func == 0) && ((PciDev->HeaderType & HEADER_TYPE_MULTI_FUNCTION) == 0)) {
+            // Skip sub functions, this is not a multi function device
+            Func = PCI_MAX_FUNC;
+          }
+
         }
       }
     }
