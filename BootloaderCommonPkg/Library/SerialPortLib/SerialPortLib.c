@@ -59,13 +59,15 @@ SerialPortReadRegister (
   UINTN    Base;
 
   Base   = (UINTN) GetSerialPortBase ();
-  Offset = GetSerialPortStrideSize () * Offset;
   if (Base == 0) {
-    Data = 0;
-  } else if (Base < 0x10000) {
-    Data = IoRead8 (Base + Offset);
+    Data = (Offset == LSR_OFFSET) ? LSR_TXRDY : 0;
   } else {
-    Data = MmioRead8 (Base + Offset);
+    Offset = GetSerialPortStrideSize () * Offset;
+    if (Base < 0x10000) {
+      Data = IoRead8 (Base + Offset);
+    } else {
+      Data = MmioRead8 (Base + Offset);
+    }
   }
   return Data;
 }
