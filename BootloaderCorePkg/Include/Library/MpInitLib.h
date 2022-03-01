@@ -18,15 +18,6 @@ typedef enum {
   EnumMpInitFull   = 0xFF
 } MP_INIT_PHASE;
 
-typedef struct {
-  UINT32           ApicId;
-} CPU_INFO;
-
-typedef struct {
-  UINT32           CpuCount;
-  CPU_INFO         CpuInfo[0];
-} SYS_CPU_INFO;
-
 typedef VOID   (*PLATFORM_CPU_INIT_HOOK) (UINT32 CpuIndex);
 
 

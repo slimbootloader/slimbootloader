@@ -49,8 +49,19 @@ typedef struct {
 } SYS_CPU_TASK;
 
 typedef struct {
+  UINT32          ApicId;
+} CPU_INFO;
+
+typedef struct {
+  UINT32          CpuCount;
+  CPU_INFO        CpuInfo[0];
+} SYS_CPU_INFO;
+
+typedef struct {
   EFI_PHYSICAL_ADDRESS  SysCpuTask;
+  EFI_PHYSICAL_ADDRESS  SysCpuInfo;
 } SYS_CPU_TASK_HOB;
+
 
 #pragma pack()
 

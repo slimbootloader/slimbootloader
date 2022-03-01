@@ -956,6 +956,7 @@ BuildExtraInfoHob (
 
     if (SysCpuTaskHob != NULL) {
       SysCpuTaskHob->SysCpuTask = (UINTN) MpGetTask();
+      SysCpuTaskHob->SysCpuInfo = (UINTN) MpGetInfo();
     }
   }
 

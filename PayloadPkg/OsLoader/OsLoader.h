@@ -47,6 +47,7 @@
 #include <Library/UniversalPayloadLib.h>
 #include <Library/LinuxLib.h>
 #include <Library/ThunkLib.h>
+#include <Library/MpServiceLib.h>
 #include <Library/ContainerLib.h>
 #include <Library/DebugLogBufferLib.h>
 #include <Guid/SeedInfoHobGuid.h>
