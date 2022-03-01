@@ -82,6 +82,9 @@
   LinuxLib
   ContainerLib
   StringSupportLib
+  LocalApicLib
+  SynchronizationLib
+  MpServiceLib
 
 [Guids]
   gOsConfigDataGuid
@@ -90,6 +93,7 @@
   gBootLoaderVersionGuid
   gFlashMapInfoGuid
   gSeedListInfoHobGuid
+  gLoaderMpCpuTaskInfoGuid
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress

@@ -408,6 +408,7 @@
       AbSupportLib        | PayloadPkg/Library/AbSupportLib/AbSupportLib.inf
       SblParameterLib     | PayloadPkg/Library/SblParameterLib/SblParameterLib.inf
       TrustyBootLib       | PayloadPkg/Library/TrustyBootLib/TrustyBootLib.inf
+      MpServiceLib        | PayloadPkg/Library/MpServiceLib/MpServiceLib.inf
   }
 
 !if $(ENABLE_FWU)
