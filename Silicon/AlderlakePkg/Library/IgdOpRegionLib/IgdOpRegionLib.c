@@ -1,18 +1,8 @@
-/**@file
-  This is part of the implementation of an Intel Graphics drivers OpRegion /
-  Software SCI interface between system Bootloader, ASL code, and Graphics drivers.
-  The code in this file will load the driver and initialize the interface
-  Supporting Specification: OpRegion / Software SCI SPEC 0.70
-
-  Acronyms:
-    IGD:        Internal Graphics Device
-    NVS:        ACPI Non Volatile Storage
-    OpRegion:   ACPI Operational Region
-    VBT:        Video BIOS Table (OEM customizable data)
-    IPU:        Image Processing Unit
+/** @file
 
   Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
+
 **/
 
 #include <PiPei.h>
@@ -114,6 +104,29 @@ AdlPDdr5GopVbtSpecificUpdate (
   ChildStructPtr[2]->DVOPort      = DISPLAY_PORT_B;
   ChildStructPtr[2]->AUX_Channel  = AUX_CHANNEL_B;
   ChildStructPtr[2]->DDCBus       = 0x2;
+}
+
+/**
+  GOP VBT update for ADL P Ddr5 Edp + DP
+
+  @param[in]  ChildStructPtr  - CHILD_STRUCT
+
+**/
+VOID
+EFIAPI
+AdlNLpddr5GopVbtSpecificUpdate (
+  IN CHILD_STRUCT **ChildStructPtr
+)
+{
+  DEBUG ((DEBUG_INFO,"Update VBT for ADL-N LPDDR5\n"));
+  // Disabling DDI-B (LFP1)
+  ChildStructPtr[1]->DeviceClass          = NO_DEVICE;
+  // Enabling HDMI on DDI-B
+  ChildStructPtr[2]->DeviceClass          = HDMI_DVI;
+  ChildStructPtr[2]->DVOPort              = HDMI_B;
+  ChildStructPtr[2]->AUX_Channel          = 0x0;
+  ChildStructPtr[2]->HdmiLevelShifterConfig.Bits.HdmiMaxDataRateBits  = 0x0;
+  ChildStructPtr[2]->DDCBus               = 0x2;
 }
 
 /**
@@ -250,7 +263,7 @@ UpdateVbt (
     break;
   case PLATFORM_ID_ADL_N_LPDDR5_RVP:
     DEBUG((DEBUG_INFO, "UpdateVbt: BoardIdAdlNLpddr5 .....\n"));
-    GopVbtSpecificUpdate = (GOP_VBT_SPECIFIC_UPDATE)(UINTN)&AdlGopVbtSpecificUpdateNull;
+    GopVbtSpecificUpdate = (GOP_VBT_SPECIFIC_UPDATE)(UINTN)&AdlNLpddr5GopVbtSpecificUpdate;
     break;
   default:
     DEBUG((DEBUG_INFO, "UpdateVbt: Unsupported board Id %x .....\n", BoardId));

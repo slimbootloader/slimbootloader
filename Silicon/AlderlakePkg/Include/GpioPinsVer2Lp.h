@@ -95,6 +95,7 @@
 #define GPIO_VER2_LP_GPP_H23                 0x09070017
 
 #define GPIO_VER2_LP_GPP_D1                  0x09080001
+#define GPIO_VER2_LP_GPP_D11                 0x0908000B
 #define GPIO_VER2_LP_GPP_D13                 0x0908000D
 #define GPIO_VER2_LP_GPP_D14                 0x0908000E
 #define GPIO_VER2_LP_GPP_D15                 0x0908000F

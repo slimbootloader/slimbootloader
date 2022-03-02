@@ -614,8 +614,6 @@ UpdateFspConfig (
         Fspmcfg->SkipCpuReplacementCheck = 0x0;
         break;
       case PLATFORM_ID_ADL_N_LPDDR5_RVP:
-        Fspmcfg->DdiPortBHpd = 0x1;
-        Fspmcfg->DdiPortBDdc = 0x1;
         Fspmcfg->DmiHweq = 0x2;
         Fspmcfg->Lp5CccConfig = 0xff;
         Fspmcfg->FirstDimmBitMask = 0x0;

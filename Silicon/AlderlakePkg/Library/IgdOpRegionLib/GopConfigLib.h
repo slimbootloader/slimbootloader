@@ -1,22 +1,10 @@
 /** @file
-Header file for GOP Configuration Library
 
-@copyright
-Copyright (c) 2015 - 2019 Intel Corporation. All rights reserved
-This software and associated documentation (if any) is furnished
-under a license and may only be used or copied in accordance
-with the terms of the license. Except as permitted by the
-license, no part of this software or documentation may be
-reproduced, stored in a retrieval system, or transmitted in any
-form or by any means without the express written consent of
-Intel Corporation.
-This file contains a 'Sample Driver' and is licensed as such
-under the terms of your license agreement with Intel or your
-vendor. This file may be modified by the user, subject to
-the additional terms of the license agreement.
+  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 
-@par Specification Reference:
 **/
+
 
 #ifndef _GOP_CONFIG_LIB_H_
 #define _GOP_CONFIG_LIB_H_
@@ -31,6 +19,7 @@ the additional terms of the license agreement.
 #define AUX_CHANNEL_B                         0x10
 #define AUX_CHANNEL_C                         0x20
 #define AUX_CHANNEL_E                         0x50
+#define HDMI_B                                0x01      ///< Defines a output port HDMI-B
 #define HDMI_D                                0x03      ///< Defines a output port HDMI-D
 #define DISPLAY_PORT_B                        0x07      ///< Defines a output port DisplayPort B
 #define DISPLAY_PORT_C                        0x08      ///< Defines a output port DisplayPort C
