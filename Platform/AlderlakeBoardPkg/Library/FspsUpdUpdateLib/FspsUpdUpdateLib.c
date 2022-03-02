@@ -509,6 +509,13 @@ UpdateFspConfig (
     DEBUG ((DEBUG_INFO, "Frame Buffer Enabled\n"));
     FspsConfig->GraphicsConfigPtr = (UINT32)GetVbtAddress ();
     VbtPtr = (VBIOS_VBT_STRUCTURE*)(UINTN)(FspsConfig->GraphicsConfigPtr);
+    //
+    // Update VBT for the board
+    //
+    Status = UpdateVbt (VbtPtr);
+    if (EFI_ERROR(Status)) {
+      DEBUG ((DEBUG_ERROR, "Could not update VBT\n"));
+    }
     FspsConfig->PeiGraphicsPeimInit = 1;
     if (VbtPtr != NULL) {
       FspsConfig->VbtSize = ((VbtPtr->HeaderVbtSize) & (UINT32)~(0x1FF)) + 0x200;

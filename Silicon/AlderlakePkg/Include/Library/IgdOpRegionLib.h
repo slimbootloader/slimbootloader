@@ -33,4 +33,17 @@ IgdOpRegionInit (
   void
   );
 
+/**
+  Update VBT data in Igd Op Region.
+
+  @param[in] VbtTablePtr      Pointer to VBT_TABLE_DATA
+
+  @retval    EFI_SUCCESS      VBT data was returned.
+  @exception EFI_ABORTED      Intel VBT not found.
+**/
+EFI_STATUS
+UpdateVbt (
+  IN VOID   *VbtTablePtr
+  );
+
 #endif
