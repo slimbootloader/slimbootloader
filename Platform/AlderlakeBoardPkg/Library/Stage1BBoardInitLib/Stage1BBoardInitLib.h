@@ -50,7 +50,7 @@
 #include "GpioTableAdlSPreMem.h"
 #include "GpioTableAdlPPreMem.h"
 #include "GpioTableAdlNPreMem.h"
-#include "GpioTableAdlPtestPreMem.h"
+#include "GpioTableAdlPsPreMem.h"
 #include "GpioTableTestPreMem.h"
 #include <Library/WatchDogTimerLib.h>
 #include <Include/CpuRegs.h>

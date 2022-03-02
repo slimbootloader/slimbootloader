@@ -88,7 +88,7 @@
       help         : >
                      Pointer to SPD data in Memory
       length       : 0x200
-      value        : {FILE: Spd_Data_AdlPtest_DDR5.bin}
+      value        : {FILE: Spd_Data_AdlPs_DDR5.bin}
 
 - MEM_SPD6_CFG_DATA :
   - !expand { CFGHDR_TMPL : [ MEM_SPD6_CFG_DATA, 0x8F6, 0, 0 ] }

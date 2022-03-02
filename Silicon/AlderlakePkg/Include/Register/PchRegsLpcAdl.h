@@ -9,7 +9,7 @@
 
 #define V_LPC_CFG_DID_ADL_S                       0x7A80
 #define V_LPC_CFG_DID_ADL_P                       0x5180
-#define V_LPC_CFG_DID_ADL_PTEST                   0x5188
+#define V_LPC_CFG_DID_ADL_PS                      0x5188
 #define V_LPC_CFG_DID_ADL_N                       0x5480
 
 //

@@ -54,9 +54,9 @@ GLOBAL_REMOVE_IF_UNREFERENCED const UINT8 mAdlUDdr4RowDisplayDdiConfig[16] = {
 };
 
 //
-// Display DDI settings for Adl-PTest Ddr5 Rvp DP and HDMI
+// Display DDI settings for Adl-PS Ddr5 Rvp DP and HDMI
 //
-GLOBAL_REMOVE_IF_UNREFERENCED const UINT8 mAdlPTestEdpHdmiDisplayDdiConfig[16] = {
+GLOBAL_REMOVE_IF_UNREFERENCED const UINT8 mAdlPSEdpHdmiDisplayDdiConfig[16] = {
                                                                                 DdiPortEdp, // DDI Port A Config : DdiPortDisabled = No LFP is Connected, DdiPortEdp = eDP, DdiPortMipiDsi = MIPI DSI
                                                                                 DdiPortDisabled, // DDI Port B Config : DdiPortDisabled = No LFP is Connected, DdiPortEdp = eDP, DdiPortMipiDsi = MIPI DSI
                                                                                 DdiHpdDisable, // DDI Port A HPD : DdiHpdDisable = Disable, DdiHpdEnable = Enable HPD

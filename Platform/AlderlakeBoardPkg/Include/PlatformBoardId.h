@@ -21,12 +21,12 @@ Defines Platform BoardIds
 #define BoardIdAdlNLp5Rvp                             0x07
 #define PLATFORM_ID_ADL_N_LPDDR5_RVP                  0x07
 
-// Added for ADL-PTest Board IDs
-#define BoardIdAdlPTestDdr5Rvp                        0x0B
-#define PLATFORM_ID_ADL_P_TEST_DDR5_RVP               0x0B
+// Added for ADL-PS Board IDs
+#define BoardIdAdlPSDdr5Rvp                           0x0B
+#define PLATFORM_ID_ADL_PS_DDR5_RVP                   0x0B
 
-#define BoardIdAdlPTestDdr5Crb                        0x0D // MiniITX is CRB
-#define PLATFORM_ID_ADL_P_TEST_DDR5_CRB               0x0D
+#define BoardIdAdlPSDdr5Crb                           0x0D // MiniITX is CRB
+#define PLATFORM_ID_ADL_PS_DDR5_CRB                   0x0D
 
 // AlderLake P Board IDs
 #define BoardIdAdlPLp4Rvp                             0x10
