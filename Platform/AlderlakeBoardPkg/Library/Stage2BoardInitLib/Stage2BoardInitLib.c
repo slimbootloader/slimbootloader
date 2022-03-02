@@ -240,6 +240,9 @@ BoardInit (
       case BoardIdAdlNDdr5Crb:
         ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTablePostMemAdlNDdr5Crb) / sizeof (mGpioTablePostMemAdlNDdr5Crb[0]), (UINT8*)mGpioTablePostMemAdlNDdr5Crb);
         break;
+      case BoardIdAdlNLp5Rvp:
+        ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTablePostMemAdlNLpddr5Rvp) / sizeof (mGpioTablePostMemAdlNLpddr5Rvp[0]), (UINT8*)mGpioTablePostMemAdlNLpddr5Rvp);
+        break;
       default:
         ConfigureGpio (CDATA_GPIO_TAG, 0, NULL);
         break;
