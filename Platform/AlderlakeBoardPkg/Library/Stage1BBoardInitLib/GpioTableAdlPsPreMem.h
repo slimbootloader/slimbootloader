@@ -1,17 +1,17 @@
 /** @file
-  AlderLake PTEST RVP GPIO definition table for Pre-Memory Initialization
+  AlderLake PS RVP GPIO definition table for Pre-Memory Initialization
 
   Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
-#ifndef _ALDER_LAKE_PTEST_DDR5_CRB_PREMEM_GPIO_TABLE_H_
-#define _ALDER_LAKE_PTEST_DDR5_CRB_PREMEM_GPIO_TABLE_H_
+#ifndef _ALDER_LAKE_PS_DDR5_CRB_PREMEM_GPIO_TABLE_H_
+#define _ALDER_LAKE_PS_DDR5_CRB_PREMEM_GPIO_TABLE_H_
 
 #include <GpioPinsVer2Lp.h>
 #include <GpioConfig.h>
 
-GLOBAL_REMOVE_IF_UNREFERENCED GPIO_INIT_CONFIG mGpioTablePreMemAdlPtestDdr5Rvp[] =
+GLOBAL_REMOVE_IF_UNREFERENCED GPIO_INIT_CONFIG mGpioTablePreMemAdlPsDdr5Rvp[] =
 {
   //CPU M.2 SSD1
   {GPIO_VER2_LP_GPP_D14,  {GpioPadModeGpio,       GpioHostOwnAcpi,       GpioDirOut,        GpioOutHigh,       GpioIntDefault,     GpioPlatformReset,     GpioTermNone} },//M.2_CPU_SSD1_PWREN
@@ -28,4 +28,4 @@ GLOBAL_REMOVE_IF_UNREFERENCED GPIO_INIT_CONFIG mGpioTablePreMemAdlPtestDdr5Rvp[]
   {GPIO_VER2_LP_GPP_A7,   {GpioPadModeGpio,       GpioHostOwnGpio,       GpioDirOut,        GpioOutLow,        GpioIntDefault,     GpioPlatformReset,     GpioTermNone} },//SRCCLK_OEB7
 };
 
-#endif // _ALDER_LAKE_PTEST_DDR5_CRB_PREMEM_GPIO_TABLE_H_
+#endif // _ALDER_LAKE_PS_DDR5_CRB_PREMEM_GPIO_TABLE_H_

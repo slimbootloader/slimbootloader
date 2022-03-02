@@ -234,8 +234,8 @@ UpdateVbt (
     GopVbtSpecificUpdate = (GOP_VBT_SPECIFIC_UPDATE)(UINTN)&AdlGopVbtSpecificUpdateNull;
     break;
   case PLATFORM_ID_ADL_P_DDR5_RVP:
-  case PLATFORM_ID_ADL_P_TEST_DDR5_RVP:
-  case PLATFORM_ID_ADL_P_TEST_DDR5_CRB:
+  case PLATFORM_ID_ADL_PS_DDR5_RVP:
+  case PLATFORM_ID_ADL_PS_DDR5_CRB:
     DEBUG((DEBUG_INFO, "UpdateVbt: PLATFORM_ID_ADL_P_DDR5_RVP .....\n"));
     GopVbtSpecificUpdate = (GOP_VBT_SPECIFIC_UPDATE)(UINTN)&AdlPDdr5GopVbtSpecificUpdate;
     break;

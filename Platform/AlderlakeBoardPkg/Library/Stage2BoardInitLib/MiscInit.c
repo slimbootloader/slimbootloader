@@ -27,7 +27,6 @@ UpdatePayloadId (
   PLDSEL_CFG_DATA   *PldSelCfgData;
   UINT32            PayloadSelGpioData;
   UINT32            PayloadSelGpioPad;
-  UINT8             CmosData;
 
   PayloadSelGpioData = 0;
 

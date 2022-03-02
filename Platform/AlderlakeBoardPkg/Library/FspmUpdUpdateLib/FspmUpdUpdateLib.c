@@ -515,9 +515,9 @@ UpdateFspConfig (
     DEBUG((DEBUG_INFO, "ADL_S_ADP_S_CRB board Id %x .....\n", PlatformId));
     CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mAdlUDdr4RowDisplayDdiConfig, sizeof(mAdlUDdr4RowDisplayDdiConfig));
     break;
-  case PLATFORM_ID_ADL_P_TEST_DDR5_RVP:
-    DEBUG((DEBUG_INFO, "PLATFORM_ID_ADL_P_TEST_DDR5_RVP board Id %x .....\n", PlatformId));
-    CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mAdlPTestEdpHdmiDisplayDdiConfig, sizeof(mAdlPTestEdpHdmiDisplayDdiConfig));
+  case PLATFORM_ID_ADL_PS_DDR5_RVP:
+    DEBUG((DEBUG_INFO, "PLATFORM_ID_ADL_PS_DDR5_RVP board Id %x .....\n", PlatformId));
+    CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mAdlPSEdpHdmiDisplayDdiConfig, sizeof(mAdlPSEdpHdmiDisplayDdiConfig));
     break;
   case PLATFORM_ID_TEST_S_DDR5_UDIMM_RVP:
     // DP + DP
@@ -595,7 +595,7 @@ UpdateFspConfig (
         Fspmcfg->TcssXdciEn = 0x1;
         Fspmcfg->Ddr4OneDpc = 0x3;
         break;
-      case PLATFORM_ID_ADL_P_TEST_DDR5_RVP:
+      case PLATFORM_ID_ADL_PS_DDR5_RVP:
         Fspmcfg->DdiPortBHpd = 0x1;
         Fspmcfg->DmiHweq = 0x2;
         Fspmcfg->PcieClkReqGpioMux[9] = 0x796e9000;
