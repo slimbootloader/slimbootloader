@@ -1,7 +1,7 @@
 /** @file
   Shell command `fs` to view partition information
 
-  Copyright (c) 2019 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -12,6 +12,7 @@
 #include <Library/FileSystemLib.h>
 #include <Library/MediaAccessLib.h>
 #include <Library/ConsoleInLib.h>
+#include <Library/MemoryAllocationLib.h>
 #include <Guid/OsBootOptionGuid.h>
 #include <Library/BootOptionLib.h>
 #include <Guid/DeviceTableHobGuid.h>
@@ -238,6 +239,86 @@ CmdFsFsListDir (
 }
 
 /**
+  Load a file into memory.
+
+  @param[in]  File path to load.
+  @param[in]  LoadAddr   Memory address to load.
+
+  @retval EFI_SUCCESS   File was loaded successfully.
+  @retval EFI_ABORTED   File system is not initialized.
+  @retval EFI_OUT_OF_RESOURCES  Insufficant memory.
+  @retval EFI_BAD_BUFFER_SIZE   File size is 0.
+
+**/
+STATIC
+EFI_STATUS
+CmdFsLoad (
+  IN  CHAR16      *FilePath,
+  IN  UINTN        LoadAddr
+  )
+{
+  EFI_STATUS      Status;
+  UINTN           ImageSize;
+  VOID           *Image;
+  EFI_HANDLE      FsHandle;
+  EFI_HANDLE      FileHandle;
+
+  FsHandle = mFsHandle;
+  if (FsHandle == NULL) {
+    ShellPrint (L"FileSystem is not initialized!\n");
+    return EFI_ABORTED;
+  }
+
+  FileHandle = NULL;
+  Status = OpenFile (FsHandle, FilePath, &FileHandle);
+  if (EFI_ERROR (Status)) {
+    goto FileLoadErrOut;
+  }
+
+  Status = GetFileSize (FileHandle, &ImageSize);
+  if (EFI_ERROR (Status)) {
+    goto FileLoadErrOut;
+  }
+
+  if (ImageSize == 0) {
+    Status = EFI_BAD_BUFFER_SIZE;
+    goto FileLoadErrOut;
+  }
+
+  if (LoadAddr == 0) {
+    // Allocate space for loading
+    Image = AllocatePages (EFI_SIZE_TO_PAGES (ImageSize));
+    if (Image == NULL) {
+      Status = EFI_OUT_OF_RESOURCES;
+      goto FileLoadErrOut;
+    }
+  } else {
+    Image = (VOID *)LoadAddr;
+  }
+
+  Status = ReadFile (FileHandle, &Image, &ImageSize);
+  if (EFI_ERROR (Status)) {
+    if (Image != NULL) {
+      FreePool (Image);
+    }
+    goto FileLoadErrOut;
+  }
+
+FileLoadErrOut:
+  if (EFI_ERROR (Status)) {
+    ShellPrint (L"Failed to load file: %r\n", Status);
+  } else {
+    ShellPrint (L"File was loaded at 0x%p with length 0x%X!\n", Image, ImageSize);
+  }
+
+  if (FileHandle != NULL) {
+    CloseFile (FileHandle);
+  }
+
+  return Status;
+}
+
+/**
   Display current filesystem info
 
   @retval EFI_SUCCESS
@@ -308,6 +389,7 @@ ShellCommandFsFunc (
   CHAR16             *SubCmd;
   CHAR16             *String;
   UINTN               Result;
+  UINTN               LoadAddr;
 
   if (Argc < 2) {
     goto Usage;
@@ -345,6 +427,9 @@ ShellCommandFsFunc (
     Status = CmdFsFsListDir ((Argc < 3) ? L"/" : Argv[2]);
   } else if (StrCmp (SubCmd, L"info") == 0) {
     Status = CmdFsInfo ();
+  } else if (StrCmp (SubCmd, L"load") == 0) {
+    LoadAddr = (Argc < 4) ? 0 : StrHexToUintn (Argv[3]);
+    Status = CmdFsLoad ((Argc < 3) ? L"/" : Argv[2], LoadAddr);
   } else {
     goto Usage;
   }
@@ -355,6 +440,7 @@ Usage:
   ShellPrint (L"       %s close\n", Argv[0]);
   ShellPrint (L"       %s info\n", Argv[0]);
   ShellPrint (L"       %s ls [dir or file path]\n", Argv[0]);
+  ShellPrint (L"       %s load [dir or file path] [Address]\n", Argv[0]);
 
   ShellPrint (L"\nDevType:DevInstance - Media type and instance number in the same media type\n");
   PrintPlatformDevices ();
