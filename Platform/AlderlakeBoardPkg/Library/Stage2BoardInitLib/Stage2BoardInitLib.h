@@ -127,12 +127,6 @@
 #define ATOM_MODULE_ID_1            0x8
 #define ATOM_MODULE_ID_2            0x9
 
-#define CMOS_EXTENDED_ADDREG        0x74
-#define CMOS_EXTENDED_DATAREG       0x75
-#define CMOS_EXTENDED_OFFSET_20     0x20
-#define CMOS_EXTENDED_OFFSET_21     0x21
-#define CMOS_VALUE_SWITCH_PLD       0x5A
-
 /**
   Time spent in the Package C-State.  It is given in units compatible to P1 clock frequency (Guaranteed / Maximum Core Non-Turbo Frequency).
   This time will be updated by PCODE only after the C-State exit (the update of this register has lower priority than actually ensuring that the C-State exit occurs).
