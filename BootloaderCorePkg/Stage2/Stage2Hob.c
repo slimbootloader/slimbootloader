@@ -304,7 +304,9 @@ BuildBaseInfoHob (
   // Build serial port hob
   SerialPortInfo = BuildGuidHob (&gLoaderSerialPortInfoGuid, sizeof (SERIAL_PORT_INFO));
   if (SerialPortInfo != NULL) {
+    SerialPortInfo->Revision    = LOADER_SERIAL_PORT_INFO_REVISION;
     SerialPortInfo->Type        = 1;
+    SerialPortInfo->BaseAddr64  = 0x3F8;
     SerialPortInfo->BaseAddr    = 0x3F8;
     SerialPortInfo->Baud        = 115200;
     SerialPortInfo->RegWidth    = 1;
@@ -589,7 +591,7 @@ BuildUniversalPayloadHob (
       PldSerialPortInfo->Header.Revision = UNIVERSAL_PAYLOAD_SERIAL_PORT_INFO_REVISION;
       PldSerialPortInfo->Header.Length   = sizeof (UNIVERSAL_PAYLOAD_SERIAL_PORT_INFO);
       PldSerialPortInfo->UseMmio         = (SerialPortInfo->Type == 2) ? TRUE : FALSE;
-      PldSerialPortInfo->RegisterBase    = SerialPortInfo->BaseAddr;
+      PldSerialPortInfo->RegisterBase    = SerialPortInfo->BaseAddr64;
       PldSerialPortInfo->BaudRate        = SerialPortInfo->Baud;
       PldSerialPortInfo->RegisterStride  = (UINT8) SerialPortInfo->RegWidth;
     }
