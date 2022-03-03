@@ -11,7 +11,7 @@
 #include <Library/PcdLib.h>
 #include <Library/DebugLib.h>
 #include <Library/PlatformHookLib.h>
-#include <Guid/SerialPortInfoGuid.h>
+#include <UniversalPayload/SerialPortInfo.h>
 
 /**
   Get serial port stride register size.
@@ -60,41 +60,32 @@ PlatformHookSerialPortInitialize (
   VOID
   )
 {
-  RETURN_STATUS                  Status;
-  EFI_HOB_GUID_TYPE             *GuidHob;
-  SERIAL_PORT_INFO              *PldSerialInfo;
+  RETURN_STATUS                        Status;
+  EFI_HOB_GUID_TYPE                   *GuidHob;
+  UNIVERSAL_PAYLOAD_SERIAL_PORT_INFO  *PldSerialInfo;
 
-  GuidHob = GetNextGuidHob (&gLoaderSerialPortInfoGuid, (VOID *)(UINTN)PcdGet32 (PcdPayloadHobList));
+  GuidHob = GetNextGuidHob (&gUniversalPayloadSerialPortInfoGuid, (VOID *)(UINTN)PcdGet32 (PcdPayloadHobList));
   if (GuidHob == NULL) {
     ASSERT (FALSE);
     return RETURN_NOT_FOUND;
   }
 
-  PldSerialInfo = (SERIAL_PORT_INFO *)GET_GUID_HOB_DATA (GuidHob);
-  if (PldSerialInfo->Type == 2) { //MMIO
-    Status = PcdSetBoolS (PcdSerialUseMmio, TRUE);
-  } else { //IO
-    Status = PcdSetBoolS (PcdSerialUseMmio, FALSE);
-  }
+  PldSerialInfo = (UNIVERSAL_PAYLOAD_SERIAL_PORT_INFO *)GET_GUID_HOB_DATA (GuidHob);
+  Status = PcdSetBoolS (PcdSerialUseMmio, PldSerialInfo->UseMmio);
   if (RETURN_ERROR (Status)) {
     return Status;
   }
-  Status = PcdSet64S (PcdSerialRegisterBase, (UINT64) PldSerialInfo->BaseAddr);
+  Status = PcdSet64S (PcdSerialRegisterBase, PldSerialInfo->RegisterBase);
   if (RETURN_ERROR (Status)) {
     return Status;
   }
 
-  Status = PcdSet32S (PcdSerialRegisterStride, PldSerialInfo->RegWidth);
+  Status = PcdSet32S (PcdSerialRegisterStride, PldSerialInfo->RegisterStride);
   if (RETURN_ERROR (Status)) {
     return Status;
   }
 
-  Status = PcdSet32S (PcdSerialBaudRate, PldSerialInfo->Baud);
-  if (RETURN_ERROR (Status)) {
-    return Status;
-  }
-
-  Status = PcdSet32S (PcdSerialClockRate, PldSerialInfo->InputHertz);
+  Status = PcdSet32S (PcdSerialBaudRate, PldSerialInfo->BaudRate);
   if (RETURN_ERROR (Status)) {
     return Status;
   }
