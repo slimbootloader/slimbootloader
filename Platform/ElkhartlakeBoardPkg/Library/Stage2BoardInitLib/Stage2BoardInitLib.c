@@ -1870,7 +1870,8 @@ UpdateSerialPortInfo (
   IN  SERIAL_PORT_INFO  *SerialPortInfo
 )
 {
-  SerialPortInfo->BaseAddr = (UINT32) GetSerialPortBase ();
+  SerialPortInfo->BaseAddr64 = GetSerialPortBase ();
+  SerialPortInfo->BaseAddr   = (UINT32) SerialPortInfo->BaseAddr64;
   SerialPortInfo->RegWidth = GetSerialPortStrideSize ();
   if (GetDebugPort () >= PCH_MAX_SERIALIO_UART_CONTROLLERS) {
     // IO Type

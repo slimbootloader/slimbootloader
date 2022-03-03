@@ -553,8 +553,9 @@ UpdateSerialPortInfo (
   IN  SERIAL_PORT_INFO  *SerialPortInfo
 )
 {
-  SerialPortInfo->Type     = 1;
-  SerialPortInfo->BaseAddr = (UINT32) GetSerialPortBase();
+  SerialPortInfo->Type       = 1;
+  SerialPortInfo->BaseAddr64 = GetSerialPortBase ();
+  SerialPortInfo->BaseAddr   = (UINT32) SerialPortInfo->BaseAddr64;
   SerialPortInfo->RegWidth = GetSerialPortStrideSize();
 }
 
