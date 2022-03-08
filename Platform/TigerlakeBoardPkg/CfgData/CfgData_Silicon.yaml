@@ -263,6 +263,14 @@
                      Enable/disable Timed GPIO1    0- Disable; 1- Enable.
       length       : 0x01
       value        : 0x0
+  - EnableTcoTimer :
+      name         : Enable TCO Timer
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/disable TCO Timer    0- Disable; 1- Enable.
+      length       : 0x01
+      value        : 0x0
   - EcEnable     :
       name         : Enable EC Device
       type         : Combo
@@ -315,5 +323,5 @@
     - !expand { USB_PORT_TMPL : [ 2, 14 ] }
     - !expand { USB_PORT_TMPL : [ 2, 15 ] }
   - Dummy        :
-      length       : 0x3
+      length       : 0x2
       value        : 0x0

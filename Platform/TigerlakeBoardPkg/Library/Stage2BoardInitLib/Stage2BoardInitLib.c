@@ -1610,6 +1610,7 @@ UpdateFspConfig (
   FspsConfig->UsbTcPortEn = 0xf;
 
   if (SiCfgData != NULL) {
+    FspsConfig->EnableTcoTimer   = SiCfgData->EnableTcoTimer;
     FspsConfig->EnableTimedGpio0 = SiCfgData->EnableTimedGpio0;
     FspsConfig->EnableTimedGpio1 = SiCfgData->EnableTimedGpio1;
     FspsConfig->XdciEnable       = SiCfgData->XdciEnable;
