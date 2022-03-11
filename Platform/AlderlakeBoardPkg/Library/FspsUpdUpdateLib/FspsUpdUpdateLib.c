@@ -387,6 +387,10 @@ TccModePostMemConfig (
     FspsUpd->FspsConfig.TccCacheCfgBase = (UINT32)(UINTN)TccCacheconfigBase;
     FspsUpd->FspsConfig.TccCacheCfgSize = TccCacheconfigSize;
     DEBUG ((DEBUG_INFO, "Load Tcc Cache @0x%p, size = 0x%x\n", TccCacheconfigBase, TccCacheconfigSize));
+
+    if (IsPchS ()) {
+      FspsUpd->FspsConfig.TccMode = 1;
+    }
   }
 
   // Load Tcc Crl binary from container
