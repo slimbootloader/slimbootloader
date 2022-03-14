@@ -964,6 +964,7 @@ FspUpdatePsePolicy (
   Fspscfg->PchPseEcliteEnabled    = 1;
   Fspscfg->PchPseOobEnabled       = 0;
   Fspscfg->PchPseWoLEnabled       = 1;
+  Fspscfg->PchPseAicEnabled       = (UINT8)SiCfgData->PchPseAicEnabled;
 
   //Fspscfg->PseJtagEnabled       = 0;
   //Fspscfg->PseJtagPinMux        = 0;
@@ -1769,6 +1770,8 @@ UpdateFspConfig (
     // configure s0ix related FSP-S config
     Fspscfg->XdciEnable = 0;
   }
+  // PCH_GPIO_PADS
+  Fspscfg->PchUnlockGpioPads = (UINT8)SiCfgData->PchUnlockGpioPads;
 }
 
 
