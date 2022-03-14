@@ -1905,11 +1905,26 @@
                      Set PSE TSN 1 Phy Interface Type 0: Not Connected, 1: RGMII, 2: SGMII, 3:SGMII+
       length       : 2b
       value        : 0x01
+  - PchPseAicEnabled:
+      name         : Enable PSE AIC SPI1 option
+      type         : EditNum, HEX, (0x0,0xFF)
+      help         : >
+                     Set if to enable PSE AIC SPI1. 0: Disable; 1: Enable.
+      length       : 1b
+      value        : 0x0
+  - PchUnlockGpioPads :
+      name         : Unlock all GPIO pads
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Force all GPIO pads to be unlocked for debug purpose.
+      length       : 1b
+      value        : 0x0
   - Dummy        :
       name         : SaPostMemTestRsvd
       type         : Combo
       option       : $EN_DIS
       help         : >
                      Reserved for SA Post-Mem Test
-      length       : 15b
+      length       : 13b
       value        : 0x0
