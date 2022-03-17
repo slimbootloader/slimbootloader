@@ -477,7 +477,7 @@ GetOverrideL1ssCapsOffset (
     if (((Override->Table[Index].OverrideConfig & PchPcieL1SubstatesOverride) == PchPcieL1SubstatesOverride) &&
         (Override->Table[Index].VendorId == VendorId) &&
         (Override->Table[Index].DeviceId == DeviceId) &&
-        (Override->Table[Index].RevId == Revision || Override->Table[Index].RevId == 0xFFFF)) {
+        (Override->Table[Index].RevId == Revision || Override->Table[Index].RevId == 0xFF)) {
       return Override->Table[Index].L1SubstatesCapOffset;
     }
   }
