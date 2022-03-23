@@ -2,7 +2,7 @@
 #
 #  Slim Bootloader Payload Selection CFGDATA File.
 #
-#  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2021 - 2022, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -51,6 +51,7 @@
       option          : 0:Active High, 1:Active Low
       help            : >
                         GPIO Pin Polarity to trigger Payload switching
+                        When pin polarity matches the value, OS Loader will be used. Otherwise, UEFI Payload is selected.
       condition       : $(COND_PLD_SEL_EN)
       length          : 1bD
       value           : 0

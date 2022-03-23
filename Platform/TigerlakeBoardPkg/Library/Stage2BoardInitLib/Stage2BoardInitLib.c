@@ -729,7 +729,7 @@ UpdatePayloadId (
 
   PldSelCfgData = (PLDSEL_CFG_DATA *)FindConfigDataByTag (CDATA_PLDSEL_TAG);
   if ((PldSelCfgData != NULL) && (PldSelCfgData->PldSelGpio.Enable != 0)) {
-    PayloadSelGpioPad = GpioGroupPinToPad (PldSelCfgData->PldSelGpio.PadGroup,  PldSelCfgData->PldSelGpio.PinNumber);
+    PayloadSelGpioPad = GpioGroupPinToPad (PldSelCfgData->PldSelGpio.PadGroup, PldSelCfgData->PldSelGpio.PinNumber);
     if (PayloadSelGpioPad == 0) {
       Status = EFI_ABORTED;
     } else {
