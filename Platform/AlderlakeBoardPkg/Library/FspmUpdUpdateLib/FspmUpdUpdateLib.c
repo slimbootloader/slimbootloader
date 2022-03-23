@@ -520,6 +520,7 @@ UpdateFspConfig (
     CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mAdlPSEdpHdmiDisplayDdiConfig, sizeof(mAdlPSEdpHdmiDisplayDdiConfig));
     break;
   case PLATFORM_ID_TEST_S_DDR5_UDIMM_RVP:
+  case PLATFORM_ID_TEST_S_DDR5_SODIMM_RVP:
     // DP + DP
     CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mTestSDdr5RowDisplayDdiConfig3, sizeof(mTestSDdr5RowDisplayDdiConfig3));
     break;
