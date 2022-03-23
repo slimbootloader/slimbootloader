@@ -2,7 +2,7 @@
 #
 #  Platform Configuration Delta File.
 #
-#  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -39,12 +39,6 @@ SILICON_CFG_DATA.PchDmiAspmCtrl                             | 2
 SILICON_CFG_DATA.PchLegacyIoLowLatency                      | 1
 
 BOOT_OPTION_CFG_DATA_5.HwPart_5                             | 255
-
-
-# PCH H :  GPIO_VER2_H_GPP_F10
-PLDSEL_CFG_DATA.PldSelGpio.Enable                           | 1
-PLDSEL_CFG_DATA.PldSelGpio.PadGroup                         | 5
-PLDSEL_CFG_DATA.PldSelGpio.PinNumber                        | 10
 
 # GPIO Group GPP_A: TGL-H has 15. 15-23 should be skipped.
 GPIO_CFG_DATA.GpioPinConfig0_GPP_A00                        | 0x0350A383
@@ -565,4 +559,10 @@ GPIO_CFG_DATA.GpioPinConfig1_GPD11.GPIOSkip_GPD11           | 1           # TGL-
 #
 GEN_CFG_DATA.PayloadId                                      | 'AUTO'
 GPIO_CFG_DATA.GpioPinConfig0_GPP_F10.GPIODirection_GPP_F10  | 11
+# PCH H :  GPIO_VER2_H_GPP_F10
+PLDSEL_CFG_DATA.PldSelGpio.Enable                           | 1
+PLDSEL_CFG_DATA.PldSelGpio.PadGroup                         | 5
+PLDSEL_CFG_DATA.PldSelGpio.PinNumber                        | 10
+PLDSEL_CFG_DATA.PldSelGpio.PinPolarity                      | 1
+
 SILICON_CFG_DATA.PchHdaEnable                               | 0x00
