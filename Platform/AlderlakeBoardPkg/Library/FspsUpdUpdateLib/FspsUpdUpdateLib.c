@@ -649,6 +649,10 @@ UpdateFspConfig (
       if(SiCfgData->PchTsnEnable == 1) {
         FspsConfig->PchTsnMultiVcEnable = SiCfgData->PchTsnMultiVcEnable;
 
+          if (IsPchLp ()) {
+            FspsConfig->PchTsnLinkSpeed = SiCfgData->PchTsnLinkSpeed;
+          }
+
         TsnMacAddrBase      = NULL;
         TsnMacAddrSize      = 0;
         Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'M', 'A', 'C'),
@@ -660,6 +664,7 @@ UpdateFspConfig (
           FspsConfig->PchTsnMacAddressLow   = TsnSubRegion->MacConfigData.Port[0].MacAddr.U32MacAddr[0];
           FspsConfig->PchTsn1MacAddressHigh = TsnSubRegion->MacConfigData.Port[1].MacAddr.U32MacAddr[1];
           FspsConfig->PchTsn1MacAddressLow  = TsnSubRegion->MacConfigData.Port[1].MacAddr.U32MacAddr[0];
+
         } else {
           DEBUG ((DEBUG_ERROR, "TSN MAC subregion not found! %r\n", Status));
         }

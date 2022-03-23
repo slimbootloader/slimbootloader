@@ -81,7 +81,14 @@
 #define GPIO_VER2_LP_GPD2                    0x09050002
 #define GPIO_VER2_LP_GPD7                    0x09050007
 
+#define GPIO_VER2_LP_GPP_S0                  0x09060000
+#define GPIO_VER2_LP_GPP_S1                  0x09060001
+#define GPIO_VER2_LP_GPP_S2                  0x09060002
+#define GPIO_VER2_LP_GPP_S3                  0x09060003
+#define GPIO_VER2_LP_GPP_S4                  0x09060004
 #define GPIO_VER2_LP_GPP_S5                  0x09060005
+#define GPIO_VER2_LP_GPP_S6                  0x09060006
+#define GPIO_VER2_LP_GPP_S7                  0x09060007
 
 #define GPIO_VER2_LP_GPP_H0                  0x09070000
 #define GPIO_VER2_LP_GPP_H1                  0x09070001

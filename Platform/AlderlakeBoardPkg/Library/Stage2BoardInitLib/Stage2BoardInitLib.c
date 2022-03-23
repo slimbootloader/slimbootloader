@@ -11,7 +11,7 @@
 #include "Stage2BoardInitLib.h"
 #include "GpioTableAdlPsPostMem.h"
 #include "GpioTableAdlNPostMem.h"
-#include "GpioTableAdlSTsn.h"
+#include "GpioTableAdlTsn.h"
 #include <Library/PciePm.h>
 #include <Library/PlatformInfo.h>
 
@@ -269,6 +269,10 @@ BoardInit (
           case PLATFORM_ID_ADL_S_ADP_S_DDR4_SODIMM_CRB:
           case PLATFORM_ID_ADL_S_ADP_S_DDR5_SODIMM_CRB:
             ConfigureGpio (CDATA_NO_TAG, sizeof (mAdlSTsnDeviceGpioTable) / sizeof (mAdlSTsnDeviceGpioTable[0]), (UINT8*)mAdlSTsnDeviceGpioTable);
+            break;
+          case PLATFORM_ID_ADL_N_DDR5_CRB:
+          case PLATFORM_ID_ADL_N_LPDDR5_RVP:
+            ConfigureGpio (CDATA_NO_TAG, sizeof (mAdlNTsnDeviceGpioTable) / sizeof (mAdlNTsnDeviceGpioTable[0]), (UINT8*)mAdlNTsnDeviceGpioTable);
             break;
           default:
             DEBUG ((DEBUG_WARN, "TSN GPIO: Unrecognized BoardId 0x%X\n", GetPlatformId ()));
