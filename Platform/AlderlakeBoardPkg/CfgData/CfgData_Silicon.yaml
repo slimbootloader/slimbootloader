@@ -28,6 +28,14 @@
                      Enable/disable TSN on the PCH.
       length       : 0x01
       value        : 0x0
+  - PchTsnLinkSpeed :
+      name         : TSN Link Speed
+      type         : Combo
+      option       :   0: Reserved, 1: Reserved, 2: 38.4Mhz 2.5Gbps, 3: 38.4Mhz 1Gbps
+      help         : >
+                     Set TSN Link Speed. Only applicable for ADLN
+      length       : 0x01
+      value        : 0x03
   - PchTsnMultiVcEnable :
       name         : Enable TSN Multi-VC
       type         : Combo
@@ -445,5 +453,5 @@
       length       : 0x01
       value        : 0x1
   - SiliconRsvd  :
-      length       : 0x01
+      length       : 0x00
       value        : 0x00
