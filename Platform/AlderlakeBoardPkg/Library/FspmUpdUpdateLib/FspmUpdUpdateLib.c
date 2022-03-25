@@ -559,21 +559,23 @@ UpdateFspConfig (
 #endif
   }
 
+  Fspmcfg->CpuDmiHwEqGen4CoeffListCm[1] = 0xe;
+  Fspmcfg->CpuDmiHwEqGen4CoeffListCm[2] = 0xa;
+  Fspmcfg->CpuDmiHwEqGen4CoeffListCp[1] = 0x7;
+  Fspmcfg->CpuDmiHwEqGen4CoeffListCp[2] = 0x6;
+  Fspmcfg->PchDmiHwEqGen3CoeffListCm[0] = 0x0;
+  Fspmcfg->PchDmiHwEqGen3CoeffListCm[1] = 0x0;
+  Fspmcfg->PchDmiHwEqGen3CoeffListCm[2] = 0x0;
+  Fspmcfg->PchDmiHwEqGen3CoeffListCm[3] = 0x0;
+  Fspmcfg->PchDmiHwEqGen3CoeffListCp[0] = 0x0;
+  Fspmcfg->PchDmiHwEqGen3CoeffListCp[1] = 0x0;
+  Fspmcfg->PchDmiHwEqGen3CoeffListCp[2] = 0x0;
+  Fspmcfg->PchDmiHwEqGen3CoeffListCp[3] = 0x0;
+  Fspmcfg->WRDS = 0x1;
+
   if (IsPchLp ()) {
     Fspmcfg->DdiPortAConfig = 0x1;
     Fspmcfg->WdtDisableAndLock = 0x1;
-    Fspmcfg->CpuDmiHwEqGen4CoeffListCm[1] = 0xe;
-    Fspmcfg->CpuDmiHwEqGen4CoeffListCm[2] = 0xa;
-    Fspmcfg->CpuDmiHwEqGen4CoeffListCp[1] = 0x7;
-    Fspmcfg->CpuDmiHwEqGen4CoeffListCp[2] = 0x6;
-    Fspmcfg->PchDmiHwEqGen3CoeffListCm[0] = 0x0;
-    Fspmcfg->PchDmiHwEqGen3CoeffListCm[1] = 0x0;
-    Fspmcfg->PchDmiHwEqGen3CoeffListCm[2] = 0x0;
-    Fspmcfg->PchDmiHwEqGen3CoeffListCm[3] = 0x0;
-    Fspmcfg->PchDmiHwEqGen3CoeffListCp[0] = 0x0;
-    Fspmcfg->PchDmiHwEqGen3CoeffListCp[1] = 0x0;
-    Fspmcfg->PchDmiHwEqGen3CoeffListCp[2] = 0x0;
-    Fspmcfg->PchDmiHwEqGen3CoeffListCp[3] = 0x0;
     Fspmcfg->FirstDimmBitMask = 0x0;
     switch (GetPlatformId ()) {
       case PLATFORM_ID_ADL_P_LP4_RVP:
