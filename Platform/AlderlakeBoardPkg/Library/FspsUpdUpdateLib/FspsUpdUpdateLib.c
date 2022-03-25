@@ -748,42 +748,6 @@ UpdateFspConfig (
   FspsConfig->SerialIoSpiDelayRxClk[1] = 0x0;
   FspsConfig->SerialIoSpiDelayRxClk[2] = 0x0;
   FspsConfig->SerialIoSpiDelayRxClk[3] = 0x0;
-  FspsConfig->AtomTurboRatioLimitRatio[0] = 0x50;
-  FspsConfig->AtomTurboRatioLimitRatio[1] = 0x50;
-  FspsConfig->AtomTurboRatioLimitRatio[2] = 0x50;
-  FspsConfig->AtomTurboRatioLimitRatio[3] = 0x50;
-  FspsConfig->AtomTurboRatioLimitRatio[4] = 0x50;
-  FspsConfig->AtomTurboRatioLimitRatio[5] = 0x50;
-  FspsConfig->AtomTurboRatioLimitRatio[6] = 0x50;
-  FspsConfig->AtomTurboRatioLimitRatio[7] = 0x50;
-  FspsConfig->TurboRatioLimitNumCore[0] = 0x1;
-  FspsConfig->TurboRatioLimitNumCore[1] = 0x2;
-  FspsConfig->TurboRatioLimitNumCore[2] = 0x3;
-  FspsConfig->TurboRatioLimitNumCore[3] = 0x4;
-  FspsConfig->TurboRatioLimitNumCore[4] = 0x5;
-  FspsConfig->TurboRatioLimitNumCore[5] = 0x6;
-  FspsConfig->TurboRatioLimitNumCore[6] = 0x7;
-  FspsConfig->TurboRatioLimitNumCore[7] = 0x8;
-  FspsConfig->AtomTurboRatioLimitNumCore[0] = 0x1;
-  FspsConfig->AtomTurboRatioLimitNumCore[1] = 0x2;
-  FspsConfig->AtomTurboRatioLimitNumCore[2] = 0x3;
-  FspsConfig->AtomTurboRatioLimitNumCore[3] = 0x4;
-  FspsConfig->AtomTurboRatioLimitNumCore[4] = 0x5;
-  FspsConfig->AtomTurboRatioLimitNumCore[5] = 0x6;
-  FspsConfig->AtomTurboRatioLimitNumCore[6] = 0x7;
-  FspsConfig->AtomTurboRatioLimitNumCore[7] = 0x8;
-
-  if (IsPchS ()) {
-    FspsConfig->TurboRatioLimitRatio[0] = 0x32;
-    FspsConfig->TurboRatioLimitRatio[1] = 0x32;
-    FspsConfig->TurboRatioLimitRatio[2] = 0x30;
-    FspsConfig->TurboRatioLimitRatio[3] = 0x30;
-    FspsConfig->TurboRatioLimitRatio[4] = 0x2f;
-    FspsConfig->TurboRatioLimitRatio[5] = 0x2f;
-    FspsConfig->TurboRatioLimitRatio[6] = 0x2e;
-    FspsConfig->TurboRatioLimitRatio[7] = 0x2e;
-  }
-
   FspsConfig->VccInAuxImonIccImax = 0x0;
   FspsConfig->CpuPcieRpGen3Uptp[0] = 0x5;
   FspsConfig->CpuPcieRpGen4Uptp[0] = 0x8;
@@ -956,13 +920,54 @@ UpdateFspConfig (
 
   FspsConfig->TdcTimeWindow[0] = 0x3e8;
   FspsConfig->TdcTimeWindow[1] = 0x3e8;
+  FspsConfig->Device4Enable = 0x1;
+
+  if (IsPchS ()) {
+    FspsConfig->CpuPcieFunc0LinkDisable[2] = 0x0;
+    FspsConfig->CseDataResilience = 0x1;
+    FspsConfig->VerticalResolution = 0x0;
+    FspsConfig->ThcIdleLtr[1] = 0xffffffff;
+    FspsConfig->ThcHidResetPadTrigger[1] = 0x0;
+    FspsConfig->ThcHidConnectionSpeed[1] = 0x1036640;
+    FspsConfig->TurboRatioLimitRatio[0] = 0x0;
+    FspsConfig->TurboRatioLimitRatio[1] = 0x0;
+    FspsConfig->TurboRatioLimitRatio[2] = 0x0;
+    FspsConfig->TurboRatioLimitRatio[3] = 0x0;
+    FspsConfig->TurboRatioLimitRatio[4] = 0x0;
+    FspsConfig->TurboRatioLimitRatio[5] = 0x0;
+    FspsConfig->TurboRatioLimitRatio[6] = 0x0;
+    FspsConfig->TurboRatioLimitRatio[7] = 0x0;
+    FspsConfig->TurboRatioLimitNumCore[0] = 0x0;
+    FspsConfig->TurboRatioLimitNumCore[1] = 0x0;
+    FspsConfig->TurboRatioLimitNumCore[2] = 0x0;
+    FspsConfig->TurboRatioLimitNumCore[3] = 0x0;
+    FspsConfig->TurboRatioLimitNumCore[4] = 0x0;
+    FspsConfig->TurboRatioLimitNumCore[5] = 0x0;
+    FspsConfig->TurboRatioLimitNumCore[6] = 0x0;
+    FspsConfig->TurboRatioLimitNumCore[7] = 0x0;
+    FspsConfig->AtomTurboRatioLimitRatio[0] = 0x0;
+    FspsConfig->AtomTurboRatioLimitRatio[1] = 0x0;
+    FspsConfig->AtomTurboRatioLimitRatio[2] = 0x0;
+    FspsConfig->AtomTurboRatioLimitRatio[3] = 0x0;
+    FspsConfig->AtomTurboRatioLimitRatio[4] = 0x0;
+    FspsConfig->AtomTurboRatioLimitRatio[5] = 0x0;
+    FspsConfig->AtomTurboRatioLimitRatio[6] = 0x0;
+    FspsConfig->AtomTurboRatioLimitRatio[7] = 0x0;
+    FspsConfig->AtomTurboRatioLimitNumCore[0] = 0x0;
+    FspsConfig->AtomTurboRatioLimitNumCore[1] = 0x0;
+    FspsConfig->AtomTurboRatioLimitNumCore[2] = 0x0;
+    FspsConfig->AtomTurboRatioLimitNumCore[3] = 0x0;
+    FspsConfig->AtomTurboRatioLimitNumCore[4] = 0x0;
+    FspsConfig->AtomTurboRatioLimitNumCore[5] = 0x0;
+    FspsConfig->AtomTurboRatioLimitNumCore[6] = 0x0;
+  }
+
   if (IsPchLp ()) {
     for (Index = 0; Index < 4; Index++) {
       FspsConfig->CpuPcieRpLtrMaxSnoopLatency[Index]   = 0x100f;
       FspsConfig->CpuPcieRpLtrMaxNoSnoopLatency[Index] = 0x100f;
     }
     FspsConfig->IopFusaConfigEnable = 0x0;
-    FspsConfig->Device4Enable = 0x1;
     FspsConfig->SataPortDevSlpPinMux[0] = 0x59673e0c;
     FspsConfig->SataPortDevSlpPinMux[1] = 0x5967400d;
     FspsConfig->SerialIoSpiDelayRxClk[1] = 0x0;
@@ -1035,6 +1040,31 @@ UpdateFspConfig (
     FspsConfig->TurboRatioLimitRatio[5] = 0x2a;
     FspsConfig->TurboRatioLimitRatio[6] = 0x2a;
     FspsConfig->TurboRatioLimitRatio[7] = 0x2a;
+
+    FspsConfig->AtomTurboRatioLimitRatio[0] = 0x50;
+    FspsConfig->AtomTurboRatioLimitRatio[1] = 0x50;
+    FspsConfig->AtomTurboRatioLimitRatio[2] = 0x50;
+    FspsConfig->AtomTurboRatioLimitRatio[3] = 0x50;
+    FspsConfig->AtomTurboRatioLimitRatio[4] = 0x50;
+    FspsConfig->AtomTurboRatioLimitRatio[5] = 0x50;
+    FspsConfig->AtomTurboRatioLimitRatio[6] = 0x50;
+    FspsConfig->AtomTurboRatioLimitRatio[7] = 0x50;
+    FspsConfig->TurboRatioLimitNumCore[0] = 0x1;
+    FspsConfig->TurboRatioLimitNumCore[1] = 0x2;
+    FspsConfig->TurboRatioLimitNumCore[2] = 0x3;
+    FspsConfig->TurboRatioLimitNumCore[3] = 0x4;
+    FspsConfig->TurboRatioLimitNumCore[4] = 0x5;
+    FspsConfig->TurboRatioLimitNumCore[5] = 0x6;
+    FspsConfig->TurboRatioLimitNumCore[6] = 0x7;
+    FspsConfig->TurboRatioLimitNumCore[7] = 0x8;
+    FspsConfig->AtomTurboRatioLimitNumCore[0] = 0x1;
+    FspsConfig->AtomTurboRatioLimitNumCore[1] = 0x2;
+    FspsConfig->AtomTurboRatioLimitNumCore[2] = 0x3;
+    FspsConfig->AtomTurboRatioLimitNumCore[3] = 0x4;
+    FspsConfig->AtomTurboRatioLimitNumCore[4] = 0x5;
+    FspsConfig->AtomTurboRatioLimitNumCore[5] = 0x6;
+    FspsConfig->AtomTurboRatioLimitNumCore[6] = 0x7;
+    FspsConfig->AtomTurboRatioLimitNumCore[7] = 0x8;
 
     switch (GetPlatformId ()) {
       case PLATFORM_ID_ADL_P_DDR5_RVP:
