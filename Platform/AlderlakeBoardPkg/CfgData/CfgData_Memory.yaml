@@ -285,7 +285,7 @@
         help         : >
                        Number of active big cores(Depends on Number of big cores). Default 0xFF means to active all system supported big cores. <b>0xFF- Active all big cores</b>; 0- Disable all big cores; 1- 1; 2- 2; 3- 3;
         length       : 0x0001
-        value        : 0x8
+        value        : 0xFF
   - FClkFrequency :
       name         : Processor Early Power On Configuration FCLK setting
       type         : Combo
