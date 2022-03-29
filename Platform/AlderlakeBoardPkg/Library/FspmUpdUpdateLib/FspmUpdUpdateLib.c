@@ -574,6 +574,41 @@ UpdateFspConfig (
   Fspmcfg->PchDmiHwEqGen3CoeffListCp[3] = 0x0;
   Fspmcfg->WRDS = 0x1;
 
+  if (IsPchS ()) {
+    Fspmcfg->CpuDmiHwEqGen4CoeffListCm[0] = 0x6;
+    Fspmcfg->CpuDmiHwEqGen4CoeffListCm[1] = 0x6;
+    Fspmcfg->CpuDmiHwEqGen4CoeffListCm[2] = 0x6;
+    Fspmcfg->CpuDmiHwEqGen4CoeffListCm[3] = 0x6;
+    Fspmcfg->CpuDmiHwEqGen4CoeffListCm[4] = 0x6;
+    Fspmcfg->CpuDmiHwEqGen4CoeffListCm[5] = 0x6;
+    Fspmcfg->CpuDmiHwEqGen4CoeffListCm[6] = 0x6;
+    Fspmcfg->CpuDmiHwEqGen4CoeffListCm[7] = 0x6;
+    Fspmcfg->CpuDmiHwEqGen4CoeffListCp[0] = 0xa;
+    Fspmcfg->CpuDmiHwEqGen4CoeffListCp[1] = 0xa;
+    Fspmcfg->CpuDmiHwEqGen4CoeffListCp[2] = 0xa;
+    Fspmcfg->CpuDmiHwEqGen4CoeffListCp[3] = 0xa;
+    Fspmcfg->CpuDmiHwEqGen4CoeffListCp[4] = 0xa;
+    Fspmcfg->CpuDmiHwEqGen4CoeffListCp[5] = 0xa;
+    Fspmcfg->CpuDmiHwEqGen4CoeffListCp[6] = 0xa;
+    Fspmcfg->CpuDmiHwEqGen4CoeffListCp[7] = 0xa;
+    Fspmcfg->PchDmiHwEqGen3CoeffListCm[0] = 0x3;
+    Fspmcfg->PchDmiHwEqGen3CoeffListCm[1] = 0x3;
+    Fspmcfg->PchDmiHwEqGen3CoeffListCm[2] = 0x3;
+    Fspmcfg->PchDmiHwEqGen3CoeffListCm[3] = 0x3;
+    Fspmcfg->PchDmiHwEqGen3CoeffListCm[4] = 0x3;
+    Fspmcfg->PchDmiHwEqGen3CoeffListCm[5] = 0x3;
+    Fspmcfg->PchDmiHwEqGen3CoeffListCm[6] = 0x3;
+    Fspmcfg->PchDmiHwEqGen3CoeffListCm[7] = 0x3;
+    Fspmcfg->PchDmiHwEqGen3CoeffListCp[0] = 0x3;
+    Fspmcfg->PchDmiHwEqGen3CoeffListCp[1] = 0x3;
+    Fspmcfg->PchDmiHwEqGen3CoeffListCp[2] = 0x3;
+    Fspmcfg->PchDmiHwEqGen3CoeffListCp[3] = 0x3;
+    Fspmcfg->PchDmiHwEqGen3CoeffListCp[4] = 0x3;
+    Fspmcfg->PchDmiHwEqGen3CoeffListCp[5] = 0x3;
+    Fspmcfg->PchDmiHwEqGen3CoeffListCp[6] = 0x3;
+    Fspmcfg->PchDmiHwEqGen3CoeffListCp[7] = 0x3;
+  }
+
   if (IsPchLp ()) {
     Fspmcfg->DdiPortAConfig = 0x1;
     Fspmcfg->WdtDisableAndLock = 0x1;
