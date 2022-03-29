@@ -390,6 +390,7 @@ TccModePostMemConfig (
 
     if (IsPchS ()) {
       FspsUpd->FspsConfig.TccMode = 1;
+      FspsUpd->FspsConfig.L2QosEnumerationEn = 1;
     }
   }
 
