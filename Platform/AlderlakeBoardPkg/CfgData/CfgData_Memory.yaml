@@ -716,6 +716,34 @@
                        CPU_PCIE_EQ_PARAM. Coefficient C+1.
         length       : 0x0008
         value        : {0x00, 0x00, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00}
+   - CpuDmiHwEqGen4CoeffListCm :
+        name         : DMI Hw Eq Gen4 CoeffList Cm
+        type         : EditNum, HEX, (0x0, 0xFFFFFFFFFF)
+        help         : >
+                       CPU_PCIE_EQ_PARAM. Coefficient C-1.
+        length       : 0x0008
+        value        : {0x00, 0x0E, 0x0A, 0x00, 0x00, 0x00, 0x00, 0x00}
+   - CpuDmiHwEqGen4CoeffListCp :
+        name         : DMI Hw Eq Gen4 CoeffList Cp
+        type         : EditNum, HEX, (0x0, 0xFFFFFFFFFF)
+        help         : >
+                       CPU_PCIE_EQ_PARAM. Coefficient C+1.
+        length       : 0x0008
+        value        : {0x00, 0x07, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00}
+   - PchDmiHwEqGen3CoeffListCm :
+        name         : DMI Hw Eq Gen3 CoeffList Cm
+        type         : EditNum, HEX, (0x0, 0xFFFFFFFFFF)
+        help         : >
+                       PCH_DMI_EQ_PARAM. Coefficient C-1.
+        length       : 0x0008
+        value        : {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+   - PchDmiHwEqGen3CoeffListCp :
+        name         : DMI Hw Eq Gen3 CoeffList Cp
+        type         : EditNum, HEX, (0x0, 0xFFFFFFFFFF)
+        help         : >
+                       PCH_DMI_EQ_PARAM. Coefficient C+1.
+        length       : 0x0008
+        value        : {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
     - Gen3LtcoEnable :
         name         : Enable/Disable CPU DMI Gen3 EQ Local Transmitter Coefficient Override Enable
         type         : Combo
