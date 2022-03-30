@@ -2,7 +2,7 @@
 #
 #  TSN feature Configuration Delta File.
 #
-#  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2021 - 2022, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -10,7 +10,7 @@
 
 FEATURES_CFG_DATA.Features.S0ix   | 0
 
-SILICON_CFG_DATA.PchTsnEnable     | 1
+SILICON_CFG_DATA.PchTsnEnable     | {1, 1}
 
 SILICON_CFG_DATA.PchTsnLinkSpeed  | 3
 

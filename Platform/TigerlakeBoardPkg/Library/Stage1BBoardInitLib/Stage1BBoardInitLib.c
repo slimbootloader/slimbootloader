@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2008 - 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2008 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -255,7 +255,7 @@ UpdateFspConfig (
   // Need enable VTd if TSN is enabled
   SiCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
   if (SiCfgData != NULL) {
-    if (SiCfgData->PchTsnEnable == 1) {
+    if (SiCfgData->PchTsnEnable[0] || SiCfgData->PchTsnEnable[1]) {
       DEBUG ((DEBUG_INFO, "TSN is enabled\n"));
       PlatformData->PlatformFeatures.VtdEnable = 1;
     }
@@ -521,7 +521,7 @@ UpdateFspConfig (
     PLAT_FEAT.S0ixEnable = FeaturesCfgData->Features.S0ix;
 
     // S0ix is disabled if TSN is enabled.
-    if ((PLAT_FEAT.S0ixEnable == 1) && (SiCfgData != NULL) && (SiCfgData->PchTsnEnable == 1)) {
+    if ((PLAT_FEAT.S0ixEnable == 1) && (SiCfgData != NULL) && (SiCfgData->PchTsnEnable[0] || SiCfgData->PchTsnEnable[1])) {
       PLAT_FEAT.S0ixEnable = 0;
       DEBUG ((DEBUG_INFO, "S0ix is turned off when TSN is enabled\n"));
     }

@@ -2,7 +2,7 @@
 #
 #  Slim Bootloader CFGDATA Option File.
 #
-#  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -54,13 +54,12 @@
       value        : 0x1
   - PchTsnEnable :
       name         : Enable PCH TSN
-      type         : Combo
-      option       : $EN_DIS
+      type         : EditNum, HEX, (0x00,0xFFFF)
       condition    : $(COND_S0IX_DIS)
       help         : >
-                     Enable/disable TSN on the PCH.
-      length       : 0x01
-      value        : 0x0
+                     Enable/disable TSN Ports on the PCH.
+      length       : 0x02
+      value        : { 0x0, 0x0 }
   - PchTsnLinkSpeed :
       name         : TSN Link Speed
       type         : Combo
@@ -323,5 +322,5 @@
     - !expand { USB_PORT_TMPL : [ 2, 14 ] }
     - !expand { USB_PORT_TMPL : [ 2, 15 ] }
   - Dummy        :
-      length       : 0x2
+      length       : 0x1
       value        : 0x0
