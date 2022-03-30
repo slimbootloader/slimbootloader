@@ -126,3 +126,4 @@
 [FixedPcd]
   gPlatformAlderLakeTokenSpaceGuid.PcdAdlLpSupport
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled
+  gPlatformAlderLakeTokenSpaceGuid.PcdAzbSupport

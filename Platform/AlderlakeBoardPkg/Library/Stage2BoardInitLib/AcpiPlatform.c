@@ -1199,6 +1199,8 @@ PlatformUpdateAcpiGnvs (
     PlatformNvs->WlanWakeGpio = GPIO_VER2_LP_GPP_D13;
     PlatformNvs->WlanRootPortNumber = 4;
     break;
+  case PLATFORM_ID_AZB_LP5_CRB2A:
+    break;
   default:
     DEBUG ((DEBUG_ERROR, "Could not find PlatformNvs settings for PlatformId 0x%X!\n", GetPlatformId ()));
     break;

@@ -4,3 +4,4 @@ VerInfo.txt
 !CoffeelakeBoardPkg/VbtBin/
 !AlderlakeBoardPkg/VbtBin/
 !ApollolakeBoardPkg/VbtBin/Vbt_*.*
+*.json

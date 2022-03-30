@@ -4,3 +4,4 @@ FspRel.bin
 Fsp*.h
 *.mcb
 ElkhartlakePkg/Include/MemInfoHob.h
+FSP_License.pdf

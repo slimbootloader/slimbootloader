@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -24,6 +24,7 @@
   GpioTableAdlPPreMem.h
   GpioTableTestPreMem.h
   GpioTableAdlNPreMem.h
+  GpioTableAzbPreMem.h
   Stage1BBoardInitLib.h
   Stage1BBoardInitLib.c
   RtcInit.c
@@ -86,3 +87,4 @@
 
 [FixedPcd]
   gPlatformAlderLakeTokenSpaceGuid.PcdAdlLpSupport
+  gPlatformAlderLakeTokenSpaceGuid.PcdAzbWwanSupport

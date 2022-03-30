@@ -50,6 +50,9 @@
 #define PCI_DEVICE_NUMBER_PCH_XHCI                    20
 #define PCI_FUNCTION_NUMBER_PCH_XHCI                  0
 
+#define PCI_DEVICE_NUMBER_PCH_XHCI_1                  13
+#define PCI_FUNCTION_NUMBER_PCH_XHCI_1                0
+
 //
 // xDCI (OTG) USB Device Controller
 //

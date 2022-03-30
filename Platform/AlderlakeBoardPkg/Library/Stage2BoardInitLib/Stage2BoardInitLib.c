@@ -450,7 +450,7 @@ BoardInit (
       }
     }
     Status = PcdSet32S (PcdFuncCpuInitHook, (UINT32)(UINTN) PlatformCpuInit);
-
+#if !FixedPcdGetBool(PcdAzbSupport)
     if (PcdGetBool (PcdFastBootEnabled) == FALSE) {
       if (IsPchS ()) {
         Status = HsPhyLoadAndInit ();
@@ -459,7 +459,7 @@ BoardInit (
         }
       }
     }
-
+#endif
     break;
   case PostSiliconInit:
     FusaConfigPostSi();
@@ -542,7 +542,9 @@ BoardInit (
     /// Initialize the IGD OpRegion
     ///
     }
+#if !FixedPcdGetBool(PcdAzbSupport)
     IgdOpRegionPlatformInit ();
+#endif
 
     ///
     /// Initialize the HECI device (for test HeciInitLib only)
