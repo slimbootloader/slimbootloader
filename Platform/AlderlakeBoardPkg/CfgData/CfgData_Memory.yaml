@@ -334,12 +334,12 @@
   - ActiveSmallCoreCount :
       name         : Number of active small cores
       type         : Combo
-      option       : 0x0:Disable all small cores, 0x1:1, 0x2:2, 0x3:3, 0xff:Active all small cores
+      option       : 0x0:Disable all small cores, 0x1:1, 0x2:2, 0x3:3, 0x4:4, 0x8:8, 0xff:Active all small cores
       help         : >
-                     Number of active small cores(Depends on Number of small cores). Default 0xFF means to active all system supported small cores. <b>0xFF- Active all small cores</b>; 0- Disable all small cores; 1- 1; 2- 2; 3- 3;
+                     Number of active small cores(Depends on Number of small cores). Default 0xFF means to active all system supported small cores. <b>0xFF- Active all small cores</b>; 0- Disable all small cores; 1- 1; 2- 2; 3- 3; 4- 4;
       length       : 0x0001
       value        : 0xff
-  - BiosSize     :
+  - BiosSize       :
       name         : BiosSize
       type         : EditNum, HEX, (0x0, 0xFFFF)
       help         : >
@@ -617,7 +617,7 @@
       value        : {0x04, 0x04, 0x04, 0x04, 0x02, 0x01, 0x04, 0x04}
   - CsiSpeed     :
       name         : Speed of each CSI port
-      type         : EditNum, HEX, (0x00,0xFFFF)
+      type         : EditNum, HEX, (0x0, 0xFFFF)
       option       : 0x0:Sensor default, 0x1:<416Mbps, 0x2:<1.5Gbps, 0x3:<2Gbps, 0x4:<2.5Gbps, 0x5:<4Gbps, 0x6:>4Gbps
       help         : >
                      Speed of each CSI port

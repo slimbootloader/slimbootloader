@@ -109,6 +109,14 @@ jobs:
         Build.Name:   "rpls"
         Build.Arch:   ""
         Build.Target: ""
+      AZB_X86_DEBUG:
+        Build.Name:   "azb"
+        Build.Arch:   ""
+        Build.Target: ""
+      AZB_X86_RELEASE:
+        Build.Name:   "azb"
+        Build.Arch:   ""
+        Build.Target: "-r"
 
 
   pool:
@@ -228,6 +236,14 @@ jobs:
         Build.Name:   "rpls"
         Build.Arch:   "-a x64"
         Build.Target: ""
+      AZB_X86_DEBUG:
+        Build.Name:   "azb"
+        Build.Arch:   ""
+        Build.Target: ""
+      AZB_X86_RELEASE:
+        Build.Name:   "azb"
+        Build.Arch:   ""
+        Build.Target: "-r"
 
   pool:
     vmImage: 'windows-2019'

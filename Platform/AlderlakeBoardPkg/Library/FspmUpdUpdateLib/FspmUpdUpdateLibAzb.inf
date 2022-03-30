@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2021 - 2023, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2023, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -20,7 +20,7 @@
 #
 
 [Sources]
-  FspmUpdUpdateLib.c
+  FspmUpdUpdateLibAzb.c
   BoardSaConfigPreMem.h
 
 [Packages]
@@ -38,8 +38,6 @@
   DebugLib
   ConfigDataLib
   WatchDogTimerLib
-  TccLib
-  FusaConfigLib
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
@@ -48,7 +46,3 @@
   gPlatformModuleTokenSpaceGuid.PcdStage1StackBaseOffset
   gPlatformModuleTokenSpaceGuid.PcdStage1StackSize
   gPlatformModuleTokenSpaceGuid.PcdStage1DataSize
-
-[FixedPcd]
-  gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled
-  gPlatformModuleTokenSpaceGuid.PcdFusaSupport

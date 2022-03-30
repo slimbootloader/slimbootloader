@@ -1,7 +1,7 @@
 /**@file
   GPIO pins for ADL-PCH-LP,
 
-  Copyright (c) 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2022 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -54,6 +54,7 @@
 
 #define GPIO_VER2_LP_GPP_A1                  0x09020001
 #define GPIO_VER2_LP_GPP_A2                  0x09020002
+#define GPIO_VER2_LP_GPP_A6                  0x09020006
 #define GPIO_VER2_LP_GPP_A7                  0x09020007
 #define GPIO_VER2_LP_GPP_A8                  0x09020008
 #define GPIO_VER2_LP_GPP_A11                 0x0902000B
@@ -83,11 +84,14 @@
 #define GPIO_VER2_LP_GPP_H3                  0x09070003
 #define GPIO_VER2_LP_GPP_H10                 0x0907000A
 #define GPIO_VER2_LP_GPP_H11                 0x0907000B
+#define GPIO_VER2_LP_GPP_H13                 0x0907000D
 #define GPIO_VER2_LP_GPP_H17                 0x09070011
 #define GPIO_VER2_LP_GPP_H19                 0x09070013
 #define GPIO_VER2_LP_GPP_H23                 0x09070017
 
 #define GPIO_VER2_LP_GPP_D1                  0x09080001
+#define GPIO_VER2_LP_GPP_D9                  0x09080009
+#define GPIO_VER2_LP_GPP_D10                 0x0908000A
 #define GPIO_VER2_LP_GPP_D11                 0x0908000B
 #define GPIO_VER2_LP_GPP_D13                 0x0908000D
 #define GPIO_VER2_LP_GPP_D14                 0x0908000E
@@ -98,6 +102,7 @@
 
 
 #define GPIO_VER2_LP_GPP_C2                  0x090B0002
+#define GPIO_VER2_LP_GPP_C5                  0x090B0005
 
 
 #define GPIO_VER2_LP_GPP_F1                  0x090C0001

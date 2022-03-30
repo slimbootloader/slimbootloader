@@ -107,6 +107,10 @@
 #define V_SA_DEVICE_ID_INDU_ULX_16   0x4675   ///< ASL (0+8) 2C IOT_INDU
 #define V_SA_DEVICE_ID_INDU_ULX_17   0x4632   ///< ASL (0+8) 2C IOT_INDU IPU Defeature SKU
 
+#define V_SA_DEVICE_ID_MB_ULX_17   0x4672   ///< ArizonaBeach (0+8+0) SA DID
+#define V_SA_DEVICE_ID_MB_ULX_18   0x4676   ///< ArizonaBeach (0+4+0) SA DID
+#define V_SA_DEVICE_ID_MB_ULX_19   0x467A   ///< ArizonaBeach (0+2+0) SA DID
+
 /**
  <b>Description</b>:
   This is the base address for the PCI Express Egress Port MMIO Configuration space.  There is no physical memory within this 4KB window that can be addressed.  The 4KB reserved by this register does not alias to any PCI 2.3 compliant memory mapped space.  On reset, the EGRESS port MMIO configuration space is disabled and must be enabled by writing a 1 to PXPEPBAREN [Dev 0, offset 40h, bit 0].

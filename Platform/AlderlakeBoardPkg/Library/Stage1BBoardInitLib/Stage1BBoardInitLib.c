@@ -23,6 +23,18 @@ CONST PLT_DEVICE mPlatformDevices[] = {
   {
     .Dev = {
       .PciDev = {
+        .PciFunctionNumber  = PCI_FUNCTION_NUMBER_PCH_XHCI_1,
+        .PciDeviceNumber    = PCI_DEVICE_NUMBER_PCH_XHCI_1,
+        .PciBusNumber       = DEFAULT_PCI_BUS_NUMBER_PCH,
+        .IsMmioDevice       = 0
+      }
+    },
+    .Type = OsBootDeviceUsb,
+    .Instance = 1
+  },
+  {
+    .Dev = {
+      .PciDev = {
         .PciFunctionNumber  = PCI_FUNCTION_NUMBER_PCH_SATA_1,
         .PciDeviceNumber    = PCI_DEVICE_NUMBER_PCH_SATA_1,
         .PciBusNumber       = DEFAULT_PCI_BUS_NUMBER_PCH,
@@ -652,6 +664,30 @@ DEBUG_CODE_END();
       break;
     case PLATFORM_ID_ADL_N_LPDDR5_RVP:
       ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTablePreMemAdlNLpddr5Rvp) / sizeof (mGpioTablePreMemAdlNLpddr5Rvp[0]), (UINT8*)mGpioTablePreMemAdlNLpddr5Rvp);
+      break;
+    case PLATFORM_ID_AZB_LP5_CRB2A:
+#if FixedPcdGetBool(PcdAzbWwanSupport)
+      ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTablePreMemAzbLp5) / sizeof (mGpioTablePreMemAzbLp5[0]), (UINT8*)mGpioTablePreMemAzbLp5);
+
+      GpioSetOutputValue ( GPIO_VER2_LP_GPP_C5, 0);
+      MicroSecondDelay (20 * 1000);  // Delay by 20ms
+
+      GpioSetOutputValue ( GPIO_VER2_LP_GPP_E5, 0);
+      MicroSecondDelay (10 * 1000);  // Delay by 10ms
+
+      GpioSetOutputValue ( GPIO_VER2_LP_GPP_D9, 0);
+      MicroSecondDelay (500 * 1000);  // Delay by 500ms
+
+      ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTableAzbM80WwanEarlyPreMem) / sizeof (mGpioTableAzbM80WwanEarlyPreMem[0]), (UINT8*)mGpioTableAzbM80WwanEarlyPreMem);
+
+      MicroSecondDelay (20 * 1000);  // Delay by 20ms
+
+      GpioSetOutputValue ( GPIO_VER2_LP_GPP_E5, 1);
+      MicroSecondDelay (80 * 1000);  // Delay by 80ms
+
+      GpioSetOutputValue ( GPIO_VER2_LP_GPP_C5, 1);
+#endif
+
       break;
     default:
       DEBUG ((DEBUG_ERROR, "Could not find pre-mem GPIO for PlatformId 0x%X!\n", GetPlatformId ()));

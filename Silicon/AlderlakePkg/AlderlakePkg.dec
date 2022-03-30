@@ -24,6 +24,8 @@
 [PcdsFixedAtBuild]
   gPlatformAlderLakeTokenSpaceGuid.PcdAdlLpSupport    | FALSE      | BOOLEAN | 0x30000100
   gPlatformAlderLakeTokenSpaceGuid.PcdAdlNSupport     | FALSE      | BOOLEAN | 0x30000101
+  gPlatformAlderLakeTokenSpaceGuid.PcdAzbSupport      | FALSE      | BOOLEAN | 0x30000102
+  gPlatformAlderLakeTokenSpaceGuid.PcdAzbWwanSupport  | FALSE      | BOOLEAN | 0x30000103
 
 [PcdsDynamic]
   gPlatformAlderLakeTokenSpaceGuid.PcdFusaDiagnosticBoot | 0 | BOOLEAN | 0x30000200

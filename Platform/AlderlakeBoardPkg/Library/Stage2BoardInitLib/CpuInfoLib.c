@@ -109,6 +109,12 @@ GetCpuSkuInfo (
           CpuType  = EnumCpuUlt;
           SkuFound = TRUE;
           break;
+        case V_SA_DEVICE_ID_MB_ULX_17:    // ArizonaBeach (0+8+0)
+        case V_SA_DEVICE_ID_MB_ULX_18:    // ArizonaBeach (0+4+0)
+        case V_SA_DEVICE_ID_MB_ULX_19:    // ArizonaBeach (0+2+0)
+          CpuType = EnumCpuUlx;
+          SkuFound = TRUE;
+          break;
         default:
           break;
       }

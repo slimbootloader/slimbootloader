@@ -21,14 +21,16 @@ UpdatePayloadId (
   VOID
   )
 {
-  EFI_STATUS        Status;
   UINT32            PayloadId;
   GEN_CFG_DATA      *GenericCfgData;
+#if !FixedPcdGetBool(PcdAzbSupport)
+  EFI_STATUS        Status;
   PLDSEL_CFG_DATA   *PldSelCfgData;
   UINT32            PayloadSelGpioData;
   UINT32            PayloadSelGpioPad;
 
   PayloadSelGpioData = 0;
+#endif
 
   PayloadId = GetPayloadId ();
   GenericCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);
@@ -49,6 +51,7 @@ UpdatePayloadId (
     }
   }
 
+#if !FixedPcdGetBool(PcdAzbSupport)
   //
   // Switch payloads based on configured GPIO pin
   //
@@ -72,6 +75,6 @@ UpdatePayloadId (
       DEBUG ((DEBUG_INFO, "Set PayloadId to 0x%08X based on GPIO config\n", PayloadId));
     }
   }
-
+#endif
   SetPayloadId (PayloadId);
 }

@@ -54,6 +54,10 @@ Defines Platform BoardIds
 #define BoardIdAdlSAdpSDdr5SODimmCrb                  0x30
 #define PLATFORM_ID_ADL_S_ADP_S_DDR5_SODIMM_CRB       0x1C
 
+// ArizonaBeach Boards
+#define BoardIdAzbLp5Crb2A                            0x22
+#define PLATFORM_ID_AZB_LP5_CRB2A                     0x09
+
 // Test boards
 #define BoardIdTestSDdr5UDimm1DRvp                    0x39
 #define PLATFORM_ID_TEST_S_DDR5_UDIMM_RVP             0x19
