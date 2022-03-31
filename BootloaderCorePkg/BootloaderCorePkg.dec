@@ -90,7 +90,7 @@
   gPlatformModuleTokenSpaceGuid.PcdVariableRegionBase     | 0x00000000 | UINT32 | 0x2000008E
   gPlatformModuleTokenSpaceGuid.PcdVariableRegionSize     | 0x00000000 | UINT32 | 0x2000008F
 
-  gPlatformModuleTokenSpaceGuid.PcdMemoryMapEntryNumber   | 0x00000020 | UINT32 | 0x200000A2
+  gPlatformModuleTokenSpaceGuid.PcdMemoryMapEntryNumber   | 0x00000000 | UINT32 | 0x200000A2
   gPlatformModuleTokenSpaceGuid.PcdOsBootOptionNumber     | 0x00000008 | UINT32 | 0x200000A3
   gPlatformModuleTokenSpaceGuid.PcdServiceNumber          | 0x00000004 | UINT32 | 0x200000A4
 
