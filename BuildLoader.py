@@ -238,6 +238,8 @@ class BaseBoard(object):
         self.MIN_FSP_REVISION      = 0
         self.FSP_IMAGE_ID          = ''
 
+        self.MAX_MEMORY_MAP_ENTRY_NUM = 0x20
+
         self.TOP_SWAP_SIZE         = 0
         self.REDUNDANT_SIZE        = 0
 
