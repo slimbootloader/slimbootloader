@@ -11,11 +11,11 @@
 
 [UserExtensions.SBL."CloneRepo"]
   REPO    = https://github.com/intel/FSP.git
-  COMMIT  = 2263d48a006d8653df1fc742c3f7d5ffd6b75d68
+  COMMIT  = b24086682cb08da0c9b7a1c975da460f39ffd314
 
 [UserExtensions.SBL."CopyList"]
-  CometLakeFspBinPkg/CometLakeV/FSP.fd                 : Silicon/CometlakevPkg/FspBin/FspDbg.bin
-  CometLakeFspBinPkg/CometLakeV/FSP.fd                 : Silicon/CometlakevPkg/FspBin/FspRel.bin
+  CometLakeFspBinPkg/CometLakeV/Fsp.fd                 : Silicon/CometlakevPkg/FspBin/FspDbg.bin
+  CometLakeFspBinPkg/CometLakeV/Fsp.fd                 : Silicon/CometlakevPkg/FspBin/FspRel.bin
   CometLakeFspBinPkg/CometLakeV/Fsp.bsf                : Silicon/CometlakevPkg/FspBin/Fsp.bsf
   CometLakeFspBinPkg/CometLakeV/Include/FspInfoHob.h   : Silicon/CometlakevPkg/Include/FspInfoHob.h
   CometLakeFspBinPkg/CometLakeV/Include/FspUpd.h       : Silicon/CometlakevPkg/Include/FspUpd.h

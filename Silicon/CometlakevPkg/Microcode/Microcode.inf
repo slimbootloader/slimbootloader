@@ -14,13 +14,13 @@
   VERSION_STRING       = 1.0
 
 [Sources]
- m22A0653_000000CC.mcb  # CML G1-Step
- m22A0655_000000CA.mcb
+ m22A0653_000000EA.mcb  # CML G1-Step
+ m22A0655_000000EC.mcb  # CML Q0-Step
 
 [UserExtensions.SBL."CloneRepo"]
   REPO  = https://github.com/tianocore/edk2-non-osi.git
-  COMMIT= 9369fc86378bc13383e0544e55dec4bf0e65a412
+  COMMIT= bf2ba5e5136bfe5efe6052fb565d8597bcbeec17
 
 [UserExtensions.SBL."CopyList"]
-  Silicon/Intel/CometlakeSiliconBinPkg/Microcode/m22A0653_000000CC.mcb  : Silicon/CometlakevPkg/Microcode/m22A0653_000000CC.mcb
-  Silicon/Intel/CometlakeSiliconBinPkg/Microcode/m22A0655_000000CA.mcb  : Silicon/CometlakevPkg/Microcode/m22A0655_000000CA.mcb
+  Silicon/Intel/CometlakeSiliconBinPkg/Microcode/m22A0653_000000EA.mcb  : Silicon/CometlakevPkg/Microcode/m22A0653_000000EA.mcb
+  Silicon/Intel/CometlakeSiliconBinPkg/Microcode/m22A0655_000000EC.mcb  : Silicon/CometlakevPkg/Microcode/m22A0655_000000EC.mcb
