@@ -535,7 +535,7 @@ def gen_flash_map_bin (flash_map_file, comp_list):
 def copy_expanded_file (src, dst):
     gen_cfg_data ("GENDLT", src, dst)
 
-def gen_config_file (fv_dir, brd_name_override, brd_name, platform_id, pri_key, cfg_db_size, cfg_size, cfg_int, cfg_ext, sign_scheme, hash_type, svn):
+def gen_config_file (fv_dir, brd_name_override, brd_name, platform_id, pri_key, cfg_db_size, cfg_size, cfg_int, cfg_ext, sign_scheme, hash_type, svn, brd_build_name):
     # Remove previous generated files
     for file in glob.glob(os.path.join(fv_dir, "CfgData*.*")):
             os.remove(file)
@@ -574,6 +574,21 @@ def gen_config_file (fv_dir, brd_name_override, brd_name, platform_id, pri_key, 
     gen_cfg_data (gen_cmd[file_ext], cfg_dsc_file, cfg_comb_dsc_file)
     gen_cfg_data ("GENHDR", cfg_pkl_file, ';'.join([cfg_hdr_file, cfg_com_hdr_file]))
     gen_cfg_data ("GENBIN", cfg_pkl_file, cfg_bin_file)
+
+    # Update cfg_hdr_file to add a new #define for platform name
+    if brd_build_name != "":
+        with open(cfg_hdr_file, "r") as in_file:
+            lines = in_file.readlines()
+
+        with open(cfg_hdr_file, "w") as out_file:
+            line_added = False
+            for line in lines:
+                out_file.write (line)
+                if not line_added:
+                    match = re.match('^#define ', line)
+                    if match:
+                        out_file.write ("\n#define PLATFORM_%s        1" % brd_build_name.upper())
+                        line_added = True
 
     cfg_base_file = None
     for cfg_file_list in [cfg_int, cfg_ext]:
