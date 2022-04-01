@@ -71,6 +71,7 @@
   WatchDogTimerLib
   FspsUpdUpdateLib
   PciePm
+  PrintLib
 
 [Guids]
   gOsConfigDataGuid
