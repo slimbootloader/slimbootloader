@@ -49,22 +49,40 @@ InitializeSmbiosInfo (
   VOID
   )
 {
+  CHAR8                 TempStrBuf[SMBIOS_STRING_MAX_LENGTH];
   UINT16                Index;
   UINTN                 Length;
   SMBIOS_TYPE_STRINGS  *TempSmbiosStrTbl;
+  BOOT_LOADER_VERSION  *VerInfoTbl;
   VOID                 *SmbiosStringsPtr;
 
   if (FeaturePcdGet (PcdSmbiosEnabled)) {
     Index         = 0;
     TempSmbiosStrTbl  = (SMBIOS_TYPE_STRINGS *) AllocateTemporaryMemory (0);
+    VerInfoTbl    = GetVerInfoPtr ();
 
     //
     // SMBIOS_TYPE_BIOS_INFORMATION
     //
     AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BIOS_INFORMATION,
       1, "Intel Corporation");
-    AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BIOS_INFORMATION,
-      2, "0.0.0 Version");
+  if (VerInfoTbl != NULL) {
+    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf),
+      "SB_ADL.%03d.%03d.%03d.%03d.%03d.%05d.%c-%016lX%a\0",
+      VerInfoTbl->ImageVersion.SecureVerNum,
+      VerInfoTbl->ImageVersion.CoreMajorVersion,
+      VerInfoTbl->ImageVersion.CoreMinorVersion,
+      VerInfoTbl->ImageVersion.ProjMajorVersion,
+      VerInfoTbl->ImageVersion.ProjMinorVersion,
+      VerInfoTbl->ImageVersion.BuildNumber,
+      VerInfoTbl->ImageVersion.BldDebug ? 'D' : 'R',
+      VerInfoTbl->SourceVersion,
+      VerInfoTbl->ImageVersion.Dirty ? "-dirty" : "");
+  } else {
+    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "Unknown");
+  }
+  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BIOS_INFORMATION,
+    2, TempStrBuf);
     AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BIOS_INFORMATION,
       3, __DATE__);
 
