@@ -1195,5 +1195,11 @@ PlatformUpdateAcpiGnvs (
       PlatformNvs->LowPowerS0Idle = PlatformData->PlatformFeatures.TccLowPowerS0Idle;
     }
   }
+
+    // Expose Timed GPIO to OS through Nvs variables
+    if (SiCfgData != NULL) {
+        PchNvs->EnableTimedGpio0 = (UINT8)SiCfgData->EnableTimedGpio0;
+        PchNvs->EnableTimedGpio1 = (UINT8)SiCfgData->EnableTimedGpio1;
+    }
 }
 
