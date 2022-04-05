@@ -2,7 +2,7 @@
 ## @ GenContainer.py
 # Tools to operate on a container image
 #
-# Copyright (c) 2019 - 2020, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2019 - 2022, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -329,9 +329,13 @@ class CONTAINER ():
         # calculate auth info for a give component file with specified auth type
         auth_size = CONTAINER.get_auth_size (auth_type_str, True)
         file_data = bytearray(get_file_data (comp_file))
-        lz_header = LZ_HEADER.from_buffer(file_data)
         auth_data = None
         hash_data = bytearray()
+
+        if len(file_data) < sizeof (LZ_HEADER):
+            return file_data, hash_data, auth_data
+
+        lz_header = LZ_HEADER.from_buffer(file_data)
         data      = bytearray()
         if lz_header.signature in LZ_HEADER._compress_alg:
             offset = sizeof(lz_header) + get_aligned_value (lz_header.compressed_len)
