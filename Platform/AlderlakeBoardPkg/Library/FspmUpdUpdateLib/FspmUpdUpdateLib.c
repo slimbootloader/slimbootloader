@@ -101,9 +101,7 @@ TccModePreMemConfig (
   //FspmUpd->FspmConfig.WrcFeatureEnable         = 1;
   FspmUpd->FspmConfig.GtClosEnable               = 1;    // ***This causes hang in FSP and may end up frying up the board if this line is enabled in non-IOTG SKU ***
   FspmUpd->FspmConfig.PowerDownMode              = 0;    // controls command bus tristating during idle periods
-  if (GetCpuStepping () >= EnumAdlB0) {
-      FspmUpd->FspmConfig.HyperThreading         = 0;
-  }
+  FspmUpd->FspmConfig.HyperThreading         = 0;
   FspmUpd->FspmConfig.DisableStarv2medPrioOnNewReq = 1;
 
   FspmUpd->FspmConfig.SoftwareSramEnPreMem   = TccCfgData->TccSoftSram;
