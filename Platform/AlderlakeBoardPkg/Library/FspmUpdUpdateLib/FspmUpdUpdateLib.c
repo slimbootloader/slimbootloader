@@ -556,7 +556,9 @@ UpdateFspConfig (
     Fspmcfg->SiSkipOverrideBootModeWhenFwUpdate = TRUE;
 #endif
   }
-  Fspmcfg->WRDS = 0x1;
+#ifndef PLATFORM_ADLN
+    Fspmcfg->WRDS = 0x1;
+#endif
   if (IsPchLp ()) {
     Fspmcfg->DdiPortAConfig = 0x1;
     Fspmcfg->WdtDisableAndLock = 0x1;
