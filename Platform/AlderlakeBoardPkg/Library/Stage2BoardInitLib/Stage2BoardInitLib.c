@@ -268,6 +268,8 @@ BoardInit (
           case PLATFORM_ID_ADL_S_ADP_S_DDR5_UDIMM_1DC_CRB:
           case PLATFORM_ID_ADL_S_ADP_S_DDR4_SODIMM_CRB:
           case PLATFORM_ID_ADL_S_ADP_S_DDR5_SODIMM_CRB:
+          case PLATFORM_ID_TEST_S_DDR5_UDIMM_RVP:
+          case PLATFORM_ID_TEST_S_DDR5_SODIMM_RVP:
             ConfigureGpio (CDATA_NO_TAG, sizeof (mAdlSTsnDeviceGpioTable) / sizeof (mAdlSTsnDeviceGpioTable[0]), (UINT8*)mAdlSTsnDeviceGpioTable);
             break;
           case PLATFORM_ID_ADL_N_DDR5_CRB:
