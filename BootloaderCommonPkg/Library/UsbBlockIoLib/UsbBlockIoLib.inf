@@ -1,7 +1,7 @@
 ## @file
 # Description file for the USB block I/O library.
 #
-# Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2018 - 2022, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -48,4 +48,5 @@
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdUsbTransferTimeoutValue  ## CONSUMES
   gPlatformCommonLibTokenSpaceGuid.PcdMultiUsbBootDeviceEnabled ## CONSUMES
+  gPlatformCommonLibTokenSpaceGuid.PcdUsbCmdTimeout ## CONSUMES
 

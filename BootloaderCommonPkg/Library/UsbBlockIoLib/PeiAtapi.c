@@ -1,7 +1,7 @@
 /** @file
 Pei USB ATATPI command implementations.
 
-Copyright (c) 1999 - 2017, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 1999 - 2022, Intel Corporation. All rights reserved.<BR>
 
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
@@ -56,7 +56,7 @@ PeiUsbInquiry (
              &Idata,
              36,
              EfiUsbDataIn,
-             2000
+             PcdGet16 (PcdUsbCmdTimeout)
              );
 
   if (EFI_ERROR (Status)) {
@@ -111,7 +111,7 @@ PeiUsbTestUnitReady (
              NULL,
              0,
              EfiUsbNoData,
-             2000
+             PcdGet16 (PcdUsbCmdTimeout)
              );
 
   if (EFI_ERROR (Status)) {
@@ -179,7 +179,7 @@ PeiUsbRequestSense (
                (VOID *) Ptr,
                sizeof (ATAPI_REQUEST_SENSE_DATA),
                EfiUsbDataIn,
-               2000
+               PcdGet16 (PcdUsbCmdTimeout)
                );
 
     //
@@ -255,7 +255,7 @@ PeiUsbReadCapacity (
              (VOID *) &Data,
              sizeof (ATAPI_READ_CAPACITY_DATA),
              EfiUsbDataIn,
-             2000
+             PcdGet16 (PcdUsbCmdTimeout)
              );
 
   if (EFI_ERROR (Status)) {
@@ -313,7 +313,7 @@ PeiUsbReadFormattedCapacity (
              (VOID *) &FormatData,
              sizeof (ATAPI_READ_FORMAT_CAPACITY_DATA),
              EfiUsbDataIn,
-             2000
+             PcdGet16 (PcdUsbCmdTimeout)
              );
 
   if (EFI_ERROR (Status)) {

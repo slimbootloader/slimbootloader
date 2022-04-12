@@ -134,6 +134,7 @@ class BaseBoard(object):
         self.ACPI_PM_TIMER_BASE     = 0x0408
         self.ACPI_PROCESSOR_ID_BASE = 1
         self.USB_KB_POLLING_TIMEOUT = 1
+        self.USB_CMD_TIMEOUT        = 0x1000
 
         self.VERIFIED_BOOT_STAGE_1B   = 0x0
         self.BOOT_MEDIA_SUPPORT_MASK  = 0xFFFFFFFF
