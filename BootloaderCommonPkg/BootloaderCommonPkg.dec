@@ -1,7 +1,7 @@
 ## @file
 # Provides bootloader driver related package definitions.
 #
-# Copyright (c) 2016 - 2021, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2016 - 2022, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -119,6 +119,9 @@
 
   # USB keyboard polling timeout in milliseconds
   gPlatformCommonLibTokenSpaceGuid.PcdUsbKeyboardPollingTimeout   | 0x00000001 | UINT32 | 0x20000440
+
+  # USB command timeout in milliseconds
+  gPlatformCommonLibTokenSpaceGuid.PcdUsbCmdTimeout               |     0x1000 | UINT16 | 0x20000441
 
   # Options to limit framebuffer console size (it will be centered if smaller than screen resolution)
   gPlatformCommonLibTokenSpaceGuid.PcdFrameBufferMaxConsoleWidth  | 0xFFFFFFFF | UINT32 | 0x20000501
