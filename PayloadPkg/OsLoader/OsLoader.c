@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -1367,6 +1367,7 @@ PayloadMain (
       BootShell    = FALSE;
     } else {
       if (OsBootOptionList->BootToShell != 0) {
+        ShellTimeout = (UINTN)PcdGet16 (PcdPlatformBootTimeOut);
         BootShell    = TRUE;
       } else if (DebugCodeEnabled ()) {
         ShellTimeout = (UINTN)PcdGet16 (PcdPlatformBootTimeOut);
@@ -1419,7 +1420,7 @@ PayloadMain (
       }
     }
 
-    if (DebugCodeEnabled () && (OsBootOptionList->RestrictedBoot == 0)) {
+    if ((DebugCodeEnabled () || (OsBootOptionList->BootToShell != 0)) && (OsBootOptionList->RestrictedBoot == 0)) {
       // Restricted boot should not fall back to shell
       RunShell (0);
     } else {

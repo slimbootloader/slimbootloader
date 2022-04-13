@@ -2,7 +2,7 @@
 #
 #  Slim Bootloader Platform CFGDATA Option File.
 #
-#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -68,4 +68,15 @@
                      AUTO allows platform to set current boot option using platform specific policy.
       length       : 0x01
       value        : 0
-
+  - BootToShell :
+      name         : Boot to OsLoader shell
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     By default OsLoader payload shell is only available in debug build. Enable BootToShell will make OsLoader Payload
+                     have same behavior with debug build in the release build.
+      length       : 0x01
+      value        : 0
+  - Dummy        :
+      length       : 0x3
+      value        : 0x0
