@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2019 - 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -127,6 +127,7 @@ FillBootOptionListFromCfgData (
   GenCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);
   if (GenCfgData != NULL) {
     OsBootOptionList->CurrentBoot = GenCfgData->CurrentBoot;
+    OsBootOptionList->BootToShell = (GenCfgData->BootToShell == 0)?0:1;
     if (OsBootOptionList->CurrentBoot != MAX_BOOT_OPTION_ENTRY - 1) {
       if (OsBootOptionList->CurrentBoot >= OsBootOptionList->OsBootOptionCount) {
         OsBootOptionList->CurrentBoot = 0;
