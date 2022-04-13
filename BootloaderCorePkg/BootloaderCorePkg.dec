@@ -146,6 +146,10 @@
   gPlatformModuleTokenSpaceGuid.PcdSeedListBufferSize     | 0x00000400 | UINT32 | 0x200000E2
 
   gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesSize       |     0x1000 | UINT16 | 0x200000E3
+  # 0: Sort the CPU according to their thread distances
+  # 1: Sort the CPU based on CPU APIC ID in ascending order
+  # 2: Sort the CPU based on CPU APIC ID in descending order
+  gPlatformModuleTokenSpaceGuid.PcdCpuSortMethod          |     0      | UINT32 | 0x200000E4
 
   # Size of the Hash store allocated in bootloader
   gPlatformModuleTokenSpaceGuid.PcdHashStoreSize          | 0x00000200 | UINT32 | 0x200000F1

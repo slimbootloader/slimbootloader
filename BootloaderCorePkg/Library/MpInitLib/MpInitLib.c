@@ -1,7 +1,7 @@
 /** @file
   MP init library implementation.
 
-  Copyright (c) 2015 - 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2015 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -74,10 +74,11 @@ CompareCpuApicId (
 }
 
 /**
-  Sort the CPU entry according to their thread distances
+  Sort the CPU entry
 
-  It is required to list CPU thread with further distance first so as to
-  fully utilize unshared CPU resources.
+  It sort the CPU by the PCD PcdCpuSortMethod. Sort CPU by APIC ID in ascending order could make the debug easy.
+  Sort CPU by the APIC ID in descending order might be required by some special case.
+  Sort CPU by their thread distances could help fully utilize unshared CPU resources.
 
   @param[in]  SysCpuInfo     Pointer to the ALL_CPU_INFO structure.
 
@@ -98,22 +99,35 @@ SortSysCpu (
     return;
   }
 
-  // Sort by APIC ID first
+  // Sort the CPU by APIC ID
   PerformQuickSort (SysCpuInfo->CpuInfo, SysCpuInfo->CpuCount, sizeof (CPU_INFO), CompareCpuApicId, &Temp);
 
-  // Keep a backup copy
-  CopyMem (&OldSysCpuInfo,  SysCpuInfo, sizeof (ALL_CPU_INFO));
+  if (FixedPcdGet32 (PcdCpuSortMethod) == 2) {
+    // Sort the CPU by CPU APIC ID in descending order
+    for (Idx1 = 0; Idx1 < SysCpuInfo->CpuCount / 2; Idx1++) {
+      CopyMem (&Temp, &SysCpuInfo->CpuInfo[Idx1], sizeof(CPU_INFO));
+      CopyMem (&SysCpuInfo->CpuInfo[Idx1], &SysCpuInfo->CpuInfo[SysCpuInfo->CpuCount - Idx1 - 1], sizeof(CPU_INFO));
+      CopyMem (&SysCpuInfo->CpuInfo[SysCpuInfo->CpuCount - Idx1 - 1], &Temp, sizeof(CPU_INFO));
+    }
+  }
 
-  // Rearrange order per thread distance
-  Idx2 = 0;
-  Step = GetPowerOfTwo32 (SysCpuInfo->CpuCount);
-  for (; Step > 0; Step >>= 1) {
-    for (Idx1 = 0; Idx1 < SysCpuInfo->CpuCount; Idx1 += Step) {
-      if ((OldSysCpuInfo.CpuInfo[Idx1].ApicId != 0xFFFFFFFF) && (Idx2 < SysCpuInfo->CpuCount)) {
-        // Fill the CPU_INFO and mark it as consumed
-        CopyMem (&SysCpuInfo->CpuInfo[Idx2], &OldSysCpuInfo.CpuInfo[Idx1], sizeof(CPU_INFO));
-        OldSysCpuInfo.CpuInfo[Idx1].ApicId = 0xFFFFFFFF;
-        Idx2++;
+  if (FixedPcdGet32 (PcdCpuSortMethod) == 0) {
+    // Sort the CPU according to their thread distances
+
+    // Keep a backup copy
+    CopyMem (&OldSysCpuInfo,  SysCpuInfo, sizeof (ALL_CPU_INFO));
+
+    // Rearrange order per thread distance
+    Idx2 = 0;
+    Step = GetPowerOfTwo32 (SysCpuInfo->CpuCount);
+    for (; Step > 0; Step >>= 1) {
+      for (Idx1 = 0; Idx1 < SysCpuInfo->CpuCount; Idx1 += Step) {
+        if ((OldSysCpuInfo.CpuInfo[Idx1].ApicId != 0xFFFFFFFF) && (Idx2 < SysCpuInfo->CpuCount)) {
+          // Fill the CPU_INFO and mark it as consumed
+          CopyMem (&SysCpuInfo->CpuInfo[Idx2], &OldSysCpuInfo.CpuInfo[Idx1], sizeof(CPU_INFO));
+          OldSysCpuInfo.CpuInfo[Idx1].ApicId = 0xFFFFFFFF;
+          Idx2++;
+        }
       }
     }
   }
