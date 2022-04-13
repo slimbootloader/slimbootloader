@@ -65,7 +65,7 @@ def gen_xml_file(stitch_dir, stitch_cfg_file, btg_profile, plt_params_list, plat
 
     tree.write(updated_xml_file)
 
-def replace_component (ifwi_src_path, flash_path, file_path, comp_alg, pri_key):
+def replace_component (ifwi_src_path, flash_path, file_path, comp_alg, pri_key, svn):
     print ("Replacing components.......")
     work_dir = os.getcwd()
     ifwi_bin = bytearray (get_file_data (ifwi_src_path))
@@ -90,7 +90,7 @@ def replace_component (ifwi_src_path, flash_path, file_path, comp_alg, pri_key):
     replace_comp = replace_comps[0]
     if comp_name:
         # extract container image
-        container_file = os.path.join(work_dir, 'CTN_%s.bin') % comp_name
+        container_file = os.path.join(work_dir, 'Temp', 'CTN_%s.bin') % comp_name
         gen_file_from_object (container_file, ifwi_bin[replace_comp.offset:replace_comp.offset + replace_comp.length])
         comp_file     = os.path.join(work_dir, file_path)
         sblopen_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), '../../../../', 'SblOpen')
@@ -108,7 +108,7 @@ def replace_component (ifwi_src_path, flash_path, file_path, comp_alg, pri_key):
         if not os.path.isabs(pri_key):
             pri_key = os.path.join (work_dir, pri_key)
         cmd_line = [sys.executable, gen_container, 'replace', '-i', container_file, '-o', container_file, '-n', comp_name,
-                                    '-f', comp_file, '-c', comp_alg, '-k', pri_key, '-td', tool_bin_dir]
+                    '-f', comp_file, '-c', comp_alg, '-k', pri_key, '-td', tool_bin_dir, '-s', '%d' % svn]
         run_process (cmd_line, True)
         comp_bin = bytearray (get_file_data (container_file))
     else:
@@ -117,11 +117,11 @@ def replace_component (ifwi_src_path, flash_path, file_path, comp_alg, pri_key):
     IFWI_PARSER.replace_component (ifwi_bin, comp_bin, flash_path)
     gen_file_from_object (ifwi_src_path, ifwi_bin)
 
-def replace_components (ifwi_src_path, stitch_cfg_file):
+def replace_components (ifwi_src_path, stitch_cfg_file, plt_params_list):
     print ("Replacing components.......")
-    replace_list = stitch_cfg_file.get_component_replace_list ()
-    for flash_path, file_path, comp_alg, pri_key in replace_list:
-        replace_component (ifwi_src_path, flash_path, file_path, comp_alg, pri_key)
+    replace_list = stitch_cfg_file.get_component_replace_list (plt_params_list)
+    for flash_path, file_path, comp_alg, pri_key, svn in replace_list:
+        replace_component (ifwi_src_path, flash_path, file_path, comp_alg, pri_key, svn)
 
 def stitch (stitch_dir, stitch_cfg_file, sbl_file, btg_profile, plt_params_list, platform_data, platform, tpm, full_rdundant = True):
     temp_dir = os.path.abspath(os.path.join (stitch_dir, 'Temp'))
@@ -152,7 +152,7 @@ def stitch (stitch_dir, stitch_cfg_file, sbl_file, btg_profile, plt_params_list,
         fd.close()
 
     print("Replace components in both partitions....")
-    replace_components (os.path.join(temp_dir, "SlimBootloader.bin"), stitch_cfg_file)
+    replace_components (os.path.join(temp_dir, "SlimBootloader.bin"), stitch_cfg_file, plt_params_list)
 
     # Generate xml
     gen_xml_file(stitch_dir, stitch_cfg_file, btg_profile, plt_params_list, platform, tpm)
@@ -187,6 +187,7 @@ def main():
     ap.add_argument('-d', dest='plat_data', type=hexstr, default=None, help='Specify a platform specific data (HEX, DWORD) for customization')
     ap.add_argument('-r', dest='remove', action = "store_true", default = False, help = "delete temporary files after stitch")
     ap.add_argument('-t', dest='tpm', default = 'ptt', choices=['ptt', 'dtpm', 'none'], help='specify TPM type')
+    ap.add_argument('-k', dest='key_dir', type=str, required=False, help='specify the path to Sbl Keys directory')
     ap.add_argument('-o', dest='option', default = '', help = "Platform specific stitch option. Format: '-o option1;option2;...' For each option its format is 'parameter:data'. Try -o help for more information")
     ap.add_argument('-op', dest='outpath', default = '', help = "Specify path to write output IFIW and signed bin files")
 
@@ -196,19 +197,25 @@ def main():
     if args.work_dir == '':
         print ("Please specify stitch work directory")
         print ('%s' % stitch_cfg_file.extra_usage_txt)
-        return 1
+        return 0
 
     if args.btg_profile in ["vm","fvme"] and args.tpm == "none":
         print ("ERROR: Choose appropriate Tpm type for BootGuard profile 3 and 5")
-        return 1
+        return 0
 
     plt_params_list = get_para_list (args.option.split(';'))
     if not stitch_cfg_file.check_parameter(plt_params_list):
-        exit (1)
+        exit (0)
 
     print ("Executing stitch.......")
     curr_dir = os.getcwd()
     sbl_file = os.path.abspath(os.path.join (curr_dir, args.sbl_file))
+
+    if 'tsn' in plt_params_list or 'tcc' in plt_params_list:
+      if args.key_dir:
+          os.environ['SBL_KEY_DIR'] = os.path.abspath(args.key_dir)
+      else:
+          raise Exception ('SBL Keys dir is not set. Use -k to set directory!')
 
     work_dir = os.path.abspath (args.work_dir)
     os.chdir(work_dir)
@@ -222,6 +229,17 @@ def main():
 
     ifwi_file_name = os.path.join(args.outpath,'sbl_ifwi_%s.bin' % (args.platform))
     shutil.copy(generated_ifwi_file, ifwi_file_name)
+    if 'dual' in plt_params_list:
+        print ("Copy dual IFWI images to root")
+        ifwi_4MB_file_name = os.path.join(args.outpath,'sbl_ifwi_%s_4MB.bin' % (args.platform))
+        ifwi_32MB_file_name = os.path.join(args.outpath,'sbl_ifwi_%s_32MB.bin' % (args.platform))
+        generated4MB_ifwi_file = os.path.join(work_dir, 'Temp', 'Ifwi1.bin')
+        generated32MB_ifwi_file = os.path.join(work_dir, 'Temp', 'Ifwi2.bin')
+        if not os.path.exists (generated4MB_ifwi_file):
+            generated4MB_ifwi_file = os.path.join(work_dir, 'Temp', 'Temp', 'Ifwi1.bin')
+            generated32MB_ifwi_file = os.path.join(work_dir, 'Temp', 'Temp', 'Ifwi2.bin')
+        shutil.copy(generated4MB_ifwi_file, ifwi_4MB_file_name)
+        shutil.copy(generated32MB_ifwi_file, ifwi_32MB_file_name)
 
     generated_signed_sbl =  os.path.join(work_dir, 'Temp', 'SlimBootloader.bin')
     sbl_file_name = os.path.join(args.outpath,'SlimBootloader_%s.bin' % (args.platform))

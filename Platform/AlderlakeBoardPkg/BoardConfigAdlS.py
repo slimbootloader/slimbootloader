@@ -1,7 +1,7 @@
 ## @file
 # This file is used to provide board specific image information.
 #
-#  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -15,26 +15,28 @@ import time
 
 sys.dont_write_bytecode = True
 sys.path.append (os.path.join('..', '..'))
-from BuildLoader import *
+from BuildLoader import BaseBoard, STITCH_OPS, FLASH_REGION_TYPE, HASH_USAGE
+from BuildLoader import IPP_CRYPTO_OPTIMIZATION_MASK, IPP_CRYPTO_ALG_MASK, HASH_TYPE_VALUE
 
 class Board(BaseBoard):
     def __init__(self, *args, **kwargs):
 
         super(Board, self).__init__(*args, **kwargs)
 
-        self.VERINFO_IMAGE_ID     = ''
+        self.VERINFO_IMAGE_ID     = 'SBL_ADL'
         self.VERINFO_PROJ_MAJOR_VER = 1
-        self.VERINFO_PROJ_MINOR_VER = 0
+        self.VERINFO_PROJ_MINOR_VER = 1
         self.VERINFO_SVN            = 1
         self.VERINFO_BUILD_DATE     = time.strftime("%m/%d/%Y")
 
-        self.BOARD_NAME           = ''
+        self.BOARD_NAME           = 'adls'
         self.BOARD_PKG_NAME       = 'AlderlakeBoardPkg'
         self.SILICON_PKG_NAME     = 'AlderlakePkg'
         self.FSP_IMAGE_ID         = 'ADLI-FSP'
-        self._EXTRA_INC_PATH      = []
-        self._FSP_PATH_NAME       = ''
-        self.MICROCODE_INF_FILE   = ''
+        self._EXTRA_INC_PATH      = ['Silicon/AlderlakePkg/Adls/FspBin']
+        self._FSP_PATH_NAME       =  'Silicon/AlderlakePkg/Adls/FspBin'
+        self.MICROCODE_INF_FILE   = 'Silicon/AlderlakePkg/Microcode/Microcode.inf'
+        self.ACPI_TABLE_INF_FILE  = 'Platform/AlderlakeBoardPkg/AcpiTables/AcpiTables.inf'
         self._LP_SUPPORT          = False
         self._N_SUPPORT           = False
 
@@ -61,6 +63,7 @@ class Board(BaseBoard):
         self.ENABLE_SOURCE_DEBUG  = 0
         # If ENABLE_SOURCE_DEBUG is disabled, SKIP_STAGE1A_SOURCE_DEBUG will be ignored
         self.SKIP_STAGE1A_SOURCE_DEBUG = 1
+        self.ENABLE_PCIE_PM       = 1
         # 0: Disable  1: Enable  2: Auto (disable for UEFI payload, enable for others)
         self.ENABLE_SMM_REBASE    = 2
 
@@ -113,7 +116,7 @@ class Board(BaseBoard):
         self.STAGE2_FD_BASE       = 0x01000000
         self.STAGE2_FD_SIZE       = 0x001F0000
 
-        self.PAYLOAD_SIZE         = 0x00029000
+        self.PAYLOAD_SIZE         = 0x00030000
         self.EPAYLOAD_SIZE        = 0x00161000
 
         self.ENABLE_FAST_BOOT = 0
@@ -200,7 +203,8 @@ class Board(BaseBoard):
         self._generated_cfg_file_prefix = 'Autogen_'
 
         self._CFGDATA_INT_FILE = []
-        self._CFGDATA_EXT_FILE = []
+        self._CFGDATA_EXT_FILE = [self._generated_cfg_file_prefix + 'CfgDataInt_Adls_Crb_Ddr4.dlt', self._generated_cfg_file_prefix + 'CfgDataInt_Adls_Crb_Ddr5.dlt', \
+                                  self._generated_cfg_file_prefix + 'CfgDataInt_Adls_Crb_Ddr4_Sodimm.dlt', self._generated_cfg_file_prefix + 'CfgDataInt_Adls_Crb_Ddr5_Sodimm.dlt']
 
     def PlatformBuildHook (self, build, phase):
         if phase == 'pre-build:before':
@@ -223,15 +227,21 @@ class Board(BaseBoard):
                 if self.ENABLE_TCC:
                     if os.path.exists(os.path.join(brd_cfg_src_dir, 'CfgData_Tcc_Feature.dlt')):
                         lines += open (os.path.join(brd_cfg_src_dir, 'CfgData_Tcc_Feature.dlt')).read()
-                    else:
+                    elif os.path.exists(os.path.join(brd_cfg2_src_dir, 'CfgData_Tcc_Feature.dlt')):
                         lines += open (os.path.join(brd_cfg2_src_dir, 'CfgData_Tcc_Feature.dlt')).read()
+                    else:
+                        tcc_cfg_dir = os.path.join(os.getenv('SBL_SOURCE', ''), 'Platform', self.BOARD_PKG_NAME, 'CfgData')
+                        lines += open (os.path.join(tcc_cfg_dir, 'CfgData_Tcc_Feature.dlt')).read()
 
                 # Enable TSN in dlt file
                 if self.ENABLE_TSN:
                     if os.path.exists(os.path.join(brd_cfg_src_dir, 'CfgData_Tsn_Feature.dlt')):
                         lines += open (os.path.join(brd_cfg_src_dir, 'CfgData_Tsn_Feature.dlt')).read()
-                    else:
+                    elif os.path.exists(os.path.join(brd_cfg2_src_dir, 'CfgData_Tsn_Feature.dlt')):
                         lines += open (os.path.join(brd_cfg2_src_dir, 'CfgData_Tsn_Feature.dlt')).read()
+                    else:
+                        tsn_cfg_dir = os.path.join(os.getenv('SBL_SOURCE', ''), 'Platform', self.BOARD_PKG_NAME, 'CfgData')
+                        lines += open (os.path.join(tsn_cfg_dir, 'CfgData_Tsn_Feature.dlt')).read()
 
                 # Write to generated final dlt file
                 output_cfg_dlt_file = os.path.join(build._fv_dir, dlt_file)
@@ -254,6 +264,7 @@ class Board(BaseBoard):
             'FspsUpdUpdateLib|Platform/$(BOARD_PKG_NAME)/Library/FspsUpdUpdateLib/FspsUpdUpdateLib.inf',
             'PchInfoLib|Silicon/$(SILICON_PKG_NAME)/Library/PchInfoLib/PchInfoLib.inf',
             'PchPciBdfLib|Silicon/$(SILICON_PKG_NAME)/Library/BasePchPciBdfLib/BasePchPciBdfLib.inf',
+            'PchPcrLib|Silicon/CommonSocPkg/Library/PchPcrLib/PchPcrLib.inf',
             'PchSpiLib|Silicon/CommonSocPkg/Library/PchSpiLib/PchSpiLib.inf',
             'SpiFlashLib|Silicon/CommonSocPkg/Library/SpiFlashLib/SpiFlashLib.inf',
             'BootGuardLib|Silicon/CommonSocPkg/Library/BootGuardLibCBnT/BootGuardLibCBnT.inf',
@@ -272,6 +283,18 @@ class Board(BaseBoard):
 
         if self.BUILD_CSME_UPDATE_DRIVER:
             dsc['LibraryClasses.%s' % self.BUILD_ARCH].append ('MeFwUpdateLib|Silicon/$(SILICON_PKG_NAME)/Library/MeFwUpdateLib/MeFwUpdateLib.inf')
+
+        if self.ENABLE_PCIE_PM:
+            lib = [
+                'PciePm|Silicon/$(SILICON_PKG_NAME)/Library/PciePm/PciePm.inf',
+                'PciExpressHelpersLib|Silicon/$(SILICON_PKG_NAME)/Library/PciExpressHelpersLibrary/PciExpressHelpersLibrary.inf',
+                'BasePcieHelperLib|Silicon/$(SILICON_PKG_NAME)/Library/BasePcieHelperLib/BasePcieHelperLib.inf',
+                'PcieClientRpLib|Silicon/$(SILICON_PKG_NAME)/Library/PcieClientRpLib/PcieClientRpLib.inf',
+                'BasePchPciBdfLib|Silicon/$(SILICON_PKG_NAME)/Library/BasePchPciBdfLib/BasePchPciBdfLib.inf',
+            ]
+            dsc['LibraryClasses.%s' % self.BUILD_ARCH].extend (lib)
+        else:
+            dsc['LibraryClasses.%s' % self.BUILD_ARCH].append ('PciePm|Silicon/CommonSocPkg/Library/PciePmNull/PciePmNull.inf')
 
         dsc['PcdsFixedAtBuild'] = ['gPlatformModuleTokenSpaceGuid.PcdAcpiTablesMaxEntry | 40']
 
@@ -327,20 +350,25 @@ class Board(BaseBoard):
 
         bins = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'Binaries')
 
+        TccCacheCfg = os.path.join(bins, 'TccCacheCfg.bin') if os.path.exists(os.path.join(bins, 'TccCacheCfg.bin')) else ''
+        TccCrlBinary = os.path.join(bins, 'TccCrlBinary.bin')if os.path.exists(os.path.join(bins, 'TccCrlBinary.bin')) else ''
+        TccStreamCfg = os.path.join(bins, 'TccStreamCfg.bin')if os.path.exists(os.path.join(bins, 'TccStreamCfg.bin')) else ''
+        TsnSubRegion = os.path.join(bins, 'TsnSubRegion.bin')if os.path.exists(os.path.join(bins, 'TsnSubRegion.bin')) else ''
+
         if self.ENABLE_TCC:
             container_list.append (
-              ('TCCC', 'TccCacheCfg.bin' if os.path.exists(os.path.join(bins,   'TccCacheCfg.bin')) else '',   'Lz4', container_list_auth_type, 'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0, self.TCC_CCFG_SIZE, 0),   # TCC Cache Config
+              ('TCCC', TccCacheCfg, 'Lz4', container_list_auth_type, 'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0, self.TCC_CCFG_SIZE, 0), # TCC Cache Config
+           )
+            container_list.append (
+              ('TCCM', TccCrlBinary, 'Lz4', container_list_auth_type, 'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0, self.TCC_CRL_SIZE, 0),   # TCC Crl
             )
             container_list.append (
-              ('TCCM', 'TccCrlBinary.bin' if os.path.exists(os.path.join(bins, 'TccCrlBinary.bin')) else '', 'Lz4', container_list_auth_type, 'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0, self.TCC_CRL_SIZE, 0),   # TCC Crl
-            )
-            container_list.append (
-              ('TCCT', 'TccStreamCfg.bin' if os.path.exists(os.path.join(bins,  'TccStreamCfg.bin')) else '',  'Lz4', container_list_auth_type, 'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0, self.TCC_STREAM_SIZE, 0),   # TCC Stream Config
+              ('TCCT', TccStreamCfg, 'Lz4', container_list_auth_type, 'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0, self.TCC_STREAM_SIZE, 0),   # TCC Stream Config
             )
 
         if self.ENABLE_TSN:
             container_list.append (
-              ('TMAC','TsnSubRegion.bin' if os.path.exists(os.path.join(bins,  'TsnSubRegion.bin')) else '',   'Lz4', container_list_auth_type, 'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0, self.TMAC_SIZE, 0),   # TSN MAC Address
+              ('TMAC', TsnSubRegion, 'Lz4', container_list_auth_type, 'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0, self.TMAC_SIZE, 0),   # TSN MAC Address
             )
 
         return [container_list]
