@@ -1,0 +1,26 @@
+## @file
+#  File to describe FSP repo information
+#
+#  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+##
+
+
+[UserExtensions.SBL."CloneRepo"]
+  REPO    = https://github.com/intel/FSP.git
+  COMMIT  = 2cedeba57f6f7c604bea715065e7a4dca8ffa271
+
+[UserExtensions.SBL."CopyList"]
+  AlderLakeFspBinPkg/ADL_IOT/Fsp.fd                    : Silicon/AlderlakePkg/Adls/FspBin/FspDbg.bin
+  AlderLakeFspBinPkg/ADL_IOT/Fsp.fd                    : Silicon/AlderlakePkg/Adls/FspBin/FspRel.bin
+  AlderLakeFspBinPkg/ADL_IOT/Fsp.bsf                   : Silicon/AlderlakePkg/Adls/FspBin/Fsp.bsf
+  AlderLakeFspBinPkg/ADL_IOT/Include/FspUpd.h          : Silicon/AlderlakePkg/Adls/Include/FspUpd.h
+  AlderLakeFspBinPkg/ADL_IOT/Include/FsptUpd.h         : Silicon/AlderlakePkg/Adls/Include/FsptUpd.h
+  AlderLakeFspBinPkg/ADL_IOT/Include/FspmUpd.h         : Silicon/AlderlakePkg/Adls/Include/FspmUpd.h
+  AlderLakeFspBinPkg/ADL_IOT/Include/FspsUpd.h         : Silicon/AlderlakePkg/Adls/Include/FspsUpd.h
+  AlderLakeFspBinPkg/ADL_IOT/Include/FspInfoHob.h      : Silicon/AlderlakePkg/Adls/Include/MemInfoHob.h
+  AlderLakeFspBinPkg/ADL_IOT/VBT/Vbt.bin               : Platform/AlderlakeBoardPkg/VbtBin/Vbt.dat
+  AlderLakeFspBinPkg/ADL_IOT/VBT/Vbt.json              : Platform/AlderlakeBoardPkg/VbtBin/Vbt.json
