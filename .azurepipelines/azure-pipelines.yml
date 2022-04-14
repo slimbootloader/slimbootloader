@@ -85,6 +85,10 @@ jobs:
         Build.Name:   "ehl"
         Build.Arch:   ""
         Build.Target: ""
+      ADLS_X86_DEBUG:
+        Build.Name:   "adls"
+        Build.Arch:   ""
+        Build.Target: ""
 
   pool:
     vmImage: 'ubuntu-20.04'
@@ -161,6 +165,14 @@ jobs:
         Build.Target: "-r"
       EHL_X64_DEBUG:
         Build.Name:   "ehl"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      ADLS_X86_RELEASE:
+        Build.Name:   "adls"
+        Build.Arch:   ""
+        Build.Target: "-r"
+      ADLS_X64_DEBUG:
+        Build.Name:   "adls"
         Build.Arch:   "-a x64"
         Build.Target: ""
 
