@@ -1093,11 +1093,14 @@ UpdateFspConfig (
   FSP_S_CONFIG       *Fspscfg;
   SILICON_CFG_DATA   *SiCfgData;
   POWER_CFG_DATA     *PowerCfgData;
+  MEMORY_CFG_DATA    *MemCfgData;
   UINT8              SaDisplayConfigTable[17] = { 0 };
 
   FspsUpd    = (FSPS_UPD *)FspsUpdPtr;
   Fspscfg     = &FspsUpd->FspsConfig;
   SiCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
+  MemCfgData = (MEMORY_CFG_DATA *)FindConfigDataByTag (CDATA_MEMORY_TAG);
+
   if (SiCfgData == NULL) {
     DEBUG ((DEBUG_INFO, "Failed to find Silicon CFG!\n"));
   }
@@ -1601,7 +1604,13 @@ UpdateFspConfig (
 
   if (mPchSciSupported) {
     Fspscfg->IsFusaSupported = 0x1;
-    Fspscfg->IehMode = 0x1;
+    if (MemCfgData != NULL) {
+        if (MemCfgData->IbeccErrorInj != 0x1){
+            Fspscfg->IehMode = 0x1;
+        } else {
+            Fspscfg->IehMode = 0x0;
+        }
+    }
     //
     // PchPse*Enable UPDs should be set to to 0x2 for
     // host ownership; set to 1 for PSE ownership.
