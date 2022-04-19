@@ -875,6 +875,8 @@ RtcInit (
   Bar     = MmioRead32 (MM_PCI_ADDRESS (0, PCI_DEVICE_NUMBER_PCH_PMC, PCI_FUNCTION_NUMBER_PCH_PMC, R_PMC_CFG_BASE)) & ~0x0F;
   PmConf1 = MmioRead8 (Bar + R_PMC_PWRM_GEN_PMCON_B);
 
+  RtcRead (R_RTC_IO_REGA);
+
   if ((PmConf1 & B_PMC_PWRM_GEN_PMCON_B_RTC_PWR_STS) != 0) {
     DEBUG ((DEBUG_INFO, "Initialize RTC with default values\n"));
     RtcWrite (R_RTC_IO_REGA, 0x66);
