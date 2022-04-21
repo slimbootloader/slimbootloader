@@ -351,7 +351,7 @@ BoardInit (
   case PrePayloadLoading:
     Status = IgdOpRegionInit ();
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_WARN, "VBT not found %r\n", Status));
+      DEBUG ((DEBUG_INFO, "VBT not found %r\n", Status));
     }
 
     ///
@@ -679,7 +679,7 @@ UpdateSmmInfo (
   LdrSmmInfo->SmmBase = PcdGet32 (PcdSmramTsegBase);
   LdrSmmInfo->SmmSize = PcdGet32 (PcdSmramTsegSize);
   LdrSmmInfo->Flags = SMM_FLAGS_4KB_COMMUNICATION;
-  DEBUG ((DEBUG_ERROR, "Stage2: SmmRamBase = 0x%x, SmmRamSize = 0x%x\n", LdrSmmInfo->SmmBase, LdrSmmInfo->SmmSize));
+  DEBUG ((DEBUG_INFO, "Stage2: SmmRamBase = 0x%x, SmmRamSize = 0x%x\n", LdrSmmInfo->SmmBase, LdrSmmInfo->SmmSize));
 
   //
   // Update smi ctrl register data
