@@ -1018,6 +1018,14 @@
                      IBECC Protected Region Masks. Max value this can have is 0x03FFFFFF
       length       : 0x20
       value        : {0:0D,  0x03FFFFE0, 0x03FFFFE0, 0x03FFFFE0, 0x03FFFFE0, 0x03FFFFE0, 0x03FFFFE0, 0x03FFFFE0, 0x03FFFFE0 }
+  - Lp5BankMode :
+      name         : LP5 Bank Mode
+      type         : Combo
+      option       : 0: Auto, 1: 8 Bank Mode, 2: 16 Bank Mode, 3: BG Mode
+      help         : >
+                     LP5 Bank Mode
+      length       : 0x01
+      value        : 0x0
   - Dummy        :
-      length      : 0x03
+      length      : 0x02
       value       : 0x00
