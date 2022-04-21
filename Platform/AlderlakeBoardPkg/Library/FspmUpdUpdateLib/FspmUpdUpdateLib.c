@@ -434,6 +434,7 @@ UpdateFspConfig (
   Fspmcfg->HyperThreading             = MemCfgData->HyperThreading;
   Fspmcfg->GtClosEnable               = MemCfgData->GtClosEnable;
   Fspmcfg->VmxEnable                  = MemCfgData->VmxEnable;
+  Fspmcfg->Lp5BankMode                = MemCfgData->Lp5BankMode;
 
   // CSI port
   CopyMem (Fspmcfg->IpuLaneUsed, MemCfgData->IpuLaneUsed, sizeof(MemCfgData->IpuLaneUsed));
