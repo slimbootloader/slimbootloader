@@ -73,6 +73,7 @@ GetCpuSkuInfo (
       }
     break;
     case 0x000B0670:
+    case 0x000B06A0:
         CpuType  = EnumCpuTrad;
         SkuFound = TRUE;
         DEBUG ((DEBUG_INFO, "CPU Device ID: 0x%02X, CPUID: 0x%08X!\n", CpuDid, CpuFamilyModel));
@@ -95,7 +96,7 @@ GetCpuSkuInfo (
   }
 
   if (!SkuFound) {
-    DEBUG ((DEBUG_ERROR, "Unsupported CPU SKU, Device ID: 0x%02X, CPUID: 0x%08X!\n", CpuDid, CpuFamilyModel));
+    DEBUG ((DEBUG_INFO, "Unsupported CPU SKU, Device ID: 0x%02X, CPUID: 0x%08X!\n", CpuDid, CpuFamilyModel));
   }
 
   return CpuType;
