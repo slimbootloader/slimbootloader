@@ -96,7 +96,7 @@ GetCpuSkuInfo (
   }
 
   if (!SkuFound) {
-    DEBUG ((DEBUG_INFO, "Unsupported CPU SKU, Device ID: 0x%02X, CPUID: 0x%08X!\n", CpuDid, CpuFamilyModel));
+    DEBUG ((DEBUG_ERROR, "Unsupported CPU SKU, Device ID: 0x%02X, CPUID: 0x%08X!\n", CpuDid, CpuFamilyModel));
   }
 
   return CpuType;
