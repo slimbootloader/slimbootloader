@@ -1,7 +1,7 @@
 ## @ StitchLoader.py
 #  This is a python stitching script for Slim Bootloader CMLV build
 #
-# Copyright (c) 2019, Intel Corporation. All rights reserved. <BR>
+# Copyright (c) 2019 - 2022, Intel Corporation. All rights reserved. <BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -12,7 +12,11 @@ from   ctypes import *
 from   functools import reduce
 
 sys.dont_write_bytecode = True
-sys.path.append (os.path.join(os.getenv('SBL_SOURCE', ''), "BootloaderCorePkg" , "Tools"))
+sblopen_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../'))
+if not os.path.exists (sblopen_dir):
+    sblopen_dir = os.getenv('SBL_SOURCE', '')
+sys.path.append (os.path.join(sblopen_dir, "BootloaderCorePkg" , "Tools"))
+
 try:
     from   IfwiUtility import *
 except ImportError:
@@ -21,18 +25,18 @@ except ImportError:
     raise  ImportError(err_msg)
 
 extra_usage_txt = \
-"""This script creates a new Whiskeylake/Cometlake Slim Bootloader IFWI image basing
+"""This script creates a new Cometlake Slim Bootloader IFWI image basing
 on an existing IFWI base image.  Please note, this stitching method will work
 only if Boot Guard in the base image is not enabled, and the silicon is not
 fused with Boot Guard enabled.
 Please follow steps below:
-  1.  Download an existing Whiskeylake/Cometlake UEFI IFWI image associated
+  1.  Download an existing Cometlake UEFI IFWI image associated
       with the target platform.
       Alternatively, the original IFWI image from the onboard SPI flash can be
       read out as the base image too.
   2.  Build Slim Bootloader source tree.
       The generated Slim Bootloader binary is located at:
-      $(WORKSPACE)/Outputs/cml/SlimBootloader.bin
+      $(WORKSPACE)/Outputs/cmlv/SlimBootloader.bin
   3.  Stitch to create a new IFWI image.
       EX:
       python StitchLoader.py -i CMLV_UEFI_IFWI.bin -s SlimBootloader.bin -o CMLV_SBL_IFWI.bin

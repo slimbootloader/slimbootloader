@@ -1,7 +1,7 @@
 ## @ StitchIfwi.py
 #  This is a python stitching script for Slim Bootloader CMLV build
 #
-# Copyright (c) 2020, Intel Corporation. All rights reserved. <BR>
+# Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved. <BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -22,6 +22,12 @@ from   ctypes  import *
 from   subprocess   import call # nosec
 from   StitchLoader import *
 sys.dont_write_bytecode = True
+
+sblopen_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../'))
+if not os.path.exists (sblopen_dir):
+    sblopen_dir = os.getenv('SBL_SOURCE', '')
+if not os.path.exists (sblopen_dir):
+    raise  Exception("Please set env 'SBL_SOURCE' to SBL open source root folder")
 
 btg_profile_values = [\
                     "Boot Guard Profile 0 - No_FVME",\
@@ -400,12 +406,6 @@ def replace_component (ifwi_src_path, flash_path, file_path, comp_alg, pri_key):
         container_file = os.path.join(work_dir, 'CTN_%s.bin') % comp_name
         gen_file_from_object (container_file, ifwi_bin[replace_comp.offset:replace_comp.offset + replace_comp.length])
         comp_file     = os.path.join(work_dir, file_path)
-        sblopen_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), '../../../../', 'SblOpen')
-        if not os.path.exists (sblopen_dir):
-            sblopen_dir = os.getenv('SBL_SOURCE', '')
-
-        if not os.path.exists (sblopen_dir):
-           raise  Exception("Please set env 'SBL_SOURCE' to SBL open source root folder")
 
         if os.name == 'nt':
             tool_bin_dir  = os.path.join(sblopen_dir, "BaseTools", "Bin", "Win32")

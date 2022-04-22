@@ -1,7 +1,7 @@
 ## @ StitchLoader.py
 #  This is a python stitching script for Slim Bootloader CML build
 #
-# Copyright (c) 2020, Intel Corporation. All rights reserved. <BR>
+# Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved. <BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -12,7 +12,11 @@ from   ctypes import *
 from   functools import reduce
 
 sys.dont_write_bytecode = True
-sys.path.append (os.path.join(os.getenv('SBL_SOURCE', ''), "BootloaderCorePkg" , "Tools"))
+sblopen_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../'))
+if not os.path.exists (sblopen_dir):
+    sblopen_dir = os.getenv('SBL_SOURCE', '')
+sys.path.append (os.path.join(sblopen_dir, "BootloaderCorePkg" , "Tools"))
+
 try:
     from   IfwiUtility import *
 except ImportError:
