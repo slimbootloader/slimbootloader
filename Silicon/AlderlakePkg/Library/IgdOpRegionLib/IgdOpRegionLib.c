@@ -130,6 +130,43 @@ AdlNLpddr5GopVbtSpecificUpdate (
 }
 
 /**
+  GOP VBT update for ADL N Ddr5 Edp + DP
+
+  @param[in]  ChildStructPtr  - CHILD_STRUCT
+
+**/
+VOID
+EFIAPI
+AdlNddr5GopVbtSpecificUpdate (
+  IN CHILD_STRUCT **ChildStructPtr
+)
+{
+  DEBUG ((DEBUG_INFO,"Update VBT for ADL-N LPDDR5\n"));
+  // Disabling DDI-A (LFP1)
+  ChildStructPtr[0]->DeviceClass          = NO_DEVICE;
+  // Disabling DDI-B (LFP2)
+  ChildStructPtr[1]->DeviceClass          = NO_DEVICE;
+  // Enabling HDMI on DDI-B
+  ChildStructPtr[2]->DeviceClass          = HDMI_DVI;
+  ChildStructPtr[2]->DVOPort              = HDMI_B;
+  // Enabling HDMI on DDI-1 (TCP-2)
+  ChildStructPtr[4]->DeviceClass          = HDMI_DVI;
+  ChildStructPtr[4]->DVOPort              = HDMI_G;
+  ChildStructPtr[4]->Flags_2.Bits.DpAltModeOverTypeCEnabled   = 0x0;
+  ChildStructPtr[4]->Flags_2.Bits.TbtAltModeOverTypeCEnabled  = 0x0;
+  // Disabling EFP4
+  ChildStructPtr[5]->DeviceClass          = NO_DEVICE;
+  // Disabling EFP5
+  ChildStructPtr[6]->DeviceClass          = NO_DEVICE;
+  // Enabling DP on DDI-A (EFP6)
+  ChildStructPtr[7]->DeviceClass          = DISPLAY_PORT_ONLY;
+  ChildStructPtr[7]->DVOPort              = DISPLAY_PORT_A;
+  ChildStructPtr[7]->AUX_Channel          = AUX_CHANNEL_A;
+  ChildStructPtr[7]->Flags_2.Bits.DpAltModeOverTypeCEnabled   = 0x0;
+  ChildStructPtr[7]->Flags_2.Bits.TbtAltModeOverTypeCEnabled  = 0x0;
+}
+
+/**
   GOP VBT update for ADL S DDR4
 
   @param[in]  ChildStructPtr  - CHILD_STRUCT
@@ -260,7 +297,7 @@ UpdateVbt (
     break;
   case PLATFORM_ID_ADL_N_DDR5_CRB:
     DEBUG((DEBUG_INFO, "UpdateVbt: BoardIdAdlNDdr5 .....\n"));
-    GopVbtSpecificUpdate = (GOP_VBT_SPECIFIC_UPDATE)(UINTN)&AdlGopVbtSpecificUpdateNull;
+    GopVbtSpecificUpdate = (GOP_VBT_SPECIFIC_UPDATE)(UINTN)&AdlNddr5GopVbtSpecificUpdate;
     break;
   case PLATFORM_ID_ADL_N_LPDDR5_RVP:
     DEBUG((DEBUG_INFO, "UpdateVbt: BoardIdAdlNLpddr5 .....\n"));

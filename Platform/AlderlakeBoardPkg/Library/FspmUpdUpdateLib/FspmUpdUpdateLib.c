@@ -521,6 +521,10 @@ UpdateFspConfig (
     // DP + DP
     CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mTestSDdr5RowDisplayDdiConfig3, sizeof(mTestSDdr5RowDisplayDdiConfig3));
     break;
+  case PLATFORM_ID_ADL_N_DDR5_CRB:
+    // DP + DP
+    CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mAdlNddr5CrbRowDisplayDdiConfig, sizeof(mAdlNddr5CrbRowDisplayDdiConfig));
+    break;
   case PLATFORM_ID_ADL_N_LPDDR5_RVP:
     // DP + DP
     CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mAdlNLpddr5RowDisplayDdiConfig, sizeof(mAdlNLpddr5RowDisplayDdiConfig));
@@ -590,16 +594,11 @@ UpdateFspConfig (
         break;
       case PLATFORM_ID_ADL_N_DDR5_CRB:
         Fspmcfg->CpuPcieRpEnableMask = 0x0;
-        Fspmcfg->DdiPortAConfig = 0x1;
-        Fspmcfg->DdiPortBHpd = 0x1;
-        Fspmcfg->DdiPort1Hpd = 0x1;
-        Fspmcfg->DdiPort2Hpd = 0x1;
-        Fspmcfg->DdiPortBDdc = 0x1;
-        Fspmcfg->DdiPort1Ddc = 0x1;
-        Fspmcfg->DdiPort2Ddc = 0x1;
         Fspmcfg->DmiHweq = 0x2;
         Fspmcfg->Lp5CccConfig = 0xff;
         Fspmcfg->SkipCpuReplacementCheck = 0x0;
+        Fspmcfg->FirstDimmBitMaskEcc = 0x0;
+        Fspmcfg->Lp5BankMode = 0x0;
         break;
       case PLATFORM_ID_ADL_N_LPDDR5_RVP:
         Fspmcfg->DmiHweq = 0x2;

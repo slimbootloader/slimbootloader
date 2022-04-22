@@ -14,13 +14,17 @@
 #define ChildStruct_MAX                       10         ///< Maximum number of child structures in VBT
 #define CompressionStruct_MAX                 16         ///< Maximum number of compression parameter structures in VBT.
 #define NO_DEVICE                             0x00      ///< Defines a null display class.
+#define DISPLAY_PORT_ONLY                     0x68C6    ///< Defines a display class of Integrated Display Port Only
 #define DISPLAY_PORT_HDMI_DVI_COMPATIBLE      0x60D6    ///< Defines a display class of Integrated DisplayPort with HDMI/DVI Compatible
 #define HDMI_DVI                              0x60D2    ///< Defines a display class of Integrated HDMI/DVI
+#define AUX_CHANNEL_A                         0x40
 #define AUX_CHANNEL_B                         0x10
 #define AUX_CHANNEL_C                         0x20
 #define AUX_CHANNEL_E                         0x50
 #define HDMI_B                                0x01      ///< Defines a output port HDMI-B
 #define HDMI_D                                0x03      ///< Defines a output port HDMI-D
+#define HDMI_G                                0x10      ///< Defines a output port HDMI-G (TCP-2)
+#define DISPLAY_PORT_A                        0x0A      ///< Defines a output port DisplayPort A
 #define DISPLAY_PORT_B                        0x07      ///< Defines a output port DisplayPort B
 #define DISPLAY_PORT_C                        0x08      ///< Defines a output port DisplayPort C
 #define DISPLAY_PORT_D                        0x09      ///< Defines a output port DisplayPort D
