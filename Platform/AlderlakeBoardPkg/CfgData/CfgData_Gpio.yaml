@@ -317,4 +317,9 @@
   - !expand { GPIO_TMPL : [ GPP_D21,  0x0350A383,  0x11152001 ] }
   - !expand { GPIO_TMPL : [ GPP_D22,  0x0350A383,  0x11162001 ] }
   - !expand { GPIO_TMPL : [ GPP_D23,  0x0350A381,  0x11172001 ] }
+  - !expand { GPIO_TMPL : [ GPP_T00,  0x0350A387,  0x81182001 ] }
+  - !expand { GPIO_TMPL : [ GPP_T01,  0x0350A387,  0x81192001 ] }
+  - !expand { GPIO_TMPL : [ GPP_T02,  0x0350A387,  0x811A2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_T03,  0x0350A387,  0x811B2001 ] }
+
 
