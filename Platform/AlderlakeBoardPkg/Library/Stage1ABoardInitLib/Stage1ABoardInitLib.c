@@ -49,6 +49,27 @@ FSPT_UPD TempRamInitParams = {
     .CodeRegionSize         = CODE_REGION_SIZE,
     .Reserved               = {0},
   },
+  .FsptConfig = {
+    .PcdSerialIoUartDebugEnable = 1,
+    .PcdSerialIoUartNumber      = FixedPcdGet32 (PcdDebugPortNumber) < PCH_MAX_SERIALIO_UART_CONTROLLERS ? \
+                                    FixedPcdGet32 (PcdDebugPortNumber) : 2,
+    .PcdSerialIoUartMode        = 4, // SerialIoUartSkipInit, let SBL init UART
+#ifdef PLATFORM_ADLN
+    .PcdSerialIoUartPowerGating = 1,
+#endif
+    .PcdSerialIoUartBaudRate    = 115200,
+    .PcdPciExpressBaseAddress   = FixedPcdGet32 (PcdPciMmcfgBase),
+    .PcdPciExpressRegionLength  = 0x10000000,
+    .PcdSerialIoUartParity      = 1, // NoParity
+    .PcdSerialIoUartDataBits    = 8,
+    .PcdSerialIoUartStopBits    = 1,
+    .PcdSerialIoUartAutoFlow    = 0,
+    .PcdSerialIoUartRxPinMux    = 0,
+    .PcdSerialIoUartTxPinMux    = 0,
+    .PcdSerialIoUartRtsPinMux   = 0,
+    .PcdSerialIoUartCtsPinMux   = 0,
+    .PcdLpcUartDebugEnable      = 1,
+  },
   .UpdTerminator = 0x55AA,
 };
 

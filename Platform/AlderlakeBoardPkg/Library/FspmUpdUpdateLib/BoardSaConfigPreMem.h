@@ -100,6 +100,28 @@ GLOBAL_REMOVE_IF_UNREFERENCED const UINT8 mTestSDdr5RowDisplayDdiConfig3[16] = {
 //
 // Display DDI Config 3: DP + DP
 //
+GLOBAL_REMOVE_IF_UNREFERENCED const UINT8 mAdlNddr5CrbRowDisplayDdiConfig[16] = {
+  DdiPortEdp,         // DDI Port A Config : DdiPortDisabled = No LFP is Connected, DdiPortEdp = eDP, DdiPortMipiDsi = MIPI DSI
+  DdiPortDisabled,    // DDI Port B Config : DdiPortDisabled = No LFP is Connected, DdiPortEdp = eDP, DdiPortMipiDsi = MIPI DSI
+  DdiHpdDisable,      // DDI Port A HPD    : DdiHpdDisable = Disable, DdiHpdEnable = Enable HPD
+  DdiHpdEnable,       // DDI Port B HPD    : DdiHpdDisable = Disable, DdiHpdEnable = Enable HPD
+  DdiHpdDisable,      // DDI Port C HPD    : DdiHpdDisable = Disable, DdiHpdEnable = Enable HPD
+  DdiHpdDisable,      // DDI Port 1 HPD    : DdiHpdDisable = Disable, DdiHpdEnable = Enable HPD
+  DdiHpdEnable,       // DDI Port 2 HPD    : DdiHpdDisable = Disable, DdiHpdEnable = Enable HPD
+  DdiHpdDisable,      // DDI Port 3 HPD    : DdiHpdDisable = Disable, DdiHpdEnable = Enable HPD
+  DdiHpdDisable,      // DDI Port 4 HPD    : DdiHpdDisable = Disable, DdiHpdEnable = Enable HPD
+  DdiDisable,         // DDI Port A DDC    : DdiDisable = Disable, DdiDdcEnable = Enable DDC
+  DdiDdcEnable,       // DDI Port B DDC    : DdiDisable = Disable, DdiDdcEnable = Enable DDC
+  DdiDisable,         // DDI Port C DDC    : DdiDisable = Disable, DdiDdcEnable = Enable DDC
+  DdiDisable,         // DDI Port 1 DDC    : DdiDisable = Disable, DdiDdcEnable = Enable DDC
+  DdiDdcEnable,       // DDI Port 2 DDC    : DdiDisable = Disable, DdiDdcEnable = Enable DDC
+  DdiDisable,         // DDI Port 3 DDC    : DdiDisable = Disable, DdiDdcEnable = Enable DDC
+  DdiDisable          // DDI Port 4 DDC    : DdiDisable = Disable, DdiDdcEnable = Enable DDC
+};
+
+//
+// Display DDI Config 3: DP + DP
+//
 GLOBAL_REMOVE_IF_UNREFERENCED const UINT8 mAdlNLpddr5RowDisplayDdiConfig[16] = {
   DdiPortEdp,         // DDI Port A Config : DdiPortDisabled = No LFP is Connected, DdiPortEdp = eDP, DdiPortMipiDsi = MIPI DSI
   DdiPortDisabled,    // DDI Port B Config : DdiPortDisabled = No LFP is Connected, DdiPortEdp = eDP, DdiPortMipiDsi = MIPI DSI
