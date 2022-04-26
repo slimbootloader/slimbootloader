@@ -21,6 +21,7 @@
 #include <GlobalNvsAreaDef.h>
 #include "GopConfigLib.h"
 #include <PlatformBoardId.h>
+#include <ConfigDataDefs.h>
 
 typedef
 VOID
@@ -290,14 +291,14 @@ UpdateVbt (
     DEBUG((DEBUG_INFO, "UpdateVbt: PLATFORM_ID_ADL_P_DDR5_RVP .....\n"));
     GopVbtSpecificUpdate = (GOP_VBT_SPECIFIC_UPDATE)(UINTN)&AdlPDdr5GopVbtSpecificUpdate;
     break;
+  case PLATFORM_ID_ADL_N_DDR5_CRB:
+    DEBUG((DEBUG_INFO, "UpdateVbt: BoardIdAdlNDdr5 .....\n"));
+    GopVbtSpecificUpdate = (GOP_VBT_SPECIFIC_UPDATE)(UINTN)&AdlGopVbtSpecificUpdateNull;
+    break;
   case PLATFORM_ID_ADL_P_LP4_RVP:
   case PLATFORM_ID_ADL_P_LP5_RVP:
     DEBUG((DEBUG_INFO, "UpdateVbt: BoardIdAdlPLp4/5Rvp .....\n"));
     GopVbtSpecificUpdate = (GOP_VBT_SPECIFIC_UPDATE)(UINTN)&AdlGopVbtSpecificUpdateNull;
-    break;
-  case PLATFORM_ID_ADL_N_DDR5_CRB:
-    DEBUG((DEBUG_INFO, "UpdateVbt: BoardIdAdlNDdr5 .....\n"));
-    GopVbtSpecificUpdate = (GOP_VBT_SPECIFIC_UPDATE)(UINTN)&AdlNddr5GopVbtSpecificUpdate;
     break;
   case PLATFORM_ID_ADL_N_LPDDR5_RVP:
     DEBUG((DEBUG_INFO, "UpdateVbt: BoardIdAdlNLpddr5 .....\n"));

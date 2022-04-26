@@ -18,6 +18,8 @@
 #include <Register/PchRegsLpc.h>
 #include <Register/PchRegsPcr.h>
 #include <PlatformBoardId.h>
+#include <Library/SmbusLib.h>
+#include <ConfigDataDefs.h>
 
 //
 // The EC implements an embedded controller interface at ports 0x60/0x64 and a ACPI compliant
@@ -36,6 +38,21 @@
 #define EC_S_OBF         0x01    // Output buffer is full/empty
 
 //
+// PCA9555 device slave address
+//
+#define SMBUS_IO_EXPANDER_SLAVE_ADDRESS    0x22
+
+//
+// PCA9555 command byte
+// -------   ------------
+// Command     Register
+// -------   ------------
+//   0x0     Input Port 0
+//   0x1     Input Port 1
+#define SMBUS_IO_EXPANDER_INPUT_PORT0_CMD   0x0
+#define SMBUS_IO_EXPANDER_INPUT_PORT1_CMD   0x1
+
+//
 // BoardId format definition (Data came from EC_C_FAB_ID command)
 //
 typedef union {
@@ -51,6 +68,67 @@ typedef union {
     UINT16  EspiTestCard   :1;   // [15]    - ESPI_TESTCARD_DET
   } AdlRvpFields;
 } BOARD_ID_INFO;
+
+typedef union {
+  UINT8    InputPort0Raw;
+  struct {
+    UINT8  BomId          :1;   // [0]    - BOM_ID[2]
+    UINT8  FabId          :2;   // [2:1]  - Fab_IDx
+    UINT8  SpdPresent     :1;   // [3]    - SPD_PRSNT
+    UINT8  DisplayId      :4;   // [7:4]  - DISPLAY_ID[3:0]
+  } InputPort0Fields;
+} SMBUS_INPUT_PORT0;
+typedef union {
+  UINT8    InputPort1Raw;
+  struct {
+    UINT8  BoardId        :6;   // [5:0]   - BOARD_ID[5:0]
+    UINT8  BomId          :2;   // [7:6]   - BOM_ID[1:0]
+  } InputPort1Fields;
+} SMBUS_INPUT_PORT1;
+
+/**
+  Returns the BoardId ID of the platform from Smbus I/O port expander PCA9555PW.
+
+  @param[in]  BoardId           BoardId ID as determined through the Smbus.
+**/
+VOID
+EFIAPI
+GetBoardIdFromSmbus (
+  OUT UINT8          *BoardId
+  )
+{
+  UINT8                    BomId;
+  SMBUS_INPUT_PORT0        SmbusInputPort0Info;
+  SMBUS_INPUT_PORT1        SmbusInputPort1Info;
+  EFI_STATUS               Status0;
+  EFI_STATUS               Status1;
+
+  Status0 = EFI_DEVICE_ERROR;
+  Status1 = EFI_DEVICE_ERROR;
+
+  /*Default BoardID assignment*/
+  //*BoardId = BoardIdEhlLp4xType4Rvp1;
+  DEBUG ((DEBUG_INFO, "Initially set to default BoardId 0x%X\n", *BoardId));
+
+  SmbusInputPort0Info.InputPort0Raw = SmBusReadDataByte (SMBUS_LIB_ADDRESS(SMBUS_IO_EXPANDER_SLAVE_ADDRESS, SMBUS_IO_EXPANDER_INPUT_PORT0_CMD, 0, 0), &Status0);
+  SmbusInputPort1Info.InputPort1Raw = SmBusReadDataByte (SMBUS_LIB_ADDRESS(SMBUS_IO_EXPANDER_SLAVE_ADDRESS, SMBUS_IO_EXPANDER_INPUT_PORT1_CMD, 0, 0), &Status1);
+
+  if ((Status0 == EFI_SUCCESS) && (Status1 == EFI_SUCCESS)) {
+    BomId = (UINT8) ((SmbusInputPort0Info.InputPort0Fields.BomId << 2) | SmbusInputPort1Info.InputPort1Fields.BomId);
+
+    DEBUG ((DEBUG_INFO, "Raw data from Input Port 0 is 0x%x\n", SmbusInputPort0Info.InputPort0Raw));
+    DEBUG ((DEBUG_INFO, "Raw data from Input Port 1 is 0x%x\n", SmbusInputPort1Info.InputPort1Raw));
+    DEBUG ((DEBUG_INFO, "Fields.BoardId from Smbus Io expander is 0x%x\n", SmbusInputPort1Info.InputPort1Fields.BoardId));
+    DEBUG ((DEBUG_INFO, "Fields.BomId from Smbus Io expander is 0x%x\n", BomId));
+    DEBUG ((DEBUG_INFO, "Fields.FabId from Smbus Io expander is 0x%x\n", (UINT16) (SmbusInputPort0Info.InputPort0Fields.FabId)));
+    DEBUG ((DEBUG_INFO, "Fields.SpdPresent from Smbus Io expander is %x\n", (BOOLEAN) (SmbusInputPort0Info.InputPort0Fields.SpdPresent)));
+
+    *BoardId = SmbusInputPort1Info.InputPort1Fields.BoardId;
+  }
+  else {
+    DEBUG ((DEBUG_ERROR, "Failed to get Board ID from Smbus Io expander\n"));
+  }
+}
 
 /**
   Receives status from EC.
@@ -189,28 +267,19 @@ ReceiveEcDataTimeout (
 }
 
 /**
-  Get the board ID from EC.
-
-  @param[out] PlatformId       Buffer to return the Platform ID based on EC BaordId
-
+Return Board ID from EC
+@retval UINT8                   Board ID
 **/
 VOID
-GetBoardId (
-  OUT UINT8                  *PlatformId
-)
+GetBoardIdFromEC (
+  OUT UINT8                  *BoardId
+  )
 {
   BOARD_ID_INFO BoardInfo;
   EFI_STATUS Status;
   UINTN   eSPIBaseAddr;
   UINT16  Data16;
   UINT8   EcData;
-
-  //
-  // Set board ID to unknown initially
-  // in case there is any issue encountered
-  // below.
-  //
-  *PlatformId = 0xFF;
 
   eSPIBaseAddr = PCI_LIB_ADDRESS (
                       DEFAULT_PCI_BUS_NUMBER_PCH,
@@ -246,9 +315,39 @@ GetBoardId (
   }
   BoardInfo.Raw |= (UINT16) EcData;
 
-  *PlatformId = (UINT8) BoardInfo.AdlRvpFields.BoardId;
+  *BoardId = (UINT8)BoardInfo.AdlRvpFields.BoardId;
+}
 
-  switch (BoardInfo.AdlRvpFields.BoardId) {
+/**
+  Get the board ID from EC.
+
+  @param[out] PlatformId       Buffer to return the Platform ID based on EC BaordId
+
+**/
+VOID
+GetBoardId (
+  OUT UINT8                  *PlatformId
+)
+{
+  UINT8   BoardID;
+
+  //
+  // Set board ID to unknown initially
+  // in case there is any issue encountered
+  // below.
+  //
+  *PlatformId = 0xFF;
+
+#ifdef PLATFORM_ADLN
+   GetBoardIdFromSmbus(&BoardID);
+   if (BoardID == BoardIdAdlNDdr5Crb){
+      *PlatformId = PLATFORM_ID_ADL_N_DDR5_CRB;
+   }
+  return;
+#else
+  GetBoardIdFromEC(&BoardID);
+
+  switch (BoardID) {
     case BoardIdAdlSAdpSDdr4UDimm2DCrb:
       *PlatformId = PLATFORM_ID_ADL_S_ADP_S_CRB;
       break;
@@ -289,4 +388,6 @@ GetBoardId (
       DEBUG((DEBUG_INFO, "Unsupported board Id %x .....\n", *PlatformId));
       break;
   }
+#endif
+
 }

@@ -516,15 +516,13 @@ UpdateFspConfig (
     DEBUG((DEBUG_INFO, "PLATFORM_ID_ADL_PS_DDR5_RVP board Id %x .....\n", PlatformId));
     CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mAdlPSEdpHdmiDisplayDdiConfig, sizeof(mAdlPSEdpHdmiDisplayDdiConfig));
     break;
+  case PLATFORM_ID_ADL_N_DDR5_CRB:
   case PLATFORM_ID_TEST_S_DDR5_UDIMM_RVP:
   case PLATFORM_ID_TEST_S_DDR5_SODIMM_RVP:
     // DP + DP
     CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mTestSDdr5RowDisplayDdiConfig3, sizeof(mTestSDdr5RowDisplayDdiConfig3));
     break;
-  case PLATFORM_ID_ADL_N_DDR5_CRB:
     // DP + DP
-    CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mAdlNddr5CrbRowDisplayDdiConfig, sizeof(mAdlNddr5CrbRowDisplayDdiConfig));
-    break;
   case PLATFORM_ID_ADL_N_LPDDR5_RVP:
     // DP + DP
     CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mAdlNLpddr5RowDisplayDdiConfig, sizeof(mAdlNLpddr5RowDisplayDdiConfig));
@@ -560,9 +558,7 @@ UpdateFspConfig (
     Fspmcfg->SiSkipOverrideBootModeWhenFwUpdate = TRUE;
 #endif
   }
-#ifndef PLATFORM_ADLN
     Fspmcfg->WRDS = 0x1;
-#endif
   if (IsPchLp ()) {
     Fspmcfg->DdiPortAConfig = 0x1;
     Fspmcfg->WdtDisableAndLock = 0x1;

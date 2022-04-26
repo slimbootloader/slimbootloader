@@ -62,6 +62,7 @@
   VariableLib
   WatchDogTimerLib
   FspmUpdUpdateLib
+  SmbusLib
 
 [Guids]
   gFspNonVolatileStorageHobGuid
