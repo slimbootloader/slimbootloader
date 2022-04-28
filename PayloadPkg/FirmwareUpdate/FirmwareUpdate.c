@@ -29,6 +29,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/GraphicsLib.h>
 #include <Library/ConsoleOutLib.h>
 #include <Guid/OsBootOptionGuid.h>
+#include <Library/BootGuardLib.h>
 #include "FirmwareUpdateHelper.h"
 
 UINT32   mSblImageBiosRgnOffset;
@@ -186,6 +187,15 @@ VerifyFwVersion (
     } else {
       return EFI_SUCCESS;
     }
+  }
+
+  //
+  // Check SVN for ACM update
+  //
+  if (((UINT32)ImageHdr->UpdateHardwareInstance) == FW_UPDATE_COMP_ACM0_REGION) {
+    DEBUG((DEBUG_INFO, "Capsule update is for ACM region!!\n"));
+    Status = CheckAcmSvn (ImageHdr);
+    return Status;
   }
 
   if ((UINT32)ImageHdr->UpdateHardwareInstance == FW_UPDATE_COMP_BIOS_REGION) {

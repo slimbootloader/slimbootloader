@@ -169,3 +169,37 @@ ExtendBtGuardEvents(
   }
 
 }
+
+/**
+  Get SVN from an ACM.
+
+  @param[in] Hdr          Acm Header.
+  @param[out] Svn         Svn of Acm.
+
+  @retval EFI_SUCCESS     The Svn was found for the given Acm
+  @retval Others          An error occured in finding the given Acm Svn
+**/
+EFI_STATUS
+EFIAPI
+GetAcmSvnFromAcmHdr (
+  IN  UINTN  Hdr,
+  OUT UINT16 *Svn
+  )
+{
+  return EFI_UNSUPPORTED;
+}
+
+/**
+  Get SVN from existing ACM.
+
+  @retval EFI_SUCCESS     The Svn was found for the existing Acm
+  @retval Others          An error occured in finding the existing Acm Svn
+**/
+EFI_STATUS
+EFIAPI
+GetExistingAcmSvn (
+  OUT UINT16  *Svn
+  )
+{
+  return EFI_UNSUPPORTED;
+}

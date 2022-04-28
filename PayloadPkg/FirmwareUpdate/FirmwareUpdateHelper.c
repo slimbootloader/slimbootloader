@@ -23,6 +23,7 @@
 #include <Library/TimerLib.h>
 #include "FirmwareUpdateHelper.h"
 #include <Service/SpiFlashService.h>
+#include <Library/BootGuardLib.h>
 
 SPI_FLASH_SERVICE   *mFwuSpiService = NULL;
 
@@ -977,6 +978,53 @@ CheckSblConfigDataSvn (
 }
 
 /**
+  Perform ACM svn check
+
+  This function will perform svn checks for ACM in flash and
+  ACM in capsule.
+
+  @param[in]  ImageHdr       Pointer to fw mgmt capsule Image header
+
+  @retval  EFI_SUCCESS      SVN check successful.
+  @retval  other            error occurred during firmware update
+**/
+EFI_STATUS
+CheckAcmSvn (
+  IN   EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
+  )
+{
+  EFI_STATUS            Status;
+  UINT16                ExistingAcmSvn;
+  UINT16                NewAcmSvn;
+  UINT32                NewAcmHdr;
+
+  if ((ImageHdr == NULL)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  Status = GetExistingAcmSvn (&ExistingAcmSvn);
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "Unable to get existing ACM SVN!"));
+    return Status;
+  }
+
+  NewAcmHdr = (UINT32)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
+
+  Status = GetAcmSvnFromAcmHdr(NewAcmHdr, &NewAcmSvn);
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "Unable to get new ACM SVN!"));
+    return Status;
+  }
+
+  if (NewAcmSvn < ExistingAcmSvn) {
+    DEBUG((DEBUG_ERROR, "Acm update Svn check failed!!\n"));
+    return EFI_INCOMPATIBLE_VERSION;
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
   Perform Slim Bootloader component update.
 
   This function will try to locate component in the flash map,
@@ -1031,11 +1079,11 @@ UpdateSblComponent (
   if (Entry == NULL) {
     return EFI_NOT_FOUND;
   }
-
   if ((Entry->Flags & FLASH_MAP_FLAGS_NON_REDUNDANT_REGION) != 0){
     DEBUG ((DEBUG_INFO, "Non redundant component update requested! \n"));
     Status = UpdateNonRedundantComp(ImageHdr);
-  } else if ((Entry->Flags & FLASH_MAP_FLAGS_REDUNDANT_REGION) != 0) {
+  } else if ((Entry->Flags & FLASH_MAP_FLAGS_REDUNDANT_REGION) != 0 ||
+            (Entry->Flags & FLASH_MAP_FLAGS_TOP_SWAP ) != 0){
     DEBUG ((DEBUG_INFO, "Redundant component update requested! \n"));
     Status = UpdateSystemFirmware(ImageHdr);
   }

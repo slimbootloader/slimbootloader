@@ -220,6 +220,22 @@ CheckSblConfigDataSvn (
   );
 
 /**
+  Perform ACM svn check
+
+  This function will perform svn checks for ACM in flash and
+  ACM in capsule.
+
+  @param[in]  ImageHdr       Pointer to fw mgmt capsule Image header
+
+  @retval  EFI_SUCCESS      SVN check successful.
+  @retval  other            error occurred during firmware update
+**/
+EFI_STATUS
+CheckAcmSvn (
+  IN   EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
+  );
+
+/**
   Reboot platform.
 
   @param[in]  ResetType   Cold, Warm or Shutdown
