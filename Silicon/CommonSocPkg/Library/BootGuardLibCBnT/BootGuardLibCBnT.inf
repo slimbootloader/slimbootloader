@@ -29,6 +29,7 @@
   BaseLib
   DebugLib
   PciLib
+  TpmLib
 
 
 [Packages]

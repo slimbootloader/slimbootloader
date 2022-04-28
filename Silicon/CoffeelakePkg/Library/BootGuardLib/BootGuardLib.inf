@@ -19,6 +19,7 @@
   DebugLib
 #  PciSegmentLib
   PciLib
+  TpmLib
 
 
 [Packages]

@@ -34,6 +34,7 @@
   BootloaderCommonPkg/BootloaderCommonPkg.dec
   PayloadPkg/PayloadPkg.dec
   Platform/CommonBoardPkg/CommonBoardPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
 
 [LibraryClasses]
   FirmwareUpdateLib
@@ -51,6 +52,7 @@
   StringSupportLib
   BootOptionLib
   TimerLib
+  BootGuardLib
 
 [Guids]
   gLoaderMemoryMapInfoGuid
