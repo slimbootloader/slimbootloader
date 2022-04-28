@@ -965,7 +965,7 @@ FspUpdatePsePolicy (
   Fspscfg->PchPseOobEnabled       = 0;
   Fspscfg->PchPseWoLEnabled       = 1;
   Fspscfg->PchPseAicEnabled       = (UINT8)SiCfgData->PchPseAicEnabled;
-
+  Fspscfg->CpuTempSensorReadEnable= 1;
   //Fspscfg->PseJtagEnabled       = 0;
   //Fspscfg->PseJtagPinMux        = 0;
 
