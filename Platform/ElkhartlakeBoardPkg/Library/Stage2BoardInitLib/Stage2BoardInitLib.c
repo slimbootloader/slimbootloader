@@ -953,6 +953,9 @@ FspUpdatePsePolicy (
     if (MEASURED_BOOT_ENABLED() && (GetBootMode() != BOOT_ON_S3_RESUME)) {
       TpmHashAndExtendPcrEventLog (0, (UINT8 *)SiipRegionBase, SiipRegionSize, EV_EFI_PLATFORM_FIRMWARE_BLOB, sizeof("PSEF Firmware"), (UINT8 *)"PSEF Firmware");
     }
+  } else {
+    DEBUG ((DEBUG_ERROR, "PSE is enabled but missing PSE FW !! %r\n", Status));
+    return;
   }
 
   DEBUG ((DEBUG_INFO, "Load PSE firmware @ %p:0x%X - %r\n", SiipRegionBase, SiipRegionSize, Status));
@@ -1561,9 +1564,9 @@ UpdateFspConfig (
     // PCH_8254_CONFIG
     Fspscfg->Enable8254ClockGating      = SiCfgData->Enable8254ClockGating;
     Fspscfg->Enable8254ClockGatingOnS3  = SiCfgData->Enable8254ClockGatingOnS3;
-
-    FspUpdatePsePolicy(FspsUpd, SiCfgData);
-
+    if (MemCfgData != NULL && MemCfgData->PchPseEnable) {
+      FspUpdatePsePolicy(FspsUpd, SiCfgData);
+    }
     // SA Post CONFIG
     Fspscfg->RenderStandby        = SiCfgData->RenderStandby;
     Fspscfg->PmSupport            = SiCfgData->PmSupport;
