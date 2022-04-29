@@ -26,6 +26,9 @@
 #define MSR_PACKAGE_POWER_SKU                                         0x614
 
 
+#define MSR_BOOT_GUARD_SACM_INFO                                      0x0000013A
+#define B_BOOT_GUARD_SACM_INFO_NEM_ENABLED                            BIT0
+
 ///
 /// Local APIC definitions
 ///
@@ -36,6 +39,11 @@
 #define CPUID_FULL_FAMILY_MODEL                     0x0FFF0FF0
 #define CPUID_FULL_FAMILY_MODEL_ALDERLAKE_DT_HALO   0x00090670
 #define CPUID_FULL_FAMILY_MODEL_ALDERLAKE_MOBILE    0x000906A0
+
+#define CACHE_WRITEPROTECTED            5
+
+#define MSR_CACHE_VARIABLE_MTRR_BASE                                  0x200
+#define B_CACHE_MTRR_VALID                                            BIT11
 
 #ifndef SLE_FLAG
 #ifndef STALL_ONE_MICRO_SECOND
