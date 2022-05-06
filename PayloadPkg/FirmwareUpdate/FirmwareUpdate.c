@@ -198,6 +198,14 @@ VerifyFwVersion (
     return Status;
   }
 
+  //
+  // Allow all UCOD Updates
+  //
+  if (((UINT32)ImageHdr->UpdateHardwareInstance) == FW_UPDATE_COMP_UCOD_REGION) {
+    DEBUG((DEBUG_INFO, "Capsule update is for UCODE region!!\n"));
+    return EFI_SUCCESS;
+  }
+
   if ((UINT32)ImageHdr->UpdateHardwareInstance == FW_UPDATE_COMP_BIOS_REGION) {
     Status = VerifySblVersion (ImageHdr, FwPolicy);
     return Status;
