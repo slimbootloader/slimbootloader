@@ -72,7 +72,6 @@ def prep_env ():
     os.environ['EDK_TOOLS_PATH'] = os.path.join(sblsource, 'BaseTools')
     os.environ['BASE_TOOLS_PATH'] = os.path.join(sblsource, 'BaseTools')
     os.environ['CONF_PATH'] = os.path.join(os.environ['WORKSPACE'], 'Conf')
-
     if 'SBL_KEY_DIR' not in os.environ:
         os.environ['SBL_KEY_DIR'] = os.path.join(sblsource, '..', 'SblKeys')
 
@@ -355,15 +354,17 @@ class Build(object):
             # Collect all CPU uCode images
             u_code_images = []
             while ucode_offset < len(rom):
+                # Extract info from CPU uCode images
                 ucode_hdr = UCODE_HEADER.from_buffer(rom, ucode_offset)
                 if ucode_hdr.header_version == 1:
-                    if ucode_hdr.total_size:
-                        ucode_size = ucode_hdr.total_size
-                    else:
-                        ucode_size = 0x0800
-                    u_code_images.append((ucode_offset, ucode_size))
-                    ucode_offset += ucode_size
+                    u_code_images.append(ucode_offset)
                     num_fit_entries += 1
+                    if (hasattr (self._board, "UCODE_SLOT_SIZE")):
+                        ucode_offset += self._board.UCODE_SLOT_SIZE
+                    elif ucode_hdr.total_size:
+                        ucode_offset += ucode_hdr.total_size
+                    else:
+                        ucode_offset += 0x0800
                 else:
                     break
 
@@ -372,7 +373,7 @@ class Build(object):
                 fit_entry = FIT_ENTRY.from_buffer(rom, fit_offset + (i+1)*16)
                 # uCode Update
                 if len(u_code_images) > 0:
-                    offset, size = u_code_images.pop(0)
+                    offset = u_code_images.pop(0)
                     fit_entry.set_values(base + offset, 0, 0x100, 0x1, 0)
                     print ('  Patching entry %d with 0x%08X - uCode' % (i, fit_entry.address))
                 else:
@@ -1123,7 +1124,23 @@ class Build(object):
         if self._board.HAVE_FSP_BIN:
             check_build_component_bin = os.path.join(tool_dir, 'PrepareBuildComponentBin.py')
             if os.path.exists(check_build_component_bin):
-                ret = subprocess.call([sys.executable, check_build_component_bin, work_dir, self._board.SILICON_PKG_NAME, '/d' if self._board.FSPDEBUG_MODE else '/r'])
+                # Create basic command
+                cmd = [ sys.executable,
+                        check_build_component_bin,
+                        work_dir,
+                        self._board.SILICON_PKG_NAME ]
+
+                # Add target
+                if (self._board.FSPDEBUG_MODE):
+                    cmd.append('/d')
+                else:
+                    cmd.append('/r')
+
+                # Add slot size (optional argument)
+                if (hasattr(self._board, 'UCODE_SLOT_SIZE')):
+                    cmd.append(str(self._board.UCODE_SLOT_SIZE))
+
+                ret = subprocess.call(cmd)
                 if ret:
                     raise Exception  ('Failed to prepare build component binaries !')
 

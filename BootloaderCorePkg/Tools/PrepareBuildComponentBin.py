@@ -10,7 +10,7 @@ import sys
 import re
 import shutil
 import subprocess
-from   datetime import date
+import glob
 
 def Fatal (msg):
     sys.stdout.flush()
@@ -220,17 +220,27 @@ def BuildFspBins (fsp_dir, sbl_dir, fsp_inf, silicon_pkg_name, flag):
 
     CopyFileList (copy_list, fsp_dir, sbl_dir)
 
+def DoAddPaddingData(File, SlotSize):
+  with open(File, "rb") as fd:
+    Binary = fd.read()
+    if len(Binary) > SlotSize:
+      print (("Microcode patch %s is larger than slot size(%d)\n") % (File, SlotSize))
+      assert (False)
+    elif len(Binary) < SlotSize:
+      Binary = Binary + b'\xff' * (SlotSize - len(Binary))
+
+  with open(File, "wb") as fd:
+    fd.write(Binary)
+
 def Main():
 
-    if len(sys.argv) < 3:
-        print ('Silicon directory and silicon package name are required!')
+    if len(sys.argv) < 4:
+        print ('Silicon directory, silicon package name, and target are required!')
         return -1
-    target = ''
-    if len(sys.argv) > 3:
-        target = sys.argv[3]
 
     sbl_dir          = sys.argv[1]
     silicon_pkg_name = sys.argv[2]
+    target           = sys.argv[3]
 
     workspace_dir  = os.path.join(sbl_dir, '../Download', silicon_pkg_name)
     fsp_repo_dir   = os.path.abspath (os.path.join(workspace_dir, 'IntelFsp'))
@@ -245,8 +255,20 @@ def Main():
     else:
         CopyBins (fsp_repo_dir, sbl_dir, fsp_inf)
 
-    microcode_inf = os.path.join(sbl_dir, 'Silicon', silicon_pkg_name, 'Microcode', 'Microcode.inf')
+    microcode_dir = os.path.join(sbl_dir, 'Silicon', silicon_pkg_name, 'Microcode')
+    microcode_inf = os.path.join(microcode_dir, 'Microcode.inf')
     CopyBins (ucode_repo_dir, sbl_dir, microcode_inf)
+
+    # Pad all microcode files in directory
+    microcode_pattern = os.path.join(microcode_dir, "*.mcb")
+    microcode_bins = glob.glob(microcode_pattern)
+
+    # Add microcode padding, if slotting
+    if len(sys.argv) > 4:
+        ucode_slot_size = int(sys.argv[4])
+        for microcode_bin in microcode_bins:
+            DoAddPaddingData (microcode_bin, ucode_slot_size)
+
     return 0
 
 if __name__ == '__main__':
