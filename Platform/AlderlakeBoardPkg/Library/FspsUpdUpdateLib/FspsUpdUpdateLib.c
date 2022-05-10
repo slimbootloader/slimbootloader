@@ -40,6 +40,7 @@
 #define CPU_PCIE_DT_HALO_MAX_ROOT_PORT     3
 #define CPU_PCIE_ULT_ULX_MAX_ROOT_PORT     3
 #define MAX_TCSS_USB3_PORTS                4
+#define TURBO_RATIO_LIMIT_ARRAY_SIZE       8
 
 
 //
@@ -707,6 +708,7 @@ UpdateFspConfig (
   // PCH Flash protection
   FspsConfig->PchPwrOptEnable             = 0x1;
   FspsConfig->PchWriteProtectionEnable[0] = 0x0;
+  FspsConfig->PchWriteProtectionEnable[1] = 0x0;
   FspsConfig->PchProtectedRangeLimit[0]   = 0x1fff;
   FspsConfig->PchProtectedRangeBase[0]    = 0x1070;
 
@@ -919,6 +921,13 @@ UpdateFspConfig (
      FspsConfig->CstateLatencyControl3Irtl     = PowerCfgData->CstateLatencyControl3Irtl;
      FspsConfig->CstateLatencyControl4Irtl     = PowerCfgData->CstateLatencyControl4Irtl;
      FspsConfig->CstateLatencyControl5Irtl     = PowerCfgData->CstateLatencyControl5Irtl;
+
+    // Cpu power related settings
+    for (Index = 0; Index < TURBO_RATIO_LIMIT_ARRAY_SIZE; Index++) {
+      FspsConfig->TurboRatioLimitRatio[Index] = PowerCfgData->TurboRatioLimitRatio[Index];
+      FspsConfig->AtomTurboRatioLimitRatio[Index] = PowerCfgData->AtomTurboRatioLimitRatio[Index];
+      FspsConfig->AtomTurboRatioLimitNumCore[Index] = PowerCfgData->AtomTurboRatioLimitNumCore[Index];
+    }
   }
 
   FspsConfig->TdcTimeWindow[0] = 0x3e8;
@@ -932,30 +941,6 @@ UpdateFspConfig (
     FspsConfig->ThcIdleLtr[1] = 0xffffffff;
     FspsConfig->ThcHidResetPadTrigger[1] = 0x0;
     FspsConfig->ThcHidConnectionSpeed[1] = 0x1036640;
-    FspsConfig->TurboRatioLimitRatio[0] = 0x0;
-    FspsConfig->TurboRatioLimitRatio[1] = 0x0;
-    FspsConfig->TurboRatioLimitRatio[2] = 0x0;
-    FspsConfig->TurboRatioLimitRatio[3] = 0x0;
-    FspsConfig->TurboRatioLimitRatio[4] = 0x0;
-    FspsConfig->TurboRatioLimitRatio[5] = 0x0;
-    FspsConfig->TurboRatioLimitRatio[6] = 0x0;
-    FspsConfig->TurboRatioLimitRatio[7] = 0x0;
-    FspsConfig->TurboRatioLimitNumCore[0] = 0x0;
-    FspsConfig->TurboRatioLimitNumCore[1] = 0x0;
-    FspsConfig->TurboRatioLimitNumCore[2] = 0x0;
-    FspsConfig->TurboRatioLimitNumCore[3] = 0x0;
-    FspsConfig->TurboRatioLimitNumCore[4] = 0x0;
-    FspsConfig->TurboRatioLimitNumCore[5] = 0x0;
-    FspsConfig->TurboRatioLimitNumCore[6] = 0x0;
-    FspsConfig->TurboRatioLimitNumCore[7] = 0x0;
-    FspsConfig->AtomTurboRatioLimitRatio[0] = 0x0;
-    FspsConfig->AtomTurboRatioLimitRatio[1] = 0x0;
-    FspsConfig->AtomTurboRatioLimitRatio[2] = 0x0;
-    FspsConfig->AtomTurboRatioLimitRatio[3] = 0x0;
-    FspsConfig->AtomTurboRatioLimitRatio[4] = 0x0;
-    FspsConfig->AtomTurboRatioLimitRatio[5] = 0x0;
-    FspsConfig->AtomTurboRatioLimitRatio[6] = 0x0;
-    FspsConfig->AtomTurboRatioLimitRatio[7] = 0x0;
     FspsConfig->AtomTurboRatioLimitNumCore[0] = 0x0;
     FspsConfig->AtomTurboRatioLimitNumCore[1] = 0x0;
     FspsConfig->AtomTurboRatioLimitNumCore[2] = 0x0;
@@ -1035,32 +1020,7 @@ UpdateFspConfig (
     FspsConfig->IomStayInTCColdSeconds = 0x0;
     FspsConfig->IomBeforeEnteringTCColdSeconds = 0x0;
     FspsConfig->Irms[0] = 0x1;
-    FspsConfig->TurboRatioLimitRatio[0] = 0x30;
-    FspsConfig->TurboRatioLimitRatio[1] = 0x30;
-    FspsConfig->TurboRatioLimitRatio[2] = 0x2d;
-    FspsConfig->TurboRatioLimitRatio[3] = 0x2d;
-    FspsConfig->TurboRatioLimitRatio[4] = 0x2a;
-    FspsConfig->TurboRatioLimitRatio[5] = 0x2a;
-    FspsConfig->TurboRatioLimitRatio[6] = 0x2a;
-    FspsConfig->TurboRatioLimitRatio[7] = 0x2a;
-
-    FspsConfig->AtomTurboRatioLimitRatio[0] = 0x50;
-    FspsConfig->AtomTurboRatioLimitRatio[1] = 0x50;
-    FspsConfig->AtomTurboRatioLimitRatio[2] = 0x50;
-    FspsConfig->AtomTurboRatioLimitRatio[3] = 0x50;
-    FspsConfig->AtomTurboRatioLimitRatio[4] = 0x50;
-    FspsConfig->AtomTurboRatioLimitRatio[5] = 0x50;
-    FspsConfig->AtomTurboRatioLimitRatio[6] = 0x50;
-    FspsConfig->AtomTurboRatioLimitRatio[7] = 0x50;
-    FspsConfig->TurboRatioLimitNumCore[0] = 0x1;
-    FspsConfig->TurboRatioLimitNumCore[1] = 0x2;
-    FspsConfig->TurboRatioLimitNumCore[2] = 0x3;
-    FspsConfig->TurboRatioLimitNumCore[3] = 0x4;
-    FspsConfig->TurboRatioLimitNumCore[4] = 0x5;
-    FspsConfig->TurboRatioLimitNumCore[5] = 0x6;
-    FspsConfig->TurboRatioLimitNumCore[6] = 0x7;
-    FspsConfig->TurboRatioLimitNumCore[7] = 0x8;
-    FspsConfig->AtomTurboRatioLimitNumCore[0] = 0x1;
+    FspsConfig->Irms[1] = 0x1;
     FspsConfig->AtomTurboRatioLimitNumCore[1] = 0x2;
     FspsConfig->AtomTurboRatioLimitNumCore[2] = 0x3;
     FspsConfig->AtomTurboRatioLimitNumCore[3] = 0x4;
@@ -1071,7 +1031,7 @@ UpdateFspConfig (
 
     switch (GetPlatformId ()) {
       case PLATFORM_ID_ADL_P_DDR5_RVP:
-        FspsConfig->Usb4CmMode = 0x0;
+        FspsConfig->Usb4CmMode = 0x1;
         break;
       case PLATFORM_ID_ADL_N_DDR5_CRB:
         FspsConfig->PchLanEnable = 0x0;
