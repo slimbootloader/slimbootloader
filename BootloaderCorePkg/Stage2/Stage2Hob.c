@@ -830,6 +830,7 @@ BuildExtraInfoHob (
   VOID                             *DeviceTableHob;
   LDR_SMM_INFO                     *SmmInfoHob;
   SYS_CPU_TASK_HOB                 *SysCpuTaskHob;
+  CSME_PERFORMANCE_INFO            *CsmeBootTimeData;
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
   S3Data    = (S3_DATA *)LdrGlobal->S3DataPtr;
@@ -934,6 +935,19 @@ BuildExtraInfoHob (
     PerformanceInfo->Frequency = LdrGlobal->PerfData.FreqKhz;
     PerformanceInfo->Flags = 0;
     CopyMem (PerformanceInfo->TimeStamp, LdrGlobal->PerfData.TimeStamp, sizeof (UINT64) * Count);
+  }
+
+  //
+  // Build HOB for CSME boot time performance data
+  //
+  if ((PcdGet32 (PcdBootPerformanceMask) & BIT2) != 0) {
+    Length = sizeof (CSME_PERFORMANCE_INFO) + (64 * sizeof (UINT32));
+    CsmeBootTimeData = BuildGuidHob (&gCsmePerformanceInfoGuid, Length);
+    if (CsmeBootTimeData != NULL) {
+      ZeroMem (CsmeBootTimeData, Length);
+      CsmeBootTimeData->BootDataLength = 64;
+      PlatformUpdateHobInfo (&gCsmePerformanceInfoGuid, CsmeBootTimeData);
+    }
   }
 
   // Build Loader Platform info Hob

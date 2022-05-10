@@ -145,5 +145,6 @@
   gPlatformModuleTokenSpaceGuid.PcdSmmRebaseMode
   gPlatformModuleTokenSpaceGuid.PcdAcpiTablesRsdp
   gPlatformCommonLibTokenSpaceGuid.PcdBuildSmmHobs
+  gPlatformCommonLibTokenSpaceGuid.PcdBootPerformanceMask
 [Depex]
   TRUE

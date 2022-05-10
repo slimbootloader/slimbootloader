@@ -63,6 +63,7 @@
   BdatLib
   IgdOpRegionLib
   HeciLib
+  HeciMeExtLib
   VtdLib
   PsdLib
   MeExtMeasurementLib
@@ -77,6 +78,7 @@
   gOsConfigDataGuid
   gFspVariableNvDataHobGuid
   gCpuInitDataHobGuid
+  gCsmePerformanceInfoGuid
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
@@ -112,6 +114,7 @@
   gPlatformModuleTokenSpaceGuid.PcdFastBootEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled
   gPlatformModuleTokenSpaceGuid.PcdEnablePciePm
+  gPlatformCommonLibTokenSpaceGuid.PcdBootPerformanceMask
 
 [FixedPcd]
   gPlatformAlderLakeTokenSpaceGuid.PcdAdlLpSupport

@@ -8,6 +8,7 @@
 
 #include <Library/ShellLib.h>
 #include <Library/DebugLib.h>
+#include <Guid/CsmePerformanceInfoGuid.h>
 #include <Guid/PerformanceInfoGuid.h>
 #include <Library/HobLib.h>
 
@@ -68,6 +69,58 @@ PrintPerformanceInfo (
 }
 
 /**
+  Print CSME PERFORMANCE_INFO data.
+
+  @param[in]  PerfData    pointer to performance data
+
+**/
+STATIC
+VOID
+EFIAPI
+PrintCsmePerformanceInfo (
+  VOID
+  )
+{
+  UINT8                 Index;
+  UINT32                PrevTS;
+  EFI_HOB_GUID_TYPE     *GuidHob;
+  CSME_PERFORMANCE_INFO  *CsmePerformanceInfo;
+
+  GuidHob = GetNextGuidHob (&gCsmePerformanceInfoGuid, GetHobList());
+  if (GuidHob == NULL) {
+    return;
+  }
+
+  CsmePerformanceInfo = (CSME_PERFORMANCE_INFO *)GET_GUID_HOB_DATA (GuidHob);
+  if (CsmePerformanceInfo == NULL) {
+    return;
+  }
+
+  ShellPrint (L"CSME Performance Info\n");
+  ShellPrint (L"=======================\n\n");
+
+  ShellPrint (L" Id   | Time (ms)  | Delta (ms) \n");
+  ShellPrint (L"------+------------+------------\n");
+  //
+  // Initialize previous time stamp to CSME ROM Start execution TS
+  //
+  PrevTS = CsmePerformanceInfo->BootPerformanceData[1];
+  for (Index = 1; Index < CsmePerformanceInfo->BootDataLength; Index++) {
+    //
+    // Ignore timestamps with value as 0
+    //
+    if (CsmePerformanceInfo->BootPerformanceData[Index] == 0) {
+      continue;
+    }
+    ShellPrint (L" %4x | %7d ms | %7d ms\n",
+          Index,\
+          CsmePerformanceInfo->BootPerformanceData[Index],\
+          CsmePerformanceInfo->BootPerformanceData[Index] - PrevTS);
+    PrevTS = CsmePerformanceInfo->BootPerformanceData[Index];
+  }
+}
+
+/**
   Display performance data.
 
   @param[in]  Shell        shell instance
@@ -100,6 +153,11 @@ ShellCommandPerfFunc (
   ShellPrint (L"Loader Performance Info\n");
   ShellPrint (L"=======================\n\n");
   PrintPerformanceInfo (PerfData);
+
+  // Print CSME boot performance
+  if ((PcdGet32 (PcdBootPerformanceMask) & BIT2) != 0) {
+    PrintCsmePerformanceInfo ();
+  }
 
   return EFI_SUCCESS;
 }

@@ -143,6 +143,7 @@ class BaseBoard(object):
         self.DEBUG_PORT_NUMBER        = 0x00000002
         self.CONSOLE_IN_DEVICE_MASK   = 0x00000001
         self.CONSOLE_OUT_DEVICE_MASK  = 0x00000001
+        self.BOOT_PERFORMANCE_MASK    = 0x00000001
 
         self.HAVE_VBT_BIN          = 0
         self.HAVE_FIT_TABLE        = 0

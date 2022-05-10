@@ -71,7 +71,7 @@
 #include <Guid/SpiFlashInfoGuid.h>
 #include <Guid/NvVariableInfoGuid.h>
 #include <Guid/SmmS3CommunicationInfoGuid.h>
-
+#include <Guid/CsmePerformanceInfoGuid.h>
 
 #define UIMAGE_FIT_MAGIC               (0x56190527)
 

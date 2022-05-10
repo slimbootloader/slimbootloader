@@ -39,6 +39,7 @@
 #include <Guid/SystemTableInfoGuid.h>
 #include <Guid/SerialPortInfoGuid.h>
 #include <Guid/OsConfigDataHobGuid.h>
+#include <Guid/CsmePerformanceInfoGuid.h>
 #include <Guid/SmmInformationGuid.h>
 #include <IndustryStandard/Acpi.h>
 #include <IndustryStandard/MemoryMappedConfigurationSpaceAccessTable.h>
@@ -80,11 +81,13 @@
 #include <CpuPowerMgmt.h>
 #include <Library/MpInitLib.h>
 #include <Library/HeciLib.h>
+#include <Library/HeciMeExtLib.h>
 #include <Library/PchInfoLib.h>
 #include <Library/DmaRemappingTable.h>
 #include <Library/VTdLib.h>
 #include <Library/CpuPcieHsPhyInitLib.h>
 #include <Include/TccConfigSubRegions.h>
+#include <Include/BupMsgs.h>
 #include <Library/PchPciBdfLib.h>
 #include <Library/PchPcrLib.h>
 #include <Library/PchPcieRpLib.h>
