@@ -860,6 +860,10 @@ PlatformUpdateAcpiGnvs (
   PchNvs->CnviMode           = FspsConfig->CnviMode;
   PchNvs->CnviBtCore         = FspsConfig->CnviBtCore;
   PchNvs->CnviBtAudioOffload = FspsConfig->CnviBtAudioOffload;
+  switch (GetPlatformId ()) {
+    case PLATFORM_ID_ADL_P_DDR5_RVP:
+    PchNvs->CnviBtAudioOffload = 0x1;
+  }
   PchNvs->PsOnEnable         = FspsConfig->PsOnEnable;
   PchNvs->CnviPortId         = PID_CNVI;
   PchNvs->IclkPid            = PID_ICLK;
