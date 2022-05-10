@@ -35,3 +35,4 @@
   IoLib
   TimerLib
   MeChipsetLib
+  MemoryAllocationLib

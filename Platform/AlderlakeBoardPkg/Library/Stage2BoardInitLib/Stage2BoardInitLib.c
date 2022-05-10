@@ -28,7 +28,6 @@ STATIC S3_SAVE_REG mS3SaveReg = {
   { { REG_TYPE_IO, WIDE32, { 0, 0}, (ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN), 0x00000000 } }
 };
 
-
 /**
   Create OS config data support HOB.
 
@@ -91,6 +90,58 @@ BuildOsConfigDataHob (
     Status = PcdSet32S (PcdPayloadReservedMemSize, PldRsvdMemSize + MemorySize);
     ASSERT_EFI_ERROR (Status);
   }
+  return EFI_SUCCESS;
+}
+
+/**
+  Create Csme Boot time HOB.
+
+  @param[out]  CsmeBootTimeData       pointer to CSME_PERFORMANCE_INFO structure
+
+  @retval EFI_SUCCESS           OS config data HOB built
+  @retval EFI_NOT_FOUND         Loader Global data not found
+  @retval EFI_OUT_OF_RESOURCES  Could not build HOB
+**/
+EFI_STATUS
+UpdateCsmeBootPerfHob (
+  OUT CSME_PERFORMANCE_INFO  *CsmeBootTimeData
+  )
+{
+  UINT32      *EarlyBootData;
+  UINT32      EarlyBootDataLength;
+  UINT32      EarlyBootDataVersion;
+  UINT32      AllocatedDataLength;
+  EFI_STATUS  Status;
+
+  EarlyBootData = NULL;
+  EarlyBootDataLength = 0;
+
+  if (CsmeBootTimeData == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  //
+  // Memory allocated for boot data is passed through BootDataLength
+  //
+  AllocatedDataLength = CsmeBootTimeData->BootDataLength;
+
+  Status = HeciGetEarlyBootPerfData (&EarlyBootData, &EarlyBootDataLength, &EarlyBootDataVersion);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Obtaining CSME Boot performance data failed with status: %r\n", Status));
+    return Status;
+  } else {
+    DEBUG ((DEBUG_INFO, "Found CSME Boot performance data!\n"));
+  }
+
+  if (EarlyBootDataLength > AllocatedDataLength) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  CsmeBootTimeData->Revision = 1;
+  CsmeBootTimeData->BootDataVersion = EarlyBootDataVersion;
+  CsmeBootTimeData->BootDataLength = EarlyBootDataLength;
+  CopyMem (CsmeBootTimeData->BootPerformanceData, EarlyBootData, EarlyBootDataLength * sizeof (UINT32));
+
   return EFI_SUCCESS;
 }
 
@@ -735,6 +786,8 @@ PlatformUpdateHobInfo (
     UpdateSmmInfo (HobInfo);
   } else if (Guid == &gLoaderPlatformInfoGuid) {
     UpdateLoaderPlatformInfo (HobInfo);
+  } else if (Guid == &gCsmePerformanceInfoGuid) {
+    UpdateCsmeBootPerfHob (HobInfo);
   }
 }
 

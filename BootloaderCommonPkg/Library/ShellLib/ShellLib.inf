@@ -80,6 +80,7 @@
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
   gPlatformCommonLibTokenSpaceGuid.PcdMiniShellEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdConsoleInDeviceMask
+  gPlatformCommonLibTokenSpaceGuid.PcdBootPerformanceMask
 
 [Guids]
   gLoaderPerformanceInfoGuid

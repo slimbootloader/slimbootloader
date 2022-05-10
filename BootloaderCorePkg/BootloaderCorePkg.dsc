@@ -259,6 +259,7 @@
 
   gPayloadTokenSpaceGuid.PcdRtcmRsvdSize                        | $(RTCM_RSVD_SIZE)
 
+  gPlatformCommonLibTokenSpaceGuid.PcdBootPerformanceMask       | $(BOOT_PERFORMANCE_MASK)
 
 [PcdsPatchableInModule]
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel   | 0x8000004F

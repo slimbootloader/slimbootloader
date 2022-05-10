@@ -39,6 +39,7 @@
   gPeiFirmwarePerformanceGuid
   gEdkiiFpdtExtendedFirmwarePerformanceGuid
   gLoaderFspInfoGuid
+  gCsmePerformanceInfoGuid
 
 [Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdBootPerformanceMask

@@ -34,6 +34,9 @@
 #define BIOS_FIXED_HOST_ADDR                0
 #define HECI_MKHI_MESSAGE_ADDR              0x07
 
+#define BUP_COMMON_GROUP_ID                   0xF0
+#define GET_EARLY_BOOT_PERFORMANCE_DATA_CMD   0x08
+
 #pragma pack(1)
 
 //
@@ -147,6 +150,25 @@ typedef union {
     UINT32  Reserved2               : 16;
   } Fields;
 } PLATFORM_TYPE_RULE_DATA;
+
+#define EARLY_BOOT_PERF_DATA_CMD_VERSION       1
+#define EARLY_BOOT_PERF_DATA_LENGTH_VERSION_1  64
+typedef struct
+{
+  MKHI_MESSAGE_HEADER                Header;
+  UINT32                             Reserved;
+} GET_EARLY_BOOT_PERF_DATA_CMD;
+typedef struct
+{
+  MKHI_MESSAGE_HEADER                Header;
+  UINT32                             BootDataVersion;
+  UINT32                             BootDataLength;
+  UINT32                             BootPerformanceData[];
+} GET_EARLY_BOOT_PERF_DATA_RESPONSE;
+typedef union {
+  GET_EARLY_BOOT_PERF_DATA_CMD      Request;
+  GET_EARLY_BOOT_PERF_DATA_RESPONSE Response;
+} GET_EARLY_BOOT_PERF_DATA_BUFFER;
 
 #pragma pack()
 

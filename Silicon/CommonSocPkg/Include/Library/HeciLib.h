@@ -297,4 +297,23 @@ HeciRegisterHeciService (
   VOID
   );
 
+/**
+  This function gets CSME boot time data from CSME.
+
+  @param[out]  EarlyBootData         - Pointer to Array of TimeStamps in CSME Boot data structure
+  @param[out]  EarlyBootLength       - Pointer to Number of elements in CSME Boot data structure
+  @param[out]  EarlyBootDataVersion  - Pointer to Version of CSME Boot data structure
+
+  @retval EFI_SUCCESS             Event data read successfully
+  @retval EFI_INVALID_PARAMETER   Input parameters are not valid
+  @retval EFI_DEVICE_ERROR        HECI Device error, command aborts abnormally
+  @retval EFI_NOT_READY           Device is not ready
+**/
+EFI_STATUS
+HeciGetEarlyBootPerfData (
+  OUT UINT32        **EarlyBootData,
+  OUT UINT32        *EarlyBootLength,
+  OUT UINT32        *EarlyBootDataVersion
+  );
+
 #endif // _HECI_LIB_H_
