@@ -99,6 +99,19 @@ VerifyFwVersion (
   );
 
 /**
+  Verify uCode internal structure
+
+  @param[in] ImageHdr     Pointer to the fw mgmt capsule image header
+
+  @retval  EFI_SUCCESS    The operation completed successfully.
+  @retval  others         There is error happening.
+**/
+EFI_STATUS
+VerifyUcodeStruct (
+  IN  EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
+  );
+
+/**
   Verify the firmware internal structure.
 
   @param[in] ImageHdr     Pointer to the fw mgmt capsule image header
