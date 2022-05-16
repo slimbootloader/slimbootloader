@@ -10,6 +10,7 @@
 #
 import os
 import sys
+import re
 
 tool_dir = os.path.join(os.path.dirname (os.path.realpath(__file__)), 'BootloaderCorePkg', 'Tools')
 sys.dont_write_bytecode = True
@@ -1071,6 +1072,17 @@ class Build(object):
         out_file = os.path.join("Outputs", self._board.BOARD_NAME, 'Stitch_Components.zip')
         copy_images_to_output (self._fv_dir, out_file, self._img_list, rgn_name_list, extra_list)
 
+    def pad_file(self, file, size):
+        with open(file, "rb") as fd:
+            binary = fd.read()
+            if len(binary) > size:
+                print(("Microcode patch %s is larger than slot size(%d)\n") % (file, size))
+                assert (False)
+            elif len(binary) < size:
+                binary = binary + b'\xff' * (size - len(binary))
+
+        with open(file, "wb") as fd:
+            fd.write(binary)
 
     def pre_build(self):
         # Update search path
@@ -1136,13 +1148,37 @@ class Build(object):
                 else:
                     cmd.append('/r')
 
-                # Add slot size (optional argument)
-                if (hasattr(self._board, 'UCODE_SLOT_SIZE')):
-                    cmd.append(str(self._board.UCODE_SLOT_SIZE))
-
                 ret = subprocess.call(cmd)
                 if ret:
                     raise Exception  ('Failed to prepare build component binaries !')
+
+        # if slot size exists, pad the uCode files before they are combined
+        if hasattr(self._board, 'UCODE_SLOT_SIZE'):
+            microcode_inf = os.path.join(os.environ['PLT_SOURCE'], self._board.MICROCODE_INF_FILE)
+            microcode_dir = os.path.dirname(microcode_inf)
+            microcode_rel_paths = []
+
+            # get relevant uCode files
+            fd = open(microcode_inf, 'r')
+            lines = fd.readlines()
+            fd.close()
+            has_sources_section = False
+            for line in lines:
+                line = line.strip()
+                if line.startswith('['):
+                    if line.startswith('[Sources]'):
+                        has_sources_section = True
+                    else:
+                        has_sources_section = False
+                if has_sources_section:
+                    match = re.match(".+\.mcb", line)
+                    if match:
+                        microcode_rel_paths.append(match.group(0).strip())
+
+            # perform the padding
+            for microcode_rel_path in microcode_rel_paths:
+                microcode_abs_path = os.path.join(microcode_dir, microcode_rel_path)
+                self.pad_file(microcode_abs_path, self._board.UCODE_SLOT_SIZE)
 
         # create FSP size and UPD size can be known
         fsp_list = ['FSP_T', 'FSP_M', 'FSP_S']
