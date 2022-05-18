@@ -348,9 +348,9 @@ class Build(object):
         num_fit_entries = 0
         if self._board.UCODE_SIZE > 0:
             ucode_base = self._board.UCODE_BASE
-            ucode_offset = ucode_base - base;
-            if (ucode_offset < 0):
-                raise Exception ('  UCODE %x\n  UCODE address (0x%08X) out of range' % (base, ucode_base))
+            ucode_offset = ucode_base - base
+            if ucode_offset < 0:
+                raise Exception ('UCODE %x\n  UCODE address (0x%08X) out of range' % (base, ucode_base))
 
             # Collect all CPU uCode images
             u_code_images = []
@@ -361,6 +361,8 @@ class Build(object):
                     u_code_images.append(ucode_offset)
                     num_fit_entries += 1
                     if (hasattr (self._board, "UCODE_SLOT_SIZE")):
+                        if ucode_hdr.total_size > self._board.UCODE_SLOT_SIZE:
+                            raise Exception ('UCODE total size (0x%08X) greater than UCODE slot size' % (ucode_hdr.total_size, self._board.UCODE_SLOT_SIZE))
                         ucode_offset += self._board.UCODE_SLOT_SIZE
                     elif ucode_hdr.total_size:
                         ucode_offset += ucode_hdr.total_size
@@ -1072,18 +1074,6 @@ class Build(object):
         out_file = os.path.join("Outputs", self._board.BOARD_NAME, 'Stitch_Components.zip')
         copy_images_to_output (self._fv_dir, out_file, self._img_list, rgn_name_list, extra_list)
 
-    def pad_file(self, file, size):
-        with open(file, "rb") as fd:
-            binary = fd.read()
-            if len(binary) > size:
-                print(("Microcode patch %s is larger than slot size(%d)\n") % (file, size))
-                assert (False)
-            elif len(binary) < size:
-                binary = binary + b'\xff' * (size - len(binary))
-
-        with open(file, "wb") as fd:
-            fd.write(binary)
-
     def pre_build(self):
         # Update search path
         sbl_dir = os.environ['SBL_SOURCE']
@@ -1151,34 +1141,6 @@ class Build(object):
                 ret = subprocess.call(cmd)
                 if ret:
                     raise Exception  ('Failed to prepare build component binaries !')
-
-        # if slot size exists, pad the uCode files before they are combined
-        if hasattr(self._board, 'UCODE_SLOT_SIZE'):
-            microcode_inf = os.path.join(os.environ['PLT_SOURCE'], self._board.MICROCODE_INF_FILE)
-            microcode_dir = os.path.dirname(microcode_inf)
-            microcode_rel_paths = []
-
-            # get relevant uCode files
-            fd = open(microcode_inf, 'r')
-            lines = fd.readlines()
-            fd.close()
-            has_sources_section = False
-            for line in lines:
-                line = line.strip()
-                if line.startswith('['):
-                    if line.startswith('[Sources]'):
-                        has_sources_section = True
-                    else:
-                        has_sources_section = False
-                if has_sources_section:
-                    match = re.match(".+\.mcb", line)
-                    if match:
-                        microcode_rel_paths.append(match.group(0).strip())
-
-            # perform the padding
-            for microcode_rel_path in microcode_rel_paths:
-                microcode_abs_path = os.path.join(microcode_dir, microcode_rel_path)
-                self.pad_file(microcode_abs_path, self._board.UCODE_SLOT_SIZE)
 
         # create FSP size and UPD size can be known
         fsp_list = ['FSP_T', 'FSP_M', 'FSP_S']
