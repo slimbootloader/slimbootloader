@@ -50,6 +50,7 @@ MEMORY_CFG_DATA.TcssDma1En | 0x1
 MEMORY_CFG_DATA.PchHdaAudioLinkHdaEnable   | 0x1
 MEMORY_CFG_DATA.PchHdaAudioLinkDmicEnable  | {0x1, 0x1}
 MEMORY_CFG_DATA.PchHdaDspEnable            | 0x1
+MEMORY_CFG_DATA.DmiMaxLinkSpeed            | 0x0
 
 PLDSEL_CFG_DATA.PldSelGpio.Enable      | 1
 PLDSEL_CFG_DATA.PldSelGpio.PadGroup    | 5
