@@ -440,7 +440,14 @@
 !endif
 
 !if $(UCODE_SIZE) > 0
-  $(MICROCODE_INF_FILE)
+  !if $(UCODE_SLOT_SIZE) > 0
+    $(MICROCODE_INF_FILE) {
+      <BuildOptions>
+        *_*_*_GENFW_FLAGS  = --align $(UCODE_SLOT_SIZE)
+    }
+  !else
+    $(MICROCODE_INF_FILE)
+  !endif
 !endif
 
 [BuildOptions.Common.EDKII]
