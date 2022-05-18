@@ -1078,6 +1078,13 @@
                      TurboRatioLimitRatio[7-0] will pair with TurboRatioLimitNumCore[7-0] to determine the active core ranges for each frequency point.
       length       : 0x08
       value        : {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+  - TurboRatioLimitNumCore :
+      name         : Turbo Ratio Limit Num Core array
+      type         : EditNum, HEX, (0x00, 0xFFFFFFFF)
+      help         : >
+                     TurboRatioLimitNumCore[7-0] will pair with TurboRatioLimitRatio[7-0] to determine the active core ranges for each frequency point.
+      length       : 0x08
+      value        : {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
   - AtomTurboRatioLimitRatio :
       name         : Turbo Ratio Limit Ratio array
       type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFF)
