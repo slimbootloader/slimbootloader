@@ -72,6 +72,16 @@
 #define V_SA_DEVICE_ID_MB_ULT_4   0x4609   ///< AlderLake P (2(f)+4(f)+GT) SA DID
 #define V_SA_DEVICE_ID_MB_ULT_5   0x4601   ///< AlderLake P (2+8+GT) SA DID
 #define V_SA_DEVICE_ID_MB_ULT_6   0x4661   ///< AlderLake P (6+8+2) SA DID
+#define V_SA_DEVICE_ID_MB_ULT_7    0x4629   ///< AlderLake P (4+4+1) SA DID
+#define V_SA_DEVICE_ID_MB_ULT_8    0x4619   ///< AlderLake P (1+4+GT) SA DID
+#define V_SA_DEVICE_ID_MB_ULT_9    0x4659   ///< AlderLake P (1+8+GT) SA DID
+#define V_SA_DEVICE_ID_MB_ULT_10   0x4645   ///< AlderLake P (6+6+GT) SA DID
+#define V_SA_DEVICE_ID_MB_ULT_11   0x4603   ///< AlderLake PS (2+8+GT) SA DID
+#define V_SA_DEVICE_ID_MB_ULT_12   0x4643   ///< AlderLake PS (6+8+GT) SA DID
+#define V_SA_DEVICE_ID_MB_ULT_13   0x4627   ///< AlderLake PS (4+8+GT) SA DID
+#define V_SA_DEVICE_ID_MB_ULT_14   0x460B   ///< AlderLake PS (2+4+GT) SA DID
+#define V_SA_DEVICE_ID_MB_ULT_15   0x464B   ///< AlderLake PS (4+4+GT) SA DID
+#define V_SA_DEVICE_ID_MB_ULT_16   0x467B   ///< AlderLake PS (1+4+GT) SA DID
 /**
  <b>Description</b>:
   This is the base address for the PCI Express Egress Port MMIO Configuration space.  There is no physical memory within this 4KB window that can be addressed.  The 4KB reserved by this register does not alias to any PCI 2.3 compliant memory mapped space.  On reset, the EGRESS port MMIO configuration space is disabled and must be enabled by writing a 1 to PXPEPBAREN [Dev 0, offset 40h, bit 0].

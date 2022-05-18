@@ -771,6 +771,7 @@ UpdateFspConfig (
       FspsConfig->EnableItbm = 0;
       FspsConfig->EnableTimedGpio0 = 0;
       FspsConfig->EnableTimedGpio1 = 0;
+      FspsConfig->PchLanEnable = 0x0;
       ZeroMem (FspsConfig->PchIshI2cEnable, sizeof (FspsConfig->PchIshI2cEnable));
       ZeroMem (FspsConfig->PchIshGpEnable, sizeof (FspsConfig->PchIshGpEnable));
       DEBUG ((DEBUG_INFO, "Stage 2 S0ix config applied.\n"));
@@ -925,6 +926,7 @@ UpdateFspConfig (
     // Cpu power related settings
     for (Index = 0; Index < TURBO_RATIO_LIMIT_ARRAY_SIZE; Index++) {
       FspsConfig->TurboRatioLimitRatio[Index] = PowerCfgData->TurboRatioLimitRatio[Index];
+      FspsConfig->TurboRatioLimitNumCore[Index] = PowerCfgData->TurboRatioLimitNumCore[Index];
       FspsConfig->AtomTurboRatioLimitRatio[Index] = PowerCfgData->AtomTurboRatioLimitRatio[Index];
       FspsConfig->AtomTurboRatioLimitNumCore[Index] = PowerCfgData->AtomTurboRatioLimitNumCore[Index];
     }
