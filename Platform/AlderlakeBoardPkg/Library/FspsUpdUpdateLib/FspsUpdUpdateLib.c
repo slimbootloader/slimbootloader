@@ -1000,8 +1000,8 @@ UpdateFspConfig (
     FspsConfig->TdcTimeWindow[0] = 0x3e8;
     FspsConfig->TdcTimeWindow[1] = 0x3e8;
     FspsConfig->PchLockDownBiosLock = 0x1;
-    FspsConfig->UfsEnable[0] = 0x0;
-    FspsConfig->UfsEnable[1] = 0x0;
+    FspsConfig->UfsEnable[0] = SiCfgData->PchUfsEnable[0];
+    FspsConfig->UfsEnable[1] = SiCfgData->PchUfsEnable[1];
     FspsConfig->IehMode = 0x0;
     FspsConfig->PortResetMessageEnable[0] = 0x1;
     FspsConfig->PortResetMessageEnable[1] = 0x1;
