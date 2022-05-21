@@ -652,5 +652,19 @@ UpdateFspConfig (
       DEBUG ((DEBUG_INFO, "Stage 1B S0ix config applied.\n"));
     }
   }
+
+  //
+  // Enable ISH incase if UFS is enabled.
+  //
+  if ((SiCfgData != NULL) && ((SiCfgData->PchUfsEnable[0] == 1) || (SiCfgData->PchUfsEnable[1] == 1))) {
+    if (IsPchLp ()) {
+      switch (GetPlatformId ()) {
+        case PLATFORM_ID_ADL_P_LP4_RVP:
+        case PLATFORM_ID_ADL_P_LP5_RVP:
+        case PLATFORM_ID_ADL_P_DDR5_RVP:
+          Fspmcfg->PchIshEnable       = 1;
+      }
+    }
+  }
 }
 

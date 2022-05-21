@@ -352,6 +352,13 @@
                      Describe the specific over current pin number of USBC Port N.
       length       : 0x0008
       value        : {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
+  - PchUfsEnable :
+      name         : Enable PCH UFS
+      type         : EditNum, HEX, (0x0, 0x1)
+      help         : >
+                     Enable/Disable UFS controllers 1 and 2. 0- Disable; 1- Enable.
+      length       : 0x02
+      value        : {0x00, 0x00}
   - PchIshI2cEnable :
       condition    : $(COND_S0IX_DIS)
       name         : Enable PCH ISH I2C pins assigned
@@ -453,5 +460,5 @@
       length       : 0x01
       value        : 0x1
   - SiliconRsvd  :
-      length       : 0x00
+      length       : 0x02
       value        : 0x00
