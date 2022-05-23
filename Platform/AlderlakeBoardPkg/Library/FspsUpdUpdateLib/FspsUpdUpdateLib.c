@@ -641,6 +641,12 @@ UpdateFspConfig (
     FspsConfig->EnableTimedGpio1 = SiCfgData->EnableTimedGpio1;
     FspsConfig->PchPmSlpAMinAssert = SiCfgData->PchPmSlpAMinAssert;
 
+    // UFS
+    if (IsPchLp ()) {
+      FspsConfig->UfsEnable[0] = SiCfgData->PchUfsEnable[0];
+      FspsConfig->UfsEnable[1] = SiCfgData->PchUfsEnable[1];
+    }
+
     // When fast boot is enabled, program SLP_A_MIN_ASST_WDTH to 0
     // to reduce boottime.
     if (PcdGetBool (PcdFastBootEnabled)) {
@@ -1002,8 +1008,6 @@ UpdateFspConfig (
     FspsConfig->TdcTimeWindow[0] = 0x3e8;
     FspsConfig->TdcTimeWindow[1] = 0x3e8;
     FspsConfig->PchLockDownBiosLock = 0x1;
-    FspsConfig->UfsEnable[0] = SiCfgData->PchUfsEnable[0];
-    FspsConfig->UfsEnable[1] = SiCfgData->PchUfsEnable[1];
     FspsConfig->IehMode = 0x0;
     FspsConfig->PortResetMessageEnable[0] = 0x1;
     FspsConfig->PortResetMessageEnable[1] = 0x1;
