@@ -71,9 +71,9 @@ CONST PLT_DEVICE mPlatformDevices[] = {
   {
     .Dev = {
       .PciDev = {
-        .PciFunctionNumber  = 0,
+        .PciFunctionNumber  = 5,
         .PciDeviceNumber    = 18,
-        .PciBusNumber       = 5,
+        .PciBusNumber       = 0,
         .IsMmioDevice       = 0
       }
     },
@@ -83,9 +83,9 @@ CONST PLT_DEVICE mPlatformDevices[] = {
   {
     .Dev = {
       .PciDev = {
-        .PciFunctionNumber  = 0,
+        .PciFunctionNumber  = 7,
         .PciDeviceNumber    = 18,
-        .PciBusNumber       = 7,
+        .PciBusNumber       = 0,
         .IsMmioDevice       = 0
       }
     },
