@@ -9,7 +9,7 @@
 #include <PlatformData.h>
 #include <Library/MeExtMeasurementLib.h>
 #include "Stage2BoardInitLib.h"
-#include "GpioTableAdlPsPostMem.h"
+//#include "GpioTableAdlPsPostMem.h"
 #include "GpioTableAdlNPostMem.h"
 #include "GpioTableAdlTsn.h"
 #include <Library/PciePm.h>
@@ -285,9 +285,6 @@ BoardInit (
   case PreSiliconInit:
     EnableLegacyRegions ();
     switch (GetPlatformId ()) {
-      case BoardIdAdlPSDdr5Rvp:
-        ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTablePostMemAdlPsDdr5Rvp) / sizeof (mGpioTablePostMemAdlPsDdr5Rvp[0]), (UINT8*)mGpioTablePostMemAdlPsDdr5Rvp);
-        break;
       case BoardIdAdlNLp5Rvp:
         ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTablePostMemAdlNLpddr5Rvp) / sizeof (mGpioTablePostMemAdlNLpddr5Rvp[0]), (UINT8*)mGpioTablePostMemAdlNLpddr5Rvp);
         break;
