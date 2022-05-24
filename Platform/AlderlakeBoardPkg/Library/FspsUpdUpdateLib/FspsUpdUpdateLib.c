@@ -1113,6 +1113,11 @@ UpdateFspConfig (
         FspsConfig->CpuPcieRpGen5Uptp[1] = 0x7;
         FspsConfig->CpuPcieRpGen5Uptp[2] = 0x7;
         break;
+      case PLATFORM_ID_ADL_PS_DDR5_RVP:
+        FspsConfig->AmtEnabled = 0x1;
+        FspsConfig->FwProgress = 0x1;
+        FspsConfig->Irms[1] = 0x0;
+        break;
       default:
         break;
     }
