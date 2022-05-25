@@ -309,7 +309,6 @@ GpioConfigurePch (
         ASSERT (FALSE);
         return EFI_INVALID_PARAMETER;
       }
-      DEBUG_CODE_END ();
 
       ZeroMem (PadCfgDwReg, sizeof (PadCfgDwReg));
       ZeroMem (PadCfgDwRegMask, sizeof (PadCfgDwRegMask));
@@ -355,6 +354,7 @@ GpioConfigurePch (
         PadCfgDwReg[2]
         );
 
+
       //
       // Get GPIO DW register values from GPIO config data
       //
@@ -363,7 +363,7 @@ GpioConfigurePch (
         &GpioData->GpioConfig,
         GroupDwData
         );
-
+      DEBUG_CODE_END ();
       //Move to next item
       Index++;
     }
