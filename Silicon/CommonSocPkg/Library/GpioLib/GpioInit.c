@@ -309,7 +309,6 @@ GpioConfigurePch (
         ASSERT (FALSE);
         return EFI_INVALID_PARAMETER;
       }
-      DEBUG_CODE_END ();
 
       ZeroMem (PadCfgDwReg, sizeof (PadCfgDwReg));
       ZeroMem (PadCfgDwRegMask, sizeof (PadCfgDwRegMask));
@@ -363,7 +362,7 @@ GpioConfigurePch (
         &GpioData->GpioConfig,
         GroupDwData
         );
-
+      DEBUG_CODE_END ();
       //Move to next item
       Index++;
     }
