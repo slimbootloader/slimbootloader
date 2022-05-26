@@ -23,7 +23,7 @@ GLOBAL_REMOVE_IF_UNREFERENCED GPIO_INIT_CONFIG mGpioTablePostMemAdlPsDdr5Rvp[] =
   {GPIO_VER2_LP_GPP_A14,  {GpioPadModeGpio,       GpioHostOwnAcpi,       GpioDirOut,        GpioOutLow,        GpioIntDefault,          GpioPlatformReset,     GpioTermNone} },//X4_SLOT_PWREN
   {GPIO_VER2_LP_GPP_F10,  {GpioPadModeGpio,       GpioHostOwnAcpi,       GpioDirOut,        GpioOutHigh,       GpioIntDefault,          GpioPlatformReset,     GpioTermNone} },//X4_Slot_RESET
    //WLAN
-  {GPIO_VER2_LP_GPP_A13,  {GpioPadModeGpio,       GpioHostOwnDefault,    GpioDirOut,        GpioOutHigh,       GpioIntDefault,          GpioPlatformReset,     GpioTermNone} },//BT_RF_KILL_N
+  {GPIO_VER2_LP_GPP_A13,  {GpioPadModeGpio,       GpioHostOwnDefault,    GpioDirIn,         GpioOutHigh,       GpioIntDefault,          GpioPlatformReset,     GpioTermNone} },//BT_RF_KILL_N
   {GPIO_VER2_LP_GPP_H2,   {GpioPadModeGpio,       GpioHostOwnAcpi,       GpioDirOut,        GpioOutHigh,       GpioIntDefault,          GpioPlatformReset,     GpioTermNone} },//WLAN_RST_N
   //M.2 PCH SSD
   {GPIO_VER2_LP_GPP_D16,  {GpioPadModeGpio,       GpioHostOwnAcpi,       GpioDirOut,        GpioOutHigh,       GpioIntDefault,          GpioPlatformReset,     GpioTermNone} },//M2_PCH_SSD_PWREN
@@ -49,22 +49,25 @@ GLOBAL_REMOVE_IF_UNREFERENCED GPIO_INIT_CONFIG mGpioTablePostMemAdlPsDdr5Rvp[] =
   {GPIO_VER2_LP_GPP_A11,  {GpioPadModeGpio,       GpioHostOwnDefault,    GpioDirOut,        GpioOutHigh,       GpioIntDefault,            GpioPlatformReset,     GpioTermNone} },  //EC_SLP_S0_CS_N
   {GPIO_VER2_LP_GPP_E7,   {GpioPadModeGpio,       GpioHostOwnAcpi,       GpioDirInInv,      GpioOutDefault,    GpioIntSmi|GpioIntLevel,   GpioPlatformReset,     GpioTermNone} },  //GPPC_E7_EC_SMI_N
 
+  //DNX/DDIA DDC
+  {GPIO_VER2_LP_GPP_E23,  {GpioPadModeGpio,       GpioHostOwnDefault,    GpioDirOut,        GpioOutHigh,       GpioIntDefault,           GpioPlatformReset,     GpioTermNone} },//DNX_IN_PROG
+
   //HDMI Input Detect and Wake
   {GPIO_VER2_LP_GPP_H9,   {GpioPadModeGpio,       GpioHostOwnAcpi,       GpioDirInInv,      GpioOutDefault,     GpioIntSci|GpioIntEdge,     GpioHostDeepReset,     GpioTermNone,  GpioPadConfigUnlock } },//CRD2_HDMI_WAKE_N
   {GPIO_VER2_LP_GPD7,     {GpioPadModeGpio,       GpioHostOwnAcpi,       GpioDirInInv,      GpioOutDefault,     GpioIntSci|GpioIntEdge,     GpioHostDeepReset,     GpioTermNone,  GpioPadConfigUnlock} },//CRD1_HDMI_WAKE_N
 
   //TouchPad
-  {GPIO_VER2_LP_GPP_A15,  {GpioPadModeGpio, GpioHostOwnGpio, GpioDirInInv,  GpioOutDefault,GpioIntEdge|GpioIntApic,GpioPlatformReset,  GpioTermNone,  GpioPadConfigUnlock  }},  //TCH_PAD_INT_N
+  {GPIO_VER2_LP_GPP_A15,  {GpioPadModeGpio,       GpioHostOwnGpio,       GpioDirInInv,      GpioOutDefault,    GpioIntApic|GpioIntEdge,  GpioPlatformReset,     GpioTermNone} },// TCH_PAD_INT_N
 
   //Touch PNL2 /TSN
   {GPIO_VER2_LP_GPP_F17,  {GpioPadModeGpio,         GpioHostOwnAcpi,     GpioDirOut,        GpioOutHigh,       GpioIntDefault,          GpioPlatformReset,     GpioTermNone} },//GSPI1_CS_CVF
   {GPIO_VER2_LP_GPP_F18,  {GpioPadModeGpio,         GpioHostOwnGpio,     GpioDirInInv,      GpioOutDefault,    GpioIntApic|GpioIntEdge, GpioPlatformReset,     GpioTermNone} },//GSPI1_CS_CVF
 
   //WLAN/Flash Dec/ sec /ISH SNSR HDR/EC/MECC
-  {GPIO_VER2_LP_GPP_D13,  {GpioPadModeGpio,       GpioHostOwnAcpi,       GpioDirInInv,      GpioOutDefault,     GpioIntDis, GpioHostDeepReset,     GpioTermNone,  GpioPadConfigUnlock} },//WIFI_WAKE_N
+  {GPIO_VER2_LP_GPP_D13,  {GpioPadModeGpio,       GpioHostOwnAcpi,       GpioDirInInv,      GpioOutDefault,     GpioIntSci|GpioIntLevel, GpioHostDeepReset,     GpioTermNone,  GpioPadConfigUnlock} },//WIFI_WAKE_N
 
   //UART_BT_WAKE_N
-  {GPIO_VER2_LP_GPP_E0,   {GpioPadModeGpio,       GpioHostOwnAcpi,       GpioDirInInv,      GpioOutDefault,      GpioIntDis, GpioHostDeepReset,     GpioTermNone,  GpioPadConfigUnlock} },//UART_BT_WAKE_N
+  {GPIO_VER2_LP_GPP_E0,   {GpioPadModeGpio,       GpioHostOwnAcpi,       GpioDirInInv,      GpioOutDefault,      GpioIntSci|GpioIntLevel, GpioHostDeepReset,     GpioTermNone,  GpioPadConfigUnlock} },//UART_BT_WAKE_N
   //WLAN/ SPI TPM HDR
   {GPIO_VER2_LP_GPP_E3,   {GpioPadModeGpio,       GpioHostOwnDefault,    GpioDirOut,        GpioOutHigh,       GpioIntDefault,            GpioPlatformReset,     GpioTermNone} },//WIFI_RF_KILL_N
   //WWAN/LPC TPM HDR
