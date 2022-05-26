@@ -118,7 +118,6 @@ CONST PLT_DEVICE mPlatformDevices[] = {
   }
 };
 
-
 VOID
 GetBoardId (
   OUT UINT8 *BoardId

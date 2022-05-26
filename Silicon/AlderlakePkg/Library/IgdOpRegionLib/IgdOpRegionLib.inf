@@ -44,6 +44,7 @@
   BootloaderCommonPkg/BootloaderCommonPkg.dec
   Silicon/AlderlakePkg/AlderlakePkg.dec
   Platform/AlderlakeBoardPkg/AlderlakeBoardPkg.dec
+  Platform/CommonBoardPkg/CommonBoardPkg.dec
 [LibraryClasses]
   BaseLib
   IoLib
