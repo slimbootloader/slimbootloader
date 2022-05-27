@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2018 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -34,6 +34,7 @@
 #include <Library/ConfigDataLib.h>
 #include <ConfigDataStruct.h>
 #include <Library/HeciInitLib.h>
+#include <Library/HeciInitLib/MeBiosPayloadData.h>
 
 #define PSD_VERSION_MAJOR                               0x0000
 #define PSD_VERSION_MINOR                               0x0003
@@ -117,6 +118,10 @@ GetSecCapability (
   )
 {
   EFI_STATUS                 Status;
+  ME_BIOS_PAYLOAD            *MbpBiosPayload;
+  VOID                       *FspHobList;
+  UINT8                      *DataPtr;
+  UINT32                     MbpDataHobLen;
   GET_FW_CAPSKU              MsgGenGetFwCapsSku;
   GET_FW_CAPS_SKU_ACK        MsgGenGetFwCapsSkuAck;
 
@@ -124,6 +129,21 @@ GetSecCapability (
     DEBUG ((DEBUG_ERROR, "GetSecCapability Failed Status=0x%x\n",EFI_INVALID_PARAMETER));
     return EFI_INVALID_PARAMETER;
   }
+
+  FspHobList = GetFspHobListPtr ();
+  if (FspHobList != NULL ) {
+    DataPtr = GetGuidHobData (FspHobList, &MbpDataHobLen, &gMeBiosPayloadHobGuid);
+    if ((DataPtr != NULL) && (MbpDataHobLen > 0)) {
+      MbpBiosPayload = (ME_BIOS_PAYLOAD *) (DataPtr + 4);
+      if ((MbpBiosPayload != NULL) && (MbpBiosPayload->FwCapsSku.Available)) {
+        *SecCapability = MbpBiosPayload->FwCapsSku.FwCapabilities.Data;
+
+        return EFI_SUCCESS;
+      }
+    }
+  }
+  // Fill the FW capability data if MBP doesn't exist
+  DEBUG((DEBUG_INFO, "GetSecCapability from HECI\n"));
 
   Status = HeciGetFwCapsSkuMsg ( (UINT8 *)&MsgGenGetFwCapsSku, (UINT8 *)&MsgGenGetFwCapsSkuAck);
   if (EFI_ERROR(Status)) {
