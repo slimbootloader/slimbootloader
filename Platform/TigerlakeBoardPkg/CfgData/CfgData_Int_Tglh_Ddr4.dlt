@@ -45,8 +45,8 @@ GPIO_CFG_DATA.GpioPinConfig0_GPP_A00                        | 0x0350A383
 GPIO_CFG_DATA.GpioPinConfig1_GPP_A00                        | 0x80002019
 GPIO_CFG_DATA.GpioPinConfig0_GPP_A01                        | 0x0350A383
 GPIO_CFG_DATA.GpioPinConfig1_GPP_A01                        | 0x80012019
-GPIO_CFG_DATA.GpioPinConfig0_GPP_A02                        | 0x0350A383
-GPIO_CFG_DATA.GpioPinConfig1_GPP_A02                        | 0x80022019
+GPIO_CFG_DATA.GpioPinConfig0_GPP_A02                        | 0x0350A283
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A02                        | 0x00022019
 GPIO_CFG_DATA.GpioPinConfig0_GPP_A03                        | 0x0350A383
 GPIO_CFG_DATA.GpioPinConfig1_GPP_A03                        | 0x80032019
 GPIO_CFG_DATA.GpioPinConfig0_GPP_A04                        | 0x0350A383
@@ -55,22 +55,22 @@ GPIO_CFG_DATA.GpioPinConfig0_GPP_A05                        | 0x0350A383
 GPIO_CFG_DATA.GpioPinConfig1_GPP_A05                        | 0x80052009
 GPIO_CFG_DATA.GpioPinConfig0_GPP_A06                        | 0x0350A383
 GPIO_CFG_DATA.GpioPinConfig1_GPP_A06                        | 0x80062001
-GPIO_CFG_DATA.GpioPinConfig0_GPP_A07                        | 0x0350A381
-GPIO_CFG_DATA.GpioPinConfig1_GPP_A07                        | 0x80072001
-GPIO_CFG_DATA.GpioPinConfig0_GPP_A08                        | 0x0350A385
-GPIO_CFG_DATA.GpioPinConfig1_GPP_A08                        | 0x80082001
-GPIO_CFG_DATA.GpioPinConfig0_GPP_A09                        | 0x0500E2E1
-GPIO_CFG_DATA.GpioPinConfig1_GPP_A09                        | 0x00090001
-GPIO_CFG_DATA.GpioPinConfig0_GPP_A10                        | 0x0550A581
-GPIO_CFG_DATA.GpioPinConfig1_GPP_A10                        | 0x800A2001
-GPIO_CFG_DATA.GpioPinConfig0_GPP_A11                        | 0x050082E1
-GPIO_CFG_DATA.GpioPinConfig1_GPP_A11                        | 0x000B0001
-GPIO_CFG_DATA.GpioPinConfig0_GPP_A12                        | 0x050082E1
-GPIO_CFG_DATA.GpioPinConfig1_GPP_A12                        | 0x000C0001
-GPIO_CFG_DATA.GpioPinConfig0_GPP_A13                        | 0x050082E1
-GPIO_CFG_DATA.GpioPinConfig1_GPP_A13                        | 0x000D0001
-GPIO_CFG_DATA.GpioPinConfig0_GPP_A14                        | 0x0550A281
-GPIO_CFG_DATA.GpioPinConfig1_GPP_A14                        | 0x800E2001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_A07                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A07                        | 0x00072019
+GPIO_CFG_DATA.GpioPinConfig0_GPP_A08                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A08                        | 0x00082019
+GPIO_CFG_DATA.GpioPinConfig0_GPP_A09                        | 0x0550E281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A09                        | 0x00092001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_A10                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A10                        | 0x000A2019
+GPIO_CFG_DATA.GpioPinConfig0_GPP_A11                        | 0x0550A281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A11                        | 0x000B2001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_A12                        | 0x0550E281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A12                        | 0x000C2001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_A13                        | 0x0550A281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A13                        | 0x000D2001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_A14                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A14                        | 0x000E2001
 GPIO_CFG_DATA.GpioPinConfig1_GPP_A15.GPIOSkip_GPP_A15       | 1           # TGL-U Only. Skip for TGL-H.
 GPIO_CFG_DATA.GpioPinConfig1_GPP_A16.GPIOSkip_GPP_A16       | 1           # TGL-U Only. Skip for TGL-H.
 GPIO_CFG_DATA.GpioPinConfig1_GPP_A17.GPIOSkip_GPP_A17       | 1           # TGL-U Only. Skip for TGL-H.

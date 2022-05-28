@@ -557,7 +557,11 @@ GpioGroupPinToPad (
     GpioPad = GPIO_VER2_LP_GPP_B0;
   } else if (PchSku == PCH_H) {
     Index   = 1;
-    GpioPad = GPIO_VER2_H_GPP_A0;
+    if (Group == 0) {
+      GpioPad = GPIO_VER2_H_GPP_A0;
+    } else {
+      GpioPad = GPIO_VER2_H_SPI0_IO_2;
+    }
   } else {
     return 0;
   }
@@ -589,9 +593,11 @@ GpioGetGpioPadFromCfgDw (
   UINT8                 GrpIdx;
   UINT8                 NewGrpIdx;
   UINT8                 PchSku;
+  UINT8                 PadOffset;
 
   Dw1 = (GPIO_CFG_DATA_DW1 *) (&GpioItem[1]);
 
+  PadOffset = 0;
   NewGrpIdx = 0xFF;
   PchSku = GetSocSku () & 0xFF;
   GrpIdx = (UINT8) Dw1->GrpIdx;
@@ -600,6 +606,9 @@ GpioGetGpioPadFromCfgDw (
       NewGrpIdx = mPchGpioGroup[0][GrpIdx];
     } else if (PchSku == PCH_H) {
       NewGrpIdx = mPchGpioGroup[1][GrpIdx];
+      if (GrpIdx == 0) {
+        PadOffset = 8;
+      }
     }
   }
   if (NewGrpIdx == 0xFF) {
@@ -608,7 +617,7 @@ GpioGetGpioPadFromCfgDw (
 
   PadInfo.Pad = 0;
   PadInfo.PadField.GrpIdx    = NewGrpIdx;
-  PadInfo.PadField.PadNum    = (UINT16) Dw1->PadNum;
+  PadInfo.PadField.PadNum    = (UINT16) Dw1->PadNum + PadOffset;
   PadInfo.PadField.ChipsetId = GpioGetThisChipsetId ();
   *GpioPad = PadInfo.Pad;
 
