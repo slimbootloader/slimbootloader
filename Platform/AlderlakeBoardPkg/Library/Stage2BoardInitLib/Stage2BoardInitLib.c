@@ -9,6 +9,7 @@
 #include <PlatformData.h>
 #include <Library/MeExtMeasurementLib.h>
 #include "Stage2BoardInitLib.h"
+#include "GpioTableAdlPsPostMem.h"
 #include "GpioTableAdlNPostMem.h"
 #include "GpioTableAdlPsPostMem.h"
 #include "GpioTableAdlTsn.h"
