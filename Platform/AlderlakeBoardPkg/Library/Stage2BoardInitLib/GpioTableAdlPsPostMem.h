@@ -49,15 +49,12 @@ GLOBAL_REMOVE_IF_UNREFERENCED GPIO_INIT_CONFIG mGpioTablePostMemAdlPsDdr5Rvp[] =
   {GPIO_VER2_LP_GPP_A11,  {GpioPadModeGpio,       GpioHostOwnDefault,    GpioDirOut,        GpioOutHigh,       GpioIntDefault,            GpioPlatformReset,     GpioTermNone} },  //EC_SLP_S0_CS_N
   {GPIO_VER2_LP_GPP_E7,   {GpioPadModeGpio,       GpioHostOwnAcpi,       GpioDirInInv,      GpioOutDefault,    GpioIntSmi|GpioIntLevel,   GpioPlatformReset,     GpioTermNone} },  //GPPC_E7_EC_SMI_N
 
-  //DNX/DDIA DDC
-  {GPIO_VER2_LP_GPP_E23,  {GpioPadModeGpio,       GpioHostOwnDefault,    GpioDirOut,        GpioOutHigh,       GpioIntDefault,           GpioPlatformReset,     GpioTermNone} },//DNX_IN_PROG
-
   //HDMI Input Detect and Wake
   {GPIO_VER2_LP_GPP_H9,   {GpioPadModeGpio,       GpioHostOwnAcpi,       GpioDirInInv,      GpioOutDefault,     GpioIntSci|GpioIntEdge,     GpioHostDeepReset,     GpioTermNone,  GpioPadConfigUnlock } },//CRD2_HDMI_WAKE_N
   {GPIO_VER2_LP_GPD7,     {GpioPadModeGpio,       GpioHostOwnAcpi,       GpioDirInInv,      GpioOutDefault,     GpioIntSci|GpioIntEdge,     GpioHostDeepReset,     GpioTermNone,  GpioPadConfigUnlock} },//CRD1_HDMI_WAKE_N
 
   //TouchPad
-  {GPIO_VER2_LP_GPP_A15,  {GpioPadModeGpio,       GpioHostOwnGpio,       GpioDirInInv,      GpioOutDefault,    GpioIntApic|GpioIntEdge,  GpioPlatformReset,     GpioTermNone} },// TCH_PAD_INT_N
+  {GPIO_VER2_LP_GPP_A15,  {GpioPadModeGpio,       GpioHostOwnGpio,       GpioDirInInv,      GpioOutDefault,    GpioIntApic|GpioIntEdge,  GpioPlatformReset,     GpioPadConfigUnlock} },// TCH_PAD_INT_N
 
   //Touch PNL2 /TSN
   {GPIO_VER2_LP_GPP_F17,  {GpioPadModeGpio,         GpioHostOwnAcpi,     GpioDirOut,        GpioOutHigh,       GpioIntDefault,          GpioPlatformReset,     GpioTermNone} },//GSPI1_CS_CVF
