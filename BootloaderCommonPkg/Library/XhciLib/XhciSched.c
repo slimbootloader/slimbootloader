@@ -2,7 +2,7 @@
 PEIM to produce gPeiUsb2HostControllerPpiGuid based on gPeiUsbControllerPpiGuid
 which is used to enable recovery function from USB Drivers.
 
-Copyright (c) 2014 - 2017, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2014 - 2022, Intel Corporation. All rights reserved.<BR>
 
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
@@ -2835,6 +2835,7 @@ XhcPeiInitSched (
   UINT32                Index;
   UINTN                 *ScratchEntryMap;
   EFI_STATUS            Status;
+  ScratchBuf = NULL;
 
   //
   // Initialize memory management.
