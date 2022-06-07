@@ -117,6 +117,7 @@ GetCpuSkuInfo (
         case V_SA_DEVICE_ID_MB_ULX_11:   // AlderLake N IOT SA DID
         case V_SA_DEVICE_ID_MB_ULX_12:   // AlderLake N IOT SA DID
           CpuType = EnumCpuUlx;
+          SkuFound = TRUE;
           break;
         default:
           SkuFound = FALSE;
