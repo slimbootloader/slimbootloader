@@ -1195,9 +1195,12 @@ PlatformUpdateAcpiGnvs (
 
     // If TCC is enabled, use the TCC policy from subregion
     PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
-    if((PlatformData != NULL) && PlatformData->PlatformFeatures.TccDsoTuning){
+    if ((PlatformData != NULL) && PlatformData->PlatformFeatures.TccDsoTuning) {
       PlatformNvs->Rtd3Support    = PlatformData->PlatformFeatures.TccRtd3Support;
       PlatformNvs->LowPowerS0Idle = PlatformData->PlatformFeatures.TccLowPowerS0Idle;
+    } else {
+      PlatformNvs->Rtd3Support = 0;
+      PlatformNvs->LowPowerS0Idle = 0;
     }
   }
 

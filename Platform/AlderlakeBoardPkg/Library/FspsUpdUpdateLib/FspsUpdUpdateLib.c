@@ -1203,8 +1203,10 @@ UpdateFspConfig (
     }
   }
 
-  if (IsPchS () && FeaturePcdGet (PcdTccEnabled)) {
-    Status = TccModePostMemConfig (FspsUpd);
+  if (IsPchS () || IsPchN()) {
+    if (FeaturePcdGet (PcdTccEnabled)) {
+      Status = TccModePostMemConfig (FspsUpd);
+    }
   }
   if (FeaturePcdGet (PcdEnablePciePm)) {
     StoreRpConfig (FspsConfig);

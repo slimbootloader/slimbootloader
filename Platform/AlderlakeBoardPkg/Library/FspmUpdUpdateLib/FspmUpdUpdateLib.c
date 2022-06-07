@@ -562,10 +562,11 @@ UpdateFspConfig (
     Fspmcfg->SiSkipOverrideBootModeWhenFwUpdate = TRUE;
 #endif
   }
+
     Fspmcfg->WRDS = 0x1;
   if (IsPchLp ()) {
     Fspmcfg->DdiPortAConfig = 0x1;
-    Fspmcfg->WdtDisableAndLock = 0x1;
+    Fspmcfg->WdtDisableAndLock = 0x0;
     Fspmcfg->FirstDimmBitMask = 0x0;
     switch (GetPlatformId ()) {
       case PLATFORM_ID_ADL_P_LP4_RVP:
@@ -624,9 +625,13 @@ UpdateFspConfig (
   Fspmcfg->Lfsr1Mask      = 0xb;
   Fspmcfg->RefreshPanicWm = 0x8;
   Fspmcfg->RefreshHpWm    = 0x7;
+
   // Tcc enabling
-  if (IsPchS () && FeaturePcdGet (PcdTccEnabled)) {
-    TccModePreMemConfig (FspmUpd);
+  if (IsPchS () || IsPchN()) {
+    if (FeaturePcdGet (PcdTccEnabled)) {
+      Fspmcfg->WdtDisableAndLock = 0x0;
+      TccModePreMemConfig (FspmUpd);
+    }
   }
   // S0ix is disabled if TSN is enabled.
   FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag (CDATA_FEATURES_TAG);
