@@ -206,6 +206,82 @@ SI_PCH_DEVICE_INTERRUPT_CONFIG mPchPDevIntConfig[] = {
   //{16, 3, SiPchIntD, 19}  // ISH: FPAK - Not present
 };
 
+//
+// This table contains data on INTx and IRQ for PCH-N
+//
+SI_PCH_DEVICE_INTERRUPT_CONFIG mPchNDevIntConfig[] = {
+//  {31, 0, PchNoInt, 0}, // LPC/eSPI Interface, doesn't use interrupts
+//  {31, 1, PchNoInt, 0}, // P2SB, doesn't use interrupts
+//  {31, 2, PchNoInt, 0}, // PMC , doesn't use interrupts
+  {31, 3, SiPchIntA, 16}, // cAVS(Audio, Voice, Speach), INTA is default, programmed in PciCfgSpace 3Dh
+  {31, 4, SiPchIntA, 16}, // SMBus Controller, no default value, programmed in PciCfgSpace 3Dh
+//  {31, 5, PchNoInt, 0}, // SPI , doesn't use interrupts
+  {31, 7, SiPchIntA, 16}, // TraceHub, INTA is default, RO register
+  {30, 0, SiPchIntA, 16}, // SerialIo: UART #0 and TSN #0
+  {30, 1, SiPchIntB, 17}, // SerialIo: UART #1 and TSN #1
+  {30, 2, SiPchIntC, 36}, // SerialIo: SPI #0, INTA is default, programmed in PCR[SERIALIO] + PCICFGCTRL[10]
+  {30, 3, SiPchIntD, 37}, // SerialIo: SPI #1, INTA is default, programmed in PCR[SERIALIO] + PCICFGCTRL[11]
+//  {30, 6, SiPchIntA, 17}, // Reserved for HPET
+//  {30, 7, SiPchIntB, 18}, // Reserved for IOAPIC
+  {28, 0, SiPchIntA, 16}, // PCI Express Port 1, INT is default, programmed in PciCfgSpace + FCh
+  {28, 1, SiPchIntB, 17}, // PCI Express Port 2, INT is default, programmed in PciCfgSpace + FCh
+  {28, 2, SiPchIntC, 18}, // PCI Express Port 3, INT is default, programmed in PciCfgSpace + FCh
+  {28, 3, SiPchIntD, 19}, // PCI Express Port 4, INT is default, programmed in PciCfgSpace + FCh
+  {26, 0, SiPchIntA, 16}, // SCS: eMMC //ADLN specific
+  {25, 2, SiPchIntC, 42}, // SerialIo UART Controller #2, INTA is default, programmed in PCR[SERIALIO] + PCICFGCTRL[9]
+//  {24, 0, 0, 0}, // Reserved (used by RST PCIe Storage Cycle Router)
+  {23, 0, SiPchIntA, 16}, // SATA Controller, INTA is default, programmed in PciCfgSpace + 3Dh
+  {22, 0, SiPchIntA, 16}, // CSME: HECI #1
+  {22, 1, SiPchIntB, 17}, // CSME: HECI #2
+  {22, 4, SiPchIntA, 16}, // CSME: HECI #3
+  {22, 5, SiPchIntD, 19}, // CSME: HECI #4
+//  {22, 7, SiPchIntA, 16}, // CSME: WLAN
+  {21, 0, SiPchIntA, 27}, // SerialIo I2C Controller #0, INTA is default, programmed in PCR[SERIALIO] + PCICFGCTRL[1]
+  {21, 1, SiPchIntB, 40}, // SerialIo I2C Controller #1, INTA is default, programmed in PCR[SERIALIO] + PCICFGCTRL[2]
+                        //   Note: To avoid interrupt conflict with TPM reserved interrupt (28), changing SerialIo I2C #1 interrupt value to 40.
+  {21, 2, SiPchIntC, 29}, // SerialIo I2C Controller #2, INTA is default, programmed in PCR[SERIALIO] + PCICFGCTRL[3]
+  {21, 3, SiPchIntD, 33}, // SerialIo I2C Controller #3, INTA is default, programmed in PCR[SERIALIO] + PCICFGCTRL[4] //ADLN specific
+//  {21, 7, SiPchIntA, 16}, // Northpeak Phantom (ACPI) Dunction - not exposed to OS
+  {20, 0, SiPchIntA, 16}, // USB 3.0 xHCI Controller, no default value, programmed in PciCfgSpace 3Dh
+  {20, 1, SiPchIntB, 17}, // USB Device Controller (OTG)
+  {20, 3, SiPchIntA, 16}, // CNVi WiFi
+  //{20, 2, PchNoInt, 0}, // Shared SRAM, no interrupts
+//  {20, 4, 0, 0}, // TraceHub Phantom (ACPI) Function
+//  {18, 2, PchNoInt, 0}, // CSME: PMT,  doesn't use interrupts
+//  {18, 4, 0, 0}  // CSME: fTPM DMA
+  {19, 0, SiPchIntA, 20}, // SerialIo: SPI #3
+//  {19, 1, SiPchIntB, 24}, // SerialIo: SPI #4
+  {18, 0, SiPchIntA, 26}, // Integrated Sensor Hub
+  {18, 6, SiPchIntB, 39}, // SerialIo: SPI #2, INTA is default, programmed in PCR[SERIALIO] + PCICFGCTRL[12]
+  {17, 0, SiPchIntA, 25}, // SerialIo: UART #3
+  {17, 1, SiPchIntB, 35}, // SerialIo: UART #4
+  {17, 2, SiPchIntC, 28}, // SerialIo: UART #5
+  {17, 3, SiPchIntD, 34}, // SerialIo: UART #6
+  {16, 0, SiPchIntC, 18}, // SerialIo: I2C #6
+  {16, 1, SiPchIntD, 19}, // SerialIo: I2C #7
+//  {16, 5, SiPchIntC, 18}, // IEH
+  {16, 6, SiPchIntA, 23}, // THC #0
+  {16, 7, SiPchIntB, 22}, // THC #1
+  // Starting from here is for all Lp series: mPchLpOnlyDevIntConfig which includes N as well
+  {31, 6, SiPchIntA, 16}, // GbE Controller, INTA is default, programmed in PciCfgSpace 3Dh
+  {30, 4, SiPchIntA, 16}, // TSN Controller, INTA is default, programmed in PCR[TSN] + PCICFGCTRL[29]
+  {29, 0, SiPchIntA, 16}, // PCI Express Port 9, INT is default, programmed in PciCfgSpace + FCh
+  {29, 1, SiPchIntB, 17}, // PCI Express Port 10, INT is default, programmed in PciCfgSpace + FCh
+  {29, 2, SiPchIntC, 18}, // PCI Express Port 11, INT is default, programmed in PciCfgSpace + FCh
+  {29, 3, SiPchIntD, 19}, // PCI Express Port 12, INT is default, programmed in PciCfgSpace + FCh
+  {28, 4, SiPchIntA, 16}, // PCI Express Port 5, INT is default, programmed in PciCfgSpace + FCh
+  {28, 5, SiPchIntB, 17}, // PCI Express Port 6, INT is default, programmed in PciCfgSpace + FCh
+  {28, 6, SiPchIntC, 18}, // PCI Express Port 7, INT is default, programmed in PciCfgSpace + FCh
+  {28, 7, SiPchIntD, 19}, // PCI Express Port 8, INT is default, programmed in PciCfgSpace + FCh
+  {25, 0, SiPchIntA, 31}, // SerialIo I2C Controller #4, INTA is default, programmed in PCR[SERIALIO] + PCICFGCTRL[5]
+  {25, 1, SiPchIntB, 32}, // SerialIo I2C Controller #5, INTA is default, programmed in PCR[SERIALIO] + PCICFGCTRL[6]
+  {22, 2, SiPchIntC, 18}, // CSME: IDE-Redirection (IDE-R)
+  {22, 3, SiPchIntD, 19}, // CSME: Keyboard and Text (KT) Redirection
+  {19, 1, SiPchIntB, 21}, // SerialIo: SPI #4
+  {19, 2, SiPchIntC, 24}, // SerialIo: SPI #5 (LP)
+  {19, 3, SiPchIntD, 38}, // SerialIo: SPI #6 (LP)
+  {18, 7, SiPchIntC, 18}  // SCS: UFS
+};
 /**
   Return CPU Family ID
 
@@ -471,6 +547,10 @@ UpdateFspConfig (
     DEBUG ((DEBUG_INFO, "Pch-P is detected\n"));
     FspsConfig->DevIntConfigPtr   = (UINT32)(UINTN)mPchPDevIntConfig;
     FspsConfig->NumOfDevIntConfig = sizeof (mPchPDevIntConfig) / sizeof (SI_PCH_DEVICE_INTERRUPT_CONFIG);
+  } else if (IsPchN ()) {
+    DEBUG ((DEBUG_INFO, "Pch-N is detected\n"));
+    FspsConfig->DevIntConfigPtr   = (UINT32)(UINTN)mPchNDevIntConfig;
+    FspsConfig->NumOfDevIntConfig = sizeof (mPchNDevIntConfig) / sizeof (SI_PCH_DEVICE_INTERRUPT_CONFIG);
   } else {
     DEBUG ((DEBUG_ERROR, "Unsupported PCH.\n"));
   }

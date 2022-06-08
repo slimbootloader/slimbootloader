@@ -63,8 +63,14 @@ GetCpuSkuInfo (
         case V_SA_DEVICE_ID_DT_11:       // AlderLake Desktop (4(f)+0+GT) SA DID
         case V_SA_DEVICE_ID_DT_12:       // AlderLake Desktop (2(f)+0+GT) SA DID
         case V_SA_DEVICE_ID_DT_13:       // AlderLake Desktop (8+6(f)+GT) SA DID
-        case V_SA_DEVICE_ID_DT_14:       // AlderLake Desktop (8+6(f)+GT) SA DID
-//        case V_SA_DEVICE_ID_DT_15:       // WA ADL_CPU_PO
+        case V_SA_DEVICE_ID_DT_15:       // AlderLake Desktop BGA (8+8(f)+GT) SA DID
+        case V_SA_DEVICE_ID_DT_16:       // AlderLake Desktop BGA (8+4(f)+GT) SA DID
+        case V_SA_DEVICE_ID_DT_17:       // AlderLake Desktop BGA (6+0(f)+GT) SA DID
+        case V_SA_DEVICE_ID_DT_18:       // AlderLake Desktop BGA (4+0(f)+GT) SA DID
+        case V_SA_DEVICE_ID_DT_19:       // AlderLake Mobile S BGA (8+8(f)+GT) SA DID
+        case V_SA_DEVICE_ID_DT_20:       // AlderLake Mobile S BGA (6+8(f)+GT) SA DID
+        case V_SA_DEVICE_ID_DT_21:       // AlderLake Mobile S BGA (4+8(f)+GT) SA DID
+        case V_SA_DEVICE_ID_DT_22:       // AlderLake Mobile S BGA (4+4(f)+GT) SA DID
           CpuType  = EnumCpuTrad;
           SkuFound = TRUE;
           break;
@@ -103,6 +109,19 @@ GetCpuSkuInfo (
           break;
       }
     break;
+    case CPUID_FULL_FAMILY_MODEL_ALDERLAKE_ATOM:
+      switch (CpuDid) {
+        case V_SA_DEVICE_ID_MB_ULX_8:   // AlderLake N Pentium (0+4+0) SA DID
+        case V_SA_DEVICE_ID_MB_ULX_9:   // AlderLake N Celeron (0+4+0) SA DID
+        case V_SA_DEVICE_ID_MB_ULX_10:   // AlderLake N IOT SA DID
+        case V_SA_DEVICE_ID_MB_ULX_11:   // AlderLake N IOT SA DID
+        case V_SA_DEVICE_ID_MB_ULX_12:   // AlderLake N IOT SA DID
+          CpuType = EnumCpuUlx;
+          break;
+        default:
+          SkuFound = FALSE;
+          break;
+      }
   }
 
   if (!SkuFound) {

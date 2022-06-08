@@ -524,6 +524,7 @@ UpdateFspConfig (
     break;
   case PLATFORM_ID_ADL_N_DDR5_CRB:
     // DP + DP
+    DEBUG((DEBUG_INFO, "PLATFORM_ID_ADL_N_DDR5_CRB board Id %x .....\n", PlatformId));
     CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mAdlNddr5CrbRowDisplayDdiConfig, sizeof(mAdlNddr5CrbRowDisplayDdiConfig));
     break;
   case PLATFORM_ID_ADL_N_LPDDR5_RVP:

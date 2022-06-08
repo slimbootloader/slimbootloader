@@ -65,13 +65,29 @@
 #define V_SA_DEVICE_ID_DT_11      0x4630   ///< AlderLake Desktop (4(f)+0+GT) SA DID
 #define V_SA_DEVICE_ID_DT_12      0x4610   ///< AlderLake Desktop (2(f)+0+GT) SA DID
 #define V_SA_DEVICE_ID_DT_13      0x4673   ///< AlderLake Desktop (8+6(f)+GT) SA DID
-#define V_SA_DEVICE_ID_DT_14      0x4623   ///< AlderLake Desktop (8+6(f)+GT) SA DID
-#define V_SA_DEVICE_ID_MB_ULT_1   0x4641   ///< AlderLake P (6+8+GT) SA DID
-#define V_SA_DEVICE_ID_MB_ULT_2   0x4649   ///< AlderLake P (6+4(f)+GT) SA DID
-#define V_SA_DEVICE_ID_MB_ULT_3   0x4621   ///< AlderLake P (4(f)+8+GT) SA DID
-#define V_SA_DEVICE_ID_MB_ULT_4   0x4609   ///< AlderLake P (2(f)+4(f)+GT) SA DID
-#define V_SA_DEVICE_ID_MB_ULT_5   0x4601   ///< AlderLake P (2+8+GT) SA DID
-#define V_SA_DEVICE_ID_MB_ULT_6   0x4661   ///< AlderLake P (6+8+2) SA DID
+#define V_SA_DEVICE_ID_DT_15      0x4663   ///< AlderLake Desktop BGA (8+8(f)+GT) SA DID
+#define V_SA_DEVICE_ID_DT_16      0x466B   ///< AlderLake Desktop BGA (8+4(f)+GT) SA DID
+#define V_SA_DEVICE_ID_DT_17      0x4653   ///< AlderLake Desktop BGA (6+0(f)+GT) SA DID
+#define V_SA_DEVICE_ID_DT_18      0x4633   ///< AlderLake Desktop BGA (4+0(f)+GT) SA DID
+#define V_SA_DEVICE_ID_DT_19      0x4637   ///< AlderLake Mobile S BGA (8+8(f)+GT) SA DID
+#define V_SA_DEVICE_ID_DT_20      0x463B   ///< AlderLake Mobile S BGA (6+8(f)+GT) SA DID
+#define V_SA_DEVICE_ID_DT_21      0x4623   ///< AlderLake Mobile S BGA (4+8(f)+GT) SA DID
+#define V_SA_DEVICE_ID_DT_22      0x462B   ///< AlderLake Mobile S BGA (4+4(f)+GT) SA DID
+#define V_SA_DEVICE_ID_HALO_1     0x0002   ///< Reserved
+#define V_SA_DEVICE_ID_HALO_2     0x0003   ///< Reserved
+#define V_SA_DEVICE_ID_HALO_3     0x0006   ///< Reserved
+#define V_SA_DEVICE_ID_HALO_4     0x0007   ///< Reserved
+#define V_SA_DEVICE_ID_HALO_5     0x0008   ///< Reserved
+
+//
+// AlderLake CPU Mobile SA Device IDs B0:D0:F0
+//
+#define V_SA_DEVICE_ID_MB_ULT_1    0x4641   ///< AlderLake P (6+8+GT) SA DID
+#define V_SA_DEVICE_ID_MB_ULT_2    0x4649   ///< AlderLake P (6+4(f)+GT) SA DID
+#define V_SA_DEVICE_ID_MB_ULT_3    0x4621   ///< AlderLake P (4(f)+8+GT) SA DID
+#define V_SA_DEVICE_ID_MB_ULT_4    0x4609   ///< AlderLake P (2(f)+4(f)+GT) SA DID
+#define V_SA_DEVICE_ID_MB_ULT_5    0x4601   ///< AlderLake P (2+8+GT) SA DID
+#define V_SA_DEVICE_ID_MB_ULT_6    0x4661   ///< AlderLake P (6+8+2) SA DID
 #define V_SA_DEVICE_ID_MB_ULT_7    0x4629   ///< AlderLake P (4+4+1) SA DID
 #define V_SA_DEVICE_ID_MB_ULT_8    0x4619   ///< AlderLake P (1+4+GT) SA DID
 #define V_SA_DEVICE_ID_MB_ULT_9    0x4659   ///< AlderLake P (1+8+GT) SA DID
@@ -82,6 +98,11 @@
 #define V_SA_DEVICE_ID_MB_ULT_14   0x460B   ///< AlderLake PS (2+4+GT) SA DID
 #define V_SA_DEVICE_ID_MB_ULT_15   0x464B   ///< AlderLake PS (4+4+GT) SA DID
 #define V_SA_DEVICE_ID_MB_ULT_16   0x467B   ///< AlderLake PS (1+4+GT) SA DID
+#define V_SA_DEVICE_ID_MB_ULX_8    0x461B   ///< AlderLake N Pentium (0+4+0) SA DID
+#define V_SA_DEVICE_ID_MB_ULX_9    0x461C   ///< AlderLake N Celeron (0+4+0) SA DID
+#define V_SA_DEVICE_ID_MB_ULX_10   0x4678   ///< AlderLake N IOT_PC(0+4+0) 24EU SA DID
+#define V_SA_DEVICE_ID_MB_ULX_11   0x4679   ///< AlderLake N IOT_EBM(0+4+0) 24EU SA DID
+#define V_SA_DEVICE_ID_MB_ULX_12   0x467C   ///< AlderLake N IOT_EBM(0+2+0) 16EU SA DID
 /**
  <b>Description</b>:
   This is the base address for the PCI Express Egress Port MMIO Configuration space.  There is no physical memory within this 4KB window that can be addressed.  The 4KB reserved by this register does not alias to any PCI 2.3 compliant memory mapped space.  On reset, the EGRESS port MMIO configuration space is disabled and must be enabled by writing a 1 to PXPEPBAREN [Dev 0, offset 40h, bit 0].
