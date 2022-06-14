@@ -580,7 +580,8 @@ UpdateFspConfig (
       Fspmcfg->IbeccProtectedRegionBase[Index]   = MemCfgData->IbeccProtectedRegionBase[Index];
       Fspmcfg->IbeccProtectedRegionMask[Index]   = MemCfgData->IbeccProtectedRegionMask[Index];
     }
-
+    // FIA Lane Reversal setting
+    Fspmcfg->FiaLaneReversalEnable              = MemCfgData->FiaLaneReversalEnable;
     // Debug Config
     Fspmcfg->DciEn                        = 1;
     Fspmcfg->DciModphyPg                  = 0;
@@ -645,6 +646,7 @@ UpdateFspConfig (
       DEBUG ((DEBUG_INFO, "PchTraceHubMode = %x\n",        Fspmcfg->PchTraceHubMode));
       DEBUG ((DEBUG_INFO, "PchTraceHubMemReg0Size = %x\n", Fspmcfg->PchTraceHubMemReg0Size));
       DEBUG ((DEBUG_INFO, "PchTraceHubMemReg1Size = %x\n", Fspmcfg->PchTraceHubMemReg1Size));
+      DEBUG ((DEBUG_INFO, "FiaLaneReversalEnable = %x\n", Fspmcfg->FiaLaneReversalEnable));
   }
 
   // IGD config data
