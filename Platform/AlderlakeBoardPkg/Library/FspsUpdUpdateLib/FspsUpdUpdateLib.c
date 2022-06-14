@@ -734,7 +734,7 @@ UpdateFspConfig (
     }
 
     // TSN feature support
-    if (IsPchS ()) {
+    if (IsPchS () || IsPchN () ) {
       FspsConfig->PchTsnEnable = SiCfgData->PchTsnEnable;
       if(SiCfgData->PchTsnEnable == 1) {
         FspsConfig->PchTsnMultiVcEnable = SiCfgData->PchTsnMultiVcEnable;
@@ -755,6 +755,7 @@ UpdateFspConfig (
           FspsConfig->PchTsn1MacAddressHigh = TsnSubRegion->MacConfigData.Port[1].MacAddr.U32MacAddr[1];
           FspsConfig->PchTsn1MacAddressLow  = TsnSubRegion->MacConfigData.Port[1].MacAddr.U32MacAddr[0];
 
+         DEBUG ((DEBUG_ERROR, "TSN MAC subregion completed %r\n", Status));
         } else {
           DEBUG ((DEBUG_ERROR, "TSN MAC subregion not found! %r\n", Status));
         }
