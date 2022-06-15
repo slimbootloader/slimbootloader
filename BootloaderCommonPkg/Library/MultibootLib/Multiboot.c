@@ -17,7 +17,7 @@
 #include <Guid/MemoryMapInfoGuid.h>
 #include <Guid/GraphicsInfoHob.h>
 
-#define SUPPORTED_FEATURES  (MULTIBOOT_HEADER_MODS_ALIGNED | MULTIBOOT_HEADER_WANT_MEMORY)
+#define SUPPORTED_FEATURES  (MULTIBOOT_HEADER_MODS_ALIGNED | MULTIBOOT_HEADER_WANT_MEMORY | MULTIBOOT_HEADER_HAS_VBE)
 UINT8 mLoaderName[]        = "Slim BootLoader\0";
 
 
@@ -301,6 +301,11 @@ SetupMultibootImage (
 
   if ((MbHeader->Flags & MULTIBOOT_HEADER_HAS_ADDR) == 0) {
     return RETURN_UNSUPPORTED;
+  }
+
+  if ((MbHeader->Flags & MULTIBOOT_HEADER_HAS_VBE) != 0) {
+    // Just print the preferred graphics mode.
+    DEBUG ((DEBUG_INFO, "Mb: ModeType=0x%x, Width=0x%x , Height=0x%x, Depth=0x%x\n", MbHeader->ModeType, MbHeader->Width, MbHeader->Height, MbHeader->Depth));
   }
 
   if ((MbHeader->Flags & MULTIBOOT_HEADER_MODS_ALIGNED) != 0) {
