@@ -44,6 +44,7 @@
   CmdCdata.c
   CmdCls.c
   CmdFs.c
+  CmdUsbDev.c
   ShellCmds.c
   Parsing.c
   History.c

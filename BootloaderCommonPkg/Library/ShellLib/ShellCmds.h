@@ -28,6 +28,7 @@ extern CONST SHELL_COMMAND ShellCommandReset;
 extern CONST SHELL_COMMAND ShellCommandUcode;
 extern CONST SHELL_COMMAND ShellCommandCls;
 extern CONST SHELL_COMMAND ShellCommandFs;
+extern CONST SHELL_COMMAND ShellCommandUsbDev;
 
 /**
   Load shell commands.
