@@ -48,6 +48,7 @@ LoadShellCommands (
     ShellCommandRegister (Shell, &ShellCommandDmesg);
     ShellCommandRegister (Shell, &ShellCommandReset);
     ShellCommandRegister (Shell, &ShellCommandFs);
+    ShellCommandRegister (Shell, &ShellCommandUsbDev);
 
     // Load Platform specific shell commands
     ShellExtensionCmds = GetShellExtensionCmds ();
