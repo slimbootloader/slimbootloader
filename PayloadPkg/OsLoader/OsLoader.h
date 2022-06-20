@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -178,19 +178,6 @@ DumpMbInfo (
 VOID
 DumpMbBootState (
   IN  CONST IA32_BOOT_STATE  *BootState
-  );
-
-/**
-  Dumps the content of the buffer starting from Address.
-
-  @param[in]  Address   Start address of buffer to dump
-  @param[in]  Length    Size of the buffer to dump
-
- **/
-VOID
-DumpBuffer (
-  IN CHAR8                   *Address,
-  IN UINT32                  Length
   );
 
 /**

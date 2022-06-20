@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -31,7 +31,7 @@ TestDevBlocks (
   UINT64                       TestLba;
   UINTN                        BootMediumPciBase;
   DEVICE_BLOCK_FUNC            DevBlockFunc;
-  EFI_PEI_BLOCK_DEVICE_TYPE    DevType;
+
   //
   // Get OS boot device address
   //
@@ -47,27 +47,23 @@ TestDevBlocks (
     DevBlockFunc.GetInfo     = MmcGetMediaInfo;
     DevBlockFunc.ReadBlocks  = MmcReadBlocks;
     DevBlockFunc.WriteBlocks = MmcWriteBlocks;
-    DevType = EMMC;
   } else if (OsBootOption->DevType == OsBootDeviceSd) {
     DevBlockFunc.DevInit     = SdInitialize;
     DevBlockFunc.GetInfo     = MmcGetMediaInfo;
     DevBlockFunc.ReadBlocks  = MmcReadBlocks;
     DevBlockFunc.WriteBlocks = MmcWriteBlocks;
-    DevType = SD;
   } else if (OsBootOption->DevType == OsBootDeviceUfs) {
     DevBlockFunc.DevInit     = InitializeUfs;
     DevBlockFunc.GetInfo     = UfsGetMediaInfo;
     DevBlockFunc.ReadBlocks  = UfsReadBlocks;
     DevBlockFunc.WriteBlocks = UfsWriteBlocks;
-    DevType = UfsDevice;
   } else if (OsBootOption->DevType == OsBootDeviceNvme) {
     DevBlockFunc.DevInit     = NvmeInitialize;
     DevBlockFunc.GetInfo     = NvmeGetMediaInfo;
     DevBlockFunc.ReadBlocks  = NvmeReadBlocks;
     DevBlockFunc.WriteBlocks = NvmeWriteBlocks;
-    DevType = UfsDevice;
   } else {
-    DEBUG ((DEBUG_ERROR, "Invalid Boot device configured!"));
+    DEBUG ((DEBUG_ERROR, "Invalid Boot device configured!\n"));
     return RETURN_UNSUPPORTED;
   }
 
@@ -108,7 +104,7 @@ TestDevBlocks (
         continue;
       }
       DEBUG ((DEBUG_INFO, "    P[%d]: Dump Read Data\n", Index));
-      DumpBuffer (Buffer, 0x200);
+      DumpHex (2, 0, 0x200, (VOID *) Buffer);
 
       // test write
       DEBUG ((DEBUG_INFO, "    P[%d]: try to write block 0x%lx with BlockSize=0x%x\n", Index, TestLba, BlockInfo.BlockSize));
@@ -117,7 +113,7 @@ TestDevBlocks (
         DEBUG ((DEBUG_INFO, "    P[%d]: write 0x%x to block\n", Index, * (UINT32 *)TestData2));
       } else {
         Status = DevBlockFunc.WriteBlocks (Index, TestLba, BlockInfo.BlockSize, TestData1);
-        DEBUG ((DEBUG_INFO, "    P[%d]: write 0x%x to block\n", * (UINT32 *)TestData1));
+        DEBUG ((DEBUG_INFO, "    P[%d]: write 0x%x to block\n", Index, * (UINT32 *)TestData1));
       }
       if (EFI_ERROR (Status)) {
         DEBUG ((DEBUG_INFO, "        P[%d]: Write block Status = %r\n", Index, Status));
@@ -131,10 +127,9 @@ TestDevBlocks (
         continue;
       }
       DEBUG ((DEBUG_INFO, "         P[%d]: Dump Read Data after written.\n", Index));
-      DumpBuffer (Buffer, 0x200);
+      DumpHex (2, 0, 0x200, (VOID *) Buffer);
     }
   }
   return EFI_SUCCESS;
 }
 #endif
-
