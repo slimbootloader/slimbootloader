@@ -15,7 +15,7 @@
 PLATFORMID_CFG_DATA.PlatformId           | 0x0018
 PLAT_NAME_CFG_DATA.PlatformName          | 'AdlSSdm4'
 GEN_CFG_DATA.PayloadId                   | 'AUTO'
-FEATURES_CFG_DATA.Features.S0ix          | 0x1
+FEATURES_CFG_DATA.Features.S0ix          | 0x0
 #
 # This GPIO maps to the SW7C1 4-block DIP switch's 3rd switch.
 # If the switch is ON then OS Loader will be used, if OFF UEFI PLD
