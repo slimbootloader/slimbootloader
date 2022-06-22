@@ -511,6 +511,18 @@ InitializeSmbiosInfo (
     4, "Board Serial Number");
 
   //
+  // SMBIOS_TYPE_SYSTEM_ENCLOSURE
+  //
+  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_ENCLOSURE,
+    1, "Intel Corporation");
+  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_ENCLOSURE,
+    2, "0.1");
+  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_ENCLOSURE,
+    3, "Chassis Serial Number");
+  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_ENCLOSURE,
+    4, "Chassis Sku Number");
+
+  //
   // SMBIOS_TYPE_PROCESSOR_INFORMATION : TBD
   //
 
