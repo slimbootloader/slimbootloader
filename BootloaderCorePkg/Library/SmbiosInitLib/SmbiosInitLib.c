@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -59,6 +59,11 @@ CONST SMBIOS_TYPE_STRINGS  mDefaultSmbiosStrings[] = {
   {  SMBIOS_TYPE_BASEBOARD_INFORMATION ,   4,  SMBIOS_STRING_UNKNOWN          },  // Serial Number
   {  SMBIOS_TYPE_BASEBOARD_INFORMATION ,   5,  SMBIOS_STRING_UNKNOWN          },  // AssetTag
   {  SMBIOS_TYPE_BASEBOARD_INFORMATION ,   6,  SMBIOS_STRING_UNKNOWN          },  // LocationInChassis
+  // Type 3
+  {  SMBIOS_TYPE_SYSTEM_ENCLOSURE ,        1,  SMBIOS_STRING_UNKNOWN          },  // Manufacturer
+  {  SMBIOS_TYPE_SYSTEM_ENCLOSURE ,        2,  SMBIOS_STRING_UNKNOWN_VERSION  },  // Version
+  {  SMBIOS_TYPE_SYSTEM_ENCLOSURE ,        3,  SMBIOS_STRING_UNKNOWN          },  // Serial Number
+  {  SMBIOS_TYPE_SYSTEM_ENCLOSURE ,        4,  SMBIOS_STRING_UNKNOWN          },  // AssetTag
   // Type 127 - End of strings
   {  SMBIOS_TYPE_END_OF_TABLE,             0,  ""                             }
 };
@@ -740,6 +745,7 @@ SmbiosInit (
   Status  = AddSmbiosType (&mBiosInfo);
   Status |= AddSmbiosType (&mSystemInfo);
   Status |= AddSmbiosType (&mBaseBoardInfo);
+  Status |= AddSmbiosType (&mDefaultChasisInfo);
   Status |= BuildProcessorInfo ();
   Status |= AddSmbiosType (&mMemArrayMappedAddr);
   if (Status != EFI_SUCCESS) {

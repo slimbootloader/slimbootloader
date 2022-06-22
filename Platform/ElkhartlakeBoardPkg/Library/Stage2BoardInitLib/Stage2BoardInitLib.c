@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -509,6 +509,18 @@ InitializeSmbiosInfo (
     3, "1");
   AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BASEBOARD_INFORMATION,
     4, "Board Serial Number");
+
+  //
+  // SMBIOS_TYPE_SYSTEM_ENCLOSURE
+  //
+  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_ENCLOSURE,
+    1, "Intel Corporation");
+  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_ENCLOSURE,
+    2, "0.1");
+  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_ENCLOSURE,
+    3, "Chassis Serial Number");
+  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_ENCLOSURE,
+    4, "Chassis Sku Number");
 
   //
   // SMBIOS_TYPE_PROCESSOR_INFORMATION : TBD
