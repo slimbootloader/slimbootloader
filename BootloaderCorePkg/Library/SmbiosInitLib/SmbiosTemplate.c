@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -136,6 +136,42 @@ SMBIOS_TABLE_TYPE2    mBaseBoardInfo = {
   { 0 }                                         // ContainedObjectHandles
 };
 
+//
+// Default Chassis Info for SMBIOS Type 3
+//
+SMBIOS_TABLE_TYPE3  mDefaultChasisInfo = {
+  {                                             // Hdr
+    SMBIOS_TYPE_SYSTEM_ENCLOSURE,               ///< Hdr.Type
+    sizeof(SMBIOS_TABLE_TYPE3),                 ///< Hdr.Length
+    0                                           ///< Hdr.Handle
+  },
+  SMBIOS_STRING_INDEX_1,                         ///< Manufactrurer
+  0,                                            ///< Type
+  SMBIOS_STRING_INDEX_2,                         ///< Version
+  SMBIOS_STRING_INDEX_3,                         ///< SerialNumber
+  SMBIOS_STRING_INDEX_4,                         ///< AssetTag
+  ChassisStateSafe,                             ///< BootupState
+  ChassisStateSafe,                             ///< PowerSupplyState
+  ChassisStateOther,                            ///< ThermalState
+  ChassisSecurityStatusOther,                   ///< SecurityStatus
+  {                                             // OemDefined[4]
+    0,
+    0,
+    0,
+    0
+  },
+  0,                                            ///< Height
+  1,                                            ///< NumberofPowerCords
+  0,                                            ///< ContainedElementCount
+  0,                                            ///< ContainedElementRecordLength
+  {                                             // ContainedElements
+    {
+      0,                                          ///< ContainedElementType
+      0,                                          ///< ContainedElementMinimum
+      0                                           ///< ContainedElementMaximum
+    }
+  }
+};
 
 SMBIOS_TABLE_TYPE19  mMemArrayMappedAddr = {
   {                                             // Hdr
