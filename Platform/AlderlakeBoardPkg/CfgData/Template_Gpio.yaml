@@ -148,7 +148,8 @@ GPIO_TMPL: >
         length       : 8b
     - GrpIdx_$(1)  :
         name         : GrpIdx
-        type         : Reserved
+        type         : EditNum, HEX, (0x0,0x1F)
+        condition    : $GPIO_CFG_DATA.GpioPinConfig1_$(1).Hide_$(1) == 1
         length       : 5b
     - Reserved2_$(1) :
         name         : Reserved2
