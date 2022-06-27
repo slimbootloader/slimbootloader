@@ -416,6 +416,8 @@ typedef struct {
 #define B_GPIO_PCR_RX_SMI_ROUTE         BIT18
 #define B_GPIO_PCR_RX_NMI_ROUTE         BIT17
 #define N_GPIO_PCR_RX_NMI_ROUTE         17
+#define B_GPIO_PCR_PINSTRAPVAL          BIT11
+#define N_GPIO_PCR_PINSTRAPVAL          11
 #define B_GPIO_PCR_TERM                 (BIT13 | BIT12 | BIT11 | BIT10)
 #define N_GPIO_PCR_TERM                 10
 #define B_GPIO_PCR_PAD_MODE             (BIT12 | BIT11 | BIT10)
