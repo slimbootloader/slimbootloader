@@ -1036,6 +1036,40 @@ GpioGetInputValue (
 }
 
 /**
+  This procedure will get GPIO strap value
+
+  @param[in] GpioPad              GPIO pad
+  @param[out] StrapVal            GPIO Strap value
+                                  0: Low, 1: High
+
+  @retval EFI_SUCCESS             The function completed successfully
+  @retval EFI_INVALID_PARAMETER   Invalid GpioPad
+**/
+EFI_STATUS
+EFIAPI
+GpioGetStrapValue (
+  IN GPIO_PAD                  GpioPad,
+  OUT UINT32                   *StrapVal
+  )
+{
+  UINT32      PadCfgReg;
+
+  if (!GpioIsPadValid (GpioPad)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (!GpioIsPadHostOwned (GpioPad)) {
+    return EFI_UNSUPPORTED;
+  }
+
+  PadCfgReg = GpioReadPadCfgReg (GpioPad, 2);
+
+  *StrapVal = (PadCfgReg & B_GPIO_PCR_PINSTRAPVAL) >> N_GPIO_PCR_PINSTRAPVAL;
+
+  return EFI_SUCCESS;
+}
+
+/**
   This procedure will get GPIO IOxAPIC interrupt number
 
   @param[in]  GpioPad             GPIO pad

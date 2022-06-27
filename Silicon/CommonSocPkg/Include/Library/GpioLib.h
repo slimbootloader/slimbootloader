@@ -167,6 +167,24 @@ GpioGetInputValue (
 
 
 /**
+  This procedure will get GPIO strap value
+
+  @param[in]  GpioPad             GPIO pad
+  @param[out] StrapVal            GPIO Strap value
+                                  0: Low, 1: High
+
+  @retval EFI_SUCCESS             The function completed successfully
+  @retval EFI_INVALID_PARAMETER   Invalid GpioPad
+**/
+EFI_STATUS
+EFIAPI
+GpioGetStrapValue (
+  IN GPIO_PAD                  GpioPad,
+  OUT UINT32                   *StrapVal
+  );
+
+
+/**
   This procedure will configure GPIO input inversion
 
   @param[in] GpioPad              GPIO pad
