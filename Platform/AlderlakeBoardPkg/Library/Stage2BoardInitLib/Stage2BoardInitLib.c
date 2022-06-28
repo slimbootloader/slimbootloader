@@ -13,6 +13,7 @@
 #include "GpioTableAdlTsn.h"
 #include <Library/PciePm.h>
 #include <Library/PlatformInfo.h>
+#include "SioChip.h"
 
 GLOBAL_REMOVE_IF_UNREFERENCED UINT8    mBigCoreCount;
 GLOBAL_REMOVE_IF_UNREFERENCED UINT8    mSmallCoreCount;
@@ -279,6 +280,7 @@ BoardInit (
   VOID                      *FspHobList;
   SILICON_CFG_DATA          *SiCfgData;
   BL_SW_SMI_INFO            *BlSwSmiInfo;
+  FEATURES_DATA             *FeatureCfgData;
 
   switch (InitPhase) {
   case PreSiliconInit:
@@ -342,6 +344,7 @@ BoardInit (
 
     break;
   case PostSiliconInit:
+    FeatureCfgData = (FEATURES_DATA *)FindConfigDataByTag (CDATA_FEATURES_TAG);
     if (IsWdtFlagsSet(WDT_FLAG_TCC_DSO_IN_PROGRESS)) {
       WdtDisable (WDT_FLAG_TCC_DSO_IN_PROGRESS);
     }
@@ -373,6 +376,10 @@ BoardInit (
     if (FeaturePcdGet (PcdSmbiosEnabled)) {
       InitializeSmbiosInfo ();
     }
+    if (FeatureCfgData != NULL && FeatureCfgData->Sio == 1){
+      SioInit();
+    }
+
     break;
   case PostPciEnumeration:
     if (FeaturePcdGet (PcdEnablePciePm)) {
