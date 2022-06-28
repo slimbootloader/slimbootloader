@@ -2,7 +2,7 @@
 #
 #  Slim Bootloader CFGDATA Option File.
 #
-#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2022, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -41,9 +41,16 @@
         help         : >
                        Enable/Disable S0ix feature. 1:S0ix Enabled, 0:S0ix Disabled
         length       : 1b
+    - Sio            :
+        name         : Sio (Super IO) Enable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable Sio feature. 1:Sio Enabled, 0:Sio Disabled
+        length       : 1b
     - Rsvd         :
         name         : Reserved
         type         : Reserved
         help         : >
                        reserved bits
-        length       : 29b
+        length       : 28b

@@ -31,6 +31,8 @@
   LowPowerSupport.h
   AcpiPlatform.c
   CpuInfoLib.c
+  SioChip.c
+  SioChip.h
 
 [Packages]
   MdePkg/MdePkg.dec
