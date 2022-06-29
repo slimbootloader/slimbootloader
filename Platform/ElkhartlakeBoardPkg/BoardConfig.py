@@ -1,7 +1,7 @@
 ## @file
 # This file is used to provide board specific image information.
 #
-#  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 
@@ -81,6 +81,9 @@ class Board(BaseBoard):
         if self.ENABLE_PSEFW_LOADING:
             self.PSEF_SIZE = 0x00030000
             self.SIIPFW_SIZE += self.PSEF_SIZE
+
+        # Allow boot through GRUB config
+        self.ENABLE_GRUB_CONFIG   = 1
 
         if self.ENABLE_TSN:
             self.TSNC_SIZE      = 0x00001000
@@ -177,7 +180,7 @@ class Board(BaseBoard):
         self.SPI_IAS1_SIZE        = 0x0
         self.SPI_IAS2_SIZE        = 0x0
 
-        self.PLD_HEAP_SIZE        = 0x04000000
+        self.PLD_HEAP_SIZE        = 0x08000000
         self.PLD_STACK_SIZE       = 0x00020000
         self.PLD_RSVD_MEM_SIZE    = 0x00500000
         self.LOADER_RSVD_MEM_SIZE = 0x500000
