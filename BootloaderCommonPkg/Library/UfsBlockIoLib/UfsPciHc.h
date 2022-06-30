@@ -18,7 +18,7 @@
 #include <Library/MemoryAllocationLib.h>
 
 #define UFS_HC_PEI_SIGNATURE    SIGNATURE_32 ('U', 'F', 'S', 'P')
-#define MAX_UFS_HCS             8
+#define MAX_UFS_HCS             12
 
 typedef struct {
   UINTN                         Signature;
