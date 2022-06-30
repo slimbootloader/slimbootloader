@@ -87,6 +87,7 @@ UFS_PEIM_HC_PRIVATE_DATA   gUfsHcTemplate = {
   },
   0,                              // UfsHcBase
   0,                              // Capabilities
+  0,                              // Version
   0,                              // TaskTag
   0,                              // UtpTrlBase
   0,                              // Nutrs
@@ -104,6 +105,10 @@ UFS_PEIM_HC_PRIVATE_DATA   gUfsHcTemplate = {
       UFS_LUN_5,                      // Ufs Common Lun 5
       UFS_LUN_6,                      // Ufs Common Lun 6
       UFS_LUN_7,                      // Ufs Common Lun 7
+      UFS_WLUN_REPORT_LUNS,           // Ufs Reports Luns Well Known Lun
+      UFS_WLUN_UFS_DEV,               // Ufs Device Well Known Lun
+      UFS_WLUN_BOOT,                  // Ufs Boot Well Known Lun
+      UFS_WLUN_RPMB                   // RPMB Well Known Lun
     },
     0x0000,                           // By default exposing all Luns.
     0x0
@@ -1269,6 +1274,48 @@ UfsGetMediaInfo (
 }
 
 /**
+  Finishes device initialization by setting fDeviceInit flag and waiting untill device responds by
+  clearing it.
+
+  @param[in] Private  Pointer to the UFS_PASS_THRU_PRIVATE_DATA.
+
+  @retval EFI_SUCCESS  The operation succeeds.
+  @retval Others       The operation fails.
+
+**/
+EFI_STATUS
+UfsFinishDeviceInitialization (
+  IN UFS_PEIM_HC_PRIVATE_DATA  *Private
+  )
+{
+  EFI_STATUS  Status;
+  UINT8  DeviceInitStatus;
+  UINT8  Timeout;
+
+  DeviceInitStatus = 0xFF;
+
+  //
+  // The host enables the device initialization completion by setting fDeviceInit flag.
+  //
+  Status = UfsSetFlag (Private, UfsFlagDevInit);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  Timeout = 5;
+  do {
+    Status = UfsReadFlag (Private, UfsFlagDevInit, &DeviceInitStatus);
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
+    MicroSecondDelay (1);
+    Timeout--;
+  } while (DeviceInitStatus != 0 && Timeout != 0);
+
+  return EFI_SUCCESS;
+}
+
+/**
   The function will initialize UFS device.
 
   Based on UfsHcPciBase, this function will initialize UFS host controller, allocate
@@ -1292,10 +1339,13 @@ InitializeUfs (
   EFI_STATUS                    Status;
   UFS_PEIM_HC_PRIVATE_DATA      *Private;
   UINT32                        Index;
-  UFS_CONFIG_DESC               Config;
+  UFS_UNIT_DESC                 UnitDescriptor;
+  UFS_DEV_DESC                  DeviceDescriptor;
   UINTN                         MmioBase;
   UINT8                         Controller;
   UFS_HC_PEI_PRIVATE_DATA      *UfsPrivateHcData;
+  UINT32                        UnitDescriptorSize;
+  UINT32                        DeviceDescriptorSize;
 
   if (DevInitPhase == DevDeinit) {
     if (gPrivate != NULL) {
@@ -1328,6 +1378,10 @@ InitializeUfs (
     }
     return EFI_SUCCESS;
   }
+
+  // Enable Bus Master
+  MmioOr16 (UfsHcPciBase + PCI_COMMAND_OFFSET,
+            (UINT16)(EFI_PCI_COMMAND_IO_SPACE | EFI_PCI_COMMAND_MEMORY_SPACE | EFI_PCI_COMMAND_BUS_MASTER));
 
   gPrivate = (UFS_PEIM_HC_PRIVATE_DATA *)AllocatePool (sizeof (UFS_PEIM_HC_PRIVATE_DATA));
   if (gPrivate == NULL) {
@@ -1375,6 +1429,13 @@ InitializeUfs (
       break;
     }
 
+    Status = GetUfsHcInfo (Private);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Failed to initialize UfsHcInfo\n"));
+      Status = EFI_DEVICE_ERROR;
+      break;
+    }
+
     //
     // Initialize UFS Host Controller H/W.
     //
@@ -1397,30 +1458,40 @@ InitializeUfs (
       continue;
     }
 
-    //
-    // The host enables the device initialization completion by setting fDeviceInit flag.
-    //
-    Status = UfsSetFlag (Private, UfsFlagDevInit);
+    Status = UfsFinishDeviceInitialization (Private);
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "Ufs Set fDeviceInit Flag Error, Status = %r\n", Status));
+      DEBUG ((DEBUG_ERROR, "Device failed to finish initialization, Status = %r\n", Status));
       Controller++;
       continue;
     }
 
     //
-    // Get Ufs Device's Lun Info by reading Configuration Descriptor.
+    // Check if 8 common luns are active and set corresponding bit mask.
     //
-    Status = UfsRwDeviceDesc (Private, TRUE, UfsConfigDesc, 0, 0, &Config, sizeof (UFS_CONFIG_DESC));
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "Ufs Get Configuration Descriptor Error, Status = %r\n", Status));
-      Controller++;
-      continue;
-    }
-
-    for (Index = 0; Index < UFS_PEIM_MAX_LUNS; Index++) {
-      if (Config.UnitDescConfParams[Index].LunEn != 0) {
+    UnitDescriptorSize = sizeof (UFS_UNIT_DESC);
+    for (Index = 0; Index < 8; Index++) {
+      Status = UfsRwDeviceDesc (Private, TRUE, UfsUnitDesc, (UINT8) Index, 0, &UnitDescriptor, &UnitDescriptorSize);
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "Failed to read unit descriptor, index = %X, status = %r\n", Index, Status));
+        continue;
+      }
+      if (UnitDescriptor.LunEn == 0x1) {
+        DEBUG ((DEBUG_INFO, "UFS LUN %X is enabled\n", Index));
         Private->Luns.BitMask |= (BIT0 << Index);
-        DEBUG ((DEBUG_INFO, "Ufs %d Lun %d is enabled\n", Controller, Index));
+      }
+    }
+
+    //
+    // Check if RPMB WLUN is supported and set corresponding bit mask.
+    //
+    DeviceDescriptorSize = sizeof (UFS_DEV_DESC);
+    Status = UfsRwDeviceDesc (Private, TRUE, UfsDeviceDesc, 0, 0, &DeviceDescriptor, &DeviceDescriptorSize);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Failed to read device descriptor, status = %r\n", Status));
+    } else {
+      if (DeviceDescriptor.SecurityLun == 0x1) {
+        DEBUG ((DEBUG_INFO, "UFS WLUN RPMB is supported\n"));
+        Private->Luns.BitMask |= BIT11;
       }
     }
 
