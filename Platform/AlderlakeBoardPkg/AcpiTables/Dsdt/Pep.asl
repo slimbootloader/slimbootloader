@@ -603,7 +603,7 @@ Scope(\_SB)
 
     Method(_STA, 0x0, NotSerialized)
     {
-      If(LOr(LGreaterEqual(OSYS,2015), LAnd(LGreaterEqual(OSYS,2012),LEqual(S0ID, 1))))
+      If(LEqual(S0ID, 1))
       {
         PSOP () // Update _DSD
         Return(0xf)
