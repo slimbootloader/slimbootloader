@@ -229,7 +229,7 @@ def get_xml_change_list (platform, plt_params_list):
         ('./IntegratedSensorHub/IshData/PdtBinary',                                  '$SourceDir\PdtBinary.bin'),
         ('./Debug/DelayedAuthenticationModeConfiguration/DelayedAuthMode',           'No'),
         ('./Debug/IntelMeFirmwareDebuggingOverrides/DbgOverridePreProdSi',           '0'),
-        ('./Debug/DirectConnectInterfaceConfiguration/DciDbcEnable',                 'Yes'),
+        ('./Debug/DirectConnectInterfaceConfiguration/DciDbcEnable',                 'No'),
         ('./Debug/EarlyUsb2DbcOverType-AConfiguration/EnEarlyUsb2DbcCon',            'Yes'),
         ('./Debug/EarlyUsb2DbcOverType-AConfiguration/Usb2DbcAutoDetect',            'Enabled'),
         ('./CpuStraps/CpuStraps/CpuMaxFreqBoot',                                     'Yes'),
