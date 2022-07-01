@@ -264,6 +264,7 @@ class BaseBoard(object):
         self.BUILD_ARCH            = ''
         self.KEYH_SVN              = 0
         self.CFGDATA_SVN           = 0
+        self.BUILD_IDENTICAL_TS    = 0
 
         self.RTCM_RSVD_SIZE        = 0xFF000
 
@@ -516,7 +517,7 @@ class Build(object):
 
         hs_offset = stage1_bins.find (HashStoreTable.HASH_STORE_SIGNATURE)
         if hs_offset < 0:
-            raise Exceptoin ("HashStoreTable not found in '%s'!" % os.path.basename(img_file))
+            raise Exception ("HashStoreTable not found in '%s'!" % os.path.basename(img_file))
 
         comp_name, part_name = get_redundant_info (img_file)
         if part_name:
@@ -958,7 +959,7 @@ class Build(object):
         stage1b_path   = os.path.join(self._fv_dir, 'STAGE1B.fd')
         stage1b_b_path = os.path.join(self._fv_dir, 'STAGE1B_B.fd')
 
-        if self._board.STAGE1B_XIP:
+        if self._board.STAGE1B_XIP and not self._board.BUILD_IDENTICAL_TS:
             # Rebase stage1b.fd
             print("Rebasing STAGE1B_B")
             rebase_stage (stage1b_path, stage1b_b_path, -self._board.REDUNDANT_SIZE)
