@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2019 - 2021, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2019 - 2022, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 #
@@ -14,14 +14,14 @@
   VERSION_STRING       = 1.0
 
 [Sources]
-  m_80_806c1_0000009a.mcb
+  m_80_806c1_000000a4.mcb
   m_c2_806d1_0000003c.mcb
 
 [UserExtensions.SBL."CloneRepo"]
   REPO   = https://github.com/slimbootloader/firmwareblob.git
-  COMMIT = 411cbc8e0ebb22374b7b26f14881d1013bd9fcb8
+  COMMIT = b587cd64ac87bde380b113a32867ff5dc2ef3fb7
 
 [UserExtensions.SBL."CopyList"]
-  Microcode/TigerLake/m_80_806c1_0000009a.pdb  : Silicon/TigerlakePkg/Microcode/m_80_806c1_0000009a.mcb
+  Microcode/TigerLake/m_80_806c1_000000a4.pdb  : Silicon/TigerlakePkg/Microcode/m_80_806c1_000000a4.mcb
   Microcode/TigerLake/m_c2_806d1_0000003c.pdb  : Silicon/TigerlakePkg/Microcode/m_c2_806d1_0000003c.mcb
 
