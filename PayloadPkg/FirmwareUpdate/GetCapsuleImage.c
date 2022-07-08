@@ -1,7 +1,7 @@
 /** @file
   This file contains the implementation of FirmwareUpdateLib library.
 
-  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -301,7 +301,11 @@ LoadCapsuleImage (
     goto Done;
   }
 
-  Status = InitFileSystem (CapsuleInfo->SwPart, EnumFileSystemTypeFat, HwPartHandle, &FsHandle);
+  if (CapsuleInfo->FsType >= EnumFileSystemMax) {
+    Status = InitFileSystem (CapsuleInfo->SwPart, EnumFileSystemTypeAuto, HwPartHandle, &FsHandle);
+  } else {
+    Status = InitFileSystem (CapsuleInfo->SwPart, CapsuleInfo->FsType, HwPartHandle, &FsHandle);
+  }
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "No partitions found, Status = %r\n", Status));
     goto Done;
