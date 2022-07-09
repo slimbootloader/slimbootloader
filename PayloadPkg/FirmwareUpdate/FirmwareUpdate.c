@@ -654,6 +654,106 @@ GetFwImageOrder (
   return ImageOrder;
 }
 
+/**
+  This function validates the boundaries of a capsule payload
+
+  @param[in] FwUpdHeader        Firmware update header
+  @param[in] CapHeader          Capsule header
+  @param[in] Offset             Image offset relative to capsule header
+
+  @retval TRUE                  Payload boundaries are valid
+  @retval FALSE                 Otherwise
+**/
+BOOLEAN
+IsValidPayloadBoundary (
+  IN FIRMWARE_UPDATE_HEADER        *FwUpdHeader,
+  IN EFI_FW_MGMT_CAP_HEADER        *CapHeader,
+  IN UINT64                        Offset
+  )
+{
+  UINT16                        TotalPayloadCount;
+  EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImgHeader;
+
+  if ((FwUpdHeader == NULL) || (CapHeader == NULL)) {
+    return FALSE;
+  }
+
+  TotalPayloadCount = (UINT16)(CapHeader->EmbeddedDriverCount + CapHeader->PayloadItemCount);
+
+  if (TotalPayloadCount == 0) {
+    DEBUG((DEBUG_ERROR, "Invalid capsule body: no payload\n"));
+    return FALSE;
+  }
+
+  if (Offset < (sizeof(EFI_FW_MGMT_CAP_HEADER) + TotalPayloadCount * sizeof (UINT64))) {
+    DEBUG((DEBUG_ERROR, "Invalid offset (0x%x): not in payload regions\n", Offset));
+    return FALSE;
+  }
+
+  if (Offset > (FwUpdHeader->ImageSize - sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER))) {
+    DEBUG((DEBUG_ERROR, "Invalid offset (0x%x): no room for payload header\n", Offset));
+    return FALSE;
+  }
+
+  ImgHeader = (EFI_FW_MGMT_CAP_IMAGE_HEADER *)((UINTN)CapHeader + (UINTN)Offset);
+
+  if (ImgHeader->UpdateImageSize == 0) {
+    DEBUG((DEBUG_ERROR, "Invalid payload header: zero payload size\n"));
+    return FALSE;
+  }
+
+  if (FwUpdHeader->ImageSize < (Offset + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER) + \
+                               ImgHeader->UpdateImageSize + ImgHeader->UpdateVendorCodeSize)) {
+    DEBUG((DEBUG_ERROR, "Invalid payload size: exceed capsue body size\n"));
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+/**
+  Get payload header by index
+
+  This function gets a specific payload header in capsule body.
+
+  @param[in] FwUpdHeader        Firmware update header
+  @param[in] CapHeader          Capsule header
+  @param[in] Index              Index of the payload in the capsule
+  @param[out] OutImgHeader      The found image header
+
+  @retval  EFI_SUCCESS          The operation completed successfully.
+  @retval  others               There is error happening.
+**/
+EFI_STATUS
+GetPayloadHeaderByIndex (
+  IN FIRMWARE_UPDATE_HEADER        *FwUpdHeader,
+  IN EFI_FW_MGMT_CAP_HEADER        *CapHeader,
+  IN UINT16                        Index,
+  EFI_FW_MGMT_CAP_IMAGE_HEADER     **OutImgHeader
+  )
+{
+  UINT64                  Offset;
+
+  if ((FwUpdHeader == NULL) || (CapHeader == NULL) || (OutImgHeader == NULL)) {
+    return EFI_NOT_FOUND;
+  }
+
+  if (Index > CapHeader->PayloadItemCount) {
+    return EFI_NOT_FOUND;
+  }
+
+  Offset = *(UINT64 *)((UINTN)CapHeader + sizeof(EFI_FW_MGMT_CAP_HEADER) +
+                       (CapHeader->EmbeddedDriverCount + Index) * sizeof (UINT64));
+
+  if (!IsValidPayloadBoundary (FwUpdHeader, CapHeader, Offset)) {
+    DEBUG((DEBUG_ERROR, "Invalid capsule payload boundary: Index=%d Offset=0x%x\n", Index, Offset));
+    return EFI_NOT_FOUND;
+  }
+
+  *OutImgHeader = (EFI_FW_MGMT_CAP_IMAGE_HEADER *)((UINTN)CapHeader + (UINTN)Offset);
+
+  return EFI_SUCCESS;
+}
 
 /**
   Process capsule image.
@@ -677,9 +777,10 @@ ProcessCapsule (
   IN  UINT32    FwSize
   )
 {
-  UINT8                         Count;
-  UINT8                         i;
-  UINT8                         TotalPayloadCount;
+  UINT16                        Count;
+  UINT16                        i;
+  UINT16                        TotalPayloadCount;
+  UINT16                        PayloadItemCount;
   EFI_STATUS                    Status;
   UINT32                        FwUpdStatusOffset;
   FW_UPDATE_STATUS              FwUpdStatus;
@@ -783,21 +884,32 @@ ProcessCapsule (
     return EFI_NOT_FOUND;
   }
 
-  TotalPayloadCount = (UINT8)(CapHeader->EmbeddedDriverCount + CapHeader->PayloadItemCount);
+  TotalPayloadCount = (UINT16)(CapHeader->EmbeddedDriverCount + CapHeader->PayloadItemCount);
+  if (CapHeader->PayloadItemCount > MAX_FW_COMPONENTS) {
+    DEBUG((DEBUG_ERROR, "# of payloads(%d) in capsule exceeds max(%d). The excess payloads will be skipped\n",
+          TotalPayloadCount, MAX_FW_COMPONENTS));
+    PayloadItemCount = MAX_FW_COMPONENTS;
+  } else {
+    PayloadItemCount =  CapHeader->PayloadItemCount;
+  }
+
 
   //
   // Zero out memory for component structures
   //
   ZeroMem((VOID *)&FwUpdCompStatus, MAX_FW_COMPONENTS * sizeof(FW_UPDATE_COMP_STATUS));
 
-  ImgHeader = (EFI_FW_MGMT_CAP_IMAGE_HEADER *)((UINTN)CapHeader + sizeof(EFI_FW_MGMT_CAP_HEADER) + TotalPayloadCount * sizeof (UINT64));
-
   //
   // Loop through all the payloads
   // if matching guid found, return the payload header
   // Boundary check to see if image header address exceeds the capsule region
   //
-  for (Count = 0; Count < CapHeader->PayloadItemCount; Count++) {
+  for (Count = 0; Count < PayloadItemCount; Count++) {
+    Status = GetPayloadHeaderByIndex (FwUpdHeader, CapHeader, Count, &ImgHeader);
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
+
     //
     // Create new structure
     //
@@ -806,25 +918,22 @@ ProcessCapsule (
     FwUpdCompStatus[Count].LastAttemptVersion = 0xFFFFFFFF;
     FwUpdCompStatus[Count].LastAttemptStatus = 0xFFFFFFFF;
     FwUpdCompStatus[Count].UpdatePending = FW_UPDATE_IMAGE_UPDATE_PENDING;
-
-    ImgHeader = (EFI_FW_MGMT_CAP_IMAGE_HEADER *)((UINTN)ImgHeader + ImgHeader->UpdateImageSize + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
-    if ((UINTN)ImgHeader > ((UINTN)CapHeader + FwUpdHeader->ImageSize)) {
-      return EFI_NOT_FOUND;
-    }
   }
 
   //
   // Sort FwUpdCompStatus as per the Firmware update image loading order when multiple updates are in capsule update
   // CSME - 1, CSMD - 2, BIOS - 3, remaining components as containers would be updated at last.
   //
-  for (Count = 0; Count < CapHeader->PayloadItemCount; Count++) {
-    for (i = Count+1; i < CapHeader->PayloadItemCount; i++) {
+  for (Count = 0; Count < PayloadItemCount; Count++) {
+    for (i = Count+1; i < PayloadItemCount; i++) {
       if (GetFwImageOrder (FwUpdCompStatus[Count].HardwareInstance) > GetFwImageOrder (FwUpdCompStatus[i].HardwareInstance)) {
            CopyMem((VOID *)&FwUpdCompStatusTemp, (VOID *)&FwUpdCompStatus[Count], sizeof(FW_UPDATE_COMP_STATUS));
            CopyMem((VOID *)&FwUpdCompStatus[Count], (VOID *)&FwUpdCompStatus[i], sizeof(FW_UPDATE_COMP_STATUS));
            CopyMem((VOID *)&FwUpdCompStatus[i], (VOID *)&FwUpdCompStatusTemp, sizeof(FW_UPDATE_COMP_STATUS));
       }
     }
+    DEBUG((DEBUG_INFO, "ProcessCapsule adds payload: %04X:%04X\n",
+          (UINT32)FwUpdCompStatus[Count].HardwareInstance, (UINT32)RShiftU64 (FwUpdCompStatus[Count].HardwareInstance, 32)));
   }
 
   //
@@ -865,11 +974,11 @@ FindImage (
   OUT EFI_FW_MGMT_CAP_IMAGE_HEADER  **ImageHdr
   )
 {
-  UINT8                   Count;
-  UINT8                   TotalPayloadCount;
+  UINT16                  Count;
   EFI_FW_MGMT_CAP_HEADER  *CapHeader;
   FIRMWARE_UPDATE_HEADER  *FwUpdHeader;
   EFI_FW_MGMT_CAP_IMAGE_HEADER  *CapImageHdr;
+  EFI_STATUS                    Status;
 
   *ImageHdr = NULL;
   CapImageHdr = NULL;
@@ -888,23 +997,20 @@ FindImage (
     return EFI_NOT_FOUND;
   }
 
-  TotalPayloadCount = (UINT8)(CapHeader->EmbeddedDriverCount + CapHeader->PayloadItemCount);
-
-  CapImageHdr = (EFI_FW_MGMT_CAP_IMAGE_HEADER *)((UINTN)CapHeader + sizeof(EFI_FW_MGMT_CAP_HEADER) + TotalPayloadCount * sizeof(UINT64));
-
   //
   // Loop through all the payloads
   // if matching guid, return the payload header
   // Boundary check to see if image header address exceeds the capsule region
   //
   for (Count = 0; Count < CapHeader->PayloadItemCount; Count++) {
+    Status = GetPayloadHeaderByIndex (FwUpdHeader, CapHeader, Count, &CapImageHdr);
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
+
     if (CapImageHdr->UpdateHardwareInstance == Signature) {
       *ImageHdr = CapImageHdr;
       return EFI_SUCCESS;
-    }
-    CapImageHdr = (EFI_FW_MGMT_CAP_IMAGE_HEADER *)((UINTN)CapImageHdr + CapImageHdr->UpdateImageSize + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
-    if ((UINTN)CapImageHdr > (UINTN)((UINTN)CapHeader + FwUpdHeader->ImageSize)) {
-      return EFI_NOT_FOUND;
     }
   }
 
@@ -950,6 +1056,7 @@ ApplyFwImage (
   }
 
   Signature = (UINT32)ImageHdr->UpdateHardwareInstance;
+  DEBUG((DEBUG_INFO, "ApplyFwImage: %04X:%04X\n", Signature, (UINT32)RShiftU64 (Signature, 32)));
 
   switch (Signature) {
   case FW_UPDATE_COMP_BIOS_REGION:
@@ -1125,11 +1232,15 @@ InitFirmwareUpdate (
         if ((UINT32)ImgHdr->UpdateHardwareInstance != FW_UPDATE_COMP_CSME_DRIVER) {
           Status = ApplyFwImage(CapsuleImage, CapsuleSize, ImgHdr, &ResetRequired);
           if (EFI_ERROR (Status)) {
-            DEBUG((DEBUG_ERROR, "ApplyFwImage failed with Status = %r\n", Status));
+            DEBUG((DEBUG_ERROR, "ApplyFwImage (%04X:%04X) failed with Status = %r\n",
+                  (UINT32)FwUpdCompStatus[Count].HardwareInstance, (UINT32)RShiftU64 (FwUpdCompStatus[Count].HardwareInstance, 32),
+                  Status));
           }
         }
       } else {
-        DEBUG((DEBUG_ERROR, "FindImage failed with Status = %r\n", Status));
+        DEBUG((DEBUG_ERROR, "FindImage (%04X:%04X) failed with Status = %r\n",
+              (UINT32)FwUpdCompStatus[Count].HardwareInstance, (UINT32)RShiftU64 (FwUpdCompStatus[Count].HardwareInstance, 32),
+              Status));
         continue;
       }
 
