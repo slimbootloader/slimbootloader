@@ -215,6 +215,100 @@ VerifyFwVersion (
 }
 
 /**
+  Initialize firmware update's retry count
+
+  Since the retry count is stored in SPI, the "count" is represented
+  as the number of continuous "1 (One)"
+
+  @retval Value        The bits of retry count
+**/
+UINT8
+InitFwuRetryCount (
+  VOID
+)
+{
+  UINT8             Value;
+  UINT8             i;
+
+  Value = 0;
+  for (i = 0; i < MAX_FW_FAILED_RETRY; i++) {
+    Value = (Value << 1) | 1;
+  }
+
+  DEBUG((DEBUG_INFO, "Set the bit array of retry count: %02X\n", Value));
+
+  return Value;
+}
+
+/**
+  Get firmware update's retry count
+
+  @retval Value    Current bits of retry count
+**/
+UINT8
+GetFwuRetryCount (
+  VOID
+)
+{
+  EFI_STATUS        Status;
+  UINT32            FwUpdStatusOffset;
+  FW_UPDATE_STATUS  FwUpdStatus;
+
+  FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
+  Status = BootMediaRead (FwUpdStatusOffset, sizeof(FW_UPDATE_STATUS), (UINT8 *)&FwUpdStatus);
+
+  if (EFI_ERROR (Status)) {
+    return 0;
+  }
+
+  if (FwUpdStatus.Signature != FW_UPDATE_STATUS_SIGNATURE) {
+    return 0;
+  }
+
+  DEBUG((DEBUG_INFO, "Current bit array of retry count: 0x%02X\n", FwUpdStatus.RetryCount));
+
+  return FwUpdStatus.RetryCount;
+}
+
+/**
+  Validate and then decrease firmware update's retry count
+
+  This function validates if current retry count is still avaiable (non-zero).
+  If so, it decreases retry count.
+
+  @retval  TRUE          Retry count is still avaiable
+  @retval  FALSE         No more room for retry
+**/
+BOOLEAN
+ValidThenDecFwuRetryCount (
+  VOID
+)
+{
+  EFI_STATUS        Status;
+  UINT32            FwUpdStatusOffset;
+  UINT8             RetryCount;
+
+  RetryCount = GetFwuRetryCount ();
+  if (RetryCount == 0) {
+    return FALSE;
+  }
+
+  RetryCount = RetryCount >> 1;
+
+  FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
+
+  FwUpdStatusOffset += OFFSET_OF(FW_UPDATE_STATUS, RetryCount);
+  Status = BootMediaWrite (FwUpdStatusOffset, sizeof(UINT8), (UINT8 *)&(RetryCount));
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "BootMediaWrite. offset: 0x%04x, Status = 0x%x\n", FwUpdStatusOffset, Status));
+    return FALSE;
+  } else {
+    return TRUE;
+  }
+}
+
+
+/**
   Get state machine flag from flash.
 
   This function will get state machine flag from the bootloader reserved region
@@ -294,14 +388,14 @@ SetStateMachineFlag (
   ----------------------------------------------------------
   |  SM   |   TS   |             Operation                 |
   ----------------------------------------------------------
-  |  FF   |    0   | Set SM to FE, Set TS and reboot       |
-  |  FF   |    1   | Set SM to FD, clear TS and reboot     |
-  |  FE   |    0   | Set TS and reboot                     |
-  |  FE   |    1   | Set SM to FC, clear TS and reboot     |
-  |  FD   |    0   | Set SM to FC, reboot                  |
-  |  FD   |    1   | clear TS and reboot                   |
-  |  FC   |    0   | Clear IBB signal,Set SM to FF, reboot |
-  |  FC   |    1   | Clear IBB signal,Set SM to FF, reboot |
+  |  7F   |    0   | Set SM to 7E, Set TS and reboot       |
+  |  7F   |    1   | Set SM to 7D, clear TS and reboot     |
+  |  7E   |    0   | Set TS and reboot                     |
+  |  7E   |    1   | Set SM to 7C, clear TS and reboot     |
+  |  7D   |    0   | Set SM to 7C, reboot                  |
+  |  7D   |    1   | clear TS and reboot                   |
+  |  7C   |    0   | Clear IBB signal, reboot              |
+  |  7C   |    1   | Clear IBB signal, reboot              |
   ----------------------------------------------------------
 
   @param[in][out] FwPolicy    Pointer to Firmware update policy.
@@ -354,8 +448,14 @@ EnforceFwUpdatePolicy (
 
   case FW_UPDATE_SM_PART_A:
     if (LoaderInfo->BootPartition == FW_UPDATE_PARTITION_A){
-      SetBootPartition (BackupPartition);
-      ResetRequired = TRUE;
+      if (ValidThenDecFwuRetryCount()) {
+        DEBUG((DEBUG_ERROR, "Unable to switch to partition B. Retry...\n"));
+        SetBootPartition (BackupPartition);
+        ResetRequired = TRUE;
+      } else {
+        DEBUG((DEBUG_ERROR, "Unable to switch to partition B with too many retry. Skip update\n"));
+        return EFI_NOT_STARTED;
+      }
     } else if (LoaderInfo->BootPartition == FW_UPDATE_PARTITION_B){
       FwPolicy->Fields.StateMachine       = FW_UPDATE_SM_PART_AB;
       FwPolicy->Fields.UpdatePartitionA   = 0x1;
@@ -371,8 +471,14 @@ EnforceFwUpdatePolicy (
       FwPolicy->Fields.SwitchtoBackupPart = 0;
       FwPolicy->Fields.Reboot             = 0;
     } else if (LoaderInfo->BootPartition == FW_UPDATE_PARTITION_B){
-      SetBootPartition (PrimaryPartition);
-      ResetRequired = TRUE;
+      if (ValidThenDecFwuRetryCount()) {
+        DEBUG((DEBUG_ERROR, "Unable to switch to partition A. Retry...\n"));
+        SetBootPartition (PrimaryPartition);
+        ResetRequired = TRUE;
+      } else {
+        DEBUG((DEBUG_ERROR, "Unable to switch to partition A with too many retry. Skip update\n"));
+        return EFI_NOT_STARTED;
+      }
     }
     break;
 
@@ -385,8 +491,14 @@ EnforceFwUpdatePolicy (
       //
       return EFI_ALREADY_STARTED;
     } else if (LoaderInfo->BootPartition == FW_UPDATE_PARTITION_B) {
-      SetBootPartition (PrimaryPartition);
-      ResetRequired = TRUE;
+      if (ValidThenDecFwuRetryCount()) {
+        DEBUG((DEBUG_ERROR, "Unable to switch to partition A. Retry...\n"));
+        SetBootPartition (PrimaryPartition);
+        ResetRequired = TRUE;
+      } else {
+        DEBUG((DEBUG_ERROR, "Unable to switch to partition A with too many retry. Skip update\n"));
+        return EFI_NOT_STARTED;
+      }
     }
     break;
   }
@@ -839,6 +951,7 @@ ProcessCapsule (
     FwUpdStatus.Signature = FW_UPDATE_STATUS_SIGNATURE;
     FwUpdStatus.Version = FW_UPDATE_STATUS_VERSION;
     FwUpdStatus.Length = sizeof(FW_UPDATE_STATUS);
+    FwUpdStatus.RetryCount = InitFwuRetryCount ();
 
     //
     // Save the current capsule signature into flash

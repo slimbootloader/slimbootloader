@@ -40,6 +40,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #define MAX_FILE_LEN            16
 #define MAX_FW_COMPONENTS       3
+#define MAX_FW_FAILED_RETRY     3
 
 #define CAPSULE_FLAGS_CFG_DATA  BIT0
 
@@ -109,7 +110,8 @@ typedef struct {
   UINT16                Length;
   UINT8                 CapsuleSig[FW_UPDATE_SIG_LENGTH];
   UINT8                 StateMachine;
-  UINT8                 Reserved[7];
+  UINT8                 RetryCount;
+  UINT8                 Reserved[6];
 } FW_UPDATE_STATUS;
 
 typedef struct {
