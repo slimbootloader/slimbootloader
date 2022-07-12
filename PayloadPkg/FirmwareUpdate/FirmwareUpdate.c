@@ -1167,9 +1167,6 @@ InitFirmwareUpdate (
   if (EFI_ERROR (Status)) {
     //
     // Error condition
-    // Clear state machine anyway to prevent FWU loop.
-    //
-    SetStateMachineFlag (FW_UPDATE_SM_DONE);
     return Status;
   }
 
@@ -1261,13 +1258,7 @@ InitFirmwareUpdate (
     }
   }
 
-  //
-  // At this point, all the firmware images in the capsule are processed
-  // Clear the state machine and exit
-  //
-  if (Count == MAX_FW_COMPONENTS) {
-    SetStateMachineFlag(FW_UPDATE_SM_DONE);
-  } else {
+  if (Count != MAX_FW_COMPONENTS) {
     return EFI_ABORTED;
   }
 
@@ -1319,11 +1310,8 @@ GetRegionInfo (
 
   This function will clear firmware update trigger and end firmware update.
 
-  @retval  EFI_SUCCESS        Update successfully.
-  @retval  others             Error happened during end firmware update.
-
 **/
-EFI_STATUS
+VOID
 EFIAPI
 EndFirmwareUpdate (
   VOID
@@ -1333,8 +1321,15 @@ EndFirmwareUpdate (
 
   ClearFwUpdateTrigger ();
 
+  // Clear state machine anyway to prevent FWU loop.
+  SetStateMachineFlag (FW_UPDATE_SM_DONE);
+
   Status = PlatformEndFirmwareUpdate ();
-  return Status;
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "Platform end firmware update failed: %r\n", Status));
+  }
+
+  Reboot (EfiResetCold);
 }
 
 /**
@@ -1478,6 +1473,4 @@ EndOfFwu:
   //
   ConsolePrint ("Exiting Firmware Update (Status: %r)\n", Status);
   EndFirmwareUpdate ();
-
-  Reboot (EfiResetCold);
 }
