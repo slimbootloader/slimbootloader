@@ -231,11 +231,11 @@ CsmePerfIdToStr (
   case 18:
     return "PMC indicated CSME that TCO_S0 was asserted";
   case 19:
-    return "PMC sent Core Reset Done Ack – Sent message to CSME";
+    return "PMC sent Core Reset Done Ack - Sent message to CSME";
   case 20:
-    return "ACM Active indication – ACM started its execution";
+    return "ACM Active indication - ACM started its execution";
   case 21:
-    return "ACM Done indication – ACM completed execution";
+    return "ACM Done indication - ACM completed execution";
   case 22:
     return "BIOS sent DRAM Init Done message";
   case 23:
