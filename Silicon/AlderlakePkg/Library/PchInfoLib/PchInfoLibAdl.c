@@ -730,6 +730,7 @@ GetPchMaxPciePortNum (
 {
   switch (PchSeries ()) {
     case PCH_P:
+    case PCH_N:
       return 12;
     case PCH_S:
       return 28;
