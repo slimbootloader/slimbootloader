@@ -1151,6 +1151,24 @@ UpdateFspConfig (
         FspsConfig->Usb4CmMode = 0x0;
         FspsConfig->EnergyEfficientTurbo = 0x1;
         FspsConfig->PsysPmax = 0x0;
+        FspsConfig->CnviBtAudioOffload = 0x1;
+        FspsConfig->IomTypeCPortPadCfg[0] = 0x90e0016;
+        FspsConfig->IomTypeCPortPadCfg[1] = 0x90e0017;
+        FspsConfig->VmdEnable = 1;
+        FspsConfig->Irms[0] = 0x0;
+        FspsConfig->Irms[1] = 0x0;
+        FspsConfig->ThcMode[0] = 1;
+        FspsConfig->ThcMode[1] = 1;
+        FspsConfig->PortResetMessageEnable[1] = 0x0;
+        FspsConfig->PortResetMessageEnable[2] = 0x0;
+        FspsConfig->PortResetMessageEnable[4] = 0x0;
+        FspsConfig->AtomTurboRatioLimitNumCore[1] = 0x0;
+        FspsConfig->AtomTurboRatioLimitNumCore[2] = 0x0;
+        FspsConfig->AtomTurboRatioLimitNumCore[3] = 0x0;
+        FspsConfig->AtomTurboRatioLimitNumCore[4] = 0x0;
+        FspsConfig->AtomTurboRatioLimitNumCore[5] = 0x0;
+        FspsConfig->AtomTurboRatioLimitNumCore[6] = 0x0;
+        FspsConfig->AtomTurboRatioLimitNumCore[7] = 0x0;
 
         break;
       case PLATFORM_ID_ADL_N_LPDDR5_RVP:
