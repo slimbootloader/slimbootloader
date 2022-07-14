@@ -1,7 +1,7 @@
 ## @ StitchIfwi.py
 #  This is an IFWI stitch config script for Slim Bootloader
 #
-# Copyright (c) 2019 - 2020, Intel Corporation. All rights reserved. <BR>
+# Copyright (c) 2019 - 2022, Intel Corporation. All rights reserved. <BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -74,49 +74,29 @@ def get_platform_sku():
 
 def get_component_replace_list(plt_params_list):
     replace_list = [
-       #    Path                   file name              compress    Key                           SVN
-      ('IFWI/BIOS/TS0/ACM0',      'Input/acm.bin',        'dummy',    '',                            ''),
-      ('IFWI/BIOS/TS1/ACM0',      'Input/acm.bin',        'dummy',    '',                            ''),
+      # Path                      file name                  compress  Key                              SVN
+      ('IFWI/BIOS/TS0/ACM0',      'Input/acm.bin',           'dummy',  '',                              ''),
+      ('IFWI/BIOS/TS1/ACM0',      'Input/acm.bin',           'dummy',  '',                              ''),
+
+      # need to set ENABLE_PRE_OS_CHECKER = 1 in BoardConfig.py
+      # ('IFWI/BIOS/NRD/IPFW/POSC', 'IPFW/PreOsChecker.bin',   'dummy',  'KEY_ID_CONTAINER_COMP_RSA3072', 0 ), # Pre-OS Checker
+
+      # need to set ENABLE_PSEFW_LOADING = 1 in BoardConfig.py
+      # ('IFWI/BIOS/NRD/IPFW/PSEF', 'IPFW/PseFw.bin',          'lz4',    'KEY_ID_CONTAINER_COMP_RSA3072', 0 ), # OSE FW
+
+      # need to set ENABLE_TSN = 1 in BoardConfig.py
+      # ('IFWI/BIOS/NRD/IPFW/TSIP', 'IPFW/PseTsnIpConfig.bin', 'lz4',    'KEY_ID_CONTAINER_COMP_RSA3072', 0 ), # PSE TSN IP
+      # ('IFWI/BIOS/NRD/IPFW/TSNC', 'IPFW/TsnConfig.bin',      'lz4',    'KEY_ID_CONTAINER_COMP_RSA3072', 0 ), # TSN Config
+      # ('IFWI/BIOS/NRD/IPFW/TMAC', 'IPFW/TsnMacAddr.bin',     'lz4',    'KEY_ID_CONTAINER_COMP_RSA3072', 0 ), # TSN MAC Address
+
+      # need to set ENABLE_TCC = 1 in BoardConfig.py
+      # ('IFWI/BIOS/NRD/IPFW/TCCM', 'IPFW/crl.bin',            'lz4',    'KEY_ID_CONTAINER_COMP_RSA3072', 0 ), # TCC CRL binary
     ]
-
-    if os.path.exists('IPFW/PreOsChecker.bin'):
-        print ("PreOsChecker.bin found")
-        replace_list.append (
-            ('IFWI/BIOS/NRD/IPFW/POSC', 'IPFW/PreOsChecker.bin', 'dummy', 'KEY_ID_CONTAINER_COMP_RSA3072', 0), # Pre-OS Checker
-        )
-    if os.path.exists('IPFW/PseFw.bin'):
-        print ("PseFw.bin found")
-        replace_list.append (
-            ('IFWI/BIOS/NRD/IPFW/PSEF', 'IPFW/PseFw.bin',          'lz4',     'KEY_ID_CONTAINER_COMP_RSA3072', 0),   # OSE FW
-        )
-    if 'tsn' in plt_params_list:
-        if os.path.exists('IPFW/PseTsnIpConfig.bin'):
-            print ("PseTsnIpConfig.bin found")
-            replace_list.append (
-                ('IFWI/BIOS/NRD/IPFW/TSIP', 'IPFW/PseTsnIpConfig.bin', 'lz4',     'KEY_ID_CONTAINER_COMP_RSA3072', 0),   # PSE TSN IP
-            )
-        if os.path.exists('IPFW/TsnConfig.bin'):
-            print ("TsnConfig.bin found")
-            replace_list.append (
-                ('IFWI/BIOS/NRD/IPFW/TSNC', 'IPFW/TsnConfig.bin',      'lz4',     'KEY_ID_CONTAINER_COMP_RSA3072', 0),   # TSN Config
-            )
-        if os.path.exists('IPFW/TsnMacAddr.bin'):
-            print ("TsnMacAddr.bin found")
-            replace_list.append (
-                ('IFWI/BIOS/NRD/IPFW/TMAC', 'IPFW/TsnMacAddr.bin',     'lz4',     'KEY_ID_CONTAINER_COMP_RSA3072', 0),   # TSN MAC Address
-            )
-    if os.path.exists('IPFW/crl.bin'):
-        print ("crl.bin found")
-        replace_list.append (
-            ('IFWI/BIOS/NRD/IPFW/TCCM', 'IPFW/crl.bin',         'lz4',     'KEY_ID_CONTAINER_COMP_RSA3072', 0),   # TCC CRL binary
-        )
-
     return replace_list
 
 def check_parameter(para_list):
     print (para_list)
     para_supported = {
-        'sata'     : {},
         'tsn'      : {},
         'dnx'      : {},
         'pt'       : {},
@@ -126,7 +106,6 @@ def check_parameter(para_list):
 
     para_help = \
         """
-        'sata'      -- Enable sata direct port, by default disabled.
         'tsn'       -- Enable TSN, by disable tsn port is disabled
         'dnx'       -- Enable DNX capsule binary build for IFWI updating via DNX
         'pt'        -- Enable Proof Test configuration
@@ -158,7 +137,7 @@ def get_xml_change_list (platform, plt_params_list, stitch_dir):
       # Path                                                                            | value |
       # =========================================================================================
       #Region Order
-      ('./BuildSettings/BuildResults/RegionOrder',                                 '421'),
+      ('./BuildSettings/BuildResults/RegionOrder',                                 '4521'),
       ('./FlashLayout/DescriptorRegion/OemBinary',                                 '$SourceDir\OemBinary.bin'),
       ('./FlashLayout/BiosRegion/InputFile',                                       '$SourceDir\BiosRegion.bin'),
       ('./FlashLayout/Ifwi_IntelMePmcRegion/MeRegionFile',                         '$SourceDir\MeRegionFile.bin'),
@@ -208,11 +187,6 @@ def get_xml_change_list (platform, plt_params_list, stitch_dir):
     # Append SBL specific FIT Settings
     # Top Swap Size given in BoardConfig.py is allocated to be 512KB
     xml_change_list.append ([('./FlashSettings/BiosConfiguration/TopSwapOverride', '512KB')])
-
-    if 'sata' in plt_params_list:
-        print ("Applying changes to enable SATA port")
-        xml_change_list.append ([
-            ])
 
     if 'tsn' in plt_params_list:
         print ("Applying changes to enable TSN")
