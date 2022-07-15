@@ -247,6 +247,16 @@ class FmpCapsuleHeaderClass(object):
             FmpCapsuleImageHeader.VendorCodeBytes = VendorCodeBytes
             FmpCapsuleImageHeader.UpdateHardwareInstance = HardwareInstance
             FmpCapsuleImage = FmpCapsuleImageHeader.Encode()
+
+            # for BIOS payload, adjust the starting offset to be 8-byte aligned with 0xFF paddings
+            if str(UpdateImageTypeId) == PredefinedUuidDict['BIOS'].lower():
+                if Offset & 0x7:
+                    Padding8Num = 8 - Offset & 0x7
+                    print('Adjusted the starting offset of BIOS payload with %s paddings' %Padding8Num)
+                    Padding = bytearray(b'\xFF') * Padding8Num
+                    FmpCapsuleData += Padding
+                    Offset += Padding8Num
+
             FmpCapsuleData = FmpCapsuleData + FmpCapsuleImage
 
             self._ItemOffsetList.append(Offset)
@@ -460,7 +470,8 @@ def SignImage(RawData, OutFile, HashType, SignScheme, PrivKey, ForceBiosUpdate):
 
 
 def main():
-    PredefinedUuidDict = {
+    global PredefinedUuidDict
+    PredefinedUuidDict  = {
         'BIOS': '605C6813-C2C7-4242-9C27-50A4C363DBA4',  # SBL  BIOS Region
         'MISC': '66030B7A-47D1-4958-B73D-00B44B9DD4B6',  # SBL  COMPONENT
         'CSME': '43AEF186-0CA5-4230-B1BD-193FB4627201',  # IFWI ME/CSME
