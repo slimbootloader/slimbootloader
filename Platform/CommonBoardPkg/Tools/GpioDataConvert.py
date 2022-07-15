@@ -337,6 +337,7 @@ V_GPIO_PCR_RST_CONF_POW_GOOD    = 0x00
 V_GPIO_PCR_RST_CONF_DEEP_RST    = 0x01
 V_GPIO_PCR_RST_CONF_GPIO_RST    = 0x02
 V_GPIO_PCR_RST_CONF_RESUME_RST  = 0x03
+V_GPIO_PCR_RST_CONF_DSW_RST     = 0x07
 
 GPP_RST_CFG_EDS_TO_SBL = {
     0x0 : GpioResumeReset,
@@ -349,6 +350,7 @@ GPP_RST_CFG_SBL_TO_EDS = {
     GpioHostDeepReset   : V_GPIO_PCR_RST_CONF_DEEP_RST,
     GpioPlatformReset   : V_GPIO_PCR_RST_CONF_GPIO_RST,
     GpioResumeReset     : V_GPIO_PCR_RST_CONF_POW_GOOD,
+    GpioDswReset        : V_GPIO_PCR_RST_CONF_DSW_RST,
 }
 
 # Sbl Dw fields mask & offset
@@ -414,6 +416,7 @@ def validate_args (inp_fmt, out_fmt):
     return valid
 
 # Ex : convert GPP_A7 to GPP_A07 to match GPP_A23 etc.
+#      convert GPD1 to GPD01
 def normalize_pad_name (Name):
     Match = re.match('([a-zA-Z_]+)(\d+)$', Name)
     if Match:
@@ -425,7 +428,7 @@ def normalize_pad_name (Name):
 def get_parts_from_inp (inp_fmt, line, next_line):
     parts = []
     if inp_fmt.endswith ('.h') or inp_fmt.endswith ('.csv'):
-        line = line.replace('{', ' ').replace('}', ' ').replace(' ', '').rstrip('\n')
+        line = line.replace('{', ' ').replace('}', ' ').replace(' ', '').rstrip('\n').lstrip()
         if not line.startswith ('//'):
             parts = line.split(',')
     elif inp_fmt.endswith ('.txt'):
@@ -546,11 +549,17 @@ def get_sbl_dws_from_h_csv (parts, pad_name, sbl_dw0, sbl_dw1, gpio_cfg_file):
         if parts[9].startswith('Gpio'):
             sbl_dw1.Dw1Tmpl.OtherSettings  = GPIO_OTHER_CONFIG[parts[9]]
 
-    sbl_dw1.Dw1Tmpl.PadNum          = int (pad_name[5:7])
+    if 'GPP_' in pad_name: # format GPP_[G][n]
+      sbl_dw1.Dw1Tmpl.PadNum          = int (pad_name[5:7])
+      grp_name = pad_name[0:5]
+    else: # format GPD[n]
+      sbl_dw1.Dw1Tmpl.PadNum          = int (pad_name[4:6])
+      grp_name = pad_name[0:3]
+
     if gpio_cfg_file.vir_to_phy_grp() == True:
-        sbl_dw1.Dw1Tmpl.GrpIdx      = gpio_cfg_file.get_grp_info(V_PCH_SERIES)[pad_name[0:5]][0]
+        sbl_dw1.Dw1Tmpl.GrpIdx      = gpio_cfg_file.get_grp_info(V_PCH_SERIES)[grp_name][0]
     else:
-        sbl_dw1.Dw1Tmpl.GrpIdx      = grp_info_sbl[pad_name[0:5]][0]
+        sbl_dw1.Dw1Tmpl.GrpIdx      = grp_info_sbl[grp_name][0]
 
 # Map the reset (power) cfg from eds dw to sbl dw
 def get_reset_cfg_from_eds (eDw0):
@@ -595,23 +604,32 @@ def get_sbl_dws_from_txt (parts, pad_name, sbl_dw0, sbl_dw1, gpio_cfg_file):
     sbl_dw1.Dw1Tmpl.LockConfig      |=  ((not((padcfglocktx >> padnumpos) & 0x1)) << 2) | 0x1
     if (gpio_cfg_file.rxraw_override_cfg()):
         sbl_dw1.Dw1Tmpl.OtherSettings=  get_field_from_eds_dw (eds_dw0.Dw0, 'RXRAW1',       0, 0)
-    sbl_dw1.Dw1Tmpl.PadNum          =   int (pad_name[5:7])
+    if 'GPP_' in pad_name: # format GPP_[G][n]
+      sbl_dw1.Dw1Tmpl.PadNum          =   int (pad_name[5:7])
+      grp_name = pad_name[0:5]
+    else: # format GPD[n]
+      sbl_dw1.Dw1Tmpl.PadNum          =   int (pad_name[4:6])
+      grp_name = pad_name[0:3]
     if gpio_cfg_file.vir_to_phy_grp() == True:
-        sbl_dw1.Dw1Tmpl.GrpIdx      = gpio_cfg_file.get_grp_info(V_PCH_SERIES)[pad_name[0:5]][0]
+        sbl_dw1.Dw1Tmpl.GrpIdx      = gpio_cfg_file.get_grp_info(V_PCH_SERIES)[grp_name][0]
     else:
-        sbl_dw1.Dw1Tmpl.GrpIdx      = grp_info_sbl[pad_name[0:5]][0]
+        sbl_dw1.Dw1Tmpl.GrpIdx      = grp_info_sbl[grp_name][0]
 
 # Calucalte the SBL Config Dws from '.h' or '.csv' or '.txt' data
 def get_sbl_dws (inp_fmt, cfg_file, parts):
     sbl_dw0 = SBL_DW0 ()
     sbl_dw1 = SBL_DW1 ()
 
-    if not 'GPP_' in parts[0]:
-        return '', 0x0, 0x0
     splitdata = parts[0].split('_')
     pin_number = splitdata[len(splitdata)-1]
     pin_number = normalize_pad_name (pin_number)
-    pad_name = 'GPP_' + pin_number
+    if 'GPP_' in parts[0]:
+      pad_name = 'GPP_' + pin_number
+    elif 'GPD' in parts[0]:
+      pad_name = pin_number
+    else:
+      return '', 0x0, 0x0
+
 
     gpio_cfg_file = SourceFileLoader ('GenGpioDataConfig', cfg_file).load_module()
 
@@ -663,11 +681,15 @@ def get_h_csv_from_sbl_dws (sbl_dw0, sbl_dw1, gpio_cfg_file):
 # in .txt file for each pin
 def patch_own_lock_txt ():
     for txt_key in txt_dict:
+        if 'GPP_' in txt_key: # format: GPP_[G][n]
+            key = txt_key[0:5]
+        else: # format: GPD[n]
+            key = txt_key[0:3]
         txt_line = txt_dict[txt_key]
         txt_parts = txt_line.split(':')
-        txt_parts[1] = "0x%08X" % own_dict[txt_key[0:5]]
-        txt_parts[2] = "0x%08X" % lock_dict[txt_key[0:5]]
-        txt_parts[3] = "0x%08X" % locktx_dict[txt_key[0:5]]
+        txt_parts[1] = "0x%08X" % own_dict[key]
+        txt_parts[2] = "0x%08X" % lock_dict[key]
+        txt_parts[3] = "0x%08X" % locktx_dict[key]
         txt_line = ""
         for i in range(len(txt_parts)):
             txt_line += txt_parts[i] + ':'
@@ -697,20 +719,26 @@ def get_txt_from_sbl_dws (sbl_dw0, sbl_dw1, pad_name, gpio_cfg_file):
         eds_dw0.Dw0 |= get_field_from_sbl_dw (sbl_dw1.Dw1Tmpl.OtherSettings,    SBL_DW1_OTHER_RXRAW_MASK,                       0,  'RXRAW1',      0)
     eds_dw1.Dw1 |=  get_field_from_sbl_dw (sbl_dw1.Dw1Tmpl.ElectricalConfig,SBL_DW1_ELEC_CFG_MASK,                          0,  'TERM',        1)
 
-    padnum      = int (pad_name[5:7])
+    if 'GPP_' in pad_name: # format: GPP_[G][n]
+      padnum   = int (pad_name[5:7])
+      grp_name = pad_name[0:5]
+    else: # format: GPD[n]
+      padnum   = int (pad_name[4:6])
+      grp_name = pad_name[0:3]
+
     padnumpos   = padnum % 32
     hsown       = (sbl_dw0.Dw0Tmpl.HostSoftPadOwn >> 1) << padnumpos
     lockcfg     = ones_complement ( ((sbl_dw1.Dw1Tmpl.LockConfig >> 1) & 0x1), 1 ) << padnumpos
     lockcfgtx   = ones_complement ( ((sbl_dw1.Dw1Tmpl.LockConfig >> 2) & 0x1), 1 ) << padnumpos
 
-    if pad_name[0:5] in own_dict.keys():
-        own_dict[pad_name[0:5]]     |= hsown
-        lock_dict[pad_name[0:5]]    |= lockcfg
-        locktx_dict[pad_name[0:5]]  |= lockcfgtx
+    if grp_name in own_dict.keys():
+        own_dict[grp_name]     |= hsown
+        lock_dict[grp_name]    |= lockcfg
+        locktx_dict[grp_name]  |= lockcfgtx
     else:
-        own_dict[pad_name[0:5]]     = hsown
-        lock_dict[pad_name[0:5]]    = lockcfg
-        locktx_dict[pad_name[0:5]]  = lockcfgtx
+        own_dict[grp_name]     = hsown
+        lock_dict[grp_name]    = lockcfg
+        locktx_dict[grp_name]  = lockcfgtx
 
     txt_line = "0x%08X:0x%08X:0x%08X:0x%08X:0x%08X" % (hsown, lockcfg, lockcfgtx, eds_dw0.Dw0, eds_dw1.Dw1)
 
@@ -737,8 +765,6 @@ def parse_sbl_dws (inp_fmt, out_fmt, cfg_file, parts):
             pad_name = parts[0][-7:]
 
     pad_name = normalize_pad_name (pad_name)
-    if not pad_name.startswith('GPP_'):
-        return '', ''
 
     gpio_cfg_file = SourceFileLoader ('GenGpioDataConfig', cfg_file).load_module()
 
@@ -893,7 +919,7 @@ def main ():
                         help='Determine the GPIO template format. For new platforms, please use new format.')
     ap.add_argument(  '-p',
                         dest='pch_series',
-                        choices=['def', 'h', 'lp', 's', 'p'],
+                        choices=['def', 'h', 'lp', 's', 'p', 'n'],
                         default='def',
                         type=str,
                         help='PCH series to get the correct group info')
