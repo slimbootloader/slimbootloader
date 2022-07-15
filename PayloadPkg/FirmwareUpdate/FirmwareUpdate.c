@@ -1194,7 +1194,7 @@ ApplyFwImage (
       CsmeUpdateInData = InitCsmeUpdInputData();
       if (CsmeUpdateInData != NULL) {
         Status = UpdateCsme(CapImage, CapImageSize, CsmeUpdateInData, ImageHdr);
-        *ResetRequired = FALSE;
+        *ResetRequired = TRUE;
       }
     }
     break;
