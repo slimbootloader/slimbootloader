@@ -1,7 +1,7 @@
 /** @file
 The header file for firmware update library.
 
-Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -39,7 +39,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define FW_UPDATE_SIG_LENGTH    256
 
 #define MAX_FILE_LEN            16
-#define MAX_FW_COMPONENTS       3
+#define MAX_FW_COMPONENTS       6
 #define MAX_FW_FAILED_RETRY     3
 
 #define CAPSULE_FLAGS_CFG_DATA  BIT0
