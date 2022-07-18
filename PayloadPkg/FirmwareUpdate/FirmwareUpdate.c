@@ -868,6 +868,29 @@ GetPayloadHeaderByIndex (
 }
 
 /**
+  This function will be called after the firmware update is complete.
+  It checks if the update was a critical component but failed
+  @param[in] Signature          Signature of component to update.
+  @param[in] LastAttemptStatus  Status of last firmware update attempted.
+  @retval TRUE                  The update is for a critical component but failed
+  @retval FALSE                 Otherwise
+**/
+BOOLEAN
+IsCritCompUpdateFailed (
+  IN UINT64     Signature,
+  IN EFI_STATUS LastAttemptStatus
+ )
+{
+  switch (Signature) {
+  case FW_UPDATE_COMP_CSME_REGION:
+  case FW_UPDATE_COMP_BIOS_REGION:
+    return EFI_ERROR (LastAttemptStatus);
+  }
+
+  return FALSE;
+}
+
+/**
   Process capsule image.
 
   This function will abstract firmware images from the capsule image. for each
@@ -1175,10 +1198,10 @@ ApplyFwImage (
   case FW_UPDATE_COMP_BIOS_REGION:
     if ((CapHdr->CapsuleFlags & CAPSULE_FLAG_FORCE_BIOS_UPDATE) != 0) {
       Status = UpdateFullBiosRegion (ImageHdr);
-      *ResetRequired = TRUE;
     } else {
       Status = UpdateSystemFirmware (ImageHdr);
     }
+    *ResetRequired = TRUE;
     break;
   case FW_UPDATE_COMP_CSME_REGION:
     Status = EFI_UNSUPPORTED;
@@ -1223,6 +1246,7 @@ InitFirmwareUpdate (
 )
 {
   EFI_STATUS                  Status;
+  EFI_STATUS                  StatusPayloadUpdate;
   UINT8                       Count;
   VOID                        *CapsuleImage;
   UINT32                      CapsuleSize;
@@ -1334,32 +1358,45 @@ InitFirmwareUpdate (
       //
       // Find payload associated with component in the capsule image
       //
-      Status = FindImage(FwUpdCompStatus[Count].HardwareInstance, CapsuleImage, CapsuleSize, &ImgHdr);
-      if (!EFI_ERROR (Status)) {
+      StatusPayloadUpdate = FindImage(FwUpdCompStatus[Count].HardwareInstance, CapsuleImage, CapsuleSize, &ImgHdr);
+      if (!EFI_ERROR (StatusPayloadUpdate)) {
         //
         // Start firmware udpate for the component, exclude CSME driver (CSMD)
         //
         if ((UINT32)ImgHdr->UpdateHardwareInstance != FW_UPDATE_COMP_CSME_DRIVER) {
-          Status = ApplyFwImage(CapsuleImage, CapsuleSize, ImgHdr, &ResetRequired);
+          StatusPayloadUpdate = ApplyFwImage(CapsuleImage, CapsuleSize, ImgHdr, &ResetRequired);
           if (EFI_ERROR (Status)) {
             DEBUG((DEBUG_ERROR, "ApplyFwImage (%04X:%04X) failed with Status = %r\n",
                   (UINT32)FwUpdCompStatus[Count].HardwareInstance, (UINT32)RShiftU64 (FwUpdCompStatus[Count].HardwareInstance, 32),
-                  Status));
+                  StatusPayloadUpdate));
           }
         }
       } else {
         DEBUG((DEBUG_ERROR, "FindImage (%04X:%04X) failed with Status = %r\n",
               (UINT32)FwUpdCompStatus[Count].HardwareInstance, (UINT32)RShiftU64 (FwUpdCompStatus[Count].HardwareInstance, 32),
-              Status));
+              StatusPayloadUpdate));
+
+        // Safety check: critical update must be successful, or the remaining update will be skipped
+        if (IsCritCompUpdateFailed (ImgHdr->UpdateHardwareInstance, StatusPayloadUpdate)) {
+          DEBUG ((DEBUG_ERROR, "Unable to find a critical component. Skip the remaining\n"));
+          break;
+        }
+
         continue;
       }
 
       //
       // Update firmware update status of the component in reserved region
       //
-      Status = UpdateStatus(ImgHdr->UpdateHardwareInstance, (UINT16)ImgHdr->Version, Status);
+      Status = UpdateStatus(ImgHdr->UpdateHardwareInstance, (UINT16)ImgHdr->Version, StatusPayloadUpdate);
       if (EFI_ERROR (Status)) {
         DEBUG ((DEBUG_ERROR, "UpdateStatus failed! Status = %r\n", Status));
+      }
+
+      // Safety check: critical update must be successful, or the remaining update will be skipped
+      if (IsCritCompUpdateFailed (ImgHdr->UpdateHardwareInstance, StatusPayloadUpdate)) {
+        DEBUG ((DEBUG_ERROR, "Failed to update a critical component. Skip the remaining\n"));
+        break;
       }
 
       //
