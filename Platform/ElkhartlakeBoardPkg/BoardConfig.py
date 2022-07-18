@@ -26,7 +26,7 @@ class Board(BaseBoard):
         # VERINFO_PROJ_MAJOR_VER: 1 PV Quality release
         # VERINFO_PROJ_MINOR_VER: 0: PV  1: MR1  2: MR2 etc.
         self.VERINFO_PROJ_MAJOR_VER = 1
-        self.VERINFO_PROJ_MINOR_VER = 3
+        self.VERINFO_PROJ_MINOR_VER = 4
         self.VERINFO_SVN          = 1
         self.VERINFO_BUILD_DATE   = time.strftime("%m/%d/%Y")
         self.LOWEST_SUPPORTED_FW_VER = ((self.VERINFO_PROJ_MAJOR_VER << 8) + self.VERINFO_PROJ_MINOR_VER)
