@@ -286,9 +286,6 @@ BoardInit (
   case PreSiliconInit:
     EnableLegacyRegions ();
     switch (GetPlatformId ()) {
-      case PLATFORM_ID_ADL_N_DDR5_CRB:
-        ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTablePostMemAdlNDdr5Crb) / sizeof (mGpioTablePostMemAdlNDdr5Crb[0]), (UINT8*)mGpioTablePostMemAdlNDdr5Crb);
-        break;
       case PLATFORM_ID_ADL_N_LPDDR5_RVP:
         ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTablePostMemAdlNLpddr5Rvp) / sizeof (mGpioTablePostMemAdlNLpddr5Rvp[0]), (UINT8*)mGpioTablePostMemAdlNLpddr5Rvp);
         break;

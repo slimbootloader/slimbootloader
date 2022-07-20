@@ -71,7 +71,8 @@ GLOBAL_REMOVE_IF_UNREFERENCED GPIO_INIT_CONFIG mGpioTablePostMemAdlNDdr5Crb[] =
   {GPIO_VER2_LP_GPD2,      {GpioPadModeGpio, GpioHostOwnAcpi, GpioDirInInv, GpioOutDefault,   GpioIntEdge,               GpioHostDeepReset,  GpioTermNone, GpioPadConfigUnlock}},  // this is needed to be in NF mode1 FOX_WAKE_N. Set to SCI based on the setup option
 
   // PWR BTN GPIO
-  {GPIO_VER2_LP_GPP_H19,   {GpioPadModeGpio, GpioHostOwnGpio, GpioDirInInv, GpioOutDefault,   GpioIntEdge|GpioIntSci,    GpioPlatformReset,  GpioTermNone,  GpioPadConfigUnlock  }},  // PWRBTN_GPIO_N
+//  {GPIO_VER2_LP_GPP_H19,   {GpioPadModeGpio, GpioHostOwnGpio, GpioDirInInv, GpioOutDefault,   GpioIntEdge|GpioIntSci,    GpioPlatformReset,  GpioTermNone,  GpioPadConfigUnlock  }},  // PWRBTN_GPIO_N
+  {GPIO_VER2_LP_GPP_H19,   {GpioPadModeGpio, GpioHostOwnAcpi, GpioDirInInv, GpioOutDefault,   GpioIntBothEdge|GpioIntSci,    GpioHostDeepReset,  GpioTermNone,  GpioPadConfigUnlock  }},  // PWRBTN_GPIO_N
 
   // Unused pins set to high impedance
   {GPIO_VER2_LP_GPP_F11,   {GpioPadModeGpio, GpioHostOwnGpio, GpioDirNone,  GpioOutDefault,   GpioIntDefault,            GpioResetDefault,   GpioTermNone}},  // HiZ
