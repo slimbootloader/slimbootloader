@@ -792,6 +792,7 @@ def convert_from_inp_to_out (gpio_tmp_fmt, inp_fmt, cfg_file, out_fmt, parts):
         if pad_name != '':
             if out_fmt == 'yaml':
                 if gpio_tmp_fmt == 'new':
+                #Ex: !expand { GPIO_TMPL : [ GPP_A,  00,  0x0350A383,  0x00002019 ] }
                     idx = len(pad_name)
                     while idx > 0:
                         if not pad_name[idx-1].isdigit():
