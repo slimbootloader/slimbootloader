@@ -23,6 +23,7 @@ from   ctypes  import *
 from   subprocess   import call
 from   StitchLoader import *
 from   security_stitch_help  import *
+from   GenContainer import *
 sys.dont_write_bytecode = True
 
 # sign_bin_flag can be set to false to avoid signing process. Applicable for Btg profile 0
@@ -87,6 +88,13 @@ def replace_component (ifwi_src_path, flash_path, file_path, comp_alg, pri_key, 
         gen_file_from_object (container_file, ifwi_bin[replace_comp.offset:replace_comp.offset + replace_comp.length])
         comp_file     = os.path.join(work_dir, file_path)
 
+        # try to locate the component in the container
+        container = CONTAINER(get_file_data(container_file))
+        component = container.locate_component (comp_name)
+        if not component:
+            print ("Could not locate component '%s' in container '%s'. Skip the replacement !" % (comp_name, flash_path))
+            return 1
+
         if os.name == 'nt':
             tool_bin_dir  = os.path.join(sblopen_dir, "BaseTools", "Bin", "Win32")
         else:
@@ -104,13 +112,16 @@ def replace_component (ifwi_src_path, flash_path, file_path, comp_alg, pri_key, 
     IFWI_PARSER.replace_component (ifwi_bin, comp_bin, flash_path)
     gen_file_from_object (ifwi_src_path, ifwi_bin)
 
-def replace_components (ifwi_src_path, stitch_cfg_file, plt_params_list):
-    print ("Replacing components.......")
-    replace_list = stitch_cfg_file.get_component_replace_list (plt_params_list)
-    for flash_path, file_path, comp_alg, pri_key, svn in replace_list:
-        replace_component (ifwi_src_path, flash_path, file_path, comp_alg, pri_key, svn)
+    return 0
 
-def stitch (stitch_dir, stitch_cfg_file, sbl_file, btg_profile, plt_params_list, platform_data, platform, tpm, full_rdundant = True):
+def replace_components (ifwi_src_path, stitch_cfg_file, out_skipped_list):
+    print ("Replacing components.......")
+    replace_list = stitch_cfg_file.get_component_replace_list ()
+    for flash_path, file_path, comp_alg, pri_key, svn in replace_list:
+        if (replace_component (ifwi_src_path, flash_path, file_path, comp_alg, pri_key, svn)):
+            out_skipped_list.append(flash_path)
+
+def stitch (stitch_dir, stitch_cfg_file, sbl_file, btg_profile, plt_params_list, out_skipped_list, platform_data, platform, tpm, full_rdundant = True):
     temp_dir = os.path.abspath(os.path.join (stitch_dir, 'Temp'))
     if os.path.exists(temp_dir):
         shutil.rmtree(temp_dir, ignore_errors=True)
@@ -139,7 +150,7 @@ def stitch (stitch_dir, stitch_cfg_file, sbl_file, btg_profile, plt_params_list,
         fd.close()
 
     print("Replace components in both partitions....")
-    replace_components (os.path.join(temp_dir, "SlimBootloader.bin"), stitch_cfg_file, plt_params_list)
+    replace_components (os.path.join(temp_dir, "SlimBootloader.bin"), stitch_cfg_file, out_skipped_list)
 
     # Generate xml
     gen_xml_file(stitch_dir, stitch_cfg_file, btg_profile, plt_params_list, platform, tpm)
@@ -218,7 +229,9 @@ def main():
 
     plt_params_list = get_para_list (args.option.split(';'))
     if not stitch_cfg_file.check_parameter(plt_params_list):
-        exit (0)
+        exit (1)
+
+    skipped_replace_list = []
 
     print ("Executing stitch.......")
     curr_dir = os.getcwd()
@@ -231,7 +244,7 @@ def main():
 
     work_dir = os.path.abspath (args.work_dir)
     os.chdir(work_dir)
-    if stitch (work_dir, stitch_cfg_file, sbl_file, args.btg_profile, plt_params_list, args.plat_data, args.platform, args.tpm):
+    if stitch (work_dir, stitch_cfg_file, sbl_file, args.btg_profile, plt_params_list, skipped_replace_list, args.plat_data, args.platform, args.tpm):
         raise Exception ('Stitching process failed !')
     os.chdir(curr_dir)
 
@@ -264,6 +277,8 @@ def main():
 
     print ("\nIFWI Stitching completed successfully !")
     print ("Boot Guard Profile: %s" % args.btg_profile.upper())
+    if len(skipped_replace_list):
+        print ("Skipped replacement components: %s" % skipped_replace_list)
     print ("IFWI image: %s\n" % ifwi_file_name)
     if args.remove:
         shutil.rmtree(os.path.join(work_dir, 'Temp'), ignore_errors=True)
