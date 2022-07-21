@@ -1377,7 +1377,7 @@ InitFirmwareUpdate (
               StatusPayloadUpdate));
 
         // Safety check: critical update must be successful, or the remaining update will be skipped
-        if (IsCritCompUpdateFailed (ImgHdr->UpdateHardwareInstance, StatusPayloadUpdate)) {
+        if (IsCritCompUpdateFailed (FwUpdCompStatus[Count].HardwareInstance, StatusPayloadUpdate)) {
           DEBUG ((DEBUG_ERROR, "Unable to find a critical component. Skip the remaining\n"));
           break;
         }
