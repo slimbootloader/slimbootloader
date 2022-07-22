@@ -1,18 +1,12 @@
-FROM ubuntu:18.04
+FROM ubuntu:22.04
 
 # Install build dependencies
-RUN apt-get update && apt-get -y install sudo build-essential python python3 \
+RUN apt-get update && apt-get -y install sudo build-essential python3 python-is-python3 \
     uuid-dev nasm openssl gcc-multilib git m4 bison flex qemu-system-x86
 
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 0
-
 # Install ACPICA Utilities
-ADD http://ftp.br.debian.org/debian/pool/main/a/acpica-unix/acpica-tools_20200925-6_amd64.deb /tmp
-RUN cd /tmp && \
-    dpkg -i acpica-tools_20200925-6_amd64.deb && \
-    rm *.deb && \
-    apt-get install -f && \
-    apt-get -y install python3-distutils
+RUN apt-get -y install acpica-tools
+RUN apt-get -y install python3-distutils
 
 # Install stitching dependencies
 RUN apt-get install -y --no-install-recommends libxcb1 \
