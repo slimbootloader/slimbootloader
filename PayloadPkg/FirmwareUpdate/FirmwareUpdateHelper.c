@@ -1102,6 +1102,27 @@ Reboot (
   IN  EFI_RESET_TYPE        ResetType
   )
 {
+  EFI_STATUS        UpdStatus;
+  UINT32            FwUpdStatusOffset;
+  UINT8             CsmeNeedResetVal;;
+
+  // clear FW_UPDATE_STATUS.CsmeNeedReset since the system will do a reset
+  FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
+  FwUpdStatusOffset += OFFSET_OF(FW_UPDATE_STATUS, CsmeNeedReset);
+
+  UpdStatus = BootMediaRead (FwUpdStatusOffset, sizeof(UINT8), (UINT8 *)&CsmeNeedResetVal);
+  if (EFI_ERROR (UpdStatus)) {
+    DEBUG((DEBUG_ERROR, "BootMediaRead CsmeNeedReset. offset: 0x%04x, Status = 0x%x\n", FwUpdStatusOffset, UpdStatus));
+  } else {
+    if (CsmeNeedResetVal == 1) {
+      CsmeNeedResetVal = 0;
+      UpdStatus = BootMediaWrite (FwUpdStatusOffset, sizeof(UINT8), (UINT8 *)&CsmeNeedResetVal);
+      if (EFI_ERROR (UpdStatus)) {
+        DEBUG((DEBUG_ERROR, "BootMediaWrite CsmeNeedReset=0. offset: 0x%04x, Status = 0x%x\n", FwUpdStatusOffset, UpdStatus));
+      }
+    }
+  }
+
   ConsolePrint("Reset required to proceed.\n\n");
   MicroSecondDelay (3000000);
   ResetSystem (ResetType);

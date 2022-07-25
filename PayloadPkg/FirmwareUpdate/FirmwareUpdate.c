@@ -607,7 +607,7 @@ UpdateStatus (
   //
   for (Count = 0; Count < MAX_FW_COMPONENTS; Count ++) {
     if (FwUpdCompStatus[Count].HardwareInstance == Signature) {
-      DEBUG((DEBUG_VERBOSE, "FOund the component to update status\n"));
+      DEBUG((DEBUG_VERBOSE, "Found the component to update status\n"));
       break;
     }
   }
@@ -914,7 +914,6 @@ ProcessCapsule (
 {
   UINT16                        Count;
   UINT16                        i;
-  UINT16                        TotalPayloadCount;
   UINT16                        PayloadItemCount;
   EFI_STATUS                    Status;
   UINT32                        FwUpdStatusOffset;
@@ -975,6 +974,7 @@ ProcessCapsule (
     FwUpdStatus.Version = FW_UPDATE_STATUS_VERSION;
     FwUpdStatus.Length = sizeof(FW_UPDATE_STATUS);
     FwUpdStatus.RetryCount = InitFwuRetryCount ();
+    FwUpdStatus.CsmeNeedReset = 0xF;
 
     //
     // Save the current capsule signature into flash
@@ -1020,15 +1020,13 @@ ProcessCapsule (
     return EFI_NOT_FOUND;
   }
 
-  TotalPayloadCount = (UINT16)(CapHeader->EmbeddedDriverCount + CapHeader->PayloadItemCount);
-  if (CapHeader->PayloadItemCount > MAX_FW_COMPONENTS) {
+  // Get the number of payloads
+  PayloadItemCount = CapHeader->PayloadItemCount;
+  if (PayloadItemCount > MAX_FW_COMPONENTS) {
     DEBUG((DEBUG_ERROR, "# of payloads(%d) in capsule exceeds max(%d). The excess payloads will be skipped\n",
-          TotalPayloadCount, MAX_FW_COMPONENTS));
+          PayloadItemCount, MAX_FW_COMPONENTS));
     PayloadItemCount = MAX_FW_COMPONENTS;
-  } else {
-    PayloadItemCount =  CapHeader->PayloadItemCount;
   }
-
 
   //
   // Zero out memory for component structures
@@ -1111,6 +1109,7 @@ FindImage (
   )
 {
   UINT16                  Count;
+  UINT16                  PayloadItemCount;
   EFI_FW_MGMT_CAP_HEADER  *CapHeader;
   FIRMWARE_UPDATE_HEADER  *FwUpdHeader;
   EFI_FW_MGMT_CAP_IMAGE_HEADER  *CapImageHdr;
@@ -1133,12 +1132,20 @@ FindImage (
     return EFI_NOT_FOUND;
   }
 
+  // Get the number of payloads
+  PayloadItemCount = CapHeader->PayloadItemCount;
+  if (PayloadItemCount > MAX_FW_COMPONENTS) {
+    DEBUG((DEBUG_ERROR, "# of payloads(%d) in capsule exceeds max(%d). The excess payloads will be ignored\n",
+          PayloadItemCount, MAX_FW_COMPONENTS));
+    PayloadItemCount = MAX_FW_COMPONENTS;
+  }
+
   //
   // Loop through all the payloads
   // if matching guid, return the payload header
   // Boundary check to see if image header address exceeds the capsule region
   //
-  for (Count = 0; Count < CapHeader->PayloadItemCount; Count++) {
+  for (Count = 0; Count < PayloadItemCount; Count++) {
     Status = GetPayloadHeaderByIndex (FwUpdHeader, CapHeader, Count, &CapImageHdr);
     if (EFI_ERROR (Status)) {
       return Status;
@@ -1217,11 +1224,52 @@ ApplyFwImage (
       CsmeUpdateInData = InitCsmeUpdInputData();
       if (CsmeUpdateInData != NULL) {
         Status = UpdateCsme(CapImage, CapImageSize, CsmeUpdateInData, ImageHdr);
-        *ResetRequired = TRUE;
+        *ResetRequired = FALSE;
+
+        // set FW_UPDATE_STATUS.CsmeNeedReset = 1 for OEM key revocation command
+        if (!EFI_ERROR(Status)) {
+          EFI_STATUS        UpdStatus;
+          UINT32            FwUpdStatusOffset;
+          UINT8             CsmeNeedResetVal;
+
+          FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
+          FwUpdStatusOffset += OFFSET_OF(FW_UPDATE_STATUS, CsmeNeedReset);
+
+          CsmeNeedResetVal = 1;
+          UpdStatus = BootMediaWrite (FwUpdStatusOffset, sizeof(UINT8), (UINT8 *)&CsmeNeedResetVal);
+          if (EFI_ERROR (UpdStatus)) {
+            DEBUG((DEBUG_ERROR, "BootMediaWrite CsmeNeedReset=1. offset: 0x%04x, Status = 0x%x\n", FwUpdStatusOffset, UpdStatus));
+          }
+        }
       }
     }
     break;
   case FW_UPDATE_COMP_CMD_REQUEST:
+    // If CSME is updated, the system needs a reset for the changes to take effect.
+    // Otherwise, the CMDI {OEMKEYREVOCATION} command might fail.
+    EFI_STATUS        UpdStatus;
+    UINT32            FwUpdStatusOffset;
+    UINT8             CsmeNeedResetVal;;
+
+    FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
+    FwUpdStatusOffset += OFFSET_OF(FW_UPDATE_STATUS, CsmeNeedReset);
+
+    UpdStatus = BootMediaRead (FwUpdStatusOffset, sizeof(UINT8), (UINT8 *)&CsmeNeedResetVal);
+    if (EFI_ERROR (UpdStatus)) {
+      DEBUG((DEBUG_ERROR, "BootMediaRead CsmeNeedReset. offset: 0x%04x, Status = 0x%x\n", FwUpdStatusOffset, UpdStatus));
+    } else {
+      if (CsmeNeedResetVal == 1) {
+        CsmeNeedResetVal = 0;
+        UpdStatus = BootMediaWrite (FwUpdStatusOffset, sizeof(UINT8), (UINT8 *)&CsmeNeedResetVal);
+        if (EFI_ERROR (UpdStatus)) {
+          DEBUG((DEBUG_ERROR, "BootMediaWrite CsmeNeedReset=0. offset: 0x%04x, Status = 0x%x\n", FwUpdStatusOffset, UpdStatus));
+        } else {
+          DEBUG((DEBUG_INFO, "Reboot for CSME update to take effect\n"));
+          Reboot (EfiResetCold);
+        }
+      }
+    }
+
     Status = FwCmdUpdateProcess (ImageHdr);
     break;
   default:
@@ -1248,14 +1296,16 @@ InitFirmwareUpdate (
   EFI_STATUS                  Status;
   EFI_STATUS                  StatusPayloadUpdate;
   UINT8                       Count;
+  UINT16                      PayloadItemCount;
   VOID                        *CapsuleImage;
   UINT32                      CapsuleSize;
   UINT32                      FwUpdStatusOffset;
   UINT32                      ByteOffset;
   BOOLEAN                     ResetRequired;
   FW_UPDATE_COMP_STATUS       FwUpdCompStatus[MAX_FW_COMPONENTS];
+  FIRMWARE_UPDATE_HEADER        *FwUpdHdr;
+  EFI_FW_MGMT_CAP_HEADER        *CapHdr;
   EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImgHdr;
-  FIRMWARE_UPDATE_HEADER        *CapHdr;
 
   ImgHdr = NULL;
   FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
@@ -1313,8 +1363,8 @@ InitFirmwareUpdate (
   // SBL FWU state machine and status stored in flash should not be updated in a successful
   // update since the new FW might have used this region for other purpose.
   //
-  CapHdr = (FIRMWARE_UPDATE_HEADER *)CapsuleImage;
-  if ((CapHdr->CapsuleFlags & CAPSULE_FLAG_FORCE_BIOS_UPDATE) != 0) {
+  FwUpdHdr = (FIRMWARE_UPDATE_HEADER *)CapsuleImage;
+  if ((FwUpdHdr->CapsuleFlags & CAPSULE_FLAG_FORCE_BIOS_UPDATE) != 0) {
     // Only expect a single BIOS component update.
     Status = FindImage (FwUpdCompStatus[0].HardwareInstance, CapsuleImage, CapsuleSize, &ImgHdr);
     if (!EFI_ERROR (Status)) {
@@ -1330,14 +1380,22 @@ InitFirmwareUpdate (
     return Status;
   }
 
+  // Get the number of payloads
+  CapHdr = (EFI_FW_MGMT_CAP_HEADER *)((UINTN)FwUpdHdr + FwUpdHdr->ImageOffset);
+  PayloadItemCount = CapHdr->PayloadItemCount;
+  if (PayloadItemCount > MAX_FW_COMPONENTS) {
+    DEBUG((DEBUG_ERROR, "# of payloads(%d) in capsule exceeds max(%d). The excess payloads will be skipped\n",
+          PayloadItemCount, MAX_FW_COMPONENTS));
+    PayloadItemCount = MAX_FW_COMPONENTS;
+  }
+
   //
   // Loop through the components to perform update
   //
-  for (Count = 0; Count < MAX_FW_COMPONENTS; Count ++) {
+  for (Count = 0; Count < PayloadItemCount; Count ++) {
     //
     // If the component has pending or processing state
     //
-
     if (FwUpdCompStatus[Count].UpdatePending & (BIT0 | BIT1 | BIT2)) {
       if (FwUpdCompStatus[Count].UpdatePending == FW_UPDATE_IMAGE_UPDATE_PENDING) {
         //
@@ -1402,13 +1460,13 @@ InitFirmwareUpdate (
       //
       // Reset system if required
       //
-      if (ResetRequired == TRUE) {
+      if ((Count != PayloadItemCount-1) && (ResetRequired == TRUE)) {
         Reboot (EfiResetCold);
       }
     }
   }
 
-  if (Count != MAX_FW_COMPONENTS) {
+  if (Count != PayloadItemCount) {
     return EFI_ABORTED;
   }
 

@@ -111,7 +111,8 @@ typedef struct {
   UINT8                 CapsuleSig[FW_UPDATE_SIG_LENGTH];
   UINT8                 StateMachine;
   UINT8                 RetryCount;
-  UINT8                 Reserved[6];
+  UINT8                 CsmeNeedReset;
+  UINT8                 Reserved[5];
 } FW_UPDATE_STATUS;
 
 typedef struct {
