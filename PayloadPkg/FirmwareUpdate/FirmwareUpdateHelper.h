@@ -236,6 +236,36 @@ CheckAcmSvn (
   );
 
 /**
+  Read the value of FW_UPDATE_STATUS.CsmeNeedReset
+
+  The CsmeNeedReset flag is used to ensure CSME update
+  has taken effect before processing CMDI payload.
+  This is specific to prevent {OEMKEYREVOCATION} command
+  failure for the case that CSME payload contains OEM KM
+  with key revocation extension.
+
+  @retval  Value  Value of FW_UPDATE_STATUS.CsmeNeedReset
+**/
+UINT8
+ReadCsmeNeedResetFlag (
+  VOID
+  );
+
+/**
+  Write the value to FW_UPDATE_STATUS.CsmeNeedReset
+
+  @param[in] Value  Value to be written to FW_UPDATE_STATUS.CsmeNeedReset
+
+  @retval  EFI_SUCCESS            Write operation is successful
+  @retval  EFI_INVALID_PARAMETER  Invalid parameter
+  @retval  EFI_DEVICE_ERROR       Write operation failed
+**/
+EFI_STATUS
+WriteCsmeNeedResetFlag (
+  IN  UINT8  Value
+  );
+
+/**
   Reboot platform.
 
   @param[in]  ResetType   Cold, Warm or Shutdown
