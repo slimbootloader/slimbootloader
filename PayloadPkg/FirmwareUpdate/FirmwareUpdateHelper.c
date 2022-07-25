@@ -1092,6 +1092,78 @@ UpdateSblComponent (
 }
 
 /**
+  Read the value of FW_UPDATE_STATUS.CsmeNeedReset
+
+  The CsmeNeedReset flag is used to ensure CSME update
+  has taken effect before processing CMDI payload.
+  This is specific to prevent {OEMKEYREVOCATION} command
+  failure for the case that CSME payload contains OEM KM
+  with key revocation extension.
+
+  @retval  Value  Value of FW_UPDATE_STATUS.CsmeNeedReset
+**/
+UINT8
+ReadCsmeNeedResetFlag (
+  VOID
+  )
+{
+  EFI_STATUS  Status;
+  UINT32      FwUpdStatusOffset;
+  UINT8       Value;
+
+  FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
+  FwUpdStatusOffset += OFFSET_OF(FW_UPDATE_STATUS, CsmeNeedReset);
+
+  Value = CSME_NEED_RESET_INIT;
+  Status = BootMediaRead (FwUpdStatusOffset, sizeof(UINT8), (UINT8 *)&Value);
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "BootMediaRead CsmeNeedReset. offset: 0x%04x, Status = 0x%x\n",
+          FwUpdStatusOffset, Status));
+    Value = CSME_NEED_RESET_INVALID;
+  }
+
+  return Value;
+}
+
+/**
+  Write the value of FW_UPDATE_STATUS.CsmeNeedReset
+
+  @param[in] Value  Value to be written to FW_UPDATE_STATUS.CsmeNeedReset
+
+  @retval  EFI_SUCCESS            Write operation is successful
+  @retval  EFI_INVALID_PARAMETER  Invalid parameter
+  @retval  EFI_DEVICE_ERROR       Write operation failed
+**/
+EFI_STATUS
+WriteCsmeNeedResetFlag (
+  IN  UINT8  Value
+  )
+{
+  EFI_STATUS  Status;
+  UINT32      FwUpdStatusOffset;
+  UINT8       CurrVal;
+
+  CurrVal = ReadCsmeNeedResetFlag();
+  if (Value > CurrVal) {
+    DEBUG((DEBUG_ERROR, "WriteCsmeNeedResetFlag invalid parameter: %x, current value: %x\n",
+          Value, CurrVal));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
+  FwUpdStatusOffset += OFFSET_OF(FW_UPDATE_STATUS, CsmeNeedReset);
+
+  Status = BootMediaWrite (FwUpdStatusOffset, sizeof(UINT8), (UINT8 *)&Value);
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "BootMediaWrite CsmeNeedReset=%x. offset: 0x%04x, Status = 0x%x\n",
+          Value, FwUpdStatusOffset, Status));
+    return EFI_DEVICE_ERROR;
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
   Reboot platform.
 
   @param[in]  ResetType   Cold, Warm or Shutdown
@@ -1102,6 +1174,11 @@ Reboot (
   IN  EFI_RESET_TYPE        ResetType
   )
 {
+  // Set FW_UPDATE_STATUS.CsmeNeedReset to DONE since the system will do a reset
+  if (ReadCsmeNeedResetFlag() == CSME_NEED_RESET_PENDING) {
+    WriteCsmeNeedResetFlag(CSME_NEED_RESET_DONE);
+  }
+
   ConsolePrint("Reset required to proceed.\n\n");
   MicroSecondDelay (3000000);
   ResetSystem (ResetType);

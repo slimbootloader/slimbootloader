@@ -42,6 +42,11 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define MAX_FW_COMPONENTS       6
 #define MAX_FW_FAILED_RETRY     3
 
+#define CSME_NEED_RESET_INIT     0xFF
+#define CSME_NEED_RESET_PENDING  0xFE
+#define CSME_NEED_RESET_DONE     0xFC
+#define CSME_NEED_RESET_INVALID  0xF8
+
 #define CAPSULE_FLAGS_CFG_DATA  BIT0
 
 #define FW_UPDATE_COMP_BIOS_REGION SIGNATURE_32('B', 'I', 'O', 'S')
@@ -111,7 +116,8 @@ typedef struct {
   UINT8                 CapsuleSig[FW_UPDATE_SIG_LENGTH];
   UINT8                 StateMachine;
   UINT8                 RetryCount;
-  UINT8                 Reserved[6];
+  UINT8                 CsmeNeedReset;
+  UINT8                 Reserved[5];
 } FW_UPDATE_STATUS;
 
 typedef struct {
