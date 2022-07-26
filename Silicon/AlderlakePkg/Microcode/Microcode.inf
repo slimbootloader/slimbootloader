@@ -15,10 +15,12 @@
 
 [Sources]
   m_03_90672_0000001e.mcb
+  m_80_906a3_00000421.mcb
 
 [UserExtensions.SBL."CloneRepo"]
   REPO   = https://github.com/slimbootloader/firmwareblob.git
-  COMMIT = edc752553b5662be6febf4a9b38197004323cbd7
+  COMMIT = affdf8d09b6767b2bca01ea8343f45755c9d657b
 
 [UserExtensions.SBL."CopyList"]
   Microcode/AlderLake/m_03_90672_0000001e.pdb  : Silicon/AlderlakePkg/Microcode/m_03_90672_0000001e.mcb
+  Microcode/AlderLake/m_80_906a3_00000421.pdb  : Silicon/AlderlakePkg/Microcode/m_80_906a3_00000421.mcb
