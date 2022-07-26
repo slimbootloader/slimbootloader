@@ -11,16 +11,28 @@
 
 [UserExtensions.SBL."CloneRepo"]
   REPO    = https://github.com/intel/FSP.git
-  COMMIT  = 2cedeba57f6f7c604bea715065e7a4dca8ffa271
+  COMMIT  = 81dd5055f4c75db7c7b3d69fbc00c218a329bfa4
 
 [UserExtensions.SBL."CopyList"]
-  AlderLakeFspBinPkg/ADL_IOT/Fsp.fd                    : Silicon/AlderlakePkg/Adls/FspBin/FspDbg.bin
-  AlderLakeFspBinPkg/ADL_IOT/Fsp.fd                    : Silicon/AlderlakePkg/Adls/FspBin/FspRel.bin
-  AlderLakeFspBinPkg/ADL_IOT/Fsp.bsf                   : Silicon/AlderlakePkg/Adls/FspBin/Fsp.bsf
-  AlderLakeFspBinPkg/ADL_IOT/Include/FspUpd.h          : Silicon/AlderlakePkg/Adls/Include/FspUpd.h
-  AlderLakeFspBinPkg/ADL_IOT/Include/FsptUpd.h         : Silicon/AlderlakePkg/Adls/Include/FsptUpd.h
-  AlderLakeFspBinPkg/ADL_IOT/Include/FspmUpd.h         : Silicon/AlderlakePkg/Adls/Include/FspmUpd.h
-  AlderLakeFspBinPkg/ADL_IOT/Include/FspsUpd.h         : Silicon/AlderlakePkg/Adls/Include/FspsUpd.h
-  AlderLakeFspBinPkg/ADL_IOT/Include/FspInfoHob.h      : Silicon/AlderlakePkg/Adls/Include/MemInfoHob.h
-  AlderLakeFspBinPkg/ADL_IOT/VBT/Vbt.bin               : Platform/AlderlakeBoardPkg/VbtBin/Vbt.dat
-  AlderLakeFspBinPkg/ADL_IOT/VBT/Vbt.json              : Platform/AlderlakeBoardPkg/VbtBin/Vbt.json
+# For ADL-S
+  AlderLakeFspBinPkg/IoT/AlderLakeS/Fsp.fd                    : Silicon/AlderlakePkg/Adls/FspBin/FspDbg.bin
+  AlderLakeFspBinPkg/IoT/AlderLakeS/Fsp.fd                    : Silicon/AlderlakePkg/Adls/FspBin/FspRel.bin
+  AlderLakeFspBinPkg/IoT/AlderLakeS/Fsp.bsf                   : Silicon/AlderlakePkg/Adls/FspBin/Fsp.bsf
+  AlderLakeFspBinPkg/IoT/AlderLakeS/Include/FspUpd.h          : Silicon/AlderlakePkg/Adls/Include/FspUpd.h
+  AlderLakeFspBinPkg/IoT/AlderLakeS/Include/FsptUpd.h         : Silicon/AlderlakePkg/Adls/Include/FsptUpd.h
+  AlderLakeFspBinPkg/IoT/AlderLakeS/Include/FspmUpd.h         : Silicon/AlderlakePkg/Adls/Include/FspmUpd.h
+  AlderLakeFspBinPkg/IoT/AlderLakeS/Include/FspsUpd.h         : Silicon/AlderlakePkg/Adls/Include/FspsUpd.h
+  AlderLakeFspBinPkg/IoT/AlderLakeS/Include/FspInfoHob.h      : Silicon/AlderlakePkg/Adls/Include/MemInfoHob.h
+  AlderLakeFspBinPkg/IoT/AlderLakeS/VBT/Vbt.bin               : Platform/AlderlakeBoardPkg/VbtBin/Vbt.dat
+  AlderLakeFspBinPkg/IoT/AlderLakeS/VBT/Vbt.json              : Platform/AlderlakeBoardPkg/VbtBin/Vbt.json
+# For ADL-P
+  AlderLakeFspBinPkg/IoT/AlderLakeP/Fsp.fd                    : Silicon/AlderlakePkg/Adlp/FspBin/FspDbg.bin
+  AlderLakeFspBinPkg/IoT/AlderLakeP/Fsp.fd                    : Silicon/AlderlakePkg/Adlp/FspBin/FspRel.bin
+  AlderLakeFspBinPkg/IoT/AlderLakeP/Fsp.bsf                   : Silicon/AlderlakePkg/Adlp/FspBin/Fsp.bsf
+  AlderLakeFspBinPkg/IoT/AlderLakeP/Include/FspUpd.h          : Silicon/AlderlakePkg/Adlp/Include/FspUpd.h
+  AlderLakeFspBinPkg/IoT/AlderLakeP/Include/FsptUpd.h         : Silicon/AlderlakePkg/Adlp/Include/FsptUpd.h
+  AlderLakeFspBinPkg/IoT/AlderLakeP/Include/FspmUpd.h         : Silicon/AlderlakePkg/Adlp/Include/FspmUpd.h
+  AlderLakeFspBinPkg/IoT/AlderLakeP/Include/FspsUpd.h         : Silicon/AlderlakePkg/Adlp/Include/FspsUpd.h
+  AlderLakeFspBinPkg/IoT/AlderLakeP/Include/FspInfoHob.h      : Silicon/AlderlakePkg/Adlp/Include/MemInfoHob.h
+  AlderLakeFspBinPkg/IoT/AlderLakeP/VBT/VbtAdlP.bin           : Platform/AlderlakeBoardPkg/VbtBin/VbtAdlP.dat
+  AlderLakeFspBinPkg/IoT/AlderLakeP/VBT/VbtAdlP.json          : Platform/AlderlakeBoardPkg/VbtBin/VbtAdlP.json
