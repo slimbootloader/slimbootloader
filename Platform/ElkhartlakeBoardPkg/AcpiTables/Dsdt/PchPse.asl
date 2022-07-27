@@ -1,7 +1,7 @@
 /**@file
   ACPI DSDT table for PSE
 
- Copyright (c) 2019 - 2021 Intel Corporation. All rights reserved.<BR>
+ Copyright (c) 2019 - 2022 Intel Corporation. All rights reserved.<BR>
  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -114,8 +114,8 @@ Scope(\_SB.PC00) {
     {
       CreateDwordField(^RBUF, ^BAR0._BAS, B0BA)
       CreateDwordField(^RBUF, ^BAR0._LEN, B0LN)
-      Store(D10A, B0BA)
-      Store(D10L, B0LN)
+      Store(D20A, B0BA)
+      Store(D20L, B0LN)
       Return (RBUF)
     }
     Method (_STA, 0, NotSerialized)
@@ -154,7 +154,7 @@ Scope(\_SB.PC00) {
   // PSE SPI-0
   //-------------------------------------------
   Device(OSP0) {
-    Name (_ADR, 0x00130000) // Device 29, Function 0
+    Name (_ADR, 0x00130000) // Device 19, Function 0
     Method(_CRS, 0x0, Serialized)
     {
       Name(RBUF, ResourceTemplate ()
@@ -170,7 +170,7 @@ Scope(\_SB.PC00) {
   // PSE SPI-1
   //-------------------------------------------
   Device(OSP1) {
-    Name (_ADR, 0x00130001) // Device 29, Function 1
+    Name (_ADR, 0x00130001) // Device 19, Function 1
     Method(_CRS, 0x0, Serialized)
     {
       Name(RBUF, ResourceTemplate ()
@@ -186,7 +186,7 @@ Scope(\_SB.PC00) {
   // PSE SPI-2
   //-------------------------------------------
   Device(OSP2) {
-    Name (_ADR, 0x00130002) // Device 29, Function 2
+    Name (_ADR, 0x00130002) // Device 19, Function 2
     Method(_CRS, 0x0, Serialized)
     {
       Name(RBUF, ResourceTemplate ()
@@ -202,7 +202,7 @@ Scope(\_SB.PC00) {
   // PSE SPI-3
   //-------------------------------------------
   Device(OSP3) {
-    Name (_ADR, 0x00130003) // Device 29, Function 3
+    Name (_ADR, 0x00130003) // Device 19, Function 3
     Method(_CRS, 0x0, Serialized)
     {
       Name(RBUF, ResourceTemplate ()
