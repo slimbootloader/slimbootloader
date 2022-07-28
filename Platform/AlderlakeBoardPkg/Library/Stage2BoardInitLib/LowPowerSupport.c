@@ -198,7 +198,8 @@ UINT64 GetLowPowerS0IdleConstraint(VOID)
     //
     if (FspsConfig->ThcPort0Assignment  != 1) {
       PepConfigData->PepThc0 = 0;
-    } else if (FspsConfig->ThcPort1Assignment  != 2) {
+    }
+    if (FspsConfig->ThcPort1Assignment  != 1) {
       PepConfigData->PepThc1 = 0;
     }
 
