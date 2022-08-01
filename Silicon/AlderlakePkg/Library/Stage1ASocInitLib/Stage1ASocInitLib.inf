@@ -26,8 +26,7 @@
   MdePkg/MdePkg.dec
   BootloaderCorePkg/BootloaderCorePkg.dec
   Silicon/AlderlakePkg/AlderlakePkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
 
 [LibraryClasses]
   BaseLib
-
-[Pcd]
