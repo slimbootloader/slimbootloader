@@ -96,6 +96,14 @@ typedef enum {
   SMM_REBASE_AUTO
 } SMM_REBASE_MODE;
 
+//
+// Enum for boot partitions
+//
+typedef enum {
+  PrimaryPartition,
+  BackupPartition
+} BOOT_PARTITION;
+
 /**
   Returns the current stage of Bootloader execution.
 
