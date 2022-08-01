@@ -13,8 +13,6 @@
 #include <PchAccess.h>
 #include "HeciCore.h"
 
-GLOBAL_REMOVE_IF_UNREFERENCED UINT32 mHpetBaseAddr = 0;
-
 /**
   Used for calculating timeouts
 
@@ -32,16 +30,11 @@ StartTimer (
 {
   UINT32 HpetTimer;
 
-  HpetTimer = 0;
-
   ///
   /// Get the High Precision Event Timer base address
   ///
-  if (mHpetBaseAddr == 0) {
-    mHpetBaseAddr = HPET_BASE_ADDRESS;
-  } else {
-    HpetTimer = mHpetBaseAddr;
-  }
+  HpetTimer = HPET_BASE_ADDRESS;
+
 
   ///
   /// Start the timer so it is up and running
@@ -79,16 +72,10 @@ IsHeciTimeout (
   UINT32 Current;
   UINT32 HpetTimer;
 
-  HpetTimer = 0;
-
   ///
   /// Get the High Precision Event Timer base address
   ///
-  if (mHpetBaseAddr == 0) {
-    mHpetBaseAddr = HPET_BASE_ADDRESS;
-  } else {
-    HpetTimer = mHpetBaseAddr;
-  }
+  HpetTimer = HPET_BASE_ADDRESS;
 
   ///
   /// Read HPET and assign the value as the current time.
