@@ -67,6 +67,15 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define SMBUS_LIB_RESERVED(SmBusAddress)           ((SmBusAddress) & ~(BIT23 - 2))
 
 /**
+  Clear SmBus in use status
+**/
+VOID
+EFIAPI
+SmBusClearInUseStatus (
+  VOID
+  );
+
+/**
   Executes an SMBUS quick read command.
 
   Executes an SMBUS quick read command on the SMBUS device specified by SmBusAddress.
