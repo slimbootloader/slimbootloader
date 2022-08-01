@@ -40,6 +40,8 @@
 // TCO register I/O map
 //
 #define R_TCO_IO_RLD                                 0x0
+#define B_TCO_IO_RLD                                 BIT0
+
 #define R_TCO_IO_TCO1_STS                            0x04
 #define S_TCO_IO_TCO1_STS                            2
 #define B_TCO_IO_TCO1_STS_DMISERR                    BIT12
@@ -67,13 +69,15 @@
 #define S_TCO_IO_TCO1_CNT                            2
 #define B_TCO_IO_TCO1_CNT_LOCK                       BIT12
 #define B_TCO_IO_TCO1_CNT_TMR_HLT                    BIT11
-#define B_TCO_IO_TCO1_CNT_NR_MSUS                    BIT0  //NO_REBOOT
+#define B_TCO_IO_TCO1_CNT_NR_MSUS                    BIT0
 
 #define R_TCO_IO_TCO2_CNT                            0x0A
 #define S_TCO_IO_TCO2_CNT                            2
 #define N_TCO_IO_TCO2_CNT_INTRD_SEL                  2
 
-#define R_TCO_IO_TWDS                                0x0E           ///< TCO_WDSTATUS register.
+#define R_TCO_IO_TWDS                                0x0E
 #define R_TCO_IO_TMR                                 0x12
+
+#define TCO_BASE_ADDRESS                             0x400
 
 #endif
