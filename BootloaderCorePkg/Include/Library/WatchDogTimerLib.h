@@ -11,7 +11,6 @@
 #define  WDT_TIMEOUT_TCC_DSO           200    // 200 seconds
 #define  WDT_FLAG_TCC_DSO_IN_PROGRESS  BIT17
 
-
 /**
   Reloads WDT with new timeout value and starts it.
 
@@ -67,6 +66,18 @@ WdtSetScratchpad (
   );
 
 /**
+  Get WDT flags in scratchpad
+
+  @param[in] Flags             The scratchpad flags to get.
+  @retval UINT32               The flags specified.
+**/
+UINT32
+EFIAPI
+WdtGetScratchpad (
+  IN  UINT32  Flags
+  );
+
+/**
   Returns if the previous reset is triggered by timer expiration.
 
   @retval TRUE                    Timer time out
@@ -115,6 +126,36 @@ IsWdtEnabled (
 UINT8
 EFIAPI
 IsWdtLocked (
+  VOID
+  );
+
+/**
+  Get the number of failed boots.
+
+  @retval UINT32              the number of boots
+
+**/
+UINT32
+EFIAPI
+GetFailedBootCount (
+  VOID
+  );
+
+/**
+  Increment the number of failed boots.
+**/
+VOID
+EFIAPI
+IncrementFailedBootCount (
+  VOID
+  );
+
+/**
+  Set the number of failed boots to 0.
+**/
+VOID
+EFIAPI
+ClearFailedBootCount (
   VOID
   );
 
