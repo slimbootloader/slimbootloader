@@ -15,6 +15,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Guid/SystemResourceTable.h>
 #include <Guid/BootLoaderVersionGuid.h>
 #include <Service/SpiFlashService.h>
+#include <Library/BootloaderCommonLib.h>
 
 #define CMOS_ADDREG             0x70
 #define CMOS_DATAREG            0x71
@@ -85,11 +86,6 @@ typedef enum {
   TopSwapSet,
   TopSwapClear
 } TOP_SWAP_OPERATION;
-
-typedef enum {
-  PrimaryPartition,
-  BackupPartition
-} BOOT_PARTITION;
 
 #pragma pack(push, 1)
 //
