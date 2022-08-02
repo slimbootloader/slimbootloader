@@ -553,7 +553,7 @@ def get_sbl_dws_from_h_csv (parts, pad_name, sbl_dw0, sbl_dw1, gpio_cfg_file):
       sbl_dw1.Dw1Tmpl.PadNum          = int (pad_name[5:7])
       grp_name = pad_name[0:5]
     else: # format GPD[n]
-      sbl_dw1.Dw1Tmpl.PadNum          = int (pad_name[4:6])
+      sbl_dw1.Dw1Tmpl.PadNum          = int (pad_name[3:5])
       grp_name = pad_name[0:3]
 
     if gpio_cfg_file.vir_to_phy_grp() == True:
@@ -608,7 +608,7 @@ def get_sbl_dws_from_txt (parts, pad_name, sbl_dw0, sbl_dw1, gpio_cfg_file):
       sbl_dw1.Dw1Tmpl.PadNum          =   int (pad_name[5:7])
       grp_name = pad_name[0:5]
     else: # format GPD[n]
-      sbl_dw1.Dw1Tmpl.PadNum          =   int (pad_name[4:6])
+      sbl_dw1.Dw1Tmpl.PadNum          =   int (pad_name[3:5])
       grp_name = pad_name[0:3]
     if gpio_cfg_file.vir_to_phy_grp() == True:
         sbl_dw1.Dw1Tmpl.GrpIdx      = gpio_cfg_file.get_grp_info(V_PCH_SERIES)[grp_name][0]
@@ -723,7 +723,7 @@ def get_txt_from_sbl_dws (sbl_dw0, sbl_dw1, pad_name, gpio_cfg_file):
       padnum   = int (pad_name[5:7])
       grp_name = pad_name[0:5]
     else: # format: GPD[n]
-      padnum   = int (pad_name[4:6])
+      padnum   = int (pad_name[3:5])
       grp_name = pad_name[0:3]
 
     padnumpos   = padnum % 32
