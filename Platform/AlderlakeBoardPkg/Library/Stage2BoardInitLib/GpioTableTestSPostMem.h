@@ -30,7 +30,7 @@ GLOBAL_REMOVE_IF_UNREFERENCED GPIO_INIT_CONFIG mGpioTablePostMemTestsDdr5UDimmRv
 
   // M.2 Key-E Slot for WiFi/BT
   {GPIO_VER4_S_GPP_B2,    {GpioPadModeGpio, GpioHostOwnAcpi, GpioDirInInv,   GpioOutDefault,  GpioIntEdge|GpioIntSci,  GpioHostDeepReset,  GpioTermNone, GpioPadConfigUnlock}}, // M.2 Key-E slot WiFi Wake -> UART_BT_WAKE_N
-  {GPIO_VER4_S_GPP_B3,    {GpioPadModeGpio, GpioHostOwnGpio, GpioDirOut,     GpioOutHigh,     GpioIntDefault,          GpioPlatformReset,  GpioTermNone}},                      // M.2 Key-E slot BT RF Kill
+  {GPIO_VER4_S_GPP_B3,    {GpioPadModeGpio, GpioHostOwnGpio, GpioDirIn,      GpioOutHigh,     GpioIntDefault,          GpioPlatformReset,  GpioTermNone}},                      // M.2 Key-E slot BT RF Kill
   {GPIO_VER4_S_GPP_B19,   {GpioPadModeGpio, GpioHostOwnGpio, GpioDirOut,     GpioOutHigh,     GpioIntDefault,          GpioPlatformReset,  GpioTermNone}},                      // M.2 Key-E slot WiFi RF Kill
   {GPIO_VER4_S_GPP_G6,    {GpioPadModeGpio, GpioHostOwnGpio, GpioDirOut,     GpioOutDefault,  GpioIntDefault,          GpioHostDeepReset,  GpioTermNone}},                      // M.2 Key-E slot for WiFi -> CNVI_EN_N
   {GPIO_VER4_S_GPP_H2,    {GpioPadModeGpio, GpioHostOwnAcpi, GpioDirInInv,   GpioOutDefault,  GpioIntEdge|GpioIntSci,  GpioResumeReset,    GpioTermNone, GpioPadConfigUnlock}}, // M.2 Key-E slot for WiFi Wake
@@ -156,7 +156,7 @@ GLOBAL_REMOVE_IF_UNREFERENCED GPIO_INIT_CONFIG mGpioTablePostMemTestsDdr5SODimmR
 
   // M.2 Key-E Slot for Wifi
   {GPIO_VER4_S_GPP_B2,    {GpioPadModeGpio, GpioHostOwnAcpi, GpioDirInInv,   GpioOutDefault,  GpioIntEdge|GpioIntSci,  GpioHostDeepReset,  GpioTermNone, GpioPadConfigUnlock}},// M.2 Key-E Slot  Wifi Wake-> UART_BT_WAKE_N
-  {GPIO_VER4_S_GPP_B3,    {GpioPadModeGpio, GpioHostOwnGpio, GpioDirOut,     GpioOutHigh,     GpioIntDefault,          GpioPlatformReset,  GpioTermNone}},// M.2 Key-E Slot  BT RF Kill
+  {GPIO_VER4_S_GPP_B3,    {GpioPadModeGpio, GpioHostOwnGpio, GpioDirIn,     GpioOutHigh,     GpioIntDefault,          GpioPlatformReset,  GpioTermNone}},// M.2 Key-E Slot  BT RF Kill
   {GPIO_VER4_S_GPP_B19,   {GpioPadModeGpio, GpioHostOwnGpio, GpioDirOut,     GpioOutHigh,     GpioIntDefault,          GpioPlatformReset,  GpioTermNone}},// M.2 Key-E Slot  RF Kill
   {GPIO_VER4_S_GPP_G6,    {GpioPadModeGpio, GpioHostOwnGpio, GpioDirOut,     GpioOutDefault,  GpioIntDefault,          GpioHostDeepReset,  GpioTermNone}},// M.2 Key-E slot for Wifi -> CNVI_EN_N
   {GPIO_VER4_S_GPP_H2,    {GpioPadModeGpio, GpioHostOwnAcpi, GpioDirInInv,   GpioOutDefault,  GpioIntEdge|GpioIntSci,  GpioResumeReset,    GpioTermNone, GpioPadConfigUnlock}},//M.2 Key-E slot for Wifi Wake
