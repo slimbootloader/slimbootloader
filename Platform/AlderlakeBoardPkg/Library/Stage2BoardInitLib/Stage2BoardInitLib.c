@@ -290,12 +290,6 @@ BoardInit (
       case PLATFORM_ID_ADL_N_LPDDR5_RVP:
         ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTablePostMemAdlNLpddr5Rvp) / sizeof (mGpioTablePostMemAdlNLpddr5Rvp[0]), (UINT8*)mGpioTablePostMemAdlNLpddr5Rvp);
         break;
-      case PLATFORM_ID_TEST_S_DDR5_UDIMM_RVP:
-        ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTablePostMemTestsDdr5UDimmRvp) / sizeof (mGpioTablePostMemTestsDdr5UDimmRvp[0]), (UINT8*)mGpioTablePostMemTestsDdr5UDimmRvp);
-        break;
-      case PLATFORM_ID_TEST_S_DDR5_SODIMM_RVP:
-        ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTablePostMemTestsDdr5SODimmRvp) / sizeof (mGpioTablePostMemTestsDdr5SODimmRvp[0]), (UINT8*)mGpioTablePostMemTestsDdr5SODimmRvp);
-        break;
       default:
         ConfigureGpio (CDATA_GPIO_TAG, 0, NULL);
         break;
