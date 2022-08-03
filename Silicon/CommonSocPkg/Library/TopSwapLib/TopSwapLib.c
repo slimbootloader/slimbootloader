@@ -11,7 +11,10 @@
 #include <Library/IoLib.h>
 #include <Library/PcdLib.h>
 #include <Library/BaseLib.h>
-#include <PchAccess.h>
+
+#define PCI_DEVICE_NUMBER_PCH_LPC       31
+#define PID_RTC_HOST                    0xC3
+#define R_RTC_PCR_BUC                   0x3414
 
 /**
   Get the address of P2sb register.
