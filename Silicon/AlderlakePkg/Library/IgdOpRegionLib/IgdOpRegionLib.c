@@ -290,6 +290,7 @@ UpdateVbt (
     GopVbtSpecificUpdate = (GOP_VBT_SPECIFIC_UPDATE)(UINTN)&AdlPDdr5GopVbtSpecificUpdate;
     break;
   case PLATFORM_ID_ADL_P_DDR5_RVP:
+  case PLATFORM_ID_RPL_P_DDR5_RVP:
   case PLATFORM_ID_ADL_P_LP4_RVP:
   case PLATFORM_ID_ADL_P_LP5_RVP:
   case PLATFORM_ID_RPL_P_LP5_RVP:
