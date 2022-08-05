@@ -13,6 +13,26 @@
 **/
 VOID
 EFIAPI
+InitTcoBaseAddress (
+  VOID
+  );
+
+/**
+  Stop the TCO timer
+**/
+VOID
+EFIAPI
+StopTcoTimer (
+  VOID
+  );
+
+/**
+  Initialize TCO base address, set TCO timeout, and stop the TCO timer
+
+  @param[in] Timeout    Number of 0.6s ticks to wait
+**/
+VOID
+EFIAPI
 InitTcoTimer (
   VOID
   );
@@ -29,28 +49,19 @@ SetTcoTimeout (
   );
 
 /**
-  Resume (un-halt) the TCO timer
-**/
-VOID
-EFIAPI
-ResumeTcoTimer (
-  VOID
-  );
-
-/**
   Reload the TCO timer with its timeout
 **/
 VOID
 EFIAPI
-RestartTcoTimer (
+StartTcoTimer (
   VOID
   );
 
 /**
   Check if TCO status indicates failure on previous boot
 
-  @return TRUE if timeout exceeded on previous boot
-  @return FALSE if timeout not exceeded on previous boot
+  @return TRUE if twice the timeout exceeded on previous boot
+  @return FALSE if twice the timeout not exceeded on previous boot
 **/
 BOOLEAN
 EFIAPI
@@ -64,35 +75,6 @@ WasPreviousTcoTimeout (
 VOID
 EFIAPI
 ClearTcoStatus (
-  VOID
-  );
-
-/**
-  Halt the TCO timer
-**/
-VOID
-EFIAPI
-HaltTcoTimer (
-  VOID
-  );
-
-/**
-  Initialize TCO timer, set TCO timeout, and restart TCO timer
-
-  @param[in] Timeout    Number of 0.6s ticks to wait
-**/
-VOID
-EFIAPI
-EnableTcoTimer (
-  IN UINT16 Timeout
-  );
-
-/**
-  Initialize and halt TCO timer
-**/
-VOID
-EFIAPI
-DisableTcoTimer (
   VOID
   );
 
