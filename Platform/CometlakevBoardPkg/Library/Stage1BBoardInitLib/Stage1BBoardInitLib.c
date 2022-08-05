@@ -344,7 +344,7 @@ SpiControllerInitialize (
   @retval  others             Error happening.
 **/
 EFI_STATUS
-SetBootPartition (
+SetBootPartitionInTopSwapReg (
   IN BOOT_PARTITION  Partition
   )
 {
@@ -440,12 +440,12 @@ FwuTopSwapSetting (
     DEBUG ((DEBUG_INFO, "TopSwapReg=0x%x\n",  Data32));
     if (pFwUpdStatus->StateMachine == 0x7E) {
       if (GetCurrentBootPartition() == 0) {
-        SetBootPartition(1);
+        SetBootPartitionInTopSwapReg(1);
         ResetSystem(EfiResetCold);
       }
     } else if (pFwUpdStatus->StateMachine == 0x7D) {
       if (GetCurrentBootPartition() == 1) {
-        SetBootPartition(0);
+        SetBootPartitionInTopSwapReg(0);
         ResetSystem(EfiResetCold);
       }
     }

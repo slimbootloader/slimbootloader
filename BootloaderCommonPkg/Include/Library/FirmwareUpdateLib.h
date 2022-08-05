@@ -27,6 +27,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define FW_UPDATE_SM_PART_A           0x7E
 #define FW_UPDATE_SM_PART_B           0x7D
 #define FW_UPDATE_SM_PART_AB          0x7C
+#define FW_UPDATE_SM_RECOVERY         0x7B
 #define FW_UPDATE_SM_DONE             0x77 // Lower 3 bits are ignored
 
 #define FW_UPDATE_IMAGE_UPDATE_NONE         0xFF

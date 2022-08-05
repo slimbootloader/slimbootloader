@@ -210,6 +210,9 @@ class Board(BaseBoard):
             'SpiFlashLib|Silicon/$(SILICON_PKG_NAME)/Library/SpiFlashLib/SpiFlashLib.inf',
             'GraphicsInitLib|Silicon/CommonSocPkg/Library/EmuGfxInitLib/EmuGfxInitLib.inf',
             'BootGuardLib|Silicon/CommonSocPkg/Library/BootGuardLibCBnT/BootGuardLibCBnT.inf',
+            'TcoTimerLib|Silicon/CommonSocPkg/Library/TcoTimerLib/TcoTimerLib.inf',
+            'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf',
+            'WatchDogTimerLib|Silicon/CommonSocPkg/Library/WatchDogTimerLib/WatchDogTimerLib.inf'
         ]
         dsc['PcdsFeatureFlag.%s' % self.BUILD_ARCH] = [
             'gPlatformCommonLibTokenSpaceGuid.PcdMultiUsbBootDeviceEnabled | TRUE'

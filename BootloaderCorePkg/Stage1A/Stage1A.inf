@@ -36,6 +36,7 @@
   BootloaderCorePkg/BootloaderCorePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
   IntelFsp2Pkg/IntelFsp2Pkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
 
 [LibraryClasses]
   IoLib
@@ -54,6 +55,8 @@
   DebugAgentLib
   ExtraBaseLib
   StageLib
+  TcoTimerLib
+  TopSwapLib
 
 [Guids]
   gPlatformModuleTokenSpaceGuid
@@ -86,6 +89,9 @@
   gPlatformModuleTokenSpaceGuid.PcdHashStoreSize
   gPlatformCommonLibTokenSpaceGuid.PcdPcdLibId
   gPlatformCommonLibTokenSpaceGuid.PcdCompSignHashAlg
+  gPlatformModuleTokenSpaceGuid.PcdSblResiliencyEnabled
+  gPlatformModuleTokenSpaceGuid.PcdIdenticalTopSwapsBuilt
+  gPlatformModuleTokenSpaceGuid.PcdTcoTimeout
 
 [Depex]
   TRUE

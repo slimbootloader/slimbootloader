@@ -265,6 +265,7 @@ SecStartup2 (
   SERVICES_LIST            *ServiceList;
   BUF_INFO                 *BufInfo;
   CONTAINER_LIST           *ContainerList;
+  BOOT_PARTITION           Partition;
 
   Stage1aFvBase = PcdGet32 (PcdStage1AFdBase) + PcdGet32 (PcdFSPTSize);
   PeCoffFindAndReportImageInfo ((UINT32) (UINTN) GET_STAGE_MODULE_BASE (Stage1aFvBase));
@@ -359,14 +360,28 @@ SecStartup2 (
     SetLibraryData (PcdGet8 (PcdPcdLibId), LdrGlobal->PcdDataPtr, BufInfo->AllocLen);
   }
 
-  // Extra initialization
-  if (FlashMap != NULL) {
-    SetCurrentBootPartition ((FlashMap->Attributes & FLASH_MAP_ATTRIBUTES_BACKUP_REGION) ? 1 : 0);
+  if (PcdGetBool (PcdIdenticalTopSwapsBuilt)) {
+    Status = GetBootPartition (&Partition);
+    if (EFI_ERROR (Status)) {
+      CpuHalt ("Boot partition retrieval failed!\n");
+    }
+    SetCurrentBootPartition (Partition);
+  } else {
+    if (FlashMap != NULL) {
+      SetCurrentBootPartition ((FlashMap->Attributes & FLASH_MAP_ATTRIBUTES_BACKUP_REGION) ? 1 : 0);
+    } else {
+      CpuHalt ("Boot partition retrival failed!\n");
+    }
   }
 
   // Call board hook to enable debug
   BoardInit (PostTempRamInit);
   AddMeasurePoint (0x1040);
+
+  if (PcdGetBool (PcdSblResiliencyEnabled)) {
+    SetTcoTimeout (PcdGet16 (PcdTcoTimeout));
+    StartTcoTimer ();
+  }
 
   // Set DebugPrintErrorLevel to default PCD.
   SetDebugPrintErrorLevel (PcdGet32 (PcdDebugPrintErrorLevel));

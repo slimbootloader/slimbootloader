@@ -30,6 +30,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/ConsoleOutLib.h>
 #include <Guid/OsBootOptionGuid.h>
 #include <Library/BootGuardLib.h>
+#include <Library/WatchDogTimerLib.h>
 #include "FirmwareUpdateHelper.h"
 
 UINT32   mSblImageBiosRgnOffset;
@@ -1428,6 +1429,104 @@ InitFirmwareUpdate (
   return EFI_SUCCESS;
 }
 
+
+/**
+  Try to recover a working boot partition.
+  @retval  EFI_SUCCESS          The operation completed successfully.
+  @retval  others               There is error happening.
+**/
+EFI_STATUS
+InitFirmwareRecovery (
+  VOID
+)
+{
+  FLASH_MAP                   *FlashMap;
+  EFI_STATUS                  Status;
+  UINT32                      TopSwapRegionSize;
+  UINT32                      RedundantRegionSize;
+  UINT32                      TopSwapPrimaryAddress;
+  UINT32                      TopSwapBackupAddress;
+  UINT32                      RedundantPrimaryAddress;
+  UINT32                      RedundantBackupAddress;
+  FIRMWARE_UPDATE_PARTITION   *UpdatePartition;
+  FIRMWARE_UPDATE_REGION      *UpdateRegion;
+  UINT32                      AllocateSize;
+  UINT32                      RomBase;
+
+  FlashMap = GetFlashMapPtr ();
+  if (FlashMap == NULL) {
+    DEBUG((DEBUG_INFO, "Flash map not found!\n"));
+    return EFI_NOT_FOUND;
+  }
+
+  RomBase = (UINT32) (0x100000000ULL - FlashMap->RomSize);
+
+  Status = SetStateMachineFlag (FW_UPDATE_SM_RECOVERY);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "SetStateMachineFlag, Status = 0x%x\n", Status));
+    return Status;
+  }
+
+  ClearFailedBootCount ();
+
+  Status = GetRegionInfo (&TopSwapRegionSize, &RedundantRegionSize, NULL);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "GetRegionInfo, Status = 0x%x\n", Status));
+    return Status;
+  }
+
+  TopSwapPrimaryAddress = FlashMap->RomSize - TopSwapRegionSize;
+  TopSwapBackupAddress = TopSwapPrimaryAddress - TopSwapRegionSize;
+  RedundantPrimaryAddress = TopSwapBackupAddress - RedundantRegionSize;
+  RedundantBackupAddress = RedundantPrimaryAddress - RedundantRegionSize;
+
+  AllocateSize = sizeof (FIRMWARE_UPDATE_PARTITION) + sizeof (FIRMWARE_UPDATE_REGION);
+  UpdatePartition = (FIRMWARE_UPDATE_PARTITION *) AllocateZeroPool (AllocateSize);
+  UpdatePartition->RegionCount = 2;
+
+  if (GetCurrentBootPartition () == PrimaryPartition) {
+    UpdateRegion = &UpdatePartition->FwRegion[0];
+    UpdateRegion->SourceAddress = (VOID *)((UINTN)RomBase + (UINTN)TopSwapPrimaryAddress);
+    UpdateRegion->ToUpdateAddress = TopSwapBackupAddress;
+    UpdateRegion->UpdateSize = TopSwapRegionSize;
+
+    UpdateRegion = &UpdatePartition->FwRegion[1];
+    UpdateRegion->SourceAddress = (VOID *)((UINTN)RomBase + (UINTN)RedundantPrimaryAddress);
+    UpdateRegion->ToUpdateAddress = RedundantBackupAddress;
+    UpdateRegion->UpdateSize = RedundantRegionSize;
+  } else {
+    UpdateRegion = &UpdatePartition->FwRegion[0];
+    UpdateRegion->SourceAddress = (VOID *)((UINTN)RomBase + (UINTN)TopSwapBackupAddress);
+    UpdateRegion->ToUpdateAddress = TopSwapPrimaryAddress;
+    UpdateRegion->UpdateSize = TopSwapRegionSize;
+
+    UpdateRegion = &UpdatePartition->FwRegion[1];
+    UpdateRegion->SourceAddress = (VOID *)((UINTN)RomBase + (UINTN)RedundantBackupAddress);
+    UpdateRegion->ToUpdateAddress = RedundantPrimaryAddress;
+    UpdateRegion->UpdateSize = RedundantRegionSize;
+  }
+
+  Status = UpdateBootPartition (UpdatePartition);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "UpdateBootPartition, Status = 0x%x\n", Status));
+    return Status;
+  }
+
+  Status = SetStateMachineFlag (FW_UPDATE_SM_DONE);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "SetStateMachineFlag, Status = 0x%x\n", Status));
+    return Status;
+  }
+
+  Status = SetBootPartition (PrimaryPartition);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "SetBootPartition, Status = 0x%x\n", Status));
+    return Status;
+  }
+
+  return EFI_SUCCESS;
+}
+
 /**
   Get all region sizes from flash map.
 
@@ -1557,6 +1656,7 @@ PayloadMain (
   FLASH_MAP     *FlashMap;
   EFI_STATUS    Status;
   UINT32        BiosRgnSize;
+  UINT8         StateMachine;
 
   //
   // Prepare Console Print
@@ -1616,17 +1716,27 @@ PayloadMain (
   (VOID) PcdSet32S (PcdFwUpdStatusBase, mSblImageBiosRgnOffset + (FlashMap->RomSize - (~RsvdBase + 1)));
 
   //
-  // Perform firmware update
+  // Perform firmware recovery/update
   //
-  Status = InitFirmwareUpdate ();
-  if (EFI_ERROR (Status)) {
-    if (Status != EFI_ALREADY_STARTED) {
-      DEBUG((DEBUG_ERROR, "Firmware update failed with Status = %r\n", Status));
-    } else {
-      //
-      // This case happens when firmware update is successfully completed
-      //
-      Status = EFI_SUCCESS;
+  GetStateMachineFlag (&StateMachine);
+  if (PcdGetBool (PcdSblResiliencyEnabled) &&
+     (StateMachine == FW_UPDATE_SM_RECOVERY || GetFailedBootCount () >= PcdGet8 (PcdBootFailureThreshold))) {
+    DEBUG((DEBUG_ERROR, "Triggered FW recovery!\n"));
+    Status = InitFirmwareRecovery ();
+    if (EFI_ERROR (Status)) {
+      DEBUG((DEBUG_ERROR, "Firmware recovery failed with Status = %r\n", Status));
+    }
+  } else {
+    Status = InitFirmwareUpdate ();
+    if (EFI_ERROR (Status)) {
+      if (Status != EFI_ALREADY_STARTED) {
+        DEBUG((DEBUG_ERROR, "Firmware update failed with Status = %r\n", Status));
+      } else {
+        //
+        // This case happens when firmware update is successfully completed
+        //
+        Status = EFI_SUCCESS;
+      }
     }
   }
 
