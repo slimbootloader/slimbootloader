@@ -37,8 +37,11 @@
 #include <Library/TpmLib.h>
 #include <Library/StageLib.h>
 #include <Library/ContainerLib.h>
+#include <Library/TcoTimerLib.h>
+#include <Library/WatchDogTimerLib.h>
 #include <Guid/PcdDataBaseSignatureGuid.h>
 #include <Guid/LoaderPlatformDataGuid.h>
+#include <Library/TopSwapLib.h>
 #include <VerInfo.h>
 
 /**

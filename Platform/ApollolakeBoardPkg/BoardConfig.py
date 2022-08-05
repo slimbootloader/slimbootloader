@@ -209,7 +209,10 @@ class Board(BaseBoard):
             'SmbusLib|Silicon/$(SILICON_PKG_NAME)/Library/SmbusLib/SmbusLib.inf',
             'HdaLib|Platform/$(BOARD_PKG_NAME)/Library/HdaLib/HdaLib.inf',
             'VtdPmrLib|Silicon/CommonSocPkg/Library/VtdPmrLib/VtdPmrLib.inf',
-            'BaseIpcLib|Silicon/$(SILICON_PKG_NAME)/Library/BaseIpcLib/BaseIpcLib.inf'
+            'BaseIpcLib|Silicon/$(SILICON_PKG_NAME)/Library/BaseIpcLib/BaseIpcLib.inf',
+            'TcoTimerLib|Silicon/CommonSocPkg/Library/TcoTimerLib/TcoTimerLib.inf',
+            'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf',
+            'WatchDogTimerLib|Silicon/CommonSocPkg/Library/WatchDogTimerLib/WatchDogTimerLib.inf'
         ]
         dsc['LibraryClasses.%s' % self.BUILD_ARCH] = common_libs
         return dsc

@@ -41,6 +41,8 @@
 #include <Library/ThunkLib.h>
 #include <Library/LocalApicLib.h>
 #include <Library/ContainerLib.h>
+#include <Library/TcoTimerLib.h>
+#include <Library/WatchDogTimerLib.h>
 #include <Guid/BootLoaderServiceGuid.h>
 #include <Guid/BootLoaderVersionGuid.h>
 #include <Guid/LoaderPlatformInfoGuid.h>

@@ -306,6 +306,41 @@ CreateConfigDatabase (
 }
 
 /**
+  Count boot failures and react appropriately.
+**/
+VOID
+EFIAPI
+HandleBootFailures (
+  VOID
+  )
+{
+  EFI_STATUS      Status;
+  BOOT_PARTITION  CurrentPartition;
+  BOOT_PARTITION  NewPartition;
+  UINT32          FailedBootCount;
+
+  if (WasPreviousTcoTimeout ()) {
+    ClearTcoStatus ();
+    IncrementFailedBootCount ();
+    FailedBootCount = GetFailedBootCount ();
+    DEBUG ((DEBUG_INFO, "Boot failure occurred! Failed boot count: %d\n", FailedBootCount));
+    if (GetFailedBootCount () >= PcdGet8 (PcdBootFailureThreshold)) {
+      CurrentPartition = GetCurrentBootPartition ();
+      if ((CurrentPartition == PrimaryPartition) ||
+          (CurrentPartition == BackupPartition && GetBootMode () == BOOT_ON_FLASH_UPDATE)) {
+        NewPartition = (CurrentPartition == PrimaryPartition) ? BackupPartition : PrimaryPartition;
+        DEBUG ((DEBUG_INFO, "Boot failure threshold reached! Switching to partition: %d\n", NewPartition));
+        Status = SetBootPartition (NewPartition);
+        if (EFI_ERROR (Status)) {
+          CpuHalt("Unable to recover corrupted partition!\n");
+        }
+        ResetSystem (EfiResetWarm);
+      }
+    }
+  }
+}
+
+/**
   Entry point to the C language phase of Stage 1B.
 
   Stage1B will find memory initialization. It can be either executed from
@@ -397,6 +432,10 @@ SecStartup2 (
   }
 
   BoardInit (PostConfigInit);
+
+  if (PcdGetBool (PcdSblResiliencyEnabled)) {
+    HandleBootFailures ();
+  }
 
   //Get Platform ID and Boot Mode
   DEBUG ((DEBUG_INIT, "BOOT: BP%d \nMODE: %d\nBoardID: 0x%02X\n",

@@ -35,6 +35,7 @@
   PayloadPkg/PayloadPkg.dec
   Platform/CommonBoardPkg/CommonBoardPkg.dec
   Silicon/CommonSocPkg/CommonSocPkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
 
 [LibraryClasses]
   FirmwareUpdateLib
@@ -53,6 +54,7 @@
   BootOptionLib
   TimerLib
   BootGuardLib
+  WatchDogTimerLib
 
 [Guids]
   gLoaderMemoryMapInfoGuid
@@ -76,6 +78,8 @@
   gPlatformCommonLibTokenSpaceGuid.PcdConsoleOutDeviceMask
   gPlatformCommonLibTokenSpaceGuid.PcdFrameBufferMaxConsoleWidth
   gPlatformCommonLibTokenSpaceGuid.PcdFrameBufferMaxConsoleHeight
+  gPlatformModuleTokenSpaceGuid.PcdSblResiliencyEnabled
+  gPlatformModuleTokenSpaceGuid.PcdBootFailureThreshold
 
 [Depex]
   TRUE
