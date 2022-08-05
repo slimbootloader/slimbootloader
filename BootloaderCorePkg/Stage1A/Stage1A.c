@@ -360,18 +360,13 @@ SecStartup2 (
     SetLibraryData (PcdGet8 (PcdPcdLibId), LdrGlobal->PcdDataPtr, BufInfo->AllocLen);
   }
 
+  SetCurrentBootPartition (PrimaryPartition);
   if (PcdGetBool (PcdIdenticalTopSwapsBuilt)) {
-    Status = GetBootPartition (&Partition);
-    if (EFI_ERROR (Status)) {
-      CpuHalt ("Boot partition retrieval failed!\n");
+    if (!EFI_ERROR (GetBootPartition (&Partition))) {
+      SetCurrentBootPartition (Partition);
     }
-    SetCurrentBootPartition (Partition);
-  } else {
-    if (FlashMap != NULL) {
-      SetCurrentBootPartition ((FlashMap->Attributes & FLASH_MAP_ATTRIBUTES_BACKUP_REGION) ? 1 : 0);
-    } else {
-      CpuHalt ("Boot partition retrival failed!\n");
-    }
+  } else if (FlashMap != NULL) {
+    SetCurrentBootPartition ((FlashMap->Attributes & FLASH_MAP_ATTRIBUTES_BACKUP_REGION) ? BackupPartition : PrimaryPartition);
   }
 
   // Call board hook to enable debug
