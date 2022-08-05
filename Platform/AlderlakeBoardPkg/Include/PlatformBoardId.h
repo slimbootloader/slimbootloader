@@ -58,4 +58,7 @@ Defines Platform BoardIds
 #define BoardIdTestSDdr5SODimmRvp                     0x31  // S17
 #define PLATFORM_ID_TEST_S_DDR5_SODIMM_RVP            0x11
 
+#define BoardIdRplPLp5Rvp                             0x05
+#define PLATFORM_ID_RPL_P_LP5_RVP                     0x05
+
 #endif // _PLATFORM_BOARD_ID_H_
