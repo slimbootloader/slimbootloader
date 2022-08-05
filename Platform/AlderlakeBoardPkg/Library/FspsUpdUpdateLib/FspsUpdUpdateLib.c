@@ -1118,6 +1118,7 @@ UpdateFspConfig (
 
     switch (GetPlatformId ()) {
       case PLATFORM_ID_ADL_P_DDR5_RVP:
+      case PLATFORM_ID_RPL_P_DDR5_RVP:
         FspsConfig->Usb4CmMode = 0x0;
         break;
       case PLATFORM_ID_ADL_N_DDR5_CRB:

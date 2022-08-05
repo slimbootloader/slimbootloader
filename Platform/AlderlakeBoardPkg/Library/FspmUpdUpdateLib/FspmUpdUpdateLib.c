@@ -582,6 +582,7 @@ UpdateFspConfig (
         Fspmcfg->Lp5CccConfig = 0xff;
         break;
       case PLATFORM_ID_ADL_P_DDR5_RVP:
+      case PLATFORM_ID_RPL_P_DDR5_RVP:
         Fspmcfg->DdiPortBHpd = 0x1;
         Fspmcfg->PrmrrSize = 0x200000;
         Fspmcfg->PcieClkReqGpioMux[9] = 0x796e9000;
@@ -679,6 +680,7 @@ UpdateFspConfig (
         case PLATFORM_ID_ADL_P_LP4_RVP:
         case PLATFORM_ID_ADL_P_LP5_RVP:
         case PLATFORM_ID_ADL_P_DDR5_RVP:
+        case PLATFORM_ID_RPL_P_DDR5_RVP:
         case PLATFORM_ID_RPL_P_LP5_RVP:
           Fspmcfg->PchIshEnable       = 1;
       }
