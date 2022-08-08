@@ -164,6 +164,7 @@ class Board(BaseBoard):
             self.TCC_CRL_SIZE    = 0x00008000
             self.TCC_STREAM_SIZE = 0x00005000
             self.SIIPFW_SIZE    += self.TCC_CCFG_SIZE + self.TCC_CRL_SIZE + self.TCC_STREAM_SIZE
+            self.CPU_SORT_METHOD = 1  #sort CPU threads in ascending order
 
         self.ENABLE_TSN = 0
         if self.ENABLE_TSN:

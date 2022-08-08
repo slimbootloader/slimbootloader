@@ -52,6 +52,9 @@ MEMORY_CFG_DATA.PchHdaAudioLinkDmicEnable  | {0x1, 0x1}
 MEMORY_CFG_DATA.PchHdaDspEnable            | 0x1
 MEMORY_CFG_DATA.DmiMaxLinkSpeed            | 0x0
 
+# Increase the size to 64MB in order to get rid of an error during Tcc init flow in FSP
+MEMORY_CFG_DATA.PlatformMemorySize | 0x4000000
+
 PLDSEL_CFG_DATA.PldSelGpio.Enable      | 1
 PLDSEL_CFG_DATA.PldSelGpio.PadGroup    | 5
 PLDSEL_CFG_DATA.PldSelGpio.PinNumber   | 3

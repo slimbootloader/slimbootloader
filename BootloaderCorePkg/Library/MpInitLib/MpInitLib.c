@@ -99,7 +99,7 @@ SortSysCpu (
     return;
   }
 
-  // Sort the CPU by APIC ID
+  // Sort the CPU by APIC ID (ascending order)
   PerformQuickSort (SysCpuInfo->CpuInfo, SysCpuInfo->CpuCount, sizeof (CPU_INFO), CompareCpuApicId, &Temp);
 
   if (FixedPcdGet32 (PcdCpuSortMethod) == 2) {
