@@ -249,10 +249,12 @@ NormalBootPath (
 
   BoardInit (EndOfStages);
 
-  // Only continue timing and boot failure counting if executing FWU payload
-  if (PcdGetBool (PcdSblResiliencyEnabled) && GetBootMode() != BOOT_ON_FLASH_UPDATE) {
+  // Stop timer so boot retries stop
+  if (PcdGetBool (PcdSblResiliencyEnabled)) {
     StopTcoTimer ();
-    ClearFailedBootCount ();
+    if (GetBootMode () != BOOT_ON_FLASH_UPDATE) {
+      ClearFailedBootCount ();
+    }
   }
 
   PayloadId = GetPayloadId ();
@@ -345,10 +347,12 @@ S3ResumePath (
   // Call the board notification
   BoardInit (EndOfStages);
 
-  // Only continue timing and boot failure counting if executing FWU payload
-  if (PcdGetBool (PcdSblResiliencyEnabled) && GetBootMode() != BOOT_ON_FLASH_UPDATE) {
+  // Stop timer so boot retries stop
+  if (PcdGetBool (PcdSblResiliencyEnabled)) {
     StopTcoTimer ();
-    ClearFailedBootCount ();
+    if (GetBootMode () != BOOT_ON_FLASH_UPDATE) {
+      ClearFailedBootCount ();
+    }
   }
 
   // Call board and FSP Notify ReadyToBoot
