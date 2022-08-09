@@ -99,6 +99,7 @@
 #include "GpioPinsVer2Lp.h"
 #include <Library/TimerLib.h>
 #include <Library/PrintLib.h>
+#include <Register/RtcRegs.h>
 
 #define NHLT_ACPI_TABLE_SIGNATURE  SIGNATURE_32 ('N', 'H', 'L', 'T')
 #define V_EPOC_XTAL_38_4_MHZ  0x249F000

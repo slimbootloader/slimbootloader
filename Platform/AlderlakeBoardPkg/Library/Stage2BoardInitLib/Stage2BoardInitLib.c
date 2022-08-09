@@ -176,7 +176,8 @@ ClearSmi (
 {
   UINT32                SmiEn;
   UINT32                SmiSts;
-  UINT16                Pm1Sts;
+  UINT32                Pm1Sts;
+  UINT16                Pm1Cnt;
 
   SmiEn = IoRead32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN));
   if (((SmiEn & B_ACPI_IO_SMI_EN_GBL_SMI) !=0) && ((SmiEn & B_ACPI_IO_SMI_EN_EOS) !=0)) {
@@ -187,7 +188,17 @@ ClearSmi (
   // Clear the status before setting smi enable
   //
   SmiSts = IoRead32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN + 4));
-  Pm1Sts = IoRead16 ((UINTN)(ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS));
+  Pm1Sts = IoRead32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS));
+  Pm1Cnt = IoRead16 ((UINTN)(ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_CNT));
+
+  // Clear RTC alarm and corresponding Pm1Sts only if wake-up source is RTC SMI#
+  if (((Pm1Sts & B_ACPI_IO_PM1_STS_RTC_EN) != 0) &&
+      ((Pm1Sts & B_ACPI_IO_PM1_STS_RTC) != 0) &&
+      ((Pm1Cnt & B_ACPI_IO_PM1_CNT_SCI_EN) == 0)) {
+    IoWrite8 (R_RTC_IO_INDEX, R_RTC_IO_REGC);
+    IoRead8 (R_RTC_IO_TARGET); /* RTC alarm is cleared upon read */
+    Pm1Sts |= B_ACPI_IO_PM1_STS_RTC;
+  }
 
   SmiSts |=
     (
@@ -388,19 +399,6 @@ BoardInit (
     if (EFI_ERROR(Status)) {
       DEBUG ((DEBUG_INFO, "Failed to set GFX framebuffer as WC\n"));
     }
-    if (GetBootMode() == BOOT_ON_S3_RESUME) {
-      ClearSmi ();
-      RestoreS3RegInfo (FindS3Info (S3_SAVE_REG_COMM_ID));
-
-      //
-      // If payload registered a software SMI handler for bootloader to restore
-      // SMRR base and mask in S3 resume path, trigger sw smi
-      //
-      BlSwSmiInfo = FindS3Info (BL_SW_SMI_COMM_ID);
-      if (BlSwSmiInfo != NULL) {
-        TriggerPayloadSwSmi (BlSwSmiInfo->BlSwSmiHandlerInput);
-      }
-    }
     InterruptRoutingInit ();
     break;
   case PrePayloadLoading:
@@ -423,7 +421,17 @@ BoardInit (
     HeciRegisterHeciService ();
     ClearSmi ();
     if (GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE) {
-      if (GetBootMode() != BOOT_ON_S3_RESUME) {
+      if (GetBootMode() == BOOT_ON_S3_RESUME) {
+        RestoreS3RegInfo (FindS3Info (S3_SAVE_REG_COMM_ID));
+        //
+        // If payload registered a software SMI handler for bootloader to restore
+        // SMRR base and mask in S3 resume path, trigger sw smi
+        //
+        BlSwSmiInfo = FindS3Info (BL_SW_SMI_COMM_ID);
+        if (BlSwSmiInfo != NULL) {
+          TriggerPayloadSwSmi (BlSwSmiInfo->BlSwSmiHandlerInput);
+        }
+      } else {
         ClearS3SaveRegion ();
         //
         // Set SMMBASE_INFO dummy strucutre in TSEG before others

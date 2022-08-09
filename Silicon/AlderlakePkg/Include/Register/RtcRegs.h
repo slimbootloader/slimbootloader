@@ -43,5 +43,8 @@ Conventions:
 // RTC PCRs (PID:RTC)
 //
 #define R_RTC_PCR_BUC                         0x3414               ///< Backed Up Control
+#define R_RTC_IO_INDEX                        0x70
+#define R_RTC_IO_TARGET                       0x71
+#define R_RTC_IO_REGC                         0x0C
 
 #endif
