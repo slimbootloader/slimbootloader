@@ -1519,12 +1519,6 @@ InitFirmwareRecovery (
     return Status;
   }
 
-  Status = SetStateMachineFlag (FW_UPDATE_SM_DONE);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "SetStateMachineFlag, Status = 0x%x\n", Status));
-    return Status;
-  }
-
   Status = SetBootPartition (PrimaryPartition);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "SetBootPartition, Status = 0x%x\n", Status));
