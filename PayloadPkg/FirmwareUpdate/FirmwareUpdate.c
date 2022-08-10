@@ -1444,6 +1444,7 @@ InitFirmwareRecovery (
   EFI_STATUS                  Status;
   UINT32                      TopSwapRegionSize;
   UINT32                      RedundantRegionSize;
+  VOID*                       TopSwapSourceAddress;
   UINT32                      TopSwapPrimaryAddress;
   UINT32                      TopSwapBackupAddress;
   UINT32                      RedundantPrimaryAddress;
@@ -1475,6 +1476,12 @@ InitFirmwareRecovery (
     return Status;
   }
 
+  // Top swap source address is already mapped to primary or backup by
+  // system based off top swap bit
+  TopSwapSourceAddress = (VOID *)((UINTN)RomBase + (UINTN)FlashMap->RomSize - (UINTN)TopSwapRegionSize);
+
+  // Redundant source, redundant update, and top swap update addresses
+  // require manual mapping
   TopSwapPrimaryAddress = FlashMap->RomSize - TopSwapRegionSize;
   TopSwapBackupAddress = TopSwapPrimaryAddress - TopSwapRegionSize;
   RedundantPrimaryAddress = TopSwapBackupAddress - RedundantRegionSize;
@@ -1486,7 +1493,7 @@ InitFirmwareRecovery (
 
   if (GetCurrentBootPartition () == PrimaryPartition) {
     UpdateRegion = &UpdatePartition->FwRegion[0];
-    UpdateRegion->SourceAddress = (VOID *)((UINTN)RomBase + (UINTN)TopSwapPrimaryAddress);
+    UpdateRegion->SourceAddress = TopSwapSourceAddress;
     UpdateRegion->ToUpdateAddress = TopSwapBackupAddress;
     UpdateRegion->UpdateSize = TopSwapRegionSize;
 
@@ -1496,7 +1503,7 @@ InitFirmwareRecovery (
     UpdateRegion->UpdateSize = RedundantRegionSize;
   } else {
     UpdateRegion = &UpdatePartition->FwRegion[0];
-    UpdateRegion->SourceAddress = (VOID *)((UINTN)RomBase + (UINTN)TopSwapBackupAddress);
+    UpdateRegion->SourceAddress = TopSwapSourceAddress;
     UpdateRegion->ToUpdateAddress = TopSwapPrimaryAddress;
     UpdateRegion->UpdateSize = TopSwapRegionSize;
 
