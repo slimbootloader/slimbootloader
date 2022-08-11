@@ -281,7 +281,7 @@ CheckStateMachine (
   // firmare update process, continue doing firmware update
   // If Bit 3 of State Machine is 0, SM is set to Done. Rest of the bits are ignored while checking for Done state.
   //
-  if (pFwUpdStatus->Signature == FW_UPDATE_STATUS_SIGNATURE) {
+  if ((pFwUpdStatus->Signature == FW_UPDATE_STATUS_SIGNATURE) || (pFwUpdStatus->Signature == FW_RECOVERY_STATUS_SIGNATURE)) {
     if ((pFwUpdStatus->StateMachine != FW_UPDATE_SM_INIT) && (pFwUpdStatus->StateMachine & BIT3)) {
       DEBUG((DEBUG_ERROR, "State Machine set to processing mode, triggering firmware update\n"));
       return EFI_SUCCESS;
