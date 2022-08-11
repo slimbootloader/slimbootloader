@@ -988,10 +988,10 @@ FspUpdatePsePolicy (
   Fspscfg->PchPseLogOutputChannel = SiCfgData->PchPseLogOutputChannel;
   Fspscfg->PchPseLogOutputSize    = SiCfgData->PchPseLogOutputSize;
   Fspscfg->PchPseLogOutputOffset  = SiCfgData->PchPseLogOutputOffset;
-  Fspscfg->PchPseEcliteEnabled    = 1;
   Fspscfg->PchPseOobEnabled       = 0;
   Fspscfg->PchPseWoLEnabled       = 1;
   Fspscfg->PchPseAicEnabled       = (UINT8)SiCfgData->PchPseAicEnabled;
+  Fspscfg->PchPseEcliteEnabled    = (UINT8)SiCfgData->PchPseEcliteEnabled;
   Fspscfg->CpuTempSensorReadEnable= 1;
   //Fspscfg->PseJtagEnabled       = 0;
   //Fspscfg->PseJtagPinMux        = 0;
@@ -1039,6 +1039,7 @@ FspUpdatePsePolicy (
     Fspscfg->PchPseSpiEnable[Index]            = SiCfgData->PchPseSpiEnable[Index];
     Fspscfg->PchPseSpiSbInterruptEnable[Index] = SiCfgData->PchPseSpiSbInterruptEnable[Index];
     Fspscfg->PchPseSpiCs0Enable[Index]         = SiCfgData->PchPseSpiCs0Enable[Index];
+    Fspscfg->PchPseSpiCs1Enable[Index]          = SiCfgData->PchPseSpiCs1Enable[Index];
   }
   Fspscfg->PchPseSpiMosiPinMux[1]              = GPIO_VER3_MUXING_PSE_SPI1_MOSI_GPP_D3;
   Fspscfg->PchPseSpiMisoPinMux[1]              = GPIO_VER3_MUXING_PSE_SPI1_MISO_GPP_D2;
