@@ -64,8 +64,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define FW_UPDATE_COMP_DEFAULT_ORDER          4
 
 
-#define FW_UPDATE_STATUS_SIGNATURE SIGNATURE_32 ('F', 'W', 'U', 'S')
-#define FW_UPDATE_STATUS_VERSION   0x1
+#define FW_UPDATE_STATUS_SIGNATURE    SIGNATURE_32 ('F', 'W', 'U', 'S')
+#define FW_RECOVERY_STATUS_SIGNATURE  SIGNATURE_32 ('F', 'W', 'R', 'S')
+#define FW_UPDATE_STATUS_VERSION      0x1
 
 ///
 /// "FWST"  Firmware Update status data Table

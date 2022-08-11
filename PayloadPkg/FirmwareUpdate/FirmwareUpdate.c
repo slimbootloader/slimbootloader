@@ -341,7 +341,7 @@ GetStateMachineFlag (
 /**
   Set state machine flag in flash.
 
-  This function will set state machine flag in the bootloader reserved region
+  This function will set state machine flag (via bitwise AND) in the bootloader reserved region
   First byte in the booloader reserved region is state machine flag
 
   ----------------------------------------------------------------------------------------
@@ -1429,6 +1429,54 @@ InitFirmwareUpdate (
   return EFI_SUCCESS;
 }
 
+/**
+  Initialize FW update status region for recovery.
+  @retval  EFI_SUCCESS          The operation completed successfully.
+  @retval  others               There is error happening.
+**/
+EFI_STATUS
+InitFwUpdStatusForRecovery (
+  VOID
+  )
+{
+  EFI_STATUS                    Status;
+  UINT32                        FwUpdStatusOffset;
+  FW_UPDATE_STATUS              FwUpdStatus;
+  UINT8                         StateMachine;
+
+  FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
+
+  GetStateMachineFlag (&StateMachine);
+  if (StateMachine != FW_UPDATE_SM_RECOVERY) {
+
+    // Set up the initial reserved region structure
+    FwUpdStatus.Signature = FW_RECOVERY_STATUS_SIGNATURE;
+    FwUpdStatus.Version = FW_UPDATE_STATUS_VERSION;
+    FwUpdStatus.Length = sizeof(FW_UPDATE_STATUS);
+    ZeroMem (&FwUpdStatus.CapsuleSig, sizeof(FwUpdStatus.CapsuleSig));
+    FwUpdStatus.StateMachine = FW_UPDATE_SM_RECOVERY;
+    FwUpdStatus.RetryCount = 0;
+    FwUpdStatus.CsmeNeedReset = CSME_NEED_RESET_INIT;
+
+    // Clear the reserved region structure, if not already null bytes
+    if (StateMachine != FW_UPDATE_SM_INIT) {
+      Status = BootMediaErase (FwUpdStatusOffset, EFI_PAGE_SIZE);
+      if (EFI_ERROR (Status)) {
+        DEBUG((DEBUG_ERROR, "BootMediaErase failed with status %r\n", Status));
+        return Status;
+      }
+    }
+
+    // Write the reserved region structure
+    Status = BootMediaWrite (FwUpdStatusOffset, sizeof(FW_UPDATE_STATUS), (UINT8 *)&FwUpdStatus);
+    if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_ERROR, "BootMediaWrite failed with status %r\n", Status));
+      return Status;
+    }
+  }
+
+  return EFI_SUCCESS;
+}
 
 /**
   Try to recover a working boot partition.
@@ -1438,7 +1486,7 @@ InitFirmwareUpdate (
 EFI_STATUS
 InitFirmwareRecovery (
   VOID
-)
+  )
 {
   FLASH_MAP                   *FlashMap;
   EFI_STATUS                  Status;
@@ -1462,9 +1510,9 @@ InitFirmwareRecovery (
 
   RomBase = (UINT32) (0x100000000ULL - FlashMap->RomSize);
 
-  Status = SetStateMachineFlag (FW_UPDATE_SM_RECOVERY);
+  Status = InitFwUpdStatusForRecovery ();
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "SetStateMachineFlag, Status = 0x%x\n", Status));
+    DEBUG ((DEBUG_ERROR, "InitFwUpdStatusForRecovery, Status = 0x%x\n", Status));
     return Status;
   }
 
