@@ -360,7 +360,6 @@ SecStartup2 (
     SetLibraryData (PcdGet8 (PcdPcdLibId), LdrGlobal->PcdDataPtr, BufInfo->AllocLen);
   }
 
-  SetCurrentBootPartition (PrimaryPartition);
   if (PcdGetBool (PcdIdenticalTopSwapsBuilt)) {
     if (!EFI_ERROR (GetBootPartition (&Partition))) {
       SetCurrentBootPartition (Partition);
