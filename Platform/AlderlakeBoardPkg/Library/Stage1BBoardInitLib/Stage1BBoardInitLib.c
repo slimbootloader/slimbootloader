@@ -169,6 +169,9 @@ PlatformDeviceTableInitialize (
 
     SetDeviceTable (PltDeviceTable);
   }
+
+  // clear SmBus in use status as TCO timer reload causes it to be marked in use here
+  SmBusClearInUseStatus ();
 }
 
 VOID
@@ -176,13 +179,9 @@ FwuTopSwapSetting (
   IN FW_UPDATE_STATUS    *pFwUpdStatus
   )
 {
-  UINT32      Data32;
-  UINT32      TopSwapReg;
-  UINT32      P2sbBar;
   EFI_STATUS  Status;
   UINT32      RsvdBase;
   UINT32      RsvdSize;
-  UINTN       P2sbBase;
 
   if (pFwUpdStatus == NULL) {
     Status = GetComponentInfoByPartition (FLASH_MAP_SIG_BLRESERVED, FALSE, &RsvdBase, &RsvdSize);
@@ -192,43 +191,28 @@ FwuTopSwapSetting (
     pFwUpdStatus = (FW_UPDATE_STATUS *)(UINTN)RsvdBase;
   }
 
-  //
-  // Get Top swap register Bit0 in PCH Private Configuration Space.
-  //
-  P2sbBase   = MM_PCI_ADDRESS (0, PCI_DEVICE_NUMBER_PCH_LPC, 1, 0); // P2SB device base
-
-  if (MmioRead16 (P2sbBase) == 0xFFFF) {
-    //
-    // unhide P2SB
-    //
-    MmioWrite8 (P2sbBase + 0xE1, 0);
-    DEBUG ((DEBUG_INFO, "P2sb is hidden, unhide it\n"));
+  // If in a recovery path, stay on current partition
+  if (PcdGetBool (PcdSblResiliencyEnabled) &&
+      (GetFailedBootCount () >= PcdGet8 (PcdBootFailureThreshold) ||
+      pFwUpdStatus->StateMachine == FW_UPDATE_SM_RECOVERY)) {
+    return;
   }
 
-  P2sbBar    = MmioRead32 (P2sbBase + 0x10);
-  P2sbBar  &= 0xFFFFFFF0;
-  ASSERT (P2sbBar != 0xFFFFFFF0);
-
-  TopSwapReg = P2sbBar | ((PID_RTC_HOST) << 16) | (UINT16)(R_RTC_PCR_BUC);
-  Data32    = MmioRead32 (TopSwapReg);
-  DEBUG ((DEBUG_INFO, "TopSwapReg=0x%x\n",  Data32));
   if (pFwUpdStatus->StateMachine == FW_UPDATE_SM_PART_A) {
-    if (GetCurrentBootPartition() == 0) {
-      SetBootPartition(1);
-      ResetSystem(EfiResetCold);
+    if (GetCurrentBootPartition () == PrimaryPartition) {
+      SetBootPartition (BackupPartition);
+      ResetSystem (EfiResetCold);
     }
   } else if (pFwUpdStatus->StateMachine == FW_UPDATE_SM_PART_B) {
-    if (GetCurrentBootPartition() == 1) {
-      SetBootPartition(0);
-      ResetSystem(EfiResetCold);
+    if (GetCurrentBootPartition () == BackupPartition) {
+      SetBootPartition (PrimaryPartition);
+      ResetSystem (EfiResetCold);
     }
-  }
-  else{
-   if (GetCurrentBootPartition() == 1) {
-     SetBootPartition(0);
-     ResetSystem(EfiResetCold);
-   }
-   DEBUG ((DEBUG_INFO, "Not in Firmware Update mode.\n"));
+  } else {
+    if (GetCurrentBootPartition () == BackupPartition) {
+        SetBootPartition (PrimaryPartition);
+        ResetSystem (EfiResetCold);
+    }
   }
 }
 
@@ -243,6 +227,7 @@ FwuTopSwapSetting (
 BOOLEAN
 IsFirmwareUpdate ()
 {
+
   //
   // Check if state machine is set to capsule processing mode.
   //
@@ -254,6 +239,14 @@ IsFirmwareUpdate ()
   // Check if platform firmware update trigger is set.
   //
   if (IoRead32 (ACPI_BASE_ADDRESS + R_ACPI_IO_OC_WDT_CTL) & BIT16) {
+    return TRUE;
+  }
+
+  //
+  // Check if we need to recover a failing partition.
+  //
+  if (PcdGetBool (PcdSblResiliencyEnabled) &&
+      GetFailedBootCount () >=  PcdGet8 (PcdBootFailureThreshold)) {
     return TRUE;
   }
 

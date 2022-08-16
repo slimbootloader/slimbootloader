@@ -45,8 +45,8 @@
 #include <Include/TccConfigSubRegions.h>
 #include <Library/PchInfoLib.h>
 #include <Library/VariableLib.h>
-#include <Library/FirmwareUpdateLib.h>
 #include <Library/GpioLib.h>
+#include <Library/TopSwapLib.h>
 #include "GpioTableAdlSPreMem.h"
 #include "GpioTableAdlPPreMem.h"
 #include "GpioTableAdlNPreMem.h"
@@ -56,6 +56,7 @@
 #include <Include/CpuRegs.h>
 #include <Register/Cpuid.h>
 #include <Library/SocInitLib.h>
+#include <Library/SmbusLib.h>
 
 /**
   Initialize Variable.

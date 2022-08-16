@@ -721,6 +721,10 @@ UpdateFspConfig (
     FspsConfig->EnableTimedGpio1 = SiCfgData->EnableTimedGpio1;
     FspsConfig->PchPmSlpAMinAssert = SiCfgData->PchPmSlpAMinAssert;
 
+    if (PcdGetBool (PcdSblResiliencyEnabled)) {
+      FspsConfig->EnableTcoTimer = 0x1;
+    }
+
     // UFS
     if (IsPchLp ()) {
       FspsConfig->UfsEnable[0] = SiCfgData->PchUfsEnable[0];
