@@ -22,6 +22,7 @@
 #include <GpioPinsVer2Lp.h>
 #include <Library/ConfigDataLib.h>
 #include <Library/PchInfoLib.h>
+#include <Library/TcoTimerLib.h>
 
 #define UCODE_REGION_BASE   FixedPcdGet32(PcdUcodeBase)
 #define UCODE_REGION_SIZE   FixedPcdGet32(PcdUcodeSize)
@@ -142,7 +143,7 @@ BoardInit (
 
   switch (InitPhase) {
   case PostTempRamInit:
-    DisableWatchDogTimer ();
+    InitTcoTimer ();
     EarlyPlatformDataCheck ();
 
     DebugPort = GetDebugPort ();

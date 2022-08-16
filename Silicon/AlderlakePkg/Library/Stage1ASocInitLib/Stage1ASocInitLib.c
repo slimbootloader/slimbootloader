@@ -9,7 +9,6 @@
 #include <Library/IoLib.h>
 #include <RegAccess.h>
 #include <PlatformBase.h>
-#include <Register/TcoRegs.h>
 
 /**
   Disable watch dog timer
@@ -20,15 +19,6 @@ DisableWatchDogTimer (
   VOID
 )
 {
-  //
-  // Halt the TCO timer
-  //
-  IoOr16 (TCO_BASE_ADDRESS + R_TCO_IO_TCO1_CNT, B_TCO_IO_TCO1_CNT_TMR_HLT);
-
-  //
-  // Clear the Second TO status bit
-  //
-  IoOr8 (TCO_BASE_ADDRESS + R_TCO_IO_TCO2_STS, B_TCO_IO_TCO2_STS_SECOND_TO);
 }
 
 /**

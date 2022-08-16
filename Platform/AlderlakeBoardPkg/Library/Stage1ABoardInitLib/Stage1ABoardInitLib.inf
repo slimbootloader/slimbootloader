@@ -44,6 +44,7 @@
   GpioLib
   ConfigDataLib
   PchInfoLib
+  TcoTimerLib
 
 [Guids]
 

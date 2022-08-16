@@ -45,5 +45,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled
   gPlatformModuleTokenSpaceGuid.PcdEnablePciePm
   gPlatformModuleTokenSpaceGuid.PcdFastBootEnabled
+  gPlatformModuleTokenSpaceGuid.PcdSblResiliencyEnabled
+
 [FixedPcd]
   gPlatformAlderLakeTokenSpaceGuid.PcdAdlLpSupport

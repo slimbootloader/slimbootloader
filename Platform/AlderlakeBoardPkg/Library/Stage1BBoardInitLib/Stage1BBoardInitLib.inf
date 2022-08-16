@@ -63,6 +63,7 @@
   WatchDogTimerLib
   FspmUpdUpdateLib
   SmbusLib
+  TopSwapLib
 
 [Guids]
   gFspNonVolatileStorageHobGuid
@@ -79,6 +80,8 @@
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled
+  gPlatformModuleTokenSpaceGuid.PcdSblResiliencyEnabled
+  gPlatformModuleTokenSpaceGuid.PcdBootFailureThreshold
 
 [FixedPcd]
   gPlatformAlderLakeTokenSpaceGuid.PcdAdlLpSupport
