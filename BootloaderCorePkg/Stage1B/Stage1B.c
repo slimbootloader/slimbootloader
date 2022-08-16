@@ -324,7 +324,7 @@ HandleBootFailures (
     IncrementFailedBootCount ();
     FailedBootCount = GetFailedBootCount ();
     DEBUG ((DEBUG_INFO, "Boot failure occurred! Failed boot count: %d\n", FailedBootCount));
-    if (GetFailedBootCount () >= PcdGet8 (PcdBootFailureThreshold)) {
+    if (FailedBootCount >= PcdGet8 (PcdBootFailureThreshold)) {
       CurrentPartition = GetCurrentBootPartition ();
       if ((CurrentPartition == PrimaryPartition) ||
           (CurrentPartition == BackupPartition && GetBootMode () == BOOT_ON_FLASH_UPDATE)) {
