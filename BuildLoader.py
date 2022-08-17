@@ -220,7 +220,7 @@ class BaseBoard(object):
         self.FWUPDATE_LOAD_BASE    = 0
 
         # OS Loader FD/FV sizes
-        self.OS_LOADER_FD_SIZE     = 0x00053000
+        self.OS_LOADER_FD_SIZE     = 0x00055000
 
         self.OS_LOADER_FD_NUMBLK   = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
