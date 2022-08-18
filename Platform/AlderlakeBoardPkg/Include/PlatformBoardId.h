@@ -15,7 +15,7 @@ Defines Platform BoardIds
 #define FlavorDesktop                       0x2
 
 // AlderLake-N Boards
-#define BoardIdAdlNDdr5Crb                            0x0A // MiniITX is CRB
+#define BoardIdAdlNDdr5Crb                            0x0B // MiniITX is CRB
 #define PLATFORM_ID_ADL_N_DDR5_CRB                    0x0A
 
 #define BoardIdAdlNLp5Rvp                             0x07

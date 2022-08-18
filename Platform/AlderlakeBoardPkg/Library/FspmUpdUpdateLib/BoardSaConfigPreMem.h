@@ -76,6 +76,28 @@ GLOBAL_REMOVE_IF_UNREFERENCED const UINT8 mAdlPSEdpHdmiDisplayDdiConfig[16] = {
 };
 
 //
+// Display DDI settings for Adl-PS Ddr5 eCRB DDIA  HDMI on LPSCON and TCP0 HDMI LPSCON
+//
+GLOBAL_REMOVE_IF_UNREFERENCED const UINT8 mAdlPSeCRBDDIAHdmiDisplayDdiConfig[16] = {
+                                                                                DdiPortDisabled, // DDI Port A Config : DdiPortDisabled = No LFP is Connected, DdiPortEdp = eDP, DdiPortMipiDsi = MIPI DSI
+                                                                                DdiPortDisabled, // DDI Port B Config : DdiPortDisabled = No LFP is Connected, DdiPortEdp = eDP, DdiPortMipiDsi = MIPI DSI
+                                                                                DdiHpdEnable, // DDI Port A HPD : DdiHpdDisable = Disable, DdiHpdEnable = Enable HPD
+                                                                                DdiHpdDisable, // DDI Port B HPD : DdiHpdDisable = Disable, DdiHpdEnable = Enable HPD
+                                                                                DdiHpdDisable, // DDI Port C HPD : DdiHpdDisable = Disable, DdiHpdEnable = Enable HPD
+                                                                                DdiHpdEnable, // DDI Port 1 HPD : DdiHpdDisable = Disable, DdiHpdEnable = Enable HPD
+                                                                                DdiHpdDisable, // DDI Port 2 HPD : DdiHpdDisable = Disable, DdiHpdEnable = Enable HPD
+                                                                                DdiHpdDisable, // DDI Port 3 HPD : DdiHpdDisable = Disable, DdiHpdEnable = Enable HPD
+                                                                                DdiHpdDisable, // DDI Port 4 HPD : DdiHpdDisable = Disable, DdiHpdEnable = Enable HPD
+                                                                                DdiDdcEnable, // DDI Port A DDC : DdiDisable = Disable, DdiDdcEnable = Enable DDC
+                                                                                DdiDisable, // DDI Port B DDC : DdiDisable = Disable, DdiDdcEnable = Enable DDC
+                                                                                DdiDisable, // DDI Port C DDC : DdiDisable = Disable, DdiDdcEnable = Enable DDC
+                                                                                DdiDisable, // DDI Port 1 DDC : DdiDisable = Disable, DdiDdcEnable = Enable DDC //changed for typec port in crb
+                                                                                DdiDisable, // DDI Port 2 DDC : DdiDisable = Disable, DdiDdcEnable = Enable DDC
+                                                                                DdiDisable, // DDI Port 3 DDC : DdiDisable = Disable, DdiDdcEnable = Enable DDC
+                                                                                DdiDisable // DDI Port 4 DDC : DdiDisable = Disable, DdiDdcEnable = Enable DDC
+};
+
+//
 // Display DDI Config 3: DP + DP
 //
 GLOBAL_REMOVE_IF_UNREFERENCED const UINT8 mTestSDdr5RowDisplayDdiConfig3[16] = {

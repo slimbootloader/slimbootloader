@@ -97,10 +97,11 @@ typedef union {
 VOID
 EFIAPI
 GetBoardIdFromSmbus (
-  OUT UINT8          *BoardId
+  OUT UINT8          *PlatformId
   )
 {
   UINT8                    BomId;
+  UINT8                    BoardId;
   SMBUS_INPUT_PORT0        SmbusInputPort0Info;
   SMBUS_INPUT_PORT1        SmbusInputPort1Info;
   EFI_STATUS               Status0;
@@ -122,10 +123,21 @@ GetBoardIdFromSmbus (
     DEBUG ((DEBUG_INFO, "Fields.FabId from Smbus Io expander is 0x%x\n", (UINT16) (SmbusInputPort0Info.InputPort0Fields.FabId)));
     DEBUG ((DEBUG_INFO, "Fields.SpdPresent from Smbus Io expander is %x\n", (BOOLEAN) (SmbusInputPort0Info.InputPort0Fields.SpdPresent)));
 
-    *BoardId = (SmbusInputPort1Info.InputPort1Fields.BoardId - ADL_SMBUS_BOARDID_OFFSET);
+    BoardId = SmbusInputPort1Info.InputPort1Fields.BoardId;
   }
   else {
     DEBUG ((DEBUG_ERROR, "Failed to get Board ID from Smbus Io expander\n"));
+    return;
+  }
+  switch (BoardId) {
+    case BoardIdAdlNDdr5Crb:
+      *PlatformId = PLATFORM_ID_ADL_N_DDR5_CRB;
+      break;
+    case BoardIdAdlPSDdr5Crb:
+      *PlatformId = PLATFORM_ID_ADL_PS_DDR5_CRB;
+      break;
+    default:
+    break;
   }
 }
 
@@ -339,7 +351,8 @@ GetBoardId (
   GetBoardIdFromEC(&BoardID);
   if (BoardID == 0xFF){
     //EC is not detected (timeout)
-    GetBoardIdFromSmbus(&BoardID);
+    GetBoardIdFromSmbus(PlatformId);
+    return;
   }
 
   switch (BoardID) {
@@ -367,14 +380,8 @@ GetBoardId (
     case BoardIdAdlPSDdr5Rvp:
       *PlatformId = PLATFORM_ID_ADL_PS_DDR5_RVP;
       break;
-    case BoardIdAdlPSDdr5Crb:
-      *PlatformId = PLATFORM_ID_ADL_PS_DDR5_CRB;
-      break;
     case BoardIdAdlNLp5Rvp:
       *PlatformId = PLATFORM_ID_ADL_N_LPDDR5_RVP;
-      break;
-    case BoardIdAdlNDdr5Crb:
-      *PlatformId = PLATFORM_ID_ADL_N_DDR5_CRB;
       break;
     case BoardIdTestSDdr5UDimm1DRvp:
       *PlatformId = PLATFORM_ID_TEST_S_DDR5_UDIMM_RVP;
