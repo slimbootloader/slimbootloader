@@ -556,6 +556,7 @@ DEBUG_CODE_END();
       ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTableEarlyPreMemTestSDdr5UDimm1DRvp) / sizeof (mGpioTableEarlyPreMemTestSDdr5UDimm1DRvp[0]), (UINT8*)mGpioTableEarlyPreMemTestSDdr5UDimm1DRvp);
       break;
     case PLATFORM_ID_ADL_PS_DDR5_RVP:
+    case PLATFORM_ID_ADL_PS_DDR5_CRB:
       ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTablePreMemAdlPsDdr5Rvp) / sizeof (mGpioTablePreMemAdlPsDdr5Rvp[0]), (UINT8*)mGpioTablePreMemAdlPsDdr5Rvp);
       break;
     case PLATFORM_ID_ADL_N_DDR5_CRB:

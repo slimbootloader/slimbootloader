@@ -444,7 +444,7 @@ UpdateFspConfig (
   Fspmcfg->DmiMaxLinkSpeed = MemCfgData->DmiMaxLinkSpeed;
   Fspmcfg->DmiAspm         = MemCfgData->DmiAspm;
   Fspmcfg->DmiAspmCtrl     = MemCfgData->DmiAspmCtrl;
-  Fspmcfg->DmiHweq         = 0x1;
+  Fspmcfg->DmiHweq         = 0x2;
   CopyMem (Fspmcfg->DmiGen3RootPortPreset, MemCfgData->DmiGen3RootPortPreset, sizeof(MemCfgData->DmiGen3RootPortPreset));
   CopyMem (Fspmcfg->DmiGen3EndPointPreset, MemCfgData->DmiGen3EndPointPreset, sizeof(MemCfgData->DmiGen3EndPointPreset));
   CopyMem (Fspmcfg->DmiGen3EndPointHint,   MemCfgData->DmiGen3EndPointHint,   sizeof(MemCfgData->DmiGen3EndPointHint));
@@ -516,6 +516,10 @@ UpdateFspConfig (
   case PLATFORM_ID_ADL_PS_DDR5_RVP:
     DEBUG((DEBUG_INFO, "PLATFORM_ID_ADL_PS_DDR5_RVP board Id %x .....\n", PlatformId));
     CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mAdlPSEdpHdmiDisplayDdiConfig, sizeof(mAdlPSEdpHdmiDisplayDdiConfig));
+    break;
+  case PLATFORM_ID_ADL_PS_DDR5_CRB:
+    DEBUG((DEBUG_INFO, "PLATFORM_ID_ADL_PS_DDR5_CRB board Id %x .....\n", PlatformId));
+    CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mAdlPSeCRBDDIAHdmiDisplayDdiConfig, sizeof(mAdlPSeCRBDDIAHdmiDisplayDdiConfig));
     break;
   case PLATFORM_ID_TEST_S_DDR5_UDIMM_RVP:
   case PLATFORM_ID_TEST_S_DDR5_SODIMM_RVP:
