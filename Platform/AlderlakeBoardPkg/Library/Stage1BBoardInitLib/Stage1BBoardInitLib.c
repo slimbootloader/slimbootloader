@@ -174,6 +174,18 @@ PlatformDeviceTableInitialize (
   SmBusClearInUseStatus ();
 }
 
+/**
+  Set TS based on FW update status.
+
+  This function will set the TS register based on the FW update status.
+  The TS register is set here as opposed to in the FW update payload due to a
+  uCode assert issue.
+
+  @param[in] pFwUpdStatus        Update status structure from RSVD region.
+
+  @retval  EFI_SUCCESS           The operation completed successfully.
+  @retval  others                There is error happening.
+**/
 VOID
 FwuTopSwapSetting (
   IN FW_UPDATE_STATUS    *pFwUpdStatus
@@ -191,27 +203,55 @@ FwuTopSwapSetting (
     pFwUpdStatus = (FW_UPDATE_STATUS *)(UINTN)RsvdBase;
   }
 
-  // If in a recovery path, stay on current partition
+  DEBUG ((DEBUG_INFO, "Current FW update state machine: %d\n", pFwUpdStatus->StateMachine));
+  // If in a recovery path, stay on current partition.
   if (PcdGetBool (PcdSblResiliencyEnabled) &&
-      (GetFailedBootCount () >= PcdGet8 (PcdBootFailureThreshold) ||
+     (IsRecoveryTriggered () ||
       pFwUpdStatus->StateMachine == FW_UPDATE_SM_RECOVERY)) {
     return;
   }
 
   if (pFwUpdStatus->StateMachine == FW_UPDATE_SM_PART_A) {
     if (GetCurrentBootPartition () == PrimaryPartition) {
-      SetBootPartition (BackupPartition);
-      ResetSystem (EfiResetCold);
+      if (IsTopSwapTriggered ()) {
+        ClearTopSwapTrigger ();
+        SetBootPartition (BackupPartition);
+        ResetSystem (EfiResetCold);
+      }
+    } else {
+      if (IsTopSwapTriggered ()) {
+        DEBUG((DEBUG_INFO, "Already on partition that was meant to be swapped back to\n"));
+        ClearTopSwapTrigger ();
+        SetRecoveryTrigger ();
+      }
     }
   } else if (pFwUpdStatus->StateMachine == FW_UPDATE_SM_PART_B) {
     if (GetCurrentBootPartition () == BackupPartition) {
-      SetBootPartition (PrimaryPartition);
-      ResetSystem (EfiResetCold);
+      if (IsTopSwapTriggered ()) {
+        ClearTopSwapTrigger ();
+        SetBootPartition (PrimaryPartition);
+        ResetSystem (EfiResetCold);
+      }
+    } else {
+      if (IsTopSwapTriggered ()) {
+        DEBUG((DEBUG_INFO, "Already on partition that was meant to be swapped back to\n"));
+        ClearTopSwapTrigger ();
+        SetRecoveryTrigger ();
+      }
     }
   } else {
     if (GetCurrentBootPartition () == BackupPartition) {
+      if (IsTopSwapTriggered ()) {
+        ClearTopSwapTrigger ();
         SetBootPartition (PrimaryPartition);
         ResetSystem (EfiResetCold);
+      }
+    } else {
+      if (IsTopSwapTriggered ()) {
+        DEBUG((DEBUG_INFO, "Already on partition that was meant to be swapped back to\n"));
+        ClearTopSwapTrigger ();
+        SetRecoveryTrigger ();
+      }
     }
   }
 }
@@ -225,7 +265,9 @@ FwuTopSwapSetting (
   @retval  others                There is error happening.
 **/
 BOOLEAN
-IsFirmwareUpdate ()
+IsFirmwareUpdate (
+  VOID
+  )
 {
 
   //
@@ -238,7 +280,7 @@ IsFirmwareUpdate ()
   //
   // Check if platform firmware update trigger is set.
   //
-  if (IoRead32 (ACPI_BASE_ADDRESS + R_ACPI_IO_OC_WDT_CTL) & BIT16) {
+  if (IsUpdateTriggered ()) {
     return TRUE;
   }
 
@@ -246,7 +288,7 @@ IsFirmwareUpdate ()
   // Check if we need to recover a failing partition.
   //
   if (PcdGetBool (PcdSblResiliencyEnabled) &&
-      GetFailedBootCount () >=  PcdGet8 (PcdBootFailureThreshold)) {
+      IsRecoveryTriggered ()) {
     return TRUE;
   }
 
@@ -504,12 +546,12 @@ DEBUG_CODE_BEGIN();
 DEBUG_CODE_END();
     PlatformDeviceTableInitialize ();
     SpiControllerInitialize ();
+    FwuTopSwapSetting(NULL);
     break;
   case PostConfigInit:
     PlatformIdInitialize ();
     PlatformNameInit ();
     SetBootMode (IsFirmwareUpdate() ? BOOT_ON_FLASH_UPDATE : GetPlatformPowerState());
-    FwuTopSwapSetting(NULL);
     PlatformFeaturesInit ();
     VariableInitialize ();
     RtcInit ();

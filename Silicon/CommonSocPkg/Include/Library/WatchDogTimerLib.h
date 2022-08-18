@@ -159,4 +159,76 @@ ClearFailedBootCount (
   VOID
   );
 
+/**
+  Check if FW update triggered.
+**/
+BOOLEAN
+EFIAPI
+IsUpdateTriggered (
+  VOID
+  );
+
+/**
+  Clear FW update trigger.
+**/
+VOID
+EFIAPI
+ClearUpdateTrigger (
+  VOID
+  );
+
+/**
+  Check if top swap triggered.
+**/
+BOOLEAN
+EFIAPI
+IsTopSwapTriggered (
+  VOID
+  );
+
+/**
+  Clear top swap trigger.
+**/
+VOID
+EFIAPI
+ClearTopSwapTrigger (
+  VOID
+  );
+
+/**
+  Set top swap trigger.
+**/
+VOID
+EFIAPI
+SetTopSwapTrigger (
+  VOID
+  );
+
+/**
+  Check if FW recovery triggered.
+**/
+BOOLEAN
+EFIAPI
+IsRecoveryTriggered (
+  VOID
+  );
+
+/**
+  Clear FW recovery trigger.
+**/
+VOID
+EFIAPI
+ClearRecoveryTrigger (
+  VOID
+  );
+
+/**
+  Set FW recovery trigger.
+**/
+VOID
+EFIAPI
+SetRecoveryTrigger (
+  VOID
+  );
+
 #endif

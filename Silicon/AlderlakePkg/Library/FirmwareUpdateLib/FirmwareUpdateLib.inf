@@ -39,6 +39,7 @@
   #HeciLib
   LitePeCoffLib
   HeciMeExtLib
+  WatchDogTimerLib
 
 [Guids]
   gEfiPartTypeSystemPartGuid
