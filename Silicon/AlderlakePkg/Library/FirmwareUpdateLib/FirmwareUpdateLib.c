@@ -27,6 +27,7 @@
 #include <Service/HeciService.h>
 #include <CsmeUpdateDriver.h>
 #include <PlatformBase.h>
+#include <Library/WatchDogTimerLib.h>
 
 #define FWU_BOOT_MODE_OFFSET   0x40
 #define FWU_BOOT_MODE_VALUE    0x5A
@@ -158,6 +159,11 @@ SetBootPartition (
 
   DEBUG ((DEBUG_INFO, "Read it to ensure data is written. Data32=0x%x\n", Data32));
 #endif
+  // Need to signal for TS back to other partition in SG1B, since TS
+  // is blocked from being performed in FWU payload
+  if (GetCurrentBootPartition () != Partition) {
+    SetTopSwapTrigger ();
+  }
   return EFI_SUCCESS;
 }
 
@@ -385,7 +391,7 @@ ClearFwUpdateTrigger (
   VOID
   )
 {
-  IoAnd32(ACPI_BASE_ADDRESS + R_ACPI_IO_OC_WDT_CTL, 0xFF00FFFF);
+  ClearUpdateTrigger ();
 }
 
 /**

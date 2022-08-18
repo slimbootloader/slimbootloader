@@ -22,14 +22,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #define MAX_UPDATE_REGIONS      4
 
-#define FW_UPDATE_SM_INIT             0xFF
-#define FW_UPDATE_SM_CAP_PROCESSING   0x7F
-#define FW_UPDATE_SM_PART_A           0x7E
-#define FW_UPDATE_SM_PART_B           0x7D
-#define FW_UPDATE_SM_PART_AB          0x7C
-#define FW_UPDATE_SM_RECOVERY         0x7B
-#define FW_UPDATE_SM_DONE             0x77 // Lower 3 bits are ignored
-
 #define FW_UPDATE_IMAGE_UPDATE_NONE         0xFF
 #define FW_UPDATE_IMAGE_UPDATE_PENDING      0xFE
 #define FW_UPDATE_IMAGE_UPDATE_PROCESSING   0xFC
@@ -37,8 +29,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #define FW_UPDATE_PARTITION_A   0
 #define FW_UPDATE_PARTITION_B   1
-
-#define FW_UPDATE_SIG_LENGTH    256
 
 #define MAX_FILE_LEN            16
 #define MAX_FW_COMPONENTS       6
@@ -100,23 +90,6 @@ typedef struct {
   EFI_SYSTEM_RESOURCE_TABLE     EsrtTablePtr;
   EFI_SYSTEM_RESOURCE_ENTRY     EsrtTableEntry[MAX_FW_COMPONENTS];
 } EFI_FWST_ACPI_DESCRIPTION_TABLE;
-
-//
-// Firmware Update status structure
-// This structure maintains the firmware update status
-// in the non volatile reserved region of Slim Bootloader
-// ESRT ACPI table will be populated based on this structure
-//
-typedef struct {
-  UINT32                Signature;
-  UINT16                Version;
-  UINT16                Length;
-  UINT8                 CapsuleSig[FW_UPDATE_SIG_LENGTH];
-  UINT8                 StateMachine;
-  UINT8                 RetryCount;
-  UINT8                 CsmeNeedReset;
-  UINT8                 Reserved[5];
-} FW_UPDATE_STATUS;
 
 typedef struct {
   EFI_GUID              FirmwareId;

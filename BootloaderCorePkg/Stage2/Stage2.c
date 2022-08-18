@@ -249,14 +249,6 @@ NormalBootPath (
 
   BoardInit (EndOfStages);
 
-  // Stop timer so boot retries stop
-  if (PcdGetBool (PcdSblResiliencyEnabled)) {
-    StopTcoTimer ();
-    if (GetBootMode () != BOOT_ON_FLASH_UPDATE) {
-      ClearFailedBootCount ();
-    }
-  }
-
   PayloadId = GetPayloadId ();
   if (PayloadId == 0) {
     // For built-in payload including OsLoader and FirmwareUpdate, it will handle
@@ -296,6 +288,12 @@ NormalBootPath (
   DEBUG_CODE_BEGIN ();
   PrintStackHeapInfo ();
   DEBUG_CODE_END ();
+
+  // Stop timer so boot retries stop
+  if (PcdGetBool (PcdSblResiliencyEnabled)) {
+    StopTcoTimer ();
+    ClearFailedBootCount ();
+  }
 
   DEBUG ((DEBUG_INFO, "Payload entry: 0x%08X\n", PldEntry));
   if (PldEntry != NULL) {
@@ -347,14 +345,6 @@ S3ResumePath (
   // Call the board notification
   BoardInit (EndOfStages);
 
-  // Stop timer so boot retries stop
-  if (PcdGetBool (PcdSblResiliencyEnabled)) {
-    StopTcoTimer ();
-    if (GetBootMode () != BOOT_ON_FLASH_UPDATE) {
-      ClearFailedBootCount ();
-    }
-  }
-
   // Call board and FSP Notify ReadyToBoot
   BoardNotifyPhase (ReadyToBoot);
   AddMeasurePoint (0x31D0);
@@ -370,8 +360,15 @@ S3ResumePath (
   // Update FPDT table
   UpdateFpdtS3Table (S3Data->AcpiBase);
 
-  // Find Wake Vector and Jump to OS
   AddMeasurePoint (0x31F0);
+
+  // Stop timer so boot retries stop
+  if (PcdGetBool (PcdSblResiliencyEnabled)) {
+    StopTcoTimer ();
+    ClearFailedBootCount ();
+  }
+
+  // Find Wake Vector and Jump to OS
   FindAcpiWakeVectorAndJump (S3Data->AcpiBase);
 }
 

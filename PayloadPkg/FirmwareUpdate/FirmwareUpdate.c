@@ -1516,7 +1516,7 @@ InitFirmwareRecovery (
     return Status;
   }
 
-  ClearFailedBootCount ();
+  ClearRecoveryTrigger ();
 
   Status = GetRegionInfo (&TopSwapRegionSize, &RedundantRegionSize, NULL);
   if (EFI_ERROR (Status)) {
@@ -1716,7 +1716,7 @@ PayloadMain (
   // Prepare Console Print
   //
   InitConsole ();
-  ConsolePrint ("Starting Firmware Update\n");
+  ConsolePrint ("Starting Firmware Update/Recovery\n");
 
   //
   // Initialize boot media to look for the capsule image
@@ -1774,13 +1774,14 @@ PayloadMain (
   //
   GetStateMachineFlag (&StateMachine);
   if (PcdGetBool (PcdSblResiliencyEnabled) &&
-     (StateMachine == FW_UPDATE_SM_RECOVERY || GetFailedBootCount () >= PcdGet8 (PcdBootFailureThreshold))) {
-    DEBUG((DEBUG_ERROR, "Triggered FW recovery!\n"));
+     (StateMachine == FW_UPDATE_SM_RECOVERY || IsRecoveryTriggered ())) {
+    DEBUG((DEBUG_INFO, "Triggered FW recovery!\n"));
     Status = InitFirmwareRecovery ();
     if (EFI_ERROR (Status)) {
       DEBUG((DEBUG_ERROR, "Firmware recovery failed with Status = %r\n", Status));
     }
   } else {
+    DEBUG((DEBUG_INFO, "Triggered FW update!\n"));
     Status = InitFirmwareUpdate ();
     if (EFI_ERROR (Status)) {
       if (Status != EFI_ALREADY_STARTED) {

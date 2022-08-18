@@ -17,6 +17,9 @@
 #define B_ACPI_IO_OC_WDT_CTL_RLD                          BIT31
 #define B_ACPI_IO_OC_WDT_CTL_ICCSURV_STS                  BIT25
 #define B_ACPI_IO_OC_WDT_CTL_NO_ICCSURV_STS               BIT24
+#define B_ACPI_IO_OC_WDT_CTL_TOP_SWAP_TRIGGER             BIT21
+#define B_ACPI_IO_OC_WDT_CTL_RECOVERY_TRIGGER             BIT20
+#define B_ACPI_IO_OC_WDT_CTL_UPDATE_TRIGGER               BIT16
 #define B_ACPI_IO_OC_WDT_CTL_FORCE_ALL                    BIT15
 #define B_ACPI_IO_OC_WDT_CTL_EN                           BIT14
 #define B_ACPI_IO_OC_WDT_CTL_ICCSURV                      BIT13
@@ -310,4 +313,100 @@ ClearFailedBootCount (
   )
 {
   WdtClearScratchpad (B_ACPI_IO_OC_WDT_CTL_SCRATCHPAD_BOOT_CNT_MASK);
+}
+
+/**
+  Check if FW update triggered.
+**/
+BOOLEAN
+EFIAPI
+IsUpdateTriggered (
+  VOID
+  )
+{
+  return WdtGetScratchpad (B_ACPI_IO_OC_WDT_CTL_UPDATE_TRIGGER) != 0;
+}
+
+/**
+  Clear FW update trigger.
+**/
+VOID
+EFIAPI
+ClearUpdateTrigger (
+  VOID
+  )
+{
+  WdtClearScratchpad (B_ACPI_IO_OC_WDT_CTL_UPDATE_TRIGGER);
+}
+
+/**
+  Check if top swap triggered.
+**/
+BOOLEAN
+EFIAPI
+IsTopSwapTriggered (
+  VOID
+  )
+{
+  return WdtGetScratchpad (B_ACPI_IO_OC_WDT_CTL_TOP_SWAP_TRIGGER) != 0;
+}
+
+/**
+  Clear top swap trigger.
+**/
+VOID
+EFIAPI
+ClearTopSwapTrigger (
+  VOID
+  )
+{
+  WdtClearScratchpad (B_ACPI_IO_OC_WDT_CTL_TOP_SWAP_TRIGGER);
+}
+
+/**
+  Set top swap trigger.
+**/
+VOID
+EFIAPI
+SetTopSwapTrigger (
+  VOID
+  )
+{
+  WdtSetScratchpad (B_ACPI_IO_OC_WDT_CTL_TOP_SWAP_TRIGGER);
+}
+
+/**
+  Check if FW recovery triggered.
+**/
+BOOLEAN
+EFIAPI
+IsRecoveryTriggered (
+  VOID
+  )
+{
+  return WdtGetScratchpad (B_ACPI_IO_OC_WDT_CTL_RECOVERY_TRIGGER) != 0;
+}
+
+/**
+  Clear FW recovery trigger.
+**/
+VOID
+EFIAPI
+ClearRecoveryTrigger (
+  VOID
+  )
+{
+  WdtClearScratchpad (B_ACPI_IO_OC_WDT_CTL_RECOVERY_TRIGGER);
+}
+
+/**
+  Set FW recovery trigger.
+**/
+VOID
+EFIAPI
+SetRecoveryTrigger (
+  VOID
+  )
+{
+  WdtSetScratchpad (B_ACPI_IO_OC_WDT_CTL_RECOVERY_TRIGGER);
 }
