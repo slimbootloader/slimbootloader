@@ -1537,6 +1537,11 @@ InitFirmwareRecovery (
 
   AllocateSize = sizeof (FIRMWARE_UPDATE_PARTITION) + sizeof (FIRMWARE_UPDATE_REGION);
   UpdatePartition = (FIRMWARE_UPDATE_PARTITION *) AllocateZeroPool (AllocateSize);
+
+  if (UpdatePartition == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+
   UpdatePartition->RegionCount = 2;
 
   if (GetCurrentBootPartition () == PrimaryPartition) {
