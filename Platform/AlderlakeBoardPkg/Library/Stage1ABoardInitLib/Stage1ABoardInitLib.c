@@ -143,6 +143,9 @@ BoardInit (
 
   switch (InitPhase) {
   case PostTempRamInit:
+    // Initialize TCO timer in board-specific SG1A file
+    // as not to interfere with other boards' disable TCO
+    // timer functions which do the same thing
     InitTcoTimer ();
     EarlyPlatformDataCheck ();
 
