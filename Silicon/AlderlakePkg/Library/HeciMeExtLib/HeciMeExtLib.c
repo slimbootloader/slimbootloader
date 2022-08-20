@@ -403,3 +403,205 @@ HeciRevokeOemKey (
 
   return Status;
 }
+
+//
+// MKHI_MCA_GROUP_ID = 0x0A
+//
+
+/**
+  This message is sent by the BIOS to retrieve file stored in ME firmware NVM
+  using HeciReadFile ExMsg command.
+
+  @param[in]      FileId          Id number of file to read
+  @param[in]      Offset          File offset
+  @param[in, out] DataSize        On input - size of data to read, on output - size of read data
+  @param[in]      Flags           Flags
+  @param[out]     *Buffer         Pointer to the data buffer
+
+  @retval EFI_UNSUPPORTED         Current ME mode doesn't support this function
+  @retval EFI_SUCCESS             Command succeeded
+  @retval EFI_DEVICE_ERROR        HECI Device error, command aborts abnormally
+  @retval EFI_TIMEOUT             HECI does not return the buffer before timeout
+  @retval EFI_ABORTED             Cannot allocate memory
+  @retval EFI_BUFFER_TOO_SMALL    Message Buffer is too small for the Acknowledge
+**/
+EFI_STATUS
+EFIAPI
+HeciReadFileExMsg (
+  IN UINT32      FileId,
+  IN UINT32      Offset,
+  IN OUT UINT32  *DataSize,
+  IN UINT8       Flags,
+  OUT UINT8      *DataBuffer
+  )
+{
+  EFI_STATUS          Status;
+  UINT32              Length;
+  UINT32              RecvLength;
+  READ_FILE_EX_BUFFER *ReadFileEx;
+  UINT32              MeMode;
+
+  Status = HeciGetMeMode (&MeMode);
+  if (EFI_ERROR (Status) || (MeMode != ME_MODE_NORMAL)) {
+    return EFI_UNSUPPORTED;
+  }
+
+  Length     = sizeof (READ_FILE_EX);
+  RecvLength = sizeof (READ_FILE_EX_ACK) + *DataSize;
+  ReadFileEx = AllocateZeroPool (MAX(RecvLength,Length));
+  ZeroMem (DataBuffer, *DataSize);
+
+  if (ReadFileEx == NULL) {
+    DEBUG ((DEBUG_ERROR, "HeciReadFileExMsg Error: Could not allocate Memory\n"));
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  ReadFileEx->Request.MkhiHeader.Fields.GroupId = MKHI_MCA_GROUP_ID;
+  ReadFileEx->Request.MkhiHeader.Fields.Command = MCA_READ_FILE_EX_CMD;
+  ReadFileEx->Request.FileId                    = FileId;
+  ReadFileEx->Request.Offset                    = Offset;
+  ReadFileEx->Request.DataSize                  = *DataSize;
+  ReadFileEx->Request.Flags                     = Flags;
+
+  Status = HeciSendwAck (
+                   HECI1_DEVICE,
+                   (UINT32 *) ReadFileEx,
+                   Length,
+                   &RecvLength,
+                   BIOS_FIXED_HOST_ADDR,
+                   HECI_MCHI_MESSAGE_ADDR
+                   );
+
+  if (!EFI_ERROR (Status)) {
+    if (ReadFileEx->Response.MkhiHeader.Fields.Command == MCA_READ_FILE_EX_CMD &&
+       (ReadFileEx->Response.MkhiHeader.Fields.IsResponse == 1) &&
+       (ReadFileEx->Response.MkhiHeader.Fields.Result == MkhiStatusSuccess) &&
+       (ReadFileEx->Response.DataSize <= *DataSize)) {
+      CopyMem (DataBuffer, ReadFileEx->Response.Data, ReadFileEx->Response.DataSize);
+      *DataSize = ReadFileEx->Response.DataSize;
+    } else {
+      Status = EFI_DEVICE_ERROR;
+    }
+  }
+
+  FreePool (ReadFileEx);
+
+  return Status;
+}
+
+/**
+  This command indicates to the FW that it shall commit ARBSVN to fuse.
+
+  @retval EFI_SUCCESS             Command succeeded
+  @retval EFI_UNSUPPORTED         Current ME mode doesn't support this function
+  @retval EFI_DEVICE_ERROR        HECI Device error, command aborts abnormally
+**/
+EFI_STATUS
+HeciArbSvnCommitMsg (
+  VOID
+  )
+{
+  EFI_STATUS               Status;
+  UINT32                   Length;
+  UINT32                   RecvLength;
+  ARB_SVN_COMMIT_BUFFER    ArbSvnCommit;
+  UINT32                   MeMode;
+
+  Status = HeciGetMeMode (&MeMode);
+  if (EFI_ERROR (Status) || (MeMode != ME_MODE_NORMAL)) {
+    return EFI_UNSUPPORTED;
+  }
+
+  ZeroMem (&ArbSvnCommit, sizeof (ARB_SVN_COMMIT_BUFFER));
+  ArbSvnCommit.Request.MkhiHeader.Data           = 0;
+  ArbSvnCommit.Request.MkhiHeader.Fields.GroupId = MKHI_MCA_GROUP_ID;
+  ArbSvnCommit.Request.MkhiHeader.Fields.Command = MCA_ARB_SVN_COMMIT_CMD;
+  ArbSvnCommit.Request.UsageId                   = ARB_SVN_COMMIT_ALL;
+  Length                                         = sizeof (ARB_SVN_COMMIT);
+  RecvLength                                     = sizeof (ARB_SVN_COMMIT_ACK);
+
+  Status = HeciSendwAck (
+                   HECI1_DEVICE,
+                   (UINT32 *) &ArbSvnCommit,
+                   Length,
+                   &RecvLength,
+                   BIOS_FIXED_HOST_ADDR,
+                   HECI_MCHI_MESSAGE_ADDR
+                   );
+
+  return Status;
+}
+
+/**
+  The command retrieves anti-replay SVN information.
+  Caller can set Entries as 0 to get the correct number of entries CSME contains.
+
+  @param[in, out] Entries         On input, it is the number of entries caller expects.
+                                  On output, it indicates the number of entries CSME contains.
+  @param[in, out] ArbSvnInfo      Anti-Rollback SVN Information
+
+  @retval EFI_SUCCESS             Command succeeded
+  @retval EFI_UNSUPPORTED         Current ME mode doesn't support this function
+  @retval EFI_DEVICE_ERROR        HECI Device error, command aborts abnormally
+  @retval EFI_OUT_OF_RESOURCES    Unable to allocate required resources
+  @retval EFI_BUFFER_TOO_SMALL    The Entries is too small for the result
+**/
+EFI_STATUS
+HeciArbSvnGetInfoMsg (
+  IN OUT UINT32                *Entries,
+  IN OUT ARB_SVN_INFO_ENTRY    *ArbSvnInfo
+  )
+{
+  EFI_STATUS                Status;
+  UINT32                    Length;
+  UINT32                    RecvLength;
+  ARB_SVN_GET_INFO_BUFFER   *ArbSvnGetInfo;
+  UINT32                    MeMode;
+  UINT32                    NumberOfEntries;
+
+  Status = HeciGetMeMode (&MeMode);
+  if (EFI_ERROR (Status) || (MeMode != ME_MODE_NORMAL)) {
+    return EFI_UNSUPPORTED;
+  }
+
+  if (Entries == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  NumberOfEntries = *Entries;
+  ArbSvnGetInfo   = AllocateZeroPool (NumberOfEntries * sizeof (ARB_SVN_INFO_ENTRY) + sizeof (ARB_SVN_GET_INFO_BUFFER));
+  if (ArbSvnGetInfo == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  ArbSvnGetInfo->Request.MkhiHeader.Fields.GroupId = MKHI_MCA_GROUP_ID;
+  ArbSvnGetInfo->Request.MkhiHeader.Fields.Command = MCA_ARB_SVN_GET_INFO_CMD;
+  Length                                           = sizeof (ARB_SVN_GET_INFO);
+  RecvLength                                       = NumberOfEntries * sizeof (ARB_SVN_INFO_ENTRY) + sizeof (ARB_SVN_GET_INFO_BUFFER);
+
+  Status = HeciSendwAck (
+                   HECI1_DEVICE,
+                   (UINT32 *) ArbSvnGetInfo,
+                   Length,
+                   &RecvLength,
+                   BIOS_FIXED_HOST_ADDR,
+                   HECI_MCHI_MESSAGE_ADDR
+                   );
+
+  if (EFI_ERROR (Status) && (Status == EFI_BUFFER_TOO_SMALL)) {
+    *Entries = ArbSvnGetInfo->Response.NumEntries;
+    DEBUG ((DEBUG_INFO, "NumEntries: %08x.\n", ArbSvnGetInfo->Response.NumEntries));
+  }
+
+  if (!EFI_ERROR (Status) &&
+      ((ArbSvnGetInfo->Response.MkhiHeader.Fields.Command) == MCA_ARB_SVN_GET_INFO_CMD) &&
+      ((ArbSvnGetInfo->Response.MkhiHeader.Fields.IsResponse) == 1) &&
+      (ArbSvnGetInfo->Response.MkhiHeader.Fields.Result == 0)) {
+    ASSERT (sizeof (ArbSvnInfo) <= (sizeof (ArbSvnGetInfo)));
+    *Entries = ArbSvnGetInfo->Response.NumEntries;
+    CopyMem (ArbSvnInfo, ArbSvnGetInfo->Response.ArbSvnEntry, ArbSvnGetInfo->Response.NumEntries * sizeof (ARB_SVN_INFO_ENTRY));
+  }
+
+  FreePool (ArbSvnGetInfo);
+  return Status;
+}

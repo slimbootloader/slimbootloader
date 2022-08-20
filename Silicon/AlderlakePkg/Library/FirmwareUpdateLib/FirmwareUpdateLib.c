@@ -449,7 +449,16 @@ SetArbSvnCommit (
    IN  UINTN     CmdDataSize
    )
 {
-  return EFI_UNSUPPORTED;
+  EFI_STATUS Status;
+
+  Status = HeciArbSvnCommitMsg ();
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_INFO, "ARB SVN commit failed -  0x%x\n", Status));
+  } else {
+    DEBUG((DEBUG_INFO, "ARB SVN commit SUCCESS \n"));
+  }
+
+  return Status;
 }
 
 /**

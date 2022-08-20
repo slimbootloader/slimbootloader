@@ -35,6 +35,9 @@
 ///
 /// Defines for MCA_GROUP Command
 ///
+#define MCA_READ_FILE_EX_CMD              0x0A
+#define MCA_ARB_SVN_COMMIT_CMD            0x1B
+#define MCA_ARB_SVN_GET_INFO_CMD          0x1C
 #define MCA_REVOKE_OEM_KEY_HASH_CMD       0x2F
 #define MCA_GET_OEM_KEY_STATUS_CMD        0x0D
 ///
@@ -45,6 +48,17 @@
 ///
 #define GEN_SET_MEASURED_BOOT_STATE_CMD           0x22
 #define GEN_GET_MEASURED_BOOT_STATE_CMD           0x23
+
+///
+/// HW Anti-Rollback Key Usage
+///
+#define  MFT_KEY_USAGE_INDEX_CSE_RBE_MANIFEST      3
+#define  MFT_KEY_USAGE_INDEX_BOOT_POLICY_MANIFEST 32
+#define  MFT_KEY_USAGE_INDEX_OEM_KEY_MANIFEST     45
+#define  MFT_KEY_USAGE_INDEX_OEM_BTG_KEY_MANIFEST 54
+#define  MFT_KEY_USAGE_INDEX_OEM_ACM_MANIFEST     56
+
+#define ARB_SVN_COMMIT_ALL                      0xFF ///< Value 0xFF refers to committing all pending ARBSVN values.
 
 //
 // Typedef for Result field of MHKI Header
