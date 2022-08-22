@@ -338,7 +338,8 @@ PlatformFeaturesInit (
     HeciBaseAddress = MeGetHeciMmPciAddress (0, 0);
     GetBootGuardInfo (HeciBaseAddress, &PlatformData->BtGuardInfo);
     DEBUG ((DEBUG_INFO, "GetPlatformDataPtr is copied 0x%08X \n", PlatformData));
-    if (!PlatformData->BtGuardInfo.MeasuredBoot) {
+    if ((PlatformData->BtGuardInfo.MeasuredBoot) && (!PlatformData->BtGuardInfo.BypassTpmInit)) {
+      // Disable the measured boot when TPM init is not succesful by ACM
       LdrFeatures &= ~FEATURE_MEASURED_BOOT;
     }
     if (!PlatformData->BtGuardInfo.VerifiedBoot) {
@@ -365,26 +366,34 @@ TpmInitialize (
   BootMode     = GetBootMode();
   PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
 
-  if((PlatformData != NULL) && PlatformData->BtGuardInfo.MeasuredBoot &&
-    (!PlatformData->BtGuardInfo.DisconnectAllTpms) &&
-    ((PlatformData->BtGuardInfo.TpmType == dTpm20) || (PlatformData->BtGuardInfo.TpmType == Ptt))){
 
-    //  As per PC Client spec, SRTM should perform a host platform reset
-    if (PlatformData->BtGuardInfo.TpmStartupFailureOnS3) {
-      ResetSystem(EfiResetCold);
-      CpuDeadLoop ();
+  if ((PlatformData != NULL) && MEASURED_BOOT_ENABLED() &&
+    (!PlatformData->BtGuardInfo.DisconnectAllTpms)) {
+
+    if ((PlatformData->BtGuardInfo.MeasuredBoot) &&
+      ((PlatformData->BtGuardInfo.TpmType == dTpm20) || (PlatformData->BtGuardInfo.TpmType == Ptt))) {
+
+      //  As per PC Client spec, SRTM should perform a host platform reset
+      if (PlatformData->BtGuardInfo.TpmStartupFailureOnS3) {
+        ResetSystem(EfiResetCold);
+        CpuDeadLoop ();
+      }
+
+      // TPM is initialized in by ACM.
+      Status = TpmInit(PlatformData->BtGuardInfo.BypassTpmInit, BootMode);
+    } else {
+      // Initialize TPM if it has not already been initialized by BootGuard component (i.e. ACM)
+      Status = TpmInit(FALSE, BootMode);
     }
 
-    // Initialize TPM if it has not already been initialized by BootGuard component (i.e. ACM)
-    Status = TpmInit(PlatformData->BtGuardInfo.BypassTpmInit, BootMode);
     if (EFI_ERROR (Status)) {
       CpuHalt ("Tpm Initialization failed !!\n");
     } else {
       if (BootMode != BOOT_ON_S3_RESUME) {
         // Create and add BootGuard Event logs in TCG Event log
         CreateTpmEventLog (PlatformData->BtGuardInfo.TpmType);
-      }
     }
+   }
   } else {
     DisableTpm();
     Features  = GetFeatureCfg ();
@@ -569,9 +578,7 @@ DEBUG_CODE_END();
   case PreTempRamExit:
     break;
   case PostTempRamExit:
-    if (MEASURED_BOOT_ENABLED()) {
-      TpmInitialize();
-    }
+    TpmInitialize();
     break;
   default:
     break;
