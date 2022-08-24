@@ -58,6 +58,12 @@ GetBoardId (
   OUT UINT8 *BoardId
 );
 
+VOID
+InitEcCpuFanControl (
+  VOID
+);
+
+
 /**
   Update FSP-M UPD config data for TCC mode and tuning
 
@@ -845,6 +851,7 @@ DEBUG_CODE_END();
     PlatformNameInit ();
     SetBootMode (IsFirmwareUpdate() ? BOOT_ON_FLASH_UPDATE : GetPlatformPowerState());
     PlatformFeaturesInit ();
+    InitEcCpuFanControl ();
     break;
   case PreMemoryInit:
     //
