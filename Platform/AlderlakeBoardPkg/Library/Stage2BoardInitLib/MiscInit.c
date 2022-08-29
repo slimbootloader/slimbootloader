@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -42,6 +42,8 @@ UpdatePayloadId (
       // OS Loader.
       //
       PayloadId = GenericCfgData->PayloadId;
+      if(GenericCfgData->PayloadId == LINX_PAYLOAD_ID_SIGNATURE)
+        PayloadId = 0;
       SetPayloadId (PayloadId);
       return;
     }
