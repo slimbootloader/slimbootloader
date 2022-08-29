@@ -58,6 +58,7 @@ GetCpuStepping(
   return ((CPU_STEPPING) (Eax.Uint32 & CPUID_FULL_STEPPING));
 }
 
+#if FeaturePcdGet (PcdTccEnabled)
 /**
   Update FSP-M UPD config data for TCC mode and tuning
 
@@ -183,6 +184,7 @@ TccModePreMemConfig (
 
   return Status;
 }
+#endif
 
 /**
   Update FSP-M UPD config data.
@@ -639,12 +641,13 @@ UpdateFspConfig (
   }
 
   // Tcc enabling
-  if (IsPchS () || IsPchN()) {
-    if (FeaturePcdGet (PcdTccEnabled)) {
-      Fspmcfg->WdtDisableAndLock = 0x0;
-      TccModePreMemConfig (FspmUpd);
-    }
+  if (IsPchS() || IsPchN()) {
+#if FeaturePcdGet (PcdTccEnabled)
+    Fspmcfg->WdtDisableAndLock = 0x0;
+    TccModePreMemConfig (FspmUpd);
+#endif
   }
+
   // S0ix is disabled if TSN is enabled.
   FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag (CDATA_FEATURES_TAG);
   SiCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
