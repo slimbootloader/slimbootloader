@@ -73,6 +73,9 @@ MEMORY_CFG_DATA.BdatEnable                 | 0x0
 MEMORY_CFG_DATA.TcssXhciEn                 | 0x1
 MEMORY_CFG_DATA.PchHdaAudioLinkHdaEnable   | 0x1
 MEMORY_CFG_DATA.PchHdaDspEnable            | 0x1
+MEMORY_CFG_DATA.WdtDisableAndLock          | 0
+MEMORY_CFG_DATA.PrmrrSize                  | 0x200000
+MEMORY_CFG_DATA.Ddr4OneDpc                 | 0x3
 
 GRAPHICS_CFG_DATA.InternalGfx             | 0x2
 
