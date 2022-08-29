@@ -306,99 +306,6 @@ CreateConfigDatabase (
 }
 
 /**
-  Retrieve FW update state from the reserved region
-
-  @param[in,out] StateMachine The current FW update state
-**/
-VOID
-GetStateMachine (
-  IN OUT UINT8* StateMachine
-  )
-{
-  FW_UPDATE_STATUS    *FwUpdStatus;
-  EFI_STATUS          Status;
-  UINT32              RsvdBase;
-  UINT32              RsvdSize;
-
-  if (StateMachine != NULL) {
-    Status = GetComponentInfoByPartition (FLASH_MAP_SIG_BLRESERVED, FALSE, &RsvdBase, &RsvdSize);
-    if (EFI_ERROR (Status)) {
-      *StateMachine = FW_UPDATE_SM_INIT;
-    } else {
-      FwUpdStatus = (FW_UPDATE_STATUS *)(UINTN)RsvdBase;
-      *StateMachine = FwUpdStatus->StateMachine;
-    }
-  }
-}
-
-/**
-  Check if ACM detected corruption in IBB
-
-  @param[in] StateMachine The current FW update state
-**/
-VOID
-CheckForAcmFailures (
-  IN UINT8 StateMachine
-  )
-{
-  switch (StateMachine) {
-    case FW_UPDATE_SM_PART_A:
-      if (GetCurrentBootPartition () == PrimaryPartition) {
-        DEBUG((DEBUG_INFO, "Partition to be updated is same as current boot partition (primary)\n"));
-        SetRecoveryTrigger ();
-      }
-      break;
-
-    case FW_UPDATE_SM_PART_B:
-    case FW_UPDATE_SM_PART_AB:
-      if (GetCurrentBootPartition () == BackupPartition) {
-        DEBUG((DEBUG_INFO, "Partition to be updated is same as current boot partition (backup)\n"));
-        SetRecoveryTrigger ();
-      }
-      break;
-
-    default:
-      if (GetCurrentBootPartition () == BackupPartition) {
-        DEBUG((DEBUG_INFO, "Booting from backup partition outside of update\n"));
-        SetRecoveryTrigger ();
-      }
-      break;
-  }
-}
-
-/**
-  Check if TCO timer detected corruption in OBB, a dead loop in IBB, or a dead loop in OBB
-**/
-VOID
-CheckForTcoTimerFailures (
-  VOID
-  )
-{
-  EFI_STATUS          Status;
-  BOOT_PARTITION      NewPartition;
-  UINT32              FailedBootCount;
-
-  // If unable to boot all the way up to PLD, recovery is necessary.
-  if (WasPreviousTcoTimeout ()) {
-    ClearTcoStatus ();
-    IncrementFailedBootCount ();
-    FailedBootCount = GetFailedBootCount ();
-    DEBUG ((DEBUG_INFO, "Boot failure occurred! Failed boot count: %d\n", FailedBootCount));
-    if (FailedBootCount >= PcdGet8 (PcdBootFailureThreshold)) {
-      ClearFailedBootCount ();
-      SetRecoveryTrigger ();
-      NewPartition = GetCurrentBootPartition () == PrimaryPartition ? BackupPartition : PrimaryPartition;
-      DEBUG ((DEBUG_INFO, "Boot failure threshold reached! Switching to partition: %d\n", NewPartition));
-      Status = SetBootPartition (NewPartition);
-      if (EFI_ERROR (Status)) {
-        CpuHalt("Unable to recover corrupted partition!\n");
-      }
-      ResetSystem (EfiResetCold);
-    }
-  }
-}
-
-/**
   Entry point to the C language phase of Stage 1B.
 
   Stage1B will find memory initialization. It can be either executed from
@@ -479,11 +386,13 @@ SecStartup2 (
   BoardInit (PreConfigInit);
 
   // Check if recovery is needed, if not in recovery path already
-  GetStateMachine (&StateMachine);
-  DEBUG ((DEBUG_INFO, "Current FW update state machine: %d\n", StateMachine));
-  if (PcdGetBool (PcdSblResiliencyEnabled) && StateMachine != FW_UPDATE_SM_RECOVERY && !IsRecoveryTriggered ()) {
-    CheckForTcoTimerFailures ();
-    CheckForAcmFailures (StateMachine);
+  if (PcdGetBool (PcdSblResiliencyEnabled)) {
+    GetStateMachine (&StateMachine);
+    DEBUG ((DEBUG_INFO, "Current FW update state machine: %d\n", StateMachine));
+    if (StateMachine != FW_UPDATE_SM_RECOVERY && !IsRecoveryTriggered ()) {
+      CheckForTcoTimerFailures (PcdGet8 (PcdBootFailureThreshold));
+      CheckForAcmFailures (StateMachine);
+    }
   }
 
   Status = AppendHashStore (LdrGlobal, &Stage1bParam);

@@ -390,10 +390,11 @@
 
   BootloaderCorePkg/Stage1B/Stage1B.inf {
     <LibraryClasses>
-      FspApiLib    | BootloaderCorePkg/Library/FspApiLib/FspmApiLib.inf
-      BaseMemoryLib| MdePkg/Library/BaseMemoryLibRepStr/BaseMemoryLibRepStr.inf
-      SocInitLib   | $(SOC_INIT_STAGE1B_LIB_INF_FILE)
-      BoardInitLib | $(BRD_INIT_STAGE1B_LIB_INF_FILE)
+      FspApiLib             | BootloaderCorePkg/Library/FspApiLib/FspmApiLib.inf
+      BaseMemoryLib         | MdePkg/Library/BaseMemoryLibRepStr/BaseMemoryLibRepStr.inf
+      FirmwareResiliencyLib | BootloaderCorePkg/Library/FirmwareResiliencyLib/FirmwareResiliencyLib.inf
+      SocInitLib            | $(SOC_INIT_STAGE1B_LIB_INF_FILE)
+      BoardInitLib          | $(BRD_INIT_STAGE1B_LIB_INF_FILE)
   }
 
   BootloaderCorePkg/Stage2/Stage2.inf {
