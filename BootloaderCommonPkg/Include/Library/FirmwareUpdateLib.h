@@ -16,16 +16,12 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Guid/BootLoaderVersionGuid.h>
 #include <Service/SpiFlashService.h>
 #include <Library/BootloaderCommonLib.h>
+#include <FirmwareUpdateStatus.h>
 
 #define CMOS_ADDREG             0x70
 #define CMOS_DATAREG            0x71
 
 #define MAX_UPDATE_REGIONS      4
-
-#define FW_UPDATE_IMAGE_UPDATE_NONE         0xFF
-#define FW_UPDATE_IMAGE_UPDATE_PENDING      0xFE
-#define FW_UPDATE_IMAGE_UPDATE_PROCESSING   0xFC
-#define FW_UPDATE_IMAGE_UPDATE_DONE         0xF8
 
 #define FW_UPDATE_PARTITION_A   0
 #define FW_UPDATE_PARTITION_B   1
@@ -34,29 +30,12 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define MAX_FW_COMPONENTS       6
 #define MAX_FW_FAILED_RETRY     3
 
-#define CSME_NEED_RESET_INIT     0xFF
-#define CSME_NEED_RESET_PENDING  0xFE
-#define CSME_NEED_RESET_DONE     0xFC
-#define CSME_NEED_RESET_INVALID  0xF8
-
 #define CAPSULE_FLAGS_CFG_DATA  BIT0
-
-#define FW_UPDATE_COMP_BIOS_REGION SIGNATURE_32('B', 'I', 'O', 'S')
-#define FW_UPDATE_COMP_CSME_REGION SIGNATURE_32('C', 'S', 'M', 'E')
-#define FW_UPDATE_COMP_CSME_DRIVER SIGNATURE_32('C', 'S', 'M', 'D')
-#define FW_UPDATE_COMP_CMD_REQUEST SIGNATURE_32('C', 'M', 'D', 'I')
-#define FW_UPDATE_COMP_ACM0_REGION SIGNATURE_32('A', 'C', 'M', '0')
-#define FW_UPDATE_COMP_UCOD_REGION SIGNATURE_32('U', 'C', 'O', 'D')
 
 #define FW_UPDATE_COMP_CSME_REGION_ORDER      1
 #define FW_UPDATE_COMP_CSME_DRIVER_ORDER      2
 #define FW_UPDATE_COMP_BIOS_REGION_ORDER      3
 #define FW_UPDATE_COMP_DEFAULT_ORDER          4
-
-
-#define FW_UPDATE_STATUS_SIGNATURE    SIGNATURE_32 ('F', 'W', 'U', 'S')
-#define FW_RECOVERY_STATUS_SIGNATURE  SIGNATURE_32 ('F', 'W', 'R', 'S')
-#define FW_UPDATE_STATUS_VERSION      0x1
 
 ///
 /// "FWST"  Firmware Update status data Table
@@ -90,15 +69,6 @@ typedef struct {
   EFI_SYSTEM_RESOURCE_TABLE     EsrtTablePtr;
   EFI_SYSTEM_RESOURCE_ENTRY     EsrtTableEntry[MAX_FW_COMPONENTS];
 } EFI_FWST_ACPI_DESCRIPTION_TABLE;
-
-typedef struct {
-  EFI_GUID              FirmwareId;
-  UINT64                HardwareInstance;
-  UINT32                LastAttemptVersion;
-  UINT32                LastAttemptStatus;
-  UINT8                 UpdatePending;
-  UINT8                 Reserved[3];
-} FW_UPDATE_COMP_STATUS;
 
 typedef union _FIRMWARE_UPDATE_POLICY {
   UINT32 Data;

@@ -59,6 +59,7 @@
   TcoTimerLib
   TopSwapLib
   WatchDogTimerLib
+  FirmwareResiliencyLib
 
 [Guids]
   gPlatformModuleTokenSpaceGuid
