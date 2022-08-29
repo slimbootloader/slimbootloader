@@ -319,6 +319,7 @@ GetMaxCpuPciePortNum (
   }
 }
 
+#if FeaturePcdGet (PcdTccEnabled)
 /**
   Update FSP-S UPD config data for TCC mode and tuning
 
@@ -489,6 +490,7 @@ TccModePostMemConfig (
 
   return Status;
 }
+#endif
 
 /**
   Update FSP-S UPD config data.
@@ -622,7 +624,9 @@ UpdateFspConfig (
     DEBUG ((DEBUG_INFO, "Failed to find Silicon Cfg Data\n"));
   } else {
     FspsUpd->FspsConfig.AcSplitLock               = SiCfgData->AcSplitLock;   // AC check on split locks
+#if FeaturePcdGet (PcdTccEnabled)
     FspsUpd->FspsConfig.PsfTccEnable              = SiCfgData->PsfTccEnable;  // Enable will decrease psf transaction latency by disabling psf power mgmt features
+#endif
     FspsUpd->FspsConfig.PchDmiAspmCtrl            = SiCfgData->PchDmiAspmCtrl;// ASPM configuration on the PCH side of the DMI/OPI Link
     FspsUpd->FspsConfig.PchLegacyIoLowLatency     = SiCfgData->PchLegacyIoLowLatency;
     FspsUpd->FspsConfig.RenderStandby             = SiCfgData->RenderStandby; // IGFX RenderStandby
@@ -1228,10 +1232,11 @@ UpdateFspConfig (
   }
 
   if (IsPchS () || IsPchN()) {
-    if (FeaturePcdGet (PcdTccEnabled)) {
-      Status = TccModePostMemConfig (FspsUpd);
-    }
+#if FeaturePcdGet (PcdTccEnabled)
+    Status = TccModePostMemConfig (FspsUpd);
+#endif
   }
+
   if (FeaturePcdGet (PcdEnablePciePm)) {
     StoreRpConfig (FspsConfig);
   }
