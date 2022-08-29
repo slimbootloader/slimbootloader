@@ -16,7 +16,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 VOID
 EFIAPI
-GetStateMachine (
+GetFwuStateMachine (
   IN OUT UINT8* StateMachine
   );
 
