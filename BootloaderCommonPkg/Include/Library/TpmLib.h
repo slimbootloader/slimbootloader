@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -43,6 +43,25 @@ TpmInit(
 RETURN_STATUS
 DisableTpm (
   VOID
+  );
+
+/**
+  Get the TPM event log info.
+
+
+  @param Lasa  TPM event log buffer.
+  @param Laml  TPM event log size.
+
+  @retval RETURN_SUCCESS             Operation completed successfully.
+  @retval RETURN_INVALID_PARAMETER   Invalid parameter.
+  @retval RETURN_DEVICE_ERROR        Tpm Device not found or in bad state.
+  @retval Others                     The request could not be executed successfully.
+
+**/
+RETURN_STATUS
+GetTpmEventLog (
+  OUT UINT64 *Lasa,
+  OUT UINT32 *Laml
   );
 
 /**
@@ -194,5 +213,29 @@ GetTpmHashAlg (
 VOID
 ExtendStageHash (
   IN  COMPONENT_CALLBACK_INFO   *CbInfo
+  );
+
+/**
+  Create a TPM event log from bootloader
+
+  @retval RETURN_SUCCESS     Operation completed successfully.
+  @retval Others             Unable to create TCG event log.
+
+**/
+RETURN_STATUS
+CreateTpmEventLogHob (
+  );
+
+/**
+  Get ActivePCR banks info from TPM_LIB_PRIVATE_DATA instance.
+
+  @param  ActivePcrBanks       Active PCR banks in TPM
+
+  @retval EFI_SUCCESS          Operation executed successfully.
+  @retval EFI_NOT_FOUND        TPM Lib data not found.
+**/
+RETURN_STATUS
+TpmLibGetActivePcrBanks (
+  IN UINT32 *ActivePcrBanks
   );
 #endif  // _TPM_LIB_H

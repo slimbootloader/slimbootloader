@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2016 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2016 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -74,6 +74,8 @@
 #include <Guid/NvVariableInfoGuid.h>
 #include <Guid/SmmS3CommunicationInfoGuid.h>
 #include <Guid/CsmePerformanceInfoGuid.h>
+#include <Guid/TpmEventLogInfoGuid.h>
+#include <Guid/SecureBootInfoGuid.h>
 
 #define UIMAGE_FIT_MAGIC               (0x56190527)
 

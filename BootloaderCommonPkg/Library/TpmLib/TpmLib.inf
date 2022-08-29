@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -52,3 +52,8 @@
   BootloaderCommonLib
   BootloaderLib
   ResetSystemLib
+  HobLib
+  HobBuildLib
+
+[Guids]
+ gTcgEvent2EntryHobGuid
