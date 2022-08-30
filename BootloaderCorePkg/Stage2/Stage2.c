@@ -289,8 +289,9 @@ NormalBootPath (
   PrintStackHeapInfo ();
   DEBUG_CODE_END ();
 
-  // Stop timer so boot retries stop
-  if (PcdGetBool (PcdSblResiliencyEnabled)) {
+  // FWU payload is the only payload in SBL scope, so stop TCO
+  // timer if another payload is set to be launched
+  if (PcdGetBool (PcdSblResiliencyEnabled) && GetBootMode () != BOOT_ON_FLASH_UPDATE) {
     StopTcoTimer ();
     ClearFailedBootCount ();
   }
@@ -362,8 +363,9 @@ S3ResumePath (
 
   AddMeasurePoint (0x31F0);
 
-  // Stop timer so boot retries stop
-  if (PcdGetBool (PcdSblResiliencyEnabled)) {
+  // FWU payload is the only payload in SBL scope, so stop TCO
+  // timer if another payload is set to be launched
+  if (PcdGetBool (PcdSblResiliencyEnabled) && GetBootMode () != BOOT_ON_FLASH_UPDATE) {
     StopTcoTimer ();
     ClearFailedBootCount ();
   }

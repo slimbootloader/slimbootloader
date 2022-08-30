@@ -31,6 +31,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Guid/OsBootOptionGuid.h>
 #include <Library/BootGuardLib.h>
 #include <Library/WatchDogTimerLib.h>
+#include <Library/TcoTimerLib.h>
 #include "FirmwareUpdateHelper.h"
 
 UINT32   mSblImageBiosRgnOffset;
@@ -1768,6 +1769,14 @@ PayloadMain (
   // Set PCD for Firmware Update status structure offset within BIOS region
   //
   (VOID) PcdSet32S (PcdFwUpdStatusBase, mSblImageBiosRgnOffset + (FlashMap->RomSize - (~RsvdBase + 1)));
+
+  //
+  // Stop TCO timer here as SPI read/write timings are highly variable
+  //
+  if (PcdGetBool (PcdSblResiliencyEnabled)) {
+    StopTcoTimer ();
+    ClearFailedBootCount ();
+  }
 
   //
   // Perform firmware recovery/update
