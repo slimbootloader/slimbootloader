@@ -75,6 +75,7 @@ MEMORY_CFG_DATA.CpuDmiHwEqGen3CoeffListCm  | { 0x01, 0x01, 0x01, 0x01, 0x01, 0x0
 MEMORY_CFG_DATA.BdatEnable                 | 0x0
 MEMORY_CFG_DATA.PchHdaAudioLinkHdaEnable   | 0x1
 MEMORY_CFG_DATA.PchHdaDspEnable            | 0x1
+MEMORY_CFG_DATA.WdtDisableAndLock          | 0
 
 GRAPHICS_CFG_DATA.InternalGfx             | 0x2
 

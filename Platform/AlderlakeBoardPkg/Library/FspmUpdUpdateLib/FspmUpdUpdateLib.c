@@ -484,7 +484,10 @@ UpdateFspConfig (
   Fspmcfg->SkipExtGfxScan       = MemCfgData->SkipExtGfxScan;
   Fspmcfg->LockPTMregs          = MemCfgData->LockPTMregs;
   Fspmcfg->CridEnable           = 0x0;
-  Fspmcfg->Ddr4OneDpc           = 0x3;
+  Fspmcfg->Lfsr0Mask            = 0xb;
+  Fspmcfg->Lfsr1Mask            = 0xb;
+  Fspmcfg->RefreshPanicWm       = 0x8;
+  Fspmcfg->RefreshHpWm          = 0x7;
 
   Fspmcfg->PlatformDebugConsent         = MemCfgData->PlatformDebugConsent;
   if (Fspmcfg->PlatformDebugConsent != 0) {
@@ -567,11 +570,7 @@ UpdateFspConfig (
 #endif
   }
 
-    Fspmcfg->WRDS = 0x1;
   if (IsPchLp ()) {
-    Fspmcfg->DdiPortAConfig = 0x1;
-    Fspmcfg->WdtDisableAndLock = 0x0;
-    Fspmcfg->FirstDimmBitMask = 0x0;
     switch (GetPlatformId ()) {
       case PLATFORM_ID_ADL_P_LP4_RVP:
         Fspmcfg->DdiPortBHpd = 0x1;
@@ -579,10 +578,8 @@ UpdateFspConfig (
         break;
       case PLATFORM_ID_ADL_P_LP5_RVP:
         Fspmcfg->DdiPortBConfig = 0x1;
-        Fspmcfg->PrmrrSize = 0x200000;
         Fspmcfg->PcieClkReqGpioMux[9] = 0x796e9000;
         Fspmcfg->TcssXdciEn = 0x1;
-        Fspmcfg->Ddr4OneDpc = 0x3;
         Fspmcfg->Lp5CccConfig = 0xff;
         break;
       case PLATFORM_ID_ADL_P_DDR5_RVP:
@@ -609,22 +606,22 @@ UpdateFspConfig (
         Fspmcfg->DdiPortBHpd = 0x1;
         Fspmcfg->DmiHweq = 0x2;
         Fspmcfg->PcieClkReqGpioMux[9] = 0x796e9000;
-        Fspmcfg->PrmrrSize = 0x200000;
         Fspmcfg->SkipCpuReplacementCheck = 0x0;
-        Fspmcfg->FirstDimmBitMaskEcc = 0x0;
+        break;
+        case PLATFORM_ID_ADL_PS_DDR5_CRB:
+          Fspmcfg->DdiPortAConfig = 0x1;
         break;
       case PLATFORM_ID_ADL_N_DDR5_CRB:
         Fspmcfg->CpuPcieRpEnableMask = 0x0;
         Fspmcfg->DmiHweq = 0x2;
         Fspmcfg->Lp5CccConfig = 0xff;
         Fspmcfg->SkipCpuReplacementCheck = 0x0;
-        Fspmcfg->FirstDimmBitMaskEcc = 0x0;
+        //Fspmcfg->FirstDimmBitMaskEcc = 0x0;
         Fspmcfg->Lp5BankMode = 0x0;
         break;
       case PLATFORM_ID_ADL_N_LPDDR5_RVP:
         Fspmcfg->DmiHweq = 0x2;
         Fspmcfg->Lp5CccConfig = 0xff;
-        Fspmcfg->FirstDimmBitMask = 0x0;
         Fspmcfg->SkipCpuReplacementCheck = 0x0;
         break;
       default:
@@ -635,11 +632,6 @@ UpdateFspConfig (
   if (PcdGetBool (PcdFastBootEnabled) && !(IsPchP ())) {
     Fspmcfg->CpuPcieRpEnableMask = 0;
   }
-
-  Fspmcfg->Lfsr0Mask      = 0xb;
-  Fspmcfg->Lfsr1Mask      = 0xb;
-  Fspmcfg->RefreshPanicWm = 0x8;
-  Fspmcfg->RefreshHpWm    = 0x7;
 
   // Tcc enabling
   if (IsPchS () || IsPchN()) {
@@ -691,4 +683,3 @@ UpdateFspConfig (
     }
   }
 }
-
