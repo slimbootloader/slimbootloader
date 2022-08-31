@@ -608,8 +608,11 @@ UpdateFspConfig (
         Fspmcfg->PcieClkReqGpioMux[9] = 0x796e9000;
         Fspmcfg->SkipCpuReplacementCheck = 0x0;
         break;
-        case PLATFORM_ID_ADL_PS_DDR5_CRB:
-          Fspmcfg->DdiPortAConfig = 0x1;
+      case PLATFORM_ID_ADL_PS_DDR5_CRB:
+        Fspmcfg->DdiPortAConfig = 0x0;
+        Fspmcfg->PcieClkReqGpioMux[9] = 0x796e9000;
+        Fspmcfg->SkipCpuReplacementCheck = 0x0;
+        Fspmcfg->FirstDimmBitMaskEcc = 0x0;
         break;
       case PLATFORM_ID_ADL_N_DDR5_CRB:
         Fspmcfg->CpuPcieRpEnableMask = 0x0;
