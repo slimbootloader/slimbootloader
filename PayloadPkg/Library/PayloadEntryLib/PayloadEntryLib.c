@@ -14,6 +14,7 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/PayloadLib.h>
 #include <Library/BootloaderCommonLib.h>
+#include <Library/BootloaderCoreLib.h>
 #include <Library/LoaderPerformanceLib.h>
 #include <Library/PayloadMemoryAllocationLib.h>
 #include <Library/SerialPortLib.h>
@@ -272,7 +273,7 @@ SecStartup (
 
   // ACPI table
   SystemTableInfo = GetSystemTableInfo ();
-  if (SystemTableInfo != NULL) {
+  if (SystemTableInfo != NULL && ACPI_ENABLED()) {
     ParseAcpiTableInfo ((UINT32)SystemTableInfo->AcpiTableBase);
   }
 
