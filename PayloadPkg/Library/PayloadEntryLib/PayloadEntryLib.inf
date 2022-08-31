@@ -26,6 +26,7 @@
   MdePkg/MdePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
   PayloadPkg/PayloadPkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
 
 [LibraryClasses]
   BaseLib
@@ -40,6 +41,7 @@
   DebugLogBufferLib
   DebugPrintErrorLevelLib
   PagingLib
+  BootloaderCoreLib
 
 [Guids]
   gLoaderLibraryDataGuid
@@ -59,3 +61,4 @@
   gPlatformCommonLibTokenSpaceGuid.PcdDmaProtectionEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdDmaBufferSize
   gPlatformCommonLibTokenSpaceGuid.PcdDmaBufferAlignment
+  gPlatformModuleTokenSpaceGuid.PcdAcpiEnabled
