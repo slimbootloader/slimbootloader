@@ -1222,6 +1222,9 @@ UpdateFspConfig (
         FspsConfig->FwProgress = 0x1;
         FspsConfig->Irms[1] = 0x0;
         break;
+      case PLATFORM_ID_ADL_PS_DDR5_CRB:
+        FspsConfig->AmtEnabled = 0x1;
+        break;
       default:
         break;
     }
