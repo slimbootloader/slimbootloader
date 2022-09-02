@@ -612,7 +612,7 @@ UpdateFspConfig (
         Fspmcfg->DdiPortAConfig = 0x0;
         Fspmcfg->PcieClkReqGpioMux[9] = 0x796e9000;
         Fspmcfg->SkipCpuReplacementCheck = 0x0;
-        Fspmcfg->Ddr4OneDpc = 0x3;
+        Fspmcfg->Ddr4OneDpc = MemCfgData->Ddr4OneDpc;
         Fspmcfg->FirstDimmBitMask = 0x0;
         Fspmcfg->FirstDimmBitMaskEcc = MemCfgData->FirstDimmBitMaskEcc;
         break;
