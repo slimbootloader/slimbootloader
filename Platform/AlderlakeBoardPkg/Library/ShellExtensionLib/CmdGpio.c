@@ -8,6 +8,71 @@
 
 #include <Library/ShellLib.h>
 #include <Library/GpioLib.h>
+#include <GpioPinsVer2Lp.h>
+#include <GpioPinsVer4S.h>
+#include <Library/PchInfoLib.h>
+#include <Library/GpioSiLib.h>
+
+
+/*GPIO Group number for ADLN and ADLP in Alphabetic order from A to Z*/
+GPIO_GROUP GpioGrpAdlnpTable[] = {
+  GPIO_VER2_LP_GROUP_GPP_A,
+  GPIO_VER2_LP_GROUP_GPP_B,
+  GPIO_VER2_LP_GROUP_GPP_C,
+  GPIO_VER2_LP_GROUP_GPP_D,
+  GPIO_VER2_LP_GROUP_GPP_E,
+  GPIO_VER2_LP_GROUP_GPP_F,
+  0x0,
+  GPIO_VER2_LP_GROUP_GPP_H,
+  GPIO_VER2_LP_GROUP_GPP_I,
+  0x0,
+  0x0,
+  0x0,
+  0x0,
+  0x0,
+  GPIO_VER2_LP_GROUP_VGPIO,
+  GPIO_VER2_LP_GROUP_GPD,
+  0x0,
+  GPIO_VER2_LP_GROUP_GPP_R,
+  GPIO_VER2_LP_GROUP_GPP_S,
+  GPIO_VER2_LP_GROUP_GPP_T,
+  GPIO_VER2_LP_GROUP_GPP_U,
+  0x0,
+  0x0,
+  0x0,
+  0x0,
+  0x0
+};
+
+/*GPIO Group number for ADLS in Alphabetic order from A to Z*/
+GPIO_GROUP GpioGrpAdlsTable[] = {
+  GPIO_VER4_S_GROUP_GPP_A,
+  GPIO_VER4_S_GROUP_GPP_B,
+  GPIO_VER4_S_GROUP_GPP_C,
+  GPIO_VER4_S_GROUP_GPP_D,
+  GPIO_VER4_S_GROUP_GPP_E,
+  GPIO_VER4_S_GROUP_GPP_F,
+  GPIO_VER4_S_GROUP_GPP_G,
+  GPIO_VER4_S_GROUP_GPP_H,
+  GPIO_VER4_S_GROUP_GPP_I,
+  GPIO_VER4_S_GROUP_GPP_J,
+  GPIO_VER4_S_GROUP_GPP_K,
+  0x0,
+  0x0,
+  0x0,
+  GPIO_VER4_S_GROUP_VGPIO,
+  GPIO_VER4_S_GROUP_GPD,
+  0x0,
+  GPIO_VER4_S_GROUP_GPP_R,
+  GPIO_VER4_S_GROUP_GPP_S,
+  0x0,
+  0x0,
+  0x0,
+  0x0,
+  0x0,
+  0x0,
+  0x0
+};
 
 
 /**
@@ -36,6 +101,99 @@ CONST SHELL_COMMAND mShellCommandGpio = {
 };
 
 /**
+  Calculate GPIO group value from group array index
+
+  @param[in]  GrpArrayIndex GPIO group array index
+  @param[out] GpioGroup     GPIO group
+**/
+EFI_STATUS
+EFIAPI
+GpioGetGroup(
+  IN UINT32 GrpArrayIndex,
+  OUT UINT32 *GpioGroup)
+{
+  *GpioGroup = 0;
+  if (IsPchS()) {
+    *GpioGroup = GpioGrpAdlsTable[GrpArrayIndex];
+  }
+  else if (IsPchP() || IsPchN()) {
+    *GpioGroup = GpioGrpAdlnpTable[GrpArrayIndex];
+  }
+
+  if (*GpioGroup == 0) {
+    ShellPrint(L"This GPIO group is not present in ADL platform\n");
+    return EFI_INVALID_PARAMETER;
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Calculate GPIO group from command line argument
+
+  @param[in]  Subcmd      GPIO command argument
+  @param[out] GroupValue  GPIO group value
+**/
+EFI_STATUS
+EFIAPI
+ProcessCmd(
+  IN CHAR16  *Subcmd,
+  OUT UINT32 *GroupValue)
+{
+  UINT32 GroupName;
+  EFI_STATUS Status = EFI_SUCCESS;
+  if (StrLen(Subcmd) == 1){
+    if ((Subcmd[0] >= 'A') && (Subcmd[0] <= 'Z')) {
+      GroupName = (UINT32)(Subcmd[0] - 'A');
+    }
+    else if ((Subcmd[0] >= 'a') && (Subcmd[0] <= 'z')) {
+      GroupName = (UINT32)(Subcmd[0] - 'a');
+    }
+    else {
+      ShellPrint(L"Invalid GPIO group\n");
+      Status = EFI_INVALID_PARAMETER;
+    }
+  }
+  else {
+      ShellPrint(L"Invalid GPIO group\n");
+      Status = EFI_INVALID_PARAMETER;
+  }
+
+  if (!EFI_ERROR(Status)) {
+    Status = GpioGetGroup(GroupName, GroupValue);
+  }
+
+  return Status;
+}
+
+/**
+  Calculate GPIO pad value from pad group and pin number.
+
+  @param[in]  PadGroup      GPIO pad group
+  @param[in]  PinNumber     GPIO pin number
+**/
+UINT32
+EFIAPI
+GpioPadcalc(
+    IN UINT32 PadGroup,
+    IN UINT32 PinNumber
+)
+{
+  UINT32 GpioPad;
+  UINT32 GroupIndex;
+
+  GroupIndex = GpioGetGroupIndexFromGroup(PadGroup);
+
+  if (IsPchS()) {
+    GpioPad = (PinNumber | (GroupIndex << 16)) | (GPIO_VER4_S_CHIPSET_ID << 24);
+  }
+  else if (IsPchP()) {
+    GpioPad = (PinNumber | (GroupIndex << 16)) | (GPIO_VER2_LP_CHIPSET_ID << 24);
+  }
+  return GpioPad;
+ }
+
+/**
   Write GPIO pin value.
 
   @param[in]  GpioPad      GPIO pad
@@ -56,19 +214,14 @@ GpioWrite (
     return EFI_ABORTED;
   }
 
-  if((Value != 0) && (Value != 1)){
-    ShellPrint (L"Write Failed! value: %d unsupported\n", Value);
-    return EFI_ABORTED;
-  }
-
   if((PadConfig.Direction == GpioDirOut) || (PadConfig.Direction == GpioDirInOut) ||
   (PadConfig.Direction == GpioDirInInvOut)){
     Status = GpioSetOutputValue(GpioPad, Value);
     if (!EFI_ERROR (Status)) {
-        ShellPrint (L"GPIO write value: %d to pad %08x Success\n", Value, GpioPad);
+      ShellPrint(L"GPIO write success\n");
     }
     else{
-        ShellPrint (L"GPIO write Failed: %d\n", Status);
+      ShellPrint (L"GPIO write Failed: %d\n", Status);
     }
   }
   else{
@@ -113,7 +266,7 @@ GpioRead (
   }
 
   if (!EFI_ERROR (Status)) {
-    ShellPrint (L"GPIO pad %08x read value: %d\n", GpioPad, Value);
+    ShellPrint(L"Read success! Read value: %d\n", Value);
   }
   else{
     ShellPrint (L"GPIO read Failed: %d\n", Status);
@@ -140,18 +293,52 @@ ShellCommandGpioFunc (
   IN CHAR16 *Argv[]
   )
 {
-  EFI_STATUS Status = EFI_INVALID_PARAMETER;
+  EFI_STATUS Status = EFI_SUCCESS;
   UINT32 Value;
   UINT32 GpioPad;
+  UINT32 GroupValue;
+  UINT32 GpioPin;
+  UINT32 Index = 1;
 
-  if ((Argc == 3) && (StrCmp (Argv[1], L"read") == 0)){
-    GpioPad = (UINT32)StrHexToUintn (Argv[2]);
-    Status = GpioRead(GpioPad);
+  if ((Argc == 4) && (StrCmp (Argv[Index], L"read") == 0)){
+    Index ++;
+    Status = ProcessCmd(Argv[Index], &GroupValue);
+
+    if (!EFI_ERROR(Status)) {
+      GpioPin = (UINT32)StrDecimalToUintn(Argv[3]);
+      //In ADL platform all pin number ranges from 0 to 23
+      if ((GpioPin >= 0) && (GpioPin < 24)){
+        GpioPad = GpioPadcalc(GroupValue, GpioPin);
+        Status = GpioRead(GpioPad);
+      }
+      else {
+        ShellPrint(L"Invalid Pin Number\n");
+        Status = EFI_INVALID_PARAMETER;
+      }
+    }
   }
-  else if ((Argc == 4) && (StrCmp (Argv[1], L"write") == 0)){
-    GpioPad = (UINT32)StrHexToUintn (Argv[2]);
-    Value = (UINT32)StrHexToUintn (Argv[3]);
-    Status = GpioWrite(GpioPad, Value);
+  else if ((Argc == 5) && (StrCmp (Argv[Index], L"write") == 0)){
+    Index ++;
+    Status = ProcessCmd(Argv[Index], &GroupValue);
+
+    if (!EFI_ERROR(Status)) {
+      GpioPin = (UINT32)StrDecimalToUintn(Argv[3]);
+      //In ADL platform all pin number ranges between 0 to 23
+      if ((GpioPin >= 0) && (GpioPin < 24)){
+        GpioPad = GpioPadcalc(GroupValue, GpioPin);
+        Value = (UINT32)StrDecimalToUintn(Argv[4]);
+        if ((Value != 0) && (Value != 1)){
+          ShellPrint(L"Error! GPIO supported write values [0|1]\n");
+        }
+        else {
+          Status = GpioWrite(GpioPad, Value);
+        }
+      }
+      else {
+        ShellPrint(L"Invalid Pin Number\n");
+        Status = EFI_INVALID_PARAMETER;
+      }
+    }
   }
   else{
     goto Usage;
@@ -160,16 +347,20 @@ ShellCommandGpioFunc (
   return Status;
 
 Usage:
-  ShellPrint (L"Usage: %s read [GpioPad] \n", Argv[0]);
-  ShellPrint (L"       %s write [GpioPad] [0|1]  (0 - set GPIO output level low; 1 - set GPIO output level high)\n", Argv[0]);
-  ShellPrint (L"       #GPIOPad value (in hex) can be obtained from corresponding platform header file for the required GPIO pin\n");
-  ShellPrint (L"       examples:\n");
-  ShellPrint (L"       # Read GPIO pad 0x09020014 for GPIO pin A20\n");
-  ShellPrint (L"         read 0x09020014\n");
-  ShellPrint (L"       # Write 1 to GPIO pad 0x09020014, to set GPIO pin A20 output level as high\n");
-  ShellPrint (L"         write 0x09020014 1\n");
-  ShellPrint (L"       # Write 0 to GPIO pad 0x09020014, to set GPIO pin A20 output level as low\n");
-  ShellPrint (L"         write 0x09020014 0\n");
+  ShellPrint (L"Usage: %s read [GPIO Group] [Pin Number] \n", Argv[0]);
+  ShellPrint (L"       %s write [GPIO Group] [Pin Number] [0|1]  (0 - set GPIO output level low; 1 - set GPIO output level high)\n", Argv[0]);
+  ShellPrint (L"       [GPIO Group] example list\n");
+  ShellPrint (L"       # GPP_A - A\n");
+  ShellPrint (L"       # GPP_B - B\n");
+  ShellPrint (L"       # GROUP_VGPIO - O\n");
+  ShellPrint (L"       # GROUP_GPD - P\n");
+  ShellPrint (L"       Example Commands:\n");
+  ShellPrint (L"       # Read GPIO pin A20\n");
+  ShellPrint (L"         gpio read A 20\n");
+  ShellPrint (L"       # Write 1 to set output level as High for GPIO pin A20 \n");
+  ShellPrint (L"         gpio write A 20 1\n");
+  ShellPrint (L"       # Write 0 to set output level as Low for GPIO pin A20 \n");
+  ShellPrint (L"         gpio write A 20 0\n");
 
   return EFI_ABORTED;
 }
