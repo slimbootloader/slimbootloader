@@ -363,9 +363,8 @@ S3ResumePath (
 
   AddMeasurePoint (0x31F0);
 
-  // FWU payload is the only payload in SBL scope, so stop TCO
-  // timer if another payload is set to be launched
-  if (PcdGetBool (PcdSblResiliencyEnabled) && GetBootMode () != BOOT_ON_FLASH_UPDATE) {
+  // No payload is executed in S3 resume, so stop TCO timer in all cases
+  if (PcdGetBool (PcdSblResiliencyEnabled)) {
     StopTcoTimer ();
     ClearFailedBootCount ();
   }
