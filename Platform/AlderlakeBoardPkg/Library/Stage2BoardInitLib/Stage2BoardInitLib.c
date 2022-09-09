@@ -450,16 +450,19 @@ BoardInit (
       ProgramSecuritySetting ();
     }
 
-    //
-    // Enable decoding of I/O locations 62h and 66h to LPC
-    //
-    LpcBase = MM_PCI_ADDRESS (0, PCI_DEVICE_NUMBER_PCH_LPC, 0, 0);
-    MmioOr16 (LpcBase + R_LPC_CFG_IOE, B_LPC_CFG_IOE_ME1);
+    SiCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
+    if ( (SiCfgData != NULL) && (SiCfgData->EcAvailable == 1)) {
+      //
+      // Enable decoding of I/O locations 62h and 66h to LPC
+      //
+      LpcBase = MM_PCI_ADDRESS (0, PCI_DEVICE_NUMBER_PCH_LPC, 0, 0);
+      MmioOr16 (LpcBase + R_LPC_CFG_IOE, B_LPC_CFG_IOE_ME1);
 
-    //
-    // Enable EC's ACPI mode to control power to motherboard during Sleep (S3)
-    //
-    IoWrite16 (EC_C_PORT, EC_C_ACPI_ENABLE);
+      //
+      // Enable EC's ACPI mode to control power to motherboard during Sleep (S3)
+      //
+      IoWrite16 (EC_C_PORT, EC_C_ACPI_ENABLE);
+    }
     break;
   case ReadyToBoot:
     if ((GetBootMode() != BOOT_ON_FLASH_UPDATE) && (GetPayloadId() == 0)) {

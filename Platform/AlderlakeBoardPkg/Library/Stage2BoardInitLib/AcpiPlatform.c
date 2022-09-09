@@ -267,6 +267,7 @@ PlatformUpdateAcpiTable (
   GLOBAL_NVS_AREA             *GlobalNvs;
   UINT32                       Base;
   UINT16                       Size;
+  SILICON_CFG_DATA            *SiCfgData;
   VOID                        *FspHobList;
   PLATFORM_DATA               *PlatformData;
   FEATURES_CFG_DATA           *FeaturesCfgData;
@@ -280,6 +281,12 @@ PlatformUpdateAcpiTable (
   Ptr  = (UINT8 *)Table;
   End  = (UINT8 *)Table + Table->Length;
 
+  if (Table->Signature == EFI_ACPI_5_0_EMBEDDED_CONTROLLER_BOOT_RESOURCES_TABLE_SIGNATURE) {
+    SiCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
+    if ((SiCfgData == NULL) || (SiCfgData->EcAvailable == 0)) {
+      return EFI_UNSUPPORTED;
+    }
+  }
   if (Table->Signature == EFI_ACPI_5_0_DIFFERENTIATED_SYSTEM_DESCRIPTION_TABLE_SIGNATURE) {
     for (; Ptr < End; Ptr++) {
       if (*(Ptr-1) != AML_NAME_OP)
