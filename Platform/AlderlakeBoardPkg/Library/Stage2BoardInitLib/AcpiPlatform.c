@@ -1048,6 +1048,12 @@ PlatformUpdateAcpiGnvs (
 
     PlatformNvs->PchM2SsdPowerEnableGpio = GPIO_VER4_S_GPP_K11;
     break;
+  case PLATFORM_ID_ADL_PS_DDR5_CRB:
+    PlatformNvs->M2Ssd2PowerEnableGpio = GPIO_VER2_LP_GPP_D14;
+    PlatformNvs->M2Ssd2RstGpio = GPIO_VER2_LP_GPP_F7;
+    PlatformNvs->PchM2SsdPowerEnableGpio = GPIO_VER2_LP_GPP_D16;
+    PlatformNvs->PchM2SsdRstGpio = GPIO_VER2_LP_GPP_H1;
+    break;
   case PLATFORM_ID_TEST_S_DDR5_UDIMM_RVP:
     PlatformNvs->PcieSlot1PowerEnableGpio = GPIO_VER4_S_GPP_E1;
     PlatformNvs->PcieSlot2RpNumber = 5;
