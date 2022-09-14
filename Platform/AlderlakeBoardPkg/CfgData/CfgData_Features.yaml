@@ -48,9 +48,16 @@
         help         : >
                        Enable/Disable Sio feature. 1:Sio Enabled, 0:Sio Disabled
         length       : 1b
+    - MeFipsMode     :
+        name         : ME FIPS Mode Enable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable ME FIPS Mode. 1:Enabled, 0:Disabled
+        length       : 1b
     - Rsvd         :
         name         : Reserved
         type         : Reserved
         help         : >
                        reserved bits
-        length       : 28b
+        length       : 27b
