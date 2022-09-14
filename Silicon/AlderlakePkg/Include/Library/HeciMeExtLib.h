@@ -1,7 +1,7 @@
 /** @file
   Heci ME Extended Measured boot library.
 
-  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -10,6 +10,7 @@
 #include <Uefi/UefiBaseType.h>
 #include <Library/BaseLib.h>
 #include <Library/PciLib.h>
+#include <MkhiMsgs.h>
 
 #define HeciPciRead32(func, reg)     PciRead32 (PCI_LIB_ADDRESS(ME_BUS, ME_DEVICE_NUMBER, func, reg))
 #define HeciPciRead16(func, reg)     PciRead16 (PCI_LIB_ADDRESS(ME_BUS, ME_DEVICE_NUMBER, func, reg))
@@ -96,6 +97,36 @@ HeciGetHerHashData (
   IN UINT32    *Her,
   IN UINT32    HerOffset,
   IN UINT8     HerMaxRegCount
+  );
+
+/**
+  Send Set FIPS Mode to Enabled or Disabled
+
+  @retval EFI_UNSUPPORTED         Current ME mode doesn't support this function
+  @retval EFI_SUCCESS             Command succeeded
+  @retval EFI_DEVICE_ERROR        HECI Device error, command aborts abnormally
+  @retval EFI_TIMEOUT             HECI does not return the buffer before timeout
+  @retval EFI_BUFFER_TOO_SMALL    Message Buffer is too small for the Acknowledge
+**/
+EFI_STATUS
+EFIAPI
+HeciSetFipsMode (
+  IN UINT32 FipsMode
+  );
+
+/**
+  Send Get Current FIPS Mode and Crypto Driver version
+
+  @retval EFI_UNSUPPORTED         Current ME mode doesn't support this function
+  @retval EFI_SUCCESS             Command succeeded
+  @retval EFI_DEVICE_ERROR        HECI Device error, command aborts abnormally
+  @retval EFI_TIMEOUT             HECI does not return the buffer before timeout
+  @retval EFI_BUFFER_TOO_SMALL    Message Buffer is too small for the Acknowledge
+**/
+EFI_STATUS
+EFIAPI
+HeciGetFipsMode (
+  OUT GET_FIPS_MODE_DATA  *GetFipsModeData
   );
 
 #endif

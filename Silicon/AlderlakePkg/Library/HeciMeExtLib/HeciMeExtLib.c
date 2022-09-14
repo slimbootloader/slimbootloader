@@ -1,7 +1,7 @@
 /** @file
   Implementation file for Heci ME Extended Measured boot functionality
 
-  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -603,5 +603,121 @@ HeciArbSvnGetInfoMsg (
   }
 
   FreePool (ArbSvnGetInfo);
+  return Status;
+}
+
+/**
+  Send Set FIPS Mode to Enabled or Disabled
+
+  @retval EFI_UNSUPPORTED         Current ME mode doesn't support this function
+  @retval EFI_SUCCESS             Command succeeded
+  @retval EFI_DEVICE_ERROR        HECI Device error, command aborts abnormally
+  @retval EFI_TIMEOUT             HECI does not return the buffer before timeout
+  @retval EFI_BUFFER_TOO_SMALL    Message Buffer is too small for the Acknowledge
+**/
+EFI_STATUS
+EFIAPI
+HeciSetFipsMode (
+  IN UINT32 FipsMode
+  )
+{
+  SET_FIPS_MODE_BUFFER   SetFipsMode;
+  UINT32                 Length;
+  UINT32                 RecvLength;
+  EFI_STATUS             Status;
+  UINT32                 MeMode;
+
+  Status = HeciGetMeMode(&MeMode);
+  if (EFI_ERROR (Status) || (MeMode != ME_MODE_NORMAL)) {
+    return EFI_UNSUPPORTED;
+  }
+
+  SetFipsMode.Request.MkhiHeader.Data              = 0;
+  SetFipsMode.Request.MkhiHeader.Fields.GroupId    = MKHI_GEN_GROUP_ID;
+  SetFipsMode.Request.MkhiHeader.Fields.Command    = GEN_SET_FIPS_MODE_CMD;
+  SetFipsMode.Request.Data.FipsMode                = FipsMode;
+  Length                                           = sizeof (SET_FIPS_MODE);
+  RecvLength                                       = sizeof (SET_FIPS_MODE_ACK);
+  ///
+  /// Send Set FIPS Mode Request to ME
+  ///
+  Status = HeciSendwAck (
+                   HECI1_DEVICE,
+                   (UINT32 *) &SetFipsMode,
+                   Length,
+                   &RecvLength,
+                   BIOS_FIXED_HOST_ADDR,
+                   HECI_MKHI_MESSAGE_ADDR
+                   );
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "HeciSetFipsMode: Message failed! EFI_STATUS = %r\n", Status));
+    return Status;
+  }
+
+  if (SetFipsMode.Request.MkhiHeader.Fields.Result != MkhiStatusSuccess) {
+    Status = EFI_DEVICE_ERROR;
+  }
+
+  return Status;
+}
+
+/**
+  Send Get Current FIPS Mode and Crypto Driver version
+
+  @retval EFI_UNSUPPORTED         Current ME mode doesn't support this function
+  @retval EFI_SUCCESS             Command succeeded
+  @retval EFI_DEVICE_ERROR        HECI Device error, command aborts abnormally
+  @retval EFI_TIMEOUT             HECI does not return the buffer before timeout
+  @retval EFI_BUFFER_TOO_SMALL    Message Buffer is too small for the Acknowledge
+**/
+EFI_STATUS
+EFIAPI
+HeciGetFipsMode (
+  OUT GET_FIPS_MODE_DATA  *GetFipsModeData
+  )
+{
+  GET_FIPS_MODE_BUFFER   GetFipsMode;
+  UINT32                 Length;
+  UINT32                 RecvLength;
+  EFI_STATUS             Status;
+  UINT32                 MeMode;
+
+
+  Status = HeciGetMeMode (&MeMode);
+  if (EFI_ERROR (Status) || (MeMode != ME_MODE_NORMAL)) {
+    return EFI_UNSUPPORTED;
+  }
+
+  GetFipsMode.Request.MkhiHeader.Data              = 0;
+  GetFipsMode.Request.MkhiHeader.Fields.GroupId    = MKHI_GEN_GROUP_ID;
+  GetFipsMode.Request.MkhiHeader.Fields.Command    = GEN_GET_FIPS_MODE_CMD;
+  Length                                           = sizeof (GET_FIPS_MODE);
+  RecvLength                                       = sizeof (GET_FIPS_MODE_ACK);
+  ///
+  /// Send Get FIPS Mode Request to ME
+  ///
+  Status = HeciSendwAck (
+                   HECI1_DEVICE,
+                   (UINT32 *) &GetFipsMode,
+                   Length,
+                   &RecvLength,
+                   BIOS_FIXED_HOST_ADDR,
+                   HECI_MKHI_MESSAGE_ADDR
+                   );
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "HeciGetFipsMode: Message failed! EFI_STATUS = %r\n", Status));
+    return Status;
+  }
+
+  if ((GetFipsMode.Response.MkhiHeader.Fields.Command == GEN_GET_FIPS_MODE_CMD) &&
+      (GetFipsMode.Response.MkhiHeader.Fields.IsResponse == 1) &&
+      (GetFipsMode.Response.MkhiHeader.Fields.Result == MkhiStatusSuccess)) {
+    *GetFipsModeData = GetFipsMode.Response.Data;
+  } else {
+    return EFI_DEVICE_ERROR;
+  }
+
   return Status;
 }
