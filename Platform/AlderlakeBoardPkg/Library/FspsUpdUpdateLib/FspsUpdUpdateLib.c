@@ -1132,6 +1132,10 @@ UpdateFspConfig (
       case PLATFORM_ID_ADL_N_DDR5_CRB:
         FspsConfig->PchLanEnable = 0x0;
         FspsConfig->PchPmVrAlert = 0x1;
+        FspsConfig->PchFivrExtV1p05RailEnabledStates = 0x3f;
+        FspsConfig->PchFivrExtVnnRailEnabledStates = 0x3f;
+        FspsConfig->PchFivrExtVnnRailSupportedVoltageStates = 0x4;
+        FspsConfig->PchFivrVccinAuxOffToHighCurModeVolTranTime = 0x0;
         FspsConfig->IomStayInTCColdSeconds = 0x0;
         FspsConfig->IomBeforeEnteringTCColdSeconds = 0x0;
         FspsConfig->UsbTcPortEn = 0x3;
@@ -1144,12 +1148,6 @@ UpdateFspConfig (
         FspsConfig->CpuPcieRpLtrEnable[0] = 0x0;
         FspsConfig->CpuPcieRpLtrEnable[1] = 0x0;
         FspsConfig->CpuPcieRpLtrEnable[2] = 0x0;
-
-        for (Index = 0; Index < 4; Index++) {
-          FspsConfig->CpuPcieRpLtrMaxSnoopLatency[Index]   = 0x1003;
-          FspsConfig->CpuPcieRpLtrMaxNoSnoopLatency[Index] = 0x1003;
-        }
-
         FspsConfig->CpuPcieRpGen3Uptp[0] = 0x7;
         FspsConfig->CpuPcieRpGen3Uptp[2] = 0x7;
         FspsConfig->CpuPcieRpGen4Uptp[1] = 0x8;
@@ -1171,14 +1169,9 @@ UpdateFspConfig (
         FspsConfig->PortResetMessageEnable[1] = 0x0;
         FspsConfig->PortResetMessageEnable[2] = 0x0;
         FspsConfig->PortResetMessageEnable[4] = 0x0;
-        FspsConfig->AtomTurboRatioLimitNumCore[1] = 0x0;
-        FspsConfig->AtomTurboRatioLimitNumCore[2] = 0x0;
-        FspsConfig->AtomTurboRatioLimitNumCore[3] = 0x0;
-        FspsConfig->AtomTurboRatioLimitNumCore[4] = 0x0;
-        FspsConfig->AtomTurboRatioLimitNumCore[5] = 0x0;
-        FspsConfig->AtomTurboRatioLimitNumCore[6] = 0x0;
-        FspsConfig->AtomTurboRatioLimitNumCore[7] = 0x0;
-
+        FspsConfig->AmtEnabled = 0x1;
+        FspsConfig->LidStatus = 0x5b;
+        FspsConfig->TcssAuxOri = 0x1;
         break;
       case PLATFORM_ID_ADL_N_LPDDR5_RVP:
         FspsConfig->PchLanEnable = 0x0;

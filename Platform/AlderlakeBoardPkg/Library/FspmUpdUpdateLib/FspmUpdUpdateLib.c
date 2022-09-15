@@ -620,9 +620,11 @@ UpdateFspConfig (
         break;
       case PLATFORM_ID_ADL_N_DDR5_CRB:
         Fspmcfg->CpuPcieRpEnableMask = 0x0;
+        Fspmcfg->Ddr4OneDpc = 0x3;
         Fspmcfg->DmiHweq = 0x2;
         Fspmcfg->Lp5CccConfig = 0xff;
         Fspmcfg->SkipCpuReplacementCheck = 0x0;
+        Fspmcfg->FirstDimmBitMask = 0x0;
         //Fspmcfg->FirstDimmBitMaskEcc = 0x0;
         Fspmcfg->Lp5BankMode = 0x0;
         break;
