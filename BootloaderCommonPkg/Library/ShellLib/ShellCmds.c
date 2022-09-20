@@ -35,7 +35,6 @@ LoadShellCommands (
   ShellCommandRegister (Shell, &ShellCommandMtrr);
   ShellCommandRegister (Shell, &ShellCommandUcode);
   ShellCommandRegister (Shell, &ShellCommandCls);
-  ShellCommandRegister (Shell, &ShellCommandCorruptComponent);
 
   if (!FeaturePcdGet (PcdMiniShellEnabled)) {
     // More Shell commands
@@ -56,6 +55,11 @@ LoadShellCommands (
     for (Iter = ShellExtensionCmds; *Iter != NULL; Iter++) {
       ShellCommandRegister (Shell, *Iter);
     }
+  }
+
+  if (FeaturePcdGet (PcdSecurityShellEnabled)) {
+    // Security-related Shell commands
+    ShellCommandRegister (Shell, &ShellCommandCorruptComp);
   }
 
   return EFI_SUCCESS;
