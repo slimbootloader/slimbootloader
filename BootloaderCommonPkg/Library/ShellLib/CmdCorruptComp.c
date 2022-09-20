@@ -24,24 +24,34 @@
 **/
 EFI_STATUS
 EFIAPI
-ShellCommandCorruptComponentFunc (
+ShellCommandCorruptCompFunc (
   IN SHELL  *Shell,
   IN UINTN   Argc,
   IN CHAR16 *Argv[]
   );
 
-CONST SHELL_COMMAND ShellCommandCorruptComponent = {
-  L"corruptcomponent",
+CONST SHELL_COMMAND ShellCommandCorruptComp = {
+  L"corruptcomp",
   L"Perform random corruption in SBL component",
-  &ShellCommandCorruptComponentFunc
+  &ShellCommandCorruptCompFunc
 };
 
+/**
+  Show usage prompt to screen.
+
+  @param[in]  Argv         Command line arguments
+
+  @retval EFI_SUCCESS
+
+**/
 VOID
 ShowUsage (
   VOID
   )
 {
-  ShellPrint (L"Usage: corruptcomponent <boot partition> <component>\n");
+  ShellPrint (L"Usage: corruptcomp <boot partition> <component>\n");
+  ShellPrint (L"Example: corruptcomp 0 SG1B\n");
+  ShellPrint (L"Example: corruptcomp 1 ACM0\n");
 }
 
 /**
@@ -56,7 +66,7 @@ ShowUsage (
 **/
 EFI_STATUS
 EFIAPI
-ShellCommandCorruptComponentFunc (
+ShellCommandCorruptCompFunc (
   IN SHELL  *Shell,
   IN UINTN   Argc,
   IN CHAR16 *Argv[]
@@ -68,6 +78,7 @@ ShellCommandCorruptComponentFunc (
   UINT32              CompSig;
   SPI_FLASH_SERVICE   *SpiService;
   UINT32              BiosStart;
+  FLASH_MAP           *FlashMap;
   UINT8               *Buf;
   UINT32              CompOffset;
   UINT32              CompSize;
@@ -112,67 +123,83 @@ ShellCommandCorruptComponentFunc (
 
   SpiService = (SPI_FLASH_SERVICE *) GetServiceBySignature (SPI_FLASH_SERVICE_SIGNATURE);
   if (SpiService == NULL) {
-    ShellPrint (L"Error occured getting SPI flash service");
+    ShellPrint (L"Error, unable to retrieve SPI flash service\n");
     return EFI_UNSUPPORTED;
   }
 
   Status = SpiService->SpiInit ();
   if (EFI_ERROR(Status)) {
-    ShellPrint (L"Error occured initializing SPI flash service %r\n", Status);
+    ShellPrint (L"Error, unable to initialize SPI flash service %r\n", Status);
     return Status;
   }
 
   Status = SpiService->SpiGetRegion (FlashRegionBios, NULL, &BiosStart);
   if (EFI_ERROR(Status)) {
-    ShellPrint (L"Error occured getting BIOS SPI flash address %r\n", Status);
+    ShellPrint (L"Error, unable to retrieve BIOS SPI flash address %r\n", Status);
     return Status;
+  }
+
+  FlashMap = GetFlashMapPtr();
+  if (FlashMap == NULL) {
+    ShellPrint (L"Error, unable to retrieve flash map\n");
+    return EFI_NO_MAPPING;
+  }
+
+  if (BiosStart < FlashMap->RomSize) {
+    ShellPrint (L"Error, SBL image is larger than the BIOS region\n");
+    return EFI_ABORTED;
   }
 
   Buf = AllocatePages (EFI_SIZE_TO_PAGES (SIZE_4KB));
   if (Buf == NULL) {
+    ShellPrint (L"Error, unable to allocate buffer\n");
     return EFI_OUT_OF_RESOURCES;
   }
 
   Status = GetComponentInfoByPartition (CompSig, IsBackup, &CompOffset, &CompSize);
   if (EFI_ERROR (Status)) {
-    ShellPrint (L"Error, component info unable to be retrieved\n");
+    ShellPrint (L"Error, unable to retrieve SBL component info\n");
     return Status;
   }
 
-  // Choose a random offset in the component to corrupt
-  if (!GetRandomNumber32 (&RandOffset)) {
-    ShellPrint (L"Error, random offset unable to be generated\n");
-    return EFI_UNSUPPORTED;
-  }
+  do {
+    // Choose a random offset in the component to corrupt
+    if (!GetRandomNumber32 (&RandOffset)) {
+      ShellPrint (L"Error, unable to generate random offset\n");
+      return EFI_UNSUPPORTED;
+    }
 
-  RandOffset %= CompSize;
-  ChunkAddr = BiosStart + CompOffset + RandOffset;
-  ChunkAddrAligned = ALIGN_DOWN (ChunkAddr, SIZE_4KB);
+    RandOffset %= CompSize;
+    ChunkAddr = BiosStart + CompOffset + RandOffset;
+    ChunkAddrAligned = ALIGN_DOWN (ChunkAddr, SIZE_4KB);
 
-  // Read the whole 4KB chunk containing the offset from SPI flash
-  Status = SpiService->SpiRead (FlashRegionBios,
-                                ChunkAddrAligned,
-                                SIZE_4KB,
-                                Buf);
-  if (EFI_ERROR(Status)) {
-    ShellPrint (L"Error occured in SPI flash read %r\n", Status);
-    return Status;
-  }
+    // Read the whole 4KB chunk containing the offset from SPI flash
+    Status = SpiService->SpiRead (FlashRegionBios,
+                                  ChunkAddrAligned,
+                                  SIZE_4KB,
+                                  Buf);
+    if (EFI_ERROR(Status)) {
+      ShellPrint (L"Error, unable to be read SPI flash %r\n", Status);
+      return Status;
+    }
+
+    CurrVal = Buf + ChunkAddr - ChunkAddrAligned;
+
+    // Redo if byte is null, might not affect code execution otherwise
+  } while (*CurrVal == 0xFF || *CurrVal == 0x00);
 
   // Erase the whole 4KB chunk containing the offset from SPI flash
   Status = SpiService->SpiErase (FlashRegionBios, ChunkAddrAligned, SIZE_4KB);
   if (EFI_ERROR(Status)) {
-    ShellPrint (L"Error occured in SPI flash erase %r\n", Status);
+    ShellPrint (L"Error, unable to be erase SPI flash %r\n", Status);
     return Status;
   }
-
-  CurrVal = Buf + ChunkAddr - ChunkAddrAligned;
 
   // Make sure the random value to be put at the offset
   // is not the same as the existing value at the offset
   do {
     if (!GetRandomNumber16 (&RandVal)) {
-      ShellPrint (L"Error, random value unable to be generated\n");
+      ShellPrint (L"Error, unable to generate random value\n");
       return EFI_UNSUPPORTED;
     }
     NewVal = (UINT8)RandVal;
@@ -187,7 +214,7 @@ ShellCommandCorruptComponentFunc (
                                  SIZE_4KB,
                                  Buf);
   if (EFI_ERROR(Status)) {
-    ShellPrint (L"Error occured in SPI flash write %r\n", Status);
+    ShellPrint (L"Error, unable to write SPI flash %r\n", Status);
     return Status;
   }
 

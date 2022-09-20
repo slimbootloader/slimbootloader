@@ -45,7 +45,7 @@
   CmdCls.c
   CmdFs.c
   CmdUsbDev.c
-  CmdCorruptComponent.c
+  CmdCorruptComp.c
   ShellCmds.c
   Parsing.c
   History.c
@@ -86,6 +86,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdMiniShellEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdConsoleInDeviceMask
   gPlatformCommonLibTokenSpaceGuid.PcdBootPerformanceMask
+  gPlatformCommonLibTokenSpaceGuid.PcdSecurityShellEnabled
 
 [Guids]
   gLoaderPerformanceInfoGuid
