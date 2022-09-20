@@ -45,6 +45,7 @@
   CmdCls.c
   CmdFs.c
   CmdUsbDev.c
+  CmdCorruptComponent.c
   ShellCmds.c
   Parsing.c
   History.c
@@ -53,6 +54,7 @@
 [Packages]
   MdePkg/MdePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
 
 [LibraryClasses]
   BaseLib
@@ -76,6 +78,8 @@
   PartitionLib
   ShellExtensionLib
   MtrrLib
+  RngLib
+  MemoryAllocationLib
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
