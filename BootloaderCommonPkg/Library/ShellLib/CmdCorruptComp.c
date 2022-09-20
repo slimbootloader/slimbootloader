@@ -50,8 +50,9 @@ ShowUsage (
   )
 {
   ShellPrint (L"Usage: corruptcomp <boot partition> <component>\n");
+  ShellPrint (L"Example: corruptcomp 1 SG1A\n");
   ShellPrint (L"Example: corruptcomp 0 SG1B\n");
-  ShellPrint (L"Example: corruptcomp 1 ACM0\n");
+  ShellPrint (L"Example: corruptcomp 0 SG02\n");
 }
 
 /**
