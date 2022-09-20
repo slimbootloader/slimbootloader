@@ -1096,7 +1096,6 @@ UpdateFspConfig (
     FspsConfig->SaPcieItbtRpSnoopLatencyOverrideValue[2] = 0xc8;
     FspsConfig->TdcTimeWindow[0] = 0x3e8;
     FspsConfig->TdcTimeWindow[1] = 0x3e8;
-    FspsConfig->PchLockDownBiosLock = 0x1;
     FspsConfig->IehMode = 0x0;
     FspsConfig->PortResetMessageEnable[0] = 0x1;
     FspsConfig->PortResetMessageEnable[1] = 0x1;
