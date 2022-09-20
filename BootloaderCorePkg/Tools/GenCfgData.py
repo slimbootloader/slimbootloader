@@ -559,6 +559,7 @@ class DefTemplate(string.Template):
 
 class CGenCfgData:
     STRUCT         = '$STRUCT'
+    PADDINGNAME    = '__reserved'
     bits_width     = {'b':1, 'B':8, 'W':16, 'D':32, 'Q':64}
     builtin_option = {'$EN_DIS' : [('0', 'Disable'), ('1', 'Enable')]}
     exclude_struct = ['GPIO_GPP_*', 'GPIO_CFG_DATA', 'GpioConfPad*',  'GpioPinConfig',
@@ -1270,7 +1271,17 @@ class CGenCfgData:
             struct_node['length'] = info['offset'] - start
             if struct_node['length'] % 8 != 0:
                 raise SystemExit("Error: Bits length not aligned for %s !" % str(path))
-
+            # Ensure Cfg struct is 4-byte aligned
+            if 'CfgHeader' in top and (struct_node['length']//8)%4:
+                padding = 4 - (struct_node['length']//8)%4
+                pad_bytes = OrderedDict({})
+                pad_bytes['length'] = str(padding)
+                pad_bytes['value'] = str(0)
+                top[CGenCfgData.PADDINGNAME] = pad_bytes
+                path.append(CGenCfgData.PADDINGNAME)
+                self.build_cfg_list(CGenCfgData.PADDINGNAME,pad_bytes,path,info)
+                path.pop()
+                struct_node['length'] = info['offset'] - start
 
     def get_field_value (self, top = None):
         def _get_field_value (name, cfgs, level):
