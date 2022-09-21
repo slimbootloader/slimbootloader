@@ -173,16 +173,17 @@ UpdateSystemFirmware (
   This function will try to locate component in the flash map,
   if found, will update the component.
 
-  @param[in] ImageHdr       Pointer to fw mgmt capsule Image header
+  @param[in]  ImageHdr       Pointer to fw mgmt capsule Image header
+  @param[out] ResetRequired  Pointer to if reset is required after update
 
   @retval  EFI_SUCCESS      Update successful.
   @retval  other            error occurred during firmware update
 **/
 EFI_STATUS
 UpdateSblComponent (
-  IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
+  IN  EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
+  OUT BOOLEAN                       *ResetRequired
   );
-
 
 /**
   Main routine for Command updates.

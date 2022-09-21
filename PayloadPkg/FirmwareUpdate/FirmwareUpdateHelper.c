@@ -1030,22 +1030,26 @@ CheckAcmSvn (
   This function will try to locate component in the flash map,
   if found, will update the component.
 
-  @param[in] ImageHdr       Pointer to fw mgmt capsule Image header
+  @param[in]  ImageHdr       Pointer to fw mgmt capsule Image header
+  @param[out] ResetRequired  Pointer to if reset is required after update
 
   @retval  EFI_SUCCESS      Update successful.
   @retval  other            error occurred during firmware update
 **/
 EFI_STATUS
 UpdateSblComponent (
-  IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
+  IN  EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
+  OUT BOOLEAN                       *ResetRequired
   )
 {
   EFI_STATUS             Status;
   FLASH_MAP_ENTRY_DESC  *Entry;
   UINT8                  SvnStatus;
 
+
   Status = EFI_NOT_FOUND;
   SvnStatus = 0;
+  *ResetRequired = FALSE;
 
   if ((UINT32)RShiftU64 (ImageHdr->UpdateHardwareInstance, 32)){
     //
@@ -1086,6 +1090,7 @@ UpdateSblComponent (
             (Entry->Flags & FLASH_MAP_FLAGS_TOP_SWAP ) != 0){
     DEBUG ((DEBUG_INFO, "Redundant component update requested! \n"));
     Status = UpdateSystemFirmware(ImageHdr);
+    *ResetRequired = TRUE;
   }
 
   return Status;

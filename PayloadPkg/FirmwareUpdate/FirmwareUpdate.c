@@ -194,7 +194,7 @@ VerifyFwVersion (
   //
   // Check SVN for ACM update
   //
-  if (((UINT32)ImageHdr->UpdateHardwareInstance) == FW_UPDATE_COMP_ACM0_REGION) {
+  if (((UINT32)ImageHdr->UpdateHardwareInstance) == FLASH_MAP_SIG_ACM) {
     DEBUG((DEBUG_INFO, "Capsule update is for ACM region!!\n"));
     Status = CheckAcmSvn (ImageHdr);
     return Status;
@@ -203,7 +203,7 @@ VerifyFwVersion (
   //
   // Allow all UCOD Updates
   //
-  if (((UINT32)ImageHdr->UpdateHardwareInstance) == FW_UPDATE_COMP_UCOD_REGION) {
+  if (((UINT32)ImageHdr->UpdateHardwareInstance) == FLASH_MAP_SIG_UCODE) {
     DEBUG((DEBUG_INFO, "Capsule update is for UCODE region!!\n"));
     return EFI_SUCCESS;
   }
@@ -512,6 +512,71 @@ EnforceFwUpdatePolicy (
 }
 
 /**
+  Reset state machine to processing.
+
+  This function resets the state machine to processing state.
+
+  @retval  EFI_SUCCESS      State machine reset occured successfully.
+  @retval  other            An error occured.
+**/
+EFI_STATUS
+ResetToProcessingState (
+  VOID
+  )
+{
+  EFI_STATUS            Status;
+  UINT32                FwUpdStatusOffset;
+  FW_UPDATE_STATUS      FwUpdStatus;
+  FW_UPDATE_COMP_STATUS FwUpdCompStatus[MAX_FW_COMPONENTS];
+
+  FwUpdStatusOffset = PcdGet32 (PcdFwUpdStatusBase);
+
+  // Read the current FW update status structure
+  Status = BootMediaRead (FwUpdStatusOffset, sizeof(FW_UPDATE_STATUS), (UINT8 *)&FwUpdStatus);
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "BootMediaRead. offset: 0x%llx, Status = 0x%x\n", FwUpdStatusOffset, Status));
+    return Status;
+  }
+
+  // Read the current FW update component status structure array
+  Status = BootMediaRead ((FwUpdStatusOffset + sizeof(FW_UPDATE_STATUS)), \
+                           MAX_FW_COMPONENTS * sizeof(FW_UPDATE_COMP_STATUS), (UINT8 *)&FwUpdCompStatus);
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "BootMediaRead. offset: 0x%llx, Status = 0x%x\n", (FwUpdStatusOffset + sizeof(FW_UPDATE_STATUS)), Status));
+    return Status;
+  }
+
+  // Change the SM to processing so that next redundant component update is triggered (if exists)
+  // Keep all other values the same
+  FwUpdStatus.StateMachine = FW_UPDATE_SM_CAP_PROCESSING;
+
+  // Need to erase because writes only bitwise-and the values
+  // Need to erase a whole page, because that's the smallest allowed
+  Status = BootMediaErase (FwUpdStatusOffset, EFI_PAGE_SIZE);
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "BootMediaErase failed with status %r\n", Status));
+    return Status;
+  }
+
+  // Write updated FW update status structure
+  Status = BootMediaWrite (FwUpdStatusOffset, sizeof(FW_UPDATE_STATUS), (UINT8 *)&FwUpdStatus);
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "BootMediaWrite failed with status %r\n", Status));
+    return Status;
+  }
+
+  // Write current FW update component status structure array
+  Status = BootMediaWrite ((FwUpdStatusOffset + sizeof(FW_UPDATE_STATUS)), \
+                           MAX_FW_COMPONENTS * sizeof(FW_UPDATE_COMP_STATUS), (UINT8 *)&FwUpdCompStatus);
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "BootMediaWrite failed with status %r\n", Status));
+    return Status;
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
   This function will enforce firmware update policy after
   partition update is successful.
 
@@ -529,10 +594,18 @@ AfterUpdateEnforceFwUpdatePolicy (
 {
   EFI_STATUS    Status;
 
-  if ((FwPolicy.Fields.StateMachine & 0xFF) >= FW_UPDATE_SM_PART_AB) {
+  if ((FwPolicy.Fields.StateMachine & 0xFF) > FW_UPDATE_SM_PART_AB) {
     Status = SetStateMachineFlag ((UINT8)FwPolicy.Fields.StateMachine);
     if (EFI_ERROR (Status)) {
       DEBUG((DEBUG_ERROR, "Set state machine flag failed with status: %r\n", Status));
+      return Status;
+    }
+  }
+
+  if ((FwPolicy.Fields.StateMachine & 0xFF) == FW_UPDATE_SM_PART_AB) {
+    Status = ResetToProcessingState ();
+    if (EFI_ERROR (Status)) {
+      DEBUG((DEBUG_ERROR, "Reset to processing state failed with status: %r\n", Status));
       return Status;
     }
   }
@@ -1216,7 +1289,6 @@ ApplyFwImage (
       CsmeUpdateInData = InitCsmeUpdInputData();
       if (CsmeUpdateInData != NULL) {
         Status = UpdateCsme(CapImage, CapImageSize, CsmeUpdateInData, ImageHdr);
-        *ResetRequired = FALSE;
 
         // Set FW_UPDATE_STATUS.CsmeNeedReset to PENDING to indicate a reboot is needed before processing CMDI payload
         if (!EFI_ERROR(Status)) {
@@ -1238,7 +1310,8 @@ ApplyFwImage (
     Status = FwCmdUpdateProcess (ImageHdr);
     break;
   default:
-    Status = UpdateSblComponent (ImageHdr);
+    Status = UpdateSblComponent (ImageHdr, ResetRequired);
+    break;
   }
 
   return Status;
@@ -1258,15 +1331,15 @@ InitFirmwareUpdate (
   VOID
 )
 {
-  EFI_STATUS                  Status;
-  EFI_STATUS                  StatusPayloadUpdate;
-  UINT8                       Count;
-  VOID                        *CapsuleImage;
-  UINT32                      CapsuleSize;
-  UINT32                      FwUpdStatusOffset;
-  UINT32                      ByteOffset;
-  BOOLEAN                     ResetRequired;
-  FW_UPDATE_COMP_STATUS       FwUpdCompStatus[MAX_FW_COMPONENTS];
+  EFI_STATUS                    Status;
+  EFI_STATUS                    StatusPayloadUpdate;
+  UINT8                         Count;
+  VOID                          *CapsuleImage;
+  UINT32                        CapsuleSize;
+  UINT32                        FwUpdStatusOffset;
+  UINT32                        ByteOffset;
+  BOOLEAN                       ResetRequired;
+  FW_UPDATE_COMP_STATUS         FwUpdCompStatus[MAX_FW_COMPONENTS];
   FIRMWARE_UPDATE_HEADER        *FwUpdHdr;
   EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImgHdr;
 
