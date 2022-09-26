@@ -45,7 +45,9 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--output-image', dest='output_image', type=str,
                     required=True,  help='Specify output IFWI/SBL image file path')
     parser.add_argument('-p', '--path', dest='component_path', type=str,
-                    required=True,  help='Specify path of component to corrupt in IFWI/SBL image')
+                    required=True,  help='Specify path of component to corrupt '
+                    'in IFWI/SBL binary (e.g. IFWI/BIOS/TS0/SG1A for BP0 Stage 1A of '
+                    'IFWI binary, use IfwiUtility.py to see all available paths)')
     args = parser.parse_args()
 
     corrupt_component(args.input_image, args.output_image, args.component_path)
