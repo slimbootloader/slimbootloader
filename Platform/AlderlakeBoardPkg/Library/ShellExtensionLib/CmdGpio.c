@@ -191,6 +191,9 @@ GpioPadcalc(
   else if (IsPchP()) {
     GpioPad = (PinNumber | (GroupIndex << 16)) | (GPIO_VER2_LP_CHIPSET_ID << 24);
   }
+  else {
+    ShellPrint(L"Unknown PCH\n");
+  }
   return GpioPad;
  }
 
@@ -310,7 +313,9 @@ ShellCommandGpioFunc (
       //In ADL platform all pin number ranges from 0 to 23
       if ((GpioPin >= 0) && (GpioPin < 24)){
         GpioPad = GpioPadcalc(GroupValue, GpioPin);
-        Status = GpioRead(GpioPad);
+        if (GpioPad != 0) {
+          Status = GpioRead(GpioPad);
+        }
       }
       else {
         ShellPrint(L"Invalid Pin Number\n");
@@ -327,12 +332,14 @@ ShellCommandGpioFunc (
       //In ADL platform all pin number ranges between 0 to 23
       if ((GpioPin >= 0) && (GpioPin < 24)){
         GpioPad = GpioPadcalc(GroupValue, GpioPin);
-        Value = (UINT32)StrDecimalToUintn(Argv[4]);
-        if ((Value != 0) && (Value != 1)){
-          ShellPrint(L"Error! GPIO supported write values [0|1]\n");
-        }
-        else {
-          Status = GpioWrite(GpioPad, Value);
+        if (GpioPad != 0) {
+          Value = (UINT32)StrDecimalToUintn(Argv[4]);
+          if ((Value != 0) && (Value != 1)) {
+            ShellPrint(L"Error! GPIO supported write values [0|1]\n");
+          }
+          else {
+            Status = GpioWrite(GpioPad, Value);
+          }
         }
       }
       else {
