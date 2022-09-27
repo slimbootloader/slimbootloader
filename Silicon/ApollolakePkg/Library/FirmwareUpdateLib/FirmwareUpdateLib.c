@@ -287,6 +287,45 @@ GetFirmwareUpdateInfo (
 }
 
 /**
+  Retrieve the current in-flight FW update state, if it exists
+
+  @param[out] State The current in-flight FW update state
+**/
+VOID
+EFIAPI
+GetInFlightUpdateState (
+  OUT UINT8* State
+  )
+{
+  FW_UPDATE_COMP_STATUS   *FwUpdCompStatus;
+  EFI_STATUS              Status;
+  UINT32                  RsvdBase;
+  UINT32                  RsvdSize;
+  UINT8                   Cnt;
+
+  if (State != NULL) {
+    Status = GetComponentInfoByPartition (FLASH_MAP_SIG_BLRESERVED, FALSE, &RsvdBase, &RsvdSize);
+    if (EFI_ERROR (Status)) {
+      *State = FW_UPDATE_IMAGE_UPDATE_NONE;
+    } else {
+      // Find the first in-flight update, if it exists
+      FwUpdCompStatus = (FW_UPDATE_COMP_STATUS *)(UINTN)(RsvdBase + sizeof(FW_UPDATE_STATUS));
+      Cnt = 0;
+      while (!(FwUpdCompStatus->UpdatePending & FW_UPDATE_IN_PROGRESS_FLAGS) && Cnt < MAX_FW_COMPONENTS) {
+        ++FwUpdCompStatus;
+        ++Cnt;
+      }
+
+      // Return status of first in-flight update, otherwise return none status
+      if(Cnt == MAX_FW_COMPONENTS) {
+        *State = FW_UPDATE_IMAGE_UPDATE_DONE;
+      } else {
+        *State = FwUpdCompStatus->UpdatePending;
+      }
+    }
+  }
+}
+/**
   Switch between the boot partitions.
 
   This function will use platform specific method of switching
@@ -310,8 +349,8 @@ SetBootPartition (
     // HECI command to clear MBP data is ignored when booting from BP2
     // reset here so that we can boot from BP1
     //
-    GetStateMachineFlag(&StateMachine);
-    if (StateMachine == FW_UPDATE_SM_PART_AB) {
+    GetInFlightUpdateState (&StateMachine);
+    if (StateMachine == FW_UPDATE_IMAGE_UPDATE_PART_AB) {
       ResetSystem (EfiResetWarm);
       CpuDeadLoop ();
     }

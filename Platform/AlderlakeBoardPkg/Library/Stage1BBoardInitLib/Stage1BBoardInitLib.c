@@ -181,37 +181,27 @@ PlatformDeviceTableInitialize (
   The TS register is set here as opposed to in the FW update payload due to a
   uCode assert issue.
 
-  @param[in] pFwUpdStatus        Update status structure from RSVD region.
-
   @retval  EFI_SUCCESS           The operation completed successfully.
   @retval  others                There is error happening.
 **/
 VOID
 FwuTopSwapSetting (
-  IN FW_UPDATE_STATUS    *pFwUpdStatus
+  VOID
   )
 {
-  EFI_STATUS  Status;
-  UINT32      RsvdBase;
-  UINT32      RsvdSize;
+  UINT8       OverallState;
+  UINT8       InFlightState;
 
-  if (pFwUpdStatus == NULL) {
-    Status = GetComponentInfoByPartition (FLASH_MAP_SIG_BLRESERVED, FALSE, &RsvdBase, &RsvdSize);
-    if (EFI_ERROR (Status)) {
-      DEBUG((DEBUG_ERROR, "Could not get component information for bootloader reserved region\n"));
-    }
-    pFwUpdStatus = (FW_UPDATE_STATUS *)(UINTN)RsvdBase;
-  }
-
-  DEBUG ((DEBUG_INFO, "Current FW update state machine: %d\n", pFwUpdStatus->StateMachine));
   // If in a recovery path, stay on current partition.
+  GetUpdateState (&OverallState);
   if (PcdGetBool (PcdSblResiliencyEnabled) &&
      (IsRecoveryTriggered () ||
-      pFwUpdStatus->StateMachine == FW_UPDATE_SM_RECOVERY)) {
+      OverallState == FW_UPDATE_SM_RECOVERY)) {
     return;
   }
 
-  if (pFwUpdStatus->StateMachine == FW_UPDATE_SM_PART_A) {
+  GetInFlightUpdateState (&InFlightState);
+  if (InFlightState == FW_UPDATE_IMAGE_UPDATE_PART_A) {
     if (GetCurrentBootPartition () == PrimaryPartition) {
       if (IsTopSwapTriggered ()) {
         ClearTopSwapTrigger ();
@@ -225,7 +215,7 @@ FwuTopSwapSetting (
         SetRecoveryTrigger ();
       }
     }
-  } else if (pFwUpdStatus->StateMachine == FW_UPDATE_SM_PART_B) {
+  } else if (InFlightState == FW_UPDATE_IMAGE_UPDATE_PART_B) {
     if (GetCurrentBootPartition () == BackupPartition) {
       if (IsTopSwapTriggered ()) {
         ClearTopSwapTrigger ();
@@ -555,7 +545,7 @@ DEBUG_CODE_BEGIN();
 DEBUG_CODE_END();
     PlatformDeviceTableInitialize ();
     SpiControllerInitialize ();
-    FwuTopSwapSetting(NULL);
+    FwuTopSwapSetting ();
     break;
   case PostConfigInit:
     PlatformIdInitialize ();

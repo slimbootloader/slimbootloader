@@ -64,6 +64,7 @@
 #include <IndustryStandard/SmBios.h>
 #include <VerInfo.h>
 #include <Library/S3SaveRestoreLib.h>
+#include <Library/FirmwareResiliencyLib.h>
 #include "GpioTables.h"
 
 #define DEFAULT_GPIO_IRQ_ROUTE                      14
@@ -653,11 +654,11 @@ PatchCpuSsdtTable (
 EFI_STATUS
 UpdateBlRsvdRegion ()
 {
-  UINT32      RsvdBase;
-  UINT32      RsvdSize;
-  EFI_STATUS  Status;
-  FLASH_MAP     *FlashMap;
-  FW_UPDATE_STATUS  FwUpdStatus;
+  UINT32            RsvdBase;
+  UINT32            RsvdSize;
+  EFI_STATUS        Status;
+  FLASH_MAP         *FlashMap;
+  UINT8             State;
 
   //
   // Get flash map pointer
@@ -677,9 +678,8 @@ UpdateBlRsvdRegion ()
     return Status;
   }
 
-  CopyMem (&FwUpdStatus, (VOID *)(UINTN)RsvdBase, sizeof(FW_UPDATE_STATUS));
-
-  if (FwUpdStatus.StateMachine == FW_UPDATE_SM_PART_AB) {
+  GetInFlightUpdateState (&State);
+  if (State == FW_UPDATE_IMAGE_UPDATE_PART_AB) {
     Status = SpiFlashErase (FlashRegionBios, FlashMap->RomSize - (~RsvdBase + 1), RsvdSize);
     if (EFI_ERROR (Status)) {
       DEBUG((DEBUG_ERROR, "Erasing Bootloader Reserved region failed with status: %r\n", Status));

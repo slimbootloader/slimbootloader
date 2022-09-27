@@ -16,53 +16,92 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <FirmwareUpdateStatus.h>
 
 /**
-  Retrieve FW update state from the reserved region
+  Retrieve the current overall FW update state, if it exists
 
-  @param[in,out] StateMachine The current FW update state
+  @param[out] State The current overall FW update state
 **/
 VOID
 EFIAPI
-GetFwuStateMachine (
-  IN OUT UINT8* StateMachine
+GetUpdateState (
+  OUT UINT8* State
   )
 {
   FW_UPDATE_STATUS    *FwUpdStatus;
   EFI_STATUS          Status;
   UINT32              RsvdBase;
   UINT32              RsvdSize;
-
-  if (StateMachine != NULL) {
+  if (State != NULL) {
     Status = GetComponentInfoByPartition (FLASH_MAP_SIG_BLRESERVED, FALSE, &RsvdBase, &RsvdSize);
     if (EFI_ERROR (Status)) {
-      *StateMachine = FW_UPDATE_SM_INIT;
+      *State = FW_UPDATE_SM_INIT;
     } else {
       FwUpdStatus = (FW_UPDATE_STATUS *)(UINTN)RsvdBase;
-      *StateMachine = FwUpdStatus->StateMachine;
+      *State = FwUpdStatus->StateMachine;
+    }
+  }
+}
+
+/**
+  Retrieve the current in-flight FW update state, if it exists
+
+  @param[out] State The current in-flight FW update state
+**/
+VOID
+EFIAPI
+GetInFlightUpdateState (
+  OUT UINT8* State
+  )
+{
+  FW_UPDATE_COMP_STATUS   *FwUpdCompStatus;
+  EFI_STATUS              Status;
+  UINT32                  RsvdBase;
+  UINT32                  RsvdSize;
+  UINT8                   Cnt;
+
+  if (State != NULL) {
+    Status = GetComponentInfoByPartition (FLASH_MAP_SIG_BLRESERVED, FALSE, &RsvdBase, &RsvdSize);
+    if (EFI_ERROR (Status)) {
+      *State = FW_UPDATE_IMAGE_UPDATE_NONE;
+    } else {
+      // Find the first in-flight update, if it exists
+      FwUpdCompStatus = (FW_UPDATE_COMP_STATUS *)(UINTN)(RsvdBase + sizeof(FW_UPDATE_STATUS));
+      Cnt = 0;
+      while (!(FwUpdCompStatus->UpdatePending & FW_UPDATE_IN_PROGRESS_FLAGS) && Cnt < MAX_FW_COMPONENTS) {
+        ++FwUpdCompStatus;
+        ++Cnt;
+      }
+
+      // Return status of first in-flight update, otherwise return none status
+      if(Cnt == MAX_FW_COMPONENTS) {
+        *State = FW_UPDATE_IMAGE_UPDATE_DONE;
+      } else {
+        *State = FwUpdCompStatus->UpdatePending;
+      }
     }
   }
 }
 
 /**
   Check if ACM detected corruption in IBB
-
-  @param[in] StateMachine The current FW update state
 **/
 VOID
 EFIAPI
 CheckForAcmFailures (
-  IN UINT8 StateMachine
+  VOID
   )
 {
-  switch (StateMachine) {
-    case FW_UPDATE_SM_PART_A:
+  UINT8 InFlightUpdateState;
+
+  GetInFlightUpdateState (&InFlightUpdateState);
+  switch (InFlightUpdateState) {
+    case FW_UPDATE_IMAGE_UPDATE_PART_A:
       if (GetCurrentBootPartition () == PrimaryPartition) {
         DEBUG((DEBUG_INFO, "Partition to be updated is same as current boot partition (primary)\n"));
         SetRecoveryTrigger ();
       }
       break;
 
-    case FW_UPDATE_SM_PART_B:
-    case FW_UPDATE_SM_PART_AB:
+    case FW_UPDATE_IMAGE_UPDATE_PART_B:
       if (GetCurrentBootPartition () == BackupPartition) {
         DEBUG((DEBUG_INFO, "Partition to be updated is same as current boot partition (backup)\n"));
         SetRecoveryTrigger ();

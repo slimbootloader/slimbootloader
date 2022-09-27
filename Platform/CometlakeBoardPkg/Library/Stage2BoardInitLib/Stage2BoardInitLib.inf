@@ -54,6 +54,7 @@
   PsdLib
   S3SaveRestoreLib
   BoardSupportLib
+  FirmwareResiliencyLib
 
 [Guids]
   gSmmInformationGuid

@@ -555,7 +555,7 @@ UpdateSystemFirmware (
   //
   // 1. Enforce firmware update policy.
   //
-  Status = EnforceFwUpdatePolicy (&FwPolicy);
+  Status = EnforceFwUpdatePolicy (ImageHdr->UpdateHardwareInstance, &FwPolicy);
   if (EFI_ERROR (Status)) {
     if (Status == EFI_ALREADY_STARTED) {
       return EFI_SUCCESS;
@@ -594,7 +594,7 @@ UpdateSystemFirmware (
   //
   // 5. After update Enforce firmware update policy
   //
-  Status = AfterUpdateEnforceFwUpdatePolicy(FwPolicy);
+  Status = AfterUpdateEnforceFwUpdatePolicy(ImageHdr->UpdateHardwareInstance, FwPolicy);
   if (EFI_ERROR (Status)) {
     //
     // If EFI_END_OF_FILE is returned, that means SBL update is successful
@@ -1030,16 +1030,16 @@ CheckAcmSvn (
   This function will try to locate component in the flash map,
   if found, will update the component.
 
-  @param[in]  ImageHdr       Pointer to fw mgmt capsule Image header
-  @param[out] ResetRequired  Pointer to if reset is required after update
+  @param[in]  ImageHdr       Pointer to fw mgmt capsule image header
+  @param[out] ResetRequired  Pointer to if reset required
 
-  @retval  EFI_SUCCESS      Update successful.
+  @retval  EFI_SUCCESS      update successful
   @retval  other            error occurred during firmware update
 **/
 EFI_STATUS
 UpdateSblComponent (
-  IN  EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
-  OUT BOOLEAN                       *ResetRequired
+  IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
+  OUT BOOLEAN                      *ResetRequired
   )
 {
   EFI_STATUS             Status;
@@ -1188,4 +1188,62 @@ Reboot (
   MicroSecondDelay (3000000);
   ResetSystem (ResetType);
   CpuDeadLoop ();
+}
+
+/**
+  Get the component status structure for a FW component.
+
+  This function will try to retrieve the component status
+  structure for a FW component from SPI flash.
+
+  @param[in]  Signature       The signature of the FW component to find
+  @param[out] FwUpdCompStatus Pointer to the component status structure to
+                              populate
+  @param[out] Index           Pointer to the index of the component status
+                              structure (for use in writes)
+
+  @retval  EFI_SUCCESS      retrieval successful
+  @retval  other            error occurred during retrieval
+**/
+EFI_STATUS
+GetFwUpdCompStatus (
+  IN  UINT64                Signature,
+  OUT FW_UPDATE_COMP_STATUS *FwUpdCompStatus,
+  OUT UINT8                 *Index
+  )
+{
+  EFI_STATUS              Status;
+  UINT32                  FwUpdStatusOffset;
+  UINT8                   Count;
+
+  FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
+
+  // Keep reading component statuses until the one with the given signature is found
+  for (Count = 0; Count < MAX_FW_COMPONENTS; Count++) {
+    Status = BootMediaRead ((FwUpdStatusOffset + sizeof(FW_UPDATE_STATUS)) + Count * sizeof(FW_UPDATE_COMP_STATUS), \
+                          sizeof(FW_UPDATE_COMP_STATUS), (UINT8 *)FwUpdCompStatus);
+    if (EFI_ERROR (Status)) {
+      DEBUG((DEBUG_ERROR, "BootMediaRead. offset: 0x%llx, Status = 0x%x\n", (FwUpdStatusOffset + sizeof(FW_UPDATE_STATUS)), Status));
+      return Status;
+    }
+    if (FwUpdCompStatus->HardwareInstance == Signature) {
+      DEBUG((DEBUG_VERBOSE, "Found the component to update status\n"));
+      break;
+    }
+  }
+
+  // Indicate if not found, give invalid index
+  if (Count == MAX_FW_COMPONENTS) {
+    DEBUG ((DEBUG_ERROR, "Could not find the component to update status\n"));
+    if (Index != NULL) {
+      *Index = Count;
+    }
+    return EFI_NOT_FOUND;
+  }
+
+  // Indicate found, also give index
+  if (Index != NULL) {
+    *Index = Count;
+  }
+  return EFI_SUCCESS;
 }

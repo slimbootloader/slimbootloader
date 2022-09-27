@@ -10,25 +10,34 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define _FIRMWARE_RESILIENCY_LIB_H_
 
 /**
-  Retrieve FW update state from the reserved region
+  Retrieve the current overall FW update state, if it exists
 
-  @param[in,out] StateMachine The current FW update state
+  @param[out] State The current overall FW update state
 **/
 VOID
 EFIAPI
-GetFwuStateMachine (
-  IN OUT UINT8* StateMachine
+GetUpdateState (
+   OUT UINT8* State
+   );
+
+/**
+  Retrieve the current in-flight FW update state, if it exists
+
+  @param[out] State The current in-flight FW update state
+**/
+VOID
+EFIAPI
+GetInFlightUpdateState (
+  OUT UINT8* State
   );
 
 /**
   Check if ACM detected corruption in IBB
-
-  @param[in] StateMachine The current FW update state
 **/
 VOID
 EFIAPI
 CheckForAcmFailures (
-  IN UINT8 StateMachine
+  VOID
   );
 
 /**

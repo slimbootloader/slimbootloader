@@ -313,8 +313,8 @@ GetFirmwareUpdateInfo (
     UpdateRegion->SourceAddress   = (UINT8 *)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER) + (UINTN)UpdateRegion->ToUpdateAddress);
     UpdatePartition->RegionCount += 1;
 
-    if ((FwPolicy.Fields.StateMachine == FW_UPDATE_SM_PART_A) ||
-        (FwPolicy.Fields.StateMachine == FW_UPDATE_SM_PART_B)) {
+    if ((FwPolicy.Fields.StateMachine == FW_UPDATE_IMAGE_UPDATE_PART_A) ||
+        (FwPolicy.Fields.StateMachine == FW_UPDATE_IMAGE_UPDATE_PART_B)) {
       //
       // Non-redundant region
       //

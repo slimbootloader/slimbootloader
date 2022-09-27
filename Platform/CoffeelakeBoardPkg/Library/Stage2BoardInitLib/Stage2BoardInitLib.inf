@@ -55,6 +55,7 @@
   S3SaveRestoreLib
   BoardSupportLib
   VtdPmrLib
+  FirmwareResiliencyLib
 
 [Guids]
   gSmmInformationGuid

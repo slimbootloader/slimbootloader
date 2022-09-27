@@ -27,7 +27,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define FW_UPDATE_PARTITION_B   1
 
 #define MAX_FILE_LEN            16
-#define MAX_FW_COMPONENTS       6
 #define MAX_FW_FAILED_RETRY     3
 
 #define CAPSULE_FLAGS_CFG_DATA  BIT0

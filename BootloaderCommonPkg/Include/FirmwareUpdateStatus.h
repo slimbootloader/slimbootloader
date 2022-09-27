@@ -11,16 +11,20 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #define FW_UPDATE_SM_INIT             0xFF
 #define FW_UPDATE_SM_CAP_PROCESSING   0x7F
-#define FW_UPDATE_SM_PART_A           0x7E
-#define FW_UPDATE_SM_PART_B           0x7D
-#define FW_UPDATE_SM_PART_AB          0x7C
-#define FW_UPDATE_SM_RECOVERY         0x7B
+#define FW_UPDATE_SM_RECOVERY         0x7E
 #define FW_UPDATE_SM_DONE             0x77 // Lower 3 bits are ignored
 
 #define FW_UPDATE_IMAGE_UPDATE_NONE         0xFF
 #define FW_UPDATE_IMAGE_UPDATE_PENDING      0xFE
 #define FW_UPDATE_IMAGE_UPDATE_PROCESSING   0xFC
-#define FW_UPDATE_IMAGE_UPDATE_DONE         0xF8
+#define FW_UPDATE_IMAGE_UPDATE_PART_A       0xF8
+#define FW_UPDATE_IMAGE_UPDATE_PART_B       0xF0
+#define FW_UPDATE_IMAGE_UPDATE_PART_AB      0xE0
+#define FW_UPDATE_IMAGE_UPDATE_DONE         0xC0
+#define FW_UPDATE_IMAGE_UPDATE_UNUSED       0x00
+
+#define FW_UPDATE_IN_PROGRESS_FLAGS (FW_UPDATE_IMAGE_UPDATE_DONE \
+                                    ^ FW_UPDATE_IMAGE_UPDATE_PROCESSING)
 
 #define CSME_NEED_RESET_INIT     0xFF
 #define CSME_NEED_RESET_PENDING  0xFE
@@ -36,6 +40,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define FW_RECOVERY_STATUS_SIGNATURE  SIGNATURE_32 ('F', 'W', 'R', 'S')
 #define FW_UPDATE_STATUS_VERSION      0x1
 #define FW_UPDATE_SIG_LENGTH          256
+#define MAX_FW_COMPONENTS             6
 
 #pragma pack(push, 1)
 //

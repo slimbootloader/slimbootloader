@@ -104,24 +104,27 @@ SetStateMachineFlag (
   ----------------------------------------------------------
   |  SM   |   TS   |             Operation                 |
   ----------------------------------------------------------
-  |  FF   |    0   | Set SM to FE, Set TS and reboot       |
-  |  FF   |    1   | Set SM to FD, clear TS and reboot     |
-  |  FE   |    0   | Set TS and reboot                     |
-  |  FE   |    1   | Set SM to FC, clear TS and reboot     |
-  |  FD   |    0   | Set SM to FC, reboot                  |
-  |  FD   |    1   | clear TS and reboot                   |
-  |  FC   |    0   | Clear IBB signal,Set SM to FF, reboot |
-  |  FC   |    1   | Clear IBB signal,Set SM to FF, reboot |
+  |  FC   |    0   | Set SM to F8, set TS and reboot       |
+  |  FC   |    1   | Set SM to F0, clear TS and reboot     |
+  |  F8   |    0   | Set TS and reboot                     |
+  |  F8   |    1   | Set SM to EO, clear TS and reboot     |
+  |  F0   |    0   | Set SM to E0, reboot                  |
+  |  F0   |    1   | Clear TS and reboot                   |
+  |  E0   |    0   | Clear IBB signal, reboot              |
+  |  E0   |    1   | Clear TS and reboot                   |
   ----------------------------------------------------------
-  @param[in][out] FwPolicy    Pointer to Firmware update policy.
+
+  @param[in] Signature   Signature of firmware component being updated.
+  @param[in] FwPolicy    Pointer to Firmware update policy.
 
   @retval  EFI_SUCCESS        The operation completed successfully.
   @retval  others             There is error happening.
 **/
 EFI_STATUS
 EnforceFwUpdatePolicy (
+  IN UINT64                   Signature,
   IN FIRMWARE_UPDATE_POLICY   *FwPolicy
- );
+  );
 
 /**
   This function will enforce firmware update policy after
@@ -129,6 +132,7 @@ EnforceFwUpdatePolicy (
 
   After update firmware update policy
 
+  @param[in] Signature        Signature of firmware component being updated.
   @param[in] FwPolicy         Firmware update policy.
 
   @retval  EFI_SUCCESS        The operation completed successfully.
@@ -136,6 +140,7 @@ EnforceFwUpdatePolicy (
 **/
 EFI_STATUS
 AfterUpdateEnforceFwUpdatePolicy (
+  IN UINT64                   Signature,
   IN FIRMWARE_UPDATE_POLICY   FwPolicy
  );
 
@@ -173,17 +178,18 @@ UpdateSystemFirmware (
   This function will try to locate component in the flash map,
   if found, will update the component.
 
-  @param[in]  ImageHdr       Pointer to fw mgmt capsule Image header
-  @param[out] ResetRequired  Pointer to if reset is required after update
+  @param[in] ImageHdr       Pointer to fw mgmt capsule image header
+  @param[out] ResetRequired Pointer to if reset required
 
-  @retval  EFI_SUCCESS      Update successful.
+  @retval  EFI_SUCCESS      update successful
   @retval  other            error occurred during firmware update
 **/
 EFI_STATUS
 UpdateSblComponent (
-  IN  EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
-  OUT BOOLEAN                       *ResetRequired
+  IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
+  OUT BOOLEAN                      *ResetRequired
   );
+
 
 /**
   Main routine for Command updates.
@@ -285,6 +291,28 @@ Reboot (
 UINT32
 GetRomImageOffsetInBiosRegion (
   VOID
+  );
+
+/**
+  Get the component status structure for a FW component.
+
+  This function will try to retrieve the component status
+  structure for a FW component from SPI flash.
+
+  @param[in]  Signature       The signature of the FW component to find
+  @param[out] FwUpdCompStatus Pointer to the component status structure to
+                              populate
+  @param[out] Index           Pointer to the index of the component status
+                              structure (for use in writes)
+
+  @retval  EFI_SUCCESS      retrieval successful
+  @retval  other            error occurred during retrieval
+**/
+EFI_STATUS
+GetFwUpdCompStatus (
+  IN  UINT64                Signature,
+  OUT FW_UPDATE_COMP_STATUS *FwUpdCompStatus,
+  OUT UINT8                 *Index
   );
 
 #endif

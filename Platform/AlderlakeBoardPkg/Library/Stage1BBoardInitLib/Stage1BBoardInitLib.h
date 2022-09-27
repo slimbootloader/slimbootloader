@@ -57,6 +57,7 @@
 #include <Register/Cpuid.h>
 #include <Library/SocInitLib.h>
 #include <Library/SmbusLib.h>
+#include <Library/FirmwareResiliencyLib.h>
 
 /**
   Initialize Variable.

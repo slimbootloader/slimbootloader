@@ -310,6 +310,79 @@ ValidThenDecFwuRetryCount (
 }
 
 /**
+  Get the state machine flag for a FW component.
+
+  This function will retrieve the current state of a
+  FW component's update from SPI flash.
+
+  @param[in] Signature      The signature of the FW component whose
+                            state machine flag is to be retrieved
+  @param[out] StateMachine  The state machine flag reflected in SPI
+                            flash
+**/
+EFI_STATUS
+GetComponentStateMachineFlag (
+  IN UINT64   Signature,
+  OUT UINT8   *StateMachine
+)
+{
+  EFI_STATUS              Status;
+  FW_UPDATE_COMP_STATUS   FwUpdCompStatus;
+
+  Status = GetFwUpdCompStatus (Signature, &FwUpdCompStatus, NULL);
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "GetFwUpdCompStatus, Status = 0x%x\n", Status));
+    return Status;
+  }
+
+  *StateMachine = FwUpdCompStatus.UpdatePending;
+  return EFI_SUCCESS;
+}
+
+/**
+  Set the state machine flag for a FW component.
+
+  This function will reflect the current state of a
+  FW component's update in SPI flash.
+
+  @param[in] Signature      The signature of the FW component whose
+                            state machine flag is to be updated
+  @param[in] StateMachine   The state machine flag to be reflected in
+                            SPI flash
+**/
+EFI_STATUS
+SetComponentStateMachineFlag (
+  IN UINT64   Signature,
+  IN UINT8    StateMachine
+)
+{
+  UINT8                   Count;
+  EFI_STATUS              Status;
+  UINT32                  FwUpdStatusOffset;
+  UINT32                  ByteOffset;
+  FW_UPDATE_COMP_STATUS   FwUpdCompStatus;
+
+  Status = GetFwUpdCompStatus (Signature, &FwUpdCompStatus, &Count);
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "GetFwUpdCompStatus, Status = 0x%x\n", Status));
+    return Status;
+  }
+
+  //
+  // Write the update to SPI flash
+  //
+  FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
+  ByteOffset = COMP_STATUS_OFFSET(FwUpdStatusOffset, Count) + OFFSET_OF(FW_UPDATE_COMP_STATUS, UpdatePending);
+  Status = BootMediaWrite(ByteOffset, sizeof(UINT8), &StateMachine);
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "Updating updatepending failed with status: %r\n", Status));
+    return Status;
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
   Get state machine flag from flash.
 
   This function will get state machine flag from the bootloader reserved region
@@ -389,25 +462,27 @@ SetStateMachineFlag (
   ----------------------------------------------------------
   |  SM   |   TS   |             Operation                 |
   ----------------------------------------------------------
-  |  7F   |    0   | Set SM to 7E, Set TS and reboot       |
-  |  7F   |    1   | Set SM to 7D, clear TS and reboot     |
-  |  7E   |    0   | Set TS and reboot                     |
-  |  7E   |    1   | Set SM to 7C, clear TS and reboot     |
-  |  7D   |    0   | Set SM to 7C, reboot                  |
-  |  7D   |    1   | clear TS and reboot                   |
-  |  7C   |    0   | Clear IBB signal, reboot              |
-  |  7C   |    1   | Clear IBB signal, reboot              |
+  |  FC   |    0   | Set SM to F8, set TS and reboot       |
+  |  FC   |    1   | Set SM to F0, clear TS and reboot     |
+  |  F8   |    0   | Set TS and reboot                     |
+  |  F8   |    1   | Set SM to EO, clear TS and reboot     |
+  |  F0   |    0   | Set SM to E0, reboot                  |
+  |  F0   |    1   | Clear TS and reboot                   |
+  |  E0   |    0   | Clear IBB signal, reboot              |
+  |  E0   |    1   | Clear TS and reboot                   |
   ----------------------------------------------------------
 
-  @param[in][out] FwPolicy    Pointer to Firmware update policy.
+  @param[in] Signature   Signature of firmware component being updated.
+  @param[in] FwPolicy    Pointer to Firmware update policy.
 
   @retval  EFI_SUCCESS        The operation completed successfully.
   @retval  others             There is error happening.
 **/
 EFI_STATUS
 EnforceFwUpdatePolicy (
+  IN UINT64                   Signature,
   IN FIRMWARE_UPDATE_POLICY   *FwPolicy
- )
+  )
 {
   UINT8                   StateMachine;
   BOOLEAN                 ResetRequired;
@@ -427,27 +502,27 @@ EnforceFwUpdatePolicy (
   //
   // Get State machine flag
   //
-  GetStateMachineFlag (&StateMachine);
+  GetComponentStateMachineFlag (Signature, &StateMachine);
   DEBUG((DEBUG_INIT, "Get current FWU state: 0x%02X\n", StateMachine));
 
   FwPolicy->Data = 0;
 
   switch (StateMachine) {
-  case FW_UPDATE_SM_CAP_PROCESSING:
+  case FW_UPDATE_IMAGE_UPDATE_PROCESSING:
     if (LoaderInfo->BootPartition == FW_UPDATE_PARTITION_A) {
-      FwPolicy->Fields.StateMachine       = FW_UPDATE_SM_PART_A;
+      FwPolicy->Fields.StateMachine       = FW_UPDATE_IMAGE_UPDATE_PART_A;
       FwPolicy->Fields.UpdatePartitionB   = 0x1;
       FwPolicy->Fields.SwitchtoBackupPart = 0x1;
       FwPolicy->Fields.Reboot             = 0x1;
     } else if (LoaderInfo->BootPartition == FW_UPDATE_PARTITION_B) {
-      FwPolicy->Fields.StateMachine       = FW_UPDATE_SM_PART_B;
+      FwPolicy->Fields.StateMachine       = FW_UPDATE_IMAGE_UPDATE_PART_B;
       FwPolicy->Fields.UpdatePartitionA   = 0x1;
       FwPolicy->Fields.SwitchtoBackupPart = 0;
       FwPolicy->Fields.Reboot             = 0x1;
     }
     break;
 
-  case FW_UPDATE_SM_PART_A:
+  case FW_UPDATE_IMAGE_UPDATE_PART_A:
     if (LoaderInfo->BootPartition == FW_UPDATE_PARTITION_A){
       if (ValidThenDecFwuRetryCount()) {
         DEBUG((DEBUG_ERROR, "Unable to switch to partition B. Retry...\n"));
@@ -458,16 +533,16 @@ EnforceFwUpdatePolicy (
         return EFI_NOT_STARTED;
       }
     } else if (LoaderInfo->BootPartition == FW_UPDATE_PARTITION_B){
-      FwPolicy->Fields.StateMachine       = FW_UPDATE_SM_PART_AB;
+      FwPolicy->Fields.StateMachine       = FW_UPDATE_IMAGE_UPDATE_PART_AB;
       FwPolicy->Fields.UpdatePartitionA   = 0x1;
       FwPolicy->Fields.SwitchtoBackupPart = 0;
       FwPolicy->Fields.Reboot             = 0;
     }
     break;
 
-  case FW_UPDATE_SM_PART_B:
+  case FW_UPDATE_IMAGE_UPDATE_PART_B:
     if (LoaderInfo->BootPartition == FW_UPDATE_PARTITION_A){
-      FwPolicy->Fields.StateMachine       = FW_UPDATE_SM_PART_AB;
+      FwPolicy->Fields.StateMachine       = FW_UPDATE_IMAGE_UPDATE_PART_AB;
       FwPolicy->Fields.UpdatePartitionB   = 0x1;
       FwPolicy->Fields.SwitchtoBackupPart = 0;
       FwPolicy->Fields.Reboot             = 0;
@@ -483,7 +558,7 @@ EnforceFwUpdatePolicy (
     }
     break;
 
-  case FW_UPDATE_SM_PART_AB:
+  case FW_UPDATE_IMAGE_UPDATE_PART_AB:
     if (LoaderInfo->BootPartition == FW_UPDATE_PARTITION_A){
       //
       // This return would end the firmware update
@@ -512,76 +587,12 @@ EnforceFwUpdatePolicy (
 }
 
 /**
-  Reset state machine to processing.
-
-  This function resets the state machine to processing state.
-
-  @retval  EFI_SUCCESS      State machine reset occured successfully.
-  @retval  other            An error occured.
-**/
-EFI_STATUS
-ResetToProcessingState (
-  VOID
-  )
-{
-  EFI_STATUS            Status;
-  UINT32                FwUpdStatusOffset;
-  FW_UPDATE_STATUS      FwUpdStatus;
-  FW_UPDATE_COMP_STATUS FwUpdCompStatus[MAX_FW_COMPONENTS];
-
-  FwUpdStatusOffset = PcdGet32 (PcdFwUpdStatusBase);
-
-  // Read the current FW update status structure
-  Status = BootMediaRead (FwUpdStatusOffset, sizeof(FW_UPDATE_STATUS), (UINT8 *)&FwUpdStatus);
-  if (EFI_ERROR (Status)) {
-    DEBUG((DEBUG_ERROR, "BootMediaRead. offset: 0x%llx, Status = 0x%x\n", FwUpdStatusOffset, Status));
-    return Status;
-  }
-
-  // Read the current FW update component status structure array
-  Status = BootMediaRead ((FwUpdStatusOffset + sizeof(FW_UPDATE_STATUS)), \
-                           MAX_FW_COMPONENTS * sizeof(FW_UPDATE_COMP_STATUS), (UINT8 *)&FwUpdCompStatus);
-  if (EFI_ERROR (Status)) {
-    DEBUG((DEBUG_ERROR, "BootMediaRead. offset: 0x%llx, Status = 0x%x\n", (FwUpdStatusOffset + sizeof(FW_UPDATE_STATUS)), Status));
-    return Status;
-  }
-
-  // Change the SM to processing so that next redundant component update is triggered (if exists)
-  // Keep all other values the same
-  FwUpdStatus.StateMachine = FW_UPDATE_SM_CAP_PROCESSING;
-
-  // Need to erase because writes only bitwise-and the values
-  // Need to erase a whole page, because that's the smallest allowed
-  Status = BootMediaErase (FwUpdStatusOffset, EFI_PAGE_SIZE);
-  if (EFI_ERROR (Status)) {
-    DEBUG((DEBUG_ERROR, "BootMediaErase failed with status %r\n", Status));
-    return Status;
-  }
-
-  // Write updated FW update status structure
-  Status = BootMediaWrite (FwUpdStatusOffset, sizeof(FW_UPDATE_STATUS), (UINT8 *)&FwUpdStatus);
-  if (EFI_ERROR (Status)) {
-    DEBUG((DEBUG_ERROR, "BootMediaWrite failed with status %r\n", Status));
-    return Status;
-  }
-
-  // Write current FW update component status structure array
-  Status = BootMediaWrite ((FwUpdStatusOffset + sizeof(FW_UPDATE_STATUS)), \
-                           MAX_FW_COMPONENTS * sizeof(FW_UPDATE_COMP_STATUS), (UINT8 *)&FwUpdCompStatus);
-  if (EFI_ERROR (Status)) {
-    DEBUG((DEBUG_ERROR, "BootMediaWrite failed with status %r\n", Status));
-    return Status;
-  }
-
-  return EFI_SUCCESS;
-}
-
-/**
   This function will enforce firmware update policy after
   partition update is successful.
 
   After update firmware update policy
 
+  @param[in] Signature        Signature of firmware component being updated.
   @param[in] FwPolicy         Firmware update policy.
 
   @retval  EFI_SUCCESS        The operation completed successfully.
@@ -589,23 +600,16 @@ ResetToProcessingState (
 **/
 EFI_STATUS
 AfterUpdateEnforceFwUpdatePolicy (
+  IN UINT64                   Signature,
   IN FIRMWARE_UPDATE_POLICY   FwPolicy
  )
 {
   EFI_STATUS    Status;
 
-  if ((FwPolicy.Fields.StateMachine & 0xFF) > FW_UPDATE_SM_PART_AB) {
-    Status = SetStateMachineFlag ((UINT8)FwPolicy.Fields.StateMachine);
+  if ((FwPolicy.Fields.StateMachine & 0xFF) >= FW_UPDATE_IMAGE_UPDATE_PART_AB) {
+    Status = SetComponentStateMachineFlag (Signature, (UINT8)FwPolicy.Fields.StateMachine);
     if (EFI_ERROR (Status)) {
       DEBUG((DEBUG_ERROR, "Set state machine flag failed with status: %r\n", Status));
-      return Status;
-    }
-  }
-
-  if ((FwPolicy.Fields.StateMachine & 0xFF) == FW_UPDATE_SM_PART_AB) {
-    Status = ResetToProcessingState ();
-    if (EFI_ERROR (Status)) {
-      DEBUG((DEBUG_ERROR, "Reset to processing state failed with status: %r\n", Status));
       return Status;
     }
   }
@@ -629,11 +633,11 @@ AfterUpdateEnforceFwUpdatePolicy (
   }
 
   //
-  // When we are setting SM as FW_UPDATE_SM_PART_AB, this indicates
+  // When we are setting SM as FW_UPDATE_IMAGE_UPDATE_PART_AB, this indicates
   // SBL update is done, One more reset is not required, end the
   // firmware update and reset the system.
   //
-  if (FwPolicy.Fields.StateMachine == FW_UPDATE_SM_PART_AB) {
+  if (FwPolicy.Fields.StateMachine == FW_UPDATE_IMAGE_UPDATE_PART_AB) {
     return EFI_END_OF_FILE;
   }
 
@@ -662,80 +666,61 @@ UpdateStatus (
   EFI_STATUS              Status;
   UINT32                  FwUpdStatusOffset;
   UINT32                  ByteOffset;
-  FW_UPDATE_COMP_STATUS   FwUpdCompStatus[MAX_FW_COMPONENTS];
+  FW_UPDATE_COMP_STATUS   FwUpdCompStatus;
 
-  FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
-
-  //
-  // Read all the component structures
-  //
-  Status = BootMediaRead ((FwUpdStatusOffset + sizeof(FW_UPDATE_STATUS)), \
-                          MAX_FW_COMPONENTS * sizeof(FW_UPDATE_COMP_STATUS), (UINT8 *)&FwUpdCompStatus);
+  Status = GetFwUpdCompStatus (Signature, &FwUpdCompStatus, &Count);
   if (EFI_ERROR (Status)) {
-    DEBUG((DEBUG_ERROR, "BootMediaRead. offset: 0x%llx, Status = 0x%x\n", (FwUpdStatusOffset + sizeof(FW_UPDATE_STATUS)), Status));
+    DEBUG((DEBUG_ERROR, "GetFwUpdCompStatus, Status = 0x%x\n", Status));
     return Status;
   }
 
-  //
-  // Find the required component to update status
-  //
-  for (Count = 0; Count < MAX_FW_COMPONENTS; Count ++) {
-    if (FwUpdCompStatus[Count].HardwareInstance == Signature) {
-      DEBUG((DEBUG_VERBOSE, "Found the component to update status\n"));
-      break;
-    }
-  }
-
-  if (Count == MAX_FW_COMPONENTS) {
-    DEBUG ((DEBUG_ERROR, "Could not find the component to update status\n"));
-    return EFI_NOT_FOUND;
-  }
-
   if (LastAttemptVersion != 0) {
-    FwUpdCompStatus[Count].LastAttemptVersion = LastAttemptVersion;
+    FwUpdCompStatus.LastAttemptVersion = LastAttemptVersion;
   }
 
   if (LastAttemptStatus != 0xFFFFFFFF) {
-    FwUpdCompStatus[Count].UpdatePending = FW_UPDATE_IMAGE_UPDATE_DONE;
+    FwUpdCompStatus.UpdatePending = FW_UPDATE_IMAGE_UPDATE_DONE;
     if (LastAttemptStatus == EFI_SUCCESS) {
-      FwUpdCompStatus[Count].LastAttemptStatus = LAST_ATTEMPT_STATUS_SUCCESS;
+      FwUpdCompStatus.LastAttemptStatus = LAST_ATTEMPT_STATUS_SUCCESS;
     } else if (LastAttemptStatus == EFI_INCOMPATIBLE_VERSION) {
-      FwUpdCompStatus[Count].LastAttemptStatus = LAST_ATTEMPT_STATUS_ERROR_INCORRECT_VERSION;
+      FwUpdCompStatus.LastAttemptStatus = LAST_ATTEMPT_STATUS_ERROR_INCORRECT_VERSION;
     } else if (LastAttemptStatus == EFI_OUT_OF_RESOURCES) {
-      FwUpdCompStatus[Count].LastAttemptStatus = LAST_ATTEMPT_STATUS_ERROR_INSUFFICIENT_RESOURCES;
+      FwUpdCompStatus.LastAttemptStatus = LAST_ATTEMPT_STATUS_ERROR_INSUFFICIENT_RESOURCES;
     } else if ((LastAttemptStatus == EFI_SECURITY_VIOLATION) || (LastAttemptStatus == EFI_COMPROMISED_DATA)){
       //
       // If we get security violation, at this point we do not know
       // version from capsule, instead of keeping the existing version
       // reset it back to 0
       //
-      FwUpdCompStatus[Count].LastAttemptVersion = 0;
-      FwUpdCompStatus[Count].LastAttemptStatus = LAST_ATTEMPT_STATUS_ERROR_AUTH_ERROR;
+      FwUpdCompStatus.LastAttemptVersion = 0;
+      FwUpdCompStatus.LastAttemptStatus = LAST_ATTEMPT_STATUS_ERROR_AUTH_ERROR;
     } else {
-      FwUpdCompStatus[Count].LastAttemptVersion = 0;
-      FwUpdCompStatus[Count].LastAttemptStatus = LAST_ATTEMPT_STATUS_ERROR_UNSUCCESSFUL;
+      FwUpdCompStatus.LastAttemptVersion = 0;
+      FwUpdCompStatus.LastAttemptStatus = LAST_ATTEMPT_STATUS_ERROR_UNSUCCESSFUL;
     }
   }
 
   //
   // Update a field at a time, if we loose power in between, we can still have control
   //
+  FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
+
   ByteOffset = COMP_STATUS_OFFSET(FwUpdStatusOffset, Count) + OFFSET_OF(FW_UPDATE_COMP_STATUS, LastAttemptVersion);
-  Status = BootMediaWrite(ByteOffset, sizeof(UINT32), (UINT8 *)&(FwUpdCompStatus[Count].LastAttemptVersion));
+  Status = BootMediaWrite(ByteOffset, sizeof(UINT32), (UINT8 *)&(FwUpdCompStatus.LastAttemptVersion));
   if (EFI_ERROR (Status)) {
     DEBUG((DEBUG_ERROR, "Updating last attempt version failed with status: %r\n", Status));
     return Status;
   }
 
   ByteOffset = COMP_STATUS_OFFSET(FwUpdStatusOffset, Count) + OFFSET_OF(FW_UPDATE_COMP_STATUS, LastAttemptStatus);
-  Status = BootMediaWrite(ByteOffset, sizeof(UINT32), (UINT8 *)&(FwUpdCompStatus[Count].LastAttemptStatus));
+  Status = BootMediaWrite(ByteOffset, sizeof(UINT32), (UINT8 *)&(FwUpdCompStatus.LastAttemptStatus));
   if (EFI_ERROR (Status)) {
     DEBUG((DEBUG_ERROR, "Updating last attempt status failed with status: %r\n", Status));
     return Status;
   }
 
   ByteOffset = COMP_STATUS_OFFSET(FwUpdStatusOffset, Count) + OFFSET_OF(FW_UPDATE_COMP_STATUS, UpdatePending);
-  Status = BootMediaWrite(ByteOffset, sizeof(UINT8), (UINT8 *)&(FwUpdCompStatus[Count].UpdatePending));
+  Status = BootMediaWrite(ByteOffset, sizeof(UINT8), (UINT8 *)&(FwUpdCompStatus.UpdatePending));
   if (EFI_ERROR (Status)) {
     DEBUG((DEBUG_ERROR, "Updating updatepending failed with status: %r\n", Status));
     return Status;
@@ -1421,9 +1406,9 @@ InitFirmwareUpdate (
   //
   for (Count = 0; Count < MAX_FW_COMPONENTS; Count ++) {
     //
-    // If the component has pending or processing state
+    // Skip all none and done
     //
-    if (FwUpdCompStatus[Count].UpdatePending & (BIT0 | BIT1 | BIT2)) {
+    if (FwUpdCompStatus[Count].UpdatePending & FW_UPDATE_IN_PROGRESS_FLAGS) {
       if (FwUpdCompStatus[Count].UpdatePending == FW_UPDATE_IMAGE_UPDATE_PENDING) {
         //
         // Set the component to processing state before the update
