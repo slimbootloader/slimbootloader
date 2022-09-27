@@ -905,6 +905,14 @@
                      Enables/Disable Memory Test
       length       : 0x01
       value        : 0x00
+  - MemTestOnWarmBoot :
+      name         : MRC Boot Mode
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enables/Disable MRC Boot Mode
+      length       : 0x01
+      value        : 0x00
   - ECT          :
       name         : Early Command Training
       type         : Combo
@@ -1413,5 +1421,5 @@
       length       : 0x2
       value        : 0x0
   - Dummy        :
-      length       : 0x2
+      length       : 0x1
       value        : 0x0
