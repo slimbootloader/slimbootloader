@@ -352,6 +352,8 @@ GetBoardId (
   if (BoardID == 0xFF){
     //EC is not detected (timeout)
     GetBoardIdFromSmbus(PlatformId);
+    if (*PlatformId == 0xFF)
+      *PlatformId = PLATFORM_ID_RPL_P_DDR5_CRB;
     return;
   }
 

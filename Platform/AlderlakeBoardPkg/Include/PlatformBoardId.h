@@ -64,4 +64,6 @@ Defines Platform BoardIds
 #define BoardIdRplPLp5Rvp                             0x05
 #define PLATFORM_ID_RPL_P_LP5_RVP                     0x05
 
+#define PLATFORM_ID_RPL_P_DDR5_CRB                    0x08
+
 #endif // _PLATFORM_BOARD_ID_H_
