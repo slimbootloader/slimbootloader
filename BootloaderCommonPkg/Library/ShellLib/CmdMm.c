@@ -2,7 +2,7 @@
   Shell command `mm` to read/write system memory, PCI config space
   and IO ports.
 
-  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -264,7 +264,10 @@ ShellCommandMmFunc (
 
   if (EFI_ERROR(Status)) {
     ShellPrint (L"Usage: %s <addr> [value] [-w <1|2|4|8>] [-c count] [-io | -pci] \n", Argv[0]);
-    ShellPrint (L"       defaults: -w=4 -c=1\n");
+    ShellPrint (L"       All input numeric values are interpreted as hexadecimal numbers\n");
+    ShellPrint (L"       <addr> must be starting address for read/write\n");
+    ShellPrint (L"       w : Width of single data unit in bytes. (Default = 4)\n");
+    ShellPrint (L"       c : Number of data units. (Default = 1)\n");
     ShellPrint (L"       examples:\n");
     ShellPrint (L"       # Read 1 dword at the address\n");
     ShellPrint (L"         mm c0000000\n");
