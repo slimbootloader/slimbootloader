@@ -429,7 +429,11 @@ TpmInitialize (
     }
 
     if (EFI_ERROR (Status)) {
-      CpuHalt ("Tpm Initialization failed !!\n");
+      DEBUG ((DEBUG_ERROR, "Tpm Initialization failed  %r !! \n", Status));
+
+      Features  = GetFeatureCfg ();
+      Features &= (UINT32)(~FEATURE_MEASURED_BOOT);
+      SetFeatureCfg (Features);
     } else {
       if (BootMode != BOOT_ON_S3_RESUME) {
         // Create and add BootGuard Event logs in TCG Event log
