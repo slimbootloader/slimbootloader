@@ -412,7 +412,7 @@ InternalGetVariable (
   DataSizeIn = *DataSize;
   VariableDataLen = FindVarHdrPtr->DataSize - VariableNameLen;
   *DataSize = VariableDataLen;
-  if (DataSizeIn <  VariableDataLen) {
+  if ((Data != NULL) && (DataSizeIn <  VariableDataLen)) {
     return EFI_BUFFER_TOO_SMALL;
   }
 
