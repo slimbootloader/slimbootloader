@@ -490,6 +490,7 @@ UpdateFspConfig (
     Fspmcfg->BdatTestType               = MemCfgData->BdatTestType;
     Fspmcfg->RMC                        = MemCfgData->RMC;
     Fspmcfg->MEMTST                     = MemCfgData->MEMTST;
+    Fspmcfg->MemTestOnWarmBoot          = MemCfgData->MemTestOnWarmBoot;
     //FspmUpd->FspmRestrictedConfig.PerBankRefresh = 0x1;
 
     Fspmcfg->ECT                        = MemCfgData->ECT;
@@ -665,6 +666,8 @@ UpdateFspConfig (
       DEBUG ((DEBUG_INFO, "PchTraceHubMemReg0Size = %x\n", Fspmcfg->PchTraceHubMemReg0Size));
       DEBUG ((DEBUG_INFO, "PchTraceHubMemReg1Size = %x\n", Fspmcfg->PchTraceHubMemReg1Size));
       DEBUG ((DEBUG_INFO, "FiaLaneReversalEnable = %x\n", Fspmcfg->FiaLaneReversalEnable));
+      DEBUG ((DEBUG_INFO, "Memory Test = 0x%x\n", Fspmcfg->MEMTST));
+      DEBUG ((DEBUG_INFO, "MemTestOnWarmBoot = 0x%x\n", Fspmcfg->MemTestOnWarmBoot));
   }
 
   // IGD config data
