@@ -315,7 +315,7 @@ CheckAndFixHeciForAccess (
 
   MemBar = HeciPciRead32 (HeciDev, PCI_BASE_ADDRESSREG_OFFSET) & 0xFFFFFFF0;
   if ((HeciPciRead32 (HeciDev, PCI_BASE_ADDRESSREG_OFFSET) & B_PCI_BAR_MEMORY_TYPE_MASK) == B_PCI_BAR_MEMORY_TYPE_64) {
-    MemBar += (UINT64)HeciPciRead32 (HeciDev, (PCI_BASE_ADDRESSREG_OFFSET + 4)) << 32;
+    MemBar += LShiftU64((UINT64)HeciPciRead32 (HeciDev, (PCI_BASE_ADDRESSREG_OFFSET + 4)), 32);
   }
 
   if (MemBar == 0) {
