@@ -29,6 +29,7 @@
 #include <Register/GpioPinsVer3.h>
 #include <Register/PseRegs.h>
 #include <Register/SaRegsHostBridge.h>
+#include <FspsUpd.h>
 #include <Library/PchSciLib.h>
 #include <Library/ConfigDataLib.h>
 #include <ConfigDataDefs.h>
@@ -207,6 +208,66 @@ GetCpuStepping (
   ///
   AsmCpuid (CPUID_VERSION_INFO, &Cpuid.RegEax, &Cpuid.RegEbx, &Cpuid.RegEcx, &Cpuid.RegEdx);
   return ((CPU_STEPPING) (Cpuid.RegEax & CPUID_FULL_STEPPING));
+}
+
+/**
+  Return SIO Uart Pci Cfg base
+
+  @param[in] UartNumber          Uart index
+
+  @retval UINT64             Pci Cfg base
+**/
+UINT64
+EFIAPI
+GetSerialIoUartPciCfgBase (
+  IN UINT8       UartNumber
+  )
+{
+  if (GetPchMaxSerialIoUartControllersNum () <= UartNumber) {
+    ASSERT (FALSE);
+    return 0;
+  }
+  switch (UartNumber) {
+    case 0:
+      return 0xF0000; // B0:D30:F0
+    case 1:
+      return 0xF1000; // B0:D30:F1
+    case 2:
+      return 0xCA000; // B0:D25:F2
+    default:
+      ASSERT (FALSE);
+      return 0;
+  }
+}
+
+/**
+  Return SIO Uart Irq
+
+  @param[in] UartNumber          Uart index
+
+  @retval UINT8              irq
+**/
+UINT8
+EFIAPI
+GetSerialIoUartIrq (
+  IN UINT8       UartNumber
+  )
+{
+  if (GetPchMaxSerialIoUartControllersNum () <= UartNumber) {
+    ASSERT (FALSE);
+    return 0xFF;
+  }
+  switch (UartNumber) {
+    case 0:
+      return 16;
+    case 1:
+      return 17;
+    case 2:
+      return 33;
+    default:
+      ASSERT (FALSE);
+      return 0xFF;
+  }
 }
 
 /**
@@ -530,6 +591,8 @@ PlatformUpdateAcpiGnvs (
   FEATURES_CFG_DATA       *FeaturesCfgData;
   BOOLEAN                 PchSciSupported;
   SILICON_CFG_DATA        *SiCfgData;
+  FSPS_UPD                *FspsUpd;
+  FSP_S_CONFIG            *FspsConfig;
 
   PchSciSupported         = PchIsSciSupported ();
   GlobalNvs               = (GLOBAL_NVS_AREA *) GnvsIn;
@@ -852,6 +915,21 @@ PlatformUpdateAcpiGnvs (
   PlatformNvs->IC5S                             = 400000;
   PlatformNvs->IC6S                             = 400000;
   PlatformNvs->IC7S                             = 400000;
+
+  FspsUpd     = (FSPS_UPD *)(UINTN)PcdGet32 (PcdFspsUpdPtr);
+  FspsConfig  = &FspsUpd->FspsConfig;
+  Length = GetPchMaxSerialIoUartControllersNum ();
+  for (Index = 0; Index < Length ; Index++) {
+    PchNvs->UM0[Index] = FspsConfig->SerialIoUartMode[Index];
+    if (FspsConfig->SerialIoUartMode[Index] == 1) {
+      PchNvs->UC0[Index] = GetSerialIoUartPciCfgBase(Index);
+    } else if (FspsConfig->SerialIoUartMode[Index] == 3) {
+      PchNvs->UC0[Index] = PCH_SERIAL_IO_BASE_ADDRESS + 0x1F000 + 0x2000 * Index; /* COM */
+    }
+    PchNvs->UD0[Index] = FspsConfig->SerialIoUartDmaEnable[Index];
+    PchNvs->UP0[Index] = FspsConfig->SerialIoUartPowerGating[Index];
+    PchNvs->UI0[Index] = GetSerialIoUartIrq(Index);
+  }
 
   PlatformNvs->USTP                             = 1;
 
