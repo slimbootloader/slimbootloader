@@ -1,9 +1,11 @@
 /** @file
 
-  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
+
+External(TCIR) // TCSS xDCI Irq number
 
 Scope(\_SB) {
   Name(PD00, Package(){
@@ -104,7 +106,7 @@ Scope(\_SB) {
 // D25
     Package(){0x0019FFFF, 0, 0, 31 },
     Package(){0x0019FFFF, 1, 0, 32 },
-    Package(){0x0019FFFF, 2, 0, 33 },
+    Package(){0x0019FFFF, 2, 0, 42 },
 // D23
     Package(){0x0017FFFF, 0, 0, 16 },
 // D22
@@ -113,10 +115,17 @@ Scope(\_SB) {
     Package(){0x0016FFFF, 2, 0, 18 },
     Package(){0x0016FFFF, 3, 0, 19 },
 // D21
+#if FixedPcdGetBool(PcdAdlNSupport) == 1
     Package(){0x0015FFFF, 0, 0, 27 },
     Package(){0x0015FFFF, 1, 0, 40 },
     Package(){0x0015FFFF, 2, 0, 29 },
-    Package(){0x0015FFFF, 3, 0, 30 },
+    Package(){0x0015FFFF, 3, 0, 33 },
+#else
+    Package(){0x0015FFFF, 0, 0, 27 },
+    Package(){0x0015FFFF, 1, 0, 40 },
+    Package(){0x0015FFFF, 2, 0, 29 },
+    Package(){0x0015FFFF, 3, 0, 43 },
+#endif
 // D20
     Package(){0x0014FFFF, 0, 0, 16 },
     Package(){0x0014FFFF, 1, 0, 17 },
@@ -134,7 +143,7 @@ Scope(\_SB) {
 //  Package(){0x0012FFFF, 3, 0, 19 },
 // D17
     Package(){0x0011FFFF, 0, 0, 25 },
-    Package(){0x0011FFFF, 1, 0, 36 },
+    Package(){0x0011FFFF, 1, 0, 35 },
     Package(){0x0011FFFF, 2, 0, 28 },
     Package(){0x0011FFFF, 3, 0, 34 },
 // D16
@@ -164,7 +173,7 @@ Scope(\_SB) {
 // SA GNA Device
     Package(){0x0008FFFF, 0, 0, 16 },
 // SA XHCI XDCI Device
-    Package(){0x000DFFFF, 0, 0, 16 },
+    Package(){0x000DFFFF, 0, 0, TCIR },
     Package(){0x000DFFFF, 1, 0, 17 },
 // ITBT PCIE Root Port
     Package(){0x0007FFFF, 0, 0, 16 },
