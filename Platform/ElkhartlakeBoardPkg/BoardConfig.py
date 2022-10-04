@@ -139,7 +139,7 @@ class Board(BaseBoard):
         # if PAYLOAD_LOAD_HIGH is 1, PAYLOAD_EXE_BASE will be ignored
         self.PAYLOAD_LOAD_HIGH    = 1
         self.PAYLOAD_EXE_BASE     = 0x00B00000
-        self.PAYLOAD_SIZE         = 0x00020000
+        self.PAYLOAD_SIZE         = 0x00030000
         self.EPAYLOAD_SIZE        = 0x00162000
         self.UCODE_SIZE           = 0x00010000 if self.HAVE_FSP_BIN != 0 else 0
         self.MRCDATA_SIZE         = 0x00008000
