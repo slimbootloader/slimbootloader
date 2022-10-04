@@ -288,7 +288,7 @@ BoardInit (
   UINT32          TsegBase;
   UINT32          TsegSize;
   UINTN           LpcBase;
-  GET_FIPS_MODE_DATA        *GetFipsModeData;
+  GET_FIPS_MODE_DATA        GetFipsModeData;
   EFI_PEI_GRAPHICS_INFO_HOB *FspGfxHob;
   VOID                      *FspHobList;
   SILICON_CFG_DATA          *SiCfgData;
@@ -391,10 +391,10 @@ BoardInit (
       if (FeatureCfgData->Sio == 1){
         SioInit();
       }
-      GetFipsModeData = NULL;
-      HeciGetFipsMode(GetFipsModeData);
-      DEBUG ((DEBUG_INFO, "HeciGetFipsMode = 0x%x\n", GetFipsModeData->FipsMode));
-      if (GetFipsModeData->FipsMode != FeatureCfgData->MeFipsMode){
+      ZeroMem (&GetFipsModeData,sizeof(GetFipsModeData));
+      HeciGetFipsMode(&GetFipsModeData);
+      DEBUG ((DEBUG_INFO, "HeciGetFipsMode = 0x%x\n", GetFipsModeData.FipsMode));
+      if (GetFipsModeData.FipsMode != FeatureCfgData->MeFipsMode){
         DEBUG ((DEBUG_INFO, "Set HeciSetFipsMode to 0x%x\n", FeatureCfgData->MeFipsMode));
         HeciSetFipsMode(FeatureCfgData->MeFipsMode);
       }

@@ -182,6 +182,7 @@ GpioPadcalc(
   UINT32 GpioPad;
   UINT32 GroupIndex;
 
+  GpioPad = 0;
   GroupIndex = GpioGetGroupIndexFromGroup(PadGroup);
 
   if (IsPchS()) {
