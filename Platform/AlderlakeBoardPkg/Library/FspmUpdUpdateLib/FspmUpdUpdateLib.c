@@ -540,6 +540,10 @@ UpdateFspConfig (
     // DP + DP
     CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mAdlNLpddr5RowDisplayDdiConfig, sizeof(mAdlNLpddr5RowDisplayDdiConfig));
     break;
+  case PLATFORM_ID_RPL_P_DDR5_CRB:
+    DEBUG((DEBUG_INFO, "PLATFORM_ID_RPL_P_DDR5_CRB board Id %x .....\n", PlatformId));
+    CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mRplPDdr5SODimmCrbDisplayDdiConfig, sizeof(mRplPDdr5SODimmCrbDisplayDdiConfig));
+    break;
   default:
     DEBUG((DEBUG_INFO, "DDI Init: Unsupported board Id %x .....\n", PlatformId));
     break;
