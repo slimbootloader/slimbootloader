@@ -1,0 +1,239 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : SIL
+- SILICON_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ SILICON_CFG_DATA, 0x500, 0, 0 ] }
+  - !expand { SIL_TMPL : [ SATA CFG 0] }
+  - SataConfig0 :
+    - $STRUCT      :
+        name         : Sata Configuration 0
+        help         : >
+                       Configure SATA Configuration Features
+        struct       : SATA_FEATURE_CFG_0
+        length       : 0x04
+    - EnableSATA0  :
+        name         : SATA Controller 0
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/disable SATA Controller 0.
+        length       : 1b
+        value        : 1
+    - EnableSATA1  :
+        name         : SATA Controller 1
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/disable SATA Controller 1.
+        length       : 1b
+        value        : 1
+    - EnableSATA2  :
+        name         : SATA Controller 2
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/disable SATA Controller 2.
+        length       : 1b
+        value        : 1
+    - SATA0Mode  :
+        name         : SATA Controller 0 Mode
+        type         : Combo
+        option       : 0:AHCI, 1:RAID
+        help         : >
+                       Mode of SATA Controller 0.
+        length       : 1b
+    - SATA1Mode  :
+        name         : SATA Controller 1 Mode
+        type         : Combo
+        option       : 0:AHCI, 1:RAID
+        help         : >
+                       Mode of SATA Controller 1.
+        length       : 1b
+    - SATA2Mode  :
+        name         : SATA Controller 2 Mode
+        type         : Combo
+        option       : 0:AHCI, 1:RAID
+        help         : >
+                       Mode of SATA Controller 2.
+        length       : 1b
+    - SATA0IntMode  :
+        name         : SATA Controller 0 Interrupt Mode
+        type         : Combo
+        option       : 0:Msix, 1:Msi, 2:Legacy
+        help         : >
+                       Interrupt Mode for SATA Controller 0.
+        length       : 2b
+    - SATA1IntMode  :
+        name         : SATA Controller 1 Interrupt Mode
+        type         : Combo
+        option       : 0:Msix, 1:Msi, 2:Legacy
+        help         : >
+                       Interrupt Mode for SATA Controller 1.
+        length       : 2b
+    - SATA2IntMode  :
+        name         : SATA Controller 2 Interrupt Mode
+        type         : Combo
+        option       : 0:Msix, 1:Msi, 2:Legacy
+        help         : >
+                       Interrupt Mode for SATA Controller 2.
+        length       : 2b
+    - SATA0PortEnable  :
+        name         : SATA Controller 0 Port Enable
+        type         : EditNum, Hex, (0x00, 0xFF)
+        help         : >
+                       Each one of 8 ports is represented by a bit. 0 : Disbaled, 1: Enabled
+        length       : 8b
+        value        : 0xFF
+    - SATA0PortHotplug  :
+        name         : SATA Controller 0 Port Hotplug capability
+        type         : EditNum, Hex, (0x00, 0xFF)
+        help         : >
+                       Each one of 8 ports is represented by a bit. 0 : Disbaled, 1: Enabled
+        length       : 8b
+        value        : 0
+    - Reserved0    :
+        name         : Reserved0
+        type         : Reserved
+        help         : >
+                       Reserved
+        length       : 4b
+        value        : 0
+  - !expand { SIL_TMPL : [ SATA CFG 1] }
+  - SataConfig1 :
+    - $STRUCT      :
+        name         : Sata Configuration 1
+        help         : >
+                       Configure SATA Configuration Features
+        struct       : SATA_FEATURE_CFG_1
+        length       : 0x04
+    - SATA1PortEnable  :
+        name         : SATA Controller 1 Port Enable
+        type         : EditNum, Hex, (0x00, 0xFF)
+        help         : >
+                       Each one of 8 ports is represented by a bit. 0 : Disbaled, 1: Enabled
+        length       : 8b
+        value        : 0xFF
+    - SATA1PortHotplug  :
+        name         : SATA Controller 1 Port Hotplug capability
+        type         : EditNum, Hex, (0x00, 0xFF)
+        help         : >
+                       Each one of 8 ports is represented by a bit. 0 : Disbaled, 1: Enabled
+        length       : 8b
+        value        : 0
+    - SATA2PortEnable  :
+        name         : SATA Controller 2 Port Enable
+        type         : EditNum, Hex, (0x00, 0xFF)
+        help         : >
+                       Each one of 8 ports is represented by a bit. 0 : Disbaled, 1: Enabled
+        length       : 8b
+        value        : 0xFF
+    - SATA2PortHotplug  :
+        name         : SATA Controller 2 Port Hotplug capability
+        type         : EditNum, Hex, (0x00, 0xFF)
+        help         : >
+                       Each one of 8 ports is represented by a bit. 0 : Disbaled, 1: Enabled
+        length       : 8b
+        value        : 0
+  - !expand { SIL_TMPL : [ FPRR ] }
+  - FprrConfig :
+    - $STRUCT      :
+        name         : FPRR Configuration
+        help         : >
+                       Configure Silicon Configuration Features
+        struct       : FPRR_CFG
+        length       : 0x20
+    - WriteEnable :
+        name         : PCH Flash Protection Ranges Write Enable
+        type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFF)
+        help         : >
+                        Each byte represents a WriteProtectionEnable for respective Range.
+        length       : 5
+        value        : { 0x1, 0x1, 0x1, 0x1, 0x1 }
+    - ReadEnable :
+        name         : PCH Flash Protection Ranges Read Enable
+        type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFF)
+        help         : >
+                        Each byte represents a ReadProtectionEnable for respective Range.
+        length       : 5
+        value        : { 0x0, 0x0, 0x0, 0x0, 0x0 }
+    - FprrRsvd :
+        name         : Reserved0
+        type         : Reserved
+        help         : >
+                        Reserved for padding.
+        length       : 2
+        value        : { 0x0, 0x0 }
+    - Range :
+        name         : Base and Limit for Range [0..4]
+        type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+        help         : >
+                       Lower WORD is Base, Upper WORD is Limit.
+                       Base and Limit are left shifted address by 12 bits with Flash address.
+                       ex) 64MB SPI : (0x0000000-0x3FFFFFF) => (0x0000-0x3FFF).
+                           12MB BIOS: (0x3400000-0x3FFFFFF) => (0x3400-0x3FFF).
+        struct       : UINT32
+        length       : 0x14
+        value        : {0:0D, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 }
+  - !expand { SIL_TMPL : [ INT Config ] }
+  - IntConfig :
+    - $STRUCT      :
+        name         : Misc Configuration
+        help         : >
+                       Configure Silicon Configuration Features
+        struct       : INT_CFG
+        length       : 0x10
+    - DevIntCfgptr :
+        name         : Address of PCH_DEVICE_INTERRUPT_CONFIG table.
+        type         : EditNum, HEX, (0x00, 0xFFFFFFFF)
+        help         : >
+                       The address of the table of PCH_DEVICE_INTERRUPT_CONFIG.
+        length       : 32b
+        value        : 0
+    - GpioIrqRoute :
+        name         : Interrupt config GpioIrqRoute.
+        type         : EditNum, HEX, (0,0xFF)
+        help         : >
+                       GpioIrqRoute can be confiured here. Valid value should be set.
+        length       : 8b
+        value        : 0x15
+    - SciIrqSelect :
+        name         : Interrupt config SciIrqSelect.
+        type         : EditNum, HEX, (0,0xFF)
+        help         : >
+                       SciIrqSelect can be confiured here. Valid value should be set.
+        length       : 8b
+        value        : 0x9
+    - Reserved0    :
+        name         : Reserved0
+        type         : Reserved
+        help         : >
+                       Reserved
+        length       : 16b
+        value        : 0
+    - PxRcConfig0 :
+        name         : Interrupt config PxRcConfig.
+        type         : EditNum, HEX, (0,0xFFFFFFFF)
+        help         : >
+                       PxRcConfig can be confiured here for PIRQA, PIRQB, PIRQC, PIRQD. First byte is for PIRQA, second byte is for PIRQB, and so on.
+        length       : 32b
+        value        : 0x0B0B0A0B
+    - PxRcConfig1 :
+        name         : Interrupt config PxRcConfig.
+        type         : EditNum, HEX, (0,0xFFFFFFFF)
+        help         : >
+                       PxRcConfig can be confiured here for PIRQE, PIRQF, PIRQG, PIRQH. First byte is for PIRQE, second byte is for PIRQF, and so on.
+        length       : 32b
+        value        : 0x0B0B0B0B
+  - Dummy        :
+      length       : 0x0
+      value        : 0x0
+

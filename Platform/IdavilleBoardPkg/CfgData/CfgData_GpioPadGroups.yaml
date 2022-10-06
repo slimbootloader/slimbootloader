@@ -1,0 +1,13 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Ice Lake D GPIO pad groups.
+#
+#  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+>
+0x0:GROUP_A, 0x1:GROUP_B, 0x2:GROUP_C, 0x3:GROUP_D, 0x4:GROUP_E,
+0x5:GROUP_F, 0x6:GROUP_G, 0x7:GROUP_H, 0x8:GROUP_I, 0x9:GROUP_J,
+0xA:GROUP_K, 0xB:GROUP_L, 0xC:GROUP_M

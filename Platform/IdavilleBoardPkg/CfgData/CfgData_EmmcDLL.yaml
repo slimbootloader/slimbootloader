@@ -1,0 +1,57 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : SIL
+- EMMC_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ EMMC_CFG_DATA, 0x700, 0, 0 ] }
+  - !expand { SIL_TMPL : [ EMMC DLL ] }
+  - TxCmdDelayControl :
+      name         : Tx CMD Delay Control
+      help         : >
+                     Tx CMD Delay Control (Offset 820h)
+      type         : EditNum, Hex, (0x00, 0x500)
+      length       : 0x04
+      value        : 0x500
+  - TxDataDelayControl1 :
+      name         : Tx Data Delay Control 1
+      help         : >
+                     Tx Data Delay Control 1 (Offset 824h)
+      type         : EditNum, Hex, (0x00, 0x910)
+      length       : 0x04
+      value        : 0x910
+  - TxDataDelayControl2 :
+      name         : Tx Data Delay Control 2
+      help         : >
+                     Tx Data Delay Control 2 (Offset 828h)
+      type         : EditNum, Hex, (0x00, 0x2a2b292a)
+      length       : 0x04
+      value        : 0x2a2b292a
+  - RxCmdDataDelayControl1 :
+      name         : Rx CMD + Data Delay Control 1
+      help         : >
+                     Rx CMD + Data Delay Control 1 (Offset 82Ch)
+      type         : EditNum, Hex, (0x00, 0x1c1d251c)
+      length       : 0x04
+      value        : 0x1c1d251c
+  - RxCmdDataDelayControl2 :
+      name         : Rx CMD + Data Delay Control 2
+      help         : >
+                     Rx CMD + Data Delay Control 2 (Offset 834h)
+      type         : EditNum, Hex, (0x00, 0x1000c)
+      length       : 0x04
+      value        : 0x1000c
+  - RxStrobeDelayControl :
+      name         : Rx Strobe Delay Control, valid only for eMMC
+      help         : >
+                     Rx Strobe Delay Control, valid only for eMMC (Offset 830h)
+      type         : EditNum, Hex, (0x00, 0x1818)
+      length       : 0x04
+      value        : 0x1818

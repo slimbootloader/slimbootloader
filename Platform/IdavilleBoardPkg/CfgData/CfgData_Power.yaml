@@ -1,0 +1,377 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : PWR
+- PWR_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ PWR_CFG_DATA, 0xB00, 0, 0 ] }
+  - !expand { PWR_TMPL : [ MGMT ] }
+  - PState :
+    - $STRUCT      :
+        name         : P-State Power Mgmt Control Config
+        help         : >
+                       Control, Enabling/Disabling P-State Power Mgmt Features
+        struct       : P_STATE_CFG
+        length       : 0x08
+    - EistEnable :
+        name         : Enable EIST
+        help         : >
+                        Enable Speed Step (P-states)
+        type         : Combo
+        option       : 0:Disabled, 1:Enabled
+        length       : 1b
+        value        : 1
+    - BootPState :
+        name         : Boot performance mode
+        help         : >
+                        Select Boot Performance State. EIST should be Enabled.
+        type         : Combo
+        option       : 0:Max Performance, 1:Max Efficient, 2:Set by Intel Node Manager
+        length       : 2b
+        value        : 0x0
+    - HWPMEnable :
+        name         : Hardware P-States
+        help         : >
+                        Select Hardware P-State control.
+        type         : Combo
+        option       : 0:Disable, 1:Native Mode, 2:Out of Band Mode, 3:Native Mode with No Legacy Support
+        length       : 2b
+        value        : 0x1
+    - HWPMInterrupt :
+        name         : Hardware PM Interrupt
+        help         : >
+                        Enable / Disable Hardware PM Interrupt. Hardware P-States should be Native mode.
+        type         : Combo
+        option       : 0:Disabled, 1:Enabled
+        length       : 1b
+        value        : 0
+    - PsdFunction      :
+        name         : EIST PSD Function
+        type         : Combo
+        option       : 0:HW_ALL,1:SW_ALL
+        help         : >
+                       Choose HW_ALL/SW_ALL in _PSD return
+        length       : 1b
+        value        : 1
+    - EPPEnable :
+        name         : EPP Enable
+        help         : >
+                        Enable / Disable EPP. Hardware P-States should not be disabled.
+        type         : Combo
+        option       : 0:Disabled, 1:Enabled
+        length       : 1b
+        value        : 1
+    - EppProfile :
+        name         : Epp Profile
+        help         : >
+                        Select HWPM Profile (EPP). Hardware P-States should be OOB and EPP should be enabled.
+        type         : Combo
+        option       : 0:Performance, 128:Balanced Performance, 192:Balanced Power, 255:Power
+        length       : 8b
+        value        : 0x80
+    - ConfigTdpLock :
+        name         : Config TDP Lock
+        help         : >
+                        Config TDP CONTROL Lock Bit. EIST should be enabled.
+        type         : Combo
+        option       : 0:Disabled, 1:Enabled
+        length       : 1b
+        value        : 1
+    - ConfigTdpLevel :
+        name         : AVX P1 Level
+        help         : >
+                        AVX P1 level selection. EIST should be enabled.
+        type         : Combo
+        option       : 0:Normal, 1:Level 1, 2:Level 2
+        length       : 2b
+        value        : 0x0
+    - AvxSupport :
+        name         : AVX Support
+        help         : >
+                        Enable/Disable AVX/2/3 instructions. Applicable to only certain SKUs - OC and HEDT.
+        type         : Combo
+        option       : 0:Disabled, 1:Enabled
+        length       : 1b
+        value        : 1
+    - AvxLicensePreGrant :
+        name         : AVX Licence Pre-Grant Override
+        help         : >
+                        Enables AVX ICCP pre-grant level override.
+        type         : Combo
+        option       : 0:Disabled, 1:Enabled
+        length       : 1b
+        value        : 0
+    - AvxIccpLevel :
+        name         : AVX ICCP pre-grant level
+        help         : >
+                        Pre-grants an AVX level to the core. Base frequency is not updated. AVX Licence Pre-Grant Override should be enabled.
+        type         : Combo
+        option       : 0:None, 1:128 Heavy, 2:256 Light, 3:256 Heavy, 4:512 Light, 5:512 Heavy
+        length       : 3b
+        value        : 0x1
+    - GpssTimer :
+        name         : GPSS timer
+        help         : >
+                        P-state change hysteresis time window.
+        type         : Combo
+        option       : 0:0 us, 5:50 us, 50:500 us
+        length       : 8b
+        value        : 0x32
+    - TurboMode :
+        name         : Turbo Mode
+        type         : Combo
+        option       : 0:Disabled, 1:Enabled
+        help         : >
+                        Enable/Disable Turbo Mode
+        length       : 1b
+        value        : 1
+    - PwrPerfTuning :
+        name         : Power Performance Tuning
+        type         : Combo
+        option       : 0:OS Controls EPB, 1:BIOS Controls EPB , 2:PECI Controls EPB
+        help         : >
+                        Options decides who Controls EPB. 0:In OS mode :IA32_ENERGY_PERF_BIAS is used
+                        (Option 0 is valid only if HWPMEnable is 0/1),
+                        1:In BIOS mode:ENERGY_PERF_BIAS_CONFIG is used, 2:In PECI mode: PCS53 is used.
+        length       : 2b
+        value        : 0
+    - AltEngPerfBIAS :
+        name         : Turbo Mode
+        type         : Combo
+        option       : 0:Performance, 7:Balanced Performance, 8:Balanced Power ,15:Power
+        help         : >
+                        (Valid if Power Performance Tuning is set to 1:BIOS Controls EPB.)
+                        Use input from ENERGY_PERF_BIAS_CONFIG mode selection.PERF/Balanced Perf/Balanced Power/Power.
+        length       : 4b
+        value        : 7
+    - Reserved4    :
+        name         : Reserved4
+        type         : Reserved
+        help         : >
+                       reserved
+        length       : 25b
+        value        : 0
+  - CState :
+    - $STRUCT      :
+        name         : C-State Power Mgmt Control Config
+        help         : >
+                       Control, Enabling/Disabling C-State Power Mgmt Features
+        struct       : C_STATE_CFG
+        length       : 0x0C
+    - PackageCState :
+        name         : Package C State
+        help         : >
+                        Package C State limit.
+        type         : Combo
+        option       : 0:C0/C1 state, 1:C2 state, 2:C6(non Retention) state, 255:Auto
+        length       : 8b
+        value        : 0xFF
+    - EnableCstate     :
+        name         : Enable C-State
+        type         : Combo
+        option       : 0:Disabled,1:Enabled
+        help         : >
+                       Enable/Disable C-State
+        length       : 1b
+        value        : 1
+    - C1eEnable :
+        name         : Enhanced Halt State (C1E)
+        help         : >
+                        Enable / Disable Core C1E auto promotion Control.
+        type         : Combo
+        option       : 0:Disabled, 1:Enabled
+        length       : 1b
+        value        : 1
+    - C2C3TT :
+        name         : C2 to C3 Transition Timer
+        help         : >
+                        C2 to C3 Transition Timer. Default = 0, means [AUTO].
+        type         : EditNum, DEC, (0,255)
+        length       : 8b
+        value        : 0
+    - C3Enable :
+        name         : CPU C3 report
+        help         : >
+                        Enable/Disable CPU C3(ACPI C2) report to OS.
+        type         : Combo
+        option       : 0:Disabled, 1:Enabled
+        length       : 1b
+        value        : 1
+    - C6Enable    :
+        name         : CPU C6 report
+        help         : >
+                       Enable/Disable CPU C6(ACPI C3) report to OS.
+        type         : Combo
+        option       : 0:Disable, 1:Enable, 255:Auto
+        length       : 8b
+        value        : 0xFF
+    - MonitorMWait :
+        name         : Enable Monitor MWAIT
+        help         : >
+                        Enable / Disable Monitor and MWAIT instructions.
+        type         : Combo
+        option       : 0:Disabled, 1:Enabled
+        length       : 1b
+        value        : 1
+    - Reserved2 :
+        name         : Reserved2
+        type         : Reserved
+        help         : >
+                       reserved
+        length       : 4b
+        value        : 0
+    - CStateLatencyCtrlValid0 :
+        name         : C State Latency Control VALID[0]
+        help         : >
+                        Enable / Disable validity of the Value field in this register.
+        type         : Combo
+        option       : 0:Disabled, 1:Enabled
+        length       : 1b
+        value        : 0
+    - CStateLatencyCtrlMultiplier0 :
+        name         : C State Latency Control MULTIPLIER[0]
+        help         : >
+                        Indicates the unit of measurement that is defined for the Value field in this register. Valid field should be set.
+        type         : EditNum, HEX, (0,0x7)
+        length       : 3b
+        value        : 0
+    - CStateLatencyCtrlValue0 :
+        name         : C State Latency Control VALUE[0]
+        help         : >
+                        The Interrupt Response Time Limit is given in units defined in the Multiplier field of this register. Valid field should be set.
+        type         : EditNum, HEX, (0,0x3FF)
+        length       : 10b
+        value        : 0
+    - CStateLatencyCtrlValid1 :
+        name         : C State Latency Control VALID[1]
+        help         : >
+                        Enable / Disable validity of the Value field in this register.
+        type         : Combo
+        option       : 0:Disabled, 1:Enabled
+        length       : 1b
+        value        : 0
+    - CStateLatencyCtrlMultiplier1 :
+        name         : C State Latency Control MULTIPLIER[1]
+        help         : >
+                        Indicates the unit of measurement that is defined for the Value field in this register. Valid field should be set.
+        type         : EditNum, HEX, (0,0x7)
+        length       : 3b
+        value        : 0
+    - CStateLatencyCtrlValue1 :
+        name         : C State Latency Control VALUE[1]
+        help         : >
+                        The Interrupt Response Time Limit is given in units defined in the Multiplier field of this register. Valid field should be set.
+        type         : EditNum, HEX, (0,0x3FF)
+        length       : 10b
+        value        : 0
+    - Reserved3 :
+        name         : Reserved3
+        type         : Reserved
+        help         : >
+                       reserved
+        length       : 4b
+        value        : 0
+    - CStateLatencyCtrlValid2 :
+        name         : C State Latency Control VALID[2]
+        help         : >
+                        Enable / Disable validity of the Value field in this register.
+        type         : Combo
+        option       : 0:Disabled, 1:Enabled
+        length       : 1b
+        value        : 0
+    - CStateLatencyCtrlMultiplier2 :
+        name         : C State Latency Control MULTIPLIER[2]
+        help         : >
+                        Indicates the unit of measurement that is defined for the Value field in this register. Valid field should be set.
+        type         : EditNum, HEX, (0,0x7)
+        length       : 3b
+        value        : 0
+    - CStateLatencyCtrlValue2 :
+        name         : C State Latency Control VALUE[2]
+        help         : >
+                        The Interrupt Response Time Limit is given in units defined in the Multiplier field of this register. Valid field should be set.
+        type         : EditNum, HEX, (0,0x3FF)
+        length       : 10b
+        value        : 0
+    - ReportOSCX :
+        name         : Report CC3/CC6 to OS
+        type         : Combo
+        option       : 0:To ACPI C2,1:To ACPI C3
+        help         : >
+                       Report CC3/CC6 to OS ACPI C2 or ACPI C3.
+        length       : 1b
+        value        : 0
+    - Reserved4    :
+        name         : Reserved4
+        type         : Reserved
+        help         : >
+                       reserved
+        length       : 17b
+        value        : 0
+  - TState :
+    - $STRUCT      :
+        name         : T-State Power Mgmt Control Config
+        help         : >
+                       Control, Enabling/Disabling T-State Power Mgmt Features
+        struct       : T_STATE_CFG
+        length       : 0x04
+    - TStateEnable :
+        name         : Software Controlled T-States
+        help         : >
+                        Enable / Disable Software Controlled T-States.
+        type         : Combo
+        option       : 0:Disabled, 1:Enabled
+        length       : 1b
+        value        : 0
+    - EnableProcHot :
+        name         : PROCHOT Modes
+        help         : >
+                        When a processor thermal sensor trips, the PROCHOT# will be driven.
+        type         : Combo
+        option       : 0:Output-only, 1:Disable, 2:Both Input and Output, 3:Input-only
+        length       : 2b
+        value        : 0x3
+    - EnableThermalMonitor :
+        name         : Thermal Monitor
+        help         : >
+                        Enable / Disable Thermal Monitor.
+        type         : Combo
+        option       : 0:Disabled, 1:Enabled
+        length       : 1b
+        value        : 1
+    - Reserved3    :
+        name         : Reserved3
+        type         : Reserved
+        help         : >
+                       reserved
+        length       : 28b
+        value        : 0
+  - Miscellaneous :
+    - $STRUCT      :
+        name         : Miscellaneous Power Mgmt Control Config
+        help         : >
+                       Miscellaneous Power Mgmt Features
+        struct       : Miscellaneous_CFG
+        length       : 0x04
+    - WakeOnLanSupport :
+        name         : WakeOnLanSupport
+        type         : Combo
+        option       : 0:Disabled, 1:Enabled
+        help         : >
+                        Enable/Disable Wake on Lan Support
+        length       : 1b
+        value        : 0
+    - Reserved5    :
+        name         : Reserved5
+        type         : Reserved
+        help         : >
+                       reserved
+        length       : 31b
+        value        : 0

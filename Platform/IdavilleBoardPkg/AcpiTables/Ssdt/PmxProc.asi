@@ -1,0 +1,286 @@
+/** @file
+
+  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+  External (HWPS, FieldUnitObj) //HWPM
+
+  OperationRegion (DBG0, SystemIO, 0x80, 2)
+  Field (DBG0, ByteAcc,NoLock,Preserve) {
+    IO80, 8,
+    IO81, 8
+  }
+
+  //
+  // CPUx _PDC Flags.
+  //
+  Name(TYPE, 0x80000000)
+
+  //
+  // Dynamically load the CPUHWP SSDT if:
+  //   (1) If HWP capable and enabled
+  //   (2) SSDT is not already loaded
+  //
+  // HWEN  = HWP capable & enabled
+  // SDTL[1]   = CPUHWP SSDT Loaded
+  //
+  Method(HWPT,0)
+  {
+    If (LAnd(LOr(LEqual(HWEN,1), LEqual(HWEN,3)),LNot(And(SDTL,0x2))))
+    {
+      ADBG("HWPT")
+      //
+      // Flag the HWP SSDT as loaded
+      //
+      Or(SDTL, 0x2, SDTL)
+      LoadTable("OEM2", "INTEL", "CPU  HWP",,,) // Dynamically load the CPUHWP SSDT
+    }
+  }
+
+  //
+  // Dynamically load the CPUEIST SSDT if:
+  //   (1) If EIST capable and enabled
+  //   (2) SSDT is not already loaded
+  //
+  // PSEN  = EIST capable & enabled
+  // SDTL[0]   = CPUEIST SSDT Loaded
+  //
+  Method(ISTT,0)
+  {
+    If(LAnd (LAnd(LEqual(PSEN,1), LOr(LEqual(HWEN,0), LEqual(HWEN,1))), LNot(And(SDTL,0x1))))
+    {
+      ADBG("ISTT")
+      //
+      // Flag the EIST SSDT as loaded
+      //
+      Or(SDTL, 0x1, SDTL)
+      LoadTable("OEM1", "INTEL", "CPU EIST",,,)   // Dynamically load the CPUEIST SSDT
+    }
+  }
+
+  //
+  // Dynamically load the CPUTST SSDT if:
+  //   (1) If TST capable and enabled
+  //   (2) SSDT is not already loaded
+  //
+  // SDTL[2]   = CPUTST SSDT Loaded
+  //
+  Method(TSTT,0)
+  {
+    If(LAnd (LAnd(LEqual(TSEN,1), LOr(LEqual(HWEN,0), LEqual(HWEN,1))), LNot(And(SDTL,0x4))))
+    {
+      ADBG("TSTT")
+      //
+      // Flag the TST SSDT as loaded
+      //
+      Or(SDTL, 0x4, SDTL)
+      LoadTable("OEM3", "INTEL", "CPU  TST",,,)   // Dynamically load the CPUTST SSDT
+    }
+  }
+
+  //
+  // Dynamically load the CPUCST SSDT if:
+  //   (1) If CST capable and enabled
+  //   (2) SSDT is not already loaded
+  //
+  // SDTL[3]   = CPUCST SSDT Loaded
+  //
+  Method(CSTT,0)
+  {
+    If(LAnd (LEqual(CSEN,1), LNot(And(SDTL,0x8))) )
+    {
+      ADBG("CSTT")
+      //
+      // Flag the CST SSDT as loaded
+      //
+      Or(SDTL, 0x8, SDTL)
+      LoadTable("OEM4", "INTEL", "CPU  CST",,,)   // Dynamically load the CPUCST SSDT
+    }
+  }
+
+  Method(_PDC,1 ,Serialized) {
+    //
+    // Store result of PDC.
+    //
+// remove this to avoid "not used" remark from compiler.
+//        CreateDWordField(Arg0,8,CAPA)         // Point to 3rd DWORD.
+
+    CreateDwordField (Arg0, 0, REVS)
+    CreateDwordField (Arg0, 4, SIZE)
+
+    //
+    // Local0 = Number of bytes for Arg0
+    //
+    Store (SizeOf (Arg0), Local0)
+
+    //
+    // Local1 = Number of Capabilities bytes in Arg0
+    //
+    Store (Subtract (Local0, 8), Local1)
+
+    //
+    // TEMP = Temporary field holding Capability DWORDs
+    //
+    CreateField (Arg0, 64, Multiply (Local1, 8), TEMP)
+
+    //
+    // Create the Status (STS0) buffer with the first DWORD = 0
+    // This is required as per ACPI 3.0 Spec which says the
+    // first DWORD is used to return errors defined by _OSC.
+    //
+    Name (STS0, Buffer () {0x00, 0x00, 0x00, 0x00})
+
+    //
+    // Concatenate the _PDC capabilities bytes to the STS0 Buffer
+    // and store them in a local variable for calling OSC
+    //
+    Concatenate (STS0, TEMP, Local2)
+
+    _OSC (ToUUID("4077A616-290C-47BE-9EBD-D87058713953"), REVS, SIZE, Local2)
+  }
+
+  Method(_OSC, 4,Serialized)
+  {
+    //
+    // Store result of PDC.
+    //
+    CreateDWordField(Arg3,4,CAPA)         // Point to 3rd DWORD.
+    Store(CAPA, TYPE)                     // Store It in PDCx.
+
+    // Point to Status DWORD in the Arg3 buffer (STATUS)
+    CreateDWordField(Arg3, 0, STS0)
+
+    // Point to Caps DWORDs of the Arg3 buffer (CAPABILITIES)
+    CreateDwordField(Arg3, 4, CAP0)
+
+    //
+    // _OSC needs to validate the UUID and Revision.
+    //
+    // IF Unrecognized UUID
+    //  Return Unrecognized UUID _OSC Failure
+    // IF Unsupported Revision
+    //  Return Unsupported Revision _OSC Failure
+    //
+    //    STS0[0] = Reserved
+    //    STS0[1] = _OSC Failure
+    //    STS0[2] = Unrecognized UUID
+    //    STS0[3] = Unsupported Revision
+    //    STS0[4] = Capabilities masked
+    //
+    // Note:  The comparison method used is necessary due to
+    // limitations of certain OSes which cannot perform direct
+    // buffer comparisons.
+    //
+    // Create a set of "Input" UUID fields.
+    //
+    CreateDwordField(Arg0, 0x0, IID0)
+    CreateDwordField(Arg0, 0x4, IID1)
+    CreateDwordField(Arg0, 0x8, IID2)
+    CreateDwordField(Arg0, 0xC, IID3)
+    //
+    // Create a set of "Expected" UUID fields.
+    //
+    Name(UID0, ToUUID("4077A616-290C-47BE-9EBD-D87058713953"))
+    CreateDwordField(UID0, 0x0, EID0)
+    CreateDwordField(UID0, 0x4, EID1)
+    CreateDwordField(UID0, 0x8, EID2)
+    CreateDwordField(UID0, 0xC, EID3)
+    //
+    // Verify the input UUID matches the expected UUID.
+    //
+    If(LNot(LAnd(LAnd(LEqual(IID0, EID0),LEqual(IID1, EID1)),LAnd(LEqual(IID2, EID2),LEqual(IID3, EID3)))))
+    {
+      //
+      // Return Unrecognized UUID _OSC Failure
+      //
+      Store (0x6, Index (STS0, 0))
+      Return (Arg3)
+    }
+
+    If(LNot(LEqual(Arg1,1)))
+    {
+      //
+      // Return Unsupported Revision _OSC Failure
+      //
+      Store (0xA, Index (STS0, 0))
+      Return (Arg3)
+    }
+
+    //
+    // Verify if OS is simply querying what functions are supported
+    //
+    // Bit 0 = Query Support Flag.
+    //
+    If(And(STS0,0x01))
+    {
+      //
+      // Mask off the bits supported and return.
+      //
+      And(CAP0, 0xBFF, CAP0)
+      Return (Arg3)
+    }
+
+    //
+    // Attempt to dynamically load the IST SSDTs if:
+    //   (1) Driver supports P-States in MP configurations
+    //   (2) Driver supports direct HW P-State control
+    //
+    //   PDCx[3]  = OS supports C1 and P-states in MP systems
+    //   PDCx[0]  = OS supports direct access of the perf MSR
+    //
+    If(LEqual(And(TYPE, 0x0009), 0x0009))
+    {
+      ISTT();
+    }        // Load the EIST SSDTs
+
+    //
+    // Load HWP SSDT
+    // HWPS = 1, OS supports CPPC2 from Platform _OSC
+    //
+    If(LEqual(HWPS,1))
+    {
+      HWPT()
+    }
+
+    If(LEqual(And(TYPE, 0x0008), 0x0008))
+    {
+      TSTT();        // Load the T-State SSDTs
+    }        // Load the TST SSDTs
+
+    If(LEqual(And(TYPE, 0x0018), 0x0018))
+    {
+      CSTT();        // Load the C-State SSDTs
+    }        // Load the CST SSDTs
+
+    And(CAP0, 0xBFF, CAP0)
+    Store(CAP0, TYPE)               // Store It in PDCx.
+    Return (Arg3)
+  }
+
+  Name (PSDC, Package()  //_PSD SW_ALL (0xFC)
+  {
+    Package(){0x00000005, 0x00000000, 0xFFFFFFFF, 0x000000FC, 0xFFFFFFFF}
+  })
+
+  Name (PSDE, Package()  //_PSD HW_ALL (0xFE)
+  {
+    Package(){0x00000005, 0x00000000, 0xFFFFFFFF, 0x000000FE, 0xFFFFFFFF}
+  })
+
+  Method(_PSD,0) {
+
+    //
+    // IF _PCD[5,11]=11, or 01, _PSD reports HW_ALL (0xFE)
+    //
+    If (LAnd(LEqual(And(TYPE, 0x820), 0x820), LEqual(HWAL, 0))) {
+        Return(PSDE)
+    }
+
+    //
+    // By default let _PSD report SW_ALL (0xFC) - conservative.
+    //
+    Return(PSDC)
+  } // End of _PSD
+

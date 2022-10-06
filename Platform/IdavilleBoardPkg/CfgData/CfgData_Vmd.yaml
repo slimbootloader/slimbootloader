@@ -1,0 +1,122 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : MEM
+- VMD_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ VMD_CFG_DATA, 0x800, 0, 0 ] }
+  - !expand { MEM_TMPL : [ VMD ] }
+  - VMDEnabled :
+      name         : Enable VMD
+      help         : >
+                     Enable/Disable VMD in this Stack for socket0. 1st Byte:Represents VMD config for PCH port(Stack 0) 2nd Byte:Represents VMD config for IOU 0(Stack1)
+      type         : EditNum, HEX, (0x0, 0xFFFF)
+      option       : 0:Disabled,1:Enabled
+      length       : 0x02
+      value        : {0x0, 0x0}
+  - VMDPchPortEnable :
+      name         : PCH Root Port
+      type         : EditNum, HEX, (0x0, 0xFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Configuration PCH root port:Enable-VMD ownership root port (Valid if PchRootPortIsAllowed for respective port) 1st Byte:PCH Root Port 0, 2nd Byte:PCH Root Port 1,... PCH Root Port 11, 0x00(Disable)~0x01(Enable)
+      length       : 0x0c
+      value        : {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0}
+  - VMDPortEnableA :
+      name         : VMD port A
+      type         : Combo
+      option       : 0:Disabled,1:Enabled
+      help         : >
+                     Enable/Disable VMD on port A
+      length       : 0x01
+      value        : 0x0
+  - VMDPortEnableB :
+      name         : VMD Port B
+      type         : Combo
+      option       : 0:Disabled,1:Enabled
+      help         : >
+                     Enable/Disable VMD on port B
+      length       : 0x01
+      value        : 0x0
+  - VMDPortEnableC :
+      name         : VMD Port C
+      type         : Combo
+      option       : 0:Disabled,1:Enabled
+      help         : >
+                     Enable/Disable VMD on port C
+      length       : 0x01
+      value        : 0x0
+  - VMDPortEnableD :
+      name         : VMD Port D
+      type         : Combo
+      option       : 0:Disabled,1:Enabled
+      help         : >
+                     Enable/Disable VMD on port D
+      length       : 0x01
+      value        : 0x00
+  - VMDHotPlugEnable :
+      name         : Hot Plug Capable
+      type         : EditNum, HEX, (0x0, 0xFFFF)
+      help         : >
+                     Enable/Disable VMD Hot Plug for PCIe Root Ports. 1st Byte:PCH port. 2nd Byte:IOU 0, 0(Disable)~1(Enable)
+      length       : 0x2
+      value        : {0x0, 0x0}
+  - VMDCfgBarSz :
+      name         : CfgBar Size
+      type         : EditNum, HEX, (0x0, 0xFFFF)
+      help         : >
+                     Setup VMD Config BAR size (in bits Min=0x14, Max=0x1B), ex: 0x14(20 bits)=1MB, 0x1B(27bits)=128MB 1st Byte:PCH port. 2nd Byte:IOU 0
+      length       : 0x2
+      value        : {0x19, 0x19}
+  - VMDCfgBarAttr :
+      name         : CfgBar attribute
+      type         : EditNum, HEX, (0x0, 0xFFFF)
+      help         : >
+                     Set up VMD Config BAR attribute, like 64-bit or prefetchable. 1st Byte:PCH port. 2nd Byte:IOU 0, 0x0:(32-bit non-prefetchable),0x1:(64-bit non-prefetchable), 0x2:(64-bit prefetchable)
+      length       : 0x2
+      value        : {0x2, 0x2}
+  - VMDMemBarSz1 :
+      name         : MemBar1 Size
+      type         : EditNum, HEX, (0x0, 0xFFFF)
+      help         : >
+                     Setup VMD Memory BAR1 size (in bits Min=0x14, Max=0x1B), ex: 0x14(20 bits)=1MB, 0x1B(27bits)=128MB 1st Byte:Represents VMD Memory BAR1 size for PCH port. 2nd Byte:Represents VMD Memory BAR1 size for IOU 0
+      length       : 0x2
+      value        : {0x19, 0x19}
+  - VMDMemBar1Attr :
+      name         : MemBar1 attribute
+      type         : EditNum, HEX, (0x0, 0xFFFF)
+      help         : >
+                     Set up VMD Memory BAR1 attribute, like 64-bit or prefetchable. 1st Byte:PCH port. 2nd Byte:IOU 0, 0x0:(32-bit non-prefetchable),0x1:(64-bit non-prefetchable), 0x2:(64-bit prefetchable)
+      length       : 0x2
+      value        : {0x0, 0x0}
+  - VMDMemBarSz2 :
+      name         : MemBar2 Size
+      type         : EditNum, HEX, (0x0, 0xFFFF)
+      help         : >
+                     Setup VMD Memory BAR2 size (in bits Min=0x14, Max=0x1B), ex: 0x14(20 bits)=1MB, 0x1B(27bits)=128MB 1st Byte:PCH port. 2nd Byte: IOU 0
+      length       : 0x2
+      value        : {0x14, 0x14}
+  - VMDMemBar2Attr :
+      name         : MemBar2 attribute
+      type         : EditNum, HEX, (0x0, 0xFFFF)
+      help         : >
+                     Set up VMD Memory BAR2 attribute, like 64-bit or prefetchable. 1st Byte:PCH port. 2nd Byte:IOU 0, 0x0:(32-bit non-prefetchable),0x1:(64-bit non-prefetchable), 0x2:(64-bit prefetchable)
+      length       : 0x2
+      value        : {0x1, 0x1}
+  - VMDDirectAssign :
+      name         : VMD for Direct Assign
+      type         : EditNum, HEX, (0x0, 0xFFFF)
+      help         : >
+                     Enable/ Disable VMD for Direct Assign, 1st Byte:PCH port 2nd Byte:IOU 0, 0x00(Disable)~0x01(Enable)
+      length       : 0x2
+      value        : {0x0, 0x0}
+  - Dummy        :
+      length       : 0x2
+      value        : 0x0
+

@@ -1,0 +1,71 @@
+/** @file
+
+  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+    OperationRegion(SMCF,     //Name of Operation Region for SuperIO device
+      SystemIO,               //Type of address space
+      0x2E,                   //Offset to start of region
+      2)                      //Size of region in bytes
+                              //End of Operation Region
+
+    Field(SMCF, ByteAcc, NoLock,Preserve){
+      INXF, 8,                //Field named INDX is 8 bit wide
+      DATF, 8                 //Field DATA is 8 bit wide
+    }
+
+//----------------------------------------------------------------------
+//  Set of Field names to be used to access SIO configuration space.
+//----------------------------------------------------------------------
+    IndexField(INXF, DATF, ByteAcc, NoLock, Preserve){
+      //
+      // Global Configuration Registers:
+      //
+      Offset(7),
+      LDNF, 8,  // Logical Device Number
+
+
+      //
+      // Per-Device Configuration Registers:
+      //
+      Offset(0x30),
+      ACTF, 8, // Active register
+
+      Offset(0x60),
+      AHFF, 8, // Primary i/o base address, high byte
+      ALFF, 8, //  low byte
+
+      MSHF, 8, // Second i/o base address, high byte
+      MSLF, 8, //  low byte
+
+      Offset(0x70),
+      INTF, 8, // Primary IRQ register
+
+      Offset(0x71),
+      INSF, 8, // IRQ type select (some devices)
+
+      Offset(0x74),
+      DMCF, 8, // Primary DMA channel (some devices)
+    } //End of indexed field
+
+
+//------------------------------------------------------------------------
+// Enter Config Mode, Select LDN
+// Arg0 : Logical Device number
+//------------------------------------------------------------------------
+
+    Method (ENFF, 1) {
+      Store(0xA5, INXF)
+      Store(0xA5, INXF)
+      Store(Arg0, LDNF)    //Select LDN
+    }
+
+
+//------------------------------------------------------------------------
+// Exit Config Mode
+//------------------------------------------------------------------------
+    Method (EXFF, 0) {
+      Store(0xAA, INXF)
+    }

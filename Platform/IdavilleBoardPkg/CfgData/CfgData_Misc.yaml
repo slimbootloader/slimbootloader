@@ -1,0 +1,91 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : MSC
+- MISC_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ MISC_CFG_DATA, 0x900, 0, 0 ] }
+  - !expand { MSC_TMPL : [ General ] }
+  - MiscCfg :
+    - $STRUCT      :
+        name         : Misc Config
+        help         : >
+                       Configure multiple settings
+        struct       : MISC_CFG
+    - HsuartDevice :
+        name         : HSUART Device for Serial Port
+        type         : Combo
+        option       : 0:HSUART0, 1:HSUART1, 2:HSUART2
+        help         : >
+                       Select the PCI High Speed UART Device for Serial Port.
+        length       : 2b
+        value        : 0
+    - TsegSize     :
+        name         : TSEG size
+        type         : Combo
+        option       : 0:4M, 1:8M, 2:16M, 3:32M, 4:64M, 5:128M
+        help         : >
+                       Configure TSEG size in MB.
+        length       : 3b
+        value        : 5
+    - HyperThreading :
+        name         : Hyper Threading Enable/Disable
+        help         : >
+                       Enable or Disable Hyper Threading
+        type         : Combo
+        option       : $EN_DIS
+        length       : 1b
+        value        : 1
+    - HeciCommunication :
+        name         : ME Heci Communication
+        type         : Combo
+        option       : 0:Disabled,1:Enabled
+        help         : >
+                       Enable/Disable ME Heci Communication.
+        length       : 1b
+        value        : 1
+    - FspDebugPrintErrorLevel :
+        name         : FSP Debug Print Level
+        type         : Combo
+        option       : 0:NO DEBUG, 1:MIN DEBUG, 2:MED DEBUG, 3:VERBOSE DEBUG
+        help         : >
+                       Select the FSP debug print level.
+        length       : 2b
+        value        : 2
+    - AcExceptionOnSplitLockEnable :
+        name         : AC Exception On Split Lock
+        type         : Combo
+        option       : 0:Disabled, 1:Enabled
+        help         : >
+                        Enable or Disable AC (Alignment Check) Exception On Split Lock
+        length       : 1b
+        value        : 0
+    - Emmc         :
+        name         : EMMC controller
+        type         : Combo
+        option       : 0:Disabled,1:Enabled
+        help         : >
+                       Enable/Disable EMMC controller.
+        length       : 1b
+        value        : 1
+    - EmmcHS400Support :
+        name         : EMMC HS400 Support
+        type         : Combo
+        option       : 0:Disabled,1:Enabled
+        help         : >
+                       Enable/Disable EMMC HS400 Support.
+        length       : 1b
+        value        : 1
+    - Reserved0    :
+        name         : Reserved0
+        type         : Reserved
+        help         : >
+                       reserved
+        length       : 20b

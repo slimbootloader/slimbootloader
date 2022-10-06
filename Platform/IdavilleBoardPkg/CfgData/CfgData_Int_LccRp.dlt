@@ -1,0 +1,44 @@
+## @file
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+#
+# Delta configuration values
+#
+PLATFORMID_CFG_DATA.PlatformId            | 0x000F
+PLAT_NAME_CFG_DATA.PlatformName           | 'IdvLccRp'
+
+GEN_CFG_DATA.PayloadId                    | 'AUTO'
+# PLDSEL is valid only when PayloadId is 'AUTO'
+PLDSEL_CFG_DATA.PldSelGpio.Enable         | 1
+PLDSEL_CFG_DATA.PldSelGpio.PadGroup       | 7
+PLDSEL_CFG_DATA.PldSelGpio.PinNumber      | 8
+PLDSEL_CFG_DATA.PldSelGpio.PinPolarity    | 1
+
+#
+# Following pins are not host-owned.
+# They are already marked 'Skip' in .yaml.
+# Double check before unskipping them here.
+#
+# C01, C15-to-C20
+# F00-to-F04
+# G00-to-G09
+# H00-to-H07
+# I01-to-I19
+# J00
+# K00, K02-to-K05, K10-to-K22
+# N19-N20, N22
+
+FEATURES_CFG_DATA.Features.eMMCTuning     | 1
+CLOCK_CFG_DATA.SkipClockGenerator         | 0
+
+                                                    #Stack0        #Stack1        #Stack2                   #Ubox
+PCIE_CFG_DATA.IioRes.IoBase         | { 0:0W,        0x0000,        0x6000,        0xB000, 0, 0, 0, 0,          0 }
+PCIE_CFG_DATA.IioRes.IoLimit        | { 0:0W,        0x5FFF,        0xAFFF,        0xFFFF, 0, 0, 0, 0,          0 }
+PCIE_CFG_DATA.IioRes.LowMmioBase    | { 0:0D,    0x90000000,    0xB4000000,    0xD8000000, 0, 0, 0, 0, 0xFB800000 }
+PCIE_CFG_DATA.IioRes.LowMmioLimit   | { 0:0D,    0xB3FFFFFF,    0xD7FFFFFF,    0xFB7FFFFF, 0, 0, 0, 0, 0xFBFFFFFF }
+PCIE_CFG_DATA.IioRes.HighMmioBase   | { 0:0Q, 0x20000000000, 0x21000000000, 0x22000000000, 0, 0, 0, 0,          0 }
+PCIE_CFG_DATA.IioRes.HighMmioLimit  | { 0:0Q, 0x20FFFFFFFFF, 0x21FFFFFFFFF, 0x22FFFFFFFFF, 0, 0, 0, 0,          0 }

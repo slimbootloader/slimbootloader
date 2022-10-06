@@ -1,0 +1,143 @@
+/** @file
+
+  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+#include <Acpi/AcpiTablePlatform.h>
+
+EFI_ACPI_6_2_MULTIPLE_APIC_DESCRIPTION_TABLE Madt = {
+  {
+    {
+      EFI_ACPI_6_2_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE,
+      sizeof (EFI_ACPI_6_2_MULTIPLE_APIC_DESCRIPTION_TABLE),
+      EFI_ACPI_6_2_MULTIPLE_APIC_DESCRIPTION_TABLE_REVISION,
+
+      //
+      // Checksum will be updated at runtime
+      //
+      0x00,
+
+      //
+      // It is expected that these values will be programmed at runtime
+      //
+      { ' ', ' ', ' ', ' ', ' ', ' ' },
+
+      0,
+      EFI_ACPI_OEM_MADT_REVISION,
+      0,
+      0
+    },
+
+    //
+    // MADT specific fields
+    //
+    EFI_ACPI_LOCAL_APIC_ADDRESS,
+    EFI_ACPI_6_2_MULTIPLE_APIC_FLAGS
+  },
+
+  //
+  // Sample Processor Local APIC Structure
+  //
+  //EFI_ACPI_6_2_PROCESSOR_LOCAL_APIC,                          // Type
+  //sizeof (EFI_ACPI_6_2_PROCESSOR_LOCAL_APIC_STRUCTURE),       // Length
+  //0x00                                                        // Processor ID
+  //0x00                                                        // Local APIC ID
+  //0x00000000,                                                 // Flags - Disabled (until initialized by platform driver)
+  {
+    {
+      EFI_ACPI_6_2_PROCESSOR_LOCAL_APIC,                        // Type
+      sizeof (EFI_ACPI_6_2_PROCESSOR_LOCAL_APIC_STRUCTURE),     // Length
+      0x00,                                                     // Processor ID
+      0x00,                                                     // Local APIC ID
+      0x00000000                                                // Flags - Disabled (until initialized by platform driver)
+    }
+  },
+
+  //
+  // Sample IO APIC Structure
+  //
+  //EFI_ACPI_6_2_IO_APIC,                                       // Type
+  //sizeof (EFI_ACPI_6_2_IO_APIC_STRUCTURE),                    // Length
+  //0x00,                                                       // IO APIC ID
+  //EFI_ACPI_RESERVED_BYTE,                                     // Reserved
+  //0x00000000,                                                 // IO APIC Address (physical)
+  //0x00000000,                                                 // Global System Interrupt Base
+  {
+    {
+      EFI_ACPI_6_2_IO_APIC,                                     // Type
+      sizeof (EFI_ACPI_6_2_IO_APIC_STRUCTURE),                  // Length
+      PCH_IOAPIC_ID,                                            // IO APIC ID
+      EFI_ACPI_RESERVED_BYTE,                                   // Reserved
+      PCH_IOAPIC_ADDRESS,                                       // IO APIC Address (physical)
+      PCH_INTERRUPT_BASE                                        // Global System Interrupt Base
+    }
+  },
+
+  //
+  // Sample Interrupt Source Override Structure
+  //
+  //EFI_ACPI_6_2_INTERRUPT_SOURCE_OVERRIDE,                     // Type
+  //sizeof (EFI_ACPI_6_2_INTERRUPT_SOURCE_OVERRIDE_STRUCTURE),  // Length
+  //0x00,                                                       // Bus
+  //0x00,                                                       // Source
+  //0x00000000,                                                 // Global System Interrupt
+  //0x0000,                                                     // Flags
+  {
+    {
+      //
+      // IRQ0=>IRQ2 Interrupt Source Override Structure
+      //
+      EFI_ACPI_6_2_INTERRUPT_SOURCE_OVERRIDE,                   // Type
+      sizeof (EFI_ACPI_6_2_INTERRUPT_SOURCE_OVERRIDE_STRUCTURE),// Length
+      0x00,                                                     // Bus - ISA
+      0x00,                                                     // Source - IRQ0
+      0x00000002,                                               // Global System Interrupt - IRQ2
+      0x0000                                                    // Flags - Conforms to specifications of the bus
+    },
+    {
+      //
+      // ISO (SCI Active High) Interrupt Source Override Structure
+      //
+      EFI_ACPI_6_2_INTERRUPT_SOURCE_OVERRIDE,                   // Type
+      sizeof (EFI_ACPI_6_2_INTERRUPT_SOURCE_OVERRIDE_STRUCTURE),// Length
+      0x00,                                                     // Bus - ISA
+      0x09,                                                     // Source - IRQ9
+      0x00000009,                                               // Global System Interrupt - IRQ9
+      0x000D                                                    // Flags - Level-tiggered, Active High
+    }
+  },
+
+  //EFI_ACPI_6_2_LOCAL_APIC_NMI_STRUCTURE
+  {
+    EFI_ACPI_6_2_LOCAL_APIC_NMI,                              // Type
+    sizeof (EFI_ACPI_6_2_LOCAL_APIC_NMI_STRUCTURE),           // Length
+    0xFF,                                                     // AcpiProcessorUid
+    (POLARITY_ACTIVE_HIGH | TRIGGERMODE_EDGE),                // Flags
+    0x01                                                      // LocalApicLint
+  },
+
+};
+
+#ifdef __GNUC__
+VOID*
+ReferenceAcpiTable (
+ VOID
+ )
+
+{
+ //
+ // Reference the table being generated to prevent the optimizer from removing the
+ // data structure from the exeutable
+ //
+ return (VOID*)&Madt;
+}
+#else
+VOID
+main (
+  VOID
+  )
+{
+}
+#endif

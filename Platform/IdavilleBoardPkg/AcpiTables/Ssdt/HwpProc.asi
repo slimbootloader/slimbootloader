@@ -1,0 +1,93 @@
+/** @file
+
+  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+  External (HWEN, FieldUnitObj) //HWPM
+
+// _CPC (Continuous Performance Control)
+//  _CPC is a per-processor ACPI object that declares an interface for OSPM to
+//  transition the processor into a performance state based on a continuous range
+//  of allowable values.  Each CPPC register is described in a Generic Register
+//  Descriptor format and maps to an unique PCC shared memory location.
+
+//  For a complete description of _CPC object, refer to ACPI 5.1
+//  specification, section 8.4.5.1.
+// Arguments: (0)
+//  None
+// Return Value:
+//  A Package of elements in the following format
+//
+//  Package
+//  {
+//    NumEntries,                                             // Integer
+//    Revision,                                               // Integer
+//    HighestPerformance,                                     // Integer or Buffer (Resource Descriptor)
+//    NominalPerformance,                                     // Integer or Buffer (Resource Descriptor)
+//    LowestNonlinearPerformance,                             // Integer or Buffer (Resource Descriptor)
+//    LowestPerformance,                                      // Integer or Buffer (Resource Descriptor)
+//    GuaranteedPerformanceRegister,                          // Buffer (Resource Descriptor)
+//    DesiredPerformanceRegister,                             // Buffer (Resource Descriptor)
+//    MinimumPerformanceRegister,                             // Buffer (Resource Descriptor)
+//    MaximumPerformanceRegister,                             // Buffer (Resource Descriptor)
+//    PerformanceReductionToleranceRegister,                  // Buffer (Resource Descriptor)
+//    TimeWindowRegister,                                     // Buffer (Resource Descriptor)
+//    CounterWraparoundTime,                                  // Integer or Buffer (Resource Descriptor)
+//    ReferencePerformanceCounterRegister,                    // Buffer (Resource Descriptor)
+//    DeliveredPerformanceCounterRegister,                    // Buffer (Resource Descriptor)
+//    PerformanceLimitedRegister,                             // Buffer (Resource Descriptor)
+//    CPPCEnableRegister                                      // Buffer (Resource Descriptor)
+//    AutonomousSelectionEnable,                              // Integer or Buffer (Resource Descriptor)
+//    AutonomousActivityWindowRegister,                       // Buffer (Resource Descriptor)
+//    EnergyPerformancePreferenceRegister,                    // Buffer (Resource Descriptor)
+//    ReferencePerformance,                                   // Integer or Buffer (Resource Descriptor)
+//    LowestFrequency,                                        // Integer or Buffer (Resource Descriptor)
+//    NominalFrequency                                        // Integer or Buffer (Resource Descriptor)
+//  }
+Name(CPCP, Package()
+{
+  //
+  // Describe processor capabilities
+  //
+  23,                                                         // Number of entries
+  3,                                                          // Revision
+  ResourceTemplate() {Register(FFixedHW, 8, 0,  0x771, 4)},   // HighestPerformance
+  ResourceTemplate() {Register(FFixedHW, 8, 8,  0x0CE, 4)},   // NominalPerformance
+  ResourceTemplate() {Register(FFixedHW, 8, 16, 0x771, 4)},   // LowestNonlinearPerformance
+  ResourceTemplate() {Register(FFixedHW, 8, 24, 0x771, 4)},   // LowestPerformance
+  ResourceTemplate() {Register(FFixedHW, 8, 8,  0x771, 4)},   // GuaranteedPerformanceRegister
+  ResourceTemplate() {Register(FFixedHW, 8, 16, 0x774, 4)},   // DesiredPerformanceRegister
+  ResourceTemplate() {Register(FFixedHW, 8, 0,  0x774, 4)},   // MinimumPerformanceRegister
+  ResourceTemplate() {Register(FFixedHW, 8, 8,  0x774, 4)},   // MaximumPerformanceRegister
+  ResourceTemplate() {Register(SystemMemory, 0, 0, 0, 0)},    // PerformanceReductionToleranceRegister
+  ResourceTemplate() {Register(SystemMemory, 0, 0, 0, 0)},    // TimeWindowRegister
+  ResourceTemplate() {Register(SystemMemory, 0, 0, 0, 0)},    // CounterWraparoundTime
+  ResourceTemplate() {Register(FFixedHW, 64, 0, 0xE7, 4)},    // ReferencePerformanceCounterRegister
+  ResourceTemplate() {Register(FFixedHW, 64, 0, 0xE8, 4)},    // DeliveredPerformanceCounterRegister
+  ResourceTemplate() {Register(FFixedHW, 1, 2, 0x777, 4)},    // PerformanceLimitedRegister
+  ResourceTemplate() {Register(FFixedHW, 1, 0, 0x770, 4)},    // CPPCEnableRegister
+  1,                                                          // AutonomousSelectionEnable
+  ResourceTemplate() {Register(FFixedHW, 10, 32, 0x774, 4)},  // AutonomousActivityWindowRegister
+  ResourceTemplate() {Register(FFixedHW, 8, 24, 0x774, 4)},   // EnergyPerformancePreferenceRegister
+  ResourceTemplate() {Register(SystemMemory, 0, 0, 0, 0)},    // ReferencePerformance
+  ResourceTemplate() {Register(SystemMemory, 0, 0, 0, 0)},    // LowestFrequency
+  ResourceTemplate() {Register(SystemMemory, 0, 0, 0, 0)}     // NominalFrequency
+})
+
+Name (ZCPC, Package() {     // CPC package entries for HWPM interface when disabled in BIOS setup
+  3,//length of the package excluding this entry length
+  1,
+  ResourceTemplate(){Register(SystemMemory, 0, 0, 0, 0)}
+})
+
+Method(_CPC,0)
+{
+  If(LOr(LEqual(HWEN,1), LEqual(HWEN,3))) //enabled in setup CPC-Native
+  {
+    Return(CPCP)  // Return native CPCP table
+  }
+  Return(ZCPC)
+}
+
