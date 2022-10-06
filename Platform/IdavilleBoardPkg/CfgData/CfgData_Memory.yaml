@@ -1,0 +1,315 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : MEM
+- MEMORY_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ MEMORY_CFG_DATA, 0x200, 0, 0 ] }
+  - !expand { MEM_TMPL : [ General ] }
+  - GeneralConfig :
+    - $STRUCT      :
+        name         : General Configuration
+        help         : >
+                       Configure General Options
+        struct       : MEM_GENERAL_CFG
+        length       : 0x04
+    - EccSupport   :
+        name         : ECC Support
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/disable ECC Support.
+        length       : 1b
+        value        : 1
+    - EnableIMR3 :
+        name         : Enable IMR3
+        help         : >
+                       Enables/Disables IMR3. Default is disabled.
+        type         : Combo
+        option       : $EN_DIS
+        length       : 1b
+        value        : 0
+    - FastBoot     :
+        name         : Fast Boot
+        type         : Combo
+        option       : 0:Disabled,1:Enabled
+        help         : >
+                       Enable/Disable Fast Boot.
+        length       : 1b
+        value        : 1
+    - MemoryThermalThrottling :
+        name         : Memory Thermal Throttling Mode
+        type         : Combo
+        option       : 0:Disabled,1:Open Loop,2:Close Loop,3:Close Loop PECI
+        help         : >
+                       Enable/disable Memory Thermal Throttling
+        length       : 2b
+        value        : 2
+    - MemTest     :
+        name         : Enable Memory Test
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/disable Memory Test Support.
+        length       : 1b
+        value        : 1
+    - MemoryDown   :
+        name         : MemoryDown
+        type         : Combo
+        option       : 0x0:No, 0x1:Yes
+        help         : >
+                        Memory Down
+        length       : 1b
+        value        : 0
+    - HwSpdRead   :
+        name         : HW SPD Read
+        type         : Combo
+        option       : 0x0:No, 0x1:Yes
+        help         : >
+                        Get SPD data from HW or Cfg Data
+        length       : 1b
+        condition    : $(COND_MEM_DOWN)
+        value        : 0
+    - DimmConfigType :
+        name         : Dimm Configuration Type
+        type         : Combo
+        option       : 1:1x3x2 (LCC - 1 IMC 3 CH 2 DIMM), 2:2x2x2 (HCC - 2 IMC 2 CH 2 DIMM)
+        help         : >
+                        Select the DIMM Configuration
+        length       : 2b
+        value        : 1
+    - TmeEnable   :
+        name         : Total Memory Encryption Enable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                        Total Memory Encryption enabling
+        length       : 1b
+        value        : 0
+    - MkTmeEnable :
+        name         : Multi-Key Total Memory Encryption Enable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                        Multi-Key Total Memory Encryption enabling
+        length       : 1b
+        condition    : $(COND_TME_EN)
+        value        : 0
+    - EliminateWarmReset   :
+        name         : Warm Reset Elimination Enable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                        Warm Reset Elimination Enable
+        length       : 1b
+        value        : 1
+    - Reserved0    :
+        name         : Reserved0
+        type         : Reserved
+        help         : >
+                       reserved
+        length       : 19b
+  - !expand { MEM_TMPL : [ Parameter ] }
+  - ParameterConfig :
+    - $STRUCT      :
+        name         : Memory Parameter Configuration
+        help         : >
+                       Configure Memory Parameter
+        struct       : MEM_PARAMETER_CFG
+        length       : 0x04
+    - DdrFreq      :
+        name         : Memory Frequency
+        help         : >
+                       Set DDR Memory Frequency Limit
+        type         : Combo
+        option       : 0:AUTO, 4:1200, 5:1333, 6:1400, 7:1600, 8:1800, 9:1866, 11:2133, 12:2200, 13:2400, 14:2600, 15:2666, 16:2800, 17:2933
+        length       : 6b
+        value        : 0x0
+    - CommandTiming :
+        name         : Memory Command Timing
+        type         : Combo
+        help         : >
+                       Select the desired memory controller command timing
+        option       : 0:Auto, 1:1N, 2:2N, 3:3N
+        length       : 2b
+        value        : 0x0
+    - CustomRefreshRate :
+        name         : Memory Custom Refresh Rate
+        type         : EditNum, DEC, (20,80)
+        help         : >
+                       Set Desired rate in 0.1x units of the standard 7.8 usec interval. The valid range is 20 - 80(i.e. 2x to 8x)
+        length       : 8b
+        value        : 0x14
+    - Reserved1    :
+        name         : Reserved1
+        type         : Reserved
+        help         : >
+                       reserved
+        length       : 16b
+        value        : 0x0
+  - !expand { MEM_TMPL : [ RMT ] }
+  - PcdEnableBiosSsaRMT :
+      name         : Enable BIOS SSA RMT
+      help         : >
+                     Enables/Disables SSA RMT. Please refer to the Integration guide for RMT details.
+      type         : Combo
+      option       : $EN_DIS
+      length       : 0x01
+      value        : 1
+  - PcdEnableBiosSsaRMTonFCB :
+      name         : Enable BIOS SSA RMT on Fast Cold Boot
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enables/Disables SSA RMT on cold Fast Boot
+      length       : 0x01
+      value        : 0
+  - PcdBiosSsaPerBitMargining :
+      name         : Enable RMT per Bit Margining
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enables/Disables SSA Per Bit Margining
+      length       : 0x01
+      value        : 1
+  - PcdBiosSsaDisplayTables :
+      name         : Enable SSA Tables Display
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enables/Disables displaying results as tables
+      length       : 0x01
+      value        : 1
+  - PcdBiosSsaPerDisplayPlots :
+      name         : Enable SSA Plot Display
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enables/Disables the per bit resulats as plots
+      length       : 0x01
+      value        : 1
+  - PcdBiosSsaLoopCount :
+      name         : Loop count for rank test
+      type         : EditNum, HEX, (0x01,0x1F)
+      help         : >
+                     Exponential loop count for a single rank test
+      length       : 0x01
+      value        : 0x10
+  - PcdBiosSsaBacksideMargining :
+      name         : Enable Backside Margining
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enables/Disables margin test on buffer backside
+      length       : 0x01
+      value        : 0
+  - PcdBiosSsaEarlyReadIdMargining :
+      name         : Enable Early Read ID Margining
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enables/Disables PMem Early Read Id Test
+      length       : 0x01
+      value        : 0
+  - PcdBiosSsaStepSizeOverride :
+      name         : Enable Step Size Ovreride
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enables/Disables overriding the default step sizes
+      length       : 0x01
+      value        : 0
+  - PcdBiosSsaRxDqs :
+      name         : Step size RxDqs
+      type         : Combo
+      option       : 1:1, 2:2, 4:4, 8:8
+      help         : >
+                     Step size of RxDqs. Auto:1. Supported values - 1,2,4,8. This option is valid only if 'Enable Step size override' is Enabled
+      length       : 0x01
+      value        : 1
+  - PcdBiosSsaRxVref :
+      name         : Step size RxVrefs
+      type         : Combo
+      option       : 1:1, 2:2, 4:4, 8:8
+      help         : >
+                     Step size of RxVrefs. Auto:1. Supported values - 1,2,4,8. This option is valid only if 'Enable Step size override' is Enabled
+      length       : 0x01
+      value        : 1
+  - PcdBiosSsaTxDq :
+      name         : Step size TxDqs
+      type         : Combo
+      option       : 1:1, 2:2, 4:4, 8:8
+      help         : >
+                     Step size of TxDqs. Auto:1. Supported values - 1,2,4,8. This option is valid only if 'Enable Step size override' is Enabled
+      length       : 0x01
+      value        : 1
+  - PcdBiosSsaTxVref :
+      name         : Step size TxVrefs
+      type         : Combo
+      option       : 1:1, 2:2, 4:4, 8:8
+      help         : >
+                     Step size of TxVrefs. Auto:1. Supported values - 1,2,4,8. This option is valid only if 'Enable Step size override' is Enabled
+      length       : 0x01
+      value        : 1
+  - PcdBiosSsaCmdAll :
+      name         : Step size CmdAll
+      type         : Combo
+      option       : 1:1, 2:2, 4:4, 8:8
+      help         : >
+                     Step size of CmdAll. Auto:1. Supported values - 1,2,4,8. This option is valid only if 'Enable Step size override' is Enabled
+      length       : 0x01
+      value        : 1
+  - PcdBiosSsaCmdVref :
+      name         : Step size CmdVref
+      type         : Combo
+      option       : 1:1, 2:2, 4:4, 8:8
+      help         : >
+                     Step size of CmdVref. Auto:1. Supported values - 1,2,4,8. This option is valid only if 'Enable Step size override' is Enabled
+      length       : 0x01
+      value        : 1
+  - PcdBiosSsaCtlAll :
+      name         : Step size CtlAll
+      type         : Combo
+      option       : 1:1, 2:2, 4:4, 8:8
+      help         : >
+                     Step size of CtlAll. Auto:1. Supported values - 1,2,4,8. This option is valid only if 'Enable Step size override' is Enabled
+      length       : 0x01
+      value        : 1
+  - PcdBiosSsaEridDelay :
+      name         : Step size SsaEridDelay
+      type         : Combo
+      option       : 1:1, 2:2, 4:4, 8:8
+      help         : >
+                     Step size of TxVrefs. Auto:1. Supported values - 1,2,4,8. This option is valid only if 'Enable Step size override' is Enabled
+      length       : 0x01
+      value        : 1
+  - PcdBiosSsaEridVref :
+      name         : Step size SsaEridVref
+      type         : Combo
+      option       : 1:1, 2:2, 4:4, 8:8
+      help         : >
+                     Step size of SsaEridVref. Auto:1. Supported values - 1,2,4,8. This option is valid only if 'Enable Step size override' is Enabled
+      length       : 0x01
+      value        : 1
+  - PcdBiosSsaDebugMessages :
+      name         : Enable SSA RMT Debug Message
+      type         : Combo
+      option       : 2:Disable, 5:Enable
+      help         : >
+                     Enables the BSSA RMT debug messages
+      length       : 0x01
+      value        : 2
+  - Reserved2    :
+      name         : Reserved2
+      type         : Reserved
+      help         : >
+                     reserved
+      length       : 0x1
+      value        : 0

@@ -1,0 +1,189 @@
+/** @file
+
+  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+#include <Acpi/AcpiTablePlatform.h>
+
+EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE Fadt = {
+  {
+    EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE,
+    sizeof (EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE),
+    EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE_REVISION,
+    0x00,                                                 // to make sum of entire table == 0
+    {
+      EFI_ACPI_OEM_ID
+    },                                                    // OEMID is a 6 bytes long field
+    EFI_ACPI_OEM_TABLE_ID,                                // OEM table identification(8 bytes long)
+    EFI_ACPI_OEM_FADT_REVISION,                           // OEM revision number
+    EFI_ACPI_CREATOR_ID,                                  // ASL compiler vendor ID
+    EFI_ACPI_CREATOR_REVISION                             // ASL compiler revision number
+  },
+  0x00000000,                                             // Physical addesss of FACS
+  0x00000000,                                             // Physical address of DSDT
+  EFI_ACPI_RESERVED_BYTE,                                 // System Interrupt Model (ignored in 2k and later, must be 0 for 98)
+  EFI_ACPI_PREFERRED_PM_PROFILE,                          // Preferred PM Profile
+  EFI_ACPI_SCI_INT,                                       // System vector of SCI interrupt
+  EFI_ACPI_SMI_CMD,                                       // Port address of SMI command port
+  EFI_ACPI_ACPI_ENABLE,                                   // value to write to port smi_cmd to enable ACPI
+  EFI_ACPI_ACPI_DISABLE,                                  // value to write to port smi_cmd to disable ACPI
+  EFI_ACPI_S4_BIOS_REQ,                                   // Value to write to SMI CMD port to enter the S4BIOS state
+  EFI_ACPI_PSTATE_CNT,                                    // PState control
+
+  EFI_ACPI_PM1A_EVT_BLK_ADDRESS,                          // Port address of Power Mgt 1a Event Reg Blk
+  EFI_ACPI_PM1B_EVT_BLK_ADDRESS,                          // Port address of Power Mgt 1b Event Reg Blk
+  EFI_ACPI_PM1A_CNT_BLK_ADDRESS,                          // Port address of Power Mgt 1a Ctrl Reg Blk
+  EFI_ACPI_PM1B_CNT_BLK_ADDRESS,                          // Port address of Power Mgt 1b Ctrl Reg Blk
+  EFI_ACPI_PM2_CNT_BLK_ADDRESS,                           // Port address of Power Mgt 2  Ctrl Reg Blk
+  EFI_ACPI_PM_TMR_BLK_ADDRESS,                            // Port address of Power Mgt Timer Ctrl Reg Blk
+  EFI_ACPI_GPE0_BLK_ADDRESS,                              // Port addr of General Purpose Event 0 Reg Blk
+  EFI_ACPI_GPE1_BLK_ADDRESS,                              // Port addr of General Purpose Event 1 Reg Blk
+  EFI_ACPI_PM1_EVT_LEN,                                   // Byte Length of ports at pm1X_evt_blk
+  EFI_ACPI_PM1_CNT_LEN,                                   // Byte Length of ports at pm1X_cnt_blk
+  EFI_ACPI_PM2_CNT_LEN,                                   // Byte Length of ports at pm2_cnt_blk
+  EFI_ACPI_PM_TMR_LEN,                                    // Byte Length of ports at pm_tm_blk
+  EFI_ACPI_GPE0_BLK_LEN,                                  // Byte Length of ports at gpe0_blk
+  EFI_ACPI_GPE1_BLK_LEN,                                  // Byte Length of ports at gpe1_blk
+  EFI_ACPI_GPE1_BASE,                                     // offset in gpe model where gpe1 events start
+
+  EFI_ACPI_CST_CNT,                                       // _CST support
+  EFI_ACPI_P_LVL2_LAT,                                    // worst case HW latency to enter/exit C2 state
+  EFI_ACPI_P_LVL3_LAT,                                    // worst case HW latency to enter/exit C3 state
+  EFI_ACPI_FLUSH_SIZE,                                    // Size of area read to flush caches
+  EFI_ACPI_FLUSH_STRIDE,                                  // Stride used in flushing caches
+  EFI_ACPI_DUTY_OFFSET,                                   // bit location of duty cycle field in p_cnt reg
+  EFI_ACPI_DUTY_WIDTH,                                    // bit width of duty cycle field in p_cnt reg
+  EFI_ACPI_DAY_ALRM,                                      // index to day-of-month alarm in RTC CMOS RAM
+  EFI_ACPI_MON_ALRM,                                      // index to month-of-year alarm in RTC CMOS RAM
+  EFI_ACPI_CENTURY,                                       // index to century in RTC CMOS RAM
+  EFI_ACPI_IAPC_BOOT_ARCH,                                // IA-PCI Boot Architecture Flag
+  EFI_ACPI_RESERVED_BYTE,                                 // reserved
+  EFI_ACPI_FIXED_FEATURE_FLAGS,
+  {
+    EFI_ACPI_RESET_REG_ADDRESS_SPACE_ID,
+    EFI_ACPI_RESET_REG_BIT_WIDTH,
+    EFI_ACPI_RESET_REG_BIT_OFFSET,
+    EFI_ACPI_6_2_BYTE,
+    EFI_ACPI_RESET_REG_ADDRESS
+  },
+  EFI_ACPI_RESET_VALUE, // Hardware reset value
+  EFI_ACPI_RESERVED_WORD,                                 // EFI_ACPI_6_2_ARM_BOOT_ARCH
+  EFI_ACPI_6_2_FIXED_ACPI_DESCRIPTION_TABLE_MINOR_REVISION,
+  0x0000000000000000,                                     // XFirmwareCtrl
+  0x0000000000000000,                                     // XDsdt
+  //
+  // X_PM1a Event Register Block
+  //
+  {
+    EFI_ACPI_PM1A_EVT_BLK_ADDRESS_SPACE_ID,
+    EFI_ACPI_PM1A_EVT_BLK_BIT_WIDTH,
+    EFI_ACPI_PM1A_EVT_BLK_BIT_OFFSET,
+    EFI_ACPI_6_2_WORD,
+    EFI_ACPI_PM1A_EVT_BLK_ADDRESS
+  },
+  //
+  // X_PM1b Event Register Block
+  //
+  {
+    EFI_ACPI_PM1B_EVT_BLK_ADDRESS_SPACE_ID,
+    EFI_ACPI_PM1B_EVT_BLK_BIT_WIDTH,
+    EFI_ACPI_PM1B_EVT_BLK_BIT_OFFSET,
+    EFI_ACPI_6_2_UNDEFINED,
+    EFI_ACPI_PM1B_EVT_BLK_ADDRESS
+  },
+  //
+  // X_PM1a Control Register Block
+  //
+  {
+    EFI_ACPI_PM1A_CNT_BLK_ADDRESS_SPACE_ID,
+    EFI_ACPI_PM1A_CNT_BLK_BIT_WIDTH,
+    EFI_ACPI_PM1A_CNT_BLK_BIT_OFFSET,
+    EFI_ACPI_6_2_WORD,
+    EFI_ACPI_PM1A_CNT_BLK_ADDRESS
+  },
+  //
+  // X_PM1b Control Register Block
+  //
+  {
+    EFI_ACPI_PM1B_CNT_BLK_ADDRESS_SPACE_ID,
+    EFI_ACPI_PM1B_CNT_BLK_BIT_WIDTH,
+    EFI_ACPI_PM1B_CNT_BLK_BIT_OFFSET,
+    EFI_ACPI_6_2_UNDEFINED,
+    EFI_ACPI_PM1B_CNT_BLK_ADDRESS
+  },
+  //
+  // X_PM2 Control Register Block
+  //
+  {
+    EFI_ACPI_PM2_CNT_BLK_ADDRESS_SPACE_ID,
+    EFI_ACPI_PM2_CNT_BLK_BIT_WIDTH,
+    EFI_ACPI_PM2_CNT_BLK_BIT_OFFSET,
+    EFI_ACPI_6_2_UNDEFINED,
+    EFI_ACPI_PM2_CNT_BLK_ADDRESS
+  },
+  //
+  // X_PM Timer Control Register Block
+  //
+  {
+    EFI_ACPI_PM_TMR_BLK_ADDRESS_SPACE_ID,
+    EFI_ACPI_PM_TMR_BLK_BIT_WIDTH,
+    EFI_ACPI_PM_TMR_BLK_BIT_OFFSET,
+    EFI_ACPI_6_2_DWORD,
+    EFI_ACPI_PM_TMR_BLK_ADDRESS
+  },
+  //
+  // X_General Purpose Event 0 Register Block
+  //
+  {
+    EFI_ACPI_GPE0_BLK_ADDRESS_SPACE_ID,
+    EFI_ACPI_GPE0_BLK_BIT_WIDTH,
+    EFI_ACPI_GPE0_BLK_BIT_OFFSET,
+    EFI_ACPI_6_2_BYTE,
+    EFI_ACPI_GPE0_BLK_ADDRESS
+  },
+  //
+  // X_General Purpose Event 1 Register Block
+  //
+  {
+    EFI_ACPI_GPE1_BLK_ADDRESS_SPACE_ID,
+    EFI_ACPI_GPE1_BLK_BIT_WIDTH,
+    EFI_ACPI_GPE1_BLK_BIT_OFFSET,
+    EFI_ACPI_6_2_UNDEFINED,
+    EFI_ACPI_GPE1_BLK_ADDRESS
+  },
+  //
+  // Sleep Control Register Block
+  //
+  {
+    EFI_ACPI_SLP_CNT_BLK_ADDRESS_SPACE_ID,
+    EFI_ACPI_SLP_CNT_BLK_BIT_WIDTH,
+    EFI_ACPI_SLP_CNT_BLK_BIT_OFFSET,
+    EFI_ACPI_6_2_UNDEFINED,
+    EFI_ACPI_SLP_CNT_BLK_ADDRESS
+  },
+  //
+  // Sleep Status Register Block
+  //
+  {
+    EFI_ACPI_SLP_STS_BLK_ADDRESS_SPACE_ID,
+    EFI_ACPI_SLP_STS_BLK_BIT_WIDTH,
+    EFI_ACPI_SLP_STS_BLK_BIT_OFFSET,
+    EFI_ACPI_6_2_UNDEFINED,
+    EFI_ACPI_SLP_STS_BLK_ADDRESS
+  },
+  0x0000000000000000,                                     // HypervisorVendorIdentity
+};
+
+VOID*
+ReferenceAcpiTable (
+  VOID
+  )
+{
+  //
+  // Reference the table being generated to prevent the optimizer from
+  // removing the data structure from the executable
+  //
+  return (VOID*)&Fadt;
+}

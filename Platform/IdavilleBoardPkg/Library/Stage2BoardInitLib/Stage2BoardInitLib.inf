@@ -1,0 +1,110 @@
+## @file
+#
+#  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = Stage2BoardInitLib
+  FILE_GUID                      = 382FF3D3-6872-4737-9CD3-7232AF2C6748
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = BoardInitLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF
+#
+
+[Sources]
+  Stage2BoardInitLib.h
+  Stage2BoardInitLib.c
+  InterruptInit.c
+  SmbiosInit.c
+  MiscInit.c
+  AcpiTablesInit.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  IntelFsp2Pkg/IntelFsp2Pkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/IdavillePkg/IdavillePkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+  Platform/CommonBoardPkg/CommonBoardPkg.dec
+  Platform/IdavilleBoardPkg/IdavilleBoardPkg.dec
+
+[LibraryClasses]
+  SerialPortLib
+  BaseLib
+  DebugLib
+  BootloaderCoreLib
+  MemoryAllocationLib
+  MmcAccessLib
+  IoLib
+  ConfigDataLib
+  PlatformHookLib
+  BootOptionLib
+  BoardSupportLib
+  SpiFlashLib
+  GpioLib
+  UncoreLib
+  PchInfoLib
+  PchPcieRpLib
+  ResetSystemLib
+  VtdLib
+  HeciLib
+  PrintLib
+  StageCommonBoardInitLib
+  AspeedGfxLib
+  UefiVariableLib
+  TccLib
+  TmeVarLib
+  BdatLib
+  PsdLib
+  SgxLib
+  WatchDogTimerLib
+  PchSbiAccessLib
+
+[Guids]
+  gOsConfigDataGuid
+  gFspVariableNvDataHobGuid
+  gLoaderPciRootBridgeInfoGuid
+  gIioUdsHobGuid
+  gEfiGlobalVariableGuid
+
+[Pcd]
+  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
+  gPlatformModuleTokenSpaceGuid.PcdPciResourceIoBase
+  gPlatformModuleTokenSpaceGuid.PcdPciResourceMem32Base
+  gPlatformModuleTokenSpaceGuid.PcdVariableRegionSize
+  gPlatformModuleTokenSpaceGuid.PcdOsBootOptionNumber
+  gPlatformModuleTokenSpaceGuid.PcdIntelGfxEnabled
+  gPlatformModuleTokenSpaceGuid.PcdAcpiGnvsAddress
+  gPlatformModuleTokenSpaceGuid.PcdServiceNumber
+  gPlatformModuleTokenSpaceGuid.PcdCfgDataSize
+  gPlatformModuleTokenSpaceGuid.PcdMrcDataSize
+  gPlatformModuleTokenSpaceGuid.PcdPayloadReservedMemSize
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsPtr
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsCnt
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesBase
+  gPlatformModuleTokenSpaceGuid.PcdVtdEnabled
+  gPlatformModuleTokenSpaceGuid.PcdPciResAllocTableBase
+  gPlatformModuleTokenSpaceGuid.PcdSplashEnabled
+  gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase
+  gPlatformModuleTokenSpaceGuid.PcdSmramTsegSize
+  gPlatformCommonLibTokenSpaceGuid.PcdSerialUseMmio
+  gPlatformCommonLibTokenSpaceGuid.PcdSerialRegisterBase
+  gPlatformCommonLibTokenSpaceGuid.PcdSerialBaudRate
+  gPlatformCommonLibTokenSpaceGuid.PcdSerialRegisterStride
+  gPlatformCommonLibTokenSpaceGuid.PcdSerialClockRate
+  gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
+  gPlatformModuleTokenSpaceGuid.PcdPciEnumHookProc
+  gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled
+  gPlatformModuleTokenSpaceGuid.PcdAcpiTableTemplatePtr
+  gPlatformModuleTokenSpaceGuid.PcdFuncCpuInitHook

@@ -1,0 +1,30 @@
+## @file
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+#
+# Delta configuration values
+#
+PLATFORMID_CFG_DATA.PlatformId            | 0x000E
+PLAT_NAME_CFG_DATA.PlatformName           | 'IdvHccRp'
+GEN_CFG_DATA.PayloadId                    | 'AUTO'
+# PLDSEL is valid only when PayloadId is 'AUTO'
+PLDSEL_CFG_DATA.PldSelGpio.Enable         | 1
+PLDSEL_CFG_DATA.PldSelGpio.PadGroup       | 7
+PLDSEL_CFG_DATA.PldSelGpio.PinNumber      | 8
+PLDSEL_CFG_DATA.PldSelGpio.PinPolarity    | 1
+
+#
+# GPIO overrides from Base .yaml
+#
+GPIO_CFG_DATA.GpioPinConfig0_GPP_L09    | 0x0350A5A3
+
+PCIE_CFG_DATA.IioRes.Enable             | 0
+
+MEMORY_CFG_DATA.GeneralConfig.DimmConfigType | 2
+
+CLOCK_CFG_DATA.SkipClockGenerator       | 0
+

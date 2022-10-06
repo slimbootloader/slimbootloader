@@ -1,0 +1,59 @@
+## @file
+# Component description file for PlatformAcpiTable module.
+#
+# Build acpi table data required by system boot.
+#  All .asi files tagged with "ToolCode="DUMMY"" in following file list are device description and are included
+#  by top level ASL file which will be dealed with by asl.exe application.
+#
+# Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved
+#
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = AcpiTables
+  FILE_GUID                      = 7E374E25-8E01-4FEE-87F2-390C23C606CD
+  MODULE_TYPE                    = USER_DEFINED
+  VERSION_STRING                 = 1.0
+  EDK_RELEASE_VERSION            = 0x00020000
+  EFI_SPECIFICATION_VERSION      = 0x00020000
+
+[sources]
+  Platform/CommonBoardPkg/AcpiTables/Dsdt/AslInc.h
+  Fadt/Fadt.aslc
+  Facs/Facs.aslc
+  Dsdt/Dsdt.asl
+  Mcfg/Mcfg.aslc
+  Hpet/Hpet.aslc
+  Dbg2/Dbg2.aslc
+  Platform/CommonBoardPkg/AcpiTables/Tpm/Tpm2.aslc
+  Platform/CommonBoardPkg/AcpiTables/Tpm/TpmSsdt.asl
+  Ssdt/CpuPm.asl
+  Ssdt/CpuEist.asl
+  Ssdt/CpuHwp.asl
+  Ssdt/CpuTst.asl
+  Ssdt/CpuCst.asl
+  Ssdt/SpsNm.asl
+  Ssdt/Aspeed.asl
+  Fwst/Fwst.aslc
+  Wddt/Wddt1.0.aslc
+  Wsmt/Wsmt.aslc
+  Platform/CommonBoardPkg/AcpiTables/Fpdt/Fpdt.aslc
+  PsdTable/PsdTable.aslc
+  # runtime generation tables
+  Madt/Madt.aslc
+  Dmar/Dmar.aslc
+  BdatTable/BdatTable.aslc
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/IdavillePkg/IdavillePkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+  Platform/IdavilleBoardPkg/IdavilleBoardPkg.dec
+
+[BuildOptions]
+  *_*_*_ASL_FLAGS = -ve -oi

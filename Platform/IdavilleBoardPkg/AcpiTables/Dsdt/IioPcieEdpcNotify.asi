@@ -1,0 +1,50 @@
+/** @file
+
+  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+External(\_SB.EDTM, MethodObj)
+External (\_SB.EDNT, FieldUnitObj)
+External (\_SB.EDVD, FieldUnitObj)
+
+#define PCIE_EDPC_NOTIFY(stack, port)                                                  \
+  store (\_SB.stack._SEG, Local0)                                                      \
+  store (\_SB.stack._BBN, Local1)                                                      \
+  store (\_SB.stack.port._ADR, Local2)                                                 \
+  And (Local2, 0xffff, Local3)                                                         \
+  ShiftRight (Local2, 16, Local4)                                                      \
+  If (\_SB.EDTM(Local0, Local1, Local4, Local3)) {                                     \
+    If (\_SB.EDNT) {                                                                   \
+      /*                                                                               \
+       we are going to notify this device, set the valid flag to EDPC_INFO_NOTIFIED    \
+      */                                                                               \
+      store (2, \_SB.EDVD)                                                             \
+      Notify(\_SB.stack.port, 0xf) /*Error Eject*/                                 \
+    } else {                                                                           \
+      /*                                                                               \
+       we are going to notify this device, set the valid flag to EDPC_INFO_NOTIFIED    \
+      */                                                                               \
+      store (2, \_SB.EDVD)                                                             \
+      Notify(\_SB.stack.port, 0)   /*Bus Check*/                                   \
+    }                                                                                  \
+  }
+
+Scope (\_SB) {
+  //
+  // eDPC Notify Method
+  //
+  Method (EDNM, 0) {
+    // PC01 PCI-Ex eDPC
+    // If this is the eDPC event trigger, notify error eject or bus check
+    PCIE_EDPC_NOTIFY(PC01, RP1A)
+    PCIE_EDPC_NOTIFY(PC01, RP1B)
+    PCIE_EDPC_NOTIFY(PC01, RP1C)
+    PCIE_EDPC_NOTIFY(PC01, RP1D)
+    PCIE_EDPC_NOTIFY(PC05, RP5A)
+    PCIE_EDPC_NOTIFY(PC05, RP5B)
+    PCIE_EDPC_NOTIFY(PC05, RP5C)
+    PCIE_EDPC_NOTIFY(PC05, RP5D)
+  } //endof the method EDGH
+}

@@ -1,0 +1,31 @@
+## @file
+#  File to describe FSP repo information
+#
+#  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+##
+
+
+[UserExtensions.SBL."CloneRepo"]
+  REPO    = https://github.com/intel/FSP.git
+  COMMIT  = af464fcd242e69259111d1c3d5dd75a0cb84e8ac
+
+[UserExtensions.SBL."CopyList"]
+# For ICX-D HCC
+  IdavilleFspBinPkg/Hcc/FspBin/FspRel.bin                     : Silicon/IdavillePkg/Hcc/FspBin/FspDbg.bin
+  IdavilleFspBinPkg/Hcc/FspBin/FspRel.bin                     : Silicon/IdavillePkg/Hcc/FspBin/FspRel.bin
+  IdavilleFspBinPkg/Hcc/Include/FspmUpd.h                     : Silicon/IdavillePkg/Hcc/Include/FspmUpd.h
+  IdavilleFspBinPkg/Hcc/Include/FspsUpd.h                     : Silicon/IdavillePkg/Hcc/Include/FspsUpd.h
+  IdavilleFspBinPkg/Hcc/Include/FsptUpd.h                     : Silicon/IdavillePkg/Hcc/Include/FsptUpd.h
+  IdavilleFspBinPkg/Hcc/Include/FspUpd.h                      : Silicon/IdavillePkg/Hcc/Include/FspUpd.h
+
+# For ICX-D LCC
+  IdavilleFspBinPkg/Lcc/FspBin/FspRel.bin                     : Silicon/IdavillePkg/Lcc/FspBin/FspDbg.bin
+  IdavilleFspBinPkg/Lcc/FspBin/FspRel.bin                     : Silicon/IdavillePkg/Lcc/FspBin/FspRel.bin
+  IdavilleFspBinPkg/Lcc/Include/FspmUpd.h                     : Silicon/IdavillePkg/Lcc/Include/FspmUpd.h
+  IdavilleFspBinPkg/Lcc/Include/FspsUpd.h                     : Silicon/IdavillePkg/Lcc/Include/FspsUpd.h
+  IdavilleFspBinPkg/Lcc/Include/FsptUpd.h                     : Silicon/IdavillePkg/Lcc/Include/FsptUpd.h
+  IdavilleFspBinPkg/Lcc/Include/FspUpd.h                      : Silicon/IdavillePkg/Lcc/Include/FspUpd.h

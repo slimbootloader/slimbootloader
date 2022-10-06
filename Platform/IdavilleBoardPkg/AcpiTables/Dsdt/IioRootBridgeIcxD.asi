@@ -1,0 +1,25 @@
+/** @file
+
+  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+Scope(\_SB) {
+  Method(OSCM, 1)
+  {
+    if (LEqual(Arg0, 1)) {  // PC01
+      \_SB.PC01.RP1A.OSHP ()
+      \_SB.PC01.RP1B.OSHP ()
+      \_SB.PC01.RP1C.OSHP ()
+      \_SB.PC01.RP1D.OSHP ()
+    }
+    if (LEqual(Arg0, 5)) {  // PC05
+      \_SB.PC05.RP5A.OSHP ()
+      \_SB.PC05.RP5B.OSHP ()
+      \_SB.PC05.RP5C.OSHP ()
+      \_SB.PC05.RP5D.OSHP ()
+    }
+  } // end of OSCM
+}
+

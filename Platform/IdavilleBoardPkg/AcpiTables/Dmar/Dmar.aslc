@@ -1,0 +1,83 @@
+/** @file
+  ACPI DSDT table
+
+  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+#include "Dmar.h"
+
+EFI_ACPI_DMAR_DESCRIPTION_TABLE DmarTable = {
+  //
+  // EFI_ACPI_DMAR_DESCRIPTION_TABLE
+  //
+    //
+    // EFI_ACPI_DESCRIPTION_HEADER
+    //
+    {
+      EFI_ACPI_DMAR_DESCRIPTION_TABLE_SIGNATURE,
+      sizeof(EFI_ACPI_DMAR_DESCRIPTION_TABLE),
+      EFI_ACPI_DMAR_TABLE_REVISION,
+
+      //
+      // Checksum will be updated at runtime
+      //
+      0x00,
+
+      //
+      // It is expected that these values will be programmed at runtime
+      //
+      { 'I', 'N', 'T', 'E', 'L', ' ' },
+      EFI_ACPI_DMAR_OEM_TABLE_ID,
+      0x1,
+      EFI_ACPI_DMAR_OEM_CREATOR_ID,
+      1
+    },
+
+    //
+    // DMAR table specific entries below:
+    //
+
+    //
+    // 39-bit addressing Host Address Width
+    //
+    38,
+
+    //
+    // Flags
+    //
+    0,
+
+    //
+    // Reserved fields
+    //
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+
+};
+
+//
+// Dummy function required for build tools
+//
+#if defined (__GNUC__)
+VOID*
+ReferenceAcpiTable (
+  VOID
+  )
+
+{
+  //
+  // Reference the table being generated to prevent the optimizer from removing the
+  // data structure from the exeutable
+  //
+  return (VOID*)&DmarTable;
+}
+#else
+int
+main (
+  VOID
+  )
+{
+  return 0;
+}
+#endif

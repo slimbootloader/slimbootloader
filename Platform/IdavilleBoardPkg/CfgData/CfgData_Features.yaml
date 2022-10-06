@@ -1,0 +1,69 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : FEATURES:PLT:"Features"
+- $ACTION      :
+    page         : FEATURES
+- FEATURES_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ FEATURES_CFG_DATA, 0x310, 0, 0 ] }
+  - Features     :
+    - $STRUCT      :
+        name         : PlatformFeatures
+        struct       : FEATURES_DATA
+        length       : 0x04
+    - Acpi         :
+        name         : ACPI Enable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable ACPI feature. 1:ACPI Enabled (default), 0:ACPI Disabled
+        length       : 1b
+        value        : 1
+    - MeasuredBoot :
+        name         : MeasuredBoot Enable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable MeasuredBoot feature. 1:MeasuredBoot Enabled (default), 0:MeasuredBoot Disabled
+        length       : 1b
+        value        : 1
+    - eMMCTuning   :
+        name         : eMMC Tuning Enable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable EMMC feature, if disabled get the DLLs from DLL config data
+        length       : 1b
+        value        : 0
+    - VtdSupport   :
+        name         : Vtd Support
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable Vtd Support.
+        length       : 1b
+        value        : 0
+    - DCI          :
+        name         : DCI Enable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable DCI for CCA OOB.
+        length       : 1b
+        value        : 0
+    - Rsvd         :
+        name         : Reserved
+        type         : Reserved
+        help         : >
+                       reserved bits
+        length       : 27b
+        value        : 0x0
+
