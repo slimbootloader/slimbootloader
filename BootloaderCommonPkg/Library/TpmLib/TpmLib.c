@@ -2,7 +2,7 @@
   TPM library routines to provide TPM support.
   For more details, consult TCG TPM specifications.
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -377,6 +377,46 @@ IsTpmEnabled (
   }
 
   return FALSE;
+}
+
+/**
+  Get the TPM event log buffer info.
+
+
+  @param Lasa  TPM event log buffer.
+  @param Laml  TPM event log size.
+
+  @retval RETURN_SUCCESS             Operation completed successfully.
+  @retval RETURN_INVALID_PARAMETER   Invalid parameter.
+  @retval RETURN_DEVICE_ERROR        Tpm Device not found or in bad state.
+  @retval Others                     The request could not be executed successfully.
+
+**/
+RETURN_STATUS
+GetTpmEventLog (
+  OUT UINT64 *Lasa,
+  OUT UINT32 *Laml
+  )
+{
+  TPM_LIB_PRIVATE_DATA        *PrivateData;
+
+  if ((Lasa == NULL) || (Laml == NULL)) {
+    return RETURN_INVALID_PARAMETER;
+  }
+
+  if (!IsTpmEnabled()) {
+    return RETURN_DEVICE_ERROR;
+  }
+
+  PrivateData = TpmLibGetPrivateData ();
+  if (PrivateData != NULL) {
+    *Lasa = PrivateData->LogAreaStartAddress;
+    *Laml = PrivateData->LogAreaMinLength;
+  } else {
+    return RETURN_INVALID_PARAMETER;
+  }
+
+  return RETURN_SUCCESS;
 }
 
 /**
