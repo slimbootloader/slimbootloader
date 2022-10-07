@@ -86,7 +86,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdMiniShellEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdConsoleInDeviceMask
   gPlatformCommonLibTokenSpaceGuid.PcdBootPerformanceMask
-  gPlatformCommonLibTokenSpaceGuid.PcdSecurityShellEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdCmdCorruptShellAppEnabled
 
 [Guids]
   gLoaderPerformanceInfoGuid
