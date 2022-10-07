@@ -328,5 +328,5 @@
   # Control if X2APIC should be used or not
   gPlatformCommonLibTokenSpaceGuid.PcdCpuX2ApicEnabled            | FALSE  | BOOLEAN | 0x20000220
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled                  | FALSE  | BOOLEAN | 0x20000221
-  # This PCD will enable a debug Shell with security-related tools.
-  gPlatformCommonLibTokenSpaceGuid.PcdSecurityShellEnabled        | FALSE  | BOOLEAN | 0x20000222
+  # This PCD will enable the SBL component corruption command
+  gPlatformCommonLibTokenSpaceGuid.PcdCmdCorruptShellAppEnabled   | FALSE  | BOOLEAN | 0x20000222

@@ -57,8 +57,8 @@ LoadShellCommands (
     }
   }
 
-  if (FeaturePcdGet (PcdSecurityShellEnabled)) {
-    // Security-related Shell commands
+  if (FeaturePcdGet (PcdCmdCorruptShellAppEnabled)) {
+    // SBL component corruption command
     ShellCommandRegister (Shell, &ShellCommandCorruptComp);
   }
 
