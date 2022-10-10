@@ -164,6 +164,7 @@
   #               New HOB format refer these file headers: SmmS3CommunicationInfoGuid.h, SpiFlashInfoGuid.h
   #               SmmRegisterInfoGuid.h and NvVariableInfoGuid.h
   gPlatformCommonLibTokenSpaceGuid.PcdBuildSmmHobs                     |        0x03| UINT8 | 0x20000705
+  gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled                  | FALSE  | BOOLEAN | 0x20000221
 
 [PcdsFixedAtBuild, PcdsPatchableInModule]
   # For patchable PCDs, try to set the default as none-zero
@@ -326,4 +327,3 @@
   gPlatformCommonLibTokenSpaceGuid.PcdMultiUsbBootDeviceEnabled   | FALSE  | BOOLEAN | 0x20000219
   # Control if X2APIC should be used or not
   gPlatformCommonLibTokenSpaceGuid.PcdCpuX2ApicEnabled            | FALSE  | BOOLEAN | 0x20000220
-  gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled                  | FALSE  | BOOLEAN | 0x20000221
