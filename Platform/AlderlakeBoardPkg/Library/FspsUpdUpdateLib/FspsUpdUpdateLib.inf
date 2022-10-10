@@ -42,10 +42,10 @@
 
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdFramebufferInitEnabled
-  gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled
   gPlatformModuleTokenSpaceGuid.PcdEnablePciePm
   gPlatformModuleTokenSpaceGuid.PcdFastBootEnabled
   gPlatformModuleTokenSpaceGuid.PcdSblResiliencyEnabled
 
 [FixedPcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled
   gPlatformAlderLakeTokenSpaceGuid.PcdAdlLpSupport

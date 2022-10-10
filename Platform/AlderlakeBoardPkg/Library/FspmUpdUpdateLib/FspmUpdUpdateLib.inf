@@ -44,4 +44,6 @@
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
   gPlatformModuleTokenSpaceGuid.PcdVtdEnabled
   gPlatformModuleTokenSpaceGuid.PcdFastBootEnabled
+
+[FixedPcd]
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled
