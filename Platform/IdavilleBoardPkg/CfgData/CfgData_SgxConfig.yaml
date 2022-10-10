@@ -50,7 +50,7 @@
       option       : 0x80000000:2GB, 0x100000000:4GB, 0x200000000:8GB, 0x400000000:16GB, 0x400000000:32GB, 0x800000000:64GB, 0x1000000000:128GB, 0x2000000000:256GB, 0x4000000000:512GB
       help         : >
                      Setting the PRMRR Size
-      length       : 0x04
+      length       : 0x08
       value        : 0x80000000
   - SgxQos    :
       name         : SGX Qos
@@ -79,7 +79,48 @@
                      Enable/Disable SGX Debug Mode
       length       : 0x01
       value        : 0x0
+  - SgxLeWr    :
+      name         : SGX Flexible Launch control
+      condition    : $(COND_SGX_EN)
+      type         : Combo
+      option       : 0:Disabled, 1:Enabled
+      help         : >
+                     Enable/Disable SGX Flexible Launch control
+      length       : 0x01
+      value        : 0x0
+  - SgxLePubKeyHash0    :
+      name         : SGX Flexible Launch control Hash 0
+      condition    : $(COND_SGX_EN)
+      type         : EditNum, HEX, (0x0,0xFFFFFFFFFFFFFFFF)
+      help         : >
+                     SGX Flexible Launch control Hash 0 value
+      length       : 0x08
+      value        : 0x0
+  - SgxLePubKeyHash1    :
+      name         : SGX Flexible Launch control Hash 1
+      condition    : $(COND_SGX_EN)
+      type         : EditNum, HEX, (0x0,0xFFFFFFFFFFFFFFFF)
+      help         : >
+                     SGX Flexible Launch control Hash 1 value
+      length       : 0x08
+      value        : 0x0
+  - SgxLePubKeyHash2    :
+      name         : SGX Flexible Launch control Hash 2
+      condition    : $(COND_SGX_EN)
+      type         : EditNum, HEX, (0x0,0xFFFFFFFFFFFFFFFF)
+      help         : >
+                     SGX Flexible Launch control Hash 2 value
+      length       : 0x08
+      value        : 0x0
+  - SgxLePubKeyHash3    :
+      name         : SGX Flexible Launch control Hash 3
+      condition    : $(COND_SGX_EN)
+      type         : EditNum, HEX, (0x0,0xFFFFFFFFFFFFFFFF)
+      help         : >
+                     SGX Flexible Launch control Hash 3 value
+      length       : 0x08
+      value        : 0x0
   - PaddingBytes :
-      length       : 0x03
+      length       : 0x02
       value        : 0x0
 
