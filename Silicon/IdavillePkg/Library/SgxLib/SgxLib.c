@@ -537,6 +537,11 @@ UpdateFspmSgxConfig (
         FspmUpd->FspmConfig.PcdSgxAutoRegistrationAgent = SgxCfgData->SgxAutoRegistration;
         FspmUpd->FspmConfig.PcdSgxQoS = SgxCfgData->SgxQos;;
         FspmUpd->FspmConfig.PcdSgxDebugMode = SgxCfgData->SgxDebugMode;
+        FspmUpd->FspmConfig.PcdSgxLeWr = SgxCfgData->SgxLeWr;
+        FspmUpd->FspmConfig.PcdSgxLePubKeyHash0 = SgxCfgData->SgxLePubKeyHash0;
+        FspmUpd->FspmConfig.PcdSgxLePubKeyHash1 = SgxCfgData->SgxLePubKeyHash1;
+        FspmUpd->FspmConfig.PcdSgxLePubKeyHash2 = SgxCfgData->SgxLePubKeyHash2;
+        FspmUpd->FspmConfig.PcdSgxLePubKeyHash3 = SgxCfgData->SgxLePubKeyHash3;
         UpdateFspmSgxConfigStatus = TRUE;
     } else if (SgxCfgData->EnableSgx == CONFIG_SGX_DISABLED) {
       DEBUG ((DEBUG_WARN, "Intel(R) SGX set to disabled in config.\n"));
