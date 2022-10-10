@@ -869,7 +869,6 @@ PlatformUpdateAcpiGnvs (
   PchNvs->CnviBtAudioOffload = FspsConfig->CnviBtAudioOffload;
   switch (GetPlatformId ()) {
     case PLATFORM_ID_ADL_P_DDR5_RVP:
-    case PLATFORM_ID_RPL_P_DDR5_RVP:
     PchNvs->CnviBtAudioOffload = 0x1;
   }
   PchNvs->PsOnEnable         = FspsConfig->PsOnEnable;
@@ -1066,7 +1065,6 @@ PlatformUpdateAcpiGnvs (
     PlatformNvs->PcieSlot2RpNumber = 5;
     break;
   case PLATFORM_ID_ADL_P_DDR5_RVP:
-  case PLATFORM_ID_RPL_P_DDR5_RVP:
     PlatformNvs->PcieSlot1WakeGpio = 0;
     PlatformNvs->PcieSlot1PowerEnableGpio = GPIO_VER2_LP_GPP_A22;
     PlatformNvs->PcieSlot1PowerEnableGpioPolarity = 0;

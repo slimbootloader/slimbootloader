@@ -374,9 +374,11 @@ GetBoardId (
       *PlatformId = PLATFORM_ID_ADL_P_LP4_RVP;
       break;
     case BoardIdAdlPLp5Rvp:
+    case BoardIdRplPLp5Rvp:
       *PlatformId = PLATFORM_ID_ADL_P_LP5_RVP;
       break;
     case BoardIdAdlPDdr5Rvp:
+    case BoardIdRplPDdr5Rvp:
       *PlatformId = PLATFORM_ID_ADL_P_DDR5_RVP;
       break;
     case BoardIdAdlPSDdr5Rvp:
@@ -390,12 +392,6 @@ GetBoardId (
       break;
     case BoardIdTestSDdr5SODimmRvp:
       *PlatformId = PLATFORM_ID_TEST_S_DDR5_SODIMM_RVP;
-      break;
-    case BoardIdRplPDdr5Rvp:
-      *PlatformId = PLATFORM_ID_RPL_P_DDR5_RVP;
-      break;
-    case BoardIdRplPLp5Rvp:
-      *PlatformId = PLATFORM_ID_RPL_P_LP5_RVP;
       break;
     default:
       DEBUG((DEBUG_INFO, "Unsupported board Id %x .....\n", *PlatformId));
