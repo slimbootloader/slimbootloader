@@ -910,7 +910,7 @@ GetExpectedDescriptor (
 
     DescriptorHeader  = (UINT16) (*Ptr + ((* (Ptr + 1)) << 8));
 
-    Len               = Buffer[0];
+    Len               = Buffer[Parsed];
 
     //
     // Check to see if it is a start of expected descriptor
