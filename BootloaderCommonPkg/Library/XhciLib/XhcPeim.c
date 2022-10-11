@@ -917,7 +917,7 @@ XhcPeiBulkTransfer (
       return EFI_INVALID_PARAMETER;
     }
   } else {
-    if (((DeviceSpeed == EFI_USB_SPEED_LOW) && (MaximumPacketLength != 8))  ||
+    if (((DeviceSpeed == EFI_USB_SPEED_LOW) && (MaximumPacketLength > 8))  ||
         ((DeviceSpeed == EFI_USB_SPEED_FULL) && (MaximumPacketLength > 64)) ||
         ((DeviceSpeed == EFI_USB_SPEED_HIGH) && (MaximumPacketLength > 3072))) {
       return EFI_INVALID_PARAMETER;
