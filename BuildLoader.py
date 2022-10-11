@@ -935,16 +935,22 @@ class Build(object):
                 raise Exception ('Could not find FSP-T UPD signatures in STAGE1A_B.fd !')
             if bins.find (upd_sig, upd_off + 1) > 0:
                 raise Exception ('Found multiple FSP-T UPD signatures in STAGE1A_B.fd !')
-            ucode_upd_off = upd_off + 0x20
+            upd_rev = bytes_to_value (bins[upd_off + 8 : upd_off + 9])
+            if upd_rev == 1:
+                # Platforms using FSP spec 2.0/2.1 (e.g. TGL) have revision 1 format
+                ucode_upd_off = upd_off + 0x20
+            elif upd_rev == 2:
+                # Platforms using FSP spec 2.2 (e.g. ADL) have revision 2 format
+                ucode_upd_off = upd_off + 0x40
+            else:
+                raise Exception ('Unrecognized FSP-T UPD rev !')
             ucode_base = bytes_to_value (bins[ucode_upd_off + 0 : ucode_upd_off + 4])
-            if ucode_base == 1:
-                # APL/QEMU FSP-T UPD has revision 1 format
-                ucode_upd_off = upd_off + 0x24
-                ucode_base = bytes_to_value (bins[ucode_upd_off + 0 : ucode_upd_off + 4])
             ucode_size = bytes_to_value (bins[ucode_upd_off + 4 : ucode_upd_off + 8])
             if ucode_size > 0 and ucode_base > 0:
                 if ucode_base != self._board.UCODE_BASE:
                     raise Exception ('Incorrect microcode region base in FSP-T UPD parameter !')
+                if ucode_size != self._board.UCODE_SIZE:
+                    raise Exception ('Incorrect microcode region size in FSP-T UPD parameter !')
                 if ucode_base < 0x100000000 - self._board.TOP_SWAP_SIZE * 2:
                     # Microcode is located outside of top swap region, patch it
                     ucode_base -= self._board.REDUNDANT_SIZE
