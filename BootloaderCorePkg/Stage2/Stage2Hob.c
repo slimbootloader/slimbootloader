@@ -989,7 +989,9 @@ BuildExtraInfoHob (
 
     TpmLibGetActivePcrBanks (&SecureBootInfoHob->TpmPcrActivePcrBanks);
 
-    SecureBootInfoHob->FirmwareDebuggerInitialized  = ((LoaderPlatformInfo->HwState >> 2) || (LoaderPlatformInfo->HwState >> 3));
+    if (LoaderPlatformInfo != NULL) {
+      SecureBootInfoHob->FirmwareDebuggerInitialized  = ((LoaderPlatformInfo->HwState >> 2) || (LoaderPlatformInfo->HwState >> 3));
+    }
 
     // SBL supports only TPM 2.0
     if (SecureBootInfoHob->MeasuredBootEnabled) {
