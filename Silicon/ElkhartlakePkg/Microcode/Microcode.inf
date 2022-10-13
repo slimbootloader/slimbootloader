@@ -14,11 +14,11 @@
   VERSION_STRING       = 1.0
 
 [Sources]
-  m0190661_00000016.mcb
+  m0190661_00000017.mcb
 
 [UserExtensions.SBL."CloneRepo"]
-  REPO  = https://github.com/tianocore/edk2-non-osi.git
-  COMMIT= 6996a45d7f4014fd4aa0f1eb4cbe97d8a3c5957a
+  REPO  = https://github.com/slimbootloader/firmwareblob.git
+  COMMIT= 98918f6881ce7f3a551712260d6d04f5f117d219
 
 [UserExtensions.SBL."CopyList"]
-  Silicon/Intel/ElkhartlakeSiliconBinPkg/Microcode/m0190661_00000016.mcb  : Silicon/ElkhartlakePkg/Microcode/m0190661_00000016.mcb
+  Microcode/ElkhartLake/m_01_90661_00000017.pdb  : Silicon/ElkhartlakePkg/Microcode/m0190661_00000017.mcb
