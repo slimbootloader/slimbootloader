@@ -539,33 +539,22 @@ UpdateFullBiosRegion (
   This function will update SBL or Configuration data alone.
 
   @param[in] ImageHdr       Pointer to fw mgmt capsule Image header
+  @param[in] FwPolicy       Fw update policy
 
   @retval  EFI_SUCCESS      Update successful.
   @retval  other            error occurred during firmware update
 **/
 EFI_STATUS
 UpdateSystemFirmware (
-  IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
+  IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
+  IN FIRMWARE_UPDATE_POLICY        FwPolicy
   )
 {
-  EFI_STATUS              Status;
+  EFI_STATUS                  Status;
   FIRMWARE_UPDATE_PARTITION   *UpdatePartition;
-  FIRMWARE_UPDATE_POLICY  FwPolicy;
 
   //
-  // 1. Enforce firmware update policy.
-  //
-  Status = EnforceFwUpdatePolicy (&FwPolicy);
-  if (EFI_ERROR (Status)) {
-    if (Status == EFI_ALREADY_STARTED) {
-      return EFI_SUCCESS;
-    }
-    DEBUG((DEBUG_ERROR, "EnforceFwUpdatePolicy: Status = 0x%x\n", Status));
-    return Status;
-  }
-
-  //
-  // 2. Check firmware version.
+  // 1. Check firmware version.
   //
   Status = VerifyFwVersion (ImageHdr, FwPolicy);
   if (EFI_ERROR (Status)) {
@@ -574,7 +563,7 @@ UpdateSystemFirmware (
   }
 
   //
-  // 3. Get firmware update required information.
+  // 2. Get firmware update required information.
   //
   Status = GetFirmwareUpdateInfo (ImageHdr, FwPolicy, &UpdatePartition);
   if (EFI_ERROR(Status)) {
@@ -583,29 +572,12 @@ UpdateSystemFirmware (
   }
 
   //
-  // 4. Do boot partition update.
+  // 3. Do boot partition update.
   //
   Status = UpdateBootPartition (UpdatePartition);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "UpdateBootPartition, Status = 0x%x\n", Status));
     return Status;
-  }
-
-  //
-  // 5. After update Enforce firmware update policy
-  //
-  Status = AfterUpdateEnforceFwUpdatePolicy(FwPolicy);
-  if (EFI_ERROR (Status)) {
-    //
-    // If EFI_END_OF_FILE is returned, that means SBL update is successful
-    // return success to end firmware update.
-    //
-    if (Status != EFI_END_OF_FILE) {
-      DEBUG((DEBUG_ERROR, "AfterUpdateEnforceFwUpdatePolicy failed! Status = %r\n", Status));
-      return Status;
-    } else {
-      return EFI_SUCCESS;
-    }
   }
 
   return Status;
@@ -927,7 +899,7 @@ IsUpdateComponentForContainer (
 EFI_STATUS
 CheckSblConfigDataSvn (
   IN   EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
-  IN   FIRMWARE_UPDATE_POLICY         FwPolicy,
+  IN   FIRMWARE_UPDATE_POLICY        FwPolicy,
   OUT  UINT8                         *SvnStatus
   )
 {
@@ -1031,17 +1003,18 @@ CheckAcmSvn (
   if found, will update the component.
 
   @param[in] ImageHdr       Pointer to fw mgmt capsule Image header
+  @param[in] FwPolicy       Fw update policy
 
   @retval  EFI_SUCCESS      Update successful.
   @retval  other            error occurred during firmware update
 **/
 EFI_STATUS
 UpdateSblComponent (
-  IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
+  IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
+  IN FIRMWARE_UPDATE_POLICY        FwPolicy
   )
 {
   EFI_STATUS             Status;
-  FLASH_MAP_ENTRY_DESC  *Entry;
   UINT8                  SvnStatus;
 
   Status = EFI_NOT_FOUND;
@@ -1075,19 +1048,13 @@ UpdateSblComponent (
   //
   // This is a SBL component update, check if it is a redundant component
   //
-  Entry = GetComponentEntryByPartition((UINT32)ImageHdr->UpdateHardwareInstance, TRUE);
-  if (Entry == NULL) {
-    return EFI_NOT_FOUND;
-  }
-  if ((Entry->Flags & FLASH_MAP_FLAGS_NON_REDUNDANT_REGION) != 0){
+  if (IsRedundantComponent(ImageHdr->UpdateHardwareInstance)) {
+    DEBUG ((DEBUG_INFO, "Redundant component update requested! \n"));
+    Status = UpdateSystemFirmware(ImageHdr, FwPolicy);
+  } else {
     DEBUG ((DEBUG_INFO, "Non redundant component update requested! \n"));
     Status = UpdateNonRedundantComp(ImageHdr);
-  } else if ((Entry->Flags & FLASH_MAP_FLAGS_REDUNDANT_REGION) != 0 ||
-            (Entry->Flags & FLASH_MAP_FLAGS_TOP_SWAP ) != 0){
-    DEBUG ((DEBUG_INFO, "Redundant component update requested! \n"));
-    Status = UpdateSystemFirmware(ImageHdr);
   }
-
   return Status;
 }
 
