@@ -224,7 +224,7 @@ UpdateFspConfig (
 
   DebugPort = GetDebugPort ();
   if (DebugPort < GetPchMaxSerialIoUartControllersNum ()) {
-    Fspmcfg->PcdDebugInterfaceFlags = BIT4 | BIT5;
+    Fspmcfg->PcdDebugInterfaceFlags = BIT4 | BIT5 | BIT1;
     Fspmcfg->SerialIoUartDebugControllerNumber = DebugPort;
     Fspmcfg->SerialIoUartDebugMode = 4;
   } else {
@@ -613,6 +613,10 @@ UpdateFspConfig (
         Fspmcfg->DmiHweq = 0x2;
         Fspmcfg->PcieClkReqGpioMux[9] = 0x796e9000;
         Fspmcfg->SkipCpuReplacementCheck = 0x0;
+        Fspmcfg->PrmrrSize = MemCfgData->PrmrrSize;
+        Fspmcfg->Ddr4OneDpc = MemCfgData->Ddr4OneDpc;
+        Fspmcfg->FirstDimmBitMask = 0x0;
+        Fspmcfg->FirstDimmBitMaskEcc = MemCfgData->FirstDimmBitMaskEcc;
         break;
       case PLATFORM_ID_ADL_PS_DDR5_CRB:
         Fspmcfg->DdiPortAConfig = 0x0;
@@ -621,6 +625,8 @@ UpdateFspConfig (
         Fspmcfg->Ddr4OneDpc = MemCfgData->Ddr4OneDpc;
         Fspmcfg->FirstDimmBitMask = 0x0;
         Fspmcfg->FirstDimmBitMaskEcc = MemCfgData->FirstDimmBitMaskEcc;
+        Fspmcfg->PchIshEnable = 0x0;
+        Fspmcfg->PanelPowerEnable = 0x0;
         break;
       case PLATFORM_ID_ADL_N_DDR5_CRB:
         Fspmcfg->CpuPcieRpEnableMask = 0x0;
