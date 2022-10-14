@@ -344,7 +344,7 @@
       help         : >
                      The size of the BIOS region of the IFWI. Used if FspmUpd->FspmConfig.BiosGuard != 0. If BiosGuard is enabled, MRC will increase the size of the DPR (DMA Protected Range) so that a BIOS Update Script can be stored in the DPR.
       length       : 0x0002
-      value        : 0x3000
+      value        : 0x4000
   - BiosAcmBase  :
       name         : ACM Base
       type         : EditNum, HEX, (0x00,0xFFFFFFFF)
@@ -555,7 +555,7 @@
       type         : Combo
       option       : 0:Disabled, 1:FixedLow, 2:FixedMid, 3:FixedHigh, 4:Enabled
       help         : >
-                     System Agent dynamic frequency support and when enabled memory will be training at two different frequencies. Only effects ULX/ULT CPUs. 0=Disabled, 1=FixedLow, 2=FixedHigh, and 3=Enabled.
+                     System Agent dynamic frequency support and when enabled memory will be training at two different frequencies. Only effects ULX/ULT CPUs. 0:Disabled, 1:FixedPoint0, 2:FixedPoint1, 3:FixedPoint2, 4:FixedPoint3, 5:Enabled
       length       : 0x01
       value        : 0x00
   - DisPgCloseIdleTimeout :
@@ -914,7 +914,7 @@
       type         : EditNum, HEX, (0x00, 0x0F)
       option       : 0: Disabled, 1: Enabled on DIMM0 only, 2: Enabled on DIMM1 only, 3: Enabled
       help         : >
-                     Defines which ECC DIMM should be populated first on a 2DPC board. Bit0: MC0 DIMM0, Bit1: MC0 DIMM1, Bit2: MC1 DIMM0, Bit3: MC1 DIMM1. For each MC, the first DIMM to be populated should be set to '1'}
+                     Defines which ECC DIMM should be populated first on a 2DPC board. Bit0: MC0 DIMM0, Bit1: MC0 DIMM1, Bit2: MC1 DIMM0, Bit3: MC1 DIMM1. For each MC, the first DIMM to be populated should be set to '1'
       length       : 0x01
       value        : 0x0
   - WRDS :
