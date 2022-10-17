@@ -78,12 +78,16 @@ GetCpuSkuInfo (
           break;
       }
     break;
-    case 0x000B0670:
-    case 0x000B06A0:
-        CpuType  = EnumCpuTrad;
-        SkuFound = TRUE;
-        DEBUG ((DEBUG_INFO, "CPU Device ID: 0x%02X, CPUID: 0x%08X!\n", CpuDid, CpuFamilyModel));
-        break;
+    case CPUID_FULL_FAMILY_MODEL_RAPTORLAKE_DT_HALO:
+    case CPUID_FULL_FAMILY_MODEL_RAPTORLAKE_2_DT_HALO:
+      CpuType = EnumCpuTrad;
+      SkuFound = TRUE;
+      break;
+    case CPUID_FULL_FAMILY_MODEL_RAPTORLAKE_MOBILE:
+      CpuType = EnumCpuUlt;
+      SkuFound = TRUE;
+      break;
+
     case CPUID_FULL_FAMILY_MODEL_ALDERLAKE_MOBILE:
       switch (CpuDid) {
         case V_SA_DEVICE_ID_MB_ULT_1:    // AlderLake P (6+8+GT)
