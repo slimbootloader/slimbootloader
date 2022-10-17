@@ -203,7 +203,6 @@ FwuTopSwapSetting (
     pFwUpdStatus = (FW_UPDATE_STATUS *)(UINTN)RsvdBase;
   }
 
-  DEBUG ((DEBUG_INFO, "Current FW update state machine: %d\n", pFwUpdStatus->StateMachine));
   // If in a recovery path, stay on current partition.
   if (PcdGetBool (PcdSblResiliencyEnabled) &&
      (IsRecoveryTriggered () ||

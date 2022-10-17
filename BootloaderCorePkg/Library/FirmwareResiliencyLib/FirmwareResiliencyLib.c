@@ -18,12 +18,12 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 /**
   Retrieve FW update state from the reserved region
 
-  @param[in,out] StateMachine The current FW update state
+  @retval StateMachine The current FWU state machine
 **/
-VOID
+UINT8
 EFIAPI
 GetFwuStateMachine (
-  IN OUT UINT8* StateMachine
+  VOID
   )
 {
   FW_UPDATE_STATUS    *FwUpdStatus;
@@ -31,28 +31,25 @@ GetFwuStateMachine (
   UINT32              RsvdBase;
   UINT32              RsvdSize;
 
-  if (StateMachine != NULL) {
-    Status = GetComponentInfoByPartition (FLASH_MAP_SIG_BLRESERVED, FALSE, &RsvdBase, &RsvdSize);
-    if (EFI_ERROR (Status)) {
-      *StateMachine = FW_UPDATE_SM_INIT;
-    } else {
-      FwUpdStatus = (FW_UPDATE_STATUS *)(UINTN)RsvdBase;
-      *StateMachine = FwUpdStatus->StateMachine;
-    }
+  Status = GetComponentInfoByPartition (FLASH_MAP_SIG_BLRESERVED, FALSE, &RsvdBase, &RsvdSize);
+  if (!EFI_ERROR (Status)) {
+    FwUpdStatus = (FW_UPDATE_STATUS *)(UINTN)RsvdBase;
+    return FwUpdStatus->StateMachine;
   }
+  return FW_UPDATE_SM_INIT;
 }
 
 /**
   Check if ACM detected corruption in IBB
-
-  @param[in] StateMachine The current FW update state
 **/
 VOID
 EFIAPI
 CheckForAcmFailures (
-  IN UINT8 StateMachine
+  VOID
   )
 {
+  UINT8 StateMachine;
+  StateMachine = GetFwuStateMachine ();
   switch (StateMachine) {
     case FW_UPDATE_SM_PART_A:
       if (GetCurrentBootPartition () == PrimaryPartition) {
@@ -62,7 +59,6 @@ CheckForAcmFailures (
       break;
 
     case FW_UPDATE_SM_PART_B:
-    case FW_UPDATE_SM_PART_AB:
       if (GetCurrentBootPartition () == BackupPartition) {
         DEBUG((DEBUG_INFO, "Partition to be updated is same as current boot partition (backup)\n"));
         SetRecoveryTrigger ();
@@ -100,13 +96,17 @@ CheckForTcoTimerFailures (
     FailedBootCount = GetFailedBootCount ();
     DEBUG ((DEBUG_INFO, "Boot failure occurred! Failed boot count: %d\n", FailedBootCount));
     if (FailedBootCount >= BootFailureThreshold) {
+      if (IsRecoveryTriggered ()) {
+        StopTcoTimer ();
+        CpuHalt("Unable to recover partition, both partitions are failing!\n");
+      }
       ClearFailedBootCount ();
       SetRecoveryTrigger ();
       NewPartition = GetCurrentBootPartition () == PrimaryPartition ? BackupPartition : PrimaryPartition;
       DEBUG ((DEBUG_INFO, "Boot failure threshold reached! Switching to partition: %d\n", NewPartition));
       Status = SetBootPartition (NewPartition);
       if (EFI_ERROR (Status)) {
-        CpuHalt("Unable to recover corrupted partition!\n");
+        CpuHalt("Unable to recover partition, failed to switch boot partition!\n");
       }
       ResetSystem (EfiResetCold);
     }

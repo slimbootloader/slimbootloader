@@ -12,23 +12,21 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 /**
   Retrieve FW update state from the reserved region
 
-  @param[in,out] StateMachine The current FW update state
+  @retval StateMachine The current FWU state machine
 **/
-VOID
+UINT8
 EFIAPI
 GetFwuStateMachine (
-  IN OUT UINT8* StateMachine
+  VOID
   );
 
 /**
   Check if ACM detected corruption in IBB
-
-  @param[in] StateMachine The current FW update state
 **/
 VOID
 EFIAPI
 CheckForAcmFailures (
-  IN UINT8 StateMachine
+  VOID
   );
 
 /**
