@@ -356,7 +356,6 @@ SecStartup2 (
   VOID                    **FieldPtr;
   UINT32                    Tolum;
   UINT64                    Touum;
-  UINT8                     FwuStateMachine;
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
   ASSERT (LdrGlobal != NULL);
@@ -387,12 +386,8 @@ SecStartup2 (
 
   // Check if recovery is needed, if not in recovery path already
   if (PcdGetBool (PcdSblResiliencyEnabled)) {
-    GetFwuStateMachine (&FwuStateMachine);
-    DEBUG ((DEBUG_INFO, "Current FW update state machine: %d\n", FwuStateMachine));
-    if (FwuStateMachine != FW_UPDATE_SM_RECOVERY && !IsRecoveryTriggered ()) {
-      CheckForTcoTimerFailures (PcdGet8 (PcdBootFailureThreshold));
-      CheckForAcmFailures (FwuStateMachine);
-    }
+    CheckForAcmFailures ();
+    CheckForTcoTimerFailures (PcdGet8 (PcdBootFailureThreshold));
   }
 
   Status = AppendHashStore (LdrGlobal, &Stage1bParam);
