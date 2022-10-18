@@ -1479,7 +1479,8 @@ InitFirmwareUpdate (
       // Update firmware update status of the component in reserved region
       //
       if ((IsRedundantComponent(ImgHdr->UpdateHardwareInstance) && FwPolicy.Fields.SwitchtoBackupPart == 0x0) ||
-          !IsRedundantComponent(ImgHdr->UpdateHardwareInstance)) {
+          !IsRedundantComponent(ImgHdr->UpdateHardwareInstance) ||
+          EFI_ERROR(StatusPayloadUpdate)) {
         Status = UpdateStatus (ImgHdr->UpdateHardwareInstance, (UINT16)ImgHdr->Version, StatusPayloadUpdate);
         if (EFI_ERROR (Status)) {
           DEBUG ((DEBUG_ERROR, "UpdateStatus failed! Status = %r\n", Status));
