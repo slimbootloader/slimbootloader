@@ -996,7 +996,7 @@ new file mode 100644
 index 0000000000..9420bba30d
 --- /dev/null
 +++ b/QemuFspPkg/FspmInit/FspmInit.c
-@@ -0,0 +1,802 @@
+@@ -0,0 +1,800 @@
 +/** @file
 +  FSP-M component implementation.
 +
@@ -1595,7 +1595,6 @@ index 0000000000..9420bba30d
 +  UINT32                          TsegBase;
 +  UINT8                           EsmramcVal;
 +  UINT8                           Q35TsegMbytes;
-+  UINT8                           RegMask8;
 +  UINT32                          TopOfLowRam;
 +  UINT32                          TopOfLowRamMb;
 +  UINT16                          HostBridgeDevId;
@@ -1657,7 +1656,6 @@ index 0000000000..9420bba30d
 +  // bits are hard-coded as 1 by QEMU.
 +  //
 +  EsmramcVal = PciRead8 (DRAMC_REGISTER_Q35 (MCH_ESMRAMC));
-+  RegMask8 = MCH_ESMRAMC_SM_CACHE | MCH_ESMRAMC_SM_L1 | MCH_ESMRAMC_SM_L2;
 +
 +  TopOfLowRam = LowMemLen;
 +  ASSERT ((TopOfLowRam & (SIZE_1MB - 1)) == 0);
