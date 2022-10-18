@@ -7,6 +7,7 @@
 ##
 
 from abc import abstractmethod
+from StitchLoader import *
 
 class StitchIfwiConfigBase:
     extra_usage_txt = \
@@ -59,7 +60,22 @@ class StitchIfwiConfigBase:
             #    Path                   file name                  compress     Key
             ('IFWI/BIOS/TS0/ACM0',      'Input/acm0.bin',          'dummy',   ''),
             ('IFWI/BIOS/TS1/ACM0',      'Input/acm0.bin',          'dummy',   ''),
-        ]
+            ]
+        if os.path.exists('IPFW/TccCacheCfg.bin'):
+            print ("TccCacheCfg.bin found")
+            replace_list.append (
+                ('IFWI/BIOS/NRD/IPFW/TCCC', 'IPFW/TccCacheCfg.bin',  'lz4',   'KEY_ID_CONTAINER_COMP_RSA3072'), # TCC Cache Cfg binary
+            )
+        if os.path.exists('IPFW/TccCrlBinary.bin'):
+            print ("TccCrlBinary.bin found")
+            replace_list.append (
+                ('IFWI/BIOS/NRD/IPFW/TCCM', 'IPFW/TccCrlBinary.bin', 'lz4',   'KEY_ID_CONTAINER_COMP_RSA3072'), # TCC Crl Cfg binary
+            )
+        if os.path.exists('IPFW/TccStreamCfg.bin'):
+            print ("TccStreamCfg found")
+            replace_list.append (
+                ('IFWI/BIOS/NRD/IPFW/TCCT', 'IPFW/TccStreamCfg.bin', 'lz4',   'KEY_ID_CONTAINER_COMP_RSA3072'), # TCC Stream Cfg binary
+            )
         return replace_list
 
     def get_btGuard_xml_change_dict (self):
