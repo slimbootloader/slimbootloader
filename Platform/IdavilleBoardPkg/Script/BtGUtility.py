@@ -1,7 +1,7 @@
 ## @ StitchIfwi.py
 #  This is a python stitching script for Slim Bootloader IDV build
 #
-# Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved. <BR>
+# Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved. <BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -239,7 +239,7 @@ def replace_component (ifwi_src_path, flash_path, file_path, comp_alg, pri_key):
             pri_key = os.path.join (work_dir, pri_key)
         cmd_line = [sys.executable, gen_container, 'replace', '-i', container_file, '-o', container_file, '-n', comp_name,
                                     '-f', comp_file, '-c', comp_alg, '-k', pri_key, '-td', tool_bin_dir]
-        run_process_wrapper (cmd_line, True)
+        run_process_wrapper (cmd_line)
         comp_bin = bytearray (get_file_data (container_file))
     else:
         # replace directly in flash map

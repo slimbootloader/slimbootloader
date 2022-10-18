@@ -1,7 +1,7 @@
 ## @ StitchIfwi.py
 #  This is a python stitching script for Slim Bootloader IDV build
 #
-# Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved. <BR>
+# Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved. <BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -158,6 +158,7 @@ def main():
     ap.add_argument('-b', dest='btg_profile', default = 'legacy', choices=['legacy', 'vm', 'fve', 'fvme'], help='specify Boot Guard profile type')
     ap.add_argument('-r', dest='remove', action = "store_true", default = False, help = "delete temporary files after stitch")
     ap.add_argument('-t', dest='tpm', default = 'dtpm', choices=['ptt', 'dtpm', 'none'], help='specify TPM type')
+    ap.add_argument('-k', dest='key_dir', type=str, required=False, help='specify the path to Sbl Keys directory')
     ap.add_argument('-d', dest='plat_data', type=hexstr, default=None, help='Specify a platform specific data (HEX, DWORD) for customization')
     ap.add_argument('-o', dest='option', default = '', help = "Platform specific stitch option. Format: '-o option1;option2;...' For each option its format is 'parameter:data'. Try -o help for more information")
     ap.add_argument('-i', dest='igfw', default = '', help = "Stitch IGN FW flag. Give '-i igfw' if stitching Ignition Firmware")
@@ -183,6 +184,11 @@ def main():
     print ("Executing stitch.......")
     curr_dir = os.getcwd()
     sbl_file = os.path.abspath(os.path.join (curr_dir, args.sbl_file))
+
+    if args.key_dir:
+        os.environ['SBL_KEY_DIR'] = os.path.abspath(args.key_dir)
+    else:
+        raise Exception ('SBL Keys dir is not set. Use -k to set directory!')
 
     work_dir = os.path.abspath (args.work_dir)
     os.chdir(work_dir)
