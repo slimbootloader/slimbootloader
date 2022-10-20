@@ -1237,7 +1237,8 @@ UpdateFspConfig (
     Fspscfg->PavpEnable                 = SiCfgData->PavpEnable;
     Fspscfg->CdClock                    = SiCfgData->CdClock;
     Fspscfg->PeiGraphicsPeimInit        = SiCfgData->PeiGraphicsPeimInit;
-    Fspscfg->GraphicsConfigPtr          = PcdGet32(PcdGraphicsVbtAddress);
+    
+    Fspscfg->GraphicsConfigPtr          = (UINT32)GetVbtAddress ();
 
     CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mEhlCrbRowDisplayDdiConfig, sizeof(mEhlCrbRowDisplayDdiConfig));
     Fspscfg->DdiPortAConfig             = SaDisplayConfigTable[0];
