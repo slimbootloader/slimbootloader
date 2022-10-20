@@ -185,6 +185,14 @@ class Board(BaseBoard):
         self.PLD_RSVD_MEM_SIZE    = 0x00500000
         self.LOADER_RSVD_MEM_SIZE = 0x500000
 
+        # If mulitple VBT table support is required, list them as:
+        #   {VbtImageId1 : VbtFileName1, VbtImageId2 : VbtFileName2, ...}
+        # VbtImageId is ID to identify a VBT image. It is a UINT32 number to match
+        #   the ImageId field in the VBT container.
+        # VbtFileName is the VBT file name. It needs to be located under platform
+        #   VbtBin folder.
+        self._MULTI_VBT_FILE      = {1:'Vbt.dat'}
+
         # _CFGDATA_INT_FILE - Internal cfg data is generally used for internal boards like MRBs, RVPs etc.
         # _CFGDATA_EXT_FILE - External cfg data is for the customer boards to populate new data on top of the internal defaults.
         # Cfg data dlt files for internal boards could also put into external cfg data if want to update cfg data for these platforms
