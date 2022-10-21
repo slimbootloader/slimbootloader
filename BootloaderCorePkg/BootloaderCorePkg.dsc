@@ -206,6 +206,7 @@
   gPlatformModuleTokenSpaceGuid.PcdMrcDataSize            | $(MRCDATA_SIZE)
   gPlatformModuleTokenSpaceGuid.PcdUcodeBase              | $(UCODE_BASE)
   gPlatformModuleTokenSpaceGuid.PcdUcodeSize              | $(UCODE_SIZE)
+  gPlatformModuleTokenSpaceGuid.PcdUcodeSlotSize          | $(UCODE_SLOT_SIZE)
   gPlatformModuleTokenSpaceGuid.PcdVariableRegionBase     | $(VARIABLE_BASE)
   gPlatformModuleTokenSpaceGuid.PcdVariableRegionSize     | $(VARIABLE_SIZE)
 

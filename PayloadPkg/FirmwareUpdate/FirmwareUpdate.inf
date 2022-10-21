@@ -81,6 +81,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdFrameBufferMaxConsoleHeight
   gPlatformModuleTokenSpaceGuid.PcdSblResiliencyEnabled
   gPlatformModuleTokenSpaceGuid.PcdBootFailureThreshold
+  gPlatformModuleTokenSpaceGuid.PcdUcodeSlotSize
 
 [Depex]
   TRUE

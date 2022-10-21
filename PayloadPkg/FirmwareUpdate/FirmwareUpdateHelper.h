@@ -12,6 +12,24 @@
 #include <Uefi/UefiBaseType.h>
 #include <Library/ResetSystemLib.h>
 
+///
+/// Structure to describe microcode header
+///
+typedef struct {
+  UINT32 HeaderVersion;  ///< Version number of the update header.
+  UINT32 UpdateRevision; ///< Unique version number for the update.
+  UINT32 Date;           ///< Date of the update creation.
+  UINT32 ProcessorId;    ///< Signature of the processor that requires this update.
+  UINT32 Checksum;       ///< Checksum of update data and header.
+  UINT32 LoaderRevision; ///< Version number of the microcode loader program.
+  UINT32 ProcessorFlags; ///< Lower 4 bits denoting platform type information.
+  UINT32 DataSize;       ///< Size of encoded data in bytes.
+  UINT32 TotalSize;      ///< Total size of microcode update in bytes.
+  UINT8  Reserved[12];   ///< Reserved bits.
+} CPU_MICROCODE_HEADER;
+
+#define PAD_BYTE  0xFF
+
 /**
   Update a region block.
 
@@ -78,6 +96,19 @@ EFI_STATUS
 VerifyFwVersion (
   IN  EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
   IN  FIRMWARE_UPDATE_POLICY  FwPolicy
+  );
+
+/**
+  Verify the firmware internal structure.
+
+  @param[in] ImageHdr     Pointer to the fw mgmt capsule image header
+
+  @retval  EFI_SUCCESS    The operation completed successfully.
+  @retval  others         There is error happening.
+**/
+EFI_STATUS
+VerifyFwStruct (
+  IN  EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
   );
 
 /**
