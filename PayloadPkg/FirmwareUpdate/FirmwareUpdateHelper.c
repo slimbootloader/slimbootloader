@@ -554,7 +554,7 @@ UpdateSystemFirmware (
   FIRMWARE_UPDATE_PARTITION   *UpdatePartition;
 
   //
-  // 1. Check firmware version.
+  // Check firmware version.
   //
   Status = VerifyFwVersion (ImageHdr, FwPolicy);
   if (EFI_ERROR (Status)) {
@@ -563,7 +563,7 @@ UpdateSystemFirmware (
   }
 
   //
-  // 2. Get firmware update required information.
+  // Get firmware update required information.
   //
   Status = GetFirmwareUpdateInfo (ImageHdr, FwPolicy, &UpdatePartition);
   if (EFI_ERROR(Status)) {
@@ -572,7 +572,16 @@ UpdateSystemFirmware (
   }
 
   //
-  // 3. Do boot partition update.
+  // Check firmware structure.
+  //
+  Status = VerifyFwStruct (ImageHdr);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, " VerifyFwStruct failed with Status = 0x%x\n", Status));
+    return Status;
+  }
+
+  //
+  // Do boot partition update.
   //
   Status = UpdateBootPartition (UpdatePartition);
   if (EFI_ERROR (Status)) {
@@ -1150,4 +1159,59 @@ Reboot (
   MicroSecondDelay (3000000);
   ResetSystem (ResetType);
   CpuDeadLoop ();
+}
+
+/**
+  Verify the firmware internal structure.
+
+  @param[in] ImageHdr     Pointer to the fw mgmt capsule image header
+
+  @retval  EFI_SUCCESS    The operation completed successfully.
+  @retval  others         There is error happening.
+**/
+EFI_STATUS
+VerifyFwStruct (
+  IN  EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
+  )
+{
+  UINTN                 ImageBase;
+  UINTN                 ImageOffset;
+  CPU_MICROCODE_HEADER  *UCodeHdr;
+  UINT8                 *ImageByte;
+
+  if ((UINT32)ImageHdr->UpdateHardwareInstance == FLASH_MAP_SIG_UCODE) {
+
+    // Update is only supported for platforms that slot their uCode
+    if (PcdGet32 (PcdUcodeSlotSize) == 0) {
+      DEBUG((DEBUG_ERROR, "Existing image does not contain uCode slots!!\n"));
+      return EFI_UNSUPPORTED;
+    }
+
+    ImageBase = (UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER);
+    ImageOffset = 0;
+
+    // Ensure patches in update image start at slot boundaries
+    ImageByte = (UINT8*)(ImageBase + ImageOffset);
+    while (*ImageByte != PAD_BYTE && ImageOffset < ImageHdr->UpdateImageSize) {
+      UCodeHdr = (CPU_MICROCODE_HEADER *)ImageByte;
+      if (UCodeHdr->HeaderVersion != 1) {
+        DEBUG((DEBUG_ERROR, "Existing image slots do not line up with new image slots!!\n"));
+        return EFI_NO_MAPPING;
+      }
+      ImageOffset += PcdGet32(PcdUcodeSlotSize);
+      ImageByte = (UINT8*)(ImageBase + ImageOffset);
+    }
+
+    // Check remaining bytes are unused
+    while (ImageOffset < ImageHdr->UpdateImageSize) {
+      if (*ImageByte != PAD_BYTE) {
+        DEBUG((DEBUG_ERROR, "Existing image slots do not line up with new image slots!!\n"));
+        return EFI_NO_MAPPING;
+      }
+      ++ImageOffset;
+      ImageByte = (UINT8*)(ImageBase + ImageOffset);
+    }
+  }
+
+  return EFI_SUCCESS;
 }

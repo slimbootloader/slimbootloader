@@ -87,8 +87,9 @@
   gPlatformModuleTokenSpaceGuid.PcdMrcDataSize            | 0x00000000 | UINT32 | 0x2000008B
   gPlatformModuleTokenSpaceGuid.PcdUcodeBase              | 0x00000000 | UINT32 | 0x2000008C
   gPlatformModuleTokenSpaceGuid.PcdUcodeSize              | 0x00000000 | UINT32 | 0x2000008D
-  gPlatformModuleTokenSpaceGuid.PcdVariableRegionBase     | 0x00000000 | UINT32 | 0x2000008E
-  gPlatformModuleTokenSpaceGuid.PcdVariableRegionSize     | 0x00000000 | UINT32 | 0x2000008F
+  gPlatformModuleTokenSpaceGuid.PcdUcodeSlotSize          | 0x00000000 | UINT32 | 0x2000008E
+  gPlatformModuleTokenSpaceGuid.PcdVariableRegionBase     | 0x00000000 | UINT32 | 0x2000008F
+  gPlatformModuleTokenSpaceGuid.PcdVariableRegionSize     | 0x00000000 | UINT32 | 0x20000090
 
   gPlatformModuleTokenSpaceGuid.PcdMemoryMapEntryNumber   | 0x00000000 | UINT32 | 0x200000A2
   gPlatformModuleTokenSpaceGuid.PcdOsBootOptionNumber     | 0x00000008 | UINT32 | 0x200000A3
