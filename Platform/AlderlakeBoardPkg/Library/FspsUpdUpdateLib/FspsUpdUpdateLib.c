@@ -468,7 +468,7 @@ TccModePostMemConfig (
 
     if (IsPchS ()) {
       FspsUpd->FspsConfig.TccMode = 1;
-#ifdef PLATFORM_ADLS
+#if FixedPcdGet8(PcdAdlNSupport) == 0
       FspsUpd->FspsConfig.L2QosEnumerationEn = 1;
 #endif
     }
