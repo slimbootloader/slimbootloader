@@ -116,7 +116,7 @@ class Board(BaseBoard):
         if self.ENABLE_SOURCE_DEBUG:
             self.STAGE1B_SIZE += 0x2000
         self.STAGE2_SIZE          = 0x00032000
-        self.PAYLOAD_SIZE         = 0x00020000
+        self.PAYLOAD_SIZE         = 0x00021000
 
         if len(self._PAYLOAD_NAME.split(';')) > 1:
             # EPAYLOAD is specified

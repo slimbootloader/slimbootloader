@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -134,20 +134,28 @@ UpdateOsMemMap (
   MULTIBOOT_IMAGE            *MultiBoot;
   OS_CONFIG_DATA_HOB         *OsConfigData;
   UINT32                     TempMemorySize;
+  BOOLEAN                    CrashModeDisabled;
 
   OsConfigData = (OS_CONFIG_DATA_HOB *) GetGuidHobData (NULL, NULL, &gOsConfigDataGuid);
-  if ((OsConfigData == NULL) || (OsConfigData->EnableCrashMode == 0)) {
+  CrashModeDisabled = (OsConfigData == NULL || OsConfigData->EnableCrashMode == 0);
+
+  GetPayloadReservedRamRegion (&RsvdMemBase, &RsvdMemSize);
+  TempMemorySize  = ALIGN_UP (PcdGet32 (PcdPayloadStackSize), EFI_PAGE_SIZE);
+  TempMemorySize += ALIGN_UP (PcdGet32 (PcdPayloadHeapSize),  EFI_PAGE_SIZE);
+
+  if ((LoadedImage->Flags & LOADED_IMAGE_MULTIBOOT2) != 0) {
+    UpdateMultiboot2MemInfo (&LoadedImage->Image.MultiBoot, RsvdMemBase, RsvdMemSize, CrashModeDisabled ? 0 : TempMemorySize);
+    return;
+  }
+  if (CrashModeDisabled) {
     UpdateOsMemSize (LoadedImage);
     return;
   }
 
   //
-  // Crash mode is enabled, make sure the memory used by payload is set to
+  // If crash mode is enabled, make sure the memory used by payload is set to
   // reserved memory to avoid overriding OS memory in next boot.
   //
-  GetPayloadReservedRamRegion (&RsvdMemBase, &RsvdMemSize);
-  TempMemorySize  = ALIGN_UP (PcdGet32 (PcdPayloadStackSize), EFI_PAGE_SIZE);
-  TempMemorySize += ALIGN_UP (PcdGet32 (PcdPayloadHeapSize),  EFI_PAGE_SIZE);
 
   //
   // Linux E820 Mmap is very similar with multiboot MMAP
@@ -199,6 +207,9 @@ DisplayInfo (
 DEBUG_CODE_BEGIN ();
   if ((LoadedImage->Flags & LOADED_IMAGE_MULTIBOOT) != 0) {
     DumpMbInfo (&LoadedImage->Image.MultiBoot.MbInfo);
+    DumpMbBootState (&LoadedImage->Image.MultiBoot.BootState);
+  } else if ((LoadedImage->Flags & LOADED_IMAGE_MULTIBOOT2) != 0) {
+    DumpMb2Info (LoadedImage->Image.MultiBoot.Mb2Info.StartTag);
     DumpMbBootState (&LoadedImage->Image.MultiBoot.BootState);
   } else if ((LoadedImage->Flags & LOADED_IMAGE_LINUX) != 0) {
     DumpLinuxBootParams (GetLinuxBootParams ());

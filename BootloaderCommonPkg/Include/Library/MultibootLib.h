@@ -234,11 +234,18 @@ typedef struct {
   BOOTPARAMS_IMAGE_DATA   BootParamsData;
 } TRUSTY_IMAGE_DATA;
 
+typedef struct multiboot2_start_tag MULTIBOOT2_START_TAG;  /* opaque type */
+
+typedef struct {
+  MULTIBOOT2_START_TAG   *StartTag;
+} MULTIBOOT2_INFO;
+
 #define MAX_MULTIBOOT_MODULE_NUMBER  16
 typedef struct {
   IMAGE_DATA              BootFile;
   IMAGE_DATA              CmdFile;
   MULTIBOOT_INFO          MbInfo;
+  MULTIBOOT2_INFO         Mb2Info;
   IA32_BOOT_STATE         BootState;
   UINT16                  CmdBufferSize;
   UINT16                  MbModuleNumber;
@@ -294,6 +301,63 @@ VOID
 EFIAPI
 JumpToMultibootOs (
   IN IA32_BOOT_STATE *State  // esp + 4
+  );
+
+/* ======================================================================== */
+/**
+  Check if it is Multiboot-2 image
+
+  @param[in]  ImageAddr    Memory address of an image
+
+  @retval TRUE             Image is Multiboot 2.0 compliant image
+  @retval FALSE            Not multiboot image
+**/
+BOOLEAN
+EFIAPI
+IsMultiboot2 (
+  IN  VOID                   *ImageAddr
+  );
+
+/**
+  Setup Multiboot-2 image and its boot info.
+
+  @param[in,out] MultiBoot   Point to loaded Multiboot-2 image structure
+
+  @retval  RETURN_SUCCESS    Setup Multiboot-2 image successfully
+  @retval  Others            There is error when setup image
+**/
+EFI_STATUS
+EFIAPI
+SetupMultiboot2Image (
+  IN OUT MULTIBOOT_IMAGE     *MultiBoot
+  );
+
+/**
+  Setup the Multiboot-2 info for boot usage.
+
+  @param[in,out]   MultiBoot  Point to loaded Multiboot-2 image structure
+**/
+VOID
+EFIAPI
+SetupMultiboot2Info (
+  IN OUT MULTIBOOT_IMAGE     *MultiBoot
+  );
+
+/**
+  Update the memory info inside the Multiboot-2 info.
+
+  @param[in,out]   MultiBoot     Point to loaded Multiboot-2 image structure
+  @param[in]       RsvdMemBase   Reserved memory base address
+  @param[in]       RsvdMemSize   Reserved memory size
+  @param[in]       RsvdMemExtra  Extra space to add to the reserved memory region.
+**/
+VOID
+EFIAPI
+UpdateMultiboot2MemInfo (
+  IN OUT MULTIBOOT_IMAGE     *MultiBoot,
+  IN UINT64                   RsvdMemBase,
+  IN UINT64                   RsvdMemSize,
+  IN UINT32                   RsvdMemExtra
   );
 
 #endif
