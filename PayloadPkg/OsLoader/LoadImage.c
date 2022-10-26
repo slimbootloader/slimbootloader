@@ -674,6 +674,7 @@ UnloadLoadedImage (
   MULTIBOOT_MODULE_DATA      *MbModuleData;
   TRUSTY_IMAGE_DATA          *TrustyImageData;
   MULTIBOOT_INFO             *MbInfo;
+  MULTIBOOT2_INFO            *Mb2Info;
   UINT32                      Index;
   UINT32                      Count;
 
@@ -733,6 +734,20 @@ UnloadLoadedImage (
     if ((MbInfo->MmapAddr != NULL) && (MbInfo->Flags & MULTIBOOT_INFO_HAS_MMAP)) {
       FreePool (MbInfo->MmapAddr);
       MbInfo->MmapAddr = NULL;
+    }
+  }
+
+  //
+  // Free MultiBoot-2 Image Data
+  //
+  if (LoadedImage->Flags & LOADED_IMAGE_MULTIBOOT2) {
+    MultiBootImage = &LoadedImage->Image.MultiBoot;
+
+    // Free info tags which are allocated in SetupMultiboot2Info ()
+    Mb2Info = &MultiBootImage->Mb2Info;
+    if (Mb2Info->StartTag != NULL) {
+      FreePool (Mb2Info->StartTag);
+      Mb2Info->StartTag = NULL;
     }
   }
 

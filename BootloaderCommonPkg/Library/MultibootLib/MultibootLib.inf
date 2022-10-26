@@ -25,6 +25,7 @@
 
 [Sources]
   Multiboot.c
+  Multiboot2.c
 
 [Sources.IA32]
   Ia32/MultibootJump.nasm

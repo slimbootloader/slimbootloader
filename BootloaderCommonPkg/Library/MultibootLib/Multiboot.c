@@ -1,7 +1,7 @@
 /** @file
   This file Multiboot specification (implementation).
 
-  Copyright (c) 2014 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2014 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -16,9 +16,12 @@
 #include <Library/BootloaderCommonLib.h>
 #include <Guid/MemoryMapInfoGuid.h>
 #include <Guid/GraphicsInfoHob.h>
+#include "MultibootLibInternal.h"
 
 #define SUPPORTED_FEATURES  (MULTIBOOT_HEADER_MODS_ALIGNED | MULTIBOOT_HEADER_WANT_MEMORY | MULTIBOOT_HEADER_HAS_VBE)
 UINT8 mLoaderName[]        = "Slim BootLoader\0";
+
+VOID DumpMbHeader (CONST MULTIBOOT_HEADER *Mh);
 
 
 /**
@@ -81,6 +84,7 @@ IsMultiboot (
 
   MbHeader = GetMultibootHeader (ImageAddr);
   if (MbHeader != NULL) {
+    DumpMbHeader (MbHeader);
     return TRUE;
   }
   return FALSE;
@@ -238,7 +242,7 @@ SetupMultibootInfo (
 **/
 EFI_STATUS
 EFIAPI
-AlignMulitibootModules (
+AlignMultibootModules (
   IN OUT MULTIBOOT_IMAGE     *MultiBoot
   )
 {
@@ -310,7 +314,7 @@ SetupMultibootImage (
 
   if ((MbHeader->Flags & MULTIBOOT_HEADER_MODS_ALIGNED) != 0) {
     // Other modules should be page (4KB) aligned
-    Status = AlignMulitibootModules (MultiBoot);
+    Status = AlignMultibootModules (MultiBoot);
     if (EFI_ERROR (Status)) {
       return Status;
     }
@@ -340,6 +344,34 @@ SetupMultibootImage (
   return EFI_SUCCESS;
 }
 
+
+/**
+  Print out the Multiboot header.
+
+  @param[in]  Mh  The Multiboot header to be printed.
+**/
+VOID
+DumpMbHeader (CONST MULTIBOOT_HEADER *Mh)
+{
+  DEBUG ((DEBUG_INFO, "\nDump MB header @%p:\n", Mh));
+
+  DEBUG ((DEBUG_INFO, "- Magic:             %8x\n", Mh->Magic));
+  DEBUG ((DEBUG_INFO, "- Flags:             %8x\n", Mh->Flags));
+  DEBUG ((DEBUG_INFO, "- Checksum:          %8x\n", Mh->Checksum));
+
+  /* Valid if mh_flags sets MULTIBOOT_HEADER_HAS_ADDR. */
+  DEBUG ((DEBUG_INFO, "- HeaderAddr:        %8x\n", Mh->HeaderAddr));
+  DEBUG ((DEBUG_INFO, "- LoadAddr:          %8x\n", Mh->LoadAddr));
+  DEBUG ((DEBUG_INFO, "- LoadEndAddr:       %8x\n", Mh->LoadEndAddr));
+  DEBUG ((DEBUG_INFO, "- BssEndAddr:        %8x\n", Mh->BssEndAddr));
+  DEBUG ((DEBUG_INFO, "- EntryAddr:         %8x\n", Mh->EntryAddr));
+
+  /* Valid if mh_flags sets MULTIBOOT_HEADER_HAS_VBE. */
+  DEBUG ((DEBUG_INFO, "- ModeType:          %8x\n", Mh->ModeType));
+  DEBUG ((DEBUG_INFO, "- Width:             %8x\n", Mh->Width));
+  DEBUG ((DEBUG_INFO, "- Height:            %8x\n", Mh->Height));
+  DEBUG ((DEBUG_INFO, "- Depth:             %8x\n", Mh->Depth));
+}
 
 /**
   Print out the Multiboot information block.

@@ -76,6 +76,9 @@ UpdateLoadedImage (
     if (IsMultiboot (File[0].Addr)) {
       LoadedImage->Flags |= LOADED_IMAGE_MULTIBOOT;
       TypeStr = "Multiboot";
+    } else if (IsMultiboot2 (File[0].Addr)) {
+      LoadedImage->Flags |= LOADED_IMAGE_MULTIBOOT2;
+      TypeStr = "Multiboot-2";
     } else if (IsTePe32Image (File[0].Addr, NULL) && \
                (* (UINT32 *)File[0].Addr == EFI_IMAGE_DOS_SIGNATURE)) {
       // Add extra check to ensure it is a PE32 image generated from payload build.
@@ -418,7 +421,7 @@ SetupBootImage (
   BootFile = &LoadedImage->Image.Common.BootFile;
 
   MultiBoot = &LoadedImage->Image.MultiBoot;
-    if (IsElfFormat ((CONST UINT8 *)BootFile->Addr)) {
+  if (IsElfFormat ((CONST UINT8 *)BootFile->Addr)) {
     DEBUG ((DEBUG_INFO, "Boot image is ELF format...\n"));
     EntryPoint = 0;
     ZeroMem (&PayloadInfo, sizeof(PayloadInfo));
@@ -428,12 +431,18 @@ SetupBootImage (
       if (IsMultiboot (BootFile->Addr)) {
         DEBUG ((DEBUG_INFO, "and Image is Multiboot format\n"));
         SetupMultibootInfo (MultiBoot);
+      } else if (IsMultiboot2 (BootFile->Addr)) {
+        DEBUG ((DEBUG_INFO, "and Image is Multiboot-2 format\n"));
+        SetupMultiboot2Info (MultiBoot);
       }
       MultiBoot->BootState.EntryPoint = (UINT32)(UINTN)EntryPoint;
     }
   } else if (IsMultiboot (BootFile->Addr)) {
     DEBUG ((DEBUG_INFO, "Boot image is Multiboot format...\n"));
     Status = SetupMultibootImage (MultiBoot);
+  } else if (IsMultiboot2 (BootFile->Addr)) {
+    DEBUG ((DEBUG_INFO, "Boot image is Multiboot-2 format...\n"));
+    Status = SetupMultiboot2Image (MultiBoot);
   } else if ((LoadedImage->Flags & LOADED_IMAGE_PE) != 0) {
     DEBUG ((DEBUG_INFO, "Boot image is PE32 format\n"));
     Status = PeCoffRelocateImage ((UINT32)(UINTN)BootFile->Addr);
@@ -682,6 +691,18 @@ StartBooting (
     }
 
     BeforeOSJump ("Starting MB Kernel ...");
+    JumpToMultibootOs((IA32_BOOT_STATE*)&MultiBoot->BootState);
+    Status = EFI_DEVICE_ERROR;
+
+  } else if ((LoadedImage->Flags & LOADED_IMAGE_MULTIBOOT2) != 0) {
+    DEBUG ((DEBUG_INIT, "Jumping Multiboot-2 image entry point...\n"));
+    MultiBoot = &LoadedImage->Image.MultiBoot;
+    if (MultiBoot->BootState.EntryPoint == 0) {
+      DEBUG ((DEBUG_ERROR, "EntryPoint is not found\n"));
+      return RETURN_INVALID_PARAMETER;
+    }
+
+    BeforeOSJump ("Starting MB-2 Kernel ...");
     JumpToMultibootOs((IA32_BOOT_STATE*)&MultiBoot->BootState);
     Status = EFI_DEVICE_ERROR;
 
