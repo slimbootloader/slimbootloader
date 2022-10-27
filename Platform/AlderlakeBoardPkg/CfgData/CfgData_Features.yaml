@@ -41,12 +41,12 @@
         help         : >
                        Enable/Disable S0ix feature. 1:S0ix Enabled, 0:S0ix Disabled
         length       : 1b
-    - Sio            :
-        name         : Sio (Super IO) Enable
+    - DTT            :
+        name         : Intel(R) Dynamic Tuning Technology Enable
         type         : Combo
         option       : $EN_DIS
         help         : >
-                       Enable/Disable Sio feature. 1:Sio Enabled, 0:Sio Disabled
+                       Enable/Disable DTT feature. 1:DTT Enabled, 0:DTT Disabled
         length       : 1b
     - MeFipsMode     :
         name         : ME FIPS Mode Enable

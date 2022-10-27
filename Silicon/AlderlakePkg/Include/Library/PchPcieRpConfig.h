@@ -203,8 +203,6 @@ enum PCH_PCIE_MAX_PAYLOAD {
   PchPcieMaxPayloadMax
 };
 
-#define PCH_PCIE_NO_SUCH_CLOCK  0xFF
-#define PCH_PCIE_NO_GPIO_MUXING 0x00
 
 typedef enum {
   PchClockUsagePchPcie0      = 0,

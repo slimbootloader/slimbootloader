@@ -295,6 +295,8 @@ BoardInit (
   BL_SW_SMI_INFO            *BlSwSmiInfo;
   FEATURES_DATA             *FeatureCfgData;
 
+  SiCfgData = NULL;
+  
   switch (InitPhase) {
   case PreSiliconInit:
     EnableLegacyRegions ();
@@ -386,17 +388,19 @@ BoardInit (
     if (FeaturePcdGet (PcdSmbiosEnabled)) {
       InitializeSmbiosInfo ();
     }
+
     if (FeatureCfgData != NULL){
-      if (FeatureCfgData->Sio == 1){
+      if ((SiCfgData != NULL) && (SiCfgData->EcAvailable == 0)){
+        //Init SIO if EC is not available
         SioInit();
       }
-      ZeroMem (&GetFipsModeData,sizeof(GetFipsModeData));
-      HeciGetFipsMode(&GetFipsModeData);
-      DEBUG ((DEBUG_INFO, "HeciGetFipsMode = 0x%x\n", GetFipsModeData.FipsMode));
-      if (GetFipsModeData.FipsMode != FeatureCfgData->MeFipsMode){
-        DEBUG ((DEBUG_INFO, "Set HeciSetFipsMode to 0x%x\n", FeatureCfgData->MeFipsMode));
-        HeciSetFipsMode(FeatureCfgData->MeFipsMode);
-      }
+    }
+    ZeroMem (&GetFipsModeData,sizeof(GetFipsModeData));
+    HeciGetFipsMode(&GetFipsModeData);
+    DEBUG ((DEBUG_INFO, "HeciGetFipsMode = 0x%x\n", GetFipsModeData.FipsMode));
+    if (GetFipsModeData.FipsMode != FeatureCfgData->MeFipsMode){
+      DEBUG ((DEBUG_INFO, "Set HeciSetFipsMode to 0x%x\n", FeatureCfgData->MeFipsMode));
+      HeciSetFipsMode(FeatureCfgData->MeFipsMode);
     }
 
     break;

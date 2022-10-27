@@ -26,7 +26,6 @@
 #define LTR_VALUE_MASK (BIT0 + BIT1 + BIT2 + BIT3 + BIT4 + BIT5 + BIT6 + BIT7 + BIT8 + BIT9)
 #define LTR_SCALE_MASK (BIT10 + BIT11 + BIT12)
 
-  #define CONFIG_WRITE_LOOP_COUNT   100000
 
 //
 // LTR related macros
