@@ -614,8 +614,6 @@ UpdateFspConfig (
         Fspmcfg->Ddr4OneDpc = MemCfgData->Ddr4OneDpc;
         Fspmcfg->FirstDimmBitMask = 0x0;
         Fspmcfg->FirstDimmBitMaskEcc = MemCfgData->FirstDimmBitMaskEcc;
-        Fspmcfg->PchIshEnable = 0x0;
-        Fspmcfg->PanelPowerEnable = 0x0;
         break;
       case PLATFORM_ID_ADL_N_DDR5_CRB:
         Fspmcfg->CpuPcieRpEnableMask = 0x0;

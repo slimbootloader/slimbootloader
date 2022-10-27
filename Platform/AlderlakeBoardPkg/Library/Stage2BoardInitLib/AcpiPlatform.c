@@ -281,12 +281,15 @@ PlatformUpdateAcpiTable (
   Ptr  = (UINT8 *)Table;
   End  = (UINT8 *)Table + Table->Length;
 
+  FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag (CDATA_FEATURES_TAG);
+
   if (Table->Signature == EFI_ACPI_5_0_EMBEDDED_CONTROLLER_BOOT_RESOURCES_TABLE_SIGNATURE) {
     SiCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
     if ((SiCfgData == NULL) || (SiCfgData->EcAvailable == 0)) {
       return EFI_UNSUPPORTED;
     }
   }
+
   if (Table->Signature == EFI_ACPI_5_0_DIFFERENTIATED_SYSTEM_DESCRIPTION_TABLE_SIGNATURE) {
     for (; Ptr < End; Ptr++) {
       if (*(Ptr-1) != AML_NAME_OP)
@@ -353,6 +356,15 @@ PlatformUpdateAcpiTable (
       }
     }
     return EFI_UNSUPPORTED;
+  } else if (Table->OemTableId == SIGNATURE_64 ('D', 'p', 't', 'f', 'T', 'a', 'b', 'l')) { //DptfTabl
+    DEBUG ((DEBUG_INFO, "Find DptfTabl table\n"));
+
+    if (FeaturesCfgData != NULL && FeaturesCfgData->Features.DTT == 1){
+      //return success if DTT feature is set and dptf table is found
+      DEBUG ((DEBUG_INFO, "Found DptfTabl table succcessfully\n"));
+      return EFI_SUCCESS;
+    }
+    return EFI_UNSUPPORTED;
   } else if (Table->Signature == EFI_BDAT_TABLE_SIGNATURE) {
     FspHobList = GetFspHobListPtr ();
     if (FspHobList != NULL) {
@@ -409,7 +421,6 @@ PlatformUpdateAcpiTable (
   } else if (Table->Signature == EFI_ACPI_6_3_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE) {
     DEBUG ((DEBUG_INFO, "Updated FADT Table entries in AcpiTable\n"));
     FadtPointer = (EFI_ACPI_6_3_FIXED_ACPI_DESCRIPTION_TABLE *) Table;
-    FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag (CDATA_FEATURES_TAG);
     if (FeaturesCfgData != NULL) {
       if (FeaturesCfgData->Features.S0ix == 1) {
         DEBUG ((DEBUG_INFO, "Enable S0ix / Low Power S0 Idle Capable ACPI flag.\n"));
@@ -726,6 +737,7 @@ PlatformUpdateAcpiGnvs (
   PchNvs      = (PCH_NVS_AREA *) &GlobalNvs->PchNvs;
   CpuNvs      = (CPU_NVS_AREA *) &GlobalNvs->CpuNvs;
   SaNvs       = (SYSTEM_AGENT_NVS_AREA *) &GlobalNvs->SaNvs;
+  FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag (CDATA_FEATURES_TAG);
 
   FspsUpd     = (FSPS_UPD *)(UINTN)PcdGet32 (PcdFspsUpdPtr);
   FspsConfig  = &FspsUpd->FspsConfig;
@@ -914,11 +926,32 @@ PlatformUpdateAcpiGnvs (
   PlatformNvs->PowerState                   = 1;
   if ((SiCfgData != NULL) && (SiCfgData->EcAvailable)) {
     PlatformNvs->EcAvailable            = SiCfgData->EcAvailable;
+    DEBUG ((DEBUG_INFO, "SiCfgData->EcAvailable  = 0x%X\n",SiCfgData->EcAvailable));
     if (PlatformNvs->EcAvailable == 1) {
       PlatformNvs->EcLowPowerMode         = 0;
       PlatformNvs->EcSmiGpioPin           = GPIO_VER4_S_GPP_B4;
       PlatformNvs->EcLowPowerModeGpioPin  = 0;
     }
+  }    
+  if ((SiCfgData != NULL) && (SiCfgData->EcAvailable == 0)){
+      PlatformNvs->PcdIT8659SIO = 1;
+      PlatformNvs->PcdIT8659HWMON = 1;
+      PlatformNvs->PcdIT8659COM = 1;
+  }
+    //
+    // Intel(R) Dynamic Tuning Technology Devices and trip points
+    //
+  if (FeaturesCfgData != NULL && FeaturesCfgData->Features.DTT == 1){
+    DEBUG ((DEBUG_INFO, "Updating Fans and sensors devices in PlatformNvs\n"));
+    PlatformNvs->EnableDptf       = 1;
+    PlatformNvs->EnableFan1Device = 1;
+    PlatformNvs->EnableFan2Device = 1;
+    PlatformNvs->EnableFan3Device = 1;
+    PlatformNvs->EnableSen1Participant = 1;
+    PlatformNvs->EnableSen2Participant = 1;
+    PlatformNvs->EnableSen3Participant = 1;
+    PlatformNvs->EnableSaDevice        = 1;
+    PlatformNvs->EnableInt3400Device   = 1;
   }
 
   SysCpuInfo = MpGetInfo ();
@@ -937,7 +970,6 @@ PlatformUpdateAcpiGnvs (
   PlatformNvs->PlatformFlavor = FlavorDesktop;
   PlatformNvs->BoardRev = 1;
   PlatformNvs->BoardType = 0;
-  FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag (CDATA_FEATURES_TAG);
   if (FeaturesCfgData != NULL) {
     if (FeaturesCfgData->Features.S0ix == 1) {
       PlatformNvs->LowPowerS0Idle                   = 1;
@@ -959,11 +991,6 @@ PlatformUpdateAcpiGnvs (
   PlatformNvs->PassiveTc2Value              = 5;
   PlatformNvs->PassiveTspValue              = 10;
   PlatformNvs->CriticalThermalTripPoint     = 119;
-
-  //
-  // Intel(R) Dynamic Tuning Technology Devices and trip points
-  //
-  PlatformNvs->EnableDptf                   = 0;
 
   //
   // Wireless
@@ -1053,12 +1080,6 @@ PlatformUpdateAcpiGnvs (
     PlatformNvs->PegSlot2PwrEnableGpioPolarity = 0;
 
     PlatformNvs->PchM2SsdPowerEnableGpio = GPIO_VER4_S_GPP_K11;
-    break;
-  case PLATFORM_ID_ADL_PS_DDR5_CRB:
-    PlatformNvs->M2Ssd2PowerEnableGpio = GPIO_VER2_LP_GPP_D14;
-    PlatformNvs->M2Ssd2RstGpio = GPIO_VER2_LP_GPP_F7;
-    PlatformNvs->PchM2SsdPowerEnableGpio = GPIO_VER2_LP_GPP_D16;
-    PlatformNvs->PchM2SsdRstGpio = GPIO_VER2_LP_GPP_H1;
     break;
   case PLATFORM_ID_TEST_S_DDR5_UDIMM_RVP:
     PlatformNvs->PcieSlot1PowerEnableGpio = GPIO_VER4_S_GPP_E1;

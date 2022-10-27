@@ -126,6 +126,7 @@ Scope(\_SB)
       }
     }
 
+If (LEqual(ECON,1)) {
     //
     // HID Button Load Method - called by Platform to say HID driver is capable of receiving 5-button array notifies.
     // Input: None
@@ -436,5 +437,6 @@ Scope(\_SB)
       Return (Buffer() {0x00})
 
     }  // End _DSM Method
+  }
   }
 }//end scope _SB

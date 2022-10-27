@@ -1218,11 +1218,7 @@ UpdateFspConfig (
         FspsConfig->VccInAuxImonSlope = 0x64;
         break;
       case PLATFORM_ID_ADL_PS_DDR5_CRB:
-        FspsConfig->AmtEnabled = 0x0;
-        FspsConfig->Usb4CmMode = 0x0;
-        FspsConfig->Device4Enable = 0x0;
-        FspsConfig->CnviBtAudioOffload = 0x1;
-        FspsConfig->VccInAuxImonSlope = 0x64;
+        FspsConfig->AmtEnabled = 0x1;
         break;
       default:
         break;
