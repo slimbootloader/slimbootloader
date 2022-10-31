@@ -24,7 +24,7 @@ from   BtGUtility  import *
 from   StitchLoader import *
 
 sys.dont_write_bytecode = True
-sblopen_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), '../../../../', 'SblOpen')
+sblopen_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), '../../../')
 if not os.path.exists (sblopen_dir):
     sblopen_dir = os.getenv('SBL_SOURCE', '')
 sys.path.append (os.path.join(sblopen_dir, "BootloaderCorePkg" , "Tools"))
