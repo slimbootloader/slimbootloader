@@ -42,7 +42,6 @@
 #include <Guid/PcdDataBaseSignatureGuid.h>
 #include <Guid/LoaderPlatformDataGuid.h>
 #include <Library/TopSwapLib.h>
-#include <Library/FirmwareResiliencyLib.h>
 #include <FirmwareUpdateStatus.h>
 #include <VerInfo.h>
 

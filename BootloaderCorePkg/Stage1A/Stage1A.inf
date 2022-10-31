@@ -57,6 +57,7 @@
   StageLib
   TcoTimerLib
   TopSwapLib
+  FirmwareResiliencyLib
 
 [Guids]
   gPlatformModuleTokenSpaceGuid
@@ -92,6 +93,7 @@
   gPlatformModuleTokenSpaceGuid.PcdSblResiliencyEnabled
   gPlatformModuleTokenSpaceGuid.PcdIdenticalTopSwapsBuilt
   gPlatformModuleTokenSpaceGuid.PcdTcoTimeout
+  gPlatformModuleTokenSpaceGuid.PcdBootFailureThreshold
 
 [Depex]
   TRUE

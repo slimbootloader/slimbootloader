@@ -381,6 +381,7 @@
     <LibraryClasses>
       FspApiLib    | BootloaderCorePkg/Library/FspApiLib/FsptApiLib.inf
       BaseMemoryLib| MdePkg/Library/BaseMemoryLibRepStr/BaseMemoryLibRepStr.inf
+      FirmwareResiliencyLib | BootloaderCorePkg/Library/FirmwareResiliencyLib/FirmwareResiliencyLib.inf
       SocInitLib   | $(SOC_INIT_STAGE1A_LIB_INF_FILE)
       BoardInitLib | $(BRD_INIT_STAGE1A_LIB_INF_FILE)
 !if $(SKIP_STAGE1A_SOURCE_DEBUG)
@@ -392,7 +393,6 @@
     <LibraryClasses>
       FspApiLib             | BootloaderCorePkg/Library/FspApiLib/FspmApiLib.inf
       BaseMemoryLib         | MdePkg/Library/BaseMemoryLibRepStr/BaseMemoryLibRepStr.inf
-      FirmwareResiliencyLib | BootloaderCorePkg/Library/FirmwareResiliencyLib/FirmwareResiliencyLib.inf
       SocInitLib            | $(SOC_INIT_STAGE1B_LIB_INF_FILE)
       BoardInitLib          | $(BRD_INIT_STAGE1B_LIB_INF_FILE)
   }

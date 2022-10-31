@@ -384,12 +384,6 @@ SecStartup2 (
   // Perform pre-config board init
   BoardInit (PreConfigInit);
 
-  // Check if recovery is needed, if not in recovery path already
-  if (PcdGetBool (PcdSblResiliencyEnabled)) {
-    CheckForAcmFailures ();
-    CheckForTcoTimerFailures (PcdGet8 (PcdBootFailureThreshold));
-  }
-
   Status = AppendHashStore (LdrGlobal, &Stage1bParam);
   DEBUG ((DEBUG_INFO,  "Append public key hash into store: %r\n", Status));
 

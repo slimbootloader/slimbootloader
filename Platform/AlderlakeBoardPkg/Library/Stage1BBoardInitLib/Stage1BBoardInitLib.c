@@ -175,87 +175,6 @@ PlatformDeviceTableInitialize (
 }
 
 /**
-  Set TS based on FW update status.
-
-  This function will set the TS register based on the FW update status.
-  The TS register is set here as opposed to in the FW update payload due to a
-  uCode assert issue.
-
-  @param[in] pFwUpdStatus        Update status structure from RSVD region.
-
-  @retval  EFI_SUCCESS           The operation completed successfully.
-  @retval  others                There is error happening.
-**/
-VOID
-FwuTopSwapSetting (
-  IN FW_UPDATE_STATUS    *pFwUpdStatus
-  )
-{
-  EFI_STATUS  Status;
-  UINT32      RsvdBase;
-  UINT32      RsvdSize;
-
-  if (pFwUpdStatus == NULL) {
-    Status = GetComponentInfoByPartition (FLASH_MAP_SIG_BLRESERVED, FALSE, &RsvdBase, &RsvdSize);
-    if (EFI_ERROR (Status)) {
-      DEBUG((DEBUG_ERROR, "Could not get component information for bootloader reserved region\n"));
-    }
-    pFwUpdStatus = (FW_UPDATE_STATUS *)(UINTN)RsvdBase;
-  }
-
-  // If in a recovery path, stay on current partition.
-  if (PcdGetBool (PcdSblResiliencyEnabled) &&
-     (IsRecoveryTriggered () ||
-      pFwUpdStatus->StateMachine == FW_UPDATE_SM_RECOVERY)) {
-    return;
-  }
-
-  if (pFwUpdStatus->StateMachine == FW_UPDATE_SM_PART_A) {
-    if (GetCurrentBootPartition () == PrimaryPartition) {
-      if (IsTopSwapTriggered ()) {
-        ClearTopSwapTrigger ();
-        SetBootPartition (BackupPartition);
-        ResetSystem (EfiResetCold);
-      }
-    } else {
-      if (IsTopSwapTriggered ()) {
-        DEBUG((DEBUG_INFO, "Already on partition that was meant to be swapped back to\n"));
-        ClearTopSwapTrigger ();
-        SetRecoveryTrigger ();
-      }
-    }
-  } else if (pFwUpdStatus->StateMachine == FW_UPDATE_SM_PART_B) {
-    if (GetCurrentBootPartition () == BackupPartition) {
-      if (IsTopSwapTriggered ()) {
-        ClearTopSwapTrigger ();
-        SetBootPartition (PrimaryPartition);
-        ResetSystem (EfiResetCold);
-      }
-    } else {
-      if (IsTopSwapTriggered ()) {
-        DEBUG((DEBUG_INFO, "Already on partition that was meant to be swapped back to\n"));
-        ClearTopSwapTrigger ();
-        SetRecoveryTrigger ();
-      }
-    }
-  } else {
-    if (GetCurrentBootPartition () == BackupPartition) {
-      if (IsTopSwapTriggered ()) {
-        ClearTopSwapTrigger ();
-        SetBootPartition (PrimaryPartition);
-        ResetSystem (EfiResetCold);
-      }
-    } else {
-      if (IsTopSwapTriggered ()) {
-        DEBUG((DEBUG_INFO, "Already on partition that was meant to be swapped back to\n"));
-        ClearTopSwapTrigger ();
-        SetRecoveryTrigger ();
-      }
-    }
-  }
-}
-
-/**
   Determine if this is firmware update mode.
 
   This function will determine if we have to put system in firmware update mode.
@@ -558,7 +477,6 @@ DEBUG_CODE_BEGIN();
 DEBUG_CODE_END();
     PlatformDeviceTableInitialize ();
     SpiControllerInitialize ();
-    FwuTopSwapSetting(NULL);
     break;
   case PostConfigInit:
     PlatformIdInitialize ();

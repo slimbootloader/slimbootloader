@@ -46,7 +46,6 @@
 #include <Library/PchInfoLib.h>
 #include <Library/VariableLib.h>
 #include <Library/GpioLib.h>
-#include <Library/TopSwapLib.h>
 #include "GpioTableAdlSPreMem.h"
 #include "GpioTableAdlPPreMem.h"
 #include "GpioTableAdlNPreMem.h"

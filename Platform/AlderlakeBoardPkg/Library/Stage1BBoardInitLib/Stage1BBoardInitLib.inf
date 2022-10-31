@@ -81,7 +81,6 @@
   gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled
   gPlatformModuleTokenSpaceGuid.PcdSblResiliencyEnabled
-  gPlatformModuleTokenSpaceGuid.PcdBootFailureThreshold
 
 [FixedPcd]
   gPlatformAlderLakeTokenSpaceGuid.PcdAdlLpSupport

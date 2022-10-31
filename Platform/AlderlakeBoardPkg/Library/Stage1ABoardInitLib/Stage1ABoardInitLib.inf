@@ -45,6 +45,9 @@
   ConfigDataLib
   PchInfoLib
   TcoTimerLib
+  TopSwapLib
+  WatchDogTimerLib
+  ResetSystemLib
 
 [Guids]
 
@@ -59,6 +62,7 @@
   gPlatformModuleTokenSpaceGuid.PcdRedundantRegionSize
   gPlatformModuleTokenSpaceGuid.PcdStage1BSize
   gPlatformCommonLibTokenSpaceGuid.PcdDebugPortNumber
+  gPlatformModuleTokenSpaceGuid.PcdSblResiliencyEnabled
 
 [FixedPcd]
   gPlatformAlderLakeTokenSpaceGuid.PcdAdlLpSupport

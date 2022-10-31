@@ -59,7 +59,6 @@
   TcoTimerLib
   TopSwapLib
   WatchDogTimerLib
-  FirmwareResiliencyLib
 
 [Guids]
   gPlatformModuleTokenSpaceGuid
@@ -104,8 +103,6 @@
   gPlatformModuleTokenSpaceGuid.PcdLoaderAcpiNvsSize
   gPlatformModuleTokenSpaceGuid.PcdLoaderAcpiReclaimSize
   gPlatformModuleTokenSpaceGuid.PcdEnableSetup
-  gPlatformModuleTokenSpaceGuid.PcdSblResiliencyEnabled
-  gPlatformModuleTokenSpaceGuid.PcdBootFailureThreshold
 
 [Depex]
   TRUE

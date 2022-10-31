@@ -32,6 +32,7 @@
 #include <Library/DebugPrintErrorLevelLib.h>
 #include <Library/TcoTimerLib.h>
 #include <Library/TopSwapLib.h>
+#include <Library/FirmwareResiliencyLib.h>
 #include <Register/Intel/ArchitecturalMsr.h>
 #include <Guid/FspHeaderFile.h>
 #include <Guid/FlashMapInfoGuid.h>

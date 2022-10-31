@@ -372,11 +372,6 @@ SecStartup2 (
   BoardInit (PostTempRamInit);
   AddMeasurePoint (0x1040);
 
-  if (PcdGetBool (PcdSblResiliencyEnabled)) {
-    SetTcoTimeout (PcdGet16 (PcdTcoTimeout));
-    StartTcoTimer ();
-  }
-
   // Set DebugPrintErrorLevel to default PCD.
   SetDebugPrintErrorLevel (PcdGet32 (PcdDebugPrintErrorLevel));
 
@@ -384,6 +379,15 @@ SecStartup2 (
     DEBUG ((DEBUG_INFO, "\n============= %a STAGE1A =============\n",mBootloaderName));
   } else {
     DEBUG ((DEBUG_INIT, "\n%a\n", mBootloaderName));
+  }
+
+  if (PcdGetBool (PcdSblResiliencyEnabled)) {
+    // Check for failures in ACM or TCO timer
+    CheckForAcmFailures ();
+    CheckForTcoTimerFailures (PcdGet8 (PcdBootFailureThreshold));
+
+    // Setup the TCO timer for current boot
+    StartTcoTimer (PcdGet16 (PcdTcoTimeout));
   }
 
   if (Stage1aAsmParam->Status.CpuBist != 0) {
