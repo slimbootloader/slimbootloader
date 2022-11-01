@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -14,6 +14,11 @@
 #define  SD_OCR_33      20
 #define  SD_OCR_30      18
 #define  SD_OCR_LOW     7
+
+//
+// SD card voltage check retry times
+//
+#define  SD_VOLTAGE_CHECK_MAX_RETRY    5
 
 /**
   Get a pointer to the SD_MMC_HC_PRIVATE_DATA instance.
