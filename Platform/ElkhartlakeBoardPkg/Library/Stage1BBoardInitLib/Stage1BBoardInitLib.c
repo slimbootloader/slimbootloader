@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -49,6 +49,7 @@ CONST PLT_DEVICE  mPlatformDevices[]= {
   {{0x00001205}, OsBootDeviceUfs   , 0 },
   {{0x00001207}, OsBootDeviceUfs   , 1 },
   {{0x00001A00}, OsBootDeviceEmmc  , 0 },
+  {{0x00001A01}, OsBootDeviceSd    , 0 },
   {{0x00010000}, OsBootDeviceNvme  , 0 },
   {{0x00001F05}, OsBootDeviceSpi   , 0 },
   {{0x00001400}, OsBootDeviceUsb   , 0 },
