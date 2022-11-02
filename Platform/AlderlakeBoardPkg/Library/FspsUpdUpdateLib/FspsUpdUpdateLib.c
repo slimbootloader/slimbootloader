@@ -867,6 +867,10 @@ UpdateFspConfig (
       FspsConfig->PchLanEnable = 0x0;
       ZeroMem (FspsConfig->PchIshI2cEnable, sizeof (FspsConfig->PchIshI2cEnable));
       ZeroMem (FspsConfig->PchIshGpEnable, sizeof (FspsConfig->PchIshGpEnable));
+      // Apply FIVR workaround
+      if(IsPchN()) {
+        FspsConfig->PchFivrVccinAuxOffToHighCurModeVolTranTime = 0;
+      }
       DEBUG ((DEBUG_INFO, "Stage 2 S0ix config applied.\n"));
     }
   }
