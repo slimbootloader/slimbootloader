@@ -423,6 +423,22 @@ PlatformUpdateAcpiTable (
     if (GetCpuSku() == 0) {   // ADL-S
       FadtPointer->PreferredPmProfile = 0x2;  //mobile
     }
+  } else if (CompareMem (&Table->OemId,  "Rtd3", 4) == 0) {
+    // Load RTD3 SSDT table for ADL RVP/CRB SKUs
+    // Note: "OemId" field is used to indentify whether SSDT table is for RTD3 usage
+
+    Status = EFI_UNSUPPORTED;
+    if (GlobalNvs->PlatformNvs.Rtd3Support == 1) {
+
+      // return EFI_SUCCESS only when PlatformID matches
+      if (GetPlatformId () == BoardIdAdlNDdr5Crb && Table->OemTableId == SIGNATURE_64('A', 'd', 'l', 'N' ,'_' ,'C' ,'r' ,'b')) {
+        Status = EFI_SUCCESS;
+      } else if (GetPlatformId () == BoardIdAdlNLp5Rvp && Table->OemTableId == SIGNATURE_64('A', 'd', 'l', 'N' ,'_' ,'R' ,'v' ,'p')) {
+        Status = EFI_SUCCESS;
+      }
+      DEBUG ((DEBUG_INFO, "Board SsdtRtd3 Table: %x\n", Table->OemTableId));
+    }
+    return Status;
   }
 
   if (MEASURED_BOOT_ENABLED()) {
