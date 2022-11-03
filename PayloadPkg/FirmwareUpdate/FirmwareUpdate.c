@@ -927,7 +927,6 @@ IsCritCompUpdateFailed (
 
   @param[in]  FwImage             The pointer to the firmware update capsule image.
   @param[in]  FwSize              The size of capsule image in bytes.
-  @param[out] ContainsRedundant   Whether the capsule contains redundant components.
 
   @retval  EFI_SUCCESS        The operation completed successfully.
   @retval  others             There is error happening.
@@ -935,8 +934,7 @@ IsCritCompUpdateFailed (
 EFI_STATUS
 ProcessCapsule (
   IN  UINT8     *FwImage,
-  IN  UINT32    FwSize,
-  OUT BOOLEAN   *ContainsRedundant
+  IN  UINT32    FwSize
   )
 {
   UINT16                        Count;
@@ -953,7 +951,6 @@ ProcessCapsule (
   SIGNATURE_HDR                 *SignatureHdr;
   UINT32                        SigLen;
 
-  *ContainsRedundant = FALSE;
   FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
 
   //
@@ -1080,13 +1077,6 @@ ProcessCapsule (
     FwUpdCompStatus[Count].LastAttemptVersion = 0xFFFFFFFF;
     FwUpdCompStatus[Count].LastAttemptStatus = 0xFFFFFFFF;
     FwUpdCompStatus[Count].UpdatePending = FW_UPDATE_IMAGE_UPDATE_PENDING;
-
-    //
-    // Keep track if both partitions are needing update
-    //
-    if (IsRedundantComponent (ImgHeader->UpdateHardwareInstance)) {
-      *ContainsRedundant = TRUE;
-    }
   }
 
   //
@@ -1116,6 +1106,70 @@ ProcessCapsule (
   }
 
   return Status;
+}
+
+/**
+  Determine if capsule image contains redundant components.
+
+  @param[in]  CapImage          Pointer to the capsule image
+  @param[in]  CapImageSize      Size of the capsule image in bytes
+  @param[out] ContainsRedundant If the capsule image contains redundant components
+
+  @retval  EFI_SUCCESS          Successfully determined if capsule image contains
+                                redundant components
+  @retval  other                An error occurred
+**/
+EFI_STATUS
+CheckCapsuleForRedundant (
+  IN  UINT8                         *CapImage,
+  IN  UINT32                        CapImageSize,
+  OUT BOOLEAN                       *ContainsRedundant
+  )
+{
+  UINT16                          Count;
+  EFI_FW_MGMT_CAP_HEADER          *CapHeader;
+  FIRMWARE_UPDATE_HEADER          *FwUpdHeader;
+  EFI_FW_MGMT_CAP_IMAGE_HEADER    *CapImageHdr;
+  EFI_STATUS                      Status;
+
+  *ContainsRedundant = FALSE;
+  CapImageHdr = NULL;
+
+  FwUpdHeader = (FIRMWARE_UPDATE_HEADER *)CapImage;
+  if (FwUpdHeader == NULL) {
+    return EFI_NOT_FOUND;
+  }
+
+  //
+  // If capsule header is NULL or no payloads found in the capsule
+  // return EFI_NOT_FOUND
+  //
+  CapHeader = (EFI_FW_MGMT_CAP_HEADER *)((UINTN)FwUpdHeader + FwUpdHeader->ImageOffset);
+  if ((CapHeader == NULL) || (CapHeader->PayloadItemCount == 0)) {
+    return EFI_NOT_FOUND;
+  }
+
+  //
+  // If a payload contains redundant component return EFI_SUCCESS
+  // and set ContainsRedundant
+  //
+  for (Count = 0; Count < CapHeader->PayloadItemCount; Count++) {
+    Status = GetPayloadHeaderByIndex (FwUpdHeader, CapHeader, Count, &CapImageHdr);
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
+
+    if (IsRedundantComponent (CapImageHdr->UpdateHardwareInstance)) {
+      *ContainsRedundant = TRUE;
+      return EFI_SUCCESS;
+    }
+  }
+
+  //
+  // If no payload contains redundant component return EFI_SUCCESS
+  // and leave ContainsRedundant unset
+  //
+  return EFI_SUCCESS;
 }
 
 /**
@@ -1341,7 +1395,7 @@ InitFirmwareUpdate (
   FwPolicy.Data = 0;
 
   //
-  // 1. Get capsule image.
+  // Get capsule image.
   //
   Status = GetCapsuleImage (&CapsuleImage, &CapsuleSize);
   if (EFI_ERROR (Status)) {
@@ -1349,7 +1403,7 @@ InitFirmwareUpdate (
   }
 
   //
-  // 2. Authenticate capsule image.
+  // Authenticate capsule image.
   //
   if (!EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "CapsuleImage: 0x%p, CapsuleSize: 0x%X\n", CapsuleImage, CapsuleSize));
@@ -1360,10 +1414,10 @@ InitFirmwareUpdate (
   }
 
   //
-  // 3. Process capsule image.
+  // Process capsule image.
   //
   if (!EFI_ERROR (Status)) {
-    Status = ProcessCapsule (CapsuleImage, CapsuleSize, &ContainsRedundant);
+    Status = ProcessCapsule (CapsuleImage, CapsuleSize);
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "ProcessCapsule, Status = 0x%x\n", Status));
     }
@@ -1377,6 +1431,16 @@ InitFirmwareUpdate (
                             MAX_FW_COMPONENTS * sizeof(FW_UPDATE_COMP_STATUS), (UINT8 *)&FwUpdCompStatus);
     if (EFI_ERROR (Status)) {
       DEBUG((DEBUG_ERROR, "BootMediaRead. offset: 0x%llx, Status = 0x%x\n", (FwUpdStatusOffset + sizeof(FW_UPDATE_STATUS)), Status));
+    }
+  }
+
+  //
+  // Check capsule for redundant components.
+  //
+  if (!EFI_ERROR (Status)) {
+    Status = CheckCapsuleForRedundant (CapsuleImage, CapsuleSize, &ContainsRedundant);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "CheckCapsuleForRedundant, Status = 0x%x\n", Status));
     }
   }
 
