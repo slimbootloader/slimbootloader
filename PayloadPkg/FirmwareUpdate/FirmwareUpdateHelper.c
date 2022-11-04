@@ -1188,12 +1188,19 @@ VerifyUcodeStruct (
   ImageBase = (UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER);
   ImageOffset = 0;
 
-  // Ensure patches in update image start at slot boundaries
   ImageByte = (UINT8*)(ImageBase + ImageOffset);
   while (*ImageByte != PAD_BYTE && ImageOffset < ImageHdr->UpdateImageSize) {
     UCodeHdr = (CPU_MICROCODE_HEADER *)ImageByte;
+
+    // Ensure patches in update image start at slot boundaries
     if (UCodeHdr->HeaderVersion != 1) {
-      DEBUG((DEBUG_ERROR, "Existing image slots do not line up with new image slots!!\n"));
+      DEBUG((DEBUG_ERROR, "Existing uCode slots do not line up with new uCode slots!!\n"));
+      return EFI_NO_MAPPING;
+    }
+
+    // Ensure total size from header does not exceed slot size
+    if (UCodeHdr->TotalSize > PcdGet32 (PcdUcodeSlotSize)) {
+      DEBUG((DEBUG_ERROR, "Total uCode size from header exceeds uCode slot size!!\n"));
       return EFI_NO_MAPPING;
     }
     ImageOffset += PcdGet32(PcdUcodeSlotSize);
