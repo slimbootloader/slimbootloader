@@ -158,6 +158,10 @@ NormalBootPath (
   // Load payload
   Dst = (UINT32 *)(UINTN)PreparePayload (Stage2Param);
   if (Dst == NULL) {
+    // Unable to recover non-FWU payload, no need to reboot
+    if (PcdGetBool (PcdSblResiliencyEnabled) && GetBootMode () != BOOT_ON_FLASH_UPDATE) {
+      StopTcoTimer ();
+    }
     CpuHalt ("Failed to load payload !");
   }
 
