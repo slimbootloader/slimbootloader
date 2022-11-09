@@ -170,7 +170,7 @@ GetBootDeviceInfo (
   }
 
   do {
-    ShellPrint (L"Enter BootFlags (MISC 0x1, CRASH_OS 0x2, PREOS 0x4, EXTRA 0x8, MENDER 0x10)\n");
+    ShellPrint (L"Enter BootFlags (NORMAL 0x0, MISC 0x1, CRASH_OS 0x2, PREOS 0x4, EXTRA 0x8, MENDER 0x10)\n");
     ShellPrint (L"(default 0x%X) ", CurrOption->BootFlags);
     Status = ShellReadUintn (Shell, Buffer, BufferSize, &IsHex);
     if (EFI_ERROR (Status)) {
