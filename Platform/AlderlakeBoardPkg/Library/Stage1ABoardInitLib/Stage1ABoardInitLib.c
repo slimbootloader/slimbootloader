@@ -125,6 +125,7 @@ EarlyPlatformDataCheck (
   }
 }
 
+
 /**
   Set TS based on FW update status.
 
@@ -152,41 +153,57 @@ FwuTopSwapSetting (
   FwUpdStatus = (FW_UPDATE_STATUS *)(UINTN)RsvdBase;
 
 
-  // If in a recovery path, stay on current partition.
-  if (PcdGetBool (PcdSblResiliencyEnabled) &&
-     (IsRecoveryTriggered () ||
-      FwUpdStatus->StateMachine == FW_UPDATE_SM_RECOVERY)) {
+  // If in a recovery path, stay on current partition
+  if (PcdGetBool (PcdSblResiliencyEnabled) && IsRecoveryTriggered ()) {
     return;
   }
 
-  if (FwUpdStatus->StateMachine == FW_UPDATE_SM_PART_A) {
-    if (GetCurrentBootPartition () == PrimaryPartition) {
-      if (IsTopSwapTriggered ()) {
-        ClearTopSwapTrigger ();
-        SetBootPartition (BackupPartition);
-        ResetSystem (EfiResetCold);
+  switch (FwUpdStatus->StateMachine) {
+    case FW_UPDATE_SM_RECOVERY:
+      // This indicates that recovery is in progress
+      break;
+
+    case FW_UPDATE_SM_PART_A:
+      // This indicates that update of partition B is complete
+      if (GetCurrentBootPartition () == PrimaryPartition) {
+        if (IsTopSwapTriggered ()) {
+          ClearTopSwapTrigger ();
+          SetBootPartition (BackupPartition);
+          ResetSystem (EfiResetCold);
+        }
+      } else {
+        if (IsTopSwapTriggered ()) {
+          DEBUG((DEBUG_INFO, "Already on partition that was meant to be swapped back to\n"));
+          ClearTopSwapTrigger ();
+          if (PcdGetBool (PcdSblResiliencyEnabled)) {
+            SetRecoveryTrigger ();
+          }
+        }
       }
-    } else {
-      if (IsTopSwapTriggered ()) {
-        DEBUG((DEBUG_INFO, "Already on partition that was meant to be swapped back to\n"));
-        ClearTopSwapTrigger ();
-        SetRecoveryTrigger ();
+      break;
+
+    case FW_UPDATE_SM_PART_AB:
+      // This indicates update of partition A and B is complete and
+      // firmware update structure need finalization
+      break;
+
+    default:
+      if (GetCurrentBootPartition () == BackupPartition) {
+        if (IsTopSwapTriggered ()) {
+          ClearTopSwapTrigger ();
+          SetBootPartition (PrimaryPartition);
+          ResetSystem (EfiResetCold);
+        }
+      } else {
+        if (IsTopSwapTriggered ()) {
+          DEBUG((DEBUG_INFO, "Already on partition that was meant to be swapped back to\n"));
+          ClearTopSwapTrigger ();
+          if (PcdGetBool (PcdSblResiliencyEnabled)) {
+            SetRecoveryTrigger ();
+          }
+        }
       }
-    }
-  } else {
-    if (GetCurrentBootPartition () == BackupPartition) {
-      if (IsTopSwapTriggered ()) {
-        ClearTopSwapTrigger ();
-        SetBootPartition (PrimaryPartition);
-        ResetSystem (EfiResetCold);
-      }
-    } else {
-      if (IsTopSwapTriggered ()) {
-        DEBUG((DEBUG_INFO, "Already on partition that was meant to be swapped back to\n"));
-        ClearTopSwapTrigger ();
-        SetRecoveryTrigger ();
-      }
-    }
+      break;
   }
 }
 
