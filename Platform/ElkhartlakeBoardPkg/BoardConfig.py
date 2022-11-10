@@ -180,7 +180,7 @@ class Board(BaseBoard):
         self.SPI_IAS1_SIZE        = 0x0
         self.SPI_IAS2_SIZE        = 0x0
 
-        self.PLD_HEAP_SIZE        = 0x08000000
+        self.PLD_HEAP_SIZE        = 0x0C000000
         self.PLD_STACK_SIZE       = 0x00020000
         self.PLD_RSVD_MEM_SIZE    = 0x00500000
         self.LOADER_RSVD_MEM_SIZE = 0x500000
