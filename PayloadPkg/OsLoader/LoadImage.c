@@ -398,6 +398,8 @@ LoadLinuxFile (
 
   FileBuffer = AllocatePages (EFI_SIZE_TO_PAGES(FileSize));
   if (FileBuffer == NULL) {
+    DEBUG ((DEBUG_INFO, "Unable to allocate memory to load file '%s' (size: %d) \n", FileName, FileSize));
+    DEBUG ((DEBUG_INFO, "Please increase PLD_HEAP_SIZE\n"));
     Status = EFI_OUT_OF_RESOURCES;
     goto Done;
   }
