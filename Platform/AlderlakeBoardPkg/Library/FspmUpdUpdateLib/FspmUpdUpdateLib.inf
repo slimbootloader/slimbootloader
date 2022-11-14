@@ -47,3 +47,4 @@
 
 [FixedPcd]
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled
+  gPlatformModuleTokenSpaceGuid.PcdFusaSupport

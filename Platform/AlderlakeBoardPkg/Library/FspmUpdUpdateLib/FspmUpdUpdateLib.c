@@ -689,4 +689,12 @@ UpdateFspConfig (
       }
     }
   }
+#if FixedPcdGetBool(PcdFusaSupport)
+  if ((SiCfgData != NULL) && (SiCfgData->FusaConfigEnable)) {
+    DEBUG((DEBUG_INFO, "FuSa enabled. Overriding CpuCrashLog and IBECC settings to Enabled - All requests protected.\n"));
+    Fspmcfg->CpuCrashLogEnable = 1;
+    Fspmcfg->Ibecc = 1;
+    Fspmcfg->IbeccOperationMode = 2;
+  }
+#endif
 }

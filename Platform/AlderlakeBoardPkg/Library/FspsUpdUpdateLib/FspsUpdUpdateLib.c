@@ -1238,6 +1238,28 @@ UpdateFspConfig (
   if (FeaturePcdGet (PcdEnablePciePm)) {
     StoreRpConfig (FspsConfig);
   }
+
+#if FixedPcdGetBool(PcdFusaSupport)
+    if (SiCfgData != NULL) {
+      FspsConfig->FusaConfigEnable = SiCfgData->FusaConfigEnable;
+      FspsConfig->DisplayFusaConfigEnable = SiCfgData->DisplayFusaConfigEnable;
+      FspsConfig->GraphicFusaConfigEnable = SiCfgData->GraphicFusaConfigEnable;
+      FspsConfig->OpioFusaConfigEnable = SiCfgData->OpioFusaConfigEnable;
+      FspsConfig->IopFusaConfigEnable = SiCfgData->IopFusaConfigEnable;
+      FspsConfig->PsfFusaConfigEnable = SiCfgData->PsfFusaConfigEnable;
+      FspsConfig->FusaRunStartupArrayBist = SiCfgData->FusaRunStartupArrayBist;
+      FspsConfig->FusaRunStartupScanBist = SiCfgData->FusaRunStartupScanBist;
+      FspsConfig->FusaRunPeriodicScanBist = SiCfgData->FusaRunPeriodicScanBist;
+      FspsConfig->Module0Lockstep = SiCfgData->Module0Lockstep;
+      FspsConfig->Module1Lockstep = SiCfgData->Module1Lockstep;
+      if (SiCfgData->FusaConfigEnable)
+      {
+        DEBUG((DEBUG_INFO, "FuSa enabled. Disabling Bidir Prochot and enabling L2 CAT.\n"));
+        FspsConfig->BiProcHot = 0;
+        FspsConfig->L2QosEnumerationEn = 1;
+      }
+    }
+#endif
 }
 
 

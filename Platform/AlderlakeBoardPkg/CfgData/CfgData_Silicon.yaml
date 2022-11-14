@@ -459,6 +459,92 @@
                      Describes whether Embedded Controller is availabile or not
       length       : 0x01
       value        : 0x1
-  - SiliconRsvd  :
-      length       : 0x02
-      value        : 0x00
+  - FusaConfigEnable :
+      name         : Enable FuSa support
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable global FuSa support; 0- Disable; <b>1- Enable</b>.
+      length       : 0x01
+      value        : 0x01
+  - DisplayFusaConfigEnable :
+      name         : Fusa Display Configuration
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Fusa (Functional Safety) Enable Fusa Feature on Display, 0- Disable, 1- Enable
+      length       : 0x01
+      value        : 0x01
+  - GraphicFusaConfigEnable :
+      name         : Fusa Graphics Configuration
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Fusa (Functional Safety) Enable Fusa Feature on Graphics, 0- Disable, 1- Enable
+      length       : 0x01
+      value        : 0x01
+  - OpioFusaConfigEnable :
+      name         : Fusa Opio Configuration
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Fusa (Functional Safety) Enable Fusa Feature on Opio, 0- Disable, 1- Enable
+      length       : 0x01
+      value        : 0x01
+  - IopFusaConfigEnable :
+      name         : Fusa Iop Configuration
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Fusa (Functional Safety) Enable Fusa Feature on Iop, 0- Disable, 1- Enable
+      length       : 0x01
+      value        : 0x01
+  - PsfFusaConfigEnable :
+      name         : Fusa Psf Configuration
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Fusa (Functional Safety) Enable Fusa Feature on Psf, 0- Disable, 1- Enable
+      length       : 0x01
+      value        : 0x1
+  - FusaRunStartupArrayBist :
+      name         : Fusa Run Start Up Array BIST
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enabling this will execute startup array test during boot, 0: Disable, 1: Enable
+      length       : 0x01
+      value        : 0x1
+  - FusaRunStartupScanBist :
+      name         : Fusa Run Start Up Scan BIST
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enabling this will execute startup scan test during boot, 0: Disable, 1: Enable
+      length       : 0x01
+      value        : 0x1
+  - FusaRunPeriodicScanBist :
+      name         : Fusa Run Periodic Scan BIST
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enabling this will execute periodic scan test during boot, 0: Disable, 1: Enable
+      length       : 0x01
+      value        : 0x1
+  - Module0Lockstep :
+      name         : Fusa Module 0 Lockstep Configuration
+      type         : Combo
+      option       : 0: Disable lockstep, 1: Enable lockstep for Core 0 with Core 1; Core 2 with Core 3, 2: Enable lockstep for Core 0 with Core 1, 3: Enable lockstep for Core 2 with Core 3
+      help         : >
+                     Enable/Disable Lockstep for Atom module 0, which has 4 cores;
+      length       : 0x01
+      value        : 0x1
+  - Module1Lockstep :
+      name         : Fusa Module 1 Lockstep Configuration
+      type         : Combo
+      option       : 0: Disable lockstep, 1: Enable lockstep for Core 0 with Core 1; Core 2 with Core 3, 2: Enable lockstep for Core 0 with Core 1, 3: Enable lockstep for Core 2 with Core 3
+      help         : >
+                     Enable/Disable Lockstep for Atom module 1, which has 4 cores;
+      length       : 0x01
+      value        : 0x1
+
