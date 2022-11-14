@@ -253,14 +253,6 @@
                      Enable or Disable initialization of machine check registers; 0- Disable; <b>1- Enable</b>.
       length       : 0x01
       value        : 0x01
-  - IsFusaSupported :
-      name         : Check if FUSA is supported
-      type         : Combo
-      option       : $EN_DIS
-      help         : >
-                     Check if FUSA is supported; 0- Disable; <b>1- Enable</b>.
-      length       : 0x01
-      value        : 0x01
   - ApIdleManner :
       name         : AP Idle Manner of waiting for SIPI
       type         : Combo
