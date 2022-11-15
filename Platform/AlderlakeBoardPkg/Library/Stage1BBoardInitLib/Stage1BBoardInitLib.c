@@ -169,9 +169,6 @@ PlatformDeviceTableInitialize (
 
     SetDeviceTable (PltDeviceTable);
   }
-
-  // clear SmBus in use status as TCO timer reload causes it to be marked in use here
-  SmBusClearInUseStatus ();
 }
 
 /**
