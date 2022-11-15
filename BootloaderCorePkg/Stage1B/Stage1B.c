@@ -384,7 +384,7 @@ SecStartup2 (
   // Perform pre-config board init
   BoardInit (PreConfigInit);
 
-  // Check if recovery is needed, if not in recovery path already
+  // Check for failures in ACM or TCO timer on last boot
   if (PcdGetBool (PcdSblResiliencyEnabled)) {
     CheckForAcmFailures ();
     CheckForTcoTimerFailures (PcdGet8 (PcdBootFailureThreshold));
@@ -414,6 +414,11 @@ SecStartup2 (
 
   // Perform pre-memory board init
   BoardInit (PreMemoryInit);
+
+  // Start TCO timer here as ACM active timer is stopped within FSP-M
+  if (PcdGetBool (PcdSblResiliencyEnabled)) {
+    StartTcoTimer (PcdGet16 (PcdTcoTimeout));
+  }
 
   // Initialize memory
   HobList = NULL;

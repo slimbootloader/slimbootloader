@@ -49,6 +49,12 @@ CheckForAcmFailures (
   )
 {
   UINT8 StateMachine;
+
+  // If already marked in recovery path, no need to check for recovery path.
+  if (IsRecoveryTriggered ()) {
+    return;
+  }
+
   StateMachine = GetFwuStateMachine ();
   switch (StateMachine) {
     case FW_UPDATE_SM_PART_A:
@@ -90,7 +96,7 @@ CheckForTcoTimerFailures (
   UINT32              FailedBootCount;
 
   // If unable to boot all the way up to PLD, recovery is necessary.
-  if (WasPreviousTcoTimeout ()) {
+  if (WasBootCausedByTcoTimeout ()) {
     ClearTcoStatus ();
     IncrementFailedBootCount ();
     FailedBootCount = GetFailedBootCount ();

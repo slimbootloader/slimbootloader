@@ -106,6 +106,7 @@
   gPlatformModuleTokenSpaceGuid.PcdEnableSetup
   gPlatformModuleTokenSpaceGuid.PcdSblResiliencyEnabled
   gPlatformModuleTokenSpaceGuid.PcdBootFailureThreshold
+  gPlatformModuleTokenSpaceGuid.PcdTcoTimeout
 
 [Depex]
   TRUE
