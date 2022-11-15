@@ -2,7 +2,7 @@
   Routines supporting partition discovery and
   logical device reading
 
-Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
 
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
@@ -16,8 +16,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #define  PART_MAX_BLOCK_SIZE      8192
 #define  PART_MAX_BLOCK_DEVICE    64
-
-#define  GPT_MAX_NUM_PARTITIONS   128
 
 typedef enum {
   EnumPartTypeUnknown = 0,

@@ -1,7 +1,7 @@
 /** @file
   Routines supporting partition discovery
 
-Copyright (c) 2006 - 2021, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2006 - 2022, Intel Corporation. All rights reserved.<BR>
 
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
@@ -417,12 +417,6 @@ FindGptPartitions (
   }
 
   GptPartCnt = Gpt->NumberOfPartitionEntries;
-
-  if (GptPartCnt > GPT_MAX_NUM_PARTITIONS) {
-    Status = EFI_UNSUPPORTED;
-    goto Done;
-  }
-
   Status = EFI_NOT_FOUND;
   for (Index = 0; Index < GptPartCnt; Index++) {
     if (CompareGuid (&GptEntries[Index].PartitionTypeGUID, &gEfiPartTypeUnusedGuid)) {
