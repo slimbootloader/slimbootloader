@@ -372,11 +372,6 @@ SecStartup2 (
   BoardInit (PostTempRamInit);
   AddMeasurePoint (0x1040);
 
-  if (PcdGetBool (PcdSblResiliencyEnabled)) {
-    SetTcoTimeout (PcdGet16 (PcdTcoTimeout));
-    StartTcoTimer ();
-  }
-
   // Set DebugPrintErrorLevel to default PCD.
   SetDebugPrintErrorLevel (PcdGet32 (PcdDebugPrintErrorLevel));
 
