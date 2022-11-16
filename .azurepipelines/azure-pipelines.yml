@@ -89,6 +89,10 @@ jobs:
         Build.Name:   "adls"
         Build.Arch:   ""
         Build.Target: ""
+      IDV_X64_DEBUG:
+        Build.Name:   "idv"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
 
   pool:
     vmImage: 'ubuntu-20.04'
@@ -173,6 +177,14 @@ jobs:
         Build.Target: "-r"
       ADLS_X64_DEBUG:
         Build.Name:   "adls"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      IDV_X86_RELEASE:
+        Build.Name:   "idv"
+        Build.Arch:   ""
+        Build.Target: "-r"
+      IDVH_X64_DEBUG:
+        Build.Name:   "idvh"
         Build.Arch:   "-a x64"
         Build.Target: ""
 
