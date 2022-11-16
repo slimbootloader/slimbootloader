@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -55,11 +55,13 @@ InitializeSmbiosInfo (
   SMBIOS_TYPE_STRINGS  *TempSmbiosStrTbl;
   BOOT_LOADER_VERSION  *VerInfoTbl;
   VOID                 *SmbiosStringsPtr;
+  UINT8                TempName[9];
 
   if (FeaturePcdGet (PcdSmbiosEnabled)) {
     Index         = 0;
     TempSmbiosStrTbl  = (SMBIOS_TYPE_STRINGS *) AllocateTemporaryMemory (0);
-    VerInfoTbl    = GetVerInfoPtr ();
+    VerInfoTbl  = GetVerInfoPtr ();
+    TempName[8] = 0;
 
     //
     // SMBIOS_TYPE_BIOS_INFORMATION
@@ -67,8 +69,14 @@ InitializeSmbiosInfo (
     AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BIOS_INFORMATION,
       1, "Intel Corporation");
   if (VerInfoTbl != NULL) {
+    CopyMem (TempName, &VerInfoTbl->ImageId, sizeof (UINT64));
+    for (Length = 7; Length != 0; Length--) {
+      if (TempName[Length] != 0x20) break;
+      TempName[Length] = 0;
+    }
     AsciiSPrint (TempStrBuf, sizeof (TempStrBuf),
-      "SB_ADL.%03d.%03d.%03d.%03d.%03d.%05d.%c-%016lX%a\0",
+      "%a.%02d.%02d.%02d.%02d.%02d.%03d.%c-%08X%a\0",
+      TempName,
       VerInfoTbl->ImageVersion.SecureVerNum,
       VerInfoTbl->ImageVersion.CoreMajorVersion,
       VerInfoTbl->ImageVersion.CoreMinorVersion,
@@ -76,7 +84,7 @@ InitializeSmbiosInfo (
       VerInfoTbl->ImageVersion.ProjMinorVersion,
       VerInfoTbl->ImageVersion.BuildNumber,
       VerInfoTbl->ImageVersion.BldDebug ? 'D' : 'R',
-      VerInfoTbl->SourceVersion,
+      *((UINT32*)&VerInfoTbl->SourceVersion + 1),
       VerInfoTbl->ImageVersion.Dirty ? "-dirty" : "");
   } else {
     AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "Unknown");
@@ -91,8 +99,11 @@ InitializeSmbiosInfo (
     //
     AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
       1, "Intel Corporation");
+
+    CopyMem (TempName, GetPlatformName(), sizeof (UINT64));
+    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a (CPU:%a)", TempName, GetCpuName ());
     AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
-      2, "AlderLake");
+      2, TempStrBuf);
     AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
       3, "0.0");
     AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
@@ -100,15 +111,16 @@ InitializeSmbiosInfo (
     AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
       5, "System SKU Number");
     AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
-      6, "AlderLake");
+      6, GetCpuName());
 
     //
     // SMBIOS_TYPE_BASEBOARD_INFORMATION
     //
     AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BASEBOARD_INFORMATION,
       1, "Intel Corporation");
+    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a (ID:%02X)", TempName, GetPlatformId ());
     AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BASEBOARD_INFORMATION,
-      2, "AlderLake");
+      2, TempStrBuf);
     AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BASEBOARD_INFORMATION,
       3, "1");
     AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BASEBOARD_INFORMATION,

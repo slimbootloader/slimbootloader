@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -242,6 +242,16 @@ GetCpuStepping(
 CPU_FAMILY
 EFIAPI
 GetCpuFamily (
+  VOID
+  );
+
+/**
+  Return CPU name
+
+  @retval               CPU name string
+**/
+CHAR8 *
+GetCpuName (
   VOID
   );
 
