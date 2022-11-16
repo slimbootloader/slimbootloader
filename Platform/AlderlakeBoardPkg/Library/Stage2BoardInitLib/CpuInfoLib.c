@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -269,5 +269,39 @@ GetCpuFamily (
   ///
   AsmCpuid (CPUID_VERSION_INFO, &Eax.Uint32, NULL, NULL, NULL);
   return (Eax.Uint32 & CPUID_FULL_FAMILY_MODEL);
+}
+
+/**
+  Return CPU name
+
+  @retval               CPU name string
+**/
+CHAR8 *
+GetCpuName (
+  VOID
+  )
+{
+  UINT32                  CpuFamilyModel;
+  CPUID_VERSION_INFO_EAX  Eax;
+
+  ///
+  /// Read the CPUID & DID information
+  ///
+  AsmCpuid (CPUID_VERSION_INFO, &Eax.Uint32, NULL, NULL, NULL);
+  CpuFamilyModel = Eax.Uint32 & CPUID_FULL_FAMILY_MODEL;
+
+  switch (CpuFamilyModel) {
+    case CPUID_FULL_FAMILY_MODEL_RAPTORLAKE_DT_HALO:
+    case CPUID_FULL_FAMILY_MODEL_RAPTORLAKE_2_DT_HALO:
+    case CPUID_FULL_FAMILY_MODEL_RAPTORLAKE_MOBILE:
+      return "RaptorLake";
+    case CPUID_FULL_FAMILY_MODEL_ALDERLAKE_MOBILE:
+    case CPUID_FULL_FAMILY_MODEL_ALDERLAKE_DT_HALO:
+    case CPUID_FULL_FAMILY_MODEL_ALDERLAKE_ATOM:
+      return "AlderLake";
+    default:
+      return "Unknown";
+  }
+
 }
 
