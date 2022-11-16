@@ -191,16 +191,6 @@ GetCapsuleFromRawPartition (
     return EFI_NOT_FOUND;
   }
 
-  if (FwUpdHeader->PubKeySize != RSA2048_MOD_SIZE + RSA_E_SIZE + sizeof (UINT32)) {
-    DEBUG ((DEBUG_INFO, "Invalid Capsule image found, Public Key size mismatch\n"));
-    return EFI_NOT_FOUND;
-  }
-
-  if (FwUpdHeader->SignatureSize != RSA2048_NUMBYTES) {
-    DEBUG ((DEBUG_INFO, "Invalid Capsule image found, Signature size mismatch\n"));
-    return EFI_NOT_FOUND;
-  }
-
   //
   // Make sure to round the image size to be block aligned in bytes.
   //
