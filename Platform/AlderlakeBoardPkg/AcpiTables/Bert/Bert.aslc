@@ -1,0 +1,51 @@
+/** @file
+
+  Copyright (c) 2022, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+#include "AcpiTablePlatform.h"
+
+//
+// Boot Error Record Table
+//
+
+EFI_ACPI_6_4_BOOT_ERROR_RECORD_TABLE_HEADER Bert = {
+    {
+      EFI_ACPI_6_4_BOOT_ERROR_RECORD_TABLE_SIGNATURE,
+      sizeof (EFI_ACPI_6_4_BOOT_ERROR_RECORD_TABLE_HEADER),
+      EFI_ACPI_6_4_BOOT_ERROR_RECORD_TABLE_REVISION,
+      //
+      // Checksum will be updated at runtime
+      //
+      0x00,
+      //
+      // It is expected that these values will be programmed at runtime
+      //
+      {' ',  ' ',  ' ',  ' ',  ' ',  ' '},
+      0,
+      0,
+      0,
+      0
+    },
+  //
+  // Beginning of BERT specific fields
+  //
+  //  UINT32                      BootErrorRegionLength;
+  //  UINT64                      BootErrorRegion;
+  0,
+  0
+};
+
+VOID *
+ReferenceAcpiTable (
+ VOID
+ )
+{
+  //
+  // Reference the table being generated to prevent the optimizer from removing the
+  // data structure from the exeutable
+  //
+  return (VOID *)&Bert;
+}

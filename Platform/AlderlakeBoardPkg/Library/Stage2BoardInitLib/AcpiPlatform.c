@@ -476,6 +476,15 @@ PlatformUpdateAcpiTable (
     }
   }
 
+  if (Table->Signature == EFI_ACPI_6_4_BOOT_ERROR_RECORD_TABLE_SIGNATURE) {
+    Status = UpdateCrashLogBertTable((EFI_ACPI_6_4_BOOT_ERROR_RECORD_TABLE_HEADER*)Current);
+    DEBUG ( (DEBUG_INFO, "Updated BERT Table in AcpiTable Entries %r\n", Status) );
+    // If error updating BERT, don't install the table
+    if (EFI_ERROR(Status)) {
+      return Status;
+    }
+  }
+
   return EFI_SUCCESS;
 }
 

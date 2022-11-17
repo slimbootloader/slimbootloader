@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -100,6 +100,7 @@
 #include <Library/TimerLib.h>
 #include <Library/PrintLib.h>
 #include <Register/RtcRegs.h>
+#include <Library/CrashLogLib.h>
 
 #define NHLT_ACPI_TABLE_SIGNATURE  SIGNATURE_32 ('N', 'H', 'L', 'T')
 #define V_EPOC_XTAL_38_4_MHZ  0x249F000
