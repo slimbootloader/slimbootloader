@@ -356,39 +356,34 @@ class Build(object):
 
             # Collect all CPU uCode images
             u_code_images = []
-            while ucode_offset < len(rom):
-                # Extract info from CPU uCode images
-                ucode_hdr = UCODE_HEADER.from_buffer(rom, ucode_offset)
-                if ucode_hdr.header_version == 1:
-                    u_code_images.append(ucode_offset)
-                    num_fit_entries += 1
-                    if (hasattr (self._board, "UCODE_SLOT_SIZE")):
-                        if ucode_hdr.total_size > self._board.UCODE_SLOT_SIZE:
-                            raise Exception ('UCODE total size (0x%08X) greater than UCODE slot size' % (ucode_hdr.total_size, self._board.UCODE_SLOT_SIZE))
-                        ucode_offset += self._board.UCODE_SLOT_SIZE
-                    elif ucode_hdr.total_size:
-                        ucode_offset += ucode_hdr.total_size
+
+            if hasattr(self._board, 'UCODE_SLOT_SIZE'):
+                # Fill up with however many slots fit into the region
+                num_ucode = self._board.UCODE_SIZE // self._board.UCODE_SLOT_SIZE
+                ucode_end_offset = ucode_offset + num_ucode * self._board.UCODE_SLOT_SIZE
+                u_code_images = list(range(ucode_offset, ucode_end_offset, self._board.UCODE_SLOT_SIZE))
+            else:
+                while ucode_offset < len(rom):
+                    # Extract info from CPU uCode images
+                    ucode_hdr = UCODE_HEADER.from_buffer(rom, ucode_offset)
+                    if ucode_hdr.header_version == 1:
+                        u_code_images.append(ucode_offset)
+                        if ucode_hdr.total_size:
+                            ucode_offset += ucode_hdr.total_size
+                        else:
+                            ucode_offset += 0x0800
                     else:
-                        ucode_offset += 0x0800
-                else:
-                    break
+                        break
 
             # Patch FIT with addresses of uCode images
-            for i in range(0, num_fit_entries):
+            for i in range(0, len(u_code_images)):
                 fit_entry = FIT_ENTRY.from_buffer(rom, fit_offset + (i+1)*16)
-                # uCode Update
-                if len(u_code_images) > 0:
-                    offset = u_code_images.pop(0)
-                    fit_entry.set_values(base + offset, 0, 0x100, 0x1, 0)
-                    print ('  Patching entry %d with 0x%08X - uCode' % (i, fit_entry.address))
-                else:
-                    print ('  Nullifying unused uCode patch entry %d' % i)
-                    fit_entry.type      = 0x7f
+                offset = u_code_images.pop(0)
+                fit_entry.set_values(base + offset, 0, 0x100, 0x1, 0)
+                print ('  Patching entry %d with 0x%08X - uCode' % (i, fit_entry.address))
+                num_fit_entries     += 1
 
-            if len(u_code_images) > 0:
-                raise Exception('  Insufficient uCode entries in FIT. Need %d more.' % len(u_code_images))
-
-            # ACM
+        # ACM
         if self._board.ACM_SIZE > 0:
             fit_entry = FIT_ENTRY.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
             fit_entry.set_values(self._board.ACM_BASE, 0, 0x100, 0x2, 0)
