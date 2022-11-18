@@ -284,9 +284,13 @@ AddSblCommandLine (
   //
   if ((BootOption->BootFlags & BOOT_FLAGS_MENDER) != 0) {
     if ((BootOption->BootFlags & LOAD_IMAGE_FROM_BACKUP) == 0) {
-      AsciiStrCatS (CommandLine, MaxCmdSize, " root=PARTLABEL=primary");
+      if (AsciiStrStr (CommandLine, " root=PARTLABEL=primary") == NULL) {
+        AsciiStrCatS (CommandLine, MaxCmdSize, " root=PARTLABEL=primary");
+      }
     } else {
-      AsciiStrCatS (CommandLine, MaxCmdSize, " root=PARTLABEL=secondary");
+      if (AsciiStrStr (CommandLine, " root=PARTLABEL=secondary") == NULL) {
+        AsciiStrCatS (CommandLine, MaxCmdSize, " root=PARTLABEL=secondary");
+      }
     }
   }
 
