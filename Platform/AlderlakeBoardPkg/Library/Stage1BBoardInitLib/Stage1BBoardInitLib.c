@@ -618,6 +618,7 @@ DEBUG_CODE_END();
     break;
   case PostMemoryInit:
     UpdateMemoryInfo ();
+    GetCrashLogData();
     break;
   case PreTempRamExit:
     break;

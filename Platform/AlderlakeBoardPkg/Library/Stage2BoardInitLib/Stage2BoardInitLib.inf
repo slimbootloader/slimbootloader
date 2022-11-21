@@ -75,6 +75,7 @@
   FspsUpdUpdateLib
   PciePm
   PrintLib
+  CrashLogLib
 
 [Guids]
   gOsConfigDataGuid

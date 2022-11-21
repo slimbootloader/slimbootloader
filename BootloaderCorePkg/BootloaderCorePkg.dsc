@@ -135,6 +135,7 @@
   PagingLib|BootloaderCommonPkg/Library/PagingLib/PagingLib.inf
   TimerLib|BootloaderCommonPkg/Library/AcpiTimerLib/AcpiTimerLib.inf
   DebugPortLib|BootloaderCommonPkg/Library/DebugPortLib/DebugPortLibNull.inf
+  CrashLogLib|Silicon/CommonSocPkg/Library/CrashLogLibNull/CrashLogLibNull.inf
 
 ################################################################################
 #
@@ -266,7 +267,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled          | $(ENABLE_TCC)
 
 [PcdsPatchableInModule]
-  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel   | 0x8000004F
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel   | 0x8040004F
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress  | $(PCI_EXPRESS_BASE)
   gPlatformModuleTokenSpaceGuid.PcdAcpiTablesRsdp    | 0xFF000000
   gPlatformModuleTokenSpaceGuid.PcdAcpiTablesAddress | 0xFF000000

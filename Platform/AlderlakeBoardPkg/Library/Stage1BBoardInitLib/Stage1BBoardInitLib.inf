@@ -64,6 +64,7 @@
   FspmUpdUpdateLib
   SmbusLib
   TopSwapLib
+  CrashLogLib
 
 [Guids]
   gFspNonVolatileStorageHobGuid
