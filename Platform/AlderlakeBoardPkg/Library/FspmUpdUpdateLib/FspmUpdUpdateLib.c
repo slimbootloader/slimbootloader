@@ -589,6 +589,9 @@ UpdateFspConfig (
         Fspmcfg->Lp5CccConfig = 0xff;
         break;
       case PLATFORM_ID_ADL_P_DDR5_RVP:
+#if PLATFORM_RPLP
+        Fspmcfg->DdiPortAConfig = 0x1;
+#endif
         Fspmcfg->DdiPortBHpd = 0x1;
         Fspmcfg->PrmrrSize = 0x200000;
         Fspmcfg->PcieClkReqGpioMux[9] = 0x796e9000;
