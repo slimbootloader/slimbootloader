@@ -198,21 +198,34 @@ UpdateFspConfig (
   IN  VOID  *FspmUpdPtr
   )
 {
-  FSPM_UPD        *FspmUpd;
-  FSP_M_CONFIG    *Fspmcfg;
+  FSPM_UPD                    *FspmUpd;
+  FSP_M_CONFIG                *Fspmcfg;
   MEMORY_CFG_DATA             *MemCfgData;
   GRAPHICS_CFG_DATA           *GfxCfgData;
   PLATFORM_DATA               *PlatformData;
   FEATURES_CFG_DATA           *FeaturesCfgData;
   SILICON_CFG_DATA            *SiCfgData;
-  UINT16           PlatformId;
-  UINT8            SaDisplayConfigTable[16] = { 0 };
-  UINT8            Index;
-  UINT8            DebugPort;
-  UINT32           SpdData[9];
+  UINT16                      PlatformId;
+  UINT8                       SaDisplayConfigTable[16] = { 0 };
+  UINT8                       Index;
+  UINT8                       DebugPort;
+  UINT32                      SpdData[9];
+  UINT32                      CarBase;
+  UINT32                      CarSize;
+  EFI_STATUS                  Status;
 
   FspmUpd = (FSPM_UPD *)FspmUpdPtr;
   Fspmcfg = &FspmUpd->FspmConfig;
+
+  Status = GetTempRamInfo (&CarBase, &CarSize);
+  ASSERT_EFI_ERROR (Status);
+  FspmUpd->FspmArchUpd.StackBase = CarBase \
+                                 + FixedPcdGet32 (PcdStage1StackBaseOffset) \
+                                 + FixedPcdGet32 (PcdStage1StackSize) \
+                                 + FixedPcdGet32 (PcdStage1DataSize);
+  FspmUpd->FspmArchUpd.StackSize = CarBase + CarSize - FspmUpd->FspmArchUpd.StackBase;
+  DEBUG ((DEBUG_INFO, "CAR Base 0x%X (0x%X)\n", CarBase, CarSize));
+  DEBUG ((DEBUG_INFO, "FSPM Stack Base=0x%X, Size=0x%X\n", FspmUpd->FspmArchUpd.StackBase, FspmUpd->FspmArchUpd.StackSize));
 
   DEBUG ((DEBUG_INFO, "FSPM CfgData assignment\n"));
   MemCfgData = (MEMORY_CFG_DATA *)FindConfigDataByTag (CDATA_MEMORY_TAG);
