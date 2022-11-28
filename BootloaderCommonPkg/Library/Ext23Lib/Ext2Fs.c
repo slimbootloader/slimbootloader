@@ -294,6 +294,12 @@ BlockMap (
 
     while (Etable->Eheader.EhDepth > 0) {
       ExtIndex = NULL;
+
+      /* if only one entry exists, the first entry should be used */
+      if (Etable->Eheader.EhEntries == 1) {
+        ExtIndex = &(Etable->Enodes.Eindex[0]);
+      }
+
       for (Index=1; Index < Etable->Eheader.EhEntries; Index++) {
         ExtIndex = &(Etable->Enodes.Eindex[Index]);
         if (((UINT32) FileBlock) < ExtIndex->EiBlk) {
