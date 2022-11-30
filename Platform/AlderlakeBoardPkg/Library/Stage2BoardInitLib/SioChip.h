@@ -14,6 +14,14 @@
 #include "Stage2BoardInitLib.h"
 #include <Protocol/DevicePath.h>
 
+// ALL
+#define REG_CONFIG_CONTROL              0x02
+#define REG_SIO_LOGICAL_DEVICE          0x07
+
+#define REG_CHIP_ID1                    0x20
+#define REG_CHIP_ID2                    0x21
+#define REG_CHIP_VER                    0x22
+#define REG_CLK_SEL                     0x23
 //
 // Define some fixed platform device location information
 //
@@ -33,56 +41,18 @@
 //
 #define SIO_COM1                        0x01
 #define SIO_COM2                        0x02
-#define SIO_ENV                         0x04
-#define SIO_KYBD                        0x05
-#define SIO_MOUSE                       0x06
-#define SIO_GPIO                        0x07
-#define SIO_CON_IR                      0x0A
 
-
-//
-// Global register in LPC
-//
 
 // ALL
-#define REG_CONFIG_CONTROL              0x02
 #define REG_SIO_LOGICAL_DEVICE          0x07
-
-#define REG_CHIP_ID1                    0x20
-#define REG_CHIP_ID2                    0x21
-#define REG_CHIP_VER                    0x22
-#define REG_CLK_SEL                     0x23
-
-#define REG_SIO_MMIO                    0x24
-
-#define REG_SIO_SPECIAL_FUNC_2          0x2B
-
-// LDN 07
-#define REG_SIO_GPIO_SET_1              0x25
-#define REG_SIO_GPIO_SET_2              0x26
-#define REG_SIO_GPIO_SET_3              0x27
-#define REG_SIO_GPIO_SET_4              0x28
-#define REG_SIO_GPIO_SET_5              0x29
-#define REG_SIO_SPECIAL_FUNC_1          0x2A
-#define REG_SIO_SPECIAL_FUNC_3          0x2C
-#define REG_SIO_SPECIAL_FUNC_4          0x2D
-
-
 
 
 #define R_SIO_ACTIVATE                  0x30
 #define R_SIO_BASE_ADDRESS_HIGH         0x60
 #define R_SIO_BASE_ADDRESS_LOW          0x61
-#define R_SIO_BASE_ADDRESS_HIGH2        0x62
-#define R_SIO_BASE_ADDRESS_LOW2         0x63
 #define R_SIO_PRIMARY_INTERRUPT_SELECT  0x70
-#define R_SIO_SECOND_INTERRUPT_SELECT   0x72
 #define R_SIO_DMA_CHANNEL_SELECT        0x74
 
-//
-// Register for COM1
-//
-#define SERIAL_MODE 0xF0
 
 #define COM1_ADDRESS                    0x03F8
 #define COM1_IRQ_BIT                    BIT4
@@ -125,7 +95,6 @@ It8659HwMonReadRegister (
 #define RESOURCE_IO    BIT0
 #define RESOURCE_IRQ   BIT1
 #define RESOURCE_DMA   BIT2
-#define RESOURCE_MEM   BIT3
 
 #pragma pack(1)
 

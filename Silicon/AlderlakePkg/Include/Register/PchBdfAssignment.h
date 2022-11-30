@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021-2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -146,11 +146,6 @@
 #define PCI_DEVICE_NUMBER_PCH_SERIAL_IO_I2C7          16
 #define PCI_FUNCTION_NUMBER_PCH_SERIAL_IO_I2C7        1
 
-//
-//  Serial IO I3C #0 Controller
-//
-#define PCI_DEVICE_NUMBER_PCH_SERIAL_IO_I3C0          NOT_PRESENT
-#define PCI_FUNCTION_NUMBER_PCH_SERIAL_IO_I3C0        NOT_PRESENT
 
 //
 //  PCH LP, N & H Serial IO SPI #0 Controller

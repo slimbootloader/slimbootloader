@@ -59,8 +59,6 @@ GLOBAL_REMOVE_IF_UNREFERENCED GPIO_INIT_CONFIG mGpioTablePostMemAdlNDdr5Crb[] =
   //HDMIB ALS
   {GPIO_VER2_LP_GPP_A17,   {GpioPadModeGpio, GpioHostOwnAcpi, GpioDirOut,   GpioOutHigh,      GpioIntDis,                GpioPlatformReset,  GpioTermNone,}},  // HDMIB_ALS_PWR_EN
 
-  // SIO Controller
-  //{GPIO_VER2_LP_GPP_E4,  {GpioPadModeGpio, GpioHostOwnGpio, GpioDirIn,    GpioOutHigh,      GpioIntDis,                GpioPlatformReset,  GpioTermNone}},  // SIO_PCH_GPIO SCI or IOAPIC no clear
 
   // TI PDC
   {GPIO_VER2_LP_GPP_F13,   {GpioPadModeGpio, GpioHostOwnGpio, GpioDirInInv, GpioOutDefault,   GpioIntEdge|GpioIntApic,   GpioPlatformReset,  GpioTermNone,  GpioPadConfigUnlock  }},  // PD_CNTL_I2C_IRQ_N
