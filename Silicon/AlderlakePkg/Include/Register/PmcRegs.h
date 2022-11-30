@@ -1,7 +1,7 @@
 /** @file
   Register names for PCH PMC device
 
-  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021-2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -427,5 +427,41 @@
 //
 #define GPE_PCI_EXP                                     0x69
 #define GPE_PME_B0                                      0x6D
+
+//
+// PWRM Registers for IPC interface
+//
+#define R_PMC_PWRM_IPC_CMD                                  0x00                        ///< IPC Command
+#define N_PMC_PWRM_IPC_CMD_CMD_ID                           12                          ///< IPC command.cmd.ID
+#define N_PMC_PWRM_IPC_CMD_SIZE                             16                          ///< IPC command.size
+#define N_PMC_PWRM_IPC_CMD_COMMAND                          0                           ///< IPC command.cmd.Command
+#define V_PMC_PWRM_IPC_CMD_COMMAND_SLP_CTRL                 0xA1                        ///< IPC commmand to control S0ix policies
+#define V_PMC_PWRM_IPC_CMD_COMMAND_SNDW_RCOMP               0xA2                        ///< IPC commmand to control platform Soundwire buffer RCOMP
+#define V_PMC_PWRM_IPC_CMD_COMMAND_FIVR                     0xA3                        ///< IPC commmand to control FIVR Configuration
+#define V_PMC_PWRM_IPC_SUBCMD_RFI_CTRL0_LOGIC               0                           ///< IPC subcommand to control RFI Control 0 register logic write
+#define V_PMC_PWRM_IPC_SUBCMD_RFI_CTRL4_LOGIC               1                           ///< IPC subcommand to control RFI Control 4 register logic write
+#define V_PMC_PWRM_IPC_SUBCMD_EMI_CTRL0_LOGIC               2                           ///< IPC subcommand to control EMI Control 0 register logic write
+#define V_PMC_PWRM_IPC_SUBCMD_FFFC_FAULT_STATUS             3                           ///< IPC subcommand to control FFFC_FAULT_STATUS register logic read
+#define V_PMC_PWRM_IPC_SUBCMD_FFFC_RFI_STATUS               4                           ///< IPC subcommand to control FFFC_RFI_STATUS register logic read
+#define V_PMC_PWRM_IPC_CMD_CMD_ID_FIVR_READ                 0x00                        ///< IPC subcommand to read FIVR Register
+#define V_PMC_PWRM_IPC_CMD_CMD_ID_FIVR_WRITE                0x01                        ///< IPC subcommand to write FIVR Register and fuse SRAM/DCCM
+#define V_PMC_PWRM_IPC_CMD_COMMAND_CRASHLOG                 0xA6                        ///< CrashLog Command
+#define V_PMC_PWRM_IPC_CMD_CMD_ID_CRASHLOG_DISCOVERY        0x01                        ///< CrashLog Discovery SubCommand
+#define V_PMC_PWRM_IPC_CMD_CMD_ID_CRASHLOG_DISABLE          0x02                        ///< Disable CrashLog SubCommand
+#define V_PMC_PWRM_IPC_CMD_CMD_ID_CRASHLOG_ERASE            0x04                        ///< Clear CrashLog record SubCommand
+#define V_PMC_PWRM_IPC_CMD_CMD_ID_CRASHLOG_ON_RESET         0x05                        ///< Collect on all resets SubCommand
+#define V_PMC_PWRM_IPC_SRC_CLK_CMD                          0xA8                        ///< IPC to PMC SRCCLK command
+#define V_PMC_PWRM_IPC_SRC_CLK_PORT_MAPPING_CMD             0xAC                        ///< IPC to PMC SRCCLK and port mapping command
+#define R_PMC_PWRM_IPC_STS                                  0x04                        ///< IPC Status
+#define B_PMC_PWRM_IPC_STS_BUSY                             BIT0                        ///< IPC Status Busy Bit
+#define B_PMC_PWRM_IPC_STS_ERROR                            BIT1                        ///< IPC Status Error Bit
+#define R_PMC_PWRM_IPC_WBUF0                                0x80                        ///< IPC Write Buffer
+#define R_PMC_PWRM_IPC_WBUF1                                0x84                        ///< IPC Write Buffer
+#define R_PMC_PWRM_IPC_WBUF2                                0x88                        ///< IPC Write Buffer
+#define R_PMC_PWRM_IPC_WBUF3                                0x8C                        ///< IPC Write Buffer
+#define R_PMC_PWRM_IPC_RBUF0                                0x90                        ///< IPC Read Buffer
+#define R_PMC_PWRM_IPC_RBUF1                                0x94                        ///< IPC Read Buffer
+#define R_PMC_PWRM_IPC_RBUF2                                0x98                        ///< IPC Read Buffer
+#define R_PMC_PWRM_IPC_RBUF3                                0x9C                        ///< IPC Read Buffer
 
 #endif

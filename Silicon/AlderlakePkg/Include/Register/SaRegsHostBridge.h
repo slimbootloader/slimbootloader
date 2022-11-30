@@ -15,7 +15,7 @@
   - Registers / bits of new devices introduced in a SA generation will be just named
     as "_SA_" without [generation_name] inserted.
 
-  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021-2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -73,11 +73,6 @@
 #define V_SA_DEVICE_ID_DT_20      0x463B   ///< AlderLake Mobile S BGA (6+8(f)+GT) SA DID
 #define V_SA_DEVICE_ID_DT_21      0x4623   ///< AlderLake Mobile S BGA (4+8(f)+GT) SA DID
 #define V_SA_DEVICE_ID_DT_22      0x462B   ///< AlderLake Mobile S BGA (4+4(f)+GT) SA DID
-#define V_SA_DEVICE_ID_HALO_1     0x0002   ///< Reserved
-#define V_SA_DEVICE_ID_HALO_2     0x0003   ///< Reserved
-#define V_SA_DEVICE_ID_HALO_3     0x0006   ///< Reserved
-#define V_SA_DEVICE_ID_HALO_4     0x0007   ///< Reserved
-#define V_SA_DEVICE_ID_HALO_5     0x0008   ///< Reserved
 
 //
 // AlderLake CPU Mobile SA Device IDs B0:D0:F0

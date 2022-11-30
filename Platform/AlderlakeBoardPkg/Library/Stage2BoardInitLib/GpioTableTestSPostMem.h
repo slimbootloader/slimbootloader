@@ -62,7 +62,6 @@ GLOBAL_REMOVE_IF_UNREFERENCED GPIO_INIT_CONFIG mGpioTablePostMemTestsDdr5UDimmRv
   {GPIO_VER4_S_GPP_E6,    {GpioPadModeGpio, GpioHostOwnAcpi, GpioDirInInv,   GpioOutDefault,  GpioIntEdge|GpioIntSci,  GpioHostDeepReset,  GpioTermNone, GpioPadConfigUnlock}}, // PEG SLOT_1 Wake
   {GPIO_VER4_S_GPP_F7,    {GpioPadModeGpio, GpioHostOwnGpio, GpioDirOut,     GpioOutLow,      GpioIntDefault,          GpioPlatformReset,  GpioTermNone}},                      // PEG_SLOT_DGPU_SEL_N, MIPI60 (Rework)
   {GPIO_VER4_S_GPP_F9,    {GpioPadModeGpio, GpioHostOwnGpio, GpioDirInInv,   GpioOutDefault,  GpioIntDefault,          GpioPlatformReset,  GpioTermNone}},                      // PEG_SLOT_DGPU_PWR_OK, MIPI60 (Rework)
-//{GPIO_VER4_S_GPP_F3,    {GpioPadModeGpio, GpioHostOwnGpio, GpioDirOut,     GpioOutHigh,     GpioIntDefault,          GpioResetDefault,   GpioTermNone}},                      // PEG_SLOT_PWREN, moved to EarlyPreMem
 
   // SATA
   {GPIO_VER4_S_GPP_R11,   {GpioPadModeGpio, GpioHostOwnGpio, GpioDirOut,     GpioOutHigh,     GpioIntDefault,          GpioPlatformReset,  GpioTermNone}}, // SATA Direct power enable

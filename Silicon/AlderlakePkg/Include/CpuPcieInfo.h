@@ -25,7 +25,4 @@ PCIe controller configuration.
 #define SA_PEG3_DEV_NUM    0x06
 
 
-#define DMI_GEN1              1
-
-
 #endif
