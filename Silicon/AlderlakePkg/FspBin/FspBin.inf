@@ -11,7 +11,7 @@
 
 [UserExtensions.SBL."CloneRepo"]
   REPO    = https://github.com/intel/FSP.git
-  COMMIT  = 0cee967cc4a648368c7135013239e13c2ce35ce1
+  COMMIT  = f99be62be87caddbacd9af6d9b99b1d9739646f1
 
 [UserExtensions.SBL."CopyList"]
 # For ADL-S
@@ -38,3 +38,16 @@
   AlderLakeFspBinPkg/IoT/AlderLakeP/VBT/VbtAdlP.bin           : Platform/AlderlakeBoardPkg/VbtBin/VbtAdlP.dat
   AlderLakeFspBinPkg/IoT/AlderLakeP/VBT/VbtAdlP.json          : Platform/AlderlakeBoardPkg/VbtBin/VbtAdlP.json
   FSP_License.pdf                                             : Silicon/AlderlakePkg/Adlp/FspBin/FSP_License.pdf
+# For ADL-PS
+  AlderLakeFspBinPkg/IoT/AlderLakePS/Fsp.fd                               : Silicon/AlderlakePkg/Adlps/FspBin/FspDbg.bin
+  AlderLakeFspBinPkg/IoT/AlderLakePS/Fsp.fd                               : Silicon/AlderlakePkg/Adlps/FspBin/FspRel.bin
+  AlderLakeFspBinPkg/IoT/AlderLakePS/Fsp.bsf                              : Silicon/AlderlakePkg/Adlps/FspBin/Fsp.bsf
+  AlderLakeFspBinPkg/IoT/AlderLakePS/Include/FspUpd.h                     : Silicon/AlderlakePkg/Adlps/Include/FspUpd.h
+  AlderLakeFspBinPkg/IoT/AlderLakePS/Include/FsptUpd.h                    : Silicon/AlderlakePkg/Adlps/Include/FsptUpd.h
+  AlderLakeFspBinPkg/IoT/AlderLakePS/Include/FspmUpd.h                    : Silicon/AlderlakePkg/Adlps/Include/FspmUpd.h
+  AlderLakeFspBinPkg/IoT/AlderLakePS/Include/FspsUpd.h                    : Silicon/AlderlakePkg/Adlps/Include/FspsUpd.h
+  AlderLakeFspBinPkg/IoT/AlderLakePS/Include/FspInfoHob.h                 : Silicon/AlderlakePkg/Adlps/Include/FspInfoHob.h
+  AlderLakeFspBinPkg/IoT/AlderLakePS/Vbt/Vbt_AdlpsRvp_eDp_Dp.bin          : Platform/AlderlakeBoardPkg/VbtBin/VbtAdlPsRvp.dat
+  AlderLakeFspBinPkg/IoT/AlderLakePS/Vbt/Vbt_AdlpsCrb_Dp_To_Hdmi.bin      : Platform/AlderlakeBoardPkg/VbtBin/VbtAdlPsCrb.dat
+  AlderLakeFspBinPkg/IoT/AlderLakePS/Vbt/VbtAdlP.json                     : Platform/AlderlakeBoardPkg/VbtBin/VbtAdlPs.json
+  FSP_License.pdf                                                         : Silicon/AlderlakePkg/Adlps/FspBin/FSP_License.pdf
