@@ -39,9 +39,9 @@ LinuxPerfIdToStr (
   case 0x4070:
     return "Load boot images";
   case 0x4080:
-    return "Verify IAS image";
+    return "Verify boot image";
   case 0x40A0:
-    return "Process IAS type";
+    return "Process boot image type";
   case 0x40B0:
     return "Process ELF/MultiBoot";
   case 0x40E0:
