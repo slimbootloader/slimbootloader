@@ -104,7 +104,7 @@ UpdateLoadedImage (
     return EFI_SUCCESS;
   }
 
-  if (ImageType == IAS_TYPE_CLASSIC) {
+  if (ImageType == CONTAINER_TYPE_CLASSIC) {
     // Files: cmdline, bzImage, initrd, acpi, firmware1, firmware2, ...
     LinuxImage                = &LoadedImage->Image.Linux;
     LoadedImage->Flags       |= LOADED_IMAGE_LINUX;
@@ -135,7 +135,7 @@ UpdateLoadedImage (
       Index++;
     }
     LinuxImage->ExtraBlobNumber = Index;
-  } else if (ImageType == IAS_TYPE_MULTIBOOT) {
+  } else if (ImageType == CONTAINER_TYPE_MULTIBOOT) {
     // Files: cmdline1, elf1, cmdline2, elf2, ...
     // Assume the first elf file is the one to boot
     MultiBoot                = &LoadedImage->Image.MultiBoot;
@@ -191,7 +191,7 @@ UpdateLoadedImage (
   @param[in, out] LoadedImage   Loaded Image information.
 
   @retval  RETURN_SUCCESS       Parse container image successfully
-  @retval  Others               There is error when parsing IAS image.
+  @retval  Others               There is error when parsing CONTAINER image.
 **/
 EFI_STATUS
 ParseContainerImage (
@@ -203,7 +203,7 @@ ParseContainerImage (
   CONTAINER_HDR              *ContainerHdr;
   UINT64                      ComponentName;
   LOADER_COMPRESSED_HEADER   *LzHdr;
-  IMAGE_DATA                  File[MAX_IAS_SUB_IMAGE];
+  IMAGE_DATA                  File[MAX_CONTAINER_SUB_IMAGE];
   UINT8                       Index;
 
   ContainerHdr = (CONTAINER_HDR  *)LoadedImage->ImageData.Addr;
@@ -282,7 +282,7 @@ ParseContainerImage (
   @param[in, out] LoadedImage   Loaded Image information.
 
   @retval  RETURN_SUCCESS       Parse component image successfully
-  @retval  Others               There is error when parsing IAS image.
+  @retval  Others               There is error when parsing component image.
 **/
 EFI_STATUS
 ParseComponentImage (
@@ -945,8 +945,6 @@ ParseBootImages (
       if (FeaturePcdGet (PcdContainerBootEnabled)) {
         Status = ParseContainerImage (OsBootOption, LoadedImage);
       }
-    } else if ((LoadedImage->Flags & LOADED_IMAGE_IAS) != 0) {
-      Status = ParseIasImage (OsBootOption, LoadedImage);
     } else if ((LoadedImage->Flags & LOADED_IMAGE_COMPONENT) != 0) {
       Status = ParseComponentImage (OsBootOption, LoadedImage);
     }
