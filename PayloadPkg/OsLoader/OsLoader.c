@@ -304,68 +304,6 @@ ParseComponentImage (
 }
 
 /**
-  Parse IAS image
-
-  This function will parse IAS image and get every file blobs info, Especially
-  get the command line file and ELF/kernel file for boot.
-
-  @param[in]      BootOption    Current boot option
-  @param[in, out] LoadedImage   Loaded Image information.
-
-  @retval  RETURN_SUCCESS       Parse IAS image successfully
-  @retval  Others               There is error when parsing IAS image.
-**/
-EFI_STATUS
-ParseIasImage (
-  IN     OS_BOOT_OPTION      *BootOption,
-  IN OUT LOADED_IMAGE        *LoadedImage
-  )
-{
-  IAS_HEADER                *IasImage;
-  UINT32                     NumFiles;
-  IMAGE_DATA                 File[MAX_IAS_SUB_IMAGE];
-  UINT32                     ImageType;
-  IAS_IMAGE_INFO             IasImageInfo;
-  COMPONENT_CALLBACK_INFO    CompInfo;
-  EFI_STATUS                 Status;
-
-  IasImage = IsIasImageValid (LoadedImage->ImageData.Addr, LoadedImage->ImageData.Size, &IasImageInfo);
-  if (IasImage == NULL) {
-    DEBUG ((DEBUG_INFO, "Image given is not a valid IAS image\n"));
-    return EFI_LOAD_ERROR;
-  }
-
-  if (FeaturePcdGet (PcdMeasuredBootEnabled) && (GetFeatureCfg() & FEATURE_MEASURED_BOOT)) {
-    // Fill  COMPONENT_CALLBACK_INFO
-    CompInfo.ComponentType =  CONTAINER_BOOT_SIGNATURE;
-    CompInfo.CompBuf       =  IasImageInfo.CompBuf;
-    CompInfo.CompLen       =  IasImageInfo.CompLen;
-    CompInfo.HashAlg       =  IasImageInfo.HashAlg;
-    CompInfo.HashData      =  IasImageInfo.HashData;
-
-  // Extend OsImage hash to TPM
-    ExtendStageHash (&CompInfo);
-  }
-
-  AddMeasurePoint (0x4080);
-
-  ZeroMem (File, sizeof (File));
-  NumFiles = IasGetFiles (IasImage, sizeof (File) / sizeof ((File)[0]), File);
-  DEBUG ((DEBUG_INFO, "IAS size = 0x%x, file number: %d\n", LoadedImage->ImageData.Size, NumFiles));
-
-  ImageType = IAS_IMAGE_TYPE (IasImage->ImageType);
-  DEBUG ((DEBUG_INFO, "IAS Image Type = 0x%x\n", ImageType));
-
-  Status = UpdateLoadedImage (NumFiles, File, LoadedImage, ImageType);
-  if (EFI_ERROR (Status)) {
-    UnloadLoadedImage (LoadedImage);
-  }
-
-  AddMeasurePoint (0x40A0);
-  return Status;
-}
-
-/**
   Setup boot image
 
   This function will check boot image type, then setup boot parameters
