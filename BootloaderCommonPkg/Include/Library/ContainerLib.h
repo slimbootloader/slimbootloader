@@ -40,6 +40,13 @@ typedef UINT8 AUTH_TYPE;
 // Attributes for COMPONENT_ENTRY
 #define COMPONENT_ENTRY_ATTR_RESERVED       BIT7
 
+// Container Image types
+#define CONTAINER_TYPE_NORMAL               0x0     // Used for boot images in FV, regular ELF, PE32, etc. formats
+#define CONTAINER_TYPE_CLASSIC              0x3     // Used for booting Linux with bzImage, cmdline, initrd, etc.
+#define CONTAINER_TYPE_MULTIBOOT            0x4     // Multiboot compliant ELF images
+
+// Max images per container
+#define MAX_CONTAINER_SUB_IMAGE             32
 
 typedef struct {
   UINT32           ComponentType;
