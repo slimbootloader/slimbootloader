@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
   Copyright (c) 1997 Manuel Bouyer.
@@ -572,7 +572,7 @@ SearchDirectory (
         // found entry
         //
         *INumPtr = Dp->Ext2DirectInodeNumber;
-        File->FileNamePtr = Name;
+        AsciiStrCpyS (File->FileNameBuf, EXT2FS_MAXNAMLEN, Name);
         return 0;
       }
     }
@@ -818,6 +818,7 @@ Ext2fsOpen (
   CHAR8 *Buf;
 
   Nlinks = 0;
+  CHAR8 SymFileNameBuf[EXT2FS_MAXNAMLEN];
 #endif
 
   INDPTR mult;
@@ -957,6 +958,11 @@ Ext2fsOpen (
 
       Len = AsciiStrLen (Cp);
 
+      if (Nlinks == 0) {
+        /* copy the top-most filename */
+        AsciiStrCpyS (SymFileNameBuf, EXT2FS_MAXNAMLEN, Ncp);
+      }
+
       if (((LinkLength + Len) > MAXPATHLEN) ||
           ((++Nlinks) > MAXSYMLINKS)) {
         Status = RETURN_LOAD_ERROR;
@@ -1001,6 +1007,12 @@ Ext2fsOpen (
         INumber = (INODE32)EXT2_ROOTINO;
       }
 
+      if (Nlinks == 1) {
+        /* only show the dest name of the next link */
+        AsciiStrCatS (SymFileNameBuf, EXT2FS_MAXNAMLEN, " -> ");
+        AsciiStrCatS (SymFileNameBuf, EXT2FS_MAXNAMLEN, NameBuf);
+      }
+
       Status = ReadInode (INumber, File);
       if (RETURN_ERROR (Status)) {
         goto out;
@@ -1030,6 +1042,12 @@ Ext2fsOpen (
 #endif // !LIBSA_FS_SINGLECOMPONENT
 
   Fp->SeekPtr = 0;        // reset seek pointer
+
+#ifndef LIBSA_NO_FS_SYMLINK
+  if (Nlinks > 0) {
+    AsciiStrCpyS (File->FileNameBuf, EXT2FS_MAXNAMLEN, SymFileNameBuf);
+  }
+#endif
 
 out:
   if (RETURN_ERROR (Status)) {

@@ -1,4 +1,7 @@
 /** @file
+ Copyright (c) 2022, Intel Corporation. All rights reserved.<BR>
+ SPDX-License-Identifier: BSD-2-Clause-Patent
+
  Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -99,7 +102,7 @@ typedef struct {
 #if !defined(LIBSA_NO_RAW_ACCESS)
   OFFSET      FileOffset;                     // current file offset (F_RAW)
 #endif
-  CHAR8       *FileNamePtr;
+  CHAR8       FileNameBuf[EXT2FS_MAXNAMLEN];  // buffer to store file name (not always the actual name, e.g., symbolic link)
 } OPEN_FILE;
 
 #if ! defined(LIBSA_SINGLE_DEVICE)
