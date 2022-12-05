@@ -295,9 +295,6 @@ class Board(BaseBoard):
         if self._LP_SUPPORT:
             dsc['PcdsFixedAtBuild'].append ('gPlatformAlderLakeTokenSpaceGuid.PcdAdlLpSupport | TRUE')
 
-        if self._N_SUPPORT:
-            dsc['PcdsFixedAtBuild'].append ('gPlatformAlderLakeTokenSpaceGuid.PcdAdlNSupport | TRUE')
-
         return dsc
 
 
