@@ -68,9 +68,9 @@ UpdateLoadedImage (
   PlatformService = NULL;
   Status = EFI_SUCCESS;
 
-  if (NumFiles == 1) {
-    // This is not valid image use case, at least 2 files in image.
-    // Support this only for test
+  if (ImageType == CONTAINER_TYPE_NORMAL) {
+    // Image can be of type: Multiboot, PE, FV, bzImage, or ELF
+    // Assuming that the first image in the container is used for booting
     CommonImage                = &LoadedImage->Image.Common;
     CopyMem (&CommonImage->BootFile, &File[0], sizeof (IMAGE_DATA));
     if (IsMultiboot (File[0].Addr)) {
@@ -102,9 +102,7 @@ UpdateLoadedImage (
 
     DEBUG ((DEBUG_INFO, "One %a file in boot image file .... \n", TypeStr));
     return EFI_SUCCESS;
-  }
-
-  if (ImageType == CONTAINER_TYPE_CLASSIC) {
+  } else if (ImageType == CONTAINER_TYPE_CLASSIC) {
     // Files: cmdline, bzImage, initrd, acpi, firmware1, firmware2, ...
     LinuxImage                = &LoadedImage->Image.Linux;
     LoadedImage->Flags       |= LOADED_IMAGE_LINUX;
