@@ -104,6 +104,14 @@ UpdateLoadedImage (
     return EFI_SUCCESS;
   } else if (ImageType == CONTAINER_TYPE_CLASSIC) {
     // Files: cmdline, bzImage, initrd, acpi, firmware1, firmware2, ...
+    // The file order mentioned above is fixed and needs to be followed
+
+    // Make sure that the boot file (File[1]) is present
+    if (NumFiles < 2) {
+      DEBUG ((DEBUG_ERROR, "Containers with only one file need to packaged as a \"Normal\" container.\n"));
+      ASSERT (NumFiles >= 2);
+    }
+
     LinuxImage                = &LoadedImage->Image.Linux;
     LoadedImage->Flags       |= LOADED_IMAGE_LINUX;
     CopyMem (&LinuxImage->CmdFile, &File[0], sizeof (IMAGE_DATA));
