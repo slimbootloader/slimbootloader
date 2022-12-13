@@ -52,17 +52,17 @@ def main():
     create_dirs ([tmp_dir, os_dir])
 
     # download and unzip UEFI payload image
-    local_file = tmp_dir + '/UefiUpld.zip'
+    local_file = tmp_dir + '/UniversalPayload.zip'
     download_url (
-        'https://github.com/slimbootloader/slimbootloader/files/7317829/UefiUpld.zip',
+        'https://github.com/slimbootloader/slimbootloader/files/10221853/UniversalPayload.zip',
         local_file
     )
     unzip_file (local_file, tmp_dir)
 
     # Create new EPAYLOAD and replace it in SlimBootloader.bin
     layout = ',\n'.join ([
-                 "( 'EPLD', 'EPAYLOAD.bin'  , 'NORMAL'  , 'RSA3072_PSS_SHA2_384'  , 'KEY_ID_CONTAINER_RSA3072'      , 0x10      , 0         , 0x0       )",
-                 "( 'UEFI', 'UefiUpld.elf'  , 'Lzma'    , 'SHA2_384'              , ''                              , 0x10      , 0         , 0x0       )"
+                 "( 'EPLD', 'EPAYLOAD.bin'          , 'NORMAL'  , 'RSA3072_PSS_SHA2_384'  , 'KEY_ID_CONTAINER_RSA3072'      , 0x10      , 0         , 0x0       )",
+                 "( 'UEFI', 'UniversalPayload.elf'  , 'Lzma'    , 'SHA2_384'              , ''                              , 0x10      , 0         , 0x0       )"
                ])
     gen_file_from_object (tmp_dir + '/epld.txt', layout, '')
     sbl_dir = os.getcwd()
