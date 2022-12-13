@@ -68,9 +68,9 @@ class CONTAINER_HDR (Structure):
     }
 
     _image_type = {
-      'NORMAL'     :  0x00,
-      'CLASSIC'    :  0xF3,
-      'MULTIBOOT'  :  0xF4,
+      'NORMAL'     :  0x00,                 # Used for boot images in FV, regular ELF, PE32, etc. formats
+      'CLASSIC'    :  0xF3,                 # Used for booting Linux with bzImage, cmdline, initrd, etc.
+      'MULTIBOOT'  :  0xF4,                 # Multiboot compliant ELF images
     }
 
     def __new__(cls, buf = None):

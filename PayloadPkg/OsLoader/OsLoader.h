@@ -17,7 +17,6 @@
 #include <Library/DecompressLib.h>
 #include <Library/PayloadLib.h>
 #include <Library/ShellLib.h>
-#include <Library/IasImageLib.h>
 #include <Library/MultibootLib.h>
 #include <Library/MediaAccessLib.h>
 #include <Library/PayloadEntryLib.h>
