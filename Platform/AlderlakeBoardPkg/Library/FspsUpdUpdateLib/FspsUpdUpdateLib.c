@@ -42,6 +42,10 @@
 #define MAX_TCSS_USB3_PORTS                4
 #define TURBO_RATIO_LIMIT_ARRAY_SIZE       8
 
+CHAR8 *
+GetCpuName (
+  VOID
+);
 
 //
 // This table contains data on INTx and IRQ for PCH-S
@@ -466,7 +470,8 @@ TccModePostMemConfig (
     FspsUpd->FspsConfig.TccCacheCfgSize = TccCacheconfigSize;
     DEBUG ((DEBUG_INFO, "Load Tcc Cache @0x%p, size = 0x%x\n", TccCacheconfigBase, TccCacheconfigSize));
 
-    if (IsPchS ()) {
+    if (IsPchS () ||
+      (IsPchP() && 0 == AsciiStrCmp(GetCpuName(),"RaptorLake"))) {
       FspsUpd->FspsConfig.TccMode = 1;
 #if FixedPcdGet8(PcdAdlNSupport) == 0
       FspsUpd->FspsConfig.L2QosEnumerationEn = 1;
@@ -740,7 +745,8 @@ UpdateFspConfig (
     }
 
     // TSN feature support
-    if (IsPchS () || IsPchN () ) {
+    if (IsPchS () || IsPchN () ||
+      (IsPchP() && 0 == AsciiStrCmp(GetCpuName(),"RaptorLake"))) {
 #if PLATFORM_RPLS || PLATFORM_RPLP || PLATFORM_RPLPCRB
       FspsConfig->PchTsnEnable[0] = SiCfgData->PchTsnEnable;
       FspsConfig->PchTsnEnable[1] = SiCfgData->PchTsnEnable;
@@ -1234,7 +1240,8 @@ UpdateFspConfig (
     }
   }
 
-  if (IsPchS () || IsPchN()) {
+  if (IsPchS() || IsPchN() ||
+    (IsPchP() && 0 == AsciiStrCmp(GetCpuName(),"RaptorLake"))) {
 #if FixedPcdGet8 (PcdTccEnabled)
     Status = TccModePostMemConfig (FspsUpd);
 #endif

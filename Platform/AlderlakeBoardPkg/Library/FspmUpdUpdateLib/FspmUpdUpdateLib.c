@@ -58,6 +58,40 @@ GetCpuStepping(
   return ((CPU_STEPPING) (Eax.Uint32 & CPUID_FULL_STEPPING));
 }
 
+/**
+  Return CPU name
+
+  @retval               CPU name string
+**/
+CHAR8 *
+GetCpuName (
+  VOID
+  )
+{
+  UINT32                  CpuFamilyModel;
+  CPUID_VERSION_INFO_EAX  Eax;
+
+  ///
+  /// Read the CPUID & DID information
+  ///
+  AsmCpuid (CPUID_VERSION_INFO, &Eax.Uint32, NULL, NULL, NULL);
+  CpuFamilyModel = Eax.Uint32 & CPUID_FULL_FAMILY_MODEL;
+
+  switch (CpuFamilyModel) {
+    case CPUID_FULL_FAMILY_MODEL_RAPTORLAKE_DT_HALO:
+    case CPUID_FULL_FAMILY_MODEL_RAPTORLAKE_2_DT_HALO:
+    case CPUID_FULL_FAMILY_MODEL_RAPTORLAKE_MOBILE:
+      return "RaptorLake";
+    case CPUID_FULL_FAMILY_MODEL_ALDERLAKE_MOBILE:
+    case CPUID_FULL_FAMILY_MODEL_ALDERLAKE_DT_HALO:
+    case CPUID_FULL_FAMILY_MODEL_ALDERLAKE_ATOM:
+      return "AlderLake";
+    default:
+      return "Unknown";
+  }
+
+}
+
 #if FixedPcdGet8 (PcdTccEnabled)
 /**
   Update FSP-M UPD config data for TCC mode and tuning
@@ -656,7 +690,8 @@ UpdateFspConfig (
   }
 
   // Tcc enabling
-  if (IsPchS() || IsPchN()) {
+  if (IsPchS() || IsPchN() ||
+    (IsPchP() && 0 == AsciiStrCmp(GetCpuName(),"RaptorLake"))) {
 #if FixedPcdGet8 (PcdTccEnabled)
     Fspmcfg->WdtDisableAndLock = 0x0;
     TccModePreMemConfig (FspmUpd);
