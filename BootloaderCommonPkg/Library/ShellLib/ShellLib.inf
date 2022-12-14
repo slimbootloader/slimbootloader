@@ -80,6 +80,7 @@
   MtrrLib
   RngLib
   MemoryAllocationLib
+  LoaderPerformanceLib
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress

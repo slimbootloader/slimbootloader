@@ -1,7 +1,7 @@
 /** @file
   Shell command `perf` to display system performance data.
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -11,6 +11,8 @@
 #include <Guid/CsmePerformanceInfoGuid.h>
 #include <Guid/PerformanceInfoGuid.h>
 #include <Library/HobLib.h>
+#include <Library/BootloaderCommonLib.h>
+#include <Library/LoaderPerformanceLib.h>
 
 /**
   Display performance data.
@@ -56,16 +58,16 @@ PrintPerformanceInfo (
 
   PrevTime = 0;
 
-  ShellPrint (L" Id   | Time (ms)  | Delta (ms) \n");
-  ShellPrint (L"------+------------+------------\n");
+  ShellPrint (L" Id   | Time (ms)  | Delta (ms) | Description\n");
+  ShellPrint (L"------+------------+------------+---------------------------\n");
   for (Idx = 0; Idx < PerfData->Count; Idx++) {
     Tsc  = PerfData->TimeStamp[Idx] & 0x0000FFFFFFFFFFFFULL;
     Id   = (RShiftU64 (PerfData->TimeStamp[Idx], 48)) & 0xFFFF;
     Time = (UINT32)DivU64x32 (Tsc, PerfData->Frequency);
-    ShellPrint (L" %4x | %7d ms | %7d ms\n", Id, Time, Time - PrevTime);
+    ShellPrint (L" %4x | %7d ms | %7d ms | %a\n", Id, Time, Time - PrevTime, PerfIdToStr (Id, NULL));
     PrevTime = Time;
   }
-  ShellPrint (L"------+------------+------------\n");
+  ShellPrint (L"------+------------+------------+---------------------------\n");
 }
 
 /**
@@ -99,8 +101,8 @@ PrintCsmePerformanceInfo (
   ShellPrint (L"CSME Performance Info\n");
   ShellPrint (L"=======================\n\n");
 
-  ShellPrint (L" Id   | Time (ms)  | Delta (ms) \n");
-  ShellPrint (L"------+------------+------------\n");
+  ShellPrint (L" Id   | Time (ms)  | Delta (ms) | Description\n");
+  ShellPrint (L"------+------------+------------+---------------------------\n");
   //
   // Initialize previous time stamp to CSME ROM Start execution TS
   //
@@ -112,10 +114,11 @@ PrintCsmePerformanceInfo (
     if (CsmePerformanceInfo->BootPerformanceData[Index] == 0) {
       continue;
     }
-    ShellPrint (L" %4x | %7d ms | %7d ms\n",
+    ShellPrint (L" %4x | %7d ms | %7d ms | %a\n",
           Index,\
           CsmePerformanceInfo->BootPerformanceData[Index],\
-          CsmePerformanceInfo->BootPerformanceData[Index] - PrevTS);
+          CsmePerformanceInfo->BootPerformanceData[Index] - PrevTS,\
+          PerfIdToStr (Index, CsmePerfIdToStr));
     PrevTS = CsmePerformanceInfo->BootPerformanceData[Index];
   }
 }
