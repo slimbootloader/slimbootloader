@@ -741,7 +741,12 @@ UpdateFspConfig (
 
     // TSN feature support
     if (IsPchS () || IsPchN () ) {
+#if PLATFORM_RPLS
+      FspsConfig->PchTsnEnable[0] = SiCfgData->PchTsnEnable;
+      FspsConfig->PchTsnEnable[1] = SiCfgData->PchTsnEnable;
+#else
       FspsConfig->PchTsnEnable = SiCfgData->PchTsnEnable;
+#endif
       if(SiCfgData->PchTsnEnable == 1) {
         FspsConfig->PchTsnMultiVcEnable = SiCfgData->PchTsnMultiVcEnable;
 
