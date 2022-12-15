@@ -11,7 +11,7 @@
 
 [UserExtensions.SBL."CloneRepo"]
   REPO    = https://github.com/intel/FSP.git
-  COMMIT  = af464fcd242e69259111d1c3d5dd75a0cb84e8ac
+  COMMIT  = 6f2f17f3d3397cc2f00a644e218980bb33e06f66
 
 [UserExtensions.SBL."CopyList"]
 # For ICX-D HCC
