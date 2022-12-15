@@ -14,7 +14,7 @@
 #define INT_EDGE_TRIG   1
 #define INT_ACTIVE_LOW  0
 #define INT_ACTIVE_HIGH 1
-#define PCH_ADL 1
+#define PCH_ADL 0
 
 DefinitionBlock (
   "DSDT.aml",

@@ -1012,14 +1012,14 @@ UpdateFspConfig (
     FspsConfig->CstateLatencyControl1TimeUnit = PowerCfgData->CstateLatencyControl1TimeUnit;
     FspsConfig->CstateLatencyControl2TimeUnit = PowerCfgData->CstateLatencyControl2TimeUnit;
     FspsConfig->CstateLatencyControl3TimeUnit = PowerCfgData->CstateLatencyControl3TimeUnit;
-     FspsConfig->CstateLatencyControl4TimeUnit = PowerCfgData->CstateLatencyControl4TimeUnit;
-     FspsConfig->CstateLatencyControl5TimeUnit = PowerCfgData->CstateLatencyControl5TimeUnit;
-     FspsConfig->PkgCStateLimit                = PowerCfgData->PkgCStateLimit;
-     FspsConfig->CstateLatencyControl1Irtl     = PowerCfgData->CstateLatencyControl1Irtl;
-     FspsConfig->CstateLatencyControl2Irtl     = PowerCfgData->CstateLatencyControl2Irtl;
-     FspsConfig->CstateLatencyControl3Irtl     = PowerCfgData->CstateLatencyControl3Irtl;
-     FspsConfig->CstateLatencyControl4Irtl     = PowerCfgData->CstateLatencyControl4Irtl;
-     FspsConfig->CstateLatencyControl5Irtl     = PowerCfgData->CstateLatencyControl5Irtl;
+    FspsConfig->CstateLatencyControl4TimeUnit = PowerCfgData->CstateLatencyControl4TimeUnit;
+    FspsConfig->CstateLatencyControl5TimeUnit = PowerCfgData->CstateLatencyControl5TimeUnit;
+    FspsConfig->PkgCStateLimit                = PowerCfgData->PkgCStateLimit;
+    FspsConfig->CstateLatencyControl1Irtl     = PowerCfgData->CstateLatencyControl1Irtl;
+    FspsConfig->CstateLatencyControl2Irtl     = PowerCfgData->CstateLatencyControl2Irtl;
+    FspsConfig->CstateLatencyControl3Irtl     = PowerCfgData->CstateLatencyControl3Irtl;
+    FspsConfig->CstateLatencyControl4Irtl     = PowerCfgData->CstateLatencyControl4Irtl;
+    FspsConfig->CstateLatencyControl5Irtl     = PowerCfgData->CstateLatencyControl5Irtl;
 
     // Cpu power related settings
     for (Index = 0; Index < TURBO_RATIO_LIMIT_ARRAY_SIZE; Index++) {
@@ -1173,6 +1173,7 @@ UpdateFspConfig (
         FspsConfig->AmtEnabled = 0x1;
         FspsConfig->LidStatus = 0x5b;
         FspsConfig->TcssAuxOri = 0x1;
+        FspsConfig->PchS0ixAutoDemotion = 0x1;
         break;
       case PLATFORM_ID_ADL_N_LPDDR5_RVP:
         FspsConfig->PchLanEnable = 0x0;
@@ -1198,7 +1199,7 @@ UpdateFspConfig (
         FspsConfig->CpuPcieRpLtrEnable[2] = 0x0;
         FspsConfig->Usb4CmMode = 0x0;
         FspsConfig->EnergyEfficientTurbo = 0x1;
-        FspsConfig->PkgCStateLimit = 0x6;
+        FspsConfig->PkgCStateLimit = 0xFF;
         FspsConfig->PsysPmax = 0x0;
         FspsConfig->PchUnlockGpioPads = 0x1;
 

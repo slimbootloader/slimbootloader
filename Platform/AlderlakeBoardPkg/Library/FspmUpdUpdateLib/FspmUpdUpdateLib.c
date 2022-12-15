@@ -640,6 +640,7 @@ UpdateFspConfig (
         Fspmcfg->FirstDimmBitMask = 0x0;
         //Fspmcfg->FirstDimmBitMaskEcc = 0x0;
         Fspmcfg->Lp5BankMode = 0x0;
+        Fspmcfg->SaIpuEnable = 0x0;
         break;
       case PLATFORM_ID_ADL_N_LPDDR5_RVP:
         Fspmcfg->DmiHweq = 0x2;

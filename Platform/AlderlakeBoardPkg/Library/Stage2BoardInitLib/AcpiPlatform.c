@@ -932,6 +932,8 @@ PlatformUpdateAcpiGnvs (
 
   PchNvs->ClkreqIpcCmdSupported = 1;
   PchNvs->HybridStorageCpuRpLocation = 0xFF;
+  PchNvs->Ufs0Enabled = 0;
+  PchNvs->Ufs1Enabled = 0;
 
   //Platform NVS Init
   PlatformNvs->ApicEnable                   = 1;
@@ -1190,6 +1192,7 @@ PlatformUpdateAcpiGnvs (
     PlatformNvs->FoxLanRpNumber = 0xA;
     PlatformNvs->WlanWakeGpio = GPIO_VER2_LP_GPP_D13;
     PlatformNvs->WlanRootPortNumber = 4;
+    PlatformNvs->XdciFnEnable = 0; // USB xDCI disable in PCH IO from BIOS menu
     break;
   default:
     DEBUG ((DEBUG_ERROR, "Could not find PlatformNvs settings for PlatformId 0x%X!\n", GetPlatformId ()));

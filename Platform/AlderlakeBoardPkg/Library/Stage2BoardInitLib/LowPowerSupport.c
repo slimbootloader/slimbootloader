@@ -148,6 +148,8 @@ UINT64 GetLowPowerS0IdleConstraint(VOID)
       return 0x000000AE60CBE677;
     } else if (IsPchP ()) {
       return 0x000000AE60E98677;
+    } else if (IsPchN ()) {
+      return 0x000000AE60698EF7;
     }
   } else {
 
@@ -301,6 +303,7 @@ UINT64 GetLowPowerS0IdleConstraint(VOID)
                                 ((UINT64)(PepUfs[0] && PepConfigData->PepUfs1)                                     << 45) | // Bit[45]    - En/Dis UFS1
                                 ((UINT64)(PepSerialIoI2c[7] && PepConfigData->PepI2c7)                             << 46);  // Bit[46]    - En/Dis I2C7
 
+    LowPowerS0IdleConstraint = 0x000000AE60698EF7;
     DEBUG((DEBUG_INFO, "ACPI NVS, LowPowerS0IdleConstraint(Micro-pep constraints) = 0x%lX \n", LowPowerS0IdleConstraint ));
   }
 
