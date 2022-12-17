@@ -57,6 +57,7 @@
 #define NULL  ((VOID *) 0)
 #endif
 
+#define PACKED
 //
 //  Support for variable length argument lists using the ANSI standard.
 //
