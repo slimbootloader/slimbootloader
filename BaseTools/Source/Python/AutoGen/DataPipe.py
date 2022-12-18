@@ -148,6 +148,8 @@ class MemoryDataPipe(DataPipe):
 
         self.DataContainer = {"CL_defines": GlobalData.gCommandLineDefines}
 
+        self.DataContainer = {"gCommandMaxLength": GlobalData.gCommandMaxLength}
+
         self.DataContainer = {"Env_Var": {k:v for k, v in os.environ.items()}}
 
         self.DataContainer = {"PackageList": [(dec.MetaFile,dec.Arch) for dec in PlatformInfo.PackageList]}
@@ -167,3 +169,5 @@ class MemoryDataPipe(DataPipe):
         self.DataContainer = {"BinCacheDest":GlobalData.gBinCacheDest}
 
         self.DataContainer = {"EnableGenfdsMultiThread":GlobalData.gEnableGenfdsMultiThread}
+
+        self.DataContainer = {"gPlatformFinalPcds":GlobalData.gPlatformFinalPcds}

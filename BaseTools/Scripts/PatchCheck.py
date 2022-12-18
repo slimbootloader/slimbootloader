@@ -371,6 +371,9 @@ class GitDiffCheck:
                     # do not enforce CR/LF line endings.
                     #
                     self.force_notabs = False
+                if os.path.basename(self.filename) == 'GNUmakefile' or \
+                   os.path.basename(self.filename) == 'Makefile':
+                    self.force_notabs = False
             elif len(line.rstrip()) != 0:
                 self.format_error("didn't find diff command")
             self.line_num += 1
