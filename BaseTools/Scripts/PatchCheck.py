@@ -411,7 +411,9 @@ class GitDiffCheck:
             elif line.startswith('\r\n'):
                 pass
             elif line.startswith(r'\ No newline '):
-                self.error('No newline at end of file %s' % (self.filename))
+                # report error when matches to last line
+                if self.line_num == len(self.lines)-1:
+                    self.error('No newline at end of file %s' % (self.filename))
             elif not line.startswith(' '):
                 self.format_error("unexpected patch line")
             self.line_num += 1
