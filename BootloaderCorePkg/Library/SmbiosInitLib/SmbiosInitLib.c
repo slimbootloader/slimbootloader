@@ -65,7 +65,7 @@ CONST SMBIOS_TYPE_STRINGS  mDefaultSmbiosStrings[] = {
   {  SMBIOS_TYPE_SYSTEM_ENCLOSURE ,        3,  SMBIOS_STRING_UNKNOWN          },  // Serial Number
   {  SMBIOS_TYPE_SYSTEM_ENCLOSURE ,        4,  SMBIOS_STRING_UNKNOWN          },  // AssetTag
   // Type 16
-  {  SMBIOS_TYPE_PHYSICAL_MEMORY_ARRAY ,   1,  SMBIOS_STRING_UNKNOWN          },  // NumberOfMemoryDevices;
+  {  SMBIOS_TYPE_PHYSICAL_MEMORY_ARRAY ,   1,  SMBIOS_STRING_UNKNOWN          },  // NumberOfMemoryDevices
   // Type 17
   {  SMBIOS_TYPE_MEMORY_DEVICE ,           1,  SMBIOS_STRING_UNKNOWN          },  // Device Locator
   {  SMBIOS_TYPE_MEMORY_DEVICE ,           2,  SMBIOS_STRING_UNKNOWN          },  // Bank Locator
@@ -73,12 +73,11 @@ CONST SMBIOS_TYPE_STRINGS  mDefaultSmbiosStrings[] = {
   {  SMBIOS_TYPE_MEMORY_DEVICE ,           4,  SMBIOS_STRING_UNKNOWN          },  // SerialNumber
   {  SMBIOS_TYPE_MEMORY_DEVICE ,           5,  SMBIOS_STRING_UNKNOWN          },  // AssetTag
   {  SMBIOS_TYPE_MEMORY_DEVICE ,           6,  SMBIOS_STRING_UNKNOWN          },  // PartNumber
-  {  SMBIOS_TYPE_MEMORY_DEVICE ,           7,  SMBIOS_STRING_UNKNOWN          },  // MemoryTechnology;
-  {  SMBIOS_TYPE_MEMORY_DEVICE ,           8,  SMBIOS_STRING_UNKNOWN          },  // FirwareVersion;
+  {  SMBIOS_TYPE_MEMORY_DEVICE ,           7,  SMBIOS_STRING_UNKNOWN          },  // MemoryTechnology
+  {  SMBIOS_TYPE_MEMORY_DEVICE ,           8,  SMBIOS_STRING_UNKNOWN          },  // FirwareVersion
   // Type 127 - End of strings
   {  SMBIOS_TYPE_END_OF_TABLE,             0,  ""                             }
 };
-
 
 /**
   Check if the Smbios types (including the entry point struct)
