@@ -233,18 +233,18 @@ SMBIOS_TABLE_TYPE17  mMemoryDevice  = {
     0,                                          // Reserved1       :1;
   },
   0,                                            // Speed;
-  SMBIOS_STRING_INDEX_3,                                     // Manufacturer String  :3;
-  SMBIOS_STRING_INDEX_4,                                     // SerialNumber String  :0;
-  SMBIOS_STRING_INDEX_5,                                     // AssetTag String      :0; 
-  SMBIOS_STRING_INDEX_6,                                     // PartNumber String    :0;
+  SMBIOS_STRING_INDEX_3,                        // Manufacturer String
+  SMBIOS_STRING_INDEX_4,                        // SerialNumber String
+  SMBIOS_STRING_INDEX_5,                        // AssetTag String
+  SMBIOS_STRING_INDEX_6,                        // PartNumber String
   0,                                            // Attributes;
   0,                                            // ExtendedSize;
-  0,                                            // ConfiguredMemoryClockSpeed;    
-  0,                                            // MinimumVoltage;  
-  0,                                            // MaximumVoltage;  
-  0,                                            // ConfiguredVoltage;  
-  SMBIOS_STRING_INDEX_7,                                     // MemoryTechnology;               // The enumeration value from MEMORY_DEVICE_TECHNOLOGY
-  SMBIOS_STRING_INDEX_8,                                     // MemoryOperatingModeCapability;
+  0,                                            // ConfiguredMemoryClockSpeed;
+  0,                                            // MinimumVoltage;
+  0,                                            // MaximumVoltage;
+  0,                                            // ConfiguredVoltage;
+  SMBIOS_STRING_INDEX_7,                        // MemoryTechnology;               // The enumeration value from MEMORY_DEVICE_TECHNOLOGY
+  SMBIOS_STRING_INDEX_8,                        // MemoryOperatingModeCapability;
   0,                                            // FirwareVersion;
   0,                                            // ModuleManufacturerID;
   0,                                            // ModuleProductID;
@@ -253,7 +253,7 @@ SMBIOS_TABLE_TYPE17  mMemoryDevice  = {
   0,                                            // NonVolatileSize;
   0,                                            // VolatileSize;
   0,                                            // CacheSize;
-  0                                            // LogicalSize;
+  0                                             // LogicalSize;
 };
 
 
