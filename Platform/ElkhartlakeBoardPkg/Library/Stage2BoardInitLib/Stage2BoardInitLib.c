@@ -526,6 +526,33 @@ InitializeSmbiosInfo (
   //
   // SMBIOS_TYPE_PROCESSOR_INFORMATION : TBD
   //
+  
+  //
+  // SMBIOS_TYPE_PHYSICAL_MEMORY_ARRAY
+  //
+  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_PHYSICAL_MEMORY_ARRAY,
+    1, "2");
+
+  //
+  // SMBIOS_TYPE_MEMORY_DEVICE
+  //
+  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_MEMORY_DEVICE,
+    1, "Controller0-ChannelA");
+  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_MEMORY_DEVICE,
+    2, "BANK 0");
+  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_MEMORY_DEVICE,
+    3, "Micron Technology");
+  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_MEMORY_DEVICE,
+    4, "20000000");
+  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_MEMORY_DEVICE,
+    5, "9876543210");
+  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_MEMORY_DEVICE,
+    6, " ");
+  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_MEMORY_DEVICE,
+    7, "<OUT OF SPEC>");
+  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_MEMORY_DEVICE,
+    8, "Not Specified");
+
 
   //
   // SMBIOS_TYPE_END_OF_TABLE

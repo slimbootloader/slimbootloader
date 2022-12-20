@@ -173,6 +173,90 @@ SMBIOS_TABLE_TYPE3  mDefaultChasisInfo = {
   }
 };
 
+
+//
+// Physical Memory Array (Type 16)
+//
+
+SMBIOS_TABLE_TYPE16  mPhysicalMemArray  = {
+  {                                            // Hdr
+    SMBIOS_TYPE_PHYSICAL_MEMORY_ARRAY,         // Hdr.Type
+    sizeof (SMBIOS_TABLE_TYPE16),              // Hdr.Length
+    0                                          // Hdr.Handle
+  },
+
+  MemoryArrayLocationSystemBoard,              // Location;                       // The enumeration value from MEMORY_ARRAY_LOCATION.
+  MemoryArrayUseSystemMemory,                  // Use;                            // The enumeration value from MEMORY_ARRAY_USE.
+  MemoryErrorCorrectionUnknown,                // MemoryErrorCorrection;          // The enumeration value from MEMORY_ERROR_CORRECTION.
+  0x80000000,                                  // MaximumCapacity;
+  0xFFFE,                                      // MemoryErrorInformationHandle;
+  SMBIOS_STRING_INDEX_1,                       // NumberOfMemoryDevices;
+  0x3fffffffffffffffULL,                       // ExtendedMaximumCapacity;
+ };
+ 
+//
+// Memory Device (Type 17) 
+//
+
+SMBIOS_TABLE_TYPE17  mMemoryDevice  = {
+  {                                             // Hdr
+    SMBIOS_TYPE_MEMORY_DEVICE,                  ///< Hdr.Type
+    sizeof (SMBIOS_TABLE_TYPE17),               ///< Hdr.Length
+    0                                           ///< Hdr.Handle
+  },
+  0,                                            // MemoryArrayHandle;
+  0xFFFE,                                       // MemoryErrorInformationHandle;
+  0xFFFF,                                       // TotalWidth;
+  0xFFFF,                                       // DataWidth;
+  0xFFFF,                                       // Size;
+  MemoryFormFactorRowOfChips,                   // FormFactor;              // The enumeration value from MEMORY_FORM_FACTOR.
+  0xff,                                         // DeviceSet;
+  SMBIOS_STRING_INDEX_1 ,                                     // DeviceLocator String
+  SMBIOS_STRING_INDEX_2,                                     // BankLocator String
+  MemoryTypeLpddr4,                             // MemoryType;              // The enumeration value from MEMORY_DEVICE_TYPE.
+  {                                             // TypeDetail;
+    0,                                          // Reserved        :1;
+    0,                                          // Other           :1;
+    1,                                          // Unknown         :1;
+    0,                                          // FastPaged       :1;
+    0,                                          // StaticColumn    :1;
+    0,                                          // PseudoStatic    :1;
+    0,                                          // Rambus          :1;
+    0,                                          // Synchronous     :1;
+    0,                                          // Cmos            :1;
+    0,                                          // Edo             :1;
+    0,                                          // WindowDram      :1;
+    0,                                          // CacheDram       :1;
+    0,                                          // Nonvolatile     :1;
+    0,                                          // Registered      :1;
+    0,                                          // Unbuffered      :1;
+    0,                                          // Reserved1       :1;
+  },
+  0,                                            // Speed;
+  SMBIOS_STRING_INDEX_3,                                     // Manufacturer String  :3;
+  SMBIOS_STRING_INDEX_4,                                     // SerialNumber String  :0;
+  SMBIOS_STRING_INDEX_5,                                     // AssetTag String      :0; 
+  SMBIOS_STRING_INDEX_6,                                     // PartNumber String    :0;
+  0,                                            // Attributes;
+  0,                                            // ExtendedSize;
+  0,                                            // ConfiguredMemoryClockSpeed;    
+  0,                                            // MinimumVoltage;  
+  0,                                            // MaximumVoltage;  
+  0,                                            // ConfiguredVoltage;  
+  SMBIOS_STRING_INDEX_7,                                     // MemoryTechnology;               // The enumeration value from MEMORY_DEVICE_TECHNOLOGY
+  SMBIOS_STRING_INDEX_8,                                     // MemoryOperatingModeCapability;
+  0,                                            // FirwareVersion;
+  0,                                            // ModuleManufacturerID;
+  0,                                            // ModuleProductID;
+  0,                                            // MemorySubsystemControllerManufacturerID;
+  0,                                            // MemorySubsystemControllerProductID;
+  0,                                            // NonVolatileSize;
+  0,                                            // VolatileSize;
+  0,                                            // CacheSize;
+  0,                                            // LogicalSize;
+};
+
+
 SMBIOS_TABLE_TYPE19  mMemArrayMappedAddr = {
   {                                             // Hdr
     SMBIOS_TYPE_MEMORY_ARRAY_MAPPED_ADDRESS,    ///< Hdr.Type
