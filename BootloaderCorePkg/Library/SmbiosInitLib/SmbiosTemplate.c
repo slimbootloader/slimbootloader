@@ -191,7 +191,7 @@ SMBIOS_TABLE_TYPE16  mPhysicalMemArray  = {
   0x80000000,                                  // MaximumCapacity;
   0xFFFE,                                      // MemoryErrorInformationHandle;
   SMBIOS_STRING_INDEX_1,                       // NumberOfMemoryDevices;
-  0x3fffffffffffffffULL,                       // ExtendedMaximumCapacity;
+  0x3fffffffffffffffULL                       // ExtendedMaximumCapacity;
  };
  
 //
@@ -253,7 +253,7 @@ SMBIOS_TABLE_TYPE17  mMemoryDevice  = {
   0,                                            // NonVolatileSize;
   0,                                            // VolatileSize;
   0,                                            // CacheSize;
-  0,                                            // LogicalSize;
+  0                                            // LogicalSize;
 };
 
 
