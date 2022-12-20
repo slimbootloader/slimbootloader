@@ -552,8 +552,7 @@ InitializeSmbiosInfo (
     7, "<OUT OF SPEC>");
   AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_MEMORY_DEVICE,
     8, "Not Specified");
-
-
+    
   //
   // SMBIOS_TYPE_END_OF_TABLE
   //
