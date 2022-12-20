@@ -64,6 +64,17 @@ CONST SMBIOS_TYPE_STRINGS  mDefaultSmbiosStrings[] = {
   {  SMBIOS_TYPE_SYSTEM_ENCLOSURE ,        2,  SMBIOS_STRING_UNKNOWN_VERSION  },  // Version
   {  SMBIOS_TYPE_SYSTEM_ENCLOSURE ,        3,  SMBIOS_STRING_UNKNOWN          },  // Serial Number
   {  SMBIOS_TYPE_SYSTEM_ENCLOSURE ,        4,  SMBIOS_STRING_UNKNOWN          },  // AssetTag
+  // Type 16
+  {  SMBIOS_TYPE_PHYSICAL_MEMORY_ARRAY ,   1,  SMBIOS_STRING_UNKNOWN          },  // NumberOfMemoryDevices;
+  // Type 17
+  {  SMBIOS_TYPE_MEMORY_DEVICE ,           1,  SMBIOS_STRING_UNKNOWN          },  // Device Locator
+  {  SMBIOS_TYPE_MEMORY_DEVICE ,           2,  SMBIOS_STRING_UNKNOWN          },  // Bank Locator
+  {  SMBIOS_TYPE_MEMORY_DEVICE ,           3,  SMBIOS_STRING_UNKNOWN          },  // Manufacturer
+  {  SMBIOS_TYPE_MEMORY_DEVICE ,           4,  SMBIOS_STRING_UNKNOWN          },  // SerialNumber
+  {  SMBIOS_TYPE_MEMORY_DEVICE ,           5,  SMBIOS_STRING_UNKNOWN          },  // AssetTag
+  {  SMBIOS_TYPE_MEMORY_DEVICE ,           6,  SMBIOS_STRING_UNKNOWN          },  // PartNumber
+  {  SMBIOS_TYPE_MEMORY_DEVICE ,           7,  SMBIOS_STRING_UNKNOWN          },  // MemoryTechnology;
+  {  SMBIOS_TYPE_MEMORY_DEVICE ,           8,  SMBIOS_STRING_UNKNOWN          },  // FirwareVersion;
   // Type 127 - End of strings
   {  SMBIOS_TYPE_END_OF_TABLE,             0,  ""                             }
 };
@@ -747,6 +758,8 @@ SmbiosInit (
   Status |= AddSmbiosType (&mBaseBoardInfo);
   Status |= AddSmbiosType (&mDefaultChasisInfo);
   Status |= BuildProcessorInfo ();
+  Status |= AddSmbiosType (&mPhysicalMemArray); //TYPE16
+  Status |= AddSmbiosType (&mMemoryDevice);     //TYPE17
   Status |= AddSmbiosType (&mMemArrayMappedAddr);
   if (Status != EFI_SUCCESS) {
     Status = EFI_DEVICE_ERROR;
