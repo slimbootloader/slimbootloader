@@ -248,25 +248,21 @@
 //#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_I_SMI_STS         0x0184 // Not supported setting for this group
 //#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_H_SMI_STS         0x0188 // Not supported setting for this group
 #define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_D_SMI_STS         0x018C
-//#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_VGPIO_SMI_STS     0x0190 // Not supported setting for this group
 
 //#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_S_SMI_EN          0x01A0 // Not supported setting for this group
 //#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_I_SMI_EN          0x01A4 // Not supported setting for this group
 //#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_H_SMI_EN          0x01A8 // Not supported setting for this group
 #define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_D_SMI_EN          0x01AC
-//#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_VGPIO_SMI_EN      0x01B0 // Not supported setting for this group
 
 //#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_S_NMI_STS         0x01C0 // Not supported setting for this group
 //#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_I_NMI_STS         0x01C4 // Not supported setting for this group
 //#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_H_NMI_STS         0x01C8 // Not supported setting for this group
 #define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_D_NMI_STS         0x01CC
-//#define R_GPIO_VER2_PCH_N_GPIO_PCR_VGPIO_NMI_STS         0x01D0 // Not supported setting for this group
 
 //#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_S_NMI_EN          0x01E0 // Not supported setting for this group
 //#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_I_NMI_EN          0x01E4 // Not supported setting for this group
 //#define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_H_NMI_EN          0x01E8 // Not supported setting for this group
 #define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_D_NMI_EN          0x01EC
-//#define R_GPIO_VER2_PCH_N_GPIO_PCR_VGPIO_NMI_EN          0x01F0 // Not supported setting for this group
 
 #define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_S_PADCFG_OFFSET     0x700
 #define R_GPIO_VER2_PCH_N_GPIO_PCR_GPP_I_PADCFG_OFFSET     0x780

@@ -35,8 +35,7 @@
   Ssdt/SocCommonSsdt.asl
   Ssdt/SocGpeSsdt.asl
   Ssdt/IgfxSsdt.asl
-  Ssdt/AdlNRvpRtd3.asl
-  Ssdt/AdlNDdr5CrbRtd3.asl
+  Ssdt/AdlSRvpRtd3.asl
   SaSsdt/SaSsdt.asl
   SaSsdt/Thermal.asl
   CpuSsdt/Cpu0Cst.asl
@@ -62,9 +61,11 @@
   Psd/Psd.aslc
   Rtct/Rtct.act
   Lpit/Lpit.act
+  Bert/Bert.aslc
   Dptf/Dptf.asl
 
 [FixedPcd]
+  gPlatformAlderLakeTokenSpaceGuid.PcdAdlLpSupport
   gPlatformAlderLakeTokenSpaceGuid.PcdAdlNSupport
 
 [Binaries.IA32]

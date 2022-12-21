@@ -43,10 +43,6 @@
 #define N_PCIE_DCAP_E1AL                          9
 #define B_PCIE_DCAP_E0AL                          (BIT8 | BIT7 | BIT6) ///< Endpoint L0s Acceptable Latency
 #define N_PCIE_DCAP_E0AL                          6
-#define B_PCIE_DCAP_MPS                           (BIT2 | BIT1 | BIT0) ///< Max_Payload_Size Supported
-#define R_PCIE_DCTL_OFFSET                        0x08 ///< Device Control Register (Offset 08h)
-#define B_PCIE_DCTL_MPS                           (BIT7 | BIT6 | BIT5) ///< Max_Payload_Size
-#define N_PCIE_DCTL_MPS                           5
 #define R_PCIE_LCAP_OFFSET                        0x0C ///< Link Capabilities Register (Offset 0Ch)
 #define B_PCIE_LCAP_CPM                           BIT18 ///< Clock Power Management
 #define B_PCIE_LCAP_EL1                           (BIT17 | BIT16 | BIT15) ///< L1 Exit Latency
@@ -106,7 +102,6 @@
 #define B_PCIE_EX_L1SCAP_PPL12S                  BIT0 ///< PCI-PM L1.2 supported
 #define R_PCIE_EX_L1SCTL1_OFFSET                 0x08 ///< L1 Sub-States Control 1
 #define B_PCIE_EX_L1SCTL1_L1SSEIE                BIT4
-#define B_PCIE_EX_L1SCTL1_L12LTRTLSV             0xE0000000 ///< L1.2 LTR Threshold Latency Scale Value
 #define N_PCIE_EX_L1SCTL1_L12LTRTLSV             29
 #define N_PCIE_EX_L1SCTL1_L12LTRTLV              16
 #define R_PCIE_EX_L1SCTL2_OFFSET                 0x0C ///< L1 Sub-States Control 2

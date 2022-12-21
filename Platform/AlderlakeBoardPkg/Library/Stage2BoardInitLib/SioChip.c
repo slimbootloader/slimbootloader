@@ -7,6 +7,7 @@
 
 
 #include "SioChip.h"
+#include <Library/PciSegmentLib.h>
 
 LOCAL_IO_WRITE8    mIoWrite8         = IoWrite8;
 
@@ -587,7 +588,6 @@ DeviceGetList (
   }
 }
 
-
 /**
   Initialize the SIO chip for S3.
 **/
@@ -601,6 +601,8 @@ SioInit (
   UINTN                   Index;
   UINTN                   Count;
   UINT8                   RegOrgValue;
+  UINT64                  LpcBaseAddr;
+  UINT16                  LpcIoDecodeRanges;
 
   //
   // LPC device is connected to PCH LPC interface on the
@@ -610,7 +612,79 @@ SioInit (
   // This driver (It8659F) assumes that all PCH initialization has
   // been done before this driver is started to manage the device.
   //
+
+  //
+  // Program and Enable Default Super IO Configuration Port Addresses and range
+  //
+
+  DEBUG((DEBUG_INFO, "AdlPsSioInit - Entry\n"));
+  // Enable LPC IO decode for LPC/eSPI Bridge communication
+  // Enable 4e/4f Decode over eSPI CS1#.
+  DEBUG((DEBUG_INFO, "AdlPsSioInit - Enable 4E 4F\n"));
+  LpcBaseAddr = LpcPciCfgBase();
+  LpcIoDecodeRanges = PciSegmentRead16(LpcBaseAddr + R_LPC_CFG_IOE);
+  LpcIoDecodeRanges |= (B_LPC_CFG_IOE_ME2 | B_LPC_CFG_IOE_CAE | B_LPC_CFG_IOE_CBE);
+  DEBUG((DEBUG_INFO, "AdlPsSioInit - LpcIoDecodeRanges: %x\n", LpcIoDecodeRanges));
+  PciSegmentWrite16((UINTN)(LpcBaseAddr + R_LPC_CFG_IOE), (UINT16)LpcIoDecodeRanges);
+
+  //Enter Config Mode
+  IoWrite8(SIO_CONFIG_PORT, 0x87);
+  IoWrite8(SIO_CONFIG_PORT, 0x01);
+  IoWrite8(SIO_CONFIG_PORT, 0x55);
+  IoWrite8(SIO_CONFIG_PORT, 0xAA);
+  IoWrite8(SIO_CONFIG_PORT, 0x20);
+
+  if ((IoRead8(SIO_DATA_PORT) & 0xFF) == 0x86)
+  {
+      IoWrite8(SIO_CONFIG_PORT, 0x21);
+      if ((IoRead8(SIO_DATA_PORT) & 0xFF) != 0x59)
+      {
+          DEBUG((DEBUG_INFO, "AdlPsSioInit - Return CHIPID2:Not ITE8659\n"));
+          return;
+      }
+  }
+  else
+  {
+      DEBUG((DEBUG_INFO, "AdlPsSioInit - Return CHIPID1:Not ITE8659\n"));
+      return;
+  }
+
+  //Exit Config Mode
+  IoWrite8(SIO_CONFIG_PORT, 0x02);
+  IoWrite8(SIO_DATA_PORT, 0x02);
+
+  //-------------------------
+
+
   DEBUG ((DEBUG_INFO, "SioInit Entry\n"));
+  //
+  // Assume it is It8659 and try to open configuration space (by writing
+  // 0x87 twice to the index port) and read the device ID. If it's not the
+  // correct device ID, try to close the configuration space by writing 0xaa
+  // to the index port (several SIO use the same sequence to open and close
+  // configuration space, but some older SIO have the configuration space
+  // always open) and return EFI_DEVICE_ERROR.
+  //
+  IoWrite8 (SIO_CONFIG_PORT, 0x87);
+  IoWrite8 (SIO_CONFIG_PORT, 0x01);
+  IoWrite8 (SIO_CONFIG_PORT, 0x55);
+  IoWrite8 (SIO_CONFIG_PORT, 0xAA);
+  IoWrite8 (SIO_INDEX_PORT, REG_CHIP_ID1);
+  DEBUG ((DEBUG_INFO, "SioDriverEntryPoint - chip1 %x\n", IoRead8 (SIO_DATA_PORT)));
+
+  if ((IoRead8 (SIO_DATA_PORT) & 0xFF) == 0x86) {
+    IoWrite8 (SIO_INDEX_PORT, REG_CHIP_ID2);
+    DEBUG ((DEBUG_INFO, "SioDriverEntryPoint - chip2 %x\n", IoRead8 (SIO_DATA_PORT)));
+    if ((IoRead8 (SIO_DATA_PORT) & 0xFF) != 0x59) {
+      IoWrite8 (SIO_CONFIG_PORT, 0x2);
+      IoWrite8 (SIO_DATA_PORT, 0x2);
+      DEBUG((DEBUG_INFO, "SioDriverEntryPoint Error !\n"));
+    }
+  } else {
+      IoWrite8 (SIO_CONFIG_PORT, 0x2);
+      IoWrite8 (SIO_DATA_PORT, 0x2);
+      DEBUG((DEBUG_INFO, "SioDriverEntryPoint Error !\n"));
+  }
 
   //
   // The procedure DeviceGetList has ben modified to only return the UART A.
@@ -627,12 +701,6 @@ SioInit (
 
   It8659HwMonStart();
 
-  //
-  // Use S3IoWrite8(...) function. This will both access the IO and save it
-  // to the S3 table.
-  //
-  //mIoWrite8 = S3IoWrite8;
-  //
   // Generic programming: SIO global registers, disable unused devices, force
   // all unused possible GPIO pins to input GPIO. This will both access the
   // IO and save it to the S3 table. This initialization was not done at PEI.

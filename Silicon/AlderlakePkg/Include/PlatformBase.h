@@ -12,7 +12,6 @@
 #define ACPI_BASE_ADDRESS            0x1800
 #define HPET_BASE_ADDRESS            0xFED00000
 #define IO_APIC_BASE_ADDRESS         0xFEC00000
-#define TCO_BASE_ADDRESS             0x400
 #define R_TCO_IO_TCO1_CNT            0x08
 #define LOCAL_APIC_BASE_ADDRESS      0xFEE00000
 
