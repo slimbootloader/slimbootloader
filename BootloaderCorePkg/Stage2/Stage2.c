@@ -160,11 +160,9 @@ NormalBootPath (
   if (Dst == NULL) {
     // Unable to recover non-FWU payload, so avoid triggering of recovery flow
     if (PcdGetBool (PcdSblResiliencyEnabled) && GetBootMode () != BOOT_ON_FLASH_UPDATE) {
-      DEBUG ((DEBUG_ERROR, "Unable to recover partition, failed to switch boot partition!\n"));
-      ResetSystem (EfiResetShutdown);
-    } else {
-      CpuHalt ("Failed to load payload !");
+      StopTcoTimer ();
     }
+    CpuHalt ("Failed to load payload !");
   }
 
   BoardInit (PostPayloadLoading);
