@@ -384,10 +384,10 @@ SecStartup2 (
   // Perform pre-config board init
   BoardInit (PreConfigInit);
 
-  // Check for failures in ACM or TCO timer on last boot
   if (PcdGetBool (PcdSblResiliencyEnabled)) {
+    // React to ACM failures here as the correct partition should be
+    // swapped to during pre-config init
     CheckForAcmFailures ();
-    CheckForTcoTimerFailures (PcdGet8 (PcdBootFailureThreshold));
   }
 
   Status = AppendHashStore (LdrGlobal, &Stage1bParam);
@@ -415,11 +415,6 @@ SecStartup2 (
   // Perform pre-memory board init
   BoardInit (PreMemoryInit);
 
-  // Start TCO timer here as ACM active timer is stopped within FSP-M
-  if (PcdGetBool (PcdSblResiliencyEnabled)) {
-    StartTcoTimer (PcdGet16 (PcdTcoTimeout));
-  }
-
   // Initialize memory
   HobList = NULL;
   DEBUG ((DEBUG_INIT, "Memory Init\n"));
@@ -428,6 +423,15 @@ SecStartup2 (
   AddMeasurePoint (0x2030);
   FspResetHandler (Status);
   ASSERT_EFI_ERROR (Status);
+
+  if (PcdGetBool (PcdSblResiliencyEnabled)) {
+    // React to TCO timer failures here as not to conflict with ACM active timer
+    // which is stopped at end of FSP-M
+    CheckForTcoTimerFailures (PcdGet8 (PcdBootFailureThreshold));
+
+    // Start TCO timer here as ACM active timer is stopped at end of FSP-M
+    StartTcoTimer (PcdGet16 (PcdTcoTimeout));
+  }
 
   FspReservedMemBase = (UINT32)GetFspReservedMemoryFromGuid (
                          HobList,
