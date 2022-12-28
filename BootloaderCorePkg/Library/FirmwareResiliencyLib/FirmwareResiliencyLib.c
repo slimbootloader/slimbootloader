@@ -103,8 +103,7 @@ CheckForTcoTimerFailures (
     DEBUG ((DEBUG_INFO, "Boot failure occurred! Failed boot count: %d\n", FailedBootCount));
     if (FailedBootCount >= BootFailureThreshold) {
       if (IsRecoveryTriggered ()) {
-        DEBUG ((DEBUG_ERROR, "Unable to recover partition, both partitions are failing!\n"));
-        ResetSystem (EfiResetShutdown);
+        CpuHalt ("Unable to recover partition, both partitions are failing!\n");
       }
       ClearFailedBootCount ();
       SetRecoveryTrigger ();
@@ -112,8 +111,7 @@ CheckForTcoTimerFailures (
       DEBUG ((DEBUG_INFO, "Boot failure threshold reached! Switching to partition: %d\n", NewPartition));
       Status = SetBootPartition (NewPartition);
       if (EFI_ERROR (Status)) {
-        DEBUG ((DEBUG_ERROR, "Unable to recover partition, failed to switch boot partition!\n"));
-        ResetSystem (EfiResetShutdown);
+        CpuHalt ("Unable to recover partition, failed to switch boot partition!\n");
       }
       ResetSystem (EfiResetCold);
     }
