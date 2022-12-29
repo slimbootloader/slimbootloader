@@ -390,11 +390,16 @@ BoardInit (
       InitializeSmbiosInfo ();
     }
 
-    if ((SiCfgData != NULL) && (SiCfgData->EcAvailable == 0)){
-      //Init SIO if EC is not available
-      DEBUG ((DEBUG_INFO, "SioInit\n"));
-      SioInit();
+    if ((SiCfgData != NULL) && (SiCfgData->EcAvailable == 0)) {
+      if ((FeatureCfgData != NULL) && (FeatureCfgData->S0ix == 1)) {
+        DEBUG ((DEBUG_INFO, "S0ix enabled. Skipping SioInit\n"));
+      } else {
+        //Init SIO if EC is not available and S0ix is disabled.
+        DEBUG ((DEBUG_INFO, "SioInit\n"));
+        SioInit();
+      }
     }
+
     ZeroMem (&GetFipsModeData,sizeof(GetFipsModeData));
     HeciGetFipsMode(&GetFipsModeData);
     DEBUG ((DEBUG_INFO, "HeciGetFipsMode = 0x%x\n", GetFipsModeData.FipsMode));
