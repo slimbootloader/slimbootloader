@@ -16,6 +16,11 @@ PLATFORMID_CFG_DATA.PlatformId           | 0x000D
 PLAT_NAME_CFG_DATA.PlatformName          | 'AdlPsCrb'
 GEN_CFG_DATA.PayloadId                   | ''
 
+FEATURES_CFG_DATA.Features.S0ix          | 0x0
+
+# DTT feature
+FEATURES_CFG_DATA.Features.DTT           | 0x0
+
 #
 #Delta configuration for DDR
 #
