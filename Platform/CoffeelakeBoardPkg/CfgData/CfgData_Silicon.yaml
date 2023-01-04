@@ -2,7 +2,7 @@
 #
 #  Slim Bootloader CFGDATA Option File.
 #
-#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -72,7 +72,15 @@
         help         : >
                        Enable/Disable this pin for payload selection.
         length       : 1bW
-  - SiliconRsvd  :
-      length       : 0x03
+  - InterruptRemappingSupport :
+      name         : InterruptRemappingSupport
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     InterruptRemappingSupport
+      length       : 0x01
+      value        : 0x1
+  - Dummy  :
+      length       : 0x02
       value        : 0x00
 

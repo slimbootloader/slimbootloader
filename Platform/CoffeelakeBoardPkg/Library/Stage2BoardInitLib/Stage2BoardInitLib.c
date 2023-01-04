@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017-2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -53,6 +53,8 @@
 #include <CpuInitDataHob.h>
 #include <Library/HobLib.h>
 #include <Library/FirmwareUpdateLib.h>
+#include <Library/DmaRemappingTable.h>
+#include <Library/VTdLib.h>
 #include <Library/MpInitLib.h>
 #include <Guid/GraphicsInfoHob.h>
 #include <Library/PciCf8Lib.h>
@@ -1969,7 +1971,10 @@ PlatformUpdateAcpiTable (
   UINT32                       Base;
   UINT16                       Size;
   EFI_STATUS                   Status;
+  PLATFORM_DATA               *PlatformData;
   SILICON_CFG_DATA            *SiliconCfgData;
+  MEMORY_CFG_DATA             *MemCfgData;
+  UINTN                        DmarTableFlags;
   VOID                        *FspHobList;
 
   GlobalNvs  = (GLOBAL_NVS_AREA *)(UINTN) PcdGet32 (PcdAcpiGnvsAddress);
@@ -2039,6 +2044,29 @@ PlatformUpdateAcpiTable (
     if (FspHobList != NULL) {
       UpdateBdatAcpiTable (Table, FspHobList);
       DEBUG ( (DEBUG_INFO, "Updated BDAT Table in AcpiTable Entries\n") );
+    }
+  }
+
+  if (FeaturePcdGet (PcdVtdEnabled)) {
+    PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
+    if (PlatformData != NULL) {
+      if (PlatformData->PlatformFeatures.VtdEnable == 1) {
+        if (Table->Signature == EFI_ACPI_VTD_DMAR_TABLE_SIGNATURE) {
+          DEBUG ((DEBUG_INFO, "Updated DMAR Table in AcpiTable Entries\n"));
+          SiliconCfgData  = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
+          MemCfgData = (MEMORY_CFG_DATA *)FindConfigDataByTag (CDATA_MEMORY_TAG);
+          DmarTableFlags = 0;
+          if (MemCfgData != NULL) {
+            if (MemCfgData->X2ApicOptOut == 1) {
+              DmarTableFlags  |= DMAR_TABLE_FLAGS_X2APIC_OPT_OUT;
+            }
+          }
+          if ((SiliconCfgData != NULL) && SiliconCfgData->InterruptRemappingSupport != 0) {
+            DmarTableFlags  |= DMAR_TABLE_FLAGS_INT_REMAPPING_SUPPORT;
+          }
+          UpdateDmarAcpi(Table, DmarTableFlags);
+        }
+      }
     }
   }
 

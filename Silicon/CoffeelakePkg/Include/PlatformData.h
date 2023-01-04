@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2018 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -21,7 +21,13 @@ typedef struct {
 } STITCH_DATA;
 
 typedef struct {
+  UINT32  VtdEnable    : 1;
+  UINT32  Rsvd         : 31;
+} PLAT_FEATURES;
+
+typedef struct {
   BOOT_GUARD_INFO     BtGuardInfo;
+  PLAT_FEATURES       PlatformFeatures;
   VTD_INFO            VtdInfo;
 } PLATFORM_DATA;
 
