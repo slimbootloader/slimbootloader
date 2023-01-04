@@ -1,7 +1,7 @@
 ## @ StitchIfwi.py
 #  This is a python stitching script for Slim Bootloader WHL/CFL build
 #
-# Copyright (c) 2019 - 2022, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2019 - 2023, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -70,6 +70,28 @@ stitching ingredients listed in step 2 below, please contact your Intel represen
          StitchIfwi.py -b vm -p whl -w D:\Stitch -s Stitch_Components.zip -c StitchIfwiConfig.py
 
 """
+
+def is_wine_installed ():
+    return True if shutil.which("wine") != None else False
+
+def get_path_wrapper (path):
+    if os.name == 'posix' and is_wine_installed ():
+        cmd = ['winepath', '-w', path]
+        return run_process (cmd, capture_out=True).strip()
+    else:
+        return path
+
+def run_process_wrapper (cmds):
+    if os.name == 'posix':
+        if is_wine_installed ():
+            cmds = ["wine"] + cmds
+        else:
+            print ("\n")
+            print ("ERROR: Please install 'wine'.")
+            print ("       To stitch CFL IFWI in Linux, 'wine' is required")
+            print ("\n")
+            raise Exception ()
+    run_process (cmds)
 
 def gen_bpmgen2_params (stitch_cfg_file, InFile, OutFile):
     InFileptr = open(InFile, 'r', encoding='utf8')
@@ -146,7 +168,7 @@ def sign_binary(infile, stitch_dir, stitch_cfg_file):
     gen_bpmgen2_params(stitch_cfg_file, os.path.join(bpm_gen2dir, "Example.bpDef"), os.path.join(output_dir, "bpmgen2.params"))
 
     print("Generating Btg KeyManifest.bin....")
-    run_process ([os.path.join (bpm_gen2dir, 'bpmgen2'),
+    run_process_wrapper ([get_path_wrapper (os.path.join (bpm_gen2dir, 'bpmgen2')),
         'KM1GEN',
         '-KEY',        os.path.join (bpm_key_dir, 'pubkey.pem'), 'BPM',
         '-KM',         os.path.join (output_dir,  'KeyManifest.bin'),
@@ -157,7 +179,7 @@ def sign_binary(infile, stitch_dir, stitch_cfg_file):
         '-d:2'])
 
     print("Generating Btg Boot Policy Manifest (BPM).bin....")
-    run_process ([os.path.join (bpm_gen2dir, 'bpmgen2'),
+    run_process_wrapper ([get_path_wrapper (os.path.join (bpm_gen2dir, 'bpmgen2')),
         'GEN',
         os.path.join (output_dir, 'sbl_sec_temp.bin'),
         os.path.join (output_dir, 'bpmgen2.params'),
@@ -303,8 +325,8 @@ def gen_xml_file(stitch_dir, stitch_cfg_file, btg_profile, platform, tpm):
     new_xml_file = os.path.join (stitch_dir, 'Temp', 'new.xml')
     updated_xml_file = os.path.join (stitch_dir, 'Temp', 'updated.xml')
     sku = stitch_cfg_file.get_platform_sku().get(platform)
-    cmd = [fit_tool, '-sku', sku, '-save', new_xml_file, '-w', os.path.join (stitch_dir, 'Temp')]
-    run_process (cmd)
+    cmd = [get_path_wrapper(fit_tool), '-sku', sku, '-save', new_xml_file, '-w', os.path.join (stitch_dir, 'Temp')]
+    run_process_wrapper (cmd)
 
     tree = ET.parse(new_xml_file)
 
@@ -404,7 +426,7 @@ def stitch (stitch_dir, stitch_cfg_file, sbl_file, btg_profile, platform_data, p
     gen_xml_file(stitch_dir, stitch_cfg_file, btg_profile, platform, tpm)
 
     print ("Run fit tool to generate ifwi.........")
-    run_process (['./Fit/fit', '-b', '-o', 'Temp/Ifwi.bin', '-f', os.path.join (temp_dir, 'updated.xml'),
+    run_process_wrapper ([get_path_wrapper ('./Fit/fit'), '-b', '-o', 'Temp/Ifwi.bin', '-f', os.path.join (temp_dir, 'updated.xml'),
         '-s', temp_dir, '-w', temp_dir, '-d', temp_dir])
     return 0
 #    cmd = './fit -b -o Ifwi.bin -f Platform.xml'
