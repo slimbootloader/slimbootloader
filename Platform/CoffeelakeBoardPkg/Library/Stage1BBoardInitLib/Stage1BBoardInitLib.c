@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -100,6 +100,7 @@ UpdateFspConfig (
   FSP_M_TEST_CONFIG               *FspmcfgTest;
   MEMORY_CFG_DATA                 *MemCfgData;
   GPU_CFG_DATA                    *GpuCfgData;
+  PLATFORM_DATA                   *PlatformData;
   UINT16                           PlatformId;
   UINT16                           BomId;
   PEG_GPIO_DATA                   *PegGpioData;
@@ -221,8 +222,21 @@ UpdateFspConfig (
     DEBUG ((DEBUG_INFO, "FSP-M variables for Intel(R) SGX were NOT updated.\n"));
   }
 
+  PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
+  if (PlatformData != NULL) {
+    PlatformData->PlatformFeatures.VtdEnable = FeaturePcdGet (PcdVtdEnabled) && (!MemCfgData->VtdDisable);
+  }
+
   // Enable VT-d
-  FspmcfgTest->VtdDisable = 0;
+  if (PlatformData->PlatformFeatures.VtdEnable == 1) {
+    FspmcfgTest->VtdDisable = 0;
+    Fspmcfg->X2ApicOptOut = MemCfgData->X2ApicOptOut;
+    Fspmcfg->VtdBaseAddress[0] = 0xFED90000;
+    Fspmcfg->VtdBaseAddress[1] = 0xFED92000;
+    Fspmcfg->VtdBaseAddress[2] = 0xFED91000;
+  } else {
+    FspmcfgTest->VtdDisable = 1;
+  }
 
   Fspmcfg->PlatformDebugConsent = MemCfgData->PlatformDebugConsent;
   Fspmcfg->PchTraceHubMode      = MemCfgData->PchTraceHubMode;

@@ -15,7 +15,7 @@
   - Registers / bits of new devices introduced in a SA generation will be just named
     as "_SA_" without [generation_name] inserted.
 
-  Copyright (c) 2018 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -80,5 +80,14 @@ typedef struct {
 //  This register contains the Top of low memory address.
 #define R_SA_TOLUD       (0xbc)
 #define B_SA_TOLUD_MASK  (0xfff00000)
+
+#define R_SA_MC_CAPID0_A_OFFSET (0xE4)
+
+#define R_SA_GGC             (0x50)
+#define N_SA_GGC_GMS_OFFSET  (0x8)
+#define B_SA_GGC_GMS_MASK    (0xff00)
+#define N_SA_GGC_GGMS_OFFSET (0x6)
+#define B_SA_GGC_GGMS_MASK   (0xc0)
+#define V_SA_GGC_GGMS_8MB    3
 
 #endif

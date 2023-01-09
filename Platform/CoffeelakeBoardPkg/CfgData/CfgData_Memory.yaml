@@ -2,7 +2,7 @@
 #
 #  Slim Bootloader CFGDATA Option File.
 #
-#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -146,7 +146,23 @@
                      To 'opt-in' for debug, please select 'Enabled' with the desired debug probe type. Enabling this BIOS option may alter the default value of other debug-related BIOS options. Note- DCI OOB (aka BSSB) uses CCA probe; [DCI OOB+DbC] and [USB2 DbC] have the same setting
       length       : 0x01
       value        : 0x00
-  - MemRsvd      :
-      length       : 0x01
+  - VtdDisable   :
+      name         : Disable VT-d
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     0=Enable/FALSE(VT-d enabled), 1=Disable/TRUE (VT-d disabled)
+      length       : 0x1
+      value        : 0x0
+  - X2ApicOptOut :
+      name         : State of X2APIC_OPT_OUT bit in the DMAR table
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     0=Disable/Clear, 1=Enable/Set
+      length       : 0x1
+      value        : 0x0
+  - Dummy      :
+      length       : 0x03
       value        : 0x00
 
