@@ -1,7 +1,7 @@
 ## @file
 #  File to describe FSP repo information
 #
-#  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -11,7 +11,7 @@
 
 [UserExtensions.SBL."CloneRepo"]
   REPO    = https://github.com/intel/FSP.git
-  COMMIT  = 6f5ae9679e662353bc5570a1bc89e137e262155f
+  COMMIT  = 9ff157011c695a99488576b2ae98d58609579179
 
 [UserExtensions.SBL."CopyList"]
   TigerLakeFspBinPkg/TGL_IOT/Fsp.fd                    : Silicon/TigerlakePkg/FspBin/FspDbg.bin
@@ -24,4 +24,4 @@
   TigerLakeFspBinPkg/TGL_IOT/Include/MemInfoHob.h      : Silicon/TigerlakePkg/Include/MemInfoHob.h
   TigerLakeFspBinPkg/TGL_IOT/SampleCode/Vbt/Vbt.bin    : Platform/TigerlakeBoardPkg/VbtBin/Vbt.dat
   TigerLakeFspBinPkg/TGL_IOT/SampleCode/Vbt/Vbt.json   : Platform/TigerlakeBoardPkg/VbtBin/Vbt.json
-  FSP_License.pdf                                      : Platform/TigerlakeBoardPkg/FspBin/FSP_License.pdf
+  FSP_License.pdf                                      : Silicon/TigerlakePkg/FspBin/FSP_License.pdf
