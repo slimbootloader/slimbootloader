@@ -231,7 +231,7 @@ SMBIOS_TABLE_TYPE17  mMemoryDevice  = {
     0,                                          // Nonvolatile     :1;
     0,                                          // Registered      :1;
     0,                                          // Unbuffered      :1;
-    0,                                          // Reserved1       :1;
+    0,                                          // LrDimm          :1;
   },
   0,                                            // Speed;
   SMBIOS_STRING_INDEX_3,                        // Manufacturer String
@@ -246,13 +246,8 @@ SMBIOS_TABLE_TYPE17  mMemoryDevice  = {
   0,                                            // ConfiguredVoltage;
   SMBIOS_STRING_INDEX_7,                        // MemoryTechnology;               // The enumeration value from MEMORY_DEVICE_TECHNOLOGY
   {
-    0,
-    0,
-    0,
-    1,
-    0,
-    0,
-    0,
+    sizeof (MEMORY_DEVICE_OPERATING_MODE_CAPABILITY),
+    (UINT8)(BIT1)
   },                                            // MemoryOperatingModeCapability;
   0,                                            // FirwareVersion;
   0,                                            // ModuleManufacturerID;
