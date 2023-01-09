@@ -7,6 +7,7 @@
 
 #include <PiPei.h>
 #include "SmbiosTables.h"
+#include <IndustryStandard/SmBios.h>
 
 
 SMBIOS_TABLE_TYPE0    mBiosInfo = {
@@ -244,7 +245,15 @@ SMBIOS_TABLE_TYPE17  mMemoryDevice  = {
   0,                                            // MaximumVoltage;
   0,                                            // ConfiguredVoltage;
   SMBIOS_STRING_INDEX_7,                        // MemoryTechnology;               // The enumeration value from MEMORY_DEVICE_TECHNOLOGY
-  SMBIOS_STRING_INDEX_8,                        // MemoryOperatingModeCapability;
+  {
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    },                                          // MemoryOperatingModeCapability;
   0,                                            // FirwareVersion;
   0,                                            // ModuleManufacturerID;
   0,                                            // ModuleProductID;
