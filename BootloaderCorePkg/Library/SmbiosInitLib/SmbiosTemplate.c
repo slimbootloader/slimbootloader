@@ -253,7 +253,7 @@ SMBIOS_TABLE_TYPE17  mMemoryDevice  = {
     0,
     0,
     0,
-    },                                          // MemoryOperatingModeCapability;
+  },                                            // MemoryOperatingModeCapability;
   0,                                            // FirwareVersion;
   0,                                            // ModuleManufacturerID;
   0,                                            // ModuleProductID;
