@@ -245,24 +245,6 @@ SMBIOS_TABLE_TYPE17  mMemoryDevice  = {
   0,                                            // MaximumVoltage;
   0,                                            // ConfiguredVoltage;
   SMBIOS_STRING_INDEX_7,                        // MemoryTechnology;               // The enumeration value from MEMORY_DEVICE_TECHNOLOGY
-  {
-    0,                                          // Reserved                         :1;   ///< Set to 0.
-    0,                                          // Other                            :1;
-    1,                                          // Unknown                          :1;
-    0,                                          // VolatileMemory                   :1;
-    0,                                          // ByteAccessiblePersistentMemory   :1;
-    0,                                          // BlockAccessiblePersistentMemory  :1;
-    0,                                          // Reserved2                        :10;  ///< Set to 0.
-  },                                            // MemoryOperatingModeCapability;
-  0,                                            // FirwareVersion;
-  0,                                            // ModuleManufacturerID;
-  0,                                            // ModuleProductID;
-  0,                                            // MemorySubsystemControllerManufacturerID;
-  0,                                            // MemorySubsystemControllerProductID;
-  0,                                            // NonVolatileSize;
-  0,                                            // VolatileSize;
-  0,                                            // CacheSize;
-  0                                             // LogicalSize;
 };
 
 SMBIOS_TABLE_TYPE19  mMemArrayMappedAddr = {
