@@ -157,6 +157,29 @@ typedef struct {
   EFI_PROCESSOR_FEATURE_FLAGS       FeatureFlags;
 } EFI_PROCESSOR_ID_DATA;
 
+//
+// Add more platform specific strings
+// in the following format
+//
+
+#define TO_BE_FILLED  0
+#define TO_BE_FILLED_STRING  " "        ///< Initial value should not be NULL
+
+///
+/// SMBIOS Table values with special meaning
+///
+#define SMBIOS_TYPE16_USE_EXTENDED_MAX_CAPACITY  0x80000000
+
+#define SMBIOS_TYPE17_UNKNOWN_SIZE               0xFFFF
+#define SMBIOS_TYPE17_USE_EXTENDED_SIZE          0x7FFF
+#define SMBIOS_TYPE17_KB_BIT_MASK                0x8000
+#define SMBIOS_TYPE17_NUMBER_OF_STRINGS               6
+
+#define SMBIOS_TYPE19_USE_EXTENDED_ADDRESSES     0xFFFFFFFF
+
+#ifndef MEMORY_ASSET_TAG
+#define MEMORY_ASSET_TAG  "9876543210"
+#endif
 
 ///
 /// This data record refers to the core voltage of the processor being defined. The unit of measurement
@@ -169,6 +192,8 @@ extern  SMBIOS_TABLE_TYPE1    mSystemInfo;
 extern  SMBIOS_TABLE_TYPE2    mBaseBoardInfo;
 extern  SMBIOS_TABLE_TYPE3    mDefaultChasisInfo;
 extern  SMBIOS_TABLE_TYPE4    mProcessorInfo;
+extern  SMBIOS_TABLE_TYPE16   mPhysicalMemArray;
+extern  SMBIOS_TABLE_TYPE17   mMemoryDevice;
 extern  SMBIOS_TABLE_TYPE19   mMemArrayMappedAddr;
 
 /**
