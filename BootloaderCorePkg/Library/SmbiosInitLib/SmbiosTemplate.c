@@ -246,8 +246,13 @@ SMBIOS_TABLE_TYPE17  mMemoryDevice  = {
   0,                                            // ConfiguredVoltage;
   SMBIOS_STRING_INDEX_7,                        // MemoryTechnology;               // The enumeration value from MEMORY_DEVICE_TECHNOLOGY
   {
-    sizeof (MEMORY_DEVICE_OPERATING_MODE_CAPABILITY),
-    (UINT16)(BIT1)
+    0,                                          // Reserved                         :1;   ///< Set to 0.
+    0,                                          // Other                            :1;
+    1,                                          // Unknown                          :1;
+    0,                                          // VolatileMemory                   :1;
+    0,                                          // ByteAccessiblePersistentMemory   :1;
+    0,                                          // BlockAccessiblePersistentMemory  :1;
+    0,                                          // Reserved2                        :10;  ///< Set to 0.
   },                                            // MemoryOperatingModeCapability;
   0,                                            // FirwareVersion;
   0,                                            // ModuleManufacturerID;
