@@ -1,7 +1,7 @@
 ## @file
 # This file is used to provide board specific image information.
 #
-#  Copyright (c) 2018 - 2022, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2018 - 2023, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -25,7 +25,7 @@ class Board(BaseBoard):
 
         self.VERINFO_IMAGE_ID       = 'SBL_TGL'
         self.VERINFO_PROJ_MAJOR_VER = 1
-        self.VERINFO_PROJ_MINOR_VER = 6
+        self.VERINFO_PROJ_MINOR_VER = 7
         self.VERINFO_SVN            = 1
         self.VERINFO_BUILD_DATE     = time.strftime("%m/%d/%Y")
 
