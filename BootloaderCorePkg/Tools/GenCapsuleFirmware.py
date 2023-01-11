@@ -512,7 +512,7 @@ def main():
     #
     # Error out if components overlap
     #
-    PldSigs = {Pld[0] for Pld in args.payload}
+    PldSigs = {Pld[0] for Pld in args.payload if len(Pld[0].split(":"))==1}
     NonSblCompSigs = {Sig for Sig in UpdateGuidDict.keys()}
     SblCompInPldSigs = PldSigs - NonSblCompSigs
     if 'BIOS' in PldSigs and SblCompInPldSigs:
