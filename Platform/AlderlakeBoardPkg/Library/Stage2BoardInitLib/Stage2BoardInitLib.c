@@ -288,7 +288,6 @@ BoardInit (
   UINT32          TsegBase;
   UINT32          TsegSize;
   UINTN           LpcBase;
-  GET_FIPS_MODE_DATA        GetFipsModeData;
   EFI_PEI_GRAPHICS_INFO_HOB *FspGfxHob;
   VOID                      *FspHobList;
   SILICON_CFG_DATA          *SiCfgData;
@@ -400,12 +399,10 @@ BoardInit (
       }
     }
 
-    ZeroMem (&GetFipsModeData,sizeof(GetFipsModeData));
-    HeciGetFipsMode(&GetFipsModeData);
-    DEBUG ((DEBUG_INFO, "HeciGetFipsMode = 0x%x\n", GetFipsModeData.FipsMode));
-    if (FeatureCfgData != NULL && GetFipsModeData.FipsMode != FeatureCfgData->MeFipsMode){
-      DEBUG ((DEBUG_INFO, "Set HeciSetFipsMode to 0x%x\n", FeatureCfgData->MeFipsMode));
+    // FIPS is disabled by default. enable it only when it is required.
+    if (FeatureCfgData != NULL && (FeatureCfgData->MeFipsMode != 0)){
       HeciSetFipsMode(FeatureCfgData->MeFipsMode);
+      DEBUG ((DEBUG_INFO, "Enabled FIPS mode.\n"));
     }
 
     break;
