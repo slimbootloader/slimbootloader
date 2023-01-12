@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -56,40 +56,6 @@ GetCpuStepping(
   ///
   AsmCpuid (CPUID_VERSION_INFO, &Eax.Uint32, NULL, NULL, NULL);
   return ((CPU_STEPPING) (Eax.Uint32 & CPUID_FULL_STEPPING));
-}
-
-/**
-  Return CPU name
-
-  @retval               CPU name string
-**/
-CHAR8 *
-GetCpuName (
-  VOID
-  )
-{
-  UINT32                  CpuFamilyModel;
-  CPUID_VERSION_INFO_EAX  Eax;
-
-  ///
-  /// Read the CPUID & DID information
-  ///
-  AsmCpuid (CPUID_VERSION_INFO, &Eax.Uint32, NULL, NULL, NULL);
-  CpuFamilyModel = Eax.Uint32 & CPUID_FULL_FAMILY_MODEL;
-
-  switch (CpuFamilyModel) {
-    case CPUID_FULL_FAMILY_MODEL_RAPTORLAKE_DT_HALO:
-    case CPUID_FULL_FAMILY_MODEL_RAPTORLAKE_2_DT_HALO:
-    case CPUID_FULL_FAMILY_MODEL_RAPTORLAKE_MOBILE:
-      return "RaptorLake";
-    case CPUID_FULL_FAMILY_MODEL_ALDERLAKE_MOBILE:
-    case CPUID_FULL_FAMILY_MODEL_ALDERLAKE_DT_HALO:
-    case CPUID_FULL_FAMILY_MODEL_ALDERLAKE_ATOM:
-      return "AlderLake";
-    default:
-      return "Unknown";
-  }
-
 }
 
 #if FixedPcdGet8 (PcdTccEnabled)
@@ -690,13 +656,10 @@ UpdateFspConfig (
   }
 
   // Tcc enabling
-  if (IsPchS() || IsPchN() ||
-    (IsPchP() && 0 == AsciiStrCmp(GetCpuName(),"RaptorLake"))) {
 #if FixedPcdGet8 (PcdTccEnabled)
-    Fspmcfg->WdtDisableAndLock = 0x0;
-    TccModePreMemConfig (FspmUpd);
+  Fspmcfg->WdtDisableAndLock = 0x0;
+  TccModePreMemConfig (FspmUpd);
 #endif
-  }
 
   // S0ix is disabled if TSN is enabled.
   FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag (CDATA_FEATURES_TAG);
