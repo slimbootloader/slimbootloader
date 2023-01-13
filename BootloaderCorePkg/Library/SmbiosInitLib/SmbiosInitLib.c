@@ -71,7 +71,7 @@ CONST SMBIOS_TYPE_STRINGS  mDefaultSmbiosStrings[] = {
   {  SMBIOS_TYPE_MEMORY_DEVICE ,           2,  SMBIOS_STRING_UNKNOWN          },  // Bank Locator
   {  SMBIOS_TYPE_MEMORY_DEVICE ,           3,  SMBIOS_STRING_UNKNOWN          },  // Manufacturer
   {  SMBIOS_TYPE_MEMORY_DEVICE ,           4,  SMBIOS_STRING_UNKNOWN          },  // SerialNumber
-  {  SMBIOS_TYPE_MEMORY_DEVICE ,           5,  MEMORY_ASSET_TAG               },  // AssetTag
+  {  SMBIOS_TYPE_MEMORY_DEVICE ,           5,  SMBIOS_STRING_MEMORY_ASSET_TAG },  // AssetTag
   {  SMBIOS_TYPE_MEMORY_DEVICE ,           6,  SMBIOS_STRING_UNKNOWN          },  // PartNumber
   {  SMBIOS_TYPE_MEMORY_DEVICE ,           7,  SMBIOS_STRING_UNKNOWN          },  // MemoryTechnology;
   // Type 127 - End of strings

@@ -17,6 +17,7 @@
 #define SMBIOS_STRING_UNKNOWN_VERSION   "XXXX.XXX.XXX.XXX"
 #define SMBIOS_STRING_VENDOR            "Intel Corporation"
 #define SMBIOS_STRING_PLATFORM          "Intel Platform"
+#define SMBIOS_STRING_MEMORY_ASSET_TAG  "9876543210"
 
 #define BRAND_STRING_UNSUPPORTED        "CPU Brand String Not Supported"
 #define INTEL_CORPORATION_STRING        "Intel(R) Corporation"
@@ -156,25 +157,6 @@ typedef struct {
   ///
   EFI_PROCESSOR_FEATURE_FLAGS       FeatureFlags;
 } EFI_PROCESSOR_ID_DATA;
-
-//
-// Add more platform specific strings
-// in the following format
-//
-
-#define TO_BE_FILLED  0
-#define TO_BE_FILLED_STRING  " "        ///< Initial value should not be NULL
-
-///
-/// SMBIOS Table values with special meaning
-///
-#define SMBIOS_TYPE16_USE_EXTENDED_MAX_CAPACITY  0x80000000
-
-#define SMBIOS_TYPE19_USE_EXTENDED_ADDRESSES     0xFFFFFFFF
-
-#ifndef MEMORY_ASSET_TAG
-#define MEMORY_ASSET_TAG  "9876543210"
-#endif
 
 ///
 /// This data record refers to the core voltage of the processor being defined. The unit of measurement
