@@ -244,7 +244,7 @@ SMBIOS_TABLE_TYPE17  mMemoryDevice  = {
   0,                                            // MinimumVoltage;
   0,                                            // MaximumVoltage;
   0,                                            // ConfiguredVoltage;
-  SMBIOS_STRING_INDEX_7,                        // MemoryTechnology;               // The enumeration value from MEMORY_DEVICE_TECHNOLOGY
+  SMBIOS_STRING_INDEX_7,                        // MemoryTechnology;
 };
 
 SMBIOS_TABLE_TYPE19  mMemArrayMappedAddr = {
