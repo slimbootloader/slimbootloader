@@ -17,7 +17,6 @@
 #define SMBIOS_STRING_UNKNOWN_VERSION   "XXXX.XXX.XXX.XXX"
 #define SMBIOS_STRING_VENDOR            "Intel Corporation"
 #define SMBIOS_STRING_PLATFORM          "Intel Platform"
-#define SMBIOS_STRING_MEMORY_ASSET_TAG  "9876543210"
 
 #define BRAND_STRING_UNSUPPORTED        "CPU Brand String Not Supported"
 #define INTEL_CORPORATION_STRING        "Intel(R) Corporation"
