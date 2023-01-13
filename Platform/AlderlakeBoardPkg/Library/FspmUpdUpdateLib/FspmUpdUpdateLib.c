@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -656,12 +656,10 @@ UpdateFspConfig (
   }
 
   // Tcc enabling
-  if (IsPchS() || IsPchN()) {
 #if FixedPcdGet8 (PcdTccEnabled)
-    Fspmcfg->WdtDisableAndLock = 0x0;
-    TccModePreMemConfig (FspmUpd);
+  Fspmcfg->WdtDisableAndLock = 0x0;
+  TccModePreMemConfig (FspmUpd);
 #endif
-  }
 
   // S0ix is disabled if TSN is enabled.
   FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag (CDATA_FEATURES_TAG);

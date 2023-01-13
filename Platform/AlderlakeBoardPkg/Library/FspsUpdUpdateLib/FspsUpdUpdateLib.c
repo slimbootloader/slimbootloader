@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -41,7 +41,6 @@
 #define CPU_PCIE_ULT_ULX_MAX_ROOT_PORT     3
 #define MAX_TCSS_USB3_PORTS                4
 #define TURBO_RATIO_LIMIT_ARRAY_SIZE       8
-
 
 //
 // This table contains data on INTx and IRQ for PCH-S
@@ -466,12 +465,10 @@ TccModePostMemConfig (
     FspsUpd->FspsConfig.TccCacheCfgSize = TccCacheconfigSize;
     DEBUG ((DEBUG_INFO, "Load Tcc Cache @0x%p, size = 0x%x\n", TccCacheconfigBase, TccCacheconfigSize));
 
-    if (IsPchS ()) {
-      FspsUpd->FspsConfig.TccMode = 1;
+    FspsUpd->FspsConfig.TccMode = 1;
 #if FixedPcdGet8(PcdAdlNSupport) == 0
-      FspsUpd->FspsConfig.L2QosEnumerationEn = 1;
+    FspsUpd->FspsConfig.L2QosEnumerationEn = 1;
 #endif
-    }
   }
 
   // Load Tcc Crl binary from container
@@ -740,36 +737,34 @@ UpdateFspConfig (
     }
 
     // TSN feature support
-    if (IsPchS () || IsPchN () ) {
 #if PLATFORM_RPLS || PLATFORM_RPLP || PLATFORM_RPLPCRB
-      FspsConfig->PchTsnEnable[0] = SiCfgData->PchTsnEnable;
-      FspsConfig->PchTsnEnable[1] = SiCfgData->PchTsnEnable;
+    FspsConfig->PchTsnEnable[0] = SiCfgData->PchTsnEnable;
+    FspsConfig->PchTsnEnable[1] = SiCfgData->PchTsnEnable;
 #else
-      FspsConfig->PchTsnEnable = SiCfgData->PchTsnEnable;
+    FspsConfig->PchTsnEnable = SiCfgData->PchTsnEnable;
 #endif
-      if(SiCfgData->PchTsnEnable == 1) {
-        FspsConfig->PchTsnMultiVcEnable = SiCfgData->PchTsnMultiVcEnable;
+    if(SiCfgData->PchTsnEnable == 1) {
+      FspsConfig->PchTsnMultiVcEnable = SiCfgData->PchTsnMultiVcEnable;
 
-          if (IsPchLp ()) {
-            FspsConfig->PchTsnLinkSpeed = SiCfgData->PchTsnLinkSpeed;
-          }
+      if (IsPchLp ()) {
+        FspsConfig->PchTsnLinkSpeed = SiCfgData->PchTsnLinkSpeed;
+      }
 
-        TsnMacAddrBase      = NULL;
-        TsnMacAddrSize      = 0;
-        Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'M', 'A', 'C'),
-                                (VOID **)&TsnMacAddrBase, &TsnMacAddrSize);
-        if (!EFI_ERROR(Status)) {
-           TsnSubRegion = (TSN_MAC_ADDR_SUB_REGION*) TsnMacAddrBase;
+      TsnMacAddrBase      = NULL;
+      TsnMacAddrSize      = 0;
+      Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'M', 'A', 'C'),
+                              (VOID **)&TsnMacAddrBase, &TsnMacAddrSize);
+      if (!EFI_ERROR(Status)) {
+          TsnSubRegion = (TSN_MAC_ADDR_SUB_REGION*) TsnMacAddrBase;
 
-          FspsConfig->PchTsnMacAddressHigh  = TsnSubRegion->MacConfigData.Port[0].MacAddr.U32MacAddr[1];
-          FspsConfig->PchTsnMacAddressLow   = TsnSubRegion->MacConfigData.Port[0].MacAddr.U32MacAddr[0];
-          FspsConfig->PchTsn1MacAddressHigh = TsnSubRegion->MacConfigData.Port[1].MacAddr.U32MacAddr[1];
-          FspsConfig->PchTsn1MacAddressLow  = TsnSubRegion->MacConfigData.Port[1].MacAddr.U32MacAddr[0];
+        FspsConfig->PchTsnMacAddressHigh  = TsnSubRegion->MacConfigData.Port[0].MacAddr.U32MacAddr[1];
+        FspsConfig->PchTsnMacAddressLow   = TsnSubRegion->MacConfigData.Port[0].MacAddr.U32MacAddr[0];
+        FspsConfig->PchTsn1MacAddressHigh = TsnSubRegion->MacConfigData.Port[1].MacAddr.U32MacAddr[1];
+        FspsConfig->PchTsn1MacAddressLow  = TsnSubRegion->MacConfigData.Port[1].MacAddr.U32MacAddr[0];
 
-         DEBUG ((DEBUG_ERROR, "TSN MAC subregion completed %r\n", Status));
-        } else {
-          DEBUG ((DEBUG_ERROR, "TSN MAC subregion not found! %r\n", Status));
-        }
+        DEBUG ((DEBUG_ERROR, "TSN MAC subregion completed %r\n", Status));
+      } else {
+        DEBUG ((DEBUG_ERROR, "TSN MAC subregion not found! %r\n", Status));
       }
     }
   }
@@ -1234,11 +1229,9 @@ UpdateFspConfig (
     }
   }
 
-  if (IsPchS () || IsPchN()) {
 #if FixedPcdGet8 (PcdTccEnabled)
-    Status = TccModePostMemConfig (FspsUpd);
+  Status = TccModePostMemConfig (FspsUpd);
 #endif
-  }
 
   if (FeaturePcdGet (PcdEnablePciePm)) {
     StoreRpConfig (FspsConfig);
