@@ -545,6 +545,8 @@ InitializeSmbiosInfo (
     4, "20000000");
   AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_MEMORY_DEVICE,
     6, " ");
+  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_MEMORY_DEVICE,
+    7, "<OUT OF SPEC>");
 
   //
   // SMBIOS_TYPE_END_OF_TABLE
