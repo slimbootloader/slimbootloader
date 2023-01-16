@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017-2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -30,7 +30,13 @@ GetFspNvsDataBuffer (
   UINT32           *Length
   )
 {
-  return GetGuidHobData (HobListPtr, Length, &gFspNonVolatileStorageHobGuid);
+  VOID             *GuidHobData;
+
+  GuidHobData = GetGuidHobData (HobListPtr, Length, &gFspNonVolatileStorageHob2Guid);
+  if (GuidHobData == NULL){
+    GuidHobData = GetGuidHobData (HobListPtr, Length, &gFspNonVolatileStorageHobGuid);
+  }
+  return GuidHobData;
 }
 
 /**
