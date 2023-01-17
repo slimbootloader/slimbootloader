@@ -237,7 +237,7 @@ UpdateFspConfig (
 
   DebugPort = GetDebugPort ();
   if (DebugPort < GetPchMaxSerialIoUartControllersNum ()) {
-    Fspmcfg->PcdDebugInterfaceFlags = BIT4 | BIT5 | BIT1;
+    Fspmcfg->PcdDebugInterfaceFlags = BIT4 | BIT5;
     Fspmcfg->SerialIoUartDebugControllerNumber = DebugPort;
     Fspmcfg->SerialIoUartDebugMode = 4;
   } else {
