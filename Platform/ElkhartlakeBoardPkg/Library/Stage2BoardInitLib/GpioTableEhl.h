@@ -1,7 +1,7 @@
 /** @file
   GPIO definition table for ElkhartLake
 
- Copyright (c) 2018 - 2020, Intel Corporation. All rights reserved.<BR>
+ Copyright (c) 2018 - 2023, Intel Corporation. All rights reserved.<BR>
  SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -84,6 +84,58 @@ GLOBAL_REMOVE_IF_UNREFERENCED GPIO_INIT_CONFIG mGpioTablePreMemEhlFusa[] =
   {GPIO_VER3_GPP_D17,  {GpioPadModeGpio, GpioHostOwnDefault, GpioDirNone,   GpioOutLow,    GpioIntLvlEdgDis | GpioIntDis, GpioResumeReset,  GpioTermNone}},  //GPIO_VER3_GPP_D17
   {GPIO_VER3_GPP_D18,  {GpioPadModeGpio, GpioHostOwnDefault, GpioDirNone,   GpioOutLow,    GpioIntLvlEdgDis | GpioIntDis, GpioResumeReset,  GpioTermNone}},  //GPIO_VER3_GPP_D18
 
+};
+
+GLOBAL_REMOVE_IF_UNREFERENCED GPIO_INIT_CONFIG mEhlPchTsnDeviceGpioTable[] =
+{
+  {GPIO_VER3_GPP_C17, {GpioPadModeNative1, GpioHostOwnDefault, GpioDirOut,    GpioOutDefault,   GpioIntDis, GpioResetDefault,  GpioTermNone}},  //RGMII2_MDC
+  {GPIO_VER3_GPP_C16, {GpioPadModeNative1, GpioHostOwnDefault, GpioDirInOut,  GpioOutDefault,   GpioIntDis, GpioResetDefault,  GpioTermNone}},  //RGMII2_MDIO
+  {GPIO_VER3_GPP_U0,  {GpioPadModeNative1, GpioHostOwnDefault, GpioDirIn,  GpioOutDefault,   GpioIntDis, GpioResetDefault,  GpioTermNone}},  //RGMII2_INT
+  {GPIO_VER3_GPP_U1,  {GpioPadModeGpio,    GpioHostOwnDefault, GpioDirOut,    GpioOutHigh,      GpioIntDis, GpioResetDefault,  GpioTermNone}},  //RGMII2_RESETB
+};
+
+GLOBAL_REMOVE_IF_UNREFERENCED GPIO_INIT_CONFIG mEhlPseTsn0DeviceGpioTable[] =
+{
+  {GPIO_VER3_GPP_C3,  {GpioPadModeNative1, GpioHostOwnDefault, GpioDirOut,    GpioOutDefault,   GpioIntDis, GpioResetDefault,  GpioTermNone}},  //RGMII0_MDC
+  {GPIO_VER3_GPP_C4,  {GpioPadModeNative1, GpioHostOwnDefault, GpioDirInOut,  GpioOutDefault,   GpioIntDis, GpioResetDefault,  GpioTermNone}},  //RGMII0_MDIO
+  {GPIO_VER3_GPP_T4,  {GpioPadModeNative1, GpioHostOwnDefault, GpioDirIn,     GpioOutDefault,   GpioIntDis, GpioResetDefault,  GpioTermNone}},  //RGMII0_INT
+  {GPIO_VER3_GPP_T5,  {GpioPadModeGpio,    GpioHostOwnDefault, GpioDirOut,    GpioOutHigh,      GpioIntDis, GpioResetDefault,  GpioTermNone}},  //RGMII0_RESETB
+  {GPIO_VER3_GPP_T6,  {GpioPadModeNative1, GpioHostOwnDefault, GpioDirInOut,  GpioOutDefault,   GpioIntDis, GpioResetDefault,  GpioTermNone}},  //RGMII0_AUXTS
+  {GPIO_VER3_GPP_T7,  {GpioPadModeNative1, GpioHostOwnDefault, GpioDirInOut,  GpioOutDefault,   GpioIntDis, GpioResetDefault,  GpioTermNone}},  //RGMII0_PPS
+  {GPIO_VER3_GPP_A0,  {GpioPadModeNative1, GpioHostOwnDefault, GpioDirDefault, GpioOutDefault, GpioIntDefault, GpioResetDefault, GpioTermDefault}},
+  {GPIO_VER3_GPP_A1,  {GpioPadModeNative1, GpioHostOwnDefault, GpioDirDefault, GpioOutDefault, GpioIntDefault, GpioResetDefault, GpioTermDefault}},
+  {GPIO_VER3_GPP_A2,  {GpioPadModeNative1, GpioHostOwnDefault, GpioDirDefault, GpioOutDefault, GpioIntDefault, GpioResetDefault, GpioTermDefault}},
+  {GPIO_VER3_GPP_A3,  {GpioPadModeNative1, GpioHostOwnDefault, GpioDirDefault, GpioOutDefault, GpioIntDefault, GpioResetDefault, GpioTermDefault}},
+  {GPIO_VER3_GPP_A4,  {GpioPadModeNative1, GpioHostOwnDefault, GpioDirDefault, GpioOutDefault, GpioIntDefault, GpioResetDefault, GpioTermDefault}},
+  {GPIO_VER3_GPP_A5,  {GpioPadModeNative1, GpioHostOwnDefault, GpioDirDefault, GpioOutDefault, GpioIntDefault, GpioResetDefault, GpioTermDefault}},
+  {GPIO_VER3_GPP_A6,  {GpioPadModeNative1, GpioHostOwnDefault, GpioDirDefault, GpioOutDefault, GpioIntDefault, GpioResetDefault, GpioTermDefault}},
+  {GPIO_VER3_GPP_A7,  {GpioPadModeNative1, GpioHostOwnDefault, GpioDirDefault, GpioOutDefault, GpioIntDefault, GpioResetDefault, GpioTermDefault}},
+  {GPIO_VER3_GPP_A8,  {GpioPadModeNative1, GpioHostOwnDefault, GpioDirDefault, GpioOutDefault, GpioIntDefault, GpioResetDefault, GpioTermDefault}},
+  {GPIO_VER3_GPP_A9,  {GpioPadModeNative1, GpioHostOwnDefault, GpioDirDefault, GpioOutDefault, GpioIntDefault, GpioResetDefault, GpioTermDefault}},
+  {GPIO_VER3_GPP_A10, {GpioPadModeNative1, GpioHostOwnDefault, GpioDirDefault, GpioOutDefault, GpioIntDefault, GpioResetDefault, GpioTermDefault}},
+  {GPIO_VER3_GPP_A23, {GpioPadModeNative1, GpioHostOwnDefault, GpioDirDefault, GpioOutDefault, GpioIntDefault, GpioResetDefault, GpioTermDefault}}
+};
+
+GLOBAL_REMOVE_IF_UNREFERENCED GPIO_INIT_CONFIG mEhlPseTsn1DeviceGpioTable[] =
+{
+  {GPIO_VER3_GPP_C6,  {GpioPadModeNative1, GpioHostOwnDefault, GpioDirOut,    GpioOutDefault,   GpioIntDis, GpioResetDefault,  GpioTermNone}},  //RGMII1_MDC
+  {GPIO_VER3_GPP_C7,  {GpioPadModeNative1, GpioHostOwnDefault, GpioDirInOut,  GpioOutDefault,   GpioIntDis, GpioResetDefault,  GpioTermNone}},  //RGMII1_MDIO
+  {GPIO_VER3_GPP_H0,  {GpioPadModeNative1, GpioHostOwnDefault, GpioDirIn,     GpioOutDefault,   GpioIntDis, GpioResetDefault,  GpioTermNone}},  //RGMII1_INT
+  {GPIO_VER3_GPP_H1,  {GpioPadModeGpio,    GpioHostOwnDefault, GpioDirOut,    GpioOutHigh,      GpioIntDis, GpioResetDefault,  GpioTermNone}},  //RGMII1_RESETB
+  {GPIO_VER3_GPP_H2,  {GpioPadModeNative1, GpioHostOwnDefault, GpioDirInOut,  GpioOutDefault,   GpioIntDis, GpioResetDefault,  GpioTermNone}},  //RGMII1_AUXTS
+  {GPIO_VER3_GPP_H3,  {GpioPadModeNative1, GpioHostOwnDefault, GpioDirInOut,  GpioOutDefault,   GpioIntDis, GpioResetDefault,  GpioTermNone}},   //RGMII1_PPS
+  {GPIO_VER3_GPP_A11, {GpioPadModeNative1, GpioHostOwnDefault, GpioDirDefault, GpioOutDefault, GpioIntDefault, GpioResetDefault, GpioTermDefault}},
+  {GPIO_VER3_GPP_A12, {GpioPadModeNative1, GpioHostOwnDefault, GpioDirDefault, GpioOutDefault, GpioIntDefault, GpioResetDefault, GpioTermDefault}},
+  {GPIO_VER3_GPP_A13, {GpioPadModeNative1, GpioHostOwnDefault, GpioDirDefault, GpioOutDefault, GpioIntDefault, GpioResetDefault, GpioTermDefault}},
+  {GPIO_VER3_GPP_A14, {GpioPadModeNative1, GpioHostOwnDefault, GpioDirDefault, GpioOutDefault, GpioIntDefault, GpioResetDefault, GpioTermDefault}},
+  {GPIO_VER3_GPP_A15, {GpioPadModeNative1, GpioHostOwnDefault, GpioDirDefault, GpioOutDefault, GpioIntDefault, GpioResetDefault, GpioTermDefault}},
+  {GPIO_VER3_GPP_A16, {GpioPadModeNative1, GpioHostOwnDefault, GpioDirDefault, GpioOutDefault, GpioIntDefault, GpioResetDefault, GpioTermDefault}},
+  {GPIO_VER3_GPP_A17, {GpioPadModeNative1, GpioHostOwnDefault, GpioDirDefault, GpioOutDefault, GpioIntDefault, GpioResetDefault, GpioTermDefault}},
+  {GPIO_VER3_GPP_A18, {GpioPadModeNative1, GpioHostOwnDefault, GpioDirDefault, GpioOutDefault, GpioIntDefault, GpioResetDefault, GpioTermDefault}},
+  {GPIO_VER3_GPP_A19, {GpioPadModeNative1, GpioHostOwnDefault, GpioDirDefault, GpioOutDefault, GpioIntDefault, GpioResetDefault, GpioTermDefault}},
+  {GPIO_VER3_GPP_A20, {GpioPadModeNative1, GpioHostOwnDefault, GpioDirDefault, GpioOutDefault, GpioIntDefault, GpioResetDefault, GpioTermDefault}},
+  {GPIO_VER3_GPP_A21, {GpioPadModeNative1, GpioHostOwnDefault, GpioDirDefault, GpioOutDefault, GpioIntDefault, GpioResetDefault, GpioTermDefault}},
+  {GPIO_VER3_GPP_A22, {GpioPadModeNative1, GpioHostOwnDefault, GpioDirDefault, GpioOutDefault, GpioIntDefault, GpioResetDefault, GpioTermDefault}}
 };
 
 #endif // _ELKHARTLAKE_GPIO_TABLE_H_

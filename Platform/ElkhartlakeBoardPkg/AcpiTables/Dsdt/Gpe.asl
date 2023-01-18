@@ -1,7 +1,7 @@
 /** @file
   ACPI DSDT table
 
-  Copyright (c) 2011 - 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2011 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -70,7 +70,24 @@
   Method(_L73, 0 , serialized) {
   }
   Method(_L68, 0 , serialized) {
-    Notify(\_SB.PC00.PSED, 0x02)
+    if (LEqual(\_SB.PC00.PSED.IPME(), 1)) {
+      Notify(\_SB.PC00.PSED, 0x02)
+    }
+
+    //
+    // Notify to PSE GBE if WoL is enabled
+    //
+    If(LEqual(\PWOL, 1)) {
+      // Notify Only PME status bit set on PMCSR for PSE TSN0 device
+      if (LEqual(\_SB.PC00.OTN0.IPME(), 1)) {
+        Notify(\_SB.PC00.OTN0, 0x02)
+      }
+
+      // Notify Only PME status bit set on PMCSR for PSE TSN1 device
+      if (LEqual(\_SB.PC00.OTN1.IPME(), 1)) {
+        Notify(\_SB.PC00.OTN1, 0x02)
+      }
+    }
   }
   Method(_L6B, 0 , serialized) {
   }

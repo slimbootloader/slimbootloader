@@ -1,9 +1,11 @@
 /**@file
   ACPI DSDT table for PSE
 
- Copyright (c) 2019 - 2022 Intel Corporation. All rights reserved.<BR>
+ Copyright (c) 2019 - 2023 Intel Corporation. All rights reserved.<BR>
  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
+
+External(IPCS, MethodObj)  // IPC Command Send (Read/Write)
 
 Scope(\_SB.PC00) {
   //
@@ -11,6 +13,16 @@ Scope(\_SB.PC00) {
   //
   Device(PSED) {
     Name(_ADR, 0x001d0000)
+    OperationRegion(IPCC,PCI_Config,0x00,0x100)
+    Field(IPCC,AnyAcc,NoLock,Preserve)
+    {
+      Offset(0), VDID, 32,
+      Offset(0x10), TADL,  32,
+      Offset(0x14), TADH,  32,
+      Offset(0x84),
+          , 15,
+      PMES, 1
+    }
     Method(_DSM, 0x4, NotSerialized, 0, UnknownObj, {BuffObj, IntObj, IntObj, PkgObj}) {
       if(PCIC(Arg0)) { return(PCID(Arg0,Arg1,Arg2,Arg3)) }
 
@@ -27,20 +39,70 @@ Scope(\_SB.PC00) {
 
       Return(Buffer() {0})
     } // End _DSM
+
+    Name (_DSD, Package () {
+      ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+      Package () {
+        Package (2) {"firmware-name","pseFw.bin"}
+        // This is called by Kernel provide the name of shimloader
+      }
+    })
+
+    Method(_PRW, 0) {
+      Return(GPRW(0x68, 5)) // can wakeup from S5 state
+    }
+
+    Method (_S0W, 0, NotSerialized) {
+      Return (0x03)  // _S0W: S0 Device Wake State
+    }
+
+    //
+    // PME status from PMCSR for the PSE IPC device
+    //
+    Method(IPME,0,Serialized) {
+      If(LAnd(LNotEqual(VDID,0xFFFFFFFF), LEqual(PMES,1))) {
+        Return(0x01)
+      }
+      Return(0x00)
+    }
   } // Device(PSED)
 
   //
   // TSN0
   //
   Device(OTN0) {
-    Name(_ADR, 0x001D0001)
+    Name(_ADR, 0x001D0001) // Device 29, Function 1
     OperationRegion(TSRT,PCI_Config,0x00,0x100)
     Field(TSRT,AnyAcc,NoLock,Preserve)
     {
-      DVID, 16,
-      Offset(0x10),
-      TADL,  32,
-      TADH,  32,
+      Offset(0), VDID, 32,
+      Offset(0x10), TADL,  32,
+      Offset(0x14), TADH,  32,
+      Offset(0x84),
+          , 15,
+      PMES, 1
+    }
+    Method(_PRW, 0) {
+      Return(GPRW(0x68, 5)) // can wakeup from S5 state
+    }
+
+    //
+    // PME status from PMCSR for the PSE TSN0 device
+    //
+    Method(IPME,0,Serialized) {
+      If(LAnd(LNotEqual(VDID,0xFFFFFFFF), LEqual(PMES,1))) {
+        Return(0x01)
+      }
+      Return(0x00)
+    }
+
+    Method (_IPC, 0x7,Serialized) {
+      Return(IPCS(Arg0,Arg1,Arg2,Arg3,Arg4,Arg5,Arg6))
+    }
+
+    Method(_STX)
+    {
+      Return(0x0F)
     }
   }
 
@@ -48,14 +110,38 @@ Scope(\_SB.PC00) {
   // TSN1
   //
   Device(OTN1) {
-    Name(_ADR, 0x001D0002)
+    Name(_ADR, 0x001D0002) // Device 29, Function 2
     OperationRegion(TSRT,PCI_Config,0x00,0x100)
     Field(TSRT,AnyAcc,NoLock,Preserve)
     {
-      DVID, 16,
-      Offset(0x10),
-      TADL,  32,
-      TADH,  32,
+      Offset(0), VDID, 32,
+      Offset(0x10), TADL,  32,
+      Offset(0x14), TADH,  32,
+      Offset(0x84),
+          , 15,
+      PMES, 1
+    }
+    Method(_PRW, 0) {
+      Return(GPRW(0x68, 5)) // can wakeup from S5 state
+    }
+
+    //
+    // PME status from PMCSR for the PSE TSN1 device
+    //
+    Method(IPME,0,Serialized) {
+      If(LAnd(LNotEqual(VDID,0xFFFFFFFF), LEqual(PMES,1))) {
+        Return(0x01)
+      }
+      Return(0x00)
+    }
+
+    Method (_IPC, 0x7,Serialized) {
+       Return(IPCS(Arg0,Arg1,Arg2,Arg3,Arg4,Arg5,Arg6))
+    }
+
+    Method(_STX)
+    {
+      Return(0x0F)
     }
   }
 
@@ -64,6 +150,7 @@ Scope(\_SB.PC00) {
   //-------------------------------------------
   Device(DMA0) {
     Name (_ADR, 0x001D0003) // Device 29, Function 3
+    Name (_HID, "80864BB4")
     Name (_UID, Zero)
     Method (_STA, 0, NotSerialized)
     {
@@ -76,18 +163,19 @@ Scope(\_SB.PC00) {
   //-------------------------------------------
   Device(DMA1) {
     Name (_ADR, 0x001D0004) // Device 29, Function 4
+    Name (_HID, "80864BB5")
     Name (_UID, Zero)
     Name (RBUF, ResourceTemplate ()
     {
-      Memory32Fixed (ReadWrite, 0x00000000, 0x00004000, BAR0)
+      Memory32Fixed (ReadWrite, 0x00000000, 0x00004000, PD1R)
       Interrupt (ResourceConsumer, Level, ActiveLow, Exclusive, , , ) {35}  // DMA #1 IRQ
     })
     Method (_CRS, 0x0, NotSerialized)
     {
-      CreateDwordField(^RBUF, ^BAR0._BAS, B0BA)
-      CreateDwordField(^RBUF, ^BAR0._LEN, B0LN)
-      Store(D10A, B0BA)
-      Store(D10L, B0LN)
+      CreateDwordField(^RBUF, ^PD1R._BAS, D1BA)
+      CreateDwordField(^RBUF, ^PD1R._LEN, D1LN)
+      Store(D10A, D1BA)
+      Store(D10L, D1LN)
       Return (RBUF)
     }
     Method (_STA, 0, NotSerialized)
@@ -104,18 +192,19 @@ Scope(\_SB.PC00) {
   //-------------------------------------------
   Device(DMA2) {
     Name (_ADR, 0x001D0005) // Device 29, Function 5
+    Name (_HID, "80864BB6")
     Name (_UID, Zero)
     Name (RBUF, ResourceTemplate ()
     {
-      Memory32Fixed (ReadWrite, 0x00000000, 0x00004000, BAR0)
+      Memory32Fixed (ReadWrite, 0x00000000, 0x00004000, PD2R)
       Interrupt (ResourceConsumer, Level, ActiveLow, Exclusive, , , ) {36}  // DMA #2 IRQ
     })
     Method (_CRS, 0x0, NotSerialized)
     {
-      CreateDwordField(^RBUF, ^BAR0._BAS, B0BA)
-      CreateDwordField(^RBUF, ^BAR0._LEN, B0LN)
-      Store(D20A, B0BA)
-      Store(D20L, B0LN)
+      CreateDwordField(^RBUF, ^PD2R._BAS, D2BA)
+      CreateDwordField(^RBUF, ^PD2R._LEN, D2LN)
+      Store(D20A, D2BA)
+      Store(D20L, D2LN)
       Return (RBUF)
     }
     Method (_STA, 0, NotSerialized)
@@ -362,13 +451,16 @@ Scope(\_SB.PC00) {
         Return (0xF)
       }
     }
-    Name(_DSD, Package () {
+    Method(_DSD, 0) {
+      Return(
+          Package () {
             ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
             Package () {
-                Package () {"bosch,mram-cfg", Package () {0x0, 0x80, 0x40, 0x40, 0, 0x40, 0x10, 0x10}}
+                Package () {"bosch,mram-cfg", Package () {0x800, 0x80, 0x40, 0x40, 0, 0x40, 0x10, 0x10}}
             }
-      }
-    )
+          }
+        )
+    }
   } // Device(CAN0)
 
   //-------------------------------------------
@@ -390,13 +482,16 @@ Scope(\_SB.PC00) {
         Return (0xF)
       }
     }
-    Name(_DSD, Package () {
-      ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
-      Package () {
-          Package () {"bosch,mram-cfg", Package () {0x0, 0x80, 0x40, 0x40, 0, 0x40, 0x10, 0x10}}
-      }
+    Method(_DSD, 0) {
+      Return(
+          Package () {
+            ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+            Package () {
+                Package () {"bosch,mram-cfg", Package () {0x800, 0x80, 0x40, 0x40, 0, 0x40, 0x10, 0x10}}
+            }
+          }
+        )
     }
-)
   } // Device(CAN1)
 
   //-------------------------------------------
@@ -455,13 +550,19 @@ Scope(\_SB.PC00) {
       })
       Return(RBUF)
     }
-    Name (_DSD, Package () {
-      ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
-      Package () {
-        Package () {"snps,rs485-interface-en", 1},
-        Package () {"snps,de-active-high", 1},
+    Method(_DSD, 0) {
+      If(LNotEqual(PUA0, 0)) {
+        Return(
+          Package () {
+            ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+            Package () {
+                Package () {"snps,rs485-interface-en", 1},
+                Package () {"snps,de-active-high", 1},
+            }
+          }
+        )
       }
-    })
+    }
   } // Device(OUA0)
 
   //-------------------------------------------
@@ -478,13 +579,19 @@ Scope(\_SB.PC00) {
       })
       Return(RBUF)
     }
-    Name (_DSD, Package () {
-      ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
-      Package () {
-        Package () {"snps,rs485-interface-en", 1},
-        Package () {"snps,de-active-high", 1},
+    Method(_DSD, 0) {
+      If(LNotEqual(PUA1, 0)) {
+        Return(
+          Package () {
+            ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+            Package () {
+                Package () {"snps,rs485-interface-en", 1},
+                Package () {"snps,de-active-high", 1},
+            }
+          }
+        )
       }
-    })
+    }
   } // Device(OUA1)
 
   //-------------------------------------------
@@ -501,13 +608,19 @@ Scope(\_SB.PC00) {
       })
       Return(RBUF)
     }
-    Name (_DSD, Package () {
-      ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
-      Package () {
-        Package () {"snps,rs485-interface-en", 1},
-        Package () {"snps,de-active-high", 1},
+    Method(_DSD, 0) {
+      If(LNotEqual(PUA2, 0)) {
+        Return(
+          Package () {
+            ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+            Package () {
+                Package () {"snps,rs485-interface-en", 1},
+                Package () {"snps,de-active-high", 1},
+            }
+          }
+        )
       }
-    })
+    }
   } // Device(OUA2)
 
   //-------------------------------------------
@@ -524,13 +637,19 @@ Scope(\_SB.PC00) {
       })
       Return(RBUF)
     }
-    Name (_DSD, Package () {
-      ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
-      Package () {
-        Package () {"snps,rs485-interface-en", 1},
-        Package () {"snps,de-active-high", 1},
+    Method(_DSD, 0) {
+      If(LNotEqual(PUA3, 0)) {
+        Return(
+          Package () {
+            ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"),
+            Package () {
+                Package () {"snps,rs485-interface-en", 1},
+                Package () {"snps,de-active-high", 1},
+            }
+          }
+        )
       }
-    })
+    }
   } // Device(OUA3)
 
   //-------------------------------------------
