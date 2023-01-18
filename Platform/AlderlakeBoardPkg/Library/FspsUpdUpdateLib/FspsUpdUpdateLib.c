@@ -1128,10 +1128,10 @@ UpdateFspConfig (
       case PLATFORM_ID_ADL_N_DDR5_CRB:
         FspsConfig->PchLanEnable = 0x0;
         FspsConfig->PchPmVrAlert = 0x1;
-        FspsConfig->PchFivrExtV1p05RailEnabledStates = 0x3f;
+        FspsConfig->PchFivrExtV1p05RailEnabledStates = 0x1f;
         FspsConfig->PchFivrExtVnnRailEnabledStates = 0x3f;
         FspsConfig->PchFivrExtVnnRailSupportedVoltageStates = 0x4;
-        FspsConfig->PchFivrVccinAuxOffToHighCurModeVolTranTime = 0x0;
+        FspsConfig->PchFivrVccinAuxOffToHighCurModeVolTranTime = 0x96;
         FspsConfig->IomStayInTCColdSeconds = 0x0;
         FspsConfig->IomBeforeEnteringTCColdSeconds = 0x0;
         FspsConfig->UsbTcPortEn = 0x3;
@@ -1168,6 +1168,8 @@ UpdateFspConfig (
         FspsConfig->AmtEnabled = 0x1;
         FspsConfig->LidStatus = 0x5b;
         FspsConfig->TcssAuxOri = 0x1;
+        FspsConfig->PchFivrVccstIccMaxControl = 0x1;
+        CopyMem (FspsConfig->AtomTurboRatioLimitNumCore, PowerCfgData->AtomTurboRatioLimitNumCore, sizeof(PowerCfgData->AtomTurboRatioLimitNumCore));
         break;
       case PLATFORM_ID_ADL_N_LPDDR5_RVP:
         FspsConfig->PchLanEnable = 0x0;
