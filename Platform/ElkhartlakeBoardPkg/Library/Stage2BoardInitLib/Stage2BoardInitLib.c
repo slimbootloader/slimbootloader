@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -313,6 +313,38 @@ FillGpioTable (
   GpioTable += GpioCfg->GpioItemSize;
 
   return GpioTable;
+}
+
+
+/**
+  Configure the GPIO pins for GBEs: PCH TSN and Pse TSNs
+**/
+VOID
+ConfigureGbeGpio (
+  VOID
+  )
+{
+  SILICON_CFG_DATA            *SiCfgData;
+  MEMORY_CFG_DATA             *MemCfgData;
+
+  DEBUG ((DEBUG_INFO, "ConfigureGpio for Gbe\n"));
+  SiCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
+  MemCfgData = (MEMORY_CFG_DATA *)FindConfigDataByTag (CDATA_MEMORY_TAG);
+
+  if (SiCfgData != NULL) {
+    if (SiCfgData->PchTsnEnable) {
+      ConfigureGpio (CDATA_NO_TAG, ARRAY_SIZE(mEhlPchTsnDeviceGpioTable), (UINT8*)mEhlPchTsnDeviceGpioTable);
+    }
+
+    if (MemCfgData != NULL && MemCfgData->PchPseEnable) {
+      if (SiCfgData->PchPseGbeEnable[0] > 0) {
+        ConfigureGpio (CDATA_NO_TAG, ARRAY_SIZE(mEhlPseTsn0DeviceGpioTable), (UINT8*)mEhlPseTsn0DeviceGpioTable);
+      }
+      if (SiCfgData->PchPseGbeEnable[1] > 0) {
+        ConfigureGpio (CDATA_NO_TAG, ARRAY_SIZE(mEhlPseTsn1DeviceGpioTable), (UINT8*)mEhlPseTsn1DeviceGpioTable);
+      }
+    }
+  }
 }
 
 /**
@@ -692,6 +724,9 @@ BoardInit (
       DEBUG ((DEBUG_INFO, "ConfigureGpio for Fusa\n"));
       ConfigureGpio (CDATA_NO_TAG, ARRAY_SIZE(mGpioTablePreMemEhlFusa), (UINT8*)mGpioTablePreMemEhlFusa);
     }
+
+    ConfigureGbeGpio ();
+
     SpiConstructor ();
     if (GetBootMode() != BOOT_ON_FLASH_UPDATE) {
       UpdatePayloadId ();

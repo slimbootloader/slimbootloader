@@ -1,7 +1,7 @@
 /** @file
   ACPI DSDT table
 
-  Copyright (c) 2011 - 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2011 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 #include "Register/PmcRegs.h"
@@ -83,6 +83,7 @@ External(MMRP, MethodObj)
 External(MMTB, MethodObj)
 External(TBFF, MethodObj)
 External(FFTB, MethodObj)
+External(IPCS, MethodObj)
 include("DTbt.asl")
 // Comms Hub module support
 include("CommsHub.asl")
@@ -1091,19 +1092,13 @@ Scope (\_SB)
       Return(0x00)
     }
 
-    Method (_CRS, 0x0, Serialized) {
-      Name(PCSR,ResourceTemplate(){
-        Memory32Fixed (ReadWrite, 0x0,0x4, MDAL)
-        Memory32Fixed (ReadWrite, 0x0,0x4, MDDL)
-      })
+    Method (_IPC, 0x7, Serialized ) {
+      Return(IPCS(Arg0,Arg1,Arg2,Arg3,Arg4,Arg5,Arg6))
+    }
 
-      CreateDWordField(PCSR,MDAL._BAS, MAL0)
-      Store(Add(And(\_SB.PC00.GTSN.TADL,0xFFFFF000),0x200), MAL0)
-
-      CreateDWordField(PCSR,MDDL._BAS, MDL0)
-      Store(Add(And(\_SB.PC00.GTSN.TADL,0xFFFFF000),0x204), MDL0)
-
-      Return(PCSR)
+    Method(_STX)
+    {
+      Return(0x0F)
     }
   }
 
@@ -1120,17 +1115,13 @@ Scope (\_SB)
       Return(0x00)
     }
 
-    Method (_CRS, 0x0, Serialized) {
-      Name(PCSR,ResourceTemplate(){
-        Memory32Fixed (ReadWrite, 0x0,0x4, MDAL)
-        Memory32Fixed (ReadWrite, 0x0,0x4, MDDL)
-      })
+    Method (_IPC, 0x7,Serialized) {
+      Return(IPCS(Arg0,Arg1,Arg2,Arg3,Arg4,Arg5,Arg6))
+    }
 
-      CreateDWordField(PCSR,MDAL._BAS, MAL0)
-      Store(Add(And(\_SB.PC00.OTN0.TADL,0xFFFFF000),0x200), MAL0)
-      CreateDWordField(PCSR,MDDL._BAS, MDL0)
-      Store(Add(And(\_SB.PC00.OTN0.TADL,0xFFFFF000),0x204), MDL0)
-      Return(PCSR)
+    Method(_STX)
+    {
+      Return(0x0F)
     }
   }
 
@@ -1147,17 +1138,13 @@ Scope (\_SB)
       Return(0x00)
     }
 
-    Method (_CRS, 0x0, Serialized) {
-      Name(PCSR,ResourceTemplate(){
-        Memory32Fixed (ReadWrite, 0x0,0x4, MDAL)
-        Memory32Fixed (ReadWrite, 0x0,0x4, MDDL)
-      })
+    Method (_IPC, 0x7,Serialized) {
+      Return(IPCS(Arg0,Arg1,Arg2,Arg3,Arg4,Arg5,Arg6))
+    }
 
-      CreateDWordField(PCSR,MDAL._BAS, MAL0)
-      Store(Add(And(\_SB.PC00.OTN1.TADL,0xFFFFF000),0x200), MAL0)
-      CreateDWordField(PCSR,MDDL._BAS, MDL0)
-      Store(Add(And(\_SB.PC00.OTN1.TADL,0xFFFFF000),0x204), MDL0)
-      Return(PCSR)
+    Method(_STX)
+    {
+      Return(0x0F)
     }
  }
 } // End of Scope(\_SB)
