@@ -261,6 +261,9 @@ ParseContainerImage (
       }
     }
 
+    // Save the name of the component
+    File[Index].Name = (UINT32) ComponentName;
+
     Index++;
   } while ((Status == EFI_SUCCESS) && (Index < ARRAY_SIZE (File)));
 
