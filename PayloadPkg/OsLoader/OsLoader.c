@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -69,17 +69,12 @@ UpdateLoadedImage (
   Status = EFI_SUCCESS;
 
   if (ImageType == CONTAINER_TYPE_NORMAL) {
-    // Image can be of type: Multiboot, PE, FV, bzImage, or ELF
+    // Image can be of type: PE, FV, bzImage, or ELF
+    // Container can contain additional ACPI binary blobs
     // Assuming that the first image in the container is used for booting
     CommonImage                = &LoadedImage->Image.Common;
     CopyMem (&CommonImage->BootFile, &File[0], sizeof (IMAGE_DATA));
-    if (IsMultiboot (File[0].Addr)) {
-      LoadedImage->Flags |= LOADED_IMAGE_MULTIBOOT;
-      TypeStr = "Multiboot";
-    } else if (IsMultiboot2 (File[0].Addr)) {
-      LoadedImage->Flags |= LOADED_IMAGE_MULTIBOOT2;
-      TypeStr = "Multiboot-2";
-    } else if (IsTePe32Image (File[0].Addr, NULL) && \
+    if (IsTePe32Image (File[0].Addr, NULL) && \
                (* (UINT32 *)File[0].Addr == EFI_IMAGE_DOS_SIGNATURE)) {
       // Add extra check to ensure it is a PE32 image generated from payload build.
       // Please note vmlinuxz is also following PE32 format, but it should
@@ -101,10 +96,31 @@ UpdateLoadedImage (
     }
 
     DEBUG ((DEBUG_INFO, "One %a file in boot image file .... \n", TypeStr));
+
+    // If there are more files, check for ACPI blobs and update ACPI tables accordingly
+    if (NumFiles > 1) {
+      Index = 1;
+      while (Index < NumFiles) {
+      // Update ACPI tables if we encounter an ACPI blob
+      if (File[Index].Name == SIGNATURE_32('A', 'C', 'P', 'I')) {
+          DEBUG ((DEBUG_INFO, "Loading boot image ACPI tables...\n"));
+          PlatformService = (PLATFORM_SERVICE *) GetServiceBySignature (PLATFORM_SERVICE_SIGNATURE);
+          if ((PlatformService != NULL) && (PlatformService->AcpiTableUpdate != NULL)) {
+            Status = PlatformService->AcpiTableUpdate (File[Index].Addr, File[Index].Size);
+            DEBUG ((DEBUG_INFO, "Updating ACPI table with boot image %d - %r\n", Index, Status));
+          }
+          FreeImageData (&File[Index]);
+          continue;
+        }
+      Index++;
+      }
+    }
+
     return EFI_SUCCESS;
   } else if (ImageType == CONTAINER_TYPE_CLASSIC) {
-    // Files: cmdline, bzImage, initrd, acpi, firmware1, firmware2, ...
-    // The file order mentioned above is fixed and needs to be followed
+    // Files: cmdline, bzImage, initrd, other optional files (acpi, firmware1, firmware2, ...)
+    // The file order for the first three files mentioned above is fixed. The rest are optional and can be in any order.
+    // Container can contain additional ACPI binary blobs
 
     // Make sure that the boot file (File[1]) is present
     if (NumFiles < 2) {
@@ -136,14 +152,40 @@ UpdateLoadedImage (
 
     // Save other binary blobs
     Index = 3;
-    while ((Index < MAX_MULTIBOOT_MODULE_NUMBER) && (Index < NumFiles)) {
+    while ((Index < MAX_EXTRA_FILE_NUMBER) && (Index < NumFiles)) {
+      // Update ACPI tables if we encounter an ACPI blob
+      if (File[Index].Name == SIGNATURE_32('A', 'C', 'P', 'I')) {
+          DEBUG ((DEBUG_INFO, "Loading boot image ACPI tables...\n"));
+          PlatformService = (PLATFORM_SERVICE *) GetServiceBySignature (PLATFORM_SERVICE_SIGNATURE);
+          if ((PlatformService != NULL) && (PlatformService->AcpiTableUpdate != NULL)) {
+            Status = PlatformService->AcpiTableUpdate (File[Index].Addr, File[Index].Size);
+            DEBUG ((DEBUG_INFO, "Updating ACPI table with boot image %d - %r\n", Index, Status));
+          }
+          FreeImageData (&File[Index]);
+          Index++;
+          continue;
+        }
       CopyMem (&LinuxImage->ExtraBlob[Index - 3], &File[Index], sizeof (IMAGE_DATA));
       Index++;
     }
     LinuxImage->ExtraBlobNumber = Index;
   } else if (ImageType == CONTAINER_TYPE_MULTIBOOT) {
     // Files: cmdline1, elf1, cmdline2, elf2, ...
+    // Container can contain additional ACPI binary blobs
     // Assume the first elf file is the one to boot
+    if (IsMultiboot (File[1].Addr)) {
+      LoadedImage->Flags |= LOADED_IMAGE_MULTIBOOT;
+      TypeStr = "Multiboot";
+    } else if (IsMultiboot2 (File[1].Addr)) {
+      LoadedImage->Flags |= LOADED_IMAGE_MULTIBOOT2;
+      TypeStr = "Multiboot-2";
+    } else {
+      DEBUG ((DEBUG_ERROR, "\"Multiboot\" container type used for a non-multiboot image!"));
+      return EFI_UNSUPPORTED;
+    }
+
+    DEBUG ((DEBUG_INFO, "%a file in boot image file .... \n", TypeStr));
+
     MultiBoot                = &LoadedImage->Image.MultiBoot;
     LoadedImage->Flags      |= LOADED_IMAGE_MULTIBOOT;
     CopyMem (&MultiBoot->CmdFile, &File[0], sizeof (IMAGE_DATA));
@@ -153,6 +195,10 @@ UpdateLoadedImage (
     ModuleIndex = 0;
     for (Index = 2; Index < NumFiles; Index += 2) {
       if (Index < MAX_MULTIBOOT_MODULE_NUMBER) {
+        // Multiboot modules are in a cmdline-ELF pair according to the spec.
+        // So to accomodate for that, ACPI binary blobs should be preceded by
+        // a corresponding dummy cmdline file that contains the MULTIBOOT_SPECIAL_MODULE_MAGIC
+        // string to indicate that the paired file is the ACPI binary blob
         if (* (UINT32 *) File[Index].Addr == MULTIBOOT_SPECIAL_MODULE_MAGIC) {
           DEBUG ((DEBUG_INFO, "Loading boot image ACPI tables...\n"));
           PlatformService = (PLATFORM_SERVICE *) GetServiceBySignature (PLATFORM_SERVICE_SIGNATURE);
