@@ -117,7 +117,7 @@ UpdateLoadedImage (
     }
 
     return EFI_SUCCESS;
-  } else if (ImageType == CONTAINER_TYPE_CLASSIC) {
+  } else if (ImageType == CONTAINER_TYPE_CLASSIC_LINUX) {
     // Files: cmdline, bzImage, initrd, other optional files (acpi, firmware1, firmware2, ...)
     // The file order for the first three files mentioned above is fixed. The rest are optional and can be in any order.
     // Container can contain additional ACPI binary blobs
