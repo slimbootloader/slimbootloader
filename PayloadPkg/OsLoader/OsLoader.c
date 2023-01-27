@@ -64,6 +64,11 @@ UpdateLoadedImage (
   COMMON_IMAGE               *CommonImage;
   PLATFORM_SERVICE           *PlatformService;
   CHAR8                      *TypeStr;
+  CHAR8                      BlobName[5];               // 4 character component name + null termination
+  CHAR8                      BlobAddr[17];              // 64-bit address in ASCII hex + null termination
+  CHAR8                      *BlobPos;                  // Pointer to a character in the kernel cmdline string
+  CHAR8                      BlobSearchStr[28];         // ASCII string in the expected format: SBL.XXXX=0x0000000000000000
+  VOID                       *BlobReservedBuf;          // Pointer to allocated reserved memory
 
   PlatformService = NULL;
   Status = EFI_SUCCESS;
@@ -166,6 +171,57 @@ UpdateLoadedImage (
           continue;
         }
       CopyMem (&LinuxImage->ExtraBlob[Index - 3], &File[Index], sizeof (IMAGE_DATA));
+
+      //
+      // Update the blob's address in the kernel command line so that the OS knows where it resides
+      // We also copy the blob into a reserved memory address so that the OS does not overwrite it
+      //
+
+      // Get the blob name
+      CopyMem(BlobName, &File[Index].Name, 4);
+      BlobName[4] = '\0';
+
+      // Copy the extra blob into reserved memory
+      BlobReservedBuf = AllocateReservedPages(EFI_SIZE_TO_PAGES(File[Index].Size));
+      if (BlobReservedBuf == NULL) {
+        return EFI_OUT_OF_RESOURCES;
+      }
+      CopyMem(BlobReservedBuf, File[Index].Addr, File[Index].Size);
+      DEBUG ((DEBUG_INFO, "Copied %a to reserved memory @ 0x%016X\n", BlobName, BlobReservedBuf));
+
+      // Generate the search string: SBL.XXXX=0x0000000000000000
+      AsciiSPrint(BlobSearchStr, 28, "SBL.%a=0x0000000000000000", BlobName);
+      DEBUG ((DEBUG_INFO, "Searching for \"%a\" blob placeholder string  in cmdline: %a... ", BlobName, BlobSearchStr));
+
+      // Find the location of the placeholder string
+      BlobPos = AsciiStrStr(LinuxImage->CmdFile.Addr, BlobSearchStr);
+
+      if (BlobPos != NULL) {
+        // Move the pointer to where we get to the actual adress (part after 0x)
+        // e.g. SBL.ABCD=0x0000000000000000
+        // AsciiStrStr will get us a pointer to 'S'. Adding 11 will get us to the address
+        BlobPos += 11;
+
+        // Get the blob's address into a string
+        // AsciiSPrint(BlobAddr, 17, "%016X", File[Index].Addr);
+        AsciiSPrint(BlobAddr, 17, "%016X", BlobReservedBuf);
+
+        // Copy the actual address at the placeholder location
+        AsciiStrCpyS(BlobPos, 17, BlobAddr);
+
+        // Replace the copied string's last character with a space for all files except the last one
+        // We don't do this for the last one since the kernel expects a null-terminated cmdline
+        if (Index != NumFiles) {
+          BlobPos += 16;
+          *BlobPos = ' ';
+        }
+
+        DEBUG ((DEBUG_INFO, "Found and patched address!\n"));
+      } else {
+        DEBUG ((DEBUG_INFO, "Could not find cmdline placeholder\n"));
+      }
+
+      // Move to the next file
       Index++;
     }
     LinuxImage->ExtraBlobNumber = Index;
