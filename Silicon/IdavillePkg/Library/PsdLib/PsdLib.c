@@ -196,7 +196,7 @@ GetSecCapability (
   )
 {
   EFI_STATUS                      Status;
-  GEN_GET_FW_CAPS_SKU_ACK_DATA    MsgGenGetFwCapsSkuAck;
+  GEN_GET_FW_CAPS_SKU_ACK         MsgGenGetFwCapsSkuAck;
   VOID                           *FspHobListPtr;
   ME_BIOS_PAYLOAD                *MbpDataHob;
   UINT32                          MbpDataHobLen;
@@ -233,7 +233,7 @@ GetSecCapability (
     DEBUG ((DEBUG_ERROR, "GetSecCapability(): HeciGetFwCapsSkyMsg(): Failed Status=0x%x\n", EFI_NO_RESPONSE));
     return Status;
   }
-  *SecCapability = MsgGenGetFwCapsSkuAck.FWCap.Data;
+  *SecCapability = MsgGenGetFwCapsSkuAck.Data.FWCap.Data;
 
   return EFI_SUCCESS;
 }
