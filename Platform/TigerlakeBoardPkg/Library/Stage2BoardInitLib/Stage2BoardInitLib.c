@@ -1411,7 +1411,7 @@ UpdateFspConfig (
       DEBUG ((DEBUG_ERROR, "UpdateFspConfig Error: Could not allocate Memory for HdaVerbTable\n"));
     }
   }
-  if (PcdGetBool (PcdFramebufferInitEnabled)) {
+  if (PcdGetBool (PcdFramebufferInitEnabled) && (GetBootMode() != BOOT_ON_S3_RESUME)) {
     FspsConfig->GraphicsConfigPtr = (UINT32) GetVbtAddress();
     FspsConfig->PeiGraphicsPeimInit = 1;
   } else {

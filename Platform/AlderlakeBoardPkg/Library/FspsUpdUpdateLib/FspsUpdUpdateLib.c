@@ -592,7 +592,7 @@ UpdateFspConfig (
     DEBUG (((BiosProtected) ? DEBUG_INFO : DEBUG_WARN, "BIOS SPI region will %a protected\n", (BiosProtected) ? "be" : "NOT BE"));
   }
 
-  if (PcdGetBool (PcdFramebufferInitEnabled)) {
+  if (PcdGetBool (PcdFramebufferInitEnabled) && (GetBootMode() != BOOT_ON_S3_RESUME)) {
     DEBUG ((DEBUG_INFO, "Frame Buffer Enabled\n"));
     FspsConfig->GraphicsConfigPtr = (UINT32)GetVbtAddress ();
     VbtPtr = (VBIOS_VBT_STRUCTURE*)(UINTN)(FspsConfig->GraphicsConfigPtr);
