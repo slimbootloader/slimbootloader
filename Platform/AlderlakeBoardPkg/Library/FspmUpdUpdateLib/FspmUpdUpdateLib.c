@@ -411,8 +411,8 @@ UpdateFspConfig (
   PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
   if (PlatformData != NULL) {
     PlatformData->PlatformFeatures.VtdEnable = (!MemCfgData->VtdDisable) & FeaturePcdGet (PcdVtdEnabled);
+    Fspmcfg->VtdDisable   = (UINT8)(!PlatformData->PlatformFeatures.VtdEnable);
     if (PlatformData->PlatformFeatures.VtdEnable == 1) {
-      Fspmcfg->VtdDisable   = (UINT8)(!PlatformData->PlatformFeatures.VtdEnable);
       Fspmcfg->VtdIgdEnable = MemCfgData->VtdIgdEnable;
       Fspmcfg->VtdIpuEnable = 0x1;
       Fspmcfg->VtdIopEnable = 0x1;
