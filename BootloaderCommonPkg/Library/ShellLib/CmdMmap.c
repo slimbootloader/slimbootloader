@@ -1,7 +1,7 @@
 /** @file
   Shell command `mmap` to display the memory map.
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -57,9 +57,9 @@ MemTypeToStr (
   case 0x02:
     return L"Reserved";
   case 0x03:
-    return L"ACPI NVS";
-  case 0x04:
     return L"ACPI Reclaim";
+  case 0x04:
+    return L"ACPI NVS";
   default:
     return L"Unknown";
   }
