@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -64,22 +64,22 @@ UpdateLoadedImage (
   COMMON_IMAGE               *CommonImage;
   PLATFORM_SERVICE           *PlatformService;
   CHAR8                      *TypeStr;
+  CHAR8                      BlobName[5];               // 4 character component name + null termination
+  CHAR8                      BlobAddr[17];              // 64-bit address in ASCII hex + null termination
+  CHAR8                      *BlobPos;                  // Pointer to a character in the kernel cmdline string
+  CHAR8                      BlobSearchStr[28];         // ASCII string in the expected format: SBL.XXXX=0x0000000000000000
+  VOID                       *BlobReservedBuf;          // Pointer to allocated reserved memory
 
   PlatformService = NULL;
   Status = EFI_SUCCESS;
 
   if (ImageType == CONTAINER_TYPE_NORMAL) {
-    // Image can be of type: Multiboot, PE, FV, bzImage, or ELF
+    // Image can be of type: PE, FV, bzImage, or ELF
+    // Container can contain additional ACPI binary blobs
     // Assuming that the first image in the container is used for booting
     CommonImage                = &LoadedImage->Image.Common;
     CopyMem (&CommonImage->BootFile, &File[0], sizeof (IMAGE_DATA));
-    if (IsMultiboot (File[0].Addr)) {
-      LoadedImage->Flags |= LOADED_IMAGE_MULTIBOOT;
-      TypeStr = "Multiboot";
-    } else if (IsMultiboot2 (File[0].Addr)) {
-      LoadedImage->Flags |= LOADED_IMAGE_MULTIBOOT2;
-      TypeStr = "Multiboot-2";
-    } else if (IsTePe32Image (File[0].Addr, NULL) && \
+    if (IsTePe32Image (File[0].Addr, NULL) && \
                (* (UINT32 *)File[0].Addr == EFI_IMAGE_DOS_SIGNATURE)) {
       // Add extra check to ensure it is a PE32 image generated from payload build.
       // Please note vmlinuxz is also following PE32 format, but it should
@@ -101,10 +101,31 @@ UpdateLoadedImage (
     }
 
     DEBUG ((DEBUG_INFO, "One %a file in boot image file .... \n", TypeStr));
+
+    // If there are more files, check for ACPI blobs and update ACPI tables accordingly
+    if (NumFiles > 1) {
+      Index = 1;
+      while (Index < NumFiles) {
+      // Update ACPI tables if we encounter an ACPI blob
+      if (File[Index].Name == SIGNATURE_32('A', 'C', 'P', 'I')) {
+          DEBUG ((DEBUG_INFO, "Loading boot image ACPI tables...\n"));
+          PlatformService = (PLATFORM_SERVICE *) GetServiceBySignature (PLATFORM_SERVICE_SIGNATURE);
+          if ((PlatformService != NULL) && (PlatformService->AcpiTableUpdate != NULL)) {
+            Status = PlatformService->AcpiTableUpdate (File[Index].Addr, File[Index].Size);
+            DEBUG ((DEBUG_INFO, "Updating ACPI table with boot image %d - %r\n", Index, Status));
+          }
+          FreeImageData (&File[Index]);
+          continue;
+        }
+      Index++;
+      }
+    }
+
     return EFI_SUCCESS;
-  } else if (ImageType == CONTAINER_TYPE_CLASSIC) {
-    // Files: cmdline, bzImage, initrd, acpi, firmware1, firmware2, ...
-    // The file order mentioned above is fixed and needs to be followed
+  } else if (ImageType == CONTAINER_TYPE_CLASSIC_LINUX) {
+    // Files: cmdline, bzImage, initrd, other optional files (acpi, firmware1, firmware2, ...)
+    // The file order for the first three files mentioned above is fixed. The rest are optional and can be in any order.
+    // Container can contain additional ACPI binary blobs
 
     // Make sure that the boot file (File[1]) is present
     if (NumFiles < 2) {
@@ -136,14 +157,91 @@ UpdateLoadedImage (
 
     // Save other binary blobs
     Index = 3;
-    while ((Index < MAX_MULTIBOOT_MODULE_NUMBER) && (Index < NumFiles)) {
+    while ((Index < MAX_EXTRA_FILE_NUMBER) && (Index < NumFiles)) {
+      // Update ACPI tables if we encounter an ACPI blob
+      if (File[Index].Name == SIGNATURE_32('A', 'C', 'P', 'I')) {
+          DEBUG ((DEBUG_INFO, "Loading boot image ACPI tables...\n"));
+          PlatformService = (PLATFORM_SERVICE *) GetServiceBySignature (PLATFORM_SERVICE_SIGNATURE);
+          if ((PlatformService != NULL) && (PlatformService->AcpiTableUpdate != NULL)) {
+            Status = PlatformService->AcpiTableUpdate (File[Index].Addr, File[Index].Size);
+            DEBUG ((DEBUG_INFO, "Updating ACPI table with boot image %d - %r\n", Index, Status));
+          }
+          FreeImageData (&File[Index]);
+          Index++;
+          continue;
+        }
       CopyMem (&LinuxImage->ExtraBlob[Index - 3], &File[Index], sizeof (IMAGE_DATA));
+
+      //
+      // Update the blob's address in the kernel command line so that the OS knows where it resides
+      // We also copy the blob into a reserved memory address so that the OS does not overwrite it
+      //
+
+      // Get the blob name
+      CopyMem(BlobName, &File[Index].Name, 4);
+      BlobName[4] = '\0';
+
+      // Copy the extra blob into reserved memory
+      BlobReservedBuf = AllocateReservedPages(EFI_SIZE_TO_PAGES(File[Index].Size));
+      if (BlobReservedBuf == NULL) {
+        return EFI_OUT_OF_RESOURCES;
+      }
+      CopyMem(BlobReservedBuf, File[Index].Addr, File[Index].Size);
+      DEBUG ((DEBUG_INFO, "Copied %a to reserved memory @ 0x%016X\n", BlobName, BlobReservedBuf));
+
+      // Generate the search string: SBL.XXXX=0x0000000000000000
+      AsciiSPrint(BlobSearchStr, 28, "SBL.%a=0x0000000000000000", BlobName);
+      DEBUG ((DEBUG_INFO, "Searching for \"%a\" blob placeholder string  in cmdline: %a... ", BlobName, BlobSearchStr));
+
+      // Find the location of the placeholder string
+      BlobPos = AsciiStrStr(LinuxImage->CmdFile.Addr, BlobSearchStr);
+
+      if (BlobPos != NULL) {
+        // Move the pointer to where we get to the actual adress (part after 0x)
+        // e.g. SBL.ABCD=0x0000000000000000
+        // AsciiStrStr will get us a pointer to 'S'. Adding 11 will get us to the address
+        BlobPos += 11;
+
+        // Get the blob's address into a string
+        // AsciiSPrint(BlobAddr, 17, "%016X", File[Index].Addr);
+        AsciiSPrint(BlobAddr, 17, "%016X", BlobReservedBuf);
+
+        // Copy the actual address at the placeholder location
+        AsciiStrCpyS(BlobPos, 17, BlobAddr);
+
+        // Replace the copied string's last character with a space for all files except the last one
+        // We don't do this for the last one since the kernel expects a null-terminated cmdline
+        if (Index != NumFiles) {
+          BlobPos += 16;
+          *BlobPos = ' ';
+        }
+
+        DEBUG ((DEBUG_INFO, "Found and patched address!\n"));
+      } else {
+        DEBUG ((DEBUG_INFO, "Could not find cmdline placeholder\n"));
+      }
+
+      // Move to the next file
       Index++;
     }
     LinuxImage->ExtraBlobNumber = Index;
   } else if (ImageType == CONTAINER_TYPE_MULTIBOOT) {
     // Files: cmdline1, elf1, cmdline2, elf2, ...
+    // Container can contain additional ACPI binary blobs
     // Assume the first elf file is the one to boot
+    if (IsMultiboot (File[1].Addr)) {
+      LoadedImage->Flags |= LOADED_IMAGE_MULTIBOOT;
+      TypeStr = "Multiboot";
+    } else if (IsMultiboot2 (File[1].Addr)) {
+      LoadedImage->Flags |= LOADED_IMAGE_MULTIBOOT2;
+      TypeStr = "Multiboot-2";
+    } else {
+      DEBUG ((DEBUG_ERROR, "\"Multiboot\" container type used for a non-multiboot image!"));
+      return EFI_UNSUPPORTED;
+    }
+
+    DEBUG ((DEBUG_INFO, "%a file in boot image file .... \n", TypeStr));
+
     MultiBoot                = &LoadedImage->Image.MultiBoot;
     LoadedImage->Flags      |= LOADED_IMAGE_MULTIBOOT;
     CopyMem (&MultiBoot->CmdFile, &File[0], sizeof (IMAGE_DATA));
@@ -153,6 +251,10 @@ UpdateLoadedImage (
     ModuleIndex = 0;
     for (Index = 2; Index < NumFiles; Index += 2) {
       if (Index < MAX_MULTIBOOT_MODULE_NUMBER) {
+        // Multiboot modules are in a cmdline-ELF pair according to the spec.
+        // So to accomodate for that, ACPI binary blobs should be preceded by
+        // a corresponding dummy cmdline file that contains the MULTIBOOT_SPECIAL_MODULE_MAGIC
+        // string to indicate that the paired file is the ACPI binary blob
         if (* (UINT32 *) File[Index].Addr == MULTIBOOT_SPECIAL_MODULE_MAGIC) {
           DEBUG ((DEBUG_INFO, "Loading boot image ACPI tables...\n"));
           PlatformService = (PLATFORM_SERVICE *) GetServiceBySignature (PLATFORM_SERVICE_SIGNATURE);
@@ -260,6 +362,9 @@ ParseContainerImage (
         File[Index].AllocType = ImageAllocateTypePage;
       }
     }
+
+    // Save the name of the component
+    File[Index].Name = (UINT32) ComponentName;
 
     Index++;
   } while ((Status == EFI_SUCCESS) && (Index < ARRAY_SIZE (File)));

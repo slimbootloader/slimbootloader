@@ -1,7 +1,7 @@
 /** @file
   This file defines IAS File structures.
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -66,6 +66,7 @@ typedef struct {        /* a file (sub-image) inside a boot image */
   VOID                 *Addr;
   UINT32                Size;
   IMAGE_ALLOCATE_TYPE   AllocType;
+  UINT32                Name;   // Name specified for the component when building the container
 } IMAGE_DATA;
 
 //
