@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2020-2021, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020-2023, Intel Corporation. All rights reserved.<BR>
 #  This program and the accompanying materials
 #  are licensed and made available under the terms and conditions of the BSD License
 #  which accompanies this distribution.  The full text of the license may be found at
@@ -26,40 +26,23 @@ LIBRARY_CLASS                  = PsdLib
 #
 
 [Sources]
-PsdLib.c
+  PsdLib.c
 
 [Packages]
-MdePkg/MdePkg.dec
-IntelFsp2Pkg/IntelFsp2Pkg.dec
-BootloaderCorePkg/BootloaderCorePkg.dec
-BootloaderCommonPkg/BootloaderCommonPkg.dec
-Silicon/AlderlakePkg/AlderlakePkg.dec
-Platform/AlderlakeBoardPkg/AlderlakeBoardPkg.dec
-Silicon/CommonSocPkg/CommonSocPkg.dec
-Platform/CommonBoardPkg/CommonBoardPkg.dec
+  MdePkg/MdePkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/AlderlakePkg/AlderlakePkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
 
 
 [LibraryClasses]
-BaseLib
-DebugLib
-BootloaderCoreLib
-DebugDataLib
-CryptoLib
-BootloaderCommonLib
-BootloaderLib
-HeciLib
-ConfigDataLib
-BootGuardLib
-PciLib
+  BaseLib
+  DebugLib
+  HeciLib
 
 [Guids]
   gMeBiosPayloadHobGuid
 
 [Pcd]
-gPlatformModuleTokenSpaceGuid.PcdAcpiTablesAddress
-gPlatformModuleTokenSpaceGuid.PcdAcpiGnvsAddress
-gPlatformCommonLibTokenSpaceGuid.PcdPcdLibId
-gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
-gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
-gPlatformCommonLibTokenSpaceGuid.PcdHeciLibId
-gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled

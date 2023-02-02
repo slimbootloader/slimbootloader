@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020-2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020-2023, Intel Corporation. All rights reserved.<BR>
   This program and the accompanying materials
   are licensed and made available under the terms and conditions of the BSD License
   which accompanies this distribution.  The full text of the license may be found at
@@ -15,29 +15,14 @@
 #include <Library/PcdLib.h>
 #include <Library/DebugLib.h>
 #include <Library/BaseLib.h>
-#include <Library/SocInitLib.h>
 #include <IndustryStandard/Acpi.h>
 #include <Library/BaseMemoryLib.h>
-#include <Library/MemoryAllocationLib.h>
 #include <IndustryStandard/Acpi.h>
-#include <IndustryStandard/Tpm20.h>
 #include <Library/HeciLib.h>
-#include <Library/PciLib.h>
-#include <Library/BootGuardLib.h>
-#include <Library/SecureBootLib.h>
-#include <Guid/PcdDataBaseSignatureGuid.h>
-#include <Library/ConfigDataLib.h>
 #include <Library/PcdLib.h>
-#include <Library/BootloaderCoreLib.h>
-#include <Library/BootloaderCommonLib.h>
-#include <Guid/FlashMapInfoGuid.h>
+#include <Library/HobLib.h>
 #include <PlatformData.h>
-#include <Library/BootGuardLib.h>
 #include <PsdLib.h>
-#include <RegAccess.h>
-#include <PchAccess.h>
-#include <Library/ConfigDataLib.h>
-#include <ConfigDataStruct.h>
 #include <MeBiosPayloadData.h>
 
 #define PSD_VERSION_MAJOR                               0x0000
@@ -50,12 +35,40 @@
 #define PSD_HROT_TXT                                    5
 
 /**
-  Wrapper function to Get EOM status from CSE Status Register.
+ Get ME BIOS payload HOB data.
+
+  @retval The ME BIOS payload HOB data
+
+ **/
+ME_BIOS_PAYLOAD *
+GetMeBiosPayloadHobData (
+    VOID
+    )
+{
+  VOID                            *FspHobListPtr;
+  UINT32                          MbpDataHobLen;
+  UINT8                           *DataPtr;
+
+  // HOB is an FSP HOB
+  FspHobListPtr = GetFspHobListPtr();
+  if (FspHobListPtr != NULL) {
+    DataPtr = (UINT8 *)GetGuidHobData (FspHobListPtr, &MbpDataHobLen, &gMeBiosPayloadHobGuid);
+    if ((DataPtr != NULL) && (MbpDataHobLen > 0)) {
+      // Skip to data within the HOB
+      return (ME_BIOS_PAYLOAD *)(DataPtr + 4);
+    }
+  }
+
+  return NULL;
+}
+
+/**
+ Get EOM state from CSE.
 
   @param[in,out] EomState         Pointer to The EOM state value.
 
-  @retval EFI_SUCCESS         The EOM Get Status successfully.
-  @retval Others              The EOM Get from CSE doesn't get status.
+  @retval EFI_SUCCESS             The EOM state was retrieved successfully.
+  @retval Others                  An error occured.
 
  **/
 EFI_STATUS
@@ -63,57 +76,78 @@ GetEomState (
     IN OUT UINT8 *EomState
     )
 {
-  EFI_STATUS            Status;
-  UINT32                FwSts;
+  EFI_STATUS    Status;
+  UINT16        MeManuMode;
 
-  if(EomState == NULL) {
-    DEBUG ((DEBUG_ERROR, "EomState is not valid pointer\n"));
+  if (EomState == NULL) {
+    DEBUG ((DEBUG_ERROR, "EomState is not a valid pointer\n"));
     return EFI_INVALID_PARAMETER;
   }
 
-  Status = HeciReadFwStatus( &FwSts);
-  if (Status == EFI_SUCCESS ) {
-    *EomState = (UINT8)((FwSts & BIT4) >> 4);
-   }
-  return Status;
+  Status = HeciGetManufactureMode (&MeManuMode);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "HeciGetManufactureMode Failed Status=0x%x\n", Status));
+    return Status;
+  }
+
+  *EomState = (UINT8)MeManuMode;
+  return EFI_SUCCESS;
 }
 
 /**
-Get Sec FW Version.
-@param[in]: SecVersion Pointer to  Sec FW Version structure.
-@return EFI_SUCCESS.
-@return EFI_ERROR.
+  Get Sec FW version from CSE.
+
+  @param[in,out] SecVersion     Pointer to Sec FW version structure.
+
+  @return EFI_SUCCESS           The Sec FW version was retrieved successfully.
+  @return EFI_ERROR             An error occurred.
 
 **/
 EFI_STATUS
 GetSecFwVersion (
-    SEC_VERSION_INFO *SecVersion
+    IN OUT SEC_VERSION_INFO *SecVersion
     )
 {
-  EFI_STATUS            Status;
-  GEN_GET_FW_VER_ACK    MsgGenGetFwVersionAckData;
+  EFI_STATUS              Status;
+  GEN_GET_FW_VER_ACK      MsgGenGetFwVersionAckData;
+  ME_BIOS_PAYLOAD         *MbpHobData;
 
-  if(SecVersion == NULL) {
-    DEBUG ((DEBUG_ERROR, "GetSecFwVersion Failed Status=0x%x\n",EFI_INVALID_PARAMETER));
+  if (SecVersion == NULL) {
+    DEBUG ((DEBUG_ERROR, "SecVersion is not a valid pointer\n"));
     return EFI_INVALID_PARAMETER;
   }
 
-  Status = HeciGetFwVersionMsg( (UINT8 *)&MsgGenGetFwVersionAckData);
-  if (Status == EFI_SUCCESS) {
-    SecVersion->CodeMajor = MsgGenGetFwVersionAckData.Data.CodeMajor;
-    SecVersion->CodeMinor = MsgGenGetFwVersionAckData.Data.CodeMinor;
-    SecVersion->CodeHotFix = MsgGenGetFwVersionAckData.Data.CodeHotFix;
-    SecVersion->CodeBuildNo = MsgGenGetFwVersionAckData.Data.CodeBuildNo;
+  // Try with HOB first as HECI calls are costly
+  MbpHobData = GetMeBiosPayloadHobData ();
+  if (MbpHobData != NULL) {
+    SecVersion->CodeMajor   =  MbpHobData->FwVersionName.MajorVersion;
+    SecVersion->CodeMinor   =  MbpHobData->FwVersionName.MinorVersion;
+    SecVersion->CodeBuildNo =  MbpHobData->FwVersionName.BuildVersion;
+    SecVersion->CodeHotFix  =  MbpHobData->FwVersionName.HotfixVersion;
+    return EFI_SUCCESS;
   }
 
-  return Status;
+  DEBUG((DEBUG_ERROR, "No MBP HOB available, calling HECI API\n"));
+  Status = HeciGetFwVersionMsg ((UINT8 *)&MsgGenGetFwVersionAckData);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "HeciGetFwVersionMsg Failed Status=0x%x\n", Status));
+    return Status;
+  }
+
+  SecVersion->CodeMajor   =   MsgGenGetFwVersionAckData.Data.CodeMajor;
+  SecVersion->CodeMinor   =   MsgGenGetFwVersionAckData.Data.CodeMinor;
+  SecVersion->CodeBuildNo =   MsgGenGetFwVersionAckData.Data.CodeBuildNo;
+  SecVersion->CodeHotFix  =   MsgGenGetFwVersionAckData.Data.CodeHotFix;
+  return EFI_SUCCESS;
 }
 
 /**
-Get Sec Capabilities of CSE.
-@param[in] SecCapability Pointer to Sec Caps.
-@retval EFI_SUCCESS Success get all FW hash value
-@retval EFI_ERROR Unable to get hash value
+  Get Sec capabilities from CSE.
+
+  @param[in] SecCapability    Pointer to Sec Capability structure.
+
+  @retval EFI_SUCCESS         The Sec FW capabilities were retrieved successfully.
+  @retval EFI_ERROR           An error occurred.
 
 **/
 EFI_STATUS
@@ -122,54 +156,39 @@ GetSecCapability (
   )
 {
   EFI_STATUS                      Status;
-  GEN_GET_FW_CAPS_SKU_ACK_DATA    MsgGenGetFwCapsSkuAck;
-  VOID                           *FspHobListPtr;
-  ME_BIOS_PAYLOAD                *MbpDataHob;
-  UINT32                          MbpDataHobLen;
-  UINT8                          *DataPtr;
+  GEN_GET_FW_CAPS_SKU_ACK         MsgGenGetFwCapsSkuAck;
+  ME_BIOS_PAYLOAD                *MbpHobData;
 
-  if(SecCapability == NULL) {
-    DEBUG ((DEBUG_ERROR, "GetSecCapability(): Failed Status=0x%x\n", EFI_INVALID_PARAMETER));
+  if (SecCapability == NULL) {
+    DEBUG ((DEBUG_ERROR, "SecCapability is not a valid pointer\n"));
     return EFI_INVALID_PARAMETER;
   }
 
-  //
-  // Fill the FW capapbility data from MBP if it exists
-  // FIXME: Need to move MBP read to a different place.
-  // It cannot be moved to HeciLib (SblOpen) as MBP is
-  // specific to platform.
-  //
-  FspHobListPtr = GetFspHobListPtr();
-  if (FspHobListPtr != NULL) {
-    DataPtr = (UINT8 *)GetGuidHobData (FspHobListPtr, &MbpDataHobLen, &gMeBiosPayloadHobGuid);
-    if ((DataPtr != NULL) && (MbpDataHobLen > 0)) {
-      MbpDataHob = (ME_BIOS_PAYLOAD *)(DataPtr + 4);
-      if (MbpDataHob->FwCapsSku.Available == 1 ) {
-        *SecCapability = MbpDataHob->FwCapsSku.FwCapabilities.Data;
-        return EFI_SUCCESS;
-      }
-    }
+  // Try with HOB first as HECI calls are costly
+  MbpHobData = GetMeBiosPayloadHobData ();
+  if ((MbpHobData != NULL) && (MbpHobData->FwCapsSku.Available)) {
+    *SecCapability = MbpHobData->FwCapsSku.FwCapabilities.Data;
+    return EFI_SUCCESS;
   }
 
-  //
-  // Fill the FW capability data if MBP doesn't exist
-  //
+  DEBUG((DEBUG_ERROR, "No MBP HOB available, calling HECI API\n"));
   Status = HeciGetFwCapsSkuMsg ((UINT8 *)&MsgGenGetFwCapsSkuAck);
-  if (EFI_ERROR(Status)) {
-    DEBUG ((DEBUG_ERROR, "GetSecCapability(): HeciGetFwCapsSkyMsg(): Failed Status=0x%x\n", EFI_NO_RESPONSE));
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "HeciGetFwCapsSkuMsg Failed Status=0x%x\n", Status));
     return Status;
   }
-  *SecCapability = MsgGenGetFwCapsSkuAck.FWCap.Data;
 
+  *SecCapability = MsgGenGetFwCapsSkuAck.Data.FWCap.Data;
   return EFI_SUCCESS;
 }
 
 /**
-
   Update Platform Service Discovery Table.
-  @param[in] Table Pointer of ACPI Table Data.
-  @retval EFI_SUCCESS Installed PSD ACPI table successfully.
-  @retval EFI_ ERROR.
+
+  @param[in] Table      Pointer to ACPI Table Data.
+
+  @retval EFI_SUCCESS   The PSD ACPI table was installed successfully.
+  @retval EFI_ ERROR    An error occurred.
 
 **/
 EFI_STATUS
@@ -179,67 +198,71 @@ UpdateAcpiPsdTable (
   )
 {
   EFI_ACPI_PSD_TABLE             *mPsdt;
-  PLATFORM_DATA                   *PlatformData;
-  EFI_STATUS                      Status;
+  PLATFORM_DATA                  *PlatformData;
+  EFI_STATUS                     Status;
 
   DEBUG((DEBUG_VERBOSE, "UpdateAcpiPsdTable start\n"));
-  if ( Table == NULL) {
-    DEBUG((DEBUG_WARN, "EFI_ACPI_PSD_TABLE IS NULL\n"));
-    return EFI_BUFFER_TOO_SMALL;
+  if (Table == NULL) {
+    DEBUG((DEBUG_WARN, "Table is not a valid pointer\n"));
+    return EFI_INVALID_PARAMETER;
   }
+
   mPsdt = (EFI_ACPI_PSD_TABLE*)Table;
-  // Populate Platfrom security capabilities in table structure
-  mPsdt->Header.Signature               = EFI_ACPI_PSD_SIGNATURE;
-  mPsdt->Header.Checksum                = 0;
+  mPsdt->Header.Signature         = EFI_ACPI_PSD_SIGNATURE;
+  mPsdt->Header.Length            = sizeof(EFI_ACPI_PSD_TABLE);
+  mPsdt->Header.Revision          = EFI_ACPI_PSD_TABLE_REVISION;
+  mPsdt->Header.Checksum          = 0;
 
   if( &(mPsdt->Header.OemId) == NULL) {
     return RETURN_BUFFER_TOO_SMALL;
   }
+  CopyMem (&mPsdt->Header.OemId, PSDS_EFI_ACPI_OEM_ID, sizeof(mPsdt->Header.OemId));
 
-  CopyMem(&mPsdt->Header.OemId, PSDS_EFI_ACPI_OEM_ID, sizeof(mPsdt->Header.OemId));
-  mPsdt->Header.OemTableId              = PSDS_EFI_ACPI_OEM_TABLE_ID;
-  mPsdt->Header.OemRevision             = PSDS_EFI_ACPI_OEM_REVISION;
-  mPsdt->Header.CreatorId               = PSDS_EFI_ACPI_CREATOR_ID;
-  mPsdt->Header.CreatorRevision         = PSDS_EFI_ACPI_CREATOR_REVISION;
+  mPsdt->Header.OemTableId        = PSDS_EFI_ACPI_OEM_TABLE_ID;
+  mPsdt->Header.OemRevision       = PSDS_EFI_ACPI_OEM_REVISION;
+  mPsdt->Header.CreatorId         = PSDS_EFI_ACPI_CREATOR_ID;
+  mPsdt->Header.CreatorRevision   = PSDS_EFI_ACPI_CREATOR_REVISION;
 
-  mPsdt->PsdVersion.PsdVerMajor = PSD_VERSION_MAJOR;
-  mPsdt->PsdVersion.PsdVerMinor = PSD_VERSION_MINOR;
+  mPsdt->PsdVersion.PsdVerMajor   = PSD_VERSION_MAJOR;
+  mPsdt->PsdVersion.PsdVerMinor   = PSD_VERSION_MINOR;
 
-  //Eom State,
-  Status = GetEomState(&mPsdt->EomState);
+  // Populate EOM state
+  Status = GetEomState (&mPsdt->EomState);
   if (EFI_ERROR(Status)) {
-    DEBUG((DEBUG_ERROR, " GetEomState failed =%x\n",Status));
+    DEBUG((DEBUG_ERROR, " GetEomState failed =%x\n", Status));
   }
 
-  //Sec Capabilities,
-  Status = GetSecCapability( &(mPsdt->CsmeSecCapabilities) );
+  // Populate Sec capabilities
+  Status = GetSecCapability (&mPsdt->CsmeSecCapabilities);
   if (EFI_ERROR(Status)) {
-    DEBUG((DEBUG_ERROR, " GetSecCapability failed =%x\n",Status));
+    DEBUG((DEBUG_ERROR, " GetSecCapability failed =%x\n", Status));
   }
 
-
-  //FW version,
-  Status = GetSecFwVersion( &(mPsdt->FwVer) );
+  // Populate Sec FW version
+  Status = GetSecFwVersion (&mPsdt->FwVer);
   if (EFI_ERROR(Status)) {
-    DEBUG((DEBUG_ERROR, " GetSecCFwVersion failed =%x\n",Status));
+    DEBUG((DEBUG_ERROR, " GetSecFwVersion failed =%x\n", Status));
   }
+
   if( &(mPsdt->FwVendor) == NULL) {
     return RETURN_BUFFER_TOO_SMALL;
   }
-  CopyMem(&mPsdt->FwVendor, EFI_ACPI_PSD_FW_VENDOR, EFI_ACPI_PSD_FW_VENDOR_SIZE);
-  PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr();
+  CopyMem (&mPsdt->FwVendor, EFI_ACPI_PSD_FW_VENDOR, EFI_ACPI_PSD_FW_VENDOR_SIZE);
+
+  PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
   if (PlatformData == NULL) {
-    DEBUG(( DEBUG_ERROR, "PSD Values:  GetPlatformDataPtr Failed\n" ));
-    return  EFI_UNSUPPORTED;
+    DEBUG(( DEBUG_ERROR, "GetPlatformDataPtr Failed\n"));
+    return EFI_UNSUPPORTED;
   }
 
-  //BIT0: UEFI Secure boot is enabled, BIT1: Boot Guard is Enabled, BIT2: Bootloader Verified boot is Enabled, BIT0-2 can be combined.
-  mPsdt->SecureBoot = (UINT8)(((PlatformData->BtGuardInfo.VerifiedBoot) << 1)| (FeaturePcdGet (PcdVerifiedBootEnabled)) << 2);
-  //Measured boot enabled.
+  // Check if verifed boot is reflected in BtG profile as well as in SBL
+  mPsdt->SecureBoot = (UINT8)(((PlatformData->BtGuardInfo.VerifiedBoot) << 1) | (FeaturePcdGet (PcdVerifiedBootEnabled)) << 2);
+
+  // Check if measured boot is reflected in BtG profile
   mPsdt->MeasuredBoot = (UINT8)((PlatformData->BtGuardInfo.MeasuredBoot));
 
-  //0 - No HWRoT; 1 - ROM based RoT; 2 - TXE; 3 - CSE; 4 - ACM; 5 - TXT
-  mPsdt->HwrotType                      = PSD_HROT_ACM;
+  // SBL always uses an ACM HWROT
+  mPsdt->HwrotType              = PSD_HROT_ACM;
   DumpHex (2, 0, sizeof(EFI_ACPI_PSD_TABLE), (VOID *)Table);
   DEBUG( (DEBUG_VERBOSE, "UpdateAcpiPsdTable() end\n") );
 

@@ -182,13 +182,13 @@ HeciGetFwCapsSkuMsg (
   EFI_STATUS                      Status;
   UINT32                          Length;
   GEN_GET_FW_CAPSKU               MsgGenGetFwCapsSku;
-  GEN_GET_FW_CAPS_SKU_ACK_DATA   *MsgGenGetFwCapsSkuAck;
+  GEN_GET_FW_CAPS_SKU_ACK         *MsgGenGetFwCapsSkuAck;
 
   if (MsgGetFwCapsAck == NULL) {
     return EFI_INVALID_PARAMETER;
   }
 
-  MsgGenGetFwCapsSkuAck = (GEN_GET_FW_CAPS_SKU_ACK_DATA *)MsgGetFwCapsAck;
+  MsgGenGetFwCapsSkuAck = (GEN_GET_FW_CAPS_SKU_ACK *)MsgGetFwCapsAck;
 
   //
   // Allocate MsgGenGetFwVersion data structure.
