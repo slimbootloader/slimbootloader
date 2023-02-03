@@ -1,7 +1,7 @@
 /** @file
   Shell command `usbdev` to view all usb device list
 
-  Copyright (c) 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2022 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -66,55 +66,66 @@ ShellCommandUsbDevFunc (
   UINTN              StringSize;
   UINTN              StringIndex;
   UINTN              CharFound;
+  UINT16             DeviceCounter;
+  PLT_DEVICE_TABLE   *DeviceTable;
+  PLT_DEVICE         *Device;
+  UINTN              DeviceIndexNumber;
 
-  BaseAddress = GetDeviceAddr (OsBootDeviceUsb, 0);
-  if (BaseAddress == 0) {
-    ShellPrint (L"Base Address is 0");
-    return EFI_ABORTED;
-  } else if (!(BaseAddress & 0xFF000000)) {
-    BaseAddress = TO_MM_PCI_ADDRESS (BaseAddress);
-  }
+  DeviceIndexNumber = 1;
+  DeviceTable = (PLT_DEVICE_TABLE *)GetDeviceTable();
 
-  Status = InitUsbDevices (BaseAddress);
-  if (!EFI_ERROR(Status)) {
-    Status = GetUsbDevices ((PEI_USB_IO_PPI **)&UsbIoArray, &UsbIoCount);
-  }
-  if (EFI_ERROR(Status)) {
-    ShellPrint (L"Failed to initialize USB bus !\n");
-    return Status;
-  }
+  for(DeviceCounter = 0; DeviceCounter < DeviceTable->DeviceNumber; DeviceCounter++) {
+    Device = &DeviceTable->Device[DeviceCounter];
 
-  ShellPrint (L"\n");
-  for (Index = 0; Index < UsbIoCount; Index++) {
-    NameStr = GetUsbDeviceNameString (UsbIoArray[Index]);
-    if (NameStr == NULL) {
-      NameStr = L"N/A";
+    if (Device->Type != OsBootDeviceUsb) {
+      continue;
     }
-    StringSize = StrSize (NameStr);
 
-    CharFound = 0;
-    for (StringIndex = 0; StringIndex < StringSize; StringIndex++) {
-      if (NameStr[StringIndex] == 0) {
-        break;
+    BaseAddress = Device->Dev.DevAddr;
+    if (!(BaseAddress & 0xFF000000)) {
+      BaseAddress = TO_MM_PCI_ADDRESS (BaseAddress);
+    }
+
+    Status = InitUsbDevices (BaseAddress);
+    if (!EFI_ERROR(Status)) {
+      Status = GetUsbDevices ((PEI_USB_IO_PPI **)&UsbIoArray, &UsbIoCount);
+    }
+    if (EFI_ERROR(Status)) {
+      ShellPrint (L"Failed to initialize USB bus !\n");
+      return Status;
+    }
+
+
+    for (Index = 0; Index < UsbIoCount; Index++) {
+      NameStr = GetUsbDeviceNameString (UsbIoArray[Index]);
+      if (NameStr == NULL) {
+        NameStr = L"N/A";
       }
-      //
-      // Checking the NameStr is not combination of spaces and tabs
-      //
-      if (((char)NameStr[StringIndex]) != 32 && ((char)NameStr[StringIndex]) != 9) {
-        CharFound++;
-      }
-    }
-    if (CharFound == 0) {
-      NameStr = L"Unnamed Device";
-    }
-    ShellPrint (L"USB Device %2d: %s\n", Index + 1, NameStr);
-  }
-  ShellPrint (L"\n");
+      StringSize = StrSize (NameStr);
 
-  Status = DeinitUsbDevices();
-  if (EFI_ERROR(Status)) {
-    ShellPrint (L"Failed to Deinitialize USB bus !\n");
-    return Status;
+      CharFound = 0;
+      for (StringIndex = 0; StringIndex < StringSize; StringIndex++) {
+        if (NameStr[StringIndex] == 0) {
+          break;
+        }
+        //
+        // Checking the NameStr is not combination of spaces and tabs
+        //
+        if (((char)NameStr[StringIndex]) != 32 && ((char)NameStr[StringIndex]) != 9) {
+          CharFound++;
+        }
+      }
+      if (CharFound == 0) {
+        NameStr = L"Unnamed Device";
+      }
+      ShellPrint (L"    USB Device %2d: %s\n", DeviceIndexNumber++, NameStr);
+    }
+
+    Status = DeinitUsbDevices();
+    if (EFI_ERROR(Status)) {
+      ShellPrint (L"Failed to Deinitialize USB bus !\n");
+      return Status;
+    }
   }
 
   return EFI_SUCCESS;
