@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -8,6 +8,7 @@
 #include <FspApiLibInternal.h>
 #include <Library/ResetSystemLib.h>
 #include <Library/LitePeCoffLib.h>
+#include <Library/PcdLib.h>
 
 /**
   This function will handle FSP reset request.
@@ -25,8 +26,11 @@ FspResetHandler (
     DEBUG ((DEBUG_INIT, "FSP Requested Reboot ...\n\n"));
     if (Status == FSP_STATUS_RESET_REQUIRED_WARM) {
       ResetSystem(EfiResetWarm);
-    } else {
+    } else if (Status == FSP_STATUS_RESET_REQUIRED_COLD){
       ResetSystem(EfiResetCold);
+    } else {
+      PcdSet32S(PcdFspResetStatus, (UINT32)Status);
+      ResetSystem(EfiResetPlatformSpecific);
     }
     CpuDeadLoop ();
   }

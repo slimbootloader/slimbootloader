@@ -1,7 +1,7 @@
 ## @file
 #   Library instance for ResetSystem library class for PCAT systems
 #
-#  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2019 - 2023, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -26,10 +26,17 @@
 [Packages]
   MdePkg/MdePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  Silicon/AlderlakePkg/AlderlakePkg.dec
+  IntelFsp2Pkg/IntelFsp2Pkg.dec
 
 [LibraryClasses]
   DebugLib
   IoLib
   BaseLib
 
+[Guids]
+  gPlatformModuleTokenSpaceGuid
+
 [Pcd]
+  gPlatformModuleTokenSpaceGuid.PcdFspResetStatus
