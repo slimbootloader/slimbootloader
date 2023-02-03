@@ -865,6 +865,7 @@ UpdateFspConfig (
       FspsConfig->EnableTimedGpio0 = 0;
       FspsConfig->EnableTimedGpio1 = 0;
       FspsConfig->PchLanEnable = 0x0;
+      ZeroMem (FspsConfig->CpuPcieRpMultiVcEnabled, sizeof (FspsConfig->CpuPcieRpMultiVcEnabled));
       ZeroMem (FspsConfig->PchIshI2cEnable, sizeof (FspsConfig->PchIshI2cEnable));
       ZeroMem (FspsConfig->PchIshGpEnable, sizeof (FspsConfig->PchIshGpEnable));
       DEBUG ((DEBUG_INFO, "Stage 2 S0ix config applied.\n"));
