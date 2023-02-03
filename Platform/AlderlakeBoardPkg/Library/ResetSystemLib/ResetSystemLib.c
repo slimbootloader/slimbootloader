@@ -1,7 +1,7 @@
 /** @file
   Reset System Library
 
-  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -11,6 +11,9 @@
 #include <Library/DebugLib.h>
 #include <Library/IoLib.h>
 #include <Library/ResetSystemLib.h>
+#include <Library/PcdLib.h>
+#include <PchAccess.h>
+#include <FspEas/FspApi.h>
 
 //
 // Reset Control Register
@@ -53,6 +56,23 @@ ResetWarm (
 }
 
 /**
+  Calling this function causes a PCH Global reset in addition to system-wide
+  initialization.
+
+  System reset should not return, if it returns, it means the system does
+  not support warm reset.
+**/
+VOID
+ResetPchGlobal (
+  VOID
+  )
+{
+  // Enable PMC Global reset on FSP_STATUS_RESET_REQUIRED_3
+  MmioOr32 (PCH_PWRM_BASE_ADDRESS + R_PMC_PWRM_ETR3, (UINT32) (B_PMC_PWRM_ETR3_CF9GR));
+  IoWrite8 ((UINTN) R_RST_CNT, V_RST_CNT_HARDRESET);
+}
+
+/**
   Calling this function causes the system to enter a power state equivalent
   to the ACPI G2/S5 or G3 states.
 
@@ -79,6 +99,8 @@ ResetSystem (
   IN EFI_RESET_TYPE   ResetType
   )
 {
+  EFI_STATUS    FspResetRequest = 0;
+
   switch (ResetType) {
   case EfiResetWarm:
     ResetWarm ();
@@ -91,6 +113,13 @@ ResetSystem (
   case EfiResetShutdown:
     ResetShutdown ();
     break ;
+
+  case EfiResetPlatformSpecific:
+    FspResetRequest = (EFI_STATUS)PcdGet32(PcdFspResetStatus);
+    if (FspResetRequest == FSP_STATUS_RESET_REQUIRED_3) {
+      ResetPchGlobal ();
+    }
+
 
   default:
     return ;
