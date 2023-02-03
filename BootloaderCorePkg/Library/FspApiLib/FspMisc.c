@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -8,6 +8,7 @@
 #include <FspApiLibInternal.h>
 #include <Library/ResetSystemLib.h>
 #include <Library/LitePeCoffLib.h>
+#include <Library/BoardInitLib.h>
 
 /**
   This function will handle FSP reset request.
@@ -23,6 +24,8 @@ FspResetHandler (
 {
   if ((Status >= FSP_STATUS_RESET_REQUIRED_COLD) && (Status <= FSP_STATUS_RESET_REQUIRED_8)) {
     DEBUG ((DEBUG_INIT, "FSP Requested Reboot ...\n\n"));
+    // Pass FSP reset type to BoardInit hook for special reset type handling
+    BoardInit(ResetSystemInit | (Status & 0xF));
     if (Status == FSP_STATUS_RESET_REQUIRED_WARM) {
       ResetSystem(EfiResetWarm);
     } else {

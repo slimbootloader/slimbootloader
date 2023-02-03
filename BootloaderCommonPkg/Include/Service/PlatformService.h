@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -14,6 +14,7 @@
 #define PLATFORM_SERVICE_VERSION    1
 
 typedef enum {
+  ResetSystemInit    = 0x00,
   PreTempRamInit     = 0x10,
   PostTempRamInit    = 0x20,
   PreConfigInit      = 0x30,

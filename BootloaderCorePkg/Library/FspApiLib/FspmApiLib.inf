@@ -1,7 +1,7 @@
 ## @file
 #  FSP API interfaces
 #
-#  Copyright (c) 2016 - 2017, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2016 - 2023, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -44,6 +44,7 @@
   BaseMemoryLib
   ResetSystemLib
   ThunkLib
+  BoardInitLib
 
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdFSPMBase

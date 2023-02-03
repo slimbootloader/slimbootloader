@@ -38,6 +38,7 @@
   BaseMemoryLib
   ResetSystemLib
   ThunkLib
+  BoardInitLib
 
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdFSPSBase

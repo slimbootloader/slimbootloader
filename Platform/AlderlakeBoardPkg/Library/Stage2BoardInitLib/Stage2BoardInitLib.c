@@ -296,6 +296,12 @@ BoardInit (
 
   SiCfgData = NULL;
 
+  if (InitPhase == (ResetSystemInit | (FSP_STATUS_RESET_REQUIRED_3 & 0xF))) {
+    // Enable PMC Global reset on FSP_STATUS_RESET_REQUIRED_3
+    MmioOr32 (PCH_PWRM_BASE_ADDRESS + R_PMC_PWRM_ETR3, (UINT32) (B_PMC_PWRM_ETR3_CF9GR));
+    return;
+  }
+
   switch (InitPhase) {
   case PreSiliconInit:
     EnableLegacyRegions ();
