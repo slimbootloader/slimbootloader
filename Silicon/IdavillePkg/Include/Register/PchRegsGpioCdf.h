@@ -203,7 +203,7 @@
 #define R_CDF_PCH_GPIO_PCR_GPP_N_NMI_STS               0x0328
 #define R_CDF_PCH_GPIO_PCR_GPP_N_NMI_EN                0x0358
 #define R_CDF_PCH_GPIO_PCR_GPP_N_PADCFGLOCK            0x00d0
-#define R_CDF_PCH_GPIO_PCR_GPP_N_PADCFGLOCKTX          0x00c4
+#define R_CDF_PCH_GPIO_PCR_GPP_N_PADCFGLOCKTX          0x00d4
 #define V_PCH_GPIO_GPP_N_PAD_MAX 23
 // Group: c,SB iD: c5
 #define R_CDF_PCH_GPIO_PCR_GPP_O_PAD_OWN               0x0040
