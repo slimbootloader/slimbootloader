@@ -212,7 +212,7 @@ SI_PCH_DEVICE_INTERRUPT_CONFIG mPchNDevIntConfig[] = {
 //  {31, 0, PchNoInt, 0}, // LPC/eSPI Interface, doesn't use interrupts
 //  {31, 1, PchNoInt, 0}, // P2SB, doesn't use interrupts
 //  {31, 2, PchNoInt, 0}, // PMC , doesn't use interrupts
-  {31, 3, SiPchIntA, 16}, // cAVS(Audio, Voice, Speach), INTA is default, programmed in PciCfgSpace 3Dh
+  {31, 3, SiPchIntD, 19}, // cAVS(Audio, Voice, Speach), INTD is default, programmed in PciCfgSpace 3Dh
   {31, 4, SiPchIntA, 16}, // SMBus Controller, no default value, programmed in PciCfgSpace 3Dh
 //  {31, 5, PchNoInt, 0}, // SPI , doesn't use interrupts
   {31, 7, SiPchIntA, 16}, // TraceHub, INTA is default, RO register

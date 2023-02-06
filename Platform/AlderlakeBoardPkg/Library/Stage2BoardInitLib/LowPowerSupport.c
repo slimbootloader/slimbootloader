@@ -148,6 +148,8 @@ UINT64 GetLowPowerS0IdleConstraint(VOID)
       return 0x000000AE60CBE677;
     } else if (IsPchP ()) {
       return 0x000000AE60E98677;
+    } else if (IsPchN ()) {
+      return 0x000000AE60698EF7;
     }
   } else {
 
