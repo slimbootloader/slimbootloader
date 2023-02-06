@@ -32,8 +32,8 @@ FSPT_UPD TempRamInitParams = {
 CONST GPIO_INIT_CONFIG mUartGpioTable[] = {
   {GPIO_CDF_GPP_B20, {GpioPadModeNative1, GpioHostOwnDefault, GpioDirDefault, GpioOutDefault, GpioIntDefault, GpioResetDefault, GpioTermDefault}},//UART0_RXD
   {GPIO_CDF_GPP_B21, {GpioPadModeNative1, GpioHostOwnDefault, GpioDirDefault, GpioOutDefault, GpioIntDefault, GpioResetDefault, GpioTermDefault}},//UART0_TXD
-  {GPIO_CDF_GPP_B22, {GpioPadModeNative1, GpioHostOwnDefault, GpioDirDefault, GpioOutDefault, GpioIntDefault, GpioResetDefault, GpioTermDefault}},//UART1_RXD
-  {GPIO_CDF_GPP_B23, {GpioPadModeNative1, GpioHostOwnDefault, GpioDirDefault, GpioOutDefault, GpioIntDefault, GpioResetDefault, GpioTermDefault}},//UART1_TXD
+  {GPIO_CDF_GPP_B22, {GpioPadModeNative2, GpioHostOwnDefault, GpioDirDefault, GpioOutDefault, GpioIntDefault, GpioResetDefault, GpioTermDefault}},//UART1_RXD
+  {GPIO_CDF_GPP_B23, {GpioPadModeNative2, GpioHostOwnDefault, GpioDirDefault, GpioOutDefault, GpioIntDefault, GpioResetDefault, GpioTermDefault}},//UART1_TXD
   {GPIO_CDF_GPP_D0,  {GpioPadModeNative1, GpioHostOwnDefault, GpioDirDefault, GpioOutDefault, GpioIntDefault, GpioResetDefault, GpioTermDefault}},//IE_UART_RXD
   {GPIO_CDF_GPP_D1,  {GpioPadModeNative1, GpioHostOwnDefault, GpioDirDefault, GpioOutDefault, GpioIntDefault, GpioResetDefault, GpioTermDefault}},//IE_UART_TXD
 };
