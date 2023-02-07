@@ -617,14 +617,14 @@ SioInit (
   // Program and Enable Default Super IO Configuration Port Addresses and range
   //
 
-  DEBUG((DEBUG_INFO, "AdlPsSioInit - Entry\n"));
+  DEBUG((DEBUG_INFO, "SioInit - Entry\n"));
   // Enable LPC IO decode for LPC/eSPI Bridge communication
   // Enable 4e/4f Decode over eSPI CS1#.
-  DEBUG((DEBUG_INFO, "AdlPsSioInit - Enable 4E 4F\n"));
+  DEBUG((DEBUG_INFO, "SioInit - Enable 4E 4F\n"));
   LpcBaseAddr = LpcPciCfgBase();
   LpcIoDecodeRanges = PciSegmentRead16(LpcBaseAddr + R_LPC_CFG_IOE);
   LpcIoDecodeRanges |= (B_LPC_CFG_IOE_ME2 | B_LPC_CFG_IOE_CAE | B_LPC_CFG_IOE_CBE);
-  DEBUG((DEBUG_INFO, "AdlPsSioInit - LpcIoDecodeRanges: %x\n", LpcIoDecodeRanges));
+  DEBUG((DEBUG_INFO, "SioInit - LpcIoDecodeRanges: %x\n", LpcIoDecodeRanges));
   PciSegmentWrite16((UINTN)(LpcBaseAddr + R_LPC_CFG_IOE), (UINT16)LpcIoDecodeRanges);
 
   //Enter Config Mode
@@ -639,13 +639,13 @@ SioInit (
       IoWrite8(SIO_CONFIG_PORT, 0x21);
       if ((IoRead8(SIO_DATA_PORT) & 0xFF) != 0x59)
       {
-          DEBUG((DEBUG_INFO, "AdlPsSioInit - Return CHIPID2:Not ITE8659\n"));
+          DEBUG((DEBUG_INFO, "SioInit - Return CHIPID2:Not ITE8659\n"));
           return;
       }
   }
   else
   {
-      DEBUG((DEBUG_INFO, "AdlPsSioInit - Return CHIPID1:Not ITE8659\n"));
+      DEBUG((DEBUG_INFO, "SioInit - Return CHIPID1:Not ITE8659\n"));
       return;
   }
 

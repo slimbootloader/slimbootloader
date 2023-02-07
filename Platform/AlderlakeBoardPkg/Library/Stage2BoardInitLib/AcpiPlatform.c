@@ -1163,7 +1163,7 @@ PlatformUpdateAcpiGnvs (
     PlatformNvs->PcieSlot1PowerEnableGpio = GPIO_VER2_LP_GPP_A8;
     PlatformNvs->PcieSlot1RstGpio = GPIO_VER2_LP_GPP_F10;
     PlatformNvs->PcieSlot1RpNumber = 9;
-    PlatformNvs->PcieSlot2WakeGpio = GPIO_VER4_S_GPP_F1;
+    PlatformNvs->PcieSlot2WakeGpio = 0;
     PlatformNvs->PcieSlot2RpNumber = 0;
     PlatformNvs->PcieSlot2PowerEnableGpio = 0;
     PlatformNvs->PcieSlot2PowerEnableGpioPolarity = 0;
@@ -1201,11 +1201,6 @@ PlatformUpdateAcpiGnvs (
     PlatformNvs->PegSlot2RstGpioPolarity = 0;
     PlatformNvs->PegSlot2WakeGpioPin = 0;
     PlatformNvs->PegSlot2RootPort = 0;
-    //PlatformNvs->PegSlot3PwrEnableGpioNo = 0;
-    //PlatformNvs->PegSlot3PwrEnableGpioPolarity = 0;
-    //PlatformNvs->PegSlot3RstGpioNo = 0;
-    //PlatformNvs->PegSlot3RstGpioPolarity = 0;
-    //PlatformNvs->PegSlot3WakeGpioPin = 0;
     PlatformNvs->FoxLanWakeGpio = GPIO_VER2_LP_GPD2;
     PlatformNvs->FoxLanDisableNGpio = GPIO_VER2_LP_GPP_E5;
     PlatformNvs->FoxLanDisableNGpioPolarity = 1;
@@ -1233,7 +1228,7 @@ PlatformUpdateAcpiGnvs (
   PlatformNvs->SensorStandby = 0x0;
   PlatformNvs->Rtd3Config0 = 0x0;
   PlatformNvs->Rtd3Config1 = 0x0;
-  PlatformNvs->StorageRtd3Support = 0x1;
+  PlatformNvs->StorageRtd3Support = 0x2;
 
   PlatformNvs->Rp08D3ColdDisable = 0x0;
   PlatformNvs->Rp08D3ColdSupport = 0x0;
