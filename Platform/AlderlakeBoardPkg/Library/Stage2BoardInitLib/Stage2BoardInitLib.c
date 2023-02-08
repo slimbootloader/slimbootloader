@@ -403,6 +403,7 @@ BoardInit (
     if (FeatureCfgData != NULL && (FeatureCfgData->MeFipsMode != 0)){
       HeciSetFipsMode(FeatureCfgData->MeFipsMode);
       DEBUG ((DEBUG_INFO, "Enabled FIPS mode.\n"));
+      DEBUG ((DEBUG_INFO, "Set HeciSetFipsMode to 0x%x\n", FeatureCfgData->MeFipsMode));
     }
 
     break;
