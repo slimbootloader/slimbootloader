@@ -592,7 +592,10 @@ class CONTAINER ():
             auth_type_str = self.get_auth_type_str (self.header.auth_type)
             match = re.match('RSA(\d+)_', auth_type_str)
             if match:
-                key_file = 'KEY_ID_CONTAINER_RSA%s' % match.group(1)
+                if self.header.signature.decode() == 'BOOT':
+                    key_file = 'KEY_ID_OS1_PRIVATE_RSA%s' % match.group(1)
+                else:
+                    key_file = 'KEY_ID_CONTAINER_RSA%s' % match.group(1)
             else:
                 key_file = ''
             alignment = self.header.alignment
