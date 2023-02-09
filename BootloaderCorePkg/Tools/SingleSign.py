@@ -49,6 +49,9 @@ SIGNING_KEY = {
     "KEY_ID_OS2_PUBLIC_RSA2048"      :    "OS2_TestKey_Pub_RSA2048.pem",
     "KEY_ID_OS2_PUBLIC_RSA3072"      :    "OS2_TestKey_Pub_RSA3072.pem",
 
+    # KEY_ID_OS1_PRIVATE is used for signing container header with BOOT signature
+    "KEY_ID_OS1_PRIVATE_RSA2048"     :    "OS1_TestKey_Priv_RSA2048.pem",
+    "KEY_ID_OS1_PRIVATE_RSA3072"     :    "OS1_TestKey_Priv_RSA3072.pem",
     }
 
 MESSAGE_SBL_KEY_DIR = (
