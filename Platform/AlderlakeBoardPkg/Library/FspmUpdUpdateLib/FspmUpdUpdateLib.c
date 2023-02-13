@@ -509,10 +509,10 @@ UpdateFspConfig (
     Fspmcfg->DciModphyPg                  = 0;
     Fspmcfg->DciUsb3TypecUfpDbg           = 2;
     Fspmcfg->DebugInterfaceLockEnable     = TRUE;
-    Fspmcfg->DciDbcMode                   = DciDbcNoChange; // 4
+    Fspmcfg->DciDbcMode                   = DciDbcNoChange;
     Fspmcfg->DciEn                        = MemCfgData->DciEn;
-    Fspmcfg->CpuTraceHubMode              = MemCfgData->CpuTraceHubMode; // 2
-    Fspmcfg->PchTraceHubMode              = MemCfgData->PchTraceHubMode; // 2
+    Fspmcfg->CpuTraceHubMode              = MemCfgData->CpuTraceHubMode;
+    Fspmcfg->PchTraceHubMode              = MemCfgData->PchTraceHubMode;
     Fspmcfg->CpuTraceHubMemReg0Size       = MemCfgData->CpuTraceHubMemReg0Size;
     Fspmcfg->CpuTraceHubMemReg1Size       = MemCfgData->CpuTraceHubMemReg1Size;
     Fspmcfg->PchTraceHubMemReg0Size       = MemCfgData->PchTraceHubMemReg0Size;
@@ -638,7 +638,7 @@ UpdateFspConfig (
         Fspmcfg->Lp5CccConfig = 0xff;
         Fspmcfg->SkipCpuReplacementCheck = 0x0;
         Fspmcfg->FirstDimmBitMask = 0x0;
-        //Fspmcfg->FirstDimmBitMaskEcc = 0x0;
+        Fspmcfg->FirstDimmBitMaskEcc = 0x0;
         Fspmcfg->Lp5BankMode = 0x0;
         break;
       case PLATFORM_ID_ADL_N_LPDDR5_RVP:
