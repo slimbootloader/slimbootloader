@@ -1,7 +1,7 @@
 /** @file
   Pch information library for ADL.
 
-  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -608,6 +608,9 @@ PchGetSeriesStr (
     case PCH_S:
       return "ADL PCH-S";
 
+    case PCH_N:
+      return "ADL PCH-N";
+
     default:
       return NULL;
   }
@@ -659,6 +662,7 @@ GetPchMaxTypeCPortNum (
   switch (PchSeries ()) {
     case PCH_P:
     case PCH_M:
+    case PCH_N:
       return 4;
     default:
       return 0;
@@ -950,7 +954,12 @@ IsPchEmmcSupported (
   VOID
   )
 {
-  return FALSE;
+  switch (PchSeries ()) {
+    case PCH_N:
+      return TRUE;
+    default:
+      return FALSE;
+  }
 }
 
 /**

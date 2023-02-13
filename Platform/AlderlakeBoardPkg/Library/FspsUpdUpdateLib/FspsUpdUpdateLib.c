@@ -1158,7 +1158,7 @@ UpdateFspConfig (
         FspsConfig->CnviBtAudioOffload = 0x1;
         FspsConfig->IomTypeCPortPadCfg[0] = 0x90e0016;
         FspsConfig->IomTypeCPortPadCfg[1] = 0x90e0017;
-        FspsConfig->VmdEnable = 1;
+        FspsConfig->VmdEnable = 0;
         FspsConfig->Irms[0] = 0x0;
         FspsConfig->Irms[1] = 0x0;
         FspsConfig->ThcMode[0] = 1;
@@ -1166,9 +1166,10 @@ UpdateFspConfig (
         FspsConfig->PortResetMessageEnable[1] = 0x0;
         FspsConfig->PortResetMessageEnable[2] = 0x0;
         FspsConfig->PortResetMessageEnable[4] = 0x0;
-        FspsConfig->AmtEnabled = 0x1;
+        FspsConfig->AmtEnabled = 0x0;
         FspsConfig->LidStatus = 0x5b;
         FspsConfig->TcssAuxOri = 0x1;
+        FspsConfig->Device4Enable = 0x0; //this controls the thermal device (B0,D4,F0)
 #ifdef PLATFORM_ADLN
         FspsConfig->PchFivrVccstIccMaxControl = 0x1;
 #endif

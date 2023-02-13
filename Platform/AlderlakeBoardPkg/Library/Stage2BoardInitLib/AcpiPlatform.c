@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -1287,7 +1287,8 @@ PlatformUpdateAcpiGnvs (
   SaNvs->PcieLtrMaxNoSnoopLatency[2] = 0x8C8;
   SaNvs->PcieLtrMaxNoSnoopLatency[3] = 0x8C8;
   SaNvs->SlotSelection = 1;
-  SaNvs->CpuPcieRtd3 = 1;
+  SaNvs->CpuPcieRtd3   = 1;
+  SaNvs->VmdEnable     = FspsConfig ->VmdEnable;
 
   PlatformNvs->PpmFlags           = CpuNvs->PpmFlags;
   SocUpdateAcpiGnvs ((VOID *)GnvsIn);

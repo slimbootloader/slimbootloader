@@ -2,7 +2,7 @@
 #
 #  Slim Bootloader CFGDATA Option File.
 #
-#  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -76,6 +76,14 @@
                        Enable- Enable Cpu , Disable- Disable Cpu
         length       : 0x01
         value        : 0x1
+    - PepEmmc       :
+        name         : Enable/disable Low Power constraints eMMC
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable eMMC , Disable- Disable eMMC
+        length       : 0x01
+        value        : 0x0
     - PepI2c2      :
         name         : Enable/disable Low Power constraints I2C2
         type         : Combo
@@ -277,5 +285,5 @@
         length       : 0x01
         value        : 0x0
     - Dummy        :
-        length       : 0x0
+        length       : 0x1
         value        : 0x0

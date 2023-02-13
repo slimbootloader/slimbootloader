@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2021 Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021-2023 Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 #include <Library/BaseLib.h>
@@ -217,11 +217,17 @@ UINT64 GetLowPowerS0IdleConstraint(VOID)
     if (PciRead16 ((UINT32)PchHeci1PciCfgBase () + PCI_VENDOR_ID_OFFSET) == 0xFFFF) {
       PepConfigData->PepCsme = 0;
     }
+
+    //
+    // Disable PEP constraint for EMMC device if not preset
+    //
+    if (!IsPchEmmcSupported ()) {
+      PepConfigData->PepEmmc = 0;
+    }
     //
     // Disable PEP constraint if HECI3 B0:D22:F4 device is not preset
     //
     if (PciRead16 ((UINT32)PchHeci3PciCfgBase () + PCI_VENDOR_ID_OFFSET) == 0xFFFF) {
-      DEBUG((DEBUG_INFO,"HECI3 device is not present\n"));
       PepConfigData->PepHeci3 = 0;
     }
 
@@ -270,7 +276,7 @@ UINT64 GetLowPowerS0IdleConstraint(VOID)
                                  (PepConfigData->PepAudio                                                          <<  7) | // Bit[8:7] - HD Audio (includes ADSP) (0:No Constraint or 1: D0/F1 or 3:D3)
                                  (PepConfigData->PepGfx                                                            <<  9) | // Bit[9]   - En/Dis GFX
                                  (PepConfigData->PepCpu                                                            << 10) | // Bit[10]  - En/Dis CPU
-                                 (0                                                                << 11) | // Bit[11]  - En/Dis EMMC
+                                 (PepConfigData->PepEmmc                                                           << 11) | // Bit[11]  - En/Dis EMMC
                                  (0                                                                                << 12) | // Bit[12]  - En/Dis SDXC
                                  ((PepSerialIoI2c[2] && PepConfigData->PepI2c2)                                    << 13) | // Bit[13]  - En/Dis I2C2
                                  ((PepSerialIoI2c[3] && PepConfigData->PepI2c3)                                    << 14) | // Bit[14]  - En/Dis I2C3
@@ -294,11 +300,11 @@ UINT64 GetLowPowerS0IdleConstraint(VOID)
 
     LowPowerS0IdleConstraint |= ((UINT64)PepConfigData->PepHeci3                                                   << 32) | // Bit[32]    - En/Dis HECI3
                                 (((UINT64)(0x3 & PepConfigData->PepPcieStorage))                                   << 33) | // Bit[34:33] - PCIE Storage RP (0:No Constraint or 1: D0/F1 or 3:D3)
-                                (((UINT64)(0x3 & PepConfigData->PepPcieLan))                                       << 35) | // Bit[36:35] - Pcie Lan (0:No Constraint or 1:D0/F1 or 3:D3) //SG - this is 1 in cfg
-                                (((UINT64)(0x3 & PepConfigData->PepPcieWlan))                                      << 37) | // Bit[38:37] - Pcie Wlan (0:No Constraint or 1:D0/F1 or 3:D3) //SG - this is 1 in cfg
+                                (((UINT64)(0x3 & PepConfigData->PepPcieLan))                                       << 35) | // Bit[36:35] - Pcie Lan (0:No Constraint or 1:D0/F1 or 3:D3)
+                                (((UINT64)(0x3 & PepConfigData->PepPcieWlan))                                      << 37) | // Bit[38:37] - Pcie Wlan (0:No Constraint or 1:D0/F1 or 3:D3)
                                 (((UINT64)(0x3 & PepConfigData->PepPcieGfx))                                       << 39) | // Bit[40:39] - Pcie Gfx (0:No Constraint or 1:D0/F1 or 3:D3)
                                 (((UINT64)(0x3 & PepConfigData->PepPcieOther))                                     << 41) | // Bit[42:41] - Pcie Other (0:No Constraint or 1:D0/F1 or 3:D3)
-                                ((UINT64)PepConfigData->PepPcieDg                                                  << 43) | // Bit[43]    - En/Dis DG on x8 PEG port (PEG1) //SG- if PcdAdlLpSupport = 1
+                                ((UINT64)PepConfigData->PepPcieDg                                                  << 43) | // Bit[43]    - En/Dis DG on x8 PEG port (PEG1)
                                 ((UINT64)(PepUfs[0] && PepConfigData->PepUfs0)                                     << 44) | // Bit[44]    - En/Dis UFS0
                                 ((UINT64)(PepUfs[0] && PepConfigData->PepUfs1)                                     << 45) | // Bit[45]    - En/Dis UFS1
                                 ((UINT64)(PepSerialIoI2c[7] && PepConfigData->PepI2c7)                             << 46);  // Bit[46]    - En/Dis I2C7
