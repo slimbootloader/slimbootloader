@@ -1,7 +1,7 @@
 /** @file
   ELF library
 
-  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019-2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -242,6 +242,7 @@ ParseElfImage (
   UINTN          End;
   UINTN          Base;
   UINTN          FileOffset;
+  UINT8          *CurrentLoadAddress;
 
   if (ElfCt == NULL) {
     return EFI_INVALID_PARAMETER;
@@ -317,10 +318,14 @@ ParseElfImage (
   //
   ElfCt->ImageSize             = End - Base + 1;
   ElfCt->PreferredImageAddress = (VOID *) Base;
+  CurrentLoadAddress           = ElfCt->FileBase + FileOffset;
+  if (ElfCt->PreferredImageAddress != CurrentLoadAddress) {
+    ElfCt->ReloadRequired = TRUE;
+  }
   if (ElfCt->ReloadRequired) {
     ElfCt->ImageAddress = NULL;
   } else {
-    ElfCt->ImageAddress = ElfCt->FileBase + FileOffset;
+      ElfCt->ImageAddress = CurrentLoadAddress;
   }
 
   CalculateElfFileSize (ElfCt, &ElfCt->FileSize);
