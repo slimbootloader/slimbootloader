@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -14,6 +14,8 @@
 #include "GpioTableTestSPostMem.h"
 #include <Library/PciePm.h>
 #include <Library/PlatformInfo.h>
+#include <Library/LoaderPerformanceLib.h>
+#include <Library/PciEnumerationLib.h>
 #include "SioChip.h"
 
 GLOBAL_REMOVE_IF_UNREFERENCED UINT8    mBigCoreCount;
@@ -28,6 +30,43 @@ STATIC S3_SAVE_REG mS3SaveReg = {
   { BL_PLD_COMM_SIG, S3_SAVE_REG_COMM_ID, 1, 0 },
   { { REG_TYPE_IO, WIDE32, { 0, 0}, (ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN), 0x00000000 } }
 };
+
+/**
+  Platform specific initialization for PCI Enum.
+  Logs Device addresses of NVME controllers to boot options.
+
+  @param[in] Bus      Device bus number
+  @param[in] Dev      Device number
+  @param[in] Fun      Device function number
+  @param[in] Phase    Current PCI enumeration phase
+**/
+VOID
+EFIAPI
+PlatformPciEnumHookProc (
+  UINT8         Bus,
+  UINT8         Dev,
+  UINT8         Fun,
+  EFI_PCI_CONTROLLER_RESOURCE_ALLOCATION_PHASE Phase
+  )
+{
+  STATIC UINT8                            Instance = 0;
+  volatile PCI_DEVICE_INDEPENDENT_REGION  *PciDev;
+
+  // Exit on any other PCI enumeration phase
+  if (Phase != EfiPciBeforeResourceCollection) {
+    return;
+  }
+
+  // When an NVME controller is detected, update its boot option entry.
+  PciDev = (volatile PCI_DEVICE_INDEPENDENT_REGION *) MM_PCI_ADDRESS (Bus, Dev, Fun, 0);
+  if ((PciDev->ClassCode[0] == PCI_IF_MASS_STORAGE_SOLID_STATE_ENTERPRISE_NVMHCI) &&
+      (PciDev->ClassCode[1] == PCI_CLASS_MASS_STORAGE_SOLID_STATE) &&
+      (PciDev->ClassCode[2] == PCI_CLASS_MASS_STORAGE)) {
+    DEBUG((DEBUG_INFO, "Found NVME controller at B%02X|D%02X|F%X\n", Bus, Dev, Fun));
+    SetDeviceAddr (OsBootDeviceNvme, Instance, (UINT32)((Bus << 16) | (Dev << 8)));
+    Instance += 1;
+  }
+}
 
 /**
   Create OS config data support HOB.
@@ -409,6 +448,9 @@ BoardInit (
     }
 
     break;
+  case PrePciEnumeration:
+    (VOID) PcdSet32S (PcdPciEnumHookProc, (UINT32)(UINTN) PlatformPciEnumHookProc);
+    break;
   case PostPciEnumeration:
     if (FeaturePcdGet (PcdEnablePciePm)) {
       PciePmConfig ();
@@ -630,31 +672,7 @@ UpdateOsBootMediumInfo (
   OUT  OS_BOOT_OPTION_LIST  *OsBootOptionList
   )
 {
-  volatile PCI_DEVICE_INDEPENDENT_REGION *PciDev;
-  UINT16                                 Bus;
-  UINT8                                  Dev;
-  UINT8                                  Instance;
-
   FillBootOptionListFromCfgData (OsBootOptionList);
-
-  //
-  // Depends on the PCI root bridge, connected external PCI devices, the bus number for
-  // NVMe device might be different, so update the NVMe bus number in the device table.
-  //
-  Instance = 0;
-  for (Bus = 1; Bus <= PCI_MAX_BUS; Bus++) {
-    for (Dev = 0; Dev <= PCI_MAX_DEVICE; Dev++) {
-      PciDev = (volatile PCI_DEVICE_INDEPENDENT_REGION *) MM_PCI_ADDRESS (Bus, Dev, 0, 0);
-      if (PciDev->DeviceId != 0xFFFF) {
-        if ((PciDev->ClassCode[0] == 2) && (PciDev->ClassCode[1] == 8) && (PciDev->ClassCode[2] == 1)) {
-          SetDeviceAddr (OsBootDeviceNvme, Instance, (UINT32)((Bus << 16) | (Dev << 8)));
-          Instance += 1;
-        }
-      }
-    }
-  }
-
-  return;
 }
 
 /**

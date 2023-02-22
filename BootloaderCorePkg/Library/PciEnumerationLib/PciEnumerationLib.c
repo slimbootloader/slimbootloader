@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -714,10 +714,18 @@ PciSearchDevice (
   OUT PCI_IO_DEVICE                         **PciDevice
   )
 {
-  PCI_IO_DEVICE *PciIoDevice;
+  PCI_IO_DEVICE                     *PciIoDevice;
+  PLATFORM_PCI_ENUM_HOOK_PROC       PlatformPciEnumHookProc;
 
   PciIoDevice = NULL;
 
+  //
+  // Nofify EfiPciBeforeResourceCollection
+  //
+  PlatformPciEnumHookProc = (PLATFORM_PCI_ENUM_HOOK_PROC)(UINTN)PcdGet32 (PcdPciEnumHookProc);
+  if (PlatformPciEnumHookProc != NULL) {
+    PlatformPciEnumHookProc (Bus, Device, Func, EfiPciBeforeResourceCollection);
+  }
 #if DEBUG_PCI_ENUM
   DEBUG ((
            DEBUG_INFO,
