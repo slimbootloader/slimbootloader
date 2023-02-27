@@ -966,7 +966,7 @@ ExtendStageHash (
                               EV_COMPACT_HASH, sizeof("LinuxLoaderPkg: OS Image"), (UINT8 *)"LinuxLoaderPkg: OS Image");
       } else {
         // Record base and length in event log
-        Blob.BlobBase = (UINT64)CbInfo->CompBuf;
+        Blob.BlobBase = (UINT64)(UINTN)CbInfo->CompBuf;
         Blob.BlobLength = CbInfo->CompLen;
 
         // TPM Extend for Stage components and payloads
