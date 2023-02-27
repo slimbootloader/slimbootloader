@@ -711,7 +711,7 @@ ContinueFunc (
         // Extend External Config Data hash
         if (Stage1bParam->ConfigDataHashValid == 1) {
           CfgDataBlob = LdrGlobal->CfgDataPtr;
-          CfgDataFwBlob.BlobBase = (UINT64)CfgDataBlob;
+          CfgDataFwBlob.BlobBase = (UINT64)(UINTN)CfgDataBlob;
           CfgDataFwBlob.BlobLength = CfgDataBlob->UsedLength;
           TpmExtendPcrAndLogEvent (0,
                     MbTmpAlgHash,
@@ -724,7 +724,7 @@ ContinueFunc (
         // Extend Key hash manifest digest
         if (Stage1bParam->KeyHashManifestHashValid == 1) {
           KeyHashBlob = LdrGlobal->HashStorePtr;
-          KeyHashFwBlob.BlobBase = (UINT64)KeyHashBlob;
+          KeyHashFwBlob.BlobBase = (UINT64)(UINTN)KeyHashBlob;
           KeyHashFwBlob.BlobLength = KeyHashBlob->UsedLength;
           TpmExtendPcrAndLogEvent (0,
                     MbTmpAlgHash,
