@@ -1,7 +1,7 @@
 ## @file
 #  File to describe FSP repo information
 #
-#  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -11,7 +11,7 @@
 
 [UserExtensions.SBL."CloneRepo"]
   REPO    = https://github.com/intel/FSP.git
-  COMMIT  = f99be62be87caddbacd9af6d9b99b1d9739646f1
+  COMMIT  = 78826231e11a9d395beaeab348f6169caa3f185c
 
 [UserExtensions.SBL."CopyList"]
 # For ADL-S
@@ -51,3 +51,15 @@
   AlderLakeFspBinPkg/IoT/AlderLakePS/Vbt/Vbt_AdlpsCrb_Dp_To_Hdmi.bin      : Platform/AlderlakeBoardPkg/VbtBin/VbtAdlPsCrb.dat
   AlderLakeFspBinPkg/IoT/AlderLakePS/Vbt/VbtAdlP.json                     : Platform/AlderlakeBoardPkg/VbtBin/VbtAdlPs.json
   FSP_License.pdf                                                         : Silicon/AlderlakePkg/Adlps/FspBin/FSP_License.pdf
+# For ADL-N
+  AlderLakeFspBinPkg/IoT/AlderLakeN/Fsp.fd                               : Silicon/AlderlakePkg/Adln/FspBin/FspDbg.bin
+  AlderLakeFspBinPkg/IoT/AlderLakeN/Fsp.fd                               : Silicon/AlderlakePkg/Adln/FspBin/FspRel.bin
+  AlderLakeFspBinPkg/IoT/AlderLakeN/Fsp.bsf                              : Silicon/AlderlakePkg/Adln/FspBin/Fsp.bsf
+  AlderLakeFspBinPkg/IoT/AlderLakeN/Include/FspUpd.h                     : Silicon/AlderlakePkg/Adln/Include/FspUpd.h
+  AlderLakeFspBinPkg/IoT/AlderLakeN/Include/FsptUpd.h                    : Silicon/AlderlakePkg/Adln/Include/FsptUpd.h
+  AlderLakeFspBinPkg/IoT/AlderLakeN/Include/FspmUpd.h                    : Silicon/AlderlakePkg/Adln/Include/FspmUpd.h
+  AlderLakeFspBinPkg/IoT/AlderLakeN/Include/FspsUpd.h                    : Silicon/AlderlakePkg/Adln/Include/FspsUpd.h
+  AlderLakeFspBinPkg/IoT/AlderLakeN/Include/FspInfoHob.h                 : Silicon/AlderlakePkg/Adln/Include/FspInfoHob.h
+  AlderLakeFspBinPkg/IoT/AlderLakeN/Vbt/Vbt.bin                          : Platform/AlderlakeBoardPkg/VbtBin/VbtAdlN.dat
+  AlderLakeFspBinPkg/IoT/AlderLakeN/Vbt/VbtAdlN.json                     : Platform/AlderlakeBoardPkg/VbtBin/VbtAdlN.json
+  FSP_License.pdf                                                        : Silicon/AlderlakePkg/Adln/FspBin/FSP_License.pdf

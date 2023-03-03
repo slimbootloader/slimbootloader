@@ -1,7 +1,7 @@
 ## @ StitchIfwi.py
 #  This is a python stitching script for Slim Bootloader ADL build
 #
-# Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved. <BR>
+# Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved. <BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -66,6 +66,32 @@ def gen_xml_file(stitch_dir, stitch_cfg_file, btg_profile, plt_params_list, plat
             print (value)
 
     tree.write(updated_xml_file)
+
+def patch_xml_file(stitch_dir, ifwi_src_path):
+    print ("Patching xml file .........")
+
+    TOP_SWAP_SIZE = {
+        0x00020000 : '64KB',
+        0x00040000 : '128KB',
+        0x00080000 : '512KB',
+        0x00100000 : '1MB',
+        0x00200000 : '2MB',
+        0x00400000 : '4MB',
+        0x00800000 : '8MB',
+    }
+
+    ifwi_bin = bytearray (get_file_data (ifwi_src_path))
+    ifwi = IFWI_PARSER.parse_ifwi_binary (ifwi_bin)
+    ts0_comp = IFWI_PARSER.locate_components (ifwi, 'IFWI/BIOS/TS0')
+    if len(ts0_comp) == 0:
+        raise Exception ("Could not locate component IFWI/BIOS/TS0!")
+
+    updated_xml_file = os.path.join (stitch_dir, 'Temp', 'updated.xml')
+    tree = ET.parse(updated_xml_file)
+    node = tree.find('./FlashSettings/BiosConfiguration/TopSwapOverride')
+    node.set('value', TOP_SWAP_SIZE[ts0_comp[0].length])
+    tree.write(updated_xml_file)
+
 
 def replace_component (ifwi_src_path, flash_path, file_path, comp_alg, pri_key, svn):
     print ("Replacing components.......")
@@ -152,6 +178,8 @@ def stitch (stitch_dir, stitch_cfg_file, sbl_file, btg_profile, plt_params_list,
 
     # Generate xml
     gen_xml_file(stitch_dir, stitch_cfg_file, btg_profile, plt_params_list, platform, tpm)
+
+    patch_xml_file(stitch_dir, os.path.join(temp_dir, "SlimBootloader.bin"))
 
     if sign_bin_flag:
         update_btGuard_manifests(stitch_dir, stitch_cfg_file, btg_profile, tpm)
