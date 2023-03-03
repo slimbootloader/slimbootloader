@@ -1,7 +1,7 @@
 ## @file
 # This file is used to provide board specific image information.
 #
-#  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2023, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -15,30 +15,29 @@ import time
 
 sys.dont_write_bytecode = True
 sys.path.append (os.path.join('..', '..'))
-from BuildLoader import BaseBoard, STITCH_OPS, FLASH_REGION_TYPE, HASH_USAGE
-from BuildLoader import IPP_CRYPTO_OPTIMIZATION_MASK, IPP_CRYPTO_ALG_MASK, HASH_TYPE_VALUE
+from BuildLoader import *
 
 class Board(BaseBoard):
     def __init__(self, *args, **kwargs):
 
         super(Board, self).__init__(*args, **kwargs)
 
-        self.VERINFO_IMAGE_ID     = 'SBL_ADL'
+        self.VERINFO_IMAGE_ID     = 'SB_ADLN'
         self.VERINFO_PROJ_MAJOR_VER = 1
-        self.VERINFO_PROJ_MINOR_VER = 3
+        self.VERINFO_PROJ_MINOR_VER = 0
         self.VERINFO_SVN            = 1
         self.VERINFO_BUILD_DATE     = time.strftime("%m/%d/%Y")
 
-        self.BOARD_NAME           = 'adls'
+        self.BOARD_NAME           = 'adln'
         self.BOARD_PKG_NAME       = 'AlderlakeBoardPkg'
         self.SILICON_PKG_NAME     = 'AlderlakePkg'
         self.FSP_IMAGE_ID         = 'ADLI-FSP'
-        self._EXTRA_INC_PATH      = ['Silicon/AlderlakePkg/Adls/Include']
-        self._FSP_PATH_NAME       =  'Silicon/AlderlakePkg/Adls/FspBin'
+        self._EXTRA_INC_PATH      = ['Silicon/AlderlakePkg/Adln/Include']
+        self._FSP_PATH_NAME       = 'Silicon/AlderlakePkg/Adln/FspBin'
         self.MICROCODE_INF_FILE   = 'Silicon/AlderlakePkg/Microcode/Microcode.inf'
-        self.ACPI_TABLE_INF_FILE  = 'Platform/AlderlakeBoardPkg/AcpiTables/AcpiTables.inf'
-        self._LP_SUPPORT          = False
-        self._N_SUPPORT           = False
+        self.ACPI_TABLE_INF_FILE  = 'Platform/AlderlakeBoardPkg/AcpiTables/AcpiTablesN.inf'
+        self._LP_SUPPORT          = True
+        self._N_SUPPORT           = True
 
         self.PCI_EXPRESS_BASE     = 0xC0000000
         self.PCI_IO_BASE          = 0x00002000
@@ -68,7 +67,7 @@ class Board(BaseBoard):
         self.ENABLE_SMM_REBASE    = 2
 
         # 0 - PCH UART0, 1 - PCH UART1, 2 - PCH UART2, 0xFF - EC UART 0x3F8
-        self.DEBUG_PORT_NUMBER = 0x2
+        self.DEBUG_PORT_NUMBER = 0x0
 
         self.ENABLE_MULTI_USB_BOOT_DEV = 1
 
@@ -144,7 +143,7 @@ class Board(BaseBoard):
         self.UEFI_VARIABLE_SIZE = 0x1000
         if len(self._PAYLOAD_NAME.split(';')) > 1:
             self.UEFI_VARIABLE_SIZE = 0x00040000
-        self.UCODE_SIZE           = 0x000C1000
+        self.UCODE_SIZE           = 0x000EC000
         self.MRCDATA_SIZE         = 0x00010000
         self.CFGDATA_SIZE         = 0x00004000
         self.KEYHASH_SIZE         = 0x00001000
@@ -152,14 +151,34 @@ class Board(BaseBoard):
         self.SBLRSVD_SIZE         = 0x00001000
         self.FWUPDATE_SIZE        = 0x00020000 if self.ENABLE_FWU else 0
 
-        self.OS_LOADER_FD_SIZE    = 0x00057000
-        self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
+        self.SIIPFW_SIZE          = 0x1000
 
-        self.TOP_SWAP_SIZE        = 0x00080000
-        self.REDUNDANT_SIZE       = self.UCODE_SIZE + self.STAGE2_SIZE + self.STAGE1B_SIZE + \
-                                    self.FWUPDATE_SIZE + self.CFGDATA_SIZE + self.KEYHASH_SIZE
+        # Declaring UCODE_SLOT_SIZE populates the uCode region with as many
+        # uCode slots as possible, even if there aren't enough uCode patches
+        # to fill each slot. This can have a slight performance impact on SBL,
+        # as it tries to load dummy uCode patches.
+        self.UCODE_SLOT_SIZE      = 0x3B000
 
-        self.SIIPFW_SIZE = 0x1000
+        # If ENABLE_SBL_RESILIENCY is 1, BiosRedAssistance FIT strap setting
+        # needs to be manually changed to Enabled and TopSwapOverride
+        # flash setting needs to be manually changed to 4MB in stitch config
+        self.ENABLE_SBL_RESILIENCY = 0
+
+        # If BUILD_IDENTICAL_TS is 1, TopSwapOverride flash setting
+        # needs to be manually changed to 4MB in stitch config
+        self.BUILD_IDENTICAL_TS    = 0
+
+        if self.ENABLE_SBL_RESILIENCY:
+            self.BUILD_IDENTICAL_TS    = 1
+
+        if self.BUILD_IDENTICAL_TS:
+            self.TOP_SWAP_SIZE         = 0x400000
+            self.REDUNDANT_SIZE        = self.STAGE2_SIZE + self.FWUPDATE_SIZE + self.CFGDATA_SIZE + \
+                                         self.KEYHASH_SIZE
+        else:
+            self.TOP_SWAP_SIZE         = 0x80000
+            self.REDUNDANT_SIZE        = self.UCODE_SIZE + self.STAGE2_SIZE + self.STAGE1B_SIZE + \
+                                         self.FWUPDATE_SIZE + self.CFGDATA_SIZE + self.KEYHASH_SIZE
 
         self.ENABLE_TCC = 0
         if self.ENABLE_TCC:
@@ -167,7 +186,7 @@ class Board(BaseBoard):
             self.TCC_CRL_SIZE    = 0x00008000
             self.TCC_STREAM_SIZE = 0x00005000
             self.SIIPFW_SIZE    += self.TCC_CCFG_SIZE + self.TCC_CRL_SIZE + self.TCC_STREAM_SIZE
-            self.CPU_SORT_METHOD = 1  #sort CPU threads in ascending order
+            self.CPU_SORT_METHOD = 1 #sort CPU threads in ascending order
 
         self.ENABLE_TSN = 0
         if self.ENABLE_TSN:
@@ -201,14 +220,13 @@ class Board(BaseBoard):
         #   the ImageId field in the VBT container.
         # VbtFileName is the VBT file name. It needs to be located under platform
         #   VbtBin folder.
-        self._MULTI_VBT_FILE      = {1:'Vbt.dat'}
+        self._MULTI_VBT_FILE      = {1:'VbtAdlN.dat'}
 
         self.CFG_DATABASE_SIZE    = self.CFGDATA_SIZE
         self._generated_cfg_file_prefix = 'Autogen_'
 
         self._CFGDATA_INT_FILE = []
-        self._CFGDATA_EXT_FILE = [self._generated_cfg_file_prefix + 'CfgDataInt_Adls_Crb_Ddr4.dlt', self._generated_cfg_file_prefix + 'CfgDataInt_Adls_Crb_Ddr5.dlt', \
-                                  self._generated_cfg_file_prefix + 'CfgDataInt_Adls_Crb_Ddr4_Sodimm.dlt', self._generated_cfg_file_prefix + 'CfgDataInt_Adls_Crb_Ddr5_Sodimm.dlt']
+        self._CFGDATA_EXT_FILE = [self._generated_cfg_file_prefix + 'CfgDataInt_Adln_Crb_Ddr5.dlt', self._generated_cfg_file_prefix + 'CfgDataInt_Adln_Rvp_Lpddr5.dlt']
 
     def PlatformBuildHook (self, build, phase):
         if phase == 'pre-build:before':
@@ -229,7 +247,9 @@ class Board(BaseBoard):
 
                 # Enable TCC in dlt file
                 if self.ENABLE_TCC:
-                    if os.path.exists(os.path.join(brd_cfg_src_dir, 'CfgData_Tcc_Feature.dlt')):
+                    if os.path.exists(os.path.join(brd_cfg_src_dir, 'CfgData_Adln_Tcc_Feature.dlt')):
+                        lines += open (os.path.join(brd_cfg_src_dir, 'CfgData_Adln_Tcc_Feature.dlt')).read()
+                    elif os.path.exists(os.path.join(brd_cfg_src_dir, 'CfgData_Tcc_Feature.dlt')):
                         lines += open (os.path.join(brd_cfg_src_dir, 'CfgData_Tcc_Feature.dlt')).read()
                     elif os.path.exists(os.path.join(brd_cfg2_src_dir, 'CfgData_Tcc_Feature.dlt')):
                         lines += open (os.path.join(brd_cfg2_src_dir, 'CfgData_Tcc_Feature.dlt')).read()
@@ -239,7 +259,9 @@ class Board(BaseBoard):
 
                 # Enable TSN in dlt file
                 if self.ENABLE_TSN:
-                    if os.path.exists(os.path.join(brd_cfg_src_dir, 'CfgData_Tsn_Feature.dlt')):
+                    if os.path.exists(os.path.join(brd_cfg_src_dir, 'CfgData_Adln_Tsn_Feature.dlt')):
+                        lines += open (os.path.join(brd_cfg_src_dir, 'CfgData_Adln_Tsn_Feature.dlt')).read()
+                    elif os.path.exists(os.path.join(brd_cfg_src_dir, 'CfgData_Tsn_Feature.dlt')):
                         lines += open (os.path.join(brd_cfg_src_dir, 'CfgData_Tsn_Feature.dlt')).read()
                     elif os.path.exists(os.path.join(brd_cfg2_src_dir, 'CfgData_Tsn_Feature.dlt')):
                         lines += open (os.path.join(brd_cfg2_src_dir, 'CfgData_Tsn_Feature.dlt')).read()
@@ -307,6 +329,9 @@ class Board(BaseBoard):
         if self._LP_SUPPORT:
             dsc['PcdsFixedAtBuild'].append ('gPlatformAlderLakeTokenSpaceGuid.PcdAdlLpSupport | TRUE')
 
+        if self._N_SUPPORT:
+            dsc['PcdsFixedAtBuild'].append ('gPlatformAlderLakeTokenSpaceGuid.PcdAdlNSupport | TRUE')
+
         return dsc
 
 
@@ -361,7 +386,7 @@ class Board(BaseBoard):
         if self.ENABLE_TCC:
             container_list.append (
               ('TCCC', TccCacheCfg, 'Lz4', container_list_auth_type, 'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0, self.TCC_CCFG_SIZE, 0), # TCC Cache Config
-           )
+            )
             container_list.append (
               ('TCCM', TccCrlBinary, 'Lz4', container_list_auth_type, 'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0, self.TCC_CRL_SIZE, 0),   # TCC Crl
             )
@@ -413,34 +438,72 @@ class Board(BaseBoard):
                 ('PAYLOAD.bin'  ,  'Lz4'    , self.PAYLOAD_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
                 ]
             ),
-            ('REDUNDANT_A.bin', [
-                ('UCODE.bin'    ,  ''        , self.UCODE_SIZE,    STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
-                ('STAGE2.fd'    ,  'Lz4'     , self.STAGE2_SIZE,   STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
-                ('FWUPDATE.bin' ,  'Lzma'    , self.FWUPDATE_SIZE, STITCH_OPS.MODE_FILE_PAD | fwu_flag,  STITCH_OPS.MODE_POS_TAIL),
-                ('CFGDATA.bin'  , ''         , self.CFGDATA_SIZE,  STITCH_OPS.MODE_FILE_PAD | cfg_flag, STITCH_OPS.MODE_POS_TAIL),
-                ('KEYHASH.bin'  , ''         , self.KEYHASH_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
-                ('STAGE1B_A.fd' ,  ''        , self.STAGE1B_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
-                ]
-            ),
-            ('REDUNDANT_B.bin', [
-                ('UCODE.bin'    ,  ''        , self.UCODE_SIZE,    STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
-                ('STAGE2.fd'    ,  'Lz4'     , self.STAGE2_SIZE,   STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
-                ('FWUPDATE.bin' ,  'Lzma'    , self.FWUPDATE_SIZE, STITCH_OPS.MODE_FILE_PAD | fwu_flag,  STITCH_OPS.MODE_POS_TAIL),
-                ('CFGDATA.bin'  , ''         , self.CFGDATA_SIZE,  STITCH_OPS.MODE_FILE_PAD | cfg_flag, STITCH_OPS.MODE_POS_TAIL),
-                ('KEYHASH.bin'  , ''         , self.KEYHASH_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
-                ('STAGE1B_B.fd' ,  ''        , self.STAGE1B_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
-                ]
-            ),
-            ('TOP_SWAP_A.bin', [
-                ('ACM.bin'      ,  ''        , self.ACM_SIZE,      STITCH_OPS.MODE_FILE_NOP | acm_flag, STITCH_OPS.MODE_POS_TAIL),
-                ('STAGE1A_A.fd'      , ''    , self.STAGE1A_SIZE,  STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
-                ]
-            ),
-            ('TOP_SWAP_B.bin', [
-                ('ACM.bin'      ,  ''        , self.ACM_SIZE,      STITCH_OPS.MODE_FILE_NOP | acm_flag, STITCH_OPS.MODE_POS_TAIL),
-                ('STAGE1A_B.fd'      , ''    , self.STAGE1A_SIZE,  STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
-                ]
-            ),
+        ])
+
+        if self.BUILD_IDENTICAL_TS:
+            img_list.extend ([
+                ('REDUNDANT_A.bin', [
+                    ('STAGE2.fd'    , 'Lz4'      , self.STAGE2_SIZE,   STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
+                    ('FWUPDATE.bin' , 'Lzma'     , self.FWUPDATE_SIZE, STITCH_OPS.MODE_FILE_PAD | fwu_flag,  STITCH_OPS.MODE_POS_TAIL),
+                    ('CFGDATA.bin'  , ''         , self.CFGDATA_SIZE,  STITCH_OPS.MODE_FILE_PAD | cfg_flag, STITCH_OPS.MODE_POS_TAIL),
+                    ('KEYHASH.bin'  , ''        , self.KEYHASH_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
+                    ]
+                ),
+                ('REDUNDANT_B.bin', [
+                    ('STAGE2.fd'    , 'Lz4'      , self.STAGE2_SIZE,   STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
+                    ('FWUPDATE.bin' , 'Lzma'     , self.FWUPDATE_SIZE, STITCH_OPS.MODE_FILE_PAD | fwu_flag,  STITCH_OPS.MODE_POS_TAIL),
+                    ('CFGDATA.bin'  , ''         , self.CFGDATA_SIZE,  STITCH_OPS.MODE_FILE_PAD | cfg_flag, STITCH_OPS.MODE_POS_TAIL),
+                    ('KEYHASH.bin'  , ''        , self.KEYHASH_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
+                    ]
+                ),
+                ('TOP_SWAP_A.bin', [
+                    ('STAGE1B_A.fd' , ''        , self.STAGE1B_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
+                    ('UCODE.bin'    , ''        , self.UCODE_SIZE,    STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
+                    ('ACM.bin'      , ''        , self.ACM_SIZE,      STITCH_OPS.MODE_FILE_NOP | acm_flag, STITCH_OPS.MODE_POS_TAIL),
+                    ('STAGE1A_A.fd' , ''        , self.STAGE1A_SIZE,  STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
+                    ]
+                ),
+                ('TOP_SWAP_B.bin', [
+                    ('STAGE1B_B.fd' , ''        , self.STAGE1B_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
+                    ('UCODE.bin'    , ''        , self.UCODE_SIZE,    STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
+                    ('ACM.bin'      , ''        , self.ACM_SIZE,      STITCH_OPS.MODE_FILE_NOP | acm_flag, STITCH_OPS.MODE_POS_TAIL),
+                    ('STAGE1A_B.fd' , ''        , self.STAGE1A_SIZE,  STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
+                    ]
+                ),
+            ])
+        else:
+            img_list.extend ([
+                ('REDUNDANT_A.bin', [
+                    ('UCODE.bin'    ,  ''        , self.UCODE_SIZE,    STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
+                    ('STAGE2.fd'    ,  'Lz4'     , self.STAGE2_SIZE,   STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
+                    ('FWUPDATE.bin' ,  'Lzma'    , self.FWUPDATE_SIZE, STITCH_OPS.MODE_FILE_PAD | fwu_flag,  STITCH_OPS.MODE_POS_TAIL),
+                    ('CFGDATA.bin'  , ''         , self.CFGDATA_SIZE,  STITCH_OPS.MODE_FILE_PAD | cfg_flag, STITCH_OPS.MODE_POS_TAIL),
+                    ('KEYHASH.bin'  , ''         , self.KEYHASH_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
+                    ('STAGE1B_A.fd' ,  ''        , self.STAGE1B_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
+                    ]
+                ),
+                ('REDUNDANT_B.bin', [
+                    ('UCODE.bin'    ,  ''        , self.UCODE_SIZE,    STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
+                    ('STAGE2.fd'    ,  'Lz4'     , self.STAGE2_SIZE,   STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
+                    ('FWUPDATE.bin' ,  'Lzma'    , self.FWUPDATE_SIZE, STITCH_OPS.MODE_FILE_PAD | fwu_flag,  STITCH_OPS.MODE_POS_TAIL),
+                    ('CFGDATA.bin'  , ''         , self.CFGDATA_SIZE,  STITCH_OPS.MODE_FILE_PAD | cfg_flag, STITCH_OPS.MODE_POS_TAIL),
+                    ('KEYHASH.bin'  , ''         , self.KEYHASH_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
+                    ('STAGE1B_B.fd' ,  ''        , self.STAGE1B_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
+                    ]
+                ),
+                ('TOP_SWAP_A.bin', [
+                    ('ACM.bin'      ,  ''        , self.ACM_SIZE,      STITCH_OPS.MODE_FILE_NOP | acm_flag, STITCH_OPS.MODE_POS_TAIL),
+                    ('STAGE1A_A.fd'      , ''    , self.STAGE1A_SIZE,  STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
+                    ]
+                ),
+                ('TOP_SWAP_B.bin', [
+                    ('ACM.bin'      ,  ''        , self.ACM_SIZE,      STITCH_OPS.MODE_FILE_NOP | acm_flag, STITCH_OPS.MODE_POS_TAIL),
+                    ('STAGE1A_B.fd'      , ''    , self.STAGE1A_SIZE,  STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
+                    ]
+                ),
+            ])
+
+        img_list.extend ([
             ('SlimBootloader.bin', [
                 ('NON_VOLATILE.bin'  , '' , self.NON_VOLATILE_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_HEAD),
                 ('NON_REDUNDANT.bin' , '' , self.NON_REDUNDANT_SIZE, STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_HEAD),

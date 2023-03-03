@@ -1,7 +1,7 @@
 ## @file
 # Azure Pipeline build file for Slim Bootloader
 #
-# Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
@@ -92,6 +92,10 @@ jobs:
       IDV_X64_DEBUG:
         Build.Name:   "idv"
         Build.Arch:   "-a x64"
+        Build.Target: ""
+      ADLN_X86_DEBUG:
+        Build.Name:   "adln"
+        Build.Arch:   ""
         Build.Target: ""
 
   pool:
@@ -185,6 +189,14 @@ jobs:
         Build.Target: "-r"
       IDVH_X64_DEBUG:
         Build.Name:   "idvh"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      ADLN_X86_RELEASE:
+        Build.Name:   "adln"
+        Build.Arch:   ""
+        Build.Target: "-r"
+      ADLN_X64_DEBUG:
+        Build.Name:   "adln"
         Build.Arch:   "-a x64"
         Build.Target: ""
 
