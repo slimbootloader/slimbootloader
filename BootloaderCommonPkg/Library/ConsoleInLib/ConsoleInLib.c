@@ -1,7 +1,7 @@
 /** @file
 Implementation for console input library
 
-Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2023, Intel Corporation. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -78,6 +78,11 @@ ConsoleRead (
           Buffer += ReadCount;
           Count  += ReadCount;
         }
+      }
+      // If only serial enabled, and Source Debug enabled, return
+      // error here to prevent infinite loop and build error.
+      else if (PcdGet32 (PcdConsoleInDeviceMask) == ConsoleInSerialPort) {
+        return 0;
       }
     }
 
