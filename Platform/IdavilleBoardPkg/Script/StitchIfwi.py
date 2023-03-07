@@ -1,7 +1,7 @@
 ## @ StitchIfwi.py
 #  This is a python stitching script for Slim Bootloader IDV build
 #
-# Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved. <BR>
+# Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved. <BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -133,8 +133,9 @@ def stitch (stitch_dir, stitch_cfg_file, sbl_file, btg_profile, platform, tpm, p
         out_image = os.path.join(stitch_dir, 'Temp', 'Ifwi_igfw.bin')
 
         cmd = ['python', fitm_tool, '-b', '-i', updated_xml_file, '-s', updated_xml_file, '--layout',
-                    'bios=%s' % bios_region, 'irc=%s' % irc_region, 'nac=%s' % nac_region,
+                    'bios=%s' % bios_region, 'nac=%s' % nac_region,
                     '--params', 'me:input_file=%s' % me_region, 'mfs:mphy_table_internal=%s'% mphy_table,
+                    'irc:input_file=%s enable_regions:irc=1' % irc_region,
                     'layout:output_file=%s' % out_image, '--skip_access_check' ]
         run_process_wrapper (cmd)
 
