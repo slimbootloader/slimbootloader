@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2022, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2022 - 2023, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 #
@@ -14,12 +14,12 @@
   VERSION_STRING       = 1.0
 
 [Sources]
-  m_10_606c1_01000201.mcb
+  m_10_606c1_01000230.mcb
 
 [UserExtensions.SBL."CloneRepo"]
   REPO   = https://github.com/slimbootloader/firmwareblob.git
-  COMMIT = 29b708e48355d64d4014e81fddb2ad0c54d9c4c4
+  COMMIT = 4a0a88796107225028dacf154b153929a9db7cb2
 
 
 [UserExtensions.SBL."CopyList"]
-  Microcode/Idaville/m_10_606c1_01000201.pdb  : Silicon/IdavillePkg/Microcode/m_10_606c1_01000201.mcb
+  Microcode/Idaville/m_10_606c1_01000230.pdb  : Silicon/IdavillePkg/Microcode/m_10_606c1_01000230.mcb
