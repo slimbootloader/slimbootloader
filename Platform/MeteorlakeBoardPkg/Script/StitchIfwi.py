@@ -117,6 +117,31 @@ def replace_component (ifwi_src_path, flash_path, file_path, comp_alg, pri_key, 
     IFWI_PARSER.replace_component (ifwi_bin, comp_bin, flash_path)
     gen_file_from_object (ifwi_src_path, ifwi_bin)
 
+def patch_xml_file(stitch_dir, ifwi_src_path):
+    print ("Patching xml file .........")
+
+    TOP_SWAP_SIZE = {
+        0x00020000 : '64KB',
+        0x00040000 : '128KB',
+        0x00080000 : '512KB',
+        0x00100000 : '1MB',
+        0x00200000 : '2MB',
+        0x00400000 : '4MB',
+        0x00800000 : '8MB',
+    }
+
+    ifwi_bin = bytearray (get_file_data (ifwi_src_path))
+    ifwi = IFWI_PARSER.parse_ifwi_binary (ifwi_bin)
+    ts0_comp = IFWI_PARSER.locate_components (ifwi, 'IFWI/BIOS/TS0')
+    if len(ts0_comp) == 0:
+        raise Exception ("Could not locate component IFWI/BIOS/TS0!")
+
+    updated_xml_file = os.path.join (stitch_dir, 'Temp', 'updated.xml')
+    tree = ET.parse(updated_xml_file)
+    node = tree.find('./FlashSettings/BiosConfiguration/TopSwapOverride')
+    node.set('value', TOP_SWAP_SIZE[ts0_comp[0].length])
+    tree.write(updated_xml_file)
+
 def replace_components (ifwi_src_path, stitch_cfg_file, plt_params_list):
     print ("Replacing components.......")
     replace_list = stitch_cfg_file.get_component_replace_list (plt_params_list)
@@ -156,6 +181,8 @@ def stitch (stitch_dir, stitch_cfg_file, sbl_file, btg_profile, plt_params_list,
 
     # Generate xml
     gen_xml_file(stitch_dir, stitch_cfg_file, btg_profile, plt_params_list, platform, tpm)
+
+    patch_xml_file(stitch_dir, os.path.join(temp_dir, "SlimBootloader.bin"))
 
     if sign_bin_flag:
         update_btGuard_manifests(stitch_dir, stitch_cfg_file, btg_profile, tpm)

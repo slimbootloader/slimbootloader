@@ -45,6 +45,7 @@
   ConfigDataLib
   PchInfoLib
   PchP2sbLib
+  TcoTimerLib
 
 [Guids]
 

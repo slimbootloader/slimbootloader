@@ -77,6 +77,7 @@
 
 #define R_TCO_IO_TWDS                                0x0E
 #define R_TCO_IO_TMR                                 0x12
+#define B_TCO_IO_TMR                                 0xBFF
 
 #define TCO_BASE_ADDRESS                             0x400
 

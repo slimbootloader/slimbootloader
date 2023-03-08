@@ -33,6 +33,7 @@
 #include <Include/P2SbController.h>
 #include <Library/MtlSocGpioTopologyLib.h>
 #include <Library/GpioNativePads.h>
+#include <Library/TcoTimerLib.h>
 
 #define UCODE_REGION_BASE   FixedPcdGet32(PcdUcodeBase)
 #define UCODE_REGION_SIZE   FixedPcdGet32(PcdUcodeSize)
@@ -416,7 +417,10 @@ BoardInit (
 
   switch (InitPhase) {
   case PostTempRamInit:
-    DisableWatchDogTimer ();
+    // Initialize TCO timer in board-specific SG1A file
+    // as not to interfere with other boards' disable TCO
+    // timer functions which do the same thing
+    InitTcoTimer ();
     EarlyPlatformDataCheck ();
 
     DebugPort = GetDebugPort ();
