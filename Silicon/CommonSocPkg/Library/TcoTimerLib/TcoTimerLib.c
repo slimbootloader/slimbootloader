@@ -72,7 +72,9 @@ StartTcoTimer (
   IN UINT16 Timeout
   )
 {
+
   // Set the TCO timeout
+  IoAnd16 (TCO_BASE_ADDRESS + R_TCO_IO_TMR, (UINT16)~B_TCO_IO_TMR);
   IoOr16 (TCO_BASE_ADDRESS + R_TCO_IO_TMR, Timeout);
 
   // Reload the TCO timer with the timeout
@@ -106,5 +108,6 @@ ClearTcoStatus (
   VOID
   )
 {
+  IoOr16 (TCO_BASE_ADDRESS + R_TCO_IO_TCO1_STS, B_TCO_IO_TCO1_STS_TIMEOUT);
   IoOr16 (TCO_BASE_ADDRESS + R_TCO_IO_TCO2_STS, B_TCO_IO_TCO2_STS_SECOND_TO);
 }

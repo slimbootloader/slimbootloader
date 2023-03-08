@@ -284,7 +284,9 @@ FwuTopSwapSetting (
   @retval  others                There is error happening.
 **/
 BOOLEAN
-IsFirmwareUpdate ()
+IsFirmwareUpdate (
+  VOID
+)
 {
   //
   // Check if state machine is set to capsule processing mode.
@@ -296,7 +298,15 @@ IsFirmwareUpdate ()
   //
   // Check if platform firmware update trigger is set.
   //
-  if (IoRead32 (ACPI_BASE_ADDRESS + R_ACPI_IO_OC_WDT_CTL) & BIT16) {
+  if (IsUpdateTriggered ()) {
+    return TRUE;
+  }
+
+  //
+  // Check if we need to recover a failing partition.
+  //
+  if (PcdGetBool (PcdSblResiliencyEnabled) &&
+      IsRecoveryTriggered ()) {
     return TRUE;
   }
 
