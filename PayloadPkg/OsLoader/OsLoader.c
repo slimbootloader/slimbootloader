@@ -991,9 +991,7 @@ ParseBootImages (
 
     DEBUG ((DEBUG_INFO, "ParseBootImage ImageType-%d\n", Type));
     if ((LoadedImage->Flags & LOADED_IMAGE_CONTAINER) != 0) {
-      if (FeaturePcdGet (PcdContainerBootEnabled)) {
-        Status = ParseContainerImage (OsBootOption, LoadedImage);
-      }
+      Status = ParseContainerImage (OsBootOption, LoadedImage);
     } else if ((LoadedImage->Flags & LOADED_IMAGE_COMPONENT) != 0) {
       Status = ParseComponentImage (OsBootOption, LoadedImage);
     } else if ((LoadedImage->Flags & LOADED_IMAGE_LINUX) != 0) {

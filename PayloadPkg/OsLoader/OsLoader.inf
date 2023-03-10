@@ -112,7 +112,6 @@
   gPlatformCommonLibTokenSpaceGuid.PcdFrameBufferMaxConsoleWidth
   gPlatformCommonLibTokenSpaceGuid.PcdFrameBufferMaxConsoleHeight
   gPayloadTokenSpaceGuid.PcdGrubBootCfgEnabled
-  gPlatformCommonLibTokenSpaceGuid.PcdContainerBootEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootHashMask
   gPayloadTokenSpaceGuid.PcdRtcmRsvdSize
 

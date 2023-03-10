@@ -315,7 +315,6 @@
   gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled     | FALSE      | BOOLEAN | 0x20000210
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled     | FALSE      | BOOLEAN | 0x20000211
   gPlatformCommonLibTokenSpaceGuid.PcdSourceDebugEnabled      | FALSE      | BOOLEAN | 0x20000212
-  gPlatformCommonLibTokenSpaceGuid.PcdContainerBootEnabled    | FALSE      | BOOLEAN | 0x20000213
   gPlatformCommonLibTokenSpaceGuid.PcdEmmcHs400SupportEnabled | TRUE       | BOOLEAN | 0x20000214
   # This PCD will force to initialize SerialPort regardless of its initialized state
   gPlatformCommonLibTokenSpaceGuid.PcdForceToInitSerialPort   | FALSE      | BOOLEAN | 0x20000216
