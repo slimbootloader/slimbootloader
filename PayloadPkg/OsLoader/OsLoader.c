@@ -978,7 +978,7 @@ ParseBootImages (
   EFI_STATUS           Status;
   UINT8                Type;
 
-  Status = EFI_SUCCESS;
+  Status = EFI_UNSUPPORTED;
   for (Type = 0; Type < LoadImageTypeMax; Type++) {
     if (Type == LoadImageTypeMisc) {
       continue;
@@ -996,6 +996,8 @@ ParseBootImages (
       }
     } else if ((LoadedImage->Flags & LOADED_IMAGE_COMPONENT) != 0) {
       Status = ParseComponentImage (OsBootOption, LoadedImage);
+    } else if ((LoadedImage->Flags & LOADED_IMAGE_LINUX) != 0) {
+      Status = EFI_SUCCESS;
     }
 
     if (EFI_ERROR (Status)) {
