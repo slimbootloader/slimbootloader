@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -31,6 +31,54 @@ GetFspNvsDataBuffer (
   )
 {
   return GetGuidHobData (HobListPtr, Length, &gFspNonVolatileStorageHobGuid);
+}
+
+/**
+  Find an FSP resource descriptor large enough to accomodate
+  requested length.
+
+  @param  HobListPtr   A HOB list pointer.
+  @param  Length       A pointer to the requested length. If suitable
+                       descriptor is found, length will be updated with
+                       resource length.
+  @retval              Reserved region start address.  0 if this region does not exist.
+ */
+UINT64
+GetFspAvailableSystemMem(
+  CONST VOID     *HobListPtr,
+  UINT64         *Length
+)
+{
+  EFI_PEI_HOB_POINTERS    Hob;
+
+  /*
+   * Get the HOB list for processing
+   */
+  Hob.Raw = (VOID *)HobListPtr;
+
+  /*
+   * Collect memory ranges
+   */
+  while (!END_OF_HOB_LIST (Hob)) {
+    if (Hob.Header->HobType == EFI_HOB_TYPE_RESOURCE_DESCRIPTOR) {
+      if (Hob.ResourceDescriptor->ResourceType == EFI_RESOURCE_SYSTEM_MEMORY) {
+        if (Hob.ResourceDescriptor->ResourceLength >= *Length) {
+          // make sure this is descriptor is below 4GB
+          if (!IS_X64) {
+            if ((Hob.ResourceDescriptor->PhysicalStart +
+              Hob.ResourceDescriptor->ResourceLength) >= BASE_4GB) {
+              Hob.Raw = GET_NEXT_HOB (Hob);
+              continue;
+            }
+          }
+          *Length = (UINT32) (Hob.ResourceDescriptor->ResourceLength);
+          return (UINT64) (Hob.ResourceDescriptor->PhysicalStart);
+        }
+      }
+    }
+    Hob.Raw = GET_NEXT_HOB (Hob);
+  }
+  return 0;
 }
 
 /**

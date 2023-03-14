@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2016, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -26,6 +26,22 @@ EFIAPI
 GetFspNvsDataBuffer (
   CONST VOID             *HobListPtr,
   UINT32                 *Length
+  );
+
+/**
+  Find an FSP resource descriptor large enough to accomodate
+  requested length.
+
+  @param  HobListPtr   A HOB list pointer.
+  @param  Length       A pointer to the requested length. If suitable
+                       descriptor is found, length will be updated with
+                       resource length.
+  @retval              Reserved region start address.  0 if this region does not exist.
+ */
+UINT64
+GetFspAvailableSystemMem(
+  CONST VOID     *HobListPtr,
+  UINT64         *Length
   );
 
 /**

@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2016 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2016 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -327,6 +327,8 @@ SecStartup2 (
   LOADER_GLOBAL_DATA       *OldLdrGlobal;
   UINT32                    FspReservedMemBase;
   UINT64                    FspReservedMemSize;
+  UINT32                    FspAvailableMemBase;
+  UINT64                    FspAvailableMemSize;
   STAGE1B_PARAM             Stage1bParam;
   STAGE1B_PARAM            *Stage1bParamInMem;
   UINT32                    StackTop;
@@ -433,6 +435,15 @@ SecStartup2 (
     StartTcoTimer (PcdGet16 (PcdTcoTimeout));
   }
 
+  FspAvailableMemSize = PcdGet32 (PcdLoaderReservedMemSize) +
+                        PcdGet32 (PcdLoaderAcpiNvsSize) +
+                        PcdGet32 (PcdLoaderAcpiReclaimSize) +
+                        PcdGet32 (PcdPayloadReservedMemSize);
+  FspAvailableMemBase = (UINT32)GetFspAvailableSystemMem (
+                          HobList,
+                          &FspAvailableMemSize);
+  ASSERT (FspAvailableMemBase > 0);
+
   FspReservedMemBase = (UINT32)GetFspReservedMemoryFromGuid (
                          HobList,
                          &FspReservedMemSize,
@@ -442,8 +453,8 @@ SecStartup2 (
 
   // Prepare Global Data structure
   OldLdrGlobal   = LdrGlobal;
-  MemPoolStart   = FspReservedMemBase - PcdGet32 (PcdLoaderReservedMemSize);
-  MemPoolEnd     = FspReservedMemBase - PcdGet32 (PcdLoaderHobStackSize);
+  MemPoolStart   = (UINT32)(FspAvailableMemBase + FspAvailableMemSize) - PcdGet32 (PcdLoaderReservedMemSize);
+  MemPoolEnd     = (UINT32)(FspAvailableMemBase + FspAvailableMemSize) - PcdGet32 (PcdLoaderHobStackSize);
   MemPoolCurrTop = ALIGN_DOWN (MemPoolEnd - sizeof (LOADER_GLOBAL_DATA), 0x10);
   LdrGlobal      = (LOADER_GLOBAL_DATA *)(UINTN)MemPoolCurrTop;
   MemPoolCurrTop = ALIGN_DOWN (MemPoolCurrTop - sizeof (STAGE_IDT_TABLE), 0x10);
@@ -458,7 +469,7 @@ SecStartup2 (
 
   LdrGlobal->FspHobList        = HobList;
   LdrGlobal->LdrHobList        = NULL;
-  LdrGlobal->StackTop          = FspReservedMemBase;
+  LdrGlobal->StackTop          = (UINT32)(FspAvailableMemBase + FspAvailableMemSize);
   LdrGlobal->MemPoolEnd        = MemPoolEnd;
   LdrGlobal->MemPoolStart      = MemPoolStart;
   LdrGlobal->MemPoolCurrTop    = MemPoolCurrTop;
