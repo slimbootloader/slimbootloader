@@ -439,7 +439,7 @@ SecStartup2 (
                         PcdGet32 (PcdLoaderAcpiNvsSize) +
                         PcdGet32 (PcdLoaderAcpiReclaimSize) +
                         PcdGet32 (PcdPayloadReservedMemSize);
-  FspAvailableMemBase = (UINT32)GetFspAvailableSystemMem (
+  FspAvailableMemBase = (UINT32)GetFspHighestAvailableSystemMem (
                           HobList,
                           &FspAvailableMemSize);
   ASSERT (FspAvailableMemBase > 0);

@@ -39,7 +39,7 @@ GetFspNvsDataBuffer (
   @retval              Reserved region start address.  0 if this region does not exist.
  */
 UINT64
-GetFspAvailableSystemMem(
+GetFspHighestAvailableSystemMem(
   CONST VOID     *HobListPtr,
   UINT64         *Length
   );

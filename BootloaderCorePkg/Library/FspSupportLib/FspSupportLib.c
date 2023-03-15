@@ -44,13 +44,15 @@ GetFspNvsDataBuffer (
   @retval              Reserved region start address.  0 if this region does not exist.
  */
 UINT64
-GetFspAvailableSystemMem(
+GetFspHighestAvailableSystemMem(
   CONST VOID     *HobListPtr,
   UINT64         *Length
 )
 {
   EFI_PEI_HOB_POINTERS    Hob;
+  UINT64                  FoundBase;
 
+  FoundBase = 0;
   /*
    * Get the HOB list for processing
    */
@@ -59,26 +61,26 @@ GetFspAvailableSystemMem(
   /*
    * Collect memory ranges
    */
-  while (!END_OF_HOB_LIST (Hob)) {
+  while ((Hob.Raw != NULL) && !END_OF_HOB_LIST (Hob)) {
     if (Hob.Header->HobType == EFI_HOB_TYPE_RESOURCE_DESCRIPTOR) {
       if (Hob.ResourceDescriptor->ResourceType == EFI_RESOURCE_SYSTEM_MEMORY) {
         if (Hob.ResourceDescriptor->ResourceLength >= *Length) {
           // make sure this is descriptor is below 4GB
-          if (!IS_X64) {
-            if ((Hob.ResourceDescriptor->PhysicalStart +
-              Hob.ResourceDescriptor->ResourceLength) >= BASE_4GB) {
-              Hob.Raw = GET_NEXT_HOB (Hob);
-              continue;
+          if ((Hob.ResourceDescriptor->PhysicalStart +
+            Hob.ResourceDescriptor->ResourceLength) >= BASE_4GB) {
+            Hob.Raw = GET_NEXT_HOB (Hob);
+            continue;
             }
+          if (Hob.ResourceDescriptor->PhysicalStart > FoundBase) {
+            *Length = (UINT32) (Hob.ResourceDescriptor->ResourceLength);
+            FoundBase = (UINT64) (Hob.ResourceDescriptor->PhysicalStart);
           }
-          *Length = (UINT32) (Hob.ResourceDescriptor->ResourceLength);
-          return (UINT64) (Hob.ResourceDescriptor->PhysicalStart);
         }
       }
     }
     Hob.Raw = GET_NEXT_HOB (Hob);
   }
-  return 0;
+  return FoundBase;
 }
 
 /**
