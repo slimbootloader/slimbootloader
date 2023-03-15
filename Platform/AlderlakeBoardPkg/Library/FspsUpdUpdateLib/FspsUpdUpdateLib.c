@@ -800,10 +800,6 @@ UpdateFspConfig (
 
   // PCH Flash protection
   FspsConfig->PchPwrOptEnable             = 0x1;
-  FspsConfig->PchWriteProtectionEnable[0] = 0x0;
-  FspsConfig->PchWriteProtectionEnable[1] = 0x0;
-  FspsConfig->PchProtectedRangeLimit[0]   = 0x1fff;
-  FspsConfig->PchProtectedRangeBase[0]    = 0x1070;
 
   // MISC
   FspsConfig->PchFivrExtV1p05RailVoltage = 0x1a4;
