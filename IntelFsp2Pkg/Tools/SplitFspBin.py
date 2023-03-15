@@ -1,6 +1,6 @@
 ## @ SplitFspBin.py
 #
-# Copyright (c) 2015 - 2021, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2015 - 2023, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -125,7 +125,8 @@ class FSP_INFORMATION_HEADER(Structure):
         ('FspSiliconInitEntryOffset',      c_uint32),
         ('FspMultiPhaseSiInitEntryOffset', c_uint32),
         ('ExtendedImageRevision',          c_uint16),
-        ('Reserved4',                      c_uint16)
+        ('Reserved4',                      c_uint16),
+        ('FspMultiPhaseMemoryInitEntryOffset', c_uint32)
     ]
 
 class FSP_PATCH_TABLE(Structure):

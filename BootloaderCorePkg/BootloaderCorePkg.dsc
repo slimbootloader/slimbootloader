@@ -1,7 +1,7 @@
 ## @file
 # Provides driver and definitions to build bootloader.
 #
-# Copyright (c) 2016 - 2022, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2016 - 2023, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -58,6 +58,7 @@
   DecompressLib|BootloaderCommonPkg/Library/DecompressLib/DecompressLib.inf
   RleCompressLib|BootloaderCommonPkg/Library/RleCompressLib/RleCompressLib.inf
   FspSupportLib|BootloaderCorePkg/Library/FspSupportLib/FspSupportLib.inf
+  FspVariableServicesLib|BootloaderCorePkg/Library/FspVariableServicesLib/FspVariableServicesLib.inf
   BootloaderLib|BootloaderCorePkg/Library/BootloaderLib/BootloaderLib.inf
   BootloaderCoreLib|BootloaderCorePkg/Library/BootloaderCoreLib/BootloaderCoreLib.inf
   PciEnumerationLib|BootloaderCorePkg/Library/PciEnumerationLib/PciEnumerationLib.inf

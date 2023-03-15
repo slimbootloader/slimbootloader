@@ -1,7 +1,7 @@
 /** @file
 Lite variable service library
 
-Copyright (c) 2006 - 2016, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2006 - 2023, Intel Corporation. All rights reserved.<BR>
 Portions copyright (c) 2008 - 2009, Apple Inc. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
@@ -1020,4 +1020,55 @@ VariableConstructor (
 
   Status = RegisterService ((VOID *)&mVariableService);
   return Status;
+}
+
+
+/**
+  Get details on Variable Storage space
+
+  @param     MaxStorageSize        Total Storage region size
+  @param     RemainingStorageSize  Remaining Space available (includes reclaimable space)
+  @param     MaxVariableSize       Max size of a variable that can be stored
+  @retval    EFI_SUCCESS           Output values were returned successfully
+  @retval    EFI_INVALID_PARAMETER Output pointers passed in are invalid
+  @retval    EFI_VOLUME_CORRUPTED  Variable store is corrupted
+ */
+EFI_STATUS
+EFIAPI
+QueryVariableInfo(
+  OUT UINTN *MaxStorageSize,
+  OUT UINTN *RemainingStorageSize,
+  OUT UINTN *MaxVariableSize
+)
+{
+  VARIABLE_STORE_HEADER   *VarStoreHdrPtr;
+  VARIABLE_HEADER         *VarHdrPtr;
+  UINT8                   *VarEndPtr;
+  UINTN                   DeletedSpace=0;
+
+  if (MaxStorageSize == NULL || RemainingStorageSize == NULL || MaxVariableSize == NULL)
+    return EFI_INVALID_PARAMETER;
+
+  VarStoreHdrPtr = GetActiveVaraibelStoreBase (NULL);
+  DEBUG((DEBUG_INFO, "VarStoreHdrPtr 0x%X\n", VarStoreHdrPtr));
+  if (!IsVariableStoreValid (VarStoreHdrPtr)) {
+    return EFI_VOLUME_CORRUPTED;
+  }
+
+  VarEndPtr = (UINT8 *)VarStoreHdrPtr + VarStoreHdrPtr->Size;
+  // Loop through Variable entries looking for deleted vars and last entry
+  for (VarHdrPtr = (VARIABLE_HEADER *)&VarStoreHdrPtr[1];
+    IS_HEADER_VALID(VarHdrPtr->State);
+    VarHdrPtr = (VARIABLE_HEADER *) ((UINT8 *)&VarHdrPtr[1] + VarHdrPtr->DataSize))
+  {
+    if (IS_DELETED(VarHdrPtr->State))
+      DeletedSpace += VarHdrPtr->DataSize + sizeof(VARIABLE_HEADER);
+  }
+  DEBUG((DEBUG_VERBOSE, "VarHdrPtr: 0x%X, VarEndPtr: 0x%X\n", VarHdrPtr, VarEndPtr));
+  *RemainingStorageSize = (UINTN)(VarEndPtr - (UINT8*)VarHdrPtr) + DeletedSpace;
+  *MaxStorageSize = VarStoreHdrPtr->Size - sizeof(VARIABLE_STORE_HEADER);
+  *MaxVariableSize = *MaxStorageSize - sizeof(VARIABLE_HEADER);
+  // VARIABLE_HEADER DataSize is limited to UINT16
+  if (*MaxVariableSize > MAX_UINT16) *MaxVariableSize = MAX_UINT16;
+  return EFI_SUCCESS;
 }

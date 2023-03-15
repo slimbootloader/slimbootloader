@@ -1,7 +1,7 @@
 /** @file
   Lite variable service library
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -123,5 +123,23 @@ VariableConstructor (
   IN  UINT32    Base,
   IN  UINT32    Size
   );
+
+/**
+ Get details on Variable Storage space
+
+ @param     MaxStorageSize        Total Storage region size
+ @param     RemainingStorageSize  Remaining Space available (includes reclaimable space)
+ @param     MaxVariableSize       Max size of a variable that can be stored
+ @retval    EFI_SUCCESS           Output values were returned successfully
+ @retval    EFI_INVALID_PARAMETER Output pointers passed in are invalid
+ @retval    EFI_VOLUME_CORRUPTED  Variable store is corrupted
+ */
+EFI_STATUS
+EFIAPI
+QueryVariableInfo(
+  OUT UINTN     *MaxStorageSize,
+  OUT UINTN     *RemainingStorageSize,
+  OUT UINTN     *MaxVariableSize
+);
 
 #endif
