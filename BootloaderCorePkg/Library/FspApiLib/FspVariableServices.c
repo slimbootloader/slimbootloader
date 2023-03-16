@@ -28,6 +28,8 @@ FspVariableHandler(
   FSP_MULTI_PHASE_PARAMS                        MultiPhaseInitParams;
   FSP_MULTI_PHASE_VARIABLE_REQUEST_INFO_PARAMS  *FspVarReqParams;
 
+  Status = EFI_SUCCESS;
+
   while (FspStatus == FSP_STATUS_VARIABLE_REQUEST)
   {
     DEBUG((DEBUG_VERBOSE, "FspVariableHandler: Got FSP_STATUS_VARIABLE_REQUEST\n"));
