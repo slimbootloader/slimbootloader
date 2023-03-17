@@ -97,9 +97,6 @@ MEMORY_CFG_DATA.PrmrrSize                  | 0x200000
 # This setting is used for debug purposes
 #MEMORY_CFG_DATA.PlatformDebugConsent       | 0x7
 
-# Increase the size to 64MB in order to get rid of an error during Tcc init flow in FSP
-MEMORY_CFG_DATA.PlatformMemorySize | 0x4000000
-
 GRAPHICS_CFG_DATA.InternalGfx              | 0x2
 
 GEN_CFG_DATA.VbtImageId                    | 1

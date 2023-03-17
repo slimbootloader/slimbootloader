@@ -2,7 +2,7 @@
 #
 #  Slim Bootloader CFGDATA Option File.
 #
-#  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -257,12 +257,12 @@
       length       : 0x01
       value        : 0x01
   - PlatformMemorySize :
-      name         : Platform Reserved Memory Size
+      name         : Minimum Platform Memory Size
       type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFF)
       help         : >
                      The minimum platform memory size required to pass control to post-memory init
       length       : 0x08
-      value        : 0x400000
+      value        : 0x4000000
   - CpuRatio     :
       name         : CPU ratio value
       type         : EditNum, HEX, (0x00, 0x3F)

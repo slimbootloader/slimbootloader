@@ -70,9 +70,6 @@ MEMORY_CFG_DATA.PchHdaAudioLinkHdaEnable   | 0x1
 MEMORY_CFG_DATA.PchHdaDspEnable            | 0x1
 MEMORY_CFG_DATA.WdtDisableAndLock | 0
 
-# Increase the size to 64MB in order to get rid of an error during Tcc init flow in FSP
-MEMORY_CFG_DATA.PlatformMemorySize | 0x4000000
-
 GRAPHICS_CFG_DATA.InternalGfx              | 0x2
 
 GEN_CFG_DATA.VbtImageId                    | 1
