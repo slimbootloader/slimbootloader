@@ -254,6 +254,11 @@ Tpm2GetCapabilitySupportedAndActivePcrs (
           *ActivePcrBanks |= HASH_ALG_SM3_256;
         }
         break;
+
+      default:
+        DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - Unsupported bank 0x%04x.\n", Pcrs.pcrSelections[Index].hash));
+        continue;
+        break;
       }
     }
   }
