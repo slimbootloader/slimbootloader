@@ -822,7 +822,7 @@ TpmExtendSecureBootPolicy (
 
   Data = FeaturePcdGet (PcdVerifiedBootEnabled);
 
-  Status = TpmHashAndExtendPcrEventLog (7, &Data, sizeof (Data), EV_EFI_VARIABLE_DRIVER_CONFIG, sizeof ("SecureBootPolicy"), (UINT8*)"SecureBootPolicy");
+  Status = TpmHashAndExtendPcrEventLog (7, &Data, sizeof (Data), EV_PLATFORM_CONFIG_FLAGS, sizeof ("SecureBootPolicy"), (UINT8*)"SecureBootPolicy");
 
   return Status;
 }
