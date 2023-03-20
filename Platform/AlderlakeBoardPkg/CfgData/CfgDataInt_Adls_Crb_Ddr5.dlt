@@ -2,7 +2,7 @@
 #
 #  Platform Configuration Delta File.
 #
-#  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2021 - 2023, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 #
@@ -51,9 +51,6 @@ MEMORY_CFG_DATA.TcssDma1En | 0x1
 MEMORY_CFG_DATA.PchHdaAudioLinkHdaEnable   | 0x1
 MEMORY_CFG_DATA.PchHdaAudioLinkDmicEnable  | {0x1, 0x1}
 MEMORY_CFG_DATA.PchHdaDspEnable            | 0x1
-
-# Increase the size to 64MB in order to get rid of an error during Tcc init flow in FSP
-MEMORY_CFG_DATA.PlatformMemorySize | 0x4000000
 
 PLDSEL_CFG_DATA.PldSelGpio.Enable      | 1
 PLDSEL_CFG_DATA.PldSelGpio.PadGroup    | 5
