@@ -713,10 +713,10 @@ ContinueFunc (
           CfgDataBlob = LdrGlobal->CfgDataPtr;
           CfgDataFwBlob.BlobBase = (UINT64)(UINTN)CfgDataBlob;
           CfgDataFwBlob.BlobLength = CfgDataBlob->UsedLength;
-          TpmExtendPcrAndLogEvent (0,
+          TpmExtendPcrAndLogEvent (1,
                     MbTmpAlgHash,
                     Stage1bParam->ConfigDataHash,
-                    EV_EFI_PLATFORM_FIRMWARE_BLOB,
+                    EV_PLATFORM_CONFIG_FLAGS,
                     sizeof(CfgDataFwBlob),
                     (UINT8 *)&CfgDataFwBlob);
         }
