@@ -2,7 +2,7 @@
 #
 #  Slim Bootloader CFGDATA Option File.
 #
-#  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -188,6 +188,7 @@
       value        : 0x0
   - MrcSafeConfig :
       name         : MRC Safe Config
+      type         : Combo
       option       : $EN_DIS
       help         : >
                      Enables/Disable MRC Safe Config
