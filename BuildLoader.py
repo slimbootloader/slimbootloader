@@ -1399,19 +1399,21 @@ class Build(object):
         # create redundant components
         self.create_redundant_components ()
 
+        # create FlashMap.txt
+        flash_map_text = ''
+        if len(self._comp_list) > 0:
+            print_addr = False if getattr(self._board, "GetFlashMapList", None) else True
+            flash_map_text = decode_flash_map (os.path.join(self._fv_dir, 'FlashMap.bin'), print_addr)
+            fd = open (os.path.join(self._fv_dir, 'FlashMap.txt'), 'w')
+            fd.write (flash_map_text)
+            fd.close ()
 
         # stitch all components
         layout_name = 'ImgStitch.txt'
         self.create_bootloader_image (layout_name)
 
         # print flash map
-        if len(self._comp_list) > 0:
-            print_addr = False if getattr(self._board, "GetFlashMapList", None) else True
-            flash_map_text = decode_flash_map (os.path.join(self._fv_dir, 'FlashMap.bin'), print_addr)
-            print('%s' % flash_map_text)
-            fd = open (os.path.join(self._fv_dir, 'FlashMap.txt'), 'w')
-            fd.write (flash_map_text)
-            fd.close ()
+        print('%s' % flash_map_text)
 
 
 def main():
