@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017-2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -11,6 +11,7 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/FspSupportLib.h>
 #include <Library/BootloaderCoreLib.h>
+#include <Guid/FspNonVolatileStorageHob2.h>
 #include <Guid/GuidHobFspEas.h>
 
 /**
@@ -30,7 +31,45 @@ GetFspNvsDataBuffer (
   UINT32           *Length
   )
 {
-  return GetGuidHobData (HobListPtr, Length, &gFspNonVolatileStorageHobGuid);
+  VOID       *HobData;
+
+  HobData = GetGuidHobData (HobListPtr, Length, &gFspNonVolatileStorageHobGuid);
+  if (HobData == NULL){
+    return GetFspNvsData2Buffer(HobListPtr, Length);
+  }
+  return HobData;
+}
+
+/**
+  This function retrieves FSP Non-volatile Storage HOB 2 buffer and size.
+
+  @param  HobListPtr   A HOB list pointer.
+  @param  Length       A pointer to the NVS data buffer length.  If the FSP NVS
+                       HOB is located, the length will be updated.
+  @retval NULL         Failed to find the NVS HOB.
+  @retval others       FSP NVS data buffer pointer.
+
+**/
+VOID *
+EFIAPI
+GetFspNvsData2Buffer (
+  CONST VOID       *HobListPtr,
+  UINT32           *Length
+  )
+{
+  UINT8                  *GuidHob;
+
+  if (HobListPtr == NULL) {
+    return NULL;
+  }
+  GuidHob = GetNextGuidHob (&gFspNonVolatileStorageHob2Guid, HobListPtr);
+  if (GuidHob != NULL) {
+    if (Length != NULL) {
+      *Length = (UINT32) ((FSP_NON_VOLATILE_STORAGE_HOB2 *) (UINTN) GuidHob)->NvsDataLength;
+    }
+    return (VOID *) (UINTN) ((FSP_NON_VOLATILE_STORAGE_HOB2 *) (UINTN) GuidHob)->NvsDataPtr;
+  }
+  return NULL;
 }
 
 /**
