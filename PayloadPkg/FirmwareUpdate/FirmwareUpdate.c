@@ -1,7 +1,7 @@
 /** @file
 This driver is to update firmware in boot media.
 
-Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -747,7 +747,7 @@ AuthenticateCapsule (
   }
 
   if (Header->ImageOffset >= FwSize || Header->ImageOffset + Header->ImageSize >= FwSize) {
-    DEBUG ((DEBUG_ERROR, "Invalid capsule: ImageOffset=0x%x, ImageOffset=0x%x\n", Header->ImageOffset, Header->ImageOffset));
+    DEBUG ((DEBUG_ERROR, "Invalid capsule: ImageOffset=0x%x, ImageSize=0x%x\n", Header->ImageOffset, Header->ImageSize));
     return EFI_INVALID_PARAMETER;
   }
 
@@ -1281,7 +1281,8 @@ ApplyFwImage (
   }
 
   Signature = (UINT32)ImageHdr->UpdateHardwareInstance;
-  DEBUG((DEBUG_INFO, "ApplyFwImage: %04X:%04X\n", Signature, (UINT32)RShiftU64 (Signature, 32)));
+  DEBUG((DEBUG_INFO, "ApplyFwImage: %04X:%04X\n",
+        (UINT32)ImageHdr->UpdateHardwareInstance, (UINT32)RShiftU64 (ImageHdr->UpdateHardwareInstance, 32)));
 
   switch (Signature) {
   case FW_UPDATE_COMP_BIOS_REGION:
@@ -1407,9 +1408,13 @@ InitFirmwareUpdate (
   //
   if (!EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "CapsuleImage: 0x%p, CapsuleSize: 0x%X\n", CapsuleImage, CapsuleSize));
-    Status = AuthenticateCapsule (CapsuleImage, CapsuleSize);
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "AuthenticateCapsule, Status = 0x%x\n", Status));
+    if (FeaturePcdGet (PcdVerifiedBootEnabled)) {
+      Status = AuthenticateCapsule (CapsuleImage, CapsuleSize);
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "AuthenticateCapsule, Status = 0x%x\n", Status));
+      }
+    } else {
+      DEBUG ((DEBUG_INFO, "Verified Boot is not enabled. The capsule image is not authenticated\n"));
     }
   }
 
