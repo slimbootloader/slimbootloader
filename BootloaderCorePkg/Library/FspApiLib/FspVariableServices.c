@@ -19,6 +19,7 @@
   @retval Status
  */
 EFI_STATUS
+EFIAPI
 FspVariableHandler(
   EFI_STATUS                FspStatus,
   FSP_MULTI_PHASE_FUNCTION  MultiPhaseFunction
@@ -35,6 +36,7 @@ FspVariableHandler(
     DEBUG((DEBUG_VERBOSE, "FspVariableHandler: Got FSP_STATUS_VARIABLE_REQUEST\n"));
     // Request details of variable request from Multi-phase API.
     MultiPhaseInitParams.MultiPhaseAction = EnumMultiPhaseGetVariableRequestInfo;
+    MultiPhaseInitParams.PhaseIndex = 0;
     Status = MultiPhaseFunction(&MultiPhaseInitParams);
     ASSERT_EFI_ERROR(Status);
     if (EFI_ERROR(Status)) break;

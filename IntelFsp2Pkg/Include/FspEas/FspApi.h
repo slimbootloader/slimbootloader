@@ -443,8 +443,8 @@ typedef enum {
 
 typedef enum {
  EnumFspVariableRequestGetVariable          = 0x0,
- EnumFspVariableRequestSetVariable          = 0x1,
- EnumFspVariableRequestGetNextVariableName  = 0x2,
+ EnumFspVariableRequestGetNextVariableName  = 0x1,
+ EnumFspVariableRequestSetVariable          = 0x2,
  EnumFspVariableRequestQueryVariableInfo    = 0x3
 } FSP_VARIABLE_REQUEST_TYPE;
 

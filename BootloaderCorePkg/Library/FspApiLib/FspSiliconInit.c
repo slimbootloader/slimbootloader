@@ -73,6 +73,7 @@ CallFspSiliconInit (
  * @return EFI_STATUS
  */
 EFI_STATUS
+EFIAPI
 FspMultiPhaseSiliconInitHandler(VOID)
 {
   EFI_STATUS                                  Status;

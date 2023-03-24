@@ -424,7 +424,7 @@ SecStartup2 (
   FspResetHandler (Status);
   ASSERT_EFI_ERROR (Status);
 
-  Status = FspVariableHandler(Status,CallFspMultiPhaseMemoryInit);
+  Status = FspVariableHandler(Status, CallFspMultiPhaseMemoryInit);
   ASSERT_EFI_ERROR(Status);
 
   Status = FspMultiPhaseMemInitHandler();

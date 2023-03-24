@@ -1029,6 +1029,7 @@ VariableConstructor (
   @param     MaxStorageSize        Total Storage region size
   @param     RemainingStorageSize  Remaining Space available (includes reclaimable space)
   @param     MaxVariableSize       Max size of a variable that can be stored
+
   @retval    EFI_SUCCESS           Output values were returned successfully
   @retval    EFI_INVALID_PARAMETER Output pointers passed in are invalid
   @retval    EFI_VOLUME_CORRUPTED  Variable store is corrupted
@@ -1059,10 +1060,10 @@ QueryVariableInfo(
   // Loop through Variable entries looking for deleted vars and last entry
   for (VarHdrPtr = (VARIABLE_HEADER *)&VarStoreHdrPtr[1];
     IS_HEADER_VALID(VarHdrPtr->State);
-    VarHdrPtr = (VARIABLE_HEADER *) ((UINT8 *)&VarHdrPtr[1] + VarHdrPtr->DataSize))
-  {
-    if (IS_DELETED(VarHdrPtr->State))
+    VarHdrPtr = (VARIABLE_HEADER *) ((UINT8 *)&VarHdrPtr[1] + VarHdrPtr->DataSize)) {
+    if (IS_DELETED(VarHdrPtr->State)) {
       DeletedSpace += VarHdrPtr->DataSize + sizeof(VARIABLE_HEADER);
+    }
   }
   DEBUG((DEBUG_VERBOSE, "VarHdrPtr: 0x%X, VarEndPtr: 0x%X\n", VarHdrPtr, VarEndPtr));
   *RemainingStorageSize = (UINTN)(VarEndPtr - (UINT8*)VarHdrPtr) + DeletedSpace;

@@ -122,6 +122,7 @@ CallFspMemoryInit (
  * @return EFI_STATUS
  */
 EFI_STATUS
+EFIAPI
 FspMultiPhaseMemInitHandler(VOID)
 {
   EFI_STATUS                                  Status;

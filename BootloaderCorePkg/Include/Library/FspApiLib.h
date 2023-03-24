@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2016 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -197,6 +197,7 @@ RebaseFspComponent (
   @retval Status
  */
 EFI_STATUS
+EFIAPI
 FspVariableHandler(
   EFI_STATUS                FspStatus,
   FSP_MULTI_PHASE_FUNCTION  MultiPhaseFunction
@@ -209,6 +210,7 @@ FspVariableHandler(
  * @return EFI_STATUS
  */
 EFI_STATUS
+EFIAPI
 FspMultiPhaseMemInitHandler(VOID);
 
 /**
@@ -218,6 +220,7 @@ FspMultiPhaseMemInitHandler(VOID);
  * @return EFI_STATUS
  */
 EFI_STATUS
+EFIAPI
 FspMultiPhaseSiliconInitHandler(VOID);
 
 /**
