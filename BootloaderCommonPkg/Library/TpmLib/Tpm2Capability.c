@@ -257,7 +257,6 @@ Tpm2GetCapabilitySupportedAndActivePcrs (
 
       default:
         DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - Unsupported bank 0x%04x.\n", Pcrs.pcrSelections[Index].hash));
-        continue;
         break;
       }
     }
