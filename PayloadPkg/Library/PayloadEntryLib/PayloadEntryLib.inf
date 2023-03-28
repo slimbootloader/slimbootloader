@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -26,7 +26,6 @@
   MdePkg/MdePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
   PayloadPkg/PayloadPkg.dec
-  BootloaderCorePkg/BootloaderCorePkg.dec
 
 [LibraryClasses]
   BaseLib
@@ -41,7 +40,6 @@
   DebugLogBufferLib
   DebugPrintErrorLevelLib
   PagingLib
-  BootloaderCoreLib
 
 [Guids]
   gLoaderLibraryDataGuid
@@ -61,4 +59,3 @@
   gPlatformCommonLibTokenSpaceGuid.PcdDmaProtectionEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdDmaBufferSize
   gPlatformCommonLibTokenSpaceGuid.PcdDmaBufferAlignment
-  gPlatformModuleTokenSpaceGuid.PcdAcpiEnabled
