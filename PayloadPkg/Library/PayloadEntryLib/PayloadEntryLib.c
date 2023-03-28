@@ -1,7 +1,7 @@
 /** @file
   This file provides payload common library interfaces.
 
-  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -14,7 +14,6 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/PayloadLib.h>
 #include <Library/BootloaderCommonLib.h>
-#include <Library/BootloaderCoreLib.h>
 #include <Library/LoaderPerformanceLib.h>
 #include <Library/PayloadMemoryAllocationLib.h>
 #include <Library/SerialPortLib.h>
@@ -273,7 +272,7 @@ SecStartup (
 
   // ACPI table
   SystemTableInfo = GetSystemTableInfo ();
-  if (SystemTableInfo != NULL && ACPI_ENABLED()) {
+  if ((SystemTableInfo != NULL) && (SystemTableInfo->AcpiTableBase != 0)) {
     ParseAcpiTableInfo ((UINT32)SystemTableInfo->AcpiTableBase);
   }
 
