@@ -172,6 +172,10 @@ BoardInit (
       MskLen = (AsmReadMsr64(MSR_CACHE_VARIABLE_MTRR_BASE + 1) | (SIZE_4GB - 1)) + 1;
       MsrIdx = MSR_CACHE_VARIABLE_MTRR_BASE + 1 * 2;
       ImgLen = PcdGet32(PcdFlashSize);
+      // PCH only decodes max 16MB of SPI flash from the top down to MMIO.
+      if (ImgLen > SIZE_16MB) {
+        ImgLen = SIZE_16MB;
+      }
       AdjLen = GetPowerOfTwo32(ImgLen);
       if (ImgLen > AdjLen) {
         AdjLen <<= 1;
