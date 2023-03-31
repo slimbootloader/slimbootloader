@@ -148,8 +148,9 @@ CallFspMultiPhaseSiliconInit (
   ASSERT (FspHeader->ImageBase == FspsBase);
 
   // Multi Phase silicon init support added in FSP 2.2
-  if (FspHeader->HeaderRevision < FSP22_HEADER_REVISION || FspHeader->FspMultiPhaseSiInitEntryOffset == 0)
+  if (FspHeader->HeaderRevision < FSP22_HEADER_REVISION || FspHeader->FspMultiPhaseSiInitEntryOffset == 0) {
     return EFI_UNSUPPORTED;
+  }
 
   FspMultiPhaseSiliconInit = (FSP_MULTI_PHASE_MEM_INIT)(UINTN)(FspHeader->ImageBase + \
                                            FspHeader->FspMultiPhaseSiInitEntryOffset);

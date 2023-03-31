@@ -18,6 +18,7 @@
   @return EFI_STATUS
  */
 EFI_STATUS
+EFIAPI
 FspGetVariable(
   IN  CHAR16      *VariableName,
   IN  EFI_GUID    *VariableGuid,
@@ -37,6 +38,7 @@ FspGetVariable(
   @return EFI_STATUS
  */
 EFI_STATUS
+EFIAPI
 FspGetNextVariableName(
   IN OUT  UINT64   *VariableNameSize,
   OUT     CHAR16   *VariableName,
@@ -54,6 +56,7 @@ FspGetNextVariableName(
   @return EFI_STATUS
  */
 EFI_STATUS
+EFIAPI
 FspSetVariable(
   IN  CHAR16      *VariableName,
   IN  EFI_GUID    *VariableGuid,
@@ -72,6 +75,7 @@ FspSetVariable(
   @return EFI_STATUS
  */
 EFI_STATUS
+EFIAPI
 FspQueryVariableInfo(
   IN  UINT32      *Attributes,
   OUT UINT64      *MaximumVariableStorageSize,

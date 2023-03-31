@@ -173,7 +173,6 @@ FspMultiPhaseMemInitHandler(VOID)
   FspSiliconInit() API and before NotifyPhase() API; or in the case that FSP-I is being used,
   before the FspSmmInit() API. The multi-phase APIs may not be called at any other time.
 
-  @param[in] FspmBase                 The base address of FSPM.
   @param[in] MultiPhaseInitParamPtr   Pointer to provide multi-phase init parameters.
 
   @retval EFI_SUCCESS                 FSP execution environment was initialized successfully.
@@ -202,8 +201,9 @@ CallFspMultiPhaseMemoryInit (
   ASSERT (FspHeader->Signature == FSP_INFO_HEADER_SIGNATURE);
   ASSERT (FspHeader->ImageBase == FspmBase);
 
-  if (FspHeader->HeaderRevision < FSP24_HEADER_REVISION)
+  if (FspHeader->HeaderRevision < FSP24_HEADER_REVISION) {
     return EFI_UNSUPPORTED;
+  }
 
   ASSERT (FspHeader->FspMultiPhaseMemInitEntryOffset != 0);
   FspMultiPhaseMemoryInit = (FSP_MULTI_PHASE_MEM_INIT)(UINTN)(FspHeader->ImageBase + \

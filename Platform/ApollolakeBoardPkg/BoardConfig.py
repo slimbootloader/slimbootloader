@@ -112,7 +112,7 @@ class Board(BaseBoard):
         self.FSP_IMAGE_ID         = '$APLFSP$'
 
         self.STAGE1A_SIZE         = 0x00008000
-        self.STAGE1B_SIZE         = 0x00037000
+        self.STAGE1B_SIZE         = 0x00038000
         if self.ENABLE_SOURCE_DEBUG:
             self.STAGE1B_SIZE += 0x2000
         self.STAGE2_SIZE          = 0x00033000

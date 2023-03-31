@@ -31,31 +31,34 @@ FspVariableHandler(
 
   Status = EFI_SUCCESS;
 
-  while (FspStatus == FSP_STATUS_VARIABLE_REQUEST)
-  {
+  while (FspStatus == FSP_STATUS_VARIABLE_REQUEST) {
     DEBUG((DEBUG_VERBOSE, "FspVariableHandler: Got FSP_STATUS_VARIABLE_REQUEST\n"));
     // Request details of variable request from Multi-phase API.
     MultiPhaseInitParams.MultiPhaseAction = EnumMultiPhaseGetVariableRequestInfo;
     MultiPhaseInitParams.PhaseIndex = 0;
     Status = MultiPhaseFunction(&MultiPhaseInitParams);
     ASSERT_EFI_ERROR(Status);
-    if (EFI_ERROR(Status)) break;
+    if (EFI_ERROR(Status)) {
+      break;
+    }
 
     FspVarReqParams = (FSP_MULTI_PHASE_VARIABLE_REQUEST_INFO_PARAMS*)MultiPhaseInitParams.MultiPhaseParamPtr;
     ASSERT (FspVarReqParams != NULL);
-    if (FspVarReqParams == NULL)
-    {
+    if (FspVarReqParams == NULL) {
       Status = EFI_UNSUPPORTED;
       break;
     }
 
     DEBUG((DEBUG_VERBOSE, "FSP Variable Request %d\n", FspVarReqParams->VariableRequest));
-    if (NULL != FspVarReqParams->VariableName)
+    if (NULL != FspVarReqParams->VariableName) {
       DEBUG((DEBUG_VERBOSE, "\tVariableName %s\n", FspVarReqParams->VariableName));
-    if (NULL != FspVarReqParams->VariableGuid)
+    }
+    if (NULL != FspVarReqParams->VariableGuid) {
       DEBUG((DEBUG_VERBOSE, "\tVariableGuid %g\n", FspVarReqParams->VariableGuid));
-    if (NULL != FspVarReqParams->DataSize)
+    }
+    if (NULL != FspVarReqParams->DataSize) {
       DEBUG((DEBUG_VERBOSE, "\tDataSize 0x%X\n", *(FspVarReqParams->DataSize)));
+    }
     DEBUG((DEBUG_VERBOSE, "\tData ptr 0x%X\n", FspVarReqParams->Data));
 
     switch (FspVarReqParams->VariableRequest)
