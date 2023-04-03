@@ -601,6 +601,12 @@ UpdateFspConfig (
         Fspmcfg->TcssXdciEn = 0x1;
         Fspmcfg->Lp5CccConfig = 0xff;
         break;
+      case PLATFORM_ID_ADL_P_UPXI12:
+        Fspmcfg->Lp5CccConfig = 0xff;
+        Fspmcfg->DdiPortBConfig = 1;
+        Fspmcfg->DdiPortBHpd = 1;
+        Fspmcfg->DdiPortBDdc = 1;
+        break;
       case PLATFORM_ID_ADL_P_DDR5_RVP:
         Fspmcfg->DdiPortAConfig = 0x1;
         Fspmcfg->DdiPortBHpd = 0x1;
