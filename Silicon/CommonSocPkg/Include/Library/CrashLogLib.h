@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2022 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -24,16 +24,6 @@ typedef struct {
   CRASHLOG_HOB  Trace;
   CRASHLOG_HOB  Telemetry;
 } CPU_CRASHLOG_HOB;
-
-/**
-  Collect Crashlog Data for creating BERT table later in boot.
-
-**/
-VOID
-EFIAPI
-GetCrashLogData (
-  VOID
-);
 
 /**
   Update BERT Table with Crash Log data

@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -615,7 +615,6 @@ DEBUG_CODE_END();
     break;
   case PostMemoryInit:
     UpdateMemoryInfo ();
-    GetCrashLogData();
     break;
   case PreTempRamExit:
     break;
