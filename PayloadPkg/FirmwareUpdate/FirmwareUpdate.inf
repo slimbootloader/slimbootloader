@@ -26,7 +26,6 @@
   FirmwareUpdateHelper.c
   GetCapsuleImage.c
   CsmeFwUpdate.c
-  ErrorList.c
   CmdFwUpdate.c
 
 [Packages]
