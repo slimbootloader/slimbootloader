@@ -1,10 +1,9 @@
 /** @file
 
-  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
-
 
 #ifndef __ME_FW_UPDATELIB_H__
 #define __ME_FW_UPDATELIB_H__
@@ -18,19 +17,26 @@
 #define FPT_PARTITION_NAME_ISHC         0x43485349
 #define FPT_PARTITION_NAME_IUNP         0x504E5549
 #define FPT_PARTITION_NAME_LOCL         0x4C434F4C
-#define FPT_PARTITION_NAME_WCOD         0x444f4357
+#define FPT_PARTITION_NAME_WCOD         0x444F4357
 #define FPT_PARTITION_NAME_IOMP         0x504D4F49
-#define FPT_PARTITION_NAME_MGPP         0x5050474D
+#define FPT_PARTITION_NAME_NPHY         0x5948504E
 #define FPT_PARTITION_NAME_TBTP         0x50544254
-#define FPT_PARTITION_NAME_DPHY         0x59485044
+#define FPT_PARTITION_NAME_SPHY         0x59485053
+#define FPT_PARTITION_NAME_ISIF         0x46495349
+#define FPT_PARTITION_NAME_SAMF         0x464D4153
+#define FPT_PARTITION_NAME_PPHY         0x59485050
+#define FPT_PARTITION_NAME_GBST         0x54534247
+#define FPT_PARTITION_NAME_PSEP         0x50455350
+#define FPT_PARTITION_NAME_ADSP         0x50534441
 
 #define MFT_PART_INFO_EXT_UPDATE_ACTION_NONE         0
 #define MFT_PART_INFO_EXT_UPDATE_ACTION_HOST_RESET   1
 #define MFT_PART_INFO_EXT_UPDATE_ACTION_CSE_RESET    2
 #define MFT_PART_INFO_EXT_UPDATE_ACTION_GLOBAL_RESET 3
 
-#define FW_UPDATE_DISABLED 0
-#define FW_UPDATE_ENABLED 1
+#define FW_UPDATE_DISABLED                  0 // Full Disabled. Partial Enabled.
+#define FW_UPDATE_ENABLED                   1 // Full Enabled.  Partial Enabled.
+#define FW_UPDATE_FULL_AND_PARTIAL_DISABLED 3 // Full Disabled. Partial Disabled.
 
 #define FWU_FW_TYPE_INVALID 0
 #define FWU_FW_TYPE_RESERVED 1
@@ -42,6 +48,7 @@
 #define FWU_PCH_SKU_H 1
 #define FWU_PCH_SKU_LP 2
 
+#define CALL_CONV
 /**
   Starting a Full FW Update from a buffer.
 
@@ -108,11 +115,12 @@ FwuCheckUpdateProgress(
   );
 
 /**
-  Get FW Update enabling state: enabled, disabled.
+  Get FW Update enabling state.
 
-  @param[out] EnabledState  FW Update enabling state: enabled, disabled. Caller allocated.
-                            FW_UPDATE_DISABLED = 0.
-                            FW_UPDATE_ENABLED = 1.
+  @param[out] EnabledState  FW Update enabling state. Caller allocated.
+                            FW_UPDATE_DISABLED = 0. Full Disabled. Partial Enabled.
+                            FW_UPDATE_ENABLED = 1. Full Enabled. Partial Enabled.
+                            FW_UPDATE_FULL_AND_PARTIAL_DISABLED = 3. Full Disabled. Partial Disabled.
 
   @retval SUCCESS  If succeeded. Error code otherwise.
 **/
@@ -134,7 +142,7 @@ FwuOemId(
   );
 
 /**
-  Get FW Type.
+  Get FW Type, from the flash image.
 
   @param[out] FwType  FW Type. Caller allocated.
                       FWU_FW_TYPE_INVALID 0
@@ -151,7 +159,7 @@ FwuFwType(
   );
 
 /**
-  Get PCH SKU.
+  Get PCH SKU, from the flash image.
 
   @param[out] PchSku  PCH SKU. Caller allocated.
                       FWU_PCH_SKU_INVALID 0
@@ -169,7 +177,7 @@ FwuPchSku(
   Get version of a specific partition, from the flash image.
 
   @param[in]  PartitionId  ID of partition. If the FW version of CSE is needed,
-                           use FTPR partition ID: FPT_PARTITION_NAME_FTPR.
+                           use bup partition ID: FPT_PARTITION_NAME_FTPR/FPT_PARTITION_NAME_RBEP.
   @param[out] Major        Major number of version. Caller allocated.
   @param[out] Minor        Minor number of version. Caller allocated.
   @param[out] HotFix       Hotfix number of version. Caller allocated.
@@ -192,7 +200,7 @@ FwuPartitionVersionFromFlash(
   @param[in]  Buffer        Buffer of Update Image read from Update Image file.
   @param[in]  BufferLength  Length of the buffer in bytes.
   @param[in]  PartitionId   ID of partition. If the FW version of CSE is needed,
-                            use FTPR partition ID: FPT_PARTITION_NAME_FTPR.
+                            use bup partition ID: FPT_PARTITION_NAME_FTPR/FPT_PARTITION_NAME_RBEP.
   @param[out] Major         Major number of version. Caller allocated.
   @param[out] Minor         Minor number of version. Caller allocated.
   @param[out] HotFix        Hotfix number of version. Caller allocated.
@@ -228,18 +236,18 @@ FwuPartitionVendorIdFromFlash(
 /**
   Get the the current image from the flash - Restore Point Image, and save it to buffer.
 
-  @param[out] buffer        Buffer of the saved Restore Point Image.
+  @param[out] Buffer        Buffer of the saved Restore Point Image.
                             Allocated by the function, only in case of SUCCESS. NULL otherwise.
                             Caller should free the buffer
                             using FreePool() in EFI.
-  @param[out] bufferLength  Length of the buffer in bytes.
+  @param[out] BufferLength  Length of the buffer in bytes.
 
   @retval SUCCESS  If succeeded. Error code otherwise.
 **/
 UINT32
 FwuSaveRestorePointToBuffer(
-  OUT UINT8 **buffer,
-  OUT UINT32 *bufferLength
+  OUT UINT8 **Buffer,
+  OUT UINT32 *BufferLength
   );
 
 /**
@@ -274,4 +282,4 @@ FwuGetIshPdtVersion(
   OUT UINT8 *VdvVersion
   );
 
-#endif
+#endif // __ME_FW_UPDATELIB_H__
