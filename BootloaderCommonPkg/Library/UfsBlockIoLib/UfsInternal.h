@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2014, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2014 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -196,6 +196,21 @@ UfsExecScsiCmds (
   );
 
 /**
+  Switches the link Power Mode and Gear.
+
+  @param Private                    The pointer to the UFS_PEIM_HC_PRIVATE_DATA data structure.
+
+  @retval EFI_SUCCESS                Successfully switched the Power Mode and Gear
+  @retval others                     Failed to switch the Power Mode and Gear
+
+**/
+EFI_STATUS
+EFIAPI
+UfsPowerModeAndGearSwitch (
+  IN  UFS_PEIM_HC_PRIVATE_DATA       *Private
+  );
+
+/**
   Initialize the UFS host controller.
 
   @param[in] Private                 The pointer to the UFS_PEIM_HC_PRIVATE_DATA data structure.
@@ -265,6 +280,31 @@ UfsRwDeviceDesc (
   IN     UINT8                        Selector,
   IN OUT VOID                         *Descriptor,
   IN     UINT32                       *DescSize
+  );
+
+/**
+  Read or write specified attribute of a UFS device.
+
+  @param[in]      Private       The pointer to the UFS_PEIM_HC_PRIVATE_DATA data structure.
+  @param[in]      Read          The boolean variable to show r/w direction.
+  @param[in]      AttrId        The ID of Attribute.
+  @param[in]      Index         The Index of Attribute.
+  @param[in]      Selector      The Selector of Attribute.
+  @param[in, out] Attributes    The value of Attribute to be read or written.
+
+  @retval EFI_SUCCESS           The Attribute was read/written successfully.
+  @retval EFI_DEVICE_ERROR      A device error occurred while attempting to r/w the Attribute.
+  @retval EFI_TIMEOUT           A timeout occurred while waiting for the completion of r/w the Attribute.
+
+**/
+EFI_STATUS
+UfsRwAttributes (
+  IN     UFS_PEIM_HC_PRIVATE_DATA  *Private,
+  IN     BOOLEAN                     Read,
+  IN     UINT8                       AttrId,
+  IN     UINT8                       Index,
+  IN     UINT8                       Selector,
+  IN OUT UINT32                      *Attributes
   );
 
 /**

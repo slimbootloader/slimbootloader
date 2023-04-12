@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2014 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2014 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -996,7 +996,53 @@ UfsRwDeviceDesc (
   return Status;
 }
 
+/**
+  Read or write specified attribute of a UFS device.
 
+  @param[in]      Private       The pointer to the UFS_PEIM_HC_PRIVATE_DATA data structure.
+  @param[in]      Read          The boolean variable to show r/w direction.
+  @param[in]      AttrId        The ID of Attribute.
+  @param[in]      Index         The Index of Attribute.
+  @param[in]      Selector      The Selector of Attribute.
+  @param[in, out] Attributes    The value of Attribute to be read or written.
+
+  @retval EFI_SUCCESS           The Attribute was read/written successfully.
+  @retval EFI_INVALID_PARAMETER AttrId, Index and Selector are invalid combination to point to a
+                                type of UFS device descriptor.
+  @retval EFI_DEVICE_ERROR      A device error occurred while attempting to r/w the Attribute.
+  @retval EFI_TIMEOUT           A timeout occurred while waiting for the completion of r/w the Attribute.
+
+**/
+EFI_STATUS
+UfsRwAttributes (
+  IN     UFS_PEIM_HC_PRIVATE_DATA  *Private,
+  IN     BOOLEAN                     Read,
+  IN     UINT8                       AttrId,
+  IN     UINT8                       Index,
+  IN     UINT8                       Selector,
+  IN OUT UINT32                      *Attributes
+  )
+{
+  UFS_DEVICE_MANAGEMENT_REQUEST_PACKET  Packet;
+
+  ZeroMem (&Packet, sizeof (UFS_DEVICE_MANAGEMENT_REQUEST_PACKET));
+
+  if (Read) {
+    Packet.DataDirection = UfsDataIn;
+    Packet.Opcode        = UtpQueryFuncOpcodeRdAttr;
+  } else {
+    Packet.DataDirection = UfsDataOut;
+    Packet.Opcode        = UtpQueryFuncOpcodeWrAttr;
+  }
+
+  Packet.DataBuffer = Attributes;
+  Packet.DescId     = AttrId;
+  Packet.Index      = Index;
+  Packet.Selector   = Selector;
+  Packet.Timeout    = UFS_TIMEOUT;
+
+  return UfsSendDmRequest (Private, &Packet);
+}
 
 /**
   Read or write specified flag of a UFS device.
@@ -2041,7 +2087,8 @@ UfsPowerModeAndGearSwitch (
   @param[in] Private                 The pointer to the UFS_PEIM_HC_PRIVATE_DATA data structure.
 
 **/
-VOID
+EFI_STATUS
+EFIAPI
 UfsHcPlatformPostHceSwitchGear (
   IN  UFS_PEIM_HC_PRIVATE_DATA       *Private
   )
@@ -2051,17 +2098,20 @@ UfsHcPlatformPostHceSwitchGear (
   DEBUG ((DEBUG_INFO, "UfsHcPlatformPostHceSwitchGear Entry\n" ));
   if (Private == NULL) {
     DEBUG((DEBUG_ERROR, "UfsHcPlatformPostHceSwitchGear Private is NULL\n"));
-    return;
+    return EFI_LOAD_ERROR;
   }
+
   Status = UfsPwmGearSwitch (Private);
   if (EFI_ERROR (Status)) {
     DEBUG((DEBUG_ERROR, "UfsPwmGearSwitch Fails, Status = %r\n", Status));
   }
+
   Status = UfsPowerModeAndGearSwitch(Private);
   if (EFI_ERROR(Status)) {
     DEBUG((DEBUG_ERROR, "UfsPowerModeAndGearSwitch Fails, Status = %r\n", Status));
   }
   DEBUG ((DEBUG_INFO, "UfsHcPlatformPostHceSwitchGear Exit\n" ));
+  return Status;
 }
 
 /**
@@ -2095,13 +2145,9 @@ UfsDeviceDetection (
     LinkStartupCommand.Arg2 = 0;
     LinkStartupCommand.Arg3 = 0;
     Status = UfsExecUicCommands (Private, &LinkStartupCommand);
-    if (EFI_ERROR (Status)) {
-      return EFI_DEVICE_ERROR;
-    }
-
-    Address = Private->UfsHcBase + UFS_HC_STATUS_OFFSET;
-    Data = MmioRead32 (Address);
-
+    if (!EFI_ERROR (Status)) {
+      Address = Private->UfsHcBase + UFS_HC_STATUS_OFFSET;
+      Data = MmioRead32 (Address);
 
     if ((Data & UFS_HC_HCS_DP) == 0) {
       Address = Private->UfsHcBase + UFS_HC_IS_OFFSET;
@@ -2109,13 +2155,21 @@ UfsDeviceDetection (
       if (EFI_ERROR (Status)) {
         return EFI_DEVICE_ERROR;
       }
-    } else {
-      UfsHcPlatformPostHceSwitchGear(Private);
-      return EFI_SUCCESS;
     }
+    break;
+    }
+    if (Status == EFI_NOT_FOUND) {
+      continue;
+    }
+
+    return EFI_DEVICE_ERROR;
   }
 
-  return EFI_NOT_FOUND;
+  if (Retry == 3) {
+      return EFI_NOT_FOUND;
+  }
+
+  return EFI_SUCCESS;
 }
 
 /**
