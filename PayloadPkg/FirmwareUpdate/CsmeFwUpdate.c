@@ -412,7 +412,7 @@ StartCsmeUpdate (
 
 End:
   if (UpdateStatus != SUCCESS) {
-    DEBUG((DEBUG_ERROR, "CSME update failed. Error Code:%a.\n", UpdateStatus));
+    DEBUG((DEBUG_ERROR, "CSME update failed. Error Code: 0x%X\n", UpdateStatus));
     return EFI_DEVICE_ERROR;
   }
   return EFI_SUCCESS;
