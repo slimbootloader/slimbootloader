@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2014 - 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2014 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -1316,6 +1316,37 @@ UfsFinishDeviceInitialization (
 }
 
 /**
+  Switches the link Power Mode and Gear.
+
+  @param[in] Private                 The pointer to the UFS_PEIM_HC_PRIVATE_DATA data structure.
+
+  @retval EFI_SUCCESS                Successfully switched the Power Mode and Gear
+  @retval others                     Failed to switch the Power Mode and Gear
+
+**/
+EFI_STATUS
+EFIAPI
+VerifyUfsHcPlatformPostHceSwitchGear (
+  IN  UFS_PEIM_HC_PRIVATE_DATA       *Private
+  )
+{
+  EFI_STATUS                         Status;
+
+  DEBUG ((DEBUG_INFO, "VerifyUfsHcPlatformPostHceSwitchGear Entry\n" ));
+  if (Private == NULL) {
+    DEBUG((DEBUG_ERROR, "VerifyUfsHcPlatformPostHceSwitchGear Private is NULL\n"));
+    return EFI_LOAD_ERROR;
+  }
+
+  Status = UfsPowerModeAndGearSwitch(Private);
+  if (EFI_ERROR(Status)) {
+    DEBUG((DEBUG_ERROR, "UfsPowerModeAndGearSwitch Fails, Status = %r\n", Status));
+  }
+  DEBUG ((DEBUG_INFO, "VerifyUfsHcPlatformPostHceSwitchGear Exit\n" ));
+  return Status;
+}
+
+/**
   The function will initialize UFS device.
 
   Based on UfsHcPciBase, this function will initialize UFS host controller, allocate
@@ -1346,7 +1377,10 @@ InitializeUfs (
   UFS_HC_PEI_PRIVATE_DATA      *UfsPrivateHcData;
   UINT32                        UnitDescriptorSize;
   UINT32                        DeviceDescriptorSize;
+  UFS_CARD_REF_CLK_FREQ_ATTRIBUTE  Attributes,RefClkFreq;
+  UINT8                            RefClkAttr;
 
+  RefClkFreq = UfsCardRefClkFreq19p2Mhz;
   if (DevInitPhase == DevDeinit) {
     if (gPrivate != NULL) {
       Private = gPrivate;
@@ -1463,6 +1497,69 @@ InitializeUfs (
       DEBUG ((DEBUG_ERROR, "Device failed to finish initialization, Status = %r\n", Status));
       Controller++;
       continue;
+    }
+
+    if((RefClkFreq == UfsCardRefClkFreq19p2Mhz) ||
+       (RefClkFreq == UfsCardRefClkFreq26Mhz) ||
+       (RefClkFreq == UfsCardRefClkFreq38p4Mhz))
+    {
+      DEBUG ((DEBUG_INFO, "Setting clock frequency for UFS\n"));
+      RefClkAttr = UfsAttrRefClkFreq;
+      Attributes = UfsCardRefClkFreqObsolete;
+      Status     = UfsRwAttributes (Private, TRUE, RefClkAttr, 0, 0, (UINT32 *)&Attributes);
+      if (!EFI_ERROR (Status)) {
+        if (Attributes != RefClkFreq) {
+          Attributes = RefClkFreq;
+          DEBUG (
+            (DEBUG_INFO,
+             "Setting bRefClkFreq attribute(%x) to %x\n  0 -> 19.2 Mhz\n  1 -> 26 Mhz\n  2 -> 38.4 Mhz\n  3 -> Obsolete\n",
+             RefClkAttr,
+             Attributes)
+            );
+          Status = UfsRwAttributes (Private, FALSE, RefClkAttr, 0, 0, (UINT32 *)&Attributes);
+          if (EFI_ERROR (Status)) {
+            DEBUG (
+              (DEBUG_ERROR,
+               "Failed to Change Reference Clock Attribute to %d, Status = %r \n",
+               RefClkFreq,
+               Status)
+              );
+          }
+        }
+      } else {
+        DEBUG (
+          (DEBUG_ERROR,
+           "Failed to Read Reference Clock Attribute, Status = %r \n",
+           Status)
+          );
+      }
+      if (Attributes == 0){
+        DEBUG (
+              (DEBUG_INFO,
+               "Setting bRefClkFreq attribute(%x) to 19.2 Mhz\n",
+               RefClkAttr)
+            );
+      } else if (Attributes == 1) {
+          DEBUG (
+              (DEBUG_INFO,
+               "Setting bRefClkFreq attribute(%x) to 26 Mhz\n",
+               RefClkAttr)
+          );
+      } else if (Attributes == 2) {
+          DEBUG (
+              (DEBUG_INFO,
+               "Setting bRefClkFreq attribute(%x) to 38.4 Mhz\n",
+               RefClkAttr)
+          );
+      }
+    } else {
+        DEBUG ((DEBUG_WARN, "Warning: Unsuppored UFS clock frequency \n"));
+      }
+
+    Status = VerifyUfsHcPlatformPostHceSwitchGear(Private);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Failed to switch power link power mode gear, status = %r\n", Status));
+      return Status;
     }
 
     //
