@@ -2,7 +2,7 @@
   UfsPassThruDxe driver is used to produce EFI_EXT_SCSI_PASS_THRU protocol interface
   for upper layer application to execute UFS-supported SCSI cmds.
 
-  Copyright (c) 2014, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -411,6 +411,13 @@ typedef enum {
   UfsUicDmeHibernateExit  = 0x18,
   UfsUicDmeTestMode       = 0x1A
 } UFS_UIC_OPCODE;
+
+typedef enum {
+  UfsCardRefClkFreq19p2Mhz,
+  UfsCardRefClkFreq26Mhz,
+  UfsCardRefClkFreq38p4Mhz,
+  UfsCardRefClkFreqObsolete
+} UFS_CARD_REF_CLK_FREQ_ATTRIBUTE;
 
 //
 // UTP Transfer Request Descriptor
