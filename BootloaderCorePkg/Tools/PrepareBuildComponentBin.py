@@ -222,14 +222,16 @@ def BuildFspBins (fsp_dir, sbl_dir, fsp_inf, silicon_pkg_name, flag):
 
 def Main():
 
-    if len(sys.argv) < 4:
+    if len(sys.argv) < 6:
         print ('Silicon directory, silicon package name, and target are required!')
         return -1
-
+    print(sys.argv)
     sbl_dir          = sys.argv[1]
     silicon_pkg_name = sys.argv[2]
-    target           = sys.argv[3]
-
+    fsp_inf_file     = sys.argv[3]
+    microcode_inf    = sys.argv[4]
+    target           = sys.argv[5] 
+    
     workspace_dir  = os.path.join(sbl_dir, '../Download', silicon_pkg_name)
     fsp_repo_dir   = os.path.abspath (os.path.join(workspace_dir, 'IntelFsp'))
     qemu_repo_dir  = os.path.abspath (os.path.join(workspace_dir, 'QemuFsp'))
@@ -237,13 +239,12 @@ def Main():
     # Leave the final path node as '$AUTO' to allow to determine the repo dir automatically.
     ucode_repo_dir = os.path.abspath (os.path.join(workspace_dir, '$AUTO'))
 
-    fsp_inf = os.path.join(sbl_dir, 'Silicon', silicon_pkg_name, 'FspBin', 'FspBin.inf')
+    fsp_inf = os.path.join(sbl_dir, 'Silicon', silicon_pkg_name, 'FspBin', fsp_inf_file)
     if silicon_pkg_name == 'QemuSocPkg':
         BuildFspBins (qemu_repo_dir, sbl_dir, fsp_inf, silicon_pkg_name, target)
     else:
         CopyBins (fsp_repo_dir, sbl_dir, fsp_inf)
 
-    microcode_inf = os.path.join(sbl_dir, 'Silicon', silicon_pkg_name, 'Microcode', 'Microcode.inf')
     CopyBins (ucode_repo_dir, sbl_dir, microcode_inf)
 
     return 0
