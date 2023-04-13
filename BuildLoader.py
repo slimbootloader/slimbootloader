@@ -290,7 +290,9 @@ class Build(object):
         # enforce feature configs rules
         if self._board.ENABLE_SBL_SETUP:
             self._board.ENABLE_PAYLOD_MODULE = 1
-
+            
+        if not hasattr(self._board, 'FSP_INF_FILE'):
+            self._board.FSP_INF_FILE  = 'FspBin.inf'
         if not hasattr(self._board, 'MICROCODE_INF_FILE'):
             self._board.MICROCODE_INF_FILE  = 'Silicon/%s/Microcode/Microcode.inf' % self._board.SILICON_PKG_NAME
         if not hasattr(self._board, 'ACPI_TABLE_INF_FILE'):
@@ -1130,11 +1132,15 @@ class Build(object):
         if self._board.HAVE_FSP_BIN:
             check_build_component_bin = os.path.join(tool_dir, 'PrepareBuildComponentBin.py')
             if os.path.exists(check_build_component_bin):
+                print("BuildLoader.py")
+                print(self._board.MICROCODE_INF_FILE)
                 # Create basic command
                 cmd = [ sys.executable,
                         check_build_component_bin,
                         work_dir,
-                        self._board.SILICON_PKG_NAME ]
+                        self._board.SILICON_PKG_NAME,
+                        self._board.FSP_INF_FILE,
+                        self._board.MICROCODE_INF_FILE]
 
                 # Add target
                 if (self._board.FSPDEBUG_MODE):
