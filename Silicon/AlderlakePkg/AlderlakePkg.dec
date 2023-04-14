@@ -23,3 +23,6 @@
 [PcdsFixedAtBuild]
   gPlatformAlderLakeTokenSpaceGuid.PcdAdlLpSupport    | FALSE      | BOOLEAN | 0x30000100
   gPlatformAlderLakeTokenSpaceGuid.PcdAdlNSupport     | FALSE      | BOOLEAN | 0x30000101
+
+[PcdsPatchableInModule]
+  gPlatformAlderLakeTokenSpaceGuid.PcdCrashLogDataPtr | 0x00000000 | UINT32  | 0x30000200
