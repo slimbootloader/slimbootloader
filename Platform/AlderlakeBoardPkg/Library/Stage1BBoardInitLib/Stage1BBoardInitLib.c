@@ -354,7 +354,6 @@ PlatformFeaturesInit (
   // Set common features
   LdrFeatures  = GetFeatureCfg ();
   LdrFeatures |= FeaturePcdGet (PcdAcpiEnabled)?FEATURE_ACPI:0;
-
   LdrFeatures |= FeaturePcdGet (PcdVerifiedBootEnabled)?FEATURE_VERIFIED_BOOT:0;
   LdrFeatures |= FeaturePcdGet (PcdMeasuredBootEnabled)?FEATURE_MEASURED_BOOT:0;
 
@@ -368,6 +367,8 @@ PlatformFeaturesInit (
     if (FeaturesCfgData->Features.MeasuredBoot == 0) {
       LdrFeatures &= ~FEATURE_MEASURED_BOOT;
     }
+  } else {
+    DEBUG((DEBUG_INFO, "FEATURES_CFG_DATA is NULL"));
   }
 
   // Disable features by boot guard profile
@@ -376,16 +377,28 @@ PlatformFeaturesInit (
     HeciBaseAddress = MeGetHeciMmPciAddress (0, 0);
     GetBootGuardInfo (HeciBaseAddress, &PlatformData->BtGuardInfo);
     DEBUG ((DEBUG_INFO, "GetPlatformDataPtr is copied 0x%08X \n", PlatformData));
-    if ((PlatformData->BtGuardInfo.MeasuredBoot) && (!PlatformData->BtGuardInfo.BypassTpmInit)) {
-      // Disable the measured boot when TPM init is not succesful by ACM
-      LdrFeatures &= ~FEATURE_MEASURED_BOOT;
-    }
     if (!PlatformData->BtGuardInfo.VerifiedBoot) {
       LdrFeatures &= ~FEATURE_VERIFIED_BOOT;
     }
+  } else {
+    DEBUG((DEBUG_INFO, "PLATFORM_DATA is NULL"));
   }
 
   SetFeatureCfg (LdrFeatures);
+}
+
+/**
+  Disable measured boot in SBL
+**/
+VOID
+DisableMeasuredBoot (
+  VOID
+  )
+{
+  UINT32    Features;
+  Features  = GetFeatureCfg ();
+  Features &= (UINT32)(~FEATURE_MEASURED_BOOT);
+  SetFeatureCfg (Features);
 }
 
 /**
@@ -399,48 +412,50 @@ TpmInitialize (
   EFI_STATUS                   Status;
   UINT8                        BootMode;
   PLATFORM_DATA               *PlatformData;
-  UINT32                       Features;
+  BOOT_LOADER_VERSION         *BlVersion;
 
   BootMode     = GetBootMode();
   PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
+  BlVersion    = GetVerInfoPtr ();
 
+  if (PlatformData == NULL ||
+     (PlatformData->BtGuardInfo.BootGuardCapability &&
+      PlatformData->BtGuardInfo.DisconnectAllTpms)) {
+    DEBUG ((DEBUG_ERROR, "Tpm set to be disabled by ACM !! \n"));
+    DisableTpm ();
+    DisableMeasuredBoot ();
+    return;
+  }
 
-  if ((PlatformData != NULL) && MEASURED_BOOT_ENABLED() &&
-    (!PlatformData->BtGuardInfo.DisconnectAllTpms)) {
-
-    if ((PlatformData->BtGuardInfo.MeasuredBoot) &&
-      ((PlatformData->BtGuardInfo.TpmType == dTpm20) || (PlatformData->BtGuardInfo.TpmType == Ptt))) {
-
-      //  As per PC Client spec, SRTM should perform a host platform reset
-      if (PlatformData->BtGuardInfo.TpmStartupFailureOnS3) {
-        ResetSystem(EfiResetCold);
-        CpuDeadLoop ();
-      }
-
-      // TPM is initialized in by ACM.
-      Status = TpmInit(PlatformData->BtGuardInfo.BypassTpmInit, BootMode);
-    } else {
-      // Initialize TPM if it has not already been initialized by BootGuard component (i.e. ACM)
-      Status = TpmInit(FALSE, BootMode);
+  if (PlatformData->BtGuardInfo.BootGuardCapability &&
+      PlatformData->BtGuardInfo.MeasuredBoot) {
+    //  As per PC Client spec, if TPM startup failed in ACM on S3 resume, reset
+    if (PlatformData->BtGuardInfo.TpmStartupFailureOnS3) {
+      ResetSystem (EfiResetCold);
+      CpuDeadLoop ();
     }
 
+    // If measured boot enabled in ACM, let ACM decide on if TPM is initialized here
+    Status = TpmInit (PlatformData->BtGuardInfo.BypassTpmInit, BootMode);
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "Tpm Initialization failed  %r !! \n", Status));
-
-      Features  = GetFeatureCfg ();
-      Features &= (UINT32)(~FEATURE_MEASURED_BOOT);
-      SetFeatureCfg (Features);
-    } else {
-      if (BootMode != BOOT_ON_S3_RESUME) {
-        // Create and add BootGuard Event logs in TCG Event log
-        CreateTpmEventLog (PlatformData->BtGuardInfo.TpmType);
+      DisableMeasuredBoot ();
+    } else if (BootMode != BOOT_ON_S3_RESUME) {
+      // Add BtG events to TPM event log
+      CreateTpmEventLog (PlatformData->BtGuardInfo.TpmType);
+      // Add CRTM version event after BtG events
+      TpmLogCrtmVersionEvent (BlVersion);
     }
-   }
-  } else {
-    DisableTpm();
-    Features  = GetFeatureCfg ();
-    Features &= (UINT32)(~FEATURE_MEASURED_BOOT);
-    SetFeatureCfg (Features);
+  } else if (MEASURED_BOOT_ENABLED ()) {
+    // If measured boot enabled in SBL but not in ACM, force TPM initialization here
+    Status = TpmInit (FALSE, BootMode);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Tpm Initialization failed  %r !! \n", Status));
+      DisableMeasuredBoot ();
+    } else if (BootMode != BOOT_ON_S3_RESUME) {
+      // Add only CRTM version event to TPM event log at this point
+      TpmLogCrtmVersionEvent (BlVersion);
+    }
   }
 }
 
