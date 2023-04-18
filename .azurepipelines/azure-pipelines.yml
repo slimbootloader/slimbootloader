@@ -89,14 +89,23 @@ jobs:
         Build.Name:   "adls"
         Build.Arch:   ""
         Build.Target: ""
+      ADLP_X64_RELEASE:
+        Build.Name:   "adlp"
+        Build.Arch:   "-a x64"
+        Build.Target: "-r"
+      ADLPS_X86_DEBUG:
+        Build.Name:   "adlps"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      ADLN_X86_RELEASE:
+        Build.Name:   "adln"
+        Build.Arch:   ""
+        Build.Target: "-r"
       IDV_X64_DEBUG:
         Build.Name:   "idv"
         Build.Arch:   "-a x64"
         Build.Target: ""
-      ADLN_X86_DEBUG:
-        Build.Name:   "adln"
-        Build.Arch:   ""
-        Build.Target: ""
+
 
   pool:
     vmImage: 'ubuntu-20.04'
@@ -183,12 +192,12 @@ jobs:
         Build.Name:   "adls"
         Build.Arch:   "-a x64"
         Build.Target: ""
-      IDV_X86_RELEASE:
-        Build.Name:   "idv"
-        Build.Arch:   ""
+      ADLP_X64_RELEASE:
+        Build.Name:   "adlp"
+        Build.Arch:   "-a x64"
         Build.Target: "-r"
-      IDVH_X64_DEBUG:
-        Build.Name:   "idvh"
+      ADLPS_X64_DEBUG:
+        Build.Name:   "adlps"
         Build.Arch:   "-a x64"
         Build.Target: ""
       ADLN_X86_RELEASE:
@@ -197,6 +206,14 @@ jobs:
         Build.Target: "-r"
       ADLN_X64_DEBUG:
         Build.Name:   "adln"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      IDV_X86_RELEASE:
+        Build.Name:   "idv"
+        Build.Arch:   ""
+        Build.Target: "-r"
+      IDVH_X64_DEBUG:
+        Build.Name:   "idvh"
         Build.Arch:   "-a x64"
         Build.Target: ""
 

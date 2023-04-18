@@ -106,8 +106,8 @@ PatchCpuSsdtTable (
   @retval                   Calculated power value in mW
 
 **/
-STATIC
 UINT32
+EFIAPI
 CalculateRelativePower (
   IN  UINT16  BaseRatio,
   IN  UINT16  CurrRatio,
