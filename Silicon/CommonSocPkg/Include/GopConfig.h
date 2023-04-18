@@ -1103,31 +1103,6 @@ typedef struct {
   } LaceAggressivenessProfile; ///< Defines the LACE Aggressiveness Profile
 } BLOCK44_ALS;
 
-
-/**
-  This defines the structure of Black Frame Insertion table entry.
-**/
-typedef struct {
-  /**
-  BFI Features\n
-  Bit[7-2]  : Reserved\n
-  Bit[1]    : Enable Brightness control in CUI\n
-  Bit[0]    : Enable BFI in driver
-  **/
-  UINT8         EnableBits;
-  UINT8         BrightnessNonBFI;   ///< Brightness percentage in non BFI mode
-} BFI;
-
-/**
-  This defines the structure of Block 45 (Black Frame insertion Support for LFP)
-**/
-typedef struct {
-  UINT8              BlockId;         ///< Defines the unique Block ID : 45
-  UINT16             BlockSize;       ///< Defines the size of Black frame insertion support block.
-  UINT8              SIZE_BFIStruc;   ///< Defines the size of 1 entry of black frame data.
-  BFI                BFI_Struct[16];  ///< Array defining the data of black frame insertion for all 16 panels.
-} BLOCK45_BFI_SUPPORT;
-
 /**
   This structure defines the chromaticity information for a single LFP panel.
 **/
@@ -1466,36 +1441,6 @@ typedef struct {
 } BLOCK52_MIPI_CONF;
 
 /**
-  This defines the structure of Block 53 (MIPI Sequence block) for panel initialisation.
-**/
-typedef struct {
-  UINT8      BlockId;         ///< Defines the unique Block ID: 53
-  UINT16     BlockSize;       ///< Defines the size of MIPI sequence Block
-  UINT8      Version;         ///< Defines the version of MIPI sequence.
-  UINT8*     MipiSequence;    ///< Pointer to the actual MIPI sequence structure.
-} BLOCK53_MIPI_SEQ;
-
-/**
-  This defines the structure of a single RGB Palette entry block
-  for programming Gamma, Brightness, Contrast.
-**/
-typedef struct {
-  UINT8     Red[256];         ///< Red component.
-  UINT8     Green[256];       ///< Green component.
-  UINT8     Blue[256];        ///< Blue component.
-} RGB_PALETTE_TABLE_ENTRY;
-
-/**
-  This defines the structure of Block 54 (RGB Palette Table)
-**/
-typedef struct {
-  UINT8                   BlockId;        ///< Defines the unique Block ID: 54
-  UINT16                  BlockSize;      ///< Defines the size of RGB Palette Table block.
-  UINT8                   IsEnabled;      ///< Feature enable flag.
-  RGB_PALETTE_TABLE_ENTRY PaletteTable;   ///< Structure of RGB palette entries.
-} BLOCK54_RGB_PALETTE_TABLE;
-
-/**
   This defines a single structure of compression parameters.
   For each compression engine, we need to have one structure.
 **/
@@ -1578,59 +1523,6 @@ typedef struct {
     } Bits;
   } DscLineBufDepth;
 
-  /**
-  DSC Flag_Bits_1
-  Contains various flag bits.
-  Bits 7 - 1 : Reserved
-  Bit  0     : Block prediction enable
-           0 : BP is not used
-           1 : Decoder must select between BP and MMAP
-  **/
-  union {
-    UINT8 Value;
-    struct {
-      UINT8   BlkPredictionEn:1;
-      UINT8   Reserved:7;
-    } Bits;
-  } DscFlagBits1;
-
-  /**
-  DSC Maximum Bits per pixel.
-  This field specifies the maximum bits per pixel
-  that the sink device can support for compressed output.
-  Value         BPP
-     0        = 6BPP
-     1        = 8BPP
-     2        = 10BPP
-     3        = 12BPP
-  **/
-  UINT8    DscMaxBpp;
-
-  /**
-  DSC Color depth capabilities.
-  This field specifies the color depths supported by the sink.
-  Bits 7-4 : Reserved
-  Bit    3 : 12 Bits per Color supported
-         0 = 12 bpc is not supported
-         1 = 12 bpc is supported
-  Bit    2 : 10 Bits per Color supported
-         0 = 10 bpc is not supported
-         1 = 10 bpc is supported
-  Bit    1 : 8  Bits per Color supported
-         0 = 8  bpc is not supported
-         1 = 8 bpc is supported
-  **/
-
-  union {
-    UINT8 Value;
-    struct {
-      UINT8   Reserved:1;
-      UINT8   BpcSupported8:1;
-      UINT8   BpcSupported10:1;
-      UINT8   BpcSupported12:1;
-      UINT8   Reserved1:4;
-    } Bits;
-  } DscColorDepthCap;
 
 
   /**

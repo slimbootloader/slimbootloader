@@ -22,14 +22,12 @@
 #define AUX_CHANNEL_C                         0x20
 #define AUX_CHANNEL_E                         0x50
 #define HDMI_B                                0x01      ///< Defines a output port HDMI-B
-#define HDMI_D                                0x03      ///< Defines a output port HDMI-D
 #define HDMI_G                                0x10      ///< Defines a output port HDMI-G (TCP-2)
 #define DISPLAY_PORT_A                        0x0A      ///< Defines a output port DisplayPort A
 #define DISPLAY_PORT_B                        0x07      ///< Defines a output port DisplayPort B
 #define DISPLAY_PORT_C                        0x08      ///< Defines a output port DisplayPort C
 #define DISPLAY_PORT_D                        0x09      ///< Defines a output port DisplayPort D
 #define DISPLAY_PORT_E                        0x0B      ///< Defines a output port DisplayPort E
-#define DISPLAY_PORT_H                        0x11      ///< Defines a output port DisplayPort H (TCP-3)
 
 #define NUMBER_VSWING_TABLES                  04        ///< Update this if VBT spec for Block 57 gets updated for ICL platforms.
 #define NUMBER_VSWING_COLUMNS                 11        ///< Update this if Bspec adds any new DWORDS. Even if Bspec removes any DWORDS, we still need to keep them in structure as is.
@@ -1292,25 +1290,6 @@ typedef struct {
 } BLOCK40_LVDS_FEATURES;
 
 /**
-  This structure defines the second type of BMP table pointers.
-  This is used to store pointers to LFP Flat panel data, DTD and PID information.
-**/
-typedef struct {
-  UINT16  Offset;       ///< Offset of the table.
-  UINT8   Size;         ///< Size of the table.
-} BMP_TABLE_TYPE2_PTR;
-
-/**
-  This structure defines a set of 3 pointers for LFP display.
-  These pointers point to FP data, DTD and PID information respectively.
-**/
-typedef struct {
-  BMP_TABLE_TYPE2_PTR   FpTablePtr;   ///< Pointer to FP Data of the LFP panel.
-  BMP_TABLE_TYPE2_PTR   DtdTablePtr;  ///< Pointer to DTD of the LFP panel.
-  BMP_TABLE_TYPE2_PTR   PidTablePtr;  ///< Pointer to the PID data of the LFP panel.
-} LFP_TABLE_POINTERS;
-
-/**
   This defines the structure for Hinge Alignment Parameters
 **/
 typedef struct {
@@ -1874,36 +1853,6 @@ typedef struct {
   MIPI_PWM_BACKLIGHT_DELAYS MipiPwmBackLightDelays[6];
   UINT8                     PmicI2cBusNo[6];
 } BLOCK52_MIPI_CONF;
-
-/**
-  This defines the structure of Block 53 (MIPI Sequence block) for panel initialisation.
-**/
-typedef struct {
-  UINT8      BlockId;         ///< Defines the unique Block ID: 53
-  UINT16     BlockSize;       ///< Defines the size of MIPI sequence Block
-  UINT8      Version;         ///< Defines the version of MIPI sequence.
-  UINT8*     MipiSequence;    ///< Pointer to the actual MIPI sequence structure.
-} BLOCK53_MIPI_SEQ;
-
-/**
-  This defines the structure of a single RGB Palette entry block
-  for programming Gamma, Brightness, Contrast.
-**/
-typedef struct {
-  UINT8     Red[256];         ///< Red component.
-  UINT8     Green[256];       ///< Green component.
-  UINT8     Blue[256];        ///< Blue component.
-} RGB_PALETTE_TABLE_ENTRY;
-
-/**
-  This defines the structure of Block 54 (RGB Palette Table)
-**/
-typedef struct {
-  UINT8                   BlockId;        ///< Defines the unique Block ID: 54
-  UINT16                  BlockSize;      ///< Defines the size of RGB Palette Table block.
-  UINT8                   IsEnabled;      ///< Feature enable flag.
-  RGB_PALETTE_TABLE_ENTRY PaletteTable;   ///< Structure of RGB palette entries.
-} BLOCK54_RGB_PALETTE_TABLE;
 
 /**
   This defines a single structure of compression parameters.
