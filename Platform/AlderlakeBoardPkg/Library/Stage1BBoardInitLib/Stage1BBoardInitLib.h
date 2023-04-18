@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -46,7 +46,6 @@
 #include <Library/PchInfoLib.h>
 #include <Library/VariableLib.h>
 #include <Library/GpioLib.h>
-#include <Library/TopSwapLib.h>
 #include "GpioTableAdlSPreMem.h"
 #include "GpioTableAdlPPreMem.h"
 #include "GpioTableAdlNPreMem.h"
