@@ -18,8 +18,6 @@
   m_07_90672_0000002c.mcb  # ADLS  C0
 
 [UserExtensions.SBL."CloneRepo"]
-  #REPO   = https://github.com/slimbootloader/firmwareblob.git
-  #COMMIT = 698dac8c3d5dd4e8654653e8f4133c7038abb86d
   REPO = https://github.com/kdbarnes-intel/firmwareblob_kdb
   COMMIT = 52e6bae7920f4f443ca860ed9726cf97caf9c368
  
