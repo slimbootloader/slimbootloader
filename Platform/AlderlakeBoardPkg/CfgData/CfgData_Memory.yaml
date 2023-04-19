@@ -1066,6 +1066,14 @@
                      Enables/Disable Early Command Training
       length       : 0x01
       value        : 0x01
+  - I2cPostCode    :
+      name         : Enable/Disable I2C Postcode
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable:Postcode via I2C, Disable: Postcode via Port80
+      length       : 0x01
+      value        : 0x00
   - Dummy        :
-      length      : 0x02
+      length      : 0x01
       value       : 0x00
