@@ -1304,37 +1304,39 @@ CreateTpmEventLog (
   ACM_BIOS_POLICY      AcmPolicySts;
   UINT8                TpmStartupLocality;
 
-  if (IsMeasuredBoot ()) {
+  AcmPolicySts.Data = GetAcmPolicySts ();
 
-    AcmPolicySts.Data = GetAcmPolicySts ();
+  Tpm2GetCapabilitySupportedAndActivePcrs (&TpmHashAlgorithmBitmap, &ActivePcrBanks);
 
-    Tpm2GetCapabilitySupportedAndActivePcrs (&TpmHashAlgorithmBitmap, &ActivePcrBanks);
+  //
+  // Initialize TPM Startup locality to 0
+  //
+  TpmStartupLocality = LOCALITY_0_INDICATOR;
 
+  //
+  // If BootGuard ACM is the S-CRTM, check for the TPM Startup locality used.
+  //   b'001--> BTG / b'010 (2) --> TXT / b'100 (4) --> PFR
+  //
+  if (AcmPolicySts.Bits.SCrtmStatus != 0) {
     //
-    // If BootGuard ACM is the S-CRTM, check for the TPM Startup locality used.
-    //   b'001--> BTG / b'010 (2) --> TXT / b'100 (4) --> PFR
+    // Update TPM startup locality based on the ACM Policy Status TpmStartupLocality field:
+    //   0x0 : Startup Locality = 3
+    //   0x1 : Startup Locality = 0
     //
-    if (AcmPolicySts.Bits.SCrtmStatus != 0) {
-      //
-      // Update TPM startup locality based on the ACM Policy Status TpmStartupLocality field:
-      //   0x0 : Startup Locality = 3
-      //   0x1 : Startup Locality = 0
-      //
-      if (AcmPolicySts.Bits.TpmStartupLocality == 0) {
-        TpmStartupLocality = LOCALITY_3_INDICATOR;
-      }
+    if (AcmPolicySts.Bits.TpmStartupLocality == 0) {
+      TpmStartupLocality = LOCALITY_3_INDICATOR;
     }
+  }
 
-    CreateLocalityStartupEvent (TpmStartupLocality, ActivePcrBanks);
+  CreateLocalityStartupEvent (TpmStartupLocality, ActivePcrBanks);
 
-    //
-    // If BootGuard ACM is the S-CRTM,
-    // create event logs from previous PCR extensions on behalf of ACM.
-    //
-    if (AcmPolicySts.Bits.SCrtmStatus != 0) {
-      CreateDetailPcrEvent (ActivePcrBanks);
-      CreateAuthorityPcrEvent (ActivePcrBanks);
-    }
+  //
+  // If BootGuard ACM is the S-CRTM,
+  // create event logs from previous PCR extensions on behalf of ACM.
+  //
+  if (AcmPolicySts.Bits.SCrtmStatus != 0) {
+    CreateDetailPcrEvent (ActivePcrBanks);
+    CreateAuthorityPcrEvent (ActivePcrBanks);
   }
 }
 
