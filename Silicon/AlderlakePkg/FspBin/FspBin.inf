@@ -11,8 +11,8 @@
 
 [UserExtensions.SBL."CloneRepo"]
   REPO    = https://github.com/intel/FSP.git
-  COMMIT  = 78826231e11a9d395beaeab348f6169caa3f185c
-  
+  COMMIT  = cf40b9ec6c7b0e4fc00ded7e121ea879cde94f6a
+
 [UserExtensions.SBL."CopyList"]
 # For ADL-S
   AlderLakeFspBinPkg/IoT/AlderLakeS/Fsp.fd                    : Silicon/AlderlakePkg/Adls/FspBin/FspDbg.bin

@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -166,80 +166,6 @@ CsmePciReadBuffer (
 }
 
 /**
-  Check if the update image has the same version as the flash image.
-
-  @param[in]  buffer         Buffer of Update Image.
-  @param[in]  bufferLength   Length of the buffer in bytes.
-  @param[in]  UpdateApi      Pointer to update service API's
-  @param[out] isSameVersion  TRUE if same version, FALSE if not. Caller allocated.
-
-  @retval  EFI_SUCCESS      Update successful
-  @retval  other            error status from the routine
-**/
-static UINT32
-IsUpdateToSameVersion(
-  IN  UINT8   *Buffer,
-  IN  UINT32  BufferLength,
-  IN  CSME_UPDATE_DRIVER_OUTPUT *UpdateApi,
-  OUT BOOLEAN *IsSameVersion
-  )
-{
-  UINT32   Status;
-  UINT16   flashMajor   = 0;
-  UINT16   flashMinor   = 0;
-  UINT16   flashHotfix  = 0;
-  UINT16   flashBuild   = 0;
-  UINT16   bufferMajor  = 0;
-  UINT16   bufferMinor  = 0;
-  UINT16   bufferHotfix = 0;
-  UINT16   bufferBuild  = 0;
-
-  if (Buffer == NULL || BufferLength == 0 || IsSameVersion == NULL) {
-    Status = INTERNAL_ERROR;
-    return Status;
-  }
-
-  *IsSameVersion = FALSE;
-
-  Status = UpdateApi->FwuPartitionVersionFromFlash(
-                        FPT_PARTITION_NAME_FTPR,
-                        &flashMajor,
-                        &flashMinor,
-                        &flashHotfix,
-                        &flashBuild
-                        );
-  if (Status != SUCCESS) {
-    return Status;
-  }
-
-  Status = UpdateApi->FwuPartitionVersionFromBuffer(
-                        Buffer,
-                        BufferLength,
-                        FPT_PARTITION_NAME_FTPR,
-                        &bufferMajor,
-                        &bufferMinor,
-                        &bufferHotfix,
-                        &bufferBuild
-                        );
-  if (Status != SUCCESS) {
-    return Status;
-  }
-
-  if (flashMajor == bufferMajor &&
-      flashMinor == bufferMinor &&
-      flashHotfix == bufferHotfix &&
-      flashBuild == bufferBuild)
-  {
-    *IsSameVersion = TRUE;
-  }
-
-  DEBUG((DEBUG_ERROR, "OldVer %d.%d.%d.%d\n", flashMajor, flashMinor, flashHotfix, flashBuild));
-  DEBUG((DEBUG_ERROR, "NewVer %d.%d.%d.%d\n", bufferMajor, bufferMinor, bufferHotfix, bufferBuild));
-
-  return Status;
-}
-
-/**
   Display send image status.
 
   A callback function that reports the progress of sending
@@ -283,9 +209,7 @@ StartCsmeUpdate (
   )
 {
   UINT32            UpdateStatus;
-  BOOLEAN           AllowSameVersion;
   UINT16            EnabledState;
-  BOOLEAN           IsSameVersion;
   UINT32            FirmwareType;
   UINT32            PchSku;
   UINT32            Index;
@@ -298,9 +222,7 @@ StartCsmeUpdate (
   UINT32            Timer;
   UINT32            PreviousPercent;
 
-  AllowSameVersion  = TRUE;
   EnabledState      = FALSE;
-  IsSameVersion     = FALSE;
   InProgress        = FALSE;
   FirmwareType      = FWU_FW_TYPE_INVALID;
   PchSku            = FWU_PCH_SKU_INVALID;
@@ -324,27 +246,6 @@ StartCsmeUpdate (
 
   if (EnabledState == FW_UPDATE_DISABLED) {
     UpdateStatus = FWU_LOCAL_DIS;
-    goto End;
-  }
-
-  //
-  // For full update, check if update to the same version
-  //
-  UpdateStatus = IsUpdateToSameVersion(
-                  Buffer,
-                  (UINT32)BufferLength,
-                  UpdateApi,
-                  &IsSameVersion
-                  );
-  if (UpdateStatus != SUCCESS) {
-    goto End;
-  }
-
-  //
-  // Need /s option for same version
-  //
-  if (IsSameVersion && !AllowSameVersion) {
-    UpdateStatus = FWU_ALLOWSV_RS_MISSING;
     goto End;
   }
 
@@ -511,7 +412,7 @@ StartCsmeUpdate (
 
 End:
   if (UpdateStatus != SUCCESS) {
-    DEBUG((DEBUG_ERROR, "%a\n", GetErrorString (UpdateStatus)));
+    DEBUG((DEBUG_ERROR, "CSME update failed. Error Code: 0x%X\n", UpdateStatus));
     return EFI_DEVICE_ERROR;
   }
   return EFI_SUCCESS;

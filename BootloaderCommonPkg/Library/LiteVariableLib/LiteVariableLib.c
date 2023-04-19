@@ -57,7 +57,7 @@ GetVariableInstance (
 
 **/
 VOID *
-GetVaraibelStoreBase (
+GetVariableStoreBase (
   IN OUT  UINT32 *Size      OPTIONAL
   )
 {
@@ -194,7 +194,7 @@ GetActiveVaraibelStoreBase (
   VARIABLE_STORE_HEADER  *VarStoreHdrPtr2;
   VARIABLE_STORE_HEADER  *VarStoreHdrPtr;
 
-  VarStoreHdrPtr1 = (VARIABLE_STORE_HEADER *)GetVaraibelStoreBase (&VarStoreLen);
+  VarStoreHdrPtr1 = (VARIABLE_STORE_HEADER *)GetVariableStoreBase (&VarStoreLen);
   if (VarStoreHdrPtr1 == NULL) {
     return NULL;
   }
@@ -243,7 +243,7 @@ InitializeVariableStore (
   UINT8                   State;
   EFI_STATUS              Status;
 
-  VarStoreHdrPtr1 = (VARIABLE_STORE_HEADER *)GetVaraibelStoreBase (&FullVarStoreLen);
+  VarStoreHdrPtr1 = (VARIABLE_STORE_HEADER *)GetVariableStoreBase (&FullVarStoreLen);
   if (VarStoreHdrPtr1 == NULL) {
     return EFI_NOT_READY;
   }
@@ -591,7 +591,7 @@ Reclaim (
 
   DEBUG ((DEBUG_INFO, "Reclaiming variable storage\n"));
 
-  VarStoreHdrPtr1 = (VARIABLE_STORE_HEADER *)GetVaraibelStoreBase (&FullVarStoreLen);
+  VarStoreHdrPtr1 = (VARIABLE_STORE_HEADER *)GetVariableStoreBase (&FullVarStoreLen);
   if (VarStoreHdrPtr1 == NULL) {
     return EFI_NOT_READY;
   }

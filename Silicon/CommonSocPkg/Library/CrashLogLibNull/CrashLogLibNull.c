@@ -1,7 +1,7 @@
 /** @file
   This file contains the CrashLog feature support library template.
 
-  Copyright (c) 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2022 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -9,19 +9,6 @@
 #include <Uefi.h>
 #include <IndustryStandard/Acpi.h>
 #include <Library/CrashLogLib.h>
-
-/**
-  Collect CPU CrashLog data from Telemetry SRAM and store in ACPI BERT Table .
-
-**/
-VOID
-EFIAPI
-GetCrashLogData (
-  VOID
-)
-{
-  return;
-}
 
 /**
   Update BERT Table with Crash Log Telemetry SRAM data
