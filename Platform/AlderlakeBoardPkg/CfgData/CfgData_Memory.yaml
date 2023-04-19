@@ -188,6 +188,7 @@
       value        : 0x0
   - MrcSafeConfig :
       name         : MRC Safe Config
+      type         : Combo
       option       : $EN_DIS
       help         : >
                      Enables/Disable MRC Safe Config
