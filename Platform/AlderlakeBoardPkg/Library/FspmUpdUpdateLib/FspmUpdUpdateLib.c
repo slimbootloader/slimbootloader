@@ -715,4 +715,9 @@ UpdateFspConfig (
     Fspmcfg->IbeccOperationMode = 2;
   }
 #endif
+
+#if PLATFORM_RPLP
+  Fspmcfg->I2cPostCodeEnable = MemCfgData->I2cPostCode;
+#endif
+
 }
