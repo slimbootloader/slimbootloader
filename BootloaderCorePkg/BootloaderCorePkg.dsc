@@ -1,7 +1,7 @@
 ## @file
 # Provides driver and definitions to build bootloader.
 #
-# Copyright (c) 2016 - 2022, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2016 - 2023, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -136,6 +136,7 @@
   TimerLib|BootloaderCommonPkg/Library/AcpiTimerLib/AcpiTimerLib.inf
   DebugPortLib|BootloaderCommonPkg/Library/DebugPortLib/DebugPortLibNull.inf
   CrashLogLib|Silicon/CommonSocPkg/Library/CrashLogLibNull/CrashLogLibNull.inf
+  FusaConfigLib|Silicon/CommonSocPkg/Library/FusaConfigLibNull/FusaConfigLibNull.inf
 
 ################################################################################
 #

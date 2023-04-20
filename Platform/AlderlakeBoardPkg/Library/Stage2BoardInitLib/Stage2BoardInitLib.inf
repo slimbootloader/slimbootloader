@@ -76,6 +76,7 @@
   PciePm
   PrintLib
   CrashLogLib
+  FusaConfigLib
 
 [Guids]
   gOsConfigDataGuid
