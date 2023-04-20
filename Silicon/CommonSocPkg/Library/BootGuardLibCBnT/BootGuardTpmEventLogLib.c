@@ -441,26 +441,32 @@ typedef struct {
 //
 typedef union {
   struct {
-    UINT32 KmId           : 4;      // 0-3   Key Manifest ID used for verified Key Manifest
-    UINT32 MeasuredBoot   : 1;      // 4     perform measured boot
-    UINT32 VerifiedBoot   : 1;      // 5     perform verified boot
-    UINT32 Hap            : 1;      // 6     high assurance platform
-    UINT32 TxtSupported   : 1;      // 7     txt supported
-    UINT32 Reserved       : 1;      // 8     must be 0
-    UINT32 Dcd            : 1;      // 9     disable CPU debug
-    UINT32 Dbi            : 1;      // 10    disable BSP init
-    UINT32 Pbe            : 1;      // 11    protect BIOS environment
-    UINT32 Bbp            : 1;      // 12    bypass boot policy - fast S3 resume
-    UINT32 TpmType        : 2;      // 13-14 TPM Type
-    UINT32 TpmSuccess     : 1;      // 15    TPM Success
-    UINT32 Reserved2      : 4;      // 16-19 BIOS Heartbeat
-    UINT32 TxtProfile     : 5;      // 20-24 TXT profile selection
-    UINT32 MemScrubPolicy : 2;      // 25-26 Memory scrubbing policy
-    UINT32 KmArbEn        : 1;      // 27    KM ARB enable
-    UINT32 BpmArbEn       : 1;      // 28    BPM ARB enable
-    UINT32 Reserved3      : 3;      // 29-31
+    UINT64 KmId               : 4;      // 0-3   Key Manifest ID used for verified Key Manifest
+    UINT64 MeasuredBoot       : 1;      // 4     perform measured boot
+    UINT64 VerifiedBoot       : 1;      // 5     perform verified boot
+    UINT64 HAP                : 1;      // 6     high assurance platform
+    UINT64 TxtSupported       : 1;      // 7     txt supported
+    UINT64 BootMedia          : 1;      // 8     Boot media
+    UINT64 DCD                : 1;      // 9     disable CPU debug
+    UINT64 DBI                : 1;      // 10    disable BSP init
+    UINT64 PBE                : 1;      // 11    protect BIOS environment
+    UINT64 BBP                : 1;      // 12    bypass boot policy - fast S3 resume
+    UINT64 TpmType            : 2;      // 13-14 TPM Type
+    UINT64 TpmSuccess         : 1;      // 15    TPM Success
+    UINT64 Reserved1          : 1;      // 16
+    UINT64 BootPolicies       : 1;      // 17    PFR supported
+    UINT64 BackupActions      : 2;      // 18-19 Backup actions
+    UINT64 TxtProfile         : 5;      // 20-24 TXT profile selection
+    UINT64 MemScrubPolicy     : 2;      // 25-26 Memory scrubbing policy
+    UINT64 Reserved2          : 2;      // 27-28
+    UINT64 DmaProtection      : 1;      // 29    DMA Protection
+    UINT64 Reserved3          : 2;      // 30-31
+    UINT64 SCrtmStatus        : 3;      // 32-34 S-CRTM status
+    UINT64 Cosign             : 1;      // 35    CPU co-signing
+    UINT64 TpmStartupLocality : 1;      // 36    TPM startup locality.
+    UINT64 Reserved           :27;      // 37-63
   } Bits;
-  UINT32 Data;
+  UINT64 Data;
 } ACM_BIOS_POLICY;
 
 
@@ -1102,11 +1108,10 @@ NeedAuthorityMeasure (
 /**
   Create DetailPCR event log.
 
-  @param[in] TpmType  TPM type
+  @param[in] ActivePcrBanks   Active PCR banks
 **/
 VOID
 CreateDetailPcrEvent (
-  IN TPM_TYPE TpmType,
   IN UINT32   ActivePcrBanks
   )
 {
@@ -1162,11 +1167,10 @@ CreateDetailPcrEvent (
 /**
   Create AuthorityPCR event log.
 
-  @param[in] TpmType  TPM type
+  @param[in] ActivePcrBanks Active PCR banks
 **/
 VOID
 CreateAuthorityPcrEvent (
-  IN TPM_TYPE TpmType,
   IN UINT32   ActivePcrBanks
   )
 {
@@ -1192,25 +1196,56 @@ CreateAuthorityPcrEvent (
     }
 }
 
+/**
+  Hash and log ACM extended event entry into the TCG Event Log.
+
+  @param[in] DigestList    Pointer to a TPML_DIGEST_VALUES structure.
+  @param[in] NewEventHdr   Pointer to a TCG_PCR_EVENT_HDR data structure.
+  @param[in] NewEventData  Pointer to the new event data.
+
+  @retval EFI_SUCCESS           The new event log entry was added.
+  @retval EFI_OUT_OF_RESOURCES  No enough memory to log the new event.
+**/
+EFI_STATUS
+LogAcmPcrExtendedEvent (
+  IN      TPML_DIGEST_VALUES        *DigestList,
+  IN      TCG_PCR_EVENT2_HDR        *NewEventHdr,
+  IN      UINT8                     *NewEventData
+  )
+{
+  UINT8                             *DigestBuffer;
+
+  DigestBuffer = (UINT8 *)&NewEventHdr->Digests;
+  DigestBuffer = CopyDigestListToBuffer (DigestBuffer, DigestList, PcdGet32(PcdMeasuredBootHashMask));
+  CopyMem (DigestBuffer, &NewEventHdr->EventSize, sizeof (NewEventHdr->EventSize));
+  DigestBuffer = DigestBuffer + sizeof (NewEventHdr->EventSize);
+  CopyMem (DigestBuffer, NewEventData, NewEventHdr->EventSize);
+  TpmLogEvent (NewEventHdr, (UINT8 *) NewEventData);
+
+  return EFI_SUCCESS;
+}
+
 
 /**
   Create Locality Startup event entry
 
-  @param[in] TpmType        TPM type
+  @param[in] StartupLocality  Startup locality
+  @param[in] TpmType          TPM type
 **/
 VOID
 CreateLocalityStartupEvent (
-  IN UINT8              TpmType,
+  IN UINT8              StartupLocality,
   IN UINT32             ActivePcrBanks
   )
 {
-  TCG_EfiStartupLocalityEvent     StartupLocalityEvent;
-  TCG_PCR_EVENT2_HDR              PcrEventHdr;
+  TCG_PCR_EVENT2_HDR               PcrEventHdr;
   UINT8                            Sha1[SHA1_DIGEST_SIZE];
   UINT8                            Sha256[SHA256_DIGEST_SIZE];
   UINT8                            Sha384[SHA384_DIGEST_SIZE];
   UINT8                            Sm3[SM3_256_DIGEST_SIZE];
-  TPML_DIGEST_VALUES              *Digests;
+  TPML_DIGEST_VALUES               DigestList;
+  TCG_EfiStartupLocalityEvent      LocalityEventData;
+  STATIC CONST CHAR8               LocalityString[] = "StartupLocality\0";
 
   ZeroMem (&Sha1, SHA1_DIGEST_SIZE);
   ZeroMem (&Sha256, SHA256_DIGEST_SIZE);
@@ -1219,40 +1254,38 @@ CreateLocalityStartupEvent (
 
   PcrEventHdr.PCRIndex = 0;
   PcrEventHdr.EventType = EV_NO_ACTION;
-  PcrEventHdr.EventSize = sizeof (StartupLocalityEvent);
+  PcrEventHdr.EventSize = sizeof (LocalityEventData);
 
-  Digests = &PcrEventHdr.Digests;
-  ZeroMem (Digests, sizeof(TPML_DIGEST_VALUES));
+  ZeroMem (&DigestList, sizeof(TPML_DIGEST_VALUES));
 
   if ((ActivePcrBanks & HASH_ALG_SHA1) != 0) {
-    Digests->digests[Digests->count].hashAlg = TPM_ALG_SHA1;
-    CopyMem (Digests->digests[Digests->count].digest.sha1, Sha1, SHA1_DIGEST_SIZE);
-    Digests->count ++;
+    DigestList.digests[DigestList.count].hashAlg = TPM_ALG_SHA1;
+    CopyMem (DigestList.digests[DigestList.count].digest.sha1, Sha1, SHA1_DIGEST_SIZE);
+    DigestList.count ++;
   }
 
   if ((ActivePcrBanks & HASH_ALG_SHA256) != 0) {
-    Digests->digests[Digests->count].hashAlg = TPM_ALG_SHA256;
-    CopyMem (Digests->digests[Digests->count].digest.sha256, Sha256, SHA256_DIGEST_SIZE);
-    Digests->count ++;
+    DigestList.digests[DigestList.count].hashAlg = TPM_ALG_SHA256;
+    CopyMem (DigestList.digests[DigestList.count].digest.sha256, Sha256, SHA256_DIGEST_SIZE);
+    DigestList.count ++;
   }
 
   if ((ActivePcrBanks & HASH_ALG_SHA384) != 0) {
-    Digests->digests[Digests->count].hashAlg = TPM_ALG_SHA384;
-    CopyMem (Digests->digests[Digests->count].digest.sha384, Sha384, SHA384_DIGEST_SIZE);
-    Digests->count ++;
+    DigestList.digests[DigestList.count].hashAlg = TPM_ALG_SHA384;
+    CopyMem (DigestList.digests[DigestList.count].digest.sha384, Sha384, SHA384_DIGEST_SIZE);
+    DigestList.count ++;
   }
 
   if ((ActivePcrBanks & HASH_ALG_SM3_256) != 0) {
-    Digests->digests[Digests->count].hashAlg = TPM_ALG_SM3_256;
-    CopyMem (Digests->digests[Digests->count].digest.sm3_256, Sm3, SM3_256_DIGEST_SIZE);
-    Digests->count ++;
+    DigestList.digests[DigestList.count].hashAlg = TPM_ALG_SM3_256;
+    CopyMem (DigestList.digests[DigestList.count].digest.sm3_256, Sm3, SM3_256_DIGEST_SIZE);
+    DigestList.count ++;
   }
 
-  CopyMem (StartupLocalityEvent.Signature, TCG_EfiStartupLocalityEvent_SIGNATURE,
-                                              sizeof (StartupLocalityEvent.Signature));
-  StartupLocalityEvent.StartupLocality = 0x03;
+  CopyMem (LocalityEventData.Signature, LocalityString, AsciiStrSize (LocalityString));
+  LocalityEventData.StartupLocality = StartupLocality;
 
-  TpmLogEvent ( &PcrEventHdr, (const UINT8 *)&StartupLocalityEvent);
+  LogAcmPcrExtendedEvent (&DigestList, &PcrEventHdr, (UINT8 *) &LocalityEventData);
 }
 
 
@@ -1268,14 +1301,42 @@ CreateTpmEventLog (
 {
   UINT32               ActivePcrBanks;
   UINT32               TpmHashAlgorithmBitmap;
+  ACM_BIOS_POLICY      AcmPolicySts;
+  UINT8                TpmStartupLocality;
 
-  if (IsMeasuredBoot()) {
+  AcmPolicySts.Data = GetAcmPolicySts ();
 
-    Tpm2GetCapabilitySupportedAndActivePcrs(&TpmHashAlgorithmBitmap, &ActivePcrBanks);
+  Tpm2GetCapabilitySupportedAndActivePcrs (&TpmHashAlgorithmBitmap, &ActivePcrBanks);
 
-    CreateLocalityStartupEvent (TpmType, ActivePcrBanks);
-    CreateDetailPcrEvent (TpmType, ActivePcrBanks);
-    CreateAuthorityPcrEvent (TpmType, ActivePcrBanks);
+  //
+  // Initialize TPM Startup locality to 0
+  //
+  TpmStartupLocality = LOCALITY_0_INDICATOR;
+
+  //
+  // If BootGuard ACM is the S-CRTM, check for the TPM Startup locality used.
+  //   b'001--> BTG / b'010 (2) --> TXT / b'100 (4) --> PFR
+  //
+  if (AcmPolicySts.Bits.SCrtmStatus != 0) {
+    //
+    // Update TPM startup locality based on the ACM Policy Status TpmStartupLocality field:
+    //   0x0 : Startup Locality = 3
+    //   0x1 : Startup Locality = 0
+    //
+    if (AcmPolicySts.Bits.TpmStartupLocality == 0) {
+      TpmStartupLocality = LOCALITY_3_INDICATOR;
+    }
+  }
+
+  CreateLocalityStartupEvent (TpmStartupLocality, ActivePcrBanks);
+
+  //
+  // If BootGuard ACM is the S-CRTM,
+  // create event logs from previous PCR extensions on behalf of ACM.
+  //
+  if (AcmPolicySts.Bits.SCrtmStatus != 0) {
+    CreateDetailPcrEvent (ActivePcrBanks);
+    CreateAuthorityPcrEvent (ActivePcrBanks);
   }
 }
 
