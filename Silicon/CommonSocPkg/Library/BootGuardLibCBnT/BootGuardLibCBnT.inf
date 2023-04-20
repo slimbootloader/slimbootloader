@@ -46,3 +46,4 @@
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
   gPlatformModuleTokenSpaceGuid.PcdTopSwapRegionSize
+  gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootHashMask

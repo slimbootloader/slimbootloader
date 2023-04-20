@@ -169,6 +169,7 @@ TpmTcgLogInit (
 
 **/
 RETURN_STATUS
+EFIAPI
 CreateTpmEventLogHob (
   )
 {
@@ -380,6 +381,7 @@ TpmLogSpecIDEvent (
   @retval Others           Unable to log event in TCG Event log.
 **/
 RETURN_STATUS
+EFIAPI
 TpmLogEvent (
   IN  CONST  TCG_PCR_EVENT2_HDR      *EventHdr,
   IN  CONST  UINT8                   *EventData
