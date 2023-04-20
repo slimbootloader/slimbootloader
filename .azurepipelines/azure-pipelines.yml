@@ -105,6 +105,10 @@ jobs:
         Build.Name:   "idv"
         Build.Arch:   "-a x64"
         Build.Target: ""
+      RPLS_X86_DEBUG:
+        Build.Name:   "rpls"
+        Build.Arch:   ""
+        Build.Target: ""
 
 
   pool:
@@ -216,7 +220,11 @@ jobs:
         Build.Name:   "idvh"
         Build.Arch:   "-a x64"
         Build.Target: ""
-
+      RPLS_X86_RELEASE:
+        Build.Name:   "rpls"
+        Build.Arch:   ""
+        Build.Target: "-r"
+        
   pool:
     vmImage: 'windows-2019'
 
