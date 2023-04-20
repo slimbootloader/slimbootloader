@@ -27,6 +27,7 @@
 #include <Library/BaseMemoryLib.h>
 #include <GpioPinsVer2Lp.h>
 #include <Library/TccLib.h>
+#include <Library/FusaConfigLib.h>
 
 #include "BoardSaConfigPreMem.h"
 
@@ -450,6 +451,7 @@ UpdateFspConfig (
   Fspmcfg->GtClosEnable               = MemCfgData->GtClosEnable;
   Fspmcfg->VmxEnable                  = MemCfgData->VmxEnable;
   Fspmcfg->Lp5BankMode                = MemCfgData->Lp5BankMode;
+  Fspmcfg->DisableStarv2medPrioOnNewReq = MemCfgData->DisableStarv2medPrioOnNewReq;
 
   // CSI port
   CopyMem (Fspmcfg->IpuLaneUsed, MemCfgData->IpuLaneUsed, sizeof(MemCfgData->IpuLaneUsed));
@@ -707,15 +709,9 @@ UpdateFspConfig (
       }
     }
   }
-#if FixedPcdGetBool(PcdFusaSupport)
-  if ((SiCfgData != NULL) && (SiCfgData->FusaConfigEnable)) {
-    DEBUG((DEBUG_INFO, "FuSa enabled. Overriding CpuCrashLog and IBECC settings to Enabled - All requests protected.\n"));
-    Fspmcfg->CpuCrashLogEnable = 1;
-    Fspmcfg->Ibecc = 1;
-    Fspmcfg->IbeccOperationMode = 2;
-  }
-#endif
 
+  Status = FusaConfigPreMem(FspmUpdPtr);
+  DEBUG((DEBUG_INFO, "FusaConfigPreMem Status %r\n", Status));
 #if PLATFORM_RPLP
   Fspmcfg->I2cPostCodeEnable = MemCfgData->I2cPostCode;
 #endif

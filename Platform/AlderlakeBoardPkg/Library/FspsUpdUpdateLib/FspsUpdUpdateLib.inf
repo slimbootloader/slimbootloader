@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -39,6 +39,7 @@
   ConfigDataLib
   TccLib
   WatchDogTimerLib
+  FusaConfigLib
 
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdFramebufferInitEnabled
@@ -50,4 +51,3 @@
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled
   gPlatformAlderLakeTokenSpaceGuid.PcdAdlLpSupport
   gPlatformAlderLakeTokenSpaceGuid.PcdAdlNSupport
-  gPlatformModuleTokenSpaceGuid.PcdFusaSupport

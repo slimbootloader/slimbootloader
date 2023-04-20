@@ -1,0 +1,26 @@
+### @file
+# Fusa Config support library.
+#
+# Copyright (c) 2023, Intel Corporation. All rights reserved.<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+###
+
+[Defines]
+  INF_VERSION          = 0x00010005
+  BASE_NAME            = FusaConfigLibNull
+  FILE_GUID            = f0d46136-d5f0-4d42-bc58-214a78c558b4
+  MODULE_TYPE          = BASE
+  VERSION_STRING       = 1.0
+  LIBRARY_CLASS        = FusaConfigLib
+
+[Sources]
+  FusaConfigLibNull.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec

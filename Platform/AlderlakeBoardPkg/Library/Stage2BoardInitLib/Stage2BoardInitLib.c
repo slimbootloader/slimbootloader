@@ -16,6 +16,7 @@
 #include <Library/PlatformInfo.h>
 #include <Library/LoaderPerformanceLib.h>
 #include <Library/PciEnumerationLib.h>
+#include <Library/FusaConfigLib.h>
 #include "SioChip.h"
 
 GLOBAL_REMOVE_IF_UNREFERENCED UINT8    mBigCoreCount;
@@ -395,6 +396,7 @@ BoardInit (
 
     break;
   case PostSiliconInit:
+    FusaConfigPostSi();
     FeatureCfgData = (FEATURES_DATA *)FindConfigDataByTag (CDATA_FEATURES_TAG);
     SiCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
     if (IsWdtFlagsSet(WDT_FLAG_TCC_DSO_IN_PROGRESS)) {
