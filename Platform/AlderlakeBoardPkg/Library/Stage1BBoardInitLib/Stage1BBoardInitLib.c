@@ -346,8 +346,8 @@ PlatformFeaturesInit (
   VOID
   )
 {
-  FEATURES_CFG_DATA           *FeaturesCfgData;
-  PLATFORM_DATA               *PlatformData;
+  FEATURES_CFG_DATA           *FeaturesCfgData = NULL;
+  PLATFORM_DATA               *PlatformData = NULL;
   UINTN                        HeciBaseAddress;
   UINT32                       LdrFeatures;
 
@@ -368,7 +368,7 @@ PlatformFeaturesInit (
       LdrFeatures &= ~FEATURE_MEASURED_BOOT;
     }
   } else {
-    DEBUG((DEBUG_INFO, "FEATURES_CFG_DATA is NULL"));
+    DEBUG((DEBUG_ERROR, "FEATURES_CFG_DATA is NULL\n"));
   }
 
   // Disable features by boot guard profile
@@ -381,7 +381,7 @@ PlatformFeaturesInit (
       LdrFeatures &= ~FEATURE_VERIFIED_BOOT;
     }
   } else {
-    DEBUG((DEBUG_INFO, "PLATFORM_DATA is NULL"));
+    DEBUG((DEBUG_ERROR, "PLATFORM_DATA is NULL\n"));
   }
 
   SetFeatureCfg (LdrFeatures);
@@ -411,8 +411,8 @@ TpmInitialize (
 {
   EFI_STATUS                   Status;
   UINT8                        BootMode;
-  PLATFORM_DATA               *PlatformData;
-  BOOT_LOADER_VERSION         *BlVersion;
+  PLATFORM_DATA               *PlatformData = NULL;
+  BOOT_LOADER_VERSION         *BlVersion = NULL;
 
   BootMode     = GetBootMode();
   PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
