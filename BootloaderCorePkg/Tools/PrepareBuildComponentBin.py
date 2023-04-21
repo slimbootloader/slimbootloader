@@ -1,6 +1,6 @@
 ## @ PrepareFspBin.py
 #
-# Copyright (c) 2018 - 2021, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2018 - 2023, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -228,7 +228,7 @@ def Main():
     print(sys.argv)
     sbl_dir          = sys.argv[1]
     silicon_pkg_name = sys.argv[2]
-    fsp_inf_file     = sys.argv[3]
+    fsp_inf          = sys.argv[3]
     microcode_inf    = sys.argv[4]
     target           = sys.argv[5] 
     
@@ -239,9 +239,10 @@ def Main():
     # Leave the final path node as '$AUTO' to allow to determine the repo dir automatically.
     ucode_repo_dir = os.path.abspath (os.path.join(workspace_dir, '$AUTO'))
 
-    fsp_inf = os.path.join(sbl_dir, 'Silicon', silicon_pkg_name, 'FspBin', fsp_inf_file)
+    #fsp_inf = os.path.join(sbl_dir, 'Silicon', silicon_pkg_name, 'FspBin', fsp_inf_file)
     if silicon_pkg_name == 'QemuSocPkg':
         BuildFspBins (qemu_repo_dir, sbl_dir, fsp_inf, silicon_pkg_name, target)
+        #BuildFspBins (qemu_repo_dir, sbl_dir, fsp_inf, silicon_pkg_name, target)
     else:
         CopyBins (fsp_repo_dir, sbl_dir, fsp_inf)
 
