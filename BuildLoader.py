@@ -1443,8 +1443,9 @@ def main():
     for cfgfile in board_cfgs:
         module_name = os.path.basename(os.path.dirname(cfgfile))[:-8] + os.path.basename(cfgfile)[:-3]
         brdcfg = load_source(module_name, cfgfile)
-        board_names.append(brdcfg.Board().BOARD_NAME)
-        module_names.append(brdcfg)
+        if brdcfg.Board().BOARD_NAME:
+            board_names.append(brdcfg.Board().BOARD_NAME)
+            module_names.append(brdcfg)
 
     ap = argparse.ArgumentParser()
     sp = ap.add_subparsers(help='command')
@@ -1501,6 +1502,74 @@ def main():
             files.extend ([
             ])
 
+        def GetCopyList (driver_inf):
+            fd = open (driver_inf, 'r')
+            lines = fd.readlines()
+            fd.close ()
+
+            have_copylist_section = False
+            copy_list      = []
+            for line in lines:
+                line = line.strip ()
+                if line.startswith('['):
+                    if line.startswith('[UserExtensions.SBL."CopyList"]'):
+                        have_copylist_section = True
+                    else:
+                        have_copylist_section = False
+
+                if have_copylist_section:
+                    match = re.match("^(.+)\s*:\s*(.+)", line)
+                    if match:
+                        copy_list.append((match.group(1).strip(), match.group(2).strip()))
+
+            return copy_list
+
+        if args.board:
+            for index, name in enumerate(board_names):
+                if args.board == name:
+
+                    board  = module_names[index].Board()
+                    if hasattr(board, 'FSP_INF_FILE'):
+                        fsp_inf = board.FSP_INF_FILE
+                    else:
+                        fsp_inf = 'Silicon/%s/FspBin/FspBin.inf' % board.SILICON_PKG_NAME
+
+                    fsp_inf_full_path = os.path.join(sbl_dir, fsp_inf)
+                    dest_dir = sbl_dir
+
+                    plt_dir = os.environ['PLT_SOURCE'] if 'PLT_SOURCE' in os.environ else None
+
+                    if not os.path.exists(fsp_inf_full_path) and plt_dir:
+                        fsp_inf_full_path = os.path.join(plt_dir, fsp_inf)
+                        dest_dir = plt_dir
+
+                    if os.path.exists(fsp_inf_full_path):
+                        for _, file in GetCopyList (fsp_inf_full_path):
+                            file_full_path = os.path.join(dest_dir, file)
+                            if os.path.exists(file_full_path):
+                                print('Removing %s' % file_full_path)
+                                os.remove(file_full_path)
+
+                    if hasattr(board, 'MICROCODE_INF_FILE'):
+                        microcode_inf = board.MICROCODE_INF_FILE
+                    else:
+                        microcode_inf = 'Silicon/%s/Microcode/Microcode.inf' % board.SILICON_PKG_NAME
+
+                    micorcode_inf_full_path = os.path.join(sbl_dir, microcode_inf)
+                    dest_dir = sbl_dir
+                    if not os.path.exists(micorcode_inf_full_path) and plt_dir:
+                        micorcode_inf_full_path = os.path.join(plt_dir, microcode_inf)
+                        dest_dir = plt_dir
+
+                    if os.path.exists(micorcode_inf_full_path):
+                        for _, file in GetCopyList (micorcode_inf_full_path):
+                            file_full_path = os.path.join(dest_dir, file)
+                            if os.path.exists(file_full_path):
+                                print('Removing %s' % file_full_path)
+                                os.remove(file_full_path)
+
+                    break
+
         for dir in dirs:
             dirpath = os.path.join (workspace, dir)
             print('Removing %s' % dirpath)
@@ -1520,6 +1589,7 @@ def main():
 
     cleanp = sp.add_parser('clean', help='clean build dir')
     cleanp.add_argument('-d',  '--distclean', action='store_true', help='Distribution clean')
+    cleanp.add_argument('board', nargs='?', metavar='board', choices=board_names, help='Board Name (%s)' % ', '.join(board_names))
     cleanp.set_defaults(func=cmd_clean)
 
     def cmd_build_dsc(args):
