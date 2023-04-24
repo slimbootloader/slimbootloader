@@ -63,4 +63,3 @@
   AlderLakeFspBinPkg/IoT/AlderLakeN/Vbt/Vbt.bin                          : Platform/AlderlakeBoardPkg/VbtBin/VbtAdlN.dat
   AlderLakeFspBinPkg/IoT/AlderLakeN/Vbt/VbtAdlN.json                     : Platform/AlderlakeBoardPkg/VbtBin/VbtAdlN.json
   FSP_License.pdf                                                        : Silicon/AlderlakePkg/Adln/FspBin/FSP_License.pdf
-
