@@ -28,7 +28,7 @@ LoadComponentCallback (
     AddMeasurePoint (0x4080);
   }
 
-  if (FeaturePcdGet (PcdMeasuredBootEnabled) && (GetFeatureCfg() & FEATURE_MEASURED_BOOT)) {
+  if (MEASURED_BOOT_ENABLED() && GetBootMode() != BOOT_ON_S3_RESUME) {
     // Extend the OS component hash
     ExtendStageHash (CbInfo);
   }
@@ -662,7 +662,7 @@ BeforeOSJump (
   if (LoaderPlatformInfo == NULL) {
     return ;
   }
-  if (FeaturePcdGet (PcdMeasuredBootEnabled) && (LoaderPlatformInfo->LdrFeatures & FEATURE_MEASURED_BOOT)) {
+  if (MEASURED_BOOT_ENABLED() && GetBootMode() != BOOT_ON_S3_RESUME)  {
     PlatformDebugEnabled = PlatformDebugStateEnabled (LoaderPlatformInfo->HwState);
     if(TpmIndicateReadyToBoot (PlatformDebugEnabled) != EFI_SUCCESS) {
       DEBUG ((DEBUG_ERROR, "FAILED to complete TPM ReadyToBoot actions. \n"));

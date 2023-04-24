@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -66,6 +66,7 @@
 #include <Register/Intel/Msr/ArchitecturalMsr.h>
 #include <Library/StringSupportLib.h>
 #include <PreOsHeader.h>
+#include <Library/BootloaderCoreLib.h>
 
 
 #define MKHI_BOOTLOADER_SEED_LEN       64
