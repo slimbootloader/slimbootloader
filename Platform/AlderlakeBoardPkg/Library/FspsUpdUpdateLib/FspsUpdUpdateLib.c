@@ -36,6 +36,8 @@
 #include <Library/ContainerLib.h>
 #include "TsnSubRegion.h"
 #include <Library/PciePm.h>
+#include <IndustryStandard/UefiTcgPlatform.h>
+#include <Library/TpmLib.h>
 #include <Library/FusaConfigLib.h>
 
 #define CPU_PCIE_DT_HALO_MAX_ROOT_PORT     3
@@ -334,8 +336,8 @@ TccModePostMemConfig (
   FSPS_UPD  *FspsUpd
 )
 {
-  UINT32                                    *TccCacheconfigBase;
-  UINT32                                     TccCacheconfigSize;
+  UINT32                                    *TccCacheConfigBase;
+  UINT32                                     TccCacheConfigSize;
   UINT32                                    *TccCrlBase;
   UINT32                                     TccCrlSize;
   UINT32                                    *TccStreamBase;
@@ -348,6 +350,9 @@ TccModePostMemConfig (
   TCC_CFG_DATA                              *TccCfgData;
   EFI_STATUS                                 Status;
   PLATFORM_DATA                             *PlatformData;
+  EFI_PLATFORM_FIRMWARE_BLOB                 TccStreamCfgBlob;
+  EFI_PLATFORM_FIRMWARE_BLOB                 TccCacheCfgBlob;
+  EFI_PLATFORM_FIRMWARE_BLOB                 TccCrlBlob;
 
   Status = EFI_SUCCESS;
 
@@ -417,6 +422,12 @@ TccModePostMemConfig (
         DEBUG ((DEBUG_INFO, "Dump Tcc Stream with MIN(0x40, TccStreamSize):\n"));
         DumpHex (2, 0, MIN(0x40, TccStreamSize), TccStreamBase);
 
+        if (MEASURED_BOOT_ENABLED() && (GetBootMode() != BOOT_ON_S3_RESUME)) {
+          TccStreamCfgBlob.BlobBase = (UINT64)(UINTN)TccStreamBase;
+          TccStreamCfgBlob.BlobLength = TccStreamSize;
+          TpmHashAndExtendPcrEventLog (0, (UINT8 *)TccStreamBase, TccStreamSize, EV_PLATFORM_CONFIG_FLAGS, sizeof(TccStreamCfgBlob), (UINT8 *)&TccStreamCfgBlob);
+        }
+
        // Override Tcc settings from Streams
           StreamConfig   = (TCC_STREAM_CONFIGURATION *) TccStreamBase;
           PolicyConfig = (BIOS_SETTINGS *) &StreamConfig->BiosSettings;
@@ -455,16 +466,22 @@ TccModePostMemConfig (
   }
 
   // Load Tcc cache config binary from container
-  TccCacheconfigBase = NULL;
-  TccCacheconfigSize = 0;
+  TccCacheConfigBase = NULL;
+  TccCacheConfigSize = 0;
   Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'C', 'C', 'C'),
-                                (VOID **)&TccCacheconfigBase, &TccCacheconfigSize);
+                                (VOID **)&TccCacheConfigBase, &TccCacheConfigSize);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "TCC  Cache config not found! %r\n", Status));
   } else {
-    FspsUpd->FspsConfig.TccCacheCfgBase = (UINT32)(UINTN)TccCacheconfigBase;
-    FspsUpd->FspsConfig.TccCacheCfgSize = TccCacheconfigSize;
-    DEBUG ((DEBUG_INFO, "Load Tcc Cache @0x%p, size = 0x%x\n", TccCacheconfigBase, TccCacheconfigSize));
+    FspsUpd->FspsConfig.TccCacheCfgBase = (UINT32)(UINTN)TccCacheConfigBase;
+    FspsUpd->FspsConfig.TccCacheCfgSize = TccCacheConfigSize;
+    DEBUG ((DEBUG_INFO, "Load Tcc Cache @0x%p, size = 0x%x\n", TccCacheConfigBase, TccCacheConfigSize));
+
+    if (MEASURED_BOOT_ENABLED() && (GetBootMode() != BOOT_ON_S3_RESUME)) {
+      TccCacheCfgBlob.BlobBase = (UINT64)(UINTN)TccCacheConfigBase;
+      TccCacheCfgBlob.BlobLength = TccCacheConfigSize;
+      TpmHashAndExtendPcrEventLog (0, (UINT8 *)TccCacheConfigBase, TccCacheConfigSize, EV_PLATFORM_CONFIG_FLAGS, sizeof(TccCacheCfgBlob), (UINT8 *)&TccCacheCfgBlob);
+    }
 
     FspsUpd->FspsConfig.TccMode = 1;
 #if FixedPcdGet8(PcdAdlNSupport) == 0
@@ -484,6 +501,12 @@ TccModePostMemConfig (
     FspsUpd->FspsConfig.TccCrlBinSize = TccCrlSize;
     DEBUG ((DEBUG_INFO, "Load Tcc Crl @0x%p, size = 0x%x\n", TccCrlBase, TccCrlSize));
     DumpHex (2, 0, MIN(0x40, TccCrlSize), TccCrlBase);
+
+    if (MEASURED_BOOT_ENABLED() && (GetBootMode() != BOOT_ON_S3_RESUME)) {
+      TccCrlBlob.BlobBase = (UINT64)(UINTN)TccCrlBase;
+      TccCrlBlob.BlobLength = TccCrlSize;
+      TpmHashAndExtendPcrEventLog (0, (UINT8 *)TccCrlBase, TccCrlSize, EV_EFI_PLATFORM_FIRMWARE_BLOB, sizeof(TccCrlBlob), (UINT8 *)&TccCrlBlob);
+    }
   }
 
   return Status;
@@ -524,6 +547,7 @@ UpdateFspConfig (
   BOOLEAN                     BiosProtected;
   EFI_STATUS                  Status;
   VBIOS_VBT_STRUCTURE         *VbtPtr;
+  EFI_PLATFORM_FIRMWARE_BLOB  TsnCfgBlob;
 
   Address              = 0;
   FspsUpd              = (FSPS_UPD *) FspsUpdPtr;
@@ -762,6 +786,12 @@ UpdateFspConfig (
         FspsConfig->PchTsnMacAddressLow   = TsnSubRegion->MacConfigData.Port[0].MacAddr.U32MacAddr[0];
         FspsConfig->PchTsn1MacAddressHigh = TsnSubRegion->MacConfigData.Port[1].MacAddr.U32MacAddr[1];
         FspsConfig->PchTsn1MacAddressLow  = TsnSubRegion->MacConfigData.Port[1].MacAddr.U32MacAddr[0];
+
+        if (MEASURED_BOOT_ENABLED() && (GetBootMode() != BOOT_ON_S3_RESUME)) {
+          TsnCfgBlob.BlobBase = (UINT64)(UINTN)TsnMacAddrBase;
+          TsnCfgBlob.BlobLength = TsnMacAddrSize;
+          TpmHashAndExtendPcrEventLog (0, (UINT8 *)TsnMacAddrBase, TsnMacAddrSize, EV_PLATFORM_CONFIG_FLAGS, sizeof(TsnCfgBlob), (UINT8 *)&TsnCfgBlob);
+        }
 
         DEBUG ((DEBUG_ERROR, "TSN MAC subregion completed %r\n", Status));
       } else {
