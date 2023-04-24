@@ -39,6 +39,7 @@
   ConfigDataLib
   TccLib
   WatchDogTimerLib
+  TpmLib
   FusaConfigLib
 
 [Pcd]
@@ -46,6 +47,7 @@
   gPlatformModuleTokenSpaceGuid.PcdEnablePciePm
   gPlatformModuleTokenSpaceGuid.PcdFastBootEnabled
   gPlatformModuleTokenSpaceGuid.PcdSblResiliencyEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
 
 [FixedPcd]
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled
