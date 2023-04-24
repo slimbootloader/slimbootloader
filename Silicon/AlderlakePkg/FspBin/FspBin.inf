@@ -63,18 +63,4 @@
   AlderLakeFspBinPkg/IoT/AlderLakeN/Vbt/Vbt.bin                          : Platform/AlderlakeBoardPkg/VbtBin/VbtAdlN.dat
   AlderLakeFspBinPkg/IoT/AlderLakeN/Vbt/VbtAdlN.json                     : Platform/AlderlakeBoardPkg/VbtBin/VbtAdlN.json
   FSP_License.pdf                                                        : Silicon/AlderlakePkg/Adln/FspBin/FSP_License.pdf
-<<<<<<< HEAD
-=======
-# For RPL-S
-  RaptorLakeFspBinPkg/IoT/RaptorLakeS/Fsp.fd                             : Silicon/AlderlakePkg/rpls/FspBin/FspDbg.bin
-  RaptorLakeFspBinPkg/IoT/RaptorLakeS/Fsp.fd                             : Silicon/AlderlakePkg/rpls/FspBin/FspRel.bin
-  RaptorLakeFspBinPkg/IoT/RaptorLakeS/Fsp.bsf                            : Silicon/AlderlakePkg/rpls/FspBin/Fsp.bsf
-  RaptorLakeFspBinPkg/IoT/RaptorLakeS/Include/FspUpd.h                   : Silicon/AlderlakePkg/rpls/Include/FspUpd.h
-  RaptorLakeFspBinPkg/IoT/RaptorLakeS/Include/FsptUpd.h                  : Silicon/AlderlakePkg/rpls/Include/FsptUpd.h
-  RaptorLakeFspBinPkg/IoT/RaptorLakeS/Include/FspmUpd.h                  : Silicon/AlderlakePkg/rpls/Include/FspmUpd.h
-  RaptorLakeFspBinPkg/IoT/RaptorLakeS/Include/FspsUpd.h                  : Silicon/AlderlakePkg/rpls/Include/FspsUpd.h
-  RaptorLakeFspBinPkg/IoT/RaptorLakeS/Include/FspInfoHob.h               : Silicon/AlderlakePkg/rpls/Include/FspInfoHob.h
-  RaptorLakeFspBinPkg/IoT/RaptorLakeS/Vbt/Vbt.bin                        : Platform/RaptorlakeBoardPkg/VbtBin/Vbt_rpls.dat
-  RaptorLakeFspBinPkg/IoT/RaptorLakeS/Vbt/VbtAdlN.json                   : Platform/RaptorlakeBoardPkg/VbtBin/Vbt.json
-  FSP_License.pdf                                                        : Silicon/AlderlakePkg/rpls/FspBin/FSP_License.pdf
->>>>>>> 3c3cb7fb ([RPL-S] Upstream RPL-S PV to open source)
+

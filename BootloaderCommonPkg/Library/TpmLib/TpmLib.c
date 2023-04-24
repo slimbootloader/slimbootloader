@@ -19,6 +19,7 @@
 #include <IndustryStandard/Tpm2Acpi.h>
 #include <Library/SecureBootLib.h>
 #include <Library/ResetSystemLib.h>
+#include <Guid/BootLoaderVersionGuid.h>
 #include "Tpm2CommandLib.h"
 #include "Tpm2DeviceLib.h"
 #include "TpmLibInternal.h"
@@ -50,6 +51,7 @@ CountPcrBankActive (
   @retval CryptoHashAlg Crypo Hash Alg.
 **/
 UINT8
+EFIAPI
 GetCryptoHashAlg (
   UINT32 TcgAlgMask
   )
@@ -76,6 +78,7 @@ GetCryptoHashAlg (
   @retval PcdHashType    TPM Algorithm Id.
 **/
 UINT32
+EFIAPI
 GetTpmHashAlg (
    UINT32 TcgAlgHash
   )
@@ -226,6 +229,7 @@ TpmLibSetActivePcrBanks (
   @retval EFI_NOT_FOUND        TPM Lib data not found.
 **/
 RETURN_STATUS
+EFIAPI
 TpmLibGetActivePcrBanks (
   IN UINT32 *ActivePcrBanks
   )
@@ -304,6 +308,7 @@ TpmPcrBankCheck (
 
 **/
 RETURN_STATUS
+EFIAPI
 DisableTpm (
   VOID
   )
@@ -393,6 +398,7 @@ IsTpmEnabled (
 
 **/
 RETURN_STATUS
+EFIAPI
 GetTpmEventLog (
   OUT UINT64 *Lasa,
   OUT UINT32 *Laml
@@ -433,6 +439,7 @@ GetTpmEventLog (
 
 **/
 RETURN_STATUS
+EFIAPI
 UpdateTpm2AcpiTable (
   IN EFI_ACPI_DESCRIPTION_HEADER *Table
   )
@@ -472,6 +479,34 @@ UpdateTpm2AcpiTable (
 }
 
 /**
+  Extend SBL version in PCR [0].
+
+  @param BlVersion            The current SBL version.
+
+  @retval RETURN_SUCCESS      Operation completed successfully.
+  @retval Others              Unable to extend PCR.
+**/
+RETURN_STATUS
+EFIAPI
+TpmLogCrtmVersionEvent(
+  BOOT_LOADER_VERSION *BlVersion
+  )
+{
+  //
+  // Use FirmwareVersion string to represent CRTM version.
+  // OEMs should get real CRTM version string and measure it.
+  //
+  return TpmHashAndExtendPcrEventLog (
+           0,
+           (UINT8 *)BlVersion,
+           sizeof(BOOT_LOADER_VERSION),
+           EV_S_CRTM_VERSION,
+           sizeof(BOOT_LOADER_VERSION),
+           (UINT8 *)BlVersion
+           );
+}
+
+/**
   Initialize the TPM. Initiate TPM_Startup if not yet done by BootGuard component.
 
   @param BypassTpmInit    If TRUE, skip TPM_Startup as it is done by ACM.
@@ -482,6 +517,7 @@ UpdateTpm2AcpiTable (
   @retval Others                     The request could not be executed successfully.
 **/
 RETURN_STATUS
+EFIAPI
 TpmInit(
   IN BOOLEAN BypassTpmInit,
   IN UINT8  BootMode
@@ -521,8 +557,6 @@ TpmInit(
     goto TpmError;
   }
 
-  // @todo TPM_SelfTest (for dTPM)
-
   // Set TPM Ready Status
   TpmLibSetReadyStatus (1);
 
@@ -531,11 +565,8 @@ TpmInit(
     DEBUG ((DEBUG_INFO, "TCG Event Log initialization skipped.\n"));
   } else {
     Status = TpmTcgLogInit();
-    if (Status == EFI_SUCCESS) {
-      if (!BypassTpmInit) {
-        // TPM_Start was done by SBL via Locality 0
-        TpmLogLocalityEvent (0, ActivePcrBank);
-      }
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_INFO, "TCG Event Log initialization failed.\n"));
     }
   }
 
@@ -561,6 +592,7 @@ TpmError:
 
 **/
 RETURN_STATUS
+EFIAPI
 MeasureSeparatorEvent (
   IN   UINT32  WithError
   )
@@ -645,6 +677,7 @@ Hash and Extend a PCR and log it into TCG event log.
 @retval Others              Unable to extend PCR.
 **/
 RETURN_STATUS
+EFIAPI
 TpmHashAndExtendPcrEventLog (
 IN         TPMI_DH_PCR               PcrHandle,
 IN         UINT8                     *Data,
@@ -727,6 +760,7 @@ IN  CONST  UINT8                     *Event
   @retval Others              Unable to extend PCR.
 **/
 RETURN_STATUS
+EFIAPI
 TpmExtendPcrAndLogEvent (
   IN         TPMI_DH_PCR               PcrHandle,
   IN         TPMI_ALG_HASH             HashAlg,
@@ -886,6 +920,7 @@ TpmChangePlatformAuth (
   @retval Others           Unable to finish handling ReadyToBoot events.
 **/
 RETURN_STATUS
+EFIAPI
 TpmIndicateReadyToBoot (
   IN UINT8 FwDebugEnabled
   )
@@ -923,6 +958,7 @@ TpmIndicateReadyToBoot (
 
 **/
 VOID
+EFIAPI
 ExtendStageHash (
   IN  COMPONENT_CALLBACK_INFO   *CbInfo
   )

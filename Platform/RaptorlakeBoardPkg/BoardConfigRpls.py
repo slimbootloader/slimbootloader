@@ -37,8 +37,6 @@ class Board(BaseBoard):
         self._FSP_PATH_NAME       = 'Silicon/AlderlakePkg/rpls/FspBin'
         self.FSP_INF_FILE         = 'Silicon/AlderlakePkg/FspBin/FspBinRpls.inf'
         self.MICROCODE_INF_FILE   = 'Silicon/AlderlakePkg/Microcode/MicrocodeRpls.inf'
-        self._LP_SUPPORT          = False
-        self._N_SUPPORT           = False
 
         self.PCI_EXPRESS_BASE     = 0xC0000000
         self.PCI_IO_BASE          = 0x00002000
@@ -293,12 +291,6 @@ class Board(BaseBoard):
             dsc['LibraryClasses.%s' % self.BUILD_ARCH].append ('PciePm|Silicon/CommonSocPkg/Library/PciePmNull/PciePmNull.inf')
 
         dsc['PcdsFixedAtBuild'] = ['gPlatformModuleTokenSpaceGuid.PcdAcpiTablesMaxEntry | 40']
-
-        if self._LP_SUPPORT:
-            dsc['PcdsFixedAtBuild'].append ('gPlatformAlderLakeTokenSpaceGuid.PcdAdlLpSupport | TRUE')
-
-        if self._N_SUPPORT:
-            dsc['PcdsFixedAtBuild'].append ('gPlatformAlderLakeTokenSpaceGuid.PcdAdlNSupport | TRUE')
 
         return dsc
 

@@ -11,8 +11,7 @@
 
 [UserExtensions.SBL."CloneRepo"]
   REPO    = https://github.com/intel/FSP.git
-  #COMMIT  = 78826231e11a9d395beaeab348f6169caa3f185c
-  COMMIT = 72b10be1347397e4bcd4f4b08dd12324a40f68aa
+  COMMIT  = 72b10be1347397e4bcd4f4b08dd12324a40f68aa
   
 [UserExtensions.SBL."CopyList"]
 # For RPL-S
@@ -25,5 +24,5 @@
   RaptorLakeFspBinPkg/IoT/RaptorLakeS/Include/FspsUpd.h                  : Silicon/AlderlakePkg/rpls/Include/FspsUpd.h
   RaptorLakeFspBinPkg/IoT/RaptorLakeS/Include/FspInfoHob.h               : Silicon/AlderlakePkg/rpls/Include/FspInfoHob.h
   RaptorLakeFspBinPkg/IoT/RaptorLakeS/Vbt/Vbt.bin                        : Platform/RaptorlakeBoardPkg/VbtBin/Vbt_rpls.dat
-  RaptorLakeFspBinPkg/IoT/RaptorLakeS/Vbt/VbtAdlN.json                   : Platform/RaptorlakeBoardPkg/VbtBin/Vbt.json
+  RaptorLakeFspBinPkg/IoT/RaptorLakeS/Vbt/Vbt.json                       : Platform/RaptorlakeBoardPkg/VbtBin/Vbt.json
   FSP_License.pdf                                                        : Silicon/AlderlakePkg/rpls/FspBin/FSP_License.pdf
