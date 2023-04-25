@@ -47,9 +47,9 @@ LinuxPerfIdToStr (
   case 0x40E0:
     return "Kernel setup";
   case 0x40F0:
-    return "FSP ReadyToBoot/EndOfFirmware notify";
-  case 0x4100:
     return "TPM IndicateReadyToBoot";
+  case 0x4100:
+    return "FSP ReadyToBoot/EndOfFirmware notify";
   default:
     return NULL;
   }

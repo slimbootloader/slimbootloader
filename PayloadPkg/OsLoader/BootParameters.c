@@ -324,6 +324,7 @@ UpdateOsParameters (
   }
   DEBUG ((DEBUG_INFO, "\nDump normal boot image info:\n"));
   DisplayInfo (LoadedImage);
+  AddMeasurePoint(0x40E0);
 
   return Status;
 }

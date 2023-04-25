@@ -646,17 +646,10 @@ BeforeOSJump (
   CHAR8 *Message
   )
 {
-  PLATFORM_SERVICE          *PlatformService;
-  LOADER_PLATFORM_INFO      *LoaderPlatformInfo;
-  DEBUG_LOG_BUFFER_HEADER   *LogBufHdr;
-  UINT8                      PlatformDebugEnabled;
-
-  PlatformService = (PLATFORM_SERVICE *) GetServiceBySignature (PLATFORM_SERVICE_SIGNATURE);
-  if ((PlatformService != NULL) && (PlatformService->NotifyPhase != NULL)) {
-    PlatformService->NotifyPhase (ReadyToBoot);
-    PlatformService->NotifyPhase (EndOfFirmware);
-  }
-  AddMeasurePoint (0x40F0);
+  PLATFORM_SERVICE                              *PlatformService;
+  LOADER_PLATFORM_INFO                          *LoaderPlatformInfo;
+  DEBUG_LOG_BUFFER_HEADER                       *LogBufHdr;
+  UINT8                                          PlatformDebugEnabled;
 
   LoaderPlatformInfo = (LOADER_PLATFORM_INFO *)GetLoaderPlatformInfoPtr();
   if (LoaderPlatformInfo == NULL) {
@@ -667,6 +660,13 @@ BeforeOSJump (
     if(TpmIndicateReadyToBoot (PlatformDebugEnabled) != EFI_SUCCESS) {
       DEBUG ((DEBUG_ERROR, "FAILED to complete TPM ReadyToBoot actions. \n"));
     }
+    AddMeasurePoint (0x40F0);
+  }
+
+  PlatformService = (PLATFORM_SERVICE *) GetServiceBySignature (PLATFORM_SERVICE_SIGNATURE);
+  if ((PlatformService != NULL) && (PlatformService->NotifyPhase != NULL)) {
+    PlatformService->NotifyPhase (ReadyToBoot);
+    PlatformService->NotifyPhase (EndOfFirmware);
   }
   AddMeasurePoint (0x4100);
 
