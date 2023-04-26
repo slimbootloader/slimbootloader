@@ -290,7 +290,6 @@ class Build(object):
         # enforce feature configs rules
         if self._board.ENABLE_SBL_SETUP:
             self._board.ENABLE_PAYLOD_MODULE = 1
-
         if not hasattr(self._board, 'FSP_INF_FILE'):
             self._board.FSP_INF_FILE  = 'Silicon/%s/FspBin/FspBin.inf' % self._board.SILICON_PKG_NAME
         if not hasattr(self._board, 'MICROCODE_INF_FILE'):
