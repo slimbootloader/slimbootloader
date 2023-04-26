@@ -2,7 +2,7 @@
   TPM library routines to provide TPM support.
   For more details, consult TCG TPM specifications.
 
-  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -492,6 +492,11 @@ TpmLogCrtmVersionEvent(
   BOOT_LOADER_VERSION *BlVersion
   )
 {
+
+  if (BlVersion == NULL) {
+    return RETURN_INVALID_PARAMETER;
+  }
+
   //
   // Use FirmwareVersion string to represent CRTM version.
   // OEMs should get real CRTM version string and measure it.

@@ -3,7 +3,7 @@
   For more details, consult 'Event Logging' chapter in TCG  PC Client
   Platform Firmware Profile  specification.
 
-  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
