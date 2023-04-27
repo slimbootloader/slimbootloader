@@ -31,6 +31,44 @@ typedef struct  {
   UINT32 Data[];
 } HDAUDIO_VERB_TABLE;
 
+HDAUDIO_VERB_TABLE HdaVerbTableDisplayAudio = HDAUDIO_VERB_TABLE_INIT (
+  //
+  //  VerbTable: ICL Display Audio Codec
+  //  Revision ID = 0xFF
+  //  Codec Vendor: 0x8086280F
+  //
+  0x8086, 0x280F,
+  0xFF, 0xFF,
+  //
+  // Display Audio Verb Table
+  //
+  // Enable the third converter and 4 pin widgets (for GEN10+, the Vendor Node ID is 02h)
+  0x00278111,
+  // Pin Widget 5 - PORT B - Configuration Default: 0x18560010
+  0x00571C10,
+  0x00571D00,
+  0x00571E56,
+  0x00571F18,
+  // Pin Widget 6 - PORT C - Configuration Default: 0x18560020
+  0x00671C20,
+  0x00671D00,
+  0x00671E56,
+  0x00671F18,
+  // Pin Widget 7 - PORT D - Configuration Default: 0x18560030
+  0x00771C30,
+  0x00771D00,
+  0x00771E56,
+  0x00771F18,
+  // Pin Widget 8 - PORT E - Configuration Default: 0x18560040
+  // For GEN10+ forth port was added and Node ID 8 has this Pin Widget for the forth port
+  0x00871C40,
+  0x00871D00,
+  0x00871E56,
+  0x00871F18,
+  // Disable the third converter and 4 Pins (NID 02h)
+  0x00278100
+);
+
 HDAUDIO_VERB_TABLE HdaVerbTableAlc700 = HDAUDIO_VERB_TABLE_INIT(
   //
   //  VerbTable: (Realtek ALC700) RVP

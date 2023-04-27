@@ -1157,7 +1157,10 @@ UpdateFspConfig (
   SILICON_CFG_DATA   *SiCfgData;
   POWER_CFG_DATA     *PowerCfgData;
   MEMORY_CFG_DATA    *MemCfgData;
+  GRAPHICS_CFG_DATA  *GfxCfgData;
   UINT8              SaDisplayConfigTable[17] = { 0 };
+  UINT32             *HdaVerbTablePtr;
+  UINT8              HdaVerbTableNum;
 
   FspsUpd    = (FSPS_UPD *)FspsUpdPtr;
   Fspscfg     = &FspsUpd->FspsConfig;
@@ -1272,6 +1275,19 @@ UpdateFspConfig (
     Fspscfg->PavpEnable                 = SiCfgData->PavpEnable;
     Fspscfg->CdClock                    = SiCfgData->CdClock;
     Fspscfg->PeiGraphicsPeimInit        = SiCfgData->PeiGraphicsPeimInit;
+
+    GfxCfgData = (GRAPHICS_CFG_DATA *)FindConfigDataByTag (CDATA_GRAPHICS_TAG);
+    if ((GfxCfgData != NULL) && GfxCfgData->PchHdaEnable == 1) {
+      HdaVerbTablePtr = (UINT32 *) AllocateZeroPool (4 * sizeof (UINT32));
+      if (HdaVerbTablePtr != NULL) {
+        HdaVerbTableNum = 0;
+        HdaVerbTablePtr[HdaVerbTableNum++]   = (UINT32)(UINTN) &HdaVerbTableDisplayAudio;
+        FspsUpd->FspsConfig.PchHdaVerbTablePtr      = (UINT32)(UINTN) HdaVerbTablePtr;
+        FspsUpd->FspsConfig.PchHdaVerbTableEntryNum = HdaVerbTableNum;
+      } else {
+        DEBUG ((DEBUG_ERROR, "UpdateFspConfig Error: Could not allocate Memory for HdaVerbTable\n"));
+      }
+    }
 
     if ((GetBootMode() != BOOT_ON_S3_RESUME)) {
       Fspscfg->GraphicsConfigPtr          = (UINT32)GetVbtAddress ();
