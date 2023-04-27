@@ -1,0 +1,26 @@
+## @file
+#
+#  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+##
+
+[Defines]
+  INF_VERSION          = 0x00010005
+  BASE_NAME            = Microcode
+  FILE_GUID            = 197DB236-F856-4924-90F8-CDF12FB875F3
+  MODULE_TYPE          = USER_DEFINED
+  VERSION_STRING       = 1.0
+
+[Sources]
+  m_32_b0671_0000010f.mcb  # RPL-S B0
+  m_07_90672_0000002c.mcb  # ADLS  C0
+
+[UserExtensions.SBL."CloneRepo"]
+  REPO   = https://github.com/slimbootloader/firmwareblob.git
+  COMMIT = 52e6bae7920f4f443ca860ed9726cf97caf9c368
+
+[UserExtensions.SBL."CopyList"]
+  Microcode/RaptorLake/m_32_b0671_0000010f.pdb  : Platform/RaptorlakeBoardPkg/Rpls/Microcode/m_32_b0671_0000010f.mcb
+  Microcode/RaptorLake/m_07_90672_0000002c.pdb  : Platform/RaptorlakeBoardPkg/Rpls/Microcode/m_07_90672_0000002c.mcb
