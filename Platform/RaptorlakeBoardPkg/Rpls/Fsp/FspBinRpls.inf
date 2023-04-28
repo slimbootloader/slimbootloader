@@ -15,9 +15,9 @@
 
 [UserExtensions.SBL."CopyList"]
 # For RPL-S
-  RaptorLakeFspBinPkg/IoT/RaptorLakeS/Fsp.fd                             : Platform/RaptorlakeBoardPkg/Rpls/Fsp/FspDbg.bin
-  RaptorLakeFspBinPkg/IoT/RaptorLakeS/Fsp.fd                             : Platform/RaptorlakeBoardPkg/Rpls/Fsp/FspRel.bin
-  RaptorLakeFspBinPkg/IoT/RaptorLakeS/Fsp.bsf                            : Platform/RaptorlakeBoardPkg/Rpls/Fsp/Fsp.bsf
+  RaptorLakeFspBinPkg/IoT/RaptorLakeS/FSP.fd                             : Platform/RaptorlakeBoardPkg/Rpls/Fsp/FspDbg.bin
+  RaptorLakeFspBinPkg/IoT/RaptorLakeS/FSP.fd                             : Platform/RaptorlakeBoardPkg/Rpls/Fsp/FspRel.bin
+  RaptorLakeFspBinPkg/IoT/RaptorLakeS/FSP.bsf                            : Platform/RaptorlakeBoardPkg/Rpls/Fsp/Fsp.bsf
   RaptorLakeFspBinPkg/IoT/RaptorLakeS/Include/FspUpd.h                   : Platform/RaptorlakeBoardPkg/Rpls/Fsp/FspUpd.h
   RaptorLakeFspBinPkg/IoT/RaptorLakeS/Include/FsptUpd.h                  : Platform/RaptorlakeBoardPkg/Rpls/Fsp/FsptUpd.h
   RaptorLakeFspBinPkg/IoT/RaptorLakeS/Include/FspmUpd.h                  : Platform/RaptorlakeBoardPkg/Rpls/Fsp/FspmUpd.h
