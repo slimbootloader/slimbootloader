@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -251,7 +251,7 @@ GenerateSeeds (
 
   // Get EmmcTuningData.SerialNumber from SPI using variable service
   VariableLen = sizeof (EmmcTuningData);
-  Status = GetVariable ("MMCDLL", NULL, &VariableLen, (void *)&EmmcTuningData);
+  Status = GetVariable (L"MMCDLL", NULL, NULL, &VariableLen, (void *)&EmmcTuningData);
   if ((Status != EFI_SUCCESS) || (AsciiStrnCmp (EmmcTuningData.SerialNumber, "badbadbadbadba", sizeof (EmmcTuningData.SerialNumber)) == 0)) {
     RpmbSerialNumberValid = FALSE;
   } else {

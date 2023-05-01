@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -41,13 +41,13 @@ DEBUG_CODE_BEGIN ();
       CHAR8   Buffer[VAR_LENGTH_VAR_STS + 1];
 
       VariableLen = VAR_LENGTH_VAR_STS;
-      Status = GetVariable (VAR_NAME_VAR_STS, NULL, &VariableLen, Buffer);
+      Status = GetVariable (VAR_NAME_VAR_STS, NULL, NULL, &VariableLen, Buffer);
       if (!EFI_ERROR (Status)) {
-        DEBUG ((DEBUG_INFO, "VariableInitialize: %a %a(%d)\n", VAR_NAME_VAR_STS, Buffer, VariableLen));
+        DEBUG ((DEBUG_INFO, "VariableInitialize: %s %a(%d)\n", VAR_NAME_VAR_STS, Buffer, VariableLen));
       } else if (Status == EFI_NOT_FOUND) {
         Status = AsciiStrCpyS (Buffer, VAR_LENGTH_VAR_STS, "Initialized!\0");
         if (!EFI_ERROR (Status)) {
-          Status = SetVariable (VAR_NAME_VAR_STS, 0, AsciiStrLen (Buffer), Buffer);
+          Status = SetVariable (VAR_NAME_VAR_STS, NULL, 0, AsciiStrLen (Buffer), Buffer);
         }
       }
     }

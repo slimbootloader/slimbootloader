@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -343,11 +343,11 @@ DEBUG_CODE_BEGIN ();
 
   ZeroMem (Buffer, sizeof (Buffer));
   VariableLen = VAR_LENGTH_VAR_STS;
-  Status = GetVariable (VAR_NAME_VAR_STS, NULL, &VariableLen, Buffer);
+  Status = GetVariable (VAR_NAME_VAR_STS, NULL, NULL, &VariableLen, Buffer);
   if (!EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "GetVariable: %a %a(%d)\n", VAR_NAME_VAR_STS, Buffer, VariableLen));
+    DEBUG ((DEBUG_INFO, "GetVariable: %s %a(%d)\n", VAR_NAME_VAR_STS, Buffer, VariableLen));
   } else {
-    DEBUG ((DEBUG_INFO, "No %a found!\n", VAR_NAME_VAR_STS));
+    DEBUG ((DEBUG_INFO, "No %s found!\n", VAR_NAME_VAR_STS));
   }
 
   Status = GetComponentInfo (FLASH_MAP_SIG_UEFIVARIABLE, &Address, &VarSize);

@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -60,7 +60,7 @@ TestVariableService (
   DEBUG ((DEBUG_INFO, "Test variable services\n"));
 
   DataSize   = sizeof(Data);
-  Status   = GetVariable ("VARTST0", NULL, &DataSize, &Data);
+  Status   = GetVariable (L"VARTST0", NULL, NULL, &DataSize, &Data);
   if (!EFI_ERROR(Status) && (Data == 0x55667788) && (sizeof(Data) == DataSize)) {
     return EFI_SUCCESS;
   }
@@ -70,12 +70,12 @@ TestVariableService (
   }
 
   Data       = 0x55667788;
-  Status     = SetVariable ("VARTST0", 0, sizeof(Data), &Data);
+  Status     = SetVariable (L"VARTST0", NULL, 0, sizeof(Data), &Data);
 
   Data       = 0;
   DataSize   = sizeof(Data);
   if (!EFI_ERROR(Status)) {
-    Status   = GetVariable ("VARTST0", NULL, &DataSize, &Data);
+    Status   = GetVariable (L"VARTST0", NULL, NULL, &DataSize, &Data);
   }
 
   if (!EFI_ERROR(Status) && (Data == 0x55667788) && (sizeof(Data) == DataSize)) {

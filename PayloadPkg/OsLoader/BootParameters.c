@@ -1,13 +1,13 @@
 /** @file
 
-  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
 #include "OsLoader.h"
 
-CONST CHAR8 *mMmcDllStr = "MMCDLL";
+CONST CHAR16 *mMmcDllStr = L"MMCDLL";
 
 CONST CHAR8 *mAppendCmdLineParams = NULL;
 

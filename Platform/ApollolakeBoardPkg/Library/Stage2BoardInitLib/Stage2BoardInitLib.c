@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017-2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017-2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -1552,7 +1552,7 @@ UpdateLoaderPlatformInfo (
 
   EmmcTuningData.Hs400DataValid = 0;
   VariableLen = sizeof (EmmcTuningData);
-  Status = GetVariable ("MMCDLL", NULL, &VariableLen, &EmmcTuningData);
+  Status = GetVariable (L"MMCDLL", NULL, NULL, &VariableLen, &EmmcTuningData);
   if (EFI_ERROR (Status)) {
     AsciiStrCpyS (EmmcTuningData.SerialNumber, sizeof(EmmcTuningData.SerialNumber), "badbadbadbadba");
   }
