@@ -86,7 +86,6 @@
   LocalApicLib
   SynchronizationLib
   MpServiceLib
-  BootloaderCoreLib
 
 [Guids]
   gOsConfigDataGuid
