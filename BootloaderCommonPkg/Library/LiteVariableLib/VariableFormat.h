@@ -1,7 +1,7 @@
 /** @file
   The variable data structures.
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -81,6 +81,10 @@ typedef struct {
   /// Size of the variable data.
   ///
   UINT16      DataSize;
+  ///
+  /// Variable GUID
+  ///
+  EFI_GUID    VariableGuid;
 } VARIABLE_HEADER;
 
 #endif
