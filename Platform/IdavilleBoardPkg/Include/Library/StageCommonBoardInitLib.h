@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -10,7 +10,7 @@
 
 #include <Library/VariableLib.h>
 
-#define VAR_NAME_VAR_STS    "VarSts"
+#define VAR_NAME_VAR_STS    L"VarSts"
 #define VAR_LENGTH_VAR_STS  16
 
 #define INITIAL_CODE_REGION_LENGTH  ALIGN_UP (FixedPcdGet32(PcdStage1ASize), SIZE_64KB)

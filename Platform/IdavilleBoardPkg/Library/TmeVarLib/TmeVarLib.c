@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2021 Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021 - 2023 Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -73,7 +73,7 @@ GetTmeVar (
   // read the TME keys
   //
   DEBUG ((DEBUG_INFO, "reading the keys from the TME NVRAM variable...\n"));
-  Status = GetVariable (TME_KEY_VAR, 0, &TmeKeyVarSize, TmeKeyData);
+  Status = GetVariable (TME_KEY_VAR, NULL, NULL, &TmeKeyVarSize, TmeKeyData);
 
   DEBUG ((DEBUG_INFO, "GetTmeVar Exit\n"));
 
@@ -135,7 +135,7 @@ SetTmeVar (
       TmeKeyData.TmeKey[0].Key1 = pTmeStatusHobData->TME_Key1;
 
       DEBUG ((DEBUG_INFO, "Writing the keys to the TME NVRAM variable...\n"));
-      Status = SetVariable (TME_KEY_VAR, 0, sizeof(TME_KEY), &TmeKeyData);
+      Status = SetVariable (TME_KEY_VAR, NULL, 0, sizeof(TME_KEY), &TmeKeyData);
     }
   } else {
     DEBUG ((DEBUG_INFO, "FSP HOB List not found.\n"));

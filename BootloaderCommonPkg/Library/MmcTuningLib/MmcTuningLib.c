@@ -1,7 +1,7 @@
 /** @file
   This file provides some helper functions which are specific for EMMC device.
 
-  Copyright (c) 2015 - 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2015 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -957,7 +957,7 @@ MmcTuning (
   //
   VariableLen = sizeof (EmmcTuningData);
   ZeroMem (&EmmcTuningData, VariableLen);
-  Status = GetVariable ("MMCDLL", NULL, &VariableLen, &EmmcTuningData);
+  Status = GetVariable (L"MMCDLL", NULL, NULL, &VariableLen, &EmmcTuningData);
   if (!EFI_ERROR (Status)) {
     if ((FeatureCfg & FEATURE_MMC_FORCE_TUNING) == 0) {
       DEBUG ((DEBUG_INFO, "Found eMMC tunning data, re-tuning is not required.\n"));
@@ -992,7 +992,7 @@ MmcTuning (
     DEBUG ((DEBUG_ERROR, "ERRORL: MMC serial number invalid, status = %r\n", Status));
   }
 
-  Status = SetVariable ("MMCDLL", 0, sizeof(EMMC_TUNING_DATA), &EmmcTuningData);
+  Status = SetVariable (L"MMCDLL", NULL, 0, sizeof(EMMC_TUNING_DATA), &EmmcTuningData);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "MMC DLL data save error, status = %r\n", Status));
   }

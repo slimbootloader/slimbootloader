@@ -1,14 +1,14 @@
 /** @file
 
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
 #include "OsLoader.h"
 
-extern CONST CHAR8 *mMmcDllStr;
-UINT8              mRpmbKeyCount = 0;
+extern CONST CHAR16   *mMmcDllStr;
+UINT8                 mRpmbKeyCount = 0;
 
 /**
   Check the eMMC storage serial number validity.
@@ -42,7 +42,7 @@ EmmcSerialNumCheck (
 
   // Get serial number from SPI flash
   VariableLen = sizeof (EmmcTuningData);
-  Status = GetVariable ((CHAR8 *)mMmcDllStr, NULL, &VariableLen, (void *)&EmmcTuningData);
+  Status = GetVariable ((CHAR16 *)mMmcDllStr, NULL, NULL, &VariableLen, (void *)&EmmcTuningData);
   if (EFI_ERROR (Status)) {
     return EFI_NOT_FOUND;
   }
@@ -52,7 +52,7 @@ EmmcSerialNumCheck (
     AsciiStrCpyS (EmmcTuningData.SerialNumber, sizeof(EmmcTuningData.SerialNumber), LoaderPlatformInfo->SerialNumber);
 
     // Save new serial number into SPI flash
-    Status = SetVariable ((CHAR8 *)mMmcDllStr, 0, sizeof (EMMC_TUNING_DATA), (VOID *)&EmmcTuningData);
+    Status = SetVariable ((CHAR16 *)mMmcDllStr, NULL, 0, sizeof (EMMC_TUNING_DATA), (VOID *)&EmmcTuningData);
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "MMC serial number save to flash unsuccessful, Status = %r\n", Status));
       return EFI_DEVICE_ERROR;

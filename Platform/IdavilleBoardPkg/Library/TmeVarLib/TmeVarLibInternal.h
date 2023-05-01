@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -8,7 +8,7 @@
 #ifndef _TME_VAR_LIB_INTERNAL_H_
 #define _TME_VAR_LIB_INTERNAL_H_
 
-#define TME_KEY_VAR     "TME_KEYS"
+#define TME_KEY_VAR     L"TME_KEYS"
 
 typedef struct {
     UINT64   TME_Key0;
