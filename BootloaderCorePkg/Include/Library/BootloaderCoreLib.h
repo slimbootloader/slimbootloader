@@ -10,15 +10,6 @@
 
 #include <Library/BootloaderCommonLib.h>
 
-//
-// These MACRO definations should be used only after feature config data is set in stage1b.
-//
-#define ACPI_FEATURE_ENABLED()   (GetFeatureCfg() & FEATURE_ACPI)
-#define ACPI_ENABLED()           (FeaturePcdGet (PcdAcpiEnabled) && ACPI_FEATURE_ENABLED())
-#define MEASURED_BOOT_ENABLED()  (FeaturePcdGet (PcdMeasuredBootEnabled) && (GetFeatureCfg() & FEATURE_MEASURED_BOOT) && ACPI_FEATURE_ENABLED())
-
-#define PCD_GET32_WITH_ADJUST(x)  GetAdjustedPcdBase (PcdGet32 (x))
-
 typedef enum {
   EnumMemInfoTom,     // Total system memory size
   EnumMemInfoTolum,   // Top of low usable memory
