@@ -458,9 +458,13 @@ BoardInit (
     if (FeaturePcdGet (PcdEnablePciePm)) {
       PciePmConfig ();
     }
-    Status = SetFrameBufferWriteCombining (0, MAX_UINT32);
-    if (EFI_ERROR(Status)) {
-      DEBUG ((DEBUG_INFO, "Failed to set GFX framebuffer as WC\n"));
+    // UEFI Payload will change cache type to UC based on PCI root bridge
+    // info HOB MMIO range. In some cases this causes a CPU exception.
+    if (GetPayloadId () != UEFI_PAYLOAD_ID_SIGNATURE) {
+      Status = SetFrameBufferWriteCombining (0, MAX_UINT32);
+      if (EFI_ERROR(Status)) {
+        DEBUG ((DEBUG_INFO, "Failed to set GFX framebuffer as WC\n"));
+      }
     }
     InterruptRoutingInit ();
     break;
