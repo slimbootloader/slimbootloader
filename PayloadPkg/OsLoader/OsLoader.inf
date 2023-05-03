@@ -1,5 +1,5 @@
 ## @file
-#  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -45,7 +45,6 @@
   IntelFsp2Pkg/IntelFsp2Pkg.dec
   PayloadPkg/PayloadPkg.dec
   Platform/CommonBoardPkg/CommonBoardPkg.dec
-  BootloaderCorePkg/BootloaderCorePkg.dec
 
 [LibraryClasses]
   BaseLib
