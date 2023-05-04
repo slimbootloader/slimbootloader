@@ -1524,7 +1524,7 @@ InitFirmwareUpdate (
         //
         if ((UINT32)ImgHdr->UpdateHardwareInstance != FW_UPDATE_COMP_CSME_DRIVER) {
           StatusPayloadUpdate = ApplyFwImage(CapsuleImage, CapsuleSize, ImgHdr, FwPolicy, &ResetRequired);
-          if (EFI_ERROR (Status)) {
+          if (EFI_ERROR (StatusPayloadUpdate)) {
             DEBUG((DEBUG_ERROR, "ApplyFwImage (%04X:%04X) failed with Status = %r\n",
                   (UINT32)FwUpdCompStatus[Count].HardwareInstance, (UINT32)RShiftU64 (FwUpdCompStatus[Count].HardwareInstance, 32),
                   StatusPayloadUpdate));
