@@ -38,6 +38,7 @@ Defines Platform BoardIds
 #define BoardIdAdlPLp5Rvp                             0x13
 #define PLATFORM_ID_ADL_P_LP5_RVP                     0x13
 
+#define BoardIdAdlpUpXtremei12                        0x04
 #define PLATFORM_ID_ADL_P_UPXI12                      0x04
 
 // AlderLake-S & ADP-S Boards
