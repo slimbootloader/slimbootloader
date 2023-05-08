@@ -705,6 +705,7 @@ UpdateFspConfig (
         case PLATFORM_ID_ADL_P_LP4_RVP:
         case PLATFORM_ID_ADL_P_LP5_RVP:
         case PLATFORM_ID_ADL_P_DDR5_RVP:
+        case PLATFORM_ID_ADL_P_UPXI12:
           Fspmcfg->PchIshEnable       = 1;
       }
     }
