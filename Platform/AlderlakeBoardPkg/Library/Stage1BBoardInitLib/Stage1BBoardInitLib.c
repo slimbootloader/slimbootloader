@@ -115,6 +115,18 @@ CONST PLT_DEVICE mPlatformDevices[] = {
     },
     .Type = PlatformDeviceGraphics,
     .Instance = 0
+  },
+  {
+    .Dev = {
+      .PciDev = {
+        .PciFunctionNumber  = PCI_FUNCTION_NUMBER_PCH_ISH,
+        .PciDeviceNumber    = 0,
+        .PciBusNumber       = DEFAULT_PCI_BUS_NUMBER_PCH,
+        .IsMmioDevice       = 0
+      }
+    },
+    .Type = PltDeviceIsh,
+    .Instance = 0
   }
 };
 
@@ -545,6 +557,8 @@ BoardInit (
   IN  BOARD_INIT_PHASE  InitPhase
   )
 {
+  UINT8  DeviceId;
+
   switch (InitPhase) {
   case PreConfigInit:
 DEBUG_CODE_BEGIN();
@@ -581,6 +595,9 @@ DEBUG_CODE_END();
     VariableInitialize ();
     RtcInit ();
     DEBUG ((DEBUG_INFO, "Boot Mode .... %d\n",GetBootMode()));
+    // Set ISH Device Address
+    DeviceId = (IsPchS () ? PCI_DEVICE_NUMBER_PCH_ISH : PCI_DEVICE_NUMBER_PCH_LP_ISH);
+    SetDeviceAddr (PltDeviceIsh, 0, (UINT32)((DEFAULT_PCI_BUS_NUMBER_PCH << 16) | (DeviceId << 8) | PCI_FUNCTION_NUMBER_PCH_ISH));
     break;
   case PreMemoryInit:
     //

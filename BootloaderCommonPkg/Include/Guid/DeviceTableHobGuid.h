@@ -1,7 +1,7 @@
 /** @file
   This file defines the hob structure for the device table.
 
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -15,7 +15,8 @@
 extern EFI_GUID gDeviceTableHobGuid;
 
 typedef enum {
-  PltDeviceSmbus = 0x20
+  PltDeviceSmbus = 0x20,
+  PltDeviceIsh
 } PLT_MEDIUM_MISC_TYPE;
 
 typedef struct {

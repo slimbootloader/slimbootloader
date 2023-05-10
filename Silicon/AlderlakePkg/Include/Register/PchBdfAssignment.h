@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2021-2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021-2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -317,6 +317,7 @@
 // ISH Controller
 //
 #define PCI_DEVICE_NUMBER_PCH_ISH                     18
+#define PCI_DEVICE_NUMBER_PCH_LP_ISH                  19
 #define PCI_FUNCTION_NUMBER_PCH_ISH                   0
 
 //
