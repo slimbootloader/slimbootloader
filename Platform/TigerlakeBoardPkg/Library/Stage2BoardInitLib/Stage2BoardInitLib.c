@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2008 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2008 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -1212,7 +1212,7 @@ TccModePostMemConfig (
     Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'C', 'C', 'T'),
                           (VOID **)&TccStreamBase, &TccStreamSize);
     if (EFI_ERROR (Status) || (TccStreamSize < sizeof (TCC_STREAM_CONFIGURATION))) {
-      DEBUG ((DEBUG_INFO, "Load TCC Stream %r, size = 0x%x\n", Status, TccStreamSize));
+      DEBUG ((DEBUG_ERROR, "Load TCC Stream %r, size = 0x%x\n", Status, TccStreamSize));
     } else {
       FspsUpd->FspsConfig.TccStreamCfgBase = (UINT32)(UINTN)TccStreamBase;
       FspsUpd->FspsConfig.TccStreamCfgSize = TccStreamSize;
@@ -1250,7 +1250,7 @@ TccModePostMemConfig (
   Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'C', 'C', 'C'),
                                 (VOID **)&TccCacheconfigBase, &TccCacheconfigSize);
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "TCC Cache config not found! %r\n", Status));
+    DEBUG ((DEBUG_ERROR, "TCC Cache config not found! %r\n", Status));
   } else {
     FspsUpd->FspsConfig.TccCacheCfgBase = (UINT32)(UINTN)TccCacheconfigBase;
     FspsUpd->FspsConfig.TccCacheCfgSize = TccCacheconfigSize;
@@ -1263,7 +1263,7 @@ TccModePostMemConfig (
   Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'C', 'C', 'M'),
                                 (VOID **)&TccCrlBase, &TccCrlSize);
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "TCC CRL not found! %r\n", Status));
+    DEBUG ((DEBUG_ERROR, "TCC CRL not found! %r\n", Status));
   } else {
     FspsUpd->FspsConfig.TccCrlBinBase = (UINT32)(UINTN)TccCrlBase;
     FspsUpd->FspsConfig.TccCrlBinSize = TccCrlSize;
@@ -1520,13 +1520,18 @@ UpdateFspConfig (
       FspsConfig->PchTsnMultiVcEnable = SiCfgData->PchTsnMultiVcEnable;
       Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'M', 'A', 'C'),
                               (VOID **)&TsnMacAddrBase, &TsnMacAddrSize);
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "Failed to load TSN MAC subregion %r\n", Status));
+      } else {
+        TsnSubRegion = (TSN_MAC_ADDR_SUB_REGION*) TsnMacAddrBase;
 
-      TsnSubRegion = (TSN_MAC_ADDR_SUB_REGION*) TsnMacAddrBase;
+        FspsConfig->PchTsn0MacAddressHigh = TsnSubRegion->Config.Port[0].MacAddr.U32MacAddr[1];
+        FspsConfig->PchTsn0MacAddressLow  = TsnSubRegion->Config.Port[0].MacAddr.U32MacAddr[0];
+        FspsConfig->PchTsn1MacAddressHigh = TsnSubRegion->Config.Port[1].MacAddr.U32MacAddr[1];
+        FspsConfig->PchTsn1MacAddressLow  = TsnSubRegion->Config.Port[1].MacAddr.U32MacAddr[0];
 
-      FspsConfig->PchTsn0MacAddressHigh      = TsnSubRegion->Config.Port[0].MacAddr.U32MacAddr[1];
-      FspsConfig->PchTsn0MacAddressLow       = TsnSubRegion->Config.Port[0].MacAddr.U32MacAddr[0];
-      FspsConfig->PchTsn1MacAddressHigh      = TsnSubRegion->Config.Port[1].MacAddr.U32MacAddr[1];
-      FspsConfig->PchTsn1MacAddressLow       = TsnSubRegion->Config.Port[1].MacAddr.U32MacAddr[0];
+        DEBUG ((DEBUG_INFO, "Load TSN MAC subregion @0x%p, size = 0x%x\n", TsnMacAddrBase, TsnMacAddrSize));
+      }
     }
     for (Index = 0; Index < (sizeof (FspsConfig->PortUsb20Enable) / sizeof (FspsConfig->PortUsb20Enable[0])); Index++) {
       FspsConfig->PortUsb20Enable[Index] = ((*((UINT32*) (&SiCfgData->PortUsb20Enable))) >> Index) & 0x1;
