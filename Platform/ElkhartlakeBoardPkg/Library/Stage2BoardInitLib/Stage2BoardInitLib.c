@@ -905,7 +905,7 @@ TccModePostMemConfig (
     Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'C', 'C', 'T'),
                             (VOID **)&TccStreamBase, &TccStreamSize);
     if (EFI_ERROR (Status) || (TccStreamSize < sizeof (TCC_STREAM_CONFIGURATION))) {
-      DEBUG ((DEBUG_INFO, "Load TCC Stream %r, size = 0x%x\n", Status, TccStreamSize));
+      DEBUG ((DEBUG_ERROR, "Load TCC Stream %r, size = 0x%x\n", Status, TccStreamSize));
     } else {
       FspsUpd->FspsConfig.TccStreamCfgBase = (UINT32)(UINTN)TccStreamBase;
       FspsUpd->FspsConfig.TccStreamCfgSize = TccStreamSize;
@@ -957,7 +957,7 @@ TccModePostMemConfig (
   Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'C', 'C', 'C'),
                                 (VOID **)&TccCacheconfigBase, &TccCacheconfigSize);
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "TCC Cache config not found! %r\n", Status));
+    DEBUG ((DEBUG_ERROR, "TCC Cache config not found! %r\n", Status));
   } else {
     FspsUpd->FspsConfig.TccCacheCfgBase = (UINT32)(UINTN)TccCacheconfigBase;
     FspsUpd->FspsConfig.TccCacheCfgSize = TccCacheconfigSize;
@@ -970,7 +970,7 @@ TccModePostMemConfig (
   Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'C', 'C', 'M'),
                                 (VOID **)&TccCrlBase, &TccCrlSize);
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "TCC CRL not found! %r\n", Status));
+    DEBUG ((DEBUG_ERROR, "TCC CRL not found! %r\n", Status));
   } else {
     FspsUpd->FspsConfig.TccCrlBinBase = (UINT32)(UINTN)TccCrlBase;
     FspsUpd->FspsConfig.TccCrlBinSize = TccCrlSize;
@@ -1580,9 +1580,14 @@ UpdateFspConfig (
       if (MEASURED_BOOT_ENABLED() && (GetBootMode() != BOOT_ON_S3_RESUME)) {
         TpmHashAndExtendPcrEventLog (1, (UINT8 *)TsnMacAddrBase, TsnMacAddrSize, EV_EFI_VARIABLE_DRIVER_CONFIG, sizeof("TMAC Config"), (UINT8 *)"TMAC Config");
       }
+
+      Fspscfg->TsnMacAddrBase = (UINT32)(UINTN)TsnMacAddrBase;
+      Fspscfg->TsnMacAddrSize = TsnMacAddrSize;
+
+      DEBUG ((DEBUG_INFO, "Load TSN MAC subregion @0x%p, size = 0x%x\n", TsnMacAddrBase, TsnMacAddrSize));
+    } else {
+      DEBUG ((DEBUG_ERROR, "Failed to load TSN MAC subregion %r\n", Status));
     }
-    Fspscfg->TsnMacAddrBase      = (UINT32)(UINTN)TsnMacAddrBase;
-    Fspscfg->TsnMacAddrSize      = TsnMacAddrSize;
 
     Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'S', 'I', 'P'),
                             (VOID **)&PseTsnIpConfigBase, &PseTsnIpConfigSize);
@@ -1590,9 +1595,14 @@ UpdateFspConfig (
       if (MEASURED_BOOT_ENABLED() && (GetBootMode() != BOOT_ON_S3_RESUME)) {
         TpmHashAndExtendPcrEventLog (1, (UINT8 *)PseTsnIpConfigBase, PseTsnIpConfigSize, EV_EFI_VARIABLE_DRIVER_CONFIG, sizeof("TSIP Config"), (UINT8 *)"TSIP Config");
       }
+
+      Fspscfg->PseTsnIpConfigBase = (UINT32)(UINTN)PseTsnIpConfigBase;
+      Fspscfg->PseTsnIpConfigSize = PseTsnIpConfigSize;
+
+      DEBUG ((DEBUG_INFO, "Load TSN IP config @0x%p, size = 0x%x\n", PseTsnIpConfigBase, PseTsnIpConfigSize));
+    } else {
+      DEBUG ((DEBUG_ERROR, "Failed to load TSN IP config %r\n", Status));
     }
-    Fspscfg->PseTsnIpConfigBase  = (UINT32)(UINTN)PseTsnIpConfigBase;
-    Fspscfg->PseTsnIpConfigSize  = PseTsnIpConfigSize;
 
     Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'S', 'N', 'C'),
                             (VOID **)&TsnConfigBase, &TsnConfigSize);
@@ -1600,9 +1610,14 @@ UpdateFspConfig (
       if (MEASURED_BOOT_ENABLED() && (GetBootMode() != BOOT_ON_S3_RESUME)) {
         TpmHashAndExtendPcrEventLog (1, (UINT8 *)TsnConfigBase, TsnConfigSize, EV_EFI_VARIABLE_DRIVER_CONFIG, sizeof("TSNC Config"), (UINT8 *)"TSNC Config");
       }
+
+      Fspscfg->TsnConfigBase = (UINT32)(UINTN)TsnConfigBase;
+      Fspscfg->TsnConfigSize = TsnConfigSize;
+
+      DEBUG ((DEBUG_INFO, "Load TSN config @0x%p, size = 0x%x\n", TsnConfigBase, TsnConfigSize));
+    } else {
+      DEBUG ((DEBUG_ERROR, "Failed to load TSN config %r\n", Status));
     }
-    Fspscfg->TsnConfigBase       = (UINT32)(UINTN)TsnConfigBase;
-    Fspscfg->TsnConfigSize       = TsnConfigSize;
 
     Fspscfg->EnableTimedGpio0   = (UINT8)SiCfgData->EnableTimedGpio0;
     Fspscfg->EnableTimedGpio1   = (UINT8)SiCfgData->EnableTimedGpio1;

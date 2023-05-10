@@ -793,7 +793,7 @@ UpdateFspConfig (
           TpmHashAndExtendPcrEventLog (0, (UINT8 *)TsnMacAddrBase, TsnMacAddrSize, EV_PLATFORM_CONFIG_FLAGS, sizeof(TsnCfgBlob), (UINT8 *)&TsnCfgBlob);
         }
 
-        DEBUG ((DEBUG_ERROR, "TSN MAC subregion completed %r\n", Status));
+        DEBUG ((DEBUG_INFO, "TSN MAC subregion completed %r\n", Status));
       } else {
         DEBUG ((DEBUG_ERROR, "TSN MAC subregion not found! %r\n", Status));
       }

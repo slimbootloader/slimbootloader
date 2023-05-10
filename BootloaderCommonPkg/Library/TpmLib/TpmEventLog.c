@@ -266,7 +266,7 @@ AddEventTCGLog (
 
     // Copy the hash
     CopyMem (Loc, & (EventHdr->Digests.digests[Idx].digest), GetHashSizeFromAlgo (HashAlg));
-    DEBUG ((DEBUG_INFO, "HASH Extended %llx", EventHdr->Digests.digests[Idx].digest));
+    DEBUG ((DEBUG_INFO, "HASH Extended %llx\n", EventHdr->Digests.digests[Idx].digest));
     Loc += GetHashSizeFromAlgo (HashAlg);
   }
 
