@@ -799,7 +799,7 @@ UpdateFspConfig (
       }
     }
     FspsConfig->OpioRecenter = SiCfgData->OpioRecenter;
-#if !defined(PLATFORM_ADLN)
+#if !defined(PLATFORM_ADLN) && !defined(PLATFORM_ASL)
     FspsConfig->L2QosEnumerationEn = SiCfgData->L2QosEnumerationEn;
 #endif
   }

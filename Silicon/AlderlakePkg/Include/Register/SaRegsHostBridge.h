@@ -15,7 +15,7 @@
   - Registers / bits of new devices introduced in a SA generation will be just named
     as "_SA_" without [generation_name] inserted.
 
-  Copyright (c) 2021-2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021-2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -98,6 +98,15 @@
 #define V_SA_DEVICE_ID_MB_ULX_10   0x4678   ///< AlderLake N IOT_PC(0+4+0) 24EU SA DID
 #define V_SA_DEVICE_ID_MB_ULX_11   0x4679   ///< AlderLake N IOT_EBM(0+4+0) 24EU SA DID
 #define V_SA_DEVICE_ID_MB_ULX_12   0x467C   ///< AlderLake N IOT_EBM(0+2+0) 16EU SA DID
+
+//
+// ASL:AlderLake Industrial Device IDs B0:D0:F0
+//
+#define V_SA_DEVICE_ID_INDU_ULX_14   0x4673   ///< ASL (0+2) 8C IOT_INDU
+#define V_SA_DEVICE_ID_INDU_ULX_15   0x4674   ///< ASL (0+4) 4C IOT_INDU
+#define V_SA_DEVICE_ID_INDU_ULX_16   0x4675   ///< ASL (0+8) 2C IOT_INDU
+#define V_SA_DEVICE_ID_INDU_ULX_17   0x4632   ///< ASL (0+8) 2C IOT_INDU IPU Defeature SKU
+
 /**
  <b>Description</b>:
   This is the base address for the PCI Express Egress Port MMIO Configuration space.  There is no physical memory within this 4KB window that can be addressed.  The 4KB reserved by this register does not alias to any PCI 2.3 compliant memory mapped space.  On reset, the EGRESS port MMIO configuration space is disabled and must be enabled by writing a 1 to PXPEPBAREN [Dev 0, offset 40h, bit 0].
