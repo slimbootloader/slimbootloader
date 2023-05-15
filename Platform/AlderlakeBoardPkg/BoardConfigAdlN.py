@@ -163,9 +163,6 @@ class Board(BaseBoard):
         # needs to be manually changed to Enabled and TopSwapOverride
         # flash setting needs to be manually changed to 4MB in stitch config
         self.ENABLE_SBL_RESILIENCY = 0
-
-        # If BUILD_IDENTICAL_TS is 1, TopSwapOverride flash setting
-        # needs to be manually changed to 4MB in stitch config
         self.BUILD_IDENTICAL_TS    = 0
 
         if self.ENABLE_SBL_RESILIENCY:
