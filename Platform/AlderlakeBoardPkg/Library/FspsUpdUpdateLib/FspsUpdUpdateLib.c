@@ -798,7 +798,17 @@ UpdateFspConfig (
         DEBUG ((DEBUG_ERROR, "TSN MAC subregion not found! %r\n", Status));
       }
     }
-    FspsConfig->OpioRecenter = SiCfgData->OpioRecenter;
+    FspsConfig->IehMode               = SiCfgData->IehMode;
+    FspsConfig->OpioRecenter          = SiCfgData->OpioRecenter;
+    FspsConfig->D3HotEnable           = SiCfgData->D3HotEnable;
+    FspsConfig->D3ColdEnable          = SiCfgData->D3ColdEnable;
+    FspsConfig->TcCstateLimit         = SiCfgData->TcCstateLimit;
+    FspsConfig->VccSt                 = SiCfgData->VccSt;
+    // Cpu Pcie
+    FspsConfig->CpuPciePowerGating[0] = SiCfgData->CpuPciePowerGating;
+    FspsConfig->CpuPciePowerGating[1] = SiCfgData->CpuPciePowerGating;
+    FspsConfig->CpuPciePowerGating[2] = SiCfgData->CpuPciePowerGating;
+    FspsConfig->CpuPciePowerGating[3] = SiCfgData->CpuPciePowerGating;
 #if !defined(PLATFORM_ADLN) && !defined(PLATFORM_ASL)
     FspsConfig->L2QosEnumerationEn = SiCfgData->L2QosEnumerationEn;
 #endif
@@ -822,10 +832,6 @@ UpdateFspConfig (
   FspsConfig->VmdEnable = 0;
 
   // Cpu Pcie
-  FspsConfig->CpuPciePowerGating[0] = 0x1;
-  FspsConfig->CpuPciePowerGating[1] = 0x1;
-  FspsConfig->CpuPciePowerGating[2] = 0x1;
-  FspsConfig->CpuPciePowerGating[3] = 0x1;
   FspsConfig->CpuPcieRpFunctionSwap = 0x0;
   for (Index = 0; Index < 3; Index++) {
     FspsConfig->CpuPcieRpMaxPayload[Index] = 0x1;
@@ -859,7 +865,6 @@ UpdateFspConfig (
   FspsConfig->PchEspiLgmrEnable = 0x0;
   FspsConfig->ForcMebxSyncUp = 0x0;
   FspsConfig->PmcModPhySusPgEnable = 0x0;
-  FspsConfig->D3HotEnable = 0x0;
   FspsConfig->IomTypeCPortPadCfg[2] = 0x6040000;
   FspsConfig->IomTypeCPortPadCfg[3] = 0x6040011;
   FspsConfig->DmiTS0TW = 0x3;
@@ -1039,14 +1044,14 @@ UpdateFspConfig (
     FspsConfig->CstateLatencyControl1TimeUnit = PowerCfgData->CstateLatencyControl1TimeUnit;
     FspsConfig->CstateLatencyControl2TimeUnit = PowerCfgData->CstateLatencyControl2TimeUnit;
     FspsConfig->CstateLatencyControl3TimeUnit = PowerCfgData->CstateLatencyControl3TimeUnit;
-     FspsConfig->CstateLatencyControl4TimeUnit = PowerCfgData->CstateLatencyControl4TimeUnit;
-     FspsConfig->CstateLatencyControl5TimeUnit = PowerCfgData->CstateLatencyControl5TimeUnit;
-     FspsConfig->PkgCStateLimit                = PowerCfgData->PkgCStateLimit;
-     FspsConfig->CstateLatencyControl1Irtl     = PowerCfgData->CstateLatencyControl1Irtl;
-     FspsConfig->CstateLatencyControl2Irtl     = PowerCfgData->CstateLatencyControl2Irtl;
-     FspsConfig->CstateLatencyControl3Irtl     = PowerCfgData->CstateLatencyControl3Irtl;
-     FspsConfig->CstateLatencyControl4Irtl     = PowerCfgData->CstateLatencyControl4Irtl;
-     FspsConfig->CstateLatencyControl5Irtl     = PowerCfgData->CstateLatencyControl5Irtl;
+    FspsConfig->CstateLatencyControl4TimeUnit = PowerCfgData->CstateLatencyControl4TimeUnit;
+    FspsConfig->CstateLatencyControl5TimeUnit = PowerCfgData->CstateLatencyControl5TimeUnit;
+    FspsConfig->PkgCStateLimit                = PowerCfgData->PkgCStateLimit;
+    FspsConfig->CstateLatencyControl1Irtl     = PowerCfgData->CstateLatencyControl1Irtl;
+    FspsConfig->CstateLatencyControl2Irtl     = PowerCfgData->CstateLatencyControl2Irtl;
+    FspsConfig->CstateLatencyControl3Irtl     = PowerCfgData->CstateLatencyControl3Irtl;
+    FspsConfig->CstateLatencyControl4Irtl     = PowerCfgData->CstateLatencyControl4Irtl;
+    FspsConfig->CstateLatencyControl5Irtl     = PowerCfgData->CstateLatencyControl5Irtl;
 
     // Cpu power related settings
     for (Index = 0; Index < TURBO_RATIO_LIMIT_ARRAY_SIZE; Index++) {
@@ -1113,10 +1118,8 @@ UpdateFspConfig (
     FspsConfig->CnviClkreqPinMux = 0x294ce605;
     FspsConfig->PmcUsb2PhySusPgEnable = 0x1;
     FspsConfig->PmcModPhySusPgEnable = 0x1;
-    FspsConfig->D3HotEnable = 0x1;
     FspsConfig->IomTypeCPortPadCfg[2] = 0x0;
     FspsConfig->IomTypeCPortPadCfg[3] = 0x0;
-    FspsConfig->D3ColdEnable = 0x1;
     FspsConfig->UsbTcPortEn = 0xF;
     FspsConfig->ITbtPcieTunnelingForUsb4 = 0x1;
     FspsConfig->ITbtPcieRootPortEn[0] = 0x1;
@@ -1135,7 +1138,6 @@ UpdateFspConfig (
     FspsConfig->CstCfgCtrIoMwaitRedirection = 0;
     FspsConfig->PmcLpmS0ixSubStateEnableMask = 0x9;
     FspsConfig->VbtSize           = 0x2200;
-    FspsConfig->VccSt             = 0x1;
     FspsConfig->CpuPcieRpGen3Uptp[2] = 0x5;
     FspsConfig->CpuPcieRpGen4Uptp[2] = 0x8;
     FspsConfig->CpuPcieRpGen4Dptp[2] = 0x9;

@@ -67,6 +67,8 @@ GEN_CFG_DATA.VbtImageId                  | 1
 SILICON_CFG_DATA.CpuPcieRpAspm           | {0x2, 0x2, 0x2, 0x0}
 SILICON_CFG_DATA.EnableTimedGpio0        | 0x1
 SILICON_CFG_DATA.EnableTimedGpio1        | 0x1
+SILICON_CFG_DATA.D3HotEnable             | 0x0
+SILICON_CFG_DATA.VccSt                   | 0x0
 
 MEMORY_CFG_DATA.BootFrequency            | 0x2
 
