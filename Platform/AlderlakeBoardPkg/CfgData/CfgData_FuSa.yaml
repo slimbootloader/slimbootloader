@@ -102,11 +102,11 @@ $ACTION      :
       length       : 0x01
       value        : 0x0
   - McParity :
-      name         : FuSa MC Parity
+      name         : FuSa MC/CMF Parity
       type         : Combo
       option       : $EN_DIS
       help         : >
-                     MC Parity and error reporting configuration
+                     MC and CMF Parity and error reporting configuration
       length       : 0x01
       value        : 0x0
   - IbeccParity :
@@ -115,14 +115,6 @@ $ACTION      :
       option       : $EN_DIS
       help         : >
                      IBECC Parity and error reporting configuration
-      length       : 0x01
-      value        : 0x0
-  - CmfParity :
-      name         : FuSa CMF Parity
-      type         : Combo
-      option       : $EN_DIS
-      help         : >
-                     CMF Parity and error reporting configuration
       length       : 0x01
       value        : 0x0
   - DiagGspiCtrlr :

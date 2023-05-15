@@ -28,7 +28,6 @@ FUSA_CFG_DATA.IopFusaConfigEnable | 1
 FUSA_CFG_DATA.PsfFusaConfigEnable | 1
 FUSA_CFG_DATA.McParity | 1
 FUSA_CFG_DATA.IbeccParity | 1
-FUSA_CFG_DATA.CmfParity | 1
 
 # IBECC
 MEMORY_CFG_DATA.Ibecc | 1
@@ -41,7 +40,6 @@ SILICON_CFG_DATA.CrashLogReporting | 1
 
 # PROCHOT
 POWER_CFG_DATA.BiProcHot | 0
-POWER_CFG_DATA.DisableProcHotOut | 1
 POWER_CFG_DATA.ProcHotResponse | 1
 POWER_CFG_DATA.ProcHotLock | 1
 
@@ -72,6 +70,16 @@ SILICON_CFG_DATA.CpuPcieRpAspm                | {0, 0, 0, 0}
 SILICON_CFG_DATA.CpuPcieRpL1Substates         | {0, 0, 0, 0}
 SILICON_CFG_DATA.CpuPcieRpPtmEnabled          | {1, 1, 1, 1}
 SILICON_CFG_DATA.CpuPcieClockGating           | 0
+SILICON_CFG_DATA.CpuPciePowerGating           | 0
 SILICON_CFG_DATA.CpuPcieRpMultiVcEnabled      | {1, 1, 1, 1}
 SILICON_CFG_DATA.L2QosEnumerationEn           | 1
 SILICON_CFG_DATA.RenderStandby                | 0
+
+# MISC settings that affect FuSa
+SILICON_CFG_DATA.D3ColdEnable                 | 0
+SILICON_CFG_DATA.D3HotEnable                  | 0
+SILICON_CFG_DATA.IehMode                      | 1
+SILICON_CFG_DATA.TcCstateLimit                | 0
+SILICON_CFG_DATA.VccSt                        | 0
+
+MEMORY_CFG_DATA.PlatformDebugConsent          | 1

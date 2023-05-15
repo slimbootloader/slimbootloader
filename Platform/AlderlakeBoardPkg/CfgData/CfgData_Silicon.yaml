@@ -109,6 +109,14 @@
                      Describes whether the PCI Express Clock Gating for each root port is enabled by platform modules. 0- Disable; 1- Enable.
       length       : 0x01
       value        : 0x1
+  - CpuPciePowerGating :
+      name         : CPU PCIe RootPort Power Gating
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Describes whether the PCI Express Power Gating for each root port is enabled by platform modules. 0- Disable; 1- Enable.
+      length       : 0x01
+      value        : 0x1
   - CpuPcieRpAspm :
       name         : PCIE RP Aspm
       type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
@@ -492,3 +500,43 @@
                      Enable L2 Qos Enumerate
       length       : 0x01
       value        : 0x0
+  - IehMode :
+      name         : IEH Mode
+      type         : Combo
+      option       : 0:Bypass. 1:Enable
+      help         : >
+                     Integrated Error Handler Mode
+      length       : 0x01
+      value        : 0x0
+  - D3HotEnable :
+      name         : Enable D3 Hot in TCSS
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     This policy will enable/disable D3 hot support in IOM
+      length       : 0x01
+      value        : 0x1
+  - D3ColdEnable :
+      name         : Enable D3 Cold in TCSS
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     This policy will enable/disable D3 cold support in IOM
+      length       : 0x01
+      value        : 0x1
+  - TcCstateLimit :
+      name         : TC State in TCSS
+      type         : Combo
+      option       : 0:Disable, 1:1, 2:2, 4:4, 5:5, 6:6, 7:7, 10:10
+      help         : >
+                     TC C-State Limit in IOM
+      length       : 0x01
+      value        : 10
+  - VccSt        :
+      name         : VCCST request for IOM
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     This policy will enable/disable VCCST and also decides if message would be replayed in S4/S5
+      length       : 0x01
+      value        : 0x01
