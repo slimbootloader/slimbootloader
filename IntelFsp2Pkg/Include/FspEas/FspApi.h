@@ -2,7 +2,7 @@
   Intel FSP API definition from Intel Firmware Support Package External
   Architecture Specification v2.0 - v2.2
 
-  Copyright (c) 2014 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2014 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -11,19 +11,24 @@
 #define _FSP_API_H_
 
 #include <Pi/PiStatusCode.h>
+#include <Base.h>
 
 ///
 /// FSP Reset Status code
-/// These are defined in FSP EAS v2.0 section 11.2.2 - OEM Status Code
+/// These are defined in FSP EAS v2.4 section 13.2.2 - OEM Status Code
 /// @{
-#define FSP_STATUS_RESET_REQUIRED_COLD         0x40000001
-#define FSP_STATUS_RESET_REQUIRED_WARM         0x40000002
-#define FSP_STATUS_RESET_REQUIRED_3            0x40000003
-#define FSP_STATUS_RESET_REQUIRED_4            0x40000004
-#define FSP_STATUS_RESET_REQUIRED_5            0x40000005
-#define FSP_STATUS_RESET_REQUIRED_6            0x40000006
-#define FSP_STATUS_RESET_REQUIRED_7            0x40000007
-#define FSP_STATUS_RESET_REQUIRED_8            0x40000008
+
+#define ENCODE_RESET_REQUEST(ResetType)  \
+        ((EFI_STATUS)((MAX_BIT >> 1) | (ResetType)))
+#define FSP_STATUS_RESET_REQUIRED_COLD  ENCODE_RESET_REQUEST(1)
+#define FSP_STATUS_RESET_REQUIRED_WARM  ENCODE_RESET_REQUEST(2)
+#define FSP_STATUS_RESET_REQUIRED_3     ENCODE_RESET_REQUEST(3)
+#define FSP_STATUS_RESET_REQUIRED_4     ENCODE_RESET_REQUEST(4)
+#define FSP_STATUS_RESET_REQUIRED_5     ENCODE_RESET_REQUEST(5)
+#define FSP_STATUS_RESET_REQUIRED_6     ENCODE_RESET_REQUEST(6)
+#define FSP_STATUS_RESET_REQUIRED_7     ENCODE_RESET_REQUEST(7)
+#define FSP_STATUS_RESET_REQUIRED_8     ENCODE_RESET_REQUEST(8)
+#define FSP_STATUS_VARIABLE_REQUEST     ENCODE_RESET_REQUEST(10)
 /// @}
 
 ///
@@ -129,6 +134,27 @@ typedef struct {
 } FSPT_ARCH_UPD;
 
 ///
+/// FSPT_ARCH2_UPD Configuration.
+///
+typedef struct {
+  ///
+  /// Revision of the structure is 2 for this version of the specification.
+  ///
+  UINT8                Revision;
+  UINT8                Reserved[3];
+  ///
+  /// Length of the structure in bytes. The current value for this field is 32.
+  ///
+  UINT32               Length;
+  ///
+  /// FspDebugHandler Optional debug handler for the bootloader to receive debug messages
+  /// occurring during FSP execution.
+  ///
+  EFI_PHYSICAL_ADDRESS FspDebugHandler;
+  UINT8                Reserved1[16];
+} FSPT_ARCH2_UPD;
+
+///
 /// FSPM_ARCH_UPD Configuration.
 ///
 typedef struct {
@@ -169,6 +195,54 @@ typedef struct {
   UINT8                       Reserved1[4];
 } FSPM_ARCH_UPD;
 
+///
+/// FSPM_ARCH2_UPD Configuration.
+///
+typedef struct {
+  ///
+  /// Revision of the structure is 3 for this version of the specification.
+  ///
+  UINT8                Revision;
+  UINT8                Reserved[3];
+  ///
+  /// Length of the structure in bytes. The current value for this field is 64.
+  ///
+  UINT32               Length;
+  ///
+  /// Pointer to the non-volatile storage (NVS) data buffer.
+  /// If it is NULL it indicates the NVS data is not available.
+  ///
+  EFI_PHYSICAL_ADDRESS NvsBufferPtr;
+  ///
+  /// Pointer to the temporary stack base address to be
+  /// consumed inside FspMemoryInit() API.
+  ///
+  EFI_PHYSICAL_ADDRESS StackBase;
+  ///
+  /// Temporary stack size to be consumed inside
+  /// FspMemoryInit() API.
+  ///
+  UINT64               StackSize;
+  ///
+  /// Size of memory to be reserved by FSP below "top
+  /// of low usable memory" for bootloader usage.
+  ///
+  UINT32               BootLoaderTolumSize;
+  ///
+  /// Current boot mode.
+  ///
+  UINT32               BootMode;
+  ///
+  /// Optional event handler for the bootloader to be informed of events occurring during FSP execution.
+  /// This value is only valid if Revision is >= 2.
+  ///
+  EFI_PHYSICAL_ADDRESS FspEventHandler;
+  UINT8                Reserved1[16];
+} FSPM_ARCH2_UPD;
+
+///
+/// FSPS_ARCH_UPD Configuration.
+///
 typedef struct {
   ///
   /// Revision Revision of the structure is 1 for this version of the specification.
@@ -196,6 +270,27 @@ typedef struct {
 } FSPS_ARCH_UPD;
 
 ///
+/// FSPS_ARCH2_UPD Configuration.
+///
+typedef struct {
+  ///
+  /// Revision of the structure is 2 for this version of the specification.
+  ///
+  UINT8                Revision;
+  UINT8                Reserved[3];
+  ///
+  /// Length of the structure in bytes. The current value for this field is 32.
+  ///
+  UINT32               Length;
+  ///
+  /// FspEventHandler Optional event handler for the bootloader to be informed of events
+  /// occurring during FSP execution.
+  ///
+  EFI_PHYSICAL_ADDRESS FspEventHandler;
+  UINT8                Reserved1[16];
+} FSPS_ARCH2_UPD;
+
+///
 /// FSPT_UPD_COMMON Configuration.
 ///
 typedef struct {
@@ -221,6 +316,21 @@ typedef struct {
 } FSPT_UPD_COMMON_FSP22;
 
 ///
+/// FSPT_UPD_COMMON Configuration for FSP spec. 2.4 and above.
+///
+typedef struct {
+  ///
+  /// FSP_UPD_HEADER Configuration.
+  ///
+  FSP_UPD_HEADER    FspUpdHeader;
+
+  ///
+  /// FSPT_ARCH2_UPD Configuration.
+  ///
+  FSPT_ARCH2_UPD    FsptArchUpd;
+} FSPT_UPD_COMMON_FSP24;
+
+///
 /// FSPM_UPD_COMMON Configuration.
 ///
 typedef struct {
@@ -233,6 +343,20 @@ typedef struct {
   ///
   FSPM_ARCH_UPD               FspmArchUpd;
 } FSPM_UPD_COMMON;
+
+///
+/// FSPM_UPD_COMMON Configuration for FSP spec. 2.4 and above.
+///
+typedef struct {
+  ///
+  /// FSP_UPD_HEADER Configuration.
+  ///
+  FSP_UPD_HEADER    FspUpdHeader;
+  ///
+  /// FSPM_ARCH2_UPD Configuration.
+  ///
+  FSPM_ARCH2_UPD    FspmArchUpd;
+} FSPM_UPD_COMMON_FSP24;
 
 ///
 /// FSPS_UPD_COMMON Configuration.
@@ -258,6 +382,21 @@ typedef struct {
   ///
   FSPS_ARCH_UPD               FspsArchUpd;
 } FSPS_UPD_COMMON_FSP22;
+
+///
+/// FSPS_UPD_COMMON Configuration for FSP spec. 2.4 and above.
+///
+typedef struct {
+  ///
+  /// FSP_UPD_HEADER Configuration.
+  ///
+  FSP_UPD_HEADER    FspUpdHeader;
+
+  ///
+  /// FSPS_ARCH2_UPD Configuration.
+  ///
+  FSPS_ARCH2_UPD    FspsArchUpd;
+} FSPS_UPD_COMMON_FSP24;
 
 ///
 /// Enumeration of FSP_INIT_PHASE for NOTIFY_PHASE.
@@ -296,9 +435,34 @@ typedef struct {
 /// Action definition for FspMultiPhaseSiInit API
 ///
 typedef enum {
-  EnumMultiPhaseGetNumberOfPhases  = 0x0,
-  EnumMultiPhaseExecutePhase       = 0x1
+  EnumMultiPhaseGetNumberOfPhases       = 0x0,
+  EnumMultiPhaseExecutePhase            = 0x1,
+  EnumMultiPhaseGetVariableRequestInfo  = 0x2,
+  EnumMultiPhaseCompleteVariableRequest = 0x3
 } FSP_MULTI_PHASE_ACTION;
+
+typedef enum {
+ EnumFspVariableRequestGetVariable          = 0x0,
+ EnumFspVariableRequestGetNextVariableName  = 0x1,
+ EnumFspVariableRequestSetVariable          = 0x2,
+ EnumFspVariableRequestQueryVariableInfo    = 0x3
+} FSP_VARIABLE_REQUEST_TYPE;
+
+#pragma pack(16)
+typedef struct {
+  IN     FSP_VARIABLE_REQUEST_TYPE   VariableRequest;
+  IN OUT CHAR16                      *VariableName;
+  IN OUT UINT64                      *VariableNameSize;
+  IN OUT EFI_GUID                    *VariableGuid;
+  IN OUT UINT32                      *Attributes;
+  IN OUT UINT64                      *DataSize;
+  IN OUT VOID                        *Data;
+  OUT    UINT64                      *MaximumVariableStorageSize;
+  OUT    UINT64                      *RemainingVariableStorageSize;
+  OUT    UINT64                      *MaximumVariableSize;
+  OUT    EFI_STATUS                  Status;
+} FSP_MULTI_PHASE_VARIABLE_REQUEST_INFO_PARAMS;
+#pragma pack()
 
 ///
 /// Data structure returned by FSP when bootloader calling
@@ -323,7 +487,7 @@ typedef struct {
 typedef struct {
   IN     FSP_MULTI_PHASE_ACTION  MultiPhaseAction;
   IN     UINT32                  PhaseIndex;
-  IN OUT UINT32                  MultiPhaseParamPtr;
+  IN OUT VOID                    *MultiPhaseParamPtr;
 } FSP_MULTI_PHASE_PARAMS;
 
 #pragma pack()
@@ -481,5 +645,31 @@ EFI_STATUS
 (EFIAPI *FSP_MULTI_PHASE_SI_INIT) (
   IN FSP_MULTI_PHASE_PARAMS     *MultiPhaseSiInitParamPtr
 );
+
+/**
+  The FspMultiPhaseMemInit() API may only be called after the FspMemoryInit() API and before the
+  FspSiliconInit() API; or in the case that FSP-T is being used, before the TempRamExit() API.
+  This FSP API provides multi-phase memory initialization; which brings greater modularity
+  beyond the existing FspMemoryInit() API. Increased modularity is achieved by adding an
+  extra API to FSP-M. This allows the bootloader to add board specific initialization steps
+  throughout the MemoryInit flow as needed.
+
+  @param[in,out] FSP_MULTI_PHASE_PARAMS   For action - EnumMultiPhaseGetNumberOfPhases:
+                                            FSP_MULTI_PHASE_PARAMS->MultiPhaseParamPtr will contain
+                                            how many phases supported by FSP.
+                                          For action - EnumMultiPhaseExecutePhase:
+                                            FSP_MULTI_PHASE_PARAMS->MultiPhaseParamPtr shall be NULL.
+  @retval EFI_SUCCESS                     FSP execution environment was initialized successfully.
+  @retval EFI_INVALID_PARAMETER           Input parameters are invalid.
+  @retval EFI_UNSUPPORTED                 The FSP calling conditions were not met.
+  @retval EFI_DEVICE_ERROR                FSP initialization failed.
+  @retval FSP_STATUS_RESET_REQUIREDx      A reset is required. These status codes will not be returned during S3.
+  @retval FSP_STATUS_VARIABLE_REQUEST     A variable request has been made by FSP that needs boot loader handling.
+**/
+typedef
+EFI_STATUS
+(EFIAPI *FSP_MULTI_PHASE_MEM_INIT)(
+  IN FSP_MULTI_PHASE_PARAMS     *MultiPhaseSiInitParamPtr
+  );
 
 #endif

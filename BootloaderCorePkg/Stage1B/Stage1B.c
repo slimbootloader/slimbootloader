@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2016 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2016 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -420,9 +420,23 @@ SecStartup2 (
   DEBUG ((DEBUG_INIT, "Memory Init\n"));
   AddMeasurePoint (0x2020);
   Status = CallFspMemoryInit (PCD_GET32_WITH_ADJUST (PcdFSPMBase), &HobList);
-  AddMeasurePoint (0x2030);
+
   FspResetHandler (Status);
   ASSERT_EFI_ERROR (Status);
+
+  Status = FspVariableHandler(Status, CallFspMultiPhaseMemoryInit);
+  ASSERT_EFI_ERROR(Status);
+
+  Status = FspMultiPhaseMemInitHandler();
+
+  if (Status == EFI_UNSUPPORTED) {
+    DEBUG((DEBUG_INFO, "FspMultiPhaseMemInit() returned EFI_UNSUPPORTED. This is expected for FSP 2.3 and older.\n"));
+  } else {
+    ASSERT_EFI_ERROR(Status);
+  }
+  AddMeasurePoint (0x2030);
+
+  FspResetHandler (Status);
 
   if (PcdGetBool (PcdSblResiliencyEnabled)) {
     // React to TCO timer failures here as not to conflict with ACM active timer
