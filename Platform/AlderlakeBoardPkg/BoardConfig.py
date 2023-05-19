@@ -154,7 +154,7 @@ class Board(BaseBoard):
         self.TOP_SWAP_SIZE        = 0x00080000
         self.REDUNDANT_SIZE       = self.UCODE_SIZE + self.STAGE2_SIZE + self.STAGE1B_SIZE + \
                                     self.FWUPDATE_SIZE + self.CFGDATA_SIZE + self.KEYHASH_SIZE
-
+        self.REDUNDANT_SIZE       = ((self.REDUNDANT_SIZE + 0xFFFF) & ~0xFFFF)
         self.SIIPFW_SIZE = 0x1000
 
         self.ENABLE_TCC = 0
@@ -392,8 +392,8 @@ class Board(BaseBoard):
                 ('VARIABLE.bin' ,  ''        , self.VARIABLE_SIZE, STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
                 ('MRCDATA.bin'  ,  ''        , self.MRCDATA_SIZE,  STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
                 ('EPAYLOAD.bin',   ''        , self.EPAYLOAD_SIZE, STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
-                ('UEFIVARIABLE.bin', ''      , self.UEFI_VARIABLE_SIZE,  STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
                 ('PAYLOAD.bin'  ,  'Lz4'    , self.PAYLOAD_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
+                ('UEFIVARIABLE.bin', ''      , self.UEFI_VARIABLE_SIZE,  STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
                 ]
             ),
             ('REDUNDANT_A.bin', [
