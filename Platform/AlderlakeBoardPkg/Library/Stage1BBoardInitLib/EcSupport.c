@@ -348,7 +348,10 @@ GetBoardId (
   //
   *PlatformId = 0xFF;
 
+#if !defined(PLATFORM_ADLN) && !defined(PLATFORM_ASL)
   GetBoardIdFromEC(&BoardID);
+#endif
+
   if (BoardID == 0xFF){
     //EC is not detected (timeout)
     GetBoardIdFromSmbus(PlatformId);
