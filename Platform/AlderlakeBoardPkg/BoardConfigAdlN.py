@@ -128,8 +128,8 @@ class Board(BaseBoard):
             self.VERIFIED_BOOT_HASH_MASK    = 0
 
         if self.RELEASE_MODE and self.ENABLE_FAST_BOOT:
-            self.STAGE1A_SIZE         = 0x00015000
-            self.STAGE1B_SIZE         = 0x000C0000
+            self.STAGE1A_SIZE         = 0x00016000
+            self.STAGE1B_SIZE         = 0x000E0000
             self.STAGE2_SIZE          = 0x000C0000
             self.STAGE2_FD_SIZE       = 0x000F0000
             self.PAYLOAD_SIZE         = 0x00024000
