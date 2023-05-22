@@ -1,7 +1,7 @@
 /** @file
   Heci init library.
 
-  Copyright (c) 2007 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2007 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -432,4 +432,21 @@ EFIAPI
 HeciRevokeOemKey (
    VOID
    );
+
+/**
+  Send ME the BIOS end of Post message.
+
+  @param[out] RequestedActions    Action request returned by EOP ACK
+                                    0x00 (HECI_EOP_STATUS_SUCCESS) - Continue to boot
+                                    0x01 (HECI_EOP_PERFORM_GLOBAL_RESET) - Global reset
+
+  @retval EFI_SUCCESS             Platform reached End of Post successfully
+  @retval EFI_DEVICE_ERROR        An error has occured by EoP message
+**/
+EFI_STATUS
+EFIAPI
+MeEndOfPostEvent (
+  OUT UINT32                          *RequestedActions
+  );
+
 #endif

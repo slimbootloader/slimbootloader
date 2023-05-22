@@ -80,6 +80,7 @@
 #include <Register/RegsSpi.h>
 #include <Library/GpioLib.h>
 #include <Library/PlatformHookLib.h>
+#include <Library/ResetSystemLib.h>
 
 BOOLEAN mTccDsoTuning      = FALSE;
 UINT8   mTccRtd3Support    = 0;
@@ -711,6 +712,7 @@ BoardInit (
   VOID                        *FspHobList;
   UINT32                      TsegBase;
   UINT32                      TsegSize;
+  UINT32                      NeedReboot;
 
   if (mPchSciSupported == 0xFF){
     mPchSciSupported = PchIsSciSupported();
@@ -812,6 +814,13 @@ BoardInit (
     }
     break;
   case ReadyToBoot:
+    if (FeaturePcdGet (PcdFspNoEop)) {
+      MeEndOfPostEvent (&NeedReboot);
+      if (NeedReboot) {
+        DEBUG ((DEBUG_INIT, "Me Requested Reboot ...\n\n"));
+        ResetSystem (EfiResetPlatformSpecific);
+      }
+    }
     if ((GetBootMode() != BOOT_ON_FLASH_UPDATE) && (GetPayloadId() == 0)) {
       ProgramSecuritySetting ();
     }

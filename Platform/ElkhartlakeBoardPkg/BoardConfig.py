@@ -1,7 +1,7 @@
 ## @file
 # This file is used to provide board specific image information.
 #
-#  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 
@@ -56,6 +56,9 @@ class Board(BaseBoard):
         # 0: Disable  1: Enable  2: Auto (disable for UEFI payload, enable for others)
         self.ENABLE_SMM_REBASE    = 2
         self.ENABLE_FRAMEBUFFER_INIT = 1
+
+        # EHL FSP Ready To Boot does not call EOP
+        self.HAVE_NO_FSP_EOP      = 1
 
         self.SIIPFW_SIZE = 0x1000
 

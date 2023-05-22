@@ -345,6 +345,7 @@
   gPayloadTokenSpaceGuid.PcdPayloadModuleEnabled          | $(ENABLE_PAYLOD_MODULE)
   gPlatformModuleTokenSpaceGuid.PcdEnableDts              | $(ENABLE_DTS)
   gPlatformModuleTokenSpaceGuid.PcdEnablePciePm           | $(ENABLE_PCIE_PM)
+  gPlatformCommonLibTokenSpaceGuid.PcdFspNoEop            | $(HAVE_NO_FSP_EOP)
 
 !ifdef $(S3_DEBUG)
   gPlatformModuleTokenSpaceGuid.PcdS3DebugEnabled         | $(S3_DEBUG)

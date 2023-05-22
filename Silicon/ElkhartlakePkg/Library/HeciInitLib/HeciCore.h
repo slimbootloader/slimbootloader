@@ -1,7 +1,6 @@
-/** @file
-  Definitions for HECI driver
+/** @file Definitions for HECI driver
 
-  Copyright (c) 2006 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2006 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 #ifndef _HECI_CORE_H
@@ -324,4 +323,34 @@ PseHeciSendAndReceive (
   IN      UINT8                   HostAddress,
   IN      UINT8                   MeAddress
   );
+
+/**
+  Send End of Post Request Message through HECI.
+
+  @param[out] RequestedActions    Action request returned by EOP ACK
+                                    0x00 (HECI_EOP_STATUS_SUCCESS) - Continue to boot
+                                    0x01 (HECI_EOP_PERFORM_GLOBAL_RESET) - Global reset
+
+  @retval EFI_UNSUPPORTED         Current ME mode doesn't support this function
+  @retval EFI_SUCCESS             Command succeeded
+  @retval EFI_DEVICE_ERROR        HECI Device error, command aborts abnormally
+  @retval EFI_TIMEOUT             HECI does not return the buffer before timeout
+**/
+EFI_STATUS
+HeciSendEndOfPostMessage (
+  OUT UINT32                      *RequestedActions
+  );
+
+/**
+  This message is sent by the BIOS if EOP-ACK not received to force ME to disable
+  HECI interfaces.
+
+  @retval EFI_UNSUPPORTED         Current ME mode doesn't support this function
+  @retval EFI_SUCCESS             HECI interfaces disabled by ME
+**/
+EFI_STATUS
+HeciDisableHeciBusMsg (
+  VOID
+  );
+
 #endif // _HECI_CORE_H
