@@ -1,7 +1,7 @@
 /** @file
   MKHI Messages
 
-  Copyright (c) 2010 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2010 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 #ifndef _MKHI_MSGS_H
@@ -83,6 +83,10 @@ typedef union {
 
 #define ARB_SVN_COMMIT_ALL                      0xFF ///< Value 0xFF refers to committing all pending ARBSVN values.
 
+///
+/// HECI BUS command
+///
+#define HECI_BUS_DISABLE_OPCODE           0x0C
 
 //
 // Typedef for Result field of MHKI Header
@@ -673,6 +677,24 @@ typedef union {
  END_OF_POST_ACK Response;
 } END_OF_POST_BUFFER;
 
+typedef union {
+  UINT8 Data;
+  struct {
+    UINT8 Command    : 7;
+    UINT8 IsResponse : 1;
+  } Fields;
+} HBM_COMMAND;
+
+typedef struct {
+  HBM_COMMAND Command;
+  UINT8       Reserved[3];
+} HECI_BUS_DISABLE_CMD;
+
+typedef struct {
+  HBM_COMMAND Command;
+  UINT8       Status;
+  UINT8       Reserved[2];
+} HECI_BUS_DISABLE_CMD_ACK;
 
 typedef struct {
   MKHI_MESSAGE_HEADER MkhiHeader;

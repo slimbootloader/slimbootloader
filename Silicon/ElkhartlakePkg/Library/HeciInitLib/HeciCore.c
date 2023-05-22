@@ -2,7 +2,7 @@
   Heci driver core for PEI & DXE phases, determines the HECI device and
   initializes it.
 
-  Copyright (c) 2007 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2007 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -1535,4 +1535,129 @@ HeciGetSpiProtectionMode (
   }
 
   return EFI_SUCCESS;
+}
+
+
+/**
+  Send End of Post Request Message through HECI.
+
+  @param[out] RequestedActions    Action request returned by EOP ACK
+                                    0x00 (HECI_EOP_STATUS_SUCCESS) - Continue to boot
+                                    0x01 (HECI_EOP_PERFORM_GLOBAL_RESET) - Global reset
+
+  @retval EFI_UNSUPPORTED         Current ME mode doesn't support this function
+  @retval EFI_SUCCESS             Command succeeded
+  @retval EFI_DEVICE_ERROR        HECI Device error, command aborts abnormally
+  @retval EFI_TIMEOUT             HECI does not return the buffer before timeout
+**/
+EFI_STATUS
+HeciSendEndOfPostMessage (
+  OUT UINT32                      *RequestedActions
+  )
+{
+  EFI_STATUS         Status;
+  UINT32             Length;
+  UINT32             RecvLength;
+  END_OF_POST_BUFFER EndOfPost;
+
+  EndOfPost.Request.MkhiHeader.Data           = 0;
+  EndOfPost.Request.MkhiHeader.Fields.Command = GEN_END_OF_POST_CMD;
+  EndOfPost.Request.MkhiHeader.Fields.GroupId = MKHI_GEN_GROUP_ID;
+  Length                                      = sizeof (END_OF_POST);
+  RecvLength                                  = sizeof (END_OF_POST_ACK);
+
+  Status = HeciSendwAck (
+             HECI1_DEVICE,
+             (UINT32 *) &EndOfPost,
+             Length,
+             &RecvLength,
+             BIOS_FIXED_HOST_ADDR,
+             HECI_MKHI_MESSAGE_ADDR
+             );
+
+  if (!EFI_ERROR (Status)) {
+    *RequestedActions = EndOfPost.Response.Data.RequestedActions;
+    if (EndOfPost.Response.Data.RequestedActions == HeciEopPerformGlobalReset) {
+      DEBUG ((DEBUG_INFO, "HeciSendEndOfPostMessage(): Global Reset requested by FW EOP ACK\n"));
+    }
+  }
+
+  return Status;
+}
+
+/**
+  This message is sent by the BIOS if EOP-ACK not received to force ME to disable
+  HECI interfaces.
+
+  @retval EFI_UNSUPPORTED         Current ME mode doesn't support this function
+  @retval EFI_SUCCESS             HECI interfaces disabled by ME
+**/
+EFI_STATUS
+HeciDisableHeciBusMsg (
+  VOID
+  )
+{
+  EFI_STATUS                      Status;
+  UINT32                          Length;
+  UINT32                          RespLength;
+  HECI_BUS_DISABLE_CMD_ACK        MsgHeciBusDisable;
+
+  ZeroMem (&MsgHeciBusDisable, sizeof (HECI_BUS_DISABLE_CMD_ACK));
+
+  MsgHeciBusDisable.Command.Data = HECI_BUS_DISABLE_OPCODE;
+  Length     = sizeof (HECI_BUS_DISABLE_CMD);
+  RespLength = sizeof (HECI_BUS_DISABLE_CMD_ACK);
+
+  Status = HeciSendwAck (
+             HECI1_DEVICE,
+             (UINT32 *) &MsgHeciBusDisable,
+             Length,
+             &RespLength,
+             BIOS_FIXED_HOST_ADDR,
+             HECI_HBM_MESSAGE_ADDR
+             );
+
+  if (!EFI_ERROR (Status) &&
+      ((MsgHeciBusDisable.Command.Fields.Command != HECI_BUS_DISABLE_OPCODE) ||
+       (MsgHeciBusDisable.Command.Fields.IsResponse == 0) ||
+       (MsgHeciBusDisable.Status != 0))) {
+    Status = EFI_ABORTED;
+  }
+
+  return Status;
+}
+
+/**
+  Send ME the BIOS end of Post message.
+
+  @param[out] RequestedActions    Action request returned by EOP ACK
+                                    0x00 (HECI_EOP_STATUS_SUCCESS) - Continue to boot
+                                    0x01 (HECI_EOP_PERFORM_GLOBAL_RESET) - Global reset
+
+  @retval EFI_SUCCESS             Platform reached End of Post successfully
+  @retval EFI_DEVICE_ERROR        An error has occured by EoP message
+**/
+EFI_STATUS
+EFIAPI
+MeEndOfPostEvent (
+  OUT UINT32                          *RequestedActions
+  )
+{
+  EFI_STATUS                          Status;
+  UINT8                               EopSendRetries;
+
+  DEBUG ((DEBUG_INFO, "ME-BIOS: Send EOP\n"));
+
+  for (EopSendRetries = 0; EopSendRetries < MAX_EOP_SEND_RETRIES; EopSendRetries++) {
+    Status = HeciSendEndOfPostMessage (RequestedActions);
+    if (!EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_INFO, "ME-BIOS: EOP Exit - Success.\n"));
+      return EFI_SUCCESS;
+    }
+  }
+
+  DEBUG ((DEBUG_ERROR, "ME-BIOS: EOP Exit - Error by sending EOP message. Forcing HECI interface closure\n"));
+  HeciDisableHeciBusMsg ();
+
+  return EFI_DEVICE_ERROR;
 }

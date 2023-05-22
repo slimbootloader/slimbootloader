@@ -330,3 +330,4 @@
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled                  | FALSE  | BOOLEAN | 0x20000221
   # This PCD will enable the SBL component corruption command
   gPlatformCommonLibTokenSpaceGuid.PcdCmdCorruptShellAppEnabled   | FALSE  | BOOLEAN | 0x20000222
+  gPlatformCommonLibTokenSpaceGuid.PcdFspNoEop                    | FALSE  | BOOLEAN | 0x20000223
