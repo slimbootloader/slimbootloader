@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2019 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -53,6 +53,27 @@ S3_PERFORMANCE_TABLE        mS3PerformanceTableTemplate = {
     0,  // ResumeCount
     0,  // FullResume
     0   // AverageResume
+  }
+};
+
+SBL_PERFORMANCE_TABLE       mSblPerfTableTemplate = {
+  {
+    SBL_PERFORMANCE_TABLE_SIGNATURE,
+    sizeof (SBL_PERFORMANCE_TABLE)
+  },
+  {
+    {
+      SBL_PERFORMACE_TABLE_TYPE,        // Type
+      sizeof (SBL_PERFORMANCE_RECORD),  // Length
+      SBL_PERFORMACE_TABLE_REVISION     // Revision
+    },
+    0,  // Reserved
+    //
+    // These values will be updated during the execution of SBL
+    //
+    0,  // Stage 1 execution time in nanoseconds
+    0,  // Stage 2 execution time in nanoseconds
+    0   // OS Loader execution time in nanoseconds
   }
 };
 
@@ -198,6 +219,7 @@ UpdateFpdt (
   UINT8                               BootMode;
   BOOT_PERFORMANCE_TABLE              *BootPerfTable;
   S3_PERFORMANCE_TABLE                *S3PerfTable;
+  SBL_PERFORMANCE_TABLE               *SblPerfTable;
 
   if ( Table == NULL) {
     DEBUG((DEBUG_WARN, "TABLE is NULL\n"));
@@ -209,15 +231,18 @@ UpdateFpdt (
     Fpdt          = (FIRMWARE_PERFORMANCE_TABLE *)Table;
     BootPerfTable = (BOOT_PERFORMANCE_TABLE *) (Fpdt + 1);
     S3PerfTable   = (S3_PERFORMANCE_TABLE *) (BootPerfTable + 1);
+    SblPerfTable  = (SBL_PERFORMANCE_TABLE *) (S3PerfTable + 1);
 
     Fpdt->BootPointerRecord.BootPerformanceTablePointer = (UINT64) (UINTN) BootPerfTable;
     Fpdt->S3PointerRecord.S3PerformanceTablePointer     = (UINT64) (UINTN) S3PerfTable;
+    Fpdt->SblPerfPointerRecord.SblPerfTablePointer      = (UINT64) (UINTN) SblPerfTable;
     CopyMem (BootPerfTable, &mBootPerformanceTableTemplate, sizeof (mBootPerformanceTableTemplate));
     CopyMem (S3PerfTable, &mS3PerformanceTableTemplate, sizeof (mS3PerformanceTableTemplate));
+    CopyMem (SblPerfTable, &mSblPerfTableTemplate, sizeof (mSblPerfTableTemplate));
     UpdateFpdtBootTable (BootPerfTable);
 
     if (ExtraSize != NULL) {
-      *ExtraSize = (UINT32)((UINT8 *) (S3PerfTable + 1) - Table - Fpdt->Header.Length);
+      *ExtraSize = (UINT32)((UINT8 *) (SblPerfTable + 1) - Table - Fpdt->Header.Length);
     }
 
   }
