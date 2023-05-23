@@ -692,7 +692,7 @@ ConfigureGpio (
   // Find the GPIO CFG Data based on Platform ID
   // GpioTableData is the start of the GPIO entries
   //
-  if (GpioCfgCurrHdr->BaseTableId < 16) {
+  if (GpioCfgCurrHdr->BaseTableId < GPIO_MAX_BASE_TABLE_PLATFORM_ID) {
     GpioCfgBaseHdr = (ARRAY_CFG_HDR *)FindConfigDataByPidTag (GpioCfgCurrHdr->BaseTableId, Tag);
     if (GpioCfgBaseHdr == NULL) {
       DEBUG ((GPIO_DEBUG_ERROR, "Cannot find base GPIO table for platform ID %d\n", GpioCfgCurrHdr->BaseTableId));

@@ -119,7 +119,7 @@ GpioInit (
   GpioCfgBaseHdr = NULL;
 
   //Find the GPIO CFG Data based on Platform ID. GpioTableData is the start of the GPIO entries
-  if (GpioCfgCurrHdr->GpioBaseTableId < 16) {
+  if (GpioCfgCurrHdr->GpioBaseTableId < GPIO_MAX_BASE_TABLE_PLATFORM_ID) {
     DEBUG ((DEBUG_INFO, "Get base platform GPIO table from board ID %d\n", GpioCfgCurrHdr->GpioBaseTableId));
     GpioCfgBaseHdr = (GPIO_CFG_HDR *)FindConfigDataByPidTag (GpioCfgCurrHdr->GpioBaseTableId, CDATA_GPIO_TAG);
     if (GpioCfgBaseHdr == NULL) {
