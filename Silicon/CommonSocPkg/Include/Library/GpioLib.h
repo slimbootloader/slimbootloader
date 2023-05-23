@@ -23,6 +23,11 @@
 //
 #define GPIO_PADCFG_DW_REG_NUMBER  4
 
+//
+// Max supported platform ID for GPIO base table
+//
+#define GPIO_MAX_BASE_TABLE_PLATFORM_ID  32
+
 /**
   This procedure will initialize multiple GPIO pins. Use GPIO_INIT_CONFIG structure.
   Structure contains fields that can be used to configure each pad.
