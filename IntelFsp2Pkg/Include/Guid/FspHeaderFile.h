@@ -2,15 +2,22 @@
   Intel FSP Header File definition from Intel Firmware Support Package External
   Architecture Specification v2.0 and above.
 
-  Copyright (c) 2014 - 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2014 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
+
+#include <Base.h>
 
 #ifndef __FSP_HEADER_FILE_H__
 #define __FSP_HEADER_FILE_H__
 
 #define FSP_HEADER_REVISION_3   3
+#define FSP20_HEADER_REVISION   3
+#define FSP21_HEADER_REVISION   4
+#define FSP22_HEADER_REVISION   5
+#define FSP23_HEADER_REVISION   6
+#define FSP24_HEADER_REVISION   7
 
 #define FSPE_HEADER_REVISION_1  1
 #define FSPP_HEADER_REVISION_1  1
@@ -23,6 +30,13 @@
 #define OFFSET_IN_FSP_INFO_HEADER(x)  (UINT32)&((FSP_INFO_HEADER *)(UINTN)0)->x
 
 #define FSP_INFO_HEADER_SIGNATURE  SIGNATURE_32 ('F', 'S', 'P', 'H')
+
+#define IMAGE_ATTRIBUTE_GRAPHICS_SUPPORT      BIT0
+#define IMAGE_ATTRIBUTE_DISPATCH_MODE_SUPPORT BIT1
+#define IMAGE_ATTRIBUTE_64BIT_MODE_SUPPORT    BIT2
+#define IMAGE_ATTRIBUTE_VAR_SERVICES_SUPPORT  BIT3
+#define FSP_IA32                              0
+#define FSP_X64                               1
 
 #pragma pack(1)
 
@@ -49,7 +63,7 @@ typedef struct {
   UINT8   SpecVersion;
   ///
   /// Byte 0x0B: Revision of the FSP Information Header.
-  ///            The Current value for this field is 0x6.
+  ///            The Current value for this field is 0x7.
   ///
   UINT8   HeaderRevision;
   ///
@@ -82,6 +96,11 @@ typedef struct {
   UINT32  ImageBase;
   ///
   /// Byte 0x20: Attribute for the FSP binary.
+  ///   Bit 0: Graphics Support - Set to 1 when FSP supports enabling Graphics Display.
+  ///   Bit 1: Dispatch Mode Support - Set to 1 when FSP supports the optional Dispatch Mode API defined in Section 7.2 and 9. This bit is only valid if FSP HeaderRevision is >= 4.
+  ///   Bit 2: 64-bit mode support - Set to 1 to indicate FSP supports 64-bit long mode interfaces. Set to 0 to indicate FSP supports 32-bit mode interfaces. This bit is only valid if FSP HeaderRevision is >= 7.
+  ///   Bit 3: FSP Variable Services Support - Set to 1 to indicate FSP utilizes the FSP Variable Services defined in Section 9.6 to store non-volatile data. This bit is only valid if FSP HeaderRevision is >= 7.
+  ///   Bits 15:4 - Reserved
   ///
   UINT16  ImageAttribute;
   ///
@@ -147,6 +166,10 @@ typedef struct {
   /// Byte 0x4E: Reserved4.
   ///
   UINT16  Reserved4;
+  ///
+  /// Byte 0x50: Multi Phase Mem Init offset.
+  ///
+  UINT32  FspMultiPhaseMemInitEntryOffset;
 } FSP_INFO_HEADER;
 
 ///

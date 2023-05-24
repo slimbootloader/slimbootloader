@@ -31,6 +31,7 @@
   FspTempRamExit.c
   FspMemoryInit.c
   FspMisc.c
+  FspVariableServices.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -45,6 +46,8 @@
   ResetSystemLib
   ThunkLib
   PcdLib
+  BootloaderLib
+  VariableLib
 
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdFSPMBase
