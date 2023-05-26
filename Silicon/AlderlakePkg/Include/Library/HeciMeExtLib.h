@@ -1,7 +1,7 @@
 /** @file
   Heci ME Extended Measured boot library.
 
-  Copyright (c) 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2022 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -127,6 +127,23 @@ EFI_STATUS
 EFIAPI
 HeciGetFipsMode (
   OUT GET_FIPS_MODE_DATA  *GetFipsModeData
+  );
+
+/**
+  Get EPS (Extended Period State) information
+
+  @param[out]     GetEpsStateInfo   Extended license installation info
+
+  @retval EFI_UNSUPPORTED         Current ME mode doesn't support this function
+  @retval EFI_SUCCESS             Command succeeded
+  @retval EFI_DEVICE_ERROR        HECI Device error, command aborts abnormally
+  @retval EFI_TIMEOUT             HECI does not return the buffer before timeout
+  @retval EFI_BUFFER_TOO_SMALL    Message Buffer is too small for the Acknowledge
+**/
+EFI_STATUS
+EFIAPI
+HeciGetEpsState (
+  OUT EPS_GET_STATE_INFO  *GetEpsStateInfo
   );
 
 #endif

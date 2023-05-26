@@ -1,7 +1,7 @@
 /** @file
   Implementation file for Heci ME Extended Measured boot functionality
 
-  Copyright (c) 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2022 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -717,6 +717,77 @@ HeciGetFipsMode (
     *GetFipsModeData = GetFipsMode.Response.Data;
   } else {
     return EFI_DEVICE_ERROR;
+  }
+
+  return Status;
+}
+
+/**
+  Get EPS (Extended Period State) information
+
+  @param[out]     GetEpsStateInfo   Extended license installation info
+
+  @retval EFI_UNSUPPORTED         Current ME mode doesn't support this function
+  @retval EFI_SUCCESS             Command succeeded
+  @retval EFI_DEVICE_ERROR        HECI Device error, command aborts abnormally
+  @retval EFI_TIMEOUT             HECI does not return the buffer before timeout
+  @retval EFI_BUFFER_TOO_SMALL    Message Buffer is too small for the Acknowledge
+**/
+EFI_STATUS
+EFIAPI
+HeciGetEpsState (
+  OUT EPS_GET_STATE_INFO  *GetEpsStateInfo
+  )
+{
+  EPS_GET_STATE_BUFFER   GetEpsState;
+  UINT32                 Length;
+  UINT32                 RecvLength;
+  EFI_STATUS             Status;
+  UINT32                 MeMode;
+
+
+  Status = HeciGetMeMode (&MeMode);
+  if (EFI_ERROR (Status) || (MeMode != ME_MODE_NORMAL)) {
+    return EFI_UNSUPPORTED;
+  }
+
+  GetEpsState.Request.MkhiHeader.Data              = 0;
+  GetEpsState.Request.MkhiHeader.Fields.GroupId    = MKHI_EPS_GROUP_ID;
+  GetEpsState.Request.MkhiHeader.Fields.Command    = EPS_GET_STATE_CMD;
+  Length                                           = sizeof (EPS_GET_STATE);
+  RecvLength                                       = sizeof (EPS_GET_STATE_ACK);
+
+  ///
+  /// Send Get EPS state Mode Request to ME
+  ///
+  Status = HeciSendwAck (
+                   HECI1_DEVICE,
+                   (UINT32 *) &GetEpsState,
+                   Length,
+                   &RecvLength,
+                   BIOS_FIXED_HOST_ADDR,
+                   HECI_MKHI_MESSAGE_ADDR
+                   );
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "HeciGetEpsState: Message failed! EFI_STATUS = %r\n", Status));
+    return Status;
+  }
+
+  if ((GetEpsState.Response.MkhiHeader.Fields.Command == EPS_GET_STATE_CMD) &&
+      (GetEpsState.Response.MkhiHeader.Fields.IsResponse == 1) &&
+      (GetEpsState.Response.MkhiHeader.Fields.Result == MkhiStatusSuccess)) {
+
+    *GetEpsStateInfo = GetEpsState.Response.eps_info;
+
+    DEBUG ((DEBUG_INFO, "delivery_method    =%d\n", GetEpsStateInfo->delivery_method));
+    DEBUG ((DEBUG_INFO, "license_requested  =%d\n", GetEpsStateInfo->license_requested));
+    DEBUG ((DEBUG_INFO, "license_installed  =%d\n", GetEpsStateInfo->license_installed));
+    DEBUG ((DEBUG_INFO, "license_permits    =%d\n", GetEpsStateInfo->license_permits));
+
+  } else {
+    DEBUG ((DEBUG_INFO, "Error in EPS Info population \n"));
+    Status = EFI_DEVICE_ERROR;
   }
 
   return Status;

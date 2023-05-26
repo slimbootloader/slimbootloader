@@ -1,7 +1,7 @@
 /** @file
   MKHI Messages
 
-  Copyright (c) 2018 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -60,6 +60,15 @@
 ///
 #define GEN_SET_FIPS_MODE_CMD                     0x20
 #define GEN_GET_FIPS_MODE_CMD                     0x21
+
+///
+/// DEFINES FOR EPS_GROUP command
+///
+#define MKHI_EPS_GROUP_ID                         0x21
+#define EPS_SET_STATE_CMD                         0x1
+#define EPS_GET_STATE_CMD                         0x2
+#define EPS_GET_PLATFORM_ID_STATE_CMD             0x3
+#define EPS_INSTALL_LICENSE_CMD                   0x4
 
 #pragma pack(1)
 
@@ -347,6 +356,41 @@ typedef union {
   OEM_KEY_STATUS_REQ   Request;
   OEM_KEY_STATUS_ACK   Response;
 } OEM_KEY_STATUS_BUFFER;
+
+///
+/// Get Extended Period State (EPS) info
+///
+typedef struct
+{
+  MKHI_MESSAGE_HEADER     MkhiHeader;
+} EPS_GET_STATE;
+
+typedef enum
+{
+  EPS_DELIVERY_METHOD_NOT_SET    = 0,
+  EPS_DELIVERY_METHOD_MANAGED    = 1,
+  EPS_DELIVERY_METHOD_AUTO       = 2,
+} EPS_DELIVERY_METHOD;
+
+typedef struct
+{
+  EPS_DELIVERY_METHOD     delivery_method;
+  UINT8                   license_requested;
+  UINT8                   license_installed;
+  UINT8                   license_permits;
+  UINT8                   reserved;
+} EPS_GET_STATE_INFO;
+
+typedef struct
+{
+  MKHI_MESSAGE_HEADER     MkhiHeader;
+  EPS_GET_STATE_INFO      eps_info;
+} EPS_GET_STATE_ACK;
+
+typedef union {
+  EPS_GET_STATE           Request;
+  EPS_GET_STATE_ACK       Response;
+} EPS_GET_STATE_BUFFER;
 
 #pragma pack()
 
