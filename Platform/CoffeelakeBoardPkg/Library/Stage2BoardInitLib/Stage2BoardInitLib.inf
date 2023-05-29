@@ -92,3 +92,4 @@
   gPlatformCommonLibTokenSpaceGuid.PcdDmaBufferSize
   gPlatformModuleTokenSpaceGuid.PcdPciResourceMem64Base
   gPlatformModuleTokenSpaceGuid.PcdVtdEnabled
+  gPlatformModuleTokenSpaceGuid.PcdIgdOpRegionAddress

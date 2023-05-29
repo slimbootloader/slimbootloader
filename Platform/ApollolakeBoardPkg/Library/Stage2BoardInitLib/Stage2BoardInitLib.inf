@@ -107,3 +107,4 @@
   gPlatformCommonLibTokenSpaceGuid.PcdDmaBufferAlignment
   gPlatformCommonLibTokenSpaceGuid.PcdDmaBufferSize
   gPlatformCommonLibTokenSpaceGuid.PcdEmmcHs400SupportEnabled
+  gPlatformModuleTokenSpaceGuid.PcdIgdOpRegionAddress

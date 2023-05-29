@@ -839,6 +839,21 @@ SdcardPowerUp (
   }
 }
 
+//Initialize Platform Igd OpRegion
+VOID
+EFIAPI
+IgdOpRegionPlatformInit (
+  VOID
+  )
+{
+  EFI_STATUS                Status;
+
+  Status = IgdOpRegionInit (NULL);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_WARN, "VBT not found %r\n", Status));
+  }
+}
+
 /**
   Board specific hook points.
 
@@ -1792,7 +1807,7 @@ PlatformUpdateAcpiTable (
   } else if (Table->Signature == SIGNATURE_32 ('$', 'V', 'B', 'T')) {
     // Pointer to new VBT
     Status = PcdSet32S (PcdGraphicsVbtAddress, (UINT32)(UINTN)Table + VBT_OFFSET);
-    IgdOpRegionInit ();
+    IgdOpRegionPlatformInit();
   }
 
   if (MEASURED_BOOT_ENABLED() ) {
@@ -1879,7 +1894,7 @@ PlatformUpdateAcpiGnvs (
     Pnvs->Ipc1Enable = (UINT8)DevEnCfgData->DevEnControl1.Ipc1Enable;
   }
 
-  IgdOpRegionInit ();
+  IgdOpRegionPlatformInit();
 
   SysCpuInfo = MpGetInfo ();
   if (SysCpuInfo != NULL) {

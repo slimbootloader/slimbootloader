@@ -11,7 +11,7 @@
     VBT:        Video BIOS Table (OEM customizable data)
     IPU:        Image Processing Unit
 
-  Copyright (c) 2021 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -282,15 +282,8 @@ typedef struct {
 
 #pragma pack()
 
-typedef
-VOID
-(EFIAPI *GOP_VBT_UPDATE_CALLBACK) (
-  IN CHILD_STRUCT **ChildStructPtr
-  );
-
 typedef struct {
   UINT8                  TurboIMON;
-  GOP_VBT_UPDATE_CALLBACK callback;
 } IGD_OP_PLATFORM_INFO;
 
 /**
@@ -308,21 +301,4 @@ EFIAPI
 IgdOpRegionInit (
   IN IGD_OP_PLATFORM_INFO *PlatformInfo
   );
-
-/**
-  Locate a VBT block within VBT bianry by its block ID.
-
-  @param[in] VbtBuf     VBT binary buffer pointer.
-  @param[in] BlockId    A VBT block ID to locate.
-
-  @retval    NULL       Not found.
-             Others     The pointer to the block header.
-**/
-UINT8 *
-EFIAPI
-LocateVbtBlockById (
-  IN  UINT8     *VbtBuf,
-  IN  UINT8      BlockId
-  );
-
 #endif

@@ -196,7 +196,7 @@ class Board(BaseBoard):
             'GpioLib|Silicon/$(SILICON_PKG_NAME)/Library/GpioLib/GpioLib.inf',
             'PchSpiLib|Silicon/CommonSocPkg/Library/PchSpiLib/PchSpiLib.inf',
             'SpiFlashLib|Silicon/CommonSocPkg/Library/SpiFlashLib/SpiFlashLib.inf',
-            'IgdOpRegionLib|Silicon/$(SILICON_PKG_NAME)/Library/IgdOpRegionLib/IgdOpRegionLib.inf',
+            'IgdOpRegionLib|Silicon/CommonSocPkg/Library/IgdOpRegionLib/IgdOpRegionLib.inf',
             'IocIpcLib|Platform/$(BOARD_PKG_NAME)/Library/IocIpcLib/IocIpcLib.inf',
             'BootGuardLib|Silicon/$(SILICON_PKG_NAME)/Library/BootGuardLib20/BootGuardLib20.inf',
             'HeciLib|Silicon/CommonSocPkg/Library/HeciLib/HeciLib.inf',
