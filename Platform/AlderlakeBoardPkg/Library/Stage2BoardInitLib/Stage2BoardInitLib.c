@@ -309,6 +309,32 @@ PlatformCpuInit (
 }
 
 /**
+  Initialize Platform Igd OpRegion
+
+  @return VOID
+ */
+VOID
+EFIAPI
+IgdOpRegionPlatformInit (
+  VOID
+  )
+{
+  GLOBAL_NVS_AREA           *Gnvs;
+  IGD_OP_PLATFORM_INFO      IgdPlatformInfo;
+  EFI_STATUS                Status;
+
+  Gnvs = (GLOBAL_NVS_AREA *)(UINTN)PcdGet32 (PcdAcpiGnvsAddress);
+
+  IgdPlatformInfo.TurboIMON = Gnvs->SaNvs.GfxTurboIMON;
+
+  Status = IgdOpRegionInit (&IgdPlatformInfo);
+  Gnvs->SaNvs.IgdOpRegionAddress = (UINT32)(UINTN)PcdGet32 (PcdIgdOpRegionAddress);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_WARN, "VBT not found %r\n", Status));
+  }
+}
+
+/**
   Fix up the memory map entry for the flash map if it exceeds 16MB
 
   @return EFI_STATUS
@@ -512,11 +538,11 @@ BoardInit (
     Status = FixUpFlashMapEntry();
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_INFO, "Error fixing up Flash Map Memory Map entry %r\n", Status));
+    ///
+    /// Initialize the IGD OpRegion
+    ///
     }
-    Status = IgdOpRegionInit ();
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_INFO, "VBT not found %r\n", Status));
-    }
+    IgdOpRegionPlatformInit ();
 
     ///
     /// Initialize the HECI device (for test HeciInitLib only)

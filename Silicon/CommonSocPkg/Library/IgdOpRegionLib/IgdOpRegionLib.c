@@ -10,7 +10,7 @@
     VBT:        Video BIOS Table (OEM customizable data)
     IPU:        Image Processing Unit
 
-  Copyright (c) 2021 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -24,7 +24,6 @@
 #include <Library/MemoryAllocationLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include <Library/IgdOpRegionLib.h>
-#include <GopConfig.h>
 #include "IgdOpRegion.h"
 #include <IgdOpRegionDefines.h>
 
@@ -69,136 +68,6 @@ GetVbt (
 }
 
 /**
-This function will update the VBT checksum.
-
-@param[in out] VbtPtr - Pointer to VBT table
-
-@retval none
-**/
-VOID
-UpdateVbtChecksum(
-  VBT_TABLE_DATA *VbtPtr
-  )
-{
-  UINT8           Checksum;
-  UINT8           *VbtStartAddress;
-  UINT8           *VbtEndAddress;
-
-  VbtStartAddress = (UINT8 *)(UINTN)VbtPtr;
-  VbtEndAddress = VbtStartAddress + (VbtPtr->VbtHeader.Table_Size);
-
-  Checksum = 0;
-
-  //
-  // Compute the checksum
-  //
-  while (VbtStartAddress != VbtEndAddress) {
-    Checksum = Checksum + (*VbtStartAddress);
-    VbtStartAddress = VbtStartAddress + 1;
-  }
-  Checksum = Checksum - VbtPtr->VbtHeader.Checksum;
-  Checksum = (UINT8)(0x100 - Checksum);
-
-  //
-  // Update the checksum
-  //
-  VbtPtr->VbtHeader.Checksum = Checksum;
-
-}
-
-/**
-  Locate a VBT block within VBT bianry by its block ID.
-
-  @param[in] VbtBuf     VBT binary buffer pointer.
-  @param[in] BlockId    A VBT block ID to locate.
-
-  @retval    NULL       Not found.
-             Others     The pointer to the block header.
-**/
-UINT8 *
-EFIAPI
-LocateVbtBlockById (
-  IN  UINT8     *VbtBuf,
-  IN  UINT8      BlockId
-  )
-{
-  VBT_HEADER               *VbtHdr;
-  VBT_BIOS_DATA_HEADER     *BiosDataHdr;
-  VBT_BLOCK_COMMON_HEADER  *BlkHdr;
-  UINT32                    Offset;
-
-  if ((VbtBuf != NULL) && (*(UINT32 *)VbtBuf == VBT_SIGNATURE)) {
-    VbtHdr = (VBT_HEADER *)VbtBuf;
-    Offset = VbtHdr->Bios_Data_Offset;
-    BiosDataHdr = (VBT_BIOS_DATA_HEADER *)(VbtBuf + Offset);
-    Offset = Offset + BiosDataHdr->BDB_Header_Size;
-    while (Offset < BiosDataHdr->BDB_Size) {
-      BlkHdr = (VBT_BLOCK_COMMON_HEADER *)(VbtBuf + Offset);
-      if (BlkHdr->BlockId == BlockId) {
-        return (UINT8 *)BlkHdr;
-      }
-      Offset += (BlkHdr->BlockSize + sizeof(VBT_BLOCK_COMMON_HEADER));
-    }
-  }
-
-  return NULL;
-}
-
-/**
-  Update VBT data in Igd Op Region.
-
-  @param[in] IsExtendedVbt          Is an extended VBT being used
-  @param[in] GopVbtUpdateCallback   A callback routine for platform to update VBT.
-
-  @retval    EFI_SUCCESS      VBT data was returned.
-  @exception EFI_ABORTED      Intel VBT not found.
-**/
-EFI_STATUS
-UpdateVbt (
-  BOOLEAN                   IsExtendedVbt,
-  GOP_VBT_UPDATE_CALLBACK   GopVbtUpdateCallback
-  )
-{
-  VBT_TABLE_DATA                    *VbtPtr;
-  VBT_GENERAL2_INFO                 *VbtGen2Info;
-  CHILD_STRUCT                      *ChildStructPtr[ChildStruct_MAX];
-  UINTN                             Index;
-
-  if (mIgdOpRegion.OpRegion == NULL) {
-    return EFI_NOT_FOUND;
-  }
-
-  if (IsExtendedVbt) {
-    VbtPtr = (VBT_TABLE_DATA*) (((UINTN)mIgdOpRegion.OpRegion) + sizeof (IGD_OPREGION_STRUCTURE));
-  } else {
-    VbtPtr = (VBT_TABLE_DATA*) &(mIgdOpRegion.OpRegion->MBox4);
-  }
-
-  if (VbtPtr != NULL) {
-    DEBUG ((DEBUG_INFO, "VBT data found '%.20a'\n", VbtPtr->VbtHeader.Product_String));
-    DEBUG((DEBUG_INFO, "Updating GOP VBT fields using GOP Configuration Lib.\n"));
-    VbtGen2Info = (VBT_GENERAL2_INFO *) LocateVbtBlockById ((UINT8 *)VbtPtr, VBT_BLK_ID_GENERAL2_INFO);
-    if (VbtGen2Info != NULL) {
-      for (Index = 0; Index < ChildStruct_MAX; Index++) {
-        ChildStructPtr[Index] = (CHILD_STRUCT *)(((UINT8 *)VbtGen2Info->Child_Struct) + Index * VbtGen2Info->SizeChild_Struct);
-      }
-
-      if (GopVbtUpdateCallback != NULL) {
-        GopVbtUpdateCallback (ChildStructPtr);
-      }
-
-      DEBUG((DEBUG_INFO, "VBT Updated.\n"));
-      UpdateVbtChecksum (VbtPtr);
-    }
-    return EFI_SUCCESS;
-  } else {
-    DEBUG ((DEBUG_INFO, "Intel VBT not found\n"));
-    return EFI_ABORTED;
-  }
-
-}
-
-/**
   Graphics OpRegion / Software SCI driver installation function.
 
   @param[in] GopVbtUpdateCallback   A callback routine for platform to update VBT.
@@ -217,13 +86,11 @@ IgdOpRegionInit (
   UINT16                        ExtendedVbtSize;
   EFI_STATUS                    Status;
   VBIOS_VBT_STRUCTURE           *VbtFileBuffer;
-  GOP_VBT_UPDATE_CALLBACK       VbtCallback;
   UINT8                         TurboIMON;
 
   Status = EFI_ABORTED;
   VbtFileBuffer = NULL;
   ExtendedVbtSize = 0;
-  VbtCallback = NULL;
 
   GetVbt (&VbtFileBuffer);
   if (VbtFileBuffer == NULL) {
@@ -280,6 +147,12 @@ IgdOpRegionInit (
   //
   mIgdOpRegion.OpRegion->Header.PCON = 0x3;
 
+  //Set External Gfx Adapter field is valid
+  mIgdOpRegion.OpRegion->Header.PCON |= BIT8;
+
+  //Assume No External Gfx Adapter
+  mIgdOpRegion.OpRegion->Header.PCON &= (UINT32) (~BIT7);
+
   mIgdOpRegion.OpRegion->MBox3.BCLP = BACKLIGHT_BRIGHTNESS;
 
   mIgdOpRegion.OpRegion->MBox3.PFIT = (FIELD_VALID_BIT | PFIT_STRETCH);
@@ -322,12 +195,6 @@ IgdOpRegionInit (
     mIgdOpRegion.OpRegion->MBox3.RVDS = 0;
     CopyMem (mIgdOpRegion.OpRegion->MBox4.RVBT, VbtFileBuffer, VbtFileBuffer->HeaderVbtSize);
   }
-
-  VbtCallback = NULL;
-  if (IgdPlatformInfo != NULL) {
-    VbtCallback = IgdPlatformInfo->callback;
-  }
-  Status = UpdateVbt (ExtendedVbtSize > 0, VbtCallback);
 
   if (EFI_ERROR (Status)) {
     return Status;

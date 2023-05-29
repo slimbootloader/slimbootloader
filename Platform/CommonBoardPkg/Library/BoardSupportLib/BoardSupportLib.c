@@ -19,7 +19,6 @@
 #include <Library/CryptoLib.h>
 #include <Library/IgdOpRegionLib.h>
 #include <IgdOpRegionDefines.h>
-#include <GopConfig.h>
 
 #define  IMAGE_TYPE_ADDENDUM  0x1E
 #define  IMAGE_TYPE_NOT_USED  0x1F
@@ -536,52 +535,4 @@ GetVbtAddress ()
   }
 
   return PcdGet32(PcdGraphicsVbtAddress);
-}
-
-/**
-  Patch VBT to use a fixed display mode with the required resolution.
-
-  @param[in]  VbtBuf    VBT binary buffer in memory to be patched.
-  @param[in]  Xres      Requested mode X resolution.
-  @param[in]  Yres      Requested mode Y resolution.
-
-  @retval     EFI_SUCCESS        Fixed mode block in VBT has been patched to the required mode.
-              EFI_NOT_FOUND      Could not find fixed mode block in VBT.
-**/
-EFI_STATUS
-EFIAPI
-SetVbtFixedMode (
-  IN  UINT8     *VbtBuf,
-  IN  UINT32     Xres,
-  IN  UINT32     Yres
-  )
-{
-  EFI_STATUS                Status;
-  VBT_HEADER               *VbtHdr;
-  VBT_BIOS_DATA_HEADER     *BiosDataHdr;
-  VBT_BLOCK_COMMON_HEADER  *BlkHdr;
-  BLOCK51_FIXED_MODE_SET   *ModeBlk;
-  UINT32                    Offset;
-
-  Status = EFI_NOT_FOUND;
-  if ((VbtBuf != NULL) && (*(UINT32 *)VbtBuf == VBT_SIGNATURE)) {
-    VbtHdr = (VBT_HEADER *)VbtBuf;
-    Offset = VbtHdr->Bios_Data_Offset;
-    BiosDataHdr = (VBT_BIOS_DATA_HEADER *)(VbtBuf + Offset);
-    Offset = Offset + BiosDataHdr->BDB_Header_Size;
-    while (Offset < BiosDataHdr->BDB_Size) {
-      BlkHdr = (VBT_BLOCK_COMMON_HEADER *)(VbtBuf + Offset);
-      // BlockId 51 is for fixed mode set
-      if (BlkHdr->BlockId == 51) {
-        ModeBlk = (BLOCK51_FIXED_MODE_SET *) BlkHdr;
-        ModeBlk->FeatureEnable = 1;
-        ModeBlk->XRes = Xres;
-        ModeBlk->YRes = Yres;
-        Status = EFI_SUCCESS;
-        break;
-      }
-      Offset += (BlkHdr->BlockSize + sizeof(VBT_BLOCK_COMMON_HEADER));
-    }
-  }
-  return Status;
 }

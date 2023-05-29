@@ -122,6 +122,7 @@
   gPlatformModuleTokenSpaceGuid.PcdPciEnumHookProc
   gPlatformModuleTokenSpaceGuid.PcdFlashBaseAddress
   gPlatformModuleTokenSpaceGuid.PcdFlashSize
+  gPlatformModuleTokenSpaceGuid.PcdIgdOpRegionAddress
 
 [FixedPcd]
   gPlatformAlderLakeTokenSpaceGuid.PcdAdlLpSupport

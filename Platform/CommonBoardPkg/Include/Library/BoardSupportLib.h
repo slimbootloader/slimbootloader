@@ -173,25 +173,6 @@ GetVbtAddress (
   );
 
 /**
-  Patch VBT to use a fixed display mode with the required resolution.
-
-  @param[in]  VbtBuf    VBT binary buffer in memory to be patched.
-  @param[in]  Xres      Requested mode X resolution.
-  @param[in]  Yres      Requested mode Y resolution.
-
-  @retval     EFI_SUCCESS        Fixed mode block in VBT has been patched to the required mode.
-              EFI_NOT_FOUND      Could not find fixed mode block in VBT.
-**/
-EFI_STATUS
-EFIAPI
-SetVbtFixedMode (
-  IN  UINT8     *VbtBuf,
-  IN  UINT32     Xres,
-  IN  UINT32     Yres
-  );
-
-
-/**
   Set framebuffer range as writecombining for performance.
 
   @param[in]    FrameBufferBase   Framebuffer base address.

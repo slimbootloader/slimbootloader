@@ -999,6 +999,27 @@ GpioInit (
   return GpioConfigurePads (GpioEntries, (GPIO_INIT_CONFIG *) GpioCfgDataBuffer);
 }
 
+//Initialize Platform Igd OpRegion
+VOID
+EFIAPI
+IgdOpRegionPlatformInit (
+  VOID
+  )
+{
+  GLOBAL_NVS_AREA           *Gnvs;
+  IGD_OP_PLATFORM_INFO      IgdPlatformInfo;
+  EFI_STATUS                Status;
+
+  Gnvs = (GLOBAL_NVS_AREA *)(UINTN)PcdGet32 (PcdAcpiGnvsAddress);
+
+  IgdPlatformInfo.TurboIMON = Gnvs->SaNvs.GfxTurboIMON;
+
+  Status = IgdOpRegionInit (&IgdPlatformInfo);
+  Gnvs->SaNvs.IgdOpRegionAddress = (UINT32)(UINTN)PcdGet32 (PcdIgdOpRegionAddress);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_WARN, "VBT not found %r\n", Status));
+  }
+}
 
 /**
   Initialize Board specific things in Stage2 Phase
@@ -1154,10 +1175,7 @@ BoardInit (
     }
     break;
   case PrePayloadLoading:
-    Status = IgdOpRegionInit ();
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_WARN, "VBT not found %r\n", Status));
-    }
+    IgdOpRegionPlatformInit();
     ClearSmi ();
     if (GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE && GetBootMode() != BOOT_ON_S3_RESUME) {
       ClearS3SaveRegion ();

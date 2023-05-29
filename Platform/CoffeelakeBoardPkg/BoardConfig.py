@@ -191,7 +191,7 @@ class Board(BaseBoard):
             'PchInfoLib|Silicon/$(SILICON_PKG_NAME)/Library/PchInfoLib/PchInfoLib.inf',
             'PchSerialIoLib|Silicon/$(SILICON_PKG_NAME)/Library/PchSerialIoLib/PchSerialIoLib.inf',
             'GpioLib|Silicon/$(SILICON_PKG_NAME)/Library/GpioLib/GpioLib.inf',
-            'IgdOpRegionLib|Silicon/$(SILICON_PKG_NAME)/Library/IgdOpRegionLib/IgdOpRegionLib.inf',
+            'IgdOpRegionLib|Silicon/CommonSocPkg/Library/IgdOpRegionLib/IgdOpRegionLib.inf',
             'BdatLib|Silicon/CommonSocPkg/Library/BdatLib/BdatLib.inf',
             'BootMediaLib|Silicon/$(SILICON_PKG_NAME)/Library/BootMediaLib/BootMediaLib.inf',
             'StageCommonLib|Silicon/$(SILICON_PKG_NAME)/Library/StageCommonLib/StageCommonLib.inf',

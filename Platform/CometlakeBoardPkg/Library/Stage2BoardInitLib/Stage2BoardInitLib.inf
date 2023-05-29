@@ -84,3 +84,4 @@
   gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsCnt
   gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesBase
   gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled
+  gPlatformModuleTokenSpaceGuid.PcdIgdOpRegionAddress

@@ -754,52 +754,6 @@ UpdatePayloadId (
   }
 }
 
-//
-//  GOP VBT update for TGL H DDR4
-//
-VOID
-EFIAPI
-TglHDdr4GopVbtSpecificUpdate (
-  IN CHILD_STRUCT **ChildStructPtr
-)
-{
-  // Enabling DP++ on DDI-B (EFP1)
-  ChildStructPtr[2]->DeviceClass  = DISPLAY_PORT_HDMI_DVI_COMPATIBLE;
-  ChildStructPtr[2]->DVOPort      = DISPLAY_PORT_B;
-  ChildStructPtr[2]->AUX_Channel  = AUX_CHANNEL_B;
-  ChildStructPtr[2]->DDCBus       = 0x2;
-}
-
-//
-// GOP VBT update for TGL U DDR4
-//
-VOID
-EFIAPI
-TglUDdr4GopVbtSpecificUpdate(
-  IN CHILD_STRUCT **ChildStructPtr
-  )
-{
-  ChildStructPtr[2]->DeviceClass = HDMI_DVI;
-  ChildStructPtr[2]->DVOPort = HDMI_B;
-  ChildStructPtr[2]->AUX_Channel = 0;
-  ChildStructPtr[2]->HdmiLevelShifterConfig.Bits.HdmiMaxDataRateBits = 1;  //[2.97 Gbps]
-}
-
-//
-// GOP VBT update for TGL U LP DDR4
-//
-VOID
-EFIAPI
-TglULpDdr4GopVbtSpecificUpdate(
-  IN CHILD_STRUCT **ChildStructPtr
-  )
-{
-  ChildStructPtr[2]->DeviceClass  = DISPLAY_PORT_HDMI_DVI_COMPATIBLE;
-  ChildStructPtr[2]->DVOPort      = DISPLAY_PORT_B;
-  ChildStructPtr[2]->AUX_Channel  = AUX_CHANNEL_B;
-  ChildStructPtr[2]->DDCBus       = 0x2;
-}
-
 //Initialize Platform Igd OpRegion
 VOID
 EFIAPI
@@ -814,24 +768,6 @@ IgdOpRegionPlatformInit (
   Gnvs = (GLOBAL_NVS_AREA *)(UINTN)PcdGet32 (PcdAcpiGnvsAddress);
 
   IgdPlatformInfo.TurboIMON = Gnvs->SaNvs.GfxTurboIMON;
-
-  switch (GetPlatformId ()) {
-    case BoardIdTglHDdr4SODimm:
-    case 0x0F:
-      IgdPlatformInfo.callback = (GOP_VBT_UPDATE_CALLBACK)(UINTN)&TglHDdr4GopVbtSpecificUpdate;
-      break;
-    case BoardIdTglUDdr4:
-    case BoardIdTglUpxi11:
-      IgdPlatformInfo.callback = (GOP_VBT_UPDATE_CALLBACK)(UINTN)&TglUDdr4GopVbtSpecificUpdate;
-      break;
-    case BoardIdTglULp4Type4:
-      IgdPlatformInfo.callback = (GOP_VBT_UPDATE_CALLBACK)(UINTN)&TglULpDdr4GopVbtSpecificUpdate;
-      break;
-    default:
-      DEBUG((DEBUG_INFO, "Unsupported board Id %x .....\n", GetPlatformId ()));
-      IgdPlatformInfo.callback = NULL;
-      break;
-  }
 
   Status = IgdOpRegionInit (&IgdPlatformInfo);
   Gnvs->SaNvs.IgdOpRegionAddress = (UINT32)(UINTN)PcdGet32 (PcdIgdOpRegionAddress);
