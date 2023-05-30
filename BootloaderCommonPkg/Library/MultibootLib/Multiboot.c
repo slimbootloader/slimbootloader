@@ -1,7 +1,7 @@
 /** @file
   This file Multiboot specification (implementation).
 
-  Copyright (c) 2014 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2014 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -14,6 +14,7 @@
 #include <Library/DebugLib.h>
 #include <Library/HobLib.h>
 #include <Library/BootloaderCommonLib.h>
+#include <Library/LinuxLib.h>
 #include <Guid/MemoryMapInfoGuid.h>
 #include <Guid/GraphicsInfoHob.h>
 #include "MultibootLibInternal.h"
@@ -122,7 +123,7 @@ GetMemoryMapInfo (
   @param[in]   MemoryMapInfo  Memmap buffer from boot loader
 **/
 VOID
-InitMultibotMmap (
+InitMultibootMmap (
   OUT     MULTIBOOT_MMAP     *MbMmap,
   IN      MEMORY_MAP_INFO    *MemoryMapInfo
   )
@@ -167,7 +168,7 @@ SetupMultibootInfo (
       DEBUG ((DEBUG_INFO, "Multiboot MMap allocation Error\n"));
       ASSERT (MbMmap);
     }
-    InitMultibotMmap (MbMmap, MemoryMapInfo);
+    InitMultibootMmap (MbMmap, MemoryMapInfo);
 
     MbInfo->MmapAddr   = (UINT32 *) MbMmap;
     MbInfo->MmapLength = MmapCount * sizeof (MULTIBOOT_MMAP);
@@ -231,6 +232,81 @@ SetupMultibootInfo (
   MultiBoot->BootState.Ebx = (UINT32)(UINTN)MbInfo;
 }
 
+/**
+  Load Multiboot module string
+
+  @param[in,out] MultiBoot   Point to loaded Multiboot image structure
+  @param[in] ModuleIndex     Module index to load
+  @param[in] File            Source image file
+
+  @retval  EFI_SUCCESS       Load Multiboot module image successfully
+  @retval  Others            There is error when setup image
+**/
+EFI_STATUS
+EFIAPI
+LoadMultibootModString (
+  IN OUT MULTIBOOT_IMAGE     *MultiBoot,
+  IN     UINT16              ModuleIndex,
+  IN     IMAGE_DATA          *File
+  )
+{
+  EFI_STATUS                 Status;
+  UINT32                     Index;
+  IMAGE_DATA                 *CmdFile;
+  UINT8                      *NewCmdBuffer;
+  UINT32                     NewSize;
+
+  if ((MultiBoot == NULL) || (File == NULL) || (ModuleIndex >= MultiBoot->MbModuleNumber)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  CmdFile = &MultiBoot->MbModuleData[ModuleIndex].CmdFile;
+  CopyMem (CmdFile, File, sizeof (IMAGE_DATA));
+
+  Status = EFI_SUCCESS;
+
+  if (CmdFile->Addr == NULL || CmdFile->Size == 0) {
+    goto done;
+  }
+
+  // multiboot spec requires a mod string be a zero-terminated ASCII string
+  // fast check: 1st char is zero or zero-terminated
+  if (((UINT8 *)CmdFile->Addr)[0] == '\0') {
+    goto done;
+  }
+
+  for (Index = (CmdFile->Size-1); Index > 0; Index--) {
+    if (((UINT8 *)CmdFile->Addr)[Index] == '\0') {
+      goto done;
+    }
+  }
+
+  // if the mod string is not zero-terminated, allocate a new buffer to append zero char
+  NewCmdBuffer = (UINT8 *) AllocatePages (EFI_SIZE_TO_PAGES (CMDLINE_LENGTH_MAX));
+  if (NewCmdBuffer == NULL) {
+    Status = EFI_OUT_OF_RESOURCES;
+    goto done;
+  }
+
+  // no ASCII check here for performance
+  NewSize = (CmdFile->Size > (CMDLINE_LENGTH_MAX -1)) ? CMDLINE_LENGTH_MAX: (CmdFile->Size + 1);
+  CopyMem (NewCmdBuffer, CmdFile->Addr, NewSize - 1);
+  NewCmdBuffer[NewSize - 1] = '\0';
+
+  // Free Allocated Memory earlier first
+  FreeImageData (CmdFile);
+  // Assign new one
+  CmdFile->Addr = NewCmdBuffer;
+  CmdFile->Size = NewSize;
+  CmdFile->AllocType = ImageAllocateTypePage;
+
+done:
+  if (Status == EFI_SUCCESS) {
+    MultiBoot->MbModule[ModuleIndex].String = (UINT8 *) MultiBoot->MbModuleData[ModuleIndex].CmdFile.Addr;
+  }
+
+  return Status;
+}
 
 /**
   Align multiboot modules if required by spec.
@@ -420,6 +496,7 @@ DumpMbInfo (
       DEBUG ((DEBUG_INFO, "- Mod[%d].Start:      %08x\n", Index, Mod[Index].Start));
       DEBUG ((DEBUG_INFO, "- Mod[%d].End:        %08x\n", Index, Mod[Index].End));
       DEBUG ((DEBUG_INFO, "- Mod[%d].String:     %08x\n", Index, (UINT32)(UINTN)Mod[Index].String));
+      DEBUG ((DEBUG_INFO, "  string = '%a'\n", Mod[Index].String));
     }
   }
 
