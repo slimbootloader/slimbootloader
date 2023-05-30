@@ -503,7 +503,7 @@
   - IehMode :
       name         : IEH Mode
       type         : Combo
-      option       : 0:Bypass. 1:Enable
+      option       : 0:Bypass, 1:Enable
       help         : >
                      Integrated Error Handler Mode
       length       : 0x01
