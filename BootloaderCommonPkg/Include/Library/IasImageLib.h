@@ -129,6 +129,21 @@ IasGetFiles (
   OUT  IMAGE_DATA  *Img
   );
 
+/**
+  Free the allocated memory in an image data
+
+  This function free a memory allocated in IMAGE_DATA according to Allocation Type.
+
+  @param[in]  ImageData       An image data pointer which has allocated memory address,
+                              its size, and allocation type.
+
+**/
+VOID
+EFIAPI
+FreeImageData (
+  IN  IMAGE_DATA    *ImageData
+  );
+
 // Image type subfields (cf. boot subsustem HLD, appendix A for details).
 #define IAS_IMAGE_TYPE(it)      (((it) & 0xffff0000) >> 16)
 #define IAS_IMAGE_IS_SIGNED(it)  ((it) &      0x100)

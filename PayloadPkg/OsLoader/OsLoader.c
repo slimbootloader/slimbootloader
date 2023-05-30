@@ -269,10 +269,9 @@ UpdateLoadedImage (
         //
         // IMAGE_DATA memory will be freed later if fails
         //
-        CopyMem (&MultiBoot->MbModuleData[ModuleIndex].CmdFile, &File[Index], sizeof (IMAGE_DATA));
+        Status = LoadMultibootModString(MultiBoot, ModuleIndex, &File[Index]);
         CopyMem (&MultiBoot->MbModuleData[ModuleIndex].ImgFile, &File[Index + 1], sizeof (IMAGE_DATA));
 
-        MultiBoot->MbModule[ModuleIndex].String = (UINT8 *) MultiBoot->MbModuleData[ModuleIndex].CmdFile.Addr;
         MultiBoot->MbModule[ModuleIndex].Start  = (UINT32)(UINTN)MultiBoot->MbModuleData[ModuleIndex].ImgFile.Addr;
         MultiBoot->MbModule[ModuleIndex].End    = (UINT32)(UINTN)MultiBoot->MbModuleData[ModuleIndex].ImgFile.Addr
           + MultiBoot->MbModuleData[ModuleIndex].ImgFile.Size;

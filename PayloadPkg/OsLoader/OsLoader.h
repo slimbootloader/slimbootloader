@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -252,20 +252,6 @@ UnloadBootImages (
 VOID
 UnloadLoadedImage (
   IN  LOADED_IMAGE  *LoadedImage
-  );
-
-/**
-  Free the allocated memory in an image data
-
-  This function free a memory allocated in IMAGE_DATA according to Allocation Type.
-
-  @param[in]  ImageData       An image data pointer which has allocated memory address,
-                              its size, and allocation type.
-
-**/
-VOID
-FreeImageData (
-  IN  IMAGE_DATA    *ImageData
   );
 
 /**
