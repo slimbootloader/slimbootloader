@@ -1,7 +1,7 @@
 ## @ StitchIfwiConfig.py
 #  This is an IFWI stitch config script for RPL Slim Bootloader
 #
-# Copyright (c) 2021, Intel Corporation. All rights reserved. <BR>
+# Copyright (c) 2021 - 2023, Intel Corporation. All rights reserved. <BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
