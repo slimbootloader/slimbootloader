@@ -170,7 +170,7 @@
   gPlatformModuleTokenSpaceGuid.PcdBootFailureThreshold   |  3         | UINT8   | 0x200000F5
 
   # The number of 0.6s ticks to wait before assuming boot failure and forcing a reboot
-  gPlatformModuleTokenSpaceGuid.PcdTcoTimeout             |  35        | UINT16  | 0x200000F6
+  gPlatformModuleTokenSpaceGuid.PcdTcoTimeout             |  50        | UINT16  | 0x200000F6
   gPlatformModuleTokenSpaceGuid.PcdFusaSupport            | FALSE      | BOOLEAN | 0x20000223
 
 [PcdsFixedAtBuild, PcdsPatchableInModule]
