@@ -48,7 +48,6 @@
   gPlatformModuleTokenSpaceGuid.PcdFastBootEnabled
   gPlatformModuleTokenSpaceGuid.PcdSblResiliencyEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
-  gPlatformCommonLibTokenSpaceGuid.PcdCmdCorruptShellAppEnabled
 
 [FixedPcd]
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled

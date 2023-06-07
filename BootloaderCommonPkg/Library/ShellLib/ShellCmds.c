@@ -57,10 +57,5 @@ LoadShellCommands (
     }
   }
 
-  if (FeaturePcdGet (PcdCmdCorruptShellAppEnabled)) {
-    // SBL component corruption command
-    ShellCommandRegister (Shell, &ShellCommandCorruptComp);
-  }
-
   return EFI_SUCCESS;
 }
