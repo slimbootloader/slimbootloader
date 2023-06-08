@@ -77,22 +77,24 @@ BoardNotifyPhase (
 
   // Populate FPDT with SBL performance data (SBLT) in EndOfFirmware phase
   if (Phase == EndOfFirmware) {
+    Status = EFI_NOT_FOUND;
     PlatformService = (PLATFORM_SERVICE *) GetServiceBySignature (PLATFORM_SERVICE_SIGNATURE);
     // Add perf data to FPDT - SBL Performance Table
     Rsdp = (EFI_ACPI_5_0_ROOT_SYSTEM_DESCRIPTION_POINTER *)(UINTN)PcdGet32 (PcdAcpiTablesRsdp);
-    Fpdt = FindAcpiTableBySignature((EFI_ACPI_DESCRIPTION_HEADER *)(UINTN)Rsdp->RsdtAddress, SIGNATURE_32('F', 'P', 'D', 'T'), NULL);
-    if (Fpdt != NULL) {
-      DEBUG ((DEBUG_INFO, "FPDT found @ 0x%X, updating..\n", Fpdt));
-      if (PlatformService != NULL){
-        PlatformService->AcpiTableUpdate((UINT8 *)Fpdt, Fpdt->Length);
-      } else{
-        DEBUG ((DEBUG_INFO, "Could not find PlatformService!\n"));
+    if (Rsdp != NULL) {
+      Fpdt = FindAcpiTableBySignature((EFI_ACPI_DESCRIPTION_HEADER *)(UINTN)Rsdp->RsdtAddress, SIGNATURE_32('F', 'P', 'D', 'T'), NULL);
+      if (Fpdt != NULL) {
+        if (PlatformService != NULL){
+          Status = PlatformService->AcpiTableUpdate((UINT8 *)Fpdt, Fpdt->Length);
+          DEBUG ((DEBUG_INFO, "Update FPDT @ 0x%X, Status =%r\n", Fpdt, Status));
+        } else {
+          DEBUG ((DEBUG_INFO, "Could not find PlatformService!\n"));
+        }
+      } else {
+        DEBUG ((DEBUG_INFO, "Failed to update SBL Performance Table\n"));
       }
-    } else {
-      DEBUG ((DEBUG_INFO, "Could not find FPDT!\n"));
     }
   }
-
 }
 
 /**
