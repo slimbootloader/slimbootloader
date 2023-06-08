@@ -145,6 +145,7 @@ UpdateAcpiSblt (
   }
 
   ResetVectorTime = 0;
+  Time = 0;
 
   // Grab relevant performance metrics
   for (PerfIdx = 0; PerfIdx < MAX_TS_NUM; PerfIdx++) {
