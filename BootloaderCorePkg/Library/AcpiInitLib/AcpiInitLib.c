@@ -144,6 +144,8 @@ UpdateAcpiSblt (
     return EFI_NOT_FOUND;
   }
 
+  ResetVectorTime = 0;
+
   // Grab relevant performance metrics
   for (PerfIdx = 0; PerfIdx < MAX_TS_NUM; PerfIdx++) {
     Id   = (RShiftU64 (PerfData->TimeStamp[PerfIdx], 48)) & 0xFFFF;
