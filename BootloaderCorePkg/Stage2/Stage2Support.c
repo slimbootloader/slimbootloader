@@ -83,7 +83,11 @@ BoardNotifyPhase (
     Fpdt = FindAcpiTableBySignature((EFI_ACPI_DESCRIPTION_HEADER *)(UINTN)Rsdp->RsdtAddress, SIGNATURE_32('F', 'P', 'D', 'T'), NULL);
     if (Fpdt != NULL) {
       DEBUG ((DEBUG_INFO, "FPDT found @ 0x%X, updating..\n", Fpdt));
-      PlatformService->AcpiTableUpdate((UINT8 *)Fpdt, Fpdt->Length);
+      if (PlatformService != NULL){
+        PlatformService->AcpiTableUpdate((UINT8 *)Fpdt, Fpdt->Length);
+      } else{
+        DEBUG ((DEBUG_INFO, "Could not find PlatformService!\n"));
+      }
     } else {
       DEBUG ((DEBUG_INFO, "Could not find FPDT!\n"));
     }
