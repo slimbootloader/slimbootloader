@@ -14,9 +14,10 @@
 #
 
 PLATFORMID_CFG_DATA.PlatformId           | 0x0011
-PLAT_NAME_CFG_DATA.PlatformName          | 'RPL_S'
+PLAT_NAME_CFG_DATA.PlatformName          | 'RPLS S17'
 GEN_CFG_DATA.PayloadId                   | ''
-FEATURES_CFG_DATA.Features.S0ix          | 0x1
+FEATURES_CFG_DATA.Features.S0ix          | 0x0
+GEN_CFG_DATA.BootToShell                 | 1
 
 #
 # This GPIO maps to the SW7C1 4-block DIP switch's 3rd switch.
@@ -127,6 +128,7 @@ GPIO_CFG_DATA.GpioPinConfig1_GPP_R18.GPIOSkip_GPP_R18 | 1
 GPIO_CFG_DATA.GpioPinConfig1_GPP_R19.GPIOSkip_GPP_R19 | 1
 GPIO_CFG_DATA.GpioPinConfig0_GPP_R20.GPIOHostSoftPadOwn_GPP_R20 | 3
 GPIO_CFG_DATA.GpioPinConfig0_GPP_R20.GPIODirection_GPP_R20 | 5
+GPIO_CFG_DATA.GpioPinConfig0_GPP_R20.GPIOOutputState_GPP_R20 | 3
 GPIO_CFG_DATA.GpioPinConfig0_GPP_R20.GPIOInterruptConfig_GPP_R20 | 0
 GPIO_CFG_DATA.GpioPinConfig0_GPP_R20.GPIOResetConfig_GPP_R20 | 1
 GPIO_CFG_DATA.GpioPinConfig1_GPP_R20.RxRaw_GPP_R20 | 0
