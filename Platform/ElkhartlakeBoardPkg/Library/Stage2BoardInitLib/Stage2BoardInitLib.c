@@ -1157,6 +1157,8 @@ UpdateFspConfig (
   UINT32      PseTsnIpConfigSize;
   UINT32      *TsnConfigBase;
   UINT32      TsnConfigSize;
+  UINT32      *ChipsetInitBinPtr;
+  UINT32      ChipsetInitBinSize;
   BOOLEAN     BiosProtected;
   BOOLEAN     IasProtected;
   EFI_STATUS  Status;
@@ -1574,6 +1576,17 @@ UpdateFspConfig (
     Fspscfg->SerialIoUartTxPinMuxPolicy[0]               = GPIO_VER3_MUXING_SERIALIO_UART0_TXD_GPP_F2;
     Fspscfg->SerialIoUartRtsPinMuxPolicy[0]              = GPIO_VER3_MUXING_SERIALIO_UART0_RTS_GPP_F0;
     Fspscfg->SerialIoUartCtsPinMuxPolicy[0]              = GPIO_VER3_MUXING_SERIALIO_UART0_CTS_GPP_F3;
+
+    // ChipsetInit
+    ChipsetInitBinPtr   = NULL;
+    ChipsetInitBinSize  = 0;
+    Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('C', 'H', 'I', 'P'),
+                            (VOID **)&ChipsetInitBinPtr, &ChipsetInitBinSize);
+    if (!EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_INFO, "Load ChipsetInitBin @0x%p, size = 0x%x\n", ChipsetInitBinPtr, ChipsetInitBinSize));
+      Fspscfg->ChipsetInitBinPtr = (UINT32)(UINTN)ChipsetInitBinPtr;
+      Fspscfg->ChipsetInitBinLen = ChipsetInitBinSize;
+    }
 
     // Check for TSN related sub-regions
     TsnMacAddrBase      = NULL;

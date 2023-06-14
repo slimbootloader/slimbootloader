@@ -62,6 +62,10 @@ class Board(BaseBoard):
 
         self.SIIPFW_SIZE = 0x1000
 
+        # ChipsetInit binary
+        self.CHIPSET_SIZE = 0x4000
+        self.SIIPFW_SIZE += self.CHIPSET_SIZE
+
         self.ENABLE_TCC         = 0
         # TSN manual configuration- If enabled, user will be able to have more refined control over TSN configuration via
         # PseTsnIpConfig, TsnConfig and TsnMacAddr binaries
@@ -306,7 +310,13 @@ class Board(BaseBoard):
         CompFilePseTsnIpConfig='PseTsnIpConfig.bin' if os.path.exists(os.path.join(bins, 'PseTsnIpConfig.bin')) else ''
         CompFileTsnConfig='TsnConfig.bin' if os.path.exists(os.path.join(bins, 'TsnConfig.bin')) else ''
         CompFileTsnMacAddr='TsnMacAddr.bin' if os.path.exists(os.path.join(bins, 'TsnMacAddr.bin')) else ''
+        CompFileChipInitFw='ChipInitBinary.bin' if os.path.exists(os.path.join(bins, 'ChipInitBinary.bin')) else ''
         CompFileCrlFw='crl.bin' if os.path.exists(os.path.join(bins, 'crl.bin')) else ''
+
+        # chipset init fw
+        container_list.append (
+            ('CHIP', CompFileChipInitFw,     '',   container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,    0,   self.CHIPSET_SIZE,  0),
+        )
 
         if self.ENABLE_TCC:
             container_list.append (
