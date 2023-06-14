@@ -79,6 +79,11 @@ def get_component_replace_list():
       ('IFWI/BIOS/TS1/ACM0',      'Input/acm.bin',           'dummy',  '',                              ''),
     ]
 
+    # ChipsetInit binary
+    if os.path.exists('IPFW/ChipInitBinary.bin'):
+        replace_list.append (
+            ('IFWI/BIOS/NRD/IPFW/CHIP', 'IPFW/ChipInitBinary.bin',   'dummy',  'KEY_ID_CONTAINER_COMP_RSA3072', 0 ),
+        )
     # need to set ENABLE_PRE_OS_CHECKER = 1 in BoardConfig.py
     if os.path.exists('IPFW/PreOsChecker.bin'):
         replace_list.append (
