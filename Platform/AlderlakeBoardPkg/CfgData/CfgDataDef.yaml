@@ -16,7 +16,7 @@ template:
 
 configs:
   - $ACTION      :
-      page         : PLT::"Platform", MEM::"Memory Settings", SIL::"Silicon Settings", GEN::"General Settings", GIO::"Gpio Settings", GFX::"Graphics Settings", OS::"OS Boot Options", SEC::"Security Settings"
+      page         : PLT::"Platform", MEM::"Memory Settings", SIL::"Silicon Settings", PWR::"Power Management Settings", GEN::"General Settings", GIO::"Gpio Settings", GFX::"Graphics Settings", OS::"OS Boot Options", SEC::"Security Settings"
   - Signature    :
       length       : 0x04
       value        : {'CFGD'}
