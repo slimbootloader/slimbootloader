@@ -324,7 +324,7 @@ DebugPrintLevelEnabled (
   @param  Expression  Boolean expression that evaluated to FALSE
 
 **/
-#ifdef __KLOCWORK__
+#if defined(__KLOCWORK__) || defined(__COVERITY__)
   #define _ASSERT(Expression)    do { if (!(Expression)) abort(); } while (0)
 #else
   #ifdef LITE_PRINT
