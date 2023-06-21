@@ -30,7 +30,7 @@ $ACTION      :
       length       : 0x01
       value        : 0x0
   - FusaPeriodicArrayBist0 :
-      name         : Periodic Scan BIST - E-cores Module 0
+      name         : Periodic Array BIST - E-cores Module 0
       type         : Combo
       option       : $EN_DIS
       help         : >
@@ -38,7 +38,7 @@ $ACTION      :
       length       : 0x01
       value        : 0x0
   - FusaPeriodicArrayBist1 :
-      name         : Periodic Scan BIST - E-cores Module 1
+      name         : Periodic Array BIST - E-cores Module 1
       type         : Combo
       option       : $EN_DIS
       help         : >
@@ -119,9 +119,8 @@ $ACTION      :
       value        : 0x0
   - DiagGspiCtrlr :
       name         : Index of GSPI controller to send FuSa diagnostic results.
-      type         : Combo
-      option       : $EN_DIS
+      type         : EditNum, DEC, (0,2)
       help         : >
-                     GSPI Controller index for sending FuSa diagnostic results. ADL-P supports 0, 1, or 2.
+                     GSPI Controller index for sending FuSa diagnostic results. RPL-P supports 0, 1, or 2.
       length       : 0x01
       value        : 0x0
