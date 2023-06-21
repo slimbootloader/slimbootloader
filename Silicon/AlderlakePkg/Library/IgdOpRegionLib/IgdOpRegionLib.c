@@ -259,7 +259,7 @@ UpdateVbt (
 
   GopVbtSpecificUpdate = NULL;
   VbtPtr = (VBT_TABLE_DATA *)VbtTablePtr;
-  if (VbtPtr == NULL) {
+  if (VbtPtr == NULL || VbtPtr->VbtGen2Info.BlockId != 2) {
     return EFI_ABORTED;
   }
 
