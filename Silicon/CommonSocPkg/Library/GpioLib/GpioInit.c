@@ -1,7 +1,7 @@
 /** @file
   This file contains routines for GPIO
 
-  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -640,6 +640,9 @@ FillGpioTable (
   @param    DataBuffer  Pointer to the Gpio Table to be programmed
 
   @retval EFI_SUCCESS                   The function completed successfully
+  @retval EFI_LOAD_ERROR                Inconsistent GPIO item size
+  @retval EFI_UNSUPPORTED               Tag is not provided, or buffer is NULL for Gpio info
+  @retval EFI_OUT_OF_RESOURCES          Failed to allocate memory
   @retval EFI_NOT_FOUND                 If Gpio Config Data cant be found
 **/
 EFI_STATUS
@@ -709,6 +712,10 @@ ConfigureGpio (
 
   Offset     = 0;
   GpioTable  = (UINT8 *)AllocateTemporaryMemory (0);  //allocate new buffer
+  if (GpioTable == NULL) {
+    DEBUG ((GPIO_DEBUG_ERROR, "Cannot allocate buffer for GpioTable\n"));
+    return EFI_OUT_OF_RESOURCES;
+  }
   GpioCfgDataBuffer = GpioTable;
 
   for (Index = 0; Index  < GpioCfgHdr->ItemCount; Index++) {
