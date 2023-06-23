@@ -107,14 +107,14 @@ UpdateFpdtBootTable (
 
 
 /**
-  Get FPDT S3 performance table by searching ACPI table
+  Get FPDT firmware performance table by searching ACPI table
 
   @param[in]  AcpiTableBase    ACPI table base address
 
-  @retval S3 performance table address     Value 0 means not found.
+  @retval  FPDT firmware performance table address, return value NULL means not found.
 **/
-UINTN
-GetFpdtS3Table (
+FIRMWARE_PERFORMANCE_TABLE *
+GetFpdtTable (
   IN  UINT32                                   AcpiTableBase
   )
 {
@@ -143,11 +143,11 @@ GetFpdtS3Table (
       DEBUG ((DEBUG_VERBOSE, "FPDT: ExitBootServicesEntry   = %ld\n", BootTable->BasicBoot.ExitBootServicesEntry));
       DEBUG ((DEBUG_VERBOSE, "FPDT: ExitBootServicesExit    = %ld\n", BootTable->BasicBoot.ExitBootServicesExit));
 
-      return (UINTN)Fpdt->S3PointerRecord.S3PerformanceTablePointer;
+      return Fpdt;
     }
   }
 
-  return 0;
+  return NULL;
 }
 
 
@@ -171,13 +171,15 @@ UpdateFpdtS3Table (
   UINT64                              TimeInMs;
   UINT64                              TotalResumeTime;
   EFI_ACPI_5_0_FPDT_S3_RESUME_RECORD  *S3Resume;
+  FIRMWARE_PERFORMANCE_TABLE          *Fpdt;
 
-  S3PerfTable = (S3_PERFORMANCE_TABLE *)GetFpdtS3Table (AcpiTableBase);
-  if (S3PerfTable == NULL) {
+  Fpdt = GetFpdtTable (AcpiTableBase);
+  if (Fpdt == NULL) {
     return EFI_NOT_FOUND;
   }
 
-  ASSERT (S3PerfTable->Header.Signature == EFI_ACPI_5_0_FPDT_S3_PERFORMANCE_TABLE_SIGNATURE);
+  S3PerfTable = (S3_PERFORMANCE_TABLE *)(UINTN)Fpdt->S3PointerRecord.S3PerformanceTablePointer;
+  ASSERT ((S3PerfTable != NULL) && (S3PerfTable->Header.Signature == EFI_ACPI_5_0_FPDT_S3_PERFORMANCE_TABLE_SIGNATURE));
 
   // Get current time
   TscValue = ReadTimeStamp();
@@ -199,6 +201,91 @@ UpdateFpdtS3Table (
   return  EFI_SUCCESS;
 }
 
+
+/**
+  This function updates SBL performance table in FPDT
+
+  @retval  EFI_SUCCESS if operation is successful, EFI_NOT_FOUND if
+           performance HOB is not found
+
+**/
+EFI_STATUS
+EFIAPI
+UpdateFpdtSblTable (
+  VOID
+  )
+{
+  UINT32                            PerfIdx;
+  UINT64                            PerfTsc;
+  UINT32                            Time;
+  UINT64                            ResetVectorTime;
+  UINT16                            Id;
+  BL_PERF_DATA                      *PerfData;
+  FIRMWARE_PERFORMANCE_TABLE        *Fpdt;
+  SBL_PERFORMANCE_TABLE             *SblPerfTable;
+
+  Fpdt = GetFpdtTable (PcdGet32 (PcdAcpiTablesRsdp));
+  if (Fpdt == NULL) {
+    return EFI_NOT_FOUND;
+  }
+
+  SblPerfTable = (SBL_PERFORMANCE_TABLE *)(UINTN)Fpdt->SblPerfPointerRecord.SblPerfTablePointer;
+  ASSERT ((SblPerfTable != NULL) && (SblPerfTable->Header.Signature == SBL_PERFORMANCE_TABLE_SIGNATURE));
+
+  PerfData = GetPerfDataPtr();
+  if (PerfData == NULL) {
+    return EFI_NOT_FOUND;
+  }
+
+  // Grab relevant performance metrics
+  for (PerfIdx = 0; PerfIdx < MAX_TS_NUM; PerfIdx++) {
+    Id   = (RShiftU64 (PerfData->TimeStamp[PerfIdx], 48)) & 0xFFFF;
+    switch (Id) {
+    case 0x1000:  // Reset vector time
+    PerfTsc = PerfData->TimeStamp[PerfIdx] & 0x0000FFFFFFFFFFFFULL;
+    Time = (UINT32)DivU64x32 (PerfTsc, PerfData->FreqKhz);
+    ResetVectorTime = Time;
+    break;
+    case 0x3000:  // Stage 1 done (Stage 2 entry)
+      PerfTsc = PerfData->TimeStamp[PerfIdx] & 0x0000FFFFFFFFFFFFULL;
+      Time = (UINT32)DivU64x32 (PerfTsc, PerfData->FreqKhz);
+      SblPerfTable->SblPerfRecord.Stage1Time= Time;
+    break;
+    case 0x31F0:  // Stage 2 done (End of stage 2)
+      PerfTsc = PerfData->TimeStamp[PerfIdx] & 0x0000FFFFFFFFFFFFULL;
+      Time = (UINT32)DivU64x32 (PerfTsc, PerfData->FreqKhz);
+      SblPerfTable->SblPerfRecord.Stage2Time = Time;
+    break;
+    default:
+    break;
+    }
+
+    // 0x31F0 is the last measure point we can get from BL_PERF_DATA
+    // Get the current measure point by reading the timestamp
+    // to get an accurate timing measurement for OsLoader. Then,
+    // calculate deltas, convert timings to nanoseconds, and break
+    if (Id == 0x31F0) {
+      PerfTsc = ReadTimeStamp();
+      Time = (UINT32)DivU64x32 (PerfTsc, PerfData->FreqKhz);
+      SblPerfTable->SblPerfRecord.OsLoaderTime = Time;
+
+      SblPerfTable->SblPerfRecord.OsLoaderTime -= SblPerfTable->SblPerfRecord.Stage2Time;
+      SblPerfTable->SblPerfRecord.Stage2Time -= SblPerfTable->SblPerfRecord.Stage1Time;
+      SblPerfTable->SblPerfRecord.Stage1Time -= ResetVectorTime;
+
+      SblPerfTable->SblPerfRecord.Stage1Time = MultU64x32(SblPerfTable->SblPerfRecord.Stage1Time, 1000000);
+      SblPerfTable->SblPerfRecord.Stage2Time = MultU64x32(SblPerfTable->SblPerfRecord.Stage2Time, 1000000);
+      SblPerfTable->SblPerfRecord.OsLoaderTime = MultU64x32(SblPerfTable->SblPerfRecord.OsLoaderTime, 1000000);
+      break;
+    }
+  }
+
+  DEBUG((DEBUG_INFO, "Updated SBL Performance Table: S1 = %ldns, S2 = %ldns, OSL = %ldns\n",
+        SblPerfTable->SblPerfRecord.Stage1Time, SblPerfTable->SblPerfRecord.Stage2Time,
+        SblPerfTable->SblPerfRecord.OsLoaderTime));
+
+  return EFI_SUCCESS;
+}
 
 /**
   Update Firmware Performance Data Table (FPDT).

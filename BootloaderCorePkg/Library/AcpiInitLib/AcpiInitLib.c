@@ -13,7 +13,6 @@
 #include <Library/SocInitLib.h>
 #include <Library/BoardInitLib.h>
 #include <Library/DebugDataLib.h>
-#include <Library/TimeStampLib.h>
 #include <Library/AcpiInitLib.h>
 #include <Service/PlatformService.h>
 #include <IndustryStandard/Acpi.h>
@@ -118,87 +117,6 @@ UpdateAcpiGnvs (
 }
 
 /**
-  This function updates SBL performance table in FPDT
-
-  @param[in]  SblPerfTable  Pointer to the SBL performance table
-
-  @retval  EFI_SUCCESS if operation is successful, EFI_NOT_FOUND if
-           performance HOB is not found
-
-**/
-EFI_STATUS
-UpdateAcpiSblt (
-  IN SBL_PERFORMANCE_TABLE            *SblPerfTable
-  )
-{
-  EFI_STATUS                        Status;
-  UINT32                            PerfIdx;
-  UINT64                            PerfTsc;
-  UINT32                            Time;
-  UINT64                            ResetVectorTime;
-  UINT16                            Id;
-  BL_PERF_DATA                      *PerfData;
-
-  PerfData = GetPerfDataPtr();
-  if (PerfData == NULL) {
-    return EFI_NOT_FOUND;
-  }
-
-  ResetVectorTime = 0;
-  Time = 0;
-
-  // Grab relevant performance metrics
-  for (PerfIdx = 0; PerfIdx < MAX_TS_NUM; PerfIdx++) {
-    Id   = (RShiftU64 (PerfData->TimeStamp[PerfIdx], 48)) & 0xFFFF;
-    switch (Id) {
-    case 0x1000:  // Reset vector time
-    PerfTsc = PerfData->TimeStamp[PerfIdx] & 0x0000FFFFFFFFFFFFULL;
-    Time = (UINT32)DivU64x32 (PerfTsc, PerfData->FreqKhz);
-    ResetVectorTime = Time;
-    break;
-    case 0x3000:  // Stage 1 done (Stage 2 entry)
-      PerfTsc = PerfData->TimeStamp[PerfIdx] & 0x0000FFFFFFFFFFFFULL;
-      Time = (UINT32)DivU64x32 (PerfTsc, PerfData->FreqKhz);
-      SblPerfTable->SblPerfRecord.Stage1Time= Time;
-    break;
-    case 0x31F0:  // Stage 2 done (End of stage 2)
-      PerfTsc = PerfData->TimeStamp[PerfIdx] & 0x0000FFFFFFFFFFFFULL;
-      Time = (UINT32)DivU64x32 (PerfTsc, PerfData->FreqKhz);
-      SblPerfTable->SblPerfRecord.Stage2Time = Time;
-    break;
-    default:
-    break;
-    }
-
-    // 0x31F0 is the last measure point we can get from BL_PERF_DATA
-    // Get the current measure point by reading the timestamp
-    // to get an accurate timing measurement for OsLoader. Then,
-    // calculate deltas, convert timings to nanoseconds, and break
-    if (Id == 0x31F0) {
-      PerfTsc = ReadTimeStamp();
-      Time = (UINT32)DivU64x32 (PerfTsc, PerfData->FreqKhz);
-      SblPerfTable->SblPerfRecord.OsLoaderTime = Time;
-
-      SblPerfTable->SblPerfRecord.OsLoaderTime -= SblPerfTable->SblPerfRecord.Stage2Time;
-      SblPerfTable->SblPerfRecord.Stage2Time -= SblPerfTable->SblPerfRecord.Stage1Time;
-      SblPerfTable->SblPerfRecord.Stage1Time -= ResetVectorTime;
-
-      SblPerfTable->SblPerfRecord.Stage1Time = MultU64x32(SblPerfTable->SblPerfRecord.Stage1Time, 1000000);
-      SblPerfTable->SblPerfRecord.Stage2Time = MultU64x32(SblPerfTable->SblPerfRecord.Stage2Time, 1000000);
-      SblPerfTable->SblPerfRecord.OsLoaderTime = MultU64x32(SblPerfTable->SblPerfRecord.OsLoaderTime, 1000000);
-      break;
-    }
-  }
-
-  Status = EFI_SUCCESS;
-  DEBUG((DEBUG_INFO, "Updated SBL Performance Table: S1 = %ldns, S2 = %ldns, OSL = %ldns\n",
-        SblPerfTable->SblPerfRecord.Stage1Time, SblPerfTable->SblPerfRecord.Stage2Time,
-        SblPerfTable->SblPerfRecord.OsLoaderTime));
-
-  return Status;
-}
-
-/**
   Find an ACPI table using the given signature.
 
   @param[in] Rsdt            ACPI table RSDT pointer.
@@ -270,8 +188,6 @@ AcpiTableUpdate (
   EFI_STATUS                        Status;
   S3_DATA                          *S3Data;
   UINT32                            AcpiMax;
-  SBL_PERFORMANCE_TABLE            *SblPerfTable;
-  FIRMWARE_PERFORMANCE_TABLE        *Fpdt;
 
   if ((AcpiTable == NULL) || (Length < sizeof (EFI_ACPI_DESCRIPTION_HEADER))) {
     return EFI_INVALID_PARAMETER;
@@ -291,22 +207,6 @@ AcpiTableUpdate (
   Size   = 0;
   while (Size < Length) {
     AcpiHdr = (EFI_ACPI_DESCRIPTION_HEADER *)(AcpiTable + Size);
-
-    // Update SBL Performance Table if signature matches
-    if (AcpiHdr->Signature == EFI_ACPI_5_0_FIRMWARE_PERFORMANCE_DATA_TABLE_SIGNATURE) {
-      // FPDT points to SBL Performance Table
-      Fpdt = (FIRMWARE_PERFORMANCE_TABLE *)AcpiHdr;
-      SblPerfTable = (SBL_PERFORMANCE_TABLE *)(UINTN)Fpdt->SblPerfPointerRecord.SblPerfTablePointer;
-      if (SblPerfTable == NULL) {
-        DEBUG((DEBUG_INFO, "SBL Performance table not found!\n"));
-        Status = EFI_NOT_FOUND;
-        break;
-      } else {
-        DEBUG ((DEBUG_INFO, "SBLT found @ 0x%X, updating..\n", SblPerfTable));
-        Status = UpdateAcpiSblt(SblPerfTable);
-        break;
-      }
-    }
 
     //
     // Verify Checksum
