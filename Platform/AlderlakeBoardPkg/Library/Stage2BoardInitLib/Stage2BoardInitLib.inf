@@ -120,6 +120,8 @@
   gPlatformModuleTokenSpaceGuid.PcdEnablePciePm
   gPlatformCommonLibTokenSpaceGuid.PcdBootPerformanceMask
   gPlatformModuleTokenSpaceGuid.PcdPciEnumHookProc
+  gPlatformModuleTokenSpaceGuid.PcdFlashBaseAddress
+  gPlatformModuleTokenSpaceGuid.PcdFlashSize
 
 [FixedPcd]
   gPlatformAlderLakeTokenSpaceGuid.PcdAdlLpSupport
