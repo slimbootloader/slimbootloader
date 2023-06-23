@@ -94,9 +94,9 @@ VerifySblVersion (
   // Get base address of Stage 1A in capsule Image
   //
   if (FwPolicy.Fields.UpdatePartitionB == 0x1) {
-    Status = PlatformGetStage1AOffset (ImageHdr, FALSE, &Stage1ABase, &Stage1ASize);
-  } else if (FwPolicy.Fields.UpdatePartitionA == 0x1) {
     Status = PlatformGetStage1AOffset (ImageHdr, TRUE, &Stage1ABase, &Stage1ASize);
+  } else if (FwPolicy.Fields.UpdatePartitionA == 0x1) {
+    Status = PlatformGetStage1AOffset (ImageHdr, FALSE, &Stage1ABase, &Stage1ASize);
   } else {
     Status = EFI_UNSUPPORTED;
   }
@@ -1523,6 +1523,11 @@ InitFirmwareUpdate (
         // Start firmware update for the component, exclude CSME driver (CSMD)
         //
         if ((UINT32)ImgHdr->UpdateHardwareInstance != FW_UPDATE_COMP_CSME_DRIVER) {
+          // The CMDI commands should be run after the components have completed the updates
+          if ((UINT32)ImgHdr->UpdateHardwareInstance == FW_UPDATE_COMP_CMD_REQUEST && FwPolicy.Fields.StateMachine != FW_UPDATE_SM_PART_AB) {
+            continue;
+          }
+
           StatusPayloadUpdate = ApplyFwImage(CapsuleImage, CapsuleSize, ImgHdr, FwPolicy, &ResetRequired);
           if (EFI_ERROR (StatusPayloadUpdate)) {
             DEBUG((DEBUG_ERROR, "ApplyFwImage (%04X:%04X) failed with Status = %r\n",
@@ -1546,8 +1551,9 @@ InitFirmwareUpdate (
 
       //
       // Update firmware update status of the component in reserved region
+      // after the component has completed the update
       //
-      if ((IsRedundantComponent(ImgHdr->UpdateHardwareInstance) && FwPolicy.Fields.SwitchtoBackupPart == 0x0) ||
+      if ((IsRedundantComponent(ImgHdr->UpdateHardwareInstance) && FwPolicy.Fields.StateMachine == FW_UPDATE_SM_PART_AB) ||
           !IsRedundantComponent(ImgHdr->UpdateHardwareInstance) ||
           EFI_ERROR(StatusPayloadUpdate)) {
         Status = UpdateStatus (ImgHdr->UpdateHardwareInstance, (UINT16)ImgHdr->Version, StatusPayloadUpdate);
@@ -1563,9 +1569,9 @@ InitFirmwareUpdate (
       }
 
       //
-      // Reset system if required
+      // Reset system if required after the component has completed the update
       //
-      if (ResetRequired == TRUE) {
+      if (ResetRequired == TRUE && FwPolicy.Fields.StateMachine == FW_UPDATE_SM_PART_AB) {
         // Check if any payload follows
         if ((Count < MAX_FW_COMPONENTS-1) && (FwUpdCompStatus[Count+1].UpdatePending != 0)) {
           Reboot (EfiResetCold);
