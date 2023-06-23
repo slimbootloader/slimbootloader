@@ -309,6 +309,46 @@ PlatformCpuInit (
 }
 
 /**
+  Fix up the memory map entry for the flash map if it exceeds 16MB
+
+  @return EFI_STATUS
+ */
+EFI_STATUS
+EFIAPI
+FixUpFlashMapEntry (VOID)
+{
+  EFI_HOB_GUID_TYPE *RawHob;
+  MEMORY_MAP_INFO   *MemoryMapInfo;
+  UINT32            MapIndex;
+
+  DEBUG ((DEBUG_VERBOSE, "FixUpFlashMapEntry Start\n"));
+  RawHob = GetFirstGuidHob(&gLoaderMemoryMapInfoGuid);
+  if (RawHob == NULL) {
+    DEBUG ((DEBUG_ERROR, "Couldn't find Memory Map HOB\n"));
+    return EFI_NOT_FOUND;
+  }
+  MemoryMapInfo = (MEMORY_MAP_INFO*)(RawHob + 1);
+
+  DEBUG ((DEBUG_VERBOSE, "Map Entry Count %d\n", MemoryMapInfo->Count));
+  for (MapIndex = 0 ; MapIndex < MemoryMapInfo->Count ; MapIndex++) {
+    DEBUG ((DEBUG_VERBOSE, "Map index %d base 0x%X\n", MapIndex, MemoryMapInfo->Entry[MapIndex].Base));
+    if (MemoryMapInfo->Entry[MapIndex].Base == PcdGet32(PcdFlashBaseAddress)
+      && MemoryMapInfo->Entry[MapIndex].Size == PcdGet32(PcdFlashSize)
+      && PcdGet32(PcdFlashSize) > SIZE_16MB)
+    {
+      // only first 16MB of flash is memory mapped.
+      // Reserving more than that will cause memory map overlaps
+      DEBUG ((DEBUG_VERBOSE, "Found Flash Map Entry\n"));
+      MemoryMapInfo->Entry[MapIndex].Base = MAX_UINT32 - SIZE_16MB + 1;
+      MemoryMapInfo->Entry[MapIndex].Size = SIZE_16MB;
+      DEBUG ((DEBUG_VERBOSE, "Map index %d base 0x%X size 0x%X\n", MapIndex, MemoryMapInfo->Entry[MapIndex].Base, MemoryMapInfo->Entry[MapIndex].Size));
+      return EFI_SUCCESS;
+    }
+  }
+  return EFI_SUCCESS;
+}
+
+/**
   Board specific hook points.
 
   Implement board specific initialization during the boot flow.
@@ -469,6 +509,10 @@ BoardInit (
     InterruptRoutingInit ();
     break;
   case PrePayloadLoading:
+    Status = FixUpFlashMapEntry();
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_INFO, "Error fixing up Flash Map Memory Map entry %r\n", Status));
+    }
     Status = IgdOpRegionInit ();
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_INFO, "VBT not found %r\n", Status));
