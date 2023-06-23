@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -60,6 +60,9 @@ InitializeSmbiosInfo (
   if (FeaturePcdGet (PcdSmbiosEnabled)) {
     Index         = 0;
     TempSmbiosStrTbl  = (SMBIOS_TYPE_STRINGS *) AllocateTemporaryMemory (0);
+    if (TempSmbiosStrTbl == NULL) {
+      return EFI_OUT_OF_RESOURCES;
+    }
     VerInfoTbl  = GetVerInfoPtr ();
     TempName[8] = 0;
 
