@@ -81,7 +81,7 @@ BoardNotifyPhase (
     PlatformService = (PLATFORM_SERVICE *) GetServiceBySignature (PLATFORM_SERVICE_SIGNATURE);
     // Add perf data to FPDT - SBL Performance Table
     Rsdp = (EFI_ACPI_5_0_ROOT_SYSTEM_DESCRIPTION_POINTER *)(UINTN)PcdGet32 (PcdAcpiTablesRsdp);
-    if (Rsdp != NULL) {
+    if (Rsdp != NULL && Rsdp->Signature == EFI_ACPI_5_0_ROOT_SYSTEM_DESCRIPTION_POINTER_SIGNATURE) {
       Fpdt = FindAcpiTableBySignature((EFI_ACPI_DESCRIPTION_HEADER *)(UINTN)Rsdp->RsdtAddress, SIGNATURE_32('F', 'P', 'D', 'T'), NULL);
       if (Fpdt != NULL) {
         if (PlatformService != NULL){
