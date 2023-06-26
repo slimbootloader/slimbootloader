@@ -1,0 +1,494 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : SIL
+- SILICON_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ SILICON_CFG_DATA, 0x200, 0, 0 ] }
+  - InterruptRemappingSupport :
+      name         : InterruptRemappingSupport
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     InterruptRemappingSupport
+      length       : 0x01
+      value        : 0x1
+  - PchTsnEnable :
+      name         : Enable PCH TSN
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/disable TSN on the PCH.
+      length       : 0x01
+      value        : 0x0
+  - PchTsnMultiVcEnable :
+      name         : Enable TSN Multi-VC
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/disable Multi Virtual Channels(VC) in TSN.
+      length       : 0x01
+      value        : 0x0
+  - EnableItbm   :
+      condition    : $(COND_S0IX_DIS)
+      name         : Intel Turbo Boost Max Technology 3.0
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Intel Turbo Boost Max Technology 3.0. 0- Disabled; <b>1- Enabled</b>
+      length       : 0x01
+      value        : 0x00
+  - AcSplitLock  :
+      name         : AC Split Lock
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/Disable #AC check on split lock. <b>0- Disable</b>; 1- Enable.
+      length       : 0x1
+      value        : 0x0
+  - PsfTccEnable :
+      name         : PSF Tcc
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Psf Tcc (Time Coordinated Computing) Enable will decrease psf transaction latency by disable some psf power management features, 0- Disable, 1- Enable
+      length       : 0x01
+      value        : 0x0
+  - PchDmiAspmCtrl :
+      name         : Pch Dmi Aspm Ctrl
+      type         : Combo
+      option       : 0:Disabled, 1:L0s, 2:L1, 3:L0sL1, 4:Auto
+      help         : >
+                     ASPM configuration on the PCH side of the DMI/OPI Link. Default is <b>PchPcieAspmAutoConfig</b>
+      length       : 0x01
+      value        : 0x02
+  - PchLegacyIoLowLatency :
+      name         : PCH Legacy IO Low Latency Enable
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Set to enable low latency of legacy IO. <b>0- Disable</b>, 1- Enable
+      length       : 0x01
+      value        : 0x0
+  - RenderStandby :
+      name         : Enable/Disable IGFX RenderStandby
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable(Default)- Enable IGFX RenderStandby, Disable- Disable IGFX RenderStandby
+      length       : 0x01
+      value        : 0x1
+  - PmSupport    :
+      name         : Enable/Disable IGFX PmSupport
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable(Default)- Enable IGFX PmSupport, Disable- Disable IGFX PmSupport
+      length       : 0x01
+      value        : 0x1
+  - CpuPcieClockGating :
+      name         : CPU PCIe RootPort Clock Gating
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Describes whether the PCI Express Clock Gating for each root port is enabled by platform modules. 0- Disable; 1- Enable.
+      length       : 0x01
+      value        : 0x1
+  - CpuPcieRpAspm :
+      name         : PCIE RP Aspm
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     The ASPM configuration of the root port (see- CPU_PCIE_ASPM_CONTROL). Default is CpuPcieAspmAutoConfig.
+      length       : 0x4
+      value        : {0x3, 0x2, 0x2, 0x0}
+  - CpuPcieRpL1Substates :
+      name         : PCIE RP L1 Substates
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     The L1 Substates configuration of the root port (see- CPU_PCIE_L1SUBSTATES_CONTROL). Default is CpuPcieL1SubstatesL1_1_2.
+      length       : 0x4
+      value        : {0x2, 0x2, 0x2, 0x2}
+  - CpuPcieRpPtmEnabled :
+      name         : PTM for PCIE RP Mask
+      type         : EditNum, HEX, (0x00,0x00FFFFFF)
+      help         : >
+                     Enable/disable Precision Time Measurement for PCIE Root Ports. 0- disable, 1- enable. One bit for each port, bit0 for port1, bit1 for port2, and so on.
+      length       : 0x04
+      value        : { 0x01, 0x01, 0x01, 0x01 }
+  - CpuPcieRpVcEnabled :
+      name         : VC for PCIE RP Mask
+      type         : EditNum, HEX, (0x00,0x00FFFFFF)
+      help         : >
+                     Enable/disable Virtual Channel for PCIE Root Ports. 0- disable, 1- enable. One bit for each port, bit0 for port1, bit1 for port2, and so on.
+      length       : 0x04
+      value        : { 0x01, 0x01, 0x01, 0x01 }
+  - CpuPcieRpMultiVcEnabled :
+      name         : Multi-VC for PCIE RP Mask
+      type         : EditNum, HEX, (0x00,0x00FFFFFF)
+      help         : >
+                     Enable/disable Multiple Virtual Channel for PCIE Root Ports. 0- disable, 1- enable. One bit for each port, bit0 for port1, bit1 for port2, and so on.
+      length       : 0x04
+      value        : { 0x0, 0x0, 0x0, 0x0 }
+  - EnableTimedGpio0 :
+      condition    : $(COND_S0IX_DIS)
+      name         : Timed GPIO 0
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/disable Timed GPIO0    0- Disable; 1- Enable.
+      length       : 0x01
+      value        : 0x0
+  - EnableTimedGpio1 :
+      condition    : $(COND_S0IX_DIS)
+      name         : Timed GPIO 1
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/disable Timed GPIO1    0- Disable; 1- Enable.
+      length       : 0x01
+      value        : 0x0
+  - SataEnable   :
+      name         : Enable SATA
+      type         : Combo
+      option       : 0x1:Enabled, 0x0:Disabled
+      help         : >
+                     Enable/disable SATA controller.
+      length       : 0x0001
+      value        : 0x01
+  - SataMode     :
+      name         : SATA Mode
+      type         : Combo
+      option       : 0x0:AHCI, 0x1:RAID
+      help         : >
+                     Select SATA controller working mode.
+      length       : 0x0001
+      value        : 0x00
+  - SataPwrOptEnable :
+      name         : PCH Sata Pwr Opt Enable
+      type         : Combo
+      option       : 0x1:Enabled, 0x0:Disabled
+      help         : >
+                     SATA Power Optimizer on PCH side.
+      length       : 0x0001
+      value        : 0x01
+  - SataLedEnable :
+      name         : SATA LED
+      type         : Combo
+      option       : 0x1:Enabled, 0x0:Disabled
+      help         : >
+                     SATA LED indicating SATA controller activity. 0- disable, 1- enable
+      length       : 0x0001
+      value        : 0x01
+  - SataPortsEnable :
+      name         : Enable SATA ports
+      type         : EditNum, HEX, (0x0, 0xFFFFFFFFFFFFFFFF)
+      help         : >
+                     Enable/disable SATA ports. One byte for each port, byte0 for port0, byte1 for port1, and so on.
+      length       : 0x0008
+      value        : {0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01}
+  - SataPortsDevSlp :
+      name         : Enable SATA DEVSLP Feature
+      type         : EditNum, HEX, (0x0, 0xFFFFFFFFFFFFFFFF)
+      help         : >
+                     Enable/disable SATA DEVSLP per port. 0 is disable, 1 is enable. One byte for each port, byte0 for port0, byte1 for port1, and so on.
+      length       : 0x0008
+      value        : {0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+  - SataPortsDmVal :
+      name         : Enable SATA Port DmVal
+      type         : EditNum, HEX, (0x0, 0xFFFFFFFFFFFFFFFF)
+      help         : >
+                     DITO multiplier. Default is 15.
+      length       : 0x0008
+      value        : {0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF, 0xF}
+  - SataPortsDitoVal :
+      name         : Enable SATA Port DmVal
+      type         : Table
+      struct       : UINT16
+      option       : 0:2:HEX, 1:2:HEX, 2:2:HEX, 3:2:HEX, 4:2:HEX, 5:2:HEX, 6:2:HEX, 7:2:HEX
+      help         : >
+                     DEVSLP Idle Timeout (DITO), Default is 625.
+      length       : 0x0010
+      value        : {0:0W,0x271,0x271,0x271,0x271,0x271,0x271,0x271,0x271}
+  - PortUsb20Enable :
+      name         : Enable USB2 ports
+      type         : Table
+      option       : 0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX, 8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX, E:1:HEX, F:1:HEX
+      help         : >
+                     Enable/disable per USB2 ports. One byte for each port, byte0 for port0, byte1 for port1, and so on.
+      length       : 0x0010
+      value        : {0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01}
+  - PortUsb30Enable :
+      name         : Enable USB3 ports
+      type         : Table
+      option       : 0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX, 8:1:HEX, 9:1:HEX
+      help         : >
+                     Enable/disable per USB3 ports. One byte for each port, byte0 for port0, byte1 for port1, and so on.
+      length       : 0x000A
+      value        : {0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01}
+  - Usb2OverCurrentPin :
+      name         : USB2 Port Over Current Pin
+      type         : Table
+      option       : 0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX, 8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX, E:1:HEX, F:1:HEX
+      help         : >
+                     Describe the specific over current pin number of USB 2.0 Port N.
+      length       : 0x0010
+      value        : {0xFF, 0x01, 0x00, 0x00, 0xFF, 0xFF, 0x07, 0x00, 0xFF, 0x07, 0x00, 0x00, 0x00, 0x6, 0x07, 0x07}
+  - Usb3OverCurrentPin :
+      name         : USB3 Port Over Current Pin
+      type         : Table
+      option       : 0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX, 8:1:HEX, 9:1:HEX
+      help         : >
+                     Describe the specific over current pin number of USB 3.0 Port N.
+      length       : 0x000A
+      value        : {0xFF, 0xFF, 0x00, 0x00, 0x07, 0x07, 0xFF, 0xFF, 0x00, 0x00}
+  - Usb2PhyPetxiset :
+      name         : USB Per Port HS Preemphasis Bias
+      type         : Table
+      option       : 0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX, 8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX, E:1:HEX, F:1:HEX
+      help         : >
+                     USB Per Port HS Preemphasis Bias. 000b-0mV, 001b-11.25mV, 010b-16.9mV, 011b-28.15mV, 100b-28.15mV, 101b-39.35mV, 110b-45mV, 111b-56.3mV. One byte for each port.
+      length       : 0x0010
+      value        : {0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x00, 0x00}
+  - Usb2PhyPredeemp :
+      name         : USB Per Port HS Transmitter Emphasis
+      type         : Table
+      option       : 0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX, 8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX, E:1:HEX, F:1:HEX
+      help         : >
+                     USB Per Port HS Transmitter Emphasis. 00b - Emphasis OFF, 01b - De-emphasis ON, 10b - Pre-emphasis ON, 11b - Pre-emphasis & De-emphasis ON. One byte for each port.
+      length       : 0x0010
+      value        : {0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x00, 0x00}
+  - Usb2PhyTxiset :
+      name         : USB Per Port HS Transmitter Bias
+      type         : Table
+      option       : 0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX, 8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX, E:1:HEX, F:1:HEX
+      help         : >
+                     USB Per Port HS Transmitter Bias. 000b-0mV, 001b-11.25mV, 010b-16.9mV, 011b-28.15mV, 100b-28.15mV, 101b-39.35mV, 110b-45mV, 111b-56.3mV, One byte for each port.
+      length       : 0x0010
+      value        : {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+  - Usb2PhyPehalfbit :
+      name         : USB Per Port Half Bit Pre-emphasis
+      type         : Table
+      option       : 0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX, 8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX, E:1:HEX, F:1:HEX
+      help         : >
+                     USB Per Port Half Bit Pre-emphasis. 1b - half-bit pre-emphasis, 0b - full-bit pre-emphasis. One byte for each port.
+      length       : 0x0010
+      value        : {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+  - SerialIoUartMode :
+      name         : UARTn Device Mode
+      type         : EditNum, HEX, (0x0, 0xFFFFFFFFFFFFFF)
+      help         : >
+                     Selects Uart operation mode. N represents controller index- Uart0, Uart1, ... Available modes- 0:SerialIoUartDisabled, 1:SerialIoUartPci, 2:SerialIoUartHidden, 3:SerialIoUartCom, 4:SerialIoUartSkipInit
+      length       : 0x0007
+      value        : {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+  - SerialIoUartPowerGating :
+      name         : Power Gating mode for each Serial IO UART that works in COM mode
+      type         : EditNum, HEX, (0x0, 0xFFFFFFFFFFFFFF)
+      help         : >
+                     Set Power Gating. 0- Disabled, 1- Enabled, 2- Auto
+      length       : 0x0007
+      value        : {0x02, 0x02, 0x02, 0x00, 0x00, 0x00, 0x00}
+  - SerialIoUartDmaEnable :
+      name         : Enable Dma for each Serial IO UART that supports it
+      type         : EditNum, HEX, (0x0, 0xFFFFFFFFFFFFFF)
+      help         : >
+                     Set DMA/PIO mode. 0- Disabled, 1- Enabled
+      length       : 0x0007
+      value        : {0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00}
+  - SerialIoUartAutoFlow :
+      name         : Enables UART hardware flow control, CTS and RTS lines
+      type         : EditNum, HEX, (0x0, 0xFFFFFFFFFFFFFF)
+      help         : >
+                     Enables UART hardware flow control, CTS and RTS lines.
+      length       : 0x0007
+      value        : {0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00}
+  - SerialIoSpiMode :
+      name         : SPIn Device Mode
+      type         : EditNum, HEX, (0x0, 0xFFFFFFFFFFFFFF)
+      help         : >
+                     Selects SPI operation mode. N represents controller index- SPI0, SPI1, ... Available modes- 0:SerialIoSpiDisabled, 1:SerialIoSpiPci, 2:SerialIoSpiHidden
+      length       : 0x0007
+      value        : {0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00}
+  - SerialIoSpiCsPolarity :
+      name         : SPI<N> Chip Select Polarity
+      type         : Table
+      option       : 0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX, 8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX
+      help         : >
+                     Sets polarity for each chip Select. Available options- 0:SerialIoSpiCsActiveLow, 1:SerialIoSpiCsActiveHigh
+      length       : 0x000E
+      value        : {0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01}
+  - SerialIoI2cMode :
+      name         : I2Cn Device Mode
+      type         : EditNum, HEX, (0x0, 0xFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Selects I2c operation mode. N represents controller index- I2c0, I2c1, ... Available modes- 0:SerialIoI2cDisabled, 1:SerialIoI2cPci, 2:SerialIoI2cHidden
+      length       : 0x0008
+      value        : {0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00}
+  - PchSerialIoI2cPadsTermination :
+      name         : PCH SerialIo I2C Pads Termination
+      type         : EditNum, HEX, (0x0, 0xFFFFFFFFFFFFFFFF)
+      help         : >
+                     0x0- Hardware default, 0x1- None, 0x13- 1kOhm weak pull-up, 0x15- 5kOhm weak pull-up, 0x19- 20kOhm weak pull-up - Enable/disable SerialIo I2C0,I2C1,... pads termination respectively. One byte for each controller, byte0 for I2C0, byte1 for I2C1, and so on.
+      length       : 0x0008
+      value        : {0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01}
+  - CpuUsb3OverCurrentPin :
+      name         : CPU USB3 Port Over Current Pin
+      type         : EditNum, HEX, (0x0, 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Describe the specific over current pin number of USBC Port N.
+      length       : 0x0008
+      value        : {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
+  - PchIshI2cEnable :
+      condition    : $(COND_S0IX_DIS)
+      name         : Enable PCH ISH I2C pins assigned
+      type         : EditNum, HEX, (0x0, 0xFFFFFF)
+      help         : >
+                     Set if ISH I2C native pins are to be enabled by BIOS. 0- Disable; 1- Enable.
+      length       : 0x0003
+      value        : {0x00, 0x00, 0x00}
+  - PchIshGpEnable :
+      condition    : $(COND_S0IX_DIS)
+      name         : Enable PCH ISH GP pins assigned
+      type         : EditNum, HEX, (0x0, 0xFFFFFFFFFFFFFFFF)
+      help         : >
+                     Set if ISH GP native pins are to be enabled by BIOS. 0- Disable; 1- Enable.
+      length       : 0x0008
+      value        : {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+  - PcieRpMaxPayload :
+      name         : PCIE RP Max Payload
+      type         : Table
+      option       : 0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX, 8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX, E:1:HEX, F:1:HEX
+      help         : >
+                     Max Payload Size supported, Default 128B, see enum PCH_PCIE_MAX_PAYLOAD.
+      length       : 0x001C
+      value        : {0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01}
+  - PcieRpL1Substates :
+      name         : PCIE RP L1 Substates
+      type         : Table
+      option       : 0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX, 8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX, E:1:HEX, F:1:HEX
+      help         : >
+                     The L1 Substates configuration of the root port (see- PCH_PCIE_L1SUBSTATES_CONTROL). Default is PchPcieL1SubstatesL1_1_2.
+      length       : 0x001C
+      value        : {0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02}
+  - PcieRpLtrEnable :
+      name         : PCIE RP Ltr Enable
+      type         : Table
+      option       : 0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX, 8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX, E:1:HEX, F:1:HEX
+      help         : >
+                     Latency Tolerance Reporting Mechanism.
+      length       : 0x001C
+      value        : {0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01}
+  - PcieRpClkReqDetect :
+      name         : Enable PCIE RP Clk Req Detect
+      type         : Table
+      option       : 0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX, 8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX, E:1:HEX, F:1:HEX
+      help         : >
+                     Probe CLKREQ# signal before enabling CLKREQ# based power management.
+      length       : 0x001C
+      value        : {0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01}
+  - PcieRpAdvancedErrorReporting :
+      name         : PCIE RP Advanced Error Report
+      type         : Table
+      option       : 0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX, 8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX, E:1:HEX, F:1:HEX
+      help         : >
+                     Indicate whether the Advanced Error Reporting is enabled.
+      length       : 0x001C
+      value        : {0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01}
+  - PcieRpAspm   :
+      name         : PCIE RP Aspm
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     The ASPM configuration of the root port (see- PCH_PCIE_ASPM_CONTROL). Default is PchPcieAspmAutoConfig.
+      length       : 0x001C
+      value        : {0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02}
+  - PciePtm      :
+      name         : PCIe PTM enable/disable
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Enable/disable Precision Time Measurement for PCIE Root Ports.
+      length       : 0x001C
+      value        : {0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01}
+  - PcieRpPcieSpeed :
+      name         : PCIE RP Pcie Speed
+      type         : Table
+      option       : 0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX, 8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX, E:1:HEX, F:1:HEX
+      help         : >
+                     Determines each PCIE Port speed capability. 0- Auto; 1- Gen1; 2- Gen2; 3- Gen3 (see- PCIE_SPEED).
+      length       : 0x001C
+      value        : {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+  - PtmEnabled :
+      name         : Enable/Disable PTM
+      type         : EditNum, HEX, (0x00,0xFFFFFFFF)
+      help         : >
+                     This policy will enable/disable Precision Time Measurement for TCSS PCIe Root Ports
+      length       : 0x04
+      value        : {0, 0, 0, 0}
+  - EcAvailable :
+      name         : Embedded Controller Availability
+      type         : Constant, Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or disable Embedded Controller
+      length       : 0x01
+      value        : 0x1
+  - IshGpGpioPinMuxing :
+      name         : ISH GP GPIO Pin Muxing
+      type         : Table
+      option       : 0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX, 8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX, E:1:HEX, F:1:HEX
+      help         : >
+                     Determines ISH GP GPIO Pin muxing. See GPIO_*_MUXING_ISH_GP_x_GPIO_*. 'x' are GP_NUMBER
+      length       : 0x0C
+      value        : {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}
+  - TurboRatioLimitRatio :
+      name         : Turbo Ratio Limit Num Core array
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Performance-core Turbo Ratio Limit Ratio0-7 (TRLR) defines the turbo ratio (max is 85 in normal mode and 120 in core extension mode). Ratio[0]: This Turbo Ratio Limit Ratio0 must be greater than or equal all other ratio values. If this value is invalid, thn set all other active cores to minimum. Otherwise, align the Ratio Limit to 0. Please check each active cores. Ratio[1~7]: This Turbo Ratio Limit Ratio1 must be <= to Turbo Ratio Limit Ratio0~6."
+      length       : 0x08
+      value        : {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}
+  - AtomTurboRatioLimitRatio :
+      name         : ATOM Turbo Ratio Limit Ratio array
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Efficient-core Turbo Ratio Limit Ratio0-7 defines the turbo ratio (max is 85 irrespective of the core extension mode), the core range is defined in E-core Turbo Ratio Limit CoreCount0-7.
+      length       : 0x08
+      value        : {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}
+  - IomTypeCPortPadCfg :
+      name         : TypeC port GPIO setting
+      type         : Table
+      option       : 0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX, 8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX, E:1:HEX, F:1:HEX
+      help         : >
+                     GPIO Ping number for Type C Aux Oritation setting, use the GpioPad that is defined in GpioPinsXXXH.h and GpioPinsXXXLp.h as argument.(XXX is platform name, Ex: Mtl = MeteorLake)
+      length       : 0x0C
+      value        : {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x04,0x06}
+  - PchIshI3cEnable :
+      name         : Enable PCH ISH I3C pins assigned
+      type         : Constant, Combo
+      option       : $EN_DIS
+      help         : >
+                     Set if ISH I3C native pins are to be enabled by BIOS. 0: Disable; 1: Enable.
+      length       : 0x01
+      value        : 0x0
+  - PchPmSlpSusMinAssert :
+      name         : PCH Pm Slp Sus Min Assert
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     SLP_SUS Minimum Assertion Width Policy. Default is PchSlpSus4s.
+      length       : 0x01
+      value        : 0x4
+  - PchPmSlpS3MinAssert :
+      name         : PCH Pm Slp S3 Min Assert
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     SLP_S3 Minimum Assertion Width Policy. Default is PchSlpS350ms.
+      length       : 0x01
+      value        : 0x3
+  - SiliconRsvd  :
+      length       : 0x02
+      value        : 0x00

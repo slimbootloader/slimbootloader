@@ -1,0 +1,46 @@
+## @file
+#
+#  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = FspsUpdUpdateLib
+  FILE_GUID                      = F0F0D153-A1A6-4455-89C5-F2BDD02C25459
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = FspsUpdUpdateLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  FspsUpdUpdateLib.c
+  TsnSubRegion.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  IntelFsp2Pkg/IntelFsp2Pkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/MeteorlakePkg/MeteorlakePkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+  Platform/CommonBoardPkg/CommonBoardPkg.dec
+  Platform/MeteorlakeBoardPkg/MeteorlakeBoardPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  ConfigDataLib
+  TccLib
+  WatchDogTimerLib
+
+[Pcd]
+  gPlatformModuleTokenSpaceGuid.PcdFramebufferInitEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled
+
