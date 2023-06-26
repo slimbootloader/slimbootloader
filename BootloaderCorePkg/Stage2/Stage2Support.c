@@ -32,9 +32,6 @@ BoardNotifyPhase (
   FSP_INIT_PHASE                                   FspPhase;
   UINT8                                            FspPhaseMask;
   EFI_STATUS                                       Status;
-  EFI_ACPI_5_0_ROOT_SYSTEM_DESCRIPTION_POINTER    *Rsdp;
-  EFI_ACPI_DESCRIPTION_HEADER                     *Fpdt;
-  PLATFORM_SERVICE                                *PlatformService;
 
   // This is board notification from payload
   FspPhaseMask = 0;
@@ -75,25 +72,9 @@ BoardNotifyPhase (
     }
   }
 
-  // Populate FPDT with SBL performance data (SBLT) in EndOfFirmware phase
-  if (Phase == EndOfFirmware) {
-    Status = EFI_NOT_FOUND;
-    PlatformService = (PLATFORM_SERVICE *) GetServiceBySignature (PLATFORM_SERVICE_SIGNATURE);
-    // Add perf data to FPDT - SBL Performance Table
-    Rsdp = (EFI_ACPI_5_0_ROOT_SYSTEM_DESCRIPTION_POINTER *)(UINTN)PcdGet32 (PcdAcpiTablesRsdp);
-    if (Rsdp != NULL) {
-      Fpdt = FindAcpiTableBySignature((EFI_ACPI_DESCRIPTION_HEADER *)(UINTN)Rsdp->RsdtAddress, SIGNATURE_32('F', 'P', 'D', 'T'), NULL);
-      if (Fpdt != NULL) {
-        if (PlatformService != NULL){
-          Status = PlatformService->AcpiTableUpdate((UINT8 *)Fpdt, Fpdt->Length);
-          DEBUG ((DEBUG_INFO, "Update FPDT @ 0x%X, Status =%r\n", Fpdt, Status));
-        } else {
-          DEBUG ((DEBUG_INFO, "Could not find PlatformService!\n"));
-        }
-      } else {
-        DEBUG ((DEBUG_INFO, "Failed to update SBL Performance Table\n"));
-      }
-    }
+  // Update Osloader boot time in FPDT
+  if ((Phase == EndOfFirmware) && (GetBootMode () != BOOT_ON_S3_RESUME)) {
+    UpdateFpdtSblTable ();
   }
 }
 

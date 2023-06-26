@@ -131,21 +131,16 @@ UpdateFpdtS3Table (
   );
 
 /**
-  Find an ACPI table using the given signature.
+  This function updates SBL performance table in FPDT
 
-  @param[in] Rsdt            ACPI table RSDT pointer.
-  @param[in] Signature       ACPI table signature to find.
-  @param[in] EntryIndex      Address to receive the entry index if found.
-
-  @retval  ACPI table pointer if found.  And EntryIndex is updated.
-           NULL if not found.
+  @retval  EFI_SUCCESS if operation is successful, EFI_NOT_FOUND if
+           performance HOB is not found
 
 **/
-EFI_ACPI_DESCRIPTION_HEADER *
-FindAcpiTableBySignature (
-  IN   EFI_ACPI_DESCRIPTION_HEADER  *Rsdt,
-  IN   UINT32                        Signature,
-  IN   UINT32                       *EntryIndex   OPTIONAL
+EFI_STATUS
+EFIAPI
+UpdateFpdtSblTable (
+  VOID
   );
 
 #endif
