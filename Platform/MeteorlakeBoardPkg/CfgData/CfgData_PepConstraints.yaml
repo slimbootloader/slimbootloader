@@ -1,0 +1,281 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+  - $ACTION      :
+      page         : PEP::"Power Engine Plugin (PEP) Options"
+  - PEP_CFG_DATA :
+    - !expand { CFGHDR_TMPL : [ PEP_CFG_DATA, 0x900, 0, 0 ] }
+    - PepSataContraints :
+        name         : Low Power constraints Configuration for sata
+        type         : Combo
+        option       : 0:None, 1:Adapter D0/F1, 2:Raid, 3:Adapter D3
+        help         : >
+                       0:None, 1:Adapter D0/F1, 2:Raid, 3:Adapter D3
+        length       : 0x01
+        value        : 0x3
+    - PepUart      :
+        name         : Enable/disable Low Power constraints Uart
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable UART, Disable- Disable UART
+        length       : 0x01
+        value        : 0x1
+    - PepI2c0      :
+        name         : Enable/disable Low Power constraints I2C0
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable I2c0, Disable- Disable I2c0
+        length       : 0x01
+        value        : 0x1
+    - PepI2c1      :
+        name         : Enable/disable Low Power constraints I2C1
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable I2c1, Disable- Disable I2c1
+        length       : 0x01
+        value        : 0x1
+    - PepXhci      :
+        name         : Enable/disable Low Power constraints Xhci
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable Xhci, Disable- Disable Xhci
+        length       : 0x01
+        value        : 0x1
+    - PepAudio     :
+        name         : Enable/disable Low Power constraints Audio
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable Audio, Disable- Disable Audio
+        length       : 0x01
+        value        : 0x1
+    - PepGfx       :
+        name         : Enable/disable Low Power constraints Gfx
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable Gfx , Disable- Disable Gfx
+        length       : 0x01
+        value        : 0x1
+    - PepCpu       :
+        name         : Enable/disable Low Power constraints Cpu
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable Cpu , Disable- Disable Cpu
+        length       : 0x01
+        value        : 0x1
+    - PepI2c2      :
+        name         : Enable/disable Low Power constraints I2C2
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable I2c2, Disable- Disable I2c2
+        length       : 0x01
+        value        : 0x1
+    - PepI2c3      :
+        name         : Enable/disable Low Power constraints I2C3
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable I2c3, Disable- Disable I2c3
+        length       : 0x01
+        value        : 0x1
+    - PepI2c4      :
+        name         : Enable/disable Low Power constraints I2C4
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable I2c4, Disable- Disable I2c4
+        length       : 0x01
+        value        : 0x1
+    - PepI2c5      :
+        name         : Enable/disable Low Power constraints I2C5
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable I2c5, Disable- Disable I2c5
+        length       : 0x01
+        value        : 0x1
+    - PepI2c6      :
+        name         : Enable/disable Low Power constraints I2C6
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable I2c6, Disable- Disable I2c6
+        length       : 0x01
+        value        : 0x1
+    - PepI2c7      :
+        name         : Enable/disable Low Power constraints I2C7
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable I2c7, Disable- Disable I2c7
+        length       : 0x01
+        value        : 0x1
+    - PepUart      :
+        name         : Enable/disable Low Power constraints Uart
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable UART, Disable- Disable UART
+        length       : 0x01
+        value        : 0x1
+    - PepSpi       :
+        name         : Enable/disable Low Power constraints SPI
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable SPI, Disable- Disable SPI
+        length       : 0x01
+        value        : 0x1
+     - PepIpu       :
+        name         : Enable/disable Low Power constraints Ipu
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable Ipu, Disable- Disable Ipu
+        length       : 0x01
+        value        : 0x1
+    - PepCsme      :
+        name         : Enable/disable Low Power constraints Csme
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable Csme, Disable- Disable Csme
+        length       : 0x01
+        value        : 0x1
+    - PepGbe       :
+        name         : Enable/disable Low Power constraints Gbe
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable Gbe, Disable- Disable Gbe
+        length       : 0x01
+        value        : 0x1
+    - PepThc0      :
+        name         : Enable/disable Low Power constraints Thc0
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable Thc0, Disable- Disable Thc0
+        length       : 0x01
+        value        : 0x1
+    - PepThc1      :
+        name         : Enable/disable Low Power constraints Thc1
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable Thc1, Disable- Disable Thc1
+        length       : 0x01
+        value        : 0x1
+    - PepTcss      :
+        name         : Enable/disable Low Power constraints Tcss
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable Tcss , Disable- Disable Tcss
+        length       : 0x01
+        value        : 0x1
+    - PepGna       :
+        name         : Enable/disable Low Power constraints Gna
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable Gna , Disable- Disable Gna
+        length       : 0x01
+        value        : 0x1
+    - PepVmd       :
+        name         : Enable/disable Low Power constraints Vmd
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable Vmd , Disable- Disable Vmd
+        length       : 0x01
+        value        : 0x1
+    - PepHeci3       :
+        name         : Enable/disable Low Power constraints Heci3
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable Heci3 , Disable- Disable Heci3
+        length       : 0x01
+        value        : 0x1
+    - PepPcieStorage :
+        name         : Low Power constraints Configuration for Pcie Storage
+        type         : Combo
+        option       : 0:No constraint, 1:Pcie D0/F1, 3:Pcie D3
+        help         : >
+                       0:No constraint, 1:Pcie D0/F1, 3:Pcie D3
+        length       : 0x01
+        value        : 0x3
+    - PepPcieLan :
+        name         : Low Power constraints Configuration for LAN
+        type         : Combo
+        option       : 0:No constraint, 1:Pcie D0/F1, 3:Pcie D3
+        help         : >
+                       0:No constraint, 1:Pcie D0/F1, 3:Pcie D3
+        length       : 0x01
+        value        : 0x1
+    - PepPcieWlan :
+        name         : Low Power constraints Configuration for WLAN
+        type         : Combo
+        option       : 0:No constraint, 1:Pcie D0/F1, 3:Pcie D3
+        help         : >
+                       0:No constraint, 1:Pcie D0/F1, 3:Pcie D3
+        length       : 0x01
+        value        : 0x1
+    - PepPcieGfx :
+        name         : Low Power constraints Configuration for Gfx
+        type         : Combo
+        option       : 0:No constraint, 1:Pcie D0/F1, 3:Pcie D3
+        help         : >
+                       0:No constraint, 1:Pcie D0/F1, 3:Pcie D3
+        length       : 0x01
+        value        : 0x1
+    - PepPcieOther :
+        name         : Low Power constraints Configuration for Other
+        type         : Combo
+        option       : 0:No constraint, 1:Pcie D0/F1, 3:Pcie D3
+        help         : >
+                       0:No constraint, 1:Pcie D0/F1, 3:Pcie D3
+        length       : 0x01
+        value        : 0x0
+    - PepPcieDg    :
+        name         : Enable/disable Low Power constraints PcieDg
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable PcieDg , Disable(Default)- Disable PcieDg
+        length       : 0x01
+        value        : 0x0
+    - PepUfs0    :
+        name         : Enable/disable Low Power constraints Ufs0
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable Ufs0 , Disable(Default)- Disable Ufs0
+        length       : 0x01
+        value        : 0x0
+    - PepUfs1    :
+        name         : Enable/disable Low Power constraints Ufs1
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable Ufs0 , Disable(Default)- Disable Ufs1
+        length       : 0x01
+        value        : 0x0
+    - Dummy        :
+        length       : 0x0
+        value        : 0x0

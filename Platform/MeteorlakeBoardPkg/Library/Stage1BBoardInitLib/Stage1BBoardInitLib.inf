@@ -1,0 +1,83 @@
+## @file
+#
+#  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = Stage1BBoardInitLib
+  FILE_GUID                      = C4555E42-949D-4b8c-8157-61A419C0F915
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = BoardInitLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF
+#
+
+[Sources]
+  GpioTableMtlPPreMem.h
+  GpioTableMtlPSPreMem.h
+  Stage1BBoardInitLib.h
+  Stage1BBoardInitLib.c
+  RtcInit.c
+  EcSupport.c
+  SioInit.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  IntelFsp2Pkg/IntelFsp2Pkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/MeteorlakePkg/MeteorlakePkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+  Platform/CommonBoardPkg/CommonBoardPkg.dec
+  Platform/MeteorlakeBoardPkg/MeteorlakeBoardPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  PlatformHookLib
+  SerialPortLib
+  ConfigDataLib
+  IoLib
+  PciLib
+  MemoryAllocationLib
+  DebugPrintErrorLevelLib
+  BootloaderLib
+  SpiFlashLib
+  BoardSupportLib
+  GpioV2Lib
+  PciCf8Lib
+  TpmLib
+  BootGuardLib
+  MeChipsetLib
+  HeciLib
+  PchInfoLib
+  VariableLib
+  WatchDogTimerLib
+  FspmUpdUpdateLib
+  PchP2sbLib
+  SmbusLib
+
+[Guids]
+  gFspNonVolatileStorageHobGuid
+
+[Pcd]
+  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
+  gPlatformModuleTokenSpaceGuid.PcdStage1BLoadBase
+  gPlatformModuleTokenSpaceGuid.PcdStage2LoadBase
+  gPlatformModuleTokenSpaceGuid.PcdCfgDatabaseSize
+  gPlatformModuleTokenSpaceGuid.PcdCfgDataSize
+  gPlatformModuleTokenSpaceGuid.PcdVtdEnabled
+  gPlatformModuleTokenSpaceGuid.PcdAcpiEnabled
+  gPlatformModuleTokenSpaceGuid.PcdFastBootEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled
+gPlatformModuleTokenSpaceGuid.PcdSblResiliencyEnabled
+
