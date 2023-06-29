@@ -914,7 +914,12 @@ HeciSend (
     }
   }
 
-  HeciGetMeMode (&MeMode);
+  Status = HeciGetMeMode (&MeMode);
+  if (!EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "ME Mode: %X\n", MeMode));
+  } else {
+    DEBUG ((DEBUG_INFO, "Failed to Get ME Mode!\n"));
+  }
   if (MeMode == ME_MODE_SECOVER) {
     return EFI_UNSUPPORTED;
   }

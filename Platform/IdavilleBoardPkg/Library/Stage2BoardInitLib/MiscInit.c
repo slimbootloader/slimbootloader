@@ -320,6 +320,7 @@ DEBUG_CODE_BEGIN ();
     DEBUG ((DEBUG_INFO, "ME Mode: %X\n", MeMode));
   } else {
     DEBUG ((DEBUG_INFO, "Failed to Get ME Mode!\n"));
+    return EFI_UNSUPPORTED;
   }
 
   Status = HeciReadFwStatus (&FwStatus);
