@@ -17,7 +17,6 @@
   CometLakeFspBinPkg/CometLakeS/Fsp.fd                 : Silicon/CometlakePkg/FspBin/FspDbg.bin
   CometLakeFspBinPkg/CometLakeS/Fsp.fd                 : Silicon/CometlakePkg/FspBin/FspRel.bin
   CometLakeFspBinPkg/CometLakeS/Fsp.bsf                : Silicon/CometlakePkg/FspBin/Fsp.bsf
-  CometLakeFspBinPkg/CometLakeS/Include/FspInfoHob.h   : Silicon/CometlakePkg/Include/FspInfoHob.h
   CometLakeFspBinPkg/CometLakeS/Include/FspUpd.h       : Silicon/CometlakePkg/Include/FspUpd.h
   CometLakeFspBinPkg/CometLakeS/Include/FsptUpd.h      : Silicon/CometlakePkg/Include/FsptUpd.h
   CometLakeFspBinPkg/CometLakeS/Include/FspmUpd.h      : Silicon/CometlakePkg/Include/FspmUpd.h

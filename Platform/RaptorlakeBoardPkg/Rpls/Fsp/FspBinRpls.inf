@@ -22,7 +22,6 @@
   RaptorLakeFspBinPkg/IoT/RaptorLakeS/Include/FsptUpd.h                  : Platform/RaptorlakeBoardPkg/Rpls/Fsp/FsptUpd.h
   RaptorLakeFspBinPkg/IoT/RaptorLakeS/Include/FspmUpd.h                  : Platform/RaptorlakeBoardPkg/Rpls/Fsp/FspmUpd.h
   RaptorLakeFspBinPkg/IoT/RaptorLakeS/Include/FspsUpd.h                  : Platform/RaptorlakeBoardPkg/Rpls/Fsp/FspsUpd.h
-  RaptorLakeFspBinPkg/IoT/RaptorLakeS/Include/FspInfoHob.h               : Platform/RaptorlakeBoardPkg/Rpls/Fsp/FspInfoHob.h
   RaptorLakeFspBinPkg/IoT/RaptorLakeS/Vbt/Vbt.bin                        : Platform/RaptorlakeBoardPkg/VbtBin/Vbt_rpls.dat
   RaptorLakeFspBinPkg/IoT/RaptorLakeS/Vbt/Vbt.json                       : Platform/RaptorlakeBoardPkg/VbtBin/Vbt.json
   FSP_License.pdf                                                        : Platform/RaptorlakeBoardPkg/Rpls/Fsp/FSP_License.pdf
