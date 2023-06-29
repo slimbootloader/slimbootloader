@@ -213,9 +213,6 @@ UpdateAcpiPsdTable (
   mPsdt->Header.Revision          = EFI_ACPI_PSD_TABLE_REVISION;
   mPsdt->Header.Checksum          = 0;
 
-  if( &(mPsdt->Header.OemId) == NULL) {
-    return RETURN_BUFFER_TOO_SMALL;
-  }
   CopyMem (&mPsdt->Header.OemId, PSDS_EFI_ACPI_OEM_ID, sizeof(mPsdt->Header.OemId));
 
   mPsdt->Header.OemTableId        = PSDS_EFI_ACPI_OEM_TABLE_ID;
@@ -244,9 +241,6 @@ UpdateAcpiPsdTable (
     DEBUG((DEBUG_ERROR, " GetSecFwVersion failed =%x\n", Status));
   }
 
-  if( &(mPsdt->FwVendor) == NULL) {
-    return RETURN_BUFFER_TOO_SMALL;
-  }
   CopyMem (&mPsdt->FwVendor, EFI_ACPI_PSD_FW_VENDOR, EFI_ACPI_PSD_FW_VENDOR_SIZE);
 
   PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
