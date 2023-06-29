@@ -83,9 +83,7 @@ EarlyPlatformDataCheck (
     SetDebugPort (0xFF);
   } else {
     SetDebugPort  (StitchData->DebugUart);
-    if ((StitchData->PlatformId > 0) && (StitchData->PlatformId < 32)) {
-      SetPlatformId (StitchData->PlatformId);
-    }
+    SetPlatformId (StitchData->PlatformId);
   }
 }
 

@@ -94,9 +94,7 @@ EarlyPlatformDataCheck (
     SetDebugPort (PcdGet8 (PcdDebugPortNumber));
   } else {
     SetDebugPort (StitchData->DebugUart);
-    if ((StitchData->PlatformId > 0) && (StitchData->PlatformId < 32)) {
-      SetPlatformId (StitchData->PlatformId);
-    }
+    SetPlatformId (StitchData->PlatformId);
   }
 }
 

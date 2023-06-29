@@ -59,9 +59,7 @@ EarlyPlatformDataCheck (
   StitchData = (STITCH_DATA *)(UINTN)0xFFFFFFF4;
   if (StitchData->Marker == 0xAA) {
     SetDebugPort (StitchData->DebugUart);
-    if ((StitchData->PlatformId > 0) && (StitchData->PlatformId < 32)) {
-      SetPlatformId (StitchData->PlatformId);
-    }
+    SetPlatformId (StitchData->PlatformId);
   } else {
     // Use the default port defined in BoardConfig.py
     SetDebugPort ( PcdGet8 (PcdDebugPortNumber));
