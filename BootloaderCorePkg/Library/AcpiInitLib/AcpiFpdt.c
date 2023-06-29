@@ -238,6 +238,7 @@ UpdateFpdtSblTable (
   }
 
   // Grab relevant performance metrics
+  ResetVectorTime = 0;
   for (PerfIdx = 0; PerfIdx < MAX_TS_NUM; PerfIdx++) {
     Id   = (RShiftU64 (PerfData->TimeStamp[PerfIdx], 48)) & 0xFFFF;
     switch (Id) {
