@@ -557,7 +557,7 @@ SecStartup (
     AddMeasurePoint (0x30B0);
 
     if (!EFI_ERROR (Status)) {
-      if (BootMode != BOOT_ON_FLASH_UPDATE) {
+      if (FeaturePcdGet(PcdEnableFwuNotify) || (BootMode != BOOT_ON_FLASH_UPDATE)) {
         BoardNotifyPhase (PostPciEnumeration);
         AddMeasurePoint (0x30C0);
       }
