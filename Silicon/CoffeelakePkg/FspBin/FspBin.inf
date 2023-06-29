@@ -17,7 +17,6 @@
   CoffeeLakeFspBinPkg/Fsp.fd                 : Silicon/CoffeelakePkg/FspBin/FspDbg.bin
   CoffeeLakeFspBinPkg/Fsp.fd                 : Silicon/CoffeelakePkg/FspBin/FspRel.bin
   CoffeeLakeFspBinPkg/Fsp.bsf                : Silicon/CoffeelakePkg/FspBin/Fsp.bsf
-  CoffeeLakeFspBinPkg/Include/FspInfoHob.h   : Silicon/CoffeelakePkg/Include/FspInfoHob.h
   CoffeeLakeFspBinPkg/Include/FspUpd.h       : Silicon/CoffeelakePkg/Include/FspUpd.h
   CoffeeLakeFspBinPkg/Include/FsptUpd.h      : Silicon/CoffeelakePkg/Include/FsptUpd.h
   CoffeeLakeFspBinPkg/Include/FspmUpd.h      : Silicon/CoffeelakePkg/Include/FspmUpd.h
