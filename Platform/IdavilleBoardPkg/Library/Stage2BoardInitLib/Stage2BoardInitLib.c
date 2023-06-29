@@ -1020,7 +1020,7 @@ PlatformUpdateAcpiGnvs (
 {
   RETURN_STATUS             Status;
   UINT32                    IioPresentBitMask;
-  EFI_CPUID_REGISTER        CpuidRegisters;
+  EFI_CPUID_REGISTER        CpuidRegisters = { 0, 0, 0, 0 };
   UINT32                    NumOfBitShift;
   GPIO_GROUP                GroupToGpeDwX[3];
   UINT32                    GroupDw[3];

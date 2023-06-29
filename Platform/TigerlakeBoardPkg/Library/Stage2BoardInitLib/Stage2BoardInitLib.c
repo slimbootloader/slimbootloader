@@ -334,7 +334,7 @@ GetCpuStepping(
   VOID
   )
 {
-  EFI_CPUID_REGISTER Cpuid;
+  EFI_CPUID_REGISTER Cpuid = { 0, 0, 0, 0 };
   ///
   /// Read the CPUID information
   ///
@@ -356,7 +356,7 @@ GetCpuSku(
   UINT8              CpuType;
   UINT16             CpuDid;
   UINT32             CpuFamilyModel;
-  EFI_CPUID_REGISTER Cpuid;
+  EFI_CPUID_REGISTER Cpuid = { 0, 0, 0, 0 };
   BOOLEAN            SkuFound;
 
   SkuFound = TRUE;
@@ -1044,7 +1044,7 @@ GetCpuFamily (
   VOID
   )
 {
-  EFI_CPUID_REGISTER Cpuid;
+  EFI_CPUID_REGISTER Cpuid = { 0, 0, 0, 0 };
   ///
   /// Read the CPUID information
   ///
@@ -2585,7 +2585,7 @@ PlatformUpdateAcpiGnvs (
   SYSTEM_AGENT_NVS_AREA   *SaNvs;
   SYS_CPU_INFO            *SysCpuInfo;
   SILICON_CFG_DATA        *SiCfgData;
-  EFI_CPUID_REGISTER      CpuidRegs;
+  EFI_CPUID_REGISTER      CpuidRegs = { 0, 0, 0, 0 };
   UINT8                   Index;
   UINT8                   Length;
   UINT8                   PchMaxPciePortNum;

@@ -461,7 +461,7 @@ IsSgxCapSupported (
   VOID
 )
 {
-  EFI_CPUID_REGISTER CpuidRegs;
+  EFI_CPUID_REGISTER CpuidRegs = { 0, 0, 0, 0 };
 
   ///
   /// Processor support SGX feature by reading CPUID.(EAX=7,ECX=0):EBX[2]

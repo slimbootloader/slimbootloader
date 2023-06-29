@@ -810,7 +810,7 @@ UpdateDmarHeader (
   UINT8                       Bus;
   UINT8                       Idx;
   UINT64                      VtdExtCap;
-  EFI_CPUID_REGISTER          CpuidRegister;
+  EFI_CPUID_REGISTER          CpuidRegister = { 0, 0, 0, 0 };
 
   Dmar->Flags = EFI_ACPI_DMAR_TABLE_FLAGS_INTR_REMAP_CLEAR;
   Bus = (UINT8) -1;

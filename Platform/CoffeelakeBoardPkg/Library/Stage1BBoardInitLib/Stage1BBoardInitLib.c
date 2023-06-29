@@ -303,7 +303,7 @@ PlatformIdInitialize (
   UINT16              CpuDid;
   UINT32              CpuFamilyModel;
   UINT8               CpuStepping;
-  EFI_CPUID_REGISTER  Cpuid;
+  EFI_CPUID_REGISTER  Cpuid = { 0, 0, 0, 0 };
   EFI_STATUS          Status;
   UINT8               Idx;
   UINT16              BomId;

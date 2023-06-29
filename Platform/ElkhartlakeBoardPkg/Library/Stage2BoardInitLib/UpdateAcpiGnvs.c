@@ -183,7 +183,7 @@ GetCpuFamily (
   VOID
   )
 {
-  EFI_CPUID_REGISTER Cpuid;
+  EFI_CPUID_REGISTER Cpuid = { 0, 0, 0, 0 };
   ///
   /// Read the CPUID information
   ///
@@ -202,7 +202,7 @@ GetCpuStepping (
   VOID
   )
 {
-  EFI_CPUID_REGISTER Cpuid;
+  EFI_CPUID_REGISTER Cpuid = { 0, 0, 0, 0 };
   ///
   /// Read the CPUID information
   ///
@@ -284,7 +284,7 @@ GetCpuSku (
   UINT8              CpuType;
   UINT16             CpuDid;
   UINT32             CpuFamilyModel;
-  EFI_CPUID_REGISTER Cpuid;
+  EFI_CPUID_REGISTER Cpuid = { 0, 0, 0, 0 };
   BOOLEAN            SkuFound;
 
   SkuFound  = TRUE;
@@ -583,7 +583,7 @@ PlatformUpdateAcpiGnvs (
   UINT32                  Data32;
   GPIO_GROUP              GroupToGpeDwX[3];
   UINT32                  GroupDw[3];
-  EFI_CPUID_REGISTER      CpuidRegs;
+  EFI_CPUID_REGISTER      CpuidRegs = { 0, 0, 0, 0 };
   UINTN                   UfsPciBase;
   UINTN                   PseCanPciMmBase;
   UINTN_STRUCT            MchBarBase;

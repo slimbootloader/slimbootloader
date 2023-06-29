@@ -57,7 +57,7 @@ IsSgxCapSupported (
   VOID
 )
 {
-  EFI_CPUID_REGISTER CpuidRegs;
+  EFI_CPUID_REGISTER CpuidRegs = { 0, 0, 0, 0 };
 
   ///
   /// Processor support SGX feature by reading CPUID.(EAX=7,ECX=0):EBX[2]
@@ -270,8 +270,8 @@ UpdateSgxNvs (
   if (CpuNvs == NULL) {
     return;
   }
-  EFI_CPUID_REGISTER CpuidSgxLeaf;
-  EFI_CPUID_REGISTER Cpuid;
+  EFI_CPUID_REGISTER CpuidSgxLeaf = { 0, 0, 0, 0 };
+  EFI_CPUID_REGISTER Cpuid = { 0, 0, 0, 0 };
 
   DEBUG ((DEBUG_INFO, "\nUpdateSgxNvs started...\n"));
 
