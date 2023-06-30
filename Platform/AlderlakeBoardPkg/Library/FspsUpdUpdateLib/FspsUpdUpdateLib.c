@@ -894,6 +894,9 @@ UpdateFspConfig (
   FspsConfig->CpuPcieRpGen5Uptp[1] = 0x5;
   FspsConfig->CpuPcieRpGen5Uptp[2] = 0x5;
 
+  // EndOfPost Upd
+  FspsUpd->FspsConfig.EndOfPostMessage = 1;
+
   if (FeaturesCfgData != NULL) {
     if (FeaturesCfgData->Features.S0ix == 1) {
       FspsConfig->XdciEnable = 0;
