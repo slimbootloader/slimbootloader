@@ -484,8 +484,10 @@ InitializeSmbiosInfo (
 
   Index         = 0;
   TempSmbiosStrTbl  = (SMBIOS_TYPE_STRINGS *) AllocateTemporaryMemory (0);
+  if (TempSmbiosStrTbl == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
   VerInfoTbl    = GetVerInfoPtr ();
-
   //
   // SMBIOS_TYPE_BIOS_INFORMATION
   //
