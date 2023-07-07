@@ -765,7 +765,6 @@ Tpm2GetCapabilityPcrs (
 
   @retval     EFI_SUCCESS   TPM was successfully queried and return values can be trusted.
   @retval     Others        An error occurred, likely in communication with the TPM.
-
 **/
 EFI_STATUS
 EFIAPI

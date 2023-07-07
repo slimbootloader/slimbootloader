@@ -174,8 +174,10 @@ Tpm2GetCapabilityPcrs (
 /**
   This function will query the TPM to determine which hashing algorithms
   are supported and which PCR banks are currently active.
+
   @param[out]  TpmHashAlgorithmBitmap A bitmask containing the algorithms supported by the TPM.
   @param[out]  ActivePcrBanks         A bitmask containing the PCRs currently allocated.
+
   @retval     EFI_SUCCESS   TPM was successfully queried and return values can be trusted.
   @retval     Others        An error occurred, likely in communication with the TPM.
 **/
