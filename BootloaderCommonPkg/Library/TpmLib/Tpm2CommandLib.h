@@ -775,6 +775,22 @@ Tpm2GetCapabilitySupportedAndActivePcrs (
   );
 
 /**
+  This function will query if the command is supported.
+
+  @param[in]  Command         TPM_CC command starts from TPM_CC_FIRST.
+  @param[out] IsCmdImpl       The command is supported or not.
+
+  @retval EFI_SUCCESS            Operation completed successfully.
+  @retval EFI_DEVICE_ERROR       The command was unsuccessful.
+**/
+EFI_STATUS
+EFIAPI
+Tpm2GetCapabilityIsCommandImplemented (
+  IN      TPM_CC      Command,
+  OUT     BOOLEAN     *IsCmdImpl
+  );
+
+/**
   This command returns the information of TPM AlgorithmSet.
 
   This function parse the value got from TPM2_GetCapability and return the AlgorithmSet.
