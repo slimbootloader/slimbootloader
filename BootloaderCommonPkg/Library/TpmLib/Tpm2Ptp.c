@@ -1,7 +1,7 @@
 /** @file
   PTP (Platform TPM Profile) CRB (Command Response Buffer) interface used by dTPM2.0 library.
 
-  Copyright (c) 2015 - 2016, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2015 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
