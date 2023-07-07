@@ -172,13 +172,10 @@ Tpm2GetCapabilityPcrs (
 /**
   This function will query the TPM to determine which hashing algorithms
   are supported and which PCR banks are currently active.
-
   @param[out]  TpmHashAlgorithmBitmap A bitmask containing the algorithms supported by the TPM.
   @param[out]  ActivePcrBanks         A bitmask containing the PCRs currently allocated.
-
   @retval     EFI_SUCCESS   TPM was successfully queried and return values can be trusted.
   @retval     Others        An error occurred, likely in communication with the TPM.
-
 **/
 EFI_STATUS
 EFIAPI
@@ -190,12 +187,14 @@ Tpm2GetCapabilitySupportedAndActivePcrs (
   EFI_STATUS            Status;
   TPML_PCR_SELECTION    Pcrs;
   UINTN                 Index;
+  UINT8                 ActivePcrBankCount;
 
   //
-  // Get supported PCR and current Active PCRs.
+  // Get supported PCR
   //
   Status = Tpm2GetCapabilityPcrs (&Pcrs);
-
+  DEBUG ((DEBUG_INFO, "Supported PCRs - Count = %08x\n", Pcrs.count));
+  ActivePcrBankCount = 0;
   //
   // If error, assume that we have at least SHA-1 (and return the error.)
   //
@@ -203,13 +202,13 @@ Tpm2GetCapabilitySupportedAndActivePcrs (
     DEBUG ((DEBUG_ERROR, "GetSupportedAndActivePcrs - Tpm2GetCapabilityPcrs fail!\n"));
     *TpmHashAlgorithmBitmap = HASH_ALG_SHA1;
     *ActivePcrBanks         = HASH_ALG_SHA1;
+    ActivePcrBankCount = 1;
   }
   //
   // Otherwise, process the return data to determine what algorithms are supported
   // and currently allocated.
   //
   else {
-    DEBUG ((DEBUG_INFO, "GetSupportedAndActivePcrs - Count = %08x\n", Pcrs.count));
     *TpmHashAlgorithmBitmap = 0;
     *ActivePcrBanks         = 0;
     for (Index = 0; Index < Pcrs.count; Index++) {
@@ -220,6 +219,7 @@ Tpm2GetCapabilitySupportedAndActivePcrs (
         if (!IsZeroBuffer (Pcrs.pcrSelections[Index].pcrSelect, Pcrs.pcrSelections[Index].sizeofSelect)) {
           DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA1 active.\n"));
           *ActivePcrBanks |= HASH_ALG_SHA1;
+          ActivePcrBankCount++;
         }
         break;
       case TPM_ALG_SHA256:
@@ -228,6 +228,7 @@ Tpm2GetCapabilitySupportedAndActivePcrs (
         if (!IsZeroBuffer (Pcrs.pcrSelections[Index].pcrSelect, Pcrs.pcrSelections[Index].sizeofSelect)) {
           DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA256 active.\n"));
           *ActivePcrBanks |= HASH_ALG_SHA256;
+          ActivePcrBankCount++;
         }
         break;
       case TPM_ALG_SHA384:
@@ -236,6 +237,7 @@ Tpm2GetCapabilitySupportedAndActivePcrs (
         if (!IsZeroBuffer (Pcrs.pcrSelections[Index].pcrSelect, Pcrs.pcrSelections[Index].sizeofSelect)) {
           DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA384 active.\n"));
           *ActivePcrBanks |= HASH_ALG_SHA384;
+          ActivePcrBankCount++;
         }
         break;
       case TPM_ALG_SHA512:
@@ -244,6 +246,7 @@ Tpm2GetCapabilitySupportedAndActivePcrs (
         if (!IsZeroBuffer (Pcrs.pcrSelections[Index].pcrSelect, Pcrs.pcrSelections[Index].sizeofSelect)) {
           DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA512 active.\n"));
           *ActivePcrBanks |= HASH_ALG_SHA512;
+          ActivePcrBankCount++;
         }
         break;
       case TPM_ALG_SM3_256:
@@ -252,9 +255,9 @@ Tpm2GetCapabilitySupportedAndActivePcrs (
         if (!IsZeroBuffer (Pcrs.pcrSelections[Index].pcrSelect, Pcrs.pcrSelections[Index].sizeofSelect)) {
           DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SM3_256 active.\n"));
           *ActivePcrBanks |= HASH_ALG_SM3_256;
+          ActivePcrBankCount++;
         }
         break;
-
       default:
         DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - Unsupported bank 0x%04x.\n", Pcrs.pcrSelections[Index].hash));
         break;
@@ -262,5 +265,6 @@ Tpm2GetCapabilitySupportedAndActivePcrs (
     }
   }
 
+  DEBUG ((DEBUG_INFO, "GetSupportedAndActivePcrs - Count = %08x\n", ActivePcrBankCount));
   return Status;
 }
