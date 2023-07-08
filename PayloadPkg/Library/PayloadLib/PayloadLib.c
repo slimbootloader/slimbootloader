@@ -1,7 +1,7 @@
 /** @file
   This file provides payload common library interfaces.
 
-  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -59,9 +59,6 @@ GetFlashMapPtr (
   }
 
   FlashMap = (FLASH_MAP *)GET_GUID_HOB_DATA (GuidHob);
-  if (FlashMap == NULL) {
-    return NULL;
-  }
 
   return FlashMap;
 }

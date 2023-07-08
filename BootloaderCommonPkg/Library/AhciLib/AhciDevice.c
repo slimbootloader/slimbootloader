@@ -1,7 +1,7 @@
 /** @file
   This file provides AHCI SATA device block access interfaces.
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -163,10 +163,6 @@ AhciReadWriteBlock (
 
   ReadBuf               = Buffer;
   LbaIndex              = Lba;
-
-  if (AtaDevice == NULL) {
-    return EFI_INVALID_PARAMETER;
-  }
 
   if (Buffer == NULL) {
     return EFI_INVALID_PARAMETER;

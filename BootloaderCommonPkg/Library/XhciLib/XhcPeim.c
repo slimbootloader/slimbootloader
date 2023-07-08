@@ -2,7 +2,7 @@
 PEIM to produce gPeiUsb2HostControllerPpiGuid based on gPeiUsbControllerPpiGuid
 which is used to enable recovery function from USB Drivers.
 
-Copyright (c) 2014 - 2018, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2014 - 2023, Intel Corporation. All rights reserved.<BR>
 
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
@@ -910,16 +910,13 @@ XhcPeiBulkTransfer (
   IsInterruptTransfer = (DeviceSpeed == EFI_USB_SPEED_LOW) ? TRUE : FALSE;
 
   if (!IsInterruptTransfer) {
-    if ((DeviceSpeed == EFI_USB_SPEED_LOW) ||
-        ((DeviceSpeed == EFI_USB_SPEED_FULL) && (MaximumPacketLength > 64)) ||
+    if (((DeviceSpeed == EFI_USB_SPEED_FULL) && (MaximumPacketLength > 64)) ||
         ((DeviceSpeed == EFI_USB_SPEED_HIGH) && (MaximumPacketLength > 512)) ||
         ((DeviceSpeed == EFI_USB_SPEED_SUPER) && (MaximumPacketLength > 1024))) {
       return EFI_INVALID_PARAMETER;
     }
   } else {
-    if (((DeviceSpeed == EFI_USB_SPEED_LOW) && (MaximumPacketLength > 8))  ||
-        ((DeviceSpeed == EFI_USB_SPEED_FULL) && (MaximumPacketLength > 64)) ||
-        ((DeviceSpeed == EFI_USB_SPEED_HIGH) && (MaximumPacketLength > 3072))) {
+    if ((DeviceSpeed == EFI_USB_SPEED_LOW) && (MaximumPacketLength > 8)) {
       return EFI_INVALID_PARAMETER;
     }
   }

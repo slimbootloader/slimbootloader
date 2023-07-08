@@ -2,7 +2,7 @@
   NvmExpress driver is used to manage non-volatile memory subsystem which follows
   NVM Express specification.
 
-  Copyright (c) 2013 - 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2013 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -177,7 +177,7 @@ Exit:
     FreePool (NamespaceData);
   }
 
-  if (EFI_ERROR (Status) && (Device != NULL)) {
+  if (Device != NULL) {
     FreePool (Device);
   }
   return Status;
