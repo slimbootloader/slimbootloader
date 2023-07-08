@@ -1,7 +1,7 @@
 /** @file
   Shell command `gpio` to read and write the required GPIO Pin
 
-  Copyright (c) 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2022 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -311,7 +311,7 @@ ShellCommandGpioFunc (
     if (!EFI_ERROR(Status)) {
       GpioPin = (UINT32)StrDecimalToUintn(Argv[3]);
       //In ADL platform all pin number ranges from 0 to 23
-      if ((GpioPin >= 0) && (GpioPin < 24)){
+      if (GpioPin < 24){
         GpioPad = GpioPadcalc(GroupValue, GpioPin);
         if (GpioPad != 0) {
           Status = GpioRead(GpioPad);
@@ -330,7 +330,7 @@ ShellCommandGpioFunc (
     if (!EFI_ERROR(Status)) {
       GpioPin = (UINT32)StrDecimalToUintn(Argv[3]);
       //In ADL platform all pin number ranges between 0 to 23
-      if ((GpioPin >= 0) && (GpioPin < 24)){
+      if (GpioPin < 24){
         GpioPad = GpioPadcalc(GroupValue, GpioPin);
         if (GpioPad != 0) {
           Value = (UINT32)StrDecimalToUintn(Argv[4]);
