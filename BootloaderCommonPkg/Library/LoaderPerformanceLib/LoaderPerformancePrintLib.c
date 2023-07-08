@@ -481,9 +481,6 @@ PrintCsmePerfData (
   }
 
   CsmePerformanceInfo = (CSME_PERFORMANCE_INFO *)GET_GUID_HOB_DATA (GuidHob);
-  if (CsmePerformanceInfo == NULL) {
-    return;
-  }
 
   DEBUG ((DEBUG_INFO | DEBUG_EVENT, "\n Csme Boot Time Performance information\n"));
 

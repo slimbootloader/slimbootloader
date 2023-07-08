@@ -179,8 +179,6 @@ DoHashVerify (
     DigestSize = SHA256_DIGEST_SIZE;
   } else if (HashAlg == HASH_TYPE_SHA384) {
     DigestSize = SHA384_DIGEST_SIZE;
-  } else {
-    return RETURN_INVALID_PARAMETER;
   }
 
   Status = CalculateHash (Data, Length, HashAlg, Digest);

@@ -1499,62 +1499,55 @@ InitializeUfs (
       continue;
     }
 
-    if((RefClkFreq == UfsCardRefClkFreq19p2Mhz) ||
-       (RefClkFreq == UfsCardRefClkFreq26Mhz) ||
-       (RefClkFreq == UfsCardRefClkFreq38p4Mhz))
-    {
-      DEBUG ((DEBUG_INFO, "Setting clock frequency for UFS\n"));
-      RefClkAttr = UfsAttrRefClkFreq;
-      Attributes = UfsCardRefClkFreqObsolete;
-      Status     = UfsRwAttributes (Private, TRUE, RefClkAttr, 0, 0, (UINT32 *)&Attributes);
-      if (!EFI_ERROR (Status)) {
-        if (Attributes != RefClkFreq) {
-          Attributes = RefClkFreq;
+    DEBUG ((DEBUG_INFO, "Setting clock frequency for UFS\n"));
+    RefClkAttr = UfsAttrRefClkFreq;
+    Attributes = UfsCardRefClkFreqObsolete;
+    Status     = UfsRwAttributes (Private, TRUE, RefClkAttr, 0, 0, (UINT32 *)&Attributes);
+    if (!EFI_ERROR (Status)) {
+      if (Attributes != RefClkFreq) {
+        Attributes = RefClkFreq;
+        DEBUG (
+          (DEBUG_INFO,
+            "Setting bRefClkFreq attribute(%x) to %x\n  0 -> 19.2 Mhz\n  1 -> 26 Mhz\n  2 -> 38.4 Mhz\n  3 -> Obsolete\n",
+            RefClkAttr,
+            Attributes)
+          );
+        Status = UfsRwAttributes (Private, FALSE, RefClkAttr, 0, 0, (UINT32 *)&Attributes);
+        if (EFI_ERROR (Status)) {
           DEBUG (
-            (DEBUG_INFO,
-             "Setting bRefClkFreq attribute(%x) to %x\n  0 -> 19.2 Mhz\n  1 -> 26 Mhz\n  2 -> 38.4 Mhz\n  3 -> Obsolete\n",
-             RefClkAttr,
-             Attributes)
+            (DEBUG_ERROR,
+              "Failed to Change Reference Clock Attribute to %d, Status = %r \n",
+              RefClkFreq,
+              Status)
             );
-          Status = UfsRwAttributes (Private, FALSE, RefClkAttr, 0, 0, (UINT32 *)&Attributes);
-          if (EFI_ERROR (Status)) {
-            DEBUG (
-              (DEBUG_ERROR,
-               "Failed to Change Reference Clock Attribute to %d, Status = %r \n",
-               RefClkFreq,
-               Status)
-              );
-          }
         }
-      } else {
-        DEBUG (
-          (DEBUG_ERROR,
-           "Failed to Read Reference Clock Attribute, Status = %r \n",
-           Status)
-          );
-      }
-      if (Attributes == 0){
-        DEBUG (
-              (DEBUG_INFO,
-               "Setting bRefClkFreq attribute(%x) to 19.2 Mhz\n",
-               RefClkAttr)
-            );
-      } else if (Attributes == 1) {
-          DEBUG (
-              (DEBUG_INFO,
-               "Setting bRefClkFreq attribute(%x) to 26 Mhz\n",
-               RefClkAttr)
-          );
-      } else if (Attributes == 2) {
-          DEBUG (
-              (DEBUG_INFO,
-               "Setting bRefClkFreq attribute(%x) to 38.4 Mhz\n",
-               RefClkAttr)
-          );
       }
     } else {
-        DEBUG ((DEBUG_WARN, "Warning: Unsuppored UFS clock frequency \n"));
-      }
+      DEBUG (
+        (DEBUG_ERROR,
+          "Failed to Read Reference Clock Attribute, Status = %r \n",
+          Status)
+        );
+    }
+    if (Attributes == 0){
+      DEBUG (
+            (DEBUG_INFO,
+              "Setting bRefClkFreq attribute(%x) to 19.2 Mhz\n",
+              RefClkAttr)
+          );
+    } else if (Attributes == 1) {
+        DEBUG (
+            (DEBUG_INFO,
+              "Setting bRefClkFreq attribute(%x) to 26 Mhz\n",
+              RefClkAttr)
+        );
+    } else if (Attributes == 2) {
+        DEBUG (
+            (DEBUG_INFO,
+              "Setting bRefClkFreq attribute(%x) to 38.4 Mhz\n",
+              RefClkAttr)
+        );
+    }
 
     Status = VerifyUfsHcPlatformPostHceSwitchGear(Private);
     if (EFI_ERROR (Status)) {

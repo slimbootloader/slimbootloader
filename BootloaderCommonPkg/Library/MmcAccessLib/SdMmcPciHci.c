@@ -140,9 +140,6 @@ SdMmcHcRwMmio (
       MmioWrite64 (Address + Offset, * (UINT64 *)Data);
     }
     break;
-  default:
-    ASSERT (FALSE);
-    return EFI_INVALID_PARAMETER;
   }
 
   return EFI_SUCCESS;

@@ -62,9 +62,6 @@ GetLoaderPlatformInfoPtr (
   }
 
   LoaderInfo = (LOADER_PLATFORM_INFO *)GET_GUID_HOB_DATA (GuidHob);
-  if (LoaderInfo == NULL) {
-    return NULL;
-  }
 
   return LoaderInfo;
 }

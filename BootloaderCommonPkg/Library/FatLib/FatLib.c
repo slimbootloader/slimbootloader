@@ -185,7 +185,7 @@ FindFile (
           }
         }
       } while (Status == EFI_SUCCESS);
-      if (EFI_ERROR (Status)) {
+      if (Status != EFI_SUCCESS) {
         return EFI_NOT_FOUND;
       } else {
         CopyMem (&Parent, File, sizeof (PEI_FAT_FILE));

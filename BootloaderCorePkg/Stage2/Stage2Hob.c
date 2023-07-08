@@ -129,9 +129,6 @@ SplitMemroyMap (
           Adjust = PcdGet32 (PcdPayloadReservedMemSize);
           Flag   = MEM_MAP_FLAG_PAYLOAD;
           break;
-        default:
-          Adjust = 0;
-          break;
         }
         if (Adjust == 0) {
           continue;

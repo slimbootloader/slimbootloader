@@ -80,9 +80,6 @@ NvmHcRwMmio (
       MmioWrite64 (Address + Offset, * (UINT64 *)Data);
     }
     break;
-  default:
-    ASSERT (FALSE);
-    return EFI_INVALID_PARAMETER;
   }
 
   return EFI_SUCCESS;
@@ -957,7 +954,7 @@ NvmeControllerInit (
   DEBUG ((DEBUG_VERBOSE, "    MN        : %a\n",   Mn));
   DEBUG ((DEBUG_VERBOSE, "    FR        : 0x%x\n", * ((UINT64 *)Private->ControllerData->Fr)));
   DEBUG ((DEBUG_VERBOSE, "    RAB       : 0x%x\n", Private->ControllerData->Rab));
-  DEBUG ((DEBUG_VERBOSE, "    IEEE      : 0x%x\n", * (UINT32 *)Private->ControllerData->Ieee_oui));
+  DEBUG ((DEBUG_VERBOSE, "    IEEE      : 0x%x%x%x\n", Private->ControllerData->Ieee_oui[2], Private->ControllerData->Ieee_oui[1], Private->ControllerData->Ieee_oui[0]));
   DEBUG ((DEBUG_VERBOSE, "    AERL      : 0x%x\n", Private->ControllerData->Aerl));
   DEBUG ((DEBUG_VERBOSE, "    SQES      : 0x%x\n", Private->ControllerData->Sqes));
   DEBUG ((DEBUG_VERBOSE, "    CQES      : 0x%x\n", Private->ControllerData->Cqes));

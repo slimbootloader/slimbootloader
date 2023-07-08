@@ -177,7 +177,7 @@ Exit:
     FreePool (NamespaceData);
   }
 
-  if (EFI_ERROR (Status) && (Device != NULL)) {
+  if (Device != NULL) {
     FreePool (Device);
   }
   return Status;

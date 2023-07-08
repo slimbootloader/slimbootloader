@@ -59,9 +59,6 @@ GetFlashMapPtr (
   }
 
   FlashMap = (FLASH_MAP *)GET_GUID_HOB_DATA (GuidHob);
-  if (FlashMap == NULL) {
-    return NULL;
-  }
 
   return FlashMap;
 }

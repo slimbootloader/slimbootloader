@@ -94,9 +94,6 @@ PrintCsmePerformanceInfo (
   }
 
   CsmePerformanceInfo = (CSME_PERFORMANCE_INFO *)GET_GUID_HOB_DATA (GuidHob);
-  if (CsmePerformanceInfo == NULL) {
-    return;
-  }
 
   ShellPrint (L"CSME Performance Info\n");
   ShellPrint (L"=======================\n\n");

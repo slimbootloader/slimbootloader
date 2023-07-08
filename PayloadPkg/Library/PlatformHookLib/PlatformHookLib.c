@@ -72,23 +72,12 @@ PlatformHookSerialPortInitialize (
 
   PldSerialInfo = (UNIVERSAL_PAYLOAD_SERIAL_PORT_INFO *)GET_GUID_HOB_DATA (GuidHob);
   Status = PcdSetBoolS (PcdSerialUseMmio, PldSerialInfo->UseMmio);
-  if (RETURN_ERROR (Status)) {
-    return Status;
-  }
+
   Status = PcdSet64S (PcdSerialRegisterBase, PldSerialInfo->RegisterBase);
-  if (RETURN_ERROR (Status)) {
-    return Status;
-  }
 
   Status = PcdSet32S (PcdSerialRegisterStride, PldSerialInfo->RegisterStride);
-  if (RETURN_ERROR (Status)) {
-    return Status;
-  }
 
   Status = PcdSet32S (PcdSerialBaudRate, PldSerialInfo->BaudRate);
-  if (RETURN_ERROR (Status)) {
-    return Status;
-  }
 
   return RETURN_SUCCESS;
 }

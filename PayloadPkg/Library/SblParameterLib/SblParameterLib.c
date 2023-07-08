@@ -29,7 +29,7 @@ GetResetReasonStr (
     return "ResetWakeS3";
   } else if ((ResetReason & ResetWarm) != 0) {
     return "warm";
-  } else if ((ResetReason & ResetCold) != 0) {
+  } else if (ResetReason == ResetCold) {
     return "cold";
   } else if ((ResetReason & ResetGlobal) != 0) {
     return "global";

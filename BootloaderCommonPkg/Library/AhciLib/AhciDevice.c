@@ -164,10 +164,6 @@ AhciReadWriteBlock (
   ReadBuf               = Buffer;
   LbaIndex              = Lba;
 
-  if (AtaDevice == NULL) {
-    return EFI_INVALID_PARAMETER;
-  }
-
   if (Buffer == NULL) {
     return EFI_INVALID_PARAMETER;
   }

@@ -327,8 +327,6 @@ StartCsmeUpdate (
     case CMD_LINE_STATUS_UPDATE_4:
       ProgressChar = '\\';
       break;
-    default:
-      break;
     }
 
     UpdateStatus = UpdateApi->FwuCheckUpdateProgress(
