@@ -62,7 +62,7 @@ GetHashToExtend (
   // Incase component hash is not avilable calculate hash from src buf and HashType provided.
 
   // Get componenet hash from hash store based on Componen Id
-  if ((ComponentType >= COMP_TYPE_STAGE_1B) && (ComponentType < COMP_TYPE_INVALID)) {
+  if (ComponentType < COMP_TYPE_INVALID) {
     Status = GetComponentHash (ComponentType, &Digest, &CompHashAlg);
     if((Status == EFI_SUCCESS) && (CompHashAlg == HashType)) {
       CopyMem (HashData, Digest, DigestSize);

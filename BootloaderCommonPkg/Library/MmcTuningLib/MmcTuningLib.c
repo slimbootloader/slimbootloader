@@ -211,7 +211,6 @@ EmmcRxHs400Tuning (
   BLOCK_READ_WRITE_STATUS   FirstRead;
   UINT32                    TuningPatternSize;
   CONST UINT8               DllMax = RX_STROBE_DLL1_TAP_MAX_RANGE;
-  CONST UINT8               DllMin = RX_STROBE_DLL1_TAP_MIN_RANGE;
 
   DEBUG ((DEBUG_VERBOSE, "EmmcRxHs400Tuning() Start\n"));
 
@@ -269,7 +268,7 @@ EmmcRxHs400Tuning (
   //
   FirstRead = NotAvailable;
 
-  while ((DllCount <= DllMax) && (DllCount >= DllMin)) {
+  while (DllCount <= DllMax) {
     DEBUG ((DEBUG_VERBOSE, "[ EmmcRxHs400Tuning: Rx Min DLL1 (DllCount) = 0x%x ]\n", DllCount));
     MicroSecondDelay (1 * 1000);
     Status = MmcReadBlocks (
@@ -332,7 +331,7 @@ EmmcRxHs400Tuning (
   EmmcSetRxDllCtrl (EmmcBaseAddress, RxDll2, DllCount, RegList);
 
   FirstRead = NotAvailable;
-  while ((DllCount <= DllMax) && (DllCount >= DllMin)) {
+  while (DllCount <= DllMax) {
     DEBUG ((DEBUG_VERBOSE, "[ EmmcRxHs400Tuning: Rx Max DLL1 (DllCount) = 0x%x ]\n", DllCount));
     MicroSecondDelay (1 * 1000);
     Status = MmcReadBlocks (
@@ -438,7 +437,6 @@ EmmcTxHs400Tuning (
   EFI_STATUS                Status;
   BLOCK_READ_WRITE_STATUS   FirstWrite;
   CONST UINT8               DllMax = TX_DATA_DLL_TAP_MAX_RANGE;
-  CONST UINT8               DllMin = TX_DATA_DLL_TAP_MIN_RANGE;
 
   DEBUG ((DEBUG_VERBOSE, "EmmcTxHs400Tuning() Start\n"));
 
@@ -481,7 +479,7 @@ EmmcTxHs400Tuning (
   //
   FirstWrite = NotAvailable;
 
-  while ((DllCount <= DllMax) && (DllCount >= DllMin)) {
+  while (DllCount <= DllMax) {
     DEBUG ((DEBUG_VERBOSE, "[ EmmcTxHs400Tuning: Tx Min DLL (DllCount) = 0x%x ]\n", DllCount));
     MicroSecondDelay (1 * 1000);
     Status = MmcWriteBlocks (
@@ -543,7 +541,7 @@ EmmcTxHs400Tuning (
   //
   FirstWrite = NotAvailable;
 
-  while ((DllCount <= DllMax) && (DllCount >= DllMin)) {
+  while (DllCount <= DllMax) {
     DEBUG ((DEBUG_VERBOSE, "[ EmmcTxHs400Tuning: Tx Max DLL1 (DllCount) = 0x%x ]\n", DllCount));
     MicroSecondDelay (1 * 1000);
     Status = MmcWriteBlocks (
