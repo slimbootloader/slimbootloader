@@ -280,9 +280,6 @@ UpdateAcpiPsdTable (
   mPsdt->Header.Signature               = EFI_ACPI_PSD_SIGNATURE;
   mPsdt->Header.Checksum                = 0;
 
-  if( &(mPsdt->Header.OemId) == NULL) {
-    return RETURN_BUFFER_TOO_SMALL;
-  }
   CopyMem(&mPsdt->Header.OemId, PSDS_EFI_ACPI_OEM_ID, 6);
   mPsdt->Header.OemTableId              = PSDS_EFI_ACPI_OEM_TABLE_ID;
   mPsdt->Header.OemRevision             = PSDS_EFI_ACPI_OEM_REVISION;
@@ -328,9 +325,7 @@ UpdateAcpiPsdTable (
   DEBUG( (DEBUG_INFO, "PSD Values:  CodeMinor=%x\n", mPsdt->FwVer.CodeMinor ));
   DEBUG( (DEBUG_INFO, "PSD Values:  CodeHotFix=%x\n", mPsdt->FwVer.CodeHotFix ));
   DEBUG( (DEBUG_INFO, "PSD Values:  CodeBuildNo=%x \n", mPsdt->FwVer.CodeBuildNo ));
-  if( &(mPsdt->FwVendor) == NULL) {
-    return RETURN_BUFFER_TOO_SMALL;
-  }
+
   CopyMem(&mPsdt->FwVendor, EFI_ACPI_PSD_FW_VENDOR, EFI_ACPI_PSD_FW_VENDOR_SIZE);
   PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr();
   if (PlatformData == NULL) {
