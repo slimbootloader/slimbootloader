@@ -1,7 +1,7 @@
 /** @file
   Implement TPM2 Capability related command.
 
-  Copyright (c) 2013 - 2016, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2013 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -29,6 +29,8 @@ typedef struct {
 } TPM2_GET_CAPABILITY_RESPONSE;
 
 #pragma pack()
+
+#define TPMA_CC_COMMANDINDEX_MASK  0x2000FFFF
 
 /**
   This command returns various information regarding the TPM and its current state.
@@ -178,7 +180,6 @@ Tpm2GetCapabilityPcrs (
 
   @retval     EFI_SUCCESS   TPM was successfully queried and return values can be trusted.
   @retval     Others        An error occurred, likely in communication with the TPM.
-
 **/
 EFI_STATUS
 EFIAPI
@@ -190,12 +191,14 @@ Tpm2GetCapabilitySupportedAndActivePcrs (
   EFI_STATUS            Status;
   TPML_PCR_SELECTION    Pcrs;
   UINTN                 Index;
+  UINT8                 ActivePcrBankCount;
 
   //
-  // Get supported PCR and current Active PCRs.
+  // Get supported PCR
   //
   Status = Tpm2GetCapabilityPcrs (&Pcrs);
-
+  DEBUG ((DEBUG_INFO, "Supported PCRs - Count = %08x\n", Pcrs.count));
+  ActivePcrBankCount = 0;
   //
   // If error, assume that we have at least SHA-1 (and return the error.)
   //
@@ -203,13 +206,13 @@ Tpm2GetCapabilitySupportedAndActivePcrs (
     DEBUG ((DEBUG_ERROR, "GetSupportedAndActivePcrs - Tpm2GetCapabilityPcrs fail!\n"));
     *TpmHashAlgorithmBitmap = HASH_ALG_SHA1;
     *ActivePcrBanks         = HASH_ALG_SHA1;
+    ActivePcrBankCount = 1;
   }
   //
   // Otherwise, process the return data to determine what algorithms are supported
   // and currently allocated.
   //
   else {
-    DEBUG ((DEBUG_INFO, "GetSupportedAndActivePcrs - Count = %08x\n", Pcrs.count));
     *TpmHashAlgorithmBitmap = 0;
     *ActivePcrBanks         = 0;
     for (Index = 0; Index < Pcrs.count; Index++) {
@@ -220,6 +223,7 @@ Tpm2GetCapabilitySupportedAndActivePcrs (
         if (!IsZeroBuffer (Pcrs.pcrSelections[Index].pcrSelect, Pcrs.pcrSelections[Index].sizeofSelect)) {
           DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA1 active.\n"));
           *ActivePcrBanks |= HASH_ALG_SHA1;
+          ActivePcrBankCount++;
         }
         break;
       case TPM_ALG_SHA256:
@@ -228,6 +232,7 @@ Tpm2GetCapabilitySupportedAndActivePcrs (
         if (!IsZeroBuffer (Pcrs.pcrSelections[Index].pcrSelect, Pcrs.pcrSelections[Index].sizeofSelect)) {
           DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA256 active.\n"));
           *ActivePcrBanks |= HASH_ALG_SHA256;
+          ActivePcrBankCount++;
         }
         break;
       case TPM_ALG_SHA384:
@@ -236,6 +241,7 @@ Tpm2GetCapabilitySupportedAndActivePcrs (
         if (!IsZeroBuffer (Pcrs.pcrSelections[Index].pcrSelect, Pcrs.pcrSelections[Index].sizeofSelect)) {
           DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA384 active.\n"));
           *ActivePcrBanks |= HASH_ALG_SHA384;
+          ActivePcrBankCount++;
         }
         break;
       case TPM_ALG_SHA512:
@@ -244,6 +250,7 @@ Tpm2GetCapabilitySupportedAndActivePcrs (
         if (!IsZeroBuffer (Pcrs.pcrSelections[Index].pcrSelect, Pcrs.pcrSelections[Index].sizeofSelect)) {
           DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SHA512 active.\n"));
           *ActivePcrBanks |= HASH_ALG_SHA512;
+          ActivePcrBankCount++;
         }
         break;
       case TPM_ALG_SM3_256:
@@ -252,9 +259,9 @@ Tpm2GetCapabilitySupportedAndActivePcrs (
         if (!IsZeroBuffer (Pcrs.pcrSelections[Index].pcrSelect, Pcrs.pcrSelections[Index].sizeofSelect)) {
           DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - HASH_ALG_SM3_256 active.\n"));
           *ActivePcrBanks |= HASH_ALG_SM3_256;
+          ActivePcrBankCount++;
         }
         break;
-
       default:
         DEBUG ((DEBUG_VERBOSE, "GetSupportedAndActivePcrs - Unsupported bank 0x%04x.\n", Pcrs.pcrSelections[Index].hash));
         break;
@@ -262,5 +269,44 @@ Tpm2GetCapabilitySupportedAndActivePcrs (
     }
   }
 
+  DEBUG ((DEBUG_INFO, "GetSupportedAndActivePcrs - Count = %08x\n", ActivePcrBankCount));
   return Status;
+}
+
+/**
+  This function will query if the command is supported.
+
+  @param[in]  Command         TPM_CC command starts from TPM_CC_FIRST.
+  @param[out] IsCmdImpl       The command is supported or not.
+
+  @retval EFI_SUCCESS            Operation completed successfully.
+  @retval EFI_DEVICE_ERROR       The command was unsuccessful.
+**/
+EFI_STATUS
+EFIAPI
+Tpm2GetCapabilityIsCommandImplemented (
+  IN      TPM_CC      Command,
+  OUT     BOOLEAN     *IsCmdImpl
+  )
+{
+  TPMS_CAPABILITY_DATA    TpmCap;
+  TPMI_YES_NO             MoreData;
+  EFI_STATUS              Status;
+  UINT32                  Attribute;
+
+  Status = Tpm2GetCapability (
+             TPM_CAP_COMMANDS,
+             Command,
+             1,
+             &MoreData,
+             &TpmCap
+             );
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  CopyMem (&Attribute, &TpmCap.data.command.commandAttributes[0], sizeof (UINT32));
+  *IsCmdImpl = (Command == (SwapBytes32(Attribute) & TPMA_CC_COMMANDINDEX_MASK));
+
+  return EFI_SUCCESS;
 }
