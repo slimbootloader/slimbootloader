@@ -56,6 +56,8 @@ class Board(BaseBoard):
         # 0: Disable  1: Enable  2: Auto (disable for UEFI payload, enable for others)
         self.ENABLE_SMM_REBASE    = 2
         self.ENABLE_FRAMEBUFFER_INIT = 1
+        # allow FSP notify during FWU
+        self.ENABLE_FWU_NOTIFY = 1
 
         # EHL FSP Ready To Boot does not call EOP
         self.HAVE_NO_FSP_EOP      = 1

@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2016 - 2022, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2016 - 2023, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -152,6 +152,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdBuildSmmHobs
   gPlatformCommonLibTokenSpaceGuid.PcdBootPerformanceMask
   gPlatformModuleTokenSpaceGuid.PcdSblResiliencyEnabled
+  gPlatformModuleTokenSpaceGuid.PcdEnableFwuNotify
 
 [Depex]
   TRUE

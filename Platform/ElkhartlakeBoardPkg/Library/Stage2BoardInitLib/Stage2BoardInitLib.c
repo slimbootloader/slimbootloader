@@ -1890,6 +1890,7 @@ UpdateFspConfig (
 
   if (GetBootMode () == BOOT_ON_FLASH_UPDATE) {
     Fspscfg->PchLockDownBiosInterface = FALSE;
+    Fspscfg->PchLockDownBiosLock      = FALSE;
     Fspscfg->RtcBiosInterfaceLock     = FALSE;
     Fspscfg->PchSbAccessUnlock        = TRUE;
     Fspscfg->SkipMpInit               = TRUE;
