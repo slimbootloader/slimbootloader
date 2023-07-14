@@ -21,24 +21,24 @@
 #define MWAIT_CD_2                   0x60
 
 CONST PCH_SERIAL_IO_CONFIG_INFO mPchSSerialIoSPIMode[PCH_MAX_SERIALIO_SPI_CONTROLLERS] = {
-  {0,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_SPI0},
-  {1,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_SPI1},
-  {0,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_SPI2},
-  {0,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_SPI3},
-  {0,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_SPI4},
-  {0,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_SPI5},
-  {0,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_SPI6}
+  {0, 0xF2000},
+  {1, 0xF3000},
+  {0, 0x96000},
+  {0, 0x98000},
+  {0, 0x99000},
+  {0, 0x9A000},
+  {0, 0x9B000}
 };
 
 CONST PCH_SERIAL_IO_CONFIG_INFO mPchSSerialIoI2CMode[PCH_MAX_SERIALIO_I2C_CONTROLLERS] = {
-  {1,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_I2C0},
-  {1,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_I2C1},
-  {1,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_I2C2},
-  {1,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_I2C3},
-  {1,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_I2C4},
-  {1,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_I2C5},
-  {0,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_I2C6},
-  {0,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_I2C7}
+  {1, 0xA8000},
+  {1, 0xA9000},
+  {1, 0xAA000},
+  {1, 0xAB000},
+  {1, 0xC8000},
+  {1, 0xC9000},
+  {0, 0x80000},
+  {0, 0x81000}
 };
 
 CONST PCH_SERIAL_IO_UART_CONFIG_INFO mPchSSerialIoUartMode[PCH_MAX_SERIALIO_UART_CONTROLLERS] = {
@@ -847,28 +847,12 @@ PlatformUpdateAcpiGnvs (
     PchNvs->SM0[Index] = FspsConfig->SerialIoSpiMode[Index];
   }
 
-  PchNvs->SC0[0] = 991232;
-  PchNvs->SC0[1] = 995328;
-  PchNvs->SC0[2] = 614400;
-  PchNvs->SC0[3] = 622592;
-  PchNvs->SC0[4] = 626688;
-  PchNvs->SC0[5] = 573440;
-  PchNvs->SC0[5] = 577536;
-
   //I2C
   Length = GetPchMaxSerialIoI2cControllersNum ();
   for (Index = 0; Index < Length ; Index++) {
     PchNvs->IC0[Index] = mPchSSerialIoI2CMode[Index].SerialIoPCIeConfig;
     PchNvs->IM0[Index] = FspsConfig->SerialIoI2cMode[Index];;
   }
-  PchNvs->IC0[0] = 688128;
-  PchNvs->IC0[1] = 692224;
-  PchNvs->IC0[2] = 696320;
-  PchNvs->IC0[3] = 700416;
-  PchNvs->IC0[4] = 819200;
-  PchNvs->IC0[5] = 823296;
-  PchNvs->IC0[6] = 524288;
-  PchNvs->IC0[7] = 528384;
 
   PchNvs->ClockToRootPortMap[0] = 0xFF;
   PchNvs->ClockToRootPortMap[1] = 0xFF;
