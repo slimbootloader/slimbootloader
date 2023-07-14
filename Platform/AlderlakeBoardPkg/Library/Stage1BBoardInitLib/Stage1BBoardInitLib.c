@@ -95,6 +95,18 @@ CONST PLT_DEVICE mPlatformDevices[] = {
   {
     .Dev = {
       .PciDev = {
+        .PciFunctionNumber  = PCI_FUNCTION_NUMBER_PCH_SCS_EMMC,
+        .PciDeviceNumber    = PCI_DEVICE_NUMBER_PCH_SCS_EMMC,
+        .PciBusNumber       = DEFAULT_PCI_BUS_NUMBER_PCH,
+        .IsMmioDevice       = 0
+      }
+    },
+    .Type = OsBootDeviceEmmc,
+    .Instance = 0
+  },
+  {
+    .Dev = {
+      .PciDev = {
         .PciFunctionNumber  = PCI_FUNCTION_NUMBER_PCH_SMBUS,
         .PciDeviceNumber    = PCI_DEVICE_NUMBER_PCH_SMBUS,
         .PciBusNumber       = DEFAULT_PCI_BUS_NUMBER_PCH,
