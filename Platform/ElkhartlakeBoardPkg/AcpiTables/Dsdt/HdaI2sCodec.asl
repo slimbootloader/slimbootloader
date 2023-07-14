@@ -36,8 +36,8 @@ Device (HDAC)
       Return
     }
     If (LEqual(I2SC, HDAC_I2S_ALC5660)) { // ALC5660
-      Store ("INTC1027", _HID)
-      Store ("INTC1027", _CID)
+      Store ("10EC5660", _HID)
+      Store ("10EC5660", _CID)
       Store (0x1C, CADR)
       Return
     }
