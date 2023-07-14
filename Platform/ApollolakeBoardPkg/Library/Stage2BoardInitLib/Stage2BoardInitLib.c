@@ -154,7 +154,10 @@ InitializeSmbiosInfo (
   PlatformId    = GetPlatformId ();
   TempSmbiosStrTbl  = (SMBIOS_TYPE_STRINGS *) AllocateTemporaryMemory (0);
   VerInfoTbl    = GetVerInfoPtr ();
-
+  if (TempSmbiosStrTbl == NULL) {
+    DEBUG ((DEBUG_ERROR, "TempSmbiosStrTbl allocation failed\n"));
+    return EFI_OUT_OF_RESOURCES;
+  }
   //
   // SMBIOS_TYPE_BIOS_INFORMATION
   //
