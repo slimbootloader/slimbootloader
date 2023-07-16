@@ -1,7 +1,7 @@
 ## @file
 # This file is used to provide board specific image information.
 #
-#  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -127,18 +127,15 @@ class Board(BaseBoard):
             self.HAVE_VERIFIED_BOOT         = 0
             self.HAVE_MEASURED_BOOT         = 0
             self.VERIFIED_BOOT_HASH_MASK    = 0
+            self.FSPDEBUG_MODE              = 0
+            self.ENABLE_SOURCE_DEBUG        = 0
 
         if self.RELEASE_MODE and self.ENABLE_FAST_BOOT:
-            self.STAGE1A_SIZE         = 0x00015000
-            self.STAGE1B_SIZE         = 0x000C0000
-            self.STAGE2_SIZE          = 0x000C0000
+            self.STAGE1A_SIZE         = 0x00016000
+            self.STAGE1B_SIZE         = 0x000D1000
+            self.STAGE2_SIZE          = 0x00072000
             self.STAGE2_FD_SIZE       = 0x000F0000
-            self.PAYLOAD_SIZE         = 0x00024000
-
-        if self.ENABLE_SOURCE_DEBUG:
-            self.STAGE1B_SIZE += 0x4000
-            if self.SKIP_STAGE1A_SOURCE_DEBUG == 0:
-                self.STAGE1A_SIZE += 0x4000
+            self.PAYLOAD_SIZE         = 0x0001F000
 
 
         self.UEFI_VARIABLE_SIZE = 0x1000
