@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -27,6 +27,7 @@ UpdatePayloadId (
   PLDSEL_CFG_DATA   *PldSelCfgData;
   UINT32            PayloadSelGpioData;
   UINT32            PayloadSelGpioPad;
+  PAYLOAD_SEL_GPIO_PIN  PldSelGpioPin;
 
   PayloadSelGpioData = 0;
 
@@ -53,11 +54,13 @@ UpdatePayloadId (
   // Switch payloads based on configured GPIO pin
   //
   PldSelCfgData = (PLDSEL_CFG_DATA *)FindConfigDataByTag (CDATA_PLDSEL_TAG);
+  PldSelGpioPin.PadGroup = GpioGetPhyGrpIdFromVirGrpIdx ((UINT8) PldSelCfgData->PldSelGpio.PadGroup);
+  PldSelGpioPin.PinNumber = PldSelCfgData->PldSelGpio.PinNumber;
   if ((PldSelCfgData != NULL) && (PldSelCfgData->PldSelGpio.Enable != 0)){
     if (IsPchS ()) {
-      PayloadSelGpioPad = GPIO_CFG_PIN_TO_PAD(PldSelCfgData->PldSelGpio) | (GPIO_VER4_S_CHIPSET_ID << 24);
+      PayloadSelGpioPad = GPIO_CFG_PIN_TO_PAD(PldSelGpioPin) | (GPIO_VER4_S_CHIPSET_ID << 24);
     } else if (IsPchP ()) {
-      PayloadSelGpioPad = GPIO_CFG_PIN_TO_PAD(PldSelCfgData->PldSelGpio) | (GPIO_VER2_LP_CHIPSET_ID << 24);
+      PayloadSelGpioPad = GPIO_CFG_PIN_TO_PAD(PldSelGpioPin) | (GPIO_VER2_LP_CHIPSET_ID << 24);
     } else {
       DEBUG ((DEBUG_WARN, "Unknown PCH in UpdatePayloadId\n"));
       return;

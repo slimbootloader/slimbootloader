@@ -1,7 +1,7 @@
 ## @ GpioDataConfig.py
 #  This is a Gpio config script for Slim Bootloader
 #
-# Copyright (c) 2022, Intel Corporation. All rights reserved. <BR>
+# Copyright (c) 2022 - 2023, Intel Corporation. All rights reserved. <BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -90,7 +90,7 @@ def rxraw_override_cfg():
     return True
 
 def vir_to_phy_grp():
-    return True
+    return False
 
 def plat_name():
     return 'adl'

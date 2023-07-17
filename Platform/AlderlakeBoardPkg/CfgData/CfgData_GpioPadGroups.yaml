@@ -2,11 +2,11 @@
 #
 #  Slim Bootloader CFGDATA Alder Lake GPIO pad groups.
 #
-#  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2021 - 2023, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
 
 >
-0x0:GROUP_I, 0x1:GROUP_R, 0x2:GROUP_J, 0x5:GROUP_B, 0x6:GROUP_G, 0x7:GROUP_H,
-0xA:GROUP_A, 0xD:GROUP_S, 0xE:GROUP_E, 0xF:GROUP_K, 0x10:GROUP_F, 0x11:GROUP_D
+0x00:GPP_A, 0x01:GPP_B, 0x02:GPP_C, 0x03:GPP_D, 0x04:GPP_E, 0x05:GPP_F, 0x06:GPP_G, 0x07:GPP_H,
+0x08:GPP_I, 0x09:GPP_J, 0x0A:GPP_K, 0x11:GPP_R, 0x12:GPP_S, 0x13:GPP_T, 0x14:GPP_U, 0x19:GPD

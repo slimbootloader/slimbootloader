@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -264,6 +264,20 @@ UINT32
 EFIAPI
 GpioGetChipsetIdFromGpioPad (
   IN GPIO_PAD        GpioPad
+  );
+
+
+/**
+  This procedure will get physical GPIO group ID from virtual group index
+
+  @param[in] VirGrpIdx  Virtual GPIO group index
+
+  @retval Value         Physical GPIO group ID
+**/
+UINT8
+EFIAPI
+GpioGetPhyGrpIdFromVirGrpIdx (
+  IN UINT8           VirGrpIdx
   );
 
 

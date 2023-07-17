@@ -1,7 +1,7 @@
 /** @file
   GpioSiLib implementation for Alder Lake platform
 
-  Copyright (c) 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2022 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -187,6 +187,28 @@ typedef struct {
   UINT32    GrpIdx      :5;
   UINT32    Rsvd2       :3;
 } GPIO_CFG_DATA_DW1;
+
+// GPIO group table to convert from virtual alphabetical group index to physical group ID
+CONST UINT8 mPchGpioGroup[3][26] = {
+  { // PCH-N based on GPIO_GROUP_INFO mPchNGpioGroupInfo
+    /*A     B     C     D     E     F     G     H     I     J     K     L     M      */
+    0x02, 0x00, 0x0B, 0x08, 0x0E, 0x0C, 0xFF, 0x07, 0x09, 0xFF, 0xFF, 0xFF, 0xFF,
+    /*N     O     P     Q     R     S     T     U     V     W     X     Y     Z(GPD) */
+    0xFF, 0xFF, 0xFF, 0xFF, 0x03, 0x06, 0x01, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x05
+  },
+  { // PCH-P based on GPIO_GROUP_INFO mPchNGpioGroupInfo
+    /*A     B     C     D     E     F     G     H     I     J     K     L     M      */
+    0x02, 0x00, 0x0B, 0x08, 0x0E, 0x0C, 0xFF, 0x07, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+    /*N     O     P     Q     R     S     T     U     V     W     X     Y     Z(GPD) */
+    0xFF, 0xFF, 0xFF, 0xFF, 0x03, 0x06, 0x01, 0x09, 0xFF, 0xFF, 0xFF, 0xFF, 0x05
+  },
+  { // PCH-S based on GPIO_GROUP_INFO mAdlPchSGpioGroupInfo
+    /*A     B     C     D     E     F     G     H     I     J     K     L     M      */
+    0x0A, 0x05, 0x0B, 0x11, 0x0E, 0x10, 0x06, 0x07, 0x00, 0x02, 0x0F, 0xFF, 0xFF,
+    /*N     O     P     Q     R     S     T     U     V     W     X     Y     Z(GPD) */
+    0xFF, 0xFF, 0xFF, 0xFF, 0x01, 0x0D, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x08
+  }
+};
 
 /**
   This function gets Group to GPE0 configuration
@@ -558,6 +580,44 @@ GpioGetChipsetIdFromGpioPad (
 }
 
 /**
+  This procedure will get physical GPIO group ID from virtual group index
+
+  @param[in] VirGrpIdx  Virtual GPIO group index
+
+  @retval Value         Physical GPIO group ID
+**/
+UINT8
+EFIAPI
+GpioGetPhyGrpIdFromVirGrpIdx (
+  IN UINT8           VirGrpIdx
+  )
+{
+  UINT8                 PhyGrpId;
+  UINT8                 PchSku;
+
+  PhyGrpId = 0xFF;
+  PchSku = PCH_UNKNOWN_SERIES;
+
+  if (VirGrpIdx < sizeof(mPchGpioGroup[0])) {
+    if (IsPchN ()) {
+      PhyGrpId = mPchGpioGroup[0][VirGrpIdx];
+      PchSku = PCH_N;
+    } else if (IsPchP ()) {
+      PhyGrpId = mPchGpioGroup[1][VirGrpIdx];
+      PchSku = PCH_P;
+    } else if (IsPchS ()) {
+      PhyGrpId = mPchGpioGroup[2][VirGrpIdx];
+      PchSku = PCH_S;
+    }
+  }
+
+  if (PhyGrpId == 0xFF) {
+    DEBUG ((DEBUG_ERROR, "Invalid GPIO GrpIdx for SOC SKU %02X !", VirGrpIdx, PchSku));
+  }
+  return PhyGrpId;
+}
+
+/**
   This procedure will get Gpio Pad from Cfg Dword
 
   @param[in]  GpioItem         Pointer to the Gpio Cfg Data Item
@@ -572,11 +632,14 @@ GpioGetGpioPadFromCfgDw (
 {
   GPIO_CFG_DATA_DW1    *Dw1;
   PAD_INFO              PadInfo;
+  UINT8                 PhyGrpId;
 
   Dw1 = (GPIO_CFG_DATA_DW1 *) (&GpioItem[1]);
+  PhyGrpId = GpioGetPhyGrpIdFromVirGrpIdx ((UINT8) Dw1->GrpIdx);
 
+  PadInfo.Pad = 0;
   PadInfo.PadField.PadNum    = (UINT16) Dw1->PadNum;
-  PadInfo.PadField.GrpIdx    = (UINT8)  Dw1->GrpIdx;
+  PadInfo.PadField.GrpIdx    = PhyGrpId;
   PadInfo.PadField.ChipsetId = GpioGetThisChipsetId ();
   *GpioPad = PadInfo.Pad;
 
