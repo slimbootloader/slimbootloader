@@ -491,7 +491,7 @@
       help         : >
                      Opio Recentering Disabling for Pcie Latency Improvement
       length       : 0x01
-      value        : 0x0
+      value        : 0x1
   - L2QosEnumerationEn :
       name         : L2 QOS Enumeration
       type         : Combo
