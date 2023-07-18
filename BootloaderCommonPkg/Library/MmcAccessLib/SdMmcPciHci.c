@@ -644,8 +644,8 @@ SdMmcHcClockSupply (
     return EFI_INVALID_PARAMETER;
   }
 
-  if (ClockFreq > (BaseClkFreq * 1000)) {
-    ClockFreq = BaseClkFreq * 1000;
+  if (ClockFreq > ((UINT64)BaseClkFreq * 1000)) {
+    ClockFreq = (UINT64)BaseClkFreq * 1000;
   }
 
   //

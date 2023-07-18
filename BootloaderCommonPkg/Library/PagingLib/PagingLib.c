@@ -388,7 +388,7 @@ CreateIdentityMappingPageTables (
   // PML5
   if (Page5LevelSupport) {
     for (Idx = 0; Idx < NumOfPml5Entries; Idx++) {
-      Page64[Idx] = (UINTN)Page64 + SIZE_4KB * (Idx + 1) + Attribute;
+      Page64[Idx] = (UINT64)(UINTN)Page64 + SIZE_4KB * (Idx + 1) + Attribute;
     }
     // PML4 Entry
     Page64 = (UINT64 *)((UINTN)Page64 + SIZE_4KB);
@@ -397,7 +397,7 @@ CreateIdentityMappingPageTables (
   // PML4
   Entries = (NumOfPml5Entries == 1) ? NumOfPml4Entries : 512;
   for (Idx = 0; Idx < Entries; Idx++) {
-    Page64[Idx] = (UINTN)Page64 + SIZE_4KB * (Idx + 1) + Attribute;
+    Page64[Idx] = (UINT64)(UINTN)Page64 + SIZE_4KB * (Idx + 1) + Attribute;
   }
 
   Page64 = (UINT64 *)((UINTN)Page64 + SIZE_4KB);
@@ -411,7 +411,7 @@ CreateIdentityMappingPageTables (
     // PDP
     Entries *= (NumOfPml4Entries == 1 ? NumOfPdpEntries : 512);
     for (Idx = 0; Idx < Entries; Idx++) {
-      Page64[Idx] = (UINTN)Page64 + (SIZE_4KB * (Idx + 1)) + Attribute;
+      Page64[Idx] = (UINT64)(UINTN)Page64 + (SIZE_4KB * (Idx + 1)) + Attribute;
     }
     Page64 = (UINT64 *)((UINTN)Page64 + SIZE_4KB);
 
