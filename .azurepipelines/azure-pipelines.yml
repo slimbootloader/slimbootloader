@@ -255,8 +255,7 @@ jobs:
       [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
       Invoke-WebRequest -Uri https://www.nasm.us/pub/nasm/releasebuilds/2.14.02/win64/nasm-2.14.02-win64.zip -OutFile nasm.zip
       Expand-Archive .\nasm.zip C:\
-      echo "Download iasl-win-20221020_Signed.zip"
-      Invoke-WebRequest -Uri https://cdrdv2.intel.com/v1/dl/getContent/774881 -OutFile iasl.zip
+      Invoke-WebRequest -Uri https://acpica.org/sites/acpica/files/iasl-win-20190509.zip -OutFile iasl.zip
       Expand-Archive .\iasl.zip C:\iasl
       echo "##vso[task.setvariable variable=nasm_prefix;]C:\nasm-2.14.02\"
       echo "##vso[task.setvariable variable=iasl_prefix;]C:\iasl\"
