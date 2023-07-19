@@ -4,7 +4,7 @@
 
   It would expose EFI_SD_MMC_PASS_THRU_PROTOCOL for upper layer use.
 
-  Copyright (c) 2015 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2015 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -140,9 +140,6 @@ SdMmcHcRwMmio (
       MmioWrite64 (Address + Offset, * (UINT64 *)Data);
     }
     break;
-  default:
-    ASSERT (FALSE);
-    return EFI_INVALID_PARAMETER;
   }
 
   return EFI_SUCCESS;

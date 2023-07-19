@@ -503,11 +503,6 @@ GetTraditionalLinux (
 
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "Could not find configuration file!\n"));
-    // No any config was found, try to load vmlinuz/initrd directly.
-    if (ConfigFile != NULL) {
-      FreePool (ConfigFile);
-      ConfigFile = NULL;
-    }
     ConfigFileSize = 0;
   }
 

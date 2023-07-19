@@ -1,7 +1,7 @@
 /** @file
   Shell command `perf` to display system performance data.
 
-  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -94,9 +94,6 @@ PrintCsmePerformanceInfo (
   }
 
   CsmePerformanceInfo = (CSME_PERFORMANCE_INFO *)GET_GUID_HOB_DATA (GuidHob);
-  if (CsmePerformanceInfo == NULL) {
-    return;
-  }
 
   ShellPrint (L"CSME Performance Info\n");
   ShellPrint (L"=======================\n\n");

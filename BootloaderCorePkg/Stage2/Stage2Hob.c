@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2016 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2016 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -128,9 +128,6 @@ SplitMemroyMap (
           // Payload reserved memory
           Adjust = PcdGet32 (PcdPayloadReservedMemSize);
           Flag   = MEM_MAP_FLAG_PAYLOAD;
-          break;
-        default:
-          Adjust = 0;
           break;
         }
         if (Adjust == 0) {

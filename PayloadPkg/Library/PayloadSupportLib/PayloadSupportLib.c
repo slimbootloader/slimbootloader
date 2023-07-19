@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2016 - 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2016 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -62,9 +62,6 @@ GetLoaderPlatformInfoPtr (
   }
 
   LoaderInfo = (LOADER_PLATFORM_INFO *)GET_GUID_HOB_DATA (GuidHob);
-  if (LoaderInfo == NULL) {
-    return NULL;
-  }
 
   return LoaderInfo;
 }

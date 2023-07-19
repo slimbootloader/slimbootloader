@@ -1,7 +1,7 @@
 /** @file
   Secure boot library routines to provide hash verification.
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -179,8 +179,6 @@ DoHashVerify (
     DigestSize = SHA256_DIGEST_SIZE;
   } else if (HashAlg == HASH_TYPE_SHA384) {
     DigestSize = SHA384_DIGEST_SIZE;
-  } else {
-    return RETURN_INVALID_PARAMETER;
   }
 
   Status = CalculateHash (Data, Length, HashAlg, Digest);

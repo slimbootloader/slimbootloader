@@ -1,7 +1,7 @@
 /** @file
   SBL parameters for specific OS.
 
-  Copyright (c) 2018 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -29,7 +29,7 @@ GetResetReasonStr (
     return "ResetWakeS3";
   } else if ((ResetReason & ResetWarm) != 0) {
     return "warm";
-  } else if ((ResetReason & ResetCold) != 0) {
+  } else if (ResetReason == ResetCold) {
     return "cold";
   } else if ((ResetReason & ResetGlobal) != 0) {
     return "global";
