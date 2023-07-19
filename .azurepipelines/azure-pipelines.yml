@@ -252,14 +252,14 @@ jobs:
           }
       }
       "@
+      echo "Create a new object"
       [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
-      echo "nasm link below is not available, comment it out to use the default version"
+      echo "Download nasm"
       Invoke-WebRequest -Uri https://www.nasm.us/pub/nasm/releasebuilds/2.14.02/win64/nasm-2.14.02-win64.zip -OutFile nasm.zip
-      echo "expand nasm"
+      echo "Expand nasm"
       Expand-Archive .\nasm.zip C:\
 
-      echo "download iasl"
-      # Download iasl-win-20221020_Signed.zip
+      echo "Download iasl"
       Invoke-WebRequest -Uri https://cdrdv2.intel.com/v1/dl/getContent/774881 -OutFile iasl.zip
       Expand-Archive .\iasl.zip C:\iasl
       echo "##vso[task.setvariable variable=nasm_prefix;]C:\nasm-2.14.02\"
