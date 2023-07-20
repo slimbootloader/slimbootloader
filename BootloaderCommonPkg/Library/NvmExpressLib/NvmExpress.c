@@ -177,9 +177,6 @@ Exit:
     FreePool (NamespaceData);
   }
 
-  if (Device != NULL) {
-    FreePool (Device);
-  }
   return Status;
 }
 
