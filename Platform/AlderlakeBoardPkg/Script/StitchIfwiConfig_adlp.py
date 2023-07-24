@@ -141,6 +141,7 @@ def get_xml_change_list (platform, plt_params_list):
         ('./FlashLayout/BiosRegion/InputFile',                                      '$SourceDir\BiosRegion.bin'),
         ('./FlashLayout/Ifwi_IntelMePmcRegion/MeRegionFile',                        '$SourceDir\MeRegionFile.bin'),
         ('./FlashLayout/Ifwi_IntelMePmcRegion/PmcBinary',                           '$SourceDir\PmcBinary.bin'),
+        ('./FlashLayout/Ifwi_IntelMePmcRegion/ChipInitBinary',                      '$SourceDir\ChipInitBinary.bin'),
         ('./FlashLayout/EcRegion/InputFile',                                        '$SourceDir\EcRegion.bin'),
         ('./FlashLayout/EcRegion/Enabled',                                          'Enabled'),
         ('./FlashLayout/EcRegion/EcRegionPointer',                                  '$SourceDir\EcRegionPointer.bin'),
@@ -149,6 +150,7 @@ def get_xml_change_list (platform, plt_params_list):
         ('./FlashLayout/SubPartitions/PchcSubPartitionData/InputFile',              '$SourceDir\PchcSubPartitionData.bin'),
         ('./FlashSettings/FlashConfiguration/SpiDualIoReadEnable',                   'Yes'),
         ('./FlashSettings/FlashConfiguration/SpiDualOutReadEnable',                  'Yes'),
+        # TopSwapOverride value will be updated by patch_xml_file() in StitchIfwi.py
         ('./FlashSettings/BiosConfiguration/TopSwapOverride',                        '512KB'),
         ('./PlatformProtection/PlatformIntegrity/OemPublicKeyHash',                  'F8 F0 E3 69 15 81 76 99 0A 54 9E D4 C3 6D 1A 86 39 D8 87 3D EF F7 ED 2D E3 4C B4 1B CC B3 04 76 CE 0A A0 63 BC 5B 7A AC FF D9 50 9E 96 40 C6 99'),
         ('./PlatformProtection/PlatformIntegrity/OemExtInputFile',                   '$SourceDir\OemExtInputFile.bin'),
@@ -178,11 +180,9 @@ def get_xml_change_list (platform, plt_params_list):
         ('./Debug/DirectConnectInterfaceConfiguration/DciDbcEnable',                 'No'),
         ('./Debug/DirectConnectInterfaceConfiguration/Usb1DciOobEnable',             'No'),
         ('./Debug/DirectConnectInterfaceConfiguration/Usb2DciOobEnable',             'No'),
-        ('./FlexIO/Type-CSubsystemConfiguration/IomBinaryFile',                      '$SourceDir\Iom_L0R0.bin'),
-        ('./FlexIO/Type-CSubsystemConfiguration/PhyBinaryFile',                      '$SourceDir\TypeC_NorthPHYRegion_L1.bin'),
-        ('./FlexIO/Type-CSubsystemConfiguration/TbtBinaryFile',                      '$SourceDir\TBT.bin'),
         ('./FlexIO/Type-CSubsystemConfiguration/IomBinaryFile',                      '$SourceDir\Iom.bin'),
         ('./FlexIO/Type-CSubsystemConfiguration/PhyBinaryFile',                      '$SourceDir\TypeC_NorthPHYRegion.bin'),
+        ('./FlexIO/Type-CSubsystemConfiguration/TbtBinaryFile',                      '$SourceDir\TBT.bin'),
         ('./IntelUniquePlatformId/EntitlementsConfiguration/IcpsSwSkuing',           'Yes'),
         ('./FlexIO/Type-CSubsystemConfiguration/XdciSplitDieConfig',                 'xDCI Split Die Disabled'),
     ])
