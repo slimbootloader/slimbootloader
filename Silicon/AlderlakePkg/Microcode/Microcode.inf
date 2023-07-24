@@ -15,8 +15,7 @@
 
 [Sources]
   m_07_90672_00000025.mcb
-  m_80_906a3_00000423.mcb
-  m_80_906a3_00000424.mcb
+  m_80_906a3_0000042a.mcb
   m_01_b06e0_00000010.mcb
 
 [UserExtensions.SBL."CloneRepo"]
@@ -25,6 +24,5 @@
 
 [UserExtensions.SBL."CopyList"]
   Microcode/AlderLake/m_07_90672_00000025.pdb  : Silicon/AlderlakePkg/Microcode/m_07_90672_00000025.mcb
-  Microcode/AlderLake/m_80_906a3_00000423.pdb  : Silicon/AlderlakePkg/Microcode/m_80_906a3_00000423.mcb
-  Microcode/AlderLake/m_80_906a3_00000424.pdb  : Silicon/AlderlakePkg/Microcode/m_80_906a3_00000424.mcb
+  Microcode/AlderLake/m_80_906a3_0000042a.pdb  : Silicon/AlderlakePkg/Microcode/m_80_906a3_0000042a.mcb
   Microcode/AlderLake/m_01_b06e0_00000010.pdb  : Silicon/AlderlakePkg/Microcode/m_01_b06e0_00000010.mcb
