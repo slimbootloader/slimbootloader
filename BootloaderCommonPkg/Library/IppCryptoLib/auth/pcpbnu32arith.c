@@ -201,7 +201,7 @@ int cpDiv_BNU32(Ipp32u* pQ, cpSize* sizeQ,
 
       /* normalization */
       pX[sizeX] = 0;
-      if(nlz) {
+      if(nlz > 0 && nlz < 32) {
          cpSize ni;
 
          pX[sizeX] = pX[sizeX-1] >> (32-nlz);
