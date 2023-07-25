@@ -481,7 +481,7 @@ PlatformUpdateAcpiTable (
       if (PsdCfgData != NULL) {
         if (PsdCfgData->EnablePsd == 1) {
           Status = UpdateAcpiPsdTable ( (VOID* )Current);
-          DEBUG ( (DEBUG_INFO, "Updated Psd Table in AcpiTable Entries\n") );
+          DEBUG ( (DEBUG_INFO, "Updated Psd Table in AcpiTable Entries %r\n", Status) );
         }
       }
     }

@@ -1,7 +1,7 @@
 /** @file
   Internal functions to update firmware in boot media.
 
-  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -584,6 +584,7 @@ UpdateSystemFirmware (
   // Do boot partition update.
   //
   Status = UpdateBootPartition (UpdatePartition);
+  FreePool(UpdatePartition);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "UpdateBootPartition, Status = 0x%x\n", Status));
     return Status;

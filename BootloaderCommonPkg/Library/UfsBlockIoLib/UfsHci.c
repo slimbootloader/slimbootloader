@@ -1454,13 +1454,17 @@ UfsHcPlatformPostHce (
   )
 {
   UFS_COMMAND            LccDisableCommand;
+  EFI_STATUS  Status;
 
   //
   // For all supported integrated controllers we have to disable the
   // line configuration check(LCC).
   //
   UfsFillUicCommand (UfsUicDmeSet, PA_Local_TX_LCC_Enable, 0, 0, 0, &LccDisableCommand );
-  UfsExecUicCommands (Private, &LccDisableCommand);
+  Status = UfsExecUicCommands (Private, &LccDisableCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to execute UIC LccDisableCommand\n"));
+  }
 }
 
 /**

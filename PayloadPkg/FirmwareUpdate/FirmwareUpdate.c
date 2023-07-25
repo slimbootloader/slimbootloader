@@ -1740,6 +1740,7 @@ InitFirmwareRecovery (
   }
 
   Status = UpdateBootPartition (UpdatePartition);
+  FreePool(UpdatePartition);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "UpdateBootPartition, Status = 0x%x\n", Status));
     return Status;

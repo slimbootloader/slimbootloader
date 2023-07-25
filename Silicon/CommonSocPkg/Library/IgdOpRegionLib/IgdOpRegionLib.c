@@ -196,10 +196,6 @@ IgdOpRegionInit (
     CopyMem (mIgdOpRegion.OpRegion->MBox4.RVBT, VbtFileBuffer, VbtFileBuffer->HeaderVbtSize);
   }
 
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
   // Initialize hardware state:
   // Set ASLS Register to the OpRegion physical memory address.
   // Set SWSCI register bit 15 to a "1" to activate SCI interrupts.
