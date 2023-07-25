@@ -24,7 +24,7 @@ VOID
 EFIAPI
 MmRead (
   IN UINTN   Addr,
-  IN UINTN   Width,
+  IN UINT32  Width,
   IN UINT32  Count,
   IN BOOLEAN IsIoAddr
 );
