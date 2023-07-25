@@ -267,7 +267,7 @@ UINT64 GetLowPowerS0IdleConstraint(VOID)
     //
     // Micro-PEP constraint list
     //
-    LowPowerS0IdleConstraint  = (((FspsConfig->SataEnable == 1 ? 0x3:0) & PepConfigData->PepSataContraints)        <<  0) | // Bit[1:0] - Storage (0:None, 1:Adapter D0/F1, 2:Raid, 3:Adapter D3)
+    LowPowerS0IdleConstraint  = (UINT64)((((FspsConfig->SataEnable == 1 ? 0x3:0) & PepConfigData->PepSataContraints)        <<  0) | // Bit[1:0] - Storage (0:None, 1:Adapter D0/F1, 2:Raid, 3:Adapter D3)
                                  ((PepSerialIoUart[0] && PepConfigData->PepUart)                                   <<  2) | // Bit[2]   - En/Dis UART0
                                  ((PepSerialIoUart[1] && PepConfigData->PepUart)                                   <<  3) | // Bit[3]   - En/Dis UART1
                                  ((PepSerialIoI2c[0] && PepConfigData->PepI2c0)                                    <<  4) | // Bit[4]   - En/Dis I2C0
@@ -296,7 +296,7 @@ UINT64 GetLowPowerS0IdleConstraint(VOID)
                                  ((PepSerialIoI2c[6] && PepConfigData->PepI2c6)                                    << 28) | // Bit[28]  - En/Dis I2C6
                                  (PepConfigData->PepTcss                                                           << 29) | // Bit[29]  - En/Dis TCSS
                                  ((FspsConfig->GnaEnable && PepConfigData->PepGna)                                 << 30) | // Bit[30]  - En/Dis GNA0
-                                 (PepConfigData->PepVmd                                                            << 31); // Bit[31]   - En/Dis VMD
+                                 (PepConfigData->PepVmd                                                            << 31)); // Bit[31]   - En/Dis VMD
 
     LowPowerS0IdleConstraint |= ((UINT64)PepConfigData->PepHeci3                                                   << 32) | // Bit[32]    - En/Dis HECI3
                                 (((UINT64)(0x3 & PepConfigData->PepPcieStorage))                                   << 33) | // Bit[34:33] - PCIE Storage RP (0:No Constraint or 1: D0/F1 or 3:D3)

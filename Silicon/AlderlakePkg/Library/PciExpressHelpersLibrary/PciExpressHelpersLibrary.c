@@ -1,7 +1,7 @@
 /** @file
   This file contains routines that support PCI Express initialization
 
-  Copyright (c) 2021 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 #include "PciExpressHelpersLibrary.h"
@@ -1086,16 +1086,10 @@ RecursiveBusAssignment (
     if (SecondaryBus != 0) {
       ChildSbdf.Bus = SecondaryBus;
       MinBus = SecondaryBus + 1;
-      PrevSub = SecondaryBus;
       DEBUG ((DEBUG_INFO, "RecursiveBusAssignmentP %x:%x:%x -> %x,%x,%x \n", Sbdf.Bus, Sbdf.Dev, Sbdf.Func, Sbdf.Bus, MinBus, SubordinateBus));
       while (FindNextPcieChild (DevType, &ChildSbdf)) {
         BelowBus = RecursiveBusAssignment (ChildSbdf, MinBus, SubordinateBus, BridgeCleanupList);
-        if (PrevSub > BelowBus) {
-          BelowBus = PrevSub;
-        } else {
-          PrevSub = BelowBus;
-          MinBus = BelowBus + 1;
-        }
+        MinBus = BelowBus + 1;
       }
       return SubordinateBus;
     } else {

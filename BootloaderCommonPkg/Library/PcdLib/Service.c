@@ -2,7 +2,7 @@
   The driver internal functions are implmented here.
   They build Pei PCD database, and provide access service to PCD database.
 
-Copyright (c) 2006 - 2017, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2006 - 2023, Intel Corporation. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -273,7 +273,7 @@ GetWorker (
 
   case PCD_TYPE_STRING:
     StringTableIdx = * (STRING_HEAD *) ((UINT8 *) PeiPcdDb + Offset);
-    return (VOID *) (&StringTable[StringTableIdx]);
+    return (VOID *) (StringTable + StringTableIdx);
 
   default:
     ASSERT (FALSE);

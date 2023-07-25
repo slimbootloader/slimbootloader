@@ -1014,6 +1014,7 @@ ProgramBar (
     // program BAR0/1 of this PPB device.
     //
     if (IS_PCI_BRIDGE(&(PciIoDevice->Pci))) {
+      ASSERT(BarIdx < PPB_MAX_BAR);
       PciBar = PciIoDevice->PpbBar;
     }
   }

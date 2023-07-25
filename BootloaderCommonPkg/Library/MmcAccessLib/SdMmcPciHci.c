@@ -1392,7 +1392,7 @@ SdMmcExecTrb (
   SdMmcHcLedOnOff (Address, TRUE);
 
   if (Trb->Mode == SdMmcSdmaMode) {
-    if ((UINT64) (UINTN)Trb->DataPhy >= 0x100000000ul) {
+    if (Trb->DataPhy >= 0x100000000ul) {
       return EFI_INVALID_PARAMETER;
     }
 
