@@ -108,27 +108,26 @@ CalculateHash  (
   UINT8 DigestSize;
   UINT8 *HashRetVal;
 
-  if(Digest != NULL){
-    if (HashAlg == HASH_TYPE_SHA256) {
-      HashRetVal = Sha256 (Data, Length, Digest);
-      DigestSize = SHA256_DIGEST_SIZE;
-    } else if (HashAlg == HASH_TYPE_SHA384) {
-      HashRetVal = Sha384 (Data, Length, Digest);
-      DigestSize = SHA384_DIGEST_SIZE;
-    } else if (HashAlg == HASH_TYPE_SM3) {
-      HashRetVal = Sm3 (Data, Length, Digest);
-      DigestSize = SM3_DIGEST_SIZE;
-    } else {
-      return RETURN_UNSUPPORTED;
-    }
-
-    if (HashRetVal == NULL){
-      DEBUG((DEBUG_INFO, "Hash Calculation is invalid!!\n"));
-      return RETURN_UNSUPPORTED;
-    } else{
-      CopyMem (OutHash, Digest, DigestSize);
-    }
+  if (HashAlg == HASH_TYPE_SHA256) {
+    HashRetVal = Sha256 (Data, Length, Digest);
+    DigestSize = SHA256_DIGEST_SIZE;
+  } else if (HashAlg == HASH_TYPE_SHA384) {
+    HashRetVal = Sha384 (Data, Length, Digest);
+    DigestSize = SHA384_DIGEST_SIZE;
+  } else if (HashAlg == HASH_TYPE_SM3) {
+    HashRetVal = Sm3 (Data, Length, Digest);
+    DigestSize = SM3_DIGEST_SIZE;
+  } else {
+    return RETURN_UNSUPPORTED;
   }
+
+  if (HashRetVal == NULL){
+    DEBUG((DEBUG_INFO, "Hash Calculation is invalid!!\n"));
+    return RETURN_UNSUPPORTED;
+  } else{
+    CopyMem (OutHash, Digest, DigestSize);
+  }
+
   return RETURN_SUCCESS;
 }
 
