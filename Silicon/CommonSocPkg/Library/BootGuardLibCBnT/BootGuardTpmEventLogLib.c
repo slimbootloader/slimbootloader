@@ -993,8 +993,9 @@ CaculateAuthorityPCRExtendValue (
 
   Km = FindKm ();
   ASSERT (Km != NULL);
-  if ((Km == NULL) ||
-      (Km->StructVersion != KEY_MANIFEST_STRUCTURE_VERSION_2_1)) {
+  if (Km == NULL) return FALSE;
+
+  if (Km->StructVersion != KEY_MANIFEST_STRUCTURE_VERSION_2_1) {
       DEBUG ((DEBUG_ERROR, "Unsupported KM Struct Version: 0x%02x\n", Km->StructVersion));
       return FALSE;
   }
