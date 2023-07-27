@@ -798,7 +798,7 @@ CaculateDetailPCRExtendValue (
   UINT16                           KeyModulusSize;
   UINT16                           IbbDigestCount;
   UINT16                           IbbDigestSize;
-  UINT8                            Idx;
+  UINT16                           Idx;
   HASH_LIST                        *IbbHashPtr;
 
   AcmSigSize = 0;
