@@ -51,6 +51,7 @@ DoRsaVerify (
   UINT8            Digest[HASH_DIGEST_MAX];
   UINT8            DigestSize;
 
+  ZeroMem (&Digest, sizeof(Digest));
 
   PublicKey = PubKeyHdr;
   if ((PublicKey->Identifier != PUBKEY_IDENTIFIER) || (SignatureHdr->Identifier != SIGNATURE_IDENTIFIER)){
