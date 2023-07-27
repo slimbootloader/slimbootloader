@@ -985,7 +985,7 @@ CaculateAuthorityPCRExtendValue (
   UINT8                                    *CurrPos;
   UINT16                                   KeyModulusSize;
   UINT8                                    MaxModulusExpo[RSA_KEY_SIZE_3K/8 + 4];
-  UINT8                                    Index;
+  UINT16                                    Index;
 
   Acm = FindAcm ();
   ASSERT (Acm != NULL);
