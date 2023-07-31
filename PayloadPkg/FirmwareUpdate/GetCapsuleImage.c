@@ -325,7 +325,7 @@ LoadCapsuleImage (
       goto Done;
     }
 
-    Status = ReadFile (FileHandle, CapsuleImage, (UINTN *)CapsuleImageSize);
+    Status = ReadFile (FileHandle, *CapsuleImage, (UINTN *)CapsuleImageSize);
     if (EFI_ERROR(Status)) {
       DEBUG((DEBUG_ERROR, " Read Capsule File '%s' Status : %r\n", FileName, Status));
       goto Done;

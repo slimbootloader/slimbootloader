@@ -220,7 +220,7 @@ EFIAPI
 ExtFsReadFile (
   IN  EFI_HANDLE                                  FsHandle,
   IN  EFI_HANDLE                                  FileHandle,
-  OUT VOID                                      **FileBufferPtr,
+  OUT VOID                                       *FileBufferPtr,
   OUT UINTN                                      *FileSizePtr
   )
 {
@@ -246,7 +246,7 @@ ExtFsReadFile (
     return EFI_INVALID_PARAMETER;
   }
 
-  FileBuffer = *FileBufferPtr;
+  FileBuffer = FileBufferPtr;
   Residual = 0;
   Status = Ext2fsRead (OpenFile, FileBuffer, FileSize, &Residual);
   if (EFI_ERROR (Status) || (Residual != 0)) {

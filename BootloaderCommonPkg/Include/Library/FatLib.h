@@ -112,7 +112,7 @@ EFIAPI
 FatFsReadFile (
   IN  EFI_HANDLE                                  FsHandle,
   IN  EFI_HANDLE                                  FileHandle,
-  OUT VOID                                      **FileBufferPtr,
+  OUT VOID                                       *FileBufferPtr,
   OUT UINTN                                      *FileSize
   );
 

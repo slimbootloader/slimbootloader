@@ -422,7 +422,7 @@ EFIAPI
 FatFsReadFile (
   IN  EFI_HANDLE                                  FsHandle,
   IN  EFI_HANDLE                                  FileHandle,
-  OUT VOID                                      **FileBufferPtr,
+  OUT VOID                                       *FileBufferPtr,
   OUT UINTN                                      *FileSize
   )
 {
@@ -448,12 +448,11 @@ FatFsReadFile (
     return EFI_INVALID_PARAMETER;
   }
 
-  ASSERT (FileBufferPtr != NULL);
   if (FileBufferPtr == NULL) {
     return EFI_INVALID_PARAMETER;
   }
 
-  FileBuffer = *FileBufferPtr;
+  FileBuffer = FileBufferPtr;
   Status = FatReadFile (
              PrivateData,
              File,

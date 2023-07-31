@@ -148,6 +148,7 @@ UpdateBdatAcpiTable (
     ///
     BufferSize  = 0;
     SchemaCount = 0;
+    ASSERT (BdatSchemaListHob->SchemaHobCount < MAX_SCHEMA_LIST_LENGTH);
     for (SchemaListIndex = 0; SchemaListIndex < BdatSchemaListHob->SchemaHobCount; SchemaListIndex++) {
       Guid = (EFI_GUID *) &(BdatSchemaListHob->SchemaHobGuids[SchemaListIndex]);
 

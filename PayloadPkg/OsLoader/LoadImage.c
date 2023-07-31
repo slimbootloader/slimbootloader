@@ -314,7 +314,7 @@ GetBootImageFromFs (
     goto Done;
   }
 
-  Status = ReadFile (FileHandle, &Image, &ImageSize);
+  Status = ReadFile (FileHandle, Image, &ImageSize);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "Read file '%a' failed, Status = %r\n", FileName, Status));
     if (Image != NULL) {
@@ -404,7 +404,7 @@ LoadLinuxFile (
     goto Done;
   }
 
-  Status = ReadFile (FileHandle, &FileBuffer, &FileSize);
+  Status = ReadFile (FileHandle, FileBuffer, &FileSize);
   DEBUG ((DEBUG_INFO, "Load file %a [size %d bytes]: %r\n", Ptr, FileSize, Status));
   if (!EFI_ERROR (Status)) {
     // Free pre-allocated memory
@@ -490,7 +490,7 @@ GetTraditionalLinux (
       return EFI_OUT_OF_RESOURCES;
     }
 
-    Status = ReadFile (FileHandle, &ConfigFile, &ConfigFileSize);
+    Status = ReadFile (FileHandle, ConfigFile, &ConfigFileSize);
     CloseFile (FileHandle);
     if (!EFI_ERROR (Status)) {
       DEBUG ((DEBUG_INFO, "Load file %s [size 0x%x]: %r\n", (CHAR16 *)mConfigFileName[Index], ConfigFileSize, Status));
