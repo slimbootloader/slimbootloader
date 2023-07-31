@@ -296,7 +296,7 @@ CmdFsLoad (
     Image = (VOID *)LoadAddr;
   }
 
-  Status = ReadFile (FileHandle, &Image, &ImageSize);
+  Status = ReadFile (FileHandle, Image, &ImageSize);
   if (EFI_ERROR (Status)) {
     if (Image != NULL) {
       FreePool (Image);
