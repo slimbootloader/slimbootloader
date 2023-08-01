@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020-2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -808,7 +808,6 @@ UpdateDmarHeader (
 {
   UINTN                       VtdBar;
   UINT8                       Bus;
-  UINT8                       Idx;
   UINT64                      VtdExtCap;
   EFI_CPUID_REGISTER          CpuidRegister;
 
@@ -823,13 +822,9 @@ UpdateDmarHeader (
   //
   // Check INTR REMAP capability (on Stack0)
   //
-  for (Idx = 0; Idx < RootBridgeInfoHob->Count; Idx++){
-    if (Idx == IIO_STACK0) {
-      Bus = RootBridgeInfoHob->Entry[Idx].BusBase;
-      break;
-    }
-  }
-  if (Bus == (UINT8) -1) {
+  if (IIO_STACK0 < RootBridgeInfoHob->Count) {
+    Bus = RootBridgeInfoHob->Entry[IIO_STACK0].BusBase;
+  } else {
     return EFI_INVALID_PARAMETER;
   }
 

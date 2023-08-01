@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -425,6 +425,7 @@ GetSgxCapabilities (
         break;
       case 0x4000000000: //512G
         SgxCaps.Bits.PRMRR =0x10;
+        break;
       default:
         SgxCaps.Bits.PRMRR =0x00;
         break;
