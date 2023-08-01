@@ -577,6 +577,7 @@ UpdateSystemFirmware (
   Status = VerifyFwStruct (ImageHdr);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, " VerifyFwStruct failed with Status = 0x%x\n", Status));
+    FreePool(UpdatePartition);
     return Status;
   }
 
@@ -655,6 +656,7 @@ UpdateSingleComponent (
     DEBUG ((DEBUG_ERROR, "Updating component %4a failed with status = %r\n", (CHAR8 *)&CompName, Status));
   }
 
+  FreePool(UpdatePartition);
   return Status;
 }
 

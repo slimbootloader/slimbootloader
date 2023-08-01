@@ -1452,6 +1452,7 @@ InitFirmwareUpdate (
   if (EFI_ERROR (Status)) {
     //
     // Error condition
+    FreePool(CapsuleImage);
     return Status;
   }
 
