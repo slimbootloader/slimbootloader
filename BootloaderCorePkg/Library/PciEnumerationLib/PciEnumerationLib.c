@@ -1639,7 +1639,7 @@ PciProgramResources (
       Root->PciBar[BarType - 1].BaseAddress = Address;
       if (Root->PciBar[BarType - 1].Length > 0) {
         ResBase[Index] += Root->PciBar[BarType - 1].Length;
-        ASSERT (ResBase[Index] <= ResLimit[Index]);
+        ASSERT (ResBase[Index] <= (ResLimit[Index] + 1));
       }
 
       ProgramResource (Root, BarType);
