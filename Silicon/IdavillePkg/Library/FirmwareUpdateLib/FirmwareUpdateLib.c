@@ -1,7 +1,7 @@
 /** @file
   This file contains the implementation of FirmwareUpdateLib library.
 
-  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -75,6 +75,7 @@ InitCsmeUpdInputData (
     if ((CsmeUpdDriverInput->HeciReadMessage == NULL) ||
         (CsmeUpdDriverInput->HeciSendMessage == NULL) ||
         (CsmeUpdDriverInput->HeciReset == NULL)) {
+      FreePool(CsmeUpdDriverInput);
       return NULL;
     }
   }

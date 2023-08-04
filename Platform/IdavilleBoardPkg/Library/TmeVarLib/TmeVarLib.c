@@ -59,6 +59,7 @@ GetTmeVar (
   UINTN                   TmeKeyVarSize;
 
   DEBUG ((DEBUG_INFO, "GetTmeVar Enter\n"));
+  TmeKeyVarSize = 0;
 
   if (!IsTmeEnabled ()) {
     DEBUG ((DEBUG_INFO, "TME is Disabled. TME Variable will not be read.\n"));

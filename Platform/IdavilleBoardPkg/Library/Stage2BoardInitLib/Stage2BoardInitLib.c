@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -1045,6 +1045,7 @@ PlatformUpdateAcpiGnvs (
   TYPE_CHOPTYPE_ENUM        ChopType;
   PLATFORM_DATA             *PlatformData;
 
+  NumOfBitShift = 0;
   Gnvs          = (GLOBAL_NVS_AREA *)GnvsIn;
   PchNvs        = &Gnvs->PchNvs;
   AcpiParameter = &Gnvs->BiosAcpiParam;
