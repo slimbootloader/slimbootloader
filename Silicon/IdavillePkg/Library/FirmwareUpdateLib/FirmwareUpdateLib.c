@@ -257,11 +257,13 @@ GetFirmwareUpdateInfo (
     Status = GetComponentInfoByPartition ((UINT32)ImageHdr->UpdateHardwareInstance, IsBackup, &CompBase, &CompSize);
     if (EFI_ERROR(Status)) {
       DEBUG ((DEBUG_INFO, "No SBL component found !"));
+      FreePool(UpdatePartition);
       return Status;
     }
 
     if (ImageHdr->UpdateImageSize > CompSize) {
       DEBUG ((DEBUG_INFO, "capsule payload size is too big for the region on flash!"));
+      FreePool(UpdatePartition);
       return EFI_UNSUPPORTED;
     }
 

@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -1065,9 +1065,13 @@ ShadowFspmCodeInCache (
     //
     Temp = AllocateTemporaryMemory (0);
 
-    while (ImageBase < ImageMax) {
-      *Temp = *(volatile UINT8 *)(UINTN)ImageBase;
-      ImageBase += 64;
+    if (Temp != NULL) {
+      while (ImageBase < ImageMax) {
+        *Temp = *(volatile UINT8 *)(UINTN)ImageBase;
+        ImageBase += 64;
+      }
+    } else {
+      DEBUG ((DEBUG_INFO, "Failed to Allocate Temporary Memory Pool\n"));
     }
   }
 }
