@@ -36,6 +36,11 @@ HighBitSet32 (
   if (Operand == 0) {
     return - 1;
   }
-  for (BitIndex = 31; (INT32)Operand > 0; BitIndex--, Operand <<= 1);
+  for (BitIndex = 31; BitIndex > 0; BitIndex--, Operand <<= 1) {
+    if ((INT32)Operand < 0) {
+      break;
+    }
+  }
+
   return BitIndex;
 }
