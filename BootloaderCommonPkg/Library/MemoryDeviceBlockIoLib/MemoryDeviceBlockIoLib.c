@@ -28,11 +28,6 @@ InitializeMemoryDevice (
   IN  DEVICE_INIT_PHASE   DevInitPhase
   )
 {
-  if (DevInitPhase == DevDeinit) {
-    // Handle Deinit if required.
-    return EFI_SUCCESS;
-  }
-
   return EFI_SUCCESS;
 }
 
