@@ -459,6 +459,7 @@ GetTraditionalLinux (
   UINT32                     Size;
 
   ConfigFile     = NULL;
+  FileHandle     = NULL;
   ConfigFileSize = 0;
   DefBootOption  = FALSE;
   Status = RETURN_NOT_FOUND;

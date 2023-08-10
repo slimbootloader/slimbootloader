@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -56,6 +56,7 @@ LoadElfPayload (
   // Get UNIVERSAL_PAYLOAD_INFO and number of additional PLD sections.
   PldInfo        = NULL;
   ExtraDataCount = 0;
+  ASSERT(Context.ShNum < MAX_ELF_SHNUM);
   for (Index = 0; Index < Context.ShNum; Index++) {
     Status = GetElfSectionName (&Context, Index, &SectionName);
     if (EFI_ERROR(Status)) {

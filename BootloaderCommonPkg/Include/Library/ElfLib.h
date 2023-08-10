@@ -1,7 +1,7 @@
 /** @file
   ELF library
 
-  Copyright (c) 2018 - 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -16,6 +16,13 @@
 #define  ELF_CLASS64   2
 
 #define  ELF_PT_LOAD   1
+
+/*
+ * Define Max value for Coverity check
+ */
+#define MAX_ELF_SHNUM           100
+#define MAX_ELF_PHNUM           50
+#define NAX_ELF_RELOC_SECT_SIZE 0x10000
 
 typedef struct {
   RETURN_STATUS ParseStatus;             ///< Return the status after ParseElfImage().

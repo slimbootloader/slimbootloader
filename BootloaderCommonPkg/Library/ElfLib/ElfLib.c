@@ -1,7 +1,7 @@
 /** @file
   ELF library
 
-  Copyright (c) 2019-2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -290,6 +290,8 @@ ParseElfImage (
   Base = MAX_UINT32;
   FileOffset = 0;
   ElfCt->ReloadRequired = FALSE;
+
+  ASSERT(ElfCt->PhNum < MAX_ELF_PHNUM);
   for (Index = 0; Index < ElfCt->PhNum; Index++) {
     Status = GetElfSegmentInfo (ElfCt->FileBase, ElfCt->EiClass, Index, &SegInfo);
     ASSERT_EFI_ERROR (Status);
