@@ -1,7 +1,7 @@
 /** @file
   ELF library
 
-  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -81,6 +81,7 @@ RelocateElf32Sections  (
 
   Delta  = (UINTN) ElfCt->ImageAddress - (UINTN) ElfCt->PreferredImageAddress;
   CurPtr = ElfCt->FileBase + Elf32Hdr->e_shoff;
+  ASSERT(Elf32Hdr->e_shnum < MAX_ELF_SHNUM);
   for (Index = 0; Index < Elf32Hdr->e_shnum; Index++) {
     Rel32Shdr = (Elf32_Shdr *)CurPtr;
     CurPtr  = CurPtr + Elf32Hdr->e_shentsize;
@@ -93,6 +94,7 @@ RelocateElf32Sections  (
         continue;
       }
       DEBUG ((DEBUG_INFO, "Relocate SEC %d\n", Rel32Shdr->sh_info));
+      ASSERT (Rel32Shdr->sh_size < NAX_ELF_RELOC_SECT_SIZE);
       for (RelIdx = 0; RelIdx < Rel32Shdr->sh_size; RelIdx += Rel32Shdr->sh_entsize) {
         Rel32Entry = (Elf32_Rel *)((UINT8*)Elf32Hdr + Rel32Shdr->sh_offset + RelIdx);
         RelType = ELF32_R_TYPE(Rel32Entry->r_info);
@@ -152,6 +154,7 @@ LoadElf32Image (
   //
   Elf32Hdr       = (Elf32_Ehdr *)ElfCt->FileBase;
   ProgramHdrBase = (Elf32_Phdr *)(ElfCt->FileBase + Elf32Hdr->e_phoff);
+  ASSERT(Elf32Hdr->e_phnum < MAX_ELF_PHNUM);
   for (Index = 0; Index < Elf32Hdr->e_phnum; Index++) {
     ProgramHdr = (Elf32_Phdr *)((UINT8 *)ProgramHdrBase + Index * Elf32Hdr->e_phentsize);
 

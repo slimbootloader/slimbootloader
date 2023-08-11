@@ -1,7 +1,7 @@
 /** @file
   ELF library
 
-  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -82,6 +82,7 @@ RelocateElf64Sections  (
 
   Delta  = (UINTN) ElfCt->ImageAddress - (UINTN) ElfCt->PreferredImageAddress;
   CurPtr = ElfCt->FileBase + Elf64Hdr->e_shoff;
+  ASSERT(Elf64Hdr->e_shnum < MAX_ELF_SHNUM);
   for (Index = 0; Index < Elf64Hdr->e_shnum; Index++) {
     Rel64Shdr = (Elf64_Shdr *)CurPtr;
     CurPtr  = CurPtr + Elf64Hdr->e_shentsize;
@@ -94,6 +95,7 @@ RelocateElf64Sections  (
         continue;
       }
 
+      ASSERT (Rel64Shdr->sh_size < NAX_ELF_RELOC_SECT_SIZE);
       for (RelIdx = 0; RelIdx < Rel64Shdr->sh_size; RelIdx += Rel64Shdr->sh_entsize) {
         Rel64Entry = (Elf64_Rel *)((UINT8*)Elf64Hdr + Rel64Shdr->sh_offset + RelIdx);
         RelType = ELF64_R_TYPE(Rel64Entry->r_info);
@@ -145,7 +147,7 @@ LoadElf64Image (
   Elf64_Ehdr    *Elf64Hdr;
   Elf64_Phdr    *ProgramHdr;
   Elf64_Phdr    *ProgramHdrBase;
-  UINT16        Index;
+  UINT32        Index;
   UINTN         Delta;
 
   ASSERT (ElfCt != NULL);
@@ -155,6 +157,7 @@ LoadElf64Image (
   //
   Elf64Hdr       = (Elf64_Ehdr *)ElfCt->FileBase;
   ProgramHdrBase = (Elf64_Phdr *)(ElfCt->FileBase + Elf64Hdr->e_phoff);
+  ASSERT(Elf64Hdr->e_phnum < MAX_ELF_PHNUM);
   for (Index = 0; Index < Elf64Hdr->e_phnum; Index++) {
     ProgramHdr = (Elf64_Phdr *)((UINT8 *)ProgramHdrBase + Index * Elf64Hdr->e_phentsize);
 
