@@ -76,7 +76,9 @@ GetContainerHeaderSize (
   Offset = 0;
   if (ContainerHdr != NULL) {
     CompEntry   = (COMPONENT_ENTRY *)&ContainerHdr[1];
-    ASSERT(ContainerHdr->Count < MAX_CONTAINER_SUB_IMAGE);
+    if(ContainerHdr->Count > MAX_CONTAINER_SUB_IMAGE) {
+      return 0;
+    }
     for (Index = 0; Index < ContainerHdr->Count; Index++) {
       CompEntry = (COMPONENT_ENTRY *)((UINT8 *)(CompEntry + 1) + CompEntry->HashSize);
       Offset = (UINT8 *)CompEntry - (UINT8 *)ContainerHdr;
