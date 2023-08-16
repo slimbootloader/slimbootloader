@@ -578,6 +578,10 @@ GetVariableStore (
         // If the working block workspace is not valid, try to find workspace in the spare block.
         //
         WorkSpaceInSpareArea = SpareAreaAddress + SpareAreaLength - FtwWorkingSize;
+
+        // Ensure WorkSpaceInSpareArea is within the expected range
+        ASSERT((WorkSpaceInSpareArea >= SpareAreaAddress) && (WorkSpaceInSpareArea <= (SpareAreaAddress + SpareAreaLength)));
+
         while (WorkSpaceInSpareArea >= SpareAreaAddress) {
           if (CompareGuid (&gEdkiiWorkingBlockSignatureGuid, (EFI_GUID *) (UINTN) WorkSpaceInSpareArea)) {
             //
