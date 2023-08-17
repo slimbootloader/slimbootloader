@@ -256,7 +256,7 @@ LoadMultibootModString (
   UINT8                      *NewCmdBuffer;
   UINT32                     NewSize;
 
-  if ((MultiBoot == NULL) || (File == NULL) || (ModuleIndex >= MultiBoot->MbModuleNumber)) {
+  if ((MultiBoot == NULL) || (File == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
