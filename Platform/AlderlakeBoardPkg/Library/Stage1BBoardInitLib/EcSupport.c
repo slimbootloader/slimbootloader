@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -383,6 +383,10 @@ GetBoardId (
     case BoardIdAdlPDdr5Rvp:
     case BoardIdRplPDdr5Rvp:
       *PlatformId = PLATFORM_ID_ADL_P_DDR5_RVP;
+#if PLATFORM_RPLPS
+      // RPL-PS RVP has same Board ID as RPL-P RVP
+      *PlatformId = PLATFORM_ID_ADL_PS_DDR5_RVP;
+#endif
       break;
     case BoardIdAdlPSDdr5Rvp:
       *PlatformId = PLATFORM_ID_ADL_PS_DDR5_RVP;
