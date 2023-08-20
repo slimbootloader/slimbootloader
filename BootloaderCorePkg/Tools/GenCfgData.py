@@ -1,6 +1,6 @@
 ## @ GenCfgData.py
 #
-# Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -229,6 +229,7 @@ class CFG_YAML():
         self.index           = 0
         self.re_expand  = re.compile (r'(.+:\s+|\s*\-\s*)!expand\s+\{\s*(\w+_TMPL)\s*:\s*\[(.+)]\s*\}')
         self.re_include = re.compile (r'(.+:\s+|\s*\-\s*)!include\s+(.+)')
+        self.board_name      = ''
 
     @staticmethod
     def count_indent (line):
@@ -245,6 +246,26 @@ class CFG_YAML():
         pass
 
     def process_include (self, line, insert = True):
+        # yaml files supporting board extension
+        extensible_yaml_files = [
+            'CfgData_GpioPinConfig.yaml',
+            'CfgData_GpioPadGroups.yaml'
+        ]
+
+        # boards supporting board extension yaml files
+        # mapping from board_name to board_extension
+        yaml_board_extension_map = {
+            # ADL series
+            'adln'  : 'adln',
+            'adlp'  : 'adlp',
+            'adlps' : 'adlp',
+            'adls'  : 'adls',
+            # RPL series
+            'rplp'  : 'adlp',
+            'rplps' : 'adlp',
+            'rpls'  : 'adls',
+        }
+
         match = self.re_include.match (line)
         if not match:
             raise Exception ("Invalid !include format '%s' !" % line.strip())
@@ -264,14 +285,29 @@ class CFG_YAML():
             # remove the include line itself
             del  self.full_lines[-1]
 
-        inc_path = os.path.join (self.yaml_path, include)
-        if not os.path.exists(inc_path):
-            # try relative path to project root
-            try_path = os.path.join(os.path.dirname (os.path.realpath(__file__)), "../..", include)
-            if os.path.exists(try_path):
-                inc_path = try_path
-            else:
-                raise Exception ("ERROR: Cannot open file '%s'." % inc_path)
+        inc_path = ''
+        if self.board_name in yaml_board_extension_map.keys() and include in extensible_yaml_files:
+            board_extension = yaml_board_extension_map[self.board_name]
+            include_board = include[:-5] + '_' + board_extension + include[-5:]
+            inc_path = os.path.join (self.yaml_path, include_board)
+            if not os.path.exists(inc_path):
+                # try relative path to project root
+                try_path = os.path.join(os.path.dirname (os.path.realpath(__file__)), "../..", include_board)
+                if os.path.exists(try_path):
+                    inc_path = try_path
+                else:
+                    print ("board extension yaml file '%s' doesn't exist; load default yaml file '%s'" % (include_board, include))
+                    inc_path = ''
+
+        if inc_path == '':
+            inc_path = os.path.join (self.yaml_path, include)
+            if not os.path.exists(inc_path):
+                # try relative path to project root
+                try_path = os.path.join(os.path.dirname (os.path.realpath(__file__)), "../..", include)
+                if os.path.exists(try_path):
+                    inc_path = try_path
+                else:
+                    raise Exception ("ERROR: Cannot open file '%s'." % inc_path)
 
         lines = read_lines (inc_path)
 
@@ -580,6 +616,7 @@ class CGenCfgData:
         self._var_dict  = {}
         self._def_dict  = {}
         self._yaml_path = ''
+        self._board_name = ''
 
 
     @staticmethod
@@ -1476,6 +1513,7 @@ class CGenCfgData:
 
     def generate_yml_file (self, in_file, out_file):
         cfg_yaml = CFG_YAML()
+        cfg_yaml.board_name = self._board_name
         text = cfg_yaml.expand_yaml (in_file)
         yml_fd = open(out_file, "w")
         yml_fd.write (text)
@@ -1862,6 +1900,7 @@ class CGenCfgData:
 
     def load_yaml (self, cfg_file):
         cfg_yaml = CFG_YAML()
+        cfg_yaml.board_name = self._board_name
         self.initialize ()
         self._cfg_tree  = cfg_yaml.load_yaml (cfg_file)
         self._def_dict  = cfg_yaml.def_dict
@@ -1895,6 +1934,8 @@ def main():
     gen_cfg_data = CGenCfgData()
     command   = sys.argv[1].upper()
     out_file  = sys.argv[3]
+    if (argc == 5):
+        gen_cfg_data._board_name = sys.argv[4]
 
     file_list  = sys.argv[2].split(';')
     if len(file_list) >= 2:

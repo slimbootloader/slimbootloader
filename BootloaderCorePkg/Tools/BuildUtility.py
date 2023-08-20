@@ -2,7 +2,7 @@
 ## @ BuildUtility.py
 # Build bootloader main script
 #
-# Copyright (c) 2016 - 2022, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2016 - 2023, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -375,13 +375,14 @@ def patch_fv(fv_dir, fvs, *vargs):
     run_process ([sys.executable, gtools['FV_PATCH'], fv_dir, fvs] + args, False)
 
 
-def gen_cfg_data (command, dscfile, outfile):
+def gen_cfg_data (command, dscfile, outfile, board_name = ''):
     run_process ([
             sys.executable,
             gtools['GEN_CFG'],
             command,
             dscfile,
-            outfile])
+            outfile,
+            board_name])
 
 
 def cfg_data_tool (command, infiles, outfile, extra = []):
@@ -570,8 +571,8 @@ def gen_config_file (fv_dir, brd_name_override, brd_name, platform_id, pri_key, 
     if os.path.exists(cfg_dsc_dyn_file):
             gen_cfg_data ("GENHDR", cfg_dsc_dyn_file, cfg_hdr_dyn_file)
 
-    gen_cfg_data ("GENPKL", cfg_dsc_file, cfg_pkl_file)
-    gen_cfg_data (gen_cmd[file_ext], cfg_dsc_file, cfg_comb_dsc_file)
+    gen_cfg_data ("GENPKL", cfg_dsc_file, cfg_pkl_file, brd_build_name)
+    gen_cfg_data (gen_cmd[file_ext], cfg_dsc_file, cfg_comb_dsc_file, brd_build_name)
     gen_cfg_data ("GENHDR", cfg_pkl_file, ';'.join([cfg_hdr_file, cfg_com_hdr_file]))
     gen_cfg_data ("GENBIN", cfg_pkl_file, cfg_bin_file)
 
