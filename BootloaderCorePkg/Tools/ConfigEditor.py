@@ -1,6 +1,6 @@
 ## @ ConfigEditor.py
 #
-# Copyright (c) 2018 - 2021, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2018 - 2023, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -356,6 +356,7 @@ class application(tkinter.Frame):
         self.in_right = state()
         self.search_text = ''
         self.search_key  = 0
+        self.org_yaml_file = ''
 
         # Check if current directory contains a file with a .yaml extension
         # if not default self.last_dir to a Platform directory where it is easier to locate *BoardPkg\CfgData\*Def.yaml files
@@ -727,8 +728,9 @@ class application(tkinter.Frame):
             self.add_config_item (item, row)
             row += 2
 
-    def load_config_data(self, file_name):
+    def load_config_data(self, file_name, board_name = ''):
         gen_cfg_data = CGenCfgData()
+        gen_cfg_data._board_name = board_name
         if file_name.endswith('.pkl'):
             with open(file_name, "rb") as pkl_file:
                 gen_cfg_data.__dict__ = marshal.load(pkl_file)
@@ -793,6 +795,44 @@ class application(tkinter.Frame):
         self.load_delta_file (path)
 
     def load_delta_file (self, path):
+        # mapping from platform_name to board_name
+        platform_board_name_map = {
+            # ADL series
+            'UPXi12'   : 'adlp',
+            'AdlNCrb'  : 'adln',
+            'AdlNLp5'  : 'adln',
+            'AdlPDdr5' : 'adlp',
+            'AdlPLp4'  : 'adlp',
+            'AdlPLp5'  : 'adlp',
+            'AdlPsCrb' : 'adlps',
+            'AdlPsRvp' : 'adlps',
+            'ADL_S'    : 'adls',
+            'AdlSSdm4' : 'adls',
+            'AdlSSdm5' : 'adls',
+            # RPL series
+            'RPLS S14' : 'rpls',
+            'RPLS S17' : 'rpls',
+            'RPLP CRB' : 'rplp',
+            'RPLPDDR5' : 'rplp',
+            'RPLP LP5' : 'rplp',
+            'RplPsCrb' : 'rplps',
+            'RplPsRvp' : 'rplps'
+        }
+
+        with open(path, 'r') as dlt_file:
+            lines = dlt_file.readlines()
+
+        for line in lines:
+            if 'PLAT_NAME_CFG_DATA.PlatformName' in line:
+                platform_name = line.split('|')[1].strip().strip('\'')
+                break
+
+        if platform_name in platform_board_name_map.keys():
+            board_name = platform_board_name_map[platform_name]
+            if self.org_yaml_file != '':
+                # reload yaml file with board_name information
+                self.load_cfg_file(self.org_yaml_file, board_name)
+
         self.reload_config_data_from_bin(self.org_cfg_data_bin)
         try:
             self.cfg_data_obj.override_default_value(path)
@@ -821,12 +861,23 @@ class application(tkinter.Frame):
             messagebox.showerror('LOADING ERROR', str(e))
             return
 
-    def load_cfg_file(self, path):
-        # Save current values in widget and clear  database
+    def load_cfg_file(self, path, board_name = ''):
+        self.org_yaml_file = ''
+        if path.endswith('.yaml'):
+            # only yaml file yet expanding !include has chance to include board extension yaml files
+            with open(path, 'r') as yaml_file:
+                lines = yaml_file.readlines()
+
+            for line in lines:
+                if '!include' in line:
+                    self.org_yaml_file = path
+                    break
+
+        # Save current values in widget and clear database
         self.clear_widgets_inLayout()
         self.left.delete(*self.left.get_children())
 
-        self.cfg_data_obj = self.load_config_data(path)
+        self.cfg_data_obj = self.load_config_data(path, board_name)
 
         self.update_last_dir (path)
         self.org_cfg_data_bin = self.cfg_data_obj.generate_binary_array()
