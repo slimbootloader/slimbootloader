@@ -1,0 +1,14 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Alder Lake GPIO pad groups.
+#
+#  Copyright (c) 2023, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+# The group ID is based on mPchLpGpioGroupInfo in GpioSiLib.c
+>
+0x02:GROUP_A, 0x00:GROUP_B, 0x0B:GROUP_C, 0x08:GROUP_D, 0x0E:GROUP_E,
+0x0C:GROUP_F, 0x07:GROUP_H, 0x03:GROUP_R, 0x06:GROUP_S, 0x01:GROUP_T,
+0x09:GROUP_U, 0x05:GROUP_GPD
