@@ -83,7 +83,11 @@ ShellCommandResetFunc (
     FuncResetSystem = PlatformService->ResetSystem;
   }
 
-  ShellPrint (L"Resetting...\n");
+  if (ResetType == EfiResetShutdown) {
+    ShellPrint (L"Start shutdowning...\n");
+  } else {
+    ShellPrint (L"Resetting...\n");
+  }
 
   FuncResetSystem (ResetType);
   return EFI_SUCCESS;

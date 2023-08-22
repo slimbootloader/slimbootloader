@@ -27,7 +27,7 @@
   MdePkg/MdePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
   BootloaderCorePkg/BootloaderCorePkg.dec
-  Silicon/AlderlakePkg/AlderlakePkg.dec
+  Silicon/ElkhartlakePkg/ElkhartlakePkg.dec
   IntelFsp2Pkg/IntelFsp2Pkg.dec
 
 [LibraryClasses]
