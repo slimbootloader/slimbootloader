@@ -262,7 +262,6 @@ UnloadLoadedImage (
 
   @param[in]  BootOption        Current boot option
   @param[in]  HwPartHandle      Hardware partition handle
-  @param[in]  FsHandle          FileSystem handle
   @param[out] LoadedImageHandle Loaded Image handle
 
   @retval     RETURN_SUCCESS    If image was loaded successfully
@@ -273,7 +272,6 @@ EFIAPI
 LoadBootImages (
   IN  OS_BOOT_OPTION  *OsBootOption,
   IN  EFI_HANDLE       HwPartHandle,
-  IN  EFI_HANDLE       FsHandle,
   OUT EFI_HANDLE      *LoadedImageHandle
   );
 
