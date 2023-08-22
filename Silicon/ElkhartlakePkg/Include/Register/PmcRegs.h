@@ -64,6 +64,7 @@
 #define B_ACPI_IO_PM1_EN_PWRBTN                  BIT8
 
 #define R_ACPI_IO_PM1_CNT                        0x04
+#define B_ACPI_IO_PM1_CNT_SLP_EN                 BIT13
 #define B_ACPI_IO_PM1_CNT_SLP_TYP                (BIT12 | BIT11 | BIT10)
 #define V_ACPI_IO_PM1_CNT_S0                     0
 #define V_ACPI_IO_PM1_CNT_S3                     (BIT12 | BIT10)
