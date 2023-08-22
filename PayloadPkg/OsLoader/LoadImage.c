@@ -245,11 +245,11 @@ GetBootImageFromRawPartition (
 /**
   Get Boot image from File System
 
-  This function will read Boot image from file based on FsHandle.
-  After Boot image is loaded into memory, its information will be saved
-  to LoadedImage.
+  This function will initialize file system and read Boot image from file
+  based on BootOption. After Boot image is loaded into memory, its
+  information will be saved to LoadedImage.
 
-  @param[in]  FsHandle        File system handle used to read file
+  @param[in]  HwPartHandle    Hardware partition handle
   @param[in]  BootOption      Current boot option
   @param[out] LoadedImage     Loaded Image information.
 
@@ -259,7 +259,7 @@ GetBootImageFromRawPartition (
 STATIC
 EFI_STATUS
 GetBootImageFromFs (
-  IN  EFI_HANDLE             FsHandle,
+  IN  EFI_HANDLE             HwPartHandle,
   IN  OS_BOOT_OPTION         *BootOption,
   OUT LOADED_IMAGE           *LoadedImage
   )
@@ -268,11 +268,25 @@ GetBootImageFromFs (
   CHAR16                     FilePath[MAX_FILE_PATH_LEN];
   VOID                       *Image;
   UINTN                      ImageSize;
+  UINT8                      SwPart;
+  UINT8                      FsType;
   CONST CHAR8                *FileName;
+  EFI_HANDLE                 FsHandle;
   EFI_HANDLE                 FileHandle;
 
-  if (FsHandle == NULL) {
+  if (HwPartHandle == NULL) {
     return RETURN_INVALID_PARAMETER;
+  }
+
+  FsHandle = NULL;
+  FileHandle = NULL;
+  SwPart = BootOption->SwPart;
+  FsType = BootOption->FsType;
+
+  Status = InitFileSystem (SwPart, FsType, HwPartHandle, &FsHandle);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "Init file system failed on SwPart %u, Status = %r\n", SwPart, Status));
+    goto Done;
   }
 
   FileName = (CONST CHAR8 *)&BootOption->Image[LoadedImage->LoadImageType].FileName[0];
@@ -280,7 +294,6 @@ GetBootImageFromFs (
   // Load Boot Image from file system
   AsciiStrToUnicodeStrS (FileName, FilePath, sizeof (FilePath) / sizeof (CHAR16));
 
-  FileHandle = NULL;
   Status = OpenFile (FsHandle, FilePath, &FileHandle);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "Open file '%a' failed, Status = %r\n", FileName, Status));
@@ -336,6 +349,9 @@ GetBootImageFromFs (
 Done:
   if (FileHandle != NULL) {
     CloseFile (FileHandle);
+  }
+  if (FsHandle != NULL) {
+    CloseFileSystem (FsHandle);
   }
 
   return Status;
@@ -796,7 +812,6 @@ UnloadBootImages (
 
   @param[in]  BootOption        Current boot option
   @param[in]  HwPartHandle      Hardware partition handle
-  @param[in]  FsHandle          FileSystem handle
   @param[out] LoadedImageHandle Loaded Image handle
 
   @retval     RETURN_SUCCESS    If image was loaded successfully
@@ -807,7 +822,6 @@ EFIAPI
 LoadBootImages (
   IN  OS_BOOT_OPTION  *OsBootOption,
   IN  EFI_HANDLE       HwPartHandle,
-  IN  EFI_HANDLE       FsHandle,
   OUT EFI_HANDLE      *LoadedImageHandle
   )
 {
@@ -818,6 +832,7 @@ LoadBootImages (
   EFI_STATUS                 Status;
   UINT8                      Index;
   CONTAINER_IMAGE           *ContainerImage;
+  EFI_HANDLE                 FsHandle;
 
   ASSERT (OsBootOption != NULL);
 
@@ -857,8 +872,10 @@ LoadBootImages (
     ContainerImage = &BootImage[Index].ContainerImage;
     if ((ContainerImage->Indicate == '!') && (ContainerImage->BackSlash == '/')) {
       Status = GetBootImageFromIfwiContainer (OsBootOption, LoadedImage);
-    } else if (FsHandle != NULL) {
-      Status = GetBootImageFromFs (FsHandle, OsBootOption, LoadedImage);
+    } else if ((OsBootOption->DevType != OsBootDeviceSpi) &&
+               (OsBootOption->DevType != OsBootDeviceMemory) &&
+               (OsBootOption->FsType < EnumFileSystemMax)) {
+      Status = GetBootImageFromFs (HwPartHandle, OsBootOption, LoadedImage);
     } else {
       Status = GetBootImageFromRawPartition (OsBootOption, LoadedImage);
     }
@@ -882,7 +899,7 @@ LoadBootImages (
   // Launch Traditional Linux for debugging purpose only
   //
   if (DebugCodeEnabled () || !FeaturePcdGet (PcdVerifiedBootEnabled)) {
-    if (EFI_ERROR (Status) && (FsHandle != NULL)) {
+    if (EFI_ERROR (Status) && (HwPartHandle != NULL)) {
       // Free loaded images previously, but keep LoadedImagesInfo structure
       UnloadBootImages ((EFI_HANDLE)(UINTN)LoadedImagesInfo, TRUE);
       LoadedImage = LoadedImagesInfo->LoadedImageList[LoadImageTypeNormal];
@@ -895,10 +912,20 @@ LoadBootImages (
       LoadedImage->HwPartHandle   = HwPartHandle;
       LoadedImage->LoadImageType  = LoadImageTypeNormal;
       LoadedImagesInfo->LoadedImageList[LoadImageTypeNormal] = LoadedImage;
-      Status = GetTraditionalLinux (FsHandle, &LoadedImage->Image.Linux);
-      if (!EFI_ERROR (Status)) {
-        LoadedImage->Flags |= LOADED_IMAGE_LINUX;
-        DEBUG ((DEBUG_INFO, "LoadBootImage TraditionalLinux ImageType-%d Image\n", Index));
+
+      FsHandle = NULL;
+      Status = InitFileSystem (OsBootOption->SwPart, OsBootOption->FsType, HwPartHandle, &FsHandle);
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_INFO, "Init file system failed, Status = %r\n", Status));
+      }
+
+      if (FsHandle != NULL) {
+        Status = GetTraditionalLinux (FsHandle, &LoadedImage->Image.Linux);
+        if (!EFI_ERROR (Status)) {
+          LoadedImage->Flags |= LOADED_IMAGE_LINUX;
+          DEBUG ((DEBUG_INFO, "LoadBootImage TraditionalLinux ImageType-%d Image\n", Index));
+        }
+        CloseFileSystem(FsHandle);
       }
     }
   }

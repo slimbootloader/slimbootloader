@@ -896,54 +896,29 @@ FindBootPartitions (
 }
 
 /**
-  Initialize File System
+  Parse A/B slot info
 
-  Based on given boot option, this function will initialize File System
+  This function gets A/B slot info from MISC/MENDeR
 
   @param[in]  OsBootOption      OS boot option to boot
   @param[in]  HwPartHandle      Detected hardware partition handle
-  @param[out] FsHandle          File System handle when detected successfully
 
-  @retval  EFI_SUCCESS          A File System is initialized successfully
-  @retval  Others               An error when initializing a File System
+  @retval  EFI_SUCCESS          BootSlot is parsed successfully
 
 **/
 EFI_STATUS
 EFIAPI
-InitBootFileSystem (
+ParseAbSlot (
   IN  OS_BOOT_OPTION      *OsBootOption,
-  IN  EFI_HANDLE           HwPartHandle,
-  OUT EFI_HANDLE          *FsHandle
+  IN  EFI_HANDLE           HwPartHandle
   )
 {
-  EFI_STATUS      Status;
-  UINT32          SwPart;
-  UINT32          DevType;
   INT32           BootSlot;
-  OS_FILE_SYSTEM_TYPE  FsType;
 
   ASSERT (OsBootOption != NULL);
 
-  SwPart = OsBootOption->SwPart;
-  FsType = OsBootOption->FsType;
-  DevType = OsBootOption->DevType;
-  DEBUG ((DEBUG_INFO, "Init File system\n"));
-  if ((DevType != OsBootDeviceSpi) && (DevType != OsBootDeviceMemory) && (FsType < EnumFileSystemMax)) {
-    Status = InitFileSystem (SwPart, FsType, HwPartHandle, FsHandle);
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_INFO, "No file system found, Status = %r\n", Status));
-      return Status;
-    }
-  } else {
-    //
-    // Assume RAW format partition
-    //
-    DEBUG ((DEBUG_INFO, "Requested FsType %d. Assume RAW format partition.\n", FsType));
-    *FsHandle = NULL;
-  }
-
   //
-  // Get boot image A/B info. TBD: Better to be in LoadBootImages ()
+  // Get boot image A/B info.
   //
   BootSlot = GetBootSlot (OsBootOption, HwPartHandle);
   DEBUG ((DEBUG_INFO, "BootSlot = 0x%x\n", BootSlot));
@@ -1155,7 +1130,6 @@ BootOsImage (
 {
   EFI_STATUS           Status;
   EFI_HANDLE           HwPartHandle;
-  EFI_HANDLE           FsHandle;
   EFI_HANDLE           LoadedImageHandle;
   DEVICE_BLOCK_INFO    DevBlkInfo;
   UINT8                OldHwPart;
@@ -1165,7 +1139,6 @@ BootOsImage (
   OS_BOOT_MEDIUM_TYPE  MediaType;
 
   HwPartHandle      = NULL;
-  FsHandle          = NULL;
   LoadedImageHandle = NULL;
 
   //
@@ -1217,12 +1190,12 @@ BootOsImage (
     }
 
     //
-    // Init File System
+    // Parse A/B Slot Info
     //
     if (!EFI_ERROR (Status)) {
-      Status = InitBootFileSystem (OsBootOption, HwPartHandle, &FsHandle);
+      Status = ParseAbSlot (OsBootOption, HwPartHandle);
       if (EFI_ERROR (Status)) {
-        DEBUG ((DEBUG_INFO, "Failed to Initialize Boot File System - SwPart %d\n", OsBootOption->SwPart));
+        DEBUG ((DEBUG_INFO, "Failed to Parse A/B Slot info %r\n", Status));
       }
     }
 
@@ -1230,7 +1203,7 @@ BootOsImage (
     // Load Boot Image
     //
     if (!EFI_ERROR (Status)) {
-      Status = LoadBootImages (OsBootOption, HwPartHandle, FsHandle, &LoadedImageHandle);
+      Status = LoadBootImages (OsBootOption, HwPartHandle, &LoadedImageHandle);
       if (EFI_ERROR (Status)) {
         DEBUG ((DEBUG_INFO, "Failed to Load Boot Image\n"));
       }
@@ -1243,11 +1216,6 @@ BootOsImage (
       if (LoadedImageHandle != NULL) {
         UnloadBootImages (LoadedImageHandle, FALSE);
         LoadedImageHandle = NULL;
-      }
-
-      if (FsHandle != NULL) {
-        CloseFileSystem (FsHandle);
-        FsHandle = NULL;
       }
 
       if (HwPartHandle != NULL) {
@@ -1303,10 +1271,6 @@ BootOsImage (
 Exit:
   if (LoadedImageHandle != NULL) {
     UnloadBootImages (LoadedImageHandle, FALSE);
-  }
-
-  if (FsHandle != NULL) {
-    CloseFileSystem (FsHandle);
   }
 
   if (HwPartHandle != NULL) {
