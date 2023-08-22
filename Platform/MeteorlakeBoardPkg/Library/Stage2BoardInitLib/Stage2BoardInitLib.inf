@@ -59,7 +59,7 @@
   PchInfoLib
   PchPciBdfLib
   BdatLib
-  IgdOpRegionLib
+  IgdOpRegionLib30
   HeciLib
   VtdLib
   PsdLib
@@ -109,3 +109,4 @@
   gPlatformModuleTokenSpaceGuid.PcdFspsUpdPtr
   gPlatformModuleTokenSpaceGuid.PcdFastBootEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled
+  gPlatformModuleTokenSpaceGuid.PcdIgdOpRegionAddress

@@ -17,7 +17,7 @@
 #include <PlatformBoardId.h>
 #include <Register/Cpuid.h>
 #include <Library/BoardSupportLib.h>
-#include <Library/IgdOpRegionDefinesMtl.h>
+#include <IgdOpRegionDefines.h>
 #include <PchLimits.h>
 #include <ConfigDataDefs.h>
 #include <ConfigDataCommonStruct.h>

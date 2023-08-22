@@ -62,7 +62,7 @@
 #include <CpuInitDataHob.h>
 #include <CpuDataStruct.h>
 #include <CpuRegs.h>
-#include <Library/IgdOpRegionDefinesMtl.h>
+#include <IgdOpRegionDefines.h>
 #include <Lpit.h>
 #include <PlatformBoardId.h>
 #include <Register/Cpuid.h>
