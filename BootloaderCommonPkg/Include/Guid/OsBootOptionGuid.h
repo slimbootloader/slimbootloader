@@ -98,6 +98,25 @@ typedef enum  {
 } PREOS_IMAGE_TYPE;
 
 typedef struct {
+  ///
+  /// Ascii file name
+  /// If FileName[0] is zero, means this entry is invalid
+  ///
+
+  UINT8                FileName[MAX_FILE_PATH_LEN];
+  ///
+  /// Zero-based software partition number for boot image
+  ///
+  UINT8                SwPart;
+
+  ///
+  /// File system type of SwPart, Refer OS_FILE_SYSTEM_TYPE
+  ///
+  UINT8                FsType;
+
+} FILE_IMAGE_LOCATION;
+
+typedef struct {
   //
   // Indicate this entry is invalid or not
   //
@@ -154,6 +173,10 @@ typedef union {
   /// If FileName[0] is zero, means this entry is invalid
   ///
   UINT8                FileName[MAX_FILE_PATH_LEN];
+  ///
+  /// Used for image from file system
+  ///
+  FILE_IMAGE_LOCATION  FileImage;
   ///
   /// Used for image from raw partition
   ///

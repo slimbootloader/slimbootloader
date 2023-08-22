@@ -110,8 +110,10 @@ FillBootOptionListFromCfgData (
       // Will remove the typecast when the structure is fixed.
       BootOption->Image[ImageIdx].LbaImage.LbaAddr = (UINT32)Lba;
     } else {
-      CopyMem (BootOption->Image[ImageIdx].FileName, BootOptionCfgData->Image[0].FileName,
+      CopyMem (BootOption->Image[ImageIdx].FileImage.FileName, StrPtr,
                sizeof (BootOption->Image[ImageIdx].FileName));
+      BootOption->Image[ImageIdx].FileImage.SwPart = BootOptionCfgData->SwPart;
+      BootOption->Image[ImageIdx].FileImage.FsType = BootOptionCfgData->FsType;
     }
 
     if (BootOptionCfgData->ImageType != IMAGE_TYPE_ADDENDUM) {

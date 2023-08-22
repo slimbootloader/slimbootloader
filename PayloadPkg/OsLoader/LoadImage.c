@@ -280,8 +280,8 @@ GetBootImageFromFs (
 
   FsHandle = NULL;
   FileHandle = NULL;
-  SwPart = BootOption->SwPart;
-  FsType = BootOption->FsType;
+  SwPart = BootOption->Image[LoadedImage->LoadImageType].FileImage.SwPart;
+  FsType = BootOption->Image[LoadedImage->LoadImageType].FileImage.FsType;
 
   Status = InitFileSystem (SwPart, FsType, HwPartHandle, &FsHandle);
   if (EFI_ERROR (Status)) {
@@ -289,7 +289,7 @@ GetBootImageFromFs (
     goto Done;
   }
 
-  FileName = (CONST CHAR8 *)&BootOption->Image[LoadedImage->LoadImageType].FileName[0];
+  FileName = (CONST CHAR8 *)&BootOption->Image[LoadedImage->LoadImageType].FileImage.FileName[0];
 
   // Load Boot Image from file system
   AsciiStrToUnicodeStrS (FileName, FilePath, sizeof (FilePath) / sizeof (CHAR16));
@@ -312,7 +312,8 @@ GetBootImageFromFs (
     goto Done;
   }
 
-  if (LoadedImage->LoadImageType == LoadImageTypeExtra0) {
+  if ((LoadedImage->LoadImageType == LoadImageTypeExtra0) &&
+      !AsciiStrCmp(FileName, "/boot/sbl_rtcm")) {
      //
      // Currently extra image is used only by RTCM which need allocate reserved memory.
      // Need revise this logic if there is other use case late.
@@ -872,12 +873,10 @@ LoadBootImages (
     ContainerImage = &BootImage[Index].ContainerImage;
     if ((ContainerImage->Indicate == '!') && (ContainerImage->BackSlash == '/')) {
       Status = GetBootImageFromIfwiContainer (OsBootOption, LoadedImage);
-    } else if ((OsBootOption->DevType != OsBootDeviceSpi) &&
-               (OsBootOption->DevType != OsBootDeviceMemory) &&
-               (OsBootOption->FsType < EnumFileSystemMax)) {
-      Status = GetBootImageFromFs (HwPartHandle, OsBootOption, LoadedImage);
-    } else {
+    } else if (BootImage[Index].LbaImage.Valid == 1) {
       Status = GetBootImageFromRawPartition (OsBootOption, LoadedImage);
+    } else {
+      Status = GetBootImageFromFs (HwPartHandle, OsBootOption, LoadedImage);
     }
 
     DEBUG ((DEBUG_INFO, "LoadBootImage ImageType-%d %r\n", Index, Status));
@@ -887,6 +886,7 @@ LoadBootImages (
       if (Index >= LoadImageTypeExtra0) {
         // Continue boot if load extra image failed.
         Status = EFI_SUCCESS;
+        LoadedImagesInfo->LoadedImageList[Index] = NULL;
         continue;
       }
 
