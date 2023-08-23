@@ -1,6 +1,6 @@
 ## @ ConfigEditor.py
 #
-# Copyright (c) 2018 - 2021, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2018 - 2023, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -769,7 +769,7 @@ class application(tkinter.Frame):
 
         if ftype == 'yaml':
             file_type = 'YAML or PKL'
-            file_ext  = 'pkl *Def.yaml'
+            file_ext  = 'pkl CfgDataDef*.yaml'
         else:
             file_type = ftype.upper()
             file_ext  = ftype

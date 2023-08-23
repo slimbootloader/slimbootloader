@@ -30,6 +30,7 @@ class Board(AlderlakeBoardConfig.Board):
         self.ACPI_TABLE_INF_FILE  = 'Platform/AlderlakeBoardPkg/AcpiTables/AcpiTablesP.inf'
         self.ENABLE_TCC           = 0
         self._generated_cfg_file_prefix = ''
+        self._CFGDATA_DEF_FILE    = 'CfgDataDefAdlp.yaml'
         self._CFGDATA_EXT_FILE    = ['CfgDataInt_Adlp_Crb_Ddr5.dlt', 'CfgDataInt_Adlp_Crb_Lpddr5.dlt', 'CfgDataInt_Adlp_Crb_Lpddr4.dlt', 'CfgDataExt_Upx12.dlt']
         self._MULTI_VBT_FILE      = {2:'VbtAdlP.dat', 3:'VbtAdlPUpx.dat'}
         self._LP_SUPPORT          = True

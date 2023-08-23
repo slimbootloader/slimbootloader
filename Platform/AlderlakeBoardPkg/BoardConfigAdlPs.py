@@ -29,6 +29,7 @@ class Board(AlderlakeBoardConfig.Board):
         self.MICROCODE_INF_FILE   = 'Silicon/AlderlakePkg/Microcode/Microcode.inf'
         self.ENABLE_TCC           = 0
         self._generated_cfg_file_prefix = ''
+        self._CFGDATA_DEF_FILE    = 'CfgDataDefAdlp.yaml'
         self._CFGDATA_EXT_FILE    = ['CfgDataInt_Adlps_Crb_Ddr5.dlt', 'CfgDataInt_Adlps_Rvp_Ddr5.dlt']
         self._MULTI_VBT_FILE      = {1:'VbtAdlPsRvp.dat', 2:'VbtAdlPsCrb.dat'}
         self._LP_SUPPORT          = True

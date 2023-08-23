@@ -2,7 +2,7 @@
 #
 #  Platform Configuration Delta File.
 #
-#  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 #
@@ -89,11 +89,6 @@ GRAPHICS_CFG_DATA.InternalGfx              | 0x2
 GEN_CFG_DATA.VbtImageId                    | 1
 
 #Delta configuration for Silicon settings
-PLDSEL_CFG_DATA.PldSelGpio.Enable      | 1
-PLDSEL_CFG_DATA.PldSelGpio.PadGroup    | 2
-PLDSEL_CFG_DATA.PldSelGpio.PinNumber   | 13
-PLDSEL_CFG_DATA.PldSelGpio.PinPolarity | 1
-
 SILICON_CFG_DATA.SataPortsDevSlp      | {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 SILICON_CFG_DATA.PortUsb30Enable      | {0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 SILICON_CFG_DATA.SerialIoUartMode     | {0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
@@ -514,8 +509,12 @@ GPIO_CFG_DATA.GpioPinConfig1_GPD11.GPIOSkip_GPD11 | 1
 GPIO_CFG_DATA.GpioPinConfig1_GPD12.GPIOSkip_GPD12 | 1
 
 #
-# This GPIO maps to the J8G1 2x2 jumper block.
-# If setting the jumper from pin 1 to pin 2 OS Loader payload will be used.
-# If removing the jumper from pin 1 to pin 2 UEFI payload will be used.
+# The payload selection uses the J79 2x2 jumper block, which maps to GPP_A13.
+# If removing the jumper from pin 1 to pin 2, OS Loader payload will be used.
+# If setting the jumper from pin 1 to pin 2, UEFI payload will be used.
 #
 GPIO_CFG_DATA.GpioPinConfig0_GPP_A13.GPIODirection_GPP_A13 | 11
+PLDSEL_CFG_DATA.PldSelGpio.Enable      | 1
+PLDSEL_CFG_DATA.PldSelGpio.PadGroup    | 2
+PLDSEL_CFG_DATA.PldSelGpio.PinNumber   | 13
+PLDSEL_CFG_DATA.PldSelGpio.PinPolarity | 1

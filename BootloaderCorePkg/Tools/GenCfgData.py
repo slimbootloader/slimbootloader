@@ -1244,6 +1244,8 @@ class CGenCfgData:
     def build_cfg_list (self, cfg_name ='', top = None, path = [], info = {'offset': 0}):
         if top is None:
             top = self._cfg_tree
+            # reset the offset for a fresh load_yaml()
+            info['offset'] = 0
 
         start = info['offset']
         is_leaf = True
