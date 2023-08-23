@@ -382,10 +382,11 @@ GetBoardId (
       break;
     case BoardIdAdlPDdr5Rvp:
     case BoardIdRplPDdr5Rvp:
-      *PlatformId = PLATFORM_ID_ADL_P_DDR5_RVP;
 #if PLATFORM_RPLPS
       // RPL-PS RVP has same Board ID as RPL-P RVP
       *PlatformId = PLATFORM_ID_ADL_PS_DDR5_RVP;
+#else
+      *PlatformId = PLATFORM_ID_ADL_P_DDR5_RVP;
 #endif
       break;
     case BoardIdAdlPSDdr5Rvp:
