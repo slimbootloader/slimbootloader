@@ -2,7 +2,7 @@
 #
 #  Platform Configuration Delta File.
 #
-#  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 #
@@ -16,12 +16,17 @@ PLATFORMID_CFG_DATA.PlatformId           | 0x0018
 PLAT_NAME_CFG_DATA.PlatformName          | 'AdlSSdm4'
 GEN_CFG_DATA.PayloadId                   | 'AUTO'
 FEATURES_CFG_DATA.Features.S0ix          | 0x0
+
 #
-# This GPIO maps to the SW7C1 4-block DIP switch's 3rd switch.
-# If the switch is ON then OS Loader will be used, if OFF UEFI PLD
-# will be used (default is OFF). Need to set the GPIO as Input.
+# The payload selection uses the SW7C1 4-block DIP switch's 3rd switch, which maps to GPP_B03.
+# If the switch is ON, OS Loader will be used.
+# If the switch is OFF, UEFI payload will be will be used (default is OFF).
+# Need to set the GPIO as Input.
 #
 GPIO_CFG_DATA.GpioPinConfig0_GPP_B03.GPIODirection_GPP_B03 | 11
+PLDSEL_CFG_DATA.PldSelGpio.Enable      | 1
+PLDSEL_CFG_DATA.PldSelGpio.PadGroup    | 5
+PLDSEL_CFG_DATA.PldSelGpio.PinNumber   | 3
 
 #
 #Delta configuration for DDR
@@ -45,10 +50,6 @@ MEMORY_CFG_DATA.TcssItbtPcie3En | 0x1
 MEMORY_CFG_DATA.TcssXhciEn | 0x1
 MEMORY_CFG_DATA.TcssDma0En | 0x1
 MEMORY_CFG_DATA.TcssDma1En | 0x1
-
-PLDSEL_CFG_DATA.PldSelGpio.Enable      | 1
-PLDSEL_CFG_DATA.PldSelGpio.PadGroup    | 5
-PLDSEL_CFG_DATA.PldSelGpio.PinNumber   | 3
 
 GEN_CFG_DATA.VbtImageId                  | 1
 

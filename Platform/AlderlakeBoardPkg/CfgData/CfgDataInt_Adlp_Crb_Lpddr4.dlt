@@ -2,7 +2,7 @@
 #
 #  Platform Configuration Delta File.
 #
-#  Copyright (c) 2021 - 2022, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2021 - 2023, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 #
@@ -17,13 +17,16 @@ PLAT_NAME_CFG_DATA.PlatformName          | 'AdlPLp4'
 GEN_CFG_DATA.PayloadId                   | 'AUTO'
 FEATURES_CFG_DATA.Features.S0ix          | 0x0
 
-
 #
-# This GPIO maps to the J8G1 2x2 jumper block.
-# If setting the jumper from pin 1 to pin 2 OS Loader payload will be used.
-# If removing the jumper from pin 1 to pin 2 UEFI payload will be used.
+# The payload selection uses the J8G1 2x2 jumper block, which maps to GPP_A13.
+# If removing the jumper from pin 1 to pin 2, OS Loader payload will be used.
+# If setting the jumper from pin 1 to pin 2, UEFI payload will be used.
 #
 GPIO_CFG_DATA.GpioPinConfig0_GPP_A13.GPIODirection_GPP_A13 | 11
+PLDSEL_CFG_DATA.PldSelGpio.Enable     | 1
+PLDSEL_CFG_DATA.PldSelGpio.PadGroup   | 2
+PLDSEL_CFG_DATA.PldSelGpio.PinNumber  | 13
+PLDSEL_CFG_DATA.PldSelGpio.PinPolarity| 1
 
 #
 #Delta configuration for DDR
@@ -86,11 +89,6 @@ PEP_CFG_DATA.PepUfs0                     | 1
 PEP_CFG_DATA.PepUfs1                     | 1
 
 #Delta configuration for Silicon settings
-PLDSEL_CFG_DATA.PldSelGpio.Enable     | 1
-PLDSEL_CFG_DATA.PldSelGpio.PadGroup   | 2
-PLDSEL_CFG_DATA.PldSelGpio.PinNumber  | 13
-PLDSEL_CFG_DATA.PldSelGpio.PinPolarity| 1
-
 SILICON_CFG_DATA.EnableItbm           | 0x1
 
 SILICON_CFG_DATA.SataPortsDevSlp      | {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}

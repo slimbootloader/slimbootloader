@@ -102,11 +102,6 @@ GRAPHICS_CFG_DATA.InternalGfx              | 0x2
 GEN_CFG_DATA.VbtImageId                    | 1
 
 #Delta configuration for Silicon settings
-PLDSEL_CFG_DATA.PldSelGpio.Enable      | 1
-PLDSEL_CFG_DATA.PldSelGpio.PadGroup    | 2
-PLDSEL_CFG_DATA.PldSelGpio.PinNumber   | 13
-PLDSEL_CFG_DATA.PldSelGpio.PinPolarity | 1
-
 SILICON_CFG_DATA.SataPortsDevSlp            | {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 SILICON_CFG_DATA.PortUsb30Enable            | {0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 SILICON_CFG_DATA.SerialIoUartMode           |  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}

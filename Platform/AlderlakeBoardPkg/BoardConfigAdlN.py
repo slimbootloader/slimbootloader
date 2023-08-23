@@ -222,6 +222,7 @@ class Board(BaseBoard):
         self.CFG_DATABASE_SIZE    = self.CFGDATA_SIZE
         self._generated_cfg_file_prefix = 'Autogen_'
 
+        self._CFGDATA_DEF_FILE = 'CfgDataDefAdln.yaml'
         self._CFGDATA_INT_FILE = []
         self._CFGDATA_EXT_FILE = [self._generated_cfg_file_prefix + 'CfgDataInt_Adln_Crb_Ddr5.dlt', self._generated_cfg_file_prefix + 'CfgDataInt_Adln_Rvp_Lpddr5.dlt']
 
