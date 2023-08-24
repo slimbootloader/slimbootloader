@@ -546,19 +546,25 @@ def gen_config_file (fv_dir, brd_name_override, brd_name, platform_id, pri_key, 
     gen_cmd  = { 'yaml':'GENYML', 'dsc':'GENDSC' }
 
     # Generate CFG data
-    brd_name_dir      = os.path.join(os.environ['PLT_SOURCE'], 'Platform', brd_name)
-    if not os.path.exists(brd_name_dir):
-        brd_name_dir      = os.path.join(os.environ['SBL_SOURCE'], 'Platform', brd_name)
+    cfgdata_def_file_name = cfg_def if cfg_def != '' else 'CfgDataDef.yaml'
+    if os.path.exists(os.path.join(os.environ['PLT_SOURCE'], 'Platform', brd_name_override, 'CfgData', cfgdata_def_file_name)):
+        brd_name_dir  = os.path.join(os.environ['PLT_SOURCE'], 'Platform', brd_name_override)
+    elif os.path.exists(os.path.join(os.environ['SBL_SOURCE'], 'Platform', brd_name_override, 'CfgData', cfgdata_def_file_name)):
+        brd_name_dir  = os.path.join(os.environ['SBL_SOURCE'], 'Platform', brd_name_override)
+    elif os.path.exists(os.path.join(os.environ['PLT_SOURCE'], 'Platform', brd_name, 'CfgData', cfgdata_def_file_name)):
+        brd_name_dir  = os.path.join(os.environ['PLT_SOURCE'], 'Platform', brd_name)
+    elif os.path.exists(os.path.join(os.environ['SBL_SOURCE'], 'Platform', brd_name, 'CfgData', cfgdata_def_file_name)):
+        brd_name_dir  = os.path.join(os.environ['SBL_SOURCE'], 'Platform', brd_name)
+    else :
+        raise Exception ("Could not find CfgDataDef.yaml file!")
+
     comm_brd_dir      = os.path.join(os.environ['SBL_SOURCE'], 'Platform', 'CommonBoardPkg')
     brd_cfg_dir       = os.path.join(brd_name_dir, 'CfgData')
     com_brd_cfg_dir   = os.path.join(comm_brd_dir, 'CfgData')
-    cfg_hdr_file      = os.path.join(brd_name_dir, 'Include', 'ConfigDataStruct.h')
+    cfg_hdr_file      = os.path.join(comm_brd_dir, 'Include', 'ConfigDataStruct.h')
     cfg_com_hdr_file  = os.path.join(comm_brd_dir, 'Include', 'ConfigDataCommonStruct.h')
-    cfg_inc_file      = os.path.join(brd_name_dir, 'Include', 'ConfigDataBlob.h')
-    cfg_dsc_file      = os.path.join(brd_cfg_dir, 'CfgDataDef.' + file_ext)
-    if cfg_def != '':
-        cfg_dsc_file  = os.path.join(brd_cfg_dir, cfg_def)
-    cfg_hdr_dyn_file  = os.path.join(brd_name_dir, 'Include', 'ConfigDataDynamic.h')
+    cfg_dsc_file      = os.path.join(brd_cfg_dir,   cfgdata_def_file_name)
+    cfg_hdr_dyn_file  = os.path.join(comm_brd_dir, 'Include', 'ConfigDataDynamic.h')
     cfg_dsc_dyn_file  = os.path.join(brd_cfg_dir, 'CfgDataDynamic.' + file_ext)
     cfg_pkl_file      = os.path.join(fv_dir, "CfgDataDef.pkl")
     cfg_bin_file      = os.path.join(fv_dir, "CfgDataDef.bin")  #default core dsc file cfg data
