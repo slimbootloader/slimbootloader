@@ -87,22 +87,6 @@ def get_component_replace_list(plt_params_list):
             replace_list.append (
                 ('IFWI/BIOS/NRD/IPFW/TMAC', 'IPFW/TsnSubRegion.bin',     'lz4',     'KEY_ID_CONTAINER_COMP_RSA3072', 0),   # TSN MAC Address
             )
-    if 'tcc' in plt_params_list:
-      if os.path.exists('IPFW/TccCrlBinary.bin'):
-          print ("TccCrlBinary.bin found")
-          replace_list.append (
-              ('IFWI/BIOS/NRD/IPFW/TCCM', 'IPFW/TccCrlBinary.bin',         'lz4',     'KEY_ID_CONTAINER_COMP_RSA3072', 0),   # TCC CRL binary
-          )
-      if os.path.exists('IPFW/TccCacheCfg.bin'):
-          print ("TccCacheCfg.bin found")
-          replace_list.append (
-              ('IFWI/BIOS/NRD/IPFW/TCCC', 'IPFW/TccCacheCfg.bin',         'lz4',     'KEY_ID_CONTAINER_COMP_RSA3072', 0),   # TCC Cache Cfg binary
-          )
-      if os.path.exists('IPFW/TccStreamCfg.bin'):
-          print ("TccStreamCfg.bin found")
-          replace_list.append (
-              ('IFWI/BIOS/NRD/IPFW/TCCT', 'IPFW/TccStreamCfg.bin',         'lz4',     'KEY_ID_CONTAINER_COMP_RSA3072', 0),   # TCC StreamCfg binary
-          )
 
     return replace_list
 
@@ -124,7 +108,6 @@ def check_parameter(para_list):
         'tsn'  -- Enable TSN softstraps with different linkspeeds ('1G1G', '1G2.5G', '2.5G1G')
         'debug'-- Enable DAM and DCI configuration (Only use for debug purpose but not for final production!)
         'spi'  -- Set SPI frequency to be '25MHz', '33MHz', '50MHz' or '100MHz'. By default use 25Mhz.
-        'tcc'  -- Stitch TCC binaries into BIOS region.
         """
     for para in para_list:
         if para == '':
@@ -245,14 +228,13 @@ def get_xml_change_list (platform, plt_params_list):
         ('./NetworkingConnectivity/WiredLanConfiguration/GbePCIePortSelect',         'None'),
         ('./InternalPchBuses/SmbusSmlinkConfiguration/SLink0MctpAddress',            '0x62'),
         ('./InternalPchBuses/SmbusSmlinkConfiguration/SLink0MctpEnable',             'Yes'),
-        ('./FlexIO/PciePortConfiguration/PCIeController2Config',                     '4x1'),
+        ('./FlexIO/PciePortConfiguration/PCIeController2Config',                     '1x2, 2x1'),
         ('./IntelUniquePlatformId/EntitlementsConfiguration/IcpsSwSkuing',           'Yes'),
         ])
 
     if 's14' in plt_params_list:
         xml_change_list.append ([
         ('./BuildSettings/HarnessGlobalData/SelectedRvp',                            'RPL-S DDR5 UDIMM S-14 (ADP-S + RPL-S)'),
-        ('./PlatformProtection/ContentProtection/PavpSupported',                     'No'),
         ('./Icc/IccPolicies/Profiles/Profile/PwrManagementConfiguration/ClkreqMapSRC12', 'GPP_D_11'),
         ('./FlexIO/PciePortConfiguration/PCIeController1Config',                     '1x2, 2x1'),
         ('./FlexIO/PciePortConfiguration/PCIeController2Config',                     '1x4'),
