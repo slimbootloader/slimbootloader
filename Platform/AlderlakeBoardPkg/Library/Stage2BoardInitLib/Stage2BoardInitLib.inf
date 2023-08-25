@@ -116,7 +116,6 @@
   gPlatformModuleTokenSpaceGuid.PcdVtdEnabled
   gPlatformModuleTokenSpaceGuid.PcdFspsUpdPtr
   gPlatformModuleTokenSpaceGuid.PcdFastBootEnabled
-  gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled
   gPlatformModuleTokenSpaceGuid.PcdEnablePciePm
   gPlatformCommonLibTokenSpaceGuid.PcdBootPerformanceMask
   gPlatformModuleTokenSpaceGuid.PcdPciEnumHookProc
@@ -126,3 +125,4 @@
 
 [FixedPcd]
   gPlatformAlderLakeTokenSpaceGuid.PcdAdlLpSupport
+  gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled

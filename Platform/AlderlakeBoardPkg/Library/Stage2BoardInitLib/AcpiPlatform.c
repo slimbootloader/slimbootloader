@@ -271,7 +271,9 @@ PlatformUpdateAcpiTable (
   VOID                        *FspHobList;
   PLATFORM_DATA               *PlatformData;
   FEATURES_CFG_DATA           *FeaturesCfgData;
+#if FixedPcdGet8 (PcdTccEnabled)
   TCC_CFG_DATA                *TccCfgData;
+#endif
   EFI_STATUS                   Status;
   EFI_ACPI_6_3_FIXED_ACPI_DESCRIPTION_TABLE *FadtPointer;
 
@@ -347,14 +349,14 @@ PlatformUpdateAcpiTable (
   } else if (Table->Signature == SIGNATURE_32 ('R', 'T', 'C', 'T')) {
     DEBUG ((DEBUG_INFO, "Find RTCT table\n"));
 
-    if (FeaturePcdGet (PcdTccEnabled)) {
+#if FixedPcdGet8 (PcdTccEnabled)
       TccCfgData = (TCC_CFG_DATA *) FindConfigDataByTag(CDATA_TCC_TAG);
       if ((TccCfgData != NULL) && (TccCfgData->TccEnable != 0)) {
         Status = UpdateAcpiRtctTable(Table);
         DEBUG ( (DEBUG_INFO, "Updated Rtct Table entries in AcpiTable status: %r\n", Status) );
         return Status;
       }
-    }
+#endif
     return EFI_UNSUPPORTED;
   } else if (Table->OemTableId == SIGNATURE_64 ('D', 'p', 't', 'f', 'T', 'a', 'b', 'l')) { //DptfTabl
     DEBUG ((DEBUG_INFO, "Find DptfTabl table\n"));
@@ -740,7 +742,6 @@ PlatformUpdateAcpiGnvs (
   SYS_CPU_INFO            *SysCpuInfo;
   FSPS_UPD                *FspsUpd;
   FSP_S_CONFIG            *FspsConfig;
-  TCC_CFG_DATA            *TccCfgData;
   SILICON_CFG_DATA        *SiCfgData;
   FEATURES_CFG_DATA       *FeaturesCfgData;
   UINT8                    Index;
@@ -751,9 +752,12 @@ PlatformUpdateAcpiGnvs (
   UINT32                   Data32;
   GPIO_GROUP               GroupToGpeDwX[3];
   UINT32                   GroupDw[3];
+#if FixedPcdGet8 (PcdTccEnabled)
+  TCC_CFG_DATA            *TccCfgData;
   CPUID_EXTENDED_TIME_STAMP_COUNTER_EDX  Edx;
   CPUID_PROCESSOR_FREQUENCY_EBX          Ebx;
   PLATFORM_DATA           *PlatformData;
+#endif
   EFI_STATUS              Status;
 
   GlobalNvs = (GLOBAL_NVS_AREA *)GnvsIn;
@@ -1278,7 +1282,7 @@ PlatformUpdateAcpiGnvs (
   SocUpdateAcpiGnvs ((VOID *)GnvsIn);
 
   // TCC mode enabling
-  if (FeaturePcdGet (PcdTccEnabled)) {
+#if FixedPcdGet8 (PcdTccEnabled)
     TccCfgData = (TCC_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
     if ((TccCfgData != NULL) && (TccCfgData->TccEnable != 0)) {
       AsmCpuid (CPUID_TIME_STAMP_COUNTER, NULL, &Ebx.Uint32, NULL, NULL);
@@ -1302,7 +1306,7 @@ PlatformUpdateAcpiGnvs (
       PlatformNvs->Rtd3Support = 0;
       PlatformNvs->LowPowerS0Idle = 0;
     }
-  }
+#endif
 
     // Expose Timed GPIO to OS through Nvs variables
     if (SiCfgData != NULL) {
