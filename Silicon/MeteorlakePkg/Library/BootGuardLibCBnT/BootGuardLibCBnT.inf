@@ -30,6 +30,7 @@
   BootloaderCorePkg/BootloaderCorePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
   Silicon/MeteorlakePkg/MeteorlakePkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
 
 [Sources]
   BootGuardLibrary.c
