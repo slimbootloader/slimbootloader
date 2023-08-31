@@ -283,6 +283,14 @@ GetBootImageFromFs (
   SwPart = BootOption->Image[LoadedImage->LoadImageType].FileImage.SwPart;
   FsType = BootOption->Image[LoadedImage->LoadImageType].FileImage.FsType;
 
+  //
+  // The image_B partition number, is image_A partition number + 1
+  // They use the same container file name and FsType.
+  //
+  if ((BootOption->BootFlags & LOAD_IMAGE_FROM_BACKUP) != 0) {
+    SwPart++;
+  }
+
   Status = InitFileSystem (SwPart, FsType, HwPartHandle, &FsHandle);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "Init file system failed on SwPart %u, Status = %r\n", SwPart, Status));
