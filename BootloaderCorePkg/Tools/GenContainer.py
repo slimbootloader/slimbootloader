@@ -71,6 +71,7 @@ class CONTAINER_HDR (Structure):
       'NORMAL'     :  0x00,                 # Used for boot images in FV, regular ELF, PE32, etc. formats
       'CLASSIC'    :  0xF3,                 # Used for booting Linux with bzImage, cmdline, initrd, etc.
       'MULTIBOOT'  :  0xF4,                 # Multiboot compliant ELF images
+      'MULTIBOOT_MODULE'  :  0xF5,                 # Multiboot compliant ELF images
     }
 
     def __new__(cls, buf = None):
@@ -825,7 +826,7 @@ def main():
     # '-l' or '-cl', one of them is mandatory
     group.add_argument('-l',  dest='layout',   type=str, help='Container layout input file if no -cl')
     group.add_argument('-cl', dest='comp_list',nargs='+', help='List of each component files, following XXXX:FileName format')
-    cmd_display.add_argument('-t', dest='img_type',  type=str, default='CLASSIC', help='Container Image Type : [NORMAL, CLASSIC, MULTIBOOT]')
+    cmd_display.add_argument('-t', dest='img_type',  type=str, default='CLASSIC', help='Container Image Type : [NORMAL, CLASSIC, MULTIBOOT, MULTIBOOT_MODULE]')
     cmd_display.add_argument('-o', dest='out_path',  type=str, default='.', help='Container output directory/file')
     cmd_display.add_argument('-k', dest='key_path',  type=str, default='', help='Input key directory/file. Use key directoy path when container layout -l option is used \
                                                                                  Use Key Id or key file path when component files with -cl option is specified')
