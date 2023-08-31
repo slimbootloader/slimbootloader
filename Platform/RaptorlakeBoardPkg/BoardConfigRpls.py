@@ -23,8 +23,8 @@ class Board(BaseBoard):
         super(Board, self).__init__(*args, **kwargs)
 
         self.VERINFO_IMAGE_ID     = 'SB_RPLS'
-        self.VERINFO_PROJ_MAJOR_VER = 0
-        self.VERINFO_PROJ_MINOR_VER = 8
+        self.VERINFO_PROJ_MAJOR_VER = 1
+        self.VERINFO_PROJ_MINOR_VER = 1
         self.VERINFO_SVN            = 1
         self.VERINFO_BUILD_DATE     = time.strftime("%m/%d/%Y")
 
@@ -37,6 +37,7 @@ class Board(BaseBoard):
         self._FSP_PATH_NAME       = 'Platform/RaptorlakeBoardPkg/Rpls/Fsp'
         self.FSP_INF_FILE         = 'Platform/RaptorlakeBoardPkg/Rpls/Fsp/FspBinRpls.inf'
         self.MICROCODE_INF_FILE   = 'Platform/RaptorlakeBoardPkg/Rpls/Microcode/MicrocodeRpls.inf'
+        self.ACPI_TABLE_INF_FILE  = 'Platform/AlderlakeBoardPkg/AcpiTables/AcpiTablesRpl.inf'
 
         self.PCI_EXPRESS_BASE     = 0xC0000000
         self.PCI_IO_BASE          = 0x00002000
@@ -110,14 +111,19 @@ class Board(BaseBoard):
         self.STAGE1_DATA_SIZE     = 0x00014000
         self.FSP_M_STACK_TOP      = 0xFEF7FF00
         self.STAGE1B_SIZE         = 0x00200000
-        self.STAGE2_SIZE          = 0x000C2000
+        self.STAGE2_SIZE          = 0x000CD000
         self.STAGE2_FD_BASE       = 0x01000000
         self.STAGE2_FD_SIZE       = 0x001F0000
 
         self.PAYLOAD_SIZE         = 0x00032000
-        self.EPAYLOAD_SIZE        = 0x00175000
+        self.EPAYLOAD_SIZE        = 0x00180000
 
         self.ENABLE_FAST_BOOT = 0
+        try:
+            if os.environ['SBL_ENABLE_FAST_BOOT'] == '1':
+                self.ENABLE_FAST_BOOT = 1
+        except Exception:
+            pass
         if self.ENABLE_FAST_BOOT:
             self.ENABLE_SPLASH              = 0
             self.ENABLE_FRAMEBUFFER_INIT    = 0
@@ -125,10 +131,11 @@ class Board(BaseBoard):
             self.HAVE_VERIFIED_BOOT         = 0
             self.HAVE_MEASURED_BOOT         = 0
             self.VERIFIED_BOOT_HASH_MASK    = 0
+            self.HAVE_PSD_TABLE             = 0
 
         if self.RELEASE_MODE and self.ENABLE_FAST_BOOT:
-            self.STAGE1A_SIZE         = 0x00015000
-            self.STAGE1B_SIZE         = 0x000C0000
+            self.STAGE1A_SIZE         = 0x00016000
+            self.STAGE1B_SIZE         = 0x000D0000
             self.STAGE2_SIZE          = 0x000C0000
             self.STAGE2_FD_SIZE       = 0x000F0000
             self.PAYLOAD_SIZE         = 0x00024000
@@ -181,12 +188,6 @@ class Board(BaseBoard):
                                         self.FWUPDATE_SIZE + self.CFGDATA_SIZE + self.KEYHASH_SIZE
 
         self.ENABLE_TCC = 0
-        if self.ENABLE_TCC:
-            self.TCC_CCFG_SIZE   = 0x00001000
-            self.TCC_CRL_SIZE    = 0x00008000
-            self.TCC_STREAM_SIZE = 0x00005000
-            self.SIIPFW_SIZE    += self.TCC_CCFG_SIZE + self.TCC_CRL_SIZE + self.TCC_STREAM_SIZE
-
         self.ENABLE_TSN = 0
         if self.ENABLE_TSN:
             self.TMAC_SIZE = 0x00001000
@@ -224,7 +225,6 @@ class Board(BaseBoard):
         self.CFG_DATABASE_SIZE    = self.CFGDATA_SIZE
         self._generated_cfg_file_prefix = 'Autogen_'
 
-        self._CFGDATA_DEF_FILE = 'CfgDataDefAdls.yaml'
         self._CFGDATA_INT_FILE = []
         self._CFGDATA_EXT_FILE = [self._generated_cfg_file_prefix + 'CfgDataInt_Rpls_Rvp_Ddr5.dlt', self._generated_cfg_file_prefix + 'CfgDataInt_Rpls_Rvp_SODdr5.dlt']
 
@@ -244,13 +244,6 @@ class Board(BaseBoard):
                 if not os.path.exists(cfg_dlt_file):
                     cfg_dlt_file = os.path.join(brd_cfg2_src_dir, dlt_file[len (self._generated_cfg_file_prefix):])
                 lines         = open (cfg_dlt_file).read()
-
-                # Enable TCC in dlt file
-                if self.ENABLE_TCC:
-                    if os.path.exists(os.path.join(brd_cfg_src_dir, 'CfgData_Tcc_Feature.dlt')):
-                        lines += open (os.path.join(brd_cfg_src_dir, 'CfgData_Tcc_Feature.dlt')).read()
-                    else:
-                        lines += open (os.path.join(brd_cfg2_src_dir, 'CfgData_Tcc_Feature.dlt')).read()
 
                 # Enable TSN in dlt file
                 if self.ENABLE_TSN:
@@ -276,8 +269,8 @@ class Board(BaseBoard):
             'PchSbiAccessLib|Silicon/CommonSocPkg/Library/PchSbiAccessLib/PchSbiAccessLib.inf',
             'TccLib|Silicon/CommonSocPkg/Library/TccLib/TccLib.inf',
             'ShellExtensionLib|Platform/$(BOARD_PKG_NAME)/Library/ShellExtensionLib/ShellExtensionLib.inf',
-            'FspmUpdUpdateLib|Platform/$(BOARD_PKG_NAME)/Library/FspmUpdUpdateLib/FspmUpdUpdateLib.inf',
-            'FspsUpdUpdateLib|Platform/$(BOARD_PKG_NAME)/Library/FspsUpdUpdateLib/FspsUpdUpdateLib.inf',
+            'FspmUpdUpdateLib|Platform/$(BOARD_PKG_NAME_OVERRIDE)/Library/FspmUpdUpdateLib/FspmUpdUpdateLib.inf',
+            'FspsUpdUpdateLib|Platform/$(BOARD_PKG_NAME_OVERRIDE)/Library/FspsUpdUpdateLib/FspsUpdUpdateLib.inf',
             'PchInfoLib|Silicon/$(SILICON_PKG_NAME)/Library/PchInfoLib/PchInfoLib.inf',
             'PchPciBdfLib|Silicon/$(SILICON_PKG_NAME)/Library/BasePchPciBdfLib/BasePchPciBdfLib.inf',
             'PchPcrLib|Silicon/CommonSocPkg/Library/PchPcrLib/PchPcrLib.inf',
@@ -361,20 +354,6 @@ class Board(BaseBoard):
         )
 
         bins = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'Binaries')
-
-        if self.ENABLE_TCC:
-            TccCacheCfg  = os.path.join(bins,  'TccCacheCfg.bin') if os.path.exists(os.path.join(bins,  'TccCacheCfg.bin'))  else ''
-            TccCrlBinary = os.path.join(bins,  'TccCrlBinary.bin')if os.path.exists(os.path.join(bins,  'TccCrlBinary.bin')) else ''
-            TccStreamCfg = os.path.join(bins,  'TccStreamCfg.bin')if os.path.exists(os.path.join(bins,  'TccStreamCfg.bin')) else ''
-            container_list.append (
-              ('TCCC', TccCacheCfg,   'Lz4', container_list_auth_type, 'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0, self.TCC_CCFG_SIZE, 0),  # TCC Cache Config
-            )
-            container_list.append (
-              ('TCCM', TccCrlBinary, 'Lz4', container_list_auth_type, 'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0, self.TCC_CRL_SIZE, 0),    # TCC Crl
-            )
-            container_list.append (
-              ('TCCT', TccStreamCfg,  'Lz4', container_list_auth_type, 'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0, self.TCC_STREAM_SIZE, 0), # TCC Stream Config
-            )
 
         if self.ENABLE_TSN:
             TsnSubRegion = os.path.join(bins,  'TsnSubRegion.bin')if os.path.exists(os.path.join(bins,  'TsnSubRegion.bin')) else ''

@@ -11,7 +11,7 @@
 
 [UserExtensions.SBL."CloneRepo"]
   REPO    = https://github.com/intel/FSP.git
-  COMMIT  = 72b10be1347397e4bcd4f4b08dd12324a40f68aa
+  COMMIT  = 5030738932bca45dabad337d90da832f5a1431b5
 
 [UserExtensions.SBL."CopyList"]
 # For RPL-S
