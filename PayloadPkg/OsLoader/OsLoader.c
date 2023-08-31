@@ -280,6 +280,25 @@ UpdateLoadedImage (
       }
     }
     MultiBoot->MbModuleNumber = ModuleIndex;
+  } else if (ImageType == CONTAINER_TYPE_MULTIBOOT_MODULE) {
+    MultiBoot                = &LoadedImage->Image.MultiBoot;
+    LoadedImage->Flags      |= LOADED_IMAGE_MBMODULE;
+
+    ModuleIndex = 0;
+
+    for (Index = 0; Index < NumFiles; Index += 2) {
+      if (Index < MAX_MULTIBOOT_MODULE_NUMBER) {
+        Status = LoadMultibootModString(MultiBoot, ModuleIndex, &File[Index]);
+        CopyMem (&MultiBoot->MbModuleData[ModuleIndex].ImgFile, &File[Index + 1], sizeof (IMAGE_DATA));
+
+        MultiBoot->MbModule[ModuleIndex].Start  = (UINT32)(UINTN)MultiBoot->MbModuleData[ModuleIndex].ImgFile.Addr;
+        MultiBoot->MbModule[ModuleIndex].End    = (UINT32)(UINTN)MultiBoot->MbModuleData[ModuleIndex].ImgFile.Addr
+          + MultiBoot->MbModuleData[ModuleIndex].ImgFile.Size;
+
+        ModuleIndex++;
+      }
+    }
+    MultiBoot->MbModuleNumber = ModuleIndex;
   } else {
     DEBUG ((DEBUG_ERROR, "Error: unsupported image type #0x%X\n", ImageType));
     return EFI_UNSUPPORTED;
@@ -983,6 +1002,39 @@ ParseBootImages (
 
 EFI_STATUS
 EFIAPI
+AppendMultibootModules (
+  IN     LOADED_IMAGE        *MultibootImage,
+  IN OUT LOADED_IMAGE        *ModuleImage
+  )
+{
+  MULTIBOOT_IMAGE         *MultiBoot;
+  MULTIBOOT_IMAGE         *MultiBootModule;
+  UINT16                  ModuleIndex;
+  UINT16                  Index;
+
+  MultiBoot = &MultibootImage->Image.MultiBoot;
+  MultiBootModule = &ModuleImage->Image.MultiBoot;
+  ModuleIndex = MultiBoot->MbModuleNumber;
+
+  for (Index = 0; Index < MultiBootModule->MbModuleNumber; Index++) {
+    if (ModuleIndex >= MAX_MULTIBOOT_MODULE_NUMBER) {
+      DEBUG ((DEBUG_INFO, "Image module number exceeds limit\n", ModuleIndex));
+      break;
+    }
+
+    MultiBoot->MbModule[ModuleIndex] = MultiBootModule->MbModule[Index];
+    MultiBoot->MbModuleData[ModuleIndex] = MultiBootModule->MbModuleData[Index];
+    ModuleIndex++;
+  }
+
+  MultiBoot->MbModuleNumber = ModuleIndex;
+  DEBUG ((DEBUG_INFO, "SetupBootImage - Multiboot image has %d modules\n", ModuleIndex));
+
+  return EFI_SUCCESS;
+}
+
+EFI_STATUS
+EFIAPI
 SetupBootImages (
   IN  OS_BOOT_OPTION    *OsBootOption,
   IN  EFI_HANDLE         LoadedImageHandle
@@ -994,24 +1046,7 @@ SetupBootImages (
   EFI_STATUS           Status;
   UINT8                Type;
 
-  //
-  // Check if extra images exist and need setup
-  //
-  for (Type = LoadImageTypeExtra0; Type < LoadImageTypeMax; Type++) {
-    Status = GetLoadedImageByType (LoadedImageHandle, Type, &LoadedExtraImage);
-    if (EFI_ERROR (Status)) {
-      break;
-    }
-    if ((LoadedExtraImage != NULL) && ((LoadedExtraImage->Flags & LOADED_IMAGE_RUN_EXTRA) != 0)) {
-      Status = SetupBootImage (LoadedExtraImage);
-      if (EFI_ERROR (Status)) {
-        return Status;
-      }
-    }
-  }
-
   GetLoadedImageByType (LoadedImageHandle, LoadImageTypeNormal, &LoadedImage);
-  GetLoadedImageByType (LoadedImageHandle, LoadImageTypePreOs, &LoadedPreOsImage);
 
   //
   // Normal type image is mandatory
@@ -1020,11 +1055,38 @@ SetupBootImages (
     return EFI_LOAD_ERROR;
   }
 
+  //
+  // Check if extra images exist and need setup
+  //
+  for (Type = LoadImageTypeExtra0; Type < LoadImageTypeMax; Type++) {
+    Status = GetLoadedImageByType (LoadedImageHandle, Type, &LoadedExtraImage);
+    if (EFI_ERROR (Status)) {
+      break;
+    }
+    DEBUG ((DEBUG_INFO, "SetupBootImage ImageType-%d Flags %x\n", Type, LoadedExtraImage->Flags));
+    if (LoadedExtraImage != NULL) {
+      if ((LoadedExtraImage->Flags & LOADED_IMAGE_RUN_EXTRA) != 0) {
+        Status = SetupBootImage (LoadedExtraImage);
+        if (EFI_ERROR (Status)) {
+          return Status;
+        }
+      }
+      if (((LoadedImage->Flags & LOADED_IMAGE_MULTIBOOT) ||
+           (LoadedImage->Flags & LOADED_IMAGE_MULTIBOOT2)) &&
+          (LoadedExtraImage->Flags & LOADED_IMAGE_MBMODULE)) {
+        DEBUG ((DEBUG_INFO, "SetupBootImage Append ImageType-%d\n", Type));
+        AppendMultibootModules (LoadedImage, LoadedExtraImage);
+      }
+    }
+  }
+
   DEBUG ((DEBUG_INFO, "SetupBootImage ImageType-%d\n", LoadImageTypeNormal));
   Status = SetupBootImage (LoadedImage);
   if (EFI_ERROR (Status)) {
     return Status;
   }
+
+  GetLoadedImageByType (LoadedImageHandle, LoadImageTypePreOs, &LoadedPreOsImage);
   if (LoadedPreOsImage != NULL) {
     DEBUG ((DEBUG_INFO, "SetupBootImage ImageType-%d\n", LoadImageTypePreOs));
     Status = SetupBootImage (LoadedPreOsImage);
