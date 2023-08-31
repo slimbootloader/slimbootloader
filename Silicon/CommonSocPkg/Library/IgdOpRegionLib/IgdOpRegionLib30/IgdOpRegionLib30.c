@@ -80,6 +80,7 @@ IgdOpRegionInit (
   UINT16                        Data16;
   UINT16                        ExtendedVbtSize;
   VBIOS_VBT_STRUCTURE           *VbtFileBuffer;
+  EFI_STATUS                    Status;
   UINT32 localBcm1[30] = {0x80000000,
                             0x800A0019,
                             0x80140033,
@@ -135,9 +136,7 @@ IgdOpRegionInit (
   //
   // Update OpRegion address to Gnvs
   //
-  PcdSet32S (PcdIgdOpRegionAddress, (UINT32)(UINTN)(mIgdOpRegion.OpRegion));
-
-
+  Status = PcdSet32S (PcdIgdOpRegionAddress, (UINT32)(UINTN)(mIgdOpRegion.OpRegion));
   //
   // Initialize OpRegion Header
   // Temp comment out  due to booting issue
@@ -212,7 +211,6 @@ IgdOpRegionInit (
   // Set ASLS Register to the OpRegion physical memory address.
   // Set SWSCI register bit 15 to a "1" to activate SCI interrupts.
 
-
   PciWrite32(PCI_LIB_ADDRESS(IGD_BUS, IGD_DEV, IGD_FUN_0, IGD_ASLS_OFFSET), (UINT32)(UINTN)(mIgdOpRegion.OpRegion));
 
   Data16 = PciRead16(PCI_LIB_ADDRESS(IGD_BUS, IGD_DEV, IGD_FUN_0, IGD_SWSCI_OFFSET));
@@ -220,7 +218,7 @@ IgdOpRegionInit (
   Data16 |= BIT15;
   PciWrite16(PCI_LIB_ADDRESS(IGD_BUS, IGD_DEV, IGD_FUN_0, IGD_SWSCI_OFFSET), Data16);
 
-
   DEBUG ((DEBUG_INFO, "IgdOpRegion ended\n"));
-  return EFI_SUCCESS;
+
+  return Status;
 }
