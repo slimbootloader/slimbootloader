@@ -835,8 +835,6 @@ UpdateFspConfig (
   FspsConfig->SerialIoSpiMosiPinMux[0] = 0x14a48d;
   FspsConfig->DmiPowerGatingDis = 0x0;
 
-  // EndOfPost Upd
-  FspsUpd->FspsConfig.EndOfPostMessage = 1;
 }
 
 
