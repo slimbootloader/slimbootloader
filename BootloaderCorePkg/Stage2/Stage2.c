@@ -147,7 +147,6 @@ NormalBootPath (
   UINT32                          InitRdLen;
   UINT8                          *CmdLine;
   UINT32                          CmdLineLen;
-  UINT32                          UefiSig;
   UINT32                          HobSize;
   UINT16                          PldMachine;
   LOADED_PAYLOAD_INFO             PayloadInfo;
@@ -168,7 +167,6 @@ NormalBootPath (
   BoardInit (PostPayloadLoading);
   AddMeasurePoint (0x31A0);
 
-  UefiSig  = 0;
   PldBase  = 0;
   PldEntry = NULL;
   PldMachine = IS_X64 ? IMAGE_FILE_MACHINE_X64 : IMAGE_FILE_MACHINE_I386;
@@ -187,7 +185,6 @@ NormalBootPath (
   } else if (Dst[10] == EFI_FVH_SIGNATURE) {
     // It is a FV format
     DEBUG ((DEBUG_INFO, "FV Format Payload\n"));
-    UefiSig = Dst[0];
     Status  = LoadFvImage (Dst, Stage2Param->PayloadActualLength, (VOID **)&PldEntry, &PldMachine);
   } else if (IsElfFormat ((CONST UINT8 *)Dst)) {
     DEBUG ((DEBUG_INFO, "ELF Format Payload\n"));
