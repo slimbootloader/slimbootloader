@@ -294,7 +294,7 @@ AddSblCommandLine (
     }
   }
 
-  if (BootOption->ImageType != EnumImageTypeAdroid) {
+  if (BootOption->ImageType != EnumImageTypeAndroid) {
     // currently these command line parameters are tested only with Android OS.
     return EFI_SUCCESS;
   }

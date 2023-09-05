@@ -139,7 +139,7 @@ GetBootDeviceInfo (
 
   do {
     ShellPrint (L"Enter ImageType (Default 0x%X, Android 0x%X, Clear Linux 0x%X, ACRN 0x%X, Fastboot 0x%X)\n",
-                EnumImageTypeDefault, EnumImageTypeAdroid, EnumImageTypeClearLinux, EnumImageTypeAcrn, EnumImageTypeFastboot
+                EnumImageTypeDefault, EnumImageTypeAndroid, EnumImageTypeClearLinux, EnumImageTypeAcrn, EnumImageTypeFastboot
                 );
     ShellPrint (L"(default 0x%X) ", CurrOption->ImageType);
     Status = ShellReadUintn (Shell, Buffer, BufferSize, &IsHex);
