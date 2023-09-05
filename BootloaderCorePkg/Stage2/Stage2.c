@@ -197,6 +197,7 @@ NormalBootPath (
     if (!EFI_ERROR(Status)) {
       if (PayloadInfo.Info.Identifier == UNIVERSAL_PAYLOAD_IDENTIFIER) {
         DEBUG ((DEBUG_INFO, "Universal Payload %a v%08X\n", PayloadInfo.Info.ImageId, PayloadInfo.Info.Revision));
+        UefiSig    = UNIVERSAL_PAYLOAD_IDENTIFIER;
         HobSize    = sizeof (UNIVERSAL_PAYLOAD_EXTRA_DATA) + sizeof(UNIVERSAL_PAYLOAD_EXTRA_DATA_ENTRY) * PayloadInfo.ImageCount;
         PldImgInfo = (UNIVERSAL_PAYLOAD_EXTRA_DATA *)BuildGuidHob (&gUniversalPayloadExtraDataGuid, HobSize);
         if (PldImgInfo != NULL) {
@@ -263,6 +264,9 @@ NormalBootPath (
     // Current open sourced UEFI payload does not call any FSP notifications,
     // but some customized UEFI payload will. The 1st DWORD in UEFI payload image
     // will be used to indicate if it will handle FSP notifications.
+    CallBoardNotify = FALSE;
+  } else if (UefiSig == UNIVERSAL_PAYLOAD_IDENTIFIER) {
+    // Expect Universal UEFI payload would send FSP notifications.
     CallBoardNotify = FALSE;
   } else {
     CallBoardNotify = TRUE;
