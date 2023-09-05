@@ -20,7 +20,7 @@
 #include <Library/BootloaderCommonLib.h>
 
 #include "IgdOpRegion30.h"
-#include <IgdOpRegionDefines.h>
+#include <IgdOpRegionDefines30.h>
 
 //
 // Global variables

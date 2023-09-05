@@ -276,12 +276,9 @@ IgdOpRegionPlatformInit (
   )
 {
   GLOBAL_NVS_AREA           *Gnvs;
-  IGD_OP_PLATFORM_INFO      IgdPlatformInfo;
   EFI_STATUS                Status;
 
   Gnvs = (GLOBAL_NVS_AREA *)(UINTN)PcdGet32 (PcdAcpiGnvsAddress);
-
-  IgdPlatformInfo.TurboIMON = 31;
 
   Status = IgdOpRegionInit (NULL);
   Gnvs->SaNvs.IgdOpRegionAddress = (UINT32)(UINTN)PcdGet32 (PcdIgdOpRegionAddress);
