@@ -59,10 +59,10 @@ typedef struct {
 // ACM definition
 //
 
-#define ACM_KEY_HASH_MMIO_ADDR_0  0xFED30400
-#define ACM_KEY_HASH_MMIO_ADDR_1  (ACM_KEY_HASH_MMIO_ADDR_0 + 8)
-#define ACM_KEY_HASH_MMIO_ADDR_2  (ACM_KEY_HASH_MMIO_ADDR_0 + 16)
-#define ACM_KEY_HASH_MMIO_ADDR_3  (ACM_KEY_HASH_MMIO_ADDR_0 + 24)
+#define ACM_KEY_HASH_MSR_ADDR_0  0x20
+#define ACM_KEY_HASH_MSR_ADDR_1  0x21
+#define ACM_KEY_HASH_MSR_ADDR_2  0x22
+#define ACM_KEY_HASH_MSR_ADDR_3  0x23
 #define ACM_PKCS_1_5_RSA_SIGNATURE_SIZE  256
 #define ACM_MODULE_TYPE_CHIPSET_ACM      2
 #define ACM_MODULE_SUBTYPE_CAPABLE_OF_EXECUTE_AT_RESET  0x1
@@ -1005,6 +1005,7 @@ CaculateAuthorityPCRExtendValue (
   if (Bpm == NULL) return FALSE;
 
   AuthorityPcrDataPtr = (UINT8*)&MaxAuthorityPcrData;
+  ZeroMem (AuthorityPcrDataPtr, sizeof(MAX_AUTHORITY_PCR_DATA));
 
   DEBUG ((DEBUG_INFO, "AuthorityPcrData:\n"));
 
@@ -1017,10 +1018,10 @@ CaculateAuthorityPCRExtendValue (
   DEBUG ((DEBUG_INFO, "AcmSvn        - 0x%04x\n", ((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmSvn));
 
   // 3. Get SHA256 hash of the public key used for signing ACM
-  *(UINT64*)&(((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmKeyHash[0])  = MmioRead64 (ACM_KEY_HASH_MMIO_ADDR_0);
-  *(UINT64*)&(((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmKeyHash[8])  = MmioRead64 (ACM_KEY_HASH_MMIO_ADDR_1);
-  *(UINT64*)&(((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmKeyHash[16]) = MmioRead64 (ACM_KEY_HASH_MMIO_ADDR_2);
-  *(UINT64*)&(((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmKeyHash[24]) = MmioRead64 (ACM_KEY_HASH_MMIO_ADDR_3);
+  *(UINT64*)&(((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmKeyHash[0])  = AsmReadMsr64 (ACM_KEY_HASH_MSR_ADDR_0);
+  *(UINT64*)&(((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmKeyHash[8])  = AsmReadMsr64 (ACM_KEY_HASH_MSR_ADDR_1);
+  *(UINT64*)&(((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmKeyHash[16]) = AsmReadMsr64 (ACM_KEY_HASH_MSR_ADDR_2);
+  *(UINT64*)&(((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmKeyHash[24]) = AsmReadMsr64 (ACM_KEY_HASH_MSR_ADDR_3);
 
   DEBUG ((DEBUG_INFO, "AcmKeyHash:  \n"));
   DumpHex (2, 0, SHA256_DIGEST_SIZE, ((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmKeyHash);
@@ -1042,8 +1043,10 @@ CaculateAuthorityPCRExtendValue (
 
     DEBUG ((DEBUG_INFO, "BtG Key Hash:  \n"));
     DumpHex (2, 0, SHA256_DIGEST_SIZE, AuthorityPcrDataPtr);
-    AuthorityPcrDataPtr += SHA256_DIGEST_SIZE;
-    AuthorityPcrDataSize += SHA256_DIGEST_SIZE;
+
+    // ACM pads BtG key hash to 384-bit
+    AuthorityPcrDataPtr += SHA384_DIGEST_SIZE;
+    AuthorityPcrDataSize += SHA384_DIGEST_SIZE;
   } else {
     DEBUG ((DEBUG_ERROR, "KmSignature: Unsupported KeyAlg\n"));
     return FALSE;
