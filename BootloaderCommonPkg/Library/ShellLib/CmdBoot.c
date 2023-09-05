@@ -138,6 +138,26 @@ GetBootDeviceInfo (
   BOOLEAN                    IsHex;
 
   do {
+    ShellPrint (L"Enter ImageType (Default 0x%X, Android 0x%X, Clear Linux 0x%X, ACRN 0x%X, Fastboot 0x%X)\n",
+                EnumImageTypeDefault, EnumImageTypeAdroid, EnumImageTypeClearLinux, EnumImageTypeAcrn, EnumImageTypeFastboot
+                );
+    ShellPrint (L"(default 0x%X) ", CurrOption->ImageType);
+    Status = ShellReadUintn (Shell, Buffer, BufferSize, &IsHex);
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
+    BootOption->ImageType = (BOOT_IMAGE_TYPE) ((IsHex) ? StrHexToUintn (Buffer) : StrDecimalToUintn (Buffer));
+
+    if (StrLen (Buffer) == 0) {
+      BootOption->ImageType = CurrOption->ImageType;
+      break;
+    } else if (BootOption->ImageType < EnumImageTypeMax) {
+      break;
+    }
+    ShellPrint (L"Invalid ImageType value '%s', please re-enter\n", Buffer);
+  } while (1);
+
+  do {
     ShellPrint (L"Enter DevType (SATA 0x%X, SD 0x%X, eMMC 0x%X, UFS 0x%X, SPI 0x%X, USB 0x%X, NVMe 0x%X)\n",
                 OsBootDeviceSata, OsBootDeviceSd, OsBootDeviceEmmc, OsBootDeviceUfs, OsBootDeviceSpi, OsBootDeviceUsb, OsBootDeviceNvme
                 );
