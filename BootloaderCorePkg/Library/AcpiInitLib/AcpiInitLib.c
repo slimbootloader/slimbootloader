@@ -395,7 +395,7 @@ UpdateMadt (
   while (MadtPtr < MadtEnd) {
     EntryHeader = (EFI_ACPI_MADT_ENTRY_COMMON_HEADER *)MadtPtr;
     Length = EntryHeader->Length;
-    if (EntryHeader->Type != EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC) {
+    if ((EntryHeader->Type != EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC) && (EntryHeader->Type != EFI_ACPI_5_0_PROCESSOR_LOCAL_X2APIC)) {
       CopyMem ((VOID *)Current, (VOID *)MadtPtr, Length);
       Current += Length;
     }
