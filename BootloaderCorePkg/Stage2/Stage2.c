@@ -252,10 +252,14 @@ NormalBootPath (
 
   PayloadId = GetPayloadId ();
 
-  // Force board notify to false here to avoid going
-  // into a low power state that prevents SMM
-  // initialization in MTL and RPL universal payloads
-  CallBoardNotify = FALSE;
+  if (PayloadId == 0 || PayloadId == UEFI_PAYLOAD_ID_SIGNATURE) {
+    // Force board notify to false here to avoid going
+    // into a low power state that prevents SMM
+    // initialization in MTL and RPL universal payloads
+    CallBoardNotify = FALSE;
+  } else {
+    CallBoardNotify = TRUE;
+  }
 
 
   if (FixedPcdGetBool (PcdSmpEnabled)) {
