@@ -165,13 +165,13 @@ SeedSanityCheck (
       }
     }
     if(!((OsImageType == EnumImageTypeClearLinux) || (OsImageType == EnumImageTypeAcrn) ||
-    ((OsImageType == EnumImageTypeAdroid) && (TrustyFlag != 0)))) {
+    ((OsImageType == EnumImageTypeAndroid) && (TrustyFlag != 0)))) {
       if(DseedCount > 0) {
         // No other Image should have dseeds. Zero out HOB buffer
         ClearSeedHOB = TRUE;
       }
     }
-    if (!((OsImageType == EnumImageTypeAdroid) || (OsImageType == EnumImageTypeAcrn) ||
+    if (!((OsImageType == EnumImageTypeAndroid) || (OsImageType == EnumImageTypeAcrn) ||
     ((OsImageType == EnumImageTypeClearLinux) && (TrustyFlag != 0)))) {
       if(mRpmbKeyCount > 0) {
         // No other Image should have rpmb keys. Zero out HOB buffer
