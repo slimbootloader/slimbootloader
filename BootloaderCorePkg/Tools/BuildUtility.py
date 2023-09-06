@@ -549,10 +549,10 @@ def gen_config_file (fv_dir, brd_name_override, brd_name, platform_id, pri_key, 
     cfgdata_def_file_name = cfg_def if cfg_def != '' else 'CfgDataDef.yaml'
     if os.path.exists(os.path.join(os.environ['PLT_SOURCE'], 'Platform', brd_name_override, 'CfgData', cfgdata_def_file_name)):
         brd_name_dir  = os.path.join(os.environ['PLT_SOURCE'], 'Platform', brd_name_override)
-    elif os.path.exists(os.path.join(os.environ['SBL_SOURCE'], 'Platform', brd_name_override, 'CfgData', cfgdata_def_file_name)):
-        brd_name_dir  = os.path.join(os.environ['SBL_SOURCE'], 'Platform', brd_name_override)
     elif os.path.exists(os.path.join(os.environ['PLT_SOURCE'], 'Platform', brd_name, 'CfgData', cfgdata_def_file_name)):
         brd_name_dir  = os.path.join(os.environ['PLT_SOURCE'], 'Platform', brd_name)
+    elif os.path.exists(os.path.join(os.environ['SBL_SOURCE'], 'Platform', brd_name_override, 'CfgData', cfgdata_def_file_name)):
+        brd_name_dir  = os.path.join(os.environ['SBL_SOURCE'], 'Platform', brd_name_override)
     elif os.path.exists(os.path.join(os.environ['SBL_SOURCE'], 'Platform', brd_name, 'CfgData', cfgdata_def_file_name)):
         brd_name_dir  = os.path.join(os.environ['SBL_SOURCE'], 'Platform', brd_name)
     else :
