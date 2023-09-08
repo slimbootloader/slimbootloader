@@ -239,25 +239,6 @@ GetBootDeviceInfo (
     ShellPrint (L"Invalid value '%s', please re-enter\n", Buffer);
   } while (1);
 
-  if (BootOption->FsType == EnumFileSystemMax) {
-    return EFI_SUCCESS;
-  }
-
-  //
-  // Get software partition for file system
-  //
-  ShellPrint (L"Enter SwPart (uint)\n");
-  ShellPrint (L"(default 0x%X) ", CurrOption->SwPart);
-  Status = ShellReadUintn (Shell, Buffer, BufferSize, &IsHex);
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-  if (StrLen (Buffer) == 0) {
-    BootOption->SwPart = CurrOption->SwPart;
-  } else {
-    BootOption->SwPart = (UINT8) ((IsHex) ? StrHexToUintn (Buffer) : StrDecimalToUintn (Buffer));
-  }
-
   return EFI_SUCCESS;
 }
 
@@ -286,6 +267,7 @@ GetBootFileInfo (
   )
 {
   EFI_STATUS                 Status;
+  BOOLEAN                    IsHex;
   UINTN                      Length;
 
   if (LoadImageType >= LoadImageTypeMax) {
@@ -293,32 +275,45 @@ GetBootFileInfo (
     return EFI_NO_MAPPING;
   }
 
+  ShellPrint (L"Enter SwPart (uint)\n");
+  ShellPrint (L"(default 0x%X) ", CurrOption->Image[LoadImageType].FileImage.SwPart);
+  Status = ShellReadUintn (Shell, Buffer, BufferSize, &IsHex);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+  if (StrLen (Buffer) == 0) {
+    BootOption->Image[LoadImageType].FileImage.SwPart = CurrOption->Image[LoadImageType].FileImage.SwPart;
+  } else {
+    BootOption->Image[LoadImageType].FileImage.SwPart = (UINT8) ((IsHex) ? StrHexToUintn (Buffer) : StrDecimalToUintn (Buffer));
+  }
+
   do {
     if (LoadImageType == LoadImageTypeNormal){
       ShellPrint (L"Enter file path string (max length of %d)\n",
-                  sizeof (BootOption->Image[LoadImageType].FileName) - 1
+                  sizeof (BootOption->Image[LoadImageType].FileImage.FileName) - 1
                   );
     } else if (LoadImageType == LoadImageTypePreOs){
         ShellPrint (L"Enter Pre-OS file path string (max length of %d)\n",
-                    sizeof (BootOption->Image[LoadImageType].FileName) - 1
+                    sizeof (BootOption->Image[LoadImageType].FileImage.FileName) - 1
                     );
-    } else if (LoadImageType == LoadImageTypeExtra0){
-        ShellPrint (L"Enter Extra Image file path string (max length of %d)\n",
-                    sizeof (BootOption->Image[LoadImageType].FileName) - 1
+    } else if (LoadImageType >= LoadImageTypeExtra0 && LoadImageType < LoadImageTypeMax){
+        ShellPrint (L"Enter Extra Image %d file path string (max length of %d)\n",
+                    LoadImageType - LoadImageTypeExtra0,
+                    sizeof (BootOption->Image[LoadImageType].FileImage.FileName) - 1
                     );
     }
-    ShellPrint (L"(default '%a') ", CurrOption->Image[LoadImageType].FileName);
+    ShellPrint (L"(default '%a') ", CurrOption->Image[LoadImageType].FileImage.FileName);
     Status = ShellReadLine (Shell, Buffer, BufferSize);
     if (EFI_ERROR (Status)) {
       return Status;
     }
     Length = StrLen (Buffer);
     if (Length == 0) {
-      CopyMem (BootOption->Image[LoadImageType].FileName, CurrOption->Image[LoadImageType].FileName, sizeof (CurrOption->Image[LoadImageType].FileName));
+      CopyMem (BootOption->Image[LoadImageType].FileImage.FileName, CurrOption->Image[LoadImageType].FileImage.FileName, sizeof (CurrOption->Image[LoadImageType].FileImage.FileName));
       break;
     }
-    if (Length < sizeof (BootOption->Image[LoadImageType].FileName)) {
-      UnicodeStrToAsciiStrS (Buffer, (CHAR8 *)BootOption->Image[LoadImageType].FileName, sizeof (BootOption->Image[LoadImageType].FileName));
+    if (Length < sizeof (BootOption->Image[LoadImageType].FileImage.FileName)) {
+      UnicodeStrToAsciiStrS (Buffer, (CHAR8 *)BootOption->Image[LoadImageType].FileImage.FileName, sizeof (BootOption->Image[LoadImageType].FileImage.FileName));
       break;
     }
     ShellPrint (L"Invalid, too long: '%s' len=%d, please re-enter\n", Buffer, Length);
@@ -431,8 +426,8 @@ PrintBootOption (
                  BootOption->BootFlags, \
                  BootOption->HwPart,  \
                  GetFsTypeString (BootOption->FsType), \
-                 BootOption->SwPart,  \
-                 BootOption->Image[0].FileName \
+                 BootOption->Image[0].FileImage.SwPart,  \
+                 BootOption->Image[0].FileImage.FileName \
                  );
     } else {
       ShellPrint (L"%3x|%7x| %5a | %4x | %3x | %4x | %4a | %4x | 0x%x", \
@@ -608,6 +603,7 @@ ShellCommandBootFunc (
     }
 
     if (BootOption.FsType != EnumFileSystemMax) {
+      BootOption.Image[LoadImageTypeNormal].FileImage.FsType = BootOption.FsType;
       Status = GetBootFileInfo (Shell, Buffer, sizeof (Buffer), &BootOption, CurrOption, LoadImageTypeNormal);
       if (EFI_ERROR (Status)) {
         goto ExitBootCmd;

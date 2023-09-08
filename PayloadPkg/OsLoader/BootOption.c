@@ -59,8 +59,8 @@ PrintBootOptions (
                  BootOption->BootFlags, \
                  BootOption->HwPart,  \
                  GetFsTypeString (BootOption->FsType), \
-                 BootOption->SwPart,  \
-                 BootOption->Image[0].FileName \
+                 BootOption->Image[0].FileImage.SwPart,  \
+                 BootOption->Image[0].FileImage.FileName \
                  ));
     } else {
       DEBUG ((DEBUG_INFO, "%3x|%7x| %5a | %4x | %3x | %4x | %4a | %4x | 0x%x", \
