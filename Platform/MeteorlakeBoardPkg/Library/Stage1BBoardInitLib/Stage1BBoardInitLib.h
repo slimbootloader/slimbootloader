@@ -34,7 +34,7 @@
 #include <ConfigDataCommonStruct.h>
 #include <Library/ResetSystemLib.h>
 #include <Register/PchRegsPmc.h>
-#include <Register/RtcRegs.h>
+#include <Register/PchRegsLpc.h>
 #include <Register/PchRegsPcr.h>
 #include <PlatformBase.h>
 #include <ConfigDataDefs.h>

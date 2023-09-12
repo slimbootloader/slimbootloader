@@ -66,6 +66,7 @@
 #define B_RTC_PCR_BUC_DSO                     BIT4                 ///< Daylight Savings Override
 #define B_RTC_PCR_BUC_TS                      BIT0                 ///< Top Swap
 #define R_RTC_PCR_RTCDCG                      0x3418               ///< RTC Dynamic Clock Gating Control
+#define R_RTC_IO_REGC                         0x0C
 #define R_LPC_PCR_PRC                         0x341C
 #define R_ESPI_PCR_SLV_CFG_REG_CTL            0x4000                  ///< Secondary Configuration Register and Link Control
 #define B_ESPI_PCR_SLV_CFG_REG_CTL_SCRE       BIT31                   ///< Secondary Configuration Register Access Enable

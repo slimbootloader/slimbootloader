@@ -21,7 +21,7 @@
 #include <Library/PchPcrLib.h>
 #include <Library/HeciInitLib.h>
 #include <Register/PchRegsPcr.h>
-#include <Register/RtcRegs.h>
+#include <Register/PchRegsLpc.h>
 #include <Register/PchRegsPmc.h>
 #include <Register/PchBdfAssignment.h>
 #include <Service/HeciService.h>

@@ -53,6 +53,7 @@
 #define V_ACPI_IO_PM1_CNT_S4                     (BIT12 | BIT11)
 #define V_ACPI_IO_PM1_CNT_S5                     (BIT12 | BIT11 | BIT10)
 #define B_ACPI_IO_PM1_CNT_SCI_EN                 BIT0                                   ///< SCI Enable
+#define B_ACPI_IO_PM1_STS_RTC_EN                 BIT26
 
 #define R_ACPI_IO_PM1_TMR                        0x08                                   ///< Power Management 1 Timer
 #define V_ACPI_IO_PM1_TMR_MAX_VAL                0x1000000       ///< The timer is 24 bit overflow

@@ -18,6 +18,7 @@
 #include <Include/GpioV2Config.h>
 #include <Library/MtlSocGpioTopologyLib.h>
 #include <Library/PchInfoLib.h>
+#include <Register/PchRegslpc.h>
 
 STATIC CONST UINT32 NhltSignaturesTable[] = {
   SIGNATURE_32 ('N', 'H', 'L', 'T'),
@@ -187,7 +188,8 @@ ClearSmi (
 {
   UINT32                SmiEn;
   UINT32                SmiSts;
-  UINT16                Pm1Sts;
+  UINT32                Pm1Sts;
+  UINT16                Pm1Cnt;
 
   SmiEn = IoRead32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN));
   if (((SmiEn & B_ACPI_IO_SMI_EN_GBL_SMI) !=0) && ((SmiEn & B_ACPI_IO_SMI_EN_EOS) !=0)) {
@@ -198,7 +200,16 @@ ClearSmi (
   // Clear the status before setting smi enable
   //
   SmiSts = IoRead32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN + 4));
-  Pm1Sts = IoRead16 ((UINTN)(ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS));
+  Pm1Sts = IoRead32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS));
+  Pm1Cnt = IoRead16 ((UINTN)(ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_CNT));
+
+  // Clear RTC alarm and corresponding Pm1Sts only if wake-up source is RTC SMI#
+  if (((Pm1Sts & B_ACPI_IO_PM1_STS_RTC_EN) != 0) &&
+      ((Pm1Sts & B_ACPI_IO_PM1_STS_RTC) != 0) &&
+      ((Pm1Cnt & B_ACPI_IO_PM1_CNT_SCI_EN) == 0)) {
+    IoWrite8 (R_RTC_IO_INDEX, R_RTC_IO_REGC);
+    IoRead8 (R_RTC_IO_TARGET); // RTC alarm is cleared upon read
+  }
 
   SmiSts |=
     (
