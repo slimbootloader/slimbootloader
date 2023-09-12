@@ -16,17 +16,29 @@
 **/
 VOID
 PrintExtraImages (
-OS_BOOT_OPTION *BootOption,
-UINT8 Flags,
-LOAD_IMAGE_TYPE ImageType
-)
+  OS_BOOT_OPTION *BootOption,
+  UINT8 Flags,
+  LOAD_IMAGE_TYPE ImageType
+  )
 {
+  BOOT_IMAGE *BootImage;
+
+  BootImage = &BootOption->Image[ImageType];
   if ((BootOption->BootFlags & Flags) != 0){
-    if (BootOption->Image[ImageType].LbaImage.Valid == 1) {
-      DEBUG ((DEBUG_INFO, " [%x|0x%x]", ImageType, BootOption->Image[ImageType].LbaImage.SwPart,
-      BootOption->Image[ImageType].LbaImage.LbaAddr));
-    } else if (BootOption->Image[ImageType].FileName[0] != '\0') {
-      DEBUG ((DEBUG_INFO, " [%a]", BootOption->Image[ImageType].FileName));
+    if (BootImage->LbaImage.Valid == 1) {
+      DEBUG ((DEBUG_INFO, "                                %6a | %4a | %4x | %a\n",
+              GetLoadedImageTypeNameString(ImageType),
+              "RAW",
+              BootImage->LbaImage.SwPart,
+              BootImage->LbaImage.LbaAddr
+            ));
+    } else if (BootImage->FileImage.FileName[0] != '\0') {
+      DEBUG ((DEBUG_INFO, "                                %6a | %4a | %4x | %a\n",
+              GetLoadedImageTypeNameString(ImageType),
+              GetFsTypeString(BootImage->FileImage.FsType),
+              BootImage->FileImage.SwPart,
+              BootImage->FileImage.FileName
+            ));
     }
   }
 }
@@ -75,15 +87,19 @@ PrintBootOptions (
                  BootOption->Image[0].LbaImage.LbaAddr \
                  ));
     }
-    //Print Pre-OS image filename
-    PrintExtraImages (BootOption,BOOT_FLAGS_PREOS,LoadImageTypePreOs);
-    //Print extra image filename
-    PrintExtraImages (BootOption,BOOT_FLAGS_EXTRA,LoadImageTypeExtra0);
 
     if (Index == OsBootOptionList->CurrentBoot) {
       DEBUG ((DEBUG_INFO," *Current"));
     }
     DEBUG ((DEBUG_INFO, "\n"));
+
+    //Print Pre-OS image filename
+    for (UINT8 Type = LoadImageTypeExtra0; Type < LoadImageTypeMax; Type++) {
+      PrintExtraImages (BootOption, BOOT_FLAGS_EXTRA, Type);
+    }
+
+    //Print extra image filename
+    PrintExtraImages (BootOption,BOOT_FLAGS_PREOS,LoadImageTypePreOs);
   }
 }
 
