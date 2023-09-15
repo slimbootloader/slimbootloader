@@ -58,11 +58,10 @@ typedef struct {
 //
 // ACM definition
 //
-
-#define ACM_KEY_HASH_MMIO_ADDR_0  0xFED30400
-#define ACM_KEY_HASH_MMIO_ADDR_1  (ACM_KEY_HASH_MMIO_ADDR_0 + 8)
-#define ACM_KEY_HASH_MMIO_ADDR_2  (ACM_KEY_HASH_MMIO_ADDR_0 + 16)
-#define ACM_KEY_HASH_MMIO_ADDR_3  (ACM_KEY_HASH_MMIO_ADDR_0 + 24)
+#define ACM_KEY_HASH_MSR_ADDR_0  0x20
+#define ACM_KEY_HASH_MSR_ADDR_1  0x21
+#define ACM_KEY_HASH_MSR_ADDR_2  0x22
+#define ACM_KEY_HASH_MSR_ADDR_3  0x23
 #define ACM_PKCS_1_5_RSA_SIGNATURE_SIZE  256
 #define ACM_MODULE_TYPE_CHIPSET_ACM      2
 #define ACM_MODULE_SUBTYPE_CAPABLE_OF_EXECUTE_AT_RESET  0x1
@@ -134,7 +133,7 @@ typedef struct {
 #define PKCS_1_5_RSA_SHA256_SIGNATURE_SIZE  (RSA_KEY_SIZE_2K / 8)
 #define PKCS_1_5_RSA_SHA384_SIGNATURE_SIZE  (RSA_KEY_SIZE_3K / 8)
 #define SHA1_DIGEST_SIZE             20
-#define SHA256_DIGEST_SIZE  32
+#define SHA256_DIGEST_SIZE           32
 #define SHA384_DIGEST_SIZE           48
 #define SM3_256_DIGEST_SIZE          32
 
@@ -189,8 +188,8 @@ typedef struct {
 #define RSA_PUBLIC_KEY_STRUCT_VERSION_1_0  0x10
 #define RSA_PUBLIC_KEY_STRUCT_KEY_EXPONENT_DEFAULT  0x11 // NOT 0x10001
 typedef struct {
-  UINT8  Version;
-  UINT16   KeySizeBits;                // 1024 or 2048 or 3072 bits
+  UINT8     Version;
+  UINT16    KeySizeBits;                // 1024 or 2048 or 3072 bits
 } KEY_STRUCT_HEADER;
 typedef struct {
   UINT8    Version;                    // 0x10
@@ -432,7 +431,7 @@ typedef struct {
 typedef struct {
   UINT64 AcmPolicySts;
   UINT16 AcmSvn;                               // ACM_SVN from ACM Header
-  UINT8  AcmKeyHash[SHA384_DIGEST_SIZE];       // The hash of the key used to verify the ACM (SHAxxx)
+  UINT8  AcmKeyHash[SHA256_DIGEST_SIZE];       // The hash of the key used to verify the ACM (SHAxxx)
   UINT8  BpKeyHash[SHA384_DIGEST_SIZE];        // The hash of the key used to verify the Key Manifest (SHAxxx)
   UINT8  BpmKeyHashFromKm[SHA384_DIGEST_SIZE]; // The hash of the key used to verify the Boot Policy Manifest (SHAxxx)
 } MAX_AUTHORITY_PCR_DATA;
@@ -973,7 +972,7 @@ CaculateDetailPCRExtendValue (
 **/
 BOOLEAN
 CaculateAuthorityPCRExtendValue (
-  OUT TPMU_HA *Digest
+  OUT UINT8 *Digest
   )
 {
   ACM_HEADER                               *Acm;
@@ -1005,6 +1004,7 @@ CaculateAuthorityPCRExtendValue (
   if (Bpm == NULL) return FALSE;
 
   AuthorityPcrDataPtr = (UINT8*)&MaxAuthorityPcrData;
+  ZeroMem (AuthorityPcrDataPtr, sizeof(MAX_AUTHORITY_PCR_DATA));
 
   DEBUG ((DEBUG_INFO, "AuthorityPcrData:\n"));
 
@@ -1017,10 +1017,10 @@ CaculateAuthorityPCRExtendValue (
   DEBUG ((DEBUG_INFO, "AcmSvn        - 0x%04x\n", ((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmSvn));
 
   // 3. Get SHA256 hash of the public key used for signing ACM
-  *(UINT64*)&(((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmKeyHash[0])  = MmioRead64 (ACM_KEY_HASH_MMIO_ADDR_0);
-  *(UINT64*)&(((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmKeyHash[8])  = MmioRead64 (ACM_KEY_HASH_MMIO_ADDR_1);
-  *(UINT64*)&(((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmKeyHash[16]) = MmioRead64 (ACM_KEY_HASH_MMIO_ADDR_2);
-  *(UINT64*)&(((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmKeyHash[24]) = MmioRead64 (ACM_KEY_HASH_MMIO_ADDR_3);
+  *(UINT64*)&(((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmKeyHash[0])  = AsmReadMsr64 (ACM_KEY_HASH_MSR_ADDR_0);
+  *(UINT64*)&(((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmKeyHash[8])  = AsmReadMsr64 (ACM_KEY_HASH_MSR_ADDR_1);
+  *(UINT64*)&(((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmKeyHash[16]) = AsmReadMsr64 (ACM_KEY_HASH_MSR_ADDR_2);
+  *(UINT64*)&(((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmKeyHash[24]) = AsmReadMsr64 (ACM_KEY_HASH_MSR_ADDR_3);
 
   DEBUG ((DEBUG_INFO, "AcmKeyHash:  \n"));
   DumpHex (2, 0, SHA256_DIGEST_SIZE, ((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmKeyHash);
@@ -1029,27 +1029,39 @@ CaculateAuthorityPCRExtendValue (
       + SHA256_DIGEST_SIZE;
   AuthorityPcrDataPtr += AuthorityPcrDataSize;
 
-  // 4. Get SHA256 hash of the public key used for signing BtGuard KM
+  // 4. Get hash of the public key used for signing BtGuard KM
   CurrPos = ((UINT8*)Km + Km->KeySignatureOffset);
-  if (((KEY_AND_SIGNATURE_STRUCT*)CurrPos)->KeyAlg == TPM_ALG_RSA) {
-
-    CurrPos += sizeof(UINT8) + sizeof(UINT16);
-    KeyModulusSize = (((KEY_STRUCT_HEADER *)(UINT8*)CurrPos)->KeySizeBits)/8;
-
-    CopyMem ( MaxModulusExpo, (UINT8 *)((RSA_PUBLIC_KEY_STRUCT *)(UINT8*)CurrPos)->Modulus, KeyModulusSize);
-    CopyMem ( MaxModulusExpo + KeyModulusSize, (UINT8 *)&(((RSA_PUBLIC_KEY_STRUCT *)(UINT8*)CurrPos)->Exponent), 4);
-    Sha256 (MaxModulusExpo, KeyModulusSize + 4, (UINT8 *)AuthorityPcrDataPtr);
-
-    DEBUG ((DEBUG_INFO, "BtG Key Hash:  \n"));
-    DumpHex (2, 0, SHA256_DIGEST_SIZE, AuthorityPcrDataPtr);
-    AuthorityPcrDataPtr += SHA256_DIGEST_SIZE;
-    AuthorityPcrDataSize += SHA256_DIGEST_SIZE;
-  } else {
+  if (((KEY_AND_SIGNATURE_STRUCT*)CurrPos)->KeyAlg != TPM_ALG_RSA) {
     DEBUG ((DEBUG_ERROR, "KmSignature: Unsupported KeyAlg\n"));
     return FALSE;
   }
 
-  // 4. Get SHA256 hash of the public key used for signing Boot Policy Manifest
+  CurrPos += sizeof(UINT8) + sizeof(UINT16);
+  KeyModulusSize = (((KEY_STRUCT_HEADER *)(UINT8*)CurrPos)->KeySizeBits)/8;
+
+  CopyMem (MaxModulusExpo, (UINT8 *)((RSA_PUBLIC_KEY_STRUCT *)(UINT8*)CurrPos)->Modulus, KeyModulusSize);
+  CopyMem (MaxModulusExpo + KeyModulusSize, (UINT8 *)&(((RSA_PUBLIC_KEY_STRUCT *)(UINT8*)CurrPos)->Exponent), 4);
+
+  // ACM uses SHA256 to hash RSA 2K keys and SHA384 to hash RSA 3K keys
+  if((((KEY_STRUCT_HEADER *)(UINT8*)CurrPos)->KeySizeBits) == RSA_KEY_SIZE_2K) {
+    Sha256 (MaxModulusExpo, KeyModulusSize + 4, (UINT8 *)AuthorityPcrDataPtr);
+    DEBUG ((DEBUG_INFO, "BtG Key Hash:  \n"));
+    DumpHex (2, 0, SHA256_DIGEST_SIZE, AuthorityPcrDataPtr);
+
+  } else if((((KEY_STRUCT_HEADER *)(UINT8*)CurrPos)->KeySizeBits) == RSA_KEY_SIZE_3K) {
+    Sha384 (MaxModulusExpo, KeyModulusSize + 4, (UINT8 *)AuthorityPcrDataPtr);
+    DEBUG ((DEBUG_INFO, "BtG Key Hash:  \n"));
+    DumpHex (2, 0, SHA384_DIGEST_SIZE, AuthorityPcrDataPtr);
+
+  } else {
+    DEBUG ((DEBUG_ERROR, "KmSignature: Unsupported Hash Size\n"));
+    return FALSE;
+  }
+  // ACM pads all BtG key hashes to 384 bits
+  AuthorityPcrDataPtr += SHA384_DIGEST_SIZE;
+  AuthorityPcrDataSize += SHA384_DIGEST_SIZE;
+
+  // 5. Get SHA256 hash of the public key used for signing Boot Policy Manifest
   CurrPos = (UINT8*)Km + sizeof(KEY_MANIFEST_STRUCTURE);
   for(Index = 0; Index < Km->KeyCount; Index++) {
     SHAX_KMHASH_STRUCT      *KmHash;
@@ -1068,10 +1080,10 @@ CaculateAuthorityPCRExtendValue (
     CurrPos += sizeof(SHAX_KMHASH_STRUCT) + ShaxHash->Size;
   }
 
-  Sha256 ((UINT8 *)&MaxAuthorityPcrData, AuthorityPcrDataSize, (UINT8 *)Digest);
+  Sha256 ((UINT8 *)&MaxAuthorityPcrData, AuthorityPcrDataSize, Digest);
 
   DEBUG ((DEBUG_INFO, "AuthorityPCR (PCR7): Hash extended by ACM:  \n"));
-  DumpHex (2, 0, SHA256_DIGEST_SIZE, (UINT8*)Digest);
+  DumpHex (2, 0, SHA256_DIGEST_SIZE, Digest);
 
   return TRUE;
 }
@@ -1166,35 +1178,41 @@ CreateDetailPcrEvent (
 }
 
 /**
-  Create AuthorityPCR event log.
+  Create AuthorityPCR event log
 
-  @param[in] ActivePcrBanks Active PCR banks
+
+  @param[in] ActivePcrBanks Active PCR Banks
 **/
 VOID
 CreateAuthorityPcrEvent (
-  IN UINT32   ActivePcrBanks
+  IN UINT32             ActivePcrBanks
   )
 {
-  TCG_PCR_EVENT2_HDR NewEventHdr;
+  TCG_PCR_EVENT2_HDR        NewEventHdr;
+  UINT8                     Sha256[SHA256_DIGEST_SIZE];
   TPML_DIGEST_VALUES        *Digests;
 
   if (NeedAuthorityMeasure() && IsVerifiedBoot()) {
-    DEBUG ((DEBUG_INFO, "Adding AuthorityPCR Event in TCG Event Log.\n"));
-    NewEventHdr.PCRIndex  = 7;
-    NewEventHdr.EventType = EV_EFI_VARIABLE_DRIVER_CONFIG;
     Digests = &NewEventHdr.Digests;
-    Digests->count = 1;
-    Digests->digests[0].hashAlg = TPM_ALG_SHA256;
-    CaculateAuthorityPCRExtendValue (&(Digests->digests[0].digest));
+    NewEventHdr.PCRIndex  = 7;
+    NewEventHdr.EventType = EV_PLATFORM_CONFIG_FLAGS;
+    CaculateAuthorityPCRExtendValue (Sha256);
 
-      if (IsNpwAcm()) {
-        NewEventHdr.EventSize = sizeof (L"Boot Guard Debug Measured S-CRTM");
-        TpmLogEvent (&NewEventHdr, (UINT8 *)L"Boot Guard Debug Measured S-CRTM");
-      } else {
-        NewEventHdr.EventSize = sizeof (L"Boot Guard Measured S-CRTM");
-        TpmLogEvent (&NewEventHdr, (UINT8 *)L"Boot Guard Measured S-CRTM");
-      }
+    ZeroMem (Digests, sizeof(TPML_DIGEST_VALUES));
+    if ((ActivePcrBanks & HASH_ALG_SHA256) != 0) {
+      Digests->digests[Digests->count].hashAlg = TPM_ALG_SHA256;
+      CopyMem (Digests->digests[Digests->count].digest.sha256, Sha256, SHA256_DIGEST_SIZE);
+      Digests->count++;
     }
+
+    if (IsNpwAcm()) {
+      NewEventHdr.EventSize = sizeof (L"Boot Guard Debug Measured S-CRTM");
+      TpmLogEvent (&NewEventHdr, (UINT8 *)L"Boot Guard Debug Measured S-CRTM");
+    } else {
+      NewEventHdr.EventSize = sizeof (L"Boot Guard Measured S-CRTM");
+      TpmLogEvent (&NewEventHdr, (UINT8 *)L"Boot Guard Measured S-CRTM");
+    }
+  }
 }
 
 /**
