@@ -23,6 +23,9 @@
 #define  IMAGE_TYPE_ADDENDUM  0x1E
 #define  IMAGE_TYPE_NOT_USED  0x1F
 
+#define  PREOS_IMAGE_INDEX    MAX_EXTRA_IMAGE_NUM
+#define  MISC_IMAGE_INDEX     PREOS_IMAGE_INDEX + 1
+
 #define NATIVE_PSTATE_LATENCY         10
 #define PSTATE_BM_LATENCY             10
 
@@ -89,9 +92,14 @@ FillBootOptionListFromCfgData (
       if (BootOptionCfgData->PreOsImageType < MAX_EXTRA_IMAGE_NUM) {
         // extra image addendum
         ImageIdx = LoadImageTypeExtra0 + BootOptionCfgData->PreOsImageType;
-      } else {
+      } else if (BootOptionCfgData->PreOsImageType == PREOS_IMAGE_INDEX) {
         //  PreOS addendum
         ImageIdx = LoadImageTypePreOs;
+      } else if (BootOptionCfgData->PreOsImageType == MISC_IMAGE_INDEX) {
+        // misc addendum
+        ImageIdx = LoadImageTypeMisc;
+      } else {
+        DEBUG ((DEBUG_ERROR, "Invalid addendum image type: %2x\n", BootOptionCfgData->PreOsImageType));
       }
     } else {
       // CFGDATA has short structure to save size on flash
