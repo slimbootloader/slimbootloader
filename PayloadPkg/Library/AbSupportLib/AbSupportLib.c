@@ -49,13 +49,14 @@ ParseBootSlot (
   UINTN                      DataSize;
 
   if (AbBootInfo->Magic != AB_MAGIC_SIGNATURE) {
+    DEBUG ((DEBUG_INFO, "AB magic error: 0x%x\n", AbBootInfo->Magic));
     return -1;
   }
 
   DataSize = sizeof (AB_BOOT_INFO) - sizeof (UINT32);
   Status = CalculateCrc32WithType ((UINT8 *)AbBootInfo, DataSize, Crc32TypeDefault, &CrcOut);
-  if (EFI_ERROR (Status) || (SwapBytes32 (CrcOut) != AbBootInfo->Crc32)) {
-    DEBUG ((DEBUG_INFO, "BootSlot CRC error: 0x%x !=0x%x\n", SwapBytes32 (CrcOut), AbBootInfo->Crc32));
+  if (EFI_ERROR (Status) || (CrcOut != AbBootInfo->Crc32)) {
+    DEBUG ((DEBUG_INFO, "BootSlot CRC error: 0x%x !=0x%x\n", CrcOut, AbBootInfo->Crc32));
     return -2;
   }
 
