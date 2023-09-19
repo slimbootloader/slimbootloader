@@ -26,7 +26,7 @@ PrintExtraImages (
   BootImage = &BootOption->Image[ImageType];
   if ((BootOption->BootFlags & Flags) != 0){
     if (BootImage->LbaImage.Valid == 1) {
-      DEBUG ((DEBUG_INFO, "                                %6a | %4a | %4x | %a\n",
+      DEBUG ((DEBUG_INFO, "                                %6a | %4a | %4x | 0x%x\n",
               GetLoadedImageTypeNameString(ImageType),
               "RAW",
               BootImage->LbaImage.SwPart,
@@ -93,13 +93,16 @@ PrintBootOptions (
     }
     DEBUG ((DEBUG_INFO, "\n"));
 
-    //Print Pre-OS image filename
+    //Print extra image filename
     for (UINT8 Type = LoadImageTypeExtra0; Type < LoadImageTypeMax; Type++) {
       PrintExtraImages (BootOption, BOOT_FLAGS_EXTRA, Type);
     }
 
-    //Print extra image filename
+    //Print Pre-OS image filename
     PrintExtraImages (BootOption,BOOT_FLAGS_PREOS,LoadImageTypePreOs);
+
+    //Print misc image filename
+    PrintExtraImages (BootOption,BOOT_FLAGS_MISC,LoadImageTypeMisc);
   }
 }
 
