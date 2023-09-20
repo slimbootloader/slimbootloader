@@ -191,6 +191,19 @@ def load_source (name, filepath):
 
 def get_openssl_path ():
     if os.name == 'nt':
+        # check openssl location and version
+        files = [
+            'C:\\Program Files\\Git\\usr\\bin\\openssl.exe',
+            'C:\\Program Files\\Git\\mingw64\\bin\\openssl.exe',
+            'C:\\Program Files (x86)\\Subversion\\bin\\openssl.exe',
+            'C:\\Program Files\\OpenSSL\\bin\openssl.exe'
+        ]
+        for file_location in files:
+            print ("Checking %s ..." % file_location)
+            if os.path.exists (file_location):
+                print ("file %s exists" % file_location)
+                print (subprocess.check_output([file_location, 'version']).decode())
+
         if 'OPENSSL_PATH' not in os.environ:
             openssl_dir = "C:\\Openssl\\bin\\"
             if os.path.exists (openssl_dir):
