@@ -1,7 +1,7 @@
 /** @file
   Payload implements one instance of Paltform Hook Library.
 
-  Copyright (c) 2015 - 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2015 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -21,6 +21,8 @@
 // Magic for the A/B struct, 0x42414342
 #define AB_MAGIC_SIGNATURE       SIGNATURE_32('B', 'C', 'A', 'B')
 
+#pragma pack(1)
+
 typedef struct {
   // Slot priority with 15 meaning highest priority, 1 lowest
   // priority and 0 the slot is unbootable.
@@ -34,7 +36,7 @@ typedef struct {
   UINT8                   VerityCorrupted:1;
   // Reserved for further use.
   UINT8                   Reserved:7;
-} __attribute__((packed)) AB_SLOT_DATA;
+} AB_SLOT_DATA;
 
 typedef struct {
   // NUL terminated active slot suffix.
@@ -58,10 +60,11 @@ typedef struct {
   // CRC32 of all 28 bytes preceding this field (little endian
   // format).
   UINT32                  Crc32;
-} __attribute__((packed)) AB_BOOT_INFO;
+} AB_BOOT_INFO;
 
 typedef struct {
   UINT8                   LegacyData[2048];
   AB_BOOT_INFO            AbBootInfo;
 } MISC_PARTITION_DATA;
 
+#pragma pack()
