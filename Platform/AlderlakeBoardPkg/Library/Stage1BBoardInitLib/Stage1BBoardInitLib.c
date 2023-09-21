@@ -618,6 +618,8 @@ DEBUG_CODE_END();
     PlatformFeaturesInit ();
     VariableInitialize ();
     RtcInit ();
+    UpdateResetReason ();
+    DEBUG ((DEBUG_INFO, "ResetReason = 0x%x\n",GetResetReason()));
     DEBUG ((DEBUG_INFO, "Boot Mode .... %d\n",GetBootMode()));
     // Set ISH Device Address
     DeviceId = (IsPchS () ? PCI_DEVICE_NUMBER_PCH_ISH : PCI_DEVICE_NUMBER_PCH_LP_ISH);

@@ -1,7 +1,7 @@
 /** @file
   This file defines the hob structure for the OS boot configuration.
 
-  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -51,8 +51,9 @@ typedef enum {
   ResetPowerOn  = BIT2,
   ResetGlobal   = BIT3,
   ResetWakeS3   = BIT4,
-  ResetUnknown  = BIT5,
-  Reserved      = BIT6 | BIT7
+  ResetWakeS4   = BIT5,
+  ResetUnknown  = BIT6,
+  Reserved      = BIT7
 } RESET_CAUSE;
 
 // Define OS boot media devices
