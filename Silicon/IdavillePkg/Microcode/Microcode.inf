@@ -14,12 +14,12 @@
   VERSION_STRING       = 1.0
 
 [Sources]
-  m_10_606c1_01000270.mcb
+  m_10_606c1_01000280.mcb
 
 [UserExtensions.SBL."CloneRepo"]
   REPO   = https://github.com/slimbootloader/firmwareblob.git
-  COMMIT = 573aa33b7287aff5a518963651b375dfaaa0acc2
+  COMMIT = ea393c710a426d62e40ff9c2678ee1e941d2aa83
 
 
 [UserExtensions.SBL."CopyList"]
-  Microcode/Idaville/m_10_606c1_01000270.pdb  : Silicon/IdavillePkg/Microcode/m_10_606c1_01000270.mcb
+  Microcode/Idaville/m_10_606c1_01000280.pdb  : Silicon/IdavillePkg/Microcode/m_10_606c1_01000280.mcb
