@@ -475,7 +475,6 @@ UpdateFspConfig (
   } else {
     FspsUpd->FspsConfig.PchLegacyIoLowLatency     = SiCfgData->PchLegacyIoLowLatency;
     FspsUpd->FspsConfig.RenderStandby             = SiCfgData->RenderStandby; // IGFX RenderStandby
-    MaxPcieRootPorts = GetMaxCpuPciePortNum ();
 
     // SATA
     SataCtrlIndex = 0;
@@ -580,13 +579,16 @@ UpdateFspConfig (
     }
     FspsConfig->PcieGen3EqPh3Preset5List[11]               = 0x9;
     FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[11]         = 0x5;
+
+    for (Index = 0; Index < 8; Index++) {
+      FspsConfig->TurboRatioLimitRatio[Index]                = SiCfgData->TurboRatioLimitRatio[Index];
+      FspsConfig->AtomTurboRatioLimitRatio[Index]            = SiCfgData->AtomTurboRatioLimitRatio[Index];
+    }
   } //End of SiCfgData Ptr
 
   for (Index = 0; Index < 8; Index++) {
     FspsConfig->PcieRpSnoopLatencyOverrideMode[Index]      = 0x2;
     FspsConfig->PcieRpNonSnoopLatencyOverrideMode[Index]   = 0x2;
-    FspsConfig->TurboRatioLimitRatio[Index]                = SiCfgData->TurboRatioLimitRatio[Index];
-    FspsConfig->AtomTurboRatioLimitRatio[Index]            = SiCfgData->AtomTurboRatioLimitRatio[Index];
     FspsConfig->TurboRatioLimitNumCore[Index]              = Index + 1;
     FspsConfig->AtomTurboRatioLimitNumCore[Index]          = Index + 1;
   }
@@ -606,8 +608,6 @@ UpdateFspConfig (
   FspsConfig->PchPwrOptEnable             = 0x1;
 
   // MISC
-  FspsConfig->PchPmSlpS3MinAssert = FspsConfig->PchPmSlpS3MinAssert;
-  FspsConfig->PchPmSlpSusMinAssert = FspsConfig->PchPmSlpSusMinAssert;
   FspsConfig->PchFivrExtV1p05RailVoltage = 0x0;
   FspsConfig->PchFivrExtVnnRailVoltage = 0x0;
   FspsConfig->PchFivrExtVnnRailSxVoltage = 0x0;
@@ -809,8 +809,6 @@ UpdateFspConfig (
   FspsConfig->IshGpGpioPinMuxing[10]          = 0x150490;
   FspsConfig->IshGpGpioPinMuxing[11]          = 0x150889;
   FspsConfig->VccSt                           = 0x1;
-  FspsConfig->PchPmSlpS3MinAssert             = 0x0;
-  FspsConfig->PchPmSlpSusMinAssert            = 0x0;
   FspsConfig->PchPmSlpAMinAssert              = 0x4;
   FspsConfig->CnviBtAudioOffload              = 0x1;
   FspsConfig->FwProgress                      = 0x1;
@@ -838,5 +836,3 @@ UpdateFspConfig (
   // EndOfPost Upd
   FspsUpd->FspsConfig.EndOfPostMessage = 1;
 }
-
-

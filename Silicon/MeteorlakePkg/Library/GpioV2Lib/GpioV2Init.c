@@ -1345,11 +1345,6 @@ GetGpioV2ServicesFromPad (
     return EFI_NOT_FOUND;
   }
 
-  if ((Hid == 0) &&
-       (Uid == 0xFFFFFFFF)) {
-      return EFI_SUCCESS;
-    }
-
   return EFI_SUCCESS;
 }
 
