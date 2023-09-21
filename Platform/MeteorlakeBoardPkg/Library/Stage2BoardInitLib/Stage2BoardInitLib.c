@@ -18,7 +18,7 @@
 #include <Include/GpioV2Config.h>
 #include <Library/MtlSocGpioTopologyLib.h>
 #include <Library/PchInfoLib.h>
-#include <Register/PchRegslpc.h>
+#include <Register/PchRegsLpc.h>
 
 STATIC CONST UINT32 NhltSignaturesTable[] = {
   SIGNATURE_32 ('N', 'H', 'L', 'T'),
