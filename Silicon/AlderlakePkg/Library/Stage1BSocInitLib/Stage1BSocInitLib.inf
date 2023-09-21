@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -27,6 +27,7 @@
   BootloaderCorePkg/BootloaderCorePkg.dec
   Silicon/AlderlakePkg/AlderlakePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
 
 [LibraryClasses]
   BaseLib
@@ -35,3 +36,4 @@
   SpiFlashLib
 
 [Pcd]
+  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress

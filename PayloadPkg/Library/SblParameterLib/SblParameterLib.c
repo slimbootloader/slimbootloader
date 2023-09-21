@@ -27,6 +27,8 @@ GetResetReasonStr (
     return "watchdog";
   } else if ((ResetReason & ResetWakeS3) != 0) {
     return "ResetWakeS3";
+  } else if ((ResetReason & ResetWakeS4) != 0) {
+    return "ResetWakeS4";
   } else if ((ResetReason & ResetWarm) != 0) {
     return "warm";
   } else if (ResetReason == ResetCold) {
