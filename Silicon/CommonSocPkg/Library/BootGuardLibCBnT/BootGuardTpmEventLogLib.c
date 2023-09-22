@@ -972,7 +972,10 @@ CaculateDetailPCRExtendValue (
 **/
 BOOLEAN
 CaculateAuthorityPCRExtendValue (
-  OUT UINT8 *Digest
+  IN UINT32  ActivePcrBanks,
+  OUT UINT8 *Sha256Digest,
+  OUT UINT8 *Sha384Digest,
+  OUT UINT8 *Sm3Digest
   )
 {
   ACM_HEADER                               *Acm;
@@ -1080,10 +1083,23 @@ CaculateAuthorityPCRExtendValue (
     CurrPos += sizeof(SHAX_KMHASH_STRUCT) + ShaxHash->Size;
   }
 
-  Sha256 ((UINT8 *)&MaxAuthorityPcrData, AuthorityPcrDataSize, Digest);
+  if ((ActivePcrBanks & HASH_ALG_SHA256) != 0) {
+    CalculateHash ((UINT8 *)&MaxAuthorityPcrData, AuthorityPcrDataSize, HASH_TYPE_SHA256, (UINT8 *)Sha256Digest);
+    DEBUG ((DEBUG_INFO, "AuthorityPCR (PCR7): Hash extended by ACM:  \n"));
+    DumpHex (2, 0, SHA256_DIGEST_SIZE, Sha256Digest);
+  }
 
-  DEBUG ((DEBUG_INFO, "AuthorityPCR (PCR7): Hash extended by ACM:  \n"));
-  DumpHex (2, 0, SHA256_DIGEST_SIZE, Digest);
+  if ((ActivePcrBanks & HASH_ALG_SHA384) != 0) {
+    CalculateHash ((UINT8 *)&MaxAuthorityPcrData, AuthorityPcrDataSize, HASH_TYPE_SHA384, (UINT8 *)Sha384Digest);
+    DEBUG ((DEBUG_INFO, "AuthorityPCR (PCR7): Hash extended by ACM:  \n"));
+    DumpHex (2, 0, SHA384_DIGEST_SIZE, Sha384Digest);
+  }
+
+  if ((ActivePcrBanks & HASH_ALG_SM3_256) != 0) {
+    CalculateHash ((UINT8 *)&MaxAuthorityPcrData, AuthorityPcrDataSize, HASH_TYPE_SM3, (UINT8 *)Sm3Digest);
+    DEBUG ((DEBUG_INFO, "AuthorityPCR (PCR7): Hash extended by ACM:  \n"));
+    DumpHex (2, 0, SM3_256_DIGEST_SIZE, Sm3Digest);
+  }
 
   return TRUE;
 }
@@ -1190,18 +1206,30 @@ CreateAuthorityPcrEvent (
 {
   TCG_PCR_EVENT2_HDR        NewEventHdr;
   UINT8                     Sha256[SHA256_DIGEST_SIZE];
+  UINT8                     Sha384[SHA384_DIGEST_SIZE];
+  UINT8                     Sm3[SM3_256_DIGEST_SIZE];
   TPML_DIGEST_VALUES        *Digests;
 
   if (NeedAuthorityMeasure() && IsVerifiedBoot()) {
     Digests = &NewEventHdr.Digests;
     NewEventHdr.PCRIndex  = 7;
     NewEventHdr.EventType = EV_PLATFORM_CONFIG_FLAGS;
-    CaculateAuthorityPCRExtendValue (Sha256);
+    CaculateAuthorityPCRExtendValue (ActivePcrBanks, Sha256, Sha384, Sm3);
 
     ZeroMem (Digests, sizeof(TPML_DIGEST_VALUES));
     if ((ActivePcrBanks & HASH_ALG_SHA256) != 0) {
       Digests->digests[Digests->count].hashAlg = TPM_ALG_SHA256;
       CopyMem (Digests->digests[Digests->count].digest.sha256, Sha256, SHA256_DIGEST_SIZE);
+      Digests->count++;
+    }
+    if ((ActivePcrBanks & HASH_ALG_SHA384) != 0) {
+      Digests->digests[Digests->count].hashAlg = TPM_ALG_SHA384;
+      CopyMem (Digests->digests[Digests->count].digest.sha384, Sha384, SHA384_DIGEST_SIZE);
+      Digests->count++;
+    }
+    if ((ActivePcrBanks & HASH_ALG_SM3_256) != 0) {
+      Digests->digests[Digests->count].hashAlg = TPM_ALG_SM3_256;
+      CopyMem (Digests->digests[Digests->count].digest.sm3_256, Sm3, TPM_ALG_SM3_256);
       Digests->count++;
     }
 
