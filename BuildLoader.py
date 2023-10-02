@@ -153,6 +153,7 @@ class BaseBoard(object):
         self.HAVE_ACPI_TABLE       = 1
         self.HAVE_PSD_TABLE        = 0
         self.HAVE_SEED_LIST        = 0
+        self.HAVE_FIT4_ENTRY       = 0
 
         self.FIT_ENTRY_MAX_NUM     = 10
 
@@ -196,6 +197,8 @@ class BaseBoard(object):
         self.VARIABLE_SIZE         = 0
         self.UEFI_VARIABLE_SIZE    = 0
         self.FWUPDATE_SIZE         = 0
+        self.BOOT_POLICY_SIZE      = 0
+        self.BOOT_POLICY_ADDRESS   = 0
 
         self.SPI_IAS1_SIZE         = 0
         self.SPI_IAS2_SIZE         = 0
@@ -396,6 +399,13 @@ class Build(object):
             if self._board.DIAGNOSTICACM_SIZE > 0:
                 diagnosticacm_index      = num_fit_entries
                 num_fit_entries          += 1
+
+            # Platform Boot Policy => FIT4
+            if self._board.HAVE_FIT4_ENTRY:
+                fit_entry = FIT_ENTRY.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
+                fit_entry.set_values(self._board.BOOT_POLICY_ADDRESS, self._board.BOOT_POLICY_SIZE, 0x100, 0x4, 0)
+                print ('  Patching entry %d with 0x%08X:0x%08X - Platform Boot Policy' % (num_fit_entries, fit_entry.address, fit_entry.size))
+                num_fit_entries += 1
 
             # BIOS Module (IBB segment 0): from FIT table end to 4GB
             # Record it now and update later since the FIT size is unknown yet
