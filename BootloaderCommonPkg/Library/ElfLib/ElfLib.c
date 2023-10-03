@@ -38,8 +38,8 @@ IsElfFormat (
   //
   if ((Elf32Hdr->e_ident[EI_MAG0] != ELFMAG0) ||
       (Elf32Hdr->e_ident[EI_MAG1] != ELFMAG1) ||
-      (Elf32Hdr->e_ident[EI_MAG1] != ELFMAG1) ||
-      (Elf32Hdr->e_ident[EI_MAG2] != ELFMAG2)
+      (Elf32Hdr->e_ident[EI_MAG2] != ELFMAG2) ||
+      (Elf32Hdr->e_ident[EI_MAG3] != ELFMAG3)
      ) {
     return FALSE;
   }
