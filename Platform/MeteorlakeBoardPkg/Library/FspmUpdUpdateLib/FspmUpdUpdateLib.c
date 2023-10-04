@@ -434,7 +434,6 @@ UpdateFspConfig (
   Fspmcfg->PchHdaEnable                                         = 0x1;
   Fspmcfg->DmiMaxLinkSpeed                                      = 0x1;
   Fspmcfg->DmiAspm                                              = 0x4;
-  Fspmcfg->Gen3LtcoEnable                                       = 0x1;
   Fspmcfg->CsVrefLow                                            = 0x45;
   Fspmcfg->CsVrefHigh                                           = 0x1d;
   Fspmcfg->CaVrefLow                                            = 0x45;
@@ -445,22 +444,6 @@ UpdateFspConfig (
   Fspmcfg->PchDmiRtlepceb                                       = 0x0;
   Fspmcfg->SkipCpuReplacementCheck                              = 0x1;
   Fspmcfg->CridEnable                                           = 0x0;
-  Fspmcfg->DqsMapCpu2DramMc0Ch0[1] = 0x1;
-  Fspmcfg->DqsMapCpu2DramMc0Ch1[1] = 0x1;
-  Fspmcfg->DqsMapCpu2DramMc0Ch2[1] = 0x1;
-  Fspmcfg->DqsMapCpu2DramMc0Ch3[1] = 0x1;
-  Fspmcfg->DqsMapCpu2DramMc1Ch0[1] = 0x1;
-  Fspmcfg->DqsMapCpu2DramMc1Ch1[1] = 0x1;
-  Fspmcfg->DqsMapCpu2DramMc1Ch2[1] = 0x1;
-  Fspmcfg->DqsMapCpu2DramMc1Ch3[1] = 0x1;
-  Fspmcfg->DmiGen3DsPortRxPreset[0] = 0x1;
-  Fspmcfg->DmiGen3DsPortRxPreset[1] = 0x1;
-  Fspmcfg->DmiGen3DsPortRxPreset[2] = 0x1;
-  Fspmcfg->DmiGen3DsPortRxPreset[3] = 0x1;
-  Fspmcfg->DmiGen3DsPortRxPreset[4] = 0x1;
-  Fspmcfg->DmiGen3DsPortRxPreset[5] = 0x1;
-  Fspmcfg->DmiGen3DsPortRxPreset[6] = 0x1;
-  Fspmcfg->DmiGen3DsPortRxPreset[7] = 0x2;
 
   if (FeaturesCfgData != NULL) {
     if (FeaturesCfgData->Features.S0ix == 1) {
@@ -479,4 +462,3 @@ UpdateFspConfig (
     }
   }
 }
-
