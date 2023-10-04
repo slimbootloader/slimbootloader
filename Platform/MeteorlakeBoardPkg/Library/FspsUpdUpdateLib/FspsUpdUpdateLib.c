@@ -558,8 +558,9 @@ UpdateFspConfig (
       FspsConfig->PcieGen3EqPh3PostCursor0List[Index]      = 0xc;
       FspsConfig->PcieGen3EqPh3PostCursor2List[Index]      = 0xa;
       FspsConfig->PcieGen3EqPh3PreCursor9List[Index]       = 0x0;
-      FspsConfig->PcieGen3EqPh3Preset4List[Index]          = 0x0;
-      FspsConfig->PcieGen3EqPh3Preset5List[Index]          = 0x8;
+      FspsConfig->PcieGen3EqPh3Preset4List[Index]          = 0x8;
+      FspsConfig->PcieGen3EqPh3Preset5List[Index]          = 0x0;
+      FspsConfig->PcieGen4EqPh1DpTxPreset[Index]           = 0x7;
       FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[Index]    = 0x3;
       FspsConfig->PcieGen4EqPh3PostCursor0List[Index]      = 0xc;
       FspsConfig->PcieGen4EqPh3PostCursor2List[Index]      = 0xa;
@@ -577,7 +578,7 @@ UpdateFspConfig (
       FspsConfig->PcieRpNonSnoopLatencyOverrideMode[Index] = 0x2;
       FspsConfig->PcieRpPhysicalSlotNumber[Index]          = (UINT8)Index;
     }
-    FspsConfig->PcieGen3EqPh3Preset5List[11]               = 0x9;
+    FspsConfig->PcieGen3EqPh3Preset4List[11]               = 0x9;
     FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[11]         = 0x5;
 
     for (Index = 0; Index < 8; Index++) {
@@ -589,8 +590,8 @@ UpdateFspConfig (
   for (Index = 0; Index < 8; Index++) {
     FspsConfig->PcieRpSnoopLatencyOverrideMode[Index]      = 0x2;
     FspsConfig->PcieRpNonSnoopLatencyOverrideMode[Index]   = 0x2;
-    FspsConfig->TurboRatioLimitNumCore[Index]              = Index + 1;
-    FspsConfig->AtomTurboRatioLimitNumCore[Index]          = Index + 1;
+    FspsConfig->TurboRatioLimitNumCore[Index]              = 0x0;
+    FspsConfig->AtomTurboRatioLimitNumCore[Index]          = 0x0;
   }
 
   if(GetPayloadId () == 0) {
@@ -779,8 +780,8 @@ UpdateFspConfig (
   FspsConfig->MaxRatio                        = 0x4;
   FspsConfig->X2ApicEnable                    = 0x0;
   FspsConfig->PchUnlockGpioPads               = 0x1;
-  FspsConfig->PchPmDisableEnergyReport        = 0x1;
-  FspsConfig->XdciEnable                      = 0x1;
+  FspsConfig->PchPmDisableEnergyReport        = 0x0;
+  FspsConfig->XdciEnable                      = 0x0;
   FspsConfig->IshUartRxPinMuxing[1]           = 0x146806;
   FspsConfig->IshUartTxPinMuxing[1]           = 0x146807;
   FspsConfig->IshI2cSdaPinMuxing[2]           = 0x143012;
@@ -826,7 +827,7 @@ UpdateFspConfig (
   FspsConfig->PcieRpLtrOverrideSpecComplaint[10] = 0x0;
   FspsConfig->PcieRpLtrOverrideSpecComplaint[11] = 0x0;
   FspsConfig->TcssAuxOri = 0x1;
-  FspsConfig->EnableTcssCovTypeA[1] = 0x82;
+  FspsConfig->EnableTcssCovTypeA[1] = 0x0;
   FspsConfig->SerialIoSpiCsPinMux[0] = 0x14a48a;
   FspsConfig->SerialIoSpiClkPinMux[0] = 0x14a48b;
   FspsConfig->SerialIoSpiMisoPinMux[0] = 0x14a48c;
