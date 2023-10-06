@@ -58,6 +58,7 @@
 #include <Library/SocInitLib.h>
 #include <Library/SmbusLib.h>
 #include <Library/CrashLogLib.h>
+#include <Register/Intel/ArchitecturalMsr.h>
 
 /**
   Initialize Variable.

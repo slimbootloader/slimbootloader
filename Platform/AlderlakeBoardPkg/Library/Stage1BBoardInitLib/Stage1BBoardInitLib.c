@@ -7,6 +7,8 @@
 
 #include "Stage1BBoardInitLib.h"
 
+#define  MTRR_CACHE_UNCACHEABLE      0
+
 CONST PLT_DEVICE mPlatformDevices[] = {
   {
     .Dev = {
@@ -582,6 +584,12 @@ BoardInit (
   )
 {
   UINT8  DeviceId;
+  UINT32             MsrIdx;
+  UINT32             MsrMax;
+  MSR_IA32_MTRRCAP_REGISTER          MsrCap;
+  MSR_IA32_MTRR_PHYSMASK_REGISTER    MsrMask;
+  MSR_IA32_MTRR_PHYSBASE_REGISTER    MsrBase;
+  CPUID_VIR_PHY_ADDRESS_SIZE_EAX     VirPhyAddressSize;
 
   switch (InitPhase) {
   case PreConfigInit:
@@ -703,6 +711,31 @@ DEBUG_CODE_END();
     break;
   case PostTempRamExit:
     TpmInitialize();
+
+    // Uncache(UC) memory address above Top of upper usable memory(Touum)
+    // Find a free MTRR pair
+    MsrCap.Uint64 = AsmReadMsr64 (MSR_IA32_MTRRCAP);
+    MsrMax = MSR_IA32_MTRR_PHYSBASE0 + 2 * MsrCap.Bits.VCNT;
+    for (MsrIdx = MSR_IA32_MTRR_PHYSBASE0; MsrIdx < MsrMax; MsrIdx += 2) {
+      MsrMask.Uint64 = AsmReadMsr64 (MsrIdx + 1);
+      if (MsrMask.Bits.V == 0) {
+        break;
+      }
+    }
+    if (MsrIdx == MsrMax) {
+      DEBUG ((DEBUG_VERBOSE, "Failed to find free MTRR registers"));
+    } else {
+
+      // Program range above max memory 1MB uncachable
+      AsmCpuid (CPUID_VIR_PHY_ADDRESS_SIZE, &VirPhyAddressSize.Uint32, NULL, NULL, NULL);
+      DEBUG ((DEBUG_ERROR, "VirPhyAddressSize.Uint32 = %llx", VirPhyAddressSize.Uint32));
+      MsrBase.Uint64 = GetMemoryInfo (EnumMemInfoTouum);
+      MsrBase.Bits.Type = MTRR_CACHE_UNCACHEABLE;
+      AsmWriteMsr64 (MsrIdx,  MsrBase.Uint64);
+      MsrMask.Uint64  = (~(SIZE_1MB - 1)) & (LShiftU64 (1, VirPhyAddressSize.Bits.PhysicalAddressBits) - 1);
+      MsrMask.Bits.V  = 1;
+      AsmWriteMsr64 (MsrIdx + 1, MsrMask.Uint64);
+    }
     break;
   default:
     break;
