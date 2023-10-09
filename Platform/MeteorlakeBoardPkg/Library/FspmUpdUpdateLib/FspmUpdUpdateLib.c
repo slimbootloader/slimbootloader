@@ -322,7 +322,7 @@ UpdateFspConfig (
   Fspmcfg->LockPTMregs            = MemCfgData->LockPTMregs;
 
   //Debug consent
-  Fspmcfg->PlatformDebugOption            = MemCfgData->PlatformDebugConsent;
+  Fspmcfg->PlatformDebugOption            = MemCfgData->PlatformDebugOption;
   if (Fspmcfg->PlatformDebugOption != 0) {
     Fspmcfg->DciUsb3TypecUfpDbg           = 2;
     Fspmcfg->DebugInterfaceLockEnable     = TRUE;
