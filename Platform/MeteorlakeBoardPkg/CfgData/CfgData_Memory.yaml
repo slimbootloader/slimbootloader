@@ -873,14 +873,14 @@
                      Specify size of Pch trace memory region 1 buffer, the size can be 0, 1MB, 8MB, 64MB, 128MB, 256MB, 512MB. Note - Limitation of total buffer size (PCH + CPU) is 512MB.
       length       : 0x01
       value        : 0x02
-  - PlatformDebugConsent :
-      name         : Platform Debug Consent
+  - PlatformDebugOption :
+      name         : Platform Debug Option
       type         : Combo
       option       : 0:Disabled, 1:Enabled (DCI OOB+[DbC]), 2:Enabled (DCI OOB), 3:Enabled (USB3 DbC), 4:Enabled (XDP/MIPI60), 5:Enabled (USB2 DbC), 6:Enable (2-wire DCI OOB), 7:Manual
       help         : >
                      To 'opt-in' for debug, please select 'Enabled' with the desired debug probe type. Enabling this BIOS option may alter the default value of other debug-related BIOS options.\Manual- Do not use Platform Debug Consent to override other debug-relevant policies, but the user must set each debug option manually, aimed at advanced users.\nNote- DCI OOB (aka BSSB) uses CCA probe;[DCI OOB+DbC] and [USB2 DbC] have the same setting.
       length       : 0x01
-      value        : 0x1
+      value        : 0x0
   - DciEn        :
       name         : DCI Enable
       type         : Combo
