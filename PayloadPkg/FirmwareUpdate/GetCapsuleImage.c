@@ -1,7 +1,7 @@
 /** @file
   This file contains the implementation of FirmwareUpdateLib library.
 
-  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -406,6 +406,7 @@ GetCapsuleImage (
   UINT8                   HwPart;
   UINT8                   StartPart;
   UINT8                   EndPart;
+  UINT8                   DevInstanace_configured;
 
   Status = EFI_UNSUPPORTED;
   CapsuleInfo = NULL;
@@ -427,41 +428,48 @@ GetCapsuleImage (
     DEBUG((DEBUG_ERROR, " CapsuleInfo not found \n"));
     return EFI_NOT_FOUND;
   }
+  DevInstanace_configured = CapsuleInfo->DevInstance;
+  //DevInstance is enumerated upto configured DevInstance in "CfgData_CapsuleInformation.yaml"
+  for (CapsuleInfo->DevInstance = 0; CapsuleInfo->DevInstance <= DevInstanace_configured; CapsuleInfo->DevInstance ++)
+  {
+    Status = InitBootDevice(CapsuleInfo);
+    if (EFI_ERROR(Status)) {
+      return Status;
+    }
 
-  Status = InitBootDevice (CapsuleInfo);
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  if ((CapsuleInfo->DevType == OsBootDeviceUsb) && (CapsuleInfo->HwPart == 0xFF)) {
-    StartPart = 0;
-    EndPart   = 0x10;
-  } else {
-    StartPart = CapsuleInfo->HwPart;
-    EndPart   = CapsuleInfo->HwPart;
-  }
-
-  for (HwPart = StartPart; HwPart <= EndPart; HwPart++) {
-    CapsuleInfo->HwPart = HwPart;
-
-    DEBUG ((DEBUG_INFO, "Read capsule image from %a DevInstance (%4x) HwPart (%4x) SwPart (%4x) FS (%4a)",
-      GetBootDeviceNameString(CapsuleInfo->DevType), CapsuleInfo->DevInstance, CapsuleInfo->HwPart,
-      CapsuleInfo->SwPart, GetFsTypeString (CapsuleInfo->FsType)));
-    if (CapsuleInfo->FsType < EnumFileSystemMax) {
-      DEBUG ((DEBUG_INFO, " file name: %a\n", CapsuleInfo->FileName));
+    if ((CapsuleInfo->DevType == OsBootDeviceUsb) && (CapsuleInfo->HwPart == 0xFF)) {
+      StartPart = 0;
+      EndPart = 0x10;
     } else {
-      DEBUG ((DEBUG_INFO, " LBA offset: 0x%x \n", CapsuleInfo->LbaAddr));
+      StartPart = CapsuleInfo->HwPart;
+      EndPart = CapsuleInfo->HwPart;
     }
 
-    Status = LoadCapsuleImage (CapsuleInfo, CapsuleImage, CapsuleImageSize);
-    if (!EFI_ERROR(Status)) {
-      DEBUG ((DEBUG_INFO, "Capsule Image found, ImageSize=0x%x\n", *CapsuleImageSize));
-      DEBUG ((DEBUG_INFO, "First 256Bytes of capsule image\n"));
-      DumpHex (2, 0, 256, (VOID *)*CapsuleImage);
-      break;
+    for (HwPart = StartPart; HwPart <= EndPart; HwPart++) {
+      CapsuleInfo->HwPart = HwPart;
+
+      DEBUG((DEBUG_INFO, "Read capsule image from %a DevInstance (%4x) HwPart (%4x) SwPart (%4x) FS (%4a)",
+          GetBootDeviceNameString(CapsuleInfo->DevType), CapsuleInfo->DevInstance, CapsuleInfo->HwPart,
+          CapsuleInfo->SwPart, GetFsTypeString(CapsuleInfo->FsType)));
+      if (CapsuleInfo->FsType < EnumFileSystemMax) {
+        DEBUG((DEBUG_INFO, " file name: %a\n", CapsuleInfo->FileName));
+      } else {
+        DEBUG((DEBUG_INFO, " LBA offset: 0x%x \n", CapsuleInfo->LbaAddr));
+      }
+
+      Status = LoadCapsuleImage(CapsuleInfo, CapsuleImage, CapsuleImageSize);
+      //Verifying the found capsule is present in configured DevInstance
+      if ((!EFI_ERROR(Status)) && (DevInstanace_configured == CapsuleInfo->DevInstance)){
+        DEBUG((DEBUG_INFO, "Capsule Image found, ImageSize=0x%x\n", *CapsuleImageSize));
+        DEBUG((DEBUG_INFO, "First 256Bytes of capsule image\n"));
+        DumpHex(2, 0, 256, (VOID*)*CapsuleImage);
+        break;
+      } else {
+        Status = EFI_NO_MEDIA;
+      }
     }
+    MediaInitialize(0, DevDeinit);
   }
-
   return Status;
 }
 
