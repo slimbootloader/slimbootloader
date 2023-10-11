@@ -500,7 +500,6 @@ AcpiInit (
   UINT32                    SectionLen;
   UINT32                    UpdateRdstXsdt;
   EFI_STATUS                Status;
-  UINT32                    ExtraSize;
   UINT32                    Round;
   UINT32                    StartIdx;
   UINT32                    EndIdx;
@@ -586,7 +585,6 @@ AcpiInit (
       CopyMem  (Current, Table, Table->Length);
 
       UpdateRdstXsdt = 0;
-      ExtraSize      = 0;
       Status = PlatformUpdateAcpiTable (Current);
       if (!EFI_ERROR(Status)) {
         UpdateRdstXsdt = 1;
@@ -621,7 +619,7 @@ AcpiInit (
           break;
         case EFI_ACPI_5_0_FIRMWARE_PERFORMANCE_DATA_TABLE_SIGNATURE:
           // FPDT
-          Status = UpdateFpdt (Current, &ExtraSize);
+          Status = UpdateFpdt (Current);
           break;
         case EFI_FIRMWARE_UPDATE_STATUS_TABLE_SIGNATURE:
           // FWST
@@ -654,8 +652,7 @@ AcpiInit (
             );
         }
 
-        TotalSize = ((EFI_ACPI_COMMON_HEADER *)Current)->Length + ExtraSize;
-        Current += TotalSize;
+        Current += ((EFI_ACPI_COMMON_HEADER *)Current)->Length;
       } else {
         DEBUG ((DEBUG_INFO, "Not adding ACPI table \n"));
         Current = Previous;
