@@ -61,15 +61,26 @@ UpdateBgrt (
   Update Firmware Performance Data Table (FPDT).
 
   @param[in]  Table         Pointer of ACPI FPDT Table.
-  @param[out] ExtraSize     Extra size the table needed.
 
   @retval EFI_SUCCESS       Update ACPI FPDT table successfully.
   @retval Others            Failed to update FPDT table.
  **/
 EFI_STATUS
 UpdateFpdt (
-  IN  UINT8                             *Table,
-  OUT UINT32                            *ExtraSize
+  IN  UINT8                             *Table
+  );
+
+/**
+  This function calculates and updates an UINT8 checksum.
+
+  @param[in]  Buffer          Pointer to buffer to checksum
+  @param[in]  Size            Number of bytes to checksum
+
+**/
+VOID
+AcpiPlatformChecksum (
+  IN UINT8      *Buffer,
+  IN UINTN      Size
   );
 
 #endif

@@ -12,6 +12,7 @@
 #include <Library/BootloaderCoreLib.h>
 #include <Library/AcpiInitLib.h>
 #include <Library/TimeStampLib.h>
+#include "AcpiInitLibInternal.h"
 
 BOOT_PERFORMANCE_TABLE mBootPerformanceTableTemplate = {
   {
@@ -198,6 +199,7 @@ UpdateFpdtS3Table (
   DEBUG ((DEBUG_VERBOSE, "FPDT: S3Resume->ResumeCount   = %d\n",  S3Resume->ResumeCount));
   DEBUG ((DEBUG_VERBOSE, "FPDT: S3Resume->FullResume    = %ld\n", S3Resume->FullResume));
 
+  AcpiPlatformChecksum ((UINT8 *)Fpdt, Fpdt->Header.Length);
   return  EFI_SUCCESS;
 }
 
@@ -285,6 +287,7 @@ UpdateFpdtSblTable (
         SblPerfTable->SblPerfRecord.Stage1Time, SblPerfTable->SblPerfRecord.Stage2Time,
         SblPerfTable->SblPerfRecord.OsLoaderTime));
 
+  AcpiPlatformChecksum ((UINT8 *)Fpdt, Fpdt->Header.Length);
   return EFI_SUCCESS;
 }
 
@@ -292,15 +295,13 @@ UpdateFpdtSblTable (
   Update Firmware Performance Data Table (FPDT).
 
   @param[in] Table          Pointer of ACPI FPDT Table.
-  @param[out] ExtraSize     Extra size the table needed.
 
   @retval EFI_SUCCESS       Update ACPI FPDT table successfully.
   @retval Others            Failed to update FPDT table.
  **/
 EFI_STATUS
 UpdateFpdt (
-  IN  UINT8                           *Table,
-  OUT UINT32                          *ExtraSize
+  IN  UINT8                           *Table
   )
 {
   FIRMWARE_PERFORMANCE_TABLE          *Fpdt;
@@ -329,10 +330,7 @@ UpdateFpdt (
     CopyMem (SblPerfTable, &mSblPerfTableTemplate, sizeof (mSblPerfTableTemplate));
     UpdateFpdtBootTable (BootPerfTable);
 
-    if (ExtraSize != NULL) {
-      *ExtraSize = (UINT32)((UINT8 *) (SblPerfTable + 1) - Table - Fpdt->Header.Length);
-    }
-
+    Fpdt->Header.Length = (UINT32)((UINT8 *) (SblPerfTable + 1) - Table);
   }
 
   return  EFI_SUCCESS;
