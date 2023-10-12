@@ -74,6 +74,10 @@ TccModePreMemConfig (
   FSPM_UPD  *FspmUpd
 )
 {
+
+  FEATURES_CFG_DATA                     *FeaturesCfgData;
+
+#if FixedPcdGet8(PcdAdlNSupport) == 0
   UINT32                                *TccCacheBase;
   UINT32                                 TccCacheSize;
   UINT32                                *TccStreamBase;
@@ -81,7 +85,6 @@ TccModePreMemConfig (
   TCC_CFG_DATA                          *TccCfgData;
   BIOS_SETTINGS                         *PolicyConfig;
   TCC_STREAM_CONFIGURATION              *StreamConfig;
-  FEATURES_CFG_DATA                     *FeaturesCfgData;
   EFI_STATUS                             Status;
 
   Status           = EFI_SUCCESS;
@@ -95,6 +98,7 @@ TccModePreMemConfig (
       DEBUG ((DEBUG_INIT, "In FW update flow. Donot apply DSO settings\n"));
       TccCfgData->TccTuning = 0;
     }
+#endif
 
   // TCC related memory settings
   DEBUG ((DEBUG_INFO, "Tcc is enabled, setting Tcc memory config.\n"));
@@ -106,9 +110,15 @@ TccModePreMemConfig (
   FspmUpd->FspmConfig.HyperThreading         = 0;
   FspmUpd->FspmConfig.DisableStarv2medPrioOnNewReq = 1;
 
+#if FixedPcdGet8(PcdAdlNSupport) == 0
   FspmUpd->FspmConfig.SoftwareSramEnPreMem   = TccCfgData->TccSoftSram;
   FspmUpd->FspmConfig.DsoTuningEnPreMem      = TccCfgData->TccTuning;
   FspmUpd->FspmConfig.TccErrorLogEnPreMem    = TccCfgData->TccErrorLog;
+#else
+  FspmUpd->FspmConfig.SoftwareSramEnPreMem   = 0;
+  FspmUpd->FspmConfig.DsoTuningEnPreMem      = 0;
+  FspmUpd->FspmConfig.TccErrorLogEnPreMem    = 0;
+#endif
 
   // S0ix is disabled if TCC is enabled.
   FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag (CDATA_FEATURES_TAG);
@@ -119,6 +129,7 @@ TccModePreMemConfig (
     }
   }
 
+#if FixedPcdGet8(PcdAdlNSupport) == 0
   if (IsMarkedBadDso ()) {
     DEBUG ((DEBUG_ERROR, "Incorrect TCC tuning parameters. Platform rebooted with default values.\n"));
     FspmUpd->FspmConfig.TccStreamCfgStatusPreMem = 1;
@@ -184,6 +195,10 @@ TccModePreMemConfig (
   }
 
   return Status;
+#else
+  return EFI_SUCCESS;
+#endif
+
 }
 #endif
 
