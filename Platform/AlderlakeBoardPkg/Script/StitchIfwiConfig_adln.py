@@ -85,22 +85,6 @@ def get_component_replace_list(plt_params_list):
             replace_list.append (
                 ('IFWI/BIOS/NRD/IPFW/TMAC', 'IPFW/TsnSubRegion.bin',     'lz4',     'KEY_ID_CONTAINER_COMP_RSA3072', 0),   # TSN MAC Address
             )
-    if 'tcc' in plt_params_list:
-      if os.path.exists('IPFW/TccCrlBinary.bin'):
-          print ("TccCrlBinary.bin found")
-          replace_list.append (
-              ('IFWI/BIOS/NRD/IPFW/TCCM', 'IPFW/TccCrlBinary.bin',         'lz4',     'KEY_ID_CONTAINER_COMP_RSA3072', 0),   # TCC CRL binary
-          )
-      if os.path.exists('IPFW/TccCacheCfg.bin'):
-          print ("TccCacheCfg.bin found")
-          replace_list.append (
-              ('IFWI/BIOS/NRD/IPFW/TCCC', 'IPFW/TccCacheCfg.bin',         'lz4',     'KEY_ID_CONTAINER_COMP_RSA3072', 0),   # TCC Cache Cfg binary
-          )
-      if os.path.exists('IPFW/TccStreamCfg.bin'):
-          print ("TccStreamCfg.bin found")
-          replace_list.append (
-              ('IFWI/BIOS/NRD/IPFW/TCCT', 'IPFW/TccStreamCfg.bin',         'lz4',     'KEY_ID_CONTAINER_COMP_RSA3072', 0),   # TCC StreamCfg binary
-          )
 
     return replace_list
 
@@ -110,7 +94,6 @@ def check_parameter(para_list):
         'crb'    : {},
         'quad'   : {},
         'debug'  : {},
-        'tcc'    : {},
         'tsn'    : {}
        }
 
@@ -119,7 +102,6 @@ def check_parameter(para_list):
         'crb'    -- Stitch for CRB board
         'quad'   -- Stitch IFWI with SPI QUAD mode
         'debug'  -- Enable DAM and DCI configuration (Only use for debug purpose but not for final production!)
-        'tcc'    -- Stitch sample Tcc binaries
         'tsn'    -- Stitch sample Tsn Mac address binary along with TSN AIC softstraps
         """
     for para in para_list:

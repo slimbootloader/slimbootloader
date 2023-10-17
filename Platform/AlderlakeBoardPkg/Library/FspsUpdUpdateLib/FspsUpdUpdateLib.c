@@ -335,15 +335,17 @@ TccModePostMemConfig (
   FSPS_UPD  *FspsUpd
 )
 {
+  UINT8                                      Index;
+  UINT8                                      MaxPchPcieRootPorts;
+  UINT8                                      MaxCpuPciePorts;
+
+#if FixedPcdGet8(PcdAdlNSupport) == 0
   UINT32                                    *TccCacheConfigBase;
   UINT32                                     TccCacheConfigSize;
   UINT32                                    *TccCrlBase;
   UINT32                                     TccCrlSize;
   UINT32                                    *TccStreamBase;
   UINT32                                     TccStreamSize;
-  UINT8                                      Index;
-  UINT8                                      MaxPchPcieRootPorts;
-  UINT8                                      MaxCpuPciePorts;
   BIOS_SETTINGS                             *PolicyConfig;
   TCC_STREAM_CONFIGURATION                  *StreamConfig;
   TCC_CFG_DATA                              *TccCfgData;
@@ -359,6 +361,7 @@ TccModePostMemConfig (
   if ((TccCfgData == NULL) || (TccCfgData->TccEnable == 0)) {
     return EFI_NOT_FOUND;
   }
+#endif
 
   DEBUG ((DEBUG_INFO, "Tcc is enabled, setting Tcc Silicon Config\n"));
 
@@ -390,10 +393,13 @@ TccModePostMemConfig (
     FspsUpd->FspsConfig.CpuPcieRpMultiVcEnabled[Index] = 1;
   }
 
+  FspsUpd->FspsConfig.IfuEnable = 0;
+  FspsUpd->FspsConfig.TccMode = 1;
+
+#if FixedPcdGet8(PcdAdlNSupport) == 0
   FspsUpd->FspsConfig.SoftwareSramEn  = TccCfgData->TccSoftSram;
   FspsUpd->FspsConfig.DsoTuningEn     = TccCfgData->TccTuning;
   FspsUpd->FspsConfig.TccErrorLogEn   = TccCfgData->TccErrorLog;
-  FspsUpd->FspsConfig.IfuEnable       = 0;
 
   if (!IsWdtFlagsSet(WDT_FLAG_TCC_DSO_IN_PROGRESS)) {
     //
@@ -482,10 +488,8 @@ TccModePostMemConfig (
       TpmHashAndExtendPcrEventLog (0, (UINT8 *)TccCacheConfigBase, TccCacheConfigSize, EV_PLATFORM_CONFIG_FLAGS, sizeof(TccCacheCfgBlob), (UINT8 *)&TccCacheCfgBlob);
     }
 
-    FspsUpd->FspsConfig.TccMode = 1;
-#if FixedPcdGet8(PcdAdlNSupport) == 0
     FspsUpd->FspsConfig.L2QosEnumerationEn = 1;
-#endif
+
   }
 
   // Load Tcc Crl binary from container
@@ -509,6 +513,13 @@ TccModePostMemConfig (
   }
 
   return Status;
+#else
+  FspsUpd->FspsConfig.SoftwareSramEn  = 0;
+  FspsUpd->FspsConfig.DsoTuningEn     = 0;
+  FspsUpd->FspsConfig.TccErrorLogEn   = 0;
+
+  return EFI_SUCCESS;
+#endif
 }
 #endif
 
