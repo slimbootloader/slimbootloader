@@ -38,7 +38,7 @@ class Board(BaseBoard):
         self._EXTRA_INC_PATH                  = ['Silicon/AlderlakePkg/Azb/Include']
         self._FSP_PATH_NAME                   = 'Silicon/AlderlakePkg/Azb/FspBin'
         self.MICROCODE_INF_FILE               = 'Silicon/AlderlakePkg/Microcode/MicrocodeAzb.inf'
-        self._LP_SUPPORT                      = False
+        self._LP_SUPPORT                      = True
         self._N_SUPPORT                       = False
         self._AZB_SUPPORT                     = True
 
