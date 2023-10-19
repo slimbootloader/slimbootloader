@@ -113,9 +113,19 @@ def stitch (stitch_dir, stitch_cfg_file, sbl_file, btg_profile, platform, tpm, p
         sku = stitch_cfg_file.get_sku()
         platform = stitch_cfg_file.get_platforms()[platform]
         print (platform)
-        fit_tool     = os.path.join (stitch_dir, 'Fit', 'spsFITc.exe')
-        run_process_wrapper ([fit_tool, '-b', '-o', 'Temp/Ifwi.bin', '-f', os.path.join (temp_dir, 'updated.xml'),
-            '-s', temp_dir, '-w', temp_dir, '-sku', sku, '-platform', platform])
+        fit_tool = os.path.join (stitch_dir, 'Fit', 'spsFITc.exe')
+        fit_cmd = [fit_tool, '-b', '-o', 'Temp/Ifwi.bin', '-f', os.path.join (temp_dir, 'updated.xml'),
+            '-s', temp_dir, '-w', temp_dir, '-sku', sku, '-platform', platform]
+        run_process_wrapper (fit_cmd)
+
+        if plt_params_list != None and 'fd0v' in plt_params_list:
+            ibst_path = os.path.join (stitch_dir, 'IbstTool')
+            cmd = ['python', os.path.join(ibst_path, 'ibst.py'), os.path.join(ibst_path, 'config', 'FD0V_Manifest.xml'),
+                    '-s', 'key=%s' % os.path.join (stitch_dir, 'BpmGen2', 'keys', 'oem_privkey_2048.pem'), 'extension_binary=%s' % os.path.join (stitch_dir, 'Temp', 'Int', 'Descriptor Manifest Extension.bin'), '-o', os.path.join(stitch_dir, 'Temp', 'FD0V_Manifest.bin')]
+            run_process_wrapper (cmd)
+            fit_cmd.extend(['-fd0vman', os.path.join(stitch_dir, "Temp", "FD0V_Manifest.bin")])
+            run_process_wrapper (fit_cmd)
+
         return 0
     else:
         gen_igfw_xml_file(stitch_dir, stitch_cfg_file, btg_profile, platform)
