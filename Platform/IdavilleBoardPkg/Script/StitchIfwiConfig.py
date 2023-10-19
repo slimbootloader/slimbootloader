@@ -159,6 +159,12 @@ class StitchIfwiConfig(StitchIfwiConfigBase):
                     ('./Debug/DelayedAuthenticationModeConfiguration/DelayedAuthMode', value),
                 ])
 
+            if 'fd0v' in plt_params_list:
+                xml_change_list.extend([
+                    ('./PlatformProtection/FD0Verification/FD0VEnabled', "0xF"),
+                    ('./UepConfiguration/IntelFpfTable/FDV_EN_LLDD', "0xF"),
+                ])
+
         return xml_change_list
 
 def get_stitch_ifwi_config_instance():
