@@ -56,7 +56,7 @@ FSPT_UPD TempRamInitParams = {
     .PcdSerialIoUartNumber      = FixedPcdGet32 (PcdDebugPortNumber) < PCH_MAX_SERIALIO_UART_CONTROLLERS ? \
                                     FixedPcdGet32 (PcdDebugPortNumber) : 2,
     .PcdSerialIoUartMode        = 4, // SerialIoUartSkipInit, let SBL init UART
-#ifdef PLATFORM_ADLN
+#if defined(PLATFORM_ADLN) || defined(PLATFORM_ASL)
     .PcdSerialIoUartPowerGating = 1,
 #endif
     .PcdSerialIoUartBaudRate    = 115200,

@@ -1209,9 +1209,9 @@ UpdateFspConfig (
         FspsConfig->LidStatus = 0x5b;
         FspsConfig->TcssAuxOri = 0x1;
         FspsConfig->Device4Enable = 0x0; //this controls the thermal device (B0,D4,F0)
-#ifdef PLATFORM_ADLN
+#if defined(PLATFORM_ADLN) || defined(PLATFORM_ASL)
         FspsConfig->PchFivrVccstIccMaxControl = 0x1;
-        FspsConfig->CpuFeaturesInitOnS3ResumeOverride = 1;
+        FspsConfig->CpuFeaturesInitOnS3ResumeOverride = 0x1;
 #endif
         CopyMem (FspsConfig->AtomTurboRatioLimitNumCore, PowerCfgData->AtomTurboRatioLimitNumCore, sizeof(PowerCfgData->AtomTurboRatioLimitNumCore));
         break;
