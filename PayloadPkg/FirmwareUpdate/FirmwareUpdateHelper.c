@@ -709,15 +709,18 @@ UpdateContainerComp (
   IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
   )
 {
-  EFI_STATUS        Status;
-  UINT32            ContainerName;
-  UINT32            ComponentName;
-  UINT32            ComponentBase;
-  CONTAINER_ENTRY   *ContainerEntryPtr;
-  COMPONENT_ENTRY   *ComponentEntryPtr;
-  CONTAINER_HDR     *ContainerHdr;
+  EFI_STATUS               Status;
+  UINT32                   ContainerName;
+  UINT32                   ComponentName;
+  UINT32                   ComponentBase;
+  CONTAINER_ENTRY          *ContainerEntryPtr;
+  COMPONENT_ENTRY          *ComponentEntryPtr;
+  CONTAINER_HDR            *ContainerHdr;
   LOADER_COMPRESSED_HEADER *FlashCompLzHeader;
   LOADER_COMPRESSED_HEADER *CapCompLzHeader;
+  UINT8                    CompInMem[sizeof(LOADER_COMPRESSED_HEADER)];
+  FLASH_MAP                *FlashMapPtr;
+  UINT32                   RomBase;
 
   ComponentName = (UINT32)RShiftU64 (ImageHdr->UpdateHardwareInstance, 32);
   ContainerName = (UINT32)ImageHdr->UpdateHardwareInstance;
@@ -736,14 +739,28 @@ UpdateContainerComp (
   // Update the component
   //
   ContainerHdr = (CONTAINER_HDR *)(UINTN)ContainerEntryPtr->HeaderCache;
-  //
-  // Component base = Container base + data offset from container base + offset of component inside container
-  //
-  ComponentBase = ContainerEntryPtr->Base + ContainerHdr->DataOffset + ComponentEntryPtr->Offset;
+
+  if (ContainerEntryPtr->Base >= 0xF0000000) {
+    //
+    // Component base = Container base + data offset from container base + offset of component inside container
+    //
+    ComponentBase     = ContainerEntryPtr->Base + ContainerHdr->DataOffset + ComponentEntryPtr->Offset;
+    FlashCompLzHeader = (LOADER_COMPRESSED_HEADER *) (UINTN)ComponentBase;
+  } else {
+    // Container base is NOT the flash address, need get its flash address
+    Status = GetComponentInfo(ContainerName, &ComponentBase, NULL);
+    ComponentBase += ContainerHdr->DataOffset + ComponentEntryPtr->Offset;
+
+    // Read compressed header since container might not be MMIO mapped.
+    FlashMapPtr = GetFlashMapPtr ();
+    ASSERT (FlashMapPtr != NULL);
+    RomBase = (UINT32) (0x100000000ULL - FlashMapPtr->RomSize);
+    Status  = BootMediaRead(ComponentBase - RomBase, sizeof(LOADER_COMPRESSED_HEADER), CompInMem);
+    FlashCompLzHeader = (LOADER_COMPRESSED_HEADER *) (UINTN) CompInMem;
+  }
 
   // Current implementation only supports compressed header.
   // Exception: Signature is zero as a mark for previously detected bad region, e.g., TCCT
-  FlashCompLzHeader = (LOADER_COMPRESSED_HEADER *) (UINTN) ComponentBase;
   CapCompLzHeader   = (LOADER_COMPRESSED_HEADER *) ((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
   if (((IS_COMPRESSED (FlashCompLzHeader) == FALSE) && (FlashCompLzHeader->Signature != 0)) ||
       (IS_COMPRESSED (CapCompLzHeader) == FALSE)) {
