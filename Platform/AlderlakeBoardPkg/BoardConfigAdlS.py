@@ -149,7 +149,7 @@ class Board(BaseBoard):
         self.SBLRSVD_SIZE         = 0x00001000
         self.FWUPDATE_SIZE        = 0x00020000 if self.ENABLE_FWU else 0
 
-        self.OS_LOADER_FD_SIZE    = 0x00057000
+        self.OS_LOADER_FD_SIZE    = 0x00058000
         self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         self.TOP_SWAP_SIZE        = 0x00080000
