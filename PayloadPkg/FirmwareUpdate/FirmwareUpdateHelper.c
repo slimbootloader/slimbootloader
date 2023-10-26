@@ -749,6 +749,10 @@ UpdateContainerComp (
   } else {
     // Container base is NOT the flash address, need get its flash address
     Status = GetComponentInfo(ContainerName, &ComponentBase, NULL);
+    if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_INFO, "Component with the matching signature not found."));
+      return Status;
+    }
     ComponentBase += ContainerHdr->DataOffset + ComponentEntryPtr->Offset;
 
     // Read compressed header since container might not be MMIO mapped.
@@ -756,6 +760,10 @@ UpdateContainerComp (
     ASSERT (FlashMapPtr != NULL);
     RomBase = (UINT32) (0x100000000ULL - FlashMapPtr->RomSize);
     Status  = BootMediaRead(ComponentBase - RomBase, sizeof(LOADER_COMPRESSED_HEADER), CompInMem);
+    if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_INFO, "Boot Media device error, read command aborts."));
+      return Status;
+    }
     FlashCompLzHeader = (LOADER_COMPRESSED_HEADER *) (UINTN) CompInMem;
   }
 
