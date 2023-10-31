@@ -1,7 +1,7 @@
 /** @file
   Container library implementation.
 
-  Copyright (c) 2019 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -82,7 +82,7 @@ GetContainerHeaderSize (
     for (Index = 0; Index < ContainerHdr->Count; Index++) {
       CompEntry = (COMPONENT_ENTRY *)((UINT8 *)(CompEntry + 1) + CompEntry->HashSize);
       Offset = (UINT8 *)CompEntry - (UINT8 *)ContainerHdr;
-      if ((Offset < 0) || (Offset >= ContainerHdr->DataOffset)) {
+      if ((Offset < 0) || (Offset > ContainerHdr->DataOffset)) {
         Offset = 0;
         break;
       }
