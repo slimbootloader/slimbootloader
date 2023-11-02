@@ -102,7 +102,7 @@ def GetCopyList (driver_inf):
                 have_copylist_section = False
 
         if have_copylist_section:
-            match = re.match("^(.+)\s*:\s*(.+)", line)
+            match = re.match("^(.+)\\s*:\\s*(.+)", line)
             if match:
                 copy_list.append((match.group(1).strip(), match.group(2).strip()))
 
@@ -125,14 +125,14 @@ def GetRepoAndCommit (driver_inf):
                 have_repo_section = False
 
         if have_repo_section:
-            match = re.match("^REPO\s*=\s*(.*)", line)
+            match = re.match("^REPO\\s*=\\s*(.*)", line)
             if match:
                 repo = match.group(1)
 
-            match = re.match("^TAG\s*=\s*(.*)", line)
+            match = re.match("^TAG\\s*=\\s*(.*)", line)
             if match:
                 commit = match.group(1)
-            match = re.match("^COMMIT\s*=\s*(.*)", line)
+            match = re.match("^COMMIT\\s*=\\s*(.*)", line)
             if match:
                 commit = match.group(1)
 

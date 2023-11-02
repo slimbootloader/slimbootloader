@@ -1,6 +1,6 @@
 ## @ GenCfgData.py
 #
-# Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -99,7 +99,7 @@ def read_lines (file):
 
 def expand_file_value (path, value_str):
     result = bytearray()
-    match  = re.match("\{\s*FILE:(.+)\}", value_str)
+    match  = re.match("\\{\\s*FILE:(.+)\\}", value_str)
     if match:
         file_list = match.group(1).split(',')
         for file in file_list:
@@ -554,7 +554,7 @@ class CFG_YAML():
 
 
 class DefTemplate(string.Template):
-    idpattern = '\([_A-Z][_A-Z0-9]*\)|[_A-Z][_A-Z0-9]*'
+    idpattern = '\\([_A-Z][_A-Z0-9]*\\)|[_A-Z][_A-Z0-9]*'
 
 
 class CGenCfgData:
@@ -563,7 +563,7 @@ class CGenCfgData:
     bits_width     = {'b':1, 'B':8, 'W':16, 'D':32, 'Q':64}
     builtin_option = {'$EN_DIS' : [('0', 'Disable'), ('1', 'Enable')]}
     exclude_struct = ['GPIO_GPP_*', 'GPIO_CFG_DATA', 'GpioConfPad*',  'GpioPinConfig',
-                      'BOOT_OPTION*', 'PLATFORMID_CFG_DATA', '\w+_Half[01]']
+                      'BOOT_OPTION*', 'PLATFORMID_CFG_DATA', '\\w+_Half[01]']
     include_tag    = ['GPIO_CFG_DATA']
     keyword_set    = set(['name', 'type', 'option', 'help', 'length', 'value', 'order', 'struct', 'condition', 'altpage'])
 
@@ -620,7 +620,7 @@ class CGenCfgData:
 
         new_lines = []
         for line_num, line in enumerate(lines):
-            match = re.match("^!include\s*(.+)?$", line.strip())
+            match = re.match("^!include\\s*(.+)?$", line.strip())
             if match:
                 inc_path = match.group(1)
                 tmp_path = os.path.join(cur_dir, inc_path)
@@ -820,7 +820,7 @@ class CGenCfgData:
                     if each[0] in "'" + '"':
                         each_value = bytearray(each[1:-1], 'utf-8')
                     elif ':' in each:
-                        match    = re.match("^(.+):(\d+)([b|B|W|D|Q])$", each)
+                        match    = re.match("^(.+):(\\d+)([b|B|W|D|Q])$", each)
                         if match is None:
                             raise SystemExit("Exception: Invald value list format '%s' !" % each)
                         if match.group(1) == '0' and match.group(2) == '0':
@@ -1156,7 +1156,7 @@ class CGenCfgData:
 
         length = item.get('length', 0)
         if type(length) is str:
-            match = re.match("^(\d+)([b|B|W|D|Q])([B|W|D|Q]?)\s*$", length)
+            match = re.match("^(\\d+)([b|B|W|D|Q])([B|W|D|Q]?)\\s*$", length)
             if match:
                 unit_len = CGenCfgData.bits_width[match.group(2)]
                 length = int(match.group(1), 10) * unit_len
@@ -1387,7 +1387,7 @@ class CGenCfgData:
             line = line.strip()
             if not line or line.startswith('#'):
                 continue
-            match = re.match("\s*([\w\.]+)\s*\|\s*(.+)", line)
+            match = re.match("\\s*([\\w\\.]+)\\s*\\|\\s*(.+)", line)
             if not match:
                 raise Exception("Unrecognized line '%s' (File:'%s' Line:%d) !" %
                                 (line, file_path, line_num + 1))
@@ -1763,7 +1763,7 @@ class CGenCfgData:
 
             bit_length = None
             length = (item['length'] + 7) // 8
-            match  = re.match("^(\d+)([b|B|W|D|Q])([B|W|D|Q]?)", t_item['length'])
+            match  = re.match("^(\\d+)([b|B|W|D|Q])([B|W|D|Q]?)", t_item['length'])
             if match and match.group(2) == 'b':
                 bit_length = int(match.group(1))
                 if match.group(3) != '':
@@ -1831,7 +1831,7 @@ class CGenCfgData:
             if 'struct' in cfgs['$STRUCT']:
                 each['alias'], array_num, var = self.get_struct_array_info (cfgs['$STRUCT']['struct'])
             else:
-                match = re.match('(\w+)(_\d+)', each['name'])
+                match = re.match('(\\w+)(_\\d+)', each['name'])
                 if match:
                     each['alias'] = match.group(1)
                 else:
