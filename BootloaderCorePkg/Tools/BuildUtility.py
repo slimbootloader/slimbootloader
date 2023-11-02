@@ -24,7 +24,6 @@ import ntpath
 from   CommonUtility import *
 from   IfwiUtility   import FLASH_MAP, FLASH_MAP_DESC, FIT_ENTRY, UCODE_HEADER
 from SingleSign import MESSAGE_SBL_KEY_DIR
-from distutils.version import LooseVersion
 
 sys.dont_write_bytecode = True
 sys.path.append (os.path.join(os.path.dirname(__file__), '..', '..', 'IntelFsp2Pkg', 'Tools'))
@@ -223,12 +222,26 @@ class PciEnumPolicyInfo(Structure):
         self.BusScanType        = 0
         self.NumOfBus           = 0
 
+def _comparable_version(version):
+    component_re = re.compile(r'([0-9]+|[._+-])')
+    result = []
+    for v in component_re.split(version):
+        if v not in '._+-':
+            try:
+                v = int(v, 10) if v.isdigit() else ord(v)
+                t = 100
+            except ValueError:
+                print ("error %s" % version)
+                t = 0
+            result.extend((t, v))
+    return result
+
 def is_valid_tool_version(cmd, current_version, optional=False):
     try:
         name_str = ntpath.basename(cmd).split('.')[0]
         name = re.sub(r'\d+', '', name_str)
         minimum_version = build_toolchains[name]
-        valid = LooseVersion(current_version) >= LooseVersion(minimum_version)
+        valid = _comparable_version(current_version) >= _comparable_version(minimum_version)
     except:
         print('Unexpected exception while checking %s tool version' % cmd)
         return False
@@ -425,7 +438,7 @@ def get_fsp_image_id (path):
 
 def get_redundant_info (comp_name):
     comp_base = os.path.splitext(os.path.basename(comp_name))[0].upper()
-    match = re.match('(\w+)_([AB])$', comp_base)
+    match = re.match('(\\w+)_([AB])$', comp_base)
     if match:
         comp_name = match.group(1)
         part_name = match.group(2)
