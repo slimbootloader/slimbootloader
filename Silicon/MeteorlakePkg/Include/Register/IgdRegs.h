@@ -35,5 +35,8 @@
 ///
 #define B_SA_GTTMMADR_DSSM_REFERENCE_FREQ_OFFSET 29
 
+#define VPU_BUS_NUM    0x00
+#define VPU_DEV_NUM    0x0B
+#define VPU_FUN_NUM    0x00
 
 #endif

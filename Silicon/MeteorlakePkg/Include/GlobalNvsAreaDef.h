@@ -1,7 +1,7 @@
 /**@file
 
 
-  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -11,7 +11,10 @@
 
 #include <PlatformBase.h>
 #include <PlatformNvsAreaDef.h>
+#include <EcNvsAreaDef.h>
+#include <DptfNvsAreaDef.h>
 #include <PchNvsAreaDef.h>
+#include <VmdNvsAreaDef.h>
 #include <CpuNvsAreaDef.h>
 #include <SaNvsAreaDef.h>
 
@@ -21,6 +24,9 @@ typedef struct {
   PCH_NVS_AREA          PchNvs;
   CPU_NVS_AREA          CpuNvs;
   SYSTEM_AGENT_NVS_AREA SaNvs;
+  EC_NVS_AREA           EcNvs;
+  DPTF_NVS_AREA         DptfNvs;
+  VMD_NVS_AREA          VmdNvs;
 } GLOBAL_NVS_AREA;
 #pragma pack(pop)
 

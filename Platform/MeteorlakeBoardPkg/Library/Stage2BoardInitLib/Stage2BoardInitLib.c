@@ -21,14 +21,7 @@
 #include <Register/PchRegslpc.h>
 
 STATIC CONST UINT32 NhltSignaturesTable[] = {
-  SIGNATURE_32 ('N', 'H', 'L', 'T'),
-  SIGNATURE_32 ('N', 'H', 'L', '1'),
-  SIGNATURE_32 ('N', 'H', 'L', '2'),
-  SIGNATURE_32 ('N', 'H', 'L', '3'),
-  SIGNATURE_32 ('N', 'H', 'L', '4'),
-  SIGNATURE_32 ('N', 'H', 'L', '5'),
-  SIGNATURE_32 ('N', 'H', 'L', '6'),
-  SIGNATURE_32 ('N', 'H', 'L', '7')
+  SIGNATURE_32 ('N', 'H', 'L', 'T')
   };
 
 CONST PCH_PCIE_CONTROLLER_INFO mPchPcieControllerInfo[] = {
@@ -43,11 +36,7 @@ CONST PCH_PCIE_CONTROLLER_INFO mPchPcieControllerInfo[] = {
 CONST PCH_SERIAL_IO_CONFIG_INFO mPchSSerialIoSPIMode[PCH_MAX_SERIALIO_SPI_CONTROLLERS] = {
   {0,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_SPI0},
   {1,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_SPI1},
-  {0,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_SPI2},
-  {0,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_SPI3},
-  {0,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_SPI4},
-  {0,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_SPI5},
-  {0,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_SPI6}
+  {0,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_SPI2}
 };
 
 CONST PCH_SERIAL_IO_CONFIG_INFO mPchMtlSerialIoSpiPciCfgCtrAddr[] = {
@@ -60,22 +49,13 @@ CONST PCH_SERIAL_IO_CONFIG_INFO mPchMtlSerialIoSpiPciCfgCtrAddr[] = {
 CONST PCH_SERIAL_IO_CONFIG_INFO mPchSSerialIoI2CMode[PCH_MAX_SERIALIO_I2C_CONTROLLERS] = {
   {1,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_I2C0},
   {1,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_I2C1},
-  {1,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_I2C2},
-  {1,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_I2C3},
-  {1,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_I2C4},
-  {1,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_I2C5},
-  {0,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_I2C6},
-  {0,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_I2C7}
+  {1,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_I2C2}
 };
 
 CONST PCH_SERIAL_IO_UART_CONFIG_INFO mPchSSerialIoUartMode[PCH_MAX_SERIALIO_UART_CONTROLLERS] = {
   {0,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_UART0, 1, 2, 16 },
   {0,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_UART1, 1, 2, 17 },
-  {2,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_UART2, 1, 2, 33 },
-  {0,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_UART3, 0, 0, 0 },
-  {0,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_UART4, 0, 0, 0 },
-  {0,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_UART5, 0, 0, 0 },
-  {0,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_UART6, 0, 0, 0 }
+  {2,R_VER4_SERIAL_IO_PCR_PCICFGCTRL_UART2, 1, 2, 33 }
 };
 
 GLOBAL_REMOVE_IF_UNREFERENCED UINT8    mBigCoreCount;
@@ -1128,32 +1108,21 @@ PlatformUpdateAcpiTable (
         // if "ATX Shutdown/PS_ON" is set in BIOS setup, both C10 ,SLP S0, PSON should be valid
         //
         Lpi_Counter.Data8 = 0x3;
-          Address = MSR_PC10_RCNTR;
-          ResidencyCounterFrequency = 0; //Counter runs at TSC frequency
-          UpdLpiStat((ACPI_LOW_POWER_IDLE_TABLE *)Table, 0, Flags, Address, ResidencyCounterFrequency);
-          if (IsPchP () || IsPchN ()) {
-            //
-            // Read PWRM Base Address to fill in Residency counter Address Space
-            //
-            // NOTE:For ADL P/M residency counter value is updated HSD:16012807020
-            Address = PCH_PWRM_BASE_ADDRESS + R_PMC_PWRM_SLP_S0_RESIDENCY;
-            ResidencyCounterFrequency = 8197;  //Counter runs at 122us granularity which implies 10KHz frequency (8197Hz)
-            UpdLpiStat((ACPI_LOW_POWER_IDLE_TABLE *)Table, 1, Flags, Address, ResidencyCounterFrequency);
-          } else {
-            //
-            // Read PWRM Base Address to fill in Residency counter Address Space
-            //
-            Address = PCH_PWRM_BASE_ADDRESS + R_PMC_PWRM_BIOS_SCRATCHPAD_2;
-            ResidencyCounterFrequency = 32768;  //Counter runs at 30.5us granularity which implies 10KHz frequency (32768Hz)
-            UpdLpiStat((ACPI_LOW_POWER_IDLE_TABLE *)Table, 1, Flags, Address, ResidencyCounterFrequency);
-          }
-//        }
+        Address = MSR_PC10_RCNTR;
+        ResidencyCounterFrequency = 0; //Counter runs at TSC frequency
+        UpdLpiStat((ACPI_LOW_POWER_IDLE_TABLE *)Table, 0, Flags, Address, ResidencyCounterFrequency);
+          //
+          // Read PWRM Base Address to fill in Residency counter Address Space
+          //
+        Address = PCH_PWRM_BASE_ADDRESS + R_PMC_PWRM_SLP_S0_RESIDENCY;
+        ResidencyCounterFrequency = 8197;  //Counter runs at 122us granularity which implies 10KHz frequency (8197Hz)
+        UpdLpiStat((ACPI_LOW_POWER_IDLE_TABLE *)Table, 1, Flags, Address, ResidencyCounterFrequency);
         if (Lpi_Counter.Bits.Ps_On) {
           //
           // Read PWRM Base Address to fill in Residency counter Address Space
           //
           Address = PCH_PWRM_BASE_ADDRESS + R_PMC_PWRM_PS_ON_COUNTER;
-          ResidencyCounterFrequency = 8197;  //Counter runs at 122us granularity which implies 10KHz frequency (8197Hz)
+          ResidencyCounterFrequency = 10000;  //Counter runs at 122us granularity which implies 10KHz frequency (8197Hz)
           UpdLpiStat((ACPI_LOW_POWER_IDLE_TABLE *)Table, 2, Flags, Address, ResidencyCounterFrequency);
         }
       }
@@ -1439,6 +1408,10 @@ PlatformUpdateAcpiGnvs (
   CPU_NVS_AREA            *CpuNvs;
   SYSTEM_AGENT_NVS_AREA   *SaNvs;
   SYS_CPU_INFO            *SysCpuInfo;
+  EC_NVS_AREA             *EcNvs;
+  DPTF_NVS_AREA           *DptfNvs;
+  VMD_NVS_AREA            *VmdNvs;
+
   FSPS_UPD                *FspsUpd;
   FSP_S_CONFIG            *FspsConfig;
   TCC_CFG_DATA            *TccCfgData;
@@ -1460,8 +1433,10 @@ PlatformUpdateAcpiGnvs (
   PlatformNvs = (PLATFORM_NVS_AREA *) &GlobalNvs->PlatformNvs;
   PchNvs      = (PCH_NVS_AREA *) &GlobalNvs->PchNvs;
   CpuNvs      = (CPU_NVS_AREA *) &GlobalNvs->CpuNvs;
+  EcNvs       = (EC_NVS_AREA  *) &GlobalNvs->EcNvs;
+  VmdNvs      = (VMD_NVS_AREA  *) &GlobalNvs->VmdNvs;
+  DptfNvs     = (DPTF_NVS_AREA*) &GlobalNvs->DptfNvs;
   SaNvs       = (SYSTEM_AGENT_NVS_AREA *) &GlobalNvs->SaNvs;
-
   FspsUpd     = (FSPS_UPD *)(UINTN)PcdGet32 (PcdFspsUpdPtr);
   FspsConfig  = &FspsUpd->FspsConfig;
 
@@ -1576,10 +1551,10 @@ PlatformUpdateAcpiGnvs (
   PchNvs->IC0[6] = 524288;
   PchNvs->IC0[7] = 528384;
 
-  PchNvs->ClockToRootPortMap[0] = 0x0;
-  PchNvs->ClockToRootPortMap[1] = 0x6;
+  PchNvs->ClockToRootPortMap[0] = 0x80;
+  PchNvs->ClockToRootPortMap[1] = 0x9;
   PchNvs->ClockToRootPortMap[2] = 0x70;
-  PchNvs->ClockToRootPortMap[3] = 0x5;
+  PchNvs->ClockToRootPortMap[3] = 0xFF;
   PchNvs->ClockToRootPortMap[4] = 0x8;
   PchNvs->ClockToRootPortMap[5] = 0x7;
   PchNvs->ClockToRootPortMap[6] = 0xB;
@@ -1621,7 +1596,12 @@ PlatformUpdateAcpiGnvs (
     PchNvs->UI0[Index] = mPchSSerialIoUartMode[Index].SerialIoUARTIrq;
   }
 
-  PchNvs->UI0[3]=25;
+  // PchNvs->UM0[0] = 2;
+  // PchNvs->UC0[0] = 0xFE02D000;
+  PchNvs->UI0[2] = 31;
+  // PchNvs->UI0[3] = 25;
+    DEBUG ((DEBUG_INFO, "PchNvs->UI0[3]  = 0x%X\n",PchNvs->UI0[3]));
+
   PchNvs->CnviBtCore         = FspsConfig->CnviBtCore;
   PlatformNvs->CnviBtAudioOffload = FspsConfig->CnviBtAudioOffload;
   PchNvs->PsOnEnable         = FspsConfig->PsOnEnable;
@@ -1711,7 +1691,7 @@ PlatformUpdateAcpiGnvs (
   //
   // Intel(R) Dynamic Tuning Technology Devices and trip points
   //
-  PlatformNvs->EnableDptf                   = 0;
+   DptfNvs->EnableDptf                   = 0;
 
   //
   // Wireless
@@ -1727,62 +1707,33 @@ PlatformUpdateAcpiGnvs (
   PlatformNvs->PL1LimitCS = 0;
   PlatformNvs->PL1LimitCSValue = 4500;
 
-  PlatformNvs->PL1LimitCS        = 0x0;
-  PlatformNvs->PL1LimitCSValue   = 4500;
-
-  PlatformNvs->PcieSlot3WakeGpio = GPIOV2_MTL_SOC_M_GPP_C2;
-  PlatformNvs->PcieSlot3RpNumber = 6;
-  PlatformNvs->PcieSlot3PowerEnableGpio = GPIOV2_MTL_SOC_M_GPP_A18;
-  PlatformNvs->PcieSlot3PowerEnableGpioPolarity = 1;
-  PlatformNvs->PcieSlot3RstGpio = GPIOV2_MTL_SOC_M_GPP_A19;
-  PlatformNvs->PcieSlot3RstGpioPolarity = 0;
-
-  PlatformNvs->PcieSlot4WakeGpio = GPIOV2_MTL_SOC_M_GPP_F20;
-  PlatformNvs->PcieSlot4RpNumber = 0x15;
-  PlatformNvs->PcieSlot4PowerEnableGpio = GPIOV2_MTL_SOC_M_GPP_D3;
-  PlatformNvs->PcieSlot4PowerEnableGpioPolarity = 0;
-  PlatformNvs->PcieSlot4RstGpio = GPIOV2_MTL_SOC_M_GPP_B9;
-  PlatformNvs->PcieSlot4RstGpioPolarity = 0;
-
-  PlatformNvs->WlanWakeGpio = GPIOV2_MTL_SOC_M_GPP_A12;
-  PlatformNvs->WlanRootPortNumber = 8;
-
-  PlatformNvs->M2Ssd1PowerEnableGpio = GPIOV2_MTL_SOC_M_GPP_D5;
-  PlatformNvs->M2Ssd1PowerEnableGpioPolarity = 1;
-  PlatformNvs->M2Ssd1RstGpio = GPIOV2_MTL_SOC_M_GPP_D2;
-  PlatformNvs->M2Ssd1RstGpioPolarity = 0;
-
-  PlatformNvs->M2Ssd2PowerEnableGpio = GPIOV2_MTL_SOC_M_GPP_D1;
-  PlatformNvs->M2Ssd2PowerEnableGpioPolarity = 1;
-  PlatformNvs->M2Ssd2RstGpio = GPIOV2_MTL_SOC_M_GPP_A13;
-  PlatformNvs->M2Ssd2RstGpioPolarity = 0;
-
-  PlatformNvs->M2Ssd3PowerEnableGpio = GPIOV2_MTL_SOC_M_GPP_B15;
-  PlatformNvs->M2Ssd3PowerEnableGpioPolarity = 1;
-  PlatformNvs->M2Ssd3RstGpio = GPIOV2_MTL_SOC_M_GPP_A20;
-  PlatformNvs->M2Ssd3RstGpioPolarity = 0;
-
-  PlatformNvs->M2Ssd4PowerEnableGpio = GPIOV2_MTL_SOC_M_GPP_D6;
-  PlatformNvs->M2Ssd4PowerEnableGpioPolarity = 1;
-  PlatformNvs->M2Ssd4RstGpio = GPIOV2_MTL_SOC_M_GPP_A14;
-  PlatformNvs->M2Ssd4RstGpioPolarity = 0;
-
-  PlatformNvs->SataPortPowerEnableGpio = 0;
-  PlatformNvs->SataPortPowerEnableGpioPolarity = 1;
-
-  PlatformNvs->PcieSlot1WakeGpio = 0;
-  PlatformNvs->PcieSlot1RpNumber = 0;
-  PlatformNvs->PcieSlot1PowerEnableGpio = 0;
+  PlatformNvs->PcieSlot1WakeGpio = GPIOV2_MTL_SOC_M_GPP_F19;
+  PlatformNvs->PcieSlot1RpNumber = 6;
+  PlatformNvs->PcieSlot1PowerEnableGpio = GPIOV2_MTL_SOC_M_GPP_D3;
   PlatformNvs->PcieSlot1PowerEnableGpioPolarity = 0;
-  PlatformNvs->PcieSlot1RstGpio = 0;
+  PlatformNvs->PcieSlot1RstGpio = GPIOV2_MTL_SOC_M_GPP_A20;
   PlatformNvs->PcieSlot1RstGpioPolarity = 0;
 
   PlatformNvs->PcieSlot2WakeGpio = 0;
-  PlatformNvs->PcieSlot2RpNumber = 0;
+  PlatformNvs->PcieSlot2RpNumber = 15;
   PlatformNvs->PcieSlot2PowerEnableGpio = 0;
   PlatformNvs->PcieSlot2PowerEnableGpioPolarity = 0;
   PlatformNvs->PcieSlot2RstGpio = 0;
   PlatformNvs->PcieSlot2RstGpioPolarity = 0;
+
+  PlatformNvs->PcieSlot3WakeGpio = 0;
+  PlatformNvs->PcieSlot3RpNumber = 0;
+  PlatformNvs->PcieSlot3PowerEnableGpio = 0;
+  PlatformNvs->PcieSlot3PowerEnableGpioPolarity = 0;
+  PlatformNvs->PcieSlot3RstGpio = 0;
+  PlatformNvs->PcieSlot3RstGpioPolarity = 0;
+
+  PlatformNvs->PcieSlot4WakeGpio = 0;
+  PlatformNvs->PcieSlot4RpNumber = 0;
+  PlatformNvs->PcieSlot4PowerEnableGpio = 0;
+  PlatformNvs->PcieSlot4PowerEnableGpioPolarity = 0;
+  PlatformNvs->PcieSlot4RstGpio = 0;
+  PlatformNvs->PcieSlot4RstGpioPolarity = 0;
 
   PlatformNvs->PcieSlot5WakeGpio = 0;
   PlatformNvs->PcieSlot5RpNumber = 0;
@@ -1805,14 +1756,40 @@ PlatformUpdateAcpiGnvs (
   PlatformNvs->PcieSlot7RstGpio = 0;
   PlatformNvs->PcieSlot7RstGpioPolarity = 0;
 
+  PlatformNvs->WlanWakeGpio = GPIOV2_MTL_SOC_M_GPP_A12;
+  PlatformNvs->WlanRstGpio = GPIOV2_MTL_SOC_M_GPP_H2;
+  PlatformNvs->WlanRootPortNumber = 8;
+
+  PlatformNvs->M2Ssd1PowerEnableGpio = GPIOV2_MTL_SOC_M_GPP_H11;
+  PlatformNvs->M2Ssd1PowerEnableGpioPolarity = 1;
+  PlatformNvs->M2Ssd1RstGpio = GPIOV2_MTL_SOC_M_GPP_A11;
+  PlatformNvs->M2Ssd1RstGpioPolarity = 0;
+
+  PlatformNvs->M2Ssd2PowerEnableGpio = GPIOV2_MTL_SOC_M_GPP_F5;
+  PlatformNvs->M2Ssd2PowerEnableGpioPolarity = 1;
+  PlatformNvs->M2Ssd2RstGpio = GPIOV2_MTL_SOC_M_GPP_F20;
+  PlatformNvs->M2Ssd2RstGpioPolarity = 0;
+
+  PlatformNvs->M2Ssd3PowerEnableGpio = GPIOV2_MTL_SOC_M_GPP_B15;
+  PlatformNvs->M2Ssd3PowerEnableGpioPolarity = 1;
+  PlatformNvs->M2Ssd3RstGpio = GPIOV2_MTL_SOC_M_GPP_A20;
+  PlatformNvs->M2Ssd3RstGpioPolarity = 0;
+
+  PlatformNvs->M2Ssd4PowerEnableGpio = GPIOV2_MTL_SOC_M_GPP_D6;
+  PlatformNvs->M2Ssd4PowerEnableGpioPolarity = 1;
+  PlatformNvs->M2Ssd4RstGpio = GPIOV2_MTL_SOC_M_GPP_A14;
+  PlatformNvs->M2Ssd4RstGpioPolarity = 0;
+
+  PlatformNvs->SataPortPowerEnableGpio = 0;
+  PlatformNvs->SataPortPowerEnableGpioPolarity = 0;
+
   PlatformNvs->WwanWakeGpio = GPIOV2_MTL_SOC_M_GPP_F21;
   PlatformNvs->WwanRootPortNumber = 0x7;
   PlatformNvs->WwanFwFlashDevice = 0;
-  PlatformNvs->XdciFnEnable = 0;
+  PlatformNvs->XdciFnEnable = 1;
 
-  PlatformNvs->LidSwitchWakeGpio = GPIOV2_MTL_SOC_M_GPP_V2;
-  DEBUG ((DEBUG_INFO, "PlatformNvs->LidSwitchWakeGpio: 0x%x\n", PlatformNvs->LidSwitchWakeGpio));
-
+  EcNvs->LidSwitchWakeGpio = GPIOV2_MTL_SOC_M_GPP_V2;
+  PlatformNvs->HidEventFilterEnable         = 0x01;
   PlatformNvs->Rtd3Support = 0x1;
   PlatformNvs->Rtd3P0dl = 0x64;
   PlatformNvs->Rtd3AudioDelay = 0xC8;
@@ -1846,16 +1823,14 @@ PlatformUpdateAcpiGnvs (
   SaNvs->LtrEnable[2] = 1;
   SaNvs->LtrEnable[3] = 1;
 
-  SaNvs->PcieLtrMaxSnoopLatency[0] = 0x8C8;
-  SaNvs->PcieLtrMaxSnoopLatency[1] = 0x8C8;
-  SaNvs->PcieLtrMaxSnoopLatency[2] = 0x8C8;
-  SaNvs->PcieLtrMaxSnoopLatency[3] = 0x8C8;
-  SaNvs->PcieLtrMaxNoSnoopLatency[0] = 0x8C8;
-  SaNvs->PcieLtrMaxNoSnoopLatency[1] = 0x8C8;
-  SaNvs->PcieLtrMaxNoSnoopLatency[2] = 0x8C8;
-  SaNvs->PcieLtrMaxNoSnoopLatency[3] = 0x8C8;
-  SaNvs->SlotSelection = 1;
-  SaNvs->VmdEnable     = 0;
+  SaNvs->PcieLtrMaxSnoopLatency[0] = 0x100F;
+  SaNvs->PcieLtrMaxSnoopLatency[1] = 0x100F;
+  SaNvs->PcieLtrMaxSnoopLatency[2] = 0x100F;
+  SaNvs->PcieLtrMaxSnoopLatency[3] = 0x100F;
+  SaNvs->PcieLtrMaxNoSnoopLatency[0] = 0x100F;
+  SaNvs->PcieLtrMaxNoSnoopLatency[1] = 0x100F;
+  SaNvs->PcieLtrMaxNoSnoopLatency[2] = 0x100F;
+  SaNvs->PcieLtrMaxNoSnoopLatency[3] = 0x100F;
 
   PlatformNvs->PpmFlags           = CpuNvs->PpmFlags;
   SocUpdateAcpiGnvs ((VOID *)GnvsIn);
@@ -1876,4 +1851,3 @@ PlatformUpdateAcpiGnvs (
     }
   }
 }
-

@@ -773,6 +773,19 @@ PchIsTsnSupported (
 }
 
 /**
+  Check if this chipset supports Gbe controller
+
+  @retval BOOLEAN  TRUE if supported, FALSE otherwise
+**/
+BOOLEAN
+PchIsGbeSupported (
+  VOID
+  )
+{
+  return TRUE;
+}
+
+/**
   Checks if PCH is attached to the SoC.
 
   @return TRUE if PCH is attached.

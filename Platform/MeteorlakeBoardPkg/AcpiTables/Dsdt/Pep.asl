@@ -16,8 +16,8 @@ External(\_SB.PC00.LPCB.H_EC.ECNT, MethodObj)
 External(\_SB.PC00.LPCB.HPET.TCN1)
 External(\_SB.PC00.SPIF.SPIS)
 External(SPCO,MethodObj)
-External(\_SB.PC00.RP08.DL23, MethodObj)
-External(\_SB.PC00.RP08.L23D, MethodObj)
+External(\_SB.PC00.RP01.DL23, MethodObj)
+External(\_SB.PC00.RP01.L23D, MethodObj)
 External (TMCS, IntObj)
 
 External(THCE) // TCSS XHCI Device Enable
@@ -701,12 +701,24 @@ Scope(\_SB)
         }
 
         // resiliency phase entry (deep standby entry)
+        Name(RSTG, Package() {0, 0})
+        Name(PWRG, Package() {0, 0})
         Store (0, Local0) // Display All Monitor off flag
         If (LEqual (Arg2, 0x5))
         {
           If (LEqual (S0ID, 1)) { //S0ID: >=1: CS 0: non-CS
             // call method specific to CS platforms when the system is in a
             // standby state with very limited SW activities
+            \_SB.PC00.RP01.DL23()
+            Store(0x14040B, Index(RSTG, 0))
+            Store(0x0, Index(RSTG, 1))
+            Store(0x14080B, Index(PWRG, 0))
+            Store(0x1, Index(PWRG, 1))
+            \PIN.ON(RSTG)
+            \_SB.PSD3 (1)
+            SPCO(0, 0)
+            \PIN.OFF (PWRG)
+            \_SB.SHPO (0, 0)
             \GUAM (1) // 0x01 - Power State Standby (CS Resiliency Entry)
           }
 
@@ -738,6 +750,18 @@ Scope(\_SB)
           If (LEqual (S0ID, 1)) { //S0ID: >=1: CS 0: non-CS
             // call method specific to CS platforms when the system is in a
             // standby state with very limited SW activities
+            Store(0x14040B, Index(RSTG, 0))
+            Store(0x0, Index(RSTG, 1))
+            Store(0x14080B, Index(PWRG, 0))
+            Store(0x1, Index(PWRG, 1))
+            \_SB.SHPO (0, 1)
+            \_SB.CAGS (0)
+            \_SB.PSD0 (1)
+            \PIN.ON (PWRG)
+            Sleep (PEP0)
+            SPCO(0, 1)
+            \PIN.OFF (RSTG)
+            \_SB.PC00.RP01.L23D()
             \GUAM (0) // 0x00 - Power State On (CS Resiliency Exit)
           }
           // Call method to notify EC of Idle Resiliency exit

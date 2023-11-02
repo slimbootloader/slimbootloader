@@ -396,8 +396,7 @@ typedef struct {
   UINT8    TRxCableLength1;                         ///< Offset 842     TRxCableLength1
   UINT8    WrddDomainType1;                         ///< Offset 843     WrddDomainType1
   UINT16   WrddCountryIdentifier1;                  ///< Offset 844     WrddCountryIdentifier1
-  UINT8    Reserved11[172];                         ///< Offset 846:1017
-  UINT8    EnableAPPolicy;                          ///< Offset 1018    Adaptive Performance Policy @deprecated. Intel(R) Dynamic Tuning can dynamically enable/disable policies
+  UINT8    Reserved11[173];                         ///< Offset 846:1018
   //
   // Intel Serial(R) IO Sensor Device Selection
   //
@@ -430,7 +429,24 @@ typedef struct {
   UINT16   GDBT;                                    ///< Offset 1047    GPIO test devices' debounce value,
   UINT8    UTKX;                                    ///< Offset 1049    UTK test devices' connection point
   UINT8    SPTD;                                    ///< Offset 1050    SerialIo additional test devices
-  UINT8    Reserved12[15];                          ///< Offset 1051:1065
+  //
+  // Test Devices for Serial IOs
+  //
+  UINT8    SIOI;                                    ///< Offset 1051    WITT SIO I2C test device enable/disable
+  UINT8    SIOC;                                    ///< Offset 1052    WITT SIO I3C test device enable/disable
+  UINT8    SIOS;                                    ///< Offset 1053    WITT SIO SPI test device enable/disable
+  UINT8    SII0;                                    ///< Offset 1054    SIO I2C0 test devices' connection point
+  UINT8    SII1;                                    ///< Offset 1055    SIO I2C1 test devices' connection point
+  UINT8    SII2;                                    ///< Offset 1056    SIO I2C2 test devices' connection point
+  UINT8    SII3;                                    ///< Offset 1057    SIO I2C3 test devices' connection point
+  UINT8    SII4;                                    ///< Offset 1058    SIO I2C4 test devices' connection point
+  UINT8    SII5;                                    ///< Offset 1059    SIO I2C5 test devices' connection point
+  UINT8    SIC0;                                    ///< Offset 1060    SIO I3C0 test devices' connection point
+  UINT8    SIC1;                                    ///< Offset 1061    SIO I3C1 test devices' connection point
+  UINT8    SIS0;                                    ///< Offset 1062    SIO SPI0 test devices' connection point
+  UINT8    SIS1;                                    ///< Offset 1063    SIO SPI1 test devices' connection point
+  UINT8    SIS2;                                    ///< Offset 1064    SIO SPI2 test devices' connection point
+  UINT8    Reserved12[1];                           ///< Offset 1065:1065
   UINT32   TableLoadBuffer;                         ///< Offset 1066    Buffer for runtime ACPI Table loading
   UINT8    SDM0;                                    ///< Offset 1070    interrupt mode for controller0 devices
   UINT8    SDM1;                                    ///< Offset 1071    interrupt mode for controller1 devices
@@ -1085,7 +1101,8 @@ typedef struct {
   UINT32   UcmcPort1Gpio;                           ///< Offset 2349    Gpio for UCMC Port 1 Interrupt
   UINT32   UcmcPort2Gpio;                           ///< Offset 2353    Gpio for UCMC Port 2 Interrupt
   UINT32   RetimerPowerStateGpio;                   ///< Offset 2357    Gpio for Retimer Power state
-  UINT8    Reserved20[57];                          ///< Offset 2361:2417
+  UINT8    TbtRTD3En;                               ///< Offset 2361    DTBT RTD3 enable status
+  UINT8    Reserved20[56];                          ///< Offset 2362:2417
   UINT8    Ufp2DfpGlobalFlag;                       ///< Offset 2418    Upstream Facing port or Downstream Facing port Global Flag from LPC EC
   UINT8    Ufp2DfpUsbPort;                          ///< Offset 2419    Upstream Facing port or Downstream Facing port number from LPC EC
   UINT8    DbcGlobalFlag;                           ///< Offset 2420    Debug Mode Global Flag from LPC EC
@@ -1194,31 +1211,35 @@ typedef struct {
   UINT8    M2Ssd4PowerEnableGpioPolarity;           ///< Offset 2643    Pcie slot 4 M.2 SSD Power Enable Gpio pin polarity
   UINT32   M2Ssd4RstGpio;                           ///< Offset 2644    Pcie slot 4 M.2 SSD Reset Gpio pin
   UINT8    M2Ssd4RstGpioPolarity;                   ///< Offset 2648    Pcie slot 4 M.2 SSD Reset Gpio pin polarity
-  UINT8    SdevXhciInterfaceNumber1;                ///< Offset 2649    SDEV xHCI Interface Number for device 1
-  UINT8    SdevXhciInterfaceNumber2;                ///< Offset 2650    SDEV xHCI Interface Number for device 2
-  UINT8    SdevXhciRootPortNumber1;                 ///< Offset 2651    SDEV xHCI Root Port Number for device 1
-  UINT8    SdevXhciRootPortNumber2;                 ///< Offset 2652    SDEV xHCI Root Port Number for device 2
-  UINT8    TsnPcsEnabled;                           ///< Offset 2653    TSN PCS device Enable
-  UINT8    WwanSourceClock;                         ///< Offset 2654    WWAN Source Clock
-  UINT32   CnvExtClock;                             ///< Offset 2655    CNV external 32KHz Clock
-  UINT8    WwanRootPortNumber;                      ///< Offset 2659    WWAN Root Port Nmuber
-  UINT8    WifiAntGainMode;                         ///< Offset 2660    Wifi Ant Gain Mode
-  UINT8    WifiAntGainChainA1;                      ///< Offset 2661    Ant Gain Table Chain A 2400
-  UINT8    WifiAntGainChainA2;                      ///< Offset 2662    Ant Gain Table Chain A 5180-5320
-  UINT8    WifiAntGainChainA3;                      ///< Offset 2663    Ant Gain Table Chain A 5340-5440
-  UINT8    WifiAntGainChainA4;                      ///< Offset 2664    Ant Gain Table Chain A 5460-5700
-  UINT8    WifiAntGainChainA5;                      ///< Offset 2665    Ant Gain Table Chain A 5720-5825
-  UINT8    WifiAntGainChainB1;                      ///< Offset 2666    Ant Gain Table Chain B 2400
-  UINT8    WifiAntGainChainB2;                      ///< Offset 2667    Ant Gain Table Chain B 5150-5320
-  UINT8    WifiAntGainChainB3;                      ///< Offset 2668    Ant Gain Table Chain B 5340-5440
-  UINT8    WifiAntGainChainB4;                      ///< Offset 2669    Ant Gain Table Chain B 5460-5700
-  UINT8    WifiAntGainChainB5;                      ///< Offset 2670    Ant Gain Table Chain B 5720-5825
-  UINT8    WifiActiveChannelSrd;                    ///< Offset 2671    SRD Active Channels Selection
-  UINT8    WifiIndonesia5GhzSupport;                ///< Offset 2672    Indonesia 5.15-5.35 GHz Band Support Selection
-  UINT32   Dg1VramSRGpio;                           ///< Offset 2673    DG1 VRAM Self Refresh Gpio pin
-  UINT32   LpmReqRegAddr;                           ///< Offset 2677    Low Power Mode required register Address
-  UINT8    Gpe1BlockEnable;                         ///< Offset 2681    Enable GPE1
-  UINT8    Reserved21[14];                          ///< Offset 2682:2695
+  UINT32   M2Ssd5PowerEnableGpio;                   ///< Offset 2649    Pcie slot 5 M.2 SSD Power Enable Gpio pin
+  UINT8    M2Ssd5PowerEnableGpioPolarity;           ///< Offset 2653    Pcie slot 5 M.2 SSD Power Enable Gpio pin polarity
+  UINT32   M2Ssd5RstGpio;                           ///< Offset 2654    Pcie slot 5 M.2 SSD Reset Gpio pin
+  UINT8    M2Ssd5RstGpioPolarity;                   ///< Offset 2658    Pcie slot 5 M.2 SSD Reset Gpio pin polarity
+  UINT8    SdevXhciInterfaceNumber1;                ///< Offset 2659    SDEV xHCI Interface Number for device 1
+  UINT8    SdevXhciInterfaceNumber2;                ///< Offset 2660    SDEV xHCI Interface Number for device 2
+  UINT8    SdevXhciRootPortNumber1;                 ///< Offset 2661    SDEV xHCI Root Port Number for device 1
+  UINT8    SdevXhciRootPortNumber2;                 ///< Offset 2662    SDEV xHCI Root Port Number for device 2
+  UINT8    TsnPcsEnabled;                           ///< Offset 2663    TSN PCS device Enable
+  UINT8    WwanSourceClock;                         ///< Offset 2664    WWAN Source Clock
+  UINT32   CnvExtClock;                             ///< Offset 2665    CNV external 32KHz Clock
+  UINT8    WwanRootPortNumber;                      ///< Offset 2669    WWAN Root Port Nmuber
+  UINT8    WifiAntGainMode;                         ///< Offset 2670    Wifi Ant Gain Mode
+  UINT8    WifiAntGainChainA1;                      ///< Offset 2671    Ant Gain Table Chain A 2400
+  UINT8    WifiAntGainChainA2;                      ///< Offset 2672    Ant Gain Table Chain A 5180-5320
+  UINT8    WifiAntGainChainA3;                      ///< Offset 2673    Ant Gain Table Chain A 5340-5440
+  UINT8    WifiAntGainChainA4;                      ///< Offset 2674    Ant Gain Table Chain A 5460-5700
+  UINT8    WifiAntGainChainA5;                      ///< Offset 2675    Ant Gain Table Chain A 5720-5825
+  UINT8    WifiAntGainChainB1;                      ///< Offset 2676    Ant Gain Table Chain B 2400
+  UINT8    WifiAntGainChainB2;                      ///< Offset 2677    Ant Gain Table Chain B 5150-5320
+  UINT8    WifiAntGainChainB3;                      ///< Offset 2678    Ant Gain Table Chain B 5340-5440
+  UINT8    WifiAntGainChainB4;                      ///< Offset 2679    Ant Gain Table Chain B 5460-5700
+  UINT8    WifiAntGainChainB5;                      ///< Offset 2680    Ant Gain Table Chain B 5720-5825
+  UINT8    WifiActiveChannelSrd;                    ///< Offset 2681    SRD Active Channels Selection
+  UINT8    WifiIndonesia5GhzSupport;                ///< Offset 2682    Indonesia 5.15-5.35 GHz Band Support Selection
+  UINT32   Dg1VramSRGpio;                           ///< Offset 2683    DG1 VRAM Self Refresh Gpio pin
+  UINT32   LpmReqRegAddr;                           ///< Offset 2687    Low Power Mode required register Address
+  UINT8    Gpe1BlockEnable;                         ///< Offset 2691    Enable GPE1
+  UINT8    Reserved21[4];                           ///< Offset 2692:2695
   //
   // WifiPhyFilterConfigX is deprecated.
   //
@@ -1438,309 +1459,302 @@ typedef struct {
   UINT8    PreBootCmMode;                           ///< Offset 2952    USB4 CM mode information in Pre-Boot
   UINT8    CmTbtMask;                               ///< Offset 2953    Indicate enabled dTBT and iTBT for CM
   UINT8    Usb4CmSwitchEnable;                      ///< Offset 2954    USB4 CM mode switch is enabled/disabled
-  UINT32   DTbtCmVersion;                           ///< Offset 2955    Each CM mode version of Discrete Thunderbolt host router support
-  UINT8    Usb4ClassOption;                         ///< Offset 2959    Indicator of USB4 Host Router Class Code for loading USB4 driver
-  UINT16   WwanOemSvid;                             ///< Offset 2960    WWAN OEM SVID
-  UINT16   WwanSvidTimeout;                         ///< Offset 2962    WWAN SVID Timeout
-  UINT8    DeepestUSBSleepWakeCapability;           ///< Offset 2964    Deepest USB Sleep Wake Capability
-  UINT32   WifiRegulatoryConfigurations;            ///< Offset 2965    WiFi Regulatory Configurations
-  UINT32   WifiUartConfigurations;                  ///< Offset 2969    WiFi UART Configurations
-  UINT32   WifiUnii4;                               ///< Offset 2973    WiFi UNII-4
-  UINT32   WifiIndoorControl;                       ///< Offset 2977    WiFi Indoor Control
-  UINT32   WifiBandSelect;                          ///< Offset 2981    WifiBandSelect
+  UINT8    Usb4ClassOption;                         ///< Offset 2955    Indicator of USB4 Host Router Class Code for loading USB4 driver
+  UINT16   WwanOemSvid;                             ///< Offset 2956    WWAN OEM SVID
+  UINT16   WwanSvidTimeout;                         ///< Offset 2958    WWAN SVID Timeout
+  UINT8    DeepestUSBSleepWakeCapability;           ///< Offset 2960    Deepest USB Sleep Wake Capability
+  UINT32   WifiRegulatoryConfigurations;            ///< Offset 2961    WiFi Regulatory Configurations
+  UINT32   WifiUartConfigurations;                  ///< Offset 2965    WiFi UART Configurations
+  UINT32   WifiUnii4;                               ///< Offset 2969    WiFi UNII-4
+  UINT32   WifiIndoorControl;                       ///< Offset 2973    WiFi Indoor Control
+  UINT32   WifiBandSelect;                          ///< Offset 2977    WifiBandSelect
   //
   // Data Role Swap:
   //
-  UINT8    UsbcDataRoleSwap;                        ///< Offset 2985    Usbc Data Role Swap
+  UINT8    UsbcDataRoleSwap;                        ///< Offset 2981    Usbc Data Role Swap
   //
   // HybridGraphics Detection
   //
-  UINT8    HybridGraphicsDetection;                 ///< Offset 2986    Primary Display (0=AUTO, 3=iGfx, 4=HG)
-  UINT8    WccdEnable;                              ///< Offset 2987    WCCD Enable
-  UINT8    WirelessLowBandIsolation;                ///< Offset 2988    WLAN/WWAN Low Band Isolation
-  UINT8    WirelessHighBandIsolation;               ///< Offset 2989    WLAN/WWAN High Band Isolation
-  UINT8    WgdsWiFiSarDeltaGroupNumber;             ///< Offset 2990    WgdsWiFiSarDeltaGroupNumber
-  UINT8    WgdsWiFiSarDeltaGroup4PowerMax1;         ///< Offset 2991    WgdsWiFiSarDeltaGroup4PowerMax1
-  UINT8    WgdsWiFiSarDeltaGroup4PowerChainA1;      ///< Offset 2992    WgdsWiFiSarDeltaGroup4PowerChainA1
-  UINT8    WgdsWiFiSarDeltaGroup4PowerChainB1;      ///< Offset 2993    WgdsWiFiSarDeltaGroup4PowerChainB1
-  UINT8    WgdsWiFiSarDeltaGroup4PowerMax2;         ///< Offset 2994    WgdsWiFiSarDeltaGroup4PowerMax2
-  UINT8    WgdsWiFiSarDeltaGroup4PowerChainA2;      ///< Offset 2995    WgdsWiFiSarDeltaGroup4PowerChainA2
-  UINT8    WgdsWiFiSarDeltaGroup4PowerChainB2;      ///< Offset 2996    WgdsWiFiSarDeltaGroup4PowerChainB2
-  UINT8    WgdsWiFiSarDeltaGroup4PowerMax3;         ///< Offset 2997    WgdsWiFiSarDeltaGroup4PowerMax3
-  UINT8    WgdsWiFiSarDeltaGroup4PowerChainA3;      ///< Offset 2998    WgdsWiFiSarDeltaGroup4PowerChainA3
-  UINT8    WgdsWiFiSarDeltaGroup4PowerChainB3;      ///< Offset 2999    WgdsWiFiSarDeltaGroup4PowerChainB3
-  UINT8    WgdsWiFiSarDeltaGroup5PowerMax1;         ///< Offset 3000    WgdsWiFiSarDeltaGroup5PowerMax1
-  UINT8    WgdsWiFiSarDeltaGroup5PowerChainA1;      ///< Offset 3001    WgdsWiFiSarDeltaGroup5PowerChainA1
-  UINT8    WgdsWiFiSarDeltaGroup5PowerChainB1;      ///< Offset 3002    WgdsWiFiSarDeltaGroup5PowerChainB1
-  UINT8    WgdsWiFiSarDeltaGroup5PowerMax2;         ///< Offset 3003    WgdsWiFiSarDeltaGroup5PowerMax2
-  UINT8    WgdsWiFiSarDeltaGroup5PowerChainA2;      ///< Offset 3004    WgdsWiFiSarDeltaGroup5PowerChainA2
-  UINT8    WgdsWiFiSarDeltaGroup5PowerChainB2;      ///< Offset 3005    WgdsWiFiSarDeltaGroup5PowerChainB2
-  UINT8    WgdsWiFiSarDeltaGroup5PowerMax3;         ///< Offset 3006    WgdsWiFiSarDeltaGroup5PowerMax3
-  UINT8    WgdsWiFiSarDeltaGroup5PowerChainA3;      ///< Offset 3007    WgdsWiFiSarDeltaGroup5PowerChainA3
-  UINT8    WgdsWiFiSarDeltaGroup5PowerChainB3;      ///< Offset 3008    WgdsWiFiSarDeltaGroup5PowerChainB3
-  UINT8    WgdsWiFiSarDeltaGroup6PowerMax1;         ///< Offset 3009    WgdsWiFiSarDeltaGroup6PowerMax1
-  UINT8    WgdsWiFiSarDeltaGroup6PowerChainA1;      ///< Offset 3010    WgdsWiFiSarDeltaGroup6PowerChainA1
-  UINT8    WgdsWiFiSarDeltaGroup6PowerChainB1;      ///< Offset 3011    WgdsWiFiSarDeltaGroup6PowerChainB1
-  UINT8    WgdsWiFiSarDeltaGroup6PowerMax2;         ///< Offset 3012    WgdsWiFiSarDeltaGroup6PowerMax2
-  UINT8    WgdsWiFiSarDeltaGroup6PowerChainA2;      ///< Offset 3013    WgdsWiFiSarDeltaGroup6PowerChainA2
-  UINT8    WgdsWiFiSarDeltaGroup6PowerChainB2;      ///< Offset 3014    WgdsWiFiSarDeltaGroup6PowerChainB2
-  UINT8    WgdsWiFiSarDeltaGroup6PowerMax3;         ///< Offset 3015    WgdsWiFiSarDeltaGroup6PowerMax3
-  UINT8    WgdsWiFiSarDeltaGroup6PowerChainA3;      ///< Offset 3016    WgdsWiFiSarDeltaGroup6PowerChainA3
-  UINT8    WgdsWiFiSarDeltaGroup6PowerChainB3;      ///< Offset 3017    WgdsWiFiSarDeltaGroup6PowerChainB3
-  UINT8    WgdsWiFiSarDeltaGroup7PowerMax1;         ///< Offset 3018    WgdsWiFiSarDeltaGroup7PowerMax1
-  UINT8    WgdsWiFiSarDeltaGroup7PowerChainA1;      ///< Offset 3019    WgdsWiFiSarDeltaGroup7PowerChainA1
-  UINT8    WgdsWiFiSarDeltaGroup7PowerChainB1;      ///< Offset 3020    WgdsWiFiSarDeltaGroup7PowerChainB1
-  UINT8    WgdsWiFiSarDeltaGroup7PowerMax2;         ///< Offset 3021    WgdsWiFiSarDeltaGroup7PowerMax2
-  UINT8    WgdsWiFiSarDeltaGroup7PowerChainA2;      ///< Offset 3022    WgdsWiFiSarDeltaGroup7PowerChainA2
-  UINT8    WgdsWiFiSarDeltaGroup7PowerChainB2;      ///< Offset 3023    WgdsWiFiSarDeltaGroup7PowerChainB2
-  UINT8    WgdsWiFiSarDeltaGroup7PowerMax3;         ///< Offset 3024    WgdsWiFiSarDeltaGroup7PowerMax3
-  UINT8    WgdsWiFiSarDeltaGroup7PowerChainA3;      ///< Offset 3025    WgdsWiFiSarDeltaGroup7PowerChainA3
-  UINT8    WgdsWiFiSarDeltaGroup7PowerChainB3;      ///< Offset 3026    WgdsWiFiSarDeltaGroup7PowerChainB3
-  UINT8    WgdsWiFiSarDeltaGroup8PowerMax1;         ///< Offset 3027    WgdsWiFiSarDeltaGroup8PowerMax1
-  UINT8    WgdsWiFiSarDeltaGroup8PowerChainA1;      ///< Offset 3028    WgdsWiFiSarDeltaGroup8PowerChainA1
-  UINT8    WgdsWiFiSarDeltaGroup8PowerChainB1;      ///< Offset 3029    WgdsWiFiSarDeltaGroup8PowerChainB1
-  UINT8    WgdsWiFiSarDeltaGroup8PowerMax2;         ///< Offset 3030    WgdsWiFiSarDeltaGroup8PowerMax2
-  UINT8    WgdsWiFiSarDeltaGroup8PowerChainA2;      ///< Offset 3031    WgdsWiFiSarDeltaGroup8PowerChainA2
-  UINT8    WgdsWiFiSarDeltaGroup8PowerChainB2;      ///< Offset 3032    WgdsWiFiSarDeltaGroup8PowerChainB2
-  UINT8    WgdsWiFiSarDeltaGroup8PowerMax3;         ///< Offset 3033    WgdsWiFiSarDeltaGroup8PowerMax3
-  UINT8    WgdsWiFiSarDeltaGroup8PowerChainA3;      ///< Offset 3034    WgdsWiFiSarDeltaGroup8PowerChainA3
-  UINT8    WgdsWiFiSarDeltaGroup8PowerChainB3;      ///< Offset 3035    WgdsWiFiSarDeltaGroup8PowerChainB3
+  UINT8    HybridGraphicsDetection;                 ///< Offset 2982    Primary Display (0=AUTO, 3=iGfx, 4=HG)
+  UINT8    WccdEnable;                              ///< Offset 2983    WCCD Enable
+  UINT8    WirelessLowBandIsolation;                ///< Offset 2984    WLAN/WWAN Low Band Isolation
+  UINT8    WirelessHighBandIsolation;               ///< Offset 2985    WLAN/WWAN High Band Isolation
+  UINT8    WgdsWiFiSarDeltaGroupNumber;             ///< Offset 2986    WgdsWiFiSarDeltaGroupNumber
+  UINT8    WgdsWiFiSarDeltaGroup4PowerMax1;         ///< Offset 2987    WgdsWiFiSarDeltaGroup4PowerMax1
+  UINT8    WgdsWiFiSarDeltaGroup4PowerChainA1;      ///< Offset 2988    WgdsWiFiSarDeltaGroup4PowerChainA1
+  UINT8    WgdsWiFiSarDeltaGroup4PowerChainB1;      ///< Offset 2989    WgdsWiFiSarDeltaGroup4PowerChainB1
+  UINT8    WgdsWiFiSarDeltaGroup4PowerMax2;         ///< Offset 2990    WgdsWiFiSarDeltaGroup4PowerMax2
+  UINT8    WgdsWiFiSarDeltaGroup4PowerChainA2;      ///< Offset 2991    WgdsWiFiSarDeltaGroup4PowerChainA2
+  UINT8    WgdsWiFiSarDeltaGroup4PowerChainB2;      ///< Offset 2992    WgdsWiFiSarDeltaGroup4PowerChainB2
+  UINT8    WgdsWiFiSarDeltaGroup4PowerMax3;         ///< Offset 2993    WgdsWiFiSarDeltaGroup4PowerMax3
+  UINT8    WgdsWiFiSarDeltaGroup4PowerChainA3;      ///< Offset 2994    WgdsWiFiSarDeltaGroup4PowerChainA3
+  UINT8    WgdsWiFiSarDeltaGroup4PowerChainB3;      ///< Offset 2995    WgdsWiFiSarDeltaGroup4PowerChainB3
+  UINT8    WgdsWiFiSarDeltaGroup5PowerMax1;         ///< Offset 2996    WgdsWiFiSarDeltaGroup5PowerMax1
+  UINT8    WgdsWiFiSarDeltaGroup5PowerChainA1;      ///< Offset 2997    WgdsWiFiSarDeltaGroup5PowerChainA1
+  UINT8    WgdsWiFiSarDeltaGroup5PowerChainB1;      ///< Offset 2998    WgdsWiFiSarDeltaGroup5PowerChainB1
+  UINT8    WgdsWiFiSarDeltaGroup5PowerMax2;         ///< Offset 2999    WgdsWiFiSarDeltaGroup5PowerMax2
+  UINT8    WgdsWiFiSarDeltaGroup5PowerChainA2;      ///< Offset 3000    WgdsWiFiSarDeltaGroup5PowerChainA2
+  UINT8    WgdsWiFiSarDeltaGroup5PowerChainB2;      ///< Offset 3001    WgdsWiFiSarDeltaGroup5PowerChainB2
+  UINT8    WgdsWiFiSarDeltaGroup5PowerMax3;         ///< Offset 3002    WgdsWiFiSarDeltaGroup5PowerMax3
+  UINT8    WgdsWiFiSarDeltaGroup5PowerChainA3;      ///< Offset 3003    WgdsWiFiSarDeltaGroup5PowerChainA3
+  UINT8    WgdsWiFiSarDeltaGroup5PowerChainB3;      ///< Offset 3004    WgdsWiFiSarDeltaGroup5PowerChainB3
+  UINT8    WgdsWiFiSarDeltaGroup6PowerMax1;         ///< Offset 3005    WgdsWiFiSarDeltaGroup6PowerMax1
+  UINT8    WgdsWiFiSarDeltaGroup6PowerChainA1;      ///< Offset 3006    WgdsWiFiSarDeltaGroup6PowerChainA1
+  UINT8    WgdsWiFiSarDeltaGroup6PowerChainB1;      ///< Offset 3007    WgdsWiFiSarDeltaGroup6PowerChainB1
+  UINT8    WgdsWiFiSarDeltaGroup6PowerMax2;         ///< Offset 3008    WgdsWiFiSarDeltaGroup6PowerMax2
+  UINT8    WgdsWiFiSarDeltaGroup6PowerChainA2;      ///< Offset 3009    WgdsWiFiSarDeltaGroup6PowerChainA2
+  UINT8    WgdsWiFiSarDeltaGroup6PowerChainB2;      ///< Offset 3010    WgdsWiFiSarDeltaGroup6PowerChainB2
+  UINT8    WgdsWiFiSarDeltaGroup6PowerMax3;         ///< Offset 3011    WgdsWiFiSarDeltaGroup6PowerMax3
+  UINT8    WgdsWiFiSarDeltaGroup6PowerChainA3;      ///< Offset 3012    WgdsWiFiSarDeltaGroup6PowerChainA3
+  UINT8    WgdsWiFiSarDeltaGroup6PowerChainB3;      ///< Offset 3013    WgdsWiFiSarDeltaGroup6PowerChainB3
+  UINT8    WgdsWiFiSarDeltaGroup7PowerMax1;         ///< Offset 3014    WgdsWiFiSarDeltaGroup7PowerMax1
+  UINT8    WgdsWiFiSarDeltaGroup7PowerChainA1;      ///< Offset 3015    WgdsWiFiSarDeltaGroup7PowerChainA1
+  UINT8    WgdsWiFiSarDeltaGroup7PowerChainB1;      ///< Offset 3016    WgdsWiFiSarDeltaGroup7PowerChainB1
+  UINT8    WgdsWiFiSarDeltaGroup7PowerMax2;         ///< Offset 3017    WgdsWiFiSarDeltaGroup7PowerMax2
+  UINT8    WgdsWiFiSarDeltaGroup7PowerChainA2;      ///< Offset 3018    WgdsWiFiSarDeltaGroup7PowerChainA2
+  UINT8    WgdsWiFiSarDeltaGroup7PowerChainB2;      ///< Offset 3019    WgdsWiFiSarDeltaGroup7PowerChainB2
+  UINT8    WgdsWiFiSarDeltaGroup7PowerMax3;         ///< Offset 3020    WgdsWiFiSarDeltaGroup7PowerMax3
+  UINT8    WgdsWiFiSarDeltaGroup7PowerChainA3;      ///< Offset 3021    WgdsWiFiSarDeltaGroup7PowerChainA3
+  UINT8    WgdsWiFiSarDeltaGroup7PowerChainB3;      ///< Offset 3022    WgdsWiFiSarDeltaGroup7PowerChainB3
+  UINT8    WgdsWiFiSarDeltaGroup8PowerMax1;         ///< Offset 3023    WgdsWiFiSarDeltaGroup8PowerMax1
+  UINT8    WgdsWiFiSarDeltaGroup8PowerChainA1;      ///< Offset 3024    WgdsWiFiSarDeltaGroup8PowerChainA1
+  UINT8    WgdsWiFiSarDeltaGroup8PowerChainB1;      ///< Offset 3025    WgdsWiFiSarDeltaGroup8PowerChainB1
+  UINT8    WgdsWiFiSarDeltaGroup8PowerMax2;         ///< Offset 3026    WgdsWiFiSarDeltaGroup8PowerMax2
+  UINT8    WgdsWiFiSarDeltaGroup8PowerChainA2;      ///< Offset 3027    WgdsWiFiSarDeltaGroup8PowerChainA2
+  UINT8    WgdsWiFiSarDeltaGroup8PowerChainB2;      ///< Offset 3028    WgdsWiFiSarDeltaGroup8PowerChainB2
+  UINT8    WgdsWiFiSarDeltaGroup8PowerMax3;         ///< Offset 3029    WgdsWiFiSarDeltaGroup8PowerMax3
+  UINT8    WgdsWiFiSarDeltaGroup8PowerChainA3;      ///< Offset 3030    WgdsWiFiSarDeltaGroup8PowerChainA3
+  UINT8    WgdsWiFiSarDeltaGroup8PowerChainB3;      ///< Offset 3031    WgdsWiFiSarDeltaGroup8PowerChainB3
   //I2C6 Support
-  UINT16   SSH6;                                    ///< Offset 3036    SSCN-HIGH for I2C6
-  UINT16   SSL6;                                    ///< Offset 3038    SSCN-LOW  for I2C6
-  UINT16   SSD6;                                    ///< Offset 3040    SSCN-HOLD for I2C6
-  UINT16   FMH6;                                    ///< Offset 3042    FMCN-HIGH for I2C6
-  UINT16   FML6;                                    ///< Offset 3044    FMCN-LOW  for I2C6
-  UINT16   FMD6;                                    ///< Offset 3046    FMCN-HOLD for I2C6
-  UINT16   FPH6;                                    ///< Offset 3048    FPCN-HIGH for I2C6
-  UINT16   FPL6;                                    ///< Offset 3050    FPCN-LOW  for I2C6
-  UINT16   FPD6;                                    ///< Offset 3052    FPCN-HOLD for I2C6
-  UINT16   HSH6;                                    ///< Offset 3054    HSCN-HIGH for I2C6
-  UINT16   HSL6;                                    ///< Offset 3056    HSCN-LOW  for I2C6
-  UINT16   HSD6;                                    ///< Offset 3058    HSCN-HOLD for I2C6
-  UINT16   M0CC;                                    ///< Offset 3060    M0D3 for I2C6
-  UINT16   M1CC;                                    ///< Offset 3062    M1D3 for I2C6
+  UINT16   SSH6;                                    ///< Offset 3032    SSCN-HIGH for I2C6
+  UINT16   SSL6;                                    ///< Offset 3034    SSCN-LOW  for I2C6
+  UINT16   SSD6;                                    ///< Offset 3036    SSCN-HOLD for I2C6
+  UINT16   FMH6;                                    ///< Offset 3038    FMCN-HIGH for I2C6
+  UINT16   FML6;                                    ///< Offset 3040    FMCN-LOW  for I2C6
+  UINT16   FMD6;                                    ///< Offset 3042    FMCN-HOLD for I2C6
+  UINT16   FPH6;                                    ///< Offset 3044    FPCN-HIGH for I2C6
+  UINT16   FPL6;                                    ///< Offset 3046    FPCN-LOW  for I2C6
+  UINT16   FPD6;                                    ///< Offset 3048    FPCN-HOLD for I2C6
+  UINT16   HSH6;                                    ///< Offset 3050    HSCN-HIGH for I2C6
+  UINT16   HSL6;                                    ///< Offset 3052    HSCN-LOW  for I2C6
+  UINT16   HSD6;                                    ///< Offset 3054    HSCN-HOLD for I2C6
+  UINT16   M0CC;                                    ///< Offset 3056    M0D3 for I2C6
+  UINT16   M1CC;                                    ///< Offset 3058    M1D3 for I2C6
   //I2C7 Support
-  UINT16   SSH7;                                    ///< Offset 3064    SSCN-HIGH for I2C7
-  UINT16   SSL7;                                    ///< Offset 3066    SSCN-LOW  for I2C7
-  UINT16   SSD7;                                    ///< Offset 3068    SSCN-HOLD for I2C7
-  UINT16   FMH7;                                    ///< Offset 3070    FMCN-HIGH for I2C7
-  UINT16   FML7;                                    ///< Offset 3072    FMCN-LOW  for I2C7
-  UINT16   FMD7;                                    ///< Offset 3074    FMCN-HOLD for I2C7
-  UINT16   FPH7;                                    ///< Offset 3076    FPCN-HIGH for I2C7
-  UINT16   FPL7;                                    ///< Offset 3078    FPCN-LOW  for I2C7
-  UINT16   FPD7;                                    ///< Offset 3080    FPCN-HOLD for I2C7
-  UINT16   HSH7;                                    ///< Offset 3082    HSCN-HIGH for I2C7
-  UINT16   HSL7;                                    ///< Offset 3084    HSCN-LOW  for I2C7
-  UINT16   HSD7;                                    ///< Offset 3086    HSCN-HOLD for I2C7
-  UINT16   M0CD;                                    ///< Offset 3088    M0D3 for I2C7
-  UINT16   M1CD;                                    ///< Offset 3090    M1D3 for I2C7
+  UINT16   SSH7;                                    ///< Offset 3060    SSCN-HIGH for I2C7
+  UINT16   SSL7;                                    ///< Offset 3062    SSCN-LOW  for I2C7
+  UINT16   SSD7;                                    ///< Offset 3064    SSCN-HOLD for I2C7
+  UINT16   FMH7;                                    ///< Offset 3066    FMCN-HIGH for I2C7
+  UINT16   FML7;                                    ///< Offset 3068    FMCN-LOW  for I2C7
+  UINT16   FMD7;                                    ///< Offset 3070    FMCN-HOLD for I2C7
+  UINT16   FPH7;                                    ///< Offset 3072    FPCN-HIGH for I2C7
+  UINT16   FPL7;                                    ///< Offset 3074    FPCN-LOW  for I2C7
+  UINT16   FPD7;                                    ///< Offset 3076    FPCN-HOLD for I2C7
+  UINT16   HSH7;                                    ///< Offset 3078    HSCN-HIGH for I2C7
+  UINT16   HSL7;                                    ///< Offset 3080    HSCN-LOW  for I2C7
+  UINT16   HSD7;                                    ///< Offset 3082    HSCN-HOLD for I2C7
+  UINT16   M0CD;                                    ///< Offset 3084    M0D3 for I2C7
+  UINT16   M1CD;                                    ///< Offset 3086    M1D3 for I2C7
   //Flash ID support for discrete flash solution
-  UINT8    MipiCamLink0DD_FlashID;                  ///< Offset 3092    Flash ID for Link0
-  UINT8    MipiCamLink1DD_FlashID;                  ///< Offset 3093    Flash ID for Link1
-  UINT8    MipiCamLink2DD_FlashID;                  ///< Offset 3094    Flash ID for Link2
-  UINT8    MipiCamLink3DD_FlashID;                  ///< Offset 3095    Flash ID for Link3
-  UINT8    MipiCamLink4DD_FlashID;                  ///< Offset 3096    Flash ID for Link4
-  UINT8    MipiCamLink5DD_FlashID;                  ///< Offset 3097    Flash ID for Link5
-  UINT16   MipiCamCtrlLogic0_GpioComNumber[6];      ///< Offset 3098    GPIO com number
-  UINT16   MipiCamCtrlLogic1_GpioComNumber[6];      ///< Offset 3110    GPIO com number
-  UINT16   MipiCamCtrlLogic2_GpioComNumber[6];      ///< Offset 3122    GPIO com number
-  UINT16   MipiCamCtrlLogic3_GpioComNumber[6];      ///< Offset 3134    GPIO com number
-  UINT16   MipiCamCtrlLogic4_GpioComNumber[6];      ///< Offset 3146    GPIO com number
-  UINT16   MipiCamCtrlLogic5_GpioComNumber[6];      ///< Offset 3158    GPIO com number
-  UINT16   MipiCamFlash0GpioComNumber;              ///< Offset 3170    GPIO Com Number
-  UINT16   MipiCamFlash1GpioComNumber;              ///< Offset 3172    GPIO Com Number
-  UINT16   MipiCamFlash2GpioComNumber;              ///< Offset 3174    GPIO Com Number
-  UINT16   MipiCamFlash3GpioComNumber;              ///< Offset 3176    GPIO Com Number
-  UINT16   MipiCamFlash4GpioComNumber;              ///< Offset 3178    GPIO Com Number
-  UINT16   MipiCamFlash5GpioComNumber;              ///< Offset 3180    GPIO Com Number
+  UINT8    MipiCamLink0DD_FlashID;                  ///< Offset 3088    Flash ID for Link0
+  UINT8    MipiCamLink1DD_FlashID;                  ///< Offset 3089    Flash ID for Link1
+  UINT8    MipiCamLink2DD_FlashID;                  ///< Offset 3090    Flash ID for Link2
+  UINT8    MipiCamLink3DD_FlashID;                  ///< Offset 3091    Flash ID for Link3
+  UINT8    MipiCamLink4DD_FlashID;                  ///< Offset 3092    Flash ID for Link4
+  UINT8    MipiCamLink5DD_FlashID;                  ///< Offset 3093    Flash ID for Link5
+  UINT16   MipiCamCtrlLogic0_GpioComNumber[6];      ///< Offset 3094    GPIO com number
+  UINT16   MipiCamCtrlLogic1_GpioComNumber[6];      ///< Offset 3106    GPIO com number
+  UINT16   MipiCamCtrlLogic2_GpioComNumber[6];      ///< Offset 3118    GPIO com number
+  UINT16   MipiCamCtrlLogic3_GpioComNumber[6];      ///< Offset 3130    GPIO com number
+  UINT16   MipiCamCtrlLogic4_GpioComNumber[6];      ///< Offset 3142    GPIO com number
+  UINT16   MipiCamCtrlLogic5_GpioComNumber[6];      ///< Offset 3154    GPIO com number
+  UINT16   MipiCamFlash0GpioComNumber;              ///< Offset 3166    GPIO Com Number
+  UINT16   MipiCamFlash1GpioComNumber;              ///< Offset 3168    GPIO Com Number
+  UINT16   MipiCamFlash2GpioComNumber;              ///< Offset 3170    GPIO Com Number
+  UINT16   MipiCamFlash3GpioComNumber;              ///< Offset 3172    GPIO Com Number
+  UINT16   MipiCamFlash4GpioComNumber;              ///< Offset 3174    GPIO Com Number
+  UINT16   MipiCamFlash5GpioComNumber;              ///< Offset 3176    GPIO Com Number
   // Type-C NVS variables for TCSS Port 7-10
-  UINT8    UsbTypeCPort7;                           ///< Offset 3182    Type C Connector 7  Port mapping within the controller the port exposed
-  UINT8    UsbTypeCPort7Pch;                        ///< Offset 3183    Type C Connector 7  Port mapping within the PCH controller (If Split mode supported)
-  UINT8    UsbCPort7Proterties;                     ///< Offset 3184    Type C Connector 7  Portperties Split Support/Controller(PCH/TBT/CPU)/Root port (vaild for TBT)
-  UINT8    UsbTypeCPort8;                           ///< Offset 3185    Type C Connector 8  Port mapping within the controller the port exposed
-  UINT8    UsbTypeCPort8Pch;                        ///< Offset 3186    Type C Connector 8  Port mapping within the PCH controller (If Split mode supported)
-  UINT8    UsbCPort8Proterties;                     ///< Offset 3187    Type C Connector 8  Portperties Split Support/Controller(PCH/TBT/CPU)/Root port (vaild for TBT)
-  UINT8    UsbTypeCPort9;                           ///< Offset 3188    Type C Connector 9  Port mapping within the controller the port exposed
-  UINT8    UsbTypeCPort9Pch;                        ///< Offset 3189    Type C Connector 9  Port mapping within the PCH controller (If Split mode supported)
-  UINT8    UsbCPort9Proterties;                     ///< Offset 3190    Type C Connector 9  Portperties Split Support/Controller(PCH/TBT/CPU)/Root port (vaild for TBT)
-  UINT8    UsbTypeCPortA;                           ///< Offset 3191    Type C Connector A  Port mapping within the controller the port exposed
-  UINT8    UsbTypeCPortAPch;                        ///< Offset 3192    Type C Connector A  Port mapping within the PCH controller (If Split mode supported)
-  UINT8    UsbCPortAProterties;                     ///< Offset 3193    Type C Connector A  Portperties Split Support/Controller(PCH/TBT/CPU)/Root port (vaild for TBT)
+  UINT8    UsbTypeCPort7;                           ///< Offset 3178    Type C Connector 7  Port mapping within the controller the port exposed
+  UINT8    UsbTypeCPort7Pch;                        ///< Offset 3179    Type C Connector 7  Port mapping within the PCH controller (If Split mode supported)
+  UINT8    UsbCPort7Proterties;                     ///< Offset 3180    Type C Connector 7  Portperties Split Support/Controller(PCH/TBT/CPU)/Root port (vaild for TBT)
+  UINT8    UsbTypeCPort8;                           ///< Offset 3181    Type C Connector 8  Port mapping within the controller the port exposed
+  UINT8    UsbTypeCPort8Pch;                        ///< Offset 3182    Type C Connector 8  Port mapping within the PCH controller (If Split mode supported)
+  UINT8    UsbCPort8Proterties;                     ///< Offset 3183    Type C Connector 8  Portperties Split Support/Controller(PCH/TBT/CPU)/Root port (vaild for TBT)
+  UINT8    UsbTypeCPort9;                           ///< Offset 3184    Type C Connector 9  Port mapping within the controller the port exposed
+  UINT8    UsbTypeCPort9Pch;                        ///< Offset 3185    Type C Connector 9  Port mapping within the PCH controller (If Split mode supported)
+  UINT8    UsbCPort9Proterties;                     ///< Offset 3186    Type C Connector 9  Portperties Split Support/Controller(PCH/TBT/CPU)/Root port (vaild for TBT)
+  UINT8    UsbTypeCPortA;                           ///< Offset 3187    Type C Connector A  Port mapping within the controller the port exposed
+  UINT8    UsbTypeCPortAPch;                        ///< Offset 3188    Type C Connector A  Port mapping within the PCH controller (If Split mode supported)
+  UINT8    UsbCPortAProterties;                     ///< Offset 3189    Type C Connector A  Portperties Split Support/Controller(PCH/TBT/CPU)/Root port (vaild for TBT)
   // UCSI/UCMX Driver Support. 0: Force Disable, 1: UCSI Driver support, 2: UCMX Driver support.
-  UINT8    UsbCPort1UcxxSupport;                    ///< Offset 3194    Type C Connector 1  UCSI/UCMX Driver Support Enable/ Force Disable.
-  UINT8    UsbCPort2UcxxSupport;                    ///< Offset 3195    Type C Connector 2  UCSI/UCMX Driver Support Enable/ Force Disable.
-  UINT8    UsbCPort3UcxxSupport;                    ///< Offset 3196    Type C Connector 3  UCSI/UCMX Driver Support Enable/ Force Disable.
-  UINT8    UsbCPort4UcxxSupport;                    ///< Offset 3197    Type C Connector 4  UCSI/UCMX Driver Support Enable/ Force Disable.
-  UINT8    UsbCPort5UcxxSupport;                    ///< Offset 3198    Type C Connector 5  UCSI/UCMX Driver Support Enable/ Force Disable.
-  UINT8    UsbCPort6UcxxSupport;                    ///< Offset 3199    Type C Connector 6  UCSI/UCMX Driver Support Enable/ Force Disable.
-  UINT8    UsbCPort7UcxxSupport;                    ///< Offset 3200    Type C Connector 7  UCSI/UCMX Driver Support Enable/ Force Disable.
-  UINT8    UsbCPort8UcxxSupport;                    ///< Offset 3201    Type C Connector 8  UCSI/UCMX Driver Support Enable/ Force Disable.
-  UINT8    UsbCPort9UcxxSupport;                    ///< Offset 3202    Type C Connector 9  UCSI/UCMX Driver Support Enable/ Force Disable.
-  UINT8    UsbCPortAUcxxSupport;                    ///< Offset 3203    Type C Connector A  UCSI/UCMX Driver Support Enable/ Force Disable.
-  UINT64   DgBaseAddress;                           ///< Offset 3204    DG PCIe base address
-  UINT32   DgOpRegionAddress;                       ///< Offset 3212    DG OpRegion base address
-  UINT8    DgBrightnessPercentage;                  ///< Offset 3216    DG eDP Brightness Level Percentage
-  UINT8    SkipVidDidCheck;                         ///< Offset 3217    Skip VDID check
+  UINT8    UsbCPort1UcxxSupport;                    ///< Offset 3190    Type C Connector 1  UCSI/UCMX Driver Support Enable/ Force Disable.
+  UINT8    UsbCPort2UcxxSupport;                    ///< Offset 3191    Type C Connector 2  UCSI/UCMX Driver Support Enable/ Force Disable.
+  UINT8    UsbCPort3UcxxSupport;                    ///< Offset 3192    Type C Connector 3  UCSI/UCMX Driver Support Enable/ Force Disable.
+  UINT8    UsbCPort4UcxxSupport;                    ///< Offset 3193    Type C Connector 4  UCSI/UCMX Driver Support Enable/ Force Disable.
+  UINT8    UsbCPort5UcxxSupport;                    ///< Offset 3194    Type C Connector 5  UCSI/UCMX Driver Support Enable/ Force Disable.
+  UINT8    UsbCPort6UcxxSupport;                    ///< Offset 3195    Type C Connector 6  UCSI/UCMX Driver Support Enable/ Force Disable.
+  UINT8    UsbCPort7UcxxSupport;                    ///< Offset 3196    Type C Connector 7  UCSI/UCMX Driver Support Enable/ Force Disable.
+  UINT8    UsbCPort8UcxxSupport;                    ///< Offset 3197    Type C Connector 8  UCSI/UCMX Driver Support Enable/ Force Disable.
+  UINT8    UsbCPort9UcxxSupport;                    ///< Offset 3198    Type C Connector 9  UCSI/UCMX Driver Support Enable/ Force Disable.
+  UINT8    UsbCPortAUcxxSupport;                    ///< Offset 3199    Type C Connector A  UCSI/UCMX Driver Support Enable/ Force Disable.
+  UINT64   DgBaseAddress;                           ///< Offset 3200    DG PCIe base address
+  UINT32   DgOpRegionAddress;                       ///< Offset 3208    DG OpRegion base address
+  UINT8    DgBrightnessPercentage;                  ///< Offset 3212    DG eDP Brightness Level Percentage
+  UINT8    SkipVidDidCheck;                         ///< Offset 3213    Skip VDID check
   // ACPI debug NVS region
-  UINT8    EnableAcpiDebug;                         ///< Offset 3218    Enable flag for ACPI debug
-  UINT8    SerialPortAcpiDebug;                     ///< Offset 3219    Serial Port ACPI debug
-  UINT32   WifiEnergyDetection;                     ///< Offset 3220    Wifi Energy Detection Threshold
-  UINT32   Wifi7Control;                            ///< Offset 3224    Wi-Fi 7 Control
-  UINT32   DisplayMuxGpioNo;                        ///< Offset 3228    Display Mux GPIO pin
-  UINT8    DgNumberOfValidDeviceId;                 ///< Offset 3232    DG Number of Valid Device IDs
-  UINT32   DgDeviceId1;                             ///< Offset 3233    DG Device ID 1
-  UINT32   DgDeviceId2;                             ///< Offset 3237    DG Device ID 2
-  UINT32   DgDeviceId3;                             ///< Offset 3241    DG Device ID 3
-  UINT32   DgDeviceId4;                             ///< Offset 3245    DG Device ID 4
-  UINT32   DgDeviceId5;                             ///< Offset 3249    DG Device ID 5
-  UINT32   DgDeviceId6;                             ///< Offset 3253    DG Device ID 6
-  UINT32   DgDeviceId7;                             ///< Offset 3257    DG Device ID 7
-  UINT32   DgDeviceId8;                             ///< Offset 3261    DG Device ID 8
-  UINT32   DgDeviceId9;                             ///< Offset 3265    DG Device ID 9
-  UINT32   DgDeviceId10;                            ///< Offset 3269    DG Device ID 10
-  UINT32   DgDeviceId11;                            ///< Offset 3273    DG Device ID 11
-  UINT32   DgDeviceId12;                            ///< Offset 3277    DG Device ID 12
-  UINT32   DgDeviceId13;                            ///< Offset 3281    DG Device ID 13
-  UINT32   DgDeviceId14;                            ///< Offset 3285    DG Device ID 14
-  UINT32   DgDeviceId15;                            ///< Offset 3289    DG Device ID 15
-  UINT32   DgDeviceIdX;                             ///< Offset 3293    DG Device ID for eDP device
-  UINT8    DgDisplaySupportFlag;                    ///< Offset 3297    _DOS DG Display Support Flag.
-  UINT8    CnvDlvrRfim;                             ///< Offset 3298    CNV DLVR RFI Mitigation
-  UINT8    ClosedLidWovLighting;                    ///< Offset 3299    Closed Lid WoV LED Lighting Support Enable
-  UINT8    ClwlI2cController;                       ///< Offset 3300    Closed Lid WoV LED Lighting I2C Controller Number
-  UINT8    ClwlI2cSlaveAddress;                     ///< Offset 3301    Closed Lid WoV LED Lighting I2C Slave address
-  UINT32   DiscreteWiFiRfKillGpio;                  ///< Offset 3302    Gpio for WiFi RF-Kill
-  UINT32   WlanRstGpio;                             ///< Offset 3306    WLAN Reset Gpio pin
-  UINT32   WlanVsecHeaderOffset;                    ///< Offset 3310    Wlan VSEC Control Reg Base Address
-  UINT8    SocBusBase;                              ///< Offset 3314    SoC Bus Base
-  UINT8    SocBusLimit;                             ///< Offset 3315    SoC Bus Limit
-  UINT16   SocIoBase;                               ///< Offset 3316    SoC IO Base
-  UINT16   SocIoLimit;                              ///< Offset 3318    SoC IO Limit
-  UINT32   SocMem32Base;                            ///< Offset 3320    SoC Mem32 Base
-  UINT32   SocMem32Limit;                           ///< Offset 3324    SoC Mem32 Limit
-  UINT64   SocMem64Base;                            ///< Offset 3328    SoC Mem64 Base
-  UINT64   SocMem64Limit;                           ///< Offset 3336    SoC Mem64 Limit
-  UINT8    PchBusBase;                              ///< Offset 3344    PCH Bus Base
-  UINT8    PchBusLimit;                             ///< Offset 3345    PCH Bus Limit
-  UINT16   PchIoBase;                               ///< Offset 3346    PCH IO Base
-  UINT16   PchIoLimit;                              ///< Offset 3348    PCH IO Limit
-  UINT32   PchMem32Base;                            ///< Offset 3350    PCH Mem32 Base
-  UINT32   PchMem32Limit;                           ///< Offset 3354    PCH Mem32 Limit
-  UINT64   PchMem64Base;                            ///< Offset 3358    PCH Mem64 Base
-  UINT64   PchMem64Limit;                           ///< Offset 3366    PCH Mem64 Limit
-  UINT8    Reserved22[10];                          ///< Offset 3374:3383
+  UINT8    EnableAcpiDebug;                         ///< Offset 3214    Enable flag for ACPI debug
+  UINT8    SerialPortAcpiDebug;                     ///< Offset 3215    Serial Port ACPI debug
+  UINT32   WifiEnergyDetection;                     ///< Offset 3216    Wifi Energy Detection Threshold
+  UINT32   Wifi7Control;                            ///< Offset 3220    Wi-Fi 7 Control
+  UINT32   DisplayMuxGpioNo;                        ///< Offset 3224    Display Mux GPIO pin
+  UINT8    DgNumberOfValidDeviceId;                 ///< Offset 3228    DG Number of Valid Device IDs
+  UINT32   DgDeviceId1;                             ///< Offset 3229    DG Device ID 1
+  UINT32   DgDeviceId2;                             ///< Offset 3233    DG Device ID 2
+  UINT32   DgDeviceId3;                             ///< Offset 3237    DG Device ID 3
+  UINT32   DgDeviceId4;                             ///< Offset 3241    DG Device ID 4
+  UINT32   DgDeviceId5;                             ///< Offset 3245    DG Device ID 5
+  UINT32   DgDeviceId6;                             ///< Offset 3249    DG Device ID 6
+  UINT32   DgDeviceId7;                             ///< Offset 3253    DG Device ID 7
+  UINT32   DgDeviceId8;                             ///< Offset 3257    DG Device ID 8
+  UINT32   DgDeviceId9;                             ///< Offset 3261    DG Device ID 9
+  UINT32   DgDeviceId10;                            ///< Offset 3265    DG Device ID 10
+  UINT32   DgDeviceId11;                            ///< Offset 3269    DG Device ID 11
+  UINT32   DgDeviceId12;                            ///< Offset 3273    DG Device ID 12
+  UINT32   DgDeviceId13;                            ///< Offset 3277    DG Device ID 13
+  UINT32   DgDeviceId14;                            ///< Offset 3281    DG Device ID 14
+  UINT32   DgDeviceId15;                            ///< Offset 3285    DG Device ID 15
+  UINT32   DgDeviceIdX;                             ///< Offset 3289    DG Device ID for eDP device
+  UINT8    DgDisplaySupportFlag;                    ///< Offset 3293    _DOS DG Display Support Flag.
+  UINT8    CnvDlvrRfim;                             ///< Offset 3294    CNV DLVR RFI Mitigation
+  UINT8    ClosedLidWovLighting;                    ///< Offset 3295    Closed Lid WoV LED Lighting Support Enable
+  UINT8    ClwlI2cController;                       ///< Offset 3296    Closed Lid WoV LED Lighting I2C Controller Number
+  UINT8    ClwlI2cSlaveAddress;                     ///< Offset 3297    Closed Lid WoV LED Lighting I2C Slave address
+  UINT32   DiscreteWiFiRfKillGpio;                  ///< Offset 3298    Gpio for WiFi RF-Kill
+  UINT32   WlanRstGpio;                             ///< Offset 3302    WLAN Reset Gpio pin
+  UINT32   WlanVsecHeaderOffset;                    ///< Offset 3306    Wlan VSEC Control Reg Base Address
+  UINT8    SocBusBase;                              ///< Offset 3310    SoC Bus Base
+  UINT8    SocBusLimit;                             ///< Offset 3311    SoC Bus Limit
+  UINT16   SocIoBase;                               ///< Offset 3312    SoC IO Base
+  UINT16   SocIoLimit;                              ///< Offset 3314    SoC IO Limit
+  UINT32   SocMem32Base;                            ///< Offset 3316    SoC Mem32 Base
+  UINT32   SocMem32Limit;                           ///< Offset 3320    SoC Mem32 Limit
+  UINT64   SocMem64Base;                            ///< Offset 3324    SoC Mem64 Base
+  UINT64   SocMem64Limit;                           ///< Offset 3332    SoC Mem64 Limit
+  UINT8    PchBusBase;                              ///< Offset 3340    PCH Bus Base
+  UINT8    PchBusLimit;                             ///< Offset 3341    PCH Bus Limit
+  UINT16   PchIoBase;                               ///< Offset 3342    PCH IO Base
+  UINT16   PchIoLimit;                              ///< Offset 3344    PCH IO Limit
+  UINT32   PchMem32Base;                            ///< Offset 3346    PCH Mem32 Base
+  UINT32   PchMem32Limit;                           ///< Offset 3350    PCH Mem32 Limit
+  UINT64   PchMem64Base;                            ///< Offset 3354    PCH Mem64 Base
+  UINT64   PchMem64Limit;                           ///< Offset 3362    PCH Mem64 Limit
   // HD Audio
-  UINT8    I2SE;                                    ///< Offset 3384    HD Audio I2S Enable
+  UINT8    I2SE;                                    ///< Offset 3370    HD Audio I2S Enable
   // SIO Configuration Registers
-  UINT8    PcdIT8659COM;                            ///< Offset 3385    IT8659 COM
-  UINT8    PcdIT8659HWMON;                          ///< Offset 3386    IT8659 HWMON
-  UINT8    PcdIT8659SIO;                            ///< Offset 3387    IT8659 SIO Present
-  UINT8    SdevXhciEntry;                           ///< Offset 3388
+  UINT8    PcdIT8659COM;                            ///< Offset 3371    IT8659 COM
+  UINT8    PcdIT8659HWMON;                          ///< Offset 3372    IT8659 HWMON
+  UINT8    PcdIT8659SIO;                            ///< Offset 3373    IT8659 SIO Present
+  UINT8    SdevXhciEntry;                           ///< Offset 3374
   //ZPODD support
-  UINT32   ZpoddDAGpio;                             ///< Offset 3389    ZPODD device attention gpio
-  UINT32   ZpoddPRGpio;                             ///< Offset 3393    ZPODD device present gpio
-  UINT32   ZpoddPWGpio;                             ///< Offset 3397    ZPODD device power gpio
-  UINT8    ZpoddPWGpioPolarity;                     ///< Offset 3401    ZPODD device power gpio polarity
-  UINT8    ZpoddPortBitmask;                        ///< Offset 3402    Bitmask of port support zpodd
+  UINT32   ZpoddDAGpio;                             ///< Offset 3375    ZPODD device attention gpio
+  UINT32   ZpoddPRGpio;                             ///< Offset 3379    ZPODD device present gpio
+  UINT32   ZpoddPWGpio;                             ///< Offset 3383    ZPODD device power gpio
+  UINT8    ZpoddPWGpioPolarity;                     ///< Offset 3387    ZPODD device power gpio polarity
+  UINT8    ZpoddPortBitmask;                        ///< Offset 3388    Bitmask of port support zpodd
+  UINT8    IsArlMobile;                             ///< Offset 3389    ARL Mobile Presented
+  UINT8    IsArlDesktop;                            ///< Offset 3390    ARL Desktop Presented
   //Foxville RTD3 support
-  UINT32   FoxLanWakeGpio;                          ///< Offset 3405    Foxville I225 Wake Gpio pin
-  UINT32   FoxLanRstGpio;                           ///< Offset 3409    Foxville I225 Reset Gpio pin
-  UINT8    FoxLanRstGpioPolarity;                   ///< Offset 3413    Foxville I225 Reset Gpio pin polarity
-  UINT32   FoxLanDisableNGpio;                      ///< Offset 3414    Foxville I225 Disable N Gpio pin
-  UINT8    FoxLanDisableNGpioPolarity;              ///< Offset 3418    Foxville I225 Disable N Gpio pin polarity
-  UINT8    FoxLanSupport;                           ///< Offset 3419    Foxville I225 support configuration
-  UINT8    FoxLanRpNumber;                          ///< Offset 3420    Foxville I225 PCIe Root Port Number
-  UINT8    CnviBtAudioOffload;                      ///< Offset 3421    CNVi BT Audio Offload
+  UINT32   FoxLanWakeGpio;                          ///< Offset 3391    Foxville I225 Wake Gpio pin
+  UINT32   FoxLanRstGpio;                           ///< Offset 3395    Foxville I225 Reset Gpio pin
+  UINT8    FoxLanRstGpioPolarity;                   ///< Offset 3399    Foxville I225 Reset Gpio pin polarity
+  UINT32   FoxLanDisableNGpio;                      ///< Offset 3400    Foxville I225 Disable N Gpio pin
+  UINT8    FoxLanDisableNGpioPolarity;              ///< Offset 3404    Foxville I225 Disable N Gpio pin polarity
+  UINT8    FoxLanSupport;                           ///< Offset 3405    Foxville I225 support configuration
+  UINT8    FoxLanRpNumber;                          ///< Offset 3406    Foxville I225 PCIe Root Port Number
+  UINT8    CnviBtAudioOffload;                      ///< Offset 3407    CNVi BT Audio Offload
+  UINT32   I2c0SpeedMode;                           ///< Offset 3408    I2C0 Speed Mode Selection
+  UINT32   I2c1SpeedMode;                           ///< Offset 3412    I2C1 Speed Mode Selection
+  UINT32   I2c2SpeedMode;                           ///< Offset 3416    I2C2 Speed Mode Selection
+  UINT32   I2c3SpeedMode;                           ///< Offset 3420    I2C3 Speed Mode Selection
+  UINT32   I2c4SpeedMode;                           ///< Offset 3424    I2C4 Speed Mode Selection
+  UINT32   I2c5SpeedMode;                           ///< Offset 3428    I2C5 Speed Mode Selection
+  UINT8    MipiCamLink0DD_PprValue;                 ///< Offset 3432    PPR Value
+  UINT8    MipiCamLink0DD_PprUnit;                  ///< Offset 3433    PPR Unit
+  UINT8    MipiCamLink1DD_PprValue;                 ///< Offset 3434    PPR Value
+  UINT8    MipiCamLink1DD_PprUnit;                  ///< Offset 3435    PPR Unit
+  UINT8    MipiCamLink2DD_PprValue;                 ///< Offset 3436    PPR Value
+  UINT8    MipiCamLink2DD_PprUnit;                  ///< Offset 3437    PPR Unit
+  UINT8    MipiCamLink3DD_PprUnit;                  ///< Offset 3438    PPR Unit
+  UINT8    MipiCamLink3DD_PprValue;                 ///< Offset 3439    PPR Value
+  UINT8    MipiCamLink4DD_PprUnit;                  ///< Offset 3440    PPR Unit
+  UINT8    MipiCamLink4DD_PprValue;                 ///< Offset 3441    PPR Value
+  UINT8    MipiCamLink5DD_PprUnit;                  ///< Offset 3442    PPR Unit
+  UINT8    MipiCamLink5DD_PprValue;                 ///< Offset 3443    PPR Value
   //Audio Custom HID Link0
-  UINT8    AudioLink0UserHid[9];                    ///< Offset 3422    User defined HID ASCII character 0
-                                                    ///< Offset 3430    User defined HID ASCII character 8
+  UINT8    AudioLink0UserHid[9];                    ///< Offset 3444    User defined HID ASCII character 0
+                                                    ///< Offset 3452    User defined HID ASCII character 8
   //Audio Custom HID Link1
-  UINT8    AudioLink1UserHid[9];                    ///< Offset 3431    User defined HID ASCII character 0
-                                                    ///< Offset 3439    User defined HID ASCII character 8
-  UINT8    MipiCamLink0DD_PprValue;                 ///< Offset 3440    PPR Value
-  UINT8    MipiCamLink0DD_PprUnit;                  ///< Offset 3441    PPR Unit
-  UINT8    MipiCamLink1DD_PprValue;                 ///< Offset 3442    PPR Value
-  UINT8    MipiCamLink1DD_PprUnit;                  ///< Offset 3443    PPR Unit
-  UINT8    MipiCamLink2DD_PprValue;                 ///< Offset 3444    PPR Value
-  UINT8    MipiCamLink2DD_PprUnit;                  ///< Offset 3445    PPR Unit
-  UINT8    MipiCamLink3DD_PprUnit;                  ///< Offset 3446    PPR Unit
-  UINT8    MipiCamLink3DD_PprValue;                 ///< Offset 3447    PPR Value
-  UINT8    MipiCamLink4DD_PprUnit;                  ///< Offset 3448    PPR Unit
-  UINT8    MipiCamLink4DD_PprValue;                 ///< Offset 3449    PPR Value
-  UINT8    MipiCamLink5DD_PprUnit;                  ///< Offset 3450    PPR Unit
-  UINT8    MipiCamLink5DD_PprValue;                 ///< Offset 3451    PPR Value
-  UINT32   I2c0SpeedMode;                           ///< Offset 3452    I2C0 Speed Mode Selection
-  UINT32   I2c1SpeedMode;                           ///< Offset 3456    I2C1 Speed Mode Selection
-  UINT32   I2c2SpeedMode;                           ///< Offset 3460    I2C2 Speed Mode Selection
-  UINT32   I2c3SpeedMode;                           ///< Offset 3464    I2C3 Speed Mode Selection
-  UINT32   I2c4SpeedMode;                           ///< Offset 3468    I2C4 Speed Mode Selection
-  UINT32   I2c5SpeedMode;                           ///< Offset 3472    I2C5 Speed Mode Selection
-
-  //Ec Nvs
-  UINT8    IuerButtonEnable;                        ///< Offset 3304       IUER Button Enable
-  UINT8    IuerConvertibleEnable;                   ///< Offset 3305       IUER Convertible Enable
-  UINT8    IuerDockEnable;                          ///< Offset 3306       IUER Dock Enable
-  UINT8    CSNotifyEC;                              ///< Offset 3307       EC Notification of Low Power S0 Idle State
-  UINT8    EcLowPowerMode;                          ///< Offset 3308       EC Low Power Mode: 1 - Enabled, 0 - Disabled
-  UINT8    PcdBatteryPresent;                       ///< Offset 3309       Battery Present - Bit0: Real Battery is supported on this platform. Bit1: Virtual Battery is supported on this platform.
-  UINT32   PcdSmcRuntimeSciPin;                     ///< Offset 3310       SMC Runtime Sci Pin
-  UINT8    PcdEcHotKeyF3Support;                    ///< Offset 3314      Ec Hotkey F3 Support
-  UINT8    PcdEcHotKeyF4Support;                    ///< Offset 3315      Ec Hotkey F4 Support
-  UINT8    PcdEcHotKeyF5Support;                    ///< Offset 3316      Ec Hotkey F5 Support
-  UINT8    PcdEcHotKeyF6Support;                    ///< Offset 3317      Ec Hotkey F6 Support
-  UINT8    PcdEcHotKeyF7Support;                    ///< Offset 3318      Ec Hotkey F7 Support
-  UINT8    PcdEcHotKeyF8Support;                    ///< Offset 3319      Ec Hotkey F8 Support
-  UINT8    PcdVirtualButtonVolumeUpSupport;         ///< Offset 3320      Virtual Button Volume Up Support
-  UINT8    PcdVirtualButtonVolumeDownSupport;       ///< Offset 3321      Virtual Button Volume Down Support
-  UINT8    PcdVirtualButtonHomeButtonSupport;       ///< Offset 3322      Virtual Button Home Button Support
-  UINT8    PcdVirtualButtonRotationLockSupport;     ///< Offset 3323      Virtual Button Rotation Lock Support
-  UINT8    PcdSlateModeSwitchSupport;               ///< Offset 3324      Slate Mode Switch Support
-  UINT8    PcdAcDcAutoSwitchSupport;                ///< Offset 3325      Ac Dc Auto Switch Support
-  UINT32   PcdPmPowerButtonGpioPin;                 ///< Offset 3326      Pm Power Button Gpio Pin
-  UINT32   EcdtGpeNumber;                           ///< Offset 3330      Ecdt GPE bit value
-  UINT32   LidSwitchWakeGpio;                       ///< KT test Offset 3334      Lid Switch Wake Gpio
-  UINT8    PseudoG3StateCounter;                    ///< KT test Offset 3338     Pseudo G3 counter Enable/Disable
-  //
-  // Intel(R) Dynamic Tuning Technology Devices and trip points
-  //
-  UINT8    EnableDptf;                              ///< Offset 0       EnableDptf
-  UINT32   EnableDCFG;                              ///< Offset 1       EnableDCFG
-  UINT8    EnableSaDevice;                          ///< Offset 5       EnableSaDevice
-  UINT8    EnableFan1Device;                        ///< Offset 6       EnableFan1Device
-  UINT8    EnableFan2Device;                        ///< Offset 7       EnableFan2Device
-  UINT8    EnableFan3Device;                        ///< Offset 8       EnableFan3Device
-  UINT8    EnableChargerParticipant;                ///< Offset 9       EnableChargerParticipant
-  UINT8    EnableBatteryParticipant;                ///< Offset 10      EnableBatteryParticipant
-  UINT8    EnableInt3400Device;                     ///< Offset 11      EnableInt3400Device. new ACPI ID is INTC1040
-  UINT8    EnableSen1Participant;                   ///< Offset 12      EnableSen1Participant
-  UINT8    EnableSen2Participant;                   ///< Offset 13      EnableSen2Participant
-  UINT8    EnableSen3Participant;                   ///< Offset 14      EnableSen3Participant
-  UINT8    EnableSen4Participant;                   ///< Offset 15      EnableSen4Participant
-  UINT8    EnableSen5Participant;                   ///< Offset 16      EnableSen5Participant
-  UINT8    EnablePchFivrParticipant;                ///< Offset 17      EnablePchFivrParticipant
-  //
-  // Miscellaneous Intel(R) Dynamic Tuning Technology
-  //
-  UINT32   PpccStepSize;                            ///< Offset 18      PPCC Step Size
-  UINT8    EnablePowerParticipant;                  ///< Offset 22      EnablePowerParticipant
-  UINT16   PowerParticipantPollingRate;             ///< Offset 23      PowerParticipantPollingRate
-  UINT8    OemDesignVariable0;                      ///< Offset 25      Intel(R) Dynamic Tuning Technology Oem Design Variables
-  UINT8    OemDesignVariable1;                      ///< Offset 26      Intel(R) Dynamic Tuning Technology Oem Design Variables
-  UINT8    OemDesignVariable2;                      ///< Offset 27      Intel(R) Dynamic Tuning Technology Oem Design Variables
-  UINT8    OemDesignVariable3;                      ///< Offset 28      Intel(R) Dynamic Tuning Technology Oem Design Variables
-  UINT8    OemDesignVariable4;                      ///< Offset 29      Intel(R) Dynamic Tuning Technology Oem Design Variables
-  UINT8    OemDesignVariable5;                      ///< Offset 30      Intel(R) Dynamic Tuning Technology Oem Design Variables
-  //
-  // Enable System Self healing for fan participant
-  //
-  UINT8    FanSysHeal;                              ///< Offset 31      Fan System Self Healing
-  UINT8    EnableFanAutoMode;                       ///< Offset 32      Enabling Auto Mode for DTT
-  //UINT8    VmdEnable;                               ///< Offset 0       VMD Device Enable
-  //UINT32   VmdSocPciePorts;                         ///< Offset 1       VMD SOC and IOE PCIe RP mapped under VMD
-  //UINT32   VmdPchPcieRp;                            ///< Offset 5       VMD PCH PCIe RP mapped under VMD
-  //UINT8    VmdSataPort0to7;                         ///< Offset 9       VMD SATA PORT 0 to 7 mapped under VMD
-  //UINT8    PchRpBusNo;                              ///< Offset 10      PCH ROOT PORT BUS Number
+  UINT8    AudioLink1UserHid[9];                    ///< Offset 3453    User defined HID ASCII character 0
+                                                    ///< Offset 3461    User defined HID ASCII character 8
+  UINT8    SCS0;                                    ///< Offset 3462    SPI0 ChipSelect 0 Device enabled
+  UINT8    SCS1;                                    ///< Offset 3463    SPI0 ChipSelect 1 Device enabled
+  UINT8    SCS2;                                    ///< Offset 3464    SPI1 ChipSelect 0 Device enabled
+  UINT8    SCS3;                                    ///< Offset 3465    SPI1 ChipSelect 1 Device enabled
+  UINT8    SCS4;                                    ///< Offset 3466    SPI2 ChipSelect 0 Device enabled
+  UINT8    SCS5;                                    ///< Offset 3467    SPI2 ChipSelect 1 Device enabled
+  // CNV GUID lock
+  UINT8    CnvGuidLockStatus;                       ///< Offset 3468    CNV Guid Lock Status ACPI Indicator
+  UINT8    EVSA;                                    ///< Offset 3469    Everest8326 I2c slave address
+  #ifdef RESTRICTED_FLAG
+  // Below is InternalOnly NVS region
+  UINT8    ScmConfig;                               ///< Offset 3470    ScmConfig to Select Full BootDisk(Default) or Split BootDisk
+  UINT64   RamdiskAdd;                              ///< Offset 3471    Address of RamDisk
+  UINT8    RamdiskSize;                             ///< Offset 3479    RamdiskSize in GB
+  UINT32   Rtd3EnabledPcieRp;                       ///< Offset 3480    PCIE Root ports bit map
+  UINT32   PegPcieSlot1WakeGpio;                    ///< Offset 3484    Peg Pcie Slot 1 Wake Gpio pin
+  UINT8    PegPcieSlot1RpNumber;                    ///< Offset 3488    Peg Pcie Slot 1 Root Port Number
+  UINT32   PegPcieSlot1PowerEnableGpio;             ///< Offset 3489    Peg Pcie Slot 1 Power Enable Gpio pin
+  UINT8    PegPcieSlot1PowerEnableGpioPolarity;     ///< Offset 3493    Peg Pcie Slot 1 Power Enable Gpio pin polarity
+  UINT32   PegPcieSlot1RstGpio;                     ///< Offset 3494    Peg Pcie Slot 1 Rest Gpio pin
+  UINT8    PegPcieSlot1RstGpioPolarity;             ///< Offset 3498    Peg Pcie Slot 1 Rest Gpio pin polarity
+  UINT32   PegPcieSlot2WakeGpio;                    ///< Offset 3499    Peg Pcie Slot 2 Wake Gpio pin
+  UINT8    PegPcieSlot2RpNumber;                    ///< Offset 3503    Peg Pcie Slot 2 Root Port Number
+  UINT32   PegPcieSlot2PowerEnableGpio;             ///< Offset 3504    Peg Pcie Slot 2 Power Enable Gpio pin
+  UINT8    PegPcieSlot2PowerEnableGpioPolarity;     ///< Offset 3508    Peg Pcie Slot 2 Power Enable Gpio pin polarity
+  UINT32   PegPcieSlot2RstGpio;                     ///< Offset 3509    Peg Pcie Slot 2 Rest Gpio pin
+  UINT8    PegPcieSlot2RstGpioPolarity;             ///< Offset 3513    Peg Pcie Slot 2 Rest Gpio pin polarity
+  UINT32   PegPcieSlot3WakeGpio;                    ///< Offset 3514    Peg Pcie Slot 3 Wake Gpio pin
+  UINT8    PegPcieSlot3RpNumber;                    ///< Offset 3518    Peg Pcie Slot 3 Root Port Number
+  UINT32   PegPcieSlot3PowerEnableGpio;             ///< Offset 3519    Peg Pcie Slot 3 Power Enable Gpio pin
+  UINT8    PegPcieSlot3PowerEnableGpioPolarity;     ///< Offset 3523    Peg Pcie Slot 3 Power Enable Gpio pin polarity
+  UINT32   PegPcieSlot3RstGpio;                     ///< Offset 3524    Peg Pcie Slot 3 Rest Gpio pin
+  UINT8    PegPcieSlot3RstGpioPolarity;             ///< Offset 3528    Peg Pcie Slot 3 Rest Gpio pin polarity
+  UINT32   PegPcieSlot4WakeGpio;                    ///< Offset 3529    Peg Pcie Slot 4 Wake Gpio pin
+  UINT8    PegPcieSlot4RpNumber;                    ///< Offset 3533    Peg Pcie Slot 4 Root Port Number
+  UINT32   PegPcieSlot4PowerEnableGpio;             ///< Offset 3534    Peg Pcie Slot 4 Power Enable Gpio pin
+  UINT8    PegPcieSlot4PowerEnableGpioPolarity;     ///< Offset 3538    Peg Pcie Slot 4 Power Enable Gpio pin polarity
+  UINT32   PegPcieSlot4RstGpio;                     ///< Offset 3539    Peg Pcie Slot 4 Rest Gpio pin
+  UINT8    PegPcieSlot4RstGpioPolarity;             ///< Offset 3543    Peg Pcie Slot 4 Rest Gpio pin polarity
+  UINT32   PegPcieSlot5WakeGpio;                    ///< Offset 3544    Peg Pcie Slot 5 Wake Gpio pin
+  UINT8    PegPcieSlot5RpNumber;                    ///< Offset 3548    Peg Pcie Slot 5 Root Port Number
+  UINT32   PegPcieSlot5PowerEnableGpio;             ///< Offset 3549    Peg Pcie Slot 5 Power Enable Gpio pin
+  UINT8    PegPcieSlot5PowerEnableGpioPolarity;     ///< Offset 3553    Peg Pcie Slot 5 Power Enable Gpio pin polarity
+  UINT32   PegPcieSlot5RstGpio;                     ///< Offset 3554    Peg Pcie Slot 5 Rest Gpio pin
+  UINT8    PegPcieSlot5RstGpioPolarity;             ///< Offset 3558    Peg Pcie Slot 5 Rest Gpio pin polarity
+  UINT32   PcieSlot1Power2EnableGpio;               ///< Offset 3559    Pcie Slot 1 Power2 Enable Gpio pin
+  UINT8    PcieSlot1Power2EnableGpioPolarity;       ///< Offset 3563    Pcie Slot 1 Power2 Enable Gpio pin polarity
+  UINT32   PcieSlot2Power2EnableGpio;               ///< Offset 3564    Pcie Slot 2 Power2 Enable Gpio pin
+  UINT8    PcieSlot2Power2EnableGpioPolarity;       ///< Offset 3568    Pcie Slot 2 Power2 Enable Gpio pin polarity
+  UINT32   PcieSlot3Power2EnableGpio;               ///< Offset 3569    Pcie Slot 3 Power2 Enable Gpio pin
+  UINT8    PcieSlot3Power2EnableGpioPolarity;       ///< Offset 3573    Pcie Slot 3 Power2 Enable Gpio pin polarity
+  UINT32   PcieSlot4Power2EnableGpio;               ///< Offset 3574    Pcie Slot 4 Power2 Enable Gpio pin
+  UINT8    PcieSlot4Power2EnableGpioPolarity;       ///< Offset 3578    Pcie Slot 4 Power2 Enable Gpio pin polarity
+  UINT32   PcieSlot5Power2EnableGpio;               ///< Offset 3579    Pcie Slot 5 Power2 Enable Gpio pin
+  UINT8    PcieSlot5Power2EnableGpioPolarity;       ///< Offset 3583    Pcie Slot 5 Power2 Enable Gpio pin polarity
+  UINT32   PcieSlot6Power2EnableGpio;               ///< Offset 3584    Pcie Slot 6 Power2 Enable Gpio pin
+  UINT8    PcieSlot6Power2EnableGpioPolarity;       ///< Offset 3588    Pcie Slot 6 Power2 Enable Gpio pin polarity
+  #endif
 } PLATFORM_NVS_AREA;
 
 #pragma pack(pop)

@@ -351,8 +351,6 @@ GetMaxCpuPciePortNum (
   )
 {
   switch (GetCpuFamily1()) {
-    case CPUID_FULL_FAMILY_MODEL_ALDERLAKE_DT_HALO:
-      return CPU_PCIE_DT_HALO_MAX_ROOT_PORT;
     default:
       return CPU_PCIE_ULT_ULX_MAX_ROOT_PORT;
   }
@@ -640,14 +638,6 @@ UpdateFspConfig (
   FspsConfig->PmcLpmS0ixSubStateEnableMask = 0x7;
   FspsConfig->PmcUsb2PhySusPgEnable = 0x0;
 
-  if (FeaturesCfgData != NULL) {
-    if (FeaturesCfgData->Features.S0ix == 1) {
-      FspsConfig->XdciEnable = 0;
-      ZeroMem (FspsConfig->PchIshI2cEnable, sizeof (FspsConfig->PchIshI2cEnable));
-      ZeroMem (FspsConfig->PchIshGpEnable, sizeof (FspsConfig->PchIshGpEnable));
-      DEBUG ((DEBUG_INFO, "Stage 2 S0ix config applied.\n"));
-    }
-  }
 
   // Force Eiss and BiosLock off for now.
   // Enable it later in OS loader/EndofStages
@@ -673,7 +663,7 @@ UpdateFspConfig (
   }
 
   FspsConfig->AmtEnabled = 0x1;
-  FspsConfig->EnableTcoTimer = 0x1;
+  FspsConfig->EnableTcoTimer = 0x0;
 
   PowerCfgData = (POWER_CFG_DATA *) FindConfigDataByTag (CDATA_POWER_TAG);
   if (PowerCfgData == NULL) {
@@ -835,4 +825,23 @@ UpdateFspConfig (
 
   // EndOfPost Upd
   FspsUpd->FspsConfig.EndOfPostMessage = 1;
+  if (FeaturesCfgData != NULL) {
+    if (FeaturesCfgData->Features.S0ix == 1) {
+      FspsConfig->C1e = 1;
+      FspsConfig->Cx = 1;
+      FspsConfig->XdciEnable = 0;
+      FspsConfig->PchLanEnable = 0x0;
+      FspsConfig->GnaEnable = 0x0;
+      FspsConfig->VpuEnable = 0x0;
+      ZeroMem (FspsConfig->PchIshI2cEnable, sizeof (FspsConfig->PchIshI2cEnable));
+      ZeroMem (FspsConfig->PchIshGpEnable, sizeof (FspsConfig->PchIshGpEnable));
+      ZeroMem (FspsConfig->ITbtPcieRootPortEn, sizeof (FspsConfig->ITbtPcieRootPortEn));
+      FspsConfig->RenderStandby = 1;
+      FspsConfig->Enable8254ClockGating = 1;
+      FspsConfig->PchFivrDynPm = 1;
+      FspsConfig->D3HotEnable = 0;
+      FspsConfig->D3ColdEnable = 1;
+      DEBUG ((DEBUG_INFO, "Stage 2 S0ix config applied.\n"));
+    }
+  }
 }
