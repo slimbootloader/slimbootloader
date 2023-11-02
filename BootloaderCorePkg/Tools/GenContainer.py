@@ -2,7 +2,7 @@
 ## @ GenContainer.py
 # Tools to operate on a container image
 #
-# Copyright (c) 2019 - 2022, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2019 - 2023, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -591,7 +591,7 @@ class CONTAINER ():
 
             # create header entry
             auth_type_str = self.get_auth_type_str (self.header.auth_type)
-            match = re.match('RSA(\d+)_', auth_type_str)
+            match = re.match('RSA(\\d+)_', auth_type_str)
             if match:
                 if self.header.signature.decode() == 'BOOT':
                     key_file = 'KEY_ID_OS1_PRIVATE_RSA%s' % match.group(1)
@@ -607,7 +607,7 @@ class CONTAINER ():
             # create component entry
             for component in self.header.comp_entry:
                 auth_type_str = self.get_auth_type_str (component.auth_type)
-                match = re.match('RSA(\d+)_', auth_type_str)
+                match = re.match('RSA(\\d+)_', auth_type_str)
                 if match:
                     key_file = 'KEY_ID_CONTAINER_COMP_RSA%s' % match.group(1)
                 else:

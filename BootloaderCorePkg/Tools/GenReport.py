@@ -1,6 +1,6 @@
 ## @ GenReport.py
 #
-# Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -278,11 +278,11 @@ class REPORTER:
         Lines = FdIn.readlines()
         FdIn.close()
         for Line in Lines:
-            Match = re.match("EFI_FV_TOTAL_SIZE\s+=\s+(0x[a-fA-F0-9]+)", Line)
+            Match = re.match("EFI_FV_TOTAL_SIZE\\s+=\\s+(0x[a-fA-F0-9]+)", Line)
             if Match is not None:
                 Fv.Length = int(Match.group(1), 16)
                 continue
-            Match = re.match("(0x[a-fA-F0-9]+)\s([0-9a-fA-F\-]+)", Line)
+            Match = re.match("(0x[a-fA-F0-9]+)\\s([0-9a-fA-F\\-]+)", Line)
             if Match is not None:
                 Ffs = IMG_INFO('FFS', Match.group(2).upper())
                 Ffs.Offset = int(Match.group(1), 16)
@@ -293,7 +293,7 @@ class REPORTER:
         Lines = FdIn.readlines()
         FdIn.close()
         for Line in Lines:
-            Match = re.match("EFI_BASE_ADDRESS\s+=\s+(0x[a-fA-F0-9]+)", Line)
+            Match = re.match("EFI_BASE_ADDRESS\\s+=\\s+(0x[a-fA-F0-9]+)", Line)
             if Match is not None:
                 # Update base if it is not dynamic loading
                 if Fv.Base != 0xFFFFFFFF:
@@ -307,7 +307,7 @@ class REPORTER:
         Lines = FdIn.readlines()
         FdIn.close()
         for Line in Lines:
-            Match = re.match("([0-9a-fA-F\-]+)\s(.+)", Line)
+            Match = re.match("([0-9a-fA-F\\-]+)\\s(.+)", Line)
             if Match:
                 Guid = Match.group(1).upper()
                 if Guid not in self.DictGuidNameXref:
@@ -331,7 +331,7 @@ class REPORTER:
                 else:
                     IsDefSection = False
             if IsDefSection:
-                Match = re.match("^DEFINE\s+([_\w]+)\s*=\s*([_\w]+)", Line)
+                Match = re.match("^DEFINE\\s+([_\\w]+)\\s*=\\s*([_\\w]+)", Line)
                 if Match is not None:
                     self.DictDscDefines[Match.group(1).upper()] = Match.group(
                         2)
