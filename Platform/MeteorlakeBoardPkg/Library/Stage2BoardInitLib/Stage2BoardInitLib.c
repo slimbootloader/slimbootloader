@@ -1410,8 +1410,6 @@ PlatformUpdateAcpiGnvs (
   SYS_CPU_INFO            *SysCpuInfo;
   EC_NVS_AREA             *EcNvs;
   DPTF_NVS_AREA           *DptfNvs;
-  VMD_NVS_AREA            *VmdNvs;
-
   FSPS_UPD                *FspsUpd;
   FSP_S_CONFIG            *FspsConfig;
   TCC_CFG_DATA            *TccCfgData;
@@ -1434,7 +1432,6 @@ PlatformUpdateAcpiGnvs (
   PchNvs      = (PCH_NVS_AREA *) &GlobalNvs->PchNvs;
   CpuNvs      = (CPU_NVS_AREA *) &GlobalNvs->CpuNvs;
   EcNvs       = (EC_NVS_AREA  *) &GlobalNvs->EcNvs;
-  VmdNvs      = (VMD_NVS_AREA  *) &GlobalNvs->VmdNvs;
   DptfNvs     = (DPTF_NVS_AREA*) &GlobalNvs->DptfNvs;
   SaNvs       = (SYSTEM_AGENT_NVS_AREA *) &GlobalNvs->SaNvs;
   FspsUpd     = (FSPS_UPD *)(UINTN)PcdGet32 (PcdFspsUpdPtr);
@@ -1596,12 +1593,7 @@ PlatformUpdateAcpiGnvs (
     PchNvs->UI0[Index] = mPchSSerialIoUartMode[Index].SerialIoUARTIrq;
   }
 
-  // PchNvs->UM0[0] = 2;
-  // PchNvs->UC0[0] = 0xFE02D000;
   PchNvs->UI0[2] = 31;
-  // PchNvs->UI0[3] = 25;
-    DEBUG ((DEBUG_INFO, "PchNvs->UI0[3]  = 0x%X\n",PchNvs->UI0[3]));
-
   PchNvs->CnviBtCore         = FspsConfig->CnviBtCore;
   PlatformNvs->CnviBtAudioOffload = FspsConfig->CnviBtAudioOffload;
   PchNvs->PsOnEnable         = FspsConfig->PsOnEnable;
