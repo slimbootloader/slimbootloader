@@ -1228,8 +1228,8 @@ PlatformUpdateAcpiGnvs (
   UpdateCpuNvs (CpuNvs);
 
   //System Agent NVS Init
-  SaNvs->Mmio64Base               = 0;
-  SaNvs->Mmio64Length             = 0;
+  SaNvs->Mmio64Base               = PcdGet64 (PcdPciResourceMem64Base);
+  SaNvs->Mmio64Length             = RShiftU64 (PcdGet64 (PcdPciResourceMem64Base), 1);
   SaNvs->Mmio32Base               = PcdGet32(PcdPciResourceMem32Base);
   SaNvs->Mmio32Length             = ACPI_MMIO_BASE_ADDRESS - SaNvs->Mmio32Base;
   SaNvs->XPcieCfgBaseAddress      = (UINT32)(PcdGet64(PcdPciExpressBaseAddress));
