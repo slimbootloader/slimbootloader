@@ -542,9 +542,7 @@ BoardInit (
     /// Initialize the IGD OpRegion
     ///
     }
-#if !FixedPcdGetBool(PcdAzbSupport)
     IgdOpRegionPlatformInit ();
-#endif
 
     ///
     /// Initialize the HECI device (for test HeciInitLib only)
