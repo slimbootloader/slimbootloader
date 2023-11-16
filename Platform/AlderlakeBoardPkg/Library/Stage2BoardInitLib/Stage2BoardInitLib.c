@@ -532,16 +532,16 @@ BoardInit (
         DEBUG ((DEBUG_INFO, "Failed to set GFX framebuffer as WC\n"));
       }
     }
-    if (GetBootMode() == BOOT_ON_S3_RESUME) {
-        RestoreS3RegInfo (FindS3Info (S3_SAVE_REG_COMM_ID));
-        //
-        // If payload registered a software SMI handler for bootloader to restore
-        // SMRR base and mask in S3 resume path, trigger sw smi
-        //
-        BlSwSmiInfo = FindS3Info (BL_SW_SMI_COMM_ID);
-        if (BlSwSmiInfo != NULL) {
-          TriggerPayloadSwSmi (BlSwSmiInfo->BlSwSmiHandlerInput);
-        }
+    if ((GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE) && (GetBootMode() == BOOT_ON_S3_RESUME)) {
+      RestoreS3RegInfo (FindS3Info (S3_SAVE_REG_COMM_ID));
+      //
+      // If payload registered a software SMI handler for bootloader to restore
+      // SMRR base and mask in S3 resume path, trigger sw smi
+      //
+      BlSwSmiInfo = FindS3Info (BL_SW_SMI_COMM_ID);
+      if (BlSwSmiInfo != NULL) {
+        TriggerPayloadSwSmi (BlSwSmiInfo->BlSwSmiHandlerInput);
+      }
     }
     InterruptRoutingInit ();
     break;
