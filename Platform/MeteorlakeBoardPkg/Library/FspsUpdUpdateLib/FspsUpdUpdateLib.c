@@ -817,7 +817,7 @@ UpdateFspConfig (
   FspsConfig->PcieRpLtrOverrideSpecComplaint[10] = 0x0;
   FspsConfig->PcieRpLtrOverrideSpecComplaint[11] = 0x0;
   FspsConfig->TcssAuxOri = 0x1;
-  FspsConfig->EnableTcssCovTypeA[1] = 0x0;
+  FspsConfig->EnableTcssCovTypeA[1] = 0x82;
   FspsConfig->SerialIoSpiCsPinMux[0] = 0x14a48a;
   FspsConfig->SerialIoSpiClkPinMux[0] = 0x14a48b;
   FspsConfig->SerialIoSpiMisoPinMux[0] = 0x14a48c;
