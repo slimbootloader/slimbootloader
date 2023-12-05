@@ -1072,6 +1072,10 @@ UpdateFspConfig (
   FspsConfig->TdcTimeWindow[1] = 0x3e8;
   FspsConfig->Device4Enable = 0x1;
 
+#if PLATFORM_RPLPS
+  FspsConfig->CpuFeaturesInitOnS3ResumeOverride = 1;
+#endif
+
   if (IsPchS ()) {
     FspsConfig->CpuPcieFunc0LinkDisable[2] = 0x0;
     FspsConfig->CseDataResilience = 0x1;
