@@ -400,6 +400,7 @@ BoardInit (
   SILICON_CFG_DATA          *SiCfgData;
   BL_SW_SMI_INFO            *BlSwSmiInfo;
   FEATURES_DATA             *FeatureCfgData;
+  UINT32                    Data;
 
   SiCfgData = NULL;
 
@@ -533,6 +534,7 @@ BoardInit (
       }
     }
     if ((GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE) && (GetBootMode() == BOOT_ON_S3_RESUME)) {
+      ClearSmi ();
       RestoreS3RegInfo (FindS3Info (S3_SAVE_REG_COMM_ID));
       //
       // If payload registered a software SMI handler for bootloader to restore
@@ -540,6 +542,8 @@ BoardInit (
       //
       BlSwSmiInfo = FindS3Info (BL_SW_SMI_COMM_ID);
       if (BlSwSmiInfo != NULL) {
+        Data = IoRead32 ((UINTN) (ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN));
+        IoWrite32 ((UINTN) (ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN), Data | B_ACPI_IO_SMI_EN_APMC | B_ACPI_IO_SMI_EN_GBL_SMI);
         TriggerPayloadSwSmi (BlSwSmiInfo->BlSwSmiHandlerInput);
       }
     }
