@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -740,8 +740,15 @@ It8659HwMonStart(
   )
 {
   EFI_SIO_ACPI_DEVICE_ID  HwMonDevice;
+  UINT32                  HwMonDecodeRange;
 
   DEBUG ((DEBUG_INFO, "SIO It8659fHwMonStart\n"));
+
+  // Need to enable eSPI decode for HwMon IO range
+  HwMonDecodeRange = (0xF << 16) | HWMON_BASE_ADDRESS | B_ESPI_CFG_ESPI_LGIR1_LDE;
+  // Generic decode range 2
+  PciSegmentWrite32((UINTN)(LpcPciCfgBase() + R_ESPI_CFG_ESPI_LGIR1 + 4), HwMonDecodeRange);
+  MmioWrite32 (PCH_PCR_ADDRESS(PID_DMI, R_PCH_DMI_PCR_LPCLGIR2), HwMonDecodeRange);
 
   //mIoWrite8 = S3IoWrite8;
   HwMonDevice.HID = EISA_PNP_ID(0xc08);
