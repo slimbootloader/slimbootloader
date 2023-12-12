@@ -550,31 +550,33 @@ UpdateFspConfig (
 
     MaxPcieRootPorts = GetPchMaxPciePortNum ();
     for (Index = 0; Index < MaxPcieRootPorts; Index++) {
-      FspsConfig->PcieRpLtrMaxSnoopLatency[Index]          = 0x100F;
-      FspsConfig->PcieRpLtrMaxNoSnoopLatency[Index]        = 0x100F;
-      FspsConfig->PcieGen3EqPh3NoOfPresetOrCoeff[Index]    = 0x5;
-      FspsConfig->PcieGen3EqPh3PostCursor0List[Index]      = 0xc;
-      FspsConfig->PcieGen3EqPh3PostCursor2List[Index]      = 0xa;
-      FspsConfig->PcieGen3EqPh3PreCursor9List[Index]       = 0x0;
-      FspsConfig->PcieGen3EqPh3Preset4List[Index]          = 0x8;
-      FspsConfig->PcieGen3EqPh3Preset5List[Index]          = 0x0;
-      FspsConfig->PcieGen4EqPh1DpTxPreset[Index]           = 0x7;
-      FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[Index]    = 0x3;
-      FspsConfig->PcieGen4EqPh3PostCursor0List[Index]      = 0xc;
-      FspsConfig->PcieGen4EqPh3PostCursor2List[Index]      = 0xa;
-      FspsConfig->PcieGen5EqPh3NoOfPresetOrCoeff[Index]    = 0x4;
-      FspsConfig->PcieGen5EqPh3PostCursor0List[Index]      = 0xe;
-      FspsConfig->PcieGen5EqPh3PostCursor1List[Index]      = 0xa;
-      FspsConfig->PcieGen5EqPh3PostCursor2List[Index]      = 0xc;
-      FspsConfig->PcieGen5EqPh3PostCursor7List[Index]      = 0xa;
-      FspsConfig->PcieGen5EqPh3PreCursor9List[Index]       = 0x8;
-      FspsConfig->PcieRpUnsupportedRequestReport[Index]    = 0x1;
-      FspsConfig->PcieRpFatalErrorReport[Index]            = 0x1;
-      FspsConfig->PcieRpNoFatalErrorReport[Index]          = 0x1;
-      FspsConfig->PcieRpCorrectableErrorReport[Index]      = 0x1;
-      FspsConfig->PcieRpSnoopLatencyOverrideMode[Index]    = 0x2;
-      FspsConfig->PcieRpNonSnoopLatencyOverrideMode[Index] = 0x2;
-      FspsConfig->PcieRpPhysicalSlotNumber[Index]          = (UINT8)Index;
+      FspsConfig->PcieRpLtrMaxSnoopLatency[Index]           = 0x100F;
+      FspsConfig->PcieRpLtrMaxNoSnoopLatency[Index]         = 0x100F;
+      FspsConfig->PcieRpSnoopLatencyOverrideValue[Index]    = 0x41;
+      FspsConfig->PcieRpNonSnoopLatencyOverrideValue[Index] = 0x41;
+      FspsConfig->PcieGen3EqPh3NoOfPresetOrCoeff[Index]     = 0x5;
+      FspsConfig->PcieGen3EqPh3PostCursor0List[Index]       = 0xc;
+      FspsConfig->PcieGen3EqPh3PostCursor2List[Index]       = 0xa;
+      FspsConfig->PcieGen3EqPh3PreCursor9List[Index]        = 0x0;
+      FspsConfig->PcieGen3EqPh3Preset4List[Index]           = 0x8;
+      FspsConfig->PcieGen3EqPh3Preset5List[Index]           = 0x0;
+      FspsConfig->PcieGen4EqPh1DpTxPreset[Index]            = 0x7;
+      FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[Index]     = 0x3;
+      FspsConfig->PcieGen4EqPh3PostCursor0List[Index]       = 0xc;
+      FspsConfig->PcieGen4EqPh3PostCursor2List[Index]       = 0xa;
+      FspsConfig->PcieGen5EqPh3NoOfPresetOrCoeff[Index]     = 0x4;
+      FspsConfig->PcieGen5EqPh3PostCursor0List[Index]       = 0xe;
+      FspsConfig->PcieGen5EqPh3PostCursor1List[Index]       = 0xa;
+      FspsConfig->PcieGen5EqPh3PostCursor2List[Index]       = 0xc;
+      FspsConfig->PcieGen5EqPh3PostCursor7List[Index]       = 0xa;
+      FspsConfig->PcieGen5EqPh3PreCursor9List[Index]        = 0x8;
+      FspsConfig->PcieRpUnsupportedRequestReport[Index]     = 0x1;
+      FspsConfig->PcieRpFatalErrorReport[Index]             = 0x1;
+      FspsConfig->PcieRpNoFatalErrorReport[Index]           = 0x1;
+      FspsConfig->PcieRpCorrectableErrorReport[Index]       = 0x1;
+      FspsConfig->PcieRpSnoopLatencyOverrideMode[Index]     = 0x2;
+      FspsConfig->PcieRpNonSnoopLatencyOverrideMode[Index]  = 0x2;
+      FspsConfig->PcieRpPhysicalSlotNumber[Index]           = (UINT8)Index;
     }
     FspsConfig->PcieGen3EqPh3Preset4List[11]               = 0x9;
     FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[11]         = 0x5;
@@ -749,6 +751,7 @@ UpdateFspConfig (
       FspsConfig->VmdPort[Index] = 0;
     }
   }
+  CopyMem (&FspsConfig->EnableTcssCovTypeA, SiCfgData->EnableTcssCovTypeA, sizeof(SiCfgData->EnableTcssCovTypeA));
   FspsConfig->ITbtPcieRootPortEn[0]           = 0x1;
   FspsConfig->ITbtPcieRootPortEn[1]           = 0x1;
   FspsConfig->ITbtPcieRootPortEn[2]           = 0x1;
@@ -817,7 +820,6 @@ UpdateFspConfig (
   FspsConfig->PcieRpLtrOverrideSpecComplaint[10] = 0x0;
   FspsConfig->PcieRpLtrOverrideSpecComplaint[11] = 0x0;
   FspsConfig->TcssAuxOri = 0x1;
-  FspsConfig->EnableTcssCovTypeA[1] = 0x82;
   FspsConfig->SerialIoSpiCsPinMux[0] = 0x14a48a;
   FspsConfig->SerialIoSpiClkPinMux[0] = 0x14a48b;
   FspsConfig->SerialIoSpiMisoPinMux[0] = 0x14a48c;
