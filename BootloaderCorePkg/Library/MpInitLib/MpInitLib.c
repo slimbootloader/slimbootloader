@@ -565,7 +565,7 @@ MpInit (
 
       for (Index = 1; Index < mSysCpuTask.CpuCount; Index++) {
         if (mSysCpuTask.CpuTask[Index].State != EnumCpuReady) {
-          DEBUG ((DEBUG_ERROR, " CPU %2d is not ready yet! State = %d\n", Index,
+          DEBUG ((DEBUG_ERROR, " CPU %2d with APIC ID %d is not ready yet! State = %d\n", Index,
                   mSysCpuInfo.CpuInfo[Index].ApicId, mSysCpuTask.CpuTask[Index].State));
         }
       }
