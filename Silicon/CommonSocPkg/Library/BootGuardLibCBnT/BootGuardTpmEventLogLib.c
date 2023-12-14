@@ -966,9 +966,12 @@ CaculateDetailPCRExtendValue (
 }
 
 /**
-  Calculate AuthorityPCR extend value.
+  Calculate Authority PCR extend value.
 
-  @param[out] Digest  AuthorityPCR digest
+  @param[in]  ActivePcrBanks  Active PCR banks in TPM
+  @param[out] Sha256Digest    SHA 256 digest calculation for authority measure
+  @param[out] Sha384Digest    SHA 384 digest calculation for authority measure
+  @param[out] Sm3Digest       SM3 digest calculation for authority measure
 **/
 BOOLEAN
 CaculateAuthorityPCRExtendValue (
@@ -987,21 +990,18 @@ CaculateAuthorityPCRExtendValue (
   UINT8                                    *CurrPos;
   UINT16                                   KeyModulusSize;
   UINT8                                    MaxModulusExpo[RSA_KEY_SIZE_3K/8 + 4];
-  UINT16                                    Index;
+  UINT16                                   Index;
 
   Acm = FindAcm ();
   ASSERT (Acm != NULL);
   if (Acm == NULL) return FALSE;
-
   Km = FindKm ();
   ASSERT (Km != NULL);
   if (Km == NULL) return FALSE;
-
   if (Km->StructVersion != KEY_MANIFEST_STRUCTURE_VERSION_2_1) {
       DEBUG ((DEBUG_ERROR, "Unsupported KM Struct Version: 0x%02x\n", Km->StructVersion));
       return FALSE;
   }
-
   Bpm = FindBpm ();
   ASSERT (Bpm != NULL);
   if (Bpm == NULL) return FALSE;
@@ -1014,20 +1014,16 @@ CaculateAuthorityPCRExtendValue (
   // 1. Get ACM Policy Status
   ((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmPolicySts = GetAcmPolicySts ();
   DEBUG ((DEBUG_INFO, "AcmPolicySts  - 0x%04lx\n", ((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmPolicySts));
-
   // 2. Get ACM SVN
   ((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmSvn = Acm->AcmSvn;
   DEBUG ((DEBUG_INFO, "AcmSvn        - 0x%04x\n", ((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmSvn));
-
-  // 3. Get SHA256 hash of the public key used for signing ACM
-  *(UINT64*)&(((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmKeyHash[0])  = AsmReadMsr64 (ACM_KEY_HASH_MSR_ADDR_0);
-  *(UINT64*)&(((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmKeyHash[8])  = AsmReadMsr64 (ACM_KEY_HASH_MSR_ADDR_1);
-  *(UINT64*)&(((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmKeyHash[16]) = AsmReadMsr64 (ACM_KEY_HASH_MSR_ADDR_2);
-  *(UINT64*)&(((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmKeyHash[24]) = AsmReadMsr64 (ACM_KEY_HASH_MSR_ADDR_3);
+  // 3. Get hash of the public key used for signing ACM
+  for (Index = 0; Index < SHA256_DIGEST_SIZE / 8; Index++) {
+    *(UINT64*)&(((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmKeyHash[Index * 8])  = AsmReadMsr64 (ACM_KEY_HASH_MSR_ADDR_0 + Index);
+  }
 
   DEBUG ((DEBUG_INFO, "AcmKeyHash:  \n"));
   DumpHex (2, 0, SHA256_DIGEST_SIZE, ((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmKeyHash);
-
   AuthorityPcrDataSize = sizeof(((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmPolicySts) + sizeof(((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmSvn)
       + SHA256_DIGEST_SIZE;
   AuthorityPcrDataPtr += AuthorityPcrDataSize;
@@ -1064,19 +1060,17 @@ CaculateAuthorityPCRExtendValue (
   AuthorityPcrDataPtr += SHA384_DIGEST_SIZE;
   AuthorityPcrDataSize += SHA384_DIGEST_SIZE;
 
-  // 5. Get SHA256 hash of the public key used for signing Boot Policy Manifest
+ // 5. Get hash of the public key used for signing Boot Policy Manifest
   CurrPos = (UINT8*)Km + sizeof(KEY_MANIFEST_STRUCTURE);
   for(Index = 0; Index < Km->KeyCount; Index++) {
     SHAX_KMHASH_STRUCT      *KmHash;
     SHAX_HASH_STRUCTURE     *ShaxHash;
-
     KmHash = (SHAX_KMHASH_STRUCT*) (CurrPos);
     ShaxHash = (SHAX_HASH_STRUCTURE*) &(KmHash->Digest);
-
     if ((KmHash->Usage & 0x1) != 0) {
       CopyMem ( AuthorityPcrDataPtr, ShaxHash->HashBuffer,  ShaxHash->Size);
       DEBUG ((DEBUG_INFO, "BPM Key Hash:  \n"));
-      DumpHex (2, 0, SHA256_DIGEST_SIZE, AuthorityPcrDataPtr);
+      DumpHex (2, 0, ShaxHash->Size, AuthorityPcrDataPtr);
       AuthorityPcrDataPtr += ShaxHash->Size;
       AuthorityPcrDataSize += ShaxHash->Size;
     }
