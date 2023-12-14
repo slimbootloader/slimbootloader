@@ -48,6 +48,11 @@ typedef struct {
 //
 // ACM definition
 //
+#define ACM_KEY_HASH_MSR_ADDR_0                         0x20
+#define ACM_KEY_HASH_MSR_ADDR_1                         0x21
+#define ACM_KEY_HASH_MSR_ADDR_2                         0x22
+#define ACM_KEY_HASH_MSR_ADDR_3                         0x23
+
 #define ACM_MODULE_TYPE_CHIPSET_ACM                     2
 #define ACM_MODULE_SUBTYPE_CAPABLE_OF_EXECUTE_AT_RESET  0x1
 #define ACM_MODULE_SUBTYPE_ANC_MODULE                   0x2
@@ -163,7 +168,7 @@ typedef struct {
   SHA384_HASH_STRUCTURE  Sha384Digest; // Array of digests  {AlgID, Size, HashValue; ...}
 } MAX_HASH_LIST;
 
-struct {
+typedef struct {
   UINT64               Usage;          // Bit mask of usages
   SHAX_HASH_STRUCTURE  Digest;         // Standard BtG hash structure primitive
 } SHAX_KMHASH_STRUCT;
@@ -404,6 +409,24 @@ typedef struct {
   UINT8  KmKeyHash[MAX_SUPPORTED_SIGNATURE_SIZE];
   UINT8  BpmKeyHashFromKm[MAX_SUPPORTED_SIGNATURE_SIZE];
 } MAX_ACM_POLICY_DATA;
+
+//
+// AuthorityPCR data
+//
+typedef struct {
+  UINT64 AcmPolicySts;
+  UINT16 AcmSvn;
+  UINT8  AcmKeyHash[];                        // The hash of the key used to verify the ACM (SHAxxx)
+  // UINT8  BpKeyHash[];                         // The hash of the key used to verify the Key Manifest (SHAxxx)
+  // UINT8  BpmKeyHashFromKm[];                  // The hash of the key used to verify the Boot Policy Manifest (SHAxxx)
+} AUTHORITY_PCR_DATA;
+typedef struct {
+  UINT64 AcmPolicySts;
+  UINT16 AcmSvn;                               // ACM_SVN from ACM Header
+  UINT8  AcmKeyHash[SHA384_DIGEST_SIZE];       // The hash of the key used to verify the ACM (SHAxxx)
+  UINT8  BpKeyHash[SHA384_DIGEST_SIZE];        // The hash of the key used to verify the Key Manifest (SHAxxx)
+  UINT8  BpmKeyHashFromKm[SHA384_DIGEST_SIZE]; // The hash of the key used to verify the Boot Policy Manifest (SHAxxx)
+} MAX_AUTHORITY_PCR_DATA;
 
 //
 // Efi Startup Locality Event Data
@@ -1019,6 +1042,182 @@ CreatePolicyDataMeasurementEvent (
 }
 
 /**
+  Calculate Authority PCR extend value.
+
+  @param[in]  ActivePcrBanks  Active PCR banks in TPM
+  @param[out] Sha256Digest    SHA 256 digest calculation for authority measure
+  @param[out] Sha384Digest    SHA 384 digest calculation for authority measure
+  @param[out] Sm3Digest       SM3 digest calculation for authority measure
+**/
+BOOLEAN
+CaculateAuthorityPCRExtendValue (
+  IN UINT32  ActivePcrBanks,
+  OUT UINT8 *Sha256Digest,
+  OUT UINT8 *Sha384Digest,
+  OUT UINT8 *Sm3Digest
+  )
+{
+  ACM_HEADER_4                             *Acm;
+  KEY_MANIFEST_STRUCTURE                   *Km;
+  BOOT_POLICY_MANIFEST_HEADER              *Bpm;
+  MAX_AUTHORITY_PCR_DATA                   MaxAuthorityPcrData;
+  UINT8                                    *AuthorityPcrDataPtr;
+  UINT32                                   AuthorityPcrDataSize;
+  UINT8                                    *CurrPos;
+  UINT16                                   KeyModulusSize;
+  UINT8                                    MaxModulusExpo[RSA_KEY_SIZE_3K/8 + 4];
+  UINT16                                   Index;
+
+  Acm = FindAcm ();
+  ASSERT (Acm != NULL);
+  if (Acm == NULL) return FALSE;
+  Km = FindKm ();
+  ASSERT (Km != NULL);
+  if (Km == NULL) return FALSE;
+  if (Km->StructVersion != KEY_MANIFEST_STRUCTURE_VERSION_2_1) {
+      DEBUG ((DEBUG_ERROR, "Unsupported KM Struct Version: 0x%02x\n", Km->StructVersion));
+      return FALSE;
+  }
+  Bpm = FindBpm ();
+  ASSERT (Bpm != NULL);
+  if (Bpm == NULL) return FALSE;
+
+  AuthorityPcrDataPtr = (UINT8*)&MaxAuthorityPcrData;
+  ZeroMem (AuthorityPcrDataPtr, sizeof(MAX_AUTHORITY_PCR_DATA));
+
+  DEBUG ((DEBUG_INFO, "AuthorityPcrData:\n"));
+
+  // 1. Get ACM Policy Status
+  ((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmPolicySts = GetAcmPolicySts ();
+  DEBUG ((DEBUG_INFO, "AcmPolicySts  - 0x%04lx\n", ((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmPolicySts));
+  // 2. Get ACM SVN
+  ((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmSvn = Acm->AcmSvn;
+  DEBUG ((DEBUG_INFO, "AcmSvn        - 0x%04x\n", ((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmSvn));
+  // 3. Get hash of the public key used for signing ACM
+  for (Index = 0; Index < SHA256_DIGEST_SIZE / 8; Index++) {
+    *(UINT64*)&(((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmKeyHash[Index * 8])  = AsmReadMsr64 (ACM_KEY_HASH_MSR_ADDR_0 + Index);
+  }
+
+  DEBUG ((DEBUG_INFO, "AcmKeyHash:  \n"));
+  DumpHex (2, 0, SHA256_DIGEST_SIZE, ((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmKeyHash);
+  AuthorityPcrDataSize = sizeof(((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmPolicySts) + sizeof(((AUTHORITY_PCR_DATA*)AuthorityPcrDataPtr)->AcmSvn)
+      + SHA256_DIGEST_SIZE;
+  AuthorityPcrDataPtr += AuthorityPcrDataSize;
+
+  // 4. Get hash of the public key used for signing BtGuard KM
+  CurrPos = ((UINT8*)Km + Km->KeySignatureOffset);
+  if (((KEY_AND_SIGNATURE_STRUCT*)CurrPos)->KeyAlg != TPM_ALG_RSA) {
+    DEBUG ((DEBUG_ERROR, "KmSignature: Unsupported KeyAlg\n"));
+    return FALSE;
+  }
+
+  CurrPos += sizeof(UINT8) + sizeof(UINT16);
+  KeyModulusSize = (((KEY_STRUCT_HEADER *)(UINT8*)CurrPos)->KeySizeBits)/8;
+
+  CopyMem (MaxModulusExpo, (UINT8 *)((RSA_PUBLIC_KEY_STRUCT *)(UINT8*)CurrPos)->Modulus, KeyModulusSize);
+  CopyMem (MaxModulusExpo + KeyModulusSize, (UINT8 *)&(((RSA_PUBLIC_KEY_STRUCT *)(UINT8*)CurrPos)->Exponent), 4);
+
+  // ACM uses SHA256 to hash RSA 2K keys and SHA384 to hash RSA 3K keys
+  if((((KEY_STRUCT_HEADER *)(UINT8*)CurrPos)->KeySizeBits) == RSA_KEY_SIZE_2K) {
+    Sha256 (MaxModulusExpo, KeyModulusSize + 4, (UINT8 *)AuthorityPcrDataPtr);
+    DEBUG ((DEBUG_INFO, "BtG Key Hash:  \n"));
+    DumpHex (2, 0, SHA256_DIGEST_SIZE, AuthorityPcrDataPtr);
+
+  } else if((((KEY_STRUCT_HEADER *)(UINT8*)CurrPos)->KeySizeBits) == RSA_KEY_SIZE_3K) {
+    Sha384 (MaxModulusExpo, KeyModulusSize + 4, (UINT8 *)AuthorityPcrDataPtr);
+    DEBUG ((DEBUG_INFO, "BtG Key Hash:  \n"));
+    DumpHex (2, 0, SHA384_DIGEST_SIZE, AuthorityPcrDataPtr);
+
+  } else {
+    DEBUG ((DEBUG_ERROR, "KmSignature: Unsupported Hash Size\n"));
+    return FALSE;
+  }
+  // ACM pads all BtG key hashes to 384 bits
+  AuthorityPcrDataPtr += SHA384_DIGEST_SIZE;
+  AuthorityPcrDataSize += SHA384_DIGEST_SIZE;
+
+ // 5. Get hash of the public key used for signing Boot Policy Manifest
+  CurrPos = (UINT8*)Km + sizeof(KEY_MANIFEST_STRUCTURE);
+  for(Index = 0; Index < Km->KeyCount; Index++) {
+    SHAX_KMHASH_STRUCT      *KmHash;
+    SHAX_HASH_STRUCTURE     *ShaxHash;
+    KmHash = (SHAX_KMHASH_STRUCT*) (CurrPos);
+    ShaxHash = (SHAX_HASH_STRUCTURE*) &(KmHash->Digest);
+    if ((KmHash->Usage & 0x1) != 0) {
+      CopyMem ( AuthorityPcrDataPtr, ShaxHash->HashBuffer,  ShaxHash->Size);
+      DEBUG ((DEBUG_INFO, "BPM Key Hash:  \n"));
+      DumpHex (2, 0, ShaxHash->Size, AuthorityPcrDataPtr);
+      AuthorityPcrDataPtr += ShaxHash->Size;
+      AuthorityPcrDataSize += ShaxHash->Size;
+    }
+    CurrPos += sizeof(SHAX_KMHASH_STRUCT) + ShaxHash->Size;
+  }
+
+  if ((ActivePcrBanks & HASH_ALG_SHA256) != 0) {
+    CalculateHash ((UINT8 *)&MaxAuthorityPcrData, AuthorityPcrDataSize, HASH_TYPE_SHA256, (UINT8 *)Sha256Digest);
+    DEBUG ((DEBUG_INFO, "AuthorityPCR (PCR7): Hash extended by ACM:  \n"));
+    DumpHex (2, 0, SHA256_DIGEST_SIZE, Sha256Digest);
+  }
+
+  if ((ActivePcrBanks & HASH_ALG_SHA384) != 0) {
+    CalculateHash ((UINT8 *)&MaxAuthorityPcrData, AuthorityPcrDataSize, HASH_TYPE_SHA384, (UINT8 *)Sha384Digest);
+    DEBUG ((DEBUG_INFO, "AuthorityPCR (PCR7): Hash extended by ACM:  \n"));
+    DumpHex (2, 0, SHA384_DIGEST_SIZE, Sha384Digest);
+  }
+
+  if ((ActivePcrBanks & HASH_ALG_SM3_256) != 0) {
+    CalculateHash ((UINT8 *)&MaxAuthorityPcrData, AuthorityPcrDataSize, HASH_TYPE_SM3, (UINT8 *)Sm3Digest);
+    DEBUG ((DEBUG_INFO, "AuthorityPCR (PCR7): Hash extended by ACM:  \n"));
+    DumpHex (2, 0, SM3_256_DIGEST_SIZE, Sm3Digest);
+  }
+
+  return TRUE;
+}
+
+/**
+  Create AuthorityPCR event log
+  @param[in] ActivePcrBanks Active PCR Banks
+**/
+VOID
+CreateAuthorityPcrEvent (
+  IN UINT32             ActivePcrBanks
+  )
+{
+  TCG_PCR_EVENT2_HDR        NewEventHdr;
+  UINT8                     Sha256[SHA256_DIGEST_SIZE];
+  UINT8                     Sha384[SHA384_DIGEST_SIZE];
+  UINT8                     Sm3[SM3_256_DIGEST_SIZE];
+  TPML_DIGEST_VALUES        *Digests;
+
+  if (NeedAuthorityMeasure() && IsVerifiedBoot()) {
+    Digests = &NewEventHdr.Digests;
+    NewEventHdr.PCRIndex  = 7;
+    NewEventHdr.EventType = EV_PLATFORM_CONFIG_FLAGS;
+    CaculateAuthorityPCRExtendValue (ActivePcrBanks, Sha256, Sha384, Sm3);
+
+    ZeroMem (Digests, sizeof(TPML_DIGEST_VALUES));
+    if ((ActivePcrBanks & HASH_ALG_SHA256) != 0) {
+      Digests->digests[Digests->count].hashAlg = TPM_ALG_SHA256;
+      CopyMem (Digests->digests[Digests->count].digest.sha256, Sha256, SHA256_DIGEST_SIZE);
+      Digests->count++;
+    }
+    if ((ActivePcrBanks & HASH_ALG_SHA384) != 0) {
+      Digests->digests[Digests->count].hashAlg = TPM_ALG_SHA384;
+      CopyMem (Digests->digests[Digests->count].digest.sha384, Sha384, SHA384_DIGEST_SIZE);
+      Digests->count++;
+    }
+    if ((ActivePcrBanks & HASH_ALG_SM3_256) != 0) {
+      Digests->digests[Digests->count].hashAlg = TPM_ALG_SM3_256;
+      CopyMem (Digests->digests[Digests->count].digest.sm3_256, Sm3, TPM_ALG_SM3_256);
+      Digests->count++;
+    }
+
+    NewEventHdr.EventSize = sizeof (L"Boot Guard Measured S-CRTM");
+    TpmLogEvent (&NewEventHdr, (UINT8 *)L"Boot Guard Measured S-CRTM");
+  }
+}
+
+/**
    Create Locality Startup event entry
 
    The Startup Locality event should be placed in the log before any event which extends
@@ -1512,6 +1711,8 @@ CreateTpmEventLog (
   if (EFI_ERROR (Status)) {
     DEBUG((DEBUG_ERROR, "Creation of policy data measurement event failed!\n"));
   }
+
+  CreateAuthorityPcrEvent (ActivePcrBanks);
 }
 
 /**
