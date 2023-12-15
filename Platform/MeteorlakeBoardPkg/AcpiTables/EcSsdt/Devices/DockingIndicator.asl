@@ -7,8 +7,7 @@
 
 Device (DIND)  // Docking Indicators.
 {
-  External (\OSYS)
-  External (\IUDE, IntObj)
+  External (\OSYS, IntObj)
 
   Name (_HID, "INT33D4")
   Name (_CID, "PNP0C70")
