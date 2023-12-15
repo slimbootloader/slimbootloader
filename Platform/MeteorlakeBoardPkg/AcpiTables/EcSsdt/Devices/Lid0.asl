@@ -14,8 +14,6 @@
 Device (LID0)
 {
   External (\PFLV, IntObj)
-  External (LSWP, IntObj)
-  External (IUBE, IntObj)
   External (\GPRW, MethodObj)
   External (\GGPE, MethodObj)
 
@@ -30,8 +28,13 @@ Device (LID0)
   Method (_LID, 0)
   {
     // 0 = Closed, 1 = Open.
-
-    Return (ECRD (RefOf (LSTE)))
+    If ((ECRD (RefOf (LSTE))) == LIDS) {
+      Return (LIDS)
+    } Else {
+      Store(LIDS, Local0)
+      Store(ECRD (RefOf (LSTE)), LIDS)
+      Return (Local0)
+    }
   }
   //
   // Enable SCI wake for LID SWITCH
