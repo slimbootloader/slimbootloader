@@ -342,16 +342,21 @@ UnitTestDebugAssert (
   #if defined (_ASSERT)
     #undef _ASSERT
   #endif
-  #if defined (__clang__) && defined (__FILE_NAME__)
-#define _ASSERT(Expression)  UnitTestDebugAssert (__FILE_NAME__, DEBUG_LINE_NUMBER, DEBUG_EXPRESSION_STRING (Expression))
+  #if defined(__KLOCWORK__) || defined(__COVERITY__)
+    #define ASSERT(Expression)    _ASSERT (Expression)
+  #elif defined (__clang__) && defined (__FILE_NAME__)
+    #define _ASSERT(Expression)  UnitTestDebugAssert (__FILE_NAME__, DEBUG_LINE_NUMBER, DEBUG_EXPRESSION_STRING (Expression))
   #else
-#define _ASSERT(Expression)  UnitTestDebugAssert (__FILE__, DEBUG_LINE_NUMBER, DEBUG_EXPRESSION_STRING (Expression))
+    #define _ASSERT(Expression)  UnitTestDebugAssert (__FILE__, DEBUG_LINE_NUMBER, DEBUG_EXPRESSION_STRING (Expression))
   #endif
 #else
-  #if defined (__clang__) && defined (__FILE_NAME__)
-#define _ASSERT(Expression)  DebugAssert (__FILE_NAME__, DEBUG_LINE_NUMBER, DEBUG_EXPRESSION_STRING (Expression))
+
+  #if defined(__KLOCWORK__) || defined(__COVERITY__)
+    #define ASSERT(Expression)    _ASSERT (Expression)
+  #elif defined (__clang__) && defined (__FILE_NAME__)
+    #define _ASSERT(Expression)  DebugAssert (__FILE_NAME__, DEBUG_LINE_NUMBER, DEBUG_EXPRESSION_STRING (Expression))
   #else
-#define _ASSERT(Expression)  DebugAssert (__FILE__, DEBUG_LINE_NUMBER, DEBUG_EXPRESSION_STRING (Expression))
+    #define _ASSERT(Expression)  DebugAssert (__FILE__, DEBUG_LINE_NUMBER, DEBUG_EXPRESSION_STRING (Expression))
   #endif
 #endif
 
@@ -619,13 +624,15 @@ UnitTestDebugAssert (
   @param  TestSignature  The 32-bit signature value to match.
 
 **/
-#if !defined (MDEPKG_NDEBUG)
-#define CR(Record, TYPE, Field, TestSignature)                                              \
+#if defined(__KLOCWORK__) || defined(__COVERITY__)
+  #define CR(Record, TYPE, Field, TestSignature)  BASE_CR(Record, TYPE, Field)
+#elif !defined (MDEPKG_NDEBUG)
+  #define CR(Record, TYPE, Field, TestSignature)                                              \
     (DebugAssertEnabled () && (BASE_CR (Record, TYPE, Field)->Signature != TestSignature)) ?  \
     (TYPE *) (_ASSERT (CR has Bad Signature), Record) :                                       \
     BASE_CR (Record, TYPE, Field)
 #else
-#define CR(Record, TYPE, Field, TestSignature)                                              \
+  #define CR(Record, TYPE, Field, TestSignature)                                              \
     BASE_CR (Record, TYPE, Field)
 #endif
 
