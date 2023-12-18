@@ -4,9 +4,13 @@
 # It also provides the definitions(including PPIs/PROTOCOLs/GUIDs) of
 # EFI1.10/UEFI2.7/PI1.7 and some Industry Standards.
 #
-# Copyright (c) 2007 - 2021, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2007 - 2022, Intel Corporation. All rights reserved.<BR>
 # Portions copyright (c) 2008 - 2009, Apple Inc. All rights reserved.<BR>
 # (C) Copyright 2016 - 2021 Hewlett Packard Enterprise Development LP<BR>
+# Copyright (c) 2022, Loongson Technology Corporation Limited. All rights reserved.<BR>
+# Copyright (c) 2021 - 2022, Arm Limited. All rights reserved.<BR>
+# Copyright (C) 2023 Advanced Micro Devices, Inc. All rights reserved.<BR>
+# Copyright (c) 2023, Ampere Computing LLC. All rights reserved.<BR>
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -23,6 +27,9 @@
 
 [Includes]
   Include
+  Test/UnitTest/Include
+  Test/Mock/Include
+  Library/MipiSysTLib/mipisyst/library/include
 
 [Includes.IA32]
   Include/Ia32
@@ -38,6 +45,12 @@
 
 [Includes.AARCH64]
   Include/AArch64
+
+[Includes.RISCV64]
+  Include/RiscV64
+
+[Includes.LOONGARCH64]
+  Include/LoongArch64
 
 [LibraryClasses]
   ##  @libraryclass  Provides most usb APIs to support the Hid requests defined in Usb Hid 1.1 spec
@@ -244,6 +257,18 @@
   ##  @libraryclass  Module entry point library for standalone MM drivers.
   StandaloneMmDriverEntryPoint|Include/Library/StandaloneMmDriverEntryPoint.h
 
+  ## @libraryclass Provides a unit test framework
+  #
+  UnitTestLib|Include/Library/UnitTestLib.h
+
+  ## @libraryclass Provides service to get the manufacturer given JEP106 bytes.
+  JedecJep106Lib|Include/Library/JedecJep106Lib.h
+
+  ## @libraryclass Extension to BaseLib for host based unit tests that allows a
+  #                subset of BaseLib services to be hooked for emulation.
+  #
+  UnitTestHostBaseLib|Test/UnitTest/Include/Library/UnitTestHostBaseLib.h
+
   ##  @libraryclass  This library provides an interface to request non-MMRAM pages to be mapped
   #                  or unblocked from inside MM environment.
   #
@@ -253,6 +278,30 @@
   #
   #
   RegisterFilterLib|Include/Library/RegisterFilterLib.h
+
+  ##  @libraryclass  This library provides interfances to probe ConfidentialComputing guest type.
+  #
+  #
+  CcProbeLib|Include/Library/CcProbeLib.h
+
+  ## @libraryclass  Provides function for SMM CPU Rendezvous Library.
+  SmmCpuRendezvousLib|Include/Library/SmmCpuRendezvousLib.h
+
+  ##  @libraryclass  Provides services to generate Entropy using a TRNG.
+  #
+  ArmTrngLib|Include/Library/ArmTrngLib.h
+
+  ##  @libraryclass  Provides APIs for third-party library libfdt.
+  #
+  FdtLib|Include/Library/FdtLib.h
+
+  ##  @libraryclass  Provides general mipi sys-T services.
+  #
+  MipiSysTLib|Include/Library/MipiSysTLib.h
+
+  ##  @libraryclass  Provides API to output Trace Hub debug message.
+  #
+  TraceHubDebugSysTLib|Include/Library/TraceHubDebugSysTLib.h
 
 [LibraryClasses.IA32, LibraryClasses.X64, LibraryClasses.AARCH64]
   ##  @libraryclass  Provides services to generate random number.
@@ -282,6 +331,13 @@
 
   ##  @libraryclass  Provides services to log the SMI handler registration.
   SmiHandlerProfileLib|Include/Library/SmiHandlerProfileLib.h
+
+  ##  @libraryclass  Provides function to support TDX processing.
+  TdxLib|Include/Library/TdxLib.h
+
+[LibraryClasses.RISCV64]
+  ##  @libraryclass  Provides function to make ecalls to SBI
+  BaseRiscVSbiLib|Include/Library/BaseRiscVSbiLib.h
 
 [Guids]
   #
@@ -381,10 +437,16 @@
   gEfiEventReadyToBootGuid       = { 0x7CE88FB3, 0x4BD7, 0x4679, { 0x87, 0xA8, 0xA8, 0xD8, 0xDE, 0xE5, 0x0D, 0x2B }}
 
   ## Include/Guid/EventGroup.h
+  gEfiEventAfterReadyToBootGuid  = { 0x3a2a00ad, 0x98b9, 0x4cdf, { 0xa4, 0x78, 0x70, 0x27, 0x77, 0xf1, 0xc1, 0x0b }}
+
+  ## Include/Guid/EventGroup.h
   gEfiEventMemoryMapChangeGuid   = { 0x78BEE926, 0x692F, 0x48FD, { 0x9E, 0xDB, 0x01, 0x42, 0x2E, 0xF0, 0xD7, 0xAB }}
 
   ## Include/Guid/EventGroup.h
-  gEfiEventVirtualAddressChangeGuid = { 0x13FA7698, 0xC831, 0x49C7, { 0x87, 0xEA, 0x8F, 0x43, 0xFC, 0xC2, 0x51, 0x96 }}
+  gEfiEventVirtualAddressChangeGuid   = { 0x13FA7698, 0xC831, 0x49C7, { 0x87, 0xEA, 0x8F, 0x43, 0xFC, 0xC2, 0x51, 0x96 }}
+
+  ## Include/Guid/EventGroup.h
+  gEfiEventBeforeExitBootServicesGuid = { 0x8BE0E274, 0x3970, 0x4B44, { 0x80, 0xC5, 0x1A, 0xB9, 0x50, 0x2F, 0x3B, 0xFC }}
 
   ## Include/Guid/EventGroup.h
   gEfiEventExitBootServicesGuid  = { 0x27ABF055, 0xB1B8, 0x4C26, { 0x80, 0x48, 0x74, 0x8F, 0x37, 0xBA, 0xA2, 0xDF }}
@@ -581,6 +643,7 @@
   gEfiRngAlgorithmX9313DesGuid       = { 0x63c4785a, 0xca34, 0x4012, {0xa3, 0xc8, 0x0b, 0x6a, 0x32, 0x4f, 0x55, 0x46 }}
   gEfiRngAlgorithmX931AesGuid        = { 0xacd03321, 0x777e, 0x4d3d, {0xb1, 0xc8, 0x20, 0xcf, 0xd8, 0x88, 0x20, 0xc9 }}
   gEfiRngAlgorithmRaw                = { 0xe43176d7, 0xb6e8, 0x4827, {0xb7, 0x84, 0x7f, 0xfd, 0xc4, 0xb6, 0x85, 0x61 }}
+  gEfiRngAlgorithmArmRndr            = { 0x43d2fde3, 0x9d4e, 0x4d79, {0x02, 0x96, 0xa8, 0x9b, 0xca, 0x78, 0x08, 0x41 }}
 
   ## Include/Protocol/AdapterInformation.h
   gEfiAdapterInfoMediaStateGuid       = { 0xD7C74207, 0xA831, 0x4A26, {0xB1, 0xF5, 0xD1, 0x93, 0x06, 0x5C, 0xE8, 0xB6 }}
@@ -810,6 +873,9 @@
   #
   gLinuxEfiInitrdMediaGuid       = {0x5568e427, 0x68fc, 0x4f3d, {0xac, 0x74, 0xca, 0x55, 0x52, 0x31, 0xcc, 0x68}}
 
+  ## Include/Protocol/CcMeasurement.h
+  gEfiCcFinalEventsTableGuid     = { 0xdd4a4648, 0x2de7, 0x4665, { 0x96, 0x4d, 0x21, 0xd9, 0xef, 0x5f, 0xb4, 0x46 }}
+
 [Guids.IA32, Guids.X64]
   ## Include/Guid/Cper.h
   gEfiIa32X64ErrorTypeCacheCheckGuid = { 0xA55701F5, 0xE3EF, 0x43de, { 0xAC, 0x72, 0x24, 0x9B, 0x57, 0x3F, 0xAD, 0x2C }}
@@ -992,11 +1058,17 @@
   gEfiPeiDelayedDispatchPpiGuid  = { 0x869c711d, 0x649c, 0x44fe, { 0x8b, 0x9e, 0x2c, 0xbb, 0x29, 0x11, 0xc3, 0xe6 }}
 
 [Protocols]
+  ## Include/Protocol/MemoryAccept.h
+  gEdkiiMemoryAcceptProtocolGuid = { 0x38c74800, 0x5590, 0x4db4, { 0xa0, 0xf3, 0x67, 0x5d, 0x9b, 0x8e, 0x80, 0x26 }}
+
   ## Include/Protocol/Pcd.h
   gPcdProtocolGuid               = { 0x11B34006, 0xD85B, 0x4D0A, { 0xA2, 0x90, 0xD5, 0xA5, 0x71, 0x31, 0x0E, 0xF7 }}
 
   ## Include/Protocol/PcdInfo.h
   gGetPcdInfoProtocolGuid        = { 0x5be40f57, 0xfa68, 0x4610, { 0xbb, 0xbf, 0xe9, 0xc5, 0xfc, 0xda, 0xd3, 0x65 } }
+
+  ## Include/Protocol/CcMeasurement.h
+  gEfiCcMeasurementProtocolGuid  = { 0x96751a3d, 0x72f4, 0x41a6, { 0xa7, 0x94, 0xed, 0x5d, 0x0e, 0x67, 0xae, 0x6b }}
 
   #
   # Protocols defined in PI1.0.
@@ -1870,6 +1942,9 @@
   ## Include/Protocol/RedfishDiscover.h
   gEfiRedfishDiscoverProtocolGuid      = { 0x5db12509, 0x4550, 0x4347, { 0x96, 0xb3, 0x73, 0xc0, 0xff, 0x6e, 0x86, 0x9f }}
 
+  ## Include/Protocol/MemoryAttribute.h
+  gEfiMemoryAttributeProtocolGuid = { 0xf4560cf6, 0x40ec, 0x4b4a, { 0xa1, 0x92, 0xbf, 0x1d, 0x57, 0xd0, 0xb1, 0x89 }}
+
   #
   # Protocols defined in Shell2.0
   #
@@ -2222,6 +2297,7 @@
   #  BIT20 - Global Coherency Database changes message.<BR>
   #  BIT21 - Memory range cachability changes message.<BR>
   #  BIT22 - Detailed debug message.<BR>
+  #  BIT23 - Manageability messages.<BR>
   #  BIT31 - Error message.<BR>
   # @Prompt Debug Message Print Level.
   # @Expression  0x80000002 | (gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel & 0x7F84AA00) == 0
@@ -2286,6 +2362,42 @@
   #  The required memory space is decided by the value of PcdMaximumGuidedExtractHandler.
   # @Prompt Memory Address of GuidedExtractHandler Table.
   gEfiMdePkgTokenSpaceGuid.PcdGuidedExtractHandlerTableAddress|0x1000000|UINT64|0x30001015
+
+  ## This value is the IPMI KCS Interface I/O base address used to transmit IPMI commands.
+  #  The value of 0xca2 is the default I/O base address defined in IPMI specification.
+  # @Prompt IPMI KCS Interface I/O Base Address
+  gEfiMdePkgTokenSpaceGuid.PcdIpmiKcsIoBaseAddress|0xca2|UINT16|0x00000031
+
+  ## This is SMBus slave address for the SSIF to the BMC.
+  #  The recommended value defined by IPMI specification is 0x20 (section 12.12).
+  # @Prompt IPMI SSIF SMBus slave address
+  gEfiMdePkgTokenSpaceGuid.PcdIpmiSsifSmbusSlaveAddr|0x20|UINT8|0x00000032
+
+  ## This is the maximum number of IPMI SSIF request retries.
+  #  The IPMI specification specified min value is 5 (section 12.17).
+  # @Prompt Number of IPMI SSIF request retries.
+  gEfiMdePkgTokenSpaceGuid.PcdIpmiSsifRequestRetryCount|0x05|UINT8|0x00000033
+
+  ## This is the required interval for each IPMI request retry.
+  #  The IPMI specification specified a time range of 60ms to 250ms (section 12.17).
+  #  The default setting is min.
+  # @Prompt Time between IPMI SSIF request retries.
+  gEfiMdePkgTokenSpaceGuid.PcdIpmiSsifRequestRetryIntervalMicrosecond|60000|UINT32|0x00000034
+
+  ## This value is the maximum retries of an IPMI SSIF response
+  #  The default value is the same as the Linux Kernel ipmi_ssif driver.
+  # @Prompt Number of IPMI SSIF response retries.
+  gEfiMdePkgTokenSpaceGuid.PcdIpmiSsifResponseRetryCount|250|UINT8|0x00000035
+
+  ## This is the required interval for each IPMI response retry.
+  #  The IPMI specification specified min value is 60ms (section 12.17).
+  # @Prompt Time-out for a response, internal
+  gEfiMdePkgTokenSpaceGuid.PcdIpmiSsifResponseRetryIntervalMicrosecond|60000|UINT32|0x00000036
+
+[PcdsFixedAtBuild.AARCH64, PcdsPatchableInModule.AARCH64]
+  ## GUID identifying the Rng algorithm implemented by CPU instruction.
+  # @Prompt CPU Rng algorithm's GUID.
+  gEfiMdePkgTokenSpaceGuid.PcdCpuRngSupportedAlgorithm|{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}|VOID*|0x00000037
 
 [PcdsFixedAtBuild, PcdsPatchableInModule, PcdsDynamic, PcdsDynamicEx]
   ## This value is used to set the base address of PCI express hierarchy.
@@ -2382,6 +2494,10 @@
   ## This value is used to configure X86 Processor FSB clock.
   # @Prompt FSB Clock.
   gEfiMdePkgTokenSpaceGuid.PcdFSBClock|200000000|UINT32|0x0000000c
+
+  ## This dynamic PCD indicates the memory encryption attribute of the guest.
+  # @Prompt Memory encryption attribute
+  gEfiMdePkgTokenSpaceGuid.PcdConfidentialComputingGuestAttr|0|UINT64|0x0000002e
 
 [UserExtensions.TianoCore."ExtraFiles"]
   MdePkgExtra.uni
