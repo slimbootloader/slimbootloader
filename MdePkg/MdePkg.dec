@@ -27,9 +27,6 @@
 
 [Includes]
   Include
-  Test/UnitTest/Include
-  Test/Mock/Include
-  Library/MipiSysTLib/mipisyst/library/include
 
 [Includes.IA32]
   Include/Ia32
