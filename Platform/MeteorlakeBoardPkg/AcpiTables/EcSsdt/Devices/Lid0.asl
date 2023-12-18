@@ -14,6 +14,8 @@
 Device (LID0)
 {
   External (\PFLV, IntObj)
+  External (LSWP, IntObj)
+  External (IUBE, IntObj)
   External (\GPRW, MethodObj)
   External (\GGPE, MethodObj)
 

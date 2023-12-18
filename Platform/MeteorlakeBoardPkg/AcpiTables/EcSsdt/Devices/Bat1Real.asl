@@ -17,7 +17,7 @@ Device (BAT1) {
   Name (_UID, 1)
 
   Method (_STA, 0) {
-    If (And (BATS, BIT0)) {  // Battery is supported.
+    If (And (BATP, BIT0)) {  // Battery is supported.
       If (And (BNUM, BIT0)) { // Real Battery 1 present?
         Return (0x001F)  // Yes.  Show it.
       } Else {

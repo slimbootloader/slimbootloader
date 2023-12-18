@@ -7,7 +7,8 @@
 
 Device (CIND)  // Convertible Indicators.
 {
-  External (\OSYS, IntObj)
+  External (\OSYS)
+  External (\IUCE, IntObj)
 
   Name (_HID, "INT33D3")
   Name (_CID, "PNP0C60")
