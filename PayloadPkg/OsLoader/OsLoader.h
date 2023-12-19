@@ -63,7 +63,7 @@
 #include <PayloadModule.h>
 #include "BlockIoTest.h"
 #include <ConfigDataCommonDefs.h>
-#include <Register/Intel/Msr/ArchitecturalMsr.h>
+#include <Register/Intel/ArchitecturalMsr.h>
 #include <Library/StringSupportLib.h>
 #include <PreOsHeader.h>
 
