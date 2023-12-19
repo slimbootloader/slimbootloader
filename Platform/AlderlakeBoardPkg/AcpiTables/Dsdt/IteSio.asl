@@ -125,7 +125,6 @@ Device(ITE8)
       Include ("Sen2Particip.asl")
       Include ("Sen3Particip.asl")
     }  Else {
-      Include ("IteHwMonAutoFan2.asl")
       Include ("IteHwMonAuto.asl")
     }
     Include ("IteCom.asl")
