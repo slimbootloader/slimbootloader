@@ -24,6 +24,7 @@
   AlderLakeFspBinPkg/IoT/AlderLakeS/Include/FspsUpd.h         : Silicon/AlderlakePkg/Adls/Include/FspsUpd.h
   AlderLakeFspBinPkg/IoT/AlderLakeS/Include/MemInfoHob.h      : Silicon/AlderlakePkg/Adls/Include/MemInfoHob.h
   FSP_License.pdf                                             : Silicon/AlderlakePkg/Adls/FspBin/FSP_License.pdf
+  AlderLakeFspBinPkg/IoT/AlderLakeS/VBT/Vbt.json              : Platform/AlderlakeBoardPkg/VbtBin/VbtAdlS.json
 # For ADL-P
   AlderLakeFspBinPkg/IoT/AlderLakeP/Fsp.fd                    : Silicon/AlderlakePkg/Adlp/FspBin/FspDbg.bin
   AlderLakeFspBinPkg/IoT/AlderLakeP/Fsp.fd                    : Silicon/AlderlakePkg/Adlp/FspBin/FspRel.bin
@@ -55,6 +56,7 @@
   AlderLakeFspBinPkg/IoT/AlderLakeN/Include/FspsUpd.h                    : Silicon/AlderlakePkg/Adln/Include/FspsUpd.h
   AlderLakeFspBinPkg/IoT/AlderLakeN/Include/MemInfoHob.h                 : Silicon/AlderlakePkg/Adln/Include/MemInfoHob.h
   FSP_License.pdf                                                        : Silicon/AlderlakePkg/Adln/FspBin/FSP_License.pdf
+  AlderLakeFspBinPkg/IoT/AlderLakeN/Vbt/VbtAdlN.json                     : Platform/AlderlakeBoardPkg/VbtBin/VbtAdlN.json
 # For AZB
   AlderLakeFspBinPkg/IoT/ArizonaBeach/Fsp.fd                             : Silicon/AlderlakePkg/Azb/FspBin/FspDbg.bin
   AlderLakeFspBinPkg/IoT/ArizonaBeach/Fsp.fd                             : Silicon/AlderlakePkg/Azb/FspBin/FspRel.bin
