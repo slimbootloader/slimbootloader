@@ -11,7 +11,7 @@
 
 [UserExtensions.SBL."CloneRepo"]
   REPO    = https://github.com/intel/FSP.git
-  COMMIT  = 8267065be80e5a326c915f214d7e097f4590ce38
+  COMMIT  = 5b7277318e99d70f80a8c6b651c478158ce41a7b
 
 [UserExtensions.SBL."CopyList"]
 # For ADL-S
@@ -56,7 +56,7 @@
   AlderLakeFspBinPkg/IoT/AlderLakeN/Include/FspsUpd.h                    : Silicon/AlderlakePkg/Adln/Include/FspsUpd.h
   AlderLakeFspBinPkg/IoT/AlderLakeN/Include/MemInfoHob.h                 : Silicon/AlderlakePkg/Adln/Include/MemInfoHob.h
   FSP_License.pdf                                                        : Silicon/AlderlakePkg/Adln/FspBin/FSP_License.pdf
-  AlderLakeFspBinPkg/IoT/AlderLakeN/Vbt/VbtAdlN.json                     : Platform/AlderlakeBoardPkg/VbtBin/VbtAdlN.json
+  AlderLakeFspBinPkg/IoT/AlderLakeN/Vbt/VbtAdlP.json                     : Platform/AlderlakeBoardPkg/VbtBin/VbtAdlN.json
 # For AZB
   AlderLakeFspBinPkg/IoT/ArizonaBeach/Fsp.fd                             : Silicon/AlderlakePkg/Azb/FspBin/FspDbg.bin
   AlderLakeFspBinPkg/IoT/ArizonaBeach/Fsp.fd                             : Silicon/AlderlakePkg/Azb/FspBin/FspRel.bin
