@@ -1394,6 +1394,7 @@ InitFirmwareUpdate (
   FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
   ResetRequired = FALSE;
   FwPolicy.Data = 0;
+  CapsuleImage = NULL;
 
   //
   // Get capsule image.
@@ -1452,7 +1453,9 @@ InitFirmwareUpdate (
   if (EFI_ERROR (Status)) {
     //
     // Error condition
-    FreePool(CapsuleImage);
+    if (CapsuleImage != NULL) {
+      FreePool(CapsuleImage);
+    }
     return Status;
   }
 

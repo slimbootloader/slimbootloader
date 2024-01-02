@@ -400,6 +400,7 @@ BoardInit (
   SILICON_CFG_DATA          *SiCfgData;
   BL_SW_SMI_INFO            *BlSwSmiInfo;
   FEATURES_DATA             *FeatureCfgData;
+  UINT32                    Data;
 
   SiCfgData = NULL;
 
@@ -532,6 +533,20 @@ BoardInit (
         DEBUG ((DEBUG_INFO, "Failed to set GFX framebuffer as WC\n"));
       }
     }
+    if ((GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE) && (GetBootMode() == BOOT_ON_S3_RESUME)) {
+      ClearSmi ();
+      RestoreS3RegInfo (FindS3Info (S3_SAVE_REG_COMM_ID));
+      //
+      // If payload registered a software SMI handler for bootloader to restore
+      // SMRR base and mask in S3 resume path, trigger sw smi
+      //
+      BlSwSmiInfo = FindS3Info (BL_SW_SMI_COMM_ID);
+      if (BlSwSmiInfo != NULL) {
+        Data = IoRead32 ((UINTN) (ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN));
+        IoWrite32 ((UINTN) (ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN), Data | B_ACPI_IO_SMI_EN_APMC | B_ACPI_IO_SMI_EN_GBL_SMI);
+        TriggerPayloadSwSmi (BlSwSmiInfo->BlSwSmiHandlerInput);
+      }
+    }
     InterruptRoutingInit ();
     break;
   case PrePayloadLoading:
@@ -558,17 +573,7 @@ BoardInit (
     HeciRegisterHeciService ();
     ClearSmi ();
     if (GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE) {
-      if (GetBootMode() == BOOT_ON_S3_RESUME) {
-        RestoreS3RegInfo (FindS3Info (S3_SAVE_REG_COMM_ID));
-        //
-        // If payload registered a software SMI handler for bootloader to restore
-        // SMRR base and mask in S3 resume path, trigger sw smi
-        //
-        BlSwSmiInfo = FindS3Info (BL_SW_SMI_COMM_ID);
-        if (BlSwSmiInfo != NULL) {
-          TriggerPayloadSwSmi (BlSwSmiInfo->BlSwSmiHandlerInput);
-        }
-      } else {
+      if (GetBootMode() != BOOT_ON_S3_RESUME) {
         ClearS3SaveRegion ();
         //
         // Set SMMBASE_INFO dummy strucutre in TSEG before others

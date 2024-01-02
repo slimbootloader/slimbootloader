@@ -1,7 +1,7 @@
 /** @file
   Register names for PCH LPC/eSPI device
 
-  Copyright (c) 2021-2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021-2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -21,6 +21,14 @@
 #define B_LPC_CFG_IOE_CBE                         BIT1            ///< Com Port B Enable, Enables decoding of the COMB range to LPC. Range is selected LIOD.CB.
 #define B_LPC_CFG_IOE_CAE                         BIT0            ///< Com Port A Enable, Enables decoding of the COMA range to LPC. Range is selected LIOD.CA.
 #define B_LPC_CFG_IOE_ME2                         BIT13
+
+#define R_ESPI_CFG_ESPI_LGIR1                     0x84                      ///< LPC Generic IO Range 1
+#define B_ESPI_CFG_ESPI_LGIR1_LDE                 BIT0
+
+#define R_PCH_DMI_PCR_LPCLGIR1                    0x2730                       ///< LPC Generic I/O Range 1
+#define R_PCH_DMI_PCR_LPCLGIR2                    0x2734                       ///< LPC Generic I/O Range 2
+#define R_PCH_DMI_PCR_LPCLGIR3                    0x2738                       ///< LPC Generic I/O Range 3
+#define R_PCH_DMI_PCR_LPCLGIR4                    0x273C                       ///< LPC Generic I/O Range 4
 
 #define R_LPC_CFG_BC                              0xDC            ///< Bios Control
 

@@ -188,6 +188,8 @@ def get_xml_change_list (platform, plt_params_list):
         ('./FlexIO/Usb2PortConfiguration/USB2Prt9ConTypeSel',                        'Type C'),
         ('./FlexIO/Usb2PortConfiguration/USB2Prt10ConTypeSel',                       'Type A / Type C'),
         ('./FlexIO/Usb2PortConfiguration/USB2Prt1ConTypeSel',                        'Type A / Type C'),
+        ('./FlexIO/Type-CSubsystemConfiguration/TypeCPort1Config',                   'DP Fixed Connection'),
+        ('./FlexIO/Type-CSubsystemConfiguration/TypeCPort2Config',                   'DP Fixed Connection'),
         ('./NetworkingConnectivity/WiredLanConfiguration/LanEnable',                 'Yes'),
         ('./Icc/SocClkOutCfg/BUFF_EN_SRC0',                                          'enable'),
         ('./Icc/SocClkOutCfg/BUFF_EN_SRC1',                                          'enable'),

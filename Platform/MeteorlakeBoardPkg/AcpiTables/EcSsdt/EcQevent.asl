@@ -1366,15 +1366,21 @@ Method(_QF2)
     ECWT(0, RefOf(FRTS)) // clear all status bits
     If(And(Local0, 0x4))
     { // BIT2: Fan3 RPM Threshold Crossed
-      Notify(\_SB.IETM.TFN3, 0x90)
+      If(CondRefOf(\_SB.IETM.TFN3)){
+        Notify(\_SB.IETM.TFN3, 0x90)
+      }
     }
     If(And(Local0, 0x2))
     { // BIT1: Fan2 RPM Threshold Crossed
-      Notify(\_SB.IETM.TFN2, 0x90)
+      If(CondRefOf(\_SB.IETM.TFN2)){
+        Notify(\_SB.IETM.TFN2, 0x90)
+      }
     }
     If(And(Local0, 0x1))
     { // BIT0: Fan1 RPM Threshold Crossed
-      Notify(\_SB.IETM.TFN1, 0x90)
+      If(CondRefOf(\_SB.IETM.TFN1)){
+        Notify(\_SB.IETM.TFN1, 0x90)
+      }
     }
     Store(ECRD(RefOf(FRTS)), Local0)
   }

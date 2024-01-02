@@ -45,13 +45,13 @@ Device (BAT1) {
     })
 
     If (ECAV) {
-      If (LAnd (LAnd (ECRD (RefOf (B1DV)), ECRD (RefOf (^^B1FC))), ECRD (RefOf (B1DC)))) {
+      If (LAnd (LAnd (ECRD (RefOf (B1DV)), ECRD (RefOf (B1FC))), ECRD (RefOf (B1DC)))) {
         // Convert mAh and mV to mWh
         Store (Divide (Multiply (ECRD (RefOf (B1DC)), ECRD (RefOf (B1DV))), 1000), Index (BPK1, 1))
-        Store (Divide (Multiply (ECRD (RefOf (^^B1FC)), ECRD (RefOf (B1DV))), 1000), Index (BPK1, 2))
+        Store (Divide (Multiply (ECRD (RefOf (B1FC)), ECRD (RefOf (B1DV))), 1000), Index (BPK1, 2))
         Store (B1DV, Index (BPK1, 4))
-        Store (Divide (Multiply (ECRD (RefOf (^^B1FC)), ECRD (RefOf (B1DV))), 10000), Index (BPK1, 5))
-        Store (Divide (Multiply (ECRD (RefOf (^^B1FC)), ECRD (RefOf (B1DV))), 25000), Index (BPK1, 6))
+        Store (Divide (Multiply (ECRD (RefOf (B1FC)), ECRD (RefOf (B1DV))), 10000), Index (BPK1, 5))
+        Store (Divide (Multiply (ECRD (RefOf (B1FC)), ECRD (RefOf (B1DV))), 25000), Index (BPK1, 6))
         Store (0x100, Index (BPK1, 7))
         Store (0x40,  Index (BPK1, 8))
       }
@@ -64,7 +64,7 @@ Device (BAT1) {
       0x01,       // Integer Revision
       0x00000000, // Power Unit = mWh. 0x0 indicates units are mW/mWh
       0xFFFFFFFF, // Unknown Design Capacity.
-      0xFFFFFFFF, // Unknown Last Full Charge.
+      0xFFFFFFFF, // Unknown Last Full Charge Capacity.
       0x00000001, // Secondary Battery Technology.
       0xFFFFFFFF, // Unknown Design Voltage.
       0x00000000, // 10% Warning Level.
@@ -85,17 +85,18 @@ Device (BAT1) {
     })
 
     If (ECAV) {
-      If (LAnd (LAnd (ECRD (RefOf (B1DV)), ECRD (RefOf (^^B1FC))), ECRD (RefOf (B1DC)))) {
+      If (LAnd (LAnd (ECRD (RefOf (B1DV)), ECRD (RefOf (B1FC))), ECRD (RefOf (B1DC)))) {
         // Convert mAh and mV to mWh
-        Store (Divide (Multiply (ECRD (RefOf (B1DC)), ECRD (RefOf (B1DV))), 1000), Index (BPK1, 2))
-        Store (Divide (Multiply (ECRD (RefOf (^^B1FC)), ECRD (RefOf (B1DV))), 1000), Index (BPK1, 3))
-        Store (ECRD (RefOf (B1DV)), Index (BPK1, 5))
-        Store (Divide (Multiply (ECRD (RefOf (^^B1FC)), ECRD (RefOf (B1DV))), 10000), Index (BPK1, 6))
-        Store (Divide (Multiply (ECRD (RefOf (^^B1FC)), ECRD (RefOf (B1DV))), 25000), Index (BPK1, 7))
+        // mAh * mV = (1/1000) mWh
+        Store (Divide (Multiply (ECRD (RefOf (B1DC)), ECRD (RefOf (B1DV))), 1000), Index (BPK1, 2))   // Update Design Capacity
+        Store (Divide (Multiply (ECRD (RefOf (B1FC)), ECRD (RefOf (B1DV))), 1000), Index (BPK1, 3))   // Update Last Full Charge Capacity
+        Store (ECRD (RefOf (B1DV)), Index (BPK1, 5))                                                  // Update Design Voltage
+        Store (Divide (Multiply (ECRD (RefOf (B1FC)), ECRD (RefOf (B1DV))), 10000), Index (BPK1, 6))  // Update Design capacity of Warning
+        Store (Divide (Multiply (ECRD (RefOf (B1FC)), ECRD (RefOf (B1DV))), 25000), Index (BPK1, 7))  // Update Design capacity of Low
+        Store (ECRD (RefOf (BICC)), Index (BPK1, 8))                                                  // Update Cycle Count
         Store (0x40,   Index (BPK1, 9))
-        Store (0x320,  Index (BPK1, 11))
         Store (0x251C, Index (BPK1, 10))
-        Store (ECRD (RefOf (BICC)), Index (BPK1, 8)) // Battery cycle count
+        Store (0x320,  Index (BPK1, 11))
       }
     }
     Return (BPK1)
@@ -126,10 +127,10 @@ Device (BAT1) {
         Store (Local0, Index (PKG1, 1))
       }
       // Calculate Remaining Capacity in mWh =
-      // (Remaininng Capacity (mAh) * Design Voltage (mV))/1000
-      // Use Remaininng Capacity in mAh multiply with a fixed Design Voltage
-      // for Remaininng Capacity in mWh
-      Store (Divide (Multiply (ECRD (RefOf (^^B1RC)), ECRD (RefOf (B1DV))), 1000), Index (PKG1, 2))
+      // Remaining Capacity (mAh) * Design Voltage (V)
+      // Use Remaining Capacity in mAh multiply with a fixed Design Voltage
+      // for Remaining Capacity in mWh
+      Store (Divide (Multiply (ECRD (RefOf (B1RC)), ECRD (RefOf (B1DV))), 1000), Index (PKG1, 2))
       // Report Battery Present Voltage (mV)
       Store (ECRD (RefOf (B1FV)), Index (PKG1, 3))
     } // If (ECAV)
@@ -140,8 +141,8 @@ Device (BAT1) {
     If (ECAV) {
       // arg2 = Battery wake level in mWh, sent to EC as Threshold.
       // transfer input value from mWh to %
-      If (LAnd (LNotEqual (ECRD (RefOf (^^B1FC)), 0), LNotEqual (ECRD (RefOf (B1FV)), 0))) {
-        Store (Divide (Multiply (Arg2, 100), Divide (Multiply (ECRD (RefOf (^^B1FC)), ECRD (RefOf (B1FV))), 1000)), Local0)
+      If (LAnd (LNotEqual (ECRD (RefOf (B1FC)), 0), LNotEqual (ECRD (RefOf (B1FV)), 0))) {
+        Store (Divide (Multiply (Arg2, 100), Divide (Multiply (ECRD (RefOf (B1FC)), ECRD (RefOf (B1FV))), 1000)), Local0)
         // adjust offset between OS & EC
         Add (Local0, 1, Local0)
         // store TP value in EC name space offset 219
@@ -151,6 +152,7 @@ Device (BAT1) {
       }
     }
   }
+
   // Return that everything runs off Battery.
 
   Method (_PCL, 0) {
