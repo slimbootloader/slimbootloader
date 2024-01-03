@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
+from StitchLoader import *
 
 extra_usage_txt = \
 """This is an IFWI stitch config script for Slim Bootloader For the FIT tool and
@@ -81,6 +82,11 @@ def get_component_replace_list():
        ('IFWI/BIOS/TS1/DACM',      'Input/DiagnosticAcm.bin',          'dummy',   ''),
        ]
 
+    # need to set ENABLE_PRE_OS_CHECKER = 1 in BoardConfig.py
+    if os.path.exists('IPFW/PreOsChecker.bin'):
+        replace_list.append (
+            ('IFWI/BIOS/NRD/IPFW/POSC', 'IPFW/PreOsChecker.bin',   'dummy',  'KEY_ID_CONTAINER_COMP_RSA3072', 0 ), # Pre-OS Checker
+        )
     return replace_list
 
 def check_parameter(para_list):
