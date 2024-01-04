@@ -2,7 +2,7 @@
 ## @ BuildLoader.py
 # Build bootloader main script
 #
-# Copyright (c) 2016 - 2023, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2016 - 2024, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 
 ##
@@ -733,9 +733,10 @@ class Build(object):
                 "<Stage2:__gPcd_BinaryPatch_PcdAcpiTablesAddress>, {7E374E25-8E01-4FEE-87F2-390C23C606CD:0x1C}, @Patch ACPI",
             )
         if self._board.ENABLE_SPLASH:
-            extra_cmd.append (
-                "<Stage2:__gPcd_BinaryPatch_PcdSplashLogoAddress>, {5E2D3BE9-AD72-4D1D-AAD5-6B08AF921590:0x1C}, @Patch Logo",
-            )
+            extra_cmd.extend ([
+                "<Stage2:__gPcd_BinaryPatch_PcdSplashLogoAddress>, {5E2D3BE9-AD72-4D1D-AAD5-6B08AF921590:0x1C}, @Patch Logo Address",
+                "<Stage2:__gPcd_BinaryPatch_PcdSplashLogoSize>, ([5E2D3BE9-AD72-4D1D-AAD5-6B08AF921590:0x14] & 0xFFFFFF) - 0x1C, @Patch Logo Size",
+            ])
         patch_fv(
             self._fv_dir,
             "STAGE2:STAGE2",

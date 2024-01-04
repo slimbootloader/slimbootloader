@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2019 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2024, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -102,7 +102,7 @@ UpdateBgrt (
       BmpHdr->ImageSize = 0;
       BmpHdr->NumberOfColors  = 0;
       BmpHdr->ImportantColors = 0;
-      Status = DisplayBmpToFrameBuffer (OrgBmpHdr, &BmpHdr[1], ImageLen, GfxInfoHob);
+      Status = DisplayBmpToFrameBuffer (OrgBmpHdr, PcdGet32(PcdSplashLogoSize), &BmpHdr[1], ImageLen, GfxInfoHob);
       if (!EFI_ERROR(Status)) {
         Bgrt->ImageAddress = (UINTN)BmpHdr;
       }

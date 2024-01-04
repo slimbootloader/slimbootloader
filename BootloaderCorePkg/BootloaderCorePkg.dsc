@@ -1,7 +1,7 @@
 ## @file
 # Provides driver and definitions to build bootloader.
 #
-# Copyright (c) 2016 - 2023, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2016 - 2024, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -282,6 +282,7 @@
   gPlatformModuleTokenSpaceGuid.PcdVerInfoBase       | 0xFF000000
   gPlatformModuleTokenSpaceGuid.PcdFileDataBase      | 0xFF000000
   gPlatformModuleTokenSpaceGuid.PcdSplashLogoAddress | 0xFF000000
+  gPlatformModuleTokenSpaceGuid.PcdSplashLogoSize    | 0xFFFFFFFF
   gPlatformModuleTokenSpaceGuid.PcdCfgDataIntBase    | 0xFF000000
   gPlatformCommonLibTokenSpaceGuid.PcdEmmcMaxRwBlockNumber     | 0xFFFF
   gPlatformModuleTokenSpaceGuid.PcdPayloadReservedMemSize | $(PLD_RSVD_MEM_SIZE)

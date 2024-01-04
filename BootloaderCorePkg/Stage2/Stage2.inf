@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2016 - 2023, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2016 - 2024, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -134,6 +134,7 @@
   gPlatformModuleTokenSpaceGuid.PcdFlashSize
   gPlatformModuleTokenSpaceGuid.PcdSplashEnabled
   gPlatformModuleTokenSpaceGuid.PcdSplashLogoAddress
+  gPlatformModuleTokenSpaceGuid.PcdSplashLogoSize
   gPlatformModuleTokenSpaceGuid.PcdOsBootOptionNumber
   gPlatformModuleTokenSpaceGuid.PcdServiceNumber
   gPlatformModuleTokenSpaceGuid.PcdFlashBaseAddress

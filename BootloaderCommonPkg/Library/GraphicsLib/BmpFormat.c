@@ -1,7 +1,7 @@
 /** @file
   BMP Image Decoding
 
-  Copyright (c) 2004 - 2014, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2004 - 2024, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -141,6 +141,7 @@ GetBmpDisplayPos (
   buffer. Otherwise, it will be dispalyed into the actual frame buffer.
 
   @param  BmpImage      Pointer to BMP file
+  @param  BmpImageSize  Size of BMP file
   @param  GopBlt        Buffer for transferring BmpImage to the BLT memory buffer.
   @param  GopBltSize    Size of GopBlt in bytes.
   @param  GfxInfoHob    Pointer to graphics info HOB.
@@ -155,6 +156,7 @@ EFI_STATUS
 EFIAPI
 DisplayBmpToFrameBuffer (
   IN     VOID      *BmpImage,
+  IN     UINT32    BmpImageSize,
   IN     VOID      *GopBlt,
   IN     UINTN     GopBltSize,
   IN     EFI_PEI_GRAPHICS_INFO_HOB *GfxInfoHob
@@ -173,6 +175,8 @@ DisplayBmpToFrameBuffer (
   UINTN                         PixelWidth;
   UINT32                        OffX;
   UINT32                        OffY;
+  UINT64                        DataSize;
+  UINT64                        DataSizePerLine;
   UINT64                        LineBufferSize;
   UINT64                        BltBufferSize;
   UINT32                        FrameBufferOffset;
@@ -181,15 +185,51 @@ DisplayBmpToFrameBuffer (
   UINT8                         *ImageHeader;
   EFI_STATUS                    Status;
 
+  if (BmpImage == NULL || BmpImageSize == MAX_UINT32) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (BmpImageSize < sizeof (BMP_IMAGE_HEADER)) {
+    DEBUG ((DEBUG_ERROR, "DisplayBmpToFrameBuffer: BmpImageSize too small\n"));
+    return EFI_UNSUPPORTED;
+  }
+
+  BmpHeader    = (BMP_IMAGE_HEADER *) BmpImage;
+  PixelWidth   = BmpHeader->PixelWidth;
+  PixelHeight  = BmpHeader->PixelHeight;
+  // DataSizePerLine in bits
+  DataSizePerLine = MultU64x32(PixelWidth, BmpHeader->BitPerPixel);
+  // Convert to bytes and round to 4byte alignment
+  DataSizePerLine = ((DataSizePerLine+31) >> 3) &(~0x3);
+  // Calculate total Data Size we expect
+  DataSize = MultU64x32(DataSizePerLine, (UINT32)PixelHeight);
+
+  if ((PixelHeight == 0) || (PixelWidth == 0)) {
+    DEBUG ((DEBUG_ERROR, "DisplayBmpToFrameBuffer: BmpHeader->PixelHeight or BmpHeader->PixelWidth is 0.\n"));
+    return EFI_UNSUPPORTED;
+  }
+
+  // Make sure BMP header doesn't describe any pixels which would fall
+  // outside BMP pixel data buffer.
+  if ((BmpHeader->Size != BmpImageSize) ||
+      (BmpHeader->Size < BmpHeader->ImageOffset) ||
+      (BmpHeader->Size - BmpHeader->ImageOffset != DataSize))
+  {
+    DEBUG ((DEBUG_ERROR, "DisplayBmpToFrameBuffer: invalid BmpImage... \n"));
+    DEBUG ((DEBUG_ERROR, "   BmpHeader->Size: 0x%x\n", BmpHeader->Size));
+    DEBUG ((DEBUG_ERROR, "   BmpHeader->ImageOffset: 0x%x\n", BmpHeader->ImageOffset));
+    DEBUG ((DEBUG_ERROR, "   BmpImageSize: 0x%x\n", BmpImageSize));
+    DEBUG ((DEBUG_ERROR, "   DataSize: 0x%lx\n", DataSize));
+
+    return EFI_UNSUPPORTED;
+  }
+
   Status = GetBmpDisplayPos (BmpImage, &OffX, &OffY, GfxInfoHob);
   if (EFI_ERROR(Status)) {
     return EFI_UNSUPPORTED;
   }
 
-  BmpHeader    = (BMP_IMAGE_HEADER *) BmpImage;
   BmpColorMap  = (BMP_COLOR_MAP *) &BmpHeader[1];
-  PixelWidth   = BmpHeader->PixelWidth;
-  PixelHeight  = BmpHeader->PixelHeight;
   Image        = ((UINT8 *) BmpImage) + BmpHeader->ImageOffset;
   ImageHeader  = Image;
 
