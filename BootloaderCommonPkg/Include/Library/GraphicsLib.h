@@ -1,7 +1,7 @@
 /** @file
   Basic graphics rendering support
 
-  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2024, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -101,6 +101,7 @@ GetBmpDisplayPos (
   buffer. Otherwise, it will be dispalyed into the actual frame buffer.
 
   @param  BmpImage      Pointer to BMP file
+  @param  BmpImageSize  Size of BMP file
   @param  GopBlt        Buffer for transferring BmpImage to the BLT memory buffer.
   @param  GopBltSize    Size of GopBlt in bytes.
   @param  GfxInfoHob    Pointer to graphics info HOB.
@@ -114,10 +115,11 @@ GetBmpDisplayPos (
 EFI_STATUS
 EFIAPI
 DisplayBmpToFrameBuffer (
-  IN  VOID      *BmpImage,
-  IN  VOID      *GopBlt,
-  IN  UINTN      GopBltSize,
-  IN  EFI_PEI_GRAPHICS_INFO_HOB *GfxInfoHob
+  IN     VOID      *BmpImage,
+  IN     UINT32    BmpImageSize,
+  IN     VOID      *GopBlt,
+  IN     UINTN     GopBltSize,
+  IN     EFI_PEI_GRAPHICS_INFO_HOB *GfxInfoHob
   );
 
 /**

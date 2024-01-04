@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2016 - 2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2016 - 2024, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -94,6 +94,7 @@ DisplaySplash (
 {
   EFI_STATUS                           Status;
   VOID                                *SplashLogoBmp;
+  UINT32                              SplashLogoBmpSize;
   EFI_PEI_GRAPHICS_INFO_HOB           *GfxInfoHob;
 
   // Get framebuffer info
@@ -104,8 +105,10 @@ DisplaySplash (
 
   // Convert image from BMP format and write to frame buffer
   SplashLogoBmp = (VOID *)(UINTN)PCD_GET32_WITH_ADJUST (PcdSplashLogoAddress);
+  SplashLogoBmpSize = PcdGet32(PcdSplashLogoSize);
   ASSERT (SplashLogoBmp != NULL);
-  Status = DisplayBmpToFrameBuffer (SplashLogoBmp, NULL, 0, GfxInfoHob);
+  ASSERT (SplashLogoBmpSize != 0);
+  Status = DisplayBmpToFrameBuffer (SplashLogoBmp, SplashLogoBmpSize, NULL, 0, GfxInfoHob);
 
   return Status;
 }
