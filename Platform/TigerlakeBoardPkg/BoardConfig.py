@@ -176,6 +176,11 @@ class Board(BaseBoard):
             self.TCC_STREAM_SIZE = 0x00005000
             self.SIIPFW_SIZE += self.TCC_CCFG_SIZE + self.TCC_CRL_SIZE + self.TCC_STREAM_SIZE
 
+        self.ENABLE_PRE_OS_CHECKER = 0
+        if self.ENABLE_PRE_OS_CHECKER:
+            self.POSC_SIZE = 0x00028000
+            self.SIIPFW_SIZE += self.POSC_SIZE
+
         # to enable TSN, set 1 to self.ENABLE_TSN
         self.ENABLE_TSN = 0
         if self.ENABLE_TSN:
@@ -354,6 +359,7 @@ class Board(BaseBoard):
         bins = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'Binaries')
 
         CompFileCrlFw='crl.bin' if os.path.exists(os.path.join(bins, 'crl.bin')) else ''
+        CompFilePreOsChecker='PreOsChecker.bin' if os.path.exists(os.path.join(bins, 'PreOsChecker.bin')) else ''
 
         if self.ENABLE_TCC:
             container_list.append (
@@ -364,6 +370,11 @@ class Board(BaseBoard):
             )
             container_list.append (
               ('TCCT',  '',   'Lz4',   container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,    0,   self.TCC_STREAM_SIZE,0),   # TCC Stream Config
+            )
+
+        if self.ENABLE_PRE_OS_CHECKER:
+            container_list.append (
+              ('POSC',CompFilePreOsChecker,      '',     container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0,   self.POSC_SIZE,      0),   # Pre-OS Checker
             )
 
         if self.ENABLE_TSN:
