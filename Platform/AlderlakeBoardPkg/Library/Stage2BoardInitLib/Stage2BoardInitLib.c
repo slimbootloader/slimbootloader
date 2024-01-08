@@ -453,7 +453,7 @@ BoardInit (
     Status = PcdSet32S (PcdFuncCpuInitHook, (UINT32)(UINTN) PlatformCpuInit);
 #if !FixedPcdGetBool(PcdAzbSupport)
     if (PcdGetBool (PcdFastBootEnabled) == FALSE) {
-      if (IsPchS ()) {
+      if (IsPchS () || IsPchP()) {
         Status = HsPhyLoadAndInit ();
         if (EFI_ERROR (Status)) {
           DEBUG ((DEBUG_WARN, "HsPhyInit failure, %r\n", Status));
