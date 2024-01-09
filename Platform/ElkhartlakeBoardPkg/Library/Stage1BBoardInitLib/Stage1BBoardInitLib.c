@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2024, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -1128,14 +1128,7 @@ BoardInit (
   IN  BOARD_INIT_PHASE  InitPhase
 )
 {
-  UINTN PmcBase;
   PLT_DEVICE_TABLE  *PltDeviceTable;
-
-  PmcBase = MmPciBase (
-            DEFAULT_PCI_BUS_NUMBER_PCH,
-            PCI_DEVICE_NUMBER_PCH_PMC,
-            PCI_FUNCTION_NUMBER_PCH_PMC
-            );
 
   switch (InitPhase) {
   case PreConfigInit:
@@ -1176,14 +1169,14 @@ DEBUG_CODE_END();
     // Set the DISB bit in PCH (DRAM Initialization Scratchpad Bit)
     // prior to starting DRAM Initialization Sequence.
     //
-    MmioOr32 (PmcBase + R_PMC_PWRM_GEN_PMCON_A, B_PMC_PWRM_GEN_PMCON_A_DISB);
+    MmioOr32 (PCH_PWRM_BASE_ADDRESS + R_PMC_PWRM_GEN_PMCON_A, B_PMC_PWRM_GEN_PMCON_A_DISB);
     ConfigureGpio (CDATA_NO_TAG, ARRAY_SIZE(mGpioTablePreMemEhl), (UINT8*)mGpioTablePreMemEhl);
     break;
   case PostMemoryInit:
     //
     // Clear the DISB bit after completing DRAM Initialization Sequence
     //
-    MmioAnd32 (PmcBase + R_PMC_PWRM_GEN_PMCON_A, 0);
+    MmioAnd32 (PCH_PWRM_BASE_ADDRESS + R_PMC_PWRM_GEN_PMCON_A, (UINT32)~B_PMC_PWRM_GEN_PMCON_A_DISB);
     UpdateMemoryInfo ();
     break;
   case PreTempRamExit:
