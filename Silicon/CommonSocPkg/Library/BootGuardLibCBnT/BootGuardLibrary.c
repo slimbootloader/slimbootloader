@@ -78,11 +78,17 @@ GetBootGuardInfo (
     BootGuardBootStatus  = *(UINT64 *) (UINTN) (TXT_PUBLIC_BASE + R_CPU_BOOT_GUARD_BOOTSTATUS);
     DEBUG ((DEBUG_INFO, "Boot Guard Boot Status = %llx\n", BootGuardBootStatus));
 
+    DEBUG ((DEBUG_INFO, "HeciBaseAddress = %llx\n", HeciBaseAddress));
     ///
-    /// Read ME FWS Registers
+    /// In case the platform does not have ME HeciBaseAddress will be 0.
+    /// If HeciBaseAddress is 0 then set ME FWS Register to 0 else,
+    /// Read the ME FWS Register
     ///
-    MeFwSts4 = MmioRead32 (HeciBaseAddress + R_ME_HFS_4);
-    DEBUG ((DEBUG_INFO, "ME FW STS 4 = %x\n", MeFwSts4));
+    if (HeciBaseAddress != 0) {
+      MeFwSts4 = MmioRead32 (HeciBaseAddress + R_ME_HFS_4);
+      DEBUG ((DEBUG_INFO, "ME FW STS 4 = %x\n", MeFwSts4));
+    } else
+      MeFwSts4 = 0x0;
 
     ///
     /// Check Bit 12 in ME FWSTS4 to check if TPM_DISCONNECT_ALL bit is set
