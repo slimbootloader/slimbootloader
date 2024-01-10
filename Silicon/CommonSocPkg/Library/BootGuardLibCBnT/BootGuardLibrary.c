@@ -78,6 +78,7 @@ GetBootGuardInfo (
     BootGuardBootStatus  = *(UINT64 *) (UINTN) (TXT_PUBLIC_BASE + R_CPU_BOOT_GUARD_BOOTSTATUS);
     DEBUG ((DEBUG_INFO, "Boot Guard Boot Status = %llx\n", BootGuardBootStatus));
 
+    DEBUG ((DEBUG_INFO, "HeciBaseAddress = %llx\n", HeciBaseAddress));
     ///
     /// Read ME FWS Registers
     ///
@@ -89,7 +90,8 @@ GetBootGuardInfo (
     /// or ENF Shutdown path is taken by ME FW.
     /// Also Identify any failures in ACM
     ///
-    if (((MeFwSts4 & (B_TPM_DISCONNECT | B_BOOT_GUARD_ENF_MASK)) != 0) ||
+    if ((((MeFwSts4 & (B_TPM_DISCONNECT | B_BOOT_GUARD_ENF_MASK))
+        && HeciBaseAddress) != 0) ||
         ((BootGuardAcmStatus & B_BOOT_GUARD_ACM_ERRORCODE_MASK) != 0)) {
       DEBUG ((DEBUG_INFO, "All TPM's on Platform are Disconnected\n"));
       BootGuardInfo->DisconnectAllTpms = TRUE;
@@ -105,7 +107,7 @@ GetBootGuardInfo (
       BootGuardInfo->TpmStartupFailureOnS3 = TRUE;
       DEBUG ((DEBUG_INFO, "ACM Tpm2Startup (State) failure detected during S3 flow.\n"));
     }
-    if ((MeFwSts4 & BIT10) != 0) {
+    if (((MeFwSts4 & BIT10) && HeciBaseAddress) != 0) {
       DEBUG ((DEBUG_INFO, "Sx Resume Type Identified - TPM Event Log not required for ACM Measurements\n"));
       BootGuardInfo->ByPassTpmEventLog = TRUE;
     }
