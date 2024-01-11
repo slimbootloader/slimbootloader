@@ -276,6 +276,7 @@ SendIpi (
     //
     MsrValue = LShiftU64 ((UINT64) ApicId, 32) | IcrLow;
     AsmWriteMsr64 (X2APIC_MSR_ICR_ADDRESS, MsrValue);
+    MicroSecondDelay (100);
   }
 }
 
