@@ -276,6 +276,7 @@ UpdateFspConfig (
   SpdData[6] = (UINT32)(UINTN) (((MEM_SPD5_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD5_TAG))->MemorySpdPtr5);
   SpdData[7] = (UINT32)(UINTN) (((MEM_SPD6_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD6_TAG))->MemorySpdPtr6);
   SpdData[8] = (UINT32)(UINTN) (((MEM_SPD7_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD7_TAG))->MemorySpdPtr7);
+  SpdData[9] = (UINT32)(UINTN) (((MEM_SPD8_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD8_TAG))->MemorySpdPtr8);
   Fspmcfg->MemorySpdPtr000  = SpdData[MemCfgData->SpdDataSel000];
   Fspmcfg->MemorySpdPtr001  = SpdData[MemCfgData->SpdDataSel001];
   Fspmcfg->MemorySpdPtr010  = SpdData[MemCfgData->SpdDataSel010];
@@ -567,6 +568,7 @@ UpdateFspConfig (
     CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mAdlNddr5CrbRowDisplayDdiConfig, sizeof(mAdlNddr5CrbRowDisplayDdiConfig));
     break;
   case PLATFORM_ID_ADL_N_LPDDR5_RVP:
+  case PLATFORM_ID_ADL_N_UP7EN50:
     // DP + DP
     CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mAdlNLpddr5RowDisplayDdiConfig, sizeof(mAdlNLpddr5RowDisplayDdiConfig));
     break;
@@ -665,6 +667,7 @@ UpdateFspConfig (
         Fspmcfg->Lp5BankMode = 0x0;
         break;
       case PLATFORM_ID_ADL_N_LPDDR5_RVP:
+      case PLATFORM_ID_ADL_N_UP7EN50:
         Fspmcfg->DmiHweq = 0x2;
         Fspmcfg->Lp5CccConfig = 0xff;
         Fspmcfg->SkipCpuReplacementCheck = 0x0;
@@ -721,6 +724,7 @@ UpdateFspConfig (
         case PLATFORM_ID_ADL_P_LP5_RVP:
         case PLATFORM_ID_ADL_P_DDR5_RVP:
         case PLATFORM_ID_ADL_P_UPXI12:
+        case PLATFORM_ID_ADL_N_UP7EN50:
           Fspmcfg->PchIshEnable       = 1;
       }
     }
