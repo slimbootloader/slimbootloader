@@ -153,14 +153,6 @@
                      DeEmphasis control for DMI. 0=-6dB, 1(Default)=-3.5 dB
       length       : 0x01
       value        : 0x1
-  - SaRtd3Pcie0Gpio :
-      name         : Switchable Graphics GPIO information for PEG 0
-      type         : EditNum, HEX, (0x00, 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
-      struct       : UINT8
-      help         : >
-                     Switchable Graphics GPIO information for PEG 0, for Reset, power and wake GPIOs
-      length       : 0x18
-      value        : {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}
   - X2ApicOptOut :
       name         : State of X2APIC_OPT_OUT bit in the DMAR table
       type         : Combo
@@ -499,14 +491,6 @@
                      Specify size of Pch trace memory region 1 buffer, the size can be 0, 1MB, 8MB, 64MB, 128MB, 256MB, 512MB. Note - Limitation of total buffer size (PCH + CPU) is 512MB.
       length       : 0x01
       value        : 0x02
-  - PchPreMemRsvd :
-      name         : PchPreMemRsvd
-      type         : Combo
-      option       : $EN_DIS
-      help         : >
-                     Reserved for PCH Pre-Mem Reserved
-      length       : 0x07
-      value        : {0x00}
   - HyperThreading :
       name         : Hyper Threading Enable/Disable
       type         : Combo
@@ -1421,5 +1405,5 @@
       length       : 0x2
       value        : 0x0
   - Dummy        :
-      length       : 0x1
+      length       : 0x0
       value        : 0x0

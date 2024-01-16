@@ -1267,13 +1267,6 @@
                      Enable DMI Power Optimizer on PCH side.
       length       : 0x01
       value        : 0x01
-  - SerialIoDevMode :
-      name         : Enable SerialIo Device Mode
-      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFF)
-      help         : >
-                     0:Disabled, 1:PCI Mode, 2:Acpi mode, 3:Hidden mode (Legacy UART mode) - Enable/disable SerialIo I2C0,I2C1,I2C2,I2C3,I2C4,I2C5,SPI0,SPI1,SPI2,UART0,UART1,UART2 device mode respectively. One byte for each controller, byte0 for I2C0, byte1 for I2C1, and so on.
-      length       : 0x0C
-      value        : {0x01, 0x01, 0x01, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x03}
   - SerialIoSpiMode :
       name         : SPIn Device Mode
       type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFF)
@@ -1461,20 +1454,6 @@
                      Assign THC Port 1
       length       : 0x01
       value        : 0x2
-  - PchCnviRfResetPinMux :
-      name         : PchCnviRfResetPinMux
-      type         : EditNum, HEX, (0,0xFFFFFFFF)
-      help         : >
-                     Select CNVi RF Reset pin muxing. Refer to GPIO_*_MUXING_CNVI_RF_RESET_* for possible values.
-      length       : 0x04
-      value        : 0x0
-  - PchCnviModemClkreqPinMux :
-      name         : PchCnviModemClkreqPinMux
-      type         : EditNum, HEX, (0,0xFFFFFFFF)
-      help         : >
-                     Select CNVi Modem Clkreq pin muxing. Refer to GPIO_*_MUXING_CNVI_MODEM_CLKREQ_* for possible values.
-      length       : 0x04
-      value        : 0x0
   - PchFivrExtV1p05RailVoltage :
       name         : External V1P05 Voltage Value that will be used in S0i2/S0i3 states
       type         : EditNum, HEX, (0x0,0x07FF)
