@@ -666,7 +666,7 @@ UpdateFspConfig (
   }
 
   FspsConfig->AmtEnabled = 0x1;
-  FspsConfig->EnableTcoTimer = 0x0;
+  FspsConfig->EnableTcoTimer = 0x1;
 
   PowerCfgData = (POWER_CFG_DATA *) FindConfigDataByTag (CDATA_POWER_TAG);
   if (PowerCfgData == NULL) {
