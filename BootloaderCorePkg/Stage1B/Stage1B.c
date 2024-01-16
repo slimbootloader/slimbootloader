@@ -676,8 +676,6 @@ ContinueFunc (
   TPMI_ALG_HASH               MbTmpAlgHash;
   HASH_STORE_TABLE            *KeyHashBlob;
   CDATA_BLOB                  *CfgDataBlob;
-  EFI_PLATFORM_FIRMWARE_BLOB  KeyHashFwBlob;
-  EFI_PLATFORM_FIRMWARE_BLOB  CfgDataFwBlob;
 
   Stage1bParam   = (STAGE1B_PARAM *)Context1;
   OldLdrGlobal = (LOADER_GLOBAL_DATA *)Context2;
@@ -725,27 +723,23 @@ ContinueFunc (
         // Extend External Config Data hash
         if (Stage1bParam->ConfigDataHashValid == 1) {
           CfgDataBlob = LdrGlobal->CfgDataPtr;
-          CfgDataFwBlob.BlobBase = (UINT64)(UINTN)CfgDataBlob;
-          CfgDataFwBlob.BlobLength = CfgDataBlob->UsedLength;
           TpmExtendPcrAndLogEvent (1,
                     MbTmpAlgHash,
                     Stage1bParam->ConfigDataHash,
                     EV_PLATFORM_CONFIG_FLAGS,
-                    sizeof(CfgDataFwBlob),
-                    (UINT8 *)&CfgDataFwBlob);
+                    (UINT32)CfgDataBlob->UsedLength,
+                    (UINT8 *)CfgDataBlob);
         }
 
         // Extend Key hash manifest digest
         if (Stage1bParam->KeyHashManifestHashValid == 1) {
           KeyHashBlob = LdrGlobal->HashStorePtr;
-          KeyHashFwBlob.BlobBase = (UINT64)(UINTN)KeyHashBlob;
-          KeyHashFwBlob.BlobLength = KeyHashBlob->UsedLength;
           TpmExtendPcrAndLogEvent (0,
                     MbTmpAlgHash,
                     Stage1bParam->KeyHashManifestHash,
                     EV_EFI_PLATFORM_FIRMWARE_BLOB,
-                    sizeof(KeyHashFwBlob),
-                    (UINT8 *)&KeyHashFwBlob);
+                    (UINT32)KeyHashBlob->UsedLength,
+                    (UINT8 *)KeyHashBlob);
         }
     }
   }
