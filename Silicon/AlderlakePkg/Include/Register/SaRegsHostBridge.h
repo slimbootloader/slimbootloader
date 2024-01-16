@@ -98,6 +98,7 @@
 #define V_SA_DEVICE_ID_MB_ULX_10   0x4678   ///< AlderLake N IOT_PC(0+4+0) 24EU SA DID
 #define V_SA_DEVICE_ID_MB_ULX_11   0x4679   ///< AlderLake N IOT_EBM(0+4+0) 24EU SA DID
 #define V_SA_DEVICE_ID_MB_ULX_12   0x467C   ///< AlderLake N IOT_EBM(0+2+0) 16EU SA DID
+#define V_SA_DEVICE_ID_MB_ULX_13   0x4614   ///< AlderLake N N50 SA DID
 
 //
 // ASL:AlderLake Industrial Device IDs B0:D0:F0

@@ -409,6 +409,7 @@ BoardInit (
     EnableLegacyRegions ();
     switch (GetPlatformId ()) {
       case PLATFORM_ID_ADL_N_LPDDR5_RVP:
+      case PLATFORM_ID_ADL_N_UP7EN50:
         ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTablePostMemAdlNLpddr5Rvp) / sizeof (mGpioTablePostMemAdlNLpddr5Rvp[0]), (UINT8*)mGpioTablePostMemAdlNLpddr5Rvp);
         break;
       default:
@@ -442,6 +443,7 @@ BoardInit (
             break;
           case PLATFORM_ID_ADL_N_DDR5_CRB:
           case PLATFORM_ID_ADL_N_LPDDR5_RVP:
+          case PLATFORM_ID_ADL_N_UP7EN50:
             ConfigureGpio (CDATA_NO_TAG, sizeof (mAdlNTsnDeviceGpioTable) / sizeof (mAdlNTsnDeviceGpioTable[0]), (UINT8*)mAdlNTsnDeviceGpioTable);
             break;
           default:

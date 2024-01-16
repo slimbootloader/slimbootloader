@@ -18,6 +18,9 @@ Defines Platform BoardIds
 #define BoardIdAdlNDdr5Crb                            0x0B // MiniITX is CRB
 #define PLATFORM_ID_ADL_N_DDR5_CRB                    0x0A
 
+#define BoardIdAdlNUp7000EdgeN50                      0x06
+#define PLATFORM_ID_ADL_N_UP7EN50                     0x06
+
 #define BoardIdAdlNLp5Rvp                             0x07
 #define PLATFORM_ID_ADL_N_LPDDR5_RVP                  0x07
 
