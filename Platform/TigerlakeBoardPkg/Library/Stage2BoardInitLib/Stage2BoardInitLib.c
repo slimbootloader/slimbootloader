@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2008 - 2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2008 - 2024, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -1383,16 +1383,6 @@ UpdateFspConfig (
 
   if (IsPchH ()) {
     FspsConfig->SataPortsEnable[4] = 0x1;
-  }
-
-  // Enable Fusa configuration for Display, Graphics, OPIO, PSF fabric
-  SiCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
-  if (SiCfgData != NULL) {
-    DEBUG ((DEBUG_INFO, "Load Silicon Cfg Data\n"));
-    FspsConfig->DisplayFusaConfigEnable = SiCfgData->DisplayFusaConfigEnable;
-    FspsConfig->GraphicFusaConfigEnable = SiCfgData->GraphicFusaConfigEnable;
-    FspsConfig->OpioFusaConfigEnable    = SiCfgData->OpioFusaConfigEnable;
-    FspsConfig->PsfFusaConfigEnable     = SiCfgData->PsfFusaConfigEnable;
   }
 
   if( GetPayloadId() == 0) {

@@ -2,7 +2,7 @@
 #
 #  Slim Bootloader CFGDATA Option File.
 #
-#  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2024, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -18,38 +18,6 @@
       option       : $EN_DIS
       help         : >
                      InterruptRemappingSupport
-      length       : 0x01
-      value        : 0x1
-  - DisplayFusaConfigEnable :
-      name         : Fusa Display Configuration
-      type         : Combo
-      option       : $EN_DIS
-      help         : >
-                     Fusa (Functional Safety) Enable Fusa Feature on Display, 0- Disable, 1- Enable
-      length       : 0x01
-      value        : 0x01
-  - GraphicFusaConfigEnable :
-      name         : Fusa Graphics Configuration
-      type         : Combo
-      option       : $EN_DIS
-      help         : >
-                     Fusa (Functional Safety) Enable Fusa Feature on Graphics, 0- Disable, 1- Enable
-      length       : 0x01
-      value        : 0x01
-  - OpioFusaConfigEnable :
-      name         : Fusa Opio Configuration
-      type         : Combo
-      option       : $EN_DIS
-      help         : >
-                     Fusa (Functional Safety) Enable Fusa Feature on Opio, 0- Disable, 1- Enable
-      length       : 0x01
-      value        : 0x01
-  - PsfFusaConfigEnable :
-      name         : Fusa Psf Configuration
-      type         : Combo
-      option       : $EN_DIS
-      help         : >
-                     Fusa (Functional Safety) Enable Fusa Feature on Psf, 0- Disable, 1- Enable
       length       : 0x01
       value        : 0x1
   - PchTsnEnable :
