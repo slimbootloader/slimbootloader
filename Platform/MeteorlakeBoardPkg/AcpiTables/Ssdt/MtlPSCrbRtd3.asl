@@ -201,7 +201,6 @@ External(\_SB.PC00.HDAS.VDID)
         Name(WAKG, 0)
         Store(WWKP, WAKG)
         Name(SCLK, 1)
-        Include("Rtd3PcieWwan.asl")
       }
     }
 

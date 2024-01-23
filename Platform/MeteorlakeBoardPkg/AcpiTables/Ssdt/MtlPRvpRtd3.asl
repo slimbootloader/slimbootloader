@@ -230,7 +230,6 @@ External(\_SB.PC00.HDAS.VDID)
         Name(WAKG, 0)
         Store(WWKP, WAKG)
         Name(SCLK, 1)
-        Include("Rtd3PcieWwan.asl")
       }
     }
 
@@ -323,9 +322,6 @@ External(\_SB.PC00.HDAS.VDID)
       Name(SCLK, 6)
       Name(WAKP, 0)             // must be defined due to compiler bug, will be removed when fixed https://bugs.acpica.org/show_bug.cgi?id=1432
       Include("PcieRpGenericPcieDeviceRtd3.asl")
-      If(LNotEqual (DGBA, 0)) {
-        Include ("PcieRpDiscreteGraphicsDeviceRtd3Hook.asl")
-      }
     }
 
 // USB - END

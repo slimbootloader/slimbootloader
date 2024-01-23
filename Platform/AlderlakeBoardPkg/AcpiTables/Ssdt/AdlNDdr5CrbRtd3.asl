@@ -142,7 +142,6 @@ External(\_SB.PC00.SAT0.PRT0.PRES, MethodObj)
         Name(WAKG, 0)
         Store(WWKP, WAKG)
         Name(SCLK, 2)
-        Include("Rtd3PcieWwan.asl")
       }
     }
     ///
@@ -221,7 +220,7 @@ External(\_SB.PC00.SAT0.PRT0.PRES, MethodObj)
         Store(STPP, Index(PWRG, 1))
       }
     }
-    Include("Rtd3Sata.asl")
+
   }
 
 
@@ -439,7 +438,6 @@ If (LNotEqual(GBES,0)) {
         Alias(IC0D, TD_D)                                         // TD_D - Touch Device power on delay
         Alias(\_SB.PC00.I2C0.ONTM, TD_C)                     // TD_C - Touch Device I2C controller power on timestamp
 
-        Include("Rtd3I2cTouchDev.asl")
         Method(_PS0) { PS0X() }
         Method(_PS3) { PS3X() }
       }// End Of Scope(TPD0)
@@ -452,7 +450,6 @@ If (LNotEqual(GBES,0)) {
           Alias(IC1D, TD_D)                                         // TD_D - Touch Device power on delay
           Alias(\_SB.PC00.I2C0.ONTM, TD_C)                          // TD_C - Touch Device I2C controller power on timestamp
 
-          Include("Rtd3I2cTouchDev.asl")
           Method(_PS0) { PS0X() }
           Method(_PS3) { PS3X() }
         }// End Of Scope(TPL1)

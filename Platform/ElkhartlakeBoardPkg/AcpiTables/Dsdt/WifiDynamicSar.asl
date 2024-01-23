@@ -83,10 +83,6 @@
         Return(Zero)
       }
 
-      Name(WQCC, Buffer() //Compiled WMI MOF
-      {
-        Include ("MofSampleDev.h")
-      })
     }//End of  Device(WFDE)
 
     //-----------------------------------------
@@ -122,10 +118,6 @@
         Return(Zero)
       }
 
-      Name(WQCC, Buffer() //Compiled WMI MOF
-      {
-        Include ("MofTestDev.h")
-      })
     }
     //-----------------------------------------
     // Test Device - End (Used for test purpose alone)

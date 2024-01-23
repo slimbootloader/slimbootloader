@@ -24,8 +24,3 @@ Scope (\_SB.PC00.GFX0)
 {
   include("Igfx.asl")
 } // end I.G.D
-
-///
-/// IPU Device
-///
-include("Ipu.asl")
