@@ -973,6 +973,7 @@ ExtendStageHash (
   TPMI_ALG_HASH               MbTmpAlgHash;
   UINT8                       *HashPtr;
   RETURN_STATUS               Status;
+  EFI_PLATFORM_FIRMWARE_BLOB  Blob;
 
   //Convert Measured boot Hash Mask to HASH_ALG_TYPE (CryptoLib)
   MbHashType   = GetCryptoHashAlg(PcdGet32(PcdMeasuredBootHashMask));
@@ -1006,9 +1007,12 @@ ExtendStageHash (
                               EV_COMPACT_HASH, sizeof("LinuxLoaderPkg: OS Image"), (UINT8 *)"LinuxLoaderPkg: OS Image");
       } else {
         // Record base and length in event log
+        Blob.BlobBase = (UINT64)(UINTN)CbInfo->CompBuf;
+        Blob.BlobLength = CbInfo->CompLen;
+
         // TPM Extend for Stage components and payloads
         TpmExtendPcrAndLogEvent (0, MbTmpAlgHash, HashPtr,
-                              EV_EFI_PLATFORM_FIRMWARE_BLOB, CbInfo->CompLen, (UINT8 *)CbInfo->CompBuf);
+                              EV_EFI_PLATFORM_FIRMWARE_BLOB, sizeof(Blob), (UINT8 *)&Blob);
       }
     } else {
       DEBUG((DEBUG_INFO, "Stage2 TPM PCR(0) extend failed!! \n"));
