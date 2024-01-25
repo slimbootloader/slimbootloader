@@ -10,7 +10,7 @@
 
 - $ACTION      :
     page         : OS
-- !expand { BOOT_OPTION_TMPL : [ 0 ,   0    ,  20 ,    5   ,   0   ,    0  ,     1 ,     1 , '/boot/sbl_os' ] }
+- !expand { BOOT_OPTION_TMPL : [ 0 ,   0    ,   0 ,    7   ,   0   ,    0  ,     2 ,     1 , '!SETP/MPYM:STPY' ] }
 - !expand { BOOT_OPTION_TMPL : [ 1 , 0x9E   ,  16 ,    0   ,   0   ,    1  ,     1 ,     1 , '!IPFW/POSC' ] }
 - !expand { BOOT_OPTION_TMPL : [ 2 , 0x1F   ,  16 ,    5   ,   0   ,    0  ,     1 ,     1 , '/boot/sbl_rtcm' ] }
 - !expand { BOOT_OPTION_TMPL : [ 3 ,  0     ,  20 ,    6   ,   0   ,    0  ,     1 ,     1 , '/boot/sbl_os' ] }
