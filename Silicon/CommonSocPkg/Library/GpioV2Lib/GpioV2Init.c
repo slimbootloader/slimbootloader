@@ -2246,15 +2246,15 @@ GpioV2StoreUnlockData (
   }
 
   GetPadName (GpioPad, sizeof (PadName), PadName);
-  DEBUG ((DEBUG_INFO, "[GPIOV2] [UNLOCK] [SELECT] %a ", PadName));
+  DEBUG ((DEBUG_VERBOSE, "[GPIOV2] [UNLOCK] [SELECT] %a ", PadName));
   if (LockCfg == GpioV2Unlock) {
-    DEBUG ((DEBUG_INFO, "CFG"));
+    DEBUG ((DEBUG_VERBOSE, "CFG"));
   }
 
   if (LockTx == GpioV2Unlock) {
-    DEBUG ((DEBUG_INFO, " TX"));
+    DEBUG ((DEBUG_VERBOSE, " TX"));
   }
-  DEBUG ((DEBUG_INFO, "\n"));
+  DEBUG ((DEBUG_VERBOSE, "\n"));
 }
 
 /**
