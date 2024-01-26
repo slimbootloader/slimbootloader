@@ -70,6 +70,7 @@ GetBootImageFromIfwiContainer (
   }
 
   DEBUG ((DEBUG_ERROR, "Loaded component (%x/%x) success.\n", Image->ContainerSig, Image->ComponentName));
+  DEBUG ((DEBUG_INFO, "@@@ container loaded at %llx\n", LoadedImage->ImageData.Addr));
   return EFI_SUCCESS;
 }
 
@@ -176,6 +177,10 @@ GetBootImageFromRawPartition (
     ImageSize = ContainerHdr->DataOffset + ContainerHdr->DataSize;
   } else if (ContainerHdr->Signature == IAS_MAGIC_PATTERN) {
     ImageSize = IAS_IMAGE_SIZE ((IAS_HEADER *) BlockData);
+  } else if (BootOption->Image[LoadedImage->LoadImageType].LbaImage.Size) {
+    // demo only: because we loaded a container's component
+    ImageSize = BootOption->Image[LoadedImage->LoadImageType].LbaImage.Size;
+    LoadedImage->Flags      |= LOADED_IMAGE_COMPONENT;
   } else {
     DEBUG ((DEBUG_INFO, "No valid image header found !\n"));
     return EFI_LOAD_ERROR;
@@ -835,6 +840,7 @@ LoadBootImages (
   )
 {
   LOADED_IMAGES_INFO        *LoadedImagesInfo;
+  LOADED_IMAGE              *TempLoadedImage;
   LOADED_IMAGE              *LoadedImage;
   BOOT_IMAGE                *BootImage;
   UINT8                      BootFlags;
@@ -878,11 +884,40 @@ LoadBootImages (
     //
     // Load Boot Image from FS or RAW partition
     //
+    // For demo only:
+    //   background: because we don't have a memory space where booting image resides
+    //   in the demo, let's load a container's component image into memory and try to
+    //   boot from its memory address
+    //
+    //   Step 1.a container component is loaded to memory and referred by TempLoadedImage
+    //   Step 2.use OsBootOption[LoadImageTypeMisc] to cary LbaImage info. Tweaks for LbaImage:
+    //      a. LbaImage.SwPart = 255; because AddSpiPartition sets StartBlock = 0xFFFFFFFF
+    //      b. LbaImage.LbaAddr = TempLoadedImage->ImageData.Addr
+    //      c. add a field: LbaImage.Size = TempLoadedImage->ImageData.Size
+    //   Step 3. call GetBootImageFromRawPartition to "load" the memory address
+    //      tweaking the func to support "container component"
+
+    // step 1
+    TempLoadedImage = (LOADED_IMAGE *)AllocateZeroPool (sizeof (LOADED_IMAGE));
+    if (TempLoadedImage == NULL) {
+      return EFI_OUT_OF_RESOURCES;
+    }
     ContainerImage = &BootImage[Index].ContainerImage;
     if ((ContainerImage->Indicate == '!') && (ContainerImage->BackSlash == '/')) {
-      Status = GetBootImageFromIfwiContainer (OsBootOption, LoadedImage);
-    } else if (BootImage[Index].LbaImage.Valid == 1) {
+      Status = GetBootImageFromIfwiContainer (OsBootOption, TempLoadedImage);
+
+      // step 2
+      LoadedImage->LoadImageType  = LoadImageTypeMisc;
+      OsBootOption->Image[LoadImageTypeMisc].LbaImage.Valid = 1;
+      OsBootOption->Image[LoadImageTypeMisc].LbaImage.SwPart = 255;
+      OsBootOption->Image[LoadImageTypeMisc].LbaImage.Size = TempLoadedImage->ImageData.Size;
+      OsBootOption->Image[LoadImageTypeMisc].LbaImage.LbaAddr = (UINT32) TempLoadedImage->ImageData.Addr;
+
+      // step 3
       Status = GetBootImageFromRawPartition (OsBootOption, LoadedImage);
+
+      // undo tweak
+      LoadedImage->LoadImageType  = Index;
     } else {
       Status = GetBootImageFromFs (HwPartHandle, OsBootOption, LoadedImage);
     }

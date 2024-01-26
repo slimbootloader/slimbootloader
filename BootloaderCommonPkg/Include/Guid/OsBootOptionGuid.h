@@ -134,6 +134,8 @@ typedef struct {
   /// Lba offset address relative to partition
   ///
   UINT32               LbaAddr;
+
+  UINT32               Size; // for demo only: to record component size
 } LBA_IMAGE_LOCATION;
 
 ///
