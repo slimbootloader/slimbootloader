@@ -63,6 +63,8 @@
   EcSsdt/EcSsdt.asl
   Ecdt/Ecdt.act
 
+[FixedPcd]
+  gPlatformMeteorLakeTokenSpaceGuid.PcdMtlPSSupport
 
 [Binaries.IA32]
   BIN|Dsdt/NhltConf2DmicX4.bin

@@ -26,3 +26,5 @@
   gPlatformMeteorLakeTokenSpaceGuid.PcdP2sb2Ptr       | 0x00000000 | UINT32 | 0x200001A6
   gPlatformMeteorLakeTokenSpaceGuid.PcdP2sb3Ptr       | 0x00000000 | UINT32 | 0x200001A7
   gPlatformMeteorLakeTokenSpaceGuid.PcdP2sb4Ptr       | 0x00000000 | UINT32 | 0x200001A8
+[PcdsFixedAtBuild]
+  gPlatformMeteorLakeTokenSpaceGuid.PcdMtlPSSupport   | FALSE      | BOOLEAN | 0x200001A9
