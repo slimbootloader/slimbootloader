@@ -1,7 +1,7 @@
 /** @file
   ACPI uPEP Support
 
-  Copyright (c) 2023-2024, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -716,10 +716,17 @@ Scope(\_SB)
             // call method specific to CS platforms when the system is in a
             // standby state with very limited SW activities
             \_SB.PC00.RP01.DL23()
+#if FixedPcdGetBool(PcdMtlPSSupport) == 1
+            Store(0x14040B, Index(RSTG, 0))
+            Store(0x0, Index(RSTG, 1))
+            Store(0x14080B, Index(PWRG, 0))
+            Store(0x1, Index(PWRG, 1))
+#else
             Store(0x141082, Index(RSTG, 0))
             Store(0x0, Index(RSTG, 1))
-            Store(0x141085, Index(PWRG, 0))
+            Store(0x140805, Index(PWRG, 0))
             Store(0x1, Index(PWRG, 1))
+#endif
             \PIN.ON(RSTG)
             \_SB.PSD3 (1)
             SPCO(0, 0)
@@ -730,6 +737,17 @@ Scope(\_SB)
             Store(0x14040D, Index(RSTG, 0))
             Store(0x0, Index(RSTG, 1))
             Store(0x141081, Index(PWRG, 0))
+            Store(0x1, Index(PWRG, 1))
+            \PIN.ON(RSTG)
+            \_SB.PSD3 (1)
+            SPCO(0, 0)
+            \PIN.OFF (PWRG)
+            \_SB.SHPO (0, 0)
+
+            \_SB.PC00.RP10.DL23()
+            Store(0x140894, Index(RSTG, 0))
+            Store(0x0, Index(RSTG, 1))
+            Store(0x140885, Index(PWRG, 0))
             Store(0x1, Index(PWRG, 1))
             \PIN.ON(RSTG)
             \_SB.PSD3 (1)
@@ -778,10 +796,17 @@ Scope(\_SB)
           If (LEqual (S0ID, 1)) { //S0ID: >=1: CS 0: non-CS
             // call method specific to CS platforms when the system is in a
             // standby state with very limited SW activities
+#if FixedPcdGetBool(PcdMtlPSSupport) == 1
+            Store(0x14040B, Index(RSTG, 0))
+            Store(0x0, Index(RSTG, 1))
+            Store(0x14080B, Index(PWRG, 0))
+            Store(0x1, Index(PWRG, 1))
+#else
             Store(0x141082, Index(RSTG, 0))
             Store(0x0, Index(RSTG, 1))
             Store(0x140805, Index(PWRG, 0))
             Store(0x1, Index(PWRG, 1))
+#endif
             \_SB.SHPO (0, 1)
             \_SB.CAGS (0)
             \_SB.PSD0 (1)
@@ -803,6 +828,21 @@ Scope(\_SB)
             SPCO(0, 1)
             \PIN.OFF (RSTG)
             \_SB.PC00.RP09.L23D()
+
+
+            Store(0x140894, Index(RSTG, 0))
+            Store(0x0, Index(RSTG, 1))
+            Store(0x140885, Index(PWRG, 0))
+            Store(0x1, Index(PWRG, 1))
+            \_SB.SHPO (0, 1)
+            \_SB.CAGS (0)
+            \_SB.PSD0 (1)
+            \PIN.ON (PWRG)
+            Sleep (PEP0)
+            SPCO(0, 1)
+            \PIN.OFF (RSTG)
+            \_SB.PC00.RP10.L23D()
+
 
             Store(0x14040E, Index(RSTG, 0))
             Store(0x0, Index(RSTG, 1))
