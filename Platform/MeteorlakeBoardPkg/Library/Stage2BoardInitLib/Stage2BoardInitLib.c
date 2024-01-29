@@ -1695,43 +1695,98 @@ PlatformUpdateAcpiGnvs (
 
   // Miscellaneous
   //
+  switch (GetPlatformId())
+  {
+    case BoardIdMtlPDdr5SODimmSbsRvp:
+      PlatformNvs->PcieSlot1WakeGpio = 0;
+      PlatformNvs->PcieSlot1RpNumber = 0;
+      PlatformNvs->PcieSlot1PowerEnableGpio = 0;
+      PlatformNvs->PcieSlot1RstGpio = 0;
+
+      PlatformNvs->PcieSlot2RpNumber = 0;
+
+      PlatformNvs->PcieSlot3WakeGpio = GPIOV2_MTL_SOC_M_GPP_C2;
+      PlatformNvs->PcieSlot3RpNumber = 6;
+      PlatformNvs->PcieSlot3PowerEnableGpio = GPIOV2_MTL_SOC_M_GPP_A18;
+      PlatformNvs->PcieSlot3PowerEnableGpioPolarity = 1;
+      PlatformNvs->PcieSlot3RstGpio = GPIOV2_MTL_SOC_M_GPP_A19;
+
+      PlatformNvs->PcieSlot4WakeGpio = GPIOV2_MTL_SOC_M_GPP_F20;
+      PlatformNvs->PcieSlot4RpNumber = 15;
+      PlatformNvs->PcieSlot4PowerEnableGpio = GPIOV2_MTL_SOC_M_GPP_D3;
+      PlatformNvs->PcieSlot4RstGpio = GPIOV2_MTL_SOC_M_GPP_B9;
+
+      PlatformNvs->PcieSlot5WakeGpio = GPIOV2_MTL_SOC_M_GPP_F19;
+      PlatformNvs->PcieSlot5PowerEnableGpio = GPIOV2_MTL_SOC_M_GPP_B15;
+      PlatformNvs->PcieSlot5PowerEnableGpioPolarity = 1;
+      PlatformNvs->PcieSlot5RstGpio = GPIOV2_MTL_SOC_M_GPP_A20;
+
+      PlatformNvs->M2Ssd1PowerEnableGpio = GPIOV2_MTL_SOC_M_GPP_D5;
+      PlatformNvs->M2Ssd1RstGpio = GPIOV2_MTL_SOC_M_GPP_D2;
+
+      PlatformNvs->M2Ssd2PowerEnableGpio = GPIOV2_MTL_SOC_M_GPP_D1;
+      PlatformNvs->M2Ssd2RstGpio = GPIOV2_MTL_SOC_M_GPP_A13;
+
+      PlatformNvs->M2Ssd3PowerEnableGpio = 0;
+      PlatformNvs->M2Ssd3PowerEnableGpioPolarity = 0;
+      PlatformNvs->M2Ssd3RstGpio = 0;
+    break;
+
+    default:
+      PlatformNvs->PcieSlot1WakeGpio = GPIOV2_MTL_SOC_M_GPP_F19;
+      PlatformNvs->PcieSlot1RpNumber = 9;
+      PlatformNvs->PcieSlot1PowerEnableGpio = GPIOV2_MTL_SOC_M_GPP_D3;
+      PlatformNvs->PcieSlot1RstGpio = GPIOV2_MTL_SOC_M_GPP_F19;
+
+      PlatformNvs->PcieSlot2RpNumber = 11;
+
+      PlatformNvs->PcieSlot3WakeGpio = 0;
+      PlatformNvs->PcieSlot3RpNumber = 0;
+      PlatformNvs->PcieSlot3PowerEnableGpio = 0;
+      PlatformNvs->PcieSlot3PowerEnableGpioPolarity = 0;
+      PlatformNvs->PcieSlot3RstGpio = 0;
+
+      PlatformNvs->PcieSlot4WakeGpio = 0;
+      PlatformNvs->PcieSlot4RpNumber = 0;
+      PlatformNvs->PcieSlot4PowerEnableGpio = 0;
+      PlatformNvs->PcieSlot4RstGpio = 0;
+
+      PlatformNvs->PcieSlot5WakeGpio = 0;
+      PlatformNvs->PcieSlot5PowerEnableGpio = 0;
+      PlatformNvs->PcieSlot5PowerEnableGpioPolarity = 0;
+      PlatformNvs->PcieSlot5RstGpio = 0;
+
+      PlatformNvs->M2Ssd1PowerEnableGpio = GPIOV2_MTL_SOC_M_GPP_H11;
+      PlatformNvs->M2Ssd1RstGpio = GPIOV2_MTL_SOC_M_GPP_A11;
+
+      PlatformNvs->M2Ssd2PowerEnableGpio = GPIOV2_MTL_SOC_M_GPP_F5;
+      PlatformNvs->M2Ssd2RstGpio = GPIOV2_MTL_SOC_M_GPP_F20;
+
+      PlatformNvs->M2Ssd3PowerEnableGpio = 0;
+      PlatformNvs->M2Ssd3PowerEnableGpioPolarity = 1;
+      PlatformNvs->M2Ssd3RstGpio = 0;
+    break;
+  }
+
   PlatformNvs->ConfigTdpBios = 0;
   PlatformNvs->PL1LimitCS = 0;
   PlatformNvs->PL1LimitCSValue = 4500;
 
-  PlatformNvs->PcieSlot1WakeGpio = 0;
-  PlatformNvs->PcieSlot1RpNumber = 0;
-  PlatformNvs->PcieSlot1PowerEnableGpio = 0;
   PlatformNvs->PcieSlot1PowerEnableGpioPolarity = 0;
-  PlatformNvs->PcieSlot1RstGpio = 0;
   PlatformNvs->PcieSlot1RstGpioPolarity = 0;
 
   PlatformNvs->PcieSlot2WakeGpio = 0;
-  PlatformNvs->PcieSlot2RpNumber = 0;
   PlatformNvs->PcieSlot2PowerEnableGpio = 0;
   PlatformNvs->PcieSlot2PowerEnableGpioPolarity = 0;
   PlatformNvs->PcieSlot2RstGpio = 0;
   PlatformNvs->PcieSlot2RstGpioPolarity = 0;
 
-  PlatformNvs->PcieSlot3WakeGpio = GPIOV2_MTL_SOC_M_GPP_C2;
-  PlatformNvs->PcieSlot3RpNumber = 6;
-  PlatformNvs->PcieSlot3PowerEnableGpio = GPIOV2_MTL_SOC_M_GPP_A18;
-  PlatformNvs->PcieSlot3PowerEnableGpioPolarity = 1;
-  PlatformNvs->PcieSlot3RstGpio = GPIOV2_MTL_SOC_M_GPP_A19;
   PlatformNvs->PcieSlot3RstGpioPolarity = 0;
 
-  PlatformNvs->PcieSlot4WakeGpio = GPIOV2_MTL_SOC_M_GPP_F20;
-  PlatformNvs->PcieSlot4RpNumber = 15;
-  PlatformNvs->PcieSlot4PowerEnableGpio = GPIOV2_MTL_SOC_M_GPP_D3;
   PlatformNvs->PcieSlot4PowerEnableGpioPolarity = 0;
-  PlatformNvs->PcieSlot4RstGpio = GPIOV2_MTL_SOC_M_GPP_B9;
   PlatformNvs->PcieSlot4RstGpioPolarity = 0;
 
-  PlatformNvs->PcieSlot5WakeGpio = GPIOV2_MTL_SOC_M_GPP_F19;
   PlatformNvs->PcieSlot5RpNumber = 0;
-  PlatformNvs->PcieSlot5PowerEnableGpio = GPIOV2_MTL_SOC_M_GPP_B15;
-  PlatformNvs->PcieSlot5PowerEnableGpioPolarity = 1;
-  PlatformNvs->PcieSlot5RstGpio = GPIOV2_MTL_SOC_M_GPP_A20;
   PlatformNvs->PcieSlot5RstGpioPolarity = 0;
 
   PlatformNvs->PcieSlot6WakeGpio = 0;
@@ -1752,19 +1807,12 @@ PlatformUpdateAcpiGnvs (
   PlatformNvs->WlanRstGpio = GPIOV2_MTL_SOC_M_GPP_H2;
   PlatformNvs->WlanRootPortNumber = 8;
 
-  PlatformNvs->M2Ssd1PowerEnableGpio = GPIOV2_MTL_SOC_M_GPP_D5;
   PlatformNvs->M2Ssd1PowerEnableGpioPolarity = 1;
-  PlatformNvs->M2Ssd1RstGpio = GPIOV2_MTL_SOC_M_GPP_D2;
   PlatformNvs->M2Ssd1RstGpioPolarity = 0;
 
-  PlatformNvs->M2Ssd2PowerEnableGpio = GPIOV2_MTL_SOC_M_GPP_D1;
   PlatformNvs->M2Ssd2PowerEnableGpioPolarity = 1;
-  PlatformNvs->M2Ssd2RstGpio = GPIOV2_MTL_SOC_M_GPP_A13;
   PlatformNvs->M2Ssd2RstGpioPolarity = 0;
 
-  PlatformNvs->M2Ssd3PowerEnableGpio = 0;
-  PlatformNvs->M2Ssd3PowerEnableGpioPolarity = 0;
-  PlatformNvs->M2Ssd3RstGpio = 0;
   PlatformNvs->M2Ssd3RstGpioPolarity = 0;
 
   PlatformNvs->M2Ssd4PowerEnableGpio = GPIOV2_MTL_SOC_M_GPP_D6;
