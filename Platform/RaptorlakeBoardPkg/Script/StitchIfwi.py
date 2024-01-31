@@ -238,7 +238,7 @@ def main():
     curr_dir = os.getcwd()
     sbl_file = os.path.abspath(os.path.join (curr_dir, args.sbl_file))
 
-    if 'tsn' in plt_params_list or 'tcc' in plt_params_list:
+    if 'tsn' in plt_params_list or 'tcc' in plt_params_list or 'posc' in plt_params_list:
       if args.key_dir:
           os.environ['SBL_KEY_DIR'] = os.path.abspath(args.key_dir)
       else:
@@ -251,6 +251,16 @@ def main():
     os.chdir(curr_dir)
 
     generated_ifwi_file = os.path.join(work_dir, 'Temp', 'Ifwi.bin')
+
+    if 'dual' in plt_params_list:
+        if args.platform == 'rplp':
+            print ("Copy dual IFWI images to root")
+            ifwi_1_file_name = os.path.join(args.outpath,'sbl_ifwi_%s_cs0.bin' % (args.platform))
+            ifwi_2_file_name = os.path.join(args.outpath,'sbl_ifwi_%s_cs1.bin' % (args.platform))
+            generated_ifwi_1_file = os.path.join(work_dir, 'Temp', 'Ifwi1.bin')
+            generated_ifwi_2_file = os.path.join(work_dir, 'Temp', 'Ifwi2.bin')
+            shutil.copy(generated_ifwi_1_file, ifwi_1_file_name)
+            shutil.copy(generated_ifwi_2_file, ifwi_2_file_name)
 
     ifwi_file_name = os.path.join(args.outpath,'sbl_ifwi_%s.bin' % (args.platform))
     shutil.copy(generated_ifwi_file, ifwi_file_name)

@@ -1,0 +1,24 @@
+## @file
+#
+#  POSC feature Configuration with TCC rtcm Delta File.
+#
+#  Copyright (c) 2023, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+#
+
+# Note: This file will come into effect only when ENABLE_FUSA = 1,
+# ENABLE_PRE_OS_CHECKER = 1, and ENABLE_TCC = 1 in BoardConfig file.
+
+# Enable POSC from the boot option
+BOOT_OPTION_CFG_DATA_0.BootFlags_0 | 0x1C
+BOOT_OPTION_CFG_DATA_2.ImageType_2 | 0x9E
+BOOT_OPTION_CFG_DATA_3.BootFlags_3 | 0x1C
+BOOT_OPTION_CFG_DATA_5.ImageType_5 | 0x9E
+BOOT_OPTION_CFG_DATA_6.BootFlags_6 | 0x1C
+BOOT_OPTION_CFG_DATA_8.ImageType_8 | 0x9E
+BOOT_OPTION_CFG_DATA_9.BootFlags_9 | 0x1C
+BOOT_OPTION_CFG_DATA_11.ImageType_11 | 0x9E
+BOOT_OPTION_CFG_DATA_12.BootFlags_12 | 0x1C
+BOOT_OPTION_CFG_DATA_14.ImageType_14 | 0x9E

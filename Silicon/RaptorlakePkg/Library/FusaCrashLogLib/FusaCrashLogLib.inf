@@ -1,0 +1,42 @@
+### @file
+# Crash Log support library.
+#
+# Copyright (c) 2022 - 2023, Intel Corporation. All rights reserved.<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+###
+
+[Defines]
+  INF_VERSION          = 0x00010005
+  BASE_NAME            = FusaCrashLogLib
+  FILE_GUID            = 3cb3132a-976c-4321-8981-982844f4b0d2
+  MODULE_TYPE          = BASE
+  VERSION_STRING       = 1.0
+  LIBRARY_CLASS        = CrashLogLib
+
+[Sources]
+  FusaCrashLogLib.c
+  FusaCrashLogLibPrivate.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  Silicon/AlderlakePkg/AlderlakePkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  MemoryAllocationLib
+  IoLib
+  TimerLib
+  BaseMemoryLib
+  HobLib
+  BootloaderCoreLib
+
+[Guids]
+  gEfiFirmwareErrorSectionGuid
+  gCpuCrashLogDataBufferHobGuid
