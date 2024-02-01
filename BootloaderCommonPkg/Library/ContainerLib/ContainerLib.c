@@ -868,7 +868,7 @@ LoadComponentWithCallback (
       // Update component Call back info after authenticaton is done
       // This info will used by firmware stage to extend to TPM
       CbInfo.ComponentType    = ComponentId;
-      CbInfo.CompBuf          = CompBuf;
+      CbInfo.CompBuf          = CompData;
       CbInfo.CompLen          = SignedDataLen;
       CbInfo.HashAlg          = GetHashAlg(AuthType);
       CbInfo.HashData         = HashData;

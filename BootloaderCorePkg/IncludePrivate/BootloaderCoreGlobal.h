@@ -94,6 +94,10 @@ typedef struct {
   UINT8         ConfigDataHash[HASH_DIGEST_MAX];
   UINT8         KeyHashManifestHashValid;
   UINT8         KeyHashManifestHash[HASH_DIGEST_MAX];
+  UINT64        ExtCfgDataBlobBase;
+  UINT64        ExtCfgDataBlobLength;
+  UINT64        HashKeyDataBlobBase;
+  UINT64        HashKeyDataBlobLength;
 } STAGE1B_PARAM;
 
 typedef struct {

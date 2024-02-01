@@ -130,6 +130,23 @@ AppendHashStore (
   UINT8               *OemKeyHashBlob;
   UINT32               OemKeyHashLen;
   HASH_ALG_TYPE        MbHashType;
+  UINT32               OemKeyHashBase;
+
+  // Get the Hash store base address
+  Status = LocateComponent ( CONTAINER_KEY_HASH_STORE_SIGNATURE,
+                              HASH_STORE_SIGNATURE,
+                                (VOID **)&OemKeyHashBase, NULL);
+  DEBUG((DEBUG_INFO, "%a KeyHash Component Base = 0x%x\n", __func__,
+                        OemKeyHashBase));
+  // Component must have LOADER_COMPRESSED_HEADER
+  // Update the OEM Key Hash data address
+  OemKeyHashBase = (UINT32)(UINTN)(((LOADER_COMPRESSED_HEADER *)(UINTN)OemKeyHashBase)->Data);
+  DEBUG((DEBUG_INFO, "%a KeyHash Component Data Base = 0x%x\n", __func__,
+                        OemKeyHashBase));
+
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
 
   // Request to load at the end of current hash store in memory
   LdrKeyHashBlob = (HASH_STORE_TABLE *)(UINTN)LdrGlobal->HashStorePtr;
@@ -143,9 +160,13 @@ AppendHashStore (
   if (EFI_ERROR(Status)) {
     // Not really necessary, but keep buffer clean
     ZeroMem (OemKeyHashBlob, OemKeyHashLen);
+    Stage1bParam->HashKeyDataBlobBase = 0;
+    Stage1bParam->HashKeyDataBlobLength = 0;
     return Status;
   }
 
+  Stage1bParam->HashKeyDataBlobBase = (UINT64)OemKeyHashBase;
+  Stage1bParam->HashKeyDataBlobLength = (UINT64)OemKeyHashLen;
 
   if (MEASURED_BOOT_ENABLED()) {
     //Convert Measured boot Hash Mask to HASH_ALG_TYPE (CryptoLib)
@@ -241,6 +262,8 @@ CreateConfigDatabase (
              ((CDATA_BLOB *)ExtCfgAddPtr)->UsedLength,
              Status
              ));
+    Stage1bParam->ExtCfgDataBlobBase = (UINT64)CfgDataBase;
+    Stage1bParam->ExtCfgDataBlobLength = (UINT64)((CDATA_BLOB *)ExtCfgAddPtr)->UsedLength;
     if (!EFI_ERROR (Status)) {
       if (FeaturePcdGet (PcdVerifiedBootEnabled)) {
         // Verify CFG public key
@@ -278,6 +301,8 @@ CreateConfigDatabase (
         if (EFI_ERROR (Status)) {
           DEBUG ((DEBUG_INFO, "Append EXT CFG Data ... %r\n", Status));
           Stage1bParam->ConfigDataHashValid = 0;
+          Stage1bParam->ExtCfgDataBlobBase = 0;
+          Stage1bParam->ExtCfgDataBlobLength = 0;
         }
       }
     }
@@ -674,8 +699,6 @@ ContinueFunc (
   LOADER_GLOBAL_DATA          *LdrGlobal;
   LOADER_GLOBAL_DATA          *OldLdrGlobal;
   TPMI_ALG_HASH               MbTmpAlgHash;
-  HASH_STORE_TABLE            *KeyHashBlob;
-  CDATA_BLOB                  *CfgDataBlob;
   EFI_PLATFORM_FIRMWARE_BLOB  KeyHashFwBlob;
   EFI_PLATFORM_FIRMWARE_BLOB  CfgDataFwBlob;
 
@@ -724,9 +747,10 @@ ContinueFunc (
 
         // Extend External Config Data hash
         if (Stage1bParam->ConfigDataHashValid == 1) {
-          CfgDataBlob = LdrGlobal->CfgDataPtr;
-          CfgDataFwBlob.BlobBase = (UINT64)(UINTN)CfgDataBlob;
-          CfgDataFwBlob.BlobLength = CfgDataBlob->UsedLength;
+          CfgDataFwBlob.BlobBase = Stage1bParam->ExtCfgDataBlobBase;
+          CfgDataFwBlob.BlobLength = Stage1bParam->ExtCfgDataBlobLength;
+          DEBUG ((DEBUG_INFO, "%a :cfg data : 0x%x length : 0x%x\n", __FUNCTION__,
+                CfgDataFwBlob.BlobBase, CfgDataFwBlob.BlobLength));
           TpmExtendPcrAndLogEvent (1,
                     MbTmpAlgHash,
                     Stage1bParam->ConfigDataHash,
@@ -737,9 +761,10 @@ ContinueFunc (
 
         // Extend Key hash manifest digest
         if (Stage1bParam->KeyHashManifestHashValid == 1) {
-          KeyHashBlob = LdrGlobal->HashStorePtr;
-          KeyHashFwBlob.BlobBase = (UINT64)(UINTN)KeyHashBlob;
-          KeyHashFwBlob.BlobLength = KeyHashBlob->UsedLength;
+          KeyHashFwBlob.BlobBase = Stage1bParam->HashKeyDataBlobBase;
+          KeyHashFwBlob.BlobLength = Stage1bParam->HashKeyDataBlobLength;
+          DEBUG ((DEBUG_INFO, "%a :Hash : 0x%x length : 0x%x\n", __FUNCTION__,
+          KeyHashFwBlob.BlobBase, KeyHashFwBlob.BlobLength));
           TpmExtendPcrAndLogEvent (0,
                     MbTmpAlgHash,
                     Stage1bParam->KeyHashManifestHash,
