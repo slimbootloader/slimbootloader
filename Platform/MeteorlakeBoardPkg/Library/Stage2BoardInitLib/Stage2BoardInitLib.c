@@ -1035,34 +1035,6 @@ PlatformUpdateAcpiTable (
     GlobalNvs->PchNvs.NHLA[0]  = (UINT64)(UINTN) Table;
     GlobalNvs->PchNvs.NHLL[0]  = Table->Length;
     DEBUG ((DEBUG_INFO, "NHLT Base 0x%08X, Size 0x%08X\n", (UINT32)(UINTN)GlobalNvs->PchNvs.NHLA[0], GlobalNvs->PchNvs.NHLL[0]));
-  } else if (Table->Signature == NhltSignaturesTable[1]) {
-    GlobalNvs->PchNvs.NHLA[1]  = (UINT64)(UINTN) Table;
-    GlobalNvs->PchNvs.NHLL[1]  = Table->Length;
-    DEBUG ((DEBUG_INFO, "NHL1 Base 0x%08X, Size 0x%08X\n", (UINT32)(UINTN)GlobalNvs->PchNvs.NHLA[1], GlobalNvs->PchNvs.NHLL[1]));
-  }else if (Table->Signature == NhltSignaturesTable[2]) {
-    GlobalNvs->PchNvs.NHLA[2]  = (UINT64)(UINTN) Table;
-    GlobalNvs->PchNvs.NHLL[2]  = Table->Length;
-    DEBUG ((DEBUG_INFO, "NHL2 Base 0x%08X, Size 0x%08X\n", (UINT32)(UINTN)GlobalNvs->PchNvs.NHLA[2], GlobalNvs->PchNvs.NHLL[2]));
-  }else if (Table->Signature == NhltSignaturesTable[3]) {
-    GlobalNvs->PchNvs.NHLA[3]  = (UINT64)(UINTN) Table;
-    GlobalNvs->PchNvs.NHLL[3]  = Table->Length;
-    DEBUG ((DEBUG_INFO, "NHL3 Base 0x%08X, Size 0x%08X\n", (UINT32)(UINTN)GlobalNvs->PchNvs.NHLA[3], GlobalNvs->PchNvs.NHLL[3]));
-  }else if (Table->Signature == NhltSignaturesTable[4]) {
-    GlobalNvs->PchNvs.NHLA[4]  = (UINT64)(UINTN) Table;
-    GlobalNvs->PchNvs.NHLL[4]  = Table->Length;
-    DEBUG ((DEBUG_INFO, "NHL4 Base 0x%08X, Size 0x%08X\n", (UINT32)(UINTN)GlobalNvs->PchNvs.NHLA[4], GlobalNvs->PchNvs.NHLL[4]));
-  }else if (Table->Signature == NhltSignaturesTable[5]) {
-    GlobalNvs->PchNvs.NHLA[5]  = (UINT64)(UINTN) Table;
-    GlobalNvs->PchNvs.NHLL[5]  = Table->Length;
-    DEBUG ((DEBUG_INFO, "NHL5 Base 0x%08X, Size 0x%08X\n", (UINT32)(UINTN)GlobalNvs->PchNvs.NHLA[5], GlobalNvs->PchNvs.NHLL[5]));
-  }else if (Table->Signature == NhltSignaturesTable[6]) {
-    GlobalNvs->PchNvs.NHLA[6]  = (UINT64)(UINTN) Table;
-    GlobalNvs->PchNvs.NHLL[6]  = Table->Length;
-    DEBUG ((DEBUG_INFO, "NHL6 Base 0x%08X, Size 0x%08X\n", (UINT32)(UINTN)GlobalNvs->PchNvs.NHLA[6], GlobalNvs->PchNvs.NHLL[6]));
-  }else if (Table->Signature == NhltSignaturesTable[7]) {
-    GlobalNvs->PchNvs.NHLA[7]  = (UINT64)(UINTN) Table;
-    GlobalNvs->PchNvs.NHLL[7]  = Table->Length;
-    DEBUG ((DEBUG_INFO, "NHL7 Base 0x%08X, Size 0x%08X\n", (UINT32)(UINTN)GlobalNvs->PchNvs.NHLA[7], GlobalNvs->PchNvs.NHLL[7]));
   }else if (Table->OemTableId == SIGNATURE_64 ('C', 'p', 'u', 'S', 's', 'd', 't', 0)) {
       DEBUG ((DEBUG_INFO, "Updated CPUSSDT Table in AcpiTable Entries\n"));
       PatchCpuSsdtTable (Table, GlobalNvs);
