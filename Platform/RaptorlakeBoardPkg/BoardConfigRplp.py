@@ -37,10 +37,10 @@ class Board(BaseBoard):
         self.BOARD_PKG_NAME_OVERRIDE = 'RaptorlakeBoardPkg'
         self.FSP_IMAGE_ID         = 'ADLI-FSP'
         self._CFGDATA_DEF_FILE    = 'CfgDataDefRplp.yaml'
-        self._EXTRA_INC_PATH      = ['Platform/RaptorlakeBoardPkg/Rplp/Fsp']
-        self._FSP_PATH_NAME       = 'Platform/RaptorlakeBoardPkg/Rplp/Fsp'
-        self.FSP_INF_FILE         = 'Platform/RaptorlakeBoardPkg/Rplp/Fsp/FspBinRplp.inf'
-        self.MICROCODE_INF_FILE   = 'Platform/RaptorlakeBoardPkg/Rplp/Microcode/MicrocodeRplp.inf'
+        self._EXTRA_INC_PATH      = ['Silicon/RaptorlakePkg/Rplp/Fsp']
+        self._FSP_PATH_NAME       = 'Silicon/RaptorlakePkg/Rplp/Fsp'
+        self.FSP_INF_FILE         = 'Silicon/RaptorlakePkg/Rplp/Fsp/FspBinRplp.inf'
+        self.MICROCODE_INF_FILE   = 'Silicon/RaptorlakePkg/Rplp/Microcode/MicrocodeRplp.inf'
         self._LP_SUPPORT          = False
         self._N_SUPPORT           = False
 
@@ -275,7 +275,7 @@ class Board(BaseBoard):
             brd_cfg_src_dir = os.path.join(os.environ['SBL_SOURCE'], 'Platform', self.BOARD_PKG_NAME, 'CfgData')
             brd_cfg2_src_dir = '.'
             if hasattr(self, 'BOARD_PKG_NAME_OVERRIDE'):
-                brd_cfg2_src_dir = os.path.join(os.environ['PLT_SOURCE'], 'Platform', self.BOARD_PKG_NAME_OVERRIDE, 'CfgData')
+                brd_cfg2_src_dir = os.path.join(os.environ['SBL_SOURCE'], 'Platform', self.BOARD_PKG_NAME_OVERRIDE, 'CfgData')
             for dlt_file in self._CFGDATA_EXT_FILE:
                 cfg_dlt_file  = os.path.join(brd_cfg_src_dir, dlt_file[len (self._generated_cfg_file_prefix):])
                 if not os.path.exists(cfg_dlt_file):

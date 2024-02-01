@@ -21,5 +21,5 @@
   COMMIT = 01e5a97823e8b8587e99f6ccf0c1a70dfa39fd46
 
 [UserExtensions.SBL."CopyList"]
-  Microcode/RaptorLake/m_e0_b06a2_0000411d.pdb  : Platform/RaptorlakeBoardPkg/Rplp/Microcode/m_e0_b06a2_0000411d.mcb
+  Microcode/RaptorLake/m_e0_b06a2_0000411d.pdb  : Silicon/RaptorlakePkg/Rplp/Microcode/m_e0_b06a2_0000411d.mcb
 
