@@ -1076,6 +1076,7 @@ SetupBootImages (
           (LoadedExtraImage->Flags & LOADED_IMAGE_MBMODULE)) {
         DEBUG ((DEBUG_INFO, "SetupBootImage Append ImageType-%d\n", Type));
         AppendMultibootModules (LoadedImage, LoadedExtraImage);
+        LoadedExtraImage->Flags |= LOADED_IMAGE_RUN_EXTRA;
       }
     }
   }
