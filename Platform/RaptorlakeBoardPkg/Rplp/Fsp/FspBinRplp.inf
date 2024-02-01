@@ -11,10 +11,10 @@
 
 [UserExtensions.SBL."CloneRepo"]
   REPO    = https://github.com/intel/FSP.git
-  COMMIT  = fc5e3c9aa6779d8d83548dc0ff397843491d2b1b
+  COMMIT  = 98e497f733450b97f590cab0556f05d23cdf3e02
 
 [UserExtensions.SBL."CopyList"]
-# For RPL-S
+# For RPL-P
   RaptorLakeFspBinPkg/IoT/RaptorLakeP/FSP.fd                             : Platform/RaptorlakeBoardPkg/Rplp/Fsp/FspDbg.bin
   RaptorLakeFspBinPkg/IoT/RaptorLakeP/FSP.fd                             : Platform/RaptorlakeBoardPkg/Rplp/Fsp/FspRel.bin
   RaptorLakeFspBinPkg/IoT/RaptorLakeP/FSP.bsf                            : Platform/RaptorlakeBoardPkg/Rplp/Fsp/Fsp.bsf
@@ -23,6 +23,4 @@
   RaptorLakeFspBinPkg/IoT/RaptorLakeP/Include/FspmUpd.h                  : Platform/RaptorlakeBoardPkg/Rplp/Fsp/FspmUpd.h
   RaptorLakeFspBinPkg/IoT/RaptorLakeP/Include/FspsUpd.h                  : Platform/RaptorlakeBoardPkg/Rplp/Fsp/FspsUpd.h
   RaptorLakeFspBinPkg/IoT/RaptorLakeP/Include/MemInfoHob.h               : Platform/RaptorlakeBoardPkg/Rplp/Fsp/MemInfoHob.h
-  RaptorLakeFspBinPkg/IoT/RaptorLakeP/Vbt/Vbt.bin                        : Platform/RaptorlakeBoardPkg/VbtBin/Vbt_rplp.dat
-  RaptorLakeFspBinPkg/IoT/RaptorLakeP/Vbt/Vbt.json                       : Platform/RaptorlakeBoardPkg/VbtBin/Vbt_rplp.json
   FSP_License.pdf                                                        : Platform/RaptorlakeBoardPkg/Rplp/Fsp/FSP_License.pdf

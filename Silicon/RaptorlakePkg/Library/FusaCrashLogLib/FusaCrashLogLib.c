@@ -8,16 +8,20 @@
 #include "FusaCrashLogLibPrivate.h"
 
 /**
-  Get Cpu Crash log
+  Get Cpu Crash log from HOB and use data to fill FW boot error records for BERT.
+
+  @param[out] MainLogDestination       Destination FW error record for main log.
+  @param[out] TelemetryDestination     Destination FW error record for Telemetry.
+  @param[out] TraceDestination         Destination FW error record for Trace log.
 
   @retval EFI_SUCCESS             The function completes successfully
 
 **/
 EFI_STATUS
 GetCpuCrashLog (
-  IN  UINT32         *MainLogDestination,
-  IN  UINT32         *TelemetryDestination,
-  IN  UINT32         *TraceDestination
+  OUT  UINT32         *MainLogDestination,
+  OUT  UINT32         *TelemetryDestination,
+  OUT  UINT32         *TraceDestination
   )
 {
   UINT32              *CrashLogAddr = NULL;
@@ -117,8 +121,7 @@ GetCpuCrashLog (
   @param[in out] FirmwareGenericErrorAddr       Pointer to this FirmwareGenericError entry address, updated on return.
   @param[in out] FirmwareCrashLogPayloadAddr    Pointer to Firmware CrashLog Entry payload address, updated on return.
   @param[in] EntrySize                          Firmware CrashLog Entry payload size.
-  @param[in] EntrySource                        Firmware CrashLog Entry source.
-  @param[in] EntryVersion                       Firmware CrashLog Entry version.
+  @param[in] RecordIdGuid                       Firmware CrashLog Record ID GUID.
 
 **/
 
@@ -155,7 +158,8 @@ AddFirmwareCrashLogEntry (
 /**
   Get CPU Crash Log, and initialize the APEI BERT GENERIC_ERROR_STATUS structure
 
-  @param[in] ErrStsBlk            BERT GENERIC_ERROR_STATUS instance.
+  @param[in out] ErrStsBlk            BERT GENERIC_ERROR_STATUS instance.
+  @param[in out] Bert                 ACPI BERT table containing error record.
 
   @retval EFI_SUCCESS             The function completes successfully
 **/
@@ -241,13 +245,13 @@ GenFwBootErrorlog (
 /**
   Log firmware boot error log  in APEI BERT.
 
-  @param[in] BootErrorTable       APEI BERT address.
+  @param[in out] BootErrorTable       APEI BERT address.
 
   @retval EFI_SUCCESS             The function completes successfully
 **/
 EFI_STATUS
 LogFwBootErrorlog (
-  IN EFI_ACPI_6_4_BOOT_ERROR_RECORD_TABLE_HEADER    *BootErrorTable
+  IN OUT  EFI_ACPI_6_4_BOOT_ERROR_RECORD_TABLE_HEADER    *BootErrorTable
   )
 {
   EFI_ACPI_6_4_GENERIC_ERROR_STATUS_STRUCTURE       *ErrStsBlk;
@@ -266,7 +270,7 @@ LogFwBootErrorlog (
 /**
   Update BERT Table with Crash Log Telemetry SRAM data
 
-  @param[in] Bert                   Pointer to BERT table to update.
+  @param[in out] Bert                   Pointer to BERT table to update.
 
   @retval  EFI_SUCCESS:              Driver initialized successfully
            EFI_LOAD_ERROR:           Failed to Initialize or to Load the driver
@@ -275,7 +279,7 @@ LogFwBootErrorlog (
 EFI_STATUS
 EFIAPI
 UpdateCrashLogBertTable (
-  EFI_ACPI_6_4_BOOT_ERROR_RECORD_TABLE_HEADER *Bert
+  IN OUT  EFI_ACPI_6_4_BOOT_ERROR_RECORD_TABLE_HEADER *Bert
   )
 {
   EFI_STATUS                  Status;
