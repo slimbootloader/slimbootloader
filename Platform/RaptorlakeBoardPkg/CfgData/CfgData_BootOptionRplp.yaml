@@ -12,20 +12,15 @@
     page         : OS
 # usb
 - !expand { BOOT_OPTION_TMPL : [ 0 ,   0       ,  0 ,    5   ,   0   ,    0xFF  ,     1 ,     1 , '/boot/sbl_os' ] }
-- !expand { BOOT_OPTION_TMPL : [ 1 ,   0x1F    ,  0 ,    5   ,   0   ,    0     ,     1 ,     1 , '/boot/sbl_rtcm' ] }
-- !expand { BOOT_OPTION_TMPL : [ 2 ,   0x1F    ,  0 ,    5   ,   0   ,    0     ,     1 ,     1 , '!IPFW/POSC' ] }
+- !expand { BOOT_OPTION_TMPL : [ 1 ,   0x1F    ,  0 ,    5   ,   0   ,    0     ,     1 ,     1 , '!IPFW/POSC' ] }
 # nvme
-- !expand { BOOT_OPTION_TMPL : [ 3 ,   0       ,  0 ,    6   ,   1   ,    0     ,     2,     1 , '/boot/sbl_os' ] }
-- !expand { BOOT_OPTION_TMPL : [ 4 ,   0x1F    ,  0 ,    6   ,   1   ,    0     ,     2,     1 , '/boot/sbl_rtcm' ] }
-- !expand { BOOT_OPTION_TMPL : [ 5 ,   0x1F    ,  0 ,    6   ,   1   ,    0     ,     2,     1 , '!IPFW/POSC' ] }
-- !expand { BOOT_OPTION_TMPL : [ 6 ,   0       ,  0 ,    6   ,   0   ,    0     ,     2,     1 , '/boot/sbl_os' ] }
-- !expand { BOOT_OPTION_TMPL : [ 7 ,   0x1F    ,  0 ,    6   ,   0   ,    0     ,     2,     1 , '/boot/sbl_rtcm' ] }
-- !expand { BOOT_OPTION_TMPL : [ 8 ,   0x1F    ,  0 ,    6   ,   0   ,    0     ,     2,     1 , '!IPFW/POSC' ] }
+- !expand { BOOT_OPTION_TMPL : [ 2 ,   0       ,  0 ,    6   ,   1   ,    0     ,     2,     1 , '/boot/sbl_os' ] }
+- !expand { BOOT_OPTION_TMPL : [ 3 ,   0x1F    ,  0 ,    6   ,   1   ,    0     ,     2,     1 , '!IPFW/POSC' ] }
+- !expand { BOOT_OPTION_TMPL : [ 4 ,   0       ,  0 ,    6   ,   0   ,    0     ,     2,     1 , '/boot/sbl_os' ] }
+- !expand { BOOT_OPTION_TMPL : [ 5 ,   0x1F    ,  0 ,    6   ,   0   ,    0     ,     2,     1 , '!IPFW/POSC' ] }
 # sata
-- !expand { BOOT_OPTION_TMPL : [ 9 ,   0       ,  0 ,    0   ,   0   ,    0xFF  ,     1 ,     1 , '/boot/sbl_os' ] }
-- !expand { BOOT_OPTION_TMPL : [ 10,   0x1F    ,  0 ,    0   ,   0   ,    0     ,     1 ,     1 , '/boot/sbl_rtcm' ] }
-- !expand { BOOT_OPTION_TMPL : [ 11,   0x1F    ,  0 ,    0   ,   0   ,    0     ,     1 ,     1 , '!IPFW/POSC' ] }
+- !expand { BOOT_OPTION_TMPL : [ 6 ,   0       ,  0 ,    0   ,   0   ,    0xFF  ,     1 ,     1 , '/boot/sbl_os' ] }
+- !expand { BOOT_OPTION_TMPL : [ 7 ,   0x1F    ,  0 ,    0   ,   0   ,    0     ,     1 ,     1 , '!IPFW/POSC' ] }
 # emmc
-- !expand { BOOT_OPTION_TMPL : [ 12,   0       ,  0 ,    2   ,   0   ,    0     ,     1 ,     1 , '/boot/sbl_os' ] }
-- !expand { BOOT_OPTION_TMPL : [ 13,   0x1F    ,  0 ,    2   ,   0   ,    0     ,     1 ,     1 , '/boot/sbl_rtcm' ] }
-- !expand { BOOT_OPTION_TMPL : [ 14,   0x1F    ,  0 ,    2   ,   0   ,    0     ,     1 ,     1 , '!IPFW/POSC' ] }
+- !expand { BOOT_OPTION_TMPL : [ 8 ,   0       ,  0 ,    2   ,   0   ,    0     ,     1 ,     1 , '/boot/sbl_os' ] }
+- !expand { BOOT_OPTION_TMPL : [ 9 ,   0x1F    ,  0 ,    2   ,   0   ,    0     ,     1 ,     1 , '!IPFW/POSC' ] }

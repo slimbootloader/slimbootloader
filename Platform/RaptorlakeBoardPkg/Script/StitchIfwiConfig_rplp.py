@@ -87,22 +87,7 @@ def get_component_replace_list(plt_params_list):
             replace_list.append (
                 ('IFWI/BIOS/NRD/IPFW/TMAC', 'IPFW/TsnSubRegion.bin',     'lz4',     'KEY_ID_CONTAINER_COMP_RSA3072', 0),   # TSN MAC Address
             )
-    if 'tcc' in plt_params_list:
-      if os.path.exists('IPFW/TccCrlBinary.bin'):
-          print ("TccCrlBinary.bin found")
-          replace_list.append (
-              ('IFWI/BIOS/NRD/IPFW/TCCM', 'IPFW/TccCrlBinary.bin',         'lz4',     'KEY_ID_CONTAINER_COMP_RSA3072', 0),   # TCC CRL binary
-          )
-      if os.path.exists('IPFW/TccCacheCfg.bin'):
-          print ("TccCacheCfg.bin found")
-          replace_list.append (
-              ('IFWI/BIOS/NRD/IPFW/TCCC', 'IPFW/TccCacheCfg.bin',         'lz4',     'KEY_ID_CONTAINER_COMP_RSA3072', 0),   # TCC Cache Cfg binary
-          )
-      if os.path.exists('IPFW/TccStreamCfg.bin'):
-          print ("TccStreamCfg.bin found")
-          replace_list.append (
-              ('IFWI/BIOS/NRD/IPFW/TCCT', 'IPFW/TccStreamCfg.bin',         'lz4',     'KEY_ID_CONTAINER_COMP_RSA3072', 0),   # TCC StreamCfg binary
-          )
+
     if 'posc' in plt_params_list:
         if os.path.exists('IPFW/PreOsChecker.bin'):
             print ("PreOsChecker.bin found")
@@ -121,7 +106,6 @@ def check_parameter(para_list):
         'crb'    : {},
         'sata'  : {},
         'spi'    : {'25MHz', '33MHz', '50MHz', '100MHz'},
-        'tcc'   : {},
         'tsn'   : {'PCIe7','PCIe8'},
         'dual'  : {},
         '64MB'  : {},
@@ -137,7 +121,6 @@ def check_parameter(para_list):
         'crb'  -- Stitch for DDR5 COM-HPC CRB board
         'sata' -- Enable sata port0 and port1 support
         'spi'  -- Set SPI frequency to be '25MHz', '33MHz', '50MHz' or '100MHz'. By default use 25Mhz.
-        'tcc'  -- Stitch TCC binaries into BIOS region.
         'tsn'  -- Enable TSN softstraps for different TSN ports (either PCIe7 or PCIe8)
         'dual' -- Build For 2 flash components to allow space for FuSa BIST pattern data
         '64MB' -- Build for 64MB component to allow space for FuSa BIST pattern data

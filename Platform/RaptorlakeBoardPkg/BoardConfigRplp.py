@@ -197,7 +197,6 @@ class Board(BaseBoard):
         self.FUSA_SUPPORT         = 0
         self.FUSA_SIZE            = 0
 
-        # These can be overridden by FUSA .dlt file.
         self.ENABLE_TCC           = 0
         self.ENABLE_TSN           = 0
 
@@ -214,33 +213,6 @@ class Board(BaseBoard):
                 self.FSBP_SIZE        = 0x1000000
                 self.FPBP_SIZE        = 0x1000000
                 self.FUSA_SIZE        = 0x1000 + self.FPBP_SIZE + self.FSBP_SIZE
-
-            # Allow TCC to be enabled by FuSa dlt file
-            FusaConfig = ''
-            brd_cfg_src_dir = os.path.join(os.environ['SBL_SOURCE'], 'Platform', self.BOARD_PKG_NAME, 'CfgData')
-            brd_cfg2_src_dir = '.'
-            if hasattr(self, 'BOARD_PKG_NAME_OVERRIDE'):
-                brd_cfg2_src_dir = os.path.join(os.environ['PLT_SOURCE'], 'Platform', self.BOARD_PKG_NAME_OVERRIDE, 'CfgData')
-            if os.path.exists(os.path.join(brd_cfg_src_dir, 'CfgData_Fusa_Feature.dlt')):
-                FusaConfig = open (os.path.join(brd_cfg_src_dir, 'CfgData_Fusa_Feature.dlt')).readlines()
-            else:
-                if os.path.exists(os.path.join(brd_cfg2_src_dir, 'CfgData_Fusa_Feature.dlt')):
-                    FusaConfig = open (os.path.join(brd_cfg2_src_dir, 'CfgData_Fusa_Feature.dlt')).readlines()
-            for line in FusaConfig:
-                if (re.search("TCC_CFG_DATA\.TccEnable\s+\|\s*1",line) != None or
-                    re.search("TCC_CFG_DATA\.TccEnable\s+\|\s*0x0*1",line) != None):
-                    # use setattr() to avoid matching release.py regex
-                    setattr(self, 'ENABLE_TCC', 1)
-                elif (re.search("SILICON_CFG_DATA\.PchTsnEnable\s+\|\s*1",line) != None or
-                    re.search("SILICON_CFG_DATA\.PchTsnEnable\s+\|\s*0x0*1",line) != None):
-                    # use setattr() to avoid matching release.py regex
-                    setattr(self, 'ENABLE_TSN', 1)
-
-        if self.ENABLE_TCC:
-            self.TCC_CCFG_SIZE   = 0x00001000
-            self.TCC_CRL_SIZE    = 0x00008000
-            self.TCC_STREAM_SIZE = 0x00005000
-            self.SIIPFW_SIZE    += self.TCC_CCFG_SIZE + self.TCC_CRL_SIZE + self.TCC_STREAM_SIZE
 
         if self.ENABLE_TSN:
             self.TMAC_SIZE = 0x00001000
@@ -310,14 +282,7 @@ class Board(BaseBoard):
                     cfg_dlt_file = os.path.join(brd_cfg2_src_dir, dlt_file[len (self._generated_cfg_file_prefix):])
                 lines         = open (cfg_dlt_file).read()
 
-                # Enable TCC in dlt file
-                if self.ENABLE_TCC:
-                    if os.path.exists(os.path.join(brd_cfg2_src_dir, 'CfgData_Tcc_Feature.dlt')):
-                        lines += open (os.path.join(brd_cfg2_src_dir, 'CfgData_Tcc_Feature.dlt')).read()
-                    else:
-                        lines += open (os.path.join(brd_cfg_src_dir, 'CfgData_Tcc_Feature.dlt')).read()
-
-                # Enable TSN in dlt file
+               # Enable TSN in dlt file
                 if self.ENABLE_TSN:
                     if os.path.exists(os.path.join(brd_cfg2_src_dir, 'CfgData_Tsn_Feature.dlt')):
                         lines += open (os.path.join(brd_cfg2_src_dir, 'CfgData_Tsn_Feature.dlt')).read()
@@ -330,16 +295,10 @@ class Board(BaseBoard):
                     else:
                         lines += open (os.path.join(brd_cfg_src_dir, 'CfgData_Fusa_Feature.dlt')).read()
                     if self.ENABLE_PRE_OS_CHECKER:
-                        if self.ENABLE_TCC:
-                            if os.path.exists(os.path.join(brd_cfg2_src_dir, 'CfgData_Posc_Feature_Tcc.dlt')):
-                                lines += open (os.path.join(brd_cfg2_src_dir, 'CfgData_Posc_Feature_Tcc.dlt')).read()
-                            else:
-                                lines += open (os.path.join(brd_cfg_src_dir, 'CfgData_Posc_Feature_Tcc.dlt')).read()
+                        if os.path.exists(os.path.join(brd_cfg2_src_dir, 'CfgData_Posc_Feature.dlt')):
+                            lines += open (os.path.join(brd_cfg2_src_dir, 'CfgData_Posc_Feature.dlt')).read()
                         else:
-                            if os.path.exists(os.path.join(brd_cfg2_src_dir, 'CfgData_Posc_Feature.dlt')):
-                                lines += open (os.path.join(brd_cfg2_src_dir, 'CfgData_Posc_Feature.dlt')).read()
-                            else:
-                                lines += open (os.path.join(brd_cfg_src_dir, 'CfgData_Posc_Feature.dlt')).read()
+                            lines += open (os.path.join(brd_cfg_src_dir, 'CfgData_Posc_Feature.dlt')).read()
                 # Write to generated final dlt file
                 output_cfg_dlt_file = os.path.join(build._fv_dir, dlt_file)
                 open(output_cfg_dlt_file, 'w').write(lines)
@@ -456,20 +415,6 @@ class Board(BaseBoard):
         )
 
         bins = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'Binaries')
-
-        if self.ENABLE_TCC:
-            TccCacheCfg  = os.path.join(bins,  'TccCacheCfg.bin') if os.path.exists(os.path.join(bins,  'TccCacheCfg.bin'))  else ''
-            TccCrlBinary = os.path.join(bins,  'TccCrlBinary.bin')if os.path.exists(os.path.join(bins,  'TccCrlBinary.bin')) else ''
-            TccStreamCfg = os.path.join(bins,  'TccStreamCfg.bin')if os.path.exists(os.path.join(bins,  'TccStreamCfg.bin')) else ''
-            container_list[0].append (
-              ('TCCC', TccCacheCfg,   'Lz4', container_list_auth_type, 'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0, self.TCC_CCFG_SIZE, 0),  # TCC Cache Config
-            )
-            container_list[0].append (
-              ('TCCM', TccCrlBinary, 'Lz4', container_list_auth_type, 'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0, self.TCC_CRL_SIZE, 0),    # TCC Crl
-            )
-            container_list[0].append (
-              ('TCCT', TccStreamCfg,  'Lz4', container_list_auth_type, 'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0, self.TCC_STREAM_SIZE, 0), # TCC Stream Config
-            )
 
         if self.ENABLE_TSN:
             TsnSubRegion = os.path.join(bins,  'TsnSubRegion.bin')if os.path.exists(os.path.join(bins,  'TsnSubRegion.bin')) else ''
