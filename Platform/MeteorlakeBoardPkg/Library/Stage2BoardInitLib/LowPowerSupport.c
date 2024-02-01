@@ -274,8 +274,6 @@ UINT64 GetLowPowerS0IdleConstraint(VOID)
                                ((PepSerialIoI2c[3] && PepConfigData->PepI2c3)                          << 6) | // En/Dis BIT[6] I2C3
                                ((PepSerialIoI2c[4] && PepConfigData->PepI2c4)                          << 7) | // En/Dis BIT[7] I2C4
                                ((PepSerialIoI2c[5] && PepConfigData->PepI2c5)                          << 8) | // En/Dis BIT[8] I2C5
-                               ((UINT64)(PepSerialIoI2c[6] && PepConfigData->PepI2c6)                  << 9) | // En/Dis BIT[9] I2C6
-                               ((UINT64)(PepSerialIoI2c[7] && PepConfigData->PepI2c7)                  << 10) |  // En/Dis BIT[10] I2C7
                                ((PepSerialIoSpi[0] && PepConfigData->PepSpi)                           << 11) | // En/Dis BIT[11] SPI0
                                ((PepSerialIoSpi[1] && PepConfigData->PepSpi)                           << 12) | // En/Dis BIT[12] SPI1
                                ((PepSerialIoSpi[2] && PepConfigData->PepSpi)                           << 13) | // En/Dis BIT[13] SPI2
