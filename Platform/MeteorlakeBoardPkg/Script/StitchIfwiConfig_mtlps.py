@@ -238,7 +238,10 @@ def get_xml_change_list (platform, plt_params_list):
         xml_change_list.append ([
             ('./GlobalSettings/ImageSettings/NumberOfImageSubdivisions',               '2'),
             ('./GlobalSettings/ImageSettings/ImageSubdivisionsSizes',                  '4, 32'),
-            ('./GlobalSettings/IfwiSettings/RegionOrder',                              '654321'),
+            ('./GlobalSettings/IfwiSettings/RegionOrder',                              '7654321'),
+            ('./FlashLayout/EcRegion/EcRegionPointer',                                 '$SourceDir\EcRegionPointer_400000.bin'),
+            ('./PlatformProtection/PchBindingRegionConfiguration/PchBindingRegion',    'PCH Binding on Region 13'),
+            ('./PlatformProtection/PchBindingRegionConfiguration/Length',              '0x3FC000'),
         ])
 
     return xml_change_list
