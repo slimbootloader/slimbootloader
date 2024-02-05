@@ -1,0 +1,24 @@
+## @file
+#
+#  POSC feature Configuration Delta File.
+#
+#  Copyright (c) 2023, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+#
+
+# Note: This file will come into effect only when ENABLE_FUSA = 1 and
+# ENABLE_PRE_OS_CHECKER = 1 in BoardConfig file.
+
+# Enable POSC from the boot option
+BOOT_OPTION_CFG_DATA_0.BootFlags_0 | 0x4
+BOOT_OPTION_CFG_DATA_1.ImageType_1 | 0x9E
+BOOT_OPTION_CFG_DATA_2.BootFlags_2 | 0x4
+BOOT_OPTION_CFG_DATA_3.ImageType_3 | 0x9E
+BOOT_OPTION_CFG_DATA_4.BootFlags_4 | 0x4
+BOOT_OPTION_CFG_DATA_5.ImageType_5 | 0x9E
+BOOT_OPTION_CFG_DATA_6.BootFlags_6 | 0x4
+BOOT_OPTION_CFG_DATA_7.ImageType_7 | 0x9E
+BOOT_OPTION_CFG_DATA_8.BootFlags_8 | 0x4
+BOOT_OPTION_CFG_DATA_9.ImageType_9 | 0x9E

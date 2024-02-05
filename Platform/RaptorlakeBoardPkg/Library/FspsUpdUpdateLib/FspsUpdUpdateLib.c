@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -368,6 +368,10 @@ TccModePostMemConfig (
   }
 
   FspsUpd->FspsConfig.IfuEnable       = 0;
+  FspsUpd->FspsConfig.TccMode = 1;
+  FspsUpd->FspsConfig.SoftwareSramEn  = 0;
+  FspsUpd->FspsConfig.DsoTuningEn     = 0;
+  FspsUpd->FspsConfig.TccErrorLogEn   = 0;
 
   return EFI_SUCCESS;
 }
@@ -651,6 +655,7 @@ UpdateFspConfig (
         DEBUG ((DEBUG_ERROR, "TSN MAC subregion not found! %r\n", Status));
       }
     }
+    FspsConfig->CpuCrashLogEnable     = SiCfgData->CpuCrashLogEnable;
     FspsConfig->IehMode               = SiCfgData->IehMode;
     FspsConfig->OpioRecenter          = SiCfgData->OpioRecenter;
     FspsConfig->D3HotEnable           = SiCfgData->D3HotEnable;
@@ -747,8 +752,10 @@ UpdateFspConfig (
   FspsConfig->CpuPcieRpGen5Uptp[1] = 0x5;
   FspsConfig->CpuPcieRpGen5Uptp[2] = 0x5;
 
-  // EndOfPost Upd
-  FspsUpd->FspsConfig.EndOfPostMessage = 1;
+  if (IsPchS()) {
+    // EndOfPost Upd
+    FspsUpd->FspsConfig.EndOfPostMessage = 1;
+  }
 
   if (FeaturesCfgData != NULL) {
     if (FeaturesCfgData->Features.S0ix == 1) {
@@ -773,8 +780,10 @@ UpdateFspConfig (
   // Enable it later in OS loader/EndofStages
   FspsConfig->PchLockDownBiosLock = 0x0;
 
-  // Disable IEH
-  FspsConfig->IehMode = 0x0;
+  if (IsPchS()) {
+    // Disable IEH
+    FspsConfig->IehMode = 0x0;
+  }
   FspsConfig->PchCrid = 0x0;
   if (GetBootMode() == BOOT_ON_FLASH_UPDATE) {
     //
@@ -986,7 +995,6 @@ UpdateFspConfig (
     FspsConfig->SaPcieItbtRpSnoopLatencyOverrideValue[2] = 0xc8;
     FspsConfig->TdcTimeWindow[0] = 0x3e8;
     FspsConfig->TdcTimeWindow[1] = 0x3e8;
-    FspsConfig->IehMode = 0x0;
     FspsConfig->PortResetMessageEnable[0] = 0x1;
     FspsConfig->PortResetMessageEnable[1] = 0x1;
     FspsConfig->PortResetMessageEnable[2] = 0x1;
