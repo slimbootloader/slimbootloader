@@ -225,7 +225,7 @@ UpdateFspConfig (
   UINT8                       SaDisplayConfigTable[16] = { 0 };
   UINT8                       Index;
   UINT8                       DebugPort;
-  UINT32                      SpdData[9];
+  UINT32                      SpdData[10];
   UINT32                      CarBase;
   UINT32                      CarSize;
   EFI_STATUS                  Status;
