@@ -687,31 +687,32 @@ FindBpmElement (
   Buffer += sizeof(BOOT_POLICY_MANIFEST_HEADER);
 
   IbbElement = (IBB_ELEMENT *)Buffer;
-  if (*(UINT64 *)IbbElement->StructureId != BOOT_POLICY_MANIFEST_IBB_ELEMENT_STRUCTURE_ID) {
-    return NULL;
-  }
-  if (StructureId == BOOT_POLICY_MANIFEST_IBB_ELEMENT_STRUCTURE_ID) {
-    return Buffer;
-  }
 
-  // Advance to end of IBB_ELEMENT structure
-  Buffer = (UINT8*) &(IbbElement->PostIbbHash);
-  Buffer += sizeof(UINT32) + IbbElement->PostIbbHash.Size;
-  Buffer += sizeof(UINT32);  //entrypoint
-  if (StructureId == BOOT_POLICY_MANIFEST_IBB_ELEMENT_DIGEST_ID) {
-    return Buffer;
-  }
-  Buffer += sizeof(UINT32) + ((SHAX_HASH_STRUCTURE*)Buffer)->Size;  //digest
-  Buffer += sizeof(UINT8) + (sizeof(IBB_SEGMENT) * (*Buffer));  //size * segmentcount
+  do {
+    if (*(UINT64 *)IbbElement->StructureId != BOOT_POLICY_MANIFEST_IBB_ELEMENT_STRUCTURE_ID) {
+      return NULL;
+    }
+    if (StructureId == BOOT_POLICY_MANIFEST_IBB_ELEMENT_STRUCTURE_ID) {
+      return Buffer;
+    }
+    if (StructureId == BOOT_POLICY_MANIFEST_IBB_ELEMENT_DIGEST_ID) {
+      // Advance to end of IBB_ELEMENT structure
+      Buffer = (UINT8*) &(IbbElement->PostIbbHash);
+      Buffer += sizeof(UINT32) + IbbElement->PostIbbHash.Size;
+      Buffer += sizeof(UINT32); //IbbEntryPoint
+      return Buffer;
+    } else {
+      Buffer += IbbElement->ElementSize; // Go to the end of the IBB Element structure
+    }
+    IbbElement = (IBB_ELEMENT *)Buffer;
+  } while (*(UINT64 *)IbbElement->StructureId == BOOT_POLICY_MANIFEST_IBB_ELEMENT_STRUCTURE_ID); // to support multiple IBB Elements
 
   // Do we have TXT element in BPM?
   // If so, advance to end of TXT_ELEMENT structure
   TxtElement = (TXT_ELEMENT *)Buffer;
   if (*(UINT64 *)TxtElement->StructureId == BOOT_POLICY_MANIFEST_TXT_ELEMENT_STRUCTURE_ID)
   {
-    Buffer = (UINT8*) &(TxtElement->DigestList);
-    Buffer += sizeof(UINT32) + TxtElement->DigestList.Size;
-    Buffer += sizeof(UINT8) + (sizeof(IBB_SEGMENT) * (*Buffer));  //size * segmentcount
+    Buffer += TxtElement->ElementSize;
   }
 
   // Do we have Platform Config Data element in BPM?
@@ -719,7 +720,15 @@ FindBpmElement (
   PcdsElement = (PLATFORM_CONFIG_DATA_ELEMENT *)Buffer;
   if (*(UINT64 *)PcdsElement->StructureId == BOOT_POLICY_MANIFEST_PLATFORM_CONFIG_DATA_ELEMENT_STRUCTURE_ID)
   {
-    Buffer += 11 + PcdsElement->SizeOfData;
+    if (StructureId == BOOT_POLICY_MANIFEST_PLATFORM_CONFIG_DATA_ELEMENT_STRUCTURE_ID) {
+      return Buffer;
+    }
+    if (StructureId == BPM_CNBS_ELEMENT_STRUCTURE_ID) {
+      Buffer = (UINT8*) &(PcdsElement->SizeOfData);
+      Buffer += sizeof(UINT16) + (*Buffer);
+      return Buffer;
+    }
+    Buffer += PcdsElement->ElementSize;
   }
 
   // Do we have Platform Manufacturer element in BPM?
