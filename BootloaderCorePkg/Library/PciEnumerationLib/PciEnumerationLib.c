@@ -1664,7 +1664,6 @@ PciScanRootBridges (
   OUT       UINT8                  *RootBridgeCount
   )
 {
-  UINT32                            Address;
   UINT16                            Bus;
   UINT8                             SubBusNumber;
   PCI_IO_DEVICE                    *Bridge;
@@ -1730,27 +1729,24 @@ PciScanRootBridges (
       Bus = Index;
     }
 
-    Address = PCI_EXPRESS_LIB_ADDRESS (Bus, 0, 0, 0);
-    if (PciExpressRead16 (Address) != 0xFFFF) {
-      Root = CreatePciIoDevice (NULL, NULL, (UINT8)Bus, 0, 0);
-      Root->Decodes = RootBridgeDecodes;
-      Root->BusNumberRanges.BusBase  = (UINT8)Bus;
-      Root->BusNumberRanges.BusLimit = BusLimit;
+    Root = CreatePciIoDevice (NULL, NULL, (UINT8)Bus, 0, 0);
+    Root->Decodes = RootBridgeDecodes;
+    Root->BusNumberRanges.BusBase  = (UINT8)Bus;
+    Root->BusNumberRanges.BusLimit = BusLimit;
 
+    SubBusNumber = (UINT8)Bus;
+    PciScanBus (Root, (UINT8)Bus, &SubBusNumber, NULL);
+    if (Bus == PCI_MAX_BUS) {
       SubBusNumber = (UINT8)Bus;
-      PciScanBus (Root, (UINT8)Bus, &SubBusNumber, NULL);
-      if (Bus == PCI_MAX_BUS) {
-        SubBusNumber = (UINT8)Bus;
-      }
-      Root->BusNumberRanges.BusLimit = SubBusNumber;
-      Root->Address |= BIT31;
+    }
+    Root->BusNumberRanges.BusLimit = SubBusNumber;
+    Root->Address |= BIT31;
 
-      InsertPciDevice (Bridge, Root);
-      Count++;
+    InsertPciDevice (Bridge, Root);
+    Count++;
 
-      if (EnumPolicy->BusScanType != BusScanTypeList) {
-        Index = SubBusNumber;
-      }
+    if (EnumPolicy->BusScanType != BusScanTypeList) {
+      Index = SubBusNumber;
     }
   }
   *RootBridges = Bridge;
