@@ -62,7 +62,15 @@ PrintBootOptions (
   DEBUG ((DEBUG_INFO, "Idx|ImgType|DevType|DevNum|Flags|HwPart|FsType|SwPart|File/Lbaoffset\n"));
   for (Index = 0; Index < OsBootOptionList->OsBootOptionCount; Index++) {
     BootOption = &OsBootOptionList->OsBootOption[Index];
-    if (BootOption->FsType < EnumFileSystemMax) {
+    if (BootOption->DevType == OsBootDeviceMemory) {
+      DEBUG ((DEBUG_INFO, "%3x|%7x| %5a |   -  | %3x |   -  |   -  |   -  | 0x%x", \
+                 Index, \
+                 BootOption->ImageType, \
+                 GetBootDeviceNameString(BootOption->DevType), \
+                 BootOption->BootFlags, \
+                 BootOption->Image[0].LbaImage.LbaAddr \
+                 ));
+    } else if (BootOption->FsType < EnumFileSystemMax) {
       DEBUG ((DEBUG_INFO, "%3x|%7x| %5a | %4x | %3x | %4x | %4a | %4x | %a", \
                  Index, \
                  BootOption->ImageType, \

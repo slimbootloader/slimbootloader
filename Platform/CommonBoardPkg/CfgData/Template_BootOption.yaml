@@ -96,8 +96,8 @@ BOOT_OPTION_TMPL: >
         name         : Normal OS info or LBA address
         type         : EditText
         help         : >
-                       Specify file name of normal OS or LBA address (16-byte max length).
-                       For LBA address, please use HEX prefix "#0x". EX- #0x12345678
+                       Specify file name of normal OS or LBA address or Container image memory address (16-byte max length).
+                       For LBA address or Container image memory address, please use HEX prefix "#0x". EX- #0x12345678
         condition    : ($BOOT_OPTION_CFG_DATA_$(1).ImageType_$(1) & 0x1F) < 0x1F
         length       : 0x10
         value        : $(9)
