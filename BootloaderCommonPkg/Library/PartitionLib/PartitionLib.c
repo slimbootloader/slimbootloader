@@ -541,7 +541,7 @@ FindPartitions (
 
   CurrentMediaType = MediaGetInterfaceType();
 
-  if (CurrentMediaType == OsBootDeviceMemory || CurrentMediaType == OsBootDeviceSpi) {
+  if (CurrentMediaType == OsBootDeviceSpi) {
     // It is memory mapped SPI block device.
     Status = FindSpiPartitions (PartBlockDev);
     if (!EFI_ERROR (Status)) {

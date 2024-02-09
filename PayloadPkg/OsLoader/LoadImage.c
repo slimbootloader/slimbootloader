@@ -109,6 +109,12 @@ GetBootImageFromRawPartition (
   UINT64                     Address;
   CONTAINER_HDR             *ContainerHdr;
 
+  if(BootOption->DevType == OsBootDeviceMemory)
+  {
+    DEBUG ((DEBUG_INFO, "Updating SwPart to 0xFF for Memory boot\n"));
+    BootOption->Image[LoadedImage->LoadImageType].LbaImage.SwPart = 0xFF;
+  }
+
   SwPart   = BootOption->Image[LoadedImage->LoadImageType].LbaImage.SwPart;
   LbaAddr  = BootOption->Image[LoadedImage->LoadImageType].LbaImage.LbaAddr;
 
@@ -131,7 +137,7 @@ GetBootImageFromRawPartition (
       return Status;
     }
   } else {
-    DEBUG ((DEBUG_INFO, "SwPart is 255, LbaAddr will be treated as an absolute LBA\n"));
+    DEBUG ((DEBUG_INFO, "SwPart is 0xFF, LbaAddr will be treated as an absolute LBA\n"));
     LogicBlkDev.StartBlock = 0;
   }
 

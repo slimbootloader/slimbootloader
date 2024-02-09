@@ -158,9 +158,9 @@ GetBootDeviceInfo (
   } while (1);
 
   do {
-    ShellPrint (L"Enter DevType (SATA 0x%X, SD 0x%X, eMMC 0x%X, UFS 0x%X, SPI 0x%X, USB 0x%X, NVMe 0x%X)\n",
-                OsBootDeviceSata, OsBootDeviceSd, OsBootDeviceEmmc, OsBootDeviceUfs, OsBootDeviceSpi, OsBootDeviceUsb, OsBootDeviceNvme
-                );
+    ShellPrint (L"Enter DevType (SATA 0x%X, SD 0x%X, eMMC 0x%X, UFS 0x%X, SPI 0x%X, USB 0x%X, NVMe 0x%X, MEM 0x%X)\n",
+                OsBootDeviceSata, OsBootDeviceSd, OsBootDeviceEmmc, OsBootDeviceUfs, OsBootDeviceSpi, OsBootDeviceUsb,
+                OsBootDeviceNvme, OsBootDeviceMemory);
     ShellPrint (L"(default 0x%X) ", CurrOption->DevType);
     Status = ShellReadUintn (Shell, Buffer, BufferSize, &IsHex);
     if (EFI_ERROR (Status)) {
@@ -176,6 +176,10 @@ GetBootDeviceInfo (
     }
     ShellPrint (L"Invalid DevType value '%s', please re-enter\n", Buffer);
   } while (1);
+
+  if (BootOption->DevType == OsBootDeviceMemory) {
+    return Status;
+  }
 
   ShellPrint (L"Enter DevInstance (uint)\n");
   ShellPrint (L"(default 0x%X) ", CurrOption->DevInstance);
@@ -273,6 +277,23 @@ GetBootFileInfo (
   if (LoadImageType >= LoadImageTypeMax) {
     ShellPrint (L"Invalid LoadImageType '0x%X'\n", LoadImageType);
     return EFI_NO_MAPPING;
+  }
+
+  if (BootOption->DevType == OsBootDeviceMemory) {
+    do {
+      ShellPrint (L"Enter Image Address in Memory\n");
+
+      ShellPrint (L"(default '#0x%x') #", CurrOption->Image[LoadImageType].LbaImage.LbaAddr);
+      Status = ShellReadUintn (Shell, Buffer, BufferSize, &IsHex);
+      if (!EFI_ERROR (Status)) {
+        BootOption->Image[LoadImageType].LbaImage.LbaAddr = (UINT32) ((IsHex) ? StrHexToUintn (Buffer) : StrDecimalToUintn (Buffer));
+        BootOption->Image[LoadImageType].LbaImage.Valid   = 1;
+        ShellPrint(L"Get Memory address: 0x%x\n", BootOption->Image[LoadImageType].LbaImage.LbaAddr);
+        break;
+      }
+      ShellPrint(L"Not able to read from shell");
+    } while (1);
+    return Status;
   }
 
   ShellPrint (L"Enter SwPart (uint)\n");
@@ -429,7 +450,15 @@ PrintBootOption (
   ShellPrint (L"Idx|ImgType|DevType|DevNum|Flags|HwPart|FsType|SwPart|File/Lbaoffset\n");
   for (Index = 0; Index < OsBootOptionList->OsBootOptionCount; Index++) {
     BootOption = &OsBootOptionList->OsBootOption[Index];
-    if (BootOption->FsType < EnumFileSystemMax) {
+    if (BootOption->DevType == OsBootDeviceMemory) {
+      ShellPrint (L"%3x|%7x| %5a |   -  | %3x |   -  |   -  |   -  | 0x%x", \
+                 Index, \
+                 BootOption->ImageType, \
+                 GetBootDeviceNameString(BootOption->DevType), \
+                 BootOption->BootFlags, \
+                 BootOption->Image[0].LbaImage.LbaAddr \
+                 );
+    } else if (BootOption->FsType < EnumFileSystemMax) {
       ShellPrint (L"%3x|%7x| %5a | %4x | %3x | %4x | %4a | %4x | %a", \
                  Index, \
                  BootOption->ImageType, \
