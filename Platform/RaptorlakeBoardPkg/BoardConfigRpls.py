@@ -33,10 +33,10 @@ class Board(BaseBoard):
         self.SILICON_PKG_NAME     = 'AlderlakePkg'
         self.BOARD_PKG_NAME_OVERRIDE = 'RaptorlakeBoardPkg'
         self.FSP_IMAGE_ID         = 'ADLI-FSP'
-        self._EXTRA_INC_PATH      = ['Platform/RaptorlakeBoardPkg/Rpls/Fsp']
-        self._FSP_PATH_NAME       = 'Platform/RaptorlakeBoardPkg/Rpls/Fsp'
-        self.FSP_INF_FILE         = 'Platform/RaptorlakeBoardPkg/Rpls/Fsp/FspBinRpls.inf'
-        self.MICROCODE_INF_FILE   = 'Platform/RaptorlakeBoardPkg/Rpls/Microcode/MicrocodeRpls.inf'
+        self._EXTRA_INC_PATH      = ['Silicon/RaptorlakePkg/Rpls/Fsp']
+        self._FSP_PATH_NAME       = 'Silicon/RaptorlakePkg/Rpls/Fsp'
+        self.FSP_INF_FILE         = 'Silicon/RaptorlakePkg/Rpls/Fsp/FspBinRpls.inf'
+        self.MICROCODE_INF_FILE   = 'Silicon/RaptorlakePkg/Rpls/Microcode/MicrocodeRpls.inf'
         self.ACPI_TABLE_INF_FILE  = 'Platform/AlderlakeBoardPkg/AcpiTables/AcpiTablesRpl.inf'
 
         self.PCI_EXPRESS_BASE     = 0xC0000000
