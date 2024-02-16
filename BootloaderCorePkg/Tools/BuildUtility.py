@@ -824,6 +824,11 @@ def align_pad_file (src, dst, val, mode = STITCH_OPS.MODE_FILE_ALIGN, pos = STIT
         fo.write(padding)
     fo.close()
 
+def gen_actm_file (brd_pkg_name, actm_bin, actm_file):
+    # Copy ACTM file
+    src_path = os.path.join(os.environ['PLT_SOURCE'], 'Platform', brd_pkg_name, 'Actm', actm_bin)
+    shutil.copy (src_path, actm_file)
+    return
 
 def gen_vbt_file (brd_pkg_name, vbt_dict, vbt_file):
     if len(vbt_dict) == 0:
