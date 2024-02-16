@@ -1742,8 +1742,11 @@ PciScanRootBridges (
     Root->BusNumberRanges.BusLimit = SubBusNumber;
     Root->Address |= BIT31;
 
-    InsertPciDevice (Bridge, Root);
-    Count++;
+    // Only add Root Bridges with actual devices, not empty ones.
+    if (Root->ChildList.ForwardLink != &Root->ChildList) {
+      InsertPciDevice (Bridge, Root);
+      Count++;
+    }
 
     if (EnumPolicy->BusScanType != BusScanTypeList) {
       Index = SubBusNumber;
