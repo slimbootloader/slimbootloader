@@ -1,0 +1,28 @@
+## @file
+#  File to describe FSP repo information
+#
+#  Copyright (c) 2020 - 2024, Intel Corporation. All rights reserved.<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+##
+
+
+[UserExtensions.SBL."CloneRepo"]
+  REPO    = https://github.com/intel/FSP.git
+  COMMIT  = 43f7092a6156ace79a13e7c8793ce8578f69b216
+
+[UserExtensions.SBL."CopyList"]
+# For RPL-S
+  RaptorLakeFspBinPkg/IoT/RaptorLakeS/FSP.fd                             : Silicon/RaptorlakePkg/Rpls/Fsp/FspDbg.bin
+  RaptorLakeFspBinPkg/IoT/RaptorLakeS/FSP.fd                             : Silicon/RaptorlakePkg/Rpls/Fsp/FspRel.bin
+  RaptorLakeFspBinPkg/IoT/RaptorLakeS/FSP.bsf                            : Silicon/RaptorlakePkg/Rpls/Fsp/Fsp.bsf
+  RaptorLakeFspBinPkg/IoT/RaptorLakeS/Include/FspUpd.h                   : Silicon/RaptorlakePkg/Rpls/Fsp/FspUpd.h
+  RaptorLakeFspBinPkg/IoT/RaptorLakeS/Include/FsptUpd.h                  : Silicon/RaptorlakePkg/Rpls/Fsp/FsptUpd.h
+  RaptorLakeFspBinPkg/IoT/RaptorLakeS/Include/FspmUpd.h                  : Silicon/RaptorlakePkg/Rpls/Fsp/FspmUpd.h
+  RaptorLakeFspBinPkg/IoT/RaptorLakeS/Include/FspsUpd.h                  : Silicon/RaptorlakePkg/Rpls/Fsp/FspsUpd.h
+  RaptorLakeFspBinPkg/IoT/RaptorLakeS/Include/MemInfoHob.h               : Silicon/RaptorlakePkg/Rpls/Fsp/MemInfoHob.h
+  RaptorLakeFspBinPkg/IoT/RaptorLakeS/Vbt/Vbt.bin                        : Platform/RaptorlakeBoardPkg/VbtBin/Vbt_rpls.dat
+  RaptorLakeFspBinPkg/IoT/RaptorLakeS/Vbt/Vbt.json                       : Platform/RaptorlakeBoardPkg/VbtBin/Vbt.json
+  FSP_License.pdf                                                        : Silicon/RaptorlakePkg/Rpls/Fsp/FSP_License.pdf
