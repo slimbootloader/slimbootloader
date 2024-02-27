@@ -235,9 +235,6 @@ UpdateAcpiPsdTable (
     DEBUG((DEBUG_ERROR, " GetSecFwVersion failed =%x\n", Status));
   }
 
-  if( &(mPsdt->FwVendor) == NULL) {
-    return RETURN_BUFFER_TOO_SMALL;
-  }
   CopyMem (&mPsdt->FwVendor, EFI_ACPI_PSD_FW_VENDOR, EFI_ACPI_PSD_FW_VENDOR_SIZE);
 
   PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
