@@ -142,6 +142,7 @@ def get_xml_change_list (platform, plt_params_list):
       #Region Order
         ('./FlashLayout/BiosRegion/InputFile',                                       '$SourceDir\BiosRegion.bin'),
         ('./FlashLayout/Ifwi_IntelMePmcRegion/MeRegionFile',                         '$SourceDir\MeRegionFile.bin'),
+        ('./FlashLayout/Ifwi_IntelMePmcRegion/ChipInitBinary',                       '$SourceDir\ChipInitBinary.bin'),
         ('./FlashLayout/Ifwi_IntelMePmcRegion/PmcBinary',                            '$SourceDir\PmcBinary.bin'),
         ('./FlashLayout/SubPartitions/PchcSubPartitionData/InputFile',               '$SourceDir\PchcSubPartitionData.bin'),
         ('./FlashLayout/SubPartitions/IunitSubPartition/InputFile',                  '$SourceDir\Iunit.bin'),
@@ -157,7 +158,7 @@ def get_xml_change_list (platform, plt_params_list):
         ('./NetworkingConnectivity/WiredLanConfiguration/MELanPowerWell',            'SLP_LAN#'),
         ('./InternalPchBuses/EspiConfiguration/EspiEcSlvAtchdFlshMor',               'Multiple Outstanding Requests'),
         ('./IntegratedSensorHub/IshImage/InputFile',                                 '$SourceDir\IshImage.bin'),
-        ('./IntegratedSensorHub/IshImage/Length',                                    '0x50000'),
+        ('./IntegratedSensorHub/IshImage/Length',                                    '0x58000'),
         ('./IntegratedSensorHub/IshData/PdtBinary',                                  '$SourceDir\PdtBinary.bin'),
         ('./Debug/DelayedAuthenticationModeConfiguration/DelayedAuthMode',           'No'),
         ('./Debug/IntelMeFirmwareDebuggingOverrides/DbgOverridePreProdSi',           '0x7'),
