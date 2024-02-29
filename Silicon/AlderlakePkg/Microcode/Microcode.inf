@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2024, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 #
@@ -15,14 +15,14 @@
 
 [Sources]
   m_07_90672_0000002e.mcb
-  m_80_906a3_0000042c.mcb
+  m_80_906a3_00000432.mcb
   m_11_b06e0_00000012.mcb
 
 [UserExtensions.SBL."CloneRepo"]
   REPO   = https://github.com/slimbootloader/firmwareblob.git
-  COMMIT = 301288b714ce666948adcd24251cb2554dbeefbc
+  COMMIT = 3ff0e7ba281a783720b04c9066ed2c388660a16c
 
 [UserExtensions.SBL."CopyList"]
   Microcode/AlderLake/m_07_90672_0000002e.pdb  : Silicon/AlderlakePkg/Microcode/m_07_90672_0000002e.mcb
-  Microcode/AlderLake/m_80_906a3_0000042c.pdb  : Silicon/AlderlakePkg/Microcode/m_80_906a3_0000042c.mcb
+  Microcode/AlderLake/m_80_906a3_00000432.pdb  : Silicon/AlderlakePkg/Microcode/m_80_906a3_00000432.mcb
   Microcode/AlderLake/m_11_b06e0_00000012.pdb  : Silicon/AlderlakePkg/Microcode/m_11_b06e0_00000012.mcb

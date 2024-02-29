@@ -1,7 +1,7 @@
 ## @file
 # This file is used to provide board specific image information.
 #
-#  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2024, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -113,7 +113,7 @@ class Board(BaseBoard):
         self.FSP_M_STACK_TOP      = 0xFEF7FF00
         self.STAGE1B_SIZE         = 0x00200000
         if self.FSPDEBUG_MODE:
-            self.STAGE2_SIZE      = 0x000CE000
+            self.STAGE2_SIZE      = 0x000CF000
         else:
             self.STAGE2_SIZE      = 0x000C3000
         self.STAGE2_FD_BASE       = 0x01000000
