@@ -30,6 +30,7 @@ typedef enum {
 typedef struct {
   UINT64                        StartBlock;
   UINT64                        LastBlock;
+  CHAR16                        PartitionName[36];
 } LOGICAL_BLOCK_DEVICE;
 
 typedef struct {

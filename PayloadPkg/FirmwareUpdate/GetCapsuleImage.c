@@ -21,7 +21,35 @@
 #include <Library/FirmwareUpdateLib.h>
 #include <Library/ConfigDataLib.h>
 #include <Library/BootOptionLib.h>
+#include <Library/AbSupportLib.h>
 #include <ConfigDataCommonStruct.h>
+
+EFI_STATUS
+GetSwPartByName (
+  IN  EFI_HANDLE            PartHandle,
+  IN  CHAR16*               PartName,
+  OUT UINT32*               SwPart
+  )
+{
+  PART_BLOCK_DEVICE   *PartBlockDev;
+  UINT32 Index;
+
+  // Validate parameters
+  PartBlockDev = (PART_BLOCK_DEVICE *)PartHandle;
+  if ( (PartBlockDev == NULL) || \
+       (PartBlockDev->Signature != PART_INFO_SIGNATURE) ) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  for (Index = 0; Index < PartBlockDev->BlockDeviceCount; Index++) {
+      if (StrCmp(PartName, PartBlockDev->BlockDevice[Index].PartitionName) == 0) {
+        DEBUG ((DEBUG_INFO, "Found Partition %s at SwPart %d\n", PartName, Index));
+        *SwPart = Index;
+        return EFI_SUCCESS;
+      }
+    }
+  return EFI_NOT_FOUND;
+}
 
 /**
   Initialize Boot Device (Media)
@@ -257,6 +285,9 @@ LoadCapsuleImage (
   EFI_HANDLE          HwPartHandle;
   CHAR16              FileName[MAX_FILE_LEN];
   EFI_HANDLE          FileHandle;
+  UINT32              SwPart;
+  INT32               BootSlot;
+  OS_BOOT_OPTION      BootOption;
 
 
   if ((CapsuleImage == NULL) || (CapsuleImageSize == NULL)) {
@@ -269,11 +300,24 @@ LoadCapsuleImage (
   FileHandle        = NULL;
   HwPartHandle      = NULL;
   FsHandle          = NULL;
+  SwPart            = 0;
+  BootSlot = 0;
 
   Status = FindBootPartition (CapsuleInfo, &HwPartHandle);
   if (EFI_ERROR (Status)) {
     goto Done;
   }
+
+  Status = GetSwPartByName (HwPartHandle, L"misc", &SwPart);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "Unable to find misc partition, Status = %r\n", Status));
+  }
+
+  BootOption.BootFlags = BOOT_FLAGS_MISC | BOOT_FLAGS_MENDER;
+  BootOption.Image[LoadImageTypeMisc].LbaImage.SwPart = (UINT8)SwPart;
+  BootOption.Image[LoadImageTypeMisc].LbaImage.LbaAddr= 0;
+  BootOption.HwPart = CapsuleInfo->HwPart;
+  BootSlot = GetBootSlot (&BootOption, HwPartHandle);
 
   //
   // If we do not have file system, try reading capsule from raw partition
@@ -292,9 +336,9 @@ LoadCapsuleImage (
   }
 
   if (CapsuleInfo->FsType >= EnumFileSystemMax) {
-    Status = InitFileSystem (CapsuleInfo->SwPart, EnumFileSystemTypeAuto, HwPartHandle, &FsHandle);
+    Status = InitFileSystem (CapsuleInfo->SwPart + BootSlot, EnumFileSystemTypeAuto, HwPartHandle, &FsHandle);
   } else {
-    Status = InitFileSystem (CapsuleInfo->SwPart, CapsuleInfo->FsType, HwPartHandle, &FsHandle);
+    Status = InitFileSystem (CapsuleInfo->SwPart + BootSlot, CapsuleInfo->FsType, HwPartHandle, &FsHandle);
   }
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "No partitions found, Status = %r\n", Status));
