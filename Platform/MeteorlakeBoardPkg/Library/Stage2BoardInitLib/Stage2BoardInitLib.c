@@ -982,7 +982,6 @@ PlatformUpdateAcpiTable (
   VOID                        *FspHobList;
   PLATFORM_DATA               *PlatformData;
   FEATURES_CFG_DATA           *FeaturesCfgData;
-  TCC_CFG_DATA                *TccCfgData;
   EFI_STATUS                   Status;
   EFI_ACPI_6_3_FIXED_ACPI_DESCRIPTION_TABLE *FadtPointer;
 
@@ -1049,14 +1048,6 @@ PlatformUpdateAcpiTable (
   } else if (Table->Signature == SIGNATURE_32 ('R', 'T', 'C', 'T')) {
     DEBUG ((DEBUG_INFO, "Find RTCT table\n"));
 
-    if (FeaturePcdGet (PcdTccEnabled)) {
-      TccCfgData = (TCC_CFG_DATA *) FindConfigDataByTag(CDATA_TCC_TAG);
-      if ((TccCfgData != NULL) && (TccCfgData->TccEnable != 0)) {
-        Status = UpdateAcpiRtctTable(Table);
-        DEBUG ( (DEBUG_INFO, "Updated Rtct Table entries in AcpiTable status: %r\n", Status) );
-        return Status;
-      }
-    }
     return EFI_UNSUPPORTED;
   } else if (Table->Signature == EFI_BDAT_TABLE_SIGNATURE) {
     FspHobList = GetFspHobListPtr ();
@@ -1384,7 +1375,6 @@ PlatformUpdateAcpiGnvs (
   DPTF_NVS_AREA           *DptfNvs;
   FSPS_UPD                *FspsUpd;
   FSP_S_CONFIG            *FspsConfig;
-  TCC_CFG_DATA            *TccCfgData;
   SILICON_CFG_DATA        *SiCfgData;
   FEATURES_CFG_DATA       *FeaturesCfgData;
   UINT8                    Index;
@@ -1394,9 +1384,6 @@ PlatformUpdateAcpiGnvs (
   UINT32                   Data32;
   GPIO_GROUP               GroupToGpeDwX[3];
   UINT32                   GroupDw[3];
-  CPUID_EXTENDED_TIME_STAMP_COUNTER_EDX  Edx;
-  CPUID_PROCESSOR_FREQUENCY_EBX          Ebx;
-  PLATFORM_DATA           *PlatformData;
 
   GlobalNvs = (GLOBAL_NVS_AREA *)GnvsIn;
   ZeroMem (GlobalNvs, sizeof (GLOBAL_NVS_AREA));
@@ -1846,20 +1833,4 @@ PlatformUpdateAcpiGnvs (
 
   PlatformNvs->PpmFlags           = CpuNvs->PpmFlags;
   SocUpdateAcpiGnvs ((VOID *)GnvsIn);
-
-  // TCC mode enabling
-  if (FeaturePcdGet (PcdTccEnabled)) {
-    TccCfgData = (TCC_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
-    if ((TccCfgData != NULL) && (TccCfgData->TccEnable != 0)) {
-      AsmCpuid (CPUID_TIME_STAMP_COUNTER, NULL, &Ebx.Uint32, NULL, NULL);
-      AsmCpuid (CPUID_EXTENDED_TIME_STAMP_COUNTER, NULL, NULL, NULL, &Edx.Uint32);
-    }
-
-    // If TCC is enabled, use the TCC policy from subregion
-    PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
-    if((PlatformData != NULL) && PlatformData->PlatformFeatures.TccDsoTuning){
-      PlatformNvs->Rtd3Support    = PlatformData->PlatformFeatures.TccRtd3Support;
-      PlatformNvs->LowPowerS0Idle = PlatformData->PlatformFeatures.TccLowPowerS0Idle;
-    }
-  }
 }
