@@ -970,9 +970,27 @@ MmcSwitchToHighSpeed (
   UINT8               HostCtrl1;
   UINT8               HostCtrl2;
 
-  Status = MmcSwitchBusWidth (Private, Rca, IsDdr, BusWidth);
-  if (EFI_ERROR (Status)) {
-    return Status;
+  HsTiming = 1;
+  if (IsDdr) {
+    Status = MmcSwitchClockFreq (Private, Rca, HsTiming, ClockFreq);
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
+
+    Status = MmcSwitchBusWidth (Private, Rca, IsDdr, BusWidth);
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
+  } else {
+    Status = MmcSwitchBusWidth (Private, Rca, IsDdr, BusWidth);
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
+
+    Status = MmcSwitchClockFreq (Private, Rca, HsTiming, ClockFreq);
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
   }
 
   //
@@ -1003,12 +1021,6 @@ MmcSwitchToHighSpeed (
     HostCtrl2 = 0;
   }
   Status = SdMmcHcOrMmio (Private->SdMmcHcBase, SD_MMC_HC_HOST_CTRL2, sizeof (HostCtrl2), &HostCtrl2);
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  HsTiming = 1;
-  Status = MmcSwitchClockFreq (Private, Rca, HsTiming, ClockFreq);
 
   return Status;
 }
