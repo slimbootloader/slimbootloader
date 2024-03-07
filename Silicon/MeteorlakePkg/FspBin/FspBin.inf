@@ -1,0 +1,31 @@
+## @file
+#  File to describe FSP repo information
+#
+#  Copyright (c) 2024, Intel Corporation. All rights reserved.<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+##
+
+
+[UserExtensions.SBL."CloneRepo"]
+  REPO    = https://github.com/intel/FSP.git
+  COMMIT  = cc6399e8c759ad4ed83c2d6ea568fd918fc9bc06
+
+[UserExtensions.SBL."CopyList"]
+  MeteorLakeFspBinPkg/IoT/MeteorLake/Fsp.fd                 : Silicon/MeteorlakePkg/FspBin/FspRel.bin
+  MeteorLakeFspBinPkg/IoT/MeteorLake/Fsp.fd                 : Silicon/MeteorlakePkg/FspBin/FspDbg.bin
+  MeteorLakeFspBinPkg/IoT/MeteorLake/Fsp.bsf                : Silicon/MeteorlakePkg/FspBin/Fsp.bsf
+  MeteorLakeFspBinPkg/IoT/MeteorLake/Include/FspUpd.h       : Silicon/MeteorlakePkg/Include/FspUpd.h
+  MeteorLakeFspBinPkg/IoT/MeteorLake/Include/FsptUpd.h      : Silicon/MeteorlakePkg/Include/FsptUpd.h
+  MeteorLakeFspBinPkg/IoT/MeteorLake/Include/FspmUpd.h      : Silicon/MeteorlakePkg/Include/FspmUpd.h
+  MeteorLakeFspBinPkg/IoT/MeteorLake/Include/FspsUpd.h      : Silicon/MeteorlakePkg/Include/FspsUpd.h
+  MeteorLakeFspBinPkg/IoT/MeteorLake/Include/MemInfoHob.h   : Silicon/MeteorlakePkg/Include/MemInfoHob.h
+  MeteorLakeFspBinPkg/IoT/MeteorLake/VbtBin/VbtMtlpCrb.dat  : Platform/MeteorlakeBoardPkg/VbtBin/VbtMtlpCrb.dat
+  MeteorLakeFspBinPkg/IoT/MeteorLake/VbtBin/VbtMtlpLp5.dat  : Platform/MeteorlakeBoardPkg/VbtBin/VbtMtlpLp5.dat
+  MeteorLakeFspBinPkg/IoT/MeteorLake/VbtBin/VbtMtlpRvp.dat  : Platform/MeteorlakeBoardPkg/VbtBin/VbtMtlpRvp.dat
+  MeteorLakeFspBinPkg/IoT/MeteorLake/VbtBin/VbtMtlpsCrb.dat : Platform/MeteorlakeBoardPkg/VbtBin/VbtMtlpsCrb.dat
+  MeteorLakeFspBinPkg/IoT/MeteorLake/VbtBin/VbtMtlpsRvp.dat : Platform/MeteorlakeBoardPkg/VbtBin/VbtMtlpsRvp.dat
+  MeteorLakeFspBinPkg/IoT/MeteorLake/VbtBin/Vbt.json        : Platform/MeteorlakeBoardPkg/VbtBin/Vbt.json
+  FSP_License.pdf                                           : Silicon/MeteorlakePkg/Fsp/FSP_License.pdf
