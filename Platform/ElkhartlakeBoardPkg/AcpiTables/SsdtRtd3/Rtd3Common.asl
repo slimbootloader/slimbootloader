@@ -113,7 +113,6 @@ External(\_SB.CSD0, MethodObj)
 External(\_SB.CSD3, MethodObj)
 External(DVID)
 
-include("GpioAcpiDefinesVer1.h")
 include("HsioDefine.asl")
 
 #define RCG1_RTD3_PRT0_ENABLED 0x01

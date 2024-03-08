@@ -80,27 +80,3 @@ Method(WWST,0,Serialized)
     Return(0)
   }
 }
-
-//
-// Load Wifi/BT/WiGig tables only the Vendor ID, Device ID matches
-//
-If (WIST())
-{
-  Include("Wifi.asl")
-}
-
-//
-// Load WWAN tables only the Vendor ID, Device ID matches
-//
-If(WWST())
-{
-  Include("Wwan.asl")
-}
-
-//
-// Load Platform-level device reset tables only the Vendor ID, Device ID matches
-//
-If (LOr(WIST(),WWST()))
-{
-  Include("DiscreteConnectivityReset.asl")
-}

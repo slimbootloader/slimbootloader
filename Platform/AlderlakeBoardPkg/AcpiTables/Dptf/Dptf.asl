@@ -608,13 +608,7 @@ Scope(\_SB.PC00.LPCB.H_EC) // Open scope to Embedded Controller
 //
 // Participants using device sensors.
 //
-  Include("ChrgParticipant.asl")
   Include("TPwrParticipant.asl")
-
-//
-// Participants using battery.
-//
-  Include("BatteryParticipant.asl")
 
 //
 // Participants using motherboard sensors.
@@ -624,7 +618,6 @@ Scope(\_SB.PC00.LPCB.H_EC) // Open scope to Embedded Controller
   Include("Sen3Participant.asl")
   Include("Sen4Participant.asl")
   Include("Sen5Participant.asl")
-  Include("dGpuSensor.asl")
 
 //
 // Policy support files

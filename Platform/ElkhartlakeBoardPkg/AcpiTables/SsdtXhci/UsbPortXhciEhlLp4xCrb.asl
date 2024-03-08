@@ -227,13 +227,6 @@ DefinitionBlock (
       }
     }
   }
-  If (\_SB.PC00.RP07.PXSX.WIST()) {
-    Scope (\_SB.PC00.XHCI.RHUB.HS10) {
-      Include("AntennaDiversity.asl")
-      Include("BtRegulatory.asl")
-      Include("GeneralPurposeConfig.asl")
-    }
-  }
 
   Scope (\_SB.PC00.XHCI.RHUB.HS11) {
     // Unused

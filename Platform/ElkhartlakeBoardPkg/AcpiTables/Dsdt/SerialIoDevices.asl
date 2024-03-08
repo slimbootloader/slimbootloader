@@ -194,8 +194,6 @@ Scope(\_SB.PC00.I2C0) {
   Name(I2CX, 0)
   Store (SDS0, I2CN)
   Store (SERIAL_IO_I2C0, I2CX)
-  Include ("I2cTouchPad.asl")
-  Include ("I2cTouchPanel.asl")
 }
 
 //-----------------------------
@@ -206,8 +204,6 @@ Scope(\_SB.PC00.I2C1) {
   Name(I2CX, 0)
   Store (SDS1, I2CN)
   Store (SERIAL_IO_I2C1, I2CX)
-  Include ("I2cTouchPad.asl")
-  Include ("I2cTouchPanel.asl")
 }
 
 //-----------------------------
@@ -218,8 +214,6 @@ Scope(\_SB.PC00.I2C2) {
   Name(I2CX, 0)
   Store (SDS2, I2CN)
   Store (SERIAL_IO_I2C2, I2CX)
-  Include ("I2cTouchPad.asl")
-  Include ("I2cTouchPanel.asl")
 }
 
 //-----------------------------
@@ -230,8 +224,6 @@ Scope(\_SB.PC00.I2C3) {
   Name(I2CX, 0)
   Store (SDS3, I2CN)
   Store (SERIAL_IO_I2C3, I2CX)
-  Include ("I2cTouchPad.asl")
-  Include ("I2cTouchPanel.asl")
 }
 
 //-----------------------------
@@ -243,7 +235,6 @@ Scope(\_SB.PC00.SPI1)
   Name(SPIX, 0)
   Store (SDS7, SPIP)
   Store (SERIAL_IO_SPI1, SPIX)
-  Include ("PostCode.asl")
 }
 
 //-----------------------------
@@ -255,6 +246,5 @@ Scope(\_SB.PC00.SPI2)
   Name(SPIX, 0)
   Store (SDS8, SPIP)
   Store (SERIAL_IO_SPI2, SPIX)
-  Include ("SpiFingerprint.asl")
 }
 

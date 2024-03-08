@@ -611,11 +611,6 @@ Include ("PchTsn.asl")
 Include ("PchIsi.asl")
 
 //
-// Touch Host Controllers definition
-//
-Include ("Thc.asl")
-
-//
 // MEI 1 definition
 //
 Include ("PchHeci.asl")

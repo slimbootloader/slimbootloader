@@ -92,28 +92,3 @@ Method (WWST,0,Serialized)
     Return (0)
   }
 }
-
-//
-// Load Wifi/BT/WiGig tables only the Vendor ID, Device ID matches
-//
-If (WIST ())
-{
-  Include ("Wifi.asl")
-}
-
-//
-// Load WWAN tables only the Vendor ID, Device ID matches
-//
-If (LAnd (LNotEqual (WWEN, 0), LEqual (WWRP, SLOT)))
-{
-  Include ("Wwan.asl")
-}
-
-//
-// Load Platform-level device reset tables only the Vendor ID, Device ID matches
-//
-If (LOr (WIST (), LAnd (LNotEqual (WWEN, 0), LEqual (WWRP, SLOT))))
-{
-  Include ("DiscreteConnectivityReset.asl")
-  Include ("DiscreteConnectivityDsm.asl")
-}

@@ -27,11 +27,11 @@ typedef struct {
   ///
   /// The 128-bit GUID value that uniquely identifies the system configuration table.
   ///
-  EFI_GUID                          VendorGuid;
+  EFI_GUID    VendorGuid;
   ///
   /// A pointer to the table associated with VendorGuid.
   ///
-  VOID                              *VendorTable;
+  VOID        *VendorTable;
 } EFI_CONFIGURATION_TABLE;
 
 #include <Uefi/UefiGpt.h>

@@ -202,7 +202,6 @@ DefinitionBlock (
   Include ("HdaDspModules.asl")
   Include ("HIDWakeDSM.asl")
   Include ("PinDriverLib.asl")
-  Include ("Pld.asl")
   Include ("Lid.asl")
   Include ("FwuWmi.asl")
 

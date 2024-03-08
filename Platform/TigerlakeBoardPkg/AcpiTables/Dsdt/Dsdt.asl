@@ -194,17 +194,12 @@ DefinitionBlock (
   Include ("FwuWmi.asl")
   Include ("Gpe.asl")
   Include ("Pep.asl")
-  Include ("Connectivity.asl")
   Include ("PchRpPxsxWrapper.asl")
   Include ("SerialIoDevices.asl")
   Include ("SerialIoTimingParametersEmbedded.asl")
   Include ("HidPlatformEventDev.asl")
   Include ("HIDWakeDSM.asl")
   Include ("PinDriverLib.asl")
-
-  If(LEqual(CVFS,1)) {
-    Include("Cvf.asl")
-  }
 
   If (LAnd(LNotEqual(PSWP, 0), LEqual(RPNB, 0x05))) {
     Scope(\_SB.PC00.RP05) {

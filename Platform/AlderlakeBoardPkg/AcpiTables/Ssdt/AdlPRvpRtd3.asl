@@ -235,10 +235,6 @@ External(\_SB.PC00.HDAS.VDID)
       Store(P1WP, WAKG)
       // Note: IPC1 Command Timeout need to increase for dGPU only.
       Name (TMCS, 3000) // IPC Command Timeout Increase to 3 Secs.
-      If(LNotEqual (DGBA, 0)) {
-        Include ("PcieRpDiscreteGraphicsDeviceRtd3Hook.asl")
-        Include ("PcieRpDiscreteGraphicsHpdAsD3WakeHook.asl")
-      }
       Scope (\_SB.PC00.PEG1.PEGP) {
         Include ("PcieRpSsdStorageRtd3Hook.asl")
       }
@@ -446,7 +442,6 @@ If (LNotEqual(GBES,0)) {
         Alias(IC0D, TD_D)                                         // TD_D - Touch Device power on delay
         Alias(\_SB.PC00.I2C0.ONTM, TD_C)                     // TD_C - Touch Device I2C controller power on timestamp
 
-        Include("Rtd3I2cTouchDev.asl")
         Method(_PS0) { PS0X() }
         Method(_PS3) { PS3X() }
       }// End Of Scope(TPD0)
@@ -460,7 +455,6 @@ If (LNotEqual(GBES,0)) {
             Alias(IC1D, TD_D)                                         // TD_D - Touch Device power on delay
             Alias(\_SB.PC00.I2C0.ONTM, TD_C)                          // TD_C - Touch Device I2C controller power on timestamp
 
-            Include("Rtd3I2cTouchDev.asl")
             Method(_PS0) { PS0X() }
             Method(_PS3) { PS3X() }
           }// End Of Scope(TPL1)

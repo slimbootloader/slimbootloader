@@ -151,8 +151,6 @@ typedef struct _UFS_PEIM_HC_PRIVATE_DATA {
 
 #define ROUNDUP8(x) (((x) % 8 == 0) ? (x) : ((x) / 8 + 1) * 8)
 
-#define IS_ALIGNED(addr, size)      (((UINTN) (addr) & (size - 1)) == 0)
-
 #define UFS_SCSI_OP_LENGTH_SIX      0x6
 #define UFS_SCSI_OP_LENGTH_TEN      0xa
 #define UFS_SCSI_OP_LENGTH_SIXTEEN  0x10

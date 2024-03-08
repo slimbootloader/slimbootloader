@@ -29,18 +29,6 @@ Scope(\_SB)
   }
 }
 
-//
-// Report thermal & regulatory methods if CNVi WiFi is present
-//
-If (\_SB.PC00.CNIP ()) {
-  Scope (\_SB.PC00.CNVW) {
-    Include("WifiThermal.asl")
-    Include("WifiRegulatory.asl")
-    Include("AntennaDiversity.asl")
-    Include("GeneralPurposeConfig.asl")
-  }
-}
-
 Scope(\_SB.PC00.UA00)
 {
   //
@@ -93,6 +81,5 @@ Scope(\_SB.PC00.UA00)
     }
     Name (_S0W, 2)                            // Required to put the device to D2 during S0 idle
   } // Device BTH0
-  Include("BtRegulatory.asl")
-  Include("GeneralPurposeConfig.asl")
+
 }  // End of Scope(\_SB.PC00.UART0)

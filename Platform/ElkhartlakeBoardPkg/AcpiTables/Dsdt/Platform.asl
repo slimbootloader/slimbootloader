@@ -84,9 +84,6 @@ External(MMTB, MethodObj)
 External(TBFF, MethodObj)
 External(FFTB, MethodObj)
 External(IPCS, MethodObj)
-include("DTbt.asl")
-// Comms Hub module support
-include("CommsHub.asl")
 
 // Create a Global MUTEX.
 
