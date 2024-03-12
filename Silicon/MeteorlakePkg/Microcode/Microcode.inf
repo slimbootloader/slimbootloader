@@ -21,5 +21,4 @@
   COMMIT = 57cc7eb0da0c244e5e527d0c5ee571d9234c03da
 
 [UserExtensions.SBL."CopyList"]
-  Microcode/Meteorlake/m_e6_a06a4_0000001c.pdb  : Silicon/MeteorlakePkg/Microcode/m_e6_a06a4_0000001c.mcb
-
+  Microcode/MeteorLake/m_e6_a06a4_0000001c.pdb  : Silicon/MeteorlakePkg/Microcode/m_e6_a06a4_0000001c.mcb
