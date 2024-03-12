@@ -229,9 +229,7 @@ External(\_SB.PC00.HDAS.VDID)
 
 // PCIe root ports - END
 
-// USB - START
-  Include ("Rtd3Xdci.asl")
-// USB - END
+
 
 If (LNotEqual(GBES,0)) {
   Scope(\_SB.PC00.GLAN)
@@ -254,7 +252,6 @@ If (LNotEqual(GBES,0)) {
 //
 // Human Interface Devices Start
 //
-  Include ("Rtd3MPRvpLpss.asl")
 Include ("Rtd3Hdas.asl")
 
 //GPE Event handling - Start

@@ -18,62 +18,50 @@ Scope(\_SB) {
       If (LEqual(WWRP, 1)) {
         #undef WWAN_PCIE_ROOT_PORT
         #define WWAN_PCIE_ROOT_PORT \_SB.PC00.RP01
-        Include ("WwanFlashReset.asl")
       }
       If (LEqual(WWRP, 2)) {
         #undef WWAN_PCIE_ROOT_PORT
         #define WWAN_PCIE_ROOT_PORT \_SB.PC00.RP02
-        Include ("WwanFlashReset.asl")
       }
       If (LEqual(WWRP, 3)) {
         #undef WWAN_PCIE_ROOT_PORT
         #define WWAN_PCIE_ROOT_PORT \_SB.PC00.RP03
-        Include ("WwanFlashReset.asl")
       }
       If (LEqual(WWRP, 4)) {
         #undef WWAN_PCIE_ROOT_PORT
         #define WWAN_PCIE_ROOT_PORT \_SB.PC00.RP04
-        Include ("WwanFlashReset.asl")
       }
       If (LEqual(WWRP, 5)) {
         #undef WWAN_PCIE_ROOT_PORT
         #define WWAN_PCIE_ROOT_PORT \_SB.PC00.RP05
-        Include ("WwanFlashReset.asl")
       }
       If (LEqual(WWRP, 6)) {
         #undef WWAN_PCIE_ROOT_PORT
         #define WWAN_PCIE_ROOT_PORT \_SB.PC00.RP06
-        Include ("WwanFlashReset.asl")
       }
       If (LEqual(WWRP, 7)) {
         #undef WWAN_PCIE_ROOT_PORT
         #define WWAN_PCIE_ROOT_PORT \_SB.PC00.RP07
-        Include ("WwanFlashReset.asl")
       }
       If (LEqual(WWRP, 8)) {
         #undef WWAN_PCIE_ROOT_PORT
         #define WWAN_PCIE_ROOT_PORT \_SB.PC00.RP08
-        Include ("WwanFlashReset.asl")
       }
       If (LEqual(WWRP, 9)) {
         #undef WWAN_PCIE_ROOT_PORT
         #define WWAN_PCIE_ROOT_PORT \_SB.PC00.RP09
-        Include ("WwanFlashReset.asl")
       }
       If (LEqual(WWRP, 13)) {
         #undef WWAN_PCIE_ROOT_PORT
         #define WWAN_PCIE_ROOT_PORT \_SB.PC00.RP13
-        Include ("WwanFlashReset.asl")
       }
       If (LEqual(WWRP, 17)) {
         #undef WWAN_PCIE_ROOT_PORT
         #define WWAN_PCIE_ROOT_PORT \_SB.PC00.RP17
-        Include ("WwanFlashReset.asl")
       }
       If (LEqual(WWRP, 21)) {
         #undef WWAN_PCIE_ROOT_PORT
         #define WWAN_PCIE_ROOT_PORT \_SB.PC00.RP21
-        Include ("WwanFlashReset.asl")
       }
       If (LEqual (Local0, 1)) {
         Release (\WWMT)
