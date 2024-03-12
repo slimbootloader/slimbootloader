@@ -681,10 +681,5 @@ Scope (\_SB.PC00) {
       }
       Return (PD04)                                // PIC Mode
     }                                              // end _PRT
-    Scope(\_SB.PC00.RP12.PXSX) {
-      If (LNotEqual(DGBA, 0)) {
-        Include("PcieRpDgEdpFeatureHook.asl")
-      }
-    }
   }                                             // end "PCIE Root Port#12"
 }

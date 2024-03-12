@@ -297,7 +297,6 @@ Scope(\_SB.PC00.SPI1)
     Store (SDS7, SPIP)
     Store (SERIAL_IO_SPI1, SPIX)
   }
-  Include ("SpiFingerprint.asl")
 }
 
 //-----------------------------
@@ -311,7 +310,6 @@ Scope(\_SB.PC00.SPI2)
     Store (SDS8, SPIP)
     Store (SERIAL_IO_SPI2, SPIX)
   }
-  Include ("SpiFingerprint.asl")
 }
 
 

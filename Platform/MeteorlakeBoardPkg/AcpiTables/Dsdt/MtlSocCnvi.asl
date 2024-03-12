@@ -52,7 +52,6 @@ Scope (\_SB.PC00) {
       }
 
       #define R_CNVI_ACPI_PLRB R_CNVI_PCR_CNVI_PLDR_ABORT_SOC_M
-      Include ("CnviWifi.asl")
       #undef R_CNVI_ACPI_PLRB
     }
   }

@@ -374,19 +374,6 @@ If (LNotEqual (PCHS, PCH_S)) {
       include ("HdaIda.asl")
     }
 
-    Scope (HDAS.IDA) {
-      //
-      // High Definition Audio - SoundWire Controller
-      //
-      include ("HdaSoundWireCtrl.asl")
-
-      If (LNotEqual (UAOE,0)) {
-        //
-        // High Definition Audio - USB Audio Offload
-        //
-        include ("HdaUsbAudioOffload.asl")
-      }
-    } // END Device (HDAS)
 
     //
     // MEI 1 definition
