@@ -490,7 +490,7 @@ STATIC TPMI_ALG_HASH SortedAlgIds[] = {
 VOID
 HashDataForSelectedPcrs (
   IN  UINT8              *Data,
-  IN  UINTN              Size,
+  IN  UINT32             Size,
   IN  UINT32             SelectedPcrs,
   OUT TPML_DIGEST_VALUES *DigestList
   )
@@ -1043,7 +1043,7 @@ CreatePolicyDataMeasurementEvent (
     (UINT8 *) &MaxAcmPolicyData,
     AcmPolicyDataSize,
     EV_POST_CODE,
-    AsciiStrSize (PolicyDataMeasurementEventDataString),
+    (UINT32) AsciiStrSize (PolicyDataMeasurementEventDataString),
     (UINT8 *) PolicyDataMeasurementEventDataString
     );
 
@@ -1593,7 +1593,7 @@ CreateIbbMeasurementEvent (
   //
   NewEventHdr.PCRIndex  = 0;
   NewEventHdr.EventType = EV_POST_CODE;
-  NewEventHdr.EventSize = AsciiStrSize (IbbMeasurementEventDataString);
+  NewEventHdr.EventSize = (UINT32) AsciiStrSize (IbbMeasurementEventDataString);
 
   Status = LogAcmPcrExtendedEvent (&SortedDigestList, &NewEventHdr, (UINT8 *) IbbMeasurementEventDataString);
   return Status;
