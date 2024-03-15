@@ -118,7 +118,6 @@ jobs:
         Build.Arch:   ""
         Build.Target: "-r"
 
-
   pool:
     vmImage: 'ubuntu-20.04'
 
@@ -137,12 +136,51 @@ jobs:
 
       wget --no-check-certificate http://archive.ubuntu.com/ubuntu/pool/universe/a/acpica-unix/acpica-tools_20190509-1_amd64.deb -P ~/asl/
       sudo dpkg -i ~/asl/acpica-tools_20190509-1_amd64.deb
+
     displayName: Install required tools
 
   - script: |
       python BuildLoader.py build $(Build.Name) $(Build.Arch) $(Build.Target) -k
     displayName: 'Run $(Build.Name) build'
 
+- job: Linux2204
+
+  strategy:
+    matrix:
+      MTL_X86_DEBUG:
+        Build.Name:   "mtl"
+        Build.Arch:   ""
+        Build.Target: ""
+      MTLPS_X86_RELEASE:
+        Build.Name:   "mtlps"
+        Build.Arch:   ""
+        Build.Target: "-r"
+
+  pool:
+    vmImage: 'ubuntu-22.04'
+
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.8.x'
+      architecture: 'x64'
+    displayName: Set Python version
+
+  - bash: |
+      git config --global user.email "you@example.com"
+      git config --global user.name  "Your Name"
+      sudo apt-get update
+      sudo apt-get install -y uuid-dev
+      wget --no-check-certificate http://archive.ubuntu.com/ubuntu/pool/universe/a/acpica-unix/acpica-tools_20200925-8_amd64.deb -P ~/asl/
+      sudo dpkg -i ~/asl/acpica-tools_20200925-8_amd64.deb
+
+      wget --no-check-certificate http://ftp.us.debian.org/debian/pool/main/n/nasm/nasm_2.15.05-1_amd64.deb -P ~/nasm/
+      sudo dpkg -i ~/nasm/nasm_2.15.05-1_amd64.deb
+    displayName: Install required tools
+
+  - script: |
+      python BuildLoader.py build $(Build.Name) $(Build.Arch) $(Build.Target) -k
+    displayName: 'Run $(Build.Name) build'
 
 - job: Windows
 
@@ -244,7 +282,22 @@ jobs:
         Build.Name:   "azb"
         Build.Arch:   ""
         Build.Target: "-r"
-
+      MTL_X86_RELEASE:
+        Build.Name:   "mtl"
+        Build.Arch:   ""
+        Build.Target: "-r"
+      MTL_X64_DEBUG:
+        Build.Name:   "mtl"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      MTLPS_X86_RELEASE:
+        Build.Name:   "mtlps"
+        Build.Arch:   ""
+        Build.Target: "-r"
+      MTLPS_X64_DEBUG:
+        Build.Name:   "mtlps"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
   pool:
     vmImage: 'windows-2019'
 
