@@ -24,3 +24,4 @@
   RaptorLakeFspBinPkg/IoT/RaptorLakeP/Include/FspsUpd.h                  : Silicon/RaptorlakePkg/Rplp/Fsp/FspsUpd.h
   RaptorLakeFspBinPkg/IoT/RaptorLakeP/Include/MemInfoHob.h               : Silicon/RaptorlakePkg/Rplp/Fsp/MemInfoHob.h
   FSP_License.pdf                                                        : Silicon/RaptorlakePkg/Rplp/Fsp/FSP_License.pdf
+  RaptorLakeFspBinPkg/IoT/RaptorLakeP/Vbt/VbtAdlP.json                   : Platform/RaptorlakePkg/VbtBin/Vbt_rplp.json

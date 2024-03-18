@@ -43,6 +43,7 @@ POWER_CFG_DATA.BiProcHot | 0
 POWER_CFG_DATA.ProcHotResponse | 1
 POWER_CFG_DATA.ProcHotLock | 1
 
+TCC_CFG_DATA.TccEnable | 1
 # TCC Power profile settings
 # These are set automatically if TCC is enabled above.
 MEMORY_CFG_DATA.DisPgCloseIdleTimeout         | 1

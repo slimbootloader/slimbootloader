@@ -1,7 +1,7 @@
 ## @file
 # This file is used to provide board specific image information.
 #
-#  Copyright (c) 2021 - 2023, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2021 - 2024, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -143,6 +143,8 @@ class Board(BaseBoard):
             self.HAVE_MEASURED_BOOT         = 0
             self.VERIFIED_BOOT_HASH_MASK    = 0
             self.HAVE_PSD_TABLE             = 0
+            self.FSPDEBUG_MODE              = 0
+            self.ENABLE_SOURCE_DEBUG        = 0
 
         if self.RELEASE_MODE and self.ENABLE_FAST_BOOT:
             self.STAGE1A_SIZE         = 0x00016000
@@ -153,8 +155,6 @@ class Board(BaseBoard):
 
         if self.ENABLE_SOURCE_DEBUG:
             self.STAGE1B_SIZE += 0x4000
-            if self.SKIP_STAGE1A_SOURCE_DEBUG == 0:
-                self.STAGE1A_SIZE += 0x4000
 
 
         self.UEFI_VARIABLE_SIZE = 0x1000
@@ -197,6 +197,7 @@ class Board(BaseBoard):
         self.FUSA_SUPPORT         = 0
         self.FUSA_SIZE            = 0
 
+        # These can be overridden by FUSA dlt file if FUSA_SUPPORT is set
         self.ENABLE_TCC           = 0
         self.ENABLE_TSN           = 0
 
@@ -208,11 +209,35 @@ class Board(BaseBoard):
             self.FUSA_BIST_PATTERN_SUPPORT  = 0
             if self.FUSA_BIST_PATTERN_SUPPORT:
                 self.FUSA_PATTERN_IS_FFS        = 0
-                self.FUSA_STARTUP_BIST_FILE     = ''
-                self._FUSA_PERIODIC_BIST_FILE    = ''
+                self.FUSA_STARTUP_BIST_FILE     = 'FusaStartupBist.bin'
+                self.FUSA_PERIODIC_BIST_FILE    = 'FusaPeriodicBist.bin'
                 self.FSBP_SIZE        = 0x1000000
                 self.FPBP_SIZE        = 0x1000000
                 self.FUSA_SIZE        = 0x1000 + self.FPBP_SIZE + self.FSBP_SIZE
+
+            # Allow TCC and TSN to be enabled by FuSa dlt file
+            FusaConfig = ''
+
+            brd_cfg_src_dir = os.path.join(os.environ['SBL_SOURCE'], 'Platform', self.BOARD_PKG_NAME, 'CfgData')
+            brd_cfg2_src_dir = '.'
+            if hasattr(self, 'BOARD_PKG_NAME_OVERRIDE'):
+                brd_cfg2_src_dir = os.path.join(os.environ['SBL_SOURCE'], 'Platform', self.BOARD_PKG_NAME_OVERRIDE, 'CfgData')
+
+            if os.path.exists(os.path.join(brd_cfg_src_dir, 'CfgData_Fusa_Feature.dlt')):
+                FusaConfig = open (os.path.join(brd_cfg_src_dir, 'CfgData_Fusa_Feature.dlt')).readlines()
+            else:
+                if os.path.exists(os.path.join(brd_cfg2_src_dir, 'CfgData_Fusa_Feature.dlt')):
+                    FusaConfig = open (os.path.join(brd_cfg2_src_dir, 'CfgData_Fusa_Feature.dlt')).readlines()
+
+            for line in FusaConfig:
+                if (re.search("TCC_CFG_DATA\.TccEnable\s+\|\s*1",line) != None or
+                    re.search("TCC_CFG_DATA\.TccEnable\s+\|\s*0x0*1",line) != None):
+                    # use setattr() to avoid matching release.py regex
+                    setattr(self, 'ENABLE_TCC', 1)
+                elif (re.search("SILICON_CFG_DATA\.PchTsnEnable\s+\|\s*1",line) != None or
+                    re.search("SILICON_CFG_DATA\.PchTsnEnable\s+\|\s*0x0*1",line) != None):
+                    # use setattr() to avoid matching release.py regex
+                    setattr(self, 'ENABLE_TSN', 1)
 
         if self.ENABLE_TSN:
             self.TMAC_SIZE = 0x00001000
@@ -294,6 +319,8 @@ class Board(BaseBoard):
                         lines += open (os.path.join(brd_cfg2_src_dir, 'CfgData_Fusa_Feature.dlt')).read()
                     else:
                         lines += open (os.path.join(brd_cfg_src_dir, 'CfgData_Fusa_Feature.dlt')).read()
+                    # remove the TCC_CFG_DATA.TccEnable line to avoid its presence in final dlt files
+                    lines = re.sub("TCC_CFG_DATA\.TccEnable\s+\|[^\n]+","",lines)
                     if self.ENABLE_PRE_OS_CHECKER:
                         if os.path.exists(os.path.join(brd_cfg2_src_dir, 'CfgData_Posc_Feature.dlt')):
                             lines += open (os.path.join(brd_cfg2_src_dir, 'CfgData_Posc_Feature.dlt')).read()
@@ -432,7 +459,7 @@ class Board(BaseBoard):
             if self.FUSA_BIST_PATTERN_SUPPORT:
                 global fv_dir
                 StartupBistPattRegion = os.path.join(bins,  self.FUSA_STARTUP_BIST_FILE)if os.path.exists(os.path.join(bins,  self.FUSA_STARTUP_BIST_FILE)) else ''
-                PeriodicBistPattRegion = os.path.join(bins,  self._FUSA_PERIODIC_BIST_FILE)if os.path.exists(os.path.join(bins,  self._FUSA_PERIODIC_BIST_FILE)) else ''
+                PeriodicBistPattRegion = os.path.join(bins,  self.FUSA_PERIODIC_BIST_FILE)if os.path.exists(os.path.join(bins,  self.FUSA_PERIODIC_BIST_FILE)) else ''
                 if self.FUSA_PATTERN_IS_FFS:
                     FUSA_STARTUP_PATTERN_BIST_GUID = '2A81105C-2AB6-4C7A-AC9C-E8AEFAB8B229'
                     FUSA_PERIODIC_PATTERN_BIST_GUID = 'E48CAE50-6EC5-4F3B-8CB4-1ECD12B00CAF'
