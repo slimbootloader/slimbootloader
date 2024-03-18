@@ -22,9 +22,12 @@ from   xml.dom import minidom
 from   ctypes  import *
 from   subprocess   import call
 
-sblopen_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), '../../../../', 'SblOpen')
+sblopen_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../'))
 if not os.path.exists (sblopen_dir):
     sblopen_dir = os.getenv('SBL_SOURCE', '')
+if not os.path.exists (sblopen_dir):
+    raise  Exception("Please set env 'SBL_SOURCE' to SBL open source root folder")
+
 sys.path.append (os.path.join(sblopen_dir, "BootloaderCorePkg" , "Tools"))
 sys.path.append (os.path.join(sblopen_dir, "Platform", "CommonBoardPkg" , "Script"))
 
@@ -118,12 +121,6 @@ def replace_component (ifwi_src_path, flash_path, file_path, comp_alg, pri_key, 
         container_file = os.path.join(work_dir, 'CTN_%s.bin') % comp_name
         gen_file_from_object (container_file, ifwi_bin[replace_comp.offset:replace_comp.offset + replace_comp.length])
         comp_file     = os.path.join(work_dir, file_path)
-        sblopen_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), '../../../../', 'SblOpen')
-        if not os.path.exists (sblopen_dir):
-            sblopen_dir = os.getenv('SBL_SOURCE', '')
-
-        if not os.path.exists (sblopen_dir):
-           raise  Exception("Please set env 'SBL_SOURCE' to SBL open source root folder")
 
         if os.name == 'nt':
             tool_bin_dir  = os.path.join(sblopen_dir, "BaseTools", "Bin", "Win32")
