@@ -161,8 +161,9 @@ BoardInit (
     PlatformHookSerialPortInitialize ();
     SerialPortInitialize ();
 
-    // Enlarge the code cache region to cover full flash for non-BootGuard case only
-    if ((AsmReadMsr64(MSR_BOOT_GUARD_SACM_INFO) & B_BOOT_GUARD_SACM_INFO_NEM_ENABLED) == 0) {
+    // Enlarge the code cache region to cover full flash for non-BootGuard case or fast boot case
+    if ((AsmReadMsr64(MSR_BOOT_GUARD_SACM_INFO) & B_BOOT_GUARD_SACM_INFO_NEM_ENABLED) == 0
+        || PcdGetBool (PcdFastBootEnabled)) {
       // FSP-T does not allow to enable full flash code cache due to cache size restriction.
       // Here, MTRR is patched to enable full flash region cache to avoid performance penalty.
       // However, the SBL code flow should ensure only limited flash regions will be accessed
