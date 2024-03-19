@@ -59,6 +59,7 @@
   gPlatformModuleTokenSpaceGuid.PcdRedundantRegionSize
   gPlatformModuleTokenSpaceGuid.PcdStage1BSize
   gPlatformCommonLibTokenSpaceGuid.PcdDebugPortNumber
+  gPlatformModuleTokenSpaceGuid.PcdFastBootEnabled
 
 [FixedPcd]
   gPlatformAlderLakeTokenSpaceGuid.PcdAdlLpSupport
