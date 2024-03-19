@@ -50,6 +50,7 @@
   ConfigDataLib
   ContainerLib
   StringSupportLib
+  AbSupportLib
   BootOptionLib
   TimerLib
   BootGuardLib

@@ -198,6 +198,7 @@ FindMbrPartitions (
       BlockDev                    = & (PartBlockDev->BlockDevice[PartBlockDev->BlockDeviceCount]);
       BlockDev->StartBlock        = UNPACK_UINT32 (Mbr->Partition[Index].StartingLBA);
       BlockDev->LastBlock         = BlockDev->StartBlock + UNPACK_INT32 (Mbr->Partition[Index].SizeInLBA) - 1;
+      ZeroMem (BlockDev->PartitionName, sizeof (BlockDev->PartitionName));
       PartBlockDev->BlockDeviceCount++;
     }
   }
@@ -427,6 +428,7 @@ FindGptPartitions (
       BlockDev                    = & (PartBlockDev->BlockDevice[PartBlockDev->BlockDeviceCount]);
       BlockDev->StartBlock        = GptEntries[Index].StartingLBA;
       BlockDev->LastBlock         = GptEntries[Index].EndingLBA;
+      StrCpyS (BlockDev->PartitionName, sizeof(BlockDev->PartitionName), GptEntries[Index].PartitionName);
       DEBUG ((DEBUG_INFO, "Part %02d: %12s ", PartBlockDev->BlockDeviceCount, GptEntries[Index].PartitionName));
       DEBUG ((DEBUG_INFO, "0x%08x--0x%08x, LBA count: 0x%x\n", (UINT32)BlockDev->StartBlock, \
               (UINT32)BlockDev->LastBlock, (UINT32) (BlockDev->LastBlock - BlockDev->StartBlock + 1)));
