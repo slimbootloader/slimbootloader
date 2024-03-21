@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2024, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -901,6 +901,12 @@ PlatformUpdateAcpiGnvs (
   PchNvs->IclkPid            = PID_ICLK;
   PchNvs->GBES               = PchIsGbeSupported();
   PchNvs->CpuSku             = GetCpuSku();
+
+  // Update eMMC
+#if FixedPcdGetBool(PcdAdlNSupport) == 1
+  PchNvs->EMH4                                  = 1;
+  PchNvs->EmmcEnabled                           = 1;
+#endif
 
   // Update HDA ACPI
   PchNvs->XTAL                                  = V_EPOC_XTAL_38_4_MHZ;

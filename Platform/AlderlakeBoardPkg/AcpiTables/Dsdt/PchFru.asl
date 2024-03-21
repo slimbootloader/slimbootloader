@@ -24,6 +24,10 @@ Include ("GpioAdl.asl")
 //
 Include ("ScsUfsAdl.asl")
 //
+#if FixedPcdGetBool(PcdAdlNSupport) ==1
+Include ("ScsEmmcAdl.asl")
+#endif
+//
 // Integrated Connectivity definition
 //
 //Include ("CnviCommon.asl")
