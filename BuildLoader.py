@@ -146,6 +146,7 @@ class BaseBoard(object):
         self.BOOT_PERFORMANCE_MASK    = 0x00000001
 
         self.HAVE_VBT_BIN          = 0
+        self.HAVE_ACTM_BIN         = 0
         self.HAVE_FIT_TABLE        = 0
         self.HAVE_VERIFIED_BOOT    = 0
         self.HAVE_MEASURED_BOOT    = 0
@@ -255,6 +256,7 @@ class BaseBoard(object):
 
         self._PLATFORM_ID          = None
         self._MULTI_VBT_FILE       = {}
+        self._ACTM_BIN_FILE        = ''
         self._CFGDATA_DEF_FILE     = ''
         self._CFGDATA_INT_FILE     = []
         self._CFGDATA_EXT_FILE     = []
@@ -1262,6 +1264,13 @@ class Build(object):
                 gen_vbt_file (self._board.BOARD_PKG_NAME_OVERRIDE, self._board._MULTI_VBT_FILE, os.path.join(self._fv_dir, 'Vbt.bin'))
             else:
                 gen_vbt_file (self._board.BOARD_PKG_NAME, self._board._MULTI_VBT_FILE, os.path.join(self._fv_dir, 'Vbt.bin'))
+
+        # create ACTM file
+        if self._board.HAVE_ACTM_BIN:
+            if hasattr(self._board, 'BOARD_PKG_NAME_OVERRIDE'):
+                gen_actm_file (self._board.BOARD_PKG_NAME_OVERRIDE, self._board._ACTM_BIN_FILE, os.path.join(self._fv_dir, 'ACTM.bin'))
+            else:
+                gen_actm_file (self._board.BOARD_PKG_NAME, self._board._ACTM_BIN_FILE, os.path.join(self._fv_dir, 'ACTM.bin'))
 
         # create platform include dsc file
         platform_dsc_path = os.path.join(sbl_dir, 'BootloaderCorePkg', 'Platform.dsc')

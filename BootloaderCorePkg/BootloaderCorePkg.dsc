@@ -211,6 +211,8 @@
   gPlatformModuleTokenSpaceGuid.PcdUcodeSlotSize          | $(UCODE_SLOT_SIZE)
   gPlatformModuleTokenSpaceGuid.PcdVariableRegionBase     | $(VARIABLE_BASE)
   gPlatformModuleTokenSpaceGuid.PcdVariableRegionSize     | $(VARIABLE_SIZE)
+  gPlatformModuleTokenSpaceGuid.PcdActmBase               | $(ACTM_BASE)
+  gPlatformModuleTokenSpaceGuid.PcdActmSize               | $(ACTM_SIZE)
 
   gPlatformModuleTokenSpaceGuid.PcdFSPTBase               | $(FSP_T_BASE)
   gPlatformModuleTokenSpaceGuid.PcdFSPTSize               | $(FSP_T_SIZE)
