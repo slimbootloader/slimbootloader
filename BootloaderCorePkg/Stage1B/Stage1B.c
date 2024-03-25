@@ -143,17 +143,26 @@ AppendHashStore (
   if (EFI_ERROR(Status)) {
     // Not really necessary, but keep buffer clean
     ZeroMem (OemKeyHashBlob, OemKeyHashLen);
+    Stage1bParam->HashKeyDataBlobBase = 0;
+    Stage1bParam->HashKeyDataBlobLength = 0;
     return Status;
   }
 
+  Stage1bParam->HashKeyDataBlobBase = (UINT64)(UINTN)OemKeyHashBlob;
+  Stage1bParam->HashKeyDataBlobLength = (UINT64)OemKeyHashLen;
 
   if (MEASURED_BOOT_ENABLED()) {
     //Convert Measured boot Hash Mask to HASH_ALG_TYPE (CryptoLib)
     MbHashType   = GetCryptoHashAlg(PcdGet32(PcdMeasuredBootHashMask));
 
     if (PcdGet8(PcdCompSignHashAlg) == MbHashType) {
+      DEBUG ((DEBUG_INFO, "%a :Need Not extend hash\n", __FUNCTION__));
       Stage1bParam->KeyHashManifestHashValid = 1;
     } else {
+      DEBUG ((DEBUG_INFO, "%a :Need to extend hash\n", __FUNCTION__));
+      DEBUG ((DEBUG_INFO, "%a :Hash : %p length : 0x%x\n", __FUNCTION__,
+          OemKeyHashBlob, OemKeyHashLen));
+
       // Check validition of Stage1bParam->KeyHashManifestHash generated.
       // Calcluate the digest to extend if measured boot hash alg doesn't match
       Status = GetHashToExtend (COMP_TYPE_INVALID,
@@ -241,6 +250,8 @@ CreateConfigDatabase (
              ((CDATA_BLOB *)ExtCfgAddPtr)->UsedLength,
              Status
              ));
+    Stage1bParam->ExtCfgDataBlobBase = (UINT64)(UINTN)ExtCfgAddPtr;
+    Stage1bParam->ExtCfgDataBlobLength = (UINT64)((CDATA_BLOB *)ExtCfgAddPtr)->UsedLength;
     if (!EFI_ERROR (Status)) {
       if (FeaturePcdGet (PcdVerifiedBootEnabled)) {
         // Verify CFG public key
@@ -261,8 +272,12 @@ CreateConfigDatabase (
 
          // Check if Stage1bParam->ConfigDataHash generated matches PcdMeasuredBootHashMask
          if (PcdGet8(PcdCompSignHashAlg) == MbHashType) {
-           Stage1bParam->ConfigDataHashValid = 1;
+            DEBUG ((DEBUG_INFO, "%a :Need not extend hash\n", __FUNCTION__));
+            Stage1bParam->ConfigDataHashValid = 1;
          } else {
+            DEBUG ((DEBUG_INFO, "%a :Need to extend hash\n", __FUNCTION__));
+            DEBUG ((DEBUG_INFO, "%a :cfg data : %p length : 0x%x\n", __FUNCTION__,
+                ExtCfgAddPtr, ((CDATA_BLOB *)ExtCfgAddPtr)->UsedLength));
             // Get config hash to extend if config data hash type do not match PcdMeasuredBootHashMask
             Status = GetHashToExtend (COMP_TYPE_INVALID,
                                   MbHashType,
@@ -278,6 +293,8 @@ CreateConfigDatabase (
         if (EFI_ERROR (Status)) {
           DEBUG ((DEBUG_INFO, "Append EXT CFG Data ... %r\n", Status));
           Stage1bParam->ConfigDataHashValid = 0;
+          Stage1bParam->ExtCfgDataBlobBase = 0;
+          Stage1bParam->ExtCfgDataBlobLength = 0;
         }
       }
     }
@@ -674,8 +691,6 @@ ContinueFunc (
   LOADER_GLOBAL_DATA          *LdrGlobal;
   LOADER_GLOBAL_DATA          *OldLdrGlobal;
   TPMI_ALG_HASH               MbTmpAlgHash;
-  HASH_STORE_TABLE            *KeyHashBlob;
-  CDATA_BLOB                  *CfgDataBlob;
   EFI_PLATFORM_FIRMWARE_BLOB  KeyHashFwBlob;
   EFI_PLATFORM_FIRMWARE_BLOB  CfgDataFwBlob;
 
@@ -724,9 +739,10 @@ ContinueFunc (
 
         // Extend External Config Data hash
         if (Stage1bParam->ConfigDataHashValid == 1) {
-          CfgDataBlob = LdrGlobal->CfgDataPtr;
-          CfgDataFwBlob.BlobBase = (UINT64)(UINTN)CfgDataBlob;
-          CfgDataFwBlob.BlobLength = CfgDataBlob->UsedLength;
+          CfgDataFwBlob.BlobBase = Stage1bParam->ExtCfgDataBlobBase;
+          CfgDataFwBlob.BlobLength = Stage1bParam->ExtCfgDataBlobLength;
+          DEBUG ((DEBUG_INFO, "%a :cfg data : 0x%x length : 0x%x\n", __FUNCTION__,
+                CfgDataFwBlob.BlobBase, CfgDataFwBlob.BlobLength));
           TpmExtendPcrAndLogEvent (1,
                     MbTmpAlgHash,
                     Stage1bParam->ConfigDataHash,
@@ -737,9 +753,10 @@ ContinueFunc (
 
         // Extend Key hash manifest digest
         if (Stage1bParam->KeyHashManifestHashValid == 1) {
-          KeyHashBlob = LdrGlobal->HashStorePtr;
-          KeyHashFwBlob.BlobBase = (UINT64)(UINTN)KeyHashBlob;
-          KeyHashFwBlob.BlobLength = KeyHashBlob->UsedLength;
+          KeyHashFwBlob.BlobBase = Stage1bParam->HashKeyDataBlobBase;
+          KeyHashFwBlob.BlobLength = Stage1bParam->HashKeyDataBlobLength;
+          DEBUG ((DEBUG_INFO, "%a :Hash : 0x%x length : 0x%x\n", __FUNCTION__,
+          KeyHashFwBlob.BlobBase, KeyHashFwBlob.BlobLength));
           TpmExtendPcrAndLogEvent (0,
                     MbTmpAlgHash,
                     Stage1bParam->KeyHashManifestHash,
