@@ -36,3 +36,4 @@
   gPlatformModuleTokenSpaceGuid.PcdStage1BXip
   gPlatformModuleTokenSpaceGuid.PcdStage1BFdBase
   gPlatformModuleTokenSpaceGuid.PcdStage1BFdSize
+  gPlatformModuleTokenSpaceGuid.PcdFastBootEnabled
