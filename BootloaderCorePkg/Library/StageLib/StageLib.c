@@ -104,13 +104,14 @@ RemapStage (
   UINTN                Cr0;
 
   Is64Bit = IS_X64;
-  if (!Is64Bit && FeaturePcdGet (PcdStage1BXip)) {
+  if (!Is64Bit && FeaturePcdGet (PcdStage1BXip) && !PcdGetBool (PcdFastBootEnabled)) {
     return;
   }
 
   PageTblSize = GetPageTablesMemorySize (Is64Bit);
-  if (Is64Bit) {
+  if (Is64Bit || PcdGetBool (PcdFastBootEnabled)) {
     // 64bit paging table needs to be perserved across all stages
+    // Also preserve 32bit paging table across all stages to improve performance when fast boot enabled.
     PageBuffer  = AllocatePages (EFI_SIZE_TO_PAGES(PageTblSize));
   } else {
     // 32bit paging table is just for temporary use
@@ -120,8 +121,14 @@ RemapStage (
   DEBUG ((DEBUG_INFO, "Load page table from memory @ 0x%08X\n", (UINT32)(UINTN)PageBuffer));
   Status = Create4GbPageTables (PageBuffer, Is64Bit);
 
-  if (!EFI_ERROR(Status) && !FeaturePcdGet (PcdStage1BXip)) {
-    Stage1bBase = AllocateTemporaryMemory (PcdGet32 (PcdStage1BFdSize));
+  if (!EFI_ERROR(Status) && (!FeaturePcdGet (PcdStage1BXip) || PcdGetBool (PcdFastBootEnabled))) {
+    if (PcdGetBool (PcdFastBootEnabled)) {
+      // Copy stage1B to pool because all temporary memory will be free at start of stage2.
+      // Keep FSM-M in memory can improve the performance of PostTempRamExit hook, PreSiliconInit hook and FSP-S.
+      Stage1bBase = AllocatePool (PcdGet32 (PcdStage1BFdSize));
+    } else {
+      Stage1bBase = AllocateTemporaryMemory (PcdGet32 (PcdStage1BFdSize));
+    }
     DEBUG ((DEBUG_INFO, "Remapping Stage to 0x%08X\n", Stage1bBase));
     CopyMem (Stage1bBase, (VOID *)(UINTN)PcdGet32 (PcdStage1BFdBase), PcdGet32 (PcdStage1BFdSize));
     RoundSize          = ALIGN_UP (PcdGet32 (PcdStage1BFdSize), EFI_PAGE_SIZE);
