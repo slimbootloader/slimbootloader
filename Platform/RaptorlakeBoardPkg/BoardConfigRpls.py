@@ -116,7 +116,7 @@ class Board(BaseBoard):
         self.STAGE2_FD_SIZE       = 0x001F0000
 
         self.PAYLOAD_SIZE         = 0x00032000
-        self.EPAYLOAD_SIZE        = 0x00200000
+        self.EPAYLOAD_SIZE        = 0x00220000
 
         self.ENABLE_FAST_BOOT = 0
         try:
@@ -212,7 +212,7 @@ class Board(BaseBoard):
             acm_btm = (acm_btm & 0xFFFC0000)
             self.ACM_SIZE     = acm_top - acm_btm
 
-        self.LOADER_RSVD_MEM_SIZE = 0x500000
+        self.LOADER_RSVD_MEM_SIZE = 0xC00000
 
         # If mulitple VBT table support is required, list them as:
         #   {VbtImageId1 : VbtFileName1, VbtImageId2 : VbtFileName2, ...}
