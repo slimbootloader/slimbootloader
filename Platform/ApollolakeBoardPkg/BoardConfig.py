@@ -115,7 +115,7 @@ class Board(BaseBoard):
         self.STAGE1B_SIZE         = 0x00038000
         if self.ENABLE_SOURCE_DEBUG:
             self.STAGE1B_SIZE += 0x2000
-        self.STAGE2_SIZE          = 0x00033000
+        self.STAGE2_SIZE          = 0x00034000
         self.PAYLOAD_SIZE         = 0x00022000
 
         if len(self._PAYLOAD_NAME.split(';')) > 1:

@@ -118,7 +118,7 @@ class Board(BaseBoard):
         if self.RELEASE_MODE:
             self.STAGE1A_SIZE         = 0x0000D000
             self.STAGE1B_SIZE         = 0x000B1000
-            self.STAGE2_SIZE          = 0x00070000
+            self.STAGE2_SIZE          = 0x00080000
             self.STAGE2_FD_SIZE       = 0x000E0000
             self.PAYLOAD_SIZE         = 0x00024000
         else:
