@@ -43,6 +43,7 @@
 #include <Library/ContainerLib.h>
 #include <Library/TcoTimerLib.h>
 #include <Library/WatchDogTimerLib.h>
+#include <Library/FitLib.h>
 #include <Guid/BootLoaderServiceGuid.h>
 #include <Guid/BootLoaderVersionGuid.h>
 #include <Guid/LoaderPlatformInfoGuid.h>
@@ -57,6 +58,7 @@
 #include <UniversalPayload/AcpiTable.h>
 #include <UniversalPayload/SmbiosTable.h>
 #include <UniversalPayload/SerialPortInfo.h>
+#include <UniversalPayload/UniversalPayloadBase.h>
 #include <Service/PlatformService.h>
 #include <Pi/PiBootMode.h>
 #include <FspEas.h>
