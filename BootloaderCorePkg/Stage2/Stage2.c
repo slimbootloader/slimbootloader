@@ -152,6 +152,11 @@ NormalBootPath (
   UINT16                          PldMachine;
   LOADED_PAYLOAD_INFO             PayloadInfo;
   UNIVERSAL_PAYLOAD_EXTRA_DATA   *PldImgInfo;
+  FIT_IMAGE_CONTEXT               Context;
+  FIT_RELOCATE_ITEM              *RelocateTable;
+  INTN                            Delta;
+  UINTN                           Index;
+  UNIVERSAL_PAYLOAD_BASE         *PayloadBase;
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
 
@@ -184,6 +189,26 @@ NormalBootPath (
         Status = PeCoffLoaderGetEntryPoint (Dst, (VOID *)&PldEntry);
       }
     }
+  } else if (IsFitImage (Dst, &Context)) {
+    DEBUG ((DEBUG_INFO, "FIT Format Payload\n"));
+    Context.PayloadBaseAddress = (UINTN)Dst;
+    if (Context.PayloadBaseAddress != Context.PayloadLoadAddress) {
+      RelocateTable = (FIT_RELOCATE_ITEM *)(UINTN)(Context.PayloadBaseAddress + Context.RelocateTableOffset);
+      Delta         = (INTN)(Context.PayloadBaseAddress - Context.PayloadLoadAddress);
+      Context.PayloadEntryPoint += Delta;
+      for (Index = 0; Index < Context.RelocateTableCount; Index++) {
+        if ((RelocateTable[Index].RelocateType == 10) || (RelocateTable[Index].RelocateType == 3)) {
+          *((UINT64 *)(UINTN)(Context.PayloadBaseAddress + RelocateTable[Index].Offset)) += Delta;
+        }
+      }
+    }
+    DEBUG ((DEBUG_INFO, "Image Base: 0x%08lx, EntryPoint: 0x%08lx\n", Context.PayloadLoadAddress, Context.PayloadEntryPoint));
+    PayloadBase = BuildGuidHob (&gUniversalPayloadBaseGuid, sizeof (UNIVERSAL_PAYLOAD_BASE));
+    PayloadBase->Entry = (EFI_PHYSICAL_ADDRESS)Context.ImageBase;
+
+    // ASSUME 64bit payload. Need get arch info if need support 32bit payload
+    PldMachine = IMAGE_FILE_MACHINE_X64;
+    PldEntry   = (PAYLOAD_ENTRY)(UINTN)Context.PayloadEntryPoint;
   } else if (Dst[10] == EFI_FVH_SIGNATURE) {
     // It is a FV format
     DEBUG ((DEBUG_INFO, "FV Format Payload\n"));
