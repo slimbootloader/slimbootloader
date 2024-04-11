@@ -620,7 +620,16 @@ UpdateFrameBufferInfo (
   OUT  EFI_PEI_GRAPHICS_INFO_HOB   *GfxInfo
   )
 {
+  UINT64  GfxBar;
 
+  if (PcdGetBool (PcdIntelGfxEnabled)) {
+    GfxBar = PciRead32 (PCI_LIB_ADDRESS (IGD_BUS_NUM, IGD_DEV_NUM, IGD_FUN_NUM, 0x18));
+    if (((GfxBar & BIT0) == 0) && ((GfxBar & BIT2) != 0)) {
+      // 64bit bar
+      GfxBar += LShiftU64 (PciRead32 (PCI_LIB_ADDRESS (IGD_BUS_NUM, IGD_DEV_NUM, IGD_FUN_NUM, 0x1C)), 32);
+    }
+    GfxInfo->FrameBufferBase = (PHYSICAL_ADDRESS) (GfxBar & 0xFFFFFFFFFFFFFF00);
+  }
 }
 
 /**
