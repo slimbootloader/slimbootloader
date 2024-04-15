@@ -191,6 +191,7 @@ class BaseBoard(object):
         self.CPU_SORT_METHOD       = 0
 
         self.ACM_SIZE              = 0
+        self.ACM_FIT_VERISON       = 0x100
         self.DIAGNOSTICACM_SIZE    = 0
         self.UCODE_SIZE            = 0
         self.CFGDATA_SIZE          = 0
@@ -392,7 +393,7 @@ class Build(object):
         # ACM
         if self._board.ACM_SIZE > 0:
             fit_entry = FIT_ENTRY.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
-            fit_entry.set_values(self._board.ACM_BASE, 0, 0x100, 0x2, 0)
+            fit_entry.set_values(self._board.ACM_BASE, 0, self._board.ACM_FIT_VERISON, 0x2, 0)
             print ('  Patching entry %d with 0x%08X:0x%08X - ACM' % (num_fit_entries, fit_entry.address, fit_entry.size))
             num_fit_entries     += 1
 
