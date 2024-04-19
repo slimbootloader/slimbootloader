@@ -200,7 +200,10 @@ UpdateFspConfig (
   FEATURES_CFG_DATA       *FeaturesCfgData;
   SILICON_CFG_DATA        *SiCfgData;
   PLATFORM_DATA           *PlatformData;
-  UINT8                   DebugPort;
+  UINT8                    DebugPort;
+  UINT32                   CarBase;
+  UINT32                   CarSize;
+  EFI_STATUS               Status;
 
   FspmUpd     = (FSPM_UPD *)FspmUpdPtr;
   FspmArchUpd = &FspmUpd->FspmArchUpd;
@@ -405,9 +408,16 @@ UpdateFspConfig (
     DEBUG ((DEBUG_INFO, "Failed to find GFX CFG!\n"));
   }
 
-  // Value from EDKII bios, refine these settings later.
-  FspmArchUpd->StackBase = 0xFEF4FF00;
-  FspmArchUpd->StackSize = 0x50000;
+  Status = GetTempRamInfo (&CarBase, &CarSize);
+  ASSERT_EFI_ERROR (Status);
+  FspmArchUpd->StackBase = CarBase \
+                                 + FixedPcdGet32 (PcdStage1StackBaseOffset) \
+                                 + FixedPcdGet32 (PcdStage1StackSize) \
+                                 + FixedPcdGet32 (PcdStage1DataSize);
+  FspmArchUpd->StackSize = CarBase + CarSize - FspmUpd->FspmArchUpd.StackBase;
+  DEBUG ((DEBUG_INFO, "CAR Base 0x%X (0x%X)\n", CarBase, CarSize));
+  DEBUG ((DEBUG_INFO, "FSPM Stack Base=0x%X, Size=0x%X\n", FspmUpd->FspmArchUpd.StackBase, FspmUpd->FspmArchUpd.StackSize));
+
   Fspmcfg->TcssXdciEn = 0x1;
 
   // Following UPDs are related to TCC . But all of these are also generic features that can be changed regardless of TCC feature.
