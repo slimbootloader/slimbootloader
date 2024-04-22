@@ -52,6 +52,7 @@
 // ACPI and legacy I/O register offsets from ACPIBASE
 //
 #define R_ACPI_IO_PM1_STS                        0x00
+#define B_ACPI_IO_PM1_STS_RTC_EN                 BIT26
 #define B_ACPI_IO_PM1_STS_WAK                    BIT15
 #define B_ACPI_IO_PM1_STS_PRBTNOR                BIT11
 #define B_ACPI_IO_PM1_STS_RTC                    BIT10
@@ -70,7 +71,7 @@
 #define V_ACPI_IO_PM1_CNT_S3                     (BIT12 | BIT10)
 #define V_ACPI_IO_PM1_CNT_S4                     (BIT12 | BIT11)
 #define V_ACPI_IO_PM1_CNT_S5                     (BIT12 | BIT11 | BIT10)
-
+#define B_ACPI_IO_PM1_CNT_SCI_EN                 BIT0
 
 #define R_ACPI_IO_SMI_EN                              0x30
 #define B_ACPI_IO_SMI_EN_APMC                         BIT5
@@ -89,14 +90,13 @@
 
 #define R_ACPI_IO_GPE_CNTL                            0x40
 
-
 #define R_ACPI_IO_OC_WDT_CTL                          0x54
 
-#define R_ACPI_IO_GPE0_STS_127_96                  0x6C
-#define B_ACPI_IO_GPE0_STS_127_96_SMB_WAK          BIT7
+#define R_ACPI_IO_GPE0_STS_127_96                     0x6C
+#define B_ACPI_IO_GPE0_STS_127_96_SMB_WAK             BIT7
 
-#define R_ACPI_IO_GPE0_EN_127_96                   0x7C
-
+#define R_ACPI_IO_GPE0_EN_127_96                      0x7C
+#define B_ACPI_IO_GPE0_EN_127_96_PME_B0               BIT13
 
 //
 // TCO register I/O map

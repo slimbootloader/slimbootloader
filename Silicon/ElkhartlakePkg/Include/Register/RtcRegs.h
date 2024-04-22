@@ -40,6 +40,7 @@ Conventions:
 #define R_RTC_IO_TARGET                          0x71
 #define R_RTC_IO_REGA                            0x0A
 #define R_RTC_IO_REGB                            0x0B
+#define R_RTC_IO_REGC                            0x0C
 #define R_RTC_IO_REGD                            0x0D
 
 //
