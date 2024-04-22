@@ -105,11 +105,11 @@ typedef struct {
   UINT32    Rsvd2:3;
 } GPIO_CFG_DATA_DW1;
 
-SMMBASE_INFO mSmmBaseInfo = {
+STATIC SMMBASE_INFO mSmmBaseInfo = {
   { BL_PLD_COMM_SIG, SMMBASE_INFO_COMM_ID, 0, 0 }
 };
 
-S3_SAVE_REG mS3SaveReg = {
+STATIC S3_SAVE_REG mS3SaveReg = {
   { BL_PLD_COMM_SIG, S3_SAVE_REG_COMM_ID, 1, 0 },
   { { REG_TYPE_IO, WIDE32, { 0, 0}, (ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN), 0x00000000 } }
 };
@@ -233,11 +233,6 @@ CONST EFI_ACPI_COMMON_HEADER *mPlatformAcpiTables[] = {
 
 VOID
 EnableLegacyRegions (
-  VOID
-);
-
-VOID
-ClearSmbusStatus (
   VOID
 );
 
@@ -591,7 +586,8 @@ ClearSmi (
 {
   UINT32                SmiEn;
   UINT32                SmiSts;
-  UINT16                Pm1Sts;
+  UINT32                Pm1Sts;
+  UINT16                Pm1Cnt;
 
   SmiEn = IoRead32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN));
   if (((SmiEn & B_ACPI_IO_SMI_EN_GBL_SMI) !=0) && ((SmiEn & B_ACPI_IO_SMI_EN_EOS) !=0)) {
@@ -601,8 +597,11 @@ ClearSmi (
   //
   // Clear the status before setting smi enable
   //
-  SmiSts = IoRead32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN + 4));
-  Pm1Sts = IoRead16 ((UINTN)(ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS));
+  SmiSts = IoRead32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_STS));
+  Pm1Sts = IoRead32 ((UINTN)(ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS));
+  Pm1Cnt = IoRead16 ((UINTN)(ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_CNT));
+
+  DEBUG((DEBUG_VERBOSE, "ClearSmi: SmiStus: 0x%x Pm1Sts: 0x%x Pm1Cnt: 0x%x\n", SmiSts, Pm1Sts, Pm1Cnt));
 
   SmiSts |=
     (
@@ -616,6 +615,14 @@ ClearSmi (
       B_ACPI_IO_SMI_STS_BIOS
     );
 
+  if ((Pm1Cnt & B_ACPI_IO_PM1_CNT_SCI_EN) == 0) {
+    if (((Pm1Sts & B_ACPI_IO_PM1_STS_RTC_EN) != 0) &&
+        ((Pm1Sts & B_ACPI_IO_PM1_STS_RTC) != 0)) {
+      IoWrite8 (R_RTC_IO_INDEX, R_RTC_IO_REGC);
+      (void)IoRead8 (R_RTC_IO_TARGET); /* RTC alarm is cleared upon read */
+    }
+  }
+
   Pm1Sts |=
     (
       B_ACPI_IO_PM1_STS_WAK |
@@ -626,8 +633,13 @@ ClearSmi (
       B_ACPI_IO_PM1_STS_TMROF
       );
 
-  IoWrite32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN + 4), SmiSts);
+  // Clear SMI Status
+  IoWrite32 ((UINTN) (ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_STS), SmiSts);
+  // Clear PM1 Status (the lower 16-bit of PM1)
   IoWrite16 ((UINTN) (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS), (UINT16) Pm1Sts);
+
+  // Clear GPE0_STS in case some bits are set
+  IoOr32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_GPE0_STS_127_96), 0);
 }
 
 /**
@@ -715,6 +727,7 @@ BoardInit (
   UINT32                      TsegBase;
   UINT32                      TsegSize;
   UINT32                      NeedReboot;
+  BL_SW_SMI_INFO             *BlSwSmiInfo;
 
   if (mPchSciSupported == 0xFF){
     mPchSciSupported = PchIsSciSupported();
@@ -780,7 +793,23 @@ BoardInit (
         DEBUG ((DEBUG_WARN, "SCI device has boot issue\n"));
       }
     }
-    ClearSmbusStatus ();
+
+    if ((GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE)
+         && GetBootMode() == BOOT_ON_S3_RESUME) {
+
+      ClearSmi ();
+
+      RestoreS3RegInfo (FindS3Info (S3_SAVE_REG_COMM_ID));
+
+      //
+      // If payload registered a software SMI handler for bootloader to restore
+      // SMRR base and mask in S3 resume path, trigger sw smi
+      //
+      BlSwSmiInfo = FindS3Info (BL_SW_SMI_COMM_ID);
+      if (BlSwSmiInfo != NULL) {
+        TriggerPayloadSwSmi (BlSwSmiInfo->BlSwSmiHandlerInput);
+      }
+    }
 
     break;
   case PrePayloadLoading:
@@ -1287,7 +1316,6 @@ UpdateFspConfig (
     // GRAPHICS_PEI_CONFIG
     Fspscfg->PavpEnable                 = SiCfgData->PavpEnable;
     Fspscfg->CdClock                    = SiCfgData->CdClock;
-    Fspscfg->PeiGraphicsPeimInit        = SiCfgData->PeiGraphicsPeimInit;
 
     GfxCfgData = (GRAPHICS_CFG_DATA *)FindConfigDataByTag (CDATA_GRAPHICS_TAG);
     if ((GfxCfgData != NULL) && GfxCfgData->PchHdaEnable == 1) {
@@ -1302,8 +1330,12 @@ UpdateFspConfig (
       }
     }
 
-    if ((GetBootMode() != BOOT_ON_S3_RESUME)) {
+    if (PcdGetBool (PcdFramebufferInitEnabled) && (GetBootMode() != BOOT_ON_S3_RESUME)) {
       Fspscfg->GraphicsConfigPtr          = (UINT32)GetVbtAddress ();
+      Fspscfg->PeiGraphicsPeimInit        = SiCfgData->PeiGraphicsPeimInit;
+    } else {
+      Fspscfg->GraphicsConfigPtr = 0;
+      Fspscfg->PeiGraphicsPeimInit = 0;
     }
 
     CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mEhlCrbRowDisplayDdiConfig, sizeof(mEhlCrbRowDisplayDdiConfig));

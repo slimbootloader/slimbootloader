@@ -40,42 +40,6 @@ GetAcpiGnvsSize (
 }
 
 /**
-  Clear SMBUS status and SMB_WAK_STS of GPE0
-**/
-VOID
-EFIAPI
-ClearSmbusStatus (
-  VOID
-)
-{
-  UINTN                       SmbusRegBase;
-  UINT16                      SmbusIoBase;
-
-  SmbusRegBase = PCI_LIB_ADDRESS (
-                   DEFAULT_PCI_BUS_NUMBER_PCH,
-                   PCI_DEVICE_NUMBER_PCH_SMBUS,
-                   PCI_FUNCTION_NUMBER_PCH_SMBUS,
-                   0
-                   );
-
-  if (PciRead32 (SmbusRegBase) == 0xFFFFFFFF) {
-    return;
-  }
-
-  SmbusIoBase = PciRead16 (SmbusRegBase + R_SMBUS_CFG_BASE) & B_SMBUS_CFG_BASE_BAR;
-  if (SmbusIoBase == 0) {
-    return;
-  }
-
-  PciOr8 (SmbusRegBase + PCI_COMMAND_OFFSET, EFI_PCI_COMMAND_IO_SPACE);
-  //
-  // Clear SMBUS status and SMB_WAK_STS of GPE0
-  //
-  IoWrite8 (SmbusIoBase + R_SMBUS_IO_HSTS, B_SMBUS_IO_SMBALERT_STS);
-  IoWrite32 (ACPI_BASE_ADDRESS + R_ACPI_IO_GPE0_STS_127_96, B_ACPI_IO_GPE0_STS_127_96_SMB_WAK);
-}
-
-/**
  Update GPIO address and length to global NVS data.
 
  @param [in] GnvsIn Pointer to Global NVS data.
