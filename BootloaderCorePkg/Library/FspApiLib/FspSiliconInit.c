@@ -96,7 +96,7 @@ FspMultiPhaseSiliconInitHandler(VOID)
   // Loop through all phases. Break on error status or FSP_STATUS_* not
   // handled by variable services handler
   for (MultiPhaseInitParams.PhaseIndex = 1;
-    MultiPhaseInitParams.PhaseIndex < GetNumPhasesParams.NumberOfPhases &&
+    MultiPhaseInitParams.PhaseIndex <= GetNumPhasesParams.NumberOfPhases &&
       !EFI_ERROR(Status) &&
       !(Status & ENCODE_RESET_REQUEST(0));
     MultiPhaseInitParams.PhaseIndex++)
