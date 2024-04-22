@@ -241,6 +241,14 @@ ClearSmbusStatus (
   VOID
 );
 
+VOID
+EFIAPI
+ClearPmeStatus (
+  UINTN Base,
+  UINT32 Reg,
+  UINT16 Pos
+);
+
 /**
   Print the output of the GPIO Config table that was read from CfgData.
 
@@ -589,9 +597,13 @@ ClearSmi (
   VOID
 )
 {
-  UINT32                SmiEn;
-  UINT32                SmiSts;
-  UINT16                Pm1Sts;
+  UINT32   SmiEn;
+  UINT32   SmiSts;
+  UINT16   Pm1Sts;
+  UINT16   Pm1Cnt;
+  UINT16   DevActSts;
+  UINT32   TcoBase;
+  UINT16   Tco1Sts;
 
   SmiEn = IoRead32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN));
   if (((SmiEn & B_ACPI_IO_SMI_EN_GBL_SMI) !=0) && ((SmiEn & B_ACPI_IO_SMI_EN_EOS) !=0)) {
@@ -601,9 +613,36 @@ ClearSmi (
   //
   // Clear the status before setting smi enable
   //
-  SmiSts = IoRead32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN + 4));
+  SmiSts = IoRead32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_STS));
   Pm1Sts = IoRead16 ((UINTN)(ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS));
+  Pm1Cnt = IoRead16 ((UINTN)(ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_CNT));
 
+  if ((Pm1Cnt & B_ACPI_IO_PM1_CNT_SCI_EN) == 0) {
+    Pm1Sts |=
+      (
+        B_ACPI_IO_PM1_STS_WAK |
+        B_ACPI_IO_PM1_STS_PRBTNOR |
+        B_ACPI_IO_PM1_STS_PWRBTN |
+        B_ACPI_IO_PM1_STS_GBL |
+        B_ACPI_IO_PM1_STS_TMROF
+      );
+
+    // Clear RTC alarm and corresponding Pm1Sts only if wake-up source is RTC SMI#
+    if (((Pm1Sts & B_ACPI_IO_PM1_STS_RTC_EN) != 0) &&
+        ((Pm1Sts & B_ACPI_IO_PM1_STS_RTC) != 0) &&
+        ((Pm1Cnt & B_ACPI_IO_PM1_CNT_SCI_EN) == 0)) {
+      IoWrite8 (R_RTC_IO_INDEX, R_RTC_IO_REGC);
+      (void)IoRead8 (R_RTC_IO_TARGET); /* RTC alarm is cleared upon read */
+      Pm1Sts |= B_ACPI_IO_PM1_STS_RTC;
+    }
+
+    IoWrite16 ((UINTN) (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS), (UINT16) Pm1Sts);
+
+    // Clear GPE0_STS in case some bits are set
+    IoOr32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_GPE0_STS_127_96), 0);
+  }
+
+  // Clear all SMIs that are unaffected by SCI_EN
   SmiSts |=
     (
       B_ACPI_IO_SMI_STS_SMBUS |
@@ -616,18 +655,35 @@ ClearSmi (
       B_ACPI_IO_SMI_STS_BIOS
     );
 
-  Pm1Sts |=
+  DevActSts = (BIT12|BIT9|BIT8|BIT7|BIT6);
+
+  TcoBase     = PciRead32 (PCI_LIB_ADDRESS(0, 31, 4, 0x50)) & 0x0000FFE0;
+  if (TcoBase != 0xFFE0) {
+    Tco1Sts |=
     (
-      B_ACPI_IO_PM1_STS_WAK |
-      B_ACPI_IO_PM1_STS_PRBTNOR |
-      B_ACPI_IO_PM1_STS_RTC |
-      B_ACPI_IO_PM1_STS_PWRBTN |
-      B_ACPI_IO_PM1_STS_GBL |
-      B_ACPI_IO_PM1_STS_TMROF
+      B_TCO_IO_TCO1_STS_DMISERR |
+      B_TCO_IO_TCO1_STS_DMISMI |
+      B_TCO_IO_TCO1_STS_DMISCI |
+      B_TCO_IO_TCO1_STS_BIOSWR |
+      B_TCO_IO_TCO1_STS_NEWCENTURY |
+      B_TCO_IO_TCO1_STS_TIMEOUT |
+      B_TCO_IO_TCO1_STS_TCO_INT |
+      B_TCO_IO_TCO1_STS_SW_TCO_SMI
       );
 
-  IoWrite32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN + 4), SmiSts);
-  IoWrite16 ((UINTN) (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS), (UINT16) Pm1Sts);
+    IoWrite16 ((UINTN) (TcoBase + R_TCO_IO_TCO1_STS), Tco1Sts);
+    IoWrite16 ((UINTN) (TcoBase + R_TCO_IO_TCO2_STS), (UINT16) ~B_TCO_IO_TCO2_STS_INTRD_DET);
+  }
+
+  // Clear causes of GPE0_STS.PME_B0_STS
+  if (GetBootMode() == BOOT_ON_S3_RESUME) {
+    ClearPmeStatus (PCI_LIB_ADDRESS (0, 20, 0, 0), 0x74, BIT15); // Xhci
+    ClearPmeStatus (PCI_LIB_ADDRESS (0, 23, 0, 0), 0x74, BIT15); // SATA
+  }
+
+  IoOr32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_GPE0_STS_127_96), 0);
+  IoWrite32 ((UINTN) (ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_STS), SmiSts);
+  IoWrite16 ((UINTN) (ACPI_BASE_ADDRESS + R_ACPI_IO_DEVACT_STS), DevActSts);
 }
 
 /**
@@ -715,6 +771,7 @@ BoardInit (
   UINT32                      TsegBase;
   UINT32                      TsegSize;
   UINT32                      NeedReboot;
+  BL_SW_SMI_INFO             *BlSwSmiInfo;
 
   if (mPchSciSupported == 0xFF){
     mPchSciSupported = PchIsSciSupported();
@@ -780,7 +837,22 @@ BoardInit (
         DEBUG ((DEBUG_WARN, "SCI device has boot issue\n"));
       }
     }
+
     ClearSmbusStatus ();
+
+    if (GetBootMode() == BOOT_ON_S3_RESUME) {
+      ClearSmi ();
+      RestoreS3RegInfo (FindS3Info (S3_SAVE_REG_COMM_ID));
+
+      //
+      // If payload registered a software SMI handler for bootloader to restore
+      // SMRR base and mask in S3 resume path, trigger sw smi
+      //
+      BlSwSmiInfo = FindS3Info (BL_SW_SMI_COMM_ID);
+      if (BlSwSmiInfo != NULL) {
+        TriggerPayloadSwSmi (BlSwSmiInfo->BlSwSmiHandlerInput);
+      }
+    }
 
     break;
   case PrePayloadLoading:

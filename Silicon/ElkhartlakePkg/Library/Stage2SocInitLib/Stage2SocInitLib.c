@@ -40,6 +40,34 @@ GetAcpiGnvsSize (
 }
 
 /**
+  Clear PME status
+**/
+VOID
+EFIAPI
+ClearPmeStatus (
+  UINTN Base,
+  UINT32 Reg,
+  UINT16 Pos
+)
+{
+  UINT16 Val;
+
+  if (PciRead32 (Base) == 0xFFFFFFFF) {
+    return;
+  }
+
+  Val = PciRead16 (Base + Reg);
+  if (Val & Pos) {
+    PciWrite16(Base + Reg, Val | Pos);
+  }
+
+  Val = PciRead16 (Base + Reg);
+  DEBUG ((DEBUG_INFO, "ClearPmStatus: Base: 0x%x Reg(0x%x): 0x%x\n",
+          Base, Reg, Val));
+}
+
+
+/**
   Clear SMBUS status and SMB_WAK_STS of GPE0
 **/
 VOID

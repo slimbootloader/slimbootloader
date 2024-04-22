@@ -52,6 +52,7 @@
 // ACPI and legacy I/O register offsets from ACPIBASE
 //
 #define R_ACPI_IO_PM1_STS                        0x00
+#define B_ACPI_IO_PM1_STS_RTC_EN                 BIT26
 #define B_ACPI_IO_PM1_STS_WAK                    BIT15
 #define B_ACPI_IO_PM1_STS_PRBTNOR                BIT11
 #define B_ACPI_IO_PM1_STS_RTC                    BIT10
@@ -70,7 +71,7 @@
 #define V_ACPI_IO_PM1_CNT_S3                     (BIT12 | BIT10)
 #define V_ACPI_IO_PM1_CNT_S4                     (BIT12 | BIT11)
 #define V_ACPI_IO_PM1_CNT_S5                     (BIT12 | BIT11 | BIT10)
-
+#define B_ACPI_IO_PM1_CNT_SCI_EN                 BIT0
 
 #define R_ACPI_IO_SMI_EN                              0x30
 #define B_ACPI_IO_SMI_EN_APMC                         BIT5
@@ -89,6 +90,7 @@
 
 #define R_ACPI_IO_GPE_CNTL                            0x40
 
+#define R_ACPI_IO_DEVACT_STS                          0x44
 
 #define R_ACPI_IO_OC_WDT_CTL                          0x54
 
@@ -102,7 +104,18 @@
 // TCO register I/O map
 //
 #define R_TCO_IO_TCO1_STS                            0x04
+#define B_TCO_IO_TCO1_STS_DMISERR                    BIT12
+#define B_TCO_IO_TCO1_STS_DMISMI                     BIT10
+#define B_TCO_IO_TCO1_STS_DMISCI                     BIT9
+#define B_TCO_IO_TCO1_STS_BIOSWR                     BIT8
+#define B_TCO_IO_TCO1_STS_NEWCENTURY                 BIT7
+#define B_TCO_IO_TCO1_STS_TIMEOUT                    BIT3
+#define B_TCO_IO_TCO1_STS_TCO_INT                    BIT2
+#define B_TCO_IO_TCO1_STS_SW_TCO_SMI                 BIT1
+#define B_TCO_IO_TCO1_STS_NMI2SMI                    BIT0
 
+#define R_TCO_IO_TCO2_STS                            0x06
+#define B_TCO_IO_TCO2_STS_INTRD_DET BIT0
 
 //
 // PWRM Registers for IPC interface
