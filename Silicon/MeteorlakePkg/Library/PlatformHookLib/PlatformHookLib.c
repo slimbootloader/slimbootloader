@@ -1,7 +1,7 @@
 /** @file
   The platform hook library.
 
-  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2024, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -19,6 +19,8 @@
 #include <IndustryStandard/Pci.h>
 #include <Register/SerialIoUartRegs.h>
 #include <Include/PcrDefine.h>
+#include <Register/SaRegsHostBridge.h>
+#include <Register/PchRegsLpc.h>
 
 #define MM_PCI_OFFSET(Bus, Device, Function) \
     ( (UINTN)(Bus << 20) +    \
@@ -106,26 +108,33 @@ LegacySerialPortInitialize (
   VOID
   )
 {
-  UINTN   eSPIBaseAddr;
-  UINT16  Data16;
+  UINTN   EspiBaseAddr;
+  UINT16  IoDecodeRanges;
+  UINT16  IoDecodeEnable;
+  UINT32  MchBar;
 
-  eSPIBaseAddr = PCI_LIB_ADDRESS (
-    DEFAULT_PCI_BUS_NUMBER_PCH,
-    PCI_DEVICE_NUMBER_PCH_ESPI,
-    PCI_FUNCTION_NUMBER_PCH_ESPI,
-    0);
+  // Decode range value, Bit 6:4: ComB range, Bit 2:0: ComA range
+  EspiBaseAddr    = PCI_LIB_ADDRESS (DEFAULT_PCI_BUS_NUMBER_PCH, PCI_DEVICE_NUMBER_PCH_ESPI, PCI_FUNCTION_NUMBER_PCH_ESPI, 0);
+  IoDecodeRanges  = PciRead16 (EspiBaseAddr + R_LPC_CFG_IOD) & 0xFF84;
+  IoDecodeRanges |= (V_LPC_CFG_IOD_COMB_2F8 << N_LPC_CFG_IOD_COMB);
+  IoDecodeRanges |= (V_LPC_CFG_IOD_COMA_3F8 << N_LPC_CFG_IOD_COMA);
 
-  Data16 = PciRead16 (eSPIBaseAddr + R_LPC_CFG_IOD);
-  Data16 |= (V_LPC_CFG_IOD_COMB_2F8 << N_LPC_CFG_IOD_COMB);
-  Data16 |= (V_LPC_CFG_IOD_COMA_3F8 << N_LPC_CFG_IOD_COMA);
-  MmioWrite16 (PCH_PCR_ADDRESS (PID_DMI, R_PCH_DMI_PCR_LPCIOD), Data16);
-  PciWrite16 (eSPIBaseAddr + R_LPC_CFG_IOD, Data16);
+  // Set PCH LPC/eSPI IO decode ranges in IOC
+  MchBar  = PciRead32 (PCI_LIB_ADDRESS (SA_MC_BUS, SA_MC_DEV, SA_MC_FUN, MCHBAR_HOSTBRIDGE_CFG_REG));
+  MchBar &= 0xFFFE0000;
+  MmioWrite32 (MchBar + R_IOC_CFG_LPCIOD, IoDecodeRanges);
 
-  Data16 = PciRead16 (eSPIBaseAddr + R_LPC_CFG_IOE);
-  Data16 |= B_LPC_CFG_IOE_CBE;
-  Data16 |= B_LPC_CFG_IOE_CAE;
-  MmioWrite16 (PCH_PCR_ADDRESS (PID_DMI, R_PCH_DMI_PCR_LPCIOE), Data16);
-  PciWrite16 (eSPIBaseAddr + R_LPC_CFG_IOE, Data16);
+  // Program same decode value in LPC/eSPI PCI
+  PciWrite16 (EspiBaseAddr + R_LPC_CFG_IOD, IoDecodeRanges);
+
+  IoDecodeEnable = PciRead16 (EspiBaseAddr + R_LPC_CFG_IOE);
+  IoDecodeEnable |= B_LPC_CFG_IOE_SE;
+  IoDecodeEnable |= B_LPC_CFG_IOE_CBE;
+  IoDecodeEnable |= B_LPC_CFG_IOE_CAE;
+  IoDecodeEnable |= B_LPC_CFG_IOE_ME1;
+
+  MmioWrite32 (MchBar + R_IOC_CFG_LPCIOE, IoDecodeEnable);
+  PciWrite16 (EspiBaseAddr + R_LPC_CFG_IOE, IoDecodeEnable);
 
   return RETURN_SUCCESS;
 }
