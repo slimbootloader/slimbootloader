@@ -648,4 +648,6 @@ This bit is either part of the PCI Express Base Address (R/W) or part of the Add
 /// Description of GMADRBAR bit (38:27)
 /// Description of VTDBAR bit (38:12)
 ///
+
+#define MCHBAR_HOSTBRIDGE_CFG_REG        0x48
 #endif

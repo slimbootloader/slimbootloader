@@ -26,9 +26,10 @@
 #define B_LPC_CFG_IOE_CAE                         BIT0            ///< Com Port A Enable, Enables decoding of the COMA range to LPC. Range is selected LIOD.CA.
 #define B_LPC_CFG_GENX_DEC_EN                     0x00000001
 #define B_LPC_CFG_GENX_DEC_EN                     0x00000001
+#define B_LPC_CFG_IOE_SE                          BIT12
 
-#define R_LPC_CFG_BDE                             0xD8                          ///< BIOS decode enable
-
+#define R_IOC_CFG_LPCIOD                          0x7A70                       ///< LPC I/O Decode Ranges
+#define R_IOC_CFG_LPCIOE                          0x7A74                       ///< LPC I/O Enables
 
 //
 // APM Registers
@@ -36,7 +37,6 @@
 #define R_PCH_IO_APM_CNT                             0xB2
 #define R_PCH_IO_APM_STS                             0xB3
 #define R_LPC_CFG_BC                              0xDC            ///< Bios Control
-
 
 //
 //
