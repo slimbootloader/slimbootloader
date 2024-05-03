@@ -57,9 +57,9 @@ CallFspMemoryInit (
   DefaultMemoryInitUpd = (UINT8 *)(UINTN)(FspHeader->ImageBase + FspHeader->CfgRegionOffset);
   CopyMem (&FspmUpd, DefaultMemoryInitUpd, FspHeader->CfgRegionSize);
 
+  FspmUpdCommon = (FSPM_UPD_COMMON *)FspmUpd;
   /* Update architectural UPD fields */
-  if (FspHeader->SpecVersion < 0x24) {
-    FspmUpdCommon = (FSPM_UPD_COMMON *)FspmUpd;
+  if (FspmUpdCommon->FspUpdHeader.Revision < FSP_HEADER_REVISION_3) {
     FspmUpdCommon->FspmArchUpd.BootLoaderTolumSize  = 0;
     FspmUpdCommon->FspmArchUpd.BootMode             = (UINT32)GetBootMode();
     FspmUpdCommon->FspmArchUpd.NvsBufferPtr         = (UINT32)(UINTN)FindNvsData();
@@ -142,7 +142,7 @@ FspMultiPhaseMemInitHandler(VOID)
   // Loop through all phases. Break on error status or FSP_STATUS_* not
   // handled by variable services handler
   for (MultiPhaseInitParams.PhaseIndex = 1;
-    MultiPhaseInitParams.PhaseIndex < GetNumPhasesParams.NumberOfPhases &&
+    MultiPhaseInitParams.PhaseIndex <= GetNumPhasesParams.NumberOfPhases &&
       !EFI_ERROR(Status) &&
       !(Status & ENCODE_RESET_REQUEST(0));
     MultiPhaseInitParams.PhaseIndex++)
