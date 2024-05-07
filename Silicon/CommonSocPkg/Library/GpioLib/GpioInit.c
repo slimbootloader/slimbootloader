@@ -300,15 +300,6 @@ GpioConfigurePch (
         continue;
       }
 
-      //
-      // Check if Pad enabled for SCI is to be in unlocked state
-      //
-      if (((GpioData->GpioConfig.InterruptConfig & GpioIntSci) == GpioIntSci) &&
-          ((GpioData->GpioConfig.LockConfig & B_GPIO_LOCK_CONFIG_PAD_CONF_LOCK_MASK) != GpioPadConfigUnlock)){
-        DEBUG ((GPIO_DEBUG_ERROR, "GPIO ERROR: Gpio pad for SCI is not unlocked (Group=%d, Pad=%d)!\n", GroupIndex, PadNumber));
-        ASSERT (FALSE);
-        return EFI_INVALID_PARAMETER;
-      }
       DEBUG_CODE_END ();
 
       ZeroMem (PadCfgDwReg, sizeof (PadCfgDwReg));
