@@ -191,6 +191,7 @@ class BaseBoard(object):
         self.CPU_SORT_METHOD       = 0
 
         self.ACM_SIZE              = 0
+        self.LNC_ACM_SIZE          = 0
         self.ACM_FIT_VERISON       = 0x100
         self.DIAGNOSTICACM_SIZE    = 0
         self.UCODE_SIZE            = 0
@@ -272,6 +273,8 @@ class BaseBoard(object):
         self.CFGDATA_SVN           = 0
         self.BUILD_IDENTICAL_TS    = 0
         self.ENABLE_SBL_RESILIENCY = 0
+        self._ACM_CPU_FMS          = []
+        self._LNC_ACM_CPU_FMS      = []
 
         self.RTCM_RSVD_SIZE        = 0xFF000
 
@@ -393,9 +396,22 @@ class Build(object):
         # ACM
         if self._board.ACM_SIZE > 0:
             fit_entry = FIT_ENTRY.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
-            fit_entry.set_values(self._board.ACM_BASE, 0, self._board.ACM_FIT_VERISON, 0x2, 0)
+            fit_entry.set_values(self._board.ACM_BASE, 0x0, 0x100, 0x2, 0x00)
             print ('  Patching entry %d with 0x%08X:0x%08X - ACM' % (num_fit_entries, fit_entry.address, fit_entry.size))
             num_fit_entries     += 1
+
+            if self._board.ACM_FIT_VERISON == 0x200:
+                for CPU_FMS in self._board._ACM_CPU_FMS :
+                    fit_entry = FIT_ENTRY.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
+                    fit_entry.set_values(self._board.ACM_BASE, CPU_FMS, self._board.ACM_FIT_VERISON, 0x2, 0xF0)
+                    print ('  Patching entry %d with 0x%08X:0x%08X - ACM' % (num_fit_entries, fit_entry.address, fit_entry.size))
+                    num_fit_entries     += 1
+
+                for CPU_FMS in self._board._LNC_ACM_CPU_FMS :
+                    fit_entry = FIT_ENTRY.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
+                    fit_entry.set_values(self._board.LNCACM_BASE, CPU_FMS, self._board.ACM_FIT_VERISON, 0x2, 0xF0)
+                    print ('  Patching entry %d with 0x%08X:0x%08X - ACM' % (num_fit_entries, fit_entry.address, fit_entry.size))
+                    num_fit_entries     += 1
 
             # Diagnostic ACM Fit entry should be in sequential order with/without BTG enabled
             # Save the next FIT entry for Diagnostic ACM here and set it later below
@@ -1362,6 +1378,10 @@ class Build(object):
         # create ACM binary
         if self._board.ACM_SIZE > 0:
             gen_file_with_size (os.path.join(self._fv_dir, 'ACM.bin'), self._board.ACM_SIZE)
+
+        # create LNCACM binary
+        if self._board.ACM_SIZE > 0:
+            gen_file_with_size (os.path.join(self._fv_dir, 'LNCACM.bin'), self._board.LNC_ACM_SIZE)
 
         # create Diagnostic ACM binary
         if self._board.DIAGNOSTICACM_SIZE > 0:
