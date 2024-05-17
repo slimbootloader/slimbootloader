@@ -1246,6 +1246,14 @@ UpdateFspConfig (
   UINT8                MaxPcieRootPorts;
   UINT32              *HdaVerbTablePtr;
   UINT8                HdaVerbTableNum;
+  FSP_INFO_HEADER      *FspHeader;
+  UINT32               FspsBase;
+
+  FspsBase = PcdGet32 (PcdFSPSBase);
+  FspHeader = (FSP_INFO_HEADER *)(UINTN)(FspsBase + FSP_INFO_HEADER_OFF);
+  // TGL FSP doesn't correctly support MultiPhase Si Init.
+  FspHeader->FspMultiPhaseSiInitEntryOffset = 0;
+
   FspsUpd    = (FSPS_UPD *)FspsUpdPtr;
   FspsConfig = &FspsUpd->FspsConfig;
 
