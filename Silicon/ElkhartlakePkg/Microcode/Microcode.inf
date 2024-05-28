@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2024, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 #
@@ -14,11 +14,11 @@
   VERSION_STRING       = 1.0
 
 [Sources]
-  m0190661_00000017.mcb
+  m0190661_0000001a.mcb
 
 [UserExtensions.SBL."CloneRepo"]
   REPO  = https://github.com/slimbootloader/firmwareblob.git
-  COMMIT= 98918f6881ce7f3a551712260d6d04f5f117d219
+  COMMIT= cafeee06194fc1a3176e606189092be11887b51d
 
 [UserExtensions.SBL."CopyList"]
-  Microcode/ElkhartLake/m_01_90661_00000017.pdb  : Silicon/ElkhartlakePkg/Microcode/m0190661_00000017.mcb
+  Microcode/ElkhartLake/m_01_90661_0000001a.pdb  : Silicon/ElkhartlakePkg/Microcode/m0190661_0000001a.mcb
