@@ -114,7 +114,7 @@ class BaseBoard(object):
         self.KEY_GEN                 = 0
 
         self.VERINFO_IMAGE_ID       = 'SB_???? '
-        self.VERINFO_PROJ_ID        = 1
+        self.VERINFO_PROJ_ID        = 2
         self.VERINFO_CORE_MAJOR_VER = 1
         self.VERINFO_CORE_MINOR_VER = 0
 
