@@ -1,7 +1,7 @@
 /** @file
   This file provides AHCI SATA device block access interfaces.
 
-  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2024, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -84,7 +84,11 @@ AhciAtaDeviceReadWrite (
   //
   ZeroMem (&AtaCmdBlk, sizeof (EFI_ATA_COMMAND_BLOCK));
 
-  AtaCmdBlk.AtaCommand = (AtaDevice->DeviceFeature & DEVICE_LBA_48_SUPPORT) ? ATA_CMD_READ_DMA_EXT : ATA_CMD_READ_DMA;
+  if (Read) {
+    AtaCmdBlk.AtaCommand = (AtaDevice->DeviceFeature & DEVICE_LBA_48_SUPPORT) ? ATA_CMD_READ_DMA_EXT : ATA_CMD_READ_DMA;
+  } else {
+    AtaCmdBlk.AtaCommand = (AtaDevice->DeviceFeature & DEVICE_LBA_48_SUPPORT) ? ATA_CMD_WRITE_DMA_EXT : ATA_CMD_WRITE_DMA;
+  }
   AtaCmdBlk.AtaSectorNumber = (UINT8) StartLba;
   AtaCmdBlk.AtaCylinderLow = (UINT8) RShiftU64 (StartLba, 8);
   AtaCmdBlk.AtaCylinderHigh = (UINT8) RShiftU64 (StartLba, 16);

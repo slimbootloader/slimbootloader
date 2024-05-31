@@ -117,6 +117,8 @@ class Board(BaseBoard):
 
         self.PAYLOAD_SIZE         = 0x00032000
         self.EPAYLOAD_SIZE        = 0x00230000
+        self.OS_LOADER_FD_SIZE    = 0x00059000
+        self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         self.ENABLE_FAST_BOOT = 0
         try:
