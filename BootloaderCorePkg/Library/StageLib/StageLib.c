@@ -100,6 +100,7 @@ RemapStage (
   UINT32               RoundSize;
   VOID                *Stage1bBase;
   EFI_STATUS           Status;
+  EFI_STATUS           MapStatus;
   BOOLEAN              Is64Bit;
   UINTN                Cr0;
 
@@ -136,7 +137,17 @@ RemapStage (
     Ranges[0].Limit    = (UINTN)Ranges[0].Start + RoundSize - 1;
     Ranges[0].Mapping  = (UINTN)Stage1bBase;
     Ranges[0].PageSize = SIZE_4KB;
-    Status = MapMemoryRange (Ranges, PageBuffer);
+    MapStatus = MapMemoryRange (Ranges, PageBuffer);
+    if (MapStatus == EFI_INVALID_PARAMETER) {
+      // Remapping Stage1B is not possible, likely because it crosses
+      // too many PDE boundary. SBL PagingLib doesn't support this currently.
+       DEBUG ((DEBUG_INFO, "Remapping Stage Failed!\n"));
+       if (FeaturePcdGet (PcdStage1BXip)) {
+        DEBUG((DEBUG_INFO, "Continuing with XIP.\n"));
+       } else {
+        Status = MapStatus;
+       }
+    }
   }
   ASSERT_EFI_ERROR (Status);
 

@@ -85,22 +85,33 @@ MapMemoryRange (
       // 64 bit mode
       PteOffset = 6 * EFI_PAGE_SIZE;
       PdeOffset = 2 * EFI_PAGE_SIZE;
-      EntryNum  = 512;
     } else {
       // 32 bit mode
       PteOffset = 1 * EFI_PAGE_SIZE;
       PdeOffset = 0;
-      EntryNum  = 1024;
     }
+    // 32-bit page table has room for 1024 32-bit entries.
+    // 64-bit has 2 pages reserved for PTEs so it can have 1024 64-bit entries.
+    EntryNum  = 1024;
     PageTable4K = (UINTN *)((UINTN)PageBuffer + PteOffset);
     PageTable2M = (UINTN *)((UINTN)PageBuffer + PdeOffset);
 
     Alignment = (UINTN) LShiftU64 (1, PageBits) - 1;
     PageBase  = Ranges[0].Start & ~Alignment;
 
-    // Check if the limit is in the same page
-    if ((Ranges[0].Limit & ~Alignment) != PageBase) {
-      return EFI_INVALID_PARAMETER;
+    // Make sure we can satisfy this remap request.
+    if (PageBits == 21) {
+      // 64 bit mode
+      // Check if the limit can be covered by two PDE's
+      if ((Ranges[0].Limit & ~Alignment) >= (PageBase + LShiftU64 (1, PageBits+1))) {
+        return EFI_INVALID_PARAMETER;
+      }
+    } else {
+      // 32 bit mode
+      // Check if the limit is in the same PDE
+      if ((Ranges[0].Limit & ~Alignment) != PageBase) {
+        return EFI_INVALID_PARAMETER;
+      }
     }
 
     Address = PageBase;
@@ -118,6 +129,9 @@ MapMemoryRange (
     // Split the 2MB page containing the CAR region into 4KB pages
     Idx = (UINT32) RShiftU64 (PageBase, PageBits);
     PageTable2M[Idx] = (UINTN)PageTable4K + Attribute;
+    if (PageBits == 21) {
+      PageTable2M[Idx+1] = (UINTN)&PageTable4K[EntryNum/2] + Attribute;
+    }
     break;
   case SIZE_1GB:
     ASSERT (Ranges[0].Limit < SIZE_512GB);
