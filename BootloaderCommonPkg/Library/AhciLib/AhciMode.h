@@ -1,7 +1,7 @@
 /** @file
   Header file for AHCI mode of ATA host controller.
 
-  Copyright (c) 2010 - 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2010 - 2024, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -99,7 +99,7 @@ typedef enum {
 #define EFI_AHCI_PORT_IS                       0x0010
 #define   EFI_AHCI_PORT_IS_DHRS                BIT0
 #define   EFI_AHCI_PORT_IS_PSS                 BIT1
-#define   EFI_AHCI_PORT_IS_SSS                 BIT2
+#define   EFI_AHCI_PORT_IS_DSS                 BIT2
 #define   EFI_AHCI_PORT_IS_SDBS                BIT3
 #define   EFI_AHCI_PORT_IS_UFS                 BIT4
 #define   EFI_AHCI_PORT_IS_DPS                 BIT5
@@ -116,6 +116,8 @@ typedef enum {
 #define   EFI_AHCI_PORT_IS_CPDS                BIT31
 #define   EFI_AHCI_PORT_IS_CLEAR               0xFFFFFFFF
 #define   EFI_AHCI_PORT_IS_FIS_CLEAR           0x0000000F
+#define   EFI_AHCI_PORT_IS_ERROR_MASK        (EFI_AHCI_PORT_IS_INFS | EFI_AHCI_PORT_IS_IFS | EFI_AHCI_PORT_IS_HBDS | EFI_AHCI_PORT_IS_HBFS | EFI_AHCI_PORT_IS_TFES)
+#define   EFI_AHCI_PORT_IS_FATAL_ERROR_MASK  (EFI_AHCI_PORT_IS_IFS | EFI_AHCI_PORT_IS_HBDS | EFI_AHCI_PORT_IS_HBFS | EFI_AHCI_PORT_IS_TFES)
 
 #define EFI_AHCI_PORT_IE                       0x0014
 #define EFI_AHCI_PORT_CMD                      0x0018
@@ -283,7 +285,19 @@ typedef struct {
   UINT16  Command_set_feature_enb_86; // word 86
   UINT16  Command_set_feature_default; // word 87
   UINT16  Ultra_dma_mode; // word 88
-  UINT16  Reserved_89_105[17];
+  UINT16  Time_for_security_erase_unit;
+  UINT16  Time_for_enhanced_security_erase_unit;
+  UINT16  Advanced_power_management_level;
+  UINT16  Master_password_identifier;
+  UINT16  Hardware_configuration_test_result;
+  UINT16  obsolete_94;
+  UINT16  Stream_minimum_request_size;
+  UINT16  Streaming_transfer_time_for_dma;
+  UINT16  Streaming_access_latency_for_dma_and_pio;
+  UINT16  Streaming_performance_granularity[2];  ///< word 98~99
+  UINT16  Maximum_lba_for_48bit_addressing[4];   ///< word 100~103
+  UINT16  Streaming_transfer_time_for_pio;
+  UINT16  Max_no_of_512byte_blocks_per_data_set_cmd;
   UINT16  Phy_logic_sector_support; // word 106
   UINT16  Reserved_107_116[10];
   UINT16  Logic_sector_size_lo; // word 117
@@ -447,6 +461,12 @@ typedef struct {
   UINT8    AhciCFisRsvd4[4];
   UINT8    AhciCFisRsvd5[44];
 } EFI_AHCI_COMMAND_FIS;
+
+typedef enum {
+  SataFisD2H = 0,
+  SataFisPioSetup,
+  SataFisDmaSetup
+} SATA_FIS_TYPE;
 
 //
 // ACMD: ATAPI command (12 or 16 bytes)
