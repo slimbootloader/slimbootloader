@@ -330,6 +330,7 @@
   gPlatformModuleTokenSpaceGuid.PcdPciEnumEnabled         | $(ENABLE_PCI_ENUM)
   gPlatformModuleTokenSpaceGuid.PcdStage1AXip             | $(STAGE1A_XIP)
   gPlatformModuleTokenSpaceGuid.PcdStage1BXip             | $(STAGE1B_XIP)
+  gPlatformModuleTokenSpaceGuid.PcdRemapStage1B           | $(REMAP_STAGE1B)
   gPlatformModuleTokenSpaceGuid.PcdLoadImageUseFsp        | $(ENABLE_FSP_LOAD_IMAGE)
   gPlatformModuleTokenSpaceGuid.PcdSplashEnabled          | $(ENABLE_SPLASH)
   gPlatformModuleTokenSpaceGuid.PcdFramebufferInitEnabled | $(ENABLE_FRAMEBUFFER_INIT)
