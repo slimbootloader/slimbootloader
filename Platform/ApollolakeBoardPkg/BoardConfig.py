@@ -134,6 +134,7 @@ class Board(BaseBoard):
         self.STAGE1A_XIP          = 0
         self.STAGE1A_LOAD_BASE    = 0xFEF00000
         self.STAGE1B_XIP          = 0
+        self.REMAP_STAGE1B        = 1
         self.STAGE1B_LOAD_BASE    = 0xFEF10000
         self.STAGE1B_FD_BASE      = 0xFEF80000
         self.STAGE1B_FD_SIZE      = 0x0006D000

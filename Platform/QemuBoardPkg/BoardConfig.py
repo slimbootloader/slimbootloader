@@ -144,6 +144,7 @@ class Board(BaseBoard):
             self.STAGE1A_LOAD_BASE  = FREE_TEMP_RAM_TOP
 
         self.STAGE1B_XIP          = EXECUTE_IN_PLACE
+        self.REMAP_STAGE1B        = not EXECUTE_IN_PLACE
         if not self.STAGE1B_XIP:
             # For Stage1B, it can be compressed if STAGE1B_XIP is 0
             # If so, STAGE1B_FD_BASE/STAGE1B_FD_SIZE need to be defined

@@ -212,6 +212,7 @@ class BaseBoard(object):
         self.FSP_M_STACK_TOP       = 0
         self.STAGE1A_XIP           = 1
         self.STAGE1B_XIP           = 1
+        self.REMAP_STAGE1B         = 0
         self.STAGE1_STACK_BASE_OFFSET = 0
         self.STAGE2_XIP            = 0
         self.STAGE2_LOAD_HIGH      = 1

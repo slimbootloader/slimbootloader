@@ -236,6 +236,7 @@
   gPlatformModuleTokenSpaceGuid.PcdPciEnumEnabled         | TRUE       | BOOLEAN | 0x20000206
   gPlatformModuleTokenSpaceGuid.PcdStage1BXip             | TRUE       | BOOLEAN | 0x20000207
   gPlatformModuleTokenSpaceGuid.PcdStage1AXip             | TRUE       | BOOLEAN | 0x20000208
+  gPlatformModuleTokenSpaceGuid.PcdRemapStage1B           | FALSE      | BOOLEAN | 0x20000226
   gPlatformModuleTokenSpaceGuid.PcdLoadImageUseFsp        | FALSE      | BOOLEAN | 0x20000209
   gPlatformModuleTokenSpaceGuid.PcdVtdEnabled             | FALSE      | BOOLEAN | 0x2000020B
   gPlatformModuleTokenSpaceGuid.PcdS3DebugEnabled         | FALSE      | BOOLEAN | 0x2000020D
