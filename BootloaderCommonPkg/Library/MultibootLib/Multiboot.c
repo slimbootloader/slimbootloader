@@ -339,6 +339,7 @@ AlignMultibootModules (
               Index, MbModule->Start, AlignedAddr));
       CopyMem (AlignedAddr, (CONST VOID *)(UINTN)MbModule->Start, (UINTN)ModuleSize);
       MbModule->Start = (UINT32)(UINTN)AlignedAddr;
+      MbModule->End = MbModule->Start + ModuleSize;
     }
   }
 
