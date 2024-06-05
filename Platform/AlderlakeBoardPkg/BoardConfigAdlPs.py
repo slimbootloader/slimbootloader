@@ -23,7 +23,7 @@ class Board(AlderlakeBoardConfig.Board):
         self.VERINFO_IMAGE_ID     = 'SB_ADLPS'
         self.BOARD_NAME           = 'adlps'
         self.VERINFO_PROJ_MAJOR_VER = 1
-        self.VERINFO_PROJ_MINOR_VER = 3
+        self.VERINFO_PROJ_MINOR_VER = 6
         self._EXTRA_INC_PATH      = ['Silicon/AlderlakePkg/Adlps/Include']
         self._FSP_PATH_NAME       = 'Silicon/AlderlakePkg/Adlps/FspBin'
         self.MICROCODE_INF_FILE   = 'Silicon/AlderlakePkg/Microcode/Microcode.inf'
