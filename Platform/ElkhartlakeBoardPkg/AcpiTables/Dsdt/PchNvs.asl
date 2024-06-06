@@ -5,7 +5,7 @@
 
 /**@file
 
- Copyright (c) 2013 - 2019, Intel Corporation. All rights reserved.<BR>
+ Copyright (c) 2013 - 2024, Intel Corporation. All rights reserved.<BR>
  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -327,8 +327,4 @@
   Offset(705),    UF1E, 8,  // Offset(705),   Is UFS1 Enabled
   Offset(706),    PC0E, 8,  // Offset(706),   PSE Can0 Enabled
   Offset(707),    PC1E, 8,  // Offset(707),   PSE Can1 Enabled
-  #ifdef RESTRICTED_FLAG
-  Offset(708),    CBTI, 8,  // Offset(708),   CNVi BT interface
-  Offset(709),    CBTU, 8,  // Offset(709),   CNVi BT UART type
-  #endif
   }
