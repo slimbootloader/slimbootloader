@@ -3,7 +3,7 @@
 /** @file
   ACPI Platform NVS Data
 
-  Copyright (c) 2021 - 2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021 - 2024, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -1706,55 +1706,6 @@ typedef struct {
   // CNV GUID lock
   UINT8    CnvGuidLockStatus;                       ///< Offset 3468    CNV Guid Lock Status ACPI Indicator
   UINT8    EVSA;                                    ///< Offset 3469    Everest8326 I2c slave address
-  #ifdef RESTRICTED_FLAG
-  // Below is InternalOnly NVS region
-  UINT8    ScmConfig;                               ///< Offset 3470    ScmConfig to Select Full BootDisk(Default) or Split BootDisk
-  UINT64   RamdiskAdd;                              ///< Offset 3471    Address of RamDisk
-  UINT8    RamdiskSize;                             ///< Offset 3479    RamdiskSize in GB
-  UINT32   Rtd3EnabledPcieRp;                       ///< Offset 3480    PCIE Root ports bit map
-  UINT32   PegPcieSlot1WakeGpio;                    ///< Offset 3484    Peg Pcie Slot 1 Wake Gpio pin
-  UINT8    PegPcieSlot1RpNumber;                    ///< Offset 3488    Peg Pcie Slot 1 Root Port Number
-  UINT32   PegPcieSlot1PowerEnableGpio;             ///< Offset 3489    Peg Pcie Slot 1 Power Enable Gpio pin
-  UINT8    PegPcieSlot1PowerEnableGpioPolarity;     ///< Offset 3493    Peg Pcie Slot 1 Power Enable Gpio pin polarity
-  UINT32   PegPcieSlot1RstGpio;                     ///< Offset 3494    Peg Pcie Slot 1 Rest Gpio pin
-  UINT8    PegPcieSlot1RstGpioPolarity;             ///< Offset 3498    Peg Pcie Slot 1 Rest Gpio pin polarity
-  UINT32   PegPcieSlot2WakeGpio;                    ///< Offset 3499    Peg Pcie Slot 2 Wake Gpio pin
-  UINT8    PegPcieSlot2RpNumber;                    ///< Offset 3503    Peg Pcie Slot 2 Root Port Number
-  UINT32   PegPcieSlot2PowerEnableGpio;             ///< Offset 3504    Peg Pcie Slot 2 Power Enable Gpio pin
-  UINT8    PegPcieSlot2PowerEnableGpioPolarity;     ///< Offset 3508    Peg Pcie Slot 2 Power Enable Gpio pin polarity
-  UINT32   PegPcieSlot2RstGpio;                     ///< Offset 3509    Peg Pcie Slot 2 Rest Gpio pin
-  UINT8    PegPcieSlot2RstGpioPolarity;             ///< Offset 3513    Peg Pcie Slot 2 Rest Gpio pin polarity
-  UINT32   PegPcieSlot3WakeGpio;                    ///< Offset 3514    Peg Pcie Slot 3 Wake Gpio pin
-  UINT8    PegPcieSlot3RpNumber;                    ///< Offset 3518    Peg Pcie Slot 3 Root Port Number
-  UINT32   PegPcieSlot3PowerEnableGpio;             ///< Offset 3519    Peg Pcie Slot 3 Power Enable Gpio pin
-  UINT8    PegPcieSlot3PowerEnableGpioPolarity;     ///< Offset 3523    Peg Pcie Slot 3 Power Enable Gpio pin polarity
-  UINT32   PegPcieSlot3RstGpio;                     ///< Offset 3524    Peg Pcie Slot 3 Rest Gpio pin
-  UINT8    PegPcieSlot3RstGpioPolarity;             ///< Offset 3528    Peg Pcie Slot 3 Rest Gpio pin polarity
-  UINT32   PegPcieSlot4WakeGpio;                    ///< Offset 3529    Peg Pcie Slot 4 Wake Gpio pin
-  UINT8    PegPcieSlot4RpNumber;                    ///< Offset 3533    Peg Pcie Slot 4 Root Port Number
-  UINT32   PegPcieSlot4PowerEnableGpio;             ///< Offset 3534    Peg Pcie Slot 4 Power Enable Gpio pin
-  UINT8    PegPcieSlot4PowerEnableGpioPolarity;     ///< Offset 3538    Peg Pcie Slot 4 Power Enable Gpio pin polarity
-  UINT32   PegPcieSlot4RstGpio;                     ///< Offset 3539    Peg Pcie Slot 4 Rest Gpio pin
-  UINT8    PegPcieSlot4RstGpioPolarity;             ///< Offset 3543    Peg Pcie Slot 4 Rest Gpio pin polarity
-  UINT32   PegPcieSlot5WakeGpio;                    ///< Offset 3544    Peg Pcie Slot 5 Wake Gpio pin
-  UINT8    PegPcieSlot5RpNumber;                    ///< Offset 3548    Peg Pcie Slot 5 Root Port Number
-  UINT32   PegPcieSlot5PowerEnableGpio;             ///< Offset 3549    Peg Pcie Slot 5 Power Enable Gpio pin
-  UINT8    PegPcieSlot5PowerEnableGpioPolarity;     ///< Offset 3553    Peg Pcie Slot 5 Power Enable Gpio pin polarity
-  UINT32   PegPcieSlot5RstGpio;                     ///< Offset 3554    Peg Pcie Slot 5 Rest Gpio pin
-  UINT8    PegPcieSlot5RstGpioPolarity;             ///< Offset 3558    Peg Pcie Slot 5 Rest Gpio pin polarity
-  UINT32   PcieSlot1Power2EnableGpio;               ///< Offset 3559    Pcie Slot 1 Power2 Enable Gpio pin
-  UINT8    PcieSlot1Power2EnableGpioPolarity;       ///< Offset 3563    Pcie Slot 1 Power2 Enable Gpio pin polarity
-  UINT32   PcieSlot2Power2EnableGpio;               ///< Offset 3564    Pcie Slot 2 Power2 Enable Gpio pin
-  UINT8    PcieSlot2Power2EnableGpioPolarity;       ///< Offset 3568    Pcie Slot 2 Power2 Enable Gpio pin polarity
-  UINT32   PcieSlot3Power2EnableGpio;               ///< Offset 3569    Pcie Slot 3 Power2 Enable Gpio pin
-  UINT8    PcieSlot3Power2EnableGpioPolarity;       ///< Offset 3573    Pcie Slot 3 Power2 Enable Gpio pin polarity
-  UINT32   PcieSlot4Power2EnableGpio;               ///< Offset 3574    Pcie Slot 4 Power2 Enable Gpio pin
-  UINT8    PcieSlot4Power2EnableGpioPolarity;       ///< Offset 3578    Pcie Slot 4 Power2 Enable Gpio pin polarity
-  UINT32   PcieSlot5Power2EnableGpio;               ///< Offset 3579    Pcie Slot 5 Power2 Enable Gpio pin
-  UINT8    PcieSlot5Power2EnableGpioPolarity;       ///< Offset 3583    Pcie Slot 5 Power2 Enable Gpio pin polarity
-  UINT32   PcieSlot6Power2EnableGpio;               ///< Offset 3584    Pcie Slot 6 Power2 Enable Gpio pin
-  UINT8    PcieSlot6Power2EnableGpioPolarity;       ///< Offset 3588    Pcie Slot 6 Power2 Enable Gpio pin polarity
-  #endif
 } PLATFORM_NVS_AREA;
 
 #pragma pack(pop)
