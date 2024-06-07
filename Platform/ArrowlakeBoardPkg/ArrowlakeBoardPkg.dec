@@ -1,0 +1,24 @@
+#/** @file
+# Platform Package
+#
+# This package provides platform specific modules.
+# Copyright (c) 2024, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+
+[Defines]
+  DEC_SPECIFICATION              = 0x00010005
+  PACKAGE_NAME                   = ArrowlakeBoardPkg
+  PACKAGE_GUID                   = 6DEF602D-7CC2-4ED8-8FD0-BD823BACA6C2
+  PACKAGE_VERSION                = 0.1
+
+[Includes]
+  Include
+
+[Guids]
+  gCpuInitDataHobGuid       = { 0x266e31cc, 0x13c5, 0x4807, { 0xb9, 0xdc, 0x39, 0xa6, 0xba, 0x88, 0xff, 0x1a } }
+  gCpuPowerManagementDataHobGuid  =  {0x21ac65f8, 0x96e5, 0x43f4, {0xa1, 0x68, 0xef, 0x2c, 0x62, 0xe9, 0x76, 0x4b}}
+  gTccRtctHobGuid           = { 0x6bddb43d, 0x1782, 0x4d9c, { 0xb6, 0x80, 0xe3, 0xde, 0x45, 0xe0, 0x37, 0x4a } }
+  gIioResHobGuid            = { 0x88b02d56, 0x2035, 0x4d67, { 0xa6, 0xef, 0xa7, 0xc3, 0xe0, 0x11, 0x0d, 0xba } }
+
+[PcdsFixedAtBuild]
