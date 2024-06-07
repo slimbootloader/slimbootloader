@@ -110,7 +110,7 @@ class Board(BaseBoard):
         self.TEST_SIZE            = 0x00001000
         self.SIIPFW_SIZE          = 0x00010000
         self.EPAYLOAD_SIZE        = 0x0020D000
-        self.PAYLOAD_SIZE         = 0x00020000
+        self.PAYLOAD_SIZE         = 0x00021000
         self.CFGDATA_SIZE         = 0x00001000
         self.KEYHASH_SIZE         = 0x00001000
         self.VARIABLE_SIZE        = 0x00002000
