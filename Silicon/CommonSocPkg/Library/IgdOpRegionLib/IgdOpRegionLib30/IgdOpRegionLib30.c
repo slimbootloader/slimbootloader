@@ -73,6 +73,7 @@ GetVbt (
                                  installation of the ACPI tables.
 **/
 EFI_STATUS
+EFIAPI
 IgdOpRegionInit (
   IN IGD_OP_PLATFORM_INFO    *IgdPlatformInfo
   )
