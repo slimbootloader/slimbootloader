@@ -157,7 +157,7 @@ class Board(AlderlakeBoardConfig.Board):
             acm_btm = (acm_btm & 0xFFFC0000)
             self.ACM_SIZE     = acm_top - acm_btm
 
-        self.LOADER_RSVD_MEM_SIZE = 0x500000
+        self.LOADER_RSVD_MEM_SIZE = 0xC00000
 
         # If mulitple VBT table support is required, list them as:
         #   {VbtImageId1 : VbtFileName1, VbtImageId2 : VbtFileName2, ...}
