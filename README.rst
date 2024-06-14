@@ -43,6 +43,23 @@ EHL_Win_VS2019                |_unknown|    |ehl_w32r|    |ehl_w64d|    |_unknow
 EHL_Lin_GCC5                  |ehl_l32d|    |_unknown|    |_unknown|    |_unknown|
 TGL_Win_VS2019                |_unknown|    |tgl_w32r|    |tgl_w64d|    |_unknown|
 TGL_Lin_GCC5                  |tgl_l32d|    |_unknown|    |_unknown|    |_unknown|
+ADLS_Lin_GCC5                 |adls_l32d|   |_unknown|    |_unknown|    |_unknown|
+ADLS_Win_VS2019               |_unknown|    |adls_w32r|   |adls_w64d|   |_unknown|
+ADLP_Win_VS2019               |_unknown|    |adls_w32r|   |_unknown|    |adlp_w64r|
+ADLP_Lin_GCC5                 |_unknown|    |_unknown|    |_unknown|    |adlp_l64r|
+ADLPS_Win_VS2019              |_unknown|    |_unknown|    |adlps_w64d|  |_unknown|
+ADLPS_Lin_GCC5                |adlps_l32d|  |_unknown|    |_unknown|    |_unknown|
+ADLN_Win_VS2019               |_unknown|    |adln_w32r|   |adln_w64d|   |_unknown|
+ADLN_Lin_GCC5                 |_unknown|    |adln_l32r|   |_unknown|    |_unknown|
+IDV_Win_VS2019                |_unknown|    |idv_w32r|    |_unknown|    |_unknown|
+IDV_Lin_GCC5                  |_unknown|    |_unknown|    |idv_l64d|    |_unknown|
+IDVH_Win_VS2019               |_unknown|    |_unknown|    |idvh_w64d|   |_unknown|
+RPLS_Win_VS2019               |_unknown|    |rpls_w32r|   |rpls_w64d|   |_unknown|
+RPLS_Lin_GCC5                 |rpls_l32d|   |_unknown|    |_unknown|    |_unknown|
+MTL_Win_VS2019                |_unknown|    |mtl_w32r|    |mtl_w64d|    |_unknown|
+MTL_Lin2204_GCC5              |mtl_l32d|    |_unknown|    |_unknown|    |_unknown|
+MTLPS_Win_VS2019              |_unknown|    |mtlps_w32r|  |mtlps_w64d|  |_unknown|
+MTLPS_Lin2204_GCC5            |_unknown|    |mtlps_l32r|  |_unknown|    |_unknown|
 ============================= ============= ============= ============= =============
 
 Getting Started
@@ -86,3 +103,25 @@ identified in the applicable source code file(s) and/or file header(s).
 .. |ehl_w32r| image:: https://dev.azure.com/slimbootloader/slimbootloader/_apis/build/status/slimbootloader.slimbootloader?branchName=master&jobName=Windows&configuration=Windows%20EHL_X86_RELEASE
 .. |ehl_w64d| image:: https://dev.azure.com/slimbootloader/slimbootloader/_apis/build/status/slimbootloader.slimbootloader?branchName=master&jobName=Windows&configuration=Windows%20EHL_X64_DEBUG
 .. |ehl_l32d| image:: https://dev.azure.com/slimbootloader/slimbootloader/_apis/build/status/slimbootloader.slimbootloader?branchName=master&jobName=Linux&configuration=Linux%20EHL_X86_DEBUG
+.. |adls_l32d| image:: https://dev.azure.com/slimbootloader/slimbootloader/_apis/build/status/slimbootloader.slimbootloader?branchName=master&jobName=Linux&configuration=Linux%20ADLS_X86_DEBUG
+.. |adls_w32r| image:: https://dev.azure.com/slimbootloader/slimbootloader/_apis/build/status/slimbootloader.slimbootloader?branchName=master&jobName=Windows&configuration=Windows%20ADLS_X86_RELEASE
+.. |adls_w64d| image:: https://dev.azure.com/slimbootloader/slimbootloader/_apis/build/status/slimbootloader.slimbootloader?branchName=master&jobName=Windows&configuration=Windows%20ADLS_X64_DEBUG
+.. |adlp_w64r| image:: https://dev.azure.com/slimbootloader/slimbootloader/_apis/build/status/slimbootloader.slimbootloader?branchName=master&jobName=Windows&configuration=Windows%20ADLP_X64_RELEASE
+.. |adlp_l64r| image:: https://dev.azure.com/slimbootloader/slimbootloader/_apis/build/status/slimbootloader.slimbootloader?branchName=master&jobName=Linux&configuration=Linux%20ADLP_X64_RELEASE
+.. |adlps_w64d| image:: https://dev.azure.com/slimbootloader/slimbootloader/_apis/build/status/slimbootloader.slimbootloader?branchName=master&jobName=Windows&configuration=Windows%20ADLPS_X64_DEBUG
+.. |adlps_l32d| image:: https://dev.azure.com/slimbootloader/slimbootloader/_apis/build/status/slimbootloader.slimbootloader?branchName=master&jobName=Linux&configuration=Linux%20ADLPS_X86_DEBUG
+.. |adln_w32r| image:: https://dev.azure.com/slimbootloader/slimbootloader/_apis/build/status/slimbootloader.slimbootloader?branchName=master&jobName=Windows&configuration=Windows%20ADLN_X86_RELEASE
+.. |adln_w64d| image:: https://dev.azure.com/slimbootloader/slimbootloader/_apis/build/status/slimbootloader.slimbootloader?branchName=master&jobName=Windows&configuration=Windows%20ADLN_X64_DEBUG
+.. |adln_l32r| image:: https://dev.azure.com/slimbootloader/slimbootloader/_apis/build/status/slimbootloader.slimbootloader?branchName=master&jobName=Linux&configuration=Linux%20ADLN_X86_RELEASE
+.. |idv_w32r| image:: https://dev.azure.com/slimbootloader/slimbootloader/_apis/build/status/slimbootloader.slimbootloader?branchName=master&jobName=Windows&configuration=Windows%20IDV_X86_RELEASE
+.. |idv_l64d| image:: https://dev.azure.com/slimbootloader/slimbootloader/_apis/build/status/slimbootloader.slimbootloader?branchName=master&jobName=Linux&configuration=Linux%20IDV_X64_DEBUG
+.. |idvh_w64d| image:: https://dev.azure.com/slimbootloader/slimbootloader/_apis/build/status/slimbootloader.slimbootloader?branchName=master&jobName=Windows&configuration=Windows%20IDVH_X64_DEBUG
+.. |rpls_w32r| image:: https://dev.azure.com/slimbootloader/slimbootloader/_apis/build/status/slimbootloader.slimbootloader?branchName=master&jobName=Windows&configuration=Windows%20RPLS_X86_RELEASE
+.. |rpls_w64d| image:: https://dev.azure.com/slimbootloader/slimbootloader/_apis/build/status/slimbootloader.slimbootloader?branchName=master&jobName=Windows&configuration=Windows%20RPLS_X64_DEBUG
+.. |rpls_l32d| image:: https://dev.azure.com/slimbootloader/slimbootloader/_apis/build/status/slimbootloader.slimbootloader?branchName=master&jobName=Linux&configuration=Linux%20RPLS_X86_DEBUG
+.. |mtl_w32r| image:: https://dev.azure.com/slimbootloader/slimbootloader/_apis/build/status/slimbootloader.slimbootloader?branchName=master&jobName=Windows&configuration=Windows%20MTL_X86_RELEASE
+.. |mtl_w64d| image:: https://dev.azure.com/slimbootloader/slimbootloader/_apis/build/status/slimbootloader.slimbootloader?branchName=master&jobName=Windows&configuration=Windows%20MTL_X64_DEBUG
+.. |mtl_l32d| image:: https://dev.azure.com/slimbootloader/slimbootloader/_apis/build/status/slimbootloader.slimbootloader?branchName=master&jobName=Linux2204&configuration=Linux2204%20MTL_X86_DEBUG
+.. |mtlps_w32r| image:: https://dev.azure.com/slimbootloader/slimbootloader/_apis/build/status/slimbootloader.slimbootloader?branchName=master&jobName=Windows&configuration=Windows%20MTLPS_X86_RELEASE
+.. |mtlps_w64d| image:: https://dev.azure.com/slimbootloader/slimbootloader/_apis/build/status/slimbootloader.slimbootloader?branchName=master&jobName=Windows&configuration=Windows%20MTLPS_X64_DEBUG
+.. |mtlps_l32r| image:: https://dev.azure.com/slimbootloader/slimbootloader/_apis/build/status/slimbootloader.slimbootloader?branchName=master&jobName=Linux2204&configuration=Linux2204%20MTLPS_X86_RELEASE
