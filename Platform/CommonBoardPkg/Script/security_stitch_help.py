@@ -9,7 +9,6 @@
 import sys
 import os
 import re
-import imp
 import struct
 import shutil
 import glob
