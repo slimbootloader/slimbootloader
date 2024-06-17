@@ -266,7 +266,7 @@ class Board(BaseBoard):
             acm_btm = (acm_btm & 0xFFFC0000)
             self.ACM_SIZE     = acm_top - acm_btm
 
-        self.LOADER_RSVD_MEM_SIZE = 0x500000
+        self.LOADER_RSVD_MEM_SIZE = 0xC00000
         # large BIST test patterns increase heap usage significantly. round to 1MB
         if (2*self.FUSA_SIZE & 0xFFFFF) != 0:
             self.LOADER_RSVD_MEM_SIZE += (2*self.FUSA_SIZE & ~0xFFFFF) + 0x100000
