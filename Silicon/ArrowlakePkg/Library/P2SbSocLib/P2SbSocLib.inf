@@ -1,0 +1,34 @@
+## @file
+# PEI/DXE/SMM P2SB SoC library
+#
+# All function in this library is available for PEI, DXE, and SMM,
+# But do not support UEFI RUNTIME environment call.
+#
+#
+# Copyright (c) 2024, Intel Corporation. All rights reserved.<BR>
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+INF_VERSION = 0x00010017
+BASE_NAME = P2SbSocLib
+FILE_GUID = 3CCF07A8-3947-4749-8E76-15CFDB97BE56
+VERSION_STRING = 1.0
+MODULE_TYPE = BASE
+LIBRARY_CLASS = P2SbSocLib
+
+[LibraryClasses]
+BaseLib
+DebugLib
+#P2SbSidebandAccessLib
+
+[Packages]
+MdePkg/MdePkg.dec
+BootloaderCorePkg/BootloaderCorePkg.dec
+Silicon/ArrowlakePkg/ArrowlakePkg.dec
+
+[Sources]
+P2SbSocLib.c
+
+[Pcd]

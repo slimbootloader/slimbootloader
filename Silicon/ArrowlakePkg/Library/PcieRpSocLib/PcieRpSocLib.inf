@@ -1,0 +1,36 @@
+## @file
+# PCIe SoC library
+#
+# All function in this library is available for PEI, DXE, and SMM,
+# But do not support UEFI RUNTIME environment call.
+#
+#
+# Copyright (c) 2024, Intel Corporation. All rights reserved.<BR>
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+INF_VERSION = 0x00010017
+BASE_NAME = PcieRpSocLib
+FILE_GUID = 59925405-E2A2-44A8-98B9-EDBC4E95BD39
+VERSION_STRING = 1.0
+MODULE_TYPE = BASE
+LIBRARY_CLASS = PcieRpSocLib
+
+[LibraryClasses]
+BaseLib
+IoLib
+DebugLib
+PciSegmentLib
+BaseMemoryLib
+P2SbSocLib
+PchP2sbLib
+
+[Packages]
+MdePkg/MdePkg.dec
+BootloaderCorePkg/BootloaderCorePkg.dec
+Silicon/ArrowlakePkg/ArrowlakePkg.dec
+
+[Sources]
+PcieRpSocLib.c
