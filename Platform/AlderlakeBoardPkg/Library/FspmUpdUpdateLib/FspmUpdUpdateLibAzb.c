@@ -314,6 +314,10 @@ UpdateFspConfig (
   Fspmcfg->RefreshPanicWm       = 0x8;
   Fspmcfg->RefreshHpWm          = 0x7;
 
+  // Hda Audio
+  Fspmcfg->PchHdaAudioLinkDmicEnable[0]   = 0;
+  Fspmcfg->PchHdaAudioLinkDmicEnable[1]   = 0;
+
   Fspmcfg->PlatformDebugConsent           = MemCfgData->PlatformDebugConsent;
   if (Fspmcfg->PlatformDebugConsent != 0) {
     Fspmcfg->DciModphyPg                  = 0;
