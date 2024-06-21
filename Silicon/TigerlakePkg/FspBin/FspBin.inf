@@ -1,7 +1,7 @@
 ## @file
 #  File to describe FSP repo information
 #
-#  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2024, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -11,7 +11,7 @@
 
 [UserExtensions.SBL."CloneRepo"]
   REPO    = https://github.com/intel/FSP.git
-  COMMIT  = cfdf71ddce304e411e46d88f5ef635c6a515a54d
+  COMMIT  = c4af5ac9f627571179879484d93093c31f426c96
 
 [UserExtensions.SBL."CopyList"]
   TigerLakeFspBinPkg/TGL_IOT/Fsp.fd                    : Silicon/TigerlakePkg/FspBin/FspDbg.bin
@@ -22,6 +22,6 @@
   TigerLakeFspBinPkg/TGL_IOT/Include/FspmUpd.h         : Silicon/TigerlakePkg/Include/FspmUpd.h
   TigerLakeFspBinPkg/TGL_IOT/Include/FspsUpd.h         : Silicon/TigerlakePkg/Include/FspsUpd.h
   TigerLakeFspBinPkg/TGL_IOT/Include/MemInfoHob.h      : Silicon/TigerlakePkg/Include/MemInfoHob.h
-  TigerLakeFspBinPkg/TGL_IOT/SampleCode/Vbt/Vbt.bin    : Platform/TigerlakeBoardPkg/VbtBin/Vbt.dat
-  TigerLakeFspBinPkg/TGL_IOT/SampleCode/Vbt/Vbt.json   : Platform/TigerlakeBoardPkg/VbtBin/Vbt.json
+  TigerLakeFspBinPkg/TGL_IOT/Vbt/Vbt.bin               : Platform/TigerlakeBoardPkg/VbtBin/Vbt.dat
+  TigerLakeFspBinPkg/TGL_IOT/Vbt/Vbt.json              : Platform/TigerlakeBoardPkg/VbtBin/Vbt.json
   FSP_License.pdf                                      : Silicon/TigerlakePkg/FspBin/FSP_License.pdf
