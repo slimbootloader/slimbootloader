@@ -497,10 +497,16 @@ SetupBootImage (
       EntryPoint = PayloadInfo.EntryPoint;
       if (IsMultiboot (BootFile->Addr)) {
         DEBUG ((DEBUG_INFO, "and Image is Multiboot format\n"));
-        SetupMultibootInfo (MultiBoot);
+        Status = CheckAndAlignMultibootModules (MultiBoot);
+        if (!EFI_ERROR (Status)) {
+          SetupMultibootInfo (MultiBoot);
+        }
       } else if (IsMultiboot2 (BootFile->Addr)) {
         DEBUG ((DEBUG_INFO, "and Image is Multiboot-2 format\n"));
-        SetupMultiboot2Info (MultiBoot);
+        Status = CheckAndAlignMultiboot2Modules (MultiBoot);
+        if (!EFI_ERROR (Status)) {
+          SetupMultiboot2Info (MultiBoot);
+        }
       }
       MultiBoot->BootState.EntryPoint = (UINT32)(UINTN)EntryPoint;
     }

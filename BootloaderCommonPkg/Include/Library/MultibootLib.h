@@ -297,6 +297,20 @@ SetupMultibootInfo (
   );
 
 /**
+  Align multiboot modules if requested by header.
+
+  @param[in,out] MultiBoot    Point to loaded Multiboot image structure
+
+  @retval  RETURN_SUCCESS     Align modules successfully
+  @retval  Others             There is error when align image
+**/
+EFI_STATUS
+EFIAPI
+CheckAndAlignMultibootModules (
+  IN OUT MULTIBOOT_IMAGE     *MultiBoot
+  );
+
+/**
   ASM inline function that goes from payload to a Multiboot enabled OS.
   @param[in]  State  Boot state structure
  **/
@@ -343,6 +357,20 @@ SetupMultiboot2Image (
 VOID
 EFIAPI
 SetupMultiboot2Info (
+  IN OUT MULTIBOOT_IMAGE     *MultiBoot
+  );
+
+/**
+  Align multiboot modules if requested by module alignment tag.
+
+  @param[in,out] MultiBoot    Point to loaded Multiboot image structure
+
+  @retval  RETURN_SUCCESS     Align modules successfully
+  @retval  Others             There is error when align image
+**/
+EFI_STATUS
+EFIAPI
+CheckAndAlignMultiboot2Modules (
   IN OUT MULTIBOOT_IMAGE     *MultiBoot
   );
 

@@ -346,6 +346,41 @@ AlignMultibootModules (
   return RETURN_SUCCESS;
 }
 
+/**
+  Align multiboot modules if requested by header.
+
+  @param[in,out] MultiBoot    Point to loaded Multiboot image structure
+
+  @retval  RETURN_SUCCESS     Align modules successfully
+  @retval  Others             There is error when align image
+**/
+EFI_STATUS
+EFIAPI
+CheckAndAlignMultibootModules (
+  IN OUT MULTIBOOT_IMAGE     *MultiBoot
+  )
+{
+  EFI_STATUS                 Status;
+  CONST MULTIBOOT_HEADER     *MbHeader;
+
+  if (MultiBoot == NULL) {
+    return RETURN_INVALID_PARAMETER;
+  }
+
+  MbHeader = GetMultibootHeader (MultiBoot->BootFile.Addr);
+  if (MbHeader == NULL) {
+    return RETURN_LOAD_ERROR;
+  }
+
+  if ((MbHeader->Flags & MULTIBOOT_HEADER_MODS_ALIGNED) != 0) {
+    // Modules should be page (4KB) aligned
+    Status = AlignMultibootModules (MultiBoot);
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
+  }
+  return EFI_SUCCESS;
+}
 
 /**
   Setup Multiboot image and its boot info.

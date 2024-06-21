@@ -424,6 +424,54 @@ ParseMultiboot2Header (
 }
 
 /**
+  Align multiboot modules if requested by module alignment tag.
+
+  @param[in,out] MultiBoot    Point to loaded Multiboot image structure
+
+  @retval  RETURN_SUCCESS     Align modules successfully
+  @retval  Others             There is error when align image
+**/
+EFI_STATUS
+EFIAPI
+CheckAndAlignMultiboot2Modules (
+  IN OUT MULTIBOOT_IMAGE     *MultiBoot
+  )
+{
+  EFI_STATUS                 Status;
+  BOOLEAN                    AlignModules;
+  UINT8                      *HeaderAddr;
+  UINT8                      *LoadAddr;
+  UINT8                      *LoadEnd;
+  UINT8                      *BssEnd;
+  UINT32                     EntryPoint;
+  CONST struct multiboot2_header     *MbHeader;
+
+  if (MultiBoot == NULL) {
+    return RETURN_INVALID_PARAMETER;
+  }
+
+  MbHeader = GetMultiboot2Header (MultiBoot->BootFile.Addr);
+  if (MbHeader == NULL) {
+    return RETURN_LOAD_ERROR;
+  }
+
+  Status = ParseMultiboot2Header (MbHeader, &AlignModules, &HeaderAddr, &LoadAddr, &LoadEnd, &BssEnd, &EntryPoint);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  if (AlignModules) {
+    // Modules should be page (4KB) aligned
+    Status = AlignMultibootModules (MultiBoot);
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
   Setup Multiboot image and its boot info.
 
   @param[in,out] MultiBoot   Point to loaded Multiboot image structure
