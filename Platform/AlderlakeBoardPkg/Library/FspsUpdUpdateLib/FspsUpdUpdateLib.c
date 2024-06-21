@@ -708,7 +708,7 @@ UpdateFspConfig (
     }
 
     // SPI
-    FspsConfig->SerialIoSpiMode[1] = 0x1;
+    CopyMem (&FspsConfig->SerialIoSpiMode, SiCfgData->SerialIoSpiMode, sizeof(SiCfgData->SerialIoSpiMode));
     CopyMem (&FspsConfig->SerialIoSpiCsPolarity, SiCfgData->SerialIoSpiCsPolarity, sizeof(SiCfgData->SerialIoSpiCsPolarity));
 
     // I2C
