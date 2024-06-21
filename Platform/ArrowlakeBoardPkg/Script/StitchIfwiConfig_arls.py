@@ -48,7 +48,7 @@ def get_bpmgen2_params_change_list ():
       # variable                | value |
       # ===================================
       ('PlatformRules',         'ARL Client'),
-      ('BpmStrutVersion',       '0x20'),
+      ('BpmStrutVersion',       '0x25'),
       ('BpmRevision',           '0x01'),
       ('BpmRevocation',         '1'),
       ('AcmRevocation',         '2'),
@@ -65,6 +65,7 @@ def get_bpmgen2_params_change_list ():
       ('BpmSigPrivKey',         r'BpmGen2/keys/bpm_privkey_3072.pem'),
       ('BpmKeySizeBits',        '3072'),
       ('BpmSigHashAlgID',       '0x0C:SHA384'),
+      ('CnbsInclude',           'TRUE'),
       ])
     return params_change_list
 
