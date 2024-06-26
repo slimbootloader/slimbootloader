@@ -1,0 +1,25 @@
+## @file
+#  File to describe FSP repo information
+#
+#  Copyright (c) 2020 - 2024, Intel Corporation. All rights reserved.<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+##
+
+
+[UserExtensions.SBL."CloneRepo"]
+  REPO    = https://github.com/intel/FSP.git
+  COMMIT  = 41e45901ce203fd454edc99077e4cc426e90fb8b
+
+[UserExtensions.SBL."CopyList"]
+# For AZB
+  AlderLakeFspBinPkg/IoT/ArizonaBeach/Fsp.fd                             : Silicon/AlderlakePkg/Azb/FspBin/FspDbg.bin
+  AlderLakeFspBinPkg/IoT/ArizonaBeach/Fsp.fd                             : Silicon/AlderlakePkg/Azb/FspBin/FspRel.bin
+  AlderLakeFspBinPkg/IoT/ArizonaBeach/Fsp.bsf                            : Silicon/AlderlakePkg/Azb/FspBin/Fsp.bsf
+  AlderLakeFspBinPkg/IoT/ArizonaBeach/Include/FspUpd.h                   : Silicon/AlderlakePkg/Azb/Include/FspUpd.h
+  AlderLakeFspBinPkg/IoT/ArizonaBeach/Include/FsptUpd.h                  : Silicon/AlderlakePkg/Azb/Include/FsptUpd.h
+  AlderLakeFspBinPkg/IoT/ArizonaBeach/Include/FspmUpd.h                  : Silicon/AlderlakePkg/Azb/Include/FspmUpd.h
+  AlderLakeFspBinPkg/IoT/ArizonaBeach/Include/FspsUpd.h                  : Silicon/AlderlakePkg/Azb/Include/FspsUpd.h
+  FSP_License.pdf                                                        : Silicon/AlderlakePkg/Azb/FspBin/FSP_License.pdf

@@ -36,6 +36,7 @@ class Board(BaseBoard):
         self._EXTRA_INC_PATH      = ['Silicon/AlderlakePkg/Adls/Include']
         self._FSP_PATH_NAME       =  'Silicon/AlderlakePkg/Adls/FspBin'
         self.MICROCODE_INF_FILE   = 'Silicon/AlderlakePkg/Microcode/Microcode.inf'
+        self.FSP_INF_FILE         = 'Silicon/AlderlakePkg/FspBin/FspBinIpu.inf'
         self.ACPI_TABLE_INF_FILE  = 'Platform/AlderlakeBoardPkg/AcpiTables/AcpiTables.inf'
         self._LP_SUPPORT          = False
         self._N_SUPPORT           = False
