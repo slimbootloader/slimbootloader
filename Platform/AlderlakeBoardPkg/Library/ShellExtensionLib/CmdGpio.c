@@ -188,7 +188,7 @@ GpioPadcalc(
   if (IsPchS()) {
     GpioPad = (PinNumber | (GroupIndex << 16)) | (GPIO_VER4_S_CHIPSET_ID << 24);
   }
-  else if (IsPchP()) {
+  else if (IsPchP() || IsPchN()) {
     GpioPad = (PinNumber | (GroupIndex << 16)) | (GPIO_VER2_LP_CHIPSET_ID << 24);
   }
   else {
