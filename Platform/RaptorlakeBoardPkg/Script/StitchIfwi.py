@@ -203,7 +203,7 @@ def get_para_list (plt_para):
 def main():
     hexstr = lambda x: int(x, 16)
     ap = argparse.ArgumentParser()
-    ap.add_argument('-p', dest='platform', choices = ['rpls', 'rplp'], default = 'rpls', help='specify platform sku to stitch')
+    ap.add_argument('-p', dest='platform', choices = ['rpls', 'rplp', 'rplps'], default = 'rpls', help='specify platform sku to stitch')
     ap.add_argument('-w', dest='work_dir', default = '', help='specify stitch workspace directory, CSME tools and ingredients should be here')
     ap.add_argument('-c', dest='config_file', type=str, required=True, help='specify the platform specific stitch config file')
     ap.add_argument('-s', dest='sbl_file', type=str, default='stitch_Components.zip', help='specify slim bootloader file or generate zip file')
@@ -250,6 +250,17 @@ def main():
     generated_ifwi_file = os.path.join(work_dir, 'Temp', 'Ifwi.bin')
 
     if 'dual' in plt_params_list:
+        if args.platform == 'rplps':
+            print ("Copy dual IFWI images to root")
+            ifwi_4MB_file_name = os.path.join(args.outpath,'sbl_ifwi_%s_4MB.bin' % (args.platform))
+            ifwi_32MB_file_name = os.path.join(args.outpath,'sbl_ifwi_%s_32MB.bin' % (args.platform))
+            generated4MB_ifwi_file = os.path.join(work_dir, 'Temp', 'Ifwi1.bin')
+            generated32MB_ifwi_file = os.path.join(work_dir, 'Temp', 'Ifwi2.bin')
+            if not os.path.exists (generated4MB_ifwi_file):
+                generated4MB_ifwi_file = os.path.join(work_dir, 'Temp', 'Temp', 'Ifwi1.bin')
+                generated32MB_ifwi_file = os.path.join(work_dir, 'Temp', 'Temp', 'Ifwi2.bin')
+            shutil.copy(generated4MB_ifwi_file, ifwi_4MB_file_name)
+            shutil.copy(generated32MB_ifwi_file, ifwi_32MB_file_name)
         if args.platform == 'rplp':
             print ("Copy dual IFWI images to root")
             ifwi_1_file_name = os.path.join(args.outpath,'sbl_ifwi_%s_cs0.bin' % (args.platform))
