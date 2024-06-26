@@ -529,7 +529,7 @@ UpdateFspConfig (
       Fspmcfg->EnablePwrDn = 0x0;
       Fspmcfg->EnablePwrDnLpddr = 0x0;
       Fspmcfg->SrefCfgEna = 0x0;
-      Fspmcfg->WdtDisableAndLock = 0x1; // Remove this later if any issues
+      Fspmcfg->WdtDisableAndLock = 0x0; // Remove this later if any issues
       break;
   }
 }
