@@ -255,13 +255,13 @@ class Board(BaseBoard):
         if self.FUSA_SUPPORT:
             # FuSa validation requires prebuilt images that can boot OS Loader Ubuntu
             self.PLD_HEAP_SIZE    = 0x09000000
-
+        self.DIAGNOSTICACM_SIZE   = 0x00001000
         self.KM_SIZE              = 0x00000400
         self.BPM_SIZE             = 0x00000600
         self.ACM_SIZE             = 0x00040000 + self.KM_SIZE + self.BPM_SIZE
         # adjust ACM_SIZE to meet 256KB alignment (to align 256KB ACM size)
         if self.ACM_SIZE > 0:
-            acm_top = self.FLASH_LAYOUT_START - self.STAGE1A_SIZE
+            acm_top = self.FLASH_LAYOUT_START - self.STAGE1A_SIZE - self.DIAGNOSTICACM_SIZE
             acm_btm = acm_top - self.ACM_SIZE
             acm_btm = (acm_btm & 0xFFFC0000)
             self.ACM_SIZE     = acm_top - acm_btm
@@ -563,6 +563,7 @@ class Board(BaseBoard):
 
         acm_flag = 0 if self.ACM_SIZE > 0 else STITCH_OPS.MODE_FILE_IGNOR
         fwu_flag = 0 if self.ENABLE_FWU else STITCH_OPS.MODE_FILE_IGNOR
+        diagnosticacm_flag = 0 if self.DIAGNOSTICACM_SIZE > 0 else STITCH_OPS.MODE_FILE_IGNOR
         cfg_flag = 0 if len(self._CFGDATA_EXT_FILE) > 0 and self.CFGDATA_REGION_TYPE == FLASH_REGION_TYPE.BIOS else STITCH_OPS.MODE_FILE_IGNOR
 
         if len(self._CFGDATA_EXT_FILE) > 0 and self.CFGDATA_REGION_TYPE == FLASH_REGION_TYPE.PLATFORMDATA:
@@ -650,11 +651,13 @@ class Board(BaseBoard):
                 ),
                 ('TOP_SWAP_A.bin', [
                     ('ACM.bin'      ,  ''        , self.ACM_SIZE,      STITCH_OPS.MODE_FILE_NOP | acm_flag, STITCH_OPS.MODE_POS_TAIL),
+                    ('DIAGNOSTICACM.bin',  '',     self.DIAGNOSTICACM_SIZE,     STITCH_OPS.MODE_FILE_NOP | diagnosticacm_flag, STITCH_OPS.MODE_POS_TAIL),
                     ('STAGE1A_A.fd'      , ''    , self.STAGE1A_SIZE,  STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
                     ]
                 ),
                 ('TOP_SWAP_B.bin', [
                     ('ACM.bin'      ,  ''        , self.ACM_SIZE,      STITCH_OPS.MODE_FILE_NOP | acm_flag, STITCH_OPS.MODE_POS_TAIL),
+                    ('DIAGNOSTICACM.bin',  ''    , self.DIAGNOSTICACM_SIZE, STITCH_OPS.MODE_FILE_NOP | diagnosticacm_flag, STITCH_OPS.MODE_POS_TAIL),
                     ('STAGE1A_B.fd'      , ''    , self.STAGE1A_SIZE,  STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
                     ]
                 ),

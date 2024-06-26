@@ -79,6 +79,8 @@ def get_component_replace_list(plt_params_list):
        #    Path                   file name              compress    Key                           SVN
       ('IFWI/BIOS/TS0/ACM0',      'Input/acm0.bin',        'dummy',    '',                            ''),
       ('IFWI/BIOS/TS1/ACM0',      'Input/acm0.bin',        'dummy',    '',                            ''),
+      ('IFWI/BIOS/TS0/DACM',      'Input/DiagnosticAcm.bin', 'dummy',      '',                        ''),
+      ('IFWI/BIOS/TS1/DACM',      'Input/DiagnosticAcm.bin', 'dummy',      '',                        ''),
        ]
 
     if 'tsn' in plt_params_list:
