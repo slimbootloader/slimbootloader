@@ -244,8 +244,8 @@ UpdateFspConfig (
 
   // Smbus
   Fspmcfg->SmbusEnable                = MemCfgData->SmbusEnable;
-  Fspmcfg->PchNumRsvdSmbusAddresses   = MemCfgData->PchNumRsvdSmbusAddresses;
-  Fspmcfg->RsvdSmbusAddressTablePtr   = MemCfgData->RsvdSmbusAddressTablePtr;
+  Fspmcfg->PchNumRsvdSmbusAddresses   = sizeof (MemCfgData->RsvdSmbusAddressTablePtr) / sizeof (MemCfgData->RsvdSmbusAddressTablePtr[0]);
+  Fspmcfg->RsvdSmbusAddressTablePtr   = (UINT32)(UINTN)MemCfgData->RsvdSmbusAddressTablePtr;
 
   // Overclocking Cfg
   Fspmcfg->RealtimeMemoryTiming       = MemCfgData->RealtimeMemoryTiming;

@@ -2,7 +2,7 @@
 #
 #  Slim Bootloader CFGDATA Option File.
 #
-#  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2024, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -529,20 +529,13 @@
                      Enable/disable SMBus controller.
       length       : 0x01
       value        : 0x01
-  - PchNumRsvdSmbusAddresses :
-      name         : Number of RsvdSmbusAddressTable.
-      type         : EditNum, HEX, (0x0, 0xFF)
-      help         : >
-                     The number of elements in the RsvdSmbusAddressTable.
-      length       : 0x0001
-      value        : 0x04
   - RsvdSmbusAddressTablePtr :
-      name         : Point of RsvdSmbusAddressTable
+      name         : Reserved SMBUS address table
       type         : EditNum, HEX, (0x0, 0xFFFFFFFF)
       help         : >
                      Array of addresses reserved for non-ARP-capable SMBus devices.
-      length       : 0x0004
-      value        : 0xfffc3ff8
+      length       : 0x04
+      value        : { 0xA2, 0xA0, 0xA2, 0xA0 }
   - RealtimeMemoryTiming :
       name         : Realtime Memory Timing
       type         : Combo
@@ -1083,5 +1076,5 @@
       length       : 0x01
       value        : 0x00
   - Dummy        :
-      length      : 0x01
+      length      : 0x02
       value       : 0x00
