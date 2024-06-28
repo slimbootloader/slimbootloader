@@ -19,7 +19,11 @@ Scope(\_SB) {
         Return("PNP0C02")
       }
 
+#if FixedPcdGetBool(PcdAdlNSupport) == 1
+      Return(GPIO_VER2_N_ACPI_HID)
+#else
       Return(GPIO_VER2_P_ACPI_HID)
+#endif
     }
 
     Name (LINK,"\\_SB.GPI0")
