@@ -65,6 +65,7 @@
 
 [FixedPcd]
   gPlatformAlderLakeTokenSpaceGuid.PcdAdlNSupport
+  gPlatformAlderLakeTokenSpaceGuid.PcdAdlLpSupport
 
 [Binaries.IA32]
   BIN|Dsdt/NhltConf2DmicX4_38_4.bin
