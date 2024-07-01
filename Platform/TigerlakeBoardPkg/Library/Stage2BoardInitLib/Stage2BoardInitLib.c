@@ -1703,9 +1703,20 @@ UpdateOsBootMediumInfo (
   UINT16                                  Bus;
   volatile PCI_DEVICE_INDEPENDENT_REGION *PciDev;
   UINT8                                  Instance;
+  OS_BOOT_OPTION                         *BootOption;
+  UINT32                                 Idx;
 
   FillBootOptionListFromCfgData (OsBootOptionList);
 
+  // Disable PreOS checker if Fusa is not enabled.
+  if (!FeaturePcdGet (PcdFusaEnabled)) {
+    for (Idx = 0; Idx < OsBootOptionList->OsBootOptionCount; Idx++) {
+      BootOption = &(OsBootOptionList->OsBootOption[Idx]);
+      if ((BootOption->BootFlags & BOOT_FLAGS_PREOS) != 0) {
+        BootOption->BootFlags &= ~BOOT_FLAGS_PREOS;
+      }
+    }
+  }
   //
   // Depends on the PCI root bridge, pluged PCI devices, the bus number for NVMe device
   // might be different. so update the NVMe bus number in the device table.
