@@ -248,7 +248,7 @@ class Board(BaseBoard):
         self.SLIMBOOTLOADER_SIZE  = (self.TOP_SWAP_SIZE + self.REDUNDANT_SIZE) * 2 + \
                                     self.NON_REDUNDANT_SIZE + self.NON_VOLATILE_SIZE
         self.SLIMBOOTLOADER_SIZE  = ((self.SLIMBOOTLOADER_SIZE + 0xFFFFF) & ~0xFFFFF)
-        self.PLD_HEAP_SIZE        = 0x04000000
+        self.PLD_HEAP_SIZE        = 0x09000000
         self.PLD_STACK_SIZE       = 0x00020000
         self.PLD_RSVD_MEM_SIZE    = 0x00500000
 
@@ -286,7 +286,7 @@ class Board(BaseBoard):
         self._generated_cfg_file_prefix = 'Autogen_'
 
         self._CFGDATA_INT_FILE = []
-        self._CFGDATA_EXT_FILE = [self._generated_cfg_file_prefix + 'CfgDataInt_Rplp_Rvp_Ddr5.dlt', self._generated_cfg_file_prefix + 'CfgDataInt_Rplp_Rvp_Lpddr5.dlt', self._generated_cfg_file_prefix + 'CfgDataInt_Rplp_Crb_Ddr5.dlt']
+        self._CFGDATA_EXT_FILE = [self._generated_cfg_file_prefix + 'CfgDataInt_Rplp_Rvp_Ddr5.dlt', self._generated_cfg_file_prefix + 'CfgDataInt_Rplp_Rvp_Lpddr5.dlt', self._generated_cfg_file_prefix + 'CfgDataInt_Rplp_Crb_Ddr5.dlt', self._generated_cfg_file_prefix + 'CfgDataExt_Rplp_Upx12.dlt']
 
     def PlatformBuildHook (self, build, phase):
         global fv_dir
