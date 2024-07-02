@@ -351,7 +351,7 @@ UpdateFspConfig (
     DEBUG((DEBUG_INFO, "BoardIdArlHSODimm1DCRB board Id %x .....\n", BoardId));
     CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mArlhDdr5SODimmSbsCrbRowDisplayDdiConfig, sizeof(mArlhDdr5SODimmSbsCrbRowDisplayDdiConfig));
     break;
-   case PLATFORM_ID_ARL_H_DDR5_Rvp:
+   case PLATFORM_ID_ARL_H_DDR5_RVP:
     DEBUG((DEBUG_INFO, "BoardIdArlHSODimm1DRvp board Id %x .....\n", BoardId));
     CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mArlhDdr5SODimmSbsRvpRowDisplayDdiConfig, sizeof(mArlhDdr5SODimmSbsRvpRowDisplayDdiConfig));
     break;

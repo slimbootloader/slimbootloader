@@ -20,6 +20,7 @@
 #include <Library/MtlSocGpioTopologyLib.h>
 #include "GpioTableArlSPostMem.h"
 #include "GpioTableArlhPostMem.h"
+#include "GpioTableArlhRvpPostMem.h"
 #include <Library/MtlPchGpioTopologyLib.h>
 #include <Library/MtlSocInfoLib.h>
 
@@ -353,6 +354,13 @@ BoardInit (
         DEBUG ((DEBUG_ERROR, "GPIO table size: %x  \n",sizeof (mGpioTablePostMemArlHSbsCrbDimm) / sizeof (mGpioTablePostMemArlHSbsCrbDimm[0])));
         MtlSocInstallCommunityAccess(CommunityAccess);
         GPIOTableV2 = mGpioTablePostMemArlHSbsCrbDimm;
+        GpioInit (GPIOTableV2);
+        break;
+      case PLATFORM_ID_ARL_H_DDR5_RVP:
+        DEBUG ((DEBUG_ERROR, "The platform id is : 0x%X!\n", GetPlatformId ()));
+        DEBUG ((DEBUG_ERROR, "GPIO table size: %x  \n",sizeof (mGpioTablePostMemArlHRvpSbsCrbDimm) / sizeof (mGpioTablePostMemArlHRvpSbsCrbDimm[0])));
+        MtlSocInstallCommunityAccess(CommunityAccess);
+        GPIOTableV2 = mGpioTablePostMemArlHRvpSbsCrbDimm;
         GpioInit (GPIOTableV2);
         break;
       default:
