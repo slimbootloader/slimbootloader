@@ -75,7 +75,7 @@ class Board(BaseBoard):
         self.ENABLE_DTS           = 1
         self.ENABLE_PCIE_PM       = 1
         self.ENABLE_FAST_BOOT     = 0
-        self.HAVE_FUSA            = 1
+        self.HAVE_FUSA            = 0
         # 0: Disable  1: Enable  2: Auto (disable for UEFI payload, enable for others)
         self.ENABLE_SMM_REBASE     = 2
 
