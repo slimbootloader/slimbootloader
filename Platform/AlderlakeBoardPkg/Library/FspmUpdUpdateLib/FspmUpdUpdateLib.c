@@ -621,6 +621,7 @@ UpdateFspConfig (
         Fspmcfg->Lp5CccConfig = 0xff;
         break;
       case PLATFORM_ID_ADL_P_UPXI12:
+      case PLATFORM_ID_RPL_P_UPXI12:
         Fspmcfg->Lp5CccConfig = 0xff;
         Fspmcfg->DdiPortBConfig = 1;
         Fspmcfg->DdiPortBHpd = 1;
@@ -725,6 +726,7 @@ UpdateFspConfig (
         case PLATFORM_ID_ADL_P_DDR5_RVP:
         case PLATFORM_ID_ADL_P_UPXI12:
         case PLATFORM_ID_ADL_N_UP7EN50:
+        case PLATFORM_ID_RPL_P_UPXI12:
           Fspmcfg->PchIshEnable       = 1;
       }
     }
