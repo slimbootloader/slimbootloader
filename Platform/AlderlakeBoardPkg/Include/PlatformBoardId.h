@@ -44,6 +44,8 @@ Defines Platform BoardIds
 #define BoardIdAdlpUpXtremei12                        0x04
 #define PLATFORM_ID_ADL_P_UPXI12                      0x04
 
+#define PLATFORM_ID_RPL_P_UPXI12                      0x14
+
 // AlderLake-S & ADP-S Boards
 #define BoardIdAdlSAdpSDdr4UDimm2DCrb                 0x27
 #define PLATFORM_ID_ADL_S_ADP_S_CRB                   0x17
