@@ -8,6 +8,21 @@
 #ifndef _PCH_LIMITS_H_
 #define _PCH_LIMITS_H_
 
+//
+// PCIe limits
+//
+#define PCH_MAX_PCIE_ROOT_PORTS             24
+#define PCH_MAX_PCIE_CONTROLLERS            6
+
+//
+// PCIe clocks limits
+//
+#define PCH_MAX_PCIE_CLOCKS                 16
+
+//
+// DMI lanes
+//
+#define PCH_MAX_DMI_LANES                   8
 
 //
 // SATA limits

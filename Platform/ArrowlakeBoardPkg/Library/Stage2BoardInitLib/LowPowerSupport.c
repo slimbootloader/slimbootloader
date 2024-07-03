@@ -17,6 +17,7 @@
 #include <Library/ConfigDataLib.h>
 #include <Library/DebugLib.h>
 #include <IndustryStandard/Pci30.h>
+#include <CpuPcieInfo.h>
 #include <Library/BaseMemoryLib.h>
 
 #define PCI_MAX_FUNC    7
@@ -157,6 +158,10 @@ UINT64 GetLowPowerS0IdleConstraint(VOID)
     //
     if (PciRead16 (PCI_SEGMENT_LIB_ADDRESS (0, GNA_BUS_NUM, GNA_DEV_NUM, GNA_FUN_NUM, PCI_VENDOR_ID_OFFSET)) == 0xFFFF) {
       PepConfigData->PepGna = 0;
+    }
+
+    if (PciRead16 (PCI_SEGMENT_LIB_ADDRESS (0, SA_PEG_BUS_NUM, SA_PEG1_DEV_NUM, SA_PEG0_FUN_NUM, PCI_VENDOR_ID_OFFSET)) == 0xFFFF) {
+      PepConfigData->PepPcieDg = 0;
     }
     //
     //Disable PEP constraint if VMD B0:D14:F0 device is not present

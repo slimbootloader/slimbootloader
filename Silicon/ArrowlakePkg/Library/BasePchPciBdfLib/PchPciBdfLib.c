@@ -1445,6 +1445,20 @@ PchPcieRpFuncNumber (
   return (UINT8)Function;
 }
 
+UINT64
+PchPcieRpPciCfgBase (
+  IN  UINT32   RpIndex
+  )
+{
+  return PCI_SEGMENT_LIB_ADDRESS (
+          DEFAULT_PCI_SEGMENT_NUMBER_PCH,
+          DEFAULT_PCI_BUS_NUMBER_PCH,
+          PchPcieRpDevNumber (RpIndex),
+          PchPcieRpFuncNumber (RpIndex),
+          0
+          );
+}
+
 /**
   Get HECI1 PCI device number
 

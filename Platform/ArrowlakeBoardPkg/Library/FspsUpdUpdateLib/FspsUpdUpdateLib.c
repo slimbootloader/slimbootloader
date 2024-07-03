@@ -36,6 +36,7 @@
 #include <Library/ContainerLib.h>
 #include "TsnSubRegion.h"
 #include <Library/MtlSocInfoLib.h>
+#include <Library/PciePm.h>
 
 #define CPU_PCIE_DT_HALO_MAX_ROOT_PORT     3
 #define CPU_PCIE_ULT_ULX_MAX_ROOT_PORT     3
@@ -788,21 +789,175 @@ UpdateFspConfig (
       FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[1] = 0x5;
       FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[2] = 0x5;
       FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[4] = 0x5;
+      FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[5] = 0x5;
+      FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[6] = 0x5;
+      FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[7] = 0x5;
+      FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[8] = 0x5;
+      FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[9] = 0x5;
+      FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[10] = 0x5;
+      FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[11] = 0x5;
+      FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[12] = 0x5;
+      FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[13] = 0x5;
+      FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[14] = 0x5;
+      FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[15] = 0x5;
+      FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[16] = 0x5;
+      FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[17] = 0x5;
+      FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[18] = 0x5;
+      FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[19] = 0x5;
+      FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[20] = 0x5;
+      FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[21] = 0x5;
+      FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[22] = 0x5;
+      FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[23] = 0x5;
+      FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[24] = 0x5;
+      FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[25] = 0x5;
+      FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[26] = 0x5;
+      FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[27] = 0x5;
+      FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[28] = 0x5;
       FspsConfig->PcieGen4EqPh3Preset3List[0] = 0x8;
       FspsConfig->PcieGen4EqPh3Preset3List[1] = 0x8;
       FspsConfig->PcieGen4EqPh3Preset3List[2] = 0x8;
       FspsConfig->PcieGen4EqPh3Preset3List[4] = 0x8;
+      FspsConfig->PcieGen4EqPh3Preset3List[5] = 0x7;
+      FspsConfig->PcieGen4EqPh3Preset3List[6] = 0x7;
+      FspsConfig->PcieGen4EqPh3Preset3List[7] = 0x7;
+      FspsConfig->PcieGen4EqPh3Preset3List[8] = 0x7;
+      FspsConfig->PcieGen4EqPh3Preset3List[9] = 0x7;
+      FspsConfig->PcieGen4EqPh3Preset3List[10] = 0x7;
+      FspsConfig->PcieGen4EqPh3Preset3List[11] = 0x7;
+      FspsConfig->PcieGen4EqPh3Preset3List[12] = 0x7;
+      FspsConfig->PcieGen4EqPh3Preset3List[13] = 0x7;
+      FspsConfig->PcieGen4EqPh3Preset3List[14] = 0x7;
+      FspsConfig->PcieGen4EqPh3Preset3List[15] = 0x7;
+      FspsConfig->PcieGen4EqPh3Preset3List[16] = 0x7;
+      FspsConfig->PcieGen4EqPh3Preset3List[17] = 0x7;
+      FspsConfig->PcieGen4EqPh3Preset3List[18] = 0x7;
+      FspsConfig->PcieGen4EqPh3Preset3List[19] = 0x7;
+      FspsConfig->PcieGen4EqPh3Preset3List[20] = 0x7;
+      FspsConfig->PcieGen4EqPh3Preset3List[21] = 0x7;
+      FspsConfig->PcieGen4EqPh3Preset3List[22] = 0x7;
+      FspsConfig->PcieGen4EqPh3Preset3List[23] = 0x7;
+      FspsConfig->PcieGen4EqPh3Preset3List[24] = 0x7;
+      FspsConfig->PcieGen4EqPh3Preset3List[25] = 0x7;
+      FspsConfig->PcieGen4EqPh3Preset3List[26] = 0x7;
+      FspsConfig->PcieGen4EqPh3Preset3List[27] = 0x7;
+      FspsConfig->PcieGen4EqPh3Preset3List[28] = 0x7;
       FspsConfig->PcieGen4EqPh3Preset4List[0] = 0x9;
       FspsConfig->PcieGen4EqPh3Preset4List[1] = 0x9;
       FspsConfig->PcieGen4EqPh3Preset4List[2] = 0x9;
       FspsConfig->PcieGen4EqPh3Preset4List[4] = 0x9;
+      FspsConfig->PcieGen4EqPh3Preset4List[5] = 0x8;
+      FspsConfig->PcieGen4EqPh3Preset4List[6] = 0x8;
+      FspsConfig->PcieGen4EqPh3Preset4List[7] = 0x8;
+      FspsConfig->PcieGen4EqPh3Preset4List[8] = 0x8;
+      FspsConfig->PcieGen4EqPh3Preset4List[9] = 0x8;
+      FspsConfig->PcieGen4EqPh3Preset4List[10] = 0x8;
+      FspsConfig->PcieGen4EqPh3Preset4List[11] = 0x8;
+      FspsConfig->PcieGen4EqPh3Preset4List[12] = 0x8;
+      FspsConfig->PcieGen4EqPh3Preset4List[13] = 0x8;
+      FspsConfig->PcieGen4EqPh3Preset4List[14] = 0x8;
+      FspsConfig->PcieGen4EqPh3Preset4List[15] = 0x8;
+      FspsConfig->PcieGen4EqPh3Preset4List[16] = 0x8;
+      FspsConfig->PcieGen4EqPh3Preset4List[17] = 0x8;
+      FspsConfig->PcieGen4EqPh3Preset4List[18] = 0x8;
+      FspsConfig->PcieGen4EqPh3Preset4List[19] = 0x8;
+      FspsConfig->PcieGen4EqPh3Preset4List[20] = 0x8;
+      FspsConfig->PcieGen4EqPh3Preset4List[21] = 0x8;
+      FspsConfig->PcieGen4EqPh3Preset4List[22] = 0x8;
+      FspsConfig->PcieGen4EqPh3Preset4List[23] = 0x8;
+      FspsConfig->PcieGen4EqPh3Preset4List[24] = 0x8;
+      FspsConfig->PcieGen4EqPh3Preset4List[25] = 0x8;
+      FspsConfig->PcieGen4EqPh3Preset4List[26] = 0x8;
+      FspsConfig->PcieGen4EqPh3Preset4List[27] = 0x8;
+      FspsConfig->PcieGen4EqPh3Preset4List[28] = 0x8;
       FspsConfig->PcieGen4EqPh1UpTxPreset[0] = 0x7;
       FspsConfig->PcieGen4EqPh1UpTxPreset[1] = 0x7;
       FspsConfig->PcieGen4EqPh1UpTxPreset[2] = 0x7;
       FspsConfig->PcieGen4EqPh1UpTxPreset[4] = 0x7;
+      FspsConfig->Usb2OverCurrentPin[0] = 0x3;
+      FspsConfig->Usb2OverCurrentPin[5] = 0x3;
+      FspsConfig->Usb3OverCurrentPin[1] = 0x1;
+      FspsConfig->Usb3OverCurrentPin[3] = 0x2;
+      FspsConfig->Usb3OverCurrentPin[5] = 0x0;
+      FspsConfig->Usb3OverCurrentPin[7] = 0x4;
+      FspsConfig->Usb3OverCurrentPin[8] = 0x1;
+      FspsConfig->Usb3OverCurrentPin[9] = 0x1;
       FspsConfig->Usb4CmMode                 = 0x0;
     break;
   }
+
+
+  FspsConfig->PcieRpLtrEnable[0] = 0x1;
+  FspsConfig->PcieRpLtrEnable[2] = 0x1;
+  FspsConfig->PcieRpLtrEnable[3] = 0x1;
+  FspsConfig->PcieRpLtrEnable[4] = 0x1;
+  FspsConfig->PcieRpLtrEnable[5] = 0x1;
+  FspsConfig->PcieRpAspm[0] = 0x4;
+  FspsConfig->PcieRpAspm[1] = 0x4;
+  FspsConfig->PcieRpAspm[2] = 0x4;
+  FspsConfig->PchPmSlpS3MinAssert = 0x3;
+  FspsConfig->PchPmSlpSusMinAssert = 0x4;
+  FspsConfig->PchPmSlpAMinAssert = 0x4;
+  FspsConfig->EnableTimedGpio0 = 0x0;
+  FspsConfig->EnableTimedGpio1 = 0x0;
+  FspsConfig->PcieRpAdvancedErrorReporting[0] = 0x0;
+  FspsConfig->PcieRpAdvancedErrorReporting[1] = 0x0;
+  FspsConfig->PcieRpAdvancedErrorReporting[2] = 0x0;
+  FspsConfig->PcieRpAdvancedErrorReporting[3] = 0x0;
+  FspsConfig->PcieRpAdvancedErrorReporting[4] = 0x0;
+  FspsConfig->PcieRpAdvancedErrorReporting[5] = 0x0;
+  FspsConfig->PcieRpAdvancedErrorReporting[6] = 0x0;
+  FspsConfig->PcieRpAdvancedErrorReporting[7] = 0x0;
+  FspsConfig->PcieRpAdvancedErrorReporting[8] = 0x0;
+  FspsConfig->PcieRpAdvancedErrorReporting[9] = 0x0;
+  FspsConfig->PcieRpAdvancedErrorReporting[10] = 0x0;
+  FspsConfig->PcieRpAdvancedErrorReporting[11] = 0x0;
+  FspsConfig->PcieRpAdvancedErrorReporting[12] = 0x0;
+  FspsConfig->PcieRpAdvancedErrorReporting[13] = 0x0;
+  FspsConfig->PcieRpAdvancedErrorReporting[14] = 0x0;
+  FspsConfig->PcieRpAdvancedErrorReporting[15] = 0x0;
+  FspsConfig->PcieRpAdvancedErrorReporting[16] = 0x0;
+  FspsConfig->PcieRpAdvancedErrorReporting[17] = 0x0;
+  FspsConfig->PcieRpAdvancedErrorReporting[18] = 0x0;
+  FspsConfig->PcieRpAdvancedErrorReporting[19] = 0x0;
+  FspsConfig->PcieRpAdvancedErrorReporting[20] = 0x0;
+  FspsConfig->PcieRpAdvancedErrorReporting[21] = 0x0;
+  FspsConfig->PcieRpAdvancedErrorReporting[22] = 0x0;
+  FspsConfig->PcieRpAdvancedErrorReporting[23] = 0x0;
+  FspsConfig->PcieRpAdvancedErrorReporting[24] = 0x0;
+  FspsConfig->PcieRpAdvancedErrorReporting[25] = 0x0;
+  FspsConfig->PcieRpAdvancedErrorReporting[26] = 0x0;
+  FspsConfig->PcieRpAdvancedErrorReporting[27] = 0x0;
+  FspsConfig->PcieRpAdvancedErrorReporting[28] = 0x0;
+  FspsConfig->PcieEnablePeerMemoryWrite[0] = 0x0;
+  FspsConfig->PcieEnablePeerMemoryWrite[1] = 0x0;
+  FspsConfig->PcieEnablePeerMemoryWrite[2] = 0x0;
+  FspsConfig->PcieEnablePeerMemoryWrite[3] = 0x0;
+  FspsConfig->PcieEnablePeerMemoryWrite[4] = 0x0;
+  FspsConfig->PcieEnablePeerMemoryWrite[5] = 0x0;
+  FspsConfig->PcieEnablePeerMemoryWrite[6] = 0x0;
+  FspsConfig->PcieEnablePeerMemoryWrite[7] = 0x0;
+  FspsConfig->PcieEnablePeerMemoryWrite[8] = 0x0;
+  FspsConfig->PcieEnablePeerMemoryWrite[9] = 0x0;
+  FspsConfig->PcieEnablePeerMemoryWrite[10] = 0x0;
+  FspsConfig->PcieEnablePeerMemoryWrite[11] = 0x0;
+  FspsConfig->PcieEnablePeerMemoryWrite[12] = 0x0;
+  FspsConfig->PcieEnablePeerMemoryWrite[13] = 0x0;
+  FspsConfig->PcieEnablePeerMemoryWrite[14] = 0x0;
+  FspsConfig->PcieEnablePeerMemoryWrite[15] = 0x0;
+  FspsConfig->PcieEnablePeerMemoryWrite[16] = 0x0;
+  FspsConfig->PcieEnablePeerMemoryWrite[17] = 0x0;
+  FspsConfig->PcieEnablePeerMemoryWrite[18] = 0x0;
+  FspsConfig->PcieEnablePeerMemoryWrite[19] = 0x0;
+  FspsConfig->PcieEnablePeerMemoryWrite[20] = 0x0;
+  FspsConfig->PcieEnablePeerMemoryWrite[21] = 0x0;
+  FspsConfig->PcieEnablePeerMemoryWrite[22] = 0x0;
+  FspsConfig->PcieEnablePeerMemoryWrite[23] = 0x0;
+  FspsConfig->PcieEnablePeerMemoryWrite[24] = 0x0;
+  FspsConfig->PcieEnablePeerMemoryWrite[25] = 0x0;
+  FspsConfig->PcieEnablePeerMemoryWrite[26] = 0x0;
+  FspsConfig->PcieEnablePeerMemoryWrite[27] = 0x0;
+  FspsConfig->PcieEnablePeerMemoryWrite[28] = 0x0;
+  StoreRpConfig (FspsConfig);
 
   // S0ix configuration
   if (FeaturesCfgData != NULL) {
@@ -821,9 +976,13 @@ UpdateFspConfig (
       FspsConfig->PchFivrDynPm = 1;
       FspsConfig->D3HotEnable = 0;
       FspsConfig->D3ColdEnable = 1;
+      FspsConfig->ThermalMonitor = 0;
+      FspsConfig->VmdEnable = 0;
+      FspsConfig->C1StateAutoDemotion = 0;
+      FspsConfig->C1StateUnDemotion = 0;
+      FspsConfig->PkgCStateDemotion = 0;
+      FspsConfig->PkgCStateUnDemotion = 0;
       DEBUG ((DEBUG_INFO, "Stage 2 S0ix config applied.\n"));
     }
   }
 }
-
-

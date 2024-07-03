@@ -450,6 +450,7 @@ UpdateFspConfig (
 
   if (FeaturesCfgData != NULL) {
     if (FeaturesCfgData->Features.S0ix == 1) {
+       Fspmcfg->InternalGfx        = 0;
       Fspmcfg->PchIshEnable       = 0;
       Fspmcfg->TcssXdciEn         = 0;
       Fspmcfg->TcssDma0En         = 0;
@@ -525,8 +526,21 @@ UpdateFspConfig (
       Fspmcfg->EnablePwrDn = 0x0;
       Fspmcfg->EnablePwrDnLpddr = 0x0;
       Fspmcfg->SrefCfgEna = 0x0;
+      Fspmcfg->DmiGen4UsPortTxPreset[0] = 0x1;
+      Fspmcfg->DmiGen4UsPortTxPreset[1] = 0x1;
+      Fspmcfg->DmiGen4UsPortTxPreset[2] = 0x1;
+      Fspmcfg->DmiGen4UsPortTxPreset[3] = 0x1;
+      Fspmcfg->DmiGen4UsPortTxPreset[4] = 0x1;
+      Fspmcfg->DmiGen4UsPortTxPreset[5] = 0x1;
+      Fspmcfg->DmiGen4UsPortTxPreset[6] = 0x1;
+      Fspmcfg->DmiGen4UsPortTxPreset[7] = 0x1;
+      Fspmcfg->FClkFrequency = 0x0;
+      Fspmcfg->TdcTimeWindow[0] = 0x0;
+      Fspmcfg->TdcTimeWindow[1] = 0x0;
+      Fspmcfg->TdcTimeWindow[2] = 0x0;
+      Fspmcfg->UsbTcPortEnPreMem = 0x0;
       Fspmcfg->WdtDisableAndLock = 0x1; // Remove this later if any issues
       break;
   }
-}
 
+}

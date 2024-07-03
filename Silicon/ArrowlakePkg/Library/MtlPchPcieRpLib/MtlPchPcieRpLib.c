@@ -17,6 +17,7 @@
 #include <Register/PchRegs.h>
 #include <Register/PchPcieRpRegs.h>
 #include <Register/PchRegsPcr.h>
+#include <Include/PchPcieRpInfo.h>
 #include <Register/MtlPchBdfAssignment.h>
 #include <Include/PcrDefine.h>
 #include <Library/MtlPchGpioTopologyLib.h>

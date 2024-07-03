@@ -37,6 +37,7 @@
 
 #define PEP_TCSS_CONS_INDEX (22)
 #define PEP_GNA_CONS_INDEX (23)
+#define PEP_VMD_CONS_INDEX (24)
 #define PEP_HECI3_CONS_INDEX (25)
 
 #define PEP_AUDIO_CONS_INDEX (26)
