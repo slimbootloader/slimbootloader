@@ -307,6 +307,9 @@ GetBootFileInfo (
   } else {
     BootOption->Image[LoadImageType].FileImage.SwPart = (UINT8) ((IsHex) ? StrHexToUintn (Buffer) : StrDecimalToUintn (Buffer));
   }
+  if (LoadImageType == LoadImageTypeNormal) {
+    BootOption->SwPart = BootOption->Image[LoadImageType].FileImage.SwPart;
+  }
 
   do {
     if (LoadImageType == LoadImageTypeNormal){
@@ -378,6 +381,7 @@ GetBootLbaInfo (
   } else {
     BootOption->Image[0].LbaImage.SwPart = (UINT8) ((IsHex) ? StrHexToUintn (Buffer) : StrDecimalToUintn (Buffer));
   }
+  BootOption->SwPart = BootOption->Image[0].LbaImage.SwPart;
 
   ShellPrint (L"Enter LBA Address (uint)\n");
   ShellPrint (L"(default 0x%X) ", CurrOption->Image[0].LbaImage.LbaAddr);
