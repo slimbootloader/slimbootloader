@@ -32,4 +32,7 @@ Defines Platform BoardIds
 #define BoardIdArlhDdr5Rvp                    0x3A
 #define PLATFORM_ID_ARL_H_DDR5_RVP            0x18
 
+#define BoardIdArlsSodimmRvp                  0x24
+#define PLATFORM_ID_ARL_S_SODIMM_RVP          0x15
+
 #endif // _PLATFORM_BOARD_ID_H_

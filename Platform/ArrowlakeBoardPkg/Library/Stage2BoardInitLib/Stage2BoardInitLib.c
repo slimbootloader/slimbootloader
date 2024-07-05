@@ -341,6 +341,7 @@ BoardInit (
   case PreSiliconInit:
     EnableLegacyRegions ();
     switch (GetPlatformId ()) {
+      case PLATFORM_ID_ARL_S_SODIMM_RVP:
       case PLATFORM_ID_ARL_S_UDIMM_1DPC_RVP:
         DEBUG ((DEBUG_ERROR, "The platform id is : 0x%X!\n", GetPlatformId ()));
         DEBUG ((DEBUG_ERROR, "GPIO table size: %x  \n",sizeof (mGpioTablePostMemMtlSUDimm1DPCRvpDimm) / sizeof (mGpioTablePostMemMtlSUDimm1DPCRvpDimm[0])));

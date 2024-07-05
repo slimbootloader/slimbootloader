@@ -147,6 +147,10 @@ GetBoardIdFromSmbus (
     case BoardIdArlhDdr5Rvp:
       *PlatformId = PLATFORM_ID_ARL_H_DDR5_RVP;
       break;
+    case BoardIdArlsSodimmRvp:
+      *PlatformId =  PLATFORM_ID_ARL_S_SODIMM_RVP;
+      DEBUG((DEBUG_INFO, "ARLH RVP DETECTED USING SIO \n"));
+      break; 
     default:
     break;
   }
@@ -389,6 +393,10 @@ GetBoardId (
     case BoardIdArlhDdr5Rvp:
       *PlatformId = PLATFORM_ID_ARL_H_DDR5_RVP;
       break;
+    case BoardIdArlsSodimmRvp:
+      *PlatformId =  PLATFORM_ID_ARL_S_SODIMM_RVP;
+      DEBUG((DEBUG_INFO, "ARLH RVP DETECTED USING SIO \n"));
+      break;   
     default:
       DEBUG((DEBUG_INFO, "Unsupporteddd board Id %x .....\n", *PlatformId));
       break;
