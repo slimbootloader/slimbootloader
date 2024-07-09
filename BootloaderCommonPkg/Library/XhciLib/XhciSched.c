@@ -10,6 +10,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include "XhcPeim.h"
 
+#define XHC_INIT_DEVICE_SLOT_RETRIES  1
+
 /**
   Create a command transfer TRB to support XHCI command interfaces.
 
@@ -858,11 +860,13 @@ XhcPeiPollPortStatusChange (
   EFI_STATUS        Status;
   UINT8             Speed;
   UINT8             SlotId;
+  UINT8             Retries;
   USB_DEV_ROUTE     RouteChart;
 
   DEBUG ((DEBUG_INFO, "XhcPeiPollPortStatusChange: PortChangeStatus: %x PortStatus: %x\n", PortState->PortChangeStatus, PortState->PortStatus));
 
   Status = EFI_SUCCESS;
+  Retries = XHC_INIT_DEVICE_SLOT_RETRIES;
 
   if ((PortState->PortChangeStatus & (USB_PORT_STAT_C_CONNECTION | USB_PORT_STAT_C_ENABLE | USB_PORT_STAT_C_OVERCURRENT | USB_PORT_STAT_C_RESET)) == 0) {
     return EFI_SUCCESS;
@@ -904,17 +908,28 @@ XhcPeiPollPortStatusChange (
     } else if ((PortState->PortStatus & USB_PORT_STAT_SUPER_SPEED) != 0) {
       Speed = EFI_USB_SPEED_SUPER;
     }
-    //
-    // Execute Enable_Slot cmd for attached device, initialize device context and assign device address.
-    //
-    SlotId = XhcPeiRouteStringToSlotId (Xhc, RouteChart);
-    if ((SlotId == 0) && ((PortState->PortChangeStatus & USB_PORT_STAT_C_RESET) != 0)) {
-      if (Xhc->HcCParams.Data.Csz == 0) {
-        Status = XhcPeiInitializeDeviceSlot (Xhc, ParentRouteChart, Port, RouteChart, Speed);
-      } else {
-        Status = XhcPeiInitializeDeviceSlot64 (Xhc, ParentRouteChart, Port, RouteChart, Speed);
+
+    do {
+      //
+      // Execute Enable_Slot cmd for attached device, initialize device context and assign device address.
+      //
+      SlotId = XhcPeiRouteStringToSlotId (Xhc, RouteChart);
+      if ((SlotId == 0) && ((PortState->PortChangeStatus & USB_PORT_STAT_C_RESET) != 0)) {
+        if (Xhc->HcCParams.Data.Csz == 0) {
+          Status = XhcPeiInitializeDeviceSlot (Xhc, ParentRouteChart, Port, RouteChart, Speed);
+        } else {
+          Status = XhcPeiInitializeDeviceSlot64 (Xhc, ParentRouteChart, Port, RouteChart, Speed);
+        }
       }
-    }
+      //
+      // According to the xHCI specification (section 4.6.5), "a USB Transaction
+      // Error Completion Code for an Address Device Command may be due to a Stall
+      // response from a device. Software should issue a Disable Slot Command for
+      // the Device Slot then an Enable Slot Command to recover from this error."
+      // Therefore, retry the device slot initialization if it fails due to a
+      // device error.
+      //
+    } while ((Status == EFI_DEVICE_ERROR) && (Retries-- != 0));
   }
 
   return Status;
