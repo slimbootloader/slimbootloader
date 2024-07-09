@@ -147,6 +147,9 @@ GetBoardIdFromSmbus (
     case BoardIdArlhDdr5Rvp:
       *PlatformId = PLATFORM_ID_ARL_H_DDR5_RVP;
       break;
+    case BoardIdArlsSodimmRvp:
+      *PlatformId =  PLATFORM_ID_ARL_S_SODIMM_RVP;
+      break;
     default:
     break;
   }
@@ -388,6 +391,9 @@ GetBoardId (
       break;
     case BoardIdArlhDdr5Rvp:
       *PlatformId = PLATFORM_ID_ARL_H_DDR5_RVP;
+      break;
+    case BoardIdArlsSodimmRvp:
+      *PlatformId =  PLATFORM_ID_ARL_S_SODIMM_RVP;
       break;
     default:
       DEBUG((DEBUG_INFO, "Unsupporteddd board Id %x .....\n", *PlatformId));
