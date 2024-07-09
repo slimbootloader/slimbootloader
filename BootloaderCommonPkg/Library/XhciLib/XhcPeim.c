@@ -1521,7 +1521,13 @@ UsbInitCtrl (
   // This xHC supports a page size of 2^(n+12) if bit n is Set. For example,
   // if bit 0 is Set, the xHC supports 4k byte page sizes.
   //
-  PageSize         = XhcPeiReadOpReg (XhcDev, XHC_PAGESIZE_OFFSET) & XHC_PAGESIZE_MASK;
+  PageSize = XhcPeiReadOpReg (XhcDev, XHC_PAGESIZE_OFFSET);
+  if ((PageSize & (~XHC_PAGESIZE_MASK)) != 0) {
+    DEBUG ((DEBUG_ERROR, "UsbInitCtrl: Reserved bits are not 0 for PageSize\n"));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  PageSize &= XHC_PAGESIZE_MASK;
   XhcDev->PageSize = 1 << (HighBitSet32 (PageSize) + 12);
 
   DEBUG ((DEBUG_INFO, "XhciPei: UsbHostControllerBaseAddress: %x\n", XhcDev->UsbHostControllerBaseAddress));
