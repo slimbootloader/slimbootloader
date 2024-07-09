@@ -355,6 +355,10 @@ UpdateFspConfig (
     DEBUG((DEBUG_INFO, "BoardIdArlHSODimm1DRvp board Id %x .....\n", BoardId));
     CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mArlhDdr5SODimmSbsRvpRowDisplayDdiConfig, sizeof(mArlhDdr5SODimmSbsRvpRowDisplayDdiConfig));
     break;
+   case  PLATFORM_ID_ARL_S_SODIMM_RVP:
+    DEBUG((DEBUG_INFO, "BoardIdArlHSODimm1DRvp board Id %x .....\n", BoardId));
+    CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mArlsDdr5SODimmSbsRvpRowDisplayDdiConfig, sizeof(mArlsDdr5SODimmSbsRvpRowDisplayDdiConfig));
+    break;
   default:
     DEBUG((DEBUG_INFO, "DDI Init: Unsupported board Id %x .....\n", BoardId));
     break;
