@@ -454,6 +454,7 @@ UpdateFspConfig (
 
   if (FeaturesCfgData != NULL) {
     if (FeaturesCfgData->Features.S0ix == 1) {
+      Fspmcfg->InternalGfx        = 0;
       Fspmcfg->PchIshEnable       = 0;
       Fspmcfg->TcssXdciEn         = 0;
       Fspmcfg->TcssDma0En         = 0;
