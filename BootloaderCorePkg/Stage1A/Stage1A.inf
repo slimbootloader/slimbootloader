@@ -27,9 +27,11 @@
 
 [Sources.IA32]
   Ia32/SecEntry.nasm
+  Ia32/UpdateSelectors.nasm
 
 [Sources.X64]
   X64/SecEntry.nasm
+  X64/UpdateSelectors.nasm
 
 [Packages]
   MdePkg/MdePkg.dec

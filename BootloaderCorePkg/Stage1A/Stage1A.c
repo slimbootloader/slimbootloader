@@ -482,6 +482,7 @@ SecStartup (
   LdrGlobal->CarSize               = Stage1aAsmParam->CarTop - LdrGlobal->CarBase;
 
   LoadGdt (&GdtTable, (IA32_DESCRIPTOR *)&mGdt);
+  UpdateSelectors();
   LoadIdt (&IdtTable, (UINT32)(UINTN)LdrGlobal);
   SetLoaderGlobalDataPointer (LdrGlobal);
 
