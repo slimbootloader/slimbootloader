@@ -1329,6 +1329,9 @@ class Build(object):
         rebuild_basetools ()
 
     def build(self):
+        if (self._board.BOARD_NAME in [ 'arl', 'arls' ]) & (self._board.BUILD_ARCH == 'IA32') :
+            WARNING = '\033[93m'
+            print(f"{WARNING}\n\n!!! DEPRECATED !!! Arrowlake ia32 build is obsolete. !!! DEPRECATED !!!\n\n{WARNING}")
         print("Build [%s] ..." % self._board.BOARD_NAME)
 
         # Run early build init
