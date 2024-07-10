@@ -73,6 +73,7 @@
   HeciMeExtLib
   GpioV2Lib
   MtlPchPcieRpLib
+  PciePm
 
 [Guids]
   gOsConfigDataGuid
@@ -118,3 +119,4 @@
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled
   gPlatformModuleTokenSpaceGuid.PcdIgdOpRegionAddress
   gPlatformModuleTokenSpaceGuid.PcdPciResAllocTableBase
+  gPlatformModuleTokenSpaceGuid.PcdEnablePciePm

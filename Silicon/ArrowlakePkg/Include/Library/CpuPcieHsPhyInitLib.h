@@ -39,4 +39,16 @@ HsPhyLoadAndInit (
   VOID
   );
 
+/**
+  Return CPU Sku
+
+  @retval UINT8              CPU Sku
+**/
+UINT8
+EFIAPI
+GetCpuSku (
+  VOID
+  );
+
+
 #endif
