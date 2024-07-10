@@ -1,7 +1,7 @@
 /** @file
   ACPI DSDT table
 
-  Copyright (c) 2011 - 2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2011 - 2024, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 #include "Register/PmcRegs.h"
@@ -1089,7 +1089,7 @@ Scope (\_SB)
       Return(0x00)
     }
 
-    Method (_IPC, 0x7, Serialized ) {
+    Method (IPCG, 0x7, Serialized ) {
       Return(IPCS(Arg0,Arg1,Arg2,Arg3,Arg4,Arg5,Arg6))
     }
 
@@ -1112,7 +1112,7 @@ Scope (\_SB)
       Return(0x00)
     }
 
-    Method (_IPC, 0x7,Serialized) {
+    Method (IPCG, 0x7,Serialized) {
       Return(IPCS(Arg0,Arg1,Arg2,Arg3,Arg4,Arg5,Arg6))
     }
 
@@ -1135,7 +1135,7 @@ Scope (\_SB)
       Return(0x00)
     }
 
-    Method (_IPC, 0x7,Serialized) {
+    Method (IPCG, 0x7,Serialized) {
       Return(IPCS(Arg0,Arg1,Arg2,Arg3,Arg4,Arg5,Arg6))
     }
 

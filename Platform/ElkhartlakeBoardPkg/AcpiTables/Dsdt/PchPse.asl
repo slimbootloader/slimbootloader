@@ -1,7 +1,7 @@
 /**@file
   ACPI DSDT table for PSE
 
- Copyright (c) 2019 - 2023 Intel Corporation. All rights reserved.<BR>
+ Copyright (c) 2019 - 2024 Intel Corporation. All rights reserved.<BR>
  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -96,7 +96,7 @@ Scope(\_SB.PC00) {
       Return(0x00)
     }
 
-    Method (_IPC, 0x7,Serialized) {
+    Method (IPCG, 0x7,Serialized) {
       Return(IPCS(Arg0,Arg1,Arg2,Arg3,Arg4,Arg5,Arg6))
     }
 
@@ -135,7 +135,7 @@ Scope(\_SB.PC00) {
       Return(0x00)
     }
 
-    Method (_IPC, 0x7,Serialized) {
+    Method (IPCG, 0x7,Serialized) {
        Return(IPCS(Arg0,Arg1,Arg2,Arg3,Arg4,Arg5,Arg6))
     }
 
