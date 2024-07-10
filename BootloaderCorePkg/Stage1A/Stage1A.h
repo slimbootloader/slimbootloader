@@ -52,4 +52,13 @@ ContinueFunc (
   IN VOID  *Params
   );
 
+/**
+  Reloads segment selectors based on SBL GDT. This is useful if reset
+  vector GDT is different from Stage1A GDT.
+
+**/
+VOID
+EFIAPI
+UpdateSelectors (VOID);
+
 #endif
