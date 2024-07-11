@@ -1,7 +1,7 @@
 /** @file
 Private Header file for Usb Host Controller PEIM
 
-Copyright (c) 2014 - 2018, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2014 - 2024, Intel Corporation. All rights reserved.<BR>
 
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
@@ -9,6 +9,13 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #ifndef _EFI_PEI_XHCI_REG_H_
 #define _EFI_PEI_XHCI_REG_H_
+
+//
+// xHCI Extended Capability Codes
+//
+#define XHC_CAP_USB_LEGACY              0x01
+#define XHC_CAP_USB_DEBUG               0x0A
+#define XHC_CAP_USB_SUPPORTED_PROTOCOL  0x02
 
 //
 // Capability registers offset
@@ -105,6 +112,17 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define XHC_IMODI_MASK                  0x0000FFFF  // Interrupt Moderation Interval
 #define XHC_IMODC_MASK                  0xFFFF0000  // Interrupt Moderation Counter
 
+//
+// xHCI Supported Protocol Capability
+//
+#define XHC_SUPPORTED_PROTOCOL_DW0_MAJOR_REVISION_USB2  0x02
+#define XHC_SUPPORTED_PROTOCOL_DW0_MAJOR_REVISION_USB3  0x03
+#define XHC_SUPPORTED_PROTOCOL_NAME_STRING_OFFSET       0x04
+#define XHC_SUPPORTED_PROTOCOL_NAME_STRING_VALUE        0x20425355
+#define XHC_SUPPORTED_PROTOCOL_DW2_OFFSET               0x08
+#define XHC_SUPPORTED_PROTOCOL_PSI_OFFSET               0x10
+#define XHC_SUPPORTED_PROTOCOL_USB2_HIGH_SPEED_PSIM     480
+#define XHC_SUPPORTED_PROTOCOL_USB2_LOW_SPEED_PSIM      1500
 
 #pragma pack (1)
 typedef struct {
@@ -161,6 +179,52 @@ typedef union {
   UINT32                Dword;
   HCCPARAMS             Data;
 } XHC_HCCPARAMS;
+
+//
+// xHCI Supported Protocol Cabability
+//
+typedef struct {
+  UINT8    CapId;
+  UINT8    NextExtCapReg;
+  UINT8    RevMinor;
+  UINT8    RevMajor;
+} SUPPORTED_PROTOCOL_DW0;
+
+typedef union {
+  UINT32                    Dword;
+  SUPPORTED_PROTOCOL_DW0    Data;
+} XHC_SUPPORTED_PROTOCOL_DW0;
+
+typedef struct {
+  UINT32    NameString;
+} XHC_SUPPORTED_PROTOCOL_DW1;
+
+typedef struct {
+  UINT8     CompPortOffset;
+  UINT8     CompPortCount;
+  UINT16    ProtocolDef : 12;
+  UINT16    Psic        : 4;
+} SUPPORTED_PROTOCOL_DW2;
+
+typedef union {
+  UINT32                    Dword;
+  SUPPORTED_PROTOCOL_DW2    Data;
+} XHC_SUPPORTED_PROTOCOL_DW2;
+
+typedef struct {
+  UINT16    Psiv  : 4;
+  UINT16    Psie  : 2;
+  UINT16    Plt   : 2;
+  UINT16    Pfd   : 1;
+  UINT16    RsvdP : 5;
+  UINT16    Lp    : 2;
+  UINT16    Psim;
+} SUPPORTED_PROTOCOL_PROTOCOL_SPEED_ID;
+
+typedef union {
+  UINT32                                  Dword;
+  SUPPORTED_PROTOCOL_PROTOCOL_SPEED_ID    Data;
+} XHC_SUPPORTED_PROTOCOL_PROTOCOL_SPEED_ID;
 
 #pragma pack ()
 

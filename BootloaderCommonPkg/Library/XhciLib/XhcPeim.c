@@ -188,6 +188,270 @@ XhcPeiWaitOpRegBit (
 }
 
 /**
+  Read XHCI extended capability register.
+
+  @param  Xhc          The XHCI Instance.
+  @param  Offset       The offset of the extended capability register.
+
+  @return The register content read
+
+**/
+UINT32
+XhcReadExtCapReg (
+  IN PEI_XHC_DEV        *Xhc,
+  IN UINT32             Offset
+  )
+{
+  UINT32                Data;
+
+  Data = MmioRead32 (Xhc->ExtCapRegBase + Offset);
+
+  return Data;
+}
+
+
+/**
+  Calculate the offset of the XHCI capability.
+
+  @param  Xhc     The XHCI Instance.
+  @param  CapId   The XHCI Capability ID.
+
+  @return The offset of XHCI legacy support capability register.
+
+**/
+UINT32
+XhcGetCapabilityAddr (
+  IN PEI_XHC_DEV        *Xhc,
+  IN UINT8              CapId
+  )
+{
+  UINT32  ExtCapOffset;
+  UINT8   NextExtCapReg;
+  UINT32  Data;
+
+  ExtCapOffset = 0;
+
+  do {
+    //
+    // Check if the extended capability register's capability id is USB Legacy Support.
+    //
+    Data = XhcReadExtCapReg (Xhc, ExtCapOffset);
+    if ((Data & 0xFF) == CapId) {
+      return ExtCapOffset;
+    }
+
+    //
+    // If not, then traverse all of the ext capability registers till finding out it.
+    //
+    NextExtCapReg = (UINT8)((Data >> 8) & 0xFF);
+    ExtCapOffset += (NextExtCapReg << 2);
+  } while (NextExtCapReg != 0);
+
+  return 0xFFFFFFFF;
+}
+
+/**
+  Calculate the offset of the xHCI Supported Protocol Capability.
+
+  @param  Xhc           The XHCI Instance.
+  @param  MajorVersion  The USB Major Version in xHCI Support Protocol Capability Field
+
+  @return The offset of xHCI Supported Protocol capability register.
+
+**/
+UINT32
+XhcGetSupportedProtocolCapabilityAddr (
+  IN PEI_XHC_DEV        *Xhc,
+  IN UINT8              MajorVersion
+  )
+{
+  UINT32                      ExtCapOffset;
+  UINT8                       NextExtCapReg;
+  UINT32                      Data;
+  UINT32                      NameString;
+  XHC_SUPPORTED_PROTOCOL_DW0  UsbSupportDw0;
+
+  if (Xhc == NULL) {
+    return 0;
+  }
+
+  ExtCapOffset = 0;
+
+  do {
+    //
+    // Check if the extended capability register's capability id is USB Legacy Support.
+    //
+    Data                = XhcReadExtCapReg (Xhc, ExtCapOffset);
+    UsbSupportDw0.Dword = Data;
+    if ((Data & 0xFF) == XHC_CAP_USB_SUPPORTED_PROTOCOL) {
+      if (UsbSupportDw0.Data.RevMajor == MajorVersion) {
+        NameString = XhcReadExtCapReg (Xhc, ExtCapOffset + XHC_SUPPORTED_PROTOCOL_NAME_STRING_OFFSET);
+        if (NameString == XHC_SUPPORTED_PROTOCOL_NAME_STRING_VALUE) {
+          //
+          // Ensure Name String field is xHCI supported protocols in xHCI Supported Protocol Capability Offset 04h
+          //
+          return ExtCapOffset;
+        }
+      }
+    }
+
+    //
+    // If not, then traverse all of the ext capability registers till finding out it.
+    //
+    NextExtCapReg = (UINT8)((Data >> 8) & 0xFF);
+    ExtCapOffset += (NextExtCapReg << 2);
+  } while (NextExtCapReg != 0);
+
+  return 0xFFFFFFFF;
+}
+
+/**
+  Find PortSpeed value match Protocol Speed ID Value (PSIV).
+
+  @param  Xhc            The XHCI Instance.
+  @param  ExtCapOffset   The USB Major Version in xHCI Support Protocol Capability Field
+  @param  PortSpeed      The Port Speed Field in USB PortSc register
+  @param  PortNumber     The Port Number (0-indexed)
+
+  @return The Protocol Speed ID (PSI) from xHCI Supported Protocol capability register.
+
+**/
+UINT32
+XhciPsivGetPsid (
+  IN PEI_XHC_DEV        *Xhc,
+  IN UINT32             ExtCapOffset,
+  IN UINT8              PortSpeed,
+  IN UINT8              PortNumber
+  )
+{
+  XHC_SUPPORTED_PROTOCOL_DW2                PortId;
+  XHC_SUPPORTED_PROTOCOL_PROTOCOL_SPEED_ID  Reg;
+  UINT32                                    Count;
+  UINT32                                    MinPortIndex;
+  UINT32                                    MaxPortIndex;
+
+  if ((Xhc == NULL) || (ExtCapOffset == 0xFFFFFFFF)) {
+    return 0;
+  }
+
+  //
+  // According to XHCI 1.1 spec November 2017,
+  // Section 7.2 xHCI Supported Protocol Capability
+  // 1. Get the PSIC(Protocol Speed ID Count) value.
+  // 2. The PSID register boundary should be Base address + PSIC * 0x04
+  //
+  PortId.Dword = XhcReadExtCapReg (Xhc, ExtCapOffset + XHC_SUPPORTED_PROTOCOL_DW2_OFFSET);
+
+  //
+  // According to XHCI 1.1 spec November 2017, valid values
+  // for CompPortOffset are 1 to CompPortCount - 1.
+  //
+  // PortNumber is zero-indexed, so subtract 1.
+  //
+  if ((PortId.Data.CompPortOffset == 0) || (PortId.Data.CompPortCount == 0)) {
+    return 0;
+  }
+
+  MinPortIndex = PortId.Data.CompPortOffset - 1;
+  MaxPortIndex = MinPortIndex + PortId.Data.CompPortCount - 1;
+
+  if ((PortNumber < MinPortIndex) || (PortNumber > MaxPortIndex)) {
+    return 0;
+  }
+
+  for (Count = 0; Count < PortId.Data.Psic; Count++) {
+    Reg.Dword = XhcReadExtCapReg (Xhc, ExtCapOffset + XHC_SUPPORTED_PROTOCOL_PSI_OFFSET + (Count << 2));
+    if (Reg.Data.Psiv == PortSpeed) {
+      return Reg.Dword;
+    }
+  }
+
+  return 0;
+}
+
+/**
+  Find PortSpeed value match case in XHCI Supported Protocol Capability
+
+  @param  Xhc         The XHCI Instance.
+  @param  PortSpeed   The Port Speed Field in USB PortSc register
+  @param  PortNumber  The Port Number (0-indexed)
+
+  @return The USB Port Speed.
+
+**/
+UINT16
+XhcCheckUsbPortSpeedUsedPsic (
+  IN PEI_XHC_DEV        *Xhc,
+  IN UINT8              PortSpeed,
+  IN UINT8              PortNumber
+  )
+{
+  XHC_SUPPORTED_PROTOCOL_PROTOCOL_SPEED_ID  SpField;
+  UINT16                                    UsbSpeedIdMap;
+
+  if (Xhc == NULL) {
+    return 0;
+  }
+
+  SpField.Dword = 0;
+  UsbSpeedIdMap = 0;
+
+  //
+  // Check xHCI Supported Protocol Capability, find the PSIV field to match
+  // PortSpeed definition when the Major Revision is 03h.
+  //
+  if (Xhc->Usb3SupOffset != 0xFFFFFFFF) {
+    SpField.Dword = XhciPsivGetPsid (Xhc, Xhc->Usb3SupOffset, PortSpeed, PortNumber);
+    if (SpField.Dword != 0) {
+      //
+      // Found the corresponding PORTSC value in PSIV field of USB3 offset.
+      //
+      UsbSpeedIdMap = USB_PORT_STAT_SUPER_SPEED;
+    }
+  }
+
+  //
+  // Check xHCI Supported Protocol Capability, find the PSIV field to match
+  // PortSpeed definition when the Major Revision is 02h.
+  //
+  if ((UsbSpeedIdMap == 0) && (Xhc->Usb2SupOffset != 0xFFFFFFFF)) {
+    SpField.Dword = XhciPsivGetPsid (Xhc, Xhc->Usb2SupOffset, PortSpeed, PortNumber);
+    if (SpField.Dword != 0) {
+      //
+      // Found the corresponding PORTSC value in PSIV field of USB2 offset.
+      //
+      if (SpField.Data.Psie == 2) {
+        //
+        // According to XHCI 1.1 spec November 2017,
+        // Section 7.2.1 the Protocol Speed ID Exponent (PSIE) field definition,
+        // PSIE value shall be applied to Protocol Speed ID Mantissa when calculating, value 2 shall represent bit rate in Mb/s
+        //
+        if (SpField.Data.Psim == XHC_SUPPORTED_PROTOCOL_USB2_HIGH_SPEED_PSIM) {
+          //
+          // PSIM shows as default High-speed protocol, apply to High-speed mapping
+          //
+          UsbSpeedIdMap = USB_PORT_STAT_HIGH_SPEED;
+        }
+      } else if (SpField.Data.Psie == 1) {
+        //
+        // According to XHCI 1.1 spec November 2017,
+        // Section 7.2.1 the Protocol Speed ID Exponent (PSIE) field definition,
+        // PSIE value shall be applied to Protocol Speed ID Mantissa when calculating, value 1 shall represent bit rate in Kb/s
+        //
+        if (SpField.Data.Psim == XHC_SUPPORTED_PROTOCOL_USB2_LOW_SPEED_PSIM) {
+          //
+          // PSIM shows as default Low-speed protocol, apply to Low-speed mapping
+          //
+          UsbSpeedIdMap = USB_PORT_STAT_LOW_SPEED;
+        }
+      }
+    }
+  }
+
+  return UsbSpeedIdMap;
+}
+
+/**
   Read XHCI capability register.
 
   @param Xhc        The XHCI device.
@@ -208,7 +472,6 @@ XhcPeiReadCapRegister (
 
   return Data;
 }
-
 
 
 /**
@@ -1316,6 +1579,7 @@ XhcPeiGetRootHubPortStatus (
   UINT32                    State;
   UINTN                     Index;
   UINTN                     MapSize;
+  UINT8                     PortSpeed;
   EFI_STATUS                Status;
   USB_DEV_ROUTE             ParentRouteChart;
 
@@ -1340,26 +1604,38 @@ XhcPeiGetRootHubPortStatus (
   State                         = XhcPeiReadOpReg (Xhc, Offset);
   DEBUG ((DEBUG_INFO, "XhcPeiGetRootHubPortStatus: Port: %x State: %x\n", PortNumber, State));
 
+  PortSpeed = (State & XHC_PORTSC_PS) >> 10;
+
   //
   // According to XHCI 1.1 spec November 2017,
-  // bit 10~13 of the root port status register identifies the speed of the attached device.
+  // Section 7.2 xHCI Support Protocol Capability
   //
-  switch ((State & XHC_PORTSC_PS) >> 10) {
-    case 2:
-      PortStatus->PortStatus |= USB_PORT_STAT_LOW_SPEED;
-      break;
+  if (PortSpeed > 0) {
+    PortStatus->PortStatus = XhcCheckUsbPortSpeedUsedPsic (Xhc, PortSpeed, PortNumber);
+    // If no match found in ext cap reg, fall back to PORTSC
+    if (PortStatus->PortStatus == 0) {
+      //
+      // According to XHCI 1.1 spec November 2017,
+      // bit 10~13 of the root port status register identifies the speed of the attached device.
+      //
+      switch (PortSpeed) {
+        case 2:
+          PortStatus->PortStatus |= USB_PORT_STAT_LOW_SPEED;
+          break;
 
-    case 3:
-      PortStatus->PortStatus |= USB_PORT_STAT_HIGH_SPEED;
-      break;
+        case 3:
+          PortStatus->PortStatus |= USB_PORT_STAT_HIGH_SPEED;
+          break;
 
-    case 4:
-    case 5:
-      PortStatus->PortStatus |= USB_PORT_STAT_SUPER_SPEED;
-      break;
+        case 4:
+        case 5:
+          PortStatus->PortStatus |= USB_PORT_STAT_SUPER_SPEED;
+          break;
 
-    default:
-      break;
+        default:
+          break;
+      }
+    }
   }
 
   //
@@ -1515,6 +1791,7 @@ UsbInitCtrl (
   PEI_XHC_DEV                 *XhcDev;
   EFI_PHYSICAL_ADDRESS        TempPtr;
   UINT32                      PageSize;
+  UINT16                      ExtCapReg;
 
   MemPages = EFI_SIZE_TO_PAGES (sizeof (PEI_XHC_DEV));
   Status = PeiServicesAllocatePages (
@@ -1551,6 +1828,13 @@ UsbInitCtrl (
   PageSize &= XHC_PAGESIZE_MASK;
   XhcDev->PageSize = 1 << (HighBitSet32 (PageSize) + 12);
 
+  ExtCapReg              = (UINT16)(XhcDev->HcCParams.Data.ExtCapReg);
+  XhcDev->ExtCapRegBase     = ExtCapReg << 2;
+  XhcDev->UsbLegSupOffset   = XhcGetCapabilityAddr (XhcDev, XHC_CAP_USB_LEGACY);
+  XhcDev->DebugCapSupOffset = XhcGetCapabilityAddr (XhcDev, XHC_CAP_USB_DEBUG);
+  XhcDev->Usb2SupOffset     = XhcGetSupportedProtocolCapabilityAddr (XhcDev, XHC_SUPPORTED_PROTOCOL_DW0_MAJOR_REVISION_USB2);
+  XhcDev->Usb3SupOffset     = XhcGetSupportedProtocolCapabilityAddr (XhcDev, XHC_SUPPORTED_PROTOCOL_DW0_MAJOR_REVISION_USB3);
+
   DEBUG ((DEBUG_INFO, "XhciPei: UsbHostControllerBaseAddress: %x\n", XhcDev->UsbHostControllerBaseAddress));
   DEBUG ((DEBUG_INFO, "XhciPei: CapLength:                    %x\n", XhcDev->CapLength));
   DEBUG ((DEBUG_INFO, "XhciPei: HcSParams1:                   %x\n", XhcDev->HcSParams1.Dword));
@@ -1559,6 +1843,10 @@ UsbInitCtrl (
   DEBUG ((DEBUG_INFO, "XhciPei: DBOff:                        %x\n", XhcDev->DBOff));
   DEBUG ((DEBUG_INFO, "XhciPei: RTSOff:                       %x\n", XhcDev->RTSOff));
   DEBUG ((DEBUG_INFO, "XhciPei: PageSize:                     %x\n", XhcDev->PageSize));
+  DEBUG ((DEBUG_INFO, "       : UsbLegSupOffset:              %x\n", XhcDev->UsbLegSupOffset));
+  DEBUG ((DEBUG_INFO, "       : DebugCapSupOffset:            %x\n", XhcDev->DebugCapSupOffset));
+  DEBUG ((DEBUG_INFO, "       : Usb2SupOffset:                %x\n", XhcDev->Usb2SupOffset));
+  DEBUG ((DEBUG_INFO, "       : Usb3SupOffset:                %x\n", XhcDev->Usb3SupOffset));
 
   XhcPeiResetHC (XhcDev, XHC_RESET_TIMEOUT);
   ASSERT (XhcPeiIsHalt (XhcDev));
