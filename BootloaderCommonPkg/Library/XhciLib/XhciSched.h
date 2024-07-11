@@ -1,7 +1,7 @@
 /** @file
 Private Header file for Usb Host Controller PEIM
 
-Copyright (c) 2014 - 2015, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2014 - 2024, Intel Corporation. All rights reserved.<BR>
 
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
@@ -70,6 +70,15 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define TRB_COMPLETION_TRB_ERROR                5
 #define TRB_COMPLETION_STALL_ERROR              6
 #define TRB_COMPLETION_SHORT_PACKET             13
+#define TRB_COMPLETION_STOPPED                  26
+#define TRB_COMPLETION_STOPPED_LENGTH_INVALID   27
+
+//
+// USB Transfer Results Internal Definition
+// Based on XHCI spec 4.8.3, software should do the reset endpoint while USB Transaction occur.
+// Add the error code for USB Transaction error since UEFI spec don't have the related definition.
+//
+#define EDKII_USB_ERR_TRANSACTION  0x200
 
 //
 // The topology string used to present usb device location
