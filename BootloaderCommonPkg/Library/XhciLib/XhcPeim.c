@@ -1306,6 +1306,7 @@ XhcPeiGetRootHubPortStatus (
   UINT32                    State;
   UINTN                     Index;
   UINTN                     MapSize;
+  EFI_STATUS                Status;
   USB_DEV_ROUTE             ParentRouteChart;
 
   if (PortStatus == NULL) {
@@ -1313,6 +1314,7 @@ XhcPeiGetRootHubPortStatus (
   }
 
   Xhc = PEI_RECOVERY_USB_XHC_DEV_FROM_THIS (This);
+  Status = EFI_SUCCESS;
 
   if (PortNumber >= Xhc->HcSParams1.Data.MaxPorts) {
     return EFI_INVALID_PARAMETER;
@@ -1388,10 +1390,19 @@ XhcPeiGetRootHubPortStatus (
   // For those devices behind hub, we get its attach/detach event by hooking Get_Port_Status request at control transfer for those hub.
   //
   ParentRouteChart.Dword = 0;
-  XhcPeiPollPortStatusChange (Xhc, ParentRouteChart, PortNumber, PortStatus);
+  Status = XhcPeiPollPortStatusChange (Xhc, ParentRouteChart, PortNumber, PortStatus);
+
+  //
+  // Force resetting the port by clearing the USB_PORT_STAT_C_RESET bit in PortChangeStatus
+  // when XhcPeiPollPortStatusChange fails
+  //
+  if (EFI_ERROR (Status)) {
+    PortStatus->PortChangeStatus &= ~(USB_PORT_STAT_C_RESET);
+    Status                        = EFI_SUCCESS;
+  }
 
   DEBUG ((DEBUG_INFO, "XhcPeiGetRootHubPortStatus: PortChangeStatus: %x PortStatus: %x\n", PortStatus->PortChangeStatus, PortStatus->PortStatus));
-  return EFI_SUCCESS;
+  return Status;
 }
 
 
