@@ -2,7 +2,7 @@
 PEIM to produce gPeiUsb2HostControllerPpiGuid based on gPeiUsbControllerPpiGuid
 which is used to enable recovery function from USB Drivers.
 
-Copyright (c) 2014 - 2023, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2014 - 2024, Intel Corporation. All rights reserved.<BR>
 
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
@@ -643,7 +643,12 @@ XhcPeiControlTransfer (
   } else {
     if (*TransferResult == EFI_USB_NOERROR) {
       Status = EFI_SUCCESS;
-    } else if ((*TransferResult == EFI_USB_ERR_STALL) || (*TransferResult == EFI_USB_ERR_BABBLE)) {
+    } else if ((*TransferResult == EFI_USB_ERR_STALL) ||
+               (*TransferResult == EFI_USB_ERR_BABBLE) ||
+               (*TransferResult == EDKII_USB_ERR_TRANSACTION)) {
+      //
+      // Based on XHCI spec 4.8.3, software should do the reset endpoint while USB Transaction occur.
+      //
       RecoveryStatus = XhcPeiRecoverHaltedEndpoint(Xhc, Urb);
       if (EFI_ERROR (RecoveryStatus)) {
         DEBUG ((DEBUG_ERROR, "XhcPeiControlTransfer: XhcPeiRecoverHaltedEndpoint failed\n"));
@@ -979,7 +984,12 @@ XhcPeiBulkTransfer (
   } else {
     if (*TransferResult == EFI_USB_NOERROR) {
       Status = EFI_SUCCESS;
-    } else if ((*TransferResult == EFI_USB_ERR_STALL) || (*TransferResult == EFI_USB_ERR_BABBLE)) {
+    } else if ((*TransferResult == EFI_USB_ERR_STALL) ||
+               (*TransferResult == EFI_USB_ERR_BABBLE) ||
+               (*TransferResult == EDKII_USB_ERR_TRANSACTION)) {
+      //
+      // Based on XHCI spec 4.8.3, software should do the reset endpoint while USB Transaction occur.
+      //
       RecoveryStatus = XhcPeiRecoverHaltedEndpoint(Xhc, Urb);
       if (EFI_ERROR (RecoveryStatus)) {
         DEBUG ((DEBUG_ERROR, "XhcPeiBulkTransfer: XhcPeiRecoverHaltedEndpoint failed\n"));
