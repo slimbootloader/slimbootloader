@@ -1256,6 +1256,9 @@ XhcPeiInitializeDeviceSlot (
     DeviceAddress = (UINT8) OutputContext->Slot.DeviceAddress;
     DEBUG ((DEBUG_INFO, "XhcPeiInitializeDeviceSlot: Address %d assigned successfully\n", DeviceAddress));
     Xhc->UsbDevContext[SlotId].XhciDevAddr = DeviceAddress;
+  } else {
+    DEBUG ((DEBUG_INFO, "    Address %d assigned unsuccessfully\n"));
+    XhcPeiDisableSlotCmd (Xhc, SlotId);
   }
 
   DEBUG ((DEBUG_INFO, "XhcPeiInitializeDeviceSlot: Enable Slot, Status = %r\n", Status));
@@ -1467,6 +1470,9 @@ XhcPeiInitializeDeviceSlot64 (
     DeviceAddress = (UINT8) OutputContext->Slot.DeviceAddress;
     DEBUG ((DEBUG_INFO, "XhcPeiInitializeDeviceSlot64: Address %d assigned successfully\n", DeviceAddress));
     Xhc->UsbDevContext[SlotId].XhciDevAddr = DeviceAddress;
+  } else {
+    DEBUG ((DEBUG_INFO, "    Address %d assigned unsuccessfully\n"));
+    XhcPeiDisableSlotCmd64 (Xhc, SlotId);
   }
 
   DEBUG ((DEBUG_INFO, "XhcPeiInitializeDeviceSlot64: Enable Slot, Status = %r\n", Status));
