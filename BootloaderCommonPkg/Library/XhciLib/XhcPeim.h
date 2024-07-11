@@ -1,7 +1,7 @@
 /** @file
 Private Header file for Usb Host Controller PEIM
 
-Copyright (c) 2014 - 2021, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2014 - 2024, Intel Corporation. All rights reserved.<BR>
 
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
@@ -169,6 +169,11 @@ struct _PEI_XHC_DEV {
   VOID                              *ScratchMap;
   UINT64                            *ScratchEntry;
   UINTN                             *ScratchEntryMap;
+  UINT32                            ExtCapRegBase;
+  UINT32                            UsbLegSupOffset;
+  UINT32                            DebugCapSupOffset;
+  UINT32                            Usb2SupOffset;
+  UINT32                            Usb3SupOffset;
   UINT64                            *DCBAA;
   UINT32                            MaxSlotsEn;
   //
