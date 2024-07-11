@@ -2151,6 +2151,7 @@ XhcPeiEvaluateContext (
   CMD_TRB_EVALUATE_CONTEXT      CmdTrbEvalu;
   EVT_TRB_COMMAND_COMPLETION    *EvtTrb;
   INPUT_CONTEXT                 *InputContext;
+  DEVICE_CONTEXT                *OutputContext;
   EFI_PHYSICAL_ADDRESS          PhyAddr;
 
   ASSERT (Xhc->UsbDevContext[SlotId].SlotId != 0);
@@ -2159,10 +2160,14 @@ XhcPeiEvaluateContext (
   // 4.6.7 Evaluate Context
   //
   InputContext = Xhc->UsbDevContext[SlotId].InputContext;
+  OutputContext = Xhc->UsbDevContext[SlotId].OutputContext;
   ZeroMem (InputContext, sizeof (INPUT_CONTEXT));
+
+  CopyMem (&InputContext->EP[0], &OutputContext->EP[0], sizeof (ENDPOINT_CONTEXT));
 
   InputContext->InputControlContext.Dword2 |= BIT1;
   InputContext->EP[0].MaxPacketSize         = MaxPacketSize;
+  InputContext->EP[0].EPState               = 0;
 
   ZeroMem (&CmdTrbEvalu, sizeof (CmdTrbEvalu));
   PhyAddr = UsbHcGetPciAddrForHostAddr (Xhc->MemPool, InputContext, sizeof (INPUT_CONTEXT));
@@ -2205,6 +2210,7 @@ XhcPeiEvaluateContext64 (
   CMD_TRB_EVALUATE_CONTEXT      CmdTrbEvalu;
   EVT_TRB_COMMAND_COMPLETION    *EvtTrb;
   INPUT_CONTEXT_64              *InputContext;
+  DEVICE_CONTEXT_64             *OutputContext;
   EFI_PHYSICAL_ADDRESS          PhyAddr;
 
   ASSERT (Xhc->UsbDevContext[SlotId].SlotId != 0);
@@ -2213,10 +2219,14 @@ XhcPeiEvaluateContext64 (
   // 4.6.7 Evaluate Context
   //
   InputContext = Xhc->UsbDevContext[SlotId].InputContext;
+  OutputContext = Xhc->UsbDevContext[SlotId].OutputContext;
   ZeroMem (InputContext, sizeof (INPUT_CONTEXT_64));
+
+  CopyMem (&InputContext->EP[0], &OutputContext->EP[0], sizeof (ENDPOINT_CONTEXT_64));
 
   InputContext->InputControlContext.Dword2 |= BIT1;
   InputContext->EP[0].MaxPacketSize         = MaxPacketSize;
+  InputContext->EP[0].EPState               = 0;
 
   ZeroMem (&CmdTrbEvalu, sizeof (CmdTrbEvalu));
   PhyAddr = UsbHcGetPciAddrForHostAddr (Xhc->MemPool, InputContext, sizeof (INPUT_CONTEXT_64));
