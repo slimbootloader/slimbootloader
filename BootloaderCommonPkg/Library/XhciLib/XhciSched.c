@@ -1743,6 +1743,9 @@ XhcPeiSetConfigCmd (
     }
 
     NumEp = IfDesc->NumEndpoints;
+    if ((NumEp == 0) && (MaxDci == 0)) {
+      MaxDci = 1;
+    }
 
     EpDesc = (USB_ENDPOINT_DESCRIPTOR *) (IfDesc + 1);
     for (EpIndex = 0; EpIndex < NumEp; EpIndex++) {
@@ -1959,6 +1962,9 @@ XhcPeiSetConfigCmd64 (
     }
 
     NumEp = IfDesc->NumEndpoints;
+    if ((NumEp == 0) && (MaxDci == 0)) {
+      MaxDci = 1;
+    }
 
     EpDesc = (USB_ENDPOINT_DESCRIPTOR *) (IfDesc + 1);
     for (EpIndex = 0; EpIndex < NumEp; EpIndex++) {
