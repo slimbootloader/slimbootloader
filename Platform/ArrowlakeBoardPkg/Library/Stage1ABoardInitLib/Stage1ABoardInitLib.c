@@ -443,7 +443,7 @@ MtlPchSecSerialIoGpioConfigure (
   UINT32                          RegisterOffset;
   UINT32                          AndValue;
   UINT32                          OrValue;
-  //UINT32                          RegisterValue;
+
   CommunityIndex = GPIOV2_PAD_GET_COMMUNITY_INDEX (GpioPad);
 
   ZeroMem (&CommunityAccess, sizeof (P2SB_SIDEBAND_REGISTER_ACCESS));
@@ -464,8 +464,6 @@ MtlPchSecSerialIoGpioConfigure (
       &CommunityAccess
       );
 
-  IoWrite32 (0x80, 0xDEC5);
-
   //
   //
   //  Get DW0 Register Offset to program Pad Mode and Input Inversion
@@ -474,14 +472,14 @@ MtlPchSecSerialIoGpioConfigure (
   if (EFI_ERROR(Status)) {
     return Status;
   }
-  IoWrite32 (0x80, 0xDEC6);
+
   //
   //  Program Pad Mode
   //
   if (PadMode != GpioV2PadModeHardwareDefault) {
     AndValue = (UINT32)~(GPIOV2_PAD_MODE_MASK << GPIOV2_PAD_MODE_DW0_POS);
     OrValue = ((PadMode >> 1) & GPIOV2_PAD_MODE_MASK) << GPIOV2_PAD_MODE_DW0_POS;
-    IoWrite32 (0x80, 0xDEC7);
+
     CommunityAccess.Access.AndThenOr32(
       &(CommunityAccess.Access),
       RegisterOffset,
@@ -489,7 +487,7 @@ MtlPchSecSerialIoGpioConfigure (
       OrValue
     );
   }
-  IoWrite32 (0x80, 0xDEC8);
+
   //
   //  Program Input Inversion
   //
@@ -497,14 +495,13 @@ MtlPchSecSerialIoGpioConfigure (
 
     AndValue = (UINT32)~(GPIOV2_PAD_INPUT_INVERSION_MASK << GPIOV2_PAD_INPUT_INVERSION_DW0_POS);
     OrValue  = ((InputInversion >> 1) & GPIOV2_PAD_INPUT_INVERSION_MASK) << GPIOV2_PAD_INPUT_INVERSION_DW0_POS;
-    IoWrite32 (0x80, 0xDEC9);
     CommunityAccess.Access.AndThenOr32 (
       &(CommunityAccess.Access),
       RegisterOffset,
       AndValue,
       OrValue
     );
-    IoWrite32 (0x80, 0xDECA);
+
   }
 
   //
@@ -515,55 +512,21 @@ MtlPchSecSerialIoGpioConfigure (
     //  Get DW1 Register Offset to program Pad Termination
     //
     Status = MtlPchGpioGetRegOffset (GpioPad, GpioV2Dw1Reg, &RegisterOffset);
-    IoWrite32 (0x80, 0xDECB);
     if (EFI_ERROR(Status)) {
       return Status;
     }
 
     AndValue = (UINT32)~(GPIOV2_PAD_TERMINATION_CONFIG_MASK << GPIOV2_PAD_TERMINATION_CONFIG_DW1_POS);
     OrValue  = ((TerminationConfig >> 1) & GPIOV2_PAD_TERMINATION_CONFIG_MASK) << GPIOV2_PAD_TERMINATION_CONFIG_DW1_POS;
-    IoWrite32 (0x80, 0xDECC);
     CommunityAccess.Access.AndThenOr32 (
       &(CommunityAccess.Access),
       RegisterOffset,
       AndValue,
       OrValue
     );
-    IoWrite32 (0x80, 0xDECD);
+
   }
 
-
-/*
-  // For debug purpose - start
-  // Read DW0 register offset
-  MtlPchGpioGetRegOffset (GpioPad, GpioV2Dw0Reg, &RegisterOffset);
-
-  // Read DW0 register offset data
-  RegisterValue = CommunityAccess.Access.Read32 (
-    &(CommunityAccess.Access),
-    RegisterOffset
-  );
-  DEBUG ((DEBUG_INFO, "DW0 RegisterOffset= 0x%x, RegisterValue= 0x%x\n", RegisterOffset, RegisterValue));
-
-  // Read DW1 register offset
-  MtlPchGpioGetRegOffset (GpioPad, GpioV2Dw1Reg, &RegisterOffset);
-  // Read DW1 register offset data
-  RegisterValue = CommunityAccess.Access.Read32 (
-    &(CommunityAccess.Access),
-    RegisterOffset
-  );
-  DEBUG ((DEBUG_INFO, "DW1 RegisterOffset= 0x%x, RegisterValue= 0x%x\n", RegisterOffset, RegisterValue));
-
-  // Read DW2 register offset
-  MtlPchGpioGetRegOffset (GpioPad, GpioV2Dw2Reg, &RegisterOffset);
-  // Read DW2 register offset data
-  RegisterValue = CommunityAccess.Access.Read32 (
-    &(CommunityAccess.Access),
-    RegisterOffset
-  );
-  DEBUG ((DEBUG_INFO, "DW2 RegisterOffset= 0x%x, RegisterValue= 0x%x\n", RegisterOffset, RegisterValue));
-  // For debug purpose - end
-*/
   return Status;
 }
 
@@ -583,53 +546,42 @@ BoardInit (
   )
 {
   UINT8             DebugPort;
-  UINT8             UartNumber;
   GPIOV2_PAD        GpioPad;
-
-  UartNumber = 2; //FixedPcdGet32 (PcdDebugPortNumber);
 
   switch (InitPhase) {
   case PostTempRamInit:
     // Initialize TCO timer in board-specific SG1A file
     // as not to interfere with other boards' disable TCO
     // timer functions which do the same thing
-    IoWrite32 (0x80, 0xDEE0);
     InitTcoTimer ();
-    IoWrite32 (0x80, 0xDEE1);
     EarlyPlatformDataCheck ();
 
     DebugPort = GetDebugPort ();
     if ((DebugPort != 0xFF) && (DebugPort < MTL_MAX_SERIALIO_UART_CONTROLLERS)) {
       if (MtlIsSocM ()) {
         // RX
-        GpioPad =  MtlSocPchGpioGetNativePadByFunctionAndPinMux (GPIO_FUNCTION_SERIAL_IO_UART_RX (UartNumber), TempRamInitParams.FsptConfig.PcdSerialIoUartRxPinMux);
+        GpioPad =  MtlSocPchGpioGetNativePadByFunctionAndPinMux (GPIO_FUNCTION_SERIAL_IO_UART_RX (DebugPort), TempRamInitParams.FsptConfig.PcdSerialIoUartRxPinMux);
         SecSerialIoGpioConfigure (GpioPad, GPIOV2_PAD_GET_PAD_MODE (GpioPad), GpioV2InputInversionDisable, GpioV2TermDefault);
 
         // TX
-        GpioPad =  MtlSocPchGpioGetNativePadByFunctionAndPinMux (GPIO_FUNCTION_SERIAL_IO_UART_TX (UartNumber), TempRamInitParams.FsptConfig.PcdSerialIoUartTxPinMux);
+        GpioPad =  MtlSocPchGpioGetNativePadByFunctionAndPinMux (GPIO_FUNCTION_SERIAL_IO_UART_TX (DebugPort), TempRamInitParams.FsptConfig.PcdSerialIoUartTxPinMux);
         SecSerialIoGpioConfigure (GpioPad, GPIOV2_PAD_GET_PAD_MODE (GpioPad), GpioV2InputInversionDisable, GpioV2TermDefault);
       } else if (MtlIsSocS ()) {
         // RX
-        GpioPad =  MtlSocPchGpioGetNativePadByFunctionAndPinMux (GPIO_FUNCTION_SERIAL_IO_UART_RX (UartNumber), 0 /*UartDeviceConfig->PinMux.Rx*/);
-        IoWrite32 (0x80, 0xDEB5);
+        GpioPad =  MtlSocPchGpioGetNativePadByFunctionAndPinMux (GPIO_FUNCTION_SERIAL_IO_UART_RX (DebugPort), 0 );
         MtlPchSecSerialIoGpioConfigure (GpioPad, GPIOV2_PAD_GET_PAD_MODE (GpioPad), GpioV2InputInversionDisable, GpioV2TermDefault);
-        IoWrite32 (0x80, 0xDEB6);
 
         // TX
-        GpioPad =  MtlSocPchGpioGetNativePadByFunctionAndPinMux (GPIO_FUNCTION_SERIAL_IO_UART_TX (UartNumber), 0 /*UartDeviceConfig->PinMux.Tx*/);
+        GpioPad =  MtlSocPchGpioGetNativePadByFunctionAndPinMux (GPIO_FUNCTION_SERIAL_IO_UART_TX (DebugPort), 0 );
         MtlPchSecSerialIoGpioConfigure (GpioPad, GPIOV2_PAD_GET_PAD_MODE (GpioPad), GpioV2InputInversionDisable, GpioV2TermDefault);
-        IoWrite32 (0x80, 0xDEB7);
 
         // RTS
-        GpioPad =  MtlSocPchGpioGetNativePadByFunctionAndPinMux (GPIO_FUNCTION_SERIAL_IO_UART_RTS (UartNumber), 0 /*UartDeviceConfig->PinMux.Rx*/);
-        IoWrite32 (0x80, 0xDEB5);
+        GpioPad =  MtlSocPchGpioGetNativePadByFunctionAndPinMux (GPIO_FUNCTION_SERIAL_IO_UART_RTS (DebugPort), 0 );
         MtlPchSecSerialIoGpioConfigure (GpioPad, GPIOV2_PAD_GET_PAD_MODE (GpioPad), GpioV2InputInversionDisable, GpioV2TermDefault);
-        IoWrite32 (0x80, 0xDEB8);
 
         // CTS
-        GpioPad =  MtlSocPchGpioGetNativePadByFunctionAndPinMux (GPIO_FUNCTION_SERIAL_IO_UART_CTS (UartNumber), 0 /*UartDeviceConfig->PinMux.Tx*/);
+        GpioPad =  MtlSocPchGpioGetNativePadByFunctionAndPinMux (GPIO_FUNCTION_SERIAL_IO_UART_CTS (DebugPort), 0 );
         MtlPchSecSerialIoGpioConfigure (GpioPad, GPIOV2_PAD_GET_PAD_MODE (GpioPad), GpioV2InputInversionDisable, GpioV2TermDefault);
-        IoWrite32 (0x80, 0xDEB9);
       }
     }
     PlatformHookSerialPortInitialize ();
