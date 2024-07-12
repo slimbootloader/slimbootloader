@@ -11,7 +11,9 @@
 #include <Library/DebugLib.h>
 #include <Library/IoLib.h>
 #include <Library/ResetSystemLib.h>
+#include <PchAccess.h>
 #include <FspEas/FspApi.h>
+#include <Register/PmcRegs.h>
 
 //
 // Reset Control Register
@@ -80,6 +82,7 @@ ResetPchGlobal (
   )
 {
   // Enable PMC Global reset on FSP_STATUS_RESET_REQUIRED_3
+  MmioOr32 (PCH_PWRM_BASE_ADDRESS + R_PMC_PWRM_ETR3, (UINT32) (B_PMC_PWRM_ETR3_CF9GR));
   IoWrite8 (R_RST_CNT, V_RST_CNT_FULLRESET);
 }
 
