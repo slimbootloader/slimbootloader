@@ -49,7 +49,7 @@ PeCoffLoaderUnloadImageExtraAction (
 **/
 VOID
 PeCoffFindAndReportImageInfo (
-  IN UINT32   ImageBase
+  IN UINTN   ImageBase
   )
 {
   return;
