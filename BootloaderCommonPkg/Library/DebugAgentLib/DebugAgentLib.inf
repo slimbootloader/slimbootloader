@@ -37,6 +37,12 @@
   Ia32/ArchDebugSupport.c
   Ia32/IntHandlerFuncs.c
 
+[Sources.X64]
+  X64/AsmFuncs.nasm
+  X64/IntHandler.nasm
+  X64/ArchDebugSupport.c
+  X64/IntHandlerFuncs.c
+
 [Packages]
   MdePkg/MdePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
