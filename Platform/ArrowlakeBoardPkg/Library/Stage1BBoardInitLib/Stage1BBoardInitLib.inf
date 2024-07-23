@@ -54,7 +54,6 @@
   PciCf8Lib
   TpmLib
   BootGuardLib
-  MeChipsetLib
   HeciLib
   PchInfoLib
   VariableLib
