@@ -6,3 +6,4 @@ VerInfo.txt
 !ApollolakeBoardPkg/VbtBin/Vbt_*.*
 *.json
 !RaptorlakeBoardPkg/VbtBin/Vbt_rplp*.*
+!RaptorlakeBoardPkg/VbtBin/VbtRplPs*.*
