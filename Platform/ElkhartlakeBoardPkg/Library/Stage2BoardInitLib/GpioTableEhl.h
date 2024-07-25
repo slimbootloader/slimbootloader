@@ -90,7 +90,7 @@ GLOBAL_REMOVE_IF_UNREFERENCED GPIO_INIT_CONFIG mEhlPchTsnDeviceGpioTable[] =
 {
   {GPIO_VER3_GPP_C17, {GpioPadModeNative1, GpioHostOwnDefault, GpioDirOut,    GpioOutDefault,   GpioIntDis, GpioResetDefault,  GpioTermNone}},  //RGMII2_MDC
   {GPIO_VER3_GPP_C16, {GpioPadModeNative1, GpioHostOwnDefault, GpioDirInOut,  GpioOutDefault,   GpioIntDis, GpioResetDefault,  GpioTermNone}},  //RGMII2_MDIO
-  {GPIO_VER3_GPP_U0,  {GpioPadModeNative1, GpioHostOwnDefault, GpioDirIn,  GpioOutDefault,   GpioIntDis, GpioResetDefault,  GpioTermNone}},  //RGMII2_INT
+  {GPIO_VER3_GPP_U0,  {GpioPadModeNative1, GpioHostOwnDefault, GpioDirInInv,  GpioOutDefault,   GpioIntDis, GpioResetDefault,  GpioTermNone}},  //RGMII2_INT
   {GPIO_VER3_GPP_U1,  {GpioPadModeGpio,    GpioHostOwnDefault, GpioDirOut,    GpioOutHigh,      GpioIntDis, GpioResetDefault,  GpioTermNone}},  //RGMII2_RESETB
 };
 
