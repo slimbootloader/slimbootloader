@@ -73,6 +73,7 @@ typedef enum {
 typedef enum {
   PlatformDeviceMin = OsBootDeviceMax,
   PlatformDeviceGraphics,
+  PlatformDeviceMe,
   PlatformDeviceMax
 } PLATFORM_DEVICE_TYPE;
 

@@ -13,12 +13,93 @@
 #include <Library/HeciMeExtLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include <Library/MemoryAllocationLib.h>
-#include <Register/MeChipset.h>
+#include <Library/HeciMeExtLib.h>
 #include <Library/HeciLib.h>
 #include <PcieRegs.h>
 #include <MkhiMsgsMtl.h>
 #include <CoreBiosMsg.h>
 #include <BupMsgs.h>
+#include <Guid/OsBootOptionGuid.h>
+
+/**
+  Reads a 32-bit value from the HECI PCI configuration space.
+
+  @param[in]  Function    The function number of the HECI device.
+  @param[in]  Regoffset   The offset of the register to read.
+
+  @return The 32-bit value read from the HECI PCI configuration space.
+**/
+UINT32
+EFIAPI
+HeciPciRead32 (
+  IN UINT8  Function,
+  IN UINT32 Regoffset
+  )
+{
+  UINT32 MeBaseAddress;
+  UINT8  Mebus;
+  UINT8  Medevice;
+
+  MeBaseAddress = GetDeviceAddr (PlatformDeviceMe, 0);
+  Mebus         = (MeBaseAddress >> 16) & 0xFF;
+  Medevice      = (MeBaseAddress >> 8) & 0xFF;
+
+  return PciRead32 (PCI_LIB_ADDRESS(Mebus, Medevice, Function, Regoffset));
+}
+
+/**
+  Reads a 16-bit value from the HECI PCI configuration space.
+
+  @param[in]  Function    The function number of the HECI device.
+  @param[in]  Regoffset   The offset of the register to read.
+
+  @return The 16-bit value read from the HECI PCI configuration space.
+**/
+UINT16
+EFIAPI
+HeciPciRead16 (
+  IN UINT8   Function,
+  IN UINT32  Regoffset
+)
+{
+  UINTN MeBaseAddress;
+  UINT8 Mebus;
+  UINT8 Medevice;
+
+  MeBaseAddress = GetDeviceAddr (PlatformDeviceMe, 0);
+  Mebus         = (MeBaseAddress >> 16) & 0xFF;
+  Medevice      = (MeBaseAddress >> 8) & 0xFF;
+
+  return PciRead16 (PCI_LIB_ADDRESS(Mebus, Medevice, Function, Regoffset));
+}
+
+/**
+  Reads an 8-bit value from the HECI PCI configuration space and performs a logical OR operation with the given value.
+
+  @param[in]  Function    The function number of the HECI device.
+  @param[in]  Regoffset   The offset of the register to read.
+  @param[in]  OrValue     The value to perform a logical OR operation with.
+
+  @return The 8-bit value read from the HECI PCI configuration space after the logical OR operation.
+**/
+UINT8
+EFIAPI
+HeciPciOr8 (
+  IN UINT8   Function,
+  IN UINT32  Regoffset,
+  IN UINT8   OrValue
+  )
+{
+  UINTN MeBaseAddress;
+  UINT8 Mebus;
+  UINT8 Medevice;
+
+  MeBaseAddress = GetDeviceAddr (PlatformDeviceMe, 0);
+  Mebus         = (MeBaseAddress >> 16) & 0xFF;
+  Medevice      = (MeBaseAddress >> 8) & 0xFF;
+
+  return PciOr8 (PCI_LIB_ADDRESS(Mebus, Medevice, Function, Regoffset), OrValue);
+}
 
 /**
   Send Get Current CSME Measured Boot State
@@ -269,6 +350,7 @@ HeciGetHerHashData (
     DEBUG ((DEBUG_WARN, "MMIO Bar for HECI device isn't programmed\n"));
     return EFI_DEVICE_ERROR;
   }
+
   HeciMemBar = (UINTN) MemBar;
 
   ///

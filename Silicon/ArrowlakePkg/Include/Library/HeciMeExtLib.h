@@ -12,11 +12,53 @@
 #include <Library/PciLib.h>
 #include <MkhiMsgs.h>
 
-#define HeciPciRead32(func, reg)     PciRead32 (PCI_LIB_ADDRESS(ME_BUS, ME_DEVICE_NUMBER, func, reg))
-#define HeciPciRead16(func, reg)     PciRead16 (PCI_LIB_ADDRESS(ME_BUS, ME_DEVICE_NUMBER, func, reg))
-#define HeciPciOr16(func, reg, val)  PciOr16 (PCI_LIB_ADDRESS(ME_BUS, ME_DEVICE_NUMBER, func, reg), val)
-#define HeciPciOr8(func, reg, val)   PciOr8 (PCI_LIB_ADDRESS(ME_BUS, ME_DEVICE_NUMBER, func, reg), val)
-#define HeciPciAnd8(func, reg, val)  PciAnd8 (PCI_LIB_ADDRESS(ME_BUS, ME_DEVICE_NUMBER, func, reg), val)
+/**
+  Reads a 32-bit value from the HECI PCI configuration space.
+
+  @param[in]  Devicefunc  The function number of the HECI device.
+  @param[in]  Regoffset   The offset of the register to read.
+
+  @return The 32-bit value read from the HECI PCI configuration space.
+**/
+UINT32
+EFIAPI
+HeciPciRead32 (
+  IN UINT8   Function,
+  IN UINT32  Regoffset
+ );
+
+/**
+  Reads a 16-bit value from the HECI PCI configuration space.
+
+  @param[in]  Function    The function number of the HECI device.
+  @param[in]  Regoffset   The offset of the register to read.
+
+  @return The 16-bit value read from the HECI PCI configuration space.
+**/
+UINT16
+EFIAPI
+HeciPciRead16 (
+  IN UINT8   Function,
+  IN UINT32  Regoffset
+);
+
+/**
+  Writes an 8-bit value to the HECI PCI configuration space by performing a bitwise OR operation.
+
+  @param[in]  Function    The function number of the HECI device.
+  @param[in]  Regoffset   The offset of the register to write.
+  @param[in]  OrValue     The 8-bit value read from the HECI PCI configuration space after the logical OR operation.
+
+  @return The 8-bit value read from the HECI PCI configuration space.
+**/
+UINT8
+EFIAPI
+HeciPciOr8 (
+  IN UINT8   Function,
+  IN UINT32  Regoffset,
+  IN UINT8   OrValue
+);
+
 
 /**
   This function sends a command to CSME to get Log information of Measurements provided in
