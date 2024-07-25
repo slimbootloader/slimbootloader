@@ -100,6 +100,22 @@ CONST PLT_DEVICE mPlatformDevices[] = {
     },
     .Type = PlatformDeviceGraphics,
     .Instance = 0
+  },
+  {
+    .Dev = {
+      .PciDev = {
+        .PciFunctionNumber  = 0,
+        .PciDeviceNumber    = 22,
+#if (FixedPcdGet8(PcdMtlSSupport) == 1)
+        .PciBusNumber       = 0x80,
+#else
+        .PciBusNumber       = 0x0,
+#endif
+        .IsMmioDevice       = 0
+      }
+    },
+    .Type = PlatformDeviceMe,
+    .Instance = 0
   }
 };
 

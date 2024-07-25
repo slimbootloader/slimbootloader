@@ -13,7 +13,6 @@
 #include <Library/TpmLib.h>
 #include <Library/IoLib.h>
 #include <Library/MeExtMeasurementLib.h>
-#include <Register/MeChipset.h>
 #include <PcieRegs.h>
 #include <MeBiosPayloadData.h>
 
@@ -163,13 +162,13 @@ ExtendCsmeMeasurementToTpmPcr (
   MemBar =  HeciPciRead32 (HECI_FUNCTION_NUMBER, PCI_BASE_ADDRESSREG_OFFSET) & 0xFFFFFFF0;
   if ((HeciPciRead32 (HECI_FUNCTION_NUMBER, PCI_BASE_ADDRESSREG_OFFSET) & B_PCI_BAR_MEMORY_TYPE_MASK) == B_PCI_BAR_MEMORY_TYPE_64) {
     MemBar += (UINT64) HeciPciRead32 (HECI_FUNCTION_NUMBER, (PCI_BASE_ADDRESSREG_OFFSET + 4)) << 32;
+
   }
 
   if (MemBar == 0) {
     DEBUG ((DEBUG_WARN, "MMIO Bar for HECI device isn't programmed\n"));
     return EFI_DEVICE_ERROR;
   }
-
   ///
   /// Enable HECI MSE
   ///
