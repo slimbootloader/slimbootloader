@@ -27,7 +27,7 @@ class Board(BaseBoard):
 
         self.VERINFO_IMAGE_ID     = 'SB_RPLP'
         self.VERINFO_PROJ_MAJOR_VER = 1
-        self.VERINFO_PROJ_MINOR_VER = 1
+        self.VERINFO_PROJ_MINOR_VER = 2
         self.VERINFO_SVN            = 1
         self.VERINFO_BUILD_DATE     = time.strftime("%m/%d/%Y")
 
@@ -145,6 +145,7 @@ class Board(BaseBoard):
             self.HAVE_PSD_TABLE             = 0
             self.FSPDEBUG_MODE              = 0
             self.ENABLE_SOURCE_DEBUG        = 0
+            self.ENABLE_PCIE_PM             = 0
 
         if self.RELEASE_MODE and self.ENABLE_FAST_BOOT:
             self.STAGE1A_SIZE         = 0x00016000
