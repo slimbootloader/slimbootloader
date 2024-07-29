@@ -1446,6 +1446,27 @@ PchPcieRpFuncNumber (
 }
 
 /**
+  Get PCH PCIe controller address that can be passed to the PCI Segment Library functions.
+
+  @param[in]  RpIndex       PCH PCIe Root Port physical number. (0-based)
+
+  @retval PCH PCIe controller address in PCI Segment Library representation
+**/
+UINT64
+PchPcieRpPciCfgBase (
+  IN  UINT32   RpIndex
+  )
+{
+  return PCI_SEGMENT_LIB_ADDRESS (
+          DEFAULT_PCI_SEGMENT_NUMBER_PCH,
+          DEFAULT_PCI_BUS_NUMBER_PCH,
+          PchPcieRpDevNumber (RpIndex),
+          PchPcieRpFuncNumber (RpIndex),
+          0
+          );
+}
+
+/**
   Get HECI1 PCI device number
 
   @retval PCI dev number

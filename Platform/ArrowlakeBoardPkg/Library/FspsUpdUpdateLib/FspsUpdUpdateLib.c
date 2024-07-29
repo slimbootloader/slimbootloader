@@ -36,6 +36,7 @@
 #include <Library/ContainerLib.h>
 #include "TsnSubRegion.h"
 #include <Library/MtlSocInfoLib.h>
+#include <Library/PciePm.h>
 
 #define CPU_PCIE_DT_HALO_MAX_ROOT_PORT     3
 #define CPU_PCIE_ULT_ULX_MAX_ROOT_PORT     3
@@ -804,6 +805,9 @@ UpdateFspConfig (
     break;
   }
 
+  if (FeaturePcdGet (PcdEnablePciePm)) {
+    StoreRpConfig (FspsConfig);
+  }
   // S0ix configuration
   if (FeaturesCfgData != NULL) {
     if (FeaturesCfgData->Features.S0ix == 1) {
@@ -825,5 +829,3 @@ UpdateFspConfig (
     }
   }
 }
-
-

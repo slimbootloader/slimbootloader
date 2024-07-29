@@ -43,4 +43,4 @@
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdFramebufferInitEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled
-
+  gPlatformModuleTokenSpaceGuid.PcdEnablePciePm

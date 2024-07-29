@@ -21,6 +21,7 @@
 #include "GpioTableArlSPostMem.h"
 #include "GpioTableArlhPostMem.h"
 #include "GpioTableArlhRvpPostMem.h"
+#include <Library/PciePm.h>
 #include <Library/MtlPchGpioTopologyLib.h>
 #include <Library/MtlSocInfoLib.h>
 
@@ -429,6 +430,9 @@ BoardInit (
     PlatformPrePciEnumeration();
     break;
   case PostPciEnumeration:
+    if (FeaturePcdGet (PcdEnablePciePm)) {
+      PciePmConfig ();
+    }
     Status = SetFrameBufferWriteCombining (0, MAX_UINT32);
     if (EFI_ERROR(Status)) {
       DEBUG ((DEBUG_INFO, "Failed to set GFX framebuffer as WC\n"));
@@ -881,7 +885,6 @@ PatchCpuSsdtTable (
 **/
 STATIC
 UINT32
-EFIAPI
 CalculateRelativePower (
   IN  UINT16  BaseRatio,
   IN  UINT16  CurrRatio,
@@ -1634,8 +1637,8 @@ PlatformUpdateAcpiGnvs (
       MtlPchNvs->RpAddress[RpNumber] = Data32;
       DEBUG ((DEBUG_INFO, "MtlPchNvs->RpAddress[%d] = 0x%08X\n", RpNumber, MtlPchNvs->RpAddress[RpNumber]));
 
-      MtlPchNvs->PcieLtrMaxSnoopLatency[RpNumber]   = 0x0;
-      MtlPchNvs->PcieLtrMaxNoSnoopLatency[RpNumber] = 0x0;
+      MtlPchNvs->PcieLtrMaxSnoopLatency[RpNumber]   = 0x100F;
+      MtlPchNvs->PcieLtrMaxNoSnoopLatency[RpNumber] = 0x100F;
     }
     MtlPchNvs->GEI0 = 0x2;
     MtlPchNvs->GEI1 = 0x3;
