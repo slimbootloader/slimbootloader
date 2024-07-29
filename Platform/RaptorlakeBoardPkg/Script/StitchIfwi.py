@@ -1,7 +1,7 @@
 ## @ StitchIfwi.py
 #  This is a python stitching script for Slim Bootloader RPL build
 #
-# Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved. <BR>
+# Copyright (c) 2020 - 2024, Intel Corporation. All rights reserved. <BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -94,7 +94,7 @@ def patch_xml_file(stitch_dir, ifwi_src_path):
 
 
 def replace_component (ifwi_src_path, flash_path, file_path, comp_alg, pri_key, svn):
-    print ("Replacing components.......")
+    print ("Replacing components.......%s " % file_path)
     work_dir = os.getcwd()
     ifwi_bin = bytearray (get_file_data (ifwi_src_path))
     ifwi = IFWI_PARSER.parse_ifwi_binary (ifwi_bin)

@@ -256,7 +256,8 @@ class Board(BaseBoard):
         if self.FUSA_SUPPORT:
             # FuSa validation requires prebuilt images that can boot OS Loader Ubuntu
             self.PLD_HEAP_SIZE    = 0x09000000
-        self.DIAGNOSTICACM_SIZE   = 0x00001000
+            self.DIAGNOSTICACM_SIZE   = 0x00001000
+
         self.KM_SIZE              = 0x00000400
         self.BPM_SIZE             = 0x00000600
         self.ACM_SIZE             = 0x00040000 + self.KM_SIZE + self.BPM_SIZE

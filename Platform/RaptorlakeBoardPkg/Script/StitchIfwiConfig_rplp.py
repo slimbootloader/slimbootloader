@@ -79,9 +79,14 @@ def get_component_replace_list(plt_params_list):
        #    Path                   file name              compress    Key                           SVN
       ('IFWI/BIOS/TS0/ACM0',      'Input/acm0.bin',        'dummy',    '',                            ''),
       ('IFWI/BIOS/TS1/ACM0',      'Input/acm0.bin',        'dummy',    '',                            ''),
+       ]
+
+    if 'fusa' in plt_params_list:
+      print("Replace the DACM")
+      replace_list.extend ([
       ('IFWI/BIOS/TS0/DACM',      'Input/DiagnosticAcm.bin', 'dummy',      '',                        ''),
       ('IFWI/BIOS/TS1/DACM',      'Input/DiagnosticAcm.bin', 'dummy',      '',                        ''),
-       ]
+      ])
 
     if 'tsn' in plt_params_list:
         if os.path.exists('IPFW/TsnSubRegion.bin'):
@@ -112,7 +117,8 @@ def check_parameter(para_list):
         'dual'  : {},
         '64MB'  : {},
         'debug' : {},
-        'posc'  : {}
+        'posc'  : {},
+        'fusa'  : {}
         }
 
     para_help = \
@@ -128,6 +134,7 @@ def check_parameter(para_list):
         '64MB' -- Build for 64MB component to allow space for FuSa BIST pattern data
         'debug' -- Enable DAM and DCI
         'posc' -- Stitch POSC binary into BIOS region.
+        'fusa' -- Stitch Fusa DiagnosticAcm binary into BIOS region
         """
     for para in para_list:
         if para == '':
