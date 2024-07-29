@@ -6,3 +6,4 @@ Fsp*.h
 ElkhartlakePkg/Include/MemInfoHob.h
 FSP_License.pdf
 AlderlakePkg/*/Include/MemInfoHob.h
+MeteorlakePkg/Include/MemInfoHob.h
