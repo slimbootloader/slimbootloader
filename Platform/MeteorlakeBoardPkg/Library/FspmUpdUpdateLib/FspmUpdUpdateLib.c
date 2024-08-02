@@ -115,17 +115,18 @@ UpdateFspConfig (
 
   DebugPort = GetDebugPort ();
   if (DebugPort < GetPchMaxSerialIoUartControllersNum ()) {
+    Fspmcfg->PcdDebugInterfaceFlags = BIT4 | BIT5;
     Fspmcfg->SerialIoUartDebugControllerNumber = DebugPort;
     Fspmcfg->SerialIoUartDebugMode = 4;
   } else {
+    Fspmcfg->PcdDebugInterfaceFlags = BIT1;
     if (DebugPort == 0xFF) {
       Fspmcfg->PcdIsaSerialUartBase = 0;
     } else {
       Fspmcfg->PcdIsaSerialUartBase = 1;
     }
   }
-  Fspmcfg->PcdSerialDebugLevel          = 0x3;
-  Fspmcfg->PcdDebugInterfaceFlags       = BIT1;
+  Fspmcfg->PcdSerialDebugLevel          = 0x5;
 
   // Memory SPD Data
   //Update if embedded memory needed
