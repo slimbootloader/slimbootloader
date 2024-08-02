@@ -77,6 +77,7 @@ PcieIsPhyLanePgEnabled (
   @param[in] LtrConfig                      Root Port LTR configuration
 **/
 VOID
+EFIAPI
 ConfigureRpLtrOverride (
   UINT64           RpBase,
   UINT32           DevNum,
@@ -164,6 +165,7 @@ ConfigureRpLtrOverride (
   @param[in] L1LowCapable   TRUE if Root Port is L1 Low capable
 **/
 VOID
+EFIAPI
 L1ssProprietaryConfiguration (
   UINT64  RpBase,
   BOOLEAN LtrCapable,
