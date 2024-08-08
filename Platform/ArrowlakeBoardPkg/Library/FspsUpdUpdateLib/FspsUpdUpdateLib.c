@@ -592,16 +592,6 @@ UpdateFspConfig (
     FspsConfig->PchLockDownGlobalSmi = 0x1;
   }
 
-  if (MtlIsSocM ()) {
-    DEBUG ((DEBUG_INFO, "Updated Soc M VMD Enabled WatchDog Disabled\n"));
-    FspsConfig->VmdEnable = 1;
-    FspsConfig->EnableTcoTimer = 0x0;
-    FspsConfig->WatchDogEnabled = 0x0;
-  } else {
-      FspsConfig->VmdEnable = 0;
-      FspsConfig->EnableTcoTimer = 0x1;
-  }
-
   // PCH Flash protection
   FspsConfig->PchPwrOptEnable             = 0x1;
 
@@ -630,6 +620,18 @@ UpdateFspConfig (
 
   FspsConfig->AmtEnabled = 0x1;
   FspsConfig->EnableTcoTimer = 0x1;
+
+  if (MtlIsSocM ()) {
+    DEBUG ((DEBUG_INFO, "Updated Soc M VMD Enabled WatchDog Disabled\n"));
+    FspsConfig->VmdEnable = 1;
+    FspsConfig->EnableTcoTimer = 0x0;
+    FspsConfig->WatchDogEnabled = 0x0;
+    FspsConfig->PchLockDownBiosLock = SiCfgData->PchLockDownBiosLock;
+    FspsConfig->PchLockDownGlobalSmi = SiCfgData->PchLockDownGlobalSmi;
+  } else {
+      FspsConfig->VmdEnable = 0;
+      FspsConfig->EnableTcoTimer = 0x1;
+  }
 
   PowerCfgData = (POWER_CFG_DATA *) FindConfigDataByTag (CDATA_POWER_TAG);
   if (PowerCfgData == NULL) {
