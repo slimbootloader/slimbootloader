@@ -683,12 +683,14 @@ def adjust_auth_type (auth_type_str, key_path):
     return auth_type_str
 
 def gen_layout (comp_list, img_type, auth_type_str, svn, out_file, key_dir, key_file):
-    hash_type = CONTAINER._auth_to_hashalg_str[auth_type_str] if auth_type_str else ''
+    if auth_type_str in ['SHA2_256','SHA2_384']:
+        raise Exception ("Invalid 'auth' parameter '%s'. Monolithic signing requires a signature-type auth." % (auth_type_str))
     auth_type = auth_type_str
     key_path  = os.path.join(key_dir, key_file)
     auth_type = adjust_auth_type (auth_type, key_path)
-    if auth_type == '':
-        raise Exception ("'auth' parameter is expected  !")
+    hash_type = CONTAINER._auth_to_hashalg_str[auth_type]
+    if auth_type_str == '':
+        print ("No 'auth' parameter specified. Defaulting to '%s' based on key type." % (auth_type))
 
     # prepare the layout from individual components from '-cl'
     if img_type not in CONTAINER_HDR._image_type.keys():
