@@ -147,6 +147,7 @@ def get_xml_change_list (platform, plt_params_list):
         # Path                                                                      | value |
         # =========================================================================================
         #   Region Order
+        ('./FlashSettings/BiosConfiguration/BiosRedAssistance',                                     'Disabled'),
         ('./FlashLayout/DescriptorRegion/HarnessGlobalData/SelectedRvp',                            'ARL-H DDR5 SBS (MTP-P + ARL-H)'),
         ('./FlashLayout/BiosRegion/InputFile',                                                      '$SourceDir\BiosRegion.bin'),
         ('./FlashLayout/Ifwi_IntelMePmcRegion/MeRegionFile',                                        '$SourceDir\ME Sub Partition.bin'),
