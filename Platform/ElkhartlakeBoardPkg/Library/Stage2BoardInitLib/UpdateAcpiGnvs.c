@@ -663,7 +663,7 @@ PlatformUpdateAcpiGnvs (
   PchNvs->GED2                                  = (UINT8) GroupDw[2];
 
   // Update eMMC/ SdCard/ UFS
-  PchNvs->EMH4                                  = 0;
+  PchNvs->EMH4                                  = 1;
   PchNvs->EmmcEnabled                           = 1;
   PchNvs->EMDS                                  = 1;
   PchNvs->SdCardEnabled                         = 1;
