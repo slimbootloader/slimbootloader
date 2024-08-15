@@ -42,8 +42,8 @@
 
 #define UCODE_REGION_BASE   FixedPcdGet32(PcdUcodeBase)
 #define UCODE_REGION_SIZE   FixedPcdGet32(PcdUcodeSize)
-#define SG1B_REDB_BASE      (UINT32) ((2 * FixedPcdGet32(PcdTopSwapRegionSize)) + FixedPcdGet32(PcdRedundantRegionSize) + FixedPcdGet32(PcdStage1BSize))
-#define CODE_REGION_SIZE    ALIGN_UP (SG1B_REDB_BASE, SIZE_1MB)
+
+#define CODE_REGION_SIZE    FixedPcdGet32(PcdTopSwapRegionSize)
 #define CODE_REGION_BASE    (UINT32) (BASE_4GB - CODE_REGION_SIZE)
 
 #define MTL_MAX_SERIALIO_UART_CONTROLLERS     3
