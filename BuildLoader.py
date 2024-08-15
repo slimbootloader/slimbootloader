@@ -40,7 +40,7 @@ def rebuild_basetools ():
 
         if not check_files_exist (exe_list, os.path.join(sblsource, 'BaseTools', 'Bin', 'Win32'), '.exe'):
             print ("Could not find pre-built BaseTools binaries, try to rebuild BaseTools ...")
-            ret = run_process (['BaseTools\\toolsetup.bat', 'forcerebuild'])
+            ret = run_process (['BaseTools\\toolsetup.bat', 'forcerebuild', os.environ['TOOL_CHAIN']])
 
     if ret:
         print ("Build BaseTools failed, please check required build environment and utilities !")
