@@ -19,5 +19,9 @@ Scope(\_SB.PC00) {
       TADL,  32,
       TADH,  32,
     }
+
+    Method(_PRW, 0) {
+      Return(GPRW(0x70, 5)) // can wakeup from S5 state
+    }
   } // Device(GTSN)
 }
