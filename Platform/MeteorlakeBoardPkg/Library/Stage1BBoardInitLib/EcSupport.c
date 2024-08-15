@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2024, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -388,6 +388,9 @@ GetBoardId (
       break;
     case BoardIdMtlPDdr5CRb:
       *PlatformId = PLATFORM_ID_MTL_P_DDR5_CRB;
+      break;
+    case BoardIdMtlPDdr5Mcl:
+      *PlatformId = PLATFORM_ID_MTL_P_DDR5_MCL;
       break;
     default:
       DEBUG((DEBUG_INFO, "Unsupporteddd board Id %x .....\n", *PlatformId));

@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2024, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -704,6 +704,13 @@ DEBUG_CODE_END();
       DEBUG ((DEBUG_ERROR, "GPIO table size: %x  \n",sizeof (mGpioTablePreMemMtlPSbsCRBDimm) / sizeof (mGpioTablePreMemMtlPSbsCRBDimm[0])));
       MtlSocInstallCommunityAccess(CommunityAccess);
       GPIOTableV2 = mGpioTablePreMemMtlPSbsCRBDimm;
+      GpioInit (GPIOTableV2);
+      break;
+    case BoardIdMtlPDdr5Mcl:
+      DEBUG ((DEBUG_ERROR, "The platform id is MCL:  0x%X!\n", GetPlatformId ()));
+      DEBUG ((DEBUG_ERROR, "GPIO table size: %x  \n",sizeof (mGpioTableMcl) / sizeof (mGpioTableMcl[0])));
+      MtlSocInstallCommunityAccess(CommunityAccess);
+      GPIOTableV2 = mGpioTableMcl;
       GpioInit (GPIOTableV2);
       break;
     default:

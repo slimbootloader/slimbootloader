@@ -56,9 +56,17 @@
         help         : >
                        Enable/Disable ME FIPS Mode. 1:Enabled, 0:Disabled
         length       : 1b
+    - HdaVerbTable   :
+        name         : HDA Verb table customize Enable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable set the Azalia verb table. 1:Enabled, 0:Disabled
+        length       : 1b
+
     - Rsvd         :
         name         : Reserved
         type         : Reserved
         help         : >
                        reserved bits
-        length       : 27b
+        length       : 26b
