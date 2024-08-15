@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2024, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -34,6 +34,8 @@
 #include <Library/WatchDogTimerLib.h>
 #include <PlatformData.h>
 #include <Library/ContainerLib.h>
+#include "HdaVerbTable.h"
+#include <Library/BlMemoryAllocationLib.h>
 #include "TsnSubRegion.h"
 
 #define CPU_PCIE_DT_HALO_MAX_ROOT_PORT     3
@@ -594,6 +596,11 @@ UpdateFspConfig (
     FspsConfig->AtomTurboRatioLimitNumCore[Index]          = 0x0;
   }
 
+  // Set VerbTable is disabled by default. Enable it only when specified by config data.
+  if (FeaturesCfgData != NULL && (FeaturesCfgData->Features.HdaVerbTable != 0)){
+    FspsConfig->PchHdaVerbTablePtr = (UINT32)(UINTN) &HdaVerbTableAlc897;
+    FspsConfig->PchHdaVerbTableEntryNum = 1;
+  }
   if(GetPayloadId () == 0) {
     // Disable SMI sources
     SmiEn = IoRead32((UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN));
