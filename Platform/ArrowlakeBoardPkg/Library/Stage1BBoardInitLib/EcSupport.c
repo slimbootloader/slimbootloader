@@ -201,6 +201,9 @@ SendEcCommandTimeout (
   // Wait for EC to be ready (with a timeout)
   //
   ReceiveEcStatus (&EcStatus);
+  if (EcStatus == 0xFF) {
+    return EFI_DEVICE_ERROR;
+  }
   //
   // Check if output buffer bit(OBF) is set.
   // Read and discard the output buffer data so that next BIOS-EC cmd is in sync
