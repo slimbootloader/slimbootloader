@@ -62,4 +62,5 @@
   gPlatformModuleTokenSpaceGuid.PcdStage1BSize
   gPlatformCommonLibTokenSpaceGuid.PcdDebugPortNumber
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel
+  gPlatformModuleTokenSpaceGuid.PcdFastBootEnabled
 
