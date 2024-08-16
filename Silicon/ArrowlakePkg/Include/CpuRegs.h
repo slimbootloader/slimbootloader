@@ -166,6 +166,9 @@ typedef enum {
 #define MSR_PACKAGE_POWER_LIMIT                                       0x610
 #define MSR_PACKAGE_POWER_SKU                                         0x614
 
+// Boot Guard Definitions
+#define MSR_BOOT_GUARD_SACM_INFO                                      0x0000013A
+#define B_BOOT_GUARD_SACM_INFO_NEM_ENABLED                            BIT0
 
 ///
 /// Local APIC definitions
@@ -181,6 +184,11 @@ typedef enum {
 #define CPUID_FULL_FAMILY_MODEL_ARROWLAKE_MOBILE_H  0x000C0650
 #define CPUID_FULL_FAMILY_MODEL_ARROWLAKE_DT_HALO   0x000C0660    // For ARL S and HX Segments
 #define CPUID_FULL_FAMILY_MODEL_ARROWLAKE_DT_20A    0x000C06A0    // For ARL S and HX Segments 20A
+
+// Cache Definitions
+#define CACHE_WRITEPROTECTED                        5
+#define MSR_CACHE_VARIABLE_MTRR_BASE                0x200
+#define B_CACHE_MTRR_VALID                          BIT11
 
 /**
   This 'flexible boot' register is written by BIOS in order to modify the maximum non-turbo ratio on the next reset.
