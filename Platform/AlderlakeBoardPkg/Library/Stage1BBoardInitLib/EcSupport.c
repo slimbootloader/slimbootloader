@@ -348,7 +348,7 @@ GetBoardId (
   //
   *PlatformId = 0xFF;
 
-#if !defined(PLATFORM_ADLN) && !defined(PLATFORM_ASL)
+#if !defined(PLATFORM_ADLN)
   GetBoardIdFromEC(&BoardID);
 #endif
 

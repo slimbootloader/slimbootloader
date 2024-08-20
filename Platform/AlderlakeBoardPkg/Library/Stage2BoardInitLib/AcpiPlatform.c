@@ -271,7 +271,7 @@ PlatformUpdateAcpiTable (
   VOID                        *FspHobList;
   PLATFORM_DATA               *PlatformData;
   FEATURES_CFG_DATA           *FeaturesCfgData;
-#if FixedPcdGet8 (PcdTccEnabled) && !defined(PLATFORM_RPLS) && !defined(PLATFORM_ADLN) && !defined(PLATFORM_ASL) && !defined(PLATFORM_RPLP)
+#if FixedPcdGet8 (PcdTccEnabled) && !defined(PLATFORM_RPLS) && !defined(PLATFORM_ADLN) && !defined(PLATFORM_RPLP)
   TCC_CFG_DATA                *TccCfgData;
 #endif
   EFI_STATUS                   Status;
@@ -349,7 +349,7 @@ PlatformUpdateAcpiTable (
   } else if (Table->Signature == SIGNATURE_32 ('R', 'T', 'C', 'T')) {
     DEBUG ((DEBUG_INFO, "Find RTCT table\n"));
 
-#if FixedPcdGet8 (PcdTccEnabled) && !defined(PLATFORM_RPLS) && !defined(PLATFORM_ADLN) && !defined(PLATFORM_ASL) && !defined(PLATFORM_RPLP)
+#if FixedPcdGet8 (PcdTccEnabled) && !defined(PLATFORM_RPLS) && !defined(PLATFORM_ADLN) && !defined(PLATFORM_RPLP)
       TccCfgData = (TCC_CFG_DATA *) FindConfigDataByTag(CDATA_TCC_TAG);
       if ((TccCfgData != NULL) && (TccCfgData->TccEnable != 0)) {
         Status = UpdateAcpiRtctTable(Table);
@@ -752,7 +752,7 @@ PlatformUpdateAcpiGnvs (
   UINT32                   Data32;
   GPIO_GROUP               GroupToGpeDwX[3];
   UINT32                   GroupDw[3];
-#if FixedPcdGet8 (PcdTccEnabled) && !defined(PLATFORM_RPLS) && !defined(PLATFORM_ADLN) && !defined(PLATFORM_ASL) && !defined(PLATFORM_RPLP)
+#if FixedPcdGet8 (PcdTccEnabled) && !defined(PLATFORM_RPLS) && !defined(PLATFORM_ADLN) && !defined(PLATFORM_RPLP)
   TCC_CFG_DATA            *TccCfgData;
   CPUID_EXTENDED_TIME_STAMP_COUNTER_EDX  Edx;
   CPUID_PROCESSOR_FREQUENCY_EBX          Ebx;
@@ -1290,7 +1290,7 @@ PlatformUpdateAcpiGnvs (
   SocUpdateAcpiGnvs ((VOID *)GnvsIn);
 
   // TCC mode enabling
-#if FixedPcdGet8 (PcdTccEnabled) && !defined(PLATFORM_RPLS) && !defined(PLATFORM_ADLN) && !defined(PLATFORM_ASL) && !defined(PLATFORM_RPLP)
+#if FixedPcdGet8 (PcdTccEnabled) && !defined(PLATFORM_RPLS) && !defined(PLATFORM_ADLN) && !defined(PLATFORM_RPLP)
     TccCfgData = (TCC_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
     if ((TccCfgData != NULL) && (TccCfgData->TccEnable != 0)) {
       AsmCpuid (CPUID_TIME_STAMP_COUNTER, NULL, &Ebx.Uint32, NULL, NULL);

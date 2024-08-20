@@ -23,6 +23,7 @@
 #include <Library/ConfigDataLib.h>
 #include <Library/PchInfoLib.h>
 #include <Library/TcoTimerLib.h>
+#include <ConfigDataStruct.h>
 
 #define UCODE_REGION_BASE   FixedPcdGet32(PcdUcodeBase)
 #define UCODE_REGION_SIZE   FixedPcdGet32(PcdUcodeSize)
@@ -56,7 +57,7 @@ FSPT_UPD TempRamInitParams = {
     .PcdSerialIoUartNumber      = FixedPcdGet32 (PcdDebugPortNumber) < PCH_MAX_SERIALIO_UART_CONTROLLERS ? \
                                     FixedPcdGet32 (PcdDebugPortNumber) : 2,
     .PcdSerialIoUartMode        = 4, // SerialIoUartSkipInit, let SBL init UART
-#if defined(PLATFORM_ADLN) || defined(PLATFORM_ASL)
+#if defined(PLATFORM_ADLN)
     .PcdSerialIoUartPowerGating = 1,
 #endif
     .PcdSerialIoUartBaudRate    = 115200,

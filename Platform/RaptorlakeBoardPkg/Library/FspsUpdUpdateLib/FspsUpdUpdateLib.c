@@ -667,7 +667,7 @@ UpdateFspConfig (
     FspsConfig->CpuPciePowerGating[1] = SiCfgData->CpuPciePowerGating;
     FspsConfig->CpuPciePowerGating[2] = SiCfgData->CpuPciePowerGating;
     FspsConfig->CpuPciePowerGating[3] = SiCfgData->CpuPciePowerGating;
-#if !defined(PLATFORM_ADLN) && !defined(PLATFORM_ASL)
+#if !defined(PLATFORM_ADLN)
     FspsConfig->L2QosEnumerationEn = SiCfgData->L2QosEnumerationEn;
 #endif
   }
