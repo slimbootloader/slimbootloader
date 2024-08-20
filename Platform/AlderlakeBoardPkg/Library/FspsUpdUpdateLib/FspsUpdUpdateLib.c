@@ -812,7 +812,7 @@ UpdateFspConfig (
     FspsConfig->CpuPciePowerGating[1] = SiCfgData->CpuPciePowerGating;
     FspsConfig->CpuPciePowerGating[2] = SiCfgData->CpuPciePowerGating;
     FspsConfig->CpuPciePowerGating[3] = SiCfgData->CpuPciePowerGating;
-#if !defined(PLATFORM_ADLN) && !defined(PLATFORM_ADLN50) && !defined(PLATFORM_ASL)
+#if !defined(PLATFORM_ADLN) && !defined(PLATFORM_ADLN50)
     FspsConfig->L2QosEnumerationEn = SiCfgData->L2QosEnumerationEn;
 #endif
   }
@@ -1213,7 +1213,7 @@ UpdateFspConfig (
         FspsConfig->LidStatus = 0x5b;
         FspsConfig->TcssAuxOri = 0x1;
         FspsConfig->Device4Enable = 0x0; //this controls the thermal device (B0,D4,F0)
-#if defined(PLATFORM_ADLN) || defined(PLATFORM_ASL)
+#if defined(PLATFORM_ADLN)
         FspsConfig->PchFivrVccstIccMaxControl = 0x1;
         FspsConfig->CpuFeaturesInitOnS3ResumeOverride = 0x1;
 #endif
