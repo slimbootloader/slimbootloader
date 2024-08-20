@@ -86,7 +86,7 @@ static int fdt_splice_struct_(void *fdt, void *p,
     int delta = newlen - oldlen;
     int err;
 
-    if ((err = fdt_splice_(fdt, p, oldlen, newlen)))
+    if ((err = fdt_splice_(fdt, p, oldlen, newlen)) != 0)
         return err;
 
     fdt_set_size_dt_struct(fdt, fdt_size_dt_struct(fdt) + delta);
@@ -108,7 +108,7 @@ static int fdt_splice_string_(void *fdt, int newlen)
         + fdt_off_dt_strings(fdt) + fdt_size_dt_strings(fdt);
     int err;
 
-    if ((err = fdt_splice_(fdt, p, 0, newlen)))
+    if ((err = fdt_splice_(fdt, p, 0, newlen)) != 0)
         return err;
 
     fdt_set_size_dt_strings(fdt, fdt_size_dt_strings(fdt) + newlen);
@@ -192,7 +192,7 @@ static int fdt_resize_property_(void *fdt, int nodeoffset, const char *name,
         return oldlen;
 
     if ((err = fdt_splice_struct_(fdt, (*prop)->data, FDT_TAGALIGN(oldlen),
-                      FDT_TAGALIGN(len))))
+                      FDT_TAGALIGN(len))) != 0)
         return err;
 
     (*prop)->len = cpu_to_fdt32(len);
