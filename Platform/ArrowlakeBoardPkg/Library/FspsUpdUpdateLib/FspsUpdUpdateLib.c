@@ -619,13 +619,13 @@ UpdateFspConfig (
   }
 
   FspsConfig->AmtEnabled = 0x1;
-  FspsConfig->EnableTcoTimer = 0x1;
 
   if (MtlIsSocM ()) {
-    DEBUG ((DEBUG_INFO, "Updated Soc M VMD Enabled WatchDog Disabled\n"));
-    FspsConfig->VmdEnable = 1;
-    FspsConfig->EnableTcoTimer = 0x0;
-    FspsConfig->WatchDogEnabled = 0x0;
+    DEBUG ((DEBUG_INFO, "Updated Soc M VMD Disabled\n"));
+    FspsConfig->VmdEnable = 0;
+    DEBUG ((DEBUG_INFO, "Updated Soc M WatchDog Enabled\n"));
+    FspsConfig->EnableTcoTimer = 0x1;
+    FspsConfig->WatchDogEnabled = 0x1;
     FspsConfig->PchLockDownBiosLock = SiCfgData->PchLockDownBiosLock;
     FspsConfig->PchLockDownGlobalSmi = SiCfgData->PchLockDownGlobalSmi;
   } else {
