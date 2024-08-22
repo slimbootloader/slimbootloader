@@ -358,6 +358,7 @@ BoardInit (
         GPIOTableV2 = mGpioTablePostMemArlHSbsCrbDimm;
         GpioInit (GPIOTableV2);
         break;
+      case PLATFORM_ID_ARL_H_LP5x_Rvp:
       case PLATFORM_ID_ARL_H_DDR5_RVP:
         DEBUG ((DEBUG_ERROR, "The platform id is : 0x%X!\n", GetPlatformId ()));
         DEBUG ((DEBUG_ERROR, "GPIO table size: %x  \n",sizeof (mGpioTablePostMemArlHRvpSbsCrbDimm) / sizeof (mGpioTablePostMemArlHRvpSbsCrbDimm[0])));
