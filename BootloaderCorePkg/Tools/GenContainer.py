@@ -485,6 +485,8 @@ class CONTAINER ():
                     component.attribute = COMPONENT_ENTRY._attr['RESERVED']
                     compress_alg        = 'Dummy'
                     is_last_entry       = True
+                    if auth_type == 'NONE':
+                        raise Exception ("Monolithic signing component with auth type '%s' not valid !" % auth_type)
 
             # compress the component
             lz_file = compress (in_file, compress_alg, svn, self.out_dir, self.tool_dir)
