@@ -1,7 +1,7 @@
 /**@file
   GPIO pins for ADL-PCH-LP,
 
-  Copyright (c) 2022 - 2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2022 - 2024, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -184,6 +184,8 @@
 #define GPIO_VER2_LP_GPP_F5                  0x090C0005
 #define GPIO_VER2_LP_GPP_F6                  0x090C0006
 #define GPIO_VER2_LP_GPP_F7                  0x090C0007
+#define GPIO_VER2_LP_GPP_F8                  0x090C0008
+#define GPIO_VER2_LP_GPP_F9                  0x090C0009
 #define GPIO_VER2_LP_GPP_F10                 0x090C000A
 #define GPIO_VER2_LP_GPP_F11                 0x090C000B
 #define GPIO_VER2_LP_GPP_F12                 0x090C000C
@@ -193,6 +195,7 @@
 #define GPIO_VER2_LP_GPP_F16                 0x090C0010
 #define GPIO_VER2_LP_GPP_F17                 0x090C0011
 #define GPIO_VER2_LP_GPP_F18                 0x090C0012
+#define GPIO_VER2_LP_GPP_F19                 0x090C0013
 #define GPIO_VER2_LP_GPP_F20                 0x090C0014
 #define GPIO_VER2_LP_GPP_F21                 0x090C0015
 #define GPIO_VER2_LP_GPP_F22                 0x090C0016
@@ -224,13 +227,103 @@
 #define GPIO_VER2_LP_GPP_E22                 0x090E0016
 #define GPIO_VER2_LP_GPP_E23                 0x090E0017
 
+/*
+  Following group is used only for PCH_N
+  Other GPIO Group Defines are same keeping
+  Macro in sync with earlier PCH in case there
+  is usage outside IP Block
+*/
+#define GPIO_VER2_LP_GPP_I0                   0x09090000
+#define GPIO_VER2_LP_GPP_I1                   0x09090001
+#define GPIO_VER2_LP_GPP_I2                   0x09090002
+#define GPIO_VER2_LP_GPP_I3                   0x09090003
+#define GPIO_VER2_LP_GPP_I4                   0x09090004
+#define GPIO_VER2_LP_GPP_I5                   0x09090005
+#define GPIO_VER2_LP_GPP_I6                   0x09090006
+#define GPIO_VER2_LP_GPP_I7                   0x09090007
+#define GPIO_VER2_LP_GPP_I8                   0x09090008
+#define GPIO_VER2_LP_GPP_I9                   0x09090009
+#define GPIO_VER2_LP_GPP_I10                  0x0909000A
+#define GPIO_VER2_LP_GPP_I11                  0x0909000B
+#define GPIO_VER2_LP_GPP_I12                  0x0909000C
+#define GPIO_VER2_LP_GPP_I13                  0x0909000D
+#define GPIO_VER2_LP_GPP_I14                  0x0909000E
+#define GPIO_VER2_LP_GPP_I15                  0x0909000F
+#define GPIO_VER2_LP_GPP_I16                  0x09090010
+#define GPIO_VER2_LP_GPP_I17                  0x09090011
+#define GPIO_VER2_LP_GPP_I18                  0x09090012
+#define GPIO_VER2_LP_GPP_I19                  0x09090013
 
+#define GPIO_VER2_LP_MUXING_SERIALIO_UART0_RXD_GPP_F1        0x290C0201
+#define GPIO_VER2_LP_MUXING_SERIALIO_UART0_TXD_GPP_F2        0x290C1202
+#define GPIO_VER2_LP_MUXING_SERIALIO_UART0_RTS_GPP_F0        0x290C2200
+#define GPIO_VER2_LP_MUXING_SERIALIO_UART0_CTS_GPP_F3        0x290C3203
+
+#define GPIO_VER2_P_MUXING_ISH_UART1_RXD_GPP_D17             0x29282211
+#define GPIO_VER2_P_MUXING_ISH_UART1_TXD_GPP_D18             0x29283212
+
+#define GPIO_VER2_P_MUXING_SERIALIO_I2C0_SDA_GPP_H4          0x1947c404
+#define GPIO_VER2_P_MUXING_SERIALIO_I2C0_SDA_GPP_E12         0x594ec40c
+#define GPIO_VER2_P_MUXING_SERIALIO_I2C1_SDA_GPP_H6          0x1947c606
+#define GPIO_VER2_P_MUXING_SERIALIO_I2C1_SDA_GPP_F13         0x594cc60d
+#define GPIO_VER2_P_MUXING_SERIALIO_I2C7_SDA_GPP_H12         0x1947d20c
+#define GPIO_VER2_P_MUXING_SERIALIO_I2C7_SDA_GPP_D15         0x4948d20f
+
+#define GPIO_VER2_P_MUXING_SERIALIO_I2C0_SCL_GPP_H5          0x1947a405
+#define GPIO_VER2_P_MUXING_SERIALIO_I2C0_SCL_GPP_E13         0x594ea40d
+#define GPIO_VER2_P_MUXING_SERIALIO_I2C1_SCL_GPP_H7          0x1947a607
+#define GPIO_VER2_P_MUXING_SERIALIO_I2C1_SCL_GPP_F12         0x594ca60c
+#define GPIO_VER2_P_MUXING_SERIALIO_I2C7_SCL_GPP_H13         0x1947b20d
+#define GPIO_VER2_P_MUXING_SERIALIO_I2C7_SCL_GPP_D16         0x4948b210
+
+#define GPIO_VER2_LP_MUXING_DMIC0_CLKA_GPP_S6                0x29460C06
+#define GPIO_VER2_LP_MUXING_DMIC0_CLKA_GPP_A7                0x59420C07
+#define GPIO_VER2_LP_MUXING_DMIC0_CLKB_GPP_S2                0x29461402
+#define GPIO_VER2_LP_MUXING_DMIC0_CLKB_GPP_A13               0x5942140D
+#define GPIO_VER2_LP_MUXING_DMIC0_DATA_GPP_S7                0x29460407
+#define GPIO_VER2_LP_MUXING_DMIC0_DATA_GPP_A8                0x59420408
+#define GPIO_VER2_LP_MUXING_DMIC1_CLKA_GPP_S4                0x29460E04
+#define GPIO_VER2_LP_MUXING_DMIC1_CLKA_GPP_A9                0x59420E09
+#define GPIO_VER2_LP_MUXING_DMIC1_CLKB_GPP_S3                0x29461603
+#define GPIO_VER2_LP_MUXING_DMIC1_CLKB_GPP_A14               0x5942160E
+#define GPIO_VER2_LP_MUXING_DMIC1_DATA_GPP_S5                0x29460605
+#define GPIO_VER2_LP_MUXING_DMIC1_DATA_GPP_A10               0x5942060A
 #define GPIO_VER2_LP_MUXING_DMIC0_CLKA_GPP_S2                0x29460c02
 #define GPIO_VER2_LP_MUXING_DMIC1_CLKA_GPP_S6                0x29460e06
+#define GPIO_VER2_LP_MUXING_DMIC0_CLKB_GPP_S4                0x29461404
 #define GPIO_VER2_LP_MUXING_DMIC1_CLKB_GPP_S5                0x29461605
 #define GPIO_VER2_LP_MUXING_DMIC0_DATA_GPP_S3                0x29460403
 #define GPIO_VER2_LP_MUXING_DMIC1_DATA_GPP_S7                0x29460607
+#define GPIO_VER2_LP_MUXING_DMIC0_CLKA_GPP_R4                0x39430c04
+#define GPIO_VER2_LP_MUXING_DMIC1_CLKA_GPP_R6                0x39430e06
+#define GPIO_VER2_LP_MUXING_DMIC0_CLKB_GPP_R0                0x39431400
+#define GPIO_VER2_LP_MUXING_DMIC1_CLKB_GPP_R1                0x39431601
+#define GPIO_VER2_LP_MUXING_DMIC0_DATA_GPP_R5                0x39430405
+#define GPIO_VER2_LP_MUXING_DMIC1_DATA_GPP_R7                0x39430607
 
-#define GPIO_VER2_LP_GPD11                   0x0905000B
+#define GPIO_VER2_LP_MUXING_CNVI_RF_RESET_GPP_A8             0x2942E408
+#define GPIO_VER2_LP_MUXING_CNVI_RF_RESET_GPP_F4             0x194CE404
+
+#define GPIO_VER2_LP_MUXING_CNVI_MODEM_CLKREQ_GPP_A9         0x2942E609
+#define GPIO_VER2_LP_MUXING_CNVI_CRF_XTAL_CLKREQ_GPP_A9      0x3942E609
+#define GPIO_VER2_LP_MUXING_CNVI_MODEM_CLKREQ_GPP_F5         0x294CE605
+#define GPIO_VER2_LP_MUXING_CNVI_CRF_XTAL_CLKREQ_GPP_F5      0x394CE605
+
+#define GPIO_VER2_P_MUXING_SATA_DEVSLP0_GPP_E4               0x196e3e04
+#define GPIO_VER2_P_MUXING_SATA_DEVSLP1_GPP_E5               0x196e4005
+#define GPIO_VER2_P_MUXING_SATA_DEVSLP0_GPP_H12              0x59673e0c
+#define GPIO_VER2_P_MUXING_SATA_DEVSLP1_GPP_H13              0x5967400d
+
+#define GPIO_VER2_P_MUXING_PCIE_CLKREQ_9_E0                  0x796e9000
+#define GPIO_VER2_P_MUXING_PCIE_CLKREQ_9_A12                 0x4962900c
+
+#define GPIO_VER2_P_MUXING_ISH_GP_4_E9                       0x290ea809
+#define GPIO_VER2_P_MUXING_ISH_GP_4_B3                       0x4900a803
+#define GPIO_VER2_P_MUXING_ISH_GP_5_A16                      0x4902aa10
+#define GPIO_VER2_P_MUXING_ISH_GP_5_B4                       0x4900aa04
+#define GPIO_VER2_P_MUXING_ISH_GP_6_B14                      0x5900ac0e
+#define GPIO_VER2_P_MUXING_ISH_GP_6_H12                      0x4907ac0c
+#define GPIO_VER2_P_MUXING_ISH_GP_7_B15                      0x5900ae0f
+#define GPIO_VER2_P_MUXING_ISH_GP_7_H13                      0x4907ae0d
 
 #endif // _GPIO_PINS_VER2_LP_H_
