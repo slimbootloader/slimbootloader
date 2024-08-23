@@ -38,6 +38,7 @@
 #include <IndustryStandard/UefiTcgPlatform.h>
 #include <Library/TpmLib.h>
 #include <Library/FusaConfigLib.h>
+#include <GpioPinsVer2Lp.h>
 
 #define CPU_PCIE_DT_HALO_MAX_ROOT_PORT     3
 #define CPU_PCIE_ULT_ULX_MAX_ROOT_PORT     3
@@ -1098,23 +1099,23 @@ UpdateFspConfig (
       FspsConfig->CpuPcieRpLtrMaxNoSnoopLatency[Index] = 0x100f;
     }
     FspsConfig->IopFusaConfigEnable = 0x0;
-    FspsConfig->SataPortDevSlpPinMux[0] = 0x59673e0c;
-    FspsConfig->SataPortDevSlpPinMux[1] = 0x5967400d;
+    FspsConfig->SataPortDevSlpPinMux[0] = GPIO_VER2_P_MUXING_SATA_DEVSLP0_GPP_H12;
+    FspsConfig->SataPortDevSlpPinMux[1] = GPIO_VER2_P_MUXING_SATA_DEVSLP1_GPP_H13;
     FspsConfig->SerialIoSpiDelayRxClk[1] = 0x0;
     FspsConfig->SerialIoSpiDelayRxClk[2] = 0x0;
     FspsConfig->SerialIoSpiDelayRxClk[3] = 0x0;
-    FspsConfig->PchSerialIoI2cSdaPinMux[0] = 0x1947c404;
-    FspsConfig->PchSerialIoI2cSdaPinMux[1] = 0x1947c606;
+    FspsConfig->PchSerialIoI2cSdaPinMux[0] = GPIO_VER2_P_MUXING_SERIALIO_I2C0_SDA_GPP_H4;
+    FspsConfig->PchSerialIoI2cSdaPinMux[1] = GPIO_VER2_P_MUXING_SERIALIO_I2C1_SDA_GPP_H6;
     FspsConfig->PchSerialIoI2cSdaPinMux[4] = 0;
-    FspsConfig->PchSerialIoI2cSdaPinMux[7] = 0x1947d20c;
-    FspsConfig->PchSerialIoI2cSclPinMux[0] = 0x1947a405;
-    FspsConfig->PchSerialIoI2cSclPinMux[1] = 0x1947a607;
+    FspsConfig->PchSerialIoI2cSdaPinMux[7] = GPIO_VER2_P_MUXING_SERIALIO_I2C7_SDA_GPP_H12;
+    FspsConfig->PchSerialIoI2cSclPinMux[0] = GPIO_VER2_P_MUXING_SERIALIO_I2C0_SCL_GPP_H5;
+    FspsConfig->PchSerialIoI2cSclPinMux[1] = GPIO_VER2_P_MUXING_SERIALIO_I2C1_SCL_GPP_H7;
     FspsConfig->PchSerialIoI2cSclPinMux[4] = 0;
-    FspsConfig->PchSerialIoI2cSclPinMux[7] = 0x1947b20d;
-    FspsConfig->IshGpGpioPinMuxing[4] = 0x4900a803;
-    FspsConfig->IshGpGpioPinMuxing[5] = 0x4900aa04;
-    FspsConfig->IshGpGpioPinMuxing[6] = 0x4907ac0c;
-    FspsConfig->IshGpGpioPinMuxing[7] = 0x5900ae0f;
+    FspsConfig->PchSerialIoI2cSclPinMux[7] = GPIO_VER2_P_MUXING_SERIALIO_I2C7_SCL_GPP_H13;
+    FspsConfig->IshGpGpioPinMuxing[4] = GPIO_VER2_P_MUXING_ISH_GP_4_B3;
+    FspsConfig->IshGpGpioPinMuxing[5] = GPIO_VER2_P_MUXING_ISH_GP_5_B4;
+    FspsConfig->IshGpGpioPinMuxing[6] = GPIO_VER2_P_MUXING_ISH_GP_6_H12;
+    FspsConfig->IshGpGpioPinMuxing[7] = GPIO_VER2_P_MUXING_ISH_GP_7_B15;
     FspsConfig->PchFivrExtV1p05RailSupportedVoltageStates = 0x2;
     FspsConfig->PchFivrExtV1p05RailVoltage = 0x0;
     FspsConfig->PchFivrExtVnnRailVoltage = 0x0;
@@ -1124,8 +1125,8 @@ UpdateFspConfig (
     FspsConfig->PchFivrVccinAuxRetToLowCurModeVolTranTime = 0x2b;
     FspsConfig->PchFivrVccinAuxOffToHighCurModeVolTranTime = 0x96;
     FspsConfig->PchFivrExtVnnRailSxIccMaximum = 0x0;
-    FspsConfig->CnviRfResetPinMux = 0x194ce404;
-    FspsConfig->CnviClkreqPinMux = 0x294ce605;
+    FspsConfig->CnviRfResetPinMux = GPIO_VER2_LP_MUXING_CNVI_RF_RESET_GPP_F4;
+    FspsConfig->CnviClkreqPinMux = GPIO_VER2_LP_MUXING_CNVI_MODEM_CLKREQ_GPP_F5;
     FspsConfig->PmcUsb2PhySusPgEnable = 0x1;
     FspsConfig->PmcModPhySusPgEnable = 0x1;
     FspsConfig->IomTypeCPortPadCfg[2] = 0x0;
