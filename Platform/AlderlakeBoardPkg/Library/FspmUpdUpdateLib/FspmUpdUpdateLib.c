@@ -616,7 +616,7 @@ UpdateFspConfig (
         break;
       case PLATFORM_ID_ADL_P_LP5_RVP:
         Fspmcfg->DdiPortBConfig = 0x1;
-        Fspmcfg->PcieClkReqGpioMux[9] = 0x796e9000;
+        Fspmcfg->PcieClkReqGpioMux[9] = GPIO_VER2_P_MUXING_PCIE_CLKREQ_9_E0;
         Fspmcfg->TcssXdciEn = 0x1;
         Fspmcfg->Lp5CccConfig = 0xff;
         break;
@@ -631,7 +631,7 @@ UpdateFspConfig (
         Fspmcfg->DdiPortAConfig = 0x1;
         Fspmcfg->DdiPortBHpd = 0x1;
         Fspmcfg->PrmrrSize = 0x200000;
-        Fspmcfg->PcieClkReqGpioMux[9] = 0x796e9000;
+        Fspmcfg->PcieClkReqGpioMux[9] = GPIO_VER2_P_MUXING_PCIE_CLKREQ_9_E0;
         Fspmcfg->TcssXdciEn = 0x1;
         Fspmcfg->Ddr4OneDpc = 0x3;
         Fspmcfg->DmiHweq = 0x2;
@@ -640,7 +640,7 @@ UpdateFspConfig (
       case PLATFORM_ID_ADL_PS_DDR5_RVP:
         Fspmcfg->DdiPortBHpd = 0x1;
         Fspmcfg->DmiHweq = 0x2;
-        Fspmcfg->PcieClkReqGpioMux[9] = 0x796e9000;
+        Fspmcfg->PcieClkReqGpioMux[9] = GPIO_VER2_P_MUXING_PCIE_CLKREQ_9_E0;
         Fspmcfg->SkipCpuReplacementCheck = 0x0;
         Fspmcfg->PrmrrSize = MemCfgData->PrmrrSize;
         Fspmcfg->Ddr4OneDpc = MemCfgData->Ddr4OneDpc;
@@ -649,7 +649,7 @@ UpdateFspConfig (
         break;
       case PLATFORM_ID_ADL_PS_DDR5_CRB:
         Fspmcfg->DdiPortAConfig = 0x0;
-        Fspmcfg->PcieClkReqGpioMux[9] = 0x796e9000;
+        Fspmcfg->PcieClkReqGpioMux[9] = GPIO_VER2_P_MUXING_PCIE_CLKREQ_9_E0;
         Fspmcfg->SkipCpuReplacementCheck = 0x0;
         Fspmcfg->Ddr4OneDpc = MemCfgData->Ddr4OneDpc;
         Fspmcfg->FirstDimmBitMask = 0x0;
