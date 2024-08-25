@@ -248,6 +248,7 @@
   gPlatformModuleTokenSpaceGuid.PcdEnableSetup            | FALSE      | BOOLEAN | 0x20000213
   gPlatformModuleTokenSpaceGuid.PcdLegacyEfSegmentEnabled | TRUE       | BOOLEAN | 0x20000214
   gPlatformModuleTokenSpaceGuid.PcdEnableDts              | FALSE      | BOOLEAN | 0x20000215
+  gPlatformModuleTokenSpaceGuid.PcdResizableBarSupport    | FALSE      | BOOLEAN | 0x20000216
   gPlatformModuleTokenSpaceGuid.PcdEnablePciePm           | FALSE      | BOOLEAN | 0x20000222
   gPlatformModuleTokenSpaceGuid.PcdEnableFwuNotify        | FALSE      | BOOLEAN | 0x20000225
 

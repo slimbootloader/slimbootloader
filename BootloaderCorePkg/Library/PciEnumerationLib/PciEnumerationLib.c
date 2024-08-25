@@ -17,6 +17,7 @@
 #include <Library/BootloaderCommonLib.h>
 #include "PciAri.h"
 #include "PciIov.h"
+#include "InternalPciEnumerationLib.h"
 
 #define  DEBUG_PCI_ENUM    0
 
@@ -432,7 +433,7 @@ CreatePciIoDevice (
   PciIoDevice->Decodes                    = 0;
   PciIoDevice->IsPciExp                   = FALSE;
   PciIoDevice->PciExpressCapabilityOffset = 0;
-  if (FeaturePcdGet (PcdAriSupport) || FeaturePcdGet (PcdSrIovSupport)) {
+  if (FeaturePcdGet (PcdAriSupport) || FeaturePcdGet (PcdSrIovSupport) || FeaturePcdGet (PcdResizableBarSupport)) {
     InitializePciExpCapability (PciIoDevice);
   }
   if (FeaturePcdGet (PcdAriSupport)) {
@@ -441,7 +442,9 @@ CreatePciIoDevice (
   if (FeaturePcdGet (PcdSrIovSupport)) {
     InitializeSrIov (PciIoDevice, Bus, Device, Func);
   }
-
+  if (FeaturePcdGet (PcdResizableBarSupport)) {
+    InitializeResizeBar (PciIoDevice);
+  }
   return PciIoDevice;
 }
 
