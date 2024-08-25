@@ -61,6 +61,11 @@ typedef enum {
   BusScanTypeInvalid  = 0xFF
 } BUS_SCAN_TYPE;
 
+typedef enum {
+  PciResizableBarMin = 0x00,
+  PciResizableBarMax = 0xFF
+} PCI_RESIZABLE_BAR_OPERATION;
+
 typedef struct {
   UINT16            Io32            : 1;
   UINT16            Mem64           : 1;
@@ -152,6 +157,7 @@ struct _PCI_IO_DEVICE {
   BOOLEAN                                   IsPciExp;
   UINT8                                     PciExpressCapabilityOffset;
   UINT32                                    AriCapabilityOffset;
+
   //
   // SR-IOV
   //
@@ -160,6 +166,15 @@ struct _PCI_IO_DEVICE {
   UINT32                                    SystemPageSize;
   UINT16                                    InitialVFs;
   UINT16                                    ReservedBusNum;
+
+  //
+  // Per PCI to PCI Bridge spec, I/O window is 4K aligned,
+  // but some chipsets support non-standard I/O window alignments less than 4K.
+  // This field is used to support this case.
+  //
+  UINT16                                    BridgeIoAlignment;
+  UINT32                                    ResizableBarOffset;
+  UINT32                                    ResizableBarNumber;
 
   //
   // The bridge device this pci device is subject to
@@ -192,6 +207,17 @@ BarExisted (
   IN  UINTN         Offset,
   OUT UINT32        *BarLengthValue,
   OUT UINT32        *OriginalBarValue
+  );
+
+/**
+  Initialize Resizable BAR
+
+  @param[in,out]  PciIoDevice     Pointer to instance of PCI_IO_DEVICE.
+
+**/
+VOID
+InitializeResizeBar (
+  IN OUT  PCI_IO_DEVICE *PciIoDevice
   );
 
 #endif

@@ -347,6 +347,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdCpuX2ApicEnabled    | $(SUPPORT_X2APIC)
   gPlatformModuleTokenSpaceGuid.PcdAriSupport             | $(SUPPORT_ARI)
   gPlatformModuleTokenSpaceGuid.PcdSrIovSupport           | $(SUPPORT_SR_IOV)
+  gPlatformModuleTokenSpaceGuid.PcdResizableBarSupport    | $(SUPPORT_RESIZABLE_BAR)
   gPlatformModuleTokenSpaceGuid.PcdEnableSetup            | $(ENABLE_SBL_SETUP)
   gPayloadTokenSpaceGuid.PcdPayloadModuleEnabled          | $(ENABLE_PAYLOD_MODULE)
   gPlatformModuleTokenSpaceGuid.PcdEnableDts              | $(ENABLE_DTS)
