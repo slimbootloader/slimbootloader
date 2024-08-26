@@ -133,6 +133,7 @@ UpdateFspConfig (
   SpdData[1] = (UINT32)(UINTN) (((MEM_SPD0_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD0_TAG))->MemorySpdPtr0);
   SpdData[2] = (UINT32)(UINTN) (((MEM_SPD1_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD1_TAG))->MemorySpdPtr1);
   SpdData[3] = (UINT32)(UINTN) (((MEM_SPD2_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD2_TAG))->MemorySpdPtr2);
+  SpdData[4] = (UINT32)(UINTN) (((MEM_SPD3_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD3_TAG))->MemorySpdPtr3);
   Fspmcfg->MemorySpdPtr000  = SpdData[MemCfgData->SpdDataSel000];
   Fspmcfg->MemorySpdPtr001  = SpdData[MemCfgData->SpdDataSel001];
   Fspmcfg->MemorySpdPtr010  = SpdData[MemCfgData->SpdDataSel010];
