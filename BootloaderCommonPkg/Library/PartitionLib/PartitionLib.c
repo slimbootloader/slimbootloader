@@ -385,7 +385,7 @@ FindGptPartitions (
     }
   }
 
-  ReadSize = Gpt->NumberOfPartitionEntries * Gpt->SizeOfPartitionEntry;
+  ReadSize = (UINTN)Gpt->NumberOfPartitionEntries * Gpt->SizeOfPartitionEntry;
   ReadSize = (ReadSize % DevBlockInfo->BlockSize) == 0 ? ReadSize : DevBlockInfo->BlockSize * ((
                ReadSize / DevBlockInfo->BlockSize) + 1);
   GptEntries = (EFI_PARTITION_ENTRY *) AllocatePool (ReadSize);

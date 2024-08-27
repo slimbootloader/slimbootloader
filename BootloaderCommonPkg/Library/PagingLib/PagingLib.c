@@ -363,9 +363,9 @@ CreateIdentityMappingPageTables (
   NumOfPdpEntries = (UINT32) LShiftU64 (1, PhysicalAddressBits - 30);
 
   if (!Page1GSupport) {
-    TotalPagesNum = ((NumOfPdpEntries + 1) * NumOfPml4Entries + 1) * NumOfPml5Entries + 1;
+    TotalPagesNum = ((UINTN)(NumOfPdpEntries + 1) * NumOfPml4Entries + 1) * NumOfPml5Entries + 1;
   } else {
-    TotalPagesNum = (NumOfPml4Entries + 1) * NumOfPml5Entries + 1;
+    TotalPagesNum = (UINTN)(NumOfPml4Entries + 1) * NumOfPml5Entries + 1;
   }
 
   if (!Page5LevelSupport) {

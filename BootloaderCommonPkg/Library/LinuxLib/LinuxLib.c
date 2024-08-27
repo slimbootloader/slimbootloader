@@ -233,7 +233,7 @@ LoadBzImage (
   }
 
   KernelBuf  = (VOID *) (UINTN)LINUX_KERNEL_BASE;
-  KernelSize = Bp->Hdr.SysSize * 16;
+  KernelSize = (UINTN)Bp->Hdr.SysSize * 16;
   CopyMem (KernelBuf, (UINT8 *)ImageBase + BootParamSize, KernelSize);
 
   //

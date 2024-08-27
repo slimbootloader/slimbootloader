@@ -367,7 +367,7 @@ BuildConfigData (
         // Handle array item specially
         ArrayHdr     = (ARRAY_CFG_HDR *)Cdata;
         ArrayHdrCurr = (ARRAY_CFG_HDR *)CdataCurr;
-        BitMaskLen   = (CdataHdr->Length << 2) - HdrLen - OFFSET_OF(ARRAY_CFG_HDR, BaseTableBitMask) \
+        BitMaskLen   = (CdataHdr->Length << 2) - HdrLen - (UINT32)OFFSET_OF(ARRAY_CFG_HDR, BaseTableBitMask) \
                        - (ArrayHdr->ItemSize * ArrayHdr->ItemCount);
 
         // Update BaseTableBitMask
@@ -375,7 +375,7 @@ BuildConfigData (
         ArrayHdr->BaseTableId = 0x80;
 
         // Update skip bit accordingly in the entry based on BaseTableBitMask
-        GpioTableDataOffset = OFFSET_OF(ARRAY_CFG_HDR, BaseTableBitMask) + BitMaskLen;
+        GpioTableDataOffset = (UINT32)OFFSET_OF(ARRAY_CFG_HDR, BaseTableBitMask) + BitMaskLen;
         for (Index2 = 0; Index2 < ArrayHdr->ItemCount; Index2++) {
           if ((ArrayHdr->BaseTableBitMask[Index2 >> 3] & (1 << (Index2 & 7))) == 0) {
             // Skip one entry
