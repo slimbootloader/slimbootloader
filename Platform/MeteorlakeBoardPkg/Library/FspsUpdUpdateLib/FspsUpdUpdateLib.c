@@ -35,6 +35,7 @@
 #include <PlatformData.h>
 #include <Library/ContainerLib.h>
 #include "HdaVerbTable.h"
+#include <Library/MemoryAllocationLib.h>
 #include <Library/BlMemoryAllocationLib.h>
 #include "TsnSubRegion.h"
 
@@ -389,6 +390,8 @@ UpdateFspConfig (
   BOOLEAN                     BiosProtected;
   EFI_STATUS                  Status;
   VBIOS_VBT_STRUCTURE         *VbtPtr;
+  UINT32                    *HdaVerbTablePtr;
+  UINT8                     HdaVerbTableNum;
 
   Address              = 0;
   FspsUpd              = (FSPS_UPD *) FspsUpdPtr;
@@ -598,8 +601,13 @@ UpdateFspConfig (
 
   // Set VerbTable is disabled by default. Enable it only when specified by config data.
   if (FeaturesCfgData != NULL && (FeaturesCfgData->Features.HdaVerbTable != 0)){
-    FspsConfig->PchHdaVerbTablePtr = (UINT32)(UINTN) &HdaVerbTableAlc897;
-    FspsConfig->PchHdaVerbTableEntryNum = 1;
+    HdaVerbTablePtr = (UINT32 *) AllocateZeroPool (2 * sizeof (UINT32));  // max 6 tables supported for now
+    if (HdaVerbTablePtr != NULL) {
+      HdaVerbTableNum = 0;
+      HdaVerbTablePtr[HdaVerbTableNum++]   = (UINT32)(UINTN) &HdaVerbTableAlc897;
+      FspsConfig->PchHdaVerbTablePtr      = (UINT32)(UINTN) HdaVerbTablePtr;
+      FspsConfig->PchHdaVerbTableEntryNum = HdaVerbTableNum;
+    }
   }
   if(GetPayloadId () == 0) {
     // Disable SMI sources
