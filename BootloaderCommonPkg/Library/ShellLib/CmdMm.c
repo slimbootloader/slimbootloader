@@ -111,7 +111,7 @@ MmRead (
   IN BOOLEAN IsIoAddr
 )
 {
-  UINTN  Index;
+  UINT32 Index;
   UINT32 Start;
   UINT32 ItemsPerRow;
 
