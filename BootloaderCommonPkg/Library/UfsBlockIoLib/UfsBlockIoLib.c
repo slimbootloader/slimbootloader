@@ -792,7 +792,7 @@ UfsGetMediaInfoInternal (
   UINT8                              SenseDataLength;
   EFI_SCSI_DISK_CAPACITY_DATA        *Capacity;
   EFI_SCSI_DISK_CAPACITY_DATA16      *Capacity16;
-  UINTN                              DataLength;
+  UINT32                             DataLength;
   BOOLEAN                            NeedRetry;
 
   NeedRetry = TRUE;
@@ -853,7 +853,7 @@ UfsGetMediaInfoInternal (
 
   DataLength      = sizeof (EFI_SCSI_DISK_CAPACITY_DATA);
   SenseDataLength = 0;
-  Status = UfsReadCapacity (Private, DeviceIndex, Capacity, (UINT32 *)&DataLength, NULL, &SenseDataLength);
+  Status = UfsReadCapacity (Private, DeviceIndex, Capacity, &DataLength, NULL, &SenseDataLength);
   if (EFI_ERROR (Status)) {
     Status = EFI_DEVICE_ERROR;
     goto Done;
@@ -863,7 +863,7 @@ UfsGetMediaInfoInternal (
       (Capacity->LastLba1 == 0xff) && (Capacity->LastLba0 == 0xff)) {
     DataLength      = sizeof (EFI_SCSI_DISK_CAPACITY_DATA16);
     SenseDataLength = 0;
-    Status = UfsReadCapacity16 (Private, DeviceIndex, Capacity16, (UINT32 *)&DataLength, NULL, &SenseDataLength);
+    Status = UfsReadCapacity16 (Private, DeviceIndex, Capacity16, &DataLength, NULL, &SenseDataLength);
     if (EFI_ERROR (Status)) {
       Status = EFI_DEVICE_ERROR;
       goto Done;
@@ -937,6 +937,7 @@ UfsReadBlocksInternal (
   EFI_SCSI_SENSE_DATA                SenseData;
   UINT8                              SenseDataLength;
   BOOLEAN                            NeedRetry;
+  UINT32                             BufferSize32;
 
   Private = UfsGetPrivateData();
   if (Private == NULL) {
@@ -1003,6 +1004,7 @@ UfsReadBlocksInternal (
   } while (NeedRetry);
 
   SenseDataLength = 0;
+  BufferSize32 = (UINT32)BufferSize;
   if (Private->Media[DeviceIndex].LastBlock < 0xfffffffful) {
     Status = UfsRead10 (
                Private,
@@ -1010,7 +1012,7 @@ UfsReadBlocksInternal (
                (UINT32)StartLBA,
                (UINT32)NumberOfBlocks,
                Buffer,
-               (UINT32 *)&BufferSize,
+               &BufferSize32,
                NULL,
                &SenseDataLength
                );
@@ -1021,7 +1023,7 @@ UfsReadBlocksInternal (
                (UINT32)StartLBA,
                (UINT32)NumberOfBlocks,
                Buffer,
-               (UINT32 *)&BufferSize,
+               &BufferSize32,
                NULL,
                &SenseDataLength
                );
@@ -1127,6 +1129,7 @@ UfsWriteBlocks (
   EFI_SCSI_SENSE_DATA                SenseData;
   UINT8                              SenseDataLength;
   BOOLEAN                            NeedRetry;
+  UINT32                             BufferSize32;
 
   DEBUG ((DEBUG_INFO, "UfsWriteBlocks. DeviceIndex = %x\n", DeviceIndex));
 
@@ -1195,6 +1198,7 @@ UfsWriteBlocks (
   } while (NeedRetry);
 
   SenseDataLength = 0;
+  BufferSize32 = (UINT32)BufferSize;
   if (Private->Media[DeviceIndex].LastBlock < 0xfffffffful) {
     Status = UfsWrite10 (
                Private,
@@ -1202,7 +1206,7 @@ UfsWriteBlocks (
                (UINT32)StartLBA,
                (UINT32)NumberOfBlocks,
                Buffer,
-               (UINT32 *)&BufferSize,
+               &BufferSize32,
                NULL,
                &SenseDataLength
                );
@@ -1213,7 +1217,7 @@ UfsWriteBlocks (
                (UINT32)StartLBA,
                (UINT32)NumberOfBlocks,
                Buffer,
-               (UINT32 *)&BufferSize,
+               &BufferSize32,
                NULL,
                &SenseDataLength
                );
