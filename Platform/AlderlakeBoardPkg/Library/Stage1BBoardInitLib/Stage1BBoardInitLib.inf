@@ -29,6 +29,7 @@
   Stage1BBoardInitLib.c
   RtcInit.c
   EcSupport.c
+  MaxLedInit.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -88,6 +89,7 @@
   gPlatformModuleTokenSpaceGuid.PcdBootFailureThreshold
   gPlatformCommonLibTokenSpaceGuid.PcdI2cIoExpanderPortNumber
   gPlatformCommonLibTokenSpaceGuid.PcdI2cIoExpanderSlaveAddress
+  gPlatformCommonLibTokenSpaceGuid.PcdI2cMaxLedSlaveAddress
   gPlatformAlderLakeTokenSpaceGuid.PcdI2cFruEepromSlaveAddress
   gPlatformAlderLakeTokenSpaceGuid.PcdDisplayId
   gPlatformAlderLakeTokenSpaceGuid.PcdBoardRev

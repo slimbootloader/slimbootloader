@@ -107,4 +107,14 @@ RtcInit (
   VOID
   );
 
+/**
+  This function does the basic init work for Max6950.
+
+  @param[in]  SpiBaseAddress - Base Address of SPI Controller
+**/
+EFI_STATUS
+MaxLedInit (
+  VOID
+  );
+
 #endif // __STAGE1B_BOARD_INIT_LIB_H__

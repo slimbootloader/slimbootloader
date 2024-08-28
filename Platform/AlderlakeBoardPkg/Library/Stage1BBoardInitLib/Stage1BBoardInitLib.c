@@ -682,6 +682,7 @@ DEBUG_CODE_END();
 #if FixedPcdGetBool(PcdPcieWwanEnable)
       ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTablePreMemRplpAutoWwan) / sizeof (mGpioTablePreMemRplpAutoWwan[0]), (UINT8*)mGpioTablePreMemRplpAutoWwan);
 #endif
+      MaxLedInit ();
       break;
     case PLATFORM_ID_ADL_P_DDR5_RVP:
       ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTablePreMemAdlPDdr5Rvp) / sizeof (mGpioTablePreMemAdlPDdr5Rvp[0]), (UINT8*)mGpioTablePreMemAdlPDdr5Rvp);
