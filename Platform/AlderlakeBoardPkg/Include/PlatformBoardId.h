@@ -75,4 +75,16 @@ Defines Platform BoardIds
 
 #define PLATFORM_ID_RPL_P_DDR5_CRB                    0x08
 
+// RPL-P Auto Malibou Lake Boards
+#define BoardIdRplPLp5AutoRvp                         0x05  // Standard 6 bits Board ID used when reading from IO Expander
+#define ExtendedBoardIdRplPLp5AutoRvp                 0x45  // MBL RVP Platform ID when read from FRU EEPROM
+#define BoardIdRplPAutoLp5Crb                         0x46  // MBL CRB Platform ID when read from FRU EEPROM
+
+#define PLATFORM_ID_RPLP_LP5_AUTO_RVP                 0x05  // Internal Platform Id for Malibou Lake RVP Fab. A and B.
+#define PLATFORM_ID_RPLP_LP5_AUTO_CRB                 0x15  // Internal Platform Id for Malibou Lake CRB.
+#define FabIdRplPLp5AutoRvpRev1                       0x01  // FAB-B Revision ID
+
+#define DisplayIdRplpAutoDualDp                       0x0
+#define DisplayIdRplpAutoDualMipi                     (BIT0 | BIT1)
+
 #endif // _PLATFORM_BOARD_ID_H_
