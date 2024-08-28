@@ -48,6 +48,9 @@
   gPlatformModuleTokenSpaceGuid.PcdStage1StackBaseOffset
   gPlatformModuleTokenSpaceGuid.PcdStage1StackSize
   gPlatformModuleTokenSpaceGuid.PcdStage1DataSize
+  gPlatformAlderLakeTokenSpaceGuid.PcdDisplayId
+  gPlatformAlderLakeTokenSpaceGuid.PcdBoardRev
+  gPlatformAlderLakeTokenSpaceGuid.PcdMemConfigId
 
 [FixedPcd]
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled

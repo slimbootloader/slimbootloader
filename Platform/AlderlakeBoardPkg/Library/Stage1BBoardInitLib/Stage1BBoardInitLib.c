@@ -521,7 +521,8 @@ GetPlatformPowerState (
   if (NvsData == NULL) {
     // FBAF (First Boot After Flash)
     BootMode = BOOT_WITH_FULL_CONFIGURATION;
-  } else if ((PmcIsRtcBatteryGood () == FALSE) || IsCMOSBad ()) {
+  } else if ((GetPlatformId() != PLATFORM_ID_RPLP_LP5_AUTO_RVP) && ((PmcIsRtcBatteryGood () == FALSE) || IsCMOSBad ())) {
+    // Skip check if we have a coinless platform.
     // Not First boot, but RTC/CMOS is bad
     BootMode = BOOT_WITH_DEFAULT_SETTINGS;
     DEBUG ((DEBUG_INFO, "RTC battery or CMOS Diag bad. Boot with Default Settings.\n"));
@@ -550,7 +551,7 @@ GetPlatformPowerState (
     //
     // Report RTC battery failure, Clear Sleep Type
     //
-    if (PmcIsRtcBatteryGood () == FALSE) {
+    if ((GetPlatformId() != PLATFORM_ID_RPLP_LP5_AUTO_RVP) && (PmcIsRtcBatteryGood () == FALSE)) {
       BootMode = BOOT_WITH_DEFAULT_SETTINGS;
       DEBUG ((DEBUG_INFO, "RTC Battery bad. Boot with Default Settings.\n"));
       IoAndThenOr16 (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_CNT, (UINT16) ~B_ACPI_IO_PM1_CNT_SLP_TYP, V_ACPI_IO_PM1_CNT_S0);
@@ -657,6 +658,12 @@ DEBUG_CODE_END();
       break;
     case PLATFORM_ID_ADL_P_LP5_RVP:
       ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTablePreMemAdlPLp5Rvp) / sizeof (mGpioTablePreMemAdlPLp5Rvp[0]), (UINT8*)mGpioTablePreMemAdlPLp5Rvp);
+      break;
+    case PLATFORM_ID_RPLP_LP5_AUTO_RVP:
+      ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTablePreMemRplpLp5AutoRvp) / sizeof (mGpioTablePreMemRplpLp5AutoRvp[0]), (UINT8*)mGpioTablePreMemRplpLp5AutoRvp);
+#if FixedPcdGetBool(PcdPcieWwanEnable)
+      ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTablePreMemRplpAutoWwan) / sizeof (mGpioTablePreMemRplpAutoWwan[0]), (UINT8*)mGpioTablePreMemRplpAutoWwan);
+#endif
       break;
     case PLATFORM_ID_ADL_P_DDR5_RVP:
       ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTablePreMemAdlPDdr5Rvp) / sizeof (mGpioTablePreMemAdlPDdr5Rvp[0]), (UINT8*)mGpioTablePreMemAdlPDdr5Rvp);

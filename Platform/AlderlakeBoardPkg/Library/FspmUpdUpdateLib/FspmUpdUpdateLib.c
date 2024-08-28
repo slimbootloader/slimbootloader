@@ -40,6 +40,18 @@ typedef enum {
   DciDbcMax
 } DCI_DBC_MODE;
 
+typedef enum {
+  RplpLp5AutoMicron4GMT62F1G32D2DSSpd   = 0x01,
+  RplpLp5AutoMicron8GbMT62F2G32D4DSSpd  = 0x02,
+  RplpLp5AutoMicron16GbMT62F4G32D8DVSpd = 0x03,
+  RplpLp5AutoHynix4GbH58G56BK8QX068Spd  = 0x04,
+  RplpLp5AutoHynix8GbH58G66BK8QX067Spd  = 0x05,
+  RplpLp5AutoHynix16GbH58G78BK8QX114Spd = 0x06,
+  RplpLp5AutoSamsung4GbK3KL8L80QMSpd    = 0x07,
+  RplpLp5AutoSamsung8GbK3KL9L90QMSpd    = 0x08,
+  RplpLp5AutoSamsung16GbK3KLALA0DMSpd   = 0x09
+} MemoryDefinition;
+
 /**
 Return Cpu stepping type
 
@@ -120,6 +132,7 @@ UpdateFspConfig (
   FEATURES_CFG_DATA           *FeaturesCfgData;
   SILICON_CFG_DATA            *SiCfgData;
   UINT16                      PlatformId;
+  UINT8                       DisplayId;
   UINT8                       SaDisplayConfigTable[16] = { 0 };
   UINT8                       Index;
   UINT8                       DebugPort;
@@ -164,7 +177,7 @@ UpdateFspConfig (
   }
   Fspmcfg->PcdSerialDebugLevel          = 0x5;
 
-  // Memory SPD Data
+  // Memory SPD Data.
   SpdData[0] = 0;
   SpdData[1] = (UINT32)(UINTN) (((MEM_SPD0_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD0_TAG))->MemorySpdPtr0);
   SpdData[2] = (UINT32)(UINTN) (((MEM_SPD1_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD1_TAG))->MemorySpdPtr1);
@@ -175,22 +188,47 @@ UpdateFspConfig (
   SpdData[7] = (UINT32)(UINTN) (((MEM_SPD6_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD6_TAG))->MemorySpdPtr6);
   SpdData[8] = (UINT32)(UINTN) (((MEM_SPD7_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD7_TAG))->MemorySpdPtr7);
   SpdData[9] = (UINT32)(UINTN) (((MEM_SPD8_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD8_TAG))->MemorySpdPtr8);
-  Fspmcfg->MemorySpdPtr000  = SpdData[MemCfgData->SpdDataSel000];
-  Fspmcfg->MemorySpdPtr001  = SpdData[MemCfgData->SpdDataSel001];
-  Fspmcfg->MemorySpdPtr010  = SpdData[MemCfgData->SpdDataSel010];
-  Fspmcfg->MemorySpdPtr011  = SpdData[MemCfgData->SpdDataSel011];
-  Fspmcfg->MemorySpdPtr020  = SpdData[MemCfgData->SpdDataSel020];
-  Fspmcfg->MemorySpdPtr021  = SpdData[MemCfgData->SpdDataSel021];
-  Fspmcfg->MemorySpdPtr030  = SpdData[MemCfgData->SpdDataSel030];
-  Fspmcfg->MemorySpdPtr031  = SpdData[MemCfgData->SpdDataSel031];
-  Fspmcfg->MemorySpdPtr100  = SpdData[MemCfgData->SpdDataSel100];
-  Fspmcfg->MemorySpdPtr101  = SpdData[MemCfgData->SpdDataSel101];
-  Fspmcfg->MemorySpdPtr110  = SpdData[MemCfgData->SpdDataSel110];
-  Fspmcfg->MemorySpdPtr111  = SpdData[MemCfgData->SpdDataSel111];
-  Fspmcfg->MemorySpdPtr120  = SpdData[MemCfgData->SpdDataSel120];
-  Fspmcfg->MemorySpdPtr121  = SpdData[MemCfgData->SpdDataSel121];
-  Fspmcfg->MemorySpdPtr130  = SpdData[MemCfgData->SpdDataSel130];
-  Fspmcfg->MemorySpdPtr131  = SpdData[MemCfgData->SpdDataSel131];
+
+#if defined(PLATFORM_RPLA)
+  UINT8 MemId;
+  MemId = PcdGet8 (PcdMemConfigId);
+
+  if ((MemId >= RplpLp5AutoMicron4GMT62F1G32D2DSSpd) && (MemId <= RplpLp5AutoSamsung16GbK3KLALA0DMSpd)) {
+    Fspmcfg->MemorySpdPtr000  = MemId;
+    Fspmcfg->MemorySpdPtr001  = MemId;
+    Fspmcfg->MemorySpdPtr010  = MemId;
+    Fspmcfg->MemorySpdPtr011  = MemId;
+    Fspmcfg->MemorySpdPtr020  = MemId;
+    Fspmcfg->MemorySpdPtr021  = MemId;
+    Fspmcfg->MemorySpdPtr030  = MemId;
+    Fspmcfg->MemorySpdPtr031  = MemId;
+    Fspmcfg->MemorySpdPtr100  = MemId;
+    Fspmcfg->MemorySpdPtr101  = MemId;
+    Fspmcfg->MemorySpdPtr110  = MemId;
+    Fspmcfg->MemorySpdPtr111  = MemId;
+    Fspmcfg->MemorySpdPtr120  = MemId;
+    Fspmcfg->MemorySpdPtr121  = MemId;
+    Fspmcfg->MemorySpdPtr130  = MemId;
+    Fspmcfg->MemorySpdPtr131  = MemId;
+  }
+#endif
+
+  Fspmcfg->MemorySpdPtr000 = SpdData[MemCfgData->SpdDataSel000];
+  Fspmcfg->MemorySpdPtr001 = SpdData[MemCfgData->SpdDataSel001];
+  Fspmcfg->MemorySpdPtr010 = SpdData[MemCfgData->SpdDataSel010];
+  Fspmcfg->MemorySpdPtr011 = SpdData[MemCfgData->SpdDataSel011];
+  Fspmcfg->MemorySpdPtr020 = SpdData[MemCfgData->SpdDataSel020];
+  Fspmcfg->MemorySpdPtr021 = SpdData[MemCfgData->SpdDataSel021];
+  Fspmcfg->MemorySpdPtr030 = SpdData[MemCfgData->SpdDataSel030];
+  Fspmcfg->MemorySpdPtr031 = SpdData[MemCfgData->SpdDataSel031];
+  Fspmcfg->MemorySpdPtr100 = SpdData[MemCfgData->SpdDataSel100];
+  Fspmcfg->MemorySpdPtr101 = SpdData[MemCfgData->SpdDataSel101];
+  Fspmcfg->MemorySpdPtr110 = SpdData[MemCfgData->SpdDataSel110];
+  Fspmcfg->MemorySpdPtr111 = SpdData[MemCfgData->SpdDataSel111];
+  Fspmcfg->MemorySpdPtr120 = SpdData[MemCfgData->SpdDataSel120];
+  Fspmcfg->MemorySpdPtr121 = SpdData[MemCfgData->SpdDataSel121];
+  Fspmcfg->MemorySpdPtr130 = SpdData[MemCfgData->SpdDataSel130];
+  Fspmcfg->MemorySpdPtr131 = SpdData[MemCfgData->SpdDataSel131];
 
   //Dq/Dqs Mapping arrays
   CopyMem (&Fspmcfg->DqsMapCpu2DramMc0Ch0, MemCfgData->DqsMapCpu2DramMc0Ch0, sizeof(MemCfgData->DqsMapCpu2DramMc0Ch0));
@@ -436,6 +474,7 @@ UpdateFspConfig (
   }
 
   PlatformId = GetPlatformId();
+  DisplayId = PcdGet8(PcdDisplayId);
   //
   // Display DDI Initialization ( default Native GPIO as per board during AUTO case)
   //
@@ -473,6 +512,15 @@ UpdateFspConfig (
   case PLATFORM_ID_RPL_P_DDR5_CRB:
     DEBUG((DEBUG_INFO, "PLATFORM_ID_RPL_P_DDR5_CRB board Id %x .....\n", PlatformId));
     CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mRplPDdr5SODimmCrbDisplayDdiConfig, sizeof(mRplPDdr5SODimmCrbDisplayDdiConfig));
+    break;
+  case PLATFORM_ID_RPLP_LP5_AUTO_RVP:
+    if (DisplayId == DisplayIdRplpAutoDualMipi) {
+      DEBUG((DEBUG_INFO, "PLATFORM_ID_RPLP_LP5_AUTO_RVP board Id %x, DDI Configuration RPLP-LP5 Auto RVP Dual Mipi\n", PlatformId));
+      CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mRplpLp5AutoRvpDualMipiDisplayDdiConfig, sizeof(mRplpLp5AutoRvpDualMipiDisplayDdiConfig));
+    } else {
+      DEBUG((DEBUG_INFO, "PLATFORM_ID_RPLP_LP5_AUTO_RVP board Id %x, DDI Configuration RPLP-LP5 Auto RVP Dual DP\n", PlatformId));
+      CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mRplpLp5AutoRvpDisplayDdiConfig, sizeof(mRplpLp5AutoRvpDisplayDdiConfig));
+    }
     break;
   default:
     DEBUG((DEBUG_INFO, "DDI Init: Unsupported board Id %x .....\n", PlatformId));
@@ -571,6 +619,11 @@ UpdateFspConfig (
         Fspmcfg->Lp5CccConfig = 0xff;
         Fspmcfg->SkipCpuReplacementCheck = 0x0;
         break;
+      case PLATFORM_ID_RPLP_LP5_AUTO_RVP:
+        Fspmcfg->PcieClkReqGpioMux[9] = 0x796e9000;
+        Fspmcfg->TcssXdciEn = 0x1;
+        Fspmcfg->Lp5CccConfig = 0xff;
+        break;
       default:
         DEBUG ((DEBUG_INFO, "Unknown board for FSP-M UPD settings.\n"));
         break;
@@ -631,7 +684,7 @@ UpdateFspConfig (
 
   Status = FusaConfigPreMem(FspmUpdPtr);
   DEBUG((DEBUG_INFO, "FusaConfigPreMem Status %r\n", Status));
-#if PLATFORM_RPLP
+#if PLATFORM_RPLP | PLATFORM_RPLA
   Fspmcfg->I2cPostCodeEnable = MemCfgData->I2cPostCode;
 #endif
 

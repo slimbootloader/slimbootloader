@@ -19,4 +19,13 @@
  gCpuInitDataHobGuid        = { 0x266e31cc, 0x13c5, 0x4807, { 0xb9, 0xdc, 0x39, 0xa6, 0xba, 0x88, 0xff, 0x1a } }
   gTccRtctHobGuid           = { 0x6bddb43d, 0x1782, 0x4d9c, { 0xb6, 0x80, 0xe3, 0xde, 0x45, 0xe0, 0x37, 0x4a } }
 
+[PcdsDynamic]
+  ## This PCD stores DisplayId.
+  gPlatformAlderLakeTokenSpaceGuid.PcdDisplayId                 | 0x0 |UINT8 |0x30000202
+  ## This PCD stores FabId.
+  gPlatformAlderLakeTokenSpaceGuid.PcdBoardRev                  | 0x0 |UINT8 |0x30000203
+  ## This PCD stores MemId.
+  gPlatformAlderLakeTokenSpaceGuid.PcdMemConfigId               | 0x0 |UINT8 |0x30000204
+
 [PcdsFixedAtBuild]
+  gPlatformAlderLakeTokenSpaceGuid.PcdI2cFruEepromSlaveAddress  | 0x54|UINT8 |0x30000201

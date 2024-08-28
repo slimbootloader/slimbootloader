@@ -60,12 +60,14 @@
   MeChipsetLib
   HeciLib
   PchInfoLib
+  PchPciBdfLib
   VariableLib
   WatchDogTimerLib
   FspmUpdUpdateLib
   SmbusLib
   TopSwapLib
   CrashLogLib
+  SerialIoI2cLib
 
 [Guids]
   gFspNonVolatileStorageHobGuid
@@ -84,6 +86,13 @@
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled
   gPlatformModuleTokenSpaceGuid.PcdSblResiliencyEnabled
   gPlatformModuleTokenSpaceGuid.PcdBootFailureThreshold
+  gPlatformCommonLibTokenSpaceGuid.PcdI2cIoExpanderPortNumber
+  gPlatformCommonLibTokenSpaceGuid.PcdI2cIoExpanderSlaveAddress
+  gPlatformAlderLakeTokenSpaceGuid.PcdI2cFruEepromSlaveAddress
+  gPlatformAlderLakeTokenSpaceGuid.PcdDisplayId
+  gPlatformAlderLakeTokenSpaceGuid.PcdBoardRev
+  gPlatformAlderLakeTokenSpaceGuid.PcdMemConfigId
+
 
 [FixedPcd]
   gPlatformAlderLakeTokenSpaceGuid.PcdAdlLpSupport

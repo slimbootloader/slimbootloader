@@ -431,6 +431,7 @@ BoardInit (
         switch (GetPlatformId ()) {
           case PLATFORM_ID_ADL_P_LP5_RVP:
           case PLATFORM_ID_ADL_P_DDR5_RVP:
+          case PLATFORM_ID_RPLP_LP5_AUTO_RVP:
             DEBUG ((DEBUG_WARN, "TSN GPIO: No ADL-P GPIO table available currently...\n"));
             break;
           case PLATFORM_ID_ADL_S_ADP_S_CRB:

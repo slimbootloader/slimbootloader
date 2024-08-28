@@ -198,6 +198,11 @@
   # IO ISA UART       : 0xFF - IO base 0x3F8, 0xFE - IO base 0x2F8
   gPlatformCommonLibTokenSpaceGuid.PcdDebugPortNumber        |0x02|UINT8|0x20000410
 
+  ## This PCD specifies Serial I2C settings for IO Expander
+  gPlatformCommonLibTokenSpaceGuid.PcdI2cIoExpanderPortNumber     |0x7|UINT8|0x20000411
+  gPlatformCommonLibTokenSpaceGuid.PcdI2cIoExpanderSlaveAddress   |0x22|UINT8|0x20000412
+  gPlatformCommonLibTokenSpaceGuid.PcdI2cMaxLedSlaveAddress       |0x38|UINT8|0x20000413
+
   ## Indicates the 16550 serial port registers are in MMIO space, or in I/O space. Default is I/O space.<BR><BR>
   #   TRUE  - 16550 serial port registers are in MMIO space.<BR>
   #   FALSE - 16550 serial port registers are in I/O space.<BR>
