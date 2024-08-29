@@ -582,6 +582,19 @@ UpdateFspConfig (
     // Misc
     FspsConfig->PchPmSlpS3MinAssert = SiCfgData->PchPmSlpS3MinAssert;
     FspsConfig->PchPmSlpSusMinAssert = SiCfgData->PchPmSlpSusMinAssert;
+
+    if (MtlIsSocM ()) {
+      DEBUG ((DEBUG_INFO, "Updated Soc M VMD Disabled\n"));
+      FspsConfig->VmdEnable = 0;
+      DEBUG ((DEBUG_INFO, "Updated Soc M WatchDog Enabled\n"));
+      FspsConfig->EnableTcoTimer = 0x1;
+      FspsConfig->WatchDogEnabled = 0x1;
+      FspsConfig->PchLockDownBiosLock = SiCfgData->PchLockDownBiosLock;
+      FspsConfig->PchLockDownGlobalSmi = SiCfgData->PchLockDownGlobalSmi;
+    } else {
+      FspsConfig->VmdEnable = 0;
+      FspsConfig->EnableTcoTimer = 0x1;
+    }
   } // End of SiCfgData Ptr
 
   if(GetPayloadId () == 0) {
@@ -619,19 +632,6 @@ UpdateFspConfig (
   }
 
   FspsConfig->AmtEnabled = 0x1;
-
-  if (MtlIsSocM ()) {
-    DEBUG ((DEBUG_INFO, "Updated Soc M VMD Disabled\n"));
-    FspsConfig->VmdEnable = 0;
-    DEBUG ((DEBUG_INFO, "Updated Soc M WatchDog Enabled\n"));
-    FspsConfig->EnableTcoTimer = 0x1;
-    FspsConfig->WatchDogEnabled = 0x1;
-    FspsConfig->PchLockDownBiosLock = SiCfgData->PchLockDownBiosLock;
-    FspsConfig->PchLockDownGlobalSmi = SiCfgData->PchLockDownGlobalSmi;
-  } else {
-      FspsConfig->VmdEnable = 0;
-      FspsConfig->EnableTcoTimer = 0x1;
-  }
 
   PowerCfgData = (POWER_CFG_DATA *) FindConfigDataByTag (CDATA_POWER_TAG);
   if (PowerCfgData == NULL) {
