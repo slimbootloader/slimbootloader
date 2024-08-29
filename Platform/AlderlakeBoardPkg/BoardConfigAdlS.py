@@ -160,12 +160,6 @@ class Board(BaseBoard):
         self.SIIPFW_SIZE = 0x1000
 
         self.ENABLE_TCC = 0
-        if self.ENABLE_TCC:
-            self.TCC_CCFG_SIZE   = 0x00001000
-            self.TCC_CRL_SIZE    = 0x00008000
-            self.TCC_STREAM_SIZE = 0x00005000
-            self.SIIPFW_SIZE    += self.TCC_CCFG_SIZE + self.TCC_CRL_SIZE + self.TCC_STREAM_SIZE
-            self.CPU_SORT_METHOD = 1  #sort CPU threads in ascending order
 
         self.ENABLE_TSN = 0
         if self.ENABLE_TSN:
@@ -225,16 +219,6 @@ class Board(BaseBoard):
                 if not os.path.exists(cfg_dlt_file):
                     cfg_dlt_file = os.path.join(brd_cfg2_src_dir, dlt_file[len (self._generated_cfg_file_prefix):])
                 lines         = open (cfg_dlt_file).read()
-
-                # Enable TCC in dlt file
-                if self.ENABLE_TCC:
-                    if os.path.exists(os.path.join(brd_cfg_src_dir, 'CfgData_Tcc_Feature.dlt')):
-                        lines += open (os.path.join(brd_cfg_src_dir, 'CfgData_Tcc_Feature.dlt')).read()
-                    elif os.path.exists(os.path.join(brd_cfg2_src_dir, 'CfgData_Tcc_Feature.dlt')):
-                        lines += open (os.path.join(brd_cfg2_src_dir, 'CfgData_Tcc_Feature.dlt')).read()
-                    else:
-                        tcc_cfg_dir = os.path.join(os.getenv('SBL_SOURCE', ''), 'Platform', self.BOARD_PKG_NAME, 'CfgData')
-                        lines += open (os.path.join(tcc_cfg_dir, 'CfgData_Tcc_Feature.dlt')).read()
 
                 # Enable TSN in dlt file
                 if self.ENABLE_TSN:
@@ -352,21 +336,7 @@ class Board(BaseBoard):
 
         bins = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'Binaries')
 
-        TccCacheCfg = os.path.join(bins, 'TccCacheCfg.bin') if os.path.exists(os.path.join(bins, 'TccCacheCfg.bin')) else ''
-        TccCrlBinary = os.path.join(bins, 'TccCrlBinary.bin')if os.path.exists(os.path.join(bins, 'TccCrlBinary.bin')) else ''
-        TccStreamCfg = os.path.join(bins, 'TccStreamCfg.bin')if os.path.exists(os.path.join(bins, 'TccStreamCfg.bin')) else ''
         TsnSubRegion = os.path.join(bins, 'TsnSubRegion.bin')if os.path.exists(os.path.join(bins, 'TsnSubRegion.bin')) else ''
-
-        if self.ENABLE_TCC:
-            container_list.append (
-              ('TCCC', TccCacheCfg, 'Lz4', container_list_auth_type, 'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0, self.TCC_CCFG_SIZE, 0), # TCC Cache Config
-           )
-            container_list.append (
-              ('TCCM', TccCrlBinary, 'Lz4', container_list_auth_type, 'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0, self.TCC_CRL_SIZE, 0),   # TCC Crl
-            )
-            container_list.append (
-              ('TCCT', TccStreamCfg, 'Lz4', container_list_auth_type, 'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0, self.TCC_STREAM_SIZE, 0),   # TCC Stream Config
-            )
 
         if self.ENABLE_TSN:
             container_list.append (

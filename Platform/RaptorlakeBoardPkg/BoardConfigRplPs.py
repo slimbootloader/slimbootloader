@@ -31,7 +31,6 @@ class Board(AlderlakeBoardConfig.Board):
         self.FSP_INF_FILE         = 'Silicon/RaptorlakePkg/Rplps/Fsp/FspBinRplps.inf'
         self.BOARD_PKG_NAME_OVERRIDE = 'RaptorlakeBoardPkg'
         self.MICROCODE_INF_FILE   = 'Silicon/RaptorlakePkg/Rplps/Microcode/MicrocodeRplps.inf'
-        self.ENABLE_TCC           = 0
         self._generated_cfg_file_prefix = ''
         self._CFGDATA_EXT_FILE    = ['CfgDataInt_Rplps_Crb_Ddr5.dlt', 'CfgDataInt_Rplps_Rvp_Ddr5.dlt']
         self._MULTI_VBT_FILE      = {1:'VbtRplPsRvp.dat', 2:'VbtRplPsCrb.dat'}

@@ -27,7 +27,6 @@ class Board(AlderlakeBoardConfig.Board):
         self._EXTRA_INC_PATH      = ['Silicon/AlderlakePkg/Adlps/Include']
         self._FSP_PATH_NAME       = 'Silicon/AlderlakePkg/Adlps/FspBin'
         self.MICROCODE_INF_FILE   = 'Silicon/AlderlakePkg/Microcode/Microcode.inf'
-        self.ENABLE_TCC           = 0
         self._generated_cfg_file_prefix = ''
         self._CFGDATA_DEF_FILE    = 'CfgDataDefAdlp.yaml'
         self._CFGDATA_EXT_FILE    = ['CfgDataInt_Adlps_Crb_Ddr5.dlt', 'CfgDataInt_Adlps_Rvp_Ddr5.dlt']

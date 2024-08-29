@@ -374,7 +374,6 @@ PlatformUpdateAcpiTable (
   UINT32                       Base;
   UINT16                       Size;
   EFI_STATUS                   Status;
-  TCC_CFG_DATA                *TccCfgData;
   VOID                        *FspHobList;
   EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE *FadtPointer;
 
@@ -433,18 +432,6 @@ PlatformUpdateAcpiTable (
     if (GetBootMode () != BOOT_ON_FLASH_UPDATE) {
       AcpiPatchPss (Table, GlobalNvs);
     }
-  } else if (Table->Signature == SIGNATURE_32 ('R', 'T', 'C', 'T')) {
-    DEBUG ((DEBUG_INFO, "Find RTCT table\n"));
-
-    if (FeaturePcdGet (PcdTccEnabled)) {
-      TccCfgData = (TCC_CFG_DATA *) FindConfigDataByTag (CDATA_TCC_TAG);
-      if ((TccCfgData != NULL) && (TccCfgData->TccEnable != 0)) {
-        Status = UpdateAcpiRtctTable(Table);
-        DEBUG ( (DEBUG_INFO, "Updated ACPI RTCT Table : %r\n", Status) );
-        return Status;
-      }
-    }
-    return EFI_UNSUPPORTED;
   } else if (Table->Signature == EFI_BDAT_TABLE_SIGNATURE) {
     FspHobList = GetFspHobListPtr ();
     if (FspHobList != NULL) {

@@ -82,9 +82,6 @@
 #include <Library/PlatformHookLib.h>
 #include <Library/ResetSystemLib.h>
 
-BOOLEAN mTccDsoTuning      = FALSE;
-UINT8   mTccRtd3Support    = 0;
-
 //
 // GPIO_PAD Fileds
 //
@@ -219,15 +216,8 @@ SI_PCH_DEVICE_INTERRUPT_CONFIG mPchDevIntConfig[] = {
 
 STATIC UINT8 mPchSciSupported = 0xFF;
 
-CONST EFI_ACPI_DESCRIPTION_HEADER  mAcpiTccRtctTableTemplate = {
-  EFI_ACPI_RTCT_SIGNATURE,
-  sizeof (EFI_ACPI_DESCRIPTION_HEADER)
-  // Other fields will be updated in runtime
-};
-
 STATIC
 CONST EFI_ACPI_COMMON_HEADER *mPlatformAcpiTables[] = {
-  (EFI_ACPI_COMMON_HEADER *)&mAcpiTccRtctTableTemplate,
   NULL
 };
 
@@ -863,6 +853,7 @@ BoardInit (
   }
 }
 
+#if FeaturePcdGet(PcdTccEnabled)
 /**
   Update FSP-S UPD config data for TCC mode and tuning
 
@@ -877,24 +868,6 @@ TccModePostMemConfig (
   FSPS_UPD  *FspsUpd
 )
 {
-  UINT32                                    *TccCacheconfigBase;
-  UINT32                                     TccCacheconfigSize;
-  UINT32                                    *TccCrlBase;
-  UINT32                                     TccCrlSize;
-  UINT32                                    *TccStreamBase;
-  UINT32                                     TccStreamSize;
-  EFI_STATUS                                 Status;
-  UINT8                                      Index;
-  UINT8                                      MaxPchPcieRootPorts;
-  BIOS_SETTINGS                             *PolicyConfig;
-  TCC_STREAM_CONFIGURATION                  *StreamConfig;
-  TCC_CFG_DATA                              *TccCfgData;
-
-  TccCfgData = (TCC_CFG_DATA *) FindConfigDataByTag (CDATA_TCC_TAG);
-  if ((TccCfgData == NULL) || ((TccCfgData->TccEnable == 0) && (TccCfgData->TccTuning == 0))) {
-    return EFI_NOT_FOUND;
-  }
-
   DEBUG ((DEBUG_INFO, "Set TCC silicon:\n"));
 
   // Set default values for TCC related Silicon settings
@@ -925,54 +898,7 @@ TccModePostMemConfig (
     }
   }
 
-  FspsUpd->FspsConfig.SoftwareSramEn  = TccCfgData->TccSoftSram;
-  FspsUpd->FspsConfig.DsoTuningEn     = TccCfgData->TccTuning;
-  FspsUpd->FspsConfig.TccErrorLogEn   = TccCfgData->TccErrorLog;
   FspsUpd->FspsConfig.IfuEnable       = 0;
-  if (!IsWdtFlagsSet(WDT_FLAG_TCC_DSO_IN_PROGRESS)) {
-    //
-    // If FSPM doesn't enable TCC DSO timer, FSPS should also skip TCC DSO.
-    //
-    DEBUG ((DEBUG_INFO, "DSO Tuning skipped.\n"));
-    FspsUpd->FspsConfig.TccStreamCfgStatus = 1;
-  } else if (TccCfgData->TccTuning != 0) {
-    // Reload Watch dog timer
-    WdtReloadAndStart (WDT_TIMEOUT_TCC_DSO, WDT_FLAG_TCC_DSO_IN_PROGRESS);
-
-    // Load TCC stream config from container
-    TccStreamBase = NULL;
-    TccStreamSize = 0;
-    Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'C', 'C', 'T'),
-                            (VOID **)&TccStreamBase, &TccStreamSize);
-    if (EFI_ERROR (Status) || (TccStreamSize < sizeof (TCC_STREAM_CONFIGURATION))) {
-      DEBUG ((DEBUG_ERROR, "Load TCC Stream %r, size = 0x%x\n", Status, TccStreamSize));
-    } else {
-      FspsUpd->FspsConfig.TccStreamCfgBase = (UINT32)(UINTN)TccStreamBase;
-      FspsUpd->FspsConfig.TccStreamCfgSize = TccStreamSize;
-      DEBUG ((DEBUG_INFO, "Load tcc stream @0x%p, size = 0x%x\n", TccStreamBase, TccStreamSize));
-
-      //Update UPD from stream
-      StreamConfig   = (TCC_STREAM_CONFIGURATION *) TccStreamBase;
-      PolicyConfig = (BIOS_SETTINGS *) &StreamConfig->BiosSettings;
-      FspsUpd->FspsConfig.Eist                       = PolicyConfig->Pstates;
-      FspsUpd->FspsConfig.Hwp                        = PolicyConfig->HwpEn;
-      FspsUpd->FspsConfig.Cx                         = PolicyConfig->Cstates;
-      FspsUpd->FspsConfig.TurboMode                  = PolicyConfig->Turbo;
-      FspsUpd->FspsConfig.PsfTccEnable               = PolicyConfig->FabricPm;
-      FspsUpd->FspsConfig.PchDmiAspmCtrl             = PolicyConfig->DmiAspm;
-      FspsUpd->FspsConfig.PchLegacyIoLowLatency      = PolicyConfig->PchPwrClkGate;
-      FspsUpd->FspsConfig.RenderStandby              = PolicyConfig->GtRstRc6;
-
-      for (Index = 0; Index < MaxPchPcieRootPorts; Index++) {
-        FspsUpd->FspsConfig.PcieRpAspm[Index]        = PolicyConfig->PchPcieAspm;
-        FspsUpd->FspsConfig.PcieRpL1Substates[Index] = PolicyConfig->PchPcieRpL1;
-      }
-      mTccDsoTuning      = TRUE;
-      if (mPchSciSupported != 0) {
-        mTccRtd3Support                = PolicyConfig->Dstates;
-      }
-    }
-  }
 
   // Print configured TCC stream settings
   DEBUG ((DEBUG_INFO, "TCC Stage 2 parameters configuration details:\n"));
@@ -991,34 +917,9 @@ TccModePostMemConfig (
   DEBUG ((DEBUG_INFO, "PcieRpL1Substates     = %x\n", FspsUpd->FspsConfig.PcieRpL1Substates[0]   ));
   DEBUG ((DEBUG_INFO, "Rtd3Support           = %x\n", mTccRtd3Support                            ));
 
-  // Load TCC cache config binary from container
-  TccCacheconfigBase = NULL;
-  TccCacheconfigSize = 0;
-  Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'C', 'C', 'C'),
-                                (VOID **)&TccCacheconfigBase, &TccCacheconfigSize);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "TCC Cache config not found! %r\n", Status));
-  } else {
-    FspsUpd->FspsConfig.TccCacheCfgBase = (UINT32)(UINTN)TccCacheconfigBase;
-    FspsUpd->FspsConfig.TccCacheCfgSize = TccCacheconfigSize;
-    DEBUG ((DEBUG_INFO, "Load tcc cache @0x%p, size = 0x%x\n", TccCacheconfigBase, TccCacheconfigSize));
-  }
-
-  // Load TCC CRL binary from container
-  TccCrlBase = NULL;
-  TccCrlSize = 0;
-  Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'C', 'C', 'M'),
-                                (VOID **)&TccCrlBase, &TccCrlSize);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "TCC CRL not found! %r\n", Status));
-  } else {
-    FspsUpd->FspsConfig.TccCrlBinBase = (UINT32)(UINTN)TccCrlBase;
-    FspsUpd->FspsConfig.TccCrlBinSize = TccCrlSize;
-    DEBUG ((DEBUG_INFO, "Load tcc crl @0x%p, size = 0x%x\n", TccCrlBase, TccCrlSize));
-  }
-
-  return Status;
+  return EFI_SUCCESS;
 }
+#endif
 
 /**
   Update PSE policies.
@@ -1914,10 +1815,6 @@ UpdateFspConfig (
       Fspscfg->PcieRpL1Substates[Index]    = 0;
     }
     DEBUG ((DEBUG_INFO, "Fusa FSP UPD settings updated.........Done\n"));
-  }
-
-  if (FeaturePcdGet (PcdTccEnabled)) {
-    TccModePostMemConfig (FspsUpd);
   }
 
   if (GetBootMode () == BOOT_ON_FLASH_UPDATE) {
