@@ -63,7 +63,7 @@ InitEcCpuFanControl (
   VOID
 );
 
-
+#if FeaturePcdGet(PcdTccEnabled)
 /**
   Update FSP-M UPD config data for TCC mode and tuning
 
@@ -78,24 +78,6 @@ TccModePreMemConfig (
   FSPM_UPD  *FspmUpd
 )
 {
-  UINT32                    *TccCacheBase;
-  UINT32                    TccCacheSize;
-  UINT32                    *TccStreamBase;
-  UINT32                    TccStreamSize;
-  EFI_STATUS                Status;
-  TCC_CFG_DATA              *TccCfgData;
-  BIOS_SETTINGS             *PolicyConfig;
-  TCC_STREAM_CONFIGURATION  *StreamConfig;
-
-  TccCfgData = (TCC_CFG_DATA *) FindConfigDataByTag(CDATA_TCC_TAG);
-  if ((TccCfgData == NULL) || ((TccCfgData->TccEnable == 0) && (TccCfgData->TccTuning == 0))) {
-    return EFI_NOT_FOUND;
-  }
-
-  if (GetBootMode() == BOOT_ON_FLASH_UPDATE) {
-    DEBUG ((DEBUG_INIT, "In FW update flow. Donot apply DSO settings\n"));
-    TccCfgData->TccTuning = 0;
-  }
   // TCC related memory settings
   DEBUG ((DEBUG_INFO, "Tcc is enabled, Setting memory config.\n"));
   FspmUpd->FspmConfig.SaGv                   = 0;    // System Agent Geyserville - SAGV dynamically adjusts the system agent
@@ -108,71 +90,15 @@ TccModePreMemConfig (
   FspmUpd->FspmConfig.BiosGuard              = 0x0;
   FspmUpd->FspmConfig.VmxEnable              = 1;    // RTCM need enable VMX
 
-  FspmUpd->FspmConfig.SoftwareSramEnPreMem   = TccCfgData->TccSoftSram;
-  FspmUpd->FspmConfig.DsoTuningEnPreMem      = TccCfgData->TccTuning;
-  FspmUpd->FspmConfig.TccErrorLogEnPreMem    = TccCfgData->TccErrorLog;
-
   // S0ix is disabled if TCC is enabled.
   if (PLAT_FEAT.S0ixEnable == 1) {
     PLAT_FEAT.S0ixEnable = 0;
     DEBUG ((DEBUG_INFO, "S0ix is turned off when TCC is enabled\n"));
   }
 
-  if (IsMarkedBadDso ()) {
-    DEBUG ((DEBUG_ERROR, "Incorrect TCC tuning parameters. Platform rebooted with default values.\n"));
-    FspmUpd->FspmConfig.TccStreamCfgStatusPreMem = 1;
-  } else if (IsWdtFlagsSet(WDT_FLAG_TCC_DSO_IN_PROGRESS) && IsWdtTimeout()) {
-    DEBUG ((DEBUG_ERROR, "Incorrect TCC tuning parameters. Platform rebooted with default values.\n"));
-    WdtClearScratchpad (WDT_FLAG_TCC_DSO_IN_PROGRESS);
-    FspmUpd->FspmConfig.TccStreamCfgStatusPreMem = 1;
-    InvalidateBadDso ();
-  } else if (TccCfgData->TccTuning != 0) {
-    // Setup Watch dog timer
-    WdtReloadAndStart (WDT_TIMEOUT_TCC_DSO, WDT_FLAG_TCC_DSO_IN_PROGRESS);
-
-    // Load TCC stream config from container
-    TccStreamBase = NULL;
-    TccStreamSize = 0;
-    Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'C', 'C', 'T'),
-                          (VOID **)&TccStreamBase, &TccStreamSize);
-    if (EFI_ERROR (Status) || (TccStreamSize < sizeof(TCC_STREAM_CONFIGURATION))) {
-      DEBUG ((DEBUG_INFO, "Load TCC Stream %r, size = 0x%x\n", Status, TccStreamSize));
-    } else {
-      FspmUpd->FspmConfig.TccStreamCfgBasePreMem = (UINT32)(UINTN)TccStreamBase;
-      FspmUpd->FspmConfig.TccStreamCfgSizePreMem = TccStreamSize;
-      DEBUG ((DEBUG_INFO, "Load TCC stream @0x%p, size = 0x%x\n", TccStreamBase, TccStreamSize));
-
-      StreamConfig = (TCC_STREAM_CONFIGURATION *) TccStreamBase;
-      PolicyConfig = (BIOS_SETTINGS *) &StreamConfig->BiosSettings;
-
-      FspmUpd->FspmConfig.SaGv                   = PolicyConfig->SaGv;
-      FspmUpd->FspmConfig.HyperThreading         = PolicyConfig->HyperThreading;
-      FspmUpd->FspmConfig.PowerDownMode          = PolicyConfig->MemPowerDown;
-      FspmUpd->FspmConfig.DisPgCloseIdleTimeout  = PolicyConfig->DisPgCloseIdle;
-      PLAT_FEAT.S0ixEnable                       = PolicyConfig->Sstates;
-      if (PLAT_FEAT.S0ixEnable == 1) {
-        DEBUG ((DEBUG_INFO, "S0ix is forced turning on by TCC DSO\n"));
-      }
-      DEBUG ((DEBUG_INFO, "Dump TCC DSO BIOS settings:\n"));
-      DumpHex (2, 0, sizeof(BIOS_SETTINGS), PolicyConfig);
-    }
-  }
-
-  // Load Tcc Cache config from container
-  TccCacheBase = NULL;
-  TccCacheSize = 0;
-  Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'C', 'C', 'C'),
-                                (VOID **)&TccCacheBase, &TccCacheSize);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "TCC Cache config not found! %r\n", Status));
-  } else {
-    FspmUpd->FspmConfig.TccCacheCfgBasePreMem = (UINT32)(UINTN)TccCacheBase;
-    FspmUpd->FspmConfig.TccCacheCfgSizePreMem = TccCacheSize;
-    DEBUG ((DEBUG_INFO, "Load TCC cache @0x%p, size = 0x%x\n", TccCacheBase, TccCacheSize));
-  }
-
-  return Status;
+  return EFI_SUCCESS;
 }
+#endif
 
 /**
   Update FSP-M UPD config data
@@ -196,7 +122,6 @@ UpdateFspConfig (
   UINT32                   SpdData[3];
   UINT16                   BoardId;
   UINT8                    SaDisplayConfigTable[16] = { 0 };
-  TCC_CFG_DATA            *TccCfgData;
   FEATURES_CFG_DATA       *FeaturesCfgData;
   SILICON_CFG_DATA        *SiCfgData;
   PLATFORM_DATA           *PlatformData;
@@ -256,14 +181,11 @@ UpdateFspConfig (
   }
   PlatformData->PlatformFeatures.VtdEnable = (!MemCfgData->VtdDisable) & FeaturePcdGet (PcdVtdEnabled);
 
+#if FeaturePcdGet(PcdTccEnabled)
   // Need enable VTD if TCC is enalbed.
-  if (FeaturePcdGet (PcdTccEnabled)) {
-    TccCfgData = (TCC_CFG_DATA *)FindConfigDataByTag (CDATA_TCC_TAG);
-    if ((TccCfgData != NULL) && (TccCfgData->TccEnable == 1)) {
-      DEBUG ((DEBUG_INFO, "Enable VTd since TCC is enabled\n"));
-      PlatformData->PlatformFeatures.VtdEnable = 1;
-    }
-  }
+  DEBUG ((DEBUG_INFO, "Enable VTd since TCC is enabled\n"));
+  PlatformData->PlatformFeatures.VtdEnable = 1;
+#endif
 
   // Need enable VTd if TSN is enabled
   SiCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
@@ -547,10 +469,10 @@ UpdateFspConfig (
     }
   }
 
+#if FeaturePcdGet(PcdTccEnabled)
   // Update TCC related UPDs if TCC is enabled
-  if (FeaturePcdGet (PcdTccEnabled)) {
-    TccModePreMemConfig (FspmUpd);
-  }
+  TccModePreMemConfig (FspmUpd);
+#endif
 
   if (S0IX_STATUS() == 1) {
     // configure s0ix related FSP-M UPDs

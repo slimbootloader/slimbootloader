@@ -171,11 +171,6 @@ class Board(BaseBoard):
 
         self.SIIPFW_SIZE = 0x1000
         self.ENABLE_TCC  = 0
-        if self.ENABLE_TCC:
-            self.TCC_CCFG_SIZE   = 0x00001000
-            self.TCC_CRL_SIZE    = 0x00008000
-            self.TCC_STREAM_SIZE = 0x00005000
-            self.SIIPFW_SIZE += self.TCC_CCFG_SIZE + self.TCC_CRL_SIZE + self.TCC_STREAM_SIZE
 
         self.ENABLE_PRE_OS_CHECKER = 0
         if self.ENABLE_PRE_OS_CHECKER:
@@ -256,10 +251,6 @@ class Board(BaseBoard):
             for dlt_file in self._CFGDATA_EXT_FILE:
                 cfg_dlt_file  = os.path.join(brd_cfg_src_dir, dlt_file[len (self._generated_cfg_file_prefix):])
                 lines         = open (cfg_dlt_file).read()
-
-                # Enable TCC in dlt file
-                if self.ENABLE_TCC:
-                    lines += open (os.path.join(brd_cfg_src_dir, 'CfgData_Tcc_Feature.dlt')).read()
 
                 # Enable TSN in dlt file
                 if self.ENABLE_TSN:
@@ -360,19 +351,7 @@ class Board(BaseBoard):
         )
         bins = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'Binaries')
 
-        CompFileCrlFw='crl.bin' if os.path.exists(os.path.join(bins, 'crl.bin')) else ''
         CompFilePreOsChecker='PreOsChecker.bin' if os.path.exists(os.path.join(bins, 'PreOsChecker.bin')) else ''
-
-        if self.ENABLE_TCC:
-            container_list.append (
-              ('TCCC', '',     'Lz4',   container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,    0,   self.TCC_CCFG_SIZE,  0),   # TCC Cache Config
-            )
-            container_list.append (
-              ('TCCM', CompFileCrlFw,    'Lz4',   container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,    0,   self.TCC_CRL_SIZE,   0),   # TCC CRL
-            )
-            container_list.append (
-              ('TCCT',  '',   'Lz4',   container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,    0,   self.TCC_STREAM_SIZE,0),   # TCC Stream Config
-            )
 
         if self.ENABLE_PRE_OS_CHECKER:
             container_list.append (

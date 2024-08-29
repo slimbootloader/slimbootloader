@@ -112,12 +112,6 @@ def get_component_replace_list():
             ('IFWI/BIOS/NRD/IPFW/TMAC', 'IPFW/TsnMacAddr.bin',     'lz4',    'KEY_ID_CONTAINER_COMP_RSA3072', 0 ), # TSN MAC Address
         )
 
-    # need to set ENABLE_TCC = 1 in BoardConfig.py
-    if os.path.exists('IPFW/crl.bin'):
-        replace_list.append (
-            ('IFWI/BIOS/NRD/IPFW/TCCM', 'IPFW/crl.bin',            'lz4',    'KEY_ID_CONTAINER_COMP_RSA3072', 0 ), # TCC CRL binary
-        )
-
     return replace_list
 
 def check_parameter(para_list):

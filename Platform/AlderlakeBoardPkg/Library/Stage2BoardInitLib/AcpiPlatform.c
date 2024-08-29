@@ -271,9 +271,6 @@ PlatformUpdateAcpiTable (
   VOID                        *FspHobList;
   PLATFORM_DATA               *PlatformData;
   FEATURES_CFG_DATA           *FeaturesCfgData;
-#if FixedPcdGet8 (PcdTccEnabled) && !defined(PLATFORM_RPLS) && !defined(PLATFORM_ADLN) && !defined(PLATFORM_RPLP)
-  TCC_CFG_DATA                *TccCfgData;
-#endif
   EFI_STATUS                   Status;
   EFI_ACPI_6_3_FIXED_ACPI_DESCRIPTION_TABLE *FadtPointer;
 
@@ -346,18 +343,6 @@ PlatformUpdateAcpiTable (
     if (GetBootMode() != BOOT_ON_FLASH_UPDATE) {
       AcpiPatchPss (Table, GlobalNvs);
     }
-  } else if (Table->Signature == SIGNATURE_32 ('R', 'T', 'C', 'T')) {
-    DEBUG ((DEBUG_INFO, "Find RTCT table\n"));
-
-#if FixedPcdGet8 (PcdTccEnabled) && !defined(PLATFORM_RPLS) && !defined(PLATFORM_ADLN) && !defined(PLATFORM_RPLP)
-      TccCfgData = (TCC_CFG_DATA *) FindConfigDataByTag(CDATA_TCC_TAG);
-      if ((TccCfgData != NULL) && (TccCfgData->TccEnable != 0)) {
-        Status = UpdateAcpiRtctTable(Table);
-        DEBUG ( (DEBUG_INFO, "Updated Rtct Table entries in AcpiTable status: %r\n", Status) );
-        return Status;
-      }
-#endif
-    return EFI_UNSUPPORTED;
   } else if (Table->OemTableId == SIGNATURE_64 ('D', 'p', 't', 'f', 'T', 'a', 'b', 'l')) { //DptfTabl
     DEBUG ((DEBUG_INFO, "Find DptfTabl table\n"));
 
@@ -752,12 +737,6 @@ PlatformUpdateAcpiGnvs (
   UINT32                   Data32;
   GPIO_GROUP               GroupToGpeDwX[3];
   UINT32                   GroupDw[3];
-#if FixedPcdGet8 (PcdTccEnabled) && !defined(PLATFORM_RPLS) && !defined(PLATFORM_ADLN) && !defined(PLATFORM_RPLP)
-  TCC_CFG_DATA            *TccCfgData;
-  CPUID_EXTENDED_TIME_STAMP_COUNTER_EDX  Edx;
-  CPUID_PROCESSOR_FREQUENCY_EBX          Ebx;
-  PLATFORM_DATA           *PlatformData;
-#endif
   EFI_STATUS              Status;
 
   GlobalNvs = (GLOBAL_NVS_AREA *)GnvsIn;
@@ -1290,32 +1269,6 @@ PlatformUpdateAcpiGnvs (
   SocUpdateAcpiGnvs ((VOID *)GnvsIn);
 
   // TCC mode enabling
-#if FixedPcdGet8 (PcdTccEnabled) && !defined(PLATFORM_RPLS) && !defined(PLATFORM_ADLN) && !defined(PLATFORM_RPLP)
-    TccCfgData = (TCC_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
-    if ((TccCfgData != NULL) && (TccCfgData->TccEnable != 0)) {
-      AsmCpuid (CPUID_TIME_STAMP_COUNTER, NULL, &Ebx.Uint32, NULL, NULL);
-      AsmCpuid (CPUID_EXTENDED_TIME_STAMP_COUNTER, NULL, NULL, NULL, &Edx.Uint32);
-
-      if (Edx.Bits.InvariantTsc == 1 && Ebx.Uint32 != 0) {
-        DEBUG ((DEBUG_INFO, "ATSC True\n"));
-        PlatformNvs->ATSC = 1;
-      } else {
-        DEBUG ((DEBUG_INFO, "ATSC False\n"));
-        PlatformNvs->ATSC = 0;
-      }
-    }
-
-    // If TCC is enabled, use the TCC policy from subregion
-    PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
-    if ((PlatformData != NULL) && PlatformData->PlatformFeatures.TccDsoTuning) {
-      PlatformNvs->Rtd3Support    = PlatformData->PlatformFeatures.TccRtd3Support;
-      PlatformNvs->LowPowerS0Idle = PlatformData->PlatformFeatures.TccLowPowerS0Idle;
-    } else {
-      PlatformNvs->Rtd3Support = 0;
-      PlatformNvs->LowPowerS0Idle = 0;
-    }
-#endif
-
   // Expose Timed GPIO to OS through Nvs variables
   if (SiCfgData != NULL) {
     PchNvs->EnableTimedGpio0 = (UINT8)SiCfgData->EnableTimedGpio0;

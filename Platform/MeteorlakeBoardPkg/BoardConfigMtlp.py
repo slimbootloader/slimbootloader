@@ -176,18 +176,6 @@ class Board(BaseBoard):
 
         self.SIIPFW_SIZE = 0x1000
 
-        self.ENABLE_TCC = 0
-        if self.ENABLE_TCC:
-            self.TCC_CCFG_SIZE   = 0x00001000
-            self.TCC_CRL_SIZE    = 0x00008000
-            self.TCC_STREAM_SIZE = 0x00005000
-            self.SIIPFW_SIZE    += self.TCC_CCFG_SIZE + self.TCC_CRL_SIZE + self.TCC_STREAM_SIZE
-
-        self.ENABLE_TSN = 0
-        if self.ENABLE_TSN:
-            self.TMAC_SIZE = 0x00001000
-            self.SIIPFW_SIZE += self.TMAC_SIZE
-
         self.NON_REDUNDANT_SIZE   = 0x3BF000 + self.SIIPFW_SIZE
         self.NON_VOLATILE_SIZE    = 0x001000
         self.SLIMBOOTLOADER_SIZE  = (self.TOP_SWAP_SIZE + self.REDUNDANT_SIZE) * 2 + \
@@ -241,20 +229,6 @@ class Board(BaseBoard):
                 if not os.path.exists(cfg_dlt_file):
                     cfg_dlt_file = os.path.join(brd_cfg2_src_dir, dlt_file[len (self._generated_cfg_file_prefix):])
                 lines         = open (cfg_dlt_file).read()
-
-                # Enable TCC in dlt file
-                if self.ENABLE_TCC:
-                    if os.path.exists(os.path.join(brd_cfg_src_dir, 'CfgData_Tcc_Feature.dlt')):
-                        lines += open (os.path.join(brd_cfg_src_dir, 'CfgData_Tcc_Feature.dlt')).read()
-                    else:
-                        lines += open (os.path.join(brd_cfg2_src_dir, 'CfgData_Tcc_Feature.dlt')).read()
-
-                # Enable TSN in dlt file
-                if self.ENABLE_TSN:
-                    if os.path.exists(os.path.join(brd_cfg_src_dir, 'CfgData_Tsn_Feature.dlt')):
-                        lines += open (os.path.join(brd_cfg_src_dir, 'CfgData_Tsn_Feature.dlt')).read()
-                    else:
-                        lines += open (os.path.join(brd_cfg2_src_dir, 'CfgData_Tsn_Feature.dlt')).read()
 
                 # Write to generated final dlt file
                 output_cfg_dlt_file = os.path.join(build._fv_dir, dlt_file)
@@ -348,24 +322,6 @@ class Board(BaseBoard):
           # ========================================================================================================================================================
           ('IPFW',      'SIIPFW.bin',          '',     container_list_auth_type,   'KEY_ID_CONTAINER'+'_'+self._RSA_SIGN_TYPE,        0,          0     ,        0),   # Container Header
         )
-
-        bins = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'Binaries')
-
-        if self.ENABLE_TCC:
-            container_list.append (
-              ('TCCC', 'TccCacheCfg.bin' if os.path.exists(os.path.join(bins,   'TccCacheCfg.bin')) else '',   'Lz4', container_list_auth_type, 'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0, self.TCC_CCFG_SIZE, 0),   # TCC Cache Config
-            )
-            container_list.append (
-              ('TCCM', 'TccCrlBinary.bin' if os.path.exists(os.path.join(bins, 'TccCrlBinary.bin')) else '', 'Lz4', container_list_auth_type, 'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0, self.TCC_CRL_SIZE, 0),   # TCC Crl
-            )
-            container_list.append (
-              ('TCCT', 'TccStreamCfg.bin' if os.path.exists(os.path.join(bins,  'TccStreamCfg.bin')) else '',  'Lz4', container_list_auth_type, 'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0, self.TCC_STREAM_SIZE, 0),   # TCC Stream Config
-            )
-
-        if self.ENABLE_TSN:
-            container_list.append (
-              ('TMAC','TsnSubRegion.bin' if os.path.exists(os.path.join(bins,  'TsnSubRegion.bin')) else '',   'Lz4', container_list_auth_type, 'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0, self.TMAC_SIZE, 0),   # TSN MAC Address
-            )
 
         return [container_list]
 

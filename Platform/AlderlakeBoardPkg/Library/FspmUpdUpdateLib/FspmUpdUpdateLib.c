@@ -59,7 +59,7 @@ GetCpuStepping(
   return ((CPU_STEPPING) (Eax.Uint32 & CPUID_FULL_STEPPING));
 }
 
-#if FixedPcdGet8 (PcdTccEnabled)
+#if FeaturePcdGet(PcdTccEnabled)
 /**
   Update FSP-M UPD config data for TCC mode and tuning
 
@@ -77,29 +77,6 @@ TccModePreMemConfig (
 
   FEATURES_CFG_DATA                     *FeaturesCfgData;
 
-#if (FixedPcdGet8(PcdAdlNSupport) == 0) && !defined(PLATFORM_RPLP)
-  UINT32                                *TccCacheBase;
-  UINT32                                 TccCacheSize;
-  UINT32                                *TccStreamBase;
-  UINT32                                 TccStreamSize;
-  TCC_CFG_DATA                          *TccCfgData;
-  BIOS_SETTINGS                         *PolicyConfig;
-  TCC_STREAM_CONFIGURATION              *StreamConfig;
-  EFI_STATUS                             Status;
-
-  Status           = EFI_SUCCESS;
-
-  TccCfgData = (TCC_CFG_DATA *) FindConfigDataByTag(CDATA_TCC_TAG);
-  if ((TccCfgData == NULL) || (TccCfgData->TccEnable == 0)) {
-    return EFI_NOT_FOUND;
-  }
-
-    if (GetBootMode() == BOOT_ON_FLASH_UPDATE) {
-      DEBUG ((DEBUG_INIT, "In FW update flow. Donot apply DSO settings\n"));
-      TccCfgData->TccTuning = 0;
-    }
-#endif
-
   // TCC related memory settings
   DEBUG ((DEBUG_INFO, "Tcc is enabled, setting Tcc memory config.\n"));
   FspmUpd->FspmConfig.DisPgCloseIdleTimeout      = 1;    // controls Page Close Idle Timeout
@@ -110,16 +87,6 @@ TccModePreMemConfig (
   FspmUpd->FspmConfig.HyperThreading         = 0;
   FspmUpd->FspmConfig.DisableStarv2medPrioOnNewReq = 1;
 
-#if (FixedPcdGet8(PcdAdlNSupport) == 0) && !defined(PLATFORM_RPLP)
-  FspmUpd->FspmConfig.SoftwareSramEnPreMem   = TccCfgData->TccSoftSram;
-  FspmUpd->FspmConfig.DsoTuningEnPreMem      = TccCfgData->TccTuning;
-  FspmUpd->FspmConfig.TccErrorLogEnPreMem    = TccCfgData->TccErrorLog;
-#else
-  FspmUpd->FspmConfig.SoftwareSramEnPreMem   = 0;
-  FspmUpd->FspmConfig.DsoTuningEnPreMem      = 0;
-  FspmUpd->FspmConfig.TccErrorLogEnPreMem    = 0;
-#endif
-
   // S0ix is disabled if TCC is enabled.
   FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag (CDATA_FEATURES_TAG);
   if (FeaturesCfgData != NULL) {
@@ -129,76 +96,7 @@ TccModePreMemConfig (
     }
   }
 
-#if (FixedPcdGet8(PcdAdlNSupport) == 0) && !defined(PLATFORM_RPLP)
-  if (IsMarkedBadDso ()) {
-    DEBUG ((DEBUG_ERROR, "Incorrect TCC tuning parameters. Platform rebooted with default values.\n"));
-    FspmUpd->FspmConfig.TccStreamCfgStatusPreMem = 1;
-  } else if (IsWdtFlagsSet(WDT_FLAG_TCC_DSO_IN_PROGRESS) && IsWdtTimeout()) {
-    DEBUG ((DEBUG_ERROR, "Incorrect TCC tuning parameters. Platform rebooted with default values.\n"));
-    WdtClearScratchpad (WDT_FLAG_TCC_DSO_IN_PROGRESS);
-
-    // Let FSP know that an error has occured in DSO loading
-    FspmUpd->FspmConfig.TccStreamCfgStatusPreMem = 1;
-    InvalidateBadDso ();
-  } else if (TccCfgData->TccTuning != 0) {
-    // Setup Watch dog timer
-    WdtReloadAndStart (WDT_TIMEOUT_TCC_DSO, WDT_FLAG_TCC_DSO_IN_PROGRESS);
-
-    // Load TCC stream config from container
-    TccStreamBase = NULL;
-    TccStreamSize = 0;
-
-    Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'C', 'C', 'T'),
-                            (VOID **)&TccStreamBase, &TccStreamSize);
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "TCC Streams not found! %r\n", Status));
-    } else {
-      if ((TccStreamSize >= sizeof (TCC_STREAM_CONFIGURATION)) && (TccStreamBase != NULL)) {
-        DEBUG ((DEBUG_INFO, "Load TCC Stream @0x%p, size = 0x%x\n", TccStreamBase, TccStreamSize));
-        DEBUG ((DEBUG_INFO, "PreMem TCC Dso 0x%x\n", FspmUpd->FspmConfig.DsoTuningEnPreMem));
-        DEBUG ((DEBUG_INFO, "Dump Tcc Stream with MIN(0x40, TccStreamSize):\n"));
-        DumpHex (2, 0, MIN(0x40, TccStreamSize), TccStreamBase);
-
-        FspmUpd->FspmConfig.TccStreamCfgBasePreMem = (UINT32) (UINTN)TccStreamBase;
-        FspmUpd->FspmConfig.TccStreamCfgSizePreMem = TccStreamSize;
-
-        // Override Tcc settings from Streams
-        StreamConfig   = (TCC_STREAM_CONFIGURATION *) TccStreamBase;
-        PolicyConfig   = (BIOS_SETTINGS *) &StreamConfig->BiosSettings;
-
-        if (StreamConfig->Version == TCC_STREAM_CONFIGURATION_VERSION) {
-          FspmUpd->FspmConfig.HyperThreading        = PolicyConfig->HyperThreading;
-          FspmUpd->FspmConfig.SaGv                  = PolicyConfig->SaGv;
-          FspmUpd->FspmConfig.DisPgCloseIdleTimeout = PolicyConfig->DisPgCloseIdle;
-          FspmUpd->FspmConfig.PowerDownMode         = PolicyConfig->MemPowerDown;
-
-          DEBUG ((DEBUG_INFO, "Dump TCC DSO BIOS settings:\n"));
-          DumpHex (2, 0, sizeof(BIOS_SETTINGS), PolicyConfig);
-        }
-      }
-    }
-  }
-
-  // Load Tcc Cache config from container
-  TccCacheBase = NULL;
-  TccCacheSize = 0;
-  Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'C', 'C', 'C'),
-                                (VOID **)&TccCacheBase, &TccCacheSize);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "TCC Cache config not found! %r\n", Status));
-  } else {
-    FspmUpd->FspmConfig.TccCacheCfgBasePreMem = (UINT32)(UINTN)TccCacheBase;
-    FspmUpd->FspmConfig.TccCacheCfgSizePreMem = TccCacheSize;
-    DEBUG ((DEBUG_INFO, "Load TCC cache @0x%p, size = 0x%x\n", TccCacheBase, TccCacheSize));
-    DEBUG ((DEBUG_INFO, "Dump Tcc Cache with MIN(0x40, TccCacheSize):\n"));
-    DumpHex (2, 0, MIN(0x40, TccCacheSize), TccCacheBase);
-  }
-
-  return Status;
-#else
   return EFI_SUCCESS;
-#endif
-
 }
 #endif
 
@@ -683,8 +581,7 @@ UpdateFspConfig (
   }
 
   // Tcc enabling
-#if FixedPcdGet8 (PcdTccEnabled)
-  Fspmcfg->WdtDisableAndLock = 0x0;
+#if FeaturePcdGet(PcdTccEnabled)
   TccModePreMemConfig (FspmUpd);
 #endif
 
