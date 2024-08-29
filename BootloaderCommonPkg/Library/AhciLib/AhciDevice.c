@@ -216,7 +216,7 @@ AhciReadWriteBlock (
     }
 
     if (RemainSectorCount >= MaxTransferSector)  {
-      ReadBuf           += (UINTN) (AtaDevice->BlockSize * MaxTransferSector);
+      ReadBuf           += ((UINTN)AtaDevice->BlockSize * MaxTransferSector);
       LbaIndex          += MaxTransferSector;
       RemainSectorCount -= MaxTransferSector;
     } else {
