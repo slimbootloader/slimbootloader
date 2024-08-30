@@ -155,24 +155,26 @@ Scope (\_SB.PC00.RP24.PXSX)
   include("PepPcieEp.asl")
 }
 
-Scope (\_SB.PC00.RP25.PXSX)
-{
-  include("PepPcieEp.asl")
-}
+If (LEqual (PCHS, PCHX)) {
+  Scope (\_SB.PC00.RP25.PXSX)
+  {
+    include("PepPcieEp.asl")
+  }
 
-Scope (\_SB.PC00.RP26.PXSX)
-{
-  include("PepPcieEp.asl")
-}
+  Scope (\_SB.PC00.RP26.PXSX)
+  {
+    include("PepPcieEp.asl")
+  }
 
-Scope (\_SB.PC00.RP27.PXSX)
-{
-  include("PepPcieEp.asl")
-}
+  Scope (\_SB.PC00.RP27.PXSX)
+  {
+    include("PepPcieEp.asl")
+  }
 
-Scope (\_SB.PC00.RP28.PXSX)
-{
-  include("PepPcieEp.asl")
+  Scope (\_SB.PC00.RP28.PXSX)
+  {
+    include("PepPcieEp.asl")
+  }
 }
 
 Scope (\_SB.PC00.PEG0.PEGP)
@@ -500,10 +502,12 @@ Scope(\_SB)
       DSDF(GRPC(\_SB.PC00.RP22.PXSX.GRPT()), PARS("\\_SB.PC00.RP22"))
       DSDF(GRPC(\_SB.PC00.RP23.PXSX.GRPT()), PARS("\\_SB.PC00.RP23"))
       DSDF(GRPC(\_SB.PC00.RP24.PXSX.GRPT()), PARS("\\_SB.PC00.RP24"))
-      DSDF(GRPC(\_SB.PC00.RP25.PXSX.GRPT()), PARS("\\_SB.PC00.RP25"))
-      DSDF(GRPC(\_SB.PC00.RP26.PXSX.GRPT()), PARS("\\_SB.PC00.RP26"))
-      DSDF(GRPC(\_SB.PC00.RP27.PXSX.GRPT()), PARS("\\_SB.PC00.RP27"))
-      DSDF(GRPC(\_SB.PC00.RP28.PXSX.GRPT()), PARS("\\_SB.PC00.RP28"))
+      If (LEqual (PCHS, PCHX)) {
+        DSDF(GRPC(\_SB.PC00.RP25.PXSX.GRPT()), PARS("\\_SB.PC00.RP25"))
+        DSDF(GRPC(\_SB.PC00.RP26.PXSX.GRPT()), PARS("\\_SB.PC00.RP26"))
+        DSDF(GRPC(\_SB.PC00.RP27.PXSX.GRPT()), PARS("\\_SB.PC00.RP27"))
+        DSDF(GRPC(\_SB.PC00.RP28.PXSX.GRPT()), PARS("\\_SB.PC00.RP28"))
+      }
       DSDF(GRPC(\_SB.PC00.PEG0.PEGP.GRPT()), PARS("\\_SB.PC00.PEG0"))
       DSDF(GRPC(\_SB.PC00.PEG1.PEGP.GRPT()), PARS("\\_SB.PC00.PEG1"))
       DSDF(GRPC(\_SB.PC00.PEG2.PEGP.GRPT()), PARS("\\_SB.PC00.PEG2"))

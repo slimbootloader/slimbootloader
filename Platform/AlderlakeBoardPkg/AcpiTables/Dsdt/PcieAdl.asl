@@ -1435,239 +1435,241 @@ Scope(\_SB.PC00) {
     }                                              // end _PRT
   }                                                // end "PCIE Root Port#24"
 
-  //
-  // PCIE Root Port #25
-  //
-  Device (RP25) {
-    Method (_ADR, 0) {
-      If (LNotEqual (RPAP, 0)) {
-        Return (RPAP)
-      } Else {
-        Return (0x001A0000)
-      }
-    }
+  If (LEqual (PCHS, PCH_S)) {
     //
-    // Pass LTRx to LTEN so PchPcieCommon.asl can be reused for PCIes.
+    // PCIE Root Port #25
     //
-    Name (SLOT, 25)
-    Name (LTEN, 0)
-    Name (LMSL, 0)
-    Name (LNSL, 0)
-    Method (_INI)
-    {
-      Store (LTRP, LTEN)
-      Store (PMLP, LMSL)
-      Store (PNLP, LNSL)
-      If (HBSL & 0x40) {
-        Store (1, HBCS)
-      }
-      If (LAnd (CondRefOf (VMR4), CondRefOf (VMDE))) {
-        If (LAnd (LEqual (VMDE, 1), LNotEqual (And (VMR4, 0x01), 0))) {
-          Store (1, PRMV)
+    Device (RP25) {
+      Method (_ADR, 0) {
+        If (LNotEqual (RPAP, 0)) {
+          Return (RPAP)
+        } Else {
+          Return (0x001A0000)
         }
       }
-      If (PRES()) {
-        If(CondRefOf(PINI)) {
-          PINI()
+      //
+      // Pass LTRx to LTEN so PchPcieCommon.asl can be reused for PCIes.
+      //
+      Name (SLOT, 25)
+      Name (LTEN, 0)
+      Name (LMSL, 0)
+      Name (LNSL, 0)
+      Method (_INI)
+      {
+        Store (LTRP, LTEN)
+        Store (PMLP, LMSL)
+        Store (PNLP, LNSL)
+        If (HBSL & 0x40) {
+          Store (1, HBCS)
         }
-      }
+        If (LAnd (CondRefOf (VMR4), CondRefOf (VMDE))) {
+          If (LAnd (LEqual (VMDE, 1), LNotEqual (And (VMR4, 0x01), 0))) {
+            Store (1, PRMV)
+          }
+        }
+        If (PRES()) {
+          If(CondRefOf(PINI)) {
+            PINI()
+          }
+        }
 
-      //
-      // RP D3Cold/D3hot support status for Storage devices
-      //
-      #define PCIE_ROOT_PORT  \_SB.PC00.RP25
-      Include ("PcieStorage.asl")
-      #undef PCIE_ROOT_PORT
-    }
-    Store (GSIP (), SIPV)
-    Include ("PchPcieCommon.asl")
+        //
+        // RP D3Cold/D3hot support status for Storage devices
+        //
+        #define PCIE_ROOT_PORT  \_SB.PC00.RP25
+        Include ("PcieStorage.asl")
+        #undef PCIE_ROOT_PORT
+      }
+      Store (GSIP (), SIPV)
+      Include ("PchPcieCommon.asl")
 #if FeaturePcdGet (PcdTccEnabled) == 1
-    Include ("PchPcieAtscCommon.asl")
+      Include ("PchPcieAtscCommon.asl")
 #endif
-    Method (_PRT, 0) {
-      If (CondRefOf (PICM)) {
-        If (PICM) {
-          Return (AR04)
-        }                                          // APIC mode
-      }
-      Return (PD04)                                // PIC Mode
-    }                                              // end _PRT
-  }                                                // end "PCIE Root Port#21"
+      Method (_PRT, 0) {
+        If (CondRefOf (PICM)) {
+          If (PICM) {
+            Return (AR04)
+          }                                          // APIC mode
+        }
+        Return (PD04)                                // PIC Mode
+      }                                              // end _PRT
+    }                                                // end "PCIE Root Port#21"
 
-  //
-  // PCIE Root Port #26
-  //
-  Device (RP26) {
-    Method (_ADR, 0) {
-      If (LNotEqual (RPAQ, 0)) {
-        Return (RPAQ)
-      } Else {
-        Return (0x001A0001)
-      }
-    }
     //
-    // Pass LTRx to LTEN so PchPcieCommon.asl can be reused for PCIes.
+    // PCIE Root Port #26
     //
-    Name (SLOT, 26)
-    Name (LTEN, 0)
-    Name (LMSL, 0)
-    Name (LNSL, 0)
-    Method (_INI)
-    {
-      Store (LTRQ, LTEN)
-      Store (PMLQ, LMSL)
-      Store (PNLQ, LNSL)
-      If (HBSL & 0x40) {
-        Store (1, HBCS)
-      }
-      If (LAnd (CondRefOf (VMR4), CondRefOf (VMDE))) {
-        If (LAnd (LEqual (VMDE, 1), LNotEqual (And (VMR4, 0x02), 0))) {
-          Store (1, PRMV)
+    Device (RP26) {
+      Method (_ADR, 0) {
+        If (LNotEqual (RPAQ, 0)) {
+          Return (RPAQ)
+        } Else {
+          Return (0x001A0001)
         }
       }
-      If (PRES()) {
-        If(CondRefOf(PINI)) {
-          PINI()
+      //
+      // Pass LTRx to LTEN so PchPcieCommon.asl can be reused for PCIes.
+      //
+      Name (SLOT, 26)
+      Name (LTEN, 0)
+      Name (LMSL, 0)
+      Name (LNSL, 0)
+      Method (_INI)
+      {
+        Store (LTRQ, LTEN)
+        Store (PMLQ, LMSL)
+        Store (PNLQ, LNSL)
+        If (HBSL & 0x40) {
+          Store (1, HBCS)
         }
-      }
+        If (LAnd (CondRefOf (VMR4), CondRefOf (VMDE))) {
+          If (LAnd (LEqual (VMDE, 1), LNotEqual (And (VMR4, 0x02), 0))) {
+            Store (1, PRMV)
+          }
+        }
+        If (PRES()) {
+          If(CondRefOf(PINI)) {
+            PINI()
+          }
+        }
 
-      //
-      // RP D3Cold/D3hot support status for Storage devices
-      //
-      #define PCIE_ROOT_PORT  \_SB.PC00.RP26
-      Include ("PcieStorage.asl")
-      #undef PCIE_ROOT_PORT
-    }
-    Store (GSIP (), SIPV)
-    Include ("PchPcieCommon.asl")
+        //
+        // RP D3Cold/D3hot support status for Storage devices
+        //
+        #define PCIE_ROOT_PORT  \_SB.PC00.RP26
+        Include ("PcieStorage.asl")
+        #undef PCIE_ROOT_PORT
+      }
+      Store (GSIP (), SIPV)
+      Include ("PchPcieCommon.asl")
 #if FeaturePcdGet (PcdTccEnabled) == 1
-    Include ("PchPcieAtscCommon.asl")
+      Include ("PchPcieAtscCommon.asl")
 #endif
-    Method (_PRT, 0) {
-      If (CondRefOf (PICM)) {
-        If (PICM) {
-          Return (AR05)
-        }                                          // APIC mode
-      }
-      Return (PD05)                                // PIC Mode
-    }                                              // end _PRT
-  }                                                // end "PCIE Root Port#26"
+      Method (_PRT, 0) {
+        If (CondRefOf (PICM)) {
+          If (PICM) {
+            Return (AR05)
+          }                                          // APIC mode
+        }
+        Return (PD05)                                // PIC Mode
+      }                                              // end _PRT
+    }                                                // end "PCIE Root Port#26"
 
-  //
-  // PCIE Root Port #27
-  //
-  Device (RP27) {
-    Method (_ADR, 0) {
-      If (LNotEqual (RPAR, 0)) {
-        Return (RPAR)
-      } Else {
-        Return (0x001A0002)
-      }
-    }
     //
-    // Pass LTRx to LTEN so PchPcieCommon.asl can be reused for PCIes.
+    // PCIE Root Port #27
     //
-    Name (SLOT, 27)
-    Name (LTEN, 0)
-    Name (LMSL, 0)
-    Name (LNSL, 0)
-    Method (_INI)
-    {
-      Store (LTRR, LTEN)
-      Store (PMLR, LMSL)
-      Store (PNLR, LNSL)
-      If (HBSL & 0x40) {
-        Store (1, HBCS)
-      }
-      If (LAnd (CondRefOf (VMR4), CondRefOf (VMDE))) {
-        If (LAnd (LEqual (VMDE, 1), LNotEqual (And (VMR4, 0x04), 0))) {
-          Store (1, PRMV)
+    Device (RP27) {
+      Method (_ADR, 0) {
+        If (LNotEqual (RPAR, 0)) {
+          Return (RPAR)
+        } Else {
+          Return (0x001A0002)
         }
       }
-      If (PRES()) {
-        If(CondRefOf(PINI)) {
-          PINI()
+      //
+      // Pass LTRx to LTEN so PchPcieCommon.asl can be reused for PCIes.
+      //
+      Name (SLOT, 27)
+      Name (LTEN, 0)
+      Name (LMSL, 0)
+      Name (LNSL, 0)
+      Method (_INI)
+      {
+        Store (LTRR, LTEN)
+        Store (PMLR, LMSL)
+        Store (PNLR, LNSL)
+        If (HBSL & 0x40) {
+          Store (1, HBCS)
         }
-      }
+        If (LAnd (CondRefOf (VMR4), CondRefOf (VMDE))) {
+          If (LAnd (LEqual (VMDE, 1), LNotEqual (And (VMR4, 0x04), 0))) {
+            Store (1, PRMV)
+          }
+        }
+        If (PRES()) {
+          If(CondRefOf(PINI)) {
+            PINI()
+          }
+        }
 
-      //
-      // RP D3Cold/D3hot support status for Storage devices
-      //
-      #define PCIE_ROOT_PORT  \_SB.PC00.RP27
-      Include ("PcieStorage.asl")
-      #undef PCIE_ROOT_PORT
-    }
-    Store (GSIP (), SIPV)
-    Include ("PchPcieCommon.asl")
+        //
+        // RP D3Cold/D3hot support status for Storage devices
+        //
+        #define PCIE_ROOT_PORT  \_SB.PC00.RP27
+        Include ("PcieStorage.asl")
+        #undef PCIE_ROOT_PORT
+      }
+      Store (GSIP (), SIPV)
+      Include ("PchPcieCommon.asl")
 #if FeaturePcdGet (PcdTccEnabled) == 1
-    Include ("PchPcieAtscCommon.asl")
+      Include ("PchPcieAtscCommon.asl")
 #endif
-    Method (_PRT, 0) {
-      If (CondRefOf (PICM)) {
-        If (PICM) {
-          Return (AR06)
-        }                                          // APIC mode
-      }
-      Return (PD06)                                // PIC Mode
-    }                                              // end _PRT
-  }                                                // end "PCIE Root Port#27"
+      Method (_PRT, 0) {
+        If (CondRefOf (PICM)) {
+          If (PICM) {
+            Return (AR06)
+          }                                          // APIC mode
+        }
+        Return (PD06)                                // PIC Mode
+      }                                              // end _PRT
+    }                                                // end "PCIE Root Port#27"
 
-  //
-  // PCIE Root Port #28
-  //
-  Device (RP28) {
-    Method (_ADR, 0) {
-      If (LNotEqual (RPAS, 0)) {
-        Return (RPAS)
-      } Else {
-        Return (0x001A0003)
-      }
-    }
     //
-    // Pass LTRx to LTEN so PchPcieCommon.asl can be reused for PCIes.
+    // PCIE Root Port #28
     //
-    Name (SLOT, 28)
-    Name (LTEN, 0)
-    Name (LMSL, 0)
-    Name (LNSL, 0)
-    Method (_INI)
-    {
-      Store (LTRS, LTEN)
-      Store (PMLS, LMSL)
-      Store (PNLS, LNSL)
-      If (HBSL & 0x40) {
-        Store (1, HBCS)
-      }
-      If (LAnd (CondRefOf (VMR4), CondRefOf (VMDE))) {
-        If (LAnd (LEqual (VMDE, 1), LNotEqual (And (VMR4, 0x08), 0))) {
-          Store (1, PRMV)
+    Device (RP28) {
+      Method (_ADR, 0) {
+        If (LNotEqual (RPAS, 0)) {
+          Return (RPAS)
+        } Else {
+          Return (0x001A0003)
         }
       }
-      If (PRES()) {
-        If(CondRefOf(PINI)) {
-          PINI()
+      //
+      // Pass LTRx to LTEN so PchPcieCommon.asl can be reused for PCIes.
+      //
+      Name (SLOT, 28)
+      Name (LTEN, 0)
+      Name (LMSL, 0)
+      Name (LNSL, 0)
+      Method (_INI)
+      {
+        Store (LTRS, LTEN)
+        Store (PMLS, LMSL)
+        Store (PNLS, LNSL)
+        If (HBSL & 0x40) {
+          Store (1, HBCS)
         }
-      }
+        If (LAnd (CondRefOf (VMR4), CondRefOf (VMDE))) {
+          If (LAnd (LEqual (VMDE, 1), LNotEqual (And (VMR4, 0x08), 0))) {
+            Store (1, PRMV)
+          }
+        }
+        If (PRES()) {
+          If(CondRefOf(PINI)) {
+            PINI()
+          }
+        }
 
-      //
-      // RP D3Cold/D3hot support status for Storage devices
-      //
-      #define PCIE_ROOT_PORT  \_SB.PC00.RP28
-      Include ("PcieStorage.asl")
-      #undef PCIE_ROOT_PORT
-    }
-    Store (GSIP (), SIPV)
-    Include ("PchPcieCommon.asl")
+        //
+        // RP D3Cold/D3hot support status for Storage devices
+        //
+        #define PCIE_ROOT_PORT  \_SB.PC00.RP28
+        Include ("PcieStorage.asl")
+        #undef PCIE_ROOT_PORT
+      }
+      Store (GSIP (), SIPV)
+      Include ("PchPcieCommon.asl")
 #if FeaturePcdGet (PcdTccEnabled) == 1
-    Include ("PchPcieAtscCommon.asl")
+      Include ("PchPcieAtscCommon.asl")
 #endif
-    Method (_PRT, 0) {
-      If (CondRefOf (PICM)) {
-        If (PICM) {
-          Return (AR07)
-        }                                          // APIC mode
-      }
-      Return (PD07)                                // PIC Mode
-    }                                              // end _PRT
-  }                                                // end "PCIE Root Port#28"
+      Method (_PRT, 0) {
+        If (CondRefOf (PICM)) {
+          If (PICM) {
+            Return (AR07)
+          }                                          // APIC mode
+        }
+        Return (PD07)                                // PIC Mode
+      }                                              // end _PRT
+    }                                                // end "PCIE Root Port#28"
+  }
 }

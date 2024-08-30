@@ -445,28 +445,31 @@ DefinitionBlock (
       Return (GPRW (GPE_PCI_EXP, 4))
     }
   }
-  Scope(\_SB.PC00.RP25) {
-    Method(_PRW, 0) {
-      If (LAnd(LNotEqual(PSW2, 0), LEqual(RPN2, 0x19))) {
-        Return (GPRW (GGPE (PSW2), 4))
-      } Else {
+
+  If (LEqual (PCHS, PCH_S)) {
+    Scope(\_SB.PC00.RP25) {
+      Method(_PRW, 0) {
+        If (LAnd(LNotEqual(PSW2, 0), LEqual(RPN2, 0x19))) {
+          Return (GPRW (GGPE (PSW2), 4))
+        } Else {
+          Return (GPRW (GPE_PCI_EXP, 4))
+        }
+      }
+    }
+    Scope(\_SB.PC00.RP26) {
+      Method(_PRW, 0) {
         Return (GPRW (GPE_PCI_EXP, 4))
       }
     }
-  }
-  Scope(\_SB.PC00.RP26) {
-    Method(_PRW, 0) {
-      Return (GPRW (GPE_PCI_EXP, 4))
+    Scope(\_SB.PC00.RP27) {
+      Method(_PRW, 0) {
+        Return (GPRW (GPE_PCI_EXP, 4))
+      }
     }
-  }
-  Scope(\_SB.PC00.RP27) {
-    Method(_PRW, 0) {
-      Return (GPRW (GPE_PCI_EXP, 4))
-    }
-  }
-  Scope(\_SB.PC00.RP28) {
-    Method(_PRW, 0) {
-      Return (GPRW (GPE_PCI_EXP, 4))
+    Scope(\_SB.PC00.RP28) {
+      Method(_PRW, 0) {
+        Return (GPRW (GPE_PCI_EXP, 4))
+      }
     }
   }
 
