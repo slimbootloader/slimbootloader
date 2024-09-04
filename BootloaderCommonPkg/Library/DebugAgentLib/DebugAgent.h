@@ -131,21 +131,6 @@ typedef struct {
 } DEBUG_AGENT_MAILBOX;
 #pragma pack()
 
-///
-/// Byte packed structure for an IA-32 Interrupt Gate Descriptor.
-///
-typedef union {
-  struct {
-    UINT32  OffsetLow:16;   ///< Offset bits 15..0.
-    UINT32  Selector:16;    ///< Selector.
-    UINT32  Reserved_0:8;   ///< Reserved.
-    UINT32  GateType:8;     ///< Gate Type.  See #defines above.
-    UINT32  OffsetHigh:16;  ///< Offset bits 31..16.
-  } Bits;
-  UINT64  Uint64;
-} IA32_IDT_ENTRY;
-
-
 typedef union {
   struct {
     UINT32  LimitLow    : 16;
