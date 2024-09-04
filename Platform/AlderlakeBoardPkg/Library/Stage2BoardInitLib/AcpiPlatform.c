@@ -905,6 +905,7 @@ PlatformUpdateAcpiGnvs (
   // Update eMMC
 #if FixedPcdGetBool(PcdAdlNSupport) == 1
   PchNvs->EMH4                                  = 1;
+  PchNvs->EMDS                                  = 4;
   PchNvs->EmmcEnabled                           = 1;
 #endif
 
