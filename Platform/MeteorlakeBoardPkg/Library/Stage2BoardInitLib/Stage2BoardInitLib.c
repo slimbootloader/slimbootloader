@@ -1610,7 +1610,7 @@ PlatformUpdateAcpiGnvs (
   PlatformNvs->UsbTypeCSupport = 1;
 
   PlatformNvs->GenerationId = 0;
-  PlatformNvs->PlatformFlavor = FlavorDesktop;
+  PlatformNvs->PlatformFlavor = FlavorMobile;
   PlatformNvs->BoardRev = 1;
   PlatformNvs->BoardType = 0;
   FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag (CDATA_FEATURES_TAG);
