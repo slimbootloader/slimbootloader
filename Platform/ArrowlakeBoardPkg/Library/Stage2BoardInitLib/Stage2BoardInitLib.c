@@ -1825,7 +1825,15 @@ PlatformUpdateAcpiGnvs (
   PlatformNvs->ApicEnable = 1;
   PlatformNvs->PlatformId = (UINT8) GetPlatformId ();
   PlatformNvs->GenerationId = 0;
-  PlatformNvs->PlatformFlavor = FlavorDesktop;
+  switch (GetPlatformId ()) {
+  case PLATFORM_ID_ARL_H_DDR5_RVP:
+  case PLATFORM_ID_ARL_H_LP5x_Rvp:
+    PlatformNvs->PlatformFlavor = FlavorMobile;
+    break;
+  default:
+    PlatformNvs->PlatformFlavor = FlavorDesktop;
+    break;
+  }
   PlatformNvs->BoardRev = 1;
   PlatformNvs->BoardType = 0;
   PlatformNvs->PlatformCpuId = 0xC0660;
