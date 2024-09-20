@@ -194,22 +194,22 @@ UpdateFspConfig (
   MemId = PcdGet8 (PcdMemConfigId);
 
   if ((MemId >= RplpLp5AutoMicron4GMT62F1G32D2DSSpd) && (MemId <= RplpLp5AutoSamsung16GbK3KLALA0DMSpd)) {
-    Fspmcfg->MemorySpdPtr000  = MemId;
-    Fspmcfg->MemorySpdPtr001  = MemId;
-    Fspmcfg->MemorySpdPtr010  = MemId;
-    Fspmcfg->MemorySpdPtr011  = MemId;
-    Fspmcfg->MemorySpdPtr020  = MemId;
-    Fspmcfg->MemorySpdPtr021  = MemId;
-    Fspmcfg->MemorySpdPtr030  = MemId;
-    Fspmcfg->MemorySpdPtr031  = MemId;
-    Fspmcfg->MemorySpdPtr100  = MemId;
-    Fspmcfg->MemorySpdPtr101  = MemId;
-    Fspmcfg->MemorySpdPtr110  = MemId;
-    Fspmcfg->MemorySpdPtr111  = MemId;
-    Fspmcfg->MemorySpdPtr120  = MemId;
-    Fspmcfg->MemorySpdPtr121  = MemId;
-    Fspmcfg->MemorySpdPtr130  = MemId;
-    Fspmcfg->MemorySpdPtr131  = MemId;
+    MemCfgData->SpdDataSel000  = MemId;
+    MemCfgData->SpdDataSel001  = MemId;
+    MemCfgData->SpdDataSel010  = MemId;
+    MemCfgData->SpdDataSel011  = MemId;
+    MemCfgData->SpdDataSel020  = MemId;
+    MemCfgData->SpdDataSel021  = MemId;
+    MemCfgData->SpdDataSel030  = MemId;
+    MemCfgData->SpdDataSel031  = MemId;
+    MemCfgData->SpdDataSel100  = MemId;
+    MemCfgData->SpdDataSel101  = MemId;
+    MemCfgData->SpdDataSel110  = MemId;
+    MemCfgData->SpdDataSel111  = MemId;
+    MemCfgData->SpdDataSel120  = MemId;
+    MemCfgData->SpdDataSel121  = MemId;
+    MemCfgData->SpdDataSel130  = MemId;
+    MemCfgData->SpdDataSel131  = MemId;
   }
 #endif
 
@@ -514,6 +514,7 @@ UpdateFspConfig (
     CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mRplPDdr5SODimmCrbDisplayDdiConfig, sizeof(mRplPDdr5SODimmCrbDisplayDdiConfig));
     break;
   case PLATFORM_ID_RPLP_LP5_AUTO_RVP:
+  case PLATFORM_ID_RPLP_LP5_AUTO_CRB:
     if (DisplayId == DisplayIdRplpAutoDualMipi) {
       DEBUG((DEBUG_INFO, "PLATFORM_ID_RPLP_LP5_AUTO_RVP board Id %x, DDI Configuration RPLP-LP5 Auto RVP Dual Mipi\n", PlatformId));
       CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mRplpLp5AutoRvpDualMipiDisplayDdiConfig, sizeof(mRplpLp5AutoRvpDualMipiDisplayDdiConfig));
@@ -620,6 +621,7 @@ UpdateFspConfig (
         Fspmcfg->SkipCpuReplacementCheck = 0x0;
         break;
       case PLATFORM_ID_RPLP_LP5_AUTO_RVP:
+      case PLATFORM_ID_RPLP_LP5_AUTO_CRB:
         Fspmcfg->PcieClkReqGpioMux[9] = 0x796e9000;
         Fspmcfg->TcssXdciEn = 0x1;
         Fspmcfg->Lp5CccConfig = 0xff;

@@ -294,4 +294,15 @@ IsSecondaryThread (
   VOID
   );
 
+/**
+  Returns RPL Auto Supported processor
+
+  @retval TRUE          If the CPU is RPL-P Auto CPU
+  @retval FALSE         If the CPU is not RPL-P Auto CPU
+**/
+BOOLEAN
+EFIAPI
+IsRplAutoCpu (
+  VOID
+  );
 #endif // __STAGE2_BOARD_INIT_LIB_H__

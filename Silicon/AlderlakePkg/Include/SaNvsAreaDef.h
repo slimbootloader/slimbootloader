@@ -201,6 +201,7 @@ typedef struct {
                                                     ///< Offset 429     CpuPcieRp address 3
                                                     ///< Offset 433     CpuPcieRp Address 4
   UINT16   RegBarOffset;                            ///< Offset 437     MCH RegBar Offset
+  UINT8    UFSIrq;                                  ///< Offset 439     UFS IRQ Number
 } SYSTEM_AGENT_NVS_AREA;
 
 #pragma pack(pop)
