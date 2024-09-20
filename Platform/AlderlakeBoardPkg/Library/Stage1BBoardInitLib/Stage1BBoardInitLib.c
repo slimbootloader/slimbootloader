@@ -6,6 +6,19 @@
 **/
 
 #include "Stage1BBoardInitLib.h"
+#include <Library/PciSegmentLib.h>
+
+
+#define SA_SEG_NUM                         0
+#define SA_MC_BUS                          0
+#define CPU_PCIE_ULT_ULX_MAX_ROOT_PORT     3
+
+// X710 X550 Link Degrade WA
+
+#define  B_PCIE_ACGR3S2_DRXTERMDQ    BIT4
+#define  R_PCIE_ACGR3S2              0xC50
+
+#define VAR_NAME_X710X550WA          L"X710X550WA"
 
 #define  MTRR_CACHE_UNCACHEABLE      0
 
@@ -569,6 +582,127 @@ GetPlatformPowerState (
   return BootMode;
 }
 
+#if FixedPcdGetBool(PcdAzbSupport)
+/**
+  Get CPU Pcie Root Port Device and Function Number by Root Port physical Number
+
+  @param[in]  RpNumber              Root port physical number. (0-based)
+  @param[out] RpDev                 Return corresponding root port device number.
+  @param[out] RpFun                 Return corresponding root port function number.
+
+  @retval     EFI_SUCCESS           Root port device and function is retrieved
+  @retval     EFI_INVALID_PARAMETER RpNumber is invalid
+**/
+EFI_STATUS
+EFIAPI
+GetCpuPcieRpDeviceFunction (
+  IN  UINTN   RpNumber,
+  OUT UINTN   *RpDev,
+  OUT UINTN   *RpFun
+  )
+{
+  switch (RpNumber) {
+    case 0:
+      *RpDev = 6;
+      *RpFun = 0;
+      break;
+    case 1:
+      *RpDev = 1;
+      *RpFun = 0;
+      break;
+    case 2:
+      *RpDev = 6;
+      *RpFun = 2;
+      break;
+    default:
+      *RpDev = 6;
+      *RpFun = 0;
+      break;
+  }
+  return EFI_SUCCESS;
+}
+
+/**
+  Gets pci segment base address of PCIe root port.
+
+  @param[in] RpIndex    Root Port Index
+
+  @return    PCIe       port base address.
+**/
+UINT64
+CpuPcieBase (
+  IN  UINT32   RpIndex
+  )
+{
+  UINTN   RpDevice;
+  UINTN   RpFunction;
+
+  RpDevice   = 0;
+  RpFunction = 0;
+
+  GetCpuPcieRpDeviceFunction (RpIndex, &RpDevice, &RpFunction);
+  return PCI_SEGMENT_LIB_ADDRESS (SA_SEG_NUM, SA_MC_BUS, (UINT32) RpDevice, (UINT32) RpFunction, 0);
+}
+
+
+/**
+ Check the lite variable "X710X550WA" state, and if this variable is set, WA will be executed.
+ Otherwise, no card connected in the PEG slot or the connected card is other than x550 or x710.
+
+  @param[in] RpIndex    Root Port Index
+
+  @retval    TRUE        Lite Variable Set; Need to run WA
+  @retval    FALSE       Lite Variable Not Set; No need to run WA
+**/
+BOOLEAN
+ShouldExecuteWA (UINT32 RpIndex)
+{
+  EFI_STATUS   Status;
+  UINT8        X710X550WA;
+  UINT32       VarSize;
+
+  X710X550WA  = 0;
+  VarSize     = sizeof(UINT8);
+
+  DEBUG ((DEBUG_INFO, "ShouldExecuteWA! RpIndex[%x] \n", RpIndex));
+  switch (RpIndex) {
+    case 0: // PEG60RP
+      Status = GetVariable (VAR_NAME_X710X550WA, NULL, NULL, &VarSize, &X710X550WA);
+      DEBUG ((DEBUG_INFO, "X710X550WA Variable Status %r . X710X550WA Value : %d\n", Status, X710X550WA));
+      if (!EFI_ERROR(Status)) {
+        if (X710X550WA & (1 << RpIndex)) {
+          return TRUE;
+        }
+      }
+      break;
+  }
+
+  return FALSE;
+}
+
+/**
+  Actual WA for X710 and x550 NIC Card Link Degrade Issue. Clear B_PCIE_ACGR3S2_DRXTERMDQ bit.
+
+  @param[in] RpIndex    Root Port Index
+
+  @retval    VOID
+**/
+VOID
+ExecuteWAForX710X550 (UINT32 RpIndex)
+{
+  UINT32    Data32 = 0;
+  UINT64    RpBase;
+
+  RpBase = CpuPcieBase (RpIndex);
+  DEBUG ((DEBUG_INFO, "Clear B_PCIE_ACGR3S2_DRXTERMDQ\n"));
+  PciSegmentAnd32 (RpBase + R_PCIE_ACGR3S2, (UINT32)~(B_PCIE_ACGR3S2_DRXTERMDQ));
+  Data32 = PciSegmentRead32 (RpBase + R_PCIE_ACGR3S2);
+  DEBUG ((DEBUG_INFO, "Data32 = %x\n", Data32));
+  MicroSecondDelay (25000);
+}
+
+#endif
+
 /**
   Board specific hook points.
 
@@ -590,6 +724,12 @@ BoardInit (
   MSR_IA32_MTRR_PHYSMASK_REGISTER    MsrMask;
   MSR_IA32_MTRR_PHYSBASE_REGISTER    MsrBase;
   CPUID_VIR_PHY_ADDRESS_SIZE_EAX     VirPhyAddressSize;
+
+#if FixedPcdGetBool(PcdAzbSupport)
+  UINT8                              Index;
+  UINTN                              RpDevice;
+  UINTN                              RpFunction;
+#endif
 
   switch (InitPhase) {
   case PreConfigInit:
@@ -634,6 +774,18 @@ DEBUG_CODE_END();
     SetDeviceAddr (PltDeviceIsh, 0, (UINT32)((DEFAULT_PCI_BUS_NUMBER_PCH << 16) | (DeviceId << 8) | PCI_FUNCTION_NUMBER_PCH_ISH));
     break;
   case PreMemoryInit:
+
+#if FixedPcdGetBool(PcdAzbSupport)
+    // WA for X710 and x550 NIC Card Link Degrade
+    DEBUG((DEBUG_INFO, "WA for x710 and x550 NIC Card in Stage 1B\n"));
+    for (Index = 0; Index < CPU_PCIE_ULT_ULX_MAX_ROOT_PORT; Index++) {
+      GetCpuPcieRpDeviceFunction (Index, &RpDevice, &RpFunction);
+      DEBUG ((DEBUG_INFO, "**** BDF = 0%x%x ****\n", RpDevice, RpFunction));
+      if (ShouldExecuteWA (Index)) {
+        ExecuteWAForX710X550 (Index);
+      }
+    }
+#endif
     //
     // Set B_CNL_PCH_PWRM_GEN_PMCON_A_DISB.
     // NOTE: Byte access and not clear BIT18 and BIT16 (W1C bits)

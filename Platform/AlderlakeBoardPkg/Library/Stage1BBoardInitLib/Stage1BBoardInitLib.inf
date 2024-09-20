@@ -66,6 +66,7 @@
   SmbusLib
   TopSwapLib
   CrashLogLib
+  PciSegmentLib
 
 [Guids]
   gFspNonVolatileStorageHobGuid
@@ -88,3 +89,4 @@
 [FixedPcd]
   gPlatformAlderLakeTokenSpaceGuid.PcdAdlLpSupport
   gPlatformAlderLakeTokenSpaceGuid.PcdAzbWwanSupport
+  gPlatformAlderLakeTokenSpaceGuid.PcdAzbSupport

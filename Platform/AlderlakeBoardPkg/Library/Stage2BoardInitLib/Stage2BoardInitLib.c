@@ -17,7 +17,37 @@
 #include <Library/LoaderPerformanceLib.h>
 #include <Library/PciEnumerationLib.h>
 #include <Library/FusaConfigLib.h>
+#include <Library/PcieHelperLib.h>
 #include "SioChip.h"
+
+// X710 X550 Link Degrade WA
+#define PCIE_SECONDARY_BUS_OFFSET      0x19
+
+//X710 cards
+#define X710_10GBE_SFPplus             0x104E8086
+#define X710_10GBE_Backplane           0x104F8086
+#define X710_10GBASE_T                 0x15FF8086
+#define X710_5GBASE_T                  0x101F8086
+#define X710_BLANKFLASH                0x154B8086
+#define X710                           0x15728086
+#define X710_40GBE_Backplane           0x15808086
+#define X710_10GBE_Backplane2          0x15818086
+#define XL710_40GBE_QSFplus            0x15838086
+#define XL710_40GBE_QSFplus2           0x15848086
+#define X710_x557_AT                   0x15898086
+#define XXV710_25GBE_Backplane         0x158A8086
+#define XXV710_25GBE_SFP28             0x158B8086
+
+//x550 cards
+#define X550_AT2                       0x15638086
+#define X550_AT                        0x15D18086
+
+//rootport 1->B0:D6:F0
+#define PEG60_SLOT_BUS                 0
+#define PEG60_SLOT_DEV                 6
+#define PEG60_SLOT_FUN                 0
+
+#define VAR_NAME_X710X550WA            L"X710X550WA"
 
 GLOBAL_REMOVE_IF_UNREFERENCED UINT8    mBigCoreCount;
 GLOBAL_REMOVE_IF_UNREFERENCED UINT8    mSmallCoreCount;
@@ -374,6 +404,112 @@ FixUpFlashMapEntry (VOID)
   return EFI_SUCCESS;
 }
 
+
+#if FixedPcdGetBool(PcdAzbSupport)
+
+/**
+  Check if the predefined device ids with the PEG slot card and if it matched, check if the link width is degraded.
+
+  @param[in]  RPBus           Root Port Bus number
+  @param[in]  RPDevice        Root Port Device number
+  @param[in]  RPFunction      Root Port Function number
+  @param[out] ResetRequired   Reset required flag
+
+  @retval     1               If the card is x710 or x550
+  @retval     0               If the card is not x710 or x550
+**/
+UINT8
+VerifyPEGSlotCards (
+  UINT8 RPBus,
+  UINT8 RPDevice,
+  UINT8 RPFunction,
+  UINT8 *ResetRequired
+)
+{
+  UINT8                    DeviceBus;
+  UINT32                   DevVenId;
+  UINT8                    CapHeaderOffset;
+  PCI_CAPABILITY_PCIEXP    ExpressCapability;
+
+  DEBUG((DEBUG_INFO, "VerifyPEGSlotCards [%x|%x|%x]\n", RPBus, RPDevice, RPFunction));
+  DeviceBus = PciSegmentRead8 (PCI_SEGMENT_LIB_ADDRESS (0, RPBus, RPDevice, RPFunction, PCIE_SECONDARY_BUS_OFFSET));
+  DevVenId  = PciSegmentRead32(PCI_SEGMENT_LIB_ADDRESS (0, DeviceBus, 0, 0, 0));
+  DEBUG((DEBUG_INFO, "DeviceBus [%x] DevVenId[%x]\n", DeviceBus, DevVenId));
+//
+//  Based on requirement we can add 'DevVenId' check of other cards.
+//
+  switch (DevVenId)
+  {
+    case X550_AT:
+    case X550_AT2:
+    case X710:
+    case X710_x557_AT:
+    case X710_5GBASE_T:
+    case X710_10GBASE_T:
+    case X710_BLANKFLASH:
+    case X710_10GBE_SFPplus:
+    case XL710_40GBE_QSFplus:
+    case XL710_40GBE_QSFplus2:
+    case X710_10GBE_Backplane:
+    case X710_40GBE_Backplane:
+    case X710_10GBE_Backplane2:
+    case XXV710_25GBE_Backplane:
+    case XXV710_25GBE_SFP28:
+      CapHeaderOffset = PcieFindCapId (0, DeviceBus, 0, 0, EFI_PCI_CAPABILITY_ID_PCIEXP);
+      PciSegmentReadBuffer (PCI_SEGMENT_LIB_ADDRESS (0, DeviceBus, 0, 0, 0) + CapHeaderOffset, sizeof(PCI_CAPABILITY_PCIEXP), &ExpressCapability);
+      if (ExpressCapability.LinkStatus.Bits.NegotiatedLinkWidth != ExpressCapability.LinkCapability.Bits.MaxLinkWidth){
+        *ResetRequired = 1;
+        DEBUG((DEBUG_INFO, "Reset required!\n"));
+      }
+      return 1;
+    default:
+      return 0;
+  }
+
+}
+
+/**
+  Set the WA Lite variable in Stage2 and this variable will be used in Stage1B before run the WA
+  for link degrade issue. This variable needs to be deleted if the connected card is not x710 or x550.
+  The system will get reset if the variable status misalign with the current state.
+
+  @param[in] VOID
+
+  @retval    VOID
+**/
+VOID X710X550WA (VOID)
+{
+  UINT8        IsPEGSlotNeedWA;
+  UINTN        VarSize;
+  UINT8        Value;
+  EFI_STATUS   VariableStatus;
+  UINT8        ResetRequired;
+
+  IsPEGSlotNeedWA   = 0;
+  ResetRequired     = 0;
+  VarSize           = sizeof(UINT8);
+  Value             = 0;
+
+  DEBUG((DEBUG_INFO, "WA for x710 and x550 NIC Card in Stage 2\n"));
+  IsPEGSlotNeedWA |= (VerifyPEGSlotCards(PEG60_SLOT_BUS, PEG60_SLOT_DEV, PEG60_SLOT_FUN, &ResetRequired) << 0);
+  DEBUG((DEBUG_INFO, "IsPEGSlotNeedWA : %x\n", IsPEGSlotNeedWA));
+  VariableStatus = GetVariable (VAR_NAME_X710X550WA, NULL, NULL, &VarSize, &Value);
+  DEBUG((DEBUG_INFO, "Getvariable X710X550WA Status : %r Value : %x\n", VariableStatus, Value));
+
+  if(EFI_ERROR(VariableStatus) || (IsPEGSlotNeedWA != Value)){
+    DEBUG((DEBUG_INFO, "Setting The WA Variable\n"));
+    SetVariable (VAR_NAME_X710X550WA, NULL, 0, VarSize, &IsPEGSlotNeedWA);
+    if(ResetRequired || // Reset required because link degrade in the first boot
+       ((!IsPEGSlotNeedWA) && !EFI_ERROR(VariableStatus)) // No x710/x550 in the slots, but WA executed for this boot, NV variable value != 0,
+      ) {
+      DEBUG((DEBUG_INFO, "Warm Reset after executing to skip WA for x710/x550 Link Degrade issue !\n"));
+      ResetSystem (EfiResetWarm);
+    }
+  }
+}
+
+#endif
+
 /**
   Board specific hook points.
 
@@ -524,6 +660,10 @@ BoardInit (
     (VOID) PcdSet32S (PcdPciEnumHookProc, (UINT32)(UINTN) PlatformPciEnumHookProc);
     break;
   case PostPciEnumeration:
+#if FixedPcdGetBool(PcdAzbSupport)
+    // WA for X710 and x550 NIC Card Link Degrade
+    X710X550WA();
+#endif
     if (FeaturePcdGet (PcdEnablePciePm)) {
       PciePmConfig ();
     }
