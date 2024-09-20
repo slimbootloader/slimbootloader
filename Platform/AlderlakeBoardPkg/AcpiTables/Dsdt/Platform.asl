@@ -1141,6 +1141,46 @@ Scope (\_SB)
     }
   }
 } // End of Scope(\_SB)
+
+If (ToInteger(PLID) == PLATFORM_ID_RPLP_LP5_AUTO_RVP || ToInteger(PLID) == PLATFORM_ID_RPLP_LP5_AUTO_CRB) {
+  Scope (\_SB.PC00.GFX0)
+  {
+      Method(_CRS, 0, Serialized)
+      {
+        Name(BUF0, ResourceTemplate()
+        {
+          //
+          //Host IRQ
+          //
+          GpioIo (Exclusive, PullDefault, 0, 0, IoRestrictionInputOnly,  "\\_SB.GPI0",,,, RawDataBuffer(){6}) {162} //GPIO_VER2_LP_DRIVER_GPP_D2     DDIB HPD
+          //
+          //Interrupt to Host
+          //
+          GpioInt (Edge, ActiveBoth, Exclusive, PullDefault, 0x0000, "\\_SB.GPI0", 0x00, ResourceConsumer,, RawDataBuffer(){6}) {162} //GPIO_VER2_LP_DRIVER_GPP_D2   DDIB HPD
+
+          //
+          //Host IRQ
+          //
+          GpioIo (Exclusive, PullDefault, 0, 0, IoRestrictionInputOnly,  "\\_SB.GPI0",,,, RawDataBuffer(){12}) {163} //GPIO_VER2_LP_DRIVER_GPP_D3   TCP3 HPD
+          //
+          //Interrupt to Host
+          //
+          GpioInt (Edge, ActiveBoth, Exclusive, PullDefault, 0x0000, "\\_SB.GPI0", 0x00, ResourceConsumer,, RawDataBuffer(){12}) {163} //GPIO_VER2_LP_DRIVER_GPP_D3  TCP3 HPD
+
+          //
+          //Host IRQ
+          //
+          GpioIo (Exclusive, PullDefault, 0, 0, IoRestrictionInputOnly,  "\\_SB.GPI0",,,, RawDataBuffer(){13}) {161} //GPIO_VER2_LP_DRIVER_GPP_D1  TCP4 HPD
+          //
+          //Interrupt to Host
+          //
+          GpioInt (Edge, ActiveBoth, Exclusive, PullDefault, 0x0000, "\\_SB.GPI0", 0x00, ResourceConsumer,, RawDataBuffer(){13}) {161}   //GPIO_VER2_LP_DRIVER_GPP_D1   TCP4 HPD
+        })
+        Return(BUF0)
+      }
+  }
+}
+
 OperationRegion (OCWD, SystemIO, (ACPI_BASE_ADDRESS + R_ACPI_IO_OC_WDT_CTL), 0x4)
 Field(OCWD, DWordAcc, NoLock, Preserve)
 {

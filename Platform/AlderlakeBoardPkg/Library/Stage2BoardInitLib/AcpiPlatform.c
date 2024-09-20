@@ -20,6 +20,18 @@
 #define MWAIT_CD_1                   0x50
 #define MWAIT_CD_2                   0x60
 
+// HD Audio I2S codecs
+
+#define HDAC_I2S_DISABLED 0
+#define HDAC_I2S_ALC274   1
+#define HDAC_I2S_ALC1308  2
+#define HDAC_I2S_EVEREST8316  3
+#define HDAC_I2S_EVEREST8326  4
+#define HDAC_I2S_EVEREST8336  5
+#define HDAC_I2S_ALC5682I_VD  6
+#define HDAC_I2S_ALC5682I_VS  7
+#define HDAC_I2S_PCM3168A     8
+
 CONST PCH_SERIAL_IO_CONFIG_INFO mPchSSerialIoSPIMode[PCH_MAX_SERIALIO_SPI_CONTROLLERS] = {
   {0, 0xF2000},
   {1, 0xF3000},
@@ -271,6 +283,9 @@ PlatformUpdateAcpiTable (
   VOID                        *FspHobList;
   PLATFORM_DATA               *PlatformData;
   FEATURES_CFG_DATA           *FeaturesCfgData;
+#if FixedPcdGet8 (PcdTccEnabled) && !defined(PLATFORM_RPLS) && !defined(PLATFORM_ADLN) && !defined(PLATFORM_ASL)
+  TCC_CFG_DATA                *TccCfgData;
+#endif
   EFI_STATUS                   Status;
   EFI_ACPI_6_3_FIXED_ACPI_DESCRIPTION_TABLE *FadtPointer;
 
@@ -343,6 +358,18 @@ PlatformUpdateAcpiTable (
     if (GetBootMode() != BOOT_ON_FLASH_UPDATE) {
       AcpiPatchPss (Table, GlobalNvs);
     }
+  } else if (Table->Signature == SIGNATURE_32 ('R', 'T', 'C', 'T')) {
+    DEBUG ((DEBUG_INFO, "Find RTCT table\n"));
+
+#if FixedPcdGet8 (PcdTccEnabled) && !defined(PLATFORM_RPLS) && !defined(PLATFORM_ADLN) && !defined(PLATFORM_ASL)
+      TccCfgData = (TCC_CFG_DATA *) FindConfigDataByTag(CDATA_TCC_TAG);
+      if ((TccCfgData != NULL) && (TccCfgData->TccEnable != 0)) {
+        Status = UpdateAcpiRtctTable(Table);
+        DEBUG ( (DEBUG_INFO, "Updated Rtct Table entries in AcpiTable status: %r\n", Status) );
+        return Status;
+      }
+#endif
+    return EFI_UNSUPPORTED;
   } else if (Table->OemTableId == SIGNATURE_64 ('D', 'p', 't', 'f', 'T', 'a', 'b', 'l')) { //DptfTabl
     DEBUG ((DEBUG_INFO, "Find DptfTabl table\n"));
 
@@ -417,7 +444,7 @@ PlatformUpdateAcpiTable (
       } else {
         FadtPointer->Flags &= ~(EFI_ACPI_6_3_PWR_BUTTON); // clear indicates the power button is handled as a fixed feature programming model
       }
-    }
+  }
     if (GetCpuSku() == 0) {   // ADL-S
       FadtPointer->PreferredPmProfile = 0x2;  //mobile
     }
@@ -737,6 +764,12 @@ PlatformUpdateAcpiGnvs (
   UINT32                   Data32;
   GPIO_GROUP               GroupToGpeDwX[3];
   UINT32                   GroupDw[3];
+#if FixedPcdGet8 (PcdTccEnabled) && !defined(PLATFORM_RPLS) && !defined(PLATFORM_ADLN) && !defined(PLATFORM_ASL)
+  TCC_CFG_DATA            *TccCfgData;
+  CPUID_EXTENDED_TIME_STAMP_COUNTER_EDX  Edx;
+  CPUID_PROCESSOR_FREQUENCY_EBX          Ebx;
+  PLATFORM_DATA           *PlatformData;
+#endif
   EFI_STATUS              Status;
 
   GlobalNvs = (GLOBAL_NVS_AREA *)GnvsIn;
@@ -976,7 +1009,15 @@ PlatformUpdateAcpiGnvs (
     }
   }
 
-  PlatformNvs->I2SC     = 0x0;
+  //
+  // Select PCM3168A codec for MBL RVP boards
+  //
+  if ((PlatformNvs->PlatformId == PLATFORM_ID_RPLP_LP5_AUTO_RVP) ||
+     (PlatformNvs->PlatformId == PLATFORM_ID_RPLP_LP5_AUTO_CRB))
+    PlatformNvs->I2SC     = HDAC_I2S_PCM3168A;
+  else
+    PlatformNvs->I2SC     = HDAC_I2S_DISABLED;
+
   PlatformNvs->I2SI     = GPIO_VER4_S_GPP_F23;
   PlatformNvs->I2SB     = 0x0;
   PlatformNvs->HdaDspPpModuleMask = 0;
@@ -1266,14 +1307,45 @@ PlatformUpdateAcpiGnvs (
   SaNvs->CpuPcieRtd3   = 1;
   SaNvs->VmdEnable     = FspsConfig ->VmdEnable;
 
+  if (IsRplAutoCpu()) {
+    SaNvs->UFSIrq = 30;
+  } else {
+    SaNvs->UFSIrq = 18;
+  }
+
   PlatformNvs->PpmFlags = CpuNvs->PpmFlags;
   SocUpdateAcpiGnvs ((VOID *)GnvsIn);
 
   // TCC mode enabling
+#if FixedPcdGet8 (PcdTccEnabled) && !defined(PLATFORM_RPLS) && !defined(PLATFORM_ADLN) && !defined(PLATFORM_ASL)
+    TccCfgData = (TCC_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
+    if ((TccCfgData != NULL) && (TccCfgData->TccEnable != 0)) {
+      AsmCpuid (CPUID_TIME_STAMP_COUNTER, NULL, &Ebx.Uint32, NULL, NULL);
+      AsmCpuid (CPUID_EXTENDED_TIME_STAMP_COUNTER, NULL, NULL, NULL, &Edx.Uint32);
+
+      if (Edx.Bits.InvariantTsc == 1 && Ebx.Uint32 != 0) {
+        DEBUG ((DEBUG_INFO, "ATSC True\n"));
+        PlatformNvs->ATSC = 1;
+      } else {
+        DEBUG ((DEBUG_INFO, "ATSC False\n"));
+        PlatformNvs->ATSC = 0;
+      }
+    }
+
+    // If TCC is enabled, use the TCC policy from subregion
+    PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
+    if ((PlatformData != NULL) && PlatformData->PlatformFeatures.TccDsoTuning) {
+      PlatformNvs->Rtd3Support    = PlatformData->PlatformFeatures.TccRtd3Support;
+      PlatformNvs->LowPowerS0Idle = PlatformData->PlatformFeatures.TccLowPowerS0Idle;
+    } else {
+      PlatformNvs->Rtd3Support = 0;
+      PlatformNvs->LowPowerS0Idle = 0;
+    }
+#endif
+
   // Expose Timed GPIO to OS through Nvs variables
   if (SiCfgData != NULL) {
     PchNvs->EnableTimedGpio0 = (UINT8)SiCfgData->EnableTimedGpio0;
     PchNvs->EnableTimedGpio1 = (UINT8)SiCfgData->EnableTimedGpio1;
   }
 }
-

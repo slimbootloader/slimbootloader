@@ -305,6 +305,8 @@ GetCpuName (
     case CPUID_FULL_FAMILY_MODEL_RAPTORLAKE_DT_HALO:
     case CPUID_FULL_FAMILY_MODEL_RAPTORLAKE_2_DT_HALO:
     case CPUID_FULL_FAMILY_MODEL_RAPTORLAKE_MOBILE:
+    case CPUID_FULL_FAMILY_MODEL_RAPTORLAKE_INDU:
+    case CPUID_FULL_FAMILY_MODEL_RAPTORLAKE_J2_M0:
       return "RaptorLake";
     case CPUID_FULL_FAMILY_MODEL_ALDERLAKE_MOBILE:
     case CPUID_FULL_FAMILY_MODEL_ALDERLAKE_DT_HALO:
@@ -316,3 +318,26 @@ GetCpuName (
 
 }
 
+/**
+  Returns RPL Auto Supported processor
+
+  @retval TRUE          If the CPU is RPL-P Auto CPU
+  @retval FALSE         If the CPU is not RPL-P Auto CPU
+**/
+BOOLEAN
+EFIAPI
+IsRplAutoCpu (
+  VOID
+  )
+{
+  CPUID_VERSION_INFO_EAX  Eax;
+  ///
+  /// Read the CPUID information
+  ///
+  AsmCpuid (CPUID_VERSION_INFO, &Eax.Uint32, NULL, NULL, NULL);
+  if ((Eax.Uint32 == CPUID_FULL_FAMILY_MODEL_RAPTORLAKE_INDU) ||
+      (Eax.Uint32 == CPUID_FULL_FAMILY_MODEL_RAPTORLAKE_J2_M0)) {
+      return TRUE;
+  }
+  return FALSE;
+}
