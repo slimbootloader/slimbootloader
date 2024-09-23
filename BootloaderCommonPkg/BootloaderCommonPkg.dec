@@ -169,6 +169,7 @@
   #               SmmRegisterInfoGuid.h and NvVariableInfoGuid.h
   gPlatformCommonLibTokenSpaceGuid.PcdBuildSmmHobs                     |        0x03| UINT8 | 0x20000705
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled                  | FALSE  | BOOLEAN | 0x20000221
+  gPlatformCommonLibTokenSpaceGuid.PcdEnableCryptoPerfTest        | FALSE  | BOOLEAN | 0x20000224
 
 [PcdsFixedAtBuild, PcdsPatchableInModule]
   # For patchable PCDs, try to set the default as none-zero

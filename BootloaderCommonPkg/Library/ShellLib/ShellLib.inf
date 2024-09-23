@@ -82,12 +82,14 @@
   RngLib
   MemoryAllocationLib
   LoaderPerformanceLib
+  IppCryptoPerfLib
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
   gPlatformCommonLibTokenSpaceGuid.PcdMiniShellEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdConsoleInDeviceMask
   gPlatformCommonLibTokenSpaceGuid.PcdBootPerformanceMask
+  gPlatformCommonLibTokenSpaceGuid.PcdEnableCryptoPerfTest
 
 [Guids]
   gLoaderPerformanceInfoGuid

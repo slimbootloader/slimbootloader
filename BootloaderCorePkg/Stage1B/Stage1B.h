@@ -45,6 +45,7 @@
 #include <Library/FirmwareResiliencyLib.h>
 #include <FirmwareUpdateStatus.h>
 #include <VerInfo.h>
+#include <Library/IppCryptoPerfLib.h>
 
 /**
   Continue Stage1B execution.

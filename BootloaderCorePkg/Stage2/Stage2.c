@@ -520,6 +520,10 @@ SecStartup (
   BoardInit (PostSiliconInit);
   AddMeasurePoint (0x3040);
 
+#if FixedPcdGetBool (PcdEnableCryptoPerfTest)
+  CryptoPerfTest();
+#endif
+
   // Create base HOB
   BuildBaseInfoHob (Stage2Param);
 

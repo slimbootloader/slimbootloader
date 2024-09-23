@@ -1,0 +1,36 @@
+## @file
+#
+#  Copyright (c) 2024, Intel Corporation. All rights reserved.<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = IppCryptoPerfLib
+  FILE_GUID                      = CE304A91-FBDF-48F8-9C4D-1285DFCBF923
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = IppCryptoPerfLib
+
+[Sources]
+  IppCryptoPerfLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+
+[LibraryClasses]
+  BaseLib
+  ConsoleOutLib
+  MemoryAllocationLib
+  CryptoLib
+  BootloaderLib
+  LoaderPerformanceLib
+
+[Pcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdEnableCryptoPerfTest
+  gPlatformModuleTokenSpaceGuid.PcdStage1ABase
