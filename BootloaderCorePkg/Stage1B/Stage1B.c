@@ -440,6 +440,10 @@ SecStartup2 (
   // Perform pre-memory board init
   BoardInit (PreMemoryInit);
 
+#if FixedPcdGetBool (PcdEnableCryptoPerfTest)
+  CryptoPerfTest();
+#endif
+
   // Initialize memory
   HobList = NULL;
   DEBUG ((DEBUG_INIT, "Memory Init\n"));

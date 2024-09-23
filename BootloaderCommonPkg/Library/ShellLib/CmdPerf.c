@@ -14,6 +14,7 @@
 #include <Library/BootloaderCommonLib.h>
 #include <Library/LoaderPerformanceLib.h>
 #include <Library/TimeStampLib.h>
+#include <Library/IppCryptoPerfLib.h>
 
 /**
   Display performance data.
@@ -155,7 +156,14 @@ ShellCommandPerfFunc (
   if (Argc == 2) {
     if (StrCmp (Argv[1], L"-d") == 0) {
       InMicroSecond = TRUE;
-    } else {
+    }
+#if FixedPcdGetBool (PcdEnableCryptoPerfTest)
+    else if (StrCmp (Argv[1], L"-c") == 0) {
+      CryptoPerfTestPrintResult();
+      return EFI_SUCCESS;
+    }
+#endif
+    else {
       goto usage;
     }
   } else if (Argc > 2) {
@@ -185,6 +193,11 @@ ShellCommandPerfFunc (
   ShellPrint (L"Usage: %s [-d]\n", Argv[0]);
   ShellPrint (L"\n"
               L"Flags:\n"
-              L"  -d     Show host performance time in MicroSecond, by default in MilliSecond\n");
+              L"  -d     Show host performance time in MicroSecond, by default in MilliSecond\n"
+#if FixedPcdGetBool (PcdEnableCryptoPerfTest)
+              L"  -c     Show host crypto performance time in MicroSecond\n"
+#endif
+              );
+
   return EFI_ABORTED;
 }

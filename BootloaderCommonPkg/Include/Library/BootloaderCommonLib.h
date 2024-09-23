@@ -39,7 +39,7 @@
 #pragma pack(1)
 
 // Data that are handed off between stages
-#define  MAX_TS_NUM                   64
+#define  MAX_TS_NUM                   74
 typedef struct {
   UINT32        PerfIndex;
   UINT32        FreqKhz;
