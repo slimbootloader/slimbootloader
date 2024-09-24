@@ -429,9 +429,9 @@ PlatformUpdateAcpiTable (
     if (GlobalNvs->PlatformNvs.Rtd3Support == 1) {
 
       // return EFI_SUCCESS only when PlatformID matches
-      if (GetPlatformId () == BoardIdAdlNDdr5Crb && Table->OemTableId == SIGNATURE_64('A', 'd', 'l', 'N' ,'_' ,'C' ,'r' ,'b')) {
+      if (GetPlatformId () == PLATFORM_ID_ADL_N_DDR5_CRB && Table->OemTableId == SIGNATURE_64('A', 'd', 'l', 'N' ,'_' ,'C' ,'r' ,'b')) {
         Status = EFI_SUCCESS;
-      } else if (GetPlatformId () == BoardIdAdlNLp5Rvp && Table->OemTableId == SIGNATURE_64('A', 'd', 'l', 'N' ,'_' ,'R' ,'v' ,'p')) {
+      } else if (GetPlatformId () == PLATFORM_ID_ADL_N_LPDDR5_RVP && Table->OemTableId == SIGNATURE_64('A', 'd', 'l', 'N' ,'_' ,'R' ,'v' ,'p')) {
         Status = EFI_SUCCESS;
       }
       DEBUG ((DEBUG_INFO, "Board SsdtRtd3 Table: %x\n", Table->OemTableId));
