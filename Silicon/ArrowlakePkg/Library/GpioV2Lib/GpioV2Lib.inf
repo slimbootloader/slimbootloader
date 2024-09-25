@@ -21,8 +21,6 @@
 
 [Sources]
   GpioV2Init.c
-  MtlSocGpioTopologyLib.c
-  GpioV2MtlPchSTopology.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -35,19 +33,10 @@
   BaseLib
   IoLib
   MemoryAllocationLib
-  GpioSiLib
-  PchSbiAccessLib
+  GpioV2SiLib
   SortLib
   PcdLib
   HobLib
   HobBuildLib
-  PchP2sbLib
+  P2sbLib
 
-[Pcd]
-  gPlatformArrowLakeTokenSpaceGuid.PcdP2sb0Ptr
-  gPlatformArrowLakeTokenSpaceGuid.PcdP2sb1Ptr
-  gPlatformArrowLakeTokenSpaceGuid.PcdP2sb2Ptr
-  gPlatformArrowLakeTokenSpaceGuid.PcdP2sb3Ptr
-  gPlatformArrowLakeTokenSpaceGuid.PcdP2sb4Ptr
-  gPlatformArrowLakeTokenSpaceGuid.PcdP2sb5Ptr
-  gPlatformArrowLakeTokenSpaceGuid.PcdMtlSSupport
