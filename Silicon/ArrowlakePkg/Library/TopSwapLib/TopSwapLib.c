@@ -12,62 +12,24 @@
 #include <Library/PcdLib.h>
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
-#include <Library/P2SbSocLib.h>
-#include <Include/P2SbSidebandAccessLib.h>
+#include <Library/P2SbLib.h>
 #include <Register/PchRegsPcr.h>
+#include <Library/PciLib.h>
 
 #define R_RTC_PCR_BUC                   0x3414
 
-/**
-  Get the P2SB controller and build the P2SB sideband access.
-
-  @param P2SbAccess
-  @return EFI_STATUS
-**/
-EFI_STATUS
-EFIAPI
-GetP2SbAccess (
-  OUT P2SB_CONTROLLER               *P2SbController,
-  OUT P2SB_SIDEBAND_REGISTER_ACCESS *P2SbAccess
-  )
-{
-  EFI_STATUS                    Status;
-
 #if FixedPcdGetBool(PcdMtlSSupport)
-  Status = MtlPchGetP2SbController(P2SbController);
-  ASSERT_EFI_ERROR(Status);
-  if (EFI_ERROR(Status)) {
-    return Status;
-  }
-
-  Status = BuildP2SbSidebandAccess(
-    P2SbController,
-    MTL_PCH_PID_RTC,
-    0,
-    P2SbPrivateConfig,
-    P2SbMsgAccess,
-    FALSE,
-    P2SbAccess
-    );
+#define  P2SB_BUS                       0x80
+#define  P2SB_DEVICE                    31
+#define  P2SB_FUNCTION                  1
+#define  P2SB_PID                       MTL_PCH_PID_RTC
 #else
-  Status = MtlSocGetP2SbController(P2SbController);
-  ASSERT_EFI_ERROR(Status);
-  if (EFI_ERROR(Status)) {
-    return Status;
-  }
-
-  Status = BuildP2SbSidebandAccess(
-    P2SbController,
-    PID_RTC_HOST,
-    0,
-    P2SbMemory,
-    P2SbMmioAccess,
-    TRUE,
-    P2SbAccess
-    );
+#define  P2SB_BUS                       0
+#define  P2SB_DEVICE                    31
+#define  P2SB_FUNCTION                  1
+#define  P2SB_PID                       PID_RTC_HOST
 #endif
-  return Status;
-}
+
 
 /**
   Switch between the boot partitions.
@@ -85,23 +47,17 @@ SetBootPartition (
   IN BOOT_PARTITION  Partition
   )
 {
-  EFI_STATUS                    Status;
-  P2SB_CONTROLLER               P2SbController;
-  P2SB_SIDEBAND_REGISTER_ACCESS P2SbAccess;
+  UINT32             AndData;
+  UINT32             OrData;
 
-  Status = GetP2SbAccess (&P2SbController, &P2SbAccess);
-  ASSERT_EFI_ERROR(Status);
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
+  AndData = (UINT32)~BIT0;
   if (Partition == BackupPartition) {
-    DEBUG((DEBUG_INFO, "Setting Backup Partition\n"));
-    P2SbAccess.Access.Or32(&P2SbAccess.Access, R_RTC_PCR_BUC, BIT0);
+    OrData = BIT0;
   } else {
-    DEBUG((DEBUG_INFO, "Setting Primary Partition\n"));
-    P2SbAccess.Access.And32(&P2SbAccess.Access, R_RTC_PCR_BUC, (UINT32)~BIT0);
+    OrData = 0;
   }
+
+  P2SbAndThenOr32 (PCI_LIB_ADDRESS(P2SB_BUS, P2SB_DEVICE, P2SB_FUNCTION, 0), MTL_PCH_PID_RTC, 0, R_RTC_PCR_BUC, AndData, OrData);
 
   return EFI_SUCCESS;
 }
@@ -122,27 +78,10 @@ GetBootPartition (
   OUT BOOT_PARTITION *Partition
   )
 {
-  EFI_STATUS  Status;
-  P2SB_CONTROLLER               P2SbController;
-  P2SB_SIDEBAND_REGISTER_ACCESS P2SbAccess;
+  UINT32             RegValue;
 
-  if (Partition == NULL) {
-    DEBUG ((DEBUG_ERROR, "Partition not initialized!\n"));
-    return EFI_INVALID_PARAMETER;
-  }
-
-  Status = GetP2SbAccess (&P2SbController, &P2SbAccess);
-  ASSERT_EFI_ERROR(Status);
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-  if (P2SbAccess.Access.Read32(&P2SbAccess.Access, R_RTC_PCR_BUC) & BIT0) {
-    *Partition = BackupPartition;
-    DEBUG((DEBUG_INFO, "Current Boot Partition is Backup\n"));
-  } else {
-    *Partition = PrimaryPartition;
-    DEBUG((DEBUG_INFO, "Current Boot Partition is Primary\n"));
-  }
+  RegValue = P2sbRead32 (PCI_LIB_ADDRESS(P2SB_BUS, P2SB_DEVICE, P2SB_FUNCTION, 0), MTL_PCH_PID_RTC, 0, R_RTC_PCR_BUC);
+  *Partition = (BOOT_PARTITION)(RegValue & BIT0);
 
   return EFI_SUCCESS;
 }
