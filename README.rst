@@ -5,12 +5,12 @@ Slim Bootloader
 
 Slim Bootloader is an open-source boot firmware solution, built from the
 ground up to be secure, lightweight, and highly optimized while leveraging
-robust tools and libraries from the [EDK II](https://www.tianocore.org/edk2/)
+robust tools and libraries from the `EDK II <https://www.tianocore.org/edk2/>`_
 framework.
 
 What is a Bootloader?
 ---------------------
-Just like a typical [BIOS](https://en.wikipedia.org/wiki/BIOS), Slim Bootloader
+Just like a typical `BIOS <https://en.wikipedia.org/wiki/BIOS>`_, Slim Bootloader
 is the piece of software responsible for initializing the core hardware
 components of the system when it is powered on, followed by the loading and
 launching of the desired operating system.
@@ -21,7 +21,7 @@ thereby achieving unparalleled boot performance and minimizing firmware footprin
 
 Supported Platforms
 -------------------
-Please visit [Supported Hardware](https://slimbootloader.github.io/supported-hardware/index.html) page for a list of platforms supported by Slim Bootloader.
+Please visit `Supported Hardware <https://slimbootloader.github.io/supported-hardware/index.html>`_ page for a list of platforms supported by Slim Bootloader.
 
 Platform CI Build Status
 ------------------------
@@ -65,7 +65,7 @@ MTLPS_Lin2204_GCC5            |_unknown|    |mtlps_l32r|  |_unknown|    |_unknow
 Getting Started
 ---------------
 Documentation for compiling, using, and extending Slim Bootloader can be found
-[here](https://slimbootloader.github.io/).
+`here <https://slimbootloader.github.io/>`_.
 
 Mailing List
 --------------
