@@ -24,13 +24,10 @@
 [LibraryClasses]
   IoLib
   DebugLib
-  PchPcrLib
-  PchInfoLib
-  GpioLib
-  TimerLib
-  BasePchPciBdfLib
-  BasePcieHelperLib
   PcieRpLib
+  PchInfoLib
+  TimerLib
+  BasePcieHelperLib
 
 [Packages]
   Silicon/ArrowlakePkg/ArrowlakePkg.dec

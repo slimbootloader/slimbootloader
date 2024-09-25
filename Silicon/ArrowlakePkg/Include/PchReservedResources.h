@@ -59,9 +59,6 @@
 #define PCH_TRACE_HUB_MTB_MMIO_SIZE     0x00100000     ///< 1MB
 #define PCH_TRACE_HUB_FW_BASE_ADDRESS   0xFE200000     ///< TraceHub FW MMIO base address
 
-#define PCH_PCR_BASE_ADDRESS                0xE0000000     ///< SBREG MMIO base address
-#define PCH_PCR_MMIO_SIZE                   0x01000000     ///< 16MB
-
 #define IOE_PCR_ABOVE_4G_BASE_ADDRESS       0x3FFF0000000  ///< IOE P2SB above 4G base address (PhysicalAddressBits - SIZE_256M
 
 #endif

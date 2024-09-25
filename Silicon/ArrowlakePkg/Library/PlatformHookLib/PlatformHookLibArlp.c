@@ -10,14 +10,12 @@
 #include <Library/IoLib.h>
 #include <Library/PciLib.h>
 #include <Library/PchInfoLib.h>
-#include <Library/PchPcrLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include <Library/BootloaderCoreLib.h>
 #include <PchReservedResources.h>
 #include <PchAccess.h>
 #include <IndustryStandard/Pci.h>
 #include <Register/SerialIoUartRegs.h>
-#include <Include/PcrDefine.h>
 #include <Library/PciSegmentLib.h>
 #include <Register/SaRegsHostBridge.h>
 #include <Register/PchRegsLpc.h>

@@ -18,7 +18,6 @@
 #include <Library/FirmwareUpdateLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include <Library/PchSbiAccessLib.h>
-#include <Library/PchPcrLib.h>
 #include <Library/HeciInitLib.h>
 #include <Register/PchRegsPcr.h>
 #include <Register/PchRegsLpc.h>

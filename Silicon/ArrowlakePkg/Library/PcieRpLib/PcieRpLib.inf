@@ -25,12 +25,9 @@
 [LibraryClasses]
   IoLib
   DebugLib
-  PchPcrLib
   PchInfoLib
-  GpioLib
   TimerLib
   BasePcieHelperLib
-  PchPciBdfLib
 
 [Packages]
   MdePkg/MdePkg.dec
