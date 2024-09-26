@@ -7,20 +7,20 @@
 
 [Defines]
   INF_VERSION                    = 0x00010005
-  BASE_NAME                      = PchP2sbLib
+  BASE_NAME                      = P2sbLib
   FILE_GUID                      = 3EA3392B-3D6A-432C-A3CB-1961F0093993
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
-  LIBRARY_CLASS                  = PchP2sbLib
+  LIBRARY_CLASS                  = P2sbLib
 
 #
 # The following information is for reference only and not required by the build tools.
 #
-#  VALID_ARCHITECTURES           = IA32 X64 IPF
+#  VALID_ARCHITECTURES           = IA32 X64
 #
 
 [Sources]
-  PchP2sbLib.c
+  P2sbLib.c
 
 [Packages]
   MdePkg/MdePkg.dec
