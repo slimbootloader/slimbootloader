@@ -47,8 +47,6 @@
 #include <Library/VariableLib.h>
 #include <Library/FirmwareUpdateLib.h>
 #include <Library/GpioV2Lib.h>
-#include "GpioTableMtlPPreMem.h"
-#include "GpioTableMtlPSPreMem.h"
 #include <Library/WatchDogTimerLib.h>
 #include <Include/CpuRegs.h>
 #include <Register/Cpuid.h>

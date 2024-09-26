@@ -15,10 +15,8 @@
 #include <PlatformBase.h>
 #include <Register/PchRegsPcr.h>
 #include <Register/PchRegsLpc.h>
-#include <Library/PchPcrLib.h>
 #include <Library/PchInfoLib.h>
 #include <Register/PchRegsPcr.h>
-#include <Include/PcrDefine.h>
 
 //
 // Dallas DS12C887 Real Time Clock
@@ -61,6 +59,7 @@
 
 #define R_ITSS_PCR_GIC                          0x31FC  ///< General Interrupt Control
 #define B_ITSS_PCR_GIC_AME                      BIT17   ///< Alternate Access Mode Enable
+#define PCH_PCR_ADDRESS(Pid, Offset)  (PCH_PCR_BASE_ADDRESS | (UINT32) (((Offset) & 0x0F0000) << 8) | ((UINT8)(Pid) << 16) | (UINT16) ((Offset) & 0xFFFF))
 
 /**
 

@@ -8,12 +8,10 @@
 #include "Stage1BBoardInitLib.h"
 #include <Include/GpioV2Config.h>
 #include <Library/PcdLib.h>
-#include <Library/MtlSocGpioTopologyLib.h>
 #include <Register/PchRegsSmbus.h>
 #include <Library/MeExtMeasurementLib.h>
 #include <IndustryStandard/Pci22.h>
 #include <Library/PciSegmentLib.h>
-#include <Library/MtlPchGpioTopologyLib.h>
 
 
 CONST PLT_DEVICE mPlatformDevices[] = {
@@ -116,7 +114,37 @@ CONST PLT_DEVICE mPlatformDevices[] = {
     },
     .Type = PlatformDeviceMe,
     .Instance = 0
+  },
+  {
+    // SOC P2sb 0:31:1
+    .Dev = {
+      .DevAddr = 0xE0000000,
+    },
+    .Type = PlatformDeviceP2sb,
+    .Instance = 0
+  },
+  {
+    // IOE P2sb 0:19:0
+    // Use Reserved fields for high address of SMREG_BAR
+    .Dev = {
+      .DevAddr = 0xF0000000,
+    },
+    .Type = PlatformDeviceP2sb,
+    .Instance = 1,
+    .Reserved = 0x3FF
+  },
+#if (FixedPcdGet8(PcdMtlSSupport) == 1)
+  {
+    // PCH P2sb  0x80:31:1
+    // Use Reserved fields for high address of SMREG_BAR
+    .Dev = {
+      .DevAddr = 0xF0000000,
+    },
+    .Type = PlatformDeviceP2sb,
+    .Instance = 2,
+    .Reserved = 0x5F
   }
+#endif
 };
 
 
@@ -576,51 +604,6 @@ GetPlatformPowerState (
   IoAnd32 (ACPI_BASE_ADDRESS + R_ACPI_IO_GPE0_EN_127_96, (UINT32)~B_ACPI_IO_GPE0_EN_127_96_PME_B0_EN);
 
   return BootMode;
-}
-
-/**
-  Count the number of GPIO settings in the Table.
-
-  @param[in]  GpioTable   The pointer of GPIO config table
-  @param[out] GpioCount   The number of GPIO config entries
-**/
-VOID
-GetGpioTableSize (
-  GPIOV2_INIT_CONFIG   *GpioTable,
-  OUT UINT16           *GpioCount
-  )
-{
-  *GpioCount = 0;
-  if(GpioTable != NULL) {
-    while (GpioTable[*GpioCount].GpioPad != 0 && *GpioCount < MAX_GPIO_PINS) {
-      DEBUG ((DEBUG_INFO, "GpioTable[%d]->GpioPad = %x \n", *GpioCount, GpioTable[*GpioCount].GpioPad));
-      (*GpioCount) ++;
-    }
-  } else {
-    DEBUG ((DEBUG_INFO, "GpioTable is NULL\n"));
-  }
-  DEBUG ((DEBUG_INFO, "GetGpioTableSize() GpioCount = %d\n", *GpioCount));
-}
-
-/**
-  Configure GPIO Before Memory is initialized.
-
-  @param[in]  GpioTable  Pointer to Gpio table
-**/
-VOID
-GpioInit (
-  IN GPIOV2_INIT_CONFIG *GpioTable
-  )
-{
-  UINT16             GpioCount;
-
-  if (GpioTable != 0) {
-    GpioCount = 0;
-    GetGpioTableSize (GpioTable, &GpioCount);
-    if (GpioCount != 0) {
-      ConfigureGpioV2 (CDATA_NO_TAG, (VOID *) GpioTable, (UINTN) GpioCount);
-    }
-  }
 }
 
 /**
