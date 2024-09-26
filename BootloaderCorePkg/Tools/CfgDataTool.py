@@ -128,7 +128,8 @@ class CCfgData:
             if Flag & CCfgData.DUMP_FLAG_VERBOSE:
                 if PrintData:
                     if not IsArray:
-                        print_bytes (CfgData[2], 5)
+                        if (len(CfgData[2]) > 1):
+                            print_bytes (CfgData[2], 5)
                     else:
                         Offset    = 0
                         DataOffset = sizeof(CCfgData.CDATA_ITEM_ARRAY)
