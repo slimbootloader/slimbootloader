@@ -23,6 +23,7 @@
   ShellExtension.c
   CmdPappend.c
   CmdFwUpdate.c
+  CmdGpio.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -34,8 +35,11 @@
 
 [LibraryClasses]
   BaseMemoryLib
+  GpioV2Lib
+  GpioV2SiLib
 
 [Pcd]
 
 [Guids]
-
+  gFspPchConfigGuid
+  gLoaderFspInfoGuid

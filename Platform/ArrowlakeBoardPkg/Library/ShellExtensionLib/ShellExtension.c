@@ -10,10 +10,12 @@
 
 extern CONST SHELL_COMMAND mShellCommandPappend;
 extern CONST SHELL_COMMAND mShellCommandFwUpdate;
+extern CONST SHELL_COMMAND mShellCommandGpio;
 
 CONST SHELL_COMMAND *mShellExtensionCommands[] = {
   &mShellCommandPappend,
   &mShellCommandFwUpdate,
+  &mShellCommandGpio,
   NULL,
 };
 
