@@ -18,7 +18,6 @@
 #include <Register/PchRegsLpc.h>
 #include <Register/PchRegsPcr.h>
 #include <PlatformBoardId.h>
-#include <Include/PcrDefine.h>
 #include <Library/SmbusLib.h>
 #include <ConfigDataDefs.h>
 #include <Library/ConfigDataLib.h>

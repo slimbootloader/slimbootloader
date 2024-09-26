@@ -55,8 +55,8 @@
 #include <Register/PmcRegs.h>
 #include <PlatformBase.h>
 #include <PchReservedResources.h>
-#include <Library/GpioLib.h>
-#include <Library/GpioSiLib.h>
+#include <Library/GpioV2Lib.h>
+#include <Library/GpioV2SiLib.h>
 #include <ConfigDataDefs.h>
 #include <Library/PchInfoLib.h>
 #include <CpuInitDataHob.h>

@@ -44,9 +44,8 @@
   GpioV2Lib
   ConfigDataLib
   PchInfoLib
-  PchP2sbLib
+  P2sbLib
   TcoTimerLib
-  P2SbSocLib
 
 [Guids]
 

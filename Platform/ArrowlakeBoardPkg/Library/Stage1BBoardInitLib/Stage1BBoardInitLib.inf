@@ -20,8 +20,6 @@
 #
 
 [Sources]
-  GpioTableMtlPPreMem.h
-  GpioTableMtlPSPreMem.h
   Stage1BBoardInitLib.h
   Stage1BBoardInitLib.c
   RtcInit.c
@@ -59,7 +57,7 @@
   VariableLib
   WatchDogTimerLib
   FspmUpdUpdateLib
-  PchP2sbLib
+  P2sbLib
   SmbusLib
 
 [Guids]

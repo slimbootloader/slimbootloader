@@ -16,30 +16,18 @@
 #include <CpuRegs.h>
 #include <FsptUpd.h>
 #include <PlatformData.h>
-#include <Library/GpioLib.h>
-#include <GpioConfig.h>
-#include <GpioPinsVer4S.h>
-#include <GpioPinsVer2Lp.h>
 #include <GpioV2PinsMtlSoc.h>
 #include <Library/ConfigDataLib.h>
 #include <Library/PchInfoLib.h>
 #include <Library/MtlSocInfoLib.h>
 #include <Register/GpioRegsVer6.h>
-#include <Register/GpioV2ChipsetId.h>
-#include <Include/GpioV2ControllerInterface.h>
 #include <Register/PmcRegsVer6.h>
-#include <Include/GpioV2Pad.h>
-#include <Include/P2SbSidebandAccessLib.h>
-#include <Include/RegisterAccess.h>
-#include <Include/P2SbController.h>
-#include <Library/MtlSocGpioTopologyLib.h>
-#include <Library/GpioNativePads.h>
+#include <RegisterAccess.h>
 #include <Library/TcoTimerLib.h>
-#include <Include/GpioV2PinsMtlPchS.h>
-#include <Library/MtlPchGpioTopologyLib.h>
+#include <GpioV2PinsMtlPchS.h>
 #include <Library/DebugPrintErrorLevelLib.h>
-#include <Library/P2SbSocLib.h>
-
+#include <GpioV2Config.h>
+#include <Library/GpioV2Lib.h>
 
 #define UCODE_REGION_BASE   FixedPcdGet32(PcdUcodeBase)
 #define UCODE_REGION_SIZE   FixedPcdGet32(PcdUcodeSize)
@@ -83,121 +71,39 @@ FSPT_UPD TempRamInitParams = {
   .UpdTerminator = 0x55AA,
 };
 
-CONST GPIO_INIT_CONFIG mMtlPUartGpioTable[] = {
-  {0xA050008 ,  {GpioPadModeNative1, GpioHostOwnGpio, GpioDirNone,  GpioOutDefault, GpioIntDis, GpioHostDeepReset,  GpioTermNone}},//SERIALIO_UART0_RXD
-  {0xA050009 ,  {GpioPadModeNative1, GpioHostOwnGpio, GpioDirNone,  GpioOutDefault, GpioIntDis, GpioHostDeepReset,  GpioTermNone}},//SERIALIO_UART0_TXD
+
+CONST GPIOV2_INIT_CONFIG mArlsUartGpioTable[] =
+{ //     PAD                        PadMode             HostOwn         Direction        OutputState          InterruptConfig   ResetConfig       TerminationConfig   LockConfig     LockTx
+  {GPIOV2_MTL_PCH_S_GPP_C_8,  {GpioV2PadModeNative1, GpioV2HostOwnGpio, GpioV2DirNone,  GpioV2StateDefault,  GpioV2IntDis,    GpioV2ResetHost,  GpioV2TermDefault,  GpioV2Unlock,  GpioV2Unlock }}, //SERIALIO_UART0_RXD
+  {GPIOV2_MTL_PCH_S_GPP_C_9,  {GpioV2PadModeNative1, GpioV2HostOwnGpio, GpioV2DirNone,  GpioV2StateDefault,  GpioV2IntDis,    GpioV2ResetHost,  GpioV2TermDefault,  GpioV2Unlock,  GpioV2Unlock }}, //SERIALIO_UART0_TXD
+  {GPIOV2_MTL_PCH_S_GPP_C_10, {GpioV2PadModeNative1, GpioV2HostOwnGpio, GpioV2DirNone,  GpioV2StateDefault,  GpioV2IntDis,    GpioV2ResetHost,  GpioV2TermDefault,  GpioV2Unlock,  GpioV2Unlock }}, //SERIALIO_UART0_RTS
+  {GPIOV2_MTL_PCH_S_GPP_C_11, {GpioV2PadModeNative1, GpioV2HostOwnGpio, GpioV2DirNone,  GpioV2StateDefault,  GpioV2IntDis,    GpioV2ResetHost,  GpioV2TermDefault,  GpioV2Unlock,  GpioV2Unlock }}, //SERIALIO_UART0_CTS
+
+  {GPIOV2_MTL_PCH_S_GPP_C_12, {GpioV2PadModeNative1, GpioV2HostOwnGpio, GpioV2DirNone,  GpioV2StateDefault,  GpioV2IntDis,    GpioV2ResetHost,  GpioV2TermDefault,  GpioV2Unlock,  GpioV2Unlock }}, //SERIALIO_UART1_RXD
+  {GPIOV2_MTL_PCH_S_GPP_C_13, {GpioV2PadModeNative1, GpioV2HostOwnGpio, GpioV2DirNone,  GpioV2StateDefault,  GpioV2IntDis,    GpioV2ResetHost,  GpioV2TermDefault,  GpioV2Unlock,  GpioV2Unlock }}, //SERIALIO_UART1_TXD
+  {GPIOV2_MTL_PCH_S_GPP_C_14, {GpioV2PadModeNative1, GpioV2HostOwnGpio, GpioV2DirNone,  GpioV2StateDefault,  GpioV2IntDis,    GpioV2ResetHost,  GpioV2TermDefault,  GpioV2Unlock,  GpioV2Unlock }}, //SERIALIO_UART1_RTS
+  {GPIOV2_MTL_PCH_S_GPP_C_15, {GpioV2PadModeNative1, GpioV2HostOwnGpio, GpioV2DirNone,  GpioV2StateDefault,  GpioV2IntDis,    GpioV2ResetHost,  GpioV2TermDefault,  GpioV2Unlock,  GpioV2Unlock }}, //SERIALIO_UART1_CTS
+
+  {GPIOV2_MTL_PCH_S_GPP_C_20, {GpioV2PadModeNative1, GpioV2HostOwnGpio, GpioV2DirNone,  GpioV2StateDefault,  GpioV2IntDis,    GpioV2ResetHost,  GpioV2TermDefault,  GpioV2Unlock,  GpioV2Unlock }}, //SERIALIO_UART2_RXD
+  {GPIOV2_MTL_PCH_S_GPP_C_21, {GpioV2PadModeNative1, GpioV2HostOwnGpio, GpioV2DirNone,  GpioV2StateDefault,  GpioV2IntDis,    GpioV2ResetHost,  GpioV2TermDefault,  GpioV2Unlock,  GpioV2Unlock }}, //SERIALIO_UART2_TXD
+  {GPIOV2_MTL_PCH_S_GPP_C_22, {GpioV2PadModeNative1, GpioV2HostOwnGpio, GpioV2DirNone,  GpioV2StateDefault,  GpioV2IntDis,    GpioV2ResetHost,  GpioV2TermDefault,  GpioV2Unlock,  GpioV2Unlock }}, //SERIALIO_UART2_RTS
+  {GPIOV2_MTL_PCH_S_GPP_C_23, {GpioV2PadModeNative1, GpioV2HostOwnGpio, GpioV2DirNone,  GpioV2StateDefault,  GpioV2IntDis,    GpioV2ResetHost,  GpioV2TermDefault,  GpioV2Unlock,  GpioV2Unlock }}, //SERIALIO_UART2_CTS
 };
 
-STATIC UINT32 mMtlSocMGpioMapping[] = {
-  GPIO_FUNCTION_SERIAL_IO_UART_RX(0),    GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_H8, 0x1),
-  GPIO_FUNCTION_SERIAL_IO_UART_RX(2),    GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_F1, 0x2),
-  GPIO_FUNCTION_SERIAL_IO_UART_TX(0),    GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_H9, 0x1),
-  GPIO_FUNCTION_SERIAL_IO_UART_TX(2),    GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_F2, 0x2),
-  GPIO_FUNCTION_SERIAL_IO_UART_RTS(0),   GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_H10,0x1),
-  GPIO_FUNCTION_SERIAL_IO_UART_RTS(2),   GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_F0, 0x2),
-  GPIO_FUNCTION_SERIAL_IO_UART_CTS(0),   GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_H11, 0x1),
-  GPIO_FUNCTION_SERIAL_IO_UART_CTS(2),   GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_F3,  0x2),
-  GPIO_FUNCTION_SERIAL_IO_SPI_MOSI (1),  GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_F12, 0x5),
-  GPIO_FUNCTION_SERIAL_IO_SPI_MISO (1),  GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_F13, 0x5),
-  GPIO_FUNCTION_SERIAL_IO_SPI_CLK (1),   GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_F11, 0x5),
-  GPIO_FUNCTION_SERIAL_IO_SPI_CS (1, 0), GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_F17, 0x5),
-  GPIO_FUNCTION_SERIAL_IO_I2C_SCL(0),    GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_H20, 0x1),
-  GPIO_FUNCTION_SERIAL_IO_I2C_SCL(1),    GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_H22, 0x1),
-  GPIO_FUNCTION_SERIAL_IO_I2C_SDA(0),    GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_H19, 0x1),
-  GPIO_FUNCTION_SERIAL_IO_I2C_SDA(1),    GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_H21, 0x1),
-  GPIO_FUNCTION_SERIAL_IO_I3C_SCL(0),    GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_H20, 0x2),
-  GPIO_FUNCTION_SERIAL_IO_I3C_SDA(0),    GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_H19, 0x2),
-  GPIO_FUNCTION_SERIAL_IO_I3C_SCL_FB(0), GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_LPI3C0_CLK_LOOPBK, 0x2),
-  GPIO_FUNCTION_ISH_GP(0),               GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_B5,  0x4),
-  GPIO_FUNCTION_ISH_GP(1),               GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_B6,  0x4),
-  GPIO_FUNCTION_ISH_GP(2),               GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_B7,  0x4),
-  GPIO_FUNCTION_ISH_GP(3),               GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_B8,  0x4),
-  GPIO_FUNCTION_ISH_GP(4),               GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_B4,  0x4),
-  GPIO_FUNCTION_ISH_GP(7),               GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_E5,  0x8),
-  GPIO_FUNCTION_ISH_UART_RX(0),          GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_D5,  0x2),
-  GPIO_FUNCTION_ISH_UART_TX(0),          GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_D6,  0x2),
-  GPIO_FUNCTION_ISH_UART_RTS(0),         GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_D7,  0x2),
-  GPIO_FUNCTION_ISH_UART_CTS(0),         GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_D8,  0x2),
-  GPIO_FUNCTION_ISH_I2C_SCL(0),          GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_B3,  0x3),
-  GPIO_FUNCTION_ISH_I2C_SCL(1),          GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_H15, 0x3),
-  GPIO_FUNCTION_ISH_I2C_SDA(0),          GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_B2,  0x3),
-  GPIO_FUNCTION_ISH_I2C_SDA(1),          GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_H14, 0x3),
-  GPIO_FUNCTION_ISH_I3C_SCL(0),          GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_B3,  0x4),
-  GPIO_FUNCTION_ISH_I3C_SDA(0),          GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_B2,  0x4),
-  GPIO_FUNCTION_HDA_BCLK,                GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_D10, 0x1),
-  GPIO_FUNCTION_HDA_RSTB,                GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_D17, 0x1),
-  GPIO_FUNCTION_HDA_SYNC,                GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_D11, 0x1),
-  GPIO_FUNCTION_HDA_SDO,                 GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_D12, 0x1),
-  GPIO_FUNCTION_HDA_SDI_0,               GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_D13, 0x1),
-  GPIO_FUNCTION_HDA_SDI_1,               GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_D16, 0x1),
-  GPIO_FUNCTION_DDSP_HPD(1),             GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_B9,  0x2),
-  GPIO_FUNCTION_DDSP_HPD(2),             GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_B10, 0x2),
-  GPIO_FUNCTION_DDSP_HPD(3),             GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_B11, 0x2),
-  GPIO_FUNCTION_DDSP_HPD(4),             GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_B14, 0x2),
-  GPIO_FUNCTION_DDSP_HPD('A'),           GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_E14, 0x1),
-  GPIO_FUNCTION_DDSP_HPD('B'),           GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_B16, 0x2),
-  GPIO_FUNCTION_PANEL_AVDD_EN(0),        GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_VDDEN,   0x1),
-  GPIO_FUNCTION_PANEL_BKLTEN(0),         GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_BKLTEN,  0x1),
-  GPIO_FUNCTION_PANEL_BKLTCTL(0),        GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_BKLTCTL, 0x1),
-  GPIO_FUNCTION_PANEL_AVDD_EN(1),        GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_B17, 0x2),
-  GPIO_FUNCTION_PANEL_BKLTEN(1),         GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_D1, 0x2),
-  GPIO_FUNCTION_PANEL_BKLTCTL(1),        GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_D2, 0x2),
-  GPIO_FUNCTION_CNVI_RF_RESET,           GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_F4,  0x1),
-  GPIO_FUNCTION_CNVI_CLKREQ,             GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_F5,  0x3),
-  GPIO_FUNCTION_DMIC_CLKA(0),            GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_S2, 0x3),
-  GPIO_FUNCTION_DMIC_CLKA(1),            GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_S6, 0x3),
-  GPIO_FUNCTION_DMIC_CLKB(0),            GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_S4, 0x3),
-  GPIO_FUNCTION_DMIC_CLKB(1),            GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_S5, 0x3),
-  GPIO_FUNCTION_DMIC_DATA(0),            GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_S3, 0x3),
-  GPIO_FUNCTION_DMIC_DATA(1),            GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_S7, 0x3),
-  GPIO_FUNCTION_THC_SPI_INT(0),          GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_E17, 0x2),
-  GPIO_FUNCTION_THC_SPI_INT(1),          GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_F18, 0x3),
-  GPIO_FUNCTION_THC_CLK_LOOPBACK(0),     GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_THC0_GPSI0_CLK_LOOPBK, 0x2),
-  GPIO_FUNCTION_THC_CLK_LOOPBACK(1),     GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_THC1_GSPI1_CLK_LOOPBK, 0x3),
-  GPIO_FUNCTION_THC_WOT(0),              GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_THC_0, 0x0),
-  GPIO_FUNCTION_THC_WOT(1),              GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_THC_1, 0x0),
-  GPIO_FUNCTION_SATA_DEVSLP(0,0),        GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_E4,  0x1),
-  GPIO_FUNCTION_SATA_DEVSLP(0,1),        GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_E5,  0x1),
-  GPIO_FUNCTION_PCIE_CLKREQ(0),          GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_C9,  0x1),
-  GPIO_FUNCTION_PCIE_CLKREQ(1),          GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_C10, 0x1),
-  GPIO_FUNCTION_PCIE_CLKREQ(2),          GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_C11, 0x1),
-  GPIO_FUNCTION_PCIE_CLKREQ(3),          GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_C12, 0x1),
-  GPIO_FUNCTION_PCIE_CLKREQ(4),          GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_C13, 0x1),
-  GPIO_FUNCTION_PCIE_CLKREQ(5),          GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_D21, 0x2),
-  GPIO_FUNCTION_PCIE_CLKREQ(6),          GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_D18, 0x1),
-  GPIO_FUNCTION_PCIE_CLKREQ(7),          GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_D19, 0x1),
-  GPIO_FUNCTION_PCIE_CLKREQ(8),          GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_M_GPP_D20, 0x1)
-};
+CONST GPIOV2_INIT_CONFIG mArlhUartGpioTable[] =
+{ //     PAD                        PadMode             HostOwn         Direction        OutputState          InterruptConfig   ResetConfig       TerminationConfig   LockConfig     LockTx
+  {GPIOV2_MTL_SOC_M_GPP_H8,  {GpioV2PadModeNative1, GpioV2HostOwnGpio, GpioV2DirNone,  GpioV2StateDefault,  GpioV2IntDis,    GpioV2ResetHost,  GpioV2TermDefault,  GpioV2Unlock,  GpioV2Unlock }}, //SERIALIO_UART0_RXD
+  {GPIOV2_MTL_SOC_M_GPP_H9,  {GpioV2PadModeNative1, GpioV2HostOwnGpio, GpioV2DirNone,  GpioV2StateDefault,  GpioV2IntDis,    GpioV2ResetHost,  GpioV2TermDefault,  GpioV2Unlock,  GpioV2Unlock }}, //SERIALIO_UART0_TXD
+//{GPIOV2_MTL_SOC_M_GPP_H10, {GpioV2PadModeNative1, GpioV2HostOwnGpio, GpioV2DirNone,  GpioV2StateDefault,  GpioV2IntDis,    GpioV2ResetHost,  GpioV2TermDefault,  GpioV2Unlock,  GpioV2Unlock }}, //SERIALIO_UART0_RTS
+//{GPIOV2_MTL_SOC_M_GPP_H11, {GpioV2PadModeNative1, GpioV2HostOwnGpio, GpioV2DirNone,  GpioV2StateDefault,  GpioV2IntDis,    GpioV2ResetHost,  GpioV2TermDefault,  GpioV2Unlock,  GpioV2Unlock }}, //SERIALIO_UART0_CTS
 
-static UINT32 mMtlGpioMapping[] = {
-  GPIO_FUNCTION_PCIE_CLKREQ(0),           GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_S_GPP_B7,  1),
-  GPIO_FUNCTION_PCIE_CLKREQ(1),           GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_S_GPP_B14, 1),
-  GPIO_FUNCTION_PCIE_CLKREQ(2),           GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_S_GPP_B0,  3),
-  GPIO_FUNCTION_PCIE_CLKREQ(3),           GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_S_GPP_D7,  1),
-  GPIO_FUNCTION_PCIE_CLKREQ(4),           GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_S_GPP_B8,  1),
-  GPIO_FUNCTION_PCIE_CLKREQ(5),           GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_S_GPP_B9,  1),
-  GPIO_FUNCTION_PANEL_AVDD_EN(1),         GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_S_GPP_B6,  1),
-  GPIO_FUNCTION_PANEL_BKLTEN(1),          GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_S_GPP_B10, 1),
-  GPIO_FUNCTION_PANEL_BKLTCTL(1),         GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_SOC_S_GPP_B11, 1)
-};
+  {GPIOV2_MTL_SOC_M_GPP_H6, {GpioV2PadModeNative2, GpioV2HostOwnGpio, GpioV2DirNone,  GpioV2StateDefault,  GpioV2IntDis,    GpioV2ResetHost,  GpioV2TermDefault,  GpioV2Unlock,  GpioV2Unlock }}, //SERIALIO_UART1_RXD
+  {GPIOV2_MTL_SOC_M_GPP_H7, {GpioV2PadModeNative2, GpioV2HostOwnGpio, GpioV2DirNone,  GpioV2StateDefault,  GpioV2IntDis,    GpioV2ResetHost,  GpioV2TermDefault,  GpioV2Unlock,  GpioV2Unlock }}, //SERIALIO_UART1_TXD
 
-static UINT32 mMtlPchGpioMapping[] = {
-    GPIO_FUNCTION_SERIAL_IO_UART_RX(0),     GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_PCH_S_GPP_C_8,  0x1),
-    GPIO_FUNCTION_SERIAL_IO_UART_RX(1),     GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_PCH_S_GPP_C_12, 0x1),
-    GPIO_FUNCTION_SERIAL_IO_UART_RX(2),     GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_PCH_S_GPP_C_20, 0x1),
-    GPIO_FUNCTION_SERIAL_IO_UART_RX(3),     GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_PCH_S_GPP_D_20, 0x1),
-    GPIO_FUNCTION_SERIAL_IO_UART_TX(0),     GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_PCH_S_GPP_C_9,  0x1),
-    GPIO_FUNCTION_SERIAL_IO_UART_TX(1),     GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_PCH_S_GPP_C_13, 0x1),
-    GPIO_FUNCTION_SERIAL_IO_UART_TX(2),     GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_PCH_S_GPP_C_21, 0x1),
-    GPIO_FUNCTION_SERIAL_IO_UART_TX(3),     GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_PCH_S_GPP_D_21, 0x1),
-    GPIO_FUNCTION_SERIAL_IO_UART_RTS(0),    GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_PCH_S_GPP_C_10, 0x1),
-    GPIO_FUNCTION_SERIAL_IO_UART_RTS(1),    GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_PCH_S_GPP_C_14, 0x1),
-    GPIO_FUNCTION_SERIAL_IO_UART_RTS(2),    GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_PCH_S_GPP_C_22, 0x1),
-    GPIO_FUNCTION_SERIAL_IO_UART_RTS(3),    GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_PCH_S_GPP_D_22, 0x1),
-    GPIO_FUNCTION_SERIAL_IO_UART_CTS(0),    GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_PCH_S_GPP_C_11, 0x1),
-    GPIO_FUNCTION_SERIAL_IO_UART_CTS(1),    GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_PCH_S_GPP_C_15, 0x1),
-    GPIO_FUNCTION_SERIAL_IO_UART_CTS(2),    GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_PCH_S_GPP_C_23, 0x1),
-    GPIO_FUNCTION_SERIAL_IO_UART_CTS(3),    GPIOV2_PAD_SET_NATIVE_FUNCTION (GPIOV2_MTL_PCH_S_GPP_D_23, 0x1),
+  {GPIOV2_MTL_SOC_M_GPP_F1, {GpioV2PadModeNative2, GpioV2HostOwnGpio, GpioV2DirNone,  GpioV2StateDefault,  GpioV2IntDis,    GpioV2ResetHost,  GpioV2TermDefault,  GpioV2Unlock,  GpioV2Unlock }}, //SERIALIO_UART2_RXD
+  {GPIOV2_MTL_SOC_M_GPP_F2, {GpioV2PadModeNative2, GpioV2HostOwnGpio, GpioV2DirNone,  GpioV2StateDefault,  GpioV2IntDis,    GpioV2ResetHost,  GpioV2TermDefault,  GpioV2Unlock,  GpioV2Unlock }}, //SERIALIO_UART2_TXD
+// {GPIOV2_MTL_SOC_M_GPP_F0, {GpioV2PadModeNative2, GpioV2HostOwnGpio, GpioV2DirNone,  GpioV2StateDefault,  GpioV2IntDis,    GpioV2ResetHost,  GpioV2TermDefault,  GpioV2Unlock,  GpioV2Unlock }}, //SERIALIO_UART2_RTS
+// {GPIOV2_MTL_SOC_M_GPP_F3, {GpioV2PadModeNative2, GpioV2HostOwnGpio, GpioV2DirNone,  GpioV2StateDefault,  GpioV2IntDis,    GpioV2ResetHost,  GpioV2TermDefault,  GpioV2Unlock,  GpioV2Unlock }}, //SERIALIO_UART2_CTS
 };
 
 /**
@@ -227,312 +133,6 @@ EarlyPlatformDataCheck (
 }
 
 /**
-  This function provides GPIO Native Pad for a given native function
-  @param[in]  GpioServices           Gpio Services
-  @param[in]  PadFunction            PadFunction for a specific native signal. Please refer to GpioNativePads.h
-
-  @retval     GpioPad                GPIO pad with encoded native function
-**/
-GPIOV2_PAD
-MtlSocPchGpioGetNativePadByFunction (
-  IN  UINT32  PadFunction
-  )
-{
-  UINT32    *MappingTable = NULL;
-  UINT32    MapIndex;
-  UINT32    MapCount = 0;
-
-  if (MtlIsSocM ()) {
-    MappingTable = mMtlSocMGpioMapping;
-    MapCount = sizeof(mMtlSocMGpioMapping)/sizeof(UINT32);
-  } else if (MtlIsSocS ()) {
-    MappingTable = mMtlPchGpioMapping;
-    MapCount = sizeof(mMtlPchGpioMapping)/sizeof(UINT32);
-  } else {
-    MappingTable = mMtlGpioMapping;
-    MapCount = sizeof(mMtlGpioMapping)/sizeof(UINT32);
-  }
-
-  for (MapIndex = 0 ; MapIndex < MapCount ; MapIndex+=2) {
-    if (MappingTable[MapIndex] ==  PadFunction) {
-      return MappingTable[MapIndex+1];
-    }
-  }
-  return GPIOV2_PAD_NONE;
-}
-
-/**
-  This procedure will get GPIO native pad based on provided native function and platform muxing selection (if needed).
-
-  @param[in]  PadFunction         PadMode for a specific native signal. Please refer to GpioNativePads.h
-  @param[in]  PinMux              GPIO Native pin mux platform config.
-                                  This argument is optional and needs to be
-                                  provided only if feature can be enabled
-                                  on multiple pads
-
-  @retval  NativePad              GPIO pad with encoded native function
-**/
-GPIO_NATIVE_PAD
-MtlSocPchGpioGetNativePadByFunctionAndPinMux (
-  IN UINT32  PadFunction,
-  IN UINT32  PinMux
-  )
-{
-  //
-  //  To do : Need to decide how Pin Muxing will be supported once confirmed there will be
-  //          Change in following code
-  //
-
-  GPIOV2_PAD GpioPad;
-
-  GpioPad = MtlSocPchGpioGetNativePadByFunction (PadFunction);
-
-  if (GpioPad != GPIOV2_PAD_NONE) {
-    //
-    // For situations where native signal can be enabled only on
-    // a single pad then PinMux argument should be set to 0.
-    //
-    ASSERT(PinMux == GPIOV2_PAD_NONE);
-  } else {
-     //
-     // If native signal can be enabled on multiple pads
-     // then PinMux argument needs to be configured to platform specific value
-     GpioPad = PinMux;
-  }
-
-  return GpioPad;
-}
-
-/**
-  This procedure does minimum Gpio Configuration required for Serial Io Devices
-  in SEC phase.
-
-  @param[in] GpioPad             GPIO pad
-  @param[in] PadModeValue        GPIO pad mode value, please refer to GpioV2Pad.h
-  @param[in] TerminationConfig   Termination configuration, please refer to GpioV2Pad.h
-  @param[in] InputInversion      GpioV2InputInversionEnable or GpioV2InputInversionDisable, please refer to GpioV2Pad.h
-
-  @retval EFI_SUCCESS             The function completed successfully
-  @retval EFI_NOT_FOUND           Required structure not found.
-**/
-EFI_STATUS
-EFIAPI
-SecSerialIoGpioConfigure (
-  IN  GPIOV2_PAD                  GpioPad,
-  IN  GPIOV2_PAD_MODE             PadMode,
-  IN  GPIOV2_PAD_INPUT_INVERSION  InputInversion,
-  IN  GPIOV2_TERMINATION_CONFIG   TerminationConfig
-  )
-{
-  P2SB_SIDEBAND_REGISTER_ACCESS   CommunityAccess;
-  UINT32                          CommunityIndex;
-  EFI_STATUS                      Status;
-  UINT32                          RegisterOffset;
-  UINT32                          AndValue;
-  UINT32                          OrValue;
-  P2SB_CONTROLLER                 P2SbController;
-
-  CommunityIndex = GPIOV2_PAD_GET_COMMUNITY_INDEX (GpioPad);
-
-  ZeroMem (&CommunityAccess, sizeof (P2SB_SIDEBAND_REGISTER_ACCESS));
-
-  Status = MtlSocGetP2SbController (&(P2SbController));
-  if (EFI_ERROR (Status)) {
-    return EFI_NOT_FOUND;
-  }
-
-  BuildP2SbSidebandAccess (
-      &(P2SbController),
-      (P2SB_PID)(MTL_SOC_PID_GPIOCOM0 + CommunityIndex),
-      0,
-      P2SbMemory,
-      P2SbMmioAccess,
-      TRUE,
-      &CommunityAccess
-      );
-
-  //
-  //
-  //  Get DW0 Register Offset to program Pad Mode and Input Inversion
-  //
-  Status = MtlSocGpioGetRegOffset(GpioPad, GpioV2Dw0Reg, &RegisterOffset);
-  if (EFI_ERROR(Status)) {
-    return Status;
-  }
-
-  //
-  //  Program Pad Mode
-  //
-  if (PadMode != GpioV2PadModeHardwareDefault) {
-    AndValue = (UINT32)~(GPIOV2_PAD_MODE_MASK << GPIOV2_PAD_MODE_DW0_POS);
-    OrValue = ((PadMode >> 1) & GPIOV2_PAD_MODE_MASK) << GPIOV2_PAD_MODE_DW0_POS;
-
-    CommunityAccess.Access.AndThenOr32(
-      &(CommunityAccess.Access),
-      RegisterOffset,
-      AndValue,
-      OrValue
-    );
-  }
-
-  //
-  //  Program Input Inversion
-  //
-  if (InputInversion != GpioV2InputInversionHardwareDefault) {
-
-    AndValue = (UINT32)~(GPIOV2_PAD_INPUT_INVERSION_MASK << GPIOV2_PAD_INPUT_INVERSION_DW0_POS);
-    OrValue  = ((InputInversion >> 1) & GPIOV2_PAD_INPUT_INVERSION_MASK) << GPIOV2_PAD_INPUT_INVERSION_DW0_POS;
-
-    CommunityAccess.Access.AndThenOr32 (
-      &(CommunityAccess.Access),
-      RegisterOffset,
-      AndValue,
-      OrValue
-    );
-  }
-
-  //
-  //  Program Termination config
-  //
-  if (TerminationConfig != GpioV2TermDefault) {
-    //
-    //  Get DW1 Register Offset to program Pad Termination
-    //
-    Status = MtlSocGpioGetRegOffset (GpioPad, GpioV2Dw1Reg, &RegisterOffset);
-    if (EFI_ERROR(Status)) {
-      return Status;
-    }
-
-    AndValue = (UINT32)~(GPIOV2_PAD_TERMINATION_CONFIG_MASK << GPIOV2_PAD_TERMINATION_CONFIG_DW1_POS);
-    OrValue  = ((TerminationConfig >> 1) & GPIOV2_PAD_TERMINATION_CONFIG_MASK) << GPIOV2_PAD_TERMINATION_CONFIG_DW1_POS;
-
-    CommunityAccess.Access.AndThenOr32 (
-      &(CommunityAccess.Access),
-      RegisterOffset,
-      AndValue,
-      OrValue
-    );
-  }
-  return EFI_SUCCESS;
-}
-
-/**
-  This procedure does minimum Gpio Configuration required for Serial Io Devices
-  in SEC phase.
-
-  @param[in] GpioPad             GPIO pad
-  @param[in] PadModeValue        GPIO pad mode value, please refer to GpioV2Pad.h
-  @param[in] TerminationConfig   Termination configuration, please refer to GpioV2Pad.h
-  @param[in] InputInversion      GpioV2InputInversionEnable or GpioV2InputInversionDisable, please refer to GpioV2Pad.h
-
-  @retval EFI_SUCCESS             The function completed successfully
-  @retval EFI_NOT_FOUND           Required structure not found.
-**/
-EFI_STATUS
-EFIAPI
-MtlPchSecSerialIoGpioConfigure (
-  IN  GPIOV2_PAD                  GpioPad,
-  IN  GPIOV2_PAD_MODE             PadMode,
-  IN  GPIOV2_PAD_INPUT_INVERSION  InputInversion,
-  IN  GPIOV2_TERMINATION_CONFIG   TerminationConfig
-  )
-{
-  P2SB_SIDEBAND_REGISTER_ACCESS   CommunityAccess;
-  UINT32                          CommunityIndex;
-  P2SB_CONTROLLER                 P2SbController;
-  EFI_STATUS                      Status;
-  UINT32                          RegisterOffset;
-  UINT32                          AndValue;
-  UINT32                          OrValue;
-
-  CommunityIndex = GPIOV2_PAD_GET_COMMUNITY_INDEX (GpioPad);
-
-  ZeroMem (&CommunityAccess, sizeof (P2SB_SIDEBAND_REGISTER_ACCESS));
-
-  //Status = MtlPchGetP2SbController (&P2SbController, 0x80, 0x1F, 0x1);
-  Status = MtlPchGetP2SbController (&P2SbController);
-  if (EFI_ERROR (Status)) {
-    return EFI_NOT_FOUND;
-  }
-
-  BuildP2SbSidebandAccess (
-      &(P2SbController),
-      (P2SB_PID)(MTL_PCH_PID_GPCOM0 - CommunityIndex),
-      0,
-      P2SbPrivateConfig,
-      P2SbMsgAccess,
-      TRUE,
-      &CommunityAccess
-      );
-
-  //
-  //
-  //  Get DW0 Register Offset to program Pad Mode and Input Inversion
-  //
-  Status = MtlPchGpioGetRegOffset (GpioPad, GpioV2Dw0Reg, &RegisterOffset);
-  if (EFI_ERROR(Status)) {
-    return Status;
-  }
-
-  //
-  //  Program Pad Mode
-  //
-  if (PadMode != GpioV2PadModeHardwareDefault) {
-    AndValue = (UINT32)~(GPIOV2_PAD_MODE_MASK << GPIOV2_PAD_MODE_DW0_POS);
-    OrValue = ((PadMode >> 1) & GPIOV2_PAD_MODE_MASK) << GPIOV2_PAD_MODE_DW0_POS;
-
-    CommunityAccess.Access.AndThenOr32(
-      &(CommunityAccess.Access),
-      RegisterOffset,
-      AndValue,
-      OrValue
-    );
-  }
-
-  //
-  //  Program Input Inversion
-  //
-  if (InputInversion != GpioV2InputInversionHardwareDefault) {
-
-    AndValue = (UINT32)~(GPIOV2_PAD_INPUT_INVERSION_MASK << GPIOV2_PAD_INPUT_INVERSION_DW0_POS);
-    OrValue  = ((InputInversion >> 1) & GPIOV2_PAD_INPUT_INVERSION_MASK) << GPIOV2_PAD_INPUT_INVERSION_DW0_POS;
-    CommunityAccess.Access.AndThenOr32 (
-      &(CommunityAccess.Access),
-      RegisterOffset,
-      AndValue,
-      OrValue
-    );
-
-  }
-
-  //
-  //  Program Termination config
-  //
-  if (TerminationConfig != GpioV2TermDefault) {
-    //
-    //  Get DW1 Register Offset to program Pad Termination
-    //
-    Status = MtlPchGpioGetRegOffset (GpioPad, GpioV2Dw1Reg, &RegisterOffset);
-    if (EFI_ERROR(Status)) {
-      return Status;
-    }
-
-    AndValue = (UINT32)~(GPIOV2_PAD_TERMINATION_CONFIG_MASK << GPIOV2_PAD_TERMINATION_CONFIG_DW1_POS);
-    OrValue  = ((TerminationConfig >> 1) & GPIOV2_PAD_TERMINATION_CONFIG_MASK) << GPIOV2_PAD_TERMINATION_CONFIG_DW1_POS;
-    CommunityAccess.Access.AndThenOr32 (
-      &(CommunityAccess.Access),
-      RegisterOffset,
-      AndValue,
-      OrValue
-    );
-
-  }
-
-  return Status;
-}
-
-
-/**
   Board specific hook points.
 
   Implement board specific initialization during the boot flow.
@@ -547,7 +147,6 @@ BoardInit (
   )
 {
   UINT8             DebugPort;
-  GPIOV2_PAD        GpioPad;
   UINT32            MsrIdx;
   UINT32            ImgLen;
   UINT32            AdjLen;
@@ -560,33 +159,13 @@ BoardInit (
     // timer functions which do the same thing
     InitTcoTimer ();
     EarlyPlatformDataCheck ();
-
     DebugPort = GetDebugPort ();
-    if ((DebugPort != 0xFF) && (DebugPort < MTL_MAX_SERIALIO_UART_CONTROLLERS)) {
+
+    if (DebugPort < MTL_MAX_SERIALIO_UART_CONTROLLERS) {
       if (MtlIsSocM ()) {
-        // RX
-        GpioPad =  MtlSocPchGpioGetNativePadByFunctionAndPinMux (GPIO_FUNCTION_SERIAL_IO_UART_RX (DebugPort), TempRamInitParams.FsptConfig.PcdSerialIoUartRxPinMux);
-        SecSerialIoGpioConfigure (GpioPad, GPIOV2_PAD_GET_PAD_MODE (GpioPad), GpioV2InputInversionDisable, GpioV2TermDefault);
-
-        // TX
-        GpioPad =  MtlSocPchGpioGetNativePadByFunctionAndPinMux (GPIO_FUNCTION_SERIAL_IO_UART_TX (DebugPort), TempRamInitParams.FsptConfig.PcdSerialIoUartTxPinMux);
-        SecSerialIoGpioConfigure (GpioPad, GPIOV2_PAD_GET_PAD_MODE (GpioPad), GpioV2InputInversionDisable, GpioV2TermDefault);
+        ConfigureGpioV2 (CDATA_NO_TAG, (VOID *)(mArlhUartGpioTable + DebugPort * 2), 2);
       } else if (MtlIsSocS ()) {
-        // RX
-        GpioPad =  MtlSocPchGpioGetNativePadByFunctionAndPinMux (GPIO_FUNCTION_SERIAL_IO_UART_RX (DebugPort), 0 );
-        MtlPchSecSerialIoGpioConfigure (GpioPad, GPIOV2_PAD_GET_PAD_MODE (GpioPad), GpioV2InputInversionDisable, GpioV2TermDefault);
-
-        // TX
-        GpioPad =  MtlSocPchGpioGetNativePadByFunctionAndPinMux (GPIO_FUNCTION_SERIAL_IO_UART_TX (DebugPort), 0 );
-        MtlPchSecSerialIoGpioConfigure (GpioPad, GPIOV2_PAD_GET_PAD_MODE (GpioPad), GpioV2InputInversionDisable, GpioV2TermDefault);
-
-        // RTS
-        GpioPad =  MtlSocPchGpioGetNativePadByFunctionAndPinMux (GPIO_FUNCTION_SERIAL_IO_UART_RTS (DebugPort), 0 );
-        MtlPchSecSerialIoGpioConfigure (GpioPad, GPIOV2_PAD_GET_PAD_MODE (GpioPad), GpioV2InputInversionDisable, GpioV2TermDefault);
-
-        // CTS
-        GpioPad =  MtlSocPchGpioGetNativePadByFunctionAndPinMux (GPIO_FUNCTION_SERIAL_IO_UART_CTS (DebugPort), 0 );
-        MtlPchSecSerialIoGpioConfigure (GpioPad, GPIOV2_PAD_GET_PAD_MODE (GpioPad), GpioV2InputInversionDisable, GpioV2TermDefault);
+        ConfigureGpioV2 (CDATA_NO_TAG, (VOID *)(mArlsUartGpioTable + DebugPort * 4), 4);
       }
     }
     PlatformHookSerialPortInitialize ();

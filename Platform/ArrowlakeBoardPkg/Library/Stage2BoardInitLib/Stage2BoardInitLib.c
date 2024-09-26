@@ -10,21 +10,17 @@
 #include <Library/MeExtMeasurementLib.h>
 #include "Stage2BoardInitLib.h"
 #include "PsdLib.h"
-#include "GpioPinsVer4S.h"
-#include "GpioPinsVer2Lp.h"
+#include <GpioV2PinsMtlPchS.h>
 #include <Library/TimerLib.h>
-#include <Include/PcrDefine.h>
 #include <GpioV2PinsMtlSoc.h>
 #include <Library/GpioV2Lib.h>
-#include <Include/GpioV2Config.h>
-#include <Library/MtlSocGpioTopologyLib.h>
-#include "GpioTableArlSPostMem.h"
-#include "GpioTableArlhPostMem.h"
-#include "GpioTableArlhRvpPostMem.h"
+#include <GpioV2Config.h>
+#include <Library/GpioV2SiLib.h>
 #include <Library/PciePm.h>
-#include <Library/MtlPchGpioTopologyLib.h>
 #include <Library/MtlSocInfoLib.h>
-
+#include <Library/P2SbLib.h>
+#include <Guids/FspPchConfigHob.h>
+#include <Library/MtlSocPcieRpLib.h>
 
 STATIC CONST UINT32 NhltSignaturesTable[] = {
   SIGNATURE_32 ('N', 'H', 'L', 'T'),
@@ -263,48 +259,27 @@ IgdOpRegionPlatformInit (
   }
 }
 
-/**
-  Count the number of GPIO settings in the Table.
 
-  @param[in]  GpioTable   The pointer of GPIO config table
-  @param[out] GpioCount   The number of GPIO config entries
-**/
 VOID
-GetGpioTableSize (
-  GPIOV2_INIT_CONFIG   *GpioTable,
-  OUT UINT16           *GpioCount
+UpdatePchSbRegBar (
+  VOID
   )
 {
-  *GpioCount = 0;
-  if(GpioTable != NULL) {
-    while (GpioTable[*GpioCount].GpioPad != 0 && *GpioCount < MAX_GPIO_PINS) {
-      DEBUG ((DEBUG_INFO, "GpioTable[%d]->GpioPad = %x \n", *GpioCount, GpioTable[*GpioCount].GpioPad));
-      (*GpioCount) ++;
-    }
-  } else {
-    DEBUG ((DEBUG_INFO, "GpioTable is NULL\n"));
+
+  MTL_PCH_CONFIGURATION     *PchConfig;
+  GPIOV2_CONTROLLER         *Controller;
+  GPIOV2_PAD                GpioPad;
+
+  if (!IsPchS()) {
+    return;
   }
-  DEBUG ((DEBUG_INFO, "GetGpioTableSize() GpioCount = %d\n", *GpioCount));
-}
 
-/**
-  Configure GPIO Before Memory is initialized.
-
-  @param[in]  GpioTable  Pointer to Gpio table
-**/
-VOID
-GpioInit (
-  IN GPIOV2_INIT_CONFIG *GpioTable
-  )
-{
-  UINT16             GpioCount;
-
-  if (GpioTable != 0) {
-    GpioCount = 0;
-    GetGpioTableSize (GpioTable, &GpioCount);
-    if (GpioCount != 0) {
-      //ConfigureGpioV2 (CDATA_NO_TAG, (VOID *) GpioTable, (UINTN) GpioCount);
-    }
+  PchConfig = (MTL_PCH_CONFIGURATION *) GetGuidHobData (GetFspHobListPtr (), NULL, &gFspPchConfigGuid);
+  if (PchConfig != NULL) {
+    GpioPad    = GPIOV2_PAD_ID(0, GPIOV2_MTL_PCH_S_CHIPSET_ID, 0, 0, 0, 0);
+    Controller = GpioGetController (GpioPad);
+    Controller->SbRegBar = PchConfig->ReservedMmio64Base;
+    DEBUG ((DEBUG_INFO, "Get Pch SBREG = 0x%llX\n", PchConfig->ReservedMmio64Base));
   }
 }
 
@@ -333,43 +308,12 @@ BoardInit (
   VOID                      *FspHobList;
   BL_SW_SMI_INFO            *BlSwSmiInfo;
   FEATURES_DATA             *FeaturesCfgData;
-  GPIOV2_INIT_CONFIG        *GPIOTableV2;
-  P2SB_SIDEBAND_REGISTER_ACCESS   *CommunityAccess;
-
-  CommunityAccess = 0;
 
   switch (InitPhase) {
   case PreSiliconInit:
+    UpdatePchSbRegBar ();
     EnableLegacyRegions ();
-    switch (GetPlatformId ()) {
-      case PLATFORM_ID_ARL_S_SODIMM_RVP:
-      case PLATFORM_ID_ARL_S_UDIMM_1DPC_RVP:
-        DEBUG ((DEBUG_ERROR, "The platform id is : 0x%X!\n", GetPlatformId ()));
-        DEBUG ((DEBUG_ERROR, "GPIO table size: %x  \n",sizeof (mGpioTablePostMemMtlSUDimm1DPCRvpDimm) / sizeof (mGpioTablePostMemMtlSUDimm1DPCRvpDimm[0])));
-        //MtlPchInstallCommunityAccess(CommunityAccess, 0x80, 0x1F, 0x1);
-        MtlPchInstallCommunityAccess(CommunityAccess);
-        GPIOTableV2 = mGpioTablePostMemMtlSUDimm1DPCRvpDimm;
-        GpioInit (GPIOTableV2);
-        break;
-      case PLATFORM_ID_ARL_H_DDR5_CRB:
-        DEBUG ((DEBUG_ERROR, "The platform id is : 0x%X!\n", GetPlatformId ()));
-        DEBUG ((DEBUG_ERROR, "GPIO table size: %x  \n",sizeof (mGpioTablePostMemArlHSbsCrbDimm) / sizeof (mGpioTablePostMemArlHSbsCrbDimm[0])));
-        MtlSocInstallCommunityAccess(CommunityAccess);
-        GPIOTableV2 = mGpioTablePostMemArlHSbsCrbDimm;
-        GpioInit (GPIOTableV2);
-        break;
-      case PLATFORM_ID_ARL_H_LP5x_Rvp:
-      case PLATFORM_ID_ARL_H_DDR5_RVP:
-        DEBUG ((DEBUG_ERROR, "The platform id is : 0x%X!\n", GetPlatformId ()));
-        DEBUG ((DEBUG_ERROR, "GPIO table size: %x  \n",sizeof (mGpioTablePostMemArlHRvpSbsCrbDimm) / sizeof (mGpioTablePostMemArlHRvpSbsCrbDimm[0])));
-        MtlSocInstallCommunityAccess(CommunityAccess);
-        GPIOTableV2 = mGpioTablePostMemArlHRvpSbsCrbDimm;
-        GpioInit (GPIOTableV2);
-        break;
-      default:
-        DEBUG ((DEBUG_ERROR, "Could not find post-mem GPIO for PlatformId 0x%X!\n", GetPlatformId ()));
-        break;
-    }
+    ConfigureGpioV2 (CDATA_GPIO_TAG, NULL, 0);
 
     if (GetBootMode() != BOOT_ON_FLASH_UPDATE) {
       UpdatePayloadId ();
@@ -402,7 +346,7 @@ BoardInit (
         FspGfxHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GetGuidHobData (FspHobList, &Length, &gEfiGraphicsInfoHobGuid);
       }
       if (FspGfxHob != NULL) {
-        DEBUG ((DEBUG_INFO, "FspGfxHob->FrameBufferBase = 0x%lx\n", FspGfxHob->FrameBufferBase));
+        DEBUG ((DEBUG_INFO, "FspGfxHob->FrameBufferBase = 0x%llx\n", FspGfxHob->FrameBufferBase));
         PciWrite8 (PCI_LIB_ADDRESS(IGD_BUS_NUM, IGD_DEV_NUM, IGD_FUN_NUM, PCI_COMMAND_OFFSET), \
                    EFI_PCI_COMMAND_MEMORY_SPACE | EFI_PCI_COMMAND_BUS_MASTER);
         PciWrite32 (PCI_LIB_ADDRESS(IGD_BUS_NUM, IGD_DEV_NUM, IGD_FUN_NUM, 0x18), \
@@ -1559,8 +1503,7 @@ PlatformUpdateAcpiGnvs (
   UINT16                   RpDev;
   UINT16                   RpFun;
   UINT32                   Data32;
-  GPIO_GROUP               GroupToGpeDwX[3];
-  UINT32                   GroupDw[3];
+  UINT8                    GroupIndex[3];
   PCI_RES_ALLOC_TABLE     *ResAllocTable;
 
   GlobalNvs = (GLOBAL_NVS_AREA *)GnvsIn;
@@ -1642,9 +1585,10 @@ PlatformUpdateAcpiGnvs (
       MtlPchNvs->PcieLtrMaxSnoopLatency[RpNumber]   = 0x100F;
       MtlPchNvs->PcieLtrMaxNoSnoopLatency[RpNumber] = 0x100F;
     }
-    MtlPchNvs->GEI0 = 0x2;
-    MtlPchNvs->GEI1 = 0x3;
-    MtlPchNvs->GEI2 = 0x7;
+    GpioGetGpeMapping (GPIOV2_MTL_PCH_S_CHIPSET_ID, &GroupIndex[0], &GroupIndex[1], &GroupIndex[2]);
+    MtlPchNvs->GEI0 = GroupIndex[0];
+    MtlPchNvs->GEI1 = GroupIndex[1];
+    MtlPchNvs->GEI2 = GroupIndex[2];
     MtlPchNvs->GED0 = (UINT8) 0;
     MtlPchNvs->GED1 = (UINT8) 0;
     MtlPchNvs->GED2 = (UINT8) 0;
@@ -1666,8 +1610,7 @@ PlatformUpdateAcpiGnvs (
   // Update ASL PCIE port address according to root port device and function
   //
   for (RpNumber = 0; RpNumber < GetPchMaxPciePortNum (); RpNumber++) {
-    RpDev = PchPcieRpDevNumber (RpNumber);
-    RpFun = PchPcieRpFuncNumber (RpNumber);
+    MtlSocGetPcieRpDevFun (RpNumber, &RpDev, &RpFun);
     DEBUG ((DEBUG_INFO, "PchNvs->RpDev: 0x%x\n", RpDev));
     DEBUG ((DEBUG_INFO, "PchNvs->RpFun: 0x%x\n", RpFun));
     Data32 = ((UINT8) RpDev << 16) | (UINT8) RpFun;
@@ -1704,15 +1647,15 @@ PlatformUpdateAcpiGnvs (
   PchNvs->SGIR  = 0xE;
   PchNvs->GPHD  = 0x0;
 
-  GpioGetGroupDwToGpeDwX (
-    &GroupToGpeDwX[0], &GroupDw[0],
-    &GroupToGpeDwX[1], &GroupDw[1],
-    &GroupToGpeDwX[2], &GroupDw[2]
-    );
+  if (MtlIsSocM ()) {
+    GpioGetGpeMapping (GPIOV2_MTL_SOC_M_CHIPSET_ID, &GroupIndex[0], &GroupIndex[1], &GroupIndex[2]);
+  } else {
+    GpioGetGpeMapping (GPIOV2_MTL_SOC_S_CHIPSET_ID, &GroupIndex[0], &GroupIndex[1], &GroupIndex[2]);
+  }
 
-  PchNvs->GEI0 = (UINT8) GpioGetGroupIndexFromGroup (GroupToGpeDwX[0]);
-  PchNvs->GEI1 = (UINT8) GpioGetGroupIndexFromGroup (GroupToGpeDwX[1]);
-  PchNvs->GEI2 = (UINT8) GpioGetGroupIndexFromGroup (GroupToGpeDwX[2]);
+  PchNvs->GEI0 = GroupIndex[0];
+  PchNvs->GEI1 = GroupIndex[1];
+  PchNvs->GEI2 = GroupIndex[2];
   PchNvs->GED0 = (UINT8) 0x0;
   PchNvs->GED1 = (UINT8) 0x0;
   PchNvs->GED2 = (UINT8) 0x0;
