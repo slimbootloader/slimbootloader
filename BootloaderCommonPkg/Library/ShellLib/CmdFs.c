@@ -298,8 +298,8 @@ CmdFsLoad (
 
   Status = ReadFile (FileHandle, Image, &ImageSize);
   if (EFI_ERROR (Status)) {
-    if (Image != NULL) {
-      FreePool (Image);
+    if ((Image != NULL) && (LoadAddr == 0)) {
+      FreePages (Image, EFI_SIZE_TO_PAGES (ImageSize));
     }
     goto FileLoadErrOut;
   }
