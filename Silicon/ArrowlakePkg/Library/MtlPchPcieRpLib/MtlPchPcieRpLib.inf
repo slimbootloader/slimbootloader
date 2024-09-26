@@ -29,9 +29,5 @@ BootloaderCommonPkg/BootloaderCommonPkg.dec
 Silicon/CommonSocPkg/CommonSocPkg.dec
 Silicon/ArrowlakePkg/ArrowlakePkg.dec
 
-
-[LibraryClasses]
-#BaseLib
-#IoLib
-#DebugLib
-#PciSegmentLib
+[FixedPcd]
+  gPlatformArrowLakeTokenSpaceGuid.PcdMtlSSupport

@@ -12,15 +12,18 @@
 #include <Library/DebugLib.h>
 #include <Library/BaseLib.h>
 #include <Library/PciSegmentLib.h>
-#include <Include/P2SbSidebandAccessLib.h>
+#include <Library/P2SbLib.h>
 #include <PcieRegs.h>
 #include <Register/PchRegs.h>
 #include <Register/PchPcieRpRegs.h>
 #include <Register/PchRegsPcr.h>
 #include <Register/MtlPchBdfAssignment.h>
-#include <Include/PcrDefine.h>
-#include <Library/MtlPchGpioTopologyLib.h>
 #include <Library/BaseMemoryLib.h>
+#include <Library/BootloaderCommonLib.h>
+#include <Library/PciLib.h>
+#include <Guid/OsBootOptionGuid.h>
+
+#define DEVICE_TABLE_P2SB_INSTANCE_PCH     2
 
 typedef struct {
   UINT8     DevNum;
@@ -38,135 +41,97 @@ GLOBAL_REMOVE_IF_UNREFERENCED MTL_PCH_PCIE_CONTROLLER_INFO  mMtlPchSPcieControll
   {MTL_PCH_PCIE_RP21_DEVICE_NUM, MTL_PCH_PID_SPF, 20, 4}
 };
 
+
 /**
-  Translate RpIndex to controller index.
+  Get device address
 
-  @param[in] RpIndex  Root port index
+  If the device is PCI device, the device address format is 0x00BBDDFF, where
+  BB, DD and FF are PCI bus, device and function number.
+  If the device is MMIO device, the device address format is 0x0000MMMMMM000000, where
+  MM should be non-zero value.
 
-  @return ControllerIndex
-  @retval 0xFF Failed to lookup controller index.
+  @param[in]  DeviceInstance     The device instance number starting from 0.
+
+  @retval     Device address for a given device instance, return 0 if the device
+              could not be found from device table.
 **/
-UINT32
-MtlPchRpIndexToControllerIndex (
-  IN UINT32  RpIndex
+UINT64
+GetP2sbDeviceAddr (
+  IN  UINT8          DeviceInstance
   )
 {
-  return RpIndex / PCH_PCIE_CONTROLLER_PORTS;
+  PLT_DEVICE_TABLE   *DeviceTable;
+  PLT_DEVICE         *Device;
+  UINT64             DeviceBase;
+  UINT32             Index;
+
+  DeviceBase  = 0;
+  Device      = NULL;
+  DeviceTable = (PLT_DEVICE_TABLE *)GetDeviceTable();
+  for (Index = 0; Index < DeviceTable->DeviceNumber; Index++) {
+    Device = &DeviceTable->Device[Index];
+    if ((Device->Type == PlatformDeviceP2sb) && (Device->Instance == DeviceInstance)){
+      break;
+    }
+  }
+
+  if (DeviceTable->DeviceNumber != Index) {
+    DeviceBase = Device->Dev.DevAddr | ( (UINT64)Device->Reserved << 32);
+  }
+
+  return DeviceBase;
 }
 
-/**
-  Get the FID number of the PCIe root port.
-
-  @param[in] RpIndex  Index of the root port
-
-  @return FID number to use when sending SBI msg
-**/
-UINT16
-MtlPchPcieRpGetSbiFid (
-  IN UINT32  RpIndex
-  )
-{
-  return RpIndex % 4;
-}
 
 /**
-  Get MTL SoC Pcie Root Port Device and Function Number by Root Port physical Number
+  Get MTL PCH Pcie Root Port Device and Function Number by Root Port physical Number
 
-  @param[in]  RpNumber              Root port physical number. (0-based)
-  @param[out] RpDev                 Return corresponding root port device number.
-  @param[out] RpFun                 Return corresponding root port function number.
+  @param[in]  RpNumber           Root port physical number. (0-based)
+  @param[out] RpDev              Return corresponding root port device number.
+  @param[out] RpFun              Return corresponding root port function number.
 
-  @retval     EFI_SUCCESS           Root port device and function is retrieved
+  Rretval     EFI_SUCCESS           Root port device and function is retrieved
   @retval     EFI_INVALID_PARAMETER RpNumber is invalid
 **/
 EFI_STATUS
+EFIAPI
 MtlPchGetPcieRpDevFun (
-  IN  UINT32                 RpNumber,
-  OUT UINT16                 *RpDev,
-  OUT UINT16                 *RpFun
+  IN  UINTN    RpNumber,
+  OUT UINT16   *RpDev,
+  OUT UINT16   *RpFun
   )
 {
-  UINT32                         Index = MAX_UINT32;
+  UINTN                          Index;
   UINTN                          FuncIndex;
   UINT32                         PciePcd;
   MTL_PCH_PCIE_CONTROLLER_INFO   *PcieInfo;
-  P2SB_SIDEBAND_REGISTER_ACCESS  RpAccess;
-  P2SB_CONTROLLER                P2SbController;
-  P2SB_SIDEBAND_ACCESS_METHOD    AccessMethod;
+  UINT64                          P2sbBase;
+  UINT16                          Fid;
 
-  PcieInfo = mMtlPchSPcieControllerInfo;
-  Index    = MtlPchRpIndexToControllerIndex (RpNumber);
-  *RpDev   = 0;
-  *RpFun   = 0;
-
-  if (Index >= ARRAY_SIZE (mMtlPchSPcieControllerInfo) || PcieInfo == NULL || Index == MAX_UINT32) {
-    return EFI_NOT_FOUND;
+  Index = RpNumber / PCH_PCIE_CONTROLLER_PORTS;
+  if (Index >= ARRAY_SIZE (mMtlPchSPcieControllerInfo)) {
+    return EFI_INVALID_PARAMETER;
   }
 
+  P2sbBase = GetP2sbDeviceAddr (DEVICE_TABLE_P2SB_INSTANCE_PCH);
+  if ((P2sbBase & 0x0FFFFFFF) != 0) {
+    P2sbBase = TO_PCI_LIB_ADDRESS (P2sbBase);
+  }
+
+  PcieInfo  = mMtlPchSPcieControllerInfo;
+  *RpDev    = PcieInfo[Index].DevNum;
+  *RpFun    = 0xFF;
   FuncIndex = RpNumber - PcieInfo[Index].RpNumBase;
-  *RpDev = PcieInfo[Index].DevNum;
-  MtlPchGetP2SbController (&P2SbController);
-  //
-  // P2SB is hidden at the end of PEI. In case we are executing after that event
-  // use MMIO access method.
-  //
-  if (PciSegmentRead16 (P2SbController.PciCfgBaseAddr) == 0xFFFF) {
-    AccessMethod = P2SbMmioAccess;
-  } else {
-    AccessMethod = P2SbMsgAccess;
-  }
-
-  ZeroMem (&RpAccess, sizeof (P2SB_SIDEBAND_REGISTER_ACCESS));
-
-  BuildP2SbSidebandAccess (
-    &P2SbController,
-    PcieInfo[Index].Pid,
-    MtlPchPcieRpGetSbiFid ((UINT32) RpNumber),
-    P2SbPrivateConfig,
-    AccessMethod,
-    FALSE,
-    &RpAccess
-    );
-
-  PciePcd = RpAccess.Access.Read32 (&RpAccess.Access, R_SPX_SIP16_PCR_PCD);
+  Fid       = RpNumber % 4;
+  PciePcd   = P2sbRead32 (P2sbBase, PcieInfo[Index].Pid, Fid, R_SPX_SIP16_PCR_PCD);
   if (PciePcd != 0xFFFFFFFF) {
     *RpFun = (PciePcd >> (FuncIndex * S_SPX_PCR_PCD_RP_FIELD)) & B_SPX_PCR_PCD_RP1FN;
   } else {
     *RpFun = RpNumber % 8;
   }
+
+  DEBUG ((DEBUG_INFO, "\n-%d, P2sbBase 0x%llx, PID=0x%x, Fid = 0x%x, PciePcd = 0x%x\n", Index, P2sbBase, PcieInfo[Index].Pid, Fid, PciePcd));
+
   return EFI_SUCCESS;
 }
 
-
-/**
-  This function returns PID according to PCIe controller index
-
-  @param[in] ControllerIndex     PCIe controller index
-
-  @retval P2SB_PID    Returns PID for SBI Access
-**/
-P2SB_PID
-MtlPchGetPcieControllerSbiPid (
-  IN UINT32  ControllerIndex
-  )
-{
-  return mMtlPchSPcieControllerInfo[ControllerIndex].Pid;
-}
-
-/**
-  This function returns PID according to Root Port Number
-
-  @param[in] RpIndex     Root Port Index (0-based)
-
-  @retval P2SB_PID   Returns PID for SBI Access
-**/
-P2SB_PID
-MtlPchGetRpSbiPid (
-  IN UINT32  RpIndex
-  )
-{
-  UINT32   ControllerIndex;
-
-  ControllerIndex = MtlPchRpIndexToControllerIndex (RpIndex);
-  return MtlPchGetPcieControllerSbiPid (ControllerIndex);
-}
