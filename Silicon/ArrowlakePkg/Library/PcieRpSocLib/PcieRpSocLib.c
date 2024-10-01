@@ -147,6 +147,8 @@ GetP2sbDeviceAddr2 (
   DeviceBase  = 0;
   Device      = NULL;
   DeviceTable = (PLT_DEVICE_TABLE *)GetDeviceTable();
+  // Set a boundary limit to avoid coverity issue
+  DeviceTable->DeviceNumber = MIN (50, DeviceTable->DeviceNumber);
   for (Index = 0; Index < DeviceTable->DeviceNumber; Index++) {
     Device = &DeviceTable->Device[Index];
     if ((Device->Type == PlatformDeviceP2sb) && (Device->Instance == DeviceInstance)){
@@ -184,19 +186,22 @@ MtlSocGetPcieRpDevFun (
   UINTN                          FuncIndex;
   UINT32                         PciePcd;
   MTL_SOC_PCIE_CONTROLLER_INFO   *PcieInfo;
-  UINT64                          P2sbBase;
-  UINT16                          Fid;
-
-  Index = MtlSocRpIndexToControllerIndex (RpNumber);
-  if (Index == 0xFF) {
-    return EFI_INVALID_PARAMETER;
-  }
+  UINT64                         P2sbBase;
+  UINT16                         Fid;
+  UINT16                         TableSize;
 
 #if FixedPcdGetBool(PcdMtlSSupport)
-  PcieInfo = mMtlSocSPcieControllerInfo;
+  PcieInfo  = mMtlSocSPcieControllerInfo;
+  TableSize = sizeof (mMtlSocSPcieControllerInfo) / sizeof (mMtlSocSPcieControllerInfo[0]);
 #else
-  PcieInfo = mMtlSocMPcieControllerInfo;
+  PcieInfo  = mMtlSocMPcieControllerInfo;
+  TableSize = sizeof (mMtlSocMPcieControllerInfo) / sizeof (mMtlSocMPcieControllerInfo[0]);
 #endif
+
+  Index = MtlSocRpIndexToControllerIndex (RpNumber);
+  if ((Index == 0xFF) || (Index >= TableSize)) {
+    return EFI_INVALID_PARAMETER;
+  }
 
   if (PcieInfo[Index].OnIoe) {
     P2sbBase = GetP2sbDeviceAddr2 (DEVICE_TABLE_P2SB_INSTANCE_IOE);
