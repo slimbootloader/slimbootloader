@@ -7,7 +7,6 @@
 
 External (\_SB.PC00.LPCB.H_EC.B1FC, FieldUnitObj)
 External (\_SB.PC00.LPCB.H_EC.B1RC, FieldUnitObj)
-External (\BATP, IntObj)
 
 //
 // Define the Real Battery 1 Control Method.
@@ -17,13 +16,6 @@ Device (BAT1) {
   Name (_UID, 1)
 
   Method (_STA, 0) {
-    If (And (BATP, BIT0)) {  // Battery is supported.
-      If (And (BNUM, BIT0)) { // Real Battery 1 present?
-        Return (0x001F)  // Yes.  Show it.
-      } Else {
-        Return (0x000B)    // No.  Hide it.
-      }
-    }
     Return (0)
   }
 

@@ -33,6 +33,7 @@ typedef struct {
   UINT32   EcdtGpeNumber;                           ///< Offset 22      Ecdt GPE bit value
   UINT32   LidSwitchWakeGpio;                       ///< Offset 26      Lid Switch Wake Gpio
   UINT8    PseudoG3StateCounter;                    ///< Offset 30      Pseudo G3 counter Enable/Disable
+  UINT8    EnableBTP;                               ///< Offset 31      Enable battery _BTP support
 } EC_NVS_AREA;
 
 #pragma pack(pop)

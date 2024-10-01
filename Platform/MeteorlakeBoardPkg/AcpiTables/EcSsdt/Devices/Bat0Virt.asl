@@ -18,15 +18,6 @@ Device (BAT0)
 
   Method (_STA, 0)
   {
-    If (And (BATP, BIT1))   // Virtual Battery is supported.
-    {
-      If (And (BNUM, 3))   // Real Battery 1 or 2 present?
-      {
-        Return (0x000B)  // Yes.  Hide Virtual.
-      } Else {
-        Return (0x001F)    // No.  Show Virtual.
-      }
-    }
     Return (0)
   }
 

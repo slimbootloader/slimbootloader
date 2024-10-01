@@ -1140,6 +1140,26 @@ PlatformUpdateAcpiTable (
     }
   }
 
+  //
+  // EC SSDT
+  //
+  if (Table->Signature == EFI_ACPI_6_4_SECONDARY_SYSTEM_DESCRIPTION_TABLE_SIGNATURE &&
+      Table->OemTableId == SIGNATURE_64 ('E', 'c', 'S', 's', 'd', 't', ' ', 0)) {
+    DEBUG((DEBUG_INFO, "Found EcSsdt\n"));
+    for (; Ptr < End; Ptr++) {
+      if (*(UINT32 *)Ptr == SIGNATURE_32 ('E','N','V','S')) {
+        Base = (UINT32) (UINTN) &GlobalNvs->EcNvs;
+        DEBUG ((DEBUG_INFO, "ENVS Base Old=0x%08X New=0x%08X\n", *(UINT32 *)(Ptr + 6), Base));
+        *(UINT32 *)(Ptr + 6) = Base;
+
+        Size = sizeof (EC_NVS_AREA);
+        DEBUG ((DEBUG_INFO, "ENVS Size Old=0x%04X New=0x%04X\n", *(UINT16 *)(Ptr + 11), Size));
+        *(UINT16 *)(Ptr + 11) = Size;
+        break;
+      }
+    }
+  }
+
   return EFI_SUCCESS;
 }
 
@@ -1371,7 +1391,6 @@ PlatformUpdateAcpiGnvs (
   CPU_NVS_AREA            *CpuNvs;
   SYSTEM_AGENT_NVS_AREA   *SaNvs;
   SYS_CPU_INFO            *SysCpuInfo;
-  EC_NVS_AREA             *EcNvs;
   DPTF_NVS_AREA           *DptfNvs;
   FSPS_UPD                *FspsUpd;
   FSP_S_CONFIG            *FspsConfig;
@@ -1390,7 +1409,6 @@ PlatformUpdateAcpiGnvs (
   PlatformNvs = (PLATFORM_NVS_AREA *) &GlobalNvs->PlatformNvs;
   PchNvs      = (PCH_NVS_AREA *) &GlobalNvs->PchNvs;
   CpuNvs      = (CPU_NVS_AREA *) &GlobalNvs->CpuNvs;
-  EcNvs       = (EC_NVS_AREA  *) &GlobalNvs->EcNvs;
   DptfNvs     = (DPTF_NVS_AREA*) &GlobalNvs->DptfNvs;
   SaNvs       = (SYSTEM_AGENT_NVS_AREA *) &GlobalNvs->SaNvs;
   FspsUpd     = (FSPS_UPD *)(UINTN)PcdGet32 (PcdFspsUpdPtr);
@@ -1787,7 +1805,7 @@ PlatformUpdateAcpiGnvs (
   PlatformNvs->WwanFwFlashDevice = 0;
   PlatformNvs->XdciFnEnable = 1;
 
-  EcNvs->LidSwitchWakeGpio = GPIOV2_MTL_SOC_M_GPP_V2;
+  //EcNvs->LidSwitchWakeGpio = GPIOV2_MTL_SOC_M_GPP_V2;
   PlatformNvs->HidEventFilterEnable         = 0x01;
   PlatformNvs->Rtd3Support = 0x1;
   PlatformNvs->Rtd3P0dl = 0x64;

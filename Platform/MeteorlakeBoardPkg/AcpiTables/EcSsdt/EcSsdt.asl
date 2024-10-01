@@ -18,7 +18,7 @@ DefinitionBlock (
   If (LEqual(\ECON,1)){
     External (\_SB.PC00.LPCB, DeviceObj)
     External (\_SB.HIDD, DeviceObj)
-
+    Include ("EcNvs.asl")
     Scope (\_SB.PC00.LPCB) {
       Include ("EcDevice.asl")
     }
