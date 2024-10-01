@@ -130,8 +130,6 @@ MtlPchGetPcieRpDevFun (
     *RpFun = RpNumber % 8;
   }
 
-  DEBUG ((DEBUG_INFO, "\n-%d, P2sbBase 0x%llx, PID=0x%x, Fid = 0x%x, PciePcd = 0x%x\n", Index, P2sbBase, PcieInfo[Index].Pid, Fid, PciePcd));
-
   return EFI_SUCCESS;
 }
 
