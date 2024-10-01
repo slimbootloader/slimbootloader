@@ -101,10 +101,7 @@ UpdatePayloadId (
 {
   UINT32            PayloadId;
   GEN_CFG_DATA      *GenericCfgData;
-  UINT32            PayloadSelGpioData;
   UINT8             CmosData;
-
-  PayloadSelGpioData = 0;
 
   PayloadId = GetPayloadId ();
   GenericCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);

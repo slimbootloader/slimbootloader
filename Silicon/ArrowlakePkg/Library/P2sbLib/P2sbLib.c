@@ -12,7 +12,7 @@
 #include <Library/DebugLib.h>
 #include <Library/PciSegmentLib.h>
 #include <Library/PchSbiAccessLib.h>
-#include <Library/P2SbLib.h>
+#include <Library/P2sbLib.h>
 #include <Register/P2sbRegs.h>
 #include <IndustryStandard/Pci30.h>
 #include <Library/HostBridgeDefines.h>
