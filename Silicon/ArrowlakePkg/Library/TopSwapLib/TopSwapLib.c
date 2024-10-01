@@ -12,7 +12,7 @@
 #include <Library/PcdLib.h>
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
-#include <Library/P2SbLib.h>
+#include <Library/P2sbLib.h>
 #include <Register/PchRegsPcr.h>
 #include <Library/PciLib.h>
 

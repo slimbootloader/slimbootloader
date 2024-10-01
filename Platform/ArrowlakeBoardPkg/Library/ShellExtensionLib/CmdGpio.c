@@ -168,6 +168,8 @@ GetGpioCfgStr (
   case GpioV2HostOwnGpio:
     AsciiStrCatS (Buffer, MaxLen, "  Gpio  ");
     break;
+  default:
+    break;
   }
 
   // Get direction str
@@ -191,6 +193,8 @@ GetGpioCfgStr (
   case GpioV2DirNone:
     AsciiStrCatS (Buffer, MaxLen,  " None     ");
     break;
+  default:
+    break;
   }
 
   // Output State
@@ -201,6 +205,8 @@ GetGpioCfgStr (
     break;
   case GpioV2StateHigh:
     AsciiStrCatS (Buffer, MaxLen,  "  High  ");
+    break;
+  default:
     break;
   }
 
@@ -251,6 +257,8 @@ GetGpioCfgStr (
   case GpioV2ResetGlobal:
     AsciiStrCatS (Buffer, MaxLen,  "   Global     ");
     break;
+  default:
+    break;
   }
 
   Status = GetTerminationConfig (GpioPad, &TermConfig);
@@ -282,6 +290,8 @@ GetGpioCfgStr (
   case GpioV2TermNative:
     AsciiStrCatS (Buffer, MaxLen,  "  Native    ");
     break;
+  default:
+    break;
   }
 
   Status = GetPadConfigLock (GpioPad, &ConfigLock);
@@ -292,6 +302,8 @@ GetGpioCfgStr (
   case GpioV2Lock:
     AsciiStrCatS (Buffer, MaxLen,  "  Lock   ");
     break;
+  default:
+    break;
   }
 
   Status = GetTxLock (GpioPad, &TxLock);
@@ -301,6 +313,8 @@ GetGpioCfgStr (
     break;
   case GpioV2Lock:
     AsciiStrCatS (Buffer, MaxLen,  "  Lock  ");
+    break;
+  default:
     break;
   }
 

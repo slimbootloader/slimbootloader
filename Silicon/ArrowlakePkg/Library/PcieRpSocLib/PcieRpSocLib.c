@@ -12,7 +12,7 @@
 #include <Library/DebugLib.h>
 #include <Library/BaseLib.h>
 #include <Library/PciSegmentLib.h>
-#include <Library/P2SbLib.h>
+#include <Library/P2sbLib.h>
 #include <Include/PcieRegs.h>
 #include <Register/PchRegs.h>
 #include <Register/PchBdfAssignment.h>

@@ -443,7 +443,7 @@ SetHostSwOwnership (
     return EFI_INVALID_PARAMETER;
   }
 
-  if (HostSwOwnership != GpioV2PadModeHardwareDefault) {
+  if (HostSwOwnership != GpioV2HostOwnDefault) {
     SetRegBits (GpioPad, GpioV2PadHostOwnReg, GPIOV2_PAD_GET_PAD_INDEX (GpioPad), GPIOV2_PAD_HOST_OWNERSHIP_MASK, HostSwOwnership >> 1);
   }
 

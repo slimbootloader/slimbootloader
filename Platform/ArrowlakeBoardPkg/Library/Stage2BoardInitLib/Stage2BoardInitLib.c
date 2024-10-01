@@ -18,7 +18,7 @@
 #include <Library/GpioV2SiLib.h>
 #include <Library/PciePm.h>
 #include <Library/MtlSocInfoLib.h>
-#include <Library/P2SbLib.h>
+#include <Library/P2sbLib.h>
 #include <Guids/FspPchConfigHob.h>
 #include <Library/MtlSocPcieRpLib.h>
 
