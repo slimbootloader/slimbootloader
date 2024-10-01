@@ -265,7 +265,6 @@ UpdatePchSbRegBar (
   VOID
   )
 {
-
   MTL_PCH_CONFIGURATION     *PchConfig;
   GPIOV2_CONTROLLER         *Controller;
   GPIOV2_PAD                GpioPad;
@@ -279,7 +278,7 @@ UpdatePchSbRegBar (
     GpioPad    = GPIOV2_PAD_ID(0, GPIOV2_MTL_PCH_S_CHIPSET_ID, 0, 0, 0, 0);
     Controller = GpioGetController (GpioPad);
     Controller->SbRegBar = PchConfig->ReservedMmio64Base;
-    DEBUG ((DEBUG_INFO, "Get Pch SBREG = 0x%llX\n", PchConfig->ReservedMmio64Base));
+    DEBUG ((DEBUG_INFO, "FSP PCH SBREG_BAR = 0x%llX\n", PchConfig->ReservedMmio64Base));
   }
 }
 
@@ -311,7 +310,6 @@ BoardInit (
 
   switch (InitPhase) {
   case PreSiliconInit:
-    UpdatePchSbRegBar ();
     EnableLegacyRegions ();
     ConfigureGpioV2 (CDATA_GPIO_TAG, NULL, 0);
 
@@ -327,6 +325,7 @@ BoardInit (
 
     break;
   case PostSiliconInit:
+    UpdatePchSbRegBar ();
     if (IsWdtFlagsSet(WDT_FLAG_TCC_DSO_IN_PROGRESS)) {
       WdtDisable (WDT_FLAG_TCC_DSO_IN_PROGRESS);
     }

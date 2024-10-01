@@ -203,7 +203,6 @@ MtlSocGetPcieRpDevFun (
   } else {
     P2sbBase = GetP2sbDeviceAddr2 (DEVICE_TABLE_P2SB_INSTANCE_SOC);
   }
-  DEBUG ((DEBUG_INFO, "P2sbBase 0x%llx\n",P2sbBase));
 
   if ((P2sbBase & 0x0FFFFFFF) != 0) {
     P2sbBase = TO_PCI_LIB_ADDRESS (P2sbBase);
@@ -217,7 +216,6 @@ MtlSocGetPcieRpDevFun (
   if (PciePcd != 0xFFFFFFFF) {
     *RpFun = (PciePcd >> (FuncIndex * S_SPX_PCR_PCD_RP_FIELD)) & B_SPX_PCR_PCD_RP1FN;
   }
-  DEBUG ((DEBUG_INFO, "%d, P2sbBase 0x%llx, PID=0x%x, Fid = 0x%x, PciePcd = 0x%x\n", Index, P2sbBase, PcieInfo[Index].Pid, Fid, PciePcd));
 
   return EFI_SUCCESS;
 }

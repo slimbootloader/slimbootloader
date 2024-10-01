@@ -1183,15 +1183,11 @@ ConfigurePad (
   DEBUG_CODE_BEGIN ();
   RegOffset     = GetRegisterOffset (GpioPad, GpioV2Dw0Reg);
   RegisterValue = GpioRead32 (GpioPad, RegOffset);
-  DEBUG ((DEBUG_INFO, "DW0 Offset= 0x%x, Value= 0x%x\n", RegOffset, RegisterValue));
+  DEBUG ((DEBUG_INFO, "Pad:0x%x, DW0(0x%x)=0x%x  ", GpioPad, RegOffset, RegisterValue));
 
   RegOffset     = GetRegisterOffset (GpioPad, GpioV2Dw1Reg);
   RegisterValue = GpioRead32 (GpioPad, RegOffset);
-  DEBUG ((DEBUG_INFO, "DW1 Offset= 0x%x, Value= 0x%x\n", RegOffset, RegisterValue));
-
-  RegOffset     = GetRegisterOffset (GpioPad, GpioV2Dw2Reg);
-  RegisterValue = GpioRead32 (GpioPad, RegOffset);
-  DEBUG ((DEBUG_INFO, "DW2 Offset= 0x%x, Value= 0x%x\n", RegOffset, RegisterValue));
+  DEBUG ((DEBUG_INFO, "DW1(0x%x)=0x%x\n", RegOffset, RegisterValue));
   DEBUG_CODE_END ();
 
   return EFI_SUCCESS;
