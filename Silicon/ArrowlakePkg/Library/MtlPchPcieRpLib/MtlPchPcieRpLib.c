@@ -68,6 +68,8 @@ GetP2sbDeviceAddr (
   DeviceBase  = 0;
   Device      = NULL;
   DeviceTable = (PLT_DEVICE_TABLE *)GetDeviceTable();
+  // Set a boundary limit to avoid coverity issue
+  DeviceTable->DeviceNumber = MIN (50, DeviceTable->DeviceNumber);
   for (Index = 0; Index < DeviceTable->DeviceNumber; Index++) {
     Device = &DeviceTable->Device[Index];
     if ((Device->Type == PlatformDeviceP2sb) && (Device->Instance == DeviceInstance)){
