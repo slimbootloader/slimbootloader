@@ -20,7 +20,7 @@ Device (H_EC) {
   //
   // Devices under H_EC scope
   //
-  //Include ("Devices/Als.asl")
+  Include ("Devices/Als.asl")
   Include ("Devices/Bat0Virt.asl")
   Include ("Devices/Bat1Real.asl")
   Include ("Devices/Lid0.asl")
@@ -29,4 +29,3 @@ Device (H_EC) {
   Include ("Devices/ConvertibleIndicator.asl")
   Include ("Devices/DockingIndicator.asl")
 }
-
