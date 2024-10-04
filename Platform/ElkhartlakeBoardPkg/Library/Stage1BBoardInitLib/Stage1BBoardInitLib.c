@@ -152,7 +152,7 @@ GetBoardIdFromSmbus (
   }
 }
 
-#if FeaturePcdGet(PcdTccEnabled)
+#if FixedPcdGetBool(PcdTccEnabled)
 /**
   Update FSP-M UPD config data for TCC mode and tuning
 
@@ -498,7 +498,7 @@ UpdateFspConfig (
 
     //Vtd Config
     Fspmcfg->VtdDisable                 = !FeaturePcdGet (PcdVtdEnabled);
-#if FeaturePcdGet(PcdTccEnabled)
+#if FixedPcdGetBool(PcdTccEnabled)
     DEBUG ((DEBUG_INFO, "Enable VTd since TCC is enabled\n"));
     Fspmcfg->VtdDisable = 0;
 #endif
@@ -701,7 +701,7 @@ UpdateFspConfig (
   // Enable s0ix by default
   PLAT_FEAT.S0ixEnable = 1;
 
-#if FeaturePcdGet(PcdTccEnabled)
+#if FixedPcdGetBool(PcdTccEnabled)
   TccModePreMemConfig (FspmUpd);
 #endif
 

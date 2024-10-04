@@ -853,7 +853,7 @@ BoardInit (
   }
 }
 
-#if FeaturePcdGet(PcdTccEnabled)
+#if FixedPcdGetBool(PcdTccEnabled)
 /**
   Update FSP-S UPD config data for TCC mode and tuning
 
@@ -868,6 +868,9 @@ TccModePostMemConfig (
   FSPS_UPD  *FspsUpd
 )
 {
+  UINT8  Index;
+  UINT8  MaxPchPcieRootPorts;
+
   DEBUG ((DEBUG_INFO, "Set TCC silicon:\n"));
 
   // Set default values for TCC related Silicon settings
@@ -915,7 +918,6 @@ TccModePostMemConfig (
   DEBUG ((DEBUG_INFO, "TccErrorLogEn         = %x\n", FspsUpd->FspsConfig.TccErrorLogEn          ));
   DEBUG ((DEBUG_INFO, "PcieRpAspm            = %x\n", FspsUpd->FspsConfig.PcieRpAspm[0]          ));
   DEBUG ((DEBUG_INFO, "PcieRpL1Substates     = %x\n", FspsUpd->FspsConfig.PcieRpL1Substates[0]   ));
-  DEBUG ((DEBUG_INFO, "Rtd3Support           = %x\n", mTccRtd3Support                            ));
 
   return EFI_SUCCESS;
 }

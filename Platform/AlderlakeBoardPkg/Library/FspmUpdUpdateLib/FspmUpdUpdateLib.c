@@ -71,7 +71,7 @@ GetCpuStepping(
   return ((CPU_STEPPING) (Eax.Uint32 & CPUID_FULL_STEPPING));
 }
 
-#if FeaturePcdGet(PcdTccEnabled)
+#if FixedPcdGetBool(PcdTccEnabled)
 /**
   Update FSP-M UPD config data for TCC mode and tuning
 
@@ -636,7 +636,7 @@ UpdateFspConfig (
   }
 
   // Tcc enabling
-#if FeaturePcdGet(PcdTccEnabled)
+#if FixedPcdGetBool(PcdTccEnabled)
   TccModePreMemConfig (FspmUpd);
 #endif
 
