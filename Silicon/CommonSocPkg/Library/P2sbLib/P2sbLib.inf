@@ -27,10 +27,10 @@
   BootloaderCorePkg/BootloaderCorePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
   Silicon/CommonSocPkg/CommonSocPkg.dec
-  Silicon/ArrowlakePkg/ArrowlakePkg.dec
 
 [LibraryClasses]
   BaseLib
   IoLib
+  PciSegmentLib
 
 [Pcd]
