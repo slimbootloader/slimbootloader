@@ -1055,7 +1055,7 @@ FspUpdatePcieRpPolicy (
   FspsUpd->FspsConfig.PcieRpFunctionSwap = 0x1;
 }
 
-#if FeaturePcdGet(PcdTccEnabled)
+#if FixedPcdGetBool(PcdTccEnabled)
 /**
   Update FSP-S UPD config data for TCC mode and tuning
 
@@ -1070,6 +1070,10 @@ TccModePostMemConfig (
   FSPS_UPD  *FspsUpd
 )
 {
+  UINT8  Index;
+  UINT8  MaxPchPcieRootPorts;
+  UINT8  MaxCpuPciePorts;
+
   DEBUG ((DEBUG_INFO, "Set TCC silicon:\n"));
 
   // TCC related Silicon settings
@@ -1453,7 +1457,7 @@ UpdateFspConfig (
     CopyMem (FspsConfig->PtmEnabled, SiCfgData->TcssPcieRootPortPtmEn, sizeof(SiCfgData->TcssPcieRootPortPtmEn));
   }
 
-#if FeaturePcdGet(PcdTccEnabled)
+#if FixedPcdGetBool(PcdTccEnabled)
     Status = TccModePostMemConfig (FspsUpd);
 #endif
 

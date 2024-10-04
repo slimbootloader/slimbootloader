@@ -74,9 +74,6 @@ Scope(\_SB.PC00) {
     }
     Store (GSIP (), SIPV)
     Include ("PchPcieCommon.asl")
-#if FeaturePcdGet (PcdTccEnabled) == 1
-    Include ("PchPcieAtscCommon.asl")
-#endif
     Method (_PRT, 0) {
       If (CondRefOf (PICM)) {
         If (PICM) {
@@ -133,9 +130,6 @@ Scope(\_SB.PC00) {
     }
     Store (GSIP (), SIPV)
     Include ("PchPcieCommon.asl")
-#if FeaturePcdGet (PcdTccEnabled) == 1
-    Include ("PchPcieAtscCommon.asl")
-#endif
     Method (_PRT, 0) {
       If (CondRefOf (PICM)) {
         If (PICM) {
@@ -192,9 +186,6 @@ Scope(\_SB.PC00) {
     }
     Store (GSIP (), SIPV)
     Include ("PchPcieCommon.asl")
-#if FeaturePcdGet (PcdTccEnabled) == 1
-    Include ("PchPcieAtscCommon.asl")
-#endif
     Method (_PRT, 0) {
       If (CondRefOf (PICM)) {
         If (PICM) {
@@ -251,9 +242,6 @@ Scope(\_SB.PC00) {
     }
     Store (GSIP (), SIPV)
     Include ("PchPcieCommon.asl")
-#if FeaturePcdGet (PcdTccEnabled) == 1
-    Include ("PchPcieAtscCommon.asl")
-#endif
     Method (_PRT, 0) {
       If (CondRefOf (PICM)) {
         If (PICM) {
@@ -366,9 +354,6 @@ Scope(\_SB.PC00) {
     }
     Store (GSIP (), SIPV)
     Include ("PchPcieCommon.asl")
-#if FeaturePcdGet (PcdTccEnabled) == 1
-    Include ("PchPcieAtscCommon.asl")
-#endif
     Method (_PRT, 0) {
       If (CondRefOf (PICM)) {
         If (PICM) {
@@ -425,9 +410,6 @@ Scope(\_SB.PC00) {
     }
     Store (GSIP (), SIPV)
     Include ("PchPcieCommon.asl")
-#if FeaturePcdGet (PcdTccEnabled) == 1
-    Include ("PchPcieAtscCommon.asl")
-#endif
     Method (_PRT, 0) {
       If (CondRefOf (PICM)) {
         If (PICM) {
@@ -484,9 +466,6 @@ Scope(\_SB.PC00) {
     }
     Store (GSIP (), SIPV)
     Include ("PchPcieCommon.asl")
-#if FeaturePcdGet (PcdTccEnabled) == 1
-    Include ("PchPcieAtscCommon.asl")
-#endif
     Method (_PRT, 0) {
       If (CondRefOf (PICM)) {
         If (PICM) {
@@ -599,9 +578,6 @@ Scope(\_SB.PC00) {
     }
     Store (GSIP (), SIPV)
     Include ("PchPcieCommon.asl")
-#if FeaturePcdGet (PcdTccEnabled) == 1
-    Include ("PchPcieAtscCommon.asl")
-#endif
     Method (_PRT, 0) {
       If (CondRefOf (PICM)) {
         If (PICM) {
@@ -658,9 +634,6 @@ Scope(\_SB.PC00) {
     }
     Store (GSIP (), SIPV)
     Include ("PchPcieCommon.asl")
-#if FeaturePcdGet (PcdTccEnabled) == 1
-    Include ("PchPcieAtscCommon.asl")
-#endif
     Method (_PRT, 0) {
       If (CondRefOf (PICM)) {
         If (PICM) {
@@ -717,9 +690,6 @@ Scope(\_SB.PC00) {
     }
     Store (GSIP (), SIPV)
     Include ("PchPcieCommon.asl")
-#if FeaturePcdGet (PcdTccEnabled) == 1
-    Include ("PchPcieAtscCommon.asl")
-#endif
     Method (_PRT, 0) {
       If (CondRefOf (PICM)) {
         If (PICM) {
@@ -776,9 +746,6 @@ Scope(\_SB.PC00) {
     }
     Store (GSIP (), SIPV)
     Include ("PchPcieCommon.asl")
-#if FeaturePcdGet (PcdTccEnabled) == 1
-    Include ("PchPcieAtscCommon.asl")
-#endif
     Method (_PRT, 0) {
       If (CondRefOf (PICM)) {
         If (PICM) {
@@ -835,9 +802,6 @@ Scope(\_SB.PC00) {
     }
     Store (GSIP (), SIPV)
     Include ("PchPcieCommon.asl")
-#if FeaturePcdGet (PcdTccEnabled) == 1
-    Include ("PchPcieAtscCommon.asl")
-#endif
     Method (_PRT, 0) {
       If (CondRefOf (PICM)) {
         If (PICM) {
@@ -894,9 +858,6 @@ Scope(\_SB.PC00) {
     }
     Store (GSIP (), SIPV)
     Include ("PchPcieCommon.asl")
-#if FeaturePcdGet (PcdTccEnabled) == 1
-    Include ("PchPcieAtscCommon.asl")
-#endif
     Method (_PRT, 0) {
       If (CondRefOf (PICM)) {
         If (PICM) {
@@ -953,9 +914,6 @@ Scope(\_SB.PC00) {
     }
     Store (GSIP (), SIPV)
     Include ("PchPcieCommon.asl")
-#if FeaturePcdGet (PcdTccEnabled) == 1
-    Include ("PchPcieAtscCommon.asl")
-#endif
     Method (_PRT, 0) {
       If (CondRefOf (PICM)) {
         If (PICM) {
@@ -1012,9 +970,6 @@ Scope(\_SB.PC00) {
     }
     Store (GSIP (), SIPV)
     Include ("PchPcieCommon.asl")
-#if FeaturePcdGet (PcdTccEnabled) == 1
-    Include ("PchPcieAtscCommon.asl")
-#endif
     Method (_PRT, 0) {
       If (CondRefOf (PICM)) {
         If (PICM) {
@@ -1071,9 +1026,6 @@ Scope(\_SB.PC00) {
     }
     Store (GSIP (), SIPV)
     Include ("PchPcieCommon.asl")
-#if FeaturePcdGet (PcdTccEnabled) == 1
-    Include ("PchPcieAtscCommon.asl")
-#endif
     Method (_PRT, 0) {
       If (CondRefOf (PICM)) {
         If (PICM) {
@@ -1130,9 +1082,6 @@ Scope(\_SB.PC00) {
     }
     Store (GSIP (), SIPV)
     Include ("PchPcieCommon.asl")
-#if FeaturePcdGet (PcdTccEnabled) == 1
-    Include ("PchPcieAtscCommon.asl")
-#endif
     Method (_PRT, 0) {
       If (CondRefOf (PICM)) {
         If (PICM) {
@@ -1189,9 +1138,6 @@ Scope(\_SB.PC00) {
     }
     Store (GSIP (), SIPV)
     Include ("PchPcieCommon.asl")
-#if FeaturePcdGet (PcdTccEnabled) == 1
-    Include ("PchPcieAtscCommon.asl")
-#endif
     Method (_PRT, 0) {
       If (CondRefOf (PICM)) {
         If (PICM) {
@@ -1304,9 +1250,6 @@ Scope(\_SB.PC00) {
     }
     Store (GSIP (), SIPV)
     Include ("PchPcieCommon.asl")
-#if FeaturePcdGet (PcdTccEnabled) == 1
-    Include ("PchPcieAtscCommon.asl")
-#endif
     Method (_PRT, 0) {
       If (CondRefOf (PICM)) {
         If (PICM) {
@@ -1363,9 +1306,6 @@ Scope(\_SB.PC00) {
     }
     Store (GSIP (), SIPV)
     Include ("PchPcieCommon.asl")
-#if FeaturePcdGet (PcdTccEnabled) == 1
-    Include ("PchPcieAtscCommon.asl")
-#endif
     Method (_PRT, 0) {
       If (CondRefOf (PICM)) {
         If (PICM) {
@@ -1422,9 +1362,6 @@ Scope(\_SB.PC00) {
     }
     Store (GSIP (), SIPV)
     Include ("PchPcieCommon.asl")
-#if FeaturePcdGet (PcdTccEnabled) == 1
-    Include ("PchPcieAtscCommon.asl")
-#endif
     Method (_PRT, 0) {
       If (CondRefOf (PICM)) {
         If (PICM) {
@@ -1481,9 +1418,6 @@ Scope(\_SB.PC00) {
     }
     Store (GSIP (), SIPV)
     Include ("PchPcieCommon.asl")
-#if FeaturePcdGet (PcdTccEnabled) == 1
-    Include ("PchPcieAtscCommon.asl")
-#endif
     Method (_PRT, 0) {
       If (CondRefOf (PICM)) {
         If (PICM) {
@@ -1540,9 +1474,6 @@ Scope(\_SB.PC00) {
     }
     Store (GSIP (), SIPV)
     Include ("PchPcieCommon.asl")
-#if FeaturePcdGet (PcdTccEnabled) == 1
-    Include ("PchPcieAtscCommon.asl")
-#endif
     Method (_PRT, 0) {
       If (CondRefOf (PICM)) {
         If (PICM) {
@@ -1599,9 +1530,6 @@ Scope(\_SB.PC00) {
     }
     Store (GSIP (), SIPV)
     Include ("PchPcieCommon.asl")
-#if FeaturePcdGet (PcdTccEnabled) == 1
-    Include ("PchPcieAtscCommon.asl")
-#endif
     Method (_PRT, 0) {
       If (CondRefOf (PICM)) {
         If (PICM) {
@@ -1658,9 +1586,6 @@ Scope(\_SB.PC00) {
     }
     Store (GSIP (), SIPV)
     Include ("PchPcieCommon.asl")
-#if FeaturePcdGet (PcdTccEnabled) == 1
-    Include ("PchPcieAtscCommon.asl")
-#endif
     Method (_PRT, 0) {
       If (CondRefOf (PICM)) {
         If (PICM) {

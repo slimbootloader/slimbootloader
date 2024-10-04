@@ -63,7 +63,7 @@ InitEcCpuFanControl (
   VOID
 );
 
-#if FeaturePcdGet(PcdTccEnabled)
+#if FixedPcdGetBool(PcdTccEnabled)
 /**
   Update FSP-M UPD config data for TCC mode and tuning
 
@@ -181,7 +181,7 @@ UpdateFspConfig (
   }
   PlatformData->PlatformFeatures.VtdEnable = (!MemCfgData->VtdDisable) & FeaturePcdGet (PcdVtdEnabled);
 
-#if FeaturePcdGet(PcdTccEnabled)
+#if FixedPcdGetBool(PcdTccEnabled)
   // Need enable VTD if TCC is enalbed.
   DEBUG ((DEBUG_INFO, "Enable VTd since TCC is enabled\n"));
   PlatformData->PlatformFeatures.VtdEnable = 1;
@@ -469,7 +469,7 @@ UpdateFspConfig (
     }
   }
 
-#if FeaturePcdGet(PcdTccEnabled)
+#if FixedPcdGetBool(PcdTccEnabled)
   // Update TCC related UPDs if TCC is enabled
   TccModePreMemConfig (FspmUpd);
 #endif
