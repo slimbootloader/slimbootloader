@@ -19,15 +19,11 @@
 #define R_RTC_PCR_BUC                   0x3414
 
 #if FixedPcdGetBool(PcdMtlSSupport)
-#define  P2SB_BUS                       0x80
-#define  P2SB_DEVICE                    31
-#define  P2SB_FUNCTION                  1
 #define  P2SB_PID                       MTL_PCH_PID_RTC
+#define  P2SB_BASE                      PCI_LIB_ADDRESS(0x80, 31, 1, 0)
 #else
-#define  P2SB_BUS                       0
-#define  P2SB_DEVICE                    31
-#define  P2SB_FUNCTION                  1
 #define  P2SB_PID                       PID_RTC_HOST
+#define  P2SB_BASE                      PCH_PCR_BASE_ADDRESS
 #endif
 
 
@@ -57,8 +53,7 @@ SetBootPartition (
     OrData = 0;
   }
 
-  P2SbAndThenOr32 (PCI_LIB_ADDRESS(P2SB_BUS, P2SB_DEVICE, P2SB_FUNCTION, 0), MTL_PCH_PID_RTC, 0, R_RTC_PCR_BUC, AndData, OrData);
-
+  P2SbAndThenOr32 (P2SB_BASE, P2SB_PID, 0, R_RTC_PCR_BUC, AndData, OrData);
   return EFI_SUCCESS;
 }
 
@@ -80,7 +75,7 @@ GetBootPartition (
 {
   UINT32             RegValue;
 
-  RegValue = P2sbRead32 (PCI_LIB_ADDRESS(P2SB_BUS, P2SB_DEVICE, P2SB_FUNCTION, 0), MTL_PCH_PID_RTC, 0, R_RTC_PCR_BUC);
+  RegValue = P2sbRead32 (P2SB_BASE, P2SB_PID, 0, R_RTC_PCR_BUC);
   *Partition = (BOOT_PARTITION)(RegValue & BIT0);
 
   return EFI_SUCCESS;
