@@ -48,6 +48,10 @@ class Board(BaseBoard):
         self._AZB_WWAN_SUPPORT                = True
         self.SUPPORT_SR_IOV                   = 0
 
+        # _AZB_X710X550WA_SUPPORT enable WA needed to fix the link down issue with X710/X550.
+        # By default, this flag is disabled. If WA is needed then change the flag as True.
+        self._AZB_X710X550WA_SUPPORT          = False
+
         self.PCI_EXPRESS_BASE                 = 0xC0000000
         self.PCI_IO_BASE                      = 0x00002000
         self.PCI_MEM32_BASE                   = 0x80000000
@@ -288,6 +292,9 @@ class Board(BaseBoard):
 
         if self._AZB_WWAN_SUPPORT:
             dsc['PcdsFixedAtBuild'].append ('gPlatformAlderLakeTokenSpaceGuid.PcdAzbWwanSupport | TRUE')
+
+        if self._AZB_X710X550WA_SUPPORT:
+            dsc['PcdsFixedAtBuild'].append ('gPlatformAlderLakeTokenSpaceGuid.PcdAzbX710X550WA | TRUE')
 
         return dsc
 
