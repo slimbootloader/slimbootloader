@@ -69,6 +69,7 @@
   TopSwapLib
   CrashLogLib
   SerialIoI2cLib
+  PciSegmentLib
 
 [Guids]
   gFspNonVolatileStorageHobGuid
@@ -99,3 +100,4 @@
 [FixedPcd]
   gPlatformAlderLakeTokenSpaceGuid.PcdAdlLpSupport
   gPlatformAlderLakeTokenSpaceGuid.PcdAzbWwanSupport
+  gPlatformAlderLakeTokenSpaceGuid.PcdAzbX710X550WA
