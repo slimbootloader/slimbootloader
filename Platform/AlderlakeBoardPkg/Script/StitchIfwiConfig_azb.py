@@ -138,6 +138,7 @@ def get_xml_change_list (platform, plt_params_list):
     ('./FlashLayout/SubPartitions/PchcSubPartitionData/InputFile',               '$SourceDir\PchcSubPartitionData.bin'),
     ('./FlashSettings/FlashConfiguration/SpiDualIoReadEnable',                   'No'),
     ('./FlashSettings/FlashConfiguration/SpiDualOutReadEnable',                  'No'),
+    ('./FlashSettings/BiosConfiguration/BiosRedAssistance',                      'Disabled'),
     ('./PlatformProtection/ContentProtection/PavpSupported',                     'Yes'),
     ('./PlatformProtection/BootGuardConfiguration/BtGuardKeyManifestId',         '0x1'),
     ('./PlatformProtection/TpmOverSpiBusConfiguration/SpiOverTpmBusEnable',      'Yes'),
