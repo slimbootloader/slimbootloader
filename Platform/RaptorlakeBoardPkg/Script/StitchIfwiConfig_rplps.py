@@ -150,6 +150,7 @@ def get_xml_change_list (platform, plt_params_list):
         ('./FlashSettings/FlashConfiguration/FastReadClockFreq',                    '25MHz'),
         ('./FlashSettings/FlashConfiguration/WriteEraseClockFreq',                  '25MHz'),
         ('./FlashSettings/FlashConfiguration/ReadIdAndReadStatClkFreq',             '25MHz'),
+        ('./FlashSettings/BiosConfiguration/BiosRedAssistance',                     'Disabled'),
         ('./FlashSettings/VsccTable/VsccEntries/VsccEntry/VsccEntryName',           'VsccEntry0'),
         ('./PlatformProtection/PlatformIntegrity/OemPublicKeyHash',                 'F8 F0 E3 69 15 81 76 99 0A 54 9E D4 C3 6D 1A 86 39 D8 87 3D EF F7 ED 2D E3 4C B4 1B CC B3 04 76 CE 0A A0 63 BC 5B 7A AC FF D9 50 9E 96 40 C6 99'),
         ('./PlatformProtection/PlatformIntegrity/OemExtInputFile',                  '$SourceDir\OemExtInputFile.bin'),
