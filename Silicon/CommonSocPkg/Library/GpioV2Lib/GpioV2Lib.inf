@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2023, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2024, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -21,7 +21,6 @@
 
 [Sources]
   GpioV2Init.c
-  GpioV2Virtual.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -33,12 +32,10 @@
   BaseLib
   IoLib
   MemoryAllocationLib
-  GpioSiLib
-  PchSbiAccessLib
+  GpioV2SiLib
   SortLib
   PcdLib
   HobLib
   HobBuildLib
-
-[Pcd]
+  P2sbLib
 
