@@ -180,6 +180,7 @@ class BaseBoard(object):
         self.ENABLE_LEGACY_EF_SEG  = 1
         # 0: Disable  1: Enable  2: Auto (disable for UEFI payload, enable for others)
         self.ENABLE_SMM_REBASE     = 0
+        self.ENABLE_IPP_CRYPTO_PERF = 0
 
         self.SUPPORT_ARI           = 0
         self.SUPPORT_SR_IOV        = 0

@@ -1449,6 +1449,10 @@ PayloadMain (
   mEntryStack = Param;
 
   DEBUG ((DEBUG_INFO, "\n\n====================Os Loader====================\n\n"));
+#if FixedPcdGetBool (PcdEnableCryptoPerfTest)
+    CryptoPerfTestPrintResult();
+#endif
+
   AddMeasurePoint (0x4010);
 
   //

@@ -66,6 +66,7 @@
 #include <Register/Intel/ArchitecturalMsr.h>
 #include <Library/StringSupportLib.h>
 #include <PreOsHeader.h>
+#include <Library/IppCryptoPerfLib.h>
 
 
 #define MKHI_BOOTLOADER_SEED_LEN       64

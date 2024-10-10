@@ -85,6 +85,7 @@
   LocalApicLib
   SynchronizationLib
   MpServiceLib
+  IppCryptoPerfLib
 
 [Guids]
   gOsConfigDataGuid
@@ -114,6 +115,7 @@
   gPayloadTokenSpaceGuid.PcdGrubBootCfgEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootHashMask
   gPayloadTokenSpaceGuid.PcdRtcmRsvdSize
+  gPlatformCommonLibTokenSpaceGuid.PcdEnableCryptoPerfTest
 
 [Depex]
   TRUE

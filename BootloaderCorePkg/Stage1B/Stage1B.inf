@@ -60,6 +60,7 @@
   TopSwapLib
   WatchDogTimerLib
   FirmwareResiliencyLib
+  IppCryptoPerfLib
 
 [Guids]
   gPlatformModuleTokenSpaceGuid
@@ -107,6 +108,7 @@
   gPlatformModuleTokenSpaceGuid.PcdSblResiliencyEnabled
   gPlatformModuleTokenSpaceGuid.PcdBootFailureThreshold
   gPlatformModuleTokenSpaceGuid.PcdTcoTimeout
+  gPlatformCommonLibTokenSpaceGuid.PcdEnableCryptoPerfTest
 
 [Depex]
   TRUE

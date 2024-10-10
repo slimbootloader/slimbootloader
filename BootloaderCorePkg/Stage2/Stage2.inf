@@ -74,6 +74,7 @@
   TcoTimerLib
   WatchDogTimerLib
   FitLib
+  IppCryptoPerfLib
 
 [Guids]
   gFspReservedMemoryResourceHobGuid
@@ -156,6 +157,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdBootPerformanceMask
   gPlatformModuleTokenSpaceGuid.PcdSblResiliencyEnabled
   gPlatformModuleTokenSpaceGuid.PcdEnableFwuNotify
+  gPlatformCommonLibTokenSpaceGuid.PcdEnableCryptoPerfTest
 
 [Depex]
   TRUE
