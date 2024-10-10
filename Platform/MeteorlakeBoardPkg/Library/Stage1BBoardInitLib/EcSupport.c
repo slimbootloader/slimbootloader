@@ -18,7 +18,6 @@
 #include <Register/PchRegsLpc.h>
 #include <Register/PchRegsPcr.h>
 #include <PlatformBoardId.h>
-#include <Include/PcrDefine.h>
 #include <Library/SmbusLib.h>
 #include <ConfigDataDefs.h>
 #include <Library/ConfigDataLib.h>
@@ -105,7 +104,6 @@ GetBoardIdFromSmbus (
   )
 {
   UINT8                    BomId;
-  //UINT8                   BoardId;
   SMBUS_INPUT_PORT0        SmbusInputPort0Info;
   SMBUS_INPUT_PORT1        SmbusInputPort1Info;
   EFI_STATUS               Status0;

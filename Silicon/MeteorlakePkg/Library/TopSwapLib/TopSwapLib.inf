@@ -21,7 +21,7 @@
   MdePkg/MdePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
   Silicon/MeteorlakePkg/MeteorlakePkg.dec
-
+  Silicon/CommonSocPkg/CommonSocPkg.dec
 
 [LibraryClasses]
   BaseLib
@@ -29,6 +29,7 @@
   IoLib
   BootloaderCommonLib
   PcdLib
+  P2sbLib
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress

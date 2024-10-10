@@ -61,7 +61,7 @@
   VariableLib
   WatchDogTimerLib
   FspmUpdUpdateLib
-  PchP2sbLib
+  P2sbLib
   SmbusLib
 
 [Guids]

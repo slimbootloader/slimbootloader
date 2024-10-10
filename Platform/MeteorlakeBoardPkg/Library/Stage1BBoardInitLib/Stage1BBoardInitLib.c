@@ -8,7 +8,6 @@
 #include "Stage1BBoardInitLib.h"
 #include <Include/GpioV2Config.h>
 #include <Library/PcdLib.h>
-#include <Library/MtlSocGpioTopologyLib.h>
 #include <Register/PchRegsSmbus.h>
 #include <Library/MeExtMeasurementLib.h>
 #include <IndustryStandard/Pci22.h>
@@ -97,6 +96,14 @@ CONST PLT_DEVICE mPlatformDevices[] = {
       }
     },
     .Type = PlatformDeviceGraphics,
+    .Instance = 0
+  },
+  {
+    // SOC P2sb 0:31:1
+    .Dev = {
+      .DevAddr = 0xE0000000,
+    },
+    .Type = PlatformDeviceP2sb,
     .Instance = 0
   }
 };
@@ -551,51 +558,6 @@ GetPlatformPowerState (
 }
 
 /**
-  Count the number of GPIO settings in the Table.
-
-  @param[in]  GpioTable   The pointer of GPIO config table
-  @param[out] GpioCount   The number of GPIO config entries
-**/
-VOID
-GetGpioTableSize (
-  GPIOV2_INIT_CONFIG   *GpioTable,
-  OUT UINT16           *GpioCount
-  )
-{
-  *GpioCount = 0;
-  if(GpioTable != NULL) {
-    while (GpioTable[*GpioCount].GpioPad != 0 && *GpioCount < MAX_GPIO_PINS) {
-      DEBUG ((DEBUG_INFO, "GpioTable[%d]->GpioPad = %x \n", *GpioCount, GpioTable[*GpioCount].GpioPad));
-      (*GpioCount) ++;
-    }
-  } else {
-    DEBUG ((DEBUG_INFO, "GpioTable is NULL\n"));
-  }
-  DEBUG ((DEBUG_INFO, "GetGpioTableSize() GpioCount = %d\n", *GpioCount));
-}
-
-/**
-  Configure GPIO Before Memory is initialized.
-
-  @param[in]  GpioTable  Pointer to Gpio table
-**/
-VOID
-GpioInit (
-  IN GPIOV2_INIT_CONFIG *GpioTable
-  )
-{
-  UINT16             GpioCount;
-
-  if (GpioTable != 0) {
-    GpioCount = 0;
-    GetGpioTableSize (GpioTable, &GpioCount);
-    if (GpioCount != 0) {
-      ConfigureGpioV2 (CDATA_NO_TAG, (VOID *) GpioTable, (UINTN) GpioCount);
-    }
-  }
-}
-
-/**
   Board specific hook points.
 
   Implement board specific initialization during the boot flow.
@@ -604,16 +566,12 @@ GpioInit (
 
 **/
 VOID
+EFIAPI
 BoardInit (
   IN  BOARD_INIT_PHASE  InitPhase
   )
 {
-  GPIOV2_INIT_CONFIG *GPIOTableV2;
-  P2SB_SIDEBAND_REGISTER_ACCESS   *CommunityAccess;
   FEATURES_CFG_DATA           *FeaturesCfgData;
-
-  CommunityAccess = 0;
-
   switch (InitPhase) {
   case PreConfigInit:
 DEBUG_CODE_BEGIN();
@@ -672,49 +630,25 @@ DEBUG_CODE_END();
     );
     switch (GetPlatformId ()) {
     case BoardIdMtlPDdr5SODimmSbsRvp:
-      DEBUG ((DEBUG_ERROR, "The platform id is : 0x%X!\n", GetPlatformId ()));
-      DEBUG ((DEBUG_ERROR, "GPIO table size: %x  \n",sizeof (mGpioTablePreMemMtlPSbsRvpDimm) / sizeof (mGpioTablePreMemMtlPSbsRvpDimm[0])));
-      MtlSocInstallCommunityAccess(CommunityAccess);
-      GPIOTableV2 = mGpioTablePreMemMtlPSbsRvpDimm;
-      GpioInit (GPIOTableV2);
+      ConfigureGpioV2 (CDATA_NO_TAG, (VOID *)mGpioTablePreMemMtlPSbsRvpDimm, sizeof (mGpioTablePreMemMtlPSbsRvpDimm) / sizeof (mGpioTablePreMemMtlPSbsRvpDimm[0]));
       break;
-     case BoardIdMtlPLp5xT3Rvp:
-      DEBUG ((DEBUG_ERROR, "The platform id is : 0x%X!\n", GetPlatformId ()));
-      DEBUG ((DEBUG_ERROR, "GPIO table size: %x  \n",sizeof (mGpioTablePreMemMtlPLP5SbsRvpDimm) / sizeof (mGpioTablePreMemMtlPLP5SbsRvpDimm[0])));
-      MtlSocInstallCommunityAccess(CommunityAccess);
-      GPIOTableV2 = mGpioTablePreMemMtlPLP5SbsRvpDimm;
-      GpioInit (GPIOTableV2);
+    case BoardIdMtlPLp5xT3Rvp:
+      ConfigureGpioV2 (CDATA_NO_TAG, (VOID *)mGpioTablePreMemMtlPLP5SbsRvpDimm, sizeof (mGpioTablePreMemMtlPLP5SbsRvpDimm) / sizeof (mGpioTablePreMemMtlPLP5SbsRvpDimm[0]));
       break;
     case BoardIdMtlPSDdr5Rvp:
-      DEBUG ((DEBUG_ERROR, "The platform id is : 0x%X!\n", GetPlatformId ()));
-      DEBUG ((DEBUG_ERROR, "GPIO table size: %x  \n",sizeof (mGpioTablePreMemMtlPSRvpDimm) / sizeof (mGpioTablePreMemMtlPSRvpDimm[0])));
-      MtlSocInstallCommunityAccess(CommunityAccess);
-      GPIOTableV2 = mGpioTablePreMemMtlPSRvpDimm;
-      GpioInit (GPIOTableV2);
+      ConfigureGpioV2 (CDATA_NO_TAG, (VOID *)mGpioTablePreMemMtlPSRvpDimm, sizeof (mGpioTablePreMemMtlPSRvpDimm) / sizeof (mGpioTablePreMemMtlPSRvpDimm[0]));
       break;
     case BoardIdMtlPSDdr5Crb:
-      DEBUG ((DEBUG_ERROR, "The platform id is : 0x%X!\n", GetPlatformId ()));
-      DEBUG ((DEBUG_ERROR, "GPIO table size: %x  \n",sizeof (mGpioTablePreMemMtlPSSbsCRBDimm) / sizeof (mGpioTablePreMemMtlPSSbsCRBDimm[0])));
-      MtlSocInstallCommunityAccess(CommunityAccess);
-      GPIOTableV2 = mGpioTablePreMemMtlPSSbsCRBDimm;
-      GpioInit (GPIOTableV2);
+      ConfigureGpioV2 (CDATA_NO_TAG, (VOID *)mGpioTablePreMemMtlPSSbsCRBDimm, sizeof (mGpioTablePreMemMtlPSSbsCRBDimm) / sizeof (mGpioTablePreMemMtlPSSbsCRBDimm[0]));
       break;
     case BoardIdMtlPDdr5CRb:
-      DEBUG ((DEBUG_ERROR, "The platform id is : 0x%X!\n", GetPlatformId ()));
-      DEBUG ((DEBUG_ERROR, "GPIO table size: %x  \n",sizeof (mGpioTablePreMemMtlPSbsCRBDimm) / sizeof (mGpioTablePreMemMtlPSbsCRBDimm[0])));
-      MtlSocInstallCommunityAccess(CommunityAccess);
-      GPIOTableV2 = mGpioTablePreMemMtlPSbsCRBDimm;
-      GpioInit (GPIOTableV2);
+      ConfigureGpioV2 (CDATA_NO_TAG, (VOID *)mGpioTablePreMemMtlPSbsCRBDimm, sizeof (mGpioTablePreMemMtlPSbsCRBDimm) / sizeof (mGpioTablePreMemMtlPSbsCRBDimm[0]));
       break;
     case BoardIdMtlPDdr5Mcl:
-      DEBUG ((DEBUG_ERROR, "The platform id is MCL:  0x%X!\n", GetPlatformId ()));
-      DEBUG ((DEBUG_ERROR, "GPIO table size: %x  \n",sizeof (mGpioTableMcl) / sizeof (mGpioTableMcl[0])));
-      MtlSocInstallCommunityAccess(CommunityAccess);
-      GPIOTableV2 = mGpioTableMcl;
-      GpioInit (GPIOTableV2);
+      ConfigureGpioV2 (CDATA_NO_TAG, (VOID *)mGpioTableMcl, sizeof (mGpioTableMcl) / sizeof (mGpioTableMcl[0]));
       break;
     default:
-      DEBUG ((DEBUG_ERROR, "Could not find pre-mem GPIO for PlatformId 0x%X!\n", GetPlatformId ()));
+      DEBUG ((DEBUG_INFO, "Could not find pre-mem GPIO for PlatformId 0x%X!\n", GetPlatformId ()));
       break;
     }
     break;
