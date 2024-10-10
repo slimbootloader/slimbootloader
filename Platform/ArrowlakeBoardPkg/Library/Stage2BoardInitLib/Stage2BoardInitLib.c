@@ -629,6 +629,13 @@ UpdateFrameBufferInfo (
   OUT  EFI_PEI_GRAPHICS_INFO_HOB   *GfxInfo
   )
 {
+  if (PcdGetBool (PcdIntelGfxEnabled)) {
+    DEBUG ((DEBUG_INFO, "Updating FB \n"));
+    GfxInfo->FrameBufferBase = PciRead32 (PCI_LIB_ADDRESS (IGD_BUS_NUM, IGD_DEV_NUM, IGD_FUN_NUM, 0x18)) & 0xFFFFFF00;
+    GfxInfo->FrameBufferBase |= LShiftU64(PciRead32 (PCI_LIB_ADDRESS (IGD_BUS_NUM, IGD_DEV_NUM, IGD_FUN_NUM, 0x1C)),32);
+    GfxInfo->FrameBufferBase += SIZE_8MB;
+  }
+  DEBUG ((DEBUG_INFO, "GfxDeviceInfo Frame Buffer =0x%llx\n", GfxInfo->FrameBufferBase));
 
 }
 
