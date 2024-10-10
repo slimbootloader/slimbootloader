@@ -31,6 +31,7 @@
   PayloadPkg/PayloadPkg.dec
   Platform/CommonBoardPkg/CommonBoardPkg.dec
   Platform/ArrowlakeBoardPkg/ArrowlakeBoardPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
   Silicon/ArrowlakePkg/ArrowlakePkg.dec
 
 [LibraryClasses]
