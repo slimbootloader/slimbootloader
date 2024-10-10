@@ -11,7 +11,7 @@
 #define _METEOR_LAKE_P_DDR5_CRB_PREMEM_GPIO_TABLE_H_
 
 #include <GpioV2PinsMtlSoc.h>
-#include <Include/GpioV2Config.h>
+#include <Library/GpioV2Lib.h>
 
 GLOBAL_REMOVE_IF_UNREFERENCED GPIOV2_INIT_CONFIG mGpioTablePreMemMtlPSbsRvpDimm[] =
 {
@@ -82,12 +82,10 @@ GLOBAL_REMOVE_IF_UNREFERENCED GPIOV2_INIT_CONFIG mGpioTablePreMemMtlPSbsRvpDimm[
   {GPIOV2_MTL_SOC_M_GPP_F21, {GpioV2PadModeGpio, GpioV2HostOwnAcpi, GpioV2DirInInv, GpioV2StateDefault,  GpioV2IntLevel|GpioV2IntSci,    GpioV2ResetHostDeep,  GpioV2TermNone,  GpioV2Unlock,  GpioV2Lock }},  // WWAN_WAKE_GPIO_N
   {GPIOV2_MTL_SOC_M_GPP_D7,  {GpioV2PadModeGpio, GpioV2HostOwnAcpi, GpioV2DirOut,   GpioV2StateHigh,     GpioV2IntDis,                GpioV2ResetResume,  GpioV2TermNone, GpioV2Lock,  GpioV2Unlock }},    // M.2_WWAN_DISABLE_N
   {GPIOV2_MTL_SOC_M_GPP_D8,  {GpioV2PadModeGpio, GpioV2HostOwnAcpi, GpioV2DirInInv,    GpioV2StateDefault,  GpioV2IntLevel|GpioV2IntSci,  GpioV2ResetHostDeep,  GpioV2TermNone, GpioV2Unlock,  GpioV2Lock }},     // SAR_DPR_PCH
-
-  {0x0}  // terminator
 };
 
 
-GLOBAL_REMOVE_IF_UNREFERENCED GPIO_INIT_CONFIG mGpioTablePreMemMtlPSbsRvpTempDimm[] =
+GLOBAL_REMOVE_IF_UNREFERENCED GPIOV2_INIT_CONFIG mGpioTablePreMemMtlPSbsRvpTempDimm[] =
 {
 //
 //Type-C , TBT Re-Timers
@@ -341,8 +339,6 @@ GLOBAL_REMOVE_IF_UNREFERENCED GPIOV2_INIT_CONFIG mGpioTablePreMemMtlPSbsCRBDimm[
   {GPIOV2_MTL_SOC_M_GPP_H13, {GpioV2PadModeGpio, GpioV2HostOwnAcpi, GpioV2DirIn,  GpioV2StateDefault, GpioV2IntDis, GpioV2ResetHost,  GpioV2TermWpu20K}},  // Unused
   {GPIOV2_MTL_SOC_M_GPP_V15, {GpioV2PadModeGpio, GpioV2HostOwnAcpi, GpioV2DirIn,  GpioV2StateDefault, GpioV2IntDis, GpioV2ResetHost,  GpioV2TermWpu20K}},  // Unused
 
-  {0x0}  // terminator
-
 };
 
 GLOBAL_REMOVE_IF_UNREFERENCED GPIOV2_INIT_CONFIG mGpioTablePreMemMtlPLP5SbsRvpDimm[] =
@@ -457,7 +453,6 @@ GLOBAL_REMOVE_IF_UNREFERENCED GPIOV2_INIT_CONFIG mGpioTablePreMemMtlPLP5SbsRvpDi
   {GPIOV2_MTL_SOC_M_GPP_S6,  {GpioV2PadModeHardwareDefault, GpioV2HostOwnDefault, GpioV2DirDefault, GpioV2StateDefault,  GpioV2IntDefault, GpioV2ResetDefault, GpioV2TermDefault, GpioV2Unlock, GpioV2Unlock }}, //NC
   {GPIOV2_MTL_SOC_M_GPP_S7,  {GpioV2PadModeHardwareDefault, GpioV2HostOwnDefault, GpioV2DirDefault, GpioV2StateDefault,  GpioV2IntDefault, GpioV2ResetDefault, GpioV2TermDefault, GpioV2Unlock, GpioV2Unlock }}, //NC
 
-  {0x0}  // terminator
 };
 
 GLOBAL_REMOVE_IF_UNREFERENCED GPIOV2_INIT_CONFIG mGpioTableMcl[] =
@@ -565,7 +560,6 @@ GLOBAL_REMOVE_IF_UNREFERENCED GPIOV2_INIT_CONFIG mGpioTableMcl[] =
   {GPIOV2_MTL_SOC_M_GPP_V21,{GpioV2PadModeGpio, GpioV2HostOwnAcpi, GpioV2DirOut,  GpioV2StateLow,   GpioV2IntDis,GpioV2ResetHost,  GpioV2TermDefault}},
   {GPIOV2_MTL_SOC_M_GPP_V23,{GpioV2PadModeGpio, GpioV2HostOwnAcpi, GpioV2DirOut,  GpioV2StateLow,   GpioV2IntDis,GpioV2ResetHost,  GpioV2TermDefault}},
   {GPIOV2_MTL_SOC_M_GPP_H2,{GpioV2PadModeGpio, GpioV2HostOwnAcpi, GpioV2DirOut,  GpioV2StateLow,   GpioV2IntDis,GpioV2ResetHost,  GpioV2TermDefault}},
-  {0x0}  // terminator
 
 };
 

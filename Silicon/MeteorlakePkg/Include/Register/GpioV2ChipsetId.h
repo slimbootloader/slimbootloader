@@ -11,9 +11,7 @@
 #define _GPIOV2_CHIPSET_ID_H_
 
 
-#define GPIOV2_MTL_SOC_M_CHIPSET_ID     0xA
-
-#define GPIOV2_MTL_SOC_S_CHIPSET_ID     0xA
+#define GPIOV2_MTL_SOC_M_CHIPSET_ID     1
 
 
 #endif // _GPIOV2_PAD_DEFINITION_H_

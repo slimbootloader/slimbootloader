@@ -41,8 +41,6 @@ configs:
 
   - !include Platform/CommonBoardPkg/CfgData/CfgData_Common.yaml
 
-  - !include Platform/CommonBoardPkg/CfgData/CfgData_PayloadSelection.yaml
-
   - !include CfgData_BootOption.yaml
 
   - !include CfgData_Memory.yaml

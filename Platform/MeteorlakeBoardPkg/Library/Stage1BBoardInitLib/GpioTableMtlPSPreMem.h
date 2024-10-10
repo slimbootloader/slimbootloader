@@ -156,7 +156,6 @@ GLOBAL_REMOVE_IF_UNREFERENCED GPIOV2_INIT_CONFIG mGpioTablePreMemMtlPSRvpDimm[] 
   {GPIOV2_MTL_SOC_M_GPP_S2, {GpioV2PadModeNative1, GpioV2HostOwnGpio, GpioV2DirNone,  GpioV2StateDefault, GpioV2IntDis, GpioV2ResetHostDeep,  GpioV2TermNone}},    //GPP_S_2_SNDW1_CLK_SNDW0_DATA1_DMIC_CLK_A_0_RGMII_RESET_0_I2S1_TXD
   {GPIOV2_MTL_SOC_M_GPP_S3, {GpioV2PadModeNative1, GpioV2HostOwnGpio, GpioV2DirNone,  GpioV2StateDefault, GpioV2IntDis, GpioV2ResetHostDeep,  GpioV2TermNone}},    //GPP_S_3_SNDW1_DATA_SNDW0_DATA2_DMIC_DATA_0_RGMII_PPS_0_I2S1_RXD
 
-  {0x0}  // terminator
 };
 
 GLOBAL_REMOVE_IF_UNREFERENCED GPIOV2_INIT_CONFIG mGpioTablePreMemMtlPSRvpTempDimm[] =
@@ -301,8 +300,6 @@ GLOBAL_REMOVE_IF_UNREFERENCED GPIOV2_INIT_CONFIG mGpioTablePreMemMtlPSRvpTempDim
   {GPIOV2_MTL_SOC_M_GPP_H20,{GpioV2PadModeNative1, GpioV2HostOwnGpio, GpioV2DirNone,  GpioV2StateDefault, GpioV2IntDis, GpioV2ResetHostDeep,  GpioV2TermNone}},    //GPP_H_20_I2C0_SCL_I3C0_SCL
   {GPIOV2_MTL_SOC_M_GPP_S2, {GpioV2PadModeNative1, GpioV2HostOwnGpio, GpioV2DirNone,  GpioV2StateDefault, GpioV2IntDis, GpioV2ResetHostDeep,  GpioV2TermNone}},    //GPP_S_2_SNDW1_CLK_SNDW0_DATA1_DMIC_CLK_A_0_RGMII_RESET_0_I2S1_TXD
   {GPIOV2_MTL_SOC_M_GPP_S3, {GpioV2PadModeNative1, GpioV2HostOwnGpio, GpioV2DirNone,  GpioV2StateDefault, GpioV2IntDis, GpioV2ResetHostDeep,  GpioV2TermNone}},    //GPP_S_3_SNDW1_DATA_SNDW0_DATA2_DMIC_DATA_0_RGMII_PPS_0_I2S1_RXD
-
-  {0x0}  // terminator
 
 };
 
@@ -449,7 +446,6 @@ GLOBAL_REMOVE_IF_UNREFERENCED GPIOV2_INIT_CONFIG mGpioTablePreMemMtlPSSbsCRBDimm
   {GPIOV2_MTL_SOC_M_GPP_S2, {GpioV2PadModeNative1, GpioV2HostOwnGpio, GpioV2DirNone,  GpioV2StateDefault, GpioV2IntDis, GpioV2ResetHostDeep,  GpioV2TermNone}},    //GPP_S_2_SNDW1_CLK_SNDW0_DATA1_DMIC_CLK_A_0_RGMII_RESET_0_I2S1_TXD
   {GPIOV2_MTL_SOC_M_GPP_S3, {GpioV2PadModeNative1, GpioV2HostOwnGpio, GpioV2DirNone,  GpioV2StateDefault, GpioV2IntDis, GpioV2ResetHostDeep,  GpioV2TermNone}},    //GPP_S_3_SNDW1_DATA_SNDW0_DATA2_DMIC_DATA_0_RGMII_PPS_0_I2S1_RXD
 
-  {0x0}  // terminator
 };
 
 #endif // _METEOR_LAKE_PS_DDR5_RVP_PREMEM_GPIO_TABLE_H_

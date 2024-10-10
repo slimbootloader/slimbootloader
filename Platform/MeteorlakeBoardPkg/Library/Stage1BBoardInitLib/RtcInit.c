@@ -10,15 +10,12 @@
 #include <Library/IoLib.h>
 #include <Library/DebugLib.h>
 #include <RegAccess.h>
-#include <Register/PchRegsPmc.h>
+#include <Register/PmcRegs.h>
 #include <Library/BootloaderCommonLib.h>
 #include <PlatformBase.h>
 #include <Register/PchRegsPcr.h>
 #include <Register/PchRegsLpc.h>
-#include <Library/PchPcrLib.h>
 #include <Library/PchInfoLib.h>
-#include <Register/PchRegsPcr.h>
-#include <Include/PcrDefine.h>
 
 //
 // Dallas DS12C887 Real Time Clock

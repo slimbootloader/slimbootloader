@@ -10,13 +10,9 @@
 #include <Library/MeExtMeasurementLib.h>
 #include "Stage2BoardInitLib.h"
 #include "PsdLib.h"
-#include "GpioPinsVer4S.h"
-#include "GpioPinsVer2Lp.h"
 #include <Library/TimerLib.h>
-#include <Include/PcrDefine.h>
 #include <GpioV2PinsMtlSoc.h>
-#include <Include/GpioV2Config.h>
-#include <Library/MtlSocGpioTopologyLib.h>
+#include <Library/GpioV2Lib.h>
 #include <Library/PchInfoLib.h>
 #include <Register/PchRegsLpc.h>
 
@@ -307,12 +303,8 @@ BoardInit (
   switch (InitPhase) {
   case PreSiliconInit:
     EnableLegacyRegions ();
-    switch (GetPlatformId ()) {
-      case BoardIdMtlPDdr5SODimmSbsRvp:
-        break;
-      default:
-        break;
-    }
+    ConfigureGpioV2 (CDATA_GPIO_TAG, NULL, 0);
+
     if (GetBootMode() != BOOT_ON_FLASH_UPDATE) {
       UpdatePayloadId ();
     }
@@ -1382,8 +1374,7 @@ PlatformUpdateAcpiGnvs (
   UINT8                    RpDev;
   UINT8                    RpFun;
   UINT32                   Data32;
-  GPIO_GROUP               GroupToGpeDwX[3];
-  UINT32                   GroupDw[3];
+  UINT8                    GroupIndex[3];
 
   GlobalNvs = (GLOBAL_NVS_AREA *)GnvsIn;
   ZeroMem (GlobalNvs, sizeof (GLOBAL_NVS_AREA));
@@ -1460,18 +1451,14 @@ PlatformUpdateAcpiGnvs (
   PchNvs->SGIR  = 0xE;
   PchNvs->GPHD  = 0;
 
-  GpioGetGroupDwToGpeDwX (
-    &GroupToGpeDwX[0], &GroupDw[0],
-    &GroupToGpeDwX[1], &GroupDw[1],
-    &GroupToGpeDwX[2], &GroupDw[2]
-    );
+    GpioGetGpeMapping (GPIOV2_MTL_SOC_M_CHIPSET_ID, &GroupIndex[0], &GroupIndex[1], &GroupIndex[2]);
 
-  PchNvs->GEI0 = (UINT8) GpioGetGroupIndexFromGroup (GroupToGpeDwX[0]);
-  PchNvs->GEI1 = (UINT8) GpioGetGroupIndexFromGroup (GroupToGpeDwX[1]);
-  PchNvs->GEI2 = (UINT8) GpioGetGroupIndexFromGroup (GroupToGpeDwX[2]);
-  PchNvs->GED0 = (UINT8) GroupDw[0];
-  PchNvs->GED1 = (UINT8) GroupDw[1];
-  PchNvs->GED2 = (UINT8) GroupDw[2];
+  PchNvs->GEI0 = GroupIndex[0];
+  PchNvs->GEI1 = GroupIndex[1];
+  PchNvs->GEI2 = GroupIndex[2];
+  PchNvs->GED0 = (UINT8) 0x0;
+  PchNvs->GED1 = (UINT8) 0x0;
+  PchNvs->GED2 = (UINT8) 0x0;
   DEBUG ((DEBUG_INFO, "GEI [0x%X 0x%X 0x%X], GED [0x%X 0x%X 0x%X]\n",
     PchNvs->GEI0, PchNvs->GEI1, PchNvs->GEI2,
     PchNvs->GED0, PchNvs->GED1, PchNvs->GED2));

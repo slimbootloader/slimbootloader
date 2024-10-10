@@ -55,7 +55,6 @@
   BootOptionLib
   BoardSupportLib
   SpiFlashLib
-  GpioLib
   PchInfoLib
   PchPciBdfLib
   BdatLib
@@ -69,6 +68,8 @@
   WatchDogTimerLib
   FspsUpdUpdateLib
   HeciMeExtLib
+  GpioV2Lib
+  P2sbLib
 
 [Guids]
   gOsConfigDataGuid

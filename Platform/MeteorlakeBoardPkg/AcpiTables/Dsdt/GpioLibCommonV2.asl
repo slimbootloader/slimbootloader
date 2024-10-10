@@ -5,7 +5,7 @@
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
-#include <GpioV2Pad.h>
+#include <GpioV2Config.h>
 
 //
 // GPIO Access Library

@@ -18,7 +18,6 @@
 #include <PchAccess.h>
 #include <IndustryStandard/Pci.h>
 #include <Register/SerialIoUartRegs.h>
-#include <Include/PcrDefine.h>
 #include <Register/SaRegsHostBridge.h>
 #include <Register/PchRegsLpc.h>
 

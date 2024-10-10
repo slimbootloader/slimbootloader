@@ -121,7 +121,7 @@ class Board(BaseBoard):
         self.STAGE2_FD_BASE       = 0x01000000
         self.STAGE2_FD_SIZE       = 0x001F0000
 
-        self.PAYLOAD_SIZE         = 0x0002D000
+        self.PAYLOAD_SIZE         = 0x0002E000
         self.EPAYLOAD_SIZE        = 0x00230000
 
         self.ENABLE_FAST_BOOT = 0
@@ -158,7 +158,7 @@ class Board(BaseBoard):
         self.SBLRSVD_SIZE         = 0x00001000
         self.FWUPDATE_SIZE        = 0x00020000 if self.ENABLE_FWU else 0
         # Need a little bit more for full paging table
-        self.OS_LOADER_FD_SIZE    = 0x00058000
+        self.OS_LOADER_FD_SIZE    = 0x0005B000
         self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         # If BUILD_IDENTICAL_TS is 0, the flash map sizings and layout
@@ -242,11 +242,9 @@ class Board(BaseBoard):
             'SerialPortLib|BootloaderCommonPkg/Library/SerialPortLib/SerialPortLib.inf',
             'PlatformHookLib|Silicon/$(SILICON_PKG_NAME)/Library/PlatformHookLib/PlatformHookLib.inf',
             'ResetSystemLib|Platform/$(BOARD_PKG_NAME)/Library/ResetSystemLib/ResetSystemLib.inf',
-            'GpioLib|Silicon/CommonSocPkg/Library/GpioLib/GpioLib.inf',
-            'GpioV2Lib|Silicon/$(SILICON_PKG_NAME)/Library/GpioV2Lib/GpioV2Lib.inf',
-            'PchP2sbLib|Silicon/$(SILICON_PKG_NAME)/Library/PchP2sbLib/PchP2sbLib.inf',
-            'GpioSiLib|Silicon/$(SILICON_PKG_NAME)/Library/GpioSiLib/GpioSiLib.inf',
-            'PchSbiAccessLib|Silicon/CommonSocPkg/Library/PchSbiAccessLib/PchSbiAccessLib.inf',
+            'GpioV2Lib|Silicon/CommonSocPkg/Library/GpioV2Lib/GpioV2Lib.inf',
+            'P2sbLib|Silicon/CommonSocPkg/Library/P2sbLib/P2sbLib.inf',
+            'GpioV2SiLib|Silicon/$(SILICON_PKG_NAME)/Library/GpioV2SiLib/GpioV2SiLib.inf',
             'TccLib|Silicon/CommonSocPkg/Library/TccLib/TccLib.inf',
             'ShellExtensionLib|Platform/$(BOARD_PKG_NAME)/Library/ShellExtensionLib/ShellExtensionLib.inf',
             'FspmUpdUpdateLib|Platform/$(BOARD_PKG_NAME)/Library/FspmUpdUpdateLib/FspmUpdUpdateLib.inf',
