@@ -13,6 +13,7 @@
 #include <Library/HobLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include <Library/LoaderPerformanceLib.h>
+#include <Library/TimeStampLib.h>
 
 /**
   Display performance data.
@@ -42,32 +43,39 @@ CONST SHELL_COMMAND ShellCommandPerf = {
 /**
   Print loader PERFORMANCE_INFO data.
 
-  @param[in]  PerfData    pointer to performance data
+  @param[in]  PerfData         pointer to performance data
+  @param[in]  InMicroSecond    Show host performance time in MicroSecond when it is TRUE
 
 **/
-STATIC
 VOID
 EFIAPI
 PrintPerformanceInfo (
-  IN PERFORMANCE_INFO *PerfData
+  IN PERFORMANCE_INFO *PerfData,
+  IN BOOLEAN          InMicroSecond
   )
 {
-  UINT32 Idx, Time, PrevTime;
-  UINT16  Id;
+  UINT32 Idx;
+  UINT64 Time;
+  UINT64 PrevTime;
+  UINT16 Id;
   UINT64 Tsc;
 
   PrevTime = 0;
 
-  ShellPrint (L" Id   | Time (ms)  | Delta (ms) | Description\n");
-  ShellPrint (L"------+------------+------------+---------------------------\n");
+  ShellPrint (L" Id   |   Time (ms)   | Delta (ms)  | Description\n");
+  ShellPrint (L"------+---------------+-------------+---------------------------\n");
   for (Idx = 0; Idx < PerfData->Count; Idx++) {
     Tsc  = PerfData->TimeStamp[Idx] & 0x0000FFFFFFFFFFFFULL;
     Id   = (RShiftU64 (PerfData->TimeStamp[Idx], 48)) & 0xFFFF;
-    Time = (UINT32)DivU64x32 (Tsc, PerfData->Frequency);
-    ShellPrint (L" %4x | %7d ms | %7d ms | %a\n", Id, Time, Time - PrevTime, PerfIdToStr (Id, NULL));
+    if (InMicroSecond) {
+      Time = TimeStampTickToMicroSecond (Tsc);
+    } else {
+      Time = DivU64x32 (Tsc, PerfData->Frequency);
+    }
+    ShellPrint (L" %4x | %10d ms | %8d ms | %a\n", Id, (UINT32)(UINTN)Time, (UINT32)(UINTN)(Time - PrevTime), PerfIdToStr (Id, NULL));
     PrevTime = Time;
   }
-  ShellPrint (L"------+------------+------------+---------------------------\n");
+  ShellPrint (L"------+---------------+-------------+---------------------------\n");
 }
 
 /**
@@ -141,6 +149,18 @@ ShellCommandPerfFunc (
 {
   VOID             *GuidHob;
   PERFORMANCE_INFO *PerfData;
+  BOOLEAN          InMicroSecond;
+
+  InMicroSecond = FALSE;
+  if (Argc == 2) {
+    if (StrCmp (Argv[1], L"-d") == 0) {
+      InMicroSecond = TRUE;
+    } else {
+      goto usage;
+    }
+  } else if (Argc > 2) {
+    goto usage;
+  }
 
   GuidHob = GetNextGuidHob (&gLoaderPerformanceInfoGuid, GetHobList());
   if (GuidHob == NULL) {
@@ -152,7 +172,7 @@ ShellCommandPerfFunc (
 
   ShellPrint (L"Loader Performance Info\n");
   ShellPrint (L"=======================\n\n");
-  PrintPerformanceInfo (PerfData);
+  PrintPerformanceInfo (PerfData, InMicroSecond);
 
   // Print CSME boot performance
   if ((PcdGet32 (PcdBootPerformanceMask) & BIT2) != 0) {
@@ -160,4 +180,11 @@ ShellCommandPerfFunc (
   }
 
   return EFI_SUCCESS;
+
+  usage:
+  ShellPrint (L"Usage: %s [-d]\n", Argv[0]);
+  ShellPrint (L"\n"
+              L"Flags:\n"
+              L"  -d     Show host performance time in MicroSecond, by default in MilliSecond\n");
+  return EFI_ABORTED;
 }
