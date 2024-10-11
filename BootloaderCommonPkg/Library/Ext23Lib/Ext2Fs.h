@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2019 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2024, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
   Copyright (c) 1982, 1986, 1989, 1993
@@ -268,7 +268,7 @@ typedef struct {
 #define EXT2F_INCOMPAT_64BIT        0x0080
 #define EXT2F_INCOMPAT_EXTENTS      0x0040
 #define EXT2F_INCOMPAT_FLEX_BG      0x0200
-
+#define EXT2F_INCOMPAT_CSUM_SEED    0x2000
 /**
   Features supported in this implementation
 
@@ -289,7 +289,8 @@ typedef struct {
                                  | EXT2F_INCOMPAT_RECOVER \
                                  | EXT2F_INCOMPAT_64BIT   \
                                  | EXT2F_INCOMPAT_EXTENTS \
-                                 | EXT2F_INCOMPAT_FLEX_BG)
+                                 | EXT2F_INCOMPAT_FLEX_BG \
+                                 | EXT2F_INCOMPAT_CSUM_SEED)
 
 //
 //  Definitions of behavior on errors
