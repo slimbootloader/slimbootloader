@@ -1,0 +1,150 @@
+## @file
+#
+#  Copyright (c) 2024, Intel Corporation. All rights reserved.<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = IppCryptoLib
+  FILE_GUID                      = 56D08B33-9663-4D74-9D8A-DBA2F38B62B2
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = CryptoLib
+  DEFINE IPP_PATH                = ipp-crypto
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = X64
+#
+
+[Sources]
+  IppCryptoSupport.c
+  hmac.c
+  rsa_verify.c
+  sha256.c
+  sha384.c
+  sm3.c
+  intrin.h
+  $(IPP_PATH)/include/ippcpdefs.h
+  $(IPP_PATH)/sources/include/owndefs.h
+  $(IPP_PATH)/sources/ippcp/owncp.h
+  $(IPP_PATH)/sources/ippcp/pcpbn.h
+  $(IPP_PATH)/sources/ippcp/pcptool.h
+  $(IPP_PATH)/sources/include/asmdefs.inc
+  $(IPP_PATH)/sources/include/ia_32e.inc
+  $(IPP_PATH)/sources/include/ia_common.inc
+  $(IPP_PATH)/sources/include/utils.inc
+
+  # Misc source files
+  $(IPP_PATH)/sources/ippcp/pcpmgf1ca_rmf.c
+  $(IPP_PATH)/sources/ippcp/gsmod_engineinit.c
+  $(IPP_PATH)/sources/ippcp/gsmod_enginegetsize.c
+  $(IPP_PATH)/sources/ippcp/gsmod_montfactor.c
+  $(IPP_PATH)/sources/ippcp/pcpngmontexpstuff_bin.c
+  $(IPP_PATH)/sources/ippcp/pcpmontred.c
+  $(IPP_PATH)/sources/ippcp/cpinit.c
+
+  # BigNum source files
+  $(IPP_PATH)/sources/ippcp/pcpbngetsize.c
+  $(IPP_PATH)/sources/ippcp/pcpbninit.c
+  $(IPP_PATH)/sources/ippcp/pcpbnsetoctstr.c
+  $(IPP_PATH)/sources/ippcp/pcpbngetoctstr.c
+  $(IPP_PATH)/sources/ippcp/pcpbnu_setoctstr.c
+  $(IPP_PATH)/sources/ippcp/pcpbnu_getoctstr.c
+  $(IPP_PATH)/sources/ippcp/pcpbnu_arith_mul_adc.c
+  $(IPP_PATH)/sources/ippcp/pcpbnu_arith_sqr_adc.c
+  $(IPP_PATH)/sources/ippcp/pcpbnu_arith_add.c
+  $(IPP_PATH)/sources/ippcp/pcpbnu32_arith_add.c
+  $(IPP_PATH)/sources/ippcp/pcpbnu_arith_addmuldigit.c
+  $(IPP_PATH)/sources/ippcp/pcpbnu_arith_sub.c
+  $(IPP_PATH)/sources/ippcp/pcpbnu32_arith_sub.c
+  $(IPP_PATH)/sources/ippcp/pcpbnu32_arith_submuldigit.c
+  $(IPP_PATH)/sources/ippcp/pcpbnu_nlz.c
+  $(IPP_PATH)/sources/ippcp/pcpbnu32_nlz.c
+  $(IPP_PATH)/sources/ippcp/pcpbnu32_arith_div.c
+
+  # RSA Source files
+  $(IPP_PATH)/sources/ippcp/pcprsa_gsmethod__avx2_public.c
+  $(IPP_PATH)/sources/ippcp/pcprsa_getsizepublickey.c
+  $(IPP_PATH)/sources/ippcp/pcprsa_getbuffersizepublickey.c
+  $(IPP_PATH)/sources/ippcp/pcprsa_initpublickey.c
+  $(IPP_PATH)/sources/ippcp/pcprsa_setpublickey.c
+  $(IPP_PATH)/sources/ippcp/pcprsa_sizeof_pubkey.h
+  $(IPP_PATH)/sources/ippcp/pcprsaverifyhash_pkcs1v15_rmf.c
+  $(IPP_PATH)/sources/ippcp/pcprsaverify_pss_rmf.c
+  $(IPP_PATH)/sources/ippcp/pcprsa_gspub_cipher.c
+  $(IPP_PATH)/sources/ippcp/gsmodmethod_rsa.c
+  $(IPP_PATH)/sources/ippcp/pcprsa_montexpgetsize.c
+  $(IPP_PATH)/sources/ippcp/pcprsa_gsmethod__gpr_public.c
+
+  # Hash source files
+  $(IPP_PATH)/sources/ippcp/pcphashmessage_rmf.c
+  $(IPP_PATH)/sources/ippcp/pcphashinit_rmf.c
+  $(IPP_PATH)/sources/ippcp/pcphashupdate_rmf.c
+  $(IPP_PATH)/sources/ippcp/pcphashfinal_rmf.c
+  $(IPP_PATH)/sources/ippcp/pcphashca_rmf.c
+  $(IPP_PATH)/sources/ippcp/sm3/pcpsm3stuff.h
+
+  # HMAC source files
+  $(IPP_PATH)/sources/ippcp/pcphmacmessage_rmf.c
+  $(IPP_PATH)/sources/ippcp/pcphmacgetsize_rmf.c
+  $(IPP_PATH)/sources/ippcp/pcphmacca_rmf.c
+  $(IPP_PATH)/sources/ippcp/pcphmacupdate_rmf.c
+  $(IPP_PATH)/sources/ippcp/pcphmacfinal_rmf.c
+
+[Sources.X64]
+  #L9 files
+  $(IPP_PATH)/sources/ippcp/asm_intel64/cpinitas.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha256l9as.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha512l9as.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsm3l9_ni_as.nasm
+  #M7 FIles
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnuaddm7as.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnudivm7as.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnuincm7as.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnusubm7as.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnumulschoolsrvl9as.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnumulschoolsrvl9pp.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcppurgeblkm7as.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnum7.inc
+  $(IPP_PATH)/sources/ippcp/asm_ia32/pcpvariant_xmm7560.inc
+
+[UserExtensions.SBL."CopyList"]
+  $(IPP_PATH)/sources/ippcp/asm_intel64/cpinitas.asm              : $(IPP_PATH)/sources/ippcp/asm_intel64/cpinitas.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha256l9as.asm         : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha256l9as.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha512l9as.asm         : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha512l9as.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsm3l9_ni_as.asm        : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsm3l9_ni_as.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnuaddm7as.asm         : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnuaddm7as.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnudivm7as.asm         : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnudivm7as.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnuincm7as.asm         : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnuincm7as.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnusubm7as.asm         : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnusubm7as.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnumulschoolsrvl9.asm  : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnumulschoolsrvl9as.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnumulschoolsrvl9pp.asm  : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnumulschoolsrvl9pp.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcppurgeblkm7as.asm       : $(IPP_PATH)/sources/ippcp/asm_intel64/pcppurgeblkm7as.nasm
+
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  MemoryAllocationLib
+
+[FixedPcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdCryptoShaOptMask
+  gPlatformCommonLibTokenSpaceGuid.PcdIppHashLibSupportedMask
+  gPlatformCommonLibTokenSpaceGuid.PcdCompSignSchemeSupportedMask
+
+[BuildOptions]
+  MSFT:*_*_X64_CC_FLAGS = -D_ABL_ -D_L9 -D_ARCH_EM64T /GL- /arch:AVX2
+  MSFT:*_*_X64_NASM_FLAGS = -D_ABL_ -D_L9 -DWIN32E
+  GCC:*_*_X64_NASM_FLAGS = -D_ABL_ -D_L9 -DLINUX32E
+  GCC:*_*_*_CC_FLAGS  = -D_ABL_ -D_L9 -w -Wformat -Wformat-security -march=haswell -mavx2 -maes -mvaes -mpclmul -mvpclmulqdq -msha -mrdrnd -mrdseed
+
