@@ -84,6 +84,11 @@ IPP_CRYPTO_OPTIMIZATION_MASK = {
     "SHA256_NI"       : 0x0002,
     "SHA384_W7"       : 0x0004,
     "SHA384_G9"       : 0x0008,
+    "X64_M7"          : 0x0020, # SSE3
+    "X64_U8"          : 0x0040, # SSSE3
+    "X64_Y8"          : 0x0080, # SSE4.2
+    "X64_E9"          : 0x0100, # AVX
+    "X64_L9"          : 0x0200, # AVX2
     }
 
 IPP_CRYPTO_ALG_MASK = {
