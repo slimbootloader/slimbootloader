@@ -14,11 +14,11 @@
   VERSION_STRING       = 1.0
 
 [Sources]
-  m_e6_a06a4_0000001e.mcb
+  m_e6_a06a4_0000001f.mcb
 
 [UserExtensions.SBL."CloneRepo"]
   REPO   = https://github.com/slimbootloader/firmwareblob.git
-  COMMIT = 43ffcbc8f7d2f0f7967c1f4e605adbbddd2976c7
+  COMMIT = 45c2a9225fc2e9b45ecb3a521fd0ad45428ad4ce
 
 [UserExtensions.SBL."CopyList"]
-  Microcode/MeteorLake/m_e6_a06a4_0000001e.pdb  : Silicon/MeteorlakePkg/Microcode/m_e6_a06a4_0000001e.mcb
+  Microcode/MeteorLake/m_e6_a06a4_0000001f.pdb  : Silicon/MeteorlakePkg/Microcode/m_e6_a06a4_0000001f.mcb
