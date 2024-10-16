@@ -32,5 +32,6 @@
   IoLib
   DebugLib
   PchInfoLib
+  GpioSiLib
 
 [Pcd]
