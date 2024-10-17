@@ -21,6 +21,8 @@ jobs:
     vmImage: 'ubuntu-20.04'
 
   steps:
+  - checkout: self
+    submodules: recursive
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '3.8.x'
@@ -122,6 +124,8 @@ jobs:
     vmImage: 'ubuntu-20.04'
 
   steps:
+  - checkout: self
+    submodules: recursive
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '3.8.x'
@@ -160,6 +164,8 @@ jobs:
     vmImage: 'ubuntu-22.04'
 
   steps:
+  - checkout: self
+    submodules: recursive
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '3.8.x'
@@ -302,6 +308,8 @@ jobs:
     vmImage: 'windows-2019'
 
   steps:
+  - checkout: self
+    submodules: recursive
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '3.8.x'
