@@ -15,7 +15,6 @@
 #include <Library/P2sbLib.h>
 #include <Register/P2sbRegs.h>
 #include <IndustryStandard/Pci30.h>
-#include <Library/HostBridgeDefines.h>
 
 #define P2SB_PCR_ADDRESS(MmioBase, Pid, Offset)  ((UINTN) MmioBase | (UINT32) (((Offset) & 0x0F0000) << 8) | ((UINT8)(Pid) << 16) | (UINT16) ((Offset) & 0xFFFF))
 
