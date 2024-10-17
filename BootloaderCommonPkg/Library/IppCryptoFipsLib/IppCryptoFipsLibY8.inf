@@ -94,8 +94,6 @@
   $(IPP_PATH)/sources/ippcp/pcphmacca_rmf.c
   $(IPP_PATH)/sources/ippcp/pcphmacupdate_rmf.c
   $(IPP_PATH)/sources/ippcp/pcphmacfinal_rmf.c
-[Sources.IA32]
-
 
 [Sources.X64]
   $(IPP_PATH)/sources/ippcp/asm_ia32/pcpvariant_xmm7560.inc
@@ -146,5 +144,6 @@
 [BuildOptions]
   MSFT:*_*_*_CC_FLAGS = -D_ABL_ -D_Y8 /GL-
   MSFT:*_*_X64_NASM_FLAGS = -D_ABL_ -D_Y8 -DWIN32E
-  GCC:*_*_*_CC_FLAGS  = -D_ABL_ -D_Y8
+  GCC:*_*_X64_NASM_FLAGS = -D_ABL_ -D_Y8 -DLINUX32E
+  GCC:*_*_*_CC_FLAGS  = -D_ABL_ -D_Y8 -w -Wformat -Wformat-security -march=nehalem -msse4.2 -maes -mpclmul -msha -U__INTEL_COMPILER
 

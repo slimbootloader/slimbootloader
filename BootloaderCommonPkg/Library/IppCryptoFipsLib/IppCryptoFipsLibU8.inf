@@ -143,5 +143,6 @@
 [BuildOptions]
   MSFT:*_*_*_CC_FLAGS = -D_ABL_ -D_U8 /GL-
   MSFT:*_*_X64_NASM_FLAGS = -D_ABL_ -D_U8 -DWIN32E
-  GCC:*_*_*_CC_FLAGS  = -D_ABL_ -D_U8
+  GCC:*_*_X64_NASM_FLAGS = -D_ABL_ -D_U8 -DLINUX32E
+  GCC:*_*_*_CC_FLAGS  = -D_ABL_ -D_U8 -w -Wformat -Wformat-security
 

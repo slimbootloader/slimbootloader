@@ -96,8 +96,6 @@
   $(IPP_PATH)/sources/ippcp/pcphmacca_rmf.c
   $(IPP_PATH)/sources/ippcp/pcphmacupdate_rmf.c
   $(IPP_PATH)/sources/ippcp/pcphmacfinal_rmf.c
-[Sources.IA32]
-
 
 [Sources.X64]
   #L9 files
@@ -145,7 +143,8 @@
   gPlatformCommonLibTokenSpaceGuid.PcdCompSignSchemeSupportedMask
 
 [BuildOptions]
-  MSFT:*_*_X64_CC_FLAGS = -D_ABL_ -D_L9 -D_ARCH_EM64T /GL-
+  MSFT:*_*_X64_CC_FLAGS = -D_ABL_ -D_L9 -D_ARCH_EM64T /GL- /arch:AVX2
   MSFT:*_*_X64_NASM_FLAGS = -D_ABL_ -D_L9 -DWIN32E
-  GCC:*_*_*_CC_FLAGS  = -D_ABL_ -D_L9
+  GCC:*_*_X64_NASM_FLAGS = -D_ABL_ -D_L9 -DLINUX32E
+  GCC:*_*_*_CC_FLAGS  = -D_ABL_ -D_L9 -w -Wformat -Wformat-security -march=haswell -mavx2 -maes -mvaes -mpclmul -mvpclmulqdq -msha -mrdrnd -mrdseed
 
