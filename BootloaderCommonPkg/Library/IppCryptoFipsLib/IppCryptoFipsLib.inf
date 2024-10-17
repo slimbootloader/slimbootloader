@@ -116,5 +116,5 @@
 
 [BuildOptions]
   MSFT:*_*_*_CC_FLAGS = -D_ABL_ /GL-
-  GCC:*_*_*_CC_FLAGS  = -D_ABL_
+  GCC:*_*_*_CC_FLAGS  = -D_ABL_ -w
 
