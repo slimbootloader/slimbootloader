@@ -94,11 +94,6 @@
   $(IPP_PATH)/sources/ippcp/pcphmacca_rmf.c
   $(IPP_PATH)/sources/ippcp/pcphmacupdate_rmf.c
   $(IPP_PATH)/sources/ippcp/pcphmacfinal_rmf.c
-[Sources.IA32]
-
-
-[Sources.X64]
-
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -116,5 +111,5 @@
 
 [BuildOptions]
   MSFT:*_*_*_CC_FLAGS = -D_ABL_ /GL-
-  GCC:*_*_*_CC_FLAGS  = -D_ABL_
+  GCC:*_*_*_CC_FLAGS  = -D_ABL_ -w -Wformat -Wformat-security
 

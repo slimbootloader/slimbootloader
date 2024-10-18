@@ -10,6 +10,7 @@
 #include "pcphash.h"
 #include "pcptool.h"
 #include <Library/MemoryAllocationLib.h>
+#include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Uefi/UefiBaseType.h>
 
