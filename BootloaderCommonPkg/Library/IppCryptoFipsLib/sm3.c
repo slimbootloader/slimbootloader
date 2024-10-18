@@ -15,15 +15,11 @@
 
 #include <Library/CryptoLib.h>
 
-/*F*
-//    Name: ippsHashMethod_SM3Sbl
-//
-// Purpose: Return SM3 method.
-//
-// Returns:
-//          Pointer to SM3 hash-method.
-//
-*F*/
+/**
+  Initializes user context for hash computation. Compaitable with XIP.
+
+  @retval                  Pointer to SM3 hash-method.
+**/
 IPPFUN( const IppsHashMethod*, ippsHashMethod_SM3Sbl, (void) )
 {
    static IppsHashMethod method = {

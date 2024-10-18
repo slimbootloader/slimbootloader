@@ -16,15 +16,11 @@
 #include <Library/CryptoLib.h>
 #include <Library/DebugLib.h>
 
-/*F*
-//    Name: ippsHashMethod_SHA256_Sbl
-//
-// Purpose: Return SHA256 method.
-//
-// Returns:
-//          Pointer to SHA256 hash-method.
-//
-*F*/
+/**
+  Initializes user context for hash computation. Compaitable with XIP.
+
+  @retval                  Pointer to SHA256 hash-method.
+**/
 IPPFUN( const IppsHashMethod*, ippsHashMethod_SHA256Sbl, (void) )
 {
    static IppsHashMethod method = {

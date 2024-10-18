@@ -16,16 +16,11 @@
 #include <Library/CryptoLib.h>
 #include <Library/DebugLib.h>
 
-/*F*
-//    Name: ippsHashMethod_SHA384Sbl
-//
-// Purpose: Return SHA384 method.
-//
-// Returns:
-//          Pointer to SHA384 hash-method.
-//
-*F*/
+/**
+  Initializes user context for hash computation. Compaitable with XIP.
 
+  @retval                  Pointer to SHA384 hash-method.
+**/
 IPPFUN( const IppsHashMethod*, ippsHashMethod_SHA384Sbl, (void) )
 {
    static IppsHashMethod method = {
