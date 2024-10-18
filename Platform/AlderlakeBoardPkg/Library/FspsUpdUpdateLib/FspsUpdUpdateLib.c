@@ -610,6 +610,9 @@ UpdateFspConfig (
     if (IsPchLp ()) {
       FspsConfig->UfsEnable[0] = SiCfgData->PchUfsEnable[0];
       FspsConfig->UfsEnable[1] = SiCfgData->PchUfsEnable[1];
+#if defined(PLATFORM_ADLN)
+      FspsConfig->ScsEmmcEnabled = SiCfgData->PchEmmcEnable;
+#endif
     }
 
     // When fast boot is enabled, program SLP_A_MIN_ASST_WDTH to 0
