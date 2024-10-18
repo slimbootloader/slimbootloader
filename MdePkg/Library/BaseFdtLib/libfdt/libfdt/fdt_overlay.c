@@ -557,6 +557,8 @@ static int overlay_apply_node(void *fdt, int target,
             return -FDT_ERR_INTERNAL;
         if (prop_len < 0)
             return prop_len;
+        if (!prop)
+            return -FDT_ERR_INTERNAL;
 
         ret = fdt_setprop(fdt, target, name, prop, prop_len);
         if (ret)
