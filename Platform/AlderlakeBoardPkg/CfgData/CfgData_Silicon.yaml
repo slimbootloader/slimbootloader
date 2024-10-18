@@ -367,6 +367,13 @@
                      Enable/Disable UFS controllers 1 and 2. 0- Disable; 1- Enable.
       length       : 0x02
       value        : {0x00, 0x00}
+  - PchEmmcEnable :
+      name         : Enable PCH eMMC
+      type         : EditNum, HEX, (0x0, 0x1)
+      help         : >
+                     Enable/Disable eMMC controller. 0- Disable; 1- Enable.
+      length       : 0x01
+      value        : 0x01
   - PchIshI2cEnable :
       condition    : $(COND_S0IX_DIS)
       name         : Enable PCH ISH I2C pins assigned
