@@ -1705,7 +1705,7 @@ PciScanRootBridges (
   // Use PCI_MAX_BUS if the enum policy has no multiple buses.
   //
   BusLimit = PCI_MAX_BUS;
-  if (EnumPolicy->NumOfBus > 1) {
+  if ((EnumPolicy->BusScanType == BusScanTypeRange) && (EnumPolicy->NumOfBus > 1)) {
     if (StartIndex != EndIndex) {
       BusLimit = EnumPolicy->BusScanItems[EnumPolicy->NumOfBus - 1];
     }
