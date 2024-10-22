@@ -112,6 +112,7 @@ VOID EFIAPI CryptoPerfTestPrintResult (
     ShellPrint (L" Usecase                          | Delta (µs)      \n");
     ShellPrint (L"----------------------------------+----------------+\n");
 
+    TimeStamp1 = 0;
     for (Index = 0; Index < PerfData->PerfIndex; Index++) {
         Id = ((UINT16 *)&(PerfData->TimeStamp[Index]))[3];
         if ((Id & 0xF000) == CRYPTO_MEASURE_POINT_ID) {
