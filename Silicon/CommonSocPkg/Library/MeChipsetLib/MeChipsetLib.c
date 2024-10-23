@@ -84,7 +84,7 @@ MeHeciTimeoutsEnabled (
   VOID
   )
 {
-  return FALSE;
+  return TRUE;
 }
 
 /**
