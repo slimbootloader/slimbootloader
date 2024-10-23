@@ -37,7 +37,7 @@ Method (ECRD, 1, Serialized, 0, IntObj, FieldUnitObj)
     }
     Store (Zero, ECTK)   // Clear flag for checking once only
   }
-
+  Sleep(3) // WA - for slow windows boot
   Store (Acquire (ECMT, 1000), Local0)  // save Acquire result so we can check for Mutex acquired
   If (LEqual (Local0, Zero))  // check for Mutex acquired
   {
