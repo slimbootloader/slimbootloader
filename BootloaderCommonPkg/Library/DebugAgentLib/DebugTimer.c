@@ -80,6 +80,12 @@ SaveAndSetDebugTimerInterrupt (
 {
   BOOLEAN     OldDebugTimerInterruptState;
 
+  // Disable timer interrupt to avoid #SS exception in 64bit mode.
+  // This would not impact source level debug feature.
+  if (sizeof(UINTN) == 8) {
+    EnableStatus = FALSE;
+  }
+
   OldDebugTimerInterruptState = GetApicTimerInterruptState ();
 
   if (OldDebugTimerInterruptState != EnableStatus) {
