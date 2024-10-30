@@ -171,7 +171,7 @@ ClearSmi (
   UINT32                Pm1Sts;
   UINT16                Pm1Cnt;
 
-  SmiEn = IoRead32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN));
+  SmiEn = IoRead32 ((UINTN)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN));
   if (((SmiEn & B_ACPI_IO_SMI_EN_GBL_SMI) !=0) && ((SmiEn & B_ACPI_IO_SMI_EN_EOS) !=0)) {
     return;
   }
@@ -179,9 +179,11 @@ ClearSmi (
   //
   // Clear the status before setting smi enable
   //
-  SmiSts = IoRead32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN + 4));
-  Pm1Sts = IoRead32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS));
+  SmiSts = IoRead32 ((UINTN)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_STS));
+  Pm1Sts = IoRead32 ((UINTN)(ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS));
   Pm1Cnt = IoRead16 ((UINTN)(ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_CNT));
+
+  DEBUG ((DEBUG_INFO, "ClearSmi: SmiEn: 0x%x SmiSts: 0x%x Pm1Sts: 0x%x Pm1Cnt: 0x%x\n", SmiEn, SmiSts, Pm1Sts, Pm1Cnt));
 
   // Clear RTC alarm and corresponding Pm1Sts only if wake-up source is RTC SMI#
   if (((Pm1Sts & B_ACPI_IO_PM1_STS_RTC_EN) != 0) &&
@@ -213,11 +215,14 @@ ClearSmi (
       B_ACPI_IO_PM1_STS_TMROF
       );
 
-  IoWrite32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN + 4), SmiSts);
-  IoWrite16 ((UINTN) (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS), (UINT16) Pm1Sts);
+  // Clear SMI Status
+  IoWrite32 ((UINTN)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_STS), SmiSts);
+
+  // Clear PM1 Status (the lower 16-bit of PM1)
+  IoWrite16 ((UINTN)(ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS), (UINT16)Pm1Sts);
 
   // Clear GPE0 STS in case some bits are set
-  IoOr32 ((UINTN)(UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_GPE0_STS_127_96), 0);
+  IoOr32 ((UINTN)(ACPI_BASE_ADDRESS + R_ACPI_IO_GPE0_STS_127_96), 0);
 }
 
 
@@ -374,6 +379,26 @@ BoardInit (
     if (EFI_ERROR(Status)) {
       DEBUG ((DEBUG_INFO, "Failed to set GFX framebuffer as WC\n"));
     }
+
+    if ((GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE) &&
+        (GetBootMode() == BOOT_ON_S3_RESUME)) {
+      ClearSmi ();
+      RestoreS3RegInfo (FindS3Info (S3_SAVE_REG_COMM_ID));
+
+      //
+      // If payload registered a software SMI handler for bootloader to restore
+      // SMRR base and mask in S3 resume path, trigger sw smi
+      //
+      BlSwSmiInfo = FindS3Info (BL_SW_SMI_COMM_ID);
+      if (BlSwSmiInfo != NULL) {
+        UINT32 Data;
+
+        Data = IoRead32 ((UINTN)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN));
+        IoWrite32 ((UINTN)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN), Data | B_ACPI_IO_SMI_EN_APMC | B_ACPI_IO_SMI_EN_GBL_SMI);
+        TriggerPayloadSwSmi (BlSwSmiInfo->BlSwSmiHandlerInput);
+      }
+    }
+
     InterruptRoutingInit ();
     break;
   case PrePayloadLoading:
@@ -393,32 +418,26 @@ BoardInit (
   case EndOfStages:
     // Register Heci Service
     HeciRegisterHeciService ();
+
     ClearSmi ();
-    if (GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE) {
-      if (GetBootMode() == BOOT_ON_S3_RESUME) {
-        RestoreS3RegInfo (FindS3Info (S3_SAVE_REG_COMM_ID));
-        //
-        // If payload registered a software SMI handler for bootloader to restore
-        // SMRR base and mask in S3 resume path, trigger sw smi
-        //
-        BlSwSmiInfo = FindS3Info (BL_SW_SMI_COMM_ID);
-        if (BlSwSmiInfo != NULL) {
-          TriggerPayloadSwSmi (BlSwSmiInfo->BlSwSmiHandlerInput);
-        }
-      } else {
-        //
-        // Set SMMBASE_INFO dummy strucutre in TSEG before others
-        //
-        mSmmBaseInfo.SmmBaseHdr.Count     = (UINT8) MpGetInfo()->CpuCount;
-        mSmmBaseInfo.SmmBaseHdr.TotalSize = sizeof(BL_PLD_COMM_HDR) + mSmmBaseInfo.SmmBaseHdr.Count * sizeof(CPU_SMMBASE);
-        AppendS3Info ((VOID *)&mSmmBaseInfo, TRUE);
-        //
-        // Set REG_INFO struct in TSEG region except 'Val' for regs
-        //
-        mS3SaveReg.S3SaveHdr.TotalSize = sizeof(BL_PLD_COMM_HDR) + mS3SaveReg.S3SaveHdr.Count * sizeof(REG_INFO);
-        AppendS3Info ((VOID *)&mS3SaveReg, FALSE);
-      }
+    if ((GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE) &&
+        (GetBootMode() != BOOT_ON_S3_RESUME)) {
+      ClearS3SaveRegion ();
+
+      //
+      // Set SMMBASE_INFO dummy strucutre in TSEG before others
+      //
+      mSmmBaseInfo.SmmBaseHdr.Count     = (UINT8) MpGetInfo()->CpuCount;
+      mSmmBaseInfo.SmmBaseHdr.TotalSize = sizeof(BL_PLD_COMM_HDR) + mSmmBaseInfo.SmmBaseHdr.Count * sizeof(CPU_SMMBASE);
+      AppendS3Info ((VOID *)&mSmmBaseInfo, TRUE);
+
+      //
+      // Set REG_INFO struct in TSEG region except 'Val' for regs
+      //
+      mS3SaveReg.S3SaveHdr.TotalSize = sizeof(BL_PLD_COMM_HDR) + mS3SaveReg.S3SaveHdr.Count * sizeof(REG_INFO);
+      AppendS3Info ((VOID *)&mS3SaveReg, FALSE);
     }
+
     if ((GetBootMode() != BOOT_ON_FLASH_UPDATE) && (GetPayloadId() != 0)) {
       ProgramSecuritySetting ();
     }
