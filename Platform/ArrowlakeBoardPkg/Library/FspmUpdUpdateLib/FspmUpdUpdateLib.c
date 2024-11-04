@@ -347,6 +347,10 @@ UpdateFspConfig (
     DEBUG((DEBUG_INFO, "BoardIdMtlSUDimm1DEvcrb board Id %x .....\n", BoardId));
     CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mMtlSUDimm1DEvcrbRowDisplayDdiConfig, sizeof(mMtlSUDimm1DEvcrbRowDisplayDdiConfig));
     break;
+   case PLATFORM_ID_ARL_S_UDIMM_2DPC_RVP:
+    DEBUG((DEBUG_INFO, "BoardIdArlSUDimm2DEvcrb board Id %x .....\n", BoardId));
+    CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mArlSUDimm2DEvcrbRowDisplayDdiConfig, sizeof(mArlSUDimm2DEvcrbRowDisplayDdiConfig));
+    break;
    case PLATFORM_ID_ARL_H_DDR5_CRB:
     DEBUG((DEBUG_INFO, "BoardIdArlHSODimm1DCRB board Id %x .....\n", BoardId));
     CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mArlhDdr5SODimmSbsCrbRowDisplayDdiConfig, sizeof(mArlhDdr5SODimmSbsCrbRowDisplayDdiConfig));
@@ -474,6 +478,7 @@ UpdateFspConfig (
   }
   switch (BoardId) {
     case PLATFORM_ID_ARL_S_UDIMM_1DPC_RVP:
+    case PLATFORM_ID_ARL_S_UDIMM_2DPC_RVP:
       Fspmcfg->SaIpuEnable = 0x0;
       Fspmcfg->DmiMaxLinkSpeed = 0x0;
       Fspmcfg->PchDmiGen3RootPortPreset[1] = 0x5;

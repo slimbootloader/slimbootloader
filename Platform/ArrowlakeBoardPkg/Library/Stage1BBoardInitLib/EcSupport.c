@@ -152,6 +152,9 @@ GetBoardIdFromSmbus (
     case BoardIdArlhLP5x5Rvp:
       *PlatformId =  PLATFORM_ID_ARL_H_LP5x_Rvp;
       break;
+    case BoardIdArlSUDimm2DEvcrb:
+      *PlatformId =  PLATFORM_ID_ARL_S_UDIMM_2DPC_RVP;
+      break;
     default:
     break;
   }
@@ -402,6 +405,9 @@ GetBoardId (
       break;
     case BoardIdArlhLP5x5Rvp:
       *PlatformId =  PLATFORM_ID_ARL_H_LP5x_Rvp;
+      break;
+    case BoardIdArlSUDimm2DEvcrb:
+      *PlatformId =  PLATFORM_ID_ARL_S_UDIMM_2DPC_RVP;
       break;
     default:
       DEBUG((DEBUG_INFO, "Unsupporteddd board Id %x .....\n", *PlatformId));

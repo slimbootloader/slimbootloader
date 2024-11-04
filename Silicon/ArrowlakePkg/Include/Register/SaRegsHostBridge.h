@@ -81,10 +81,25 @@ Register names for Host Bridge block
 #define V_SA_DEVICE_ID_MB_ULT_15  0x7D24   ///< MeteorLake PS (2+8+GT) SA DID
 #define V_SA_DEVICE_ID_MB_ULT_16  0x7D25   ///< MeteorLake PS (4+4+GT) SA DID
 
+#define MTL_SA_DEVICE_ID_M_2C_8A      0x7D00   ///< MeteorLake M (2+8+GT2) SA DID
+#define MTL_SA_DEVICE_ID_P_6C_8A      0x7D01   ///< MeteorLake P (6+8+GT2) SA DID
+#define MTL_SA_DEVICE_ID_P_2C_8A      0x7D02   ///< MeteorLake P (2+8+GT1) SA DID
 #define MTL_SA_DEVICE_ID_S_6C_8A      0x7D05   ///< MeteorLake S (6+8+GT1) SA DID
 #define MTL_SA_DEVICE_ID_S_6C_4A      0x7D26   ///< MeteorLake S (6+4) SA DID
 #define MTL_SA_DEVICE_ID_S_4C_4A      0x7D27   ///< MeteorLake S (4+4) SA DID
 #define MTL_SA_DEVICE_ID_S_6C_16A     0x7D28   ///< MeteorLake S (6+16) SA DID
+#define MTL_SA_DEVICE_ID_P_VALIDATION 0x7D07   ///< MeteorLake P Validation (6+8) SA DID
+#define MTL_SA_DEVICE_ID_M_2C_4A      0x7D10   ///< MeteorLake M (2+4) SA DID
+#define MTL_SA_DEVICE_ID_M_1C_8A      0x7D11   ///< MeteorLake M (1+8) SA DID
+#define MTL_SA_DEVICE_ID_M_1C_4A      0x7D12   ///< MeteorLake M (1+4) SA DID
+#define MTL_SA_DEVICE_ID_P_6C_4A      0x7D13   ///< MeteorLake P (6+4) SA DID
+#define MTL_SA_DEVICE_ID_P_4C_8A      0x7D14   ///< MeteorLake P (4+8) SA DID
+#define MTL_SA_DEVICE_ID_P_4C_4A      0x7D15   ///< MeteorLake P (4+4) SA DID
+#define MTL_SA_DEVICE_ID_P_2C_4A      0x7D16   ///< MeteorLake P (2+4) SA DID
+#define MTL_SA_DEVICE_ID_S_4C_8A      0x7D17   ///< MeteorLake S (4+8) SA DID
+#define MTL_SA_DEVICE_ID_S_2C_8A      0x7D18   ///< MeteorLake S (2+8) SA DID
+#define MTL_SA_DEVICE_ID_P_4C         0x7D1E   ///< MeteorLake P (4+0) SA DID
+
 #define ARL_SA_DEVICE_ID_S_8C_32A     0x7D08   ///< ArrowLake S (8+32+GT1) SA DID
 #define ARL_SA_DEVICE_ID_S_8C_16A     0x7D1A   ///< ArrowLake S (8+16+GT1) SA DID
 #define ARL_SA_DEVICE_ID_S_8C_12A     0x7D1B   ///< ArrowLake S (8+12) SA DID
@@ -96,6 +111,9 @@ Register names for Host Bridge block
 #define ARL_SA_DEVICE_ID_HX_6C_8A     0x7D2F   ///< ArrowLake SBG HX (6+8+GT1) SA DID
 #define ARL_SA_DEVICE_ID_S_6C_4A      0x7D35   ///< ArrowLake S (6+4) SA DID
 #define ARL_SA_DEVICE_ID_S_4C_4A      0x7D36   ///< ArrowLake S (4+4) SA DID
+#define ARL_SA_DEVICE_ID_S_4C_8A      0x7D3C   ///< ArrowLake S (4+8) SA DID
+#define ARL_SA_DEVICE_ID_S_2C_8A      0x7D3D   ///< ArrowLake S (2+8) SA DID
+#define ARL_SA_DEVICE_ID_S_2C_4A      0x7D3E   ///< ArrowLake S (2+4) SA DID
 
 #define ARL_SA_DEVICE_ID_H_6C_8A      0x7D06   ///< ArrowLake H (6+8) SA DID
 #define ARL_SA_DEVICE_ID_H_4C_8A      0x7D20   ///< ArrowLake H (4+8) SA DID
@@ -105,7 +123,16 @@ Register names for Host Bridge block
 #define ARL_SA_DEVICE_ID_H_2C_8A      0x7D33   ///< ArrowLake H (2+8) SA DID
 #define ARL_SA_DEVICE_ID_H_2C_4A      0x7D34   ///< ArrowLake H (2+4) SA DID
 #define ARL_SA_DEVICE_ID_U_2C_4A      0x7D37   ///< ArrowLake U (2+4) SA DID
-#define ARL_SA_DEVICE_ID_H_2C         0x7D3C   ///< ArrowLake H (2+0) SA DID
+#define ARL_SA_DEVICE_ID_H_2C         0x7D42   ///< ArrowLake H (2+0) SA DID
+
+#define ARL_SA_DEVICE_ID_S_R_8C_16A   0xB600   ///< ArrowLake S Refresh (8+16) SA DID
+#define ARL_SA_DEVICE_ID_HX_R_8C_16A  0xB601   ///< ArrowLake HX Refresh (8+16) SA DID
+#define ARL_SA_DEVICE_ID_S_R_6C_8A    0xB602   ///< ArrowLake S Refresh (6+8) SA DID
+#define ARL_SA_DEVICE_ID_S_R_6C_4A    0xB604   ///< ArrowLake S Refresh (6+4) SA DID
+#define ARL_SA_DEVICE_ID_S_R_8C_12A   0xB605   ///< ArrowLake S Refresh (8+12) SA DID
+#define ARL_SA_DEVICE_ID_HX_R_6C_8A   0xB606   ///< ArrowLake HX Refresh (6+8) SA DID
+#define ARL_SA_DEVICE_ID_HX_R_8C_12A  0xB607   ///< ArrowLake HX Refresh (8+12) SA DID
+#define ARL_SA_DEVICE_ID_S_R_4C_4A    0xB608   ///< ArrowLake S Refresh (4+4) SA DID
 
 /**
  <b>Description</b>:
