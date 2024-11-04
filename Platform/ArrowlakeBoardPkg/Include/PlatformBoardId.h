@@ -21,9 +21,15 @@ Defines Platform BoardIds
 
 #define BoardIdUnknown1                       0xff
 
-// MTL S Board Id's
+// MTL/ARL S Board Id's
 #define BoardIdMtlSUDimm1DEvcrb               0x21
 #define PLATFORM_ID_ARL_S_UDIMM_1DPC_RVP      0x17
+
+#define BoardIdArlSUDimm2DEvcrb               0x22
+#define PLATFORM_ID_ARL_S_UDIMM_2DPC_RVP      0x16
+
+#define BoardIdArlsSodimmRvp                  0x24
+#define PLATFORM_ID_ARL_S_SODIMM_RVP          0x15
 
 //ARL-H Board Id's
 #define BoardIdArlhDdr5CRb                    0x1A
@@ -31,9 +37,6 @@ Defines Platform BoardIds
 
 #define BoardIdArlhDdr5Rvp                    0x3A
 #define PLATFORM_ID_ARL_H_DDR5_RVP            0x18
-
-#define BoardIdArlsSodimmRvp                  0x24
-#define PLATFORM_ID_ARL_S_SODIMM_RVP          0x15
 
 #define BoardIdArlhLP5x5Rvp                   0x3D
 #define PLATFORM_ID_ARL_H_LP5x_Rvp            0x19
