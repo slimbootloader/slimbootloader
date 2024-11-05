@@ -88,17 +88,15 @@ def check_parameter(para_list):
     print (para_list)
     para_supported = {
         'sata'   : {},
-        'debug'  : {},
-        'lp5'    : {},
-        'crb'    : {},
+        's03'    : {},
+        's04'    : {},
        }
 
     para_help = \
         """
         'sata'   -- Enable direct SATA ports, these are disabled by default
-        'debug'  -- Enable DAM and DCI configuration (Only use for debug purpose but not for final production!)
-        'lp5'    -- Enable LPDDR5 Board configuration
-        'crb'    -- Enable CRB Board configuration
+        's03'   -- Stitch for S03 board
+        's04'   -- Stitch for S04 board
         """
     for para in para_list:
         if para == '':
@@ -147,9 +145,6 @@ def get_xml_change_list (platform, plt_params_list):
         # Path                                                                      | value |
         # =========================================================================================
         #   Region Order
-        ('./FlashSettings/BiosConfiguration/PchTopSwapOverride',                                    '4MB'),
-        ('./FlashSettings/BiosConfiguration/SocTopSwapOverride',                                    '4MB'),
-        ('./FlashSettings/BiosConfiguration/BiosRedAssistance',                                     'Disabled'),
         ('./FlashLayout/DescriptorRegion/HarnessGlobalData/SelectedRvp',                            'MTL-S UDIMM 1DPC (MTP-S + MTL-S)'),
         ('./FlashLayout/BiosRegion/InputFile',                                                      '$SourceDir\BiosRegion.bin'),
         ('./FlashLayout/Ifwi_IntelMePmcRegion/MeRegionFile',                                        '$SourceDir\ME Sub Partition.bin'),
@@ -176,13 +171,10 @@ def get_xml_change_list (platform, plt_params_list):
         ('./FlashSettings/FlashConfiguration/QuadOutReadEnable',                                    'Yes'),
         ('./FlashSettings/FlashConfiguration/QuadIoReadEnable',                                     'Yes'),
         ('./FlashSettings/RpmcConfiguration/RpmcOverEc',                                            'Yes'),
+        ('./PlatformProtection/TxtConfiguration/TxtSupported',                                      'Yes'),
         ('./NetworkingConnectivity/WiredLanConfiguration/PhyConnected',                             'PHY on SMLink0'),
         ('./IntegratedSensorHub/IshImage/InputFile',                                                '$SourceDir\CsePlugin#ISH.bin'),
         ('./IntegratedSensorHub/IshData/PdtBinary',                                                 '$SourceDir\ish_pdt_binary.bin'),
-        ('./Debug/DelayedAuthenticationModeConfiguration/DelayedAuthMode',                          'Yes'),
-        ('./Debug/DirectConnectInterfaceConfiguration/DciDbcEnable',                                'Yes'),
-        ('./Debug/EarlyUsb2DbcOverType-AConfiguration/Usb2DbcPortEn',                               'USB2 Port 1'),
-        ('./Debug/EarlyUsb2DbcOverType-AConfiguration/EnEarlyUsb2DbcCon',                           'Yes'),
         ('./CpuStraps/CpuStraps/NumActiveSmallCores',                                               'Disable All Cores'),
         ('./FlexIO/PciePortConfiguration/PCIeController1',                                          '1x4'),
         ('./FlexIO/PciePortConfiguration/PCIeController2',                                          '1x2, 2x1'),
@@ -241,6 +233,59 @@ def get_xml_change_list (platform, plt_params_list):
         ('./Gpio/GpioVccioVoltageControl/GppDmstrVoltSelect',                                       '1.8Volts'),
         ('./Gpio/GpioVccioVoltageControl/HdaVoltSelect',                                            '1.8Volts'),
     ])
+
+    if 's03' in plt_params_list:
+        print ("Applying changes to enable S03 RVP")
+        xml_change_list.append ([
+            ('./FlashLayout/DescriptorRegion/HarnessGlobalData/SelectedRvp',                            'MTL-S UDIMM 2DPC (MTP-S + MTL-S)'),
+            ('./PlatformProtection/TxtConfiguration/TxtSupported',                                      'No'),
+            ('./NetworkingConnectivity/WiredLanConfiguration/LanEnable',                                'Disabled'),
+            ('./NetworkingConnectivity/WiredLanConfiguration/LanPhyPwrCtrlGpd11Config',                 'Enable as GPD11'),
+            ('./NetworkingConnectivity/WiredLanConfiguration/GbeMacSmbAddrsEn',                         'No'),
+            ('./CpuStraps/CpuStraps/PlatformImonDisable',                                               'Enabled'),
+            ('./FlexIO/PciePortConfiguration/PCIeController2',                                          '4x1'),
+            ('./FlexIO/Usb3PortConfiguration/Usb32Port7and8SpdselPair',                                 'Paired'),
+            ('./FlexIO/Usb3PortConfiguration/Usb32Port9and10SpdselPair',                                'USB 3.2 Port 9 and 10 Gen 2x1'),
+            ('./FlexIO/Usb3PortConfiguration/USB3Prt7ConTypeSel',                                       'Type C'),
+            ('./FlexIO/Usb3PortConfiguration/USB3Prt8ConTypeSel',                                       'Type C'),
+            ('./FlexIO/Usb3PortConfiguration/USB3Prt9ConTypeSel',                                       'Type A / Type C'),
+            ('./FlexIO/Usb3PortConfiguration/USB3Prt10ConTypeSel',                                      'Type A / Type C'),
+            ('./FlexIO/PowerDelivery_PdControllerConfiguration/USB3PortForTypeCPort4Pch',               'USB 3.2 Port 7'),
+            ('./FlexIO/PowerDelivery_PdControllerConfiguration/Pd3TypecUsb32SMBusAddr',                 '0x40'),
+            ('./FlexIO/SoCPCIePortConfiguration/SocPCIeGen5Controller1Config',                          '2x8'),
+        ])
+
+    if 's04' in plt_params_list:
+        print ("Applying changes to enable S04 RVP")
+        xml_change_list.append ([
+            ('./FlashLayout/DescriptorRegion/HarnessGlobalData/SelectedRvp',                            'MTL-S SODIMM 1DPC (MTP-S + MTL-S)'),
+            ('./NetworkingConnectivity/WiredLanConfiguration/LanEnable',                                'GbE Port 3'),
+            ('./InternalPchBuses/DmiPcieConfiguration/DmiLaneReversal',                                 'Yes'),
+            ('./Debug/EarlyUsb2DbcOverType-AConfiguration/Usb2DbcPortEn',                               'USB2 Port 1'),
+            ('./Debug/EarlyUsb2DbcOverType-AConfiguration/EnEarlyUsb2DbcCon',                           'Yes'),
+            ('./CpuStraps/CpuStraps/PlatformImonDisable',                                               'Enabled'),
+            ('./FlexIO/PciePortConfiguration/PCIeController1',                                          '1x2, 2x1'),
+            ('./FlexIO/PciePortConfiguration/PCIeController2',                                          '1x4'),
+            ('./FlexIO/Usb3PortConfiguration/Usb32Port7and8SpdselPair',                                 'Paired'),
+            ('./FlexIO/Usb3PortConfiguration/Usb32Port9and10SpdselPair',                                'USB 3.2 Port 9 and 10 Gen 2x1'),
+            ('./FlexIO/Usb3PortConfiguration/USB3Prt7ConTypeSel',                                       'Type C'),
+            ('./FlexIO/Usb3PortConfiguration/USB3Prt8ConTypeSel',                                       'Type C'),
+            ('./FlexIO/Usb3PortConfiguration/USB3Prt9ConTypeSel',                                       'Type A / Type C'),
+            ('./FlexIO/Usb3PortConfiguration/USB3Prt10ConTypeSel',                                      'Type A / Type C'),
+            ('./FlexIO/Type-CSubsystemConfiguration/TypeCPort2Config',                                  'DP Fixed Connection'),
+            ('./FlexIO/Type-CSubsystemConfiguration/TboltPort12Retimer',                                'Port 1 Retimer Enabled'),
+            ('./FlexIO/PowerDelivery_PdControllerConfiguration/USB3PortForTypeCPort2Cpu',               'No Type-C Port'),
+            ('./FlexIO/PowerDelivery_PdControllerConfiguration/USB3PortForTypeCPort4Pch',               'USB 3.2 Port 7'),
+            ('./FlexIO/PowerDelivery_PdControllerConfiguration/Pd1TypecUsb32SMBusAddr',                 '0x3F'),
+            ('./FlexIO/PowerDelivery_PdControllerConfiguration/Pd1Usb2PortForTypecUsb32',               'USB2 Port 6'),
+            ('./FlexIO/PowerDelivery_PdControllerConfiguration/Pd2TypecUsb32Mode',                      'No'),
+            ('./FlexIO/PowerDelivery_PdControllerConfiguration/Pd2TypecUsb32RetimerEnabled',            'No'),
+            ('./FlexIO/PowerDelivery_PdControllerConfiguration/Pd2TypecUsb32RetimerConfig',             'No'),
+            ('./FlexIO/PowerDelivery_PdControllerConfiguration/Pd2TypecUsb32SMBusAddr',                 '0x0'),
+            ('./FlexIO/PowerDelivery_PdControllerConfiguration/Pd2Usb2PortForTypecUsb32',               'No USB2 Port'),
+            ('./FlexIO/PowerDelivery_PdControllerConfiguration/Pd3Usb2PortForTypecUsb32',               'USB2 Port 1'),
+            ('./FlexIO/SoCPCIePortConfiguration/SocPCIeGen5Controller1Config',                          '1x8, 2x4'),
+        ])
 
     return xml_change_list
 
