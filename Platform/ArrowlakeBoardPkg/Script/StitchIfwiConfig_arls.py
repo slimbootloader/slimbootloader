@@ -145,6 +145,9 @@ def get_xml_change_list (platform, plt_params_list):
         # Path                                                                      | value |
         # =========================================================================================
         #   Region Order
+        ('./FlashSettings/BiosConfiguration/PchTopSwapOverride',                                    '4MB'),
+        ('./FlashSettings/BiosConfiguration/SocTopSwapOverride',                                    '4MB'),
+        ('./FlashSettings/BiosConfiguration/BiosRedAssistance',                                     'Disabled'),
         ('./FlashLayout/DescriptorRegion/HarnessGlobalData/SelectedRvp',                            'MTL-S UDIMM 1DPC (MTP-S + MTL-S)'),
         ('./FlashLayout/BiosRegion/InputFile',                                                      '$SourceDir\BiosRegion.bin'),
         ('./FlashLayout/Ifwi_IntelMePmcRegion/MeRegionFile',                                        '$SourceDir\ME Sub Partition.bin'),
@@ -171,10 +174,13 @@ def get_xml_change_list (platform, plt_params_list):
         ('./FlashSettings/FlashConfiguration/QuadOutReadEnable',                                    'Yes'),
         ('./FlashSettings/FlashConfiguration/QuadIoReadEnable',                                     'Yes'),
         ('./FlashSettings/RpmcConfiguration/RpmcOverEc',                                            'Yes'),
-        ('./PlatformProtection/TxtConfiguration/TxtSupported',                                      'Yes'),
         ('./NetworkingConnectivity/WiredLanConfiguration/PhyConnected',                             'PHY on SMLink0'),
         ('./IntegratedSensorHub/IshImage/InputFile',                                                '$SourceDir\CsePlugin#ISH.bin'),
         ('./IntegratedSensorHub/IshData/PdtBinary',                                                 '$SourceDir\ish_pdt_binary.bin'),
+        ('./Debug/DelayedAuthenticationModeConfiguration/DelayedAuthMode',                          'Yes'),
+        ('./Debug/DirectConnectInterfaceConfiguration/DciDbcEnable',                                'Yes'),
+        ('./Debug/EarlyUsb2DbcOverType-AConfiguration/Usb2DbcPortEn',                               'USB2 Port 1'),
+        ('./Debug/EarlyUsb2DbcOverType-AConfiguration/EnEarlyUsb2DbcCon',                           'Yes'),
         ('./CpuStraps/CpuStraps/NumActiveSmallCores',                                               'Disable All Cores'),
         ('./FlexIO/PciePortConfiguration/PCIeController1',                                          '1x4'),
         ('./FlexIO/PciePortConfiguration/PCIeController2',                                          '1x2, 2x1'),
@@ -238,7 +244,6 @@ def get_xml_change_list (platform, plt_params_list):
         print ("Applying changes to enable S03 RVP")
         xml_change_list.append ([
             ('./FlashLayout/DescriptorRegion/HarnessGlobalData/SelectedRvp',                            'MTL-S UDIMM 2DPC (MTP-S + MTL-S)'),
-            ('./PlatformProtection/TxtConfiguration/TxtSupported',                                      'No'),
             ('./NetworkingConnectivity/WiredLanConfiguration/LanEnable',                                'Disabled'),
             ('./NetworkingConnectivity/WiredLanConfiguration/LanPhyPwrCtrlGpd11Config',                 'Enable as GPD11'),
             ('./NetworkingConnectivity/WiredLanConfiguration/GbeMacSmbAddrsEn',                         'No'),
