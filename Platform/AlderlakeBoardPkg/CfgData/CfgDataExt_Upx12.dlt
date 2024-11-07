@@ -78,8 +78,7 @@ PLDSEL_CFG_DATA.PldSelGpio.PadGroup   | 2
 PLDSEL_CFG_DATA.PldSelGpio.PinNumber  | 13
 PLDSEL_CFG_DATA.PldSelGpio.PinPolarity| 1
 
-SILICON_CFG_DATA.EnableItbm           | 0x1
-
+POWER_CFG_DATA.EnableItbm             | 0x1
 
 SILICON_CFG_DATA.SataPortsDevSlp      | {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 SILICON_CFG_DATA.PortUsb30Enable      | {0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}

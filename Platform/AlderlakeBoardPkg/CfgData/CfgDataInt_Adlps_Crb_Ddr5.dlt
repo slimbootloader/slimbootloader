@@ -108,7 +108,6 @@ SILICON_CFG_DATA.PchDmiAspmCtrl       | 0x4
 SILICON_CFG_DATA.CpuPcieRpAspm        | {0x2, 0x2, 0x2, 0x0}
 SILICON_CFG_DATA.CpuPcieRpL1Substates | {0x2, 0x2, 0x2, 0x2}
 SILICON_CFG_DATA.CpuPcieRpMultiVcEnabled | { 0x1, 0x0, 0x1, 0x0 }
-SILICON_CFG_DATA.EnableItbm           | 0x1
 SILICON_CFG_DATA.PtmEnabled           | { 0x1, 0x1, 0x1, 0x1}
 SILICON_CFG_DATA.EnableTimedGpio0     | 0x1
 SILICON_CFG_DATA.EnableTimedGpio1     | 0x1
@@ -125,6 +124,7 @@ POWER_CFG_DATA.TdcEnable                  | {0x1, 0x1, 0x0, 0x0, 0x0}
 POWER_CFG_DATA.Eist                       | 0x1
 POWER_CFG_DATA.MaxRatio                   | 0x4
 POWER_CFG_DATA.PsysPmax                   | 0x0
+POWER_CFG_DATA.EnableItbm                 | 0x1
 
 GPIO_CFG_DATA.GpioPinConfig1_GPP_A00.GPIOSkip_GPP_A00 | 1
 GPIO_CFG_DATA.GpioPinConfig1_GPP_A01.GPIOSkip_GPP_A01 | 1

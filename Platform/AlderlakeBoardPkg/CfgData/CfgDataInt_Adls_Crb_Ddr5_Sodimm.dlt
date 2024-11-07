@@ -51,9 +51,8 @@ MEMORY_CFG_DATA.TcssXhciEn | 0x1
 MEMORY_CFG_DATA.TcssDma0En | 0x1
 MEMORY_CFG_DATA.TcssDma1En | 0x1
 
-SILICON_CFG_DATA.EnableItbm              | 0x1
-
-POWER_CFG_DATA.TdcEnable | {0x1, 0x1, 0x0, 0x0, 0x0}
+POWER_CFG_DATA.TdcEnable   | {0x1, 0x1, 0x0, 0x0, 0x0}
+POWER_CFG_DATA.EnableItbm  | 0x1
 
 GEN_CFG_DATA.VbtImageId                  | 1
 
