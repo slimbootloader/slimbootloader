@@ -53,12 +53,12 @@ PLDSEL_CFG_DATA.PldSelGpio.Enable      | 1
 PLDSEL_CFG_DATA.PldSelGpio.PadGroup    | 5
 PLDSEL_CFG_DATA.PldSelGpio.PinNumber   | 3
 
-SILICON_CFG_DATA.EnableItbm              | 0x1
 SILICON_CFG_DATA.CpuPcieRpMultiVcEnabled | { 0x1, 0x0, 0x0, 0x0 }
 
 POWER_CFG_DATA.PsysPmax                  | 0
 POWER_CFG_DATA.TdcEnable                 | {0x1, 0x1, 0x0, 0x0, 0x0}
 POWER_CFG_DATA.TdcTimeWindow             | {0x1, 0x1, 0x01, 0x01, 0x01}
+POWER_CFG_DATA.EnableItbm               | 0x1
 
 GEN_CFG_DATA.VbtImageId                  | 1
 
