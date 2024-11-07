@@ -86,8 +86,6 @@ GRAPHICS_CFG_DATA.InternalGfx             | 0x2
 GEN_CFG_DATA.VbtImageId                   | 2
 
 #Delta configuration for Silicon settings
-SILICON_CFG_DATA.EnableItbm           | 0x1
-
 SILICON_CFG_DATA.SataPortsDevSlp      | {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 SILICON_CFG_DATA.PortUsb30Enable      | {0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 SILICON_CFG_DATA.SerialIoUartMode     |  {0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
@@ -113,6 +111,7 @@ POWER_CFG_DATA.Eist                 | 0x1
 POWER_CFG_DATA.EnergyEfficientTurbo | 0x1
 POWER_CFG_DATA.PsysPmax             | 0
 POWER_CFG_DATA.AtomTurboRatioLimitNumCore   | {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}
+POWER_CFG_DATA.EnableItbm           | 0x1
 
 PEP_CFG_DATA.PepPcieDg             | 1
 PEP_CFG_DATA.PepUfs0               | 1

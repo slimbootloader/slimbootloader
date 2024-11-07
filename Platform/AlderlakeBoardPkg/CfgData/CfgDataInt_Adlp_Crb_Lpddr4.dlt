@@ -89,8 +89,6 @@ PEP_CFG_DATA.PepUfs0                     | 1
 PEP_CFG_DATA.PepUfs1                     | 1
 
 #Delta configuration for Silicon settings
-SILICON_CFG_DATA.EnableItbm           | 0x1
-
 SILICON_CFG_DATA.SataPortsDevSlp      | {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 SILICON_CFG_DATA.PortUsb30Enable      | {0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 SILICON_CFG_DATA.SerialIoUartMode     |  {0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
@@ -112,6 +110,8 @@ SILICON_CFG_DATA.PchUfsEnable         |  0x0
 POWER_CFG_DATA.MaxRatio             | 0x4
 POWER_CFG_DATA.Eist                 | 0x0
 POWER_CFG_DATA.EnergyEfficientTurbo | 0x1
+POWER_CFG_DATA.EnableItbm           | 0x1
+
 
 GPIO_CFG_DATA.GpioPinConfig1_GPP_A00.GPIOSkip_GPP_A00 | 1
 GPIO_CFG_DATA.GpioPinConfig1_GPP_A01.GPIOSkip_GPP_A01 | 1

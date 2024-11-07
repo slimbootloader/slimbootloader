@@ -44,15 +44,6 @@
                      Enable/disable Multi Virtual Channels(VC) in TSN.
       length       : 0x01
       value        : 0x0
-  - EnableItbm   :
-      condition    : $(COND_S0IX_DIS)
-      name         : Intel Turbo Boost Max Technology 3.0
-      type         : Combo
-      option       : $EN_DIS
-      help         : >
-                     Intel Turbo Boost Max Technology 3.0. 0- Disabled; <b>1- Enabled</b>
-      length       : 0x01
-      value        : 0x00
   - AcSplitLock  :
       name         : AC Split Lock
       type         : Combo

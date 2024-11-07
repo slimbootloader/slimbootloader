@@ -119,7 +119,6 @@ SILICON_CFG_DATA.PchDmiAspmCtrl             | 0x4
 SILICON_CFG_DATA.CpuPcieRpAspm              | {0x3, 0x3, 0x3, 0x0}
 SILICON_CFG_DATA.CpuPcieRpL1Substates       | {0x2, 0x2, 0x2, 0x2}
 SILICON_CFG_DATA.CpuPcieRpMultiVcEnabled    | { 0x0, 0x0, 0x0, 0x0 }
-SILICON_CFG_DATA.EnableItbm                 | 0x1
 SILICON_CFG_DATA.PtmEnabled                 | { 0x1, 0x1, 0x1, 0x1}
 SILICON_CFG_DATA.EnableTimedGpio0           | 0x1
 SILICON_CFG_DATA.EnableTimedGpio1           | 0x1
@@ -136,6 +135,7 @@ POWER_CFG_DATA.AtomTurboRatioLimitNumCore   | {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0
 POWER_CFG_DATA.Eist                         | 0x1
 POWER_CFG_DATA.TdcEnable                    | {0x1, 0x1, 0x0, 0x0, 0x0}
 POWER_CFG_DATA.ImonSlope                    | {0x00, 0x00, 0x67, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+POWER_CFG_DATA.EnableItbm                   | 0x1
 
 PEP_CFG_DATA.PepAudio     | 0x1
 PEP_CFG_DATA.PepVmd       | 0x0
