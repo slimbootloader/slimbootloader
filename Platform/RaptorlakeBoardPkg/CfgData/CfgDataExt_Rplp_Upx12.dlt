@@ -83,8 +83,6 @@ PLDSEL_CFG_DATA.PldSelGpio.PadGroup   | 2
 PLDSEL_CFG_DATA.PldSelGpio.PinNumber  | 13
 PLDSEL_CFG_DATA.PldSelGpio.PinPolarity| 1
 
-SILICON_CFG_DATA.EnableItbm              | 0x1
-
 MEMORY_CFG_DATA.SaGv                     | 0x05
 
 SILICON_CFG_DATA.SataPortsDevSlp      | {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
@@ -111,6 +109,7 @@ POWER_CFG_DATA.TdcEnable            | {0x1, 0x1, 0x0, 0x0, 0x0}
 POWER_CFG_DATA.Eist                 | 0x1
 POWER_CFG_DATA.EnergyEfficientTurbo | 0x1
 POWER_CFG_DATA.PsysPmax             | 0
+POWER_CFG_DATA.EnableItbm           | 0x1
 
 PEP_CFG_DATA.PepPcieDg             | 1
 PEP_CFG_DATA.PepUfs0               | 1
