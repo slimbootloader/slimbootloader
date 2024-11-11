@@ -17,6 +17,7 @@
 #include <Library/LoaderPerformanceLib.h>
 #include <Library/PciEnumerationLib.h>
 #include <Library/FusaConfigLib.h>
+#include <Library/MediaAccessLib.h>
 #include "SioChip.h"
 
 GLOBAL_REMOVE_IF_UNREFERENCED UINT8    mBigCoreCount;
@@ -374,6 +375,58 @@ FixUpFlashMapEntry (VOID)
   return EFI_SUCCESS;
 }
 
+#if FixedPcdGetBool(PcdAzbSupport)
+/**
+ * A known hardware design issue in the CRB board where USB instance 0
+ * is mapped to the eMMC device, and the actual USB interface is mapped
+ * to the next instance. Consequently, in order to boot from USB flash
+ * drive, instance 0 must be initialized and de-initialized before the
+ * flash drive can be detected successfully.
+ *
+ * This workaround is necessary to work with this specific design, ensuring
+ * that USB flash drives are constantly recognized.
+ *
+ * @return EFI_STATUS
+ */
+
+EFI_STATUS
+EFIAPI
+UsbDevInstanceInitDeinit()
+{
+  EFI_STATUS  Status;
+  UINT8       DevInstance;
+  UINTN       UsbPciBase;
+
+  // USB device instance 0 need to be initialized and deinited before
+  // use any other USB device instance.
+  DevInstance = 0;
+
+  DEBUG((DEBUG_INFO, "UsbDevInstanceInitDeinit\n"));
+
+  UsbPciBase = GetDeviceAddr (OsBootDeviceUsb, DevInstance);
+  UsbPciBase = TO_MM_PCI_ADDRESS (UsbPciBase);
+
+  DEBUG ((DEBUG_INFO, "UsbPciBase(0x%x)\n", UsbPciBase));
+
+  //
+  // Init Boot device functions
+  //
+  Status = MediaSetInterfaceType (OsBootDeviceUsb);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Invalid Boot device configured\n"));
+    return RETURN_UNSUPPORTED;
+  }
+
+  Status = MediaInitialize (UsbPciBase, DevInitAll);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+  MediaInitialize(0, DevDeinit);
+
+  return RETURN_SUCCESS;
+}
+#endif
+
 /**
   Board specific hook points.
 
@@ -571,6 +624,12 @@ BoardInit (
 
     //Initialize and setup MeMeasureboot
     MeMeasuredBootInit();
+#if FixedPcdGetBool(PcdAzbSupport)
+    // Workaround for specific hardware design of CRB platform:
+    // USB instance 0 is mapped to eMMC, so it must be initialized
+    // and deinitialized to enable USB flash drive detection.
+    UsbDevInstanceInitDeinit();
+#endif
     break;
   case EndOfStages:
     // Register Heci Service

@@ -78,6 +78,7 @@
   CrashLogLib
   FusaConfigLib
   PciSegmentLib
+  MediaAccessLib
 
 [Guids]
   gOsConfigDataGuid
