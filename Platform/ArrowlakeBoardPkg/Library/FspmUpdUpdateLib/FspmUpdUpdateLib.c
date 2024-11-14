@@ -111,6 +111,9 @@ UpdateFspConfig (
     return;
   }
   CopyMem (&Fspmcfg->SpdAddressTable, MemCfgData->SpdAddressTable, sizeof(MemCfgData->SpdAddressTable));
+  CopyMem (&Fspmcfg->CkdAddressTable, MemCfgData->CkdAddressTable, sizeof(MemCfgData->CkdAddressTable));
+  CopyMem (&Fspmcfg->ChannelToCkdQckMapping, MemCfgData->ChannelToCkdQckMapping, sizeof(MemCfgData->ChannelToCkdQckMapping));
+  CopyMem (&Fspmcfg->PhyClockToCkdDimm, MemCfgData->PhyClockToCkdDimm, sizeof(MemCfgData->PhyClockToCkdDimm));
 
   DebugPort = GetDebugPort ();
   if (DebugPort < GetPchMaxSerialIoUartControllersNum ()) {
