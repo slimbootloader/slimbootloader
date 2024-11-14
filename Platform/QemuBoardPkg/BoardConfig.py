@@ -11,6 +11,8 @@
 #
 import os
 import sys
+import re
+import shutil
 
 sys.dont_write_bytecode = True
 sys.path.append (os.path.join('..', '..'))
@@ -26,6 +28,7 @@ class Board(BaseBoard):
         EXECUTE_IN_PLACE          = 0
         FREE_TEMP_RAM_TOP         = 0x70000
 
+        self.BUILD_ARCH                = 'X64'
         self.VERINFO_IMAGE_ID          = 'SB_QEMU '
         self.VERINFO_PROJ_MAJOR_VER    = 1
         self.VERINFO_PROJ_MINOR_VER    = 1
@@ -78,6 +81,8 @@ class Board(BaseBoard):
         self.SIGN_HASH_TYPE          = HASH_TYPE_VALUE[self._SIGN_HASH]
         # 0x0010  for SM3_256 | 0x0008 for SHA2_512 | 0x0004 for SHA2_384 | 0x0002 for SHA2_256 | 0x0001 for SHA1
         self.IPP_HASH_LIB_SUPPORTED_MASK   = IPP_CRYPTO_ALG_MASK[self._SIGN_HASH]
+        # E9 for AVX instructions
+        self.ENABLE_CRYPTO_SHA_OPT  = IPP_CRYPTO_OPTIMIZATION_MASK['X64_Y8']
 
         self._MASTER_PRIVATE_KEY    = 'KEY_ID_MASTER' + '_' + self._RSA_SIGN_TYPE
         self._CFGDATA_PRIVATE_KEY   = 'KEY_ID_CFGDATA' + '_' + self._RSA_SIGN_TYPE
@@ -110,12 +115,12 @@ class Board(BaseBoard):
         self.TEST_SIZE            = 0x00001000
         self.SIIPFW_SIZE          = 0x00010000
         self.EPAYLOAD_SIZE        = 0x0020D000
-        self.PAYLOAD_SIZE         = 0x00021000
+        self.PAYLOAD_SIZE         = 0x00022000
         self.CFGDATA_SIZE         = 0x00001000
         self.KEYHASH_SIZE         = 0x00001000
         self.VARIABLE_SIZE        = 0x00002000
         self.SBLRSVD_SIZE         = 0x00001000
-        self.FWUPDATE_SIZE        = 0x00018000 if self.ENABLE_FWU else 0
+        self.FWUPDATE_SIZE        = 0x0001A000 if self.ENABLE_FWU else 0
         self.SETUP_SIZE           = 0x00020000 if self.ENABLE_SBL_SETUP else 0
 
         self._REDUNDANT_LAYOUT    = 1
@@ -148,7 +153,7 @@ class Board(BaseBoard):
         if not self.STAGE1B_XIP:
             # For Stage1B, it can be compressed if STAGE1B_XIP is 0
             # If so, STAGE1B_FD_BASE/STAGE1B_FD_SIZE need to be defined
-            self.STAGE1B_FD_SIZE      = 0x30000
+            self.STAGE1B_FD_SIZE      = 0x40000
             if self.NO_OPT_MODE:
                 self.STAGE1B_FD_SIZE += 0xE000
             self.STAGE1B_FD_BASE    = FREE_TEMP_RAM_TOP - self.STAGE1B_FD_SIZE
@@ -157,6 +162,8 @@ class Board(BaseBoard):
         # if STAGE2_LOAD_HIGH is 1, STAGE2_FD_BASE will be ignored
         self.STAGE2_FD_BASE       = 0x01000000
         self.STAGE2_FD_SIZE       = 0x00060000
+        self.OS_LOADER_FD_SIZE    = 0x60000
+        self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         if self.NO_OPT_MODE:
             if self.FSPDEBUG_MODE == 1:
@@ -188,6 +195,80 @@ class Board(BaseBoard):
         #   VbtBin folder.
         self._MULTI_VBT_FILE      = {1:'Vbt800x600.dat', 2:'Vbt1024x768.dat'}
 
+    def GetCopyList (self,driver_inf):
+        fd = open (driver_inf, 'r')
+        lines = fd.readlines()
+        fd.close ()
+
+        have_copylist_section = False
+        have_defines_section = False
+        copy_list      = []
+        defines_dict   = {}
+        for line in lines:
+            line = line.strip ()
+            if line.startswith('#'):
+                continue
+            if line.startswith('['):
+                if line.startswith('[Defines]'):
+                    have_defines_section = True
+                else:
+                    have_defines_section = False
+
+                if line.startswith('[UserExtensions.SBL."CopyList"]'):
+                    have_copylist_section = True
+                else:
+                    have_copylist_section = False
+
+            # read .inf variables from file.
+            if have_defines_section:
+                match = re.match("^DEFINE\s+(.+)\\s*=\\s*(.+)", line)
+                if match:
+                    defines_dict[match.group(1).strip()] = match.group(2).strip()
+
+            if have_copylist_section:
+                match = re.match("^(.+)\\s*:\\s*(.+)", line)
+                if match:
+                    copy_list.append((match.group(1).strip(), match.group(2).strip()))
+
+        # substitute .inf DEFINES in copy list
+        while True:
+            # Entry may have multiple variables. Do multiple passes until no variables left
+            var_found = 0
+            for entry in copy_list:
+                match0 = re.match("\\$\\(([^\\)\\s]+)\\)", entry[0])
+                match1 = re.match("\\$\\(([^\\)\\s]+)\\)", entry[1])
+                if match0 is not None or match1 is not None:
+                    var_found = 1
+                    idx = copy_list.index(entry)
+                    copy_list[idx] = (entry[0].replace("$(" + match0.group(1)+ ")", defines_dict[match0.group(1)]),
+                        entry[1].replace("$(" + match1.group(1)+ ")", defines_dict[match1.group(1)]))
+            if var_found == 0:
+                break
+        return copy_list
+
+    def GetIppCryptoInf(self):
+        ipp_crypto_opt_lvl = 0
+        ipp_crypto_opt_name = ''
+        ipp_crypto_inf = ''
+        for k,v in IPP_CRYPTO_OPTIMIZATION_MASK.items():
+            if self.ENABLE_CRYPTO_SHA_OPT & v:
+                if v > ipp_crypto_opt_lvl:
+                    ipp_crypto_opt_lvl = v
+                    ipp_crypto_opt_name = k
+
+        #if ipp_crypto_opt_name[-2:]:
+        ipp_crypto_inf = os.path.join('BootloaderCommonPkg', 'Library', 'IppCrypto2Lib', 'IppCrypto2Lib%s.inf' % ipp_crypto_opt_name[-2:])
+        ipp_crypto_inf_full = os.path.join(os.environ['SBL_SOURCE'],ipp_crypto_inf)
+
+        if os.path.exists(ipp_crypto_inf_full):
+            copy_list = self.GetCopyList(ipp_crypto_inf_full)
+            for entry in copy_list:
+                src = os.path.join(os.path.dirname(ipp_crypto_inf_full), entry[0])
+                dst = os.path.join(os.path.dirname(ipp_crypto_inf_full), entry[1])
+                shutil.copy(src, dst)
+
+        return ipp_crypto_inf
+
     def GetPlatformToolchainVersions(self):
         version_dict = {
             'iasl'      : '20160318',
@@ -213,7 +294,8 @@ class Board(BaseBoard):
             'BootGuardLib|Silicon/CommonSocPkg/Library/BootGuardLibCBnT/BootGuardLibCBnT.inf',
             'TcoTimerLib|Silicon/CommonSocPkg/Library/TcoTimerLib/TcoTimerLib.inf',
             'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf',
-            'WatchDogTimerLib|Silicon/CommonSocPkg/Library/WatchDogTimerLib/WatchDogTimerLib.inf'
+            'WatchDogTimerLib|Silicon/CommonSocPkg/Library/WatchDogTimerLib/WatchDogTimerLib.inf',
+            'CryptoLib|%s' % self.GetIppCryptoInf()
         ]
         dsc['PcdsFeatureFlag.%s' % self.BUILD_ARCH] = [
             'gPlatformCommonLibTokenSpaceGuid.PcdMultiUsbBootDeviceEnabled | TRUE'
