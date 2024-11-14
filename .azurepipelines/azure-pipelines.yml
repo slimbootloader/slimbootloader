@@ -61,286 +61,287 @@ jobs:
         Build.Name:   "qemu"
         Build.Arch:   "-a x64"
         Build.Target: "-r"
-      APL_X64_DEBUG:
-        Build.Name:   "apl"
-        Build.Arch:   "-a x64"
-        Build.Target: ""
-      CFL_X64_RELEASE:
-        Build.Name:   "cfl"
-        Build.Arch:   "-a x64"
-        Build.Target: "-r"
-      CML_X86_DEBUG:
-        Build.Name:   "cml"
-        Build.Arch:   ""
-        Build.Target: ""
-      CMLV_X64_DEBUG:
-        Build.Name:   "cmlv"
-        Build.Arch:   "-a x64"
-        Build.Target: ""
-      TGL_X86_DEBUG:
-        Build.Name:   "tgl"
-        Build.Arch:   ""
-        Build.Target: ""
-      EHL_X86_DEBUG:
-        Build.Name:   "ehl"
-        Build.Arch:   ""
-        Build.Target: ""
-      ADLS_X86_DEBUG:
-        Build.Name:   "adls"
-        Build.Arch:   ""
-        Build.Target: ""
-      ADLP_X64_RELEASE:
-        Build.Name:   "adlp"
-        Build.Arch:   "-a x64"
-        Build.Target: "-r"
-      ADLPS_X86_DEBUG:
-        Build.Name:   "adlps"
-        Build.Arch:   "-a x64"
-        Build.Target: ""
-      ADLN_X86_RELEASE:
-        Build.Name:   "adln"
-        Build.Arch:   ""
-        Build.Target: "-r"
-      IDV_X64_DEBUG:
-        Build.Name:   "idv"
-        Build.Arch:   "-a x64"
-        Build.Target: ""
-      RPLS_X86_DEBUG:
-        Build.Name:   "rpls"
-        Build.Arch:   ""
-        Build.Target: ""
-      AZB_X86_DEBUG:
-        Build.Name:   "azb"
-        Build.Arch:   ""
-        Build.Target: ""
-      AZB_X86_RELEASE:
-        Build.Name:   "azb"
-        Build.Arch:   ""
-        Build.Target: "-r"
+#      APL_X64_DEBUG:
+#        Build.Name:   "apl"
+#        Build.Arch:   "-a x64"
+#        Build.Target: ""
+#      CFL_X64_RELEASE:
+#        Build.Name:   "cfl"
+#        Build.Arch:   "-a x64"
+#        Build.Target: "-r"
+#      CML_X86_DEBUG:
+#        Build.Name:   "cml"
+#        Build.Arch:   ""
+#        Build.Target: ""
+#      CMLV_X64_DEBUG:
+#        Build.Name:   "cmlv"
+#        Build.Arch:   "-a x64"
+#        Build.Target: ""
+#      TGL_X86_DEBUG:
+#        Build.Name:   "tgl"
+#        Build.Arch:   ""
+#        Build.Target: ""
+#      EHL_X86_DEBUG:
+#        Build.Name:   "ehl"
+#        Build.Arch:   ""
+#        Build.Target: ""
+#      ADLS_X86_DEBUG:
+#        Build.Name:   "adls"
+#        Build.Arch:   ""
+#        Build.Target: ""
+#      ADLP_X64_RELEASE:
+#        Build.Name:   "adlp"
+#        Build.Arch:   "-a x64"
+#        Build.Target: "-r"
+#      ADLPS_X86_DEBUG:
+#        Build.Name:   "adlps"
+#        Build.Arch:   "-a x64"
+#        Build.Target: ""
+#      ADLN_X86_RELEASE:
+#        Build.Name:   "adln"
+#        Build.Arch:   ""
+#        Build.Target: "-r"
+#      IDV_X64_DEBUG:
+#        Build.Name:   "idv"
+#        Build.Arch:   "-a x64"
+#        Build.Target: ""
+#      RPLS_X86_DEBUG:
+#        Build.Name:   "rpls"
+#        Build.Arch:   ""
+#        Build.Target: ""
+#      AZB_X86_DEBUG:
+#        Build.Name:   "azb"
+#        Build.Arch:   ""
+#        Build.Target: ""
+#      AZB_X86_RELEASE:
+#        Build.Name:   "azb"
+#        Build.Arch:   ""
+#        Build.Target: "-r"
 
-  pool:
-    vmImage: 'ubuntu-20.04'
-
-  steps:
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '3.8.x'
-      architecture: 'x64'
-    displayName: Set Python version
-
-  - bash: |
-      git config --global user.email "you@example.com"
-      git config --global user.name  "Your Name"
-      sudo apt-get update
-      sudo apt-get install -y nasm uuid-dev
-
-      wget --no-check-certificate http://archive.ubuntu.com/ubuntu/pool/universe/a/acpica-unix/acpica-tools_20190509-1_amd64.deb -P ~/asl/
-      sudo dpkg -i ~/asl/acpica-tools_20190509-1_amd64.deb
-
-    displayName: Install required tools
-
-  - script: |
-      python BuildLoader.py build $(Build.Name) $(Build.Arch) $(Build.Target) -k
-    displayName: 'Run $(Build.Name) build'
-
-- job: Linux2204
-
-  strategy:
-    matrix:
-      MTL_X86_DEBUG:
-        Build.Name:   "mtl"
-        Build.Arch:   ""
-        Build.Target: ""
-      MTLPS_X86_RELEASE:
-        Build.Name:   "mtlps"
-        Build.Arch:   ""
-        Build.Target: "-r"
-
-  pool:
-    vmImage: 'ubuntu-22.04'
-
-  steps:
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '3.8.x'
-      architecture: 'x64'
-    displayName: Set Python version
-
-  - bash: |
-      git config --global user.email "you@example.com"
-      git config --global user.name  "Your Name"
-      sudo apt-get update
-      sudo apt-get install -y uuid-dev
-      wget --no-check-certificate http://archive.ubuntu.com/ubuntu/pool/universe/a/acpica-unix/acpica-tools_20200925-8_amd64.deb -P ~/asl/
-      sudo dpkg -i ~/asl/acpica-tools_20200925-8_amd64.deb
-
-      wget --no-check-certificate http://ftp.us.debian.org/debian/pool/main/n/nasm/nasm_2.15.05-1_amd64.deb -P ~/nasm/
-      sudo dpkg -i ~/nasm/nasm_2.15.05-1_amd64.deb
-    displayName: Install required tools
-
-  - script: |
-      python BuildLoader.py build $(Build.Name) $(Build.Arch) $(Build.Target) -k
-    displayName: 'Run $(Build.Name) build'
-
-- job: Windows
-
-  strategy:
-    matrix:
-      APL_X86_DEBUG:
-        Build.Name:   "apl"
-        Build.Arch:   ""
-        Build.Target: ""
-      APL_X64_RELEASE:
-        Build.Name:   "apl"
-        Build.Arch:   "-a x64"
-        Build.Target: "-r"
-      CFL_X86_RELEASE:
-        Build.Name:   "cfl"
-        Build.Arch:   ""
-        Build.Target: "-r"
-      CFL_X64_DEBUG:
-        Build.Name:   "cfl"
-        Build.Arch:   "-a x64"
-        Build.Target: ""
-      CML_X86_DEBUG:
-        Build.Name:   "cml"
-        Build.Arch:   ""
-        Build.Target: ""
-      CML_X64_RELEASE:
-        Build.Name:   "cml"
-        Build.Arch:  "-a x64"
-        Build.Target: "-r"
-      CMLV_X86_RELEASE:
-        Build.Name:   "cmlv"
-        Build.Arch:   ""
-        Build.Target: "-r"
-      CMLV_X64_DEBUG:
-        Build.Name:   "cmlv"
-        Build.Arch:   "-a x64"
-        Build.Target: ""
-      TGL_X86_RELEASE:
-        Build.Name:   "tgl"
-        Build.Arch:   ""
-        Build.Target: "-r"
-      TGL_X64_DEBUG:
-        Build.Name:   "tgl"
-        Build.Arch:   "-a x64"
-        Build.Target: ""
-      EHL_X86_RELEASE:
-        Build.Name:   "ehl"
-        Build.Arch:   ""
-        Build.Target: "-r"
-      EHL_X64_DEBUG:
-        Build.Name:   "ehl"
-        Build.Arch:   "-a x64"
-        Build.Target: ""
-      ADLS_X86_RELEASE:
-        Build.Name:   "adls"
-        Build.Arch:   ""
-        Build.Target: "-r"
-      ADLS_X64_DEBUG:
-        Build.Name:   "adls"
-        Build.Arch:   "-a x64"
-        Build.Target: ""
-      ADLP_X64_RELEASE:
-        Build.Name:   "adlp"
-        Build.Arch:   "-a x64"
-        Build.Target: "-r"
-      ADLPS_X64_DEBUG:
-        Build.Name:   "adlps"
-        Build.Arch:   "-a x64"
-        Build.Target: ""
-      ADLN_X86_RELEASE:
-        Build.Name:   "adln"
-        Build.Arch:   ""
-        Build.Target: "-r"
-      ADLN_X64_DEBUG:
-        Build.Name:   "adln"
-        Build.Arch:   "-a x64"
-        Build.Target: ""
-      IDV_X86_RELEASE:
-        Build.Name:   "idv"
-        Build.Arch:   ""
-        Build.Target: "-r"
-      IDVH_X64_DEBUG:
-        Build.Name:   "idvh"
-        Build.Arch:   "-a x64"
-        Build.Target: ""
-      RPLS_X86_RELEASE:
-        Build.Name:   "rpls"
-        Build.Arch:   ""
-        Build.Target: "-r"
-      RPLS_X64_DEBUG:
-        Build.Name:   "rpls"
-        Build.Arch:   "-a x64"
-        Build.Target: ""
-      AZB_X86_DEBUG:
-        Build.Name:   "azb"
-        Build.Arch:   ""
-        Build.Target: ""
-      AZB_X86_RELEASE:
-        Build.Name:   "azb"
-        Build.Arch:   ""
-        Build.Target: "-r"
-      MTL_X86_RELEASE:
-        Build.Name:   "mtl"
-        Build.Arch:   ""
-        Build.Target: "-r"
-      MTL_X64_DEBUG:
-        Build.Name:   "mtl"
-        Build.Arch:   "-a x64"
-        Build.Target: ""
-      MTLPS_X86_RELEASE:
-        Build.Name:   "mtlps"
-        Build.Arch:   ""
-        Build.Target: "-r"
-      MTLPS_X64_DEBUG:
-        Build.Name:   "mtlps"
-        Build.Arch:   "-a x64"
-        Build.Target: ""
-  pool:
-    vmImage: 'windows-2019'
-
-  steps:
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '3.8.x'
-      architecture: 'x64'
-    displayName: Set Python version
-
-  - powershell: |
-      [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-      add-type @"
-      using System.Net;
-      using System.Security.Cryptography.X509Certificates;
-      public class TrustAllCertsPolicy : ICertificatePolicy {
-          public bool CheckValidationResult(
-              ServicePoint srvPoint, X509Certificate certificate,
-              WebRequest request, int certificateProblem) {
-              return true;
-          }
-      }
-      "@
-      echo "Create a new object"
-      [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
-      echo "Download nasm"
-      Invoke-WebRequest -Uri https://www.nasm.us/pub/nasm/releasebuilds/2.14.02/win64/nasm-2.14.02-win64.zip -OutFile nasm.zip
-      echo "Expand nasm"
-      Expand-Archive .\nasm.zip C:\
-
-      echo "Download iasl"
-      Invoke-WebRequest -Uri https://cdrdv2.intel.com/v1/dl/getContent/774881 -OutFile iasl.zip
-      Expand-Archive .\iasl.zip C:\iasl
-      echo "##vso[task.setvariable variable=nasm_prefix;]C:\nasm-2.14.02\"
-      echo "##vso[task.setvariable variable=iasl_prefix;]C:\iasl\"
-      echo "##vso[task.setvariable variable=openssl_path;]C:\Program Files\OpenSSL\bin\"
-    displayName: Windows EDK II Prerequisites
-
-  - script: |
-      git config --global user.email "you@example.com"
-      git config --global user.name  "Your Name"
-    displayName: Environment configuration
-
-  - script: |
-      python BuildLoader.py build $(Build.Name) $(Build.Arch) $(Build.Target) -t vs2019 -k
-    displayName: 'Run $(Build.Name) build'
+#  pool:
+#    vmImage: 'ubuntu-20.04'
+#
+#  steps:
+#  - task: UsePythonVersion@0
+#    inputs:
+#      versionSpec: '3.8.x'
+#      architecture: 'x64'
+#    displayName: Set Python version
+#
+#  - bash: |
+#      git config --global user.email "you@example.com"
+#      git config --global user.name  "Your Name"
+#      sudo apt-get update
+#      sudo apt-get install -y nasm uuid-dev
+#
+#      wget --no-check-certificate http://archive.ubuntu.com/ubuntu/pool/universe/a/acpica-unix/acpica-tools_20190509-1_amd64.deb -P ~/asl/
+#      sudo dpkg -i ~/asl/acpica-tools_20190509-1_amd64.deb
+#
+#    displayName: Install required tools
+#
+#  - script: |
+#      python BuildLoader.py build $(Build.Name) $(Build.Arch) $(Build.Target) -k
+#    displayName: 'Run $(Build.Name) build'
+#
+#- job: Linux2204
+#
+#  strategy:
+#    matrix:
+#      MTL_X86_DEBUG:
+#        Build.Name:   "mtl"
+#        Build.Arch:   ""
+#        Build.Target: ""
+#      MTLPS_X86_RELEASE:
+#        Build.Name:   "mtlps"
+#        Build.Arch:   ""
+#        Build.Target: "-r"
+#
+#  pool:
+#    vmImage: 'ubuntu-22.04'
+#
+#  steps:
+#  - task: UsePythonVersion@0
+#    inputs:
+#      versionSpec: '3.8.x'
+#      architecture: 'x64'
+#    displayName: Set Python version
+#
+#  - bash: |
+#      git config --global user.email "you@example.com"
+#      git config --global user.name  "Your Name"
+#      sudo apt-get update
+#      sudo apt-get install -y uuid-dev
+#      wget --no-check-certificate http://archive.ubuntu.com/ubuntu/pool/universe/a/acpica-unix/acpica-tools_20200925-8_amd64.deb -P ~/asl/
+#      sudo dpkg -i ~/asl/acpica-tools_20200925-8_amd64.deb
+#
+#      wget --no-check-certificate http://ftp.us.debian.org/debian/pool/main/n/nasm/nasm_2.15.05-1_amd64.deb -P ~/nasm/
+#      sudo dpkg -i ~/nasm/nasm_2.15.05-1_amd64.deb
+#    displayName: Install required tools
+#
+#  - script: |
+#      python BuildLoader.py build $(Build.Name) $(Build.Arch) $(Build.Target) -k
+#    displayName: 'Run $(Build.Name) build'
+#
+#- job: Windows
+#
+#  strategy:
+#    matrix:
+#      APL_X86_DEBUG:
+#        Build.Name:   "apl"
+#        Build.Arch:   ""
+#        Build.Target: ""
+#      APL_X64_RELEASE:
+#        Build.Name:   "apl"
+#        Build.Arch:   "-a x64"
+#        Build.Target: "-r"
+#      CFL_X86_RELEASE:
+#        Build.Name:   "cfl"
+#        Build.Arch:   ""
+#        Build.Target: "-r"
+#      CFL_X64_DEBUG:
+#        Build.Name:   "cfl"
+#        Build.Arch:   "-a x64"
+#        Build.Target: ""
+#      CML_X86_DEBUG:
+#        Build.Name:   "cml"
+#        Build.Arch:   ""
+#        Build.Target: ""
+#      CML_X64_RELEASE:
+#        Build.Name:   "cml"
+#        Build.Arch:  "-a x64"
+#        Build.Target: "-r"
+#      CMLV_X86_RELEASE:
+#        Build.Name:   "cmlv"
+#        Build.Arch:   ""
+#        Build.Target: "-r"
+#      CMLV_X64_DEBUG:
+#        Build.Name:   "cmlv"
+#        Build.Arch:   "-a x64"
+#        Build.Target: ""
+#      TGL_X86_RELEASE:
+#        Build.Name:   "tgl"
+#        Build.Arch:   ""
+#        Build.Target: "-r"
+#      TGL_X64_DEBUG:
+#        Build.Name:   "tgl"
+#        Build.Arch:   "-a x64"
+#        Build.Target: ""
+#      EHL_X86_RELEASE:
+#        Build.Name:   "ehl"
+#        Build.Arch:   ""
+#        Build.Target: "-r"
+#      EHL_X64_DEBUG:
+#        Build.Name:   "ehl"
+#        Build.Arch:   "-a x64"
+#        Build.Target: ""
+#      ADLS_X86_RELEASE:
+#        Build.Name:   "adls"
+#        Build.Arch:   ""
+#        Build.Target: "-r"
+#      ADLS_X64_DEBUG:
+#        Build.Name:   "adls"
+#        Build.Arch:   "-a x64"
+#        Build.Target: ""
+#      ADLP_X64_RELEASE:
+#        Build.Name:   "adlp"
+#        Build.Arch:   "-a x64"
+#        Build.Target: "-r"
+#      ADLPS_X64_DEBUG:
+#        Build.Name:   "adlps"
+#        Build.Arch:   "-a x64"
+#        Build.Target: ""
+#      ADLN_X86_RELEASE:
+#        Build.Name:   "adln"
+#        Build.Arch:   ""
+#        Build.Target: "-r"
+#      ADLN_X64_DEBUG:
+#        Build.Name:   "adln"
+#        Build.Arch:   "-a x64"
+#        Build.Target: ""
+#      IDV_X86_RELEASE:
+#        Build.Name:   "idv"
+#        Build.Arch:   ""
+#        Build.Target: "-r"
+#      IDVH_X64_DEBUG:
+#        Build.Name:   "idvh"
+#        Build.Arch:   "-a x64"
+#        Build.Target: ""
+#      RPLS_X86_RELEASE:
+#        Build.Name:   "rpls"
+#        Build.Arch:   ""
+#        Build.Target: "-r"
+#      RPLS_X64_DEBUG:
+#        Build.Name:   "rpls"
+#        Build.Arch:   "-a x64"
+#        Build.Target: ""
+#      AZB_X86_DEBUG:
+#        Build.Name:   "azb"
+#        Build.Arch:   ""
+#        Build.Target: ""
+#      AZB_X86_RELEASE:
+#        Build.Name:   "azb"
+#        Build.Arch:   ""
+#        Build.Target: "-r"
+#      MTL_X86_RELEASE:
+#        Build.Name:   "mtl"
+#        Build.Arch:   ""
+#        Build.Target: "-r"
+#      MTL_X64_DEBUG:
+#        Build.Name:   "mtl"
+#        Build.Arch:   "-a x64"
+#        Build.Target: ""
+#      MTLPS_X86_RELEASE:
+#        Build.Name:   "mtlps"
+#        Build.Arch:   ""
+#        Build.Target: "-r"
+#      MTLPS_X64_DEBUG:
+#        Build.Name:   "mtlps"
+#        Build.Arch:   "-a x64"
+#        Build.Target: ""
+#  pool:
+#    vmImage: 'windows-2019'
+#
+#  steps:
+#  - task: UsePythonVersion@0
+#    inputs:
+#      versionSpec: '3.8.x'
+#      architecture: 'x64'
+#    displayName: Set Python version
+#
+#  - powershell: |
+#      [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+#      add-type @"
+#      using System.Net;
+#      using System.Security.Cryptography.X509Certificates;
+#      public class TrustAllCertsPolicy : ICertificatePolicy {
+#          public bool CheckValidationResult(
+#              ServicePoint srvPoint, X509Certificate certificate,
+#              WebRequest request, int certificateProblem) {
+#              return true;
+#          }
+#      }
+#      "@
+#      echo "Create a new object"
+#      [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+#      echo "Download nasm"
+#      Invoke-WebRequest -Uri https://www.nasm.us/pub/nasm/releasebuilds/2.14.02/win64/nasm-2.14.02-win64.zip -OutFile nasm.zip
+#      echo "Expand nasm"
+#      Expand-Archive .\nasm.zip C:\
+#
+#      echo "Download iasl"
+#      Invoke-WebRequest -Uri https://cdrdv2.intel.com/v1/dl/getContent/774881 -OutFile iasl.zip
+#      Expand-Archive .\iasl.zip C:\iasl
+#      echo "##vso[task.setvariable variable=nasm_prefix;]C:\nasm-2.14.02\"
+#      echo "##vso[task.setvariable variable=iasl_prefix;]C:\iasl\"
+#      echo "##vso[task.setvariable variable=openssl_path;]C:\Program Files\OpenSSL\bin\"
+#    displayName: Windows EDK II Prerequisites
+#
+#  - script: |
+#      git config --global user.email "you@example.com"
+#      git config --global user.name  "Your Name"
+#    displayName: Environment configuration
+#
+#  - script: |
+#      python BuildLoader.py build $(Build.Name) $(Build.Arch) $(Build.Target) -t vs2019 -k
+#    displayName: 'Run $(Build.Name) build'
+#
