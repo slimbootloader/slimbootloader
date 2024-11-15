@@ -359,7 +359,7 @@ BuildBaseInfoHob (
   }
 
   // Build key hash Hob for Payload
-  if (LdrGlobal->HashStorePtr != NULL) {
+  if (FeaturePcdGet(PcdVerifiedBootEnabled) && LdrGlobal->HashStorePtr != NULL) {
 
     HashStorePtr = (HASH_STORE_TABLE *)LdrGlobal->HashStorePtr;
     HashHob      = BuildGuidHob (&gPayloadKeyHashGuid, HashStorePtr->UsedLength);
