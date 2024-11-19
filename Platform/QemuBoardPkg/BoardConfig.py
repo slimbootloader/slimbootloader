@@ -67,6 +67,7 @@ class Board(BaseBoard):
 
         self.ENABLE_SMBIOS            = 1
         self.ENABLE_SBL_SETUP         = 0
+        self.ENABLE_UPL_HANDOFF_FDT   = 0
 
         self.CPU_MAX_LOGICAL_PROCESSOR_NUMBER = 255
 
@@ -148,7 +149,7 @@ class Board(BaseBoard):
         if not self.STAGE1B_XIP:
             # For Stage1B, it can be compressed if STAGE1B_XIP is 0
             # If so, STAGE1B_FD_BASE/STAGE1B_FD_SIZE need to be defined
-            self.STAGE1B_FD_SIZE      = 0x30000
+            self.STAGE1B_FD_SIZE      = 0x32000
             if self.NO_OPT_MODE:
                 self.STAGE1B_FD_SIZE += 0xE000
             self.STAGE1B_FD_BASE    = FREE_TEMP_RAM_TOP - self.STAGE1B_FD_SIZE
@@ -170,7 +171,7 @@ class Board(BaseBoard):
 
         self.STAGE1_STACK_SIZE    = 0x00002000
         self.STAGE1_DATA_SIZE     = 0x0000E000
-
+        self.LOADER_RSVD_MEM_SIZE = 0x00800000
         self.CFG_DATABASE_SIZE    = self.CFGDATA_SIZE
 
         # Add following to force to use a specific platform ID
