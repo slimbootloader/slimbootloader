@@ -79,6 +79,7 @@
 #include <Guid/TpmEventLogInfoGuid.h>
 #include <Guid/SecureBootInfoGuid.h>
 #include <Library/IppCryptoPerfLib.h>
+#include <Library/BuildFdtLib.h>
 
 #define UIMAGE_FIT_MAGIC               (0x56190527)
 
