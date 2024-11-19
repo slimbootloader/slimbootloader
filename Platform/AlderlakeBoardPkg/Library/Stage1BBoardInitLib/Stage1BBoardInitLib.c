@@ -852,7 +852,7 @@ DEBUG_CODE_END();
 
       // Program range above max memory 1MB uncachable
       AsmCpuid (CPUID_VIR_PHY_ADDRESS_SIZE, &VirPhyAddressSize.Uint32, NULL, NULL, NULL);
-      DEBUG ((DEBUG_ERROR, "VirPhyAddressSize.Uint32 = %llx", VirPhyAddressSize.Uint32));
+      DEBUG ((DEBUG_INFO, "VirPhyAddressSize.Uint32 = %llx\n", VirPhyAddressSize.Uint32));
       MsrBase.Uint64 = GetMemoryInfo (EnumMemInfoTouum);
       MsrBase.Bits.Type = MTRR_CACHE_UNCACHEABLE;
       AsmWriteMsr64 (MsrIdx,  MsrBase.Uint64);
