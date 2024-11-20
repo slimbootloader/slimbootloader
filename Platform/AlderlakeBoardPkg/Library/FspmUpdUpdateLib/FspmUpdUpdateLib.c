@@ -317,6 +317,9 @@ UpdateFspConfig (
   CopyMem (Fspmcfg->PchHdaAudioLinkDmicEnable, MemCfgData->PchHdaAudioLinkDmicEnable, sizeof(MemCfgData->PchHdaAudioLinkDmicEnable));
   Fspmcfg->PchHdaAudioLinkDmicClockSelect[0] = MemCfgData->PchHdaAudioLinkDmicClockSelect[0];
   Fspmcfg->PchHdaAudioLinkDmicClockSelect[1] = MemCfgData->PchHdaAudioLinkDmicClockSelect[1];
+#if defined(PLATFORM_ADLN)
+  CopyMem (Fspmcfg->PchHdaAudioLinkSspEnable,  MemCfgData->PchHdaAudioLinkSspEnable,  sizeof(MemCfgData->PchHdaAudioLinkSspEnable));
+#endif
   CopyMem (Fspmcfg->PchHdaAudioLinkSndwEnable, MemCfgData->PchHdaAudioLinkSndwEnable, sizeof(MemCfgData->PchHdaAudioLinkSndwEnable));
   Fspmcfg->PchHdaIDispLinkTmode              = MemCfgData->PchHdaIDispLinkTmode;
   Fspmcfg->PchHdaIDispLinkFrequency   = MemCfgData->PchHdaIDispLinkFrequency;

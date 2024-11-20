@@ -437,6 +437,13 @@
                      Determines DMIC<N> Clock Source. 0- Both, 1- ClkA, 2- ClkB
       length       : 0x0002
       value        : {0x01, 0x01}
+  - PchHdaAudioLinkSspEnable :
+      name         : Enable HD Audio SSP0 Link
+      type         : EditNum, HEX, (0x00, 0xFFFFFFFFFFFF)
+      help         : >
+                     Enable/disable HD Audio SSP_N/I2S link. Muxed with HDA. N-number 0-5
+      length       : 0x06
+      value        : { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
   - PchHdaAudioLinkSndwEnable :
       name         : Enable HD Audio SoundWire#N Link
       type         : EditNum, HEX, (0x0, 0xFFFFFFFF)
