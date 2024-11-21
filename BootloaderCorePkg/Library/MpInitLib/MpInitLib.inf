@@ -55,6 +55,7 @@
 [FixedPcd]
   gPlatformModuleTokenSpaceGuid.PcdCpuMaxLogicalProcessorNumber
   gPlatformModuleTokenSpaceGuid.PcdCpuSortMethod
+  gPlatformModuleTokenSpaceGuid.PcdCpuApInitWaitInMicroSeconds
 
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase

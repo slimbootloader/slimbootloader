@@ -153,6 +153,8 @@
   # 1: Sort the CPU based on CPU APIC ID in ascending order
   # 2: Sort the CPU based on CPU APIC ID in descending order
   gPlatformModuleTokenSpaceGuid.PcdCpuSortMethod          |     0      | UINT32 | 0x200000E4
+  # Time to wait for AP Wakeup in MicroSeconds. Usually only needed for high core count SoCs
+  gPlatformModuleTokenSpaceGuid.PcdCpuApInitWaitInMicroSeconds | 0     | UINT32 | 0x200001A4
 
   # Size of the Hash store allocated in bootloader
   gPlatformModuleTokenSpaceGuid.PcdHashStoreSize          | 0x00000200 | UINT32 | 0x200000F1
@@ -220,8 +222,6 @@
   gPlatformModuleTokenSpaceGuid.PcdPciResourceIoBase      | 0x00000000 | UINT32 | 0x200001A1
   gPlatformModuleTokenSpaceGuid.PcdPciResourceMem32Base   | 0x00000000 | UINT32 | 0x200001A2
   gPlatformModuleTokenSpaceGuid.PcdPciResourceMem64Base   | 0x0000000000000000  | UINT64     | 0x200001A3
-
-
 
 [PcdsFeatureFlag]
   # Determine if the Intel GFX device should be enabled or not in system

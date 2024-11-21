@@ -239,6 +239,7 @@
   gPlatformModuleTokenSpaceGuid.PcdAcpiProcessorIdBase    | $(ACPI_PROCESSOR_ID_BASE)
   gPlatformModuleTokenSpaceGuid.PcdCpuMaxLogicalProcessorNumber | $(CPU_MAX_LOGICAL_PROCESSOR_NUMBER)
   gPlatformModuleTokenSpaceGuid.PcdCpuSortMethod          | $(CPU_SORT_METHOD)
+  gPlatformModuleTokenSpaceGuid.PcdCpuApInitWaitInMicroSeconds | $(CPU_AP_WAIT_TIME_US)
 
   gPlatformCommonLibTokenSpaceGuid.PcdConsoleInDeviceMask  | $(CONSOLE_IN_DEVICE_MASK)
   gPlatformCommonLibTokenSpaceGuid.PcdConsoleOutDeviceMask | $(CONSOLE_OUT_DEVICE_MASK)
