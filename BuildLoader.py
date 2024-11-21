@@ -190,6 +190,7 @@ class BaseBoard(object):
 
         self.CPU_MAX_LOGICAL_PROCESSOR_NUMBER = 16
         self.CPU_SORT_METHOD       = 0
+        self.CPU_AP_WAIT_TIME_US   = 0
 
         self.ACM_SIZE              = 0
         self.ACM_FIT_VERISON       = 0x100

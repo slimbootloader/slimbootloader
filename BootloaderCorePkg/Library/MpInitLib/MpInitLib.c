@@ -496,7 +496,19 @@ MpInit (
     } else {
       DEBUG ((DEBUG_INFO, "MP Init (Run)\n"));
 
-      // Wait for task done
+      // The below loop waits until all APs which have started Wakeup
+      // (ApDataPtr->ApCounter) have completed wakeup
+      // (mMpDataStruct.ApDoneCounter), or the timeout is reached
+      // (AP_TASK_TIMEOUT_UNIT * AP_TASK_TIMEOUT_CNT). Whichever occurs
+      // first. This assumes that the number of running APs is never zero
+      // unless all APs have completed wakeup. This is not always the case
+      // with high core counts and tight timings, so a fixed delay here can
+      // help ensure all APs have started before this check.
+
+      if (FixedPcdGet32 (PcdCpuApInitWaitInMicroSeconds)) {
+        MicroSecondDelay (FixedPcdGet32 (PcdCpuApInitWaitInMicroSeconds));
+      }
+
       ApDataPtr = (AP_DATA_STRUCT *) (ApBuffer + mStubCodeSize);
       ApCounter = (volatile UINT32 *)&ApDataPtr->ApCounter;
       TimeOutCounter = 0;
@@ -507,7 +519,6 @@ MpInit (
         MicroSecondDelay (AP_TASK_TIMEOUT_UNIT);
         TimeOutCounter++ ;
       }
-
 
       CpuCount = (*ApCounter) + 1;
       DEBUG ((DEBUG_INFO, "Detected %d CPU threads\n", CpuCount));
