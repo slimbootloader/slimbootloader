@@ -2,7 +2,7 @@
 #
 #  Slim Bootloader CFGDATA Option File.
 #
-#  Copyright (c) 2023, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2023 - 2024, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -53,13 +53,7 @@
         value        : 0
   # The GrpIdx of GpioPinConfig1 is based on mPchNGpioGroupInfo in GpioSiLib.c
   # Refer to PadGroup options in CfgData_PayloadSelection_Adln.yaml
-  - !expand { GPIO_TMPL : [ GPP_I00,  0x0350A383,  0x09002001 ] }
-  - !expand { GPIO_TMPL : [ GPP_I01,  0x0350A383,  0x09012001 ] }
-  - !expand { GPIO_TMPL : [ GPP_I02,  0x0534AD81,  0x09022601 ] }
-  - !expand { GPIO_TMPL : [ GPP_I03,  0x0350A381,  0x09032001 ] }
-  - !expand { GPIO_TMPL : [ GPP_I04,  0x0550E281,  0x09042001 ] }
   - !expand { GPIO_TMPL : [ GPP_I05,  0x0350A383,  0x09052001 ] }
-  - !expand { GPIO_TMPL : [ GPP_I06,  0x0350A383,  0x09062001 ] }
   - !expand { GPIO_TMPL : [ GPP_I07,  0x0350A383,  0x09072001 ] }
   - !expand { GPIO_TMPL : [ GPP_I08,  0x0350A383,  0x09082001 ] }
   - !expand { GPIO_TMPL : [ GPP_I09,  0x0350A383,  0x09092001 ] }
@@ -72,10 +66,6 @@
   - !expand { GPIO_TMPL : [ GPP_I16,  0x0550E281,  0x09102001 ] }
   - !expand { GPIO_TMPL : [ GPP_I17,  0x0150A281,  0x09112001 ] }
   - !expand { GPIO_TMPL : [ GPP_I18,  0x0550A281,  0x09122001 ] }
-  - !expand { GPIO_TMPL : [ GPP_I19,  0x0350A383,  0x09132001 ] }
-  - !expand { GPIO_TMPL : [ GPP_I20,  0x0350A383,  0x09142001 ] }
-  - !expand { GPIO_TMPL : [ GPP_I21,  0x0350A383,  0x09152001 ] }
-  - !expand { GPIO_TMPL : [ GPP_I22,  0x0350A283,  0x09162001 ] }
   - !expand { GPIO_TMPL : [ GPP_R00,  0x0350A383,  0x03002019 ] }
   - !expand { GPIO_TMPL : [ GPP_R01,  0x0350A383,  0x03012019 ] }
   - !expand { GPIO_TMPL : [ GPP_R02,  0x0350A383,  0x03022019 ] }
@@ -84,32 +74,6 @@
   - !expand { GPIO_TMPL : [ GPP_R05,  0x0350A383,  0x03052009 ] }
   - !expand { GPIO_TMPL : [ GPP_R06,  0x0350A383,  0x03062001 ] }
   - !expand { GPIO_TMPL : [ GPP_R07,  0x0350A381,  0x03072001 ] }
-  - !expand { GPIO_TMPL : [ GPP_R08,  0x0350A385,  0x03082001 ] }
-  - !expand { GPIO_TMPL : [ GPP_R09,  0x0350A385,  0x03092001 ] }
-  - !expand { GPIO_TMPL : [ GPP_R10,  0x0550A581,  0x030A2001 ] }
-  - !expand { GPIO_TMPL : [ GPP_R11,  0x0550E281,  0x030B2001 ] }
-  - !expand { GPIO_TMPL : [ GPP_R12,  0x0350A383,  0x030C2019 ] }
-  - !expand { GPIO_TMPL : [ GPP_R13,  0x0350E281,  0x030D2001 ] }
-  - !expand { GPIO_TMPL : [ GPP_R14,  0x0550A281,  0x030E2001 ] }
-  - !expand { GPIO_TMPL : [ GPP_R15,  0x0350A381,  0x030F2001 ] }
-  - !expand { GPIO_TMPL : [ GPP_R16,  0x0350A383,  0x03102001 ] }
-  - !expand { GPIO_TMPL : [ GPP_R17,  0x0350A381,  0x03112001 ] }
-  - !expand { GPIO_TMPL : [ GPP_R18,  0x0350A383,  0x03122001 ] }
-  - !expand { GPIO_TMPL : [ GPP_R19,  0x0350A381,  0x03132001 ] }
-  - !expand { GPIO_TMPL : [ GPP_R20,  0x0350A381,  0x03142001 ] }
-  - !expand { GPIO_TMPL : [ GPP_R21,  0x0350A381,  0x03152001 ] }
-  - !expand { GPIO_TMPL : [ GPP_J00,  0x0350A487,  0x9F002001 ] }
-  - !expand { GPIO_TMPL : [ GPP_J01,  0x0350A587,  0x9F012001 ] }
-  - !expand { GPIO_TMPL : [ GPP_J02,  0x0350A287,  0x9F022001 ] }
-  - !expand { GPIO_TMPL : [ GPP_J03,  0x0350A487,  0x9F032001 ] }
-  - !expand { GPIO_TMPL : [ GPP_J04,  0x0350A381,  0x9F042001 ] }
-  - !expand { GPIO_TMPL : [ GPP_J05,  0x0350A381,  0x9F052001 ] }
-  - !expand { GPIO_TMPL : [ GPP_J06,  0x0350A381,  0x9F062001 ] }
-  - !expand { GPIO_TMPL : [ GPP_J07,  0x0350A381,  0x9F072001 ] }
-  - !expand { GPIO_TMPL : [ GPP_J08,  0x0350A381,  0x9F082001 ] }
-  - !expand { GPIO_TMPL : [ GPP_J09,  0x0350A381,  0x9F092001 ] }
-  - !expand { GPIO_TMPL : [ GPP_J10,  0x0350A381,  0x9F0A2001 ] }
-  - !expand { GPIO_TMPL : [ GPP_J11,  0x0350A381,  0x9F0B2001 ] }
   - !expand { GPIO_TMPL : [ GPP_B00,  0x0550E281,  0x00002001 ] }
   - !expand { GPIO_TMPL : [ GPP_B01,  0x0550E281,  0x00012001 ] }
   - !expand { GPIO_TMPL : [ GPP_B02,  0x00348DA1,  0x00022601 ] }
@@ -134,14 +98,6 @@
   - !expand { GPIO_TMPL : [ GPP_B21,  0x0350A383,  0x00152001 ] }
   - !expand { GPIO_TMPL : [ GPP_B22,  0x0350A383,  0x00162001 ] }
   - !expand { GPIO_TMPL : [ GPP_B23,  0x0350A281,  0x00172001 ] }
-  - !expand { GPIO_TMPL : [ GPP_G00,  0x0350A383,  0x9E002001 ] }
-  - !expand { GPIO_TMPL : [ GPP_G01,  0x0350A383,  0x9E012001 ] }
-  - !expand { GPIO_TMPL : [ GPP_G02,  0x0350A383,  0x9E022001 ] }
-  - !expand { GPIO_TMPL : [ GPP_G03,  0x0350A383,  0x9E032001 ] }
-  - !expand { GPIO_TMPL : [ GPP_G04,  0x0350A383,  0x9E042001 ] }
-  - !expand { GPIO_TMPL : [ GPP_G05,  0x0350A383,  0x9E052001 ] }
-  - !expand { GPIO_TMPL : [ GPP_G06,  0x0350A383,  0x9E062001 ] }
-  - !expand { GPIO_TMPL : [ GPP_G07,  0x0350A383,  0x9E072001 ] }
   - !expand { GPIO_TMPL : [ GPP_H00,  0x0350A383,  0x07002001 ] }
   - !expand { GPIO_TMPL : [ GPP_H01,  0x0350A383,  0x07012001 ] }
   - !expand { GPIO_TMPL : [ GPP_H02,  0x0550E281,  0x07022001 ] }
@@ -178,7 +134,6 @@
   - !expand { GPIO_TMPL : [ GPD09,    0x0750A283,  0x05092001 ] }
   - !expand { GPIO_TMPL : [ GPD10,    0x0750A283,  0x050A2001 ] }
   - !expand { GPIO_TMPL : [ GPD11,    0x0750A283,  0x050B2001 ] }
-  - !expand { GPIO_TMPL : [ GPD12,    0x0750A283,  0x050C2001 ] }
   - !expand { GPIO_TMPL : [ GPP_A00,  0x0350A383,  0x02002001 ] }
   - !expand { GPIO_TMPL : [ GPP_A01,  0x0350A383,  0x02012019 ] }
   - !expand { GPIO_TMPL : [ GPP_A02,  0x0350A383,  0x02022001 ] }
@@ -211,22 +166,6 @@
   - !expand { GPIO_TMPL : [ GPP_C05,  0x0550E281,  0x0B052001 ] }
   - !expand { GPIO_TMPL : [ GPP_C06,  0x0150A383,  0x0B062001 ] }
   - !expand { GPIO_TMPL : [ GPP_C07,  0x0150A383,  0x0B072001 ] }
-  - !expand { GPIO_TMPL : [ GPP_C08,  0x0538AD81,  0x0B082001 ] }
-  - !expand { GPIO_TMPL : [ GPP_C09,  0x0350A381,  0x0B092001 ] }
-  - !expand { GPIO_TMPL : [ GPP_C10,  0x0150A281,  0x0B0A2001 ] }
-  - !expand { GPIO_TMPL : [ GPP_C11,  0x0150A281,  0x0B0B2001 ] }
-  - !expand { GPIO_TMPL : [ GPP_C12,  0x0518AD81,  0x0B0C2001 ] }
-  - !expand { GPIO_TMPL : [ GPP_C13,  0x0550E281,  0x0B0D2001 ] }
-  - !expand { GPIO_TMPL : [ GPP_C14,  0x0314AD81,  0x0B0E2601 ] }
-  - !expand { GPIO_TMPL : [ GPP_C15,  0x0550E281,  0x0B0F2001 ] }
-  - !expand { GPIO_TMPL : [ GPP_C16,  0x0350A383,  0x0B102001 ] }
-  - !expand { GPIO_TMPL : [ GPP_C17,  0x0350A383,  0x0B112001 ] }
-  - !expand { GPIO_TMPL : [ GPP_C18,  0x0350A383,  0x0B122001 ] }
-  - !expand { GPIO_TMPL : [ GPP_C19,  0x0350A383,  0x0B132001 ] }
-  - !expand { GPIO_TMPL : [ GPP_C20,  0x0350A381,  0x0B142001 ] }
-  - !expand { GPIO_TMPL : [ GPP_C21,  0x0350A381,  0x0B152001 ] }
-  - !expand { GPIO_TMPL : [ GPP_C22,  0x0350E281,  0x0B162001 ] }
-  - !expand { GPIO_TMPL : [ GPP_C23,  0x0314AD81,  0x0B172601 ] }
   - !expand { GPIO_TMPL : [ GPP_S00,  0x0350A383,  0x06002001 ] }
   - !expand { GPIO_TMPL : [ GPP_S01,  0x0350A383,  0x0601201F ] }
   - !expand { GPIO_TMPL : [ GPP_S02,  0x0350A283,  0x0602201F ] }
@@ -259,18 +198,6 @@
   - !expand { GPIO_TMPL : [ GPP_E21,  0x0350A28B,  0x0E15201F ] }
   - !expand { GPIO_TMPL : [ GPP_E22,  0x0350A28B,  0x8E16201F ] }
   - !expand { GPIO_TMPL : [ GPP_E23,  0x0350A28B,  0x8E17201F ] }
-  - !expand { GPIO_TMPL : [ GPP_K00,  0x0350A383,  0x9D002001 ] }
-  - !expand { GPIO_TMPL : [ GPP_K01,  0x0350A383,  0x9D012001 ] }
-  - !expand { GPIO_TMPL : [ GPP_K02,  0x0550E281,  0x9D022001 ] }
-  - !expand { GPIO_TMPL : [ GPP_K03,  0x0350A383,  0x9D032001 ] }
-  - !expand { GPIO_TMPL : [ GPP_K04,  0x0350A383,  0x9D042001 ] }
-  - !expand { GPIO_TMPL : [ GPP_K05,  0x0550E281,  0x9D052001 ] }
-  - !expand { GPIO_TMPL : [ GPP_K06,  0x0150A383,  0x9D062001 ] }
-  - !expand { GPIO_TMPL : [ GPP_K07,  0x0150A383,  0x9D072001 ] }
-  - !expand { GPIO_TMPL : [ GPP_K08,  0x0150A383,  0x9D082001 ] }
-  - !expand { GPIO_TMPL : [ GPP_K09,  0x0350A381,  0x9D092001 ] }
-  - !expand { GPIO_TMPL : [ GPP_K10,  0x0150A281,  0x9D0A2001 ] }
-  - !expand { GPIO_TMPL : [ GPP_K11,  0x0150A281,  0x9D0B2001 ] }
   - !expand { GPIO_TMPL : [ GPP_F00,  0x0350A383,  0x0C002001 ] }
   - !expand { GPIO_TMPL : [ GPP_F01,  0x0350A383,  0x0C012019 ] }
   - !expand { GPIO_TMPL : [ GPP_F02,  0x0350A383,  0x0C022001 ] }
@@ -315,11 +242,3 @@
   - !expand { GPIO_TMPL : [ GPP_D17,  0x0350A383,  0x08112001 ] }
   - !expand { GPIO_TMPL : [ GPP_D18,  0x0350A383,  0x08122001 ] }
   - !expand { GPIO_TMPL : [ GPP_D19,  0x0350A381,  0x08132001 ] }
-  - !expand { GPIO_TMPL : [ GPP_D20,  0x0550E281,  0x08142001 ] }
-  - !expand { GPIO_TMPL : [ GPP_D21,  0x0350A383,  0x08152001 ] }
-  - !expand { GPIO_TMPL : [ GPP_D22,  0x0350A383,  0x08162001 ] }
-  - !expand { GPIO_TMPL : [ GPP_D23,  0x0350A381,  0x08172001 ] }
-  - !expand { GPIO_TMPL : [ GPP_T00,  0x0350A387,  0x81002001 ] }
-  - !expand { GPIO_TMPL : [ GPP_T01,  0x0350A387,  0x81012001 ] }
-  - !expand { GPIO_TMPL : [ GPP_T02,  0x0350A387,  0x81022001 ] }
-  - !expand { GPIO_TMPL : [ GPP_T03,  0x0350A387,  0x81032001 ] }
