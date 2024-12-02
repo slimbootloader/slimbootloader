@@ -1022,10 +1022,14 @@ def check_for_iasl():
     try:
         ver_str = subprocess.check_output([cmd, '-v']).decode().strip()
         ver = re.search(r'version\s*([\d.]+)', ver_str).group(1)
+        print (ver_str)
+        print (ver)
+        print ("========")
     except:
         print('ERROR: iasl not available. Please set IASL_PREFIX.')
         ver = ''
         pass
+    print (cmd)
     return is_valid_tool_version(cmd, ver)
 
 def check_for_git():
