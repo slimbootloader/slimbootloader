@@ -177,8 +177,8 @@ jobs:
       git config --global user.name  "Your Name"
       sudo apt-get update
       sudo apt-get install -y uuid-dev
-      wget --no-check-certificate http://archive.ubuntu.com/ubuntu/pool/universe/a/acpica-unix/acpica-tools_20200925-8_amd64.deb -P ~/asl/
-      sudo dpkg -i ~/asl/acpica-tools_20200925-8_amd64.deb
+      wget --no-check-certificate http://archive.ubuntu.com/ubuntu/pool/universe/a/acpica-unix/acpica-tools_20200925-6_amd64.deb -P ~/asl/
+      sudo dpkg -i ~/asl/acpica-tools_20200925-6_amd64.deb
 
       wget --no-check-certificate http://ftp.us.debian.org/debian/pool/main/n/nasm/nasm_2.15.05-1_amd64.deb -P ~/nasm/
       sudo dpkg -i ~/nasm/nasm_2.15.05-1_amd64.deb
