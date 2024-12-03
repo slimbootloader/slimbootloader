@@ -170,7 +170,8 @@ GpioUnlockPadsForAGroup (
     //
     if (PadNumber >= GpioGroupInfo[GroupIndex].PadPerGroup) {
       DEBUG ((GPIO_DEBUG_ERROR, "GPIO ERROR: Pin number (%d) exceeds possible range for group %d\n", PadNumber, GroupIndex));
-      return EFI_INVALID_PARAMETER;
+      Index++;
+      continue;
     }
 
     PadBitPosition = GPIO_GET_PAD_POSITION (PadNumber);
@@ -284,7 +285,8 @@ GpioConfigurePch (
       //
       if (PadNumber >= GpioGroupInfo[GroupIndex].PadPerGroup) {
         DEBUG ((GPIO_DEBUG_ERROR, "GPIO ERROR: Pin number (%d) exceeds possible range for group %d\n", PadNumber, GroupIndex));
-        return EFI_INVALID_PARAMETER;
+        Index++;
+        continue;
       }
 
       //
