@@ -805,6 +805,47 @@ UpdateFspConfig (
       FspsConfig->PcieGen4EqPh1UpTxPreset[4] = 0x7;
       FspsConfig->Usb4CmMode                 = 0x0;
     break;
+    case PLATFORM_ID_ARL_S_SODIMM_RVP:
+      FspsConfig->UsbTcPortEn = 0x3;
+      FspsConfig->PchPmLanWakeFromDeepSx = 0x1;
+      FspsConfig->Device4Enable = 0x1;
+      FspsConfig->PchPmVrAlert = 0x1;
+      FspsConfig->PortResetMessageEnable[5] = 0x1;
+      FspsConfig->PcieGen3EqPh3Preset3List[0] = 0x0;
+      FspsConfig->PcieGen3EqPh3Preset3List[1] = 0x0;
+      FspsConfig->PcieGen3EqPh3Preset3List[2] = 0x0;
+      FspsConfig->PcieGen3EqPh3Preset3List[4] = 0x0;
+      FspsConfig->PcieGen3EqPh3Preset4List[0] = 0x9;
+      FspsConfig->PcieGen3EqPh3Preset4List[1] = 0x9;
+      FspsConfig->PcieGen3EqPh3Preset4List[2] = 0x9;
+      FspsConfig->PcieGen3EqPh3Preset4List[4] = 0x9;
+      FspsConfig->PcieGen3EqPh1UpTxPreset[0] = 0x7;
+      FspsConfig->PcieGen3EqPh1UpTxPreset[1] = 0x7;
+      FspsConfig->PcieGen3EqPh1UpTxPreset[2] = 0x7;
+      FspsConfig->PcieGen3EqPh1UpTxPreset[4] = 0x7;
+      FspsConfig->PcieGen3EqPh3NoOfPresetOrCoeff[0] = 0x3;
+      FspsConfig->PcieGen3EqPh3NoOfPresetOrCoeff[1] = 0x3;
+      FspsConfig->PcieGen3EqPh3NoOfPresetOrCoeff[2] = 0x3;
+      FspsConfig->PcieGen3EqPh3NoOfPresetOrCoeff[4] = 0x3;
+      for (Index = 0; Index < 29; Index++) {
+        FspsConfig->PcieGen5EqPh3NoOfPresetOrCoeff[Index] = 0x3;
+        FspsConfig->PcieGen5EqPh3Preset2List[Index] = 0x7;
+        FspsConfig->PcieGen5EqPh3Preset3List[Index] = 0x0;
+        FspsConfig->PcieEnablePeerMemoryWrite[Index] = 0x0;
+      }
+      FspsConfig->PcieGen4EqPh3Preset4List[0] = 0x9;
+      FspsConfig->PcieGen4EqPh3Preset4List[1] = 0x9;
+      FspsConfig->PcieGen4EqPh3Preset4List[2] = 0x9;
+      FspsConfig->PcieGen4EqPh3Preset4List[4] = 0x9;
+      FspsConfig->PcieGen4EqPh1UpTxPreset[0] = 0x7;
+      FspsConfig->PcieGen4EqPh1UpTxPreset[1] = 0x7;
+      FspsConfig->PcieGen4EqPh1UpTxPreset[2] = 0x7;
+      FspsConfig->PcieGen4EqPh1UpTxPreset[4] = 0x7;
+      for (Index = 5; Index < 29; Index++) {
+        FspsConfig->PcieGen4EqPh3Preset4List[Index] = 0x8;
+        FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[Index] = 0x5;
+        FspsConfig->PcieGen4EqPh3Preset3List[Index] = 0x7;
+      }
   }
 
   if (FeaturePcdGet (PcdEnablePciePm)) {
