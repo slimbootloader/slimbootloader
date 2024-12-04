@@ -225,6 +225,9 @@ UpdateFspConfig (
   Fspmcfg->PcieRpEnableMask     = MemCfgData->PcieRpEnableMask;
   CopyMem (Fspmcfg->PcieClkSrcUsage,       MemCfgData->PcieClkSrcUsage,       sizeof(MemCfgData->PcieClkSrcUsage));
   CopyMem (Fspmcfg->PcieClkSrcClkReq,      MemCfgData->PcieClkSrcClkReq,      sizeof(MemCfgData->PcieClkSrcClkReq));
+  Fspmcfg->PchPcieRpEnableMask      = MemCfgData->PchPcieRpEnableMask;
+  CopyMem (Fspmcfg->PchPcieClkSrcUsage,    MemCfgData->PchPcieClkSrcUsage,    sizeof(MemCfgData->PcieClkSrcUsage));
+  CopyMem (Fspmcfg->PchPcieClkSrcClkReq,   MemCfgData->PchPcieClkSrcClkReq,   sizeof(MemCfgData->PchPcieClkSrcClkReq));
 
   // Hd Audio
   Fspmcfg->PchHdaEnable                      = MemCfgData->PchHdaEnable;
@@ -482,6 +485,7 @@ UpdateFspConfig (
   switch (BoardId) {
     case PLATFORM_ID_ARL_S_UDIMM_1DPC_RVP:
     case PLATFORM_ID_ARL_S_UDIMM_2DPC_RVP:
+    case PLATFORM_ID_ARL_S_SODIMM_RVP:
       Fspmcfg->SaIpuEnable = 0x0;
       Fspmcfg->DmiMaxLinkSpeed = 0x0;
       Fspmcfg->PchDmiGen3RootPortPreset[1] = 0x5;
@@ -498,13 +502,6 @@ UpdateFspConfig (
       Fspmcfg->PchDmiAspmL1ExitLatency = 0x6;
       Fspmcfg->DmiL1ssEnable = 0x1;
       Fspmcfg->PrmrrSize = 0x200000;
-      Fspmcfg->PchPcieClkSrcUsage[4] = 0x0;
-      Fspmcfg->PchPcieClkSrcUsage[5] = 0x4;
-      Fspmcfg->PchPcieClkSrcUsage[6] = 0x70;
-      Fspmcfg->PchPcieClkSrcUsage[7] = 0x7;
-      Fspmcfg->PchPcieClkSrcUsage[8] = 0x8;
-      Fspmcfg->PchPcieClkSrcUsage[9] = 0xc;
-      Fspmcfg->PchPcieClkSrcUsage[10] = 0x14;
       Fspmcfg->PcieClkReqGpioMux[2] = 0x146400;
       Fspmcfg->PcieClkReqGpioMux[3] = 0x146401;
       Fspmcfg->PchHdaSdiEnable[1] = 0x1;
@@ -524,20 +521,6 @@ UpdateFspConfig (
       Fspmcfg->EnableFastVmode[1] = 0x0;
       Fspmcfg->CepEnable[0] = 0x0;
       Fspmcfg->CepEnable[1] = 0x0;
-      Fspmcfg->PchPcieClkSrcClkReq[2] = 0x2;
-      Fspmcfg->PchPcieClkSrcClkReq[3] = 0x3;
-      Fspmcfg->PchPcieClkSrcClkReq[4] = 0x4;
-      Fspmcfg->PchPcieClkSrcClkReq[5] = 0x5;
-      Fspmcfg->PchPcieClkSrcClkReq[6] = 0x6;
-      Fspmcfg->PchPcieClkSrcClkReq[7] = 0x7;
-      Fspmcfg->PchPcieClkSrcClkReq[8] = 0x8;
-      Fspmcfg->PchPcieClkSrcClkReq[9] = 0x9;
-      Fspmcfg->PchPcieClkSrcClkReq[10] = 0xa;
-      Fspmcfg->PchPcieClkSrcClkReq[11] = 0xb;
-      Fspmcfg->PchPcieClkSrcClkReq[12] = 0xc;
-      Fspmcfg->PchPcieClkSrcClkReq[13] = 0xd;
-      Fspmcfg->PchPcieClkSrcClkReq[14] = 0xe;
-      Fspmcfg->PchPcieClkSrcClkReq[15] = 0xf;
       Fspmcfg->EnablePwrDn = 0x0;
       Fspmcfg->EnablePwrDnLpddr = 0x0;
       Fspmcfg->SrefCfgEna = 0x0;
