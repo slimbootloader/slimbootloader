@@ -1067,7 +1067,7 @@ UpdateFspConfig (
         FspsConfig->PortResetMessageEnable[2] = 0x0;
         FspsConfig->PortResetMessageEnable[4] = 0x0;
         FspsConfig->AmtEnabled = 0x0;
-        FspsConfig->LidStatus = 0x5b;
+        FspsConfig->LidStatus = 0x1;
         FspsConfig->TcssAuxOri = 0x1;
         FspsConfig->Device4Enable = 0x0; //this controls the thermal device (B0,D4,F0)
 #if defined(PLATFORM_ADLN)
