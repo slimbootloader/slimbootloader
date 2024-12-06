@@ -1726,7 +1726,19 @@ PlatformUpdateAcpiGnvs (
   PchNvs->ClockReq[13] = 0;
   PchNvs->ClockReq[14] = 0;
   PchNvs->ClockReq[15] = 0;
-
+  if (GetPlatformId() == PLATFORM_ID_ARL_H_DDR5_RVP) {
+    PchNvs->ClockToRootPortMap[0] = 0x0;
+    PchNvs->ClockToRootPortMap[1] = 0x6;
+    PchNvs->ClockToRootPortMap[2] = 0x70;
+    PchNvs->ClockToRootPortMap[3] = 0x5;
+    PchNvs->ClockToRootPortMap[4] = 0x8;
+    PchNvs->ClockToRootPortMap[5] = 0x7;
+    PchNvs->ClockToRootPortMap[6] = 0xb;
+    PchNvs->ClockToRootPortMap[7] = 0xa;
+    PchNvs->ClockToRootPortMap[8] = 0x9;
+    PchNvs->ClockReq[7] = 7;
+    PchNvs->ClockReq[8] = 8;
+  }
   // Misc
   PchNvs->CnviBtCore         = FspsConfig->CnviBtCore;
   PchNvs->PsOnEnable         = FspsConfig->PsOnEnable;
@@ -2023,21 +2035,21 @@ PlatformUpdateAcpiGnvs (
     //
     // PCIe Slot #3 GPIO pin configuration
     //
-    PlatformNvs->PcieSlot3PowerEnableGpio = 0;
+    PlatformNvs->PcieSlot3PowerEnableGpio = GPIOV2_MTL_SOC_M_GPP_B9;
     PlatformNvs->PcieSlot3PowerEnableGpioPolarity = 0x1;
-    PlatformNvs->PcieSlot3RstGpio = 0;
+    PlatformNvs->PcieSlot3RstGpio = GPIOV2_MTL_SOC_M_GPP_A19;
     PlatformNvs->PcieSlot3RstGpioPolarity = 0;
-    PlatformNvs->PcieSlot3WakeGpio = 0;
+    PlatformNvs->PcieSlot3WakeGpio = GPIOV2_MTL_SOC_M_GPP_C2;
     PlatformNvs->PcieSlot3RpNumber = 0x6;
 
     //
     // PCIe Slot #4 GPIO pin configuration  - CPU SLOT RTD3
     //
-    PlatformNvs->PcieSlot4PowerEnableGpio = 0;
+    PlatformNvs->PcieSlot4PowerEnableGpio = GPIOV2_MTL_SOC_M_GPP_D3;
     PlatformNvs->PcieSlot4PowerEnableGpioPolarity = 0;
-    PlatformNvs->PcieSlot4RstGpio = 0;
+    PlatformNvs->PcieSlot4RstGpio = GPIOV2_MTL_SOC_M_GPP_A18;
     PlatformNvs->PcieSlot4RstGpioPolarity = 0;
-    PlatformNvs->PcieSlot4WakeGpio = 0;
+    PlatformNvs->PcieSlot4WakeGpio = GPIOV2_MTL_SOC_M_GPP_E8;
     PlatformNvs->PcieSlot4RpNumber = 0x15;
 
     //
@@ -2073,33 +2085,33 @@ PlatformUpdateAcpiGnvs (
     //
     // M.2 SSD Slot #1 GPIO pin configuration
     //
-    PlatformNvs->M2Ssd1PowerEnableGpio = 0;
+    PlatformNvs->M2Ssd1PowerEnableGpio = GPIOV2_MTL_SOC_M_GPP_D5;
     PlatformNvs->M2Ssd1PowerEnableGpioPolarity = 1;
-    PlatformNvs->M2Ssd1RstGpio = 0;
+    PlatformNvs->M2Ssd1RstGpio = GPIOV2_MTL_SOC_M_GPP_D2;
     PlatformNvs->M2Ssd1RstGpioPolarity = 0;
 
     //
     // M.2 SSD Slot #2 GPIO pin configuration
     //
-    PlatformNvs->M2Ssd2PowerEnableGpio = 0;
+    PlatformNvs->M2Ssd2PowerEnableGpio = GPIOV2_MTL_SOC_M_GPP_D1;
     PlatformNvs->M2Ssd2PowerEnableGpioPolarity = 1;
-    PlatformNvs->M2Ssd2RstGpio = 0;
+    PlatformNvs->M2Ssd2RstGpio = GPIOV2_MTL_SOC_M_GPP_A13;
     PlatformNvs->M2Ssd2RstGpioPolarity = 0;
 
     //
     // M.2 SSD Slot #3 GPIO pin configuration
     //
-    PlatformNvs->M2Ssd3PowerEnableGpio = 0;
+    PlatformNvs->M2Ssd3PowerEnableGpio = GPIOV2_MTL_SOC_M_GPP_B15;
     PlatformNvs->M2Ssd3PowerEnableGpioPolarity = 1;
-    PlatformNvs->M2Ssd3RstGpio = 0;
+    PlatformNvs->M2Ssd3RstGpio = GPIOV2_MTL_SOC_M_GPP_A20;
     PlatformNvs->M2Ssd3RstGpioPolarity = 0;
 
     //
     // M.2 SSD Slot #4 GPIO pin configuration
     //
-    PlatformNvs->M2Ssd4PowerEnableGpio = 0;
+    PlatformNvs->M2Ssd4PowerEnableGpio = GPIOV2_MTL_SOC_M_GPP_D6;
     PlatformNvs->M2Ssd4PowerEnableGpioPolarity = 1;
-    PlatformNvs->M2Ssd4RstGpio = 0;
+    PlatformNvs->M2Ssd4RstGpio = GPIOV2_MTL_SOC_M_GPP_A14;
     PlatformNvs->M2Ssd4RstGpioPolarity = 0;
 
     //
