@@ -125,6 +125,7 @@
   UniversalPayloadLib|BootloaderCommonPkg/Library/UniversalPayloadLib/UniversalPayloadLib.inf
   FitLib|BootloaderCommonPkg/Library/FitLib/FitLib.inf
   FdtLib|MdePkg/Library/BaseFdtLib/BaseFdtLib.inf
+  BuildFdtLib|BootloaderCommonPkg/Library/BuildFdtLib/BuildFdtLib.inf
 
 !if $(ENABLE_SOURCE_DEBUG)
   DebugAgentLib|BootloaderCommonPkg/Library/DebugAgentLib/DebugAgentLib.inf
@@ -273,6 +274,7 @@
   gPlatformModuleTokenSpaceGuid.PcdIdenticalTopSwapsBuilt       | $(BUILD_IDENTICAL_TS)
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled          | $(ENABLE_TCC)
   gPlatformCommonLibTokenSpaceGuid.PcdEnableCryptoPerfTest      | $(ENABLE_IPP_CRYPTO_PERF)
+  gPlatformCommonLibTokenSpaceGuid.PcdHandOffFdtEnable          | $(ENABLE_UPL_HANDOFF_FDT)
 
 [PcdsPatchableInModule]
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel   | 0x8000004F
