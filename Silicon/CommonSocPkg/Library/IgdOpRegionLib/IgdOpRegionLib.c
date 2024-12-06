@@ -196,6 +196,9 @@ IgdOpRegionInit (
     CopyMem (mIgdOpRegion.OpRegion->MBox4.RVBT, VbtFileBuffer, VbtFileBuffer->HeaderVbtSize);
   }
 
+  // Set LID state to open
+  mIgdOpRegion.OpRegion->MBox1.CLID = 0x01;
+
   // Initialize hardware state:
   // Set ASLS Register to the OpRegion physical memory address.
   // Set SWSCI register bit 15 to a "1" to activate SCI interrupts.
