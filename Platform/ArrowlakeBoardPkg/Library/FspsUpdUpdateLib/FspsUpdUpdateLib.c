@@ -866,7 +866,7 @@ UpdateFspConfig (
       FspsConfig->RenderStandby = 1;
       FspsConfig->Enable8254ClockGating = 1;
       FspsConfig->PchFivrDynPm = 1;
-      FspsConfig->D3HotEnable = 0;
+      FspsConfig->D3HotEnable = 1;
       FspsConfig->D3ColdEnable = 1;
       DEBUG ((DEBUG_INFO, "Stage 2 S0ix config applied.\n"));
     }

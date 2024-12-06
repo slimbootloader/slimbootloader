@@ -284,13 +284,13 @@ UINT64 GetLowPowerS0IdleConstraint(VOID)
                                ( PepConfigData->PepGna                                                 << 23) | // En/Dis BIT[23] GNA0
                                (UINT32)(PepConfigData->PepVmd                                          << 24) | // En/Dis BIT[24] VMD
                                (((UINT64)PepConfigData->PepHeci3)                                      << 25) | // En/Dis BIT[25] HECI3
-                               (((0x3) & PepConfigData->PepAudio)                                      << 27) | // BIT[26:27] HD Audio (includes ADSP) (0:No Constraint or 1: D0/F1 or 3:D3)
-                               (((FspsConfig->SataEnable == 1 ? 0x3:0) & PepConfigData->PepSataContraints)  << 29) | // BIT[28:29] Storage (0:None, 1:Adapter D0/F1, 2:Raid, 3:Adapter D3)
-                               (((UINT64)PepConfigData->PepPcieStorage)                                << 31) | // BIT[30:31] PCIE Storage RP (0:No Constraint or 1: D0/F1 or 3:D3)
-                               (((UINT64)PepConfigData->PepPcieLan)                                    << 33) | // BIT[32:33] Pcie Lan (0:No Constraint or 1:D0/F1 or 3:D3)
-                               (((UINT64)PepConfigData->PepPcieWlan)                                   << 35) | // BIT[34:35] Pcie Wlan (0:No Constraint or 1:D0/F1 or 3:D3)
-                               (((UINT64)PepConfigData->PepPcieGfx)                                    << 37) | // BIT[36:37] Pcie Gfx (0:No Constraint or 1:D0/F1 or 3:D3)
-                               (((UINT64)PepConfigData->PepPcieOther)                                  << 39) | // BIT[38:39] Pcie Other (0:No Constraint or 1:D0/F1 or 3:D3)
+                               (((0x3) & PepConfigData->PepAudio)                                      << 26) | // BIT[26:27] HD Audio (includes ADSP) (0:No Constraint or 1: D0/F1 or 3:D3)
+                               (((FspsConfig->SataEnable == 1 ? 0x3:0) & PepConfigData->PepSataContraints)  << 28) | // BIT[28:29] Storage (0:None, 1:Adapter D0/F1, 2:Raid, 3:Adapter D3)
+                               (((UINT64)PepConfigData->PepPcieStorage)                                << 30) | // BIT[30:31] PCIE Storage RP (0:No Constraint or 1: D0/F1 or 3:D3)
+                               (((UINT64)PepConfigData->PepPcieLan)                                    << 32) | // BIT[32:33] Pcie Lan (0:No Constraint or 1:D0/F1 or 3:D3)
+                               (((UINT64)PepConfigData->PepPcieWlan)                                   << 34) | // BIT[34:35] Pcie Wlan (0:No Constraint or 1:D0/F1 or 3:D3)
+                               (((UINT64)PepConfigData->PepPcieGfx)                                    << 36) | // BIT[36:37] Pcie Gfx (0:No Constraint or 1:D0/F1 or 3:D3)
+                               (((UINT64)PepConfigData->PepPcieOther)                                  << 38) | // BIT[38:39] Pcie Other (0:No Constraint or 1:D0/F1 or 3:D3)
                                (((UINT64)PepConfigData->PepEmmc)                                       << 40) | // En/Dis BIT[40] EMMC
                                (((UINT64)PepConfigData->PepSdxc)                                       << 41) | // En/Dis BIT[41] SDXC
                                (((UINT64)PepConfigData->PepVpu)                                        << 42) | // Bit[42]  - En/Dis VPU0

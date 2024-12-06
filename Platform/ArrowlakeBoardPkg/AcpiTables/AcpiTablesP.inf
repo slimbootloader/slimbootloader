@@ -37,6 +37,7 @@
   Ssdt/SocGpeSsdt.asl
   Ssdt/IgfxSsdt.asl
   Ssdt/Thermal.asl
+  Ssdt/MtlPRvpRtd3.asl
   CpuSsdt/Cpu0Cst.asl
   CpuSsdt/Cpu0Hwp.asl
   CpuSsdt/Cpu0Ist.asl

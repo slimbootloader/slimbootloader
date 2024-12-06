@@ -468,15 +468,19 @@ UpdateFspConfig (
 
   if (FeaturesCfgData != NULL) {
     if (FeaturesCfgData->Features.S0ix == 1) {
+      Fspmcfg->Gen3LtcoEnable = 0;
       Fspmcfg->PchIshEnable       = 0;
+      Fspmcfg->SaIpuEnable        = 0;
       Fspmcfg->TcssXdciEn         = 0;
       Fspmcfg->TcssDma0En         = 0;
       Fspmcfg->TcssDma1En         = 0;
+      Fspmcfg->TcssXhciEn         = 0;
       Fspmcfg->TcssItbtPcie0En    = 0;
       Fspmcfg->TcssItbtPcie1En    = 0;
       Fspmcfg->TcssItbtPcie2En    = 0;
       Fspmcfg->TcssItbtPcie3En    = 0;
       Fspmcfg->PchHdaDspEnable    = 0;
+       Fspmcfg->InternalGfx       = 0;
       Fspmcfg->PchHdaAudioLinkHdaEnable  = 0;
       ZeroMem (Fspmcfg->PchHdaAudioLinkDmicEnable, sizeof (Fspmcfg->PchHdaAudioLinkDmicEnable));
       DEBUG ((DEBUG_INFO, "Stage 1B S0ix config applied.\n"));
