@@ -287,6 +287,23 @@ CheckAcmSvn (
   );
 
 /**
+  Perform UCODE revision check
+
+  This function will perform revision checks for UCODE in flash and
+  UCODE in capsule.
+
+  @param[in]  ImageHdr       Pointer to fw mgmt capsule Image header
+
+  @retval  EFI_SUCCESS      revision check successful.
+  @retval  other            error occurred during firmware update
+**/
+EFI_STATUS
+EFIAPI
+CheckUCodeVersion (
+  IN   EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
+  );
+
+/**
   Read the value of FW_UPDATE_STATUS.CsmeNeedReset
 
   The CsmeNeedReset flag is used to ensure CSME update

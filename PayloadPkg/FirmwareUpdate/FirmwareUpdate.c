@@ -201,11 +201,12 @@ VerifyFwVersion (
   }
 
   //
-  // Allow all UCOD Updates
+  // Check revision for UCODE update
   //
   if (((UINT32)ImageHdr->UpdateHardwareInstance) == FLASH_MAP_SIG_UCODE) {
     DEBUG((DEBUG_INFO, "Capsule update is for UCODE region!!\n"));
-    return EFI_SUCCESS;
+    Status = CheckUCodeVersion (ImageHdr);
+    return Status;
   }
 
   if ((UINT32)ImageHdr->UpdateHardwareInstance == FW_UPDATE_COMP_BIOS_REGION) {

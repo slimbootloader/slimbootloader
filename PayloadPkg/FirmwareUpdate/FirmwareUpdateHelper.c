@@ -24,6 +24,9 @@
 #include "FirmwareUpdateHelper.h"
 #include <Service/SpiFlashService.h>
 #include <Library/BootGuardLib.h>
+#include <Library/SocInfoLib.h>
+
+#define MSR_IA32_BIOS_SIGN_ID 0x0000008B
 
 SPI_FLASH_SERVICE   *mFwuSpiService = NULL;
 
@@ -1027,6 +1030,99 @@ CheckAcmSvn (
 
   if (NewAcmSvn < ExistingAcmSvn) {
     DEBUG((DEBUG_ERROR, "Acm update Svn check failed!!\n"));
+    return EFI_INCOMPATIBLE_VERSION;
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Get cpu ucode revision.
+
+  @retval   cpu ucode revision
+**/
+UINT32
+EFIAPI
+GetCpuUCodeRev (
+  VOID
+)
+{
+  UINT64 MsrValue;
+  UINT32 UcodeRev;
+
+  AsmWriteMsr64 (MSR_IA32_BIOS_SIGN_ID, 0LL);
+  AsmCpuid (0, NULL, NULL, NULL, NULL);
+  MsrValue = AsmReadMsr64 (MSR_IA32_BIOS_SIGN_ID);
+  UcodeRev = RShiftU64 (MsrValue, 32) & 0xffffffff;
+
+  return UcodeRev;
+}
+
+/**
+  Perform UCODE revision check
+
+  This function will perform revision checks for UCODE in flash and
+  UCODE in capsule.
+
+  @param[in]  ImageHdr       Pointer to fw mgmt capsule Image header
+
+  @retval  EFI_SUCCESS      revision check successful.
+  @retval  other            error occurred during firmware update
+**/
+EFI_STATUS
+EFIAPI
+CheckUCodeVersion (
+  IN   EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
+)
+{
+  UINT32                ExistingUCodeRev;
+  UINT32                NewUCodeRev;
+  UINTN                 ImageBase;
+  UINTN                 Offset;
+  CPU_MICROCODE_HEADER  *UCodeHdr;
+  UINT8                 *ImageByte;
+  UINT32                uCodeVer;
+
+  if (ImageHdr == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  ExistingUCodeRev = GetCpuUCodeRev();
+  DEBUG((DEBUG_INFO, "Existing UCODE revision: %x\n", ExistingUCodeRev));
+
+  // Update is only supported for platforms that slot their uCode
+  if (PcdGet32 (PcdUcodeSlotSize) == 0) {
+    DEBUG((DEBUG_ERROR, "Existing image does not contain uCode slots!!\n"));
+    return EFI_UNSUPPORTED;
+  }
+
+  uCodeVer = 0;
+  Offset = 0;
+  ImageBase = (UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER);
+  ImageByte = (UINT8*)(ImageBase + Offset);
+
+  while (*ImageByte != PAD_BYTE && Offset < ImageHdr->UpdateImageSize) {
+    UCodeHdr = (CPU_MICROCODE_HEADER *)ImageByte;
+
+    // Ensure uCode size from header does not exceed slot size
+    if (UCodeHdr->TotalSize > PcdGet32 (PcdUcodeSlotSize)) {
+      uCodeVer = 0;
+      break;
+    }
+
+    if (UCodeHdr->UpdateRevision > uCodeVer) {
+      uCodeVer = UCodeHdr->UpdateRevision;
+    }
+
+    Offset   += PcdGet32(PcdUcodeSlotSize);
+    ImageByte = (UINT8*)(ImageBase + Offset);
+  }
+
+  NewUCodeRev = uCodeVer;
+  DEBUG((DEBUG_INFO, "New UCODE revision: %x\n", NewUCodeRev));
+
+  if (NewUCodeRev < ExistingUCodeRev) {
+    DEBUG((DEBUG_ERROR, "UCODE update revision check failed!!\n"));
     return EFI_INCOMPATIBLE_VERSION;
   }
 
