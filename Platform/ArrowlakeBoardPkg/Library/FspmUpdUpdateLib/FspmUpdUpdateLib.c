@@ -446,7 +446,6 @@ UpdateFspConfig (
   Fspmcfg->SaGv                                                 = 0x1;
   Fspmcfg->PchHdaEnable                                         = 0x1;
   Fspmcfg->DmiMaxLinkSpeed                                      = 0x1;
-  Fspmcfg->DmiAspm                                              = 0x4;
   Fspmcfg->CsVrefLow                                            = 0x45;
   Fspmcfg->CsVrefHigh                                           = 0x1d;
   Fspmcfg->CaVrefLow                                            = 0x45;
