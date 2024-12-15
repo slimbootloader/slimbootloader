@@ -105,7 +105,7 @@ class Board(BaseBoard):
         if self.NO_OPT_MODE:
             self.STAGE1A_SIZE    += 0x1000
         self.STAGE1B_SIZE         = 0x00030000
-        self.STAGE2_SIZE          = 0x0001A000
+        self.STAGE2_SIZE          = 0x0001C000
 
         self.TEST_SIZE            = 0x00001000
         self.SIIPFW_SIZE          = 0x00010000
