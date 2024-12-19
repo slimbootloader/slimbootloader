@@ -317,6 +317,10 @@ NormalBootPath (
 
   DEBUG ((DEBUG_INFO, "HOB @ 0x%08X\n", LdrGlobal->LdrHobList));
   PldHobList = BuildExtraInfoHob (Stage2Param);
+  #if (FixedPcdGetBool (PcdHandOffFdtEnable))
+    PldHobList = BuildFdtForUpl ();
+    ASSERT (PldHobList != NULL);
+  #endif
 
   DEBUG_CODE_BEGIN ();
   PrintStackHeapInfo ();
