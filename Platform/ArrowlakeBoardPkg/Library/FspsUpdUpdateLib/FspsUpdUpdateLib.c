@@ -831,6 +831,8 @@ UpdateFspConfig (
         FspsConfig->PcieGen5EqPh3NoOfPresetOrCoeff[Index] = 0x3;
         FspsConfig->PcieGen5EqPh3Preset2List[Index] = 0x7;
         FspsConfig->PcieGen5EqPh3Preset3List[Index] = 0x0;
+      }
+      for (Index = 0; Index < sizeof (FspsConfig->PcieEnablePeerMemoryWrite); Index++) {
         FspsConfig->PcieEnablePeerMemoryWrite[Index] = 0x0;
       }
       FspsConfig->PcieGen4EqPh3Preset4List[0] = 0x9;
