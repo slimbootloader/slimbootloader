@@ -11,7 +11,7 @@
 
 [UserExtensions.SBL."CloneRepo"]
   REPO    = https://github.com/intel/FSP.git
-  COMMIT  = d7931859bfb1f7949bb455d53b9494dd731e9642
+  COMMIT  = e276be95bac39f7f56a6755c0da105bcce283bfa
 
 [UserExtensions.SBL."CopyList"]
   MeteorLakeFspBinPkg/IoT/MeteorLake/Fsp.fd                 : Silicon/MeteorlakePkg/FspBin/FspRel.bin
