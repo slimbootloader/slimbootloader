@@ -75,6 +75,7 @@
   WatchDogTimerLib
   FitLib
   IppCryptoPerfLib
+  BuildFdtLib
 
 [Guids]
   gFspReservedMemoryResourceHobGuid
@@ -158,6 +159,7 @@
   gPlatformModuleTokenSpaceGuid.PcdSblResiliencyEnabled
   gPlatformModuleTokenSpaceGuid.PcdEnableFwuNotify
   gPlatformCommonLibTokenSpaceGuid.PcdEnableCryptoPerfTest
+  gPlatformCommonLibTokenSpaceGuid.PcdHandOffFdtEnable
 
 [Depex]
   TRUE
