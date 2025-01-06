@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -1004,7 +1004,6 @@ UpdateFspConfig (
     FspsConfig->PkgCStateLimit = 0xff;
     FspsConfig->CstCfgCtrIoMwaitRedirection = 0;
     FspsConfig->PmcLpmS0ixSubStateEnableMask = 0x9;
-    FspsConfig->VbtSize           = 0x2200;
     FspsConfig->CpuPcieRpGen3Uptp[2] = 0x5;
     FspsConfig->CpuPcieRpGen4Uptp[2] = 0x8;
     FspsConfig->CpuPcieRpGen4Dptp[2] = 0x9;
@@ -1058,7 +1057,7 @@ UpdateFspConfig (
         FspsConfig->CnviBtAudioOffload = 0x1;
         FspsConfig->IomTypeCPortPadCfg[0] = 0x90e0016;
         FspsConfig->IomTypeCPortPadCfg[1] = 0x90e0017;
-        FspsConfig->VmdEnable = 0;
+        FspsConfig->VmdEnable = 1;
         FspsConfig->Irms[0] = 0x0;
         FspsConfig->Irms[1] = 0x0;
         FspsConfig->ThcMode[0] = 1;

@@ -15,7 +15,7 @@
   - Registers / bits of new devices introduced in a SA generation will be just named
     as "_SA_" without [generation_name] inserted.
 
-  Copyright (c) 2021-2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021-2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -99,6 +99,7 @@
 #define V_SA_DEVICE_ID_MB_ULX_11   0x4679   ///< AlderLake N IOT_EBM(0+4+0) 24EU SA DID
 #define V_SA_DEVICE_ID_MB_ULX_12   0x467C   ///< AlderLake N IOT_EBM(0+2+0) 16EU SA DID
 #define V_SA_DEVICE_ID_MB_ULX_13   0x4614   ///< AlderLake N N50 SA DID
+#define V_SA_DEVICE_ID_MB_ULX_5    0x4617   ///< AlderLake N (0+8+1) SA DID
 
 //
 // ASL:AlderLake Industrial Device IDs B0:D0:F0

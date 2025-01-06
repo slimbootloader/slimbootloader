@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -131,6 +131,7 @@ GetCpuSkuInfo (
         case V_SA_DEVICE_ID_INDU_ULX_15:  // AlderLake N IOT SA DID
         case V_SA_DEVICE_ID_INDU_ULX_16:  // AlderLake N IOT SA DID
         case V_SA_DEVICE_ID_INDU_ULX_17:  // AlderLake N IOT SA DID
+        case V_SA_DEVICE_ID_MB_ULX_5:   // AlderLake N (0+8+1) SA DID
           CpuType = EnumCpuUlx;
           SkuFound = TRUE;
           break;

@@ -68,7 +68,7 @@ def get_bpmgen2_params_change_list ():
 
 def get_platform_sku():
     platform_sku ={
-        'adln'    :   'Intel(R) AlderLake N Chipset - Consumer - SPI',
+        'adln'    :   'Intel(R) TwinLake Chipset - Consumer - SPI',
     }
     return platform_sku
 
@@ -181,9 +181,9 @@ def get_xml_change_list (platform, plt_params_list):
     if 'crb' in plt_params_list:
         print ("Applying changes to enable crb board")
         xml_change_list.append ([
-          ('./BuildSettings/HarnessGlobalData/HarnessLabel',                           'v0.39 ADP-P w/ADL-N (Harness #54)'),
-          ('./BuildSettings/HarnessGlobalData/HarnessRevision',                        '#54'),
-          ('./BuildSettings/HarnessGlobalData/SelectedRvp',                            'ADL-N DDR5 TR3 (ADL-N + ADP-P)'),
+          ('./BuildSettings/HarnessGlobalData/HarnessLabel',                           'v0.4 ADP-P w/TWL and ADL-N CPU'),
+          ('./BuildSettings/HarnessGlobalData/HarnessRevision',                        '#25'),
+          ('./BuildSettings/HarnessGlobalData/SelectedRvp',                            'TWL / ADL-N DDR5 (ADP-P + ADL-N / TWL)'),
           ('./FlashLayout/EcRegion/Enabled',                                           'Disabled'),
           ('./IntelMeKernel/IntelMeFirmwareUpdate/HmrfpoEnable',                       'Yes'),
           ('./CpuStraps/CpuStraps/Mipi124RailSrcPlat',                                 'No'),
@@ -223,9 +223,9 @@ def get_xml_change_list (platform, plt_params_list):
     if 'rvp_ddr5' in plt_params_list:
         print ("Applying changes to enable rvp ddr5 board")
         xml_change_list.append ([
-          ('./BuildSettings/HarnessGlobalData/HarnessLabel',                           'v0.39 ADP-P w/ADL-N (Harness #54)'),
-          ('./BuildSettings/HarnessGlobalData/HarnessRevision',                        '#54'),
-          ('./BuildSettings/HarnessGlobalData/SelectedRvp',                            'ADL-N DDR5 TR3 (ADL-N + ADP-P)'),
+          ('./BuildSettings/HarnessGlobalData/HarnessLabel',                           'v0.4 ADP-P w/TWL and ADL-N CPU'),
+          ('./BuildSettings/HarnessGlobalData/HarnessRevision',                        '#25'),
+          ('./BuildSettings/HarnessGlobalData/SelectedRvp',                            'TWL / ADL-N DDR5 (ADP-P + ADL-N / TWL)'),
           ('./FlashLayout/EcRegion/Enabled',                                           'Enabled'),
           ('./FlashLayout/EcRegion/InputFile',                                         '$SourceDir\EcRegion.bin'),
           ('./FlashLayout/EcRegion/EcRegionPointer',                                   '$SourceDir\EcRegionPointer.bin'),

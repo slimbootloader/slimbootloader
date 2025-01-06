@@ -1,7 +1,7 @@
 ## @file
 #  File to describe FSP repo information
 #
-#  Copyright (c) 2020 - 2024, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2025, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -11,7 +11,7 @@
 
 [UserExtensions.SBL."CloneRepo"]
   REPO    = https://github.com/intel/FSP.git
-  COMMIT  = 3db711c2a9db3840f9fecb783e0d08c0d8cb8aa0
+  COMMIT  = 5cc0b60a8a4947e2b29e0b7f5563bb5d39dc70bb
 
 [UserExtensions.SBL."CopyList"]
 # For ADL-PS
@@ -24,7 +24,7 @@
   AlderLakeFspBinPkg/IoT/AlderLakePS/Include/FspsUpd.h                    : Silicon/AlderlakePkg/Adlps/Include/FspsUpd.h
   AlderLakeFspBinPkg/IoT/AlderLakePS/Include/MemInfoHob.h                 : Silicon/AlderlakePkg/Adlps/Include/MemInfoHob.h
   FSP_License.pdf                                                         : Silicon/AlderlakePkg/Adlps/FspBin/FSP_License.pdf
-  AlderLakeFspBinPkg/IoT/AlderLakePS/Vbt/VbtAdlP.json                     : Platform/AlderlakeBoardPkg/VbtBin/VbtAdlPs.json
+  AlderLakeFspBinPkg/IoT/AlderLakePS/Vbt/Vbt_ADLP.json                    : Platform/AlderlakeBoardPkg/VbtBin/VbtAdlPs.json
 # For ADL-N
   AlderLakeFspBinPkg/IoT/AlderLakeN/Fsp.fd                               : Silicon/AlderlakePkg/Adln/FspBin/FspDbg.bin
   AlderLakeFspBinPkg/IoT/AlderLakeN/Fsp.fd                               : Silicon/AlderlakePkg/Adln/FspBin/FspRel.bin
@@ -35,4 +35,4 @@
   AlderLakeFspBinPkg/IoT/AlderLakeN/Include/FspsUpd.h                    : Silicon/AlderlakePkg/Adln/Include/FspsUpd.h
   AlderLakeFspBinPkg/IoT/AlderLakeN/Include/MemInfoHob.h                 : Silicon/AlderlakePkg/Adln/Include/MemInfoHob.h
   FSP_License.pdf                                                        : Silicon/AlderlakePkg/Adln/FspBin/FSP_License.pdf
-  AlderLakeFspBinPkg/IoT/AlderLakeN/Vbt/VbtAdlP.json                     : Platform/AlderlakeBoardPkg/VbtBin/VbtAdlN.json
+  AlderLakeFspBinPkg/IoT/AlderLakeN/Vbt/Vbt_ADLP.json                    : Platform/AlderlakeBoardPkg/VbtBin/VbtAdlN.json
