@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2024, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -1570,7 +1570,11 @@ PlatformUpdateAcpiGnvs (
   Length = GetPchMaxSerialIoUartControllersNum ();
   for (Index = 0; Index < Length ; Index++) {
     PchNvs->UM0[Index] = FspsConfig->SerialIoUartMode[Index];
-    PchNvs->UC0[Index] = SerialIoUartPciCfgBase(Index);
+    if (FspsConfig->SerialIoUartMode[Index] == 1) {
+      PchNvs->UC0[Index] = SerialIoUartPciCfgBase(Index);
+    } else if (FspsConfig->SerialIoUartMode[Index] == 3) {
+      PchNvs->UC0[Index] = PCH_SERIAL_IO_BASE_ADDRESS + 0xD000 + 0x2000 * Index; /* COM */
+    }
     PchNvs->UD0[Index] = FspsConfig->SerialIoUartDmaEnable[Index];
     PchNvs->UP0[Index] = FspsConfig->SerialIoUartPowerGating[Index];
     PchNvs->UI0[Index] = mPchSSerialIoUartMode[Index].SerialIoUARTIrq;
