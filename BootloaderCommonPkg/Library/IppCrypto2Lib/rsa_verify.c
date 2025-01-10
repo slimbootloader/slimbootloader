@@ -14,6 +14,9 @@
 
 #include <Library/CryptoLib.h>
 #include <Library/BlMemoryAllocationLib.h>
+#ifdef IPPCP_FIPS_MODE_SELFTEST
+#include "ippcp/fips_cert.h"
+#endif
 
 IPPAPI(IppStatus, ippsRSAVerifyHash_PKCS1v15_rmf,(const Ipp8u* md,
                                                   const Ipp8u* pSign, int* pIsValid,
@@ -134,6 +137,36 @@ int VerifyRsaPkcs1Signature (CONST PUB_KEY_HDR *PubKeyHdr, CONST SIGNATURE_HDR *
              ((FixedPcdGet8(PcdIppHashLibSupportedMask) & IPP_HASHLIB_SHA2_384) != 0)) {
     pHashMethod = ippsHashMethod_SHA384Sbl();
   }
+#ifdef IPPCP_FIPS_MODE_SELFTEST
+  //------ FIPS-required part
+
+  // 1. check that the function is FIPS-approved:
+  if(!ippcp_is_fips_approved_func(RSAVerify_PKCS1v15_rmf)) {
+      return -1; // cannot use this function in FIPS mode.
+  }
+
+  // 2. Run the Selftest
+  fips_test_status selftest_status = IPPCP_ALGO_SELFTEST_OK;
+
+  // Query buffer size for the test and allocate it (it can be done on Intel® Cryptography Primitives Library side with IPPCP_SELFTEST_USE_MALLOC=on)
+  int KeysBufferSize = 0;
+  selftest_status += fips_selftest_ippsRSASignVerify_PKCS1v15_rmf_get_size_keys(&KeysBufferSize);
+
+  Ipp8u *pKeysBuffer = AllocateTemporaryMemory(KeysBufferSize);
+  int BufferSize = 0;
+  selftest_status += fips_selftest_ippsRSASignVerify_PKCS1v15_rmf_get_size(&BufferSize, pKeysBuffer);
+
+  Ipp8u *pBuffer = AllocateTemporaryMemory(BufferSize);
+
+  // Run the test
+  selftest_status += fips_selftest_ippsRSAVerify_PKCS1v15_rmf(pBuffer, pKeysBuffer);
+
+  // Check selftest status
+  if (IPPCP_ALGO_SELFTEST_OK != selftest_status) {
+      return -1; // selftest is not successful -> cannot use this function in FIPS mode.
+  }
+  //------ FIPS-required part ends (only needed before the first use of algorithm)
+#endif
 
   if (pHashMethod != NULL) {
     err = ippsRSAVerifyHash_PKCS1v15_rmf((const Ipp8u *)Hash, (Ipp8u *)SignatureHdr->Signature, &signature_verified, rsa_key_s, pHashMethod, scratch_buf);

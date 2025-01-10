@@ -14,6 +14,9 @@
 #include "pcpsm3stuff.h"
 
 #include <Library/CryptoLib.h>
+#ifdef IPPCP_FIPS_MODE_SELFTEST
+#include "ippcp/fips_cert.h"
+#endif
 
 /**
   Initializes user context for hash computation. Compaitable with XIP.
@@ -39,6 +42,10 @@ IPPFUN( const IppsHashMethod*, ippsHashMethod_SM3Sbl, (void) )
    return &method;
 }
 
+#ifdef IPPCP_FIPS_MODE_SELFTEST
+static BOOLEAN IsFirstUse = TRUE;
+#endif
+
 /**
   Computes the SM3 message digest of a input data buffer.
 
@@ -56,6 +63,29 @@ Ipp8u*
 EFIAPI
 Sm3 (const Ipp8u* pMsg, Ipp32u msgLen, Ipp8u* pMD)
 {
+#ifdef IPPCP_FIPS_MODE_SELFTEST
+  //------ FIPS-required part
+  if (IsFirstUse) {
+    IsFirstUse = FALSE;
+
+    // 1. check that the function is FIPS-approved:
+    if(!ippcp_is_fips_approved_func(HashMessage_rmf)) {
+      return NULL; // cannot use this function in FIPS mode.
+    }
+    // 2. Run the Selftest
+    fips_test_status selftest_status = IPPCP_ALGO_SELFTEST_OK;
+
+    // Query buffer size for the test and allocate it (it can be done on Intel® Cryptography Primitives Library side with IPPCP_SELFTEST_USE_MALLOC=on)
+    //selftest_status += fips_selftest_ippsHashMessage_rmf(ippHashAlg_SM3);
+
+    // Check selftest status
+    if (IPPCP_ALGO_SELFTEST_OK != selftest_status) {
+      return NULL; // selftest is not successful -> cannot use this function in FIPS mode.
+    }
+    //------ FIPS-required part ends (only needed before the first use of algorithm)
+  }
+#endif
+
   if (FixedPcdGet8(PcdIppHashLibSupportedMask) & IPP_HASHLIB_SM3_256) {
     ippsHashMessage_rmf(pMsg, msgLen, pMD, ippsHashMethod_SM3Sbl ());
     return pMD;
